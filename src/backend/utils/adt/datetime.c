@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.117 2003/09/13 21:12:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.118 2003/09/25 06:58:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1305,7 +1305,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							case DTK_CURRENT:
 								ereport(ERROR,
 								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								  errmsg("\"current\" is no longer supported")));
+								  errmsg("date/time value \"current\" is no longer supported")));
 
 								return DTERR_BAD_FORMAT;
 								break;
@@ -2056,7 +2056,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							case DTK_CURRENT:
 								ereport(ERROR,
 								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								  errmsg("\"current\" is no longer supported")));
+								  errmsg("date/time value \"current\" is no longer supported")));
 								return DTERR_BAD_FORMAT;
 								break;
 
@@ -3248,7 +3248,7 @@ DateTimeParseError(int dterr, const char *str, const char *datatype)
 					(errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
 					 errmsg("date/time field value out of range: \"%s\"",
 							str),
-					 errhint("Perhaps you need a different DateStyle setting.")));
+					 errhint("Perhaps you need a different \"datestyle\" setting.")));
 			break;
 		case DTERR_INTERVAL_OVERFLOW:
 			ereport(ERROR,
@@ -3266,8 +3266,7 @@ DateTimeParseError(int dterr, const char *str, const char *datatype)
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					 /* translator: first %s is datatype name */
-					 errmsg("invalid input syntax for %s: \"%s\"",
+					 errmsg("invalid input syntax for type %s: \"%s\"",
 							datatype, str)));
 			break;
 	}

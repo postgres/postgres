@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.252 2003/09/19 21:04:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.253 2003/09/25 06:57:57 petere Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -426,7 +426,7 @@ CheckAttributeType(const char *attname, Oid atttypid)
 	if (atttypid == UNKNOWNOID)
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("attribute \"%s\" has type UNKNOWN", attname),
+				 errmsg("column \"%s\" has type \"unknown\"", attname),
 				 errdetail("Proceeding with relation creation anyway.")));
 	else if (att_typtype == 'p')
 	{
@@ -434,7 +434,7 @@ CheckAttributeType(const char *attname, Oid atttypid)
 		if (atttypid != ANYARRAYOID || IsUnderPostmaster)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("attribute \"%s\" has pseudo-type %s",
+					 errmsg("column \"%s\" has pseudo-type %s",
 							attname, format_type_be(atttypid))));
 	}
 	else if (att_typtype == 'c')
@@ -444,7 +444,7 @@ CheckAttributeType(const char *attname, Oid atttypid)
 		if (get_rel_relkind(typrelid) == RELKIND_COMPOSITE_TYPE)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("attribute \"%s\" has composite type %s",
+					 errmsg("column \"%s\" has composite type %s",
 							attname, format_type_be(atttypid))));
 	}
 }
@@ -1569,7 +1569,7 @@ AddRelationRawConstraints(Relation rel,
 				if (strcmp(cdef2->name, ccname) == 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("CHECK constraint \"%s\" already exists",
+						 errmsg("check constraint \"%s\" already exists",
 								ccname)));
 			}
 		}
@@ -1631,7 +1631,7 @@ AddRelationRawConstraints(Relation rel,
 		if (length(pstate->p_rtable) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("only relation \"%s\" can be referenced in CHECK constraint",
+					 errmsg("only table \"%s\" can be referenced in check constraint",
 							relname)));
 
 		/*
@@ -1640,11 +1640,11 @@ AddRelationRawConstraints(Relation rel,
 		if (pstate->p_hasSubLinks)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				   errmsg("cannot use sub-select in CHECK constraint")));
+				   errmsg("cannot use subquery in check constraint")));
 		if (pstate->p_hasAggs)
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("cannot use aggregate in CHECK constraint")));
+					 errmsg("cannot use aggregate function in check constraint")));
 
 		/*
 		 * Constraints are evaluated with execQual, which expects an
@@ -1751,7 +1751,7 @@ cookDefault(ParseState *pstate,
 	if (contain_var_clause(expr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-			  errmsg("cannot use column references in DEFAULT clause")));
+			  errmsg("cannot use column references in default expression")));
 
 	/*
 	 * It can't return a set either.
@@ -1759,7 +1759,7 @@ cookDefault(ParseState *pstate,
 	if (expression_returns_set(expr))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("DEFAULT clause must not return a set")));
+				 errmsg("default expression must not return a set")));
 
 	/*
 	 * No subplans or aggregates, either...
@@ -1767,11 +1767,11 @@ cookDefault(ParseState *pstate,
 	if (pstate->p_hasSubLinks)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot use sub-select in DEFAULT clause")));
+				 errmsg("cannot use subquery in default expression")));
 	if (pstate->p_hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("cannot use aggregate in DEFAULT clause")));
+				 errmsg("cannot use aggregate function in default expression")));
 
 	/*
 	 * Coerce the expression to the correct type and typmod, if given.

@@ -3,16 +3,16 @@
 --
 CREATE TABLE clstr_tst_s (rf_a SERIAL PRIMARY KEY,
 	b INT);
-NOTICE:  CREATE TABLE will create implicit sequence "clstr_tst_s_rf_a_seq" for SERIAL column "clstr_tst_s.rf_a"
+NOTICE:  CREATE TABLE will create implicit sequence "clstr_tst_s_rf_a_seq" for "serial" column "clstr_tst_s.rf_a"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clstr_tst_s_pkey" for table "clstr_tst_s"
 CREATE TABLE clstr_tst (a SERIAL PRIMARY KEY,
 	b INT,
 	c TEXT,
 	d TEXT,
 	CONSTRAINT clstr_tst_con FOREIGN KEY (b) REFERENCES clstr_tst_s);
-NOTICE:  CREATE TABLE will create implicit sequence "clstr_tst_a_seq" for SERIAL column "clstr_tst.a"
+NOTICE:  CREATE TABLE will create implicit sequence "clstr_tst_a_seq" for "serial" column "clstr_tst.a"
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "clstr_tst_pkey" for table "clstr_tst"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 CREATE INDEX clstr_tst_b ON clstr_tst (b);
 CREATE INDEX clstr_tst_c ON clstr_tst (c);
 CREATE INDEX clstr_tst_c_b ON clstr_tst (c,b);
@@ -248,8 +248,8 @@ SELECT a,b,c,substring(d for 30), length(d) from clstr_tst;
 
 -- Verify that foreign key link still works
 INSERT INTO clstr_tst (b, c) VALUES (1111, 'this should fail');
-ERROR:  insert or update on "clstr_tst" violates foreign key constraint "clstr_tst_con"
-DETAIL:  Key (b)=(1111) is not present in "clstr_tst_s".
+ERROR:  insert or update on table "clstr_tst" violates foreign key constraint "clstr_tst_con"
+DETAIL:  Key (b)=(1111) is not present in table "clstr_tst_s".
 SELECT conname FROM pg_constraint WHERE conrelid = 'clstr_tst'::regclass;
     conname     
 ----------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.99 2003/08/11 23:04:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.100 2003/09/25 06:57:56 petere Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -657,7 +657,7 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 			if (length(colaliases) != natts)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("number of aliases does not match number of attributes")));
+						 errmsg("number of aliases does not match number of columns")));
 
 			/* OK, use the aliases instead */
 			for (varattno = 0; varattno < natts; varattno++)
@@ -684,7 +684,7 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 		if (length(colaliases) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("number of aliases does not match number of attributes")));
+					 errmsg("number of aliases does not match number of columns")));
 
 		/* OK, get the column alias */
 		attname = strVal(lfirst(colaliases));
@@ -701,7 +701,7 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 	else if (functyptype == 'p' && typeoid == RECORDOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("could not determine tuple description for function returning record")));
+				 errmsg("could not determine row description for function returning record")));
 	else
 	{
 		/* crummy error message, but parser should have caught this */

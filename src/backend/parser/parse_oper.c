@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.74 2003/08/17 19:58:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.75 2003/09/25 06:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -754,14 +754,14 @@ op_error(List *op, char oprkind, Oid arg1, Oid arg2, FuncDetailCode fdresult)
 				 errmsg("operator is not unique: %s",
 						op_signature_string(op, oprkind, arg1, arg2)),
 				 errhint("Could not choose a best candidate operator. "
-						 "You may need to add explicit typecasts.")));
+						 "You may need to add explicit type casts.")));
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
 				 errmsg("operator does not exist: %s",
 						op_signature_string(op, oprkind, arg1, arg2)),
 				 errhint("No operator matches the given name and argument type(s). "
-						 "You may need to add explicit typecasts.")));
+						 "You may need to add explicit type casts.")));
 }
 
 /*
@@ -893,7 +893,7 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	if (!OidIsValid(res_atypeId))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("could not find datatype for array of %s",
+				 errmsg("could not find array type for data type %s",
 						format_type_be(declared_arg_types[1]))));
 	actual_arg_types[1] = atypeId;
 	declared_arg_types[1] = res_atypeId;

@@ -25,7 +25,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/help_config.c,v 1.5 2003/08/08 21:42:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/help_config.c,v 1.6 2003/09/25 06:58:06 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,28 +59,28 @@ enum outputFormat
 };
 
 static const char *const GENERIC_FORMAT[] = {
-	gettext_noop("Name       : %-20s \nContext    : %-20s \nGroup      : %-20s\n"),
-	gettext_noop("%s\t%s\t%s\t")
+	gettext_noop("Name:        %-20s\nContext:     %-20s\nGroup:       %-20s\n"),
+	"%s\t%s\t%s\t"
 };
 static const char *const GENERIC_DESC[] = {
 	gettext_noop("Description: %s\n%s\n"),
-	gettext_noop("%s	%s\n")
+	"%s\t%s\n"
 };
 static const char *const BOOL_FORMAT[] = {
-	gettext_noop("Type       : BOOL\nReset Value: %-s \n"),
-	gettext_noop("BOOL\t%s\t\t\t")
+	gettext_noop("Type:        Boolean\nReset value: %-s\n"),
+	"BOOL\t%s\t\t\t"
 };
 static const char *const INT_FORMAT[] = {
-	gettext_noop("Type       : INT\nReset Value: %-20d \nMin Value  : %-20d \nMax Value  : %-20d \n"),
-	gettext_noop("INT\t%d\t%d\t%d\t")
+	gettext_noop("Type:        integer\nReset value: %-20d\nMin value:   %-20d\nMax value:   %-20d\n"),
+	"INT\t%d\t%d\t%d\t"
 };
 static const char *const REAL_FORMAT[] = {
-	gettext_noop("Type       : REAL\nReset Value: %-20g \nMin Value  : %-20g \nMax Value  : %-20g \n"),
-	gettext_noop("REAL\t%g\t%g\t%g\t")
+	gettext_noop("Type:        real\nReset value: %-20g\nMin value:   %-20g\nMax value:   %-20g\n"),
+	"REAL\t%g\t%g\t%g\t"
 };
 static const char *const STRING_FORMAT[] = {
-	gettext_noop("Type       : STRING\nReset Value: %-s \n"),
-	gettext_noop("STRING\t%s\t\t\t")
+	gettext_noop("Type:        string\nReset value: %-s\n"),
+	"STRING\t%s\t\t\t"
 };
 static const char *const COLUMN_HEADER[] = {
 	"",

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.81 2003/08/04 02:40:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.82 2003/09/25 06:58:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -818,7 +818,7 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 						restrictinfo->mergejoinoperator == InvalidOid)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("FULL JOIN is only supported with mergejoinable join conditions")));
+								 errmsg("FULL JOIN is only supported with merge-joinable join conditions")));
 					break;
 				default:
 					/* otherwise, it's OK to have nonmergeable join quals */

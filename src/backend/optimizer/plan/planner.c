@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.160 2003/08/17 19:58:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.161 2003/09/25 06:58:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -654,7 +654,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 			if (PlannerQueryLevel > 1)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("SELECT FOR UPDATE is not allowed in subselects")));
+						 errmsg("SELECT FOR UPDATE is not allowed in subqueries")));
 
 			foreach(l, parse->rowMarks)
 			{

@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.60 2003/08/17 19:58:05 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.61 2003/09/25 06:58:03 petere Exp $
  */
 
 #include "postgres.h"
@@ -195,7 +195,7 @@ cash_in(PG_FUNCTION_ARGS)
 	if (*s != '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for money: \"%s\"", str)));
+				 errmsg("invalid input syntax for type money: \"%s\"", str)));
 
 	result = (value * sgn);
 

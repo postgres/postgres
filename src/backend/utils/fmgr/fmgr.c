@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.75 2003/08/04 02:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.76 2003/09/25 06:58:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,7 +220,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 			if (fbp == NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					   errmsg("internal function \"%s\" is not in table",
+					   errmsg("internal function \"%s\" is not in internal lookup table",
 							  prosrc)));
 			pfree(prosrc);
 			/* Should we check that nargs, strict, retset match the table? */
@@ -619,7 +619,7 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				   errmsg("function %u has too many arguments (%d > %d)",
+				   errmsg("function %u has too many arguments (%d, maximum is %d)",
 						  fcinfo->flinfo->fn_oid, n_arguments, 16)));
 			returnValue = NULL; /* keep compiler quiet */
 			break;
@@ -1483,7 +1483,7 @@ fmgr(Oid procedureId,...)
 		if (n_arguments > FUNC_MAX_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				   errmsg("function %u has too many arguments (%d > %d)",
+				   errmsg("function %u has too many arguments (%d, maximum is %d)",
 						  flinfo.fn_oid, n_arguments, FUNC_MAX_ARGS)));
 		va_start(pvar, procedureId);
 		for (i = 0; i < n_arguments; i++)

@@ -3,13 +3,13 @@
 ---
  
 CREATE TABLE serialTest (f1 text, f2 serial);
-NOTICE:  CREATE TABLE will create implicit sequence "serialtest_f2_seq" for SERIAL column "serialtest.f2"
+NOTICE:  CREATE TABLE will create implicit sequence "serialtest_f2_seq" for "serial" column "serialtest.f2"
  
 INSERT INTO serialTest VALUES ('foo');
 INSERT INTO serialTest VALUES ('bar');
 INSERT INTO serialTest VALUES ('force', 100);
 INSERT INTO serialTest VALUES ('wrong', NULL);
-ERROR:  null value for attribute "f2" violates NOT NULL constraint
+ERROR:  null value in column "f2" violates not-null constraint
  
 SELECT * FROM serialTest;
   f1   | f2  

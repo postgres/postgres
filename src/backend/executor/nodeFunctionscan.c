@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.20 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.21 2003/09/25 06:57:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ FunctionNext(FunctionScanState *node)
 			tupledesc_mismatch(node->tupdesc, funcTupdesc))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("query-specified return tuple and actual function return tuple do not match")));
+					 errmsg("query-specified return row and actual function return row do not match")));
 	}
 
 	/*

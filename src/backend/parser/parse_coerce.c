@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.109 2003/09/23 17:12:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.110 2003/09/25 06:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -914,7 +914,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			if (OidIsValid(elem_typeid) && actual_type != elem_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-				errmsg("arguments declared ANYELEMENT are not all alike"),
+				errmsg("arguments declared \"anyelement\" are not all alike"),
 						 errdetail("%s versus %s",
 								   format_type_be(elem_typeid),
 								   format_type_be(actual_type))));
@@ -931,7 +931,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			if (OidIsValid(array_typeid) && actual_type != array_typeid)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("arguments declared ANYARRAY are not all alike"),
+				 errmsg("arguments declared \"anyarray\" are not all alike"),
 						 errdetail("%s versus %s",
 								   format_type_be(array_typeid),
 								   format_type_be(actual_type))));
@@ -960,7 +960,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			if (!OidIsValid(array_typelem))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared ANYARRAY is not an array but %s",
+						 errmsg("argument declared \"anyarray\" is not an array but %s",
 								format_type_be(array_typeid))));
 		}
 
@@ -977,7 +977,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			/* otherwise, they better match */
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("argument declared ANYARRAY is not consistent with argument declared ANYELEMENT"),
+					 errmsg("argument declared \"anyarray\" is not consistent with argument declared \"anyelement\""),
 					 errdetail("%s versus %s",
 							   format_type_be(array_typeid),
 							   format_type_be(elem_typeid))));
@@ -988,7 +988,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 		/* Only way to get here is if all the generic args are UNKNOWN */
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("could not determine ANYARRAY/ANYELEMENT type because input is UNKNOWN")));
+				 errmsg("could not determine anyarray/anyelement type because input has type \"unknown\"")));
 	}
 
 	/*
@@ -1013,7 +1013,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 					if (!OidIsValid(array_typeid))
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
-								 errmsg("could not find array type for datatype %s",
+								 errmsg("could not find array type for data type %s",
 										format_type_be(elem_typeid))));
 				}
 				declared_arg_types[j] = array_typeid;
@@ -1030,7 +1030,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			if (!OidIsValid(array_typeid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-					  errmsg("could not find array type for datatype %s",
+					  errmsg("could not find array type for data type %s",
 							 format_type_be(elem_typeid))));
 		}
 		return array_typeid;
@@ -1072,7 +1072,7 @@ resolve_generic_type(Oid declared_type,
 			if (!OidIsValid(array_typelem))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared ANYARRAY is not an array but %s",
+						 errmsg("argument declared \"anyarray\" is not an array but type %s",
 								format_type_be(context_actual_type))));
 			return context_actual_type;
 		}
@@ -1084,7 +1084,7 @@ resolve_generic_type(Oid declared_type,
 			if (!OidIsValid(array_typeid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-					  errmsg("could not find array type for datatype %s",
+					  errmsg("could not find array type for data type %s",
 							 format_type_be(context_actual_type))));
 			return array_typeid;
 		}
@@ -1099,7 +1099,7 @@ resolve_generic_type(Oid declared_type,
 			if (!OidIsValid(array_typelem))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared ANYARRAY is not an array but %s",
+						 errmsg("argument declared \"anyarray\" is not an array but type %s",
 								format_type_be(context_actual_type))));
 			return array_typelem;
 		}

@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.10 2003/09/15 20:03:37 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.11 2003/09/25 06:58:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,7 +351,7 @@ create_singleton_array(FunctionCallInfo fcinfo,
 	if (element_type == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid array element type: %u", element_type)));
+				 errmsg("invalid array element type OID: %u", element_type)));
 	if (ndims < 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -359,8 +359,8 @@ create_singleton_array(FunctionCallInfo fcinfo,
 	if (ndims > MAXDIM)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("number of array dimensions exceeds the maximum allowed, %d",
-						MAXDIM)));
+				 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
+						ndims, MAXDIM)));
 
 	dvalues[0] = element;
 

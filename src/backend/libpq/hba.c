@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.114 2003/09/05 23:07:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.115 2003/09/25 06:57:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -663,7 +663,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		{
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("could not interpret IP address \"%s\" in config file: %s",
+					 errmsg("invalid IP address \"%s\" in pg_hba.conf file: %s",
 							token, gai_strerror(ret))));
 			if (cidr_slash)
 				*cidr_slash = '/';
@@ -815,7 +815,7 @@ group_openfile(void)
 	if (groupfile == NULL && errno != ENOENT)
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not open \"%s\": %m", filename)));
+				 errmsg("could not open file \"%s\": %m", filename)));
 
 	pfree(filename);
 
@@ -839,7 +839,7 @@ user_openfile(void)
 	if (pwdfile == NULL && errno != ENOENT)
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not open \"%s\": %m", filename)));
+				 errmsg("could not open file \"%s\": %m", filename)));
 
 	pfree(filename);
 
@@ -958,7 +958,7 @@ load_hba(void)
 	if (file == NULL)
 		ereport(FATAL,
 				(errcode_for_file_access(),
-				 errmsg("could not open config file \"%s\": %m",
+				 errmsg("could not open configuration file \"%s\": %m",
 						conf_file)));
 
 	hba_lines = tokenize_file(file);
@@ -1057,7 +1057,7 @@ check_ident_usermap(const char *usermap_name,
 	{
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-		errmsg("cannot use IDENT authentication without usermap field")));
+		errmsg("cannot use Ident authentication without usermap field")));
 		found_entry = false;
 	}
 	else if (strcmp(usermap_name, "sameuser") == 0)
@@ -1105,7 +1105,7 @@ load_ident(void)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not open usermap file \"%s\": %m",
+				 errmsg("could not open Ident usermap file \"%s\": %m",
 						map_file)));
 	}
 	else
@@ -1276,7 +1276,7 @@ ident_inet(const SockAddr remote_addr,
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-			errmsg("could not create socket for IDENT connection: %m")));
+			errmsg("could not create socket for Ident connection: %m")));
 		ident_return = false;
 		goto ident_inet_done;
 	}
@@ -1304,7 +1304,7 @@ ident_inet(const SockAddr remote_addr,
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not connect to IDENT server at address \"%s\", port %s: %m",
+				 errmsg("could not connect to Ident server at address \"%s\", port %s: %m",
 						remote_addr_s, ident_port)));
 		ident_return = false;
 		goto ident_inet_done;
@@ -1324,7 +1324,7 @@ ident_inet(const SockAddr remote_addr,
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not send query to IDENT server at address \"%s\", port %s: %m",
+				 errmsg("could not send query to Ident server at address \"%s\", port %s: %m",
 						remote_addr_s, ident_port)));
 		ident_return = false;
 		goto ident_inet_done;
@@ -1339,7 +1339,7 @@ ident_inet(const SockAddr remote_addr,
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not receive response from IDENT server at address \"%s\", port %s: %m",
+				 errmsg("could not receive response from Ident server at address \"%s\", port %s: %m",
 						remote_addr_s, ident_port)));
 		ident_return = false;
 		goto ident_inet_done;
@@ -1380,7 +1380,7 @@ ident_unix(int sock, char *ident_user)
 		/* We didn't get a valid credentials struct. */
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not receive credentials: %m")));
+				 errmsg("could not get peer credentials: %m")));
 		return false;
 	}
 
@@ -1389,7 +1389,7 @@ ident_unix(int sock, char *ident_user)
 	if (pass == NULL)
 	{
 		ereport(LOG,
-				(errmsg("local user with uid %d is not known to getpwuid",
+				(errmsg("local user with ID %d does not exist",
 						(int) uid)));
 		return false;
 	}
@@ -1411,7 +1411,7 @@ ident_unix(int sock, char *ident_user)
 		/* We didn't get a valid credentials struct. */
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not receive credentials: %m")));
+				 errmsg("could not get peer credentials: %m")));
 		return false;
 	}
 
@@ -1420,7 +1420,7 @@ ident_unix(int sock, char *ident_user)
 	if (pass == NULL)
 	{
 		ereport(LOG,
-				(errmsg("local user with uid %d is not known to getpwuid",
+				(errmsg("local user with ID %d does not exist",
 						(int) peercred.uid)));
 		return false;
 	}
@@ -1479,7 +1479,7 @@ ident_unix(int sock, char *ident_user)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not receive credentials: %m")));
+				 errmsg("could not get peer credentials: %m")));
 		return false;
 	}
 
@@ -1490,7 +1490,7 @@ ident_unix(int sock, char *ident_user)
 	if (pw == NULL)
 	{
 		ereport(LOG,
-				(errmsg("local user with uid %d is not known to getpwuid",
+				(errmsg("local user with ID %d does not exist",
 						(int) cred->cruid)));
 		return false;
 	}
@@ -1502,7 +1502,7 @@ ident_unix(int sock, char *ident_user)
 #else
 	ereport(LOG,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("IDENT auth is not supported on local connections on this platform")));
+			 errmsg("Ident authentication is not supported on local connections on this platform")));
 
 	return false;
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.79 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.80 2003/09/25 06:57:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -782,7 +782,7 @@ rtpicksplit(Relation r,
 	if (newitemsz > RTPageAvailSpace)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("index tuple size %lu exceeds rtree maximum, %lu",
+				 errmsg("index row size %lu exceeds rtree maximum, %lu",
 						(unsigned long) newitemsz,
 						(unsigned long) RTPageAvailSpace)));
 

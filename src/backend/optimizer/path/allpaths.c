@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.107 2003/08/11 20:46:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.108 2003/09/25 06:57:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,7 +211,7 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 	if (intMember(parentRTindex, root->rowMarks))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELECT FOR UPDATE is not supported for inherit queries")));
+				 errmsg("SELECT FOR UPDATE is not supported for inheritance queries")));
 
 	/*
 	 * The executor will check the parent table's access permissions when

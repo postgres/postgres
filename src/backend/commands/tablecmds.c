@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.82 2003/09/19 21:04:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.83 2003/09/25 06:57:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	if (stmt->oncommit != ONCOMMIT_NOOP && !stmt->relation->istemp)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("ON COMMIT can only be used on TEMP tables")));
+				 errmsg("ON COMMIT can only be used on temporary tables")));
 
 	/*
 	 * Look up the namespace in which we are supposed to create the
@@ -207,7 +207,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 					if (strcmp(check[i].ccname, cdef->name) == 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("duplicate CHECK constraint name \"%s\"",
+						 errmsg("duplicate check constraint name \"%s\"",
 								cdef->name)));
 				}
 				check[ncheck].ccname = cdef->name;
@@ -394,7 +394,7 @@ TruncateRelation(const RangeVar *relation)
 	if (isOtherTempNamespace(RelationGetNamespace(rel)))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("cannot truncate temp tables of other processes")));
+			  errmsg("cannot truncate temporary tables of other sessions")));
 
 	/*
 	 * Don't allow truncate on tables which are referenced by foreign keys
@@ -506,7 +506,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			if (strcmp(coldef->colname, restdef->colname) == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
-						 errmsg("attribute \"%s\" duplicated",
+						 errmsg("column \"%s\" duplicated",
 								coldef->colname)));
 		}
 	}
@@ -608,14 +608,14 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				 * have the same type and typmod.
 				 */
 				ereport(NOTICE,
-						(errmsg("merging multiple inherited definitions of attribute \"%s\"",
+						(errmsg("merging multiple inherited definitions of column \"%s\"",
 								attributeName)));
 				def = (ColumnDef *) nth(exist_attno - 1, inhSchema);
 				if (typenameTypeId(def->typename) != attribute->atttypid ||
 					def->typename->typmod != attribute->atttypmod)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("inherited attribute \"%s\" has a type conflict",
+							 errmsg("inherited column \"%s\" has a type conflict",
 									attributeName),
 							 errdetail("%s versus %s",
 									   TypeNameToString(def->typename),
@@ -763,14 +763,14 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				 * have the same type and typmod.
 				 */
 				ereport(NOTICE,
-						(errmsg("merging attribute \"%s\" with inherited definition",
+						(errmsg("merging column \"%s\" with inherited definition",
 								attributeName)));
 				def = (ColumnDef *) nth(exist_attno - 1, inhSchema);
 				if (typenameTypeId(def->typename) != typenameTypeId(newdef->typename) ||
 					def->typename->typmod != newdef->typename->typmod)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
-						   errmsg("attribute \"%s\" has a type conflict",
+						   errmsg("column \"%s\" has a type conflict",
 								  attributeName),
 							 errdetail("%s versus %s",
 									   TypeNameToString(def->typename),
@@ -811,7 +811,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			if (def->cooked_default == bogus_marker)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
-						 errmsg("attribute \"%s\" inherits conflicting default values",
+						 errmsg("column \"%s\" inherits conflicting default values",
 								def->colname),
 						 errhint("To resolve the conflict, specify a default explicitly.")));
 		}
@@ -1158,7 +1158,7 @@ renameatt(Oid myrelid,
 			find_inheritance_children(myrelid) != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-					 errmsg("inherited attribute \"%s\" must be renamed in child tables too",
+					 errmsg("inherited column \"%s\" must be renamed in child tables too",
 							oldattname)));
 	}
 
@@ -1168,7 +1168,7 @@ renameatt(Oid myrelid,
 	if (!HeapTupleIsValid(atttup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("attribute \"%s\" does not exist",
+				 errmsg("column \"%s\" does not exist",
 						oldattname)));
 	attform = (Form_pg_attribute) GETSTRUCT(atttup);
 
@@ -1176,7 +1176,7 @@ renameatt(Oid myrelid,
 	if (attnum < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot rename system attribute \"%s\"",
+				 errmsg("cannot rename system column \"%s\"",
 						oldattname)));
 
 	/*
@@ -1186,7 +1186,7 @@ renameatt(Oid myrelid,
 	if (attform->attinhcount > 0 && !recursing)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("cannot rename inherited attribute \"%s\"",
+				 errmsg("cannot rename inherited column \"%s\"",
 						oldattname)));
 
 	/* should not already exist */
@@ -1197,7 +1197,7 @@ renameatt(Oid myrelid,
 							 0, 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_COLUMN),
-			 errmsg("attribute \"%s\" of relation \"%s\" already exists",
+			 errmsg("column \"%s\" of relation \"%s\" already exists",
 				  newattname, RelationGetRelationName(targetrelation))));
 
 	namestrcpy(&(attform->attname), newattname);
@@ -1751,7 +1751,7 @@ AlterTableAddColumn(Oid myrelid,
 		if (find_inheritance_children(myrelid) != NIL)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("attribute must be added to child tables too")));
+				 errmsg("column must be added to child tables too")));
 	}
 
 	/*
@@ -1798,7 +1798,7 @@ AlterTableAddColumn(Oid myrelid,
 							 0, 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_COLUMN),
-			 errmsg("attribute \"%s\" of relation \"%s\" already exists",
+			 errmsg("column \"%s\" of relation \"%s\" already exists",
 					colDef->colname, RelationGetRelationName(rel))));
 
 	minattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts;
@@ -1983,14 +1983,14 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+			 errmsg("column \"%s\" of relation \"%s\" does not exist",
 					colName, RelationGetRelationName(rel))));
 
 	/* Prevent them from altering a system attribute */
 	if (attnum < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot alter system attribute \"%s\"",
+				 errmsg("cannot alter system column \"%s\"",
 						colName)));
 
 	/*
@@ -2026,7 +2026,7 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 				if (indexStruct->indkey[i] == attnum)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-						   errmsg("attribute \"%s\" is in a primary key",
+						   errmsg("column \"%s\" is in a primary key",
 								  colName)));
 			}
 		}
@@ -2127,14 +2127,14 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+			 errmsg("column \"%s\" of relation \"%s\" does not exist",
 					colName, RelationGetRelationName(rel))));
 
 	/* Prevent them from altering a system attribute */
 	if (attnum < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot alter system attribute \"%s\"",
+				 errmsg("cannot alter system column \"%s\"",
 						colName)));
 
 	/*
@@ -2155,7 +2155,7 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 		if (isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_NOT_NULL_VIOLATION),
-					 errmsg("attribute \"%s\" contains NULL values",
+					 errmsg("column \"%s\" contains null values",
 							colName)));
 	}
 
@@ -2255,14 +2255,14 @@ AlterTableAlterColumnDefault(Oid myrelid, bool recurse,
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+			 errmsg("column \"%s\" of relation \"%s\" does not exist",
 					colName, RelationGetRelationName(rel))));
 
 	/* Prevent them from altering a system attribute */
 	if (attnum < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot alter system attribute \"%s\"",
+				 errmsg("cannot alter system column \"%s\"",
 						colName)));
 
 	/*
@@ -2419,14 +2419,14 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+			 errmsg("column \"%s\" of relation \"%s\" does not exist",
 					colName, RelationGetRelationName(rel))));
 	attrtuple = (Form_pg_attribute) GETSTRUCT(tuple);
 
 	if (attrtuple->attnum < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot alter system attribute \"%s\"",
+				 errmsg("cannot alter system column \"%s\"",
 						colName)));
 
 	/*
@@ -2445,7 +2445,7 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("column datatype %s can only have storage \"plain\"",
+			 errmsg("column data type %s can only have storage PLAIN",
 					format_type_be(attrtuple->atttypid))));
 	}
 
@@ -2624,7 +2624,7 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+			 errmsg("column \"%s\" of relation \"%s\" does not exist",
 					colName, RelationGetRelationName(rel))));
 
 	/* Can't drop a system attribute */
@@ -2632,7 +2632,7 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 	if (attnum < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot drop system attribute \"%s\"",
+				 errmsg("cannot drop system column \"%s\"",
 						colName)));
 
 	/* Don't drop inherited columns */
@@ -2640,7 +2640,7 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 	if (tupleDesc->attrs[attnum - 1]->attinhcount > 0 && !recursing)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("cannot drop inherited attribute \"%s\"",
+				 errmsg("cannot drop inherited column \"%s\"",
 						colName)));
 
 	/*
@@ -2967,7 +2967,7 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	if (length(pstate->p_rtable) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-			errmsg("CHECK constraint may only reference relation \"%s\"",
+			errmsg("check constraint may only reference relation \"%s\"",
 				   RelationGetRelationName(rel))));
 
 	/*
@@ -2976,11 +2976,11 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	if (pstate->p_hasSubLinks)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot use sub-select in CHECK constraint")));
+				 errmsg("cannot use subquery in check constraint")));
 	if (pstate->p_hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("cannot use aggregate in CHECK constraint")));
+				 errmsg("cannot use aggregate function in check constraint")));
 
 	/*
 	 * Might as well try to reduce any constant expressions, so as to
@@ -3031,8 +3031,8 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	if (!successful)
 		ereport(ERROR,
 				(errcode(ERRCODE_CHECK_VIOLATION),
-			 errmsg("CHECK constraint \"%s\" is violated at some row(s)",
-					constr->name)));
+				 errmsg("check constraint \"%s\" is violated by some row",
+						constr->name)));
 
 	/*
 	 * Call AddRelationRawConstraints to do the real adding -- It
@@ -3165,7 +3165,7 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 	if (numfks != numpks)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FOREIGN_KEY),
-				 errmsg("number of referencing and referenced attributes for foreign key disagree")));
+				 errmsg("number of referencing and referenced columns for foreign key disagree")));
 
 	for (i = 0; i < numpks; i++)
 	{
@@ -3315,7 +3315,7 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 	if (indexStruct == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			errmsg("there is no PRIMARY KEY for referenced table \"%s\"",
+			errmsg("there is no primary key for referenced table \"%s\"",
 				   RelationGetRelationName(pkrel))));
 
 	/*
@@ -3429,7 +3429,7 @@ transformFkeyCheckAttrs(Relation pkrel,
 	if (!found)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FOREIGN_KEY),
-				 errmsg("there is no UNIQUE constraint matching given keys for referenced table \"%s\"",
+				 errmsg("there is no unique constraint matching given keys for referenced table \"%s\"",
 						RelationGetRelationName(pkrel))));
 
 	freeList(indexoidlist);
@@ -3594,7 +3594,7 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	if (length(fk_attr) != length(pk_attr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FOREIGN_KEY),
-				 errmsg("number of referencing and referenced attributes for foreign key disagree")));
+				 errmsg("number of referencing and referenced columns for foreign key disagree")));
 
 	while (fk_attr != NIL)
 	{
@@ -4090,7 +4090,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("relation \"%s\" already has a toast table",
+				 errmsg("relation \"%s\" already has a TOAST table",
 						RelationGetRelationName(rel))));
 	}
 
@@ -4107,7 +4107,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("relation \"%s\" does not need a toast table",
+				 errmsg("relation \"%s\" does not need a TOAST table",
 						RelationGetRelationName(rel))));
 	}
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.64 2003/08/04 02:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.65 2003/09/25 06:58:02 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,7 @@ smgrcreate(int16 which, Relation reln)
 	if ((fd = (*(smgrsw[which].smgr_create)) (reln)) < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not create \"%s\": %m",
+				 errmsg("could not create relation \"%s\": %m",
 						RelationGetRelationName(reln))));
 
 	/* Add the relation to the list of stuff to delete at abort */
@@ -248,7 +248,7 @@ smgrextend(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 	if (status == SM_FAIL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not extend \"%s\": %m",
+				 errmsg("could not extend relation \"%s\": %m",
 						RelationGetRelationName(reln)),
 				 errhint("Check free disk space.")));
 
@@ -275,7 +275,7 @@ smgropen(int16 which, Relation reln, bool failOK)
 		if (!failOK)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not open \"%s\": %m",
+					 errmsg("could not open file \"%s\": %m",
 							RelationGetRelationName(reln))));
 
 	return fd;
@@ -292,7 +292,7 @@ smgrclose(int16 which, Relation reln)
 	if ((*(smgrsw[which].smgr_close)) (reln) == SM_FAIL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not close \"%s\": %m",
+				 errmsg("could not close relation \"%s\": %m",
 						RelationGetRelationName(reln))));
 
 	return SM_SUCCESS;
@@ -318,7 +318,7 @@ smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 	if (status == SM_FAIL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read block %d of \"%s\": %m",
+				 errmsg("could not read block %d of relation \"%s\": %m",
 						blocknum, RelationGetRelationName(reln))));
 
 	return status;
@@ -344,7 +344,7 @@ smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 	if (status == SM_FAIL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write block %d of \"%s\": %m",
+				 errmsg("could not write block %d of relation \"%s\": %m",
 						blocknum, RelationGetRelationName(reln))));
 
 	return status;
@@ -404,7 +404,7 @@ smgrnblocks(int16 which, Relation reln)
 	if (nblocks == InvalidBlockNumber)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not count blocks of \"%s\": %m",
+				 errmsg("could not count blocks of relation \"%s\": %m",
 						RelationGetRelationName(reln))));
 
 	return nblocks;
@@ -436,7 +436,7 @@ smgrtruncate(int16 which, Relation reln, BlockNumber nblocks)
 		if (newblks == InvalidBlockNumber)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not truncate \"%s\" to %u blocks: %m",
+					 errmsg("could not truncate relation \"%s\" to %u blocks: %m",
 							RelationGetRelationName(reln), nblocks)));
 	}
 

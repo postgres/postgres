@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.71 2003/09/21 17:57:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.72 2003/09/25 06:58:02 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -380,7 +380,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 
 			ereport(WARNING,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("could not allocate \"%s\"", name)));
+					 errmsg("could not allocate shared memory segment \"%s\"", name)));
 			*foundPtr = FALSE;
 			return NULL;
 		}

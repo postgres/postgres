@@ -111,26 +111,26 @@ create table nulltest
            , col5 dcheck CHECK (col5 IN ('c', 'd'))
            );
 INSERT INTO nulltest DEFAULT VALUES;
-ERROR:  domain dnotnull does not allow NULL values
+ERROR:  domain dnotnull does not allow null values
 INSERT INTO nulltest values ('a', 'b', 'c', 'd', 'c');  -- Good
 insert into nulltest values ('a', 'b', 'c', 'd', NULL);
-ERROR:  domain dcheck does not allow NULL values
+ERROR:  domain dcheck does not allow null values
 insert into nulltest values ('a', 'b', 'c', 'd', 'a');
-ERROR:  new row for relation "nulltest" violates CHECK constraint "nulltest_col5"
+ERROR:  new row for relation "nulltest" violates check constraint "nulltest_col5"
 INSERT INTO nulltest values (NULL, 'b', 'c', 'd', 'd');
-ERROR:  domain dnotnull does not allow NULL values
+ERROR:  domain dnotnull does not allow null values
 INSERT INTO nulltest values ('a', NULL, 'c', 'd', 'c');
-ERROR:  domain dnotnull does not allow NULL values
+ERROR:  domain dnotnull does not allow null values
 INSERT INTO nulltest values ('a', 'b', NULL, 'd', 'c');
-ERROR:  null value for attribute "col3" violates NOT NULL constraint
+ERROR:  null value in column "col3" violates not-null constraint
 INSERT INTO nulltest values ('a', 'b', 'c', NULL, 'd'); -- Good
 -- Test copy
 COPY nulltest FROM stdin; --fail
-ERROR:  domain dcheck does not allow NULL values
+ERROR:  domain dcheck does not allow null values
 CONTEXT:  COPY FROM, line 1
 -- Last row is bad
 COPY nulltest FROM stdin;
-ERROR:  new row for relation "nulltest" violates CHECK constraint "nulltest_col5"
+ERROR:  new row for relation "nulltest" violates check constraint "nulltest_col5"
 CONTEXT:  COPY FROM, line 3
 select * from nulltest;
  col1 | col2 | col3 | col4 | col5 
@@ -147,11 +147,11 @@ SELECT cast('1' as dnotnull);
 (1 row)
 
 SELECT cast(NULL as dnotnull); -- fail
-ERROR:  domain dnotnull does not allow NULL values
+ERROR:  domain dnotnull does not allow null values
 SELECT cast(cast(NULL as dnull) as dnotnull); -- fail
-ERROR:  domain dnotnull does not allow NULL values
+ERROR:  domain dnotnull does not allow null values
 SELECT cast(col4 as dnotnull) from nulltest; -- fail
-ERROR:  domain dnotnull does not allow NULL values
+ERROR:  domain dnotnull does not allow null values
 -- cleanup
 drop table nulltest;
 drop domain dnotnull restrict;
@@ -199,14 +199,14 @@ create table domnotnull
 );
 insert into domnotnull default values;
 alter domain dnotnulltest set not null; -- fails
-ERROR:  relation "domnotnull" attribute "col1" contains NULL values
+ERROR:  column "col1" of table "domnotnull" contains null values
 update domnotnull set col1 = 5;
 alter domain dnotnulltest set not null; -- fails
-ERROR:  relation "domnotnull" attribute "col2" contains NULL values
+ERROR:  column "col2" of table "domnotnull" contains null values
 update domnotnull set col2 = 6;
 alter domain dnotnulltest set not null;
 update domnotnull set col1 = null; -- fails
-ERROR:  domain dnotnulltest does not allow NULL values
+ERROR:  domain dnotnulltest does not allow null values
 alter domain dnotnulltest drop not null;
 update domnotnull set col1 = null;
 drop domain dnotnulltest cascade;
@@ -247,17 +247,17 @@ create table domcontest (col1 con);
 insert into domcontest values (1);
 insert into domcontest values (2);
 alter domain con add constraint t check (VALUE < 1); -- fails
-ERROR:  relation "domcontest" attribute "col1" contains values that violate the new constraint
+ERROR:  relation "domcontest" column "col1" contains values that violate the new constraint
 alter domain con add constraint t check (VALUE < 34);
 alter domain con add check (VALUE > 0);
 insert into domcontest values (-5); -- fails
-ERROR:  value for domain con violates CHECK constraint "$1"
+ERROR:  value for domain con violates check constraint "$1"
 insert into domcontest values (42); -- fails
-ERROR:  value for domain con violates CHECK constraint "t"
+ERROR:  value for domain con violates check constraint "t"
 insert into domcontest values (5);
 alter domain con drop constraint t;
 insert into domcontest values (-5); --fails
-ERROR:  value for domain con violates CHECK constraint "$1"
+ERROR:  value for domain con violates check constraint "$1"
 insert into domcontest values (42);
 -- Confirm ALTER DOMAIN with RULES.
 create table domtab (col1 integer);
@@ -274,7 +274,7 @@ select * from domview;
 
 alter domain dom set not null;
 select * from domview; -- fail
-ERROR:  domain dom does not allow NULL values
+ERROR:  domain dom does not allow null values
 alter domain dom drop not null;
 select * from domview;
  col1 
@@ -285,7 +285,7 @@ select * from domview;
 
 alter domain dom add constraint domchkgt6 check(value > 6);
 select * from domview; --fail
-ERROR:  value for domain dom violates CHECK constraint "domchkgt6"
+ERROR:  value for domain dom violates check constraint "domchkgt6"
 alter domain dom drop constraint domchkgt6 restrict;
 select * from domview;
  col1 

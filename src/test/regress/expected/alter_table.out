@@ -307,27 +307,27 @@ INSERT INTO tmp3 values (1,20);
 INSERT INTO tmp3 values (5,50);
 -- Try (and fail) to add constraint due to invalid source columns
 ALTER TABLE tmp3 add constraint tmpconstr foreign key(c) references tmp2 match full;
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  column "c" referenced in foreign key constraint does not exist
 -- Try (and fail) to add constraint due to invalide destination columns explicitly given
 ALTER TABLE tmp3 add constraint tmpconstr foreign key(a) references tmp2(b) match full;
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  column "b" referenced in foreign key constraint does not exist
 -- Try (and fail) to add constraint due to invalid data
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  insert or update on "tmp3" violates foreign key constraint "tmpconstr"
-DETAIL:  Key (a)=(5) is not present in "tmp2".
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
+ERROR:  insert or update on table "tmp3" violates foreign key constraint "tmpconstr"
+DETAIL:  Key (a)=(5) is not present in table "tmp2".
 -- Delete failing row
 DELETE FROM tmp3 where a=5;
 -- Try (and succeed)
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 -- Try (and fail) to create constraint from tmp5(a) to tmp4(a) - unique constraint on
 -- tmp4 is a,b
 ALTER TABLE tmp5 add constraint tmpconstr foreign key(a) references tmp4(a) match full;
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  there is no UNIQUE constraint matching given keys for referenced table "tmp4"
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
+ERROR:  there is no unique constraint matching given keys for referenced table "tmp4"
 DROP TABLE tmp5;
 DROP TABLE tmp4;
 DROP TABLE tmp3;
@@ -340,24 +340,24 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" fo
 CREATE TEMP TABLE FKTABLE (ftest1 inet);
 -- This next should fail, because inet=int does not exist
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- This should also fail for the same reason, but here we
 -- give the column name
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- This should succeed, even though they are different types
 -- because varchar=int does exist
 DROP TABLE FKTABLE;
 CREATE TEMP TABLE FKTABLE (ftest1 varchar);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 -- As should this
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 DROP TABLE pktable cascade;
 NOTICE:  drop cascades to constraint $2 on table fktable
 NOTICE:  drop cascades to constraint $1 on table fktable
@@ -368,31 +368,31 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" fo
 -- This should fail, because we just chose really odd types
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) references pktable;
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: cidr = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 DROP TABLE FKTABLE;
 -- Again, so should this...
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest1, ptest2);
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: cidr = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 DROP TABLE FKTABLE;
 -- This fails because we mixed up the column ordering
 CREATE TEMP TABLE FKTABLE (ftest1 int, ftest2 inet);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest2, ptest1);
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: integer = inet
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- As does this...
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest2, ftest1)
      references pktable(ptest1, ptest2);
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- temp tables should go away by themselves, need not drop them.
 -- test check constraint adding
 create table atacc1 ( test int );
@@ -400,7 +400,7 @@ create table atacc1 ( test int );
 alter table atacc1 add constraint atacc_test1 check (test>3);
 -- should fail
 insert into atacc1 (test) values (2);
-ERROR:  new row for relation "atacc1" violates CHECK constraint "atacc_test1"
+ERROR:  new row for relation "atacc1" violates check constraint "atacc_test1"
 -- should succeed
 insert into atacc1 (test) values (4);
 drop table atacc1;
@@ -410,14 +410,14 @@ create table atacc1 ( test int );
 insert into atacc1 (test) values (2);
 -- add a check constraint (fails)
 alter table atacc1 add constraint atacc_test1 check (test>3);
-ERROR:  CHECK constraint "atacc_test1" is violated at some row(s)
+ERROR:  check constraint "atacc_test1" is violated by some row
 insert into atacc1 (test) values (4);
 drop table atacc1;
 -- let's do one where the check fails because the column doesn't exist
 create table atacc1 ( test int );
 -- add a check constraint (fails)
 alter table atacc1 add constraint atacc_test1 check (test1>3);
-ERROR:  attribute "test1" not found
+ERROR:  column "test1" does not exist
 drop table atacc1;
 -- something a little more complicated
 create table atacc1 ( test int, test2 int, test3 int);
@@ -425,7 +425,7 @@ create table atacc1 ( test int, test2 int, test3 int);
 alter table atacc1 add constraint atacc_test1 check (test+test2<test3*4);
 -- should fail
 insert into atacc1 (test,test2,test3) values (4,4,2);
-ERROR:  new row for relation "atacc1" violates CHECK constraint "atacc_test1"
+ERROR:  new row for relation "atacc1" violates check constraint "atacc_test1"
 -- should succeed
 insert into atacc1 (test,test2,test3) values (4,4,5);
 drop table atacc1;
@@ -434,7 +434,7 @@ create table atacc1 (test int check (test>3), test2 int);
 alter table atacc1 add check (test2>test);
 -- should fail for $2
 insert into atacc1 (test2, test) values (3, 4);
-ERROR:  new row for relation "atacc1" violates CHECK constraint "$1"
+ERROR:  new row for relation "atacc1" violates check constraint "$1"
 drop table atacc1;
 -- inheritance related tests
 create table atacc1 (test int);
@@ -443,11 +443,11 @@ create table atacc3 (test3 int) inherits (atacc1, atacc2);
 alter table atacc2 add constraint foo check (test2>0);
 -- fail and then succeed on atacc2
 insert into atacc2 (test2) values (-3);
-ERROR:  new row for relation "atacc2" violates CHECK constraint "foo"
+ERROR:  new row for relation "atacc2" violates check constraint "foo"
 insert into atacc2 (test2) values (3);
 -- fail and then succeed on atacc3
 insert into atacc3 (test2) values (-3);
-ERROR:  new row for relation "atacc3" violates CHECK constraint "foo"
+ERROR:  new row for relation "atacc3" violates check constraint "foo"
 insert into atacc3 (test2) values (3);
 drop table atacc3;
 drop table atacc2;
@@ -459,7 +459,7 @@ create table atacc3 (test3 int) inherits (atacc1, atacc2);
 alter table only atacc2 add constraint foo check (test2>0);
 -- fail and then succeed on atacc2
 insert into atacc2 (test2) values (-3);
-ERROR:  new row for relation "atacc2" violates CHECK constraint "foo"
+ERROR:  new row for relation "atacc2" violates check constraint "foo"
 insert into atacc2 (test2) values (3);
 -- both succeed on atacc3
 insert into atacc3 (test2) values (-3);
@@ -476,7 +476,7 @@ NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc_test1" for t
 insert into atacc1 (test) values (2);
 -- should fail
 insert into atacc1 (test) values (2);
-ERROR:  duplicate key violates UNIQUE constraint "atacc_test1"
+ERROR:  duplicate key violates unique constraint "atacc_test1"
 -- should succeed
 insert into atacc1 (test) values (4);
 -- try adding a unique oid constraint
@@ -511,7 +511,7 @@ NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc_test1" for t
 insert into atacc1 (test,test2) values (4,4);
 -- should fail
 insert into atacc1 (test,test2) values (4,4);
-ERROR:  duplicate key violates UNIQUE constraint "atacc_test1"
+ERROR:  duplicate key violates unique constraint "atacc_test1"
 -- should all succeed
 insert into atacc1 (test,test2) values (4,5);
 insert into atacc1 (test,test2) values (5,4);
@@ -525,7 +525,7 @@ NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc1_test2_key" 
 -- should fail for @@ second one @@
 insert into atacc1 (test2, test) values (3, 3);
 insert into atacc1 (test2, test) values (2, 3);
-ERROR:  duplicate key violates UNIQUE constraint "atacc1_test_key"
+ERROR:  duplicate key violates unique constraint "atacc1_test_key"
 drop table atacc1;
 -- test primary key constraint adding
 create table atacc1 ( test int );
@@ -536,12 +536,12 @@ NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc_test1" 
 insert into atacc1 (test) values (2);
 -- should fail
 insert into atacc1 (test) values (2);
-ERROR:  duplicate key violates UNIQUE constraint "atacc_test1"
+ERROR:  duplicate key violates unique constraint "atacc_test1"
 -- should succeed
 insert into atacc1 (test) values (4);
 -- inserting NULL should fail
 insert into atacc1 (test) values(NULL);
-ERROR:  null value for attribute "test" violates NOT NULL constraint
+ERROR:  null value in column "test" violates not-null constraint
 -- try adding a second primary key (should fail)
 alter table atacc1 add constraint atacc_oid1 primary key(oid);
 ERROR:  multiple primary keys for table "atacc1" are not allowed
@@ -570,7 +570,7 @@ insert into atacc1 (test) values (NULL);
 -- add a primary key (fails)
 alter table atacc1 add constraint atacc_test1 primary key (test);
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc_test1" for table "atacc1"
-ERROR:  attribute "test" contains NULL values
+ERROR:  column "test" contains null values
 insert into atacc1 (test) values (3);
 drop table atacc1;
 -- let's do one where the primary key constraint fails
@@ -592,13 +592,13 @@ ERROR:  multiple primary keys for table "atacc1" are not allowed
 insert into atacc1 (test,test2) values (4,4);
 -- should fail
 insert into atacc1 (test,test2) values (4,4);
-ERROR:  duplicate key violates UNIQUE constraint "atacc_test1"
+ERROR:  duplicate key violates unique constraint "atacc_test1"
 insert into atacc1 (test,test2) values (NULL,3);
-ERROR:  null value for attribute "test" violates NOT NULL constraint
+ERROR:  null value in column "test" violates not-null constraint
 insert into atacc1 (test,test2) values (3, NULL);
-ERROR:  null value for attribute "test2" violates NOT NULL constraint
+ERROR:  null value in column "test2" violates not-null constraint
 insert into atacc1 (test,test2) values (NULL,NULL);
-ERROR:  null value for attribute "test" violates NOT NULL constraint
+ERROR:  null value in column "test" violates not-null constraint
 -- should all succeed
 insert into atacc1 (test,test2) values (4,5);
 insert into atacc1 (test,test2) values (5,4);
@@ -610,9 +610,9 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "atacc1_pkey" for
 -- only first should succeed
 insert into atacc1 (test2, test) values (3, 3);
 insert into atacc1 (test2, test) values (2, 3);
-ERROR:  duplicate key violates UNIQUE constraint "atacc1_pkey"
+ERROR:  duplicate key violates unique constraint "atacc1_pkey"
 insert into atacc1 (test2, test) values (1, NULL);
-ERROR:  null value for attribute "test" violates NOT NULL constraint
+ERROR:  null value in column "test" violates not-null constraint
 drop table atacc1;
 -- alter table / alter column [set/drop] not null tests
 -- try altering system catalogs, should fail
@@ -631,24 +631,24 @@ create table atacc1 (test int not null);
 alter table atacc1 add constraint "atacc1_pkey" primary key (test);
 NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc1_pkey" for table "atacc1"
 alter table atacc1 alter column test drop not null;
-ERROR:  attribute "test" is in a primary key
+ERROR:  column "test" is in a primary key
 alter table atacc1 drop constraint "atacc1_pkey";
 alter table atacc1 alter column test drop not null;
 insert into atacc1 values (null);
 alter table atacc1 alter test set not null;
-ERROR:  attribute "test" contains NULL values
+ERROR:  column "test" contains null values
 delete from atacc1;
 alter table atacc1 alter test set not null;
 -- try altering a non-existent column, should fail
 alter table atacc1 alter bar set not null;
-ERROR:  attribute "bar" of relation "atacc1" does not exist
+ERROR:  column "bar" of relation "atacc1" does not exist
 alter table atacc1 alter bar drop not null;
-ERROR:  attribute "bar" of relation "atacc1" does not exist
+ERROR:  column "bar" of relation "atacc1" does not exist
 -- try altering the oid column, should fail
 alter table atacc1 alter oid set not null;
-ERROR:  cannot alter system attribute "oid"
+ERROR:  cannot alter system column "oid"
 alter table atacc1 alter oid drop not null;
-ERROR:  cannot alter system attribute "oid"
+ERROR:  cannot alter system column "oid"
 -- try creating a view and altering that, should fail
 create view myview as select * from atacc1;
 alter table myview alter column test drop not null;
@@ -662,27 +662,27 @@ create table parent (a int);
 create table child (b varchar(255)) inherits (parent);
 alter table parent alter a set not null;
 insert into parent values (NULL);
-ERROR:  null value for attribute "a" violates NOT NULL constraint
+ERROR:  null value in column "a" violates not-null constraint
 insert into child (a, b) values (NULL, 'foo');
-ERROR:  null value for attribute "a" violates NOT NULL constraint
+ERROR:  null value in column "a" violates not-null constraint
 alter table parent alter a drop not null;
 insert into parent values (NULL);
 insert into child (a, b) values (NULL, 'foo');
 alter table only parent alter a set not null;
-ERROR:  attribute "a" contains NULL values
+ERROR:  column "a" contains null values
 alter table child alter a set not null;
-ERROR:  attribute "a" contains NULL values
+ERROR:  column "a" contains null values
 delete from parent;
 alter table only parent alter a set not null;
 insert into parent values (NULL);
-ERROR:  null value for attribute "a" violates NOT NULL constraint
+ERROR:  null value in column "a" violates not-null constraint
 alter table child alter a set not null;
 insert into child (a, b) values (NULL, 'foo');
-ERROR:  null value for attribute "a" violates NOT NULL constraint
+ERROR:  null value in column "a" violates not-null constraint
 delete from child;
 alter table child alter a set not null;
 insert into child (a, b) values (NULL, 'foo');
-ERROR:  null value for attribute "a" violates NOT NULL constraint
+ERROR:  null value in column "a" violates not-null constraint
 drop table child;
 drop table parent;
 -- test setting and removing default values
@@ -713,7 +713,7 @@ ERROR:  invalid input syntax for integer: "wrong_datatype"
 alter table def_test alter column c2 set default 20;
 -- set defaults on a non-existent column: this should fail
 alter table def_test alter column c3 set default 30;
-ERROR:  attribute "c3" of relation "def_test" does not exist
+ERROR:  column "c3" of relation "def_test" does not exist
 -- set defaults on views: we need to create a view, add a rule
 -- to allow insertions into it, and then alter the view to add
 -- a default
@@ -753,7 +753,7 @@ create table atacc1 (a int4 not null, b int4, c int4 not null, d int4);
 insert into atacc1 values (1, 2, 3, 4);
 alter table atacc1 drop a;
 alter table atacc1 drop a;
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 -- SELECTs
 select * from atacc1;
  b | c | d 
@@ -762,13 +762,13 @@ select * from atacc1;
 (1 row)
 
 select * from atacc1 order by a;
-ERROR:  attribute "a" not found
+ERROR:  column "a" does not exist
 select * from atacc1 order by "........pg.dropped.1........";
-ERROR:  attribute "........pg.dropped.1........" not found
+ERROR:  column "........pg.dropped.1........" does not exist
 select * from atacc1 group by a;
-ERROR:  attribute "a" not found
+ERROR:  column "a" does not exist
 select * from atacc1 group by "........pg.dropped.1........";
-ERROR:  attribute "........pg.dropped.1........" not found
+ERROR:  column "........pg.dropped.1........" does not exist
 select atacc1.* from atacc1;
  b | c | d 
 ---+---+---
@@ -776,9 +776,9 @@ select atacc1.* from atacc1;
 (1 row)
 
 select a from atacc1;
-ERROR:  attribute "a" not found
+ERROR:  column "a" does not exist
 select atacc1.a from atacc1;
-ERROR:  no such attribute atacc1.a
+ERROR:  column atacc1.a does not exist
 select b,c,d from atacc1;
  b | c | d 
 ---+---+---
@@ -786,26 +786,26 @@ select b,c,d from atacc1;
 (1 row)
 
 select a,b,c,d from atacc1;
-ERROR:  attribute "a" not found
+ERROR:  column "a" does not exist
 select * from atacc1 where a = 1;
-ERROR:  attribute "a" not found
+ERROR:  column "a" does not exist
 select "........pg.dropped.1........" from atacc1;
-ERROR:  attribute "........pg.dropped.1........" not found
+ERROR:  column "........pg.dropped.1........" does not exist
 select atacc1."........pg.dropped.1........" from atacc1;
-ERROR:  no such attribute atacc1.........pg.dropped.1........
+ERROR:  column atacc1.........pg.dropped.1........ does not exist
 select "........pg.dropped.1........",b,c,d from atacc1;
-ERROR:  attribute "........pg.dropped.1........" not found
+ERROR:  column "........pg.dropped.1........" does not exist
 select * from atacc1 where "........pg.dropped.1........" = 1;
-ERROR:  attribute "........pg.dropped.1........" not found
+ERROR:  column "........pg.dropped.1........" does not exist
 -- UPDATEs
 update atacc1 set a = 3;
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 update atacc1 set b = 2 where a = 3;
-ERROR:  attribute "a" not found
+ERROR:  column "a" does not exist
 update atacc1 set "........pg.dropped.1........" = 3;
-ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 update atacc1 set b = 2 where "........pg.dropped.1........" = 3;
-ERROR:  attribute "........pg.dropped.1........" not found
+ERROR:  column "........pg.dropped.1........" does not exist
 -- INSERTs
 insert into atacc1 values (10, 11, 12, 13);
 ERROR:  INSERT has more expressions than target columns
@@ -813,34 +813,34 @@ insert into atacc1 values (default, 11, 12, 13);
 ERROR:  INSERT has more expressions than target columns
 insert into atacc1 values (11, 12, 13);
 insert into atacc1 (a) values (10);
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 insert into atacc1 (a) values (default);
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 insert into atacc1 (a,b,c,d) values (10,11,12,13);
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 insert into atacc1 (a,b,c,d) values (default,11,12,13);
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 insert into atacc1 (b,c,d) values (11,12,13);
 insert into atacc1 ("........pg.dropped.1........") values (10);
-ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 insert into atacc1 ("........pg.dropped.1........") values (default);
-ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 insert into atacc1 ("........pg.dropped.1........",b,c,d) values (10,11,12,13);
-ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 insert into atacc1 ("........pg.dropped.1........",b,c,d) values (default,11,12,13);
-ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 -- DELETEs
 delete from atacc1 where a = 3;
-ERROR:  attribute "a" not found
+ERROR:  column "a" does not exist
 delete from atacc1 where "........pg.dropped.1........" = 3;
-ERROR:  attribute "........pg.dropped.1........" not found
+ERROR:  column "........pg.dropped.1........" does not exist
 delete from atacc1;
 -- try dropping a non-existent column, should fail
 alter table atacc1 drop bar;
-ERROR:  attribute "bar" of relation "atacc1" does not exist
+ERROR:  column "bar" of relation "atacc1" does not exist
 -- try dropping the oid column, should fail
 alter table atacc1 drop oid;
-ERROR:  cannot drop system attribute "oid"
+ERROR:  cannot drop system column "oid"
 -- try creating a view and altering that, should fail
 create view myview as select * from atacc1;
 select * from myview;
@@ -853,45 +853,45 @@ ERROR:  "myview" is not a table
 drop view myview;
 -- test some commands to make sure they fail on the dropped column
 analyze atacc1(a);
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 analyze atacc1("........pg.dropped.1........");
-ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 vacuum analyze atacc1(a);
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 vacuum analyze atacc1("........pg.dropped.1........");
-ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 comment on column atacc1.a is 'testing';
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 comment on column atacc1."........pg.dropped.1........" is 'testing';
-ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 alter a set storage plain;
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 alter table atacc1 alter "........pg.dropped.1........" set storage plain;
-ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 alter a set statistics 0;
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 alter table atacc1 alter "........pg.dropped.1........" set statistics 0;
-ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 alter a set default 3;
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 alter table atacc1 alter "........pg.dropped.1........" set default 3;
-ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 alter a drop default;
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 alter table atacc1 alter "........pg.dropped.1........" drop default;
-ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 alter a set not null;
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 alter table atacc1 alter "........pg.dropped.1........" set not null;
-ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 alter a drop not null;
-ERROR:  attribute "a" of relation "atacc1" does not exist
+ERROR:  column "a" of relation "atacc1" does not exist
 alter table atacc1 alter "........pg.dropped.1........" drop not null;
-ERROR:  attribute "........pg.dropped.1........" of relation "atacc1" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "atacc1" does not exist
 alter table atacc1 rename a to x;
-ERROR:  attribute "a" does not exist
+ERROR:  column "a" does not exist
 alter table atacc1 rename "........pg.dropped.1........" to x;
-ERROR:  attribute "........pg.dropped.1........" does not exist
+ERROR:  column "........pg.dropped.1........" does not exist
 alter table atacc1 add primary key(a);
 ERROR:  column "a" named in key does not exist
 alter table atacc1 add primary key("........pg.dropped.1........");
@@ -901,28 +901,28 @@ ERROR:  column "a" named in key does not exist
 alter table atacc1 add unique("........pg.dropped.1........");
 ERROR:  column "........pg.dropped.1........" named in key does not exist
 alter table atacc1 add check (a > 3);
-ERROR:  attribute "a" not found
+ERROR:  column "a" does not exist
 alter table atacc1 add check ("........pg.dropped.1........" > 3);
-ERROR:  attribute "........pg.dropped.1........" not found
+ERROR:  column "........pg.dropped.1........" does not exist
 create table atacc2 (id int4 unique);
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "atacc2_id_key" for table "atacc2"
 alter table atacc1 add foreign key (a) references atacc2(id);
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  column "a" referenced in foreign key constraint does not exist
 alter table atacc1 add foreign key ("........pg.dropped.1........") references atacc2(id);
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  column "........pg.dropped.1........" referenced in foreign key constraint does not exist
 alter table atacc2 add foreign key (id) references atacc1(a);
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  column "a" referenced in foreign key constraint does not exist
 alter table atacc2 add foreign key (id) references atacc1("........pg.dropped.1........");
-NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  ALTER TABLE will create implicit triggers for foreign-key checks
 ERROR:  column "........pg.dropped.1........" referenced in foreign key constraint does not exist
 drop table atacc2;
 create index "testing_idx" on atacc1(a);
-ERROR:  attribute "a" does not exist
+ERROR:  column "a" does not exist
 create index "testing_idx" on atacc1("........pg.dropped.1........");
-ERROR:  attribute "........pg.dropped.1........" does not exist
+ERROR:  column "........pg.dropped.1........" does not exist
 -- test create as and select into
 insert into atacc1 values (21, 22, 23);
 create table test1 as select * from atacc1;
@@ -993,9 +993,9 @@ alter table test drop a;
 copy test to stdout;
 2	3
 copy test(a) to stdout;
-ERROR:  attribute "a" of relation "test" does not exist
+ERROR:  column "a" of relation "test" does not exist
 copy test("........pg.dropped.1........") to stdout;
-ERROR:  attribute "........pg.dropped.1........" of relation "test" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "test" does not exist
 copy test from stdin;
 ERROR:  extra data after last expected column
 CONTEXT:  COPY FROM, line 1
@@ -1014,9 +1014,9 @@ select * from test;
 (2 rows)
 
 copy test(a) from stdin;
-ERROR:  attribute "a" of relation "test" does not exist
+ERROR:  column "a" of relation "test" does not exist
 copy test("........pg.dropped.1........") from stdin;
-ERROR:  attribute "........pg.dropped.1........" of relation "test" does not exist
+ERROR:  column "........pg.dropped.1........" of relation "test" does not exist
 copy test(b,c) from stdin;
 select * from test;
  b  | c  
@@ -1033,9 +1033,9 @@ create table dropColumnChild (c int) inherits (dropColumn);
 create table dropColumnAnother (d int) inherits (dropColumnChild);
 -- these two should fail
 alter table dropColumnchild drop column a;
-ERROR:  cannot drop inherited attribute "a"
+ERROR:  cannot drop inherited column "a"
 alter table only dropColumnChild drop column b;
-ERROR:  cannot drop inherited attribute "b"
+ERROR:  cannot drop inherited column "b"
 -- these three should work
 alter table only dropColumn drop column e;
 alter table dropColumnChild drop column c;
@@ -1045,11 +1045,11 @@ create table renameColumnChild (b int) inherits (renameColumn);
 create table renameColumnAnother (c int) inherits (renameColumnChild);
 -- these three should fail
 alter table renameColumnChild rename column a to d;
-ERROR:  cannot rename inherited attribute "a"
+ERROR:  cannot rename inherited column "a"
 alter table only renameColumnChild rename column a to d;
-ERROR:  inherited attribute "a" must be renamed in child tables too
+ERROR:  inherited column "a" must be renamed in child tables too
 alter table only renameColumn rename column a to d;
-ERROR:  inherited attribute "a" must be renamed in child tables too
+ERROR:  inherited column "a" must be renamed in child tables too
 -- these should work
 alter table renameColumn rename column a to d;
 alter table renameColumnChild rename column b to a;
@@ -1057,14 +1057,14 @@ alter table renameColumnChild rename column b to a;
 alter table renameColumn add column w int;
 -- this should fail
 alter table only renameColumn add column x int;
-ERROR:  attribute must be added to child tables too
+ERROR:  column must be added to child tables too
 -- Test corner cases in dropping of inherited columns
 create table p1 (f1 int, f2 int);
 create table c1 (f1 int not null) inherits(p1);
-NOTICE:  merging attribute "f1" with inherited definition
+NOTICE:  merging column "f1" with inherited definition
 -- should be rejected since c1.f1 is inherited
 alter table c1 drop column f1;
-ERROR:  cannot drop inherited attribute "f1"
+ERROR:  cannot drop inherited column "f1"
 -- should work
 alter table p1 drop column f1;
 -- c1.f1 is still there, but no longer inherited
@@ -1075,25 +1075,25 @@ select f1 from c1;
 
 alter table c1 drop column f1;
 select f1 from c1;
-ERROR:  attribute "f1" not found
+ERROR:  column "f1" does not exist
 drop table p1 cascade;
 NOTICE:  drop cascades to table c1
 create table p1 (f1 int, f2 int);
 create table c1 () inherits(p1);
 -- should be rejected since c1.f1 is inherited
 alter table c1 drop column f1;
-ERROR:  cannot drop inherited attribute "f1"
+ERROR:  cannot drop inherited column "f1"
 alter table p1 drop column f1;
 -- c1.f1 is dropped now, since there is no local definition for it
 select f1 from c1;
-ERROR:  attribute "f1" not found
+ERROR:  column "f1" does not exist
 drop table p1 cascade;
 NOTICE:  drop cascades to table c1
 create table p1 (f1 int, f2 int);
 create table c1 () inherits(p1);
 -- should be rejected since c1.f1 is inherited
 alter table c1 drop column f1;
-ERROR:  cannot drop inherited attribute "f1"
+ERROR:  cannot drop inherited column "f1"
 alter table only p1 drop column f1;
 -- c1.f1 is NOT dropped, but must now be considered non-inherited
 alter table c1 drop column f1;
@@ -1101,10 +1101,10 @@ drop table p1 cascade;
 NOTICE:  drop cascades to table c1
 create table p1 (f1 int, f2 int);
 create table c1 (f1 int not null) inherits(p1);
-NOTICE:  merging attribute "f1" with inherited definition
+NOTICE:  merging column "f1" with inherited definition
 -- should be rejected since c1.f1 is inherited
 alter table c1 drop column f1;
-ERROR:  cannot drop inherited attribute "f1"
+ERROR:  cannot drop inherited column "f1"
 alter table only p1 drop column f1;
 -- c1.f1 is still there, but no longer inherited
 alter table c1 drop column f1;
@@ -1113,7 +1113,7 @@ NOTICE:  drop cascades to table c1
 create table p1(id int, name text);
 create table p2(id2 int, name text, height int);
 create table c1(age int) inherits(p1,p2);
-NOTICE:  merging multiple inherited definitions of attribute "name"
+NOTICE:  merging multiple inherited definitions of column "name"
 create table gc1() inherits (c1);
 select relname, attname, attinhcount, attislocal
 from pg_class join pg_attribute on (pg_class.oid = pg_attribute.attrelid)
@@ -1144,12 +1144,12 @@ alter table only p1 drop column name;
 alter table p2 drop column name;
 -- should be rejected since its inherited
 alter table gc1 drop column name;
-ERROR:  cannot drop inherited attribute "name"
+ERROR:  cannot drop inherited column "name"
 -- should work, and drop gc1.name along
 alter table c1 drop column name;
 -- should fail: column does not exist
 alter table gc1 drop column name;
-ERROR:  attribute "name" of relation "gc1" does not exist
+ERROR:  column "name" of relation "gc1" does not exist
 -- should work and drop the attribute in all tables
 alter table p2 drop column height;
 select relname, attname, attinhcount, attislocal
@@ -1184,7 +1184,7 @@ select oid > 0, * from altstartwith;
 
 alter table altstartwith set without oids;
 select oid > 0, * from altstartwith; -- fails
-ERROR:  attribute "oid" not found
+ERROR:  column "oid" does not exist
 select * from altstartwith;
  col 
 -----
@@ -1211,9 +1211,9 @@ select oid > 0, * from altinhoid;
 alter table altwithoid set without oids;
 alter table altinhoid set without oids;
 select oid > 0, * from altwithoid; -- fails
-ERROR:  attribute "oid" not found
+ERROR:  column "oid" does not exist
 select oid > 0, * from altinhoid; -- fails
-ERROR:  attribute "oid" not found
+ERROR:  column "oid" does not exist
 select * from altwithoid;
  col 
 -----
@@ -1234,7 +1234,7 @@ alter table p1 add column f2 text;
 NOTICE:  merging definition of column "f2" for child "c1"
 insert into p1 values (1,2,'abc');
 insert into c1 values(11,'xyz',33,0); -- should fail
-ERROR:  new row for relation "c1" violates CHECK constraint "p1_a1"
+ERROR:  new row for relation "c1" violates check constraint "p1_a1"
 insert into c1 values(11,'xyz',33,22);
 select * from p1;
  f1 | a1 | f2  

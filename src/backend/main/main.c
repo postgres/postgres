@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.62 2003/09/09 15:19:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.63 2003/09/25 06:57:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,9 +173,9 @@ main(int argc, char *argv[])
 		{
 			fprintf(stderr,
 					gettext("\"root\" execution of the PostgreSQL server is not permitted.\n"
-							"The server must be started under an unprivileged user id to prevent\n"
+							"The server must be started under an unprivileged user ID to prevent\n"
 							"possible system security compromise.  See the documentation for\n"
-				"more information on how to properly start the server.\n"
+							"more information on how to properly start the server.\n"
 							));
 			exit(1);
 		}
@@ -193,7 +193,7 @@ main(int argc, char *argv[])
 		if (getuid() != geteuid())
 		{
 			fprintf(stderr,
-				 gettext("%s: real and effective user ids must match\n"),
+				 gettext("%s: real and effective user IDs must match\n"),
 					argv[0]);
 			exit(1);
 		}
@@ -238,7 +238,7 @@ main(int argc, char *argv[])
 	pw = getpwuid(geteuid());
 	if (pw == NULL)
 	{
-		fprintf(stderr, gettext("%s: invalid effective uid: %d\n"),
+		fprintf(stderr, gettext("%s: invalid effective UID: %d\n"),
 				new_argv[0], (int) geteuid());
 		exit(1);
 	}
@@ -251,7 +251,7 @@ main(int argc, char *argv[])
 		pw_name_persist = malloc(namesize);
 		if (!GetUserName(pw_name_persist, &namesize))
 		{
-			fprintf(stderr, gettext("%s: GetUserName failed\n"),
+			fprintf(stderr, gettext("%s: could not determine user name (GetUserName failed)\n"),
 					new_argv[0]);
 			exit(1);
 		}

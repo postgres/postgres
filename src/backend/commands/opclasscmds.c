@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.19 2003/09/11 02:40:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.20 2003/09/25 06:57:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,7 +238,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 			if (amoid != GIST_AM_OID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("storage type may not be different from datatype for access method \"%s\"",
+						 errmsg("storage type may not be different from data type for access method \"%s\"",
 								stmt->amname)));
 		}
 	}

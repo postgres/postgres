@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.260 2003/09/24 18:54:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.261 2003/09/25 06:57:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -463,7 +463,7 @@ vacuum_set_xid_limits(VacuumStmt *vacstmt, bool sharedRel,
 	if (TransactionIdFollows(limit, *oldestXmin))
 	{
 		ereport(WARNING,
-				(errmsg("oldest Xmin is far in the past"),
+				(errmsg("oldest xmin is far in the past"),
 				 errhint("Close open transactions soon to avoid wraparound problems.")));
 		limit = *oldestXmin;
 	}
@@ -782,7 +782,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 		  (pg_database_ownercheck(MyDatabaseId, GetUserId()) && !onerel->rd_rel->relisshared)))
 	{
 		ereport(WARNING,
-				(errmsg("skipping \"%s\" --- only table or database owner can VACUUM it",
+				(errmsg("skipping \"%s\" --- only table or database owner can vacuum it",
 						RelationGetRelationName(onerel))));
 		relation_close(onerel, lmode);
 		CommitTransactionCommand();
@@ -796,7 +796,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	if (onerel->rd_rel->relkind != expected_relkind)
 	{
 		ereport(WARNING,
-				(errmsg("skipping \"%s\" --- cannot VACUUM indexes, views or special system tables",
+				(errmsg("skipping \"%s\" --- cannot vacuum indexes, views, or special system tables",
 						RelationGetRelationName(onerel))));
 		relation_close(onerel, lmode);
 		CommitTransactionCommand();
@@ -1354,13 +1354,13 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	}
 
 	ereport(elevel,
-			(errmsg("\"%s\": found %.0f removable, %.0f nonremovable tuples in %u pages",
+			(errmsg("\"%s\": found %.0f removable, %.0f nonremovable row versions in %u pages",
 					RelationGetRelationName(onerel),
 					tups_vacuumed, num_tuples, nblocks),
-			 errdetail("%.0f dead tuples cannot be removed yet.\n"
-				"Nonremovable tuples range from %lu to %lu bytes long.\n"
+			 errdetail("%.0f dead row versions cannot be removed yet.\n"
+				"Nonremovable row versions range from %lu to %lu bytes long.\n"
 					   "There were %.0f unused item pointers.\n"
-		 "Total free space (including removable tuples) is %.0f bytes.\n"
+		 "Total free space (including removable row versions) is %.0f bytes.\n"
 					   "%u pages are or will become empty, including %u at the end of the table.\n"
 					   "%u pages containing %.0f free bytes are potential move destinations.\n"
 					   "%s",
@@ -2360,7 +2360,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	 * processing that occurs below.
 	 */
 	ereport(elevel,
-			(errmsg("\"%s\": moved %u tuples, truncated %u to %u pages",
+			(errmsg("\"%s\": moved %u row versions, truncated %u to %u pages",
 					RelationGetRelationName(onerel),
 					num_moved, nblocks, blkno),
 			 errdetail("%s",
@@ -2639,7 +2639,7 @@ scan_index(Relation indrel, double num_tuples)
 						false);
 
 	ereport(elevel,
-			(errmsg("index \"%s\" now contains %.0f tuples in %u pages",
+			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
 					RelationGetRelationName(indrel),
 					stats->num_index_tuples,
 					stats->num_pages),
@@ -2657,7 +2657,7 @@ scan_index(Relation indrel, double num_tuples)
 		if (stats->num_index_tuples > num_tuples ||
 			!vac_is_partial_index(indrel))
 			ereport(WARNING,
-					(errmsg("index \"%s\" contains %.0f tuples, but table contains %.0f tuples",
+					(errmsg("index \"%s\" contains %.0f row versions, but table contains %.0f row versions",
 							RelationGetRelationName(indrel),
 							stats->num_index_tuples, num_tuples),
 					 errhint("Rebuild the index with REINDEX.")));
@@ -2706,11 +2706,11 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 						false);
 
 	ereport(elevel,
-			(errmsg("index \"%s\" now contains %.0f tuples in %u pages",
+			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
 					RelationGetRelationName(indrel),
 					stats->num_index_tuples,
 					stats->num_pages),
-			 errdetail("%.0f index tuples were removed.\n"
+			 errdetail("%.0f index row versions were removed.\n"
 		 "%u index pages have been deleted, %u are currently reusable.\n"
 					   "%s",
 					   stats->tuples_removed,
@@ -2726,7 +2726,7 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 		if (stats->num_index_tuples > num_tuples + keep_tuples ||
 			!vac_is_partial_index(indrel))
 			ereport(WARNING,
-					(errmsg("index \"%s\" contains %.0f tuples, but table contains %.0f tuples",
+					(errmsg("index \"%s\" contains %.0f row versions, but table contains %.0f tuples",
 							RelationGetRelationName(indrel),
 					  stats->num_index_tuples, num_tuples + keep_tuples),
 					 errhint("Rebuild the index with REINDEX.")));

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.14 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.15 2003/09/25 06:57:58 petere Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -135,7 +135,7 @@ DefineAggregate(List *names, List *parameters)
 		transTypeId != ANYELEMENTOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("aggregate transition datatype cannot be %s",
+				 errmsg("aggregate transition data type cannot be %s",
 						format_type_be(transTypeId))));
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.109 2003/09/24 18:54:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.110 2003/09/25 06:57:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,11 +89,11 @@ DefineIndex(RangeVar *heapRelation,
 	if (numberOfAttributes <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-				 errmsg("must specify at least one attribute")));
+				 errmsg("must specify at least one column")));
 	if (numberOfAttributes > INDEX_MAX_KEYS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_COLUMNS),
-				 errmsg("cannot use more than %d attributes in an index",
+				 errmsg("cannot use more than %d columns in an index",
 						INDEX_MAX_KEYS)));
 
 	/*
@@ -149,12 +149,12 @@ DefineIndex(RangeVar *heapRelation,
 	if (unique && !accessMethodForm->amcanunique)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("access method \"%s\" does not support UNIQUE indexes",
+		   errmsg("access method \"%s\" does not support unique indexes",
 				  accessMethodName)));
 	if (numberOfAttributes > 1 && !accessMethodForm->amcanmulticol)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("access method \"%s\" does not support multi-column indexes",
+				 errmsg("access method \"%s\" does not support multicolumn indexes",
 						accessMethodName)));
 
 	ReleaseSysCache(tuple);
@@ -288,7 +288,7 @@ CheckPredicate(List *predList)
 	if (contain_subplans((Node *) predList))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot use sub-select in index predicate")));
+				 errmsg("cannot use subquery in index predicate")));
 	if (contain_agg_clause((Node *) predList))
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
@@ -334,7 +334,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			if (!HeapTupleIsValid(atttuple))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-						 errmsg("attribute \"%s\" does not exist",
+						 errmsg("column \"%s\" does not exist",
 								attribute->name)));
 			attform = (Form_pg_attribute) GETSTRUCT(atttuple);
 			indexInfo->ii_KeyAttrNumbers[attn] = attform->attnum;
@@ -366,11 +366,11 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 			if (contain_subplans(attribute->expr))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				   errmsg("cannot use sub-select in index expression")));
+				   errmsg("cannot use subquery in index expression")));
 			if (contain_agg_clause(attribute->expr))
 				ereport(ERROR,
 						(errcode(ERRCODE_GROUPING_ERROR),
-					errmsg("cannot use aggregate in index expression")));
+					errmsg("cannot use aggregate function in index expression")));
 
 			/*
 			 * A expression using mutable functions is probably wrong,
@@ -572,7 +572,7 @@ RemoveIndex(RangeVar *relation, DropBehavior behavior)
 	if (relkind != RELKIND_INDEX)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("relation \"%s\" is not an index",
+				 errmsg("\"%s\" is not an index",
 						relation->relname)));
 
 	object.classId = RelOid_pg_class;
@@ -602,7 +602,7 @@ ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("relation \"%s\" is not an index",
+				 errmsg("\"%s\" is not an index",
 						indexRelation->relname)));
 
 	/* Check permissions */

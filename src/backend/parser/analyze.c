@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.287 2003/08/11 23:04:49 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.288 2003/09/25 06:58:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -970,7 +970,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		snamespace = get_namespace_name(RangeVarGetCreationNamespace(cxt->relation));
 
 		ereport(NOTICE,
-				(errmsg("%s will create implicit sequence \"%s\" for SERIAL column \"%s.%s\"",
+				(errmsg("%s will create implicit sequence \"%s\" for \"serial\" column \"%s.%s\"",
 						cxt->stmtType, sname,
 						cxt->relation->relname, column->colname)));
 
@@ -1054,8 +1054,8 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 				if (saw_nullable && column->is_not_null)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("conflicting NULL/NOT NULL declarations for \"%s.%s\"",
-							  cxt->relation->relname, column->colname)));
+							 errmsg("conflicting NULL/NOT NULL declarations for column \"%s\" of table \"%s\"",
+									column->colname, cxt->relation->relname)));
 				column->is_not_null = FALSE;
 				saw_nullable = true;
 				break;
@@ -1064,8 +1064,8 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 				if (saw_nullable && !column->is_not_null)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("conflicting NULL/NOT NULL declarations for \"%s.%s\"",
-							  cxt->relation->relname, column->colname)));
+							 errmsg("conflicting NULL/NOT NULL declarations for column \"%s\" of table \"%s\"",
+									column->colname, cxt->relation->relname)));
 				column->is_not_null = TRUE;
 				saw_nullable = true;
 				break;
@@ -1074,8 +1074,8 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 				if (column->raw_default != NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("multiple DEFAULT values specified for \"%s.%s\"",
-							  cxt->relation->relname, column->colname)));
+							 errmsg("multiple default values specified for column \"%s\" of table \"%s\"",
+									column->colname, cxt->relation->relname)));
 				column->raw_default = constraint->raw_expr;
 				Assert(constraint->cooked_expr == NULL);
 				break;
@@ -1390,7 +1390,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 					if (rel->rd_rel->relkind != RELKIND_RELATION)
 						ereport(ERROR,
 								(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						errmsg("inherited table \"%s\" is not a relation",
+						errmsg("inherited relation \"%s\" is not a table",
 							   inh->relname)));
 					for (count = 0; count < rel->rd_att->natts; count++)
 					{
@@ -1447,12 +1447,18 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			{
 				iparam = (IndexElem *) lfirst(columns);
 				if (iparam->name && strcmp(key, iparam->name) == 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_DUPLICATE_COLUMN),
-					/* translator: second %s is PRIMARY KEY or UNIQUE */
-					errmsg("column \"%s\" appears twice in %s constraint",
-						   key,
-						   index->primary ? "PRIMARY KEY" : "UNIQUE")));
+				{
+					if (index->primary)
+						ereport(ERROR,
+								(errcode(ERRCODE_DUPLICATE_COLUMN),
+								 errmsg("column \"%s\" appears twice in primary key constraint",
+										key)));
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_DUPLICATE_COLUMN),
+								 errmsg("column \"%s\" appears twice in unique constraint",
+										key)));
+				}
 			}
 
 			/* OK, add it to the index definition */
@@ -1560,8 +1566,8 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
 		return;
 
 	ereport(NOTICE,
-	(errmsg("%s will create implicit trigger(s) for FOREIGN KEY check(s)",
-			cxt->stmtType)));
+			(errmsg("%s will create implicit triggers for foreign-key checks",
+					cxt->stmtType)));
 
 	/*
 	 * For ALTER TABLE ADD CONSTRAINT, nothing to do.  For CREATE TABLE or
@@ -2764,11 +2770,11 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 			if (pstate->p_hasSubLinks)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				  errmsg("cannot use sub-select in EXECUTE parameter")));
+				  errmsg("cannot use subquery in EXECUTE parameter")));
 			if (pstate->p_hasAggs)
 				ereport(ERROR,
 						(errcode(ERRCODE_GROUPING_ERROR),
-				   errmsg("cannot use aggregate in EXECUTE parameter")));
+				   errmsg("cannot use aggregate function in EXECUTE parameter")));
 
 			given_type_id = exprType(expr);
 			expected_type_id = lfirsto(paramtypes);
@@ -2816,7 +2822,7 @@ CheckSelectForUpdate(Query *qry)
 	if (qry->hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("SELECT FOR UPDATE is not allowed with AGGREGATE")));
+			 errmsg("SELECT FOR UPDATE is not allowed with aggregate functions")));
 }
 
 static void
@@ -2999,7 +3005,7 @@ transformConstraintAttrs(List *constraintList)
 						((FkConstraint *) lastprimarynode)->initdeferred)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("INITIALLY DEFERRED constraint must be DEFERRABLE")));
+								 errmsg("constraint declared INITIALLY DEFERRED must be DEFERRABLE")));
 					break;
 				case CONSTR_ATTR_DEFERRED:
 					if (lastprimarynode == NULL ||
@@ -3223,7 +3229,7 @@ check_parameter_resolution_walker(Node *node,
 			if (param->paramtype != context->paramTypes[paramno - 1])
 				ereport(ERROR,
 						(errcode(ERRCODE_AMBIGUOUS_PARAMETER),
-				  errmsg("could not determine datatype of parameter $%d",
+				  errmsg("could not determine data type of parameter $%d",
 						 paramno)));
 		}
 		return false;

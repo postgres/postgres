@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.140 2003/08/10 19:48:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.141 2003/09/25 06:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,14 +231,14 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 			{
 				ereport(WARNING,
 						(errcode(ERRCODE_DATA_CORRUPTED),
-						 errmsg("invalid page header in block %u of \"%s\"; zeroing out page",
+						 errmsg("invalid page header in block %u of relation \"%s\"; zeroing out page",
 							  blockNum, RelationGetRelationName(reln))));
 				MemSet((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
 			}
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_DATA_CORRUPTED),
-					  errmsg("invalid page header in block %u of \"%s\"",
+					  errmsg("invalid page header in block %u of relation \"%s\"",
 							 blockNum, RelationGetRelationName(reln))));
 		}
 	}

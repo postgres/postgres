@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.159 2003/08/04 02:40:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.160 2003/09/25 06:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,7 +221,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("cannot pass result of sub-select or join %s to a function",
+								 errmsg("cannot pass result of subquery or join %s to a function",
 										relname)));
 					toid = InvalidOid;	/* keep compiler quiet */
 					break;
@@ -298,7 +298,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),
-					  errmsg("attribute \"%s\" not found in datatype %s",
+					  errmsg("attribute \"%s\" not found in data type %s",
 							 colname, format_type_be(relTypeId))));
 		}
 
@@ -312,7 +312,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							func_signature_string(funcname, nargs,
 												  actual_arg_types)),
 				   errhint("Could not choose a best candidate function. "
-						   "You may need to add explicit typecasts.")));
+						   "You may need to add explicit type casts.")));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -320,7 +320,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							func_signature_string(funcname, nargs,
 												  actual_arg_types)),
 					 errhint("No function matches the given name and argument types. "
-							 "You may need to add explicit typecasts.")));
+							 "You may need to add explicit type casts.")));
 	}
 
 	/*
@@ -1267,7 +1267,7 @@ setup_field_select(Node *input, char *attname, Oid relid)
 	if (attno == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+			 errmsg("column \"%s\" of relation \"%s\" does not exist",
 					attname, get_rel_name(relid))));
 
 	fselect->arg = (Expr *) input;
@@ -1341,7 +1341,7 @@ ParseComplexProjection(char *funcname, Node *first_arg)
 }
 
 /*
- * Simple helper routine for delivering "no such attribute" error message
+ * Simple helper routine for delivering "column does not exist" error message
  */
 static void
 unknown_attribute(const char *schemaname, const char *relname,
@@ -1350,12 +1350,12 @@ unknown_attribute(const char *schemaname, const char *relname,
 	if (schemaname)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("no such attribute %s.%s.%s",
+				 errmsg("column %s.%s.%s does not exist",
 						schemaname, relname, attname)));
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("no such attribute %s.%s",
+				 errmsg("column %s.%s does not exist",
 						relname, attname)));
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.144 2003/09/15 20:03:37 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.145 2003/09/25 06:57:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,8 +177,8 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		if (i >= MAXDIM)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("number of array dimensions exceeds the maximum allowed, %d",
-							MAXDIM)));
+					 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
+							i, MAXDIM)));
 
 		upper.indx[i++] = DatumGetInt32(ExecEvalExpr((ExprState *) lfirst(elt),
 													 econtext,
@@ -201,8 +201,8 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 			if (j >= MAXDIM)
 				ereport(ERROR,
 						(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-						 errmsg("number of array dimensions exceeds the maximum allowed, %d",
-								MAXDIM)));
+						 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
+								i, MAXDIM)));
 
 			lower.indx[j++] = DatumGetInt32(ExecEvalExpr((ExprState *) lfirst(elt),
 														 econtext,
@@ -1056,12 +1056,12 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 					if (fcinfo.isnull || !slot)
 						ereport(ERROR,
 								(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-								 errmsg("function returning tuple cannot return NULL")));
+								 errmsg("function returning row cannot return null value")));
 					if (!IsA(slot, TupleTableSlot) ||
 						!slot->ttc_tupleDescriptor)
 						ereport(ERROR,
 								(errcode(ERRCODE_DATATYPE_MISMATCH),
-								 errmsg("function returning tuple did not return a valid tuple slot")));
+								 errmsg("function returning row did not return a valid tuple slot")));
 					tupdesc = CreateTupleDescCopy(slot->ttc_tupleDescriptor);
 					returnsTuple = true;
 				}
@@ -1097,7 +1097,7 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 					TupIsNull(slot))
 					ereport(ERROR,
 							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-							 errmsg("function returning tuple cannot return NULL")));
+							 errmsg("function returning row cannot return null value")));
 				tuple = slot->val;
 			}
 			else
@@ -1716,8 +1716,8 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 				if (ndims <= 0 || ndims > MAXDIM)
 					ereport(ERROR,
 							(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-							 errmsg("number of array dimensions exceeds " \
-									"the maximum allowed, %d", MAXDIM)));
+							 errmsg("number of array dimensions (%d) exceeds " \
+									"the maximum allowed (%d)", ndims, MAXDIM)));
 
 				elem_dims = (int *) palloc(elem_ndims * sizeof(int));
 				memcpy(elem_dims, ARR_DIMS(array), elem_ndims * sizeof(int));
@@ -2027,7 +2027,7 @@ ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 				if (*isNull)
 					ereport(ERROR,
 							(errcode(ERRCODE_NOT_NULL_VIOLATION),
-						   errmsg("domain %s does not allow NULL values",
+						   errmsg("domain %s does not allow null values",
 								  format_type_be(ctest->resulttype))));
 				break;
 			case DOM_CONSTRAINT_CHECK:
@@ -2057,7 +2057,7 @@ ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 						!DatumGetBool(conResult))
 						ereport(ERROR,
 								(errcode(ERRCODE_CHECK_VIOLATION),
-								 errmsg("value for domain %s violates CHECK constraint \"%s\"",
+								 errmsg("value for domain %s violates check constraint \"%s\"",
 										format_type_be(ctest->resulttype),
 										con->name)));
 					econtext->domainValue_datum = save_datum;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.91 2003/08/27 23:29:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.92 2003/09/25 06:58:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ date_in(PG_FUNCTION_ARGS)
 		case DTK_CURRENT:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("\"current\" is no longer supported")));
+					 errmsg("date/time value \"current\" is no longer supported")));
 
 			GetCurrentDateTime(tm);
 			break;
@@ -524,7 +524,7 @@ text_date(PG_FUNCTION_ARGS)
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for date: \"%s\"",
+				 errmsg("invalid input syntax for type date: \"%s\"",
 						VARDATA(str))));
 
 	sp = VARDATA(str);
@@ -1252,7 +1252,7 @@ text_time(PG_FUNCTION_ARGS)
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for time: \"%s\"",
+				 errmsg("invalid input syntax for type time: \"%s\"",
 						VARDATA(str))));
 
 	sp = VARDATA(str);
@@ -1286,7 +1286,7 @@ time_part(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("TIME units \"%s\" not recognized",
+				 errmsg("\"time\" units \"%s\" not recognized",
 						DatumGetCString(DirectFunctionCall1(textout,
 											 PointerGetDatum(units))))));
 
@@ -1356,7 +1356,7 @@ time_part(PG_FUNCTION_ARGS)
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("TIME units \"%s\" not recognized",
+						 errmsg("\"time\" units \"%s\" not recognized",
 							 DatumGetCString(DirectFunctionCall1(textout,
 											 PointerGetDatum(units))))));
 
@@ -1375,7 +1375,7 @@ time_part(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("TIME units \"%s\" not recognized",
+				 errmsg("\"time\" units \"%s\" not recognized",
 						DatumGetCString(DirectFunctionCall1(textout,
 											 PointerGetDatum(units))))));
 		result = 0;
@@ -2015,7 +2015,7 @@ text_timetz(PG_FUNCTION_ARGS)
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-		   errmsg("invalid input syntax for time with time zone: \"%s\"",
+		   errmsg("invalid input syntax for type time with time zone: \"%s\"",
 				  VARDATA(str))));
 
 	sp = VARDATA(str);
@@ -2049,7 +2049,7 @@ timetz_part(PG_FUNCTION_ARGS)
 	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("TIMETZ units \"%s\" not recognized",
+				 errmsg("\"time with time zone\" units \"%s\" not recognized",
 						DatumGetCString(DirectFunctionCall1(textout,
 											 PointerGetDatum(units))))));
 
@@ -2133,7 +2133,7 @@ timetz_part(PG_FUNCTION_ARGS)
 			default:
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("TIMETZ units \"%s\" not recognized",
+						 errmsg("\"time with time zone\" units \"%s\" not recognized",
 							 DatumGetCString(DirectFunctionCall1(textout,
 											 PointerGetDatum(units))))));
 
@@ -2152,7 +2152,7 @@ timetz_part(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("TIMETZ units \"%s\" not recognized",
+				 errmsg("\"time with time zone\" units \"%s\" not recognized",
 						DatumGetCString(DirectFunctionCall1(textout,
 											 PointerGetDatum(units))))));
 
@@ -2241,7 +2241,7 @@ timetz_izone(PG_FUNCTION_ARGS)
 	if (zone->month != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("INTERVAL time zone \"%s\" not legal",
+				 errmsg("\"interval\" time zone \"%s\" not legal",
 						DatumGetCString(DirectFunctionCall1(interval_out,
 											  PointerGetDatum(zone))))));
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.29 2003/08/04 02:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.30 2003/09/25 06:58:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ boolin(PG_FUNCTION_ARGS)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			 errmsg("invalid input syntax for boolean: \"%s\"", b)));
+			 errmsg("invalid input syntax for type boolean: \"%s\"", b)));
 
 	/* not reached */
 	PG_RETURN_BOOL(false);

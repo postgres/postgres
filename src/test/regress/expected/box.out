@@ -24,9 +24,9 @@ INSERT INTO BOX_TBL (f1) VALUES ('(2.5, 2.5, 2.5,3.5)');
 INSERT INTO BOX_TBL (f1) VALUES ('(3.0, 3.0,3.0,3.0)');
 -- badly formatted box inputs 
 INSERT INTO BOX_TBL (f1) VALUES ('(2.3, 4.5)');
-ERROR:  invalid input syntax for box: "(2.3, 4.5)"
+ERROR:  invalid input syntax for type box: "(2.3, 4.5)"
 INSERT INTO BOX_TBL (f1) VALUES ('asdfasdf(ad');
-ERROR:  invalid input syntax for box: "asdfasdf(ad"
+ERROR:  invalid input syntax for type box: "asdfasdf(ad"
 SELECT '' AS four, BOX_TBL.*;
  four |         f1          
 ------+---------------------

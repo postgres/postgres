@@ -32,7 +32,7 @@ SELECT * FROM truncate_a;
 
 -- Test foreign constraint check
 CREATE TABLE truncate_b(col1 integer references truncate_a);
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 INSERT INTO truncate_a VALUES (1);
 SELECT * FROM truncate_a;
  col1 

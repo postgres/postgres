@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.70 2003/08/11 20:46:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.71 2003/09/25 06:57:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -306,28 +306,28 @@ CommentRelation(int objtype, List *relname, char *comment)
 			if (relation->rd_rel->relkind != RELKIND_INDEX)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("relation \"%s\" is not an index",
+						 errmsg("\"%s\" is not an index",
 								RelationGetRelationName(relation))));
 			break;
 		case OBJECT_SEQUENCE:
 			if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("relation \"%s\" is not a sequence",
+						 errmsg("\"%s\" is not a sequence",
 								RelationGetRelationName(relation))));
 			break;
 		case OBJECT_TABLE:
 			if (relation->rd_rel->relkind != RELKIND_RELATION)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("relation \"%s\" is not a table",
+						 errmsg("\"%s\" is not a table",
 								RelationGetRelationName(relation))));
 			break;
 		case OBJECT_VIEW:
 			if (relation->rd_rel->relkind != RELKIND_VIEW)
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("relation \"%s\" is not a view",
+						 errmsg("\"%s\" is not a view",
 								RelationGetRelationName(relation))));
 			break;
 	}
@@ -383,7 +383,7 @@ CommentAttribute(List *qualname, char *comment)
 	if (attnum == InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+			 errmsg("column \"%s\" of relation \"%s\" does not exist",
 					attrname, RelationGetRelationName(relation))));
 
 	/* Create the comment using the relation's oid */
@@ -569,7 +569,7 @@ CommentRule(List *qualname, char *comment)
 												  ForwardScanDirection)))
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_OBJECT),
-					 errmsg("there are multiple rules \"%s\"", rulename),
+					 errmsg("there are multiple rules named \"%s\"", rulename),
 			errhint("Specify a relation name as well as a rule name.")));
 
 		heap_endscan(scanDesc);
@@ -812,7 +812,7 @@ CommentTrigger(List *qualname, char *comment)
 	if (!HeapTupleIsValid(triggertuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			  errmsg("trigger \"%s\" for relation \"%s\" does not exist",
+			  errmsg("trigger \"%s\" for table \"%s\" does not exist",
 					 trigname, RelationGetRelationName(relation))));
 
 	oid = HeapTupleGetOid(triggertuple);
@@ -891,7 +891,7 @@ CommentConstraint(List *qualname, char *comment)
 			if (OidIsValid(conOid))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("relation \"%s\" has multiple constraints named \"%s\"",
+						 errmsg("table \"%s\" has multiple constraints named \"%s\"",
 						   RelationGetRelationName(relation), conName)));
 			conOid = HeapTupleGetOid(tuple);
 		}
@@ -903,7 +903,7 @@ CommentConstraint(List *qualname, char *comment)
 	if (!OidIsValid(conOid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-		   errmsg("constraint \"%s\" for relation \"%s\" does not exist",
+		   errmsg("constraint \"%s\" for table \"%s\" does not exist",
 				  conName, RelationGetRelationName(relation))));
 
 	/* Create the comment with the pg_constraint oid */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.105 2003/09/02 22:10:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.106 2003/09/25 06:57:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,7 +251,7 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 					 */
 					ereport(ERROR,
 							(errcode(ERRCODE_UNIQUE_VIOLATION),
-							 errmsg("duplicate key violates UNIQUE constraint \"%s\"",
+							 errmsg("duplicate key violates unique constraint \"%s\"",
 									RelationGetRelationName(rel))));
 				}
 				else if (htup.t_data != NULL)
@@ -403,7 +403,7 @@ _bt_insertonpg(Relation rel,
 	if (itemsz > BTMaxItemSize(page))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("index tuple size %lu exceeds btree maximum, %lu",
+				 errmsg("index row size %lu exceeds btree maximum, %lu",
 						(unsigned long) itemsz,
 						(unsigned long) BTMaxItemSize(page))));
 

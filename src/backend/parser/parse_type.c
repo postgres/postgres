@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.61 2003/08/04 02:40:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.62 2003/09/25 06:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ LookupTypeName(const TypeName *typename)
 		if (attnum == InvalidAttrNumber)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+			 errmsg("column \"%s\" of relation \"%s\" does not exist",
 					field, rel->relname)));
 		restype = get_atttype(relid, attnum);
 

@@ -11,7 +11,7 @@ CREATE TABLE TIMESTAMP_TBL ( d1 timestamp(2) without time zone);
 -- statements.
 INSERT INTO TIMESTAMP_TBL VALUES ('now');
 INSERT INTO TIMESTAMP_TBL VALUES ('current');
-ERROR:  "current" is no longer supported
+ERROR:  date/time value "current" is no longer supported
 INSERT INTO TIMESTAMP_TBL VALUES ('today');
 INSERT INTO TIMESTAMP_TBL VALUES ('yesterday');
 INSERT INTO TIMESTAMP_TBL VALUES ('tomorrow');
@@ -60,13 +60,13 @@ INSERT INTO TIMESTAMP_TBL VALUES ('infinity');
 INSERT INTO TIMESTAMP_TBL VALUES ('epoch');
 -- Obsolete special values
 INSERT INTO TIMESTAMP_TBL VALUES ('invalid');
-ERROR:  "invalid" is no longer supported
+ERROR:  date/time value "invalid" is no longer supported
 -- Postgres v6.0 standard output format
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01 1997 PST');
 INSERT INTO TIMESTAMP_TBL VALUES ('Invalid Abstime');
-ERROR:  "Invalid Abstime" is no longer supported
+ERROR:  date/time value "Invalid Abstime" is no longer supported
 INSERT INTO TIMESTAMP_TBL VALUES ('Undefined Abstime');
-ERROR:  "Undefined Abstime" is no longer supported
+ERROR:  date/time value "Undefined Abstime" is no longer supported
 -- Variations on Postgres v6.1 standard output format
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.000001 1997 PST');
 INSERT INTO TIMESTAMP_TBL VALUES ('Mon Feb 10 17:32:01.999999 1997 PST');

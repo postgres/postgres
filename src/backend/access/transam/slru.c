@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/slru.c,v 1.6 2003/08/08 21:41:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/slru.c,v 1.7 2003/09/25 06:57:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -611,35 +611,35 @@ SlruReportIOError(SlruCtl ctl, int pageno, TransactionId xid)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 				errmsg("could not access status of transaction %u", xid),
-					 errdetail("open of file \"%s\" failed: %m",
+					 errdetail("could not open file \"%s\": %m",
 							   path)));
 			break;
 		case SLRU_CREATE_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 				errmsg("could not access status of transaction %u", xid),
-					 errdetail("creation of file \"%s\" failed: %m",
+					 errdetail("could not create file \"%s\": %m",
 							   path)));
 			break;
 		case SLRU_SEEK_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 				errmsg("could not access status of transaction %u", xid),
-				  errdetail("lseek of file \"%s\", offset %u failed: %m",
+				  errdetail("could not seek in file \"%s\" to offset %u: %m",
 							path, offset)));
 			break;
 		case SLRU_READ_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 				errmsg("could not access status of transaction %u", xid),
-				   errdetail("read of file \"%s\", offset %u failed: %m",
+				   errdetail("could not read from file \"%s\" at offset %u: %m",
 							 path, offset)));
 			break;
 		case SLRU_WRITE_FAILED:
 			ereport(ERROR,
 					(errcode_for_file_access(),
 				errmsg("could not access status of transaction %u", xid),
-				  errdetail("write of file \"%s\", offset %u failed: %m",
+				  errdetail("could not write to file \"%s\" at offset %u: %m",
 							path, offset)));
 			break;
 		default:
@@ -817,7 +817,7 @@ restart:;
 	{
 		LWLockRelease(ctl->locks->ControlLock);
 		ereport(LOG,
-				(errmsg("could not truncate \"%s\": apparent wraparound",
+				(errmsg("could not truncate directory \"%s\": apparent wraparound",
 						ctl->Dir)));
 		return;
 	}

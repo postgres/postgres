@@ -81,4 +81,4 @@ SELECT * FROM temptest;
 ERROR:  relation "temptest" does not exist
 -- ON COMMIT is only allowed for TEMP
 CREATE TABLE temptest(col int) ON COMMIT DELETE ROWS;
-ERROR:  ON COMMIT can only be used on TEMP tables
+ERROR:  ON COMMIT can only be used on temporary tables

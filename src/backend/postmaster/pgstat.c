@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.44 2003/09/07 14:44:40 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.45 2003/09/25 06:58:01 petere Exp $
  * ----------
  */
 #include "postgres.h"
@@ -217,7 +217,7 @@ pgstat_init(void)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not create socket for statistics: %m")));
+				 errmsg("could not create socket for statistics collector: %m")));
 		goto startup_failed;
 	}
 
@@ -229,7 +229,7 @@ pgstat_init(void)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not bind socket for statistics: %m")));
+				 errmsg("could not bind socket for statistics collector: %m")));
 		goto startup_failed;
 	}
 
@@ -241,7 +241,7 @@ pgstat_init(void)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-		  errmsg("could not get address of socket for statistics: %m")));
+		  errmsg("could not get address of socket for statistics collector: %m")));
 		goto startup_failed;
 	}
 
@@ -255,7 +255,7 @@ pgstat_init(void)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not connect socket for statistics: %m")));
+				 errmsg("could not connect socket for statistics collector: %m")));
 		goto startup_failed;
 	}
 
@@ -269,7 +269,7 @@ pgstat_init(void)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-		errmsg("could not set statistics socket to nonblock mode: %m")));
+		errmsg("could not set statistics collector socket to nonblocking mode: %m")));
 		goto startup_failed;
 	}
 
@@ -1328,7 +1328,7 @@ pgstat_main(void)
 		/* assume the problem is out-of-memory */
 		ereport(LOG,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-			 errmsg("out of memory in statistics collector --- abort")));
+				 errmsg("out of memory in statistics collector --- abort")));
 		exit(1);
 	}
 
@@ -1340,7 +1340,8 @@ pgstat_main(void)
 	if (pgStatBeTable == NULL)
 	{
 		ereport(LOG,
-				(errmsg("allocation of backend table failed")));
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory in statistics collector --- abort")));
 		exit(1);
 	}
 	memset(pgStatBeTable, 0, sizeof(PgStat_StatBeEntry) * MaxBackends);
@@ -1406,7 +1407,7 @@ pgstat_main(void)
 				continue;
 			ereport(LOG,
 					(errcode_for_socket_access(),
-				   errmsg("select failed in statistics collector: %m")));
+				   errmsg("select() failed in statistics collector: %m")));
 			exit(1);
 		}
 
@@ -1448,7 +1449,7 @@ pgstat_main(void)
 						continue;
 					ereport(LOG,
 							(errcode_for_socket_access(),
-					 errmsg("could not read from statistics pipe: %m")));
+					 errmsg("could not read from statistics collector pipe: %m")));
 					exit(1);
 				}
 				if (len == 0)	/* EOF on the pipe! */
@@ -1617,7 +1618,7 @@ pgstat_recvbuffer(void)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-		  errmsg("could not set statistics pipe to nonblock mode: %m")));
+		  errmsg("could not set statistics collector pipe to nonblocking mode: %m")));
 		exit(1);
 	}
 
@@ -1690,7 +1691,7 @@ pgstat_recvbuffer(void)
 				continue;
 			ereport(LOG,
 					(errcode_for_socket_access(),
-					 errmsg("select failed in statistics buffer: %m")));
+					 errmsg("select() failed in statistics buffer: %m")));
 			exit(1);
 		}
 
@@ -1706,7 +1707,7 @@ pgstat_recvbuffer(void)
 			{
 				ereport(LOG,
 						(errcode_for_socket_access(),
-					   errmsg("failed to read statistics message: %m")));
+					   errmsg("could not read statistics message: %m")));
 				exit(1);
 			}
 
@@ -1771,7 +1772,7 @@ pgstat_recvbuffer(void)
 					continue;	/* not enough space in pipe */
 				ereport(LOG,
 						(errcode_for_socket_access(),
-						 errmsg("failed to write statistics pipe: %m")));
+						 errmsg("could not write to statistics collector pipe: %m")));
 				exit(1);
 			}
 			/* NB: len < xfr is okay */
@@ -1825,7 +1826,7 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	if (msg->m_backendid < 1 || msg->m_backendid > MaxBackends)
 	{
 		ereport(LOG,
-				(errmsg("invalid backend ID %d", msg->m_backendid)));
+				(errmsg("invalid server process ID %d", msg->m_backendid)));
 		return -1;
 	}
 
@@ -2020,7 +2021,7 @@ pgstat_write_statsfile(void)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not write temp statistics file \"%s\": %m",
+				 errmsg("could not open temporary statistics file \"%s\": %m",
 						pgStat_tmpfname)));
 		return;
 	}
@@ -2133,7 +2134,7 @@ pgstat_write_statsfile(void)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not write temp statistics file \"%s\": %m",
+				 errmsg("could not close temporary statistics file \"%s\": %m",
 						pgStat_tmpfname)));
 	}
 	else
@@ -2142,7 +2143,7 @@ pgstat_write_statsfile(void)
 		{
 			ereport(LOG,
 					(errcode_for_file_access(),
-					 errmsg("could not rename temp statistics file \"%s\" to \"%s\": %m",
+					 errmsg("could not rename temporary statistics file \"%s\" to \"%s\": %m",
 							pgStat_tmpfname, pgStat_fname)));
 		}
 	}
@@ -2164,7 +2165,7 @@ pgstat_write_statsfile(void)
 							HASH_REMOVE, NULL) == NULL)
 			{
 				ereport(LOG,
-						(errmsg("dead-backend hash table corrupted "
+						(errmsg("dead-server-process hash table corrupted "
 								"during cleanup --- abort")));
 				exit(1);
 			}

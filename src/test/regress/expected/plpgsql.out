@@ -1515,7 +1515,7 @@ select * from PField_v1 where pfname = 'PF0_2' order by slotname;
 -- Finally we want errors
 --
 insert into PField values ('PF1_1', 'should fail due to unique index');
-ERROR:  duplicate key violates UNIQUE constraint "pfield_name"
+ERROR:  duplicate key violates unique constraint "pfield_name"
 update PSlot set backlink = 'WS.not.there' where slotname = 'PS.base.a1';
 ERROR:  WS.not.there         does not exist
 CONTEXT:  PL/pgSQL function "tg_backlink_a" line 16 at assignment
@@ -1529,7 +1529,7 @@ update PSlot set slotlink = 'XX.illegal' where slotname = 'PS.base.a1';
 ERROR:  illegal slotlink beginning with XX
 CONTEXT:  PL/pgSQL function "tg_slotlink_a" line 16 at assignment
 insert into HSlot values ('HS', 'base.hub1', 1, '');
-ERROR:  duplicate key violates UNIQUE constraint "hslot_name"
+ERROR:  duplicate key violates unique constraint "hslot_name"
 insert into HSlot values ('HS', 'base.hub1', 20, '');
 ERROR:  no manual manipulation of HSlot
 delete from HSlot;

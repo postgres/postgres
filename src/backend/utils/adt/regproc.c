@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.81 2003/08/04 02:40:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.82 2003/09/25 06:58:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,12 +114,12 @@ regprocin(PG_FUNCTION_ARGS)
 		if (matches == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				  errmsg("no procedure with name %s", pro_name_or_oid)));
+				  errmsg("function \"%s\" does not exist", pro_name_or_oid)));
 
 		else if (matches > 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-					 errmsg("more than one procedure named %s",
+					 errmsg("more than one function named \"%s\"",
 							pro_name_or_oid)));
 
 		PG_RETURN_OID(result);
@@ -135,11 +135,11 @@ regprocin(PG_FUNCTION_ARGS)
 	if (clist == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("no procedure with name %s", pro_name_or_oid)));
+				 errmsg("function \"%s\" does not exist", pro_name_or_oid)));
 	else if (clist->next != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-				 errmsg("more than one procedure named %s",
+				 errmsg("more than one function named \"%s\"",
 						pro_name_or_oid)));
 
 	result = clist->oid;
@@ -287,7 +287,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 	if (clist == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("no procedure with name %s", pro_name_or_oid)));
+				 errmsg("function \"%s\" does not exist", pro_name_or_oid)));
 
 	result = clist->oid;
 
@@ -464,7 +464,7 @@ regoperin(PG_FUNCTION_ARGS)
 		if (matches == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				   errmsg("no operator with name %s", opr_name_or_oid)));
+				   errmsg("operator does not exist: %s", opr_name_or_oid)));
 		else if (matches > 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
@@ -484,7 +484,7 @@ regoperin(PG_FUNCTION_ARGS)
 	if (clist == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("no operator with name %s", opr_name_or_oid)));
+				 errmsg("operator does not exist: %s", opr_name_or_oid)));
 	else if (clist->next != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_AMBIGUOUS_FUNCTION),
@@ -662,7 +662,7 @@ regoperatorin(PG_FUNCTION_ARGS)
 	if (clist == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("no operator with name %s", opr_name_or_oid)));
+				 errmsg("operator does not exist: %s", opr_name_or_oid)));
 
 	result = clist->oid;
 
@@ -834,7 +834,7 @@ regclassin(PG_FUNCTION_ARGS)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),
-					 errmsg("no class with name %s", class_name_or_oid)));
+					 errmsg("relation \"%s\" does not exist", class_name_or_oid)));
 
 		/* We assume there can be only one match */
 
@@ -1000,7 +1000,7 @@ regtypein(PG_FUNCTION_ARGS)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("no type with name %s", typ_name_or_oid)));
+					 errmsg("type \"%s\" does not exist", typ_name_or_oid)));
 
 		/* We assume there can be only one match */
 

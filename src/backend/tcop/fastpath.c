@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.68 2003/08/04 02:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.69 2003/09/25 06:58:02 petere Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -303,7 +303,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 		ereport(ERROR,
 				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 				 errmsg("current transaction is aborted, "
-					 "queries ignored until end of transaction block")));
+					 "commands ignored until end of transaction block")));
 
 	/*
 	 * Begin parsing the buffer contents.

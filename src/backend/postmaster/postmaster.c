@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.345 2003/09/12 19:33:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.346 2003/09/25 06:58:01 petere Exp $
  *
  * NOTES
  *
@@ -358,9 +358,9 @@ checkDataDir(const char *checkdir)
 	if (fp == NULL)
 	{
 		fprintf(stderr,
-				gettext("%s could not find the database system.\n"
-				  "Expected to find it in the PGDATA directory \"%s\",\n"
-						"but failed to open file \"%s\": %s\n"),
+				gettext("%s: could not find the database system\n"
+						"Expected to find it in the directory \"%s\",\n"
+						"but could not open file \"%s\": %s\n"),
 				progname, checkdir, path, strerror(errno));
 		ExitPostmaster(2);
 	}
@@ -582,7 +582,7 @@ PostmasterMain(int argc, char *argv[])
 
 			default:
 				fprintf(stderr,
-					  gettext("Try '%s --help' for more information.\n"),
+					  gettext("Try \"%s --help\" for more information.\n"),
 						progname);
 				ExitPostmaster(1);
 		}
@@ -595,7 +595,7 @@ PostmasterMain(int argc, char *argv[])
 	{
 		postmaster_error("invalid argument: \"%s\"", argv[optind]);
 		fprintf(stderr,
-				gettext("Try '%s --help' for more information.\n"),
+				gettext("Try \"%s --help\" for more information.\n"),
 				progname);
 		ExitPostmaster(1);
 	}
@@ -680,7 +680,7 @@ PostmasterMain(int argc, char *argv[])
 #ifdef USE_SSL
 	if (EnableSSL && !NetServer)
 	{
-		postmaster_error("for SSL, TCP/IP connections must be enabled");
+		postmaster_error("TCP/IP connections must be enabled for SSL");
 		ExitPostmaster(1);
 	}
 	if (EnableSSL)
@@ -797,7 +797,7 @@ PostmasterMain(int argc, char *argv[])
 							  ListenSocket, MAXLISTEN);
 	if (status != STATUS_OK)
 		ereport(FATAL,
-				(errmsg("could not create UNIX stream port")));
+				(errmsg("could not create Unix-domain socket")));
 #endif
 
 	XLOGPathInit();
@@ -939,7 +939,7 @@ pmdaemonize(int argc, char *argv[])
 #ifdef HAVE_SETSID
 	if (setsid() < 0)
 	{
-		postmaster_error("could not disassociate from controlling TTY: %s",
+		postmaster_error("could not dissociate from controlling TTY: %s",
 						 strerror(errno));
 		ExitPostmaster(1);
 	}
@@ -1070,7 +1070,7 @@ ServerLoop(void)
 				continue;
 			ereport(LOG,
 					(errcode_for_socket_access(),
-					 errmsg("select failed in postmaster: %m")));
+					 errmsg("select() failed in postmaster: %m")));
 			return STATUS_ERROR;
 		}
 
@@ -2068,7 +2068,7 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		 * translator: %s is a noun phrase describing a child process,
 		 * such as "server process"
 		 */
-				(errmsg("%s (pid %d) exited with exit code %d",
+				(errmsg("%s (PID %d) exited with exit code %d",
 						procname, pid, WEXITSTATUS(exitstatus))));
 	else if (WIFSIGNALED(exitstatus))
 		ereport(lev,
@@ -2077,7 +2077,7 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		 * translator: %s is a noun phrase describing a child process,
 		 * such as "server process"
 		 */
-				(errmsg("%s (pid %d) was terminated by signal %d",
+				(errmsg("%s (PID %d) was terminated by signal %d",
 						procname, pid, WTERMSIG(exitstatus))));
 	else
 		ereport(lev,
@@ -2086,7 +2086,7 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		 * translator: %s is a noun phrase describing a child process,
 		 * such as "server process"
 		 */
-				(errmsg("%s (pid %d) exited with unexpected status %d",
+				(errmsg("%s (PID %d) exited with unexpected status %d",
 						procname, pid, exitstatus)));
 }
 
@@ -2609,7 +2609,7 @@ sigusr1_handler(SIGNAL_ARGS)
 					ereport(LOG,
 							(errmsg("checkpoints are occurring too frequently (%d seconds apart)",
 									elapsed_secs),
-					errhint("Consider increasing 'checkpoint_segments'.")));
+					errhint("Consider increasing the configuration parameter \"checkpoint_segments\".")));
 			}
 			LastSignalledCheckpoint = now;
 		}

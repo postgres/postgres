@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.56 2003/09/09 23:22:21 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.57 2003/09/25 06:58:04 petere Exp $
  *
  * ----------
  */
@@ -331,10 +331,10 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 					 */
 					ereport(ERROR,
 							(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
-							 errmsg("insert or update on \"%s\" violates foreign key constraint \"%s\"",
+							 errmsg("insert or update on table \"%s\" violates foreign key constraint \"%s\"",
 						  RelationGetRelationName(trigdata->tg_relation),
 									tgargs[RI_CONSTRAINT_NAME_ARGNO]),
-							 errdetail("MATCH FULL does not allow mixing of NULL and non-NULL key values.")));
+							 errdetail("MATCH FULL does not allow mixing of null and nonnull key values.")));
 					heap_close(pk_rel, RowShareLock);
 					return PointerGetDatum(NULL);
 
@@ -2542,7 +2542,7 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
 		(tgnargs % 2) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-			 errmsg("%s() called with wrong number of trigger arguments",
+			 errmsg("function \"%s\" called with wrong number of trigger arguments",
 					"RI_FKey_keyequal_upd")));
 
 	/*
@@ -2560,10 +2560,10 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
 	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			 errmsg("no target table given for trigger \"%s\" on \"%s\"",
+			 errmsg("no target table given for trigger \"%s\" on table \"%s\"",
 					trigdata->tg_trigger->tgname,
 					RelationGetRelationName(trigdata->tg_relation)),
-				 errhint("Remove this RI trigger and its mates, then do ALTER TABLE ADD CONSTRAINT.")));
+				 errhint("Remove this referential integrity trigger and its mates, then do ALTER TABLE ADD CONSTRAINT.")));
 
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, AccessShareLock);
 	pk_rel = trigdata->tg_relation;
@@ -2720,7 +2720,7 @@ ri_BuildQueryKeyFull(RI_QueryKey *key, Oid constr_id, int32 constr_queryno,
 		if (fno == SPI_ERROR_NOATTRIBUTE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
-					 errmsg("table \"%s\" does not have attribute \"%s\" referenced by constraint \"%s\"",
+					 errmsg("table \"%s\" does not have column \"%s\" referenced by constraint \"%s\"",
 							RelationGetRelationName(fk_rel),
 							argv[j],
 							argv[RI_CONSTRAINT_NAME_ARGNO])));
@@ -2730,7 +2730,7 @@ ri_BuildQueryKeyFull(RI_QueryKey *key, Oid constr_id, int32 constr_queryno,
 		if (fno == SPI_ERROR_NOATTRIBUTE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
-					 errmsg("table \"%s\" does not have attribute \"%s\" referenced by constraint \"%s\"",
+					 errmsg("table \"%s\" does not have column \"%s\" referenced by constraint \"%s\"",
 							RelationGetRelationName(pk_rel),
 							argv[j + 1],
 							argv[RI_CONSTRAINT_NAME_ARGNO])));
@@ -2750,7 +2750,7 @@ ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname, int tgkind)
 	if (!CALLED_AS_TRIGGER(fcinfo))
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-			 errmsg("%s() was not fired by trigger manager", funcname)));
+			 errmsg("function \"%s\" was not called by trigger manager", funcname)));
 
 	/*
 	 * Check proper event
@@ -2759,7 +2759,7 @@ ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname, int tgkind)
 		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-				 errmsg("%s() must be fired AFTER ROW", funcname)));
+				 errmsg("function \"%s\" must be fired AFTER ROW", funcname)));
 
 	switch (tgkind)
 	{
@@ -2767,27 +2767,27 @@ ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname, int tgkind)
 			if (!TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 				ereport(ERROR,
 					 (errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-					  errmsg("%s() must be fired for INSERT", funcname)));
+					  errmsg("function \"%s\" must be fired for INSERT", funcname)));
 			break;
 		case RI_TRIGTYPE_UPDATE:
 			if (!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 				ereport(ERROR,
 					 (errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-					  errmsg("%s() must be fired for UPDATE", funcname)));
+					  errmsg("function \"%s\" must be fired for UPDATE", funcname)));
 			break;
 		case RI_TRIGTYPE_INUP:
 			if (!TRIGGER_FIRED_BY_INSERT(trigdata->tg_event) &&
 				!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 				ereport(ERROR,
 					 (errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-					  errmsg("%s() must be fired for INSERT or UPDATE",
+					  errmsg("function \"%s\" must be fired for INSERT or UPDATE",
 							 funcname)));
 			break;
 		case RI_TRIGTYPE_DELETE:
 			if (!TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
 				ereport(ERROR,
 					 (errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-					  errmsg("%s() must be fired for DELETE", funcname)));
+					  errmsg("function \"%s\" must be fired for DELETE", funcname)));
 			break;
 	}
 
@@ -2800,7 +2800,7 @@ ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname, int tgkind)
 		(tgnargs % 2) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-			 errmsg("%s() called with wrong number of trigger arguments",
+			 errmsg("function \"%s\" called with wrong number of trigger arguments",
 					funcname)));
 
 	/*
@@ -2810,7 +2810,7 @@ ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname, int tgkind)
 	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			 errmsg("no target table given for trigger \"%s\" on \"%s\"",
+			 errmsg("no target table given for trigger \"%s\" on table \"%s\"",
 					trigdata->tg_trigger->tgname,
 					RelationGetRelationName(trigdata->tg_relation)),
 				 errhint("Remove this RI trigger and its mates, then do ALTER TABLE ADD CONSTRAINT.")));
@@ -3040,7 +3040,7 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
-				 errmsg("insert or update on \"%s\" violates foreign key constraint \"%s\"",
+				 errmsg("insert or update on table \"%s\" violates foreign key constraint \"%s\"",
 						RelationGetRelationName(fk_rel), constrname),
 				 errdetail("No rows were found in \"%s\".",
 						   RelationGetRelationName(pk_rel))));
@@ -3077,9 +3077,9 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 	if (onfk)
 		ereport(ERROR,
 				(errcode(ERRCODE_FOREIGN_KEY_VIOLATION),
-				 errmsg("insert or update on \"%s\" violates foreign key constraint \"%s\"",
+				 errmsg("insert or update on table \"%s\" violates foreign key constraint \"%s\"",
 						RelationGetRelationName(fk_rel), constrname),
-				 errdetail("Key (%s)=(%s) is not present in \"%s\".",
+				 errdetail("Key (%s)=(%s) is not present in table \"%s\".",
 						   key_names, key_values,
 						   RelationGetRelationName(pk_rel))));
 	else
@@ -3088,7 +3088,7 @@ ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
 				 errmsg("update or delete on \"%s\" violates foreign key constraint \"%s\" on \"%s\"",
 						RelationGetRelationName(pk_rel),
 						constrname, RelationGetRelationName(fk_rel)),
-			  errdetail("Key (%s)=(%s) is still referenced from \"%s\".",
+			  errdetail("Key (%s)=(%s) is still referenced from table \"%s\".",
 						key_names, key_values,
 						RelationGetRelationName(fk_rel))));
 }
@@ -3139,7 +3139,7 @@ ri_BuildQueryKeyPkCheck(RI_QueryKey *key, Oid constr_id, int32 constr_queryno,
 		if (fno == SPI_ERROR_NOATTRIBUTE)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
-					 errmsg("table \"%s\" does not have attribute \"%s\" referenced by constraint \"%s\"",
+					 errmsg("table \"%s\" does not have column \"%s\" referenced by constraint \"%s\"",
 							RelationGetRelationName(pk_rel),
 							argv[j],
 							argv[RI_CONSTRAINT_NAME_ARGNO])));

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.125 2003/09/15 00:26:31 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.126 2003/09/25 06:57:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ write_group_file(Relation grel)
 	if (fp == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-			  errmsg("could not write temp file \"%s\": %m", tempname)));
+			  errmsg("could not write to temporary file \"%s\": %m", tempname)));
 
 	/*
 	 * Read pg_group and write the file.  Note we use SnapshotSelf to
@@ -175,7 +175,7 @@ write_group_file(Relation grel)
 		groname = NameStr(*DatumGetName(datum));
 
 		/*
-		 * Check for illegal characters in the group name.
+		 * Check for invalid characters in the group name.
 		 */
 		i = strcspn(groname, "\n");
 		if (groname[i] != '\0')
@@ -245,7 +245,7 @@ write_group_file(Relation grel)
 	if (ferror(fp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-			  errmsg("could not write temp file \"%s\": %m", tempname)));
+			  errmsg("could not write to temporary file \"%s\": %m", tempname)));
 	FreeFile(fp);
 
 	/*
@@ -255,7 +255,7 @@ write_group_file(Relation grel)
 	if (rename(tempname, filename))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not rename \"%s\" to \"%s\": %m",
+				 errmsg("could not rename file \"%s\" to \"%s\": %m",
 						tempname, filename)));
 
 	pfree((void *) tempname);
@@ -294,7 +294,7 @@ write_user_file(Relation urel)
 	if (fp == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-			  errmsg("could not write temp file \"%s\": %m", tempname)));
+			  errmsg("could not write to temporary file \"%s\": %m", tempname)));
 
 	/*
 	 * Read pg_shadow and write the file.  Note we use SnapshotSelf to
@@ -376,7 +376,7 @@ write_user_file(Relation urel)
 	if (ferror(fp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-			  errmsg("could not write temp file \"%s\": %m", tempname)));
+			  errmsg("could not write to temporary file \"%s\": %m", tempname)));
 	FreeFile(fp);
 
 	/*
@@ -386,7 +386,7 @@ write_user_file(Relation urel)
 	if (rename(tempname, filename))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not rename \"%s\" to \"%s\": %m",
+				 errmsg("could not rename file \"%s\" to \"%s\": %m",
 						tempname, filename)));
 
 	pfree((void *) tempname);
@@ -584,7 +584,7 @@ CreateUser(CreateUserStmt *stmt)
 		if (sysid <= 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("user id must be positive")));
+					 errmsg("user ID must be positive")));
 		havesysid = true;
 	}
 	if (dvalidUntil)
@@ -1230,7 +1230,7 @@ CheckPgUserAclNotNull(void)
 		errmsg("before using passwords you must revoke permissions on %s",
 			   ShadowRelationName),
 				 errdetail("This restriction is to prevent unprivileged users from reading the passwords."),
-				 errhint("Try 'REVOKE ALL ON \"%s\" FROM PUBLIC'.",
+				 errhint("Try REVOKE ALL ON \"%s\" FROM PUBLIC.",
 						 ShadowRelationName)));
 
 	ReleaseSysCache(htup);
@@ -1294,7 +1294,7 @@ CreateGroup(CreateGroupStmt *stmt)
 		if (sysid <= 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("group id must be positive")));
+					 errmsg("group ID must be positive")));
 		havesysid = true;
 	}
 

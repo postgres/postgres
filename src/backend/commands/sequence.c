@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.102 2003/08/08 21:41:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.103 2003/09/25 06:57:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -495,7 +495,7 @@ nextval(PG_FUNCTION_ARGS)
 					snprintf(buf, sizeof(buf), INT64_FORMAT, maxv);
 					ereport(ERROR,
 					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					   errmsg("%s.nextval: reached MAXVALUE (%s)",
+					   errmsg("nextval: reached maximum value of sequence \"%s\" (%s)",
 							  sequence->relname, buf)));
 				}
 				next = minv;
@@ -518,7 +518,7 @@ nextval(PG_FUNCTION_ARGS)
 					snprintf(buf, sizeof(buf), INT64_FORMAT, minv);
 					ereport(ERROR,
 					  (errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-					   errmsg("%s.nextval: reached MINVALUE (%s)",
+					   errmsg("nextval: reached minimum value of sequence \"%s\" (%s)",
 							  sequence->relname, buf)));
 				}
 				next = maxv;
@@ -616,7 +616,7 @@ currval(PG_FUNCTION_ARGS)
 	if (elm->increment == 0)	/* nextval/read_info were not called */
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("%s.currval is not yet defined in this session",
+				 errmsg("currval of sequence \"%s\" is not yet defined in this session",
 						sequence->relname)));
 
 	result = elm->last;
@@ -670,8 +670,8 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 		snprintf(bufx, sizeof(bufx), INT64_FORMAT, seq->max_value);
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("%s.setval: value %s is out of bounds (%s..%s)",
-						sequence->relname, bufv, bufm, bufx)));
+				 errmsg("setval: value %s is out of bounds for sequence \"%s\" (%s..%s)",
+						bufv, sequence->relname, bufm, bufx)));
 	}
 
 	/* save info in local cache */
@@ -955,7 +955,7 @@ init_params(List *options, Form_pg_sequence new)
 		if (new->increment_by == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("cannot increment by zero")));
+					 errmsg("INCREMENT must not be zero")));
 	}
 
 	/* MAXVALUE */

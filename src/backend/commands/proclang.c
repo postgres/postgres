@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.49 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.50 2003/09/25 06:57:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,14 +93,14 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		{
 			ereport(NOTICE,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("changing return type of function %s() from OPAQUE to LANGUAGE_HANDLER",
+					 errmsg("changing return type of function %s from \"opaque\" to \"language_handler\"",
 							NameListToString(stmt->plhandler))));
 			SetFunctionReturnType(procOid, LANGUAGE_HANDLEROID);
 		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("function %s() must return LANGUAGE_HANDLER",
+					 errmsg("function %s must return type \"language_handler\"",
 							NameListToString(stmt->plhandler))));
 	}
 

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.122 2003/09/03 15:49:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.123 2003/09/25 06:58:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -873,7 +873,7 @@ DebugFileOpen(void)
 					   0666)) < 0)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-				   errmsg("failed to open \"%s\": %m", OutputFileName)));
+				   errmsg("could not open file \"%s\": %m", OutputFileName)));
 		istty = isatty(fd);
 		close(fd);
 
@@ -883,7 +883,7 @@ DebugFileOpen(void)
 		if (!freopen(OutputFileName, "a", stderr))
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("failed to reopen \"%s\" as stderr: %m",
+					 errmsg("could not reopen file \"%s\" as stderr: %m",
 							OutputFileName)));
 
 		/*
@@ -896,7 +896,7 @@ DebugFileOpen(void)
 			if (!freopen(OutputFileName, "a", stdout))
 				ereport(FATAL,
 						(errcode_for_file_access(),
-						 errmsg("failed to reopen \"%s\" as stdout: %m",
+						 errmsg("could not reopen file \"%s\" as stdout: %m",
 								OutputFileName)));
 	}
 }

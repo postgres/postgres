@@ -82,7 +82,7 @@ SELECT timestamp with time zone '12/27/2001 04:05:06.789-08';
 -- should fail in mdy mode:
 SELECT timestamp with time zone '27/12/2001 04:05:06.789-08';
 ERROR:  date/time field value out of range: "27/12/2001 04:05:06.789-08"
-HINT:  Perhaps you need a different DateStyle setting.
+HINT:  Perhaps you need a different "datestyle" setting.
 set datestyle to dmy;
 SELECT timestamp with time zone '27/12/2001 04:05:06.789-08';
            timestamptz            
@@ -306,7 +306,7 @@ SELECT date '1991-02-03' - time '04:05:06' AS "Subtract Time";
 
 SELECT date '1991-02-03' - time with time zone '04:05:06 UTC' AS "Subtract Time UTC";
 ERROR:  operator does not exist: date - time with time zone
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 --
 -- timestamp, interval arithmetic
 --
@@ -2356,7 +2356,7 @@ SELECT '' AS two, d1 AS "timestamp", abstime(d1) AS abstime
 
 SELECT '' AS three, f1 as abstime, cast(f1 as timestamp) AS "timestamp"
   FROM ABSTIME_TBL WHERE NOT isfinite(f1);
-ERROR:  cannot convert "invalid" abstime to timestamp
+ERROR:  cannot convert abstime "invalid" to timestamp
 SELECT '' AS ten, f1 AS interval, reltime(f1) AS reltime
   FROM INTERVAL_TBL;
  ten |           interval            |            reltime            

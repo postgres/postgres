@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.83 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.84 2003/09/25 06:57:58 petere Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -429,7 +429,7 @@ OperatorCreate(const char *operatorName,
 		if (leftSortName || rightSortName || ltCompareName || gtCompareName)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("only binary operators can mergejoin")));
+					 errmsg("only binary operators can merge join")));
 	}
 
 	operatorObjectId = OperatorGet(operatorName,

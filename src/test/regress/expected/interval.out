@@ -58,9 +58,9 @@ INSERT INTO INTERVAL_TBL (f1) VALUES ('5 months');
 INSERT INTO INTERVAL_TBL (f1) VALUES ('5 months 12 hours');
 -- badly formatted interval
 INSERT INTO INTERVAL_TBL (f1) VALUES ('badly formatted interval');
-ERROR:  invalid input syntax for interval: "badly formatted interval"
+ERROR:  invalid input syntax for type interval: "badly formatted interval"
 INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
-ERROR:  invalid input syntax for interval: "@ 30 eons ago"
+ERROR:  invalid input syntax for type interval: "@ 30 eons ago"
 -- test interval operators
 SELECT '' AS ten, INTERVAL_TBL.*;
  ten |       f1        

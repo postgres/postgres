@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.90 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.91 2003/09/25 06:58:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,7 +287,7 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("UNION JOIN is not implemented yet")));
+						 errmsg("UNION JOIN is not implemented")));
 				break;
 			default:
 				elog(ERROR, "unrecognized join type: %d",
@@ -344,7 +344,7 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
 			if (intMember(relno, root->rowMarks))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("SELECT FOR UPDATE cannot be applied to the nullable side of an OUTER JOIN")));
+						 errmsg("SELECT FOR UPDATE cannot be applied to the nullable side of an outer join")));
 		}
 
 		rel->outerjoinset = outerrels;
@@ -773,7 +773,7 @@ process_implied_equality(Query *root,
 		pgopform->oprresult != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("equality operator for types %s and %s should be mergejoinable, but isn't",
+				 errmsg("equality operator for types %s and %s should be merge-joinable, but isn't",
 						format_type_be(ltype), format_type_be(rtype))));
 
 	clause = make_opclause(oprid(eq_operator),	/* opno */

@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.33 2003/08/04 00:43:27 momjian Exp $
+ * $Id: wchar.c,v 1.34 2003/09/25 06:58:05 petere Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -637,7 +637,7 @@ pg_verifymbstr(const unsigned char *mbstr, int len, bool noError)
 				return false;
 			ereport(ERROR,
 					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-			 errmsg("UNICODE characters >= 0x10000 are not supported")));
+			 errmsg("Unicode characters greater than or equal to 0x10000 are not supported")));
 		}
 
 		l = pg_mblen(mbstr);
@@ -666,7 +666,7 @@ pg_verifymbstr(const unsigned char *mbstr, int len, bool noError)
 
 				ereport(ERROR,
 						(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-						 errmsg("invalid %s character sequence: 0x%s",
+						 errmsg("invalid byte sequence for encoding \"%s\": 0x%s",
 								GetDatabaseEncodingName(), buf)));
 			}
 		}
@@ -688,3 +688,6 @@ pg_database_encoding_max_length(void)
 }
 
 #endif
+
+
+

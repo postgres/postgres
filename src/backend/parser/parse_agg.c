@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.57 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.58 2003/09/25 06:58:00 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,12 +302,12 @@ check_ungrouped_columns_walker(Node *node,
 		if (context->sublevels_up == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("attribute \"%s.%s\" must be GROUPed or used in an aggregate function",
+					 errmsg("column \"%s.%s\" must appear in GROUP BY clause or used in an aggregate function",
 							rte->eref->aliasname, attname)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_GROUPING_ERROR),
-					 errmsg("sub-select uses un-GROUPed attribute \"%s.%s\" from outer query",
+					 errmsg("subquery uses ungrouped column \"%s.%s\" from outer query",
 							rte->eref->aliasname, attname)));
 
 	}

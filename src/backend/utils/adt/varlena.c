@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.105 2003/08/04 04:03:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.106 2003/09/25 06:58:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,7 @@ byteain(PG_FUNCTION_ARGS)
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for bytea")));
+					 errmsg("invalid input syntax for type bytea")));
 		}
 	}
 
@@ -154,7 +154,7 @@ byteain(PG_FUNCTION_ARGS)
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for bytea")));
+					 errmsg("invalid input syntax for type bytea")));
 		}
 	}
 

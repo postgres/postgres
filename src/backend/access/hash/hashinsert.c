@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.30 2003/09/04 22:06:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.31 2003/09/25 06:57:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ _hash_doinsert(Relation rel, HashItem hitem)
 	if (itemsz > HashMaxItemSize((Page) metap))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("index tuple size %lu exceeds hash maximum, %lu",
+				 errmsg("index row size %lu exceeds hash maximum %lu",
 						(unsigned long) itemsz,
 						(unsigned long) HashMaxItemSize((Page) metap))));
 

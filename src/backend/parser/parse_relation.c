@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.89 2003/08/11 23:04:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.90 2003/09/25 06:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -932,7 +932,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		if (funcrettype != RECORDOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("a column definition list is only allowed for functions returning RECORD")));
+					 errmsg("a column definition list is only allowed for functions returning \"record\"")));
 	}
 	else
 	{
@@ -943,7 +943,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		if (funcrettype == RECORDOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("a column definition list is required for functions returning RECORD")));
+					 errmsg("a column definition list is required for functions returning \"record\"")));
 	}
 
 	functyptype = get_typtype(funcrettype);
@@ -1580,7 +1580,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 				if (att_tup->attisdropped)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+							 errmsg("column \"%s\" of relation \"%s\" does not exist",
 									NameStr(att_tup->attname),
 									get_rel_name(rte->relid))));
 				*vartype = att_tup->atttypid;
@@ -1638,7 +1638,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					if (att_tup->attisdropped)
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_COLUMN),
-								 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+								 errmsg("column \"%s\" of relation \"%s\" does not exist",
 										NameStr(att_tup->attname),
 										get_rel_name(funcrelid))));
 					*vartype = att_tup->atttypid;
@@ -1817,7 +1817,7 @@ attnameAttNum(Relation rd, const char *attname, bool sysColOK)
 	/* on failure */
 	ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_COLUMN),
-			 errmsg("attribute \"%s\" of relation \"%s\" does not exist",
+			 errmsg("column \"%s\" of relation \"%s\" does not exist",
 					attname, RelationGetRelationName(rd))));
 	return InvalidAttrNumber;	/* keep compiler quiet */
 }

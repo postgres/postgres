@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.55 2003/08/19 01:13:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.56 2003/09/25 06:57:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,7 +287,7 @@ ExecScanSubPlan(SubPlanState *node,
 			if (found)
 				ereport(ERROR,
 						(errcode(ERRCODE_CARDINALITY_VIOLATION),
-						 errmsg("more than one tuple returned by a subselect used as an expression")));
+						 errmsg("more than one row returned by a subquery used as an expression")));
 			found = true;
 
 			/*
@@ -329,7 +329,7 @@ ExecScanSubPlan(SubPlanState *node,
 		if (subLinkType == MULTIEXPR_SUBLINK && found)
 			ereport(ERROR,
 					(errcode(ERRCODE_CARDINALITY_VIOLATION),
-					 errmsg("more than one tuple returned by a subselect used as an expression")));
+					 errmsg("more than one row returned by a subquery used as an expression")));
 
 		found = true;
 
@@ -963,7 +963,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 			 subLinkType == MULTIEXPR_SUBLINK))
 			ereport(ERROR,
 					(errcode(ERRCODE_CARDINALITY_VIOLATION),
-					 errmsg("more than one tuple returned by a subselect used as an expression")));
+					 errmsg("more than one row returned by a subquery used as an expression")));
 
 		found = true;
 

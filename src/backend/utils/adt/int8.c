@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.47 2003/08/04 02:40:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.48 2003/09/25 06:58:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ scanint8(const char *str, bool errorOK, int64 *result)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				  errmsg("invalid input syntax for int8: \"%s\"", str)));
+				  errmsg("invalid input syntax for type bigint: \"%s\"", str)));
 	}
 
 	/* process digits */
@@ -113,7 +113,7 @@ scanint8(const char *str, bool errorOK, int64 *result)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				  errmsg("invalid input syntax for int8: \"%s\"", str)));
+				  errmsg("invalid input syntax for type bigint: \"%s\"", str)));
 	}
 
 	*result = (sign < 0) ? -tmp : tmp;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.78 2003/08/11 20:46:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.79 2003/09/25 06:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -876,7 +876,7 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 			if (var->varattno == InvalidAttrNumber)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot handle whole-tuple reference")));
+						 errmsg("cannot handle whole-row reference")));
 
 			tle = get_tle_by_resno(context->targetlist, var->varattno);
 

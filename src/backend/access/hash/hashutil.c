@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.36 2003/09/04 22:06:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.37 2003/09/25 06:57:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ _hash_formitem(IndexTuple itup)
 	if (IndexTupleHasNulls(itup))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("hash indexes cannot include null keys")));
+				 errmsg("hash indexes cannot contain null keys")));
 
 	/*
 	 * make a copy of the index tuple (XXX do we still need to copy?)
@@ -129,8 +129,8 @@ _hash_checkpage(Relation rel, Page page, int flags)
 		if (metap->hashm_version != HASH_VERSION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INDEX_CORRUPTED),
-					 errmsg("index \"%s\" has wrong hash version, please REINDEX it",
-							RelationGetRelationName(rel))));
+					 errmsg("index \"%s\" has wrong hash version", RelationGetRelationName(rel)),
+					 errhint("Please REINDEX it.")));
 	}
 
 	/*

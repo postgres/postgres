@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.105 2003/08/11 20:46:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.106 2003/09/25 06:57:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,8 +109,8 @@ ProcedureCreate(const char *procedureName,
 		if (!genericParam)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("cannot determine result datatype"),
-					 errdetail("A function returning ANYARRAY or ANYELEMENT must have at least one argument of either type.")));
+					 errmsg("cannot determine result data type"),
+					 errdetail("A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type.")));
 	}
 
 	/* Make sure we have a zero-padded param type array */

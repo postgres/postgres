@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.31 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.32 2003/09/25 06:57:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -425,10 +425,10 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	}
 
 	ereport(elevel,
-			(errmsg("\"%s\": found %.0f removable, %.0f nonremovable tuples in %u pages",
+			(errmsg("\"%s\": found %.0f removable, %.0f nonremovable row versions in %u pages",
 					RelationGetRelationName(onerel),
 					tups_vacuumed, num_tuples, nblocks),
-			 errdetail("%.0f dead tuples cannot be removed yet.\n"
+			 errdetail("%.0f dead row versions cannot be removed yet.\n"
 					   "There were %.0f unused item pointers.\n"
 					   "%u pages are entirely empty.\n"
 					   "%s",
@@ -483,7 +483,7 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 	}
 
 	ereport(elevel,
-			(errmsg("\"%s\": removed %d tuples in %d pages",
+			(errmsg("\"%s\": removed %d row versions in %d pages",
 					RelationGetRelationName(onerel),
 					tupindex, npages),
 			 errdetail("%s",
@@ -594,7 +594,7 @@ lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
 						false);
 
 	ereport(elevel,
-			(errmsg("index \"%s\" now contains %.0f tuples in %u pages",
+			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
 					RelationGetRelationName(indrel),
 					stats->num_index_tuples,
 					stats->num_pages),
@@ -654,11 +654,11 @@ lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
 						false);
 
 	ereport(elevel,
-			(errmsg("index \"%s\" now contains %.0f tuples in %u pages",
+			(errmsg("index \"%s\" now contains %.0f row versions in %u pages",
 					RelationGetRelationName(indrel),
 					stats->num_index_tuples,
 					stats->num_pages),
-			 errdetail("%.0f index tuples were removed.\n"
+			 errdetail("%.0f index row versions were removed.\n"
 		 "%u index pages have been deleted, %u are currently reusable.\n"
 					   "%s",
 					   stats->tuples_removed,

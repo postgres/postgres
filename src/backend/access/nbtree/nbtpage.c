@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.70 2003/08/10 19:48:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.71 2003/09/25 06:57:57 petere Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -153,7 +153,7 @@ _bt_getroot(Relation rel, int access)
 	if (metad->btm_version != BTREE_VERSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-				 errmsg("version mismatch in \"%s\": file version %d, code version %d",
+				 errmsg("version mismatch in index \"%s\": file version %d, code version %d",
 						RelationGetRelationName(rel),
 						metad->btm_version, BTREE_VERSION)));
 
@@ -332,7 +332,7 @@ _bt_gettrueroot(Relation rel)
 	if (metad->btm_version != BTREE_VERSION)
 		ereport(ERROR,
 				(errcode(ERRCODE_INDEX_CORRUPTED),
-				 errmsg("version mismatch in \"%s\": file version %d, code version %d",
+				 errmsg("version mismatch in index \"%s\": file version %d, code version %d",
 						RelationGetRelationName(rel),
 						metad->btm_version, BTREE_VERSION)));
 

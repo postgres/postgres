@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.62 2003/09/11 23:12:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.63 2003/09/25 06:57:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,7 +197,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		/* No need for a WARNING if we already complained during VACUUM */
 		if (!vacstmt->vacuum)
 			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- only table or database owner can ANALYZE it",
+					(errmsg("skipping \"%s\" --- only table or database owner can analyze it",
 							RelationGetRelationName(onerel))));
 		relation_close(onerel, AccessShareLock);
 		return;
@@ -212,7 +212,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		/* No need for a WARNING if we already complained during VACUUM */
 		if (!vacstmt->vacuum)
 			ereport(WARNING,
-					(errmsg("skipping \"%s\" --- cannot ANALYZE indexes, views or special system tables",
+					(errmsg("skipping \"%s\" --- cannot analyze indexes, views, or special system tables",
 							RelationGetRelationName(onerel))));
 		relation_close(onerel, AccessShareLock);
 		return;

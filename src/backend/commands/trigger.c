@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.156 2003/08/08 21:41:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.157 2003/09/25 06:57:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,21 +219,21 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 				if (TRIGGER_FOR_INSERT(tgtype))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("double INSERT event specified")));
+							 errmsg("multiple INSERT events specified")));
 				TRIGGER_SETT_INSERT(tgtype);
 				break;
 			case 'd':
 				if (TRIGGER_FOR_DELETE(tgtype))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("double DELETE event specified")));
+							 errmsg("multiple DELETE events specified")));
 				TRIGGER_SETT_DELETE(tgtype);
 				break;
 			case 'u':
 				if (TRIGGER_FOR_UPDATE(tgtype))
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("double UPDATE event specified")));
+							 errmsg("multiple UPDATE events specified")));
 				TRIGGER_SETT_UPDATE(tgtype);
 				break;
 			default:
@@ -287,14 +287,14 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		if (funcrettype == OPAQUEOID)
 		{
 			ereport(NOTICE,
-					(errmsg("changing return type of function %s() from OPAQUE to TRIGGER",
+					(errmsg("changing return type of function %s from \"opaque\" to \"trigger\"",
 							NameListToString(stmt->funcname))));
 			SetFunctionReturnType(funcoid, TRIGGEROID);
 		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("function %s() must return TRIGGER",
+					 errmsg("function %s must return type \"trigger\"",
 							NameListToString(stmt->funcname))));
 	}
 
@@ -481,7 +481,7 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
 	if (!HeapTupleIsValid(tup))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			  errmsg("trigger \"%s\" for relation \"%s\" does not exist",
+			  errmsg("trigger \"%s\" for table \"%s\" does not exist",
 					 trigname, get_rel_name(relid))));
 
 	if (!pg_class_ownercheck(relid, GetUserId()))
@@ -694,7 +694,7 @@ renametrig(Oid relid,
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-			  errmsg("trigger \"%s\" for relation \"%s\" does not exist",
+			  errmsg("trigger \"%s\" for table \"%s\" does not exist",
 					 oldname, RelationGetRelationName(targetrel))));
 	}
 
@@ -1158,7 +1158,7 @@ ExecCallTriggerFunc(TriggerData *trigdata,
 	if (fcinfo.isnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
-				 errmsg("trigger function %u returned NULL",
+				 errmsg("trigger function %u returned null value",
 						fcinfo.flinfo->fn_oid)));
 
 	return (HeapTuple) DatumGetPointer(result);

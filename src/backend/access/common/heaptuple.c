@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.86 2003/08/04 02:39:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.87 2003/09/25 06:57:56 petere Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -581,7 +581,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	if (numberOfAttributes > MaxTupleAttributeNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_COLUMNS),
-				 errmsg("number of attributes %d exceeds limit, %d",
+				 errmsg("number of columns (%d) exceeds limit (%d)",
 						numberOfAttributes, MaxTupleAttributeNumber)));
 
 	for (i = 0; i < numberOfAttributes; i++)

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.217 2003/09/15 23:33:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.218 2003/09/25 06:57:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -841,19 +841,19 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 		case RELKIND_SEQUENCE:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot change sequence relation \"%s\"",
+					 errmsg("cannot change sequence \"%s\"",
 						  RelationGetRelationName(resultRelationDesc))));
 			break;
 		case RELKIND_TOASTVALUE:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot change toast relation \"%s\"",
+					 errmsg("cannot change TOAST relation \"%s\"",
 						  RelationGetRelationName(resultRelationDesc))));
 			break;
 		case RELKIND_VIEW:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("cannot change view relation \"%s\"",
+					 errmsg("cannot change view \"%s\"",
 						  RelationGetRelationName(resultRelationDesc))));
 			break;
 	}
@@ -1688,7 +1688,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 				heap_attisnull(tuple, attrChk))
 				ereport(ERROR,
 						(errcode(ERRCODE_NOT_NULL_VIOLATION),
-						 errmsg("null value for attribute \"%s\" violates NOT NULL constraint",
+						 errmsg("null value in column \"%s\" violates not-null constraint",
 					NameStr(rel->rd_att->attrs[attrChk - 1]->attname))));
 		}
 	}
@@ -1700,7 +1700,7 @@ ExecConstraints(ResultRelInfo *resultRelInfo,
 		if ((failed = ExecRelCheck(resultRelInfo, slot, estate)) != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_CHECK_VIOLATION),
-					 errmsg("new row for relation \"%s\" violates CHECK constraint \"%s\"",
+					 errmsg("new row for relation \"%s\" violates check constraint \"%s\"",
 							RelationGetRelationName(rel), failed)));
 	}
 }

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.24 2003/08/08 21:42:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.25 2003/09/25 06:58:02 petere Exp $
  *
  *	Interface:
  *
@@ -864,7 +864,7 @@ DeadLockReport(void)
 		{
 			/* Lock is for transaction ID */
 			appendStringInfo(&buf,
-							 gettext("Proc %d waits for %s on transaction %u; blocked by proc %d."),
+							 gettext("Process %d waits for %s on transaction %u; blocked by process %d."),
 							 info->pid,
 							 GetLockmodeName(info->lockmode),
 							 info->locktag.objId.xid,
@@ -874,7 +874,7 @@ DeadLockReport(void)
 		{
 			/* Lock is for a relation */
 			appendStringInfo(&buf,
-							 gettext("Proc %d waits for %s on relation %u of database %u; blocked by proc %d."),
+							 gettext("Process %d waits for %s on relation %u of database %u; blocked by process %d."),
 							 info->pid,
 							 GetLockmodeName(info->lockmode),
 							 info->locktag.relId,

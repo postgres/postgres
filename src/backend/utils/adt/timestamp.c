@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.94 2003/08/27 23:29:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.95 2003/09/25 06:58:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ timestamp_in(PG_FUNCTION_ARGS)
 		case DTK_INVALID:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("\"%s\" is no longer supported", str)));
+					 errmsg("date/time value \"%s\" is no longer supported", str)));
 
 			TIMESTAMP_NOEND(result);
 			break;
@@ -341,7 +341,7 @@ timestamptz_in(PG_FUNCTION_ARGS)
 		case DTK_INVALID:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("\"%s\" is no longer supported", str)));
+					 errmsg("date/time value \"%s\" is no longer supported", str)));
 
 			TIMESTAMP_NOEND(result);
 			break;
@@ -503,7 +503,7 @@ interval_in(PG_FUNCTION_ARGS)
 		case DTK_INVALID:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("\"%s\" is no longer supported", str)));
+					 errmsg("date/time value \"%s\" is no longer supported", str)));
 			break;
 
 		default:
@@ -1686,7 +1686,7 @@ timestamp_mi(PG_FUNCTION_ARGS)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-				 errmsg("cannot subtract non-finite timestamps")));
+				 errmsg("cannot subtract infinite timestamps")));
 
 		result->time = 0;
 	}
@@ -2381,7 +2381,7 @@ text_timestamp(PG_FUNCTION_ARGS)
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for timestamp: \"%s\"",
+				 errmsg("invalid input syntax for type timestamp: \"%s\"",
 						DatumGetCString(DirectFunctionCall1(textout,
 											   PointerGetDatum(str))))));
 
@@ -2441,7 +2441,7 @@ text_timestamptz(PG_FUNCTION_ARGS)
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for timestamp with time zone: \"%s\"",
+				 errmsg("invalid input syntax for type timestamp with time zone: \"%s\"",
 						DatumGetCString(DirectFunctionCall1(textout,
 											   PointerGetDatum(str))))));
 
@@ -2502,7 +2502,7 @@ text_interval(PG_FUNCTION_ARGS)
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for interval: \"%s\"",
+				 errmsg("invalid input syntax for type interval: \"%s\"",
 						DatumGetCString(DirectFunctionCall1(textout,
 											   PointerGetDatum(str))))));
 

@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.65 2003/08/04 00:43:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.66 2003/09/25 06:58:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2536,7 +2536,7 @@ set_var_from_str(const char *str, NumericVar *dest)
 	if (!isdigit((unsigned char) *cp))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			   errmsg("invalid input syntax for numeric: \"%s\"", str)));
+			   errmsg("invalid input syntax for type numeric: \"%s\"", str)));
 
 	decdigits = (unsigned char *) palloc(strlen(cp) + DEC_DIGITS * 2);
 
@@ -2559,7 +2559,7 @@ set_var_from_str(const char *str, NumericVar *dest)
 			if (have_dp)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					   errmsg("invalid input syntax for numeric: \"%s\"",
+					   errmsg("invalid input syntax for type numeric: \"%s\"",
 							  str)));
 			have_dp = TRUE;
 			cp++;
@@ -2583,14 +2583,14 @@ set_var_from_str(const char *str, NumericVar *dest)
 		if (endptr == cp)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for numeric: \"%s\"",
+					 errmsg("invalid input syntax for type numeric: \"%s\"",
 							str)));
 		cp = endptr;
 		if (exponent > NUMERIC_MAX_PRECISION ||
 			exponent < -NUMERIC_MAX_PRECISION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for numeric: \"%s\"",
+					 errmsg("invalid input syntax for type numeric: \"%s\"",
 							str)));
 		dweight += (int) exponent;
 		dscale -= (int) exponent;
@@ -2604,7 +2604,7 @@ set_var_from_str(const char *str, NumericVar *dest)
 		if (!isspace((unsigned char) *cp))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for numeric: \"%s\"",
+					 errmsg("invalid input syntax for type numeric: \"%s\"",
 							str)));
 		cp++;
 	}
@@ -2973,7 +2973,7 @@ apply_typmod(NumericVar *var, int32 typmod)
 					ereport(ERROR,
 							(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 							 errmsg("numeric field overflow"),
-							 errdetail("ABS(value) >= 10^%d for field with precision %d, scale %d.",
+							 errdetail("The absolute value is greater than or equal to 10^%d for field with precision %d, scale %d.",
 									   ddigits - 1, precision, scale)));
 				break;
 			}
@@ -3114,7 +3114,7 @@ numeric_to_double_no_overflow(Numeric num)
 		/* shouldn't happen ... */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for float8: \"%s\"",
+				 errmsg("invalid input syntax for type double precision: \"%s\"",
 						tmp)));
 	}
 
@@ -3140,7 +3140,7 @@ numericvar_to_double_no_overflow(NumericVar *var)
 		/* shouldn't happen ... */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for float8: \"%s\"",
+				 errmsg("invalid input syntax for type double precision: \"%s\"",
 						tmp)));
 	}
 
@@ -4122,7 +4122,7 @@ exp_var(NumericVar *arg, NumericVar *result, int rscale)
 		if (xintval >= NUMERIC_MAX_RESULT_SCALE * 3)
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("argument for EXP() too big")));
+					 errmsg("argument for function \"exp\" too big")));
 	}
 
 	/* Select an appropriate scale for internal calculation */
@@ -4249,7 +4249,7 @@ ln_var(NumericVar *arg, NumericVar *result, int rscale)
 	if (cmp_var(arg, &const_zero) <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
-				 errmsg("cannot take log of a negative number")));
+				 errmsg("cannot take logarithm of a negative number")));
 
 	local_rscale = rscale + 8;
 

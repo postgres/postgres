@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.87 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.88 2003/09/25 06:57:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 		if (interactive)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid list syntax for datestyle")));
+					 errmsg("invalid list syntax for parameter \"datestyle\"")));
 		return NULL;
 	}
 
@@ -158,7 +158,7 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 			if (interactive)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognized datestyle keyword: \"%s\"",
+						 errmsg("unrecognized \"datestyle\" key word: \"%s\"",
 								tok)));
 			ok = false;
 			break;
@@ -176,7 +176,7 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 		if (interactive)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("conflicting datestyle specifications")));
+					 errmsg("conflicting \"datestyle\" specifications")));
 		return NULL;
 	}
 
@@ -447,7 +447,7 @@ assign_timezone(const char *value, bool doit, bool interactive)
 			if (interactive)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("invalid INTERVAL for time zone: month not allowed")));
+						 errmsg("invalid interval value for time zone: month not allowed")));
 			pfree(interval);
 			return NULL;
 		}
@@ -554,7 +554,7 @@ assign_timezone(const char *value, bool doit, bool interactive)
 				{
 					ereport(interactive ? ERROR : LOG,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("unrecognized timezone name: \"%s\"",
+							 errmsg("unrecognized time zone name: \"%s\"",
 									value)));
 					return NULL;
 				}
@@ -562,9 +562,9 @@ assign_timezone(const char *value, bool doit, bool interactive)
 				{
 					ereport(interactive ? ERROR : LOG,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("timezone \"%s\" appears to use leap seconds",
+					errmsg("time zone \"%s\" appears to use leap seconds",
 						   value),
-							 errdetail("PostgreSQL does not support leap seconds")));
+							 errdetail("PostgreSQL does not support leap seconds.")));
 					return NULL;
 				}
 			}

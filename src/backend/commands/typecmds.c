@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.45 2003/09/15 00:26:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.46 2003/09/25 06:57:58 petere Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -272,14 +272,14 @@ DefineType(List *names, List *parameters)
 		{
 			/* backwards-compatibility hack */
 			ereport(NOTICE,
-					(errmsg("changing return type of function %s from OPAQUE to %s",
+					(errmsg("changing return type of function %s from \"opaque\" to %s",
 							NameListToString(inputName), typeName)));
 			SetFunctionReturnType(inputOid, typoid);
 		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("type input function %s must return %s",
+					 errmsg("type input function %s must return type %s",
 							NameListToString(inputName), typeName)));
 	}
 	resulttype = get_func_rettype(outputOid);
@@ -289,14 +289,14 @@ DefineType(List *names, List *parameters)
 		{
 			/* backwards-compatibility hack */
 			ereport(NOTICE,
-					(errmsg("changing return type of function %s from OPAQUE to CSTRING",
+					(errmsg("changing return type of function %s from \"opaque\" to \"cstring\"",
 							NameListToString(outputName))));
 			SetFunctionReturnType(outputOid, CSTRINGOID);
 		}
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("type output function %s must return cstring",
+					 errmsg("type output function %s must return type \"cstring\"",
 							NameListToString(outputName))));
 	}
 	if (receiveOid)
@@ -305,7 +305,7 @@ DefineType(List *names, List *parameters)
 		if (resulttype != typoid)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("type receive function %s must return %s",
+					 errmsg("type receive function %s must return type %s",
 							NameListToString(receiveName), typeName)));
 	}
 	if (sendOid)
@@ -314,7 +314,7 @@ DefineType(List *names, List *parameters)
 		if (resulttype != BYTEAOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("type send function %s must return bytea",
+					 errmsg("type send function %s must return type \"bytea\"",
 							NameListToString(sendName))));
 	}
 
@@ -615,7 +615,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				if (defaultExpr)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("multiple DEFAULT expressions")));
+							 errmsg("multiple default expressions")));
 
 				/* Create a dummy ParseState for transformExpr */
 				pstate = make_parsestate(NULL);
@@ -875,7 +875,7 @@ findTypeInputFunction(List *procname, Oid typeOid)
 	{
 		/* Found, but must complain and fix the pg_proc entry */
 		ereport(NOTICE,
-				(errmsg("changing argument type of function %s from OPAQUE to CSTRING",
+				(errmsg("changing argument type of function %s from \"opaque\" to \"cstring\"",
 						NameListToString(procname))));
 		SetFunctionArgType(procOid, 0, CSTRINGOID);
 
@@ -945,7 +945,7 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	{
 		/* Found, but must complain and fix the pg_proc entry */
 		ereport(NOTICE,
-		(errmsg("changing argument type of function %s from OPAQUE to %s",
+		(errmsg("changing argument type of function %s from \"opaque\" to %s",
 				NameListToString(procname), format_type_be(typeOid))));
 		SetFunctionArgType(procOid, 0, typeOid);
 
@@ -1287,9 +1287,9 @@ AlterDomainNotNull(List *names, bool notNull)
 					if (isNull)
 						ereport(ERROR,
 								(errcode(ERRCODE_NOT_NULL_VIOLATION),
-								 errmsg("relation \"%s\" attribute \"%s\" contains NULL values",
-										RelationGetRelationName(testrel),
-						 NameStr(tupdesc->attrs[attnum - 1]->attname))));
+								 errmsg("column \"%s\" of table \"%s\" contains null values",
+										NameStr(tupdesc->attrs[attnum - 1]->attname),
+										RelationGetRelationName(testrel))));
 				}
 			}
 			heap_endscan(scan);
@@ -1554,7 +1554,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 				if (!isNull && !DatumGetBool(conResult))
 					ereport(ERROR,
 							(errcode(ERRCODE_CHECK_VIOLATION),
-							 errmsg("relation \"%s\" attribute \"%s\" contains values that violate the new constraint",
+							 errmsg("relation \"%s\" column \"%s\" contains values that violate the new constraint",
 									RelationGetRelationName(testrel),
 						 NameStr(tupdesc->attrs[attnum - 1]->attname))));
 			}
@@ -1791,7 +1791,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	if (length(pstate->p_rtable) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 errmsg("cannot use table references in domain CHECK constraint")));
+				 errmsg("cannot use table references in domain check constraint")));
 
 	/*
 	 * Domains don't allow var clauses (this should be redundant with the
@@ -1800,7 +1800,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	if (contain_var_clause(expr))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-				 errmsg("cannot use table references in domain CHECK constraint")));
+				 errmsg("cannot use table references in domain check constraint")));
 
 	/*
 	 * No subplans or aggregates, either...
@@ -1808,11 +1808,11 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	if (pstate->p_hasSubLinks)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot use sub-select in CHECK constraint")));
+				 errmsg("cannot use subquery in check constraint")));
 	if (pstate->p_hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
-				 errmsg("cannot use aggregate in CHECK constraint")));
+				 errmsg("cannot use aggregate in check constraint")));
 
 	/*
 	 * Convert to string form for storage.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.70 2003/08/08 21:41:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.71 2003/09/25 06:57:57 petere Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -131,7 +131,7 @@ index_open(Oid relationId)
 	if (r->rd_rel->relkind != RELKIND_INDEX)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not an index relation",
+				 errmsg("\"%s\" is not an index",
 						RelationGetRelationName(r))));
 
 	pgstat_initstats(&r->pgstat_info, r);
@@ -156,7 +156,7 @@ index_openrv(const RangeVar *relation)
 	if (r->rd_rel->relkind != RELKIND_INDEX)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not an index relation",
+				 errmsg("\"%s\" is not an index",
 						RelationGetRelationName(r))));
 
 	pgstat_initstats(&r->pgstat_info, r);
@@ -181,7 +181,7 @@ index_openr(const char *sysRelationName)
 	if (r->rd_rel->relkind != RELKIND_INDEX)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not an index relation",
+				 errmsg("\"%s\" is not an index",
 						RelationGetRelationName(r))));
 
 	pgstat_initstats(&r->pgstat_info, r);

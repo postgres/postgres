@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.122 2003/08/17 19:58:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.123 2003/09/25 06:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -393,7 +393,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	if (r->alias == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("sub-select in FROM must have an alias")));
+				 errmsg("subquery in FROM must have an alias")));
 
 	/*
 	 * Analyze and transform the subquery.
@@ -406,17 +406,17 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	 * check 'em anyway.
 	 */
 	if (length(parsetrees) != 1)
-		elog(ERROR, "unexpected parse analysis result for sub-select in FROM");
+		elog(ERROR, "unexpected parse analysis result for subquery in FROM");
 	query = (Query *) lfirst(parsetrees);
 	if (query == NULL || !IsA(query, Query))
-		elog(ERROR, "unexpected parse analysis result for sub-select in FROM");
+		elog(ERROR, "unexpected parse analysis result for subquery in FROM");
 
 	if (query->commandType != CMD_SELECT)
-		elog(ERROR, "expected SELECT query from sub-select in FROM");
+		elog(ERROR, "expected SELECT query from subquery in FROM");
 	if (query->resultRelation != 0 || query->into != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("sub-select in FROM may not have SELECT INTO")));
+				 errmsg("subquery in FROM may not have SELECT INTO")));
 
 	/*
 	 * The subquery cannot make use of any variables from FROM items
@@ -438,7 +438,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 		if (contain_vars_of_level((Node *) query, 1))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("sub-select in FROM may not refer to other relations of same query level")));
+					 errmsg("subquery in FROM may not refer to other relations of same query level")));
 	}
 
 	/*
@@ -725,7 +725,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 					if (strcmp(res_colname, u_colname) == 0)
 						ereport(ERROR,
 								(errcode(ERRCODE_DUPLICATE_COLUMN),
-								 errmsg("USING column name \"%s\" appears more than once",
+								 errmsg("column name \"%s\" appears more than once in USING clause",
 										u_colname)));
 				}
 
@@ -749,7 +749,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 				if (l_index < 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("JOIN/USING column \"%s\" not found in left table",
+							 errmsg("column \"%s\" specified in USING clause not found in left table",
 									u_colname)));
 
 				/* Find it in right input */
@@ -772,7 +772,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 				if (r_index < 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_COLUMN),
-							 errmsg("JOIN/USING column \"%s\" not found in right table",
+							 errmsg("column \"%s\" specified in USING clause not found in right table",
 									u_colname)));
 
 				l_colvar = nth(l_index, l_colvars);
@@ -1033,7 +1033,7 @@ transformLimitClause(ParseState *pstate, Node *clause,
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		/* translator: %s is name of a SQL construct, eg LIMIT */
-				 errmsg("argument of %s must not contain sub-selects",
+				 errmsg("argument of %s must not contain subqueries",
 						constructName)));
 	}
 
@@ -1134,11 +1134,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 						if (!equal(target_result->expr, tle->expr))
 							ereport(ERROR,
 									(errcode(ERRCODE_AMBIGUOUS_COLUMN),
-
-							/*
-							 * translator: first %s is name of a SQL
-							 * construct, eg ORDER BY
-							 */
+									 /* translator: first %s is name of a SQL construct, eg ORDER BY */
 									 errmsg("%s \"%s\" is ambiguous",
 											clauseText[clause], name)));
 					}
@@ -1178,7 +1174,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 		/* translator: %s is name of a SQL construct, eg ORDER BY */
-				 errmsg("%s position %d is not in target list",
+				 errmsg("%s position %d is not in select list",
 						clauseText[clause], target_pos)));
 	}
 
@@ -1363,7 +1359,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			if (tle->resdom->resjunk)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-						 errmsg("for SELECT DISTINCT, ORDER BY expressions must appear in target list")));
+						 errmsg("for SELECT DISTINCT, ORDER BY expressions must appear in select list")));
 			else
 				result = lappend(result, copyObject(scl));
 		}

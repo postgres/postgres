@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.35 2003/09/24 18:54:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.36 2003/09/25 06:57:58 petere Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -450,7 +450,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 					strcmp(languageName, "plsh") == 0 ||
 					strcmp(languageName, "pltcl") == 0 ||
 					strcmp(languageName, "pltclu") == 0) ?
-				 errhint("You need to use 'createlang' to load the language into the database.") : 0));
+				 errhint("You need to use \"createlang\" to load the language into the database.") : 0));
 	
 	languageOid = HeapTupleGetOid(languageTuple);
 	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);

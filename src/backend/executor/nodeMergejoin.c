@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.61 2003/08/08 21:41:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.62 2003/09/25 06:57:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1476,7 +1476,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 			if (node->join.joinqual != NIL)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("RIGHT JOIN is only supported with mergejoinable join conditions")));
+						 errmsg("RIGHT JOIN is only supported with merge-joinable join conditions")));
 			break;
 		case JOIN_FULL:
 			mergestate->mj_NullOuterTupleSlot =
@@ -1493,7 +1493,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 			if (node->join.joinqual != NIL)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("FULL JOIN is only supported with mergejoinable join conditions")));
+						 errmsg("FULL JOIN is only supported with merge-joinable join conditions")));
 			break;
 		default:
 			elog(ERROR, "unrecognized join type: %d",

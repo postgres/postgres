@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.98 2003/09/15 20:03:37 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.99 2003/09/25 06:58:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,14 +187,14 @@ aclparse(const char *s, AclItem *aip)
 		else if (strcmp(name, ACL_IDTYPE_UID_KEYWORD) != 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("unrecognized keyword: \"%s\"", name),
-				 errhint("ACL keyword must be \"group\" or \"user\".")));
+					 errmsg("unrecognized key word: \"%s\"", name),
+				 errhint("ACL key word must be \"group\" or \"user\".")));
 		s = getid(s, name);		/* move s to the name beyond the keyword */
 		if (name[0] == '\0')
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					 errmsg("missing name"),
-			   errhint("A name must follow the [group|user] keyword.")));
+			   errhint("A name must follow the \"group\" or \"user\" key word.")));
 	}
 	if (name[0] == '\0')
 		idtype = ACL_IDTYPE_WORLD;
@@ -288,7 +288,7 @@ aclparse(const char *s, AclItem *aip)
 		aip->ai_grantor = BOOTSTRAP_USESYSID;
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_GRANTOR),
-				 errmsg("defaulting grantor to %u", BOOTSTRAP_USESYSID)));
+				 errmsg("defaulting grantor to user ID %u", BOOTSTRAP_USESYSID)));
 	}
 
 	ACLITEM_SET_PRIVS_IDTYPE(*aip, privs, goption, idtype);

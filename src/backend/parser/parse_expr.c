@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.161 2003/08/17 23:43:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.162 2003/09/25 06:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,8 +103,9 @@ transformExpr(ParseState *pstate, Node *expr)
 		ereport(ERROR,
 				(errcode(ERRCODE_STATEMENT_TOO_COMPLEX),
 				 errmsg("expression too complex"),
-				 errdetail("Nesting depth exceeds MAX_EXPR_DEPTH = %d.",
-						   max_expr_depth)));
+				 errdetail("Nesting depth exceeds maximum expression depth %d.",
+						   max_expr_depth),
+				 errhint("Increase the configuration parameter \"max_expr_depth\".")));
 
 	switch (nodeTag(expr))
 	{
@@ -493,13 +494,13 @@ transformExpr(ParseState *pstate, Node *expr)
 						((TargetEntry *) lfirst(tlist))->resdom->resjunk)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("sub-select must return a column")));
+							 errmsg("subquery must return a column")));
 					while ((tlist = lnext(tlist)) != NIL)
 					{
 						if (!((TargetEntry *) lfirst(tlist))->resdom->resjunk)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
-									 errmsg("sub-select must return only one column")));
+									 errmsg("subquery must return only one column")));
 					}
 
 					/*
@@ -582,7 +583,7 @@ transformExpr(ParseState *pstate, Node *expr)
 						if (left_list == NIL)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("sub-select has too many columns")));
+							 errmsg("subquery has too many columns")));
 						lexpr = lfirst(left_list);
 						left_list = lnext(left_list);
 
@@ -620,7 +621,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					if (left_list != NIL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-							  errmsg("sub-select has too few columns")));
+							  errmsg("subquery has too few columns")));
 
 					if (needNot)
 					{
@@ -792,7 +793,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					if (!OidIsValid(element_type))
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_OBJECT),
-								 errmsg("could not find array type for datatype %s",
+								 errmsg("could not find array type for data type %s",
 										format_type_be(array_type))));
 				}
 
@@ -1030,7 +1031,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_COLUMN),
-							errmsg("attribute \"%s\" not found", name)));
+							errmsg("column \"%s\" does not exist", name)));
 				}
 				break;
 			}
@@ -1224,7 +1225,7 @@ exprType(Node *expr)
 						if (!OidIsValid(type))
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
-									 errmsg("could not find array type for datatype %s",
+									 errmsg("could not find array type for data type %s",
 								format_type_be(tent->resdom->restype))));
 					}
 				}
@@ -1263,7 +1264,7 @@ exprType(Node *expr)
 						if (!OidIsValid(type))
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
-									 errmsg("could not find array type for datatype %s",
+									 errmsg("could not find array type for data type %s",
 								format_type_be(tent->resdom->restype))));
 					}
 				}

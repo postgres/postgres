@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.93 2003/08/04 02:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.94 2003/09/25 06:58:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,11 +132,11 @@ CheckFloat4Val(double val)
 	if (fabs(val) > FLOAT4_MAX)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("float4 value out of range: overflow")));
+				 errmsg("type \"real\" value out of range: overflow")));
 	if (val != 0.0 && fabs(val) < FLOAT4_MIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("float4 value out of range: underflow")));
+				 errmsg("type \"real\" value out of range: underflow")));
 
 	return;
 #endif   /* UNSAFE_FLOATS */
@@ -161,11 +161,11 @@ CheckFloat8Val(double val)
 	if (fabs(val) > FLOAT8_MAX)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("float8 value out of range: overflow")));
+				 errmsg("type \"double precision\" value out of range: overflow")));
 	if (val != 0.0 && fabs(val) < FLOAT8_MIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("float8 value out of range: underflow")));
+				 errmsg("type \"double precision\" value out of range: underflow")));
 #endif   /* UNSAFE_FLOATS */
 }
 
@@ -197,7 +197,7 @@ float4in(PG_FUNCTION_ARGS)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for float4: \"%s\"",
+					 errmsg("invalid input syntax for type real: \"%s\"",
 							num)));
 	}
 	else
@@ -205,7 +205,7 @@ float4in(PG_FUNCTION_ARGS)
 		if (errno == ERANGE)
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("\"%s\" is out of range for float4", num)));
+					 errmsg("\"%s\" is out of range for type real", num)));
 	}
 
 	/*
@@ -298,7 +298,7 @@ float8in(PG_FUNCTION_ARGS)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for float8: \"%s\"",
+					 errmsg("invalid input syntax for type double precision: \"%s\"",
 							num)));
 	}
 	else
@@ -306,7 +306,7 @@ float8in(PG_FUNCTION_ARGS)
 		if (errno == ERANGE)
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("\"%s\" is out of range for float8", num)));
+					 errmsg("\"%s\" is out of range for type double precision", num)));
 	}
 
 	CheckFloat8Val(val);
@@ -1301,12 +1301,12 @@ dlog1(PG_FUNCTION_ARGS)
 	if (arg1 == 0.0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
-				 errmsg("cannot take log of zero")));
+				 errmsg("cannot take logarithm of zero")));
 
 	if (arg1 < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
-				 errmsg("cannot take log of a negative number")));
+				 errmsg("cannot take logarithm of a negative number")));
 
 	result = log(arg1);
 
@@ -1327,12 +1327,12 @@ dlog10(PG_FUNCTION_ARGS)
 	if (arg1 == 0.0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
-				 errmsg("cannot take log of zero")));
+				 errmsg("cannot take logarithm of zero")));
 
 	if (arg1 < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
-				 errmsg("cannot take log of a negative number")));
+				 errmsg("cannot take logarithm of a negative number")));
 
 	result = log10(arg1);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.36 2003/08/11 20:46:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.37 2003/09/25 06:58:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ int4notin(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
 				 errmsg("invalid name syntax"),
-			   errhint("Must provide \"relationname.attributename\".")));
+			   errhint("Must provide \"relationname.columnname\".")));
 	attribute = strVal(llast(names));
 	names = ltruncate(nnames - 1, names);
 	relrv = makeRangeVarFromNameList(names);

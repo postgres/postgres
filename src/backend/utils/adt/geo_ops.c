@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.80 2003/08/04 02:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.81 2003/09/25 06:58:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,7 +387,7 @@ box_in(PG_FUNCTION_ARGS)
 		|| (*s != '\0'))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for box: \"%s\"", str)));
+				 errmsg("invalid input syntax for type box: \"%s\"", str)));
 
 	/* reorder corners if necessary... */
 	if (box->high.x < box->low.x)
@@ -900,14 +900,14 @@ line_in(PG_FUNCTION_ARGS)
 		|| (*s != '\0'))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for line: \"%s\"", str)));
+				 errmsg("invalid input syntax for type line: \"%s\"", str)));
 
 	line = (LINE *) palloc(sizeof(LINE));
 	line_construct_pts(line, &lseg.p[0], &lseg.p[1]);
 #else
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("line not yet implemented")));
+			 errmsg("type \"line\" not yet implemented")));
 
 	line = NULL;
 #endif
@@ -974,7 +974,7 @@ line_out(PG_FUNCTION_ARGS)
 #else
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("line not yet implemented")));
+			 errmsg("type \"line\" not yet implemented")));
 	result = NULL;
 #endif
 
@@ -989,7 +989,7 @@ line_recv(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("line not yet implemented")));
+			 errmsg("type \"line\" not yet implemented")));
 	return 0;
 }
 
@@ -1001,7 +1001,7 @@ line_send(PG_FUNCTION_ARGS)
 {
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("line not yet implemented")));
+			 errmsg("type \"line\" not yet implemented")));
 	return 0;
 }
 
@@ -1326,7 +1326,7 @@ path_in(PG_FUNCTION_ARGS)
 	if ((npts = pair_count(str, ',')) <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for path: \"%s\"", str)));
+				 errmsg("invalid input syntax for type path: \"%s\"", str)));
 
 	s = str;
 	while (isspace((unsigned char) *s))
@@ -1349,7 +1349,7 @@ path_in(PG_FUNCTION_ARGS)
 		&& (!((depth == 0) && (*s == '\0'))) && !((depth >= 1) && (*s == RDELIM)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for path: \"%s\"", str)));
+				 errmsg("invalid input syntax for type path: \"%s\"", str)));
 
 	path->closed = (!isopen);
 
@@ -1727,7 +1727,7 @@ point_in(PG_FUNCTION_ARGS)
 	if (!pair_decode(str, &x, &y, &s) || (*s != '\0'))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for point: \"%s\"", str)));
+				 errmsg("invalid input syntax for type point: \"%s\"", str)));
 
 	point = (Point *) palloc(sizeof(Point));
 
@@ -1955,7 +1955,7 @@ lseg_in(PG_FUNCTION_ARGS)
 		|| (*s != '\0'))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for lseg: \"%s\"", str)));
+				 errmsg("invalid input syntax for type lseg: \"%s\"", str)));
 
 #ifdef NOT_USED
 	lseg->m = point_sl(&lseg->p[0], &lseg->p[1]);
@@ -2547,7 +2547,7 @@ dist_lb(PG_FUNCTION_ARGS)
 	/* need to think about this one for a while */
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("dist_lb not implemented")));
+			 errmsg("function \"dist_lb\" not implemented")));
 
 	PG_RETURN_NULL();
 }
@@ -3060,7 +3060,7 @@ close_lb(PG_FUNCTION_ARGS)
 	/* think about this one for a while */
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("close_lb not implemented")));
+			 errmsg("function \"close_lb\" not implemented")));
 
 	PG_RETURN_NULL();
 }
@@ -3363,7 +3363,7 @@ poly_in(PG_FUNCTION_ARGS)
 	if ((npts = pair_count(str, ',')) <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			   errmsg("invalid input syntax for polygon: \"%s\"", str)));
+			   errmsg("invalid input syntax for type polygon: \"%s\"", str)));
 
 	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * npts;
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
@@ -3375,7 +3375,7 @@ poly_in(PG_FUNCTION_ARGS)
 		|| (*s != '\0'))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			   errmsg("invalid input syntax for polygon: \"%s\"", str)));
+			   errmsg("invalid input syntax for type polygon: \"%s\"", str)));
 
 	make_bound_box(poly);
 
@@ -3725,7 +3725,7 @@ poly_distance(PG_FUNCTION_ARGS)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("poly_distance not implemented")));
+			 errmsg("function \"poly_distance\" not implemented")));
 
 	PG_RETURN_NULL();
 }
@@ -4037,7 +4037,7 @@ path_center(PG_FUNCTION_ARGS)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("path_center not implemented")));
+			 errmsg("function \"path_center\" not implemented")));
 
 	PG_RETURN_NULL();
 }
@@ -4221,7 +4221,7 @@ circle_in(PG_FUNCTION_ARGS)
 	if (!pair_decode(s, &circle->center.x, &circle->center.y, &s))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for circle: \"%s\"", str)));
+				 errmsg("invalid input syntax for type circle: \"%s\"", str)));
 
 	if (*s == DELIM)
 		s++;
@@ -4231,7 +4231,7 @@ circle_in(PG_FUNCTION_ARGS)
 	if ((!single_decode(s, &circle->radius, &s)) || (circle->radius < 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for circle: \"%s\"", str)));
+				 errmsg("invalid input syntax for type circle: \"%s\"", str)));
 
 	while (depth > 0)
 	{
@@ -4246,13 +4246,13 @@ circle_in(PG_FUNCTION_ARGS)
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				errmsg("invalid input syntax for circle: \"%s\"", str)));
+				errmsg("invalid input syntax for type circle: \"%s\"", str)));
 	}
 
 	if (*s != '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				 errmsg("invalid input syntax for circle: \"%s\"", str)));
+				 errmsg("invalid input syntax for type circle: \"%s\"", str)));
 
 	PG_RETURN_CIRCLE_P(circle);
 }

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.115 2003/08/08 21:41:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.116 2003/09/25 06:57:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,7 +349,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 			if (!OldHeap->rd_att->attrs[colno - 1]->attnotnull)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot cluster when index access method does not handle nulls"),
+						 errmsg("cannot cluster when index access method does not handle null values"),
 						 errhint("You may be able to work around this by marking column \"%s\" NOT NULL.",
 				  NameStr(OldHeap->rd_att->attrs[colno - 1]->attname))));
 		}
@@ -362,7 +362,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 			/* index expression, lose... */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot cluster on expressional index when index access method does not handle nulls")));
+					 errmsg("cannot cluster on expressional index when index access method does not handle null values")));
 		}
 	}
 
@@ -386,7 +386,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	if (isOtherTempNamespace(RelationGetNamespace(OldHeap)))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot cluster temp tables of other processes")));
+			   errmsg("cannot cluster temporary tables of other sessions")));
 
 	/* Drop relcache refcnt on OldIndex, but keep lock */
 	index_close(OldIndex);

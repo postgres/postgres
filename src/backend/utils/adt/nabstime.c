@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.115 2003/08/27 23:29:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.116 2003/09/25 06:58:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,7 +241,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 				if (strlen(tm->tm_zone) > MAXTZLEN)
 					ereport(WARNING,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("invalid timezone name: \"%s\"",
+							 errmsg("invalid time zone name: \"%s\"",
 									tm->tm_zone)));
 			}
 		}
@@ -277,7 +277,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 				if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
 					ereport(WARNING,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("invalid timezone name: \"%s\"",
+							 errmsg("invalid time zone name: \"%s\"",
 									tzname[tm->tm_isdst])));
 			}
 		}
@@ -653,7 +653,7 @@ abstime_timestamp(PG_FUNCTION_ARGS)
 		case INVALID_ABSTIME:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot convert \"invalid\" abstime to timestamp")));
+			 errmsg("cannot convert abstime \"invalid\" to timestamp")));
 			TIMESTAMP_NOBEGIN(result);
 			break;
 
@@ -726,7 +726,7 @@ abstime_timestamptz(PG_FUNCTION_ARGS)
 		case INVALID_ABSTIME:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("cannot convert \"invalid\" abstime to timestamp")));
+			 errmsg("cannot convert abstime \"invalid\" to timestamp")));
 			TIMESTAMP_NOBEGIN(result);
 			break;
 
@@ -879,7 +879,7 @@ tintervalin(PG_FUNCTION_ARGS)
 	if (istinterval(intervalstr, &t1, &t2) == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for tinterval: \"%s\"",
+				 errmsg("invalid input syntax for type tinterval: \"%s\"",
 						intervalstr)));
 
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
@@ -1034,7 +1034,7 @@ reltime_interval(PG_FUNCTION_ARGS)
 		case INVALID_RELTIME:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("cannot convert \"invalid\" reltime to interval")));
+			  errmsg("cannot convert reltime \"invalid\" to interval")));
 			result->time = 0;
 			result->month = 0;
 			break;

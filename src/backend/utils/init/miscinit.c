@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.114 2003/09/24 18:54:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.115 2003/09/25 06:58:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -401,7 +401,7 @@ GetUserNameFromId(AclId userid)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("invalid user id: %d", userid)));
+				 errmsg("invalid user ID: %d", userid)));
 
 	result = pstrdup(NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename));
 
@@ -545,10 +545,10 @@ CreateLockFile(const char *filename, bool amPostmaster,
 						 errmsg("lock file \"%s\" already exists",
 								filename),
 						 isDDLock ?
-					 errhint("Is another %s (pid %d) running in \"%s\"?",
+					 errhint("Is another %s (PID %d) running in data directory \"%s\"?",
 						   (encoded_pid < 0 ? "postgres" : "postmaster"),
 							 (int) other_pid, refName) :
-						 errhint("Is another %s (pid %d) using \"%s\"?",
+						 errhint("Is another %s (PID %d) using socket file \"%s\"?",
 						   (encoded_pid < 0 ? "postgres" : "postmaster"),
 								 (int) other_pid, refName)));
 			}
@@ -578,12 +578,12 @@ CreateLockFile(const char *filename, bool amPostmaster,
 						ereport(FATAL,
 								(errcode(ERRCODE_LOCK_FILE_EXISTS),
 							   errmsg("pre-existing shared memory block "
-									  "(key %lu, id %lu) is still in use",
+									  "(key %lu, ID %lu) is still in use",
 									  id1, id2),
 							   errhint("If you're sure there are no old "
-									   "backends still running, remove "
+									   "server processes still running, remove "
 									   "the shared memory block with "
-									   "ipcrm(1), or just delete \"%s\".",
+									   "the command \"ipcrm\", or just delete the file \"%s\".",
 									   filename)));
 				}
 			}
@@ -600,7 +600,7 @@ CreateLockFile(const char *filename, bool amPostmaster,
 					 errmsg("could not remove old lock file \"%s\": %m",
 							filename),
 					 errhint("The file seems accidentally left over, but "
-						  "I couldn't remove it. Please remove the file "
+						  "it could not be removed. Please remove the file "
 							 "by hand and try again.")));
 	}
 
@@ -723,7 +723,7 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not rewrite \"%s\": %m",
+				 errmsg("could not open file \"%s\": %m",
 						directoryLockFile)));
 		return;
 	}
@@ -732,7 +732,7 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 	{
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not read \"%s\": %m",
+				 errmsg("could not read from file \"%s\": %m",
 						directoryLockFile)));
 		close(fd);
 		return;
@@ -772,7 +772,7 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 			errno = ENOSPC;
 		ereport(LOG,
 				(errcode_for_file_access(),
-				 errmsg("could not write \"%s\": %m",
+				 errmsg("could not write to file \"%s\": %m",
 						directoryLockFile)));
 		close(fd);
 		return;
@@ -884,7 +884,7 @@ process_preload_libraries(char *preload_libraries_string)
 		freeList(elemlist);
 		ereport(LOG,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("invalid list syntax for preload_libraries configuration option")));
+				 errmsg("invalid list syntax for parameter \"preload_libraries\"")));
 		return;
 	}
 

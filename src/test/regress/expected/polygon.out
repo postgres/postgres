@@ -21,15 +21,15 @@ INSERT INTO POLYGON_TBL(f1) VALUES ('(0.0,0.0)');
 INSERT INTO POLYGON_TBL(f1) VALUES ('(0.0,1.0),(0.0,1.0)');
 -- bad polygon input strings 
 INSERT INTO POLYGON_TBL(f1) VALUES ('0.0');
-ERROR:  invalid input syntax for polygon: "0.0"
+ERROR:  invalid input syntax for type polygon: "0.0"
 INSERT INTO POLYGON_TBL(f1) VALUES ('(0.0 0.0');
-ERROR:  invalid input syntax for polygon: "(0.0 0.0"
+ERROR:  invalid input syntax for type polygon: "(0.0 0.0"
 INSERT INTO POLYGON_TBL(f1) VALUES ('(0,1,2)');
-ERROR:  invalid input syntax for polygon: "(0,1,2)"
+ERROR:  invalid input syntax for type polygon: "(0,1,2)"
 INSERT INTO POLYGON_TBL(f1) VALUES ('(0,1,2,3');
-ERROR:  invalid input syntax for polygon: "(0,1,2,3"
+ERROR:  invalid input syntax for type polygon: "(0,1,2,3"
 INSERT INTO POLYGON_TBL(f1) VALUES ('asdf');
-ERROR:  invalid input syntax for polygon: "asdf"
+ERROR:  invalid input syntax for type polygon: "asdf"
 SELECT '' AS four, POLYGON_TBL.*;
  four |         f1          
 ------+---------------------

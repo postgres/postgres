@@ -31,19 +31,19 @@ select from pg_database;
 ERROR:  syntax error at or near "from" at character 8
 -- bad name in target list
 select nonesuch from pg_database;
-ERROR:  attribute "nonesuch" not found
+ERROR:  column "nonesuch" does not exist
 -- bad attribute name on lhs of operator
 select * from pg_database where nonesuch = pg_database.datname;
-ERROR:  attribute "nonesuch" not found
+ERROR:  column "nonesuch" does not exist
 -- bad attribute name on rhs of operator
 select * from pg_database where pg_database.datname = nonesuch;
-ERROR:  attribute "nonesuch" not found
+ERROR:  column "nonesuch" does not exist
 -- bad select distinct on syntax, distinct attribute missing
 select distinct on (foobar) from pg_database;
 ERROR:  syntax error at or near "from" at character 29
 -- bad select distinct on syntax, distinct attribute not in target list
 select distinct on (foobar) * from pg_database;
-ERROR:  attribute "foobar" not found
+ERROR:  column "foobar" does not exist
 --
 -- DELETE
  
@@ -87,13 +87,13 @@ alter table nonesuchrel rename column nonesuchatt to newnonesuchatt;
 ERROR:  relation "nonesuchrel" does not exist
 -- no such attribute 
 alter table emp rename column nonesuchatt to newnonesuchatt;
-ERROR:  attribute "nonesuchatt" does not exist
+ERROR:  column "nonesuchatt" does not exist
 -- conflict 
 alter table emp rename column salary to manager;
-ERROR:  attribute "manager" of relation "stud_emp" already exists
+ERROR:  column "manager" of relation "stud_emp" already exists
 -- conflict 
 alter table emp rename column salary to oid;
-ERROR:  attribute "oid" of relation "stud_emp" already exists
+ERROR:  column "oid" of relation "stud_emp" already exists
 --
 -- TRANSACTION STUFF
  

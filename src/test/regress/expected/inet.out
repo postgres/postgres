@@ -27,7 +27,7 @@ INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.2/24', '192.168.1.226');
 ERROR:  invalid cidr value: "192.168.1.2/24"
 DETAIL:  Value has bits set to right of mask.
 INSERT INTO INET_TBL (c, i) VALUES ('1234::1234::1234', '::1.2.3.4');
-ERROR:  invalid input syntax for cidr: "1234::1234::1234"
+ERROR:  invalid input syntax for type cidr: "1234::1234::1234"
 -- check that CIDR rejects invalid input when converting from text:
 INSERT INTO INET_TBL (c, i) VALUES (cidr('192.168.1.2/24'), '192.168.1.226');
 ERROR:  invalid cidr value: "192.168.1.2/24"

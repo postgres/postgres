@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.49 2003/08/04 02:39:57 momjian Exp $
+ *	  $Id: hio.c,v 1.50 2003/09/25 06:57:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	if (len > MaxTupleSize)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("tuple is too big: size %lu, maximum size %lu",
+				 errmsg("row is too big: size %lu, maximum size %lu",
 						(unsigned long) len,
 						(unsigned long) MaxTupleSize)));
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.217 2003/09/24 18:54:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.218 2003/09/25 06:57:57 petere Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -502,7 +502,7 @@ index_create(Oid heapRelationId,
 		IsNormalProcessingMode())
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("user-defined indexes on system catalogs are not supported")));
+				 errmsg("user-defined indexes on system catalog tables are not supported")));
 
 	/*
 	 * We cannot allow indexing a shared relation after initdb (because

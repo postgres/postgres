@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.63 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.64 2003/09/25 06:57:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,9 +77,9 @@ AggregateCreate(const char *aggName,
 		!(aggBaseType == ANYARRAYOID || aggBaseType == ANYELEMENTOID))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("cannot determine transition datatype"),
-				 errdetail("An aggregate using ANYARRAY or ANYELEMENT as "
-				 "trans type must have one of them as its base type.")));
+				 errmsg("cannot determine transition data type"),
+				 errdetail("An aggregate using \"anyarray\" or \"anyelement\" as "
+				 "transition type must have one of them as its base type.")));
 
 	/* handle transfn */
 	MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
@@ -129,7 +129,7 @@ AggregateCreate(const char *aggName,
 		if (!IsBinaryCoercible(aggBaseType, aggTransType))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("must not omit initval when transfn is strict and transtype is not compatible with input type")));
+					 errmsg("must not omit initial value when transition function is strict and transition type is not compatible with input type")));
 	}
 	ReleaseSysCache(tup);
 
@@ -162,8 +162,8 @@ AggregateCreate(const char *aggName,
 		!(aggBaseType == ANYARRAYOID || aggBaseType == ANYELEMENTOID))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("cannot determine result datatype"),
-			   errdetail("An aggregate returning ANYARRAY or ANYELEMENT "
+				 errmsg("cannot determine result data type"),
+			   errdetail("An aggregate returning \"anyarray\" or \"anyelement\" "
 						 "must have one of them as its base type.")));
 
 	/*

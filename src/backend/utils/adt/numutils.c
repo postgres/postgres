@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.57 2003/08/04 02:40:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.58 2003/09/25 06:58:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,19 +102,19 @@ pg_atoi(char *s, int size, int c)
 				)
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("%s is out of range for int4", s)));
+						 errmsg("value \"%s\" is out of range for type integer", s)));
 			break;
 		case sizeof(int16):
 			if (errno == ERANGE || l < SHRT_MIN || l > SHRT_MAX)
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("%s is out of range for int2", s)));
+						 errmsg("value \"%s\" is out of range for type shortint", s)));
 			break;
 		case sizeof(int8):
 			if (errno == ERANGE || l < SCHAR_MIN || l > SCHAR_MAX)
 				ereport(ERROR,
 						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-						 errmsg("%s is out of range for int1", s)));
+						 errmsg("value \"%s\" is out of range for 8-bit integer", s)));
 			break;
 		default:
 			elog(ERROR, "unsupported result size: %d", size);

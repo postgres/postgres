@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.87 2003/09/17 17:19:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.88 2003/09/25 06:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,7 +271,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (!is_instead || query->commandType != CMD_SELECT)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("only instead-select rules are currently supported on select")));
+					 errmsg("rules on SELECT rule must have action INSTEAD SELECT")));
 
 		/*
 		 * ... there can be no rule qual, ...
@@ -279,7 +279,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (event_qual != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("event qualifications are not implemented for rules on select")));
+					 errmsg("event qualifications are not implemented for rules on SELECT")));
 
 		/*
 		 * ... the targetlist of the SELECT action must exactly match the
@@ -299,7 +299,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 			if (i > event_relation->rd_att->natts)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("select rule's target list has too many entries")));
+						 errmsg("SELECT rule's target list has too many entries")));
 
 			attr = event_relation->rd_att->attrs[i - 1];
 			attname = NameStr(attr->attname);
@@ -320,12 +320,12 @@ DefineQueryRewrite(RuleStmt *stmt)
 			if (strcmp(resdom->resname, attname) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("select rule's target entry %d has different column name from \"%s\"", i, attname)));
+						 errmsg("SELECT rule's target entry %d has different column name from \"%s\"", i, attname)));
 
 			if (attr->atttypid != resdom->restype)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("select rule's target entry %d has different type from attribute \"%s\"", i, attname)));
+						 errmsg("SELECT rule's target entry %d has different type from column \"%s\"", i, attname)));
 
 			/*
 			 * Allow typmods to be different only if one of them is -1,
@@ -338,13 +338,13 @@ DefineQueryRewrite(RuleStmt *stmt)
 				attr->atttypmod != -1 && resdom->restypmod != -1)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-						 errmsg("select rule's target entry %d has different size from attribute \"%s\"", i, attname)));
+						 errmsg("SELECT rule's target entry %d has different size from column \"%s\"", i, attname)));
 		}
 
 		if (i != event_relation->rd_att->natts)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-			   errmsg("select rule's target list has too few entries")));
+			   errmsg("SELECT rule's target list has too few entries")));
 
 		/*
 		 * ... there must not be another ON SELECT rule already ...

@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.75 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.76 2003/09/25 06:57:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,7 +399,7 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 	if (btisz > BTMaxItemSize(npage))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("index tuple size %lu exceeds btree maximum, %lu",
+				 errmsg("index row size %lu exceeds btree maximum, %lu",
 						(unsigned long) btisz,
 						(unsigned long) BTMaxItemSize(npage))));
 

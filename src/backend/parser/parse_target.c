@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.112 2003/08/11 23:04:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.113 2003/09/25 06:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ transformTargetEntry(ParseState *pstate,
 	if (IsA(expr, RangeVar))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("relation reference \"%s\" cannot be used as a targetlist entry",
+				 errmsg("relation reference \"%s\" cannot be used as a select-list entry",
 						((RangeVar *) expr)->relname),
 				 errhint("Write \"%s\".* to denote all the columns of the relation.",
 						 ((RangeVar *) expr)->relname)));
@@ -328,7 +328,7 @@ updateTargetListEntry(ParseState *pstate,
 	if (attrno <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot assign to system attribute \"%s\"",
+				 errmsg("cannot assign to system column \"%s\"",
 						colname)));
 	attrtype = attnumTypeId(rd, attrno);
 	attrtypmod = rd->rd_att->attrs[attrno - 1]->atttypmod;
@@ -497,7 +497,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 			if (intMember(attrno, *attrnos))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
-					  errmsg("attribute \"%s\" specified more than once",
+					  errmsg("column \"%s\" specified more than once",
 							 name)));
 			*attrnos = lappendi(*attrnos, attrno);
 		}

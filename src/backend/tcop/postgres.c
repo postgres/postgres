@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.364 2003/09/24 18:54:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.365 2003/09/25 06:58:02 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -560,7 +560,7 @@ pg_rewrite_queries(List *querytree_list)
 	/* This checks both copyObject() and the equal() routines... */
 	if (!equal(new_list, querytree_list))
 		ereport(WARNING,
-		   (errmsg("copyObject failed to produce an equal parse tree")));
+		   (errmsg("copyObject() failed to produce an equal parse tree")));
 	else
 		querytree_list = new_list;
 #endif
@@ -605,7 +605,7 @@ pg_plan_query(Query *querytree)
 		/* This checks both copyObject() and the equal() routines... */
 		if (!equal(new_plan, plan))
 			ereport(WARNING,
-			(errmsg("copyObject failed to produce an equal plan tree")));
+			(errmsg("copyObject() failed to produce an equal plan tree")));
 		else
 #endif
 			plan = new_plan;
@@ -794,7 +794,7 @@ exec_simple_query(const char *query_string)
 				ereport(ERROR,
 						(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 						 errmsg("current transaction is aborted, "
-					 "queries ignored until end of transaction block")));
+					 "commands ignored until end of transaction block")));
 		}
 
 		/* Make sure we are in a transaction command */
@@ -1114,7 +1114,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 				ereport(ERROR,
 						(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 						 errmsg("current transaction is aborted, "
-					 "queries ignored until end of transaction block")));
+					 "commands ignored until end of transaction block")));
 		}
 
 		/*
@@ -1141,7 +1141,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 			if (ptype == InvalidOid || ptype == UNKNOWNOID)
 				ereport(ERROR,
 						(errcode(ERRCODE_INDETERMINATE_DATATYPE),
-				  errmsg("could not determine datatype of parameter $%d",
+				  errmsg("could not determine data type of parameter $%d",
 						 i + 1)));
 			param_list = lappendo(param_list, ptype);
 		}
@@ -1572,7 +1572,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 			ereport(ERROR,
 					(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 					 errmsg("current transaction is aborted, "
-					 "queries ignored until end of transaction block")));
+					 "commands ignored until end of transaction block")));
 	}
 
 	/* Check for cancel signal before we start execution */
@@ -1798,13 +1798,13 @@ quickdie(SIGNAL_ARGS)
 	 */
 	ereport(WARNING,
 			(errcode(ERRCODE_CRASH_SHUTDOWN),
-		errmsg("terminating connection due to crash of another backend"),
-	   errdetail("The postmaster has commanded this backend to roll back"
+		errmsg("terminating connection because of crash of another server process"),
+	   errdetail("The postmaster has commanded this server process to roll back"
 				 " the current transaction and exit, because another"
-				 " backend exited abnormally and possibly corrupted"
+				 " server process exited abnormally and possibly corrupted"
 				 " shared memory."),
 			 errhint("In a moment you should be able to reconnect to the"
-					 " database and repeat your query.")));
+					 " database and repeat your command.")));
 
 	/*
 	 * DO NOT proc_exit() -- we're here because shared memory may be
@@ -2661,7 +2661,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.364 $ $Date: 2003/09/24 18:54:01 $\n");
+		puts("$Revision: 1.365 $ $Date: 2003/09/25 06:58:02 $\n");
 	}
 
 	/*

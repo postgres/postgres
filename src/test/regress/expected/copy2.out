@@ -5,7 +5,7 @@ CREATE TABLE x (
 	d text not null,
 	e text
 );
-NOTICE:  CREATE TABLE will create implicit sequence "x_a_seq" for SERIAL column "x.a"
+NOTICE:  CREATE TABLE will create implicit sequence "x_a_seq" for "serial" column "x.a"
 CREATE FUNCTION fn_x_before () RETURNS TRIGGER AS '
   BEGIN
 		NEW.e := ''before trigger fired''::text;
@@ -28,10 +28,10 @@ COPY x (b, d) from stdin;
 COPY x (a, b, c, d, e) from stdin;
 -- non-existent column in column list: should fail
 COPY x (xyz) from stdin;
-ERROR:  attribute "xyz" of relation "x" does not exist
+ERROR:  column "xyz" of relation "x" does not exist
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
-ERROR:  attribute "d" specified more than once
+ERROR:  column "d" specified more than once
 -- missing data: should fail
 COPY x from stdin;
 ERROR:  invalid input syntax for integer: ""

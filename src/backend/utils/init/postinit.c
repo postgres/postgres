@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.126 2003/08/04 02:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.127 2003/09/25 06:58:05 petere Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -369,7 +369,7 @@ InitPostgres(const char *dbname, const char *username)
 			ereport(WARNING,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 				  errmsg("no users are defined in this database system"),
-					 errhint("You should immediately run 'CREATE USER \"%s\" WITH SYSID %d CREATEUSER;'.",
+					 errhint("You should immediately run CREATE USER \"%s\" WITH SYSID %d CREATEUSER;.",
 							 username, BOOTSTRAP_USESYSID)));
 	}
 	else

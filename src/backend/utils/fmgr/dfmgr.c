@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.65 2003/09/07 02:18:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.66 2003/09/25 06:58:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -402,7 +402,7 @@ find_in_dynamic_libpath(const char *basename)
 		if (len == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
-			   errmsg("zero-length component in DYNAMIC_LIBRARY_PATH")));
+			   errmsg("zero-length component in parameter \"dynamic_library_path\"")));
 
 		piece = palloc(len + 1);
 		strncpy(piece, p, len);
@@ -415,7 +415,7 @@ find_in_dynamic_libpath(const char *basename)
 		if (!is_absolute_path(mangled))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_NAME),
-			  errmsg("DYNAMIC_LIBRARY_PATH component is not absolute")));
+			  errmsg("component in parameter \"dynamic_library_path\" is not an absolute path")));
 
 		full = palloc(strlen(mangled) + 1 + baselen + 1);
 		sprintf(full, "%s/%s", mangled, basename);

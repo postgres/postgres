@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.122 2003/08/04 02:39:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.123 2003/09/25 06:57:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1046,7 +1046,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 				if (close(openLogFile) != 0)
 					ereport(PANIC,
 							(errcode_for_file_access(),
-					errmsg("close of log file %u, segment %u failed: %m",
+					errmsg("could not close log file %u, segment %u: %m",
 						   openLogId, openLogSeg)));
 				openLogFile = -1;
 			}
@@ -1102,7 +1102,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 			if (lseek(openLogFile, (off_t) openLogOff, SEEK_SET) < 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-						 errmsg("lseek of log file %u, segment %u, offset %u failed: %m",
+						 errmsg("could not seek in log file %u, segment %u to offset %u: %m",
 								openLogId, openLogSeg, openLogOff)));
 		}
 
@@ -1116,7 +1116,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 				errno = ENOSPC;
 			ereport(PANIC,
 					(errcode_for_file_access(),
-					 errmsg("write of log file %u, segment %u, offset %u failed: %m",
+					 errmsg("could not write to log file %u, segment %u at offset %u: %m",
 							openLogId, openLogSeg, openLogOff)));
 		}
 		openLogOff += BLCKSZ;
@@ -1162,7 +1162,7 @@ XLogWrite(XLogwrtRqst WriteRqst)
 				if (close(openLogFile) != 0)
 					ereport(PANIC,
 							(errcode_for_file_access(),
-					errmsg("close of log file %u, segment %u failed: %m",
+					errmsg("could not close log file %u, segment %u: %m",
 						   openLogId, openLogSeg)));
 				openLogFile = -1;
 			}
@@ -1360,7 +1360,7 @@ XLogFileInit(uint32 log, uint32 seg,
 			if (errno != ENOENT)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-						 errmsg("open of \"%s\" (log file %u, segment %u) failed: %m",
+						 errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
 								path, log, seg)));
 		}
 		else
@@ -1384,7 +1384,7 @@ XLogFileInit(uint32 log, uint32 seg,
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("creation of file \"%s\" failed: %m", tmppath)));
+				 errmsg("could not create file \"%s\": %m", tmppath)));
 
 	/*
 	 * Zero-fill the file.	We have to do this the hard way to ensure that
@@ -1413,14 +1413,14 @@ XLogFileInit(uint32 log, uint32 seg,
 
 			ereport(PANIC,
 					(errcode_for_file_access(),
-					 errmsg("failed to write \"%s\": %m", tmppath)));
+					 errmsg("could not write to file \"%s\": %m", tmppath)));
 		}
 	}
 
 	if (pg_fsync(fd) != 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("fsync of file \"%s\" failed: %m", tmppath)));
+				 errmsg("could not fsync file \"%s\": %m", tmppath)));
 
 	close(fd);
 
@@ -1449,7 +1449,7 @@ XLogFileInit(uint32 log, uint32 seg,
 	if (fd < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-			errmsg("open of \"%s\" (log file %u, segment %u) failed: %m",
+			errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
 				   path, log, seg)));
 
 	return (fd);
@@ -1527,14 +1527,14 @@ InstallXLogFileSegment(uint32 log, uint32 seg, char *tmppath,
 	if (link(tmppath, path) < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("link from \"%s\" to \"%s\" (initialization of log file %u, segment %u) failed: %m",
+				 errmsg("could not link file \"%s\" to \"%s\" (initialization of log file %u, segment %u): %m",
 						tmppath, path, log, seg)));
 	unlink(tmppath);
 #else
 	if (rename(tmppath, path) < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("rename from \"%s\" to \"%s\" (initialization of log file %u, segment %u) failed: %m",
+				 errmsg("could not rename file \"%s\" to \"%s\" (initialization of log file %u, segment %u): %m",
 						tmppath, path, log, seg)));
 #endif
 
@@ -1563,13 +1563,13 @@ XLogFileOpen(uint32 log, uint32 seg, bool econt)
 		{
 			ereport(LOG,
 					(errcode_for_file_access(),
-			errmsg("open of \"%s\" (log file %u, segment %u) failed: %m",
+			errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
 				   path, log, seg)));
 			return (fd);
 		}
 		ereport(PANIC,
 				(errcode_for_file_access(),
-			errmsg("open of \"%s\" (log file %u, segment %u) failed: %m",
+			errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
 				   path, log, seg)));
 	}
 
@@ -1746,7 +1746,7 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 	if (!EQ_CRC64(record->xl_crc, crc))
 	{
 		ereport(emode,
-		 (errmsg("bad resource manager data checksum in record at %X/%X",
+		 (errmsg("incorrect resource manager data checksum in record at %X/%X",
 				 recptr.xlogid, recptr.xrecoff)));
 		return (false);
 	}
@@ -1769,7 +1769,7 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 		if (!EQ_CRC64(cbuf, crc))
 		{
 			ereport(emode,
-			(errmsg("bad checksum of backup block %d in record at %X/%X",
+			(errmsg("incorrect checksum of backup block %d in record at %X/%X",
 					i + 1, recptr.xlogid, recptr.xrecoff)));
 			return (false);
 		}
@@ -1864,7 +1864,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 		{
 			ereport(emode,
 					(errcode_for_file_access(),
-					 errmsg("lseek of log file %u, segment %u, offset %u failed: %m",
+					 errmsg("could not seek in log file %u, segment %u to offset %u: %m",
 							readId, readSeg, readOff)));
 			goto next_record_is_invalid;
 		}
@@ -1872,7 +1872,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 		{
 			ereport(emode,
 					(errcode_for_file_access(),
-					 errmsg("read of log file %u, segment %u, offset %u failed: %m",
+					 errmsg("could not read from log file %u, segment %u at offset %u: %m",
 							readId, readSeg, readOff)));
 			goto next_record_is_invalid;
 		}
@@ -1930,7 +1930,7 @@ got_record:;
 	if (record->xl_rmid > RM_MAX_ID)
 	{
 		ereport(emode,
-				(errmsg("invalid resource manager id %u at %X/%X",
+				(errmsg("invalid resource manager ID %u at %X/%X",
 					 record->xl_rmid, RecPtr->xlogid, RecPtr->xrecoff)));
 		goto next_record_is_invalid;
 	}
@@ -1962,7 +1962,7 @@ got_record:;
 			{
 				ereport(emode,
 						(errcode_for_file_access(),
-						 errmsg("read of log file %u, segment %u, offset %u failed: %m",
+						 errmsg("could not read log file %u, segment %u, offset %u: %m",
 								readId, readSeg, readOff)));
 				goto next_record_is_invalid;
 			}
@@ -2191,13 +2191,13 @@ WriteControlFile(void)
 			errno = ENOSPC;
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("write to control file failed: %m")));
+				 errmsg("could not write to control file: %m")));
 	}
 
 	if (pg_fsync(fd) != 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("fsync of control file failed: %m")));
+				 errmsg("could not fsync of control file: %m")));
 
 	close(fd);
 }
@@ -2221,7 +2221,7 @@ ReadControlFile(void)
 	if (read(fd, ControlFile, sizeof(ControlFileData)) != sizeof(ControlFileData))
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("read from control file failed: %m")));
+				 errmsg("could not read from control file: %m")));
 
 	close(fd);
 
@@ -2247,7 +2247,7 @@ ReadControlFile(void)
 
 	if (!EQ_CRC64(crc, ControlFile->crc))
 		ereport(FATAL,
-				(errmsg("invalid checksum in control file")));
+				(errmsg("incorrect checksum in control file")));
 
 	/*
 	 * Do compatibility checking immediately.  We do this here for 2
@@ -2368,13 +2368,13 @@ UpdateControlFile(void)
 			errno = ENOSPC;
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("write to control file failed: %m")));
+				 errmsg("could not write to control file: %m")));
 	}
 
 	if (pg_fsync(fd) != 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("fsync of control file failed: %m")));
+				 errmsg("could not fsync control file: %m")));
 
 	close(fd);
 }
@@ -2516,13 +2516,13 @@ BootStrapXLOG(void)
 			errno = ENOSPC;
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("failed to write bootstrap xlog file: %m")));
+				 errmsg("could not write bootstrap transaction log file: %m")));
 	}
 
 	if (pg_fsync(openLogFile) != 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
-				 errmsg("failed to fsync bootstrap xlog file: %m")));
+				 errmsg("could not fsync bootstrap transaction log file: %m")));
 
 	close(openLogFile);
 	openLogFile = -1;
@@ -2654,11 +2654,11 @@ StartupXLOG(void)
 					checkPoint.undo.xlogid, checkPoint.undo.xrecoff,
 					wasShutdown ? "TRUE" : "FALSE")));
 	ereport(LOG,
-			(errmsg("next transaction id: %u; next oid: %u",
+			(errmsg("next transaction ID: %u; next OID: %u",
 					checkPoint.nextXid, checkPoint.nextOid)));
 	if (!TransactionIdIsNormal(checkPoint.nextXid))
 		ereport(PANIC,
-				(errmsg("invalid next transaction id")));
+				(errmsg("invalid next transaction ID")));
 
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
@@ -2976,10 +2976,12 @@ ReadCheckpointRecord(XLogRecPtr RecPtr,
 
 	if (!XRecOffIsValid(RecPtr.xrecoff))
 	{
-		ereport(LOG,
-		/* translator: %s is "primary" or "secondary" */
-				(errmsg("invalid %s checkpoint link in control file",
-		(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
+		if (whichChkpt == 1)
+			ereport(LOG,
+					(errmsg("invalid primary checkpoint link in control file")));
+		else
+			ereport(LOG,
+					(errmsg("invalid secondary checkpoint link in control file")));
 		return NULL;
 	}
 
@@ -2987,35 +2989,43 @@ ReadCheckpointRecord(XLogRecPtr RecPtr,
 
 	if (record == NULL)
 	{
-		ereport(LOG,
-		/* translator: %s is "primary" or "secondary" */
-				(errmsg("invalid %s checkpoint record",
-		(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
+		if (whichChkpt == 1)
+			ereport(LOG,
+					(errmsg("invalid primary checkpoint record")));
+		else
+			ereport(LOG,
+					(errmsg("invalid secondary checkpoint record")));
 		return NULL;
 	}
 	if (record->xl_rmid != RM_XLOG_ID)
 	{
-		ereport(LOG,
-		/* translator: %s is "primary" or "secondary" */
-		   (errmsg("invalid resource manager id in %s checkpoint record",
-		(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
+		if (whichChkpt == 1)
+			ereport(LOG,
+					(errmsg("invalid resource manager ID in primary checkpoint record")));
+		else
+			ereport(LOG,
+					(errmsg("invalid resource manager ID in secondary checkpoint record")));
 		return NULL;
 	}
 	if (record->xl_info != XLOG_CHECKPOINT_SHUTDOWN &&
 		record->xl_info != XLOG_CHECKPOINT_ONLINE)
 	{
-		ereport(LOG,
-		/* translator: %s is "primary" or "secondary" */
-				(errmsg("invalid xl_info in %s checkpoint record",
-		(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
+		if (whichChkpt == 1)
+			ereport(LOG,
+					(errmsg("invalid xl_info in primary checkpoint record")));
+		else
+			ereport(LOG,
+					(errmsg("invalid xl_info in secondary checkpoint record")));
 		return NULL;
 	}
 	if (record->xl_len != sizeof(CheckPoint))
 	{
-		ereport(LOG,
-		/* translator: %s is "primary" or "secondary" */
-				(errmsg("invalid length of %s checkpoint record",
-		(whichChkpt == 1) ? gettext("primary") : gettext("secondary"))));
+		if (whichChkpt == 1)
+			ereport(LOG,
+					(errmsg("invalid length of primary checkpoint record")));
+		else
+			ereport(LOG,
+					(errmsg("invalid length of secondary checkpoint record")));
 		return NULL;
 	}
 	return record;
@@ -3545,14 +3555,14 @@ assign_xlog_sync_method(const char *method, bool doit, bool interactive)
 			if (pg_fsync(openLogFile) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-					errmsg("fsync of log file %u, segment %u failed: %m",
+					errmsg("could not fsync log file %u, segment %u: %m",
 						   openLogId, openLogSeg)));
 			if (open_sync_bit != new_sync_bit)
 			{
 				if (close(openLogFile) != 0)
 					ereport(PANIC,
 							(errcode_for_file_access(),
-					errmsg("close of log file %u, segment %u failed: %m",
+					errmsg("could not close log file %u, segment %u: %m",
 						   openLogId, openLogSeg)));
 				openLogFile = -1;
 			}
@@ -3577,7 +3587,7 @@ issue_xlog_fsync(void)
 			if (pg_fsync(openLogFile) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-					errmsg("fsync of log file %u, segment %u failed: %m",
+					errmsg("could not fsync log file %u, segment %u: %m",
 						   openLogId, openLogSeg)));
 			break;
 #ifdef HAVE_FDATASYNC
@@ -3585,7 +3595,7 @@ issue_xlog_fsync(void)
 			if (pg_fdatasync(openLogFile) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
-				errmsg("fdatasync of log file %u, segment %u failed: %m",
+				errmsg("could not fdatasync log file %u, segment %u: %m",
 					   openLogId, openLogSeg)));
 			break;
 #endif

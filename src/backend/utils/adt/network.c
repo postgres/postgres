@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.45 2003/08/04 00:43:25 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.46 2003/09/25 06:58:04 petere Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -87,7 +87,7 @@ network_in(char *src, int type)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 		/* translator: first %s is inet or cidr */
-				 errmsg("invalid input syntax for %s: \"%s\"",
+				 errmsg("invalid input syntax for type %s: \"%s\"",
 						type ? "cidr" : "inet", src)));
 
 	/*
@@ -225,7 +225,7 @@ inet_recv(PG_FUNCTION_ARGS)
 		if (!addressOK(ip_addr(addr), bits, ip_family(addr)))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-					 errmsg("invalid external CIDR value"),
+					 errmsg("invalid external cidr value"),
 					 errdetail("Value has bits set to right of mask.")));
 	}
 

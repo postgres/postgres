@@ -8,7 +8,7 @@
 CREATE TABLE PKTABLE ( ptest1 int PRIMARY KEY, ptest2 text );
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int REFERENCES PKTABLE MATCH FULL ON DELETE CASCADE ON UPDATE CASCADE, ftest2 int );
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 -- Insert test data into PKTABLE
 INSERT INTO PKTABLE VALUES (1, 'Test1');
 INSERT INTO PKTABLE VALUES (2, 'Test2');
@@ -22,8 +22,8 @@ INSERT INTO FKTABLE VALUES (3, 4);
 INSERT INTO FKTABLE VALUES (NULL, 1);
 -- Insert a failed row into FK TABLE
 INSERT INTO FKTABLE VALUES (100, 2);
-ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
-DETAIL:  Key (ftest1)=(100) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (ftest1)=(100) is not present in table "pktable".
 -- Check FKTABLE
 SELECT * FROM FKTABLE;
  ftest1 | ftest2 
@@ -65,7 +65,7 @@ CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 text, PRIMARY KEY(ptest1, 
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, CONSTRAINT constrname FOREIGN KEY(ftest1, ftest2) 
                        REFERENCES PKTABLE MATCH FULL ON DELETE SET NULL ON UPDATE SET NULL);
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 -- Insert test data into PKTABLE
 INSERT INTO PKTABLE VALUES (1, 2, 'Test1');
 INSERT INTO PKTABLE VALUES (1, 3, 'Test1-2');
@@ -81,17 +81,17 @@ INSERT INTO FKTABLE VALUES (3, 6, 12);
 INSERT INTO FKTABLE VALUES (NULL, NULL, 0);
 -- Insert failed rows into FK TABLE
 INSERT INTO FKTABLE VALUES (100, 2, 4);
-ERROR:  insert or update on "fktable" violates foreign key constraint "constrname"
-DETAIL:  Key (ftest1,ftest2)=(100,2) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname"
+DETAIL:  Key (ftest1,ftest2)=(100,2) is not present in table "pktable".
 INSERT INTO FKTABLE VALUES (2, 2, 4);
-ERROR:  insert or update on "fktable" violates foreign key constraint "constrname"
-DETAIL:  Key (ftest1,ftest2)=(2,2) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname"
+DETAIL:  Key (ftest1,ftest2)=(2,2) is not present in table "pktable".
 INSERT INTO FKTABLE VALUES (NULL, 2, 4);
-ERROR:  insert or update on "fktable" violates foreign key constraint "constrname"
-DETAIL:  MATCH FULL does not allow mixing of NULL and non-NULL key values.
+ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname"
+DETAIL:  MATCH FULL does not allow mixing of null and nonnull key values.
 INSERT INTO FKTABLE VALUES (1, NULL, 4);
-ERROR:  insert or update on "fktable" violates foreign key constraint "constrname"
-DETAIL:  MATCH FULL does not allow mixing of NULL and non-NULL key values.
+ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname"
+DETAIL:  MATCH FULL does not allow mixing of null and nonnull key values.
 -- Check FKTABLE
 SELECT * FROM FKTABLE;
  ftest1 | ftest2 | ftest3 
@@ -152,7 +152,7 @@ CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 text, PRIMARY KEY(ptest1, 
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int DEFAULT -1, ftest2 int DEFAULT -2, ftest3 int, CONSTRAINT constrname2 FOREIGN KEY(ftest1, ftest2) 
                        REFERENCES PKTABLE MATCH FULL ON DELETE SET DEFAULT ON UPDATE SET DEFAULT);
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 -- Insert a value in PKTABLE for default
 INSERT INTO PKTABLE VALUES (-1, -2, 'The Default!');
 -- Insert test data into PKTABLE
@@ -170,17 +170,17 @@ INSERT INTO FKTABLE VALUES (3, 6, 12);
 INSERT INTO FKTABLE VALUES (NULL, NULL, 0);
 -- Insert failed rows into FK TABLE
 INSERT INTO FKTABLE VALUES (100, 2, 4);
-ERROR:  insert or update on "fktable" violates foreign key constraint "constrname2"
-DETAIL:  Key (ftest1,ftest2)=(100,2) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname2"
+DETAIL:  Key (ftest1,ftest2)=(100,2) is not present in table "pktable".
 INSERT INTO FKTABLE VALUES (2, 2, 4);
-ERROR:  insert or update on "fktable" violates foreign key constraint "constrname2"
-DETAIL:  Key (ftest1,ftest2)=(2,2) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname2"
+DETAIL:  Key (ftest1,ftest2)=(2,2) is not present in table "pktable".
 INSERT INTO FKTABLE VALUES (NULL, 2, 4);
-ERROR:  insert or update on "fktable" violates foreign key constraint "constrname2"
-DETAIL:  MATCH FULL does not allow mixing of NULL and non-NULL key values.
+ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname2"
+DETAIL:  MATCH FULL does not allow mixing of null and nonnull key values.
 INSERT INTO FKTABLE VALUES (1, NULL, 4);
-ERROR:  insert or update on "fktable" violates foreign key constraint "constrname2"
-DETAIL:  MATCH FULL does not allow mixing of NULL and non-NULL key values.
+ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname2"
+DETAIL:  MATCH FULL does not allow mixing of null and nonnull key values.
 -- Check FKTABLE
 SELECT * FROM FKTABLE;
  ftest1 | ftest2 | ftest3 
@@ -245,7 +245,7 @@ DROP TABLE FKTABLE;
 CREATE TABLE PKTABLE ( ptest1 int PRIMARY KEY, ptest2 text );
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int REFERENCES PKTABLE MATCH FULL, ftest2 int );
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 -- Insert test data into PKTABLE
 INSERT INTO PKTABLE VALUES (1, 'Test1');
 INSERT INTO PKTABLE VALUES (2, 'Test2');
@@ -259,8 +259,8 @@ INSERT INTO FKTABLE VALUES (3, 4);
 INSERT INTO FKTABLE VALUES (NULL, 1);
 -- Insert a failed row into FK TABLE
 INSERT INTO FKTABLE VALUES (100, 2);
-ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
-DETAIL:  Key (ftest1)=(100) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (ftest1)=(100) is not present in table "pktable".
 -- Check FKTABLE
 SELECT * FROM FKTABLE;
  ftest1 | ftest2 
@@ -285,7 +285,7 @@ SELECT * FROM PKTABLE;
 -- Delete a row from PK TABLE (should fail)
 DELETE FROM PKTABLE WHERE ptest1=1;
 ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "fktable"
-DETAIL:  Key (ptest1)=(1) is still referenced from "fktable".
+DETAIL:  Key (ptest1)=(1) is still referenced from table "fktable".
 -- Delete a row from PK TABLE (should succeed)
 DELETE FROM PKTABLE WHERE ptest1=5;
 -- Check PKTABLE for deletes
@@ -301,7 +301,7 @@ SELECT * FROM PKTABLE;
 -- Update a row from PK TABLE (should fail)
 UPDATE PKTABLE SET ptest1=0 WHERE ptest1=2;
 ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "fktable"
-DETAIL:  Key (ptest1)=(2) is still referenced from "fktable".
+DETAIL:  Key (ptest1)=(2) is still referenced from table "fktable".
 -- Update a row from PK TABLE (should succeed)
 UPDATE PKTABLE SET ptest1=0 WHERE ptest1=4;
 -- Check PKTABLE for updates
@@ -322,7 +322,7 @@ CREATE TABLE PKTABLE ( ptest1 int, ptest2 int, ptest3 int, ptest4 text, PRIMARY 
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, ftest4 int,  CONSTRAINT constrname3
 			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE);
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 -- Insert Primary Key values
 INSERT INTO PKTABLE VALUES (1, 2, 3, 'test1');
 INSERT INTO PKTABLE VALUES (1, 3, 3, 'test2');
@@ -336,8 +336,8 @@ INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
 INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
 -- Insert a failed values
 INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
-ERROR:  insert or update on "fktable" violates foreign key constraint "constrname3"
-DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname3"
+DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in table "pktable".
 -- Show FKTABLE
 SELECT * from FKTABLE;
  ftest1 | ftest2 | ftest3 | ftest4 
@@ -352,13 +352,13 @@ SELECT * from FKTABLE;
 -- Try to update something that should fail
 UPDATE PKTABLE set ptest2=5 where ptest2=2;
 ERROR:  update or delete on "pktable" violates foreign key constraint "constrname3" on "fktable"
-DETAIL:  Key (ptest1,ptest2,ptest3)=(1,2,3) is still referenced from "fktable".
+DETAIL:  Key (ptest1,ptest2,ptest3)=(1,2,3) is still referenced from table "fktable".
 -- Try to update something that should succeed
 UPDATE PKTABLE set ptest1=1 WHERE ptest2=3;
 -- Try to delete something that should fail
 DELETE FROM PKTABLE where ptest1=1 and ptest2=2 and ptest3=3;
 ERROR:  update or delete on "pktable" violates foreign key constraint "constrname3" on "fktable"
-DETAIL:  Key (ptest1,ptest2,ptest3)=(1,2,3) is still referenced from "fktable".
+DETAIL:  Key (ptest1,ptest2,ptest3)=(1,2,3) is still referenced from table "fktable".
 -- Try to delete something that should work
 DELETE FROM PKTABLE where ptest1=2;
 -- Show PKTABLE and FKTABLE
@@ -388,7 +388,7 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" fo
 CREATE TABLE FKTABLE ( ftest1 int, ftest2 int, ftest3 int, ftest4 int,  CONSTRAINT constrname3
 			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE
 			ON DELETE CASCADE ON UPDATE CASCADE);
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 -- Insert Primary Key values
 INSERT INTO PKTABLE VALUES (1, 2, 3, 'test1');
 INSERT INTO PKTABLE VALUES (1, 3, 3, 'test2');
@@ -402,8 +402,8 @@ INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
 INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
 -- Insert a failed values
 INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
-ERROR:  insert or update on "fktable" violates foreign key constraint "constrname3"
-DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname3"
+DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in table "pktable".
 -- Show FKTABLE
 SELECT * from FKTABLE;
  ftest1 | ftest2 | ftest3 | ftest4 
@@ -486,7 +486,7 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" fo
 CREATE TABLE FKTABLE ( ftest1 int DEFAULT 0, ftest2 int, ftest3 int, ftest4 int,  CONSTRAINT constrname3
 			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE
 			ON DELETE SET DEFAULT ON UPDATE SET NULL);
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 -- Insert Primary Key values
 INSERT INTO PKTABLE VALUES (1, 2, 3, 'test1');
 INSERT INTO PKTABLE VALUES (1, 3, 3, 'test2');
@@ -501,8 +501,8 @@ INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
 INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
 -- Insert a failed values
 INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
-ERROR:  insert or update on "fktable" violates foreign key constraint "constrname3"
-DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname3"
+DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in table "pktable".
 -- Show FKTABLE
 SELECT * from FKTABLE;
  ftest1 | ftest2 | ftest3 | ftest4 
@@ -591,7 +591,7 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" fo
 CREATE TABLE FKTABLE ( ftest1 int DEFAULT 0, ftest2 int DEFAULT -1, ftest3 int, ftest4 int,  CONSTRAINT constrname3
 			FOREIGN KEY(ftest1, ftest2, ftest3) REFERENCES PKTABLE
 			ON DELETE SET NULL ON UPDATE SET DEFAULT);
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 -- Insert Primary Key values
 INSERT INTO PKTABLE VALUES (1, 2, 3, 'test1');
 INSERT INTO PKTABLE VALUES (1, 3, 3, 'test2');
@@ -608,8 +608,8 @@ INSERT INTO FKTABLE VALUES (NULL, 2, 7, 4);
 INSERT INTO FKTABLE VALUES (NULL, 3, 4, 5);
 -- Insert a failed values
 INSERT INTO FKTABLE VALUES (1, 2, 7, 6);
-ERROR:  insert or update on "fktable" violates foreign key constraint "constrname3"
-DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname3"
+DETAIL:  Key (ftest1,ftest2,ftest3)=(1,2,7) is not present in table "pktable".
 -- Show FKTABLE
 SELECT * from FKTABLE;
  ftest1 | ftest2 | ftest3 | ftest4 
@@ -625,8 +625,8 @@ SELECT * from FKTABLE;
 
 -- Try to update something that will fail
 UPDATE PKTABLE set ptest2=5 where ptest2=2;
-ERROR:  insert or update on "fktable" violates foreign key constraint "constrname3"
-DETAIL:  Key (ftest1,ftest2,ftest3)=(1,-1,3) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname3"
+DETAIL:  Key (ftest1,ftest2,ftest3)=(1,-1,3) is not present in table "pktable".
 -- Try to update something that will set default
 UPDATE PKTABLE set ptest1=0, ptest2=5, ptest3=10 where ptest2=2;
 UPDATE PKTABLE set ptest2=10 where ptest2=4;
@@ -707,10 +707,10 @@ DROP TABLE PKTABLE;
 CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 CREATE TABLE FKTABLE_FAIL1 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest2) REFERENCES PKTABLE);
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  column "ftest2" referenced in foreign key constraint does not exist
 CREATE TABLE FKTABLE_FAIL2 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest1) REFERENCES PKTABLE(ptest2));
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  column "ptest2" referenced in foreign key constraint does not exist
 DROP TABLE FKTABLE_FAIL1;
 ERROR:  table "fktable_fail1" does not exist
@@ -721,8 +721,8 @@ DROP TABLE PKTABLE;
 CREATE TABLE PKTABLE (ptest1 int, ptest2 int, UNIQUE(ptest1, ptest2));
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_ptest1_key" for table "pktable"
 CREATE TABLE FKTABLE_FAIL1 (ftest1 int REFERENCES pktable(ptest1));
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  there is no UNIQUE constraint matching given keys for referenced table "pktable"
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
+ERROR:  there is no unique constraint matching given keys for referenced table "pktable"
 DROP TABLE FKTABLE_FAIL1;
 ERROR:  table "fktable_fail1" does not exist
 DROP TABLE PKTABLE;
@@ -734,23 +734,23 @@ CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 -- This next should fail, because inet=int does not exist
 CREATE TABLE FKTABLE (ftest1 inet REFERENCES pktable);
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- This should also fail for the same reason, but here we
 -- give the column name
 CREATE TABLE FKTABLE (ftest1 inet REFERENCES pktable(ptest1));
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- This should succeed, even though they are different types
 -- because varchar=int does exist
 CREATE TABLE FKTABLE (ftest1 varchar REFERENCES pktable);
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 DROP TABLE FKTABLE;
 -- As should this
 CREATE TABLE FKTABLE (ftest1 varchar REFERENCES pktable(ptest1));
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- Two columns, two tables
@@ -758,36 +758,36 @@ CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, PRIMARY KEY(ptest1, ptest2));
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 -- This should fail, because we just chose really odd types
 CREATE TABLE FKTABLE (ftest1 cidr, ftest2 timestamp, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable);
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: cidr = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- Again, so should this...
 CREATE TABLE FKTABLE (ftest1 cidr, ftest2 timestamp, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest1, ptest2));
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: cidr = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- This fails because we mixed up the column ordering
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable);
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- As does this...
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable(ptest1, ptest2));
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- And again..
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest2, ptest1));
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: integer = inet
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- This works...
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable(ptest2, ptest1));
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 DROP TABLE FKTABLE;
 -- As does this
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest1, ptest2));
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- Two columns, same table
@@ -795,35 +795,35 @@ DROP TABLE PKTABLE;
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable(ptest1, ptest2));
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 DROP TABLE PKTABLE;
 -- And this, 
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 DROP TABLE PKTABLE;
 -- This shouldn't (mixed up columns)
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable(ptest2, ptest1));
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: integer = inet
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- Nor should this... (same reason, we have 4,3 referencing 1,2 which mismatches types
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
 ptest3) REFERENCES pktable(ptest1, ptest2));
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- Not this one either... Same as the last one except we didn't defined the columns being referenced.
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
 ptest3) REFERENCES pktable);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 --
 -- Now some cases with inheritance
 -- Basic 2 table case: 1 column of matching types.
@@ -832,26 +832,26 @@ create table pktable (ptest1 int, primary key(base1), unique(base1, ptest1)) inh
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_base1_key" for table "pktable"
 create table fktable (ftest1 int references pktable(base1));
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 -- now some ins, upd, del
 insert into pktable(base1) values (1);
 insert into pktable(base1) values (2);
 --  let's insert a non-existant fktable value
 insert into fktable(ftest1) values (3);
-ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
-DETAIL:  Key (ftest1)=(3) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (ftest1)=(3) is not present in table "pktable".
 --  let's make a valid row for that
 insert into pktable(base1) values (3);
 insert into fktable(ftest1) values (3);
 -- let's try removing a row that should fail from pktable
 delete from pktable where base1>2;
 ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "fktable"
-DETAIL:  Key (base1)=(3) is still referenced from "fktable".
+DETAIL:  Key (base1)=(3) is still referenced from table "fktable".
 -- okay, let's try updating all of the base1 values to *4
 -- which should fail.
 update pktable set base1=base1*4;
 ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "fktable"
-DETAIL:  Key (base1)=(3) is still referenced from "fktable".
+DETAIL:  Key (base1)=(3) is still referenced from table "fktable".
 -- okay, let's try an update that should work.
 update pktable set base1=base1*4 where base1<3;
 -- and a delete that should work
@@ -861,26 +861,26 @@ drop table fktable;
 delete from pktable;
 -- Now 2 columns 2 tables, matching types
 create table fktable (ftest1 int, ftest2 int, foreign key(ftest1, ftest2) references pktable(base1, ptest1));
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 -- now some ins, upd, del
 insert into pktable(base1, ptest1) values (1, 1);
 insert into pktable(base1, ptest1) values (2, 2);
 --  let's insert a non-existant fktable value
 insert into fktable(ftest1, ftest2) values (3, 1);
-ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
-DETAIL:  Key (ftest1,ftest2)=(3,1) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (ftest1,ftest2)=(3,1) is not present in table "pktable".
 --  let's make a valid row for that
 insert into pktable(base1,ptest1) values (3, 1);
 insert into fktable(ftest1, ftest2) values (3, 1);
 -- let's try removing a row that should fail from pktable
 delete from pktable where base1>2;
 ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "fktable"
-DETAIL:  Key (base1,ptest1)=(3,1) is still referenced from "fktable".
+DETAIL:  Key (base1,ptest1)=(3,1) is still referenced from table "fktable".
 -- okay, let's try updating all of the base1 values to *4
 -- which should fail.
 update pktable set base1=base1*4;
 ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "fktable"
-DETAIL:  Key (base1,ptest1)=(3,1) is still referenced from "fktable".
+DETAIL:  Key (base1,ptest1)=(3,1) is still referenced from table "fktable".
 -- okay, let's try an update that should work.
 update pktable set base1=base1*4 where base1<3;
 -- and a delete that should work
@@ -894,23 +894,23 @@ create table pktable_base(base1 int not null, base2 int);
 create table pktable(ptest1 int, ptest2 int, primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 insert into pktable (base1, ptest1, base2, ptest2) values (1, 1, 1, 1);
 insert into pktable (base1, ptest1, base2, ptest2) values (2, 1, 1, 1);
 insert into pktable (base1, ptest1, base2, ptest2) values (2, 2, 2, 1);
 insert into pktable (base1, ptest1, base2, ptest2) values (1, 3, 2, 2);
 -- fails (3,2) isn't in base1, ptest1
 insert into pktable (base1, ptest1, base2, ptest2) values (2, 3, 3, 2);
-ERROR:  insert or update on "pktable" violates foreign key constraint "$1"
-DETAIL:  Key (base2,ptest2)=(3,2) is not present in "pktable".
+ERROR:  insert or update on table "pktable" violates foreign key constraint "$1"
+DETAIL:  Key (base2,ptest2)=(3,2) is not present in table "pktable".
 -- fails (2,2) is being referenced
 delete from pktable where base1=2;
 ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "pktable"
-DETAIL:  Key (base1,ptest1)=(2,2) is still referenced from "pktable".
+DETAIL:  Key (base1,ptest1)=(2,2) is still referenced from table "pktable".
 -- fails (1,1) is being referenced (twice)
 update pktable set base1=3 where base1=1;
 ERROR:  update or delete on "pktable" violates foreign key constraint "$1" on "pktable"
-DETAIL:  Key (base1,ptest1)=(1,1) is still referenced from "pktable".
+DETAIL:  Key (base1,ptest1)=(1,1) is still referenced from table "pktable".
 -- this sequence of two deletes will work, since after the first there will be no (2,*) references
 delete from pktable where base2=2;
 delete from pktable where base1=2;
@@ -922,26 +922,26 @@ create table pktable(ptest1 inet, primary key(base1, ptest1)) inherits (pktable_
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 -- just generally bad types (with and without column references on the referenced table)
 create table fktable(ftest1 cidr, ftest2 int[], foreign key (ftest1, ftest2) references pktable);
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: cidr = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 create table fktable(ftest1 cidr, ftest2 int[], foreign key (ftest1, ftest2) references pktable(base1, ptest1));
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: cidr = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 -- let's mix up which columns reference which
 create table fktable(ftest1 int, ftest2 inet, foreign key(ftest2, ftest1) references pktable);
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 create table fktable(ftest1 int, ftest2 inet, foreign key(ftest2, ftest1) references pktable(base1, ptest1));
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 create table fktable(ftest1 int, ftest2 inet, foreign key(ftest1, ftest2) references pktable(ptest1, base1));
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: integer = inet
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 drop table pktable;
 drop table pktable_base;
 -- 2 columns (1 table), mismatched types
@@ -949,27 +949,27 @@ create table pktable_base(base1 int not null, base2 int);
 create table pktable(ptest1 inet, ptest2 inet[], primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet[] = inet
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(ptest1, base1)) inherits (pktable_base);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: integer = inet
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(ptest2, base2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(ptest2, base2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit typecasts.
+HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
 drop table pktable;
 ERROR:  table "pktable" does not exist
 drop table pktable_base;
@@ -988,11 +988,11 @@ CREATE TABLE fktable (
 	fk		INT4 REFERENCES pktable DEFERRABLE
 );
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" for table "fktable"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 -- default to immediate: should fail
 INSERT INTO fktable VALUES (5, 10);
-ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
-DETAIL:  Key (fk)=(10) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (fk)=(10) is not present in table "pktable".
 -- explicitely defer the constraint
 BEGIN;
 SET CONSTRAINTS ALL DEFERRED;
@@ -1011,7 +1011,7 @@ CREATE TABLE fktable (
 	fk		INT4 REFERENCES pktable DEFERRABLE INITIALLY DEFERRED
 );
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" for table "fktable"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 -- default to deferred, should succeed
 BEGIN;
 INSERT INTO fktable VALUES (100, 200);
@@ -1022,8 +1022,8 @@ BEGIN;
 SET CONSTRAINTS ALL IMMEDIATE;
 -- should fail
 INSERT INTO fktable VALUES (500, 1000);
-ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
-DETAIL:  Key (fk)=(1000) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (fk)=(1000) is not present in table "pktable".
 COMMIT;
 DROP TABLE fktable, pktable;
 -- tricky behavior: according to SQL99, if a deferred constraint is set
@@ -1040,17 +1040,17 @@ CREATE TABLE fktable (
 	fk		INT4 REFERENCES pktable DEFERRABLE
 );
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" for table "fktable"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 BEGIN;
 SET CONSTRAINTS ALL DEFERRED;
 -- should succeed, for now
 INSERT INTO fktable VALUES (1000, 2000);
 -- should cause transaction abort, due to preceding error
 SET CONSTRAINTS ALL IMMEDIATE;
-ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
-DETAIL:  Key (fk)=(2000) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (fk)=(2000) is not present in table "pktable".
 INSERT INTO pktable VALUES (2000, 3); -- too late
-ERROR:  current transaction is aborted, queries ignored until end of transaction block
+ERROR:  current transaction is aborted, commands ignored until end of transaction block
 COMMIT;
 DROP TABLE fktable, pktable;
 -- deferrable, initially deferred
@@ -1064,11 +1064,11 @@ CREATE TABLE fktable (
 	fk		INT4 REFERENCES pktable DEFERRABLE INITIALLY DEFERRED
 );
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" for table "fktable"
-NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
+NOTICE:  CREATE TABLE will create implicit triggers for foreign-key checks
 BEGIN;
 -- no error here
 INSERT INTO fktable VALUES (100, 200);
 -- error here on commit
 COMMIT;
-ERROR:  insert or update on "fktable" violates foreign key constraint "$1"
-DETAIL:  Key (fk)=(200) is not present in "pktable".
+ERROR:  insert or update on table "fktable" violates foreign key constraint "$1"
+DETAIL:  Key (fk)=(200) is not present in table "pktable".

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.99 2003/08/17 19:58:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.100 2003/09/25 06:58:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,8 +209,8 @@ array_in(PG_FUNCTION_ARGS)
 		if (ndim >= MAXDIM)
 			ereport(ERROR,
 					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("number of array dimensions exceeds the maximum allowed, %d",
-							MAXDIM)));
+					 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
+							ndim, MAXDIM)));
 
 		for (q = p; isdigit((unsigned char) *q); q++);
 		if (q == p)				/* no digits? */
@@ -375,8 +375,8 @@ ArrayCount(char *str, int *dim, char typdelim)
 						if (nest_level >= MAXDIM)
 							ereport(ERROR,
 								(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-								 errmsg("number of array dimensions exceeds the maximum allowed, %d",
-										MAXDIM)));
+								 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
+										nest_level, MAXDIM)));
 						temp[nest_level] = 0;
 						nest_level++;
 						if (ndim < nest_level)
@@ -894,8 +894,8 @@ array_recv(PG_FUNCTION_ARGS)
 	if (ndim > MAXDIM)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("number of array dimensions exceeds the maximum allowed, %d",
-						MAXDIM)));
+				 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
+						ndim, MAXDIM)));
 
 	flags = pq_getmsgint(buf, 4);
 	if (flags != 0)
@@ -2132,7 +2132,7 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 		if (fcinfo->isnull)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("NULL array elements not supported")));
+					 errmsg("null array elements not supported")));
 
 		/* Ensure data is not toasted */
 		if (typlen == -1)
@@ -2234,8 +2234,8 @@ construct_md_array(Datum *elems,
 	if (ndims > MAXDIM)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("number of array dimensions exceeds the maximum allowed, %d",
-						MAXDIM)));
+				 errmsg("number of array dimensions (%d) exceeds the maximum allowed (%d)",
+						ndims, MAXDIM)));
 
 	/* fast track for empty array */
 	if (ndims == 0)
@@ -3028,7 +3028,7 @@ accumArrayResult(ArrayBuildState *astate,
 	if (disnull)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("NULL array elements not supported")));
+				 errmsg("null array elements not supported")));
 
 	/* Use datumCopy to ensure pass-by-ref stuff is copied into mcontext */
 	astate->dvalues[astate->nelems++] =

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.110 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.111 2003/09/25 06:57:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,20 +110,20 @@ pg_krb4_recvauth(Port *port)
 	if (status != KSUCCESS)
 	{
 		ereport(LOG,
-				(errmsg("kerberos error: %s", krb_err_txt[status])));
+				(errmsg("Kerberos error: %s", krb_err_txt[status])));
 		return STATUS_ERROR;
 	}
 	if (strncmp(version, PG_KRB4_VERSION, KRB_SENDAUTH_VLEN) != 0)
 	{
 		ereport(LOG,
-				(errmsg("kerberos protocol version \"%s\" != \"%s\"",
+				(errmsg("unexpected Kerberos protocol version received from client (received \"%s\", expected \"%s\")",
 						version, PG_KRB4_VERSION)));
 		return STATUS_ERROR;
 	}
 	if (strncmp(port->user_name, auth_data.pname, SM_DATABASE_USER) != 0)
 	{
 		ereport(LOG,
-				(errmsg("kerberos user name \"%s\" != \"%s\"",
+				(errmsg("unexpected Kerberos user name received from client (received \"%s\", expected \"%s\")",
 						port->user_name, auth_data.pname)));
 		return STATUS_ERROR;
 	}
@@ -137,7 +137,7 @@ pg_krb4_recvauth(Port *port)
 {
 	ereport(LOG,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("kerberos v4 not implemented on this server")));
+			 errmsg("Kerberos 4 not implemented on this server")));
 	return STATUS_ERROR;
 }
 #endif   /* KRB4 */
@@ -198,7 +198,7 @@ pg_krb5_init(void)
 	if (retval)
 	{
 		ereport(LOG,
-				(errmsg("kerberos init returned error %d",
+				(errmsg("Kerberos initialization returned error %d",
 						retval)));
 		com_err("postgres", retval, "while initializing krb5");
 		return STATUS_ERROR;
@@ -208,7 +208,7 @@ pg_krb5_init(void)
 	if (retval)
 	{
 		ereport(LOG,
-				(errmsg("kerberos keytab resolve returned error %d",
+				(errmsg("Kerberos keytab resolving returned error %d",
 						retval)));
 		com_err("postgres", retval, "while resolving keytab file \"%s\"",
 				pg_krb_server_keyfile);
@@ -221,7 +221,7 @@ pg_krb5_init(void)
 	if (retval)
 	{
 		ereport(LOG,
-		 (errmsg("kerberos sname_to_principal(\"%s\") returned error %d",
+		 (errmsg("Kerberos sname_to_principal(\"%s\") returned error %d",
 				 PG_KRB_SRVNAM, retval)));
 		com_err("postgres", retval,
 				"while getting server principal for service \"%s\"",
@@ -266,7 +266,7 @@ pg_krb5_recvauth(Port *port)
 	if (retval)
 	{
 		ereport(LOG,
-				(errmsg("kerberos recvauth returned error %d",
+				(errmsg("Kerberos recvauth returned error %d",
 						retval)));
 		com_err("postgres", retval, "from krb5_recvauth");
 		return STATUS_ERROR;
@@ -291,7 +291,7 @@ pg_krb5_recvauth(Port *port)
 	if (retval)
 	{
 		ereport(LOG,
-				(errmsg("kerberos unparse_name returned error %d",
+				(errmsg("Kerberos unparse_name returned error %d",
 						retval)));
 		com_err("postgres", retval, "while unparsing client name");
 		krb5_free_ticket(pg_krb5_context, ticket);
@@ -303,7 +303,7 @@ pg_krb5_recvauth(Port *port)
 	if (strncmp(port->user_name, kusername, SM_DATABASE_USER))
 	{
 		ereport(LOG,
-				(errmsg("kerberos user name \"%s\" != \"%s\"",
+				(errmsg("unexpected Kerberos user name received from client (received \"%s\", expected \"%s\")",
 						port->user_name, kusername)));
 		ret = STATUS_ERROR;
 	}
@@ -324,7 +324,7 @@ pg_krb5_recvauth(Port *port)
 {
 	ereport(LOG,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("kerberos v5 not implemented on this server")));
+			 errmsg("Kerberos 5 not implemented on this server")));
 	return STATUS_ERROR;
 }
 #endif   /* KRB5 */
@@ -416,7 +416,7 @@ ClientAuthentication(Port *port)
 		ereport(FATAL,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("missing or erroneous pg_hba.conf file"),
-				 errhint("See postmaster log for details.")));
+				 errhint("See server log for details.")));
 
 	switch (port->auth_method)
 	{
@@ -460,7 +460,7 @@ ClientAuthentication(Port *port)
 				|| port->laddr.addr.ss_family != AF_INET)
 				ereport(FATAL,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				   errmsg("kerberos 4 only supports IPv4 connections")));
+				   errmsg("Kerberos 4 only supports IPv4 connections")));
 			sendAuthRequest(port, AUTH_REQ_KRB4);
 			status = pg_krb4_recvauth(port);
 			break;
@@ -676,7 +676,7 @@ CheckPAMAuth(Port *port, char *user, char *password)
 	if (retval != PAM_SUCCESS)
 	{
 		ereport(LOG,
-				(errmsg("Failed to create PAM authenticator: %s",
+				(errmsg("could not create PAM authenticator: %s",
 						pam_strerror(pamh, retval))));
 		pam_passwd = NULL;		/* Unset pam_passwd */
 		return STATUS_ERROR;
@@ -731,7 +731,7 @@ CheckPAMAuth(Port *port, char *user, char *password)
 	if (retval != PAM_SUCCESS)
 	{
 		ereport(LOG,
-				(errmsg("failed to release PAM authenticator: %s",
+				(errmsg("could not release PAM authenticator: %s",
 						pam_strerror(pamh, retval))));
 	}
 
@@ -769,7 +769,7 @@ recv_password_packet(Port *port)
 			if (mtype != EOF)
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					errmsg("expected password response, got msg type %d",
+					errmsg("expected password response, got message type %d",
 						   mtype)));
 			return NULL;		/* EOF or bad message type */
 		}

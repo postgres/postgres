@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/encode.c,v 1.8 2003/08/04 23:59:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/encode.c,v 1.9 2003/09/25 06:58:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ get_hex(unsigned c)
 	if (res < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("invalid hex digit: \"%c\"", c)));
+				 errmsg("invalid hexadecimal digit: \"%c\"", c)));
 
 	return (uint8) res;
 }
@@ -175,7 +175,7 @@ hex_decode(const uint8 *src, unsigned len, uint8 *dst)
 		if (s >= srcend)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid hex data: odd number of digits")));
+					 errmsg("invalid hexadecimal data: odd number of digits")));
 
 		v2 = get_hex(*s++);
 		*p++ = v1 | v2;
@@ -433,7 +433,7 @@ esc_decode(const uint8 *src, unsigned srclen, uint8 *dst)
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for bytea")));
+					 errmsg("invalid input syntax for type bytea")));
 		}
 
 		len++;
@@ -498,7 +498,7 @@ esc_dec_len(const uint8 *src, unsigned srclen)
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					 errmsg("invalid input syntax for bytea")));
+					 errmsg("invalid input syntax for type bytea")));
 		}
 
 		len++;

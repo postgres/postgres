@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.129 2003/08/11 23:04:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.130 2003/09/25 06:58:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -455,7 +455,7 @@ process_matched_tle(TargetEntry *src_tle,
 		((ArrayRef *) prior_tle->expr)->refrestype)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("multiple assignments to same attribute \"%s\"",
+				 errmsg("multiple assignments to same column \"%s\"",
 						attrName)));
 
 	/*
@@ -469,7 +469,7 @@ process_matched_tle(TargetEntry *src_tle,
 	if (!equal(priorbottom, ((ArrayRef *) src_tle->expr)->refexpr))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("multiple assignments to same attribute \"%s\"",
+				 errmsg("multiple assignments to same column \"%s\"",
 						attrName)));
 
 	/*

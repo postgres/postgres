@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.153 2003/09/24 18:54:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.154 2003/09/25 06:57:57 petere Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1425,7 +1425,7 @@ RequireTransactionChain(void *stmtNode, const char *stmtType)
 	ereport(ERROR,
 			(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
 	/* translator: %s represents an SQL statement name */
-			 errmsg("%s may only be used in BEGIN/END transaction blocks",
+			 errmsg("%s may only be used in transaction blocks",
 					stmtType)));
 }
 

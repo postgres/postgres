@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.122 2003/09/10 20:24:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.123 2003/09/25 06:57:58 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,7 @@ createdb(const CreatedbStmt *stmt)
 					 src_dbpath))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
-				 errmsg("template \"%s\" does not exist", dbtemplate)));
+				 errmsg("template database \"%s\" does not exist", dbtemplate)));
 
 	/*
 	 * Permission check: to copy a DB that's not marked datistemplate, you
@@ -271,7 +271,7 @@ createdb(const CreatedbStmt *stmt)
 	if (!PG_VALID_BE_ENCODING(encoding))
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("invalid backend encoding %d", encoding)));
+				 errmsg("invalid server encoding %d", encoding)));
 
 	/*
 	 * Preassign OID for pg_database tuple, so that we can compute db
@@ -339,7 +339,7 @@ createdb(const CreatedbStmt *stmt)
 	if (rmdir(target_dir) != 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not remove temp directory \"%s\": %m",
+				 errmsg("could not remove temporary directory \"%s\": %m",
 						target_dir)));
 
 	/* Make the symlink, if needed */
@@ -350,7 +350,7 @@ createdb(const CreatedbStmt *stmt)
 #endif
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not link \"%s\" to \"%s\": %m",
+					 errmsg("could not link file \"%s\" to \"%s\": %m",
 							nominal_loc, alt_loc)));
 	}
 
@@ -911,7 +911,7 @@ resolve_alt_dbpath(const char *dbpath, Oid dboid)
 	if (len >= MAXPGPATH - 100)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
-				 errmsg("alternate path is too long")));
+				 errmsg("alternative path is too long")));
 
 	ret = palloc(len);
 	snprintf(ret, len, "%s/base/%u", prefix, dboid);
@@ -942,7 +942,7 @@ remove_dbdirs(const char *nominal_loc, const char *alt_loc)
 		{
 			ereport(WARNING,
 					(errcode_for_file_access(),
-					 errmsg("could not remove \"%s\": %m", nominal_loc)));
+					 errmsg("could not remove file \"%s\": %m", nominal_loc)));
 			success = false;
 		}
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.77 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.78 2003/09/25 06:57:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,7 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 	if (attrList == NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				 errmsg("view must have at least one attribute")));
+				 errmsg("view must have at least one column")));
 
 	/*
 	 * Check to see if we want to replace an existing view.
@@ -190,7 +190,7 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 			newattr->atttypmod != oldattr->atttypmod)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				   errmsg("cannot change datatype of view column \"%s\"",
+				   errmsg("cannot change data type of view column \"%s\"",
 						  NameStr(oldattr->attname))));
 		/* We can ignore the remaining attributes of an attribute... */
 	}

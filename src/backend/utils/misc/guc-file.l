@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.18 2003/08/04 23:59:39 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.19 2003/09/25 06:58:05 petere Exp $
  */
 
 %{
@@ -161,7 +161,7 @@ ProcessConfigFile(GucContext context)
         if (errno != ENOENT)
             ereport(elevel,
 					(errcode_for_file_access(),
-					 errmsg("could not read configuration file \"" CONFIG_FILENAME "\": %m")));
+					 errmsg("could not open configuration file \"%s\": %m", CONFIG_FILENAME)));
 		return;
     }
 
@@ -264,8 +264,8 @@ ProcessConfigFile(GucContext context)
 	free_name_value_list(head);
 	ereport(elevel,
 			(errcode(ERRCODE_SYNTAX_ERROR),
-			 errmsg("syntax error in \"" CONFIG_FILENAME "\" line %u, near token \"%s\"", 
-					ConfigFileLineno, yytext)));
+			 errmsg("syntax error in file \"%s\" line %u, near token \"%s\"", 
+					CONFIG_FILENAME, ConfigFileLineno, yytext)));
 	return;
 
  out_of_memory:
