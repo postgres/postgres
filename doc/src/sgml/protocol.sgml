@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.32 2003/04/26 20:22:57 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.33 2003/04/28 05:17:31 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -1156,7 +1156,7 @@ Notice that although each message includes a byte count at the beginning,
 the message format is defined so that the message end can be found without
 reference to the byte count.  This aids validity checking.  (The CopyData
 message is an exception, because it forms part of a data stream; the contents
-may not be interpretable on their own.)
+of any individual CopyData message may not be interpretable on their own.)
 </para>
 
 <VariableList>
