@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.75 2001/08/06 18:17:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.76 2001/08/15 07:07:40 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,6 +209,19 @@ PG_char_to_encoding(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
+Datum
+pg_convert(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "convert is not supported. To use convert, you need to enable multibyte capability");
+	return DirectFunctionCall1(textin, CStringGetDatum(""));
+}
+
+Datum
+pg_convert2(PG_FUNCTION_ARGS)
+{
+	elog(ERROR, "convert is not supported. To use convert, you need to enable multibyte capability");
+	return DirectFunctionCall1(textin, CStringGetDatum(""));
+}
 #endif
 
 /* ----------------------------------------------------------------

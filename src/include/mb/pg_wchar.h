@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.27 2001/07/15 11:07:37 ishii Exp $ */
+/* $Id: pg_wchar.h,v 1.28 2001/08/15 07:07:40 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -145,6 +145,8 @@ extern unsigned char *pg_server_to_client(unsigned char *, int);
 extern int	pg_valid_client_encoding(const char *);
 extern pg_encoding_conv_tbl *pg_get_enc_ent(int);
 extern int	pg_utf_mblen(const unsigned char *);
+extern int	pg_find_encoding_converters(int, int, void (**)(), void (**)());
+extern unsigned char *pg_do_encoding_conversion(unsigned char *, int, void (*)(), void (*)());
 
 /* internally-used versions of functions.  The PG_xxx forms of these
  * functions have fmgr-compatible interfaves.
