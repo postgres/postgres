@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.62 1998/09/09 03:42:52 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.63 1998/09/10 15:32:16 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -762,6 +762,7 @@ UpdateIndexRelation(Oid indexoid,
 	predLen = VARSIZE(predText);
 	itupLen = predLen + sizeof(FormData_pg_index);
 	indexForm = (Form_pg_index) palloc(itupLen);
+	memset (indexForm, 0, sizeof(FormData_pg_index));
 
 	memmove((char *) &indexForm->indpred, (char *) predText, predLen);
 

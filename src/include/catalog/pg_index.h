@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_index.h,v 1.9 1998/09/06 04:49:51 momjian Exp $
+ * $Id: pg_index.h,v 1.10 1998/09/10 15:32:32 vadim Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -52,6 +52,9 @@ CATALOG(pg_index)
 								 * compression)? */
 	bool		indhaskeytype;	/* does key type != attribute type? */
 	bool		indisunique;	/* is this a unique index? */
+	bool		indisprimary;	/* is this index for primary key */
+	Oid			indreference;	/* oid of index of referenced relation 
+								 * (ie - this index for foreign key */
 	text		indpred;		/* query plan for partial index predicate */
 } FormData_pg_index;
 
@@ -69,7 +72,7 @@ typedef FormData_pg_index *Form_pg_index;
  *		compiler constants for pg_index
  * ----------------
  */
-#define Natts_pg_index					10
+#define Natts_pg_index					12
 #define Anum_pg_index_indexrelid		1
 #define Anum_pg_index_indrelid			2
 #define Anum_pg_index_indproc			3
@@ -79,6 +82,8 @@ typedef FormData_pg_index *Form_pg_index;
 #define Anum_pg_index_indislossy		7
 #define Anum_pg_index_indhaskeytype		8
 #define Anum_pg_index_indisunique		9
-#define Anum_pg_index_indpred			10
+#define Anum_pg_index_indisprimary		10
+#define Anum_pg_index_indreference		11
+#define Anum_pg_index_indpred			12
 
 #endif	 /* PG_INDEX_H */
