@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.21 1999/05/25 16:09:00 momjian Exp $
+ * $Id: password.c,v 1.21.2.1 1999/12/01 15:30:46 tgl Exp $
  *
  */
 
@@ -90,6 +90,8 @@ verify_password(char *auth_arg, char *user, char *password)
 			return STATUS_ERROR;
 		}
 	}
+
+	FreeFile(pw_file);
 
 	snprintf(PQerrormsg, ERROR_MSG_LENGTH,
 			 "verify_password: user '%s' not found in password file.\n",
