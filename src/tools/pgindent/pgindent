@@ -1487,12 +1487,12 @@ do
 	cat /tmp/$$a |
 	sed 's;^/\*\(DATA(.*\)\*/$;\1;' |
 	sed 's;^/\*\(CATALOG(.*\)\*/$;\1;' |
-	sed 's;^/\* Open extern \"C\" \*/$;extern    "C"\
-{;' |
-	sed 's;^/\* Close extern \"C\" \*/$;};' |
 # remove tabs and retab with four spaces
 	detab -t8 -qc |
 	entab -t4 -qc |
+	sed 's;^/\* Open extern \"C\" \*/$;extern		"C"\
+{;' |
+	sed 's;^/\* Close extern \"C\" \*/$;};' |
 	sed 's;/\*---X_X;/* ---;g' |
 # workaround indent bug
 	sed 's;^static[ 	][ 	]*;static ;g' |
