@@ -1,5 +1,17 @@
 ===========
-14 Apr 1999
+1999 Jul 21
+===========
+
+   Josef Balatka, <balatka@email.cz> asked us to remove RECODE and sent me
+Czech ISO-8859-2 -> WIN-1250 translation table.
+   RECODE is no longer contains Cyrillic RECODE and will stay in PostgreSQL.
+
+   He also created some bits of documentation, mostly concerning RECODE -
+see README.Charsets.
+
+
+===========
+1999 Apr 14
 ===========
 
    Tatsuo Ishii <t-ishii@sra.co.jp> updated Multibyte support extending it
