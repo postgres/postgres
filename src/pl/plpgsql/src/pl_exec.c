@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.41.2.1 2001/05/08 01:02:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.41.2.2 2001/06/13 01:02:59 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1922,9 +1922,6 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 								   ObjectIdGetDatum(typeStruct->typelem),
 											 Int32GetDatum(-1)));
 
-	if (!typeStruct->typbyval)
-		pfree((void *) query);
-
 	ReleaseSysCache(typetup);
 
 	/*
@@ -2037,9 +2034,6 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 											 query,
 								   ObjectIdGetDatum(typeStruct->typelem),
 											 Int32GetDatum(-1)));
-
-	if (!typeStruct->typbyval)
-		pfree((void *) query);
 
 	ReleaseSysCache(typetup);
 
