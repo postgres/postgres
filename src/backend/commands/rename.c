@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.62 2001/11/12 00:46:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.63 2001/11/12 01:34:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,16 +41,16 @@
 #include "utils/temprel.h"
 
 
-#define RI_TRIGGER_PK   1		/* is a trigger on the PK relation */
-#define RI_TRIGGER_FK   2		/* is a trigger on the FK relation */
+#define RI_TRIGGER_PK	1		/* is a trigger on the PK relation */
+#define RI_TRIGGER_FK	2		/* is a trigger on the FK relation */
 #define RI_TRIGGER_NONE 0		/* is not an RI trigger function */
 
-static int ri_trigger_type(Oid tgfoid);
+static int	ri_trigger_type(Oid tgfoid);
 static void update_ri_trigger_args(Oid relid,
-								   const char* oldname,
-								   const char* newname,
-								   bool fk_scan,
-								   bool update_relname);
+					   const char *oldname,
+					   const char *newname,
+					   bool fk_scan,
+					   bool update_relname);
 
 
 /*
@@ -251,7 +251,7 @@ renameatt(char *relname,
 	if (targetrelation->rd_rel->reltriggers > 0)
 	{
 		/* update tgargs column reference where att is primary key */
-		update_ri_trigger_args(RelationGetRelid(targetrelation), 
+		update_ri_trigger_args(RelationGetRelid(targetrelation),
 							   oldattname, newattname,
 							   false, false);
 		/* update tgargs column reference where att is foreign key */
@@ -425,19 +425,19 @@ ri_trigger_type(Oid tgfoid)
  */
 static void
 update_ri_trigger_args(Oid relid,
-                       const char* oldname,
-                       const char* newname,
-                       bool fk_scan,
-                       bool update_relname)
+					   const char *oldname,
+					   const char *newname,
+					   bool fk_scan,
+					   bool update_relname)
 {
-	Relation          tgrel;
-	Relation          irel;
-	ScanKeyData       skey[1];
-	IndexScanDesc     idxtgscan;
+	Relation	tgrel;
+	Relation	irel;
+	ScanKeyData skey[1];
+	IndexScanDesc idxtgscan;
 	RetrieveIndexResult idxres;
-	Datum             values[Natts_pg_trigger];
-	char              nulls[Natts_pg_trigger];
-	char              replaces[Natts_pg_trigger];
+	Datum		values[Natts_pg_trigger];
+	char		nulls[Natts_pg_trigger];
+	char		replaces[Natts_pg_trigger];
 
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 	if (fk_scan)
@@ -445,29 +445,29 @@ update_ri_trigger_args(Oid relid,
 	else
 		irel = index_openr(TriggerRelidIndex);
 
-	ScanKeyEntryInitialize(&skey[0], 0x0, 
+	ScanKeyEntryInitialize(&skey[0], 0x0,
 						   1,	/* always column 1 of index */
 						   F_OIDEQ,
 						   ObjectIdGetDatum(relid));
 	idxtgscan = index_beginscan(irel, false, 1, skey);
-  
+
 	while ((idxres = index_getnext(idxtgscan, ForwardScanDirection)) != NULL)
 	{
-		HeapTupleData     tupledata;
-		Buffer            buffer;
-		HeapTuple         tuple;
-		Form_pg_trigger   pg_trigger;
-		bytea*   val;
-		bytea*   newtgargs;
-		bool		      isnull;
-		int               tg_type;
-		bool			examine_pk;
-		bool			changed;
-		int				  tgnargs;
-		int				i;
-		int				newlen;
-		const char		*arga[RI_MAX_ARGUMENTS];
-		const char		*argp;
+		HeapTupleData tupledata;
+		Buffer		buffer;
+		HeapTuple	tuple;
+		Form_pg_trigger pg_trigger;
+		bytea	   *val;
+		bytea	   *newtgargs;
+		bool		isnull;
+		int			tg_type;
+		bool		examine_pk;
+		bool		changed;
+		int			tgnargs;
+		int			i;
+		int			newlen;
+		const char *arga[RI_MAX_ARGUMENTS];
+		const char *argp;
 
 		tupledata.t_self = idxres->heap_iptr;
 		heap_fetch(tgrel, SnapshotNow, &tupledata, &buffer, idxtgscan);
@@ -487,8 +487,8 @@ update_ri_trigger_args(Oid relid,
 		/*
 		 * It is an RI trigger, so parse the tgargs bytea.
 		 *
-		 * NB: we assume the field will never be compressed or moved
-		 * out of line; so does trigger.c ...
+		 * NB: we assume the field will never be compressed or moved out of
+		 * line; so does trigger.c ...
 		 */
 		tgnargs = pg_trigger->tgnargs;
 		val = (bytea *) fastgetattr(tuple,
@@ -505,15 +505,15 @@ update_ri_trigger_args(Oid relid,
 		for (i = 0; i < tgnargs; i++)
 		{
 			arga[i] = argp;
-			argp += strlen(argp)+1;
+			argp += strlen(argp) + 1;
 		}
 
 		/*
 		 * Figure out which item(s) to look at.  If the trigger is
-		 * primary-key type and attached to my rel, I should look at
-		 * the PK fields; if it is foreign-key type and attached to my
-		 * rel, I should look at the FK fields.  But the opposite rule
-		 * holds when examining triggers found by tgconstrrel search.
+		 * primary-key type and attached to my rel, I should look at the
+		 * PK fields; if it is foreign-key type and attached to my rel, I
+		 * should look at the FK fields.  But the opposite rule holds when
+		 * examining triggers found by tgconstrrel search.
 		 */
 		examine_pk = (tg_type == RI_TRIGGER_PK) == (!fk_scan);
 
@@ -590,27 +590,27 @@ update_ri_trigger_args(Oid relid,
 		simple_heap_update(tgrel, &tuple->t_self, tuple);
 
 		{
-  			Relation	irelations[Num_pg_attr_indices];
+			Relation	irelations[Num_pg_attr_indices];
 
-  			CatalogOpenIndices(Num_pg_trigger_indices, Name_pg_trigger_indices, irelations);
-  			CatalogIndexInsert(irelations, Num_pg_trigger_indices, tgrel, tuple);
-  			CatalogCloseIndices(Num_pg_trigger_indices, irelations);
-  		}
-      
+			CatalogOpenIndices(Num_pg_trigger_indices, Name_pg_trigger_indices, irelations);
+			CatalogIndexInsert(irelations, Num_pg_trigger_indices, tgrel, tuple);
+			CatalogCloseIndices(Num_pg_trigger_indices, irelations);
+		}
+
 		/* free up our scratch memory */
 		pfree(newtgargs);
 		heap_freetuple(tuple);
 	}
 
-    index_endscan(idxtgscan);
-    index_close(irel);
+	index_endscan(idxtgscan);
+	index_close(irel);
 
 	heap_close(tgrel, RowExclusiveLock);
 
 	/*
-	 * Increment cmd counter to make updates visible; this is needed
-	 * in case the same tuple has to be updated again by next pass
-	 * (can happen in case of a self-referential FK relationship).
+	 * Increment cmd counter to make updates visible; this is needed in
+	 * case the same tuple has to be updated again by next pass (can
+	 * happen in case of a self-referential FK relationship).
 	 */
-    CommandCounterIncrement();
+	CommandCounterIncrement();
 }
