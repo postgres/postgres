@@ -4,7 +4,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.6 2001/01/24 19:01:31 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.7 2001/06/01 20:29:43 tgl Exp $
  */
 
 %{
@@ -324,6 +324,8 @@ GUC_scanstr(char *s)
 	len = strlen(s);
 
 	newStr = malloc(len + 1);	/* string cannot get longer */
+	if (newStr == NULL)
+		elog(FATAL, "out of memory");
 
 	for (i = 0, j = 0; i < len; i++)
 	{

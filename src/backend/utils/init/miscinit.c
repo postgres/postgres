@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.67 2001/05/18 17:49:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.68 2001/06/01 20:27:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,14 +143,18 @@ SetDataDir(const char *dir)
 		}
 
 		new = malloc(strlen(buf) + 1 + strlen(dir) + 1);
+		if (!new)
+			elog(FATAL, "out of memory");
 		sprintf(new, "%s/%s", buf, dir);
 		free(buf);
 	}
 	else
+	{
 		new = strdup(dir);
+		if (!new)
+			elog(FATAL, "out of memory");
+	}
 
-	if (!new)
-		elog(FATAL, "out of memory");
 	DataDir = new;
 }
 
@@ -278,10 +282,15 @@ SetCharSet()
 	{
 		map_file = (char *) malloc((strlen(DataDir) +
 									strlen(p) + 2) * sizeof(char));
+		if (! map_file)
+			elog(FATAL, "out of memory");
 		sprintf(map_file, "%s/%s", DataDir, p);
 		file = AllocateFile(map_file, PG_BINARY_R);
 		if (file == NULL)
+		{
+			free(map_file);
 			return;
+		}
 		eof = false;
 		while (!eof)
 		{
