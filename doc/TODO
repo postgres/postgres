@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu May 10 13:19:40 EDT 2001
+Last updated:		Thu May 10 13:29:36 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -47,9 +47,10 @@ URGENT
 
 ADMIN
 
-* More access control over who can create tables and use locks (Karel)
-* Allow better control over user privileges [privileges]
-* Permission to DELETE table allows UPDATE also
+* More access control over who can  (Karel)
+* Improve control over user privileges, including table creation and 
+  lock use [privileges]
+* Permission to DELETE table also allows UPDATE
 * Allow elog() to return error codes, module name, file name, line
   number, not just messages [elog]
 * Allow international error message support and add error codes [elog]
@@ -59,36 +60,35 @@ ADMIN
 
 TYPES
 
-* Nchar (as distinguished from ordinary varchar),
-* Domain capability
+* Add domain capability
 * Add IPv6 capability to INET/CIDR types
 * Add conversion function from text to inet
 * Make a separate SERIAL type?
 * Store binary-compatible type information in the system
-* Allow LOCALE on a per-column basis, default to ASCII
-* Add SHOW command to see locale
 * Allow nulls in arrays
 * Allow arrays to be ORDER'ed
 * Support construction of array result values in expressions
-* Change foreign key constraint for array -> element to mean element
-   in array
 * Remove Money type, add money formatting for decimal type
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Add non-large-object binary field
+* Make binary/file in/out interface for TOAST columns
 * Functions returning sets do not totally work
 * SELECT col FROM tab WHERE numeric_col = 10.1 fails
 * Allow better handling of numeric constants, type conversion [typeconv]
+* Missing optimizer selectivities for date, r-tree, etc. [optimizer]
+* SELECT cash_out(2) crashes because of opaque
+* Add SQL standard function bit_length()
+* Make oid use unsigned int more reliably, pg_atoi()
+
+MULTILANGUAGE SUPPORT
+
+* Add nchar (as distinguished from ordinary varchar),
+* Allow LOCALE on a per-column basis, default to ASCII
+* Add SHOW command to see locale
 * Support multiple simultaneous character sets, per SQL92
 * Reject character sequences those are not valid in their charset
 * Make functions more multi-byte aware, i.e. trim()
 * Make n of CHAR(n)/VARCHAR(n) the number of letters, not bytes
-* Add btree index support for reltime, tinterval, regproc
-* Add rtree index support for line, lseg, path, point
-* Make binary/file in/out interface for TOAST columns
-* SELECT cash_out(2) crashes because of opaque
-* Add SQL standard function bit_length()
-* Make oid use unsigned int more reliably, pg_atoi()
-* Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 
 VIEWS
 
@@ -109,6 +109,8 @@ INDEXES
 * Add UNIQUE capability to non-btree indexes
 * Certain indexes will not shrink, i.e. oid indexes with many inserts (Vadim)
 * Have UPDATE/DELETE clean out indexes
+* Add btree index support for reltime, tinterval, regproc
+* Add rtree index support for line, lseg, path, point
 
 COMMANDS
 
@@ -178,6 +180,8 @@ REFERENTIAL INTEGRITY
 * Add unique indexes on pg_database
 * Check all system tables and add unique indexes as needed
 * Make constraints clearer in dump file
+* Change foreign key constraint for array -> element to mean element
+   in array
 
 EXOTIC FEATURES
 
