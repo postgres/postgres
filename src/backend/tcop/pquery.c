@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.46 2001/10/25 05:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.47 2002/02/26 22:47:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,6 @@
 #include "tcop/pquery.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
-
-
-static char *CreateOperationTag(int operationType);
 
 
 /* ----------------------------------------------------------------
@@ -89,42 +86,6 @@ CreateExecutorState(void)
 	return state;
 }
 
-/* ----------------------------------------------------------------
- *		CreateOperationTag
- *
- *		utility to get a string representation of the
- *		query operation.
- * ----------------------------------------------------------------
- */
-static char *
-CreateOperationTag(int operationType)
-{
-	char	   *tag;
-
-	switch (operationType)
-	{
-		case CMD_SELECT:
-			tag = "SELECT";
-			break;
-		case CMD_INSERT:
-			tag = "INSERT";
-			break;
-		case CMD_DELETE:
-			tag = "DELETE";
-			break;
-		case CMD_UPDATE:
-			tag = "UPDATE";
-			break;
-		default:
-			elog(DEBUG, "CreateOperationTag: unknown operation type %d",
-				 operationType);
-			tag = "???";
-			break;
-	}
-
-	return tag;
-}
-
 /* ----------------
  *		PreparePortal
  * ----------------
@@ -158,19 +119,25 @@ PreparePortal(char *portalName)
 }
 
 
-/* ----------------------------------------------------------------
- *		ProcessQuery
+/*
+ * ProcessQuery
+ *		Execute a query
  *
- *		Execute a plan, the non-parallel version
- * ----------------------------------------------------------------
+ *	parsetree: the query tree
+ *	plan: the plan tree for the query
+ *	dest: where to send results
+ *	completionTag: points to a buffer of size COMPLETION_TAG_BUFSIZE
+ *		in which to store a command completion status string.
+ *
+ * completionTag may be NULL if caller doesn't want a status string.
  */
 void
 ProcessQuery(Query *parsetree,
 			 Plan *plan,
-			 CommandDest dest)
+			 CommandDest dest,
+			 char *completionTag)
 {
 	int			operation = parsetree->commandType;
-	char	   *tag;
 	bool		isRetrieveIntoPortal;
 	bool		isRetrieveIntoRelation;
 	char	   *intoName = NULL;
@@ -179,8 +146,6 @@ ProcessQuery(Query *parsetree,
 	QueryDesc  *queryDesc;
 	EState	   *state;
 	TupleDesc	attinfo;
-
-	set_ps_display(tag = CreateOperationTag(operation));
 
 	/*
 	 * initialize portal/into relation status
@@ -238,8 +203,7 @@ ProcessQuery(Query *parsetree,
 	 * When performing a retrieve into, we override the normal
 	 * communication destination during the processing of the the query.
 	 * This only affects the tuple-output function - the correct
-	 * destination will still see BeginCommand() and EndCommand()
-	 * messages.
+	 * destination will still see the BeginCommand() call.
 	 */
 	if (isRetrieveIntoRelation)
 		queryDesc->dest = None;
@@ -263,7 +227,7 @@ ProcessQuery(Query *parsetree,
 				 attinfo,
 				 isRetrieveIntoRelation,
 				 isRetrieveIntoPortal,
-				 tag,
+				 NULL,			/* not used */
 				 dest);
 
 	/*
@@ -281,7 +245,9 @@ ProcessQuery(Query *parsetree,
 		/* Now we can return to caller's memory context. */
 		MemoryContextSwitchTo(oldContext);
 
-		EndCommand(tag, dest);
+		/* Set completion tag.  SQL calls this operation DECLARE CURSOR */
+		if (completionTag)
+			strcpy(completionTag, "DECLARE");
 
 		return;
 	}
@@ -292,16 +258,42 @@ ProcessQuery(Query *parsetree,
 	 */
 	ExecutorRun(queryDesc, state, EXEC_RUN, 0L);
 
-	/* save infos for EndCommand */
-	UpdateCommandInfo(operation, state->es_lastoid, state->es_processed);
+	/*
+	 * Build command completion status string, if caller wants one.
+	 */
+	if (completionTag)
+	{
+		Oid		lastOid;
+
+		switch (operation)
+		{
+			case CMD_SELECT:
+				strcpy(completionTag, "SELECT");
+				break;
+			case CMD_INSERT:
+				if (state->es_processed == 1)
+					lastOid = state->es_lastoid;
+				else
+					lastOid = InvalidOid;
+				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
+						 "INSERT %u %u", lastOid, state->es_processed);
+				break;
+			case CMD_UPDATE:
+				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
+						 "UPDATE %u", state->es_processed);
+				break;
+			case CMD_DELETE:
+				snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
+						 "DELETE %u", state->es_processed);
+				break;
+			default:
+				strcpy(completionTag, "???");
+				break;
+		}
+	}
 
 	/*
 	 * Now, we close down all the scans and free allocated resources.
 	 */
 	ExecutorEnd(queryDesc, state);
-
-	/*
-	 * Notify the destination of end of processing.
-	 */
-	EndCommand(tag, dest);
 }

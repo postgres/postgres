@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.113 2001/10/25 05:49:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.114 2002/02/26 22:47:07 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -167,6 +167,9 @@ _readQuery(void)
 	token = pg_strtok(&length); /* skip the :hasSubLinks */
 	token = pg_strtok(&length); /* get hasSubLinks */
 	local_node->hasSubLinks = strtobool(token);
+
+	/* we always want originalQuery to be false in a read-in query */
+	local_node->originalQuery = false;
 
 	token = pg_strtok(&length); /* skip :rtable */
 	local_node->rtable = nodeRead(true);

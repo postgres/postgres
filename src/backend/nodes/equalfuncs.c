@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.110 2002/02/24 20:20:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.111 2002/02/26 22:47:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -593,6 +593,7 @@ _equalQuery(Query *a, Query *b)
 		return false;
 	if (a->hasSubLinks != b->hasSubLinks)
 		return false;
+	/* we deliberately ignore originalQuery */
 	if (!equal(a->rtable, b->rtable))
 		return false;
 	if (!equal(a->jointree, b->jointree))

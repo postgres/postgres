@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.67 2001/10/25 05:49:25 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.68 2002/02/26 22:47:04 tgl Exp $
  *
  */
 
@@ -120,7 +120,7 @@ ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 		plan->instrument = InstrAlloc();
 
 		gettimeofday(&starttime, NULL);
-		ProcessQuery(query, plan, None);
+		ProcessQuery(query, plan, None, NULL);
 		CommandCounterIncrement();
 		gettimeofday(&endtime, NULL);
 

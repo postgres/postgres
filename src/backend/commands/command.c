@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.154 2002/02/19 20:11:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.155 2002/02/26 22:47:04 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -89,16 +89,25 @@ PortalCleanup(Portal portal)
 	MemoryContextSwitchTo(oldcontext);
 }
 
-/* --------------------------------
- *		PerformPortalFetch
- * --------------------------------
+
+/*
+ * PerformPortalFetch
+ *
+ *	name: name of portal
+ *	forward: forward or backward fetch?
+ *	count: # of tuples to fetch (0 implies all)
+ *	dest: where to send results
+ *	completionTag: points to a buffer of size COMPLETION_TAG_BUFSIZE
+ *		in which to store a command completion status string.
+ *
+ * completionTag may be NULL if caller doesn't want a status string.
  */
 void
 PerformPortalFetch(char *name,
 				   bool forward,
 				   int count,
-				   char *tag,
-				   CommandDest dest)
+				   CommandDest dest,
+				   char *completionTag)
 {
 	Portal		portal;
 	QueryDesc  *queryDesc;
@@ -106,6 +115,10 @@ PerformPortalFetch(char *name,
 	MemoryContext oldcontext;
 	CommandId	savedId;
 	bool		temp_desc = false;
+
+	/* initialize completion status in case of early exit */
+	if (completionTag)
+		strcpy(completionTag, (dest == None) ? "MOVE 0" : "FETCH 0");
 
 	/*
 	 * sanity checks
@@ -167,7 +180,7 @@ PerformPortalFetch(char *name,
 								 * relations */
 				 false,			/* this is a portal fetch, not a "retrieve
 								 * portal" */
-				 tag,
+				 NULL,			/* not used */
 				 queryDesc->dest);
 
 	/*
@@ -193,16 +206,15 @@ PerformPortalFetch(char *name,
 		{
 			ExecutorRun(queryDesc, estate, EXEC_FOR, (long) count);
 
-			/*
-			 * I use CMD_UPDATE, because no CMD_MOVE or the like exists,
-			 * and I would like to provide the same kind of info as
-			 * CMD_UPDATE
-			 */
-			UpdateCommandInfo(CMD_UPDATE, 0, estate->es_processed);
 			if (estate->es_processed > 0)
 				portal->atStart = false;		/* OK to back up now */
 			if (count <= 0 || (int) estate->es_processed < count)
 				portal->atEnd = true;	/* we retrieved 'em all */
+
+			if (completionTag)
+				snprintf(completionTag, COMPLETION_TAG_BUFSIZE, "%s %u",
+						 (dest == None) ? "MOVE" : "FETCH",
+						 estate->es_processed);
 		}
 	}
 	else
@@ -211,16 +223,15 @@ PerformPortalFetch(char *name,
 		{
 			ExecutorRun(queryDesc, estate, EXEC_BACK, (long) count);
 
-			/*
-			 * I use CMD_UPDATE, because no CMD_MOVE or the like exists,
-			 * and I would like to provide the same kind of info as
-			 * CMD_UPDATE
-			 */
-			UpdateCommandInfo(CMD_UPDATE, 0, estate->es_processed);
 			if (estate->es_processed > 0)
 				portal->atEnd = false;	/* OK to go forward now */
 			if (count <= 0 || (int) estate->es_processed < count)
 				portal->atStart = true; /* we retrieved 'em all */
+
+			if (completionTag)
+				snprintf(completionTag, COMPLETION_TAG_BUFSIZE, "%s %u",
+						 (dest == None) ? "MOVE" : "FETCH",
+						 estate->es_processed);
 		}
 	}
 
@@ -236,11 +247,6 @@ PerformPortalFetch(char *name,
 		pfree(queryDesc);
 
 	MemoryContextSwitchTo(oldcontext);
-
-	/*
-	 * Note: the "end-of-command" tag is returned by higher-level utility
-	 * code
-	 */
 }
 
 /* --------------------------------

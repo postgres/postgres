@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.47 2001/10/28 06:25:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.48 2002/02/26 22:47:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,7 +275,7 @@ postquel_getnext(execution_state *es)
 		/*
 		 * Process a utility command. (create, destroy...)	DZ - 30-8-1996
 		 */
-		ProcessUtility(es->qd->parsetree->utilityStmt, es->qd->dest);
+		ProcessUtility(es->qd->parsetree->utilityStmt, es->qd->dest, NULL);
 		if (!LAST_POSTQUEL_COMMAND(es))
 			CommandCounterIncrement();
 		return (TupleTableSlot *) NULL;
