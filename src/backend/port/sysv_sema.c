@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_sema.c,v 1.4 2002/09/04 20:31:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_sema.c,v 1.5 2003/03/25 16:15:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey, int numSems)
 					"consumption of semaphores by reducing its max_connections parameter\n"
 					"(currently %d).\n"
 					"\n"
-					"The PostgreSQL Administrator's Guide contains more information about\n"
+					"The PostgreSQL documentation contains more information about\n"
 					"configuring your system for PostgreSQL.\n\n",
 					MaxBackends);
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.32 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.33 2003/03/25 16:15:39 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -202,8 +202,7 @@ CREATE TRIGGER
   </para>
 
   <para>
-   Refer to the chapters on SPI and Triggers in the &cite-programmer;
-   for more information.
+   Refer to <xref linkend="server-programming"> for more information.
   </para>
  </refsect1>
 
@@ -348,7 +347,6 @@ CREATE TABLE distributors (
    <member><xref linkend="sql-createfunction" endterm="sql-createfunction-title"></member>
    <member><xref linkend="sql-altertrigger" endterm="sql-altertrigger-title"></member>
    <member><xref linkend="sql-droptrigger" endterm="sql-droptrigger-title"></member>
-   <member>&cite-programmer;</member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.18 2003/03/24 14:32:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.19 2003/03/25 16:15:37 petere Exp $
 -->
 
 <chapter id="monitoring">
@@ -19,7 +19,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.18 2003/03/24 14:32:50 
    <command>ps</> and <command>top</>.  Also, once one has identified a
    poorly-performing query, further investigation may be needed using
    <productname>PostgreSQL</productname>'s <command>EXPLAIN</> command.
-   The &cite-user; discusses <command>EXPLAIN</>
+   <xref linkend="using-explain"> discusses <command>EXPLAIN</>
    and other methods for understanding the behavior of an individual
    query.
   </para>
@@ -624,7 +624,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
    </itemizedlist>
 
    For more information on locking and managing concurrency with
-   <productname>PostgreSQL</productname>, refer to the &cite-user;.
+   <productname>PostgreSQL</productname>, refer to <xref linkend="mvcc">.
   </para>
 
   <note>
@@ -727,7 +727,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
        The mode of the requested or held lock on the lockable
        object. For more information on the different lock modes
        available in <productname>PostgreSQL</productname>, refer to
-       the &cite-user;.
+       <xref linkend="mvcc">.
       </entry>
      </row>
 

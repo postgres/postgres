@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.15 2003/02/19 04:06:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.16 2003/03/25 16:15:37 petere Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1931,7 +1931,7 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
     written to the server log, or both is controlled by the
     <option>LOG_MIN_MESSAGES</option> and
     <option>CLIENT_MIN_MESSAGES</option> configuration variables. See
-    the &cite-admin; for more information.
+    <xref linkend="runtime-config"> for more information.
    </para>
 
    <para>

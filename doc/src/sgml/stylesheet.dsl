@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.22 2002/10/12 16:33:43 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.23 2003/03/25 16:15:38 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -147,7 +147,7 @@
 
 ;; Returns the depth of auto TOC that should be made at the nd-level
 (define (toc-depth nd)
-  (cond ((string=? (gi nd) (normalize "book")) 3)
+  (cond ((string=? (gi nd) (normalize "book")) 2)
 	((string=? (gi nd) (normalize "set")) 2)
 	((string=? (gi nd) (normalize "part")) 2)
 	((string=? (gi nd) (normalize "chapter")) 2)

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.29 2003/03/20 16:17:32 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.30 2003/03/25 16:15:38 petere Exp $
 -->
 
 <chapter Id="typeconv">
@@ -27,11 +27,6 @@ type conversion mechanisms and conventions.
 Refer to the relevant sections in <xref linkend="datatype"> and <xref linkend="functions">
 for more information on specific data types and allowed functions and
 operators.
-</para>
-
-<para>
-The &cite-programmer; has more details on the exact algorithms used for
-implicit type conversion and conversion.
 </para>
 
 <sect1 id="typeconv-overview">

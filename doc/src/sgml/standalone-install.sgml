@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/standalone-install.sgml,v 2.3 2001/09/21 18:37:05 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/standalone-install.sgml,v 2.4 2003/03/25 16:15:38 petere Exp $ -->
 
 <!--
 This file helps in generating the INSTALL text file that lives in the
@@ -26,7 +26,7 @@ Running 'make INSTALL' in the doc/src/sgml directory will do 1 through
 
 <!--
 The standalone version has some portions that are different from the
-version that is integrated into the Administrator's Guide, in
+version that is integrated into the full documentation set, in
 particular as regards links. The following are essentially SGML's
 equivalent of C's #ifdef and friends. The other end of this is in
 installation.sgml.
@@ -36,7 +36,7 @@ installation.sgml.
  <!entity % standalone-include "INCLUDE">
 
 <!--
-When you're building the Administrator's Guide, you want to flip the
+When you're building the full documentation set, you want to flip the
 IGNORE and INCLUDE.
 -->
 ]>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.25 2003/03/20 20:05:32 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.26 2003/03/25 16:15:39 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -145,8 +145,8 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable> RESET <replacea
        </para>
 
        <para>
-        See <xref linkend="sql-set" endterm="sql-set-title"> and the
-        &cite-admin; for more information about allowed variable names
+        See <xref linkend="sql-set" endterm="sql-set-title"> and <xref linkend="runtime-config">
+        for more information about allowed variable names
         and values.
        </para>
       </listitem>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.87 2003/03/24 18:33:52 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.88 2003/03/25 16:15:43 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -2488,16 +2488,6 @@ Field separator is "oo".
 
  <refsect1 id="APP-PSQL-examples">
   <title id="APP-PSQL-examples-title">Examples</title>
-
-  <note>
-  <para>
-  This section only shows a few examples specific to
-  <application>psql</application>. If you want to learn
-  <acronym>SQL</acronym> or get familiar with
-  <productname>PostgreSQL</productname>, you might wish to read the
-  &cite-tutorial;.
-  </para>
-  </note>
 
   <para>
   The first example shows how to spread a command over several lines of

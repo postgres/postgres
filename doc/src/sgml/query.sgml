@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.29 2003/03/13 01:30:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.30 2003/03/25 16:15:38 petere Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -259,7 +259,7 @@ COPY weather FROM '/home/user/weather.txt';
     where the file name for the source file must be available to the
     backend server machine, not the client, since the backend server
     reads the file directly.  You can read more about the
-    <command>COPY</command> command in the &cite-reference;.
+    <command>COPY</command> command in <xref linkend="sql-copy">.
    </para>
   </sect1>
 
@@ -692,7 +692,7 @@ SELECT city, max(temp_lo)
     <callout arearefs="co.tutorial-agg-like">
      <para>
       The <literal>LIKE</literal> operator does pattern matching and
-      is explained in the &cite-user;.
+      is explained in <xref linkend="functions-matching">.
      </para>
     </callout>
    </calloutlist>

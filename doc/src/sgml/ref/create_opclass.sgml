@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.5 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.6 2003/03/25 16:15:39 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -223,8 +223,7 @@ CREATE OPERATOR CLASS
   </para>
 
   <para>
-    Refer to the chapter on interfacing extensions to indexes in the
-    &cite-programmer; for further information.
+   Refer to <xref linkend="xindex"> for further information.
   </para>
   
   <refsect2 id="R2-SQL-CREATEOPCLASS-3">

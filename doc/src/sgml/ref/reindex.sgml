@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.15 2003/02/19 04:06:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.16 2003/03/25 16:15:43 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -139,8 +139,7 @@ REINDEX
       under certain access patterns. <command>REINDEX</command>
       provides a way to reduce the space consumption of the index by
       writing a new version of the index without the dead pages. See
-      the <quote>Routine Reindexing</quote> section in the
-      &cite-admin; for more information. The rest of this section
+      <xref linkend="routine-reindex"> for more information. The rest of this reference page
       mostly discusses how to use <command>REINDEX</command> to
       recover from index corruption.
      </para>

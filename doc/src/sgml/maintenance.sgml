@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.21 2003/03/24 14:32:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.22 2003/03/25 16:15:37 petere Exp $
 -->
 
 <chapter id="maintenance">
@@ -99,7 +99,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.21 2003/03/24 14:32:50
     <command>UPDATE</> or <command>DELETE</> of a row does not
     immediately remove the old <firstterm>tuple</> (version of the row).
     This approach is necessary to gain the benefits of multiversion
-    concurrency control (see the &cite-user;): the tuple
+    concurrency control (see <xref linkend="mvcc">): the tuple
     must not be deleted while it is still potentially visible to other
     transactions. But eventually, an outdated or deleted tuple is no
     longer of interest to any transaction. The space it occupies must be

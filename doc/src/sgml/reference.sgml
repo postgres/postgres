@@ -1,35 +1,27 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.43 2003/03/24 14:32:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.44 2003/03/25 16:15:38 petere Exp $
 
 PostgreSQL Reference Manual
 -->
 
-<book id="reference">
+<part id="reference">
+ <title>Reference</title>
 
- <title>PostgreSQL &version; Reference Manual</title>
- <bookinfo>
-  <corpauthor>The PostgreSQL Global Development Group</corpauthor>
-  &legal;
- </bookinfo>
-
- <preface id="reference-preface">
-  <title>Preface</title>
-
+ <partintro>
   <para>
-   The entries in this <citetitle>Reference Manual</citetitle> are
-   meant to provide in reasonable length an authoritative, complete, and
-   formal summary about their respective subjects.  More information
-   about the use of <productname>PostgreSQL</productname>, in
-   narrative, tutorial, or example form, may be found in other parts
-   of the <productname>PostgreSQL</productname> documentation set.
-   See the cross-references listed on each reference page.
+   The entries in this Reference are meant to provide in reasonable
+   length an authoritative, complete, and formal summary about their
+   respective subjects.  More information about the use of
+   <productname>PostgreSQL</productname>, in narrative, tutorial, or
+   example form, may be found in other parts of this book.  See the
+   cross-references listed on each reference page.
   </para>
 
   <para>
-   The <citetitle>Reference Manual</citetitle> entries are also
-   available as traditional <quote>man</quote> pages.
+   The reference entries are also available as traditional
+   <quote>man</quote> pages.
   </para>
- </preface>
+ </partintro>
 
  <reference id="sql-commands">
   <title>SQL Commands</title>
@@ -192,7 +184,7 @@ PostgreSQL Reference Manual
 
  </reference>
 
-</book>
+</part>
 
 <!-- Keep this comment at the end of the file
 Local variables:

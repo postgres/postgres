@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.18 2003/01/19 00:13:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.19 2003/03/25 16:15:44 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -63,8 +63,8 @@ SET <replaceable class="parameter">variable</replaceable> TO DEFAULT
    have had, had no <command>SET</> ever been issued for it in the
    current session.  The actual source of this value might be a
    compiled-in default, the postmaster's configuration file or command-line
-   switches, or per-database or per-user default settings.  See the
-   &cite-admin; for details.
+   switches, or per-database or per-user default settings.  See
+   <xref linkend="runtime-config"> for details.
   </para>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.4 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.5 2003/03/25 16:15:38 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -70,8 +70,8 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replacea
        </para>
 
        <para>
-        See <xref linkend="sql-set" endterm="sql-set-title"> and the
-        &cite-admin; for more information about allowed variable names
+        See <xref linkend="sql-set" endterm="sql-set-title"> and <xref linkend="runtime-config">
+        for more information about allowed variable names
         and values.
        </para>
       </listitem>

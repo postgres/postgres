@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.147 2003/03/24 14:32:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.148 2003/03/25 16:15:36 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -17,8 +17,8 @@ PostgreSQL documentation
   <para>
    <productname>PostgreSQL</productname> provides a large number of
    functions and operators for the built-in data types.  Users can also
-   define their own functions and operators, as described in the
-   &cite-programmer;.  The
+   define their own functions and operators, as described in
+   <xref linkend="server-programming">.  The
    <application>psql</application> commands <command>\df</command> and
    <command>\do</command> can be used to show the list of all actually
    available functions and operators, respectively.
@@ -2680,8 +2680,8 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
    <note>
     <para>
      The form of regular expressions accepted by <productname>PostgreSQL</>
-     can be chosen by setting the <varname>REGEX_FLAVOR</> run-time parameter
-     (described in the &cite-admin;).  The usual setting is
+     can be chosen by setting the <varname>regex_flavor</> run-time parameter
+     (described in <xref linkend="runtime-config">).  The usual setting is
      <literal>advanced</>, but one might choose <literal>extended</> for
      maximum backwards compatibility with pre-7.4 releases of
      <productname>PostgreSQL</>.
@@ -6950,7 +6950,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    linkend="functions-aggregate-table"> shows the built-in aggregate
    functions.  The special syntax considerations for aggregate
    functions are explained in <xref linkend="syntax-aggregates">.
-   Consult the &cite-tutorial; for additional introductory
+   Consult <xref linkend="tutorial"> for additional introductory
    information.
   </para>
 

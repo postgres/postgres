@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.10 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.11 2003/03/25 16:15:39 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -152,7 +152,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
    <command>ANALYZE</command> deems them uninteresting (for example, in
    a unique-key column, there are no common values) or if the column
    data type does not support the appropriate operators.  There is more
-   information about the statistics in the &cite-user;.
+   information about the statistics in <xref linkend="maintenance">.
   </para>
 
   <para>

@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.67 2003/03/23 05:14:36 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.68 2003/03/25 16:15:35 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -288,7 +288,7 @@
 
   <para>
    New aggregate functions are registered with the <command>CREATE
-   AGGREGATE</command> command.  See the &cite-programmer; for more
+   AGGREGATE</command> command.  See <xref linkend="xaggr"> for more
    information about writing aggregate functions and the meaning of
    the transition functions, etc.
   </para>
@@ -1452,8 +1452,8 @@
   <para>
    The <structname>pg_database</structname> catalog stores information
    about the available databases.  Databases are created with the
-   <command>CREATE DATABASE</command> command.  Consult the
-   &cite-admin; for details about the meaning of some of the
+   <command>CREATE DATABASE</command> command.  Consult
+   <xref linkend="managing-databases"> for details about the meaning of some of the
    parameters.
   </para>
 
@@ -1798,7 +1798,7 @@
   <para>
    This catalog defines groups and stores what users belong to what
    groups.  Groups are created with the <command>CREATE
-   GROUP</command> command.  Consult the &cite-admin; for information
+   GROUP</command> command.  Consult <xref linkend="user-manag"> for information
    about user permission management.
   </para>
 
@@ -2028,8 +2028,8 @@
   <para>
    <structname>pg_language</structname> registers call interfaces or
    languages in which you can write functions or stored procedures.
-   See under <command>CREATE LANGUAGE</command> and in the
-   &cite-programmer; for more information about language handlers.
+   See under <command>CREATE LANGUAGE</command> and in
+   <xref linkend="server-programming"> for more information about language handlers.
   </para>
 
   <table>
@@ -2304,7 +2304,7 @@
   </para>
 
   <para>
-   Operator classes are described at length in the &cite-programmer;.
+   Operator classes are described at length in <xref linkend="server-programming">.
   </para>
 
   <table>
@@ -2392,7 +2392,7 @@
   <title>pg_operator</title>
 
   <para>
-   See <command>CREATE OPERATOR</command> and the &cite-programmer;
+   See <command>CREATE OPERATOR</command> and <xref linkend="xoper">
    for details on these operator parameters.
   </para>
 
@@ -2562,8 +2562,8 @@
 
   <para>
    This catalog stores information about functions (or procedures).
-   The description of <command>CREATE FUNCTION</command> and the
-   &cite-programmer; contain more information about the meaning of
+   The description of <command>CREATE FUNCTION</command> and
+   <xref linkend="xfunc"> contain more information about the meaning of
    some fields.
   </para>
 
@@ -2836,7 +2836,7 @@
   </para>
 
   <para>
-   The &cite-admin; contains detailed information about user and
+   <xref linkend="user-manag"> contains detailed information about user and
    permission management.
   </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.19 2003/03/13 01:30:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.20 2003/03/25 16:15:38 petere Exp $
 -->
 
 <chapter id="user-manag">
@@ -16,8 +16,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.19 2003/03/13 01:30:29 
  <para>
   This chapter describes how to create and manage users and introduces
   the privilege system.  More information about the various types of
-  database objects and the effects of privileges can be found in the
-  &cite-user;.
+  database objects and the effects of privileges can be found in <xref linkend="ddl">.
  </para>
 
  <sect1 id="database-users">
@@ -185,7 +184,7 @@ ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</repla
  <sect1 id="privileges">
   <title>Privileges</title>
 
-  <comment>Being moved to User's Guide.  Will eventually disappear here.</comment>
+  <comment>Being moved to the DDL chapter.  Will eventually disappear here.</comment>
 
   <para>
    When a database object is created, it is assigned an owner. The
@@ -205,7 +204,7 @@ ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</repla
    <literal>USAGE</>, and <literal>ALL PRIVILEGES</>. For more
    information on the different types of privileges support by
    <productname>PostgreSQL</productname>, refer to the
-   <command>GRANT</command> page in the &cite-reference;. The right to modify or
+   <command>GRANT</command> page in <xref linkend="reference">. The right to modify or
    destroy an object is always the privilege of the owner only. To
    assign privileges, the <command>GRANT</command> command is
    used. So, if <literal>joe</literal> is an existing user, and

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.33 2003/03/24 14:32:50 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.34 2003/03/25 16:15:35 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -279,7 +279,7 @@ initdb --locale=sv_SE
     <productname>PostgreSQL</> speak their preferred language well.
     If messages in your language is currently not available or fully
     translated, your assistance would be appreciated.  If you want to
-    help, refer to the &cite-developer; or write to the developers'
+    help, refer to the <xref linkend="nls"> or write to the developers'
     mailing list.
    </para>
   </sect2>

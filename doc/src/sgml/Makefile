@@ -1,14 +1,8 @@
 #----------------------------------------------------------------------------
 #
-# Makefile
-#	Postgres documentation makefile
-#	Thomas Lockhart
+# PostgreSQL documentation makefile
 #
-# Copyright (c) 1994, Regents of the University of California
-#
-#
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.55 2003/01/14 23:19:34 petere Exp $
+# $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.56 2003/03/25 16:15:35 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -26,7 +20,7 @@ endif
 ifndef JADE
 JADE = jade
 endif
-SGMLINCLUDE = -D $(srcdir) -D $(srcdir)/ref
+SGMLINCLUDE = -D $(srcdir)
 
 ifndef NSGMLS
 NSGMLS = nsgmls
@@ -39,20 +33,11 @@ endif
 CONVERT = convert
 EPSTOPDF = epstopdf
 
-
 # docbook2man generates man pages from docbook refentry source code.
-
-ifndef D2MDIR
-# This is where the (patched) docbook2man perl scripts reside on hub.org.
-D2MDIR= /home/users/t/thomas/d2x/docbook2man
-endif
 D2MSCRIPT= $(D2MDIR)/docbook2man-spec.pl
 
-vpath %.sgml ./ref
 
-ALLBOOKS = admin developer programmer reference tutorial user
-
-GENERATED_SGML = bookindex.sgml setindex.sgml version.sgml \
+GENERATED_SGML = bookindex.sgml version.sgml \
 	features-supported.sgml features-unsupported.sgml
 
 ALLSGML := $(wildcard $(srcdir)/*.sgml $(srcdir)/ref/*.sgml) $(GENERATED_SGML)
@@ -75,12 +60,10 @@ endif
 
 DEFAULTSECTION := $(sqlmansect_dummy)
 
-man: $(ALLSGML)
-	$(NSGMLS) $(NSGMLS_FLAGS) $(srcdir)/book-decl.sgml $(srcdir)/reference.sgml \
-	  | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
+man: postgres.sgml $(ALLSGML)
+	$(NSGMLS) $(NSGMLS_FLAGS) $< | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
 # One more time, to resolve cross-references
-	$(NSGMLS) $(NSGMLS_FLAGS) $(srcdir)/book-decl.sgml $(srcdir)/reference.sgml \
-	  | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
+	$(NSGMLS) $(NSGMLS_FLAGS) $< | $(SGMLSPL) $(D2MSCRIPT) --lowercase --section $(DEFAULTSECTION) --date "`date '+%Y-%m-%d'`"
 	$(mkinstalldirs) man1 man$(DEFAULTSECTION)
 	mv *.1 man1/
 	mv *.$(DEFAULTSECTION) man$(DEFAULTSECTION)/
@@ -90,36 +73,23 @@ man: $(ALLSGML)
 ## HTML
 ##
 
-JADE.html = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -i output-html -t sgml
+all: html
 
-postgres.html: postgres.sgml $(ALLSGML) stylesheet.dsl
+.PHONY: html
+
+html: postgres.sgml $(ALLSGML) stylesheet.dsl catalogs.gif connections.gif
 	@rm -f *.html
-	$(JADE.html) $<
-	ln -sf index.html $@
-
-$(addsuffix .html, $(ALLBOOKS)): %.html: %.sgml $(ALLSGML) stylesheet.dsl
-	@rm -f *.html
-	$(JADE.html) book-decl.sgml $<
-	ln -sf index.html $@
-
-programmer.html: catalogs.gif connections.gif
-postgres.html: catalogs.gif connections.gif
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -i output-html -t sgml $<
 
 
-COLLATEINDEX := $(PERL) $(COLLATEINDEX) -f -g -t 'Index'
+COLLATEINDEX := $(PERL) $(COLLATEINDEX) -f -g
 
 ifeq (,$(wildcard HTML.index))
 bookindex.sgml:
 	$(COLLATEINDEX) -o $@ -N
-
-setindex.sgml:
-	$(COLLATEINDEX) -x -o $@ -N
 else
 bookindex.sgml: HTML.index
 	$(COLLATEINDEX) -i 'bookindex' -o $@ $<
-
-setindex.sgml: HTML.index
-	$(COLLATEINDEX) -i 'setindex' -x -o $@ $<
 endif
 
 version.sgml: $(top_builddir)/src/Makefile.global
@@ -140,22 +110,25 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 ##
 
 # RTF to allow minor editing for hardcopy
-$(addsuffix .rtf, $(ALLBOOKS)): %.rtf: %.sgml $(ALLSGML) stylesheet.dsl
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t rtf -V rtf-backend -i output-print book-decl.sgml $<
+
+%.rtf: %.sgml $(ALLSGML) stylesheet.dsl
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t rtf -V rtf-backend -i output-print $<
+
+postgres.rtf: catalogs.gif connections.gif
 
 # TeX
 # Regular TeX and pdfTeX have slightly differing requirements, so we
 # need to distinguish the path we're taking.
 
-$(addsuffix .tex-ps, $(ALLBOOKS)): %.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texdvi-output -o $@ book-decl.sgml $<
+%.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texdvi-output -o $@ $<
 
-programmer.tex-ps: catalogs.eps connections.eps
+postgres.tex-ps: catalogs.eps connections.eps
 
-$(addsuffix .tex-pdf, $(ALLBOOKS)): %.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texpdf-output -o $@ book-decl.sgml $<
+%.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texpdf-output -o $@ $<
 
-programmer.tex-pdf: catalogs.pdf connections.pdf
+postgres.tex-pdf: catalogs.pdf connections.pdf
 
 %.dvi: %.tex-ps
 	@rm -f $*.aux $*.log
@@ -177,8 +150,8 @@ programmer.tex-pdf: catalogs.pdf connections.pdf
 # This generates an XML version of the flow-object tree.  It's useful
 # for debugging DSSSL code, and possibly to interface to some other
 # tools that can make use of this.
-$(addsuffix .fot, $(ALLBOOKS)): %.fot: %.sgml $(ALLSGML) stylesheet.dsl
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t fot -i output-print -o $@ book-decl.sgml $<
+%.fot: %.sgml $(ALLSGML) stylesheet.dsl
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t fot -i output-print -o $@ $<
 
 
 # Graphics
@@ -224,13 +197,8 @@ regress_README.html: regress.sgml
 ## Check
 ##
 
-check: $(addprefix check-, $(ALLBOOKS)) check-postgres
-
 # Quick syntax check without style processing
-$(addprefix check-, $(ALLBOOKS)): check-%: %.sgml $(ALLSGML)
-	$(NSGMLS) $(SGMLINCLUDE) -s book-decl.sgml $<
-
-check-postgres: postgres.sgml $(ALLSGML)
+check: postgres.sgml $(ALLSGML)
 	$(NSGMLS) $(SGMLINCLUDE) -s $<
 
 

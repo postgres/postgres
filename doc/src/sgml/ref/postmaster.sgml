@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.35 2003/03/24 14:32:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.36 2003/03/25 16:15:43 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -80,7 +80,7 @@ PostgreSQL documentation
    <para>
     <command>postmaster</command> accepts the following
     command line arguments.  For a detailed discussion of the options
-    consult the &cite-admin;.  You can also save typing most of these
+    consult <xref linkend="runtime-config">.  You can also save typing most of these
     options by setting up a configuration file.
     
     <variablelist>
@@ -110,7 +110,7 @@ PostgreSQL documentation
       <term><option>-c <replaceable>name</replaceable>=<replaceable>value</replaceable></option></term>
       <listitem>
        <para>
-        Sets a named run-time parameter. Consult the &cite-admin; for
+        Sets a named run-time parameter. Consult <xref linkend="runtime-config"> for
         a list and descriptions.  Most of the other command line
         options are in fact short forms of such a parameter
         assignment.  <option>-c</> can appear multiple times to set
@@ -218,7 +218,7 @@ PostgreSQL documentation
 	default, this value is 32, but it can be set as high as your
 	system will support.  (Note that
 	<option>-B</option> is required to be at least twice
-	<option>-N</option>.  See the &cite-admin; for a discussion of
+	<option>-N</option>.  See <xref linkend="kernel-resources"> for a discussion of
 	system resource requirements for large numbers of client
 	connections.)
        </para>
@@ -404,7 +404,7 @@ PostgreSQL documentation
     <listitem>
      <para>
       Other environment variables may be used to designate alternative
-      data storage locations.  See the &cite-admin; for more
+      data storage locations.  See <xref linkend="manage-ag-alternate-locs"> for more
       information.
      </para>
     </listitem>
@@ -423,7 +423,7 @@ PostgreSQL documentation
       <listitem>
        <para>
 	If you see this message, you probably need to configure
-	your kernel for shared memory and semaphores as described in the &cite-admin;.
+	your kernel for shared memory and semaphores as described in <xref linkend="kernel-resources">.
 	If you run multiple instances of
 	<command>postmaster</command>
 	on a single host, or have a kernel with particularly small shared memory

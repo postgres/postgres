@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.23 2003/01/19 00:13:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.24 2003/03/25 16:15:35 petere Exp $
 -->
 
 <sect2 id="dfunc">
@@ -318,9 +318,6 @@ ld <other flags> -H512 -T512 -o foo.so -e _nostart \e
    -bI:.../lib/postgres.exp -bE:foo.exp foo.o \e
    -lm -lc 2>/dev/null
 .fi
-You should look at the &cite-user; for an explanation of
-this procedure.
-
   -->
 
 </sect2>

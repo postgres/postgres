@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.19 2003/01/19 00:13:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.20 2003/03/25 16:15:36 petere Exp $
 -->
 
  <chapter id="extend">
@@ -214,7 +214,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.19 2003/01/19 00:13:28 momj
      </mediaobject>
     </figure>
 
-    The &cite-developer; gives a more detailed explanation of these
+    <xref linkend="catalogs"> gives a more detailed explanation of these
     catalogs and their columns.  However,
     <xref linkend="EXTEND-CATALOGS">
     shows the major entities and their  relationships

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.116 2003/03/25 02:44:36 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.117 2003/03/25 16:15:37 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -1098,7 +1098,7 @@ unsigned char *PQescapeBytea(const unsigned char *from,
    three digit octal number equal to the octet value, and preceded by
    two backslashes. The single quote (<literal>'</>) and backslash
    (<literal>\</>) characters have special alternative escape
-   sequences. See the &cite-user; for more
+   sequences. See <xref linkend="datatype-binary"> for more
    information. <function>PQescapeBytea</function> performs this
    operation, escaping only the minimally required bytes.
   </para>

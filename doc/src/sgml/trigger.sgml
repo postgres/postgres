@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.26 2002/11/23 03:59:06 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.27 2003/03/25 16:15:38 petere Exp $
 -->
 
  <chapter id="triggers">
@@ -38,7 +38,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/trigger.sgml,v 1.26 2002/11/23 03:59:06 mom
    </para>
 
    <para>
-    The syntax for creating triggers is described in &cite-reference;.
+    The syntax for creating triggers is described in <xref linkend="reference">.
    </para>
 
    <para>

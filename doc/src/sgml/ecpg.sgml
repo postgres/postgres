@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.42 2003/03/13 01:30:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.43 2003/03/25 16:15:35 petere Exp $
 -->
 
 <chapter id="ecpg">
@@ -802,7 +802,7 @@ ECPG = ecpg
 
   <para>
    The complete syntax of the <command>ecpg</command> command is
-   detailed in the &cite-reference;.
+   detailed in <xref linkend="app-ecpg">.
   </para>
  </sect1>
 

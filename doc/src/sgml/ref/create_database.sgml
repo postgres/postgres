@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.32 2003/02/13 05:37:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.33 2003/03/25 16:15:39 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -259,7 +259,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
     specified with absolute path names, and by default
     only an environment variable known to the backend may be
     specified for an alternate location.
-    See the Administrator's Guide for more information.
+    See <xref linkend="manage-ag-alternate-locs"> for more information.
    </para>
 
 <!--
@@ -280,7 +280,7 @@ comment from Olly; response from Thomas...
    by specifying its name as the template, this is not (yet) intended as
    a general-purpose COPY DATABASE facility.
    We recommend that databases used as templates be treated as read-only.
-   See the &cite-admin; for more information.
+   See <xref linkend="user-manag"> for more information.
   </para>
   </refsect2>
  </refsect1>

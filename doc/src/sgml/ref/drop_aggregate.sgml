@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.20 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.21 2003/03/25 16:15:39 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -47,7 +47,6 @@ DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( <replaceable 
        <para>
 	The input data type of the aggregate function,
 	or <literal>*</literal> if the function accepts any input type.
-	(Refer to the &cite-user; for further information about data types.)
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.65 2003/02/19 04:06:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.66 2003/03/25 16:15:38 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -2051,7 +2051,7 @@ CREATE FUNCTION test(smallint, double precision) RETURNS ...
     it is not immediately clear which function would be called with
     some trivial input like <literal>test(1, 1.5)</literal>.  The
     currently implemented resolution rules are described in the
-    &cite-user;, but it is unwise to design a system that subtly
+    <xref linkend="typeconv">, but it is unwise to design a system that subtly
     relies on this behavior.
    </para>
 

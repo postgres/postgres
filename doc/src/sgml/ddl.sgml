@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.13 2003/03/13 01:30:28 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.14 2003/03/25 16:15:35 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -13,7 +13,7 @@
   schemas, and how privileges can be assigned to tables.  Finally,
   we will briefly look at other features that affect the data storage,
   such as views, functions, and triggers.  Detailed information on
-  these topics is found in the &cite-programmer;.
+  these topics is found in <xref linkend="server-programming">.
  </para>
 
  <sect1 id="ddl-basics">
@@ -274,7 +274,7 @@ DROP TABLE products;
     Transaction identifiers are also 32-bit quantities.  In a long-lived
     database it is possible for transaction IDs to wrap around.  This
     is not a fatal problem given appropriate maintenance procedures;
-    see the &cite-admin; for details.  However, it is
+    see <xref linkend="maintenance"> for details.  However, it is
     unwise to depend on uniqueness of transaction IDs over the long term
     (more than one billion transactions).
    </para>
@@ -819,7 +819,7 @@ CREATE TABLE order_items (
     If the foreign key references a unique constraint, there are some
     additional possibilities regarding how null values are matched.
     These are explained in the <literal>CREATE TABLE</literal> entry
-    in the &cite-reference;.
+    in <xref linkend="reference">.
    </para>
   </sect2>
  </sect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.24 2003/03/10 03:53:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.25 2003/03/25 16:15:41 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -188,7 +188,7 @@ ROLLBACK;
    <para>
     There is only sparse documentation on the optimizer's use of cost
     information in <productname>PostgreSQL</productname>.
-    Refer to the &cite-user; and &cite-programmer; for more information.
+    Refer to <xref linkend="using-explain"> for more information.
    </para>
   </refsect2>
  </refsect1>

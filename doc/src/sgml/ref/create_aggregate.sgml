@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.23 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.24 2003/03/25 16:15:39 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -267,12 +267,10 @@ CREATE AGGREGATE
  </refsect1>
 
  <refsect1 id="R1-SQL-CREATEAGGREGATE-2">
-  <title>
-   Usage
-  </title>
+  <title>Examples</title>
+
   <para>
-   Refer to the chapter on aggregate functions in the
-   &cite-programmer; for complete examples of usage.
+   See <xref linkend="xaggr">.
   </para>
  </refsect1>
 

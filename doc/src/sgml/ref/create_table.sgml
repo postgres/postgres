@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.62 2003/02/19 03:13:25 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.63 2003/03/25 16:15:39 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -147,8 +147,6 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <listitem>
      <para>
       The data type of the column. This may include array specifiers.
-      Refer to the &cite-user; for further information about data
-      types and arrays.
      </para>
     </listitem>
    </varlistentry>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.7 2003/01/19 00:13:29 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.8 2003/03/25 16:15:39 petere Exp $ -->
 
 <refentry id="sql-checkpoint">
  <refmeta>
@@ -34,20 +34,12 @@ CHECKPOINT
    A checkpoint is a point in the transaction log sequence at which
    all data files have been updated to reflect the information in the
    log.  All data files will be flushed to disk.  Refer to the
-   &cite-admin; for more information about the WAL system.
+   <xref linkend="wal"> for more information about the WAL system.
   </para>
 
   <para>
    Only superusers may call <command>CHECKPOINT</command>.  The command is
    not intended for use during normal operation.
-  </para>
- </refsect1>
-
- <refsect1>
-  <title>See Also</title>
-
-  <para>
-   &cite-admin;
   </para>
  </refsect1>
 

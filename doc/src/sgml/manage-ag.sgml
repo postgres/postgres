@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.26 2003/03/18 22:19:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.27 2003/03/25 16:15:37 petere Exp $
 -->
 
 <chapter id="managing-databases">
@@ -49,7 +49,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.26 2003/03/18 22:19:46 p
    or users are interrelated and should be able to use each other's
    resources they should be put in the same databases but possibly
    into separate schemas.  More information about managing schemas is
-   in the &cite-user;.
+   in <xref linkend="ddl-schemas">.
   </para>
 
   <note>

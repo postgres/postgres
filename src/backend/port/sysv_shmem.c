@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.4 2002/09/04 20:31:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.5 2003/03/25 16:15:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 					"\nThis error usually means that PostgreSQL's request for a shared memory\n"
 					"segment exceeded your kernel's SHMMAX parameter.  You can either\n"
 					"reduce the request size or reconfigure the kernel with larger SHMMAX.\n"
-			  "To reduce the request size (currently %u bytes), reduce\n"
+					"To reduce the request size (currently %u bytes), reduce\n"
 					"PostgreSQL's shared_buffers parameter (currently %d) and/or\n"
 					"its max_connections parameter (currently %d).\n"
 					"\n"
@@ -104,20 +104,20 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 					"your kernel's SHMMIN parameter, in which case raising the request size or\n"
 					"reconfiguring SHMMIN is called for.\n"
 					"\n"
-					"The PostgreSQL Administrator's Guide contains more information about\n"
-					"shared memory configuration.\n\n",
+					"The PostgreSQL documentation contains more information about shared\n"
+					"memory configuration.\n\n",
 					size, NBuffers, MaxBackends);
 
 		else if (errno == ENOMEM)
 			fprintf(stderr,
 					"\nThis error usually means that PostgreSQL's request for a shared\n"
-			  "memory segment exceeded available memory or swap space.\n"
-			  "To reduce the request size (currently %u bytes), reduce\n"
+					"memory segment exceeded available memory or swap space.\n"
+					"To reduce the request size (currently %u bytes), reduce\n"
 					"PostgreSQL's shared_buffers parameter (currently %d) and/or\n"
 					"its max_connections parameter (currently %d).\n"
 					"\n"
-					"The PostgreSQL Administrator's Guide contains more information about\n"
-					"shared memory configuration.\n\n",
+					"The PostgreSQL documentation contains more information about shared\n"
+					"memory configuration.\n\n",
 					size, NBuffers, MaxBackends);
 
 		else if (errno == ENOSPC)
@@ -132,8 +132,8 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 					"by reducing its shared_buffers parameter (currently %d) and/or\n"
 					"its max_connections parameter (currently %d).\n"
 					"\n"
-					"The PostgreSQL Administrator's Guide contains more information about\n"
-					"shared memory configuration.\n\n",
+					"The PostgreSQL documentation contains more information about shared\n"
+					"memory configuration.\n\n",
 					size, NBuffers, MaxBackends);
 
 		proc_exit(1);

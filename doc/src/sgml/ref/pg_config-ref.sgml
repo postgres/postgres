@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.14 2003/03/24 14:32:51 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.15 2003/03/25 16:15:42 petere Exp $ -->
 
 <refentry id="app-pgconfig">
  <refmeta>
@@ -152,15 +152,6 @@
   <para>
    The <command>pg_config</command> utility first appeared in
    <productname>PostgreSQL</> 7.1.
-  </para>
- </refsect1>
-
-
- <refsect1>
-  <title>See Also</title>
-
-  <para>
-   &cite-programmer;
   </para>
  </refsect1>
 </refentry>

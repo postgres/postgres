@@ -1,13 +1,13 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/legal.sgml,v 1.14 2002/06/20 20:29:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/legal.sgml,v 1.15 2003/03/25 16:15:37 petere Exp $
 -->
 
 <copyright>
- <year>1996-2002</year>
+ <year>1996-2003</year>
  <holder>The PostgreSQL Global Development Group</holder>
 </copyright>
 
-<legalnotice>
+<legalnotice id="legalnotice">
  <title>Legal Notice</title>
 
  <para>
@@ -46,45 +46,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/legal.sgml,v 1.14 2002/06/20 20:29:24 momji
   UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  </para>
 
-<!--
-How to keep track of all the trademarks? I'll try the strategy used at
-www.qnx.com - thomas
---
-
---
-There is no legal requirement to make trademark acknowledgements in
-references to third party products that happen to have trademarked
-names.
-
-The exception would be if <productname>PostgreSQL</>
- were to license a particular
-trademark and the trademark holder makes this requirement (as in the
-case of UNIX and Java).
-
-What is not allowed, however, is to use a trademark name in a way that
-could lead people to believe that they label <productname>PostgreSQL</> products.
-E.g., "the <productname>PostgreSQL</> UNIX database system" would probably be illegal,
-whereas "<productname>PostgreSQL</>, which runs on many UNIX computer systems" is
-fine.  This is independent of whether a trademark acknowledgement is
-made.
-
-- petere
-
- <para>
-  <acronym>Unix</acronym> is a trademark of X/Open, Ltd.  Sun4,  SPARC,  SunOS
-  and  Solaris  are trademarks of Sun Microsystems, Inc.  DEC,
-  DECstation, Alpha AXP and ULTRIX are trademarks  of Compaq, formerly Digital
-  Equipment   Corp.   PA-RISC  and  HP-UX  are  trademarks  of
-  Hewlett-Packard Co.  OSF/1 is a trademark of the Open  
-  Software Foundation.
- </para>
--->
-
-<!--
- <para>
-  All trademarks are the property of their respective owners.
- </para>
--->
 </legalnotice>
 
 <!-- Keep this comment at the end of the file

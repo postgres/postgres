@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.131 2003/03/25 15:11:53 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.132 2003/03/25 16:15:36 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -398,7 +398,7 @@ JAVACMD=$JAVA_HOME/bin/java
     <para>
      <command>pg_dumpall</command> does not
      save large objects.  Check
-     <![%standalone-include[the <citetitle>Administrator's Guide</>]]>
+     <![%standalone-include[the documentation]]>
      <![%standalone-ignore[<xref linkend="backup-dump-caveats">]]>
      if you need to do this.
     </para>
@@ -474,7 +474,7 @@ JAVACMD=$JAVA_HOME/bin/java
 
   <para>
    These topics are discussed at length in <![%standalone-include[the
-   <citetitle>Administrator's Guide</>,]]> <![%standalone-ignore[<xref
+   documentation,]]> <![%standalone-ignore[<xref
    linkend="migration">,]]> which you are encouraged to read in any
    case.
   </para>
@@ -656,8 +656,8 @@ JAVACMD=$JAVA_HOME/bin/java
        internal header files and the server header files are installed
        into private directories under
        <varname>includedir</varname>.
-       See the &cite-programmer; for information about how to get at
-       the header files for each interface.
+       See the documentation of each interface for information about how to get at
+       the its header files.
        Finally, a private subdirectory will also be created, if appropriate,
        under <varname>libdir</varname> for dynamically loadable modules.       
       </para>
@@ -705,8 +705,7 @@ JAVACMD=$JAVA_HOME/bin/java
        <listitem>
         <para>
          Enables single-byte character set recode support. See
-         <![%standalone-include[the <citetitle>Administrator's
-         Guide</citetitle>]]> <![%standalone-ignore[<xref
+         <![%standalone-include[the documentation]]> <![%standalone-ignore[<xref
          linkend="recode">]]> about this feature.  Note that a more
          general form of character set conversion is supported in the
          default configuration; this feature is obsolete.
@@ -1029,7 +1028,7 @@ All of PostgreSQL is successfully made. Ready to install.
     message wording or floating point results.
     <![%standalone-include[The file
     <filename>src/test/regress/README</> and the
-    <citetitle>Administrator's Guide</citetitle> contain]]>
+    documentation contain]]>
     <![%standalone-ignore[<xref linkend="regress"> contains]]>
     detailed information about interpreting the test results. You can
     repeat this test at any later time by issuing the same command.
@@ -1311,7 +1310,7 @@ export MANPATH
 
   <para>
    The following is a quick summary of how to get <productname>PostgreSQL</> up and
-   running once installed. The &cite-admin; contains more information.
+   running once installed. The main documentation contains more information.
   </para>
 
   <procedure>
@@ -1417,10 +1416,11 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
      </para>
 
      <para>
-      The &cite-tutorial; should be your first reading if you are
-      completely new to <acronym>SQL</> databases.  If you are
-      familiar with database concepts then you want to proceed with
-      the &cite-admin;, which contains information about how to set up
+      The first few chapters of the main documentation are the Tutorial,
+      which should be your first reading if you are completely new to
+      <acronym>SQL</> databases.  If you are familiar with database
+      concepts then you want to proceed with part on server
+      administration, which contains information about how to set up
       the database server, database users, and authentication.
      </para>
     </listitem>
@@ -1429,7 +1429,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
      <para>
       Usually, you will want to modify your computer so that it will
       automatically start the database server whenever it boots. Some
-      suggestions for this are in the &cite-admin;.
+      suggestions for this are in the documentation.
      </para>
     </listitem>
 
@@ -1438,7 +1438,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
       Run the regression tests against the installed server (using the
       sequential test method). If you didn't run the tests before
       installation, you should definitely do it now. This is also
-      explained in the &cite-admin;.
+      explained in the documentation.
      </para>
     </listitem>
 
@@ -1450,16 +1450,16 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
   <para>
    The documentation is also available in Postscript format. If you
    have a Postscript printer, or have your machine already set up to
-   accept Postscript files using a print filter, then to print, for
-   example the <citetitle>User's Guide</> simply type
+   accept Postscript files using a print filter, then to print, the
+   documentation simply type
 <programlisting>
 cd /usr/local/pgsql/doc
-gunzip -c user.ps.gz | lpr
+gunzip -c postgres.ps.gz | lpr
 </programlisting>
    Here is how you might do it if you have <productname>Ghostscript</>
    installed on your system and are writing to a Laserjet printer.
 <programlisting>
-gunzip -c user.ps.gz \
+gunzip -c postgres.ps.gz \
     | gs -sDEVICE=laserjet -r300 -q -dNOPAUSE -sOutputFile=- \
     | lpr
 </programlisting>
@@ -1774,7 +1774,7 @@ gunzip -c user.ps.gz \
 	Dave Page (<email>dpage@vale-housing.co.uk</email>)</entry>
        <entry>
 	native is client-side only;
-<![%standalone-include[see Administrator's Guide]]>
+<![%standalone-include[see documentation]]>
 <![%standalone-ignore[see <xref linkend="install-win32">]]>
        </entry>
       </row>

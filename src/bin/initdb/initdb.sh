@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.186 2003/03/20 03:34:56 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.187 2003/03/25 16:15:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -483,7 +483,7 @@ fi
 if test x`pg_getlocale COLLATE` != xC && test x`pg_getlocale COLLATE` != xPOSIX; then
     echo "This locale setting will prevent the use of indexes for pattern matching"
     echo "operations.  If that is a concern, rerun $CMDNAME with the collation order"
-    echo "set to \"C\".  For more information see the Administrator's Guide."
+    echo "set to \"C\".  For more information see the documentation."
 fi
 echo
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.19 2003/03/24 14:32:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.20 2003/03/25 16:15:42 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -63,14 +63,6 @@ PostgreSQL documentation
 <prompt>$</prompt> <userinput>createdb -D /opt/postgres/data/testdb testdb</userinput>
 </screen>
    </para>
- </refsect1>
-
- <refsect1>
-  <title>See Also</title>
-
-  <simplelist type="inline">
-   <member>&cite-admin;</member>
-  </simplelist>
  </refsect1>
 
 </refentry>

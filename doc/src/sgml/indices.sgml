@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.39 2003/03/13 01:30:28 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.40 2003/03/25 16:15:36 petere Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -715,7 +715,7 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
     <para>
      When indexes are not used, it can be useful for testing to force
      their use.  There are run-time parameters that can turn off
-     various plan types (described in the &cite-admin;).
+     various plan types (described in <xref linkend="runtime-config">).
      For instance, turning off sequential scans
      (<varname>enable_seqscan</>) and nested-loop joins
      (<varname>enable_nestloop</>), which are the most basic plans,
@@ -745,7 +745,7 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
      again, two possibilities.  The total cost is computed from the
      per-row costs of each plan node times the selectivity estimate of
      the plan node.  The costs of the plan nodes can be tuned with
-     run-time parameters (described in the &cite-admin;).
+     run-time parameters (described in <xref linkend="runtime-config">).
      An inaccurate selectivity estimate is due to
      insufficient statistics.  It may be possible to help this by
      tuning the statistics-gathering parameters (see <command>ALTER

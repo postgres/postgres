@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.34 2003/03/13 01:30:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.35 2003/03/25 16:15:37 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -421,7 +421,7 @@ ERROR:  Can't serialize access due to concurrent update
     To examine a list of the currently outstanding locks in a database
     server, use the <literal>pg_locks</literal> system view. For more
     information on monitoring the status of the lock manager
-    subsystem, refer to the &cite-admin;.
+    subsystem, refer to <xref linkend="monitoring">.
    </para>
 
      <variablelist>

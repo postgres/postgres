@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.25 2003/03/24 14:32:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.26 2003/03/25 16:15:39 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -49,7 +49,7 @@ PostgreSQL documentation
 
   <para>
    This reference page does not describe the embedded SQL language.
-   See the &cite-programmer; for more information on that topic.
+   See <xref linkend="ecpg"> for more information on that topic.
   </para>
  </refsect1>
 
@@ -188,16 +188,6 @@ ecpg prog1.pgc
 cc -I/usr/local/pgsql/include -c prog1.c
 cc -o prog1 prog1.o -L/usr/local/pgsql/lib -lecpg
 </programlisting>
-  </para>
- </refsect1>
-
-
- <refsect1>
-  <title>See Also</title>
-
-  <para>
-   &cite-programmer; for a more detailed description of the embedded
-   SQL interface
   </para>
  </refsect1>
 

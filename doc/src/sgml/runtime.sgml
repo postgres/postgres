@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.173 2003/03/24 14:32:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.174 2003/03/25 16:15:38 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -144,7 +144,7 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
 The database cluster will be initialized with locale de_DE.
 This locale setting will prevent the use of indexes for pattern matching
 operations.  If that is a concern, rerun initdb with the collation order
-set to "C".  For more information see the Administrator's Guide.
+set to "C".  For more information see the documentation.
 </screen>
    This is intended to warn you that the currently selected locale
    will cause indexes to be sorted in an order that prevents them from
@@ -1180,7 +1180,7 @@ SET ENABLE_SEQSCAN TO OFF;
         visible to the superuser, so it should not represent a
         security risk. This data can be accessed via the
         <structname>pg_stat_activity</structname> system view; refer
-        to the &cite-admin; for more information.
+        to <xref linkend="monitoring"> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -1195,7 +1195,7 @@ SET ENABLE_SEQSCAN TO OFF;
         default. This data can be accessed via the
         <structname>pg_stat</structname> and
         <structname>pg_statio</structname> family of system views;
-        refer to the &cite-admin; for more information.
+        refer to <xref linkend="monitoring"> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -1470,8 +1470,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        Consult the &cite-user; and
-        the command <command>SET TRANSACTION</command> for more
+        Consult <xref linkend="mvcc"> and <xref linkend="sql-set-transaction"> for more
         information.
        </para>
       </listitem>
@@ -1894,7 +1893,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        </para>
 
        <para>
-        For more information on schema handling, see the &cite-user;.
+        For more information on schema handling, see <xref linkend="ddl-schemas">.
        </para>
       </listitem>
      </varlistentry>
@@ -1978,8 +1977,8 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         not included in versions prior to 7.1. If you need the old
         behavior you can set this variable to off, but in the long run
         you are encouraged to change your applications to use the
-        <literal>ONLY</literal> key word to exclude subtables. See the
-        SQL language reference and the &cite-user; for more information about inheritance.
+        <literal>ONLY</literal> key word to exclude subtables. See
+        <xref linkend="sql"> for more information about inheritance.
        </para>
       </listitem>
      </varlistentry>
@@ -2083,7 +2082,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        </para>
 
        <para>
-        Refer to the &cite-user; for related information.
+        Refer to <xref linkend="functions-comparison"> for related information.
        </para>
       </listitem>
      </varlistentry>

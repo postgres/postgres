@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.27 2003/03/13 01:30:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.28 2003/03/25 16:15:37 petere Exp $
 -->
 
  <chapter id="performance-tips">
@@ -65,8 +65,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.27 2003/03/13 01:30:29 pet
     The costs are measured in units of disk page fetches.  (CPU effort
     estimates are converted into disk-page units using some
     fairly arbitrary fudge factors. If you want to experiment with these
-    factors, see the list of run-time configuration parameters in the
-    &cite-admin;.)
+    factors, see the list of run-time configuration parameters in
+    <xref linkend="runtime-config">.)
    </para>
 
    <para>
@@ -572,7 +572,7 @@ SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
    search to a <firstterm>genetic</firstterm> probabilistic search
    through a limited number of possibilities.  (The switch-over threshold is
    set by the <varname>geqo_threshold</varname> run-time
-   parameter described in the &cite-admin;.)
+   parameter.)
    The genetic search takes less time, but it won't
    necessarily find the best possible plan.
   </para>

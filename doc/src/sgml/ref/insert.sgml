@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.20 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.21 2003/03/25 16:15:42 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -216,8 +216,7 @@ INSERT INTO films SELECT * FROM tmp;
   </para>
 
   <para>
-   Insert into arrays (refer to the &cite-user; for further
-   information about arrays):
+   Insert into arrays:
 
    <programlisting>
 -- Create an empty 3x3 gameboard for noughts-and-crosses

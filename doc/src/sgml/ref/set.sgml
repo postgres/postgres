@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.72 2003/01/19 00:13:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.73 2003/03/25 16:15:44 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -80,7 +80,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
   <para>
    The <command>SET</command> command changes run-time configuration
    parameters.  Many of the run-time parameters listed in the
-   &cite-admin; can be changed on-the-fly with <command>SET</command>.
+   <xref linkend="runtime-config"> can be changed on-the-fly with <command>SET</command>.
    (But some require superuser privileges to change, and others cannot
    be changed after server or session start.)  Note that
    <command>SET</command> only affects the value used by the current
@@ -111,7 +111,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
   <para>
    Even with <varname>autocommit</> set to <literal>off</>, <command>SET</>
    does not start a new transaction block. See the
-   <varname>autocommit</> section of the &cite-admin; for details.
+   <varname>autocommit</> section in <xref linkend="runtime-config"> for details.
   </para>
 
   <para>
@@ -443,6 +443,14 @@ SELECT setseed(<replaceable>value</replaceable>);
   </para>
  </refsect1>
 
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   The function <function>set_config</function> provides the equivalent
+   capability. See <xref linkend="functions-misc">.
+  </para>
+ </refsect1>
  
  <refsect1>
   <title>Examples</title>
@@ -513,12 +521,6 @@ SELECT CURRENT_TIMESTAMP AS today;
    <xref linkend="sql-set-session-authorization" endterm="sql-set-session-authorization-title">,
    <xref linkend="sql-set-transaction" endterm="sql-set-transaction-title">
   </simpara>
-
-  <para>
-    The function <function>set_config</function> provides the equivalent
-    capability. See <citetitle>Miscellaneous Functions</citetitle> in
-    the &cite-user;.
-  </para>
  </refsect1>
 </refentry>
 

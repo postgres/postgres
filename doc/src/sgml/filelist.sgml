@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.26 2003/01/14 23:19:34 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.27 2003/03/25 16:15:36 petere Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -8,7 +8,6 @@
 <!entity problems   SYSTEM "problems.sgml">
 
 <!entity bookindex  SYSTEM "bookindex.sgml">
-<!entity setindex   SYSTEM "setindex.sgml">
 
 <!-- tutorial -->
 <!entity advanced   SYSTEM "advanced.sgml">

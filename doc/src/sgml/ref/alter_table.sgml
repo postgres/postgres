@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.57 2003/03/20 18:52:47 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.58 2003/03/25 16:15:38 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -437,7 +437,7 @@ VACUUM FULL table;
 
    <para>
     Refer to <command>CREATE TABLE</command> for a further description
-    of valid arguments. The &cite-user; has further information on
+    of valid arguments. <xref linkend="ddl"> has further information on
     inheritance.
    </para>
   </refsect2>

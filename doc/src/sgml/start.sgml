@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.28 2003/02/19 04:06:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.29 2003/03/25 16:15:38 petere Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -31,7 +31,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.28 2003/02/19 04:06:28 momji
 
    <para>
     If you are installing <productname>PostgreSQL</productname>
-    yourself, then refer to the &cite-admin;
+    yourself, then refer to <xref linkend="installation">
     for instructions on installation, and return to
     this guide when the installation is complete.  Be sure to follow
     closely the section about setting up the appropriate environment
@@ -292,7 +292,7 @@ createdb: database creation failed
       <para>
        Writing a custom application, using one of the several
        available language bindings.  These possibilities are discussed
-       further in the &cite-programmer;.
+       further in <xref linkend="client-interfaces">.
       </para>
      </listitem>
     </itemizedlist>
@@ -391,7 +391,7 @@ mydb=#
     command shell. (For more internal commands, type
     <literal>\?</literal> at the <command>psql</command> prompt.)  The
     full capabilities of <command>psql</command> are documented in
-    the &cite-reference;.  If <productname>PostgreSQL</> is
+    <xref linkend="reference">.  If <productname>PostgreSQL</> is
     installed correctly you can also type <literal>man psql</literal>
     at the operating system shell prompt to see the documentation.  In
     this tutorial we will not use these features explicitly, but you

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.21 2003/01/19 00:13:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.22 2003/03/25 16:15:37 petere Exp $
 -->
 
 <sect1 id="notation">
@@ -18,7 +18,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.21 2003/01/19 00:13:28 mo
   We use <filename>/usr/local/pgsql/</filename> as the root
   directory of the installation and <filename>/usr/local/pgsql/data</filename>
   as the directory with the database files.  These directories may vary
-  on your site, details can be derived in the &cite-admin;.
+  on your site, details can be derived in <xref linkend="installation">.
  </para>
 
  <para>

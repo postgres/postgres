@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.23 2003/01/19 00:13:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.24 2003/03/25 16:15:44 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -64,7 +64,7 @@ SHOW ALL
   <para>
    Even with <varname>autocommit</> set to <literal>off</>, <command>SHOW</>
    does not start a new transaction block. See the
-   <varname>autocommit</> section of the &cite-admin; for details.
+   <varname>autocommit</> section in <xref linkend="runtime-config"> for details.
   </para>
  </refsect1>
 
@@ -85,6 +85,15 @@ SHOW ALL
      </varlistentry>
     </variablelist>
    </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   The function <function>current_setting</function> produces
+   equivalent output. See <xref linkend="functions-misc">.
+  </para>
  </refsect1>
 
  <refsect1 id="R1-SQL-SHOW-2">
@@ -139,16 +148,6 @@ SHOW ALL;
   <para>
    The <command>SHOW</command> command is a
    <productname>PostgreSQL</productname> extension.
-  </para>
- </refsect1>
-
- <refsect1>
-  <title>See Also</title>
-
-  <para>
-    The function <function>current_setting</function> produces equivalent
-    output. See <citetitle>Miscellaneous Functions</citetitle> in the
-    &cite-user;.
   </para>
  </refsect1>
 </refentry>
