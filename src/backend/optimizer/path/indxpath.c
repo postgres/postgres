@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.167 2004/12/31 22:00:04 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.168 2005/03/01 00:24:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,9 +64,9 @@ static bool match_join_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
 							  RestrictInfo *rinfo);
 static Oid indexable_operator(Expr *clause, Oid opclass,
 				   bool indexkey_on_left);
-static bool pred_test_recurse_pred(Expr *predicate, List *restrictinfo_list);
 static bool pred_test_restrict_list(Expr *predicate, List *restrictinfo_list);
 static bool pred_test_recurse_restrict(Expr *predicate, Node *clause);
+static bool pred_test_recurse_pred(Expr *predicate, Node *clause);
 static bool pred_test_simple_clause(Expr *predicate, Node *clause);
 static Relids indexable_outerrelids(RelOptInfo *rel, IndexOptInfo *index);
 static Path *make_innerjoin_index_path(Query *root,
@@ -749,11 +749,25 @@ check_partial_indexes(Query *root, RelOptInfo *rel)
  *	  Recursively checks whether the clauses in restrictinfo_list imply
  *	  that the given predicate is true.
  *
- *	  This routine (together with the routines it calls) first breaks down
- *	  the predicate to its constituent AND/OR elements, then similarly
- *	  breaks down the restriction clauses to AND/OR elements in an effort
- *	  to prove that each predicate element is implied.  The top-level
- *	  List structure of each list corresponds to an AND list.
+ *	  This routine (together with the routines it calls) iterates over
+ *	  ANDs in the predicate first, then breaks down the restriction list
+ *	  to its constituent AND/OR elements, and iterates over ORs
+ *	  in the predicate last.  This order is important to make the test
+ *	  succeed whenever possible. --Nels, Jan '93
+ *
+ *	  For example, a restriction (a OR b) certainly implies a predicate
+ *	  (a OR b OR c), but no one element of the predicate is individually
+ *	  implied by the restriction.  By expanding the predicate ORs last
+ *	  we are able to prove that the whole predicate is implied by each arm
+ *	  of the restriction.  Conversely consider predicate (a AND b) with
+ *	  restriction (a AND b AND c).  This should be implied but we will
+ *	  fail to prove it if we dissect the restriction first.
+ *
+ *	  The top-level List structure of each list corresponds to an AND list.
+ *	  We assume that canonicalize_qual() has been applied and so there
+ *	  are no explicit ANDs immediately below the top-level List structure.
+ *	  (If this is not true we might fail to prove an implication that is
+ *	  valid, but no worse consequences will ensue.)
  */
 bool
 pred_test(List *predicate_list, List *restrictinfo_list)
@@ -779,13 +793,14 @@ pred_test(List *predicate_list, List *restrictinfo_list)
 		return false;			/* no restriction clauses: the test must
 								 * fail */
 
+	/* Take care of the AND semantics of the top-level predicate list */
 	foreach(pred, predicate_list)
 	{
 		/*
 		 * if any clause is not implied, the whole predicate is not
 		 * implied.
 		 */
-		if (!pred_test_recurse_pred(lfirst(pred), restrictinfo_list))
+		if (!pred_test_restrict_list(lfirst(pred), restrictinfo_list))
 			return false;
 	}
 	return true;
@@ -793,51 +808,8 @@ pred_test(List *predicate_list, List *restrictinfo_list)
 
 
 /*
- * pred_test_recurse_pred
- *	  Does the "predicate inclusion test" for one conjunct of a predicate
- *	  expression.  Here we recursively deal with the possibility that the
- *	  predicate conjunct is itself an AND or OR structure.
- */
-static bool
-pred_test_recurse_pred(Expr *predicate, List *restrictinfo_list)
-{
-	List	   *items;
-	ListCell   *item;
-
-	Assert(predicate != NULL);
-	if (or_clause((Node *) predicate))
-	{
-		items = ((BoolExpr *) predicate)->args;
-		foreach(item, items)
-		{
-			/* if any item is implied, the whole predicate is implied */
-			if (pred_test_recurse_pred(lfirst(item), restrictinfo_list))
-				return true;
-		}
-		return false;
-	}
-	else if (and_clause((Node *) predicate))
-	{
-		items = ((BoolExpr *) predicate)->args;
-		foreach(item, items)
-		{
-			/*
-			 * if any item is not implied, the whole predicate is not
-			 * implied
-			 */
-			if (!pred_test_recurse_pred(lfirst(item), restrictinfo_list))
-				return false;
-		}
-		return true;
-	}
-	else
-		return pred_test_restrict_list(predicate, restrictinfo_list);
-}
-
-
-/*
  * pred_test_restrict_list
- *	  Does the "predicate inclusion test" for one element of a predicate
+ *	  Does the "predicate inclusion test" for one AND clause of a predicate
  *	  expression.  Here we take care of the AND semantics of the top-level
  *	  restrictinfo list.
  */
@@ -859,10 +831,10 @@ pred_test_restrict_list(Expr *predicate, List *restrictinfo_list)
 
 /*
  * pred_test_recurse_restrict
- *	  Does the "predicate inclusion test" for one element of a predicate
+ *	  Does the "predicate inclusion test" for one AND clause of a predicate
  *	  expression.  Here we recursively deal with the possibility that the
  *	  restriction-list element is itself an AND or OR structure; also,
- *	  we strip off RestrictInfo nodes to find bare predicate expressions.
+ *	  we strip off RestrictInfo nodes to find bare qualifier expressions.
  */
 static bool
 pred_test_recurse_restrict(Expr *predicate, Node *clause)
@@ -902,6 +874,49 @@ pred_test_recurse_restrict(Expr *predicate, Node *clause)
 				return true;
 		}
 		return false;
+	}
+	else
+		return pred_test_recurse_pred(predicate, clause);
+}
+
+
+/*
+ * pred_test_recurse_pred
+ *	  Does the "predicate inclusion test" for one conjunct of a predicate
+ *	  expression.  Here we recursively deal with the possibility that the
+ *	  predicate conjunct is itself an AND or OR structure.
+ */
+static bool
+pred_test_recurse_pred(Expr *predicate, Node *clause)
+{
+	List	   *items;
+	ListCell   *item;
+
+	Assert(predicate != NULL);
+	if (or_clause((Node *) predicate))
+	{
+		items = ((BoolExpr *) predicate)->args;
+		foreach(item, items)
+		{
+			/* if any item is implied, the whole predicate is implied */
+			if (pred_test_recurse_pred(lfirst(item), clause))
+				return true;
+		}
+		return false;
+	}
+	else if (and_clause((Node *) predicate))
+	{
+		items = ((BoolExpr *) predicate)->args;
+		foreach(item, items)
+		{
+			/*
+			 * if any item is not implied, the whole predicate is not
+			 * implied
+			 */
+			if (!pred_test_recurse_pred(lfirst(item), clause))
+				return false;
+		}
+		return true;
 	}
 	else
 		return pred_test_simple_clause(predicate, clause);
