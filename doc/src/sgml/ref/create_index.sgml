@@ -164,7 +164,7 @@ SELECT am.amname AS acc_name,
     Outputs
    </TITLE>
    <PARA>
-   </PARA>
+
    <VARIABLELIST>
     <VARLISTENTRY>
      <TERM>
@@ -183,6 +183,7 @@ SELECT am.amname AS acc_name,
 	  </PARA>
 	 </LISTITEM>
 	</VARLISTENTRY>
+
 	<VARLISTENTRY>
 	 <TERM>
 	  <ReturnValue>ERROR: Cannot create index: 'index_name' already exists.</ReturnValue>
@@ -197,6 +198,7 @@ SELECT am.amname AS acc_name,
      </LISTITEM>
     </VARLISTENTRY>
    </VARIABLELIST>
+
   </REFSECT2>
  </REFSYNOPSISDIV>
  
