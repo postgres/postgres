@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.266 2004/06/12 04:22:15 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.267 2004/06/12 19:30:29 tgl Exp $
 -->
 
 <appendix id="release">
@@ -32,22 +32,32 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.266 2004/06/12 04:22:15 momjian
 <para>
 </para>
 <itemizedlist>
-<listitem><para>Fix temporary memory leak when using hashed aggregates (Tom)</para></listitem>
-<listitem><para>Ecpg fixes, including those for Informix compatibility (Michael)</para></listitem>
+<listitem><para>Fix temporary memory leak when using non-hashed aggregates (Tom)</para></listitem>
+<listitem><para>ECPG fixes, including some for Informix compatibility (Michael)</para></listitem>
 <listitem><para>Fixes for compiling with thread-safety, particularly Solaris (Bruce)</para></listitem>
-<listitem><para>Fix error in COPY IN termination when using the old network protocol (Tom)</para></listitem>
-<listitem><para>Several pg_autovacuum fixes, including fixes for large oids, stability, temp tables, and debug mode (Matthew T. O'Connor)</para></listitem>
-<listitem><para>Fix problem with reading tar dumps on NetBSD and BSD/OS (Bruce)</para></listitem>
+<listitem><para>Fix error in COPY IN termination when using the old network protocol (ljb)</para></listitem>
+<listitem><para>Several important fixes in pg_autovacuum, including fixes for
+large tables, unsigned oids, stability, temp tables, and debug mode
+(Matthew T. O'Connor)</para></listitem> 
+<listitem><para>Fix problem with reading tar-format dumps on NetBSD and BSD/OS (Bruce)</para></listitem>
 <listitem><para>Several JDBC fixes</para></listitem>
 <listitem><para>Fix ALTER SEQUENCE RESTART where last_value equals the restart value (Tom)</para></listitem>
+<listitem><para>Repair failure to recalculate nested sub-selects (Tom)</para></listitem>
+<listitem><para>Fix problems with non-constant expressions in LIMIT/OFFSET</para></listitem>
 <listitem><para>Support FULL JOIN with no join clause, such as X FULL JOIN Y ON TRUE (Tom)</para></listitem>
-<listitem><para>Fix a zero-column table bug (Tom)</para></listitem>
-<listitem><para>Improve handling of non-qualitified identifiers in GROUP BY clauses (Tom)</para></listitem>
-<listitem><para>Do not allow NATURAL CROSS JOIN (Tom)</para></listitem>
-<listitem><para>Add check for invalid protocol packet length in binary COPY (Tom)</para>
+<listitem><para>Fix another zero-column table bug (Tom)</para></listitem>
+<listitem><para>Improve handling of non-qualified identifiers in GROUP BY clauses in sub-selects (Tom)</para>
+<para>
+Select-list aliases within the sub-select will now take precedence over
+names from outer query levels.
+</para></listitem>
+<listitem><para>Do not generate <quote>NATURAL CROSS JOIN</> when decompiling rules (Tom)</para></listitem>
+<listitem><para>Add checks for invalid field length in binary COPY (Tom)</para>
 <para>
   This fixes a difficult-to-exploit security hole.
 </para></listitem>
+<listitem><para>Avoid locking conflict between ANALYZE and LISTEN/NOTIFY</para></listitem>
+<listitem><para>Numerous translation updates (various contributors)</para></listitem>
 </itemizedlist>
 
   </sect2>
