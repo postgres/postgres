@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.19 1999/12/29 22:57:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.20 2000/01/17 04:43:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 		{
 			/* cannot allow multiple input tuples for EXPR sublink */
 			if (found)
-				elog(ERROR, "More than one tuple returned by subselect used as expression.");
+				elog(ERROR, "More than one tuple returned by a subselect used as an expression.");
 			found = true;
 			/*
 			 * We need to copy the subplan's tuple in case the result is of
@@ -126,7 +126,7 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 
 		/* cannot allow multiple input tuples for MULTIEXPR sublink either */
 		if (subLinkType == MULTIEXPR_SUBLINK && found)
-			elog(ERROR, "More than one tuple returned by subselect used as expression.");
+			elog(ERROR, "More than one tuple returned by a subselect used as an expression.");
 
 		found = true;
 
@@ -339,7 +339,7 @@ ExecSetParamPlan(SubPlan *node)
 		if (found &&
 			(sublink->subLinkType == EXPR_SUBLINK ||
 			 sublink->subLinkType == MULTIEXPR_SUBLINK))
-			elog(ERROR, "ExecSetParamPlan: more than one tuple returned by expression subselect");
+			elog(ERROR, "More than one tuple returned a subselect used as an expression.");
 
 		found = true;
 
