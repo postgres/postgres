@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.109 2000/08/06 04:39:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.110 2000/08/30 08:48:55 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1595,7 +1595,10 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 		 * this is kind of expensive, but I think we must do it in case
 		 * relation has been truncated...
 		 */
-		relation->rd_nblocks = RelationGetNumberOfBlocks(relation);
+		if (relation->rd_unlinked)
+			relation->rd_nblocks = 0;
+		else
+			relation->rd_nblocks = RelationGetNumberOfBlocks(relation);
 
 		if (relDescChanged && !RelationHasReferenceCountZero(relation))
 			elog(ERROR, "RelationClearRelation: relation %u modified while in use",
