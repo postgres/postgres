@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.108 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.109 2005/01/06 18:29:09 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -43,8 +43,13 @@ int			optreset;
  */
 PsqlSettings pset;
 
+#ifndef WIN32
 #define SYSPSQLRC	"psqlrc"
 #define PSQLRC		".psqlrc"
+#else
+#define SYSPSQLRC	"psqlrc"
+#define PSQLRC		"psqlrc.txt"
+#endif
 
 /*
  * Structures to pass information between the option parsing routine
@@ -568,24 +573,21 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 static void
 process_psqlrc(char *argv0)
 {
-	char	   *psqlrc;
 	char		home[MAXPGPATH];
-	char		global_file[MAXPGPATH];
+	char		rc_file[MAXPGPATH];
 	char		my_exec_path[MAXPGPATH];
 	char		etc_path[MAXPGPATH];
 
 	find_my_exec(argv0, my_exec_path);
 	get_etc_path(my_exec_path, etc_path);
 
-	snprintf(global_file, MAXPGPATH, "%s/%s", etc_path, SYSPSQLRC);
-	process_psqlrc_file(global_file);
+	snprintf(rc_file, MAXPGPATH, "%s/%s", etc_path, SYSPSQLRC);
+	process_psqlrc_file(rc_file);
 
 	if (get_home_path(home))
 	{
-		psqlrc = pg_malloc(strlen(home) + 1 + strlen(PSQLRC) + 1);
-		sprintf(psqlrc, "%s/%s", home, PSQLRC);
-		process_psqlrc_file(psqlrc);
-		free(psqlrc);
+		snprintf(rc_file, MAXPGPATH, "%s/%s", home, PSQLRC);
+		process_psqlrc_file(rc_file);
 	}
 }
 

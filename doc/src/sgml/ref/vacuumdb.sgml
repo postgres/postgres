@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.34 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.35 2005/01/06 18:29:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -73,7 +73,7 @@ PostgreSQL documentation
       <term><option>--all</option></term>
       <listitem>
        <para>
-	Vacuum all databases.
+        Vacuum all databases.
        </para>
       </listitem>
      </varlistentry>
@@ -83,12 +83,12 @@ PostgreSQL documentation
       <term><option><optional>--dbname</> <replaceable class="parameter">dbname</replaceable></option></term>
       <listitem>
        <para>
-	Specifies the name of the database to be cleaned or analyzed.
-	If this is not specified and <option>-a</option> (or
-	<option>--all</option>) is not used, the database name is read
-	from the environment variable <envar>PGDATABASE</envar>.  If
-	that is not set, the user name specified for the connection is
-	used.
+        Specifies the name of the database to be cleaned or analyzed.
+        If this is not specified and <option>-a</option> (or
+        <option>--all</option>) is not used, the database name is read
+        from the environment variable <envar>PGDATABASE</envar>.  If
+        that is not set, the user name specified for the connection is
+        used.
        </para>
       </listitem>
      </varlistentry>
@@ -99,7 +99,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Echo the commands that <application>vacuumdb</application> generates
-	and sends to the server.
+        and sends to the server.
        </para>
       </listitem>
      </varlistentry>
@@ -129,9 +129,9 @@ PostgreSQL documentation
       <term><option>--table <replaceable class="parameter">table</replaceable> [ (<replaceable class="parameter">column</replaceable> [,...]) ]</option></term>
       <listitem>
        <para>
-	Clean or analyze <replaceable class="parameter">table</replaceable> only.
-	Column names may be specified only in conjunction with
-	the <option>--analyze</option> option.
+        Clean or analyze <replaceable class="parameter">table</replaceable> only.
+        Column names may be specified only in conjunction with
+        the <option>--analyze</option> option.
        </para>
        <tip>
         <para>
@@ -147,7 +147,7 @@ PostgreSQL documentation
       <term><option>--verbose</option></term>
       <listitem>
        <para>
-	Print detailed information during processing.
+        Print detailed information during processing.
        </para>
       </listitem>
      </varlistentry>
@@ -157,7 +157,7 @@ PostgreSQL documentation
       <term><option>--analyze</option></term>
       <listitem>
        <para>
-	Calculate statistics for use by the optimizer.
+        Calculate statistics for use by the optimizer.
        </para>
       </listitem>
      </varlistentry>
@@ -174,10 +174,10 @@ PostgreSQL documentation
       <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
-	Specifies the host name of the machine on which the 
-	server
-	is running.  If the value begins with a slash, it is used 
-	as the directory for the Unix domain socket.
+        Specifies the host name of the machine on which the 
+        server
+        is running.  If the value begins with a slash, it is used 
+        as the directory for the Unix domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -187,9 +187,9 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-	Specifies the TCP port or local Unix domain socket file 
-	extension on which the server
-	is listening for connections.
+        Specifies the TCP port or local Unix domain socket file 
+        extension on which the server
+        is listening for connections.
        </para>
       </listitem>
      </varlistentry>
@@ -261,7 +261,7 @@ PostgreSQL documentation
    <application>vacuumdb</application> might need to connect several
    times to the <productname>PostgreSQL</productname> server, asking
    for a password each time. It is convenient to have a
-   <filename>$HOME/.pgpass</> file in such cases. See <xref
+   <filename>~/.pgpass</> file in such cases. See <xref
    linkend="libpq-pgpass"> for more information.
   </para>
  </refsect1>

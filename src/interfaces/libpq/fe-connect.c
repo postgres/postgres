@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.296 2005/01/06 00:59:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.297 2005/01/06 18:29:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 
 #ifdef WIN32
 #include "win32.h"
+#include <shlobj.h>
 #else
 #include <sys/socket.h>
 #include <netdb.h>
@@ -57,7 +58,11 @@
 #endif
 
 
+#ifndef WIN32
 #define PGPASSFILE ".pgpass"
+#else
+#define PGPASSFILE "pgpass.txt"
+#endif
 
 /* fall back options if they are not specified by arguments or defined
    by environment variables */
@@ -3175,6 +3180,7 @@ static char *
 PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 {
 	FILE	   *fp;
+	char		homedir[MAXPGPATH];
 	char		pgpassfile[MAXPGPATH];
 	struct stat stat_buf;
 
@@ -3193,12 +3199,10 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	if (port == NULL)
 		port = DEF_PGPORT_STR;
 
-	if (!pqGetHomeDirectory(pgpassfile, sizeof(pgpassfile)))
+	if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
 		return NULL;
 
-	snprintf(pgpassfile + strlen(pgpassfile),
-			 sizeof(pgpassfile) - strlen(pgpassfile),
-			 "/%s", PGPASSFILE);
+	snprintf(pgpassfile, sizeof(pgpassfile), "%s/%s", homedir, PGPASSFILE);
 
 	/* If password file cannot be opened, ignore it. */
 	if (stat(pgpassfile, &stat_buf) == -1)
@@ -3254,6 +3258,9 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 /*
  * Obtain user's home directory, return in given buffer
  *
+ * On Unix, this actually returns the user's home directory.  On Windows
+ * it returns the PostgreSQL-specific application data folder.
+ *
  * This is essentially the same as get_home_path(), but we don't use that
  * because we don't want to pull path.c into libpq (it pollutes application
  * namespace)
@@ -3272,16 +3279,12 @@ pqGetHomeDirectory(char *buf, int bufsize)
 	return true;
 
 #else
+	char		tmppath[MAX_PATH];
 
-	/* TEMPORARY PLACEHOLDER IMPLEMENTATION */
-	const char *homedir;
-
-	homedir = getenv("USERPROFILE");
-	if (homedir == NULL)
-		homedir = getenv("HOME");
-	if (homedir == NULL)
+	ZeroMemory(tmppath, sizeof(tmppath));
+	if (!SHGetSpecialFolderPath(NULL, tmppath, CSIDL_APPDATA, FALSE))
 		return false;
-	StrNCpy(buf, homedir, bufsize);
+	snprintf(buf, bufsize, "%s/postgresql", tmppath);
 	return true;
 #endif
 }

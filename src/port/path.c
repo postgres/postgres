@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.47 2005/01/06 01:00:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.48 2005/01/06 18:29:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,9 @@
 
 #include <ctype.h>
 #include <sys/stat.h>
-#ifndef WIN32
+#ifdef WIN32
+#include <shlobj.h>
+#else
 #include <unistd.h>
 #endif
 
@@ -445,6 +447,9 @@ get_locale_path(const char *my_exec_path, char *ret_path)
 
 /*
  *	get_home_path
+ *
+ * On Unix, this actually returns the user's home directory.  On Windows
+ * it returns the PostgreSQL-specific application data folder.
  */
 bool
 get_home_path(char *ret_path)
@@ -460,16 +465,12 @@ get_home_path(char *ret_path)
 	return true;
 
 #else
+	char		tmppath[MAX_PATH];
 
-	/* TEMPORARY PLACEHOLDER IMPLEMENTATION */
-	const char *homedir;
-
-	homedir = getenv("USERPROFILE");
-	if (homedir == NULL)
-		homedir = getenv("HOME");
-	if (homedir == NULL)
+	ZeroMemory(tmppath, sizeof(tmppath));
+	if (!SHGetSpecialFolderPath(NULL, tmppath, CSIDL_APPDATA, FALSE))
 		return false;
-	StrNCpy(ret_path, homedir, MAXPGPATH);
+	snprintf(ret_path, MAXPGPATH, "%s/postgresql", tmppath);
 	return true;
 #endif
 }

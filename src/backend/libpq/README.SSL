@@ -177,7 +177,7 @@ user should be set up on the database server.  It is acceptable
 for the shell program to be bogus (e.g., /bin/false), if the
 tunnel is set up in to avoid launching a remote shell.
 
-On each client system the $HOME/.ssh/config file should contain
+On each client system the ~/.ssh/config file should contain
 an additional line similiar to
 
  LocalForward 5555 psql.example.com:5432
@@ -192,7 +192,7 @@ that establishes an SSH tunnel when the program is launched:
 
   #!/bin/sh
   HOST=psql.example.com
-  IDENTITY=$HOME/.ssh/identity.psql
+  IDENTITY=~/.ssh/identity.psql
   /usr/bin/ssh -1 -i $IDENTITY -n $HOST 'sleep 60' & \
 	/usr/bin/psql -h $HOST -p 5555 $1
 
@@ -335,12 +335,12 @@ PostgreSQL can generate client certificates via a four-step process.
 
    The client.conf file is normally installed in /etc/postgresql/root.crt.
    The client should also copy the server's root.crt file to
-   $HOME/.postgresql/root.crt.
+   ~/.postgresql/root.crt.
 
 2. If the user has the OpenSSL applications installed, they can
    run pgkeygen.sh.  (An equivalent compiled program will be available
    in the future.)  They should provide a copy of the
-   $HOME/.postgresql/postgresql.pem file to their DBA.
+   ~/.postgresql/postgresql.pem file to their DBA.
 
 3. The DBA should sign this file the OpenSSL applications:
 
@@ -348,7 +348,7 @@ PostgreSQL can generate client certificates via a four-step process.
 
    and return the signed cert (postgresql.crt) to the user.
 
-4. The user should install this file in $HOME/.postgresql/postgresql.crt.
+4. The user should install this file in ~/.postgresql/postgresql.crt.
 
 The server will log every time a client certificate has been
 used, but there is not yet a mechanism provided for using client
@@ -429,7 +429,7 @@ until later.
 > for the shell program to be bogus (e.g., /bin/false), if the
 > tunnel is set up in to avoid launching a remote shell.
 > 
-> On each client system the $HOME/.ssh/config file should contain
+> On each client system the ~/.ssh/config file should contain
 > an additional line similiar to
 > 
 >  LocalForward 5555 psql.example.com:5432

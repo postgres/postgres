@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.63 2005/01/06 00:59:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.64 2005/01/06 18:29:10 tgl Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -26,7 +26,7 @@
  *	  "man-in-the-middle" and "impersonation" attacks.	The
  *	  server certificate, or better yet the CA certificate used
  *	  to sign the server certificate, should be present in the
- *	  "$HOME/.postgresql/root.crt" file.  If this file isn't
+ *	  "~/.postgresql/root.crt" file.  If this file isn't
  *	  readable, or the server certificate can't be validated,
  *	  pqsecure_open_client() will return an error code.
  *
@@ -50,7 +50,7 @@
  *	  ...
  *
  *	  Unlike the server's static private key, the client's
- *	  static private key ($HOME/.postgresql/postgresql.key)
+ *	  static private key (~/.postgresql/postgresql.key)
  *	  should normally be stored encrypted.	However we still
  *	  support EPH since it's useful for other reasons.
  *
@@ -63,9 +63,9 @@
  *	  keeping it closed to everyone else.
  *
  *	  The user's certificate and private key are located in
- *		$HOME/.postgresql/postgresql.crt
+ *		~/.postgresql/postgresql.crt
  *	  and
- *		$HOME/.postgresql/postgresql.key
+ *		~/.postgresql/postgresql.key
  *	  respectively.
  *
  *	  ...
@@ -73,10 +73,6 @@
  *	  We don't provide informational callbacks here (like
  *	  info_cb() in be-secure.c), since there's mechanism to
  *	  display that information to the client.
- *
- * OS DEPENDENCIES
- *	  The code currently assumes a POSIX password entry.  How should
- *	  Windows and Mac users be handled?
  *
  *-------------------------------------------------------------------------
  */
@@ -124,11 +120,24 @@
 
 
 #ifdef USE_SSL
-static int	verify_cb(int ok, X509_STORE_CTX *ctx);
+
+#ifndef WIN32
+#define USERCERTFILE	".postgresql/postgresql.crt"
+#define USERKEYFILE		".postgresql/postgresql.key"
+#define ROOTCERTFILE	".postgresql/root.crt"
+#define DHFILEPATTERN	"%s/.postgresql/dh%d.pem"
+#else
+/* On Windows, the "home" directory is already PostgreSQL-specific */
+#define USERCERTFILE	"postgresql.crt"
+#define USERKEYFILE		"postgresql.key"
+#define ROOTCERTFILE	"root.crt"
+#define DHFILEPATTERN	"%s/dh%d.pem"
+#endif
 
 #ifdef NOT_USED
 static int	verify_peer(PGconn *);
 #endif
+static int	verify_cb(int ok, X509_STORE_CTX *ctx);
 static DH  *load_dh_file(int keylength);
 static DH  *load_dh_buffer(const char *, size_t);
 static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
@@ -158,7 +167,7 @@ static SSL_CTX *SSL_context = NULL;
  *	sessions even if the static private key is compromised,
  *	so we are *highly* motivated to ensure that we can use
  *	EDH even if the user... or an attacker... deletes the
- *	$HOME/.postgresql/dh*.pem files.
+ *	~/.postgresql/dh*.pem files.
  *
  *	It's not critical that users have EPH keys, but it doesn't
  *	hurt and if it's missing someone will demand it, so....
@@ -631,8 +640,7 @@ load_dh_file(int keylength)
 		return NULL;
 
 	/* attempt to open file.  It's not an error if it doesn't exist. */
-	snprintf(fnbuf, sizeof(fnbuf), "%s/.postgresql/dh%d.pem",
-			 homedir, keylength);
+	snprintf(fnbuf, sizeof(fnbuf), DHFILEPATTERN, homedir, keylength);
 
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 		return NULL;
@@ -779,8 +787,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	}
 
 	/* read the user certificate */
-	snprintf(fnbuf, sizeof(fnbuf), "%s/.postgresql/postgresql.crt",
-			 homedir);
+	snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USERCERTFILE);
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
@@ -802,8 +809,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	fclose(fp);
 
 	/* read the user key */
-	snprintf(fnbuf, sizeof(fnbuf), "%s/.postgresql/postgresql.key",
-			 homedir);
+	snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USERKEYFILE);
 	if (stat(fnbuf, &buf) == -1)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
@@ -966,7 +972,7 @@ initialize_SSL(PGconn *conn)
 	/* Set up to verify server cert, if root.crt is present */
 	if (pqGetHomeDirectory(homedir, sizeof(homedir)))
 	{
-		snprintf(fnbuf, sizeof(fnbuf), "%s/.postgresql/root.crt", homedir);
+		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, ROOTCERTFILE);
 		if (stat(fnbuf, &buf) == 0)
 		{
 			if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, NULL))

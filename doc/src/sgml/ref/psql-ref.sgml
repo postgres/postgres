@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.127 2005/01/04 03:58:16 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.128 2005/01/06 18:29:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -440,8 +440,9 @@ PostgreSQL documentation
       <term><option>--no-psqlrc</></term>
       <listitem>
       <para>
-      Do not read the start-up file <filename>/psqlrc</filename> or
-      <filename>~/.psqlrc</filename>.
+      Do not read the start-up file (neither the system-wide
+      <filename>psqlrc</filename> file nor the user's
+      <filename>~/.psqlrc</filename> file).
       </para>
       </listitem>
     </varlistentry>
@@ -1109,7 +1110,7 @@ testdb=>
 => <userinput>\echo `date`</userinput>
 Tue Oct 26 21:40:57 CEST 1999
 </programlisting>
-        If the first argument is an unquoted <literal>-n</literal> the the trailing
+        If the first argument is an unquoted <literal>-n</literal> the trailing
         newline is not written.
         </para>
 
@@ -1901,8 +1902,8 @@ bar
          The autocommit-on mode is <productname>PostgreSQL</>'s traditional
          behavior, but autocommit-off is closer to the SQL spec.  If you
          prefer autocommit-off, you may wish to set it in the system-wide
-         <filename>psqlrc</filename> or your
-         <filename>.psqlrc</filename> file.
+         <filename>psqlrc</filename> file or your
+         <filename>~/.psqlrc</filename> file.
         </para>
         </note>
         </listitem>
@@ -2415,8 +2416,8 @@ testdb=> \set PROMPT1 '%[%033[1;33;40m%]%n@%/%R%[%033[0m%#%] '
     <para>
     <application>psql</application> supports the <application>Readline</application>
     library for convenient line editing and retrieval. The command
-    history is stored in a file named <filename>.psql_history</filename>
-    in your home directory and is reloaded when
+    history is automatically saved when <application>psql</application>
+    exits and is reloaded when
     <application>psql</application> starts up. Tab-completion is also
     supported, although the completion logic makes no claim to be an
     <acronym>SQL</acronym> parser.  If for some reason you do not like the tab completion, you
@@ -2440,17 +2441,6 @@ $endif
   <title>Environment</title>
 
   <variablelist>
-   <varlistentry>
-    <term><envar>HOME</envar></term>
-
-    <listitem>
-     <para>
-      Directory for initialization file (<filename>.psqlrc</filename>)
-      and command history file (<filename>.psql_history</filename>).
-     </para>
-    </listitem>
-   </varlistentry>
-
    <varlistentry>
     <term><envar>PAGER</envar></term>
 
@@ -2531,10 +2521,12 @@ $endif
    <listitem>
     <para>
      Before starting up, <application>psql</application> attempts to
-     read and execute commands from the the system-wide
-     <filename>psqlrc</filename> file and the
-     <filename>$HOME/.psqlrc</filename> file in the user's home
-     directory.  See <filename><replaceable>PREFIX</>/share/psqlrc.sample</>
+     read and execute commands from the system-wide
+     <filename>psqlrc</filename> file and the user's
+     <filename>~/.psqlrc</filename> file.
+     (On Windows, the user's startup file is named
+     <filename>APPDATA/postgresql/psqlrc.txt</filename>.)
+     See <filename><replaceable>PREFIX</>/share/psqlrc.sample</>
      for information on setting up the system-wide file.  It could be used
      to set up the client or the server to taste (using the <command>\set
      </command> and <command>SET</command> commands).
@@ -2543,8 +2535,20 @@ $endif
 
    <listitem>
     <para>
+     Both the system-wide <filename>psqlrc</filename> file and the user's
+     <filename>~/.psqlrc</filename> file can be made version-specific
+     by appending a dash and the <productname>PostgreSQL</productname>
+     release number, for example <filename>~/.psqlrc-&version;</filename>.
+     A matching version-specific file will be read in preference to a
+     non-version-specific file.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
      The command-line history is stored in the file
-     <filename>$HOME/.psql_history</filename>.
+     <filename>~/.psql_history</filename>, or
+     <filename>APPDATA/postgresql/psql_history</filename> on Windows.
     </para>
    </listitem>
   </itemizedlist>

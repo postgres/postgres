@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.174 2004/12/28 23:17:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.175 2005/01/06 18:29:07 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -147,8 +147,8 @@ PGconn *PQconnectdb(const char *conninfo);
       likely to fail if <application>libpq</application> is passed a host name
       that is not the name of the machine at <literal>hostaddr</>.)  Also,
       <literal>host</> rather than <literal>hostaddr</> is used to identify
-      the connection in <filename>$HOME/.pgpass</> (or 
-      <filename>%USERPROFILE%\.pgpass</> on Microsoft Windows).
+      the connection in <filename>~/.pgpass</> (see
+      <xref linkend="libpq-pgpass">).
      </para>
      <para>
       Without either a host name or host address,
@@ -3691,7 +3691,7 @@ sets the user name used to connect to the database.
 <envar>PGPASSWORD</envar>
 sets the password used if the server demands password
 authentication.  This environment variable is deprecated for security
-reasons; instead consider using the <filename>$HOME/.pgpass</>
+reasons; instead consider using the <filename>~/.pgpass</>
 file (see <xref linkend="libpq-pgpass">).
 </para>
 </listitem>
@@ -3881,7 +3881,12 @@ internationalization.
 The file <filename>.pgpass</filename> in a user's home directory is a file
 that can contain passwords to be used if the connection requires a
 password (and no password has been specified otherwise).
-This file should have lines of the following format:
+On Microsoft Windows the file is named
+<filename>APPDATA/postgresql/pgpass.txt</>.
+</para>
+
+<para>
+This file should contain lines of the following format:
 <synopsis>
 <replaceable>hostname</replaceable>:<replaceable>port</replaceable>:<replaceable>database</replaceable>:<replaceable>username</replaceable>:<replaceable>password</replaceable>
 </synopsis>
@@ -3893,11 +3898,14 @@ entries first when you are using wildcards.)
 If an entry needs to contain <literal>:</literal> or
 <literal>\</literal>, escape this character with <literal>\</literal>.
 </para>
+
 <para>
 The permissions on <filename>.pgpass</filename> must disallow any
 access to world or group; achieve this by the command
 <command>chmod 0600 ~/.pgpass</command>.
 If the permissions are less strict than this, the file will be ignored.
+(The file permissions are not currently checked on Microsoft Windows,
+however.)
 </para>
 </sect1>
 
@@ -3920,16 +3928,22 @@ If the permissions are less strict than this, the file will be ignored.
    If the server demands a client certificate, 
    <application>libpq</application>
    will send the certificate stored in file
-   <filename>.postgresql/postgresql.crt</> within the user's home directory.
-   A matching private key file <filename>.postgresql/postgresql.key</>
+   <filename>~/.postgresql/postgresql.crt</> within the user's home directory.
+   A matching private key file <filename>~/.postgresql/postgresql.key</>
    must also be present, and must not be world-readable.
+   (On Microsoft Windows these files are named
+   <filename>APPDATA/postgresql/postgresql.crt</filename> and
+   <filename>APPDATA/postgresql/postgresql.key</filename>.)
   </para>
 
   <para>
-   If the file <filename>.postgresql/root.crt</> is present in the user's
+   If the file <filename>~/.postgresql/root.crt</> is present in the user's
    home directory,
    <application>libpq</application> will use the certificate list stored
-   therein to verify the server's certificate.  The SSL connection will
+   therein to verify the server's certificate.
+   (On Microsoft Windows the file is named
+   <filename>APPDATA/postgresql/root.crt</filename>.)
+   The SSL connection will
    fail if the server does not present a certificate; therefore, to
    use this feature the server must also have a <filename>root.crt</> file.
   </para>

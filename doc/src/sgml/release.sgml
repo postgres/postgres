@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.317 2005/01/06 01:49:24 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.318 2005/01/06 18:29:07 tgl Exp $
 -->
 
 <appendix id="release">
@@ -5615,7 +5615,7 @@ operations on bytea columns (Joe)</para></listitem>
    <sect3>
     <title>libpq</title>
 <itemizedlist>
-<listitem><para>Add $HOME/.pgpass to store host/user password combinations (Alvaro Herrera)</para></listitem>
+<listitem><para>Add ~/.pgpass to store host/user password combinations (Alvaro Herrera)</para></listitem>
 <listitem><para>Add PQunescapeBytea() function to libpq (Patrick Welche)</para></listitem>
 <listitem><para>Fix for sending large queries over non-blocking connections (Bernhard Herzog)</para></listitem>
 <listitem><para>Fix for libpq using timers on Win9X (David Ford)</para></listitem>

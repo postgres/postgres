@@ -3,17 +3,21 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.42 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.43 2005/01/06 18:29:09 tgl Exp $
  */
 #include "postgres_fe.h"
+
 #include "input.h"
-
-#include <errno.h>
-
 #include "pqexpbuffer.h"
 #include "settings.h"
 #include "tab-complete.h"
 #include "common.h"
+
+#ifndef WIN32
+#define PSQLHISTORY ".psql_history"
+#else
+#define PSQLHISTORY "psql_history"
+#endif
 
 /* Runtime options for turning off readline and history */
 /* (of course there is no runtime command for doing that :) */
@@ -32,13 +36,10 @@ enum histcontrol
 
 #ifdef HAVE_ATEXIT
 static void finishInput(void);
-
 #else
 /* designed for use with on_exit() */
 static void finishInput(int, void *);
 #endif
-
-#define PSQLHISTORY ".psql_history"
 
 
 #ifdef USE_READLINE
@@ -235,14 +236,12 @@ finishInput(int exitstatus, void *arg)
 			char	   *psql_history;
 			int			hist_size;
 
-			psql_history = pg_malloc(strlen(home) + 1 +
-									 strlen(PSQLHISTORY) + 1);
-
 			hist_size = GetVariableNum(pset.vars, "HISTSIZE", -1, -1, true);
-
 			if (hist_size >= 0)
 				stifle_history(hist_size);
 
+			psql_history = pg_malloc(strlen(home) + 1 +
+									 strlen(PSQLHISTORY) + 1);
 			sprintf(psql_history, "%s/%s", home, PSQLHISTORY);
 			write_history(psql_history);
 			free(psql_history);
