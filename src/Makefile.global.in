@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.25 1997/07/14 16:36:36 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.26 1997/08/17 00:39:02 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -56,7 +56,7 @@ PORTNAME= @PORTNAME@
 # library), set LINUX_ELF to null in Makefile.custom.
 LINUX_ELF= true
 
-LIBPQDIR:= $(SRCDIR)/libpq
+LIBPQDIR:= $(SRCDIR)/interfaces/libpq
 
 # For convenience, POSTGRESDIR is where BINDIR, and LIBDIR 
 # and other target destinations are rooted.  Of course, each of these is 
