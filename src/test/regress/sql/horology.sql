@@ -42,7 +42,7 @@ SET DateStyle = 'German';
 SELECT timestamp with time zone '27.12.2001 04:05:06.789+08';
 SELECT timestamp with time zone '27.12.2001 04:05:06.789-08';
 SET DateStyle = 'ISO';
--- Reject time without time zone having a time zone specified
+-- As of 7.4, allow time without time zone having a time zone specified
 SELECT time without time zone '040506.789+08';
 SELECT time without time zone '040506.789-08';
 SELECT time without time zone 'T040506.789+08';

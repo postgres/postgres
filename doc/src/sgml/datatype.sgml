@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.112 2003/01/29 01:08:42 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.113 2003/01/31 01:08:07 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1488,14 +1488,21 @@ SELECT b, char_length(b) FROM test2;
      </indexterm>
 
      <para>
-      The <type>time</type> type can be specified as <type>time</type> or
-      as <type>time without time zone</type>. The optional precision
-      <replaceable>p</replaceable> should be between 0 and 6, and
-      defaults to the precision of the input time literal.
+      The time-of-day types are <type>time [
+      (<replaceable>p</replaceable>) ] without time zone</type> and
+      <type>time [ (<replaceable>p</replaceable>) ] with time
+      zone</type>.  Writing just <type>time</type> is equivalent to
+      <type>time without time zone</type>.
      </para>
 
      <para>
-      <xref linkend="datatype-datetime-time-table"> shows the valid <type>time</type> inputs.
+      Valid input for these types consists of a time of day followed by an
+      optional time zone. (See <xref linkend="datatype-datetime-time-table">.)
+      The optional precision
+      <replaceable>p</replaceable> should be between 0 and 6, and
+      defaults to the precision of the input time literal.  If a time zone
+      is specified in the input for <type>time without time zone</type>,
+      it is silently ignored.
      </para>
 
       <table id="datatype-datetime-time-table">
@@ -1536,27 +1543,6 @@ SELECT b, char_length(b) FROM test2;
 	  <entry><literal>allballs</literal></entry>
 	  <entry>same as 00:00:00</entry>
 	 </row>
-	</tbody>
-       </tgroup>
-      </table>
-
-     <para>
-      The type <type>time with time zone</type> accepts all input also
-      legal for the <type>time</type> type, appended with a legal time
-      zone, as shown in <xref
-      linkend="datatype-datetime-timetz-table">.
-     </para>
-
-      <table id="datatype-datetime-timetz-table">
-       <title>Time With Time Zone Input</title>
-       <tgroup cols="2">
-       <thead>
-	<row>
-	 <entry>Example</entry>
-	 <entry>Description</entry>
-	</row>
-       </thead>
-       <tbody>
 	<row>
 	 <entry>04:05:06.789-8</entry>
 	 <entry>ISO 8601</entry>

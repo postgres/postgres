@@ -196,15 +196,31 @@ SELECT timestamp with time zone '27.12.2001 04:05:06.789-08';
 (1 row)
 
 SET DateStyle = 'ISO';
--- Reject time without time zone having a time zone specified
+-- As of 7.4, allow time without time zone having a time zone specified
 SELECT time without time zone '040506.789+08';
-ERROR:  Bad time external representation '040506.789+08'
+     time      
+---------------
+ 04:05:06.7890
+(1 row)
+
 SELECT time without time zone '040506.789-08';
-ERROR:  Bad time external representation '040506.789-08'
+     time      
+---------------
+ 04:05:06.7890
+(1 row)
+
 SELECT time without time zone 'T040506.789+08';
-ERROR:  Bad time external representation 'T040506.789+08'
+     time      
+---------------
+ 04:05:06.7890
+(1 row)
+
 SELECT time without time zone 'T040506.789-08';
-ERROR:  Bad time external representation 'T040506.789-08'
+     time      
+---------------
+ 04:05:06.7890
+(1 row)
+
 SELECT time with time zone '040506.789+08';
       timetz      
 ------------------
