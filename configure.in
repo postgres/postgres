@@ -1145,26 +1145,13 @@ if test -n "$NSGMLS"; then
   AC_CHECK_PROGS(SGMLSPL, sgmlspl)
 fi
 
-<<<<<<< configure.in
-
-# Finally ready to produce output files ...
-=======
-
 # check whether 'test -ef' works
 if (test "$srcdir" -ef "$srcdir") >/dev/null 2>&1 ; then
   test_ef_works=yes
 else
   test_ef_works=no
 fi
->>>>>>> 1.104
 
-<<<<<<< configure.in
-if test x"$abs_top_srcdir" != x"$abs_top_builddir"; then
-  echo $ac_n "preparing build tree... $ac_c" 1>&6
-  /bin/sh "$srcdir/config/prep_buildtree" "$abs_top_srcdir" "$abs_top_builddir" \
-    || AC_MSG_ERROR(failed)
-  AC_MSG_RESULT(done)
-=======
 abs_top_srcdir=
 AC_SUBST(abs_top_srcdir)
 
@@ -1177,7 +1164,6 @@ if test "$test_ef_works" = yes ; then
       || AC_MSG_ERROR(failed)
     AC_MSG_RESULT(done)
   fi
->>>>>>> 1.104
 fi
 
 AC_OUTPUT(

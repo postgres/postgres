@@ -15,7 +15,7 @@ import java.awt.event.*;
  * Note: Because it's designed for standalone use, if this window is closed,
  * the JVM is terminated. Do not use for normal application use.
  *
- * $Id: StandaloneApp.java,v 1.1 2001/03/05 09:15:36 peter Exp $
+ * $Id: StandaloneApp.java,v 1.2 2001/03/05 10:18:48 peter Exp $
  *
  * @author
  * @version 1.0
@@ -44,7 +44,13 @@ public abstract class StandaloneApp extends JFrame
     Globals.getInstance().parseArguments(aArgs);
 
     // Now initialise this tool (init is overidden)
-    JComponent tool = init();
+    JComponent tool = null;
+    try {
+      tool = init();
+    } catch(Exception ex) {
+      ex.printStackTrace();
+      System.exit(1);
+    }
 
     // Now add to this frame
     this.getContentPane().add(tool, BorderLayout.CENTER);

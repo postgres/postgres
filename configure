@@ -42,7 +42,7 @@
 
 # ... more stuff removed ...
 
-# $Header: /cvsroot/pgsql/configure,v 1.112 2001/03/05 09:38:55 peter Exp $
+# $Header: /cvsroot/pgsql/configure,v 1.113 2001/03/05 10:18:43 peter Exp $
 
 
 # PGAC_PATH_FLEX
@@ -66,7 +66,7 @@
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $Header: /cvsroot/pgsql/configure,v 1.112 2001/03/05 09:38:55 peter Exp $
+# $Header: /cvsroot/pgsql/configure,v 1.113 2001/03/05 10:18:43 peter Exp $
 #
 
 # PGAC_PROG_PYTHON
@@ -85,7 +85,7 @@
 # the build of the shared module. Future project.
 # PGAC_PATH_PYTHONDIR
 
-# $Header: /cvsroot/pgsql/configure,v 1.112 2001/03/05 09:38:55 peter Exp $
+# $Header: /cvsroot/pgsql/configure,v 1.113 2001/03/05 10:18:43 peter Exp $
 
 # Autoconf macros to check for Tcl related things
 
@@ -8085,26 +8085,13 @@ done
 
 fi
 
-<<<<<<< configure.in
-
-# Finally ready to produce output files ...
-=======
-
 # check whether 'test -ef' works
 if (test "$srcdir" -ef "$srcdir") >/dev/null 2>&1 ; then
   test_ef_works=yes
 else
   test_ef_works=no
 fi
->>>>>>> 1.104
 
-<<<<<<< configure.in
-if test x"$abs_top_srcdir" != x"$abs_top_builddir"; then
-  echo $ac_n "preparing build tree... $ac_c" 1>&6
-  /bin/sh "$srcdir/config/prep_buildtree" "$abs_top_srcdir" "$abs_top_builddir" \
-    || { echo "configure: error: failed" 1>&2; exit 1; }
-  echo "$ac_t""done" 1>&6
-=======
 abs_top_srcdir=
 
 
@@ -8117,7 +8104,6 @@ if test "$test_ef_works" = yes ; then
       || { echo "configure: error: failed" 1>&2; exit 1; }
     echo "$ac_t""done" 1>&6
   fi
->>>>>>> 1.104
 fi
 
 trap '' 1 2 15

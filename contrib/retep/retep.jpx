@@ -40,7 +40,6 @@
   <property category="sys" name="Version" value="1.0" />
   <property category="sys" name="VersionLabel" value="@version" />
   <property category="sys" name="WorkingDirectory" value="." />
-  <node type="Package" name="uk.org.retep.app" />
   <node type="Package" name="uk.org.retep.dtu" />
   <node type="Package" name="uk.org.retep.tools" />
   <node type="Package" name="uk.org.retep.util" />
