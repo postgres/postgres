@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.85 2002/10/24 22:09:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.85.2.1 2003/04/10 02:47:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,26 +226,6 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 				result = (Node *) makeRelabelType(result, targetTypeId, -1,
 												  cformat);
 			}
-
-			/*
-			 * If the input is a constant, apply the type conversion
-			 * function now instead of delaying to runtime.  (We could, of
-			 * course, just leave this to be done during
-			 * planning/optimization; but it's a very frequent special
-			 * case, and we save cycles in the rewriter if we fold the
-			 * expression now.)
-			 *
-			 * Note that no folding will occur if the conversion function is
-			 * not marked 'immutable'.
-			 *
-			 * HACK: if constant is NULL, don't fold it here.  This is needed
-			 * by make_subplan(), which calls this routine on placeholder
-			 * Const nodes that mustn't be collapsed.  (It'd be a lot
-			 * cleaner to make a separate node type for that purpose...)
-			 */
-			if (IsA(node, Const) &&
-				!((Const *) node)->constisnull)
-				result = eval_const_expressions(result);
 		}
 		else
 		{
@@ -496,7 +476,6 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 	{
 		List	   *args;
 		Const	   *cons;
-		Node	   *fcall;
 
 		/* Pass given value, plus target typmod as an int4 constant */
 		cons = makeConst(INT4OID,
@@ -523,19 +502,7 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 			args = lappend(args, cons);
 		}
 
-		fcall = build_func_call(funcId, targetTypeId, args, cformat);
-
-		/*
-		 * If the input is a constant, apply the length coercion
-		 * function now instead of delaying to runtime.
-		 *
-		 * See the comments for the similar case in coerce_type.
-		 */
-		if (node && IsA(node, Const) &&
-			!((Const *) node)->constisnull)
-			node = eval_const_expressions(fcall);
-		else
-			node = fcall;
+		node = build_func_call(funcId, targetTypeId, args, cformat);
 	}
 
 	return node;
