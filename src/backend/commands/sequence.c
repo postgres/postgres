@@ -97,6 +97,8 @@ DefineSequence (CreateSeqStmt *seq)
     	typnam->arrayBounds = NULL;
     	coldef = makeNode(ColumnDef);
     	coldef->typename = typnam;
+    	coldef->defval = NULL;
+    	coldef->is_not_null = false;
     	null[i-1] = ' ';
 
 	switch (i)
@@ -149,6 +151,7 @@ DefineSequence (CreateSeqStmt *seq)
     stmt->archiveLoc = -1;		/* default */
     stmt->archiveType = ARCH_NONE;
     stmt->inhRelnames = NIL;
+    stmt->constraints = NIL;
     
     ItsSequenceCreation = true;		/* hack */
 

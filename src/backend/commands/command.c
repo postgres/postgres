@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.12 1997/08/21 03:01:27 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.13 1997/08/22 14:22:07 vadim Exp $
  *
  * NOTES
  *    The PortalExecutorHeapMemory crap needs to be eliminated
@@ -283,7 +283,9 @@ PerformAddAttribute(char *relationName,
      * we can't add a not null attribute
      */
     if (colDef->is_not_null)
-        elog(WARN,"Can't add a not null attribute to a existent relation");
+    	elog(WARN,"Can't add a not null attribute to a existent relation");
+    if (colDef->defval)
+    	elog(WARN,"ADD ATTRIBUTE: DEFAULT is not implemented, yet");
     /*
      * if the first element in the 'schema' list is a "*" then we are
      * supposed to add this attribute to all classes that inherit from

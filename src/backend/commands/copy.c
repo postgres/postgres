@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.26 1997/08/19 04:43:28 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.27 1997/08/22 14:22:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -608,15 +608,18 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	 * ----------------
 	 */
 	
-	if (rel->rd_att->constr && rel->rd_att->constr->has_not_null)
-	  {
-	    int attrChk;
-	    for (attrChk = 1; attrChk <= rel->rd_att->natts; attrChk++) {
-	      if (rel->rd_att->attrs[attrChk-1]->attnotnull && heap_attisnull(tuple,attrChk))
-		elog(WARN,"CopyFrom:  Fail to add null value in not null attribute %s",
-		     rel->rd_att->attrs[attrChk-1]->attname.data);
-	    }
-	  }
+    	if ( rel->rd_att->constr )
+    	{
+    	    HeapTuple newtuple;
+    	
+    	    newtuple = ExecConstraints ("CopyFrom", rel, tuple);
+    	    
+    	    if ( newtuple != tuple )
+    	    {
+    	    	pfree (tuple);
+    	    	tuple = newtuple;
+    	    }
+    	}
 	
         heap_insert(rel, tuple);
             
