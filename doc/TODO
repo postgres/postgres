@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Aug 12 15:45:17 EDT 2004
+Last updated:		Thu Aug 12 22:47:54 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -367,6 +367,8 @@ Commands
 
 	o -Add ALTER DOMAIN, AGGREGATE, CONVERSION ... OWNER TO
 	o -Add ALTER SEQUENCE ... OWNER TO
+	o Add ALTER INDEX that works just like ALTER TABLE already does
+	  on an index
 
 * CLUSTER
 	o Automatically maintain clustering on a table
