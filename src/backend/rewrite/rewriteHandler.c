@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.67 2000/01/27 18:11:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.68 2000/03/12 18:57:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -958,10 +958,6 @@ fireRIRonSubselect(Node *node, void *context)
 		return false;
 	if (IsA(node, SubLink))
 	{
-		/*
-		 * Standard expression_tree_walker will not recurse into subselect,
-		 * but here we must do so.
-		 */
 		SubLink    *sub = (SubLink *) node;
 		Query	   *qry;
 
@@ -971,14 +967,12 @@ fireRIRonSubselect(Node *node, void *context)
 		/* Do what we came for */
 		qry = fireRIRrules((Query *) (sub->subselect));
 		sub->subselect = (Node *) qry;
-		/* Must recurse to handle any sub-subselects! */
-		if (fireRIRonSubselect((Node *) qry, context))
-			return true;
+		/* Need not recurse into subselect, because fireRIRrules did it */
 		return false;
 	}
 	if (IsA(node, Query))
 	{
-		/* Reach here after recursing down into subselect above... */
+		/* Reach here when called from fireRIRrules */
 		Query	   *qry = (Query *) node;
 
 		if (fireRIRonSubselect((Node *) (qry->targetList), context))
@@ -1107,11 +1101,11 @@ fireRIRrules(Query *parsetree)
 		heap_close(rel, AccessShareLock);
 	}
 
-	if (parsetree->hasSubLinks)
-		fireRIRonSubselect((Node *) parsetree, NULL);
-
 	if (parsetree->hasAggs)
 		parsetree->qual = modifyAggrefQual(parsetree->qual, parsetree);
+
+	if (parsetree->hasSubLinks)
+		fireRIRonSubselect((Node *) parsetree, NULL);
 
 	return parsetree;
 }
