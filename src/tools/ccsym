@@ -1,12 +1,12 @@
 #!/bin/sh
-/bin/cat >tmp.c <<EOF
+trap "/bin/rm -f /tmp/$$.*" 0 1 2 3 15
+/bin/cat >$$.c <<EOF
 extern int foo;
 EOF
-for i in `cc -v -c tmp.c 2>&1`
+for i in `cc -v -c $$.c 2>&1`
 do
         case "$i" in
         -D*) echo "$i" | /usr/bin/sed 's/^-D//';;
         -A*) /bin/test "2.7.2.1" && echo "$i" | /usr/bin/sed 's/^-A\(.*\)(\(.*\))/\1=\2/';;
         esac
 done
-/bin/rm -f tmp.*
