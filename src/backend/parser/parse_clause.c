@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.4 1997/12/29 01:12:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.5 1997/12/29 02:09:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,7 +384,7 @@ transformUnionClause(List *unionClause, List *targetlist)
 	List *union_list = NIL;
 	QueryTreeList *qlist;
 	int i;
-TargetEntry
+
 	if (unionClause)
 	{
 		qlist = parse_analyze(unionClause);
