@@ -9,21 +9,21 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.22 1999/07/15 22:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.23 1999/07/16 03:14:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>
 #include <string.h>
 
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "catalog/pg_proc.h"	/* for Form_pg_proc */
-#include "catalog/catname.h"	/* for ProcedureRelationName */
-#include "catalog/indexing.h"	/* for Num_pg_proc_indices */
-#include "utils/sets.h"			/* for GENERICSETNAME	   */
-#include "utils/syscache.h"		/* for PROOID */
+#include "catalog/pg_proc.h"
+#include "catalog/catname.h"
+#include "catalog/indexing.h"
+#include "utils/sets.h"
+#include "utils/syscache.h"
 
 extern CommandDest whereToSendOutput;	/* defined in tcop/postgres.c */
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.5 1999/07/15 23:03:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.6 1999/07/16 03:12:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #include "libpq/libpq-be.h"
 #include "parser/parse_node.h"
 #include "utils/builtins.h"
-#include <utils/relcache.h>		/* for RelationNameGetRelation */
+#include "utils/relcache.h"
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
 #include "tcop/pquery.h"

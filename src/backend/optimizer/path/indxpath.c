@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.59 1999/07/15 22:39:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.60 1999/07/16 03:13:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,10 @@
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "optimizer/pathnode.h"
-#include "parser/parsetree.h"	/* for getrelid() */
-#include "parser/parse_expr.h"	/* for exprType() */
-#include "parser/parse_oper.h"	/* for oprid() and oper() */
-#include "parser/parse_coerce.h"/* for IS_BINARY_COMPATIBLE() */
+#include "parser/parsetree.h"
+#include "parser/parse_expr.h"
+#include "parser/parse_oper.h"
+#include "parser/parse_coerce.h"
 #include "utils/lsyscache.h"
 
 

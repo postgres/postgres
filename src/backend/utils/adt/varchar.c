@@ -7,11 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.50 1999/07/15 22:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.51 1999/07/16 03:14:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>
 #include <string.h>
 #include "postgres.h"
 #include "access/htup.h"

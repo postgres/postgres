@@ -18,8 +18,8 @@
  *-------------------------------------------------------------------------
  */
 #include <string.h>
-#include "postgres.h"			/* postgres system include file */
-#include "utils/builtins.h"		/* where the function declarations go */
+#include "postgres.h"
+#include "utils/builtins.h"
 #include "mb/pg_wchar.h"
 
 static int	like(pg_wchar * text, pg_wchar * p);
@@ -110,7 +110,7 @@ textnlike(struct varlena * s, struct varlena * p)
 }
 
 
-/*	$Revision: 1.27 $
+/*	$Revision: 1.28 $
 **	"like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.

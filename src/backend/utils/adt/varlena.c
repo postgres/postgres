@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.50 1999/07/15 15:20:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.51 1999/07/16 03:14:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "utils/builtins.h"		/* where function declarations go */
+#include "utils/builtins.h"
 
 #include "mb/pg_wchar.h"
 

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.10 1999/02/13 23:18:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.11 1999/07/16 03:13:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 
 #include "postgres.h"
 
-#include "storage/lmgr.h"		/* where the declarations go */
+#include "storage/lmgr.h"
 #include "storage/lock.h"
 #include "storage/multilev.h"
 #include "utils/rel.h"

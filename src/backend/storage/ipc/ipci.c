@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.27 1999/07/15 22:39:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.28 1999/07/16 03:13:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 
 #include "storage/sinval.h"
 #include "storage/bufmgr.h"
-#include "miscadmin.h"			/* for DebugLvl */
+#include "miscadmin.h"
 
 /*
  * SystemPortAddressCreateMemoryKey

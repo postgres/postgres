@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bsd.h,v 1.4 1999/07/15 23:03:19 momjian Exp $
+ * $Id: bsd.h,v 1.5 1999/07/16 03:13:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 
 #include "postgres.h"
 
-#include "fmgr.h"				/* for func_ptr */
+#include "fmgr.h"
 #include "utils/dynamic_loader.h"
 
 /* dynloader.c */

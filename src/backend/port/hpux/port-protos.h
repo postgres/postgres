@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.7 1999/02/13 23:17:34 momjian Exp $
+ * $Id: port-protos.h,v 1.8 1999/07/16 03:13:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PORT_PROTOS_H
 #define PORT_PROTOS_H
 
-#include <sys/resource.h>		/* for struct rusage */
-#include <dl.h>					/* for shl_t */
+#include <sys/resource.h>
+#include "dl.h"
 
 #include "utils/dynamic_loader.h"
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.21 1999/07/15 22:39:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.22 1999/07/16 03:12:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@
 #include "executor/executor.h"
 #include "executor/execdebug.h"
 #include "executor/nodeAppend.h"
-#include "parser/parsetree.h"	/* for rt_store() macro */
+#include "parser/parsetree.h"
 
 static bool exec_append_initialize_next(Append *node);
 

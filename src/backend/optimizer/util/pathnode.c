@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.44 1999/07/15 22:39:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.45 1999/07/16 03:13:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include "optimizer/keys.h"
 #include "optimizer/ordering.h"
 
-#include "parser/parsetree.h"	/* for getrelid() */
+#include "parser/parsetree.h"
 
 static Path *better_path(Path *new_path, List *unique_paths, bool *is_new);
 

@@ -9,13 +9,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.6 1999/07/15 15:19:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.7 1999/07/16 03:13:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <math.h>				/* for MAXFLOAT on most systems */
+#include <math.h>
 
-#include <values.h>				/* for MAXFLOAT on SunOS */
+#include <values.h>
 #include <string.h>
 
 #include "postgres.h"
@@ -35,8 +35,8 @@
 #include "optimizer/internal.h"
 #include "optimizer/keys.h"
 #include "optimizer/pathnode.h"
-#include "optimizer/tlist.h"	/* for get_expr */
-#include "storage/buf_internals.h"		/* for NBuffers */
+#include "optimizer/tlist.h"
+#include "storage/buf_internals.h"
 #include "tcop/dest.h"
 #include "utils/syscache.h"
 

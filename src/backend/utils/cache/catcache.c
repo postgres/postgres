@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.45 1999/07/15 22:40:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.46 1999/07/16 03:14:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "utils/catcache.h"
 #include "access/valid.h"
 #include "miscadmin.h"
-#include "catalog/pg_type.h"	/* for OID of int28 type */
+#include "catalog/pg_type.h"
 
 static void CatCacheRemoveCTup(CatCache *cache, Dlelem *e);
 static Index CatalogCacheComputeHashIndex(struct catcache * cacheInP);

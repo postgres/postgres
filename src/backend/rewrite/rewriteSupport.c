@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.34 1999/07/15 22:39:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.35 1999/07/16 03:13:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,8 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
-#include "utils/catcache.h"		/* for CacheContext */
-#include "utils/syscache.h"		/* for SearchSysCache */
+#include "utils/catcache.h"
+#include "utils/syscache.h"
 
 #include "rewrite/rewriteSupport.h"
 

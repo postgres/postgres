@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.58 1999/07/15 22:39:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.59 1999/07/16 03:13:43 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -29,7 +29,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>

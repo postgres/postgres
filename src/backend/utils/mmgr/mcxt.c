@@ -7,11 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.16 1999/07/15 22:40:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.17 1999/07/16 03:14:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* XXX for printf debugging */
+#include <stdio.h>
 
 #include "postgres.h"
 

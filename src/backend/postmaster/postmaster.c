@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.110 1999/07/15 23:03:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.111 1999/07/16 03:13:19 momjian Exp $
  *
  * NOTES
  *
@@ -33,9 +33,9 @@
  *-------------------------------------------------------------------------
  */
  /* moved here to prevent double define */
-#include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
+#include <sys/param.h>
 #ifdef HAVE_NETDB_H
-#include <netdb.h>				/* for MAXHOSTNAMELEN on some */
+#include <netdb.h>
 #endif
 
 #ifndef MAXHOSTNAMELEN
@@ -54,8 +54,8 @@
 #endif	 /* !NO_UNISTD_H */
 
 #include <ctype.h>
-#include <sys/types.h>			/* for fd_set stuff */
-#include <sys/stat.h>			/* for umask */
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #ifdef HAVE_LIMITS_H
@@ -91,7 +91,7 @@
 #include "nodes/nodes.h"
 #include "storage/proc.h"
 #ifndef HAVE_GETHOSTNAME
-#include "port-protos.h"		/* For gethostname() */
+#include "port-protos.h"
 #endif
 #include "storage/fd.h"
 #include "utils/trace.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.33 1999/07/15 23:03:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.34 1999/07/16 03:14:25 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -24,7 +24,7 @@
 #include <unistd.h>
 
 #include "postgres.h"
-#include "miscadmin.h"			/* where the declarations go */
+#include "miscadmin.h"
 
 #include "storage/backendid.h"
 #include "storage/lmgr.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.23 1999/07/15 22:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.24 1999/07/16 03:14:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_language.h"
-#include "parser/parsetree.h"	/* for getrelname() */
+#include "parser/parsetree.h"
 #include "utils/builtins.h"
 #include "utils/fcache2.h"
 #ifndef HAVE_MEMMOVE

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.26 1999/07/15 22:39:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.27 1999/07/16 03:13:50 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -62,12 +62,12 @@
 #include "postgres.h"
 
 
-#include "utils/builtins.h"		/* for oideq */
+#include "utils/builtins.h"
 #include "tcop/fastpath.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 
-#include "access/xact.h"		/* for TransactionId/CommandId protos */
+#include "access/xact.h"
 
 #include "utils/syscache.h"
 #include "catalog/pg_proc.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.18 1999/07/15 23:03:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.19 1999/07/16 03:12:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@
 
 #include "postgres.h"
 
-#include <libpq/libpq.h>		/* where the declarations go */
+#include "libpq/libpq.h"
 
 PortalEntry **portals = (PortalEntry **) NULL;
 size_t		portals_array_size = 0;

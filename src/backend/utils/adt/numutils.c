@@ -10,18 +10,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.35 1999/07/15 22:40:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.36 1999/07/16 03:14:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>
 #include <errno.h>
 #include <math.h>
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
 #endif
 #include "postgres.h"
-#include "utils/builtins.h"		/* where the declarations go */
+#include "utils/builtins.h"
 #ifndef HAVE_MEMMOVE
 #else
 #include <string.h>

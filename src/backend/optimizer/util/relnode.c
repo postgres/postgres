@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.17 1999/07/15 22:39:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.18 1999/07/16 03:13:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 
 
 #include "optimizer/internal.h"
-#include "optimizer/pathnode.h" /* where the decls go */
+#include "optimizer/pathnode.h"
 #include "optimizer/plancat.h"
 
 

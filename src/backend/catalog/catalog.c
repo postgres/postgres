@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.22 1999/07/15 23:03:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.23 1999/07/16 03:12:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,9 +15,9 @@
 
 #include "postgres.h"
 
-#include <miscadmin.h>			/* for DataDir */
+#include "miscadmin.h"
 #include "utils/syscache.h"
-#include <catalog/catname.h>	/* NameIs{,Shared}SystemRelationName */
+#include "catalog/catname.h"
 #include "catalog/pg_type.h"
 #include "catalog/catalog.h"
 #include "access/transam.h"

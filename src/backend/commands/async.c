@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.49 1999/07/15 23:03:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.50 1999/07/16 03:12:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/types.h>			/* Needed by in.h on Ultrix */
+#include <sys/types.h>
 #include <netinet/in.h>
 
 #include "postgres.h"

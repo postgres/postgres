@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.25 1999/05/25 16:12:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.26 1999/07/16 03:14:22 momjian Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
@@ -15,7 +15,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* XXX use own I/O routines */
+#include <stdio.h>
 #include <errno.h>
 #include <string.h>
 

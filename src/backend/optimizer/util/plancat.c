@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.32 1999/07/15 22:39:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.33 1999/07/16 03:13:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #include "catalog/pg_amop.h"
 #include "catalog/pg_inherits.h"
 
-#include "parser/parsetree.h"	/* for getrelid() */
+#include "parser/parsetree.h"
 
 #include "optimizer/internal.h"
 #include "optimizer/plancat.h"

@@ -7,15 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.43 1999/07/15 15:20:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.44 1999/07/16 03:14:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <math.h>
 #include <limits.h>
 #include <float.h>
-#include <stdio.h>				/* for sprintf proto, etc. */
-#include <stdlib.h>				/* for strtod, etc. */
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 

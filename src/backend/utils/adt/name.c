@@ -11,13 +11,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.20 1999/07/15 15:20:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.21 1999/07/16 03:14:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
-#include "utils/builtins.h"		/* where the declarations go */
+#include "utils/builtins.h"
 
 /*****************************************************************************
  *	 USER I/O ROUTINES (none)												 *

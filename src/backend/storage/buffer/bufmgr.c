@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.58 1999/07/15 22:39:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.59 1999/07/16 03:13:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@
 #include "storage/smgr.h"
 #include "miscadmin.h"
 #include "utils/relcache.h"
-#include "executor/execdebug.h" /* for NDirectFileRead */
+#include "executor/execdebug.h"
 
 extern SPINLOCK BufMgrLock;
 extern long int ReadBufferCount;

@@ -7,11 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.36 1999/07/15 22:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.37 1999/07/16 03:13:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>
 #include <string.h>
 #include <limits.h>
 

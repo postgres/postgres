@@ -5,8 +5,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* for sprintf proto, etc. */
-#include <stdlib.h>				/* for strtod, etc. */
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <time.h>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.25 1999/07/15 23:03:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.26 1999/07/16 03:14:07 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -28,11 +28,11 @@
  *-------------------------------------------------------------------------
  */
 #include <string.h>
-#include "postgres.h"			/* postgres system include file */
+#include "postgres.h"
 
 #include "regex/regex.h"
 
-#include "utils/builtins.h"		/* where the function declarations go */
+#include "utils/builtins.h"
 
 #if defined(DISABLE_XOPEN_NLS)
 #undef _XOPEN_SOURCE

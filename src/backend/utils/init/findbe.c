@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.14 1999/05/25 16:12:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.15 1999/07/16 03:14:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include <unistd.h>
 
 #include "postgres.h"
-#include "miscadmin.h"			/* for DebugLvl */
+#include "miscadmin.h"
 
 #ifndef S_IRUSR					/* XXX [TRH] should be in a header */
 #define S_IRUSR		 S_IREAD

@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: linux.h,v 1.6 1999/07/15 23:03:20 momjian Exp $
+ * $Id: linux.h,v 1.7 1999/07/16 03:13:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PORT_PROTOS_H
 #define PORT_PROTOS_H
 
-#include "fmgr.h"				/* for func_ptr */
+#include "fmgr.h"
 #include "utils/dynamic_loader.h"
 #ifdef __ELF__
 #include <dlfcn.h>

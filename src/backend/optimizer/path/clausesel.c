@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.21 1999/07/15 22:39:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.22 1999/07/16 03:12:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "optimizer/cost.h"
 #include "optimizer/internal.h"
 #include "optimizer/plancat.h"
-#include "parser/parsetree.h"	/* for getrelid() */
+#include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
 

@@ -1,7 +1,7 @@
-/* $Id: srandom.c,v 1.7 1999/07/15 15:19:34 momjian Exp $ */
+/* $Id: srandom.c,v 1.8 1999/07/16 03:13:08 momjian Exp $ */
 
 #include <stdlib.h>
-#include <math.h>				/* for pow() prototype */
+#include <math.h>
 #include <errno.h>
 
 void

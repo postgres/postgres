@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.34 1999/07/15 15:20:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.35 1999/07/16 03:13:57 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -39,7 +39,7 @@
 #include <limits.h>
 #endif
 #include "access/xact.h"
-#include "utils/builtins.h"		/* where function declarations go */
+#include "utils/builtins.h"
 #include "utils/dt.h"
 
 #define INVALID_RELTIME_STR		"Undefined RelTime"

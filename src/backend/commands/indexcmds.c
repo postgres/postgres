@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.6 1999/07/15 23:03:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.7 1999/07/16 03:12:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_opclass.h"
 #include "commands/defrem.h"
-#include <parser/parsetree.h>	/* for getrelid() */
+#include "parser/parsetree.h"
 #include "optimizer/prep.h"
 #include "optimizer/clauses.h"
 

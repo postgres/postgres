@@ -8,12 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.54 1999/07/15 22:39:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.55 1999/07/16 03:13:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/types.h>
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>
 #include <string.h>
 #include <sys/file.h>
 #include <sys/stat.h>

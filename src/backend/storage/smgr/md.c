@@ -7,21 +7,21 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.48 1999/07/15 22:39:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.49 1999/07/16 03:13:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <unistd.h>
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>
 #include <string.h>
-#include <fcntl.h>				/* for open() flags */
+#include <fcntl.h>
 #include <sys/file.h>
 
 #include "postgres.h"
-#include "miscadmin.h"			/* for DataDir */
+#include "miscadmin.h"
 
 #include "catalog/catalog.h"
-#include "storage/smgr.h"		/* where the declarations go */
+#include "storage/smgr.h"
 
 #undef DIAGNOSTIC
 

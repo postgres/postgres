@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.45 1999/07/15 15:20:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.46 1999/07/16 03:14:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
  *		 for calls to pow(), exp() since on some machines (my Linux box
  *		 included) these routines do not set errno. - tgl 97/05/10
  */
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -60,7 +60,7 @@
 #include <limits.h>
 #endif
 #include "fmgr.h"
-#include "utils/builtins.h"		/* for ftod() prototype */
+#include "utils/builtins.h"
 
 #ifndef NAN
 #define NAN		(0.0/0.0)

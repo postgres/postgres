@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.74 1999/07/15 22:39:15 momjian Exp $
+ *	$Id: pqcomm.c,v 1.75 1999/07/16 03:12:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>				/* for ttyname() */
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -79,7 +79,7 @@
 #include <arpa/inet.h>
 #include <sys/file.h>
 
-#include "libpq/libpq.h"		/* where my declarations go */
+#include "libpq/libpq.h"
 #include "miscadmin.h"
 
 #ifndef SOMAXCONN

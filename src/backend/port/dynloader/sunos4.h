@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sunos4.h,v 1.3 1999/02/13 23:17:27 momjian Exp $
+ * $Id: sunos4.h,v 1.4 1999/07/16 03:13:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,7 +14,7 @@
 #define PORT_PROTOS_H
 
 #include <dlfcn.h>
-#include "fmgr.h"				/* for func_ptr */
+#include "fmgr.h"
 #include "utils/dynamic_loader.h"
 
 /* dynloader.c */

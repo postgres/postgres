@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.39 1999/07/15 22:39:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.40 1999/07/16 03:13:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,7 @@
 
 #include "optimizer/paths.h"
 #include "optimizer/pathnode.h"
-#include "optimizer/cost.h"		/* for _enable_{hashjoin,
-								 * _enable_mergejoin} */
+#include "optimizer/cost.h"
 
 static Path *best_innerjoin(List *join_paths, List *outer_relid);
 static List *sort_inner_and_outer(RelOptInfo *joinrel, RelOptInfo *outerrel, RelOptInfo *innerrel,

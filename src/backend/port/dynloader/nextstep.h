@@ -9,7 +9,7 @@
 #ifndef PORT_PROTOS_H
 #define PORT_PROTOS_H
 
-#include "fmgr.h"				/* for func_ptr */
+#include "fmgr.h"
 #include "utils/dynamic_loader.h"
 
 void	   *next_dlopen(char *name);

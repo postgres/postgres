@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.12 1999/05/10 00:45:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.13 1999/07/16 03:13:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #include "postgres.h"
 #include "tioga/tgRecipe.h"
 
-#include "catalog/catalog.h"	/* for newoid() */
+#include "catalog/catalog.h"
 
 static Arr_TgString *TextArray2ArrTgString(char *str);
 

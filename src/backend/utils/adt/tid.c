@@ -7,18 +7,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.9 1999/07/15 22:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.10 1999/07/16 03:14:11 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>				/* for sprintf() */
+#include <stdio.h>
 #include <string.h>
 #include "postgres.h"
 
-#include "utils/builtins.h"		/* where function declarations go */
+#include "utils/builtins.h"
 
 #define LDELIM			'('
 #define RDELIM			')'

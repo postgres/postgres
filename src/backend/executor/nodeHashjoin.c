@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.23 1999/07/15 22:39:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.24 1999/07/16 03:12:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "executor/executor.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
-#include "optimizer/clauses.h"	/* for get_leftop */
+#include "optimizer/clauses.h"
 
 static TupleTableSlot *ExecHashJoinOuterGetTuple(Plan *node, Plan *parent,
 						  HashJoinState *hjstate);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.39 1999/07/15 22:40:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.40 1999/07/16 03:14:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-#include "utils/builtins.h"		/* where function declarations go */
+#include "utils/builtins.h"
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.38 1999/07/15 22:39:04 momjian Exp $
+ *	$Id: execAmi.c,v 1.39 1999/07/16 03:12:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
 #include "executor/nodeAppend.h"
 #include "executor/nodeSubplan.h"
 #include "executor/execdebug.h"
-#include "optimizer/internal.h" /* for _NONAME_RELATION_ID_ */
+#include "optimizer/internal.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/heap.h"

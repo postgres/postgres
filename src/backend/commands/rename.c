@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.28 1999/07/15 23:03:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.29 1999/07/16 03:12:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 #include "catalog/catalog.h"
 #include "commands/rename.h"
 #include "miscadmin.h"
-#include <optimizer/prep.h>		/* for find_all_inheritors */
+#include "optimizer/prep.h"
 #ifndef NO_SECURITY
 #include "utils/acl.h"
 #endif	 /* !NO_SECURITY */

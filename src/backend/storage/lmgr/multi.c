@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.30 1999/07/15 20:32:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.31 1999/07/16 03:13:45 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -27,7 +27,7 @@
 #include "storage/multilev.h"
 
 #include "utils/rel.h"
-#include "miscadmin.h"			/* MyDatabaseId */
+#include "miscadmin.h"
 
 static bool MultiAcquire(LOCKMETHOD lockmethod, LOCKTAG *tag,
 			 LOCKMODE lockmode, PG_LOCK_LEVEL level);

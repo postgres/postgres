@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.43 1999/07/15 23:03:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.44 1999/07/16 03:14:26 momjian Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -44,12 +44,11 @@
 
 #include "access/heapam.h"
 #include "utils/syscache.h"
-#include "storage/bufpage.h"	/* for page layout, for
-								 * InitMyDatabaseInfo() */
+#include "storage/bufpage.h"
 #include "storage/sinval.h"
 
-#include "miscadmin.h"			/* for global decls */
-#include "utils/portal.h"		/* for EnablePortalManager, etc. */
+#include "miscadmin.h"
+#include "utils/portal.h"
 
 #include "utils/inval.h"
 

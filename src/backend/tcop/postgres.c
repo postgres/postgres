@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.121 1999/07/15 22:39:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.122 1999/07/16 03:13:50 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -24,9 +24,9 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
+#include <sys/param.h>
 #ifndef MAXHOSTNAMELEN
-#include <netdb.h>				/* for MAXHOSTNAMELEN on some */
+#include <netdb.h>
 #endif
 #ifndef MAXHOSTNAMELEN			/* for MAXHOSTNAMELEN under sco3.2v5.0.2 */
 #include <sys/socket.h>
@@ -52,10 +52,10 @@
 #include "optimizer/cost.h"
 #include "optimizer/planner.h"
 #include "parser/parser.h"
-#include "rewrite/rewriteHandler.h"		/* for QueryRewrite() */
+#include "rewrite/rewriteHandler.h"
 #include "tcop/fastpath.h"
 #include "tcop/pquery.h"
-#include "tcop/tcopprot.h"		/* where declarations for this file go */
+#include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/ps_status.h"
 #include "utils/temprel.h"
@@ -1502,7 +1502,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.121 $ $Date: 1999/07/15 22:39:56 $\n");
+		puts("$Revision: 1.122 $ $Date: 1999/07/16 03:13:50 $\n");
 	}
 
 	/* ----------------

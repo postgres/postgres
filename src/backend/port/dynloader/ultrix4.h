@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ultrix4.h,v 1.4 1999/07/15 23:03:21 momjian Exp $
+ * $Id: ultrix4.h,v 1.5 1999/07/16 03:13:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 #ifndef _DL_HEADER_
 #define _DL_HEADER_
 
-#include <stdio.h>				/* needed to declare FILE for ldfcn.h */
+#include <stdio.h>
 #include "filehdr.h"
 #include "syms.h"
 #include "ldfcn.h"

@@ -7,11 +7,11 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.62 1999/07/15 22:38:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.63 1999/07/16 03:12:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <unistd.h>				/* For getopt() */
+#include <unistd.h>
 #include <time.h>
 #include <stdio.h>
 #include <signal.h>

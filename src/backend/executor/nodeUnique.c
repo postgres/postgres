@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.21 1999/07/15 22:39:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.22 1999/07/16 03:12:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 #include "executor/executor.h"
 #include "executor/nodeUnique.h"
 #include "access/heapam.h"
-#include "access/printtup.h"	/* for getTypeOutAndElem() */
+#include "access/printtup.h"
 
 /* ----------------------------------------------------------------
  *		ExecIdenticalTuples

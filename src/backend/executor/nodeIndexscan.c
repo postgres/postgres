@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.38 1999/07/15 22:39:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.39 1999/07/16 03:12:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,8 @@
 #include "executor/execdebug.h"
 #include "executor/nodeIndexscan.h"
 
-#include "optimizer/clauses.h"	/* for get_op, get_leftop, get_rightop */
-#include "parser/parsetree.h"	/* for rt_fetch() */
+#include "optimizer/clauses.h"
+#include "parser/parsetree.h"
 
 #include "access/heapam.h"
 #include "access/genam.h"

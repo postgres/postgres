@@ -6,13 +6,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.35 1999/07/15 22:39:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.36 1999/07/16 03:13:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
-#include "parser/parsetree.h"	/* for getrelid() */
+#include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/builtins.h"
 #include "rewrite/rewriteManip.h"

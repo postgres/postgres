@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.24 1999/07/15 22:39:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.25 1999/07/16 03:13:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 #include "utils/syscache.h"
 #include "utils/lsyscache.h"
 
-#include "parser/parsetree.h"	/* for getrelid() */
+#include "parser/parsetree.h"
 
 #include "optimizer/prep.h"
 #include "optimizer/clauses.h"

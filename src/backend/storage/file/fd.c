@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.45 1999/07/15 15:19:47 momjian Exp $
+ *	  $Id: fd.c,v 1.46 1999/07/16 03:13:31 momjian Exp $
  *
  * NOTES:
  *
@@ -48,7 +48,7 @@
 #include <fcntl.h>
 
 #include "postgres.h"
-#include "miscadmin.h"			/* for DataDir */
+#include "miscadmin.h"
 #include "storage/fd.h"
 
 /*

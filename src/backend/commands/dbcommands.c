@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.36 1999/07/15 22:39:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.37 1999/07/16 03:12:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #include "catalog/catname.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
-#include "miscadmin.h"			/* for DataDir */
+#include "miscadmin.h"
 #include "tcop/tcopprot.h"
 #include "commands/dbcommands.h"
 #include "utils/syscache.h"

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.31 1999/07/15 23:03:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.32 1999/07/16 03:12:48 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -47,8 +47,8 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_language.h"
 #include "utils/syscache.h"
-#include <fmgr.h>				/* for fmgr */
-#include <utils/builtins.h>		/* prototype for textin() */
+#include "fmgr.h"
+#include "utils/builtins.h"
 #include "commands/defrem.h"
 #include "tcop/dest.h"
 #include "catalog/pg_shadow.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.25 1999/07/15 22:40:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.26 1999/07/16 03:14:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,8 +73,8 @@
  * PortalHeapMemory				y				y				y *
  *
  */
-#include <stdio.h>				/* for sprintf() */
-#include <string.h>				/* for strlen, strncpy */
+#include <stdio.h>
+#include <string.h>
 
 #include "postgres.h"
 

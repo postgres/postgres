@@ -7,14 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excabort.c,v 1.6 1999/02/13 23:19:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excabort.c,v 1.7 1999/07/16 03:14:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "utils/exc.h"			/* where function declarations go */
+#include "utils/exc.h"
 
 void
 ExcAbort(const Exception *excP,

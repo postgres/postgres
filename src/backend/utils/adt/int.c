@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.24 1999/07/15 22:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.25 1999/07/16 03:14:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 #endif
 
 #include "postgres.h"
-#include "utils/builtins.h"		/* where the declarations go */
+#include "utils/builtins.h"
 
 #ifndef SHRT_MAX
 #define SHRT_MAX (0x7FFF)

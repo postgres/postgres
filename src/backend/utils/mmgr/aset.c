@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.17 1999/07/15 22:40:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.18 1999/07/16 03:14:28 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -23,7 +23,7 @@
  */
 #include <stdio.h>
 #include "postgres.h"
-#include "utils/memutils.h"		/* where funnction declarations go */
+#include "utils/memutils.h"
 #ifndef HAVE_MEMMOVE
 #else
 #include <string.h>

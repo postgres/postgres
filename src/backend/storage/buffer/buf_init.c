@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.25 1999/06/26 15:58:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.26 1999/07/16 03:13:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
-#include "executor/execdebug.h" /* for NDirectFileRead */
+#include "executor/execdebug.h"
 #include "catalog/catalog.h"
 
 /*
