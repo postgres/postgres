@@ -304,7 +304,7 @@ public class LargeObject
 	 */
 	public InputStream getInputStream() throws SQLException
 	{
-		return new BlobInputStream(this);
+		return new BlobInputStream(this, 4096);
 	}
 
 	/*
@@ -318,7 +318,7 @@ public class LargeObject
 	public OutputStream getOutputStream() throws SQLException
 	{
 		if (os == null)
-			os = new BlobOutputStream(this);
+			os = new BlobOutputStream(this, 4096);
 		return os;
 	}
 

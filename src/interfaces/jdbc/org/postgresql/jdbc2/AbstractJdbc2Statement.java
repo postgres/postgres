@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.6 2002/09/06 21:23:06 momjian Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.7 2002/09/11 05:38:45 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1Statement which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2Statement
@@ -187,16 +187,26 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 			while (numRead != -1 && bytesRemaining > 0)
 			{
 				bytesRemaining -= numRead;
-				los.write(buf, 0, numRead);
+				if ( numRead == buf.length )
+					los.write(buf); // saves a buffer creation and copy in LargeObject since it's full
+				else
+					los.write(buf,0,numRead);
 				numRead = l_inStream.read(buf, 0, Math.min(buf.length, bytesRemaining));
 			}
-			los.close();
 		}
 		catch (IOException se)
 		{
 			throw new PSQLException("postgresql.unusual", se);
 		}
-		// lob is closed by the stream so don't call lob.close()
+		finally
+		{
+			try
+			{
+				los.close();
+                l_inStream.close();
+            }
+            catch( Exception e ) {}
+		}
 		setInt(i, oid);
 	}
 

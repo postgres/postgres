@@ -1,7 +1,7 @@
 package org.postgresql.test.jdbc2.optional;
 
 import junit.framework.TestCase;
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 import org.postgresql.jdbc2.optional.SimpleDataSource;
 import org.postgresql.jdbc2.optional.BaseDataSource;
 
@@ -15,7 +15,7 @@ import java.sql.*;
  * tests.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public abstract class BaseDataSourceTest extends TestCase
 {
@@ -36,12 +36,12 @@ public abstract class BaseDataSourceTest extends TestCase
 	 */
 	protected void setUp() throws Exception
 	{
-		con = JDBC2Tests.openDB();
-		JDBC2Tests.createTable(con, "poolingtest", "id int4 not null primary key, name varchar(50)");
+		con = TestUtil.openDB();
+		TestUtil.createTable(con, "poolingtest", "id int4 not null primary key, name varchar(50)");
 		Statement stmt = con.createStatement();
 		stmt.executeUpdate("INSERT INTO poolingtest VALUES (1, 'Test Row 1')");
 		stmt.executeUpdate("INSERT INTO poolingtest VALUES (2, 'Test Row 2')");
-		JDBC2Tests.closeDB(con);
+		TestUtil.closeDB(con);
 	}
 
 	/**
@@ -50,9 +50,9 @@ public abstract class BaseDataSourceTest extends TestCase
 	 */
 	protected void tearDown() throws Exception
 	{
-		con = JDBC2Tests.openDB();
-		JDBC2Tests.dropTable(con, "poolingtest");
-		JDBC2Tests.closeDB(con);
+		con = TestUtil.openDB();
+		TestUtil.dropTable(con, "poolingtest");
+		TestUtil.closeDB(con);
 	}
 
 	/**
@@ -142,8 +142,7 @@ public abstract class BaseDataSourceTest extends TestCase
 		try
 		{
 			con = getDataSourceConnection();
-			JDBC2Tests.dropTable(con, "poolingtest");
-			JDBC2Tests.createTable(con, "poolingtest", "id int4 not null primary key, name varchar(50)");
+			TestUtil.createTable(con, "poolingtest", "id int4 not null primary key, name varchar(50)");
 			con.close();
 		}
 		catch (SQLException e)

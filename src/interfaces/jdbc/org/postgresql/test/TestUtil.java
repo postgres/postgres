@@ -109,11 +109,26 @@ public class TestUtil
 			Statement stmt = con.createStatement();
 			try
 			{
-				stmt.executeUpdate("DROP TABLE " + table);
+				String sql = "DROP TABLE " + table;
+				if (con instanceof org.postgresql.jdbc1.AbstractJdbc1Connection && ((org.postgresql.jdbc1.AbstractJdbc1Connection)con).haveMinimumServerVersion("7.3")) {
+					sql += " CASCADE ";
+				}
+				stmt.executeUpdate(sql);
 			}
 			catch (SQLException ex)
 			{
-				// ignore
+				// Since every create table issues a drop table
+				// it's easy to get a table doesn't exist error.
+				// we want to ignore these, but if we're in a
+				// transaction we need to restart.
+				// If the test case wants to catch this error
+				// itself it should issue the drop SQL directly.
+				if (ex.getMessage().indexOf("does not exist") != -1) {
+					if (!con.getAutoCommit()) {
+						con.rollback();
+					}
+
+				}
 			}
 		}
 		catch (SQLException ex)

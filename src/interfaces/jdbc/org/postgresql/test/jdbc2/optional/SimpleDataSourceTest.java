@@ -1,6 +1,6 @@
 package org.postgresql.test.jdbc2.optional;
 
-import org.postgresql.test.JDBC2Tests;
+import org.postgresql.test.TestUtil;
 import org.postgresql.jdbc2.optional.SimpleDataSource;
 
 /**
@@ -8,7 +8,7 @@ import org.postgresql.jdbc2.optional.SimpleDataSource;
  * configuration logic.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.2 $
+ * @version $Revision: 1.3 $
  */
 public class SimpleDataSourceTest extends BaseDataSourceTest
 {
@@ -28,7 +28,7 @@ public class SimpleDataSourceTest extends BaseDataSourceTest
 		if (bds == null)
 		{
 			bds = new SimpleDataSource();
-			String db = JDBC2Tests.getURL();
+			String db = TestUtil.getURL();
 			if (db.indexOf('/') > -1)
 			{
 				db = db.substring(db.lastIndexOf('/') + 1);
@@ -38,8 +38,8 @@ public class SimpleDataSourceTest extends BaseDataSourceTest
 				db = db.substring(db.lastIndexOf(':') + 1);
 			}
 			bds.setDatabaseName(db);
-			bds.setUser(JDBC2Tests.getUser());
-			bds.setPassword(JDBC2Tests.getPassword());
+			bds.setUser(TestUtil.getUser());
+			bds.setPassword(TestUtil.getPassword());
 		}
 	}
 }

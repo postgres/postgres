@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.13 2002/09/06 21:23:06 momjian Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.14 2002/09/11 05:38:45 barry Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -264,7 +264,11 @@ public class DatabaseMetaDataTest extends TestCase
 				assertTrue( fkColumnName.equals( "m" ) || fkColumnName.equals( "n" ) ) ;
 
 				String fkName = rs.getString( "FK_NAME" );
-				assertTrue( fkName.equals( "<unnamed>") );
+				if (((org.postgresql.jdbc1.AbstractJdbc1Connection)con1).haveMinimumServerVersion("7.3")) {
+					assertTrue(fkName.startsWith("$1"));
+				} else {
+					assertTrue( fkName.startsWith( "<unnamed>") );
+				}
 
 				String pkName = rs.getString( "PK_NAME" );
 				assertTrue( pkName.equals("vv_pkey") );
@@ -317,7 +321,7 @@ public class DatabaseMetaDataTest extends TestCase
 				assertTrue( fkColumnName.equals( "people_id" ) || fkColumnName.equals( "policy_id" ) ) ;
 
 				String fkName = rs.getString( "FK_NAME" );
-				assertTrue( fkName.equals( "people") || fkName.equals( "policy" ) );
+				assertTrue( fkName.startsWith( "people") || fkName.startsWith( "policy" ) );
 
 				String pkName = rs.getString( "PK_NAME" );
 				assertTrue( pkName.equals( "people_pkey") || pkName.equals( "policy_pkey" ) );
@@ -337,7 +341,7 @@ public class DatabaseMetaDataTest extends TestCase
 			assertTrue( rs.getString( "FKTABLE_NAME" ).equals( "users" ) );
 			assertTrue( rs.getString( "FKCOLUMN_NAME" ).equals( "people_id" ) );
 
-			assertTrue( rs.getString( "FK_NAME" ).equals( "people" ) );
+			assertTrue( rs.getString( "FK_NAME" ).startsWith( "people" ) );
 
 
 			TestUtil.dropTable( con1, "users" );

@@ -5,7 +5,7 @@ import java.sql.*;
 import java.util.Vector;
 import org.postgresql.Field;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/Jdbc2ResultSet.java,v 1.5 2002/09/06 21:23:06 momjian Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/Jdbc2ResultSet.java,v 1.6 2002/09/11 05:38:45 barry Exp $
  * This class implements the java.sql.ResultSet interface for JDBC2.
  * However most of the implementation is really done in
  * org.postgresql.jdbc2.AbstractJdbc2ResultSet or one of it's parents
@@ -25,11 +25,19 @@ public class Jdbc2ResultSet extends org.postgresql.jdbc2.AbstractJdbc2ResultSet 
 
 	public java.sql.Clob getClob(int i) throws SQLException
 	{
+		wasNullFlag = (this_row[i - 1] == null);
+		if (wasNullFlag)
+			return null;
+
 		return new org.postgresql.jdbc2.Jdbc2Clob(connection, getInt(i));
 	}
 
 	public java.sql.Blob getBlob(int i) throws SQLException
 	{
+		wasNullFlag = (this_row[i - 1] == null);
+		if (wasNullFlag)
+			return null;
+
 		return new org.postgresql.jdbc2.Jdbc2Blob(connection, getInt(i));
 	}
 

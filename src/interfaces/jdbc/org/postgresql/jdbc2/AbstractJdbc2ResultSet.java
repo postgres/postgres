@@ -15,7 +15,7 @@ import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.7 2002/09/06 21:23:06 momjian Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.8 2002/09/11 05:38:45 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
@@ -1546,14 +1546,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 				case Types.REAL:
 				case Types.TINYINT:
 
-					try
-					{
-						rowBuffer[columnIndex] = String.valueOf( updateValues.get( columnName ) ).getBytes(connection.getEncoding().name() );
-					}
-					catch ( UnsupportedEncodingException ex)
-					{
-						throw new SQLException("Unsupported Encoding " + connection.getEncoding().name());
-					}
+					rowBuffer[columnIndex] = connection.getEncoding().encode(String.valueOf( updateValues.get( columnName ) ));
 
 				case Types.NULL:
 					continue;

@@ -14,7 +14,7 @@ import org.postgresql.largeobject.LargeObjectManager;
 import org.postgresql.util.*;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.8 2002/09/06 21:23:05 momjian Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.9 2002/09/11 05:38:44 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Connection which adds the jdbc2
  * methods.  The real Connection class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Connection
@@ -982,21 +982,32 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	 */
 	public int getTransactionIsolation() throws SQLException
 	{
-		clearWarnings();
-		ExecSQL("show transaction isolation level");
-
-		SQLWarning warning = getWarnings();
-		if (warning != null)
-		{
-			String message = warning.getMessage();
+		String sql = "show transaction isolation level";
+		String level = null;
+		if (haveMinimumServerVersion("7.3")) {
+			ResultSet rs = ExecSQL(sql);
+			if (rs.next()) {
+				level = rs.getString(1);
+			}
+			rs.close();
+		} else {
 			clearWarnings();
-			if (message.indexOf("READ COMMITTED") != -1)
+			ExecSQL(sql);
+			SQLWarning warning = getWarnings();
+			if (warning != null)
+			{
+				level = warning.getMessage();
+			}
+			clearWarnings();
+		}
+		if (level != null) {
+			if (level.indexOf("READ COMMITTED") != -1)
 				return java.sql.Connection.TRANSACTION_READ_COMMITTED;
-			else if (message.indexOf("READ UNCOMMITTED") != -1)
+			else if (level.indexOf("READ UNCOMMITTED") != -1)
 				return java.sql.Connection.TRANSACTION_READ_UNCOMMITTED;
-			else if (message.indexOf("REPEATABLE READ") != -1)
+			else if (level.indexOf("REPEATABLE READ") != -1)
 				return java.sql.Connection.TRANSACTION_REPEATABLE_READ;
-			else if (message.indexOf("SERIALIZABLE") != -1)
+			else if (level.indexOf("SERIALIZABLE") != -1)
 				return java.sql.Connection.TRANSACTION_SERIALIZABLE;
 		}
 		return java.sql.Connection.TRANSACTION_READ_COMMITTED;

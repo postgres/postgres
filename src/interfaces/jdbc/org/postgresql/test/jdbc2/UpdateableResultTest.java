@@ -124,6 +124,7 @@ public class UpdateableResultTest extends TestCase
 			st.close();
 
 			TestUtil.dropTable( con, "updateable" );
+			TestUtil.dropTable( con, "second" );
 			TestUtil.closeDB( con );
 		}
 		catch (Exception ex)

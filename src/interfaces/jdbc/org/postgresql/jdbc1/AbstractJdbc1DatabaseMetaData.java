@@ -27,19 +27,28 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	protected static final int iInt2Oid = 21; // OID for int2
 	protected static final int iInt4Oid = 23; // OID for int4
 	protected static final int VARHDRSZ = 4;	// length for int4
-	protected static int NAME_SIZE = 64;	// length for name datatype
+	protected static int NAME_SIZE = 63;	// length for name datatype
 
 	public AbstractJdbc1DatabaseMetaData(AbstractJdbc1Connection conn)
 	{
 		this.connection = conn;
+		String sql;
 		try {
 			if (connection.haveMinimumServerVersion("7.3")) {
-				NAME_SIZE = 64;
+				sql = "SELECT t.typlen FROM pg_catalog.pg_type t, pg_catalog.pg_namespace n WHERE t.typnamespace=n.oid AND t.typname='name' AND n.nspname='pg_catalog'";
+				NAME_SIZE = 63;
 			} else {
-				NAME_SIZE = 32;
+				sql = "SELECT typlen FROM pg_type WHERE typname='name'";
+				NAME_SIZE = 31;
 			}
+			ResultSet rs = connection.createStatement().executeQuery(sql);
+			if (rs.next()) {
+				NAME_SIZE = rs.getInt("typlen") - 1;
+			}
+			rs.close();
 		} catch (SQLException l_se) {
-			//leave value at default
+			// depending on the error the NAME_SIZE value will
+			// be the original or the value set before the query.
 		}
 	}
 

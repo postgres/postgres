@@ -68,6 +68,26 @@ public class BlobOutputStream extends OutputStream
 		}
 	}
 
+	public void write(byte[] buf, int off, int len) throws java.io.IOException
+	{
+		try
+			{
+				// If we have any internally buffered data, send it first
+				if ( bpos > 0 )
+					flush();
+
+				if ( off == 0 && len == buf.length )
+					lo.write(buf); // save a buffer creation and copy since full buffer written
+				else
+					lo.write(buf,off,len);
+			}
+		catch (SQLException se)
+			{
+				throw new IOException(se.toString());
+			}
+	}
+
+
 	/*
 	 * Flushes this output stream and forces any buffered output bytes
 	 * to be written out. The general contract of <code>flush</code> is
