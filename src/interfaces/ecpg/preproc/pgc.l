@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.62 2000/09/21 11:56:07 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.63 2000/09/26 05:42:15 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -385,7 +385,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 					BEGIN(state_before);
 					if (strlen(literalbuf) >= NAMEDATALEN)
        			                {
-#ifdef MULTIBYTE
+#ifdef MULTIBYTE_NOTUSED
                                                 int len;
 
 	                                        len = pg_mbcliplen(literalbuf,strlen(literalbuf),NAMEDATALEN-1);
@@ -547,7 +547,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 					if (i >= NAMEDATALEN)
 					{
-#ifdef MULTIBYTE
+#ifdef MULTIBYTE_NOTUSED
                                                 int len;
 
 	                                        len = pg_mbcliplen(lower_text,strlen(lower_text),NAMEDATALEN-1);
