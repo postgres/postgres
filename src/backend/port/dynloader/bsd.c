@@ -79,6 +79,8 @@ BSD44_derived_dlsym(void *handle, const char *name)
 #if defined(__mips__) || (defined(__NetBSD__) && defined(vax))
 	sprintf(error_message, "dlsym (%s) failed", name);
 	return NULL;
+#elif defined(__ELF__)
+	return dlsym(handle, name);
 #else
 	void	   *vp;
 	char		buf[BUFSIZ];

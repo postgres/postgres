@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.65 1999/02/13 23:19:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.66 1999/03/14 16:03:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4533,7 +4533,7 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 }	/* EncodeTimeSpan() */
 
 
-#if defined(linux) && defined(PPC)
+#if defined(linux) && defined(__powerpc__)
 int
 datetime_is_epoch(double j)
 {

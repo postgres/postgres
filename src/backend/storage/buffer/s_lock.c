@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.17 1999/02/13 23:18:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.18 1999/03/14 16:03:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,7 @@ _success:			\n\
 
 #endif	 /* __m68k__ */
 
-#if defined(PPC)
+#if defined(__powerpc__)
 /* Note: need a nice gcc constrained asm version so it can be inlined */
 static void
 tas_dummy()
@@ -140,7 +140,7 @@ success:			\n\
 	");
 }
 
-#endif	 /* PPC */
+#endif	 /* __powerpc__ */
 
 #if defined(__mips)
 static void

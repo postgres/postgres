@@ -8,7 +8,7 @@
 #define USE_POSIX_TIME
 #define HAS_TEST_AND_SET
 
-#if defined(PPC)
+#if defined(__powerpc__)
 typedef unsigned int slock_t;
 
 #elif defined(__alpha)
@@ -34,6 +34,6 @@ typedef unsigned char slock_t;
 /* #define HAVE_SIGSETJMP 1 */
 #endif
 
-#if defined(PPC)
+#if defined(__powerpc__)
 #undef HAVE_INT_TIMEZONE
 #endif

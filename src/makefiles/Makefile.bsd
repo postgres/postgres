@@ -1,4 +1,10 @@
+ifdef ELF_SYSTEM
+LDFLAGS += -Wl,-E
+endif
 %.so: %.o
+ifdef ELF_SYSTEM
+	$(LD) -x -Bshareable -o $@ $<
+else
 	$(LD) -x -r -o $<.obj $<
 	@echo building shared object $@
 	@rm -f $@.pic
@@ -7,3 +13,4 @@
 	@rm -f $@
 	$(LD) -x -Bshareable -Bforcearchive \
 	  -o $@ $@.pic
+endif

@@ -129,6 +129,9 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
     mac68k:OpenBSD:*:*)
 	echo m68k-apple-openbsd${UNAME_RELEASE}
 	exit 0 ;;
+    macppc:NetBSD:*:*)
+	echo powerpc-apple-netbsd${UNAME_RELEASE}
+	exit 0;;
     powerpc:machten:*:*)
 	echo powerpc-apple-machten${UNAME_RELEASE}
 	exit 0 ;;
