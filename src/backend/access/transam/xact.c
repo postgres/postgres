@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.164 2004/02/11 22:55:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.165 2004/04/05 03:11:39 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -238,36 +238,6 @@ static void *_RollbackData = NULL;
  *	transaction state accessors
  * ----------------------------------------------------------------
  */
-
-#ifdef NOT_USED
-
-/* --------------------------------
- *	TransactionFlushEnabled()
- *	SetTransactionFlushEnabled()
- *
- *	These are used to test and set the "TransactionFlushState"
- *	variable.  If this variable is true (the default), then
- *	the system will flush all dirty buffers to disk at the end
- *	of each transaction.   If false then we are assuming the
- *	buffer pool resides in stable main memory, in which case we
- *	only do writes as necessary.
- * --------------------------------
- */
-static int	TransactionFlushState = 1;
-
-int
-TransactionFlushEnabled(void)
-{
-	return TransactionFlushState;
-}
-
-void
-SetTransactionFlushEnabled(bool state)
-{
-	TransactionFlushState = (state == true);
-}
-#endif
-
 
 /*
  *	IsTransactionState
@@ -1171,6 +1141,15 @@ StartTransactionCommand(void)
 			 */
 		case TBLOCK_DEFAULT:
 			StartTransaction();
+			s->blockState = TBLOCK_STARTED;
+			break;
+
+			/*
+			 * We should never experience this -- it means the STARTED state
+			 * was not changed in the previous CommitTransactionCommand.
+			 */
+		case TBLOCK_STARTED:
+			elog(WARNING, "StartTransactionCommand: unexpected TBLOCK_STARTED");
 			break;
 
 			/*
@@ -1202,9 +1181,9 @@ StartTransactionCommand(void)
 			 */
 		case TBLOCK_END:
 			elog(WARNING, "StartTransactionCommand: unexpected TBLOCK_END");
-			s->blockState = TBLOCK_DEFAULT;
 			CommitTransaction();
 			StartTransaction();
+			s->blockState = TBLOCK_DEFAULT;
 			break;
 
 			/*
@@ -1247,11 +1226,21 @@ CommitTransactionCommand(void)
 	switch (s->blockState)
 	{
 			/*
+			 * This shouldn't happen, because it means the previous
+			 * StartTransactionCommand didn't set the STARTED state
+			 * appropiately.
+			 */
+		case TBLOCK_DEFAULT:
+			elog(WARNING, "CommitTransactionCommand: unexpected TBLOCK_DEFAULT");
+			break;
+
+			/*
 			 * If we aren't in a transaction block, just do our usual
 			 * transaction commit.
 			 */
-		case TBLOCK_DEFAULT:
+		case TBLOCK_STARTED:
 			CommitTransaction();
+			s->blockState = TBLOCK_DEFAULT;
 			break;
 
 			/*
@@ -1314,13 +1303,20 @@ AbortCurrentTransaction(void)
 
 	switch (s->blockState)
 	{
+		/*
+		 * we aren't in a transaction, so we do nothing.
+		 */
+		case TBLOCK_DEFAULT:
+			break;
+
 			/*
 			 * if we aren't in a transaction block, we just do the basic
 			 * abort & cleanup transaction.
 			 */
-		case TBLOCK_DEFAULT:
+		case TBLOCK_STARTED:
 			AbortTransaction();
 			CleanupTransaction();
+			s->blockState = TBLOCK_DEFAULT;
 			break;
 
 			/*
@@ -1330,9 +1326,9 @@ AbortCurrentTransaction(void)
 			 * things.
 			 */
 		case TBLOCK_BEGIN:
-			s->blockState = TBLOCK_ABORT;
 			AbortTransaction();
-			/* CleanupTransaction happens when we exit TBLOCK_ABORT */
+			s->blockState = TBLOCK_ABORT;
+			/* CleanupTransaction happens when we exit TBLOCK_ENDABORT */
 			break;
 
 			/*
@@ -1342,9 +1338,9 @@ AbortCurrentTransaction(void)
 			 * restore us to a normal state.
 			 */
 		case TBLOCK_INPROGRESS:
-			s->blockState = TBLOCK_ABORT;
 			AbortTransaction();
-			/* CleanupTransaction happens when we exit TBLOCK_ABORT */
+			s->blockState = TBLOCK_ABORT;
+			/* CleanupTransaction happens when we exit TBLOCK_ENDABORT */
 			break;
 
 			/*
@@ -1353,9 +1349,9 @@ AbortCurrentTransaction(void)
 			 * and put us back into the default state.
 			 */
 		case TBLOCK_END:
-			s->blockState = TBLOCK_DEFAULT;
 			AbortTransaction();
 			CleanupTransaction();
+			s->blockState = TBLOCK_DEFAULT;
 			break;
 
 			/*
@@ -1420,7 +1416,8 @@ PreventTransactionChain(void *stmtNode, const char *stmtType)
 		/* translator: %s represents an SQL statement name */
 			 errmsg("%s cannot be executed from a function", stmtType)));
 	/* If we got past IsTransactionBlock test, should be in default state */
-	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT)
+	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT &&
+			CurrentTransactionState->blockState != TBLOCK_STARTED)
 		elog(ERROR, "cannot prevent transaction chain");
 	/* all okay */
 }
@@ -1534,28 +1531,37 @@ BeginTransactionBlock(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-	/*
-	 * check the current transaction state
-	 */
-	if (s->blockState != TBLOCK_DEFAULT)
-		ereport(WARNING,
-				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
-				 errmsg("there is already a transaction in progress")));
+	switch (s->blockState) {
+			/*
+			 * We are inside a transaction, so allow a transaction block
+			 * to begin.
+			 */
+		case TBLOCK_STARTED:
+			s->blockState = TBLOCK_BEGIN;
+			break;
 
-	/*
-	 * set the current transaction block state information appropriately
-	 * during begin processing
-	 */
-	s->blockState = TBLOCK_BEGIN;
+			/* Already a transaction block in progress. */
+		case TBLOCK_INPROGRESS:
+			ereport(WARNING,
+					(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
+					 errmsg("there is already a transaction in progress")));
 
-	/*
-	 * do begin processing here.  Nothing to do at present.
-	 */
+			/*
+			 * This shouldn't happen, because a transaction in aborted state
+			 * will not be allowed to call BeginTransactionBlock.
+			 */
+		case TBLOCK_ABORT:
+			elog(WARNING, "BeginTransactionBlock: unexpected TBLOCK_ABORT");
+			break;
 
-	/*
-	 * done with begin processing, set block state to inprogress
-	 */
-	s->blockState = TBLOCK_INPROGRESS;
+			/* These cases are invalid.  Reject them altogether. */
+		case TBLOCK_DEFAULT:
+		case TBLOCK_BEGIN:
+		case TBLOCK_ENDABORT:
+		case TBLOCK_END:
+			elog(FATAL, "BeginTransactionBlock: not in a user-allowed state!");
+			break;
+	}
 }
 
 /*
@@ -1566,85 +1572,51 @@ EndTransactionBlock(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-	/*
-	 * check the current transaction state
-	 */
-	if (s->blockState == TBLOCK_INPROGRESS)
-	{
+	switch (s->blockState) {
 		/*
 		 * here we are in a transaction block which should commit when we
 		 * get to the upcoming CommitTransactionCommand() so we set the
 		 * state to "END".	CommitTransactionCommand() will recognize this
 		 * and commit the transaction and return us to the default state
 		 */
-		s->blockState = TBLOCK_END;
-		return;
-	}
+		case TBLOCK_INPROGRESS:
+			s->blockState = TBLOCK_END;
+			break;
 
-	if (s->blockState == TBLOCK_ABORT)
-	{
-		/*
-		 * here, we are in a transaction block which aborted and since the
-		 * AbortTransaction() was already done, we do whatever is needed
-		 * and change to the special "END ABORT" state.  The upcoming
-		 * CommitTransactionCommand() will recognise this and then put us
-		 * back in the default state.
-		 */
-		s->blockState = TBLOCK_ENDABORT;
-		return;
-	}
+			/*
+			 * here, we are in a transaction block which aborted and since the
+			 * AbortTransaction() was already done, we do whatever is needed
+			 * and change to the special "END ABORT" state.  The upcoming
+			 * CommitTransactionCommand() will recognise this and then put us
+			 * back in the default state.
+			 */
+		case TBLOCK_ABORT:
+			s->blockState = TBLOCK_ENDABORT;
+			break;
 
-	/*
-	 * here, the user issued COMMIT when not inside a transaction. Issue a
-	 * WARNING and go to abort state.  The upcoming call to
-	 * CommitTransactionCommand() will then put us back into the default
-	 * state.
-	 */
-	ereport(WARNING,
-			(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
-			 errmsg("there is no transaction in progress")));
-	AbortTransaction();
-	s->blockState = TBLOCK_ENDABORT;
+		case TBLOCK_STARTED:
+			/*
+			 * here, the user issued COMMIT when not inside a transaction. Issue a
+			 * WARNING and go to abort state.  The upcoming call to
+			 * CommitTransactionCommand() will then put us back into the default
+			 * state.
+			 */
+			ereport(WARNING,
+					(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
+					 errmsg("there is no transaction in progress")));
+			AbortTransaction();
+			s->blockState = TBLOCK_ENDABORT;
+			break;
+
+			/* These cases are invalid.  Reject them altogether. */
+		case TBLOCK_DEFAULT:
+		case TBLOCK_BEGIN:
+		case TBLOCK_ENDABORT:
+		case TBLOCK_END:
+			elog(FATAL, "EndTransactionBlock and not in a user-allowed state");
+			break;
+	}
 }
-
-/*
- *	AbortTransactionBlock
- */
-#ifdef NOT_USED
-static void
-AbortTransactionBlock(void)
-{
-	TransactionState s = CurrentTransactionState;
-
-	/*
-	 * check the current transaction state
-	 */
-	if (s->blockState == TBLOCK_INPROGRESS)
-	{
-		/*
-		 * here we were inside a transaction block something screwed up
-		 * inside the system so we enter the abort state, do the abort
-		 * processing and then return. We remain in the abort state until
-		 * we see an END TRANSACTION command.
-		 */
-		s->blockState = TBLOCK_ABORT;
-		AbortTransaction();
-		return;
-	}
-
-	/*
-	 * here, the user issued ABORT when not inside a transaction. Issue a
-	 * WARNING and go to abort state.  The upcoming call to
-	 * CommitTransactionCommand() will then put us back into the default
-	 * state.
-	 */
-	ereport(WARNING,
-			(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
-			 errmsg("there is no transaction in progress")));
-	AbortTransaction();
-	s->blockState = TBLOCK_ENDABORT;
-}
-#endif
 
 /*
  *	UserAbortTransactionBlock
@@ -1669,10 +1641,9 @@ UserAbortTransactionBlock(void)
 	{
 		/*
 		 * here we were inside a transaction block and we got an abort
-		 * command from the user, so we move to the abort state, do the
-		 * abort processing and then change to the ENDABORT state so we
-		 * will end up in the default state after the upcoming
-		 * CommitTransactionCommand().
+		 * command from the user, so we move to the ENDABORT state and
+		 * do abort processing so we will end up in the default state
+		 * after the upcoming CommitTransactionCommand().
 		 */
 		s->blockState = TBLOCK_ABORT;
 		AbortTransaction();
@@ -1706,28 +1677,30 @@ AbortOutOfAnyTransaction(void)
 	TransactionState s = CurrentTransactionState;
 
 	/*
-	 * Get out of any low-level transaction
+	 * Get out of any transaction
 	 */
-	switch (s->state)
+	switch (s->blockState)
 	{
-		case TRANS_START:
-		case TRANS_INPROGRESS:
-		case TRANS_COMMIT:
+		case TBLOCK_DEFAULT:
+			/* Not in a transaction, do nothing */
+			break;
+		case TBLOCK_STARTED:
+		case TBLOCK_BEGIN:
+		case TBLOCK_INPROGRESS:
+		case TBLOCK_END:
 			/* In a transaction, so clean up */
 			AbortTransaction();
 			CleanupTransaction();
 			break;
-		case TRANS_ABORT:
+		case TBLOCK_ABORT:
+		case TBLOCK_ENDABORT:
 			/* AbortTransaction already done, still need Cleanup */
 			CleanupTransaction();
-			break;
-		case TRANS_DEFAULT:
-			/* Not in a transaction, do nothing */
 			break;
 	}
 
 	/*
-	 * Now reset the high-level state
+	 * Now reset the transaction state
 	 */
 	s->blockState = TBLOCK_DEFAULT;
 }
@@ -1740,7 +1713,7 @@ IsTransactionBlock(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-	if (s->blockState == TBLOCK_DEFAULT)
+	if (s->blockState == TBLOCK_DEFAULT || s->blockState == TBLOCK_STARTED)
 		return false;
 
 	return true;
@@ -1758,7 +1731,7 @@ IsTransactionOrTransactionBlock(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-	if (s->blockState == TBLOCK_DEFAULT && s->state == TRANS_DEFAULT)
+	if (s->blockState == TBLOCK_DEFAULT)
 		return false;
 
 	return true;
@@ -1775,6 +1748,7 @@ TransactionBlockStatusCode(void)
 	switch (s->blockState)
 	{
 		case TBLOCK_DEFAULT:
+		case TBLOCK_STARTED:
 			return 'I';			/* idle --- not in transaction */
 		case TBLOCK_BEGIN:
 		case TBLOCK_INPROGRESS:
