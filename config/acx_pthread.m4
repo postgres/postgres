@@ -134,8 +134,10 @@ for flag in $acx_pthread_flags; do
             # We find them by checking stderror.
             cat >conftest.$ac_ext <<_ACEOF
 int
-main ()
+main (int argc, char **argv)
 {
+  (void) argc;
+  (void) argv;
   return 0;
 }
 _ACEOF
