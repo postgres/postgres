@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jul 26 16:11:20 EDT 1999
+Last updated:		Tue Jul 27 20:08:46 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -42,6 +42,7 @@ PARSER
 * Be smarter about promoting types when UNION merges different data types
 * SELECT ... UNION ... GROUP BY fails if column types disagree
 * redesign INSERT ... SELECT to have two levels of target list
+* select * from pg_class where oid in (0,-1)
 
 VIEWS
 
