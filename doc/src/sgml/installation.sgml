@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.165 2003/10/26 01:17:31 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.166 2003/10/26 01:19:57 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1578,10 +1578,10 @@ gunzip -c postgres.ps.gz \
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>Alpha</></entry>
-	<entry>7.3</entry>
-	<entry>2002-10-28,
-	 Magnus Naeslund (<email>mag@fbab.net</email>)</entry>
-	<entry>2.4.19-pre6</entry>
+	<entry>7.4</entry>
+	<entry>2003-10-25,
+	 No?l K?the (<email>noel@debian.org</email>)</entry>
+	<entry>2.4</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
@@ -1594,6 +1594,14 @@ gunzip -c postgres.ps.gz \
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
 	<entry><systemitem>Itanium</></entry>
+	<entry>7.4</entry>
+	<entry>2003-10-25,
+	 No?l K?the (<email>noel@debian.org</email>)</entry>
+	<entry>2.4</entry>
+       </row>
+       <row>
+	<entry><systemitem class="osname">Linux</></entry>
+	<entry><systemitem>m68k</></entry>
 	<entry>7.4</entry>
 	<entry>2003-10-25,
 	 No?l K?the (<email>noel@debian.org</email>)</entry>
