@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: CHetverg 13 Fevralya 23:07:35 EDT 2002
+   Data poslednego obnovleniya: Vtornik 18 Fevralya 12:23:04 EDT 2002
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -9,10 +9,10 @@
    Perevel na russkij: Viktor Vislobokov (victor_v@permonline.ru)
    
    Samuyu svezhuyu anglijskuyu versiyu dokumenta mozhno najti na
-   http://www.PostgreSQL.org/docs/faq-english.html.
+   http://www.PostgreSQL.org/docs/faqs/FAQ.html.
    
    Otvety na voprosy specifichnye dlya konkretnyh platform mozhno najti
-   na http://www.PostgreSQL.org/users-lounge/docs/faq.html.
+   na http://www.PostgreSQL.org/docs/index.html.
      _________________________________________________________________
    
                               Obschie voprosy
@@ -215,7 +215,8 @@
    Server BD mozhet byt' zapuschen na Windows NT i Win2k, ispol'zuya
    biblioteku Cygwin, razrabotannuyu dlya perenosa programmnogo
    obespecheniya Unix v NT. Smotrite pgsql/doc/FAQ_MSWIN v distributive
-   ili MS Windows FAQ na http://www.PostgreSQL.org/docs/faq-mswin.html.
+   ili MS Windows FAQ na
+   http://www.PostgreSQL.org/docs/faqs/faq-mswin.html.
    
    PostgreSQL, sportirovannyj special'no dlya MS Win NT/2000/XP v
    nastoyaschij moment nachal rabotat'.
@@ -271,11 +272,11 @@
    '#PostgreSQL' "$USER" irc.phoenix.net.
    
    Spisok kommercheskoj podderzhki kompanij dostupen na
-   http://www.PostgreSQL.org/users-lounge/commercial-support.html.
+   http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html.
    
     1.7) Kakaya poslednyaya versiya?
     
-   Poslednij vypusk PostgreSQL - `eto versiya 7.3.1.
+   Poslednij vypusk PostgreSQL - `eto versiya 7.3.2.
    
    My planiruem vypuskat' novye versii kazhdye chetyre mesyaca.
    
@@ -284,7 +285,7 @@
    V distributiv vklyuchayutsya razlichnye rukovodstva, stranicy
    `elektronnogo rukovodstva man i nekotorye malen'kie testovye primery.
    Smotrite v katalog /doc. Vy takzhe mozhete prosmatrivat' dokumentaciyu
-   v Internet po adresu http://www.PostgreSQL.org/users-lounge/docs/.
+   v Internet po adresu http://www.ca.PostgreSQL.org/users-lounge/docs/.
    
    Suschestvuet dve knigi po PostgreSQL dostupnye po adresam
    http://www.PostgreSQL.org/docs/awbook.html i
@@ -931,14 +932,14 @@ iya
 CHAR(n)         bpchar          zapolnyaetsya pustotoj do fiksirovannoj dliny
 TEXT            text            net zadavaemogo verhnego ogranicheniya ili dlin
 y
-"char"          char            odin simvol
 BYTEA           bytea           massiv bajt peremennoj dliny (mozhno ispol'zova
 t' null-bajt bez opaski)
+"char"          char            odin simvol
 
    Vnutrennee imya vy mozhete uvidet', kogda smotrite sistemnye katalogi
    i v nekotoryh soobscheniyah ob oshibkah.
    
-   Poslednie chetyre tipa yavlyayutsya "varlena" tipami (t.e., pervye
+   Pervye chetyre tipa yavlyayutsya "varlena" tipami (t.e., pervye
    chetyre bajta na diske yavlyayutsya dlinnoj, za kotoroj sleduyut
    dannye). Takim obrazom, fakticheski ispol'zuemoe prostranstvo bol'she,
    chem oboznachennyj razmer. Odnako, `eti tipy dannyh takzhe poddayutsya
@@ -954,8 +955,8 @@ t' null-bajt bez opaski)
    imeyut odinakovuyu dlinu. CHAR(n) zapolnyaetsya pustotoj do zadannoj
    dliny, v to vremya kak VARCHAR(n) hranit tol'ko simvoly, iz kotoryh
    sostoit stroka. BYTEA ispol'zuetsya dlya hraneniya binarnyh dannyh,
-   znacheniya kotoryh mogut vklyuchat' NULL bajty. `Eti tipy imeyut
-   shodnye harakteristiki proizvoditel'nosti.
+   znacheniya kotoryh mogut vklyuchat' NULL bajty. Vse tipy opisannye
+   zdes', imeyut shodnye harakteristiki proizvoditel'nosti.
    
     4.15.1) Kak mne sozdat' pole serial/s-avto-uvelicheniem?
     

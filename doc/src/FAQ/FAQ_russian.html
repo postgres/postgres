@@ -13,7 +13,7 @@
   alink="#0000ff">
     <H1>Ответы на часто задаваемые вопросы по PostgreSQL</H1>
 
-    <P>Дата последнего обновления: Четверг 13 Февраля 23:07:35 EDT 2002</P>
+    <P>Дата последнего обновления: Вторник 18 Февраля 12:23:04 EDT 2002</P>
 
     <P>Английский вариант сопровождает: Брюс Момьян (Bruce Momjian) (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -22,12 +22,11 @@
     "mailto:pgman@candle.pha.pa.us">victor_v@permonline.ru</A>)<BR>
     </P>
 
-    <P>Самую свежую английскую версию документа можно найти на <A
-    href=
-    "http://www.postgresql.org/docs/faq-english.html">http://www.PostgreSQL.org/docs/faq-english.html</A>.</P>
+    <P>Самую свежую английскую версию документа можно найти на
+    <A href="http://www.postgresql.org/docs/faqs/FAQ.html">http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>.</P>
 
-    <P>Ответы на вопросы специфичные для конкретных платформ можно найти на <A href=
-    "http://www.postgresql.org/users-lounge/docs/faq.html">http://www.PostgreSQL.org/users-lounge/docs/faq.html</A>.</P>
+    <P>Ответы на вопросы специфичные для конкретных платформ можно найти на
+    <A href="http://www.postgresql.org/users-lounge/docs/index.html">http://www.PostgreSQL.org/docs/index.html</A>.</P>
     <HR>
 
     <H2 align="center">Общие вопросы</H2>
@@ -249,8 +248,8 @@
     <P>Сервер БД может быть запущен на Windows NT и Win2k, используя
     библиотеку Cygwin, разработанную для переноса программного обеспечения Unix
     в NT. Смотрите <I>pgsql/doc/FAQ_MSWIN</I> в дистрибутиве или
-    MS Windows FAQ на <A href="http://www.postgresql.org/docs/faq-mswin.html">
-    http://www.PostgreSQL.org/docs/faq-mswin.html</A>.</P>
+    MS Windows FAQ на <A href="http://www.postgresql.org/docs/faqs/faq-mswin.html">
+    http://www.PostgreSQL.org/docs/faqs/faq-mswin.html</A>.</P>
 
     <P>PostgreSQL, спортированный специально для MS Win NT/2000/XP в
     настоящий момент начал работать.</P>
@@ -318,12 +317,11 @@
     <CODE>irc -c '#PostgreSQL' "$USER" irc.phoenix.net.</CODE></P>
 
     <P>Список коммерческой поддержки компаний доступен на
-    <A href=
-    "http://www.postgresql.org/users-lounge/commercial-support.html">http://www.PostgreSQL.org/users-lounge/commercial-support.html</A>.</P>
+    <A href="http://www.ca.postgresql.org/users-lounge/commercial-support.html">http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html</A>.</P>
 
     <H4><A name="1.7">1.7</A>) Какая последняя версия?</H4>
 
-    <P>Последний выпуск PostgreSQL - это версия 7.3.1.</P>
+    <P>Последний выпуск PostgreSQL - это версия 7.3.2.</P>
 
     <P>Мы планируем выпускать новые версии каждые четыре месяца.</P>
 
@@ -332,8 +330,8 @@
     <P>В дистрибутив включаются различные руководства, страницы
     электронного руководства man и некоторые маленькие тестовые примеры.
     Смотрите в каталог <I>/doc</I>. Вы также можете просматривать
-    документацию в Интернет по адресу <A href=
-    "http://www.PostgreSQL.org/users-lounge/docs/">http://www.PostgreSQL.org/users-lounge/docs/</A>.</P>
+    документацию в Интернет по адресу
+    <A href="http://www.ca.postgresql.org/users-lounge/docs/">http://www.ca.PostgreSQL.org/users-lounge/docs/</A>.</P>
 
     <P>Существует две книги по PostgreSQL доступные по адресам <A href=
     "http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</A>
@@ -558,7 +556,7 @@
     http://www.thekompany.com/products/rekall/</A>, коммерческий). Также есть
     PHPPgAdmin (<A href="http://phppgadmin.sourceforge.net/">
     http://phppgadmin.sourceforge.net/</A>) - интерфейс к PostgreSQL, основанный
-    на Web.</p>
+    на Web.</P>
 
     <H4><A name="2.4">2.4</A>) Какие языки могут взаимодействовать с PostgreSQL?</H4>
 
@@ -1058,14 +1056,14 @@
 VARCHAR(n)      varchar         размер задает максимальную длину, нет заполнения
 CHAR(n)         bpchar          заполняется пустотой до фиксированной длины
 TEXT            text            нет задаваемого верхнего ограничения или длины
-"char"          char            один символ
 BYTEA           bytea           массив байт переменной длины (можно использовать null-байт без опаски)
+"char"          char            один символ
 </PRE>
 
     <P>Внутреннее имя вы можете увидеть, когда смотрите системные каталоги
     и в некоторых сообщениях об ошибках.</P>
 
-    <P>Последние четыре типа являются "varlena" типами (т.е., первые
+    <P>Первые четыре типа являются "varlena" типами (т.е., первые
     четыре байта на диске являются длинной, за которой следуют данные).
     Таким образом, фактически используемое пространство больше, чем
     обозначенный размер. Однако, эти типы данных также поддаются сжатию
@@ -1082,8 +1080,8 @@ BYTEA           bytea           массив байт переменной длины (можно использовать
     пустотой до заданной длины, в то время как <SMALL>VARCHAR(n)</SMALL>
     хранит только символы, из которых состоит строка.
     <SMALL>BYTEA</SMALL> используется для хранения бинарных данных, значения
-    которых могут включать <SMALL>NULL</SMALL> байты. Эти типы имеют сходные
-    характеристики производительности.</P>
+    которых могут включать <SMALL>NULL</SMALL> байты. Все типы описанные
+    здесь, имеют сходные характеристики производительности.</P>
 
     <H4><A name="4.15.1">4.15.1</A>) Как мне создать поле
     serial/с-авто-увеличением?</H4>
