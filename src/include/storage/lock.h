@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.63 2002/07/19 00:17:40 momjian Exp $
+ * $Id: lock.h,v 1.64 2002/08/01 05:18:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,10 +80,6 @@ typedef int LOCKMETHOD;
  *		type conflicts. conflictTab[i] is a mask with the j-th bit
  *		turned on if lock types i and j conflict.
  *
- * prio -- each lockmode has a priority, so, for example, waiting
- *		writers can be given priority over readers (to avoid
- *		starvation).  XXX this field is not actually used at present!
- *
  * masterLock -- synchronizes access to the table
  *
  */
@@ -94,7 +90,6 @@ typedef struct LOCKMETHODTABLE
 	LOCKMETHOD	lockmethod;
 	int			numLockModes;
 	int			conflictTab[MAX_LOCKMODES];
-	int			prio[MAX_LOCKMODES];
 	LWLockId	masterLock;
 } LOCKMETHODTABLE;
 
@@ -215,7 +210,7 @@ typedef struct PROCLOCK
 extern void InitLocks(void);
 extern LOCKMETHODTABLE *GetLocksMethodTable(LOCK *lock);
 extern LOCKMETHOD LockMethodTableInit(char *tabName, LOCKMASK *conflictsP,
-					int *prioP, int numModes, int maxBackends);
+					int numModes, int maxBackends);
 extern LOCKMETHOD LockMethodTableRename(LOCKMETHOD lockmethod);
 extern bool LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 			TransactionId xid, LOCKMODE lockmode, bool dontWait);

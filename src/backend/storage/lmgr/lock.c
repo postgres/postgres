@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.110 2002/07/19 00:17:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.111 2002/08/01 05:18:33 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -208,18 +208,14 @@ GetLocksMethodTable(LOCK *lock)
 static void
 LockMethodInit(LOCKMETHODTABLE *lockMethodTable,
 			   LOCKMASK *conflictsP,
-			   int *prioP,
 			   int numModes)
 {
 	int			i;
 
 	lockMethodTable->numLockModes = numModes;
 	numModes++;
-	for (i = 0; i < numModes; i++, prioP++, conflictsP++)
-	{
+	for (i = 0; i < numModes; i++, conflictsP++)
 		lockMethodTable->conflictTab[i] = *conflictsP;
-		lockMethodTable->prio[i] = *prioP;
-	}
 }
 
 /*
@@ -234,7 +230,6 @@ LockMethodInit(LOCKMETHODTABLE *lockMethodTable,
 LOCKMETHOD
 LockMethodTableInit(char *tabName,
 					LOCKMASK *conflictsP,
-					int *prioP,
 					int numModes,
 					int maxBackends)
 {
@@ -335,7 +330,7 @@ LockMethodTableInit(char *tabName,
 		elog(FATAL, "LockMethodTableInit: couldn't initialize %s", tabName);
 
 	/* init data structures */
-	LockMethodInit(lockMethodTable, conflictsP, prioP, numModes);
+	LockMethodInit(lockMethodTable, conflictsP, numModes);
 
 	LWLockRelease(LockMgrLock);
 

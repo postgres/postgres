@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.53 2002/06/20 20:29:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.54 2002/08/01 05:18:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,31 +65,11 @@ static LOCKMASK LockConflicts[] = {
 
 };
 
-static int	LockPrios[] = {
-	0,
-	/* AccessShareLock */
-	1,
-	/* RowShareLock */
-	2,
-	/* RowExclusiveLock */
-	3,
-	/* ShareUpdateExclusiveLock */
-	4,
-	/* ShareLock */
-	5,
-	/* ShareRowExclusiveLock */
-	6,
-	/* ExclusiveLock */
-	7,
-	/* AccessExclusiveLock */
-	8
-};
-
 LOCKMETHOD	LockTableId = (LOCKMETHOD) NULL;
 LOCKMETHOD	LongTermTableId = (LOCKMETHOD) NULL;
 
 /*
- * Create the lock table described by LockConflicts and LockPrios.
+ * Create the lock table described by LockConflicts
  */
 LOCKMETHOD
 InitLockTable(int maxBackends)
@@ -97,8 +77,8 @@ InitLockTable(int maxBackends)
 	int			lockmethod;
 
 	lockmethod = LockMethodTableInit("LockTable",
-									 LockConflicts, LockPrios,
-									 MAX_LOCKMODES - 1, maxBackends);
+									 LockConflicts, MAX_LOCKMODES - 1,
+									 maxBackends);
 	LockTableId = lockmethod;
 
 	if (!(LockTableId))
