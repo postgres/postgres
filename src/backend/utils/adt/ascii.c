@@ -1,8 +1,7 @@
-
 /* -----------------------------------------------------------------------
  * ascii.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.4 2000/08/26 21:56:23 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.5 2000/10/25 19:36:03 tgl Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
  *
@@ -20,7 +19,7 @@
 #include "utils/ascii.h"
 
 /* ----------
- * even if MULTIBYTE is not enabled, these functions are necessary
+ * even if MULTIBYTE is not enabled, these functions must exist
  * since pg_proc.h has references to them.
  * ----------
  */
@@ -29,9 +28,9 @@
 static void multibyte_error(void);
 
 static void
-multibyte_error()
+multibyte_error(void)
 {
-	elog(ERROR, "multibyte not supported.");
+	elog(ERROR, "Multi-byte support is not enabled");
 }
 
 Datum 
@@ -59,11 +58,6 @@ to_ascii_default(PG_FUNCTION_ARGS)
 #else /* with MULTIBYTE */
 
 
-/* ----------
- * even if MULTIBYTE is enabled
- * ----------
- */
- 
 static text *encode_to_ascii(text *data, int enc);
 
 /* ----------
