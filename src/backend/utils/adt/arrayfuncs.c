@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.112 2004/09/16 03:15:52 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.113 2004/09/27 01:39:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,8 @@
 #define RETURN_NULL(type)  do { *isNull = true; return (type) 0; } while (0)
 
 static int	ArrayCount(char *str, int *dim, char typdelim);
-static Datum *ReadArrayStr(char *arrayStr, int nitems, int ndim, int *dim,
+static Datum *ReadArrayStr(char *arrayStr, const char *origStr,
+			 int nitems, int ndim, int *dim,
 			 FmgrInfo *inputproc, Oid typioparam, int32 typmod,
 			 char typdelim,
 			 int typlen, bool typbyval, char typalign,
@@ -325,7 +326,8 @@ array_in(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("missing left brace")));
-	dataPtr = ReadArrayStr(p, nitems, ndim, dim, &my_extra->proc, typioparam,
+	dataPtr = ReadArrayStr(p, string,
+						   nitems, ndim, dim, &my_extra->proc, typioparam,
 						   typmod, typdelim, typlen, typbyval, typalign,
 						   &nbytes);
 	nbytes += ARR_OVERHEAD(ndim);
@@ -371,7 +373,7 @@ ArrayCount(char *str, int *dim, char typdelim)
 				temp[MAXDIM],
 				nelems[MAXDIM],
 				nelems_last[MAXDIM];
-	bool		scanning_string = false;
+	bool		in_quotes = false;
 	bool		eoArray = false;
 	bool		empty_array = true;
 	char	   *ptr;
@@ -443,14 +445,14 @@ ArrayCount(char *str, int *dim, char typdelim)
 						ereport(ERROR,
 						   (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 						errmsg("malformed array literal: \"%s\"", str)));
-					scanning_string = !scanning_string;
-					if (scanning_string)
+					in_quotes = !in_quotes;
+					if (in_quotes)
 						parse_state = ARRAY_QUOTED_ELEM_STARTED;
 					else
 						parse_state = ARRAY_QUOTED_ELEM_COMPLETED;
 					break;
 				case '{':
-					if (!scanning_string)
+					if (!in_quotes)
 					{
 						/*
 						 * A left brace can occur if no nesting has
@@ -476,7 +478,7 @@ ArrayCount(char *str, int *dim, char typdelim)
 					}
 					break;
 				case '}':
-					if (!scanning_string)
+					if (!in_quotes)
 					{
 						/*
 						 * A right brace can occur after an element start,
@@ -520,7 +522,7 @@ ArrayCount(char *str, int *dim, char typdelim)
 					}
 					break;
 				default:
-					if (!scanning_string)
+					if (!in_quotes)
 					{
 						if (*ptr == typdelim)
 						{
@@ -595,16 +597,19 @@ ArrayCount(char *str, int *dim, char typdelim)
  *	 declaration. Unspecified elements are initialized to zero for fixed length
  *	 base types and to empty varlena structures for variable length base
  *	 types.  (This is pretty bogus; NULL would be much safer.)
+ *
  * result :
  *	 returns a palloc'd array of Datum representations of the array elements.
  *	 If element type is pass-by-ref, the Datums point to palloc'd values.
  *	 *nbytes is set to the amount of data space needed for the array,
  *	 including alignment padding but not including array header overhead.
- *	 CAUTION: the contents of "arrayStr" may be modified!
+ *
+ *	 CAUTION: the contents of "arrayStr" will be modified!
  *---------------------------------------------------------------------------
  */
 static Datum *
 ReadArrayStr(char *arrayStr,
+			 const char *origStr,
 			 int nitems,
 			 int ndim,
 			 int *dim,
@@ -620,9 +625,10 @@ ReadArrayStr(char *arrayStr,
 	int			i,
 				nest_level = 0;
 	Datum	   *values;
-	char	   *ptr;
-	bool		scanning_string = false;
+	char	   *srcptr;
+	bool		in_quotes = false;
 	bool		eoArray = false;
+	int			totbytes;
 	int			indx[MAXDIM],
 				prod[MAXDIM];
 
@@ -630,87 +636,94 @@ ReadArrayStr(char *arrayStr,
 	values = (Datum *) palloc0(nitems * sizeof(Datum));
 	MemSet(indx, 0, sizeof(indx));
 
-	/* read array enclosed within {} */
-	ptr = arrayStr;
+	/*
+	 * We have to remove " and \ characters to create a clean item value
+	 * to pass to the datatype input routine.  We overwrite each item
+	 * value in-place within arrayStr to do this.  srcptr is the current
+	 * scan point, and dstptr is where we are copying to.
+	 *
+	 * We also want to suppress leading and trailing unquoted whitespace.
+	 * We use the leadingspace flag to suppress leading space.  Trailing
+	 * space is tracked by using dstendptr to point to the last significant
+	 * output character.
+	 *
+	 * The error checking in this routine is mostly pro-forma, since we
+	 * expect that ArrayCount() already validated the string.
+	 */
+	srcptr = arrayStr;
 	while (!eoArray)
 	{
 		bool		itemdone = false;
-		bool		itemquoted = false;
-		int			i = -1;
+		bool		leadingspace = true;
 		char	   *itemstart;
-		char	   *eptr;
+		char	   *dstptr;
+		char	   *dstendptr;
 
-		/* skip leading whitespace */
-		while (isspace((unsigned char) *ptr))
-			ptr++;
-
-		itemstart = ptr;
+		i = -1;
+		itemstart = dstptr = dstendptr = srcptr;
 
 		while (!itemdone)
 		{
-			switch (*ptr)
+			switch (*srcptr)
 			{
 				case '\0':
 					/* Signal a premature end of the string */
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-					errmsg("malformed array literal: \"%s\"", arrayStr)));
+							 errmsg("malformed array literal: \"%s\"",
+									origStr)));
 					break;
 				case '\\':
-					{
-						char	   *cptr;
-
-						/* Crunch the string on top of the backslash. */
-						for (cptr = ptr; *cptr != '\0'; cptr++)
-							*cptr = *(cptr + 1);
-						if (*ptr == '\0')
-							ereport(ERROR,
-							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							 errmsg("malformed array literal: \"%s\"", arrayStr)));
-						break;
-					}
+					/* Skip backslash, copy next character as-is. */
+					srcptr++;
+					if (*srcptr == '\0')
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+								 errmsg("malformed array literal: \"%s\"",
+										origStr)));
+					*dstptr++ = *srcptr++;
+					/* Treat the escaped character as non-whitespace */
+					leadingspace = false;
+					dstendptr = dstptr;
+					break;
 				case '\"':
+					in_quotes = !in_quotes;
+					if (in_quotes)
+						leadingspace = false;
+					else
 					{
-						char	   *cptr;
-
-						scanning_string = !scanning_string;
-						if (scanning_string)
-						{
-							itemquoted = true;
-
-							/*
-							 * Crunch the string on top of the first
-							 * quote.
-							 */
-							for (cptr = ptr; *cptr != '\0'; cptr++)
-								*cptr = *(cptr + 1);
-							/* Back up to not miss following character. */
-							ptr--;
-						}
-						break;
+						/*
+						 * Advance dstendptr when we exit in_quotes; this
+						 * saves having to do it in all the other in_quotes
+						 * cases.
+						 */
+						dstendptr = dstptr;
 					}
+					srcptr++;
+					break;
 				case '{':
-					if (!scanning_string)
+					if (!in_quotes)
 					{
 						if (nest_level >= ndim)
 							ereport(ERROR,
-							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							 errmsg("malformed array literal: \"%s\"", arrayStr)));
+									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+									 errmsg("malformed array literal: \"%s\"",
+											origStr)));
 						nest_level++;
 						indx[nest_level - 1] = 0;
-						/* skip leading whitespace */
-						while (isspace((unsigned char) *(ptr + 1)))
-							ptr++;
-						itemstart = ptr + 1;
+						srcptr++;
 					}
+					else
+						*dstptr++ = *srcptr++;
 					break;
 				case '}':
-					if (!scanning_string)
+					if (!in_quotes)
 					{
 						if (nest_level == 0)
 							ereport(ERROR,
-							(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-							 errmsg("malformed array literal: \"%s\"", arrayStr)));
+									(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+									 errmsg("malformed array literal: \"%s\"",
+											origStr)));
 						if (i == -1)
 							i = ArrayGetOffset0(ndim, indx, prod);
 						indx[nest_level - 1] = 0;
@@ -718,56 +731,52 @@ ReadArrayStr(char *arrayStr,
 						if (nest_level == 0)
 							eoArray = itemdone = true;
 						else
-						{
-							/*
-							 * tricky coding: terminate item value string
-							 * at first '}', but don't process it till we
-							 * see a typdelim char or end of array.  This
-							 * handles case where several '}'s appear
-							 * successively in a multidimensional array.
-							 */
-							*ptr = '\0';
 							indx[nest_level - 1]++;
-						}
+						srcptr++;
 					}
+					else
+						*dstptr++ = *srcptr++;
 					break;
 				default:
-					if (*ptr == typdelim && !scanning_string)
+					if (in_quotes)
+						*dstptr++ = *srcptr++;
+					else if (*srcptr == typdelim)
 					{
 						if (i == -1)
 							i = ArrayGetOffset0(ndim, indx, prod);
 						itemdone = true;
 						indx[ndim - 1]++;
+						srcptr++;
+					}
+					else if (isspace((unsigned char) *srcptr))
+					{
+						/*
+						 * If leading space, drop it immediately.  Else,
+						 * copy but don't advance dstendptr.
+						 */
+						if (leadingspace)
+							srcptr++;
+						else
+							*dstptr++ = *srcptr++;
+					}
+					else
+					{
+						*dstptr++ = *srcptr++;
+						leadingspace = false;
+						dstendptr = dstptr;
 					}
 					break;
 			}
-			if (!itemdone)
-				ptr++;
 		}
-		*ptr++ = '\0';
+
+		Assert(dstptr < srcptr);
+		*dstendptr = '\0';
+
 		if (i < 0 || i >= nitems)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-				   errmsg("malformed array literal: \"%s\"", arrayStr)));
-
-		/*
-		 * skip trailing whitespace
-		 */
-		eptr = ptr - 1;
-		if (!itemquoted)
-		{
-			/* skip to last non-NULL, non-space, character */
-			while ((*eptr == '\0') || (isspace((unsigned char) *eptr)))
-				eptr--;
-			*(++eptr) = '\0';
-		}
-		else
-		{
-			/* skip to last quote character */
-			while (*eptr != '"')
-				eptr--;
-			*eptr = '\0';
-		}
+					 errmsg("malformed array literal: \"%s\"",
+							origStr)));
 
 		values[i] = FunctionCall3(inputproc,
 								  CStringGetDatum(itemstart),
@@ -780,7 +789,7 @@ ReadArrayStr(char *arrayStr,
 	 */
 	if (typlen > 0)
 	{
-		*nbytes = nitems * att_align(typlen, typalign);
+		totbytes = nitems * att_align(typlen, typalign);
 		if (!typbyval)
 			for (i = 0; i < nitems; i++)
 				if (values[i] == (Datum) 0)
@@ -789,7 +798,7 @@ ReadArrayStr(char *arrayStr,
 	else
 	{
 		Assert(!typbyval);
-		*nbytes = 0;
+		totbytes = 0;
 		for (i = 0; i < nitems; i++)
 		{
 			if (values[i] != (Datum) 0)
@@ -797,16 +806,16 @@ ReadArrayStr(char *arrayStr,
 				/* let's just make sure data is not toasted */
 				if (typlen == -1)
 					values[i] = PointerGetDatum(PG_DETOAST_DATUM(values[i]));
-				*nbytes = att_addlength(*nbytes, typlen, values[i]);
-				*nbytes = att_align(*nbytes, typalign);
+				totbytes = att_addlength(totbytes, typlen, values[i]);
+				totbytes = att_align(totbytes, typalign);
 			}
 			else if (typlen == -1)
 			{
 				/* dummy varlena value (XXX bogus, see notes above) */
 				values[i] = PointerGetDatum(palloc(sizeof(int32)));
 				VARATT_SIZEP(DatumGetPointer(values[i])) = sizeof(int32);
-				*nbytes += sizeof(int32);
-				*nbytes = att_align(*nbytes, typalign);
+				totbytes += sizeof(int32);
+				totbytes = att_align(totbytes, typalign);
 			}
 			else
 			{
@@ -814,11 +823,12 @@ ReadArrayStr(char *arrayStr,
 				Assert(typlen == -2);
 				values[i] = PointerGetDatum(palloc(1));
 				*((char *) DatumGetPointer(values[i])) = '\0';
-				*nbytes += 1;
-				*nbytes = att_align(*nbytes, typalign);
+				totbytes += 1;
+				totbytes = att_align(totbytes, typalign);
 			}
 		}
 	}
+	*nbytes = totbytes;
 	return values;
 }
 
