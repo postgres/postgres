@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jun  4 23:16:01 EDT 1999
+Last updated:		Sun Jun  6 22:08:59 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -19,6 +19,7 @@ Developers who have claimed items are:
 	* David is David Hartwig <daveh@insightdist.com>
 	* Edmund is Edmund Mergl <E.Mergl@bawue.de>
 	* Goran is Goran Thyni <goran@kyla.kiruna.se>
+	* Hiroshi is Hiroshi Inoue<Inoue@tpf.co.jp>
 	* Jan is Jan Wieck <wieck@sapserv.debis.de>
  	* Marc is Marc Fournier <scrappy@hub.org>
 	* Massimo Dal Zotto <dz@cs.unitn.it>
@@ -33,6 +34,7 @@ Developers who have claimed items are:
 
 	* Vadim is "Vadim B. Mikheev" <vadim@krs.ru>
 
+
 RELIABILITY
 -----------
 * Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
@@ -40,130 +42,152 @@ RELIABILITY
 * Remove EXTEND?
 * Tables that start with xinv confused to be large objects
 * Two and three dimensional arrays display improperly, missing {}
-* SELECT a[1] FROM test fails, it needs test.a[1]
-* UPDATE table SET table.value = 3 fails
+* Select a[1] FROM test fails, it needs test.a[1]
+* Update table SET table.value = 3 fails
 * User who can create databases can modify pg_database table
-* elog() does not free all its memory(Jan)
-* views on subselects fail
-* disallow inherited columns with the same name as new columns
-* recover or force failure when disk space is exhausted
-* views containing aggregates sometimes fail(Jan)
-* ALTER TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
-* array index references without table name cause problems
-* views with spaces in view name fail when referenced
-* plpgsql does not handle quoted mixed-case identifiers
-* do not allow bpchar column creation without length
+* Elog() does not free all its memory(Jan)
+* Disallow inherited columns with the same name as new columns
+* Recover or force failure when disk space is exhausted
+* Views containing aggregates sometimes fail(Jan)
+* Alter TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
+* Array index references without table name cause problems
+* Views with spaces in view name fail when referenced
+* Plpgsql does not handle quoted mixed-case identifiers
+* Do not allow bpchar column creation without length
 * INSERT INTO ... SELECT with AS columns matching result columns problem
 
 
 ENHANCEMENTS
 ------------
-* Transaction log, so re-do log can be on a separate disk
-* Allow transaction commits with rollback with no-fsync performance
+* Add referential integrity
+* Add OUTER joins, left and right(Thomas)
+* Allow long tuples by chaining or auto-storing outside db (chaining,large objs)
+* Fix memory leak for expressions?, aggregates?
+
+Exotic features:
+* Add sql3 recursive unions
+* Add the concept of dataspaces
+* Add replication of distributed databases
+* Allow queries across multiple databases
+
+Admin:
+* Better interface for adding to pg_group
 * More access control over who can create tables and access the database
-* Add full ANSI SQL capabilities
-	* add OUTER joins, left and right(Thomas)
-	* add sql3 recursive unions
-	* add the concept of dataspaces
-	* add BIT, BIT VARYING
- 	* NCHAR (as distinguished from ordinary varchar),
-	* DOMAIN capability
+* Add syslog functionality
+* Allow elog() to return error codes, not just messages
+* Allow international error message support and add error codes
+* Generate postmaster pid file and remove flock/fcntl lock code
+* Add ability to specifiy location of lock/socket files
+
+Types:
+* Add BIT, BIT VARYING
+* Nchar (as distinguished from ordinary varchar),
+* Domain capability
+* Add STDDEV/VARIANCE() function for standard deviation computation/variance
 * Allow compression of large fields or a compressed field type
 * Large objects
 	* Fix large object mapping scheme, own typeid or reltype(Peter)
 	* Allow large text type to use large objects(Peter)
-	* not to stuff everything as files in a single directory
-* Better interface for adding to pg_group
-* allow row re-use without vacuum, maybe?(Vadim)
-* Populate backend status area and write program to dump status data
-* Add ALTER TABLE DROP/ALTER COLUMN feature
-* Add syslog functionality
-* Add STDDEV/VARIANCE() function for standard deviation computation/variance
-* add UNIQUE capability to non-btree indexes
-* certain indexes will not shrink, i.e. oid indexes with many inserts
-* make NULL's come out at the beginning or end depending on the ORDER BY direction
-* Restore unused oid's on backend exit if no one else has gotten oids
-* have UPDATE/DELETE clean out indexes
-* allow WHERE restriction on ctid
-* allow pg_descriptions when creating types, tables, columns, and functions
-* Allow psql to print nulls as distinct from ""(?)
-* Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
+	* Not to stuff everything as files in a single directory
+* Allow pg_descriptions when creating types, tables, columns, and functions
+* Add IPv6 capability to INET/CIDR types
+* Make a separate SERIAL type?
+* Store binary-compatible type information in the system
+* Allow user to define char1 column
+* Add support for & operator
+
+Views:
 * Allow DISTINCT on views
 * Allow views of aggregate columns
-* Allow flag to control COPY input/output of NULLs
-* Allow CLUSTER on all tables at once, and improve CLUSTER
-* Allow elog() to return error codes, not just messages
-* allow international error message support and add error codes
+* Allow views with subselects
+
 * Allow subqueries in target list
-* Allow queries across multiple databases
-* Add replication of distributed databases
-* Generate error on CREATE OPERATOR of ~~, ~ and and ~*
-* allow psql \copy to allow delimiters
-* add a function to return the last inserted oid, for use in psql scripts
-* allow creation of functional indexes to use default types
-* put sort files, large objects in their on directory
-* do autocommit so always in a transaction block
-* add SIMILAR TO to allow character classes, 'pg_[a-c]%'
-* improve reporting of syntax errors by showing location of error in query
-* allow chaining of pages to allow >8k tuples, auto-large object use
-* redesign the function call interface to handle NULLs better(Jan)
-* permissions on indexes - prevent them?
-* document/trigger/rule so changes to pg_shadow create pg_pwd
-* generate postmaster pid file and remove flock/fcntl lock code
-* add ability to specifiy location of lock/socket files
-* auto-destroy sequence on DROP of table with SERIAL
-* make a separate serial type?
-* allow user to define char1 column
-* allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison
-* allow INSERT/UPDATE of system-generated oid value for a row
-* missing optimizer selectivities for date, etc.
-* Add support for & operator
-* store binary-compatible type information in the system
-* Allow ESCAPE '\' at the end of LIKE for ANSI compliance
-* rewrite the LIKE handling by rewriting the user string with the 
-	supplied ESCAPE
-* Fix memory leak for expressions?, aggregates?
-* Allow Subplans to use efficient joins(hash, merge) with upper variable
-* Update reltuples from COPY command
+* Put sort files, large objects in their on directory
+* Do autocommit so always in a transaction block
+* Show location of syntax error in query
+* Redesign the function call interface to handle NULLs better(Jan)
+* Document/trigger/rule so changes to pg_shadow create pg_pwd
+* Missing optimizer selectivities for date, etc.
+
+Indexes:
 * Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
 	fails index can't store constant parameters
-* allow SQL function indexes
+* Allow creation of functional indexes to use default types
+* Permissions on indexes - prevent them?
+* Allow SQL function indexes
+* Add FILLFACTOR to index creation
+
+Commands:
 * ALTER TABLE ADD COLUMN to inherited table put column in wrong place
-* Add IPv6 capability to INET/CIDR types
-* Allow PQrequestCancel() to terminate when in waiting-for-lock state
+* Add ALTER TABLE DROP/ALTER COLUMN feature
+* Allow CLUSTER on all tables at once, and improve CLUSTER
+* Generate error on CREATE OPERATOR of ~~, ~ and and ~*
+* Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
+* Auto-destroy sequence on DROP of table with SERIAL
+* Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison
+* Allow INSERT/UPDATE of system-generated oid value for a row
+* Allow ESCAPE '\' at the end of LIKE for ANSI compliance
+* Rewrite the LIKE handling by rewriting the user string with the 
+	supplied ESCAPE
+* Move LIKE index optimization handling to the optimizer
+  
+Clients:
+* Make NULL's come out at the beginning or end depending on the 
+	ORDER BY direction
+* Allow flag to control COPY input/output of NULLs
+* Update reltuples from COPY command
+* Allow psql \copy to allow delimiters
+* Add a function to return the last inserted oid, for use in psql scripts
+* Allow psql to print nulls as distinct from ""(?)
+
 * Increase identifier length(NAMEDATALEN) if small performance hit
-* Fix for long table/column name auto-sequence serial name
+* Allow row re-use without vacuum, maybe?(Vadim)
+* Add UNIQUE capability to non-btree indexes
+* Certain indexes will not shrink, i.e. oid indexes with many inserts
+* Restore unused oid's on backend exit if no one else has gotten oids
+* Have UPDATE/DELETE clean out indexes
+* Allow WHERE restriction on ctid
+* Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
+* Allow PQrequestCancel() to terminate when in waiting-for-lock state
+* Transaction log, so re-do log can be on a separate disk
+* Populate backend status area and write program to dump status data
+* Make oid use unsigned int more reliably, pg_atoi()
+
+* Add PL/Perl(Mark Hollomon)
 
 
 PERFORMANCE
 -----------
+* Allow transaction commits with rollback with no-fsync performance
+* Prevent fsync in SELECT-only queries
+
 * Use indexes in ORDER BY for restrictive data sets, min(), max()
+* Pull requested data directly from indexes, bypassing heap data
+* Use index to restrict rows returned by multi-key index when used with
+	non-consecutive keys or OR clauses, so fewer heap accesses
+* Use index with constants on functions
+
 * Allow LIMIT ability on single-table queries that have no ORDER BY to use
 	a matching index
-* Pull requested data directly from indexes, bypassing heap data
-* Prevent fsync in SELECT-only queries
+* Improve LIMIT processing by using index to limit rows processed
+
 * Cache most recent query plan(s?)
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
+
 * Allow compression of log and meta data
-* Add FILLFACTOR to index creation
-* update pg_statistic table to remove operator column
-* make index creation use psort code, because it is now faster(Vadim)
+* Update pg_statistic table to remove operator column
+* Make index creation use psort code, because it is now faster(Vadim)
 * Allow char() not to use variable-sized header to reduce disk size
 * Do async I/O to do better read-ahead of data
 * Fix memory exhaustion when using many OR's
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
 	when it is available
-* use mmap() rather than SYSV shared memory(?)
-* use index to restrict rows returned by multi-key index when used with
-	non-consecutive keys or OR clauses, so fewer heap accesses
-* use index with constants on functions
-* process const = const parts of OR clause in separate pass
-* make oid use oidin/oidout not int4in/int4out in pg_type.h
-* make oid use unsigned int more reliably, pg_atoi()
-* create more system table indexes for faster cache lookups
-* Move LIKE index optimization handling to the optimizer
-* Improve LIMIT processing by using index to limit rows processed
+* Use mmap() rather than SYSV shared memory(?)
+* Process const = const parts of OR clause in separate pass
+* Make oid use oidin/oidout not int4in/int4out in pg_type.h
+* Create more system table indexes for faster cache lookups
 * Improve Subplan list handling
+* Allow Subplans to use efficient joins(hash, merge) with upper variable
 
 
 DOCUMENTATION
