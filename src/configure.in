@@ -33,6 +33,8 @@ freebsd*) PORTNAME='BSD44_derived' ;;
    exit;;
 esac
 AC_SUBST(PORTNAME)
+AC_SUBST(LDFLAGS)
+AC_SUBST(CPPFLAGS)
 
 AC_CONFIG_HEADER(include/config.h)
 
