@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.282 2002/08/15 16:36:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.283 2002/08/16 21:03:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5286,7 +5286,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 			if (tbinfo->attstattarget[j] >= 0 &&
 				!tbinfo->attisdropped[j])
 			{
-				appendPQExpBuffer(q, "ALTER TABLE %s ",
+				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
 								  fmtId(tbinfo->relname, force_quotes));
 				appendPQExpBuffer(q, "ALTER COLUMN %s ",
 								  fmtId(tbinfo->attnames[j], force_quotes));
@@ -5388,6 +5388,13 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 		/* Make sure we are in proper schema so indexdef is right */
 		selectSourceSchema(tbinfo->relnamespace->nspname);
 
+		/*
+		 * The point of the messy-looking outer join is to find a constraint
+		 * that is related by an internal dependency link to the index.
+		 * If we find one, we emit an ADD CONSTRAINT command instead of
+		 * a CREATE INDEX command.  We assume an index won't have more than
+		 * one internal dependency.
+		 */
 		resetPQExpBuffer(query);
 		if (g_fout->remoteVersion >= 70300)
 			appendPQExpBuffer(query,
@@ -5399,8 +5406,13 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 							  "coalesce(c.contype, '0') as contype " 
 							  "FROM pg_catalog.pg_index i "
 							  "JOIN pg_catalog.pg_class t ON (t.oid = i.indexrelid) "
-							  "LEFT OUTER JOIN pg_catalog.pg_constraint c "
-							  "  ON (c.conrelid = i.indrelid AND c.conname = t.relname) "
+							  "LEFT JOIN pg_catalog.pg_depend d "
+							  "ON (d.classid = t.tableoid "
+							  "AND d.objid = t.oid "
+							  "AND d.deptype = 'i') "
+							  "LEFT JOIN pg_catalog.pg_constraint c "
+							  "ON (d.refclassid = c.tableoid "
+							  "AND d.refobjid = c.oid) "
 							  "WHERE i.indrelid = '%s'::pg_catalog.oid "
 							  "ORDER BY indexrelname",
 							  tbinfo->oid);
@@ -5411,8 +5423,7 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 							  "pg_get_indexdef(i.indexrelid) as indexdef, "
 							  "i.indkey, "
 							  "t.relnatts as indnkeys, "
-							  "CASE WHEN i.indisprimary IS TRUE THEN "
-							  "  'p'::char "
+							  "CASE WHEN i.indisprimary THEN 'p'::char "
 							  "ELSE '0'::char END as contype "
 							  "FROM pg_index i, pg_class t "
 							  "WHERE t.oid = i.indexrelid "
@@ -5442,17 +5453,19 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 			const char *indexreloid = PQgetvalue(res, j, i_indexreloid);
 			const char *indexrelname = PQgetvalue(res, j, i_indexrelname);
 			const char *indexdef = PQgetvalue(res, j, i_indexdef);
-			const char *contype = PQgetvalue(res, j, i_contype);
+			char contype = *(PQgetvalue(res, j, i_contype));
 
 			resetPQExpBuffer(q);
 			resetPQExpBuffer(delq);
 
-			if (strcmp(contype, "p") == 0 || strcmp(contype, "u") == 0)
+			if (contype == 'p' || contype == 'u')
 			{
 				/*
-				 * Constraints which are marked as so (created with a
-				 * constraint creation utility statement, not an index
-				 * creation statment) should be regenerated as such.
+				 * If we found a constraint matching the index, emit
+				 * ADD CONSTRAINT not CREATE INDEX.
+				 *
+				 * In a pre-7.3 database, we take this path iff the index
+				 * was marked indisprimary.
 				 */
 				int indnkeys = atoi(PQgetvalue(res, j, i_indnkeys));
 				char **indkeys = (char **) malloc(indnkeys * sizeof(char *));
@@ -5461,11 +5474,11 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 				parseNumericArray(PQgetvalue(res, j, i_indkey),
 								  indkeys, indnkeys);
 
-				appendPQExpBuffer(q, "ALTER TABLE %s ADD ",
+				appendPQExpBuffer(q, "ALTER TABLE ONLY %s ",
 								  fmtId(tbinfo->relname, force_quotes));
-				appendPQExpBuffer(q, "CONSTRAINT %s %s (",
+				appendPQExpBuffer(q, "ADD CONSTRAINT %s %s (",
 								  fmtId(indexrelname, force_quotes),
-								  strcmp(contype, "p") == 0 ? "PRIMARY KEY" : "UNIQUE");
+								  contype == 'p' ? "PRIMARY KEY" : "UNIQUE");
 
 				for (k = 0; k < indnkeys; k++)
 				{
@@ -5483,12 +5496,20 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 
 				appendPQExpBuffer(q, ");\n");
 
+				/* DROP must be fully qualified in case same name appears in pg_catalog */
+				appendPQExpBuffer(delq, "ALTER TABLE ONLY %s.",
+								  fmtId(tbinfo->relnamespace->nspname, force_quotes));
+				appendPQExpBuffer(delq, "%s ",
+								  fmtId(tbinfo->relname, force_quotes));
+				appendPQExpBuffer(delq, "DROP CONSTRAINT %s;\n",
+								  fmtId(indexrelname, force_quotes));
+
 				ArchiveEntry(fout, indexreloid,
 							 indexrelname,
 							 tbinfo->relnamespace->nspname,
 							 tbinfo->usename,
 							 "CONSTRAINT", NULL,
-							 q->data, "",
+							 q->data, delq->data,
 							 NULL, NULL, NULL);
 
 				for (k = 0; k < indnkeys; k++)
