@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.1.1.1 1996/07/09 06:21:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.2 1997/04/05 06:39:58 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,6 +266,9 @@ match_varid(Var *test_var, List *tlist)
 
 	entry = lfirst(tl);
 	tlvar = get_expr(entry);
+	
+	if ( !IsA (tlvar, Var) )
+	    continue;
 
 	/*
 	 * we test the original varno (instead of varno which might
@@ -532,6 +535,7 @@ get_expr(TargetEntry *tle)
 void
 AddGroupAttrToTlist(List *tlist, List *grpCl)
 {
+#if 0
     List *gl;
     int last_resdomno = length(tlist) + 1;
     
@@ -553,6 +557,7 @@ AddGroupAttrToTlist(List *tlist, List *grpCl)
 	    tlist = lappend(tlist, MakeTLE(r, (Node*)var));
 	}
     }
+#endif
 }
 
 /* was ExecTargetListLength() in execQual.c, 
