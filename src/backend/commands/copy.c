@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.17 1996/11/13 20:48:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.18 1996/12/14 04:58:20 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,8 +549,12 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
             }
         }
         if (done) continue;
-            
+
+	/*
+	 * Does it have any sence ? - vadim 12/14/96
+	 *                    
         tupDesc = CreateTupleDesc(attr_count, attr);
+	 */
         tuple = heap_formtuple(tupDesc, values, nulls);
         if (oids)
             tuple->t_oid = loaded_oid;
