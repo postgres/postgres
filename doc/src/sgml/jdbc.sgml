@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.22 2001/09/10 21:58:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.23 2001/09/12 15:49:10 momjian Exp $
 -->
 
  <chapter id="jdbc">
@@ -576,12 +576,12 @@ fis.close();
     <classname>Statement</classname> class can equally be used.)
 
 <programlisting>
-PreparedStatement ps = con.prepareStatement("SELECT oid FROM images WHERE name=?");
+PreparedStatement ps = con.prepareStatement("SELECT imgoid FROM images WHERE imgname=?");
 ps.setString(1, "myimage.gif");
 ResultSet rs = ps.executeQuery();
 if (rs != null) {
     while(rs.next()) {
-        InputStream is = rs.getBinaryInputStream(1);
+        InputStream is = rs.getBinaryStream(1);
         // use the stream in some way here
         is.close();
     }
@@ -1277,7 +1277,7 @@ Variables
            
           This is the center point
  
-public double radius
+ double radius
            
           This is the radius
    
@@ -1993,7 +1993,7 @@ public byte[] read(int len) throws SQLException
 
       <listitem>
 <synopsis>
-public void read(byte buf[],
+public int read(byte buf[],
                  int off,
                  int len) throws SQLException
 </synopsis>
@@ -2416,7 +2416,7 @@ here, and will be documented in the main documents in more detail.
 
 Constructors
 
- public Serialize(Connection c,
+ public Serialize(org.postgresql.Connection c,
                   String type) throws SQLException
 
           This creates an instance that can be used to serialize 
@@ -2459,7 +2459,7 @@ table, and will not overwrite the old entries.
         Throws: SQLException
                 on error
  
- public static void create(Connection con,
+ public static void create(org.postgresql.Connection con,
                            Object o) throws SQLException
 
           This method is not used by the driver, but it creates a 
@@ -2501,7 +2501,7 @@ table, and will not overwrite the old entries.
         Throws: SQLException
                 on error
  
- public static void create(Connection con,
+ public static void create(org.postgresql.Connection con,
                            Object o) throws SQLException
 
           This method is not used by the driver, but it creates a 
@@ -2907,9 +2907,9 @@ sent over the network stream
    Contains static methods to encrypt and compare passwords with Unix 
 encrypted passwords.
 
-   See John Dumas's Java Crypt page for the original source.
+   See John Dumas's Java Crypt page for the original source.  
 
-   http://www.zeh.com/local/jfd/crypt.html
+   (Invalid URL) http://www.zeh.com/local/jfd/crypt.html
 
 Methods
 
