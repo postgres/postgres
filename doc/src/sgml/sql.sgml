@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.13 2000/11/29 20:15:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.14 2000/12/09 22:59:25 momjian Exp $
 -->
 
  <chapter id="sql">
@@ -934,7 +934,7 @@ SELECT PNAME, PRICE
 SELECT PNAME, PRICE 
     FROM PART
     WHERE PNAME = 'Bolt' AND
-         (PRICE = 0 OR PRICE < 15);
+         (PRICE = 0 OR PRICE <= 15);
 	</programlisting>
 
 	will lead to the result:
@@ -1350,7 +1350,7 @@ SELECT S.SNO, S.SNAME, S.CITY
     INTERSECT
     SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
-    WHERE S.SNO > 2;
+    WHERE S.SNO < 3;
 	</programlisting>
 
 	gives the result:
@@ -1624,7 +1624,7 @@ CREATE VIEW London_Suppliers
 
       <programlisting>
 SELECT * FROM London_Suppliers
-    WHERE P.PNAME = 'Screw';
+    WHERE PNAME = 'Screw';
       </programlisting>
 
       which will return the following table:
