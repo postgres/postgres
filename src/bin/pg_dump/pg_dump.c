@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.147 2000/04/14 01:34:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.147.2.1 2000/09/23 23:36:17 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1456,13 +1456,15 @@ getFuncs(int *numFuncs)
 	int			i_proretset;
 	int			i_prosrc;
 	int			i_probin;
+	int			i_iscachable;
 	int			i_usename;
 
 	/* find all user-defined funcs */
 
 	appendPQExpBuffer(query,
 		   "SELECT pg_proc.oid, proname, prolang, pronargs, prorettype, "
-					  "proretset, proargtypes, prosrc, probin, usename "
+					  "proretset, proargtypes, prosrc, probin, usename, "
+					  "proiscachable "
 					  "from pg_proc, pg_user "
 				 "where pg_proc.oid > '%u'::oid and proowner = usesysid",
 					  g_last_builtin_oid);
@@ -1492,6 +1494,7 @@ getFuncs(int *numFuncs)
 	i_proretset = PQfnumber(res, "proretset");
 	i_prosrc = PQfnumber(res, "prosrc");
 	i_probin = PQfnumber(res, "probin");
+	i_iscachable = PQfnumber(res, "proiscachable");
 	i_usename = PQfnumber(res, "usename");
 
 	for (i = 0; i < ntups; i++)
@@ -1507,6 +1510,7 @@ getFuncs(int *numFuncs)
 		finfo[i].nargs = atoi(PQgetvalue(res, i, i_pronargs));
 		finfo[i].lang = atoi(PQgetvalue(res, i, i_prolang));
 		finfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
+		finfo[i].iscachable = (strcmp(PQgetvalue(res, i, i_iscachable),"t") == 0);
 		if (finfo[i].nargs < 0 || finfo[i].nargs > FUNC_MAX_ARGS)
 		{
 			fprintf(stderr, "failed sanity check: %s has %d args\n",
@@ -2663,10 +2667,17 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 						  (j > 0) ? "," : "",
 						  fmtId(typname, false));
 	}
-	appendPQExpBuffer(q, " ) RETURNS %s%s AS '%s' LANGUAGE '%s';\n",
+	appendPQExpBuffer(q, " ) RETURNS %s%s AS '%s' LANGUAGE '%s'",
 					  (finfo[i].retset) ? " SETOF " : "",
 	   fmtId(findTypeByOid(tinfo, numTypes, finfo[i].prorettype), false),
 					  func_def, func_lang);
+
+	if (finfo[i].iscachable) /* OR in new attrs here */
+	{
+		appendPQExpBuffer(q, " WITH (iscachable)");
+	}
+
+	appendPQExpBuffer(q, ";\n");
 
 	fputs(q->data, fout);
 

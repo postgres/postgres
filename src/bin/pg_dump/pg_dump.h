@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.48 2000/04/12 17:16:15 momjian Exp $
+ * $Id: pg_dump.h,v 1.48.2.1 2000/09/23 23:36:17 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -61,6 +61,7 @@ typedef struct _funcInfo
 	char	   *prosrc;
 	char	   *probin;
 	char	   *usename;
+	int			iscachable;		/* Attr */
 	int			dumped;			/* 1 if already dumped */
 } FuncInfo;
 
