@@ -8,14 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.39 2000/11/21 03:23:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.40 2000/11/21 04:27:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
+#include "postgres.h"
 
 #include <ctype.h>
-#include "postgres.h"
+#include <errno.h>
+
 #include "utils/builtins.h"
 
 /*****************************************************************************
