@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jun 10 11:52:17 EDT 2002
+Last updated:		Tue Jun 11 17:27:56 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -171,7 +171,7 @@ Indexes
 Commands
 ========
 
-* Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
+* -Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
 * Add BETWEEN ASYMMETRIC/SYMMETRIC (Christopher)
 * -Remove LIMIT #,# and force use LIMIT and OFFSET clauses in 7.3 (Bruce)
 * Allow LIMIT/OFFSET to use expressions
