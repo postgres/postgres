@@ -6,17 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_query.h,v 1.4 1996/10/31 18:33:09 momjian Exp $
+ * $Id: parse_query.h,v 1.5 1996/11/04 12:12:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSE_QUERY_H
 #define PARSE_QUERY_H
 
-#include "nodes/pg_list.h"
-#include "nodes/parsenodes.h"
-#include "parser/catalog_utils.h"
-#include "parser/parse_state.h"
+#include <parser/catalog_utils.h>
+#include <parser/parse_state.h>
+#include <nodes/parsenodes.h>
 
 typedef struct QueryTreeList {
   int len; /* number of queries */

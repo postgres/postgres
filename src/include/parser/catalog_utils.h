@@ -6,16 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog_utils.h,v 1.3 1996/11/03 12:13:03 scrappy Exp $
+ * $Id: catalog_utils.h,v 1.4 1996/11/04 12:12:47 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	CATALOG_UTILS_H
 #define	CATALOG_UTILS_H
 
-#include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
-#include "utils/syscache.h"
+#include <catalog/pg_type.h>
+#include <access/htup.h>
     
 typedef HeapTuple	Type;
 typedef HeapTuple	Operator;
