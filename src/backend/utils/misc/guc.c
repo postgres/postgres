@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.66 2002/04/21 00:22:52 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.67 2002/05/14 13:05:43 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -587,22 +587,22 @@ static struct config_string
 	},
 
 	{
-		"lc_messages", PGC_POSTMASTER, PGC_S_DEFAULT, &locale_messages,
+		"lc_messages", PGC_SUSET, PGC_S_DEFAULT, &locale_messages,
 		"", locale_messages_check, locale_messages_assign
 	},
 
 	{
-		"lc_monetary", PGC_POSTMASTER, PGC_S_DEFAULT, &locale_monetary,
+		"lc_monetary", PGC_USERSET, PGC_S_DEFAULT, &locale_monetary,
 		"", locale_monetary_check, locale_monetary_assign
 	},
 
 	{
-		"lc_numeric", PGC_POSTMASTER, PGC_S_DEFAULT, &locale_numeric,
+		"lc_numeric", PGC_USERSET, PGC_S_DEFAULT, &locale_numeric,
 		"", locale_numeric_check, locale_numeric_assign
 	},
 
 	{
-		"lc_time", PGC_POSTMASTER, PGC_S_DEFAULT, &locale_time,
+		"lc_time", PGC_USERSET, PGC_S_DEFAULT, &locale_time,
 		"", locale_time_check, locale_time_assign
 	},
 

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.26 2002/04/08 04:37:36 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.27 2002/05/14 13:05:42 petere Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -177,22 +177,32 @@
     <title>Locale differences</title>
 
     <para>
-     The tests expect to run in plain <quote>C</quote> locale.  This
-     should not cause any problems when you run the tests against a
-     temporary installation, since the regression test driver takes care
-     to start the server in C locale.  However, if you run the tests
-     against an already-installed server that is using non-C locale settings,
-     you may see differences caused by varying rules for string sort order,
-     formatting of numeric and monetary values, and so forth.
+     If you run the tests against an already-installed server that was
+     initialized with a collation order locale different than C then
+     there may be differences due to sort order and follow-up
+     failures.  The regression test suite is set up to handle this
+     problem by providing alternative result files that together are
+     known to handle a large number of locales.  For example, for the
+     <quote>char</quote> test, the expected file
+     <filename>char.out</filename> handles the C and POSIX locales,
+     and the file <filename>char_1.out</filename> handles many other
+     locales.  The regression test driver will automatically pick the
+     best file to match against when checking for success and for
+     computing failure differences.  (This means that the regression
+     tests cannot detect whether the results are appropriate for the
+     configured locale.  The tests will simply pick the one result
+     file that works best.)
     </para>
 
     <para>
-     In some locales the resulting differences are small and easily checked by
-     inspection.  However, in a locale that changes the rules for formatting
-     of numeric values (typically by swapping the usage of commas and
-     decimal points), entry of some data values will fail, resulting in
-     extensive differences later in the tests where the missing data values
-     are supposed to be used.
+     If for some reason the existing expected files do not cover some
+     locale, you can add a new file.  The naming scheme is
+     <literal><replaceable>testname</>_<replaceable>digit</>.out</>.
+     The actual digit is not significant.  Remember that the
+     regression test driver will consider all such files to be equally
+     valid test results.  If the test results are platform-dependent,
+     the technique described in <xref linkend="regress-platform">
+     should be used instead.
     </para>
    </sect2>
     

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.24 2002/04/24 01:56:20 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.25 2002/05/14 13:05:43 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -451,6 +451,16 @@ if [ $? -ne 0 ]; then
     (exit 2); exit
 fi
 
+"$bindir/psql" $psql_options -c "\
+alter database \"$dbname\" set lc_messages to 'C';
+alter database \"$dbname\" set lc_monetary to 'C';
+alter database \"$dbname\" set lc_numeric to 'C';
+alter database \"$dbname\" set lc_time to 'C';" "$dbname" 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "$me: could not set database default locales"
+    (exit 2); exit
+fi
+
 
 # ----------
 # Remove regressuser* and regressgroup* user accounts.
@@ -559,22 +569,44 @@ do
         # to a system-specific expected file.
         # There shouldn't be multiple matches, but take the last if there are.
 
-        EXPECTED="$inputdir/expected/${name}.out"
+        EXPECTED="$inputdir/expected/${name}"
         for LINE in $SUBSTLIST
         do
             if [ `expr "$LINE" : "$name="` -ne 0 ]
             then
                 SUBST=`echo "$LINE" | sed 's/^.*=//'`
-                EXPECTED="$inputdir/expected/${SUBST}.out"
+                EXPECTED="$inputdir/expected/${SUBST}"
             fi
         done
 
-        diff $DIFFFLAGS $EXPECTED $outputdir/results/${name}.out >/dev/null 2>&1
-        case $? in
+        # If there are multiple equally valid result file, loop to get the right one.
+        # If none match, diff against the closet one.
+
+        bestfile=
+        bestdiff=
+        result=2
+        for thisfile in $EXPECTED.out ${EXPECTED}_[0-9].out; do
+            [ ! -r "$thisfile" ] && continue
+            diff $DIFFFLAGS $thisfile $outputdir/results/${name}.out >/dev/null 2>&1
+            result=$?
+            case $result in
+                0) break;;
+                1) thisdiff=`diff $DIFFFLAGS $thisfile $outputdir/results/${name}.out | wc -l`
+                   if [ -z "$bestdiff" ] || [ "$thisdiff" -lt "$bestdiff" ]; then
+                       bestdiff=$thisdiff; bestfile=$thisfile
+                   fi
+                   continue;;
+                2) break;;
+            esac
+        done
+
+        # Now print the result.
+
+        case $result in
             0)
                 echo "ok";;
             1)
-                ( diff $DIFFFLAGS -C3 $EXPECTED $outputdir/results/${name}.out
+                ( diff $DIFFFLAGS -C3 $bestfile $outputdir/results/${name}.out
                   echo
                   echo "======================================================================"
                   echo ) >> "$diff_file"
