@@ -53,10 +53,11 @@ struct sqlca sqlca =
 
 static struct connection
 {
-	char	   *name;
-	PGconn	   *connection;
+	char	*name;
+	PGconn	*connection;
+	int	committed;
 	struct connection *next;
-}		   *all_connections = NULL, *actual_connection = NULL;
+}		*all_connections = NULL, *actual_connection = NULL;
 
 struct variable
 {
@@ -90,7 +91,6 @@ struct prepared_statement
 
 static int	simple_debug = 0;
 static FILE *debugstream = NULL;
-static int	committed = true;
 
 static void
 register_error(long code, char *fmt,...)
@@ -564,7 +564,7 @@ ECPGexecute(struct statement * stmt)
 
 	/* Now the request is built. */
 
-	if (committed && !no_auto_trans)
+	if (actual_connection->committed && !no_auto_trans)
 	{
 		if ((results = PQexec(actual_connection->connection, "begin transaction")) == NULL)
 		{
@@ -572,7 +572,7 @@ ECPGexecute(struct statement * stmt)
 			return false;
 		}
 		PQclear(results);
-		committed = 0;
+		actual_connection->committed = false;
 	}
 
 	ECPGlog("ECPGexecute line %d: QUERY: %s\n", stmt->lineno, copiedquery);
@@ -987,7 +987,7 @@ ECPGtrans(int lineno, const char *transaction)
 	{
 		struct prepared_statement *this;
 			
-		committed = 1;
+		actual_connection->committed = true;
 
 		/* deallocate all prepared statements */
 		for (this = prep_stmts; this != NULL; this = this->next)
@@ -999,7 +999,7 @@ ECPGtrans(int lineno, const char *transaction)
 		}
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -1059,6 +1059,8 @@ ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd
 		register_error(ECPG_CONNECT, "connect: could not open database %s.", dbname ? dbname : "NULL");
 		return false;
 	}
+	
+	this->committed = true;
 
 	return true;
 }

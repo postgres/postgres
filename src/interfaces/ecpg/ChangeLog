@@ -457,3 +457,9 @@ Fri Feb 19 18:38:45 CET 1999
 
 	- Finished type aliasing for structures.
 	- Set ecpg version to 2.5.0
+
+Fri Feb 19 21:40:14 CET 1999
+
+	- Fixed bug in libecpg that caused it to start transactions only for
+	  the first connection.
+	- Set library version to 2.7.1
