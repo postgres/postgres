@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.143 2003/03/14 22:40:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.144 2003/03/21 04:33:15 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1341,7 +1341,10 @@ AbortCurrentTransaction(void)
 			 */
 		case TBLOCK_DEFAULT:
 			AbortTransaction();
-			CleanupTransaction();
+			if (autocommit || suppressChain)
+				CleanupTransaction();
+			else
+				s->blockState = TBLOCK_ABORT;
 			break;
 
 			/*
