@@ -1,5 +1,13 @@
 This is a PostgreSQL adapted version of the timezone library
 from:
 
-	ftp://elsie.nci.nih.gov/pub/tz*.tar.gz
+	ftp://elsie.nci.nih.gov/pub/tzcode*.tar.gz
 
+The data files under data/ are an exact copy of the latest data set
+from
+
+	ftp://elsie.nci.nih.gov/pub/tzdata*.tar.gz
+
+Since time zone rules change frequently in some parts of the world,
+we should endeavor to update the data files before each PostgreSQL
+release.

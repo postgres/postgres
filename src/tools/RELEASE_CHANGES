@@ -29,9 +29,11 @@
     update INSTALL
     platform-specific FAQ's, if needed
 
+* Update timezone data to match latest zic database (see src/timezone/README)
+
 * Update pg_upgrade to handle new version, or disable
 
-* Update copyright year?
+* Update copyright year when needed
 
 
 ---------------------------------------------------------------------------
