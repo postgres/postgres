@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.12 1998/04/21 16:18:30 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.13 1998/08/25 17:36:18 momjian Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -24,7 +24,7 @@ trap "rm -f /tmp/genbki.tmp" 0 1 2 3 15
 >/tmp/genbki.tmp
 
 PATH=$PATH:/lib:/usr/ccs/lib:/usr/ccs/lbin		# to find cpp
-cpp /dev/null >/dev/null
+cpp /dev/null >/dev/null 2>&1
 if [ "$?" -ne 0 ]
 then	echo "Can't find cpp.  Exiting." 1>&2
 	exit 1
