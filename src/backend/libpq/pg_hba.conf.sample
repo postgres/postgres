@@ -49,6 +49,9 @@
 # 	o "all" to indicate all databases
 # 	o "sameuser" to allow access only to databases with the same
 # 	  name as the connecting user
+#
+# The superuser needs access to the 'template1' database because it is used
+# by a variety of PostgreSQL utility commands.
 # 
 # IP_ADDRESS and ADDRESS_MASK are standard dotted decimal IP address and
 # mask values. IP addresses can only be specified numerically, not as
