@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.44 2000/11/28 23:27:57 tgl Exp $
+ * $Id: bufmgr.h,v 1.45 2000/11/30 01:39:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,13 +15,34 @@
 #define BUFMGR_H
 
 #include "access/xlogdefs.h"
-#include "storage/buf_internals.h"
+#include "storage/buf.h"
+#include "storage/lock.h"
 #include "storage/relfilenode.h"
+#include "utils/rel.h"
 
 typedef void *Block;
 
+/* in globals.c ... this duplicates miscadmin.h */
+extern int	NBuffers;
+
+/* in buf_init.c */
+extern Block *BufferBlockPointers;
+extern long *PrivateRefCount;
+
+/* in localbuf.c */
+extern int	NLocBuffer;
+extern Block *LocalBufferBlockPointers;
+extern long *LocalRefCount;
+
 /* special pageno for bget */
 #define P_NEW	InvalidBlockNumber		/* grow the file to get a new page */
+
+/*
+ * Buffer context lock modes
+ */
+#define BUFFER_LOCK_UNLOCK		0
+#define BUFFER_LOCK_SHARE		1
+#define BUFFER_LOCK_EXCLUSIVE	2
 
 
 /**********************************************************************
@@ -32,18 +53,10 @@ typedef void *Block;
 
 /*
  * These routines are beaten on quite heavily, hence the macroization.
- * See buf_internals.h for a related comment.
  */
-#define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)
 
-extern int	ShowPinTrace;
-
-/*
- * Buffer context lock modes
- */
-#define BUFFER_LOCK_UNLOCK		0
-#define BUFFER_LOCK_SHARE		1
-#define BUFFER_LOCK_EXCLUSIVE	2
+#define BAD_BUFFER_ID(bid) ((bid) < 1 || (bid) > NBuffers)
+#define INVALID_DESCRIPTOR (-3)
 
 #define UnlockAndReleaseBuffer(buffer)	\
 ( \
@@ -136,9 +149,9 @@ extern int	ShowPinTrace;
 ( \
 	AssertMacro(BufferIsValid(buffer)), \
 	BufferIsLocal(buffer) ? \
-		((Block) MAKE_PTR(LocalBufferDescriptors[-(buffer) - 1].data)) \
+		LocalBufferBlockPointers[-(buffer) - 1] \
 	: \
-		((Block) MAKE_PTR(BufferDescriptors[(buffer) - 1].data)) \
+		BufferBlockPointers[(buffer) - 1] \
 )
 
 
@@ -183,5 +196,7 @@ extern void MarkBufferForCleanup(Buffer buffer, void (*CleanupFunc)(Buffer));
 extern void BufmgrCommit(void);
 extern void BufferSync(void);
 #endif
+
+extern void InitLocalBuffer(void);
 
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.27 2000/03/17 02:36:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.28 2000/11/30 01:39:06 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -29,6 +29,7 @@
 #include "access/genam.h"
 #include "access/hash.h"
 #include "miscadmin.h"
+#include "storage/lmgr.h"
 
 
 static void _hash_setpagelock(Relation rel, BlockNumber blkno, int access);

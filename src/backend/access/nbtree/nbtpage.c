@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.40 2000/10/21 15:43:18 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.41 2000/11/30 01:39:06 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -20,12 +20,14 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <time.h>
-
 #include "postgres.h"
+
+#include <time.h>
 
 #include "access/nbtree.h"
 #include "miscadmin.h"
+#include "storage/lmgr.h"
+
 
 /*
  *	We use high-concurrency locking on btrees.	There are two cases in

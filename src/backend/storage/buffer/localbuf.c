@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.35 2000/11/20 16:47:32 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.36 2000/11/30 01:39:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,8 @@
 #include <signal.h>
 
 #include "executor/execdebug.h"
+#include "storage/buf_internals.h"
+#include "storage/bufmgr.h"
 #include "storage/smgr.h"
 #include "utils/relcache.h"
 
@@ -40,6 +42,7 @@ extern long int LocalBufferFlushCount;
 
 int			NLocBuffer = 64;
 BufferDesc *LocalBufferDescriptors = NULL;
+Block	   *LocalBufferBlockPointers = NULL;
 long	   *LocalRefCount = NULL;
 
 static int	nextFreeLocalBuf = 0;
@@ -135,14 +138,24 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	bufHdr->flags &= ~BM_DIRTY;
 
 	/*
-	 * lazy memory allocation. (see MAKE_PTR for why we need to do
-	 * MAKE_OFFSET.)
+	 * lazy memory allocation: allocate space on first use of a buffer.
 	 */
 	if (bufHdr->data == (SHMEM_OFFSET) 0)
 	{
 		char	   *data = (char *) malloc(BLCKSZ);
 
+		if (data == NULL)
+			elog(FATAL, "Out of memory in LocalBufferAlloc");
+		/*
+		 * This is a bit of a hack: bufHdr->data needs to be a shmem offset
+		 * for consistency with the shared-buffer case, so make it one
+		 * even though it's not really a valid shmem offset.
+		 */
 		bufHdr->data = MAKE_OFFSET(data);
+		/*
+		 * Set pointer for use by BufferGetBlock() macro.
+		 */
+		LocalBufferBlockPointers[-(bufHdr->buf_id + 2)] = (Block) data;
 	}
 
 	*foundPtr = FALSE;
@@ -223,7 +236,7 @@ FlushLocalBuffer(Buffer buffer, bool sync, bool release)
 /*
  * InitLocalBuffer -
  *	  init the local buffer cache. Since most queries (esp. multi-user ones)
- *	  don't involve local buffers, we delay allocating memory for actual the
+ *	  don't involve local buffers, we delay allocating actual memory for the
  *	  buffer until we need it.
  */
 void
@@ -235,8 +248,9 @@ InitLocalBuffer(void)
 	 * these aren't going away. I'm not gonna use palloc.
 	 */
 	LocalBufferDescriptors =
-		(BufferDesc *) malloc(sizeof(BufferDesc) * NLocBuffer);
-	MemSet(LocalBufferDescriptors, 0, sizeof(BufferDesc) * NLocBuffer);
+		(BufferDesc *) calloc(NLocBuffer, sizeof(BufferDesc));
+	LocalBufferBlockPointers = (Block *) calloc(NLocBuffer, sizeof(Block));
+	LocalRefCount = (long *) calloc(NLocBuffer, sizeof(long));
 	nextFreeLocalBuf = 0;
 
 	for (i = 0; i < NLocBuffer; i++)
@@ -251,9 +265,6 @@ InitLocalBuffer(void)
 		 */
 		buf->buf_id = -i - 2;
 	}
-
-	LocalRefCount = (long *) malloc(sizeof(long) * NLocBuffer);
-	MemSet(LocalRefCount, 0, sizeof(long) * NLocBuffer);
 }
 
 /*
@@ -308,7 +319,6 @@ ResetLocalBufferPool(void)
 
 		buf->tag.rnode.relNode = InvalidOid;
 		buf->flags &= ~BM_DIRTY;
-		buf->buf_id = -i - 2;
 	}
 
 	MemSet(LocalRefCount, 0, sizeof(long) * NLocBuffer);

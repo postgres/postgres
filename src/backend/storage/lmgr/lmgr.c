@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.41 2000/06/08 22:37:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.42 2000/11/30 01:39:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/transam.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
+#include "storage/lmgr.h"
 #include "utils/inval.h"
 
 

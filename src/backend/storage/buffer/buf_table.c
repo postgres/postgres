@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.18 2000/10/18 05:50:15 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.19 2000/11/30 01:39:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 
 #include "postgres.h"
 
+#include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
 
 static HTAB *SharedBufHash;

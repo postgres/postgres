@@ -8,16 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.38 2000/11/28 23:27:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.39 2000/11/30 01:39:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <sys/file.h>
 #include <math.h>
 #include <signal.h>
-
-#include "postgres.h"
 
 #include "catalog/catalog.h"
 #include "executor/execdebug.h"
@@ -54,7 +54,7 @@ int			Lookup_List_Descriptor;
 int			Num_Descriptors;
 
 BufferDesc *BufferDescriptors;
-BufferBlock BufferBlocks;
+Block	   *BufferBlockPointers;
 
 long	   *PrivateRefCount;	/* also used in freelist.c */
 bits8	   *BufferLocks;		/* flag bits showing locks I have set */
@@ -126,7 +126,7 @@ long int	LocalBufferFlushCount;
 
 
 /*
- * Initialize module:
+ * Initialize module: called once during shared-memory initialization
  *
  * should calculate size of pool dynamically based on the
  * amount of available memory.
@@ -134,6 +134,7 @@ long int	LocalBufferFlushCount;
 void
 InitBufferPool(void)
 {
+	char	   *BufferBlocks;
 	bool		foundBufs,
 				foundDescs;
 	int			i;
@@ -159,24 +160,22 @@ InitBufferPool(void)
 		ShmemInitStruct("Buffer Descriptors",
 					  Num_Descriptors * sizeof(BufferDesc), &foundDescs);
 
-	BufferBlocks = (BufferBlock)
+	BufferBlocks = (char *)
 		ShmemInitStruct("Buffer Blocks",
 						NBuffers * BLCKSZ, &foundBufs);
 
 	if (foundDescs || foundBufs)
 	{
-
 		/* both should be present or neither */
 		Assert(foundDescs && foundBufs);
-
 	}
 	else
 	{
 		BufferDesc *buf;
-		unsigned long block;
+		char	   *block;
 
 		buf = BufferDescriptors;
-		block = (unsigned long) BufferBlocks;
+		block = BufferBlocks;
 
 		/*
 		 * link the buffers into a circular, doubly-linked list to
@@ -210,11 +209,21 @@ InitBufferPool(void)
 
 	SpinRelease(BufMgrLock);
 
+	BufferBlockPointers = (Block *) calloc(NBuffers, sizeof(Block));
 	PrivateRefCount = (long *) calloc(NBuffers, sizeof(long));
 	BufferLocks = (bits8 *) calloc(NBuffers, sizeof(bits8));
 	BufferTagLastDirtied = (BufferTag *) calloc(NBuffers, sizeof(BufferTag));
 	BufferBlindLastDirtied = (BufferBlindId *) calloc(NBuffers, sizeof(BufferBlindId));
 	BufferDirtiedByMe = (bool *) calloc(NBuffers, sizeof(bool));
+
+	/*
+	 * Convert shmem offsets into addresses as seen by this process.
+	 * This is just to speed up the BufferGetBlock() macro.
+	 */
+	for (i = 0; i < NBuffers; i++)
+	{
+		BufferBlockPointers[i] = (Block) MAKE_PTR(BufferDescriptors[i].data);
+	}
 }
 
 /* -----------------------------------------------------

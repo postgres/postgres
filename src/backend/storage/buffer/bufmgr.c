@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.95 2000/11/28 23:27:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.96 2000/11/30 01:39:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,8 @@
 
 #include "executor/execdebug.h"
 #include "miscadmin.h"
+#include "storage/buf_internals.h"
+#include "storage/bufmgr.h"
 #include "storage/s_lock.h"
 #include "storage/smgr.h"
 #include "utils/relcache.h"

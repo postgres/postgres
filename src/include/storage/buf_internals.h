@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.44 2000/11/28 23:27:57 tgl Exp $
+ * $Id: buf_internals.h,v 1.45 2000/11/30 01:39:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,13 +18,16 @@
 #include "storage/lmgr.h"
 #include "storage/s_lock.h"
 
+
 /* Buf Mgr constants */
 /* in bufmgr.c */
-extern int	NBuffers;
 extern int	Data_Descriptors;
 extern int	Free_List_Descriptor;
 extern int	Lookup_List_Descriptor;
 extern int	Num_Descriptors;
+
+extern int	ShowPinTrace;
+
 
 /*
  * Flags for buffer descriptors
@@ -39,9 +42,6 @@ extern int	Num_Descriptors;
 #define BM_JUST_DIRTIED			(1 << 7)
 
 typedef bits16 BufFlags;
-
-/* long * so alignment will be correct */
-typedef long **BufferBlock;
 
 typedef struct buftag
 {
@@ -63,7 +63,7 @@ typedef struct buftag
 )
 
 /*
- * We don't need in this data any more but it allows more user
+ * We don't need this data any more but it allows more user
  * friendly error messages. Feel free to get rid of it
  * (and change a lot of places -:))
  */
@@ -72,9 +72,6 @@ typedef struct bufblindid
 	char		dbname[NAMEDATALEN];	/* name of db in which buf belongs */
 	char		relname[NAMEDATALEN];	/* name of reln */
 }			BufferBlindId;
-
-#define BAD_BUFFER_ID(bid) ((bid) < 1 || (bid) > NBuffers)
-#define INVALID_DESCRIPTOR (-3)
 
 /*
  *	BufferDesc -- shared buffer cache metadata for a single
@@ -122,6 +119,8 @@ typedef struct sbufdesc
 	 */
 	void		(*CleanupFunc)(Buffer);
 } BufferDesc;
+
+#define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)
 
 /*
  * Each backend has its own BufferLocks[] array holding flag bits
@@ -182,8 +181,6 @@ extern bool BufTableInsert(BufferDesc *buf);
 
 /* bufmgr.c */
 extern BufferDesc *BufferDescriptors;
-extern BufferBlock BufferBlocks;
-extern long *PrivateRefCount;
 extern bits8 *BufferLocks;
 extern BufferTag *BufferTagLastDirtied;
 extern BufferBlindId *BufferBlindLastDirtied;
@@ -192,15 +189,12 @@ extern bool *BufferDirtiedByMe;
 extern SPINLOCK BufMgrLock;
 
 /* localbuf.c */
-extern long *LocalRefCount;
 extern BufferDesc *LocalBufferDescriptors;
-extern int	NLocBuffer;
 
 extern BufferDesc *LocalBufferAlloc(Relation reln, BlockNumber blockNum,
 				 bool *foundPtr);
 extern int	WriteLocalBuffer(Buffer buffer, bool release);
 extern int	FlushLocalBuffer(Buffer buffer, bool sync, bool release);
-extern void InitLocalBuffer(void);
 extern void LocalBufferSync(void);
 extern void ResetLocalBufferPool(void);
 

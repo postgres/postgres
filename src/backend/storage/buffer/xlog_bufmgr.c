@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------
  *
- * bufmgr.c
+ * xlog_bufmgr.c
  *	  buffer manager interface routines
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/xlog_bufmgr.c,v 1.5 2000/11/28 23:27:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/xlog_bufmgr.c,v 1.6 2000/11/30 01:39:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,14 +39,17 @@
  *		freelist.c -- chooses victim for buffer replacement
  *		buf_table.c -- manages the buffer lookup table
  */
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <sys/file.h>
 #include <math.h>
 #include <signal.h>
 
-#include "postgres.h"
 #include "executor/execdebug.h"
 #include "miscadmin.h"
+#include "storage/buf_internals.h"
+#include "storage/bufmgr.h"
 #include "storage/s_lock.h"
 #include "storage/smgr.h"
 #include "utils/relcache.h"
