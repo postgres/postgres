@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/nls-global.mk,v 1.6 2002/08/29 22:13:01 petere Exp $
+# $Header: /cvsroot/pgsql/src/nls-global.mk,v 1.7 2002/09/02 22:19:42 petere Exp $
 
 # Common rules for Native Language Support (NLS)
 #
@@ -65,9 +65,11 @@ endif # not XGETTEXT
 
 
 install-po: all-po installdirs-po
+ifneq (,$(LANGUAGES))
 	for lang in $(LANGUAGES); do \
 	  $(INSTALL_DATA) po/$$lang.mo $(DESTDIR)$(localedir)/$$lang/LC_MESSAGES/$(CATALOG_NAME).mo || exit 1; \
 	done
+endif
 
 installdirs-po:
 	$(mkinstalldirs) $(foreach lang, $(LANGUAGES), $(DESTDIR)$(localedir)/$(lang)/LC_MESSAGES)
