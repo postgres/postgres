@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.55 2003/05/27 17:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.56 2003/06/12 01:42:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,9 +305,8 @@ GetOldestXmin(bool allDbs)
  *----------
  */
 Snapshot
-GetSnapshotData(bool serializable)
+GetSnapshotData(Snapshot snapshot, bool serializable)
 {
-	Snapshot	snapshot = (Snapshot) malloc(sizeof(SnapshotData));
 	SISeg	   *segP = shmInvalBuffer;
 	ProcState  *stateP = segP->procState;
 	TransactionId xmin;
@@ -316,18 +315,29 @@ GetSnapshotData(bool serializable)
 	int			index;
 	int			count = 0;
 
-	if (snapshot == NULL)
-		elog(ERROR, "Memory exhausted in GetSnapshotData");
+	Assert(snapshot != NULL);
 
 	/*
 	 * Allocating space for MaxBackends xids is usually overkill;
 	 * lastBackend would be sufficient.  But it seems better to do the
 	 * malloc while not holding the lock, so we can't look at lastBackend.
+	 *
+	 * if (snapshot->xip != NULL)
+	 *     no need to free and reallocate xip;
+	 *
+	 * We can reuse the old xip array, because MaxBackends does not change
+	 * at runtime.
 	 */
-	snapshot->xip = (TransactionId *)
-		malloc(MaxBackends * sizeof(TransactionId));
 	if (snapshot->xip == NULL)
-		elog(ERROR, "Memory exhausted in GetSnapshotData");
+	{
+		/*
+		 * First call for this snapshot
+		 */
+		snapshot->xip = (TransactionId *)
+			malloc(MaxBackends * sizeof(TransactionId));
+		if (snapshot->xip == NULL)
+			elog(ERROR, "Memory exhausted in GetSnapshotData");
+	}
 
 	globalxmin = xmin = GetCurrentTransactionId();
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.44 2003/02/23 23:20:52 tgl Exp $
+ * $Id: tqual.h,v 1.45 2003/06/12 01:42:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ extern int HeapTupleSatisfiesUpdate(HeapTuple tuple,
 extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTupleHeader tuple,
 						 TransactionId OldestXmin);
 
-extern Snapshot GetSnapshotData(bool serializable);
+extern Snapshot GetSnapshotData(Snapshot snapshot, bool serializable);
 extern void SetQuerySnapshot(void);
 extern Snapshot CopyQuerySnapshot(void);
 extern void FreeXactSnapshot(void);

@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.62 2003/02/23 23:20:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.63 2003/06/12 01:42:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,8 @@
 static SnapshotData SnapshotDirtyData;
 Snapshot	SnapshotDirty = &SnapshotDirtyData;
 
+static SnapshotData QuerySnapshotData;
+static SnapshotData SerializableSnapshotData;
 Snapshot	QuerySnapshot = NULL;
 Snapshot	SerializableSnapshot = NULL;
 
@@ -941,23 +943,16 @@ SetQuerySnapshot(void)
 	/* 1st call in xaction? */
 	if (SerializableSnapshot == NULL)
 	{
-		SerializableSnapshot = GetSnapshotData(true);
+		SerializableSnapshot = GetSnapshotData(&SerializableSnapshotData, true);
 		QuerySnapshot = SerializableSnapshot;
 		Assert(QuerySnapshot != NULL);
 		return;
 	}
 
-	if (QuerySnapshot != SerializableSnapshot)
-	{
-		free(QuerySnapshot->xip);
-		free(QuerySnapshot);
-		QuerySnapshot = NULL;
-	}
-
 	if (XactIsoLevel == XACT_SERIALIZABLE)
 		QuerySnapshot = SerializableSnapshot;
 	else
-		QuerySnapshot = GetSnapshotData(false);
+		QuerySnapshot = GetSnapshotData(&QuerySnapshotData, false);
 
 	Assert(QuerySnapshot != NULL);
 }
@@ -1003,19 +998,11 @@ CopyQuerySnapshot(void)
 void
 FreeXactSnapshot(void)
 {
-	if (QuerySnapshot != NULL && QuerySnapshot != SerializableSnapshot)
-	{
-		free(QuerySnapshot->xip);
-		free(QuerySnapshot);
-	}
-
+	/*
+	 * We do not free(QuerySnapshot->xip);
+	 *        or free(SerializableSnapshot->xip);
+	 * they will be reused soon
+	 */
 	QuerySnapshot = NULL;
-
-	if (SerializableSnapshot != NULL)
-	{
-		free(SerializableSnapshot->xip);
-		free(SerializableSnapshot);
-	}
-
 	SerializableSnapshot = NULL;
 }
