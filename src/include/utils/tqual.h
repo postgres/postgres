@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.1 1996/08/28 01:59:28 scrappy Exp $
+ * $Id: tqual.h,v 1.2 1996/10/20 06:35:27 scrappy Exp $
  *
  * NOTE
  *    It may be desirable to allow time qualifications to indicate
@@ -17,9 +17,7 @@
 #ifndef	TQUAL_H
 #define TQUAL_H
 
-#include "postgres.h"
 #include "utils/nabstime.h"
-#include "access/htup.h"
 
 typedef struct TimeQualSpace {
     char	data[12];

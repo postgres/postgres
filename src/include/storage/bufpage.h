@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.3 1996/10/19 04:03:29 scrappy Exp $
+ * $Id: bufpage.h,v 1.4 1996/10/20 06:35:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,8 @@
 
 #include "storage/itemid.h"
 #include "storage/item.h"
+#include "storage/buf.h"
+#include "storage/off.h"
 
 /*
  * a postgres disk page is an abstraction layered on top of a postgres
