@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.43 2003/03/10 22:28:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.44 2003/04/27 23:22:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,6 +246,8 @@ current_schema(PG_FUNCTION_ARGS)
 	if (search_path == NIL)
 		PG_RETURN_NULL();
 	nspname = get_namespace_name(lfirsto(search_path));
+	if (!nspname)
+		PG_RETURN_NULL();		/* recently-deleted namespace? */
 	PG_RETURN_DATUM(DirectFunctionCall1(namein, CStringGetDatum(nspname)));
 }
 
@@ -253,25 +255,27 @@ Datum
 current_schemas(PG_FUNCTION_ARGS)
 {
 	List	   *search_path = fetch_search_path(PG_GETARG_BOOL(0));
-	int			nnames = length(search_path);
 	Datum	   *names;
 	int			i;
 	ArrayType  *array;
 
 	/* +1 here is just to avoid palloc(0) error */
-	names = (Datum *) palloc((nnames + 1) * sizeof(Datum));
+	names = (Datum *) palloc((length(search_path) + 1) * sizeof(Datum));
 	i = 0;
 	while (search_path)
 	{
 		char	   *nspname;
 
 		nspname = get_namespace_name(lfirsto(search_path));
-		names[i] = DirectFunctionCall1(namein, CStringGetDatum(nspname));
-		i++;
+		if (nspname)			/* watch out for deleted namespace */
+		{
+			names[i] = DirectFunctionCall1(namein, CStringGetDatum(nspname));
+			i++;
+		}
 		search_path = lnext(search_path);
 	}
 
-	array = construct_array(names, nnames,
+	array = construct_array(names, i,
 							NAMEOID,
 							NAMEDATALEN,		/* sizeof(Name) */
 							false,		/* Name is not by-val */
