@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.402 2003/02/13 05:19:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.403 2003/02/13 05:25:24 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1908,6 +1908,14 @@ OptSeqElem: CACHE NumericOnly
 			| MINVALUE NumericOnly
 				{
 					$$ = makeDefElem("minvalue", (Node *)$2);
+				}
+			| NO MAXVALUE
+				{
+					$$ = makeDefElem("maxvalue", (Node *)NULL);
+				}
+			| NO MINVALUE
+				{
+					$$ = makeDefElem("minvalue", (Node *)NULL);
 				}
 			| START opt_with NumericOnly
 				{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.90 2002/11/11 22:19:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.91 2003/02/13 05:25:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -781,6 +781,7 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 	DefElem    *max_value = NULL;
 	DefElem    *min_value = NULL;
 	DefElem    *cache_value = NULL;
+	bool		is_cycled_set = false;
 	List	   *option;
 
 	new->is_cycled = false;
@@ -789,17 +790,42 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 		DefElem    *defel = (DefElem *) lfirst(option);
 
 		if (strcmp(defel->defname, "increment") == 0)
+		{
+			if (increment_by)
+				elog(ERROR, "DefineSequence: INCREMENT BY defined twice");
 			increment_by = defel;
+		}
 		else if (strcmp(defel->defname, "start") == 0)
+		{
+			if (last_value)
+				elog(ERROR, "DefineSequence: LAST VALUE defined twice");
 			last_value = defel;
+		}
 		else if (strcmp(defel->defname, "maxvalue") == 0)
+		{
+			if (max_value)
+				elog(ERROR, "DefineSequence: MAX VALUE defined twice");
 			max_value = defel;
+		}
 		else if (strcmp(defel->defname, "minvalue") == 0)
+		{
+			if (min_value)
+				elog(ERROR, "DefineSequence: MIN VALUE defined twice");
 			min_value = defel;
+		}
 		else if (strcmp(defel->defname, "cache") == 0)
+		{
+			if (cache_value)
+				elog(ERROR, "DefineSequence: CACHE defined twice");
 			cache_value = defel;
+		}
 		else if (strcmp(defel->defname, "cycle") == 0)
+		{
+			if (is_cycled_set)
+				elog(ERROR, "DefineSequence: CYCLE defined twice");
+			is_cycled_set = true;
 			new->is_cycled = (defel->arg != NULL);
+		}
 		else
 			elog(ERROR, "DefineSequence: option \"%s\" not recognized",
 				 defel->defname);
@@ -810,7 +836,7 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 	else if ((new->increment_by = defGetInt64(increment_by)) == 0)
 		elog(ERROR, "DefineSequence: can't INCREMENT by 0");
 
-	if (max_value == (DefElem *) NULL)	/* MAXVALUE */
+	if (max_value == (DefElem *) NULL || !max_value->arg)	/* MAXVALUE */
 	{
 		if (new->increment_by > 0)
 			new->max_value = SEQ_MAXVALUE;		/* ascending seq */
@@ -820,7 +846,7 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 	else
 		new->max_value = defGetInt64(max_value);
 
-	if (min_value == (DefElem *) NULL)	/* MINVALUE */
+	if (min_value == (DefElem *) NULL || !min_value->arg)	/* MINVALUE */
 	{
 		if (new->increment_by > 0)
 			new->min_value = 1; /* ascending seq */
