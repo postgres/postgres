@@ -63,7 +63,7 @@ global PgAcVar CurrentDB
 	}
 	set cmd "$PgAcVar(user,action) user \"$PgAcVar(user,name)\""
 	if {$PgAcVar(user,password)!=""} {
-		set cmd "$cmd WITH PASSWORD \"$PgAcVar(user,password)\" "
+		set cmd "$cmd WITH PASSWORD '$PgAcVar(user,password)' "
 	}
 	set cmd "$cmd $PgAcVar(user,createdb) $PgAcVar(user,createuser)"
 	if {$PgAcVar(user,validuntil)!=""} {
