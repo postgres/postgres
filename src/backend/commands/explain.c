@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.60 2000/10/05 19:11:26 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.61 2000/10/26 21:34:44 tgl Exp $
  *
  */
 
@@ -216,6 +216,9 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 					pname = "SetOp ???";
 					break;
 			}
+			break;
+		case T_Limit:
+			pname = "Limit";
 			break;
 		case T_Hash:
 			pname = "Hash";

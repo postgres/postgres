@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.53 2000/10/05 19:11:26 tgl Exp $
+ *	$Id: execAmi.c,v 1.54 2000/10/26 21:35:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "executor/nodeHashjoin.h"
 #include "executor/nodeIndexscan.h"
 #include "executor/nodeTidscan.h"
+#include "executor/nodeLimit.h"
 #include "executor/nodeMaterial.h"
 #include "executor/nodeMergejoin.h"
 #include "executor/nodeNestloop.h"
@@ -348,6 +349,10 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 
 		case T_SetOp:
 			ExecReScanSetOp((SetOp *) node, exprCtxt, parent);
+			break;
+
+		case T_Limit:
+			ExecReScanLimit((Limit *) node, exprCtxt, parent);
 			break;
 
 		case T_Sort:

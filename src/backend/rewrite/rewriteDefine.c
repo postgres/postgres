@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.54 2000/10/05 19:11:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.55 2000/10/26 21:36:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,12 +303,6 @@ DefineQueryRewrite(RuleStmt *stmt)
 						 RelationGetRelationName(event_relation));
 			}
 		}
-
-		/*
-		 * LIMIT in view is not supported
-		 */
-		if (query->limitOffset != NULL || query->limitCount != NULL)
-			elog(ERROR, "LIMIT clause not supported in views");
 
 		/*
 		 * ... and finally the rule must be named _RETviewname.

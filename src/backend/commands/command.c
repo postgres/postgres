@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.107 2000/10/16 17:08:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.108 2000/10/26 21:34:44 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -111,7 +111,6 @@ PerformPortalFetch(char *name,
 	int			feature;
 	QueryDesc  *queryDesc;
 	MemoryContext oldcontext;
-	Const		limcount;
 
 	/* ----------------
 	 *	sanity checks
@@ -122,20 +121,6 @@ PerformPortalFetch(char *name,
 		elog(NOTICE, "PerformPortalFetch: missing portal name");
 		return;
 	}
-
-	/* ----------------
-	 *	Create a const node from the given count value
-	 * ----------------
-	 */
-	memset(&limcount, 0, sizeof(limcount));
-	limcount.type = T_Const;
-	limcount.consttype = INT4OID;
-	limcount.constlen = sizeof(int4);
-	limcount.constvalue = Int32GetDatum(count);
-	limcount.constisnull = false;
-	limcount.constbyval = true;
-	limcount.constisset = false;
-	limcount.constiscast = false;
 
 	/* ----------------
 	 *	get the portal from the portal name
@@ -156,8 +141,7 @@ PerformPortalFetch(char *name,
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
 	/* ----------------
-	 *	setup "feature" to tell the executor what direction and
-	 *	how many tuples to fetch.
+	 *	setup "feature" to tell the executor which direction to go in.
 	 * ----------------
 	 */
 	if (forward)
@@ -166,7 +150,7 @@ PerformPortalFetch(char *name,
 		feature = EXEC_BACK;
 
 	/* ----------------
-	 *	tell the destination to prepare to recieve some tuples
+	 *	tell the destination to prepare to receive some tuples
 	 * ----------------
 	 */
 	queryDesc = PortalGetQueryDesc(portal);
@@ -194,8 +178,7 @@ PerformPortalFetch(char *name,
 	 *	execute the portal fetch operation
 	 * ----------------
 	 */
-	ExecutorRun(queryDesc, PortalGetState(portal), feature,
-				(Node *) NULL, (Node *) &limcount);
+	ExecutorRun(queryDesc, PortalGetState(portal), feature, (long) count);
 
 	if (dest == None)			/* MOVE */
 		pfree(queryDesc);

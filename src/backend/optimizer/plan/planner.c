@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.92 2000/10/05 19:11:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.93 2000/10/26 21:36:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,8 +341,6 @@ is_simple_subquery(Query *subquery)
 	 */
 	if (subquery->rowMarks)
 		elog(ERROR, "FOR UPDATE is not supported in subselects");
-	if (subquery->limitOffset || subquery->limitCount)
-		elog(ERROR, "LIMIT is not supported in subselects");
 	/*
 	 * Can't currently pull up a query with setops.
 	 * Maybe after querytree redesign...
@@ -350,13 +348,16 @@ is_simple_subquery(Query *subquery)
 	if (subquery->setOperations)
 		return false;
 	/*
-	 * Can't pull up a subquery involving grouping, aggregation, or sorting.
+	 * Can't pull up a subquery involving grouping, aggregation, sorting,
+	 * or limiting.
 	 */
 	if (subquery->hasAggs ||
 		subquery->groupClause ||
 		subquery->havingQual ||
 		subquery->sortClause ||
-		subquery->distinctClause)
+		subquery->distinctClause ||
+		subquery->limitOffset ||
+		subquery->limitCount)
 		return false;
 	/*
 	 * Hack: don't try to pull up a subquery with an empty jointree.
@@ -831,7 +832,7 @@ union_planner(Query *parse,
 							}
 							else
 							{
-								/* It's a PARAM ... punt ... */
+								/* It's an expression ... punt ... */
 								tuple_fraction = 0.10;
 							}
 						}
@@ -839,9 +840,8 @@ union_planner(Query *parse,
 				}
 				else
 				{
-
 					/*
-					 * COUNT is a PARAM ... don't know exactly what the
+					 * COUNT is an expression ... don't know exactly what the
 					 * limit will be, but for lack of a better idea assume
 					 * 10% of the plan's result is wanted.
 					 */
@@ -1024,12 +1024,22 @@ union_planner(Query *parse,
 	}
 
 	/*
-	 * Finally, if there is a DISTINCT clause, add the UNIQUE node.
+	 * If there is a DISTINCT clause, add the UNIQUE node.
 	 */
 	if (parse->distinctClause)
 	{
 		result_plan = (Plan *) make_unique(tlist, result_plan,
 										   parse->distinctClause);
+	}
+
+	/*
+	 * Finally, if there is a LIMIT/OFFSET clause, add the LIMIT node.
+	 */
+	if (parse->limitOffset || parse->limitCount)
+	{
+		result_plan = (Plan *) make_limit(tlist, result_plan,
+										  parse->limitOffset,
+										  parse->limitCount);
 	}
 
 	return result_plan;

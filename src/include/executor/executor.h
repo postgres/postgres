@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.51 2000/09/12 21:07:09 tgl Exp $
+ * $Id: executor.h,v 1.52 2000/10/26 21:38:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);
  */
 extern TupleDesc ExecutorStart(QueryDesc *queryDesc, EState *estate);
 extern TupleTableSlot *ExecutorRun(QueryDesc *queryDesc, EState *estate,
-			int feature, Node *limoffset, Node *limcount);
+								   int feature, long count);
 extern void ExecutorEnd(QueryDesc *queryDesc, EState *estate);
 extern void ExecConstraints(char *caller, Relation rel,
 							TupleTableSlot *slot, EState *estate);

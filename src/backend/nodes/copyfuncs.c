@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.126 2000/10/18 16:16:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.127 2000/10/26 21:35:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -588,6 +588,31 @@ _copySetOp(SetOp *from)
 	newnode->dupColIdx = palloc(from->numCols * sizeof(AttrNumber));
 	memcpy(newnode->dupColIdx, from->dupColIdx, from->numCols * sizeof(AttrNumber));
 	newnode->flagColIdx = from->flagColIdx;
+
+	return newnode;
+}
+
+/* ----------------
+ *		_copyLimit
+ * ----------------
+ */
+static Limit *
+_copyLimit(Limit *from)
+{
+	Limit	   *newnode = makeNode(Limit);
+
+	/* ----------------
+	 *	copy node superclass fields
+	 * ----------------
+	 */
+	CopyPlanFields((Plan *) from, (Plan *) newnode);
+
+	/* ----------------
+	 *	copy remainder of node
+	 * ----------------
+	 */
+	Node_Copy(from, newnode, limitOffset);
+	Node_Copy(from, newnode, limitCount);
 
 	return newnode;
 }
@@ -2566,6 +2591,9 @@ copyObject(void *from)
 			break;
 		case T_SetOp:
 			retval = _copySetOp(from);
+			break;
+		case T_Limit:
+			retval = _copyLimit(from);
 			break;
 		case T_Hash:
 			retval = _copyHash(from);

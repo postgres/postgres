@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.98 2000/10/05 19:11:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.99 2000/10/26 21:36:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1647,6 +1647,27 @@ make_setop(SetOpCmd cmd, List *tlist, Plan *lefttree,
 	node->numCols = numCols;
 	node->dupColIdx = dupColIdx;
 	node->flagColIdx = flagColIdx;
+
+	return node;
+}
+
+Limit *
+make_limit(List *tlist, Plan *lefttree,
+		   Node *limitOffset, Node *limitCount)
+{
+	Limit	   *node = makeNode(Limit);
+	Plan	   *plan = &node->plan;
+
+	copy_plan_costsize(plan, lefttree);
+
+	plan->state = (EState *) NULL;
+	plan->targetlist = tlist;
+	plan->qual = NIL;
+	plan->lefttree = lefttree;
+	plan->righttree = NULL;
+
+	node->limitOffset = limitOffset;
+	node->limitCount = limitCount;
 
 	return node;
 }

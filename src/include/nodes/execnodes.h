@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.51 2000/10/05 19:11:36 tgl Exp $
+ * $Id: execnodes.h,v 1.52 2000/10/26 21:38:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -674,6 +674,28 @@ typedef struct SetOpState
 	long		numOutput;		/* number of dups left to output */
 	MemoryContext tempContext;	/* short-term context for comparisons */
 } SetOpState;
+
+/* ----------------
+ *	 LimitState information
+ *
+ *		Limit nodes are used to enforce LIMIT/OFFSET clauses.
+ *		They just select the desired subrange of their subplan's output.
+ *
+ * offset is the number of initial tuples to skip (0 does nothing).
+ * count is the number of tuples to return after skipping the offset tuples.
+ * If no limit count was specified, count is undefined and noCount is true.
+ * ----------------
+ */
+typedef struct LimitState
+{
+	CommonState cstate;			/* its first field is NodeTag */
+	long		offset;			/* current OFFSET value */
+	long		count;			/* current COUNT, if any */
+	long		position;		/* 1-based index of last tuple fetched */
+	bool		parmsSet;		/* have we calculated offset/limit yet? */
+	bool		noCount;		/* if true, ignore count */
+	bool		atEnd;			/* if true, we've reached EOF of subplan */
+} LimitState;
 
 
 /* ----------------

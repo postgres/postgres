@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.67 2000/10/05 19:11:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.68 2000/10/26 21:36:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,6 +139,7 @@ set_plan_references(Plan *plan)
 		case T_Sort:
 		case T_Unique:
 		case T_SetOp:
+		case T_Limit:
 		case T_Hash:
 
 			/*

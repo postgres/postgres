@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.43 2000/10/05 19:11:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.44 2000/10/26 21:36:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -657,6 +657,7 @@ SS_finalize_plan(Plan *plan)
 		case T_Sort:
 		case T_Unique:
 		case T_SetOp:
+		case T_Limit:
 		case T_Group:
 			break;
 

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.41 2000/10/05 19:11:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.42 2000/10/26 21:35:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -767,6 +767,14 @@ NodeGetResultTupleSlot(Plan *node)
 				SetOpState *setopstate = ((SetOp *) node)->setopstate;
 
 				slot = setopstate->cstate.cs_ResultTupleSlot;
+			}
+			break;
+
+		case T_Limit:
+			{
+				LimitState *limitstate = ((Limit *) node)->limitstate;
+
+				slot = limitstate->cstate.cs_ResultTupleSlot;
 			}
 			break;
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.128 2000/10/05 19:11:27 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.129 2000/10/26 21:35:48 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -621,6 +621,18 @@ _outSetOp(StringInfo str, SetOp *node)
 		appendStringInfo(str, "%d ", (int) node->dupColIdx[i]);
 	appendStringInfo(str, " :flagColIdx %d ",
 					 (int) node->flagColIdx);
+}
+
+static void
+_outLimit(StringInfo str, Limit *node)
+{
+	appendStringInfo(str, " LIMIT ");
+	_outPlanInfo(str, (Plan *) node);
+
+	appendStringInfo(str, " :limitOffset ");
+	_outNode(str, node->limitOffset);
+	appendStringInfo(str, " :limitCount ");
+	_outNode(str, node->limitCount);
 }
 
 /*
@@ -1558,6 +1570,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_SetOp:
 				_outSetOp(str, obj);
+				break;
+			case T_Limit:
+				_outLimit(str, obj);
 				break;
 			case T_Hash:
 				_outHash(str, obj);

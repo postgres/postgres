@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.44 2000/10/05 19:11:36 tgl Exp $
+ * $Id: plannodes.h,v 1.45 2000/10/26 21:38:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@
  *		Sort					SortState				sortstate;
  *		Unique					UniqueState				uniquestate;
  *		SetOp					SetOpState				setopstate;
+ *		Limit					LimitState				limitstate;
  *		Hash					HashState				hashstate;
  *
  * ----------------------------------------------------------------
@@ -374,6 +375,18 @@ typedef struct SetOp
 	AttrNumber	flagColIdx;
 	SetOpState *setopstate;
 } SetOp;
+
+/* ----------------
+ *		limit node
+ * ----------------
+ */
+typedef struct Limit
+{
+	Plan		plan;
+	Node	   *limitOffset;	/* OFFSET parameter, or NULL if none */
+	Node	   *limitCount;		/* COUNT parameter, or NULL if none */
+	LimitState *limitstate;
+} Limit;
 
 /* ----------------
  *		hash build node

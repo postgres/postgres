@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.46 2000/10/05 19:11:37 tgl Exp $
+ * $Id: planmain.h,v 1.47 2000/10/26 21:38:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,8 @@ extern Group *make_group(List *tlist, bool tuplePerGroup, int ngrp,
 		   AttrNumber *grpColIdx, Plan *lefttree);
 extern Material *make_material(List *tlist, Plan *lefttree);
 extern Unique *make_unique(List *tlist, Plan *lefttree, List *distinctList);
+extern Limit *make_limit(List *tlist, Plan *lefttree,
+						 Node *limitOffset, Node *limitCount);
 extern SetOp *make_setop(SetOpCmd cmd, List *tlist, Plan *lefttree,
 						 List *distinctList, AttrNumber flagColIdx);
 extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);

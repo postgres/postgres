@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.38 2000/08/22 04:06:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.39 2000/10/26 21:37:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -299,8 +299,7 @@ ProcessQuery(Query *parsetree,
 	 *	 actually run the plan..
 	 * ----------------
 	 */
-	ExecutorRun(queryDesc, state, EXEC_RUN,
-				parsetree->limitOffset, parsetree->limitCount);
+	ExecutorRun(queryDesc, state, EXEC_RUN, 0L);
 
 	/* save infos for EndCommand */
 	UpdateCommandInfo(operation, state->es_lastoid, state->es_processed);

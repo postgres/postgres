@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.79 2000/10/22 23:32:44 tgl Exp $
+ * $Id: nodes.h,v 1.80 2000/10/26 21:38:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ typedef enum NodeTag
 	T_NestLoop,
 	T_MergeJoin,
 	T_HashJoin,
-	T_Noname_XXX,				/* not used anymore; this tag# is available */
+	T_Limit,
 	T_Material,
 	T_Sort,
 	T_Agg,
@@ -122,6 +122,7 @@ typedef enum NodeTag
 	T_TidScanState,
 	T_SubqueryScanState,
 	T_SetOpState,
+	T_LimitState,
 
 	/*---------------------
 	 * TAGS FOR MEMORY NODES (memnodes.h)
