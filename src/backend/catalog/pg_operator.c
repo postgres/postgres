@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.7 1996/11/30 18:06:03 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.8 1996/12/26 17:46:07 momjian Exp $
  *
  * NOTES
  *    these routines moved here from commands/define.c and somewhat cleaned up.
@@ -551,7 +551,7 @@ OperatorDef(char *operatorName,
 	tup = SearchSysCacheTuple(PRONAME,
 				  PointerGetDatum(restrictionName),
 				  Int32GetDatum(5),
-				  ObjectIdGetDatum(typeId),
+				  PointerGetDatum(typeId),
 				  0);
 	if (!HeapTupleIsValid(tup))
 	    func_error("OperatorDef", restrictionName, 5, typeId);
@@ -575,7 +575,7 @@ OperatorDef(char *operatorName,
 	tup = SearchSysCacheTuple(PRONAME,
 				  PointerGetDatum(joinName),
 				  Int32GetDatum(5),
-				  Int32GetDatum(typeId),
+				  PointerGetDatum(typeId),
 				  0);
 	if (!HeapTupleIsValid(tup))
 	    func_error("OperatorDef", joinName, 5, typeId);
