@@ -1,0 +1,173 @@
+2001-03-20 17:31  momjian
+
+	* src/backend/utils/misc/ps_status.c: Fix 'ps' WAIT status display
+	bug on setproctitle() platforms, cleared by Tom Lane.
+
+2001-03-20 17:15  momjian
+
+	* doc/: FAQ_japanese, src/FAQ/FAQ_japanese.html: Update Japanese
+	FAQ.
+
+2001-03-20 15:54  tgl
+
+	* doc/src/sgml/ref/: create_table_as.sgml, select.sgml,
+	select_into.sgml: Recommend CREATE TABLE AS in preference to SELECT
+	INTO.  Remove the (inadequate anyway) mention of SELECT INTO from
+	the main SELECT ref page.  Point out that SELECT INTO means
+	something else in plpgsql and ecpg.
+
+2001-03-19 22:08  tgl
+
+	* contrib/intarray/: README.intarray, _int.c, data/test__int.data,
+	expected/_int.out: Repair intarray's problems with TOASTed input,
+	avoid scribbling on source data, improve split algorithm for
+	intbig_ops.  Oleg Bartunov with some kibitzing from Tom Lane.
+
+2001-03-19 19:18  tgl
+
+	* doc/FAQ_HPUX: Mention that parallel regress script needs to be
+	run under ksh not sh on HPUX.
+
+2001-03-19 19:09  tgl
+
+	* src/test/regress/README, doc/src/sgml/regress.sgml: Discuss
+	LOCALE differences as a reason for regression test failure.
+
+2001-03-19 17:29  tgl
+
+	* src/backend/utils/mmgr/aset.c: Tweak out-of-memory error messages
+	to include the request size, so that it's easier to tell whether a
+	bug report is talking about progressive memory exhaustion or a
+	wacko requested chunk size.
+
+2001-03-19 17:27  tgl
+
+	* src/backend/: regex/regerror.c, regex/regex.3,
+	utils/adt/regexp.c: Make regular-expression error messages a tad
+	less obscure, per gripe from Josh Berkus.
+
+2001-03-19 16:57  momjian
+
+	* src/interfaces/jdbc/README: Update Peter Mount's email address in
+	README.
+
+2001-03-19 11:20  petere
+
+	* doc/src/sgml/ref/ecpg-ref.sgml: Add missing TO.
+
+2001-03-19 11:19  petere
+
+	* doc/src/sgml/: backup.sgml, installation.sgml: Add note about
+	saving large objects during upgrade.
+
+2001-03-18 21:35  pjw
+
+	* src/bin/pg_dump/: pg_backup.h, pg_backup_archiver.c,
+	pg_backup_archiver.h, pg_backup_custom.c, pg_backup_db.c,
+	pg_backup_db.h, pg_backup_files.c, pg_backup_null.c,
+	pg_backup_tar.c, pg_backup_tar.h, pg_dump.c, pg_restore.c:  - Added
+	CVS headers to files
+	 - Avoid forcing table name to lower case in FixupBlobXrefs
+	 - Removed fmtId calls for all ArchiveEntry name fields. This fixes
+	   quoting problems in trigger enable/disable code for mixed case
+	   table names, and avoids commands like 'pg_restore -t '"TblA"'
+
+2001-03-18 18:36  tgl
+
+	* contrib/intarray/_int.c: Restore include-file updates, and fix
+	some of the more glaring macro sloppiness (insufficient
+	parenthesization, etc).  It still fails regress test for me,
+	however.
+
+2001-03-18 18:35  tgl
+
+	* contrib/intarray/Makefile: Restore Peter's makefile fixes.
+
+2001-03-18 15:27  tgl
+
+	* src/bin/pg_ctl/pg_ctl.sh: Give postmaster enough time to update
+	the pidfile before checking to see if it's been updated.  Skip the
+	whole mess if we didn't see any old pidfile.
+
+2001-03-18 15:18  tgl
+
+	* src/: backend/access/transam/transam.c,
+	backend/access/transam/varsup.c, backend/access/transam/xlog.c,
+	backend/storage/ipc/sinval.c, include/access/transam.h,
+	include/access/xlog.h, include/catalog/pg_control.h: Remove NEXTXID
+	xlog record type to avoid three-way deadlock risk.  NEXTXID isn't
+	really necessary, per previous discussion in pghackers, but I
+	mulishy insisted we should put it in anyway.  Mea culpa.
+
+2001-03-18 15:13  tgl
+
+	* src/backend/storage/lmgr/lock.c: When we add 'waiting' to the
+	ps_status display, there should be a space in front of it.  Improve
+	comments a little.
+
+2001-03-18 13:32  tgl
+
+	* src/backend/port/qnx4/: ipc.h, shm.h: Considering the BeOS port
+	didn't compile without IPC_STAT and shm_nattch, I'm betting the
+	QNX4 port does not either ...
+
+2001-03-18 13:22  tgl
+
+	* src/: include/port/beos.h, backend/port/beos/shm.c,
+	backend/port/beos/support.c, backend/utils/init/miscinit.c: Patches
+	from Cyril Velter to make shared-memory-conflict-detection code
+	work in BeOS port.
+
+2001-03-17 22:45  pjw
+
+	* src/bin/pg_dump/pg_backup_archiver.c: Fixed but in
+	_enableTriggersIfNecessary introduced by previous patches by me
+	which caused segfault in a data-only retore with BLOBs
+
+2001-03-17 21:25  tgl
+
+	* src/bin/pg_dump/pg_backup_custom.c: Fix coredump due to writing
+	one more byte than we'd allocated.
+
+2001-03-17 19:30  tgl
+
+	* src/backend/access/transam/xlog.c: Make sure ControlFile
+	logId/logSeg don't go backwards (barely possible given a slow
+	backend, if we update unconditionally as the code did before).
+
+2001-03-17 16:59  momjian
+
+	* contrib/intarray/: Makefile, README.intarray, _int.c,
+	_int.sql.in, bench/create_test.pl, expected/_int.out, sql/_int.sql:
+	Update contrib intarray to Jan 25 version.
+
+2001-03-17 15:54  tgl
+
+	* src/backend/access/transam/xlog.c: Rearrange XLogFileInit so that
+	control-file spinlock is not held while filling the new log file
+	with zeroes, only while renaming it into place.  This should
+	prevent problems with 'stuck spinlock' errors under heavy load.
+
+2001-03-17 13:15  petere
+
+	* HISTORY: Reformat the "major changes" to 72 or so columns.
+
+2001-03-17 13:08  petere
+
+	* doc/src/sgml/plsql.sgml: Repair.
+
+2001-03-17 11:27  petere
+
+	* doc/src/sgml/ref/: createdb.sgml, pg_dump.sgml, pg_restore.sgml,
+	pgaccess-ref.sgml, postgres-ref.sgml, vacuumdb.sgml: Tuning for
+	docbook2man.
+
+2001-03-16 20:53  thomas
+
+	* doc/src/sgml/plsql.sgml: New updates from Roberto Mello sent
+	privately today due to email troubles.
+
+2001-03-16 17:12  petere
+
+	* doc/FAQ_MSWIN: Make note that version 1.1.8 doesn't work.
+
