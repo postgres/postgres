@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jul 20 13:24:02 EDT 1999
+Last updated:		Tue Jul 20 17:40:39 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -39,9 +39,7 @@ PARSER
 * CREATE TABLE x AS SELECT 1 UNION SELECT 2 fails
 * CREATE TABLE test(col char(2) DEFAULT user) fails in length restriction
 * SELECT ... UNION ... ORDER BY fails when sort expr not in result list
-* INSERT ... SELECT ... UNION is not reliable
-* Be smarter about promoting types when UNION merges different data types
-* SELECT ... UNION ... GROUP BY fails if column types disagree
+* redesign INSERT ... SELECT to have two levels of target list
 
 VIEWS
 
