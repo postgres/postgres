@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.86 2003/11/29 19:51:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.87 2004/01/12 22:20:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -848,13 +848,58 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 	Assert(!IsA(node, Query));
 
 	/*
-	 * If we recurse down through anything other than a List node, we are
-	 * definitely not at top qual level anymore.
+	 * Because make_subplan() could return an AND or OR clause, we have to
+	 * take steps to preserve AND/OR flatness of a qual.  We assume the input
+	 * has been AND/OR flattened and so we need no recursion here.
+	 *
+	 * If we recurse down through anything other than an AND node,
+	 * we are definitely not at top qual level anymore.  (Due to the coding
+	 * here, we will not get called on the List subnodes of an AND, so no
+	 * check is needed for List.)
 	 */
-	if (IsA(node, List))
+	if (and_clause(node))
+	{
+		List   *newargs = NIL;
+		List   *l;
+
+		/* Still at qual top-level */
 		locTopQual = *isTopQual;
-	else
-		locTopQual = false;
+
+		foreach(l, ((BoolExpr *) node)->args)
+		{
+			Node *newarg;
+
+			newarg = process_sublinks_mutator(lfirst(l),
+											  (void *) &locTopQual);
+			if (and_clause(newarg))
+				newargs = nconc(newargs, ((BoolExpr *) newarg)->args);
+			else
+				newargs = lappend(newargs, newarg);
+		}
+		return (Node *) make_andclause(newargs);
+	}
+
+	/* otherwise not at qual top-level */
+	locTopQual = false;
+
+	if (or_clause(node))
+	{
+		List   *newargs = NIL;
+		List   *l;
+
+		foreach(l, ((BoolExpr *) node)->args)
+		{
+			Node *newarg;
+
+			newarg = process_sublinks_mutator(lfirst(l),
+											  (void *) &locTopQual);
+			if (or_clause(newarg))
+				newargs = nconc(newargs, ((BoolExpr *) newarg)->args);
+			else
+				newargs = lappend(newargs, newarg);
+		}
+		return (Node *) make_orclause(newargs);
+	}
 
 	return expression_tree_mutator(node,
 								   process_sublinks_mutator,

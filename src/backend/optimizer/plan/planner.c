@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.163 2003/12/28 21:57:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.164 2004/01/12 22:20:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -380,6 +380,10 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 	 * If it's a qual or havingQual, canonicalize it.  It seems most useful
 	 * to do this before applying eval_const_expressions, since the latter
 	 * can optimize flattened AND/ORs better than unflattened ones.
+	 *
+	 * Note: all processing of a qual expression after this point must be
+	 * careful to maintain AND/OR flatness --- that is, do not generate a
+	 * tree with AND directly under AND, nor OR directly under OR.
 	 */
 	if (kind == EXPRKIND_QUAL)
 	{
@@ -396,14 +400,6 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 	 */
 	expr = eval_const_expressions(expr);
 
-	/*
-	 * If it's a qual or havingQual, convert it to implicit-AND format.
-	 * (We don't want to do this before eval_const_expressions, since the
-	 * latter would be unable to simplify a top-level AND correctly.)
-	 */
-	if (kind == EXPRKIND_QUAL)
-		expr = (Node *) make_ands_implicit((Expr *) expr);
-
 	/* Expand SubLinks to SubPlans */
 	if (parse->hasSubLinks)
 		expr = SS_process_sublinks(expr, (kind == EXPRKIND_QUAL));
@@ -416,6 +412,15 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 	/* Replace uplevel vars with Param nodes */
 	if (PlannerQueryLevel > 1)
 		expr = SS_replace_correlation_vars(expr);
+
+	/*
+	 * If it's a qual or havingQual, convert it to implicit-AND format.
+	 * (We don't want to do this before eval_const_expressions, since the
+	 * latter would be unable to simplify a top-level AND correctly.  Also,
+	 * SS_process_sublinks expects explicit-AND format.)
+	 */
+	if (kind == EXPRKIND_QUAL)
+		expr = (Node *) make_ands_implicit((Expr *) expr);
 
 	return expr;
 }
