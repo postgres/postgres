@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.9 1997/08/28 05:05:43 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.10 1997/08/29 09:04:18 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,8 @@ donothing(HeapTuple tuple, TupleDesc attrdesc)
 {
 }
 
+extern void spi_printtup (HeapTuple tuple, TupleDesc tupdesc);
+
 void (*DestToFunction(CommandDest dest))(HeapTuple, TupleDesc)
 {
     switch (dest) {
@@ -72,6 +74,10 @@ void (*DestToFunction(CommandDest dest))(HeapTuple, TupleDesc)
     case Debug:
 	return debugtup;
 	break;
+    
+    case SPI:
+    	return spi_printtup;
+    	break;
 	
     case None:
     default:

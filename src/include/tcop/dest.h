@@ -26,7 +26,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.7 1997/08/27 09:05:09 vadim Exp $
+ * $Id: dest.h,v 1.8 1997/08/29 09:06:27 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,9 @@ typedef enum {
     Remote,		/* results sent to frontend process */
     CopyBegin,		/* results sent to frontend process but are strings */
     CopyEnd,	        /* results sent to frontend process but are strings */
-    RemoteInternal      /* results sent to frontend process in internal
+    RemoteInternal,     /* results sent to frontend process in internal
 			   (binary) form */
+    SPI			/* results sent to SPI manager */
 } CommandDest;
 
 
