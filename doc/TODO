@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon May 20 18:22:06 EDT 2002
+Last updated:		Sat May 25 18:43:21 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -36,6 +36,7 @@ Reporting
 * Add error codes (Peter E)
 * -Change DEBUG startup tag to LOG (Bruce)
 * Show location of syntax error in query [yacc]
+* Add getpid() function to backend
 
 
 Permissions
