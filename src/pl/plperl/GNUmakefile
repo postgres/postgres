@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.16 2004/10/07 19:01:09 momjian Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.17 2004/11/17 21:23:36 tgl Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -15,11 +15,6 @@ endif
 # If we don't have a shared library and the platform doesn't allow it
 # to work without, we have to skip it.
 ifneq (,$(findstring yes, $(shared_libperl)$(allow_nonpic_in_shlib)))
-
-# The code isn't clean with regard to these warnings.
-ifeq ($(GCC),yes)
-override CFLAGS := $(filter-out -Wall -Wmissing-declarations -Wmissing-prototypes, $(CFLAGS))
-endif
 
 ifeq ($(PORTNAME), win32)
 perl_archlibexp := $(subst \,/,$(perl_archlibexp))

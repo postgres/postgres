@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.56 2004/11/16 22:05:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.57 2004/11/17 21:23:36 tgl Exp $
  *
  **********************************************************************/
 
@@ -115,6 +115,8 @@ static void plperl_init_interp(void);
 
 Datum		plperl_call_handler(PG_FUNCTION_ARGS);
 void		plperl_init(void);
+
+HV		   *plperl_spi_exec(char *query, int limit);
 
 static Datum plperl_func_handler(PG_FUNCTION_ARGS);
 
@@ -685,7 +687,7 @@ plperl_create_sub(char *s, bool trusted)
 
 	if (SvTRUE(ERRSV))
 	{
-		POPs;
+		(void) POPs;
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
@@ -821,7 +823,7 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 
 	if (SvTRUE(ERRSV))
 	{
-		POPs;
+		(void) POPs;
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
@@ -872,7 +874,7 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo, S
 
 	if (SvTRUE(ERRSV))
 	{
-		POPs;
+		(void) POPs;
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
@@ -935,7 +937,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	if (!(perlret && SvOK(perlret) && SvTYPE(perlret) != SVt_NULL))
 	{
 		/* return NULL if Perl code returned undef */
-		retval = (Datum) 0;
 		fcinfo->isnull = true;
 	}
 
@@ -945,28 +946,24 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	if (prodesc->fn_retistuple && perlret && SvTYPE(perlret) != SVt_RV)
 		elog(ERROR, "plperl: composite-returning function must return a reference");
 
+	if (prodesc->fn_retisset && !fcinfo->resultinfo)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+
 	if (prodesc->fn_retistuple && fcinfo->resultinfo)	/* set of tuples */
 	{
 		/* SRF support */
 		HV		   *ret_hv;
 		AV		   *ret_av;
-
 		FuncCallContext *funcctx;
 		int			call_cntr;
 		int			max_calls;
 		TupleDesc	tupdesc;
-		TupleTableSlot *slot;
 		AttInMetadata *attinmeta;
-		bool		isset = 0;
+		bool		isset;
 		char	  **values = NULL;
 		ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-
-		if (prodesc->fn_retisset && !rsinfo)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("returning a composite type is not allowed in this context"),
-					 errhint("This function is intended for use in the FROM clause.")));
-
 
 		isset = plperl_is_set(perlret);
 
@@ -1007,8 +1004,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 				av_store(g_column_keys, i + 1,
 						 newSVpv(SPI_fname(tupdesc, i+1), 0));
 
-			slot = TupleDescGetSlot(tupdesc);
-			funcctx->slot = slot;
 			attinmeta = TupleDescGetAttInMetadata(tupdesc);
 			funcctx->attinmeta = attinmeta;
 			MemoryContextSwitchTo(oldcontext);
@@ -1017,8 +1012,8 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		funcctx = SRF_PERCALL_SETUP();
 		call_cntr = funcctx->call_cntr;
 		max_calls = funcctx->max_calls;
-		slot = funcctx->slot;
 		attinmeta = funcctx->attinmeta;
+		tupdesc = attinmeta->tupdesc;
 
 		if (call_cntr < max_calls)
 		{
@@ -1065,7 +1060,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 				}
 			}
 			tuple = BuildTupleFromCStrings(attinmeta, values);
-			result = TupleGetDatum(slot, tuple);
+			result = HeapTupleGetDatum(tuple);
 			SRF_RETURN_NEXT(funcctx, result);
 		}
 		else
@@ -1100,17 +1095,19 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			svp = av_fetch(array, funcctx->call_cntr, FALSE);
 
 			if (SvTYPE(*svp) != SVt_NULL)
+			{
+				fcinfo->isnull = false;
 				result = FunctionCall3(&prodesc->result_in_func,
 									   PointerGetDatum(SvPV(*svp, PL_na)),
 							ObjectIdGetDatum(prodesc->result_typioparam),
 									   Int32GetDatum(-1));
+			}
 			else
 			{
 				fcinfo->isnull = true;
 				result = (Datum) 0;
 			}
 			SRF_RETURN_NEXT(funcctx, result);
-			fcinfo->isnull = false;
 		}
 		else
 		{
@@ -1121,8 +1118,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	}
 	else if (!fcinfo->isnull)	/* non-null singleton */
 	{
-
-
 		if (prodesc->fn_retistuple)		/* singleton perl hash to Datum */
 		{
 			TupleDesc	td = lookup_rowtype_tupdesc(prodesc->ret_oid, (int32) -1);
@@ -1153,7 +1148,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			attinmeta = TupleDescGetAttInMetadata(td);
 			tup = BuildTupleFromCStrings(attinmeta, values);
 			retval = HeapTupleGetDatum(tup);
-
 		}
 		else
 			/* perl string to Datum */
@@ -1161,8 +1155,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 								   PointerGetDatum(SvPV(perlret, PL_na)),
 							ObjectIdGetDatum(prodesc->result_typioparam),
 								   Int32GetDatum(-1));
-
 	}
+	else		/* null singleton */
+		retval = (Datum) 0;
 
 	SvREFCNT_dec(perlret);
 	return retval;
@@ -1220,6 +1215,8 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 			retval = (Datum) trigdata->tg_newtuple;
 		else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
 			retval = (Datum) trigdata->tg_trigtuple;
+		else
+			retval = (Datum) 0;	/* can this happen? */
 	}
 	else
 	{
@@ -1256,6 +1253,8 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 			}
 			retval = PointerGetDatum(trv);
 		}
+		else
+			retval = (Datum) 0;
 	}
 
 	SvREFCNT_dec(perlret);
