@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.118 2000/06/11 11:39:58 petere Exp $
+ * $Id: config.h.in,v 1.119 2000/06/17 00:09:56 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -524,6 +524,17 @@ extern void srandom(unsigned int seed);
 /* Define if C++ compiler accepts "#include <string>" */
 #undef HAVE_CXX_STRING_HEADER
 
+/* Define if you are building with Kerberos 4 support */
+#undef KRB4
+
+/* Define if you are building with Kerberos 5 support */
+#undef KRB5
+
+/* The name of the Postgres service principal in Kerberos */
+#undef PG_KRB_SRVNAM
+
+/* The location of the Kerberos server's keytab file */
+#undef PG_KRB_SRVTAB
 
 /*
  * Pull in OS-specific declarations (using link created by configure)

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.26 2000/06/12 02:23:47 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.27 2000/06/17 00:09:47 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,10 +24,6 @@ endif
 
 CFLAGS+= $(X_CFLAGS) -I$(LIBPGTCLDIR)
 
-ifdef KRBVERS
-LDFLAGS+= $(KRBLIBS)
-CFLAGS+= $(KRBFLAGS)
-endif
 
 # If we are here then TCL is available
 PGMS = pgtclsh

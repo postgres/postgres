@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.54 2000/06/05 07:16:12 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.55 2000/06/17 00:09:34 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -58,13 +58,6 @@ OBJS+= bootstrap/bootstrap.o
 endif
 
 VERSIONOBJ = $(SRCDIR)/utils/version.o
-
-# kerberos flags
-
-ifdef KRBVERS
-CFLAGS+= $(KRBFLAGS)
-LDFLAGS+= $(KRBLIBS)
-endif
 
 ifeq ($(MAKE_DLL), true)
 DLLOBJS= $(OBJS) $(VERSIONOBJ)
@@ -303,5 +296,5 @@ $(IDFILE):
 #	make foo.C
 #
 %.cpp:	%.c
-	$(CC) -E $(CFLAGS) $(<:.C=.c) | cat -s | cb | tr -s '\012*' '\012' \
+	$(CC) -E $(CPPFLAGS) $(<:.C=.c) | cat -s | cb | tr -s '\012*' '\012' \
 	    > $(@F)

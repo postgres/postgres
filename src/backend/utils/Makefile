@@ -4,7 +4,7 @@
 #    Makefile for utils
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.14 2000/06/09 02:38:36 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.15 2000/06/17 00:09:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,25 +32,13 @@ SUBSYS.o: $(OBJS)
 submake:
 	for i in $(DIRS); do $(MAKE) -C $$i SUBSYS.o; done
 
-# Gen_fmgrtab.sh will not change the timestamp of its output files
-# if they already exist and would not be changed. This is to avoid
-# unnecessary recompilations. In order to avoid re-running it all
-# the time we update a stamp file instead. (Idea stolen from
-# autoconf and autoheader.)
 
-fmgroids.h fmgrtab.c: fmgrstamp-h
-
-fmgrstamp-h: Gen_fmgrtab.sh $(SRCDIR)/include/catalog/pg_proc.h
+fmgroids.h fmgrtab.c: Gen_fmgrtab.sh $(SRCDIR)/include/catalog/pg_proc.h
 	$(SHELL) $(SHOPTS) Gen_fmgrtab.sh $(SRCDIR)/include/catalog/pg_proc.h
-	date > fmgrstamp-h
 
-# don't clean fmgroids.h and fmgrtab.c, but do clean fmgrstamp-h
-# (we don't really want to put that much trust in timestamps in
-# distribution files and CVS pulls, so force at least one run of
-# Gen_fmgrtab.sh after a make clean)
 
 clean:
-	rm -f SUBSYS.o fmgrtab.o fmgrstamp-h
+	rm -f SUBSYS.o fmgrtab.o fmgroids.h fmgrtab.c
 	for i in $(DIRS); do $(MAKE) -C $$i clean; done
 
 dep depend: fmgroids.h fmgrtab.c

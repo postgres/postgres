@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.43 2000/06/14 17:07:31 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.44 2000/06/17 00:10:05 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,10 +18,6 @@ SRCDIR= ../..
 include $(SRCDIR)/Makefile.global
 
 CFLAGS+= -I$(LIBPQDIR)
-
-ifdef KRBVERS
-CFLAGS+= $(KRBFLAGS)
-endif
 
 OBJS= pgtcl.o pgtclCmds.o pgtclId.o
 

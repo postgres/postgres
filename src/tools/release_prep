@@ -43,13 +43,6 @@ rm -f bootstrap_tokens.h bootparse.c bootscanner.c
 $MAKE bootstrap_tokens.h bootparse.c bootscanner.c
 cd ../../..
 
-# Generate function manager files
-
-cd src/backend/utils
-rm -f fmgroids.h fmgrtab.c fmgrstamp-h
-$MAKE fmgroids.h fmgrtab.c
-cd ../../..
-
 # Generate configuration file scanner
 
 cd src/backend/utils/misc

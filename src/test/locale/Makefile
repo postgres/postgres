@@ -5,13 +5,6 @@
 SRCDIR= ../..
 include ../../Makefile.global
 
-#
-# And where libpq goes, so goes the authentication stuff...
-#
-ifdef KRBVERS
-LDFLAGS+= $(KRBLIBS)
-CFLAGS+= $(KRBFLAGS)
-endif
 
 PROGS = test-pgsql-locale test-ctype
 DIRS = koi8-r ISO8859-7 koi8-to-win1251

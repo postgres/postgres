@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile.in,v 1.67 2000/06/06 22:00:52 petere Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile.in,v 1.68 2000/06/17 00:09:59 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,9 +19,6 @@ include $(SRCDIR)/Makefile.global
 
 CFLAGS+= -I../include -I$(LIBPQDIR)
 
-ifdef KRBVERS
-CFLAGS+= $(KRBFLAGS)
-endif
 
 OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \
 	connect.o misc.o

@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.26 2000/06/06 22:01:06 petere Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.27 2000/06/17 00:10:17 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,16 +18,12 @@ SRCDIR= ../..
 include $(SRCDIR)/Makefile.global
 
 CXX=@CXX@
-CXXFLAGS=@CXXFLAGS@
+CXXFLAGS=@CXXFLAGS@ @INCLUDES@
 
 SRCHEADERDIR = $(SRCDIR)/include
 LIBPQHEADERDIR = $(SRCHEADERDIR)/libpq
 
 CXXFLAGS+= -I$(SRCHEADERDIR) -I$(LIBPQDIR)
-
-ifdef KRBVERS
-CXXFLAGS+= $(KRBFLAGS)
-endif
 
 OBJS = pgconnection.o pgdatabase.o pgtransdb.o pgcursordb.o pglobject.o 
 

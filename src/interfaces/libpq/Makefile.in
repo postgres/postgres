@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.59 2000/06/06 22:01:03 petere Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.60 2000/06/17 00:10:09 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,11 +19,6 @@ include $(SRCDIR)/Makefile.global
 
 CFLAGS+= -DFRONTEND
 
-ifdef KRBVERS
-CFLAGS+= $(KRBFLAGS)
-SHLIB_LINK += $(KRBLIBS)
-endif
-
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       pqexpbuffer.o dllist.o pqsignal.o @SNPRINTF@ @INET_ATON@
 
@@ -34,6 +29,10 @@ endif
 # If crypt is a separate library, rather than part of libc,
 # make sure it gets included in shared libpq.
 SHLIB_LINK+= $(findstring -lcrypt,$(LIBS))
+
+# Include kerberos libraries into libpq
+SHLIB_LINK += $(KRB_LIBS)
+
 
 # Shared library stuff, also default 'all' target
 include $(SRCDIR)/Makefile.shlib

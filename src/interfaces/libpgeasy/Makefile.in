@@ -4,7 +4,7 @@
 #    Makefile for pgeasy library
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile.in,v 1.7 2000/06/06 22:00:53 petere Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile.in,v 1.8 2000/06/17 00:10:00 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,10 +16,6 @@ SRCDIR= ../..
 include $(SRCDIR)/Makefile.global
 
 CFLAGS+= -I$(LIBPQDIR)
-
-ifdef KRBVERS
-CFLAGS+= $(KRBFLAGS)
-endif
 
 OBJS= libpgeasy.o halt.o
 

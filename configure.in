@@ -149,30 +149,31 @@ sed 's/^\([A-Za-z_]*\):\(.*\)$/\1="\2"/' "src/template/$TEMPLATE" >conftest.sh
 rm -f conftest.sh
 ]
 
+dnl
+dnl Add non-standard directories to the include path
+dnl
+AC_ARG_WITH(includes, [  --with-includes=DIRS    add non-standard include paths],
+[if test x"$withval" = x"yes" || test x"$withval" = x"no" ; then
+  AC_MSG_ERROR([You must supply an argument to the --with-includes option.])
+fi])
 
-AC_ARG_WITH(includes,
-    [  --with-includes=DIRS    look for header files for tcl/tk, etc in DIRS],
-    [
-	case "$withval" in
-	"" | y | ye | yes | n | no)
-	    AC_MSG_ERROR([*** You must supply an argument to the --with-includes option.])
-	  ;;
-	esac
-	INCLUDE_DIRS="$withval"
-    ])
+# SRCH_INC comes from the template file
+ac_save_IFS=$IFS
+IFS=':'
+for dir in $with_includes $SRCH_INC; do
+  if test -d "$dir"; then
+    INCLUDES="$INCLUDES -I$dir"
+  else
+    AC_MSG_WARN([*** Include directory $dir does not exist.])
+  fi
+done
+IFS=$ac_save_IFS
+AC_SUBST(INCLUDES)
 
-dnl INCLUDE_DIRS comes from command line, SRCH_INC from template file.
-dnl Each can name one or more directories.
-if test "$INCLUDE_DIRS" -o "$SRCH_INC"; then
-	for dir in $INCLUDE_DIRS $SRCH_INC; do
-		if test -d "$dir"; then
-			PGSQL_INCLUDES="$PGSQL_INCLUDES -I$dir"
-		else
-			AC_MSG_WARN([*** Include directory $dir does not exist.])
-		fi
-	done
-fi
 
+dnl
+dnl Add non-standard directories to the library search path
+dnl
 AC_ARG_WITH(libraries,
     [  --with-libraries=DIRS   look for additional libraries in DIRS],
     [
@@ -394,6 +395,108 @@ fi],
 [AC_MSG_RESULT(no)])
 AC_SUBST(with_python)
 
+
+dnl
+dnl Optionally build with Kerberos 4 support
+dnl
+AC_MSG_CHECKING(whether to build with Kerberos 4 support)
+AC_ARG_WITH(krb4, [  --with-krb4[=DIR]       use Kerberos 4 [/usr/athena]],
+[if test x"$withval" != x"no"; then
+  # If the user didn't give an argument, we take the Kerberos 4 default
+  # path /usr/athena. We look into lib/ and include/ for the Kerberos
+  # libraries and includes. If the user has a more complicated layout
+  # he can use --with-includes and --with-libraries.
+  if test x"$withval" = x"yes"; then
+    krb4dir=/usr/athena
+  else
+    krb4dir=$withval
+  fi
+  with_krb4=yes
+  AC_MSG_RESULT(yes)
+  if test -d $krb4dir; then
+    if test -d "$krb4dir/include"; then
+      INCLUDES="$INCLUDES -I$krb4dir/include"
+    fi
+    if test -d "$krb4dir/lib"; then
+      krb_libdir="-L$krb4dir/lib"
+      LIBS="$krb_libdir $LIBS"
+    fi
+  fi
+  AC_CHECK_LIB(des, main, [], [AC_MSG_ERROR([library \`des' is required for Kerberos 4])])
+  AC_CHECK_LIB(krb, main, [], [AC_MSG_ERROR([library \`krb' is required for Kerberos 4])])
+  KRB_LIBS="$krb_libdir -lkrb -ldes"
+  AC_DEFINE(KRB4,, [Define if you are building with Kerberos 4 support.])
+else
+  AC_MSG_RESULT(no)
+fi],
+[AC_MSG_RESULT(no)])
+AC_SUBST(with_krb4)
+
+
+dnl
+dnl Optionally build with Kerberos 5 support
+dnl
+AC_MSG_CHECKING(whether to build with Kerberos 5 support)
+AC_ARG_WITH(krb5, [  --with-krb5[=DIR]       use Kerberos 5 [/usr/athena]],
+[if test x"$withval" != x"no"; then
+  if test x"$withval" = x"yes"; then
+    krb5dir=/usr/athena
+  else
+    krb5dir=$withval
+  fi
+  with_krb5=yes
+  AC_MSG_RESULT(yes)
+  if test -d $krb5dir; then
+    if test -d "$krb5dir/include"; then
+      INCLUDES="$INCLUDES -I$krb5dir/include"
+    fi
+    if test -d "$krb5dir/lib"; then
+      krb_libdir="-L$krb5dir/lib"
+      LIBS="$krb_libdir $LIBS"
+    fi
+  fi
+  AC_CHECK_LIB(com_err, main, [], [AC_MSG_ERROR([library \`com_err' is required for Kerberos 5])])
+  AC_CHECK_LIB(crypto, main, [], [AC_MSG_ERROR([library \`crypto' is required for Kerberos 5])])
+  AC_CHECK_LIB(krb5, main, [], [AC_MSG_ERROR([library \`krb5' is required for Kerberos 5])])
+  KRB_LIBS="$krb_libdir -lkrb5 -lcrypto -lcom_err"
+  AC_DEFINE(KRB5,, [Define if you are building with Kerberos 5 support.])
+else
+  AC_MSG_RESULT(no)
+fi],
+[AC_MSG_RESULT(no)])
+AC_SUBST(with_krb5)
+
+dnl Necessary for special libpq link
+AC_SUBST(KRB_LIBS)
+
+
+dnl
+dnl Kerberos configuration parameters
+dnl
+AC_ARG_WITH(krb-srvnam, [  --with-krb-srvnam=NAME  name of the Postgres service principal in Kerberos],
+[if test x"$withval" = x"yes"; then
+  AC_MSG_ERROR([argument required for --with-krb-srvnam])
+else
+  krb_srvnam=$withval
+fi],
+[krb_srvnam="postgres"])
+AC_DEFINE_UNQUOTED(PG_KRB_SRVNAM, ["$krb_srvnam"], [The name of the Postgres service principal])
+
+AC_ARG_WITH(krb-srvtab, [  --with-krb-srvtab=FILE  location of Kerberos server's keytab file],
+[if test x"$withval" = x"yes"; then
+  AC_MSG_ERROR([argument required for --with-krb-srvtab])
+else
+  krb_srvtab=$withval
+fi],
+[if test x"$with_krb5" = x"yes"; then
+  krb_srvtab="FILE:/usr/local/postgres/krb5.keytab"
+else
+  krb_srvtab="/etc/srvtab"
+fi])
+AC_DEFINE_UNQUOTED(PG_KRB_SRVTAB, ["$krb_srvtab"], [The location of the Kerberos server's keytab file])
+
+
+
 dnl We include odbc support unless we disable it with --with-odbc=false
 AC_MSG_CHECKING(setting USE_ODBC)
 AC_ARG_WITH(
@@ -467,7 +570,7 @@ then
   unixODBC_libs="$unixODBC/lib"
   unixODBC_includes="$unixODBC/include"
 
-  CPPFLAGS="$CPPFLAGS -I$unixODBC_includes"
+  INCLUDES="$INCLUDES -I$unixODBC_includes"
   AC_CHECK_HEADERS(sql.h sqlext.h odbcinst.h,
           unixODBC_ok=yes;
           odbc_headers="$odbc_headers $ac_hdr",
@@ -499,7 +602,7 @@ AC_ARG_ENABLE(
    AC_MSG_RESULT(disabled)
 )
 
-CPPFLAGS="$CPPFLAGS $PGSQL_INCLUDES"
+CPPFLAGS="$CPPFLAGS $INCLUDES"
 echo "- setting CPPFLAGS=$CPPFLAGS"
 
 LDFLAGS="$LDFLAGS $PGSQL_LDFLAGS"
@@ -547,8 +650,6 @@ AC_SUBST(PORTNAME)
 AC_SUBST(CPU)
 AC_SUBST(SRCDIR)
 AC_SUBST(LDFLAGS)
-AC_SUBST(CPPFLAGS)
-AC_SUBST(PGSQL_INCLUDES)
 AC_SUBST(AROPT)
 AC_SUBST(SHARED_LIB)
 AC_SUBST(CFLAGS)
@@ -636,10 +737,7 @@ AC_SUBST(YFLAGS)
 
 
 AC_CHECK_LIB(sfio,     main)
-for curses in ncurses curses ; do
-	AC_CHECK_LIB(${curses}, main,
-		[LIBS="-l${curses} $LIBS"; break])
-done
+AC_CHECK_LIB(ncurses,  main, [], [AC_CHECK_LIB(curses, main)])
 AC_CHECK_LIB(termcap,  main)
 AC_CHECK_LIB(readline, main)
 AC_CHECK_LIB(readline, using_history, AC_DEFINE(HAVE_HISTORY_IN_READLINE),

@@ -19,14 +19,6 @@ CXXFLAGS+= -I$(HEADERDIR)
 
 LDFLAGS+= -L$(LIBPQDIR) -lpq++ 
 
-#
-# And where libpq goes, so goes the authentication stuff...
-#
-ifdef KRBVERS
-LDFLAGS+= $(KRBLIBS)
-CXXFLAGS+= $(KRBFLAGS)
-endif
-
 PROGS=	testlibpq0 testlibpq1 testlibpq2 testlibpq3 \
 	testlibpq4 testlibpq5 testlibpq6 testlo
 

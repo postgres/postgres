@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/pl/plperl/Attic/GNUmakefile.in,v 1.1 2000/06/10 18:02:11 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plperl/Attic/GNUmakefile.in,v 1.2 2000/06/17 00:10:21 petere Exp $
 
 srcdir = @srcdir@
 VPATH = @srcdir@
@@ -14,14 +14,14 @@ plperl_installdir = $(libdir)
 
 mkinstalldirs = @mkinstalldirs@
 PERL = @PERL@
-PGSQL_INCLUDES = @PGSQL_INCLUDES@
+INCLUDES = @INCLUDES@
 
 all: Makefile
 	$(MAKE) -f $< all
 
 Makefile: Makefile.PL
 	@plperl_installdir='$(plperl_installdir)' \
-	  EXTRA_INCLUDES='-I$(top_srcdir)/src/include $(PGSQL_INCLUDES)' \
+	  EXTRA_INCLUDES='-I$(top_srcdir)/src/include $(INCLUDES)' \
 	  $(PERL) $< POLLUTE=1
 
 install: Makefile installdirs
