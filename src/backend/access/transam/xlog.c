@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.86.2.2 2002/09/30 19:55:08 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.86.2.3 2003/01/21 19:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3052,12 +3052,10 @@ CreateCheckPoint(bool shutdown, bool force)
 
 	/*
 	 * Having constructed the checkpoint record, ensure all shmem disk
-	 * buffers are flushed to disk.
+	 * buffers and commit-log buffers are flushed to disk.
 	 */
-	FlushBufferPool();
-
-	/* And commit-log buffers, too */
 	CheckPointCLOG();
+	FlushBufferPool();
 
 	/*
 	 * Now insert the checkpoint record into XLOG.
