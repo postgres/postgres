@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.42 2000/09/15 18:45:26 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.43 2000/12/11 05:00:18 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,35 +63,34 @@ static int wchareq(unsigned char *p1, unsigned char *p2)
  * If they match, returns 1 otherwise returns 0.
  *--------------------
  */
-#define UCHARMAX 0xff
+#define CHARMAX 0x80
 
 static int iwchareq(unsigned char *p1, unsigned char *p2)
 {
-	int c1, c2;
+	int c1[2], c2[2];
 	int l;
 
-	/* short cut. if *p1 and *p2 is lower than UCHARMAX, then
-	   we assume they are ASCII */
-	if (*p1 < UCHARMAX && *p2 < UCHARMAX)
+	/* short cut. if *p1 and *p2 is lower than CHARMAX, then
+	   we could assume they are ASCII */
+	if (*p1 < CHARMAX && *p2 < CHARMAX)
 		return(tolower(*p1) == tolower(*p2));
 
-	if (*p1 < UCHARMAX)
-		c1 = tolower(*p1);
-	else
-	{
-		l = pg_mblen(p1);
-		(void)pg_mb2wchar_with_len(p1, (pg_wchar *)&c1, l);
-		c1 = tolower(c1);
-	}
-	if (*p2 < UCHARMAX)
-		c2 = tolower(*p2);
-	else
-	{
-		l = pg_mblen(p2);
-		(void)pg_mb2wchar_with_len(p2, (pg_wchar *)&c2, l);
-		c2 = tolower(c2);
-	}
-	return(c1 == c2);
+	/* if one of them is an ASCII while the other is not, then
+	   they must be different characters
+	*/
+	else if (*p1 < CHARMAX || *p2 < CHARMAX)
+		return(0);
+
+	/* ok, p1 and p2 are both > CHARMAX, then they must be multi-byte
+	   characters
+	*/
+	l = pg_mblen(p1);
+	(void)pg_mb2wchar_with_len(p1, (pg_wchar *)c1, l);
+	c1[0] = tolower(c1[0]);
+	l = pg_mblen(p2);
+	(void)pg_mb2wchar_with_len(p2, (pg_wchar *)c2, l);
+	c2[0] = tolower(c2[0]);
+	return(c1[0] == c2[0]);
 }
 
 #endif
