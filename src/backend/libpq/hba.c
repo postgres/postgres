@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.23 1997/11/07 20:51:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.24 1997/11/10 05:15:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -907,10 +907,10 @@ hba_recvauth(const Port *port, const char database[], const char user[],
 	int			retvalue;
 
 	/* UNIX socket always OK, for now */
-	if(port->raddr.in.sin_family == AF_UNIX)
-	  return STATUS_OK;
+	if (port->raddr.in.sin_family == AF_UNIX)
+		return STATUS_OK;
 	/* Our eventual return value */
-	
+
 
 	find_hba_entry(DataDir, port->raddr.in.sin_addr, database,
 				   &host_ok, &userauth, usermap_name,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.10 1997/10/25 01:09:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.11 1997/11/10 05:15:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ PQpnames(char **pnames, int rule_p)
 		{
 			if (!rule_p || portals[i]->portal->rule_p)
 			{
-				strncpy(pnames[cur_pname], portals[i]->name, PortalNameLength+1);
+				strncpy(pnames[cur_pname], portals[i]->name, PortalNameLength + 1);
 				++cur_pname;
 			}
 		}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.8 1997/10/25 01:09:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.9 1997/11/10 05:15:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,7 +241,7 @@ strmake(char *str, int len)
 		len = strlen(str);
 
 	newstr = (char *) palloc((unsigned) len + 1);
-	StrNCpy(newstr, str, len+1);
+	StrNCpy(newstr, str, len + 1);
 	newstr[len] = (char) 0;
 	return newstr;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.25 1997/11/10 02:21:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.26 1997/11/10 05:15:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -574,20 +574,25 @@ pq_async_notify()
 
 static char sock_path[100] = "";
 
-static void do_unlink()
+static void
+do_unlink()
 {
-  if (sock_path[0]) unlink(sock_path);
+	if (sock_path[0])
+		unlink(sock_path);
 }
 
 int
 StreamServerPort(char *hostName, short portName, int *fdP)
 {
-        union {
-	  struct sockaddr_in in;
-	  struct sockaddr_un un;
-	} saddr;
-	int			fd, err, family;
-	size_t                  len;
+	union
+	{
+		struct sockaddr_in in;
+		struct sockaddr_un un;
+	}			saddr;
+	int			fd,
+				err,
+				family;
+	size_t		len;
 	int			one = 1;
 
 	family = hostName != NULL ? AF_INET : AF_UNIX;
@@ -601,7 +606,8 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		pqdebug("%s", PQerrormsg);
 		return (STATUS_ERROR);
 	}
-	if (family == AF_UNIX) on_exitpg(do_unlink, (caddr_t) 0);
+	if (family == AF_UNIX)
+		on_exitpg(do_unlink, (caddr_t) 0);
 	if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
 					sizeof(one))) == -1)
 	{
@@ -614,19 +620,19 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	}
 	bzero(&saddr, sizeof(saddr));
 	if (family == AF_UNIX)
-	  {
-	    saddr.un.sun_family = family;
-	    len = UNIXSOCK_PATH(saddr.un,portName);
-	    strcpy(sock_path, saddr.un.sun_path);
-	  }
+	{
+		saddr.un.sun_family = family;
+		len = UNIXSOCK_PATH(saddr.un, portName);
+		strcpy(sock_path, saddr.un.sun_path);
+	}
 	else
-	  {
-	    saddr.in.sin_family = family;
-	    saddr.in.sin_addr.s_addr = htonl(INADDR_ANY);
-	    saddr.in.sin_port = htons(portName);
-	    len = sizeof saddr.in;
-	  }
-	err = bind(fd, (struct sockaddr *) &saddr, len);
+	{
+		saddr.in.sin_family = family;
+		saddr.in.sin_addr.s_addr = htonl(INADDR_ANY);
+		saddr.in.sin_port = htons(portName);
+		len = sizeof saddr.in;
+	}
+	err = bind(fd, (struct sockaddr *) & saddr, len);
 	if (err < 0)
 	{
 		sprintf(PQerrormsg,
@@ -664,21 +670,22 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 int
 StreamConnection(int server_fd, Port *port)
 {
-	int len, addrlen;
-	int family = port->raddr.in.sin_family;
+	int			len,
+				addrlen;
+	int			family = port->raddr.in.sin_family;
 
 	/* accept connection (and fill in the client (remote) address) */
 	len = family == AF_INET ?
-	  sizeof(struct sockaddr_in) : sizeof(struct sockaddr_un);
+		sizeof(struct sockaddr_in) : sizeof(struct sockaddr_un);
 	addrlen = len;
 	if ((port->sock = accept(server_fd,
-				 (struct sockaddr *) & port->raddr,
-				 &addrlen)) < 0)
+							 (struct sockaddr *) & port->raddr,
+							 &addrlen)) < 0)
 	{
 		elog(WARN, "postmaster: StreamConnection: accept: %m");
 		return (STATUS_ERROR);
 	}
-	
+
 	/* fill in the server (local) address */
 	addrlen = len;
 	if (getsockname(port->sock, (struct sockaddr *) & port->laddr,
@@ -737,50 +744,51 @@ StreamClose(int sock)
 int
 StreamOpen(char *hostName, short portName, Port *port)
 {
-        int len, err;
+	int			len,
+				err;
 	struct hostent *hp;
 	extern int	errno;
-	
+
 	/* set up the server (remote) address */
 	MemSet((char *) &port->raddr, 0, sizeof(port->raddr));
 	if (hostName)
-	  {
-	    if (!(hp = gethostbyname(hostName)) || hp->h_addrtype != AF_INET)
-	      {
-		sprintf(PQerrormsg,
-			"FATAL: StreamOpen: unknown hostname: %s\n",
-			hostName);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-		return (STATUS_ERROR);
-	      }
-	    memmove((char *) &(port->raddr.in.sin_addr),
-		    (char *) hp->h_addr,
-		    hp->h_length);
-	    port->raddr.in.sin_family = AF_INET;
-	    port->raddr.in.sin_port = htons(portName);
-	    len = sizeof(struct sockaddr_in);
-	  }
+	{
+		if (!(hp = gethostbyname(hostName)) || hp->h_addrtype != AF_INET)
+		{
+			sprintf(PQerrormsg,
+					"FATAL: StreamOpen: unknown hostname: %s\n",
+					hostName);
+			fputs(PQerrormsg, stderr);
+			pqdebug("%s", PQerrormsg);
+			return (STATUS_ERROR);
+		}
+		memmove((char *) &(port->raddr.in.sin_addr),
+				(char *) hp->h_addr,
+				hp->h_length);
+		port->raddr.in.sin_family = AF_INET;
+		port->raddr.in.sin_port = htons(portName);
+		len = sizeof(struct sockaddr_in);
+	}
 	else
-	  {
-	    port->raddr.un.sun_family = AF_UNIX;
-	    len  = UNIXSOCK_PATH(port->raddr.un,portName);
-	  }
+	{
+		port->raddr.un.sun_family = AF_UNIX;
+		len = UNIXSOCK_PATH(port->raddr.un, portName);
+	}
 	/* connect to the server */
-	if ((port->sock=socket(port->raddr.in.sin_family, SOCK_STREAM, 0)) < 0)
+	if ((port->sock = socket(port->raddr.in.sin_family, SOCK_STREAM, 0)) < 0)
 	{
 		sprintf(PQerrormsg,
-			"FATAL: StreamOpen: socket() failed: errno=%d\n",
+				"FATAL: StreamOpen: socket() failed: errno=%d\n",
 				errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return (STATUS_ERROR);
 	}
-	err = connect(port->sock, (struct sockaddr*) &port->raddr, len);
+	err = connect(port->sock, (struct sockaddr *) & port->raddr, len);
 	if (err < 0)
 	{
 		sprintf(PQerrormsg,
-			"FATAL: StreamOpen: connect() failed: errno=%d\n",
+				"FATAL: StreamOpen: connect() failed: errno=%d\n",
 				errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
@@ -789,7 +797,7 @@ StreamOpen(char *hostName, short portName, Port *port)
 
 	/* fill in the client address */
 	if (getsockname(port->sock, (struct sockaddr *) & port->laddr,
-			&len) < 0)
+					&len) < 0)
 	{
 		sprintf(PQerrormsg,
 				"FATAL: StreamOpen: getsockname() failed: errno=%d\n",
