@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.70 2000/08/06 04:17:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.71 2000/11/10 00:33:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,12 +29,11 @@
 #include "utils/syscache.h"
 
 static void CatCacheRemoveCTup(CatCache *cache, Dlelem *e);
-static Index CatalogCacheComputeHashIndex(CatCache *cacheInP);
-static Index CatalogCacheComputeTupleHashIndex(CatCache *cacheInOutP,
-								  Relation relation,
-								  HeapTuple tuple);
-static void CatalogCacheInitializeCache(CatCache *cache,
-										Relation relation);
+static Index CatalogCacheComputeHashIndex(CatCache *cache,
+										  ScanKey cur_skey);
+static Index CatalogCacheComputeTupleHashIndex(CatCache *cache,
+											   HeapTuple tuple);
+static void CatalogCacheInitializeCache(CatCache *cache);
 static Datum cc_hashname(PG_FUNCTION_ARGS);
 
 /* ----------------
@@ -155,25 +154,23 @@ CreateCacheMemoryContext(void)
 
 /* --------------------------------
  *		CatalogCacheInitializeCache
+ *
+ * This function does final initialization of a catcache: obtain the tuple
+ * descriptor and set up the hash and equality function links.  We assume
+ * that the relcache entry can be opened at this point!
  * --------------------------------
  */
 #ifdef CACHEDEBUG
 #define CatalogCacheInitializeCache_DEBUG1 \
-do { \
-	elog(DEBUG, "CatalogCacheInitializeCache: cache @%08lx", cache); \
-	if (relation) \
-		elog(DEBUG, "CatalogCacheInitializeCache: called w/relation(inval)"); \
-	else \
-		elog(DEBUG, "CatalogCacheInitializeCache: called w/relname %s", \
-			cache->cc_relname) \
-} while(0)
+	elog(DEBUG, "CatalogCacheInitializeCache: cache @%p %s", cache, \
+		 cache->cc_relname)
 
 #define CatalogCacheInitializeCache_DEBUG2 \
 do { \
 		if (cache->cc_key[i] > 0) { \
-			elog(DEBUG, "CatalogCacheInitializeCache: load %d/%d w/%d, %d", \
+			elog(DEBUG, "CatalogCacheInitializeCache: load %d/%d w/%d, %u", \
 				i+1, cache->cc_nkeys, cache->cc_key[i], \
-				relation->rd_att->attrs[cache->cc_key[i] - 1]->attlen); \
+				 tupdesc->attrs[cache->cc_key[i] - 1]->atttypid); \
 		} else { \
 			elog(DEBUG, "CatalogCacheInitializeCache: load %d/%d w/%d", \
 				i+1, cache->cc_nkeys, cache->cc_key[i]); \
@@ -186,26 +183,21 @@ do { \
 #endif
 
 static void
-CatalogCacheInitializeCache(CatCache * cache,
-							Relation relation)
+CatalogCacheInitializeCache(CatCache *cache)
 {
+	Relation	relation;
 	MemoryContext oldcxt;
-	bool		didopen = false;
-	short		i;
 	TupleDesc	tupdesc;
+	short		i;
 
 	CatalogCacheInitializeCache_DEBUG1;
 
-	/* ----------------
-	 *	If no relation was passed we must open it to get access to
-	 *	its fields.
-	 * ----------------
+	/*
+	 * Open the relation without locking --- we only need the tupdesc,
+	 * which we assume will never change ...
 	 */
-	if (!RelationIsValid(relation))
-	{
-		relation = heap_openr(cache->cc_relname, NoLock);
-		didopen = true;
-	}
+	relation = heap_openr(cache->cc_relname, NoLock);
+	Assert(RelationIsValid(relation));
 
 	/* ----------------
 	 *	switch to the cache context so our allocations
@@ -218,16 +210,21 @@ CatalogCacheInitializeCache(CatCache * cache,
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
 	/* ----------------
-	 *	initialize the cache's relation id and tuple descriptor
+	 *	copy the relcache's tuple descriptor to permanent cache storage
 	 * ----------------
 	 */
-	Assert(RelationIsValid(relation));
-	cache->relationId = RelationGetRelid(relation);
 	tupdesc = CreateTupleDescCopyConstr(RelationGetDescr(relation));
-	cache->cc_tupdesc = tupdesc;
 
-	CACHE3_elog(DEBUG, "CatalogCacheInitializeCache: relid %u, %d keys",
-				cache->relationId, cache->cc_nkeys);
+	/* ----------------
+	 *	return to the caller's memory context and close the rel
+	 * ----------------
+	 */
+	MemoryContextSwitchTo(oldcxt);
+
+	heap_close(relation, NoLock);
+
+	CACHE3_elog(DEBUG, "CatalogCacheInitializeCache: %s, %d keys",
+				cache->cc_relname, cache->cc_nkeys);
 
 	/* ----------------
 	 *	initialize cache's key information
@@ -235,65 +232,45 @@ CatalogCacheInitializeCache(CatCache * cache,
 	 */
 	for (i = 0; i < cache->cc_nkeys; ++i)
 	{
+		Oid			keytype;
+
 		CatalogCacheInitializeCache_DEBUG2;
 
 		if (cache->cc_key[i] > 0)
 		{
-			Oid			keytype = tupdesc->attrs[cache->cc_key[i] - 1]->atttypid;
-
-			cache->cc_hashfunc[i] = GetCCHashFunc(keytype);
-
-			/*
-			 * If GetCCHashFunc liked the type, safe to index into
-			 * eqproc[]
-			 */
-			cache->cc_skey[i].sk_procedure = EQPROC(keytype);
-
-			fmgr_info(cache->cc_skey[i].sk_procedure,
-					  &cache->cc_skey[i].sk_func);
-			cache->cc_skey[i].sk_nargs = cache->cc_skey[i].sk_func.fn_nargs;
-
-			CACHE4_elog(DEBUG, "CatalogCacheInit %s %d %x",
-						RelationGetRelationName(relation),
-						i,
-						cache);
-		}
-	}
-
-	/* ----------------
-	 *	return to the caller's memory context
-	 * ----------------
-	 */
-	MemoryContextSwitchTo(oldcxt);
-
-	/* ----------------
-	 *	close the relation if we opened it
-	 * ----------------
-	 */
-	if (didopen)
-		heap_close(relation, NoLock);
-
-	/* ----------------
-	 *	initialize index information for the cache.  this
-	 *	should only be done once per cache.
-	 * ----------------
-	 */
-	if (cache->cc_indname != NULL && cache->indexId == InvalidOid)
-	{
-		if (!IsIgnoringSystemIndexes() && RelationGetForm(relation)->relhasindex)
-		{
-
-			/*
-			 * If the index doesn't exist we are in trouble.
-			 */
-			relation = index_openr(cache->cc_indname);
-			Assert(relation);
-			cache->indexId = RelationGetRelid(relation);
-			index_close(relation);
+			keytype = tupdesc->attrs[cache->cc_key[i] - 1]->atttypid;
 		}
 		else
-			cache->cc_indname = NULL;
+		{
+			if (cache->cc_key[i] != ObjectIdAttributeNumber)
+				elog(FATAL, "CatalogCacheInit: only sys attr supported is OID");
+			keytype = OIDOID;
+		}
+
+		cache->cc_hashfunc[i] = GetCCHashFunc(keytype);
+		/*
+		 * If GetCCHashFunc liked the type, safe to index into eqproc[]
+		 */
+		cache->cc_skey[i].sk_procedure = EQPROC(keytype);
+
+		fmgr_info(cache->cc_skey[i].sk_procedure,
+				  &cache->cc_skey[i].sk_func);
+		cache->cc_skey[i].sk_nargs = cache->cc_skey[i].sk_func.fn_nargs;
+
+		/* Initialize sk_attno suitably for index scans */
+		cache->cc_skey[i].sk_attno = i+1;
+
+		CACHE4_elog(DEBUG, "CatalogCacheInit %s %d %p",
+					cache->cc_relname,
+					i,
+					cache);
 	}
+
+	/* ----------------
+	 *	mark this cache fully initialized
+	 * ----------------
+	 */
+	cache->cc_tupdesc = tupdesc;
 }
 
 /* --------------------------------
@@ -301,42 +278,42 @@ CatalogCacheInitializeCache(CatCache * cache,
  * --------------------------------
  */
 static Index
-CatalogCacheComputeHashIndex(CatCache * cacheInP)
+CatalogCacheComputeHashIndex(CatCache *cache, ScanKey cur_skey)
 {
 	uint32		hashIndex = 0;
 
-	CACHE4_elog(DEBUG, "CatalogCacheComputeHashIndex %s %d %x",
-				cacheInP->cc_relname,
-				cacheInP->cc_nkeys,
-				cacheInP);
+	CACHE4_elog(DEBUG, "CatalogCacheComputeHashIndex %s %d %p",
+				cache->cc_relname,
+				cache->cc_nkeys,
+				cache);
 
-	switch (cacheInP->cc_nkeys)
+	switch (cache->cc_nkeys)
 	{
 		case 4:
 			hashIndex ^=
-				DatumGetUInt32(DirectFunctionCall1(cacheInP->cc_hashfunc[3],
-							   cacheInP->cc_skey[3].sk_argument)) << 9;
+				DatumGetUInt32(DirectFunctionCall1(cache->cc_hashfunc[3],
+							   cur_skey[3].sk_argument)) << 9;
 			/* FALLTHROUGH */
 		case 3:
 			hashIndex ^=
-				DatumGetUInt32(DirectFunctionCall1(cacheInP->cc_hashfunc[2],
-							   cacheInP->cc_skey[2].sk_argument)) << 6;
+				DatumGetUInt32(DirectFunctionCall1(cache->cc_hashfunc[2],
+							   cur_skey[2].sk_argument)) << 6;
 			/* FALLTHROUGH */
 		case 2:
 			hashIndex ^=
-				DatumGetUInt32(DirectFunctionCall1(cacheInP->cc_hashfunc[1],
-							   cacheInP->cc_skey[1].sk_argument)) << 3;
+				DatumGetUInt32(DirectFunctionCall1(cache->cc_hashfunc[1],
+							   cur_skey[1].sk_argument)) << 3;
 			/* FALLTHROUGH */
 		case 1:
 			hashIndex ^=
-				DatumGetUInt32(DirectFunctionCall1(cacheInP->cc_hashfunc[0],
-							   cacheInP->cc_skey[0].sk_argument));
+				DatumGetUInt32(DirectFunctionCall1(cache->cc_hashfunc[0],
+							   cur_skey[0].sk_argument));
 			break;
 		default:
-			elog(FATAL, "CCComputeHashIndex: %d cc_nkeys", cacheInP->cc_nkeys);
+			elog(FATAL, "CCComputeHashIndex: %d cc_nkeys", cache->cc_nkeys);
 			break;
 	}
-	hashIndex %= (uint32) cacheInP->cc_size;
+	hashIndex %= (uint32) cache->cc_size;
 	return (Index) hashIndex;
 }
 
@@ -345,65 +322,65 @@ CatalogCacheComputeHashIndex(CatCache * cacheInP)
  * --------------------------------
  */
 static Index
-CatalogCacheComputeTupleHashIndex(CatCache * cacheInOutP,
-								  Relation relation,
+CatalogCacheComputeTupleHashIndex(CatCache *cache,
 								  HeapTuple tuple)
 {
+	ScanKeyData cur_skey[4];
 	bool		isNull = false;
 
-	/* XXX is this really needed? */
-	if (cacheInOutP->relationId == InvalidOid)
-		CatalogCacheInitializeCache(cacheInOutP, relation);
+	/* Copy pre-initialized overhead data for scankey */
+	memcpy(cur_skey, cache->cc_skey, sizeof(cur_skey));
 
-	switch (cacheInOutP->cc_nkeys)
+	/* Now extract key fields from tuple, insert into scankey */
+	switch (cache->cc_nkeys)
 	{
 		case 4:
-			cacheInOutP->cc_skey[3].sk_argument =
-				(cacheInOutP->cc_key[3] == ObjectIdAttributeNumber)
-				? (Datum) tuple->t_data->t_oid
+			cur_skey[3].sk_argument =
+				(cache->cc_key[3] == ObjectIdAttributeNumber)
+				? ObjectIdGetDatum(tuple->t_data->t_oid)
 				: fastgetattr(tuple,
-							  cacheInOutP->cc_key[3],
-							  RelationGetDescr(relation),
+							  cache->cc_key[3],
+							  cache->cc_tupdesc,
 							  &isNull);
 			Assert(!isNull);
 			/* FALLTHROUGH */
 		case 3:
-			cacheInOutP->cc_skey[2].sk_argument =
-				(cacheInOutP->cc_key[2] == ObjectIdAttributeNumber)
-				? (Datum) tuple->t_data->t_oid
+			cur_skey[2].sk_argument =
+				(cache->cc_key[2] == ObjectIdAttributeNumber)
+				? ObjectIdGetDatum(tuple->t_data->t_oid)
 				: fastgetattr(tuple,
-							  cacheInOutP->cc_key[2],
-							  RelationGetDescr(relation),
+							  cache->cc_key[2],
+							  cache->cc_tupdesc,
 							  &isNull);
 			Assert(!isNull);
 			/* FALLTHROUGH */
 		case 2:
-			cacheInOutP->cc_skey[1].sk_argument =
-				(cacheInOutP->cc_key[1] == ObjectIdAttributeNumber)
-				? (Datum) tuple->t_data->t_oid
+			cur_skey[1].sk_argument =
+				(cache->cc_key[1] == ObjectIdAttributeNumber)
+				? ObjectIdGetDatum(tuple->t_data->t_oid)
 				: fastgetattr(tuple,
-							  cacheInOutP->cc_key[1],
-							  RelationGetDescr(relation),
+							  cache->cc_key[1],
+							  cache->cc_tupdesc,
 							  &isNull);
 			Assert(!isNull);
 			/* FALLTHROUGH */
 		case 1:
-			cacheInOutP->cc_skey[0].sk_argument =
-				(cacheInOutP->cc_key[0] == ObjectIdAttributeNumber)
-				? (Datum) tuple->t_data->t_oid
+			cur_skey[0].sk_argument =
+				(cache->cc_key[0] == ObjectIdAttributeNumber)
+				? ObjectIdGetDatum(tuple->t_data->t_oid)
 				: fastgetattr(tuple,
-							  cacheInOutP->cc_key[0],
-							  RelationGetDescr(relation),
+							  cache->cc_key[0],
+							  cache->cc_tupdesc,
 							  &isNull);
 			Assert(!isNull);
 			break;
 		default:
 			elog(FATAL, "CCComputeTupleHashIndex: %d cc_nkeys",
-				 cacheInOutP->cc_nkeys);
+				 cache->cc_nkeys);
 			break;
 	}
 
-	return CatalogCacheComputeHashIndex(cacheInOutP);
+	return CatalogCacheComputeHashIndex(cache, cur_skey);
 }
 
 /* --------------------------------
@@ -506,8 +483,6 @@ CatalogCacheIdInvalidate(int cacheId,	/* XXX */
  *					   public functions
  *
  *		ResetSystemCache
- *		SystemCacheAbort
- *		InitIndexedSysCache
  *		InitSysCache
  *		SearchSysCache
  *		RelationInvalidateCatalogCacheTuple
@@ -563,27 +538,6 @@ ResetSystemCache(void)
 }
 
 /* --------------------------------
- *		SystemCacheAbort
- *
- * This routine is called to clean up catcache state as needed during
- * transaction abort.
- * --------------------------------
- */
-void
-SystemCacheAbort(void)
-{
-	CatCache *cache;
-
-	/* ----------------
-	 *	clear the "cache busy" flags, which may have been left set if we
-	 *	elog'd out during a cache lookup attempt.
-	 * ----------------
-	 */
-	for (cache = Caches; PointerIsValid(cache); cache = cache->cc_next)
-		cache->busy = false;
-}
-
-/* --------------------------------
  *		SystemCacheRelationFlushed
  *
  *	This is called by RelationFlushRelation() to clear out cached information
@@ -629,34 +583,24 @@ SystemCacheRelationFlushed(Oid relId)
 #ifdef CACHEDEBUG
 #define InitSysCache_DEBUG1 \
 do { \
-	elog(DEBUG, "InitSysCache: rid=%u id=%d nkeys=%d size=%d\n", \
-		cp->relationId, cp->id, cp->cc_nkeys, cp->cc_size); \
-	for (i = 0; i < nkeys; i += 1) \
-	{ \
-		elog(DEBUG, "InitSysCache: key=%d skey=[%d %d %d %d]\n", \
-			 cp->cc_key[i], \
-			 cp->cc_skey[i].sk_flags, \
-			 cp->cc_skey[i].sk_attno, \
-			 cp->cc_skey[i].sk_procedure, \
-			 cp->cc_skey[i].sk_argument); \
-	} \
+	elog(DEBUG, "InitSysCache: rel=%s id=%d nkeys=%d size=%d\n", \
+		cp->cc_relname, cp->id, cp->cc_nkeys, cp->cc_size); \
 } while(0)
 
 #else
 #define InitSysCache_DEBUG1
 #endif
 
-CatCache   *
-InitSysCache(char *relname,
+CatCache *
+InitSysCache(int id,
+			 char *relname,
 			 char *indname,
-			 int id,
 			 int nkeys,
-			 int *key,
-			 ScanFunc iScanfuncP)
+			 int *key)
 {
 	CatCache   *cp;
-	int			i;
 	MemoryContext oldcxt;
+	int			i;
 
 	/* ----------------
 	 *	first switch to the cache context so our allocations
@@ -714,46 +658,15 @@ InitSysCache(char *relname,
 	 *	cache's other internal fields.
 	 * ----------------
 	 */
-	cp->relationId = InvalidOid;
-	cp->indexId = InvalidOid;
 	cp->cc_relname = relname;
 	cp->cc_indname = indname;
 	cp->cc_tupdesc = (TupleDesc) NULL;
 	cp->id = id;
-	cp->busy = false;
 	cp->cc_maxtup = MAXTUP;
 	cp->cc_size = NCCBUCK;
 	cp->cc_nkeys = nkeys;
-	cp->cc_iscanfunc = iScanfuncP;
-
-	/* ----------------
-	 *	partially initialize the cache's key information
-	 *	CatalogCacheInitializeCache() will do the rest
-	 * ----------------
-	 */
 	for (i = 0; i < nkeys; ++i)
-	{
 		cp->cc_key[i] = key[i];
-		if (!key[i])
-			elog(FATAL, "InitSysCache: called with 0 key[%d]", i);
-		if (key[i] < 0)
-		{
-			if (key[i] != ObjectIdAttributeNumber)
-				elog(FATAL, "InitSysCache: called with %d key[%d]", key[i], i);
-			else
-			{
-				cp->cc_hashfunc[i] = GetCCHashFunc(OIDOID);
-				ScanKeyEntryInitialize(&cp->cc_skey[i],
-									   (bits16) 0,
-									   (AttrNumber) key[i],
-									   (RegProcedure) F_OIDEQ,
-									   (Datum) 0);
-				continue;
-			}
-		}
-
-		cp->cc_skey[i].sk_attno = key[i];
-	}
 
 	/* ----------------
 	 *	all done.  new cache is initialized.  print some debugging
@@ -773,36 +686,34 @@ InitSysCache(char *relname,
 
 
 /* --------------------------------
- *		SearchSelfReferences
+ *		IndexScanOK
  *
- *		This call searches for self-referencing information,
- *		which causes infinite recursion in the system catalog cache.
- *		This code short-circuits the normal index lookup for cache loads
- *		in those cases and replaces it with a heap scan.
- *
- *		cache should already be initialized
+ *		This function checks for tuples that will be fetched by
+ *		IndexSupportInitialize() during relcache initialization for
+ *		certain system indexes that support critical syscaches.
+ *		We can't use an indexscan to fetch these, else we'll get into
+ *		infinite recursion.  A plain heap scan will work, however.
  * --------------------------------
  */
-static HeapTuple
-SearchSelfReferences(CatCache * cache)
+static bool
+IndexScanOK(CatCache *cache, ScanKey cur_skey)
 {
-	HeapTuple	ntp;
-	Relation	rel;
-
 	if (cache->id == INDEXRELID)
 	{
 		static Oid	indexSelfOid = InvalidOid;
-		static HeapTuple indexSelfTuple = NULL;
 
+		/* One-time lookup of the OID of pg_index_indexrelid_index */
 		if (!OidIsValid(indexSelfOid))
 		{
+			Relation	rel;
 			ScanKeyData key;
 			HeapScanDesc sd;
+			HeapTuple	ntp;
 
-			/* Find oid of pg_index_indexrelid_index */
 			rel = heap_openr(RelationRelationName, AccessShareLock);
 			ScanKeyEntryInitialize(&key, 0, Anum_pg_class_relname,
-							 F_NAMEEQ, PointerGetDatum(IndexRelidIndex));
+								   F_NAMEEQ,
+								   PointerGetDatum(IndexRelidIndex));
 			sd = heap_beginscan(rel, false, SnapshotNow, 1, &key);
 			ntp = heap_getnext(sd, 0);
 			if (!HeapTupleIsValid(ntp))
@@ -812,63 +723,22 @@ SearchSelfReferences(CatCache * cache)
 			heap_endscan(sd);
 			heap_close(rel, AccessShareLock);
 		}
-		/* Looking for something other than pg_index_indexrelid_index? */
-		if ((Oid) cache->cc_skey[0].sk_argument != indexSelfOid)
-			return (HeapTuple) 0;
 
-		/* Do we need to load our private copy of the tuple? */
-		if (!HeapTupleIsValid(indexSelfTuple))
-		{
-			HeapScanDesc sd;
-			MemoryContext oldcxt;
-
-			rel = heap_open(cache->relationId, AccessShareLock);
-			sd = heap_beginscan(rel, false, SnapshotNow, 1, cache->cc_skey);
-			ntp = heap_getnext(sd, 0);
-			if (!HeapTupleIsValid(ntp))
-				elog(ERROR, "SearchSelfReferences: tuple not found");
-			if (!CacheMemoryContext)
-				CreateCacheMemoryContext();
-			oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-			indexSelfTuple = heap_copytuple(ntp);
-			MemoryContextSwitchTo(oldcxt);
-			heap_endscan(sd);
-			heap_close(rel, AccessShareLock);
-		}
-		return indexSelfTuple;
+		/* Looking for pg_index_indexrelid_index? */
+		if (DatumGetObjectId(cur_skey[0].sk_argument) == indexSelfOid)
+			return false;
 	}
 	else if (cache->id == OPEROID)
 	{
-		/* bootstrapping this requires preloading a range of rows. bjm */
-		static HeapTuple operatorSelfTuple[MAX_OIDCMP - MIN_OIDCMP + 1];
-		Oid			lookup_oid = (Oid) cache->cc_skey[0].sk_argument;
+		/* Looking for an OID comparison function? */
+		Oid			lookup_oid = DatumGetObjectId(cur_skey[0].sk_argument);
 
-		if (lookup_oid < MIN_OIDCMP || lookup_oid > MAX_OIDCMP)
-			return (HeapTuple) 0;
-
-		if (!HeapTupleIsValid(operatorSelfTuple[lookup_oid - MIN_OIDCMP]))
-		{
-			HeapScanDesc sd;
-			MemoryContext oldcxt;
-
-			rel = heap_open(cache->relationId, AccessShareLock);
-			sd = heap_beginscan(rel, false, SnapshotNow, 1, cache->cc_skey);
-			ntp = heap_getnext(sd, 0);
-			if (!HeapTupleIsValid(ntp))
-				elog(ERROR, "SearchSelfReferences: tuple not found");
-			if (!CacheMemoryContext)
-				CreateCacheMemoryContext();
-			oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-			operatorSelfTuple[lookup_oid - MIN_OIDCMP] = heap_copytuple(ntp);
-			MemoryContextSwitchTo(oldcxt);
-			heap_endscan(sd);
-			heap_close(rel, AccessShareLock);
-		}
-		return operatorSelfTuple[lookup_oid - MIN_OIDCMP];
+		if (lookup_oid >= MIN_OIDCMP && lookup_oid <= MAX_OIDCMP)
+			return false;
 	}
-	else
-		return (HeapTuple) 0;
 
+	/* Normal case, allow index scan */
+	return true;
 }
 
 /* --------------------------------
@@ -879,13 +749,14 @@ SearchSelfReferences(CatCache * cache)
  * --------------------------------
  */
 HeapTuple
-SearchSysCache(CatCache * cache,
+SearchSysCache(CatCache *cache,
 			   Datum v1,
 			   Datum v2,
 			   Datum v3,
 			   Datum v4)
 {
-	unsigned	hash;
+	ScanKeyData cur_skey[4];
+	Index		hash;
 	CatCTup    *ct = NULL;
 	CatCTup    *nct;
 	CatCTup    *nct2;
@@ -898,29 +769,24 @@ SearchSysCache(CatCache * cache,
 	 *	one-time startup overhead
 	 * ----------------
 	 */
-	if (cache->relationId == InvalidOid)
-		CatalogCacheInitializeCache(cache, NULL);
+	if (cache->cc_tupdesc == NULL)
+		CatalogCacheInitializeCache(cache);
 
 	/* ----------------
 	 *	initialize the search key information
 	 * ----------------
 	 */
-	cache->cc_skey[0].sk_argument = v1;
-	cache->cc_skey[1].sk_argument = v2;
-	cache->cc_skey[2].sk_argument = v3;
-	cache->cc_skey[3].sk_argument = v4;
-
-	/*
-	 * resolve self referencing informtion
-	 */
-	if ((ntp = SearchSelfReferences(cache)) != NULL)
-		return ntp;
+	memcpy(cur_skey, cache->cc_skey, sizeof(cur_skey));
+	cur_skey[0].sk_argument = v1;
+	cur_skey[1].sk_argument = v2;
+	cur_skey[2].sk_argument = v3;
+	cur_skey[3].sk_argument = v4;
 
 	/* ----------------
 	 *	find the hash bucket in which to look for the tuple
 	 * ----------------
 	 */
-	hash = CatalogCacheComputeHashIndex(cache);
+	hash = CatalogCacheComputeHashIndex(cache, cur_skey);
 
 	/* ----------------
 	 *	scan the hash bucket until we find a match or exhaust our tuples
@@ -941,7 +807,7 @@ SearchSysCache(CatCache * cache,
 		HeapKeyTest(ct->ct_tup,
 					cache->cc_tupdesc,
 					cache->cc_nkeys,
-					cache->cc_skey,
+					cur_skey,
 					res);
 		if (res)
 			break;
@@ -975,73 +841,89 @@ SearchSysCache(CatCache * cache,
 	 *	retrieve it directly from the relation.  If it's found,
 	 *	we add it to the cache.
 	 *
-	 *	To guard against possible infinite recursion, we mark this cache
-	 *	"busy" while trying to load a new entry for it.  It is OK to
-	 *	recursively invoke SearchSysCache for a different cache, but
-	 *	a recursive call for the same cache will error out.  (We could
-	 *	store the specific key(s) being looked for, and consider only
-	 *	a recursive request for the same key to be an error, but this
-	 *	simple scheme is sufficient for now.)
+	 *	NOTE: it is possible for recursive cache lookups to occur while
+	 *	reading the relation --- for example, due to shared-cache-inval
+	 *	messages being processed during heap_open().  This is OK.  It's
+	 *	even possible for one of those lookups to find and enter the
+	 *	very same tuple we are trying to fetch here.  If that happens,
+	 *	we will enter a second copy of the tuple into the cache.  The
+	 *	first copy will never be referenced again, and will eventually
+	 *	age out of the cache, so there's no functional problem.  This case
+	 *	is rare enough that it's not worth expending extra cycles to detect.
 	 * ----------------
 	 */
-
-	if (cache->busy)
-		elog(ERROR, "SearchSysCache: recursive use of cache %d", cache->id);
-	cache->busy = true;
 
 	/* ----------------
 	 *	open the relation associated with the cache
 	 * ----------------
 	 */
-	relation = heap_open(cache->relationId, AccessShareLock);
-	CACHE2_elog(DEBUG, "SearchSysCache(%s)",
-				RelationGetRelationName(relation));
+	relation = heap_openr(cache->cc_relname, AccessShareLock);
 
 	/* ----------------
 	 *	Scan the relation to find the tuple.  If there's an index, and
-	 *	if this isn't bootstrap (initdb) time, use the index.
+	 *	if it's safe to do so, use the index.  Else do a heap scan.
 	 * ----------------
 	 */
-	CACHE1_elog(DEBUG, "SearchSysCache: performing scan");
+	ntp = NULL;
 
-	if ((RelationGetForm(relation))->relhasindex
-		&& !IsIgnoringSystemIndexes())
+	if ((RelationGetForm(relation))->relhasindex &&
+		!IsIgnoringSystemIndexes() &&
+		IndexScanOK(cache, cur_skey))
 	{
-		HeapTuple	indextp;
+		Relation	idesc;
+		IndexScanDesc isd;
+		RetrieveIndexResult indexRes;
+		HeapTupleData tuple;
+		Buffer		buffer;
 
-		/* We call the scanfunc with all four arguments to satisfy the
-		 * declared prototype, even though the function will likely not
-		 * use all four.
-		 */
-		indextp = cache->cc_iscanfunc(relation, v1, v2, v3, v4);
+		CACHE2_elog(DEBUG, "SearchSysCache(%s): performing index scan",
+					cache->cc_relname);
 
-		/* ----------
-		 *	If we got a tuple copy it into our context.  wieck - 10/18/1996
-		 *	And free the tuple that was allocated in the
-		 *	transaction's context.   tgl - 02/03/2000
-		 * ----------
-		 */
-		if (HeapTupleIsValid(indextp))
+		idesc = index_openr(cache->cc_indname);
+		isd = index_beginscan(idesc, false, cache->cc_nkeys, cur_skey);
+		tuple.t_datamcxt = CurrentMemoryContext;
+		tuple.t_data = NULL;
+		while ((indexRes = index_getnext(isd, ForwardScanDirection)))
 		{
-			oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-			ntp = heap_copytuple(indextp);
-			MemoryContextSwitchTo(oldcxt);
-			heap_freetuple(indextp);
+			tuple.t_self = indexRes->heap_iptr;
+			heap_fetch(relation, SnapshotNow, &tuple, &buffer);
+			pfree(indexRes);
+			if (tuple.t_data != NULL)
+			{
+				/* Copy tuple into our context */
+				oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+				ntp = heap_copytuple(&tuple);
+				MemoryContextSwitchTo(oldcxt);
+				ReleaseBuffer(buffer);
+				break;
+			}
 		}
+		index_endscan(isd);
+		index_close(idesc);
 	}
 	else
 	{
 		HeapScanDesc sd;
+		int			i;
+
+		CACHE2_elog(DEBUG, "SearchSysCache(%s): performing heap scan",
+					cache->cc_relname);
+
+		/*
+		 * For a heap scan, sk_attno has to be set to the heap attribute
+		 * number(s), not the index attribute numbers.
+		 */
+		for (i = 0; i < cache->cc_nkeys; ++i)
+			cur_skey[i].sk_attno = cache->cc_key[i];
 
 		sd = heap_beginscan(relation, 0, SnapshotNow,
-							cache->cc_nkeys, cache->cc_skey);
+							cache->cc_nkeys, cur_skey);
 
 		ntp = heap_getnext(sd, 0);
 
-
 		if (HeapTupleIsValid(ntp))
 		{
-			CACHE1_elog(DEBUG, "SearchSysCache: found tuple");
+			/* Copy tuple into our context */
 			oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 			ntp = heap_copytuple(ntp);
 			MemoryContextSwitchTo(oldcxt);
@@ -1050,8 +932,6 @@ SearchSysCache(CatCache * cache,
 
 		heap_endscan(sd);
 	}
-
-	cache->busy = false;
 
 	/* ----------------
 	 *	scan is complete.  if tup is valid, we can add it to the cache.
@@ -1066,6 +946,8 @@ SearchSysCache(CatCache * cache,
 		 * ----------------
 		 */
 		Dlelem	   *lru_elt;
+
+		CACHE1_elog(DEBUG, "SearchSysCache: found tuple");
 
 		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 
@@ -1104,17 +986,16 @@ SearchSysCache(CatCache * cache,
 			if (ct != nct)		/* shouldn't be possible, but be safe... */
 			{
 				CACHE2_elog(DEBUG, "SearchSysCache(%s): Overflow, LRU removal",
-							RelationGetRelationName(relation));
+							cache->cc_relname);
 
 				CatCacheRemoveCTup(cache, elt);
 			}
 		}
 
 		CACHE4_elog(DEBUG, "SearchSysCache(%s): Contains %d/%d tuples",
-					RelationGetRelationName(relation),
-					cache->cc_ntup, cache->cc_maxtup);
+					cache->cc_relname, cache->cc_ntup, cache->cc_maxtup);
 		CACHE3_elog(DEBUG, "SearchSysCache(%s): put in bucket %d",
-					RelationGetRelationName(relation), hash);
+					cache->cc_relname, hash);
 	}
 
 	/* ----------------
@@ -1141,7 +1022,6 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 							  void (*function) (int, Index, ItemPointer))
 {
 	CatCache   *ccp;
-	Oid			relationId;
 
 	/* ----------------
 	 *	sanity checks
@@ -1159,15 +1039,18 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 	 *		   in the proper hash bucket
 	 * ----------------
 	 */
-	relationId = RelationGetRelid(relation);
 
 	for (ccp = Caches; ccp; ccp = ccp->cc_next)
 	{
-		if (relationId != ccp->relationId)
+		if (strcmp(ccp->cc_relname, RelationGetRelationName(relation)) != 0)
 			continue;
 
+		/* Just in case cache hasn't finished initialization yet... */
+		if (ccp->cc_tupdesc == NULL)
+			CatalogCacheInitializeCache(ccp);
+
 		(*function) (ccp->id,
-				 CatalogCacheComputeTupleHashIndex(ccp, relation, tuple),
+					 CatalogCacheComputeTupleHashIndex(ccp, tuple),
 					 &tuple->t_self);
 	}
 }

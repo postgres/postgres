@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.115 2000/11/08 22:10:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.116 2000/11/10 00:33:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,15 +27,14 @@
  *		careful....
  *
  */
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <errno.h>
 #include <sys/file.h>
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "postgres.h"
-
-#include "utils/builtins.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/istrat.h"
@@ -55,6 +54,7 @@
 #include "lib/hasht.h"
 #include "miscadmin.h"
 #include "storage/smgr.h"
+#include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/memutils.h"
@@ -1127,7 +1127,9 @@ IndexedAccessMethodInitialize(Relation relation)
  *		This is a special cut-down version of RelationBuildDesc()
  *		used by RelationCacheInitialize() in initializing the relcache.
  *		The relation descriptor is built just from the supplied parameters,
- *		without actually looking at any system table entries.
+ *		without actually looking at any system table entries.  We cheat
+ *		quite a lot since we only need to work for a few basic system
+ *		catalogs...
  *
  * NOTE: we assume we are already switched into CacheMemoryContext.
  * --------------------------------
@@ -1219,7 +1221,7 @@ formrdesc(char *relationName,
 	RelationGetRelid(relation) = relation->rd_att->attrs[0]->attrelid;
 
 	/* ----------------
-	 *	initialize the relation lock manager information
+	 *	initialize the relation's lock manager and RelFileNode information
 	 * ----------------
 	 */
 	RelationInitLockInfo(relation);		/* see lmgr.c */
@@ -1232,22 +1234,29 @@ formrdesc(char *relationName,
 		relation->rd_rel->relfilenode = RelationGetRelid(relation);
 
 	/* ----------------
+	 *	initialize the rel-has-index flag, using hardwired knowledge
+	 * ----------------
+	 */
+	relation->rd_rel->relhasindex = false;
+
+	/* In bootstrap mode, we have no indexes */
+	if (!IsBootstrapProcessingMode())
+	{
+		for (i = 0; IndexedCatalogNames[i] != NULL; i++)
+		{
+			if (strcmp(IndexedCatalogNames[i], relationName) == 0)
+			{
+				relation->rd_rel->relhasindex = true;
+				break;
+			}
+		}
+	}
+
+	/* ----------------
 	 *	add new reldesc to relcache
 	 * ----------------
 	 */
 	RelationCacheInsert(relation);
-
-	/*
-	 * Determining this requires a scan on pg_class, but to do the scan
-	 * the rdesc for pg_class must already exist.  Therefore we must do
-	 * the check (and possible set) after cache insertion.
-	 *
-	 * XXX I believe the above comment is misguided; we should be running
-	 * in bootstrap or init processing mode here, and CatalogHasIndex
-	 * relies on hard-wired info in those cases.
-	 */
-	relation->rd_rel->relhasindex =
-		CatalogHasIndex(relationName, RelationGetRelid(relation));
 }
 
 

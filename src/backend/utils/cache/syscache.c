@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.55 2000/06/20 01:41:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.56 2000/11/10 00:33:10 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -55,19 +55,16 @@
 
 	Add your entry to the cacheinfo[] array below.	All cache lists are
 	alphabetical, so add it in the proper place.  Specify the relation
-	name, number of arguments, argument attribute numbers, index name,
-	and index lookup function.
+	name, index name, number of keys, and key attribute numbers.
 
 	In include/catalog/indexing.h, add a define for the number of indexes
 	on the relation, add define(s) for the index name(s), add an extern
-	array to hold the index names, define the index lookup function
-	prototype, and use DECLARE_UNIQUE_INDEX to define the index.  Cache
-	lookups return only one row, so the index should be unique.
+	array to hold the index names, and use DECLARE_UNIQUE_INDEX to define
+	the index.  Cache lookups return only one row, so the index should be
+	unique in most cases.
 
 	In backend/catalog/indexing.c, initialize the relation array with
-	the index names for the relation, and create the index lookup function.
-	Pick one that has similar arguments and copy that one, but keep the
-	function names in the same order as the cache list for clarity.
+	the index names for the relation.
 
 	Finally, any place your relation gets heap_insert() or
 	heap_update calls, include code to do a CatalogIndexInsert() to update
@@ -85,293 +82,264 @@
 struct cachedesc
 {
 	char	   *name;			/* name of the relation being cached */
+	char	   *indname;		/* name of index relation for this cache */
 	int			nkeys;			/* # of keys needed for cache lookup */
 	int			key[4];			/* attribute numbers of key attrs */
-	char	   *indname;		/* name of index relation for this cache */
-	ScanFunc	iScanFunc;		/* function to handle index scans */
 };
 
 static struct cachedesc cacheinfo[] = {
 	{AggregateRelationName,		/* AGGNAME */
+	 AggregateNameTypeIndex,
 		2,
 		{
 			Anum_pg_aggregate_aggname,
 			Anum_pg_aggregate_aggbasetype,
 			0,
 			0
-		},
-	AggregateNameTypeIndex,
-	(ScanFunc) AggregateNameTypeIndexScan},
+		}},
 	{AccessMethodRelationName,	/* AMNAME */
+	 AmNameIndex,
 		1,
 		{
 			Anum_pg_am_amname,
 			0,
 			0,
 			0
-		},
-	AmNameIndex,
-	(ScanFunc) AmNameIndexScan},
+		}},
 	{AccessMethodOperatorRelationName,	/* AMOPOPID */
+	 AccessMethodOpidIndex,
 		3,
 		{
 			Anum_pg_amop_amopclaid,
 			Anum_pg_amop_amopopr,
 			Anum_pg_amop_amopid,
 			0
-		},
-	AccessMethodOpidIndex,
-	(ScanFunc) AccessMethodOpidIndexScan},
+		}},
 	{AccessMethodOperatorRelationName,	/* AMOPSTRATEGY */
+	 AccessMethodStrategyIndex,
 		3,
 		{
 			Anum_pg_amop_amopid,
 			Anum_pg_amop_amopclaid,
 			Anum_pg_amop_amopstrategy,
 			0
-		},
-	AccessMethodStrategyIndex,
-	(ScanFunc) AccessMethodStrategyIndexScan},
+		}},
 	{AttributeRelationName,		/* ATTNAME */
+	 AttributeRelidNameIndex,
 		2,
 		{
 			Anum_pg_attribute_attrelid,
 			Anum_pg_attribute_attname,
 			0,
 			0
-		},
-	AttributeRelidNameIndex,
-	(ScanFunc) AttributeRelidNameIndexScan},
+		}},
 	{AttributeRelationName,		/* ATTNUM */
+	 AttributeRelidNumIndex,
 		2,
 		{
 			Anum_pg_attribute_attrelid,
 			Anum_pg_attribute_attnum,
 			0,
 			0
-		},
-	AttributeRelidNumIndex,
-	(ScanFunc) AttributeRelidNumIndexScan},
+		}},
 	{OperatorClassRelationName, /* CLADEFTYPE */
+	 OpclassDeftypeIndex,
 		1,
 		{
 			Anum_pg_opclass_opcdeftype,
 			0,
 			0,
 			0
-		},
-	OpclassDeftypeIndex,
-	(ScanFunc) OpclassDeftypeIndexScan},
+		}},
 	{OperatorClassRelationName, /* CLANAME */
+	 OpclassNameIndex,
 		1,
 		{
 			Anum_pg_opclass_opcname,
 			0,
 			0,
 			0
-		},
-	OpclassNameIndex,
-	(ScanFunc) OpclassNameIndexScan},
+		}},
 	{GroupRelationName,			/* GRONAME */
+	 GroupNameIndex,
 		1,
 		{
 			Anum_pg_group_groname,
 			0,
 			0,
 			0
-		},
-	GroupNameIndex,
-	(ScanFunc) GroupNameIndexScan},
+		}},
 	{GroupRelationName,			/* GROSYSID */
+	 GroupSysidIndex,
 		1,
 		{
 			Anum_pg_group_grosysid,
 			0,
 			0,
 			0
-		},
-	GroupSysidIndex,
-	(ScanFunc) GroupSysidIndexScan},
+		}},
 	{IndexRelationName,			/* INDEXRELID */
+	 IndexRelidIndex,
 		1,
 		{
 			Anum_pg_index_indexrelid,
 			0,
 			0,
 			0
-		},
-	IndexRelidIndex,
-	(ScanFunc) IndexRelidIndexScan},
+		}},
 	{InheritsRelationName,		/* INHRELID */
+	 InheritsRelidSeqnoIndex,
 		2,
 		{
 			Anum_pg_inherits_inhrelid,
 			Anum_pg_inherits_inhseqno,
 			0,
 			0
-		},
-	InheritsRelidSeqnoIndex,
-	(ScanFunc) InheritsRelidSeqnoIndexScan},
+		}},
 	{LanguageRelationName,		/* LANGNAME */
+	 LanguageNameIndex,
 		1,
 		{
 			Anum_pg_language_lanname,
 			0,
 			0,
 			0
-		},
-	LanguageNameIndex,
-	(ScanFunc) LanguageNameIndexScan},
+		}},
 	{LanguageRelationName,		/* LANGOID */
+	 LanguageOidIndex,
 		1,
 		{
 			ObjectIdAttributeNumber,
 			0,
 			0,
 			0
-		},
-	LanguageOidIndex,
-	(ScanFunc) LanguageOidIndexScan},
+		}},
 	{ListenerRelationName,		/* LISTENREL */
+	 ListenerPidRelnameIndex,
 		2,
 		{
 			Anum_pg_listener_pid,
 			Anum_pg_listener_relname,
 			0,
 			0
-		},
-	ListenerPidRelnameIndex,
-	(ScanFunc) ListenerPidRelnameIndexScan},
+		}},
 	{OperatorRelationName,		/* OPERNAME */
+	 OperatorNameIndex,
 		4,
 		{
 			Anum_pg_operator_oprname,
 			Anum_pg_operator_oprleft,
 			Anum_pg_operator_oprright,
 			Anum_pg_operator_oprkind
-		},
-	OperatorNameIndex,
-	(ScanFunc) OperatorNameIndexScan},
+		}},
 	{OperatorRelationName,		/* OPEROID */
+	 OperatorOidIndex,
 		1,
 		{
 			ObjectIdAttributeNumber,
 			0,
 			0,
 			0
-		},
-	OperatorOidIndex,
-	(ScanFunc) OperatorOidIndexScan},
+		}},
 	{ProcedureRelationName,		/* PROCNAME */
+	 ProcedureNameIndex,
 		3,
 		{
 			Anum_pg_proc_proname,
 			Anum_pg_proc_pronargs,
 			Anum_pg_proc_proargtypes,
 			0
-		},
-	ProcedureNameIndex,
-	(ScanFunc) ProcedureNameIndexScan},
+		}},
 	{ProcedureRelationName,		/* PROCOID */
+	 ProcedureOidIndex,
 		1,
 		{
 			ObjectIdAttributeNumber,
 			0,
 			0,
 			0
-		},
-	ProcedureOidIndex,
-	(ScanFunc) ProcedureOidIndexScan},
+		}},
 	{RelationRelationName,		/* RELNAME */
+	 ClassNameIndex,
 		1,
 		{
 			Anum_pg_class_relname,
 			0,
 			0,
 			0
-		},
-	ClassNameIndex,
-	(ScanFunc) ClassNameIndexScan},
+		}},
 	{RelationRelationName,		/* RELOID */
+	 ClassOidIndex,
 		1,
 		{
 			ObjectIdAttributeNumber,
 			0,
 			0,
 			0
-		},
-	ClassOidIndex,
-	(ScanFunc) ClassOidIndexScan},
+		}},
 	{RewriteRelationName,		/* REWRITENAME */
+	 RewriteRulenameIndex,
 		1,
 		{
 			Anum_pg_rewrite_rulename,
 			0,
 			0,
 			0
-		},
-	RewriteRulenameIndex,
-	(ScanFunc) RewriteRulenameIndexScan},
+		}},
 	{RewriteRelationName,		/* RULEOID */
+	 RewriteOidIndex,
 		1,
 		{
 			ObjectIdAttributeNumber,
 			0,
 			0,
 			0
-		},
-	RewriteOidIndex,
-	(ScanFunc) RewriteOidIndexScan},
+		}},
 	{ShadowRelationName,		/* SHADOWNAME */
+	 ShadowNameIndex,
 		1,
 		{
 			Anum_pg_shadow_usename,
 			0,
 			0,
 			0
-		},
-	ShadowNameIndex,
-	(ScanFunc) ShadowNameIndexScan},
+		}},
 	{ShadowRelationName,		/* SHADOWSYSID */
+	 ShadowSysidIndex,
 		1,
 		{
 			Anum_pg_shadow_usesysid,
 			0,
 			0,
 			0
-		},
-	ShadowSysidIndex,
-	(ScanFunc) ShadowSysidIndexScan},
+		}},
 	{StatisticRelationName,		/* STATRELID */
+	 StatisticRelidAttnumIndex,
 		2,
 		{
 			Anum_pg_statistic_starelid,
 			Anum_pg_statistic_staattnum,
 			0,
 			0
-		},
-	StatisticRelidAttnumIndex,
-	(ScanFunc) StatisticRelidAttnumIndexScan},
+		}},
 	{TypeRelationName,			/* TYPENAME */
+	 TypeNameIndex,
 		1,
 		{
 			Anum_pg_type_typname,
 			0,
 			0,
 			0
-		},
-	TypeNameIndex,
-	(ScanFunc) TypeNameIndexScan},
+		}},
 	{TypeRelationName,			/* TYPEOID */
+	 TypeOidIndex,
 		1,
 		{
 			ObjectIdAttributeNumber,
 			0,
 			0,
 			0
-		},
-	TypeOidIndex,
-	(ScanFunc) TypeOidIndexScan}
+		}}
 };
 
 static CatCache *SysCache[lengthof(cacheinfo)];
@@ -412,12 +380,11 @@ InitCatalogCache()
 		{
 			Assert(!PointerIsValid(SysCache[cacheId]));
 
-			SysCache[cacheId] = InitSysCache(cacheinfo[cacheId].name,
+			SysCache[cacheId] = InitSysCache(cacheId,
+											 cacheinfo[cacheId].name,
 											 cacheinfo[cacheId].indname,
-											 cacheId,
 											 cacheinfo[cacheId].nkeys,
-											 cacheinfo[cacheId].key,
-										   cacheinfo[cacheId].iScanFunc);
+											 cacheinfo[cacheId].key);
 			if (!PointerIsValid(SysCache[cacheId]))
 			{
 				elog(ERROR,
@@ -469,12 +436,11 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 
 	if (!PointerIsValid(SysCache[cacheId]))
 	{
-		SysCache[cacheId] = InitSysCache(cacheinfo[cacheId].name,
+		SysCache[cacheId] = InitSysCache(cacheId,
+										 cacheinfo[cacheId].name,
 										 cacheinfo[cacheId].indname,
-										 cacheId,
 										 cacheinfo[cacheId].nkeys,
-										 cacheinfo[cacheId].key,
-										 cacheinfo[cacheId].iScanFunc);
+										 cacheinfo[cacheId].key);
 		if (!PointerIsValid(SysCache[cacheId]))
 			elog(ERROR,
 				 "InitCatalogCache: Can't init cache %s(%d)",
@@ -569,7 +535,6 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 	if (cacheId < 0 || cacheId >= SysCacheSize)
 		elog(ERROR, "SysCacheGetAttr: Bad cache id %d", cacheId);
 	if (!PointerIsValid(SysCache[cacheId]) ||
-		SysCache[cacheId]->relationId == InvalidOid ||
 		!PointerIsValid(SysCache[cacheId]->cc_tupdesc))
 		elog(ERROR, "SysCacheGetAttr: missing cache data for id %d", cacheId);
 

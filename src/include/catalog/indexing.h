@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * indexing.h
- *	  This include provides some definitions to support indexing
+ *	  This file provides some definitions to support indexing
  *	  on system catalogs
  *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.45 2000/10/24 01:38:41 tgl Exp $
+ * $Id: indexing.h,v 1.46 2000/11/10 00:33:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,55 +116,15 @@ extern void CatalogOpenIndices(int nIndices, char **names, Relation *idescs);
 extern void CatalogCloseIndices(int nIndices, Relation *idescs);
 extern void CatalogIndexInsert(Relation *idescs, int nIndices,
 							   Relation heapRelation, HeapTuple heapTuple);
-extern bool CatalogHasIndex(char *catName, Oid catId);
 
 /*
- * Functions for each index to perform the necessary scan on a cache miss.
+ * Canned functions for indexscans on certain system indexes.
  * All index-value arguments should be passed as Datum for portability!
  */
-extern HeapTuple AccessMethodOpidIndexScan(Relation heapRelation,
-						  Datum claid, Datum opopr, Datum opid);
-extern HeapTuple AccessMethodStrategyIndexScan(Relation heapRelation,
-							  Datum opid, Datum claid, Datum opstrategy);
-extern HeapTuple AggregateNameTypeIndexScan(Relation heapRelation,
-						   Datum aggName, Datum aggType);
-extern HeapTuple AmNameIndexScan(Relation heapRelation, Datum amName);
-extern HeapTuple AttributeRelidNameIndexScan(Relation heapRelation,
-							Datum relid, Datum attname);
 extern HeapTuple AttributeRelidNumIndexScan(Relation heapRelation,
-						   Datum relid, Datum attnum);
-extern HeapTuple ClassNameIndexScan(Relation heapRelation, Datum relName);
+											Datum relid, Datum attnum);
 extern HeapTuple ClassNameIndexScan(Relation heapRelation, Datum relName);
 extern HeapTuple ClassOidIndexScan(Relation heapRelation, Datum relId);
-extern HeapTuple GroupNameIndexScan(Relation heapRelation, Datum groName);
-extern HeapTuple GroupSysidIndexScan(Relation heapRelation, Datum sysId);
-extern HeapTuple IndexRelidIndexScan(Relation heapRelation, Datum relid);
-extern HeapTuple InheritsRelidSeqnoIndexScan(Relation heapRelation,
-											 Datum relid, Datum seqno);
-extern HeapTuple LanguageNameIndexScan(Relation heapRelation, Datum lanName);
-extern HeapTuple LanguageOidIndexScan(Relation heapRelation, Datum lanId);
-extern HeapTuple ListenerPidRelnameIndexScan(Relation heapRelation,
-											 Datum pid, Datum relName);
-extern HeapTuple OpclassDeftypeIndexScan(Relation heapRelation, Datum defType);
-extern HeapTuple OpclassNameIndexScan(Relation heapRelation, Datum opcName);
-extern HeapTuple OperatorNameIndexScan(Relation heapRelation,
-									   Datum oprName, Datum oprLeft,
-									   Datum oprRight, Datum oprKind);
-extern HeapTuple OperatorOidIndexScan(Relation heapRelation, Datum oprId);
-extern HeapTuple ProcedureNameIndexScan(Relation heapRelation,
-					   Datum procName, Datum nargs, Datum argTypes);
-extern HeapTuple ProcedureOidIndexScan(Relation heapRelation, Datum procId);
-extern HeapTuple RewriteOidIndexScan(Relation heapRelation, Datum rewriteId);
-extern HeapTuple RewriteRulenameIndexScan(Relation heapRelation,
-										  Datum ruleName);
-extern HeapTuple ShadowNameIndexScan(Relation heapRelation, Datum useName);
-extern HeapTuple ShadowSysidIndexScan(Relation heapRelation, Datum sysId);
-extern HeapTuple StatisticRelidAttnumIndexScan(Relation heapRelation,
-							  Datum relId, Datum attNum);
-extern HeapTuple TypeNameIndexScan(Relation heapRelation, Datum typeName);
-extern HeapTuple TypeOidIndexScan(Relation heapRelation, Datum typeId);
-
-
 
 
 /*

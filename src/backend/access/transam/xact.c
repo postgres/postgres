@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.81 2000/11/08 22:09:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.82 2000/11/10 00:33:08 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -863,7 +863,6 @@ static void
 AtAbort_Cache(void)
 {
 	RelationCacheAbort();
-	SystemCacheAbort();
 	RegisterInvalid(false);
 }
 
