@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.45 1999/05/13 07:28:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.46 1999/05/18 23:40:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -478,17 +478,23 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
  * At least one construct (BETWEEN/AND) puts the same nodes
  *	into two branches of the parse tree; hence, some nodes
  *	are transformed twice.
- * The three cases below come from transforming function calls.
- * Let's try just passing them through...
- * - thomas 1998-03-14
+ * Another way it can happen is that coercion of an operator or
+ *	function argument to the required type (via coerce_type())
+ *	can apply transformExpr to an already-transformed subexpression.
+ *	An example here is "SELECT count(*) + 1.0 FROM table".
+ * Thus, we can see node types in this routine that do not appear in the
+ *	original parse tree.  Assume they are already transformed, and just
+ *	pass them through.
+ * Do any other node types need to be accepted?  For now we are taking
+ *	a conservative approach, and only accepting node types that are
+ *	demonstrably necessary to accept.
  */
 		case T_Expr:
 		case T_Var:
 		case T_Const:
-/* T_Param comes from implicit function calls in INSERT/VALUE statements.
- * - thomas 1998-06-11
- */
 		case T_Param:
+		case T_Aggref:
+		case T_ArrayRef:
 			{
 				result = (Node *) expr;
 				break;
