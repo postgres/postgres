@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.46 1997/09/15 14:28:16 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.47 1997/09/18 05:19:17 vadim Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1120,10 +1120,32 @@ PostgresMain(int argc, char *argv[])
 
 			case 'S':
 				/* ----------------
-				 *	S - amount of sort memory to use in 1k bytes
+				 *	S - amount of sort memory to use in 1k bytes and
+				 *		(optional) max number of tuples in leftist tree
 				 * ----------------
 				 */
-				SortMem = atoi(optarg);
+				{
+					int S;
+					char *p = strchr (optarg, ',');
+					
+					if ( p != NULL )
+					{
+						*p = 0;
+						S = atoi(optarg);
+						if ( S >= 4*MAXBLCKSZ/1024 )
+							SortMem = S;
+						S = atoi (p + 1);
+						if ( S >= 32 )
+							SortTuplesInTree = S;
+						*p = ',';
+					}
+					else
+					{
+						S = atoi(optarg);
+						if ( S >= 4*MAXBLCKSZ/1024 )
+							SortMem = S;
+					}
+				}
 				break;
 
 			case 's':
@@ -1385,7 +1407,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.46 $ $Date: 1997/09/15 14:28:16 $");
+		puts("$Revision: 1.47 $ $Date: 1997/09/18 05:19:17 $");
 	}
 
 	/* ----------------
