@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.91.2.1 2004/07/17 17:28:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.91.2.2 2004/11/17 00:18:23 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -489,6 +489,23 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 	int			child_attno;
 
 	/*
+	 * Check for and reject tables with too many columns. We perform
+	 * this check relatively early for two reasons: (a) we don't run
+	 * the risk of overflowing an AttrNumber in subsequent code (b) an
+	 * O(n^2) algorithm is okay if we're processing <= 1600 columns,
+	 * but could take minutes to execute if the user attempts to
+	 * create a table with hundreds of thousands of columns.
+	 *
+	 * Note that we also need to check that any we do not exceed this
+	 * figure after including columns from inherited relations.
+	 */
+	if (length(schema) > MaxHeapAttributeNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_TOO_MANY_COLUMNS),
+				 errmsg("tables can have at most %d columns",
+						MaxHeapAttributeNumber)));
+
+	/*
 	 * Check for duplicate names in the explicit list of attributes.
 	 *
 	 * Although we might consider merging such entries in the same way that
@@ -796,6 +813,16 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		}
 
 		schema = inhSchema;
+
+		/*
+		 * Check that we haven't exceeded the legal # of columns after
+		 * merging in inherited columns.
+		 */
+		if (length(schema) > MaxHeapAttributeNumber)
+			ereport(ERROR,
+					(errcode(ERRCODE_TOO_MANY_COLUMNS),
+					 errmsg("tables can have at most %d columns",
+							MaxHeapAttributeNumber)));
 	}
 
 	/*
