@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.31 2000/04/16 20:04:50 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.32 2000/05/05 09:38:40 petere Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -778,7 +778,10 @@ exec_command(const char *cmd,
 
 	/* eat the rest of the options string */
 	while ((val = scan_option(&string, OT_NORMAL, NULL)))
-		psql_error("\\%s: extra argument '%s' ignored\n", cmd, val);
+	{
+		if (status != CMD_UNKNOWN)
+			psql_error("\\%s: extra argument '%s' ignored\n", cmd, val);
+	}
 
 	if (options_string && continue_parse)
 		*continue_parse = options_string + (string - string_cpy);
