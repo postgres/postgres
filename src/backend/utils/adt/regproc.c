@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.52 2000/02/18 09:28:48 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.53 2000/02/27 03:30:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,6 +165,13 @@ regprocout(RegProcedure proid)
 
 	result = (char *) palloc(NAMEDATALEN);
 
+	if (proid == InvalidOid)
+	{
+		result[0] = '-';
+		result[1] = '\0';
+		return result;
+	}
+
 	if (!IsBootstrapProcessingMode())
 	{
 		proctup = SearchSysCacheTuple(PROCOID,
@@ -231,14 +238,19 @@ regprocout(RegProcedure proid)
 }
 
 /*
- *		int8typeout			- converts int8 type oids to "typname" list
+ * oidvectortypes			- converts a vector of type OIDs to "typname" list
+ *
+ * The interface for this function is wrong: it should be told how many
+ * OIDs are significant in the input vector, so that trailing InvalidOid
+ * argument types can be recognized.
  */
 text *
 oidvectortypes(Oid *oidArray)
 {
 	HeapTuple	typetup;
 	text	   *result;
-	int			num;
+	int			numargs,
+				num;
 
 	if (oidArray == NULL)
 	{
@@ -247,27 +259,33 @@ oidvectortypes(Oid *oidArray)
 		return result;
 	}
 
-	result = (text *) palloc(NAMEDATALEN * FUNC_MAX_ARGS +
-							 FUNC_MAX_ARGS + VARHDRSZ + 1);
-	*VARDATA(result) = '\0';
-
+	/* Try to guess how many args there are :-( */
+	numargs = 0;
 	for (num = 0; num < FUNC_MAX_ARGS; num++)
 	{
 		if (oidArray[num] != InvalidOid)
-		{
-			typetup = SearchSysCacheTuple(TYPEOID,
-										  ObjectIdGetDatum(oidArray[num]),
-										  0, 0, 0);
-			if (HeapTupleIsValid(typetup))
-			{
-				char	   *s;
+			numargs = num+1;
+	}
 
-				s = NameStr(((Form_pg_type) GETSTRUCT(typetup))->typname);
-				StrNCpy(VARDATA(result) + strlen(VARDATA(result)), s,
-						NAMEDATALEN);
-				strcat(VARDATA(result), " ");
-			}
+	result = (text *) palloc((NAMEDATALEN + 1) * numargs + VARHDRSZ + 1);
+	*VARDATA(result) = '\0';
+
+	for (num = 0; num < numargs; num++)
+	{
+		typetup = SearchSysCacheTuple(TYPEOID,
+									  ObjectIdGetDatum(oidArray[num]),
+									  0, 0, 0);
+		if (HeapTupleIsValid(typetup))
+		{
+			char	   *s;
+
+			s = NameStr(((Form_pg_type) GETSTRUCT(typetup))->typname);
+			StrNCpy(VARDATA(result) + strlen(VARDATA(result)), s,
+					NAMEDATALEN);
+			strcat(VARDATA(result), " ");
 		}
+		else
+			strcat(VARDATA(result), "- ");
 	}
 	VARSIZE(result) = strlen(VARDATA(result)) + VARHDRSZ;
 	return result;
@@ -290,6 +308,3 @@ regproctooid(RegProcedure rp)
 }
 
 /* (see int.c for comparison/operation routines) */
-
-
-/* ========== PRIVATE ROUTINES ========== */
