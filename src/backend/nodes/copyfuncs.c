@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.201 2002/08/15 16:36:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.202 2002/08/19 00:11:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1568,7 +1568,26 @@ _copyAConst(A_Const *from)
 {
 	A_Const    *newnode = makeNode(A_Const);
 
-	newnode->val = *((Value *) (copyObject(&(from->val))));
+	/* This part must duplicate _copyValue */
+	newnode->val.type = from->val.type;
+	switch (from->val.type)
+	{
+		case T_Integer:
+			newnode->val.val.ival = from->val.val.ival;
+			break;
+		case T_Float:
+		case T_String:
+		case T_BitString:
+			newnode->val.val.str = pstrdup(from->val.val.str);
+			break;
+		case T_Null:
+			/* nothing to do */
+			break;
+		default:
+			elog(ERROR, "_copyAConst: unknown node type %d", from->val.type);
+			break;
+	}
+
 	Node_Copy(from, newnode, typename);
 
 	return newnode;
@@ -2624,6 +2643,45 @@ _copyCreateSchemaStmt(CreateSchemaStmt *from)
 	return newnode;
 }
 
+static CreateConversionStmt *
+_copyCreateConversionStmt(CreateConversionStmt *from)
+{
+	CreateConversionStmt *newnode = makeNode(CreateConversionStmt);
+
+	Node_Copy(from, newnode, conversion_name);
+	newnode->for_encoding_name = pstrdup(from->for_encoding_name);
+	newnode->to_encoding_name = pstrdup(from->to_encoding_name);
+	Node_Copy(from, newnode, func_name);
+	newnode->def = from->def;
+
+	return newnode;
+}
+
+static CreateCastStmt *
+_copyCreateCastStmt(CreateCastStmt *from)
+{
+	CreateCastStmt *newnode = makeNode(CreateCastStmt);
+
+	Node_Copy(from, newnode, sourcetype);
+	Node_Copy(from, newnode, targettype);
+	Node_Copy(from, newnode, func);
+	newnode->implicit = from->implicit;
+
+	return newnode;
+}
+
+static DropCastStmt *
+_copyDropCastStmt(DropCastStmt *from)
+{
+	DropCastStmt *newnode = makeNode(DropCastStmt);
+
+	Node_Copy(from, newnode, sourcetype);
+	Node_Copy(from, newnode, targettype);
+	newnode->behavior = from->behavior;
+
+	return newnode;
+}
+
 
 /* ****************************************************************
  *					pg_list.h copy functions
@@ -2634,6 +2692,8 @@ static Value *
 _copyValue(Value *from)
 {
 	Value	   *newnode = makeNode(Value);
+
+	/* See also _copyAConst when changing this code! */
 
 	newnode->type = from->type;
 	switch (from->type)
@@ -2646,7 +2706,11 @@ _copyValue(Value *from)
 		case T_BitString:
 			newnode->val.str = pstrdup(from->val.str);
 			break;
+		case T_Null:
+			/* nothing to do */
+			break;
 		default:
+			elog(ERROR, "_copyValue: unknown node type %d", from->type);
 			break;
 	}
 	return newnode;
@@ -2839,6 +2903,7 @@ copyObject(void *from)
 		case T_Float:
 		case T_String:
 		case T_BitString:
+		case T_Null:
 			retval = _copyValue(from);
 			break;
 		case T_List:
@@ -3042,6 +3107,15 @@ copyObject(void *from)
 			break;
 		case T_CreateSchemaStmt:
 			retval = _copyCreateSchemaStmt(from);
+			break;
+		case T_CreateConversionStmt:
+			retval = _copyCreateConversionStmt(from);
+			break;
+		case T_CreateCastStmt:
+			retval = _copyCreateCastStmt(from);
+			break;
+		case T_DropCastStmt:
+			retval = _copyDropCastStmt(from);
 			break;
 
 		case T_A_Expr:

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.150 2002/08/15 16:36:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.151 2002/08/19 00:11:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1460,6 +1460,51 @@ _equalCreateSchemaStmt(CreateSchemaStmt *a, CreateSchemaStmt *b)
 }
 
 static bool
+_equalCreateConversionStmt(CreateConversionStmt *a, CreateConversionStmt *b)
+{
+	if (!equal(a->conversion_name, b->conversion_name))
+		return false;
+	if (!equalstr(a->for_encoding_name, b->for_encoding_name))
+		return false;
+	if (!equalstr(a->to_encoding_name, b->to_encoding_name))
+		return false;
+	if (!equal(a->func_name, b->func_name))
+		return false;
+	if (a->def != b->def)
+		return false;
+
+	return true;
+}
+
+static bool
+_equalCreateCastStmt(CreateCastStmt *a, CreateCastStmt *b)
+{
+	if (!equal(a->sourcetype, b->sourcetype))
+		return false;
+	if (!equal(a->targettype, b->targettype))
+		return false;
+	if (!equal(a->func, b->func))
+		return false;
+	if (a->implicit != b->implicit)
+		return false;
+
+	return true;
+}
+
+static bool
+_equalDropCastStmt(DropCastStmt *a, DropCastStmt *b)
+{
+	if (!equal(a->sourcetype, b->sourcetype))
+		return false;
+	if (!equal(a->targettype, b->targettype))
+		return false;
+	if (a->behavior != b->behavior)
+		return false;
+
+	return true;
+}
+
+static bool
 _equalAExpr(A_Expr *a, A_Expr *b)
 {
 	if (a->oper != b->oper)
@@ -1881,7 +1926,11 @@ _equalValue(Value *a, Value *b)
 		case T_String:
 		case T_BitString:
 			return strcmp(a->val.str, b->val.str) == 0;
+		case T_Null:
+			/* nothing to do */
+			break;
 		default:
+			elog(ERROR, "_equalValue: unknown node type %d", a->type);
 			break;
 	}
 
@@ -2028,10 +2077,12 @@ equal(void *a, void *b)
 				retval = true;
 			}
 			break;
+
 		case T_Integer:
 		case T_Float:
 		case T_String:
 		case T_BitString:
+		case T_Null:
 			retval = _equalValue(a, b);
 			break;
 
@@ -2214,6 +2265,15 @@ equal(void *a, void *b)
 			break;
 		case T_CreateSchemaStmt:
 			retval = _equalCreateSchemaStmt(a, b);
+			break;
+		case T_CreateConversionStmt:
+			retval = _equalCreateConversionStmt(a, b);
+			break;
+		case T_CreateCastStmt:
+			retval = _equalCreateCastStmt(a, b);
+			break;
+		case T_DropCastStmt:
+			retval = _equalDropCastStmt(a, b);
 			break;
 
 		case T_A_Expr:
