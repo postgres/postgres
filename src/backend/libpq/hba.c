@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.65 2001/08/21 00:33:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.66 2001/08/21 14:48:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -892,7 +892,7 @@ ident_unix(int sock, char *ident_user)
 	if (pass == NULL)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-			 "ident_unix: unknown local user with uid %d\n",
+			 "ident_unix: unknown local user with uid %d\n", peercred.uid);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		return false;
