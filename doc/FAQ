@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Jan 29 23:02:37 EST 2005
+   Last updated: Sat Jan 29 23:04:53 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -56,7 +56,7 @@
    4.4) What is the maximum size for a row, a table, and a database?
    4.5) How much database disk space is required to store data from a
    typical text file?
-   4.6) My queries are slow or don't make use of the indexes. Why?
+   4.6) Why are my queries slow? Why don't they make use of indexes?
    4.7) How do I see how the query optimizer is evaluating my query?
    4.8) What is an R-tree index?
    4.9) What is the Genetic Query Optimizer?
@@ -683,7 +683,7 @@ log_*
    
    NULLs are stored as bitmaps, so they use very little space.
    
-    4.6) My queries are slow or don't make use of the indexes. Why?
+    4.6) Why are my queries slow? Why don't they make use of indexes?
     
    Indexes are not automatically used by every query. Indexes are only
    used if the table is larger than a minimum size, and the query selects
