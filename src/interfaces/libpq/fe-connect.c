@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.238 2003/04/28 04:29:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.239 2003/04/28 04:52:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,7 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	{"user", "PGUSER", NULL, NULL,
 	"Database-User", "", 20},
 
-	{"password", "PGPASSWORD", DefaultPassword, NULL,
+	{"password", "PGPASSWORD", NULL, NULL,
 	"Database-Password", "*", 20},
 
 	{"connect_timeout", "PGCONNECT_TIMEOUT", NULL, NULL,
@@ -1976,6 +1976,14 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 	int			linenr = 0,
 				i;
 
+	/*
+	 * We have to special-case the environment variable PGSERVICE here,
+	 * since this is and should be called before inserting environment
+	 * defaults for other connection options.
+	 */
+	if (service == NULL)
+		service = getenv("PGSERVICE");
+
 	if (service != NULL)
 	{
 		FILE	   *f;
@@ -2060,21 +2068,30 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 					 *	name of the service
 					 */
 					for (i = 0; options[i].keyword; i++)
+					{
 						if (strcmp(options[i].keyword, "dbname") == 0)
+						{
 							if (options[i].val == NULL)
 								options[i].val = strdup(service);
+							break;
+						}
+					}
 
 					val = line + strlen(line) + 1;
 
+					/*
+					 * Set the parameter --- but don't override any
+					 * previous explicit setting.
+					 */
 					found_keyword = 0;
 					for (i = 0; options[i].keyword; i++)
 					{
 						if (strcmp(options[i].keyword, key) == 0)
 						{
-							if (options[i].val != NULL)
-								free(options[i].val);
-							options[i].val = strdup(val);
+							if (options[i].val == NULL)
+								options[i].val = strdup(val);
 							found_keyword = 1;
+							break;
 						}
 					}
 
@@ -2273,7 +2290,10 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 	/* Done with the modifiable input string */
 	free(buf);
 
-	/* Now check for service info */
+	/*
+	 * If there's a service spec, use it to obtain any not-explicitly-given
+	 * parameters.
+	 */
 	if (parseServiceInfo(options, errorMessage))
 	{
 		PQconninfoFree(options);
@@ -2282,12 +2302,12 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 
 	/*
 	 * Get the fallback resources for parameters not specified in the
-	 * conninfo string.
+	 * conninfo string nor the service.
 	 */
 	for (option = options; option->keyword != NULL; option++)
 	{
 		if (option->val != NULL)
-			continue;			/* Value was in conninfo */
+			continue;			/* Value was in conninfo or service */
 
 		/*
 		 * Try to get the environment variable fallback
@@ -2322,15 +2342,9 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		}
 
 		/*
-		 * Special handling for dbname
+		 * We used to special-case dbname too, but it's easier to let the
+		 * backend handle the fallback for that.
 		 */
-		if (strcmp(option->keyword, "dbname") == 0)
-		{
-			tmp = conninfo_getval(options, "user");
-			if (tmp)
-				option->val = strdup(tmp);
-			continue;
-		}
 	}
 
 	return options;
