@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.23 2004/08/29 05:06:59 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.24 2004/12/30 09:36:37 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -242,7 +242,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	enum COMPAT_MODE compat = c;
 	struct connection *this;
-	char	   *dbname = strdup(name),
+	char	   *dbname = name ? strdup(name) : NULL,
 			   *host = NULL,
 			   *tmp,
 			   *port = NULL,
@@ -275,75 +275,100 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	if (dbname == NULL && connection_name == NULL)
 		connection_name = "DEFAULT";
 
-	/* get the detail information out of dbname */
-	if (strchr(dbname, '@') != NULL)
-	{
-		/* old style: dbname[@server][:port] */
-		tmp = strrchr(dbname, ':');
-		if (tmp != NULL)		/* port number given */
+	if (dbname != NULL)
+	{	
+		/* get the detail information out of dbname */
+		if (strchr(dbname, '@') != NULL)
 		{
-			port = strdup(tmp + 1);
-			*tmp = '\0';
+			/* old style: dbname[@server][:port] */
+			tmp = strrchr(dbname, ':');
+			if (tmp != NULL)		/* port number given */
+			{
+				port = strdup(tmp + 1);
+				*tmp = '\0';
+			}
+
+			tmp = strrchr(dbname, '@');
+			if (tmp != NULL)		/* host name given */
+			{
+				host = strdup(tmp + 1);
+				*tmp = '\0';
+			}
+			realname = strdup(dbname);
 		}
-
-		tmp = strrchr(dbname, '@');
-		if (tmp != NULL)		/* host name given */
+		else if (strncmp(dbname, "tcp:", 4) == 0 || strncmp(dbname, "unix:", 5) == 0)
 		{
-			host = strdup(tmp + 1);
-			*tmp = '\0';
-		}
-		realname = strdup(dbname);
-	}
-	else if (strncmp(dbname, "tcp:", 4) == 0 || strncmp(dbname, "unix:", 5) == 0)
-	{
-		int			offset = 0;
+			int			offset = 0;
 
-		/*
-		 * only allow protocols tcp and unix
-		 */
-		if (strncmp(dbname, "tcp:", 4) == 0)
-			offset = 4;
-		else if (strncmp(dbname, "unix:", 5) == 0)
-			offset = 5;
-
-		if (strncmp(dbname + offset, "postgresql://", strlen("postgresql://")) == 0)
-		{
-
-			/*------
-			 * new style:
-			 *	<tcp|unix>:postgresql://server[:port|:/unixsocket/path:]
-			 *	[/db name][?options]
-			 *------
+			/*
+			 * only allow protocols tcp and unix
 			 */
-			offset += strlen("postgresql://");
+			if (strncmp(dbname, "tcp:", 4) == 0)
+				offset = 4;
+			else if (strncmp(dbname, "unix:", 5) == 0)
+				offset = 5;
 
-			tmp = strrchr(dbname + offset, '?');
-			if (tmp != NULL)	/* options given */
+			if (strncmp(dbname + offset, "postgresql://", strlen("postgresql://")) == 0)
 			{
-				options = strdup(tmp + 1);
-				*tmp = '\0';
-			}
 
-			tmp = last_dir_separator(dbname + offset);
-			if (tmp != NULL)	/* database name given */
-			{
-				realname = strdup(tmp + 1);
-				*tmp = '\0';
-			}
+				/*------
+				 * new style:
+				 *	<tcp|unix>:postgresql://server[:port|:/unixsocket/path:]
+				 *	[/db name][?options]
+				 *------
+				 */
+				offset += strlen("postgresql://");
 
-			tmp = strrchr(dbname + offset, ':');
-			if (tmp != NULL)	/* port number or Unix socket path given */
-			{
-				char	   *tmp2;
-
-				*tmp = '\0';
-				if ((tmp2 = strchr(tmp + 1, ':')) != NULL)
+				tmp = strrchr(dbname + offset, '?');
+				if (tmp != NULL)	/* options given */
 				{
-					*tmp2 = '\0';
-					host = strdup(tmp + 1);
-					if (strncmp(dbname, "unix:", 5) != 0)
+					options = strdup(tmp + 1);
+					*tmp = '\0';
+				}
+
+				tmp = last_dir_separator(dbname + offset);
+				if (tmp != NULL)	/* database name given */
+				{
+					realname = strdup(tmp + 1);
+					*tmp = '\0';
+				}
+
+				tmp = strrchr(dbname + offset, ':');
+				if (tmp != NULL)	/* port number or Unix socket path given */
+				{
+					char	   *tmp2;
+
+					*tmp = '\0';
+					if ((tmp2 = strchr(tmp + 1, ':')) != NULL)
 					{
-						ECPGlog("connect: socketname %s given for TCP connection in line %d\n", host, lineno);
+						*tmp2 = '\0';
+						host = strdup(tmp + 1);
+						if (strncmp(dbname, "unix:", 5) != 0)
+						{
+							ECPGlog("connect: socketname %s given for TCP connection in line %d\n", host, lineno);
+							ECPGraise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, realname ? realname : "<DEFAULT>");
+							if (host)
+								ECPGfree(host);
+							if (port)
+								ECPGfree(port);
+							if (options)
+								ECPGfree(options);
+							if (realname)
+								ECPGfree(realname);
+							if (dbname)
+								ECPGfree(dbname);
+							return false;
+						}
+					}
+					else
+						port = strdup(tmp + 1);
+				}
+
+				if (strncmp(dbname, "unix:", 5) == 0)
+				{
+					if (strcmp(dbname + offset, "localhost") != 0 && strcmp(dbname + offset, "127.0.0.1") != 0)
+					{
+						ECPGlog("connect: non-localhost access via sockets in line %d\n", lineno);
 						ECPGraise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, realname ? realname : "<DEFAULT>");
 						if (host)
 							ECPGfree(host);
@@ -359,37 +384,17 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 					}
 				}
 				else
-					port = strdup(tmp + 1);
-			}
+					host = strdup(dbname + offset);
 
-			if (strncmp(dbname, "unix:", 5) == 0)
-			{
-				if (strcmp(dbname + offset, "localhost") != 0 && strcmp(dbname + offset, "127.0.0.1") != 0)
-				{
-					ECPGlog("connect: non-localhost access via sockets in line %d\n", lineno);
-					ECPGraise(lineno, ECPG_CONNECT, ECPG_SQLSTATE_SQLCLIENT_UNABLE_TO_ESTABLISH_SQLCONNECTION, realname ? realname : "<DEFAULT>");
-					if (host)
-						ECPGfree(host);
-					if (port)
-						ECPGfree(port);
-					if (options)
-						ECPGfree(options);
-					if (realname)
-						ECPGfree(realname);
-					if (dbname)
-						ECPGfree(dbname);
-					return false;
-				}
 			}
 			else
-				host = strdup(dbname + offset);
-
+				realname = strdup(dbname);
 		}
 		else
 			realname = strdup(dbname);
 	}
 	else
-		realname = strdup(dbname);
+		realname = NULL;
 
 	/* add connection to our list */
 #ifdef ENABLE_THREAD_SAFETY
