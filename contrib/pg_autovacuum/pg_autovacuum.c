@@ -118,6 +118,12 @@ init_table_info(PGresult *res, int row, db_info * dbi)
 	new_tbl->reltuples = atoi(PQgetvalue(res, row, PQfnumber(res, "reltuples")));
 	new_tbl->relpages = atoi(PQgetvalue(res, row, PQfnumber(res, "relpages")));
 
+	log_entry(PQgetvalue(res, row, PQfnumber(res, "relisshared")));
+	if (strcmp("t", PQgetvalue(res, row, PQfnumber(res, "relisshared"))))
+	  new_tbl->relisshared = 0;
+	else
+	  new_tbl->relisshared = 1;
+
 	new_tbl->analyze_threshold =
 		args->analyze_base_threshold + args->analyze_scaling_factor * new_tbl->reltuples;
 	new_tbl->vacuum_threshold =
@@ -213,7 +219,7 @@ update_table_list(db_info * dbi)
 		 * both remove tables from the list that no longer exist and add
 		 * tables to the list that are new
 		 */
-		res = send_query(query_table_stats(dbi), dbi);
+		res = send_query((char *) TABLE_STATS_QUERY, dbi);
 		t = PQntuples(res);
 
 		/*
@@ -353,7 +359,7 @@ print_table_info(tbl_info * tbl)
 {
 	sprintf(logbuffer, "  table name:     %s.%s", tbl->dbi->dbname, tbl->table_name);
 	log_entry(logbuffer);
-	sprintf(logbuffer, "     relfilenode: %i", tbl->relfilenode);
+	sprintf(logbuffer, "     relfilenode: %i;   relisshared: %i", tbl->relfilenode, tbl->relisshared);
 	log_entry(logbuffer);
 	sprintf(logbuffer, "     reltuples: %i;  relpages: %i", tbl->reltuples, tbl->relpages);
 	log_entry(logbuffer);
@@ -688,19 +694,7 @@ print_db_info(db_info * dbi, int print_tbl_list)
 
 /* End of DB List Management Function */
 
-/* Begninning of misc Functions */
-
-
-char *
-query_table_stats(db_info * dbi)
-{
-	if (!strcmp(dbi->dbname, "template1"))		/* Use template1 to
-												 * monitor the system
-												 * tables */
-		return (char *) TABLE_STATS_ALL;
-	else
-		return (char *) TABLE_STATS_USER;
-}
+/* Beginning of misc Functions */
 
 /* Perhaps add some test to this function to make sure that the stats we need are available */
 PGconn *
@@ -752,6 +746,9 @@ send_query(const char *query, db_info * dbi)
 
 	if (NULL == dbi->conn)
 		return NULL;
+
+	if (args->debug >= 4)
+	  log_entry(query);
 
 	res = PQexec(dbi->conn, query);
 
@@ -964,7 +961,7 @@ main(int argc, char *argv[])
 	int			j = 0,
 				loops = 0;
 
-/*	int numInserts, numDeletes, */
+  /*	int numInserts, numDeletes, */
 	int			sleep_secs;
 	Dllist	   *db_list;
 	Dlelem	   *db_elem,
@@ -1055,7 +1052,7 @@ main(int argc, char *argv[])
 
 				if (0 == xid_wraparound_check(dbs));
 				{
-					res = send_query(query_table_stats(dbs), dbs);		/* Get an updated
+		res = send_query(TABLE_STATS_QUERY, dbs);		/* Get an updated
 																		 * snapshot of this dbs
 																		 * table stats */
 					for (j = 0; j < PQntuples(res); j++)
@@ -1087,7 +1084,11 @@ main(int argc, char *argv[])
 								 */
 								if ((tbl->curr_vacuum_count - tbl->CountAtLastVacuum) >= tbl->vacuum_threshold)
 								{
-									snprintf(buf, sizeof(buf), "VACUUM ANALYZE \"%s\"", tbl->table_name);
+				/* if relisshared = t and database != template1 then only do an analyze */
+				if((tbl->relisshared > 0) && (strcmp("template1",dbs->dbname)))
+				  snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
+				else	
+				  snprintf(buf, sizeof(buf), "VACUUM ANALYZE %s", tbl->table_name);
 									if (args->debug >= 1)
 									{
 										sprintf(logbuffer, "Performing: %s", buf);
@@ -1101,7 +1102,7 @@ main(int argc, char *argv[])
 								}
 								else if ((tbl->curr_analyze_count - tbl->CountAtLastAnalyze) >= tbl->analyze_threshold)
 								{
-									snprintf(buf, sizeof(buf), "ANALYZE \"%s\"", tbl->table_name);
+				snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
 									if (args->debug >= 1)
 									{
 										sprintf(logbuffer, "Performing: %s", buf);

@@ -34,8 +34,8 @@
 #define VACUUM_ANALYZE		0
 #define ANALYZE_ONLY		1
 
-#define TABLE_STATS_ALL		"select a.relfilenode,a.relname,a.relnamespace,a.relpages,a.reltuples,b.schemaname,b.n_tup_ins,b.n_tup_upd,b.n_tup_del from pg_class a, pg_stat_all_tables b where a.relfilenode=b.relid"
-#define TABLE_STATS_USER	"select a.relfilenode,a.relname,a.relnamespace,a.relpages,a.reltuples,b.schemaname,b.n_tup_ins,b.n_tup_upd,b.n_tup_del from pg_class a, pg_stat_user_tables b where a.relfilenode=b.relid"
+#define TABLE_STATS_QUERY	"select a.relfilenode,a.relname,a.relnamespace,a.relpages,a.relisshared,a.reltuples,b.schemaname,b.n_tup_ins,b.n_tup_upd,b.n_tup_del from pg_class a, pg_stat_all_tables b where a.relfilenode=b.relid and a.relkind = 'r'"
+
 #define FRONTEND
 #define PAGES_QUERY "select relfilenode,reltuples,relpages from pg_class where relfilenode=%i"
 #define FROZENOID_QUERY "select oid,age(datfrozenxid) from pg_database where datname = 'template1'"
@@ -86,6 +86,7 @@ struct tableinfo
 			   *table_name;
 	int			relfilenode,
 				reltuples,
+				relisshared,
 				relpages;
 	long		analyze_threshold,
 				vacuum_threshold;
@@ -132,7 +133,6 @@ static int	check_stats_enabled(db_info * dbi);
 static PGconn *db_connect(db_info * dbi);
 static void db_disconnect(db_info * dbi);
 static PGresult *send_query(const char *query, db_info * dbi);
-static char *query_table_stats(db_info * dbi);
 
 /* Other Generally needed Functions */
 static void daemonize(void);

@@ -2,66 +2,97 @@ pg_autovacuum README
 --------------------
 
 pg_autovacuum is a libpq client program that monitors all the
-databases associated with a postgresql server.  It uses the stats
+databases associated with a PostgreSQL server.  It uses the statistics
 collector to monitor insert, update and delete activity.  
 
-When a table exceeds its insert or delete threshold (more detail
-on thresholds below) then that table will be  vacuumed or analyzed.  
+When a table exceeds a insert or delete threshold (for more detail on
+thresholds, see "Vacuum and Analyze" below) then that table will be
+vacuumed and/or analyzed.
 
-This allows postgresql to keep the fsm and table statistics up to
-date, and eliminates the need to schedule periodic vacuums.
+This allows PostgreSQL to keep the FSM (Free Space Map) and table
+statistics up to date, and eliminates the need to schedule periodic
+vacuums.
 
 The primary benefit of pg_autovacuum is that the FSM and table
-statistic information are updated as needed.  When a table is actively
-changing, pg_autovacuum will perform the necessary vacuums and
-analyzes, whereas if a table remains static, no cycles will be wasted
-performing unnecessary vacuums/analyzes.
+statistic information are updated more nearly as frequently as needed.
+When a table is actively changing, pg_autovacuum will perform the
+VACUUMs and ANALYZEs that such a table needs, whereas if a table
+remains static, no cycles will be wasted performing this
+unnecessarily.
 
 A secondary benefit of pg_autovacuum is that it ensures that a
-database wide vacuum is performed prior to xid wraparound.  This is an
+database wide vacuum is performed prior to XID wraparound.  This is an
 important, if rare, problem, as failing to do so can result in major
-data loss.
-
+data loss.  (See the section in the _Administrator's Guide_ entitled
+"Preventing transaction ID wraparound failures" for more details.)
 
 KNOWN ISSUES:
 -------------
-pg_autovacuum has been tested under Redhat Linux (by me) and Solaris (by
-Christopher B. Browne) and all known bugs have been resolved.  Please report
-any problems to the hackers list.
 
-pg_autovacuum does not get started automatically by either the postmaster or
-by pg_ctl.  Along the sames lines, when the postmaster exits no one tells
-pg_autovacuum.  The result is that at the start of the next loop,
-pg_autovacuum fails to connect to the server and exits.  Any time  it fails
-to connect pg_autovacuum exits.
+pg_autovacuum has been tested under Redhat Linux (by me) and Debian
+GNU/Linux and Solaris (by Christopher B. Browne) and all known bugs
+have been resolved.  Please report any problems to the hackers list.
 
-pg_autovacuum requires that the stats system be enabled and reporting row
-level stats.  The overhead of the stats system has been shown to be
-significant under certain workloads.  For instance a tight loop of queries
-performing "select 1" was nearly 30% slower with stats enabled.  However,
-in practice with more realistic workloads, the stats system overhead is
-usually nominal.
+pg_autovacuum requires that the statistics system be enabled and
+reporting row level stats.  The overhead of the stats system has been
+shown to be significant costly under certain workloads.  For instance,
+a tight loop of queries performing "select 1" was found to run nearly
+30% slower when stats were enabled.  However, in practice, with more
+realistic workloads, the stats system overhead is usually nominal.
 
+pg_autovacuum does not get started automatically by either the
+postmaster or by pg_ctl.  Similarly, when the postmaster exits, no one
+tells pg_autovacuum.  The result of that is that at the start of the
+next loop, pg_autovacuum will fail to connect to the server and
+exit().  Any time it fails to connect pg_autovacuum exit()s.
+
+While pg_autovacuum can manage vacuums for as many databases as you
+may have tied to a particular PostgreSQL postmaster, it can only
+connect to a single PostgreSQL postmaster.  Thus, if you have multiple
+postmasters on a particular host, you will need multiple pg_autovacuum
+instances, and they have no way, at present, to coordinate between one
+another to ensure that they do not concurrently vacuum big tables.
+
+TODO:
+-----
+
+At present, there are no sample scripts to automatically start up
+pg_autovacuum along with the database.  It would be desirable to have
+a SysV script to start up pg_autovacuum after PostgreSQL has been
+started.
+
+Some users have expressed interest in making pg_autovacuum more
+configurable so that certain tables known to be inactive could be
+excluded from being vacuumed.  It would probably make sense to
+introduce this sort of functionality by providing arguments to specify
+the database and schema in which to find a configuration table.
 
 INSTALL:
 --------
 
-As of postgresql v7.4 pg_autovacuum is included in the main source tree
-under contrib.  Therefore you just make && make install (similar to most other
-contrib modules) and it will be installed for you.
+As of postgresql v7.4 pg_autovacuum is included in the main source
+tree under contrib.  Therefore you merely need to "make && make
+install" (similar to most other contrib modules) and it will be
+installed for you.
 
-If you are using an earlier version of postgresql just uncompress the tar.gz
-into the contrib directory and modify the contrib/Makefile to include the pg_autovacuum
-directory.  pg_autovacuum will then be made as part of the standard
-postgresql install.
+If you are using an earlier version of PostgreSQL, uncompress the
+tar.gz file into the contrib directory and modify the contrib/Makefile
+to include the pg_autovacuum directory.  pg_autovacuum will then be
+built as part of the standard postgresql install.
 
-make sure that the folowing are set in postgresql.conf
+make sure that the following are set in postgresql.conf:
 
   stats_start_collector = true
   stats_row_level = true
 
-start up the postmaster, then execute the pg_autovacuum executable.
+Start up the postmaster, then execute the pg_autovacuum executable.
 
+If you have a script that automatically starts up the PostgreSQL
+instance, you might add in, after that, something similar to the
+following:
+
+  sleep 10    # To give the database some time to start up
+  $PGBINS/pg_autovacuum -D -s $SBASE -S $SSCALE ... [other arguments]
 
 Command line arguments:
 -----------------------
@@ -69,7 +100,7 @@ Command line arguments:
 pg_autovacuum has the following optional arguments:
 
 -d debug: 0 silent, 1 basic info, 2 more debug info,  etc...
--D dameonize: Detach from tty and run in background.
+-D daemonize: Detach from tty and run in background.
 -s sleep base value: see "Sleeping" below.
 -S sleep scaling factor: see "Sleeping" below.
 -v vacuum base threshold: see Vacuum and Analyze.
@@ -80,18 +111,18 @@ pg_autovacuum has the following optional arguments:
 -U username: Username pg_autovacuum will use to connect with, if not
    specified the current username is used.
 -P password: Password pg_autovacuum will use to connect with.
--H host: host name or IP to connect too.
+-H host: host name or IP to connect to.
 -p port: port used for connection.
 -h help: list of command line options.
 
-All arguments have default values defined in pg_autovacuum.h.  At the
-time of writing they are:
+Numerous arguments have default values defined in pg_autovacuum.h.  At
+the time of writing they are:
 
 -d 1
 -v 1000
 -V 2   
--a 500 (half of -v is not specified)
--A 1   (half of -v is not specified)
+-a 500 (half of -v if not specified)
+-A 1   (half of -v if not specified)
 -s 300 (5 minutes)
 -S 2
 
@@ -99,13 +130,14 @@ time of writing they are:
 Vacuum and Analyze:
 -------------------
 
-pg_autovacuum performs either a vacuum analyze or just analyze depending
-on the quantity and type of table activity (insert, update, or delete):
+pg_autovacuum performs either a VACUUM ANALYZE or just ANALYZE
+depending on the mixture of table activity (insert, update, or
+delete):
 
 - If the number of (inserts + updates + deletes) > AnalyzeThreshold, then
   only an analyze is performed.
 
-- If the number of (deletes + updates ) > VacuumThreshold, then a
+- If the number of (deletes + updates) > VacuumThreshold, then a
   vacuum analyze is performed.
 
 deleteThreshold is equal to: 
@@ -115,26 +147,27 @@ insertThreshold is equal to:
     analyze_base_value + (analyze_scaling_factor * "number of tuples in the table")
 
 The AnalyzeThreshold defaults to half of the VacuumThreshold since it
-represents a much less expensive operation (approx 5%-10% of vacuum), and
-running it more often should not substantially degrade system performance.
+represents a much less expensive operation (approx 5%-10% of vacuum),
+and running ANALYZE more often should not substantially degrade system
+performance.
 
 Sleeping:
 ---------
 
 pg_autovacuum sleeps for a while after it is done checking all the
 databases.  It does this in order to limit the amount of system
-resources it consumes.  This also allows the system administrator to
+resources it consumes.  This allows the system administrator to
 configure pg_autovacuum to be more or less aggressive.
 
 Reducing the sleep time will cause pg_autovacuum to respond more
 quickly to changes, whether they be database addition/removal, table
 addition/removal, or just normal table activity.
 
-On the other hand, setting pg_autovaccum to sleep values to agressivly
-(for too short a period of time) can have a negative effect on server
-performance.  If a table gets vacuumed 5 times during the course of a
-large update, this is likely to take much longer than if the table was
-vacuumed only once, at the end.
+On the other hand, setting pg_autovacuum to sleep values too
+aggressively (to too short periods of time) can have a negative effect
+on server performance.  For instance, if a table gets vacuumed 5 times
+during the course of a large set of updates, this is likely to take a
+lot more work than if the table was vacuumed just once, at the end.
 
 The total time it sleeps is equal to:
 
@@ -142,15 +175,17 @@ The total time it sleeps is equal to:
   loop"
 
 Note that timing measurements are made in seconds; specifying
-"pg_vacuum -s 1" means pg_autovacuum could poll the database upto 60 times
-minute.  In a system with large tables where vacuums may run for several
-minutes, longer times between vacuums are likely to be appropriate.
+"pg_vacuum -s 1" means pg_autovacuum could poll the database up to 60
+times minute.  In a system with large tables where vacuums may run for
+several minutes, rather longer times between vacuums are likely to be
+appropriate.
 
 What pg_autovacuum monitors:
 ----------------------------
 
-pg_autovacuum dynamically generates a list of all databases and tables that
-exist on the server.  It will dynamically add and remove databases and
-tables that are removed from the database server while pg_autovacuum is
-running.  Overhead is fairly small per object.  For example: 10 databases
-with 10 tables each appears to less than 10k of memory on my Linux box.
+pg_autovacuum dynamically generates a list of all databases and tables
+that exist on the server.  It will dynamically add and remove
+databases and tables that are removed from the database server while
+pg_autovacuum is running.  Overhead is fairly small per object.  For
+example: 10 databases with 10 tables each appears to less than 10k of
+memory on my Linux box.
