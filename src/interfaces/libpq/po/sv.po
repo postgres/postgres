@@ -2,15 +2,15 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003.
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/po/sv.po,v 1.7 2003/08/11 15:19:58 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/po/sv.po,v 1.8 2003/08/20 21:10:01 petere Exp $
 #
 # Use these quotes: "%s"
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-08-09 11:49+0200\n"
-"PO-Revision-Date: 2003-08-09 12:06+0200\n"
+"POT-Creation-Date: 2003-08-14 04:17-0300\n"
+"PO-Revision-Date: 2003-08-15 08:46+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -30,7 +30,7 @@ msgstr "kunde inte ställa in uttag (socket) i blockerande läge: %s\n"
 #: fe-auth.c:411 fe-auth.c:415
 #, c-format
 msgid "Kerberos 5 authentication rejected: %*s\n"
-msgstr "Kerberos-5-äkthetskontroll vägras: %*s\n"
+msgstr "Kerberos-5-autentisering vägras: %*s\n"
 
 #: fe-auth.c:441
 #, c-format
@@ -209,70 +209,72 @@ msgstr "anslutningspekare är NULL\n"
 msgid ""
 "WARNING: Password file %s has world or group read access; permission should "
 "be u=rw (0600)\n"
-msgstr ""
-"VARNING: Lösenordsfilen %s har läsrättigheter för världen och gruppen; "
-"rättigheten skall vara u=rw (0600)\n"
+msgstr "VARNING: Lösenordsfilen %s har läsrättigheter för världen och gruppen; rättigheten skall vara u=rw (0600)\n"
 
-#: fe-exec.c:475
+#: fe-exec.c:484
 msgid "NOTICE"
 msgstr "NOTIS"
 
-#: fe-exec.c:628 fe-exec.c:687
+#: fe-exec.c:637 fe-exec.c:689
 msgid "command string is a null pointer\n"
 msgstr "kommandosträngen är en null-pekare\n"
 
-#: fe-exec.c:680 fe-exec.c:1320
-msgid "function requires at least 3.0 protocol\n"
-msgstr "funktionen kräver minst version 3.0 av protokollet\n"
+#: fe-exec.c:724
+msgid "statement name is a null pointer\n"
+msgstr "satsens namn  är en null-pekare\n"
 
-#: fe-exec.c:826
+#: fe-exec.c:755
 msgid "no connection to the server\n"
 msgstr "inte förbunden till servern\n"
 
-#: fe-exec.c:833
+#: fe-exec.c:762
 msgid "another command is already in progress\n"
 msgstr "ett annat kommando pågår redan\n"
 
-#: fe-exec.c:1018
+#: fe-exec.c:798 fe-exec.c:1432
+msgid "function requires at least 3.0 protocol\n"
+msgstr "funktionen kräver minst version 3.0 av protokollet\n"
+
+#: fe-exec.c:1100
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "oväntad asyncStatus: %d\n"
 
-#: fe-exec.c:1097
+#: fe-exec.c:1205
 msgid "COPY terminated by new PQexec"
 msgstr "COPY terminerad av ny PQexec"
 
-#: fe-exec.c:1109
+#: fe-exec.c:1213
 msgid "COPY IN state must be terminated first\n"
 msgstr "COPY IN-läge måste avslutas först\n"
 
-#: fe-exec.c:1130
+#: fe-exec.c:1233
 msgid "COPY OUT state must be terminated first\n"
 msgstr "COPY OUT-läge måste avslutas först\n"
 
-#: fe-exec.c:1234 fe-exec.c:1288 fe-exec.c:1362
+#: fe-exec.c:1336 fe-exec.c:1390 fe-exec.c:1474
 msgid "no COPY in progress\n"
 msgstr "ingen COPY pågår\n"
 
-#: fe-exec.c:1554
+#: fe-exec.c:1666
 msgid "connection in wrong state\n"
 msgstr "förbindelse i felaktigt tillstånd\n"
 
-#: fe-exec.c:1585
+#: fe-exec.c:1697
 msgid "invalid ExecStatusType code"
 msgstr "ogiltig ExecStatusType-kod"
 
-#: fe-exec.c:1649 fe-exec.c:1672
+#: fe-exec.c:1761 fe-exec.c:1784
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "kolumnnummer %d är utanför giltigt intervall 0..%d"
 
-#: fe-exec.c:1665
+#: fe-exec.c:1777
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "radnummer %d är utanför giltigt intervall 0..%d"
 
-#: fe-exec.c:1902
+#: fe-exec.c:2014
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "kunde inte tolka svaret från servern: %s"
@@ -495,4 +497,3 @@ msgstr "certifikatet kunde inte valideras: %s\n"
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "certifikatet kunde inte hämtas: %s\n"
-

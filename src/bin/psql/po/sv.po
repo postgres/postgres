@@ -2,15 +2,15 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003.
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/po/sv.po,v 1.8 2003/08/11 15:19:58 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/po/sv.po,v 1.9 2003/08/20 21:10:01 petere Exp $
 #
 # Use these quotes: "%s"
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-08-09 12:08+0200\n"
-"PO-Revision-Date: 2003-08-09 15:58+0200\n"
+"POT-Creation-Date: 2003-08-14 04:17-0300\n"
+"PO-Revision-Date: 2003-08-15 08:49+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -70,7 +70,7 @@ msgid "Wrote history to file \"%s\".\n"
 msgstr "Kommandohistorien har skrivits till \"%s\".\n"
 
 #: command.c:700 command.c:1160 command.c:1257 command.c:1975 common.c:82
-#: copy.c:88 copy.c:116 mainloop.c:78 mainloop.c:341 describe.c:51
+#: copy.c:88 copy.c:116 describe.c:51 mainloop.c:78 mainloop.c:341
 msgid "out of memory\n"
 msgstr "minnet slut\n"
 
@@ -78,6 +78,14 @@ msgstr "minnet slut\n"
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: fel\n"
+
+#: command.c:744
+msgid "Timing is on."
+msgstr "Tidtagning är på."
+
+#: command.c:747
+msgid "Timing is off."
+msgstr "Tidtagning är av."
 
 #: command.c:804 command.c:824 command.c:1022 command.c:1035 command.c:1046
 #: command.c:1617 command.c:1630 command.c:1642 command.c:1655 command.c:1669
@@ -361,12 +369,12 @@ msgstr "Generella flaggor:"
 #, c-format
 msgid ""
 "  -d DBNAME       specify database name to connect to (default: \"%s\")\n"
-msgstr "  -d DBNAMN       ange databasnamn att koppla upp mot (standard: \"%s\")\n"
+msgstr ""
+"  -d DBNAMN       ange databasnamn att koppla upp mot (standard: \"%s\")\n"
 
 #: help.c:94
 msgid "  -c COMMAND      run only single command (SQL or internal) and exit"
-msgstr ""
-"  -c KOMMANDO     kör ett kommando (SQL eller internt) och avsluta sedan"
+msgstr "  -c KOMMANDO     kör ett kommando (SQL eller internt) och avsluta sedan"
 
 #: help.c:95
 msgid "  -f FILENAME     execute commands from file, then exit"
@@ -458,8 +466,7 @@ msgstr "  -t              visa endast rader (-P tuples_only)"
 msgid ""
 "  -T TEXT         set HTML table tag attributes (width, border) (-P "
 "tableattr=)"
-msgstr ""
-"  -T TEXT         sätt HTML-tabellers flaggor (width, border) (-P tableattr=)"
+msgstr "  -T TEXT         sätt HTML-tabellers flaggor (width, border) (-P tableattr=)"
 
 #: help.c:117
 msgid "  -x              turn on expanded table output (-P expanded)"
@@ -473,14 +480,12 @@ msgstr "  -P VAR[=ARG]    sätt utskriftsvariabel VAR till ARG (se kommando \\pse
 #, c-format
 msgid ""
 "  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"
-msgstr ""
-"  -F STRÄNG       sätt fältseparator (standard: \"%s\") (-P fieldsep=)\n"
+msgstr "  -F STRÄNG       sätt fältseparator (standard: \"%s\") (-P fieldsep=)\n"
 
 #: help.c:121
 msgid ""
 "  -R STRING       set record separator (default: newline) (-P recordsep=)"
-msgstr ""
-"  -R STRÄNG       sätt postseparator (standard: newline) (-P recordsep=)"
+msgstr "  -R STRÄNG       sätt postseparator (standard: newline) (-P recordsep=)"
 
 #: help.c:123
 msgid ""
@@ -564,8 +569,7 @@ msgstr ""
 
 #: help.c:182
 msgid "  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"
-msgstr ""
-"  \\h NAMN        hjälp med syntaxen för SQL-kommandon, * för alla kommanon\n"
+msgstr "  \\h NAMN        hjälp med syntaxen för SQL-kommandon, * för alla kommanon\n"
 
 #: help.c:183
 msgid "  \\q             quit psql\n"
@@ -582,8 +586,7 @@ msgstr ""
 #: help.c:186
 #, c-format
 msgid "  \\timing        toggle timing of commands (currently %s)\n"
-msgstr ""
-"  \\timing        slå om tidstagning av kommandon (för närvarande: %s)\n"
+msgstr "  \\timing        slå om tidstagning av kommandon (för närvarande: %s)\n"
 
 #: help.c:188
 msgid "  \\unset NAME    unset (delete) internal variable\n"
@@ -601,9 +604,7 @@ msgstr "Frågebuffert\n"
 #: help.c:193
 msgid ""
 "  \\e [FILE]      edit the query buffer (or file) with external editor\n"
-msgstr ""
-"  \\e [FILNAMN]   redigera frågebufferten (eller filen) med extern "
-"redigerare\n"
+msgstr "  \\e [FILNAMN]   redigera frågebufferten (eller filen) med extern redigerare\n"
 
 #: help.c:194
 msgid ""
@@ -692,8 +693,7 @@ msgstr "  \\dD [MALL]     lista domäner\n"
 
 #: help.c:218
 msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
-msgstr ""
-"  \\df [MALL]     lista funktioner (lägg till \"+\" för mer detaljer)\n"
+msgstr "  \\df [MALL]     lista funktioner (lägg till \"+\" för mer detaljer)\n"
 
 #: help.c:219
 msgid "  \\dn [PATTERN]  list schemas\n"
@@ -721,8 +721,7 @@ msgstr "  \\du [MALL]     lista användare\n"
 
 #: help.c:225
 msgid "  \\l             list all databases (add \"+\" for more detail)\n"
-msgstr ""
-"  \\l             lista alla databaser (lägg till \"+\" för mer detaljer)\n"
+msgstr "  \\l             lista alla databaser (lägg till \"+\" för mer detaljer)\n"
 
 #: help.c:226
 msgid "  \\z [PATTERN]   list table access privileges (same as \\dp)\n"
@@ -743,8 +742,7 @@ msgstr "  \\C [TEXT]      sätt tabelltitel, eller nollställ\n"
 #: help.c:232
 msgid ""
 "  \\f [STRING]    show or set field separator for unaligned query output\n"
-msgstr ""
-"  \\f [TEXT]      visa eller sätt fältseparatorn för ojusterad utmatning\n"
+msgstr "  \\f [TEXT]      visa eller sätt fältseparatorn för ojusterad utmatning\n"
 
 #: help.c:233
 #, c-format
@@ -770,8 +768,7 @@ msgstr "  \\t             visa endast rader (för närvarande: %s)\n"
 
 #: help.c:241
 msgid "  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"
-msgstr ""
-"  \\T [TEXT]      sätt HTML-tabellens <table>-attribut, eller nollställ\n"
+msgstr "  \\T [TEXT]      sätt HTML-tabellens <table>-attribut, eller nollställ\n"
 
 #: help.c:242
 #, c-format
@@ -847,8 +844,8 @@ msgstr "%s: aktuell transaktion är avbruten\n"
 msgid "%s: unknown transaction status\n"
 msgstr "%s: okänd transaktionsstatus\n"
 
-#: large_obj.c:278 describe.c:106 describe.c:157 describe.c:230 describe.c:292
-#: describe.c:339 describe.c:438 describe.c:718 describe.c:1343
+#: describe.c:106 describe.c:157 describe.c:230 describe.c:292 describe.c:339
+#: describe.c:438 describe.c:718 describe.c:1343 large_obj.c:278
 msgid "Description"
 msgstr "Beskrivning"
 
@@ -1333,4 +1330,3 @@ msgstr "Lista med typomvandlingar"
 #: describe.c:1601
 msgid "List of schemas"
 msgstr "Lista med scheman"
-
