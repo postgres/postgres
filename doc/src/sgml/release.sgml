@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.305 2004/11/10 06:09:59 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.306 2004/11/10 06:13:12 momjian Exp $
 -->
 
 <appendix id="release">
@@ -221,7 +221,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.305 2004/11/10 06:09:59 momjian
        Server configuration parameter <varname>log_statement</> has been
        changed so it can selectively log just database modification or
        data definition statements.  Server configuration parameter <varname>
-       log_duration</> now prints only when <literal>log_statement</>
+       log_duration</> now prints only when <varname>log_statement</>
        prints the query.
       </para>
      </listitem>
@@ -807,7 +807,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.305 2004/11/10 06:09:59 momjian
 
     <listitem>
      <para>
-      Make <literal>log_duration</> print only when <literal>log_statement</>
+      Make <varname>log_duration</> print only when <varname>log_statement</>
       prints the query (Ed L.)
      </para>
     </listitem>
