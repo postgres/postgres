@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.25 2004/08/29 05:06:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.26 2004/08/30 19:00:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,10 +210,41 @@ ZeroCLOGPage(int pageno, bool writeXlog)
 void
 StartupCLOG(void)
 {
+	TransactionId xid = ShmemVariableCache->nextXid;
+	int			pageno = TransactionIdToPage(xid);
+	int			byteno = TransactionIdToByte(xid);
+	int			bshift = TransactionIdToBIndex(xid) * CLOG_BITS_PER_XACT;
+	int			slotno;
+	char	   *byteptr;
+
+	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
+
 	/*
 	 * Initialize our idea of the latest page number.
 	 */
-	ClogCtl->shared->latest_page_number = TransactionIdToPage(ShmemVariableCache->nextXid);
+	ClogCtl->shared->latest_page_number = pageno;
+
+	/*
+	 * Zero out the remainder of the current clog page.  Under normal
+	 * circumstances it should be zeroes already, but it seems at least
+	 * theoretically possible that XLOG replay will have settled on a
+	 * nextXID value that is less than the last XID actually used and
+	 * marked by the previous database lifecycle (since subtransaction
+	 * commit writes clog but makes no WAL entry).  Let's just be safe.
+	 * (We need not worry about pages beyond the current one, since those
+	 * will be zeroed when first used.)
+	 */
+	slotno = SimpleLruReadPage(ClogCtl, pageno, xid);
+	byteptr = ClogCtl->shared->page_buffer[slotno] + byteno;
+
+	/* Zero so-far-unused positions in the current byte */
+	*byteptr &= (1 << bshift) - 1;
+	/* Zero the rest of the page */
+	MemSet(byteptr + 1, 0, BLCKSZ - byteno - 1);
+
+	ClogCtl->shared->page_status[slotno] = SLRU_PAGE_DIRTY;
+
+	LWLockRelease(CLogControlLock);
 }
 
 /*
