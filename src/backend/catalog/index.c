@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.179 2002/05/21 22:05:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.180 2002/06/15 19:54:23 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1621,7 +1621,8 @@ IndexBuildHeapScan(Relation heapRelation,
 					 * (Consider INSERT followed by CREATE INDEX within a
 					 * transaction.)
 					 */
-					if (!TransactionIdIsCurrentTransactionId(heapTuple->t_data->t_xmin))
+					if (!TransactionIdIsCurrentTransactionId(
+							HeapTupleHeaderGetXmin(heapTuple->t_data)))
 						elog(ERROR, "IndexBuildHeapScan: concurrent insert in progress");
 					indexIt = true;
 					tupleIsAlive = true;
@@ -1635,7 +1636,8 @@ IndexBuildHeapScan(Relation heapRelation,
 					 * (Consider DELETE followed by CREATE INDEX within a
 					 * transaction.)
 					 */
-					if (!TransactionIdIsCurrentTransactionId(heapTuple->t_data->t_xmax))
+					if (!TransactionIdIsCurrentTransactionId(
+							HeapTupleHeaderGetXmax(heapTuple->t_data)))
 						elog(ERROR, "IndexBuildHeapScan: concurrent delete in progress");
 					indexIt = true;
 					tupleIsAlive = false;

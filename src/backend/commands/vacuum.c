@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.227 2002/06/13 19:52:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.228 2002/06/15 19:54:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1080,11 +1080,11 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					 * Tuple is good.  Consider whether to replace its
 					 * xmin value with FrozenTransactionId.
 					 */
-					if (TransactionIdIsNormal(tuple.t_data->t_xmin) &&
-						TransactionIdPrecedes(tuple.t_data->t_xmin,
+					if (TransactionIdIsNormal(HeapTupleHeaderGetXmin(tuple.t_data)) &&
+						TransactionIdPrecedes(HeapTupleHeaderGetXmin(tuple.t_data),
 											  FreezeLimit))
 					{
-						tuple.t_data->t_xmin = FrozenTransactionId;
+						HeapTupleHeaderSetXmin(tuple.t_data, FrozenTransactionId);
 						/* infomask should be okay already */
 						Assert(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED);
 						pgchanged = true;
@@ -1127,7 +1127,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					 * lock on the relation; shouldn't we raise an error?
 					 */
 					elog(WARNING, "Rel %s: TID %u/%u: InsertTransactionInProgress %u - can't shrink relation",
-						 relname, blkno, offnum, tuple.t_data->t_xmin);
+						 relname, blkno, offnum, HeapTupleHeaderGetXmin(tuple.t_data));
 					do_shrinking = false;
 					break;
 				case HEAPTUPLE_DELETE_IN_PROGRESS:
@@ -1137,7 +1137,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					 * lock on the relation; shouldn't we raise an error?
 					 */
 					elog(WARNING, "Rel %s: TID %u/%u: DeleteTransactionInProgress %u - can't shrink relation",
-						 relname, blkno, offnum, tuple.t_data->t_xmax);
+						 relname, blkno, offnum, HeapTupleHeaderGetXmax(tuple.t_data));
 					do_shrinking = false;
 					break;
 				default:
@@ -1513,8 +1513,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 			if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
 			{
-				if ((TransactionId) tuple.t_data->t_cmin != myXID)
-					elog(ERROR, "Invalid XID in t_cmin");
+				if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
+					elog(ERROR, "Invalid XVAC in tuple header");
 				if (tuple.t_data->t_infomask & HEAP_MOVED_IN)
 					elog(ERROR, "HEAP_MOVED_IN was not expected");
 
@@ -1558,7 +1558,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			 * tuples to another places.
 			 */
 			if ((tuple.t_data->t_infomask & HEAP_UPDATED &&
-			 !TransactionIdPrecedes(tuple.t_data->t_xmin, OldestXmin)) ||
+			 !TransactionIdPrecedes(HeapTupleHeaderGetXmin(tuple.t_data),
+			                        OldestXmin)) ||
 				(!(tuple.t_data->t_infomask & HEAP_XMAX_INVALID) &&
 				 !(ItemPointerEquals(&(tuple.t_self),
 									 &(tuple.t_data->t_ctid)))))
@@ -1675,7 +1676,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 					/* All done ? */
 					if (!(tp.t_data->t_infomask & HEAP_UPDATED) ||
-					TransactionIdPrecedes(tp.t_data->t_xmin, OldestXmin))
+					    TransactionIdPrecedes(HeapTupleHeaderGetXmin(tp.t_data),
+					                          OldestXmin))
 						break;
 
 					/* Well, try to find tuple with old row version */
@@ -1723,8 +1725,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						 * latter, and we are too close to 6.5 release. -
 						 * vadim 06/11/99
 						 */
-						if (!(TransactionIdEquals(Ptp.t_data->t_xmax,
-												  tp.t_data->t_xmin)))
+						if (!(TransactionIdEquals(HeapTupleHeaderGetXmax(Ptp.t_data),
+												  HeapTupleHeaderGetXmin(tp.t_data))))
 						{
 							if (freeCbuf)
 								ReleaseBuffer(Cbuf);
@@ -1749,14 +1751,13 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						 * removed.
 						 */
 						if (Ptp.t_data->t_infomask & HEAP_UPDATED &&
-							TransactionIdEquals(Ptp.t_data->t_xmin,
-												Ptp.t_data->t_xmax))
+							TransactionIdEquals(HeapTupleHeaderGetXmin(Ptp.t_data),
+												HeapTupleHeaderGetXmax(Ptp.t_data)))
 						{
-							TransactionIdStore(myXID,
-								(TransactionId *) &(Ptp.t_data->t_cmin));
 							Ptp.t_data->t_infomask &=
 								~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
 							Ptp.t_data->t_infomask |= HEAP_MOVED_OFF;
+							HeapTupleHeaderSetXvac(Ptp.t_data, myXID);
 							WriteBuffer(Pbuf);
 							continue;
 						}
@@ -1820,10 +1821,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					/* NO ELOG(ERROR) TILL CHANGES ARE LOGGED */
 					START_CRIT_SECTION();
 
-					TransactionIdStore(myXID, (TransactionId *) &(tuple.t_data->t_cmin));
 					tuple.t_data->t_infomask &=
 						~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
 					tuple.t_data->t_infomask |= HEAP_MOVED_OFF;
+					HeapTupleHeaderSetXvac(tuple.t_data, myXID);
 
 					/*
 					 * If this page was not used before - clean it.
@@ -1860,10 +1861,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					 * Update the state of the copied tuple, and store it
 					 * on the destination page.
 					 */
-					TransactionIdStore(myXID, (TransactionId *) &(newtup.t_data->t_cmin));
 					newtup.t_data->t_infomask &=
 						~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_OFF);
 					newtup.t_data->t_infomask |= HEAP_MOVED_IN;
+					HeapTupleHeaderSetXvac(newtup.t_data, myXID);
 					newoff = PageAddItem(ToPage, (Item) newtup.t_data, tuple_len,
 										 InvalidOffsetNumber, LP_USED);
 					if (newoff == InvalidOffsetNumber)
@@ -1989,10 +1990,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			 * Mark new tuple as moved_in by vacuum and store vacuum XID
 			 * in t_cmin !!!
 			 */
-			TransactionIdStore(myXID, (TransactionId *) &(newtup.t_data->t_cmin));
 			newtup.t_data->t_infomask &=
 				~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_OFF);
 			newtup.t_data->t_infomask |= HEAP_MOVED_IN;
+			HeapTupleHeaderSetXvac(newtup.t_data, myXID);
 
 			/* add tuple to the page */
 			newoff = PageAddItem(ToPage, (Item) newtup.t_data, tuple_len,
@@ -2015,10 +2016,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			 * Mark old tuple as moved_off by vacuum and store vacuum XID
 			 * in t_cmin !!!
 			 */
-			TransactionIdStore(myXID, (TransactionId *) &(tuple.t_data->t_cmin));
 			tuple.t_data->t_infomask &=
 				~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
 			tuple.t_data->t_infomask |= HEAP_MOVED_OFF;
+			HeapTupleHeaderSetXvac(tuple.t_data, myXID);
 
 			{
 				XLogRecPtr	recptr =
@@ -2066,8 +2067,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 				if (tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED)
 					continue;
-				if ((TransactionId) tuple.t_data->t_cmin != myXID)
-					elog(ERROR, "Invalid XID in t_cmin (4)");
+				if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
+					elog(ERROR, "Invalid XVAC in tuple header (4)");
 				if (tuple.t_data->t_infomask & HEAP_MOVED_IN)
 					elog(ERROR, "HEAP_MOVED_IN was not expected (2)");
 				if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
@@ -2204,8 +2205,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
 			{
-				if ((TransactionId) tuple.t_data->t_cmin != myXID)
-					elog(ERROR, "Invalid XID in t_cmin (2)");
+				if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
+					elog(ERROR, "Invalid XVAC in tuple header (2)");
 				if (tuple.t_data->t_infomask & HEAP_MOVED_IN)
 				{
 					tuple.t_data->t_infomask |= HEAP_XMIN_COMMITTED;
@@ -2283,8 +2284,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 				if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
 				{
-					if ((TransactionId) tuple.t_data->t_cmin != myXID)
-						elog(ERROR, "Invalid XID in t_cmin (3)");
+					if (HeapTupleHeaderGetXvac(tuple.t_data) != myXID)
+						elog(ERROR, "Invalid XVAC in tuple header (3)");
 					if (tuple.t_data->t_infomask & HEAP_MOVED_OFF)
 					{
 						itemid->lp_flags &= ~LP_USED;

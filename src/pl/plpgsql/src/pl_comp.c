@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.41 2002/05/03 00:32:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.42 2002/06/15 19:54:24 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -188,8 +188,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 
 	function->fn_name = strdup(NameStr(procStruct->proname));
 	function->fn_oid = fn_oid;
-	function->fn_xmin = procTup->t_data->t_xmin;
-	function->fn_cmin = procTup->t_data->t_cmin;
+	function->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
+	function->fn_cmin = HeapTupleHeaderGetCmin(procTup->t_data);
 	function->fn_functype = functype;
 
 	switch (functype)

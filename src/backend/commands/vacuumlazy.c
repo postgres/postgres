@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.14 2002/04/02 01:03:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.15 2002/06/15 19:54:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,11 +332,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					 * assumption by momentarily acquiring exclusive lock,
 					 * but for the moment I see no need to.
 					 */
-					if (TransactionIdIsNormal(tuple.t_data->t_xmin) &&
-						TransactionIdPrecedes(tuple.t_data->t_xmin,
+					if (TransactionIdIsNormal(HeapTupleHeaderGetXmin(tuple.t_data)) &&
+						TransactionIdPrecedes(HeapTupleHeaderGetXmin(tuple.t_data),
 											  FreezeLimit))
 					{
-						tuple.t_data->t_xmin = FrozenTransactionId;
+						HeapTupleHeaderSetXmin(tuple.t_data, FrozenTransactionId);
 						/* infomask should be okay already */
 						Assert(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED);
 						pgchanged = true;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.52 2002/05/27 19:53:33 tgl Exp $
+ * $Id: htup.h,v 1.53 2002/06/15 19:54:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "storage/bufpage.h"
 #include "storage/relfilenode.h"
+#include "access/transam.h"
 
 
 /*
@@ -82,6 +83,87 @@ typedef struct HeapTupleHeaderData
 } HeapTupleHeaderData;
 
 typedef HeapTupleHeaderData *HeapTupleHeader;
+
+/*
+ * information stored in t_infomask:
+ */
+#define HEAP_HASNULL			0x0001	/* has null attribute(s) */
+#define HEAP_HASVARLENA			0x0002	/* has variable length
+										 * attribute(s) */
+#define HEAP_HASEXTERNAL		0x0004	/* has external stored
+										 * attribute(s) */
+#define HEAP_HASCOMPRESSED		0x0008	/* has compressed stored
+										 * attribute(s) */
+#define HEAP_HASEXTENDED		0x000C	/* the two above combined */
+
+#define HEAP_XMAX_UNLOGGED		0x0080	/* to lock tuple for update */
+										/* without logging */
+#define HEAP_XMIN_COMMITTED		0x0100	/* t_xmin committed */
+#define HEAP_XMIN_INVALID		0x0200	/* t_xmin invalid/aborted */
+#define HEAP_XMAX_COMMITTED		0x0400	/* t_xmax committed */
+#define HEAP_XMAX_INVALID		0x0800	/* t_xmax invalid/aborted */
+#define HEAP_MARKED_FOR_UPDATE	0x1000	/* marked for UPDATE */
+#define HEAP_UPDATED			0x2000	/* this is UPDATEd version of row */
+#define HEAP_MOVED_OFF			0x4000	/* moved to another place by
+										 * vacuum */
+#define HEAP_MOVED_IN			0x8000	/* moved from another place by
+										 * vacuum */
+
+#define HEAP_XACT_MASK			0xFFF0	/* visibility-related bits */
+
+
+
+/* HeapTupleHeader accessor macros */
+
+#define HeapTupleHeaderGetXmin(tup) \
+	((tup)->t_xmin)
+
+#define HeapTupleHeaderGetXmax(tup) \
+	((tup)->t_xmax)
+
+/* no AssertMacro, because this is read as a system-defined attribute also */
+#define HeapTupleHeaderGetCmin(tup) \
+( \
+	(tup)->t_cmin \
+)
+
+#define HeapTupleHeaderGetCmax(tup) \
+	((tup)->t_cmax)
+
+#define HeapTupleHeaderGetXvac(tup) \
+( \
+	AssertMacro((tup)->t_infomask & (HEAP_MOVED_IN | HEAP_MOVED_OFF)), \
+	(TransactionId) (tup)->t_cmin \
+)
+
+
+#define HeapTupleHeaderSetXmin(tup, xid) \
+	(TransactionIdStore((xid), &(tup)->t_xmin))
+
+#define HeapTupleHeaderSetXminInvalid(tup) \
+	(StoreInvalidTransactionId(&(tup)->t_xmin))
+
+#define HeapTupleHeaderSetXmax(tup, xid) \
+	(TransactionIdStore((xid), &(tup)->t_xmax))
+
+#define HeapTupleHeaderSetXmaxInvalid(tup) \
+	(StoreInvalidTransactionId(&(tup)->t_xmax))
+
+#define HeapTupleHeaderSetCmin(tup, cid) \
+( \
+	AssertMacro(!((tup)->t_infomask & (HEAP_MOVED_IN | HEAP_MOVED_OFF))), \
+	(tup)->t_cmin = (cid) \
+)
+
+#define HeapTupleHeaderSetCmax(tup, cid) \
+	((tup)->t_cmax = (cid))
+
+#define HeapTupleHeaderSetXvac(tup, xid) \
+( \
+	AssertMacro((tup)->t_infomask & (HEAP_MOVED_IN | HEAP_MOVED_OFF)), \
+	TransactionIdStore((xid), (TransactionId *) &((tup)->t_cmin)) \
+)
+
 
 /*
  * XLOG allows to store some information in high 4 bits of log
@@ -249,33 +331,6 @@ typedef HeapTupleData *HeapTuple;
  *		True iff the heap tuple is valid.
  */
 #define HeapTupleIsValid(tuple) PointerIsValid(tuple)
-
-/*
- * information stored in t_infomask:
- */
-#define HEAP_HASNULL			0x0001	/* has null attribute(s) */
-#define HEAP_HASVARLENA			0x0002	/* has variable length
-										 * attribute(s) */
-#define HEAP_HASEXTERNAL		0x0004	/* has external stored
-										 * attribute(s) */
-#define HEAP_HASCOMPRESSED		0x0008	/* has compressed stored
-										 * attribute(s) */
-#define HEAP_HASEXTENDED		0x000C	/* the two above combined */
-
-#define HEAP_XMAX_UNLOGGED		0x0080	/* to lock tuple for update
-										 * without logging */
-#define HEAP_XMIN_COMMITTED		0x0100	/* t_xmin committed */
-#define HEAP_XMIN_INVALID		0x0200	/* t_xmin invalid/aborted */
-#define HEAP_XMAX_COMMITTED		0x0400	/* t_xmax committed */
-#define HEAP_XMAX_INVALID		0x0800	/* t_xmax invalid/aborted */
-#define HEAP_MARKED_FOR_UPDATE	0x1000	/* marked for UPDATE */
-#define HEAP_UPDATED			0x2000	/* this is UPDATEd version of row */
-#define HEAP_MOVED_OFF			0x4000	/* moved to another place by
-										 * vacuum */
-#define HEAP_MOVED_IN			0x8000	/* moved from another place by
-										 * vacuum */
-
-#define HEAP_XACT_MASK			0xFFF0	/* visibility-related bits */
 
 #define HeapTupleNoNulls(tuple) \
 		(!(((HeapTuple) (tuple))->t_data->t_infomask & HEAP_HASNULL))

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.79 2002/05/22 21:40:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.80 2002/06/15 19:54:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,10 +249,10 @@ DefineSequence(CreateSeqStmt *seq)
 		itemId = PageGetItemId((Page) page, FirstOffsetNumber);
 		item = PageGetItem((Page) page, itemId);
 
-		((HeapTupleHeader) item)->t_xmin = FrozenTransactionId;
+		HeapTupleHeaderSetXmin((HeapTupleHeader) item, FrozenTransactionId);
 		((HeapTupleHeader) item)->t_infomask |= HEAP_XMIN_COMMITTED;
 
-		tuple->t_data->t_xmin = FrozenTransactionId;
+		HeapTupleHeaderSetXmin(tuple->t_data, FrozenTransactionId);
 		tuple->t_data->t_infomask |= HEAP_XMIN_COMMITTED;
 	}
 

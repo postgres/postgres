@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.55 2002/05/24 21:04:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.56 2002/06/15 19:54:24 momjian Exp $
  *
  **********************************************************************/
 
@@ -987,8 +987,8 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 
 		prodesc = (pltcl_proc_desc *) Tcl_GetHashValue(hashent);
 
-		uptodate = (prodesc->fn_xmin == procTup->t_data->t_xmin &&
-					prodesc->fn_cmin == procTup->t_data->t_cmin);
+		uptodate = (prodesc->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
+					prodesc->fn_cmin == HeapTupleHeaderGetCmin(procTup->t_data));
 
 		if (!uptodate)
 		{
@@ -1025,8 +1025,8 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 			elog(ERROR, "pltcl: out of memory");
 		MemSet(prodesc, 0, sizeof(pltcl_proc_desc));
 		prodesc->proname = strdup(internal_proname);
-		prodesc->fn_xmin = procTup->t_data->t_xmin;
-		prodesc->fn_cmin = procTup->t_data->t_cmin;
+		prodesc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
+		prodesc->fn_cmin = HeapTupleHeaderGetCmin(procTup->t_data);
 
 		/************************************************************
 		 * Lookup the pg_language tuple by Oid

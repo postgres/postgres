@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.10 2001/10/25 05:50:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.11 2002/06/15 19:54:24 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -167,8 +167,8 @@ func_up_to_date(PLpgSQL_function * func)
 		elog(ERROR, "plpgsql: cache lookup for proc %u failed",
 			 func->fn_oid);
 
-	result = (func->fn_xmin == procTup->t_data->t_xmin &&
-			  func->fn_cmin == procTup->t_data->t_cmin);
+	result = (func->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
+			  func->fn_cmin == HeapTupleHeaderGetCmin(procTup->t_data));
 
 	ReleaseSysCache(procTup);
 

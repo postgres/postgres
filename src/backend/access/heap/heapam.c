@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.137 2002/05/24 19:52:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.138 2002/06/15 19:54:23 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1122,10 +1122,10 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 			CheckMaxObjectId(tup->t_data->t_oid);
 	}
 
-	TransactionIdStore(GetCurrentTransactionId(), &(tup->t_data->t_xmin));
-	tup->t_data->t_cmin = cid;
-	StoreInvalidTransactionId(&(tup->t_data->t_xmax));
-	tup->t_data->t_cmax = FirstCommandId;
+	HeapTupleHeaderSetXmin(tup->t_data, GetCurrentTransactionId());
+	HeapTupleHeaderSetCmin(tup->t_data, cid);
+	HeapTupleHeaderSetXmaxInvalid(tup->t_data);
+	HeapTupleHeaderSetCmax(tup->t_data, FirstCommandId);
 	tup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	tup->t_data->t_infomask |= HEAP_XMAX_INVALID;
 	tup->t_tableOid = relation->rd_id;
@@ -1270,7 +1270,7 @@ l1:
 	}
 	else if (result == HeapTupleBeingUpdated)
 	{
-		TransactionId xwait = tp.t_data->t_xmax;
+		TransactionId xwait = HeapTupleHeaderGetXmax(tp.t_data);
 
 		/* sleep until concurrent transaction ends */
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
@@ -1285,7 +1285,7 @@ l1:
 		 * update then some other xaction could update this tuple before
 		 * we got to this point.
 		 */
-		if (!TransactionIdEquals(tp.t_data->t_xmax, xwait))
+		if (!TransactionIdEquals(HeapTupleHeaderGetXmax(tp.t_data), xwait))
 			goto l1;
 		if (!(tp.t_data->t_infomask & HEAP_XMAX_COMMITTED))
 		{
@@ -1309,10 +1309,10 @@ l1:
 
 	START_CRIT_SECTION();
 	/* store transaction information of xact deleting the tuple */
-	TransactionIdStore(GetCurrentTransactionId(), &(tp.t_data->t_xmax));
-	tp.t_data->t_cmax = cid;
 	tp.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+	HeapTupleHeaderSetXmax(tp.t_data, GetCurrentTransactionId());
+	HeapTupleHeaderSetCmax(tp.t_data, cid);
 	/* XLOG stuff */
 	{
 		xl_heap_delete xlrec;
@@ -1461,7 +1461,7 @@ l2:
 	}
 	else if (result == HeapTupleBeingUpdated)
 	{
-		TransactionId xwait = oldtup.t_data->t_xmax;
+		TransactionId xwait = HeapTupleHeaderGetXmax(oldtup.t_data);
 
 		/* sleep untill concurrent transaction ends */
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
@@ -1476,7 +1476,7 @@ l2:
 		 * update then some other xaction could update this tuple before
 		 * we got to this point.
 		 */
-		if (!TransactionIdEquals(oldtup.t_data->t_xmax, xwait))
+		if (!TransactionIdEquals(HeapTupleHeaderGetXmax(oldtup.t_data), xwait))
 			goto l2;
 		if (!(oldtup.t_data->t_infomask & HEAP_XMAX_COMMITTED))
 		{
@@ -1500,11 +1500,11 @@ l2:
 
 	/* Fill in OID and transaction status data for newtup */
 	newtup->t_data->t_oid = oldtup.t_data->t_oid;
-	TransactionIdStore(GetCurrentTransactionId(), &(newtup->t_data->t_xmin));
-	newtup->t_data->t_cmin = cid;
-	StoreInvalidTransactionId(&(newtup->t_data->t_xmax));
 	newtup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	newtup->t_data->t_infomask |= (HEAP_XMAX_INVALID | HEAP_UPDATED);
+	HeapTupleHeaderSetXmin(newtup->t_data, GetCurrentTransactionId());
+	HeapTupleHeaderSetCmin(newtup->t_data, cid);
+	HeapTupleHeaderSetXmaxInvalid(newtup->t_data);
 
 	/*
 	 * If the toaster needs to be activated, OR if the new tuple will not
@@ -1538,13 +1538,12 @@ l2:
 		_locked_tuple_.tid = oldtup.t_self;
 		XactPushRollback(_heap_unlock_tuple, (void *) &_locked_tuple_);
 
-		TransactionIdStore(GetCurrentTransactionId(),
-						   &(oldtup.t_data->t_xmax));
-		oldtup.t_data->t_cmax = cid;
 		oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 									   HEAP_XMAX_INVALID |
 									   HEAP_MARKED_FOR_UPDATE);
 		oldtup.t_data->t_infomask |= HEAP_XMAX_UNLOGGED;
+		HeapTupleHeaderSetXmax(oldtup.t_data, GetCurrentTransactionId());
+		HeapTupleHeaderSetCmax(oldtup.t_data, cid);
 		already_marked = true;
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
@@ -1630,12 +1629,11 @@ l2:
 	}
 	else
 	{
-		TransactionIdStore(GetCurrentTransactionId(),
-						   &(oldtup.t_data->t_xmax));
-		oldtup.t_data->t_cmax = cid;
 		oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 									   HEAP_XMAX_INVALID |
 									   HEAP_MARKED_FOR_UPDATE);
+		HeapTupleHeaderSetXmax(oldtup.t_data, GetCurrentTransactionId());
+		HeapTupleHeaderSetCmax(oldtup.t_data, cid);
 	}
 
 	/* record address of new tuple in t_ctid of old one */
@@ -1759,7 +1757,7 @@ l3:
 	}
 	else if (result == HeapTupleBeingUpdated)
 	{
-		TransactionId xwait = tuple->t_data->t_xmax;
+		TransactionId xwait = HeapTupleHeaderGetXmax(tuple->t_data);
 
 		/* sleep untill concurrent transaction ends */
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
@@ -1774,7 +1772,7 @@ l3:
 		 * update then some other xaction could update this tuple before
 		 * we got to this point.
 		 */
-		if (!TransactionIdEquals(tuple->t_data->t_xmax, xwait))
+		if (!TransactionIdEquals(HeapTupleHeaderGetXmax(tuple->t_data), xwait))
 			goto l3;
 		if (!(tuple->t_data->t_infomask & HEAP_XMAX_COMMITTED))
 		{
@@ -1802,10 +1800,10 @@ l3:
 	((PageHeader) BufferGetPage(*buffer))->pd_sui = ThisStartUpID;
 
 	/* store transaction information of xact marking the tuple */
-	TransactionIdStore(GetCurrentTransactionId(), &(tuple->t_data->t_xmax));
-	tuple->t_data->t_cmax = cid;
 	tuple->t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED | HEAP_XMAX_INVALID);
 	tuple->t_data->t_infomask |= HEAP_MARKED_FOR_UPDATE;
+	HeapTupleHeaderSetXmax(tuple->t_data, GetCurrentTransactionId());
+	HeapTupleHeaderSetCmax(tuple->t_data, cid);
 
 	LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
 
@@ -1981,15 +1979,17 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	if (move)					/* remember xmin & xmax */
 	{
 		TransactionId xmax;
+		TransactionId xmin;
 
 		if (newtup->t_data->t_infomask & HEAP_XMAX_INVALID ||
 			newtup->t_data->t_infomask & HEAP_MARKED_FOR_UPDATE)
 			xmax = InvalidTransactionId;
 		else
-			xmax = newtup->t_data->t_xmax;
+			xmax = HeapTupleHeaderGetXmax(newtup->t_data);
+		xmin = HeapTupleHeaderGetXmin(newtup->t_data);
 		memcpy((char *) &xlhdr + hsize, &xmax, sizeof(TransactionId));
 		memcpy((char *) &xlhdr + hsize + sizeof(TransactionId),
-			   &(newtup->t_data->t_xmin), sizeof(TransactionId));
+			   &xmin, sizeof(TransactionId));
 		hsize += 2 * sizeof(TransactionId);
 	}
 	rdata[2].buffer = newbuf;
@@ -2126,10 +2126,10 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	if (redo)
 	{
-		htup->t_xmax = record->xl_xid;
-		htup->t_cmax = FirstCommandId;
 		htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 							  HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+		HeapTupleHeaderSetXmax(htup, record->xl_xid);
+		HeapTupleHeaderSetCmax(htup, FirstCommandId);
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
 		UnlockAndWriteBuffer(buffer);
@@ -2201,11 +2201,11 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		htup->t_oid = xlhdr.t_oid;
 		htup->t_natts = xlhdr.t_natts;
 		htup->t_hoff = xlhdr.t_hoff;
-		htup->t_xmin = record->xl_xid;
-		htup->t_cmin = FirstCommandId;
-		htup->t_xmax = InvalidTransactionId;
-		htup->t_cmax = FirstCommandId;
 		htup->t_infomask = HEAP_XMAX_INVALID | xlhdr.mask;
+		HeapTupleHeaderSetXmin(htup, record->xl_xid);
+		HeapTupleHeaderSetCmin(htup, FirstCommandId);
+		HeapTupleHeaderSetXmax(htup, InvalidTransactionId);
+		HeapTupleHeaderSetCmax(htup, FirstCommandId);
 
 		offnum = PageAddItem(page, (Item) htup, newlen, offnum,
 							 LP_USED | OverwritePageMode);
@@ -2286,17 +2286,17 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 	{
 		if (move)
 		{
-			TransactionIdStore(record->xl_xid, (TransactionId *) &(htup->t_cmin));
 			htup->t_infomask &=
 				~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
 			htup->t_infomask |= HEAP_MOVED_OFF;
+			HeapTupleHeaderSetXvac(htup, record->xl_xid);
 		}
 		else
 		{
-			htup->t_xmax = record->xl_xid;
-			htup->t_cmax = FirstCommandId;
 			htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+			HeapTupleHeaderSetXmax(htup, record->xl_xid);
+			HeapTupleHeaderSetCmax(htup, FirstCommandId);
 		}
 		if (samepage)
 			goto newsame;
@@ -2372,26 +2372,27 @@ newsame:;
 		htup->t_hoff = xlhdr.t_hoff;
 		if (move)
 		{
+			TransactionId xmax;
+			TransactionId xmin;
+			
 			hsize = SizeOfHeapUpdate + SizeOfHeapHeader;
-			memcpy(&(htup->t_xmax),
-				   (char *) xlrec + hsize,
-				   sizeof(TransactionId));
-			memcpy(&(htup->t_xmin),
-				   (char *) xlrec + hsize + sizeof(TransactionId),
-				   sizeof(TransactionId));
-			TransactionIdStore(record->xl_xid, (TransactionId *) &(htup->t_cmin));
+			memcpy(&xmax, (char *) xlrec + hsize, sizeof(TransactionId));
+			memcpy(&xmin, (char *) xlrec + hsize + sizeof(TransactionId), sizeof(TransactionId));
 			htup->t_infomask = xlhdr.mask;
 			htup->t_infomask &= ~(HEAP_XMIN_COMMITTED |
 								  HEAP_XMIN_INVALID | HEAP_MOVED_OFF);
 			htup->t_infomask |= HEAP_MOVED_IN;
+			HeapTupleHeaderSetXmin(htup, xmin);
+			HeapTupleHeaderSetXmax(htup, xmax);
+			HeapTupleHeaderSetXvac(htup, record->xl_xid);
 		}
 		else
 		{
-			htup->t_xmin = record->xl_xid;
-			htup->t_cmin = FirstCommandId;
-			htup->t_xmax = InvalidTransactionId;
-			htup->t_cmax = FirstCommandId;
 			htup->t_infomask = HEAP_XMAX_INVALID | xlhdr.mask;
+			HeapTupleHeaderSetXmin(htup, record->xl_xid);
+			HeapTupleHeaderSetCmin(htup, FirstCommandId);
+			HeapTupleHeaderSetXmaxInvalid(htup);
+			HeapTupleHeaderSetCmax(htup, FirstCommandId);
 		}
 
 		offnum = PageAddItem(page, (Item) htup, newlen, offnum,
@@ -2445,7 +2446,7 @@ _heap_unlock_tuple(void *data)
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
-	if (!TransactionIdEquals(htup->t_xmax, GetCurrentTransactionId()))
+	if (!TransactionIdEquals(HeapTupleHeaderGetXmax(htup), GetCurrentTransactionId()))
 		elog(PANIC, "_heap_unlock_tuple: invalid xmax in rollback");
 	htup->t_infomask &= ~HEAP_XMAX_UNLOGGED;
 	htup->t_infomask |= HEAP_XMAX_INVALID;

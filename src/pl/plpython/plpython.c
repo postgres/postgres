@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.17 2002/03/29 19:06:27 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.18 2002/06/15 19:54:24 momjian Exp $
  *
  *********************************************************************
  */
@@ -1030,8 +1030,8 @@ PLy_procedure_get(FunctionCallInfo fcinfo, bool is_trigger)
 		if (proc->me != plproc)
 			elog(FATAL, "plpython: Aiieee, proc->me != plproc");
 		/* did we find an up-to-date cache entry? */
-		if (proc->fn_xmin != procTup->t_data->t_xmin ||
-			proc->fn_cmin != procTup->t_data->t_cmin)
+		if (proc->fn_xmin != HeapTupleHeaderGetXmin(procTup->t_data) ||
+			proc->fn_cmin != HeapTupleHeaderGetCmin(procTup->t_data))
 		{
 			Py_DECREF(plproc);
 			proc = NULL;
@@ -1075,8 +1075,8 @@ PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
 	proc = PLy_malloc(sizeof(PLyProcedure));
 	proc->proname = PLy_malloc(strlen(procName) + 1);
 	strcpy(proc->proname, procName);
-	proc->fn_xmin = procTup->t_data->t_xmin;
-	proc->fn_cmin = procTup->t_data->t_cmin;
+	proc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
+	proc->fn_cmin = HeapTupleHeaderGetCmin(procTup->t_data);
 	PLy_typeinfo_init(&proc->result);
 	for (i = 0; i < FUNC_MAX_ARGS; i++)
 		PLy_typeinfo_init(&proc->args[i]);

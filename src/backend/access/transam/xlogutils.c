@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.23 2002/03/31 06:26:29 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.24 2002/06/15 19:54:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,8 @@ XLogIsOwnerOfTuple(RelFileNode hnode, ItemPointer iptr,
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
 	Assert(PageGetSUI(page) == ThisStartUpID);
-	if (!TransactionIdEquals(htup->t_xmin, xid) || htup->t_cmin != cid)
+	if (!TransactionIdEquals(HeapTupleHeaderGetXmin(htup), xid) ||
+		HeapTupleHeaderGetCmin(htup) != cid)
 	{
 		UnlockAndReleaseBuffer(buffer);
 		return (-1);
@@ -137,8 +138,8 @@ XLogIsValidTuple(RelFileNode hnode, ItemPointer iptr)
 	{
 		if (htup->t_infomask & HEAP_XMIN_INVALID ||
 			(htup->t_infomask & HEAP_MOVED_IN &&
-			 TransactionIdDidAbort((TransactionId) htup->t_cmin)) ||
-			TransactionIdDidAbort(htup->t_xmin))
+			 TransactionIdDidAbort(HeapTupleHeaderGetXvac(htup))) ||
+			TransactionIdDidAbort(HeapTupleHeaderGetXmin(htup)))
 		{
 			UnlockAndReleaseBuffer(buffer);
 			return (false);
