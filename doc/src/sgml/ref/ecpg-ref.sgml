@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.3 2000/08/23 05:59:11 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.4 2000/09/12 20:58:14 momjian Exp $
 Postgres documentation
 -->
 
@@ -51,7 +51,7 @@ ecpg [ -v ] [ -t ] [ -I include-path ] [ -o outfile ]  file1 [ file2 ] [ ... ]
       <term>-t</term>
       <listitem>
        <para>
-	Turn off auto-transactin mode.
+	Turn off auto-transaction mode.
        </para>
       </listitem>
      </varlistentry>
