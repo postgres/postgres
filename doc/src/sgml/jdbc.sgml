@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.13 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.14 2000/10/16 02:20:58 momjian Exp $
 -->
 
  <chapter id="jdbc">
@@ -172,7 +172,7 @@ import java.sql.*;
     For <application>Postgres</application>, you would use:
 
     <programlisting>
-Class.forName("postgresql.Driver");
+Class.forName("org.postgresql.Driver");
     </programlisting>
 
     This will load the driver, and while loading, the driver will automatically
