@@ -17904,7 +17904,7 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-#include "src/tools/thread/thread_test.c"
+#include "$srcdir/src/tools/thread/thread_test.c"
 _ACEOF
 rm -f conftest$ac_exeext
 if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
