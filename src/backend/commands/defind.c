@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.11 1997/03/19 07:52:03 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.12 1997/03/26 03:05:28 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,10 @@ DefineIndex(char *heapRelationName,
     relationId = tuple->t_oid;
 
     if (unique && strcmp(accessMethodName,"btree") != 0)
-	elog(WARN, "DefineIndex: unique indexes are only available with the btree access method");
+	elog(WARN, "DefineIndex: unique indices are only available with the btree access method");
+
+    if (numberOfAttributes > 1 && strcmp(accessMethodName,"btree") != 0)
+	elog(WARN, "DefineIndex: multi-column indices are only available with the btree access method");
 
     /*
      * compute access method id
