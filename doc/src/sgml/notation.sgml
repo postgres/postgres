@@ -76,7 +76,7 @@ path to the <Productname>Postgres</Productname> superuser's home directory.
 
 <para>
 In a command synopsis, brackets
-<quote>[</quote> and <quote>]</quote>) indicate an optional phrase or keyword.
+(<quote>[</quote> and <quote>]</quote>) indicate an optional phrase or keyword.
 Anything in braces
 (<quote>{</quote> and <quote>}</quote>) and containing vertical bars (<quote>|</quote>)
  indicates that you must choose one.
