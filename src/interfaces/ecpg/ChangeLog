@@ -857,5 +857,9 @@ Tue Mar  7 10:58:21 CET 2000
 
 	- More cleanup in ecpglib.
 	- Fixed ecpg.c not not free variable list twice.
+
+Thu Mar  9 10:12:57 CET 2000
+
+	- Fixed another memory bug in the parser.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.

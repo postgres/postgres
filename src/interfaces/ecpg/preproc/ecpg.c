@@ -177,8 +177,7 @@ main(int argc, char *const argv[])
 				for (ptr = cur; ptr != NULL;)
 				{
 					struct cursor *this = ptr;
-					struct arguments *l1,
-							   *l2;
+					struct arguments *l1, *l2;
 
 					free(ptr->command);
 					free(ptr->connection);

@@ -189,17 +189,35 @@ reset_variables(void)
     argsresult = NULL;
 }
 
-/* Add a variable to a request. */
+/* Insert a new variable into our request list. */
 void
 add_variable(struct arguments ** list, struct variable * var, struct variable * ind)
 {
-    struct arguments * p = (struct arguments *)mm_alloc(sizeof(struct arguments));
+    struct arguments *p = (struct arguments *)mm_alloc(sizeof(struct arguments));
+    
     p->variable = var;
     p->indicator = ind;
     p->next = *list;
     *list = p;
 }
 
+/* Append a new variable to our request list. */
+void
+append_variable(struct arguments ** list, struct variable * var, struct variable * ind)
+{
+    struct arguments *p, *new = (struct arguments *)mm_alloc(sizeof(struct arguments));
+
+    for (p = *list; p && p->next; p = p->next);
+    
+    new->variable = var;
+    new->indicator = ind;
+    new->next = NULL;
+    
+    if (p)
+    	p->next = new;
+    else
+	*list = new;
+}
 
 /* Dump out a list of all the variable on this list.
    This is a recursive function that works from the end of the list and

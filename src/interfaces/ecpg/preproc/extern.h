@@ -59,6 +59,7 @@ extern void add_descriptor(char *,char *);
 extern void drop_descriptor(char *,char *);
 extern struct descriptor *lookup_descriptor(char *,char *);
 extern void add_variable(struct arguments ** , struct variable * , struct variable *);
+extern void append_variable(struct arguments ** , struct variable * , struct variable *);
 extern void dump_variables(struct arguments *, int);
 extern struct typedefs *get_typedef(char *);
 extern void adjust_array(enum ECPGttype, int *, int *, int, int, bool);

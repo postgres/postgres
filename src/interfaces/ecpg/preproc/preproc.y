@@ -525,15 +525,13 @@ stmt:  AlterTableStmt			{ output_statement($1, 0, NULL, connection); }
 						}
 
 						/* merge variables given in prepare statement with those given here */
-						for (p = argsinsert; p && p->next; p = p->next);
-						if (p)
-							p->next = ptr->argsinsert;
-						else
-							argsinsert = ptr->argsinsert;
+						for (p = ptr->argsinsert; p; p = p->next)
+							append_variable(&argsinsert, p->variable, p->indicator); 
 
-						argsresult = ptr->argsresult;
+						for (p = ptr->argsresult; p; p = p->next)
+							add_variable(&argsresult, p->variable, p->indicator); 
 
-						output_statement(ptr->command, 0, NULL, ptr->connection);
+						output_statement(mm_strdup(ptr->command), 0, NULL, ptr->connection ? mm_strdup(ptr->connection) : NULL);
 					}
 		| ECPGPrepare		{
 						if (connection)
