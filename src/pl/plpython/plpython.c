@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.5 2001/09/12 03:03:25 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.6 2001/10/01 17:53:12 tgl Exp $
  *
  *********************************************************************
  */
@@ -2325,7 +2325,7 @@ PLy_init_plpy(void)
   plpy = Py_InitModule("plpy", PLy_methods);
   plpy_dict = PyModule_GetDict(plpy);
 
-  //PyDict_SetItemString(plpy, "PlanType", (PyObject *) &PLy_PlanType);
+  /* PyDict_SetItemString(plpy, "PlanType", (PyObject *) &PLy_PlanType); */
 
   PLy_exc_error = PyErr_NewException("plpy.Error", NULL, NULL);
   PLy_exc_fatal = PyErr_NewException("plpy.Fatal", NULL, NULL);

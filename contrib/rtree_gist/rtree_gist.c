@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/contrib/rtree_gist/Attic/rtree_gist.c,v 1.2 2001/08/22 18:24:26 tgl Exp $
+ *	$Header: /cvsroot/pgsql/contrib/rtree_gist/Attic/rtree_gist.c,v 1.3 2001/10/01 17:53:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,13 +275,11 @@ gbox_picksplit(PG_FUNCTION_ARGS)
     	sizeLR = size_box( interLR );
     	sizeBT = size_box( interBT );
 
-	if ( sizeLR < sizeBT ) {
+	if ( sizeLR < sizeBT )
 		direction = 'x';
-	//} else if ( sizeLR > sizeBT ) {
-	} else {
+	else
 		direction = 'y';
-	} 
-    }
+	}
 
    if ( direction == 'x' ) {
 	pfree( unionB ); pfree( listB );
