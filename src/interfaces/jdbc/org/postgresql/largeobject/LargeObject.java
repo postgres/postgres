@@ -92,7 +92,12 @@ public class LargeObject
 	/* Release large object resources during garbage cleanup */
 	protected void finalize() throws SQLException
 	{
-		close();
+	    //This code used to call close() however that was problematic
+	    //because the scope of the fd is a transaction, thus if commit
+	    //or rollback was called before garbage collection ran then 
+	    //the call to close would error out with an invalid large object
+	    //handle.  So this method now does nothing and lets the server
+	    //handle cleanup when it ends the transaction.
 	}
 
 	/*
