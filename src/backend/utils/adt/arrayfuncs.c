@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.73 2002/02/18 14:24:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.74 2002/03/01 22:17:10 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -812,6 +812,7 @@ array_ref(ArrayType *array,
 
 	retptr = array_seek(arraydataptr, elmlen, offset);
 
+	*isNull = false;
 	return ArrayCast(retptr, elmbyval, elmlen);
 }
 
