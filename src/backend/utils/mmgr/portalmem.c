@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.67 2004/07/17 03:29:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.68 2004/08/02 21:42:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -556,10 +556,6 @@ AtCleanup_Portals(void)
 	{
 		Portal		portal = hentry->portal;
 
-		/* AtAbort_Portals should have fixed these: */
-		Assert(portal->status != PORTAL_ACTIVE);
-		Assert(portal->resowner == NULL);
-
 		/*
 		 * Do nothing else to cursors held over from a previous
 		 * transaction. (This test must include checking CURSOR_OPT_HOLD,
@@ -568,7 +564,11 @@ AtCleanup_Portals(void)
 		 */
 		if (portal->createXact != xact &&
 			(portal->cursorOptions & CURSOR_OPT_HOLD))
+		{
+			Assert(portal->status != PORTAL_ACTIVE);
+			Assert(portal->resowner == NULL);
 			continue;
+		}
 
 		/* Else zap it. */
 		PortalDrop(portal, false);
