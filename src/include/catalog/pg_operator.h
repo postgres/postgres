@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.30 1998/04/26 04:09:06 momjian Exp $
+ * $Id: pg_operator.h,v 1.31 1998/05/09 22:48:35 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -605,6 +605,14 @@ DATA(insert OID = 1589 (  ">"	  PGUID 0 b t f  601  601	16 1588  0 0 0 lseg_gt i
 DATA(insert OID = 1590 (  ">="	  PGUID 0 b t f  601  601	16 1587  0 0 0 lseg_ge intltsel - ));
 
 DATA(insert OID = 1591 (  "@-@"   PGUID 0 l t f 0  601	701    0  0 0 0 lseg_length - - ));
+
+DATA(insert OID = 1611 (  "?#"	  PGUID 0 b t f  628  628	16 1611  0 0 0 line_intersect - - ));
+DATA(insert OID = 1612 (  "?||"   PGUID 0 b t f  628  628	16 1612  0 0 0 line_parallel - - ));
+DATA(insert OID = 1613 (  "?-|"   PGUID 0 b t f  628  628	16 1613  0 0 0 line_perp - - ));
+DATA(insert OID = 1614 (  "?-"	  PGUID 0 l t f    0  628	16 1614  0 0 0 line_horizontal - - ));
+DATA(insert OID = 1615 (  "?|"	  PGUID 0 l t f    0  628	16 1615  0 0 0 line_vertical - - ));
+DATA(insert OID = 1616 (  "="	  PGUID 0 b t f  628  628	16 1616  0 0 0 line_eq intltsel - ));
+DATA(insert OID = 1617 (  "#"	  PGUID 0 b t f  628  628  600 1617  0 0 0 line_interpt - - ));
 
 /*
  * function prototypes

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.39 1998/04/27 03:19:10 momjian Exp $
+ * $Id: pg_type.h,v 1.40 1998/05/09 22:48:37 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -236,19 +236,25 @@ DESCR("storage manager");
 /* OIDS 600 - 699 */
 DATA(insert OID = 600 (  point	   PGUID 16  24 f b t \054 0 701 point_in point_out point_in point_out d _null_ ));
 DESCR("geometric point '(x, y)'");
+#define POINTOID		600
 DATA(insert OID = 601 (  lseg	   PGUID 32  48 f b t \054 0 600 lseg_in lseg_out lseg_in lseg_out d _null_ ));
 DESCR("geometric line segment '(pt1,pt2)'");
+#define LSEGOID			601
 DATA(insert OID = 602 (  path	   PGUID -1  -1 f b t \054 0 600 path_in path_out path_in path_out d _null_ ));
 DESCR("geometric path '(pt1,...)'");
+#define PATHOID			602
 DATA(insert OID = 603 (  box	   PGUID 32 100 f b t \073 0 600 box_in box_out box_in box_out d _null_ ));
 DESCR("geometric box '(lower left,upper right)'");
+#define BOXOID			603
 DATA(insert OID = 604 (  polygon   PGUID -1  -1 f b t \054 0  -1 poly_in poly_out poly_in poly_out d _null_ ));
 DESCR("geometric polygon '(pt1,...)'");
+#define POLYGONOID		604
 DATA(insert OID = 605 (  filename  PGUID 256 -1 f b t \054 0  18 filename_in filename_out filename_in filename_out i _null_ ));
 DESCR("filename used in system tables");
 
 DATA(insert OID = 628 (  line	   PGUID 32  48 f b t \054 0 701 line_in line_out line_in line_out d _null_ ));
 DESCR("geometric line '(pt1,pt2)'");
+#define LINEOID			628
 DATA(insert OID = 629 (  _line	   PGUID  -1 -1 f b t \054 0 628 array_in array_out array_in array_out d _null_ ));
 DESCR("");
 
@@ -262,8 +268,10 @@ DESCR("double-precision floating point number, 8-byte");
 #define FLOAT8OID 701
 DATA(insert OID = 702 (  abstime   PGUID  4  20 t b t \054 0   0 nabstimein nabstimeout nabstimein nabstimeout i _null_ ));
 DESCR("absolute, limited-range date and time (Unix system time)");
+#define ABSTIMEOID		702
 DATA(insert OID = 703 (  reltime   PGUID  4  20 t b t \054 0   0 reltimein reltimeout reltimein reltimeout i _null_ ));
 DESCR("relative, limited-range time interval (Unix delta time)");
+#define RELTIMEOID		703
 DATA(insert OID = 704 (  tinterval PGUID 12  47 f b t \054 0   0 tintervalin tintervalout tintervalin tintervalout i _null_ ));
 DESCR("time interval '(abstime,abstime)'");
 DATA(insert OID = 705 (  unknown   PGUID -1  -1 f b t \054 0   18 textin textout textin textout i _null_ ));
@@ -272,6 +280,7 @@ DESCR("");
 
 DATA(insert OID = 718 (  circle    PGUID  24 47 f b t \054 0	0 circle_in circle_out circle_in circle_out d _null_ ));
 DESCR("geometric circle '(center,radius)'");
+#define CIRCLEOID		718
 DATA(insert OID = 719 (  _circle   PGUID  -1 -1 f b t \054 0  718 array_in array_out array_in array_out d _null_ ));
 DATA(insert OID = 790 (  money	   PGUID   4 24 f b t \054 0	0 cash_in cash_out cash_in cash_out i _null_ ));
 DESCR("money '$d,ddd.cc'");

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.55 1998/04/29 12:39:32 scrappy Exp $
+ * $Id: pg_proc.h,v 1.56 1998/05/09 22:48:36 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -651,9 +651,9 @@ DESCR("greater-than");
 DATA(insert OID = 310 (  float84ge		   PGUID 11 f t f 2 f 16 "701 700" 100 0 0 100	foo bar ));
 DESCR("greater-than-or-equals");
 
-DATA(insert OID = 311 (  ftod			   PGUID 11 f t f 2 f 701 "700" 100 0 0 100  foo bar ));
+DATA(insert OID = 311 (  ftod			   PGUID 11 f t f 1 f 701 "700" 100 0 0 100  foo bar ));
 DESCR("convert");
-DATA(insert OID = 312 (  dtof			   PGUID 11 f t f 2 f 700 "701" 100 0 0 100  foo bar ));
+DATA(insert OID = 312 (  dtof			   PGUID 11 f t f 1 f 700 "701" 100 0 0 100  foo bar ));
 DESCR("convert");
 DATA(insert OID = 313 (  i2toi4			   PGUID 11 f t f 1 f  23  "21" 100 0 0 100  foo bar ));
 DESCR("convert");
@@ -842,6 +842,10 @@ DATA(insert OID = 658 (  namege			   PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  
 DESCR("greater-than-or-equals");
 DATA(insert OID = 659 (  namene			   PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
 DESCR("not equal");
+
+DATA(insert OID = 668 (  bpchar			   PGUID 11 f t f 2 f 1042 "1042 23" 100 0 0 100  foo bar ));
+DATA(insert OID = 669 (  varchar		   PGUID 11 f t f 2 f 1043 "1043 23" 100 0 0 100  foo bar ));
+
 DATA(insert OID = 682 (  mktinterval	   PGUID 11 f t f 2 f 704 "702 702" 100 0 0 100 foo bar ));
 DESCR("convert to interval");
 DATA(insert OID = 683 (  oid8eq			   PGUID 11 f t f 2 f 16 "30 30" 100 0 0 100  foo bar ));
@@ -1569,6 +1573,11 @@ DESCR("octet length");
 DATA(insert OID = 1376 (  octet_length			 PGUID 14 f t f 1 f   23   "1043" 100 0 0 100  "select varcharoctetlen($1)" - ));
 DESCR("octet length");
 
+DATA(insert OID = 1374 (  char_bpchar		 PGUID 11 f t f 1 f 1042 "18" 100 0 0 100  foo bar ));
+DATA(insert OID = 1375 (  bpchar			 PGUID 14 f t f 1 f 1042 "18" 100 0 0 100  "select char_bpchar($1)" - ));
+DATA(insert OID = 1376 (  bpchar_char		 PGUID 11 f t f 1 f   18 "1042" 100 0 0 100  foo bar ));
+DATA(insert OID = 1377 (  char				 PGUID 14 f t f 1 f   23 "1042" 100 0 0 100  "select bpchar_char($1)" - ));
+
 DATA(insert OID = 1380 (  date_part    PGUID 14 f t f 2 f  701 "25 1184" 100 0 0 100  "select datetime_part($1, $2)" - ));
 DESCR("extract field from datetime");
 DATA(insert OID = 1381 (  date_part    PGUID 14 f t f 2 f  701 "25 1186" 100 0 0 100  "select timespan_part($1, $2)" - ));
@@ -1791,6 +1800,29 @@ DESCR("closest point to line on line segment");
 DATA(insert OID = 1489 (  close_lseg		PGUID 11 f t f 2 f 600 "601 601" 100 0 10 100  foo bar ));
 DESCR("closest point to line segment on line segment");
 
+DATA(insert OID = 1490 (  line_in			PGUID 11 f t f 1 f 628 "0" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 1491 (  line_out			PGUID 11 f t f 1 f 23  "0" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 1492 (  line_eq			PGUID 11 f t f 2 f  16 "628 628" 100 0 0 100  foo bar ));
+DESCR("lines equal?");
+DATA(insert OID = 1493 (  line_construct_pp	PGUID 11 f t f 2 f 628 "600 600" 100 0 0 100  foo bar ));
+DESCR("line from points");
+DATA(insert OID = 1494 (  line_interpt		PGUID 11 f t f 2 f 600 "628 628" 100 0 0 100  foo bar ));
+DESCR("intersection point");
+DATA(insert OID = 1495 (  line_intersect	PGUID 11 f t f 2 f  16 "628 628" 100 0 0 100  foo bar ));
+DESCR("lines intersect?");
+DATA(insert OID = 1496 (  line_parallel		PGUID 11 f t f 2 f  16 "628 628" 100 0 0 100  foo bar ));
+DESCR("lines parallel?");
+DATA(insert OID = 1497 (  line_perp			PGUID 11 f t f 2 f  16 "628 628" 100 0 0 100  foo bar ));
+DESCR("lines perpendicular?");
+DATA(insert OID = 1498 (  line_vertical		PGUID 11 f t f 1 f  16 "628" 100 0 0 100  foo bar ));
+DESCR("lines vertical?");
+DATA(insert OID = 1499 (  line_horizontal	PGUID 11 f t f 1 f  16 "628" 100 0 0 100  foo bar ));
+DESCR("lines horizontal?");
+
+/* OIDS 1500 - 1599 */
+
 DATA(insert OID = 1530 (  point				PGUID 14 f t f 2 f 600 "601 601" 100 0 0 100  "select lseg_interpt($1, $2)" - ));
 DESCR("convert");
 DATA(insert OID = 1531 (  point				PGUID 14 f t f 1 f 600 "718" 100 0 0 100  "select circle_center($1)" - ));
@@ -1875,6 +1907,17 @@ DESCR("");
 DATA(insert OID = 1583 (  diameter			PGUID 14 f t f 1 f 701 "718" 100 0 0 100  "select circle_diameter($1)" - ));
 DESCR("");
 DATA(insert OID = 1584 (  area				PGUID 14 f t f 1 f 701 "718" 100 0 0 100  "select circle_area($1)" - ));
+DESCR("");
+
+/* OIDS 1600 - 1699 */
+
+DATA(insert OID = 1600 (  line				PGUID 14 f t f 2 f 628 "600 600" 100 0 0 100  "select line_construct_pp($1, $2)" - ));
+DESCR("");
+DATA(insert OID = 1601 (  ishorizontal		PGUID 14 f t f 1 f  16 "628" 100 0 0 100  "select line_horizontal($1)" - ));
+DESCR("");
+DATA(insert OID = 1602 (  isvertical		PGUID 14 f t f 1 f  16 "628" 100 0 0 100  "select line_vertical($1)" - ));
+DESCR("");
+DATA(insert OID = 1603 (  isparallel		PGUID 14 f t f 2 f  16 "628 628" 100 0 0 100  "select line_parallel($1, $2)" - ));
 DESCR("");
 
 /* Oracle Compatibility Related Functions - By Edmund Mergl <E.Mergl@bawue.de> */
