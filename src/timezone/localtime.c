@@ -1,3 +1,8 @@
+#include "pgtz.h"
+#undef open
+#define timezone pg_timezone
+#define USG_COMPAT
+extern time_t pg_timezone;
 /*
 ** This file is in the public domain, so clarified as of
 ** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).

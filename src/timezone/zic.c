@@ -1,4 +1,11 @@
 static char	elsieid[] = "@(#)zic.c	7.115";
+#include "pgtz.h"
+#undef unlink
+#undef TZDIR
+#define TZDIR "data"
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 #include "private.h"
 #include "locale.h"
@@ -7,10 +14,12 @@ static char	elsieid[] = "@(#)zic.c	7.115";
 #if HAVE_SYS_STAT_H
 #include "sys/stat.h"
 #endif
+#ifndef WIN32
 #ifdef S_IRUSR
 #define MKDIR_UMASK (S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
 #else
 #define MKDIR_UMASK 0755
+#endif
 #endif
 
 /*
@@ -2234,3 +2243,16 @@ const int	i;
 /*
 ** UNIX was a registered trademark of The Open Group in 2003.
 */
+
+
+#ifdef WIN32
+/*
+ * To run on win32 
+ */
+int link(const char *oldpath, const char *newpath) {
+	if (!CopyFileEx(oldpath, newpath, NULL, NULL, FALSE, 0)) {
+		return -1;
+	}
+	return 0;
+}
+#endif
