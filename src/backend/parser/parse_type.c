@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.18 1998/11/27 19:52:14 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.19 1999/02/23 07:53:01 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ typeidTypeName(Oid id)
 									ObjectIdGetDatum(id),
 									0, 0, 0)))
 	{
-		elog(ERROR, "type id lookup of %u failed", id);
+		elog(ERROR, "Unable to locate type oid %u in catalog", id);
 		return NULL;
 	}
 	typetuple = (Form_pg_type) GETSTRUCT(tup);
@@ -68,7 +68,7 @@ typeidType(Oid id)
 									ObjectIdGetDatum(id),
 									0, 0, 0)))
 	{
-		elog(ERROR, "type id lookup of %u failed", id);
+		elog(ERROR, "Unable to locate type oid %u in catalog", id);
 		return NULL;
 	}
 	return (Type) tup;
@@ -86,7 +86,7 @@ typenameType(char *s)
 	if (!(tup = SearchSysCacheTuple(TYPNAME,
 									PointerGetDatum(s),
 									0, 0, 0)))
-		elog(ERROR, "type name lookup of %s failed", s);
+		elog(ERROR, "Unable to locate type name '%s' in catalog", s);
 	return (Type) tup;
 }
 
@@ -217,7 +217,7 @@ typeidTypElem(Oid type_id)
 	return type->typelem;
 }
 
-/* Given the attribute type of an array return the arrtribute type of
+/* Given the attribute type of an array return the attribute type of
    an element of the array */
 
 Oid

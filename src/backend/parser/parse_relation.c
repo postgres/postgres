@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.18 1999/02/21 03:49:03 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.19 1999/02/23 07:53:01 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ colnameRangeTableEntry(ParseState *pstate, char *colname)
 				{
 					if (!pstate->p_is_insert ||
 						rte != pstate->p_target_rangetblentry)
-						elog(ERROR, "Column %s is ambiguous", colname);
+						elog(ERROR, "Column '%s' is ambiguous", colname);
 				}
 				else
 					rte_result = rte;
@@ -198,7 +198,7 @@ addRangeTableEntry(ParseState *pstate,
 
 				return (RangeTblEntry *) nth(rt_index - 1, pstate->p_rtable);
 			}
-			elog(ERROR, "Table name %s specified more than once", refname);
+			elog(ERROR, "Table name '%s' specified more than once", refname);
 		}
 	}
 
@@ -317,7 +317,7 @@ attnameAttNum(Relation rd, char *a)
 			return special_attr[i].code;
 
 	/* on failure */
-	elog(ERROR, "Relation %s does not have attribute %s",
+	elog(ERROR, "Relation '%s' does not have attribute '%s'",
 		 RelationGetRelationName(rd), a);
 	return 0;					/* lint */
 }
@@ -396,7 +396,7 @@ handleTargetColname(ParseState *pstate, char **resname,
 			pstate->p_insert_columns = lnext(pstate->p_insert_columns);
 		}
 		else
-			elog(ERROR, "insert: more expressions than target columns");
+			elog(ERROR, "INSERT has more expressions than target columns");
 	}
 	if (pstate->p_is_insert || pstate->p_is_update)
 		checkTargetTypes(pstate, *resname, refname, colname);
@@ -424,13 +424,13 @@ checkTargetTypes(ParseState *pstate, char *target_colname,
 	{
 		rte = colnameRangeTableEntry(pstate, colname);
 		if (rte == (RangeTblEntry *) NULL)
-			elog(ERROR, "attribute %s not found", colname);
+			elog(ERROR, "Attribute %s not found", colname);
 		refname = rte->refname;
 	}
 
 /*
 	if (pstate->p_is_insert && rte == pstate->p_target_rangetblentry)
-		elog(ERROR, "%s not available in this context", colname);
+		elog(ERROR, "'%s' not available in this context", colname);
 */
 	resdomno_id = get_attnum(rte->relid, colname);
 	attrtype_id = get_atttype(rte->relid, resdomno_id);
@@ -460,18 +460,18 @@ checkTargetTypes(ParseState *pstate, char *target_colname,
 	}
 #else
 	if (attrtype_id != attrtype_target)
-		elog(ERROR, "Type of %s does not match target column %s",
+		elog(ERROR, "Type of '%s' does not match target column '%s'",
 			 colname, target_colname);
 
 	if (attrtype_id == BPCHAROID &&
 		get_atttypmod(rte->relid, resdomno_id) !=
 		get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target))
-		elog(ERROR, "Length of %s is not equal to the length of target column %s",
+		elog(ERROR, "Length of '%s' is not equal to the length of target column '%s'",
 			 colname, target_colname);
 	if (attrtype_id == VARCHAROID &&
 		get_atttypmod(rte->relid, resdomno_id) >
 		get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target))
-		elog(ERROR, "Length of %s is longer than length of target column %s",
+		elog(ERROR, "Length of '%s' is longer than length of target column '%s'",
 			 colname, target_colname);
 #endif
 }

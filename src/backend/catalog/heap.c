@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.74 1999/02/13 23:14:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.75 1999/02/23 07:54:03 thomas Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -197,8 +197,8 @@ heap_create(char *relname,
 
 	if (relname && IsSystemRelationName(relname) && IsNormalProcessingMode())
 	{
-		elog(ERROR,
-		 "Illegal class name: %s -- pg_ is reserved for system catalogs",
+		elog(ERROR, "Illegal class name '%s'"
+			 "\n\tThe 'pg_' name prefix is reserved for system catalogs",
 			 relname);
 	}
 
@@ -427,15 +427,15 @@ CheckAttributeNames(TupleDesc tupdesc)
 			if (nameeq(&(HeapAtt[j]->attname),
 					   &(tupdesc->attrs[i]->attname)))
 			{
-				elog(ERROR,
-					 "create: system attribute named \"%s\"",
+				elog(ERROR, "Attribute '%s' has a name conflict"
+					 "\n\tName matches an existing system attribute",
 					 HeapAtt[j]->attname.data);
 			}
 		}
 		if (tupdesc->attrs[i]->atttypid == UNKNOWNOID)
 		{
-			elog(NOTICE,
-				 "create: attribute named \"%s\" has an unknown type",
+			elog(NOTICE, "Attribute '%s' has an unknown type"
+				 "\n\tRelation created; continue",
 				 tupdesc->attrs[i]->attname.data);
 		}
 	}
@@ -451,8 +451,7 @@ CheckAttributeNames(TupleDesc tupdesc)
 			if (nameeq(&(tupdesc->attrs[j]->attname),
 					   &(tupdesc->attrs[i]->attname)))
 			{
-				elog(ERROR,
-					 "create: repeated attribute \"%s\"",
+				elog(ERROR, "Attribute '%s' is repeated",
 					 tupdesc->attrs[j]->attname.data);
 			}
 		}
@@ -774,15 +773,16 @@ heap_create_with_catalog(char *relname,
 	 */
 	Assert(IsNormalProcessingMode() || IsBootstrapProcessingMode());
 	if (natts == 0 || natts > MaxHeapAttributeNumber)
-		elog(ERROR, "amcreate: from 1 to %d attributes must be specified",
- 			 MaxHeapAttributeNumber);
+		elog(ERROR, "Number of attributes is out of range"
+			 "\n\tFrom 1 to %d attributes may be specified",
+			 MaxHeapAttributeNumber);
 
 	CheckAttributeNames(tupdesc);
 
 	/* temp tables can mask non-temp tables */
 	if ((!istemp && RelnameFindRelid(relname)) ||
 	   (istemp && get_temp_rel_by_name(relname) != NULL))
-		elog(ERROR, "%s relation already exists", relname);
+		elog(ERROR, "Relation '%s' already exists", relname);
 
 	/* invalidate cache so non-temp table is masked by temp */
 	if (istemp)
@@ -951,7 +951,7 @@ RelationRemoveInheritance(Relation relation)
 		heap_endscan(scan);
 		heap_close(catalogRelation);
 
-		elog(ERROR, "relation <%d> inherits \"%s\"",
+		elog(ERROR, "Relation '%d' inherits '%s'",
 			 ((Form_pg_inherits) GETSTRUCT(tuple))->inhrel,
 			 RelationGetRelationName(relation));
 	}
@@ -1054,7 +1054,7 @@ DeleteRelationTuple(Relation rel)
 	if (!HeapTupleIsValid(tup))
 	{
 		heap_close(pg_class_desc);
-		elog(ERROR, "DeleteRelationTuple: %s relation nonexistent",
+		elog(ERROR, "Relation '%s' does not exist",
 			 &rel->rd_rel->relname);
 	}
 
@@ -1250,7 +1250,7 @@ heap_destroy_with_catalog(char *relname)
 	 */
 	rel = heap_openr(relname);
 	if (rel == NULL)
-		elog(ERROR, "Relation %s Does Not Exist!", relname);
+		elog(ERROR, "Relation '%s' does not exist", relname);
 
 	LockRelation(rel, AccessExclusiveLock);
 	rid = rel->rd_id;
@@ -1261,7 +1261,7 @@ heap_destroy_with_catalog(char *relname)
 	 */
 	/* allow temp of pg_class? Guess so. */
 	if (!istemp && IsSystemRelationName(RelationGetRelationName(rel)->data))
-		elog(ERROR, "amdestroy: cannot destroy %s relation",
+		elog(ERROR, "System relation '%s' cannot be destroyed",
 			 &rel->rd_rel->relname);
 
 	/* ----------------
@@ -1505,7 +1505,7 @@ start:;
 
 	if (length(query->rtable) > 1 ||
 		flatten_tlist(query->targetList) != NIL)
-		elog(ERROR, "DEFAULT: cannot use attribute(s)");
+		elog(ERROR, "Cannot use attribute(s) in DEFAULT clause");
 	te = (TargetEntry *) lfirst(query->targetList);
 	resdom = te->resdom;
 	expr = te->expr;
@@ -1585,7 +1585,7 @@ StoreRelCheck(Relation rel, ConstrCheck *check)
 	query = (Query *) (queryTree_list->qtrees[0]);
 
 	if (length(query->rtable) > 1)
-		elog(ERROR, "CHECK: only relation %.*s can be referenced",
+		elog(ERROR, "Only relation '%.*s' can be referenced",
 			 NAMEDATALEN, rel->rd_rel->relname.data);
 
 	plan = (Plan *) lfirst(planTree_list);
