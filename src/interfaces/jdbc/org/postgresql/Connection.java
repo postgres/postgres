@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /**
- * $Id: Connection.java,v 1.30 2001/10/09 20:47:35 barry Exp $
+ * $Id: Connection.java,v 1.31 2001/10/16 20:05:22 barry Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -262,6 +262,14 @@ public abstract class Connection
       // otherwise it's hardcoded to 'SQL_ASCII'.
       // If the backend doesn't know about multibyte we can't assume anything about the encoding
       // used, so we denote this with 'UNKNOWN'.
+      //Note: begining with 7.2 we should be using pg_client_encoding() which
+      //is new in 7.2.  However it isn't easy to conditionally call this new 
+      //function, since we don't yet have the information as to what server 
+      //version we are talking to.  Thus we will continue to call 
+      //getdatabaseencoding() until we drop support for 7.1 and older versions
+      //or until someone comes up with a conditional way to run one or
+      //the other function depending on server version that doesn't require
+      //two round trips to the server per connection
 
       final String encodingQuery =
           "case when pg_encoding_to_char(1) = 'SQL_ASCII' then 'UNKNOWN' else getdatabaseencoding() end";
