@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.119 2000/02/15 20:49:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.120 2000/02/19 05:04:54 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1461,8 +1461,6 @@ PQsetenvPoll(PGconn *conn)
 
 		case SETENV_STATE_ENCODINGS_WAIT:
 		{
-			const char *encoding = 0;
-
 			if (PQisBusy(handle->conn))
 				return PGRES_POLLING_READING;
 			
@@ -1470,6 +1468,8 @@ PQsetenvPoll(PGconn *conn)
 
 			if (handle->res)
 			{
+				char *encoding;
+
 				if (PQresultStatus(handle->res) != PGRES_TUPLES_OK)
 				{
 					PQclear(handle->res);
@@ -1478,13 +1478,10 @@ PQsetenvPoll(PGconn *conn)
 
 				encoding = PQgetvalue(handle->res, 0, 0);
 				if (!encoding)			/* this should not happen */
-					encoding = SQL_ASCII;
-
-				if (encoding)
-				{
+					conn->client_encoding = SQL_ASCII;
+				else
 					/* set client encoding to pg_conn struct */
-					conn->client_encoding = atoi(encoding);
-				}
+					conn->client_encoding = pg_char_to_encoding(encoding);
 				PQclear(handle->res);
 				/* We have to keep going in order to clear up the query */
 				goto keep_going;
@@ -2393,6 +2390,9 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 	int status;
 
 	if (!conn || conn->status != CONNECTION_OK)
+		return -1;
+
+	if (!encoding)
 		return -1;
 
 	/* check query buffer overflow */
