@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.2 2004/08/06 16:00:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.3 2004/08/06 16:06:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -495,7 +495,8 @@ SysLogger_Start(void)
 				syslogPipe[1] = -1;
 #else
 				fflush(stderr);
-				if (dup2(_open_osfhandle((long)syslogPipe[1], _O_APPEND),
+				if (dup2(_open_osfhandle((long)syslogPipe[1],
+										 _O_APPEND | _O_TEXT),
 						 _fileno(stderr)) < 0)
 					ereport(FATAL,
 							(errcode_for_file_access(),
