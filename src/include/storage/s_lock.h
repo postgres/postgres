@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.8 1997/09/30 16:21:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.9 1997/10/02 18:32:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,7 +351,7 @@ tas_dummy()
 								__asm__("ldstub [%1], %0" \
 						:		"=&r"(_res) \
 						:		"r"(lock)); \
-							} while (!_res != 0); \
+							} while (_res != 0); \
 						} while (0)
 
 #define	S_UNLOCK(lock)	(*(lock) = 0)
