@@ -1,7 +1,7 @@
 # German message translation file for PostgreSQL server
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2003.
 #
-# $PostgreSQL: pgsql/src/backend/po/de.po,v 1.13 2003/11/29 19:51:52 pgsql Exp $
+# $PostgreSQL: pgsql/src/backend/po/de.po,v 1.14 2004/01/19 14:28:18 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -4183,7 +4183,7 @@ msgstr "%s: konnte Benutzername nicht ermitteln (GetUserName fehlgeschlagen)\n"
 
 #: optimizer/path/allpaths.c:214
 msgid "SELECT FOR UPDATE is not supported for inheritance queries"
-msgstr "SELECT FOR UPDATE wird in Anfragen mit Veerbung nicht unterstützt"
+msgstr "SELECT FOR UPDATE wird in Anfragen mit Vererbung nicht unterstützt"
 
 #: optimizer/plan/initsplan.c:282 optimizer/prep/prepjointree.c:337
 msgid "UNION JOIN is not implemented"
