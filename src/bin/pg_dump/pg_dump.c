@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.65 1998/03/14 21:57:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.66 1998/03/16 05:41:39 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1856,7 +1856,7 @@ getIndices(int *numIndices)
 	 * find all the user-defined indices. We do not handle partial
 	 * indices.
 	 *
-	 * skip 'Xinx*' - indices on inversion objects
+	 * skip 'xinx*' - indices on inversion objects
 	 *
 	 * this is a 4-way join !!
 	 */
@@ -1877,7 +1877,7 @@ getIndices(int *numIndices)
 			"from pg_index i, pg_class t1, pg_class t2, pg_am a "
 			"where t1.oid = i.indexrelid and t2.oid = i.indrelid "
 			"and t1.relam = a.oid and i.indexrelid > '%d'::oid "
-			"and t2.relname !~ '^pg_' and t1.relname !~ '^Xinx'",
+			"and t2.relname !~ '^pg_' and t1.relname !~ '^xinx'",
 			g_last_builtin_oid);
 
 	res = PQexec(g_conn, query);
