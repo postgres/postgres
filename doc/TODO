@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb 19 17:41:17 EST 2002
+Last updated:		Tue Feb 19 22:50:15 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -210,6 +210,7 @@ COMMANDS
 	o Allow UPDATE/DELETE WHERE CURRENT OF cursor using per-cursor tid
 	  stored in the backend
 	o Prevent DROP of table being referenced by our own open cursor
+	o Allow cursors outside transactions [cursor]
 
 * INSERT
 	o Allow INSERT/UPDATE of system-generated oid value for a row
