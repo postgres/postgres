@@ -945,17 +945,18 @@
 
      <listitem>
       <para>
-       A double quote ('"') between quotation marks is skipped and is not parsed. 
-       If you want to write a double quote to output you must preceed
-       it with a double backslash (<literal>'\\"</literal>), for
-       example <literal>'\\"YYYY Month\\"'</literal>.
+       A double quote (<quote><literal>"</literal></quote>) between
+       quotation marks is skipped and is not parsed.  If you want to
+       write a double quote to output you must preceed it with a
+       double backslash (<literal>'\\"</literal>), for example
+       <literal>'\\"YYYY Month\\"'</literal>.
       </para>
      </listitem>
 
      <listitem>
       <para>
        <function>to_char</function> supports text without a leading
-       double quote ('"'), but any string 
+       double quote but any string 
        between a quotation marks is rapidly handled and you are
        guaranteed that it will not be interpreted as a template
        keyword (example: <literal>'"Hello Year: "YYYY'</literal>).
@@ -1473,12 +1474,12 @@ Not defined by this name. Implements the intersection operator '#'
    </para>
   </sect1>
 
-  <sect1 id="cidr-functions">
-   <title>IP V4 Functions</title>
+  <sect1 id="net-functions">
+   <title>Network Address Type Functions</title>
 
    <para>
-    <table tocentry="1">
-     <title><productname>Postgres</productname>IP V4 Functions</title>
+    <table tocentry="1" id="cidr-inet-functions">
+     <title><type>cidr</> and <type>inet</> Functions</title>
      <tgroup cols="4">
       <thead>
        <row>
@@ -1509,13 +1510,13 @@ Not defined by this name. Implements the intersection operator '#'
        </row>
        <row>
 	<entry>masklen(cidr)</entry>
-	<entry>int4</entry>
+	<entry>integer</entry>
 	<entry>calculate netmask length</entry>
 	<entry>masklen('192.168.1.5/24')</entry>
        </row>
        <row>
 	<entry>masklen(inet)</entry>
-	<entry>int4</entry>
+	<entry>integer</entry>
 	<entry>calculate netmask length</entry>
 	<entry>masklen('192.168.1.5/24')</entry>
        </row>
@@ -1525,9 +1526,21 @@ Not defined by this name. Implements the intersection operator '#'
 	<entry>construct netmask as text</entry>
 	<entry>netmask('192.168.1.5/24')</entry>
        </row>
+       <row>
+	<entry>trunc(macaddr)</entry>
+	<entry>macaddr</entry>
+	<entry>set last 3 bytes to zero</entry>
+	<entry>trunc(macaddr '12:34:56:78:90:ab')</entry>
+       </row>
       </tbody>
      </tgroup>
     </table>
+
+    The function <function>trunc</>(<type>macaddr</>) returns a MAC
+    address with the last 3 bytes set to 0.  This can be used to
+    associate the remaining prefix with a manufacturer.  The directory
+    <filename>contrib/mac</> in the source distribution contains some
+    utilities to create and maintain such an association table.
    </para>
 
   </sect1>

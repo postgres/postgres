@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.37 2000/09/29 20:21:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.38 2000/10/04 15:47:45 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -1732,67 +1732,78 @@ January 8 04:05:06 1999 PST
   </sect1>
 
   <sect1 id="net-types">
-   <title>IP Version 4 Networks and Host Addresses</title>
+   <title>Network Address Data Types</title>
 
    <para>
-    The <type>cidr</type> type stores networks specified 
-    in <acronym>CIDR</acronym> (Classless Inter-Domain Routing) notation.
-    The <type>inet</type> type stores hosts and networks in CIDR notation using a simple
-    variation in representation to represent simple host TCP/IP addresses.
-   </para>
+    <productname>Postgres</> offers data types to store IP and MAC
+    addresses.  It is preferrable to use these types over plain text
+    types, because these types offer input error checking and several
+    specialized operators and functions.
 
-   <para>
-    <table tocentry="1">
-     <title><productname>Postgres</productname>IP Version 4 Types</title>
-     <titleabbrev>IPV4</titleabbrev>
+    <table tocentry="1" id="net-types-table">
+     <title>Network Address Data Types</title>
      <tgroup cols="4">
       <thead>
        <row>
-	<entry>IPV4 Type</entry>
+	<entry>Name</entry>
 	<entry>Storage</entry>
 	<entry>Description</entry>
 	<entry>Range</entry>
        </row>
       </thead>
       <tbody>
+
        <row>
 	<entry>cidr</entry>
-	<entry>variable</entry>
-	<entry>CIDR networks</entry>
-	<entry>Valid IPV4 CIDR blocks</entry>
+	<entry>11 bytes</entry>
+	<entry>IP networks</entry>
+	<entry>valid IPv4 networks</entry>
        </row>
+
        <row>
 	<entry>inet</entry>
-	<entry>variable</entry>
-	<entry>nets and hosts</entry>
-	<entry>Valid IPV4 CIDR blocks</entry>
+	<entry>11 bytes</entry>
+	<entry>IP hosts and networks</entry>
+	<entry>valid IPv4 hosts</entry>
        </row>
+
+       <row>
+	<entry>macaddr</entry>
+	<entry>6 bytes</entry>
+	<entry>MAC addresses</entry>
+	<entry>customary formats</entry>
+       </row>
+
       </tbody>
      </tgroup>
     </table>
    </para>
 
-   <sect2>
-    <title>CIDR</title>
+   <para>
+    IP v6 is not supported, yet.
+   </para>
+
+
+   <sect2 id="cidr-type">
+    <title><type>cidr</></title>
 
     <para>
-     The <type>cidr</type> type holds a CIDR network.
-     The format for specifying classless networks is 
-     <replaceable class="parameter">x.x.x.x/y</replaceable>
-     where <replaceable class="parameter">x.x.x.x</replaceable> is the
-     network and <replaceable class="parameter">/y</replaceable> is
-     the number of bits in the netmask.
-     If <replaceable class="parameter">/y</replaceable> omitted, it is
-     calculated using assumptions from
-     the older classfull naming system except that it is extended to include at least
-     all of the octets in the input.
+     The <type>cidr</type> type holds an IP network.  The format for
+     specifying classless networks is <replaceable
+     class="parameter">x.x.x.x/y</> where <replaceable
+     class="parameter">x.x.x.x</> is the network and <replaceable
+     class="parameter">y</> is the number of bits in the netmask.  If
+     <replaceable class="parameter">y</> omitted, it is calculated
+     using assumptions from the older classfull naming system except
+     that it is extended to include at least all of the octets in the
+     input.
     </para>
 
     <para>
      Here are some examples:
 
      <table tocentry="1">
-      <title><productname>Postgres</productname>IP Types Examples</title>
+      <title><type>cidr</> Type Input Examples</title>
       <tgroup cols="2">
        <thead> 
 	<row> 
@@ -1801,6 +1812,14 @@ January 8 04:05:06 1999 PST
 	</row>
        </thead>
        <tbody>
+	<row>
+	 <entry>192.168.100.128/25</entry>
+	 <entry>192.168.100.128/25</entry>
+	</row>
+	<row>
+	 <entry>192.168/25</entry>
+	 <entry>192.168.0.0/25</entry>
+	</row>
 	<row>
 	 <entry>192.168.1</entry>
 	 <entry>192.168.1/24</entry>
@@ -1839,34 +1858,48 @@ January 8 04:05:06 1999 PST
     </para>
    </sect2>
 
-   <sect2>
-    <title id="inet-type"><type>inet</type></title>
+   <sect2 id="inet-type">
+    <title><type>inet</type></title>
 
     <para>
-     The <type>inet</type> type is designed to hold, in one field, all of the information
-     about a host including the CIDR-style subnet that it is in.
-     Note that if you want to store proper CIDR networks,
-     you should use the <type>cidr</type> type.
-     The <type>inet</type> type is similar to the <type>cidr</type>
-     type except that the bits in the
-     host part can be non-zero.
-     Functions exist to extract the various elements of the field.
+     The <type>inet</type> type holds an IP host address, and
+     optionally the identity of the subnet it is in, all in one field.
+     Note that if you want to store networks only, you should use the
+     <type>cidr</type> type.  The <type>inet</type> type is similar to
+     the <type>cidr</type> type except that the bits in the host part
+     can be non-zero.  Functions exist to extract the various elements
+     of the field.
     </para>
 
     <para>
-     The input format for this function is
-     <replaceable class="parameter">x.x.x.x/y</replaceable> 
-     where <replaceable class="parameter">x.x.x.x</replaceable> is
-     an internet host and <replaceable class="parameter">y</replaceable> 
-     is the number of bits in the netmask.
-     If the <replaceable class="parameter">/y</replaceable> part is left off, 
-     it is treated as <literal>/32</literal>.
-     On output, the <replaceable class="parameter">/y</replaceable> part is not printed 
-     if it is <literal>/32</literal>.
-     This allows the type to be used as a straight host type by just leaving off
-     the bits part.
+     The input format for this type is <replaceable
+     class="parameter">x.x.x.x/y</replaceable> where <replaceable
+     class="parameter">x.x.x.x</replaceable> is an internet host and
+     <replaceable class="parameter">y</replaceable> is the number of
+     bits in the netmask.  If the <replaceable
+     class="parameter">y</replaceable> part is left off, then the
+     netmask is 32 and you are effectively only storing the address of
+     a single host.
     </para>
    </sect2>
+
+   <sect2 id="macaddr-type">
+    <title><type>macaddr</></>
+
+    <para>
+     The <type>macaddr</> type stores MAC addresses, i.e., Ethernet
+     card hardware addresses (although MAC addresses are used for
+     other purposes as well).  Input is accepted in various customary
+     formats, including <literal>'08002b:010203'</>,
+     <literal>'08002b-010203'</>, <literal>'0800.2b01.0203'</>,
+     <literal>'08-00-2b-01-02-03'</>, and
+     <literal>'08:00:2b:01:02:03'</>, which would all specify the same
+     address.  Upper and lower case is accepted for the digits
+     <literal>a</> through <literal>f</>.  Output is always in the
+     latter of the given forms.
+    </para>
+   </sect2>
+
   </sect1>
 
  </chapter>

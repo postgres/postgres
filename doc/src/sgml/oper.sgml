@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/oper.sgml,v 1.19 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/oper.sgml,v 1.20 2000/10/04 15:47:45 petere Exp $
 -->
 
  <Chapter Id="operators">
@@ -722,13 +722,15 @@ logical union
    </Para>
   </sect1>
 
-  <sect1 id="cidr-operators">
-   <title>IP V4 CIDR Operators</title>
 
-   <Para>
-    <TABLE TOCENTRY="1">
-     <TITLE><ProductName>Postgres</ProductName>IP V4 CIDR Operators</TITLE>
-     <TITLEABBREV>Operators</TITLEABBREV>
+  <sect1 id="net-operators">
+   <title>Network Address Type Operators</title>
+
+   <sect2 id="cidr-operators">
+    <title><type>cidr</> Operators</title>
+
+    <table tocentry="1" id="cidr-operators-table">
+     <title><type>cidr</> Operators</title>
      <TGROUP COLS="3">
       <THEAD>
        <ROW>
@@ -791,16 +793,13 @@ logical union
       </TBODY>
      </TGROUP>
     </TABLE>
-   </Para>
-  </sect1>
+   </sect2>
 
-  <sect1 id="inet-operators">
-   <title>IP V4 INET Operators</title>
+   <sect2 id="inet-operators">
+   <title><type>inet</> Operators</title>
    
-   <Para>
-    <TABLE TOCENTRY="1">
-     <TITLE><ProductName>Postgres</ProductName>IP V4 INET Operators</TITLE>
-     <TITLEABBREV>Operators</TITLEABBREV>
+    <table tocentry="1" id="inet-operators-table">
+     <title><type>inet</> Operators</title>
      <TGROUP COLS="3">
       <THEAD>
        <ROW>
@@ -863,7 +862,18 @@ logical union
       </TBODY>
      </TGROUP>
     </TABLE>
-   </Para>
+   </sect2>
+
+   <sect2 id="macaddr-operators">
+    <title><type>macaddr</> Operators</>
+
+    <para>
+     The <type>macaddr</> type supports the standard relational
+     operators (<literal>&gt;</>, <literal>&lt;=</>, etc.) for
+     lexicographical ordering.
+    </para>
+   </sect2>
+
   </sect1>
 
  </Chapter>
