@@ -1,0 +1,133 @@
+# translation of pg_config.po to 
+# translation of pg_config.po to Czech
+# Karel Zak <zakkr@zf.jcu.cz>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_config\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2004-10-27 14:14+0200\n"
+"PO-Revision-Date: 2004-10-27 14:27+0200\n"
+"Last-Translator: \n"
+"Language-Team:  <cs@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.3.1\n"
+
+#: pg_config.c:36
+#, c-format
+msgid ""
+"\n"
+"%s provides information about the installed version of PostgreSQL.\n"
+"\n"
+msgstr ""
+"\n"
+"%s poskytuje informace o nainstalované verzi PostgreSQL.\n"
+"\n"
+
+#: pg_config.c:37
+#, c-format
+msgid "Usage:\n"
+msgstr "Pou¾ití:\n"
+
+#: pg_config.c:38
+#, c-format
+msgid ""
+"  %s OPTION...\n"
+"\n"
+msgstr ""
+"  %s PØEPÍNAÈ...\n"
+"\n"
+
+#: pg_config.c:39
+#, c-format
+msgid "Options:\n"
+msgstr "Pøepínaèe:\n"
+
+#: pg_config.c:40
+#, c-format
+msgid "  --bindir              show location of user executables\n"
+msgstr "  --bindir              uká¾e umístìní spustitelných souborù\n"
+
+#: pg_config.c:41
+#, c-format
+msgid ""
+"  --includedir          show location of C header files of the client\n"
+"                        interfaces\n"
+msgstr ""
+"  --includedir         uká¾e umístìní C hlavièkových souborù pro klientské\n"
+"                        rozhraní\n"
+
+#: pg_config.c:43
+#, c-format
+msgid "  --includedir-server   show location of C header files for the server\n"
+msgstr "  --includedir-server   uká¾e umístìní C hlavièkových souborù pro server\n"
+
+#: pg_config.c:44
+#, c-format
+msgid "  --libdir              show location of object code libraries\n"
+msgstr "  --libdir              uká¾e umístìní knihoven\n"
+
+#: pg_config.c:45
+#, c-format
+msgid "  --pkglibdir           show location of dynamically loadable modules\n"
+msgstr "  --pkglibdir           uká¾e umístìní dynamicky zavádìných modulù\n"
+
+#: pg_config.c:46
+#, c-format
+msgid "  --pgxs                show location of extension makefile\n"
+msgstr "  --pgxs                uká¾e umístìní.roz¹íøení makefile souboru\n"
+
+#: pg_config.c:47
+#, c-format
+msgid ""
+"  --configure           show options given to \"configure\" script when\n"
+"                        PostgreSQL was built\n"
+msgstr ""
+"  --configure           uká¾e pøepínaèe pou¾ité pro \"configure\" skript ke\n"
+"                        kompilaci PostgreSQL\n"
+
+#: pg_config.c:49
+#, c-format
+msgid "  --version             show the PostgreSQL version, then exit\n"
+msgstr "  --version             uká¾e verzi PostgreSQL, a skonèí\n"
+
+#: pg_config.c:50
+#, c-format
+msgid ""
+"  --help                show this help, then exit\n"
+"\n"
+msgstr ""
+"  --help                uká¾e tuto nápovìdu, a skonèí\n"
+"\n"
+
+#: pg_config.c:51
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Oznámení o chybách zasílejte na <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_config.c:57
+#, c-format
+msgid ""
+"\n"
+"Try \"%s --help\" for more information\n"
+msgstr ""
+"\n"
+"Zkuste \"%s --help\" pro více informací\n"
+
+#: pg_config.c:75
+#, c-format
+msgid "%s: argument required\n"
+msgstr "%s: vy¾adován parametr\n"
+
+#: pg_config.c:104
+#, c-format
+msgid "%s: invalid argument: %s\n"
+msgstr "%s: neplatný parametr: %s\n"
+
+#: pg_config.c:113
+#, c-format
+msgid "%s: could not find own executable\n"
+msgstr "%s: nelze najít spustitelné\n"
+
