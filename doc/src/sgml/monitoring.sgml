@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.25 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.26 2004/03/26 03:18:28 neilc Exp $
 -->
 
 <chapter id="monitoring">
@@ -28,7 +28,8 @@ $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.25 2003/11/29 19:51:37 pgsql
    but one should not neglect regular Unix monitoring programs such as
    <command>ps</> and <command>top</>.  Also, once one has identified a
    poorly-performing query, further investigation may be needed using
-   <productname>PostgreSQL</productname>'s <command>EXPLAIN</> command.
+   <productname>PostgreSQL</productname>'s <xref linkend="sql-explain"
+   endterm="sql-explain-title"> command.
    <xref linkend="using-explain"> discusses <command>EXPLAIN</>
    and other methods for understanding the behavior of an individual
    query.
@@ -126,28 +127,30 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <para>
-   The parameter <varname>stats_start_collector</varname> must be set to
-   <literal>true</> for the statistics collector to
-   be launched at all.  This is the default and recommended setting,
-   but it may be turned off if you have no interest in statistics and
-   want to squeeze out every last drop of overhead.  (The savings is
-   likely to be small, however.)  Note that this option
-   cannot be changed while the server is running.
+   The parameter <xref linkend="guc-stats-start-collector"> must be
+   set to <literal>true</> for the statistics collector to be launched
+   at all.  This is the default and recommended setting, but it may be
+   turned off if you have no interest in statistics and want to
+   squeeze out every last drop of overhead.  (The savings is likely to
+   be small, however.)  Note that this option cannot be changed while
+   the server is running.
   </para>
 
   <para>
-   The parameters <varname>stats_command_string</varname>,
-   <varname>stats_block_level</varname>,
-   and <varname>stats_row_level</varname> control how much information is
+   The parameters <xref linkend="guc-stats-command-string">,
+   <xref linkend="guc-stats-block-level">, and <xref
+   linkend="guc-stats-row-level"> control how much information is
    actually sent to the collector and thus determine how much run-time
-   overhead occurs.  These respectively determine whether a server process
-   sends its current command string, disk-block-level access statistics, and
-   row-level access statistics to the collector.  Normally these parameters are
-   set in <filename>postgresql.conf</> so that they apply to all server
-   processes, but it is possible to turn them on or off in individual sessions
-   using the <command>SET</> command.  (To prevent ordinary users
-   from hiding their activity from the administrator, only superusers are
-   allowed to change these parameters with <command>SET</>.)
+   overhead occurs.  These respectively determine whether a server
+   process sends its current command string, disk-block-level access
+   statistics, and row-level access statistics to the collector.
+   Normally these parameters are set in <filename>postgresql.conf</>
+   so that they apply to all server processes, but it is possible to
+   turn them on or off in individual sessions using the <xref
+   linkend="sql-set" endterm="sql-set-title"> command.  (To prevent
+   ordinary users from hiding their activity from the administrator,
+   only superusers are allowed to change these parameters with
+   <command>SET</>.)
   </para>
 
    <note>

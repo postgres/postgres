@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.36 2004/02/27 03:59:23 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.37 2004/03/26 03:18:28 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -128,7 +128,8 @@ END;
         <para>
          The <application>PL/pgSQL</application>
          <command>EXECUTE</command> statement is not related to the
-         <command>EXECUTE</command> statement supported by the
+         <xref linkend="sql-execute" endterm="sql-execute-title"> SQL
+         statement supported by the
          <productname>PostgreSQL</productname> server. The server's
          <command>EXECUTE</command> statement cannot be used within
          <application>PL/pgSQL</> functions (and is not needed).

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.254 2004/03/24 22:40:28 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.255 2004/03/26 03:18:28 neilc Exp $
 -->
 
 <Chapter Id="runtime">
@@ -521,12 +521,14 @@ env PGOPTIONS='-c geqo=off' psql
     Furthermore, it is possible to assign a set of option settings to
     a user or a database.  Whenever a session is started, the default
     settings for the user and database involved are loaded.  The
-    commands <command>ALTER DATABASE</command> and <command>ALTER
-    USER</command>, respectively, are used to configure these
-    settings.  Per-database settings override anything received
-    from the <command>postmaster</command> command-line or the
-    configuration file, and in turn are overridden by per-user
-    settings; both are overridden by per-session options.
+    commands <xref linkend="sql-alterdatabase"
+    endterm="sql-alterdatabase-title"> and <xref
+    linkend="sql-alteruser" endterm="sql-alteruser-title">,
+    respectively, are used to configure these settings.  Per-database
+    settings override anything received from the
+    <command>postmaster</command> command-line or the configuration
+    file, and in turn are overridden by per-user settings; both are
+    overridden by per-session options.
    </para>
 
    <para>
@@ -652,7 +654,7 @@ SET ENABLE_SEQSCAN TO OFF;
         server is to listen for
         connections from client applications.  The default is normally
         <filename>/tmp</filename>, but can be changed at build time.
-	This parameter can only be set at server start.
+        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -711,10 +713,11 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>rendezvous_name</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        Specifies the Rendezvous broadcast name.  By default, the
-        computer name is used, specified as an empty string ''.
-	This option is only meaningful on platforms that support Rendezvous.
-        This option can only be set at server start.
+        Specifies the <productname>Rendezvous</productname> broadcast
+        name.  By default, the computer name is used, specified as an
+        empty string ''.  This option is only meaningful on platforms
+        that support <productname>Rendezvous</productname>.  This
+        option can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -759,10 +762,13 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>password_encryption</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        When a password is specified in <command>CREATE USER</> or
-        <command>ALTER USER</> without writing either <literal>ENCRYPTED</> or
-        <literal>UNENCRYPTED</>, this option determines whether the password is to be
-        encrypted. The default is on (encrypt the password).
+        When a password is specified in <xref
+        linkend="sql-createuser" endterm="sql-createuser-title"> or
+        <xref linkend="sql-alteruser" endterm="sql-alteruser-title">
+        without writing either <literal>ENCRYPTED</> or
+        <literal>UNENCRYPTED</>, this option determines whether the
+        password is to be encrypted. The default is on (encrypt the
+        password).
        </para>
       </listitem>
      </varlistentry>
@@ -1010,13 +1016,14 @@ SET ENABLE_SEQSCAN TO OFF;
      <title>Cost-Based Vacuum Delay</title>
 
      <para>
-      During the execution of <command>VACUUM</command>
-      and <command>ANALYZE</command> commands,
-      the system maintains an internal counter that keeps track of the
-      estimated cost of the various I/O operations that are performed.
-      When the accumulated cost reaches a limit
-      (specified by <varname>vacuum_cost_limit</varname>), the process
-      performing the operation will sleep for a while (specified by
+      During the execution of <xref linkend="sql-vacuum"
+      endterm="sql-vacuum-title"> and <xref linkend="sql-analyze"
+      endterm="sql-analyze-title"> commands, the system maintains an
+      internal counter that keeps track of the estimated cost of the
+      various I/O operations that are performed.  When the accumulated
+      cost reaches a limit (specified by
+      <varname>vacuum_cost_limit</varname>), the process performing
+      the operation will sleep for a while (specified by
       <varname>vacuum_cost_naptime</varname>). Then it will reset the
       counter and continue execution.
      </para>
@@ -1306,10 +1313,13 @@ SET ENABLE_SEQSCAN TO OFF;
        choose a better plan. Other ways to improve the quality of the
        plans chosen by the optimizer include configuring the <xref
        linkend="runtime-config-query-constants"
-       endterm="runtime-config-query-constants-title">, running
-       <command>ANALYZE</command> more frequently, and increasing the
-       amount of statistics collected for a particular column using
-       <command>ALTER TABLE SET STATISTICS</command>.
+       endterm="runtime-config-query-constants-title">, running <xref
+       linkend="sql-analyze" endterm="sql-analyze-title"> more
+       frequently, increasing the value of the <xref
+       linkend="guc-default-statistics-target"> configuration parameter,
+       and increasing the amount of statistics collected for a
+       particular column using <command>ALTER TABLE SET
+       STATISTICS</command>.
       </para>
      </note>
 
@@ -2115,13 +2125,27 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>log_statement</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Causes each SQL statement to be logged. The default is off.
-        <command>EXECUTE</> only displays the plan name, not the
-        prepared query. Server-side languages like
-        <application>PL/pgSQL</> that store functions in a cache only
-        display their queries on first function call. Only superusers can
-        turn off this option if it is enabled by the administrator.
+        Causes each SQL statement to be logged. The default is
+        off. Only superusers can disable this option if it has been
+        enabled by an administrator.
        </para>
+
+       <note>
+        <para>
+         When the <command>EXECUTE</command> statement is logged, only
+         the name of the prepared statement is recorded, not the
+         entire prepared statement.
+        </para>
+
+        <para>
+         When a function is defined in a server-side language like
+         <application>PL/pgSQL</application>, any queries executed by
+         the function will only be logged the first time that the
+         function is invoked in a particular session. This is because
+         the <application>PL/pgSQL</application> keeps a cache of the
+         query plans produced for the SQL statements in the function.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
 
@@ -2202,14 +2226,27 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-stats-block-level" xreflabel="guc_stats_block_level">
       <term><varname>stats_block_level</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Enables the collection of block-level statistics on database
+        activity. This option is disabled by default. If this option
+        is enabled, the data that is produced can be accessed via the
+        <structname>pg_stat</structname> and
+        <structname>pg_statio</structname> family of system views;
+        refer to <xref linkend="monitoring"> for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-stats-row-level" xreflabel="guc_stats_row_level">
       <term><varname>stats_row_level</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        These enable the collection of block-level and row-level statistics
-        on database activity, respectively. These options are off by
-        default. This data can be accessed via the
+        Enables the collection of row-level statistics on database
+        activity. This option is disabled by default. If this option
+        is enabled, the data that is produced can be accessed via the
         <structname>pg_stat</structname> and
         <structname>pg_statio</structname> family of system views;
         refer to <xref linkend="monitoring"> for more information.
@@ -2311,10 +2348,12 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>check_function_bodies</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        This parameter is normally true.  When set false, it disables
-        validation of the function body string in <command>CREATE FUNCTION</>.
-        Disabling validation is occasionally useful to avoid problems such as
-        forward references when restoring function definitions from a dump.
+        This parameter is normally true.  When set to false, it disables
+        validation of the function body string in <xref
+        linkend="sql-createfunction"
+        endterm="sql-createfunction-title">.  Disabling validation is
+        occasionally useful to avoid problems such as forward
+        references when restoring function definitions from a dump.
        </para>
       </listitem>
      </varlistentry>
@@ -2503,7 +2542,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the locale to use for formatting numbers, for example
-        with the <function>to_char()</function> family of
+        with the <function>to_char</function> family of
         functions. Acceptable values are system-dependent; see <xref
         linkend="locale"> for more information.  If this variable is
         set to the empty string (which is the default) then the value
