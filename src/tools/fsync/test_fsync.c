@@ -6,6 +6,7 @@
 #include "../../include/pg_config.h"
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,124 +27,217 @@
 #endif
 #endif
 
-void die(char *str);
-void print_elapse(struct timeval start_t, struct timeval elapse_t);
+void		die(char *str);
+void		print_elapse(struct timeval start_t, struct timeval elapse_t);
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
 	struct timeval start_t;
 	struct timeval elapse_t;
-	int tmpfile;
-	char *strout = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+	int			tmpfile,
+				i;
+	char	   *strout = (char *) malloc(65536);
+
+	for (i = 0; i < 65536; i++)
+		strout[i] = 'a';
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) == -1)
+		die("can't open /var/tmp/test_fsync.out");
+	write(tmpfile, strout, 65536);
+	fsync(tmpfile);				/* fsync so later fsync's don't have to do
+								 * it */
+	close(tmpfile);
 
 	printf("Simple write timing:\n");
-	/* write only */	
+	/* write only */
 	gettimeofday(&start_t, NULL);
-	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | O_CREAT, 0600)) == -1)
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR)) == -1)
 		die("can't open /var/tmp/test_fsync.out");
-	write(tmpfile, &strout, 200);
-	close(tmpfile);		
+	write(tmpfile, strout, 8192);
+	close(tmpfile);
 	gettimeofday(&elapse_t, NULL);
-	unlink("/var/tmp/test_fsync.out");
-	printf("write                  ");
+	printf("\twrite                  ");
 	print_elapse(start_t, elapse_t);
 	printf("\n\n");
 
 	printf("Compare fsync before and after write's close:\n");
+
 	/* write, fsync, close */
 	gettimeofday(&start_t, NULL);
-	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | O_CREAT, 0600)) == -1)
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR)) == -1)
 		die("can't open /var/tmp/test_fsync.out");
-	write(tmpfile, &strout, 200);
+	write(tmpfile, strout, 8192);
 	fsync(tmpfile);
-	close(tmpfile);		
+	close(tmpfile);
 	gettimeofday(&elapse_t, NULL);
-	unlink("/var/tmp/test_fsync.out");
-	printf("write, fsync, close    ");
+	printf("\twrite, fsync, close    ");
 	print_elapse(start_t, elapse_t);
 	printf("\n");
 
 	/* write, close, fsync */
 	gettimeofday(&start_t, NULL);
-	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | O_CREAT, 0600)) == -1)
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR)) == -1)
 		die("can't open /var/tmp/test_fsync.out");
-	write(tmpfile, &strout, 200);
+	write(tmpfile, strout, 8192);
 	close(tmpfile);
 	/* reopen file */
-	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | O_CREAT, 0600)) == -1)
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR)) == -1)
 		die("can't open /var/tmp/test_fsync.out");
 	fsync(tmpfile);
-	close(tmpfile);		
+	close(tmpfile);
 	gettimeofday(&elapse_t, NULL);
-	unlink("/var/tmp/test_fsync.out");
-	printf("write, close, fsync    ");
+	printf("\twrite, close, fsync    ");
 	print_elapse(start_t, elapse_t);
 	printf("\n");
 
-	printf("\nTest file sync methods:\n");
+	printf("\nCompare one o_sync write to two:\n");
+
+	/* 16k o_sync write */
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | OPEN_SYNC_FLAG)) == -1)
+		die("can't open /var/tmp/test_fsync.out");
+	gettimeofday(&start_t, NULL);
+	write(tmpfile, strout, 16384);
+	gettimeofday(&elapse_t, NULL);
+	close(tmpfile);
+	printf("\tone 16k o_sync write   ");
+	print_elapse(start_t, elapse_t);
+	printf("\n");
+
+	/* 2*8k o_sync writes */
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | OPEN_SYNC_FLAG)) == -1)
+		die("can't open /var/tmp/test_fsync.out");
+	gettimeofday(&start_t, NULL);
+	write(tmpfile, strout, 8192);
+	write(tmpfile, strout, 8192);
+	gettimeofday(&elapse_t, NULL);
+	close(tmpfile);
+	printf("\ttwo 8k o_sync writes   ");
+	print_elapse(start_t, elapse_t);
+	printf("\n");
+
+	printf("\nCompare file sync methods with one 8k write:\n");
 
 #ifdef OPEN_DATASYNC_FLAG
 	/* open_dsync, write */
-	gettimeofday(&start_t, NULL);
-	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | O_CREAT | O_DSYNC, 0600)) == -1)
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | O_DSYNC)) == -1)
 		die("can't open /var/tmp/test_fsync.out");
-	write(tmpfile, &strout, 200);
-	close(tmpfile);
+	gettimeofday(&start_t, NULL);
+	write(tmpfile, strout, 8192);
 	gettimeofday(&elapse_t, NULL);
-	unlink("/var/tmp/test_fsync.out");
-	printf("open o_dsync, write    ");
+	close(tmpfile);
+	printf("\topen o_dsync, write    ");
 	print_elapse(start_t, elapse_t);
 #else
-	printf("o_dsync unavailable    ");
+	printf("\t(o_dsync unavailable)  ");
 #endif
 	printf("\n");
 
 	/* open_fsync, write */
-	gettimeofday(&start_t, NULL);
-	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | O_CREAT | OPEN_SYNC_FLAG, 0600)) == -1)
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | OPEN_SYNC_FLAG)) == -1)
 		die("can't open /var/tmp/test_fsync.out");
-	write(tmpfile, &strout, 200);
-	close(tmpfile);
+	gettimeofday(&start_t, NULL);
+	write(tmpfile, strout, 8192);
 	gettimeofday(&elapse_t, NULL);
-	unlink("/var/tmp/test_fsync.out");
-	printf("open o_fsync, write    ");
+	close(tmpfile);
+	printf("\topen o_sync, write     ");
 	print_elapse(start_t, elapse_t);
 	printf("\n");
 
 #ifdef HAVE_FDATASYNC
 	/* write, fdatasync */
-	gettimeofday(&start_t, NULL);
-	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | O_CREAT, 0600)) == -1)
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR)) == -1)
 		die("can't open /var/tmp/test_fsync.out");
-	write(tmpfile, &strout, 200);
+	gettimeofday(&start_t, NULL);
+	write(tmpfile, strout, 8192);
 	fdatasync(tmpfile);
-	close(tmpfile);
 	gettimeofday(&elapse_t, NULL);
-	unlink("/var/tmp/test_fsync.out");
-	printf("write, fdatasync       ");
+	close(tmpfile);
+	printf("\twrite, fdatasync       ");
 	print_elapse(start_t, elapse_t);
 #else
-	printf("fdatasync unavailable  ");
+	printf("\t(fdatasync unavailable)");
 #endif
 	printf("\n");
 
 	/* write, fsync, close */
-	gettimeofday(&start_t, NULL);
-	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | O_CREAT, 0600)) == -1)
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR)) == -1)
 		die("can't open /var/tmp/test_fsync.out");
-	write(tmpfile, &strout, 200);
+	gettimeofday(&start_t, NULL);
+	write(tmpfile, strout, 8192);
 	fsync(tmpfile);
-	close(tmpfile);
 	gettimeofday(&elapse_t, NULL);
-	unlink("/var/tmp/test_fsync.out");
-	printf("write, fsync,          ");
+	close(tmpfile);
+	printf("\twrite, fsync,          ");
 	print_elapse(start_t, elapse_t);
 	printf("\n");
+
+	printf("\nCompare file sync methods with 2 8k writes:\n");
+
+#ifdef OPEN_DATASYNC_FLAG
+	/* open_dsync, write */
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | O_DSYNC)) == -1)
+		die("can't open /var/tmp/test_fsync.out");
+	gettimeofday(&start_t, NULL);
+	write(tmpfile, strout, 8192);
+	write(tmpfile, strout, 8192);
+	gettimeofday(&elapse_t, NULL);
+	close(tmpfile);
+	printf("\topen o_dsync, write    ");
+	print_elapse(start_t, elapse_t);
+#else
+	printf("\t(o_dsync unavailable)  ");
+#endif
+	printf("\n");
+
+	/* open_fsync, write */
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR | OPEN_SYNC_FLAG)) == -1)
+		die("can't open /var/tmp/test_fsync.out");
+	gettimeofday(&start_t, NULL);
+	write(tmpfile, strout, 8192);
+	write(tmpfile, strout, 8192);
+	gettimeofday(&elapse_t, NULL);
+	close(tmpfile);
+	printf("\topen o_sync, write     ");
+	print_elapse(start_t, elapse_t);
+	printf("\n");
+
+#ifdef HAVE_FDATASYNC
+	/* write, fdatasync */
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR)) == -1)
+		die("can't open /var/tmp/test_fsync.out");
+	gettimeofday(&start_t, NULL);
+	write(tmpfile, strout, 8192);
+	write(tmpfile, strout, 8192);
+	fdatasync(tmpfile);
+	gettimeofday(&elapse_t, NULL);
+	close(tmpfile);
+	printf("\twrite, fdatasync       ");
+	print_elapse(start_t, elapse_t);
+#else
+	printf("\t(fdatasync unavailable)");
+#endif
+	printf("\n");
+
+	/* write, fsync, close */
+	if ((tmpfile = open("/var/tmp/test_fsync.out", O_RDWR)) == -1)
+		die("can't open /var/tmp/test_fsync.out");
+	gettimeofday(&start_t, NULL);
+	write(tmpfile, strout, 8192);
+	write(tmpfile, strout, 8192);
+	fsync(tmpfile);
+	gettimeofday(&elapse_t, NULL);
+	close(tmpfile);
+	printf("\twrite, fsync,          ");
+	print_elapse(start_t, elapse_t);
+	printf("\n");
+
+	unlink("/var/tmp/test_fsync.out");
 
 	return 0;
 }
 
-void print_elapse(struct timeval start_t, struct timeval elapse_t)
+void
+print_elapse(struct timeval start_t, struct timeval elapse_t)
 {
 	if (elapse_t.tv_usec < start_t.tv_usec)
 	{
@@ -152,10 +246,11 @@ void print_elapse(struct timeval start_t, struct timeval elapse_t)
 	}
 
 	printf("%ld.%06ld", (long) (elapse_t.tv_sec - start_t.tv_sec),
-					 (long) (elapse_t.tv_usec - start_t.tv_usec));
+		   (long) (elapse_t.tv_usec - start_t.tv_usec));
 }
 
-void die(char *str)
+void
+die(char *str)
 {
 	fprintf(stderr, "%s", str);
 	exit(1);
