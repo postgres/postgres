@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.26 1997/09/20 16:24:39 thomas Exp $
+ * $Id: builtins.h,v 1.27 1997/10/09 05:07:25 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -30,11 +30,11 @@
  */
 /* bool.c */
 extern bool boolin(char *b);
-extern char *boolout(long b);
-extern bool booleq(int8 arg1, int8 arg2);
-extern bool boolne(int8 arg1, int8 arg2);
-extern bool boollt(int8 arg1, int8 arg2);
-extern bool boolgt(int8 arg1, int8 arg2);
+extern char *boolout(bool b);
+extern bool booleq(bool arg1, bool arg2);
+extern bool boolne(bool arg1, bool arg2);
+extern bool boollt(bool arg1, bool arg2);
+extern bool boolgt(bool arg1, bool arg2);
 
 /* char.c */
 extern int32 charin(char *ch);
