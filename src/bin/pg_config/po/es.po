@@ -1,0 +1,138 @@
+# pg_config spanish translation
+# This file is put in the public domain.
+# Alvaro Herrera <alvherre@dcc.uchile.cl>, 2004
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pg_config 8.0\n"
+"Report-Msgid-Bugs-To: <pgsql-es-ayuda@postgresql.org>\n"
+"POT-Creation-Date: 2004-11-02 23:28-0300\n"
+"PO-Revision-Date: 2004-11-02 23:30 CLST\n"
+"Last-Translator: Alvaro Herrera <alvherre@dcc.uchile.cl>\n"
+"Language-Team: es <pgsql-es-ayuda@postgresql.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pg_config.c:36
+#, c-format
+msgid ""
+"\n"
+"%s provides information about the installed version of PostgreSQL.\n"
+"\n"
+msgstr ""
+"\n"
+"%s provee información sobre la versión instalada de PostgreSQL.\n"
+"\n"
+
+#: pg_config.c:37
+#, c-format
+msgid "Usage:\n"
+msgstr "Empleo:\n"
+
+#: pg_config.c:38
+#, c-format
+msgid ""
+"  %s OPTION...\n"
+"\n"
+msgstr ""
+"  %s OPCIÓN...\n"
+"\n"
+
+#: pg_config.c:39
+#, c-format
+msgid "Options:\n"
+msgstr "Opciones:\n"
+
+#: pg_config.c:40
+#, c-format
+msgid "  --bindir              show location of user executables\n"
+msgstr "  --bindir              muestra la ubicación de ejecutables de usuario\n"
+
+#: pg_config.c:41
+#, c-format
+msgid ""
+"  --includedir          show location of C header files of the client\n"
+"                        interfaces\n"
+msgstr ""
+"  --includedir          muestra la ubicación de archivos de encabezados C\n"
+"                        de las interfaces cliente\n"
+
+#: pg_config.c:43
+#, c-format
+msgid ""
+"  --includedir-server   show location of C header files for the server\n"
+msgstr ""
+"  --includedir-server   muestra la ubicación de archivos de encabezados C\n"
+"                        del servidor\n"
+
+#: pg_config.c:44
+#, c-format
+msgid "  --libdir              show location of object code libraries\n"
+msgstr "  --libdir              muestra la ubicación de bibliotecas\n"
+"                        de código objeto\n"
+
+#: pg_config.c:45
+#, c-format
+msgid "  --pkglibdir           show location of dynamically loadable modules\n"
+msgstr
+"  --pkglibdir           muestra la ubicación de módulos para carga dinámica\n"
+
+#: pg_config.c:46
+#, c-format
+msgid "  --pgxs                show location of extension makefile\n"
+msgstr "  --pgxs                muestra la ubicación del archivo makefile\n"
+       "                        para extensiones\n"
+
+#: pg_config.c:47
+#, c-format
+msgid ""
+"  --configure           show options given to \"configure\" script when\n"
+"                        PostgreSQL was built\n"
+msgstr ""
+"  --configure           muestra las opciones que se dieron a «configure»\n"
+"                        cuando PostgreSQL fue construido\n"
+
+#: pg_config.c:49
+#, c-format
+msgid "  --version             show the PostgreSQL version, then exit\n"
+msgstr "  --version             muestra la versión de PostgreSQL y termina\n"
+
+#: pg_config.c:50
+#, c-format
+msgid ""
+"  --help                show this help, then exit\n"
+"\n"
+msgstr ""
+"  --help                muestra esta ayuda y termina\n"
+"\n"
+
+#: pg_config.c:51
+#, c-format
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Reporte errores a <pgsql-bugs@postgresql.org>.\n"
+
+#: pg_config.c:57
+#, c-format
+msgid ""
+"\n"
+"Try \"%s --help\" for more information\n"
+msgstr ""
+"\n"
+"Use «%s --help» para mayor información\n"
+
+#: pg_config.c:75
+#, c-format
+msgid "%s: argument required\n"
+msgstr "%s: se requiere un argumento\n"
+
+#: pg_config.c:104
+#, c-format
+msgid "%s: invalid argument: %s\n"
+msgstr "%s: el argumento no es válido: %s\n"
+
+#: pg_config.c:113
+#, c-format
+msgid "%s: could not find own executable\n"
+msgstr "%s: no se pudo encontrar el propio ejecutable\n"
