@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.28 1998/06/15 19:27:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.29 1998/06/16 02:53:25 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1202,7 +1202,10 @@ heap_delete(Relation relation, ItemPointer tid)
 	Assert(HeapTupleIsValid(tp));
 	if (TupleUpdatedByCurXactAndCmd(tp))
 	{
-		elog(NOTICE, "Non-functional delete, tuple already deleted");
+		/*
+			Vadim says this is no longer needed 1998/6/15
+			elog(NOTICE, "Non-functional delete, tuple already deleted");
+		*/
 		if (IsSystemRelationName(RelationGetRelationName(relation)->data))
 			RelationUnsetLockForWrite(relation);
 		ReleaseBuffer(b);
