@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jul 29 12:46:58 EDT 2004
+Last updated:		Sat Jul 31 02:13:51 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -50,6 +50,7 @@ Administration
 * Allow server logs to be read using SQL commands
 * Allow server configuration parameters to be modified remotetly
 * Allow administrators to safely terminate individual sessions
+* Allow point-in-time recovery to archive partially filled logs
 
 * Improve replication solutions
 	o Automatic failover
