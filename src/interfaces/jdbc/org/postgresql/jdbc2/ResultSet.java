@@ -468,33 +468,46 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     if(s==null)
 	return null;
 
-    // This works, but it's commented out because Michael Stephenson's
-    // solution is better still:
-    //SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-// Modification by Jan Thomae
-    String sub = s.substring(s.length() - 3, s.length()-2);
-    if (sub.equals("+") || sub.equals("-")) {
-            s = s.substring(0, s.length()-3) + "GMT"+ s.substring(s.length()-3, s.length())+":00";
+    boolean subsecond;
+    //if string contains a '.' we have fractional seconds
+    if (s.indexOf('.') == -1) {
+      subsecond = false;
+    } else {
+      subsecond = true;
     }
-// -------
-       // Michael Stephenson's solution:
+
+    //here we are modifying the string from ISO format to a format java can understand
+    //java expects timezone info as 'GMT-08:00' instead of '-08' in postgres ISO format
+    //and java expects three digits if fractional seconds are present instead of two for postgres
+    //so this code strips off timezone info and adds on the GMT+/-...
+    //as well as adds a third digit for partial seconds if necessary
+    StringBuffer strBuf = new StringBuffer(s);
+    char sub = strBuf.charAt(strBuf.length()-3);
+    if (sub == '+' || sub == '-') {
+      strBuf.setLength(strBuf.length()-3);
+      if (subsecond)  {
+        strBuf = strBuf.append('0').append("GMT").append(s.substring(s.length()-3, s.length())).append(":00");
+      } else {
+        strBuf = strBuf.append("GMT").append(s.substring(s.length()-3, s.length())).append(":00");
+      }
+    } else if (subsecond) {
+      strBuf = strBuf.append('0');
+    }
+
+    s = strBuf.toString();
+
     SimpleDateFormat df = null;
 
-// Modification by Jan Thomae
-    if (s.length()>27) {
-    df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzzzzzzzz");
-    } else
-// -------
-    if (s.length()>21 && s.indexOf('.') != -1) {
-	df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSzzz");
-    } else if (s.length()>19 && s.indexOf('.') == -1) {
-	df = new SimpleDateFormat("yyyy-MM-dd HH:MM:sszzz");
-    } else if (s.length()>19 && s.indexOf('.') != -1) {
-	df = new SimpleDateFormat("yyyy-MM-dd HH:MM:ss.SS");
-    } else if (s.length()>10 && s.length()<=18) {
-	df = new SimpleDateFormat("yyyy-MM-dd HH:MM:ss");
+    if (s.length()>23 && subsecond) {
+      df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSzzzzzzzzz");
+    } else if (s.length()>23 && !subsecond) {
+      df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzzzzzzzz");
+    } else if (s.length()>10 && subsecond) {
+      df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+    } else if (s.length()>10 && !subsecond) {
+      df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     } else {
-	df = new SimpleDateFormat("yyyy-MM-dd");
+      df = new SimpleDateFormat("yyyy-MM-dd");
     }
 
     try {
@@ -503,6 +516,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	throw new PSQLException("postgresql.res.badtimestamp",new Integer(e.getErrorOffset()),s);
     }
   }
+
 
   /**
    * A column value can be retrieved as a stream of ASCII characters
