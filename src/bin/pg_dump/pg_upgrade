@@ -3,6 +3,8 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: read the manual page before trying to use this!
 
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.11 1999/08/02 22:34:53 tgl Exp $
+#
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
 
@@ -109,8 +111,15 @@ cat $INPUT | awk '	{
 						;
 				else	print $0;
 			}' >/tmp/$$
- 
-#create empty tables/indexes
+
+# Add a VACUUM command to the end of the pg_dump script.  With MVCC,
+# this is necessary to ensure that all the rows in the new database's
+# system tables will still be considered committed after we overwrite
+# pg_log with the old database's commit log...
+
+echo "VACUUM;" >>/tmp/$$
+
+# Create and vacuum empty tables/indexes
 
 psql "template1" <"/tmp/$$"
 
