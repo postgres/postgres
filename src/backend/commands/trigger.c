@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.108 2002/03/26 19:15:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.109 2002/03/29 22:10:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
@@ -29,6 +30,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -96,20 +98,10 @@ CreateTrigger(CreateTrigStmt *stmt)
 		stmt->trigname = constrtrigname;
 		sprintf(constrtrigname, "RI_ConstraintTrigger_%u", newoid());
 
-		if (stmt->constrrel == NULL)
-			constrrelid = InvalidOid;
+		if (stmt->constrrel != NULL)
+			constrrelid = RangeVarGetRelid(stmt->constrrel, false);
 		else
-		{
-			/*
-			 * NoLock is probably sufficient here, since we're only
-			 * interested in getting the relation's OID...
-			 */
-			Relation	conrel;
-
-			conrel = heap_openrv(stmt->constrrel, NoLock);
-			constrrelid = conrel->rd_id;
-			heap_close(conrel, NoLock);
-		}
+			constrrelid = InvalidOid;
 	}
 
 	TRIGGER_CLEAR_TYPE(tgtype);
@@ -310,8 +302,11 @@ CreateTrigger(CreateTrigStmt *stmt)
 	heap_close(rel, NoLock);
 }
 
+/*
+ * DropTrigger - drop an individual trigger by name
+ */
 void
-DropTrigger(DropTrigStmt *stmt)
+DropTrigger(Oid relid, const char *trigname)
 {
 	Relation	rel;
 	Relation	tgrel;
@@ -320,21 +315,21 @@ DropTrigger(DropTrigStmt *stmt)
 	Relation	pgrel;
 	HeapTuple	tuple;
 	Relation	ridescs[Num_pg_class_indices];
+	int			remaining = 0;
 	int			found = 0;
-	int			tgfound = 0;
 
-	rel = heap_openrv(stmt->relation, AccessExclusiveLock);
+	rel = heap_open(relid, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "DropTrigger: relation \"%s\" is not a table",
-			 stmt->relation->relname);
+			 RelationGetRelationName(rel));
 
-	if (!allowSystemTableMods && IsSystemRelationName(stmt->relation->relname))
+	if (!allowSystemTableMods && IsSystemRelationName(RelationGetRelationName(rel)))
 		elog(ERROR, "DropTrigger: can't drop trigger for system relation %s",
-			 stmt->relation->relname);
+			 RelationGetRelationName(rel));
 
-	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
-		elog(ERROR, "%s: %s", stmt->relation->relname,
+	if (!pg_class_ownercheck(relid, GetUserId()))
+		elog(ERROR, "%s: %s", RelationGetRelationName(rel),
 			 aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 
 	/*
@@ -346,33 +341,33 @@ DropTrigger(DropTrigStmt *stmt)
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(rel)));
+						   ObjectIdGetDatum(relid));
 	tgscan = systable_beginscan(tgrel, TriggerRelidIndex, true,
 								SnapshotNow, 1, &key);
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
 
-		if (namestrcmp(&(pg_trigger->tgname), stmt->trigname) == 0)
+		if (namestrcmp(&(pg_trigger->tgname), trigname) == 0)
 		{
 			/* Delete any comments associated with this trigger */
 			DeleteComments(tuple->t_data->t_oid, RelationGetRelid(tgrel));
 
 			simple_heap_delete(tgrel, &tuple->t_self);
-			tgfound++;
+			found++;
 		}
 		else
-			found++;
+			remaining++;
 	}
 	systable_endscan(tgscan);
 	heap_close(tgrel, RowExclusiveLock);
 
-	if (tgfound == 0)
+	if (found == 0)
 		elog(ERROR, "DropTrigger: there is no trigger %s on relation %s",
-			 stmt->trigname, stmt->relation->relname);
-	if (tgfound > 1)
+			 trigname, RelationGetRelationName(rel));
+	if (found > 1)				/* shouldn't happen */
 		elog(NOTICE, "DropTrigger: found (and deleted) %d triggers %s on relation %s",
-			 tgfound, stmt->trigname, stmt->relation->relname);
+			 found, trigname, RelationGetRelationName(rel));
 
 	/*
 	 * Update relation's pg_class entry.  Crucial side-effect: other
@@ -381,25 +376,19 @@ DropTrigger(DropTrigStmt *stmt)
 	 */
 	pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheCopy(RELOID,
-							   ObjectIdGetDatum(RelationGetRelid(rel)),
+							   ObjectIdGetDatum(relid),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "DropTrigger: relation %s not found in pg_class",
-			 stmt->relation->relname);
+			 RelationGetRelationName(rel));
 
-	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found;
+	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = remaining;
 	simple_heap_update(pgrel, &tuple->t_self, tuple);
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
 	heap_freetuple(tuple);
 	heap_close(pgrel, RowExclusiveLock);
-
-	/*
-	 * We used to try to update the rel's relcache entry here, but that's
-	 * fairly pointless since it will happen as a byproduct of the
-	 * upcoming CommandCounterIncrement...
-	 */
 
 	/* Keep lock on target rel until end of xact */
 	heap_close(rel, NoLock);
@@ -479,25 +468,12 @@ RelationRemoveTriggers(Relation rel)
 
 	while (HeapTupleIsValid(tup = systable_getnext(tgscan)))
 	{
-		Form_pg_trigger pg_trigger;
-		Relation	refrel;
-		DropTrigStmt *stmt = makeNode(DropTrigStmt);
-
-		pg_trigger = (Form_pg_trigger) GETSTRUCT(tup);
-
-		stmt->trigname = pstrdup(NameStr(pg_trigger->tgname));
-
-		/* May as well grab AccessExclusiveLock, since DropTrigger will. */
-		refrel = heap_open(pg_trigger->tgrelid, AccessExclusiveLock);
-		stmt->relation = makeNode(RangeVar);
-		/* XXX bogus: what about schema? */
-		stmt->relation->relname = pstrdup(RelationGetRelationName(refrel));
-		heap_close(refrel, NoLock);
+		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tup);
 
 		elog(NOTICE, "DROP TABLE implicitly drops referential integrity trigger from table \"%s\"",
-			stmt->relation->relname);
+			 get_temp_rel_by_physicalname(get_rel_name(pg_trigger->tgrelid)));
 
-		DropTrigger(stmt);
+		DropTrigger(pg_trigger->tgrelid, NameStr(pg_trigger->tgname));
 
 		/*
 		 * Need to do a command counter increment here to show up new

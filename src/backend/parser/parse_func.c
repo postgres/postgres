@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.121 2002/03/29 19:06:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.122 2002/03/29 22:10:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1227,12 +1227,7 @@ find_inheritors(Oid relid, Oid **supervec)
 		foreach(elt, visited)
 		{
 			/* return the type id, rather than the relation id */
-			Relation	rd;
-
-			relid = lfirsti(elt);
-			rd = heap_open(relid, NoLock);
-			*relidvec++ = rd->rd_rel->reltype;
-			heap_close(rd, NoLock);
+			*relidvec++ = get_rel_type_id((Oid) lfirsti(elt));
 		}
 	}
 	else

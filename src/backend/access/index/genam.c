@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.31 2002/02/19 20:11:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.32 2002/03/29 22:10:32 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -308,6 +308,7 @@ systable_beginscan(Relation rel,
 		Relation	irel;
 		unsigned	i;
 
+		/* We assume it's a system index, so index_openr is OK */
 		sysscan->irel = irel = index_openr(indexRelname);
 		/*
 		 * Change attribute numbers to be index column numbers.

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.141 2002/03/29 19:06:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.142 2002/03/29 22:10:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -385,7 +385,6 @@ ProcessUtility(Node *parsetree,
 			{
 				RenameStmt *stmt = (RenameStmt *) parsetree;
 
-				relname = stmt->relation->relname;
 				CheckOwnership(stmt->relation, true);
 
 				/* ----------------
@@ -723,7 +722,12 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_DropTrigStmt:
-			DropTrigger((DropTrigStmt *) parsetree);
+			{
+				DropTrigStmt *stmt = (DropTrigStmt *) parsetree;
+
+				DropTrigger(RangeVarGetRelid(stmt->relation, false),
+							stmt->trigname);
+			}
 			break;
 
 		case T_CreatePLangStmt:

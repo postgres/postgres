@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.74 2002/03/29 19:06:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.75 2002/03/29 22:10:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "commands/rename.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
 
@@ -65,40 +66,35 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 	bool		istemp;
 	char		NewHeapName[NAMEDATALEN];
 	char		NewIndexName[NAMEDATALEN];
-	RangeVar   *saveoldrelation;
-	RangeVar   *saveoldindex;
 	RangeVar   *NewHeap;
 	RangeVar   *NewIndex;
-
-	/*
-	 * FIXME SCHEMAS: The old code had the comment:
-	 * "Copy the arguments into local storage, just to be safe."
-	 * By using copyObject we are not using local storage.
-	 * Was that really necessary?
-	 */
-	saveoldrelation = copyObject(oldrelation);
-	saveoldindex = copyObject(oldrelation);
-	saveoldindex->relname = pstrdup(oldindexname);
 
 	/*
 	 * We grab exclusive access to the target rel and index for the
 	 * duration of the transaction.
 	 */
-	OldHeap = heap_openrv(saveoldrelation, AccessExclusiveLock);
+	OldHeap = heap_openrv(oldrelation, AccessExclusiveLock);
 	OIDOldHeap = RelationGetRelid(OldHeap);
 
-	OldIndex = index_openrv(saveoldindex);
-	LockRelation(OldIndex, AccessExclusiveLock);
-	OIDOldIndex = RelationGetRelid(OldIndex);
+	istemp = is_temp_rel_name(oldrelation->relname);
 
-	istemp = is_temp_rel_name(saveoldrelation->relname);
+	/*
+	 * The index is expected to be in the same namespace as the relation.
+	 */
+	OIDOldIndex = get_relname_relid(oldindexname,
+									RelationGetNamespace(OldHeap));
+	if (!OidIsValid(OIDOldIndex))
+		elog(ERROR, "CLUSTER: cannot find index \"%s\" for table \"%s\"",
+			 oldindexname, oldrelation->relname);
+	OldIndex = index_open(OIDOldIndex);
+	LockRelation(OldIndex, AccessExclusiveLock);
 
 	/*
 	 * Check that index is in fact an index on the given relation
 	 */
 	if (OldIndex->rd_index->indrelid != OIDOldHeap)
 		elog(ERROR, "CLUSTER: \"%s\" is not an index for table \"%s\"",
-			 saveoldindex->relname, saveoldrelation->relname);
+			 oldindexname, oldrelation->relname);
 
 	/* Drop relcache refcnts, but do NOT give up the locks */
 	heap_close(OldHeap, NoLock);
@@ -133,17 +129,19 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 
 	CommandCounterIncrement();
 
-	NewHeap = copyObject(saveoldrelation);
+	/* XXX ugly, and possibly wrong in the presence of schemas... */
+	/* would be better to pass OIDs to renamerel. */
+	NewHeap = copyObject(oldrelation);
 	NewHeap->relname = NewHeapName;
-	NewIndex = copyObject(saveoldindex);
+	NewIndex = copyObject(oldrelation);
 	NewIndex->relname = NewIndexName;
 	
-	renamerel(NewHeap, saveoldrelation->relname);
+	renamerel(NewHeap, oldrelation->relname);
 
 	/* This one might be unnecessary, but let's be safe. */
 	CommandCounterIncrement();
 
-	renamerel(NewIndex, saveoldindex->relname);
+	renamerel(NewIndex, oldindexname);
 }
 
 static Oid

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.32 2001/11/16 16:31:16 tgl Exp $
+ * $Id: trigger.h,v 1.33 2002/03/29 22:10:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,7 @@ typedef struct TriggerData
 
 
 extern void CreateTrigger(CreateTrigStmt *stmt);
-extern void DropTrigger(DropTrigStmt *stmt);
+extern void DropTrigger(Oid relid, const char *trigname);
 extern void RelationRemoveTriggers(Relation rel);
 
 extern void RelationBuildTriggers(Relation relation);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.93 2002/03/29 19:06:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.94 2002/03/29 22:10:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,13 +260,12 @@ RemoveRelation(const RangeVar *relation)
 void
 TruncateRelation(const RangeVar *relation)
 {
-	Oid			relid;
 	Relation	rel;
-
-	relid = RangeVarGetRelid(relation, false);
+	Oid			relid;
 
 	/* Grab exclusive lock in preparation for truncate */
-	rel = heap_open(relid, AccessExclusiveLock);
+	rel = heap_openrv(relation, AccessExclusiveLock);
+	relid = RelationGetRelid(rel);
 
 	if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
 		elog(ERROR, "TRUNCATE cannot be used on sequences. '%s' is a sequence",
@@ -280,7 +279,7 @@ TruncateRelation(const RangeVar *relation)
 		elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table",
 			 RelationGetRelationName(rel));
 
-	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
+	if (!pg_class_ownercheck(relid, GetUserId()))
 		elog(ERROR, "you do not own relation \"%s\"",
 			 RelationGetRelationName(rel));
 
