@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.23 2001/11/25 01:11:36 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.24 2001/11/26 19:41:55 momjian Exp $
 Postgres documentation
 -->
 
@@ -271,7 +271,13 @@ Postgres documentation
       <term>--<replaceable>name</replaceable>=<replaceable>value</replaceable></term>
       <listitem>
        <para>
-        Sets a named run-time parameter; a shorter form of <option>-c</>.
+        Sets a named run-time parameter; a shorter form of
+        <option>-c</>.
+       </para>
+       <para>
+	The <option>--</> option will not work on FreeBSD or OpenBSD.
+	Use <option>-c</> instead. This should be fixed in
+	<productname>PostgreSQL</productname> 7.3.
        </para>
       </listitem>
      </varlistentry>
