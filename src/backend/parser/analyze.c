@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.62 1998/01/09 20:05:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.63 1998/01/10 04:29:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ static Query *transformExtendStmt(ParseState *pstate, ExtendStmt *stmt);
 static Query *transformRuleStmt(ParseState *query, RuleStmt *stmt);
 static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
-static Query *transformCursorStmt(ParseState *pstate, CursorStmt *stmt);
+static Query *transformCursorStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
 
 List   *extras = NIL;
@@ -175,12 +175,11 @@ transformStmt(ParseState *pstate, Node *parseTree)
 			result = transformUpdateStmt(pstate, (UpdateStmt *) parseTree);
 			break;
 
-		case T_CursorStmt:
-			result = transformCursorStmt(pstate, (CursorStmt *) parseTree);
-			break;
-
 		case T_SelectStmt:
-			result = transformSelectStmt(pstate, (SelectStmt *) parseTree);
+			if (!((SelectStmt *)parseTree)->portalname)
+				result = transformSelectStmt(pstate, (SelectStmt *) parseTree);
+			else
+				result = transformCursorStmt(pstate, (SelectStmt *) parseTree);
 			break;
 
 		default:
@@ -873,6 +872,9 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	qry->rtable = pstate->p_rtable;
 	qry->resultRelation = refnameRangeTablePosn(pstate->p_rtable, stmt->relname);
 
+	if (pstate->p_numAgg > 0)
+		finalizeAggregates(pstate, qry);
+
 	/* make sure we don't have aggregates in the where clause */
 	if (pstate->p_numAgg > 0)
 		parseCheckAggregates(pstate, qry);
@@ -886,47 +888,15 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
  *
  */
 static Query *
-transformCursorStmt(ParseState *pstate, CursorStmt *stmt)
+transformCursorStmt(ParseState *pstate, SelectStmt *stmt)
 {
-	Query	   *qry = makeNode(Query);
+	Query	   *qry;
 
-	/*
-	 * in the old days, a cursor statement is a 'retrieve into portal'; If
-	 * you change the following, make sure you also go through the code in
-	 * various places that tests the kind of operation.
-	 */
-	qry->commandType = CMD_SELECT;
-
-	/* set up a range table */
-	makeRangeTable(pstate, NULL, stmt->fromClause);
-
-	qry->uniqueFlag = stmt->unique;
+	qry = transformSelectStmt(pstate, stmt);
 
 	qry->into = stmt->portalname;
 	qry->isPortal = TRUE;
 	qry->isBinary = stmt->binary;		/* internal portal */
 
-	/* fix the target list */
-	qry->targetList = transformTargetList(pstate, stmt->targetList);
-
-	/* fix where clause */
-	qry->qual = transformWhereClause(pstate, stmt->whereClause);
-
-	/* fix order clause */
-	qry->sortClause = transformSortClause(pstate,
-										  stmt->sortClause,
-										  NIL,
-										  qry->targetList,
-										  qry->uniqueFlag);
-	/* fix group by clause */
-	qry->groupClause = transformGroupClause(pstate,
-											stmt->groupClause,
-											qry->targetList);
-
-	qry->rtable = pstate->p_rtable;
-
-	if (pstate->p_numAgg > 0)
-		finalizeAggregates(pstate, qry);
-
-	return (Query *) qry;
+	return qry;
 }

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.87 1998/01/09 21:26:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.88 1998/01/10 04:29:50 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2226,12 +2226,13 @@ UpdateStmt:  UPDATE relation_name
  *				CURSOR STATEMENTS
  *
  *****************************************************************************/
-
 CursorStmt:  DECLARE name opt_binary CURSOR FOR
-			 SELECT opt_unique res_target_list2
-			 from_clause where_clause group_clause sort_clause
+ 			 SELECT opt_unique res_target_list2
+			 from_clause where_clause
+			 group_clause having_clause
+			 union_clause sort_clause
 				{
-					CursorStmt *n = makeNode(CursorStmt);
+					SelectStmt *n = makeNode(SelectStmt);
 
 					/* from PORTAL name */
 					/*
@@ -2251,7 +2252,9 @@ CursorStmt:  DECLARE name opt_binary CURSOR FOR
 					n->fromClause = $9;
 					n->whereClause = $10;
 					n->groupClause = $11;
-					n->sortClause = $12;
+					n->havingClause = $12;
+					n->unionClause = $13;
+					n->sortClause = $14;
 					$$ = (Node *)n;
 				}
 		;
