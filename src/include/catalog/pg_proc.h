@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.257 2002/08/20 04:45:59 momjian Exp $
+ * $Id: pg_proc.h,v 1.258 2002/08/20 04:47:52 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2715,6 +2715,8 @@ DATA(insert OID = 1936 (  pg_stat_get_backend_idset		PGNSP PGUID 12 f f t t s 0 
 DESCR("Statistics: Currently active backend IDs");
 DATA(insert OID = 2026 (  pg_backend_pid				PGNSP PGUID 12 f f t f s 0 23 ""	pg_backend_pid - _null_ ));
 DESCR("Statistics: Current backend PID");
+DATA(insert OID = 2274 (  pg_stat_reset				PGNSP PGUID 12 f f f f v 0 16  ""	pg_stat_reset - _null_ ));
+DESCR("Statistics: Reset collected statistics");
 DATA(insert OID = 1937 (  pg_stat_get_backend_pid		PGNSP PGUID 12 f f t f s 1 23 "23"  pg_stat_get_backend_pid - _null_ ));
 DESCR("Statistics: PID of backend");
 DATA(insert OID = 1938 (  pg_stat_get_backend_dbid		PGNSP PGUID 12 f f t f s 1 26 "23"  pg_stat_get_backend_dbid - _null_ ));

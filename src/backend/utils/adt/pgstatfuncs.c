@@ -20,6 +20,7 @@ extern Datum pg_stat_get_blocks_hit(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_backend_idset(PG_FUNCTION_ARGS);
 extern Datum pg_backend_pid(PG_FUNCTION_ARGS);
+extern Datum pg_stat_reset(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_pid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_dbid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_userid(PG_FUNCTION_ARGS);
@@ -218,6 +219,17 @@ pg_backend_pid(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(MyProcPid);
 }
 
+/*
+ * Built-in function for resetting the counters
+ *
+ */
+Datum
+pg_stat_reset(PG_FUNCTION_ARGS)
+{
+	pgstat_reset_counters();
+
+	PG_RETURN_BOOL(true);
+}
 
 Datum
 pg_stat_get_backend_pid(PG_FUNCTION_ARGS)
