@@ -5,12 +5,13 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.75 2002/03/24 17:11:36 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.76 2002/05/03 15:56:45 tgl Exp $
  *
  */
 
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "commands/explain.h"
@@ -26,7 +27,6 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
-#include "utils/relcache.h"
 
 
 typedef struct ExplainState
@@ -61,9 +61,6 @@ static TextOutputState *begin_text_output(CommandDest dest, char *title);
 static void do_text_output(TextOutputState *tstate, char *aline);
 static void do_text_output_multiline(TextOutputState *tstate, char *text);
 static void end_text_output(TextOutputState *tstate);
-
-/* Convert a null string pointer into "<>" */
-#define stringStringInfo(s) (((s) == NULL) ? "<>" : (s))
 
 
 /*
@@ -227,7 +224,6 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 				int indent, ExplainState *es)
 {
 	List	   *l;
-	Relation	relation;
 	char	   *pname;
 	int			i;
 
@@ -322,13 +318,13 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 			i = 0;
 			foreach(l, ((IndexScan *) plan)->indxid)
 			{
-				relation = RelationIdGetRelation(lfirsti(l));
-				Assert(relation);
+				Relation	relation;
+
+				relation = index_open(lfirsti(l));
 				appendStringInfo(str, "%s%s",
 								 (++i > 1) ? ", " : "",
-					stringStringInfo(RelationGetRelationName(relation)));
-				/* drop relcache refcount from RelationIdGetRelation */
-				RelationDecrementReferenceCount(relation);
+								 quote_identifier(RelationGetRelationName(relation)));
+				index_close(relation);
 			}
 			/* FALL THRU */
 		case T_SeqScan:
@@ -346,10 +342,10 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 				relname = get_rel_name(rte->relid);
 
 				appendStringInfo(str, " on %s",
-								 stringStringInfo(relname));
+								 quote_identifier(relname));
 				if (strcmp(rte->eref->aliasname, relname) != 0)
 					appendStringInfo(str, " %s",
-									 stringStringInfo(rte->eref->aliasname));
+									 quote_identifier(rte->eref->aliasname));
 			}
 			break;
 		case T_SubqueryScan:
@@ -359,7 +355,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 											  es->rtable);
 
 				appendStringInfo(str, " %s",
-								 stringStringInfo(rte->eref->aliasname));
+								 quote_identifier(rte->eref->aliasname));
 			}
 			break;
 		default:
