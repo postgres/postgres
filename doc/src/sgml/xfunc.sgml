@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.15 2000/05/18 14:24:32 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.16 2000/05/20 11:24:37 momjian Exp $
 -->
 
  <chapter id="xfunc">
@@ -87,11 +87,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.15 2000/05/18 14:24:32 momji
      which might be used to debit a bank account:
 
      <programlisting>
-create function TP1 (int4, float8) returns int4
-    as 'update BANK set balance = BANK.balance - $2
-        where BANK.acctountno = $1
-        select(x = 1)'
-    language 'sql';
+CREATE FUNCTION tp1 (int4, float8) 
+RETURNS int4
+AS '	UPDATE bank 
+	SET balance = bank.balance - $2
+       	WHERE bank.acctountno = $1;
+       	SELECT 1;'
+LANGUAGE 'sql';
      </programlisting>
 
      A user could execute this function to debit account 17 by $100.00 as
@@ -108,7 +110,7 @@ select (x = TP1( 17,100.0));
 
      <programlisting>
 select function hobbies (EMP) returns set of HOBBIES
-    as 'select (HOBBIES.all) from HOBBIES
+    as 'select HOBBIES.* from HOBBIES
         where $1.name = HOBBIES.person'
     language 'sql';
      </programlisting>
@@ -123,8 +125,10 @@ select function hobbies (EMP) returns set of HOBBIES
      simply returns a base type, such as <literal>int4</literal>:
      
      <programlisting>
-CREATE FUNCTION one() RETURNS int4
-    AS 'SELECT 1 as RESULT' LANGUAGE 'sql';
+CREATE FUNCTION one() 
+RETURNS int4
+AS 'SELECT 1 as RESULT;' 
+LANGUAGE 'sql';
 
 SELECT one() AS answer;
 
@@ -149,8 +153,10 @@ SELECT one() AS answer;
      and $2:
 
      <programlisting>
-CREATE FUNCTION add_em(int4, int4) RETURNS int4
-    AS 'SELECT $1 + $2;' LANGUAGE 'sql';
+CREATE FUNCTION add_em(int4, int4) 
+RETURNS int4
+AS 'SELECT $1 + $2;' 
+LANGUAGE 'sql';
 
 SELECT add_em(1, 2) AS answer;
 
@@ -175,12 +181,14 @@ SELECT add_em(1, 2) AS answer;
      salary would be if it were doubled:
 
      <programlisting>
-CREATE FUNCTION double_salary(EMP) RETURNS int4
-    AS 'SELECT $1.salary * 2 AS salary;' LANGUAGE 'sql';
+CREATE FUNCTION double_salary(EMP) 
+RETURNS int4
+AS 'SELECT $1.salary * 2 AS salary;' 
+LANGUAGE 'sql';
 
 SELECT name, double_salary(EMP) AS dream
-    FROM EMP
-    WHERE EMP.cubicle ~= '(2,1)'::point;
+FROM EMP
+WHERE EMP.cubicle ~= '(2,1)'::point;
  
 
      +-----+-------+
@@ -223,12 +231,13 @@ SELECT name(EMP) AS youngster
      that returns a single EMP instance:
 
      <programlisting>
-CREATE FUNCTION new_emp() RETURNS EMP
-    AS 'SELECT \'None\'::text AS name,
-        1000 AS salary,
-        25 AS age,
-        \'(2,2)\'::point AS cubicle'
-    LANGUAGE 'sql';
+CREATE FUNCTION new_emp() 
+RETURNS EMP
+AS '	SELECT \'None\'::text AS name,
+        	1000 AS salary,
+	        25 AS age,
+	        \'(2,2)\'::point AS cubicle'
+LANGUAGE 'sql';
      </programlisting>
     </para>
     <para>
@@ -303,10 +312,12 @@ NOTICE:parser: syntax error at or near "."
      specified as the function's returntype.
 
      <programlisting>
-CREATE FUNCTION clean_EMP () RETURNS int4
-    AS 'DELETE FROM EMP WHERE EMP.salary &lt;= 0;
-SELECT 1 AS ignore_this'
-    LANGUAGE 'sql';
+CREATE FUNCTION clean_EMP () 
+RETURNS int4
+AS '	DELETE FROM EMP 
+	WHERE EMP.salary &lt;= 0;
+	SELECT 1 AS ignore_this;'
+LANGUAGE 'sql';
 
 SELECT clean_EMP();
 
@@ -837,8 +848,10 @@ str = (char *) GetAttributeByName(t, "name", &amp;isnull)
      know  about  the c_overpaid function:
 
      <programlisting>
-* CREATE FUNCTION c_overpaid(EMP, int4) RETURNS bool
-     AS '<replaceable>PGROOT</replaceable>/tutorial/obj/funcs.so' LANGUAGE 'c';
+CREATE FUNCTION c_overpaid(EMP, int4) 
+RETURNS bool
+AS '<replaceable>PGROOT</replaceable>/tutorial/obj/funcs.so' 
+LANGUAGE 'c';
      </programlisting>
     </para>
 
@@ -999,7 +1012,7 @@ str = (char *) GetAttributeByName(t, "name", &amp;isnull)
 
      <para>
       For functions written in C, the SQL name declared in
-      <command>CREATE FUNCTION</command>
+      <command>CREATE FUNC TION</command>
       must be exactly the same as the actual name of the function in the
       C code (hence it must be a legal C function name).
      </para>
