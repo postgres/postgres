@@ -1,9 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.13 1998/12/29 02:24:14 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.14 1999/01/07 03:01:27 thomas Exp $
 Documentation Guide
 Thomas Lockhart
 
 $Log: docguide.sgml,v $
+Revision 1.14  1999/01/07 03:01:27  thomas
+Fix column formatting for a table. No content changes.
+
 Revision 1.13  1998/12/29 02:24:14  thomas
 Clean up to ensure tag completion as required by the newest versions
  of Norm's Modular Style Sheets and jade/docbook.
@@ -92,7 +95,7 @@ Hardcopy, for in-depth reading and reference.
 <para>
 <table tocentry="1">
 <title><ProductName>Postgres</ProductName> Documentation Products</title>
-<tgroup cols="3">
+<tgroup cols="2">
 <thead>
 <row>
 <entry>
