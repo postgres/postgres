@@ -76,7 +76,7 @@ _replace_var(Var *var)
 		lnext(vpe) = NULL;
 	}
 
-	for (i = 1;; i++)
+	for (i = ObjectIdAttributeNumber;; i++)
 	{
 		if (i == var->varattno)
 			break;
