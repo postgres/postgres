@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.61 2001/10/02 21:39:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.62 2001/10/13 01:35:25 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -282,8 +282,9 @@ CreateFunction(ProcedureStmt *stmt)
 		if (!HeapTupleIsValid(languageTuple))
 			elog(ERROR,
 				 "Unrecognized language specified in a CREATE FUNCTION: "
-				 "'%s'.\n\tRecognized languages are sql, C, "
-				 "internal, and created procedural languages.",
+				 "'%s'.\n\tPre-installed languages are SQL, C, and "
+				 "internal.\n\tAdditional languages may be installed "
+				 "using 'createlang'.",
 				 languageName);
 
 		/* Check that this language is a PL */
