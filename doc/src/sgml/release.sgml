@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.305 2004/11/10 06:09:59 momjian Exp $
 -->
 
 <appendix id="release">
@@ -10,7 +10,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp
 
   <note>
    <title>Release date</title>
-   <simpara>2004-??-??, current as of 2004-08-06</simpara>
+   <simpara>2004-??-??, current as of 2004-11-06</simpara>
   </note>
 
   <sect2>
@@ -220,7 +220,9 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp
       <para>
        Server configuration parameter <varname>log_statement</> has been
        changed so it can selectively log just database modification or
-       data definition statements.
+       data definition statements.  Server configuration parameter <varname>
+       log_duration</> now prints only when <literal>log_statement</>
+       prints the query.
       </para>
      </listitem>
 
@@ -380,6 +382,17 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp
        proceeds to its next operation.
       </para>
      </listitem>
+
+    <listitem>
+     <para>
+      CIDR values now must have their non-masked bits be zero.  For example,
+      no longer allow <literal>204.248.199.1/31</literal> as a CIDR value.
+      Such values should have never been accepted by PostgreSQL and will now be
+      rejected.
+     </para>
+    </listitem>
+
+
     </itemizedlist>
    </para>
   </sect2>
@@ -656,6 +669,12 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp
 
     <listitem>
      <para>
+      Use CIDR format in pg_hba.conf examples (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Rename server configuration parameters <varname>SortMem</> and
       <varname>VacuumMem</> to <varname>work_mem</> and
       <varname>maintenance_work_mem</> (Old names still supported) (Tom)
@@ -783,6 +802,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp
       <type>cidr</type> values incorrectly.  (This bug did not exist
       in prior releases because they wouldn't try to hash either
       datatype.)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Make <literal>log_duration</> print only when <literal>log_statement</>
+      prints the query (Ed L.)
      </para>
     </listitem>
 
@@ -1086,6 +1112,22 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp
       Warn when primary/foreign key datatype mismatch requires costly lookup
      </para>
     </listitem>
+
+    <listitem>
+     <para>
+      New ALTER INDEX command to allow moving of indexes between tablespaces 
+      (Gavin)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Have ALTER TABLE OWNER change dependent sequence ownership too (Alvaro)
+      (Gavin)
+     </para>
+    </listitem>
+
+
    </itemizedlist>
   </sect3>
 
@@ -1226,6 +1268,12 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp
      </para>
     </listitem>
 
+    <listitem>
+     <para>
+      Add Win32 service "register" command to pg_ctl (Dave Page)
+     </para>
+    </listitem>
+
    </itemizedlist>
   </sect3>
 
@@ -1340,7 +1388,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp
 
     <listitem>
      <para>
-      to_char/to_date date conversion improvements (Kurt Roeckx)
+      to_char/to_date date conversion improvements (Kurt Roeckx, Fabien Coelho)
      </para>
     </listitem>
 
@@ -1490,6 +1538,27 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp
       In prior releases, the leftmost N bits were selected, but this was
       deemed unhelpful, not to mention inconsistent with casting from bit
       to int.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Detect overflow of integer arithmetic (Tom)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove arithmetic operators for one-byte character type/"char" (Tom)
+     </para>
+     <para>
+      The data type can be cast to 'int' to perform such operations.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Require CIDR values to have all non-masked bits be zero (Kevin Brintnall)
      </para>
     </listitem>
 
@@ -1698,6 +1767,18 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp
      </para>
     </listitem>
 
+    <listitem>
+     <para>
+      Improve tab completion support (Stefan Kaltenbrunn, Greg Sabino Mullane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow boolean settings to be set using upper or lower case (Michael Paesold)
+     </para>
+    </listitem>
+
    </itemizedlist>
   </sect3>
 
@@ -1729,7 +1810,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp
      <para>
       This makes pg_restore's behavior similar to the results of feeding
       a pg_dump output script to psql.  In most cases, ignoring errors and
-      plowing ahead is the most useful thing to do.
+      plowing ahead is the most useful thing to do.  Also added was a
+      pg_restore option to give the old behavior of exiting on an error.
      </para>
     </listitem>
 
@@ -1794,6 +1876,27 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp
      <para>
       Allow PQoidValue(), PQcmdTuples(), and PQoidStatus() to work on
       <command>EXECUTE</command> commands (Neil)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add PQserverVersion() to provide more convenient access to
+      the server version number (Greg Sabino Mullane)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Many ecpg fixes, including SET DESCRIPTOR (Michael)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add PQprepare()/PQsendPrepared() functions to support preparing
+      statements without necessarily specifying the datatypes of their parameters
+      (Abhijit Menon-Sen)
      </para>
     </listitem>
 
@@ -2052,19 +2155,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp
 
     <listitem>
      <para>
-      Many ecpg fixes, including SET DESCRIPTOR (Michael)
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
       Overhaul of /contrib/dblink (Joe)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      /contrib/dbmirror improvements
+      /contrib/dbmirror improvements (Steven Singer)
      </para>
     </listitem>
 
@@ -2102,6 +2199,30 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp
     <listitem>
      <para>
       Add double metaphone to /contrib/fuzzystrmatch (Andrew)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove /contrib/rserv
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Allow /contrib/pg_autovacuum to run as a Win32 service (Dave Page)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add functions to /contrib/dbsize (Andreas Pflug)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove contrib/pg_logger
      </para>
     </listitem>
 
