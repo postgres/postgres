@@ -29,7 +29,7 @@
  * Parts of config.h that you get with autoconf on other systems
  */
 
-/*
- * Default port to connect to
- */
 #define DEF_PGPORT "5432"
+#define BLCKSZ 8192
+#define MAXIMUM_ALIGNOF 4
+
