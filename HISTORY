@@ -88,7 +88,8 @@ PL/PgSQL Allow IS and FOR keywords in cursors, for compatibility (Bruce)
 Native language support for error messages in psql, pg_dump, libpq, and
   postgres components; configure --enable-nls
   (Peter E [German, some French, some Swedish], Serguei A. Mokhov [Russian],
-  Karel Zak [Czech], Weiping He [Simplified Chinese], Zhenbang Wei [Traditional Chinese])
+  Karel Zak [Czech], Weiping He [Simplified Chinese], Zhenbang Wei 
+  [Traditional Chinese])
 Make NULL appear at beginning/end based on ORDER BY (Tom)
 Add %TYPE capability to CREATE TYPE (Ian Lance Taylor)
 Truncate extra-long sequence names to a reasonable value (Tom)
