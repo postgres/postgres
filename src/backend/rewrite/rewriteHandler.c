@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.69 2000/03/16 03:23:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.70 2000/04/04 02:30:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/prep.h"
+#include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
@@ -437,8 +438,8 @@ modifyAggrefDropQual(Node *node, Node *targetNode)
 static SubLink *
 modifyAggrefMakeSublink(Aggref *aggref, Query *parsetree)
 {
-	/* target and rte point to old structures: */
-	Var		   *target;
+	List	   *aggVarNos;
+	/* rte points to old structure: */
 	RangeTblEntry *rte;
 	/* these point to newly-created structures: */
 	Query	   *subquery;
@@ -446,10 +447,10 @@ modifyAggrefMakeSublink(Aggref *aggref, Query *parsetree)
 	TargetEntry *tle;
 	Resdom	   *resdom;
 
-	target = (Var *) (aggref->target);
-	if (! IsA(target, Var))
-		elog(ERROR, "rewrite: aggregates of views only allowed on simple variables for now");
-	rte = rt_fetch(target->varno, parsetree->rtable);
+	aggVarNos = pull_varnos(aggref->target);
+	if (length(aggVarNos) != 1)
+		elog(ERROR, "rewrite: aggregates of views only allowed on single tables for now");
+	rte = rt_fetch(lfirsti(aggVarNos), parsetree->rtable);
 
 	resdom = makeNode(Resdom);
 	resdom->resno = 1;
@@ -503,11 +504,13 @@ modifyAggrefMakeSublink(Aggref *aggref, Query *parsetree)
 	/* Increment all varlevelsup fields in the new subquery */
 	IncrementVarSublevelsUp((Node *) subquery, 1, 0);
 
-	/* Replace references to the target table with correct local varno.
-	 * Note +1 here to account for effects of previous line!
+	/* Replace references to the target table with correct local varno, 1.
+	 * Note that because of previous line, these references have
+	 * varlevelsup = 1, which must be changed to 0.
 	 */
-	modifyAggrefChangeVarnodes((Node *) subquery, target->varno,
-							   1, target->varlevelsup+1, 0);
+	modifyAggrefChangeVarnodes((Node *) subquery,
+							   lfirsti(aggVarNos), 1,
+							   1, 0);
 
 	return sublink;
 }
