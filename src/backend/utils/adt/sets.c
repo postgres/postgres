@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.8 1997/11/20 23:23:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.9 1997/11/24 05:09:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "catalog/indexing.h"	/* for Num_pg_proc_indices */
 #include "storage/lmgr.h"
 #include "utils/sets.h"			/* for GENERICSETNAME	   */
+#include "utils/tqual.h"
 #include "tcop/dest.h"
 #include "fmgr.h"
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.27 1997/10/25 01:10:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.28 1997/11/24 05:09:21 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -46,8 +46,6 @@
 #include "access/htup.h"
 #include "access/relscan.h"
 #include "access/skey.h"
-#include "utils/tqual.h"		/* for NowTimeQual */
-
 #include "storage/buf.h"
 #include "storage/bufmgr.h"		/* for BLCKSZ */
 #include "utils/portal.h"		/* for {Start,End}PortalAllocMode */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.6 1997/11/20 23:22:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.7 1997/11/24 05:08:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "utils/syscache.h"
 #include "utils/elog.h"			/* for elog stuff */
 #include "utils/palloc.h"
-#include "utils/tqual.h"		/* 'NowTimeQual' defined here.. */
 #include "access/heapam.h"		/* heap AM calls defined here */
 #include "fmgr.h"				/* for CHAR_16_EQ */
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.18 1997/11/20 23:22:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.19 1997/11/24 05:08:47 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -33,6 +33,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_user.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 #include "parser/catalog_utils.h"
 #include "fmgr.h"
 

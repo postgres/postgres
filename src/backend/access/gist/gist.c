@@ -24,6 +24,7 @@
 #include <storage/bufpage.h>
 #include <storage/lmgr.h>
 #include <utils/syscache.h>
+#include <utils/tqual.h>
 
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.8 1997/09/08 21:47:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.9 1997/11/24 05:08:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,6 @@
 #include "access/htup.h"
 #include "access/relscan.h"
 #include "access/skey.h"
-#include "utils/tqual.h"
 #include "access/xact.h"
 
 #include "storage/block.h"

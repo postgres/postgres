@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.28 1997/11/20 23:20:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.29 1997/11/24 05:08:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,6 @@
 #include "storage/itemptr.h"
 #include "utils/nabstime.h"
 #include "access/htup.h"
-#include "utils/tqual.h"
 #include "storage/buf.h"
 #include "access/relscan.h"
 #include "access/heapam.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.17 1997/11/20 23:23:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.18 1997/11/24 05:09:09 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -19,18 +19,18 @@
 #include "postgres.h"
 #include "access/heapam.h"
 #include "access/genam.h"
-#include "utils/builtins.h"
 #include "utils/tqual.h"
-#include "storage/bufpage.h"
-#include "access/valid.h"
-#include "miscadmin.h"
+#include "utils/builtins.h"
 #include "utils/portal.h"
 #include "utils/catcache.h"
-#include "fmgr.h"				/* for F_BOOLEQ, etc.  DANGER */
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/mcxt.h"
 #include "utils/rel.h"
+#include "storage/bufpage.h"
+#include "access/valid.h"
+#include "miscadmin.h"
+#include "fmgr.h"				/* for F_BOOLEQ, etc.  DANGER */
 #include "catalog/pg_type.h"	/* for OID of int28 type */
 #include "lib/dllist.h"
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.7 1997/09/08 03:19:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.8 1997/11/24 05:07:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,6 @@
 #include "nodes/primnodes.h"
 #include "utils/nabstime.h"
 #include "access/htup.h"
-#include "utils/tqual.h"
 #include "nodes/parsenodes.h"
 
 #include "parser/scansup.h"

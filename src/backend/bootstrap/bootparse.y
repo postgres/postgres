@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.6 1997/11/21 18:04:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.7 1997/11/24 05:07:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,6 @@
 #include "storage/off.h"
 #include "storage/itemptr.h"
 #include "access/htup.h"
-#include "utils/tqual.h"
 #include "nodes/parsenodes.h"
 
 #include "access/xact.h"

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.11 1997/11/20 23:23:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.12 1997/11/24 05:09:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "utils/tqual.h"		/* for NowTimeQual */
 #include "fmgr.h"
 #include "utils/builtins.h"		/* for textout() prototype and where the
 								 * declarations go */

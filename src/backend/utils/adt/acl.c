@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.19 1997/11/01 05:21:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.20 1997/11/24 05:08:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,8 @@
 
 #include <utils/memutils.h>
 #include "utils/acl.h"
-#include "catalog/pg_user.h"
 #include "utils/syscache.h"
+#include "catalog/pg_user.h"
 #include "miscadmin.h"
 
 static char *getid(char *s, char *n);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.10 1997/11/20 23:23:35 momjian Exp $
+ * $Id: valid.h,v 1.11 1997/11/24 05:09:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,11 +16,11 @@
 #include <fmgr.h>
 #include <access/heapam.h>
 #include <access/valid.h>
-#include <utils/tqual.h>
 #include <storage/bufmgr.h>
 #include <storage/bufpage.h>
 #include <utils/rel.h>
 #include <utils/builtins.h>
+#include <utils/tqual.h>
 
 /* ----------------
  *		extern decl's

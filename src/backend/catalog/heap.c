@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.32 1997/11/21 18:04:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.33 1997/11/24 05:08:07 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_creatr()			- Create an uncataloged heap relation
@@ -51,6 +51,7 @@
 #include <utils/builtins.h>
 #include <utils/mcxt.h>
 #include <utils/relcache.h>
+#include <utils/tqual.h>
 #include <nodes/plannodes.h>
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>

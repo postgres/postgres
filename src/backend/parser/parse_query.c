@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.24 1997/11/21 18:10:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.25 1997/11/24 05:08:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 
 #include "fmgr.h"
 #include "access/heapam.h"
-#include "utils/tqual.h"
 #include "access/tupmacs.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"

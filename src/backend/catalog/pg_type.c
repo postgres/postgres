@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.12 1997/11/20 23:20:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.13 1997/11/24 05:08:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include <access/heapam.h>
 #include <access/relscan.h>
 #include <utils/builtins.h>
+#include <utils/tqual.h>
 #include <fmgr.h>
 #include <parser/catalog_utils.h>
 #include <catalog/catname.h>

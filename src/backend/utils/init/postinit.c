@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.19 1997/11/18 07:58:10 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.20 1997/11/24 05:09:17 momjian Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -48,7 +48,6 @@
 #include "access/xact.h"
 #include "storage/bufmgr.h"
 #include "access/transam.h"		/* XXX dependency problem */
-#include "utils/tqual.h"
 #include "utils/syscache.h"
 #include "storage/bufpage.h"	/* for page layout, for InitMyDatabaseInfo() */
 #include "storage/sinval.h"

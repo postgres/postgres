@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.32 1997/11/21 18:10:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.33 1997/11/24 05:08:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@
 #include "utils/palloc.h"
 #include "utils/acl.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 #include "parser/parsetree.h"	/* rt_fetch() */
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
