@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.72 2000/06/28 03:32:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.73 2000/07/10 04:32:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -714,9 +714,16 @@ mdnblocks(Relation reln)
 
 			if (v->mdfd_chain == (MdfdVec *) NULL)
 			{
+				/*
+				 * Because we pass O_CREAT, we will create the next segment
+				 * (with zero length) immediately, if the last segment is of
+				 * length REL_SEGSIZE.  This is unnecessary but harmless, and
+				 * testing for the case would take more cycles than it seems
+				 * worth.
+				 */
 				v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
 				if (v->mdfd_chain == (MdfdVec *) NULL)
-					elog(ERROR, "cannot count blocks for %s -- open failed",
+					elog(ERROR, "cannot count blocks for %s -- open failed: %m",
 						 RelationGetRelationName(reln));
 			}
 
@@ -1038,11 +1045,20 @@ _mdfd_getseg(Relation reln, int blkno)
 
 		if (v->mdfd_chain == (MdfdVec *) NULL)
 		{
-			v->mdfd_chain = _mdfd_openseg(reln, i, O_CREAT);
+			/*
+			 * We will create the next segment only if the target block
+			 * is within it.  This prevents Sorcerer's Apprentice syndrome
+			 * if a bug at higher levels causes us to be handed a ridiculously
+			 * large blkno --- otherwise we could create many thousands of
+			 * empty segment files before reaching the "target" block.  We
+			 * should never need to create more than one new segment per call,
+			 * so this restriction seems reasonable.
+			 */
+			v->mdfd_chain = _mdfd_openseg(reln, i, (segno == 1) ? O_CREAT : 0);
 
 			if (v->mdfd_chain == (MdfdVec *) NULL)
-				elog(ERROR, "cannot open segment %d of relation %s",
-					 i, RelationGetRelationName(reln));
+				elog(ERROR, "cannot open segment %d of relation %s (target block %d): %m",
+					 i, RelationGetRelationName(reln), blkno);
 		}
 		v = v->mdfd_chain;
 	}
@@ -1060,8 +1076,10 @@ _mdfd_getseg(Relation reln, int blkno)
  * "blind" with no Relation struct.  We assume that we are not likely to
  * touch the same relation again soon, so we do not create an FD entry for
  * the relation --- we just open a kernel file descriptor which will be
- * used and promptly closed.  The return value is the kernel descriptor,
- * or -1 on failure.
+ * used and promptly closed.  We also assume that the target block already
+ * exists, ie, we need not extend the relation.
+ *
+ * The return value is the kernel descriptor, or -1 on failure.
  */
 
 static int
