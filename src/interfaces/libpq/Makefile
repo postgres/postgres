@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.66 2002/12/04 18:14:11 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.67 2002/12/06 03:46:37 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,6 +23,7 @@ override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -DFRONTEND -DSYSCONFDIR='"$(sysconf
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       pqexpbuffer.o dllist.o md5.o pqsignal.o fe-secure.o \
       wchar.o encnames.o \
+      v6util.o \
       $(filter inet_aton.o snprintf.o strerror.o, $(LIBOBJS))
 
 

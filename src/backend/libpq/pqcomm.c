@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.141 2002/09/04 23:31:34 tgl Exp $
+ *	$Id: pqcomm.c,v 1.142 2002/12/06 03:46:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,11 @@ extern ssize_t secure_read(Port *, void *, size_t);
 extern ssize_t secure_write(Port *, const void *, size_t);
 
 static void pq_close(void);
+#ifdef HAVE_UNIX_SOCKETS
+int StreamServerPortSubAFUNIX1(unsigned short portNumber,
+			       char *unixSocketName );
+int StreamServerPortSubAFUNIX2(void);
+#endif /* HAVE_UNIX_SOCKETS */
 
 
 /*
@@ -182,170 +187,198 @@ int
 StreamServerPort(int family, char *hostName, unsigned short portNumber,
 				 char *unixSocketName, int *fdP)
 {
-	SockAddr	saddr;
-	int			fd,
-				err;
-	int			maxconn;
-	size_t		len = 0;
-	int			one = 1;
+  int			fd,
+			err;
+  int			maxconn;
+  int			one = 1;
 
-	Assert(family == AF_INET || family == AF_UNIX);
+  int                   ret;
+  struct addrinfo*      addrs  = NULL;
+  struct addrinfo       hint;
+  char                  portNumberStr[64];
+  char*                 service = portNumberStr;
+  char*                 hostn = (hostName[0] == '\0')? NULL : hostName;
 
-	if ((fd = socket(family, SOCK_STREAM, 0)) < 0)
-	{
-		elog(LOG, "StreamServerPort: socket() failed: %m");
-		return STATUS_ERROR;
-	}
+  Assert(family == AF_INET6 || family == AF_INET || family == AF_UNIX);
 
-	if (family == AF_INET)
-	{
-		if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
-						sizeof(one))) == -1)
-		{
-			elog(LOG, "StreamServerPort: setsockopt(SO_REUSEADDR) failed: %m");
-			return STATUS_ERROR;
-		}
-	}
+  memset(&hint, 0, sizeof(hint));
+  hint.ai_family   = family;
+  hint.ai_flags    = AI_PASSIVE;
+  hint.ai_socktype = SOCK_STREAM;
 
-	MemSet((char *) &saddr, 0, sizeof(saddr));
-	saddr.sa.sa_family = family;
+  snprintf(portNumberStr, sizeof(portNumberStr)/sizeof(char),
+	   "%d", portNumber);
 
 #ifdef HAVE_UNIX_SOCKETS
-	if (family == AF_UNIX)
-	{
-		UNIXSOCK_PATH(saddr.un, portNumber, unixSocketName);
-		len = UNIXSOCK_LEN(saddr.un);
-		strcpy(sock_path, saddr.un.sun_path);
-
-		/*
-		 * Grab an interlock file associated with the socket file.
-		 */
-		if (!CreateSocketLockFile(sock_path, true))
-			return STATUS_ERROR;
-
-		/*
-		 * Once we have the interlock, we can safely delete any
-		 * pre-existing socket file to avoid failure at bind() time.
-		 */
-		unlink(sock_path);
-	}
+  if (family == AF_UNIX) {
+    if(StreamServerPortSubAFUNIX1(portNumber, unixSocketName) != STATUS_OK){
+      return STATUS_ERROR;
+    }
+    service = sock_path;
+  }
 #endif   /* HAVE_UNIX_SOCKETS */
 
-	if (family == AF_INET)
-	{
-		/* TCP/IP socket */
-		if (hostName[0] == '\0')
-			saddr.in.sin_addr.s_addr = htonl(INADDR_ANY);
-		else
-		{
-			struct hostent *hp;
 
-			hp = gethostbyname(hostName);
-			if ((hp == NULL) || (hp->h_addrtype != AF_INET))
-			{
-				elog(LOG, "StreamServerPort: gethostbyname(%s) failed",
-					 hostName);
-				return STATUS_ERROR;
-			}
-			memmove((char *) &(saddr.in.sin_addr), (char *) hp->h_addr,
-					hp->h_length);
-		}
 
-		saddr.in.sin_port = htons(portNumber);
-		len = sizeof(struct sockaddr_in);
-	}
+  ret = getaddrinfo2(hostn, service, &hint, &addrs);
+  if(ret || addrs == NULL){
+    elog(LOG, "FATAL: StreamServerPort: getaddrinfo2() failed: %s\n",
+	     gai_strerror(ret));
+    freeaddrinfo2(hint.ai_family, addrs);
+    return STATUS_ERROR;
+  }
 
-	err = bind(fd, (struct sockaddr *) & saddr.sa, len);
-	if (err < 0)
-	{
-		if (family == AF_UNIX)
-			elog(LOG, "StreamServerPort: bind() failed: %m\n"
-				 "\tIs another postmaster already running on port %d?\n"
-				 "\tIf not, remove socket node (%s) and retry.",
-				 (int) portNumber, sock_path);
-		else
-			elog(LOG, "StreamServerPort: bind() failed: %m\n"
-				 "\tIs another postmaster already running on port %d?\n"
-				 "\tIf not, wait a few seconds and retry.",
-				 (int) portNumber);
-		return STATUS_ERROR;
-	}
+
+  /** YY DEBUG
+  if(addrs->ai_family == AF_UNIX){
+    printf("%s-%s-%s \n", "debug: AF_UNIX!", unixSocketName, hostName);
+  }
+  else {
+    printf("%s", "debug: NOT AF_UNIX!\n");
+  }
+  fflush(stdout);
+  **/
+
+  if( (fd = socket(addrs->ai_family, SOCK_STREAM, 0)) < 0){
+    elog(LOG, "FATAL: StreamServerPort: socket() failed: %s\n",
+	     strerror(errno));
+    freeaddrinfo2(hint.ai_family, addrs);
+    return STATUS_ERROR;
+  }
+
+  if( isAF_INETx2(family) ){
+    if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char*)&one, 
+		    sizeof(one) )) == -1 ){
+      elog(LOG, "FATAL: StreamServerPort: setsockopt(SO_REUSEADDR) failed: %s\n",
+	       strerror(errno));
+      freeaddrinfo2(hint.ai_family, addrs);
+      return STATUS_ERROR;
+    }
+  }
+
+
+  err = bind(fd, addrs->ai_addr, addrs->ai_addrlen);
+  if(err < 0){
+    elog(LOG, "FATAL: StreamServerPort: bind() failed: %s\n"
+	     "\tIs another postmaster already running on port %d?\n",
+	     strerror(errno), (int) portNumber);
+    if (family == AF_UNIX)
+      elog(LOG, "\tIf not, remove socket node (%s) and retry.\n",
+	       sock_path);
+    else
+      elog(LOG, "\tIf not, wait a few seconds and retry.\n");
+    freeaddrinfo2(hint.ai_family, addrs);
+    return STATUS_ERROR;
+  }
 
 #ifdef HAVE_UNIX_SOCKETS
-	if (family == AF_UNIX)
-	{
-		/* Arrange to unlink the socket file at exit */
-		on_proc_exit(StreamDoUnlink, 0);
+  if (family == AF_UNIX){
+    if(StreamServerPortSubAFUNIX2() != STATUS_OK){
+      freeaddrinfo2(hint.ai_family, addrs);
+      return STATUS_ERROR;
+    }
+  }
+#endif
 
-		/*
-		 * Fix socket ownership/permission if requested.  Note we must do
-		 * this before we listen() to avoid a window where unwanted
-		 * connections could get accepted.
-		 */
-		Assert(Unix_socket_group);
-		if (Unix_socket_group[0] != '\0')
-		{
-			char	   *endptr;
-			unsigned long int val;
-			gid_t		gid;
+  /*
+   * Select appropriate accept-queue length limit.  PG_SOMAXCONN is only
+   * intended to provide a clamp on the request on platforms where an
+   * overly large request provokes a kernel error (are there any?).
+   */
+  maxconn = MaxBackends * 2;
+  if (maxconn > PG_SOMAXCONN)
+    maxconn = PG_SOMAXCONN;
 
-			val = strtoul(Unix_socket_group, &endptr, 10);
-			if (*endptr == '\0')
-			{
-				/* numeric group id */
-				gid = val;
-			}
-			else
-			{
-				/* convert group name to id */
-				struct group *gr;
+  err = listen(fd, maxconn);
+  if (err < 0) {
+    elog(LOG, "FATAL: StreamServerPort: listen() failed: %s\n",
+	     strerror(errno));
+    freeaddrinfo2(hint.ai_family, addrs);
+    return STATUS_ERROR;
+  }
 
-				gr = getgrnam(Unix_socket_group);
-				if (!gr)
-				{
-					elog(LOG, "No such group as '%s'",
-						 Unix_socket_group);
-					return STATUS_ERROR;
-				}
-				gid = gr->gr_gid;
-			}
-			if (chown(sock_path, -1, gid) == -1)
-			{
-				elog(LOG, "Could not set group of %s: %m",
-					 sock_path);
-				return STATUS_ERROR;
-			}
-		}
+  *fdP = fd;
+  freeaddrinfo2(hint.ai_family, addrs);
+  return STATUS_OK;
 
-		if (chmod(sock_path, Unix_socket_permissions) == -1)
-		{
-			elog(LOG, "Could not set permissions on %s: %m",
-				 sock_path);
-			return STATUS_ERROR;
-		}
-	}
-#endif   /* HAVE_UNIX_SOCKETS */
-
-	/*
-	 * Select appropriate accept-queue length limit.  PG_SOMAXCONN is only
-	 * intended to provide a clamp on the request on platforms where an
-	 * overly large request provokes a kernel error (are there any?).
-	 */
-	maxconn = MaxBackends * 2;
-	if (maxconn > PG_SOMAXCONN)
-		maxconn = PG_SOMAXCONN;
-
-	err = listen(fd, maxconn);
-	if (err < 0)
-	{
-		elog(LOG, "StreamServerPort: listen() failed: %m");
-		return STATUS_ERROR;
-	}
-
-	*fdP = fd;
-
-	return STATUS_OK;
 }
+
+#ifdef HAVE_UNIX_SOCKETS
+int StreamServerPortSubAFUNIX1(unsigned short portNumber,
+			       char *unixSocketName )
+{
+  SockAddr	saddr;
+  int           len;
+
+  MemSet((char *) &saddr, 0, sizeof(saddr));
+  
+  UNIXSOCK_PATH(saddr.un, portNumber, unixSocketName);
+  len = UNIXSOCK_LEN(saddr.un);
+  strcpy(sock_path, saddr.un.sun_path);
+  
+  /*
+   * Grab an interlock file associated with the socket file.
+   */
+  if (!CreateSocketLockFile(sock_path, true))
+    return STATUS_ERROR;
+  
+  /*
+   * Once we have the interlock, we can safely delete any
+   * pre-existing socket file to avoid failure at bind() time.
+   */
+  unlink(sock_path);
+
+  return STATUS_OK;
+}
+
+
+int StreamServerPortSubAFUNIX2(void)
+{
+  /* Arrange to unlink the socket file at exit */
+  on_proc_exit(StreamDoUnlink, 0);
+  
+  /*
+   * Fix socket ownership/permission if requested.  Note we must do
+   * this before we listen() to avoid a window where unwanted
+   * connections could get accepted.
+   */
+  Assert(Unix_socket_group);
+  if (Unix_socket_group[0] != '\0')  {
+    char	   *endptr;
+    unsigned long int val;
+    gid_t		gid;
+    
+    val = strtoul(Unix_socket_group, &endptr, 10);
+    if (*endptr == '\0'){     /* numeric group id */
+      gid = val;
+    }
+    else {                    /* convert group name to id */
+      struct group *gr;
+      gr = getgrnam(Unix_socket_group);
+      if (!gr) {
+	elog(LOG, "FATAL:  no such group '%s'\n",
+		 Unix_socket_group);
+	return STATUS_ERROR;
+      }
+      gid = gr->gr_gid;
+    }
+    if (chown(sock_path, -1, gid) == -1){
+      elog(LOG, "FATAL:  could not set group of %s: %s\n",
+	       sock_path, strerror(errno));
+      return STATUS_ERROR;
+    }
+  }
+
+  if (chmod(sock_path, Unix_socket_permissions) == -1){
+	elog(LOG, "FATAL:  could not set permissions on %s: %s\n",
+	     sock_path, strerror(errno));
+    return STATUS_ERROR;
+  }
+  return STATUS_OK;
+}
+
+#endif   /* HAVE_UNIX_SOCKETS */
+
 
 /*
  * StreamConnection -- create a new connection with client using
@@ -391,8 +424,20 @@ StreamConnection(int server_fd, Port *port)
 		return STATUS_ERROR;
 	}
 
+	/* DEBUG YY
+	{ 
+	  char l_hostinfo[INET6_ADDRSTRLEN];
+	  char r_hostinfo[INET6_ADDRSTRLEN];
+	  SockAddr_ntop(&port->laddr, l_hostinfo, INET6_ADDRSTRLEN, 1);
+	  SockAddr_ntop(&port->raddr, r_hostinfo, INET6_ADDRSTRLEN, 1);
+	  printf("StreamConnect() l: %s r: %s\n", l_hostinfo, r_hostinfo);
+	  printf("StreamConnect() l: %d r: %d\n", port->laddr.sa.sa_family, 
+		 port->raddr.sa.sa_family);
+	}
+	*/
+
 	/* select NODELAY and KEEPALIVE options if it's a TCP connection */
-	if (port->laddr.sa.sa_family == AF_INET)
+	if ( isAF_INETx(&port->laddr) )
 	{
 		int			on = 1;
 
