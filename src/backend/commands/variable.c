@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *  'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.2 1998/01/07 18:46:26 momjian Exp $
+ * $Id: variable.c,v 1.3 1998/02/03 16:06:49 thomas Exp $
  *
  */
 
@@ -21,19 +21,6 @@ extern Cost _cpu_index_page_wight_;
 extern bool _use_geqo_;
 extern int32 _use_geqo_rels_;
 extern bool _use_right_sided_plans_;
-
-/*-----------------------------------------------------------------------*/
-#if USE_EURODATES
-#define DATE_EURO		TRUE
-#else
-#define DATE_EURO FALSE
-#endif
-
-/*-----------------------------------------------------------------------*/
-struct PGVariables PGVariables =
-{
-	{DATE_EURO, Date_Postgres}
-};
 
 /*-----------------------------------------------------------------------*/
 static const char *
@@ -137,26 +124,6 @@ get_token(char **tok, char **val, const char *str)
 }
 
 /*-----------------------------------------------------------------------*/
-#if FALSE
-static bool
-parse_null(const char *value)
-{
-	return TRUE;
-}
-
-static bool
-show_null(const char *value)
-{
-	return TRUE;
-}
-
-static bool
-reset_null(const char *value)
-{
-	return TRUE;
-}
-#endif
-
 bool
 parse_geqo(const char *value)
 {
@@ -247,6 +214,7 @@ parse_r_plans(const char *value)
 	return TRUE;
 }
 
+/*-----------------------------------------------------------------------*/
 bool
 show_r_plans()
 {
@@ -270,6 +238,7 @@ reset_r_plans()
 	return TRUE;
 }
 
+/*-----------------------------------------------------------------------*/
 bool
 parse_cost_heap(const char *value)
 {
@@ -302,6 +271,7 @@ reset_cost_heap()
 	return TRUE;
 }
 
+/*-----------------------------------------------------------------------*/
 bool
 parse_cost_index(const char *value)
 {
@@ -334,6 +304,7 @@ reset_cost_index()
 	return TRUE;
 }
 
+/*-----------------------------------------------------------------------*/
 bool
 parse_date(const char *value)
 {
@@ -470,22 +441,13 @@ parse_timezone(const char *value)
 	{
 		/* Not yet tried to save original value from environment? */
 		if (defaultTZ == NULL)
-		{
 			/* found something? then save it for later */
-			if (getenv("TZ") != NULL)
-			{
-				defaultTZ = getenv("TZ");
-				if (defaultTZ == NULL)
-					defaultTZ = (char *) -1;
-				else
-					strcpy(TZvalue, defaultTZ);
-			}
+			if ((defaultTZ = getenv("TZ")) != NULL)
+				strcpy(TZvalue, defaultTZ);
+
 			/* found nothing so mark with an invalid pointer */
 			else
-			{
 				defaultTZ = (char *) -1;
-			}
-		}
 
 		strcpy(tzbuf, "TZ=");
 		strcat(tzbuf, tok);
@@ -519,24 +481,34 @@ show_timezone()
  * clears the process-specific environment variables.
  * Other reasonable arguments to putenv() (e.g. "TZ=", "TZ", "") result
  * in a core dump (under Linux anyway).
+ * - thomas 1998-01-26
  */
 bool
 reset_timezone()
 {
-	if ((defaultTZ != NULL) && (defaultTZ != (char *) -1))
+	/* no time zone has been set in this session? */
+	if (defaultTZ == NULL)
+	{
+	}
+
+	/* time zone was set and original explicit time zone available? */
+	else if (defaultTZ != (char *) -1)
 	{
 		strcpy(tzbuf, "TZ=");
 		strcat(tzbuf, TZvalue);
 		if (putenv(tzbuf) != 0)
 			elog(ERROR, "Unable to set TZ environment variable to %s", TZvalue);
+		tzset();
 	}
+
+	/* otherwise, time zone was set but no original explicit time zone available */
 	else
 	{
 		strcpy(tzbuf, "=");
 		if (putenv(tzbuf) != 0)
 			elog(ERROR, "Unable to clear TZ environment variable", NULL);
+		tzset();
 	}
-	tzset();
 
 	return TRUE;
 } /* reset_timezone() */
