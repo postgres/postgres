@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.236 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.237 2005/03/12 05:41:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,6 @@ static bool fe_eof;				/* true if detected end of copy data */
 static EolType eol_type;		/* EOL type of input */
 static int	client_encoding;	/* remote side's character encoding */
 static int	server_encoding;	/* local encoding */
-static bool embedded_line_warning;
 
 /* these are just for error messages, see copy_in_error_callback */
 static bool copy_binary;		/* is it a binary copy? */
@@ -139,7 +138,7 @@ static void CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 static void CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
  char *delim, char *null_print, bool csv_mode, char *quote, char *escape,
 		 List *force_notnull_atts);
-static bool CopyReadLine(void);
+static bool CopyReadLine(char * quote, char * escape);
 static char *CopyReadAttribute(const char *delim, const char *null_print,
 				  CopyReadResult *result, bool *isnull);
 static char *CopyReadAttributeCSV(const char *delim, const char *null_print,
@@ -1191,7 +1190,6 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	attr = tupDesc->attrs;
 	num_phys_attrs = tupDesc->natts;
 	attr_count = list_length(attnumlist);
-	embedded_line_warning = false;
 
 	/*
 	 * Get info about the columns we need to process.
@@ -1718,7 +1716,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			ListCell   *cur;
 
 			/* Actually read the line into memory here */
-			done = CopyReadLine();
+			done = csv_mode ? 
+				CopyReadLine(quote, escape) : CopyReadLine(NULL, NULL);
 
 			/*
 			 * EOF at start of line means we're done.  If we see EOF after
@@ -2006,7 +2005,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
  * by newline.
  */
 static bool
-CopyReadLine(void)
+CopyReadLine(char * quote, char * escape)
 {
 	bool		result;
 	bool		change_encoding = (client_encoding != server_encoding);
@@ -2015,6 +2014,19 @@ CopyReadLine(void)
 	int			j;
 	unsigned char s[2];
 	char	   *cvt;
+	bool        in_quote = false, last_was_esc = false, csv_mode = false;
+	char        quotec = '\0', escapec = '\0';
+
+	if (quote)
+	{
+		csv_mode = true;
+		quotec = quote[0];
+		escapec = escape[0];
+		/* ignore special escape processing if it's the same as quotec */
+		if (quotec == escapec)
+			escapec = '\0';
+	}
+
 
 	s[1] = 0;
 
@@ -2031,11 +2043,20 @@ CopyReadLine(void)
 
 	/*
 	 * In this loop we only care for detecting newlines (\r and/or \n) and
-	 * the end-of-copy marker (\.).  For backwards compatibility we allow
+	 * the end-of-copy marker (\.).  
+	 *
+	 * In Text mode, for backwards compatibility we allow
 	 * backslashes to escape newline characters.  Backslashes other than
 	 * the end marker get put into the line_buf, since CopyReadAttribute
-	 * does its own escape processing.	These four characters, and only
-	 * these four, are assumed the same in frontend and backend encodings.
+	 * does its own escape processing.	
+	 *
+	 * In CSV mode, CR and NL inside q quoted field are just part of the
+	 * data value and are put in line_buf. We keep just enough state
+	 * to know if we are currently in a quoted field or not.
+	 *
+	 * These four characters, and only these four, are assumed the same in 
+	 * frontend and backend encodings.
+	 *
 	 * We do not assume that second and later bytes of a frontend
 	 * multibyte character couldn't look like ASCII characters.
 	 */
@@ -2047,13 +2068,49 @@ CopyReadLine(void)
 			result = true;
 			break;
 		}
-		if (c == '\r')
+
+		if (csv_mode)
+		{
+			/*  
+			 * Dealing with quotes and escapes here is mildly tricky. If the
+			 * quote char is also the escape char, there's no problem - we  
+			 * just use the char as a toggle. If they are different, we need
+			 * to ensure that we only take account of an escape inside a quoted
+			 * field and immediately preceding a quote char, and not the
+			 * second in a escape-escape sequence.
+			 */ 
+
+			if (in_quote && c == escapec)
+				last_was_esc = ! last_was_esc;
+			if (c == quotec && ! last_was_esc)
+				in_quote = ! in_quote;
+			if (c != escapec)
+				last_was_esc = false;
+
+			/*
+			 * updating the line count for embedded CR and/or LF chars is 
+			 * necessarily a little fragile - this test is probably about 
+			 * the best we can do.
+			 */ 
+			if (in_quote && c == (eol_type == EOL_CR ? '\r' : '\n')) 
+				copy_lineno++; 
+		}
+
+		if (!in_quote && c == '\r')
 		{
 			if (eol_type == EOL_NL)
-				ereport(ERROR,
-						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("literal carriage return found in data"),
-				  errhint("Use \"\\r\" to represent carriage return.")));
+			{
+				if (! csv_mode)
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("literal carriage return found in data"),
+							 errhint("Use \"\\r\" to represent carriage return.")));
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("unquoted carriage return found in CSV data"),
+							 errhint("Use quoted CSV field to represent carriage return.")));
+			}
 			/* Check for \r\n on first line, _and_ handle \r\n. */
 			if (eol_type == EOL_UNKNOWN || eol_type == EOL_CRNL)
 			{
@@ -2068,10 +2125,19 @@ CopyReadLine(void)
 				{
 					/* found \r, but no \n */
 					if (eol_type == EOL_CRNL)
-						ereport(ERROR,
-								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("literal carriage return found in data"),
-								 errhint("Use \"\\r\" to represent carriage return.")));
+					{
+						if (!csv_mode)
+							ereport(ERROR,
+									(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+									 errmsg("literal carriage return found in data"),
+									 errhint("Use \"\\r\" to represent carriage return.")));
+						else
+							ereport(ERROR,
+									(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+									 errmsg("unquoted carriage return found in data"),
+									 errhint("Use quoted CSV field to represent carriage return.")));
+
+					}
 
 					/*
 					 * if we got here, it is the first line and we didn't
@@ -2083,26 +2149,47 @@ CopyReadLine(void)
 			}
 			break;
 		}
-		if (c == '\n')
+		if (!in_quote && c == '\n')
 		{
 			if (eol_type == EOL_CR || eol_type == EOL_CRNL)
-				ereport(ERROR,
-						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						 errmsg("literal newline found in data"),
-						 errhint("Use \"\\n\" to represent newline.")));
+			{
+				if (!csv_mode)
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("literal newline found in data"),
+							 errhint("Use \"\\n\" to represent newline.")));
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("unquoted newline found in data"),
+							 errhint("Use quoted CSV field to represent newline.")));
+					
+			}
 			eol_type = EOL_NL;
 			break;
 		}
-		if (c == '\\')
+
+		if ((line_buf.len == 0 || !csv_mode) && c == '\\')
 		{
-			c = CopyGetChar();
-			if (c == EOF)
+			int c2;
+			
+			if (csv_mode)
+				c2 = CopyPeekChar();
+			else
+				c2 = c = CopyGetChar();
+
+			if (c2 == EOF)
 			{
 				result = true;
+				if (csv_mode)
+					CopyDonePeek(c2, true);
 				break;
 			}
-			if (c == '.')
+			if (c2 == '.')
 			{
+				if (csv_mode)
+					CopyDonePeek(c2, true); /* allow keep calling GetChar() */
+
 				if (eol_type == EOL_CRNL)
 				{
 					c = CopyGetChar();
@@ -2140,8 +2227,12 @@ CopyReadLine(void)
 				result = true;	/* report EOF */
 				break;
 			}
-			/* not EOF mark, so emit \ and following char literally */
-			appendStringInfoCharMacro(&line_buf, '\\');
+			
+			if (csv_mode)
+				CopyDonePeek(c2, false); /* not a dot, so put it back */ 
+			else
+				/* not EOF mark, so emit \ and following char literally */
+				appendStringInfoCharMacro(&line_buf, '\\');
 		}
 
 		appendStringInfoCharMacro(&line_buf, c);
@@ -2369,34 +2460,6 @@ CopyReadAttributeCSV(const char *delim, const char *null_print, char *quote,
 
 	for (;;)
 	{
-		/* handle multiline quoted fields */
-		if (in_quote && line_buf.cursor >= line_buf.len)
-		{
-			bool		done;
-
-			switch (eol_type)
-			{
-				case EOL_NL:
-					appendStringInfoString(&attribute_buf, "\n");
-					break;
-				case EOL_CR:
-					appendStringInfoString(&attribute_buf, "\r");
-					break;
-				case EOL_CRNL:
-					appendStringInfoString(&attribute_buf, "\r\n");
-					break;
-				case EOL_UNKNOWN:
-					/* shouldn't happen - just keep going */
-					break;
-			}
-
-			copy_lineno++;
-			done = CopyReadLine();
-			if (done && line_buf.len == 0)
-				break;
-			start_cursor = line_buf.cursor;
-		}
-
 		end_cursor = line_buf.cursor;
 		if (line_buf.cursor >= line_buf.len)
 			break;
@@ -2629,25 +2692,6 @@ CopyAttributeOutCSV(char *server_string, char *delim, char *quote,
 		 !use_quote && (c = *test_string) != '\0';
 		 test_string += mblen)
 	{
-		/*
-		 * We don't know here what the surrounding line end characters
-		 * might be. It might not even be under postgres' control. So
-		 * we simple warn on ANY embedded line ending character.
-		 *
-		 * This warning will disappear when we make line parsing field-aware,
-		 * so that we can reliably read in embedded line ending characters
-		 * regardless of the file's line-end context.
-		 *
-		 */
-
-		if (!embedded_line_warning  && (c == '\n' || c == '\r') )
-		{
-			embedded_line_warning = true;
-			elog(WARNING,
-				 "CSV fields with embedded linefeed or carriage return "
-				 "characters might not be able to be reimported");
-		}
-
 		if (c == delimc || c == quotec || c == '\n' || c == '\r')
 			use_quote = true;
 		if (!same_encoding)
