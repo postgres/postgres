@@ -1,179 +1,173 @@
-<REFENTRY ID="SQL-DROPFUNCTION">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-DROPFUNCTION">
+ <refmeta>
+  <refentrytitle>
    DROP FUNCTION
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    DROP FUNCTION
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Removes a user-defined C function
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-04-15</date>
+  </refsynopsisdivinfo>
+  <synopsis>
 DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">type</replaceable> [, ...] ] )
-  </SYNOPSIS>
-  
-  <REFSECT2 ID="R2-SQL-DROPFUNCTION-1">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Inputs
-   </TITLE>
-   <PARA>
-   </PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter"> name</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The name of an existing function.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">type</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The type of function parameters.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-DROPFUNCTION-2">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Outputs
-   </TITLE>
-   <PARA>
+  </synopsis>
 
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>DROP</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   Message returned if the command completes successfully.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>WARN RemoveFunction: Function "<replaceable class="parameter">name</replaceable>" ("<replaceable class="parameter">types</replaceable>") does not exist</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   This message is given if the function specified does not
-exist in the current database.
+  <refsect2 id="R2-SQL-DROPFUNCTION-1">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    Inputs
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter"> name</replaceable></term>
+      <listitem>
+       <para>
+	The name of an existing function.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+     <varlistentry>
+      <term><replaceable class="parameter">type</replaceable></term>
+      <listitem>
+       <para>
+	The type of function parameters.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
- 
- <REFSECT1 ID="R1-SQL-DROPFUNCTION-1">
-  <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-DROPFUNCTION-2">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+DROP
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if the command completes successfully.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><computeroutput>
+WARN RemoveFunction: Function "<replaceable class="parameter">name</replaceable>" ("<replaceable class="parameter">types</replaceable>") does not exist
+       </computeroutput></term>
+      <listitem>
+       <para>
+	This message is given if the function specified does not
+	exist in the current database.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-DROPFUNCTION-1">
+  <refsect1info>
+   <date>1998-04-15</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    DROP FUNCTION will remove references to an existing C
    function. To execute this command the user must be the
    owner of the function. The input argument types to the
    function must be specified, as only the function with the
    given name and argument types will be removed.
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-DROPFUNCTION-3">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Notes
-   </TITLE>
-   <PARA>
-    Refer to <citerefentry>
-<refentrytitle>
-CREATE FUNCTION
-</refentrytitle>
-    </citerefentry>
- to create aggregate functions.
-   </PARA>
-  </REFSECT2>
- </refsect1>
-  
- <REFSECT1 ID="R1-SQL-DROPFUNCTION-2">
-  <TITLE>
-   Usage
-  </TITLE>
-  <PARA>
-   This command removes the square root function:
-  </PARA>
-  <ProgramListing>
-DROP FUNCTION sqrt(int4);
-  </ProgramListing>
- </REFSECT1>
+  </para>
 
- <REFSECT1 ID="R1-SQL-DROPFUNCTION-3">
-  <TITLE>
-   Bugs
-  </TITLE>
-  <PARA>
-   No checks are made to ensure that types, operators or access
-   methods that rely on the function have been removed first.
-  </PARA>
- </REFSECT1>
- 
- <REFSECT1 ID="R1-SQL-DROPFUNCTION-4">
-  <TITLE>
-   Compatibility
-  </TITLE>
-  <PARA>
-DROP FUNCTION is a <productname>Postgres</productname> language extension.
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-DROPFUNCTION-4">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    SQL/PSM
-   </TITLE>
-   <PARA>
-SQL/PSM is a proposed standard to enable function extensibility.
-The SQL/PSM DROP FUNCTION statement has the following syntax:
-    <programlisting>
-DROP [ SPECIFIC ] FUNCTION <replaceable class="parameter">name</replaceable> { RESTRICT | CASCADE }</programlisting>
-   </PARA>
+  <refsect2 id="R2-SQL-DROPFUNCTION-3">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    Notes
+   </title>
+   <para>
+    Refer to <command>CREATE FUNCTION</command>
+    to create aggregate functions.
+   </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+
+ <refsect1 id="R1-SQL-DROPFUNCTION-2">
+  <title>
+   Usage
+  </title>
+  <para>
+   This command removes the square root function:
+
+   <programlisting>
+DROP FUNCTION sqrt(int4);
+   </programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-DROPFUNCTION-3">
+  <title>
+   Bugs
+  </title>
+  <para>
+   No checks are made to ensure that types, operators or access
+   methods that rely on the function have been removed first.
+  </para>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-DROPFUNCTION-4">
+  <title>
+   Compatibility
+  </title>
+  <para>
+   DROP FUNCTION is a <productname>Postgres</productname> language extension.
+  </para>
+  
+  <refsect2 id="R2-SQL-DROPFUNCTION-4">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    SQL/PSM
+   </title>
+   <para>
+    SQL/PSM is a proposed standard to enable function extensibility.
+    The SQL/PSM DROP FUNCTION statement has the following syntax:
+    <programlisting>
+DROP [ SPECIFIC ] FUNCTION <replaceable class="parameter">name</replaceable> { RESTRICT | CASCADE }
+    </programlisting>
+   </para>
+  </refsect2>
+ </refsect1>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

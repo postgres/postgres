@@ -1,153 +1,152 @@
-<REFENTRY ID="SQL-CLOSE">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-CLOSE">
+ <refmeta>
+  <refentrytitle>
    CLOSE
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    CLOSE
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Close a cursor
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-08</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
-CLOSE <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
-  </SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-08</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+CLOSE <replaceable class="PARAMETER">cursor</replaceable>
+  </synopsis>
   
-  <REFSECT2 ID="R2-SQL-CLOSE-1">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CLOSE-1">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	   <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The name of an open cursor to close.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-   </para>
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-CLOSE-2">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Outputs
-   </TITLE>
-   <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-<ReturnValue>CLOSE</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   Message returned if the cursor is successfully closed.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-<ReturnValue>NOTICE PerformPortalClose: portal "<REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>" not found</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   This warning is given if
-	   <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE> is not
-	   declared or has already been closed.
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">cursor</replaceable></term>
+      <listitem>
+       <para>
+	The name of an open cursor to close.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
- 
- <REFSECT1 ID="R1-SQL-CLOSE-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-08</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+  </refsect2>
+  
+  <refsect2 id="R2-SQL-CLOSE-2">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+CLOSE
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if the cursor is successfully closed.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><computeroutput>
+NOTICE PerformPortalClose: portal "<replaceable class="PARAMETER">cursor</replaceable>" not found
+       </computeroutput></term>
+      <listitem>
+       <para>
+	This warning is given if
+	<replaceable class="PARAMETER">cursor</replaceable> is not
+	declared or has already been closed.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-CLOSE-1">
+  <refsect1info>
+   <date>1998-09-08</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    <command>CLOSE</command> frees the resources associated with an open cursor.
    After the cursor is closed, no subsequent operations
    are allowed on it. A cursor should be closed when it is
    no longer needed.
-  </PARA>
-  <PARA>
+  </para>
+  <para>
    An implicit close is executed for every open cursor when a
    transaction is terminated by <command>COMMIT</command>
  or <command>ROLLBACK</command>.
-  </PARA>
+  </para>
   
-  <REFSECT2 ID="R2-SQL-CLOSE-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CLOSE-3">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
-   <PARA>
-<productname>Postgres</productname> does not have
- an explicit <command>OPEN</command> cursor statement;
+   </title>
+   <para>
+    <productname>Postgres</productname> does not have
+    an explicit <command>OPEN</command> cursor statement;
     a cursor is considered open when it is declared.
     Use the <command>DECLARE</command> statement to declare a cursor.
-   </PARA>
-  </REFSECT2>
- </refsect1>
-
- <REFSECT1 ID="R1-SQL-CLOSE-2">
-  <TITLE>
-   Usage
-  </TITLE>
-  <PARA>
-   Close the cursor liahona:
-  </PARA>
-  <ProgramListing>
-CLOSE liahona;
-  </ProgramListing>
- </REFSECT1>
- 
- <REFSECT1 ID="R1-SQL-CLOSE-3">
-  <TITLE>
-   Compatibility
-  </TITLE>
-  <PARA>
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-CLOSE-4">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    SQL92
-   </TITLE>
-   <PARA>
-    <command>CLOSE</command> is fully compatible with SQL92.
-   </PARA>
+   </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
 
+ <refsect1 id="R1-SQL-CLOSE-2">
+  <title>
+   Usage
+  </title>
+  <para>
+   Close the cursor liahona:
+  </para>
+  <programlisting>
+CLOSE liahona;
+  </programlisting>
+ </refsect1>
+ 
+ <refsect1 id="R1-SQL-CLOSE-3">
+  <title>
+   Compatibility
+  </title>
+  <para>
+  </para>
+  
+  <refsect2 id="R2-SQL-CLOSE-4">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
+    SQL92
+   </title>
+   <para>
+    <command>CLOSE</command> is fully compatible with SQL92.
+   </para>
+  </refsect2>
+ </refsect1>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:

@@ -32,41 +32,34 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
     Inputs
    </title>
    <para>
-       <variablelist>
-	<varlistentry>
-	 <term>
-	  <replaceable class="parameter">name</replaceable>
-	 </term>
-	 <listitem>
-	  <para>
-           The name of a function to create.
-	  </para>
-	 </listitem>
-	</varlistentry>
-	<varlistentry>
-	 <term>
-	  <replaceable class="parameter">ftype</replaceable>
-	 </term>
-	 <listitem>
-	  <para>
-           The data type of function arguments.
-	  </para>
-	 </listitem>
-	</varlistentry>
-	<varlistentry>
-	 <term>
-	  <replaceable class="parameter">rtype</replaceable>
-	 </term>
-	 <listitem>
-	  <para>
-           The return data type.
-	  </para>
-	 </listitem>
-	</varlistentry>
-	<varlistentry>
-	 <term>
-	  <replaceable class="parameter">definition</replaceable>
-      </term>
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">name</replaceable></term>
+      <listitem>
+       <para>
+	The name of a function to create.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">ftype</replaceable></term>
+      <listitem>
+       <para>
+	The data type of function arguments.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">rtype</replaceable></term>
+      <listitem>
+       <para>
+	The return data type.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">definition</replaceable></term>
       <listitem>
        <para>
 	A string defining the function; the meaning depends on the language.
@@ -76,9 +69,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term>
-       <replaceable class="parameter">langname</replaceable>
-      </term>
+      <term><replaceable class="parameter">langname</replaceable></term>
       <listitem>
        <para>
 	may be '<literal>C</literal>', '<literal>sql</literal>',
@@ -93,7 +84,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
     </variablelist>
    </para>
   </refsect2>
-  
+
   <refsect2 id="R2-SQL-CREATEFUNCTION-2">
    <refsect2info>
     <date>1998-09-09</date>
@@ -102,12 +93,12 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
     Outputs
    </title>
    <para>
-    
+
     <variablelist>
      <varlistentry>
-      <term>
-       <returnvalue>CREATE</returnvalue>
-      </term>
+      <term><computeroutput>
+CREATE
+       </computeroutput></term>
       <listitem>
        <para>
 	This is returned if the command completes successfully.
@@ -118,7 +109,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
    </para>
   </refsect2>
  </refsynopsisdiv>
- 
+
  <refsect1 id="R1-SQL-CREATEFUNCTION-1">
   <refsect1info>
    <date>1998-09-09</date>
@@ -188,20 +179,21 @@ in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
   </title>
   <para>
    To create a simple SQL function:
-  </para>
+
   <programlisting>
-   CREATE FUNCTION one() RETURNS int4
-   AS 'SELECT 1 AS RESULT'
-   LANGUAGE 'sql';
-   
-   SELECT one() AS answer;
-   
+CREATE FUNCTION one() RETURNS int4
+    AS 'SELECT 1 AS RESULT'
+    LANGUAGE 'sql';
+SELECT one() AS answer;
+
    <computeroutput>
     answer 
     ------
     1
    </computeroutput>
   </programlisting>
+  </para>
+
   <para>
    To create a C function, calling a routine from a user-created
    shared library.  This particular routine calculates a check
@@ -210,16 +202,16 @@ in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
   </para>
   <programlisting>
    <userinput>
-    CREATE FUNCTION ean_checkdigit(bpchar, bpchar) RETURNS bool
-        AS '/usr1/proj/bray/sql/funcs.so' LANGUAGE 'c';
+CREATE FUNCTION ean_checkdigit(bpchar, bpchar) RETURNS bool
+    AS '/usr1/proj/bray/sql/funcs.so' LANGUAGE 'c';
     
-    CREATE TABLE product (
+CREATE TABLE product (
     id        char(8) PRIMARY KEY,
     eanprefix char(8) CHECK (eanprefix ~ '[0-9]{2}-[0-9]{5}')
                       REFERENCES brandname(ean_prefix),
     eancode   char(6) CHECK (eancode ~ '[0-9]{6}'),
     CONSTRAINT ean    CHECK (ean_checkdigit(eanprefix, eancode))
-    );
+);
    </userinput>
   </programlisting>
  </refsect1>
@@ -232,16 +224,16 @@ in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
    A C function cannot return a set of values.
   </para>
  </refsect1>
- 
+
  <refsect1 id="R1-SQL-CREATEFUNCTION-4">
   <title>
    Compatibility
   </title>
-   <para>
-    <command>CREATE FUNCTION</command> is
- a <productname>Postgres</productname> language extension.
+  <para>
+   <command>CREATE FUNCTION</command> is
+   a <productname>Postgres</productname> language extension.
    </para>
-  
+
   <refsect2 id="R2-SQL-CREATEFUNCTION-4">
    <refsect2info>
     <date>1998-09-09</date>
@@ -251,27 +243,26 @@ in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
    </title>
    <para>
 
-<note>
+    <note>
      <para>
       PSM stands for Persistent Stored Modules. It is a procedural
       language and it was originally hoped that PSM would be ratified
       as an official standard by late 1996. As of mid-1998, this
-has not yet happened, but it is hoped that PSM will
+      has not yet happened, but it is hoped that PSM will
       eventually become a standard.
      </para>
-</note>
+    </note>
 
-SQL/PSM <command>CREATE FUNCTION</command> has the following syntax:
-<synopsis>
+    SQL/PSM <command>CREATE FUNCTION</command> has the following syntax:
+    <synopsis>
 CREATE FUNCTION <replaceable class="parameter">name</replaceable>
-    ( [ [ IN | OUT | INOUT ] <replaceable class="parameter">eter</replaceable>eable> <replaceable
+    ( [ [ IN | OUT | INOUT ] <replaceable class="parameter">eter</replaceable>eable>eable> <replaceable
       class="parameter">type</replaceable> [, ...] ] )
      RETURNS <replaceable class="parameter">rtype</replaceable>
      LANGUAGE '<replaceable class="parameter">langname</replaceable>'
      ESPECIFIC <replaceable class="parameter">routine</replaceable>
      <replaceable class="parameter">SQL-statement</replaceable>
-</synopsis>
-
+    </synopsis>
    </para>
   </refsect2>
  </refsect1>

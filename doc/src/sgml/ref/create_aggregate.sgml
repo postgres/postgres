@@ -1,193 +1,175 @@
-<REFENTRY ID="SQL-CREATEAGGREGATE">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-CREATEAGGREGATE">
+ <refmeta>
+  <refentrytitle>
    CREATE AGGREGATE
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
 
- <REFNAMEDIV>
-  <REFNAME>
+ <refnamediv>
+  <refname>
    CREATE AGGREGATE
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Defines a new aggregate function
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-09</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
-CREATE AGGREGATE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> [ AS ]
-    ( BASETYPE    = <REPLACEABLE CLASS="PARAMETER">data_type</REPLACEABLE>
-    [ , SFUNC1    = <REPLACEABLE CLASS="PARAMETER">sfunc1</REPLACEABLE>
-      , STYPE1    = <REPLACEABLE CLASS="PARAMETER">sfunc1_return_type</REPLACEABLE> ]
-    [ , SFUNC2    = <REPLACEABLE CLASS="PARAMETER">sfunc2</REPLACEABLE>
-      , STYPE2    = <REPLACEABLE CLASS="PARAMETER">sfunc2_return_type</REPLACEABLE> ]
-    [ , FINALFUNC = <REPLACEABLE CLASS="PARAMETER">ffunc</REPLACEABLE> ]
-    [ , INITCOND1 = <REPLACEABLE CLASS="PARAMETER">initial_condition1</REPLACEABLE> ]
-    [ , INITCOND2 = <REPLACEABLE CLASS="PARAMETER">initial_condition2</REPLACEABLE> ]
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-09</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> [ AS ]
+    ( BASETYPE    = <replaceable class="PARAMETER">data_type</replaceable>
+    [ , SFUNC1    = <replaceable class="PARAMETER">sfunc1</replaceable>
+      , STYPE1    = <replaceable class="PARAMETER">sfunc1_return_type</replaceable> ]
+    [ , SFUNC2    = <replaceable class="PARAMETER">sfunc2</replaceable>
+      , STYPE2    = <replaceable class="PARAMETER">sfunc2_return_type</replaceable> ]
+    [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
+    [ , INITCOND1 = <replaceable class="PARAMETER">initial_condition1</replaceable> ]
+    [ , INITCOND2 = <replaceable class="PARAMETER">initial_condition2</replaceable> ]
     )
-  </SYNOPSIS>
+  </synopsis>
 
-  <REFSECT2 ID="R2-SQL-CREATEAGGREGATE-1">
-   <REFSECT2INFO>
-    <DATE>1998-09-09</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CREATEAGGREGATE-1">
+   <refsect2info>
+    <date>1998-09-09</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
-      <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
-     </TERM>
-     <LISTITEM>
-      <para>
-       The name of an aggregate function to create.
-      </para>
-     </LISTITEM>
-    </varlistentry>
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">name</replaceable></term>
+      <listitem>
+       <para>
+	The name of an aggregate function to create.
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>
-      <REPLACEABLE CLASS="PARAMETER">data_type</REPLACEABLE>
-     </term>
-     <listitem>
-      <para>
-The fundamental data type on which this aggregate function operates.
-      </para>
-     </listitem>
-    </varlistentry>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">data_type</replaceable></term>
+      <listitem>
+       <para>
+	The fundamental data type on which this aggregate function operates.
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>
-      <REPLACEABLE CLASS="PARAMETER">sfunc1</REPLACEABLE>
-     </term>
-     <listitem>
-      <para>
-The state transition function
- to be called for every non-NULL field from the source column.
- It takes a variable of
-type <REPLACEABLE CLASS="PARAMETER">sfunc1_return_type</REPLACEABLE> as
-the first argument and that field as the
-second argument.
-      </para>
-     </listitem>
-    </varlistentry>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">sfunc1</replaceable></term>
+      <listitem>
+       <para>
+	The state transition function
+	to be called for every non-NULL field from the source column.
+	It takes a variable of
+	type <replaceable class="PARAMETER">sfunc1_return_type</replaceable> as
+	the first argument and that field as the
+	second argument.
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>
-      <REPLACEABLE CLASS="PARAMETER">sfunc1_return_type</REPLACEABLE>
-     </term>
-     <listitem>
-      <para>
-The return type of the first transition function.
-      </para>
-     </listitem>
-    </varlistentry>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">sfunc1_return_type</replaceable></term>
+      <listitem>
+       <para>
+	The return type of the first transition function.
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>
-      <REPLACEABLE CLASS="PARAMETER">sfunc2</REPLACEABLE>
-     </term>
-     <listitem>
-      <para>
-The state transition function
- to be called for every non-NULL field from the source column.
-It takes a variable
-of type <REPLACEABLE CLASS="PARAMETER">sfunc2_return_type</REPLACEABLE>
-as the only argument and returns a variable of the same type.
-      </para>
-     </listitem>
-    </varlistentry>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">sfunc2</replaceable></term>
+      <listitem>
+       <para>
+	The state transition function
+	to be called for every non-NULL field from the source column.
+	It takes a variable
+	of type <replaceable class="PARAMETER">sfunc2_return_type</replaceable>
+	as the only argument and returns a variable of the same type.
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>
-      <REPLACEABLE CLASS="PARAMETER">sfunc2_return_type</REPLACEABLE>
-     </term>
-     <listitem>
-      <para>
-The return type of the second transition function.
-      </para>
-     </listitem>
-    </varlistentry>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">sfunc2_return_type</replaceable></term>
+      <listitem>
+       <para>
+	The return type of the second transition function.
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>
-      <REPLACEABLE CLASS="PARAMETER">ffunc</REPLACEABLE>
-     </term>
-     <listitem>
-      <para>
-The final function
- called after traversing all input fields. This function must
-take two arguments of types
- <REPLACEABLE CLASS="PARAMETER">sfunc1_return_type</REPLACEABLE>
-and
-<REPLACEABLE CLASS="PARAMETER">sfunc2_return_type</REPLACEABLE>.
-      </para>
-     </listitem>
-    </varlistentry>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">ffunc</replaceable></term>
+      <listitem>
+       <para>
+	The final function
+	called after traversing all input fields. This function must
+	take two arguments of types
+	<replaceable class="PARAMETER">sfunc1_return_type</replaceable>
+	and
+	<replaceable class="PARAMETER">sfunc2_return_type</replaceable>.
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>
-      <REPLACEABLE CLASS="PARAMETER">initial_condition1</REPLACEABLE>
-     </term>
-     <listitem>
-      <para>
-The initial value for the first transition function argument.
-      </para>
-     </listitem>
-    </varlistentry>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">initial_condition1</replaceable></term>
+      <listitem>
+       <para>
+	The initial value for the first transition function argument.
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>
-      <REPLACEABLE CLASS="PARAMETER">initial_condition2</REPLACEABLE>
-     </term>
-     <listitem>
-      <para>
-The initial value for the second transition function argument.
-      </para>
-     </listitem>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">initial_condition2</replaceable></term>
+      <listitem>
+       <para>
+	The initial value for the second transition function argument.
+       </para>
+      </listitem>
      </varlistentry>
     </variablelist>
    </para>
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-CREATEAGGREGATE-2">
-   <REFSECT2INFO>
-    <DATE>1998-09-09</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-CREATEAGGREGATE-2">
+   <refsect2info>
+    <date>1998-09-09</date>
+   </refsect2info>
+   <title>
     Outputs
-   </TITLE>
-   <PARA>
-    
-    <VARIABLELIST>
-     <VARLISTENTRY>
-      <TERM>
-       <ReturnValue>CREATE</ReturnValue>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+CREATE
+       </computeroutput></term>
+      <listitem>
+       <para>
 	Message returned if the command completes successfully.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
- 
- <REFSECT1 ID="R1-SQL-CREATEAGGREGATE-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-09</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-CREATEAGGREGATE-1">
+  <refsect1info>
+   <date>1998-09-09</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
+  </title>
   <para>
    <command>CREATE AGGREGATE</command> 
    allows a user or programmer to extend <productname>Postgres</productname>
@@ -198,25 +180,24 @@ The initial value for the second transition function argument.
    already provided then <command>CREATE AGGREGATE</command>
    can be used to provide the desired features.
   </para>
-  <PARA>
+  <para>
    An  aggregate  function can require up to three functions, two
    state transition functions, 
-   <REPLACEABLE CLASS="PARAMETER">sfunc1</REPLACEABLE>
-   and <REPLACEABLE CLASS="PARAMETER">sfunc2</REPLACEABLE>:
+   <replaceable class="PARAMETER">sfunc1</replaceable>
+   and <replaceable class="PARAMETER">sfunc2</replaceable>:
    <programlisting>
-    <REPLACEABLE CLASS="PARAMETER">sfunc1</REPLACEABLE>( internal-state1, next-data_item ) ---> next-internal-state1
-    <REPLACEABLE CLASS="PARAMETER">sfunc2</REPLACEABLE>( internal-state2 ) ---> next-internal-state2
+<replaceable class="PARAMETER">sfunc1</replaceable>( internal-state1, next-data_item ) ---> next-internal-state1 <replaceable class="PARAMETER">sfunc2</replaceable>( internal-state2 ) ---> next-internal-state2
    </programlisting>
    and a final calculation function,
-   <REPLACEABLE CLASS="PARAMETER">ffunc</REPLACEABLE>:
+   <replaceable class="PARAMETER">ffunc</replaceable>:
    <programlisting>
-    <REPLACEABLE CLASS="PARAMETER">ffunc</REPLACEABLE>(internal-state1, internal-state2) ---> aggregate-value
+<replaceable class="PARAMETER">ffunc</replaceable>(internal-state1, internal-state2) ---> aggregate-value
    </programlisting>
   </para>
   <para>
    <productname>Postgres</productname> creates up to two temporary variables
-   (referred to here as <REPLACEABLE CLASS="PARAMETER">temp1</REPLACEABLE>
-   and <REPLACEABLE CLASS="PARAMETER">temp2</REPLACEABLE>)
+   (referred to here as <replaceable class="PARAMETER">temp1</replaceable>
+   and <replaceable class="PARAMETER">temp2</replaceable>)
    to hold intermediate results used as arguments to the transition functions.
   </para>
   <para>
@@ -225,42 +206,42 @@ The initial value for the second transition function argument.
     <listitem>
      <para>
       The  arguments  to 
-      <REPLACEABLE CLASS="PARAMETER">sfunc1</REPLACEABLE>
+      <replaceable class="PARAMETER">sfunc1</replaceable>
       must be
-      <REPLACEABLE CLASS="PARAMETER">temp1</REPLACEABLE>
+      <replaceable class="PARAMETER">temp1</replaceable>
       of type
-      <REPLACEABLE CLASS="PARAMETER">sfunc1_return_type</REPLACEABLE>
+      <replaceable class="PARAMETER">sfunc1_return_type</replaceable>
       and
-      <REPLACEABLE CLASS="PARAMETER">column_value</REPLACEABLE>
-      of type <REPLACEABLE CLASS="PARAMETER">data_type</REPLACEABLE>.
+      <replaceable class="PARAMETER">column_value</replaceable>
+      of type <replaceable class="PARAMETER">data_type</replaceable>.
       The return value must  be of type
-      <REPLACEABLE CLASS="PARAMETER">sfunc1_return_type</REPLACEABLE>
+      <replaceable class="PARAMETER">sfunc1_return_type</replaceable>
       and will be used as the first argument in the next call to 
-      <REPLACEABLE CLASS="PARAMETER">sfunc1</REPLACEABLE>.
+      <replaceable class="PARAMETER">sfunc1</replaceable>.
      </para>
     </listitem>
     
     <listitem>
      <para>
       The  argument and return value of 
-      <REPLACEABLE CLASS="PARAMETER">sfunc2</REPLACEABLE>
+      <replaceable class="PARAMETER">sfunc2</replaceable>
       must be
-      <REPLACEABLE CLASS="PARAMETER">temp2</REPLACEABLE>
+      <replaceable class="PARAMETER">temp2</replaceable>
       of type
-      <REPLACEABLE CLASS="PARAMETER">sfunc2_return_type</REPLACEABLE>.
+      <replaceable class="PARAMETER">sfunc2_return_type</replaceable>.
      </para>
     </listitem>
     <listitem>     
      <para>
       The  arguments  to  the  final-calculation-function
       must  be
-      <REPLACEABLE CLASS="PARAMETER">temp1</REPLACEABLE>
+      <replaceable class="PARAMETER">temp1</replaceable>
       and
-      <REPLACEABLE CLASS="PARAMETER">temp2</REPLACEABLE>
+      <replaceable class="PARAMETER">temp2</replaceable>
       and its return value must
       be a <productname>Postgres</productname>
       base type (not necessarily
-      <REPLACEABLE CLASS="PARAMETER">data_type</REPLACEABLE> 
+      <replaceable class="PARAMETER">data_type</replaceable> 
       which had been specified for BASETYPE).
      </para>
     </listitem>
@@ -269,10 +250,9 @@ The initial value for the second transition function argument.
       FINALFUNC should be specified
       if and only if both state-transition functions  are
       specified. 
-     </para
-    </listitem>
+     </para></listitem>
    </itemizedlist>
-  </PARA>  
+  </para>  
   
   <para>	
    An aggregate function may also  require  one or two initial conditions,
@@ -281,72 +261,72 @@ The initial value for the second transition function argument.
    in the database as fields of type <type>text</type>.
   </para>
   
-  <REFSECT2 ID="R2-SQL-CREATEAGGREGATE-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-09</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CREATEAGGREGATE-3">
+   <refsect2info>
+    <date>1998-09-09</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
+   </title>
    <para>
     Use <command>DROP AGGREGATE</command>
-  to drop aggregate functions.
+    to drop aggregate functions.
    </para>
 
-  <para>
-  It  is possible to specify aggregate functions
-   that have varying combinations of state  and  final  functions. 
-   For example, the <function>count</function> aggregate requires SFUNC2
-   (an incrementing function) but not  SFUNC1  or  FINALFUNC,
-   whereas  the  <function>sum</function> aggregate requires SFUNC1 (an addition
-   function) but not SFUNC2 or FINALFUNC  and  the  <function>avg</function>
-   aggregate  requires 
- both  of the above state functions as
-   well as a FINALFUNC (a division function) to  produce  its
-   answer.   In any case, at least one state function must be
-   defined, and any SFUNC2 must have  a  corresponding  INITCOND2.
+   <para>
+    It  is possible to specify aggregate functions
+    that have varying combinations of state  and  final  functions. 
+    For example, the <function>count</function> aggregate requires SFUNC2
+    (an incrementing function) but not  SFUNC1  or  FINALFUNC,
+    whereas  the  <function>sum</function> aggregate requires SFUNC1 (an addition
+    function) but not SFUNC2 or FINALFUNC  and  the  <function>avg</function>
+    aggregate  requires 
+    both  of the above state functions as
+    well as a FINALFUNC (a division function) to  produce  its
+    answer.   In any case, at least one state function must be
+    defined, and any SFUNC2 must have  a  corresponding  INITCOND2.
    </para>
-   
-  </REFSECT2>
+
+  </refsect2>
  </refsect1>
 
- <REFSECT1 ID="R1-SQL-CREATEAGGREGATE-2">
-  <TITLE>
+ <refsect1 id="R1-SQL-CREATEAGGREGATE-2">
+  <title>
    Usage
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    Refer to the chapter on aggregate functions
    in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
    on aggregate functions for
    complete examples of usage.
   </para>   
- </REFSECT1>
- 
- <REFSECT1 ID="R1-SQL-CREATEAGGREGATE-3">
-  <TITLE>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-CREATEAGGREGATE-3">
+  <title>
    Compatibility
-  </TITLE>
-  
-  <REFSECT2 ID="R2-SQL-CREATEAGGREGATE-4">
-   <REFSECT2INFO>
-    <DATE>1998-09-09</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  </title>
+
+  <refsect2 id="R2-SQL-CREATEAGGREGATE-4">
+   <refsect2info>
+    <date>1998-09-09</date>
+   </refsect2info>
+   <title>
     SQL92
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     <command>CREATE AGGREGATE</command> 
     is a <productname>Postgres</productname> language extension.
     There is no <command>CREATE AGGREGATE</command> in SQL92.
-   </PARA>
+   </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

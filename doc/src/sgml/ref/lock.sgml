@@ -34,9 +34,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN SHARE ROW E
 
     <variablelist>
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">table</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">table</replaceable></term>
       <listitem>
        <para>
 	The name of an existing table to lock.
@@ -45,17 +43,15 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN SHARE ROW E
      </varlistentry>
 
      <varlistentry>
-      <term>
-       ACCESS SHARE MODE
-      </term>
+      <term>ACCESS SHARE MODE</term>
       <listitem>
        <note>
-       <para>
-	This lock mode is acquired automatically over tables being queried.
-	<productname>Postgres</productname> releases automatically acquired
-	ACCESS SHARE locks after the statement is done.
-	   </para>
-	   </note>
+	<para>
+	 This lock mode is acquired automatically over tables being queried.
+	 <productname>Postgres</productname> releases automatically acquired
+	 ACCESS SHARE locks after the statement is done.
+	</para>
+       </note>
 
        <para>
 	This is the least restrictive lock mode which conflicts only with 
@@ -68,9 +64,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN SHARE ROW E
      </varlistentry>
 
      <varlistentry>
-      <term>
-       ROW SHARE MODE
-      </term>
+      <term>ROW SHARE MODE</term>
       <listitem>
        <note>
        <para>
@@ -85,12 +79,10 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN SHARE ROW E
      </varlistentry>
 
      <varlistentry>
-      <term>
-       ROW EXCLUSIVE MODE
-      </term>
+      <term>ROW EXCLUSIVE MODE</term>
       <listitem>
        <note>
-       <para>
+	<para>
 	 Automatically acquired by any <command>UPDATE</command>, 
 	 <command>DELETE</command>, <command>INSERT</command> statement.
 	</para>
@@ -105,9 +97,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN SHARE ROW E
      </varlistentry>
 
      <varlistentry>
-      <term>
-       SHARE MODE
-      </term>
+      <term>SHARE MODE</term>
       <listitem>
        <note>
        <para>
@@ -124,9 +114,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN SHARE ROW E
      </varlistentry>
 
      <varlistentry>
-      <term>
-       SHARE ROW EXCLUSIVE MODE
-      </term>
+      <term>SHARE ROW EXCLUSIVE MODE</term>
       <listitem>
 
        <para>
@@ -139,9 +127,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN SHARE ROW E
      </varlistentry>
 
      <varlistentry>
-      <term>
-       EXCLUSIVE MODE
-      </term>
+      <term>EXCLUSIVE MODE</term>
       <listitem>
 
        <para>
@@ -154,9 +140,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN SHARE ROW E
      </varlistentry>
 
      <varlistentry>
-      <term>
-       ACCESS EXCLUSIVE MODE
-      </term>
+      <term>ACCESS EXCLUSIVE MODE</term>
       <listitem>
        <note>
 	<para>
@@ -179,7 +163,6 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN SHARE ROW E
        </note>
       </listitem>
      </varlistentry>
-
     </variablelist>
    </para>
   </refsect2>
@@ -195,9 +178,20 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN SHARE ROW E
     
     <variablelist>
      <varlistentry>
-      <term>
-       ERROR <replaceable class="PARAMETER">table</replaceable>: Table does not exist.
-      </term>
+      <term><computeroutput>
+LOCK TABLE
+       </computeroutput></term>
+      <listitem>
+       <para>
+	The lock was successfully applied.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>
+ERROR <replaceable class="PARAMETER">table</replaceable>: Table does not exist.
+       </computeroutput></term>
       <listitem>
        <para>
 	Message returned if <replaceable class="PARAMETER">table</replaceable>
@@ -328,45 +322,42 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">table</replaceable> IN SHARE ROW E
   </title>
 
   <para>
+   Illustrate a SHARE lock on a primary key table when going to perform
+   inserts into a foreign key table:
+
   <programlisting>
-    --
-    -- SHARE lock primary key table when going to perform
-    -- insert into foreign key table.
-    --
-    BEGIN WORK;
-    LOCK TABLE films IN SHARE MODE;
-    SELECT id FROM films 
-      WHERE name = 'Star Wars: Episode I - The Phantom Menace';
-    --
-    -- Do ROLLBACK if record was not returned
-    --
-    INSERT INTO films_user_comments VALUES 
-      (_id_, 'GREAT! I was waiting for it for so long!');
-    COMMIT WORK;
-  </programlisting>
+BEGIN WORK;
+LOCK TABLE films IN SHARE MODE;
+SELECT id FROM films 
+    WHERE name = 'Star Wars: Episode I - The Phantom Menace';
+-- Do ROLLBACK if record was not returned
+INSERT INTO films_user_comments VALUES 
+    (_id_, 'GREAT! I was waiting for it for so long!');
+COMMIT WORK;
+   </programlisting>
   </para>
 
   <para>
-  <programlisting>
-    --
-    -- SHARE ROW EXCLUSIVE lock primary key table when going to perform
-    -- delete operation.
-    --
-    BEGIN WORK;
-    LOCK TABLE films IN SHARE ROW EXCLUSIVE MODE;
-    DELETE FROM films_user_comments WHERE id IN
-      (SELECT id FROM films WHERE rating < 5);
-    DELETE FROM films WHERE rating < 5;
-    COMMIT WORK;
-  </programlisting>
+   Take a SHARE ROW EXCLUSIVE lock on a primary key table when going to perform
+   a delete operation:
+
+   <programlisting>
+BEGIN WORK;
+LOCK TABLE films IN SHARE ROW EXCLUSIVE MODE;
+DELETE FROM films_user_comments WHERE id IN
+    (SELECT id FROM films WHERE rating < 5);
+DELETE FROM films WHERE rating < 5;
+COMMIT WORK;
+   </programlisting>
   </para>
-	
  </refsect1>
 
  <refsect1 id="R1-SQL-LOCK-3">
   <title>
    Compatibility
   </title>
+  <para>
+  </para>
 	  
   <refsect2 id="R2-SQL-LOCK-4">
    <refsect2info>
@@ -397,7 +388,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"../reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
 sgml-local-ecat-files:nil
 End:
 -->

@@ -1,128 +1,122 @@
-<REFENTRY ID="SQL-DELETE">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-DELETE">
+ <refmeta>
+  <refentrytitle>
    DELETE
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    DELETE
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Deletes rows from a table
-  </REFPURPOSE>
-  
+  </refpurpose>
+
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
-   DELETE FROM <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> [ WHERE <REPLACEABLE CLASS="PARAMETER">condition</REPLACEABLE> ]
-  </SYNOPSIS>
-  
-  <REFSECT2 ID="R2-SQL-DELETE-1">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-04-15</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+DELETE FROM <replaceable class="PARAMETER">table</replaceable> [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
+  </synopsis>
+
+  <refsect2 id="R2-SQL-DELETE-1">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
-   </PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">table</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          The name of an existing table.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">condition</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   This is an SQL selection query which returns the rows which
-	   are to be deleted.
-	  </PARA>
-	  <PARA>
-          Refer to the SELECT statement for further description
-          of the WHERE clause.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-DELETE-2">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Outputs
-   </TITLE>
-   <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue> DELETE <replaceable class="parameter">count</replaceable></ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   Message returned if items are successfully deleted. The
-	   <replaceable class="parameter">count</replaceable> is the number
-	   of rows deleted.
-	  </PARA>
-	  <PARA>
-	   If <replaceable class="parameter">count</replaceable> is 0,
-	   no rows were deleted.
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">table</replaceable></term>
+      <listitem>
+       <para>
+	The name of an existing table.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+     <varlistentry>
+      <term><replaceable class="parameter">condition</replaceable></term>
+      <listitem>
+       <para>
+	This is an SQL selection query which returns the rows which
+	are to be deleted.
+       </para>
+       <para>
+	Refer to the SELECT statement for further description
+	of the WHERE clause.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
- 
- <REFSECT1 ID="R1-SQL-DELETE-1">
-  <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-DELETE-2">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+DELETE <replaceable class="parameter">count</replaceable>
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if items are successfully deleted. The
+	<replaceable class="parameter">count</replaceable> is the number
+	of rows deleted.
+       </para>
+       <para>
+	If <replaceable class="parameter">count</replaceable> is 0,
+	no rows were deleted.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-DELETE-1">
+  <refsect1info>
+   <date>1998-04-15</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
-   DELETE removes rows which satisfy the WHERE <replaceable class="parameter">condition</replaceable>,
-   from the specified table.
-  </PARA>
-  <PARA>
-   If the <replaceable class="parameter">condition</replaceable> is absent,
+  </title>
+  <para>
+   <command>DELETE</command> removes rows which satisfy the WHERE
+   clause from the specified table.
+  </para>
+  <para>
+   If the <firstterm>condition</firstterm> (WHERE clause) is absent,
    the effect is to delete all rows in the table.
    The result is a valid, but empty table.
-  </PARA>
-  <PARA>
+  </para>
+  <para>
    You must have write access to the table in order to modify
    it, as well as read access to any table whose values are
    read in the <replaceable class="parameter">condition</replaceable>.
-  </PARA>
- </REFSECT1>
-  
- <REFSECT1 ID="R1-SQL-DELETE-2">
-  <TITLE>
-   Usage
-  </TITLE>
-  <PARA>
-   Remove all films but musicals:
-  </PARA>
-  <ProgramListing>
-DETETE FROM films WHERE kind &lt;&gt; 'Musical';
+  </para>
+ </refsect1>
 
+ <refsect1 id="R1-SQL-DELETE-2">
+  <title>
+   Usage
+  </title>
+  <para>
+   Remove all films but musicals:
+   <programlisting>
+DELETE FROM films WHERE kind &lt;&gt; 'Musical';
 SELECT * FROM films;
 
 code |title                    |did| date_prod|kind      |len
@@ -131,52 +125,56 @@ UA501|West Side Story          |105|1961-01-03|Musical   | 02:32
 TC901|The King and I           |109|1956-08-11|Musical   | 02:13
 WD101|Bed Knobs and Broomsticks|111|          |Musical   | 01:57
 (3 rows)
-  </ProgramListing>
+   </programlisting>
+  </para>
+
   <para>
    Clear the table <literal>films</literal>:
-  </para>
-  <programlisting>
+   <programlisting>
 DELETE FROM films;
-   
 SELECT * FROM films;
+
 code|title|did|date_prod|kind|len
 ----+-----+---+---------+----+---
 (0 rows)
-  </programlisting>      
- </REFSECT1>
- 
- <REFSECT1 ID="R1-SQL-DELETE-3">
-  <TITLE>
+   </programlisting>      
+  </para>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-DELETE-3">
+  <title>
    Compatibility
-  </TITLE>
-  <PARA>
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-DELETE-4">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  </title>
+  <para>
+  </para>
+
+  <refsect2 id="R2-SQL-DELETE-4">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
     SQL92
-   </TITLE>
-   <PARA>
-   <acronym>SQL92</acronym> allows a positioned DELETE statement:
-   </PARA>
-   
-   <synopsis>
-DELETE FROM <replaceable class="parameter">table</replaceable> WHERE CURRENT OF <replaceable class="parameter">cursor</replaceable>
-   </synopsis>
+   </title>
    <para>
-   where <replaceable class="parameter">cursor</replaceable> identifies an open cursor. Interactive cursors in <productname>Postgres</productname> are read-only.
+    <acronym>SQL92</acronym> allows a positioned DELETE statement:
+   
+    <synopsis>
+DELETE FROM <replaceable class="parameter">table</replaceable> WHERE
+    CURRENT OF <replaceable class="parameter">cursor</replaceable>
+    </synopsis>
+
+    where <replaceable class="parameter">cursor</replaceable>
+    identifies an open cursor.
+    Interactive cursors in <productname>Postgres</productname> are read-only.
    </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

@@ -1,157 +1,155 @@
-<REFENTRY ID="SQL-CREATEDATABASE">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-CREATEDATABASE">
+ <refmeta>
+  <refentrytitle>
    CREATE DATABASE
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    CREATE DATABASE
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Creates a new database
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
-CREATE DATABASE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> [ WITH LOCATION = '<replaceable class="parameter">dbpath</replaceable>' ]
-  </SYNOPSIS>
-  
-  <REFSECT2 ID="R2-SQL-CREATEDATABASE-1">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Inputs
-   </TITLE>
-   <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">name</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The name of a database to create.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">dbpath</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   An alternate location can be specified as either an
-	   environment variable known to the backend server
-	   (e.g. '<envar>PGDATA2</envar>') or as an absolute path name
-	   (e.g. '<filename>/usr/local/pgsql/data</filename>').
-	   In either case, the location must be pre-configured
-	   by <command>initlocation</command>.
-       </PARA>
-      </LISTITEM>
-     </VARLISTENTRY>
-    </VARIABLELIST>
-   </para>
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-CREATEDATABASE-2">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Outputs
-   </TITLE>
-   <PARA>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-04-15</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATION = '<replaceable class="parameter">dbpath</replaceable>' ]
+  </synopsis>
 
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>CREATEDB</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          Message returned if the command completes successfully.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>WARN:  createdb: database "<replaceable class="parameter">name</replaceable>" already exists.</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   This occurs if <replaceable class="parameter">database</replaceable> specified already exists.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>ERROR:  Unable to create database directory <replaceable class="parameter">directory</replaceable>
-       </ReturnValue>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+  <refsect2 id="R2-SQL-CREATEDATABASE-1">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    Inputs
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">name</replaceable></term>
+      <listitem>
+       <para>
+	The name of a database to create.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">dbpath</replaceable></term>
+      <listitem>
+       <para>
+	An alternate location can be specified as either an
+	environment variable known to the backend server
+	(e.g. '<envar>PGDATA2</envar>') or as an absolute path name
+	(e.g. '<filename>/usr/local/pgsql/data</filename>').
+	In either case, the location must be pre-configured
+	by <command>initlocation</command>.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-CREATEDATABASE-2">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+CREATEDB
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if the command completes successfully.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><computeroutput>
+WARN:  createdb: database "<replaceable class="parameter">name</replaceable>" already exists.
+       </computeroutput></term>
+      <listitem>
+       <para>
+	This occurs if <replaceable class="parameter">database</replaceable> specified already exists.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><computeroutput>
+ERROR:  Unable to create database directory <replaceable class="parameter">directory</replaceable>
+       </computeroutput></term>
+      <listitem>
+       <para>
 	There was a problem with creating the required directory; this operation will
 	need permissions for the <literal>postgres</literal> user on the specified location.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
- 
- <REFSECT1 ID="R1-SQL-CREATEDATABASE-1">
-  <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-CREATEDATABASE-1">
+  <refsect1info>
+   <date>1998-04-15</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    <command>CREATE DATABASE</command> creates a new Postgres database.
    The creator becomes the administrator of the new database.
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-CREATEDATABASE-3">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  </para>
+
+  <refsect2 id="R2-SQL-CREATEDATABASE-3">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     <command>CREATE DATABASE</command> is a <productname>Postgres</productname>
- language extension.
-   </PARA>
+    language extension.
+   </para>
    <para>
     Use <command>DROP DATABASE</command> to remove a database.
    </para>
-  </REFSECT2>
+  </refsect2>
  </refsect1>
- 
- <REFSECT1 ID="R1-SQL-CREATEDATABASE-2">
-  <TITLE>
+
+ <refsect1 id="R1-SQL-CREATEDATABASE-2">
+  <title>
    Usage
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    To create a new database:
-  </PARA>
-  <ProgramListing>
-   <prompt>olly=></prompt> <userinput>create database lusiadas;</userinput>
-  </ProgramListing>
-  <PARA>
+
+   <programlisting>
+<prompt>olly=></prompt> <userinput>create database lusiadas;</userinput>
+   </programlisting>
+  </para>
+
+  <para>
    To create a new database in an alternate area <filename>~/private_db</filename>:
-  </PARA>
-  <ProgramListing>
-   <prompt>$</prompt> <userinput>mkdir private_db</userinput>
-   <prompt>$</prompt> <userinput>initlocation ~/private_db</userinput>
-   <computeroutput>Creating Postgres database system directory /home/olly/private_db/base</computeroutput>
+
+   <programlisting>
+<prompt>$</prompt> <userinput>mkdir private_db</userinput>
+<prompt>$</prompt> <userinput>initlocation ~/private_db</userinput>
+<computeroutput>Creating Postgres database system directory /home/olly/private_db/base</computeroutput>
    
    <prompt>$</prompt> <userinput>psql olly</userinput>
    <computeroutput>Welcome to the POSTGRESQL interactive sql monitor:
@@ -164,21 +162,22 @@ CREATE DATABASE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> [ WITH LOCATIO
     
     <prompt>olly=></prompt></computeroutput> <userinput>create database elsewhere with location = '/home/olly/private_db';</userinput>
    <computeroutput>CREATEDB</computeroutput>
-  </ProgramListing>
- </REFSECT1>
- 
- <REFSECT1 ID="R1-SQL-CREATEDATABASE-3">
-  <TITLE>
+   </programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-CREATEDATABASE-3">
+  <title>
    Bugs
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    There are security and data integrity issues
- involved with using alternate database locations
+   involved with using alternate database locations
    specified with absolute path names, and by default
-only an environment variable known to the backend may be
-specified for an alternate location.
- See the Administrator's Guide for more information.
-  </PARA>
+   only an environment variable known to the backend may be
+   specified for an alternate location.
+   See the Administrator's Guide for more information.
+  </para>
  </refsect1>
 
 <!--
@@ -192,33 +191,32 @@ Hmm. This isn't an issue since the upgrade would do a dump/reload from the main 
 Not sure if the dump/reload would guarantee that the alternate data area gets refreshed though...
 -->
  
- <REFSECT1 ID="R1-SQL-CREATEDATABASE-4">
-  <TITLE>
+ <refsect1 id="R1-SQL-CREATEDATABASE-4">
+  <title>
    Compatibility
-  </TITLE>
-  
-  <REFSECT2 ID="R2-SQL-CREATEDATABASE-4">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  </title>
+
+  <refsect2 id="R2-SQL-CREATEDATABASE-4">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
     SQL92
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     There is no <command>CREATE DATABASE</command> statement in SQL92.
-   </PARA>
+   </para>
    <para>
     The equivalent command in standard SQL is <command>CREATE SCHEMA</command>.
    </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
-
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

@@ -31,9 +31,7 @@ RESET <replaceable class="PARAMETER">variable</replaceable>
    <para>		
     <variablelist>
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">variable</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">variable</replaceable></term>
       <listitem>
        <para>
 	Refer to the SET statement for more information on available
@@ -56,9 +54,9 @@ RESET <replaceable class="PARAMETER">variable</replaceable>
 
     <variablelist>
      <varlistentry>
-      <term>
-       RESET VARIABLE
-      </term>
+      <term><computeroutput>
+RESET VARIABLE
+       </computeroutput></term>
       <listitem>
        <para>
 	Message returned if 
@@ -110,12 +108,17 @@ RESET <replaceable class="PARAMETER">variable</replaceable>
    Usage
   </title>
   <para>
+   Set DateStyle to its default value:
+
    <programlisting>
--- reset DateStyle to its default;
 RESET DateStyle;
    </programlisting>
+  </para>
+
+  <para>
+   Set Geqo to its default value:
+
    <programlisting>   
--- reset Geqo to its default;
 RESET GEQO;
    </programlisting>
   </para>

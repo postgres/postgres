@@ -1,153 +1,145 @@
-<REFENTRY ID="SQL-ALTERTABLE">
-<REFMETA>
-<REFENTRYTITLE>
-ALTER TABLE
-</REFENTRYTITLE>
-<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
-</REFMETA>
-<REFNAMEDIV>
-<REFNAME>
-ALTER TABLE
-</REFNAME>
-<REFPURPOSE>
-Modifies table properties
-</REFPURPOSE>
-</refnamediv>
-<REFSYNOPSISDIV>
-<REFSYNOPSISDIVINFO>
-<DATE>1998-04-15</DATE>
-</REFSYNOPSISDIVINFO>
-<SYNOPSIS>
-ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
-    [ * ] ADD [ COLUMN ] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE>
-ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
-    [ * ] RENAME [ COLUMN ] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> TO <REPLACEABLE CLASS="PARAMETER">newcolumn</REPLACEABLE>
-ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
-    RENAME TO <REPLACEABLE CLASS="PARAMETER">newtable</REPLACEABLE>
-</SYNOPSIS>
+<refentry id="SQL-ALTERTABLE">
+ <refmeta>
+  <refentrytitle>
+   ALTER TABLE
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
+   ALTER TABLE
+  </refname>
+  <refpurpose>
+   Modifies table properties
+  </refpurpose>
+ </refnamediv>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-04-15</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
+    [ * ] ADD [ COLUMN ] <replaceable class="PARAMETER">ER">co</replaceable>BLE> <replaceable
+    class="PARAMETER">type</replaceable>
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
+    [ * ] RENAME [ COLUMN ] <replaceable class="PARAMETER">ER">co</replaceable>BLE> TO <replaceable
+    class="PARAMETER">newcolumn</replaceable>
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
+    RENAME TO <replaceable class="PARAMETER">newtable</replaceable>
+  </synopsis>
 
-<REFSECT2 ID="R2-SQL-ALTERTABLE-1">
-<REFSECT2INFO>
-<DATE>1998-04-15</DATE>
-</REFSECT2INFO>
-<TITLE>
-Inputs
-</TITLE>
-<PARA>
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER"> table </REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-          The name of an existing table to alter.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
+  <refsect2 id="R2-SQL-ALTERTABLE-1">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    Inputs
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> table </replaceable></term>
+      <listitem>
+       <para>
+	The name of an existing table to alter.
+       </para>
+      </listitem>
+     </varlistentry>
 
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER"> column </REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-          Name of a new or existing column.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> column </replaceable></term>
+      <listitem>
+       <para>
+	Name of a new or existing column.
+       </para>
+      </listitem>
+     </varlistentry>
 
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER"> type </REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-          Type of the new column.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> type </replaceable></term>
+      <listitem>
+       <para>
+	Type of the new column.
+       </para>
+      </listitem>
+     </varlistentry>
 
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER"> newcolumn </REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-          New name for an existing column.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> newcolumn </replaceable></term>
+      <listitem>
+       <para>
+	New name for an existing column.
+       </para>
+      </listitem>
+     </varlistentry>
 
-<VARLISTENTRY>
-<TERM>
-<REPLACEABLE CLASS="PARAMETER"> newtable </REPLACEABLE>
-</TERM>
-<LISTITEM>
-<PARA>
-          New name for an existing column.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
-</VARIABLELIST>
-</para>
-</REFSECT2>
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> newtable </replaceable></term>
+      <listitem>
+       <para>
+	New name for an existing column.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
 
-<REFSECT2 ID="R2-SQL-ALTERTABLE-2">
-<REFSECT2INFO>
-<DATE>1998-04-15</DATE>
-</REFSECT2INFO>
-<TITLE>
-Outputs
-</TITLE>
-<PARA>
+  <refsect2 id="R2-SQL-ALTERTABLE-2">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
 
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-<returnvalue>ALTER</returnvalue>
-</TERM>
-<LISTITEM>
-<PARA>
-          Message returned from column or table renaming.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+ALTER
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned from column or table renaming.
+       </para>
+      </listitem>
+     </varlistentry>
 
-<VARLISTENTRY>
-<TERM>
-<returnvalue>NEW</returnvalue>
-</TERM>
-<LISTITEM>
-<PARA>
-          Message returned from column addition.
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
+     <varlistentry>
+      <term><computeroutput>
+NEW
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned from column addition.
+       </para>
+      </listitem>
+     </varlistentry>
 
-<VARLISTENTRY>
-<TERM>
-<ReturnValue>ERROR</ReturnValue>
-</TERM>
-<LISTITEM>
-<PARA>
-          Message returned if table or column is not available.
-</para>
-</listitem>
-</VARLISTENTRY>
-</VARIABLELIST>
-</para>
-</REFSECT2>
-</REFSYNOPSISDIV>
+     <varlistentry>
+      <term><computeroutput>
+ERROR
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if table or column is not available.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
 
-<REFSECT1 ID="R1-SQL-ALTERTABLE-1">
-<REFSECT1INFO>
-<DATE>1998-04-15</DATE>
-</REFSECT1INFO>
-<TITLE>
-Description
-</TITLE>
-<PARA>
+ <refsect1 id="R1-SQL-ALTERTABLE-1">
+  <refsect1info>
+   <date>1998-04-15</date>
+  </refsect1info>
+  <title>
+   Description
+  </title>
+  <para>
    <command>ALTER TABLE</command> changes the definition of an existing table.
    The new columns and their types are specified in the same style
    and with the the same restrictions as in <command>CREATE TABLE</command>.
@@ -156,114 +148,117 @@ Description
    the affected table. Thus, the table or column will
    remain of the same type and size after this command is
    executed.
-</para>
-<PARA>
+  </para>
+
+  <para>
    You must own the table in order to change its schema.
-</PARA>
+  </para>
 
-<REFSECT2 ID="R2-SQL-ALTERTABLE-3">
-<REFSECT2INFO>
-<DATE>1998-04-15</DATE>
-</REFSECT2INFO>
-<TITLE>
-Notes
-</TITLE>
-<PARA>
-The keyword COLUMN is noise and can be omitted.
-</para>
-<PARA>
-<Quote>[*]</Quote> following a name of a table indicates that statement
-     should be run over that table and all tables below it in the
-     inheritance hierarchy.
+  <refsect2 id="R2-SQL-ALTERTABLE-3">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    Notes
+</title>
+   <para>
+    The keyword <literal>COLUMN</literal> is noise and can be omitted.
+   </para>
+
+   <para>
+    <quote>[*]</quote> following a name of a table indicates that statement
+    should be run over that table and all tables below it in the
+    inheritance hierarchy.
     The <citetitle>PostgreSQL User's Guide</citetitle> has further
-     information on inheritance.
-</para>
+    information on inheritance.
+   </para>
 
-<PARA>
-   Refer to CREATE TABLE for a further description
-     of valid arguments.
-</para>
-</REFSECT2>
-</REFSECT1>
+   <para>
+    Refer to <command>CREATE TABLE</command> for a further description
+    of valid arguments.
+   </para>
+  </refsect2>
+ </refsect1>
 
-<REFSECT1 ID="R1-SQL-ALTERTABLE-2">
-<TITLE>
-Usage
-</TITLE>
-<PARA>
+ <refsect1 id="R1-SQL-ALTERTABLE-2">
+  <title>
+   Usage
+  </title>
+  <para>
    To add a column of type VARCHAR to a table:
-<ProgramListing>
-    ALTER TABLE distributors ADD COLUMN address VARCHAR(30);
-</ProgramListing>
-</para>
+   <programlisting>
+ALTER TABLE distributors ADD COLUMN address VARCHAR(30);
+   </programlisting>
+  </para>
 
-<PARA>
+  <para>
    To rename an existing column:
-<ProgramListing>
-    ALTER TABLE distributors RENAME COLUMN address TO city;
-</ProgramListing>
-</para>
+   <programlisting>
+ALTER TABLE distributors RENAME COLUMN address TO city;
+   </programlisting>
+  </para>
 
-<PARA>
+  <para>
    To rename an existing table:
-<ProgramListing>
-    ALTER TABLE distributors RENAME TO suppliers;
-</ProgramListing>
-</para>
+   <programlisting>
+ALTER TABLE distributors RENAME TO suppliers;
+   </programlisting>
+  </para>
+ </refsect1>
 
-</REFSECT1>
+ <refsect1 id="R1-SQL-ALTERTABLE-3">
+  <title>
+   Compatibility
+  </title>
 
-<REFSECT1 ID="R1-SQL-ALTERTABLE-3">
-<TITLE>
-Compatibility
-</TITLE>
+  <refsect2 id="R2-SQL-ALTERTABLE-4">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    SQL92
+   </title>
+   <para>
+    <command>ALTER TABLE/RENAME</command>
+    is a <productname>Postgres</productname> language extension.
+   </para>
 
-<REFSECT2 ID="R2-SQL-ALTERTABLE-4">
-<REFSECT2INFO>
-<DATE>1998-04-15</DATE>
-</REFSECT2INFO>
-<TITLE>
-SQL92
-</TITLE>
-<PARA>
-<command>ALTER TABLE/RENAME</command>
- is a <productname>Postgres</productname> language extension.
-</para>
+   <para>
+    SQL92 specifies some additional capabilities for <command>ALTER TABLE</command>
+    statement which are not yet directly supported by
+    <productname>Postgres</productname>:
+   </para>
 
-<PARA>
-   SQL92 specifies some additional capabilities for <command>ALTER TABLE</command>
-   statement which are not yet directly supported by
- <ProductName>Postgres</ProductName>:
-</para>
+   <variablelist>
+    <varlistentry>
+     <term>
+      <synopsis>
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable> ALTER [
+       COLUMN ] <replaceable class="PARAMETER">column</replaceable>
+    SET DEFAULT <replaceable class="PARAMETER">default</replaceable>
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable> ALTER [
+       COLUMN ] <replaceable class="PARAMETER">column</replaceable>
+    ADD [ CONSTRAINT <replaceable class="PARAMETER">>constrain</replaceable>> ] <replaceable
+	class="PARAMETER">table-constraint</replaceable>
+      </synopsis>
+     </term>
+     <listitem>
+      <para>
+       Puts the default value or constraint specified into the
+       definition of column in the table.
+       See <command>CREATE TABLE</command> for the
+       syntax of the default and table-constraint clauses.
+       If a default clause already exists, it will be replaced by
+       the new definition. If any constraints on this column already
+       exist, they will be retained using a boolean AND with the new
+       constraint.
+      </para>
 
-<VARIABLELIST>
-<VARLISTENTRY>
-<TERM>
-<Synopsis>
-ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> ALTER [ COLUMN ] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE>
-    SET DEFAULT <REPLACEABLE CLASS="PARAMETER">default</REPLACEABLE>
+      <para>
+       Currently, to set new default constraints on an existing column
+       the table must be recreated and reloaded:
 
-ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> ALTER [ COLUMN ] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE>
-    ADD [ CONSTRAINT <REPLACEABLE CLASS="PARAMETER">constraint</REPLACEABLE> ] <REPLACEABLE CLASS="PARAMETER">table-constraint</REPLACEABLE>
-</Synopsis>
-</TERM>
-<LISTITEM>
-<PARA>
-          Puts the default value or constraint specified into the
-          definition of column in the table.
- See <command>CREATE TABLE</command> for the
-          syntax of the default and table-constraint clauses.
-          If a default clause already exists, it will be replaced by
-          the new definition. If any constraints on this column already
-          exist, they will be retained using a boolean AND with the new
-          constraint.
-</para>
-
-<PARA>
-Currently, to set new default constraints on an existing column
-          the table must be recreated and reloaded:
-
-<ProgramListing>
+       <programlisting>
 CREATE TABLE temp AS SELECT * FROM distributors;
 DROP TABLE distributors;
 CREATE TABLE distributors (
@@ -273,65 +268,65 @@ CREATE TABLE distributors (
 );
 INSERT INTO distributors SELECT * FROM temp;
 DROP TABLE temp;
-</ProgramListing>
-</PARA>
-</LISTITEM>
-</VARLISTENTRY>
+       </programlisting>
+      </para>
+     </listitem>
+    </varlistentry>
 
-<VARLISTENTRY>
-<TERM>
-<Synopsis>
-ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
-    DROP DEFAULT <REPLACEABLE CLASS="PARAMETER">default</REPLACEABLE>
-ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
-    DROP CONSTRAINT <REPLACEABLE CLASS="PARAMETER">constraint</REPLACEABLE> { RESTRICT | CASCADE }
-</Synopsis>
-</TERM>
-<LISTITEM>
-<PARA>
-          Removes the default value specified by default or the rule
-          specified by constraint from the definition of a table. 
-          If RESTRICT is specified only a constraint with no dependent
-          constraints can be destroyed.
-          If CASCADE is specified, Any constraints that are dependent on
-          this constraint are also dropped.
-</para>
+    <varlistentry>
+     <term>
+      <synopsis>
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
+    DROP DEFAULT <replaceable class="PARAMETER">default</replaceable>
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
+    DROP CONSTRAINT <replaceable class="PARAMETER">constraint</replaceable> { RESTRICT | CASCADE }
+      </synopsis>
+     </term>
+     <listitem>
+      <para>
+       Removes the default value specified by default or the rule
+       specified by constraint from the definition of a table. 
+       If RESTRICT is specified only a constraint with no dependent
+       constraints can be destroyed.
+       If CASCADE is specified, Any constraints that are dependent on
+       this constraint are also dropped.
+      </para>
 
-<PARA>
-Currently, to remove a default value or constraints on an
-          existing column the table must be recreated and reloaded:
+      <para>
+       Currently, to remove a default value or constraints on an
+       existing column the table must be recreated and reloaded:
 
-<ProgramListing>
+       <programlisting>
 CREATE TABLE temp AS SELECT * FROM distributors;
 DROP TABLE distributors;
 CREATE TABLE distributors AS SELECT * FROM temp;
 DROP TABLE temp;
-</ProgramListing>
-</para>
-</listitem>
-</varlistentry> 
-  
-<VARLISTENTRY>
-<TERM>
-<Synopsis>
-ALTER TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE>
-    DROP [ COLUMN ] <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> { RESTRICT | CASCADE }
-</Synopsis>
-</TERM>
-<LISTITEM>
-<PARA>
-          Removes a column from a table.
-          If RESTRICT is specified only a column with no dependent
-          objects can be destroyed.
-          If CASCADE is specified, all objects that are dependent on
-          this column are also dropped.
-</para>
+       </programlisting>
+      </para>
+     </listitem>
+    </varlistentry>
 
-<PARA>
-Currently, to remove an existing column the table must be
-          recreated and reloaded:
+    <varlistentry>
+     <term>
+      <synopsis>
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
+    DROP [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { RESTRICT | CASCADE }
+      </synopsis>
+     </term>
+     <listitem>
+      <para>
+       Removes a column from a table.
+       If RESTRICT is specified only a column with no dependent
+       objects can be destroyed.
+       If CASCADE is specified, all objects that are dependent on
+       this column are also dropped.
+      </para>
 
-<ProgramListing>
+      <para>
+       Currently, to remove an existing column the table must be
+       recreated and reloaded:
+
+       <programlisting>
 CREATE TABLE temp AS SELECT did, city FROM distributors;    
 DROP TABLE distributors;
 CREATE TABLE distributors (
@@ -340,11 +335,28 @@ CREATE TABLE distributors (
 );
 INSERT INTO distributors SELECT * FROM temp;
 DROP TABLE temp;
-</ProgramListing>
-</PARA>
-</listitem>
-</varlistentry>
-</VARIABLELIST>
-</refsect2>
-</refsect1>
-</REFENTRY>
+       </programlisting>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </refsect2>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

@@ -1,168 +1,164 @@
-<REFENTRY ID="SQL-DROPAGGREGATE">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-DROPAGGREGATE">
+ <refmeta>
+  <refentrytitle>
    DROP AGGREGATE
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    DROP AGGREGATE
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Removes the definition of an aggregate function
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
-DROP AGGREGATE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE> <REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE>
-  </SYNOPSIS>
-  
-  <REFSECT2 ID="R2-SQL-DROPAGGREGATE-1">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-04-15</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> <replaceable class="PARAMETER">type</replaceable>
+  </synopsis>
+
+  <refsect2 id="R2-SQL-DROPAGGREGATE-1">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
-   </PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">name</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          The name of an existing aggregate function.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">type</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          The type of an existing aggregate function.
-          (Refer to the <citetitle>PostgreSQL User's Guide</citetitle> for
-	   further information about data types).
-	   <comment>This should become a cross-reference rather than a
-	    hard-coded chapter number</comment>
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-DROPAGGREGATE-2">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Outputs
-   </TITLE>
-   <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>DROP</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          Message returned if the command is successful.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>WARN RemoveAggregate: aggregate '<replaceable class="parameter">name</replaceable>' for '<replaceable class="parameter">type</replaceable>' does not exist</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          This message occurs if the aggregate function specified does not
-	   exist in the database.
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">name</replaceable></term>
+      <listitem>
+       <para>
+	The name of an existing aggregate function.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+     <varlistentry>
+      <term><replaceable class="parameter">type</replaceable></term>
+      <listitem>
+       <para>
+	The type of an existing aggregate function.
+	(Refer to the <citetitle>PostgreSQL User's Guide</citetitle> for
+	further information about data types).
+	<comment>This should become a cross-reference rather than a
+	 hard-coded chapter number</comment>
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
- 
- <REFSECT1 ID="R1-SQL-DROPAGGREGATE-1">
-  <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-DROPAGGREGATE-2">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+DROP
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if the command is successful.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><computeroutput>
+WARN RemoveAggregate: aggregate '<replaceable class="parameter">agg</replaceable>' for '<replaceable class="parameter">type</replaceable>' does not exist
+       </computeroutput></term>
+      <listitem>
+       <para>
+	This message occurs if the aggregate function specified does not
+	exist in the database.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-DROPAGGREGATE-1">
+  <refsect1info>
+   <date>1998-04-15</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    <command>DROP AGGREGATE</command> will remove all references to an existing
    aggregate definition. To execute this command the current
    user must be the owner of the aggregate.
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-DROPAGGREGATE-3">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  </para>
+
+  <refsect2 id="R2-SQL-DROPAGGREGATE-3">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     The <command>DROP AGGREGATE</command> statement is a
-<productname>Postgres</productname>
+    <productname>Postgres</productname>
     language extension.
-   </PARA>
-   <PARA>
+   </para>
+   <para>
     Refer to the <command>CREATE AGGREGATE</command> statement to
     create aggregate functions.
-   </PARA>
-  </REFSECT2>
- </REFSECT1>
-  
- <REFSECT1 ID="R1-SQL-DROPAGGREGATE-2">
-  <TITLE>
-   Usage
-  </TITLE>
-  <PARA>
-   To remove the <literal>myavg</literal> aggregate for type
-   <literal>int4</literal>:
-  </PARA>
-  <ProgramListing>
-DROP AGGREGATE myavg int4;
-  </ProgramListing>
- </REFSECT1>
- 
- <REFSECT1 ID="R1-SQL-DROPAGGREGATE-3">
-  <TITLE>
-   Compatibility
-  </TITLE>
-  <PARA>
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-DROPAGGREGATE-4">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    SQL92
-   </TITLE>
-   <PARA>
-   There is no DROP AGGREGATE statement in <acronym>SQL92</acronym>.
-   </PARA>
+   </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+
+ <refsect1 id="R1-SQL-DROPAGGREGATE-2">
+  <title>
+   Usage
+  </title>
+  <para>
+   To remove the <literal>myavg</literal> aggregate for type
+   <literal>int4</literal>:
+  </para>
+  <programlisting>
+DROP AGGREGATE myavg int4;
+  </programlisting>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-DROPAGGREGATE-3">
+  <title>
+   Compatibility
+  </title>
+  <para>
+  </para>
+
+  <refsect2 id="R2-SQL-DROPAGGREGATE-4">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    SQL92
+   </title>
+   <para>
+    There is no DROP AGGREGATE statement in <acronym>SQL92</acronym>.
+   </para>
+  </refsect2>
+ </refsect1>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

@@ -30,7 +30,7 @@ BEGIN [ WORK | TRANSACTION ]
     Inputs
    </title>
    <para>
-    None
+    None.
    </para>
   </refsect2>
   
@@ -45,9 +45,9 @@ BEGIN [ WORK | TRANSACTION ]
    <para>
     <variablelist>
      <varlistentry>
-      <term>
-       <returnvalue>BEGIN</returnvalue>
-      </term>
+      <term><computeroutput>
+BEGIN
+       </computeroutput></term>
       <listitem>
        <para>
 	This signifies that a new transaction has been started.
@@ -55,9 +55,9 @@ BEGIN [ WORK | TRANSACTION ]
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term>
-       <returnvalue>NOTICE:  BeginTransactionBlock and not in default state</returnvalue>
-      </term>
+      <term><computeroutput>
+NOTICE:  BeginTransactionBlock and not in default state
+       </computeroutput></term>
       <listitem>
        <para>
 	This indicates that a transaction was already in progress.

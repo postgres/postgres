@@ -1,103 +1,97 @@
-  <refentry id="SQL-ALTERUSER">
-   <refmeta>
-    <refentrytitle>
-     ALTER USER
-    </refentrytitle>
-    <refmiscinfo>SQL - Language Statements</refmiscinfo>
-   </refmeta>
-   <refnamediv>
-    <refname>
-     ALTER USER
-    </refname>
-    <refpurpose>
-     Modifies user account information
-    </refpurpose>
+<refentry id="SQL-ALTERUSER">
+ <refmeta>
+  <refentrytitle>
+   ALTER USER
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
+   ALTER USER
+  </refname>
+  <refpurpose>
+   Modifies user account information
+  </refpurpose>
  </refnamediv>
-   <refsynopsisdiv>
-    <refsynopsisdivinfo>
-     <date>1998-09-08</date>
-    </refsynopsisdivinfo>
-    <synopsis>
-ALTER USER <replaceable class="PARAMETER">username</replaceable>
-    [ WITH PASSWORD <replaceable class="PARAMETER">password</replaceable> ]
-    [ CREATEDB | NOCREATEDB ]
-    [ CREATEUSER | NOCREATEUSER ]
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-08</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+ALTER USER <replaceable class="PARAMETER">username</replaceable> [ WITH PASSWORD <replaceable class="PARAMETER">password</replaceable> ]
+    [ CREATEDB | NOCREATEDB ] [ CREATEUSER | NOCREATEUSER ]
     [ IN GROUP <replaceable class="PARAMETER">groupname</replaceable> [, ...] ]
     [ VALID UNTIL '<replaceable class="PARAMETER">abstime</replaceable>' ]
-    </synopsis>
-    
-    <refsect2 id="R2-SQL-ALTERUSER-1">
-     <refsect2info>
-      <date>1998-09-08</date>
-     </refsect2info>
-     <title>
-      Inputs
-     </title>
-     <para>
-      Refer to <command>CREATE USER</command> for a detailed description of each
-      clause.
-     </para>
-      <variablelist>
-       <varlistentry>
-	<term>
-	 <replaceable class="PARAMETER"> username </replaceable>
-	</term>
-	<listitem>
-	 <para>
-	  The Postgres account name of the user whose details are to be altered.
-	 </para>
-	</listitem>
-       </varlistentry>
+  </synopsis>
 
-       <varlistentry>
-	<term>
-	 <replaceable class="PARAMETER"> password </replaceable>
-	</term>
-	<listitem>
-	 <para>
-	  The new password to be used for this account.
-	 </para>
-	</listitem>
-       </varlistentry>
+  <refsect2 id="R2-SQL-ALTERUSER-1">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
+    Inputs
+   </title>
 
-       <varlistentry>
-	<term>
-	 <replaceable class="PARAMETER"> groupname </replaceable>
-	</term>
-	<listitem>
-	 <para>
-	  The name of an access group into which this account is to be put.
-	 </para>
-	</listitem>
-       </varlistentry>
+   <para>
+    Refer to <command>CREATE USER</command> for a detailed description of each
+    clause.
+   </para>
 
-       <varlistentry>
-	<term>
-	 <replaceable class="PARAMETER"> abstime </replaceable>
-	</term>
-	<listitem>
-	 <para>
-	  The date (and, optionally, the time)
- at which this user's access is to be terminated.
-	 </para>
-	</listitem>
-       </varlistentry>
-      </variablelist>
-    </refsect2>
-    
-    <refsect2 id="R2-SQL-ALTERUSER-2">
-     <refsect2info>
-      <date>1998-09-08</date>
-     </refsect2info>
-     <title>
-      Outputs
-     </title>
    <para>
     <variablelist>
      <varlistentry>
-      <term>
-       <returnvalue>ALTER USER</returnvalue>
-      </term>
+      <term><replaceable class="PARAMETER"> username </replaceable></term>
+      <listitem>
+       <para>
+	The Postgres account name of the user whose details are to be altered.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> password </replaceable></term>
+      <listitem>
+       <para>
+	The new password to be used for this account.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> groupname </replaceable></term>
+      <listitem>
+       <para>
+	The name of an access group into which this account is to be put.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER"> abstime </replaceable></term>
+      <listitem>
+       <para>
+	The date (and, optionally, the time)
+	at which this user's access is to be terminated.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+    
+  <refsect2 id="R2-SQL-ALTERUSER-2">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+ALTER USER
+       </computeroutput></term>
       <listitem>
        <para>
 	Message returned if the alteration was successful.
@@ -106,13 +100,13 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable>
      </varlistentry>
      
      <varlistentry>
-      <term>
-       <returnvalue>ERROR: alterUser: user "username" does not exist</returnvalue>
-      </term>
+      <term><computeroutput>
+ERROR: alterUser: user "username" does not exist
+       </computeroutput></term>
       <listitem>
        <para>
-	Error message returned if the user specified doesn't
-	exist.
+	Error message returned if the specified user is not known to
+	the database.
        </para>
       </listitem>
      </varlistentry>
@@ -120,116 +114,116 @@ ALTER USER <replaceable class="PARAMETER">username</replaceable>
    </para>
   </refsect2>
  </refsynopsisdiv>
- 
-   <refsect1 id="R1-SQL-ALTERUSER-1">
-    <refsect1info>
-     <date>1998-09-08</date>
-    </refsect1info>
-    <title>
-     Description
-    </title>
-    <para>
-     <command>ALTER USER</command> is used to change the attributes of a user's
-     <productname>Postgres</productname> account.
- Please note that it is not possible
-     to alter a user's "usesysid" via the alter user
-     statement. Also, it is only possible for the
- <productname>Postgres</productname>
-     user or any user with read and modify permissions on
-     "pg_shadow" to alter user passwords.
-    </para>
-    <para>
-     If any of the clauses of the alter user statement are
-     omitted, the corresponding value in the "pg_shadow" table
-     is left unchanged.
-    </para>
+
+ <refsect1 id="R1-SQL-ALTERUSER-1">
+  <refsect1info>
+   <date>1998-09-08</date>
+  </refsect1info>
+  <title>
+   Description
+  </title>
+  <para>
+   <command>ALTER USER</command> is used to change the attributes of a user's
+   <productname>Postgres</productname> account.
+   Please note that it is not possible
+   to alter a user's "usesysid" via the alter user
+   statement. Also, it is only possible for the
+   <productname>Postgres</productname>
+   user or any user with read and modify permissions on
+   <literal>pg_shadow</literal> to alter user passwords.
+  </para>
+
+  <para>
+   If any of the clauses of the alter user statement are
+   omitted, the corresponding value in the "pg_shadow" table
+   is left unchanged.
+  </para>
     
-    <refsect2 id="R2-SQL-ALTERUSER-3">
-     <refsect2info>
-      <date>1998-09-08</date>
-     </refsect2info>
-     <title>
-      Notes
-     </title>
-     <para>
-      <command>ALTER USER</command> statement
- is a <productname>Postgres</productname>
- language extension.
-     </para>
-     <para>
-      Refer to <command>CREATE/DROP USER</command>
-  to create or remove a user
-      account.
-     </para>
-     <para>
-      In the current release (v6.5), the IN GROUP clause is parsed
-      but has no affect.  When it is fully implemented, it is
-      intended to modify the pg_group relation.
-     </para>
-    </refsect2>
-   </refsect1>
-   
-   <refsect1 id="R1-SQL-ALTERUSER-2">
-    <title>
-     Usage
-    </title>
-    <para>
-     Change a user password
-    </para>
-    <programlisting>
+  <refsect2 id="R2-SQL-ALTERUSER-3">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
+    Notes
+   </title>
+   <para>
+    <command>ALTER USER</command>
+    is a <productname>Postgres</productname>
+    language extension.
+   </para>
+   <para>
+    Refer to <command>CREATE/DROP USER</command>
+    to create or remove a user account.
+   </para>
+   <para>
+    In the current release (v6.5), the IN GROUP clause is parsed
+    but has no affect.  When it is fully implemented, it is
+    intended to modify the pg_group relation.
+   </para>
+  </refsect2>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-ALTERUSER-2">
+  <title>
+   Usage
+  </title>
+  <para>
+   Change a user password:
+
+  <programlisting>
 ALTER USER davide WITH PASSWORD hu8jmn3;
-    </programlisting>
-    <para>
-     Change a user's valid until date
-    </para>
-    <programlisting>
+  </programlisting>
+
+   Change a user's valid until date
+
+   <programlisting>
 ALTER USER manuel VALID UNTIL 'Jan 31 2030';
-    </programlisting>
-    <para>
-     Change a user's valid until date, specifying that his
-authorisation should expire at midday on 4th May 1998 using
-the time zone which is one hour ahead of UTC
-    </para>
-    <programlisting>
+   </programlisting>
+
+   Change a user's valid until date, specifying that his
+   authorisation should expire at midday on 4th May 1998 using
+   the time zone which is one hour ahead of UTC
+   <programlisting>
 ALTER USER chris VALID UNTIL 'May 4 12:00:00 1998 +1';
-    </programlisting>
-    <para>
-     Give a user the ability to create other users and new databases.
-    </para>
-    <programlisting>
+   </programlisting>
+
+   Give a user the ability to create other users and new databases.
+
+   <programlisting>
 ALTER USER miriam CREATEUSER CREATEDB;
-    </programlisting>
-    <para>
-     Place a user in two groups
-    </para>
-    <programlisting>
+   </programlisting>
+
+   Place a user in two groups
+
+   <programlisting>
 ALTER USER miriam IN GROUP sales, payroll;
-    </programlisting>
-   </refsect1>
-   
-   <refsect1 id="R1-SQL-ALTERUSER-3">
-    <title>
-     Compatibility
-    </title>
-    <para>
-    </para>
+   </programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-ALTERUSER-3">
+  <title>
+   Compatibility
+  </title>
+  <para>
+  </para>
     
-    <refsect2 id="R2-SQL-ALTERUSER-4">
-     <refsect2info>
-      <date>1998-09-08</date>
-     </refsect2info>
-     <title>
-      SQL92
-     </title>
-     <para>
-      There is no <command>ALTER USER</command> statement in
- <acronym>SQL92</acronym>.
-  The standard leaves
-      the definition of users to the implementation.
-     </para>
-   </refsect2>
-   </refsect1>
-  </refentry>
+  <refsect2 id="R2-SQL-ALTERUSER-4">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
+    SQL92
+   </title>
+   <para>
+    There is no <command>ALTER USER</command> statement in
+    <acronym>SQL92</acronym>.
+    The standard leaves
+    the definition of users to the implementation.
+   </para>
+  </refsect2>
+ </refsect1>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:

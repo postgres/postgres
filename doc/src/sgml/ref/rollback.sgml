@@ -1,13 +1,13 @@
 <refentry id="SQL-ROLLBACK">
  <refmeta>
   <refentrytitle id="SQL-ROLLBACK-TITLE">
-ROLLBACK
+   ROLLBACK
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>
   <refname>
-ROLLBACK
+   ROLLBACK
   </refname>
   <refpurpose>
    Aborts the current transaction
@@ -44,9 +44,9 @@ ROLLBACK [ WORK | TRANSACTION ]
 	
     <variablelist>
      <varlistentry>
-      <term>
-       ABORT
-      </term>
+      <term><computeroutput>
+ABORT
+       </computeroutput></term>
       <listitem>
        <para>
 	Message returned if successful.
@@ -55,10 +55,10 @@ ROLLBACK [ WORK | TRANSACTION ]
      </varlistentry>
      
      <varlistentry>
-      <term>
-       NOTICE:  UserAbortTransactionBlock and not in in-progress state
-       ABORT
-      </term>
+      <term><computeroutput>
+NOTICE:  UserAbortTransactionBlock and not in in-progress state
+ABORT
+       </computeroutput></term>
       <listitem>
        <para>
 	If there is not any transaction currently in progress.
@@ -106,10 +106,10 @@ ROLLBACK [ WORK | TRANSACTION ]
    Usage
   </title>
   <para>
+   To abort all changes:
+
    <programlisting>
-    --To abort all changes:
-    --
-    ROLLBACK WORK;
+ROLLBACK WORK;
    </programlisting>
   </para>
  </refsect1>
@@ -129,7 +129,7 @@ ROLLBACK [ WORK | TRANSACTION ]
     SQL92
    </title>
    <para>
-    Full compatibility. TRANSACTION is a
+    Full compatibility. The TRANSACTION keyword is a
     <productname>Postgres</productname> extension.
    </para>
   </refsect2>

@@ -1,146 +1,145 @@
-<REFENTRY ID="SQL-DROPTABLE">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-DROPTABLE">
+ <refmeta>
+  <refentrytitle>
    DROP TABLE
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    DROP TABLE
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Removes existing tables from a database
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-22</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
-DROP TABLE <REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE> [, ...]
-  </SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-22</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+DROP TABLE <replaceable class="PARAMETER">name</replaceable> [, ...]
+  </synopsis>
   
-  <REFSECT2 ID="R2-SQL-DROPTABLE-1">
-   <REFSECT2INFO>
-    <DATE>1998-09-22</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-DROPTABLE-1">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
-   </PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue><REPLACEABLE CLASS="PARAMETER">table</REPLACEABLE></ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The name of an existing table or view to drop.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-DROPTABLE-2">
-   <REFSECT2INFO>
-    <DATE>1998-09-22</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Outputs
-   </TITLE>
-   <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>DROP</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The message returned if the command completes successfully.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue> ERROR Relation "<replaceable class="parameter">table</replaceable>" Does Not Exist!</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   If the specified table or view does not exist in the database.
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">name</replaceable></term>
+      <listitem>
+       <para>
+	The name of an existing table or view to drop.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-DROPTABLE-2">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+DROP
+       </computeroutput></term>
+      <listitem>
+       <para>
+	The message returned if the command completes successfully.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><computeroutput>
+ERROR Relation "<replaceable class="parameter">name</replaceable>" Does Not Exist!
+       </computeroutput></term>
+      <listitem>
+       <para>
+	If the specified table or view does not exist in the database.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
  
- <REFSECT1 ID="R1-SQL-DROPTABLE-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-22</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+ <refsect1 id="R1-SQL-DROPTABLE-1">
+  <refsect1info>
+   <date>1998-09-22</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
-<command>DROP TABLE</command> removes tables and views from the database.
+  </title>
+  <para>
+   <command>DROP TABLE</command> removes tables and views from the database.
    Only its owner may destroy a table or view. A table
    may be emptied of rows, but not destroyed, by using <command>DELETE</command>.
-  </PARA>
-  <PARA>
+  </para>
+  <para>
    If a table being destroyed has secondary indexes on it,
    they will be removed first. The removal of just a
    secondary index will not affect the contents of the underlying table.
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-DROPTABLE-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-22</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  </para>
+
+  <refsect2 id="R2-SQL-DROPTABLE-3">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     Refer to <command>CREATE TABLE</command> and
     <command>ALTER TABLE</command> for information on
     how to create or modify tables.
-   </PARA>
-  </REFSECT2>
+   </para>
+  </refsect2>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-DROPTABLE-2">
+  <title>
+   Usage
+  </title>
+  <para>
+   To destroy two tables, <literal>films</literal> and 
+   <command>distributors</command>:
+
+   <programlisting>
+DROP TABLE films, distributors;
+   </programlisting>
+  </para>
  </refsect1>
  
- <REFSECT1 ID="R1-SQL-DROPTABLE-2">
-  <TITLE>
-   Usage
-  </TITLE>
-  <PARA>
-   To destroy the <literal>films</literal> and 
-   <command>distributors</command> tables:
-  </PARA>
-  <ProgramListing>
-DROP TABLE films, distributors
-  </ProgramListing>
- </REFSECT1>
- 
- <REFSECT1 ID="R1-SQL-DROPTABLE-3">
-   <TITLE>
+ <refsect1 id="R1-SQL-DROPTABLE-3">
+   <title>
    Compatibility
-  </TITLE>
-  <PARA>
-   </PARA>
+  </title>
+  <para>
+  </para>
   
-  <REFSECT2 ID="R2-SQL-DROPTABLE-4">
-   <REFSECT2INFO>
-    <DATE>1998-09-22</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-DROPTABLE-4">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
     SQL92
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     SQL92 specifies some additional capabilities for DROP TABLE:
-   </PARA>
+   </para>
    <synopsis>
 DROP TABLE <replaceable class="parameter">table</replaceable> { RESTRICT | CASCADE }
    </synopsis>
@@ -172,12 +171,12 @@ DROP TABLE <replaceable class="parameter">table</replaceable> { RESTRICT | CASCA
    </tip>
    </refsect2>
  </refsect1>
-</REFENTRY>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

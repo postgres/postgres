@@ -20,11 +20,9 @@
   <synopsis>
 psql [ <replaceable class="parameter">dbname</replaceable> ]
 psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replaceable class="parameter">dbname</replaceable> ]
-    -e -E [ -f <replaceable class="parameter">filename</replaceable> ]
-   [ -F <replaceable class="parameter">separator</replaceable> ] [ -h <replaceable class="parameter">hostname</replaceable> ]
-    -Hln [ -o <replaceable class="parameter">filename</replaceable> ] [ -p
-<replaceable class="parameter">port</replaceable> ]
-    -qsSt [ -T <replaceable class="parameter">table_o</replaceable> ] -ux
+    -e -E [ -f <replaceable class="parameter">filename</replaceable> ] [ -F <replaceable class="parameter">separator</replaceable> ]
+    [ -h <replaceable class="parameter">hostname</replaceable> ] -Hln [ -o <replaceable class="parameter">filename</replaceable> ]
+    [ -p <replaceable class="parameter">port</replaceable> ] -qsSt [ -T <replaceable class="parameter">table_o</replaceable> ] -ux
     [ <replaceable class="parameter">dbname</replaceable> ]
   </synopsis>
 
@@ -43,9 +41,7 @@ psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replacea
 
     <variablelist>
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">dbname</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">dbname</replaceable></term>
       <listitem>
        <para>
 	The name of an existing database to access.
@@ -59,22 +55,21 @@ psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replacea
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -c <replaceable class="parameter">query</replaceable>
-      </term>
+      <term>-c <replaceable class="parameter">query</replaceable></term>
       <listitem>
        <para>
 	A single query to run. <application>psql</application> will exit on completion.
        </para>
       </listitem>
      </varlistentry>
-	  
     </variablelist>
    </para>
+
    <para>
     The full set of command-line arguments and meta-commands are described in a subsequent
     section.
    </para>
+
    <para>
     There are some environment variables which can be used in liu of
     command line arguments. 
@@ -91,9 +86,7 @@ psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replacea
 	
     <variablelist>
      <varlistentry>
-      <term>
-       <envar>PGHOST</envar>
-      </term>
+      <term><envar>PGHOST</envar></term>
       <listitem>
        <para>
 	The <acronym>DNS</acronym> host name of the database server.
@@ -105,9 +98,7 @@ psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replacea
      </varlistentry>
 
      <varlistentry>
-      <term>
-       <envar>PGPORT</envar>
-      </term>
+      <term><envar>PGPORT</envar></term>
       <listitem>
        <para>
 	The port number on which a <productname>Postgres</productname> server is listening.
@@ -117,9 +108,7 @@ psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replacea
      </varlistentry>
 
      <varlistentry>
-      <term>
-       <envar>PGTTY</envar>
-      </term>
+      <term><envar>PGTTY</envar></term>
       <listitem>
        <para>
 	The target for display of messages from the client support library.
@@ -129,9 +118,7 @@ psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replacea
      </varlistentry>
 
      <varlistentry>
-      <term>
-       <envar>PGOPTION</envar>
-      </term>
+      <term><envar>PGOPTION</envar></term>
       <listitem>
        <para>
 	If <envar>PGOPTION</envar>
@@ -143,9 +130,7 @@ psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replacea
      </varlistentry>
 
      <varlistentry>
-      <term>
-       <envar>PGREALM</envar>
-      </term>
+      <term><envar>PGREALM</envar></term>
       <listitem>
        <para>
 	<envar>PGREALM</envar>
@@ -176,10 +161,12 @@ psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replacea
     <application>psql</application>
     returns 0 to the shell on successful completion of all queries,
     1 for errors, 2 for abrupt disconnection from the backend.
-    The default TAB delimiter is used.
     <application>psql</application>
     will also return 1 if the connection to a database could not be made for
     any reason.
+   </para>
+   <para>
+    The default TAB delimiter is used.
    </para>
   </refsect2>
  </refsynopsisdiv>
@@ -337,9 +324,7 @@ testdb=>
 
    <variablelist>
     <varlistentry>
-     <term>
-      -A
-     </term>
+     <term>-A</term>
      <listitem>
       <para>
        Turn off fill justification when printing out table elements.
@@ -348,9 +333,7 @@ testdb=>
     </varlistentry>
 	
     <varlistentry>
-     <term>
-      -c <replaceable class="parameter">query</replaceable>
-     </term>
+     <term>-c <replaceable class="parameter">query</replaceable></term>
      <listitem>
       <para>
        Specifies that
@@ -364,9 +347,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -d <replaceable class="parameter">dbname</replaceable>
-     </term>
+     <term>-d <replaceable class="parameter">dbname</replaceable></term>
      <listitem>
       <para>
        Specifies the name of the database to connect to. This is equivalent to specifying
@@ -377,9 +358,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -e
-     </term>
+     <term>-e</term>
      <listitem>
       <para>
        Echo the query sent to the backend
@@ -388,9 +367,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -E
-     </term>
+     <term>-E</term>
      <listitem>
       <para>
        Echo the actual query generated by \d and other backslash commands
@@ -399,9 +376,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -f <replaceable class="parameter">filename</replaceable>
-     </term>
+     <term>-f <replaceable class="parameter">filename</replaceable></term>
      <listitem>
       <para>
        Use the file <replaceable class="parameter">filename</replaceable>
@@ -412,9 +387,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -F <replaceable class="parameter">separator</replaceable>
-     </term>
+     <term>-F <replaceable class="parameter">separator</replaceable></term>
      <listitem>
       <para>
        Use <replaceable class="parameter">separator</replaceable>
@@ -425,9 +398,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -h <replaceable class="parameter">hostname</replaceable>
-     </term>
+     <term>-h <replaceable class="parameter">hostname</replaceable></term>
      <listitem>
       <para>
        Specifies the host name of the machine on which the
@@ -440,9 +411,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -H
-     </term>
+     <term>-H</term>
      <listitem>
       <para>
        Turns on
@@ -453,9 +422,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -l
-     </term>
+     <term>-l</term>
      <listitem>
       <para>
        Lists all available databases, then exit. Other non-connection options are ignored.
@@ -464,9 +431,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -n
-     </term>
+     <term>-n</term>
      <listitem>
       <para>
        Do not use the readline library for input line editing and command history.
@@ -475,9 +440,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -o <replaceable class="parameter">filename</replaceable>
-     </term>
+     <term>-o <replaceable class="parameter">filename</replaceable></term>
      <listitem>
       <para>
        Put all output into file <replaceable class="parameter">filename</replaceable>.
@@ -487,9 +450,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -p <replaceable class="parameter">port</replaceable>
-     </term>
+     <term>-p <replaceable class="parameter">port</replaceable></term>
      <listitem>
       <para>
        Specifies the TCP/IP port or, by omission, the local Unix domain socket file
@@ -503,9 +464,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -q
-     </term>
+     <term>-q</term>
      <listitem>
       <para>
        Specifies that
@@ -520,9 +479,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -s
-     </term>
+     <term>-s</term>
      <listitem>
       <para>
        Run in single-step mode where the user is prompted for each query before
@@ -532,9 +489,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -S
-     </term>
+     <term>-S</term>
      <listitem>
       <para>
        Runs in single-line mode where each query is terminated by a newline,
@@ -544,9 +499,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -t
-     </term>
+     <term>-t</term>
      <listitem>
       <para>
        Turn off printing of column names.
@@ -558,9 +511,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -T <replaceable class="parameter">table_options</replaceable>
-     </term>
+     <term>-T <replaceable class="parameter">table_options</replaceable></term>
      <listitem>
       <para>
        Allows you to specify options to be placed within the
@@ -573,9 +524,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -u
-     </term>
+     <term>-u</term>
      <listitem>
       <para>
        Asks the user for the user name and password before connecting to the database.
@@ -588,9 +537,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      -x
-     </term>
+     <term>-x</term>
      <listitem>
       <para>
        Turns on extended row format mode. When enabled each row will have its column
@@ -640,9 +587,7 @@ testdb=>
 
    <variablelist>
     <varlistentry>
-     <term>
-      <literal>\a</literal>
-     </term>
+     <term><literal>\a</literal></term>
      <listitem>
       <para>
        Toggle field alignment when printing out table elements.
@@ -651,9 +596,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\C</literal> <replaceable class="parameter">caption</replaceable>
-     </term>
+     <term><literal>\C</literal> <replaceable class="parameter">caption</replaceable></term>
      <listitem>
       <para>
        Set the HTML3.0 table caption to 
@@ -663,10 +606,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\connect</literal> <replaceable class="parameter">meter"</replaceable>ceable> [ <replaceable
-       class="parameter">username</replaceable> ]
-     </term>
+     <term><literal>\connect</literal> <replaceable class="parameter">meter"</replaceable>ceable> [ <replaceable class="parameter">username</replaceable> ]</term>
      <listitem>
       <para>
        Establish a connection to a new database, using the default 
@@ -677,9 +617,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\copy</literal> <replaceable class="parameter">meter"</replaceable>ceable> { FROM | TO }
-      <replaceable class="parameter">filename</replaceable>
+     <term><literal>\copy</literal> <replaceable class="parameter">meter"</replaceable>ceable> { FROM | TO } <replaceable class="parameter">filename</replaceable>
      </term>
      <listitem>
       <para>
@@ -703,9 +641,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\d</literal> [ <replaceable class="parameter">table</replaceable> ]
-     </term>
+     <term><literal>\d</literal> [ <replaceable class="parameter">table</replaceable> ]</term>
      <listitem>
       <para>
        List tables in the database, or if <replaceable
@@ -718,9 +654,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\da</literal>
-     </term>
+     <term><literal>\da</literal></term>
      <listitem>
       <para>
        List all available aggregates.
@@ -729,9 +663,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\dd</literal> <replaceable class="parameter">object</replaceable>
-     </term>
+     <term><literal>\dd</literal> <replaceable class="parameter">object</replaceable></term>
      <listitem>
       <para>
        List the description from <literal>pg_description</literal>
@@ -749,9 +681,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\df</literal>
-     </term>
+     <term><literal>\df</literal></term>
      <listitem>
       <para>
        List functions.
@@ -760,9 +690,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\di</literal>
-     </term>
+     <term><literal>\di</literal></term>
      <listitem>
       <para>
        List only indexes.
@@ -771,9 +699,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\do</literal>
-     </term>
+     <term><literal>\do</literal></term>
      <listitem>
       <para>
        List only operators.
@@ -782,9 +708,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\ds</literal>
-     </term>
+     <term><literal>\ds</literal></term>
      <listitem>
       <para>
        List only sequences.
@@ -793,9 +717,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\dS</literal>
-     </term>
+     <term><literal>\dS</literal></term>
      <listitem>
       <para>
        List system tables and indexes.
@@ -804,9 +726,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\dt</literal>
-     </term>
+     <term><literal>\dt</literal></term>
      <listitem>
       <para>
        List only non-system tables.
@@ -815,9 +735,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\dT</literal>
-     </term>
+     <term><literal>\dT</literal></term>
      <listitem>
       <para>
        List types.
@@ -825,10 +743,8 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <varlistentry>
-     <term>
-      <literal>\e</literal> [ <replaceable class="parameter">filename</replaceable> ]
-     </term>
+    <varlistentry><term>
+      <literal>\e</literal> [ <replaceable class="parameter">filename</replaceable> ]</term>
      <listitem>
       <para>
        Edit the current query buffer or the contents of the file
@@ -838,9 +754,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\E</literal> [ <replaceable class="parameter">filename</replaceable> ]
-     </term>
+     <term><literal>\E</literal> [ <replaceable class="parameter">filename</replaceable> ]</term>
      <listitem>
       <para>
        Edit the current query buffer or the contents of the file
@@ -851,9 +765,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\f</literal> [ <replaceable class="parameter">separator</replaceable> ]
-     </term>
+     <term><literal>\f</literal> [ <replaceable class="parameter">separator</replaceable> ]</term>
      <listitem>
       <para>
        Set the field separator.  Default is a single blank space.
@@ -862,9 +774,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\g</literal> [ { <replaceable class="parameter">filename</replaceable> | <literal>|</literal><replaceable class="parameter">command</replaceable> } ]
-     </term>
+     <term><literal>\g</literal> [ { <replaceable class="parameter">filename</replaceable> | <literal>|</literal><replaceable class="parameter">command</replaceable> } ]</term>
      <listitem>
       <para>
        Send the current query input buffer to the backend and optionally
@@ -876,9 +786,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\h</literal> [ <replaceable class="parameter">command</replaceable> ]
-     </term>
+     <term><literal>\h</literal> [ <replaceable class="parameter">command</replaceable> ]</term>
      <listitem>
       <para>
        Give syntax help on the specified SQL command.  
@@ -895,9 +803,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\H</literal>
-     </term>
+     <term><literal>\H</literal></term>
      <listitem>
       <para>
        Toggle <acronym>HTML3</acronym> output. This is equivalent to
@@ -908,9 +814,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\i</literal> <replaceable class="parameter">filename</replaceable>
-     </term>
+     <term><literal>\i</literal> <replaceable class="parameter">filename</replaceable></term>
      <listitem>
       <para>
        Read queries from the file <replaceable class="parameter">filename</replaceable>
@@ -920,9 +824,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\l</literal>
-     </term>
+     <term><literal>\l</literal></term>
      <listitem>
       <para>
        List all the databases in the server.
@@ -931,9 +833,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\m</literal>
-     </term>
+     <term><literal>\m</literal></term>
      <listitem>
       <para>
        Toggle the old monitor-like table display, which includes border characters
@@ -946,9 +846,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\o</literal> [ { <replaceable class="parameter">filename</replaceable> | <literal>|</literal><replaceable class="parameter">command</replaceable> } ]
-     </term>
+     <term><literal>\o</literal> [ { <replaceable class="parameter">filename</replaceable> | <literal>|</literal><replaceable class="parameter">command</replaceable> } ]</term>
      <listitem>
       <para>
        Save future query results to the file
@@ -962,9 +860,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\p</literal>
-     </term>
+     <term><literal>\p</literal></term>
      <listitem>
       <para>
        Print the current query buffer.
@@ -973,9 +869,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\q</literal>
-     </term>
+     <term><literal>\q</literal></term>
      <listitem>
       <para>
        Quit the <application>psql</application> program.
@@ -984,9 +878,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\r</literal>
-     </term>
+     <term><literal>\r</literal></term>
      <listitem>
       <para>
        Reset(clear) the query buffer.
@@ -995,9 +887,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\s</literal> [ <replaceable class="parameter">filename</replaceable> ]
-     </term>
+     <term><literal>\s</literal> [ <replaceable class="parameter">filename</replaceable> ]</term>
      <listitem>
       <para>
        Print or save the command line history to 
@@ -1011,9 +901,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\t</literal>
-     </term>
+     <term><literal>\t</literal></term>
      <listitem>
       <para>
        Toggle display of output column name headings and row count footer (defaults to on).
@@ -1022,9 +910,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\T</literal> <replaceable class="parameter">table_options</replaceable>
-     </term>
+     <term><literal>\T</literal> <replaceable class="parameter">table_options</replaceable></term>
      <listitem>
       <para>
        Allows you to specify options to be placed within the
@@ -1038,9 +924,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\x</literal>
-     </term>
+     <term><literal>\x</literal></term>
      <listitem>
       <para>
        Toggles extended row format mode. When enabled each row will have its column
@@ -1052,9 +936,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\w</literal> <replaceable class="parameter">filename</replaceable>
-     </term>
+     <term><literal>\w</literal> <replaceable class="parameter">filename</replaceable></term>
      <listitem>
       <para>
        Outputs the current query buffer to the file
@@ -1064,9 +946,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\z</literal>
-     </term>
+     <term><literal>\z</literal></term>
      <listitem>
       <para>
        Produces a list of all tables in the database with their appropriate ACLs
@@ -1076,9 +956,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\!</literal> [ <replaceable class="parameter">command</replaceable> ]
-     </term>
+     <term><literal>\!</literal> [ <replaceable class="parameter">command</replaceable> ]</term>
      <listitem>
       <para>
        Escape to a separate Unix shell or execute the Unix command
@@ -1088,9 +966,7 @@ testdb=>
     </varlistentry>
 
     <varlistentry>
-     <term>
-      <literal>\?</literal>
-     </term>
+     <term><literal>\?</literal></term>
      <listitem>
       <para>
        Get help information about the slash (<quote>\</quote>) commands.
@@ -1114,7 +990,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"../reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
 sgml-local-ecat-files:nil
 End:
 -->

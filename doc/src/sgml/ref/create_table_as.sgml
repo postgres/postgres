@@ -33,9 +33,7 @@ CREATE TABLE <replaceable>table</replaceable> [ (<replaceable>column</replaceabl
    
    <variablelist>
     <varlistentry>
-     <term>
-      <replaceable>table</replaceable>
-     </term>
+     <term><replaceable>table</replaceable></term>
      <listitem>
       <para>
        The name of a new table to be created.
@@ -44,25 +42,21 @@ CREATE TABLE <replaceable>table</replaceable> [ (<replaceable>column</replaceabl
     </varlistentry>
 
      <varlistentry>
-     <term>
-      <replaceable>column</replaceable>
-     </term>
-     <listitem>
-      <para>
-       The name of a column. Multiple column names can be specified using
-a comma-delimited list of column names.
-      </para>
-     </listitem>
-    </varlistentry>
-    
-    <varlistentry>
-     <term>
-      <replaceable>select_clause</replaceable>
-     </term>
-     <listitem>
-      <para>
-A valid query statement. Refer to SELECT for a description of the
-allowed syntax.
+      <term><replaceable>column</replaceable></term>
+      <listitem>
+       <para>
+	The name of a column. Multiple column names can be specified using
+	a comma-delimited list of column names.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable>select_clause</replaceable></term>
+      <listitem>
+       <para>
+	A valid query statement. Refer to SELECT for a description of the
+	allowed syntax.
        </para>
       </listitem>
      </varlistentry>
@@ -78,7 +72,8 @@ allowed syntax.
     Outputs
    </title>
    <para>
-    Refer to CREATE TABLE and SELECT for a summary of possible output
+    Refer to <command>CREATE TABLE</command>
+    and <command>SELECT</command> for a summary of possible output
     messages.
    </para>
   </refsect2>
@@ -91,10 +86,10 @@ allowed syntax.
   <title>
    Description
   </title>
-   <para>
-CREATE TABLE AS enables a table to be created from the contents of
-an existing table. It has functionality equivalent to SELECT TABLE INTO,
-but with perhaps a more obvious syntax.
+  <para>
+   <command>CREATE TABLE AS</command> enables a table to be created from the contents of
+   an existing table. It has functionality equivalent to <command>SELECT TABLE INTO</command>,
+   but with perhaps a more direct syntax.
   </para>
  </refsect1>
 </refentry>

@@ -1,323 +1,316 @@
-<REFENTRY ID="APP-PG-DUMPALL">
-<REFMETA>
-<REFENTRYTITLE>
-<application>pg_dumpall</application>
-</REFENTRYTITLE>
-<REFMISCINFO>Application</REFMISCINFO>
-</REFMETA>
-<REFNAMEDIV>
-<REFNAME>
-<application>pg_dumpall</application>
-</REFNAME>
-<REFPURPOSE>
-Extract all <productname>Postgres</productname> databases into a script file
-</REFPURPOSE>
-  </refnamediv>
-<REFSYNOPSISDIV>
-<REFSYNOPSISDIVINFO>
-<DATE>1998-10-04</DATE>
-</REFSYNOPSISDIVINFO>
-<SYNOPSIS>
+<refentry id="APP-PG-DUMPALL">
+ <refmeta>
+  <refentrytitle>
+   <application>pg_dumpall</application>
+  </refentrytitle>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
+   <application>pg_dumpall</application>
+  </refname>
+  <refpurpose>
+   Extract all <productname>Postgres</productname> databases into a script file
+  </refpurpose>
+ </refnamediv>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-10-04</date>
+  </refsynopsisdivinfo>
+  <synopsis>
 pg_dumpall
-pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
-    [ -a ] [ -d ] [ -D ] [ -o ] [ -s ] [ -u ] [ -v ] [ -x ]
-</SYNOPSIS>
+pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ] [ -a ] [ -d ] [ -D ] [ -o ] [ -s ] [ -u ] [ -v ] [ -x ]
+  </synopsis>
 
-    <REFSECT2 ID="R2-APP-PG-DUMPALL-1">
-      <REFSECT2INFO>
-	<DATE>1998-10-04</DATE>
-      </REFSECT2INFO>
-      <TITLE>
-	Inputs
-      </TITLE>
-      <PARA>
-	<application>pg_dumpall</application> accepts the following command line arguments:
-	
-	<variablelist>
-	  <varlistentry>
-	    <term>
-	      -a
-	    </term>
-	    <listitem>
-	      <para>
-		Dump out only the data, no schema (definitions).
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	  <varlistentry>
-	    <term>
-	      -d
-	    </term>
-	    <listitem>
-	      <para>
-		Dump data as proper insert strings.
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	  
-	  <varlistentry>
-	    <term>
-	      -D
-	    </term>
-	    <listitem>
-	      <para>
-		Dump data as inserts with attribute names
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	  
-	  <varlistentry>
-	    <term>
-	      -n
-	    </term>
-	    <listitem>
-	      <para>
-		Suppress double quotes around identifiers unless absolutely necessary.
-		This may cause trouble loading this dumped data if there are reserved words
-		used for identifiers.
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	  
-	  <varlistentry>
-	    <term>
-	      -o
-	    </term>
-	    <listitem>
-	      <para>
-		Dump object identifiers (<acronym>OID</acronym>s) for every table.
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	  
-	  <varlistentry>
-	    <term>
-	      -s
-	    </term>
-	    <listitem>
-	      <para>
-		Dump out only the schema (definitions), no data.
-	      </para>
-	    </listitem>
-	  </varlistentry>
+  <refsect2 id="R2-APP-PG-DUMPALL-1">
+   <refsect2info>
+    <date>1998-10-04</date>
+   </refsect2info>
+   <title>
+    Inputs
+   </title>
+   <para>
+    <application>pg_dumpall</application> accepts the following command line arguments:
 
-	  <varlistentry>
-	    <term>
-	      -u
-	    </term>
-	    <listitem>
-	      <para>
-		Use password authentication. Prompts for username and password.
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	  
-	  <varlistentry>
-	    <term>
-	      -v
-	    </term>
-	    <listitem>
-	      <para>
-		Specifies verbose mode
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	  
-	  <varlistentry>
-	    <term>
-	      -x
-	    </term>
-	    <listitem>
-	      <para>
-		Prevent dumping ACLs (grant/revoke commands) and table ownership information.
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	  
-	</variablelist>
-      </para>
-      <para>
-	<application>pg_dumpall</application> also accepts 
-	the following command line arguments for connection parameters:
-	
-	<variablelist>
-	  <varlistentry>
-	    <term>
-	      -h <replaceable class="parameter">host</replaceable>
-	    </term>
-	    <listitem>
-	      <para>
-		Specifies the hostname of the machine on which the 
-		<application>postmaster</application>
-		is running.  Defaults to using a local Unix domain socket
-		rather than an IP connection..
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	  
-	  <varlistentry>
-	    <term>
-	      -p <replaceable class="parameter">port</replaceable>
-	    </term>
-	    <listitem>
-	      <para>
-		Specifies the Internet TCP/IP port or local Unix domain socket file 
-		extension on which the <application>postmaster</application>
-		is listening for connections.  The port number defaults to 5432,
-		or the value of the <envar>PGPORT</envar>
-		environment variable (if set).
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	  
-	  <varlistentry>
-	    <term>
-	      -u
-	    </term>
-	    <listitem>
-	      <para>
-		Use password authentication. 
-		Prompts for
-		<replaceable class="parameter">username</replaceable>
-		and <replaceable class="parameter">password</replaceable>.
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	</variablelist>
-      </para>
-    </refsect2>
+    <variablelist>
+     <varlistentry>
+      <term>-a</term>
+      <listitem>
+       <para>
+	Dump out only the data, no schema (definitions).
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <REFSECT2 ID="R2-APP-PG-DUMPALL-2">
-      <REFSECT2INFO>
-	<DATE>1998-10-04</DATE>
-      </REFSECT2INFO>
-      <TITLE>
-	Outputs
-      </TITLE>
-      <PARA>
-	<application>pg_dumpall</application> will create a file or
-	write to <filename>stdout</filename>.
-	
-	<variablelist>
-	  <varlistentry>
-	    <term>
-	      Connection to database 'template1' failed.
-	      connectDB() failed: Is the postmaster running and accepting connections
-	      at 'UNIX Socket' on port '<replaceable class="parameter">port</replaceable>'?
-	    </term>
-	    <listitem>
-	      <para>
-		<application>pg_dumpall</application> could not attach to the 
-		<application>postmaster</application> 
-		process on the specified host and port.  If you see this message,
-		ensure that the <application>postmaster</application> 
-		is running on the proper host and that you have specified the proper
-		port.  If your site uses an authentication system, ensure that you
-		have obtained the required authentication credentials.
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	  
-	  <varlistentry>
-	    <term>
-	      Connection to database '<replaceable class="parameter">dbname</replaceable>' failed.
-	      FATAL 1:  SetUserId: user '<replaceable class="parameter">username</replaceable>' is not in 'pg_shadow'
-	    </term>
-	    <listitem>
-	      <para>
-		You do not have a valid entry in the relation <literal>pg_shadow</literal>
-		and and will not be allowed to access <productname>Postgres</productname>. 
-		Contact your <productname>Postgres</productname> administrator.
-	      </para>
-	    </listitem>
-	  </varlistentry>
+     <varlistentry>
+      <term>-d</term>
+      <listitem>
+       <para>
+	Dump data as proper insert strings.
+       </para>
+      </listitem>
+     </varlistentry>
 
-	  <varlistentry>
-	    <term>
-	      dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
-	    </term>
-	    <listitem>
-	      <para>
-		You do not have permission to read the database.
-		Contact your <productname>Postgres</productname> site administrator.
-	      </para>
-	    </listitem>
-	  </varlistentry>
-	</variablelist>
-      </para>
+     <varlistentry>
+      <term>-D</term>
+      <listitem>
+       <para>
+	Dump data as inserts with attribute names
+       </para>
+      </listitem>
+     </varlistentry>
 
-      <note>
-	<para>
-	  <application>pg_dumpall</application> internally executes
-	  <command>SELECT</command> statements. If you have problems running
-	  <application>pg_dumpall</application>,
-	  make sure you are able to select information from the database using, for
-	  example, <application>psql</application>.
-	</para>
-      </note>
-    </refsect2>
-  </refsynopsisdiv>
-  
-  <REFSECT1 ID="R1-APP-PG-DUMPALL-1">
-    <REFSECT1INFO>
-      <DATE>1998-10-04</DATE>
-    </REFSECT1INFO>
-    <TITLE>
-      Description
-    </TITLE>
-    <PARA>
-      <application>pg_dumpall</application>
-      is a utility for dumping out all Postgres databases into one file.
-      It also dumps the pg_shadow table, which is global to all databases.
-      <application>pg_dumpall</application> includes in this file the proper commands
-      to automatically create each dumped database before loading.
-    </para>
+     <varlistentry>
+      <term>-n</term>
+      <listitem>
+       <para>
+	Suppress double quotes around identifiers unless absolutely necessary.
+	This may cause trouble loading this dumped data if there are reserved words
+	used for identifiers.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-o</term>
+      <listitem>
+       <para>
+	Dump object identifiers (<acronym>OID</acronym>s) for every table.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-s</term>
+      <listitem>
+       <para>
+	Dump out only the schema (definitions), no data.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-u</term>
+      <listitem>
+       <para>
+	Use password authentication. Prompts for username and password.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-v</term>
+      <listitem>
+       <para>
+	Specifies verbose mode
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-x</term>
+      <listitem>
+       <para>
+	Prevent dumping ACLs (grant/revoke commands) and table ownership information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+    </variablelist>
+   </para>
+
+   <para>
+    <application>pg_dumpall</application> also accepts 
+    the following command line arguments for connection parameters:
+
+    <variablelist>
+     <varlistentry>
+      <term>-h <replaceable class="parameter">host</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the hostname of the machine on which the 
+	<application>postmaster</application>
+	is running.  Defaults to using a local Unix domain socket
+	rather than an IP connection..
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-p <replaceable class="parameter">port</replaceable></term>
+      <listitem>
+       <para>
+	Specifies the Internet TCP/IP port or local Unix domain socket file 
+	extension on which the <application>postmaster</application>
+	is listening for connections.  The port number defaults to 5432,
+	or the value of the <envar>PGPORT</envar>
+	environment variable (if set).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-u</term>
+      <listitem>
+       <para>
+	Use password authentication. 
+	Prompts for
+	<replaceable class="parameter">username</replaceable>
+	and <replaceable class="parameter">password</replaceable>.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+
+  <refsect2 id="R2-APP-PG-DUMPALL-2">
+   <refsect2info>
+    <date>1998-10-04</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+    <application>pg_dumpall</application> will create a file or
+    write to <filename>stdout</filename>.
+
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+Connection to database 'template1' failed.
+connectDB() failed: Is the postmaster running and accepting connections at 'UNIX Socket' on port '<replaceable class="parameter">port</replaceable>'?
+       </computeroutput></term>
+      <listitem>
+       <para>
+	<application>pg_dumpall</application> could not attach to the 
+	<application>postmaster</application> 
+	process on the specified host and port.  If you see this message,
+	ensure that the <application>postmaster</application> 
+	is running on the proper host and that you have specified the proper
+	port.  If your site uses an authentication system, ensure that you
+	have obtained the required authentication credentials.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>
+Connection to database '<replaceable class="parameter">dbname</replaceable>' failed.
+FATAL 1:  SetUserId: user '<replaceable class="parameter">username</replaceable>' is not in 'pg_shadow'
+       </computeroutput></term>
+      <listitem>
+       <para>
+	You do not have a valid entry in the relation <literal>pg_shadow</literal>
+	and and will not be allowed to access <productname>Postgres</productname>. 
+	Contact your <productname>Postgres</productname> administrator.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>
+dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
+       </computeroutput></term>
+      <listitem>
+       <para>
+	You do not have permission to read the database.
+	Contact your <productname>Postgres</productname> site administrator.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <note>
     <para>
-      <application>pg_dumpall</application> takes all <application>pg_dump</application>
-      options, but <option>-f</option>, <option>-t</option> and 
-      <replaceable class="parameter">dbname</replaceable>
-      should be omitted.
+     <application>pg_dumpall</application> internally executes
+     <command>SELECT</command> statements. If you have problems running
+     <application>pg_dumpall</application>,
+     make sure you are able to select information from the database using, for
+     example, <application>psql</application>.
     </para>
+   </note>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-APP-PG-DUMPALL-1">
+  <refsect1info>
+   <date>1998-10-04</date>
+  </refsect1info>
+  <title>
+   Description
+  </title>
+  <para>
+   <application>pg_dumpall</application>
+   is a utility for dumping out all Postgres databases into one file.
+   It also dumps the pg_shadow table, which is global to all databases.
+   <application>pg_dumpall</application> includes in this file the proper commands
+   to automatically create each dumped database before loading.
+  </para>
+  <para>
+   <application>pg_dumpall</application> takes all <application>pg_dump</application>
+   options, but <option>-f</option>, <option>-t</option> and 
+   <replaceable class="parameter">dbname</replaceable>
+   should be omitted.
+  </para>
+  <para>
+   Refer to 
+   <xref endterm="pg-dump" linkend="app-pg-dump">
+   for more information on this capability.
+  </para>
+ </refsect1>
+
+ <refsect1 id="R1-APP-PG-DUMPALL-2">
+  <refsect1info>
+   <date>1998-10-04</date>
+  </refsect1info>
+  <title>
+   Usage
+  </title>
+  <para>
+   To dump all databases:
+
+   <programlisting>
+% pg_dumpall -o > db.out
+   </programlisting>
+
+   <tip>
     <para>
-      Refer to 
-      <xref linkend="app-pg-dump" endterm="pg-dump">
-	for more information on this capability.
-    </para
-  </refsect1>
-
-  <REFSECT1 ID="R1-APP-PG-DUMPALL-2">
-    <REFSECT1INFO>
-      <DATE>1998-10-04</DATE>
-    </REFSECT1INFO>
-    <TITLE>
-      Usage
-    </TITLE>
-    <PARA>
-      To dump all databases:
-
-      <programlisting>
-	% pg_dumpall -o > db.out
-      </programlisting>
-
-      <tip>
-	<para>
-	  You can use most <application>pg_dump</application> options
-	  for <application>pg_dumpall</application>.
-	</para>
-      </tip>
+     You can use most <application>pg_dump</application> options
+     for <application>pg_dumpall</application>.
     </para>
-    <para>
-      To reload this database:
-      
-      <programlisting>
-	psql -e template1 < db.out
-      </programlisting>
-    </para>
-    <tip>
-      <para>
-	You can use most <application>psql</application> options
-	when reloading.
-      </para>
-    </tip>
-  </refsect1>
-</REFENTRY>
+   </tip>
+  </para>
+  <para>
+   To reload this database:
+
+   <programlisting>
+% psql -e template1 < db.out
+   </programlisting>
+  </para>
+  <tip>
+   <para>
+    You can use most <application>psql</application> options
+    when reloading.
+   </para>
+  </tip>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

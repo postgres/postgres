@@ -1,168 +1,166 @@
-<REFENTRY ID="SQL-DROPRULE">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-DROPRULE">
+ <refmeta>
+  <refentrytitle>
    DROP RULE
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    DROP RULE
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Removes an existing rule from the database
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-22</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
-DROP RULE <REPLACEABLE CLASS="PARAMETER">name</REPLACEABLE>
-  </SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-22</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+DROP RULE <replaceable class="PARAMETER">name</replaceable>
+  </synopsis>
   
-  <REFSECT2 ID="R2-SQL-DROPRULE-1">
-   <REFSECT2INFO>
-    <DATE>1998-09-22</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-DROPRULE-1">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
-   </PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">name</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          The name of an existing rule to drop.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-DROPRULE-2">
-   <REFSECT2INFO>
-    <DATE>1998-09-22</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Outputs
-   </TITLE>
-   <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>DROP</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          Message returned if successfully.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>ERROR:  RewriteGetRuleEventRel: rule "<replaceable class="parameter">name</replaceable>" not found</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   This message occurs if the specified rule does not exist.
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">name</replaceable></term>
+      <listitem>
+       <para>
+	The name of an existing rule to drop.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
- 
- <REFSECT1 ID="R1-SQL-DROPRULE-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-22</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-DROPRULE-2">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+DROP
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if successfully.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><computeroutput>
+ERROR:  RewriteGetRuleEventRel: rule "<replaceable class="parameter">name</replaceable>" not found
+       </computeroutput></term>
+      <listitem>
+       <para>
+	This message occurs if the specified rule does not exist.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-DROPRULE-1">
+  <refsect1info>
+   <date>1998-09-22</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    <command>DROP RULE</command> drops a rule from the specified
- <productname>Postgres</productname> rule
+   <productname>Postgres</productname> rule
    system. <productname>Postgres</productname>
- will immediately cease enforcing it and
+   will immediately cease enforcing it and
    will purge its definition from the system catalogs.
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-DROPRULE-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-22</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  </para>
+
+  <refsect2 id="R2-SQL-DROPRULE-3">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     The <command>DROP RULE</command> statement is a
- <productname>Postgres</productname>
+    <productname>Postgres</productname>
     language extension.
-   </PARA>
-   <PARA>
+   </para>
+   <para>
     Refer to <command>CREATE RULE</command> for
     information on how to create rules.
-   </PARA>
+   </para>
   </refsect2>
 
-  <REFSECT2 ID="R2-SQL-DROPRULE-4">
-   <REFSECT2INFO>
-    <DATE>1998-09-22</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-DROPRULE-4">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
    Bugs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     Once a rule is dropped, access to historical information
     the rule has written may disappear.
-   </PARA>
-  </REFSECT2>
- </refsect1>
-  
- <REFSECT1 ID="R1-SQL-DROPRULE-2">
-  <TITLE>
-   Usage
-  </TITLE>
-  <PARA>
-   To drop the rewrite rule <literal>newrule</literal>:
-  </PARA>
-  <ProgramListing>
-   DROP RULE newrule
-  </ProgramListing>
- </REFSECT1>
- 
- <REFSECT1 ID="R1-SQL-DROPRULE-3">
-  <TITLE>
-   Compatibility
-  </TITLE>
-  <PARA>
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-DROPRULE-5">
-   <REFSECT2INFO>
-    <DATE>1998-09-22</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    SQL92
-   </TITLE>
-   <PARA>
-   There is no <command>DROP RULE</command> in SQL92.
-   </PARA>
+   </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+  
+ <refsect1 id="R1-SQL-DROPRULE-2">
+  <title>
+   Usage
+  </title>
+  <para>
+   To drop the rewrite rule <literal>newrule</literal>:
 
+   <programlisting>
+DROP RULE newrule;
+   </programlisting>
+  </para>
+ </refsect1>
+ 
+ <refsect1 id="R1-SQL-DROPRULE-3">
+  <title>
+   Compatibility
+  </title>
+  <para>
+  </para>
+  
+  <refsect2 id="R2-SQL-DROPRULE-5">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
+    SQL92
+   </title>
+   <para>
+    There is no <command>DROP RULE</command> in SQL92.
+   </para>
+  </refsect2>
+ </refsect1>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

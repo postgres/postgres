@@ -1,132 +1,123 @@
-<REFENTRY ID="SQL-CREATERULE">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-CREATERULE">
+ <refmeta>
+  <refentrytitle>
    CREATE RULE
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    CREATE RULE
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Defines a new rule
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-11</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
-CREATE RULE <replaceable class="parameter">name</replaceable>
-    AS ON <replaceable class="parameter">event</replaceable>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-11</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+CREATE RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable class="parameter">event</replaceable>
     TO <replaceable class="parameter">object</replaceable> [ WHERE <replaceable class="parameter">condition</replaceable> ]
     DO [ INSTEAD ] [ <replaceable class="parameter">action</replaceable> | NOTHING ]
-  </SYNOPSIS>
-  
-  <REFSECT2 ID="R2-SQL-CREATERULE-1">
-   <REFSECT2INFO>
-    <DATE>1998-09-11</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Inputs
-   </TITLE>
-   <PARA>
-   </PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-<replaceable class="parameter">name</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The name of a rule to create.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-<replaceable class="parameter">event</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   Event is one of <literal>select</literal>,
- <literal>update</literal>, <literal>delete</literal>
- or <literal>insert</literal>.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-<replaceable class="parameter">object</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   Object is either <replaceable class="parameter">table</replaceable>
- or <replaceable class="parameter">table</replaceable>.<replaceable class="parameter">column</replaceable>.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-<replaceable class="parameter">condition</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   Any SQL WHERE clause. <literal>new</literal> or
-	   <literal>current</literal> can appear instead of an instance
-	   variable whenever an instance variable is permissible in SQL.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-<replaceable class="parameter">action</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   Any SQL statement. <literal>new</literal> or
-	   <literal>current</literal> can appear instead of an instance
-	   variable whenever an instance variable is permissible in SQL.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </VARIABLELIST>
+  </synopsis>
 
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-CREATERULE-2">
-   <REFSECT2INFO>
-    <DATE>1998-09-11</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Outputs
-   </TITLE>
-   <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>CREATE</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   Message returned if the rule is successfully created.
-	</para>
+  <refsect2 id="R2-SQL-CREATERULE-1">
+   <refsect2info>
+    <date>1998-09-11</date>
+   </refsect2info>
+   <title>
+    Inputs
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">name</replaceable></term>
+      <listitem>
+       <para>
+	The name of a rule to create.
+       </para>
       </listitem>
-     </VARLISTENTRY>
-    </VARIABLELIST>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">event</replaceable></term>
+      <listitem>
+       <para>
+	Event is one of <literal>select</literal>,
+	<literal>update</literal>, <literal>delete</literal>
+	or <literal>insert</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">object</replaceable></term>
+      <listitem>
+       <para>
+	Object is either <replaceable class="parameter">table</replaceable>
+	or <replaceable class="parameter">table</replaceable>.<replaceable
+	 class="parameter">column</replaceable>.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">condition</replaceable></term>
+      <listitem>
+       <para>
+	Any SQL WHERE clause. <literal>new</literal> or
+	<literal>current</literal> can appear instead of an instance
+	variable whenever an instance variable is permissible in SQL.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">action</replaceable></term>
+      <listitem>
+       <para>
+	Any SQL statement. <literal>new</literal> or
+	<literal>current</literal> can appear instead of an instance
+	variable whenever an instance variable is permissible in SQL.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
- 
- <REFSECT1 ID="R1-SQL-CREATERULE-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-11</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-CREATERULE-2">
+   <refsect2info>
+    <date>1998-09-11</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+CREATE
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if the rule is successfully created.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-CREATERULE-1">
+  <refsect1info>
+   <date>1998-09-11</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    The semantics of a rule is that at the time an individual instance is
    accessed, updated, inserted or deleted, there is a current instance (for
    retrieves, updates and deletes) and a new instance (for updates and
@@ -146,13 +137,13 @@ CREATE RULE <replaceable class="parameter">name</replaceable>
    command that caused activation.
   </para>
   
-  <REFSECT2 ID="R2-SQL-CREATERULE-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-11</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CREATERULE-3">
+   <refsect2info>
+    <date>1998-09-11</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
+   </title>
    <para>
     A caution about SQL rules is in  order.  If the same class name
     or instance variable appears in the
@@ -164,14 +155,17 @@ CREATE RULE <replaceable class="parameter">name</replaceable>
     variables that are shared between these clauses. For example, the following
     two rules have the same semantics:
     <programlisting>
-on update to EMP.salary where EMP.name = "Joe"
-    do update EMP ( ... ) where ...
-
-on update to EMP-1.salary where EMP-2.name = "Joe"
-    do update EMP-3 ( ... ) where ...
+ON UPDATE TO emp.salary WHERE emp.name = "Joe"
+    DO UPDATE emp ( ... ) WHERE ...
     </programlisting>
+
+    <programlisting>
+ON UPDATE TO emp-1.salary WHERE emp-2.name = "Joe"
+    DO UPDATE emp-3 ( ... ) WHERE ...
+    </programlisting>
+
     Each rule can have the optional tag INSTEAD.
-Without
+    Without
     this tag, <replaceable class="parameter">action</replaceable> will be
     performed in addition to the user command when the
     <replaceable class="parameter">event</replaceable> in the
@@ -180,7 +174,7 @@ Without
     <replaceable class="parameter">action</replaceable> part will be done
     instead of the user command. In this later case, the
     <replaceable class="parameter">action</replaceable> can be the keyword
-    NOTHING.
+    <literal>NOTHING</literal>.
    </para>
    <para>
     When choosing between the rewrite and instance rule systems for a
@@ -192,25 +186,27 @@ Without
     It is very important to note that the rewrite rule system
     will neither detect nor process circular rules. For example, though each
     of the following two rule definitions are accepted by
- <productname>Postgres</productname>, the
+    <productname>Postgres</productname>, the
     retrieve command will cause <productname>Postgres</productname> to crash:
 
     <example>
      <title>Example of a circular rewrite rule combination.</title>
      <programlisting>
-create rule bad_rule_combination_1 as
-    on select to EMP
-    do instead select to TOYEMP
-
-create rule bad_rule_combination_2 as
-    on select to TOYEMP
-    do instead select to EMP
+CREATE RULE bad_rule_combination_1 AS
+    ON SELECT TO emp
+    DO INSTEAD SELECT TO toyemp;
      </programlisting>
-     <para>	 
+
+     <programlisting>
+CREATE RULE bad_rule_combination_2 AS
+    ON SELECT TO toyemp
+    DO INSTEAD SELECT TO emp;
+     </programlisting>
+     <para>
       This attempt to retrieve from EMP will cause
- <productname>Postgres</productname> to crash.
+      <productname>Postgres</productname> to crash.
       <programlisting>
-select * from EMP
+SELECT * FROM emp;
       </programlisting></para>
     </example>
 
@@ -219,25 +215,24 @@ select * from EMP
     You must have rule definition access to a class in order
     to define a rule on it. Use <command>GRANT</command>
     and <command>REVOKE</command> to change permissions.
-    
-   </PARA>
-  </REFSECT2>
+   </para>
+  </refsect2>
  </refsect1>
  
- <REFSECT1 ID="R1-SQL-CREATERULE-2">
-  <TITLE>
+ <refsect1 id="R1-SQL-CREATERULE-2">
+  <title>
    Usage
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    Make Sam get the same salary adjustment as Joe:
    
    <programlisting>
-create rule example_1 as
-    on update EMP.salary where current.name = "Joe"
-    do update EMP (salary = new.salary)
-    where EMP.name = "Sam"
+CREATE RULE example_1 AS
+    ON UPDATE emp.salary WHERE current.name = "Joe"
+    DO UPDATE emp (salary = new.salary)
+    WHERE emp.name = "Sam";
    </programlisting>
-   
+
    At the time Joe receives a salary adjustment, the event
    will become true and Joe's current instance and proposed
    new instance are available to the execution routines.
@@ -248,12 +243,12 @@ create rule example_1 as
   <para>
    Make Bill get Joe's salary when it is accessed:
    <programlisting>
-create rule example_2 as
-    on select to EMP.salary
-    where current.name = "Bill"
-    do instead
-    select (EMP.salary) from EMP
-        where EMP.name = "Joe"
+CREATE RULE example_2 AS
+    ON SELECT TO EMP.salary
+    WHERE current.name = "Bill"
+    DO INSTEAD
+    SELECT (emp.salary) from emp
+        WHERE emp.name = "Joe";
    </programlisting>
   </para>
   <para>
@@ -261,40 +256,40 @@ create rule example_2 as
    department (<function>current_user</function> returns the name of
    the current user):
    <programlisting>  
-create rule example_3 as
-    on select to EMP.salary
-    where current.dept = "shoe" and current_user = "Joe"
-    do instead nothing
+CREATE RULE example_3 AS
+    ON SELECT TO emp.salary
+    WHERE current.dept = "shoe" AND current_user = "Joe"
+    DO INSTEAD NOTHING;
    </programlisting>
   </para>
   <para>
    Create a view of the employees working in the toy department.
    <programlisting>
-create TOYEMP(name = char16, salary = int4)
+CREATE toyemp(name = char16, salary = int4);
 
-create rule example_4 as
-    on select to TOYEMP
-    do instead
-    select (EMP.name, EMP.salary) from EMP
-        where EMP.dept = "toy"
+CREATE RULE example_4 AS
+    ON SELECT TO toyemp
+    DO INSTEAD
+    SELECT (emp.name, emp.salary) FROM emp
+        WHERE emp.dept = "toy";
    </programlisting>
   </para>
   <para>
    All new employees must make 5,000 or less
    <programlisting>
-create rule example_5 as
-    on insert to EMP where new.salary > 5000
-    do update newset salary = 5000
+CREATE RULE example_5 AS
+    ON INERT TO emp WHERE new.salary > 5000
+    DO UPDATE NEWSET salary = 5000;
    </programlisting>
-  </PARA>
- </REFSECT1>
- 
- <REFSECT1 ID="R1-SQL-CREATERULE-3">
-  <TITLE>
+  </para>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-CREATERULE-3">
+  <title>
    Bugs
-  </TITLE>
+  </title>
   <para>
-   The object in a SQL rule cannot be an array reference and
+   The object in a <acronym>SQL</acronym> rule cannot be an array reference and
    cannot have parameters.
   </para>
   <para>
@@ -308,36 +303,36 @@ create rule example_5 as
    text attributes. This implies that creation of rules may
    fail if the rule plus its various internal representations
    exceed some value that is on the order of one page (8KB).
-   </PARA>
+   </para>
  </refsect1>
-  
- <REFSECT1 ID="R1-SQL-CREATERULE-4">
-  <TITLE>
+
+ <refsect1 id="R1-SQL-CREATERULE-4">
+  <title>
    Compatibility
-  </TITLE>
-  <PARA>
-   CREATE RULE statement is a <productname>Postgres</productname>
- language extension.
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-CREATERULE-4">
-   <REFSECT2INFO>
-    <DATE>1998-09-11</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  </title>
+  <para>
+   <command>CREATE RULE</command> statement is a <productname>Postgres</productname>
+   language extension.
+  </para>
+
+  <refsect2 id="R2-SQL-CREATERULE-4">
+   <refsect2info>
+    <date>1998-09-11</date>
+   </refsect2info>
+   <title>
     SQL92
-   </TITLE>
+   </title>
    <para>
-    There is no CREATE RULE statement in <acronym>SQL92</acronym>.
+    There is no <command>CREATE RULE</command> statement in <acronym>SQL92</acronym>.
    </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

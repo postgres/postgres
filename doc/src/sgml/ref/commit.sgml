@@ -30,7 +30,7 @@ COMMIT [ WORK | TRANSACTION ]
     Inputs
    </title>
    <para>
-    None
+    None.
    </para>
   </refsect2>
    
@@ -45,9 +45,9 @@ COMMIT [ WORK | TRANSACTION ]
 
     <variablelist>
      <varlistentry>
-      <term>
-       <returnvalue>END</returnvalue>
-      </term>
+      <term><computeroutput>
+END
+       </computeroutput></term>
       <listitem>
        <para>
 	Message returned if the transaction is successfully committed.
@@ -55,9 +55,9 @@ COMMIT [ WORK | TRANSACTION ]
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term>
-       <returnvalue>NOTICE EndTransactionBlock and not inprogress/abort state</returnvalue>
-      </term>
+      <term><computeroutput>
+NOTICE EndTransactionBlock and not inprogress/abort state
+       </computeroutput></term>
       <listitem>
        <para>
 	If there is no transaction in progress.

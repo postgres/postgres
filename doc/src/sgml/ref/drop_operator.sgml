@@ -1,207 +1,204 @@
-<REFENTRY ID="SQL-DROPOPERATOR">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-DROPOPERATOR">
+ <refmeta>
+  <refentrytitle>
    DROP OPERATOR
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    DROP OPERATOR
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Removes an operator from the database
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
   
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-22</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
-DROP OPERATOR <REPLACEABLE CLASS="PARAMETER">id</REPLACEABLE> ( <REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE> | NONE [,...] )
-  </SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-22</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+DROP OPERATOR <replaceable class="PARAMETER">id</replaceable> ( <replaceable class="PARAMETER">type</replaceable> | NONE [,...] )
+  </synopsis>
   
-  <REFSECT2 ID="R2-SQL-DROPOPERATOR-1">
-   <REFSECT2INFO>
-    <DATE>1998-09-22</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-DROPOPERATOR-1">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
-   </PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">id</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          The identifier of an existing operator.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">type</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          The type of function parameters.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-DROPOPERATOR-2">
-   <REFSECT2INFO>
-    <DATE>1998-09-22</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Outputs
-   </TITLE>
-   <PARA>
-
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>DROP</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The message returned if the command is successful.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>ERROR:  RemoveOperator: binary operator '<REPLACEABLE CLASS="PARAMETER">id</REPLACEABLE>' taking '<REPLACEABLE CLASS="PARAMETER">type1</REPLACEABLE>' and '<REPLACEABLE CLASS="PARAMETER">type2</REPLACEABLE>' does not exist</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          This message occurs if the specified binary operator does not exist.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>ERROR:  RemoveOperator: left unary operator '<REPLACEABLE CLASS="PARAMETER">id</REPLACEABLE>' taking '<REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE>' does not exist</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          This message occurs if the specified left unary operator
- specified does not exist.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>ERROR:  RemoveOperator: right unary operator '<REPLACEABLE CLASS="PARAMETER">id</REPLACEABLE>' taking '<REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE>' does not exist</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          This message occurs if the specified right unary operator
- specified does not exist.
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">id</replaceable></term>
+      <listitem>
+       <para>
+	The identifier of an existing operator.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+     <varlistentry>
+      <term><replaceable class="parameter">type</replaceable></term>
+      <listitem>
+       <para>
+	The type of function parameters.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
- 
- <REFSECT1 ID="R1-SQL-DROPOPERATOR-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-22</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-DROPOPERATOR-2">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+DROP
+       </computeroutput></term>
+      <listitem>
+       <para>
+	The message returned if the command is successful.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><computeroutput>
+ERROR:  RemoveOperator: binary operator '<replaceable class="PARAMETER">oper</replaceable>' taking '<replaceable class="PARAMETER">type</replaceable>' and '<replaceable class="PARAMETER">type2</replaceable>' does not exist
+       </computeroutput></term>
+      <listitem>
+       <para>
+	This message occurs if the specified binary operator does not exist.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><computeroutput>
+ERROR:  RemoveOperator: left unary operator '<replaceable class="PARAMETER">oper</replaceable>' taking '<replaceable class="PARAMETER">type</replaceable>' does not exist
+       </computeroutput></term>
+      <listitem>
+       <para>
+	This message occurs if the specified left unary operator
+	specified does not exist.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><computeroutput>
+ERROR:  RemoveOperator: right unary operator '<replaceable class="PARAMETER">oper</replaceable>' taking '<replaceable class="PARAMETER">type</replaceable>' does not exist
+       </computeroutput></term>
+      <listitem>
+       <para>
+	This message occurs if the specified right unary operator
+	specified does not exist.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-DROPOPERATOR-1">
+  <refsect1info>
+   <date>1998-09-22</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
-   The DROP OPERATOR statement drops an existing operator from the
+  </title>
+  <para>
+   <command>DROP OPERATOR</command> drops an existing operator from the
    database.
    To execute this command you must be the owner of the operator.
-  </PARA>
-  <PARA>
+  </para>
+  <para>
    The left or right type of a left or right unary
-   operator, respectively, may be specified as NONE.
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-DROPOPERATOR-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-22</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+   operator, respectively, may be specified as <literal>NONE</literal>.
+  </para>
+
+  <refsect2 id="R2-SQL-DROPOPERATOR-3">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     The <command>DROP OPERATOR</command> statement is a 
-<productname>Postgres</productname>
+    <productname>Postgres</productname>
     language extension.
-   </PARA>
-   <PARA>
+   </para>
+   <para>
     Refer to <command>CREATE OPERATOR</command> for
     information on how to create operators.
-   </PARA>
-   <PARA>
+   </para>
+   <para>
     It is the user's responsibility to remove any access methods and
     operator classes that rely on the deleted operator.
-   </PARA>
-  </REFSECT2>
- </refsect1>
-  
- <REFSECT1 ID="R1-SQL-DROPOPERATOR-2">
-  <TITLE>
-   Usage
-  </TITLE>
-  <PARA>
-   Remove power operator <literal>a^n</literal> for <literal>int4</literal>:
-  </PARA>
-  <ProgramListing>
-DROP OPERATOR ^ (int4, int4);
-  </ProgramListing>
-  <PARA>
-   Remove left unary operator <literal>!a</literal> for booleans:
-  </PARA>
-  <ProgramListing>
-DROP OPERATOR ! (none, bool);
-  </ProgramListing>
-  <PARA>
-   Remove right unary factorial operator <literal>a!</literal> for
-   <literal>int4</literal>:
-  </PARA>
-  <ProgramListing>
-DROP OPERATOR ! (int4, none);
-  </ProgramListing>
- </REFSECT1>
- 
- <REFSECT1 ID="R1-SQL-DROPOPERATOR-3">
-  <TITLE>
-   Compatibility
-  </TITLE>
-  <PARA>
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-DROPOPERATOR-4">
-   <REFSECT2INFO>
-    <DATE>1998-09-22</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    SQL92
-   </TITLE>
-   <PARA>
-   There is no <command>DROP OPERATOR</command> in <acronym>SQL92</acronym>.
-   </PARA>
+   </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+
+ <refsect1 id="R1-SQL-DROPOPERATOR-2">
+  <title>
+   Usage
+  </title>
+  <para>
+   Remove power operator <literal>a^n</literal> for <literal>int4</literal>:
+
+   <programlisting>
+DROP OPERATOR ^ (int4, int4);
+   </programlisting>
+  </para>
+  <para>
+   Remove left unary negation operator (<literal>b !</literal>) for booleans:
+   <programlisting>
+DROP OPERATOR ! (none, bool);
+   </programlisting>
+  </para>
+  <para>
+   Remove right unary factorial operator (<literal>! i</literal>) for
+   <literal>int4</literal>:
+   <programlisting>
+DROP OPERATOR ! (int4, none);
+   </programlisting>
+  </para>
+ </refsect1>
+ 
+ <refsect1 id="R1-SQL-DROPOPERATOR-3">
+  <title>
+   Compatibility
+  </title>
+  <para>
+  </para>
+
+  <refsect2 id="R2-SQL-DROPOPERATOR-4">
+   <refsect2info>
+    <date>1998-09-22</date>
+   </refsect2info>
+   <title>
+    SQL92
+   </title>
+   <para>
+    There is no <command>DROP OPERATOR</command> in <acronym>SQL92</acronym>.
+   </para>
+  </refsect2>
+ </refsect1>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

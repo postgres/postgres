@@ -1,23 +1,23 @@
-<REFENTRY ID="SQL-CREATETYPE">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-CREATETYPE">
+ <refmeta>
+  <refentrytitle>
    CREATE TYPE
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    CREATE TYPE
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Defines a new base data type
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-21</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-21</date>
+  </refsynopsisdivinfo>
+  <synopsis>
 CREATE TYPE <replaceable class="parameter">typename</replaceable> (
         INPUT          = <replaceable class="parameter">input_function</replaceable>
       , OUTPUT         = <replaceable class="parameter">output_function</replaceable>
@@ -30,177 +30,158 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> (
     [ , RECEIVE        = <replaceable class="parameter">receive_function</replaceable> ]
     [ , PASSEDBYVALUE ]
 )
-  </SYNOPSIS>
+  </synopsis>
   
-  <REFSECT2 ID="R2-SQL-CREATETYPE-1">
-   <REFSECT2INFO>
-    <DATE>1998-09-21</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CREATETYPE-1">
+   <refsect2info>
+    <date>1998-09-21</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
-   </PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	   <replaceable class="parameter">typename</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          The name of a type to be created.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-INTERNALLENGTH <replaceable class="parameter">internallength</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   A literal value, which specifies the internal length of
-	   the new type.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-EXTERNALLENGTH <replaceable class="parameter">externallength</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   A literal value, which specifies the external length of
-	   the new type.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	 INPUT <replaceable class="parameter">input_function</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The name of a function, created by CREATE FUNCTION, which
-	   converts data from its external form to the type's
-	   internal form.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	 OUTPUT <replaceable class="parameter">output_function</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The name of a function, created by CREATE FUNCTION, which
-	   converts data from its internal form to a form suitable
-	   for display.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	   <replaceable class="parameter">element</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The type being created is an array; this specifies
-	   the type of the array elements.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	   <replaceable class="parameter">delimiter</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The delimiter character for the array.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	   <replaceable class="parameter">default</replaceable
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The default text to be displayed to indicate "data
-	   not present"
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	   <replaceable class="parameter">send_function</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The name of a function, created by CREATE FUNCTION, which
-	   converts data of this type into a form suitable for
-	   transmission to another machine.
-<comment>Is this right?</comment>
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	   <replaceable class="parameter">receive_function</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The name of a function, created by CREATE FUNCTION, which
-	   converts data of this type from a form suitable for
-	   transmission from another machine to internal form.
-<comment>Is this right?</comment>
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-CREATETYPE-2">
-   <REFSECT2INFO>
-    <DATE>1998-09-21</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Outputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
 
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>CREATE</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   Message returned if the type is successfully created.
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">typename</replaceable></term>
+      <listitem>
+       <para>
+	The name of a type to be created.
        </para>
       </listitem>
      </varlistentry>
-   </VARIABLELIST>
+     <varlistentry>
+      <term>INTERNALLENGTH <replaceable class="parameter">internallength</replaceable></term>
+      <listitem>
+       <para>
+	A literal value, which specifies the internal length of
+	the new type.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>EXTERNALLENGTH <replaceable class="parameter">externallength</replaceable></term>
+      <listitem>
+       <para>
+	A literal value, which specifies the external length of
+	the new type.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>INPUT <replaceable class="parameter">input_function</replaceable></term>
+      <listitem>
+       <para>
+	The name of a function, created by CREATE FUNCTION, which
+	converts data from its external form to the type's
+	internal form.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>OUTPUT <replaceable class="parameter">output_function</replaceable></term>
+      <listitem>
+       <para>
+	The name of a function, created by CREATE FUNCTION, which
+	converts data from its internal form to a form suitable
+	for display.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">element</replaceable></term>
+      <listitem>
+       <para>
+	The type being created is an array; this specifies
+	the type of the array elements.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">delimiter</replaceable></term>
+      <listitem>
+       <para>
+	The delimiter character for the array.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">default</replaceable></term>
+      <listitem>
+       <para>
+	The default text to be displayed to indicate "data
+	not present"
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">send_function</replaceable></term>
+      <listitem>
+       <para>
+	The name of a function, created by CREATE FUNCTION, which
+	converts data of this type into a form suitable for
+	transmission to another machine.
+	<comment>Is this right?</comment>
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">receive_function</replaceable></term>
+      <listitem>
+       <para>
+	The name of a function, created by CREATE FUNCTION, which
+	converts data of this type from a form suitable for
+	transmission from another machine to internal form.
+	<comment>Is this right?</comment>
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
- 
- <REFSECT1 ID="R1-SQL-CREATETYPE-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-21</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-CREATETYPE-2">
+   <refsect2info>
+    <date>1998-09-21</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+CREATE
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if the type is successfully created.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-CREATETYPE-1">
+  <refsect1info>
+   <date>1998-09-21</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
-   CREATE  TYPE  allows  the user to register a new user data
+  </title>
+  <para>
+   <command>CREATE TYPE</command>  allows  the user to register a new user data
    type with Postgres for use in the current data base.   The
    user  who  defines  a type becomes its owner.
-   <replaceable class="parameter">Typename</replaceable> is
+   <replaceable class="parameter">typename</replaceable> is
    the name of the new type and must  be  unique  within  the
    types defined for this database.
   </para>
-  <PARA>
-   CREATE  TYPE  requires  the  registration of two functions
+  <para>
+   <command>CREATE TYPE</command>  requires  the  registration of two functions
    (using create function) before defining the type.   The
    representation  of  a  new  base  type  is  determined  by
    <replaceable class="parameter">input_function</replaceable>, which
@@ -212,7 +193,7 @@ EXTERNALLENGTH <replaceable class="parameter">externallength</replaceable>
    the input and output functions must be  declared  to  take
    one or two arguments of type "<literal>opaque</literal>".
   </para>
-  <PARA>
+  <para>
    New  base  data  types  can be fixed length, in which case
    <replaceable class="parameter">internallength</replaceable> is a
    positive integer, or variable  length,
@@ -221,33 +202,33 @@ EXTERNALLENGTH <replaceable class="parameter">externallength</replaceable>
    as the Postgres-supplied  data  type, "<literal>text</literal>".
    To  indicate that a type is variable-length, set
    <replaceable class="parameter">internallength</replaceable>
-   to VARIABLE.
+   to <option>VARIABLE</option>.
    The external representation is  similarly specified using the
    <replaceable class="parameter">externallength</replaceable>
    keyword.
   </para>
-  <PARA>
+  <para>
    To indicate that a type is an array and to indicate that a
    type has array elements, indicate the type  of  the  array
    element using the element keyword.  For example, to define
    an array of 4 byte integers ("int4"), specify
    <programlisting>ELEMENT = int4</programlisting>
   </para>
-  <PARA>
+  <para>
    To indicate the delimiter to be used  on  arrays  of  this
    type,  <replaceable class="parameter">delimiter</replaceable>
    can be
    set to a specific character.  The default delimiter is the comma
    ("<literal>,</literal>").
   </para>
-  <PARA>
+  <para>
    A default value is optionally available  in  case  a  user
    wants  some  specific  bit  pattern to mean "data not present."
-   Specify the default with the DEFAULT keyword.
-<comment>How does the user specify that bit pattern and associate
-it with the fact that the data is not present></comment>
+   Specify the default with the <literal>DEFAULT</literal> keyword.
+   <comment>How does the user specify that bit pattern and associate
+    it with the fact that the data is not present></comment>
   </para>
-  <PARA>
+  <para>
    The optional functions
    <replaceable class="parameter">send_function</replaceable> and
    <replaceable class="parameter">receive_function</replaceable>
@@ -265,25 +246,27 @@ it with the fact that the data is not present></comment>
    characters do not have to be converted if passed  from
    a Sun-4 to a DECstation, but many other types do.
   </para>
-  <PARA>
-   The  optional flag,  PASSEDBYVALUE, indicates that operators
+  <para>
+   The  optional flag,  <option>PASSEDBYVALUE</option>, indicates that operators
    and functions which use this data type should be passed an
    argument  by  value  rather  than by reference.  Note that you
    may not pass by value types whose internal representation is 
    more than four bytes.
   </para>
-  <PARA>
+  <para>
    For new base types, a user can define operators, functions
    and aggregates using the appropriate facilities  described
    in this section.
   </para>
+
   <refsect2>
    <title>Array Types</title>
    <para>
-       Two   generalized   built-in   functions,   array_in   and
-       array_out, exist for  quick  creation  of  variable-length
-       array  types.   These  functions  operate on arrays of any
-    existing Postgres type.</para>
+    Two   generalized   built-in   functions,   array_in   and
+    array_out, exist for  quick  creation  of  variable-length
+    array  types.   These  functions  operate on arrays of any
+    existing Postgres type.
+   </para>
   </refsect2>
 
   <refsect2>
@@ -306,33 +289,31 @@ it with the fact that the data is not present></comment>
    type in a class definition:
   </para>
   <programlisting>
-   CREATE TYPE box (INTERNALLENGTH = 8,
-   INPUT = my_procedure_1, OUTPUT = my_procedure_2)
-   
-   CREATE TABLE myboxes (id INT4, description box)
+CREATE TYPE box (INTERNALLENGTH = 8,
+    INPUT = my_procedure_1, OUTPUT = my_procedure_2);
+CREATE TABLE myboxes (id INT4, description box);
   </programlisting>
   <para>
    This command creates a variable length array type with
    integer elements.
-  </para>
-  <programlisting>
-       CREATE TYPE int4array
-          (INPUT = array_in, OUTPUT = array_out,
-           INTERNALLENGTH = VARIABLE, ELEMENT = int4)
 
-       CREATE TABLE myarrays (id int4, numbers int4array)
-  </programlisting>
+   <programlisting>
+CREATE TYPE int4array (INPUT = array_in, OUTPUT = array_out,
+    INTERNALLENGTH = VARIABLE, ELEMENT = int4);
+CREATE TABLE myarrays (id int4, numbers int4array);
+   </programlisting>
+  </para>
   <para>
    This command creates a large object type and uses it in
-   a class definition.
-  </para>
-  <programlisting>
-       CREATE TYPE bigobj
-          (INPUT = lo_filein, OUTPUT = lo_fileout,
-           INTERNALLENGTH = VARIABLE)
+   a class definition:
 
-       CREATE TABLE big_objs (id int4, obj bigobj)
-  </programlisting>
+   <programlisting>
+CREATE TYPE bigobj (INPUT = lo_filein, OUTPUT = lo_fileout,
+    INTERNALLENGTH = VARIABLE);
+CREATE TABLE big_objs (id int4, obj bigobj);
+   </programlisting>
+  </para>
+
   <refsect2>
    <title>Restrictions</title>
    <para>
@@ -344,44 +325,43 @@ it with the fact that the data is not present></comment>
    </para>
   </refsect2>
 
-  <REFSECT2 ID="R2-SQL-CREATETYPE-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-21</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CREATETYPE-3">
+   <refsect2info>
+    <date>1998-09-21</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     Refer to <command>DROP TYPE</command> to remove an existing type.
-   </PARA>
-   <PARA>
+   </para>
+   <para>
     See also <command>CREATE  FUNCTION</command>,
     <command>CREATE  OPERATOR</command> and the chapter on Large Objects
     in the <citetitle>PostgreSQL Programmer's Guide</citetitle>.
    </para>
-  </REFSECT2>
+  </refsect2>
  </refsect1>
  
  
- <REFSECT1 ID="R1-SQL-CREATETYPE-3">
-  <TITLE>
+ <refsect1 id="R1-SQL-CREATETYPE-3">
+  <title>
    Compatibility
-  </TITLE>
+  </title>
 
-  <REFSECT2 ID="R2-SQL-CREATETYPE-4">
-   <REFSECT2INFO>
-    <DATE>1998-09-21</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CREATETYPE-4">
+   <refsect2info>
+    <date>1998-09-21</date>
+   </refsect2info>
+   <title>
     SQL3
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
    <command>CREATE TYPE</command> is an <acronym>SQL3</acronym> statement.
-   </PARA>
-  
-  </REFSECT2>
+   </para>
+  </refsect2>
  </refsect1>
-</REFENTRY>
+</refentry>
 
 
 <!-- Keep this comment at the end of the file

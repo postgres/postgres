@@ -1,23 +1,23 @@
-<REFENTRY ID="SQL-CREATEOPERATOR">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-CREATEOPERATOR">
+ <refmeta>
+  <refentrytitle>
    CREATE OPERATOR
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    CREATE OPERATOR
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Defines a new user operator
-  </REFPURPOSE>
+  </refpurpose>
   </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1999-04-14</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1999-04-14</date>
+  </refsynopsisdivinfo>
+  <synopsis>
 CREATE OPERATOR <replaceable>name</replaceable> (
         PROCEDURE  = <replaceable class="parameter">func_name</replaceable>
      [, LEFTARG    = <replaceable class="parameter">type1</replaceable> ]
@@ -30,166 +30,144 @@ CREATE OPERATOR <replaceable>name</replaceable> (
      [, SORT1      = <replaceable class="parameter">left_sort_op</replaceable> ]
      [, SORT2      = <replaceable class="parameter">right_sort_op</replaceable> ]
     )
-  </SYNOPSIS>
+  </synopsis>
   
-  <REFSECT2 ID="R2-SQL-CREATEOPERATOR-1">
-   <REFSECT2INFO>
-    <DATE>1999-04-14</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CREATEOPERATOR-1">
+   <refsect2info>
+    <date>1999-04-14</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
-   </PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">name</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The operator to be defined. See below for allowable characters.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">func_name</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-The function used to implement this operator.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">type1</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-The type for the left-hand side of the operator, if any. This option would be
-omitted for a right-unary operator.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">type2</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-The type for the right-hand side of the operator, if any. This option would be
-omitted for a left-unary operator.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">com_op</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-The commutator for this operator.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">neg_op</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-The negator of this operator.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">res_proc</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-The restriction selectivity estimator function for this operator.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">join_proc</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-The join selectivity estimator function for this operator.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-HASHES
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-Indicates this operator can support a hash-join algorithm.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">left_sort_op</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-Operator that sorts the left-hand data type of this operator.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <replaceable class="parameter">right_sort_op</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-Operator that sorts the right-hand data type of this operator.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
+   </title>
+   <para>
 
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-CREATEOPERATOR-2">
-   <REFSECT2INFO>
-    <DATE>1999-04-14</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">name</replaceable></term>
+      <listitem>
+       <para>
+	The operator to be defined. See below for allowable characters.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">func_name</replaceable></term>
+      <listitem>
+       <para>
+	The function used to implement this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">type1</replaceable></term>
+      <listitem>
+       <para>
+	The type for the left-hand side of the operator, if any. This option would be
+	omitted for a right-unary operator.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">type2</replaceable></term>
+      <listitem>
+       <para>
+	The type for the right-hand side of the operator, if any. This option would be
+	omitted for a left-unary operator.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">com_op</replaceable></term>
+      <listitem>
+       <para>
+	The commutator for this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">neg_op</replaceable></term>
+      <listitem>
+       <para>
+	The negator of this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">res_proc</replaceable></term>
+      <listitem>
+       <para>
+	The restriction selectivity estimator function for this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">join_proc</replaceable></term>
+      <listitem>
+       <para>
+	The join selectivity estimator function for this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>HASHES</term>
+      <listitem>
+       <para>
+Indicates this operator can support a hash-join algorithm.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">left_sort_op</replaceable></term>
+      <listitem>
+       <para>
+	Operator that sorts the left-hand data type of this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">right_sort_op</replaceable></term>
+      <listitem>
+       <para>
+	Operator that sorts the right-hand data type of this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-CREATEOPERATOR-2">
+   <refsect2info>
+    <date>1999-04-14</date>
+   </refsect2info>
+   <title>
     Outputs
-   </TITLE>
-   <PARA>
-    <VARIABLELIST>
-     <VARLISTENTRY>
-      <TERM>
-       <ReturnValue>CREATE</ReturnValue>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+CREATE
+       </computeroutput></term>
+      <listitem>
+       <para>
 	Message returned if the operator is successfully created.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
- 
- <REFSECT1 ID="R1-SQL-CREATEOPERATOR-1">
-  <REFSECT1INFO>
-   <DATE>1999-04-14</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-CREATEOPERATOR-1">
+  <refsect1info>
+   <date>1999-04-14</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    <command>CREATE OPERATOR</command>  defines a new operator,
    <replaceable class="parameter">name</replaceable>.
    The user who defines an operator becomes its owner.
@@ -199,7 +177,7 @@ Operator that sorts the right-hand data type of this operator.
    is a sequence of up to thirty two (32) characters in any combination
    from the following:
    <literallayout>
-    + - * / &lt; &gt; = ~ ! @ # % ^ & | ` ? $ : 
++ - * / &lt; &gt; = ~ ! @ # % ^ & | ` ? $ : 
    </literallayout>
    <note>
     <para>
@@ -234,12 +212,16 @@ Operator that sorts the right-hand data type of this operator.
    would probably have a commutator
    operator, area-greater-than, &gt;&gt;&gt;.
    Hence, the query optimizer could freely  convert:
+
    <programlisting>
-    "0,0,1,1"::box  &gt;&gt;&gt; MYBOXES.description
+"0,0,1,1"::box  &gt;&gt;&gt; MYBOXES.description
    </programlisting>
+
    to
+
    <programlisting>
-    MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box</programlisting>
+MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
+   </programlisting>
   </para>
   <para>
    This  allows  the  execution code to always use the latter
@@ -253,11 +235,11 @@ Operator that sorts the right-hand data type of this operator.
    equal, !==.
    The negator link allows the query optimizer to simplify
    <programlisting>
-    NOT MYBOXES.description === "0,0,1,1"::box
+NOT MYBOXES.description === "0,0,1,1"::box
    </programlisting>
    to
    <programlisting>
-    MYBOXES.description !== "0,0,1,1"::box
+MYBOXES.description !== "0,0,1,1"::box
    </programlisting>
   </para>
   <para>
@@ -318,7 +300,7 @@ Operator that sorts the right-hand data type of this operator.
    the query optimizer  can  estimate  result  sizes.   If  a
    clause of the form:
    <programlisting>
-    MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
+MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
    </programlisting>
    is present in the qualification,
    then <productname>Postgres</productname> may have to
@@ -326,7 +308,7 @@ Operator that sorts the right-hand data type of this operator.
    satisfy  the clause.  The function
    <replaceable class="parameter">res_proc</replaceable>
    must be a registered function (meaning  it  is  already  defined  using
-   CREATE FUNCTION) which accepts arguments of the correct
+   <command>CREATE FUNCTION</command>) which accepts arguments of the correct
    data types and returns a floating point  number.   The
    query  optimizer  simply  calls this function, passing the
    parameter "0,0,1,1" and multiplies the result by the relation
@@ -343,11 +325,11 @@ Operator that sorts the right-hand data type of this operator.
   <para>
    The difference between the function
    <programlisting>
-    my_procedure_1 (MYBOXES.description, "0,0,1,1"::box)
+my_procedure_1 (MYBOXES.description, "0,0,1,1"::box)
    </programlisting>
    and the operator
    <programlisting>
-    MYBOXES.description === "0,0,1,1"::box
+MYBOXES.description === "0,0,1,1"::box
    </programlisting>
    is  that  <productname>Postgres</productname>
    attempts to optimize operators and can
@@ -356,34 +338,34 @@ Operator that sorts the right-hand data type of this operator.
    optimize functions, and they are performed by brute force.
    Moreover, functions can have any number of arguments while
    operators are restricted to one or two.
-  </PARA>
+  </para>
   
-  <REFSECT2 ID="R2-SQL-CREATEOPERATOR-3">
-   <REFSECT2INFO>
-    <DATE>1999-04-14</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CREATEOPERATOR-3">
+   <refsect2info>
+    <date>1999-04-14</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     Refer to the chapter on operators in the
     <citetitle>PostgreSQL User's Guide</citetitle>
     for further information.
     Refer to <command>DROP OPERATOR</command> to delete
     user-defined operators from a database.
    </para>
-  </REFSECT2>
+  </refsect2>
  </refsect1>
   
- <REFSECT1 ID="R1-SQL-CREATEOPERATOR-2">
-  <TITLE>
+ <refsect1 id="R1-SQL-CREATEOPERATOR-2">
+  <title>
    Usage
-  </TITLE>
-  <PARA>The following command defines a new operator,
+  </title>
+  <para>The following command defines a new operator,
    area-equality, for the BOX data type.
-  </PARA>
-  <ProgramListing>
-   CREATE OPERATOR === (
+  </para>
+  <programlisting>
+CREATE OPERATOR === (
    LEFTARG = box,
    RIGHTARG = box,
    PROCEDURE = area_equal_procedure,
@@ -393,36 +375,37 @@ Operator that sorts the right-hand data type of this operator.
    JOIN = area_join_procedure,
    HASHES,
    SORT1 = <<<,
-   SORT2 = <<<)
-  </ProgramListing>  
- </REFSECT1>
+   SORT2 = <<<
+);
+  </programlisting>  
+ </refsect1>
  
- <REFSECT1 ID="R1-SQL-CREATEOPERATOR-3">
-  <TITLE>
+ <refsect1 id="R1-SQL-CREATEOPERATOR-3">
+  <title>
    Compatibility
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    CREATE OPERATOR is a <productname>Postgres</productname> extension.
-  </PARA>
+  </para>
   
-  <REFSECT2 ID="R2-SQL-CREATEOPERATOR-4">
-   <REFSECT2INFO>
-    <DATE>1999-04-14</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CREATEOPERATOR-4">
+   <refsect2info>
+    <date>1999-04-14</date>
+   </refsect2info>
+   <title>
     SQL92
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     There is no CREATE OPERATOR statement in <acronym>SQL92</acronym>.
-   </PARA>
+   </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

@@ -19,10 +19,8 @@
   </refsynopsisdivinfo>
   <synopsis>
 CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replaceable> (
-    <replaceable class="PARAMETER">column</replaceable> <replaceable
-    class="PARAMETER">type</replaceable>
-    [ NULL | NOT NULL ] [ UNIQUE ] [ DEFAULT <replaceable
-    class="PARAMETER">value</replaceable> ]
+    <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable>
+    [ NULL | NOT NULL ] [ UNIQUE ] [ DEFAULT <replaceable class="PARAMETER">value</replaceable> ]
     [<replaceable>column_constraint_clause</replaceable> | PRIMARY KEY } [ ... ] ]
     [, ... ]
     [, PRIMARY KEY ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ]
@@ -40,112 +38,96 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replacea
    </title>
 
    <para>
-   
-   <variablelist>
-    <varlistentry>
-     <term>
-     TEMPORARY
-     </term>
-     <listitem>
-      <para>
+
+    <variablelist>
+     <varlistentry>
+      <term>TEMPORARY</term>
+      <listitem>
+       <para>
 	The table is created only for this session, and is
 	automatically dropped on session exit.
 	Existing permanent tables with the same name are not visible
 	while the temporary table exists.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>
-      <replaceable class="PARAMETER">table</replaceable>
-     </term>
-     <listitem>
-      <para>
-       The name of a new table to be created.
-      </para>
-     </listitem>
-    </varlistentry>
-    
-    <varlistentry>
-     <term>
-      <replaceable class="PARAMETER">column</replaceable>
-     </term>
-     <listitem>
-      <para>
-       The name of a column.
-      </para>
-     </listitem>
-    </varlistentry>
-    
-    <varlistentry>
-     <term>
-      <replaceable class="PARAMETER">type</replaceable>
-     </term>
-     <listitem>
-      <para>
-       The type of the column. This may include array specifiers.
-       Refer to the <citetitle>PostgreSQL User's Guide</citetitle> for
-       further information about data types and arrays.
-      </para>
-     </listitem>
-    </varlistentry>
-    
-    <varlistentry>
-     <term>
-     DEFAULT <replaceable class="PARAMETER">value</replaceable>
-     </term>
-     <listitem>
-      <para>
-       A default value for a column.
-       See the DEFAULT clause for more information.
-      </para>
-     </listitem>
-    </varlistentry>
-    
-    <varlistentry>
-     <term>
-      <replaceable>column_constraint_clause</replaceable>
-     </term>
-     <listitem>
-      <para>
-       The optional column constraint clauses specify a list of integrity 
-       constraints or tests which new or updated entries must satisfy for
-       an insert or update operation to succeed. Each constraint
-       must evaluate to a boolean expression. Although <acronym>SQL92</acronym>
-requires the <replaceable class="PARAMETER">column_constraint_clause</replaceable>
- to refer to that column only, <productname>Postgres</productname>
- allows multiple columns
-       to be referenced within a single column constraint.
-       See the column constraint clause for more information.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>
-      <replaceable>table_constraint_clause</replaceable>
-     </term>
-     <listitem>
-      <para>
-       The optional table CONSTRAINT clause specifies a list of integrity 
-       constraints which new or updated entries must satisfy for
-       an insert or update operation to succeed. Each constraint
-       must evaluate to a boolean expression. Multiple columns
-       may be referenced within a single constraint.
-       Only one PRIMARY KEY clause may be specified for a table;
-       PRIMARY KEY <replaceable>column</replaceable>
-       (a table constraint) and PRIMARY KEY (a column constraint) are
-       mutually exclusive..
-       See the table constraint clause for more information.
-      </para>
-     </listitem>
-    </varlistentry>
+       </para>
+      </listitem>
+     </varlistentry>
 
      <varlistentry>
-      <term>
-       INHERITS <replaceable class="PARAMETER">inherited_table</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">table</replaceable></term>
+      <listitem>
+       <para>
+	The name of a new table to be created.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">column</replaceable></term>
+      <listitem>
+       <para>
+	The name of a column.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">type</replaceable></term>
+      <listitem>
+       <para>
+	The type of the column. This may include array specifiers.
+	Refer to the <citetitle>PostgreSQL User's Guide</citetitle> for
+	further information about data types and arrays.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>DEFAULT <replaceable class="PARAMETER">value</replaceable></term>
+      <listitem>
+       <para>
+	A default value for a column.
+	See the DEFAULT clause for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable>column_constraint_clause</replaceable></term>
+      <listitem>
+       <para>
+	The optional column constraint clauses specify a list of integrity 
+	constraints or tests which new or updated entries must satisfy for
+	an insert or update operation to succeed. Each constraint
+	must evaluate to a boolean expression. Although <acronym>SQL92</acronym>
+	requires the <replaceable class="PARAMETER">column_constraint_clause</replaceable>
+	to refer to that column only, <productname>Postgres</productname>
+	allows multiple columns
+	to be referenced within a single column constraint.
+	See the column constraint clause for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable>table_constraint_clause</replaceable></term>
+      <listitem>
+       <para>
+	The optional table CONSTRAINT clause specifies a list of integrity 
+	constraints which new or updated entries must satisfy for
+	an insert or update operation to succeed. Each constraint
+	must evaluate to a boolean expression. Multiple columns
+	may be referenced within a single constraint.
+	Only one PRIMARY KEY clause may be specified for a table;
+	PRIMARY KEY <replaceable>column</replaceable>
+	(a table constraint) and PRIMARY KEY (a column constraint) are
+	mutually exclusive..
+	See the table constraint clause for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>INHERITS <replaceable class="PARAMETER">inherited_table</replaceable></term>
       <listitem>
        <para>
 	The optional INHERITS clause specifies a collection of table
@@ -169,7 +151,7 @@ requires the <replaceable class="PARAMETER">column_constraint_clause</replaceabl
     </variablelist>
    </para>    
   </refsect2>
-  
+
   <refsect2 id="R2-SQL-CREATETABLE-2">
    <refsect2info>
     <date>1998-09-11</date>
@@ -179,43 +161,43 @@ requires the <replaceable class="PARAMETER">column_constraint_clause</replaceabl
    </title>
    <para>
 
-       <variablelist>
-	<varlistentry>
-	 <term>
-	  <returnvalue>CREATE</returnvalue>
-	 </term>
-	 <listitem>
-	  <para>
-	   Message returned if table is successfully created.
-	  </para>
-	 </listitem>
-	</varlistentry>
-	
-	<varlistentry>
-	 <term>
-	  <returnvalue>ERROR</returnvalue>
-	 </term>
-	 <listitem>
-	  <para>
-	   Message returned if table creation failed.
-	   This is usually accompanied by some descriptive text, such as:
-	   <programlisting>
-amcreate: "<replaceable class="parameter">table</replaceable>" relation already exists
-	   </programlisting>
-	   which occurs at runtime, if the table specified already exists
-	   in the database.
-	  </para>
-	 </listitem>
-	</varlistentry>
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+CREATE
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if table is successfully created.
+       </para>
+      </listitem>
+     </varlistentry>
 
-	<varlistentry>
-	 <term>
-	  <returnvalue>ERROR:  DEFAULT: type mismatched</returnvalue>
-	 </term>
-	 <listitem>
-	  <para>
-	   if data type of default value doesn't match the
-	   column definition's data type.
+     <varlistentry>
+      <term><computeroutput>
+ERROR
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if table creation failed.
+	This is usually accompanied by some descriptive text, such as:
+	<computeroutput>
+ERROR:  Relation '<replaceable class="parameter">table</replaceable>' already exists
+	</computeroutput>
+	which occurs at runtime, if the table specified already exists
+	in the database.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>
+ERROR:  DEFAULT: type mismatched
+       </computeroutput></term>
+      <listitem>
+       <para>
+	If data type of default value doesn't match the
+	column definition's data type.
        </para>
       </listitem>
      </varlistentry>
@@ -223,7 +205,7 @@ amcreate: "<replaceable class="parameter">table</replaceable>" relation already 
    </para>
   </refsect2>
  </refsynopsisdiv>
- 
+
  <refsect1 id="R1-SQL-CREATETABLE-1">
   <refsect1info>
    <date>1998-09-11</date>
@@ -247,47 +229,46 @@ amcreate: "<replaceable class="parameter">table</replaceable>" relation already 
  </refsect1>
 
  <refsect1 id="R1-SQL-DEFAULTCLAUSE-1">
-   <refsect1info>
-    <date>1998-09-11</date>
-   </refsect1info>
-   <title>
-    DEFAULT Clause
-   </title>
-   <para>
-    <synopsis>
+  <refsect1info>
+   <date>1998-09-11</date>
+  </refsect1info>
+  <title>
+   DEFAULT Clause
+  </title>
+  <para>
+   <synopsis>
 DEFAULT <replaceable class="PARAMETER">value</replaceable>
-    </synopsis>
+   </synopsis>
   </para>
   <refsect2 id="R2-SQL-DEFAULTCLAUSE-1">
    <refsect2info>
     <date>1998-09-11</date>
    </refsect2info>
    <title>
-   Inputs
-  </title>
-  <para>
-       <variablelist>
-	<varlistentry>
-	 <term>
-	 <replaceable class="parameter">value</replaceable>
-	 </term>
+    Inputs
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">value</replaceable></term>
+      <listitem>
+       <para>
+	The possible values for the default value expression are:
+	<itemizedlist>
 	 <listitem>
-	  <para>
-	   The possible values for the default value expression are:
-	   <itemizedlist>
-	    <listitem>
-	     <simpara>
-	      a literal value
-	     </simpara>
-	    </listitem>
-	    <listitem>
-	     <simpara>
-	      a user function
-	     </simpara>
-	    </listitem>
-	    <listitem>
-	     <simpara>
-	      a niladic function
+	  <simpara>
+	   a literal value
+	  </simpara>
+	 </listitem>
+	 <listitem>
+	  <simpara>
+	   a user function
+	  </simpara>
+	 </listitem>
+	 <listitem>
+	  <simpara>
+	   a niladic function
 	  </simpara>
 	 </listitem>
 	</itemizedlist>
@@ -306,6 +287,7 @@ DEFAULT <replaceable class="PARAMETER">value</replaceable>
     Outputs
    </title>
    <para>
+    None.
    </para>
   </refsect2>
   
@@ -314,101 +296,95 @@ DEFAULT <replaceable class="PARAMETER">value</replaceable>
     <date>1998-09-11</date>
    </refsect2info>
    <title>
-   Description
-  </title>
-  <para>
-       The DEFAULT clause assigns a default data value to a column
-       (via a column definition in the CREATE TABLE statement). 
-       The data type of a default value must match the column definition's
-       data type.
-      </para>
-      <para>
-       An INSERT operation that includes a column without a specified
-       default value will assign the NULL value to the column
-       if no explicit data value is provided for it.
-       Default <replaceable class="parameter">literal</replaceable> means
-       that the default is the specified constant value.
-       Default <replaceable class="parameter">niladic-function</replaceable>
-       or <replaceable class="parameter">user-function</replaceable> means
-       that the default
-       is the value of the specified function at the time of the INSERT.
-      </para>
-      <para>
-       There are two types of niladic functions:
-<variablelist>
+    Description
+   </title>
+   <para>
+    The DEFAULT clause assigns a default data value to a column
+    (via a column definition in the CREATE TABLE statement). 
+    The data type of a default value must match the column definition's
+    data type.
+   </para>
+   <para>
+    An INSERT operation that includes a column without a specified
+    default value will assign the NULL value to the column
+    if no explicit data value is provided for it.
+    Default <replaceable class="parameter">literal</replaceable> means
+    that the default is the specified constant value.
+    Default <replaceable class="parameter">niladic-function</replaceable>
+    or <replaceable class="parameter">user-function</replaceable> means
+    that the default
+    is the value of the specified function at the time of the INSERT.
+   </para>
+   <para>
+    There are two types of niladic functions:
+    <variablelist>
+     <varlistentry>
+      <term>niladic USER</term>
+      <listitem>
+       <variablelist>
 	<varlistentry>
-	 <term>niladic USER</term>
+	 <term>CURRENT_USER / USER</term>
 	 <listitem>
-	  <variablelist>
-	   <varlistentry>
-	    <term>CURRENT_USER / USER</term>
-	    <listitem>
-	     <simpara>See CURRENT_USER function</simpara>
-	    </listitem>
-	   </varlistentry>
-	   <varlistentry>
-	    <term>SESSION_USER</term>
-	    <listitem>
-	     <simpara>not yet supported</simpara>
-	    </listitem>
-	   </varlistentry>
-	   <varlistentry>
-	    <term>SYSTEM_USER</term>
-	    <listitem>
-	     <simpara>not yet supported</simpara>
-	    </listitem>
-	   </varlistentry>
-	  </variablelist>
+	  <simpara>See CURRENT_USER function</simpara>
 	 </listitem>
 	</varlistentry>
 	<varlistentry>
-	 <term>niladic datetime</term>
+	 <term>SESSION_USER</term>
 	 <listitem>
-	  <variablelist>
-	   <varlistentry>
-	    <term> CURRENT_DATE</term>
-	    <listitem>
-	     <simpara>See CURRENT_DATE function</simpara>
-	    </listitem>
-	   </varlistentry>
-	   <varlistentry>
-	    <term>CURRENT_TIME</term>
-	    <listitem>
-	     <simpara>See CURRENT_TIME function</simpara>
-	    </listitem>
-	   </varlistentry>
-	   <varlistentry>
-	    <term>CURRENT_TIMESTAMP</term>
-	    <listitem>
-	     <simpara>See CURRENT_TIMESTAMP function</simpara>
-	    </listitem>
-	   </varlistentry>
-	  </variablelist>
+	  <simpara>not yet supported</simpara>
+	 </listitem>
+	</varlistentry>
+	<varlistentry>
+	 <term>SYSTEM_USER</term>
+	 <listitem>
+	  <simpara>not yet supported</simpara>
 	 </listitem>
 	</varlistentry>
        </variablelist>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>niladic datetime</term>
+      <listitem>
+       <variablelist>
+	<varlistentry>
+	 <term>CURRENT_DATE</term>
+	 <listitem>
+	  <simpara>See CURRENT_DATE function</simpara>
+	 </listitem>
+	</varlistentry>
+	<varlistentry>
+	 <term>CURRENT_TIME</term>
+	 <listitem>
+	  <simpara>See CURRENT_TIME function</simpara>
+	 </listitem>
+	</varlistentry>
+	<varlistentry>
+	 <term>CURRENT_TIMESTAMP</term>
+	 <listitem>
+	  <simpara>See CURRENT_TIMESTAMP function</simpara>
+	 </listitem>
+	</varlistentry>
+       </variablelist>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
 
-<para>
-In the current release (v6.5), <productname>Postgres</productname>
-evaluates all default expressions at the time the table is defined.
-Hence, functions which are "non-cacheable" such as
- <function>CURRENT_TIMESTAMP</function> may not produce the desired
-effect. For the particular case of date/time types, one can work
-around this behavior by using 
-<quote>
-DEFAULT TEXT 'now'
-</quote>
-instead of
-<quote>
-DEFAULT 'now'
-</quote>
-or
-<quote>
-DEFAULT CURRENT_TIMESTAMP
-</quote>.
-This forces <productname>Postgres</productname> to consider the constant a string
-type and then to convert the value to <type>timestamp</type> at runtime.
+   <para>
+    In the current release (v6.5), <productname>Postgres</productname>
+    evaluates all default expressions at the time the table is defined.
+    Hence, functions which are "non-cacheable" such as
+    <function>CURRENT_TIMESTAMP</function> may not produce the desired
+    effect. For the particular case of date/time types, one can work
+    around this behavior by using 
+    <quote>DEFAULT TEXT 'now'</quote>
+    instead of
+    <quote>DEFAULT 'now'</quote>
+    or
+    <quote>DEFAULT CURRENT_TIMESTAMP</quote>.
+    This forces <productname>Postgres</productname> to consider the constant a string
+    type and then to convert the value to <type>timestamp</type> at runtime.
    </para>
   </refsect2>
   <refsect2 id="R2-SQL-DEFAULTCLAUSE-4">
@@ -416,44 +392,45 @@ type and then to convert the value to <type>timestamp</type> at runtime.
     <date>1998-09-11</date>
    </refsect2info>
    <title>
-  Usage
+    Usage
    </title>
+
    <para>
-   To assign a constant value as the default for the
- columns <literal>did</literal> and <literal>number</literal>,
-   and a string literal to the column <literal>did</literal>:
-  
-  <programlisting>
+    To assign a constant value as the default for the
+    columns <literal>did</literal> and <literal>number</literal>,
+    and a string literal to the column <literal>did</literal>:
+
+    <programlisting>
 CREATE TABLE video_sales (
     did      VARCHAR(40) DEFAULT 'luso films',
     number   INTEGER DEFAULT 0,
     total    CASH DEFAULT '$0.0'
 );
-  </programlisting>
+    </programlisting>
    </para>
    <para>
-   To assign an existing sequence
- as the default for the column <literal>did</literal>,
-   and a literal to the column <literal>name</literal>:
-  
-  <programlisting>
+    To assign an existing sequence
+    as the default for the column <literal>did</literal>,
+    and a literal to the column <literal>name</literal>:
+
+    <programlisting>
 CREATE TABLE distributors (
     did      DECIMAL(3)  DEFAULT NEXTVAL('serial'),
     name     VARCHAR(40) DEFAULT 'luso films'
 );
-  </programlisting>
+    </programlisting>
    </para>
   </refsect2>
-  </refsect1>
-  
-  <refsect1 id="R1-SQL-COLUMNCONSTRAINT-1">
-   <refsect1info>
-    <date>1998-09-11</date>
-   </refsect1info>
-   <title>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-COLUMNCONSTRAINT-1">
+  <refsect1info>
+   <date>1998-09-11</date>
+  </refsect1info>
+  <title>
    Column CONSTRAINT Clause
-   </title>
-   <para>
+  </title>
+  <para>
    <synopsis>
 [ CONSTRAINT <replaceable class="parameter">name</replaceable> ] { [
     NULL | NOT NULL ] | UNIQUE | PRIMARY KEY | CHECK <replaceable
@@ -469,84 +446,74 @@ CREATE TABLE distributors (
     Inputs
    </title>
    <para>
-       <variablelist>
-	<varlistentry>
-	 <term>
-	   <replaceable class="parameter">name</replaceable>
-	 </term>
-	 <listitem>
-	  <para>
-          An arbitrary name given to the integrity constraint. 
-If <replaceable class="parameter">name</replaceable> is not specified,
- it is generated from the table and column names,
-which should ensure uniqueness for
- <replaceable class="parameter">name</replaceable>.
-	  </para>
-	 </listitem>
-	</varlistentry>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">name</replaceable></term>
+      <listitem>
+       <para>
+	An arbitrary name given to the integrity constraint. 
+	If <replaceable class="parameter">name</replaceable> is not specified,
+	it is generated from the table and column names,
+	which should ensure uniqueness for
+	<replaceable class="parameter">name</replaceable>.
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>
-     NULL
-     </term>
-     <listitem>
-      <para>
-The column is allowed to contain NULL values. This is the default.
-      </para>
-     </listitem>
-    </varlistentry>
-    
-    <varlistentry>
-     <term>
-     NOT NULL
-     </term>
-     <listitem>
-      <para>
-The column is not allowed to contain NULL values.
-This is equivalent to the column constraint
- CHECK (<replaceable class="PARAMETER">column</replaceable> NOT NULL).
-      </para>
-     </listitem>
-    </varlistentry>
-    
-    <varlistentry>
-     <term>
-     UNIQUE
-     </term>
-     <listitem>
-      <para>
-The column must have unique values. In <productname>Postgres</productname>
-this is enforced by an implicit creation of a unique index on the table.
-      </para>
-     </listitem>
-    </varlistentry>
+     <varlistentry>
+      <term>NULL</term>
+      <listitem>
+       <para>
+	The column is allowed to contain NULL values. This is the default.
+       </para>
+      </listitem>
+     </varlistentry>
 
-    <varlistentry>
-     <term>
-     PRIMARY KEY
-     </term>
-     <listitem>
-      <para>
-       This column is a primary key, which implies that uniqueness is
-enforced by the system and that other tables may rely on this column
-as a unique identifier for rows.
-       See PRIMARY KEY for more information.
-      </para>
-     </listitem>
-    </varlistentry>
-    
-	<varlistentry>
-	 <term>
-	   <replaceable class="parameter">constraint</replaceable>
-	 </term>
-	 <listitem>
-	  <para>
-	   The definition of the constraint.
-	  </para>
-	 </listitem>
-	</varlistentry>
-       </variablelist>
-    </para>
+     <varlistentry>
+      <term>NOT NULL</term>
+      <listitem>
+       <para>
+	The column is not allowed to contain NULL values.
+	This is equivalent to the column constraint
+	CHECK (<replaceable class="PARAMETER">column</replaceable> NOT NULL).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>UNIQUE</term>
+      <listitem>
+       <para>
+	The column must have unique values. In <productname>Postgres</productname>
+	this is enforced by an implicit creation of a unique index on the table.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>PRIMARY KEY</term>
+      <listitem>
+       <para>
+	This column is a primary key, which implies that uniqueness is
+	enforced by the system and that other tables may rely on this column
+	as a unique identifier for rows.
+	See PRIMARY KEY for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+<replaceable class="parameter">constraint</replaceable>
+      </term>
+      <listitem>
+       <para>
+	The definition of the constraint.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
   </refsect2>
 
   <refsect2 id="R2-SQL-COLUMNCONSTRAINT-2">
@@ -612,32 +579,29 @@ as a unique identifier for rows.
      Outputs
     </title>
     <para>
+     <variablelist>
+      <varlistentry>
+       <term><replaceable>status</replaceable></term>
+       <listitem>
+	<para>
+	 <variablelist>
+	  <varlistentry>
+	   <term><computeroutput>
+ERROR:  ExecAppend: Fail to add null value in not null attribute "<replaceable class="parameter">column</replaceable>".
+	    </computeroutput></term>
+	   <listitem>
+	    <para>
+	     This error occurs at runtime if one tries to insert a null value
+	     into a column which has a NOT NULL constraint.
+	    </para>
+	   </listitem>
+	  </varlistentry>
+	 </variablelist>
+	</para>
+       </listitem>
+      </varlistentry>
+     </variablelist> 
     </para>
-    <variablelist>
-     <varlistentry>
-      <term>
-       <replaceable>status</replaceable>
-      </term>
-      <listitem>
-       <para>
-	<variablelist>
-	 <varlistentry>
-	  <term>
-	   <returnvalue>ERROR:  ExecAppend: Fail to add null value in not
-	    null attribute "<replaceable class="parameter">column</replaceable>".</returnvalue>
-	  </term>
-	  <listitem>
-	   <para>
-	    This error occurs at runtime if one tries to insert a null value
-	    into a column which has a NOT NULL constraint.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist> 
    </refsect3>
 
    <refsect3 id="R3-SQL-NOTNULL-2">
@@ -650,7 +614,7 @@ as a unique identifier for rows.
     <para>
     </para>
    </refsect3>
-     
+
    <refsect3 id="R3-SQL-NOTNULL-3">
     <refsect3info>
      <date>1998-09-11</date>
@@ -658,22 +622,22 @@ as a unique identifier for rows.
     <title>
      Usage
     </title>
-    
+
     <para>
      Define two NOT NULL column constraints on the table
      <classname>distributors</classname>,
      one of which being a named constraint:
-  
-    <programlisting>
-     CREATE TABLE distributors (
-     did      DECIMAL(3) CONSTRAINT no_null NOT NULL,
-     name     VARCHAR(40) NOT NULL
-     );
+
+     <programlisting>
+CREATE TABLE distributors (
+    did      DECIMAL(3) CONSTRAINT no_null NOT NULL,
+    name     VARCHAR(40) NOT NULL
+);
      </programlisting>
     </para>
    </refsect3>
   </refsect2>
-  
+
   <refsect2 id="R2-SQL-UNIQUECLAUSE-1">
    <refsect2info>
     <date>1998-09-11</date>
@@ -688,11 +652,10 @@ as a unique identifier for rows.
    <refsect3>
     <title>Inputs</title>
     <para>
+
      <variablelist>
       <varlistentry>
-       <term>
-	CONSTRAINT <replaceable class="parameter">name</replaceable>
-       </term>
+       <term>CONSTRAINT <replaceable class="parameter">name</replaceable></term>
        <listitem>
 	<para>
 	 An arbitrary label given to a constraint.
@@ -706,22 +669,20 @@ as a unique identifier for rows.
    <refsect3>
     <title>Outputs</title>
     <para>
-    <variablelist>
-     <varlistentry>
-      <term>
-<replaceable>status</replaceable>
-      </term>
-      <listitem>
-       <para>
-	<variablelist>
-	 <varlistentry>
-	  <term>
-<returnvalue>ERROR: Cannot insert a duplicate key into a unique index.</returnvalue>
-	  </term>
-	  <listitem>
-	   <para>
-	    This error occurs at runtime if one tries to insert a
-	    duplicate value into a column.
+     <variablelist>
+      <varlistentry>
+       <term><replaceable>status</replaceable></term>
+       <listitem>
+	<para>
+	 <variablelist>
+	  <varlistentry>
+	   <term><computeroutput>
+ERROR: Cannot insert a duplicate key into a unique index.
+	    </computeroutput></term>
+	   <listitem>
+	    <para>
+	     This error occurs at runtime if one tries to insert a
+	     duplicate value into a column.
 	    </para>
 	   </listitem>
 	  </varlistentry>
@@ -732,10 +693,10 @@ as a unique identifier for rows.
      </variablelist>
     </para>
    </refsect3>
-   
+
    <refsect3>
     <title>
-Description
+     Description
     </title>
 
     <para>
@@ -747,9 +708,9 @@ Description
      include a NOT NULL constraint to be included in a UNIQUE
      constraint.  Having more than one null value in a column without a
      NOT NULL constraint, does not violate a UNIQUE constraint.
-(This deviates from the <acronym>SQL92</acronym> definition, but
-is a more sensible convention. See the section on compatibility
-for more details.).
+     (This deviates from the <acronym>SQL92</acronym> definition, but
+     is a more sensible convention. See the section on compatibility
+     for more details.).
     </para>
     <para>
      Each UNIQUE column constraint must name a column that is
@@ -759,68 +720,66 @@ for more details.).
     <note>
      <para>
       <productname>Postgres</productname> automatically creates a unique
- index for each UNIQUE constraint, to assure
+      index for each UNIQUE constraint, to assure
       data integrity. See CREATE INDEX for more information.
      </para>
     </note>
    </refsect3>
 
-  <refsect3 id="R3-SQL-UNIQUECLAUSE-3">
-   <title>
-Usage
-</title>
+   <refsect3 id="R3-SQL-UNIQUECLAUSE-3">
+    <title>
+     Usage
+    </title>
 
-  <para>
-   Defines a UNIQUE column constraint for the table distributors.
-   UNIQUE column constraints can only be defined on one column
-   of the table:
-  <programlisting>
-   CREATE TABLE distributors (
-        did      DECIMAL(3),
-        name     VARCHAR(40) UNIQUE
-        );
+    <para>
+     Defines a UNIQUE column constraint for the table distributors.
+     UNIQUE column constraints can only be defined on one column
+     of the table:
+     <programlisting>
+CREATE TABLE distributors (
+    did      DECIMAL(3),
+    name     VARCHAR(40) UNIQUE
+);
   </programlisting>
-which is equivalent to the following specified as a table constraint:
-  <programlisting>
+
+     which is equivalent to the following specified as a table constraint:
+     <programlisting>
 CREATE TABLE distributors (
     did      DECIMAL(3),
     name     VARCHAR(40),
     UNIQUE(name)
 );
-  </programlisting>
+     </programlisting>
     </para>
    </refsect3>
   </refsect2>
-  
+
   <refsect2 id="R2-SQL-CHECK-1">
    <refsect2info>
     <date>1998-09-11</date>
    </refsect2info>
-<title>
-The CHECK Constraint
-</title>
-  <synopsis>
+   <title>
+    The CHECK Constraint
+   </title>
+   <synopsis>
 [ CONSTRAINT <replaceable class="parameter">name</replaceable> ] CHECK
     ( <replaceable>condition</replaceable> [, ...] ) 
-  </synopsis>
+   </synopsis>
    <refsect3 id="R3-SQL-CHECK-1">
     <title>Inputs</title>
-   <para>
-       <variablelist>
-	<varlistentry>
-	 <term>
-	  <returnvalue><replaceable class="parameter">name</replaceable></returnvalue>
-	 </term>
-	 <listitem>
-	  <para>
-	   An arbitrary name given to a constraint.
+    <para>
+
+     <variablelist>
+      <varlistentry>
+       <term><replaceable class="parameter">name</replaceable></term>
+       <listitem>
+	<para>
+	 An arbitrary name given to a constraint.
 	</para>
        </listitem>
       </varlistentry>
       <varlistentry>
-       <term>
-	<replaceable>condition</replaceable>
-       </term>
+       <term><replaceable>condition</replaceable></term>
        <listitem>
 	<para>
 	 Any valid conditional expression evaluating to a boolean result.
@@ -830,7 +789,7 @@ The CHECK Constraint
      </variablelist>
     </para>
    </refsect3>
-   
+
    <refsect3 id="R3-SQL-CHECK-2">
     <refsect3info>
      <date>1998-09-11</date>
@@ -839,22 +798,18 @@ The CHECK Constraint
      Outputs
     </title>
     <para>
+
      <variablelist>
       <varlistentry>
-       <term>
-	<replaceable>status</replaceable>
-       </term>
+       <term><replaceable>status</replaceable></term>
        <listitem>
 	<para>
-	 
+
 	 <variablelist>
 	  <varlistentry>
-	   <term>
-	    <returnvalue>
-	     ERROR:  ExecAppend: rejected due to CHECK constraint
-	     "<replaceable class="parameter">table_column</replaceable>".
-	    </returnvalue>
-	   </term>
+	   <term><computeroutput>
+ERROR:  ExecAppend: rejected due to CHECK constraint "<replaceable class="parameter">table_column</replaceable>".
+	    </computeroutput></term>
 	   <listitem>
 	    <para>
 	     This error occurs at runtime if one tries to insert an illegal
@@ -869,7 +824,7 @@ The CHECK Constraint
      </variablelist>
     </para>
    </refsect3>
-   
+
    <refsect3>
     <title>Description</title>
     <para>
@@ -896,15 +851,13 @@ The CHECK Constraint
    <synopsis>
 [ CONSTRAINT <replaceable class="PARAMETER">name</replaceable> ] PRIMARY KEY 
    </synopsis>
-   
+
    <refsect3>
     <title>Inputs</title>
     <para>
      <variablelist>
       <varlistentry>
-       <term>
-CONSTRAINT <replaceable class="PARAMETER">name</replaceable>
-       </term>
+       <term>CONSTRAINT <replaceable class="PARAMETER">name</replaceable></term>
        <listitem>
 	<para>
 	 An arbitrary name for the constraint.
@@ -919,9 +872,9 @@ CONSTRAINT <replaceable class="PARAMETER">name</replaceable>
     <title>Outputs</title>
     <variablelist>
      <varlistentry>
-      <term>
-<returnvalue>ERROR: Cannot insert a duplicate key into a unique index.</returnvalue>
-      </term>
+      <term><computeroutput>
+ERROR: Cannot insert a duplicate key into a unique index.
+       </computeroutput></term>
       <listitem>
        <para>
 	This occurs at run-time if one tries to insert a duplicate value into
@@ -936,7 +889,7 @@ CONSTRAINT <replaceable class="PARAMETER">name</replaceable>
     <title>Description</title>
     <para>
      The PRIMARY KEY column constraint specifies that a column of a table
- may contain only unique
+     may contain only unique
      (non-duplicate), non-NULL values. The definition of
      the specified column does not have to include an explicit NOT NULL
      constraint to be included in a PRIMARY KEY constraint. 
@@ -955,16 +908,16 @@ CONSTRAINT <replaceable class="PARAMETER">name</replaceable>
     </title>
     <para>
      <productname>Postgres</productname> automatically creates
- a unique index to assure
+     a unique index to assure
      data integrity. (See CREATE INDEX statement)
     </para>
     <para>
      The PRIMARY KEY constraint should name a set of columns that is
      different from other sets of columns named by any UNIQUE constraint
      defined for the same table, since it will result in duplication
-of equivalent indexes and unproductive additional runtime overhead.
-However, <productname>Postgres</productname> does not specifically
-disallow this.
+     of equivalent indexes and unproductive additional runtime overhead.
+     However, <productname>Postgres</productname> does not specifically
+     disallow this.
     </para>
    </refsect3>
   </refsect2>
@@ -979,9 +932,8 @@ disallow this.
   </title>
   <para>
    <synopsis>
-    [ CONSTRAINT name ] { PRIMARY KEY |  UNIQUE } ( <replaceable
-     class="parameter">column</replaceable> [, ...] )
-    [ CONSTRAINT name ] CHECK ( <replaceable>constraint</replaceable> )
+[ CONSTRAINT name ] { PRIMARY KEY |  UNIQUE } ( <replaceable class="parameter">column</replaceable> [, ...] )
+[ CONSTRAINT name ] CHECK ( <replaceable>constraint</replaceable> )
    </synopsis>
   </para>
   <refsect2 id="R2-SQL-TABLECONSTRAINT-1">
@@ -991,13 +943,12 @@ disallow this.
    <title>
     Inputs
    </title>
-   
+
    <para>
+
     <variablelist>
      <varlistentry>
-      <term>
-       CONSTRAINT <replaceable class="parameter">name</replaceable>
-      </term>
+      <term>CONSTRAINT <replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
 	An arbitrary name given to an integrity constraint.
@@ -1005,9 +956,7 @@ disallow this.
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term>
-       <replaceable class="parameter">column</replaceable> [, ...]
-      </term>
+      <term><replaceable class="parameter">column</replaceable> [, ...]</term>
       <listitem>
        <para>
 	The column name(s) for which to define a unique index
@@ -1016,9 +965,7 @@ disallow this.
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term>
-       CHECK ( <replaceable class="parameter">constraint</replaceable> )
-      </term>
+      <term>CHECK ( <replaceable class="parameter">constraint</replaceable> )</term>
       <listitem>
        <para>
 	A boolean expression to be evaluated as the constraint.
@@ -1083,17 +1030,14 @@ disallow this.
    </title>
    <para>
     <synopsis>
-     [ CONSTRAINT <replaceable class="parameter">name</replaceable> ]
-     UNIQUE ( <replaceable class="parameter">column</replaceable> [, ...] )
+[ CONSTRAINT <replaceable class="parameter">name</replaceable> ] UNIQUE ( <replaceable class="parameter">column</replaceable> [, ...] )
     </synopsis>
    </para>
    <refsect3>
     <title>Inputs</title>
     <variablelist>
      <varlistentry>
-      <term>
-       CONSTRAINT <replaceable class="parameter">name</replaceable>
-      </term>
+      <term>CONSTRAINT <replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
 	An arbitrary name given to a constraint.
@@ -1101,9 +1045,7 @@ disallow this.
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term>
-       <replaceable class="parameter">column</replaceable>
-      </term>
+      <term><replaceable class="parameter">column</replaceable></term>
       <listitem>
        <para>
 	A name of a column in a table.
@@ -1118,16 +1060,12 @@ disallow this.
     <para>
      <variablelist>
       <varlistentry>
-       <term>
-	<replaceable>status</replaceable>
-       </term>
+       <term><replaceable>status</replaceable></term>
        <listitem>
 	<para>
 	 <variablelist>
 	  <varlistentry>
-	   <term>
-	    ERROR: Cannot insert a duplicate key into a unique index.
-	   </term>
+	   <term>ERROR: Cannot insert a duplicate key into a unique index</term>
 	   <listitem>
 	    <para>
 	     This error occurs at runtime if one tries to insert a
@@ -1167,11 +1105,11 @@ disallow this.
     <para>
      Define a UNIQUE table constraint for the table distributors:
      <programlisting>
-      CREATE TABLE distributors (
-      did      DECIMAL(03),
-      name     VARCHAR(40),
-      UNIQUE(name)
-      );
+CREATE TABLE distributors (
+    did      DECIMAL(03),
+    name     VARCHAR(40),
+    UNIQUE(name)
+);
      </programlisting>
     </para>
    </refsect3>
@@ -1186,18 +1124,16 @@ disallow this.
    </title>
    <para>
     <synopsis>
-     [ CONSTRAINT <replaceable class="PARAMETER">name</replaceable> ]
-     PRIMARY KEY ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) 
+[ CONSTRAINT <replaceable class="PARAMETER">name</replaceable> ] PRIMARY KEY ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) 
     </synopsis>
    </para>
    <refsect3>
     <title>Inputs</title>
     <para>
+
      <variablelist>
       <varlistentry>
-       <term>
-	CONSTRAINT <returnvalue><replaceable class="PARAMETER">name</replaceable></returnvalue>
-       </term>
+       <term>CONSTRAINT <replaceable class="PARAMETER">name</replaceable></term>
        <listitem>
 	<para>
 	 An arbitrary name for the constraint.
@@ -1205,9 +1141,7 @@ disallow this.
        </listitem>
       </varlistentry>
       <varlistentry>
-       <term>
-	<replaceable class="PARAMETER">column</replaceable> [, ...]
-       </term>
+       <term><replaceable class="PARAMETER">column</replaceable> [, ...]</term>
        <listitem>
 	<para>
 	 The names of one or more columns in the table.
@@ -1222,9 +1156,7 @@ disallow this.
     <title>Outputs</title>
     <variablelist>
      <varlistentry>
-      <term>
-       <replaceable>status</replaceable>
-      </term>
+      <term><replaceable>status</replaceable></term>
       <listitem>
        <para>
 	<variablelist>
@@ -1252,7 +1184,9 @@ disallow this.
      (non duplicate), non-null values. The column definitions of
      the specified columns do not have to include a NOT NULL
      constraint to be included in a PRIMARY KEY constraint.
-     
+    </para>
+
+    <para>
      The PRIMARY KEY table constraint is similar to that for column constraints,
      with the additional capability of encompassing multiple columns.
     </para>
@@ -1261,9 +1195,9 @@ disallow this.
      information.
     </para>
    </refsect3>
-   
+
   </refsect2>
-  
+
  </refsect1>
  
  <refsect1 id="R1-SQL-CREATETABLE-2">
@@ -1271,107 +1205,116 @@ disallow this.
    Usage
   </title>
   <para>
-   Create table films and table distributors
-  </para>
-  <programlisting>
-   CREATE TABLE films (
-          code      CHARACTER(5) CONSTRAINT firstkey PRIMARY KEY,
-          title     CHARACTER VARYING(40) NOT NULL,
-          did       DECIMAL(3) NOT NULL,
-          date_prod DATE,
-          kind      CHAR(10),
-          len       INTERVAL HOUR TO MINUTE
-          );
-  </programlisting>
+   Create table films and table distributors:
 
-  <programlisting>
-   CREATE TABLE distributors (
-          did      DECIMAL(03) PRIMARY KEY DEFAULT NEXTVAL('serial'),
-          name     VARCHAR(40) NOT NULL CHECK (name &lt;&gt; '')
-          );
-  </programlisting>
+   <programlisting>
+CREATE TABLE films (
+     code      CHARACTER(5) CONSTRAINT firstkey PRIMARY KEY,
+     title     CHARACTER VARYING(40) NOT NULL,
+     did       DECIMAL(3) NOT NULL,
+     date_prod DATE,
+     kind      CHAR(10),
+     len       INTERVAL HOUR TO MINUTE
+);
+   </programlisting>
+
+   <programlisting>
+CREATE TABLE distributors (
+     did      DECIMAL(03) PRIMARY KEY DEFAULT NEXTVAL('serial'),
+     name     VARCHAR(40) NOT NULL CHECK (name &lt;&gt; '')
+);
+   </programlisting>
+  </para>
 
   <para>
-   Create a table with a 2-dimensional array
-  </para>
-  <programlisting>
+   Create a table with a 2-dimensional array:
+
+   <programlisting>
    CREATE TABLE array (
           vector INT[][]
           );
-  </programlisting>
-   
+   </programlisting>
+  </para>
+
   <para>
    Define a UNIQUE table constraint for the table films.
    UNIQUE table constraints can be defined on one or more
-   columns of the table
+   columns of the table:
+
+   <programlisting>
+CREATE TABLE films (
+    code      CHAR(5),
+    title     VARCHAR(40),
+    did       DECIMAL(03),
+    date_prod DATE,
+    kind      CHAR(10),
+    len       INTERVAL HOUR TO MINUTE,
+    CONSTRAINT production UNIQUE(date_prod)
+);
+   </programlisting>
   </para>
-  <programlisting>
-   CREATE TABLE films (
-       code      CHAR(5),
-       title     VARCHAR(40),
-       did       DECIMAL(03),
-       date_prod DATE,
-       kind      CHAR(10),
-       len       INTERVAL HOUR TO MINUTE,
-       CONSTRAINT production UNIQUE(date_prod)
-       );
-  </programlisting>
   
   <para>
-   Define a CHECK column constraint.
+   Define a CHECK column constraint:
+
+   <programlisting>
+CREATE TABLE distributors (
+    did      DECIMAL(3) CHECK (did > 100),
+    name     VARCHAR(40)
+);
+   </programlisting>
   </para>
-  <programlisting>
-   CREATE TABLE distributors (
-        did      DECIMAL(3) CHECK (did > 100),
-        name     VARCHAR(40)
-        );
-  </programlisting>
-  
+
   <para>
-   Define a CHECK table constraint
+   Define a CHECK table constraint:
+
+   <programlisting>
+CREATE TABLE distributors (
+    did      DECIMAL(3),
+    name     VARCHAR(40)
+    CONSTRAINT con1 CHECK (did > 100 AND name > '')
+);
+   </programlisting>
   </para>
-  <programlisting>
-   CREATE TABLE distributors (
-        did      DECIMAL(3),
-        name     VARCHAR(40)
-        CONSTRAINT con1 CHECK (did > 100 AND name > '')
-        );
-  </programlisting>
-    
+ 
   <para>
    Define a PRIMARY KEY table constraint for the table films.
    PRIMARY KEY table constraints can be defined on one or more
-   columns of the table
+   columns of the table:
+
+   <programlisting>
+CREATE TABLE films (
+    code      CHAR(05),
+    title     VARCHAR(40),
+    did       DECIMAL(03),
+    date_prod DATE,
+    kind      CHAR(10),
+    len       INTERVAL HOUR TO MINUTE,
+    CONSTRAINT code_title PRIMARY KEY(code,title)
+);
+   </programlisting>
   </para>
-  <programlisting>
-   CREATE TABLE films (
-       code      CHAR(05),
-       title     VARCHAR(40),
-       did       DECIMAL(03),
-       date_prod DATE,
-       kind      CHAR(10),
-       len       INTERVAL HOUR TO MINUTE,
-       CONSTRAINT code_title PRIMARY KEY(code,title)
-       );
-  </programlisting>
-  
+
   <para>
    Defines a PRIMARY KEY column constraint for table distributors.
    PRIMARY KEY column constraints can only be defined on one column
-   of the table (the following two examples are equivalent)
-  </para>
-  <programlisting>
-   CREATE TABLE distributors (
-        did      DECIMAL(03),
-        name     CHAR VARYING(40),
-        PRIMARY KEY(did)
-        ); 
+   of the table (the following two examples are equivalent):
 
-   CREATE TABLE distributors (
-        did      DECIMAL(03) PRIMARY KEY,
-        name     VARCHAR(40)
-        );
-  </programlisting>
+   <programlisting>
+CREATE TABLE distributors (
+    did      DECIMAL(03),
+    name     CHAR VARYING(40),
+    PRIMARY KEY(did)
+); 
+   </programlisting>
+
+   <programlisting>
+CREATE TABLE distributors (
+    did      DECIMAL(03) PRIMARY KEY,
+    name     VARCHAR(40)
+);
+   </programlisting>
+  </para>
   
   <refsect2 id="R2-SQL-CREATETABLE-3">
    <refsect2info>
@@ -1401,18 +1344,19 @@ disallow this.
     SQL92
    </title>
    <para>
-    In addition to the normal CREATE TABLE, SQL92 also defines a
-    CREATE TEMPORARY TABLE statement:
-   </para>
+    In addition to the locally-visible temporary table, SQL92 also defines a
+    CREATE GLOBAL TEMPORARY TABLE statement, and optionally an 
+    ON COMMIT clause:
    <synopsis>
-   CREATE [ {GLOBAL | LOCAL} ] TEMPORARY TABLE table (
-        column type [DEFAULT value] [CONSTRAINT column_constraint] [, ...] )
-        [CONSTRAINT table_constraint ]
-        [ ON COMMIT {DELETE | PRESERVE} ROWS ] 
+CREATE GLOBAL TEMPORARY TABLE <replaceable class="parameter">table</replaceable> ( <replaceable class="parameter">column</replaceable> <replaceable class="parameter">type</replaceable> [
+    DEFAULT <replaceable class="parameter">value</replaceable> ] [ CONSTRAINT <replaceable class="parameter">column_constraint</replaceable> ] [, ...] )
+    [ CONSTRAINT <replaceable class="parameter">table_constraint</replaceable> ] [ ON COMMIT { DELETE | PRESERVE } ROWS ] 
    </synopsis>
+   </para>
+
    <para>
-    For temporary tables, the CREATE TEMPORARY TABLE statement
-    names a new table and defines the table's columns and
+    For temporary tables, the CREATE GLOBAL TEMPORARY TABLE statement
+    names a new table visible to other clients and defines the table's columns and
     constraints. 
    </para>
    <para>
@@ -1423,26 +1367,16 @@ disallow this.
    </para>
    <para>
     To create a temporary table:
+
+    <programlisting>
+CREATE TEMPORARY TABLE actors (
+    id         DECIMAL(03),
+    name       VARCHAR(40),
+    CONSTRAINT actor_id CHECK (id &lt; 150)
+) ON COMMIT DELETE ROWS;
+    </programlisting>
    </para>
-   <programlisting>
-      CREATE TEMPORARY TABLE actors (
-             id      DECIMAL(03),
-             name    VARCHAR(40),
-             CONSTRAINT actor_id CHECK (id &lt; 150)
-             ) ON COMMIT DELETE ROWS
-   </programlisting> 
-   <para>
-    Temporary tables are not currently available
-    in <productname>Postgres</productname>.
-    <tip>
-     <para>
-      In the current release of <productname>Postgres</productname>
-      (v6.5), to create a temporary
-      table you must create and drop the table by explicit commands.
-     </para>
-    </tip>
-    </para>
-    
+
    <refsect3 id="R3-SQL-UNIQUECLAUSE-1">
     <refsect3info>
      <date>1998-09-11</date>
@@ -1454,23 +1388,24 @@ disallow this.
      SQL92 specifies some additional capabilities for UNIQUE:
     </para>
     <para>
-     Table Constraint definition
+     Table Constraint definition:
+
+     <synopsis>
+[ CONSTRAINT name ] UNIQUE ( column [, ...] )
+    [ { INITIALLY DEFERRED | INITIALLY IMMEDIATE } ]
+    [ [ NOT ] DEFERRABLE ]
+     </synopsis>
     </para>
-    <synopsis>
-      [ CONSTRAINT name ]
-      UNIQUE ( column [, ...] )
-      [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
-      [ [ NOT ] DEFERRABLE ]
-    </synopsis>
+
     <para>
-     Column Constraint definition
-    </para>
-    <synopsis>
-      [ CONSTRAINT name ]
-      UNIQUE
+     Column Constraint definition:
+
+     <synopsis>
+[ CONSTRAINT name ] UNIQUE
       [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
       [ [ NOT ] DEFERRABLE ]
-    </synopsis>
+     </synopsis>
+    </para>
    </refsect3>
    
    <refsect3 id="R3-SQL-NULL-1">
@@ -1485,10 +1420,10 @@ disallow this.
 	is a <productname>Postgres</productname> extension to SQL92
 	is included for symmetry with the NOT NULL clause. Since it is the default
 	for any column, its presence is simply noise.
-    <synopsis>
-     [ CONSTRAINT name ] NULL 
-    </synopsis>
-</para>
+     <synopsis>
+[ CONSTRAINT name ] NULL 
+     </synopsis>
+    </para>
    </refsect3>
    
    <refsect3 id="R3-SQL-NOTNULL-4">
@@ -1501,12 +1436,12 @@ disallow this.
     <para>
      
      SQL92 specifies some additional capabilities for NOT NULL:
+     <synopsis>
+[ CONSTRAINT name ] NOT NULL 
+    [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
+    [ [ NOT ] DEFERRABLE ]
+     </synopsis>
     </para>
-    <synopsis>
-     [ CONSTRAINT name ] NOT NULL 
-     [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
-     [ [ NOT ] DEFERRABLE ]
-    </synopsis>
    </refsect3>
    
 <!--
@@ -1535,7 +1470,7 @@ the column. Not our problem...
     </synopsis>
    </refsect3>
 -->
-   
+
    <refsect3 id="R3-SQL-CONSTRAINT-3">
     <refsect3info>
      <date>1998-09-11</date>
@@ -1562,7 +1497,7 @@ the column. Not our problem...
      constraint:
     </para>
     <synopsis>
-     CREATE ASSERTION name CHECK ( condition )
+CREATE ASSERTION name CHECK ( condition )
     </synopsis>
     
     <para>
@@ -1571,37 +1506,34 @@ the column. Not our problem...
     </para>
     <para>
      Domain constraint: 
+
+     <synopsis>
+[ CONSTRAINT name ] CHECK constraint 
+    [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
+    [ [ NOT ] DEFERRABLE ]
+     </synopsis>
     </para>
-    <synopsis>
-      [ CONSTRAINT name ] 
-          CHECK constraint 
-          [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
-          [ [ NOT ] DEFERRABLE ]
-    </synopsis>
+
     <para>
      Table constraint definition:
+
+     <synopsis>
+[ CONSTRAINT name ] { PRIMARY KEY ( <replaceable class="parameter">column</replaceable>, ... ) | FOREIGN KEY constraint | UNIQUE constraint | CHECK constraint }
+    [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
+    [ [ NOT ] DEFERRABLE ]
+     </synopsis>
     </para>
-    <synopsis>
-      [ CONSTRAINT name ] 
-        { PRIMARY KEY constraint | 
-          FOREIGN KEY constraint | 
-          UNIQUE constraint | 
-          CHECK constraint }
-          [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
-          [ [ NOT ] DEFERRABLE ]</synopsis>
+
     <para>
      Column constraint definition:
+
+     <synopsis>
+[ CONSTRAINT name ] { NOT NULL | PRIMARY KEY | FOREIGN KEY constraint | UNIQUE | CHECK constraint }  
+    [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
+    [ [ NOT ] DEFERRABLE ]
+     </synopsis>
     </para>
-    <synopsis>
-     [ CONSTRAINT name ] 
-        { NOT NULL constraint |
-          PRIMARY KEY constraint | 
-          FOREIGN KEY constraint | 
-          UNIQUE constraint | 
-          CHECK constraint }  
-          [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
-          [ [ NOT ] DEFERRABLE ]
-    </synopsis>
+
     <para>
      A CONSTRAINT definition may contain one deferment attribute
      clause and/or one initial constraint mode clause, in any order.
@@ -1679,24 +1611,23 @@ affect a column or a table.
 -->
     <para>
      table constraint definition:
-    </para>
-    <synopsis>
-     [ CONSTRAINT name ] 
-      CHECK ( VALUE condition ) 
+     <synopsis>
+[ CONSTRAINT name ] CHECK ( VALUE condition ) 
       [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
       [ [ NOT ] DEFERRABLE ]
-    </synopsis>
+     </synopsis>
+    </para>
+
     <para>
      column constraint definition:
-    </para>
     <synopsis>
-      [ CONSTRAINT name ] 
-      CHECK ( VALUE condition ) 
+[ CONSTRAINT name ] CHECK ( VALUE condition ) 
       [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
       [ [ NOT ] DEFERRABLE ]
     </synopsis>
+    </para>
 <!--
-    <para>
+   <para>
      domain constraint definition: 
     </para>
     <synopsis>
@@ -1710,16 +1641,15 @@ affect a column or a table.
      a CREATE DOMAIN statement or an ALTER DOMAIN statement:
     </para>
     <programlisting>
-     CREATE DOMAIN duration AS SMALLINT 
-        CONSTRAINT minutes CHECK (VALUE IN (90,120,180,240)); 
+CREATE DOMAIN duration AS SMALLINT 
+    CONSTRAINT minutes CHECK (VALUE IN (90,120,180,240)); 
 
-     ALTER DOMAIN cities 
-        ADD CONSTRAINT new_city CHECK (VALUE LIKE 'L%');
-    </programlisting>
+ALTER DOMAIN cities 
+    ADD CONSTRAINT new_city CHECK (VALUE LIKE 'L%');
+   </programlisting>
 -->
    </refsect3>
-   
-   
+
    <refsect3 id="R3-SQL-PRIMARYKEY-1">
     <refsect3info>
      <date>1998-09-11</date>
@@ -1732,22 +1662,20 @@ affect a column or a table.
     </para>
     <para>
      Table Constraint definition:
+     <synopsis>
+[ CONSTRAINT name ] PRIMARY KEY ( column [, ...] ) 
+    [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
+    [ [ NOT ] DEFERRABLE ]
+     </synopsis>
     </para>
-    <synopsis>
-      [ CONSTRAINT name ] 
-      PRIMARY KEY ( column [, ...] ) 
-      [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
-      [ [ NOT ] DEFERRABLE ]
-    </synopsis>
     <para>
      Column Constraint definition: 
+     <synopsis>
+[ CONSTRAINT name ] PRIMARY KEY 
+    [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
+    [ [ NOT ] DEFERRABLE ]
+     </synopsis>
     </para>
-    <synopsis>
-      [ CONSTRAINT name ] 
-      PRIMARY KEY 
-      [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
-      [ [ NOT ] DEFERRABLE ]
-    </synopsis>
    </refsect3>
   </refsect2>
  </refsect1>

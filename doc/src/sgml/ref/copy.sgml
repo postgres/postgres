@@ -1,176 +1,166 @@
-<REFENTRY ID="SQL-COPY">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-COPY">
+ <refmeta>
+  <refentrytitle>
    COPY
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    COPY
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Copies data between files and tables
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-08</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-08</date>
+  </refsynopsisdivinfo>
+  <synopsis>
 COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
-    FROM { '<replaceable class="parameter">filename</replaceable>' | <filename>stdin</filename> }
+    FROM { '<replaceable class="parameter">filename</replaceable>' |
+   <filename>stdin</filename> }
     [ USING DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
 COPY [ BINARY ] <replaceable class="parameter">table</replaceable> [ WITH OIDS ]
-    TO { '<replaceable class="parameter">filename</replaceable>' | <filename>stdout</filename> }
+    TO { '<replaceable class="parameter">filename</replaceable>' |
+   <filename>stdout</filename> }
     [ USING DELIMITERS '<replaceable class="parameter">delimiter</replaceable>' ]
-  </SYNOPSIS>
+  </synopsis>
   
-  <REFSECT2 ID="R2-SQL-COPY-1">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-COPY-1">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-BINARY
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-   Changes the behavior of field formatting, forcing all data to be
-   stored or read as binary objects rather than as text.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-<replaceable class="parameter">table</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-The name of an existing table.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-WITH OIDS
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-Copies the internal unique object id (OID) for each row.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-<replaceable class="parameter">filename</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-The absolute Unix pathname of the input or output file.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-<filename>stdin</filename>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-Specifies that input comes from a pipe or terminal.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-<filename>stdout</filename>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-Specifies that output goes to a pipe or terminal.
-       </PARA>
-      </LISTITEM>
-     </VARLISTENTRY>
-     <VARLISTENTRY>
-      <TERM>
-       <replaceable class="parameter">delimiter</replaceable>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term>BINARY</term>
+      <listitem>
+       <para>
+	Changes the behavior of field formatting, forcing all data to be
+	stored or read as binary objects rather than as text.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">table</replaceable></term>
+      <listitem>
+       <para>
+	The name of an existing table.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>WITH OIDS</term>
+      <listitem>
+       <para>
+	Copies the internal unique object id (OID) for each row.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">filename</replaceable></term>
+      <listitem>
+       <para>
+	The absolute Unix pathname of the input or output file.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><filename>stdin</filename></term>
+      <listitem>
+       <para>
+	Specifies that input comes from a pipe or terminal.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><filename>stdout</filename></term>
+      <listitem>
+       <para>
+	Specifies that output goes to a pipe or terminal.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">delimiter</replaceable></term>
+      <listitem>
+       <para>
 	A character that delimits the input or output fields.
-       </PARA>
-      </LISTITEM>
-     </VARLISTENTRY>
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
-  </REFSECT2>
+  </refsect2>
   
-  <REFSECT2 ID="R2-SQL-COPY-2">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-COPY-2">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
     Outputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
 
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>COPY</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   The copy completed successfully.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>ERROR: <replaceable>error message</replaceable></ReturnValue>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+COPY
+       </computeroutput></term>
+      <listitem>
+       <para>
+	The copy completed successfully.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><computeroutput>
+ERROR: <replaceable>error message</replaceable>
+       </computeroutput></term>
+      <listitem>
+       <para>
 	The copy failed for the reason stated in the error message.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
+  </refsect2>
+ </refsynopsisdiv>
  
- <REFSECT1 ID="R1-SQL-COPY-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-08</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+ <refsect1 id="R1-SQL-COPY-1">
+  <refsect1info>
+   <date>1998-09-08</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
+  </title>
   <para>
    <command>COPY</command> moves data between
- <productname>Postgres</productname> tables and
+   <productname>Postgres</productname> tables and
    standard Unix files. 
 
    <command>COPY</command> instructs
    the <productname>Postgres</productname> backend
    to directly read from or write to a file. The file must be directly visible to
    the backend and the name must be specified from the viewpoint of the backend.
-   If <filename>stdin</filename> or <filename>stdout</filename> are specified, data flows through the client frontend to 
-   the backend.
-   </para>
-  <REFSECT2 ID="R2-SQL-COPY-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+   If <filename>stdin</filename> or <filename>stdout</filename> are
+   specified, data flows through the client frontend to  the backend.
+  </para>
+
+  <refsect2 id="R2-SQL-COPY-3">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
+   </title>
    <para>
     The BINARY keyword will force all data to be
     stored/read as binary objects rather than as text.  It is
@@ -191,6 +181,7 @@ Specifies that output goes to a pipe or terminal.
     The backend also needs appropriate Unix permissions for any file read
     or written by <command>COPY</command>.
    </para>
+
    <para>
     The keyword phrase USING DELIMITERS specifies a single character
     to be used for all delimiters between columns. If multiple characters
@@ -204,10 +195,10 @@ Specifies that output goes to a pipe or terminal.
      </para>
     </tip>
    </para>
-  </REFSECT2>
+  </refsect2>
  </refsect1>
  
- <refsect1 ID="R1-SQL-COPY-2">
+ <refsect1 id="R1-SQL-COPY-2">
   <refsect1info>
    <date>1998-05-04</date>
   </refsect1info>
@@ -231,9 +222,9 @@ Specifies that output goes to a pipe or terminal.
     The actual format for each instance is
     <programlisting>
 &lt;attr1&gt;&lt;<replaceable class=parameter>separator</replaceable>&gt;&lt;attr2&gt;&lt;<replaceable class=parameter>separator</replaceable>&gt;...&lt;<replaceable class=parameter>separator</replaceable>&gt;&lt;attr<replaceable class="parameter">n</replaceable>&gt;&lt;newline&gt;
-</programlisting>
+    </programlisting>
     The oid is placed on the beginning of the line
-     if WITH OIDS is specified.
+    if WITH OIDS is specified.
    </para>
    <para>
     If <command>COPY</command> is sending its output to standard
@@ -253,7 +244,7 @@ Specifies that output goes to a pipe or terminal.
     as a backslash and a tab.  A literal newline character is
     represented as a backslash and a newline.  When loading text data
     not generated by <acronym>Postgres</acronym>,
- you will need to convert backslash
+    you will need to convert backslash
     characters ("\") to double-backslashes ("\\") to ensure that they are loaded
     properly.
    </para>
@@ -279,20 +270,20 @@ Specifies that output goes to a pipe or terminal.
    </para>
    <table frame="all">
     <title>Contents of a binary copy file</title>
-    <tgroup cols="2"colsep="1" rowsep="1" align="center">
-     <COLSPEC COLNAME="col1">
-     <COLSPEC COLNAME="col2">
+    <tgroup cols="2" colsep="1" rowsep="1" align="center">
+     <colspec colname="col1">
+     <colspec colname="col2">
      <spanspec namest="col1" nameend="col2" spanname="subhead">
      <tbody>
       <row>
-       <entry align="center" spanname="subhead">At the start of the file</entry>
+       <entry spanname="subhead" align="center">At the start of the file</entry>
       </row>
       <row>
        <entry>uint32</entry>
        <entry>number of tuples</entry>
       </row>
       <row>
-       <entry align="center" spanname="subhead">For each tuple</entry>
+       <entry spanname="subhead" align="center">For each tuple</entry>
       </row>
       <row>
        <entry>uint32</entry>
@@ -337,30 +328,30 @@ Specifies that output goes to a pipe or terminal.
  </refsect1>
 
  
- <REFSECT1 ID="R1-SQL-COPY-3">
-  <TITLE>
+ <refsect1 id="R1-SQL-COPY-3">
+  <title>
    Usage
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
 The following example copies a table to standard output,
  using a vertical bar ("|") as the field
  delimiter:
-  </PARA>
-  <ProgramListing>
+  </para>
+  <programlisting>
 COPY country TO <filename>stdout</filename> USING DELIMITERS '|';
-  </ProgramListing>
-  <PARA>
+  </programlisting>
+  <para>
    To copy data from a Unix file into a table "country":
-  </PARA>
-  <ProgramListing>
+  </para>
+  <programlisting>
 COPY country FROM '/usr1/proj/bray/sql/country_data';
-  </ProgramListing>
-  <PARA>
+  </programlisting>
+  <para>
    Here is a sample of data suitable for copying into a table
  from <filename>stdin</filename> (so it
 has the termination sequence on the last line):
-  </PARA>
-  <ProgramListing>
+  </para>
+  <programlisting>
    AF      AFGHANISTAN
    AL      ALBANIA
    DZ      ALGERIA
@@ -368,8 +359,8 @@ has the termination sequence on the last line):
    ZM      ZAMBIA
    ZW      ZIMBABWE
    \.
-  </ProgramListing>
-  <PARA>
+  </programlisting>
+  <para>
    The same data, output in binary format on a Linux/i586 machine.
    The data is shown after filtering through
  the Unix utility <command>od -c</command>. The table has
@@ -379,8 +370,8 @@ has the termination sequence on the last line):
   Notice how the <classname>char(2)</classname>
    field is padded with nulls to four bytes and the text field is
    preceded by its length:
-  </PARA>
-  <ProgramListing>
+  </para>
+  <programlisting>
    355  \0  \0  \0 027  \0  \0  \0 001  \0  \0  \0 002  \0  \0  \0
    006  \0  \0  \0   A   F  \0  \0 017  \0  \0  \0   A   F   G   H
      A   N   I   S   T   A   N 023  \0  \0  \0 001  \0  \0  \0 002
@@ -391,10 +382,10 @@ has the termination sequence on the last line):
    ...              \n  \0  \0  \0   Z   A   M   B   I   A 024  \0
     \0  \0 001  \0  \0  \0 002  \0  \0  \0 006  \0  \0  \0   Z   W
     \0  \0  \f  \0  \0  \0   Z   I   M   B   A   B   W   E
-  </ProgramListing>
+  </programlisting>
  </refsect1>
  
- <refsect1 ID="R1-SQL-COPY-5">
+ <refsect1 id="R1-SQL-COPY-5">
   <title>Bugs and features</title>
   <para>
    <command>COPY</command> neither invokes rules nor acts on column defaults.
@@ -435,31 +426,31 @@ must reside on or be
   </para>
  </refsect1>
  
- <REFSECT1 ID="R1-SQL-COPY-6">
-  <TITLE>
+ <refsect1 id="R1-SQL-COPY-6">
+  <title>
    Compatibility
-  </TITLE>
-  <PARA>
-  </PARA>
+  </title>
+  <para>
+  </para>
   
-  <REFSECT2 ID="R2-SQL-COPY-4">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-COPY-4">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
     SQL92
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     There is no <command>COPY</command> statement in SQL92.
-   </PARA>
+   </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

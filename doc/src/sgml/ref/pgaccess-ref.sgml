@@ -1,57 +1,74 @@
-<REFENTRY ID="APP-PGACCESS">
- <REFMETA>
-  <REFENTRYTITLE id="pgaccess-ref">
+<refentry id="APP-PGACCESS">
+ <refmeta>
+  <refentrytitle id="pgaccess-ref">
    <application>pgaccess</application>
-  </REFENTRYTITLE>
-  <REFMISCINFO>Application</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    <application>pgaccess</application>
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    <productname>Postgres</productname> graphical interactive client
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1999-05-19</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1999-05-19</date>
+  </refsynopsisdivinfo>
+  <synopsis>
 pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
-  </SYNOPSIS>
+  </synopsis>
 
-  <REFSECT2 ID="R2-APP-PGACCESS-1">
-   <REFSECT2INFO>
-    <DATE>1999-05-19</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-APP-PGACCESS-1">
+   <refsect2info>
+    <date>1999-05-19</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">dbname</replaceable></term>
+      <listitem>
+       <para>
+	The name of an existing database to access.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
    </para>
   </refsect2>
 
-  <REFSECT2 ID="R2-APP-PGACCESS-2">
-   <REFSECT2INFO>
-    <DATE>1999-05-19</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-APP-PGACCESS-2">
+   <refsect2info>
+    <date>1999-05-19</date>
+   </refsect2info>
+   <title>
     Outputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
    </para>
   </refsect2>
  </refsynopsisdiv>
 
- <REFSECT1 ID="R1-APP-PGACCESS-1">
-  <REFSECT1INFO>
-   <DATE>1999-05-19</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+ <refsect1 id="R1-APP-PGACCESS-1">
+  <refsect1info>
+   <date>1999-05-19</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
+   <note>
+    <title>Editor's Note</title>
+    <para>
+     This should be transcribed from other pgaccess info. Volunteers?
+    </para>
+   </note>
   </para>
  </refsect1>
 </refentry>
@@ -68,7 +85,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"../reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
 sgml-local-ecat-files:nil
 End:
 -->

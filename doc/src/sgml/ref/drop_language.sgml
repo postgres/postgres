@@ -1,172 +1,170 @@
-<REFENTRY ID="SQL-DROPLANGUAGE">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-DROPLANGUAGE">
+ <refmeta>
+  <refentrytitle>
    DROP LANGUAGE
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    DROP LANGUAGE
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Removes a user-defined procedural language
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-04-15</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
-DROP PROCEDURAL LANGUAGE '<REPLACEABLE CLASS="PARAMETER">langname</REPLACEABLE>'
-  </SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-04-15</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+DROP PROCEDURAL LANGUAGE '<replaceable class="PARAMETER">name</replaceable>'
+  </synopsis>
   
-  <REFSECT2 ID="R2-SQL-DROPLANGUAGE-1">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-DROPLANGUAGE-1">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
-   </PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <REPLACEABLE CLASS="PARAMETER">langname</REPLACEABLE>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          The name of an existing language.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-       </variablelist>
-  </REFSECT2>
-  
-  <REFSECT2 ID="R2-SQL-DROPLANGUAGE-2">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Outputs
-   </TITLE>
-   <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>DROP</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   This message is returned if the language is successfully dropped.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <ReturnValue>
-	   ERROR: Language "<replaceable class="parameter">langname</replaceable>" doesn't exist</ReturnValue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   This message occurs if the language
-	   "<replaceable class="parameter">langname</replaceable>" is
-	   not found.
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">name</replaceable></term>
+      <listitem>
+       <para>
+	The name of an existing procedural language.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
- 
- <REFSECT1 ID="R1-SQL-DROPLANGUAGE-1">
-  <REFSECT1INFO>
-   <DATE>1998-04-15</DATE>
-  </REFSECT1INFO>
-  <TITLE>
-   Description
-  </TITLE>
-  <PARA>
-   <command>DROP PROCEDURAL LANGUAGE</command> will remove the definition
-   of the previously registered procedural language having the name
-   '<replaceable class="parameter">langname</replaceable>'.
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-DROPLANGUAGE-3">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Notes
-   </TITLE>
-   <PARA>
-    The <command>DROP PROCEDURAL LANGUAGE</command> statement is
-    a <productname>Postgres</productname> language extension.
-   </PARA>
-   <PARA>
-    Refer to <command>CREATE PROCEDURAL LANGUAGE</command>
-    for information on how to create procedural languages.
-   </PARA>
   </refsect2>
   
-  <REFSECT2 ID="R2-SQL-DROPLANGUAGE-4">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-DROPLANGUAGE-2">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+DROP
+       </computeroutput></term>
+      <listitem>
+       <para>
+	This message is returned if the language is successfully dropped.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><computeroutput>
+ERROR: Language "<replaceable class="parameter">name</replaceable>" doesn't exist
+       </computeroutput></term>
+      <listitem>
+       <para>
+	This message occurs if a language called
+	<replaceable class="parameter">name</replaceable> is
+	not found in the database.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
+ 
+ <refsect1 id="R1-SQL-DROPLANGUAGE-1">
+  <refsect1info>
+   <date>1998-04-15</date>
+  </refsect1info>
+  <title>
+   Description
+  </title>
+  <para>
+   <command>DROP PROCEDURAL LANGUAGE</command> will remove the definition
+   of the previously registered procedural language called
+   <replaceable class="parameter">name</replaceable>.
+  </para>
+  
+  <refsect2 id="R2-SQL-DROPLANGUAGE-3">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    Notes
+   </title>
+   <para>
+    The <command>DROP PROCEDURAL LANGUAGE</command> statement is
+    a <productname>Postgres</productname> language extension.
+   </para>
+   <para>
+    Refer to <command>CREATE PROCEDURAL LANGUAGE</command>
+    for information on how to create procedural languages.
+   </para>
+  </refsect2>
+  
+  <refsect2 id="R2-SQL-DROPLANGUAGE-4">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
     Bugs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     No checks are made if functions or trigger procedures registered
     in this language still exist. To re-enable them without having
     to drop and recreate all the functions, the pg_proc's prolang
     attribute of the functions must be adjusted to the new object
     ID of the recreated pg_language entry for the PL.
-   </PARA>
-  </REFSECT2>
- </refsect1>
- 
- <REFSECT1 ID="R1-SQL-DROPLANGUAGE-2">
-  <TITLE>
-   Usage
-  </TITLE>
-  <PARA>
-   This command removes the PL/Sample language:
-  </PARA>
-  <ProgramListing>
-DROP PROCEDURAL LANGUAGE 'plsample'
-  </ProgramListing>
- </REFSECT1>
- 
- <REFSECT1 ID="R1-SQL-DROPLANGUAGE-3">
-  <TITLE>
-   Compatibility
-  </TITLE>
-  <PARA>
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-DROPLANGUAGE-5">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    SQL92
-   </TITLE>
-   <PARA>
-    There is no <command>DROP PROCEDURAL LANGUAGE</command> in 
-<acronym>SQL92</acronym>.
-   </PARA>
+   </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+ 
+ <refsect1 id="R1-SQL-DROPLANGUAGE-2">
+  <title>
+   Usage
+  </title>
+  <para>
+   This command removes the PL/Sample language:
 
+   <programlisting>
+DROP PROCEDURAL LANGUAGE 'plsample';
+   </programlisting>
+  </para>
+ </refsect1>
+ 
+ <refsect1 id="R1-SQL-DROPLANGUAGE-3">
+  <title>
+   Compatibility
+  </title>
+  <para>
+  </para>
+  
+  <refsect2 id="R2-SQL-DROPLANGUAGE-5">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    SQL92
+   </title>
+   <para>
+    There is no <command>DROP PROCEDURAL LANGUAGE</command> in 
+    <acronym>SQL92</acronym>.
+   </para>
+  </refsect2>
+ </refsect1>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

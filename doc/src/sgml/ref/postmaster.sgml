@@ -36,9 +36,7 @@ postmaster [ -n | -s ] ...
     
     <variablelist>
      <varlistentry>
-      <term>
-       -B <replaceable class="parameter">nBuffers</replaceable>
-      </term>
+      <term>-B <replaceable class="parameter">nBuffers</replaceable></term>
       <listitem>
        <para>
 	The number of shared-memory buffers for the 
@@ -51,9 +49,7 @@ postmaster [ -n | -s ] ...
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -D <replaceable class="parameter">DataDir</replaceable>
-      </term>
+      <term>-D <replaceable class="parameter">DataDir</replaceable></term>
       <listitem>
        <para>
 	Specifies the directory to use as the root of the tree of database
@@ -70,9 +66,7 @@ postmaster [ -n | -s ] ...
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -N <replaceable class="parameter">nBackends</replaceable>
-      </term>
+      <term>-N <replaceable class="parameter">nBackends</replaceable></term>
       <listitem>
        <para>
 	The maximum number of backend server processes that this postmaster
@@ -86,9 +80,7 @@ postmaster [ -n | -s ] ...
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -S
-      </term>
+      <term>-S</term>
       <listitem>
        <para>
 	Specifies that the <application>postmaster</application>
@@ -102,9 +94,7 @@ postmaster [ -n | -s ] ...
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -d [ <replaceable class="parameter">DebugLevel</replaceable> ]
-      </term>
+      <term>-d [ <replaceable class="parameter">DebugLevel</replaceable> ]</term>
       <listitem>
        <para>
 	The optional argument <replaceable class="parameter">DebugLevel</replaceable>
@@ -125,9 +115,7 @@ postmaster [ -n | -s ] ...
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -i
-      </term>
+      <term>-i</term>
       <listitem>
        <para>
 	This enables TCP/IP or Internet domain socket communication.
@@ -138,9 +126,7 @@ postmaster [ -n | -s ] ...
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -o <replaceable class="parameter">BackendOptions</replaceable>
-      </term>
+      <term>-o <replaceable class="parameter">BackendOptions</replaceable></term>
       <listitem>
        <para>
 	The 
@@ -156,9 +142,7 @@ postmaster [ -n | -s ] ...
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -p <replaceable class="parameter">port</replaceable>
-      </term>
+      <term>-p <replaceable class="parameter">port</replaceable></term>
       <listitem>
        <para>
 	Specifies the TCP/IP port or local Unix domain socket file extension
@@ -200,9 +184,7 @@ postmaster [ -n | -s ] ...
 
     <variablelist>
      <varlistentry>
-      <term>
-       -n
-      </term>
+      <term>-n</term>
       <listitem>
        <para>
 	<application>postmaster</application>
@@ -215,9 +197,7 @@ postmaster [ -n | -s ] ...
     </varlistentry>
 
     <varlistentry>
-      <term>
-       -s
-      </term>
+      <term>-s</term>
       <listitem>
        <para>
 	<application>postmaster</application>
@@ -259,9 +239,9 @@ postmaster [ -n | -s ] ...
      </varlistentry>
      -->
      <varlistentry>
-      <term>
-       semget: No space left on device
-      </term>
+      <term><computeroutput>
+semget: No space left on device
+       </computeroutput></term>
       <listitem>
        <para>
 	If you see this message, you should run the
@@ -290,9 +270,9 @@ postmaster [ -n | -s ] ...
      </varlistentry>
 
      <varlistentry>
-      <term>
-       StreamServerPort: cannot bind to port
-      </term>
+      <term><computeroutput>
+StreamServerPort: cannot bind to port
+       </computeroutput></term>
       <listitem>
        <para>
 	If you see this message, you should be certain that there is no other 
@@ -330,9 +310,9 @@ on BSD-based systems, or
      </varlistentry>
 
      <varlistentry>
-      <term>
-       IpcMemoryAttach: shmat() failed: Permission denied
-      </term>
+      <term><computeroutput>
+IpcMemoryAttach: shmat() failed: Permission denied
+       </computeroutput></term>
       <listitem>
        <para>
 	A likely explanation is that another user attempted to start a

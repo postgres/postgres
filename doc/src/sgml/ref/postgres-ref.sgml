@@ -36,9 +36,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
     
     <variablelist>
      <varlistentry>
-      <term>
-       <replaceable class="parameter">dbname</replaceable>
-      </term>
+      <term><replaceable class="parameter">dbname</replaceable></term>
       <listitem>
        <para>
 	The optional argument
@@ -53,9 +51,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -B <replaceable class="parameter">nBuffers</replaceable>
-      </term>
+      <term>-B <replaceable class="parameter">nBuffers</replaceable></term>
       <listitem>
        <para>
 	If the backend is running under the 
@@ -72,9 +68,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -C
-      </term>
+      <term>-C</term>
       <listitem>
        <para>
 	Do not show the server version number.
@@ -83,9 +77,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -D <replaceable class="parameter">DataDir</replaceable>
-      </term>
+      <term>-D <replaceable class="parameter">DataDir</replaceable></term>
       <listitem>
        <para>
 	Specifies the directory to use as the root of the tree of database
@@ -102,9 +94,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -E
-      </term>
+      <term>-E</term>
       <listitem>
        <para>
 	Echo all queries.
@@ -113,9 +103,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -F
-      </term>
+      <term>-F</term>
       <listitem>
        <para>
 	Disable an automatic <function>fsync()</function> call after each transaction.
@@ -128,9 +116,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -O
-      </term>
+      <term>-O</term>
       <listitem>
        <para>
 	Override restrictions, so system table structures can be modified.
@@ -140,9 +126,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -Q
-      </term>
+      <term>-Q</term>
       <listitem>
        <para>
 	Specifies "quiet" mode.
@@ -151,9 +135,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -S <replaceable class="parameter">SortSize</replaceable>
-      </term>
+      <term>-S <replaceable class="parameter">SortSize</replaceable></term>
       <listitem>
        <para>
 	Specifies the amount of memory to be used by internal sorts and hashes
@@ -168,9 +150,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -d [ <replaceable class="parameter">DebugLevel</replaceable> ]
-      </term>
+      <term>-d [ <replaceable class="parameter">DebugLevel</replaceable> ]</term>
       <listitem>
        <para>
 	The optional argument <replaceable class="parameter">DebugLevel</replaceable>
@@ -191,9 +171,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -e
-      </term>
+      <term>-e</term>
       <listitem>
        <para>
 	This option controls how dates are interpreted upon
@@ -214,9 +192,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -o <replaceable class="parameter">OutputFile</replaceable>
-      </term>
+      <term>-o <replaceable class="parameter">OutputFile</replaceable></term>
       <listitem>
        <para>
 	Sends all debugging and error output to 
@@ -232,9 +208,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -s
-      </term>
+      <term>-s</term>
       <listitem>
        <para>
 	Print time information and other statistics at the end of each query.
@@ -245,9 +219,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -v <replaceable class="parameter">protocol</replaceable>
-      </term>
+      <term>-v <replaceable class="parameter">protocol</replaceable></term>
       <listitem>
        <para>
 	Specifies the number of the frontend/backend protocol to be used for this
@@ -271,9 +243,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
 
     <variablelist>
      <varlistentry>
-      <term>
-       -A n|r|b|Q\fIn\fP|X\fIn\fP
-      </term>
+      <term>-A n|r|b|Q\fIn\fP|X\fIn\fP</term>
       <listitem>
        <para>
 	This option generates a tremendous amount of output.
@@ -282,9 +252,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
     </varlistentry>
 
      <varlistentry>
-      <term>
-       -L
-      </term>
+      <term>-L</term>
       <listitem>
        <para>
 	Turns off the locking system.
@@ -293,9 +261,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -N
-      </term>
+      <term>-N</term>
       <listitem>
        <para>
 	Disables use of newline as a query delimiter.
@@ -304,9 +270,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -f [ s | i | m | n | h ]
-      </term>
+      <term>-f [ s | i | m | n | h ]</term>
       <listitem>
        <para>
 	Forbids the use of particular scan and join methods:
@@ -328,9 +292,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -i
-      </term>
+      <term>-i</term>
       <listitem>
        <para>
 	Prevents query execution, but shows the plan tree.
@@ -339,9 +301,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -p <replaceable class="parameter">dbname</replaceable>
-      </term>
+      <term>-p <replaceable class="parameter">dbname</replaceable></term>
       <listitem>
        <para>
 	Indicates to the backend server that it has been started by a 
@@ -354,9 +314,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
      </varlistentry>
 
      <varlistentry>
-      <term>
-       -t pa[rser] | pl[anner] | e[xecutor]
-      </term>
+      <term>-t pa[rser] | pl[anner] | e[xecutor]</term>
       <listitem>
        <para>
 	Print timing statistics for each query relating to each of the major
@@ -381,9 +339,9 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
 
     <variablelist>
      <varlistentry>
-      <term>
-       semget: No space left on device
-      </term>
+      <term><computeroutput>
+semget: No space left on device
+       </computeroutput></term>
       <listitem>
        <para>
 	If you see this message, you should run the

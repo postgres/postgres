@@ -34,93 +34,80 @@ REVOKE <replaceable class="PARAMETER">privilege</replaceable> [, ...]
 
     <variablelist>
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">privilege</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">privilege</replaceable></term>
       <listitem>
        <para>
 	The possible privileges are:
+
+	<variablelist>
+	 <varlistentry>
+	  <term>SELECT</term>
+	  <listitem>
+	   <para>
+	    Privilege to access all of the columns of a specific
+	    table/view.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>INSERT</term>
+	  <listitem>
+	   <para>
+	    Privilege to insert data into all columns of a
+	    specific table.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>UPDATE</term>
+	  <listitem>
+	   <para>
+	    Privilege to update all columns of a specific
+	    table.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>DELETE</term>
+	  <listitem>
+	   <para>
+	    Privilege to delete rows from a specific table.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>RULE</term>
+	  <listitem>
+	   <para>
+	    Privilege to define rules on table/view.
+	    (See <command>CREATE RULE</command>).
+	   </para>
+	  </listitem>
+	 </varlistentry>
+
+	 <varlistentry>
+	  <term>ALL</term>
+	  <listitem>
+	   <para>
+	    Rescind all privileges.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	</variablelist>
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term>
-       SELECT
-      </term>
-      <listitem>
-       <para>
-	Privilege to access all of the columns of a specific
-	table/view.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       INSERT
-      </term>
-      <listitem>
-       <para>
-	Privilege to insert data into all columns of a
-	specific table.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       UPDATE
-      </term>
-      <listitem>
-       <para>
-	Privilege to update all columns of a specific
-	table.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       DELETE
-      </term>
-      <listitem>
-       <para>
-	Privilege to delete rows from a specific table.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       RULE
-      </term>
-      <listitem>
-       <para>
-	Privilege to define rules on table/view.
-	(See <command>CREATE RULE</command>).
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       ALL
-      </term>
-      <listitem>
-       <para>
-	Rescind all privileges.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">object</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">object</replaceable></term>
       <listitem>
        <para>
 	The name of an object from which to revoke access.
+
 	The possible objects are:
 	<itemizedlist spacing="compact" mark="bullet">
 	 <listitem>
@@ -152,9 +139,7 @@ REVOKE <replaceable class="PARAMETER">privilege</replaceable> [, ...]
      </varlistentry>
 
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">group</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">group</replaceable></term>
       <listitem>
        <para>
 	The name of a group from whom to revoke privileges.
@@ -163,9 +148,7 @@ REVOKE <replaceable class="PARAMETER">privilege</replaceable> [, ...]
      </varlistentry>
 
      <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">username</replaceable>
-      </term>
+      <term><replaceable class="PARAMETER">username</replaceable></term>
       <listitem>
        <para>
 	The name of a user from whom revoke privileges. Use the PUBLIC keyword
@@ -175,9 +158,7 @@ REVOKE <replaceable class="PARAMETER">privilege</replaceable> [, ...]
      </varlistentry>
 
      <varlistentry>
-      <term>
-       PUBLIC
-      </term>
+      <term>PUBLIC</term>
       <listitem>
        <para>
 	Rescind the specified privilege(s) for all users.
@@ -199,9 +180,9 @@ REVOKE <replaceable class="PARAMETER">privilege</replaceable> [, ...]
 
     <variablelist>
      <varlistentry>
-      <term>
-       CHANGE
-      </term>
+      <term><computeroutput>
+CHANGE
+       </computeroutput></term>
       <listitem>
        <para>
 	Message returned if successfully.
@@ -210,9 +191,9 @@ REVOKE <replaceable class="PARAMETER">privilege</replaceable> [, ...]
      </varlistentry>
 
      <varlistentry>
-      <term>
-       ERROR
-      </term>
+      <term><computeroutput>
+ERROR
+       </computeroutput></term>
       <listitem>
        <para>
 	Message returned if object is not available or impossible
@@ -233,7 +214,7 @@ REVOKE <replaceable class="PARAMETER">privilege</replaceable> [, ...]
    Description
   </title>
   <para>
-   REVOKE allows creator of an object to revoke permissions granted
+   <command>REVOKE</command> allows creator of an object to revoke permissions granted
    before, from all users (via PUBLIC) or a certain user or group.
   </para>
 
@@ -271,7 +252,8 @@ Legend:
     <para>
      Currently, to create a GROUP you have to insert 
      data manually into table pg_group as:
-     <programlisting>          
+
+     <programlisting>
 INSERT INTO pg_group VALUES ('todos');
 CREATE USER miriam IN GROUP todos;
      </programlisting>
@@ -286,15 +268,18 @@ CREATE USER miriam IN GROUP todos;
    Usage
   </title>
   <para>
+   Revoke insert privilege from all users on table
+   <literal>films</literal>:
+
    <programlisting>
--- revoke insert privilege from all users on table films:
---
 REVOKE INSERT ON films FROM PUBLIC;
   </programlisting>
+  </para>
+
+  <para>
+   Revoke all privileges from user <literal>manuel</literal> on view <literal>kinds</literal>:
 
    <programlisting>  
--- revoke all privileges from user manuel on view kinds:
---
 REVOKE ALL ON kinds FROM manuel;
    </programlisting>
   </para>
@@ -355,6 +340,7 @@ REVOKE GRANT OPTION FOR <replaceable class="parameter">privilege</replaceable> [
      </varlistentry>
     </variablelist>
    </para>
+
    <para>
     The possible objects are:
     <simplelist>
@@ -381,6 +367,7 @@ REVOKE GRANT OPTION FOR <replaceable class="parameter">privilege</replaceable> [
     and user2 gives it to user3 then user1 can revoke
     this privilege in cascade using the CASCADE keyword.
    </para>
+
    <para>
     If user1 gives a privilege WITH GRANT OPTION to user2,
     and user2 gives it to user3 then if user1 try revoke

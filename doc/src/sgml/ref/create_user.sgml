@@ -36,9 +36,7 @@ CREATE USER<replaceable class="PARAMETER"> username</replaceable>
    <para>
     <variablelist>
      <varlistentry>
-      <term>
-       <returnvalue><replaceable class="parameter">username</replaceable></returnvalue>
-      </term>
+      <term><replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
 	The name of the user.
@@ -47,9 +45,7 @@ CREATE USER<replaceable class="PARAMETER"> username</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term>
-       <returnvalue><replaceable class="parameter">password</replaceable></returnvalue>
-      </term>
+      <term><replaceable class="parameter">password</replaceable></term>
       <listitem>
        <para>
 	The WITH PASSWORD clause sets the user's password within
@@ -81,9 +77,8 @@ CREATE USER<replaceable class="PARAMETER"> username</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term>
-       <returnvalue> CREATEDB/NOCREATEDB</returnvalue>   
-      </term>
+      <term>CREATEDB</term>
+      <term>NOCREATEDB</term>
       <listitem>
        <para> 
 	These clauses define a user's ability to create databases.
@@ -96,9 +91,8 @@ CREATE USER<replaceable class="PARAMETER"> username</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term>
-       <returnvalue>CREATEUSER/NOCREATEUSER</returnvalue>
-      </term>
+      <term>CREATEUSER</term>
+      <term>NOCREATEUSER</term>
       <listitem>
        <para>
 	These clauses determine whether a user will be permitted to
@@ -111,9 +105,7 @@ CREATE USER<replaceable class="PARAMETER"> username</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term>
-       <returnvalue><replaceable class="parameter">groupname</replaceable></returnvalue>
-      </term>
+      <term><replaceable class="parameter">groupname</replaceable></term>
       <listitem>
        <para>
 	A name of a group into which to insert the user as a new member.
@@ -122,9 +114,7 @@ CREATE USER<replaceable class="PARAMETER"> username</replaceable>
      </varlistentry>
 
      <varlistentry>
-      <term>
-       <returnvalue><replaceable class="parameter">abstime</replaceable></returnvalue>
-      </term>
+      <term><replaceable class="parameter">abstime</replaceable></term>
       <listitem>
        <para>
 	The VALID UNTIL clause sets an absolute time after which the
@@ -155,34 +145,20 @@ CREATE USER<replaceable class="PARAMETER"> username</replaceable>
    <para>
     <variablelist>
      <varlistentry>
-      <term>
-       <returnvalue>CREATE USER</returnvalue>
-      </term>
+      <term><computeroutput>
+CREATE USER
+       </computeroutput></term>
       <listitem>
        <para>
 	Message returned if the command completes successfully.
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry>
-      <term>
-       <returnvalue>ERROR:  removeUser: user "<replaceable
-	 class="parameter">username</replaceable>" does not exist</returnvalue>
-      </term>
-      <listitem>
-       <para>
-	if "<replaceable class="parameter">username</replaceable>" not found.
-       </para>
-       <comment>I don't understand this and I don't know how to get
-	this error message.</comment>
-      </listitem>
-     </varlistentry>
     </variablelist>
    </para>
   </refsect2>
  </refsynopsisdiv>
- 
+
  <refsect1 id="R1-SQL-CREATEUSER-1">
   <refsect1info>
    <date>1998-09-21</date>
@@ -192,23 +168,27 @@ CREATE USER<replaceable class="PARAMETER"> username</replaceable>
   </title>
   <para>
    CREATE USER will add a new user to an instance of 
-<productname>Postgres</productname>.
+   <productname>Postgres</productname>.
   </para>
   <para>
    The new user will be given a <filename>usesysid</filename> of:
-   '<command>SELECT MAX(usesysid) + 1 FROM pg_shadow</command>'.
+
+   <programlisting>
+SELECT MAX(usesysid) + 1 FROM pg_shadow;
+   </programlisting>
+
    This means that 
    <productname>Postgres</productname> users' <filename>usesysid</filename>s will not
    correspond to their operating
    system(OS) user ids. The exception to this rule is
-   the '<literal>postgres</literal>' user, whose OS user id
+   the <literal>postgres</literal> superuser, whose OS user id
    is used as the
    <filename>usesysid</filename> during the initdb process. 
    If you still want the
    OS user id and the <filename>usesysid</filename> to match
    for any given user,
-    use the "createuser" script provided with the <productname>Postgres</productname>
-   distribution.
+   use the <application>createuser</application> script provided with
+   the <productname>Postgres</productname> distribution.
   </para>
   
   <refsect2 id="R2-SQL-CREATEUSER-3">
@@ -219,11 +199,13 @@ CREATE USER<replaceable class="PARAMETER"> username</replaceable>
     Notes
    </title>
    <para>
-    CREATE USER statement is a <productname>Postgres</productname> language extension.
+    <command>CREATE USER</command> statement is a
+    <productname>Postgres</productname> language extension.
    </para>
    <para>
-   Use DROP USER or ALTER USER statements to remove or modify a user
-   account.</para>
+    Use <command>DROP USER</command> or <command>ALTER USER</command>
+    statements to remove or modify a user account.
+   </para>
    <para>
     Refer to the <filename>pg_shadow</filename> table for further information.
    </para>
@@ -251,31 +233,37 @@ CREATE USER<replaceable class="PARAMETER"> username</replaceable>
   </title>
   <para>
    Create a user with no password:
+
+   <programlisting>
+CREATE USER jonathan
+   </programlisting>
   </para>
-  <programlisting>
-   CREATE USER jonathan
-  </programlisting>
+
   <para>
    Create a user with a password:
+
+   <programlisting>
+CREATE USER davide WITH PASSWORD jw8s0F4
+   </programlisting>
   </para>
-  <programlisting>
-   CREATE USER davide WITH PASSWORD jw8s0F4
-  </programlisting>
+
   <para>
    Create a user with a password, whose account is valid until the end of 2001.
    Note that after one second has ticked in 2002, the account is not
    valid:
+
+   <programlisting>
+CREATE USER miriam WITH PASSWORD jw8s0F4 VALID UNTIL 'Jan 1 2002'
+   </programlisting>
   </para>
-  <programlisting>
-   CREATE USER miriam WITH PASSWORD jw8s0F4 VALID UNTIL 'Jan 1 2002'
-  </programlisting>
+
   <para> 
    Create an account where the user can create databases:
+
+   <programlisting>
+CREATE USER manuel WITH PASSWORD jw8s0F4 CREATEDB
+   </programlisting>
   </para>
-  <programlisting>
-   CREATE USER manuel WITH PASSWORD jw8s0F4 CREATEDB
-  </programlisting>
-  
  </refsect1>
  
  <refsect1 id="R1-SQL-CREATEUSER-3">
@@ -293,7 +281,7 @@ CREATE USER<replaceable class="PARAMETER"> username</replaceable>
     SQL92
    </title>
    <para>
-    There is no CREATE USER statement in SQL92.
+    There is no <command>CREATE USER</command> statement in SQL92.
    </para>
   </refsect2>
  </refsect1>

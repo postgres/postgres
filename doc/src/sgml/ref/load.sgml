@@ -1,179 +1,192 @@
-<REFENTRY ID="SQL-LOAD">
-  <REFMETA>
-	<REFENTRYTITLE>
-	  LOAD
-	</REFENTRYTITLE>
-	<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
-  </REFMETA>
-  <REFNAMEDIV>
-	<REFNAME>
-	  LOAD
-	</REFNAME>
-	<REFPURPOSE>
-	  Dynamically loads an object file
-	</REFPURPOSE>
-  </refnamediv>
-  <REFSYNOPSISDIV>
-	<REFSYNOPSISDIVINFO>
-	  <DATE>1998-09-24</DATE>
-	</REFSYNOPSISDIVINFO>
-	<SYNOPSIS>
-	  <REPLACEABLE CLASS="PARAMETER">
-	  </REPLACEABLE>
-	  LOAD '<REPLACEABLE CLASS="PARAMETER">filename</REPLACEABLE>'
-	</SYNOPSIS>
+<refentry id="SQL-LOAD">
+ <refmeta>
+  <refentrytitle>
+   LOAD
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
+   LOAD
+  </refname>
+  <refpurpose>
+   Dynamically loads an object file
+  </refpurpose>
+ </refnamediv>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-24</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+LOAD '<replaceable class="PARAMETER">filename</replaceable>'
+  </synopsis>
 
-	<REFSECT2 ID="R2-SQL-LOAD-1">
-	  <REFSECT2INFO>
-		<DATE>1998-09-01</DATE>
-	  </REFSECT2INFO>
-	  <TITLE>
-		Inputs
-	  </TITLE>
-	  <PARA>
-	  </PARA>
-	  <VARIABLELIST>
-		<VARLISTENTRY>
-		  <TERM>
-			<REPLACEABLE CLASS="PARAMETER">filename</REPLACEABLE>
-		  </TERM>
-		  <LISTITEM>
-			<PARA>
-			  Object file for dynamic loading.
-			</para>
-		  </listitem>
-		</varlistentry>
-	  </VARIABLELIST>
+  <refsect2 id="R2-SQL-LOAD-1">
+   <refsect2info>
+    <date>1998-09-01</date>
+   </refsect2info>
+   <title>
+    Inputs
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">filename</replaceable></term>
+      <listitem>
+       <para>
+	Object file for dynamic loading.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
 
-	</REFSECT2>
+  <refsect2 id="R2-SQL-LOAD-2">
+   <refsect2info>
+    <date>1998-09-24</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
 
-	<REFSECT2 ID="R2-SQL-LOAD-2">
-	  <REFSECT2INFO>
-		<DATE>1998-09-24</DATE>
-	  </REFSECT2INFO>
-	  <TITLE>
-		Outputs
-	  </TITLE>
-	  <PARA>
-		
-		<VARIABLELIST>
-		  <VARLISTENTRY>
-			<TERM>
-			  <returnvalue>LOAD</returnvalue>
-			</TERM>
-			<LISTITEM>
-			  <PARA>
-				Message returned on successful completion.
-			  </para>
-			</listitem>
-		  </varlistentry>
-		  <VARLISTENTRY>
-			<TERM>
-			  <returnvalue>ERROR:  LOAD: could not open file '<REPLACEABLE CLASS="PARAMETER">filename</REPLACEABLE>'</returnvalue>
-			</TERM>
-			<LISTITEM>
-			  <PARA>
-				Message returned if the specified file is not found. The file must be visible
-				<emphasis>to the <productname>Postgres</productname> backend</emphasis>,
-				with the appropriate full path name specified, to avoid this message.
-			  </para>
-			</listitem>
-		  </varlistentry>
-		</VARIABLELIST>
-	  </para>
-	</REFSECT2>
-  </REFSYNOPSISDIV>
-  
-  <REFSECT1 ID="R1-SQL-LOAD-1">
-	<REFSECT1INFO>
-	  <DATE>1998-09-24</DATE>
-	</REFSECT1INFO>
-	<TITLE>
-	  Description
-	</TITLE>
-	<PARA>
-	  Loads an object (or ".o") file into the 
-	  <productname>Postgres</productname> backend address space.  Once a
-	  file is loaded, all functions in that file can be accessed.  This
-	  function is used in support of user-defined types and functions.
-	</para>
-	<para>
-	  If a file is not loaded using
-	  <command>LOAD</command>, 
-	  the file will be loaded automatically the first time the
-	  function is called by <productname>Postgres</productname>.
-	  <command>LOAD</command>
-	  can also be used to reload an object file if it has been edited and
-	  recompiled.  Only objects created from C language files are supported
-	  at this time.
-	</para>
-	<REFSECT2 ID="R2-SQL-LOAD-3">
-	  <REFSECT2INFO>
-		<DATE>1998-09-24</DATE>
-	  </REFSECT2INFO>
-	  <TITLE>
-		Notes
-	  </TITLE>
-	  <PARA>
-		Functions in loaded object files should not call functions in other
-		object files loaded through the
-		<command>LOAD</command>
-		command. For example, all functions in file <literal>A</literal> should
-		call each other, functions in the standard or math libraries, or in
-		Postgres itself.  They should not call functions defined in a different
-		loaded file <literal>B</literal>.
-		This is because if <literal>B</literal> is reloaded, the Postgres loader is
-		not able to relocate the calls from the functions in <literal>A</literal> into
-		the new address space of <literal>B</literal>.
-		If <literal>B</literal> is not reloaded, however, there will
-		not be a problem.
-	  </para>
-	  <para>
-		Object files must be compiled to contain position independent code.
-		For example, 
-		on DECstations you must use
-		<application>/bin/cc</application>
-		with the <literal>-G 0</literal> option when compiling object files to be
-		loaded.
-	  </para>
-	  <para>
-		Note that if you are porting <productname>Postgres</productname>
-		to a new platform, <command>LOAD</command>
-		will have to work in order to support ADTs.
-	  </para>
-	</REFSECT2>
-  </refsect1>
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+LOAD
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned on successful completion.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><computeroutput>
+ERROR:  LOAD: could not open file '<replaceable class="PARAMETER">filename</replaceable>'
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned if the specified file is not found. The file must be visible
+	<emphasis>to the <productname>Postgres</productname> backend</emphasis>,
+	with the appropriate full path name specified, to avoid this message.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
 
-  <REFSECT1 ID="R1-SQL-LOAD-2">
-	<TITLE>
-	  Usage
-	</TITLE>
-	<PARA>
-	  <ProgramListing>
-		--Load the file /usr/postgres/demo/circle.o
-		--
-		LOAD '/usr/postgres/demo/circle.o'
-	  </ProgramListing>
-	</para>
-  </REFSECT1>
-  
-  <REFSECT1 ID="R1-SQL-LOAD-3">
-	<TITLE>
-	  Compatibility
-	</TITLE>
-	<PARA>
-	</PARA>
-	
-	<REFSECT2 ID="R2-SQL-LOAD-4">
-	  <REFSECT2INFO>
-		<DATE>1998-09-24</DATE>
-	  </REFSECT2INFO>
-	  <TITLE>
-		SQL92
-	  </TITLE>
-	  <PARA>
-		There is no <command>LOAD</command> in <acronym>SQL92</acronym>.
-	  </para>
-	</refsect2>
-  </refsect1>
-</REFENTRY>
+ <refsect1 id="R1-SQL-LOAD-1">
+  <refsect1info>
+   <date>1998-09-24</date>
+  </refsect1info>
+  <title>
+   Description
+  </title>
+  <para>
+   Loads an object (or ".o") file into the 
+   <productname>Postgres</productname> backend address space.  Once a
+   file is loaded, all functions in that file can be accessed.  This
+   function is used in support of user-defined types and functions.
+  </para>
+  <para>
+   If a file is not loaded using
+   <command>LOAD</command>, 
+   the file will be loaded automatically the first time the
+   function is called by <productname>Postgres</productname>.
+   <command>LOAD</command>
+   can also be used to reload an object file if it has been edited and
+   recompiled.  Only objects created from C language files are supported
+   at this time.
+  </para>
+  <refsect2 id="R2-SQL-LOAD-3">
+   <refsect2info>
+    <date>1998-09-24</date>
+   </refsect2info>
+   <title>
+    Notes
+   </title>
+   <para>
+    Functions in loaded object files should not call functions in other
+    object files loaded through the
+    <command>LOAD</command>
+    command. For example, all functions in file <literal>A</literal> should
+    call each other, functions in the standard or math libraries, or in
+    Postgres itself.  They should not call functions defined in a different
+    loaded file <literal>B</literal>.
+    This is because if <literal>B</literal> is reloaded, the Postgres loader is
+    not able to relocate the calls from the functions in
+    <literal>A</literal> into
+    the new address space of <literal>B</literal>.
+    If <literal>B</literal> is not reloaded, however, there will
+    not be a problem.
+   </para>
+   <para>
+    Object files must be compiled to contain position independent code.
+    For example, 
+    on DECstations you must use
+    <application>/bin/cc</application>
+    with the <literal>-G 0</literal> option when compiling object files to be
+    loaded.
+   </para>
+   <para>
+    Note that if you are porting <productname>Postgres</productname>
+    to a new platform, <command>LOAD</command>
+    will have to work in order to support ADTs.
+   </para>
+  </refsect2>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-LOAD-2">
+  <title>
+   Usage
+  </title>
+  <para>
+   Load the file <filename>/usr/postgres/demo/circle.o</filename>:
+
+   <programlisting>
+LOAD '/usr/postgres/demo/circle.o'
+   </programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-LOAD-3">
+  <title>
+   Compatibility
+  </title>
+  <para>
+  </para>
+
+  <refsect2 id="R2-SQL-LOAD-4">
+   <refsect2info>
+    <date>1998-09-24</date>
+   </refsect2info>
+   <title>
+    SQL92
+   </title>
+   <para>
+    There is no <command>LOAD</command> in <acronym>SQL92</acronym>.
+   </para>
+  </refsect2>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

@@ -1,227 +1,215 @@
-<REFENTRY ID="SQL-DECLARE">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-DECLARE">
+ <refmeta>
+  <refentrytitle>
    DECLARE
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    DECLARE
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Defines a cursor for table access
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-04</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-04</date>
+  </refsynopsisdivinfo>
+  <synopsis>
 DECLARE <replaceable class="parameter">cursor</replaceable> [ BINARY ] [ INSENSITIVE ] [ SCROLL ]
     CURSOR FOR <replaceable class="parameter">query</replaceable>
     [ FOR { READ ONLY | UPDATE [ OF <replaceable class="parameter">column</replaceable> [, ...] ] ]
-  </SYNOPSIS>
-  <REFSECT2 ID="R2-SQL-DECLARE-1">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  </synopsis>
+  <refsect2 id="R2-SQL-DECLARE-1">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
-   </PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	 <replaceable class="parameter">cursor</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-         The name of the cursor to be used in subsequent FETCH operations..
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
+   </title>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="parameter">cursor</replaceable></term>
+      <listitem>
+       <para>
+	The name of the cursor to be used in subsequent FETCH operations..
+       </para>
+      </listitem>
+     </varlistentry>
 
-	<VARLISTENTRY>
-	 <TERM>
-	 BINARY
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   Causes the cursor to fetch data in binary
-	   rather than in text format.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
+     <varlistentry>
+      <term>BINARY</term>
+      <listitem>
+       <para>
+	Causes the cursor to fetch data in binary
+	rather than in text format.
+       </para>
+      </listitem>
+     </varlistentry>
 
-	<VARLISTENTRY>
-	 <TERM>
-	 INSENSITIVE
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   <acronym>SQL92</acronym> keyword indicating that data retrieved
-from the cursor should be unaffected by updates from other processes or cursors.
-Since cursor operations occur within transactions
- in <productname>Postgres</productname> this is always the case.
-This keyword has no effect.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
+     <varlistentry>
+      <term>INSENSITIVE</term>
+      <listitem>
+       <para>
+	<acronym>SQL92</acronym> keyword indicating that data retrieved
+	from the cursor should be unaffected by updates from other processes or cursors.
+	Since cursor operations occur within transactions
+	in <productname>Postgres</productname> this is always the case.
+	This keyword has no effect.
+       </para>
+      </listitem>
+     </varlistentry>
 
-	<VARLISTENTRY>
-	 <TERM>
-	 SCROLL
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-<acronym>SQL92</acronym> keyword indicating that data may be retrieved
-in multiple rows per FETCH operation. Since this is allowed at all times
-by <productname>Postgres</productname> this keyword has no effect.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
+     <varlistentry>
+      <term>SCROLL</term>
+      <listitem>
+       <para>
+	<acronym>SQL92</acronym> keyword indicating that data may be retrieved
+	in multiple rows per FETCH operation. Since this is allowed at all times
+	by <productname>Postgres</productname> this keyword has no effect.
+       </para>
+      </listitem>
+     </varlistentry>
 
-	<VARLISTENTRY>
-	 <TERM>
-	 <replaceable class="parameter">query</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   An SQL query which will provide the rows to be governed by the
-	   cursor.
-	   Refer to the SELECT statement for further information about
-	   valid arguments.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
+     <varlistentry>
+      <term><replaceable class="parameter">query</replaceable></term>
+      <listitem>
+       <para>
+	An SQL query which will provide the rows to be governed by the
+	cursor.
+	Refer to the SELECT statement for further information about
+	valid arguments.
+       </para>
+      </listitem>
+     </varlistentry>
 
-	<VARLISTENTRY>
-	 <TERM>
-	 READ ONLY
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-<acronym>SQL92</acronym> keyword indicating that the cursor will be used
-in a readonly mode. Since this is the only cursor access mode
-available in <productname>Postgres</productname> this keyword has no effect.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
+     <varlistentry>
+      <term>READ ONLY</term>
+      <listitem>
+       <para>
+	<acronym>SQL92</acronym> keyword indicating that the cursor will be used
+	in a readonly mode. Since this is the only cursor access mode
+	available in <productname>Postgres</productname> this keyword has no effect.
+       </para>
+      </listitem>
+     </varlistentry>
 
-	<VARLISTENTRY>
-	 <TERM>
-	 UPDATE
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-<acronym>SQL92</acronym> keyword indicating that the cursor will be used
-to update tables. Since cursor updates are not currently
-supported in <productname>Postgres</productname> this keyword
-provokes an informational error message.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
+     <varlistentry>
+      <term>UPDATE</term>
+      <listitem>
+       <para>
+	<acronym>SQL92</acronym> keyword indicating that the cursor will be used
+	to update tables. Since cursor updates are not currently
+	supported in <productname>Postgres</productname> this keyword
+	provokes an informational error message.
+       </para>
+      </listitem>
+     </varlistentry>
 
-	<VARLISTENTRY>
-	 <TERM>
-	 <replaceable class="parameter">column</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-Column(s) to be updated.
-Since cursor updates are not currently
-supported in <productname>Postgres</productname> the UPDATE clause
-provokes an informational error message.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
+     <varlistentry>
+      <term><replaceable class="parameter">column</replaceable></term>
+      <listitem>
+       <para>
+	Column(s) to be updated.
+	Since cursor updates are not currently
+	supported in <productname>Postgres</productname> the UPDATE clause
+	provokes an informational error message.
+       </para>
+      </listitem>
+     </varlistentry>
 
-   </VARIABLELIST>
-  </REFSECT2>
-
-  <REFSECT2 ID="R2-SQL-DECLARE-2">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    Outputs
-   </TITLE>
-   <PARA>
-
-   <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	 SELECT
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-          The message returned if the SELECT is run successfully.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-
-	<VARLISTENTRY>
-	 <TERM>
-	   NOTICE
-	   BlankPortalAssignName: portal "<replaceable class="parameter">cursor</replaceable>" already exists
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   This error occurs if cursor "<replaceable class="parameter">cursor</replaceable>" is already declared.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-
-	<VARLISTENTRY>
-	 <TERM>
-ERROR:  Named portals may only be used in begin/end transaction blocks
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-This error occurs if the cursor is not declared within a transaction block.
-       </PARA>
-      </LISTITEM>
-     </VARLISTENTRY>     
-    </VARIABLELIST>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
- 
- <REFSECT1 ID="R1-SQL-DECLARE-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-04</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-DECLARE-2">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+SELECT
+       </computeroutput></term>
+      <listitem>
+       <para>
+	The message returned if the SELECT is run successfully.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>
+NOTICE
+BlankPortalAssignName: portal "<replaceable class="parameter">cursor</replaceable>" already exists
+       </computeroutput></term>
+      <listitem>
+       <para>
+	This error occurs if <replaceable class="parameter">cursor</replaceable> is already declared.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><computeroutput>
+ERROR:  Named portals may only be used in begin/end transaction blocks
+       </computeroutput></term>
+      <listitem>
+       <para>
+	This error occurs if the cursor is not declared within a transaction block.
+       </para>
+      </listitem>
+     </varlistentry>     
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-DECLARE-1">
+  <refsect1info>
+   <date>1998-09-04</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
-   DECLARE allows a user to create cursors, which can be used to retrieve
+  </title>
+  <para>
+   <command>DECLARE</command> allows a user to create cursors, which can be used to retrieve
    a small number of rows at a time out of a larger query. Cursors can return
    data either in text or in binary foramt.
-  </PARA>
-  <PARA>
+  </para>
+
+  <para>
    Normal cursors return data  in text format, either ASCII or another
-encoding scheme depending on how the <productname>Postgres</productname>
-backend was built. Since
+   encoding scheme depending on how the <productname>Postgres</productname>
+   backend was built. Since
    data is stored natively in binary format, the system must
    do a conversion to produce the text format. In addition,
    text formats are often larger in size than the corresponding binary format.
    Once the information comes back in text form,  the client
    application may have to convert it to a binary format to
    manipulate it anyway.
-  </PARA>
-  <PARA>
+  </para>
+
+  <para>
    BINARY cursors give you back the data in the native binary
    representation. So binary cursors will tend to be a
    little faster since they suffer less conversion overhead.
   </para>
+
   <para>
    As an example, if a query returns a value of one from an integer column,
-you would get a string of '1' with a default cursor
-whereas with a binary cursor you would get
- a 4-byte value equal to control-A ('^A').
+   you would get a string of '1' with a default cursor
+   whereas with a binary cursor you would get
+   a 4-byte value equal to control-A ('^A').
+
    <caution>
     <para>
      BINARY cursors should be used carefully. User applications such
@@ -230,14 +218,15 @@ whereas with a binary cursor you would get
     </para>
    </caution>
   </para>
-  <PARA>
+
+  <para>
    However, string representation is architecture-neutral whereas binary
    representation can differ between different machine architectures.
    Therefore, if your client machine and server machine use different
    representations (e.g. "big-endian" versus "little-endian"),
- you will probably not want your data returned in
+   you will probably not want your data returned in
    binary format.
-   
+
    <tip>
     <para>
      If you intend to display the data in
@@ -245,23 +234,23 @@ whereas with a binary cursor you would get
      effort on the client side.
     </para>
    </tip>
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-DECLARE-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-04</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  </para>
+
+  <refsect2 id="R2-SQL-DECLARE-3">
+   <refsect2info>
+    <date>1998-09-04</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     Cursors are only available in transactions.
-   </PARA>
-   <PARA>
+   </para>
+   <para>
     <productname>Postgres</productname>
     does not have an explicit <command>OPEN cursor</command>
     statement; a cursor is considered to be open when it is declared.
-    
+
     <note>
      <para>
       In <acronym>SQL92</acronym> cursors are only available in
@@ -271,39 +260,39 @@ whereas with a binary cursor you would get
       involving DECLARE and OPEN statements.
      </para>
     </note>
-    
-   </PARA>
-  </REFSECT2>
+   </para>
+  </refsect2>
  </refsect1>
- 
- <REFSECT1 ID="R1-SQL-DECLARESTATEMENT-2">
-  <TITLE>
+
+ <refsect1 id="R1-SQL-DECLARESTATEMENT-2">
+  <title>
    Usage
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    To declare a cursor:
-  </PARA>
-  <ProgramListing>
+
+   <programlisting>
 DECLARE liahona CURSOR
     FOR SELECT * FROM films;
-  </ProgramListing>
- </REFSECT1>
+   </programlisting>
+  </para>
+ </refsect1>
 
- <REFSECT1 ID="R1-SQL-DECLARESTATEMENT-3">
-  <TITLE>
+ <refsect1 id="R1-SQL-DECLARESTATEMENT-3">
+  <title>
    Compatibility
-  </TITLE>
-  <PARA>
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-DECLARESTATEMENT-4">
-   <REFSECT2INFO>
-    <DATE>1998-04-15</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  </title>
+  <para>
+  </para>
+
+  <refsect2 id="R2-SQL-DECLARESTATEMENT-4">
+   <refsect2info>
+    <date>1998-04-15</date>
+   </refsect2info>
+   <title>
     SQL92
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     <acronym>SQL92</acronym> allows cursors only in embedded <acronym>SQL</acronym>
     and in modules. <productname>Postgres</productname> permits cursors to be used
     interactively.
@@ -314,12 +303,12 @@ DECLARE liahona CURSOR
    </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

@@ -1,185 +1,199 @@
-<REFENTRY ID="SQL-LISTEN">
-<REFMETA>
-<REFENTRYTITLE>
-LISTEN
-</REFENTRYTITLE>
-<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
-</REFMETA>
-<REFNAMEDIV>
-<REFNAME>
-LISTEN
-</REFNAME>
-<REFPURPOSE>
-Listen for notification on a notify condition
-</REFPURPOSE>
-  </refnamediv>
-<REFSYNOPSISDIV>
-<REFSYNOPSISDIVINFO>
-<DATE>1998-10-07</DATE>
-</REFSYNOPSISDIVINFO>
-<SYNOPSIS>
-LISTEN <REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>
-</SYNOPSIS>
+<refentry id="SQL-LISTEN">
+ <refmeta>
+  <refentrytitle>
+   LISTEN
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
+   LISTEN
+  </refname>
+  <refpurpose>
+   Listen for a response on a notify condition
+  </refpurpose>
+ </refnamediv>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-10-07</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+LISTEN <replaceable class="PARAMETER">name</replaceable>
+  </synopsis>
 
-	<REFSECT2 ID="R2-SQL-LISTEN-1">
-	  <REFSECT2INFO>
-		<DATE>1998-10-07</DATE>
-	  </REFSECT2INFO>
-	  <TITLE>
-		Inputs
-	  </TITLE>
-	  <PARA>
-	  </PARA>
-	  <VARIABLELIST>
-		<VARLISTENTRY>
-		  <TERM>
-			<REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>
-		  </TERM>
-		  <LISTITEM>
-			<PARA>
-			  Name of notify condition.
-			</para>
-		  </listitem>
-		</varlistentry>
-	  </VARIABLELIST>
-	  
-	</REFSECT2>
-	
-	<REFSECT2 ID="R2-SQL-LISTEN-2">
-	  <REFSECT2INFO>
-		<DATE>1998-09-24</DATE>
-	  </REFSECT2INFO>
-	  <TITLE>
-		Outputs
-	  </TITLE>
-	  <PARA>
-		
-		<VARIABLELIST>
-		  <VARLISTENTRY>
-			<TERM>
-			  <returnvalue>LISTEN</returnvalue>
-			</TERM>
-			<LISTITEM>
-			  <PARA>
-				Message returned upon successful completion of registration.
-			  </PARA>
-			</LISTITEM>
-		  </VARLISTENTRY>
-		  <VARLISTENTRY>
-			<TERM>
-			  <returnvalue>NOTICE Async_Listen: We are already listening on notifyname</returnvalue>
-			</TERM>
-			<LISTITEM>
-			  <PARA>
-				If this backend is already registered for that notify condition.
-			  </PARA>
-			</listitem>
-		  </varlistentry>
-		</VARIABLELIST>
-	  </para>		
-	</REFSECT2>
-  </REFSYNOPSISDIV>
-  
-  <REFSECT1 ID="R1-SQL-LISTEN-1">
-	<REFSECT1INFO>
-	  <DATE>1998-10-07</DATE>
-	</REFSECT1INFO>
-	<TITLE>
-	  Description
-	</TITLE>
-	<PARA>
-	  LISTEN registers the current <productname>Postgres</productname> backend as a
-	  listener on the notify condition
-	  <REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>.
-	</para>
-	<para>
-	  Whenever the command 
-	  <command>NOTIFY <REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE></command>
-	  is invoked, either by this backend or another one connected to
-	  the same database, all the backends currently listening on that notify
-	  condition are notified, and each will in turn notify its connected
-	  frontend application.  See the discussion of <command>NOTIFY</command>
-	  for more information.
-	</para>
-	<para>
-	  A backend can be deregistered for a given notify condition with the
-	  <command>UNLISTEN</command> command.  Also, a backend's listen registrations
-	  are automatically cleared when the backend process exits.
-	</para>
-	<para>
-	  The method a frontend application must use to detect notify events depends on
-	  which <productname>Postgres</productname> application programming interface it
-	  uses.  With the basic libpq library, the application issues
-	  <command>LISTEN</command> as an ordinary SQL command, and then must
-	  periodically call the routine <function>PQnotifies</function> to find out
-	  whether any notify events have been received.  Other interfaces such as
-	  libpgtcl provide higher-level methods for handling notify events; indeed,
-	  with libpgtcl the application programmer should not even issue
-	  <command>LISTEN</command> or <command>UNLISTEN</command> directly.  See the
-	  documentation for the library you are using for more details.
-	</para>
-	<para>
-	  The reference page for <command>NOTIFY</command> contains a more extensive
-	  discussion of the use of <command>LISTEN</command> and
-	  <command>NOTIFY</command>.
-	</para>
-	  
-	<REFSECT2 ID="R2-SQL-LISTEN-3">
-	  <REFSECT2INFO>
-		<DATE>1998-10-07</DATE>
-	  </REFSECT2INFO>
-	  <TITLE>
-		Notes
-	  </TITLE>
-	  <para>
-		<REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>
-		can be any string valid as a name;
-		it need not correspond to the name of any actual table.  If
-		<REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>
-		is enclosed in double-quotes, it need not even be a syntactically
-		valid name, but can be any string up to 31 characters long.
-	  </para>
-	  <para>
-		In some previous releases of
-		<productname>Postgres</productname>,
-		<REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>
-		had to be enclosed in double-quotes when it did not correspond to any existing
-		table name, even if syntactically valid as a name.  That is no longer required.
-	  </para>
-	</REFSECT2>
-  </refsect1>
-  
-  <REFSECT1 ID="R1-SQL-LISTEN-2">
-	<TITLE>
-	  Usage
-	</TITLE>
-	<PARA>
-	  <ProgramListing>
-		-- Configure and execute a listen/notify sequence from psql
-		postgres=> listen virtual;
-		LISTEN
-		postgres=> notify virtual;
-		NOTIFY
-		ASYNC NOTIFY of 'virtual' from backend pid '11239' received
-	  </ProgramListing>
-	</para>
-  </REFSECT1>
-  
-  <REFSECT1 ID="R1-SQL-LISTEN-3">
-	<TITLE>
-	  Compatibility
-	</TITLE>
-	
-	<REFSECT2 ID="R2-SQL-LISTEN-4">
-	  <REFSECT2INFO>
-		<DATE>1998-09-01</DATE>
-	  </REFSECT2INFO>
-	  <TITLE>
-		SQL92
-	  </TITLE>
-	  <PARA>
-		There is no <command>LISTEN</command> in <acronym>SQL92</acronym>.
-	  </para>
-	</refsect2>
-  </refsect1>
-</REFENTRY>
+  <refsect2 id="R2-SQL-LISTEN-1">
+   <refsect2info>
+    <date>1998-10-07</date>
+   </refsect2info>
+   <title>
+    Inputs
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><replaceable class="PARAMETER">name</replaceable></term>
+      <listitem>
+       <para>
+	Name of notify condition.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-LISTEN-2">
+   <refsect2info>
+    <date>1998-09-24</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+
+    <variablelist>
+     <varlistentry>
+      <term><computeroutput>
+LISTEN
+       </computeroutput></term>
+      <listitem>
+       <para>
+	Message returned upon successful completion of registration.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><computeroutput>
+NOTICE Async_Listen: We are already listening on <replaceable class="PARAMETER">name</replaceable>
+       </computeroutput></term>
+      <listitem>
+       <para>
+	If this backend is already registered for that notify condition.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>		
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-SQL-LISTEN-1">
+  <refsect1info>
+   <date>1998-10-07</date>
+  </refsect1info>
+  <title>
+   Description
+  </title>
+  <para>
+   <command>LISTEN</command> registers the current <productname>Postgres</productname> backend as a
+   listener on the notify condition
+   <replaceable class="PARAMETER">name</replaceable>.
+  </para>
+  <para>
+   Whenever the command 
+   <command>NOTIFY <replaceable class="PARAMETER">name</replaceable></command>
+   is invoked, either by this backend or another one connected to
+   the same database, all the backends currently listening on that notify
+   condition are notified, and each will in turn notify its connected
+   frontend application.  See the discussion of <command>NOTIFY</command>
+   for more information.
+  </para>
+  <para>
+   A backend can be unregistered for a given notify condition with the
+   <command>UNLISTEN</command> command.  Also, a backend's listen registrations
+   are automatically cleared when the backend process exits.
+  </para>
+  <para>
+   The method a frontend application must use to detect notify events depends on
+   which <productname>Postgres</productname> application programming interface it
+   uses.  With the basic libpq library, the application issues
+   <command>LISTEN</command> as an ordinary SQL command, and then must
+   periodically call the routine <function>PQnotifies</function> to find out
+   whether any notify events have been received.  Other interfaces such as
+   libpgtcl provide higher-level methods for handling notify events; indeed,
+   with libpgtcl the application programmer should not even issue
+   <command>LISTEN</command> or <command>UNLISTEN</command> directly.  See the
+   documentation for the library you are using for more details.
+  </para>
+  <para>
+   The reference page for <command>NOTIFY</command> contains a more extensive
+   discussion of the use of <command>LISTEN</command> and
+   <command>NOTIFY</command>.
+  </para>
+
+  <refsect2 id="R2-SQL-LISTEN-3">
+   <refsect2info>
+    <date>1998-10-07</date>
+   </refsect2info>
+   <title>
+    Notes
+   </title>
+   <para>
+    <replaceable class="PARAMETER">name</replaceable>
+    can be any string valid as a name;
+    it need not correspond to the name of any actual table.  If
+    <replaceable class="PARAMETER">notifyname</replaceable>
+    is enclosed in double-quotes, it need not even be a syntactically
+    valid name, but can be any string up to 31 characters long.
+   </para>
+   <para>
+    In some previous releases of
+    <productname>Postgres</productname>,
+    <replaceable class="PARAMETER">name</replaceable>
+    had to be enclosed in double-quotes when it did not correspond to any existing
+    table name, even if syntactically valid as a name.  That is no longer required.
+   </para>
+  </refsect2>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-LISTEN-2">
+  <title>
+   Usage
+  </title>
+  <para>
+   Configure and execute a listen/notify sequence from <application>psql</application>:
+   <programlisting>
+LISTEN virtual;
+NOTIFY virtual;
+
+ASYNC NOTIFY of 'virtual' from backend pid '11239' received
+   </programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-LISTEN-3">
+  <title>
+   Compatibility
+  </title>
+
+  <refsect2 id="R2-SQL-LISTEN-4">
+   <refsect2info>
+    <date>1998-09-01</date>
+   </refsect2info>
+   <title>
+    SQL92
+   </title>
+   <para>
+    There is no <command>LISTEN</command> in <acronym>SQL92</acronym>.
+   </para>
+  </refsect2>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->
