@@ -1,6 +1,6 @@
 ODO list for PostgreSQL
 ========================
-Last updated:		Mon Oct 16 11:54:04 EDT 2000
+Last updated:		Mon Oct 16 12:12:54 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -120,6 +120,7 @@ INDEXES
 * Allow SQL function indexes
 * Add FILLFACTOR to index creation
 * Re-enable partial indexes
+* Allow inherited tables to inherit index
 
 COMMANDS
 
@@ -155,6 +156,7 @@ CLIENTS
 * Make NULL's come out at the beginning or end depending on the 
   ORDER BY direction
 * Update reltuples from COPY command
+* Allow COPY to specify column names
 * fix array handling for ECPG
 * add pg_dump option to dump type names as standard ANSI types
 * -make pg_dump dump in oid order, so dependencies are resolved (Philip)
