@@ -1,0 +1,50 @@
+<html><head><title>PgAccess - Tutorial</title></head>
+<body bgcolor="#C0C0C0">
+<h1>PgAccess - Tutorial</h1>
+<a name="admin"><h2>User Administration</h2>
+The procedure for setting up <b>postgreSQL</b> usually results in a single user
+named <samp>postgres</samp>.  In order for anyone else to use <b>postgreSQL</b>,
+users must be added.  The program <samp>createuser</samp> accomplishes this. 
+First become the PostgreSQL administrator (usually <samp>postgres</samp>):<p>
+<samp>su postgres</samp><p>
+Then create a new user:<p>
+<samp>createuser jim<br>
+Enter user's postgres ID or RETURN to use unix user ID: 500 -&gt;<br>
+Is user "jim" allowed to create databases (y/n) y<br>
+Is user "jim" a superuser? (y/n) n<br>
+createuser: jim was successfully added</samp><p>
+You can use either the UNIX user ID or the postgres ID to identify users.  See
+the <b>postgreSQL</b> documentation in the "admin" section for a fuller
+account of users and groups.<p>
+To remove users, use the <samp>destroyuser</samp> command in the same way.<p> 
+<img src="screen1.jpg" border=1 align=right>
+<a name="basic"><h2>Basic use of PgAccess</h2>
+<h3>Creating a database</h3>
+At the right is the window you should see when PgAccess starts up. The first
+task for most users will be to create a database.<p> 
+Press the <em>New</em> button to bring up the window shown below.  This will
+allow you to specify the structure of the new table.  It is important to note
+that if you haven't specified a database when starting up PgAccess, this table
+will be created in the database named <samp>&lt;username&gt;</samp>, your
+username.<p>
+Assume that you want to create a table with entries describing bibliographic 
+references in the field of chemistry.  Choose a table name, such as
+<samp>chemref</samp> that will be easy to recall and find in a list.  Enter the
+table name in the first input field.<p>
+When you already have tables in a database, you can use the <em>Inherits</em>
+button to toggle a list of existing tables to inherit characteristics of another
+table.  In this example, there should be no previous tables to use.<p>
+Enter each field, giving it a name, field type and size, if the field type does
+not imply the size.  That is, if your first field was to be a sequence number,
+and you selected <em>int2</em> as the field type, you would not have to specify
+a field size.  However, if your second field was to contain the author of the
+reference, and was a <em>varchar</em> type, you would have to specify how many
+characters would be allowed in the field.<p>
+As you enter each field, click the <em>Add field</em> button to add it to the
+list at the right side of the window.  You can change the position of fields
+using the <em>Move field up</em> and <em>Move field down</em> buttons, or delete
+a field if you decide it isn't what you wanted.  When you are finished
+specifying fields, press the <em>Create table</em> button.<p>
+<img src="newtable.jpg" border=1 align=right>
+<a href="index.html#tut">Back to index</a>
+</body></html>

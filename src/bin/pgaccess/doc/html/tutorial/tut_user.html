@@ -1,0 +1,28 @@
+<html><head><title>PgAccess Tutorial</title></head>
+<body bgcolor="#C0C0C0">
+<h1>PgAccess Tutorial - User Administration</h1>
+While user administration is really not a part of the PgAccess program, it is 
+such a basic operation that a brief description is given here.
+<h2>Creating users</h2>
+The procedure for setting up <b>postgreSQL</b> usually results in a single user
+named <samp>postgres</samp>.  In order for anyone else to use <b>postgreSQL</b>,
+users must be added.  The program <samp>createuser</samp> accomplishes this. 
+First become the PostgreSQL administrator (usually <samp>postgres</samp>):<p>
+<samp>su postgres</samp><p>
+Then create a new user:<p>
+<samp>createuser jim<br>
+Enter user's postgres ID or RETURN to use unix user ID: 500 -&gt;<br>
+Is user "jim" allowed to create databases (y/n) y<br>
+Is user "jim" a superuser? (y/n) y<br>
+createuser: jim was successfully added</samp><p>
+You can use either the UNIX user ID or the postgres ID to identify users.  See
+the <b>postgreSQL</b> documentation in the "admin" section for a fuller
+account of users and groups.<p>
+The reason for using the command line to create the first user (other than
+<em>postgres</em>) is that <em>postgres</em> may not have X-Window permission.
+You can also create users using <b>PgAccess</b> if you are created as a 
+<em>superuser</em> as shown in the example above.<p>
+<h2>Removing users</h2>
+To remove users, use the <samp>destroyuser</samp> command in the same way.<p> 
+<a href="index.html#tut">Back to index</a>
+</body></html>

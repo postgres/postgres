@@ -1,0 +1,65 @@
+<HTML>
+<HEAD>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <META NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (X11; I; Linux 2.0.32 i586) [Netscape]">
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFFF" LINK="#0000EF" VLINK="#51188E" ALINK="#FF0000">
+
+<H1>
+PgAccess - Scripts and Forms&nbsp;
+<HR WIDTH="100%"></H1>
+Beginning with 0.70 version, I have introduced in PgAccess two new modules
+for operating with scripts and forms.
+
+<P>&nbsp;&nbsp; This would give to PgAccess the power of creating application
+directly into PgAccess, defining new modules, procedures, forms and possibly
+making it a rapid development tool for PostgreSQL. The "scripts" and "forms"
+modules are using two new tables called pga_forms and pga_scripts. PgAccess
+take care of creating them if user is opening a new database and grant
+ALL permissions on them to PUBLIC.
+<BR>&nbsp;
+<BR>&nbsp;&nbsp; Of course, when Designing a script, a simple text editor
+is opened and text is saved as is in pga_scripts table. When "designing"
+a form, a "form editor" that would be very similar with "Visual Tcl" is
+invoked.
+
+<P>&nbsp;&nbsp; This mechanism and the extremely versatile scripting mode
+of Tcl/Tk would give PgAccess a great power for creating end user application
+using PostgreSQL. The most important thing is that the user could call
+procedures and functions that I have used for building up PgAccess !
+<H3>
+Forms</H3>
+&nbsp;&nbsp; Forms are used for creating windows and placing widgets inside
+it. When PgAccess interpret them, a new window appear, with buttons as
+defined that could call "user defined scripts", "user defined procedures"
+or "internal PgAccess procedures".
+<BR>&nbsp;&nbsp; Forms can hold all the widgets allowed in Tcl/Tk , buttons,
+check-boxes, radio-buttons, list-boxes, frames, canvases, etc. With these
+forms, you can control your application so PgAccess would become just a
+"shell", a startup point for you applications. See the&nbsp; <A HREF="forms.html">special
+section concerning forms.</A>
+<H3>
+Scripts</H3>
+&nbsp;&nbsp; Scripts are normal Tcl/Tk code that is interpreted by Tcl/Tk.
+You can define your own procedures inside a script called "Library" for
+example. You can call your procedures from within another script, from
+another procedure.
+<BR>&nbsp;&nbsp; The most important thing is that you have total access
+to the PgAccess core of functions and procedures used by me in building
+PgAccess as an application. Just write <B><TT><FONT COLOR="#000080">open_table
+"Your sample table"</FONT></TT></B> and you'll see the result.
+<BR>&nbsp;&nbsp; If you are writing a script called "Autoexec" then it
+will be executed every time the database is opened. You can put inside
+different commands that you want to be executed such as : running scripts
+that would define your own procedures such as <B><TT><FONT COLOR="#000080">execute_script
+"My own procedure library"</FONT></TT></B> or open a form with <B><TT><FONT COLOR="#000080">open_form
+"Main window with menu buttons"</FONT></TT></B> , and so on.
+
+<P>
+<HR WIDTH="100%">
+<BR>Remember : I'm waiting your messages at <A HREF="mailto:teo@flex.ro">teo@flex.ro</A>
+
+<P>
+<HR WIDTH="50%">
+</BODY>
+</HTML>

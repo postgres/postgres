@@ -1,0 +1,525 @@
+array set Messages {
+
+"Label" "Cimke"
+ 
+"Save schema" "Séma mentése"
+ 
+"Is unique ?" "Egyedi (UNIQUE) ?"
+ 
+"Report builder" "Jelentés szerkesztõ"
+ 
+"Criteria" "Feltételek"
+ 
+"FATAL ERROR upgrading PgAccess table" "FATÁLIS HIBA keletkezett a PgAccess tábla frissitése közben"
+ 
+"Save this query as a view" "Nézetként (VIEW) akarod elmenteni a lekérdezést?"
+ 
+"Page header" "Oldal fejléc"
+ 
+"Query name" "Lekérdezés név"
+ 
+"Please select an object first!" "Elõször válassz egy objektumot!"
+ 
+"Fields :" "Mezõk :"
+ 
+"Name" "Név"
+ 
+"File name" "Fájl név"
+ 
+"Detail record" "Részletes bejegyzés"
+ 
+"Auto-load the last opened database at startup" "Az utolsóként használt adatbázis automatikus nyitésa inditáskor"
+ 
+"Maxvalue" "Maximális érték"
+ 
+"Start value" "Kezdõérték"
+ 
+"Report fields" "Jelentés mezõk"
+ 
+"Test form" "Teszt kérdõiv (FORM)"
+ 
+"Error trying to connect to database '%s' on host %s \n\nPostgreSQL error message:%s" "Hiba a(z) '%s' nevû adatbázishoz kapcsolódás közben a(z) '%s' szerveren.\n\nPostgreSQL hibaüzenet:%s"
+ 
+"No field type ?" "Nincs a mezõnek tipusa ?"
+ 
+"User without name?" "Felhasználó név nélkül ?"
+ 
+"You have to supply a name for this schema!" "Nevet kell adj ennek a sémának !"
+ 
+"Last value" "Legutóbbi érték"
+ 
+"Preferences" "Beállitások"
+ 
+"View '%s' already exists!\nOverwrite ?" "A(z) '%s' nevû nézet (VIEW) már létezik!\n Felülirás ?"
+ 
+"You have to select an index!" "Választanod kell egy indexet!"
+ 
+"Field type" "Mezõtipus"
+ 
+"Script name" "Szkript neve"
+ 
+"Reload" "Újratölt"
+ 
+"Remove table %s from query?" "Törölni akarod a(z) '%s' táblát ebbõl a lekérdezésbõl ?"
+ 
+"SQL window" "SQL ablak"
+ 
+"Allow user to create other users" "Engedély a felhasználónak új felhasználó készitésére"
+ 
+"Delete current record ?" "Az aktuális bejegyzés törlése ?"
+ 
+"List box" "Lista"
+ 
+"Save to query builder" "Mentsd a lekérdezés szerkesztõbe"
+ 
+"fixed width" "fix szélesség"
+ 
+"Scripts" "Szkriptek"
+ 
+"Yes" "Igen"
+ 
+"Add label" "Adj hozzá cimkét"
+ 
+"Sequence created!" "A szekvencia (SEQUENCE) elkészült!"
+ 
+"Field information" "Mezõ információ"
+
+"Design" "Tervezés"
+ 
+"Field" "Mezõ"
+ 
+"You have to supply an external file name!" "Meg kell adj egy külsõ fájlnevet!"
+ 
+"Increment" "Növelés"
+ 
+"No" "Nem"
+ 
+"Form design" "Kérdõiv (FORM) tervezés"
+ 
+"You must supply a return type!" "Szükség van visszatérési értékre!"
+ 
+"Remove field from result ?" "A mezö törlése az eredménybõl ?"
+ 
+"There is another object (a %s) with the same name.\nPlease change it!" "Van már ilyen nevû (%s) objektum!\nLégyszives változtasd meg!"
+ 
+"This query has no commands?" "Ebben a lekérdezésben nincs parancs?"
+ 
+"Execute query" "Lekérdezés futtatása"
+ 
+"field cannot be null" "a mezõ nem lehet NULL"
+ 
+"Help" "Súgó"
+ 
+"Rename column" "Az oszlop átnevezése"
+ 
+"Database" "Adatbázis"
+ 
+"Information" "Információ"
+ 
+"Close" "Zárás"
+ 
+"Command" "Utasitás"
+ 
+"Table" "Tábla"
+ 
+"verify password" "jelszó ellenõrzés"
+ 
+"Vacuum" "Porszivózás (VACUUM)"
+ 
+"Default value" "Alapérték"
+ 
+"Import" "Behozatal"
+ 
+"Delete index" "Index törlés"
+ 
+"Move up" "Mozgasd fel"
+ 
+"index properties" "index tulajdonságok"
+ 
+"check" "ellenõrzi"
+ 
+"Create new table" "Új tábla készités"
+ 
+"Visual query designer" "Lekérdezés tervezõ"
+ 
+"Delete all" "Törölni mindet"
+ 
+"You are going to delete\n\n %s \n\nProceed?" "Le fogod törölni az alábbit:\n\n %s \n\nFolytatod?"
+ 
+"Schema name" "Séma neve"
+ 
+"Error executing query" "Hiba a lekérdezés futtatása közben"
+ 
+"Report name" "Jelentés neve"
+ 
+"Add field" "Mezõ hozzáadás"
+ 
+"Field name" "Mezõnév"
+ 
+"FATAL ERROR searching for PgAccess system tables" "FATÁLIS HIBA a PgAccess rendszertáblák keresésénél"
+ 
+"A big number of rows displayed in table view will take a lot of memory!" "A nézetnél (VIEW) kijelzendõ sorok nagy száma miatt sok memória fog lefoglalódni !"
+ 
+"Preview" "Elõzetes nézet"
+ 
+"Users" "Felhasználók"
+ 
+"Owner" "Tulajdonos"
+ 
+"Form's window internal name" "Kérdõiv (FORM) ablakának belsõ használatú neve"
+ 
+"Sort field" "Mezõ rendezése"
+ 
+"New name is the same as the old one!" "Az új név megegyezik a régivel!"
+ 
+"Warning" "Figyelem"
+ 
+"Suggestions at" "Javaslatok itt:"
+ 
+"Functions" "Függvények"
+ 
+"Schema" "Séma"
+ 
+"Open" "Nyit"
+ 
+"size" "méret"
+ 
+"Delete" "Törlés"
+ 
+"Returns" "Visszatér"
+ 
+"Define new user" "Új felhasználó definiálása"
+ 
+"Move down" "Mozgasd le"
+ 
+"Design script" "Szkript tervezés"
+ 
+"Check box" "Check box"
+ 
+"FINAL WARNING" "UTOLSÓ FIGYELMEZTETÉS"
+ 
+"Add table" "Tábla hozzáadás"
+ 
+"Table viewer font" "Tábla nézõ betûkészlet"
+ 
+"The field type is not specified!" "A mezõ tipusa nincs megadva!"
+ 
+"Close test form" "Zárd le a teszt kérdõivet (FORM)"
+ 
+"Export table" "Tábla kivitel"
+ 
+"Add new index" "Ûj index hozzáadás"
+ 
+"Left" "Bal"
+ 
+"Field delimiter" "Mezõ határoló"
+ 
+"Add formula" "Formula hozzáadás"
+ 
+"Open database" "Adatbázis megnyitás"
+ 
+"Return" "Visszatérés"
+ 
+"Changed fonts may appear in the next working session!" "A megváltoztatott betûkészlet a következõ futtatásnál lesz látható!"
+ 
+"Error" "Hiba"
+ 
+"Enter a field name" "Adj meg egy mezõnevet !"
+ 
+"field name" "Mezõnév"
+ 
+"Forms" "Kérdõivek"
+ 
+"Cannot add column" "Nem lehet oszlopot hozzáadni"
+ 
+"Clean" "Törlés"
+ 
+"Delete all objects ?" "Minden objektum törlése ?"
+ 
+"Preferred language" "Választott nyelv"
+ 
+"Execute SQL" "SQL futtatás"
+ 
+"Sequences" "Szekvenciák"
+ 
+"Button" "Gomb"
+ 
+"Language" "Nyelv"
+ 
+"Query '%s' was not found!" "A(z) '%s' nevû lekérdezés nem található!"
+ 
+"Object" "Objektum"
+ 
+"Font fixed" "Fix betûkészlet"
+ 
+"Table name" "Táblanév"
+ 
+"Export" "Kivitel"
+ 
+"Change user" "Felhasználócsere"
+ 
+"You must give object a new name!" "Az objektumnak új nevet kell adjál!"
+ 
+"Query" "Lekérdezés"
+ 
+"User name" "Felhasználónév"
+ 
+"Font normal" "Normális betûkészlet"
+ 
+"Import table" "Tábla bevitel"
+ 
+"Toolbar" "Eszközpult"
+ 
+"Radio btn" "Rádiógomb"
+ 
+"You must supply a name for this function!" "Hiányzik a függvény neve!"
+ 
+"You have to select index fields!" "Az index mezõket kell választanod!"
+ 
+"Constraint" "Kényszer (CONSTRAINT)"
+ 
+"The script must have a name" "Hiányzik a szkript neve"
+ 
+"Save" "Mentés"
+ 
+"Exit" "Kilépés"
+ 
+"Inherits" "örökli"
+ 
+"Delete field" "Mezõ törlés"
+ 
+"About" "A programról"
+ 
+"Empty field name ?" "Nom de champ inexistant ?"
+ 
+"All report information will be deleted.\n\nProceed ?" "Toutes les informations de l'état vont être détruites\n\nContinuer ?"
+ 
+"Host" "Szerver"
+ 
+"vacuuming database %s ..." "A(z) %s adatbázis porszivózása ..."
+ 
+"Indexes defined" "Definiált indexek"
+ 
+"You must specify field size!" "Hiányzik a mezõméret!"
+ 
+"Schema '%s' already exists!" "A(z) '%s' schéma már létezik!"
+ 
+"There is another field with the same name: '%s'!\n\nReplace it ?" "Már van ilyen nevû mezõ: '%s'!\n\nFelülirás ?"
+ 
+"Contents" "Tartalom"
+ 
+"Views" "Nézetek"
+ 
+"Variable" "Változó"
+ 
+"Error executing query\n\n%s\n\nPostgreSQL error message:\n%s\nPostgreSQL status:%s" "Hiba a lekérdezés futtatása közben\n\n%s\n\nPostgreSQL hibaüzenet:\n%s\nPostgreSQL státusz:%s"
+ 
+"Filter conditions" "Szûrõfeltételek"
+ 
+"Error retrieving query definition" "Hiba a lekérdezés definiciójának betöltésénél"
+ 
+"Error deleting view" "Hiba a nézet (VIEW) törlésénél"
+ 
+"New" "Új"
+ 
+"Tables" "Táblák"
+ 
+"Create" "Elkészit"
+ 
+"Forms need an internal name, only literals, low case" "A kérdõiveknek (FORM) kell egy belsõ név, csak kisbetûkkel"
+ 
+"Do you want to save the form into the database?" "El akarod menteni a kérdõivet (FORM) az adatbázisba ?"
+
+"Schema '%s' was not found!" "A(z) '%s' nevû séma nem található!"
+ 
+"proportional" "megfelelõ"
+ 
+"Function saved!" "A függvény elmentve!"
+ 
+"with OIDs" "OID-ekkel"
+ 
+"Table information" "Tábla információ"
+ 
+"Error inserting new record" "Hiba az üj bejegyzés tárolásával"
+ 
+"Column name '%s' already exists in this table!" "A(z) '%s' nevû oszlop már létezik ebben a táblában !"
+ 
+"File" "Fájl"
+ 
+"Your table has no fields!" "A táblában nincsenek mezõk!"
+ 
+"Height" "Magasság"
+ 
+"You will always get the latest version at:" "A legfrissebb verzió megszerezhetõ innen:"
+ 
+"Form must have a name" "Hiányzik a kérdõiv (FORM) neve !"
+ 
+"Password" "Jelszó"
+ 
+"Valid until (date)" "Érvényes eddig (dátum)"
+ 
+"Report source" "A jelentés forrása"
+ 
+"Allow user to create databases" "Engedély a felhasználónak új adatbázis készitésére"
+ 
+"Cancel" "Mégsem"
+ 
+"Is clustered ?" "CLUSTER-elt ?"
+ 
+"Add new column" "Új oszlop hozzáadás"
+ 
+"Show SQL" "SQL parancsok"
+ 
+"New name" "Új név"
+ 
+"Table '%s' not found!" "A(z) '%s' nevû tábla nem található!"
+ 
+"Form name" "Kérdõiv (FORM) név"
+ 
+"Visual designer" "Tervezõ"
+ 
+"You choose to delete index\n\n %s \n\nProceed?" "Biztos, hogy akarod törölni az alábbi indexet?\n\n %s"
+ 
+"Error retrieving from" "Hiba a betöltésnél errõl a helyrõl"
+ 
+"Save query definition" "A lekérdezés elmentése"
+ 
+"A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu" "Egy Tcl/Tk felület a\nPostgreSQL-hez\nKészitette: Constantin Teodorescu"
+ 
+"Operation completed!" "Beavatkozás végrehajtva!"
+ 
+"Max rows displayed in table/query view" "Maximális sorok száma a tábláknál/lekérdezéseknél"
+ 
+"Passwords do not match!" "A jelszók nem egyeznek!"
+ 
+"Rename" "Átnevezés"
+ 
+"Entry" "Bejegyzés"
+ 
+"Error retrieving schema definition" "Hiba a séma-definició betöltése közben"
+ 
+"This is an action query!\n\nExecute it?" "Ez nem lekérdezés, hanem parancs.\nFuttatás ?"
+ 
+"Error retrieving view definition for" "Hiba a nézet (VIEW) betöltése közben "
+ 
+"options" "beállitások"
+ 
+"Sequence '%s' not found!" "A(z) '%s' nevû szekvencia nem található!"
+ 
+"Text" "Szöveg"
+ 
+"Tcl error executing pg_exec %s\n\n%s" "Tcl hiba a pg_exec futtatásánál %s\n\n%s"
+ 
+"Width" "Szélesség"
+ 
+"You have to supply a name for this query!" "Hiányzik a lekérdezés neve!"
+ 
+"Accessing data. Please wait ..." "Adatelérés. Kis türelmet ..."
+ 
+"Report footer" "A jelentés alja"
+ 
+"Parameters" "Paraméterek"
+ 
+"Queries" "Lekérdezések"
+ 
+"Query '%s' already exists!" "A(z) '%s' nevû lekérdezés már létezik!"
+ 
+"Font bold" "Vastag betûkészlet"
+ 
+"Query builder" "Lekérdezés szerkesztõ"
+ 
+"Error defining view" "Hiba a nézet (VIEW) definiálásánál"
+ 
+"Top" "Csúcs"
+ 
+"You must supply a name for your table!" "Hiányzik a tábla neve!"
+ 
+"Page footer" "A lap alja"
+ 
+"Font italic" "Dõlt betûkészlet"
+ 
+"Field name not entered!" "A mezõnév hiányzik!"
+ 
+"Index name cannot be null!" "Az index nem lehet NULL!"
+ 
+"Sort" "Rendezés"
+ 
+"Import-Export table" "Tábla behozatal/kivitel"
+ 
+"Point" "Pont"
+ 
+"type" "tipus"
+ 
+"You should supply a name for this sequence" "Hiányzik a szekvencia neve!"
+ 
+"Remove link ?" "A kapcsolat törlése?"
+ 
+"You have to supply a table name!" "Hiányzik a tábla neve!"
+ 
+"Report header" "Jelentés fejléc"
+ 
+"Attributes" "Attribútumok"
+ 
+"Table '%s' already in schema" "A(z) '%s' tábla már szerepel a sémában!"
+ 
+"Username" "Felhasználó név"
+ 
+"Minvalue" "Minimális érték"
+ 
+"Sequence name" "Szekvencianév"
+ 
+"Define sequence" "Szekvencia definiálás"
+ 
+"Function" "Függvény"
+ 
+"Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!" "A rendezés és szûrés (még) nem megoldott a lekérdezéseknél!\n\nHasználd õket a lekérdezés definiciókban!"
+ 
+"Reports" "Jelentések"
+
+"Columns" "Oszlopok"
+
+"Indexes" "Indexek"
+
+"Permissions" "Engedélyek"
+
+"not null" "nem NULL"
+
+"Cluster index" "Index CLUSTER-elés"
+
+"index columns" "indexelt oszlopok"
+
+"Add user" "Felhasználó hozzáadás"
+
+"Change permissions" "Engedélyek megváltoztatása"
+
+"select" "olvasás"
+
+"update" "frissités"
+
+"insert" "tárolás"
+
+"rule" "szabályok"
+
+"Identification" "Azonositás"
+
+"Owner ID" "Tulajdonos azonositó"
+
+"Has primary key ?" "Van elsõdleges kulcsa ?"
+
+"Has rules ?" "Vannak szabályok ?"
+
+"Statistics" "Statisztika"
+
+"Number of tuples" "Bejegyzések száma"
+
+"Number of pages" "Oldalak száma"
+
+"Index name" "Index név"
+
+"Index fields" "Index mezõk"
+
+"Table OID" "Tábla OID"
+ 
+}
+
+
