@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.2 1996/07/12 04:53:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.3 1996/07/18 05:48:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "postgres.h"
 #include "libpq/pqcomm.h"
 #include "libpq-fe.h"
-#include <signal.h>
 
 /* the tuples array in a PGresGroup  has to grow to accommodate the tuples */
 /* returned.  Each time, we grow by this much: */
@@ -39,7 +38,6 @@ static PGresult* makePGresult(PGconn *conn, char *pname);
 static void addTuple(PGresult *res, PGresAttValue *tup);
 static PGresAttValue* getTuple(PGconn *conn, PGresult *res, int binary);
 static PGresult* makeEmptyPGresult(PGconn *conn, ExecStatusType status);
-static void fill(int length, int max, char filler, FILE *fp);
 
 /*
  * PQclear -
@@ -624,133 +622,13 @@ PQendcopy(PGconn *conn)
     }
 }
 
-/* simply send out max-length number of filler characters to fp */
-static void
-fill (int length, int max, char filler, FILE *fp)
-{
-  int count;
-  char filltmp[2];
-
-  filltmp[0] = filler;
-  filltmp[1] = 0;
-  count = max - length;
-  while (count-- >= 0)
-    {
-      fprintf(fp, "%s", filltmp);
-    }
- }
 
 
 /*
- * PQdisplayTuples()
- *
- * a better version of PQprintTuples()
- * that can optionally do padding of fields with spaces and use different
- * field separators 
- */
-void
-PQdisplayTuples(PGresult *res,
-		FILE *fp,      /* where to send the output */
-		int fillAlign, /* pad the fields with spaces */
-		char *fieldSep,  /* field separator */
-		int printHeader, /* display headers? */
-		int quiet
-		)
-{
-#define DEFAULT_FIELD_SEP " "
-
-    char *pager;
-    int i, j;
-    int nFields;
-    int nTuples;
-    int fLength[MAX_FIELDS];
-    int usePipe = 0;
-
-    if (fieldSep == NULL)
-	fieldSep == DEFAULT_FIELD_SEP;
-
-    if (fp == NULL) 
-	fp = stdout;
-    if (fp == stdout) {
-	/* try to pipe to the pager program if possible */
-	pager=getenv("PAGER");
-	if (pager != NULL) {
-	    fp = popen(pager, "w");
-	    if (fp) {
-		usePipe = 1;
-		signal(SIGPIPE, SIG_IGN);
-	    } else
-		fp = stdout;
-	}
-    }
-
-    /* Get some useful info about the results */
-    nFields = PQnfields(res);
-    nTuples = PQntuples(res);
-  
-    /* Zero the initial field lengths */
-    for (j=0  ; j < nFields; j++) {
-      fLength[j] = strlen(PQfname(res,j));
-    }
-    /* Find the max length of each field in the result */
-    /* will be somewhat time consuming for very large results */
-    if (fillAlign) {
-	for (i=0; i < nTuples; i++) {
-	    for (j=0  ; j < nFields; j++) {
-		if (PQgetlength(res,i,j) > fLength[j])
-		    fLength[j] = PQgetlength(res,i,j);
-	    }
-	}
-    }
-
-    if (printHeader) {
-	/* first, print out the attribute names */
-	for (i=0; i < nFields; i++) {
-	    fputs(PQfname(res,i), fp);
-	    if (fillAlign)
-		fill (strlen (PQfname(res,i)), fLength[i], ' ', fp);
-	    fputs(fieldSep,fp);
-	}
-	fprintf(fp, "\n");
-  
-	/* Underline the attribute names */
-	for (i=0; i < nFields; i++) {
-	    if (fillAlign)
-		fill (0, fLength[i], '-', fp);
-	    fputs(fieldSep,fp);
-	}
-	fprintf(fp, "\n");
-    }
-
-    /* next, print out the instances */
-    for (i=0; i < nTuples; i++) {
-      for (j=0  ; j < nFields; j++) {
-        fprintf(fp, "%s", PQgetvalue(res,i,j));
-	if (fillAlign)
-	    fill (strlen (PQgetvalue(res,i,j)), fLength[j], ' ', fp);
-	fputs(fieldSep,fp);
-      }
-      fprintf(fp, "\n");
-    }
-  
-    if (!quiet)
-	fprintf (fp, "\nQuery returned %d row%s.\n",PQntuples(res),
-		 (PQntuples(res) == 1) ? "" : "s");
-  
-    fflush(fp);
-    if (usePipe) {
-	pclose(fp);
-	signal(SIGPIPE, SIG_DFL);
-    }
-}
-
-
-
-/*
- * PQprintTuples()
+ * print_tuples()
  *
  * This is the routine that prints out the tuples that
- *  are returned from the backend.
+ * are returned from the backend.
  * Right now all columns are of fixed length,
  * this should be changed to allow wrap around for
  * tuples values that are wider.
@@ -819,6 +697,295 @@ PQprintTuples(PGresult *res,
 		fprintf(fout, "|\n%s\n",tborder);
 	}
     }
+}
+
+/*
+ * new PQprintTuples routine (proff@suburbia.net)
+ * PQprintOpt is a typedef (structure) that containes
+ * various flags and options. consult libpq-fe.h for
+ * details
+ */
+
+void
+PQprint(FILE *fout,
+              PGresult *res,
+	      PQprintOpt *po
+              )
+{
+    int nFields;
+
+    nFields = PQnfields(res);
+
+    if ( nFields > 0 ) {  /* only print tuples with at least 1 field.  */
+    	int i,j;
+    	int nTups;
+	int *fieldMax=NULL; /* keep -Wall happy */
+	unsigned char *fieldNotNum=NULL; /* keep -Wall happy */
+	char **fields=NULL; /*keep -Wall happy */
+	char **fieldNames;
+	int fieldMaxLen=0;
+	char *border=NULL;
+        int numFieldName;
+	int fs_len=strlen(po->fieldSep);
+    	nTups = PQntuples(res);
+	if (!(fieldNames=(char **)calloc(nFields, sizeof (char *))))
+	{
+		perror("calloc");
+		exit(1);
+	}
+	if (!(fieldNotNum=(unsigned char *)calloc(nFields, 1)))
+	{
+		perror("calloc");
+		exit(1);
+	}
+	if (!(fieldMax=(int *)calloc(nFields, sizeof(int))))
+	{
+		perror("calloc");
+		exit(1);
+	}
+	for (numFieldName=0; po->fieldName && po->fieldName[numFieldName]; numFieldName++);
+	for (j=0; j < nFields; j++)
+	{
+		int len;
+		char *s=(j<numFieldName && po->fieldName[j][0])? po->fieldName[j]: PQfname(res, j);
+		fieldNames[j]=s;
+		len=s? strlen(s): 0;
+		fieldMax[j] = len;
+		/*
+		if (po->header && len<5)
+			len=5; 
+	        */
+		len+=fs_len;
+		if (len>fieldMaxLen)
+			fieldMaxLen=len;
+	}
+	if (!po->expanded && (po->align || po->html3))
+	{
+		if (!(fields=(char **)calloc(nFields*(nTups+1), sizeof(char *))))
+		{
+			perror("calloc");
+			exit(1);
+		}
+	} else
+		if (po->header && !po->html3)
+        	{
+			if (po->expanded)
+			{
+				if (po->align)
+					fprintf(fout, "%-*s%s Value\n", fieldMaxLen-fs_len, "Field", po->fieldSep);
+				else
+					fprintf(fout, "%s%sValue\n", "Field", po->fieldSep);
+			} else
+			{
+				int len=0;
+				for (j=0; j < nFields; j++)
+				{
+					char *s=fieldNames[j];
+					fputs(s, fout);
+					len+=strlen(s)+fs_len;
+					if ((j+1)<nFields)
+						fputs(po->fieldSep, fout);
+				}
+				fputc('\n', fout);
+				for (len-=fs_len; len--; fputc('-', fout));
+				fputc('\n', fout);
+			}
+		}
+	if (po->expanded && po->html3)
+	{
+		if (po->caption)
+			fprintf(fout, "<centre><h2>%s</h2></centre>\n", po->caption);
+		else
+			fprintf(fout, "<centre><h2>Query retrieved %d tuples * %d fields</h2></centre>\n", nTups, nFields);
+	}
+        for (i = 0; i < nTups; i++) {
+	    char buf[8192*2+1];
+	    if (po->expanded)
+	    {
+	    	if (po->html3)
+			fprintf(fout, "<table %s><caption align=high>%d</caption>\n", po->tableOpt? po->tableOpt: "", i);
+		else
+			fprintf(fout, "-- RECORD %d --\n", i);
+	    }
+            for (j = 0; j < nFields; j++) {
+                char *pval, *p, *o;
+		int plen;
+		if ((plen=PQgetlength(res,i,j))<1 || !(pval=PQgetvalue(res,i,j)) || !*pval)
+		{
+			if (po->align || po->expanded)
+				continue;
+			goto efield;
+		}
+		for (p=pval, o=buf; *p; *(o++)=*(p++))
+		{
+			if ((fs_len==1 && (*p==*(po->fieldSep))) || *p=='\\')
+				*(o++)='\\';
+			if (po->align && !((*p >='0' && *p<='9') || *p=='.' || *p=='E' || *p=='e' || *p==' ' || *p=='-'))
+				fieldNotNum[j]=1;
+		}
+		*o='\0';
+		if (!po->expanded && (po->align || po->html3))
+		{
+			int n=strlen(buf);
+			if (n>fieldMax[j])
+				fieldMax[j]=n;
+			if (!(fields[i*nFields+j]=(char *)malloc(n+1)))
+			{
+				perror("malloc");
+				exit(1);
+			}
+			strcpy(fields[i*nFields+j], buf);
+		} else
+		{
+			if (po->expanded)
+			{
+				if (po->html3)
+					fprintf(fout, "<tr><td align=left><b>%s</b></td><td align=%s>%s</td></tr>\n",
+						fieldNames[j], fieldNotNum[j]? "left": "right", buf);
+				else
+				{
+					if (po->align)
+						fprintf(fout, "%-*s%s %s\n", fieldMaxLen-fs_len, fieldNames[j], po->fieldSep, buf);
+					else
+						fprintf(fout, "%s%s%s\n", fieldNames[j], po->fieldSep, buf);
+				}
+			}
+			else
+			{
+				if (!po->html3)
+				{
+					fputs(buf, fout);
+efield:
+					if ((j+1)<nFields)
+						fputs(po->fieldSep, fout);
+					else
+						fputc('\n', fout);
+				}
+			}
+		}
+	    }
+	    if (po->html3 && po->expanded)
+	    	fputs("</table>\n", fout);
+    	}
+	if (!po->expanded && (po->align || po->html3))
+	{
+	    	if (po->html3)
+		{
+			if (po->header)
+			{
+				if (po->caption)
+			                fprintf(fout, "<table %s><caption align=high>%s</caption>\n", po->tableOpt? po->tableOpt: "", po->caption);
+				else
+					fprintf(fout, "<table %s><caption align=high>Retrieved %d tuples * %d fields</caption>\n", po->tableOpt? po->tableOpt: "", nTups, nFields);
+			} else
+			        fprintf(fout, "<table %s>", po->tableOpt? po->tableOpt: "");
+		}
+		if (po->header)
+        	{
+			if (po->html3)
+				fputs("<tr>", fout);
+			else
+			{
+				int tot=0;
+				int n=0;
+				char *p;
+				for (; n<nFields; n++)
+					tot+=fieldMax[n]+fs_len+(po->standard? 2: 0);
+				if (po->standard)
+					tot+=fs_len*2+2;
+				if (!(p=border=malloc(tot+1)))
+				{
+					perror("malloc");
+					exit(1);
+				}
+				if (po->standard)
+				{
+					char *fs=po->fieldSep;
+					while (*fs++)
+						*p++='+';
+				}
+				for (j=0; j <nFields; j++)
+				{
+					int len;
+					for (len=fieldMax[j] + (po->standard? 2:0) ; len--; *p++='-');
+					if (po->standard || (j+1)<nFields)
+					{
+						char *fs=po->fieldSep;
+						while (*fs++)
+							*p++='+';
+					} 
+				}
+				*p='\0';
+				if (po->standard)
+					fprintf(fout, "%s\n", border);
+			}
+			if (po->standard)
+				fputs(po->fieldSep, fout);
+                	for (j=0; j < nFields; j++)
+			{
+				char *s=PQfname(res, j);
+				if (po->html3)
+				{
+					fprintf(fout, "<th align=%s>%s</th>", fieldNotNum[j]? "left": "right",
+						fieldNames[j]);
+				} else
+				{
+					int n=strlen(s);
+					if (n>fieldMax[j])
+						fieldMax[j]=n;
+					if (po->standard)
+						fprintf(fout, fieldNotNum[j]? " %-*s ": " %*s ", fieldMax[j], s);
+					else
+						fprintf(fout, fieldNotNum[j]? "%-*s": "%*s", fieldMax[j], s);
+					if (po->standard || (j+1)<nFields)
+						fputs(po->fieldSep, fout);
+				}
+			}
+			if (po->html3)
+				fputs("</tr>\n", fout);
+			else
+				fprintf(fout, "\n%s\n", border);
+		}
+        	for (i = 0; i < nTups; i++)
+		{
+			if (po->html3)
+				fputs("<tr>", fout);
+			else
+				if (po->standard)
+					fputs(po->fieldSep, fout);
+			
+           		for (j = 0; j < nFields; j++)
+			{
+				char *p=fields[i*nFields+j];
+			 	if (po->html3)
+			 		fprintf(fout, "<td align=%s>%s</td>", fieldNotNum[j]? "left": "right", p? p: "");
+
+				else
+				{
+			 		fprintf(fout, fieldNotNum[j]? (po->standard? " %-*s ": "%-*s"): (po->standard? " %*s ": "%*s"), fieldMax[j], p? p: "");
+					if (po->standard || (j+1)<nFields)
+						fputs(po->fieldSep, fout);
+				}
+				if (p)
+					free(p);
+			}
+			if (po->html3)
+				fputs("</tr>", fout);
+			else
+				if (po->standard)
+					fprintf(fout, "\n%s", border);
+			fputc('\n', fout);
+		}
+		free(fields);
+	}
+	free(fieldMax);
+	free(fieldNotNum);
+	free(fieldNames);
+	if (border)
+		free(border);
+	if (po->html3 && !po->expanded)
+		fputs("</table>\n", fout);
+	}
 }
 
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.1.1.1 1996/07/09 06:22:17 scrappy Exp $
+ * $Id: libpq-fe.h,v 1.2 1996/07/18 05:48:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,6 +127,17 @@ typedef struct pg_result{
   PGconn* conn;
 } PGresult;
 
+typedef struct _PQprintOpt {
+    bool header;           /* print output field headers or not */
+    bool align;            /* fill align the fields */
+    bool standard;         /* old brain dead format */
+    bool html3;            /* output html tables */
+    bool expanded;         /* expand tables */
+    char *fieldSep;        /* field separator */
+    char *tableOpt;	   /* insert to HTML <table ...> */
+    char *caption;         /* HTML <caption> */
+    char **fieldName;      /* null terminated array of repalcement field names */
+} PQprintOpt;
 
 /* ===  in fe-connect.c === */
   /* make a new client connection to the backend */
@@ -165,13 +176,6 @@ extern char* PQoidStatus(PGresult *res);
 extern char* PQgetvalue(PGresult *res, int tup_num, int field_num);
 extern int PQgetlength(PGresult *res, int tup_num, int field_num);
 extern void PQclear(PGresult* res);
-/* PQdisplayTuples() is a better version of PQprintTuples() */
-extern void PQdisplayTuples(PGresult *res,
-			    FILE *fp,      /* where to send the output */
-			    int fillAlign, /* pad the fields with spaces */
-			    char *fieldSep,  /* field separator */
-			    int printHeader, /* display headers? */
-			    int quiet);
 extern void PQprintTuples(PGresult* res, 
 			  FILE* fout,      /* output stream */
 			  int printAttName,/* print attribute names or not*/
@@ -179,6 +183,10 @@ extern void PQprintTuples(PGresult* res,
 			  int width        /* width of column, 
 					      if 0, use variable width */
 			  );
+extern void PQprint(FILE* fout,      /* output stream */
+		    PGresult* res, 
+		    PQprintOpt *ps   /* option structure */
+		    );
 extern PGnotify* PQnotifies(PGconn *conn);
 extern PGresult* PQfn(PGconn* conn,
 		      int fnid, 
