@@ -1,3 +1,6 @@
+#!/bin/sh
+
+cat <<END
 To get a list of keywords compared to SQL'92, take the keywords out of
 backend/parser/keywords.c and tools/SQL_keywords.
 
@@ -7,3 +10,4 @@ keywords.  Here is what I used:
 sdif /tmp/pgkeywords tools/SQL_keywords |\
 sed 's/</ /' | sed 's/>/ /'|sed 's/|/\
                                         /' | sort -b +0
+END
