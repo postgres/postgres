@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.78 2001/06/12 05:55:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.79 2001/06/17 22:27:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,6 @@
 #include "catalog/catname.h"
 #include "catalog/pg_listener.h"
 #include "commands/async.h"
-#include "lib/dllist.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
@@ -100,10 +99,11 @@ extern CommandDest whereToSendOutput;
 /*
  * State for outbound notifies consists of a list of all relnames NOTIFYed
  * in the current transaction.	We do not actually perform a NOTIFY until
- * and unless the transaction commits.	pendingNotifies is NULL if no
- * NOTIFYs have been done in the current transaction.
+ * and unless the transaction commits.	pendingNotifies is NIL if no
+ * NOTIFYs have been done in the current transaction.  The List nodes and
+ * referenced strings are all palloc'd in TopTransactionContext.
  */
-static Dllist *pendingNotifies = NULL;
+static List *pendingNotifies = NIL;
 
 /*
  * State for inbound notifies consists of two flags: one saying whether
@@ -121,15 +121,15 @@ static volatile int notifyInterruptOccurred = 0;
 /* True if we've registered an on_shmem_exit cleanup */
 static bool unlistenExitRegistered = false;
 
+bool	Trace_notify = false;
+
 
 static void Async_UnlistenAll(void);
 static void Async_UnlistenOnExit(void);
 static void ProcessIncomingNotify(void);
 static void NotifyMyFrontEnd(char *relname, int32 listenerPID);
-static int	AsyncExistsPendingNotify(char *relname);
+static bool AsyncExistsPendingNotify(const char *relname);
 static void ClearPendingNotifies(void);
-
-bool		Trace_notify = false;
 
 
 /*
@@ -150,26 +150,23 @@ bool		Trace_notify = false;
 void
 Async_Notify(char *relname)
 {
-	char	   *notifyName;
-
 	if (Trace_notify)
 		elog(DEBUG, "Async_Notify: %s", relname);
 
-	if (!pendingNotifies)
-		pendingNotifies = DLNewList();
 	/* no point in making duplicate entries in the list ... */
-	if (!AsyncExistsPendingNotify(relname))
+	if (! AsyncExistsPendingNotify(relname))
 	{
-
 		/*
-		 * We allocate list memory from the global malloc pool to ensure
-		 * that it will live until we want to use it.  This is probably
-		 * not necessary any longer, since we will use it before the end
-		 * of the transaction. DLList only knows how to use malloc()
-		 * anyway, but we could probably palloc() the strings...
+		 * The name list needs to live until end of transaction, so
+		 * store it in the top transaction context.
 		 */
-		notifyName = strdup(relname);
-		DLAddHead(pendingNotifies, DLNewElem(notifyName));
+		MemoryContext	oldcontext;
+
+		oldcontext = MemoryContextSwitchTo(TopTransactionContext);
+
+		pendingNotifies = lcons(pstrdup(relname), pendingNotifies);
+
+		MemoryContextSwitchTo(oldcontext);
 	}
 }
 
@@ -352,7 +349,7 @@ Async_Unlisten(char *relname, int pid)
  *--------------------------------------------------------------
  */
 static void
-Async_UnlistenAll()
+Async_UnlistenAll(void)
 {
 	Relation	lRel;
 	TupleDesc	tdesc;
@@ -401,7 +398,6 @@ Async_UnlistenAll()
 static void
 Async_UnlistenOnExit(void)
 {
-
 	/*
 	 * We need to start/commit a transaction for the unlisten, but if
 	 * there is already an active transaction we had better abort that one
@@ -438,7 +434,7 @@ Async_UnlistenOnExit(void)
  *--------------------------------------------------------------
  */
 void
-AtCommit_Notify()
+AtCommit_Notify(void)
 {
 	Relation	lRel;
 	TupleDesc	tdesc;
@@ -449,7 +445,7 @@ AtCommit_Notify()
 	char		repl[Natts_pg_listener],
 				nulls[Natts_pg_listener];
 
-	if (!pendingNotifies)
+	if (pendingNotifies == NIL)
 		return;					/* no NOTIFY statements in this
 								 * transaction */
 
@@ -579,7 +575,7 @@ AtCommit_Notify()
  *--------------------------------------------------------------
  */
 void
-AtAbort_Notify()
+AtAbort_Notify(void)
 {
 	ClearPendingNotifies();
 }
@@ -601,7 +597,6 @@ AtAbort_Notify()
  *		per above
  *--------------------------------------------------------------
  */
-
 void
 Async_NotifyHandler(SIGNAL_ARGS)
 {
@@ -671,7 +666,6 @@ Async_NotifyHandler(SIGNAL_ARGS)
  *		PostgresMain calls this the first time.
  * --------------------------------------------------------------
  */
-
 void
 EnableNotifyInterrupt(void)
 {
@@ -729,7 +723,6 @@ EnableNotifyInterrupt(void)
  *		is disabled until the next EnableNotifyInterrupt call.
  * --------------------------------------------------------------
  */
-
 void
 DisableNotifyInterrupt(void)
 {
@@ -848,8 +841,9 @@ ProcessIncomingNotify(void)
 		elog(DEBUG, "ProcessIncomingNotify: done");
 }
 
-/* Send NOTIFY message to my front end. */
-
+/*
+ * Send NOTIFY message to my front end.
+ */
 static void
 NotifyMyFrontEnd(char *relname, int32 listenerPID)
 {
@@ -874,50 +868,32 @@ NotifyMyFrontEnd(char *relname, int32 listenerPID)
 		elog(NOTICE, "NOTIFY for %s", relname);
 }
 
-/* Does pendingNotifies include the given relname?
- *
- * NB: not called unless pendingNotifies != NULL.
- */
-
-static int
-AsyncExistsPendingNotify(char *relname)
+/* Does pendingNotifies include the given relname? */
+static bool
+AsyncExistsPendingNotify(const char *relname)
 {
-	Dlelem	   *p;
+	List	   *p;
 
-	for (p = DLGetHead(pendingNotifies);
-		 p != NULL;
-		 p = DLGetSucc(p))
+	foreach(p, pendingNotifies)
 	{
 		/* Use NAMEDATALEN for relname comparison.	  DZ - 26-08-1996 */
-		if (strncmp((const char *) DLE_VAL(p), relname, NAMEDATALEN) == 0)
-			return 1;
+		if (strncmp((const char *) lfirst(p), relname, NAMEDATALEN) == 0)
+			return true;
 	}
 
-	return 0;
+	return false;
 }
 
 /* Clear the pendingNotifies list. */
-
 static void
-ClearPendingNotifies()
+ClearPendingNotifies(void)
 {
-	Dlelem	   *p;
-
-	if (pendingNotifies)
-	{
-
-		/*
-		 * Since the referenced strings are malloc'd, we have to scan the
-		 * list and delete them individually.  If we used palloc for the
-		 * strings then we could just do DLFreeList to get rid of both the
-		 * list nodes and the list base...
-		 */
-		while ((p = DLRemHead(pendingNotifies)) != NULL)
-		{
-			free(DLE_VAL(p));
-			DLFreeElem(p);
-		}
-		DLFreeList(pendingNotifies);
-		pendingNotifies = NULL;
-	}
+	/*
+	 * We used to have to explicitly deallocate the list members and nodes,
+	 * because they were malloc'd.  Now, since we know they are palloc'd
+	 * in TopTransactionContext, we need not do that --- they'll go away
+	 * automatically at transaction exit.  We need only reset the list head
+	 * pointer.
+	 */
+	pendingNotifies = NIL;
 }
