@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.91 2000/09/29 18:21:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.92 2000/11/06 15:42:30 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -921,6 +921,10 @@ func_select_candidate(int nargs,
 	 * eliminate some candidates because they are non-preferred at the
 	 * first slot, we won't notice that they didn't have the same type
 	 * category for a later slot.
+	 * XXX Hmm. How else would you do this? These candidates are here because
+	 * they all have the same number of matches on arguments with explicit
+	 * types, so from here on left-to-right resolution is as good as any.
+	 * Need a counterexample to see otherwise...
 	 */
 	for (i = 0; i < nargs; i++)
 	{
@@ -944,8 +948,21 @@ func_select_candidate(int nargs,
 				}
 				else if (current_category != slot_category)
 				{
-					/* punt if more than one category for this slot */
-					return NULL;
+					/* started out as unknown type, so give preference to string type, if available */
+					if (current_category == STRING_TYPE)
+					{
+						/* forget all previous candidates */
+						candidates = current_candidate;
+						last_candidate = current_candidate;
+					}
+					else if (slot_category == STRING_TYPE)
+					{
+						/* forget this candidate */
+						if (last_candidate)
+							last_candidate->next = current_candidate->next;
+						else
+							candidates = current_candidate->next;
+					}
 				}
 				else if (current_type != slot_type)
 				{
@@ -982,6 +999,7 @@ func_select_candidate(int nargs,
 		return NULL;			/* no remaining candidates */
 	if (candidates->next != NULL)
 		return NULL;			/* more than one remaining candidate */
+
 	return candidates->args;
 }	/* func_select_candidate() */
 
