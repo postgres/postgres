@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.18 2001/03/06 18:11:39 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.19 2001/03/24 02:35:25 thomas Exp $
 Postgres documentation
 -->
 
@@ -298,11 +298,11 @@ CREATE
 
   <para>
    The <replaceable class="parameter">storage</replaceable> keyword
-   allows selection of TOAST for variable-length data types
+   allows selection of storage strategies for variable-length data types
    (only <literal>plain</literal> is allowed for fixed-length types).
    <literal>plain</literal> disables TOAST for the data type: it will always
    be stored in-line and not compressed.
-   <literal>extended</literal> is full TOAST capability: the system will
+   <literal>extended</literal> gives full TOAST capability: the system will
    first try to compress a long data value, and will move the value out of
    the main table row if it's still too long.
    <literal>external</literal> allows the value to be moved out of the main
