@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.35 1999/12/16 16:52:53 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.36 2000/01/05 17:30:05 thomas Exp $
 #
 if [ $# -eq 0 ]
 then
@@ -47,7 +47,7 @@ echo "   ports@postgresql.org"
 echo "See regress/README for more information."
 echo ""
 
-echo "=============== dropping old regression database... ================="
+echo "=============== dropping old regression database...   ================="
 dropdb $HOST regression
 
 echo "=============== creating new regression database...   ================="
@@ -136,7 +136,7 @@ if [ $? -ne 0 ]; then
 fi
 
 exit 0
-echo "=============== dropping regression database...     ================="
+echo "=============== dropping regression database...       ================="
 dropdb regression
 if [ $? -ne 0 ]; then
      echo dropdb failed
