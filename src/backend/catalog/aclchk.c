@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.89 2003/10/05 21:49:12 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.90 2003/10/29 22:20:54 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -106,7 +106,7 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 
 			idtype = ACL_IDTYPE_UID;
 
-			grantee_is_owner = (aclitem.ai_grantee == owner_uid && owner_uid != InvalidOid);
+			grantee_is_owner = (aclitem.ai_grantee == owner_uid);
 		}
 		else if (grantee->groupname)
 		{
@@ -550,12 +550,15 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 
 		/*
 		 * If there's no ACL, create a default.
+		 *
+		 * Note: for now, languages are treated as owned by the bootstrap
+		 * user.  We should add an owner column to pg_language instead.
 		 */
 		aclDatum = SysCacheGetAttr(LANGNAME, tuple, Anum_pg_language_lanacl,
 								   &isNull);
 		if (isNull)
 			old_acl = acldefault(ACL_OBJECT_LANGUAGE,
-								 InvalidOid);
+								 BOOTSTRAP_USESYSID);
 		else
 			/* get a detoasted copy of the ACL */
 			old_acl = DatumGetAclPCopy(aclDatum);
@@ -563,7 +566,7 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grantees, privileges,
 									   stmt->grant_option, stmt->behavior,
-									   InvalidOid);
+									   BOOTSTRAP_USESYSID);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -1205,7 +1208,8 @@ pg_language_aclcheck(Oid lang_oid, AclId userid, AclMode mode)
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
-		acl = acldefault(ACL_OBJECT_LANGUAGE, InvalidOid);
+		/* XXX pg_language should have an owner column, but doesn't */
+		acl = acldefault(ACL_OBJECT_LANGUAGE, BOOTSTRAP_USESYSID);
 		aclDatum = (Datum) 0;
 	}
 	else

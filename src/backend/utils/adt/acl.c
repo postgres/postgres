@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.99 2003/09/25 06:58:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.100 2003/10/29 22:20:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -542,26 +542,23 @@ acldefault(GrantObjectType objtype, AclId ownerid)
 			break;
 	}
 
-	acl = allocacl((world_default != ACL_NO_RIGHTS ? 1 : 0)
-				   + (ownerid ? 1 : 0));
+	acl = allocacl((world_default != ACL_NO_RIGHTS) ? 2 : 1);
 	aip = ACL_DAT(acl);
 
 	if (world_default != ACL_NO_RIGHTS)
 	{
-		aip[0].ai_grantee = ACL_ID_WORLD;
-		aip[0].ai_grantor = ownerid;
-		ACLITEM_SET_PRIVS_IDTYPE(aip[0], world_default, ACL_NO_RIGHTS, ACL_IDTYPE_WORLD);
+		aip->ai_grantee = ACL_ID_WORLD;
+		aip->ai_grantor = ownerid;
+		ACLITEM_SET_PRIVS_IDTYPE(*aip, world_default, ACL_NO_RIGHTS,
+								 ACL_IDTYPE_WORLD);
+		aip++;
 	}
 
-	if (ownerid)
-	{
-		int			index = (world_default != ACL_NO_RIGHTS ? 1 : 0);
-
-		aip[index].ai_grantee = ownerid;
-		aip[index].ai_grantor = ownerid;
-		/* owner gets default privileges with grant option */
-		ACLITEM_SET_PRIVS_IDTYPE(aip[index], owner_default, owner_default, ACL_IDTYPE_UID);
-	}
+	aip->ai_grantee = ownerid;
+	aip->ai_grantor = ownerid;
+	/* owner gets default privileges with grant option */
+	ACLITEM_SET_PRIVS_IDTYPE(*aip, owner_default, owner_default,
+							 ACL_IDTYPE_UID);
 
 	return acl;
 }
@@ -574,17 +571,22 @@ acldefault(GrantObjectType objtype, AclId ownerid)
  * NB: caller is responsible for having detoasted the input ACL, if needed.
  */
 Acl *
-aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg, DropBehavior behavior)
+aclinsert3(const Acl *old_acl, const AclItem *mod_aip,
+		   unsigned modechg, DropBehavior behavior)
 {
 	Acl		   *new_acl = NULL;
 	AclItem    *old_aip,
 			   *new_aip = NULL;
+	AclMode		old_privs,
+				old_goptions,
+				new_privs,
+				new_goptions;
 	int			dst,
 				num;
 
 	/* These checks for null input are probably dead code, but... */
-	if (!old_acl || ACL_NUM(old_acl) < 1)
-		old_acl = allocacl(1);
+	if (!old_acl || ACL_NUM(old_acl) < 0)
+		old_acl = allocacl(0);
 	if (!mod_aip)
 	{
 		new_acl = allocacl(ACL_NUM(old_acl));
@@ -629,16 +631,23 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg, DropBeh
 		num++;					/* set num to the size of new_acl */
 	}
 
-	/* apply the permissions mod */
+	old_privs = ACLITEM_GET_PRIVS(new_aip[dst]);
+	old_goptions = ACLITEM_GET_GOPTIONS(new_aip[dst]);
+
+	/* apply the specified permissions change */
 	switch (modechg)
 	{
 		case ACL_MODECHG_ADD:
-			ACLITEM_SET_PRIVS(new_aip[dst], ACLITEM_GET_PRIVS(new_aip[dst]) | ACLITEM_GET_PRIVS(*mod_aip));
-			ACLITEM_SET_GOPTIONS(new_aip[dst], ACLITEM_GET_GOPTIONS(new_aip[dst]) | ACLITEM_GET_GOPTIONS(*mod_aip));
+			ACLITEM_SET_PRIVS(new_aip[dst],
+							  old_privs | ACLITEM_GET_PRIVS(*mod_aip));
+			ACLITEM_SET_GOPTIONS(new_aip[dst],
+								 old_goptions | ACLITEM_GET_GOPTIONS(*mod_aip));
 			break;
 		case ACL_MODECHG_DEL:
-			ACLITEM_SET_PRIVS(new_aip[dst], ACLITEM_GET_PRIVS(new_aip[dst]) & ~ACLITEM_GET_PRIVS(*mod_aip));
-			ACLITEM_SET_GOPTIONS(new_aip[dst], ACLITEM_GET_GOPTIONS(new_aip[dst]) & ~ACLITEM_GET_GOPTIONS(*mod_aip));
+			ACLITEM_SET_PRIVS(new_aip[dst],
+							  old_privs & ~ACLITEM_GET_PRIVS(*mod_aip));
+			ACLITEM_SET_GOPTIONS(new_aip[dst],
+								 old_goptions & ~ACLITEM_GET_GOPTIONS(*mod_aip));
 			break;
 		case ACL_MODECHG_EQL:
 			ACLITEM_SET_PRIVS_IDTYPE(new_aip[dst],
@@ -648,10 +657,13 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg, DropBeh
 			break;
 	}
 
+	new_privs = ACLITEM_GET_PRIVS(new_aip[dst]);
+	new_goptions = ACLITEM_GET_GOPTIONS(new_aip[dst]);
+
 	/*
 	 * If the adjusted entry has no permissions, delete it from the list.
 	 */
-	if (ACLITEM_GET_PRIVS(new_aip[dst]) == ACL_NO_RIGHTS)
+	if (new_privs == ACL_NO_RIGHTS && new_goptions == ACL_NO_RIGHTS)
 	{
 		memmove(new_aip + dst,
 				new_aip + dst + 1,
@@ -661,12 +673,14 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg, DropBeh
 	}
 
 	/*
-	 * Remove abandoned privileges (cascading revoke)
+	 * Remove abandoned privileges (cascading revoke).  Currently we
+	 * can only handle this when the grantee is a user.
 	 */
-	if (modechg != ACL_MODECHG_ADD
-		&& ACLITEM_GET_IDTYPE(*mod_aip) == ACL_IDTYPE_UID
-		&& ACLITEM_GET_GOPTIONS(*mod_aip))
-		new_acl = recursive_revoke(new_acl, mod_aip->ai_grantee, ACLITEM_GET_GOPTIONS(*mod_aip), behavior);
+	if ((old_goptions & ~new_goptions) != 0
+		&& ACLITEM_GET_IDTYPE(*mod_aip) == ACL_IDTYPE_UID)
+		new_acl = recursive_revoke(new_acl, mod_aip->ai_grantee,
+								   (old_goptions & ~new_goptions),
+								   behavior);
 
 	return new_acl;
 }
@@ -744,8 +758,8 @@ aclremove(PG_FUNCTION_ARGS)
 				new_num;
 
 	/* These checks for null input should be dead code, but... */
-	if (!old_acl || ACL_NUM(old_acl) < 1)
-		old_acl = allocacl(1);
+	if (!old_acl || ACL_NUM(old_acl) < 0)
+		old_acl = allocacl(0);
 	if (!mod_aip)
 	{
 		new_acl = allocacl(ACL_NUM(old_acl));
@@ -773,27 +787,14 @@ aclremove(PG_FUNCTION_ARGS)
 		new_num = old_num - 1;
 		new_acl = allocacl(new_num);
 		new_aip = ACL_DAT(new_acl);
-		if (dst == 0)
-		{						/* start */
-			ereport(ERROR,
-					(errcode(ERRCODE_DATA_EXCEPTION),
-					 errmsg("aclitem for public may not be removed")));
-		}
-		else if (dst == old_num - 1)
-		{						/* end */
-			memcpy((char *) new_aip,
-				   (char *) old_aip,
-				   new_num * sizeof(AclItem));
-		}
-		else
-		{						/* middle */
+		if (dst > 0)
 			memcpy((char *) new_aip,
 				   (char *) old_aip,
 				   dst * sizeof(AclItem));
+		if (dst < new_num)
 			memcpy((char *) (new_aip + dst),
 				   (char *) (old_aip + dst + 1),
 				   (new_num - dst) * sizeof(AclItem));
-		}
 	}
 
 	PG_RETURN_ACL_P(new_acl);
@@ -839,7 +840,7 @@ makeaclitem(PG_FUNCTION_ARGS)
 
 	if (u_grantee == 0 && g_grantee == 0)
 	{
-		aclitem   ->ai_grantee = 0;
+		aclitem->ai_grantee = ACL_ID_WORLD;
 
 		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_WORLD);
 	}
@@ -851,18 +852,18 @@ makeaclitem(PG_FUNCTION_ARGS)
 	}
 	else if (u_grantee != 0)
 	{
-		aclitem   ->ai_grantee = u_grantee;
+		aclitem->ai_grantee = u_grantee;
 
 		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_UID);
 	}
-	else if (g_grantee != 0)
+	else /* (g_grantee != 0) */
 	{
-		aclitem   ->ai_grantee = g_grantee;
+		aclitem->ai_grantee = g_grantee;
 
 		ACLITEM_SET_IDTYPE(*aclitem, ACL_IDTYPE_GID);
 	}
 
-	aclitem   ->ai_grantor = grantor;
+	aclitem->ai_grantor = grantor;
 
 	ACLITEM_SET_PRIVS(*aclitem, priv);
 	if (goption)

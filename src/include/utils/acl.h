@@ -7,16 +7,18 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.62 2003/08/17 19:58:06 tgl Exp $
+ * $Id: acl.h,v 1.63 2003/10/29 22:20:54 tgl Exp $
  *
  * NOTES
- *	  For backward-compatibility purposes we have to allow there
- *	  to be a null ACL in a pg_class tuple.  This will be defined as
- *	  meaning "default protection" (i.e., whatever acldefault() returns).
+ *	  An ACL array is simply an array of AclItems, representing the union
+ *	  of the privileges represented by the individual items.  A zero-length
+ *	  array represents "no privileges".  There are no assumptions about the
+ *	  ordering of the items, but we do expect that there are no two entries
+ *	  in the array with the same grantor and grantee.
  *
- *	  The AclItems in an ACL array are currently kept in sorted order.
- *	  Things will break hard if you change that without changing the
- *	  code wherever this is included.
+ *	  For backward-compatibility purposes we have to allow null ACL entries
+ *	  in system catalogs.  A null ACL will be treated as meaning "default
+ *	  protection" (i.e., whatever acldefault() returns).
  *-------------------------------------------------------------------------
  */
 #ifndef ACL_H
@@ -45,13 +47,16 @@ typedef uint32 AclMode;
 /*
  * AclItem
  *
+ * The IDTYPE included in ai_privs identifies the type of the grantee ID.
+ * The grantor ID currently must always be a user, never a group.  (FIXME)
+ *
  * Note: must be same size on all platforms, because the size is hardcoded
  * in the pg_type.h entry for aclitem.
  */
 typedef struct AclItem
 {
-	AclId		ai_grantee;		/* ID that this item applies to */
-	AclId		ai_grantor;
+	AclId		ai_grantee;		/* ID that this item grants privs to */
+	AclId		ai_grantor;		/* grantor of privs (always a user id) */
 	AclMode		ai_privs;		/* AclIdType plus privilege bits */
 } AclItem;
 
@@ -61,20 +66,25 @@ typedef struct AclItem
  * and the lower 15 bits are the actual privileges.
  */
 #define ACLITEM_GET_PRIVS(item)    ((item).ai_privs & 0x7FFF)
-#define ACLITEM_GET_GOPTIONS(item) (((item).ai_privs >> 15)  & 0x7FFF)
+#define ACLITEM_GET_GOPTIONS(item) (((item).ai_privs >> 15) & 0x7FFF)
 #define ACLITEM_GET_IDTYPE(item)   ((item).ai_privs >> 30)
 
-#define ACL_GRANT_OPTION_FOR(privs) (((privs) & 0x7FFF) << 15)
+#define ACL_GRANT_OPTION_FOR(privs) (((AclMode) (privs) & 0x7FFF) << 15)
 
 #define ACLITEM_SET_PRIVS(item,privs) \
-  ((item).ai_privs = (ACLITEM_GET_IDTYPE(item)<<30) | (ACLITEM_GET_GOPTIONS(item)<<15) | ((privs) & 0x7FFF))
+  ((item).ai_privs = ((item).ai_privs & ~((AclMode) 0x7FFF)) | \
+					 ((AclMode) (privs) & 0x7FFF))
 #define ACLITEM_SET_GOPTIONS(item,goptions) \
-  ((item).ai_privs = (ACLITEM_GET_IDTYPE(item)<<30) | (((goptions) & 0x7FFF) << 15) | ACLITEM_GET_PRIVS(item))
+  ((item).ai_privs = ((item).ai_privs & ~(((AclMode) 0x7FFF) << 15)) | \
+					 (((AclMode) (goptions) & 0x7FFF) << 15))
 #define ACLITEM_SET_IDTYPE(item,idtype) \
-  ((item).ai_privs = ((idtype)<<30) | (ACLITEM_GET_GOPTIONS(item)<<15) | ACLITEM_GET_PRIVS(item))
+  ((item).ai_privs = ((item).ai_privs & ~(((AclMode) 0x03) << 30)) | \
+					 (((AclMode) (idtype) & 0x03) << 30))
 
 #define ACLITEM_SET_PRIVS_IDTYPE(item,privs,goption,idtype) \
-  ((item).ai_privs = ((privs) & 0x7FFF) |(((goption) & 0x7FFF) << 15) | ((idtype) << 30))
+  ((item).ai_privs = ((AclMode) (privs) & 0x7FFF) | \
+					 (((AclMode) (goption) & 0x7FFF) << 15) | \
+					 ((AclMode) (idtype) << 30))
 
 
 /*
