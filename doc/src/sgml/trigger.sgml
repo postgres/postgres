@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.35 2004/03/03 22:22:24 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.36 2004/08/13 16:17:19 tgl Exp $
 -->
 
  <chapter id="triggers">
@@ -431,8 +431,10 @@ typedef struct Trigger
    </para>
 
    <para>
-    A trigger function must return either <symbol>NULL</> or a
-    <structname>HeapTuple</> pointer.  Be careful to return either
+    A trigger function must return either a
+    <structname>HeapTuple</> pointer or a <symbol>NULL</> pointer
+    (<emphasis>not</> a SQL NULL, that is, do not set isNull true).
+    Be careful to return either
     <structfield>tg_trigtuple</> or <structfield>tg_newtuple</>,
     as appropriate, if you don't want to modify the row being operated on.
    </para>
