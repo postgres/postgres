@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.37 1999/11/25 00:15:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.38 1999/12/14 03:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ renameatt(char *relname,
 				   *children;
 
 		/* this routine is actually in the planner */
-		children = find_all_inheritors(lconsi(relid, NIL), NIL);
+		children = find_all_inheritors(relid);
 
 		/*
 		 * find_all_inheritors does the recursive search of the
@@ -106,10 +106,9 @@ renameatt(char *relname,
 		 */
 		foreach(child, children)
 		{
-			Oid			childrelid;
+			Oid			childrelid = lfirsti(child);
 			char		childname[NAMEDATALEN];
 
-			childrelid = lfirsti(child);
 			if (childrelid == relid)
 				continue;
 			reltup = SearchSysCacheTuple(RELOID,

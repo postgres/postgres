@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.39 1999/08/21 03:49:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.40 1999/12/14 03:35:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 
 #include "postgres.h"
 
+#include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
@@ -23,17 +24,25 @@
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 
+typedef struct {
+	Index		rt_index;
+	int			sublevels_up;
+	Oid			old_relid;
+	Oid			new_relid;
+} fix_parsetree_attnums_context;
+
 static List *plan_inherit_query(Relids relids, Index rt_index,
 				   RangeTblEntry *rt_entry, Query *parse, List *tlist,
 				   List **union_rtentriesPtr);
 static RangeTblEntry *new_rangetable_entry(Oid new_relid,
 					 RangeTblEntry *old_entry);
-static Query *subst_rangetable(Query *root, Index index,
-				 RangeTblEntry *new_entry);
 static void fix_parsetree_attnums(Index rt_index, Oid old_relid,
 					  Oid new_relid, Query *parsetree);
-static Append *make_append(List *appendplans, List *unionrtables, Index rt_index,
-			List *inheritrtable, List *tlist);
+static bool fix_parsetree_attnums_walker (Node *node,
+								fix_parsetree_attnums_context *context);
+static Append *make_append(List *appendplans, List *unionrtables,
+						   Index rt_index,
+						   List *inheritrtable, List *tlist);
 
 
 /*
@@ -207,7 +216,7 @@ plan_union_queries(Query *parse)
 /*
  * plan_inherit_queries
  *
- *	  Plans the queries for a given parent relation.
+ *	  Plans the queries for an inheritance tree rooted at a parent relation.
  *
  * Inputs:
  *	parse = parent parse tree
@@ -237,13 +246,13 @@ plan_inherit_queries(Query *parse, List *tlist, Index rt_index)
 	List	   *union_relids;
 	List	   *union_plans;
 
-	union_relids = find_all_inheritors(lconsi(rt_entry->relid,
-											  NIL),
-									   NIL);
+	/* Make a list of the target relid plus all its descendants */
+	union_relids = find_all_inheritors(rt_entry->relid);
 
 	/*
-	 * Remove the flag for this relation, since we're about to handle it
-	 * (do it before recursing!). XXX destructive change to parent parse tree
+	 * Remove the flag for this relation, since we're about to handle it.
+	 * XXX destructive change to parent parse tree, but necessary to prevent
+	 * infinite recursion.
 	 */
 	rt_entry->inh = false;
 
@@ -259,8 +268,8 @@ plan_inherit_queries(Query *parse, List *tlist, Index rt_index)
 
 /*
  * plan_inherit_query
- *	  Returns a list of plans for 'relids' and a list of range table entries
- *	  in union_rtentries.
+ *	  Returns a list of plans for 'relids', plus a list of range table entries
+ *	  in *union_rtentriesPtr.
  */
 static List *
 plan_inherit_query(Relids relids,
@@ -272,19 +281,31 @@ plan_inherit_query(Relids relids,
 {
 	List	   *union_plans = NIL;
 	List	   *union_rtentries = NIL;
+	List	   *save_tlist = root->targetList;
 	List	   *i;
+
+	/*
+	 * Avoid making copies of the root's tlist, which we aren't going to
+	 * use anyway (we are going to make copies of the passed tlist, instead).
+	 */
+	root->targetList = NIL;
 
 	foreach(i, relids)
 	{
 		int			relid = lfirsti(i);
+		/*
+		 * Make a modifiable copy of the original query,
+		 * and replace the target rangetable entry with a new one
+		 * identifying this child table.
+		 */
+		Query	   *new_root = copyObject(root);
 		RangeTblEntry *new_rt_entry = new_rangetable_entry(relid,
 														   rt_entry);
-		Query	   *new_root = subst_rangetable(root,
-												rt_index,
-												new_rt_entry);
 
+		rt_store(rt_index, new_root->rtable, new_rt_entry);
 		/*
-		 * Insert the desired simplified tlist into the subquery
+		 * Insert (a modifiable copy of) the desired simplified tlist
+		 * into the subquery
 		 */
 		new_root->targetList = copyObject(tlist);
 
@@ -298,7 +319,13 @@ plan_inherit_query(Relids relids,
 		new_root->havingQual = NULL;
 		new_root->hasAggs = false; /* shouldn't be any left ... */
 
-		/* Fix attribute numbers as necessary */
+		/*
+		 * Update attribute numbers in case child has different ordering
+		 * of columns than parent (as can happen after ALTER TABLE).
+		 *
+		 * XXX This is a crock, and it doesn't really work.  It'd be better
+		 * to fix ALTER TABLE to preserve consistency of attribute numbering.
+		 */
 		fix_parsetree_attnums(rt_index,
 							  rt_entry->relid,
 							  relid,
@@ -308,52 +335,56 @@ plan_inherit_query(Relids relids,
 		union_rtentries = lappend(union_rtentries, new_rt_entry);
 	}
 
+	root->targetList = save_tlist;
+
 	*union_rtentriesPtr = union_rtentries;
 	return union_plans;
 }
 
 /*
  * find_all_inheritors -
- *		Returns a list of relids corresponding to relations that inherit
- *		attributes from any relations listed in either of the argument relid
- *		lists.
+ *		Returns an integer list of relids including the given rel plus
+ *		all relations that inherit from it, directly or indirectly.
  */
 List *
-find_all_inheritors(Relids unexamined_relids,
-					Relids examined_relids)
+find_all_inheritors(Oid parentrel)
 {
-	List	   *new_inheritors = NIL;
-	List	   *new_examined_relids;
-	List	   *new_unexamined_relids;
-	List	   *rels;
+	List	   *examined_relids = NIL;
+	List	   *unexamined_relids = lconsi(parentrel, NIL);
 
 	/*
-	 * Find all relations which inherit from members of
-	 * 'unexamined_relids' and store them in 'new_inheritors'.
+	 * While the queue of unexamined relids is nonempty, remove the
+	 * first element, mark it examined, and find its direct descendants.
+	 * NB: cannot use foreach(), since we modify the queue inside loop.
 	 */
-	foreach(rels, unexamined_relids)
+	while (unexamined_relids != NIL)
 	{
-		new_inheritors = LispUnioni(new_inheritors,
-									find_inheritance_children(lfirsti(rels)));
+		Oid		currentrel = lfirsti(unexamined_relids);
+		List   *currentchildren;
+
+		unexamined_relids = lnext(unexamined_relids);
+		examined_relids = lappendi(examined_relids, currentrel);
+		currentchildren = find_inheritance_children(currentrel);
+		/*
+		 * Add to the queue only those children not already seen.
+		 * This could probably be simplified to a plain nconc,
+		 * because our inheritance relationships should always be a
+		 * strict tree, no?  Should never find any matches, ISTM...
+		 */
+		currentchildren = set_differencei(currentchildren, examined_relids);
+		unexamined_relids = LispUnioni(unexamined_relids, currentchildren);
 	}
 
-	new_examined_relids = LispUnioni(examined_relids, unexamined_relids);
-	new_unexamined_relids = set_differencei(new_inheritors,
-											new_examined_relids);
-
-	if (new_unexamined_relids == NIL)
-		return new_examined_relids;
-	else
-		return find_all_inheritors(new_unexamined_relids,
-								   new_examined_relids);
+	return examined_relids;
 }
 
 /*
  * first_inherit_rt_entry -
  *		Given a rangetable, find the first rangetable entry that represents
- *		the appropriate special case.
+ *		an inheritance set.
  *
- *		Returns a rangetable index.,  Returns -1 if no matches
+ *		Returns a rangetable index (1..n).
+ *		Returns -1 if no matches
  */
 int
 first_inherit_rt_entry(List *rangetable)
@@ -365,9 +396,9 @@ first_inherit_rt_entry(List *rangetable)
 	{
 		RangeTblEntry *rt_entry = lfirst(temp);
 
-		if (rt_entry->inh)
-			return count + 1;
 		count++;
+		if (rt_entry->inh)
+			return count;
 	}
 
 	return -1;
@@ -397,23 +428,35 @@ new_rangetable_entry(Oid new_relid, RangeTblEntry *old_entry)
 }
 
 /*
- * subst_rangetable
- *	  Replaces the 'index'th rangetable entry in 'root' with 'new_entry'.
+ * fix_parsetree_attnums
+ *	  Replaces attribute numbers from the relation represented by
+ *	  'old_relid' in 'parsetree' with the attribute numbers from
+ *	  'new_relid'.
  *
- * Returns a new copy of 'root'.
+ * The parsetree is MODIFIED IN PLACE.  This is OK only because
+ * plan_inherit_query made a copy of the tree for us to hack upon.
  */
-static Query *
-subst_rangetable(Query *root, Index index, RangeTblEntry *new_entry)
+static void
+fix_parsetree_attnums(Index rt_index,
+					  Oid old_relid,
+					  Oid new_relid,
+					  Query *parsetree)
 {
-	Query	   *new_root = copyObject(root);
-	List	   *temp;
-	int			i;
+	fix_parsetree_attnums_context context;
 
-	for (temp = new_root->rtable, i = 1; i < index; temp = lnext(temp), i++)
-		;
-	lfirst(temp) = new_entry;
+	if (old_relid == new_relid)
+		return;					/* no work needed for parent rel itself */
 
-	return new_root;
+	context.rt_index = rt_index;
+	context.old_relid = old_relid;
+	context.new_relid = new_relid;
+	context.sublevels_up = 0;
+	/*
+	 * We must scan both the targetlist and qual, but we know the
+	 * havingQual is empty, so we can ignore it.
+	 */
+	fix_parsetree_attnums_walker((Node *) parsetree->targetList, &context);
+	fix_parsetree_attnums_walker((Node *) parsetree->qual, &context);
 }
 
 /*
@@ -425,82 +468,60 @@ subst_rangetable(Query *root, Index index, RangeTblEntry *new_entry)
  * for inherited attributes.  It'd be better to rip this code out and fix
  * ALTER TABLE...
  */
-static void
-fix_parsetree_attnums_nodes(Index rt_index,
-							Oid old_relid,
-							Oid new_relid,
-							Node *node)
+static bool
+fix_parsetree_attnums_walker (Node *node,
+							  fix_parsetree_attnums_context *context)
 {
 	if (node == NULL)
-		return;
-
-	switch (nodeTag(node))
+		return false;
+	if (IsA(node, Var))
 	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
+		Var		   *var = (Var *) node;
 
-				fix_parsetree_attnums_nodes(rt_index, old_relid, new_relid,
-											tle->expr);
-			}
-			break;
-		case T_Expr:
-			{
-				Expr	   *expr = (Expr *) node;
-
-				fix_parsetree_attnums_nodes(rt_index, old_relid, new_relid,
-											(Node *) expr->args);
-			}
-			break;
-		case T_Var:
-			{
-				Var		   *var = (Var *) node;
-
-				if (var->varno == rt_index && var->varattno != 0)
-				{
-					var->varattno = get_attnum(new_relid,
-								 get_attname(old_relid, var->varattno));
-				}
-			}
-			break;
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-				{
-					fix_parsetree_attnums_nodes(rt_index, old_relid, new_relid,
-												(Node *) lfirst(l));
-				}
-			}
-			break;
-		default:
-			break;
+		if (var->varlevelsup == context->sublevels_up &&
+			var->varno == context->rt_index &&
+			var->varattno > 0)
+		{
+			var->varattno = get_attnum(context->new_relid,
+									   get_attname(context->old_relid,
+												   var->varattno));
+		}
+		return false;
 	}
-}
+	if (IsA(node, SubLink))
+	{
+		/*
+		 * Standard expression_tree_walker will not recurse into subselect,
+		 * but here we must do so.
+		 */
+		SubLink    *sub = (SubLink *) node;
 
-/*
- * fix_parsetree_attnums
- *	  Replaces attribute numbers from the relation represented by
- *	  'old_relid' in 'parsetree' with the attribute numbers from
- *	  'new_relid'.
- *
- * Returns the destructively_modified parsetree.
- *
- */
-static void
-fix_parsetree_attnums(Index rt_index,
-					  Oid old_relid,
-					  Oid new_relid,
-					  Query *parsetree)
-{
-	if (old_relid == new_relid)
-		return;
+		if (fix_parsetree_attnums_walker((Node *) (sub->lefthand), context))
+			return true;
+		context->sublevels_up++;
+		if (fix_parsetree_attnums_walker((Node *) (sub->subselect), context))
+		{
+			context->sublevels_up--;
+			return true;
+		}
+		context->sublevels_up--;
+		return false;
+	}
+	if (IsA(node, Query))
+	{
+		/* Reach here after recursing down into subselect above... */
+		Query	   *qry = (Query *) node;
 
-	fix_parsetree_attnums_nodes(rt_index, old_relid, new_relid,
-								(Node *) parsetree->targetList);
-	fix_parsetree_attnums_nodes(rt_index, old_relid, new_relid,
-								parsetree->qual);
+		if (fix_parsetree_attnums_walker((Node *) (qry->targetList), context))
+			return true;
+		if (fix_parsetree_attnums_walker((Node *) (qry->qual), context))
+			return true;
+		if (fix_parsetree_attnums_walker((Node *) (qry->havingQual), context))
+			return true;
+		return false;
+	}
+	return expression_tree_walker(node, fix_parsetree_attnums_walker,
+								  (void *) context);
 }
 
 static Append *

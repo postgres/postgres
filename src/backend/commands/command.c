@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.59 1999/12/10 03:55:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.60 1999/12/14 03:35:20 tgl Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -340,12 +340,11 @@ PerformAddAttribute(char *relationName,
 	{
 		if (inherits)
 		{
-			Oid			childrelid;
 			List	   *child,
 					   *children;
 
 			/* this routine is actually in the planner */
-			children = find_all_inheritors(lconsi(myrelid, NIL), NIL);
+			children = find_all_inheritors(myrelid);
 
 			/*
 			 * find_all_inheritors does the recursive search of the
@@ -354,7 +353,8 @@ PerformAddAttribute(char *relationName,
 			 */
 			foreach(child, children)
 			{
-				childrelid = lfirsti(child);
+				Oid		childrelid = lfirsti(child);
+
 				if (childrelid == myrelid)
 					continue;
 				rel = heap_open(childrelid, AccessExclusiveLock);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.19 1999/09/13 00:17:08 tgl Exp $
+ * $Id: prep.h,v 1.20 1999/12/14 03:35:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,7 @@ extern List *preprocess_targetlist(List *tlist, int command_type,
 /*
  * prototypes for prepunion.c
  */
-extern List *find_all_inheritors(List *unexamined_relids,
-					List *examined_relids);
+extern List *find_all_inheritors(Oid parentrel);
 extern int	first_inherit_rt_entry(List *rangetable);
 extern Append *plan_union_queries(Query *parse);
 extern Append *plan_inherit_queries(Query *parse, List *tlist, Index rt_index);
