@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.12 1998/06/24 13:21:30 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.13 1998/07/16 15:54:39 momjian Exp $
 .TH INTRODUCTION SQL 11/5/95 PostgreSQL PostgreSQL
 .SH "Section 4 - SQL Commands (COMMANDS)"
 .SH "General Information"
@@ -313,4 +313,4 @@ delete(l),
 execute(l),
 update(l),
 select(l),
-monitor(1).
+psql(1).
