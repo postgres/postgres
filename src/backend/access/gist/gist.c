@@ -987,7 +987,7 @@ gistchoose(Relation r, Page p, IndexTuple it, /* it has compressed entry */
 	size = IndexTupleSize(datum) - sizeof(IndexTupleData);
 	datum += sizeof(IndexTupleData);
 	gistdentryinit(giststate,&entry,datum,r,p,i,size,FALSE);
-	(giststate->penaltyFn)(entry, identry, &usize);
+	(giststate->penaltyFn)(&entry, &identry, &usize);
 	if (which_grow < 0 || usize < which_grow) {
 	    which = i;
 	    which_grow = usize;

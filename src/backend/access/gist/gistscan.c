@@ -118,6 +118,13 @@ gistrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
 	gistfreestack(p->s_markstk);
 	p->s_stack = p->s_markstk = (GISTSTACK *) NULL;
 	p->s_flags = 0x0;
+	for (i = 0; i < s->numberOfKeys; i++)
+	{
+	    s->keyData[i].sk_procedure 
+		= RelationGetGISTStrategy(s->relation, s->keyData[i].sk_attno, 
+					  s->keyData[i].sk_procedure);
+	    s->keyData[i].sk_func = p->giststate->consistentFn;
+	}
     } else {
 	/* initialize opaque data */
 	p = (GISTScanOpaque) palloc(sizeof(GISTScanOpaqueData));
