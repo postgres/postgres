@@ -30,6 +30,106 @@
 	(grant option)
      _________________________________________________________________
 
+                               Release 7.3.3
+
+     Release date: 2003-05-22
+
+   This has a variety of fixes from 7.3.2.
+     _________________________________________________________________
+
+                         Migration to version 7.3.3
+
+   A dump/restore is *not* required for those running 7.3.*.
+     _________________________________________________________________
+
+                                  Changes
+
+   Repair sometimes-incorrect computation of StartUpID after a crash
+   Avoid slowness with lots of deferred triggers in one transaction (Stephan)
+   Don't lock referenced row when UPDATE doesn't change foreign key's value
+	(Jan)
+   Use -fPIC not -fpic on Sparc (Tom Callaway)
+   Repair lack of schema-awareness in contrib/reindexdb
+   Fix contrib/intarray error for zero-element result array (Teodor)
+   Ensure createuser script will exit on control-C (Oliver)
+   Fix errors when the type of a dropped column has itself been dropped
+   CHECKPOINT does not cause database panic on failure in noncritical steps
+   Accept 60 in seconds fields of timestamp, time, interval input values
+   Issue notice, not error, if TIMESTAMP, TIME, or INTERVAL precision too
+	large
+   Fix abstime-to-time cast function (fix is not applied unless you initdb)
+   Fix pg_proc entry for timestamptz_izone (fix is not applied unless you
+	initdb)
+   Make EXTRACT(EPOCH FROM timestamp without time zone) treat input as
+	local time
+   'now'::timestamptz gave wrong answer if timezone changed earlier in
+	transaction
+   HAVE_INT64_TIMESTAMP code for time with timezone overwrote its input
+   Accept GLOBAL TEMP/TEMPORARY as a synonym for TEMPORARY
+   Avoid improper schema-permissions-check failure in foreign-key triggers
+   Fix bugs in foreign-key triggers for SET DEFAULT action
+   Fix incorrect time-qual check in row fetch for UPDATE and DELETE triggers
+   Foreign-key clauses were parsed but ignored in ALTER TABLE ADD COLUMN
+   Fix createlang script breakage for case where handler function already
+	exists
+   Fix misbehavior on zero-column tables in pg_dump, COPY, ANALYZE, other
+	places
+   Fix misbehavior of func_error() on type names containing '%'
+   Fix misbehavior of replace() on strings containing '%'
+   Regular-expression patterns containing certain multibyte characters failed
+   Account correctly for NULLs in more cases in join size estimation
+   Avoid conflict with system definition of isblank() function or macro
+   Fix failure to convert large code point values in EUC_TW conversions
+	(Tatsuo)
+   Fix error recovery for SSL_read/SSL_write calls
+   Don't do early constant-folding of type coercion expressions
+   Validate page header fields immediately after reading in any page
+   Repair incorrect check for ungrouped variables in unnamed joins
+   Fix buffer overrun in to_ascii (Guido Notari)
+   contrib/ltree fixes (Teodor)
+   Fix core dump in deadlock detection on machines where char is unsigned
+   Avoid running out of buffers in many-way indexscan (bug introduced in 7.3)
+   Fix planner's selectivity estimation functions to handle domains properly
+   Fix dbmirror memory-allocation bug (Steven Singer)
+   Prevent infinite loop in ln(numeric) due to roundoff error.
+   GROUP BY got confused if there were multiple equal GROUP BY items
+   Fix bad plan when inherited UPDATE/DELETE references another inherited
+	table
+   Prevent clustering on incomplete (partial or non-NULL-storing) indexes
+   Service shutdown request at proper time if it arrives while still
+	starting up
+   Fix left-links in temporary indexes (could make backwards scans miss
+	entries)
+   Fix incorrect handling of client_encoding setting in postgresql.conf
+	(Tatsuo)
+   Fix failure to respond to 'pg_ctl stop -m fast' after Async_NotifyHandler
+	runs
+   Fix SPI for case where rule contains multiple statements of the same type
+   Fix problem with checking for wrong type of access permission in rule query
+   Fix problem with EXCEPT in CREATE RULE
+   Prevent problem with dropping temp tables having serial columns
+   Fix replace_vars_with_subplan_refs failure in complex views
+   Fix regexp slowness in multibyte encodings (Tatsuo)
+   Allow qualified type names in CREATE CAST and DROP CAST
+   Accept 'SETOF type[]', which formerly had to be written 'SETOF _type'
+   Fix pg_dump core dump in some cases with procedural languages
+   Force ISO datestyle in pg_dump output, for portability (Oliver)
+   pg_dump failed to handle error return from lo_read (Oleg Drokin)
+   pg_dumpall failed with groups having no members (Nick Eskelinen)
+   pg_dumpall failed to recognize --globals-only switch
+   pg_restore failed to restore blobs if -X disable-triggers is specified
+   Repair intrafunction memory leak in plpgsql
+   pltcl's elog command dumped core if given wrong parameters (Ian Harding)
+   plpython used wrong value of atttypmod (Brad McLean)
+   Fix improper quoting of boolean values in Python interface (D'Arcy)
+   Added addDataType() method to PGConnection interface for JDBC
+   Fixed various problems with updateable ResultSets for JDBC (Shawn Green)
+   Fixed various problems with DatabaseMetaData for JDBC (Kris Jurka,
+	Peter Royal)
+   Fixed problem with parsing table ACLs in JDBC
+   Better error message for character set conversion problems in JDBC
+     _________________________________________________________________
+
                                Release 7.3.2
 
      Release date: 2003-02-04
