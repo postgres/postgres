@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/listen.l,v 1.8 1998/08/30 21:03:20 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/listen.l,v 1.9 1998/10/08 01:16:17 tgl Exp $
 .TH "LISTEN" SQL 03/12/94 PostgreSQL PostgreSQL
 .SH NAME
 listen - listen for notification on a relation
@@ -9,6 +9,9 @@ listen - listen for notification on a relation
 \fBlisten\fR class_name
 .fi
 .SH DESCRIPTION
+This man page is obsolete.  More complete and reliable info is
+available in the User's Guide reference page for LISTEN.
+.PP
 .BR listen
 is used to register the current backend as a listener on the relation
 .IR class_name .
