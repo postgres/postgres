@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.49 2001/08/15 18:42:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.50 2001/08/15 21:08:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "fe-auth.h"
-#include "md5.h"
+#include "libpq/crypt.h"
 
 #ifdef WIN32
 #include "win32.h"

@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.33 2001/08/15 18:42:14 momjian Exp $
+ * $Id: crypt.c,v 1.34 2001/08/15 21:08:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 
 #include "postgres.h"
 #include "libpq/crypt.h"
-#include "libpq/md5.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "utils/nabstime.h"

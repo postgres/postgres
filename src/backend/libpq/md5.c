@@ -18,7 +18,7 @@
 #include <errno.h>
 
 #include "postgres.h"
-#include "libpq/md5.h"
+#include "libpq/crypt.h"
 
 /*
  *	PRIVATE FUNCTIONS
@@ -249,7 +249,7 @@ bytesToHex(unsigned8 b[16], char *s)
  *
  *  Calculates the MD5 sum of the bytes in a buffer.
  *
- *  SYNOPSIS      #include "md5.h"
+ *  SYNOPSIS      #include "crypt.h"
  *                int md5_hash(const void *buff, size_t len, char *hexsum)
  *
  *  INPUT         buff    the buffer containing the bytes that you want

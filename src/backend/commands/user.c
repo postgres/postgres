@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.80 2001/08/15 18:42:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.81 2001/08/15 21:08:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
 #include "catalog/indexing.h"
 #include "commands/user.h"
 #include "libpq/crypt.h"
-#include "libpq/md5.h"
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
