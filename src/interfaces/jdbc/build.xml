@@ -1,0 +1,59 @@
+<!--
+
+  build file to allow ant (http://jakarta.apache.org/ant/) to be used
+  to build the PostgreSQL JDBC Driver.
+
+  $Id: build.xml,v 1.1 2000/12/19 17:33:39 peter Exp $
+
+-->
+
+<project name="postgresqlJDBC" default="jar" basedir=".">
+  
+  
+  <!-- set global properties for this build -->
+  <property name="src"     value="." />
+  <property name="dest"    value="build" />
+  <property name="package" value="org/postgresql" />
+  
+  <!--
+    This is a simpler method than utils.CheckVersion
+    It defaults to jdbc1, but builds jdbc2 if the java.lang.Byte class is
+    in the CLASSPATH (ie JDK1.2 or later), and then enterprise if the
+    javax.sql.DataSource class is present.
+    
+    Important: This must have the following order: jdbc1, jdbc2, enterprise
+  -->
+  <target name="check_versions">
+    <available property="jdk1.2+" classname="java.lang.ThreadLocal" />
+    <available property="jdk1.3+" classname="java.lang.StrictMath" />
+    <available property="jdk1.2e+" classname="javax.sql.DataSource" />
+    
+    <mkdir dir="${dest}" />
+  </target>
+  
+  <target name="clean">
+    <delete dir="${dest}" />
+  </target>
+  
+  <!-- This is the core of the driver. It is common for all three versions -->
+  <target name="compile" depends="check_versions">
+    <javac srcdir="${src}" destdir="${dest}">
+      <include name="${package}/**" />
+      <exclude name="${package}/jdbc1/**" if="jdk1.2+" />
+      <exclude name="${package}/jdbc2/**" unless="jdk1.2+" />
+      <exclude name="${package}/largeobject/PGBlob.java" unless="jdk1.2+" />
+      <exclude name="${package}/PostgresqlDataSource.java" unless="jdk1.2e+" />
+      <exclude name="${package}/xa/**" unless="jdk1.2e+" />
+    </javac>
+    <copy todir="${dest}">
+      <fileset dir="${src}">
+        <include name="**/*.properties" />
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="jar" depends="compile">
+    <jar jarfile="postgresql.jar" basedir="${dest}" includes="org/**" />
+  </target>
+  
+</project>

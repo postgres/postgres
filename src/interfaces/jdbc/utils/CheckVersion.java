@@ -41,12 +41,14 @@ public class CheckVersion
     {
 	String vmversion = System.getProperty("java.vm.version");
 	
+	System.out.println("postgresql.jdbc="+System.getProperty("postgresql.jdbc"));
+	
 	// We are running a 1.1 JVM
 	if(vmversion.startsWith("1.1")) {
 	    System.out.println("jdbc1");
-	    System.exit(0);
+	    //System.exit(0);
 	}
-	
+	else
 	// We are running a 1.2 or 1.3 JVM
 	if(vmversion.startsWith("1.2") ||
 	   vmversion.startsWith("1.3") ||
@@ -59,10 +61,8 @@ public class CheckVersion
 		System.out.println("enterprise");
 	    else
 		System.out.println("jdbc2");
-	    System.exit(0);
+	    //System.exit(0);
 	}
-	
-	System.out.println("huho");
-	System.exit(0);
+	System.setProperty("postgresql.jdbc","yoyo");
     }
 }
