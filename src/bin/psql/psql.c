@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.150 1998/08/04 18:29:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.151 1998/08/05 16:23:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -782,9 +782,9 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 				 */
 
 				if (nIndices == 1)
-					fprintf(fout, "Indices:  ");
+					fprintf(fout, "Index:    ");
 				else	
-					fprintf(fout, "Index:     ");
+					fprintf(fout, "Indices:  ");
 					
 				/* next, print out the instances */
 				for (i = 0; i < PQntuples(res); i++)
