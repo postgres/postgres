@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.85 2002/03/04 04:45:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.86 2002/04/04 04:25:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,85 +236,17 @@ pg_convert2(PG_FUNCTION_ARGS)
 
 #ifdef CYR_RECODE
 
-#define MAX_TOKEN	80
-
-/*
- * Some standard C libraries, including GNU, have an isblank() function.
- * Others, including Solaris, do not.  So we have our own.
- */
-static bool
-isblank(const char c)
-{
-	return c == ' ' || c == '\t';
-}
-
-
-/*
- *	Grab one token out of fp.  Tokens are strings of non-blank
- *	characters bounded by blank characters, beginning of line, and end
- *	of line.	Blank means space or tab.  Return the token as *buf.
- *	Leave file positioned to character immediately after the token or
- *	EOF, whichever comes first.  If no more tokens on line, return null
- *	string as *buf and position file to beginning of next line or EOF,
- *	whichever comes first.
- */
-static void
-next_token(FILE *fp, char *buf, const int bufsz)
-{
-	int			c;
-	char	   *eb = buf + (bufsz - 1);
-
-	/* Move over initial token-delimiting blanks */
-	while ((c = getc(fp)) != EOF && isblank(c))
-		;
-
-	if (c != EOF && c != '\n')
-	{
-		/*
-		 * build a token in buf of next characters up to EOF, eol, or
-		 * blank.  If the token gets too long, we still parse it
-		 * correctly, but the excess characters are not stored into *buf.
-		 */
-		while (c != EOF && c != '\n' && !isblank(c))
-		{
-			if (buf < eb)
-				*buf++ = c;
-			c = getc(fp);
-		}
-
-		/*
-		 * Put back the char right after the token (critical in case it is
-		 * eol, since we need to detect end-of-line at next call).
-		 */
-		if (c != EOF)
-			ungetc(c, fp);
-	}
-	*buf = '\0';
-}
-
-
-static void
-read_through_eol(FILE *file)
-{
-	int			c;
-
-	while ((c = getc(file)) != EOF && c != '\n')
-		;
-}
-
-
-void
 SetCharSet(void)
 {
 	FILE	   *file;
-	char	   *p;
+	char	   *filename;
 	char	   *map_file;
 	char		buf[MAX_TOKEN];
 	int			i,
 				c;
 	unsigned char FromChar,
 				ToChar;
-	char		ChTable[80];
+	char		ChTable[MAX_TOKEN];
 
 	for (i = 0; i < 128; i++)
 	{
@@ -325,39 +257,40 @@ SetCharSet(void)
 	if (IsUnderPostmaster)
 	{
 		GetCharSetByHost(ChTable, MyProcPort->raddr.in.sin_addr.s_addr, DataDir);
-		p = ChTable;
+		filename = ChTable;
 	}
 	else
-		p = getenv("PG_RECODETABLE");
+		filename = getenv("PG_RECODETABLE");
 
-	if (p && *p != '\0')
+	if (filename && *filename != '\0')
 	{
-		map_file = palloc(strlen(DataDir) + strlen(p) + 2);
-		sprintf(map_file, "%s/%s", DataDir, p);
-		file = AllocateFile(map_file, PG_BINARY_R);
+		map_file = palloc(strlen(DataDir) + strlen(filename) + 2);
+		sprintf(map_file, "%s/%s", DataDir, filename);
+		file = AllocateFile(map_file, "r");
 		pfree(map_file);
 		if (file == NULL)
 			return;
-		while ((c = getc(file)) != EOF)
+
+		while (!feof(file))
 		{
-			if (c == '#')
-				read_through_eol(file);
-			else
+			next_token(file, buf, sizeof(buf));
+			if (buf[0] != '\0')
 			{
-				/* Read the FromChar */
-				ungetc(c, file);
+				FromChar = strtoul(buf, 0, 0);
+				/* Read the ToChar */
 				next_token(file, buf, sizeof(buf));
 				if (buf[0] != '\0')
 				{
-					FromChar = strtoul(buf, 0, 0);
-					/* Read the ToChar */
-					next_token(file, buf, sizeof(buf));
-					if (buf[0] != '\0')
+					ToChar = strtoul(buf, 0, 0);
+					RecodeForwTable[FromChar - 128] = ToChar;
+					RecodeBackTable[ToChar - 128] = FromChar;
+
+					/* read to EOL */
+					while (!feof(file) && buf[0])
 					{
-						ToChar = strtoul(buf, 0, 0);
-						RecodeForwTable[FromChar - 128] = ToChar;
-						RecodeBackTable[ToChar - 128] = FromChar;
-						read_through_eol(file);
+						next_token(file, buf, sizeof(buf));
+						elog(LOG, "SetCharSet: unknown tag %s in file %s"
+							buf, filename);
 					}
 				}
 			}
@@ -365,6 +298,7 @@ SetCharSet(void)
 		FreeFile(file);
 	}
 }
+
 
 char *
 convertstr(unsigned char *buff, int len, int dest)
@@ -384,7 +318,206 @@ convertstr(unsigned char *buff, int len, int dest)
 	}
 	return ch;
 }
-#endif
+
+#define CHARSET_FILE "charset.conf"
+#define MAX_CHARSETS   10
+#define KEY_HOST	   1
+#define KEY_BASE	   2
+#define KEY_TABLE	   3
+
+struct CharsetItem
+{
+	char		Orig[MAX_TOKEN];
+	char		Dest[MAX_TOKEN];
+	char		Table[MAX_TOKEN];
+};
+
+
+static bool
+CharSetInRange(char *buf, int host)
+{
+	int			valid,
+				i,
+				FromAddr,
+				ToAddr,
+				tmp;
+	struct in_addr file_ip_addr;
+	char	   *p;
+	unsigned int one = 0x80000000,
+				NetMask = 0;
+	unsigned char mask;
+
+	p = strchr(buf, '/');
+	if (p)
+	{
+		*p++ = '\0';
+		valid = inet_aton(buf, &file_ip_addr);
+		if (valid)
+		{
+			mask = strtoul(p, 0, 0);
+			FromAddr = ntohl(file_ip_addr.s_addr);
+			ToAddr = ntohl(file_ip_addr.s_addr);
+			for (i = 0; i < mask; i++)
+			{
+				NetMask |= one;
+				one >>= 1;
+			}
+			FromAddr &= NetMask;
+			ToAddr = ToAddr | ~NetMask;
+			tmp = ntohl(host);
+			return ((unsigned) tmp >= (unsigned) FromAddr &&
+					(unsigned) tmp <= (unsigned) ToAddr);
+		}
+	}
+	else
+	{
+		p = strchr(buf, '-');
+		if (p)
+		{
+			*p++ = '\0';
+			valid = inet_aton(buf, &file_ip_addr);
+			if (valid)
+			{
+				FromAddr = ntohl(file_ip_addr.s_addr);
+				valid = inet_aton(p, &file_ip_addr);
+				if (valid)
+				{
+					ToAddr = ntohl(file_ip_addr.s_addr);
+					tmp = ntohl(host);
+					return ((unsigned) tmp >= (unsigned) FromAddr &&
+							(unsigned) tmp <= (unsigned) ToAddr);
+				}
+			}
+		}
+		else
+		{
+			valid = inet_aton(buf, &file_ip_addr);
+			if (valid)
+			{
+				FromAddr = file_ip_addr.s_addr;
+				return (unsigned) FromAddr == (unsigned) host;
+			}
+		}
+	}
+	return false;
+}
+
+
+static void
+GetCharSetByHost(char *TableName, int host, const char *DataDir)
+{
+	FILE	   *file;
+	char		buf[MAX_TOKEN],
+				BaseCharset[MAX_TOKEN],
+				OrigCharset[MAX_TOKEN],
+				DestCharset[MAX_TOKEN],
+				HostCharset[MAX_TOKEN],
+			   *map_file;
+	int			key,
+				ChIndex = 0,
+				c,
+				i,
+				bufsize;
+	struct CharsetItem *ChArray[MAX_CHARSETS];
+
+	*TableName = '\0';
+	bufsize = (strlen(DataDir) + strlen(CHARSET_FILE) + 2) * sizeof(char);
+	map_file = (char *) palloc(bufsize);
+	snprintf(map_file, bufsize, "%s/%s", DataDir, CHARSET_FILE);
+	file = AllocateFile(map_file, "r");
+	pfree(map_file);
+	if (file == NULL)
+	{
+		/* XXX should we log a complaint? */
+		return;
+	}
+
+	while (!feof(file))
+	{
+		next_token(file, buf, sizeof(buf));
+		if (buf[0] != '\0')
+		{
+			key = 0;
+			if (strcasecmp(buf, "HostCharset") == 0)
+				key = KEY_HOST;
+			else if (strcasecmp(buf, "BaseCharset") == 0)
+				key = KEY_BASE;
+			else if (strcasecmp(buf, "RecodeTable") == 0)
+				key = KEY_TABLE;
+			else
+				elog(LOG, "GetCharSetByHost: unknown tag %s in file %s"
+					buf, CHARSET_FILE);
+
+			switch (key)
+			{
+				case KEY_HOST:
+					/* Read the host */
+					next_token(file, buf, sizeof(buf));
+					if (buf[0] != '\0')
+					{
+						if (CharSetInRange(buf, host))
+						{
+							/* Read the charset */
+							next_token(file, buf, sizeof(buf));
+							if (buf[0] != '\0')
+								strcpy(HostCharset, buf);
+						}
+					}
+					break;
+				case KEY_BASE:
+					/* Read the base charset */
+					next_token(file, buf, sizeof(buf));
+					if (buf[0] != '\0')
+						strcpy(BaseCharset, buf);
+					break;
+				case KEY_TABLE:
+					/* Read the original charset */
+					next_token(file, buf, sizeof(buf));
+					if (buf[0] != '\0')
+					{
+						strcpy(OrigCharset, buf);
+						/* Read the destination charset */
+						next_token(file, buf, sizeof(buf));
+						if (buf[0] != '\0')
+						{
+							strcpy(DestCharset, buf);
+							/* Read the table filename */
+							next_token(file, buf, sizeof(buf));
+							if (buf[0] != '\0')
+							{
+								ChArray[ChIndex] =
+									(struct CharsetItem *) palloc(sizeof(struct CharsetItem));
+								strcpy(ChArray[ChIndex]->Orig, OrigCharset);
+								strcpy(ChArray[ChIndex]->Dest, DestCharset);
+								strcpy(ChArray[ChIndex]->Table, buf);
+								ChIndex++;
+							}
+						}
+					}
+					break;
+			}
+
+			/* read to EOL */
+			while (!feof(file) && buf[0])
+			{
+				next_token(file, buf, sizeof(buf));
+				elog(LOG, "GetCharSetByHost: unknown tag %s in file %s"
+					buf, CHARSET_FILE);
+			}
+		}
+	}
+	FreeFile(file);
+
+	for (i = 0; i < ChIndex; i++)
+	{
+		if (strcasecmp(BaseCharset, ChArray[i]->Orig) == 0 &&
+			strcasecmp(HostCharset, ChArray[i]->Dest) == 0)
+			strncpy(TableName, ChArray[i]->Table, 79);
+		pfree(ChArray[i]);
+	}
+}
+
+#endif   /* CYR_RECODE */
 
 
 

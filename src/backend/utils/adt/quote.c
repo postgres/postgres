@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/quote.c,v 1.6 2001/10/28 06:25:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/quote.c,v 1.7 2002/04/04 04:25:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,8 +124,6 @@ do_quote_ident(text *iptr)
 	{
 		if (*cp1 == '"')
 			*cp2++ = '"';
-		if (*cp1 == '\\')
-			*cp2++ = '\\';
 		*cp2++ = *cp1++;
 	}
 	*cp2++ = '"';
@@ -234,8 +232,6 @@ do_quote_ident(text *iptr)
 
 		if (*cp1 == '"')
 			*cp2++ = '"';
-		if (*cp1 == '\\')
-			*cp2++ = '\\';
 		*cp2++ = *cp1++;
 
 		len--;

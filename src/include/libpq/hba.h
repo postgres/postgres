@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.31 2001/11/05 17:46:33 momjian Exp $
+ * $Id: hba.h,v 1.32 2002/04/04 04:25:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,14 +15,13 @@
 #include <netinet/in.h>
 #endif
 
+#include "nodes/pg_list.h"
+
 #define CONF_FILE "pg_hba.conf"
  /* Name of the config file  */
 
 #define USERMAP_FILE "pg_ident.conf"
  /* Name of the usermap file */
-
-#define OLD_CONF_FILE "pg_hba"
- /* Name of the config file in prior releases of Postgres. */
 
 #define IDENT_PORT 113
  /* Standard TCP port number for Ident service.  Assigned by IANA */
@@ -46,8 +45,15 @@ typedef enum UserAuth
 
 typedef struct Port hbaPort;
 
+#define MAX_TOKEN	256
+
+extern void next_token(FILE *fp, char *buf, const int bufsz);
+extern List **get_user_line(const char *user);
+extern void load_hba(void);
+extern void load_ident(void);
+extern void load_user(void);
+extern void load_group(void);
 extern int	hba_getauthmethod(hbaPort *port);
 extern int	authident(hbaPort *port);
-extern void load_hba_and_ident(void);
 
 #endif

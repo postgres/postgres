@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.146 2002/04/03 05:39:32 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.147 2002/04/04 04:25:50 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -603,9 +603,11 @@ $ECHO_N "initializing pg_shadow... "$ECHO_C
 
 "$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
 -- Create a trigger so that direct updates to pg_shadow will be written
--- to the flat password file pg_pwd
+-- to the flat password/group files pg_pwd and pg_group
 CREATE TRIGGER pg_sync_pg_pwd AFTER INSERT OR UPDATE OR DELETE ON pg_shadow \
-FOR EACH ROW EXECUTE PROCEDURE update_pg_pwd();
+FOR EACH ROW EXECUTE PROCEDURE update_pg_pwd_and_pg_group();
+CREATE TRIGGER pg_sync_pg_group AFTER INSERT OR UPDATE OR DELETE ON pg_group \
+FOR EACH ROW EXECUTE PROCEDURE update_pg_pwd_and_pg_group();
 -- needs to be done before alter user, because alter user checks that
 -- pg_shadow is secure ...
 REVOKE ALL on pg_shadow FROM public;
@@ -641,6 +643,11 @@ EOF
     if [ ! -f "$PGDATA"/global/pg_pwd ]; then
         echo
         echo "The password file wasn't generated. Please report this problem." 1>&2
+        exit_nicely
+    fi
+    if [ ! -f "$PGDATA"/global/pg_group ]; then
+        echo
+        echo "The group file wasn't generated. Please report this problem." 1>&2
         exit_nicely
     fi
     echo "ok"

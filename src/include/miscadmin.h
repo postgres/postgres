@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.101 2002/03/04 01:46:04 tgl Exp $
+ * $Id: miscadmin.h,v 1.102 2002/04/04 04:25:51 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -219,7 +219,6 @@ extern int FindExec(char *full_path, const char *argv0,
 extern int	CheckPathAccess(char *path, char *name, int open_mode);
 
 #ifdef CYR_RECODE
-extern void GetCharSetByHost(char *TableName, int host, const char *DataDir);
 extern void SetCharSet(void);
 extern char *convertstr(unsigned char *buff, int len, int dest);
 #endif

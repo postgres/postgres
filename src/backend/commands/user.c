@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.94 2002/03/26 19:15:48 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.95 2002/04/04 04:25:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <unistd.h>
 
 #include "access/heapam.h"
@@ -27,6 +28,7 @@
 #include "libpq/crypt.h"
 #include "miscadmin.h"
 #include "storage/pmsignal.h"
+#include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -39,22 +41,75 @@ extern bool Password_encryption;
 
 static void CheckPgUserAclNotNull(void);
 
-/*---------------------------------------------------------------------
- * write_password_file / update_pg_pwd
+
+
+/*
+ *	fputs_quote
  *
- * copy the modified contents of pg_shadow to a file used by the postmaster
- * for user authentication.  The file is stored as $PGDATA/global/pg_pwd.
+ *	Outputs string in quotes, with double-quotes duplicated.
+ *	We could use quote_ident(), but that expects varlena.
+ */
+static void fputs_quote(char *str, FILE *fp)
+{
+	fputc('"', fp);
+	while (*str)
+	{
+		fputc(*str, fp);
+		if (*str == '"')
+			fputc('"', fp);
+		str++;
+	}
+	fputc('"', fp);
+}
+
+
+
+/*
+ * group_getfilename --- get full pathname of group file
  *
- * This function set is both a trigger function for direct updates to pg_shadow
- * as well as being called directly from create/alter/drop user.
- *
- * We raise an error to force transaction rollback if we detect an illegal
- * username or password --- illegal being defined as values that would
- * mess up the pg_pwd parser.
- *---------------------------------------------------------------------
+ * Note that result string is palloc'd, and should be freed by the caller.
+ */
+char *
+group_getfilename(void)
+{
+	int			bufsize;
+	char	   *pfnam;
+
+	bufsize = strlen(DataDir) + strlen("/global/") +
+			  strlen(USER_GROUP_FILE) + 1;
+	pfnam = (char *) palloc(bufsize);
+	snprintf(pfnam, bufsize, "%s/global/%s", DataDir, USER_GROUP_FILE);
+
+	return pfnam;
+}
+
+
+
+/*
+ * Get full pathname of password file.
+ * Note that result string is palloc'd, and should be freed by the caller.
+ */
+char *
+user_getfilename(void)
+{
+	int			bufsize;
+	char	   *pfnam;
+
+	bufsize = strlen(DataDir) + strlen("/global/") +
+			  strlen(PWD_FILE) + 1;
+	pfnam = (char *) palloc(bufsize);
+	snprintf(pfnam, bufsize, "%s/global/%s", DataDir, PWD_FILE);
+
+	return pfnam;
+}
+
+
+
+/*
+ * write_group_file for trigger update_pg_pwd_and_pg_group
  */
 static void
-write_password_file(Relation rel)
+write_group_file(Relation urel, Relation grel)
 {
 	char	   *filename,
 			   *tempname;
@@ -63,14 +118,14 @@ write_password_file(Relation rel)
 	mode_t		oumask;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
-	TupleDesc	dsc = RelationGetDescr(rel);
+	TupleDesc	dsc = RelationGetDescr(grel);
 
 	/*
 	 * Create a temporary filename to be renamed later.  This prevents the
-	 * backend from clobbering the pg_pwd file while the postmaster might
+	 * backend from clobbering the pg_group file while the postmaster might
 	 * be reading from it.
 	 */
-	filename = crypt_getpwdfilename();
+	filename = group_getfilename();
 	bufsize = strlen(filename) + 12;
 	tempname = (char *) palloc(bufsize);
 
@@ -79,88 +134,89 @@ write_password_file(Relation rel)
 	fp = AllocateFile(tempname, "w");
 	umask(oumask);
 	if (fp == NULL)
-		elog(ERROR, "write_password_file: unable to write %s: %m", tempname);
+		elog(ERROR, "write_group_file: unable to write %s: %m", tempname);
 
 	/* read table */
-	scan = heap_beginscan(rel, false, SnapshotSelf, 0, NULL);
+	scan = heap_beginscan(grel, false, SnapshotSelf, 0, NULL);
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
-		Datum		datum_n,
-					datum_p,
-					datum_v;
-		bool		null_n,
-					null_p,
-					null_v;
-		char	   *str_n,
-				   *str_p,
-				   *str_v;
-		int			i;
+		Datum		datum, grolist_datum;
+		bool		isnull;
+		char	   *groname;
+		IdList	   *grolist_p;
+		AclId	   *aidp;
+		int			i, j,
+					num;
+		char 	   *usename;
+		bool		first_user = true;
 
-		datum_n = heap_getattr(tuple, Anum_pg_shadow_usename, dsc, &null_n);
-		if (null_n)
-			continue;			/* ignore NULL usernames */
-		str_n = DatumGetCString(DirectFunctionCall1(nameout, datum_n));
+		datum = heap_getattr(tuple, Anum_pg_group_groname, dsc, &isnull);
+		if (isnull)
+			continue;			/* ignore NULL groupnames */
+		groname = (char *) DatumGetName(datum);
 
-		datum_p = heap_getattr(tuple, Anum_pg_shadow_passwd, dsc, &null_p);
+		grolist_datum = heap_getattr(tuple, Anum_pg_group_grolist, dsc, &isnull);
+		/* Ignore NULL group lists */
+		if (isnull)
+			continue;
 
+		grolist_p = DatumGetIdListP(grolist_datum);
 		/*
-		 * It can be argued that people having a null password shouldn't
-		 * be allowed to connect under password authentication, because
-		 * they need to have a password set up first. If you think
-		 * assuming an empty password in that case is better, change this
-		 * logic to look something like the code for valuntil.
+		 * Check for illegal characters in the group name.
 		 */
-		if (null_p)
+		i = strcspn(groname, "\n");
+		if (groname[i] != '\0')
 		{
-			pfree(str_n);
+			elog(LOG, "Invalid group name '%s'", groname);
 			continue;
 		}
-		str_p = DatumGetCString(DirectFunctionCall1(textout, datum_p));
 
-		datum_v = heap_getattr(tuple, Anum_pg_shadow_valuntil, dsc, &null_v);
-		if (null_v)
-			str_v = pstrdup("\\N");
-		else
-			str_v = DatumGetCString(DirectFunctionCall1(nabstimeout, datum_v));
+		/* be sure the IdList is not toasted */
+		/* scan it */
+		num = IDLIST_NUM(grolist_p);
+		aidp = IDLIST_DAT(grolist_p);
+		for (i = 0; i < num; ++i)
+		{
+			tuple = SearchSysCache(SHADOWSYSID,
+								   PointerGetDatum(aidp[i]),
+								   0, 0, 0);
+			if (HeapTupleIsValid(tuple))
+			{
+				usename = NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename);
 
-		/*
-		 * Check for illegal characters in the username and password.
-		 */
-		i = strcspn(str_n, CRYPT_PWD_FILE_SEPSTR "\n");
-		if (str_n[i] != '\0')
-			elog(ERROR, "Invalid user name '%s'", str_n);
-		i = strcspn(str_p, CRYPT_PWD_FILE_SEPSTR "\n");
-		if (str_p[i] != '\0')
-			elog(ERROR, "Invalid user password '%s'", str_p);
+				/*
+				 * Check for illegal characters in the user name.
+				 */
+				j = strcspn(usename, "\n");
+				if (usename[j] != '\0')
+				{
+					elog(LOG, "Invalid user name '%s'", usename);
+					continue;
+				}
 
-		/*
-		 * The extra columns we emit here are not really necessary. To
-		 * remove them, the parser in backend/libpq/crypt.c would need to
-		 * be adjusted.
-		 */
-		fprintf(fp,
-				"%s"
-				CRYPT_PWD_FILE_SEPSTR
-				"0"
-				CRYPT_PWD_FILE_SEPSTR
-				"x"
-				CRYPT_PWD_FILE_SEPSTR
-				"x"
-				CRYPT_PWD_FILE_SEPSTR
-				"x"
-				CRYPT_PWD_FILE_SEPSTR
-				"x"
-				CRYPT_PWD_FILE_SEPSTR
-				"%s"
-				CRYPT_PWD_FILE_SEPSTR
-				"%s\n",
-				str_n,
-				str_p,
-				str_v);
+				/* File format is:
+				 *		"dbname"	"user1","user2","user3"
+				 * This matches pg_hba.conf.
+				 */
+				if (first_user)
+				{
+					fputs_quote(groname, fp);
+					fputs("\t", fp);
+				}
+				else
+					fputs(" ", fp);
 
-		pfree(str_n);
-		pfree(str_p);
-		pfree(str_v);
+				first_user = false;
+				fputs_quote(usename, fp);
+
+				ReleaseSysCache(tuple);
+			}
+		}
+		if (!first_user)
+			fputs("\n", fp);
+		/* if IdList was toasted, free detoasted copy */
+		if ((Pointer) grolist_p != DatumGetPointer(grolist_datum))
+			pfree(grolist_p);
 	}
 	heap_endscan(scan);
 
@@ -178,29 +234,154 @@ write_password_file(Relation rel)
 
 	pfree((void *) tempname);
 	pfree((void *) filename);
+}
+
+
+
+/*
+ * write_password_file for trigger update_pg_pwd_and_pg_group
+ *
+ * copy the modified contents of pg_shadow to a file used by the postmaster
+ * for user authentication.  The file is stored as $PGDATA/global/pg_pwd.
+ *
+ * This function set is both a trigger function for direct updates to pg_shadow
+ * as well as being called directly from create/alter/drop user.
+ *
+ * We raise an error to force transaction rollback if we detect an illegal
+ * username or password --- illegal being defined as values that would
+ * mess up the pg_pwd parser.
+ */
+static void
+write_user_file(Relation urel)
+{
+	char	   *filename,
+			   *tempname;
+	int			bufsize;
+	FILE	   *fp;
+	mode_t		oumask;
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+	TupleDesc	dsc = RelationGetDescr(urel);
 
 	/*
-	 * Signal the postmaster to reload its password-file cache.
+	 * Create a temporary filename to be renamed later.  This prevents the
+	 * backend from clobbering the pg_pwd file while the postmaster might
+	 * be reading from it.
 	 */
-	SendPostmasterSignal(PMSIGNAL_PASSWORD_CHANGE);
+	filename = user_getfilename();
+	bufsize = strlen(filename) + 12;
+	tempname = (char *) palloc(bufsize);
+
+	snprintf(tempname, bufsize, "%s.%d", filename, MyProcPid);
+	oumask = umask((mode_t) 077);
+	fp = AllocateFile(tempname, "w");
+	umask(oumask);
+	if (fp == NULL)
+		elog(ERROR, "write_password_file: unable to write %s: %m", tempname);
+
+	/* read table */
+	scan = heap_beginscan(urel, false, SnapshotSelf, 0, NULL);
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	{
+		Datum		datum;
+		bool		isnull;
+		char	   *usename,
+				   *passwd,
+				   *valuntil;
+		int			i;
+
+		datum = heap_getattr(tuple, Anum_pg_shadow_usename, dsc, &isnull);
+		if (isnull)
+			continue;			/* ignore NULL usernames */
+		usename = (char *) DatumGetName(datum);
+
+		datum = heap_getattr(tuple, Anum_pg_shadow_passwd, dsc, &isnull);
+
+		/*
+		 * It can be argued that people having a null password shouldn't
+		 * be allowed to connect under password authentication, because
+		 * they need to have a password set up first. If you think
+		 * assuming an empty password in that case is better, change this
+		 * logic to look something like the code for valuntil.
+		 */
+		if (isnull)
+			continue;
+
+		passwd = DatumGetCString(DirectFunctionCall1(textout, datum));
+
+		datum = heap_getattr(tuple, Anum_pg_shadow_valuntil, dsc, &isnull);
+		if (isnull)
+			valuntil = pstrdup("");
+		else
+			valuntil = DatumGetCString(DirectFunctionCall1(nabstimeout, datum));
+
+		/*
+		 * Check for illegal characters in the username and password.
+		 */
+		i = strcspn(usename, "\n");
+		if (usename[i] != '\0')
+			elog(ERROR, "Invalid user name '%s'", usename);
+		i = strcspn(passwd, "\n");
+		if (passwd[i] != '\0')
+			elog(ERROR, "Invalid user password '%s'", passwd);
+
+		/*
+		 * The extra columns we emit here are not really necessary. To
+		 * remove them, the parser in backend/libpq/crypt.c would need to
+		 * be adjusted.
+		 */
+		fputs_quote(usename, fp);
+		fputs(" ", fp);
+		fputs_quote(passwd, fp);
+		fputs(" ", fp);
+		fputs_quote(valuntil, fp);
+
+		pfree(passwd);
+		pfree(valuntil);
+	}
+	heap_endscan(scan);
+
+	fflush(fp);
+	if (ferror(fp))
+		elog(ERROR, "%s: %m", tempname);
+	FreeFile(fp);
+
+	/*
+	 * Rename the temp file to its final name, deleting the old pg_pwd. We
+	 * expect that rename(2) is an atomic action.
+	 */
+	if (rename(tempname, filename))
+		elog(ERROR, "rename %s to %s: %m", tempname, filename);
+
+	pfree((void *) tempname);
+	pfree((void *) filename);
 }
 
 
 
 /* This is the wrapper for triggers. */
 Datum
-update_pg_pwd(PG_FUNCTION_ARGS)
+update_pg_pwd_and_pg_group(PG_FUNCTION_ARGS)
 {
 	/*
 	 * ExclusiveLock ensures no one modifies pg_shadow while we read it,
 	 * and that only one backend rewrites the flat file at a time.	It's
 	 * OK to allow normal reads of pg_shadow in parallel, however.
 	 */
-	Relation	rel = heap_openr(ShadowRelationName, ExclusiveLock);
+	Relation	urel = heap_openr(ShadowRelationName, ExclusiveLock);
+	Relation	grel = heap_openr(GroupRelationName, ExclusiveLock);
 
-	write_password_file(rel);
+	write_user_file(urel);
+	write_group_file(urel, grel);
 	/* OK to release lock, since we did not modify the relation */
-	heap_close(rel, ExclusiveLock);
+	heap_close(grel, ExclusiveLock);
+	heap_close(urel, ExclusiveLock);
+
+	/*
+	 * Signal the postmaster to reload its password & group-file cache.
+	 */
+	SendPostmasterSignal(PMSIGNAL_PASSWORD_CHANGE);
+
 	return PointerGetDatum(NULL);
 }
 
@@ -446,14 +627,14 @@ CreateUser(CreateUserStmt *stmt)
 	}
 
 	/*
-	 * Write the updated pg_shadow data to the flat password file.
-	 */
-	write_password_file(pg_shadow_rel);
-
-	/*
 	 * Now we can clean up; but keep lock until commit.
 	 */
 	heap_close(pg_shadow_rel, NoLock);
+
+	/*
+	 * Write the updated pg_shadow and pg_group data to the flat file.
+	 */
+	update_pg_pwd_and_pg_group(NULL);
 }
 
 
@@ -680,14 +861,14 @@ AlterUser(AlterUserStmt *stmt)
 	heap_freetuple(new_tuple);
 
 	/*
-	 * Write the updated pg_shadow data to the flat password file.
-	 */
-	write_password_file(pg_shadow_rel);
-
-	/*
 	 * Now we can clean up.
 	 */
 	heap_close(pg_shadow_rel, NoLock);
+
+	/*
+	 * Write the updated pg_shadow and pg_group data to the flat file.
+	 */
+	update_pg_pwd_and_pg_group(NULL);
 }
 
 
@@ -733,7 +914,7 @@ AlterUserSet(AlterUserSetStmt *stmt)
 	{
 		Datum datum;
 		bool isnull;
-		ArrayType *a;
+		ArrayType *array;
 
 		repl_null[Anum_pg_shadow_useconfig-1] = ' ';
 
@@ -741,17 +922,17 @@ AlterUserSet(AlterUserSetStmt *stmt)
 								Anum_pg_shadow_useconfig, &isnull);
 
 		if (valuestr)
-			a = GUCArrayAdd(isnull
+			array = GUCArrayAdd(isnull
 							? NULL
 							: (ArrayType *) pg_detoast_datum((struct varlena *)datum),
 							stmt->variable, valuestr);
 		else
-			a = GUCArrayDelete(isnull
+			array = GUCArrayDelete(isnull
 							   ? NULL
 							   : (ArrayType *) pg_detoast_datum((struct varlena *)datum),
 							   stmt->variable);
 
-		repl_val[Anum_pg_shadow_useconfig-1] = PointerGetDatum(a);
+		repl_val[Anum_pg_shadow_useconfig-1] = PointerGetDatum(array);
 	}
 
 	newtuple = heap_modifytuple(oldtuple, rel, repl_val, repl_null, repl_repl);
@@ -846,7 +1027,7 @@ DropUser(DropUserStmt *stmt)
 			datum = heap_getattr(tmp_tuple, Anum_pg_database_datname,
 								 pg_dsc, &null);
 			Assert(!null);
-			dbname = DatumGetCString(DirectFunctionCall1(nameout, datum));
+			dbname = (char *) DatumGetName(datum);
 			elog(ERROR, "DROP USER: user \"%s\" owns database \"%s\", cannot be removed%s",
 				 user, dbname,
 				 (length(stmt->users) > 1) ? " (no users removed)" : "");
@@ -901,14 +1082,14 @@ DropUser(DropUserStmt *stmt)
 	}
 
 	/*
-	 * Write the updated pg_shadow data to the flat password file.
-	 */
-	write_password_file(pg_shadow_rel);
-
-	/*
 	 * Now we can clean up.
 	 */
 	heap_close(pg_shadow_rel, NoLock);
+
+	/*
+	 * Write the updated pg_shadow and pg_group data to the flat file.
+	 */
+	update_pg_pwd_and_pg_group(NULL);
 }
 
 
@@ -1111,6 +1292,11 @@ CreateGroup(CreateGroupStmt *stmt)
 	}
 
 	heap_close(pg_group_rel, NoLock);
+
+	/*
+	 * Write the updated pg_shadow and pg_group data to the flat file.
+	 */
+	update_pg_pwd_and_pg_group(NULL);
 }
 
 
@@ -1366,7 +1552,15 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 
 	ReleaseSysCache(group_tuple);
 
+	/*
+	 * Write the updated pg_shadow and pg_group data to the flat files.
+	 */
 	heap_close(pg_group_rel, NoLock);
+
+	/*
+	 * Write the updated pg_shadow and pg_group data to the flat file.
+	 */
+	update_pg_pwd_and_pg_group(NULL);
 }
 
 
@@ -1419,4 +1613,9 @@ DropGroup(DropGroupStmt *stmt)
 		elog(ERROR, "DROP GROUP: group \"%s\" does not exist", stmt->name);
 
 	heap_close(pg_group_rel, NoLock);
+
+	/*
+	 * Write the updated pg_shadow and pg_group data to the flat file.
+	 */
+	update_pg_pwd_and_pg_group(NULL);
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: crypt.h,v 1.19 2001/11/12 01:52:46 momjian Exp $
+ * $Id: crypt.h,v 1.20 2002/04/04 04:25:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,17 +15,12 @@
 
 #include "libpq/libpq-be.h"
 
-#define CRYPT_PWD_FILE_SEPSTR	"\t"
-
 /* Also defined in interfaces/odbc/md5.h */
 #define MD5_PASSWD_LEN	35
 
 #define isMD5(passwd)	(strncmp((passwd),"md5",3) == 0 && \
 						 strlen(passwd) == MD5_PASSWD_LEN)
 
-
-extern char *crypt_getpwdfilename(void);
-extern void load_password_cache(void);
 
 extern int md5_crypt_verify(const Port *port, const char *user,
 				 const char *pgpass);

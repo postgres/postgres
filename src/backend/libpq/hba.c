@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.80 2002/03/04 01:46:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.81 2002/04/04 04:25:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,17 +30,19 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include "commands/user.h"
+#include "libpq/crypt.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
 #include "storage/fd.h"
 
 
-#define MAX_TOKEN 80
-/* Maximum size of one token in the configuration file	*/
-
 #define IDENT_USERNAME_MAX 512
 /* Max size of username ident server can return */
+
+/* This is used to separate values in multi-valued column strings */
+#define MULTI_VALUE_SEP	"\001"
 
 /*
  * These variables hold the pre-parsed contents of the hba and ident
@@ -53,7 +55,17 @@
  */
 static List *hba_lines = NIL;	/* pre-parsed contents of hba file */
 static List *ident_lines = NIL; /* pre-parsed contents of ident file */
+static List *group_lines = NIL;	/* pre-parsed contents of group file */
+static List *user_lines = NIL;	/* pre-parsed contents of user password file */
 
+/* sorted entries so we can do binary search lookups */
+static List **user_sorted = NULL;	/* sorted user list, for bsearch() */
+static List **group_sorted = NULL;	/* sorted group list, for bsearch() */
+static int  user_length;
+static int  group_length;
+
+static List *tokenize_file(FILE *file);
+static char *tokenize_inc_file(const char *inc_filename);
 
 /*
  * Some standard C libraries, including GNU, have an isblank() function.
@@ -67,41 +79,76 @@ isblank(const char c)
 
 
 /*
- *	Grab one token out of fp.  Tokens are strings of non-blank
- *	characters bounded by blank characters, beginning of line, and end
- *	of line.	Blank means space or tab.  Return the token as *buf.
- *	Leave file positioned to character immediately after the token or
- *	EOF, whichever comes first.  If no more tokens on line, return null
- *	string as *buf and position file to beginning of next line or EOF,
- *	whichever comes first.
+ *   Grab one token out of fp. Tokens are strings of non-blank
+ *   characters bounded by blank characters, beginning of line, and
+ *   end of line. Blank means space or tab. Return the token as
+ *   *buf. Leave file positioned to character immediately after the
+ *   token or EOF, whichever comes first. If no more tokens on line,
+ *   return null string as *buf and position file to beginning of
+ *   next line or EOF, whichever comes first. Allow spaces in quoted
+ *   strings. Terminate on unquoted commas. Handle comments.
  */
-static void
+void
 next_token(FILE *fp, char *buf, const int bufsz)
 {
 	int			c;
-	char	   *eb = buf + (bufsz - 1);
+	char	   *end_buf = buf + (bufsz - 1);
+	bool		in_quote = false;
+	bool		was_quote = false;
 
-	/* Move over initial token-delimiting blanks */
-	while ((c = getc(fp)) != EOF && isblank(c))
+	/* Move over initial whitespace and commas */
+	while ((c = getc(fp)) != EOF && (isblank(c) || c == ','))
 		;
 
 	if (c != EOF && c != '\n')
 	{
 		/*
-		 * build a token in buf of next characters up to EOF, eol, or
-		 * blank.  If the token gets too long, we still parse it
-		 * correctly, but the excess characters are not stored into *buf.
+		 * Build a token in buf of next characters up to EOF, EOL, unquoted
+		 * comma, or unquoted whitespace.
 		 */
-		while (c != EOF && c != '\n' && !isblank(c))
+		while (c != EOF && c != '\n' &&
+			   (!isblank(c) || in_quote == true))
 		{
-			if (buf < eb)
+			if (c == '"')
+				in_quote = !in_quote;
+
+			/* skip comments to EOL */
+			if (c == '#' && !in_quote)
+			{
+				while ((c = getc(fp)) != EOF && c != '\n')
+					;
+				continue;
+			}
+
+			if (buf >= end_buf)
+			{
+				elog(LOG, "Token too long in authentication file, skipping, %s", buf);
+				/* Discard remainder of line */
+				while ((c = getc(fp)) != EOF && c != '\n')
+					;
+				buf[0] = '\0';
+				break;
+			}
+
+			if (c != '"' || (c == '"' && was_quote))
 				*buf++ = c;
+
+			/* We pass back the comma so the caller knows there is more */
+			if ((isblank(c) || c == ',') && !in_quote)
+				break;
+
+			/* Literal double-quote is two double-quotes */
+			if (c == '"')
+				was_quote = !was_quote;
+			else
+				was_quote = false;
+
 			c = getc(fp);
 		}
 
 		/*
 		 * Put back the char right after the token (critical in case it is
-		 * eol, since we need to detect end-of-line at next call).
+		 * EOL, since we need to detect end-of-line at next call).
 		 */
 		if (c != EOF)
 			ungetc(c, fp);
@@ -109,74 +156,57 @@ next_token(FILE *fp, char *buf, const int bufsz)
 	*buf = '\0';
 }
 
-
-static void
-read_through_eol(FILE *file)
-{
-	int			c;
-
-	while ((c = getc(file)) != EOF && c != '\n')
-		;
-}
-
-
 /*
- *	Read the given file and create a list of line sublists.
+ *   Tokenize file and handle file inclusion and comma lists. We have
+ *   to  break  apart  the  commas  to  expand  any  file names then
+ *   reconstruct with commas.
  */
-static List *
-tokenize_file(FILE *file)
+static char *
+next_token_expand(FILE *file)
 {
-	List	   *lines = NIL;
-	List	   *next_line = NIL;
-	int			line_number = 1;
 	char		buf[MAX_TOKEN];
-	char	   *comment_ptr;
+	char	   *comma_str = pstrdup("");
+	bool		trailing_comma;
+	char	   *incbuf;
 
-	while (!feof(file))
+	do
 	{
 		next_token(file, buf, sizeof(buf));
+		if (!*buf)
+			break;
 
-		/* trim off comment, even if inside a token */
-		comment_ptr = strchr(buf, '#');
-		if (comment_ptr != NULL)
-			*comment_ptr = '\0';
-
-		/* add token to list, unless we are at eol or comment start */
-		if (buf[0] != '\0')
+		if (buf[strlen(buf)-1] == ',')
 		{
-			if (next_line == NIL)
-			{
-				/* make a new line List */
-				next_line = makeListi1(line_number);
-				lines = lappend(lines, next_line);
-			}
-			/* append token to current line's list */
-			next_line = lappend(next_line, pstrdup(buf));
+			trailing_comma = true;
+			buf[strlen(buf)-1] = '\0';
 		}
 		else
+			trailing_comma = false;
+
+		/* Is this referencing a file? */
+		if (buf[0] == '@')
+			incbuf = tokenize_inc_file(buf+1);
+		else
+			incbuf = pstrdup(buf);
+
+		comma_str = repalloc(comma_str,
+							 strlen(comma_str) + strlen(incbuf) + 1);
+		strcat(comma_str, incbuf);
+		pfree(incbuf);
+
+		if (trailing_comma)
 		{
-			/* we are at real or logical eol, so force a new line List */
-			next_line = NIL;
+			comma_str = repalloc(comma_str, strlen(comma_str) + 1 + 1);
+			strcat(comma_str, MULTI_VALUE_SEP);
 		}
+	} while (trailing_comma);
 
-		if (comment_ptr != NULL)
-		{
-			/* Found a comment, so skip the rest of the line */
-			read_through_eol(file);
-			next_line = NIL;
-		}
-
-		/* Advance line number whenever we reach eol */
-		if (next_line == NIL)
-			line_number++;
-	}
-
-	return lines;
+	return comma_str;
 }
 
 
 /*
- * Free memory used by lines/tokens (ie, structure built by tokenize_file)
+ * Free memory used by lines/tokens (i.e., structure built by tokenize_file)
  */
 static void
 free_lines(List **lines)
@@ -201,6 +231,220 @@ free_lines(List **lines)
 		/* clear the static variable */
 		*lines = NIL;
 	}
+}
+
+
+static char *
+tokenize_inc_file(const char *inc_filename)
+{
+	char	   *inc_fullname;
+	FILE	   *inc_file;
+	List 	   *inc_lines;
+	List	   *line;
+	char	   *comma_str = pstrdup("");
+
+	inc_fullname = (char *) palloc(strlen(DataDir) + 1 +
+								   strlen(inc_filename) + 1);
+	strcpy(inc_fullname, DataDir);
+	strcat(inc_fullname, "/");
+	strcat(inc_fullname, inc_filename);
+
+	inc_file = AllocateFile(inc_fullname, "r");
+	if (!inc_file)
+	{
+		elog(LOG, "tokenize_inc_file: Unable to open secondary authentication file \"@%s\" as \"%s\": %m",
+			 inc_filename, inc_fullname);
+		pfree(inc_fullname);
+
+		/* return empty string, it matches nothing */
+		return pstrdup("");
+	}
+	pfree(inc_fullname);
+
+	/* There is possible recursion here if the file contains @ */
+	inc_lines = tokenize_file(inc_file);
+	FreeFile(inc_file);
+
+	/* Create comma-separate string from List */
+	foreach(line, inc_lines)
+	{
+		List	   *ln = lfirst(line);
+		List	   *token;
+
+		/* First entry is line number */
+		foreach(token, lnext(ln))
+		{
+			if (strlen(comma_str))
+			{
+				comma_str = repalloc(comma_str, strlen(comma_str) + 1);
+				strcat(comma_str, MULTI_VALUE_SEP);
+			}
+			comma_str = repalloc(comma_str,
+						strlen(comma_str) + strlen(lfirst(token)) + 1);
+			strcat(comma_str, lfirst(token));
+		}
+	}
+
+	free_lines(&inc_lines);
+
+	return comma_str;
+}
+
+
+
+/*
+ *	Read the given file and create a list of line sublists.
+ */
+static List *
+tokenize_file(FILE *file)
+{
+	List	   *lines = NIL;
+	List	   *next_line = NIL;
+	int			line_number = 1;
+	char	   *buf;
+
+	while (!feof(file))
+	{
+		buf = next_token_expand(file);
+
+		/* add token to list, unless we are at EOL or comment start */
+		if (buf[0] != '\0')
+		{
+			if (next_line == NIL)
+			{
+				/* make a new line List */
+				next_line = makeListi1(line_number);
+				lines = lappend(lines, next_line);
+			}
+			/* append token to current line's list */
+			next_line = lappend(next_line, buf);
+		}
+		else
+		{
+			/* we are at real or logical EOL, so force a new line List */
+			next_line = NIL;
+		}
+
+		/* Advance line number whenever we reach EOL */
+		if (next_line == NIL)
+			line_number++;
+	}
+
+	return lines;
+}
+
+
+/*
+ * Compare two password-file lines on the basis of their user names.
+ *
+ * Used for qsort() sorting and bsearch() lookup.
+ */
+static int
+user_group_cmp(const void *user, const void *list)
+{
+						/* first node is line number */
+	char 	   *user1 = (char *)user;
+	char	   *user2 = lfirst(lnext(*(List **)list));
+
+	return strcmp(user1, user2);
+}
+
+
+/*
+ * Lookup a group name in the pg_group file
+ */
+static List **
+get_group_line(const char *group)
+{
+	return (List **) bsearch((void *) group,
+							(void *) group_sorted,
+							group_length,
+							sizeof(List *),
+							user_group_cmp);
+}
+
+
+/*
+ * Lookup a user name in the pg_shadow file
+ */
+List **
+get_user_line(const char *user)
+{
+	return (List **) bsearch((void *) user,
+							(void *) user_sorted,
+							user_length,
+							sizeof(List *),
+							user_group_cmp);
+}
+
+
+/*
+ * Check group for a specific user.
+ */
+static int
+check_group(char *group, char *user)
+{
+	List	   **line, *l;
+
+	if ((line = get_group_line(group)) != NULL)
+	{
+		foreach(l, lnext(lnext(*line)))
+			if (strcmp(lfirst(l), user) == 0)
+				return 1;
+	}
+
+	return 0;
+}
+
+/*
+ * Check comma user list for a specific user, handle group names.
+ */
+static int
+check_user(char *user, char *param_str)
+{
+	char *tok;
+
+	for (tok = strtok(param_str, MULTI_VALUE_SEP); tok != NULL; tok = strtok(NULL, MULTI_VALUE_SEP))
+	{
+		if (tok[0] == '+')
+		{
+			if (check_group(tok+1, user))
+				return 1;
+		}
+		else if (strcmp(tok, user) == 0 ||
+			strcmp(tok, "all") == 0)
+			return 1;
+	}
+
+	return 0;
+}
+
+/*
+ * Check to see if db/user combination matches param string.
+ */
+static int
+check_db(char *dbname, char *user, char *param_str)
+{
+	char *tok;
+
+	for (tok = strtok(param_str, MULTI_VALUE_SEP); tok != NULL; tok = strtok(NULL, MULTI_VALUE_SEP))
+	{
+		if (strcmp(tok, "all") == 0)
+			return 1;
+		else if (strcmp(tok, "sameuser") == 0)
+		{
+			if (strcmp(dbname, user) == 0)
+				return 1;
+		}
+		else if (strcmp(tok, "samegroup") == 0)
+		{
+			if (check_group(dbname, user))
+				return 1;
+		}
+		else if (strcmp(tok, dbname) == 0)
+			return 1;
+	}
+	return 0;
 }
 
 
@@ -278,6 +522,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 	int			line_number;
 	char	   *token;
 	char	   *db;
+	char	   *user;
 
 	Assert(line != NIL);
 	line_number = lfirsti(line);
@@ -293,10 +538,17 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			goto hba_syntax;
 		db = lfirst(line);
 
-		/* Read the rest of the line. */
+		/* Get the user. */
 		line = lnext(line);
 		if (!line)
 			goto hba_syntax;
+		user = lfirst(line);
+
+		line = lnext(line);
+		if (!line)
+			goto hba_syntax;
+
+		/* Read the rest of the line. */
 		parse_hba_auth(line, &port->auth_method, port->auth_arg, error_p);
 		if (*error_p)
 			goto hba_syntax;
@@ -308,15 +560,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			port->auth_method == uaKrb5)
 			goto hba_syntax;
 
-		/*
-		 * If this record doesn't match the parameters of the connection
-		 * attempt, ignore it.
-		 */
-		if ((strcmp(db, port->database) != 0 &&
-			 strcmp(db, "all") != 0 &&
-			 (strcmp(db, "sameuser") != 0 ||
-			  strcmp(port->database, port->user) != 0)) ||
-			port->raddr.sa.sa_family != AF_UNIX)
+		if (port->raddr.sa.sa_family != AF_UNIX)
 			return;
 	}
 	else if (strcmp(token, "host") == 0 || strcmp(token, "hostssl") == 0)
@@ -347,6 +591,12 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			goto hba_syntax;
 		db = lfirst(line);
 
+		/* Get the user. */
+		line = lnext(line);
+		if (!line)
+			goto hba_syntax;
+		user = lfirst(line);
+
 		/* Read the IP address field. */
 		line = lnext(line);
 		if (!line)
@@ -371,20 +621,18 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		if (*error_p)
 			goto hba_syntax;
 
-		/*
-		 * If this record doesn't match the parameters of the connection
-		 * attempt, ignore it.
-		 */
-		if ((strcmp(db, port->database) != 0 &&
-			 strcmp(db, "all") != 0 &&
-			 (strcmp(db, "sameuser") != 0 ||
-			  strcmp(port->database, port->user) != 0)) ||
-			port->raddr.sa.sa_family != AF_INET ||
+		/* Must meet network restrictions */
+		if (port->raddr.sa.sa_family != AF_INET ||
 			((file_ip_addr.s_addr ^ port->raddr.in.sin_addr.s_addr) & mask.s_addr) != 0)
 			return;
 	}
 	else
 		goto hba_syntax;
+
+	if (!check_db(port->database, port->user, db))
+		return;
+	if (!check_user(port->user, user))
+		return;
 
 	/* Success */
 	*found_p = true;
@@ -430,6 +678,127 @@ check_hba(hbaPort *port)
 }
 
 
+
+/*
+ * Open the group file if possible (return NULL if not)
+ */
+static FILE *
+group_openfile(void)
+{
+	char	   *filename;
+	FILE	   *groupfile;
+
+	filename = group_getfilename();
+	groupfile = AllocateFile(filename, "r");
+
+	if (groupfile == NULL && errno != ENOENT)
+		elog(LOG, "could not open %s: %m", filename);
+
+	pfree(filename);
+
+	return groupfile;
+}
+
+
+
+/*
+ * Open the password file if possible (return NULL if not)
+ */
+static FILE *
+user_openfile(void)
+{
+	char	   *filename;
+	FILE	   *pwdfile;
+
+	filename = user_getfilename();
+	pwdfile = AllocateFile(filename, "r");
+
+	if (pwdfile == NULL && errno != ENOENT)
+		elog(LOG, "could not open %s: %m", filename);
+
+	pfree(filename);
+
+	return pwdfile;
+}
+
+
+
+/*
+ *	 Load group/user name mapping file
+ */
+void
+load_group()
+{
+	FILE	   *group_file;
+	List		*line;
+
+	if (group_lines)
+		free_lines(&group_lines);
+
+	group_file = group_openfile();
+	if (!group_file)
+		return;
+	group_lines = tokenize_file(group_file);
+	FreeFile(group_file);
+
+	/* create sorted lines for binary searching */
+	if (group_sorted)
+		pfree(group_sorted);
+	group_length = length(group_lines);
+	if (group_length)
+	{
+		int i = 0;
+
+		group_sorted = palloc(group_length * sizeof(List *));
+
+		foreach(line, group_lines)
+			group_sorted[i++] = lfirst(line);
+
+		qsort((void *) group_sorted, group_length, sizeof(List *), user_group_cmp);
+	}
+	else
+		group_sorted = NULL;
+}
+
+
+/*
+ *	 Load user/password mapping file
+ */
+void
+load_user()
+{
+	FILE	   *user_file;
+	List	   *line;
+
+	if (user_lines)
+		free_lines(&user_lines);
+
+	user_file = user_openfile();
+	if (!user_file)
+		return;
+	user_lines = tokenize_file(user_file);
+	FreeFile(user_file);
+
+	/* create sorted lines for binary searching */
+	if (user_sorted)
+		pfree(user_sorted);
+	user_length = length(user_lines);
+	if (user_length)
+	{
+		int i = 0;
+
+		user_sorted = palloc(user_length * sizeof(List *));
+
+		foreach(line, user_lines)
+			user_sorted[i++] = lfirst(line);
+
+		qsort((void *) user_sorted, user_length, sizeof(List *), user_group_cmp);
+	}
+	else
+		user_sorted = NULL;
+}
+
+
 /*
  * Read the config file and create a List of Lists of tokens in the file.
  * If we find a file by the old name of the config file (pg_hba), we issue
@@ -437,60 +806,35 @@ check_hba(hbaPort *port)
  * follow directions and just installed his old hba file in the new database
  * system.
  */
-static void
+void
 load_hba(void)
 {
-	int			fd,
-				bufsize;
+	int			bufsize;
 	FILE	   *file;			/* The config file we have to read */
-	char	   *old_conf_file;
+	char	   *conf_file;	/* The name of the config file */
 
 	if (hba_lines)
 		free_lines(&hba_lines);
 
-	/*
-	 * The name of old config file that better not exist. Fail if config
-	 * file by old name exists. Put together the full pathname to the old
-	 * config file.
-	 */
-	bufsize = (strlen(DataDir) + strlen(OLD_CONF_FILE) + 2) * sizeof(char);
-	old_conf_file = (char *) palloc(bufsize);
-	snprintf(old_conf_file, bufsize, "%s/%s", DataDir, OLD_CONF_FILE);
+	/* Put together the full pathname to the config file. */
+	bufsize = (strlen(DataDir) + strlen(CONF_FILE) + 2) * sizeof(char);
+	conf_file = (char *) palloc(bufsize);
+	snprintf(conf_file, bufsize, "%s/%s", DataDir, CONF_FILE);
 
-	if ((fd = open(old_conf_file, O_RDONLY | PG_BINARY, 0)) != -1)
+	file = AllocateFile(conf_file, "r");
+	if (file == NULL)
 	{
-		/* Old config file exists.	Tell this guy he needs to upgrade. */
-		close(fd);
-		elog(LOG, "A file exists by the name used for host-based authentication "
-			 "in prior releases of Postgres (%s).  The name and format of "
-			 "the configuration file have changed, so this file should be "
-			 "converted.", old_conf_file);
+		/* The open of the config file failed.	*/
+		elog(LOG, "load_hba: Unable to open authentication config file \"%s\": %m",
+			 conf_file);
+		pfree(conf_file);
 	}
 	else
 	{
-		char	   *conf_file;	/* The name of the config file we have to
-								 * read */
-
-		/* put together the full pathname to the config file */
-		bufsize = (strlen(DataDir) + strlen(CONF_FILE) + 2) * sizeof(char);
-		conf_file = (char *) palloc(bufsize);
-		snprintf(conf_file, bufsize, "%s/%s", DataDir, CONF_FILE);
-
-		file = AllocateFile(conf_file, "r");
-		if (file == NULL)
-		{
-			/* The open of the config file failed.	*/
-			elog(LOG, "load_hba: Unable to open authentication config file \"%s\": %m",
-				 conf_file);
-		}
-		else
-		{
-			hba_lines = tokenize_file(file);
-			FreeFile(file);
-		}
-		pfree(conf_file);
+		hba_lines = tokenize_file(file);
+		FreeFile(file);
 	}
-	pfree(old_conf_file);
+	pfree(conf_file);
 }
 
 
@@ -606,7 +950,7 @@ check_ident_usermap(const char *usermap_name,
 /*
  * Read the ident config file and create a List of Lists of tokens in the file.
  */
-static void
+void
 load_ident(void)
 {
 	FILE	   *file;			/* The map file we have to read */
@@ -622,7 +966,7 @@ load_ident(void)
 	map_file = (char *) palloc(bufsize);
 	snprintf(map_file, bufsize, "%s/%s", DataDir, USERMAP_FILE);
 
-	file = AllocateFile(map_file, PG_BINARY_R);
+	file = AllocateFile(map_file, "r");
 	if (file == NULL)
 	{
 		/* The open of the map file failed.  */
@@ -640,8 +984,8 @@ load_ident(void)
 
 /*
  *	Parse the string "*ident_response" as a response from a query to an Ident
- *	server.  If it's a normal response indicating a username, return true
- *	and store the username at *ident_user.	If it's anything else,
+ *	server.  If it's a normal response indicating a user name, return true
+ *	and store the user name at *ident_user.	If it's anything else,
  *	return false.
  */
 static bool
@@ -708,7 +1052,7 @@ interpret_ident_response(char *ident_response,
 						cursor++;		/* Go over colon */
 						while (isblank(*cursor))
 							cursor++;	/* skip blanks */
-						/* Rest of line is username.  Copy it over. */
+						/* Rest of line is user name.  Copy it over. */
 						i = 0;
 						while (*cursor != '\r' && i < IDENT_USERNAME_MAX)
 							ident_user[i++] = *cursor++;
@@ -725,7 +1069,7 @@ interpret_ident_response(char *ident_response,
 /*
  *	Talk to the ident server on host "remote_ip_addr" and find out who
  *	owns the tcp connection from his port "remote_port" to port
- *	"local_port_addr" on host "local_ip_addr".	Return the username the
+ *	"local_port_addr" on host "local_ip_addr".	Return the user name the
  *	ident server gives as "*ident_user".
  *
  *	IP addresses and port numbers are in network byte order.
@@ -955,6 +1299,8 @@ ident_unix(int sock, char *ident_user)
 #endif
 }
 
+
+
 /*
  *	Determine the username of the initiator of the connection described
  *	by "port".	Then look in the usermap file under the usermap
@@ -1010,211 +1356,3 @@ hba_getauthmethod(hbaPort *port)
 		return STATUS_ERROR;
 }
 
-/*
- * Clear and reload tokenized file contents.
- */
-void
-load_hba_and_ident(void)
-{
-	load_hba();
-	load_ident();
-}
-
-
-/* Character set stuff.  Not sure it really belongs in this file. */
-
-#ifdef CYR_RECODE
-
-#define CHARSET_FILE "charset.conf"
-#define MAX_CHARSETS   10
-#define KEY_HOST	   1
-#define KEY_BASE	   2
-#define KEY_TABLE	   3
-
-struct CharsetItem
-{
-	char		Orig[MAX_TOKEN];
-	char		Dest[MAX_TOKEN];
-	char		Table[MAX_TOKEN];
-};
-
-
-static bool
-CharSetInRange(char *buf, int host)
-{
-	int			valid,
-				i,
-				FromAddr,
-				ToAddr,
-				tmp;
-	struct in_addr file_ip_addr;
-	char	   *p;
-	unsigned int one = 0x80000000,
-				NetMask = 0;
-	unsigned char mask;
-
-	p = strchr(buf, '/');
-	if (p)
-	{
-		*p++ = '\0';
-		valid = inet_aton(buf, &file_ip_addr);
-		if (valid)
-		{
-			mask = strtoul(p, 0, 0);
-			FromAddr = ntohl(file_ip_addr.s_addr);
-			ToAddr = ntohl(file_ip_addr.s_addr);
-			for (i = 0; i < mask; i++)
-			{
-				NetMask |= one;
-				one >>= 1;
-			}
-			FromAddr &= NetMask;
-			ToAddr = ToAddr | ~NetMask;
-			tmp = ntohl(host);
-			return ((unsigned) tmp >= (unsigned) FromAddr &&
-					(unsigned) tmp <= (unsigned) ToAddr);
-		}
-	}
-	else
-	{
-		p = strchr(buf, '-');
-		if (p)
-		{
-			*p++ = '\0';
-			valid = inet_aton(buf, &file_ip_addr);
-			if (valid)
-			{
-				FromAddr = ntohl(file_ip_addr.s_addr);
-				valid = inet_aton(p, &file_ip_addr);
-				if (valid)
-				{
-					ToAddr = ntohl(file_ip_addr.s_addr);
-					tmp = ntohl(host);
-					return ((unsigned) tmp >= (unsigned) FromAddr &&
-							(unsigned) tmp <= (unsigned) ToAddr);
-				}
-			}
-		}
-		else
-		{
-			valid = inet_aton(buf, &file_ip_addr);
-			if (valid)
-			{
-				FromAddr = file_ip_addr.s_addr;
-				return (unsigned) FromAddr == (unsigned) host;
-			}
-		}
-	}
-	return false;
-}
-
-void
-GetCharSetByHost(char *TableName, int host, const char *DataDir)
-{
-	FILE	   *file;
-	char		buf[MAX_TOKEN],
-				BaseCharset[MAX_TOKEN],
-				OrigCharset[MAX_TOKEN],
-				DestCharset[MAX_TOKEN],
-				HostCharset[MAX_TOKEN],
-			   *map_file;
-	int			key,
-				ChIndex = 0,
-				c,
-				i,
-				bufsize;
-	struct CharsetItem *ChArray[MAX_CHARSETS];
-
-	*TableName = '\0';
-	bufsize = (strlen(DataDir) + strlen(CHARSET_FILE) + 2) * sizeof(char);
-	map_file = (char *) palloc(bufsize);
-	snprintf(map_file, bufsize, "%s/%s", DataDir, CHARSET_FILE);
-	file = AllocateFile(map_file, PG_BINARY_R);
-	pfree(map_file);
-	if (file == NULL)
-	{
-		/* XXX should we log a complaint? */
-		return;
-	}
-	while ((c = getc(file)) != EOF)
-	{
-		if (c == '#')
-			read_through_eol(file);
-		else
-		{
-			/* Read the key */
-			ungetc(c, file);
-			next_token(file, buf, sizeof(buf));
-			if (buf[0] != '\0')
-			{
-				key = 0;
-				if (strcasecmp(buf, "HostCharset") == 0)
-					key = KEY_HOST;
-				if (strcasecmp(buf, "BaseCharset") == 0)
-					key = KEY_BASE;
-				if (strcasecmp(buf, "RecodeTable") == 0)
-					key = KEY_TABLE;
-				switch (key)
-				{
-					case KEY_HOST:
-						/* Read the host */
-						next_token(file, buf, sizeof(buf));
-						if (buf[0] != '\0')
-						{
-							if (CharSetInRange(buf, host))
-							{
-								/* Read the charset */
-								next_token(file, buf, sizeof(buf));
-								if (buf[0] != '\0')
-									strcpy(HostCharset, buf);
-							}
-						}
-						break;
-					case KEY_BASE:
-						/* Read the base charset */
-						next_token(file, buf, sizeof(buf));
-						if (buf[0] != '\0')
-							strcpy(BaseCharset, buf);
-						break;
-					case KEY_TABLE:
-						/* Read the original charset */
-						next_token(file, buf, sizeof(buf));
-						if (buf[0] != '\0')
-						{
-							strcpy(OrigCharset, buf);
-							/* Read the destination charset */
-							next_token(file, buf, sizeof(buf));
-							if (buf[0] != '\0')
-							{
-								strcpy(DestCharset, buf);
-								/* Read the table filename */
-								next_token(file, buf, sizeof(buf));
-								if (buf[0] != '\0')
-								{
-									ChArray[ChIndex] =
-										(struct CharsetItem *) palloc(sizeof(struct CharsetItem));
-									strcpy(ChArray[ChIndex]->Orig, OrigCharset);
-									strcpy(ChArray[ChIndex]->Dest, DestCharset);
-									strcpy(ChArray[ChIndex]->Table, buf);
-									ChIndex++;
-								}
-							}
-						}
-						break;
-				}
-				read_through_eol(file);
-			}
-		}
-	}
-	FreeFile(file);
-
-	for (i = 0; i < ChIndex; i++)
-	{
-		if (strcasecmp(BaseCharset, ChArray[i]->Orig) == 0 &&
-			strcasecmp(HostCharset, ChArray[i]->Dest) == 0)
-			strncpy(TableName, ChArray[i]->Table, 79);
-		pfree(ChArray[i]);
-	}
-}
-
-#endif   /* CYR_RECODE */

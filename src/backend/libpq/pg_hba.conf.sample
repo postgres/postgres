@@ -42,22 +42,36 @@
 # 
 # Format:
 # 
-#   host  DBNAME  IP_ADDRESS  ADDRESS_MASK  AUTH_TYPE  [AUTH_ARGUMENT]
+#   host       DATABASE    USER      IP_ADDRESS    MASK               AUTH_TYPE
 # 
-# DBNAME can be:
-# 	o a database name
-# 	o "all", which means the record matches all databases
-#   o "sameuser", which means users can only access databases whose name
-#     is the same as their username
+# DATABASE can be:
+#	o a database name
+#	o "sameuser", which means a user can only access a database with the
+#	  same name as their user name
+#	o "samegroup", which means a user can only access databases when they
+#	  are members of a group with the same name as the database name
+#	o "all", which matches all databases
+#	o a list of database names, separated by commas
+#	o a file name containing database names, starting with '@'
 #
-# IP_ADDRESS and ADDRESS_MASK are standard dotted decimal IP address and
+# USER can be:
+#	o a user name
+#	o "all", which matches all users
+#	o a list of user names, separated by commas
+#	o a group name, starting with '+'
+#	o a file name containing user names, starting with '@'
+#
+# Files read using '@' can contain comma-separated database/user names,
+# or one name per line.  The files can also contain comments using '#'.
+#
+# IP_ADDRESS and MASK are standard dotted decimal IP address and
 # mask values. IP addresses can only be specified numerically, not as
 # domain or host names.
 # 
 # Do not prevent the superuser from accessing the template1 database.
 # Various utility commands need access to template1.
 # 
-# AUTH_TYPE and AUTH_ARGUMENT are described below.
+# AUTH_TYPE is described below.
 #
 # 
 # hostssl
@@ -65,10 +79,8 @@
 # 
 # The format of this record is identical to "host".
 # 
-# 
-#
-# It specifies hosts that required connection via secure SSL. "host"
-# records allow SSL connections too, but "hostssl" only allows SSL-secured
+# It specifies hosts that require connection via secure SSL. "host"
+# allows SSL connections too, but "hostssl" requires SSL-secured
 # connections.
 # 
 # This keyword is only available if the server was compiled with SSL
@@ -82,10 +94,10 @@
 # connections. Without this record, UNIX-socket connections are disallowed
 # 
 # Format:
-#   local  DBNAME  AUTH_TYPE  [AUTH_ARGUMENT]
+#   local      DATABASE    USER      AUTH_TYPE
 # 
 # This format is identical to the "host" record type except there are no
-# IP_ADDRESS and ADDRESS_MASK fields.
+# IP_ADDRESS and MASK fields.
 #
 # 
 # 
@@ -96,57 +108,38 @@
 # has an AUTH_TYPE.
 #
 #   trust: 
-#		No authentication is done. Any valid username is accepted,
+#		No authentication is done. Any valid user name is accepted,
 # 		including the PostgreSQL superuser. This option should
 # 		be used only for hosts where all users are trusted.
 # 
-#   password:
-#		Authentication is done by matching a password supplied
-#		in clear by the host. If no AUTH_ARGUMENT is used, the
-#		password is compared with the user's entry in the
-#		pg_shadow table.
-# 
-# 		If AUTH_ARGUMENT is specified, the username is looked up
-# 		in that file in the $PGDATA directory. If the username
-# 		is found but there is no password, the password is looked
-# 		up in pg_shadow. If a password exists in the file, it is
-# 		used instead. These secondary files allow fine-grained
-# 		control over who can access which databases and whether
-# 		a non-default password is required. The same file can be
-# 		used in multiple records for easier administration.
-# 		Password files can be maintained with the pg_passwd(1)
-# 		utility. Remember, these passwords override pg_shadow
-# 		passwords.  Also, such passwords are passed over the network
-#		in cleartext, meaning this should not be used on untrusted
-#		networks.
-# 
 #   md5:
-#	  	Same as "password", except the password is encrypted over the
-#	  	network. This method is preferable to "password" and "crypt"
-#	  	except for pre-7.2 clients that don't support it. NOTE: md5 can
-#	  	use usernames stored in secondary password files but ignores
-#	  	passwords stored there. The pg_shadow password will always be
-#	  	used.
+#	  	Requires the client to supply an MD5 encrypted password for
+#		authentication.  This is the only method that allows encrypted
+#		passwords to be stored in pg_shadow.
 # 
 #   crypt:
-#	  	Same as "md5", but uses crypt for pre-7.2 clients.  You can
-#		not store encrypted passwords in pg_shadow if you use this
-#		method.
+#	  	Same as "md5", but uses crypt for pre-7.2 clients.
 #
+#   password:
+#		Same as "md5", but the password is sent in cleartext over
+#		the network.  This should not be used on untrusted
+#		networks.
+# 
 #   ident:
 #		For TCP/IP connections, authentication is done by contacting the
 #		ident server on the client host. This is only as secure as the
-#		client machine. On machines that support unix-domain socket
-#		credentials (currently Linux, FreeBSD, NetBSD, and BSD/OS), this
-#		method also works for "local" connections.
+#		client machine. You must specify the map name after the 'ident'
+#		keyword. It determines how to map remote user names to
+#		PostgreSQL user names. If you use "sameuser", the user names are
+#		assumed to be identical. If not, the map name is looked up
+#		in the $PGDATA/pg_ident.conf file. The connection is accepted if
+#		that file contains an entry for this map name with the
+#		ident-supplied username and the requested PostgreSQL username.
 #
-#		AUTH_ARGUMENT is required. It determines how to map remote user
-#		names to PostgreSQL user names. If you use "sameuser", the user
-#		names are assumed to be the identical. If not, AUTH_ARGUMENT is
-#		assumed to be a map name found in the $PGDATA/pg_ident.conf
-#		file. The connection is accepted if that file contains an entry
-#		for this map name with the ident-supplied username and the
-#		requested PostgreSQL username.
+#		On machines that support unix-domain socket credentials
+#		(currently Linux, FreeBSD, NetBSD, and BSD/OS), ident allows
+#		reliable authentication of 'local' connections without ident 
+#		running on the local machine.
 #
 #   krb4:
 #		Kerberos V4 authentication is used.  Allowed only for
@@ -157,10 +150,10 @@
 #		TCP/IP connections, not for local UNIX-domain sockets.
 # 
 #   pam:
-#		Authentication is passed off to PAM (PostgreSQL must be
-#		configured --with-pam), using the default service name
-#		"postgresql" - you can specify your own service name by
-#		setting AUTH_ARGUMENT to the desired service name.
+#		Authentication is done by PAM using the default service name
+#		"postgresql". You can specify your own service name by adding
+#		the service name after the 'pam' keyword. To use this option,
+#		PostgreSQL must be configured --with-pam.
 #
 #   reject:
 #	 	Reject the connection. This is used to reject certain hosts
@@ -177,60 +170,70 @@
 # Allow any user on the local system to connect to any database under any
 # username using Unix-domain sockets (the default for local connections):
 #
-# TYPE       DATABASE    IP_ADDRESS    MASK               AUTH_TYPE  AUTH_ARGUMENT
-# local      all                                          trust
+# TYPE       DATABASE    USER       IP_ADDRESS    MASK               AUTH_TYPE
+# local      all         all                                         trust
 # 
 # The same using local loopback TCP/IP connections:
 #
-# TYPE       DATABASE    IP_ADDRESS    MASK               AUTH_TYPE  AUTH_ARGUMENT
-# host       all         127.0.0.1     255.255.255.255    trust     
+# TYPE      DATABASE     USER    IP_ADDRESS    MASK               AUTH_TYPE
+# host      all          all     127.0.0.1     255.255.255.255    trust     
 # 
 # Allow any user from any host with IP address 192.168.93.x to
 # connect to database "template1" as the same username that ident reports
 # for the connection (typically his Unix username):
 # 
-# TYPE       DATABASE    IP_ADDRESS    MASK               AUTH_TYPE  AUTH_ARGUMENT
-# host       template1   192.168.93.0  255.255.255.0      ident      sameuser
+# TYPE       DATABASE    USER    IP_ADDRESS    MASK               AUTH_TYPE
+# host       template1   all     192.168.93.0  255.255.255.0      ident sameuser
 # 
 # Allow a user from host 192.168.12.10 to connect to database "template1"
-# if the user's password in pg_shadow is correctly supplied:
+# if the user's password is correctly supplied:
 # 
-# TYPE       DATABASE    IP_ADDRESS    MASK               AUTH_TYPE  AUTH_ARGUMENT
-# host       template1   192.168.12.10 255.255.255.255    md5
+# TYPE       DATABASE    USER     IP_ADDRESS    MASK               AUTH_TYPE
+# host       template1   all      192.168.12.10 255.255.255.255    md5
 # 
 # In the absence of preceding "host" lines, these two lines will reject
 # all connection from 192.168.54.1 (since that entry will be matched
 # first), but allow Kerberos V5 connections from anywhere else on the
 # Internet. The zero mask means that no bits of the host IP address are
-# considered, so it matches any host:
+# considered so it matches any host:
 # 
 # 
-# TYPE       DATABASE    IP_ADDRESS    MASK               AUTH_TYPE  AUTH_ARGUMENT
-# host       all        192.168.54.1   255.255.255.255    reject
-# host       all        0.0.0.0        0.0.0.0            krb5
+# TYPE       DATABASE    USER     IP_ADDRESS    MASK               AUTH_TYPE
+# host       all         all      192.168.54.1  255.255.255.255    reject
+# host       all         all      0.0.0.0       0.0.0.0            krb5
 # 
 # Allow users from 192.168.x.x hosts to connect to any database if they
 # pass the ident check. For example, if ident says the user is "james" and
 # he requests to connect as PostgreSQL user "guest", the connection is
 # allowed if there is an entry in $PGDATA/pg_ident.conf with map name 
 # "phoenix" that says "james" is allowed to connect as "guest":
-# 
-# TYPE       DATABASE    IP_ADDRESS    MASK               AUTH_TYPE  AUTH_ARGUMENT
-# host       all        192.168.0.0    255.255.0.0        ident      phoenix
-#
-# If these are the only two lines for local connections, they will allow
-# local users to connect only to their own databases (databases with the
-# same name as their user name) except for administrators who may connect
-# to all databases. The file $PGDATA/admins lists the user names who are
-# permitted to connect to all databases. Passwords are required in all
-# cases. (If you prefer to use ident authorization, an ident map can
-# serve a parallel purpose to the password list file used here.)
-#
-# TYPE       DATABASE    IP_ADDRESS    MASK               AUTH_TYPE  AUTH_ARGUMENT
-# local      sameuser                                     md5
-# local      all                                          md5  admins
-# 
 # See $PGDATA/pg_ident.conf for more information on Ident maps.
+# 
+# TYPE       DATABASE    USER     IP_ADDRESS    MASK               AUTH_TYPE
+# host       all         all      192.168.0.0    255.255.0.0       ident phoenix
+#
+# If these are the only three lines for local connections, they will
+# allow local users to connect only to their own databases (databases
+# with the same name as their user name) except for administrators and
+# members of group 'support' who may connect to all databases . The file
+# $PGDATA/admins contains a list of user names. Passwords are required in
+# all cases.
+#
+# TYPE       DATABASE    USER      IP_ADDRESS    MASK               AUTH_TYPE
+# local      sameuser    all                                        md5
+# local      all         @admins                                    md5
+# local      all         +support                                   md5
+#
+# The last two lines above can be combined into a single line:
+#
+# local      all         @admins,+support                           md5
+#
+# The database column can also use lists and file names, but not groups:
+#
+# local      db1,db2,@demodbs  all                                  md5
+#
+#
+# 
 #
 #
 # 
@@ -250,7 +253,7 @@
 # configuration is probably too liberal for you. Change it to use
 # something other than "trust" authentication.
 # 
-# TYPE     DATABASE    IP_ADDRESS    MASK               AUTH_TYPE  AUTH_ARGUMENT
+# TYPE       DATABASE      USER      IP_ADDRESS    MASK               AUTH_TYPE
 
-local      all                                          trust
-host       all         127.0.0.1     255.255.255.255    trust
+local        all           all                                        trust
+host         all           all       127.0.0.1     255.255.255.255    trust

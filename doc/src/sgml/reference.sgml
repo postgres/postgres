@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.24 2002/03/19 02:18:11 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.25 2002/04/04 04:25:44 momjian Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -191,7 +191,6 @@ Disable this chapter until we have more functions documented.
    &initlocation;
    &ipcclean;
    &pgCtl;
-   &pgPasswd;
    &postgres;
    &postmaster;
 

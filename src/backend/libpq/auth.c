@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.79 2002/03/05 07:57:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.80 2002/04/04 04:25:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,6 @@
 #include "miscadmin.h"
 
 static void sendAuthRequest(Port *port, AuthRequest areq);
-static int	checkPassword(Port *port, char *user, char *password);
 static int	old_be_recvauth(Port *port);
 static int	map_old_to_new(Port *port, UserAuth old, int status);
 static void auth_failed(Port *port, int status);
@@ -381,7 +380,7 @@ recv_and_check_passwordv0(Port *port)
 		saved = port->auth_method;
 		port->auth_method = uaPassword;
 
-		status = checkPassword(port, user, password);
+		status = md5_crypt_verify(port, user, password);
 
 		port->auth_method = saved;
 
@@ -663,7 +662,7 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg, struct pam_re
 
 		initStringInfo(&buf);
 		pq_getstr(&buf);
-		
+
 		/* Do not echo failed password to logs, for security. */
 		elog(DEBUG5, "received PAM packet");
 
@@ -810,23 +809,10 @@ recv_and_check_password_packet(Port *port)
 	/* Do not echo failed password to logs, for security. */
 	elog(DEBUG5, "received password packet");
 
-	result = checkPassword(port, port->user, buf.data);
+	result = md5_crypt_verify(port, port->user, buf.data);
+
 	pfree(buf.data);
 	return result;
-}
-
-
-/*
- * Handle `password' and `crypt' records. If an auth argument was
- * specified, use the respective file. Else use pg_shadow passwords.
- */
-static int
-checkPassword(Port *port, char *user, char *password)
-{
-	if (port->auth_arg[0] != '\0')
-		return verify_password(port, user, password);
-
-	return md5_crypt_verify(port, user, password);
 }
 
 

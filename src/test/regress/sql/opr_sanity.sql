@@ -33,7 +33,7 @@ WHERE (p1.prolang = 0 OR p1.prorettype = 0 OR
 	AND p1.proname !~ '^pl[^_]+_call_handler$'
 	AND p1.proname !~ '^RI_FKey_'
 	AND p1.proname !~ 'costestimate$'
-	AND p1.proname != 'update_pg_pwd';
+	AND p1.proname != 'update_pg_pwd_and_pg_group';
 
 -- Look for conflicting proc definitions (same names and input datatypes).
 -- (This test should be dead code now that we have the unique index
