@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.173 2000/10/21 15:43:26 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.174 2000/10/24 21:33:52 tgl Exp $
  *
  * NOTES
  *
@@ -803,14 +803,15 @@ ServerLoop(void)
 		Port	   *port;
 		fd_set		rmask,
 					wmask;
-
 #ifdef USE_SSL
-		int			no_select = 0;
-
+		bool		no_select = false;
 #endif
 
-		memmove((char *) &rmask, (char *) &readmask, sizeof(fd_set));
-		memmove((char *) &wmask, (char *) &writemask, sizeof(fd_set));
+		/*
+		 * Wait for something to happen.
+		 */
+		memcpy((char *) &rmask, (char *) &readmask, sizeof(fd_set));
+		memcpy((char *) &wmask, (char *) &writemask, sizeof(fd_set));
 
 #ifdef USE_SSL
 		for (curr = DLGetHead(PortList); curr; curr = DLGetSucc(curr))
@@ -818,17 +819,16 @@ ServerLoop(void)
 			if (((Port *) DLE_VAL(curr))->ssl &&
 				SSL_pending(((Port *) DLE_VAL(curr))->ssl) > 0)
 			{
-				no_select = 1;
+				no_select = true;
 				break;
 			}
 		}
-		PG_SETMASK(&UnBlockSig);
 		if (no_select)
 			FD_ZERO(&rmask);	/* So we don't accept() anything below */
-		else
-#else
-		PG_SETMASK(&UnBlockSig);
 #endif
+
+		PG_SETMASK(&UnBlockSig);
+
 		if (select(nSockets, &rmask, &wmask, (fd_set *) NULL,
 				   (struct timeval *) NULL) < 0)
 		{
@@ -838,6 +838,21 @@ ServerLoop(void)
 					progname, strerror(errno));
 			return STATUS_ERROR;
 		}
+
+		/*
+		 * Block all signals until we wait again
+		 */
+		PG_SETMASK(&BlockSig);
+
+		/*
+		 * Respond to signals, if needed
+		 */
+		if (got_SIGHUP)
+		{
+			got_SIGHUP = false;
+			ProcessConfigFile(PGC_SIGHUP);
+		}
+
 		/*
 		 * Select a random seed at the time of first receiving a request.
 		 */
@@ -856,11 +871,8 @@ ServerLoop(void)
 		}
 
 		/*
-		 * Block all signals
+		 * new connection pending on our well-known port's socket?
 		 */
-		PG_SETMASK(&BlockSig);
-
-		/* new connection pending on our well-known port's socket */
 
 #ifdef HAVE_UNIX_SOCKETS
 		if (ServerSock_UNIX != INVALID_SOCK &&
@@ -893,21 +905,12 @@ ServerLoop(void)
 			Port	   *port = (Port *) DLE_VAL(curr);
 			int			status = STATUS_OK;
 			Dlelem	   *next;
-			int			readyread = 0;
 
+			if (FD_ISSET(port->sock, &rmask)
 #ifdef USE_SSL
-			if (port->ssl)
-			{
-				if (SSL_pending(port->ssl) ||
-					FD_ISSET(port->sock, &rmask))
-					readyread = 1;
-			}
-			else
+				|| (port->ssl && SSL_pending(port->ssl))
 #endif
-			if (FD_ISSET(port->sock, &rmask))
-				readyread = 1;
-
-			if (readyread)
+				)
 			{
 				if (DebugLvl > 1)
 					fprintf(stderr, "%s: ServerLoop:\t\thandling reading %d\n",
@@ -997,13 +1000,7 @@ ServerLoop(void)
 			}
 
 			curr = next;
-		}
-
-		if (got_SIGHUP)
-		{
-			got_SIGHUP = false;
-			ProcessConfigFile(PGC_SIGHUP);
-		}
+		} /* loop over active ports */
 	}
 }
 
@@ -1269,7 +1266,6 @@ reset_shared(int port)
 static void
 SIGHUP_handler(SIGNAL_ARGS)
 {
-	got_SIGHUP = true;
 	if (Shutdown > SmartShutdown)
 		return;
 	got_SIGHUP = true;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.180 2000/10/07 14:39:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.181 2000/10/24 21:33:48 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1618,7 +1618,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.180 $ $Date: 2000/10/07 14:39:14 $\n");
+		puts("$Revision: 1.181 $ $Date: 2000/10/24 21:33:48 $\n");
 	}
 
 	/*
@@ -1695,14 +1695,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 
 		parser_input = makeStringInfo();
 
-		/* XXX this could be moved after ReadCommand below to get more
-		 * sensical behaviour */
-		if (got_SIGHUP)
-		{
-			got_SIGHUP = false;
-			ProcessConfigFile(PGC_SIGHUP);
-		}
-
 		/* ----------------
 		 *	 (1) tell the frontend we're ready for a new query.
 		 *
@@ -1738,7 +1730,18 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		DisableNotifyInterrupt();
 
 		/* ----------------
-		 *	 (5) process the command.
+		 *	 (5) check for any other interesting events that happened
+		 *		 while we slept.
+		 * ----------------
+		 */
+		if (got_SIGHUP)
+		{
+			got_SIGHUP = false;
+			ProcessConfigFile(PGC_SIGHUP);
+		}
+
+		/* ----------------
+		 *	 (6) process the command.
 		 * ----------------
 		 */
 		switch (firstchar)
@@ -1766,7 +1769,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				 * ----------------
 				 */
 			case 'Q':
-				if (strspn(parser_input->data, " \t\n") == parser_input->len)
+				if (strspn(parser_input->data, " \t\r\n") == parser_input->len)
 				{
 					/* ----------------
 					 *	if there is nothing in the input buffer, don't bother
