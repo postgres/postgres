@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jul 29 12:23:59 EDT 2004
+Last updated:		Thu Jul 29 12:46:58 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -49,6 +49,7 @@ Administration
 * Add session start time and last statement time to pg_stat_activity
 * Allow server logs to be read using SQL commands
 * Allow server configuration parameters to be modified remotetly
+* Allow administrators to safely terminate individual sessions
 
 * Improve replication solutions
 	o Automatic failover
