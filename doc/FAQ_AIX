@@ -1,5 +1,5 @@
 From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
-Fri Feb  1 17:24:51 NFT 2002
+Fri Sep 27 12:33:36 MSZ 2002
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc 
 (vac.C 5.0.1) passes all regression tests.
@@ -21,6 +21,9 @@ which you can safely ignore.
 
 Compiling PostgreSQL with gcc (2.95.3) on AIX also works.
 Use the configure flags: --with-CC=gcc
+
+You need libm.a that is in the fileset bos.adt.libm (try following command)
+$ lslpp -l bos.adt.libm
 
 Since the mktime() function does not work on AIX for dates before
 1970, all localtime formatted datetimes will not use summer time for

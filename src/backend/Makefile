@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.87 2002/09/05 18:28:46 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.88 2002/10/09 16:21:54 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -53,6 +53,25 @@ libpostgres.a: postgres.def
 
 endif # win
 
+ifeq ($(PORTNAME), aix)
+
+postgres: $(POSTGRES_IMP)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -Wl,-bE:$(top_builddir)/src/backend/$(POSTGRES_IMP) $(LIBS) -o $@
+
+$(POSTGRES_IMP): $(OBJS)
+	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $^
+ifeq ($(host_os), aix3.2.5)
+	$(MKLDEXPORT) SUBSYS.o $(bindir)/postgres > $@
+else
+ifneq (,$(findstring aix4.1, $(host_os)))
+	$(MKLDEXPORT) SUBSYS.o $(bindir)/postgres > $@
+else
+	$(MKLDEXPORT) SUBSYS.o . > $@
+endif
+endif
+	@rm -f SUBSYS.o
+
+endif # aix
 
 # Parallel make trickery
 $(OBJS): $(DIRS:%=%-recursive) ;

@@ -47,7 +47,7 @@ else
 		# for the base executable (AIX 4.2 and up)
 		echo '#! .'
 	else
-		echo '#!' $2/$OBJNAME
+		echo '#!' $2
 	fi
 fi
 $NM -BCg $1 | \
