@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.43 2003/12/23 21:56:21 tgl Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.44 2004/02/07 07:20:12 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ pg_dump: pg_dump.o common.o pg_dump_sort.o $(OBJS) $(libpq_builddir)/libpq.a
 pg_restore: pg_restore.o $(OBJS) $(libpq_builddir)/libpq.a
 	$(CC) $(CFLAGS) pg_restore.o $(OBJS) $(EXTRA_OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@
 
-pg_dumpall: pg_dumpall.o $(libpq_builddir)/libpq.a
+pg_dumpall: pg_dumpall.o dumputils.o $(libpq_builddir)/libpq.a
 	$(CC) $(CFLAGS) pg_dumpall.o dumputils.o $(EXTRA_OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@
 
 .PHONY: submake-backend
