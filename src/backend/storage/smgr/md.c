@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.93 2002/11/12 15:26:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.94 2003/01/07 01:19:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -569,6 +569,21 @@ mdnblocks(Relation reln)
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	segno = 0;
+
+	/*
+	 * Skip through any segments that aren't the last one, to avoid redundant
+	 * seeks on them.  We have previously verified that these segments are
+	 * exactly RELSEG_SIZE long, and it's useless to recheck that each time.
+	 * (NOTE: this assumption could only be wrong if another backend has
+	 * truncated the relation.  We rely on higher code levels to handle that
+	 * scenario by closing and re-opening the md fd.)
+	 */
+	while (v->mdfd_chain != (MdfdVec *) NULL)
+	{
+		segno++;
+		v = v->mdfd_chain;
+	}
+
 	for (;;)
 	{
 		nblocks = _mdnblocks(v->mdfd_vfd, BLCKSZ);
