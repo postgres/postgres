@@ -7,7 +7,11 @@ case "$host_os" in
  solaris*)
         case "$host_cpu" in
           sparc) os=sparc_solaris ;;
-           i386) os=i386_solaris ;;
+           i386) 
+              os=i386_solaris
+              AC_LINK_FILES(backend/port/tas/i386_solaris.s backend/port/tas.s)
+              TAS=tas.s
+              AC_SUBST(TAS) ;;
         esac ;;
    sunos*) os=sunos4 ;;
    linux*) os=linux ;;
