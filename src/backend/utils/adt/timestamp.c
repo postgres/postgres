@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.93 2003/08/26 21:31:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.94 2003/08/27 23:29:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,22 +77,19 @@ timestamp_in(PG_FUNCTION_ARGS)
 	int			tz;
 	int			dtype;
 	int			nf;
+	int			dterr;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
 
 	if (strlen(str) >= sizeof(lowstr))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for timestamp: \"%s\"",
-						str)));
-
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for timestamp: \"%s\"",
-						str)));
+		dterr = DTERR_BAD_FORMAT;
+	else
+		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	if (dterr == 0)
+		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
+	if (dterr != 0)
+		DateTimeParseError(dterr, str, "timestamp");
 
 	switch (dtype)
 	{
@@ -306,22 +303,19 @@ timestamptz_in(PG_FUNCTION_ARGS)
 	int			tz;
 	int			dtype;
 	int			nf;
+	int			dterr;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
 
 	if (strlen(str) >= sizeof(lowstr))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for timestamp with time zone: \"%s\"",
-						str)));
-
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for timestamp with time zone: \"%s\"",
-						str)));
+		dterr = DTERR_BAD_FORMAT;
+	else
+		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	if (dterr == 0)
+		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
+	if (dterr != 0)
+		DateTimeParseError(dterr, str, "timestamp with time zone");
 
 	switch (dtype)
 	{
@@ -468,6 +462,7 @@ interval_in(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 	int			dtype;
 	int			nf;
+	int			dterr;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
@@ -481,17 +476,17 @@ interval_in(PG_FUNCTION_ARGS)
 	fsec = 0;
 
 	if (strlen(str) >= sizeof(lowstr))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for interval: \"%s\"",
-						str)));
-
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-		|| (DecodeInterval(field, ftype, nf, &dtype, tm, &fsec) != 0))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for interval: \"%s\"",
-						str)));
+		dterr = DTERR_BAD_FORMAT;
+	else
+		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	if (dterr == 0)
+		dterr = DecodeInterval(field, ftype, nf, &dtype, tm, &fsec);
+	if (dterr != 0)
+	{
+		if (dterr == DTERR_FIELD_OVERFLOW)
+			dterr = DTERR_INTERVAL_OVERFLOW;
+		DateTimeParseError(dterr, str, "interval");
+	}
 
 	result = (Interval *) palloc(sizeof(Interval));
 

@@ -81,7 +81,8 @@ SELECT timestamp with time zone '12/27/2001 04:05:06.789-08';
 
 -- should fail in mdy mode:
 SELECT timestamp with time zone '27/12/2001 04:05:06.789-08';
-ERROR:  invalid input syntax for timestamp with time zone: "27/12/2001 04:05:06.789-08"
+ERROR:  date/time field value out of range: "27/12/2001 04:05:06.789-08"
+HINT:  Perhaps you need a different DateStyle setting.
 set datestyle to dmy;
 SELECT timestamp with time zone '27/12/2001 04:05:06.789-08';
            timestamptz            

@@ -28,9 +28,10 @@ INSERT INTO ABSTIME_TBL (f1) VALUES (abstime '-infinity');
 INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'May 10, 1947 23:59:12');
 -- what happens if we specify slightly misformatted abstime? 
 INSERT INTO ABSTIME_TBL (f1) VALUES ('Feb 35, 1946 10:00:00');
-ERROR:  invalid input syntax for abstime: "Feb 35, 1946 10:00:00"
+ERROR:  date/time field value out of range: "Feb 35, 1946 10:00:00"
+HINT:  Perhaps you need a different DateStyle setting.
 INSERT INTO ABSTIME_TBL (f1) VALUES ('Feb 28, 1984 25:08:10');
-ERROR:  invalid input syntax for abstime: "Feb 28, 1984 25:08:10"
+ERROR:  date/time field value out of range: "Feb 28, 1984 25:08:10"
 -- badly formatted abstimes:  these should result in invalid abstimes 
 INSERT INTO ABSTIME_TBL (f1) VALUES ('bad date format');
 ERROR:  invalid input syntax for abstime: "bad date format"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.90 2003/08/08 00:10:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.91 2003/08/27 23:29:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,20 +62,19 @@ date_in(PG_FUNCTION_ARGS)
 	int			tzp;
 	int			dtype;
 	int			nf;
+	int			dterr;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + 1];
 
 	if (strlen(str) >= sizeof(lowstr))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for date: \"%s\"", str)));
-
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-	 || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp) != 0))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for date: \"%s\"", str)));
+		dterr = DTERR_BAD_FORMAT;
+	else
+		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	if (dterr == 0)
+		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp);
+	if (dterr != 0)
+		DateTimeParseError(dterr, str, "date");
 
 	switch (dtype)
 	{
@@ -95,9 +94,8 @@ date_in(PG_FUNCTION_ARGS)
 			break;
 
 		default:
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				  errmsg("invalid input syntax for date: \"%s\"", str)));
+			DateTimeParseError(DTERR_BAD_FORMAT, str, "date");
+			break;
 	}
 
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
@@ -559,21 +557,20 @@ time_in(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 	int			tz;
 	int			nf;
+	int			dterr;
 	char		lowstr[MAXDATELEN + 1];
 	char	   *field[MAXDATEFIELDS];
 	int			dtype;
 	int			ftype[MAXDATEFIELDS];
 
 	if (strlen(str) >= sizeof(lowstr))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for time: \"%s\"", str)));
-
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-	  || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for time: \"%s\"", str)));
+		dterr = DTERR_BAD_FORMAT;
+	else
+		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	if (dterr == 0)
+		dterr = DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz);
+	if (dterr != 0)
+		DateTimeParseError(dterr, str, "time");
 
 	tm2time(tm, fsec, &result);
 	AdjustTimeForTypmod(&result, typmod);
@@ -1424,23 +1421,20 @@ timetz_in(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 	int			tz;
 	int			nf;
+	int			dterr;
 	char		lowstr[MAXDATELEN + 1];
 	char	   *field[MAXDATEFIELDS];
 	int			dtype;
 	int			ftype[MAXDATEFIELDS];
 
 	if (strlen(str) >= sizeof(lowstr))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-		   errmsg("invalid input syntax for time with time zone: \"%s\"",
-				  str)));
-
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-	  || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-		   errmsg("invalid input syntax for time with time zone: \"%s\"",
-				  str)));
+		dterr = DTERR_BAD_FORMAT;
+	else
+		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	if (dterr == 0)
+		dterr = DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz);
+	if (dterr != 0)
+		DateTimeParseError(dterr, str, "time with time zone");
 
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 	tm2timetz(tm, fsec, tz, result);

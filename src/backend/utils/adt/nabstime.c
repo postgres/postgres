@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.114 2003/08/17 19:58:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.115 2003/08/27 23:29:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -364,6 +364,7 @@ abstimein(PG_FUNCTION_ARGS)
 	int			tz = 0;
 	struct tm	date,
 			   *tm = &date;
+	int			dterr;
 	char	   *field[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + 1];
 	int			dtype;
@@ -371,15 +372,13 @@ abstimein(PG_FUNCTION_ARGS)
 				ftype[MAXDATEFIELDS];
 
 	if (strlen(str) >= sizeof(lowstr))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-			   errmsg("invalid input syntax for abstime: \"%s\"", str)));
-
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-			   errmsg("invalid input syntax for abstime: \"%s\"", str)));
+		dterr = DTERR_BAD_FORMAT;
+	else
+		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	if (dterr == 0)
+		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
+	if (dterr != 0)
+		DateTimeParseError(dterr, str, "abstime");
 
 	switch (dtype)
 	{
@@ -768,21 +767,24 @@ reltimein(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 	fsec_t		fsec;
 	int			dtype;
+	int			dterr;
 	char	   *field[MAXDATEFIELDS];
 	int			nf,
 				ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + 1];
 
 	if (strlen(str) >= sizeof(lowstr))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-			   errmsg("invalid input syntax for reltime: \"%s\"", str)));
-
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-		|| (DecodeInterval(field, ftype, nf, &dtype, tm, &fsec) != 0))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-			   errmsg("invalid input syntax for reltime: \"%s\"", str)));
+		dterr = DTERR_BAD_FORMAT;
+	else
+		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	if (dterr == 0)
+		dterr = DecodeInterval(field, ftype, nf, &dtype, tm, &fsec);
+	if (dterr != 0)
+	{
+		if (dterr == DTERR_FIELD_OVERFLOW)
+			dterr = DTERR_INTERVAL_OVERFLOW;
+		DateTimeParseError(dterr, str, "reltime");
+	}
 
 	switch (dtype)
 	{

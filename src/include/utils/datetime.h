@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.44 2003/08/05 18:30:21 tgl Exp $
+ * $Id: datetime.h,v 1.45 2003/08/27 23:29:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,7 +204,7 @@ typedef struct
  */
 #define FMODULO(t,q,u) \
 do { \
-	q = ((t < 0) ? ceil(t / u): floor(t / u)); \
+	q = ((t < 0) ? ceil(t / u) : floor(t / u)); \
 	if (q != 0) t -= rint(q * u); \
 } while(0)
 
@@ -222,7 +222,7 @@ do { \
 #else
 #define TMODULO(t,q,u) \
 do { \
-	q = ((t < 0) ? ceil(t / u): floor(t / u)); \
+	q = ((t < 0) ? ceil(t / u) : floor(t / u)); \
 	if (q != 0) t -= rint(q * u); \
 } while(0)
 #endif
@@ -253,6 +253,15 @@ extern int	day_tab[2][13];
   || (((m) == JULIAN_MINMONTH) && ((d) >= JULIAN_MINDAY))))) \
  && ((y) < JULIAN_MAXYEAR))
 
+/* Julian-date equivalents of Day 0 in Unix and Postgres reckoning */
+#define UNIX_EPOCH_JDATE		2440588 /* == date2j(1970, 1, 1) */
+#define POSTGRES_EPOCH_JDATE	2451545 /* == date2j(2000, 1, 1) */
+
+/*
+ * Info about limits of the Unix time_t data type.  We assume that time_t
+ * is a signed int32 with origin 1970-01-01.  Note this is only relevant
+ * when we use the C library's time routines for timezone processing.
+ */
 #define UTIME_MINYEAR (1901)
 #define UTIME_MINMONTH (12)
 #define UTIME_MINDAY (14)
@@ -267,9 +276,17 @@ extern int	day_tab[2][13];
  || (((y) == UTIME_MAXYEAR) && (((m) < UTIME_MAXMONTH) \
   || (((m) == UTIME_MAXMONTH) && ((d) <= UTIME_MAXDAY))))))
 
-/* Julian-date equivalents of Day 0 in Unix and Postgres reckoning */
-#define UNIX_EPOCH_JDATE		2440588 /* == date2j(1970, 1, 1) */
-#define POSTGRES_EPOCH_JDATE	2451545 /* == date2j(2000, 1, 1) */
+/*
+ * Datetime input parsing routines (ParseDateTime, DecodeDateTime, etc)
+ * return zero or a positive value on success.  On failure, they return
+ * one of these negative code values.  DateTimeParseError may be used to
+ * produce a correct ereport.
+ */
+#define DTERR_BAD_FORMAT		(-1)
+#define DTERR_FIELD_OVERFLOW	(-2)
+#define DTERR_MD_FIELD_OVERFLOW	(-3)	/* triggers hint about DateStyle */
+#define DTERR_INTERVAL_OVERFLOW	(-4)
+#define DTERR_TZDISP_OVERFLOW	(-5)
 
 
 extern void GetCurrentDateTime(struct tm * tm);
@@ -283,14 +300,14 @@ extern int ParseDateTime(const char *timestr, char *lowstr,
 extern int DecodeDateTime(char **field, int *ftype,
 			   int nf, int *dtype,
 			   struct tm * tm, fsec_t *fsec, int *tzp);
-
 extern int DecodeTimeOnly(char **field, int *ftype,
 			   int nf, int *dtype,
 			   struct tm * tm, fsec_t *fsec, int *tzp);
-
 extern int DecodeInterval(char **field, int *ftype,
 			   int nf, int *dtype,
 			   struct tm * tm, fsec_t *fsec);
+extern void DateTimeParseError(int dterr, const char *str,
+							   const char *datatype);
 
 extern int	DetermineLocalTimeZone(struct tm * tm);
 

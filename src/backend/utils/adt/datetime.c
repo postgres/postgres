@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.115 2003/08/25 23:30:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.116 2003/08/27 23:29:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -699,7 +699,7 @@ TrimTrailingZeros(char *str)
 
 /* ParseDateTime()
  *	Break string into tokens based on a date/time context.
- *	Returns 0 if successful, -1 if bogus input detected.
+ *	Returns 0 if successful, DTERR code if bogus input detected.
  *
  * timestr - the input string
  * lowstr - workspace for field string storage (must be large enough for
@@ -745,7 +745,7 @@ ParseDateTime(const char *timestr, char *lowstr,
 
 		/* Record start of current field */
 		if (nf >= maxfields)
-			return -1;
+			return DTERR_BAD_FORMAT;
 		field[nf] = lp;
 
 		/* leading digit? then date or time */
@@ -866,7 +866,7 @@ ParseDateTime(const char *timestr, char *lowstr,
 			}
 			/* otherwise something wrong... */
 			else
-				return -1;
+				return DTERR_BAD_FORMAT;
 		}
 		/* ignore other punctuation but use as delimiter */
 		else if (ispunct((unsigned char) *cp))
@@ -876,7 +876,7 @@ ParseDateTime(const char *timestr, char *lowstr,
 		}
 		/* otherwise, something is not right... */
 		else
-			return -1;
+			return DTERR_BAD_FORMAT;
 
 		/* force in a delimiter after each field */
 		*lp++ = '\0';
@@ -891,7 +891,9 @@ ParseDateTime(const char *timestr, char *lowstr,
 
 /* DecodeDateTime()
  * Interpret previously parsed fields for general date and time.
- * Return 0 if full date, 1 if only time, and -1 if problems.
+ * Return 0 if full date, 1 if only time, and negative DTERR code if problems.
+ * (Currently, all callers treat 1 as an error return too.)
+ *
  *		External format(s):
  *				"<weekday> <month>-<day>-<year> <hour>:<minute>:<second>"
  *				"Fri Feb-7-1997 15:23:27"
@@ -920,15 +922,16 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								 * format */
 	int			i;
 	int			val;
+	int			dterr;
 	int			mer = HR24;
 	int			haveTextMonth = FALSE;
 	int			is2digits = FALSE;
 	int			bc = FALSE;
 
-	/***
+	/*
 	 * We'll insist on at least all of the date fields, but initialize the
 	 * remaining fields in case they are not set later...
-	 ***/
+	 */
 	*dtype = DTK_DATE;
 	tm->tm_hour = 0;
 	tm->tm_min = 0;
@@ -955,14 +958,15 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					int			val;
 
 					if (tzp == NULL)
-						return -1;
+						return DTERR_BAD_FORMAT;
 
 					val = strtol(field[i], &cp, 10);
 
 					j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 					/* Get the time zone from the end of the string */
-					if (DecodeTimezone(cp, tzp) != 0)
-						return -1;
+					dterr = DecodeTimezone(cp, tzp);
+					if (dterr)
+						return dterr;
 
 					tmask = DTK_DATE_M | DTK_TIME_M | DTK_M(TZ);
 					ptype = 0;
@@ -979,7 +983,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				{
 					/* No time zone accepted? Then quit... */
 					if (tzp == NULL)
-						return -1;
+						return DTERR_BAD_FORMAT;
 
 					if (isdigit((unsigned char) *field[i]) || ptype != 0)
 					{
@@ -989,7 +993,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						{
 							/* Sanity check; should not fail this test */
 							if (ptype != DTK_TIME)
-								return -1;
+								return DTERR_BAD_FORMAT;
 							ptype = 0;
 						}
 
@@ -999,23 +1003,28 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						 * time already...
 						 */
 						if ((fmask & DTK_TIME_M) == DTK_TIME_M)
-							return -1;
+							return DTERR_BAD_FORMAT;
 
 						if ((cp = strchr(field[i], '-')) == NULL)
-							return -1;
+							return DTERR_BAD_FORMAT;
 
 						/* Get the time zone from the end of the string */
-						if (DecodeTimezone(cp, tzp) != 0)
-							return -1;
+						dterr = DecodeTimezone(cp, tzp);
+						if (dterr)
+							return dterr;
 						*cp = '\0';
 
 						/*
 						 * Then read the rest of the field as a
 						 * concatenated time
 						 */
-						if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], fmask,
-									  &tmask, tm, fsec, &is2digits)) < 0)
-							return -1;
+						dterr = DecodeNumberField(strlen(field[i]), field[i],
+												  fmask,
+												  &tmask, tm,
+												  fsec, &is2digits);
+						if (dterr < 0)
+							return dterr;
+						ftype[i] = dterr;
 
 						/*
 						 * modify tmask after returning from
@@ -1025,27 +1034,33 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					}
 					else
 					{
-						if (DecodePosixTimezone(field[i], tzp) != 0)
-							return -1;
+						dterr = DecodePosixTimezone(field[i], tzp);
+						if (dterr)
+							return dterr;
 
 						ftype[i] = DTK_TZ;
 						tmask = DTK_M(TZ);
 					}
 				}
-				else if (DecodeDate(field[i], fmask, &tmask, tm) != 0)
-					return -1;
+				else
+				{
+					dterr = DecodeDate(field[i], fmask, &tmask, tm);
+					if (dterr)
+						return dterr;
+				}
 				break;
 
 			case DTK_TIME:
-				if (DecodeTime(field[i], fmask, &tmask, tm, fsec) != 0)
-					return -1;
+				dterr = DecodeTime(field[i], fmask, &tmask, tm, fsec);
+				if (dterr)
+					return dterr;
 
 				/*
 				 * Check upper limit on hours; other limits checked in
 				 * DecodeTime()
 				 */
 				if (tm->tm_hour > 23)
-					return -1;
+					return DTERR_FIELD_OVERFLOW;
 				break;
 
 			case DTK_TZ:
@@ -1053,10 +1068,11 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					int			tz;
 
 					if (tzp == NULL)
-						return -1;
+						return DTERR_BAD_FORMAT;
 
-					if (DecodeTimezone(field[i], &tz) != 0)
-						return -1;
+					dterr = DecodeTimezone(field[i], &tz);
+					if (dterr)
+						return dterr;
 
 					/*
 					 * Already have a time zone? Then maybe this is the
@@ -1103,11 +1119,11 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							case DTK_SECOND:
 								break;
 							default:
-								return 1;
+								return DTERR_BAD_FORMAT;
 								break;
 						}
 					else if (*cp != '\0')
-						return -1;
+						return DTERR_BAD_FORMAT;
 
 					switch (ptype)
 					{
@@ -1159,7 +1175,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 								frac = strtod(cp, &cp);
 								if (*cp != '\0')
-									return -1;
+									return DTERR_BAD_FORMAT;
 #ifdef HAVE_INT64_TIMESTAMP
 								*fsec = rint(frac * 1000000);
 #else
@@ -1170,8 +1186,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 						case DTK_TZ:
 							tmask = DTK_M(TZ);
-							if (DecodeTimezone(field[i], tzp) != 0)
-								return -1;
+							dterr = DecodeTimezone(field[i], tzp);
+							if (dterr)
+								return dterr;
 							break;
 
 						case DTK_JULIAN:
@@ -1187,7 +1204,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 								time = strtod(cp, &cp);
 								if (*cp != '\0')
-									return -1;
+									return DTERR_BAD_FORMAT;
 
 								tmask |= DTK_TIME_M;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -1202,16 +1219,20 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 						case DTK_TIME:
 							/* previous field was "t" for ISO time */
-							if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], (fmask | DTK_DATE_M),
-									  &tmask, tm, fsec, &is2digits)) < 0)
-								return -1;
+							dterr = DecodeNumberField(strlen(field[i]), field[i],
+													  (fmask | DTK_DATE_M),
+													  &tmask, tm,
+													  fsec, &is2digits);
+							if (dterr < 0)
+								return dterr;
+							ftype[i] = dterr;
 
 							if (tmask != DTK_TIME_M)
-								return -1;
+								return DTERR_BAD_FORMAT;
 							break;
 
 						default:
-							return -1;
+							return DTERR_BAD_FORMAT;
 							break;
 					}
 
@@ -1229,8 +1250,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					/* Embedded decimal and no date yet? */
 					if ((cp != NULL) && !(fmask & DTK_DATE_M))
 					{
-						if (DecodeDate(field[i], fmask, &tmask, tm) != 0)
-							return -1;
+						dterr = DecodeDate(field[i], fmask, &tmask, tm);
+						if (dterr)
+							return dterr;
 					}
 					/* embedded decimal and several digits before? */
 					else if ((cp != NULL) && ((flen - strlen(cp)) > 2))
@@ -1240,20 +1262,31 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						 * the type field to allow decoding other fields
 						 * later. Example: 20011223 or 040506
 						 */
-						if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
-									  &tmask, tm, fsec, &is2digits)) < 0)
-							return -1;
+						dterr = DecodeNumberField(flen, field[i], fmask,
+												  &tmask, tm,
+												  fsec, &is2digits);
+						if (dterr < 0)
+							return dterr;
+						ftype[i] = dterr;
 					}
 					else if (flen > 4)
 					{
-						if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
-									  &tmask, tm, fsec, &is2digits)) < 0)
-							return -1;
+						dterr = DecodeNumberField(flen, field[i], fmask,
+												  &tmask, tm,
+												  fsec, &is2digits);
+						if (dterr < 0)
+							return dterr;
+						ftype[i] = dterr;
 					}
 					/* otherwise it is a single date/time field... */
-					else if (DecodeNumber(flen, field[i], fmask,
-									  &tmask, tm, fsec, &is2digits) != 0)
-						return -1;
+					else
+					{
+						dterr = DecodeNumber(flen, field[i], fmask,
+											 &tmask, tm,
+											 fsec, &is2digits);
+						if (dterr)
+							return dterr;
+					}
 				}
 				break;
 
@@ -1274,7 +1307,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								  errmsg("\"current\" is no longer supported")));
 
-								return -1;
+								return DTERR_BAD_FORMAT;
 								break;
 
 							case DTK_NOW:
@@ -1356,7 +1389,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						tmask |= DTK_M(DTZ);
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
-							return -1;
+							return DTERR_BAD_FORMAT;
 						*tzp += val * 60;
 						break;
 
@@ -1369,7 +1402,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						tmask |= DTK_M(TZ);
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
-							return -1;
+							return DTERR_BAD_FORMAT;
 						*tzp = val * 60;
 						ftype[i] = DTK_TZ;
 						break;
@@ -1377,7 +1410,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					case TZ:
 						tm->tm_isdst = 0;
 						if (tzp == NULL)
-							return -1;
+							return DTERR_BAD_FORMAT;
 						*tzp = val * 60;
 						ftype[i] = DTK_TZ;
 						break;
@@ -1411,9 +1444,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						 */
 						tmask = 0;
 
-						/* No preceeding date? Then quit... */
+						/* No preceding date? Then quit... */
 						if ((fmask & DTK_DATE_M) != DTK_DATE_M)
-							return -1;
+							return DTERR_BAD_FORMAT;
 
 						/***
 						 * We will need one of the following fields:
@@ -1425,22 +1458,22 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							|| ((ftype[i + 1] != DTK_NUMBER)
 								&& (ftype[i + 1] != DTK_TIME)
 								&& (ftype[i + 1] != DTK_DATE)))
-							return -1;
+							return DTERR_BAD_FORMAT;
 
 						ptype = val;
 						break;
 
 					default:
-						return -1;
+						return DTERR_BAD_FORMAT;
 				}
 				break;
 
 			default:
-				return -1;
+				return DTERR_BAD_FORMAT;
 		}
 
 		if (tmask & fmask)
-			return -1;
+			return DTERR_BAD_FORMAT;
 		fmask |= tmask;
 	}
 
@@ -1477,18 +1510,18 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	if (fmask & DTK_M(MONTH))
 	{
 		if (tm->tm_mon < 1 || tm->tm_mon > 12)
-			return -1;
+			return DTERR_MD_FIELD_OVERFLOW;
 	}
 
 	/* minimal check for valid day */
 	if (fmask & DTK_M(DAY))
 	{
 		if (tm->tm_mday < 1 || tm->tm_mday > 31)
-			return -1;
+			return DTERR_MD_FIELD_OVERFLOW;
 	}
 
 	if ((mer != HR24) && (tm->tm_hour > 12))
-		return -1;
+		return DTERR_FIELD_OVERFLOW;
 	if ((mer == AM) && (tm->tm_hour == 12))
 		tm->tm_hour = 0;
 	else if ((mer == PM) && (tm->tm_hour != 12))
@@ -1498,14 +1531,19 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	if (*dtype == DTK_DATE)
 	{
 		if ((fmask & DTK_DATE_M) != DTK_DATE_M)
-			return ((fmask & DTK_TIME_M) == DTK_TIME_M) ? 1 : -1;
+		{
+			if ((fmask & DTK_TIME_M) == DTK_TIME_M)
+				return 1;
+			return DTERR_BAD_FORMAT;
+		}
 
 		/*
-		 * check for valid day of month, now that we know for sure the
-		 * month and year...
+		 * Check for valid day of month, now that we know for sure the
+		 * month and year.  Note we don't use MD_FIELD_OVERFLOW here,
+		 * since it seems unlikely that "Feb 29" is a YMD-order error.
 		 */
 		if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
-			return -1;
+			return DTERR_FIELD_OVERFLOW;
 
 		/* timezone not specified? then find local timezone if possible */
 		if ((tzp != NULL) && (!(fmask & DTK_M(TZ))))
@@ -1515,14 +1553,14 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			 * then error
 			 */
 			if (fmask & DTK_M(DTZMOD))
-				return -1;
+				return DTERR_BAD_FORMAT;
 
 			*tzp = DetermineLocalTimeZone(tm);
 		}
 	}
 
 	return 0;
-}	/* DecodeDateTime() */
+}
 
 
 /* DetermineLocalTimeZone()
@@ -1673,6 +1711,8 @@ DetermineLocalTimeZone(struct tm * tm)
 
 /* DecodeTimeOnly()
  * Interpret parsed string as time fields only.
+ * Returns 0 if successful, DTERR code if bogus input detected.
+ *
  * Note that support for time zone is here for
  * SQL92 TIME WITH TIME ZONE, but it reveals
  * bogosity with SQL92 date/time standards, since
@@ -1691,6 +1731,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	int			ptype = 0;		/* "prefix type" for ISO h04mm05s06 format */
 	int			i;
 	int			val;
+	int			dterr;
 	int			is2digits = FALSE;
 	int			mer = HR24;
 
@@ -1716,15 +1757,16 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 				 * time zones no matter what else!
 				 */
 				if (tzp == NULL)
-					return -1;
+					return DTERR_BAD_FORMAT;
 
 				/* Under limited circumstances, we will accept a date... */
 				if ((i == 0) && (nf >= 2)
 					&& ((ftype[nf - 1] == DTK_DATE)
 						|| (ftype[1] == DTK_TIME)))
 				{
-					if (DecodeDate(field[i], fmask, &tmask, tm) != 0)
-						return -1;
+					dterr = DecodeDate(field[i], fmask, &tmask, tm);
+					if (dterr)
+						return dterr;
 				}
 				/* otherwise, this is a time and/or time zone */
 				else
@@ -1739,34 +1781,40 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						 * already...
 						 */
 						if ((fmask & DTK_TIME_M) == DTK_TIME_M)
-							return -1;
+							return DTERR_BAD_FORMAT;
 
 						/*
 						 * Should not get here and fail. Sanity check
 						 * only...
 						 */
 						if ((cp = strchr(field[i], '-')) == NULL)
-							return -1;
+							return DTERR_BAD_FORMAT;
 
 						/* Get the time zone from the end of the string */
-						if (DecodeTimezone(cp, tzp) != 0)
-							return -1;
+						dterr = DecodeTimezone(cp, tzp);
+						if (dterr)
+							return dterr;
 						*cp = '\0';
 
 						/*
 						 * Then read the rest of the field as a
 						 * concatenated time
 						 */
-						if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], (fmask | DTK_DATE_M),
-									  &tmask, tm, fsec, &is2digits)) < 0)
-							return -1;
+						dterr = DecodeNumberField(strlen(field[i]), field[i],
+												  (fmask | DTK_DATE_M),
+												  &tmask, tm,
+												  fsec, &is2digits);
+						if (dterr < 0)
+							return dterr;
+						ftype[i] = dterr;
 
 						tmask |= DTK_M(TZ);
 					}
 					else
 					{
-						if (DecodePosixTimezone(field[i], tzp) != 0)
-							return -1;
+						dterr = DecodePosixTimezone(field[i], tzp);
+						if (dterr)
+							return dterr;
 
 						ftype[i] = DTK_TZ;
 						tmask = DTK_M(TZ);
@@ -1775,19 +1823,22 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 				break;
 
 			case DTK_TIME:
-				if (DecodeTime(field[i], (fmask | DTK_DATE_M), &tmask, tm, fsec) != 0)
-					return -1;
+				dterr = DecodeTime(field[i], (fmask | DTK_DATE_M),
+								   &tmask, tm, fsec);
+				if (dterr)
+					return dterr;
 				break;
 
 			case DTK_TZ:
-				if (tzp == NULL)
-					return -1;
-
 				{
 					int			tz;
 
-					if (DecodeTimezone(field[i], &tz) != 0)
-						return -1;
+					if (tzp == NULL)
+						return DTERR_BAD_FORMAT;
+
+					dterr = DecodeTimezone(field[i], &tz);
+					if (dterr)
+						return dterr;
 
 					/*
 					 * Already have a time zone? Then maybe this is the
@@ -1827,7 +1878,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						case DTK_MONTH:
 						case DTK_DAY:
 							if (tzp == NULL)
-								return -1;
+								return DTERR_BAD_FORMAT;
 						default:
 							break;
 					}
@@ -1846,11 +1897,11 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							case DTK_SECOND:
 								break;
 							default:
-								return 1;
+								return DTERR_BAD_FORMAT;
 								break;
 						}
 					else if (*cp != '\0')
-						return -1;
+						return DTERR_BAD_FORMAT;
 
 					switch (ptype)
 					{
@@ -1902,7 +1953,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 								frac = strtod(cp, &cp);
 								if (*cp != '\0')
-									return -1;
+									return DTERR_BAD_FORMAT;
 #ifdef HAVE_INT64_TIMESTAMP
 								*fsec = rint(frac * 1000000);
 #else
@@ -1913,8 +1964,9 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 						case DTK_TZ:
 							tmask = DTK_M(TZ);
-							if (DecodeTimezone(field[i], tzp) != 0)
-								return -1;
+							dterr = DecodeTimezone(field[i], tzp);
+							if (dterr)
+								return dterr;
 							break;
 
 						case DTK_JULIAN:
@@ -1929,7 +1981,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 								time = strtod(cp, &cp);
 								if (*cp != '\0')
-									return -1;
+									return DTERR_BAD_FORMAT;
 
 								tmask |= DTK_TIME_M;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -1944,16 +1996,20 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 						case DTK_TIME:
 							/* previous field was "t" for ISO time */
-							if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], (fmask | DTK_DATE_M),
-									  &tmask, tm, fsec, &is2digits)) < 0)
-								return -1;
+							dterr = DecodeNumberField(strlen(field[i]), field[i],
+													  (fmask | DTK_DATE_M),
+													  &tmask, tm,
+													  fsec, &is2digits);
+							if (dterr < 0)
+								return dterr;
+							ftype[i] = dterr;
 
 							if (tmask != DTK_TIME_M)
-								return -1;
+								return DTERR_BAD_FORMAT;
 							break;
 
 						default:
-							return -1;
+							return DTERR_BAD_FORMAT;
 							break;
 					}
 
@@ -1977,8 +2033,9 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						 */
 						if ((i == 0) && ((nf >= 2) && (ftype[nf - 1] == DTK_DATE)))
 						{
-							if (DecodeDate(field[i], fmask, &tmask, tm) != 0)
-								return -1;
+							dterr = DecodeDate(field[i], fmask, &tmask, tm);
+							if (dterr)
+								return dterr;
 						}
 						/* embedded decimal and several digits before? */
 						else if ((flen - strlen(cp)) > 2)
@@ -1988,26 +2045,37 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							 * Set the type field to allow decoding other
 							 * fields later. Example: 20011223 or 040506
 							 */
-							if ((ftype[i] = DecodeNumberField(flen, field[i],
-															  (fmask | DTK_DATE_M),
-									  &tmask, tm, fsec, &is2digits)) < 0)
-								return -1;
+							dterr = DecodeNumberField(flen, field[i],
+													  (fmask | DTK_DATE_M),
+													  &tmask, tm,
+													  fsec, &is2digits);
+							if (dterr < 0)
+								return dterr;
+							ftype[i] = dterr;
 						}
 						else
-							return -1;
+							return DTERR_BAD_FORMAT;
 					}
 					else if (flen > 4)
 					{
-						if ((ftype[i] = DecodeNumberField(flen, field[i],
-														  (fmask | DTK_DATE_M),
-									  &tmask, tm, fsec, &is2digits)) < 0)
-							return -1;
+						dterr = DecodeNumberField(flen, field[i],
+												  (fmask | DTK_DATE_M),
+												  &tmask, tm,
+												  fsec, &is2digits);
+						if (dterr < 0)
+							return dterr;
+						ftype[i] = dterr;
 					}
 					/* otherwise it is a single date/time field... */
-					else if (DecodeNumber(flen, field[i],
-										  (fmask | DTK_DATE_M),
-									  &tmask, tm, fsec, &is2digits) != 0)
-						return -1;
+					else
+					{
+						dterr = DecodeNumber(flen, field[i],
+											 (fmask | DTK_DATE_M),
+											 &tmask, tm,
+											 fsec, &is2digits);
+						if (dterr)
+							return dterr;
+					}
 				}
 				break;
 
@@ -2027,7 +2095,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 								ereport(ERROR,
 								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								  errmsg("\"current\" is no longer supported")));
-								return -1;
+								return DTERR_BAD_FORMAT;
 								break;
 
 							case DTK_NOW:
@@ -2046,7 +2114,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 								break;
 
 							default:
-								return -1;
+								return DTERR_BAD_FORMAT;
 						}
 
 						break;
@@ -2060,7 +2128,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						tmask |= DTK_M(DTZ);
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
-							return -1;
+							return DTERR_BAD_FORMAT;
 						*tzp += val * 60;
 						break;
 
@@ -2073,7 +2141,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						tmask |= DTK_M(TZ);
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
-							return -1;
+							return DTERR_BAD_FORMAT;
 						*tzp = val * 60;
 						ftype[i] = DTK_TZ;
 						break;
@@ -2081,7 +2149,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					case TZ:
 						tm->tm_isdst = 0;
 						if (tzp == NULL)
-							return -1;
+							return DTERR_BAD_FORMAT;
 						*tzp = val * 60;
 						ftype[i] = DTK_TZ;
 						break;
@@ -2111,27 +2179,27 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							|| ((ftype[i + 1] != DTK_NUMBER)
 								&& (ftype[i + 1] != DTK_TIME)
 								&& (ftype[i + 1] != DTK_DATE)))
-							return -1;
+							return DTERR_BAD_FORMAT;
 
 						ptype = val;
 						break;
 
 					default:
-						return -1;
+						return DTERR_BAD_FORMAT;
 				}
 				break;
 
 			default:
-				return -1;
+				return DTERR_BAD_FORMAT;
 		}
 
 		if (tmask & fmask)
-			return -1;
+			return DTERR_BAD_FORMAT;
 		fmask |= tmask;
 	}
 
 	if ((mer != HR24) && (tm->tm_hour > 12))
-		return -1;
+		return DTERR_FIELD_OVERFLOW;
 	if ((mer == AM) && (tm->tm_hour == 12))
 		tm->tm_hour = 0;
 	else if ((mer == PM) && (tm->tm_hour != 12))
@@ -2142,17 +2210,17 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		|| (tm->tm_min < 0) || (tm->tm_min > 59)
 		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
 		|| (*fsec < INT64CONST(0)) || (*fsec >= INT64CONST(1000000)))
-		return -1;
+		return DTERR_FIELD_OVERFLOW;
 #else
 	if ((tm->tm_hour < 0) || (tm->tm_hour > 23)
 		|| (tm->tm_min < 0) || (tm->tm_min > 59)
 		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
 		|| (*fsec < 0) || (*fsec >= 1))
-		return -1;
+		return DTERR_FIELD_OVERFLOW;
 #endif
 
 	if ((fmask & DTK_TIME_M) != DTK_TIME_M)
-		return -1;
+		return DTERR_BAD_FORMAT;
 
 	/* timezone not specified? then find local timezone if possible */
 	if ((tzp != NULL) && (!(fmask & DTK_M(TZ))))
@@ -2165,7 +2233,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		 * error
 		 */
 		if (fmask & DTK_M(DTZMOD))
-			return -1;
+			return DTERR_BAD_FORMAT;
 
 		if ((fmask & DTK_DATE_M) == 0)
 			GetCurrentDateTime(tmp);
@@ -2183,20 +2251,22 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	}
 
 	return 0;
-}	/* DecodeTimeOnly() */
+}
 
 /* DecodeDate()
  * Decode date string which includes delimiters.
+ * Return 0 if okay, a DTERR code if not.
+ *
  * Insist on a complete set of fields.
  */
 static int
 DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 {
 	fsec_t		fsec;
-
 	int			nf = 0;
 	int			i,
 				len;
+	int			dterr;
 	int			bc = FALSE;
 	int			is2digits = FALSE;
 	int			type,
@@ -2232,7 +2302,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 #if 0
 	/* don't allow too many fields */
 	if (nf > 3)
-		return -1;
+		return DTERR_BAD_FORMAT;
 #endif
 
 	*tmask = 0;
@@ -2258,10 +2328,10 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 					break;
 
 				default:
-					return -1;
+					return DTERR_BAD_FORMAT;
 			}
 			if (fmask & dmask)
-				return -1;
+				return DTERR_BAD_FORMAT;
 
 			fmask |= dmask;
 			*tmask |= dmask;
@@ -2278,20 +2348,23 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 			continue;
 
 		if ((len = strlen(field[i])) <= 0)
-			return -1;
+			return DTERR_BAD_FORMAT;
 
-		if (DecodeNumber(len, field[i], fmask, &dmask, tm, &fsec, &is2digits) != 0)
-			return -1;
+		dterr = DecodeNumber(len, field[i], fmask,
+							 &dmask, tm,
+							 &fsec, &is2digits);
+		if (dterr)
+			return dterr;
 
 		if (fmask & dmask)
-			return -1;
+			return DTERR_BAD_FORMAT;
 
 		fmask |= dmask;
 		*tmask |= dmask;
 	}
 
 	if ((fmask & ~(DTK_M(DOY) | DTK_M(TZ))) != DTK_DATE_M)
-		return -1;
+		return DTERR_BAD_FORMAT;
 
 	/* there is no year zero in AD/BC notation; i.e. "1 BC" == year 0 */
 	if (bc)
@@ -2321,19 +2394,24 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 
 	/* check for valid month */
 	if (tm->tm_mon < 1 || tm->tm_mon > 12)
-		return -1;
+		return DTERR_MD_FIELD_OVERFLOW;
 
 	/* check for valid day */
-	if (tm->tm_mday < 1 ||
-		tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
-		return -1;
+	if (tm->tm_mday < 1 || tm->tm_mday > 31)
+		return DTERR_MD_FIELD_OVERFLOW;
+
+	/* We don't want to hint about DateStyle for Feb 29 */
+	if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
+		return DTERR_FIELD_OVERFLOW;
 
 	return 0;
-}	/* DecodeDate() */
+}
 
 
 /* DecodeTime()
  * Decode time string which includes delimiters.
+ * Return 0 if okay, a DTERR code if not.
+ *
  * Only check the lower limit on hours, since this same code
  *	can be used to represent time spans.
  */
@@ -2346,7 +2424,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
 
 	tm->tm_hour = strtol(str, &cp, 10);
 	if (*cp != ':')
-		return -1;
+		return DTERR_BAD_FORMAT;
 	str = cp + 1;
 	tm->tm_min = strtol(str, &cp, 10);
 	if (*cp == '\0')
@@ -2355,7 +2433,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
 		*fsec = 0;
 	}
 	else if (*cp != ':')
-		return -1;
+		return DTERR_BAD_FORMAT;
 	else
 	{
 		str = cp + 1;
@@ -2369,7 +2447,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
 			str = cp;
 			frac = strtod(str, &cp);
 			if (*cp != '\0')
-				return -1;
+				return DTERR_BAD_FORMAT;
 #ifdef HAVE_INT64_TIMESTAMP
 			*fsec = rint(frac * 1000000);
 #else
@@ -2377,7 +2455,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
 #endif
 		}
 		else
-			return -1;
+			return DTERR_BAD_FORMAT;
 	}
 
 	/* do a sanity check */
@@ -2386,21 +2464,22 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
 		|| (tm->tm_min < 0) || (tm->tm_min > 59)
 		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
 		|| (*fsec < INT64CONST(0)) || (*fsec >= INT64CONST(1000000)))
-		return -1;
+		return DTERR_FIELD_OVERFLOW;
 #else
 	if ((tm->tm_hour < 0)
 		|| (tm->tm_min < 0) || (tm->tm_min > 59)
 		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
 		|| (*fsec < 0) || (*fsec >= 1))
-		return -1;
+		return DTERR_FIELD_OVERFLOW;
 #endif
 
 	return 0;
-}	/* DecodeTime() */
+}
 
 
 /* DecodeNumber()
  * Interpret plain numeric field as a date value in context.
+ * Return 0 if okay, a DTERR code if not.
  */
 static int
 DecodeNumber(int flen, char *str, int fmask,
@@ -2408,12 +2487,13 @@ DecodeNumber(int flen, char *str, int fmask,
 {
 	int			val;
 	char	   *cp;
+	int			dterr;
 
 	*tmask = 0;
 
 	val = strtol(str, &cp, 10);
 	if (cp == str)
-		return -1;
+		return DTERR_BAD_FORMAT;
 
 	if (*cp == '.')
 	{
@@ -2425,15 +2505,18 @@ DecodeNumber(int flen, char *str, int fmask,
 		 */
 		if ((cp - str) > 2)
 		{
-			if (DecodeNumberField(flen, str, (fmask | DTK_DATE_M),
-								  tmask, tm, fsec, is2digits) < 0)
-				return -1;
+			dterr = DecodeNumberField(flen, str,
+									  (fmask | DTK_DATE_M),
+									  tmask, tm,
+									  fsec, is2digits);
+			if (dterr < 0)
+				return dterr;
 			return 0;
 		}
 
 		frac = strtod(cp, &cp);
 		if (*cp != '\0')
-			return -1;
+			return DTERR_BAD_FORMAT;
 #ifdef HAVE_INT64_TIMESTAMP
 		*fsec = rint(frac * 1000000);
 #else
@@ -2441,7 +2524,7 @@ DecodeNumber(int flen, char *str, int fmask,
 #endif
 	}
 	else if (*cp != '\0')
-		return -1;
+		return DTERR_BAD_FORMAT;
 
 	/* Special case for day of year */
 	if ((flen == 3) &&
@@ -2515,14 +2598,16 @@ DecodeNumber(int flen, char *str, int fmask,
 
 		case (DTK_M(YEAR) | DTK_M(MONTH) | DTK_M(DAY)):
 			/* we have all the date, so it must be a time field */
-			if (DecodeNumberField(flen, str, fmask,
-								  tmask, tm, fsec, is2digits) < 0)
-				return -1;
+			dterr = DecodeNumberField(flen, str, fmask,
+									  tmask, tm,
+									  fsec, is2digits);
+			if (dterr < 0)
+				return dterr;
 			return 0;
 
 		default:
 			/* Anything else is bogus input */
-			return -1;
+			return DTERR_BAD_FORMAT;
 	}
 
 	/*
@@ -2538,12 +2623,14 @@ DecodeNumber(int flen, char *str, int fmask,
 
 /* DecodeNumberField()
  * Interpret numeric string as a concatenated date or time field.
+ * Return a DTK token (>= 0) if successful, a DTERR code (< 0) if not.
+ *
  * Use the context of previously decoded fields to help with
  * the interpretation.
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-				int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits)
+				  int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits)
 {
 	char	   *cp;
 
@@ -2623,14 +2710,14 @@ DecodeNumberField(int len, char *str, int fmask,
 		}
 	}
 
-	return -1;
-}	/* DecodeNumberField() */
+	return DTERR_BAD_FORMAT;
+}
 
 
 /* DecodeTimezone()
  * Interpret string as a numeric timezone.
  *
- * Return 0 if okay (and set *tzp), nonzero if not okay.
+ * Return 0 if okay (and set *tzp), a DTERR code if not okay.
  *
  * NB: this must *not* ereport on failure; see commands/variable.c.
  *
@@ -2644,11 +2731,10 @@ DecodeTimezone(char *str, int *tzp)
 	int			hr,
 				min;
 	char	   *cp;
-	int			len;
 
 	/* leading character must be "+" or "-" */
 	if (*str != '+' && *str != '-')
-		return -1;
+		return DTERR_BAD_FORMAT;
 
 	hr = strtol((str + 1), &cp, 10);
 
@@ -2656,28 +2742,30 @@ DecodeTimezone(char *str, int *tzp)
 	if (*cp == ':')
 		min = strtol((cp + 1), &cp, 10);
 	/* otherwise, might have run things together... */
-	else if ((*cp == '\0') && ((len = strlen(str)) > 3))
+	else if ((*cp == '\0') && (strlen(str) > 3))
 	{
-		min = strtol((str + len - 2), &cp, 10);
-		if ((min < 0) || (min >= 60))
-			return -1;
-
-		*(str + len - 2) = '\0';
-		hr = strtol((str + 1), &cp, 10);
-		if ((hr < 0) || (hr > 13))
-			return -1;
+		min = hr % 100;
+		hr = hr / 100;
 	}
 	else
 		min = 0;
 
-	tz = (hr * 60 + min) * 60;
+	if ((hr < 0) || (hr > 13))
+		return DTERR_TZDISP_OVERFLOW;
+	if ((min < 0) || (min >= 60))
+		return DTERR_TZDISP_OVERFLOW;
 
+	tz = (hr * 60 + min) * 60;
 	if (*str == '-')
 		tz = -tz;
 
 	*tzp = -tz;
-	return *cp != '\0';
-}	/* DecodeTimezone() */
+
+	if (*cp != '\0')
+		return DTERR_BAD_FORMAT;
+
+	return 0;
+}
 
 
 /* DecodePosixTimezone()
@@ -2687,7 +2775,7 @@ DecodeTimezone(char *str, int *tzp)
  *	PST
  * - thomas 2000-03-15
  *
- * Return 0 if okay (and set *tzp), nonzero if not okay.
+ * Return 0 if okay (and set *tzp), a DTERR code if not okay.
  *
  * NB: this must *not* ereport on failure; see commands/variable.c.
  */
@@ -2697,6 +2785,7 @@ DecodePosixTimezone(char *str, int *tzp)
 	int			val,
 				tz;
 	int			type;
+	int			dterr;
 	char	   *cp;
 	char		delim;
 
@@ -2708,8 +2797,9 @@ DecodePosixTimezone(char *str, int *tzp)
 	/* decode offset, if present */
 	if (*cp)
 	{
-		if (DecodeTimezone(cp, &tz) != 0)
-			return -1;
+		dterr = DecodeTimezone(cp, &tz);
+		if (dterr)
+			return dterr;
 	}
 	else
 		tz = 0;
@@ -2728,11 +2818,11 @@ DecodePosixTimezone(char *str, int *tzp)
 			break;
 
 		default:
-			return -1;
+			return DTERR_BAD_FORMAT;
 	}
 
 	return 0;
-}	/* DecodePosixTimezone() */
+}
 
 
 /* DecodeSpecial()
@@ -2786,12 +2876,12 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 	}
 
 	return type;
-}	/* DecodeSpecial() */
+}
 
 
 /* DecodeInterval()
  * Interpret previously parsed fields for general time interval.
- * Return 0 if decoded and -1 if problems.
+ * Returns 0 if successful, DTERR code if bogus input detected.
  *
  * Allow "date" field DTK_DATE since this could be just
  *	an unsigned floating point number. - thomas 1997-11-16
@@ -2803,12 +2893,12 @@ int
 DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fsec_t *fsec)
 {
 	int			is_before = FALSE;
-
 	char	   *cp;
 	int			fmask = 0,
 				tmask,
 				type;
 	int			i;
+	int			dterr;
 	int			val;
 	double		fval;
 
@@ -2829,8 +2919,9 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 		switch (ftype[i])
 		{
 			case DTK_TIME:
-				if (DecodeTime(field[i], fmask, &tmask, tm, fsec) != 0)
-					return -1;
+				dterr = DecodeTime(field[i], fmask, &tmask, tm, fsec);
+				if (dterr)
+					return dterr;
 				type = DTK_DAY;
 				break;
 
@@ -2850,8 +2941,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 				cp = field[i] + 1;
 				while ((*cp != '\0') && (*cp != ':') && (*cp != '.'))
 					cp++;
-				if ((*cp == ':')
-					&& (DecodeTime((field[i] + 1), fmask, &tmask, tm, fsec) == 0))
+				if ((*cp == ':') &&
+					(DecodeTime(field[i] + 1, fmask, &tmask, tm, fsec) == 0))
 				{
 					if (*field[i] == '-')
 					{
@@ -2903,7 +2994,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 				{
 					fval = strtod(cp, &cp);
 					if (*cp != '\0')
-						return -1;
+						return DTERR_BAD_FORMAT;
 
 					if (val < 0)
 						fval = -(fval);
@@ -2911,7 +3002,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 				else if (*cp == '\0')
 					fval = 0;
 				else
-					return -1;
+					return DTERR_BAD_FORMAT;
 
 				tmask = 0;		/* DTK_M(type); */
 
@@ -3062,7 +3153,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 						break;
 
 					default:
-						return -1;
+						return DTERR_BAD_FORMAT;
 				}
 				break;
 
@@ -3090,16 +3181,16 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 						break;
 
 					default:
-						return -1;
+						return DTERR_BAD_FORMAT;
 				}
 				break;
 
 			default:
-				return -1;
+				return DTERR_BAD_FORMAT;
 		}
 
 		if (tmask & fmask)
-			return -1;
+			return DTERR_BAD_FORMAT;
 		fmask |= tmask;
 	}
 
@@ -3128,8 +3219,11 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 	}
 
 	/* ensure that at least one time field has been found */
-	return (fmask != 0) ? 0 : -1;
-}	/* DecodeInterval() */
+	if (fmask == 0)
+		return DTERR_BAD_FORMAT;
+
+	return 0;
+}
 
 
 /* DecodeUnits()
@@ -3165,6 +3259,57 @@ DecodeUnits(int field, char *lowtoken, int *val)
 	return type;
 }	/* DecodeUnits() */
 
+/*
+ * Report an error detected by one of the datetime input processing routines.
+ *
+ * dterr is the error code, str is the original input string, datatype is
+ * the name of the datatype we were trying to accept.
+ *
+ * Note: it might seem useless to distinguish DTERR_INTERVAL_OVERFLOW and
+ * DTERR_TZDISP_OVERFLOW from DTERR_FIELD_OVERFLOW, but SQL99 mandates three
+ * separate SQLSTATE codes, so ...
+ */
+void
+DateTimeParseError(int dterr, const char *str, const char *datatype)
+{
+	switch (dterr)
+	{
+		case DTERR_FIELD_OVERFLOW:
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
+					 errmsg("date/time field value out of range: \"%s\"",
+							str)));
+			break;
+		case DTERR_MD_FIELD_OVERFLOW:
+			/* <nanny>same as above, but add hint about DateStyle</nanny> */
+			ereport(ERROR,
+					(errcode(ERRCODE_DATETIME_FIELD_OVERFLOW),
+					 errmsg("date/time field value out of range: \"%s\"",
+							str),
+					 errhint("Perhaps you need a different DateStyle setting.")));
+			break;
+		case DTERR_INTERVAL_OVERFLOW:
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERVAL_FIELD_OVERFLOW),
+					 errmsg("interval field value out of range: \"%s\"",
+							str)));
+			break;
+		case DTERR_TZDISP_OVERFLOW:
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE),
+					 errmsg("time zone displacement out of range: \"%s\"",
+							str)));
+			break;
+		case DTERR_BAD_FORMAT:
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					 /* translator: first %s is datatype name */
+					 errmsg("invalid input syntax for %s: \"%s\"",
+							datatype, str)));
+			break;
+	}
+}
 
 /* datebsearch()
  * Binary search -- from Knuth (6.2.1) Algorithm B.  Special case like this
