@@ -46,10 +46,9 @@ PERMISSIONS
 * Allow usernames to be specified directly in pg_hba.conf (Bruce)
 * Add PGPASSWORDFILE environment variable or ~/.pgpass to store
   user/host/password combinations
-* Remove PGPASSWORD because is insecure on some OS's
+* Remove PGPASSWORD because it is insecure on some OS's
 * Make single-user local access permissions the default by limiting
   permissions on the socket file (Peter E)
-* Use thread-safe crypt() in libpq, if available
 * -Allow permissions for functions (Peter E)
 
 ADMIN
@@ -66,7 +65,7 @@ ADMIN
   flags unique
 * Allow logging of query durations
 * -Prevent SIGHUP and 'pg_ctl reload' from changing command line
-  specified parameters to postgresql.conf defaults
+  specified parameters to postgresql.conf defaults (Peter E)
 
 
 DATA TYPES

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.105 2002/03/02 21:39:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.106 2002/03/08 04:29:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2964,7 +2964,7 @@ prefix_selectivity(Query *root, Var *var, char *prefix)
  * wildcards (such as % for LIKE or .* for regex) increase it.
  */
 
-#define FIXED_CHAR_SEL	0.04	/* about 1/25 */
+#define FIXED_CHAR_SEL	0.20	/* about 1/5 */
 #define CHAR_RANGE_SEL	0.25
 #define ANY_CHAR_SEL	0.9		/* not 1, since it won't match
 								 * end-of-string */
