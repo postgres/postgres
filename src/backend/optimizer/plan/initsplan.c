@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.24 1999/02/14 04:56:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.25 1999/02/15 01:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,13 +367,30 @@ set_joininfo_mergeable_hashable(List *rel_list)
 static MergeOrder *
 mergejoinop(Expr *clause)
 {
-	Oid			leftOp,
+	Var		   *left,
+			   *right;
+	Oid			opno,
+				leftOp,
 				rightOp;
 	bool		sortable;
 
-	sortable = op_mergejoinable(((Oper *) clause->oper)->opno,
-								(get_leftop(clause))->vartype,
-								(get_rightop(clause))->vartype,
+	if (!is_opclause((Node*) clause))
+		return NULL;
+
+	left = get_leftop(clause);
+	right = get_rightop(clause);
+
+	/* caution: is_opclause accepts more than I do, so check it */
+	if (!right)
+		return NULL;			/* unary opclauses need not apply */
+	if (!IsA(left, Var) || !IsA(right, Var))
+		return NULL;
+
+	opno = ((Oper *) clause->oper)->opno;
+
+	sortable = op_mergejoinable(opno,
+								left->vartype,
+								right->vartype,
 								&leftOp,
 								&rightOp);
 
@@ -381,11 +398,11 @@ mergejoinop(Expr *clause)
 	{
 		MergeOrder *morder = makeNode(MergeOrder);
 
-		morder->join_operator = ((Oper *) clause->oper)->opno;
+		morder->join_operator = opno;
 		morder->left_operator = leftOp;
 		morder->right_operator = rightOp;
-		morder->left_type = (get_leftop(clause))->vartype;
-		morder->right_type = (get_rightop(clause))->vartype;
+		morder->left_type = left->vartype;
+		morder->right_type = right->vartype;
 		return morder;
 	}
 	else
@@ -401,7 +418,22 @@ mergejoinop(Expr *clause)
 static Oid
 hashjoinop(Expr *clause)
 {
-	return (op_hashjoinable(((Oper *) clause->oper)->opno,
-							(get_leftop(clause))->vartype,
-							(get_rightop(clause))->vartype));
+	Var		   *left,
+			   *right;
+
+	if (!is_opclause((Node*) clause))
+		return InvalidOid;
+
+	left = get_leftop(clause);
+	right = get_rightop(clause);
+
+	/* caution: is_opclause accepts more than I do, so check it */
+	if (!right)
+		return InvalidOid;		/* unary opclauses need not apply */
+	if (!IsA(left, Var) || !IsA(right, Var))
+		return InvalidOid;
+
+	return op_hashjoinable(((Oper *) clause->oper)->opno,
+						   left->vartype,
+						   right->vartype);
 }

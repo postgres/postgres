@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.17 1999/02/13 23:16:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.18 1999/02/15 01:06:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,7 +206,7 @@ compute_selec(Query *root, List *clauses, List *or_selectivities)
 	Cost		s1 = 0;
 	List	   *clause = lfirst(clauses);
 
-	if (clauses == NULL)
+	if (clause == NULL)
 		s1 = 1.0;
 	else if (IsA(clause, Param))
 	{
@@ -351,7 +351,7 @@ compute_selec(Query *root, List *clauses, List *or_selectivities)
 	 * an 'or' clause, but rather that of the single clause.
 	 */
 
-	if (length(clauses) < 2)
+	if (lnext(clauses) == NIL)
 		return s1;
 	else
 	{

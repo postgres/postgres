@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.46 1999/02/13 23:16:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.47 1999/02/15 01:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -780,6 +780,7 @@ switch_outer(List *clauses)
 	{
 		clause = lfirst(i);
 		op = (Node *) get_rightop(clause);
+		Assert(op != (Node*) NULL);
 		if (IsA(op, ArrayRef))
 			op = ((ArrayRef *) op)->refexpr;
 		Assert(IsA(op, Var));

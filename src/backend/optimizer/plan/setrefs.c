@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.39 1999/02/13 23:16:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.40 1999/02/15 01:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,6 +290,8 @@ replace_clause_joinvar_refs(Expr *clause,
 {
 	List	   *temp = NULL;
 
+	if (clause == NULL)
+		return NULL;
 	if (IsA(clause, Var))
 	{
 		temp = (List *) replace_joinvar_refs((Var *) clause,
@@ -586,6 +588,8 @@ replace_result_clause(Node *clause,
 {
 	List	   *t;
 
+	if (clause == NULL)
+		return;
 	if (IsA(clause, Var))
 	{
 		TargetEntry *subplanVar;

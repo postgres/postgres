@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.13 1999/02/13 23:16:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.14 1999/02/15 01:06:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,10 +106,17 @@ find_nots(Expr *qual)
 
 	if (is_opclause((Node *) qual))
 	{
-		return (make_clause(qual->opType, qual->oper,
-							lcons(find_nots((Expr *) get_leftop(qual)),
-							 lcons(find_nots((Expr *) get_rightop(qual)),
-								   NIL))));
+		Expr   *left = (Expr *) get_leftop(qual);
+		Expr   *right = (Expr *) get_rightop(qual);
+		if (right)
+			return make_clause(qual->opType, qual->oper,
+							   lcons(find_nots(left),
+									 lcons(find_nots(right),
+										   NIL)));
+		else
+			return make_clause(qual->opType, qual->oper,
+							   lcons(find_nots(left),
+									 NIL));
 	}
 	else if (and_clause((Node *) qual))
 	{
@@ -155,12 +162,17 @@ normalize(Expr *qual)
 
 	if (is_opclause((Node *) qual))
 	{
-		Expr	   *expr = (Expr *) qual;
-
-		return (make_clause(expr->opType, expr->oper,
-							lcons(normalize((Expr *) get_leftop(qual)),
-							 lcons(normalize((Expr *) get_rightop(qual)),
-								   NIL))));
+		Expr   *left = (Expr *) get_leftop(qual);
+		Expr   *right = (Expr *) get_rightop(qual);
+		if (right)
+			return make_clause(qual->opType, qual->oper,
+							   lcons(normalize(left),
+									 lcons(normalize(right),
+										   NIL)));
+		else
+			return make_clause(qual->opType, qual->oper,
+							   lcons(normalize(left),
+									 NIL));
 	}
 	else if (and_clause((Node *) qual))
 	{
@@ -217,10 +229,17 @@ qual_cleanup(Expr *qual)
 
 	if (is_opclause((Node *) qual))
 	{
-		return ((List *) make_clause(qual->opType, qual->oper,
-							lcons(qual_cleanup((Expr *) get_leftop(qual)),
-						   lcons(qual_cleanup((Expr *) get_rightop(qual)),
-								 NIL))));
+		Expr   *left = (Expr *) get_leftop(qual);
+		Expr   *right = (Expr *) get_rightop(qual);
+		if (right)
+			return (List *) make_clause(qual->opType, qual->oper,
+										lcons(qual_cleanup(left),
+											  lcons(qual_cleanup(right),
+													NIL)));
+		else
+			return (List *) make_clause(qual->opType, qual->oper,
+										lcons(qual_cleanup(left),
+											  NIL));
 	}
 	else if (and_clause((Node *) qual))
 	{
@@ -276,10 +295,17 @@ pull_args(Expr *qual)
 
 	if (is_opclause((Node *) qual))
 	{
-		return (make_clause(qual->opType, qual->oper,
-							lcons(pull_args((Expr *) get_leftop(qual)),
-							 lcons(pull_args((Expr *) get_rightop(qual)),
-								   NIL))));
+		Expr   *left = (Expr *) get_leftop(qual);
+		Expr   *right = (Expr *) get_rightop(qual);
+		if (right)
+			return make_clause(qual->opType, qual->oper,
+							   lcons(pull_args(left),
+									 lcons(pull_args(right),
+										   NIL)));
+		else
+			return make_clause(qual->opType, qual->oper,
+							   lcons(pull_args(left),
+									 NIL));
 	}
 	else if (and_clause((Node *) qual))
 	{
@@ -384,7 +410,7 @@ push_nots(Expr *qual)
 											   0, NULL);
 
 			op->op_fcache = (FunctionCache *) NULL;
-			return (make_opclause(op, get_leftop(qual), get_rightop(qual)));
+			return make_opclause(op, get_leftop(qual), get_rightop(qual));
 		}
 		else
 			return make_notclause(qual);
@@ -511,10 +537,17 @@ remove_ands(Expr *qual)
 		return NIL;
 	if (is_opclause((Node *) qual))
 	{
-		return ((List *) make_clause(qual->opType, qual->oper,
-							lcons(remove_ands((Expr *) get_leftop(qual)),
-						   lcons(remove_ands((Expr *) get_rightop(qual)),
-								 NIL))));
+		Expr   *left = (Expr *) get_leftop(qual);
+		Expr   *right = (Expr *) get_rightop(qual);
+		if (right)
+			return (List *) make_clause(qual->opType, qual->oper,
+										lcons(remove_ands(left),
+											  lcons(remove_ands(right),
+													NIL)));
+		else
+			return (List *) make_clause(qual->opType, qual->oper,
+										lcons(remove_ands(left),
+											  NIL));
 	}
 	else if (and_clause((Node *) qual))
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.44 1999/02/13 23:16:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.45 1999/02/15 01:06:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,25 +324,25 @@ match_index_orclause(RelOptInfo *rel,
 	{
 		clause = lfirst(clist);
 
-		if (is_opclause(clause) &&
-			op_class(((Oper *) ((Expr *) clause)->oper)->opno,
-					 xclass, index->relam) &&
-			((match_index_to_operand(indexkey,
-									 (Expr *) get_leftop((Expr *) clause),
-									 rel,
-									 index) &&
-			  IsA(get_rightop((Expr *) clause), Const)) ||
-			 (match_index_to_operand(indexkey,
-								   (Expr *) get_rightop((Expr *) clause),
-									 rel,
-									 index) &&
-			  IsA(get_leftop((Expr *) clause), Const))))
-			lfirst(matching_indices) = lcons(index, lfirst(matching_indices));
+		if (is_opclause(clause))
+		{
+			Expr   *left = (Expr *) get_leftop((Expr *) clause);
+			Expr   *right = (Expr *) get_rightop((Expr *) clause);
+			if (left && right &&
+				op_class(((Oper *) ((Expr *) clause)->oper)->opno,
+						 xclass, index->relam) &&
+				((IsA(right, Const) &&
+				  match_index_to_operand(indexkey, left, rel, index)) ||
+				 (IsA(left, Const) &&
+				  match_index_to_operand(indexkey, right, rel, index))))
+				lfirst(matching_indices) = lcons(index,
+												 lfirst(matching_indices));
+		}
 
 		matching_indices = lnext(matching_indices);
 	}
-	return index_list;
 
+	return index_list;
 }
 
 /****************************************************************************
@@ -1019,6 +1019,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	/* Check the basic form; for now, only allow the simplest case */
 	if (!is_opclause(clause) ||
 		!IsA(clause_var, Var) ||
+		clause_const == NULL ||
 		!IsA(clause_const, Const) ||
 		!IsA(predicate->oper, Oper) ||
 		!IsA(pred_var, Var) ||
