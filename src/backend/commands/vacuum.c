@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.9 1996/11/27 07:27:20 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.10 1996/11/28 04:37:38 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,7 +245,7 @@ _vc_getrels(Portal p, NameData *VacRelP)
     }
 
     portalmem = PortalGetVariableMemory(p);
-    vrl = (VRelList) NULL;
+    vrl = cur = (VRelList) NULL;
 
     pgclass = heap_openr(RelationRelationName);
     pgcdesc = RelationGetTupleDescriptor(pgclass);
@@ -511,7 +511,6 @@ _vc_scanheap (VRelList curvrl, Relation onerel,
 	page = BufferGetPage(buf);
 	vpc->vpd_blkno = blkno;
 	vpc->vpd_noff = 0;
-	vpc->vpd_noff = 0;
 
 	if (PageIsNew(page)) {
 	    elog (NOTICE, "Rel %.*s: Uninitialized page %u - fixing",
@@ -734,19 +733,19 @@ _vc_rpfheap (VRelList curvrl, Relation onerel,
 {
     TransactionId myXID;
     CommandId myCID;
-    AbsoluteTime myCTM;
+    AbsoluteTime myCTM = 0;
     Buffer buf, ToBuf;
     int nblocks, blkno;
-    Page page, ToPage;
-    OffsetNumber offnum, maxoff, newoff, moff;
+    Page page, ToPage = NULL;
+    OffsetNumber offnum = 0, maxoff = 0, newoff, moff;
     ItemId itemid, newitemid;
     HeapTuple htup, newtup;
-    TupleDesc tupdesc;
-    Datum *idatum;
-    char *inulls;
+    TupleDesc tupdesc = NULL;
+    Datum *idatum = NULL;
+    char *inulls = NULL;
     InsertIndexResult iresult;
     VPageListData Nvpl;
-    VPageDescr ToVpd, Fvplast, Vvplast, vpc, *vpp;
+    VPageDescr ToVpd = NULL, Fvplast, Vvplast, vpc, *vpp;
     IndDesc *Idesc, *idcur;
     int Fblklast, Vblklast, i;
     Size tlen;
@@ -803,7 +802,7 @@ _vc_rpfheap (VRelList curvrl, Relation onerel,
     nmoved = 0;
 
     vpc = (VPageDescr) palloc (sizeof(VPageDescrData) + MaxOffsetNumber*sizeof(OffsetNumber));
-    vpc->vpd_nusd = 0;
+    vpc->vpd_nusd = vpc->vpd_noff = 0;
 	
     nblocks = curvrl->vrl_npages;
     for (blkno = nblocks - Vvpl->vpl_nemend - 1; ; blkno--)
@@ -819,6 +818,7 @@ _vc_rpfheap (VRelList curvrl, Relation onerel,
 
 	isempty = PageIsEmpty(page);
 
+	dowrite = false;
 	if ( blkno == Vblklast )		/* it's reapped page */
 	{
 	    if ( Vvplast->vpd_noff > 0 )	/* there are dead tuples */
@@ -851,7 +851,6 @@ _vc_rpfheap (VRelList curvrl, Relation onerel,
 	else
 	{
 	    Assert ( ! isempty );
-	    dowrite = false;
 	}
 
 	vpc->vpd_blkno = blkno;
