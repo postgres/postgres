@@ -6,7 +6,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Nov  8 10:32:30 EST 2004
+Last updated:		Mon Nov  8 15:16:11 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -644,7 +644,13 @@ Fsync
 Cache
 =====
 * Allow free-behind capability for large sequential scans, perhaps using
-  posix_fadvise() [fadvise]
+  posix_fadvise()
+
+  Posix_fadvise() can control both sequential/random file caching and 
+  free-behind behavior, but it is unclear how the setting affects other
+  backends that also have the file open, and the feature is not supported
+  on all operating systems.
+
 * Consider use of open/fcntl(O_DIRECT) to minimize OS caching
 * Cache last known per-tuple offsets to speed long tuple access
 
