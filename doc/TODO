@@ -213,6 +213,7 @@ INDEXES
 * fix indexscan() so it does leak memory by not requiring caller to free
 * Improve _bt_binsrch() to handle equal keys better, remove _bt_firsteq()(Tom)
 * Allow SELECT * FROM tab WHERE int2col = 4 use int2col index
+* Allow optimizer to prefer plans that match ORDER BY
 
 CACHE
 
