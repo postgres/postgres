@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.222 2002/12/15 03:16:58 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.223 2002/12/29 03:56:35 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -618,10 +618,10 @@ AC_CHECK_LIB(PW,       main)
 AC_CHECK_LIB(resolv,   main)
 AC_SEARCH_LIBS(getopt_long, [getopt gnugetopt])
 # QNX:
-AC_CHECK_LIB([[unix]], main)
+AC_CHECK_LIB(unix, main)
 AC_SEARCH_LIBS(crypt,  crypt)
 # BeOS:
-AC_CHECK_LIB(bind,     __inet_ntoa)
+AC_CHECK_LIB(bind, __inet_ntoa)
 # Solaris:
 AC_SEARCH_LIBS(fdatasync, [rt posix4])
 # Cygwin:
@@ -646,8 +646,8 @@ Use --without-zlib to disable zlib support.])])
 fi
 
 if test "$with_krb4" = yes ; then
-  AC_CHECK_LIB(des, [des_encrypt], [], [AC_MSG_ERROR([library 'des' is required for Kerberos 4])])
-  AC_CHECK_LIB(krb, [krb_sendauth], [], [AC_MSG_ERROR([library 'krb' is required for Kerberos 4])])
+  AC_CHECK_LIB(des, des_encrypt, [], [AC_MSG_ERROR([library 'des' is required for Kerberos 4])])
+  AC_CHECK_LIB(krb, krb_sendauth, [], [AC_MSG_ERROR([library 'krb' is required for Kerberos 4])])
 fi
 
 if test "$with_krb5" = yes ; then
@@ -661,12 +661,12 @@ fi
 
 if test "$with_openssl" = yes ; then
   dnl Order matters!
-  AC_CHECK_LIB(crypto, [CRYPTO_new_ex_data], [], [AC_MSG_ERROR([library 'crypto' is required for OpenSSL])])
-  AC_CHECK_LIB(ssl,    [SSL_library_init], [], [AC_MSG_ERROR([library 'ssl' is required for OpenSSL])])
+  AC_CHECK_LIB(crypto, CRYPTO_new_ex_data, [], [AC_MSG_ERROR([library 'crypto' is required for OpenSSL])])
+  AC_CHECK_LIB(ssl,    SSL_library_init, [], [AC_MSG_ERROR([library 'ssl' is required for OpenSSL])])
 fi
 
 if test "$with_pam" = yes ; then
-  AC_CHECK_LIB(pam,    [pam_start], [], [AC_MSG_ERROR([library 'pam' is required for PAM])])
+  AC_CHECK_LIB(pam,    pam_start, [], [AC_MSG_ERROR([library 'pam' is required for PAM])])
 fi
 
 
@@ -679,8 +679,8 @@ AC_CHECK_HEADERS([crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h pwd.h sys/
 
 # At least on IRIX, cpp test for netinet/tcp.h will fail unless
 # netinet/in.h is included first.
-AC_CHECK_HEADERS([netinet/in.h])
-AC_CHECK_HEADERS([netinet/tcp.h], [], [],
+AC_CHECK_HEADERS(netinet/in.h)
+AC_CHECK_HEADERS(netinet/tcp.h, [], [],
 [AC_INCLUDES_DEFAULT
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -688,14 +688,14 @@ AC_CHECK_HEADERS([netinet/tcp.h], [], [],
 ])
 
 if test "$with_readline" = yes; then
-  AC_CHECK_HEADERS([readline/readline.h], [],
-                   [AC_CHECK_HEADERS([readline.h], [],
+  AC_CHECK_HEADERS(readline/readline.h, [],
+                   [AC_CHECK_HEADERS(readline.h, [],
                                      [AC_MSG_ERROR([readline header not found
 If you have readline already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-readline to disable readline support.])])])
-  AC_CHECK_HEADERS([readline/history.h], [],
-                   [AC_CHECK_HEADERS([history.h], [],
+  AC_CHECK_HEADERS(readline/history.h, [],
+                   [AC_CHECK_HEADERS(history.h, [],
                                      [AC_MSG_ERROR([history header not found
 If you have readline already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
@@ -719,12 +719,12 @@ if test "$with_krb5" = yes ; then
 fi
 
 if test "$with_openssl" = yes ; then
-  AC_CHECK_HEADER([openssl/ssl.h], [], [AC_MSG_ERROR([header file <openssl/ssl.h> is required for OpenSSL])])
-  AC_CHECK_HEADER([openssl/err.h], [], [AC_MSG_ERROR([header file <openssl/err.h> is required for OpenSSL])])
+  AC_CHECK_HEADER(openssl/ssl.h, [], [AC_MSG_ERROR([header file <openssl/ssl.h> is required for OpenSSL])])
+  AC_CHECK_HEADER(openssl/err.h, [], [AC_MSG_ERROR([header file <openssl/err.h> is required for OpenSSL])])
 fi
 
 if test "$with_pam" = yes ; then
-  AC_CHECK_HEADER([security/pam_appl.h], [], [AC_MSG_ERROR([header file <security/pam_appl.h> is required for PAM])])
+  AC_CHECK_HEADER(security/pam_appl.h, [], [AC_MSG_ERROR([header file <security/pam_appl.h> is required for PAM])])
 fi
 
 
@@ -758,13 +758,13 @@ fi
 
 if test "$with_krb5" = yes; then
 # Check for differences between MIT and Heimdal (KTH) releases
-  AC_CHECK_MEMBERS([krb5_ticket.enc_part2], [],
+  AC_CHECK_MEMBERS(krb5_ticket.enc_part2, [],
                    [AC_CHECK_MEMBERS([krb5_ticket.client], [],
                                      [AC_MSG_ERROR([could not determine how to get client name from Kerberos 5 ticket])],
                                      [#include <krb5.h>])],
                    [#include <krb5.h>])
-  AC_CHECK_MEMBERS([krb5_error.text.data], [],
-                   [AC_CHECK_MEMBERS([krb5_error.e_data], [],
+  AC_CHECK_MEMBERS(krb5_error.text.data, [],
+                   [AC_CHECK_MEMBERS(krb5_error.e_data, [],
                                      [AC_MSG_ERROR([could not determine how to extract Kerberos 5 error messages])],
                                      [#include <krb5.h>])],
                    [#include <krb5.h>])
@@ -1096,7 +1096,7 @@ AC_CHECK_TYPES([int8, uint8, int64, uint64], [], [],
 
 # We also check for sig_atomic_t, which *should* be defined per ANSI
 # C, but is missing on some old platforms.
-AC_CHECK_TYPES([sig_atomic_t], [], [], [#include <signal.h>])
+AC_CHECK_TYPES(sig_atomic_t, [], [], [#include <signal.h>])
 
 
 PGAC_FUNC_POSIX_SIGNALS
@@ -1149,7 +1149,7 @@ fi
 #
 PGAC_PROG_NSGMLS
 PGAC_PROG_JADE
-PGAC_CHECK_DOCBOOK([3.1])
+PGAC_CHECK_DOCBOOK(3.1)
 PGAC_PATH_DOCBOOK_STYLESHEETS
 PGAC_PATH_COLLATEINDEX
 AC_CHECK_PROGS(SGMLSPL, sgmlspl)
