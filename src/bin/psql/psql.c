@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.75 1997/06/29 05:06:43 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.76 1997/06/29 17:29:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,6 +404,10 @@ tableDesc(PsqlSettings * ps, char *table)
     PGresult       *res;
 
     /* Build the query */
+
+    for(i = strlen(table); i >= 0; i--)
+	if (isupper(table[i]))
+	    table[i] = tolower(table[i]);
 
     descbuf[0] = '\0';
     strcat(descbuf, "SELECT a.attnum, a.attname, t.typname, a.attlen");
@@ -1112,6 +1116,9 @@ HandleSlashCmds(PsqlSettings * settings,
 
     unescape(cmd, line + 1);	/* sets cmd string */
 
+    if (strlen(cmd) >= 1 && cmd[strlen(cmd)-1] == ';') /* strip trailing ; */
+    	cmd[strlen(cmd)-1] = '\0';
+
     /*
      * Originally, there were just single character commands.  Now, we define
      * some longer, friendly commands, but we have to keep the old single
@@ -1543,7 +1550,6 @@ MainLoop(PsqlSettings * settings, FILE * source)
 	    }
 
 	    slashCmdStatus = -1;
-	    /* slash commands have to be on their own line */
 	    if (!in_quote && query_start[0] == '\\') {
 		slashCmdStatus = HandleSlashCmds(settings,
 						 query_start,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.12 1997/03/02 01:03:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.13 1997/06/29 17:29:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,7 @@ other		.
 			int i;
 			ScanKeyword	*keyword;
 
-			for(i = 0; i < strlen(yytext); i++)
+			for(i = strlen(yytext); i >= 0; i--)
 				if (isupper(yytext[i]))
 					yytext[i] = tolower(yytext[i]);
 			
