@@ -101,9 +101,10 @@ void CommentObject(int objtype, char *objname, char *objproperty,
     CommentTrigger(objname, objproperty, comment);
     break;
   default:
-    elog(ERROR, "An attempt was made to comment on a unkown type: %i",
+    elog(ERROR, "An attempt was made to comment on a unknown type: %i",
 	 objtype);
   }
+
 
 }
 
@@ -586,64 +587,62 @@ void CommentAggregate(char *aggregate, char *argument, char *comment) {
  *------------------------------------------------------------------
 */
 
-void CommentProc(char *function, List *arguments, char *comment) {
+void CommentProc(char *function, List *arguments, char *comment)
+{
+	HeapTuple argtuple, functuple;
+	Oid oid, argoids[FUNC_MAX_ARGS];
+	char *user, *argument;
+	int i, argcount;
 
-  HeapTuple argtuple, functuple;
-  Oid oid, argoids[FUNC_MAX_ARGS];
-  char *user, *argument;
-  int i, argcount;
+	/*** First, initialize function's argument list with their type oids ***/
 
-  /*** First, initialize function's argument list with their type oids ***/
-
-  argcount = length(arguments);
-  if (argcount > 0) {
-    MemSet(argoids, 0, FUNC_MAX_ARGS * sizeof(Oid));
-    for (i = 0; i < argcount; i++) {
-      argument = strVal(lfirst(arguments));
-      arguments = lnext(arguments);
-      if (strcmp(argument, "opaque") == 0) {
-	argoids[i] = 0;
-      } else {
-	argtuple = SearchSysCacheTuple(TYPENAME, PointerGetDatum(argument),
-				       0, 0, 0);
-	if (!HeapTupleIsValid(argtuple)) {
-	  elog(ERROR, "function argument type '%s' does not exist",
-	       argument);
-	}
-	argoids[i] = argtuple->t_data->t_oid;
-      }
+	MemSet(argoids, 0, FUNC_MAX_ARGS * sizeof(Oid));
+	argcount = length(arguments);
+	if (argcount > FUNC_MAX_ARGS)
+		elog(ERROR, "functions cannot have more than %d arguments",
+			 FUNC_MAX_ARGS);
+	for (i = 0; i < argcount; i++) {
+		argument = strVal(lfirst(arguments));
+		arguments = lnext(arguments);
+		if (strcmp(argument, "opaque") == 0)
+		{
+			argoids[i] = 0;
+		}
+		else
+		{
+			argtuple = SearchSysCacheTuple(TYPENAME,
+										   PointerGetDatum(argument),
+										   0, 0, 0);
+			if (!HeapTupleIsValid(argtuple))
+				elog(ERROR, "function argument type '%s' does not exist",
+					 argument);
+			argoids[i] = argtuple->t_data->t_oid;
+		}
     }
-  }
 
-  /*** Now, validate the user's ability to comment on this function ***/
+	/*** Now, validate the user's ability to comment on this function ***/
 
-  #ifndef NO_SECURITY
-  user = GetPgUserName();
-  if (!pg_func_ownercheck(user, function, argcount, argoids)) {
-    elog(ERROR, "you are not permitted to comment on function '%s'",
-	 function);
-  }
-  #endif
+#ifndef NO_SECURITY
+	user = GetPgUserName();
+	if (!pg_func_ownercheck(user, function, argcount, argoids))
+		elog(ERROR, "you are not permitted to comment on function '%s'",
+			 function);
+#endif
 
-  /*** Now, find the corresponding oid for this procedure ***/
+	/*** Now, find the corresponding oid for this procedure ***/
 
-  functuple = SearchSysCacheTuple(PROCNAME, PointerGetDatum(function),
-				  Int32GetDatum(argcount),
-				  PointerGetDatum(argoids), 0);
+	functuple = SearchSysCacheTuple(PROCNAME, PointerGetDatum(function),
+									Int32GetDatum(argcount),
+									PointerGetDatum(argoids), 0);
 
-  /*** Deallocate our argument oids and check the function tuple ***/
+	if (!HeapTupleIsValid(functuple))
+		elog(ERROR, "function '%s' with the supplied %s does not exist",
+			 function, "argument list");
+	oid = functuple->t_data->t_oid;
 
-  if (!HeapTupleIsValid(functuple)) {
-    elog(ERROR, "function '%s' with the supplied %s does not exist",
-	 function, "argument list");
-  }
+	/*** Call CreateComments() to create/drop the comments ***/
 
-  oid = functuple->t_data->t_oid;
-
-  /*** Call CreateComments() to create/drop the comments ***/
-
-  CreateComments(oid, comment);
-
+	CreateComments(oid, comment);
 }
 
 /*------------------------------------------------------------------
