@@ -75,7 +75,7 @@ extern void adjust_array(enum ECPGttype, int *, int *, int, int, int);
 extern void reset_variables(void);
 extern void check_indicator(struct ECPGtype *);
 extern void remove_variables(int);
-extern struct variable *new_variable(const char *, struct ECPGtype *);
+extern struct variable *new_variable(const char *, struct ECPGtype *, int);
 extern ScanKeyword *ScanKeywordLookup(char *text);
 
 /* return codes */

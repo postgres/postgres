@@ -5,13 +5,13 @@
 struct variable *allvariables = NULL;
 
 struct variable *
-new_variable(const char *name, struct ECPGtype * type)
+new_variable(const char *name, struct ECPGtype * type, int brace_level)
 {
 	struct variable *p = (struct variable *) mm_alloc(sizeof(struct variable));
 
 	p->name = mm_strdup(name);
 	p->type = type;
-	p->brace_level = braces_open;
+	p->brace_level = brace_level;
 
 	p->next = allvariables;
 	allvariables = p;
@@ -20,7 +20,7 @@ new_variable(const char *name, struct ECPGtype * type)
 }
 
 static struct variable *
-find_struct_member(char *name, char *str, struct ECPGstruct_member * members)
+find_struct_member(char *name, char *str, struct ECPGstruct_member * members, int brace_level)
 {
 	char	   *next = strchr(++str, '.'),
 				c = '\0';
@@ -41,12 +41,12 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members)
 				switch (members->type->type)
 				{
 					case ECPGt_array:
-						return (new_variable(name, ECPGmake_array_type(members->type->u.element, members->type->size)));
+						return (new_variable(name, ECPGmake_array_type(members->type->u.element, members->type->size), brace_level));
 					case ECPGt_struct:
 					case ECPGt_union:
-						return (new_variable(name, ECPGmake_struct_type(members->type->u.members, members->type->type, members->type->struct_sizeof)));
+						return (new_variable(name, ECPGmake_struct_type(members->type->u.members, members->type->type, members->type->struct_sizeof), brace_level));
 					default:
-						return (new_variable(name, ECPGmake_simple_type(members->type->type, members->type->size)));
+						return (new_variable(name, ECPGmake_simple_type(members->type->type, members->type->size), brace_level));
 				}
 			}
 			else
@@ -55,10 +55,10 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members)
 				if (c == '-')
 				{
 					next++;
-					return (find_struct_member(name, next, members->type->u.element->u.members));
+					return (find_struct_member(name, next, members->type->u.element->u.members, brace_level));
 				}
 				else
-					return (find_struct_member(name, next, members->type->u.members));
+					return (find_struct_member(name, next, members->type->u.members, brace_level));
 			}
 		}
 	}
@@ -94,7 +94,7 @@ find_struct(char *name, char *next)
 		*next = c;
 		next++;
 
-		return find_struct_member(name, next, p->type->u.element->u.members);
+		return find_struct_member(name, next, p->type->u.element->u.members, p->brace_level);
 	}
 	else
 	{
@@ -107,7 +107,7 @@ find_struct(char *name, char *next)
 		/* restore the name, we will need it later on */
 		*next = c;
 
-		return find_struct_member(name, next, p->type->u.members);
+		return find_struct_member(name, next, p->type->u.members, p->brace_level);
 	}
 }
 

@@ -4417,7 +4417,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 			}
 
 			if (struct_level == 0)
-				new_variable($2, type);
+				new_variable($2, type, braces_open);
 			else
 				ECPGmake_struct_member($2, type, &(struct_member_list[struct_level - 1]));
 

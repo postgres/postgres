@@ -1201,5 +1201,11 @@ Fri Jan 11 15:43:39 CET 2002
 
 	- clear sqlca on : [de]allocate descriptor  & get descriptor and set
 	  sqlca.sqlerrd[2] accordingly (Christof).
+
+Sat Jan 12 22:04:02 CET 2002
+
+	- Fixed variable handling for struct members.
+	- Removed check for array input. An attribut might store the
+	  complete array.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.

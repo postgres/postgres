@@ -1,7 +1,5 @@
 #include <string.h>
 
-exec sql include sqlca;
-
 /* just a test comment */ exec sql whenever sqlerror do PrintAndStop(msg);
 exec sql whenever sqlwarning do warn();
 

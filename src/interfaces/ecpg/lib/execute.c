@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.35 2002/01/08 14:25:04 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.36 2002/01/13 08:52:08 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -486,14 +486,15 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 	char	   *newcopy = NULL;
 
 	/* 
-	 * arrays are not possible 
+	 * arrays are not possible unless the attribute is an array too
+	 * FIXME: we do not know if the attribute is an array here
 	 */
-	 
-	 if (var->arrsize > 1)
+
+/*	 if (var->arrsize > 1 && ...)
 	 {
 		ECPGraise(stmt->lineno, ECPG_ARRAY_INSERT, NULL);
 		return false;
-	 }
+	 }*/
 	 
 	/*
 	 * Some special treatment is needed for records since we want their
