@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.6 1998/08/04 00:42:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.7 1998/08/04 16:44:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,9 @@
 
 /*
  * group-clauses-by-order--
- *	  If a join clause node in 'clauseinfo-list' is mergesortable, store
+ *	  If a join clause node in 'clauseinfo-list' is mergejoinable, store
  *	  it within a mergeinfo node containing other clause nodes with the same
- *	  mergesort ordering.
+ *	  mergejoin ordering.
  *
  * 'clauseinfo-list' is the list of clauseinfo nodes
  * 'inner-relid' is the relid of the inner join relation
@@ -43,7 +43,7 @@ group_clauses_by_order(List *clauseinfo_list,
 	foreach(xclauseinfo, clauseinfo_list)
 	{
 		CInfo	   *clauseinfo = (CInfo *) lfirst(xclauseinfo);
-		MergeOrder *merge_ordering = clauseinfo->mergesortorder;
+		MergeOrder *merge_ordering = clauseinfo->mergejoinorder;
 
 		if (merge_ordering)
 		{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.15 1998/07/12 21:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.16 1998/08/04 16:44:22 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -226,14 +226,14 @@ get_opname(Oid opno)
 }
 
 /*
- * op_mergesortable -
+ * op_mergejoinable -
  *
  *		Returns the left and right sort operators and types corresponding to a
- *		mergesortable operator, or nil if the operator is not mergesortable.
+ *		mergejoinable operator, or nil if the operator is not mergejoinable.
  *
  */
 bool
-op_mergesortable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
+op_mergejoinable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
 {
 	FormData_pg_operator optup;
 

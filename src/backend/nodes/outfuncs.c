@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.42 1998/08/01 22:12:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.43 1998/08/04 16:43:59 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -403,7 +403,7 @@ _outMergeJoin(StringInfo str, MergeJoin *node)
 	appendStringInfo(str, " :mergeclauses ");
 	_outNode(str, node->mergeclauses);
 
-	sprintf(buf, " :mergesortop %u ", node->mergesortop);
+	sprintf(buf, " :mergejoinop %u ", node->mergejoinop);
 	appendStringInfo(str, buf);
 
 	sprintf(buf, " :mergerightorder %u ", node->mergerightorder[0]);
@@ -1373,8 +1373,8 @@ _outCInfo(StringInfo str, CInfo *node)
 	appendStringInfo(str, " :indexids ");
 	_outNode(str, node->indexids);
 
-	appendStringInfo(str, " :mergesortorder ");
-	_outNode(str, node->mergesortorder);
+	appendStringInfo(str, " :mergejoinorder ");
+	_outNode(str, node->mergejoinorder);
 
 	sprintf(buf, " :hashjoinoperator %u ", node->hashjoinoperator);
 	appendStringInfo(str, buf);
@@ -1434,8 +1434,8 @@ _outJInfo(StringInfo str, JInfo *node)
 	appendStringInfo(str, " :jinfoclauseinfo ");
 	_outNode(str, node->jinfoclauseinfo);
 
-	appendStringInfo(str, " :mergesortable ");
-	appendStringInfo(str, node->mergesortable ? "true" : "false");
+	appendStringInfo(str, " :mergejoinable ");
+	appendStringInfo(str, node->mergejoinable ? "true" : "false");
 	appendStringInfo(str, " :hashjoinable ");
 	appendStringInfo(str, node->hashjoinable ? "true" : "false");
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.22 1998/07/18 04:22:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.23 1998/08/04 16:44:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ bool		_enable_indexscan_ = true;
 bool		_enable_sort_ = true;
 bool		_enable_hash_ = true;
 bool		_enable_nestloop_ = true;
-bool		_enable_mergesort_ = true;
+bool		_enable_mergejoin_ = true;
 bool		_enable_hashjoin_ = true;
 
 Cost		_cpu_page_wight_ = _CPU_PAGE_WEIGHT_;
@@ -259,7 +259,7 @@ cost_nestloop(Cost outercost,
 }
 
 /*
- * cost_mergesort--
+ * cost_mergejoin--
  *	  'outercost' and 'innercost' are the (disk+cpu) costs of scanning the
  *				outer and inner relations
  *	  'outersortkeys' and 'innersortkeys' are lists of the keys to be used
@@ -273,7 +273,7 @@ cost_nestloop(Cost outercost,
  *
  */
 Cost
-cost_mergesort(Cost outercost,
+cost_mergejoin(Cost outercost,
 			   Cost innercost,
 			   List *outersortkeys,
 			   List *innersortkeys,
@@ -284,7 +284,7 @@ cost_mergesort(Cost outercost,
 {
 	Cost		temp = 0;
 
-	if (!_enable_mergesort_)
+	if (!_enable_mergejoin_)
 		temp += _disable_cost_;
 
 	temp += outercost;

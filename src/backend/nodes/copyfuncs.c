@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.45 1998/08/01 22:12:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.46 1998/08/04 16:43:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,7 +335,7 @@ _copyMergeJoin(MergeJoin *from)
 	 */
 	Node_Copy(from, newnode, mergeclauses);
 
-	newnode->mergesortop = from->mergesortop;
+	newnode->mergejoinop = from->mergejoinop;
 
 	newnode->mergerightorder = (Oid *) palloc(sizeof(Oid) * 2);
 	newnode->mergerightorder[0] = from->mergerightorder[0];
@@ -1334,7 +1334,7 @@ _copyCInfo(CInfo *from)
 	newnode->notclause = from->notclause;
 
 	Node_Copy(from, newnode, indexids);
-	Node_Copy(from, newnode, mergesortorder);
+	Node_Copy(from, newnode, mergejoinorder);
 	newnode->hashjoinoperator = from->hashjoinoperator;
 	newnode->cinfojoinid = listCopy(from->cinfojoinid);
 
@@ -1424,7 +1424,7 @@ _copyJInfo(JInfo *from)
 	newnode->otherrels = listCopy(from->otherrels);
 	Node_Copy(from, newnode, jinfoclauseinfo);
 
-	newnode->mergesortable = from->mergesortable;
+	newnode->mergejoinable = from->mergejoinable;
 	newnode->hashjoinable = from->hashjoinable;
 	newnode->inactive = from->inactive;
 

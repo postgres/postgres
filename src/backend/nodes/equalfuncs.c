@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.17 1998/08/01 22:12:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.18 1998/08/04 16:43:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,7 +293,7 @@ _equalCInfo(CInfo *a, CInfo *b)
 	if (a->notclause != b->notclause)
 		return (false);
 #ifdef EqualMergeOrderExists
-	if (!EqualMergeOrder(a->mergesortorder, b->mergesortorder))
+	if (!EqualMergeOrder(a->mergejoinorder, b->mergejoinorder))
 		return (false);
 #endif
 	if (a->hashjoinoperator != b->hashjoinoperator)
@@ -538,7 +538,7 @@ _equalJInfo(JInfo *a, JInfo *b)
 		return (false);
 	if (!equal((a->jinfoclauseinfo), (b->jinfoclauseinfo)))
 		return (false);
-	if (a->mergesortable != b->mergesortable)
+	if (a->mergejoinable != b->mergejoinable)
 		return (false);
 	if (a->hashjoinable != b->hashjoinable)
 		return (false);

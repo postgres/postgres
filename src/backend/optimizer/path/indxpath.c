@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.24 1998/08/04 00:42:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.25 1998/08/04 16:44:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1251,7 +1251,7 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
  *
  * 'rel' is the relation for which 'index' is defined
  * 'clausegroup-list' is the list of clause groups (lists of clauseinfo
- *				nodes) grouped by mergesortorder
+ *				nodes) grouped by mergejoinorder
  * 'join' is a flag indicating whether or not the clauses are join
  *				clauses
  *
@@ -1284,7 +1284,7 @@ create_index_paths(Query *root,
 			clauseinfo = (CInfo *) lfirst(j);
 			if (!(join_clause_p((Node *) clauseinfo->clause) &&
 				  equal_path_merge_ordering(index->ordering,
-											clauseinfo->mergesortorder)))
+											clauseinfo->mergejoinorder)))
 				temp = false;
 		}
 

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.20 1998/07/18 04:22:27 momjian Exp $
+ * $Id: geqo_eval.c,v 1.21 1998/08/04 16:44:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -422,8 +422,8 @@ new_joininfo_list(List *joininfo_list, List *join_relids)
 					joininfo->otherrels;
 				other_joininfo->jinfoclauseinfo =
 					joininfo->jinfoclauseinfo;
-				other_joininfo->mergesortable =
-					joininfo->mergesortable;
+				other_joininfo->mergejoinable =
+					joininfo->mergejoinable;
 				other_joininfo->hashjoinable =
 					joininfo->hashjoinable;
 				other_joininfo->inactive = false;
@@ -509,7 +509,7 @@ geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 			JInfo	   *joininfo = (JInfo *) lfirst(xjoininfo);
 			List	   *other_rels = joininfo->otherrels;
 			List	   *clause_info = joininfo->jinfoclauseinfo;
-			bool		mergesortable = joininfo->mergesortable;
+			bool		mergejoinable = joininfo->mergejoinable;
 			bool		hashjoinable = joininfo->hashjoinable;
 
 			foreach(xrelid, other_rels)
@@ -541,7 +541,7 @@ geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 
 				new_joininfo->otherrels = joinrel->relids;
 				new_joininfo->jinfoclauseinfo = clause_info;
-				new_joininfo->mergesortable = mergesortable;
+				new_joininfo->mergejoinable = mergejoinable;
 				new_joininfo->hashjoinable = hashjoinable;
 				new_joininfo->inactive = false;
 				rel->joininfo =
@@ -570,7 +570,7 @@ geqo_add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 
 							new_joininfo->otherrels = new_relids;
 							new_joininfo->jinfoclauseinfo = clause_info;
-							new_joininfo->mergesortable = mergesortable;
+							new_joininfo->mergejoinable = mergejoinable;
 							new_joininfo->hashjoinable = hashjoinable;
 							new_joininfo->inactive = false;
 							joinrel->joininfo =

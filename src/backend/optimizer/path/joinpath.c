@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.7 1998/07/18 04:22:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.8 1998/08/04 16:44:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/keys.h"
 #include "optimizer/cost.h"		/* for _enable_{hashjoin,
-								 * _enable_mergesort} */
+								 * _enable_mergejoin} */
 
 static Path *best_innerjoin(List *join_paths, List *outer_relid);
 static List *
@@ -98,7 +98,7 @@ find_all_join_paths(Query *root, List *joinrels)
 
 		bestinnerjoin = best_innerjoin(innerrel->innerjoin,
 									   outerrel->relids);
-		if (_enable_mergesort_)
+		if (_enable_mergejoin_)
 		{
 			mergeinfo_list =
 				group_clauses_by_order(joinrel->clauseinfo,
@@ -116,7 +116,7 @@ find_all_join_paths(Query *root, List *joinrels)
 		joinrel->relids = intAppend(outerrelids, innerrelids);
 
 		/*
-		 * 1. Consider mergesort paths where both relations must be
+		 * 1. Consider mergejoin paths where both relations must be
 		 * explicitly sorted.
 		 */
 		pathlist = sort_inner_and_outer(joinrel, outerrel,
@@ -125,7 +125,7 @@ find_all_join_paths(Query *root, List *joinrels)
 		/*
 		 * 2. Consider paths where the outer relation need not be
 		 * explicitly sorted. This may include either nestloops and
-		 * mergesorts where the outer path is already ordered.
+		 * mergejoins where the outer path is already ordered.
 		 */
 		pathlist =
 			add_pathlist(joinrel, pathlist,
@@ -139,7 +139,7 @@ find_all_join_paths(Query *root, List *joinrels)
 
 		/*
 		 * 3. Consider paths where the inner relation need not be
-		 * explicitly sorted.  This may include nestloops and mergesorts
+		 * explicitly sorted.  This may include nestloops and mergejoins
 		 * the actual nestloop nodes were constructed in
 		 * (match-unsorted-outer).
 		 */
@@ -226,16 +226,16 @@ best_innerjoin(List *join_paths, List *outer_relids)
 
 /*
  * sort-inner-and-outer--
- *	  Create mergesort join paths by explicitly sorting both the outer and
+ *	  Create mergejoin join paths by explicitly sorting both the outer and
  *	  inner join relations on each available merge ordering.
  *
  * 'joinrel' is the join relation
  * 'outerrel' is the outer join relation
  * 'innerrel' is the inner join relation
- * 'mergeinfo-list' is a list of nodes containing info on(mergesortable)
+ * 'mergeinfo-list' is a list of nodes containing info on(mergejoinable)
  *				clauses for joining the relations
  *
- * Returns a list of mergesort paths.
+ * Returns a list of mergejoin paths.
  */
 static List *
 sort_inner_and_outer(RelOptInfo *joinrel,
@@ -270,7 +270,7 @@ sort_inner_and_outer(RelOptInfo *joinrel,
 							  xmergeinfo->jmethod.clauses);
 
 		temp_node =
-			create_mergesort_path(joinrel,
+			create_mergejoin_path(joinrel,
 								  outerrel->size,
 								  innerrel->size,
 								  outerrel->width,
@@ -292,12 +292,12 @@ sort_inner_and_outer(RelOptInfo *joinrel,
  * match-unsorted-outer--
  *	  Creates possible join paths for processing a single join relation
  *	  'joinrel' by employing either iterative substitution or
- *	  mergesorting on each of its possible outer paths(assuming that the
+ *	  mergejoining on each of its possible outer paths(assuming that the
  *	  outer relation need not be explicitly sorted).
  *
  *	  1. The inner path is the cheapest available inner path.
- *	  2. Mergesort wherever possible.  Mergesorts are considered if there
- *		 are mergesortable join clauses between the outer and inner join
+ *	  2. Mergejoin wherever possible.  Mergejoin are considered if there
+ *		 are mergejoinable join clauses between the outer and inner join
  *		 relations such that the outer path is keyed on the variables
  *		 appearing in the clauses.	The corresponding inner merge path is
  *		 either a path whose keys match those of the outer path(if such a
@@ -310,7 +310,7 @@ sort_inner_and_outer(RelOptInfo *joinrel,
  * 'outerpath-list' is the list of possible outer paths
  * 'cheapest-inner' is the cheapest inner path
  * 'best-innerjoin' is the best inner index path(if any)
- * 'mergeinfo-list' is a list of nodes containing info on mergesortable
+ * 'mergeinfo-list' is a list of nodes containing info on mergejoinable
  *		clauses
  *
  * Returns a list of possible join path nodes.
@@ -424,7 +424,7 @@ match_unsorted_outer(RelOptInfo *joinrel,
 				mergeinnerpath = cheapest_inner;
 
 			temp_node =
-				lcons(create_mergesort_path(joinrel,
+				lcons(create_mergejoin_path(joinrel,
 											outerrel->size,
 											innerrel->size,
 											outerrel->width,
@@ -463,7 +463,7 @@ match_unsorted_outer(RelOptInfo *joinrel,
  * 'outerrel' is the outer join relation
  * 'innerrel' is the inner join relation
  * 'innerpath-list' is the list of possible inner join paths
- * 'mergeinfo-list' is a list of nodes containing info on mergesortable
+ * 'mergeinfo-list' is a list of nodes containing info on mergejoinable
  *				clauses
  *
  * Returns a list of possible merge paths.
@@ -542,7 +542,7 @@ match_unsorted_inner(RelOptInfo *joinrel,
 								  clauses);
 
 				temp_node =
-					lcons(create_mergesort_path(joinrel,
+					lcons(create_mergejoin_path(joinrel,
 												outerrel->size,
 												innerrel->size,
 												outerrel->width,

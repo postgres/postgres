@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.8 1998/07/18 04:22:51 momjian Exp $
+ * $Id: pathnode.h,v 1.9 1998/08/04 16:44:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ extern JoinPath *
 create_nestloop_path(RelOptInfo *joinrel, RelOptInfo *outer_rel,
 					 Path *outer_path, Path *inner_path, List *keys);
 extern MergePath *
-create_mergesort_path(RelOptInfo *joinrel, int outersize,
+create_mergejoin_path(RelOptInfo *joinrel, int outersize,
 		 int innersize, int outerwidth, int innerwidth, Path *outer_path,
 					  Path *inner_path, List *keys, MergeOrder *order,
 		   List *mergeclauses, List *outersortkeys, List *innersortkeys);

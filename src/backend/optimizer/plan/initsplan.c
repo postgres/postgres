@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.13 1998/07/18 04:22:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.14 1998/08/04 16:44:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo,
 							 List *join_relids);
 static void add_vars_to_rels(Query *root, List *vars, List *join_relids);
 
-static MergeOrder *mergesortop(Expr *clause);
+static MergeOrder *mergejoinop(Expr *clause);
 static Oid	hashjoinop(Expr *clause);
 
 
@@ -180,7 +180,7 @@ add_clause_to_rels(Query *root, List *clause)
 	clauseinfo->notclause = contains_not((Node *) clause);
 	clauseinfo->selectivity = 0;
 	clauseinfo->indexids = NIL;
-	clauseinfo->mergesortorder = (MergeOrder *) NULL;
+	clauseinfo->mergejoinorder = (MergeOrder *) NULL;
 	clauseinfo->hashjoinoperator = (Oid) 0;
 
 
@@ -324,8 +324,8 @@ add_vars_to_rels(Query *root, List *vars, List *join_relids)
 
 /*
  * initialize-join-clause-info--
- *	  Set the MergeSortable or HashJoinable field for every joininfo node
- *	  (within a rel node) and the MergeSortOrder or HashJoinOp field for
+ *	  Set the MergeJoinable or HashJoinable field for every joininfo node
+ *	  (within a rel node) and the MergeJoinOrder or HashJoinOp field for
  *	  each clauseinfo node(within a joininfo node) for all relations in a
  *	  query.
  *
@@ -357,15 +357,15 @@ initialize_join_clause_info(List *rel_list)
 					MergeOrder *sortop = (MergeOrder *) NULL;
 					Oid			hashop = (Oid) NULL;
 
-					if (_enable_mergesort_)
-						sortop = mergesortop(clause);
+					if (_enable_mergejoin_)
+						sortop = mergejoinop(clause);
 					if (_enable_hashjoin_)
 						hashop = hashjoinop(clause);
 
 					if (sortop)
 					{
-						clauseinfo->mergesortorder = sortop;
-						joininfo->mergesortable = true;
+						clauseinfo->mergejoinorder = sortop;
+						joininfo->mergejoinable = true;
 					}
 					if (hashop)
 					{
@@ -379,19 +379,19 @@ initialize_join_clause_info(List *rel_list)
 }
 
 /*
- * mergesortop--
- *	  Returns the mergesort operator of an operator iff 'clause' is
- *	  mergesortable, i.e., both operands are single vars and the operator is
- *	  a mergesortable operator.
+ * mergejoinop--
+ *	  Returns the mergejoin operator of an operator iff 'clause' is
+ *	  mergejoinable, i.e., both operands are single vars and the operator is
+ *	  a mergejoinable operator.
  */
 static MergeOrder *
-mergesortop(Expr *clause)
+mergejoinop(Expr *clause)
 {
 	Oid			leftOp,
 				rightOp;
 	bool		sortable;
 
-	sortable = op_mergesortable(((Oper *) clause->oper)->opno,
+	sortable = op_mergejoinable(((Oper *) clause->oper)->opno,
 								(get_leftop(clause))->vartype,
 								(get_rightop(clause))->vartype,
 								&leftOp,

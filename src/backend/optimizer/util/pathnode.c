@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.9 1998/07/18 04:22:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.10 1998/08/04 16:44:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -462,8 +462,8 @@ create_nestloop_path(RelOptInfo *joinrel,
 }
 
 /*
- * create_mergesort_path--
- *	  Creates a pathnode corresponding to a mergesort join between
+ * create_mergejoin_path--
+ *	  Creates a pathnode corresponding to a mergejoin join between
  *	  two relations
  *
  * 'joinrel' is the join relation
@@ -481,7 +481,7 @@ create_nestloop_path(RelOptInfo *joinrel,
  *
  */
 MergePath  *
-create_mergesort_path(RelOptInfo *joinrel,
+create_mergejoin_path(RelOptInfo *joinrel,
 					  int outersize,
 					  int innersize,
 					  int outerwidth,
@@ -509,7 +509,7 @@ create_mergesort_path(RelOptInfo *joinrel,
 	pathnode->outersortkeys = outersortkeys;
 	pathnode->innersortkeys = innersortkeys;
 	pathnode->jpath.path.path_cost =
-		cost_mergesort(outer_path->path_cost,
+		cost_mergejoin(outer_path->path_cost,
 					   inner_path->path_cost,
 					   outersortkeys,
 					   innersortkeys,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.8 1998/07/18 04:22:45 momjian Exp $
+ * $Id: relation.h,v 1.9 1998/08/04 16:44:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,8 +215,8 @@ typedef struct CInfo
 	bool		notclause;
 	List	   *indexids;
 
-	/* mergesort only */
-	MergeOrder *mergesortorder;
+	/* mergejoin only */
+	MergeOrder *mergejoinorder;
 
 	/* hashjoin only */
 	Oid			hashjoinoperator;
@@ -247,7 +247,7 @@ typedef struct JInfo
 	NodeTag		type;
 	List	   *otherrels;
 	List	   *jinfoclauseinfo;
-	bool		mergesortable;
+	bool		mergejoinable;
 	bool		hashjoinable;
 	bool		inactive;
 } JInfo;

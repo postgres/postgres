@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.29 1998/07/18 04:22:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.30 1998/08/04 16:44:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ make_hashjoin(List *tlist, List *qpqual,
 			  List *hashclauses, Plan *lefttree, Plan *righttree);
 static Hash *make_hash(List *tlist, Var *hashkey, Plan *lefttree);
 static MergeJoin *
-make_mergesort(List *tlist, List *qpqual,
+make_mergejoin(List *tlist, List *qpqual,
 			   List *mergeclauses, Oid opcode, Oid *rightorder,
 			   Oid *leftorder, Plan *righttree, Plan *lefttree);
 static Material *
@@ -584,7 +584,7 @@ create_mergejoin_node(MergePath *best_path,
 		inner_node = (Plan *) sorted_inner_node;
 	}
 
-	join_node = make_mergesort(tlist,
+	join_node = make_mergejoin(tlist,
 							   qpqual,
 							   mergeclauses,
 							   opcode,
@@ -1038,7 +1038,7 @@ make_hash(List *tlist, Var *hashkey, Plan *lefttree)
 }
 
 static MergeJoin *
-make_mergesort(List *tlist,
+make_mergejoin(List *tlist,
 			   List *qpqual,
 			   List *mergeclauses,
 			   Oid opcode,
@@ -1058,7 +1058,7 @@ make_mergesort(List *tlist,
 	plan->lefttree = lefttree;
 	plan->righttree = righttree;
 	node->mergeclauses = mergeclauses;
-	node->mergesortop = opcode;
+	node->mergejoinop = opcode;
 	node->mergerightorder = rightorder;
 	node->mergeleftorder = leftorder;
 

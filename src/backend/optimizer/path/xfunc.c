@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.16 1998/07/18 04:22:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.17 1998/08/04 16:44:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1022,7 +1022,7 @@ xfunc_total_path_cost(JoinPath pathnode)
 	{
 		MergePath	mrgnode = (MergePath) pathnode;
 
-		cost += cost_mergesort(get_path_cost((Path) get_outerjoinpath(mrgnode)),
+		cost += cost_mergejoin(get_path_cost((Path) get_outerjoinpath(mrgnode)),
 						get_path_cost((Path) get_innerjoinpath(mrgnode)),
 							   get_outersortkeys(mrgnode),
 							   get_innersortkeys(mrgnode),

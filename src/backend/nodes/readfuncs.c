@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.34 1998/08/01 22:12:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.35 1998/08/04 16:44:00 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -407,9 +407,9 @@ _readMergeJoin()
 	token = lsptok(NULL, &length);		/* eat :mergeclauses */
 	local_node->mergeclauses = nodeRead(true);	/* now read it */
 
-	token = lsptok(NULL, &length);		/* eat :mergesortop */
-	token = lsptok(NULL, &length);		/* get mergesortop */
-	local_node->mergesortop = atol(token);
+	token = lsptok(NULL, &length);		/* eat :mergejoinop */
+	token = lsptok(NULL, &length);		/* get mergejoinop */
+	local_node->mergejoinop = atol(token);
 
 	return (local_node);
 }
@@ -1794,8 +1794,8 @@ _readCInfo()
 	token = lsptok(NULL, &length);		/* get :indexids */
 	local_node->indexids = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :mergesortorder */
-	local_node->mergesortorder = (MergeOrder *) nodeRead(true);
+	token = lsptok(NULL, &length);		/* get :mergejoinorder */
+	local_node->mergejoinorder = (MergeOrder *) nodeRead(true);
 
 	token = lsptok(NULL, &length);		/* get :hashjoinoperator */
 	token = lsptok(NULL, &length);		/* now read it */
@@ -1880,12 +1880,12 @@ _readJInfo()
 	token = lsptok(NULL, &length);		/* get :jinfoclauseinfo */
 	local_node->jinfoclauseinfo = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :mergesortable */
+	token = lsptok(NULL, &length);		/* get :mergejoinable */
 
 	if (!strncmp(token, "true", 4))
-		local_node->mergesortable = true;
+		local_node->mergejoinable = true;
 	else
-		local_node->mergesortable = false;
+		local_node->mergejoinable = false;
 
 	token = lsptok(NULL, &length);		/* get :hashjoinable */
 

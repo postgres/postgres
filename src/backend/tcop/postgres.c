@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.81 1998/07/26 04:30:46 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.82 1998/08/04 16:44:20 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -977,7 +977,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 						_enable_nestloop_ = false;
 						break;
 					case 'm':	/* mergejoin */
-						_enable_mergesort_ = false;
+						_enable_mergejoin_ = false;
 						break;
 					case 'h':	/* hashjoin */
 						_enable_hashjoin_ = false;
@@ -1339,7 +1339,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.81 $ $Date: 1998/07/26 04:30:46 $");
+		puts("$Revision: 1.82 $ $Date: 1998/08/04 16:44:20 $");
 	}
 
 	/* ----------------
