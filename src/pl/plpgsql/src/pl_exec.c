@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.95 2004/02/03 17:34:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.96 2004/02/24 01:44:33 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -262,10 +262,18 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 					HeapTuple	tup;
 					TupleDesc	tupdesc;
 
-					Assert(slot != NULL && !fcinfo->argnull[i]);
-					tup = slot->val;
-					tupdesc = slot->ttc_tupleDescriptor;
-					exec_move_row(&estate, NULL, row, tup, tupdesc);
+					if (!fcinfo->argnull[i])
+					{
+						Assert(slot != NULL);
+						tup = slot->val;
+						tupdesc = slot->ttc_tupleDescriptor;
+						exec_move_row(&estate, NULL, row, tup, tupdesc);
+					}
+					else
+					{
+						/* If arg is null, treat it as an empty row */
+						exec_move_row(&estate, NULL, row, NULL, NULL);
+					}
 				}
 				break;
 
