@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.19 1997/09/08 03:20:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.20 1997/09/12 09:01:46 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,6 +303,7 @@ CurScanPosition(void)
 #endif /* !defined(FLEX_SCANNER) */
 
 #ifdef FLEX_SCANNER
+static bool end_of_buf = false;
 /* input routine for flex to read input from a string instead of a file */
 int
 myinput(char* buf, int max)
@@ -320,17 +321,28 @@ myinput(char* buf, int max)
 			memcpy(buf, parseString, copylen);
 		buf[copylen] = '\0';
 		parseCh = parseString;
+		end_of_buf = false;
 		return copylen;
 	}
 	else
+	{
+		end_of_buf = true;
 		return 0; /* end of string */
+	}
 }
 
 int
 CurScanPosition(void)
 {
-	printf( "current position is %d\n", yy_c_buf_p - yy_current_buffer->yy_ch_buf - yyleng);
-	return (yy_c_buf_p - yy_current_buffer->yy_ch_buf - yyleng);
+	int spos;
+	
+	if ( end_of_buf )
+		spos = strlen (parseString) - strlen (yytext);
+	else
+		spos = yy_c_buf_p - yy_current_buffer->yy_ch_buf - yyleng;
+	
+	printf( "current position is %d\n", spos);
+	return (spos);
 }
 
 #endif /* FLEX_SCANNER */
