@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.236 2005/01/26 20:42:19 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.237 2005/01/28 23:12:59 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -8506,6 +8506,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </para>
 
    <indexterm zone="functions-info">
+    <primary>format_type</primary>
+   </indexterm>
+
+   <indexterm zone="functions-info">
     <primary>pg_get_viewdef</primary>
    </indexterm>
 
@@ -8554,6 +8558,11 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
      </thead>
 
      <tbody>
+      <row>
+       <entry><literal><function>format_type</function>(<parameter>type_oid</parameter>, <parameter>typemod</>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get SQL name of a data type</entry>
+      </row>
       <row>
        <entry><literal><function>pg_get_viewdef</function>(<parameter>view_name</parameter>)</literal></entry>
        <entry><type>text</type></entry>
@@ -8642,6 +8651,12 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
      </tbody>
     </tgroup>
    </table>
+
+  <para>
+   <function>format_type</function> returns the SQL name of a data type that
+   is identified by its type OID and possibly a type modifier.  Pass NULL
+   for the type modifier if no specific modifier is known.
+  </para>
 
   <para>
    <function>pg_get_viewdef</function>,
