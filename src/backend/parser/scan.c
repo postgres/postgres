@@ -556,7 +556,7 @@ char *yytext;
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/scan.c,v 1.35 1999/02/13 23:17:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/scan.c,v 1.36 1999/02/14 05:14:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -242,7 +242,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.72 1999/02/13 23:16:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.73 1999/02/14 05:14:09 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
