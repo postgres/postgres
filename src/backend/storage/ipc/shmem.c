@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.8 1996/11/27 08:15:44 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.9 1997/06/06 22:04:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -483,7 +483,9 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
     
     if (! BindingTable) {
 	/* Assert() is a macro now. substitutes inside quotes. */
+#ifndef	NO_ASSERT_CHECKING
 	char *strname = "BindingTable";
+#endif
 	
 	/* If the binding table doesnt exist, we fake it.
 	 *
