@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.2 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.3 2000/03/31 06:17:21 thomas Exp $
 -->
 
  <chapter id="pl-perl">
-  <title>Perl Procedural Language</title>
+  <title>PL/perl - Perl Procedural Language</title>
 
   <para>
    This chapter describes how to compile, install and

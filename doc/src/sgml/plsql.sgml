@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.2 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.3 2000/03/31 06:17:21 thomas Exp $
 -->
 
  <chapter>
-  <title>PL/pgSQL</title>
+  <title>PL/pgSQL - SQL Procedural Language</title>
 
   <para>
    PL/pgSQL is a loadable procedural language for the
