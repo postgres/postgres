@@ -24,4 +24,28 @@
 	- Fix incorrect type translation and many other bug fix
 	- Add schema only extraction by option schema => 'MYSCHEM'
 
+2001 06 27 - Version 1.4
+	- Add online Oracle data extraction and insertion into PG database.
+	- Data export as insert statement (type => DATA)
+	- Data export as copy from stdin statement (type => COPY)
+
+2001 12 28 - Version 1.5
+	- Fix LongReadLen problem when exporting Oracle data on LONG and LOB types
+	  Thanks to Stephane Schildknecht for reporting and testing the fix.
+	- Add more precision on NUMBER type conversion
+	- Add conversion of type LONG, LOB, FILE
+	- Fix a problem when extracting data, sometime table could need to be prefixed
+	  by the schema name.
+	- Fix output of Oracle data extraction. It now require a call to the function
+	  export_data().
+2002 01 07 - Version 1.6
+	- Fix problem exporting NULL value. Thanks to Stephane Schildknecht.
+
+2002 02 14 - Version 1.7
+	- Remove export of OUTLINE object type. Thanks to Jean-Paul ARGUDO.
+
+2002 03 05 - Version 1.8
+	- Add Oracle type FLOAT conversion to float8.
+	- Add column alias extraction on view. Thanks to Jean-Francois RIPOUTEAU
+	- Add PACKAGE extraction (type => DATA).
 

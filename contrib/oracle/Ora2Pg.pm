@@ -13,13 +13,13 @@ package Ora2Pg;
 # the same terms as Perl itself.
 #------------------------------------------------------------------------------
 
-use strict;
-use vars qw($VERSION);
+#use strict;
+use vars qw($VERSION $PSQL);
 use Carp qw(confess);
 use DBI;
 
-$VERSION = "1.2";
-
+$VERSION = "1.8";
+$PSQL = "psql";
 
 =head1 NAME
 
@@ -46,6 +46,11 @@ Ora2Pg - Oracle to PostgreSQL database schema converter
 		datasource => $dbsrc,           # Database DBD datasource
 		user => $dbuser,                # Database user
 		password => $dbpwd,             # Database password
+		{
+			PrintError => 0,
+			RaiseError => 1,
+			AutoCommit => 0
+		}
 	);
 
 	# Create the POSTGRESQL representation of all objects in the database
@@ -88,41 +93,82 @@ or if you only want to extract tables 10 to 20:
 		max => 20			# End extraction at indice 20
 	);
 
-To choose a particular schema just set the following option to your schema name :
+To choose a particular Oracle schema to export just set the following option
+to your schema name:
 
 	schema => 'APPS'
 
-To know at which indices table can be found during extraction use the option:
+This schema definition can also be needed when you want to export data. If export
+failed and complain that the table doesn't exists use this to prefix the table name
+by the schema name.
+
+To know at which indices tables can be found during extraction use the option:
 
 	showtableid => 1
 
-To extract all views set the option type as follow:
+To extract all views set the type option as follow:
 
 	type => 'VIEW'
 
-To extract all grants set the option type as follow:
+To extract all grants set the type option as follow:
 
 	type => 'GRANT'
 
-To extract all sequences set the option type as follow:
+To extract all sequences set the type option as follow:
 
 	type => 'SEQUENCE'
 
-To extract all triggers set the option type as follow:
+To extract all triggers set the type option as follow:
 
 	type => 'TRIGGER'
 
-To extract all functions set the option type as follow:
+To extract all functions set the type option as follow:
 
 	type => 'FUNCTION'
 
-To extract all procedures set the option type as follow:
+To extract all procedures set the type option as follow:
 
 	type => 'PROCEDURE'
 
-Default is table schema extraction
+To extract all packages and body set the type option as follow:
+
+	type => 'PACKAGE'
+
+Default is table extraction
 
 	type => 'TABLE'
+
+To extract all data from table extraction as INSERT statement use:
+
+	type => 'DATA'
+
+To extract all data from table extraction as COPY statement use:
+
+	type => 'COPY'
+
+and data_limit => n to specify the max tuples to return. If you set
+this options to 0 or nothing, no limitation are used. Additional option
+'table', 'min' and 'max' can also be used.
+
+When use of COPY or DATA you can export data by calling method:
+
+$schema->export_data("output.sql");
+
+Data are dumped to the given filename or to STDOUT with no argument.
+You can also send these data directly to a PostgreSQL backend using
+ the following method:
+
+$schema->send_to_pgdb($destdatasrc,$destuser,$destpasswd);
+
+In this case you must call export_data() without argument after the
+call to method send_to_pgdb().
+
+If you set type to COPY and you want to dump data directly to a PG database,
+you must call method send_to_pgdb but data will not be sent via DBD::Pg but
+they will be load to the database using the psql command. Calling this method
+is istill required to be able to extract database name, hostname and port
+information. Edit the $PSQL variable to match the path of your psql
+command (nothing to edit if psql is in your path).
 
 
 =head1 DESCRIPTION
@@ -140,6 +186,9 @@ wrong and what can be better.
 It currently dump the database schema (tables, views, sequences, indexes, grants),
 with primary, unique and foreign keys into PostgreSQL syntax without editing the
 SQL code generated.
+
+It now can dump Oracle data into PostgreSQL DB as online process. You can choose
+what columns can be exported for each table.
 
 Functions, procedures and triggers PL/SQL code generated must be reviewed to match
 the PostgreSQL syntax. Some usefull recommandation on porting Oracle to PostgreSQL
@@ -161,9 +210,9 @@ Features must include:
 	  with unique, primary and foreign key.
 	- Grants/privileges export by user and group.
 	- Table selection (by name and max table) export.
-	- Predefined functions/triggers/procedures export.
+	- Predefined functions/triggers/procedures/packages export.
+	- Data export.
 	- Sql query converter (todo)
-	- Data export (todo)
 
 My knowledge regarding database is really poor especially for Oracle
 so contribution is welcome.
@@ -171,7 +220,7 @@ so contribution is welcome.
 
 =head1 REQUIREMENT
 
-You just need the DBI and DBD::Oracle perl module to be installed
+You just need the DBI, DBD::Pg and DBD::Oracle perl module to be installed
 
 
 
@@ -187,12 +236,14 @@ Supported options are:
 	- user		: DBD user (optional with public access)
 	- password	: DBD password (optional with public access)
 	- schema	: Oracle internal schema to extract
-	- type		: Type of data to extract, can be TABLE,VIEW,GRANT,SEQUENCE,TRIGGER,FUNCTION,PROCEDURE
+	- type		: Type of data to extract, can be TABLE,VIEW,GRANT,SEQUENCE,
+			  TRIGGER,FUNCTION,PROCEDURE,DATA,COPY,PACKAGE
 	- debug		: Print the current state of the parsing
 	- tables	: Extract only the given tables (arrayref)
 	- showtableid	: Display only the table indice during extraction
 	- min		: Indice to begin extraction. Default to 0
 	- max		: Indice to end extraction. Default to 0 mean no limits
+	- data_limit	: Number max of tuples to return during data extraction (default 10)
 
 Attempt that this list should grow a little more because all initialization is
 done by this way.
@@ -215,10 +266,26 @@ sub new
 }
 
 
+=head2 export_data FILENAME
+
+Print SQL data output to a filename or
+to STDOUT if no file is given. 
+
+Must be used only if type option is set to DATA or COPY
+=cut
+
+sub export_data
+{
+	my ($self, $outfile) = @_;
+
+	$self->_get_sql_data($outfile);
+}
+
+
 =head2 export_sql FILENAME
 
 Print SQL conversion output to a filename or
-to STDOUT if no file is given. 
+simply return these data if no file is given. 
 
 =cut
 
@@ -233,13 +300,66 @@ sub export_schema
 		close FILE;
 		return; 
 	}
+
 	# Return data as string
 	return $self->_get_sql_data();
 
 }
 
 
-#### Private subroutines
+=head2 send_to_pgdb DEST_DATASRC DEST_USER DEST_PASSWD
+
+Open a DB handle to a PostgreSQL database
+
+=cut
+
+sub send_to_pgdb
+{
+	my ($self, $destsrc, $destuser, $destpasswd) = @_;
+
+        # Connect the database
+        $self->{dbhdest} = DBI->connect($destsrc, $destuser, $destpasswd);
+
+	$destsrc =~ /dbname=([^;]*)/;
+	$self->{dbname} = $1;
+	$destsrc =~ /host=([^;]*)/;
+	$self->{dbhost} = $1;
+	$self->{dbhost} = 'localhost' if (!$self->{dbhost});
+	$destsrc =~ /port=([^;]*)/;
+	$self->{dbport} = $1;
+	$self->{dbport} = 5432 if (!$self->{dbport});
+	$self->{dbuser} = $destuser;
+
+        # Check for connection failure
+        if (!$self->{dbhdest}) {
+		die "Error : $DBI::err ... $DBI::errstr\n";
+	}
+
+}
+
+
+=head2 modify_struct TABLE_NAME ARRAYOF_FIELDNAME
+
+Modify a table structure during export. Only given fieldname
+will be exported. 
+
+=cut
+
+sub modify_struct
+{
+	my ($self, $table, @fields) = @_;
+
+	map { $_ = lc($_) } @fields;
+	$table = lc($table);
+
+	push(@{$self->{modify}{$table}}, @fields);
+
+}
+
+
+
+
+#### Private subroutines ####
 
 =head1 PRIVATE METHODS
 
@@ -262,6 +382,11 @@ sub _init
 		die "Error : $DBI::err ... $DBI::errstr\n";
 	}
 
+	# Save the DB connection
+	$self->{datasource} = $options{datasource};
+	$self->{user} = $options{user};
+	$self->{password} = $options{password};
+
 	$self->{debug} = 0;
 	$self->{debug} = 1 if ($options{debug});
 
@@ -281,10 +406,14 @@ sub _init
 	$self->{showtableid} = $options{showtableid} if ($options{showtableid});
 
 	$self->{dbh}->{LongReadLen} = 0;
-	#$self->{dbh}->{LongTrunkOk} = 1;
+	#$self->{dbh}->{LongTruncOk} = 1;
+
+	$self->{data_limit} = 10;
+	$self->{data_current} = 0;
+	$self->{data_limit} = $options{data_limit} if (exists $options{data_limit});
 
 	# Retreive all table informations
-	if (!exists $options{type} || ($options{type} eq 'TABLE')) {
+	if (!exists $options{type} || ($options{type} eq 'TABLE') || ($options{type} eq 'DATA') || ($options{type} eq 'COPY')) {
 		$self->_tables();
 	} elsif ($options{type} eq 'VIEW') {
 		$self->{dbh}->{LongReadLen} = 100000;
@@ -299,8 +428,11 @@ sub _init
 	} elsif (($options{type} eq 'FUNCTION') || ($options{type} eq 'PROCEDURE')) {
 		$self->{dbh}->{LongReadLen} = 100000;
 		$self->_functions($options{type});
+	} elsif ($options{type} eq 'PACKAGE') {
+		$self->{dbh}->{LongReadLen} = 100000;
+		$self->_packages();
 	} else {
-		die "type option must be TABLE, VIEW, GRANT, SEQUENCE, TRIGGER, FUNCTION or PROCEDURE\n";
+		die "type option must be TABLE, VIEW, GRANT, SEQUENCE, TRIGGER, PACKAGE, FUNCTION or PROCEDURE\n";
 	}
 	$self->{type} = $options{type};
 
@@ -393,6 +525,24 @@ print STDERR "Retrieving functions information...\n" if ($self->{debug});
 }
 
 
+=head2 _packages
+
+This function is used to retrieve all packages information.
+
+Set the main hash $self->{packages}.
+
+=cut
+
+sub _packages
+{
+	my ($self) = @_;
+
+print STDERR "Retrieving packages information...\n" if ($self->{debug});
+	$self->{packages} = $self->_get_packages();
+
+}
+
+
 =head2 _tables
 
 This function is used to retrieve all table information.
@@ -451,7 +601,7 @@ print STDERR "Max table dump set to $self->{max}.\n" if ($self->{debug} && $self
 		foreach my $t (@$table) {
 			# Jump to desired extraction
 if (grep(/^${@$t}[2]$/, @done)) {
-print STDERR "SSSSSS duplicate ${@$t}[0] - ${@$t}[1] - ${@$t}[2]\n";
+print STDERR "Duplicate entry found: ${@$t}[0] - ${@$t}[1] - ${@$t}[2]\n";
 } else {
 push(@done, ${@$t}[2]);
 }
@@ -540,6 +690,8 @@ print STDERR "Max view dump set to $self->{max}.\n" if ($self->{debug} && $self-
 print STDERR "[$i] " if ($self->{max} || $self->{min});
 print STDERR "Scanning $table...\n" if ($self->{debug});
 		$self->{views}{$table}{text} = $view_infos{$table};
+                ## Added JFR : 3/3/02 : Retrieve also aliases from views
+                $self->{views}{$table}{alias}= $view_infos{$table}{alias};
 		$i++;
 	}
 
@@ -554,7 +706,7 @@ Returns a string containing the entire SQL Schema definition compatible with Pos
 
 sub _get_sql_data
 {
-	my ($self) = @_;
+	my ($self, $outfile) = @_;
 
 	my $sql_header = "-- Generated by Ora2Pg, the Oracle database Schema converter, version $VERSION\n";
 	$sql_header .= "-- Copyright 2000 Gilles DAROLD. All rights reserved.\n";
@@ -569,7 +721,21 @@ sub _get_sql_data
 	if ($self->{type} eq 'VIEW') {
 print STDERR "Add views definition...\n" if ($self->{debug});
 		foreach my $view (sort keys %{$self->{views}}) {
-			$sql_output .= "CREATE VIEW \"\L$view\E\" AS $self->{views}{$view}{text};\n";
+			if (!@{$self->{views}{$view}{alias}}) {
+				$sql_output .= "CREATE VIEW \"\L$view\E\" AS $self->{views}{$view}{text};\n";
+			} else {
+				$sql_output .= "CREATE VIEW \"\L$view\E\" (";
+				my $count = 0;
+				foreach my $d (@{$self->{views}{$view}{alias}}) {
+					if ($count == 0) {
+						$count = 1;
+					} else {
+						$sql_output .= ", "
+					}
+					$sql_output .= "$d->[0]";
+				}
+				$sql_output .= ") AS $self->{views}{$view}{text};\n";
+			}
 		}
 
 		if (!$sql_output) {
@@ -578,7 +744,7 @@ print STDERR "Add views definition...\n" if ($self->{debug});
 			$sql_output .= "\n";
 		}
 
-		return $sql_header . $sql_output . "\nEND TRANSACTION";
+		return $sql_header . $sql_output . "\nEND TRANSACTION;\n";
 	}
 
 	# Process grant only
@@ -629,7 +795,7 @@ print STDERR "Add groups/users privileges...\n" if ($self->{debug});
 
 		$sql_output .= "\n" . $grants . "\n";
 
-		return $sql_header . $sql_output . "\nEND TRANSACTION";
+		return $sql_header . $sql_output . "\nEND TRANSACTION;\n";
 	}
 
 	# Process sequences only
@@ -653,7 +819,7 @@ print STDERR "Add sequences definition...\n" if ($self->{debug});
 			$sql_output = "-- Nothing found of type $self->{type}\n";
 		}
 
-		return $sql_header . $sql_output . "\nEND TRANSACTION";
+		return $sql_header . $sql_output . "\nEND TRANSACTION;\n";
 	}
 
 	# Process triggers only. PL/SQL code is pre-converted to PL/PGSQL following
@@ -697,7 +863,7 @@ print STDERR "Add triggers definition...\n" if ($self->{debug});
 			$sql_output = "-- Nothing found of type $self->{type}\n";
 		}
 
-		return $sql_header . $sql_output . "\nEND TRANSACTION";
+		return $sql_header . $sql_output . "\nEND TRANSACTION;\n";
 	}
 
 	# Process functions only
@@ -727,9 +893,248 @@ print STDERR "Add functions definition...\n" if ($self->{debug});
 			$sql_output = "-- Nothing found of type $self->{type}\n";
 		}
 
-		return $sql_header . $sql_output . "\nEND TRANSACTION";
+		return $sql_header . $sql_output . "\nEND TRANSACTION;\n";
 	}
 
+	# Process functions only
+	if ($self->{type} eq 'PACKAGE') {
+print STDERR "Add packages definition...\n" if ($self->{debug});
+		foreach my $pkg (sort keys %{$self->{packages}}) {
+			$sql_output .= "-- Oracle package '$pkg' declaration, please edit to match PostgreSQL syntax.\n";
+			$sql_output .= "$self->{packages}{$pkg}\n";
+			$sql_output .= "-- End of Oracle package '$pkg' declaration\n\n";
+		}
+
+		if (!$sql_output) {
+			$sql_output = "-- Nothing found of type $self->{type}\n";
+		}
+
+		return $sql_header . $sql_output . "\nEND TRANSACTION;\n";
+	}
+
+
+
+	# Extract data only
+	if (($self->{type} eq 'DATA') || ($self->{type} eq 'COPY')) {
+		# Connect the database
+		$self->{dbh} = DBI->connect($self->{datasource}, $self->{user}, $self->{password});
+		# Check for connection failure
+		if (!$self->{dbh}) {
+			die "Error : $DBI::err ... $DBI::errstr\n";
+		}
+
+		if (!$self->{dbhdest}) {
+			if ($outfile) {
+				open(FILE,">$outfile") or die "Can't open $outfile: $!";
+				print FILE $sql_header;
+			} else {
+				print $sql_header;
+			}
+		} else {
+			if ($self->{type} eq 'COPY') {
+				open(DBH, "| $PSQL -h $self->{dbhost} -p $self->{dbport} -d $self->{dbname}") or die "Can't open $PSQL command, $!\n";
+			}
+		}
+
+		foreach my $table (keys %{$self->{tables}}) {
+print STDERR "Dumping table $table...\n" if ($self->{debug});
+			my @tt = ();
+			my @nn = ();
+			my $s_out = "INSERT INTO \"\L$table\E\" (";
+			if ($self->{type} eq 'COPY') {
+				$s_out = "COPY \"\L$table\E\" FROM stdin;\n";
+			}
+
+			foreach my $i ( 0 .. $#{$self->{tables}{$table}{field_name}} ) {
+				my $fieldname = ${$self->{tables}{$table}{field_name}}[$i];
+				if (exists $self->{modify}{"\L$table\E"}) {
+					next if (!grep(/\L$fieldname\E/, @{$self->{modify}{"\L$table\E"}}));
+				}
+				foreach my $f (@{$self->{tables}{$table}{column_info}}) {
+					next if (${$f}[0] ne "$fieldname");
+					my $type = $self->_sql_type(${$f}[1], ${$f}[2], ${$f}[5], ${$f}[6]);
+					$type = "${$f}[1], ${$f}[2]" if (!$type);
+					push(@tt, $type);
+					push(@nn, ${$f}[0]);
+					if ($self->{type} ne 'COPY') {
+						$s_out .= "\"\L${$f}[0]\E\",";
+					}
+					last;
+				}
+			}
+
+			if ($self->{type} ne 'COPY') {
+				$s_out =~ s/,$//;
+				$s_out .= ") VALUES (";
+			}
+			# Extract all data from the current table
+			$self->{data_current} = 0;
+			$self->{data_end} = 0;
+			while ( !$self->{data_end} ) {
+				my $sth = $self->_get_data($table, \@nn, \@tt);
+				$self->{data_end} = 1 if (!$self->{data_limit});
+				my $count = 0;
+				my $sql = '';
+				if ($self->{type} eq 'COPY') {
+					if ($self->{dbhdest}) {
+						$sql = $s_out;
+					} else {
+						if ($outfile) {
+							print FILE $s_out;
+						} else {
+							print $s_out;
+						}
+					}
+				}
+				while (my $row = $sth->fetch) {
+					if ($self->{type} ne 'COPY') {
+						if ($self->{dbhdest}) {
+							$sql .= $s_out;
+						} else {
+							if ($outfile) {
+								print FILE $s_out;
+							} else {
+								print $s_out;
+							}
+						}
+					}
+					for (my $i = 0; $i <= $#{$row}; $i++) {
+						if ($self->{type} ne 'COPY') {
+							if ($tt[$i] =~ /(char|date|time|text)/) {
+								$row->[$i] =~ s/'/''/gs;
+								if ($row->[$i]) {
+									$row->[$i] = "'$row->[$i]'";
+								} else {
+									$row->[$i] = 'NULL';
+								}
+								if ($self->{dbhdest}) {
+									$sql .= $row->[$i];
+								} else {
+									if ($outfile) {
+										print FILE $row->[$i];
+									} else {
+										print $row->[$i];
+									}
+								}
+							} else {
+								if (!$row->[$i]) {
+									$row->[$i] = 'NULL';
+								}
+								if ($self->{dbhdest}) {
+									$sql .= $row->[$i];
+								} else {
+									if ($outfile) {
+										print FILE $row->[$i];
+									} else {
+										print $row->[$i];
+									}
+								}
+							}
+							if ($i < $#{$row}) {
+								if ($self->{dbhdest}) {
+									$sql .= ",";
+								} else {
+									if ($outfile) {
+										print FILE ",";
+									} else {
+										print ",";
+									}
+								}
+							}
+						} else {
+							if (!$row->[$i]) {
+								$row->[$i] = '\N';
+							}
+							if ($self->{dbhdest}) {
+								$sql .= $row->[$i];
+							} else {
+								if ($outfile) {
+									print FILE $row->[$i];
+								} else {
+									print $row->[$i];
+								}
+							}
+							if ($i < $#{$row}) {
+								if ($self->{dbhdest}) {
+									$sql .= "\t";
+								} else {
+									if ($outfile) {
+										print FILE "\t";
+									} else {
+										print "\t";
+									}
+								}
+							} else {
+								if ($self->{dbhdest}) {
+									$sql .= "\n";
+								} else {
+									if ($outfile) {
+										print FILE "\n";
+									} else {
+										print "\n";
+									}
+								}
+							}
+						}
+					}
+					if ($self->{type} ne 'COPY') {
+						if ($self->{dbhdest}) {
+							$sql .= ");\n";
+						} else {
+							if ($outfile) {
+								print FILE ");\n";
+							} else {
+								print ");\n";
+							}
+						}
+					}
+					$count++;
+				}
+				if ($self->{type} eq 'COPY') {
+					if ($self->{dbhdest}) {
+						$sql .= "\\.\n";
+					} else {
+						if ($outfile) {
+							print FILE "\\.\n";
+						} else {
+							print "\\.\n";
+						}
+					}
+				}
+				if ($self->{data_limit}) {
+					$self->{data_end} = 1 if ($count+1 < $self->{data_limit});
+				}
+				# Insert data if we are in online processing mode
+				if ($self->{dbhdest}) {
+					if ($self->{type} ne 'COPY') {
+						my $s = $self->{dbhdest}->prepare($sql) or die $self->{dbhdest}->errstr . "\n";
+						$s->execute or die $s->errstr . "\n";
+					} else {
+						print DBH "$sql";
+					}
+				}
+			}
+		}
+
+		# Disconnect from the database
+		$self->{dbh}->disconnect() if ($self->{dbh});
+
+		if (!$self->{dbhdest}) {
+			if ($outfile) {
+				print FILE "\nEND TRANSACTION;\n";
+			} else {
+				print "\nEND TRANSACTION;\n";
+			}
+		}
+
+		$self->{dbhdest}->disconnect() if ($self->{dbhdest});
+
+		if ($self->{type} eq 'COPY') {
+			close DBH;
+		}
+
+		return;
+	}
 
 
 	# Dump the database structure
@@ -741,7 +1146,7 @@ print STDERR "Dumping table $table...\n" if ($self->{debug});
 		foreach my $i ( 0 .. $#{$self->{tables}{$table}{field_name}} ) {
 			foreach my $f (@{$self->{tables}{$table}{column_info}}) {
 				next if (${$f}[0] ne "${$self->{tables}{$table}{field_name}}[$i]");
-				my $type = $self->_sql_type(${$f}[1], ${$f}[2]);
+				my $type = $self->_sql_type(${$f}[1], ${$f}[2], ${$f}[5], ${$f}[6]);
 				$type = "${$f}[1], ${$f}[2]" if (!$type);
 				$sql_output .= "\t\"\L${$f}[0]\E\" $type";
 				# Set the primary key definition 
@@ -803,11 +1208,63 @@ print STDERR "Dumping table $table...\n" if ($self->{debug});
 		$sql_output = "-- Nothing found of type TABLE\n";
 	}
 
-	return $sql_header . $sql_output . "\nEND TRANSACTION";
+	return $sql_header . $sql_output . "\nEND TRANSACTION;\n";
 }
 
 
-=head2 _sql_type INTERNAL_TYPE LENGTH
+=head2 _get_data TABLE
+
+This function implements a Oracle-native data extraction.
+
+Return a list of array reference containing the data
+
+=cut
+
+sub _get_data
+{
+	my ($self, $table, $name, $type) = @_;
+
+	my $str = "SELECT ";
+	my $tmp = "SELECT ";
+	for my $k (0 .. $#{$name}) {
+		if ( $type->[$k] =~ /(date|time)/) {
+			$str .= "to_char($name->[$k], 'YYYY-MM-DD'),";
+		} else {
+			$str .= "$name->[$k],";
+		}
+		$tmp .= "$name->[$k],";
+	}
+	$str =~ s/,$//;
+	$tmp =~ s/,$//;
+	my $tmp2 = $tmp;
+	$tmp2 =~ s/SELECT /SELECT ROWNUM as noline,/;
+
+	# Fix a problem when the table need to be prefixed by the schema
+	if ($self->{schema}) {
+		$table = "$self->{schema}.$table";
+	}
+	if ($self->{data_limit}) {
+		$str = $tmp . " FROM ( $tmp2 FROM ( $tmp FROM $table) ";
+		$str .= " WHERE ROWNUM < ($self->{data_limit} + $self->{data_current})) ";
+		$str .= " WHERE noline >= $self->{data_current}";
+	} else {
+		$str .= " FROM $table";
+	}
+	$self->{data_current} += $self->{data_limit};
+
+	# Fix a problem when exporting type LONG and LOB
+	$self->{dbh}->{'LongReadLen'} = 1023*1024;
+	$self->{dbh}->{'LongTruncOk'} = 1;
+
+	my $sth = $self->{dbh}->prepare($str) or die $sth->errstr . "\n";
+	$sth->execute or die $sth->errstr . "\n";
+
+	return $sth;	
+
+}
+
+
+=head2 _sql_type INTERNAL_TYPE LENGTH PRECISION SCALE
 
 This function return the PostgreSQL datatype corresponding to the
 Oracle internal type.
@@ -816,32 +1273,70 @@ Oracle internal type.
 
 sub _sql_type
 {
-        my ($self, $type, $len) = @_;
+        my ($self, $type, $len, $precision, $scale) = @_;
 
         my %TYPE = (
+		# Oracle only has one flexible underlying numeric type, NUMBER.
+		# Without precision and scale it is set to PG type float8 to match all needs
                 'NUMBER' => 'float8',
-                'LONG' => 'integer',
+		# CHAR types limit of 2000 bytes with default to 1 if no length is given.
+		# PG char type has max length set to 8104 so it should match all needs
                 'CHAR' => 'char',
+                'NCHAR' => 'char',
+		# VARCHAR types the limit is 2000 bytes in Oracle 7 and 4000 in Oracle 8.
+		# PG varchar type has max length iset to 8104 so it should match all needs
+                'VARCHAR' => 'varchar',
+                'NVARCHAR' => 'varchar',
                 'VARCHAR2' => 'varchar',
+                'NVARCHAR2' => 'varchar',
+		# The DATE data type is used to store the date and time information.
+		# Pg type datetime should match all needs
                 'DATE' => 'datetime',
+		# Type LONG is like VARCHAR2 but with up to 2Gb.
+		# PG type text should match all needs or if you want you could use blob
+                'LONG' => 'text', # Character data of variable length
+                'LONG RAW' => 'text', # Raw binary data of variable length
+		# Types LOB and FILE are like LONG but with up to 4Gb.
+		# PG type text should match all needs or if you want you could use blob (large object)
+                'CLOB' => 'text', # A large object containing single-byte characters
+                'NLOB' => 'text', # A large object containing national character set data
+                'BLOB' => 'text', # Binary large object
+                'BFILE' => 'text', # Locator for external large binary file
+		# The RAW type is presented as hexadecimal characters. The contents are treated as binary data. Limit of 2000 bytes
+		# Pg type text should match all needs or if you want you could use blob (large object)
                 'RAW' => 'text',
                 'ROWID' => 'oid',
                 'LONG RAW' => 'binary',
+                'FLOAT' => 'float8'
         );
 
         # Overide the length
-        $len = '' if ($type eq 'NUMBER');
+        $len = $precision if ( ($type eq 'NUMBER') && $precision );
 
         if (exists $TYPE{$type}) {
 		if ($len) {
-			if (($type eq "NUMBER") || ($type eq "LONG")) {
+			if ( ($type eq "CHAR") || ($type =~ /VARCHAR/) ) {
+				# Type CHAR have default length set to 1
+				# Type VARCHAR(2) must have a given length
+				$len = 1 if (!$len && ($type eq "CHAR"));
                 		return "$TYPE{$type}($len)";
-			} elsif (($type eq "CHAR") || ($type =~ /VARCHAR/)) {
-                		return "$TYPE{$type}($len)";
+			} elsif ($type eq "NUMBER") {
+				# This is an integer
+				if (!$scale) {
+					if ($precision) {
+						return "numeric($precision)";
+					}
+				} else {
+					if ($precision) {
+						return "decimal($precision,$scale)";
+					}
+				}
+                		return "$TYPE{$type}";
 			} else {
                 		return "$TYPE{$type}";
 			}
 		} else {
+			
                 	return $TYPE{$type};
 		}
         }
@@ -872,7 +1367,7 @@ sub _column_info
 	my ($self, $table) = @_;
 
 	my $sth = $self->{dbh}->prepare(<<END) or die $self->{dbh}->errstr;
-SELECT COLUMN_NAME, DATA_TYPE, DATA_LENGTH, NULLABLE, DATA_DEFAULT
+SELECT COLUMN_NAME, DATA_TYPE, DATA_LENGTH, NULLABLE, DATA_DEFAULT, DATA_PRECISION, DATA_SCALE
 FROM DBA_TAB_COLUMNS
 WHERE TABLE_NAME='$table'
 END
@@ -880,7 +1375,7 @@ END
 	my $data = $sth->fetchall_arrayref();
 if ($self->{debug}) {
 	foreach my $d (@$data) {
-print STDERR "\t$d->[0] => type:$d->[1] , length:$d->[2] , nullable:$d->[3] , default:$d->[4]\n";
+print STDERR "\t$d->[0] => type:$d->[1] , length:$d->[2], precision:$d->[5], scale:$d->[6], nullable:$d->[3] , default:$d->[4]\n";
 	}
 }
 
@@ -1033,7 +1528,7 @@ sub _get_users
 	# Retrieve all USERS defined in this database
 	my $str = "SELECT USERNAME FROM DBA_USERS";
 	if (!$self->{schema}) {
-		$str .= " WHERE USERNAME <> 'SYS' AND USERNAME <> 'SYSTEM' AND USERNAME <> 'DBSNMP'";
+		$str .= " WHERE USERNAME <> 'SYS' AND USERNAME <> 'SYSTEM' AND USERNAME <> 'DBSNMP' AND USERNAME <> 'OUTLN'";
 	} else {
 		$str .= " WHERE USERNAME = '$self->{schema}'";
 	}
@@ -1067,7 +1562,7 @@ sub _get_roles
 	# Retrieve all ROLES defined in this database
 	my $str = "SELECT GRANTED_ROLE,GRANTEE FROM DBA_ROLE_PRIVS WHERE GRANTEE NOT IN (select distinct role from dba_roles)";
 	if (!$self->{schema}) {
-		$str .= " AND GRANTEE <> 'SYS' AND GRANTEE <> 'SYSTEM' AND GRANTEE <> 'DBSNMP'";
+		$str .= " AND GRANTEE <> 'SYS' AND GRANTEE <> 'SYSTEM' AND GRANTEE <> 'DBSNMP' AND GRANTEE <> 'OUTLN'";
 	} else {
 		$str .= " AND GRANTEE = '$self->{schema}'";
 	}
@@ -1103,7 +1598,7 @@ sub _get_all_grants
 	if ($self->{schema}) {
 		$str .= " WHERE GRANTEE = '$self->{schema}'";
 	} else {
-		$str .= " WHERE GRANTEE <> 'SYS' AND GRANTEE <> 'SYSTEM' AND GRANTEE <> 'DBSNMP'";
+		$str .= " WHERE GRANTEE <> 'SYS' AND GRANTEE <> 'SYSTEM' AND GRANTEE <> 'DBSNMP' AND GRANTEE <> 'OUTLN'";
 	}
 	$str .= " ORDER BY TABLE_NAME";
 
@@ -1167,7 +1662,7 @@ sub _get_sequences
 	# Retrieve all indexes 
 	my $str = "SELECT DISTINCT SEQUENCE_NAME, MIN_VALUE, MAX_VALUE, INCREMENT_BY, LAST_NUMBER, CACHE_SIZE, CYCLE_FLAG FROM DBA_SEQUENCES";
 	if (!$self->{schema}) {
-		$str .= " WHERE SEQUENCE_OWNER <> 'SYS' AND SEQUENCE_OWNER <> 'SYSTEM' AND SEQUENCE_OWNER <> 'DBSNMP'";
+		$str .= " WHERE SEQUENCE_OWNER <> 'SYS' AND SEQUENCE_OWNER <> 'SYSTEM' AND SEQUENCE_OWNER <> 'DBSNMP' AND SEQUENCE_OWNER <> 'OUTLN'";
 	} else {
 		$str .= " WHERE SEQUENCE_OWNER = '$self->{schema}'";
 	}
@@ -1198,7 +1693,7 @@ sub _get_views
 	# Retrieve all views
 	my $str = "SELECT VIEW_NAME,TEXT FROM DBA_VIEWS";
 	if (!$self->{schema}) {
-		$str .= " WHERE OWNER <> 'SYS' AND OWNER <> 'SYSTEM' AND OWNER <> 'DBSNMP'";
+		$str .= " WHERE OWNER <> 'SYS' AND OWNER <> 'SYSTEM' AND OWNER <> 'DBSNMP' AND OWNER <> 'OUTLN'";
 	} else {
 		$str .= " WHERE OWNER = '$self->{schema}'";
 	}
@@ -1208,11 +1703,46 @@ sub _get_views
 	my %data = ();
 	while (my $row = $sth->fetch) {
 		$data{$row->[0]} = $row->[1];
+		@{$data{$row->[0]}{alias}} = $self->_alias_info ($row->[0]);
 	}
 
 	return %data;
 }
 
+=head2 _alias_info
+
+This function implements a Oracle-native column information.
+
+Return a list of array reference containing the following informations
+for each alias of the given view
+
+[(
+  column name,
+  column id
+)]
+
+=cut
+
+sub _alias_info
+{
+        my ($self, $view) = @_;
+
+        my $sth = $self->{dbh}->prepare(<<END) or die $self->{dbh}->errstr;
+SELECT COLUMN_NAME, COLUMN_ID
+FROM DBA_TAB_COLUMNS
+WHERE TABLE_NAME='$view'
+END
+        $sth->execute or die $sth->errstr;
+        my $data = $sth->fetchall_arrayref();
+	if ($self->{debug}) {
+        	foreach my $d (@$data) {
+			print STDERR "\t$d->[0] =>  column id:$d->[1]\n";
+        	}
+	}
+
+        return @$data; 
+
+}
 
 =head2 _get_triggers
 
@@ -1229,7 +1759,7 @@ sub _get_triggers
 	# Retrieve all indexes 
 	my $str = "SELECT TRIGGER_NAME, TRIGGER_TYPE, TRIGGERING_EVENT, TABLE_NAME, TRIGGER_BODY FROM DBA_TRIGGERS WHERE STATUS='ENABLED'";
 	if (!$self->{schema}) {
-		$str .= " AND OWNER <> 'SYS' AND OWNER <> 'SYSTEM' AND OWNER <> 'DBSNMP'";
+		$str .= " AND OWNER <> 'SYS' AND OWNER <> 'SYSTEM' AND OWNER <> 'DBSNMP' AND OWNER <> 'OUTLN'";
 	} else {
 		$str .= " AND OWNER = '$self->{schema}'";
 	}
@@ -1260,7 +1790,7 @@ sub _get_functions
 	# Retrieve all indexes 
 	my $str = "SELECT DISTINCT OBJECT_NAME,OWNER FROM DBA_OBJECTS WHERE OBJECT_TYPE='$type' AND STATUS='VALID'";
 	if (!$self->{schema}) {
-		$str .= " AND OWNER <> 'SYS' AND OWNER <> 'SYSTEM' AND OWNER <> 'DBSNMP'";
+		$str .= " AND OWNER <> 'SYS' AND OWNER <> 'SYSTEM' AND OWNER <> 'DBSNMP' AND OWNER <> 'OUTLN'";
 	} else {
 		$str .= " AND OWNER = '$self->{schema}'";
 	}
@@ -1282,6 +1812,48 @@ sub _get_functions
 
 	return \%functions;
 }
+
+
+=head2 _get_packages
+
+This function implements a Oracle-native packages information.
+
+Return a hash of all function name with their PLSQL code
+
+=cut
+
+sub _get_packages
+{
+	my ($self) = @_;
+
+	# Retrieve all indexes 
+	my $str = "SELECT DISTINCT OBJECT_NAME,OWNER FROM DBA_OBJECTS WHERE OBJECT_TYPE='PACKAGE' AND STATUS='VALID'";
+	if (!$self->{schema}) {
+		$str .= " AND OWNER <> 'SYS' AND OWNER <> 'SYSTEM' AND OWNER <> 'DBSNMP' AND OWNER <> 'OUTLN'";
+	} else {
+		$str .= " AND OWNER = '$self->{schema}'";
+	}
+
+	my $sth = $self->{dbh}->prepare($str) or die $self->{dbh}->errstr;
+	$sth->execute or die $sth->errstr;
+
+	my %packages = ();
+	my @fct_done = ();
+	while (my $row = $sth->fetch) {
+print STDERR "\tFound Package: $row->[0]\n" if ($self->{debug});
+		next if (grep(/^$row->[0]$/, @fct_done));
+		push(@fct_done, $row->[0]);
+		my $sql = "SELECT TEXT FROM DBA_SOURCE WHERE OWNER='$row->[1]' AND NAME='$row->[0]' ORDER BY LINE";
+		my $sth2 = $self->{dbh}->prepare($sql) or die $self->{dbh}->errstr;
+		$sth2->execute or die $sth2->errstr;
+		while (my $r = $sth2->fetch) {
+			$packages{"$row->[0]"} .= $r->[0];
+		}
+	}
+
+	return \%packages;
+}
+
 
 
 =head2 _table_info
@@ -1311,7 +1883,7 @@ sub _table_info
 	if ($self->{schema}) {
 		$sql .= " and at.OWNER='$self->{schema}'";
 	} else {
-            $sql .= "and at.OWNER <> 'SYS' and at.OWNER <> 'SYSTEM' and at.OWNER <> 'DBSNMP'";
+            $sql .= "AND at.OWNER <> 'SYS' AND at.OWNER <> 'SYSTEM' AND at.OWNER <> 'DBSNMP' AND at.OWNER <> 'OUTLN'";
 	}
         $sql .= " order by tc.TABLE_TYPE, at.OWNER, at.TABLE_NAME";
         my $sth = $self->{dbh}->prepare( $sql ) or return undef;
@@ -1328,6 +1900,7 @@ __END__
 
 Gilles Darold <gilles@darold.net>
 
+
 =head1 COPYRIGHT
 
 Copyright (c) 2001 Gilles Darold - All rights reserved.
@@ -1343,9 +1916,15 @@ it can move and not be compatible with older version so I will do my best
 to give you official support for Ora2Pg. Your volontee to help construct
 it and your contribution are welcome.
 
+
 =head1 SEE ALSO
 
-L<DBI>, L<DBD::Oracle>
+L<DBI>, L<DBD::Oracle>, L<DBD::Pg>
+
+
+=head1 ACKNOWLEDGEMENTS
+
+Thanks to Jason Servetar who decided me to implement data extraction.
 
 =cut
 

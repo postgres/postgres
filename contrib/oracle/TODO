@@ -1,13 +1,10 @@
-Here are some more thing to do :
+Add possible call to perl function for each field value exported
+(data conversion on the fly before dump)
 
-	- More precision in type conversion based on length
-	  (I've no good DB to do that)
-
-This will be done as soon as possible
+	- Fix problem regarding table/constraint output order.
 
 The following need your help :
 
-	- Extracting/converting datas.
 	- SQL queries converter.
 	- PL/SQL code converter.
 

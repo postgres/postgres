@@ -8,7 +8,7 @@
 # Copyright: Copyright (c) 2000 : Gilles Darold - All rights reserved -
 # Function : Script used to convert Oracle Database schema to PostgreSQL
 #------------------------------------------------------------------------------
-# Version  : 1.0
+# Version  : 1.1
 #------------------------------------------------------------------------------
 
 BEGIN {
@@ -32,6 +32,9 @@ my $schema = new Ora2Pg (
 	debug => 1,			# Verbose mode
 	schema => 'APPS',		# Extract only APPS schema
 	type => 'TABLE',		# Extract table
+#	type => 'PACKAGE',		# Extract PACKAGE information
+#	type => 'DATA',			# Extract data with output as INSERT statement
+#	type => 'COPY',			# Extract data with output as COPY statement
 #	type => 'VIEW',			# Extract views
 #	type => 'GRANT',		# Extract privileges
 #	type => 'SEQUENCE',		# Extract sequences
@@ -45,11 +48,25 @@ my $schema = new Ora2Pg (
 #	tables => [('TRIP_DATA')],	# Foreign key
 #	showtableid => 1,		# Display only table indice during extraction
 #	min => 1,			# Extract begin at indice 3
-#	max => 10			# Extract ended at indice 5
+#	max => 10,			# Extract ended at indice 5
+#	data_limit => 1000,		# Extract all data by dump of 1000 tuples
+#	data_limit => 0,		# Extract all data in one pass. Be sure to have enougth memory
 );
 
-# Create the POSTGRESQL representation of all objects in the database
-$schema->export_schema("output.sql");
+# Just export data of the following fields from table 's_txcot'
+#$schema->modify_struct('s_txcot','dossier', 'rub', 'datapp');
+
+# Function to use for extraction when type option is set to DATA or COPY
+	# Send exported data to a PostgreSQL database
+	#$schema->send_to_pgdb('dbi:Pg:dbname=template1;host=localhost;port=5432','test','test');
+
+	# Output the data extracted from Oracle DB to a file or to STDOUT if no argument.
+	# If you set the send_to_pgdb() method the output is given to PG database. See above
+	#$schema->export_data("output.sql");
+
+# Function to use ifor extraction with other type
+	# Create the POSTGRESQL representation of all objects in the database
+	$schema->export_schema("output.sql");
 
 exit(0);
 
