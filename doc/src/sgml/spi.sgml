@@ -1272,6 +1272,135 @@ TBD
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
+<REFENTRY ID="SPI-SPICOPYTUPLEINTOSLOT">
+<REFMETA>
+<REFENTRYTITLE>SPI_copytupleintoslot</REFENTRYTITLE>
+<REFMISCINFO>SPI - Tuple and Descriptor Copy</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_copytupleintoslot
+</REFNAME>
+<REFPURPOSE>
+Makes copy of tuple and descriptor in upper Executor context
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPICOPYTUPLEINTOSLOT-1"><PRIMARY>SPI</PRIMARY><SECONDARY>copying tuples</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPICOPYTUPLEINTOSLOT-2"><PRIMARY>SPI_copytupleintoslot</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1997-12-24</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_copytupleintoslot(<REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>, <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>)
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SPI-SPICOPYTUPLEINTOSLOT-1">
+<REFSECT2INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+HeapTuple <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Input tuple to be copied
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+TupleDesc <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Input tuple descriptor to be copied
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SPI-SPICOPYTUPLEINTOSLOT-2">
+<REFSECT2INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+TupleTableSlot *
+</TERM>
+<LISTITEM>
+<PARA>
+Tuple slot containing copied tuple and descriptor
+<SimpleList>
+<Member>
+ <ReturnValue>non-NULL</ReturnValue>
+ if <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
+ and <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
+ are not NULL and the copy was successful
+</Member>
+<Member>
+   <ReturnValue>NULL</ReturnValue>
+ only if <REPLACEABLE CLASS="PARAMETER">tuple</REPLACEABLE>
+ or <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
+ is NULL
+</Member>
+</SimpleList>
+</para>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEINTOSLOT-1">
+<REFSECT1INFO>
+<DATE>1997-12-24</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_copytupleintoslot</FUNCTION> 
+   makes a copy of tuple in upper Executor context, returning it in the
+   form of a filled-in TupleTableSlot.
+   See the section on Memory Management.
+</PARA>
+</REFSECT1>
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEINTOSLOT-2">
+<TITLE>Usage
+</TITLE>
+<Para>
+TBD
+</PARA>
+</REFSECT1>
+<!--
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEINTOSLOT-3">
+<TITLE>Algorithm
+</TITLE>
+<PARA>
+</PARA>
+</REFSECT1>
+-->
+<!--
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEINTOSLOT-4">
+<TITLE>Structures
+</TITLE>
+<PARA>None
+</PARA>
+</REFSECT1>
+-->
+</REFENTRY>
+
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+
 <REFENTRY ID="SPI-SPIMODIFYTUPLE">
 <REFMETA>
 <REFENTRYTITLE>SPI_modifytuple</REFENTRYTITLE>
@@ -2695,6 +2824,7 @@ made in this context.
 <Function>palloc</Function>/<Function>repalloc</Function> or by SPI utility
 functions (except for <Function>SPI_copytuple</Function>,
 <Function>SPI_copytupledesc</Function>,
+<Function>SPI_copytupleintoslot</Function>,
 <Function>SPI_modifytuple</Function>,
 <Function>SPI_palloc</Function> and <Function>SPI_repalloc</Function>) are
 made in this context.

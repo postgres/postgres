@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.48 2001/10/25 05:50:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.49 2001/11/05 19:41:56 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -400,32 +400,43 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 
 	fcinfo->isnull = estate.retisnull;
 
-	if (!estate.retistuple)
+	if (!estate.retisnull)
 	{
-		estate.retval = exec_cast_value(estate.retval, estate.rettype,
-										func->fn_rettype,
-										&(func->fn_retinput),
-										func->fn_rettypelem,
-										-1,
-										&fcinfo->isnull);
-
-		/*
-		 * If the functions return type isn't by value, copy the value
-		 * into upper executor memory context.
-		 */
-		if (!fcinfo->isnull && !func->fn_retbyval)
+		if (estate.retistuple)
 		{
-			int			len;
-			Datum		tmp;
+			/* Copy tuple to upper executor memory */
+			/* Here we need to return a TupleTableSlot not just a tuple */
+			estate.retval = (Datum)
+				SPI_copytupleintoslot((HeapTuple) (estate.retval),
+									  estate.rettupdesc);
+		}
+		else
+		{
+			/* Cast value to proper type */
+			estate.retval = exec_cast_value(estate.retval, estate.rettype,
+											func->fn_rettype,
+											&(func->fn_retinput),
+											func->fn_rettypelem,
+											-1,
+											&fcinfo->isnull);
+			/*
+			 * If the functions return type isn't by value, copy the value
+			 * into upper executor memory context.
+			 */
+			if (!fcinfo->isnull && !func->fn_retbyval)
+			{
+				int			len;
+				Datum		tmp;
 
-			if (func->fn_rettyplen < 0)
-				len = VARSIZE(estate.retval);
-			else
-				len = func->fn_rettyplen;
+				if (func->fn_rettyplen < 0)
+					len = VARSIZE(estate.retval);
+				else
+					len = func->fn_rettyplen;
 
-			tmp = (Datum) SPI_palloc(len);
-			memcpy((void *) tmp, (void *) estate.retval, len);
-			estate.retval = tmp;
+				tmp = (Datum) SPI_palloc(len);
+				memcpy((void *) tmp, (void *) estate.retval, len);
+				estate.retval = tmp;
+			}
 		}
 	}
 
@@ -1619,8 +1630,8 @@ exec_stmt_return(PLpgSQL_execstate * estate, PLpgSQL_stmt_return * stmt)
 
 			if (HeapTupleIsValid(rec->tup))
 			{
-				estate->retval = (Datum) SPI_copytuple(rec->tup);
-				estate->rettupdesc = SPI_copytupledesc(rec->tupdesc);
+				estate->retval = (Datum) rec->tup;
+				estate->rettupdesc = rec->tupdesc;
 				estate->retisnull = false;
 			}
 			return PLPGSQL_RC_RETURN;
@@ -1631,16 +1642,10 @@ exec_stmt_return(PLpgSQL_execstate * estate, PLpgSQL_stmt_return * stmt)
 			exec_run_select(estate, stmt->expr, 1, NULL);
 			if (estate->eval_processed > 0)
 			{
-				estate->retval = (Datum) SPI_copytuple(estate->eval_tuptable->vals[0]);
-				estate->rettupdesc = SPI_copytupledesc(estate->eval_tuptable->tupdesc);
+				estate->retval = (Datum) estate->eval_tuptable->vals[0];
+				estate->rettupdesc = estate->eval_tuptable->tupdesc;
 				estate->retisnull = false;
 			}
-
-			/*
-			 * Okay to clean up here, since we already copied result tuple
-			 * to upper executor.
-			 */
-			exec_eval_cleanup(estate);
 		}
 		return PLPGSQL_RC_RETURN;
 	}
