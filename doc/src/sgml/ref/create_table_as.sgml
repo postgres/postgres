@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.23 2004/08/24 00:06:51 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.24 2004/09/23 03:43:57 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -166,11 +166,34 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
   <title>Compatibility</title>
 
   <para>
-   This command is modeled after an <productname>Oracle</productname>
-   feature.  There is no command with equivalent functionality in
-   the SQL standard.  However, a combination of <literal>CREATE
-   TABLE</literal> and <literal>INSERT ... SELECT</literal> can
-   accomplish the same thing with little more effort.
+   <command>CREATE TABLE AS</command> is specified by the SQL2003
+   standard. There are some small differences between the definition
+   of the command in SQL2003 and its implementation in
+   <productname>PostgreSQL</>:
+
+   <itemizedlist spacing="compact">
+    <listitem>
+     <para>
+      The standard requires parentheses around the subquery clause; in
+      <productname>PostgreSQL</productname>, these parentheses are
+      optional.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The standard defines an <literal>ON COMMIT</literal> clause;
+      this is not currently implemented by <productname>PostgreSQL</>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      The standard defines a <literal>WITH DATA</literal> clause;
+      this is not currently implemented by <productname>PostgreSQL</>.
+     </para>
+    </listitem>
+   </itemizedlist>
   </para>
  </refsect1>
 
