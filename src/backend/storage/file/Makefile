@@ -4,7 +4,7 @@
 #    Makefile for storage/file
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/file/Makefile,v 1.1 1996/10/27 09:52:01 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/file/Makefile,v 1.2 1996/11/09 06:21:38 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,6 @@ include ../../../Makefile.global
 
 INCLUDE_OPT = -I../.. \
               -I../../port/$(PORTNAME) \
-              -I../../include \
               -I../../../include
 
 CFLAGS+=$(INCLUDE_OPT)

@@ -4,7 +4,7 @@
 #    Makefile for utils
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.3 1996/11/03 09:28:31 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.4 1996/11/09 06:22:52 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,6 @@ SRCDIR = ../..
 include ../../Makefile.global
 
 INCLUDE_OPT = -I.. \
-              -I../include \
               -I../../include
 
 CFLAGS+=$(INCLUDE_OPT)

@@ -4,7 +4,7 @@
 #    Makefile for utils/fmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/Makefile,v 1.1 1996/10/27 09:53:40 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/Makefile,v 1.2 1996/11/09 06:23:18 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,6 @@ include ../../../Makefile.global
 
 INCLUDE_OPT = -I../.. \
               -I../../port/$(PORTNAME) \
-              -I../../include \
               -I../../../include
 
 CFLAGS+=$(INCLUDE_OPT)

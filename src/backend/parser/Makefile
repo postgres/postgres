@@ -4,7 +4,7 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.2 1996/11/08 05:57:18 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.3 1996/11/09 06:18:34 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,6 @@ include ../../Makefile.global
 
 INCLUDE_OPT = -I.. \
               -I../port/$(PORTNAME) \
-              -I../include \
               -I../../include
 
 CFLAGS+=$(INCLUDE_OPT) -Wno-error

@@ -4,14 +4,15 @@
 #    Makefile for tcop
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.4 1996/11/08 05:59:20 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.5 1996/11/09 06:22:37 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
 
-INCLUDE_OPT = -I../port/$(PORTNAME) \
+INCLUDE_OPT = -I.. \
+              -I../port/$(PORTNAME) \
               -I../../include
 
 CFLAGS+=$(INCLUDE_OPT) -Wno-error

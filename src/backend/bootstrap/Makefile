@@ -4,7 +4,7 @@
 #    Makefile for the bootstrap module
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.2 1996/11/08 05:55:46 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.3 1996/11/09 06:17:44 momjian Exp $
 #
 #
 # We must build bootparse.c and bootscanner.c with yacc and lex and sed,
@@ -23,7 +23,6 @@ include ../../Makefile.global
 
 INCLUDE_OPT = -I.. \
               -I../port/$(PORTNAME) \
-              -I../include \
               -I../../include
 
 CFLAGS += $(INCLUDE_OPT) -Wno-error

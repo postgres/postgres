@@ -4,7 +4,7 @@
 #    Makefile for port/bsdi
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/bsdi/Attic/Makefile,v 1.3 1996/11/01 03:35:54 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/bsdi/Attic/Makefile,v 1.4 1996/11/09 06:19:06 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,6 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 INCLUDE_OPT = -I../.. \
-              -I../../include \
               -I../../../include
 
 CFLAGS+=$(INCLUDE_OPT)

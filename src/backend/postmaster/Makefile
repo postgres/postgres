@@ -4,14 +4,15 @@
 #    Makefile for postmaster
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/postmaster/Makefile,v 1.2 1996/11/03 04:48:27 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/postmaster/Makefile,v 1.3 1996/11/09 06:20:48 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
 
-INCLUDE_OPT = -I../port/$(PORTNAME) \
+INCLUDE_OPT = -I.. \
+              -I../port/$(PORTNAME) \
               -I../../include
 
 CFLAGS+=$(INCLUDE_OPT)

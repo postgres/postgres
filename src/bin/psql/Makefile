@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.9 1996/11/08 06:01:27 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.10 1996/11/09 06:24:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -65,10 +65,10 @@ endif
 
 all: psql
 
-psql: $(OBJS) $(LIBPQDIR)/obj/libpq.a
-	$(CC) $(LDFLAGS) -o psql -L$(LIBPQDIR)/obj $(OBJS) -lpq $(LD_ADD)
+psql: $(OBJS) $(LIBPQDIR)/libpq.a
+	$(CC) $(LDFLAGS) -o psql -L$(LIBPQDIR) $(OBJS) -lpq $(LD_ADD)
 
-$(srcdir)/libpq/obj/libpq.a:
+$(srcdir)/libpq/libpq.a:
 	$(MAKE) -C $(LIBPQDIR) libpq.a
 
 install:

@@ -4,7 +4,7 @@
 #    Makefile for port/i386_solaris
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/i386_solaris/Attic/Makefile,v 1.1 1996/10/27 09:50:17 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/i386_solaris/Attic/Makefile,v 1.2 1996/11/09 06:19:27 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,6 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 INCLUDE_OPT = -I../.. \
-              -I../../include \
               -I../../../include
 
 CFLAGS+=$(INCLUDE_OPT)

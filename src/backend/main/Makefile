@@ -4,7 +4,7 @@
 #    Makefile for main
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/main/Makefile,v 1.1 1996/10/27 09:47:59 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/main/Makefile,v 1.2 1996/11/09 06:18:04 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,6 @@ include ../../Makefile.global
 
 INCLUDE_OPT = -I.. \
               -I../port/$(PORTNAME) \
-              -I../include \
               -I../../include
 
 CFLAGS+=$(INCLUDE_OPT)

@@ -7,24 +7,23 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Attic/Makefile.global,v 1.8 1996/08/28 23:00:07 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Attic/Makefile.global,v 1.9 1996/11/09 06:24:23 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 CFLAGS+= -I$(srcdir)/backend \
-	-I$(srcdir)/backend/include \
-	-I$(srcdir)/libpq \
-	-I$(srcdir)/include
+	-I$(srcdir)/include \
+	-I$(srcdir)/libpq
 
 #
 # link with libpq, so we put it here.
 #
-LIBPQ:=   -L$(srcdir)/libpq/$(objdir) -lpq
+LIBPQ:=   -L$(srcdir)/libpq -lpq
 
 LD_ADD+= $(LIBPQ)
 DPADD+= $(LIBPQ)
 # LIB_DEP is the list of dependencies on libraries for the link.
-LIB_DEP+= $(srcdir)/libpq/$(objdir)/libpq.a
+LIB_DEP+= $(srcdir)/libpq/libpq.a
 
 #
 # And where libpq goes, so goes the authentication stuff...

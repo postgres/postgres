@@ -4,14 +4,15 @@
 #    Makefile for optimizer/plan
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/Makefile,v 1.2 1996/10/31 10:59:05 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/Makefile,v 1.3 1996/11/09 06:18:17 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../../port/$(PORTNAME) \
+INCLUDE_OPT = -I../.. \
+              -I../../port/$(PORTNAME) \
               -I../../../include
 
 CFLAGS+=$(INCLUDE_OPT)

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.14 1996/11/08 21:40:11 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.15 1996/11/09 06:24:51 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -36,19 +36,19 @@ endif
 shlib := 
 ifdef LINUX_ELF
 ifeq ($(PORTNAME), linux)
-shlib := obj/libpq.so.1
+shlib := libpq.so.1
 endif
 endif
 
-all: obj/libpq.a $(shlib) postgres.h c.h
+all: libpq.a $(shlib) postgres.h c.h
 
-obj/libpq.a: $(OBJS)
+libpq.a: $(OBJS)
 ifdef MK_NO_LORDER
-	$(AR) $(AROPT) obj/libpq.a $(OBJS) 
+	$(AR) $(AROPT) libpq.a $(OBJS) 
 else
-	$(AR) $(AROPT) obj/libpq.a `lorder $(OBJS) | tsort`
+	$(AR) $(AROPT) libpq.a `lorder $(OBJS) | tsort`
 endif
-	$(RANLIB) obj/libpq.a
+	$(RANLIB) libpq.a
 
 fe-lobj.o:: ../backend/fmgr.h
 
@@ -61,8 +61,8 @@ fe-lobj.o:: ../backend/fmgr.h
 ../backend/lib/dllist.o:
 	$(MAKE) -C ../backend/lib dllist.o
 
-obj/libpq.so.1: $(OBJS)
-	$(CC) $(LDFLAGS) -shared $(OBJS) -o obj/libpq.so.1
+libpq.so.1: $(OBJS)
+	$(CC) $(LDFLAGS) -shared $(OBJS) -o libpq.so.1
 
 postgres.h: ../include/postgres.h
 # Note: ../backend/include/postgres.h needs to be named something different
@@ -128,17 +128,17 @@ install-shlib-dep :=
 endif
 
 install-libpq:
-	$(INSTALL) $(INSTL_LIB_OPTS) obj/libpq.a $(DESTDIR)$(LIBDIR)/libpq.a
+	$(INSTALL) $(INSTL_LIB_OPTS) libpq.a $(DESTDIR)$(LIBDIR)/libpq.a
 
 install-shlib:
-	$(INSTALL) $(INSTL_LIB_OPTS) obj/libpq.so.1 $(DESTDIR)$(LIBDIR)/libpq.so.1
+	$(INSTALL) $(INSTL_LIB_OPTS) libpq.so.1 $(DESTDIR)$(LIBDIR)/libpq.so.1
 
 depend dep:
 	$(CC) -MM $(INCLUDE_OPT) *.c >depend
 
 .PHONY: clean
 clean:
-	rm -f obj/libpq.a obj/libpq.so.1 $(OBJS) c.h postgres.h
+	rm -f libpq.a libpq.so.1 $(OBJS) c.h postgres.h
 
 ifeq (depend,$(wildcard depend))
 include depend
