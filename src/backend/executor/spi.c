@@ -48,7 +48,7 @@ static void _SPI_fetch(FetchStmt * stmt);
 #endif
 static int
 _SPI_execute_plan(_SPI_plan * plan,
-				  char **Values, char *Nulls, int tcount);
+				  Datum *Values, char *Nulls, int tcount);
 
 #define _SPI_CPLAN_CURCXT	0
 #define _SPI_CPLAN_PROCXT	1
@@ -199,7 +199,7 @@ SPI_exec(char *src, int tcount)
 }
 
 int
-SPI_execp(void *plan, char **Values, char *Nulls, int tcount)
+SPI_execp(void *plan, Datum *Values, char *Nulls, int tcount)
 {
 	int			res;
 
@@ -282,10 +282,7 @@ int
 SPI_fnumber(TupleDesc tupdesc, char *fname)
 {
 	int			res;
-
-	if (_SPI_curid + 1 != _SPI_connected)
-		return (SPI_ERROR_UNCONNECTED);
-
+	
 	for (res = 0; res < tupdesc->natts; res++)
 	{
 		if (strcasecmp(tupdesc->attrs[res]->attname.data, fname) == 0)
@@ -300,12 +297,6 @@ SPI_fname(TupleDesc tupdesc, int fnumber)
 {
 
 	SPI_result = 0;
-	if (_SPI_curid + 1 != _SPI_connected)
-	{
-		SPI_result = SPI_ERROR_UNCONNECTED;
-		return (NULL);
-	}
-
 	if (tupdesc->natts < fnumber || fnumber <= 0)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
@@ -313,7 +304,6 @@ SPI_fname(TupleDesc tupdesc, int fnumber)
 	}
 
 	return (nameout(&(tupdesc->attrs[fnumber - 1]->attname)));
-
 }
 
 char	   *
@@ -324,12 +314,6 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 	Oid			foutoid;
 
 	SPI_result = 0;
-	if (_SPI_curid + 1 != _SPI_connected)
-	{
-		SPI_result = SPI_ERROR_UNCONNECTED;
-		return (NULL);
-	}
-
 	if (tuple->t_natts < fnumber || fnumber <= 0)
 		return (NULL);
 
@@ -353,12 +337,6 @@ SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool * isnull)
 
 	*isnull = true;
 	SPI_result = 0;
-	if (_SPI_curid + 1 != _SPI_connected)
-	{
-		SPI_result = SPI_ERROR_UNCONNECTED;
-		return (NULL);
-	}
-
 	if (tuple->t_natts < fnumber || fnumber <= 0)
 		return (NULL);
 
@@ -373,12 +351,6 @@ SPI_gettype(TupleDesc tupdesc, int fnumber)
 	HeapTuple	typeTuple;
 
 	SPI_result = 0;
-	if (_SPI_curid + 1 != _SPI_connected)
-	{
-		SPI_result = SPI_ERROR_UNCONNECTED;
-		return (NULL);
-	}
-
 	if (tupdesc->natts < fnumber || fnumber <= 0)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
@@ -403,12 +375,6 @@ SPI_gettypeid(TupleDesc tupdesc, int fnumber)
 {
 
 	SPI_result = 0;
-	if (_SPI_curid + 1 != _SPI_connected)
-	{
-		SPI_result = SPI_ERROR_UNCONNECTED;
-		return (InvalidOid);
-	}
-
 	if (tupdesc->natts < fnumber || fnumber <= 0)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
@@ -421,14 +387,6 @@ SPI_gettypeid(TupleDesc tupdesc, int fnumber)
 char	   *
 SPI_getrelname(Relation rel)
 {
-
-	SPI_result = 0;
-	if (_SPI_curid + 1 != _SPI_connected)
-	{
-		SPI_result = SPI_ERROR_UNCONNECTED;
-		return (NULL);
-	}
-
 	return (pstrdup(rel->rd_rel->relname.data));
 }
 
@@ -581,7 +539,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan * plan)
 }
 
 static int
-_SPI_execute_plan(_SPI_plan * plan, char **Values, char *Nulls, int tcount)
+_SPI_execute_plan(_SPI_plan * plan, Datum *Values, char *Nulls, int tcount)
 {
 	QueryTreeList *queryTree_list = plan->qtlist;
 	List	   *planTree_list = plan->ptlist;
@@ -634,7 +592,7 @@ _SPI_execute_plan(_SPI_plan * plan, char **Values, char *Nulls, int tcount)
 					paramLI->kind = PARAM_NUM;
 					paramLI->id = k + 1;
 					paramLI->isnull = (Nulls != NULL && Nulls[k] != 'n');
-					paramLI->value = (Datum) Values[k];
+					paramLI->value = Values[k];
 				}
 				paramLI->kind = PARAM_INVALID;
 			}
