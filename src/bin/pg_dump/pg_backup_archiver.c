@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.67 2003/02/01 22:06:59 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.68 2003/02/14 19:40:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,7 +206,8 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		sav = SetOutput(AH, ropt->filename, ropt->compression);
 
 	ahprintf(AH, "--\n-- PostgreSQL database dump\n--\n\n");
-
+	ahprintf(AH, "SET autocommit TO 'on';\n\n");
+	
 	/*
 	 * Drop the items at the start, in reverse order
 	 */
@@ -2109,7 +2110,8 @@ _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user)
 						  dbname ? fmtId(dbname) : "-");
 		appendPQExpBuffer(qry, " %s\n\n",
 						  fmtId(user));
-
+		appendPQExpBuffer(qry, "SET autocommit TO 'on';\n\n");
+		
 		ahprintf(AH, qry->data);
 
 		destroyPQExpBuffer(qry);

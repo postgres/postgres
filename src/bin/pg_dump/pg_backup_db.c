@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.45 2003/02/13 04:54:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.46 2003/02/14 19:40:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,6 +212,21 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 	if (password)
 		free(password);
+
+	/* check for version mismatch */
+	_check_database_version(AH, true);
+
+	/* Turn autocommit on */
+	if (AH->public.remoteVersion >= 70300)
+	{
+		PGresult   *res;
+
+		res = PQexec(AH->connection, "SET autocommit TO 'on'");
+		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+			die_horribly(AH, NULL, "SET autocommit TO 'on' failed: %s",
+						  PQerrorMessage(AH->connection));
+		PQclear(res);
+	}
 
 	PQsetNoticeProcessor(newConn, notice_processor, NULL);
 
