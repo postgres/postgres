@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.16 1997/09/08 21:42:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.17 1997/10/28 14:54:46 vadim Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -45,6 +45,7 @@
 #include <catalog/pg_operator.h>
 #include <catalog/pg_proc.h>
 #include <catalog/pg_type.h>
+#include <catalog/pg_language.h>
 #include <utils/syscache.h>
 #include <fmgr.h>				/* for fmgr */
 #include <utils/builtins.h>		/* prototype for textin() */
@@ -239,6 +240,8 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 	bool		canCache;
 	bool		returnsSet;
 
+	bool		lanisPL = false;
+
 	/* The function returns a set of values, as opposed to a singleton. */
 
 
@@ -262,19 +265,59 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 	}
 	else
 	{
-		elog(WARN,
+		HeapTuple		languageTuple;
+		Form_pg_language	languageStruct;
+
+	        /* Lookup the language in the system cache */
+		languageTuple = SearchSysCacheTuple(LANNAME,
+			PointerGetDatum(languageName),
+			0, 0, 0);
+		
+		if (!HeapTupleIsValid(languageTuple)) {
+
+		    elog(WARN,
 			 "Unrecognized language specified in a CREATE FUNCTION: "
-			 "'%s'.  Recognized languages are sql, C, and internal.",
+			 "'%s'.  Recognized languages are sql, C, internal "
+			 "and the created procedural languages.",
 			 languageName);
+		}
+
+		/* Check that this language is a PL */
+		languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
+		if (!(languageStruct->lanispl)) {
+		    elog(WARN,
+		    	"Language '%s' isn't defined as PL", languageName);
+		}
+
+		/*
+		 * Functions in untrusted procedural languages are
+		 * restricted to be defined by postgres superusers only
+		 */
+		if (languageStruct->lanpltrusted == false && !superuser()) {
+		    elog(WARN, "Only users with Postgres superuser privilege "
+		    	"are permitted to create a function in the '%s' "
+			"language.",
+			languageName);
+		}
+
+		lanisPL = true;
+
+		/*
+		 * These are meaningless
+		 */
+		perbyte_cpu = percall_cpu = 0;
+		byte_pct = outin_ratio = 100;
+		canCache = false;
 	}
 
 	interpret_AS_clause(languageName, stmt->as, &prosrc_str, &probin_str);
 
-	if (strcmp(languageName, "sql") != 0 && !superuser())
+	if (strcmp(languageName, "sql") != 0 && lanisPL == false && !superuser())
 		elog(WARN,
 			 "Only users with Postgres superuser privilege are permitted "
 			 "to create a function "
-			 "in the '%s' language.  Others may use the 'sql' language.",
+			 "in the '%s' language.  Others may use the 'sql' language "
+			 "or the created procedural languages.",
 			 languageName);
 	/* Above does not return. */
 	else

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.58 1997/10/25 05:56:41 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.59 1997/10/28 14:56:08 vadim Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -109,6 +109,7 @@ static char *FlattenStringList(List *list);
 		AddAttrStmt, ClosePortalStmt,
 		CopyStmt, CreateStmt, CreateSeqStmt, DefineStmt, DestroyStmt,
 		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt,
+		CreatePLangStmt, DropPLangStmt,
 		IndexStmt, ListenStmt, OptimizableStmt,
 		ProcedureStmt, PurgeStmt,
 		RecipeStmt, RemoveAggrStmt, RemoveOperStmt, RemoveFuncStmt, RemoveStmt,
@@ -119,7 +120,7 @@ static char *FlattenStringList(List *list);
 
 %type <node>	SubSelect
 %type <str>		join_expr, join_outer, join_spec
-%type <boolean> TriggerActionTime, TriggerForSpec
+%type <boolean> TriggerActionTime, TriggerForSpec, PLangTrusted
 
 %type <str>		TriggerEvents, TriggerFuncArg
 
@@ -225,9 +226,9 @@ static char *FlattenStringList(List *list);
 /* Keywords (in SQL92 reserved words) */
 %token	ACTION, ADD, ALL, ALTER, AND, AS, ASC,
 		BEGIN_TRANS, BETWEEN, BOTH, BY,
-		CASCADE, CAST, CHAR, CHARACTER, CHECK, CLOSE,
-		COLLATE, COLUMN, COMMIT, CONSTRAINT, CREATE, CROSS,
-		CURRENT, CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
+		CASCADE, CAST, CHAR, CHARACTER, CHECK, CLOSE, COLLATE, COLUMN, COMMIT, 
+		CONSTRAINT, CREATE, CROSS, CURRENT, CURRENT_DATE, CURRENT_TIME, 
+		CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
 		DAY_P, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
 		END_TRANS, EXECUTE, EXISTS, EXTRACT,
 		FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
@@ -256,12 +257,12 @@ static char *FlattenStringList(List *list);
 		APPEND, ARCHIVE, ARCH_STORE,
 		BACKWARD, BEFORE, BINARY, CHANGE, CLUSTER, COPY,
 		DATABASE, DELIMITERS, DO, EXPLAIN, EXTEND,
-		FORWARD, FUNCTION, HEAVY,
+		FORWARD, FUNCTION, HANDLER, HEAVY,
 		INDEX, INHERITS, INSTEAD, ISNULL,
-		LIGHT, LISTEN, LOAD, MERGE, MOVE,
-		NEW, NONE, NOTHING, OIDS, OPERATOR, PURGE,
+		LANCOMPILER, LIGHT, LISTEN, LOAD, MERGE, MOVE,
+		NEW, NONE, NOTHING, OIDS, OPERATOR, PROCEDURAL, PURGE,
 		RECIPE, RENAME, REPLACE, RESET, RETRIEVE, RETURNS, RULE,
-		SEQUENCE, SETOF, SHOW, STDIN, STDOUT, STORE,
+		SEQUENCE, SETOF, SHOW, STDIN, STDOUT, STORE, TRUSTED, 
 		VACUUM, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
@@ -318,10 +319,12 @@ stmt :	  AddAttrStmt
 		| CopyStmt
 		| CreateStmt
 		| CreateSeqStmt
+		| CreatePLangStmt
 		| CreateTrigStmt
 		| ClusterStmt
 		| DefineStmt
 		| DestroyStmt
+		| DropPLangStmt
 		| DropTrigStmt
 		| ExtendStmt
 		| ExplainStmt
@@ -857,6 +860,36 @@ OptSeqElem:		IDENT NumConst
 				}
 		;
 
+/*****************************************************************************
+ *
+ *		QUERIES :
+ *				CREATE PROCEDURAL LANGUAGE ...
+ *				DROP PROCEDURAL LANGUAGE ...
+ *
+ *****************************************************************************/
+
+CreatePLangStmt: CREATE PLangTrusted PROCEDURAL LANGUAGE Sconst 
+			HANDLER def_name LANCOMPILER Sconst
+			{
+				CreatePLangStmt *n = makeNode(CreatePLangStmt);
+				n->plname = $5;
+				n->plhandler = $7;
+				n->plcompiler = $9;
+				n->pltrusted = $2;
+				$$ = (Node *)n;
+			}
+		;
+
+PLangTrusted:		TRUSTED { $$ = TRUE; }
+			|	{ $$ = FALSE; }
+
+DropPLangStmt: DROP PROCEDURAL LANGUAGE Sconst
+			{
+				DropPLangStmt *n = makeNode(DropPLangStmt);
+				n->plname = $4;
+				$$ = (Node *)n;
+			}
+		;
 
 /*****************************************************************************
  *

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_language.h,v 1.4 1997/09/08 02:35:16 momjian Exp $
+ * $Id: pg_language.h,v 1.5 1997/10/28 15:08:05 vadim Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -33,6 +33,9 @@
 CATALOG(pg_language)
 {
 	NameData	lanname;
+	bool		lanispl;		/* Is a procedural language */
+	bool		lanpltrusted;	/* PL is trusted */
+	Oid			lanplcallfoid;	/* Call handler for PL */
 	text		lancompiler;	/* VARIABLE LENGTH FIELD */
 } FormData_pg_language;
 
@@ -47,21 +50,24 @@ typedef FormData_pg_language *Form_pg_language;
  *		compiler constants for pg_language
  * ----------------
  */
-#define Natts_pg_language				2
+#define Natts_pg_language				5
 #define Anum_pg_language_lanname		1
-#define Anum_pg_language_lancompiler	2
+#define Anum_pg_language_lanispl		2
+#define Anum_pg_language_lanpltrusted		3
+#define Anum_pg_language_lanplcallfoid		4
+#define Anum_pg_language_lancompiler		5
 
 /* ----------------
  *		initial contents of pg_language
  * ----------------
  */
 
-DATA(insert OID = 11 ( internal "n/a" ));
+DATA(insert OID = 11 ( internal f 0 0 "n/a" ));
 #define INTERNALlanguageId 11
-DATA(insert OID = 12 ( lisp "/usr/ucb/liszt" ));
-DATA(insert OID = 13 ( "C" "/bin/cc" ));
+DATA(insert OID = 12 ( lisp f 0 0 "/usr/ucb/liszt" ));
+DATA(insert OID = 13 ( "C" f 0 0 "/bin/cc" ));
 #define ClanguageId 13
-DATA(insert OID = 14 ( "sql" "postgres"));
+DATA(insert OID = 14 ( "sql" f 0 0 "postgres"));
 #define SQLlanguageId 14
 
 

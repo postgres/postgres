@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.4 1997/07/28 00:55:41 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.5 1997/10/28 15:02:24 vadim Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -81,7 +81,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh.in,v 1.4 1997/07/28 00:55:41 momjian Exp $
+ * $Id: Gen_fmgrtab.sh.in,v 1.5 1997/10/28 15:02:24 vadim Exp $
  *
  * NOTES
  *	******************************
@@ -114,6 +114,8 @@ typedef struct {
 /*
  * defined in fmgr.c
  */
+extern char *fmgr_pl(Oid func_id, int n_arguments, FmgrValues *values,
+	bool *isNull);
 extern char *fmgr_c(func_ptr user_fn, Oid func_id, int n_arguments,
 	FmgrValues *values, bool *isNull);
 extern void fmgr_info(Oid procedureId, func_ptr *function, int *nargs);
@@ -175,7 +177,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.4 1997/07/28 00:55:41 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.5 1997/10/28 15:02:24 vadim Exp $
  *
  * NOTES
  *

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.12 1997/09/08 21:55:16 momjian Exp $
+ * $Id: rel.h,v 1.13 1997/10/28 15:11:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@ typedef struct Trigger
 	char	   *tgname;
 	Oid			tgfoid;
 	func_ptr	tgfunc;
+	func_ptr	tgplfunc;
 	int16		tgtype;
 	int16		tgnargs;
 	int16		tgattr[8];

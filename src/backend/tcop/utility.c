@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.26 1997/10/25 05:34:07 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.27 1997/10/28 14:57:24 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #include "commands/recipe.h"
 #include "commands/explain.h"
 #include "commands/trigger.h"
+#include "commands/proclang.h"
 
 #include "nodes/parsenodes.h"
 #include "../backend/parser/parse.h"
@@ -75,7 +76,7 @@
  * ----------------
  */
 void
-ProcessUtility(Node *parsetree,
+ProcessUtility(Node * parsetree,
 			   CommandDest dest)
 {
 	char	   *commandTag = NULL;
@@ -149,8 +150,8 @@ ProcessUtility(Node *parsetree,
 				 */
 
 				count = stmt->howMany;
-				PerformPortalFetch(portalName, forward, count, commandTag, 
-					(stmt->ismove) ? None : dest);	/* /dev/null for MOVE */
+				PerformPortalFetch(portalName, forward, count, commandTag,
+								   (stmt->ismove) ? None : dest);		/* /dev/null for MOVE */
 			}
 			break;
 
@@ -716,6 +717,23 @@ ProcessUtility(Node *parsetree,
 			CHECK_IF_ABORTED();
 
 			DropTrigger((DropTrigStmt *) parsetree);
+			break;
+
+			/*
+			 * ************* PROCEDURAL LANGUAGE statements *****************
+			 */
+		case T_CreatePLangStmt:
+			commandTag = "CREATE";
+			CHECK_IF_ABORTED();
+
+			CreateProceduralLanguage((CreatePLangStmt *) parsetree);
+			break;
+
+		case T_DropPLangStmt:
+			commandTag = "DROP";
+			CHECK_IF_ABORTED();
+
+			DropProceduralLanguage((DropPLangStmt *) parsetree);
 			break;
 
 			/*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.20 1997/10/25 05:44:11 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.21 1997/10/28 14:56:10 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,6 +104,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"function", FUNCTION},
 	{"grant", GRANT},
 	{"group", GROUP},
+	{"handler", HANDLER},
 	{"having", HAVING},
 	{"heavy", HEAVY},
 	{"hour", HOUR_P},
@@ -119,6 +120,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"isnull", ISNULL},
 	{"join", JOIN},
 	{"key", KEY},
+	{"lancompiler", LANCOMPILER},
 	{"language", LANGUAGE},
 	{"leading", LEADING},
 	{"left", LEFT},
@@ -156,6 +158,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"precision", PRECISION},
 	{"primary", PRIMARY},
 	{"privileges", PRIVILEGES},
+	{"procedural", PROCEDURAL},
 	{"procedure", PROCEDURE},
 	{"public", PUBLIC},
 	{"purge", PURGE},
@@ -188,6 +191,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"trigger", TRIGGER},
 	{"trim", TRIM},
 	{"true", TRUE_P},
+	{"trusted", TRUSTED},
 	{"type", TYPE_P},
 	{"union", UNION},
 	{"unique", UNIQUE},

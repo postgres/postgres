@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.6 1997/09/08 21:49:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.7 1997/10/28 15:05:32 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,13 +28,69 @@
 
 #include "utils/elog.h"
 
+#include "nodes/parsenodes.h"
+#include "commands/trigger.h"
+
+
+char	   *
+fmgr_pl(Oid func_id,
+		int n_arguments,
+		FmgrValues * values,
+		bool * isNull)
+{
+	HeapTuple	procedureTuple;
+	HeapTuple	languageTuple;
+	Form_pg_proc procedureStruct;
+	Form_pg_language languageStruct;
+	func_ptr	plcall_fn;
+	int			plcall_nargs;
+
+	/* Fetch the pg_proc tuple from the syscache */
+	procedureTuple = SearchSysCacheTuple(PROOID,
+										 ObjectIdGetDatum(func_id),
+										 0, 0, 0);
+	if (!HeapTupleIsValid(procedureTuple))
+	{
+		elog(WARN, "fmgr_pl(): Cache lookup of procedure %ld failed.",
+			 ObjectIdGetDatum(func_id));
+	}
+	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
+
+	/* Fetch the pg_language tuple from the syscache */
+	languageTuple = SearchSysCacheTuple(LANOID,
+							  ObjectIdGetDatum(procedureStruct->prolang),
+										0, 0, 0);
+	if (!HeapTupleIsValid(languageTuple))
+	{
+		elog(WARN, "fmgr_pl(): Cache lookup of language %ld for procedure %ld failed.",
+			 ObjectIdGetDatum(procedureStruct->prolang),
+			 ObjectIdGetDatum(func_id));
+	}
+	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
+
+	/* Get the function pointer for the PL call handler */
+	fmgr_info(languageStruct->lanplcallfoid, &plcall_fn, &plcall_nargs);
+	if (plcall_fn == NULL)
+	{
+		elog(WARN, "fmgr_pl(): failed to load PL handler for procedure %ld.",
+			 ObjectIdGetDatum(func_id));
+	}
+
+	/* Call the PL handler */
+	CurrentTriggerData = NULL;
+	return (*plcall_fn) (func_id,
+						 n_arguments,
+						 values,
+						 isNull);
+}
+
 
 char	   *
 fmgr_c(func_ptr user_fn,
 	   Oid func_id,
 	   int n_arguments,
-	   FmgrValues *values,
-	   bool *isNull)
+	   FmgrValues * values,
+	   bool * isNull)
 {
 	char	   *returnValue = (char *) NULL;
 
@@ -43,11 +99,11 @@ fmgr_c(func_ptr user_fn,
 	{
 
 		/*
-		 * a NULL func_ptr denotes untrusted function (in postgres 4.2).
-		 * Untrusted functions have very limited use and is clumsy. We
-		 * just get rid of it.
+		 * a NULL func_ptr denotet untrusted function (in postgres 4.2).
+		 * Untrusted functions have very limited use and is clumsy. We now
+		 * use this feature for procedural languages.
 		 */
-		elog(WARN, "internal error: untrusted function not supported.");
+		return fmgr_pl(func_id, n_arguments, values, isNull);
 	}
 
 	switch (n_arguments)
@@ -115,12 +171,14 @@ fmgr_c(func_ptr user_fn,
 }
 
 void
-fmgr_info(Oid procedureId, func_ptr *function, int *nargs)
+fmgr_info(Oid procedureId, func_ptr * function, int *nargs)
 {
 	func_ptr	user_fn = NULL;
 	FmgrCall   *fcp;
 	HeapTuple	procedureTuple;
 	FormData_pg_proc *procedureStruct;
+	HeapTuple	languageTuple;
+	Form_pg_language languageStruct;
 	Oid			language;
 
 	if (!(fcp = fmgr_isbuiltin(procedureId)))
@@ -158,8 +216,35 @@ fmgr_info(Oid procedureId, func_ptr *function, int *nargs)
 				*nargs = procedureStruct->pronargs;
 				break;
 			default:
-				elog(WARN, "fmgr_info: function %d: unknown language %d",
-					 procedureId, language);
+
+				/*
+				 * Might be a created procedural language Lookup the
+				 * syscache for the language and check the lanispl flag If
+				 * this is the case, we return a NULL function pointer and
+				 * the number of arguments from the procedure.
+				 */
+				languageTuple = SearchSysCacheTuple(LANOID,
+							  ObjectIdGetDatum(procedureStruct->prolang),
+													0, 0, 0);
+				if (!HeapTupleIsValid(languageTuple))
+				{
+					elog(WARN, "fmgr_info: %s %ld",
+						 "Cache lookup for language %d failed",
+						 ObjectIdGetDatum(procedureStruct->prolang));
+				}
+				languageStruct = (Form_pg_language)
+					GETSTRUCT(languageTuple);
+				if (languageStruct->lanispl)
+				{
+					user_fn = (func_ptr) NULL;
+					*nargs = procedureStruct->pronargs;
+				}
+				else
+				{
+					elog(WARN, "fmgr_info: function %d: unknown language %d",
+						 procedureId, language);
+				}
+				break;
 		}
 	}
 	else
@@ -252,7 +337,7 @@ fmgr_ptr(func_ptr user_fn, Oid func_id,...)
  * to fmgr_c().
  */
 char	   *
-fmgr_array_args(Oid procedureId, int nargs, char *args[], bool *isNull)
+fmgr_array_args(Oid procedureId, int nargs, char *args[], bool * isNull)
 {
 	func_ptr	user_fn;
 	int			true_arguments;

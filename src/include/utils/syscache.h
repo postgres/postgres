@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.7 1997/09/08 21:55:17 momjian Exp $
+ * $Id: syscache.h,v 1.8 1997/10/28 15:11:45 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@
 #define REWRITENAME		25
 #define PROSRC			26
 #define CLADEFTYPE		27
+#define LANOID			28
 
 /* ----------------
  *		struct cachedesc:		information needed for a call to InitSysCache()

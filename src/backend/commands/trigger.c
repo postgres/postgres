@@ -26,11 +26,11 @@
 #include "utils/mcxt.h"
 #include "utils/inval.h"
 #include "utils/builtins.h"
+#include "utils/syscache.h"
 
 #ifndef NO_SECURITY
 #include "miscadmin.h"
 #include "utils/acl.h"
-#include "utils/syscache.h"
 #endif
 
 TriggerData *CurrentTriggerData = NULL;
@@ -87,8 +87,8 @@ CreateTrigger(CreateTrigStmt * stmt)
 	if (stmt->row)
 		TRIGGER_SETT_ROW(tgtype);
 	else
-		elog (WARN, "CreateTrigger: STATEMENT triggers are unimplemented, yet");
-	
+		elog(WARN, "CreateTrigger: STATEMENT triggers are unimplemented, yet");
+
 	for (i = 0; i < 3 && stmt->actions[i]; i++)
 	{
 		switch (stmt->actions[i])
@@ -142,7 +142,22 @@ CreateTrigger(CreateTrigStmt * stmt)
 		elog(WARN, "CreateTrigger: function %s () does not exist", stmt->funcname);
 
 	if (((Form_pg_proc) GETSTRUCT(tuple))->prolang != ClanguageId)
-		elog(WARN, "CreateTrigger: only C functions are supported");
+	{
+		HeapTuple	langTup;
+
+		langTup = SearchSysCacheTuple(LANOID,
+			ObjectIdGetDatum(((Form_pg_proc) GETSTRUCT(tuple))->prolang),
+									  0, 0, 0);
+		if (!HeapTupleIsValid(langTup))
+		{
+			elog(WARN, "CreateTrigger: cache lookup for PL failed");
+		}
+
+		if (((Form_pg_language) GETSTRUCT(langTup))->lanispl == false)
+		{
+			elog(WARN, "CreateTrigger: only C and PL functions are supported");
+		}
+	}
 
 	MemSet(nulls, ' ', Natts_pg_trigger * sizeof(char));
 
@@ -159,10 +174,10 @@ CreateTrigger(CreateTrigStmt * stmt)
 
 		foreach(le, stmt->args)
 		{
-			char   *ar = (char *) lfirst(le);
+			char	   *ar = (char *) lfirst(le);
 
 			len += strlen(ar) + 4;
-			for ( ; *ar; ar++)
+			for (; *ar; ar++)
 			{
 				if (*ar == '\\')
 					len++;
@@ -172,9 +187,9 @@ CreateTrigger(CreateTrigStmt * stmt)
 		args[0] = 0;
 		foreach(le, stmt->args)
 		{
-			char   *s = (char *) lfirst(le);
-			char   *d = args + strlen(args);
-			
+			char	   *s = (char *) lfirst(le);
+			char	   *d = args + strlen(args);
+
 			while (*s)
 			{
 				if (*s == '\\')
@@ -399,6 +414,7 @@ RelationBuildTriggers(Relation relation)
 		build->tgname = nameout(&(pg_trigger->tgname));
 		build->tgfoid = pg_trigger->tgfoid;
 		build->tgfunc = NULL;
+		build->tgplfunc = NULL;
 		build->tgtype = pg_trigger->tgtype;
 		build->tgnargs = pg_trigger->tgnargs;
 		memcpy(build->tgattr, &(pg_trigger->tgattr), 8 * sizeof(int16));
@@ -578,6 +594,54 @@ DescribeTrigger(TriggerDesc * trigdesc, Trigger * trigger)
 
 }
 
+static HeapTuple
+ExecCallTriggerFunc(Trigger * trigger)
+{
+
+	if (trigger->tgfunc != NULL)
+	{
+		return (HeapTuple) ((*(trigger->tgfunc)) ());
+	}
+
+	if (trigger->tgplfunc == NULL)
+	{
+		HeapTuple	procTuple;
+		HeapTuple	langTuple;
+		Form_pg_proc procStruct;
+		Form_pg_language langStruct;
+		int			nargs;
+
+		procTuple = SearchSysCacheTuple(PROOID,
+										ObjectIdGetDatum(trigger->tgfoid),
+										0, 0, 0);
+		if (!HeapTupleIsValid(procTuple))
+		{
+			elog(WARN, "ExecCallTriggerFunc(): Cache lookup for proc %ld failed",
+				 ObjectIdGetDatum(trigger->tgfoid));
+		}
+		procStruct = (Form_pg_proc) GETSTRUCT(procTuple);
+
+		langTuple = SearchSysCacheTuple(LANOID,
+								   ObjectIdGetDatum(procStruct->prolang),
+										0, 0, 0);
+		if (!HeapTupleIsValid(langTuple))
+		{
+			elog(WARN, "ExecCallTriggerFunc(): Cache lookup for language %ld failed",
+				 ObjectIdGetDatum(procStruct->prolang));
+		}
+		langStruct = (Form_pg_language) GETSTRUCT(langTuple);
+
+		if (langStruct->lanispl == false)
+		{
+			fmgr_info(trigger->tgfoid, &(trigger->tgfunc), &nargs);
+			return (HeapTuple) ((*(trigger->tgfunc)) ());
+		}
+		fmgr_info(langStruct->lanplcallfoid, &(trigger->tgplfunc), &nargs);
+	}
+
+	return (HeapTuple) ((*(trigger->tgplfunc)) (trigger->tgfoid));
+}
+
 HeapTuple
 ExecBRInsertTriggers(Relation rel, HeapTuple trigtuple)
 {
@@ -586,7 +650,6 @@ ExecBRInsertTriggers(Relation rel, HeapTuple trigtuple)
 	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_INSERT];
 	HeapTuple	newtuple = trigtuple;
 	HeapTuple	oldtuple;
-	int			nargs;
 	int			i;
 
 	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
@@ -599,9 +662,7 @@ ExecBRInsertTriggers(Relation rel, HeapTuple trigtuple)
 		CurrentTriggerData = SaveTriggerData;
 		CurrentTriggerData->tg_trigtuple = oldtuple = newtuple;
 		CurrentTriggerData->tg_trigger = trigger[i];
-		if (trigger[i]->tgfunc == NULL)
-			fmgr_info(trigger[i]->tgfoid, &(trigger[i]->tgfunc), &nargs);
-		newtuple = (HeapTuple) ((*(trigger[i]->tgfunc)) ());
+		newtuple = ExecCallTriggerFunc(trigger[i]);
 		if (newtuple == NULL)
 			break;
 		else if (oldtuple != newtuple && oldtuple != trigtuple)
@@ -618,7 +679,6 @@ ExecARInsertTriggers(Relation rel, HeapTuple trigtuple)
 	TriggerData *SaveTriggerData;
 	int			ntrigs = rel->trigdesc->n_after_row[TRIGGER_EVENT_INSERT];
 	Trigger   **trigger = rel->trigdesc->tg_after_row[TRIGGER_EVENT_INSERT];
-	int			nargs;
 	int			i;
 
 	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
@@ -630,9 +690,7 @@ ExecARInsertTriggers(Relation rel, HeapTuple trigtuple)
 		CurrentTriggerData = SaveTriggerData;
 		CurrentTriggerData->tg_trigtuple = trigtuple;
 		CurrentTriggerData->tg_trigger = trigger[i];
-		if (trigger[i]->tgfunc == NULL)
-			fmgr_info(trigger[i]->tgfoid, &(trigger[i]->tgfunc), &nargs);
-		(void) ((*(trigger[i]->tgfunc)) ());
+		ExecCallTriggerFunc(trigger[i]);
 	}
 	CurrentTriggerData = NULL;
 	pfree(SaveTriggerData);
@@ -647,7 +705,6 @@ ExecBRDeleteTriggers(Relation rel, ItemPointer tupleid)
 	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_DELETE];
 	HeapTuple	trigtuple;
 	HeapTuple	newtuple = NULL;
-	int			nargs;
 	int			i;
 
 	trigtuple = GetTupleForTrigger(rel, tupleid, true);
@@ -664,9 +721,7 @@ ExecBRDeleteTriggers(Relation rel, ItemPointer tupleid)
 		CurrentTriggerData = SaveTriggerData;
 		CurrentTriggerData->tg_trigtuple = trigtuple;
 		CurrentTriggerData->tg_trigger = trigger[i];
-		if (trigger[i]->tgfunc == NULL)
-			fmgr_info(trigger[i]->tgfoid, &(trigger[i]->tgfunc), &nargs);
-		newtuple = (HeapTuple) ((*(trigger[i]->tgfunc)) ());
+		newtuple = ExecCallTriggerFunc(trigger[i]);
 		if (newtuple == NULL)
 			break;
 	}
@@ -684,7 +739,6 @@ ExecARDeleteTriggers(Relation rel, ItemPointer tupleid)
 	int			ntrigs = rel->trigdesc->n_after_row[TRIGGER_EVENT_DELETE];
 	Trigger   **trigger = rel->trigdesc->tg_after_row[TRIGGER_EVENT_DELETE];
 	HeapTuple	trigtuple;
-	int			nargs;
 	int			i;
 
 	trigtuple = GetTupleForTrigger(rel, tupleid, false);
@@ -700,9 +754,7 @@ ExecARDeleteTriggers(Relation rel, ItemPointer tupleid)
 		CurrentTriggerData = SaveTriggerData;
 		CurrentTriggerData->tg_trigtuple = trigtuple;
 		CurrentTriggerData->tg_trigger = trigger[i];
-		if (trigger[i]->tgfunc == NULL)
-			fmgr_info(trigger[i]->tgfoid, &(trigger[i]->tgfunc), &nargs);
-		(void) ((*(trigger[i]->tgfunc)) ());
+		ExecCallTriggerFunc(trigger[i]);
 	}
 	CurrentTriggerData = NULL;
 	pfree(SaveTriggerData);
@@ -719,7 +771,6 @@ ExecBRUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple newtuple)
 	HeapTuple	trigtuple;
 	HeapTuple	oldtuple;
 	HeapTuple	intuple = newtuple;
-	int			nargs;
 	int			i;
 
 	trigtuple = GetTupleForTrigger(rel, tupleid, true);
@@ -736,9 +787,7 @@ ExecBRUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple newtuple)
 		CurrentTriggerData->tg_trigtuple = trigtuple;
 		CurrentTriggerData->tg_newtuple = oldtuple = newtuple;
 		CurrentTriggerData->tg_trigger = trigger[i];
-		if (trigger[i]->tgfunc == NULL)
-			fmgr_info(trigger[i]->tgfoid, &(trigger[i]->tgfunc), &nargs);
-		newtuple = (HeapTuple) ((*(trigger[i]->tgfunc)) ());
+		newtuple = ExecCallTriggerFunc(trigger[i]);
 		if (newtuple == NULL)
 			break;
 		else if (oldtuple != newtuple && oldtuple != intuple)
@@ -757,7 +806,6 @@ ExecARUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple newtuple)
 	int			ntrigs = rel->trigdesc->n_after_row[TRIGGER_EVENT_UPDATE];
 	Trigger   **trigger = rel->trigdesc->tg_after_row[TRIGGER_EVENT_UPDATE];
 	HeapTuple	trigtuple;
-	int			nargs;
 	int			i;
 
 	trigtuple = GetTupleForTrigger(rel, tupleid, false);
@@ -773,9 +821,7 @@ ExecARUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple newtuple)
 		CurrentTriggerData->tg_trigtuple = trigtuple;
 		CurrentTriggerData->tg_newtuple = newtuple;
 		CurrentTriggerData->tg_trigger = trigger[i];
-		if (trigger[i]->tgfunc == NULL)
-			fmgr_info(trigger[i]->tgfoid, &(trigger[i]->tgfunc), &nargs);
-		(void) ((*(trigger[i]->tgfunc)) ());
+		ExecCallTriggerFunc(trigger[i]);
 	}
 	CurrentTriggerData = NULL;
 	pfree(SaveTriggerData);

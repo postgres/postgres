@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.15 1997/09/29 06:01:44 vadim Exp $
+ * $Id: nodes.h,v 1.16 1997/10/28 15:10:37 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,6 +185,8 @@ typedef enum NodeTag
 	T_VariableResetStmt,
 	T_CreateTrigStmt,
 	T_DropTrigStmt,
+	T_CreatePLangStmt,
+	T_DropPLangStmt,
 
 	T_A_Expr = 700,
 	T_Attr,

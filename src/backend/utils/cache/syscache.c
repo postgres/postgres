@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.9 1997/09/18 20:22:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.10 1997/10/28 15:03:06 vadim Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -57,7 +57,7 @@ extern bool AMI_OVERRIDE;		/* XXX style */
 #include "utils/syscache.h"
 #include "catalog/indexing.h"
 
-typedef HeapTuple (*ScanFunc) ();
+typedef		HeapTuple(*ScanFunc) ();
 
 /* ----------------
  *		Warning:  cacheinfo[] below is changed, then be sure and
@@ -179,7 +179,7 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0,
 		0},
-		offsetof(TypeTupleFormData, typalign) +sizeof(char),
+		offsetof(TypeTupleFormData, typalign) + sizeof(char),
 		TypeNameIndex,
 	TypeNameIndexScan},
 	{TypeRelationName,			/* TYPOID */
@@ -316,7 +316,16 @@ static struct cachedesc cacheinfo[] = {
 		0},
 		sizeof(FormData_pg_opclass),
 		NULL,
-	(ScanFunc) NULL}
+	(ScanFunc) NULL},
+	{LanguageRelationName,		/* LANOID */
+		1,
+		{ObjectIdAttributeNumber,
+			0,
+			0,
+		0},
+		offsetof(FormData_pg_language, lancompiler),
+		NULL,
+	NULL}
 };
 
 static struct catcache *SysCache[
@@ -383,7 +392,7 @@ InitCatalogCache()
  * XXX The tuple that is returned is NOT supposed to be pfree'd!
  */
 HeapTuple
-SearchSysCacheTuple(int cacheId,/* cache selection code */
+SearchSysCacheTuple(int cacheId,		/* cache selection code */
 					Datum key1,
 					Datum key2,
 					Datum key3,
@@ -562,7 +571,7 @@ SearchSysCacheGetAttribute(int cacheId,
 		: attributeLength;		/* fixed length */
 
 		tmp = (char *) palloc(size);
-		memmove(tmp, (void *)attributeValue, size);
+		memmove(tmp, (void *) attributeValue, size);
 		returnValue = (void *) tmp;
 	}
 
