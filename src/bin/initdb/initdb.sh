@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.164 2002/08/04 06:26:38 thomas Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.165 2002/08/08 19:39:05 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -803,26 +803,29 @@ CREATE VIEW pg_views AS \
 
 CREATE VIEW pg_tables AS \
     SELECT \
+        N.nspname AS schemaname, \
         C.relname AS tablename, \
         pg_get_userbyid(C.relowner) AS tableowner, \
         C.relhasindex AS hasindexes, \
         C.relhasrules AS hasrules, \
         (C.reltriggers > 0) AS hastriggers \
-    FROM pg_class C \
+    FROM pg_class C LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) \
     WHERE C.relkind IN ('r', 's');
 
 CREATE VIEW pg_indexes AS \
     SELECT \
+        N.nspname AS schemaname, \
         C.relname AS tablename, \
         I.relname AS indexname, \
-        pg_get_indexdef(X.indexrelid) AS indexdef \
-    FROM pg_index X, pg_class C, pg_class I \
-    WHERE C.relkind = 'r' AND I.relkind = 'i' \
-        AND C.oid = X.indrelid \
-        AND I.oid = X.indexrelid;
+        pg_get_indexdef(I.oid) AS indexdef \
+    FROM pg_index X JOIN pg_class C ON (C.oid = X.indrelid) \
+         JOIN pg_class I ON (I.oid = X.indexrelid) \
+         LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) \
+    WHERE C.relkind = 'r' AND I.relkind = 'i';
 
 CREATE VIEW pg_stats AS \
     SELECT \
+        nspname AS schemaname, \
         relname AS tablename, \
         attname AS attname, \
         stanullfrac AS null_frac, \
@@ -852,16 +855,17 @@ CREATE VIEW pg_stats AS \
             WHEN stakind3 THEN stanumbers3[1] \
             WHEN stakind4 THEN stanumbers4[1] \
         END AS correlation \
-    FROM pg_class c, pg_attribute a, pg_statistic s \
-    WHERE c.oid = s.starelid AND c.oid = a.attrelid \
-        AND a.attnum = s.staattnum \
-        AND has_table_privilege(c.oid, 'select');
+    FROM pg_statistic s JOIN pg_class c ON (c.oid = s.starelid) \
+         JOIN pg_attribute a ON (c.oid = attrelid AND attnum = s.staattnum) \
+         LEFT JOIN pg_namespace n ON (n.oid = c.relnamespace) \
+    WHERE has_table_privilege(c.oid, 'select');
 
 REVOKE ALL on pg_statistic FROM public;
 
 CREATE VIEW pg_stat_all_tables AS \
     SELECT \
             C.oid AS relid, \
+            N.nspname AS schemaname, \
             C.relname AS relname, \
             pg_stat_get_numscans(C.oid) AS seq_scan, \
             pg_stat_get_tuples_returned(C.oid) AS seq_tup_read, \
@@ -870,22 +874,24 @@ CREATE VIEW pg_stat_all_tables AS \
             pg_stat_get_tuples_inserted(C.oid) AS n_tup_ins, \
             pg_stat_get_tuples_updated(C.oid) AS n_tup_upd, \
             pg_stat_get_tuples_deleted(C.oid) AS n_tup_del \
-    FROM pg_class C LEFT OUTER JOIN \
+    FROM pg_class C LEFT JOIN \
          pg_index I ON C.oid = I.indrelid \
+         LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) \
     WHERE C.relkind = 'r' \
-    GROUP BY C.oid, C.relname;
+    GROUP BY C.oid, N.nspname, C.relname;
 
 CREATE VIEW pg_stat_sys_tables AS \
     SELECT * FROM pg_stat_all_tables \
-    WHERE relname ~ '^pg_';
+    WHERE schemaname IN ('pg_catalog', 'pg_toast');
 
 CREATE VIEW pg_stat_user_tables AS \
     SELECT * FROM pg_stat_all_tables \
-    WHERE relname !~ '^pg_';
+    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast');
 
 CREATE VIEW pg_statio_all_tables AS \
     SELECT \
             C.oid AS relid, \
+            N.nspname AS schemaname, \
             C.relname AS relname, \
             pg_stat_get_blocks_fetched(C.oid) - \
                     pg_stat_get_blocks_hit(C.oid) AS heap_blks_read, \
@@ -899,86 +905,89 @@ CREATE VIEW pg_statio_all_tables AS \
             pg_stat_get_blocks_fetched(X.oid) - \
                     pg_stat_get_blocks_hit(X.oid) AS tidx_blks_read, \
             pg_stat_get_blocks_hit(X.oid) AS tidx_blks_hit \
-    FROM pg_class C LEFT OUTER JOIN \
-            pg_index I ON C.oid = I.indrelid LEFT OUTER JOIN \
-            pg_class T ON C.reltoastrelid = T.oid LEFT OUTER JOIN \
+    FROM pg_class C LEFT JOIN \
+            pg_index I ON C.oid = I.indrelid LEFT JOIN \
+            pg_class T ON C.reltoastrelid = T.oid LEFT JOIN \
             pg_class X ON T.reltoastidxid = X.oid \
+            LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) \
     WHERE C.relkind = 'r' \
-    GROUP BY C.oid, C.relname, T.oid, X.oid;
+    GROUP BY C.oid, N.nspname, C.relname, T.oid, X.oid;
 
 CREATE VIEW pg_statio_sys_tables AS \
     SELECT * FROM pg_statio_all_tables \
-    WHERE relname ~ '^pg_';
+    WHERE schemaname IN ('pg_catalog', 'pg_toast');
 
 CREATE VIEW pg_statio_user_tables AS \
     SELECT * FROM pg_statio_all_tables \
-    WHERE relname !~ '^pg_';
+    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast');
 
 CREATE VIEW pg_stat_all_indexes AS \
     SELECT \
             C.oid AS relid, \
             I.oid AS indexrelid, \
+            N.nspname AS schemaname, \
             C.relname AS relname, \
             I.relname AS indexrelname, \
             pg_stat_get_numscans(I.oid) AS idx_scan, \
             pg_stat_get_tuples_returned(I.oid) AS idx_tup_read, \
             pg_stat_get_tuples_fetched(I.oid) AS idx_tup_fetch \
-    FROM pg_class C, \
-            pg_class I, \
-            pg_index X \
-    WHERE C.relkind = 'r' AND \
-            X.indrelid = C.oid AND \
-            X.indexrelid = I.oid;
+    FROM pg_class C JOIN \
+            pg_index X ON C.oid = X.indrelid JOIN \
+            pg_class I ON I.oid = X.indexrelid \
+            LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) \
+    WHERE C.relkind = 'r';
 
 CREATE VIEW pg_stat_sys_indexes AS \
     SELECT * FROM pg_stat_all_indexes \
-    WHERE relname ~ '^pg_';
+    WHERE schemaname IN ('pg_catalog', 'pg_toast');
 
 CREATE VIEW pg_stat_user_indexes AS \
     SELECT * FROM pg_stat_all_indexes \
-    WHERE relname !~ '^pg_';
+    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast');
 
 CREATE VIEW pg_statio_all_indexes AS \
     SELECT \
             C.oid AS relid, \
             I.oid AS indexrelid, \
+            N.nspname AS schemaname, \
             C.relname AS relname, \
             I.relname AS indexrelname, \
             pg_stat_get_blocks_fetched(I.oid) - \
                     pg_stat_get_blocks_hit(I.oid) AS idx_blks_read, \
             pg_stat_get_blocks_hit(I.oid) AS idx_blks_hit \
-    FROM pg_class C, \
-            pg_class I, \
-            pg_index X \
-    WHERE C.relkind = 'r' AND \
-            X.indrelid = C.oid AND \
-            X.indexrelid = I.oid;
+    FROM pg_class C JOIN \
+            pg_index X ON C.oid = X.indrelid JOIN \
+            pg_class I ON I.oid = X.indexrelid \
+            LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) \
+    WHERE C.relkind = 'r';
 
 CREATE VIEW pg_statio_sys_indexes AS \
     SELECT * FROM pg_statio_all_indexes \
-    WHERE relname ~ '^pg_';
+    WHERE schemaname IN ('pg_catalog', 'pg_toast');
 
 CREATE VIEW pg_statio_user_indexes AS \
     SELECT * FROM pg_statio_all_indexes \
-    WHERE relname !~ '^pg_';
+    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast');
 
 CREATE VIEW pg_statio_all_sequences AS \
     SELECT \
             C.oid AS relid, \
+            N.nspname AS schemaname, \
             C.relname AS relname, \
             pg_stat_get_blocks_fetched(C.oid) - \
                     pg_stat_get_blocks_hit(C.oid) AS blks_read, \
             pg_stat_get_blocks_hit(C.oid) AS blks_hit \
     FROM pg_class C \
+            LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) \
     WHERE C.relkind = 'S';
 
 CREATE VIEW pg_statio_sys_sequences AS \
     SELECT * FROM pg_statio_all_sequences \
-    WHERE relname ~ '^pg_';
+    WHERE schemaname IN ('pg_catalog', 'pg_toast');
 
 CREATE VIEW pg_statio_user_sequences AS \
     SELECT * FROM pg_statio_all_sequences \
-    WHERE relname !~ '^pg_';
+    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast');
 
 CREATE VIEW pg_stat_activity AS \
     SELECT \
