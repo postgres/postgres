@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.126 2004/12/21 18:33:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.127 2005/01/13 23:07:34 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3606,7 +3606,7 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	 * have more than one active param list.
 	 */
 	paramLI = (ParamListInfo)
-		MemoryContextAllocZero(econtext->ecxt_per_tuple_memory,
+		MemoryContextAlloc(econtext->ecxt_per_tuple_memory,
 						(expr->nparams + 1) * sizeof(ParamListInfoData));
 
 	/*
