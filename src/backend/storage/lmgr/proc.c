@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.30 1998/01/28 02:29:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.31 1998/02/19 15:04:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.30 1998/01/28 02:29:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.31 1998/02/19 15:04:45 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -451,19 +451,42 @@ ProcSleep(PROC_QUEUE *waitQueue,
 		  int prio,
 		  LOCK *lock)
 {
-	int			i;
+	int			i = 0;
 	PROC	   *proc;
 	struct itimerval timeval,
 				dummy;
 
+	/*
+	 *	If the first entries in the waitQueue have a greater priority than
+	 *	we have, we must be a reader, and they must be a writers, and we
+	 *	must be here because the current holder is a writer or a
+	 *	reader but we don't share shared locks if a writer is waiting.
+	 *	We put ourselves after the writers.  This way, we have a FIFO, but
+	 *	keep the readers together to give them decent priority, and no one
+	 *	starves.  Because we group all readers together, a non-empty queue
+	 *	only has a few possible configurations:
+	 *
+	 *	[readers]
+	 *	[writers]
+	 *	[readers][writers]
+	 *	[writers][readers]
+	 *	[writers][readers][writers]
+	 *
+	 *	In a full queue, we would have a reader holding a lock, then a
+	 *	writer gets the lock, then a bunch of readers, made up of readers
+	 *	who could not share the first readlock because a writer was waiting,
+	 *	and new readers arriving while the writer had the lock.
+	 *
+	 */
 	proc = (PROC *) MAKE_PTR(waitQueue->links.prev);
-	for (i = 0; i < waitQueue->size; i++)
-	{
-		if (proc->prio >= prio)
-			proc = (PROC *) MAKE_PTR(proc->links.prev);
-		else
-			break;
-	}
+
+	/* If we are a reader, and they are writers, skip past them */
+	while (i++ < waitQueue->size && proc->prio > prio)
+		proc = (PROC *) MAKE_PTR(proc->links.prev);
+
+	/* The rest of the queue is FIFO, with readers first, writers last */
+	while (i++ < waitQueue->size && proc->prio <= prio)
+		proc = (PROC *) MAKE_PTR(proc->links.prev);
 
 	MyProc->prio = prio;
 	MyProc->token = token;
@@ -596,8 +619,7 @@ ProcLockWakeup(PROC_QUEUE *queue, char *ltable, char *lock)
 
 		/*
 		 * ProcWakeup removes proc from the lock waiting process queue and
-		 * returns the next proc in chain.	If a writer just dropped its
-		 * lock and there are several waiting readers, wake them all up.
+		 * returns the next proc in chain.
 		 */
 		proc = ProcWakeup(proc, NO_ERROR);
 
