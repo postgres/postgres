@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.155 2003/05/06 23:34:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.156 2003/05/08 14:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,10 +286,13 @@ BootstrapMain(int argc, char *argv[])
 			case 'p':
 			{
 				/* indicates fork from postmaster */
-				char *p;
 #ifdef EXEC_BACKEND
-				sscanf(optarg, "%d,", &UsedShmemSegID);
+				char *p;
+
+				sscanf(optarg, "%d,%p,", &UsedShmemSegID, &UsedShmemSegAddr);
 				p = strchr(optarg, ',');
+				if (p)
+					p = strchr(p+1, ',');
 				if (p)
 					dbname = strdup(p+1);
 #else

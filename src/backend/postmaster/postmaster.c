@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.322 2003/05/06 23:34:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.323 2003/05/08 14:49:03 momjian Exp $
  *
  * NOTES
  *
@@ -2439,9 +2439,10 @@ BackendFinalize(Port *port)
 	 */
 	av[ac++] = "-p";
 #ifdef EXEC_BACKEND
-	Assert(UsedShmemSegID != 0);
+ 	Assert(UsedShmemSegID != 0 && UsedShmemSegAddr != NULL);
 	/* database name at the end because it might contain commas */
-	snprintf(pbuf, NAMEDATALEN + 256, "%d,%d,%s", port->sock, UsedShmemSegID, port->database_name);
+	snprintf(pbuf, NAMEDATALEN + 256, "%d,%d,%p,%s", port->sock,
+					UsedShmemSegID, UsedShmemSegAddr, port->database_name);
 	av[ac++] = pbuf;
 #else
 	av[ac++] = port->database_name;
@@ -2776,9 +2777,10 @@ SSDataBase(int xlop)
 
 		av[ac++] = "-p";
 #ifdef EXEC_BACKEND
-		Assert(UsedShmemSegID != 0);
+	 	Assert(UsedShmemSegID != 0 && UsedShmemSegAddr != NULL);
 		/* database name at the end because it might contain commas */
-		snprintf(pbuf, NAMEDATALEN + 256, "%d,%s", UsedShmemSegID, "template1");
+		snprintf(pbuf, NAMEDATALEN + 256, "%d,%p,%s", UsedShmemSegID,
+						UsedShmemSegAddr, "template1");
 		av[ac++] = pbuf;
 #else
 		av[ac++] = "template1";

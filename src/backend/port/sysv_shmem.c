@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.8 2003/05/06 23:34:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.9 2003/05/08 14:49:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,9 +39,8 @@ typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 #define IPCProtection	(0600)	/* access/modify by user only */
 
 
-#ifdef EXEC_BACKEND
 IpcMemoryKey UsedShmemSegID = 0;
-#endif
+void *UsedShmemSegAddr = NULL;
 
 static void *InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size);
 static void IpcMemoryDetach(int status, Datum shmaddr);
@@ -282,7 +281,7 @@ PrivateMemoryDelete(int status, Datum memaddr)
  *
  * Create a shared memory segment of the given size and initialize its
  * standard header.  Also, register an on_shmem_exit callback to release
- * the storage.
+ * the storage.  For an exec'ed backend, it just attaches.
  *
  * Dead Postgres segments are recycled if found, but we do not fail upon
  * collision with non-Postgres shmem segments.	The idea here is to detect and
@@ -302,11 +301,9 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 	/* Room for a header? */
 	Assert(size > MAXALIGN(sizeof(PGShmemHeader)));
 
-#ifdef EXEC_BACKEND
-	if (UsedShmemSegID != 0)
+	if (ExecBackend && UsedShmemSegID != 0)
 		NextShmemSegID = UsedShmemSegID;
 	else
-#endif
 		NextShmemSegID = port * 1000 + 1;
 
 	for (;;NextShmemSegID++)
@@ -320,25 +317,39 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 			break;
 		}
 
-		/* Try to create new segment */
-		memAddress = InternalIpcMemoryCreate(NextShmemSegID, size);
-		if (memAddress)
-			break;				/* successful create and attach */
+		/* If attach to fixed address, only try once */
+		if (ExecBackend && UsedShmemSegAddr != NULL && NextShmemSegID != UsedShmemSegID)
+		{
+			fprintf(stderr, "Unable to attach to memory at fixed address: shmget(key=%d, addr=%p) failed: %s\n",
+				(int) UsedShmemSegID, UsedShmemSegAddr, strerror(errno));
+			proc_exit(1);
+		}
+
+		if (!ExecBackend || UsedShmemSegAddr == NULL)
+		{
+			/* Try to create new segment */
+			memAddress = InternalIpcMemoryCreate(NextShmemSegID, size);
+			if (memAddress)
+				break;				/* successful create and attach */
+		}
 
 		/* See if it looks to be leftover from a dead Postgres process */
 		shmid = shmget(NextShmemSegID, sizeof(PGShmemHeader), 0);
 		if (shmid < 0)
 			continue;			/* failed: must be some other app's */
 
-#if defined(solaris) && defined(__sparc__)
 		/* use intimate shared memory on SPARC Solaris */
-		memAddress = shmat(shmid, 0, SHM_SHARE_MMU);
+		memAddress = shmat(shmid, UsedShmemSegAddr,
+#if defined(solaris) && defined(__sparc__)
+				SHM_SHARE_MMU
 #else
-		memAddress = shmat(shmid, 0, 0);
+				0
 #endif
+			);
 
 		if (memAddress == (void *) -1)
 			continue;			/* failed: must be some other app's */
+
 		hdr = (PGShmemHeader *) memAddress;
 		if (hdr->magic != PGShmemMagic)
 		{
@@ -346,14 +357,19 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 			continue;			/* segment belongs to a non-Postgres app */
 		}
 
+		/* Successfully attached to shared memory, which is all we wanted */
+		if (ExecBackend && UsedShmemSegAddr != NULL)
+			break;
+
+		/* Check shared memory and possibly remove and recreate */
+			
 		/*
-		 * If the creator PID is my own PID or does not belong to any
-		 * extant process, it's safe to zap it.
+		 * If I am not the creator and it belongs to an extant process,
+		 * continue.
 		 */
 		if (hdr->creatorPID != getpid())
 		{
-			if (kill(hdr->creatorPID, 0) == 0 ||
-				errno != ESRCH)
+			if (kill(hdr->creatorPID, 0) == 0 || errno != ESRCH)
 			{
 				shmdt(memAddress);
 				continue;		/* segment belongs to a live process */
@@ -385,26 +401,31 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 		 */
 	}
 
-	/*
-	 * OK, we created a new segment.  Mark it as created by this process.
-	 * The order of assignments here is critical so that another Postgres
-	 * process can't see the header as valid but belonging to an invalid
-	 * PID!
-	 */
 	hdr = (PGShmemHeader *) memAddress;
-	hdr->creatorPID = getpid();
-	hdr->magic = PGShmemMagic;
 
-	/*
-	 * Initialize space allocation status for segment.
-	 */
-	hdr->totalsize = size;
-	hdr->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
+	if (!ExecBackend || makePrivate || UsedShmemSegAddr == NULL)
+	{
+		/*
+		 * OK, we created a new segment.  Mark it as created by this process.
+		 * The order of assignments here is critical so that another Postgres
+		 * process can't see the header as valid but belonging to an invalid
+		 * PID!
+		 */
+		hdr->creatorPID = getpid();
+		hdr->magic = PGShmemMagic;
+	
+		/*
+		 * Initialize space allocation status for segment.
+		 */
+		hdr->totalsize = size;
+		hdr->freeoffset = MAXALIGN(sizeof(PGShmemHeader));
+	}
 
-#ifdef EXEC_BACKEND
-	if (!makePrivate && UsedShmemSegID == 0)
+	if (ExecBackend && !makePrivate && UsedShmemSegAddr == NULL)
+	{
+		UsedShmemSegAddr = memAddress;
 		UsedShmemSegID = NextShmemSegID;
-#endif
+	}
 
 	return hdr;
 }

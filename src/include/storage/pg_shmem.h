@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_shmem.h,v 1.5 2003/05/06 23:34:56 momjian Exp $
+ * $Id: pg_shmem.h,v 1.6 2003/05/08 14:49:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ typedef struct PGShmemHeader	/* standard header for all Postgres shmem */
 
 #ifdef EXEC_BACKEND
 extern IpcMemoryKey UsedShmemSegID;
+extern void *UsedShmemSegAddr;
 #endif
 
 extern PGShmemHeader *PGSharedMemoryCreate(uint32 size, bool makePrivate,

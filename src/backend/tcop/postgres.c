@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.338 2003/05/06 23:34:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.339 2003/05/08 14:49:04 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2025,12 +2025,16 @@ PostgresMain(int argc, char *argv[], const char *username)
 				 */
 				if (secure)
 				{
-					char *p;
 #ifdef EXEC_BACKEND
-					sscanf(optarg, "%d,%d,", &MyProcPort->sock, &UsedShmemSegID);
+					char *p;
+
+					sscanf(optarg, "%d,%d,%p,", &MyProcPort->sock,
+									&UsedShmemSegID, &UsedShmemSegAddr);
 					/* Grab dbname as last param */
 					p = strchr(optarg, ',');
 					if (p)
+						p = strchr(p+1, ',');
+					if (p)					
 						p = strchr(p+1, ',');
 					if (p)					
 						dbname = strdup(p+1);
@@ -2393,7 +2397,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.338 $ $Date: 2003/05/06 23:34:55 $\n");
+		puts("$Revision: 1.339 $ $Date: 2003/05/08 14:49:04 $\n");
 	}
 
 	/*
