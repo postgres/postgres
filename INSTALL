@@ -165,6 +165,8 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
       /usr/local/pgsql/data/pg_hba.conf to allow only you on, then bring
       postmaster back up.
 
+      Rather than using pg_dumpall, pg_upgrade can often be used.
+
   6. If you are upgrading an existing system then kill the database server
      now. Type
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.41.2.1 2000/06/01 05:14:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.41.2.2 2000/06/01 05:58:56 momjian Exp $
 -->
 
  <chapter id="install">
@@ -244,7 +244,10 @@ All of PostgreSQL is successfully made. Ready to install.
       If you are not upgrading an existing system then skip to 
       <xref linkend="continue">.
      </para>
-
+     <para>
+     If you are running 7.0 or later, skip to
+     <xref linkend="nodump">.
+      </para>
      <para>
       You now need to back up your existing database.
       To dump your fairly recent post-6.0 database installation, type
@@ -284,9 +287,13 @@ All of PostgreSQL is successfully made. Ready to install.
        bring <application>postmaster</application> back up.
       </para>
      </caution>
+     <para>
+     Rather than using <application>pg_dumpall</application>,
+     <application>pg_upgrade</application> can often be used.
+     </para>
     </step>
 
-    <step performance="required">
+    <step performance="required" id="nodump">
      <para>
       If you are upgrading an existing system then kill the database
       server now. Type
