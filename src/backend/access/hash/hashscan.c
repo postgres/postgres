@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.7 1996/11/05 09:40:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.8 1996/11/15 18:36:31 momjian Exp $
  *
  * NOTES
  *    Because we can be doing an index scan on a relation while we
@@ -80,9 +80,7 @@ _hash_dropscan(IndexScanDesc scan)
     else
 	last->hashsl_next = chk->hashsl_next;
     
-#ifdef PERFECT_MEM
     pfree (chk);
-#endif /* PERFECT_MEM */
 }
 
 void

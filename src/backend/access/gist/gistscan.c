@@ -215,6 +215,7 @@ gistendscan(IndexScanDesc s)
     if (p != (GISTScanOpaque) NULL) {
 	gistfreestack(p->s_stack);
 	gistfreestack(p->s_markstk);
+	pfree (s->opaque);
     }
     
     gistdropscan(s);
