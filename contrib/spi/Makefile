@@ -1,19 +1,15 @@
 #
-# $Header: /cvsroot/pgsql/contrib/spi/Makefile,v 1.16 2000/07/04 16:17:11 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/spi/Makefile,v 1.17 2000/07/09 13:13:36 petere Exp $
 #
 
-TOPDIR=../..
+subdir = contrib/spi
+top_builddir = ../..
+include ../../src/Makefile.global
 
-include ../Makefile.global
-
-NAME	= 
-
-PROGRAM	= 
 OBJS	= autoinc.o insert_username.o moddatetime.o refint.o timetravel.o
 DOCS	= README.spi
 SQLS	= $(OBJS:.o=.sql)
-BINS	=
-EXAMPLES= $(OBJS:.o=.example) new_example.example
+EXAMPLES= $(OBJS:.o=.example)
 MODS	= $(OBJS:.o=$(DLSUFFIX))
 
 CFLAGS += -I. $(CFLAGS_SL)
@@ -22,43 +18,36 @@ ifdef REFINT_VERBOSE
 CFLAGS+= -DREFINT_VERBOSE
 endif
 
-OTHER_CLEAN = $(SQLS)
-
 all: $(MODS) $(SQLS)
 
 %.sql: %.sql.in
-	$(SED) "s|MODULE_PATHNAME|$(CONTRIB_MODDIR)/$(@:.sql=$(DLSUFFIX))|" < $< > $@
+	sed -e 's:MODULE_PATHNAME:$(libdir)/contrib/$(@:.sql=$(DLSUFFIX)):g' < $< > $@
 
-install: install_doc install_sql install_mod install_example
-
-install_doc:
-	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
-	done
-
-install_sql:
+install: all installdirs
 	for inst_file in $(SQLS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_SQLDIR); \
+	    $(INSTALL_DATA) $$inst_file $(datadir)/contrib || exit; \
 	done
-
-install_mod:
 	for inst_file in $(MODS); do \
-		$(INSTALL) $(INSTL_SHLIB_OPTS) $$inst_file $(CONTRIB_MODDIR); \
+	    $(INSTALL_SHLIB) $$inst_file $(libdir)/contrib || exit; \
+	done
+	for inst_file in $(EXAMPLES) README.spi; do \
+	    $(INSTALL_DATA) $$inst_file $(docdir)/contrib/spi || exit; \
 	done
 
-install_example:
-	for inst_file in $(EXAMPLES); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_EXAMPLESDIR); \
-	done
+installdirs:
+	$(mkinstalldirs) $(datadir)/contrib $(libdir)/contrib $(docdir)/contrib/spi
+
+uninstall:
+	rm -f $(addprefix $(datadir)/contrib/, $(SQLS)) \
+	  $(addprefix $(libdir)/contrib/, $(MODS)) \
+	  $(addprefix $(docdir)/contrib/spi/, $(EXAMPLES) README.spi)
+
+clean distclean maintainer-clean:
+	rm -f $(MODS) $(SQLS) $(OBJS)
 
 depend dep:
 	$(CC) -MM -MG $(CFLAGS) *.c > depend
 
-clean:
-	$(RM) *~ $(OBJS) $(MODS) $(PROGRAM) depend $(OTHER_CLEAN) core log
-
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-
-

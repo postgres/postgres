@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.153 2000/07/08 03:04:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.154 2000/07/09 13:14:05 petere Exp $
  *
  * NOTES
  *
@@ -86,11 +86,6 @@
 #include "utils/exc.h"
 #include "utils/guc.h"
 
-/*
- * "postmaster.opts" is a file containing options for postmaser.
- * pg_ctl will use it to restart postmaster.
- */
-#define OPTSFNAME	"postmaster.opts"
 
 #if !defined(MAXINT)
 #define MAXINT		   INT_MAX
@@ -246,7 +241,7 @@ extern int	optind,
 /*
  * postmaster.c - function prototypes
  */
-static void pmdaemonize(char *extraoptions);
+static void pmdaemonize(int argc, char *argv[]);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
 static void reset_shared(int port);
@@ -267,15 +262,7 @@ static long PostmasterRandom(void);
 static void RandomSalt(char *salt);
 static void SignalChildren(SIGNAL_ARGS);
 static int	CountChildren(void);
-static int
-SetOptsFile(char *progname, int port, char *datadir,
-			int assert, int nbuf,
-			int debuglvl, int netserver,
-#ifdef USE_SSL
-			int securenetserver,
-#endif
-			int maxbackends, int reinit,
-			int silent, int sendstop, char *extraoptions);
+static bool CreateOptsFile(int argc, char *argv[]);
 
 extern int	BootstrapMain(int argc, char *argv[]);
 static pid_t SSDataBase(bool startup);
@@ -564,8 +551,8 @@ PostmasterMain(int argc, char *argv[])
 #ifdef USE_SSL
 	if (!NetServer && SecureNetServer)
 	{
-		fprintf(stderr, "For SSL, you must enable TCP/IP connections.\n",
-				argv[0]);
+		fprintf(stderr, "%s: For SSL, you must enable TCP/IP connections.\n",
+				progname);
 		exit(1);
 	}
 	InitSSL();
@@ -602,7 +589,7 @@ PostmasterMain(int argc, char *argv[])
 	PortList = DLNewList();
 
 	if (silentflag)
-		pmdaemonize(original_extraoptions);
+		pmdaemonize(argc, argv);
 	else
 	{
 
@@ -612,26 +599,7 @@ PostmasterMain(int argc, char *argv[])
 		SetPidFname(DataDir);
 		if (SetPidFile(getpid()) == 0)
 		{
-			if (SetOptsFile(
-							progname,	/* postmaster executable file */
-							PostPortName,		/* port number */
-							DataDir,	/* PGDATA */
-							assert_enabled,		/* whether -A is specified
-												 * or not */
-							NBuffers,	/* -B: number of shared buffers */
-							DebugLvl,	/* -d: debug level */
-							NetServer,	/* -i: accept connection from INET */
-#ifdef USE_SSL
-							SecureNetServer,	/* -l: use SSL */
-#endif
-							MaxBackends,		/* -N: max number of
-												 * backends */
-							Reinit,		/* -n: reinit shared mem after
-										 * failure */
-							silentflag, /* -S: detach tty */
-							SendStop,	/* -s: send SIGSTOP */
-							original_extraoptions		/* options for backend */
-							) != 0)
+			if (!CreateOptsFile(argc, argv))
 			{
 				UnlinkPidFile();
 				ExitPostmaster(1);
@@ -678,7 +646,7 @@ PostmasterMain(int argc, char *argv[])
 }
 
 static void
-pmdaemonize(char *extraoptions)
+pmdaemonize(int argc, char *argv[])
 {
 	int			i;
 	pid_t		pid;
@@ -700,26 +668,7 @@ pmdaemonize(char *extraoptions)
 		 */
 		if (SetPidFile(pid) == 0)
 		{
-			if (SetOptsFile(
-							progname,	/* postmaster executable file */
-							PostPortName,		/* port number */
-							DataDir,	/* PGDATA */
-							assert_enabled,		/* whether -A is specified
-												 * or not */
-							NBuffers,	/* -B: number of shared buffers */
-							DebugLvl,	/* -d: debug level */
-							NetServer,	/* -i: accept connection from INET */
-#ifdef USE_SSL
-							SecureNetServer,	/* -l: use SSL */
-#endif
-							MaxBackends,		/* -N: max number of
-												 * backends */
-							Reinit,		/* -n: reinit shared mem after
-										 * failure */
-							1,	/* -S: detach tty */
-							SendStop,	/* -s: send SIGSTOP */
-							extraoptions		/* options for backend */
-							) != 0)
+			if (!CreateOptsFile(argc, argv))
 			{
 
 				/*
@@ -2202,84 +2151,44 @@ SSDataBase(bool startup)
 	return (pid);
 }
 
+
 /*
  * Create the opts file
  */
-static int
-SetOptsFile(char *progname, int port, char *datadir,
-			int assert, int nbuf,
-			int debuglvl, int netserver,
-#ifdef USE_SSL
-			int securenetserver,
-#endif
-			int maxbackends, int reinit,
-			int silent, int sendstop, char *extraoptions)
+static bool
+CreateOptsFile(int argc, char *argv[])
 {
-	int			fd;
-	char		optsfile[MAXPGPATH];
-	char		opts[1024];
-	char		buf[1024];
+	char    fullprogname[MAXPGPATH];
+	char   *filename;
+	FILE   *fp;
+	unsigned i;
 
-	/*
-	 * Creating opts file
-	 */
-	snprintf(optsfile, sizeof(optsfile), "%s/%s", datadir, OPTSFNAME);
-	fd = open(optsfile, O_RDWR | O_TRUNC | O_CREAT, 0600);
-	if (fd < 0)
+	if (FindExec(fullprogname, argv[0], "postmaster") == -1)
+		return false;
+
+	filename = palloc(strlen(DataDir) + 20);
+	sprintf(filename, "%s/postmaster.opts", DataDir);
+
+	fp = fopen(filename, "w");
+	if (fp == NULL)
 	{
-		fprintf(stderr, "Can't create optsfile:%s", optsfile);
-		return (-1);
-	}
-	snprintf(opts, sizeof(opts), "%s\n-p %d\n-D %s\n", progname, port, datadir);
-	if (assert)
-	{
-		sprintf(buf, "-A %d\n", assert);
-		strcat(opts, buf);
+		fprintf(stderr, "%s: cannot create file %s: %s\n", progname,
+				filename, strerror(errno));
+		return false;
 	}
 
-	snprintf(buf, sizeof(buf), "-B %d\n", nbuf);
-	strcat(opts, buf);
+	fprintf(fp, "%s", fullprogname);
+	for (i = 1; i < argc; i++)
+		fprintf(fp, " '%s'", argv[i]);
+	fputs("\n", fp);
 
-	if (debuglvl)
+	if (ferror(fp))
 	{
-		sprintf(buf, "-d %d\n", debuglvl);
-		strcat(opts, buf);
+		fprintf(stderr, "%s: writing file %s failed\n", progname, filename);
+		fclose(fp);
+		return false;
 	}
 
-	if (netserver)
-		strcat(opts, "-i\n");
-
-#ifdef USE_SSL
-	if (securenetserver)
-		strcat(opts, "-l\n");
-#endif
-
-	snprintf(buf, sizeof(buf), "-N %d\n", maxbackends);
-	strcat(opts, buf);
-
-	if (!reinit)
-		strcat(opts, "-n\n");
-
-	if (silent)
-		strcat(opts, "-S\n");
-
-	if (sendstop)
-		strcat(opts, "-s\n");
-
-	if (strlen(extraoptions) > 0)
-	{
-		strcat(opts, "-o '");
-		strcat(opts, extraoptions);
-		strcat(opts, "'");
-	}
-
-	if (write(fd, opts, strlen(opts)) != strlen(opts))
-	{
-		perror("Writing to opts file failed");
-		close(fd);
-		return (-1);
-	}
-	close(fd);
-
-	return (0);
+	fclose(fp);
+	return true;
 }

@@ -1,50 +1,26 @@
 #
-# $Header: /cvsroot/pgsql/contrib/findoidjoins/Attic/Makefile,v 1.7 2000/06/19 13:53:22 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/findoidjoins/Attic/Makefile,v 1.8 2000/07/09 13:13:03 petere Exp $
 #
 
-TOPDIR=../..
+subdir = contrib/findoidjoins
+top_builddir = ../..
+include ../../src/Makefile.global
 
-include ../Makefile.global
+CFLAGS	+= -I$(LIBPGEASYDIR) -I$(LIBPQDIR)
+LIBS	+= $(LIBPGEASY)
 
-NAME	= findoidjoins
+all: findoidjoins
 
-PROGRAM	= $(NAME)
-OBJS	= $(NAME).o
-DOCS	= README.$(NAME)
-SQLS	= 
-BINS    = $(PROGRAM) make_oidjoins_check
-EXAMPLES=
-MODS	= 
+install: all installdirs
+	$(INSTALL_PROGRAM) findoidjoins$(X)	$(bindir)
+	$(INSTALL_SCRIPT) make_oidjoins_check	$(bindir)
+	$(INSTALL_DATA) README.findoidjoins	$(docdir)/contrib
 
-CFLAGS += -I$(LIBPGEASYDIR) -I$(LIBPQDIR)
+installdirs:
+	$(mkinstalldirs) $(bindir) $(docdir)/contrib
 
-OTHER_CLEAN = 
+uninstall:
+	rm -f $(bindir)/findoidjoins$(X) $(bindir)/make_oidjoins_check $(docdir)/contrib/README.findoidjoins
 
-
-all: $(PROGRAM)
-
-$(PROGRAM): $(OBJS) $(LIBPGEASYDIR)/libpgeasy.a 
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBPGEASY) 
-
-
-install: install_doc nstall_bin
-
-install_doc:
-	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
-	done
-
-install_bin:
-	for inst_file in $(BINS); do \
-		$(INSTALL) $(INSTL_EXE_OPTS) $$inst_file $(CONTRIB_BINDIR); \
-	done
-
-depend dep:
-	$(CC) -MM -MG $(CFLAGS) *.c > depend
-
-clean:
-	$(RM) *~ $(OBJS) $(MODS) $(PROGRAM) depend $(OTHER_CLEAN) core log
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif
+clean distclean maintainer-clean:
+	rm -f findoidjoins$(X)

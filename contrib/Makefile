@@ -1,13 +1,12 @@
 #
 # The PostgreSQL contrib tree Makefile
 #
-#	Portions Copyright (c) 1999-2000, PostgreSQL, Inc
-#
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.5 2000/06/19 13:52:59 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.6 2000/07/09 13:12:57 petere Exp $
 #
 
-TOPDIR = ..
-include Makefile.global
+subdir = contrib
+top_builddir = ..
+include ../src/Makefile.global
 
 WANTED_DIRS =	array		\
 		earthdistance	\
@@ -25,34 +24,22 @@ WANTED_DIRS =	array		\
 		spi		\
 		string		\
 		tips		\
-		tools		\
 		unixdate	\
 		userlock	\
 		vacuumlo	
 	#	odbc
 
-
-all:
+all .DEFAULT:
 	for dir in $(WANTED_DIRS); do \
 	    if [ -e $$dir/Makefile ]; then \
 		$(MAKE) -C $$dir $@ ; \
 	    fi; \
 	done
-
 
 install:
-	../config/mkinstalldirs $(CONTRIB_BINDIR) $(CONTRIB_MODDIR) $(CONTRIB_DOCDIR) $(CONTRIB_SQLDIR) $(CONTRIB_EXAMPLESDIR)
 	for dir in $(WANTED_DIRS); do \
 	    if [ -e $$dir/Makefile ]; then \
 		$(MAKE) -C $$dir $@ ; \
 	    fi; \
 	done
-	$(INSTALL) $(INSTL_LIB_OPTS) Contrib.index $(CONTRIB_DOCDIR);
-
-
-.DEFAULT:
-	for dir in $(WANTED_DIRS); do \
-	    if [ -e $$dir/Makefile ]; then \
-		$(MAKE) -C $$dir $@ ; \
-	    fi; \
-	done
+	$(INSTALL_DATA) Contrib.index $(docdir)/contrib

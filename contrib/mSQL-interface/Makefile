@@ -1,35 +1,30 @@
 #
-# $Header: /cvsroot/pgsql/contrib/mSQL-interface/Attic/Makefile,v 1.3 2000/06/19 13:53:47 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/mSQL-interface/Attic/Makefile,v 1.4 2000/07/09 13:13:17 petere Exp $
 #
 
-TOPDIR=../..
+subdir = contrib/mSQL-interface
+top_builddir = ../..
+include ../../src/Makefile.global
 
-include ../Makefile.global
+NAME	:= mpgsql
+SO_MAJOR_VERSION := 0
+SO_MINOR_VERSION := 0
+OBJS	:= mpgsql.o
 
-NAME	= mpgsql
+CFLAGS	+= -I$(LIBPQDIR)
 
-PROGRAM	= 
-OBJS	= 
-DOCS	= README.$(NAME) $(NAME).c
-SQLS	= 
-BINS    = 
-EXAMPLES=
-MODS	= 
+include $(top_srcdir)/src/Makefile.shlib
 
-OTHER_CLEAN = 
+all: all-lib
 
-all::
+install: all installdirs install-lib
+	$(INSTALL_DATA) README.$(NAME) $(docdir)/contrib
 
-install: install_doc
+installdirs:
+	$(mkinstalldirs) $(libdir) $(docdir)/contrib
 
-install_doc:
-	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
-	done
+uninstall: uninstall-lib
+	rm -f $(docdir)/contrib/README.$(NAME)
 
-clean:
-	$(RM) *~ $(OBJS) $(MODS) $(PROGRAM) depend $(OTHER_CLEAN) core log
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif
+clean distclean maintainer-clean: clean-lib
+	rm -f $(OBJS)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.130 2000/06/14 18:17:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.131 2000/07/09 13:14:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -795,7 +795,7 @@ connectDBStart(PGconn *conn)
 		np.protoVersion = htonl(NEGOTIATE_SSL_CODE);
 		if (pqPacketSend(conn, (char *) &np, sizeof(StartupPacket)) != STATUS_OK)
 		{
-			sprintf(conn->errorMessage,
+			printfPQExpBuffer(&conn->errorMessage,
 					"connectDB() -- couldn't send SSL negotiation packet: errno=%d\n%s\n",
 					errno, strerror(errno));
 			goto connect_errReturn;
@@ -803,7 +803,7 @@ connectDBStart(PGconn *conn)
 		/* Now receive the postmasters response */
 		if (recv(conn->sock, &SSLok, 1, 0) != 1)
 		{
-			sprintf(conn->errorMessage, "PQconnectDB() -- couldn't read postmaster response: errno=%d\n%s\n",
+			printfPQExpBuffer(&conn->errorMessage, "PQconnectDB() -- couldn't read postmaster response: errno=%d\n%s\n",
 					errno, strerror(errno));
 			goto connect_errReturn;
 		}
@@ -816,7 +816,7 @@ connectDBStart(PGconn *conn)
 				SSL_context = SSL_CTX_new(SSLv23_method());
 				if (!SSL_context)
 				{
-					sprintf(conn->errorMessage,
+					printfPQExpBuffer(&conn->errorMessage,
 					  "connectDB() -- couldn't create SSL context: %s\n",
 							ERR_reason_error_string(ERR_get_error()));
 					goto connect_errReturn;
@@ -826,7 +826,7 @@ connectDBStart(PGconn *conn)
 				!SSL_set_fd(conn->ssl, conn->sock) ||
 				SSL_connect(conn->ssl) <= 0)
 			{
-				sprintf(conn->errorMessage,
+				printfPQExpBuffer(&conn->errorMessage,
 				"connectDB() -- couldn't establish SSL connection: %s\n",
 						ERR_reason_error_string(ERR_get_error()));
 				goto connect_errReturn;
@@ -844,7 +844,7 @@ connectDBStart(PGconn *conn)
 		}
 		else if (SSLok != 'N')
 		{
-			strcpy(conn->errorMessage,
+			printfPQExpBuffer(&conn->errorMessage,
 				   "Received invalid negotiation response.\n");
 			goto connect_errReturn;
 		}

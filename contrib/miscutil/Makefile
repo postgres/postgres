@@ -1,52 +1,37 @@
 #
-# $Header: /cvsroot/pgsql/contrib/miscutil/Attic/Makefile,v 1.11 2000/07/04 16:16:59 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/miscutil/Attic/Makefile,v 1.12 2000/07/09 13:13:20 petere Exp $
 #
 
-TOPDIR=../..
+subdir = contrib/miscutil
+top_builddir = ../..
+include ../../src/Makefile.global
 
-include ../Makefile.global
-
-NAME	= misc_utils
-
-PROGRAM	= 
-OBJS	= $(NAME).o
-DOCS	= README.$(NAME)
-SQLS	= $(NAME).sql
-BINS	=
-EXAMPLES=
-MODS	= $(NAME)$(DLSUFFIX)
+NAME	:= misc_utils
+SONAME	:= $(NAME)$(DLSUFFIX)
 
 CFLAGS += -I. $(CFLAGS_SL)
 
-OTHER_CLEAN = $(SQLS)
+all: $(SONAME) $(NAME).sql
 
-all: $(MODS) $(SQLS)
+$(NAME).sql: $(NAME).sql.in
+	sed -e 's:MODULE_PATHNAME:$(libdir)/contrib/$(SONAME):g' < $< > $@
 
-%.sql: %.sql.in
-	$(SED) "s|MODULE_PATHNAME|$(CONTRIB_MODDIR)/$(@:.sql=$(DLSUFFIX))|" < $< > $@
+install: all installdirs
+	$(INSTALL_SHLIB) $(SONAME)	$(libdir)/contrib
+	$(INSTALL_DATA) $(NAME).sql	$(datadir)/contrib
+	$(INSTALL_DATA) README.$(NAME)	$(docdir)/contrib
 
-install: install_doc install_sql install_mod
+installdirs:
+	$(mkinstalldirs) $(libdir)/contrib $(datadir)/contrib $(docdir)/contrib
 
-install_doc:
-	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
-	done
+uninstall:
+	rm -f $(libdir)/contrib/$(SONAME) $(datadir)/contrib/$(NAME).sql $(docdir)/contrib/README.$(NAME)
 
-install_sql:
-	for inst_file in $(SQLS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_SQLDIR); \
-	done
-
-install_mod:
-	for inst_file in $(MODS); do \
-		$(INSTALL) $(INSTL_SHLIB_OPTS) $$inst_file $(CONTRIB_MODDIR); \
-	done
+clean distclean maintainer-clean:
+	rm -f $(SONAME) $(NAME).sql
 
 depend dep:
 	$(CC) -MM -MG $(CFLAGS) *.c > depend
-
-clean:
-	$(RM) *~ $(OBJS) $(MODS) $(PROGRAM) depend $(OTHER_CLEAN) core log
 
 ifeq (depend,$(wildcard depend))
 include depend

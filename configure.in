@@ -1,17 +1,29 @@
 dnl Process this file with autoconf to produce a configure script.
+
+dnl Developers, please strive to achieve this order:
+dnl
+dnl 0. Initialization and options processing
+dnl 1. Programs
+dnl 2. Libraries
+dnl 3. Header files
+dnl 4. Types
+dnl 5. Structures
+dnl 6. Compiler characteristics
+dnl 7. Functions, global variables
+dnl 8. System services
+dnl
+dnl Read the Autoconf manual for details.
+
 AC_INIT(src/backend/access/common/heaptuple.c)
 AC_PREFIX_DEFAULT(/usr/local/pgsql)
 AC_CONFIG_HEADER(src/include/config.h)
 
 AC_PREREQ(2.13)
-AC_CONFIG_AUX_DIR(`pwd`/config)
+AC_CONFIG_AUX_DIR(config)
 
 VERSION='7.1devel'
 AC_SUBST(VERSION)
 AC_DEFINE_UNQUOTED(PG_VERSION, "$VERSION")
-
-mkinstalldirs="\$(SHELL) \$(top_srcdir)/config/mkinstalldirs"
-AC_SUBST(mkinstalldirs)
 
 AC_CANONICAL_HOST
 
@@ -400,83 +412,99 @@ fi],
 AC_SUBST(with_python)
 
 
+dnl A note on the Kerberos and OpenSSL options:
 dnl
-dnl Optionally build with Kerberos 4 support
-dnl
-AC_MSG_CHECKING(whether to build with Kerberos 4 support)
+dnl The user can give an argument to the option in order the specify
+dnl the base path of the respective installation (what he specified
+dnl perhaps as --prefix). If no argument is given ($withval is "yes")
+dnl then we take the path where the package installs by default. This
+dnl way the user doesn't have to use redundant --with-includes and
+dnl --with-libraries options, but he can still use them if the layout
+dnl is non-standard.
+
+#
+# Kerberos 4
+#
 AC_ARG_WITH(krb4, [  --with-krb4[=DIR]       use Kerberos 4 [/usr/athena]],
 [if test x"$withval" != x"no"; then
-  # If the user didn't give an argument, we take the Kerberos 4 default
-  # path /usr/athena. We look into lib/ and include/ for the Kerberos
-  # libraries and includes. If the user has a more complicated layout
-  # he can use --with-includes and --with-libraries.
-  if test x"$withval" = x"yes"; then
-    krb4dir=/usr/athena
+  if test x"$withval" != x"yes"; then
+    krb4_prefix=$withval
   else
-    krb4dir=$withval
+    krb4_prefix=/usr/athena
   fi
   with_krb4=yes
-  AC_MSG_RESULT(yes)
-  if test -d $krb4dir; then
-    if test -d "$krb4dir/include"; then
-      INCLUDES="$INCLUDES -I$krb4dir/include"
+else
+  with_krb4=no
+fi],
+[with_krb4=no])
+
+AC_SUBST(with_krb4)
+if test "$with_krb4" = yes ; then
+  AC_MSG_RESULT([building with Kerberos 4 support])
+  AC_DEFINE(KRB4, [], [Define if you are building with Kerberos 4 support.])
+
+  if test -d "$krb4_prefix"; then
+    if test -d "$krb4_prefix/include"; then
+      INCLUDES="$INCLUDES -I$krb4_prefix/include"
     fi
-    if test -d "$krb4dir/lib"; then
-      krb_libdir="-L$krb4dir/lib"
+    if test -d "$krb4_prefix/lib"; then
+      krb_libdir="-L$krb4_prefix/lib"
       LIBS="$krb_libdir $LIBS"
     fi
   fi
-  AC_CHECK_LIB(des, main, [], [AC_MSG_ERROR([library \`des' is required for Kerberos 4])])
-  AC_CHECK_LIB(krb, main, [], [AC_MSG_ERROR([library \`krb' is required for Kerberos 4])])
+  dnl Test for these libraries is below
   KRB_LIBS="$krb_libdir -lkrb -ldes"
-  AC_DEFINE(KRB4,, [Define if you are building with Kerberos 4 support.])
-else
-  AC_MSG_RESULT(no)
-fi],
-[AC_MSG_RESULT(no)])
-AC_SUBST(with_krb4)
+fi
 
 
-dnl
-dnl Optionally build with Kerberos 5 support
-dnl
-AC_MSG_CHECKING(whether to build with Kerberos 5 support)
+#
+# Kerberos 5
+#
 AC_ARG_WITH(krb5, [  --with-krb5[=DIR]       use Kerberos 5 [/usr/athena]],
 [if test x"$withval" != x"no"; then
-  if test x"$withval" = x"yes"; then
-    krb5dir=/usr/athena
+  if test x"$withval" != x"yes"; then
+    krb5_prefix=$withval
   else
-    krb5dir=$withval
+    krb5_prefix=/usr/athena
   fi
   with_krb5=yes
-  AC_MSG_RESULT(yes)
-  if test -d $krb5dir; then
-    if test -d "$krb5dir/include"; then
-      INCLUDES="$INCLUDES -I$krb5dir/include"
+else
+  with_krb5=no
+fi],
+[with_krb5=no])
+
+AC_SUBST(with_krb5)
+if test "$with_krb5" = yes ; then
+  AC_MSG_RESULT([building with Kerberos 5 support])
+  AC_DEFINE(KRB5,, [Define if you are building with Kerberos 5 support.])
+
+  if test -d $krb5_prefix; then
+    if test -d "$krb5_prefix/include"; then
+      INCLUDES="$INCLUDES -I$krb5_prefix/include"
     fi
-    if test -d "$krb5dir/lib"; then
-      krb_libdir="-L$krb5dir/lib"
+    if test -d "$krb5_prefix/lib"; then
+      krb_libdir="-L$krb5_prefix/lib"
       LIBS="$krb_libdir $LIBS"
     fi
   fi
-  AC_CHECK_LIB(com_err, main, [], [AC_MSG_ERROR([library \`com_err' is required for Kerberos 5])])
-  AC_CHECK_LIB(crypto, main, [], [AC_MSG_ERROR([library \`crypto' is required for Kerberos 5])])
-  AC_CHECK_LIB(krb5, main, [], [AC_MSG_ERROR([library \`krb5' is required for Kerberos 5])])
+
+  dnl Test for these libraries is below
   KRB_LIBS="$krb_libdir -lkrb5 -lcrypto -lcom_err"
-  AC_DEFINE(KRB5,, [Define if you are building with Kerberos 5 support.])
-else
-  AC_MSG_RESULT(no)
-fi],
-[AC_MSG_RESULT(no)])
-AC_SUBST(with_krb5)
+fi
+
+
+# Using both Kerberos 4 and Kerberos 5 at the same time isn't going to work.
+if test "$with_krb4" = yes && test "$with_krb5" = yes ; then
+  AC_MSG_ERROR([Kerberos 4 and Kerberos 5 support cannot be combined])
+fi
 
 dnl Necessary for special libpq link
 AC_SUBST(KRB_LIBS)
 
 
-dnl
-dnl Kerberos configuration parameters
-dnl
+#
+# Kerberos configuration parameters
+#
 AC_ARG_WITH(krb-srvnam, [  --with-krb-srvnam=NAME  name of the Postgres service principal in Kerberos],
 [if test x"$withval" = x"yes"; then
   AC_MSG_ERROR([argument required for --with-krb-srvnam])
@@ -492,13 +520,52 @@ AC_ARG_WITH(krb-srvtab, [  --with-krb-srvtab=FILE  location of Kerberos server's
 else
   krb_srvtab=$withval
 fi],
-[if test x"$with_krb5" = x"yes"; then
-  krb_srvtab="FILE:/usr/local/postgres/krb5.keytab"
+[if test "$with_krb5" = yes ; then
+  krb_srvtab='FILE:${sysconfdir}/krb5.keytab'
+elif test "$with_krb4" = yes ; then
+  krb_srvtab='/etc/srvtab'
 else
-  krb_srvtab="/etc/srvtab"
+  krb_srvtab=
 fi])
-AC_DEFINE_UNQUOTED(PG_KRB_SRVTAB, ["$krb_srvtab"], [The location of the Kerberos server's keytab file])
+AC_SUBST(krb_srvtab)
 
+
+#
+# OpenSSL
+#
+AC_ARG_WITH(openssl, [  --with-openssl[=DIR]    build with OpenSSL support [/usr/local/ssl]],
+[if test x"$withval" != x"no" ; then
+  if test x"$withval" != x"yes" ; then
+    openssl_prefix=$withval
+  else
+    openssl_prefix=/usr/local/ssl
+  fi
+  with_openssl=yes
+else
+  with_openssl=no
+fi],
+[with_openssl=no])
+
+AC_SUBST(with_openssl)
+if test "$with_openssl" = yes ; then
+  AC_MSG_RESULT([building with OpenSSL support])
+  AC_DEFINE([USE_SSL], [], [Define to build with (Open)SSL support])
+
+  if test -d "${openssl_prefix}/include" ; then
+    INCLUDES="$INCLUDES -I${openssl_prefix}/include"
+  fi
+  if test -d "${openssl_prefix}/lib" ; then
+    openssl_libdir="${openssl_prefix}/lib"
+    LIBS="$LIBS -L${openssl_prefix}/lib"
+  fi
+fi
+
+
+# OpenSSL and Kerberos 5 both have a `crypto' library, so if you want to
+# use both of them you'll have to figure it out yourself.
+if test "$with_openssl" = yes && test "$with_krb5" = yes ; then
+  AC_MSG_ERROR([OpenSSL and Kerberos 5 support cannot be combined])
+fi
 
 
 dnl
@@ -524,14 +591,14 @@ AC_SUBST(enable_odbc)
 dnl Allow for overriding the default location of the odbcinst.ini
 dnl file which is normally ${datadir} (i.e., ${prefix}/share).
 if test x"$enable_odbc" = x"yes" ; then
-AC_ARG_WITH(odbcinst, [  --with-odbcinst=DIR     default directory for odbcinst.ini [datadir]],
+AC_ARG_WITH(odbcinst, [  --with-odbcinst=DIR     default directory for odbcinst.ini [sysconfdir]],
 [if test x"$with_odbcinst" = x"yes" || test x"$with_odbcinst" = x"no" ; then
   AC_MSG_ERROR([You must supply an argument to the --with-odbcinst option.])
 fi
 odbcinst_ini_dir=$withval],
-[odbcinst_ini_dir='${datadir}'])
+[odbcinst_ini_dir='${sysconfdir}'])
 else
-  odbcinst_ini_dir='${datadir}'
+  odbcinst_ini_dir='${sysconfdir}'
 fi
 AC_SUBST(odbcinst_ini_dir)
 
@@ -628,35 +695,32 @@ fi],
 AC_SUBST(with_CXX)
 
 
-
-dnl Figure out how to invoke "install" and what install options to use.
+# Figure out how to invoke "install" and what install options to use.
 
 AC_PROG_INSTALL
-
-INSTLOPTS="-m 444"
-INSTL_EXE_OPTS="-m 555"
-INSTL_SCRIPT_OPTS="-m 755"
-INSTL_LIB_OPTS="-m 644"
-INSTL_SHLIB_OPTS="-m 644"
-
-dnl HPUX wants shared libs to be mode 555.
-case "$host_os" in
- hpux*)
-	INSTL_SHLIB_OPTS="-m 555" ;;
+# When Autoconf chooses install-sh as install program it tries to generate
+# a relative path to it in each makefile where it subsitutes it. This clashes
+# with our Makefile.global concept. This workaround helps.
+case $INSTALL in
+  *install-sh*) INSTALL='\${SHELL} \${top_srcdir}/config/install-sh -c';;
 esac
 
-AC_SUBST(INSTLOPTS)
-AC_SUBST(INSTL_LIB_OPTS)
-AC_SUBST(INSTL_SHLIB_OPTS)
-AC_SUBST(INSTL_EXE_OPTS)
+# Fix Autoconf's brain-dead defaults for script installs.
+INSTALL_SCRIPT="\${INSTALL} -m 755"
 
-dnl Fix autoconf's brain-dead defaults for script and shlib installs.
-
-INSTALL_SCRIPT="\${INSTALL} $INSTL_SCRIPT_OPTS"
-AC_SUBST(INSTALL_SCRIPT)
+# HPUX wants shared libs to be mode 555. Add your platform's special
+# needs here if necessary.
+case $host_os in
+    hpux*)      INSTL_SHLIB_OPTS="-m 555" ;;
+    *)          INSTL_SHLIB_OPTS="-m 644" ;;
+esac
 
 INSTALL_SHLIB="\${INSTALL} $INSTL_SHLIB_OPTS"
 AC_SUBST(INSTALL_SHLIB)
+
+
+mkinstalldirs="\$(SHELL) \$(top_srcdir)/config/mkinstalldirs"
+AC_SUBST(mkinstalldirs)
 
 
 AC_PROG_AWK
@@ -678,15 +742,12 @@ broken as well.)
 fi
 AC_PROG_LN_S
 AC_PROG_RANLIB
-AC_PATH_PROG(find, find)
 AC_PATH_PROG(tar, tar)
-AC_PATH_PROGS(GZCAT, gzcat zcat, gzcat)
 AC_CHECK_PROGS(PERL, perl,)
 AC_PROG_YACC
 AC_SUBST(YFLAGS)
 
 
-AC_CHECK_LIB(z,     main)
 AC_CHECK_LIB(sfio,     main)
 AC_CHECK_LIB(ncurses,  main, [], [AC_CHECK_LIB(curses, main)])
 AC_CHECK_LIB(termcap,  main)
@@ -714,8 +775,29 @@ AC_CHECK_LIB(BSD,      main)
 AC_CHECK_LIB(gen,      main)
 AC_CHECK_LIB(PW,       main)
 AC_SEARCH_LIBS(crypt,  crypt)
+AC_CHECK_LIB(z,        inflate)
 
+if test "$with_krb4" = yes ; then
+  AC_CHECK_LIB(des, [des_encrypt], [], [AC_MSG_ERROR([library \`des' is required for Kerberos 4])])
+  AC_CHECK_LIB(krb, [krb_sendauth], [], [AC_MSG_ERROR([library \`krb' is required for Kerberos 4])])
+fi
+
+if test "$with_krb5" = yes ; then
+  AC_CHECK_LIB(com_err, main, [], [AC_MSG_ERROR([library \`com_err' is required for Kerberos 5])])
+  AC_CHECK_LIB(crypto,  main, [], [AC_MSG_ERROR([library \`crypto' is required for Kerberos 5])])
+  AC_CHECK_LIB(krb5,    main, [], [AC_MSG_ERROR([library \`krb5' is required for Kerberos 5])])
+fi
+
+if test "$with_openssl" = yes ; then
+  dnl Order matters!
+  AC_CHECK_LIB(crypto, [CRYPTO_new_ex_data], [], [AC_MSG_ERROR([library \`ssl' is required for OpenSSL])])
+  AC_CHECK_LIB(ssl,    [SSL_library_init], [], [AC_MSG_ERROR([library \`ssl' is required for OpenSSL])])
+fi
+
+
+dnl
 dnl Checks for header files.
+dnl
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(arpa/inet.h)
@@ -725,24 +807,38 @@ AC_CHECK_HEADERS(endian.h)
 AC_CHECK_HEADERS(float.h)
 AC_CHECK_HEADERS(fp_class.h)
 AC_CHECK_HEADERS(getopt.h)
-AC_CHECK_HEADERS(history.h)
 AC_CHECK_HEADERS(ieeefp.h)
 AC_CHECK_HEADERS(limits.h)
 AC_CHECK_HEADERS(netdb.h)
 AC_CHECK_HEADERS(netinet/in.h)
-AC_CHECK_HEADERS(readline.h)
-AC_CHECK_HEADERS(readline/history.h)
-AC_CHECK_HEADERS(readline/readline.h)
+AC_CHECK_HEADERS([readline/readline.h readline.h], [break])
+AC_CHECK_HEADERS([readline/history.h history.h], [break])
 AC_CHECK_HEADERS(sys/select.h)
 AC_CHECK_HEADERS(termios.h)
 AC_CHECK_HEADERS(unistd.h)
 AC_CHECK_HEADERS(values.h)
-AC_CHECK_HEADERS(sys/exec.h sys/pstat.h machine/vmparam.h)
+AC_CHECK_HEADERS(sys/pstat.h)
 AC_CHECK_HEADERS(sys/types.h sys/socket.h)
 AC_CHECK_HEADERS(sys/param.h pwd.h)
 
+if test "$with_krb4" = yes ; then
+  AC_CHECK_HEADER(krb.h, [], [AC_MSG_ERROR([header file <krb.h> is required for Kerberos 4])])
+fi
 
+if test "$with_krb5" = yes ; then
+  AC_CHECK_HEADER(krb5.h, [], [AC_MSG_ERROR([header file <krb5.h> is required for Kerberos 5])])
+  AC_CHECK_HEADER(com_err.h, [], [AC_MSG_ERROR([header file <com_err.h> is required for Kerberos 5])])
+fi
+
+if test "$with_openssl" = yes ; then
+  AC_CHECK_HEADER([openssl/ssl.h], [], [AC_MSG_ERROR([header file <openssl/ssl.h> is required for OpenSSL])])
+  AC_CHECK_HEADER([openssl/err.h], [], [AC_MSG_ERROR([header file <openssl/err.h> is required for OpenSSL])])
+fi
+
+
+dnl
 dnl Checks for typedefs, structures, and compiler characteristics.
+dnl
 AC_C_CONST
 AC_C_INLINE
 AC_C_STRINGIZE
@@ -762,6 +858,7 @@ PGAC_UNION_SEMUN
 
 
 AC_MSG_CHECKING(for fcntl(F_SETLK))
+if test "$os" != linux ; then
 AC_TRY_LINK([#include <stdio.h>
 #include <fcntl.h>],
 	    [struct flock lck;
@@ -770,6 +867,9 @@ AC_TRY_LINK([#include <stdio.h>
 	     fcntl(0, F_SETLK, &lck);],
 	    [AC_DEFINE(HAVE_FCNTL_SETLK) AC_MSG_RESULT(yes)],
 	    AC_MSG_RESULT(no))
+else
+  AC_MSG_RESULT([broken on Linux])
+fi
 
 dnl Checks for library functions.
 AC_FUNC_MEMCMP
@@ -779,18 +879,18 @@ AC_CHECK_FUNCS(memmove sysconf)
 AC_CHECK_FUNCS(sigprocmask waitpid setsid fcvt)
 AC_CHECK_FUNCS(setproctitle pstat)
 
-AC_MSG_CHECKING(for PS_STRINGS)
-AC_TRY_LINK(
-[#ifdef HAVE_MACHINE_VMPARAM_H
-# include <machine/vmparam.h>
-#endif
-#ifdef HAVE_SYS_EXEC_H
-# include <sys/exec.h>
-#endif],
+AC_CACHE_CHECK([for PS_STRINGS], [pgac_cv_var_PS_STRINGS],
+[AC_TRY_LINK(
+[#include <machine/vmparam.h>
+#include <sys/exec.h>
+],
 [PS_STRINGS->ps_nargvstr = 1;
 PS_STRINGS->ps_argvstr = "foo";],
-[AC_MSG_RESULT(yes) AC_DEFINE(HAVE_PS_STRINGS)],
-AC_MSG_RESULT(no))
+[pgac_cv_var_PS_STRINGS=yes],
+[pgac_cv_var_PS_STRINGS=no])])
+if test "$pgac_cv_var_PS_STRINGS" = yes ; then
+  AC_DEFINE([HAVE_PS_STRINGS], [], [Define if the PS_STRINGS thing exists.])
+fi
 
 AC_CHECK_FUNCS(fpclass fp_class fp_class_d class)
 dnl We use our snprintf.c emulation if either snprintf() or vsnprintf()
@@ -1192,6 +1292,12 @@ See the file 'config.log' for further diagnostics.])
 	LDFLAGS="$ice_save_LDFLAGS"
 fi
 
+
+# Wait with these until we're done so no tests fail because of too
+# many warnings.
+if test x"$GCC" = x"yes" ; then
+  CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wmissing-declarations"
+fi
 
 dnl Finally ready to produce output files ...
 

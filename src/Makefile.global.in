@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.85 2000/07/02 15:20:41 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.86 2000/07/09 13:13:59 petere Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -38,17 +38,23 @@
 # PostgreSQL version number
 VERSION = @VERSION@
 
+ifndef top_builddir
+top_builddir = $(SRCDIR)/..
+endif
+
 ifndef SRCDIR
+SRCDIR = $(top_builddir)/src
+endif
+
 # This should be changed once we have separate build dirs.
 top_srcdir = $(top_builddir)
+
 ifeq ($(top_builddir), $(top_srcdir))
 srcdir = .
 else
 srcdir = $(top_srcdir)/$(subdir)
 endif
 VPATH = $(srcdir)
-SRCDIR = $(top_builddir)/src
-endif
 
 ##############################################################################
 #
@@ -88,7 +94,9 @@ sharedstatedir = @sharedstatedir@
 localstatedir = @localstatedir@
 libdir = @libdir@
 includedir = @includedir@
+mandir = @mandir@
 
+docdir = ${prefix}/doc
 odbcinst_ini_dir = @odbcinst_ini_dir@
 
 # old variable names for installation directories
@@ -97,8 +105,8 @@ POSTGRESDIR= $(prefix)
 BINDIR= $(bindir)
 LIBDIR= $(libdir)
 TEMPLATEDIR= $(libdir)
-POSTMANDIR= $(POSTGRESDIR)/man
-POSTDOCDIR= $(POSTGRESDIR)/doc
+POSTMANDIR= $(mandir)
+POSTDOCDIR= $(docdir)
 HEADERDIR= $(includedir)
 
 
@@ -125,6 +133,8 @@ with_python = @with_python@
 PYTHON = @PYTHON@
 python_extmakefile = @python_extmakefile@
 python_moduledir = @python_moduledir@
+
+krb_srvtab = @krb_srvtab@
 
 #
 # Please do not edit USE_TCL and USE_TK by hand.
@@ -156,12 +166,6 @@ INSTALL_SHLIB = @INSTALL_SHLIB@
 
 mkinstalldirs = @mkinstalldirs@
 
-# don't use these any more
-INSTLOPTS= @INSTLOPTS@
-INSTL_EXE_OPTS= @INSTL_EXE_OPTS@
-INSTL_LIB_OPTS= @INSTL_LIB_OPTS@
-INSTL_SHLIB_OPTS= @INSTL_SHLIB_OPTS@
-
 RANLIB= @RANLIB@
 
 #-------------------------------------------------------------
@@ -184,11 +188,11 @@ LDOUT= -o
 DLSUFFIX= @DLSUFFIX@
 LN_S= @LN_S@
 TAR= @tar@
-GZCAT= @GZCAT@
 PERL = @PERL@
 AWK = @AWK@
 CXX=@CXX@
 CXXFLAGS=@CXXFLAGS@ @INCLUDES@
+GCC = @GCC@
 
 
 ##############################################################################
@@ -259,12 +263,6 @@ ifneq ($(CUSTOM_COPT),)
   COPT= $(CUSTOM_COPT)
 endif
 
-GCC = @GCC@
-
-ifeq ($(GCC), yes)
-CFLAGS+= -Wall -Wmissing-prototypes -Wmissing-declarations
-endif
-
 ifdef COPT
    CFLAGS+= $(COPT)
    LDFLAGS+= $(COPT)
@@ -284,3 +282,4 @@ SNPRINTF = @SNPRINTF@
 STRDUP = @STRDUP@
 
 .PHONY: all install installdirs uninstall dep depend clean distclean maintainer-clean
+.SILENT: installdirs

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.15 2000/05/17 16:57:40 momjian Exp $
+#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.16 2000/07/09 13:13:55 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -16,7 +16,6 @@ PGDOCS= $(POSTGRESDIR)/doc
 SRCDIR= ../src
 
 TAR= tar
-GZCAT= zcat
 
 # Pick up Makefile.global from the source area
 # This is the only resource from the code source area and is optional.
@@ -58,7 +57,7 @@ distclean::
 
 man::
 	-@if test ! -d $(POSTMANDIR) ; then mkdir $(POSTMANDIR) ; fi
-	$(GZCAT) man.tar.gz | (cd $(POSTMANDIR) ; $(TAR) xf - )
+	gunzip -c man.tar.gz | (cd $(POSTMANDIR) ; $(TAR) xf - )
 
 #
 # Generic production rules
@@ -75,5 +74,5 @@ man::
 %:	%.tar.gz
 	rm -rf ./$@ $(PGDOCS)/$*
 	if test ! -d $(PGDOCS)/$* ; then mkdir $(PGDOCS)/$* ; fi
-	$(GZCAT) $< | (cd $(PGDOCS)/$* ; $(TAR) xf - )
+	gunzip -c $< | (cd $(PGDOCS)/$* ; $(TAR) xf - )
 #	touch ./$*

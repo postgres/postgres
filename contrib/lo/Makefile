@@ -1,19 +1,15 @@
 #
-# $Header: /cvsroot/pgsql/contrib/lo/Makefile,v 1.6 2000/07/04 16:16:54 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/lo/Makefile,v 1.7 2000/07/09 13:13:14 petere Exp $
 #
 
-TOPDIR=../..
+subdir = contrib/lo
+top_builddir = ../..
+include ../../src/Makefile.global
 
-include ../Makefile.global
+NAME	:= lo
+SONAME	:= $(NAME)$(DLSUFFIX)
 
-NAME	= lo
-
-PROGRAM	= 
-OBJS	= $(NAME).o
-DOCS	= README.$(NAME)
 SQLS	= $(NAME).sql lo_drop.sql lo_test.sql
-BINS	=
-EXAMPLES=
 MODS	= $(NAME)$(DLSUFFIX)
 
 CFLAGS += -I. $(CFLAGS_SL)
@@ -22,39 +18,31 @@ ifdef REFINT_VERBOSE
 CFLAGS+= -DREFINT_VERBOSE
 endif
 
-OTHER_CLEAN = $(SQLS)
+all: $(SONAME) $(NAME).sql
 
-all: $(MODS) $(SQLS)
+$(NAME).sql: $(NAME).sql.in
+	sed -e 's:MODULE_PATHNAME:$(libdir)/contrib/$(SONAME):g' < $< > $@
 
+install: all installdirs
+	$(INSTALL_SHLIB) $(SONAME)	$(libdir)/contrib
+	$(INSTALL_DATA) README.$(NAME)	$(docdir)/contrib
+	$(INSTALL_DATA) $(NAME).sql	$(datadir)/contrib
+	$(INSTALL_DATA) lo_drop.sql	$(datadir)/contrib
+	$(INSTALL_DATA) lo_test.sql	$(datadir)/contrib
 
-%.sql: %.sql.in
-	$(SED) "s|MODULE_PATHNAME|$(CONTRIB_MODDIR)/$(@:.sql=$(DLSUFFIX))|" < $< > $@
+installdirs:
+	$(mkinstalldirs) $(libdir)/contrib $(docdir)/contrib $(datadir)/contrib
 
+uninstall:
+	rm -f $(libdir)/contrib/$(SONAME) $(docdir)/contrib/README.$(NAME) \
+	  $(addprefix $(datadir)/contrib/, $(NAME).sql lo_drop.sql lo_test.sql)
 
-install: install_doc install_sql install_mod
-
-install_doc:
-	for inst_file in $(DOCS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
-	done
-
-install_sql:
-	for inst_file in $(SQLS); do \
-		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_SQLDIR); \
-	done
-
-install_mod:
-	for inst_file in $(MODS); do \
-		$(INSTALL) $(INSTL_SHLIB_OPTS) $$inst_file $(CONTRIB_MODDIR); \
-	done
+clean distclean maintainer-clean:
+	rm -f $(SONAME) $(NAME).sql
 
 depend dep:
 	$(CC) -MM -MG $(CFLAGS) *.c > depend
 
-clean:
-	$(RM) *~ $(OBJS) $(MODS) $(PROGRAM) depend $(OTHER_CLEAN) core log
-
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.18 2000/06/08 22:37:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.19 2000/07/09 13:14:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,7 @@ ValidateBinary(char *path)
  * we change directories to the /data directory.
  */
 int
-FindExec(char *full_path, char *argv0, char *binary_name)
+FindExec(char *full_path, const char *argv0, const char *binary_name)
 {
 	char		buf[MAXPGPATH + 2];
 	char	   *p;

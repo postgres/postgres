@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.123 2000/07/05 17:44:29 scrappy Exp $
+ * $Id: config.h.in,v 1.124 2000/07/09 13:14:13 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -58,8 +58,8 @@
 /* Kerberos name of the Postgres service principal (--with-krb-srvnam=NAME) */
 #undef PG_KRB_SRVNAM
 
-/* Location of the Kerberos server's keytab file (--with-krb-srvtab=FILE) */
-#undef PG_KRB_SRVTAB
+/* Define to build with (Open)SSL support (--with-openssl[=DIR]) */
+#undef USE_SSL
 
 /* 
  * DEF_PGPORT is the TCP port number on which the Postmaster listens and

@@ -4,11 +4,12 @@
 #    Makefile for libpq subsystem (backend half of libpq interface)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.21 2000/07/08 03:04:39 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.22 2000/07/09 13:14:05 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR = ../..
+subdir = src/backend/libpq
+top_builddir = ../..
 include ../../Makefile.global
 
 # be-fsstubs is here for historical reasons, probably belongs elsewhere
@@ -16,6 +17,12 @@ include ../../Makefile.global
 OBJS = be-fsstubs.o \
 	auth.o crypt.o hba.o password.o \
 	pqcomm.o pqformat.o pqpacket.o pqsignal.o util.o
+
+# This location might depend on the installation directories. Therefore
+# we can't subsitute it into config.h.
+ifdef krb_srvtab
+CPPFLAGS += -DPG_KRB_SRVTAB='"$(krb_srvtab)"'
+endif
 
 
 all: SUBSYS.o

@@ -5,7 +5,7 @@
  * to contain some useful information. Differs wildly across
  * platforms.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.1 2000/06/04 01:44:34 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.2 2000/07/09 13:14:11 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * various details abducted from various places
@@ -20,11 +20,9 @@
 #ifdef HAVE_SYS_PSTAT_H
 # include <sys/pstat.h>			/* for HP-UX */
 #endif
-#ifdef HAVE_MACHINE_VMPARAM_H
+#ifdef HAVE_PS_STRINGS
 # include <machine/vmparam.h>	/* for old BSD */
-#endif
-#ifdef HAVE_SYS_EXEC_H
-# include <sys/exec.h>			/* for old BSD */
+# include <sys/exec.h>
 #endif
 
 #include "miscadmin.h"
