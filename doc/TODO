@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Sep  6 21:29:44 EDT 2001
+Last updated:		Fri Sep  7 14:50:01 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -226,6 +226,7 @@ REFERENTIAL INTEGRITY
 * Enforce referential integrity for system tables
 * INSERT & UPDATE/DELETE in transaction of primary key fails with
   deferredTriggerGetPreviousEvent or "change violation" [foreign]
+* Allow user to control trigger firing order
 * Change foreign key constraint for array -> element to mean element
    in array
 
