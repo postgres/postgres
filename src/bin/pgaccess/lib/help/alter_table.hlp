@@ -1,0 +1,30 @@
+.pgaw:Help.f.t insert end "ALTER TABLE" {bold} " changes the definition of an existing table. The new columns and their types are specified in the same style and with the the same restrictions as in CREATE TABLE. The RENAME clause causes the name of a table or column to change without changing any of the data contained in the affected table. Thus, the table or column will remain of the same type and size after this command is executed.
+
+" {} "Synopsis" {bold} "
+
+ALTER TABLE table \[ * \] ADD \[ COLUMN \] column type
+ALTER TABLE table \[ * \] RENAME \[ COLUMN \] column TO newcolumn
+ALTER TABLE table RENAME TO newtable
+
+" {code} "table" {italic} "
+	The name of an existing table to alter.
+
+" {} "column" {italic} "
+	Name of a new or existing column.
+
+" {} "type " {italic} "
+	Type of the new column.
+
+" {} "newcolumn " {italic} "
+	New name for an existing column.
+
+" {} "newtable " {italic} "
+	New name for an existing column.
+	
+You must own the table in order to change its schema.
+
+" {} "Notes:" {italic} " The keyword COLUMN is noise and can be omitted.
+
+\"\[*\]\" following a name of a table indicates that statement should be run over that table and all tables below it in the inheritance hierarchy. The PostgreSQL User's Guide has further information on inheritance.
+
+Refer to " {} "CREATE TABLE" {link create_table} " for a further description of valid arguments."

@@ -1,0 +1,23 @@
+.pgaw:Help.f.t insert end "will display the current configuration parameters for variable during a session. 
+
+The session can be configured using SET statement, and values can be restored to the defaults using RESET statement. Parameters and values are case-insensitive. 
+
+" {} "Synopsis" {bold} "
+
+SHOW variable
+
+" {} "Usage" {bold} "
+" {} "
+-- show DateStyle;
+SHOW DateStyle;
+NOTICE:DateStyle is Postgres with US (NonEuropean) conventions
+
+-- show Geqo;
+SHOW GEQO;
+NOTICE:GEQO is ON
+
+" {code} "Notes" {bold} "
+
+The SHOW is a Postgres language extension. 
+
+Refer to SET/RESET to set/reset variable values. See also SET TIME ZONE. "

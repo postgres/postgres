@@ -1,0 +1,17 @@
+.pgaw:Help.f.t insert end "DROP AGGREGATE" {bold} " will remove all references to an existing aggregate definition. To execute this command the current user must be the owner of the aggregate. 
+
+" {} "Synopsis" {bold} "
+
+DROP AGGREGATE name type
+
+" {} "Usage" {bold} "
+
+To remove the myavg aggregate for type int4: 
+
+DROP AGGREGATE myavg int4;
+
+" {} "Notes" {bold} "
+
+The DROP AGGREGATE statement is a Postgres language extension. 
+
+Refer to the CREATE AGGREGATE statement to create aggregate functions. "

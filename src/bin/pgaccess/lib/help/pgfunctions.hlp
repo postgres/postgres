@@ -1,0 +1,13 @@
+.pgaw:Help.f.t insert end \
+"PostgreSQL functions" {title} \
+"
+
+Many data types have functions available for conversion to other related types. In addition, there are some type-specific functions. Some functions are also available through operators and may be documented as operators only. 
+
+" {} \
+"\tSQL functions\n" {link sqlfunc} \
+"\tMathematical functions\n" {link mathfunc} \
+"\tString functions\n" {link stringfunc} \
+"\tDate/Time functions\n" {link datefunc} \
+"\tGeometric functions\n" {link geomfunc} \
+"\tIP V4 functions" {link ipv4func}

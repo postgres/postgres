@@ -1,0 +1,80 @@
+.pgaw:Help.f.t insert end "CREATE TRIGGER" {bold} " will enter a new trigger into the current data base. The trigger will be associated with the relation relname and will execute the specified function funcname. 
+
+The trigger can be specified to fire either before the operation is attempted on a tuple (before constraints are checked and the INSERT, UPDATE or DELETE is attempted) or after the operation \
+has been attempted (e.g. after constraints are checked and the INSERT, UPDATE or DELETE has completed). If the trigger fires before the event, the trigger may skip the operation for the \
+current tuple, or change the tuple being inserted (for INSERT and UPDATE operations only). If the trigger fires after the event, all changes, including the last insertion, update, or deletion, are \
+\"visible\" to the trigger. 
+
+Refer to the chapters on SPI and Triggers in the PostgreSQL Programmer's Guide for more information. 
+
+" {} "Synopsis" {bold} "
+
+CREATE TRIGGER name \{ BEFORE | AFTER \}
+    \{ event \[OR ...\] \}
+    ON table FOR EACH \{ ROW | STATEMENT \}
+    EXECUTE PROCEDURE funcname ( arguments )
+
+" {code} "Inputs" {bold} "
+
+" {} "name" {italic} "
+       The name of an existing trigger. 
+
+" {} "table" {italic} "
+       The name of a table. 
+
+" {} "event" {italic} "
+       One of INSERT, DELETE or UPDATE. 
+
+" {} "funcname" {italic} "
+       A user-supplied function. 
+
+" {} "Outputs" {bold} "
+
+" {} "CREATE" {italic} "
+       This message is returned if the trigger is successfully created. 
+
+" {} "Usage" {bold} "
+
+Check if the specified distributor code exists in the distributors table before appending or updating a row in the table films: 
+" {} "
+   CREATE TRIGGER if_dist_exists
+   BEFORE INSERT OR UPDATE ON films FOR EACH ROW
+   EXECUTE PROCEDURE check_primary_key ('did', 'distributors', 'did');
+  
+" {code} "
+Before cancelling a distributor or updating its code, remove every reference to the table films: 
+" {} "
+   CREATE TRIGGER if_film_exists 
+   BEFORE DELETE OR UPDATE ON distributors FOR EACH ROW
+   EXECUTE PROCEDURE check_foreign_key (1, 'CASCADE', 'did', 'films', 'did');
+
+
+
+" {code} "Compatibility" {bold} "
+
+" {} "SQL92" {italic} "
+
+There is no CREATE TRIGGER in SQL92. 
+
+The second example above may also be done by using a FOREIGN KEY constraint as in: 
+" {} "
+    CREATE TABLE distributors (
+    did      DECIMAL(3),
+    name     VARCHAR(40),
+    CONSTRAINT if_film_exists
+    FOREIGN KEY(did) REFERENCES films
+    ON UPDATE CASCADE ON DELETE CASCADE  
+    );
+   
+" {code} "
+However, foreign keys are not yet implemented (as of version 6.4) in Postgres. 
+
+" {} "Notes" {bold} "
+
+" {} "CREATE TRIGGER" {italic} " is a Postgres language extension. 
+
+Only the relation owner may create a trigger on this relation. 
+
+As of the current release (v6.4), STATEMENT triggers are not implemented. 
+
+Refer to DROP TRIGGER for information on how to remove triggers. "

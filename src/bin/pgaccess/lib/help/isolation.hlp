@@ -1,0 +1,24 @@
+.pgaw:Help.f.t insert end \
+"Isolation levels" {title} "
+
+" {} "Read Committed Isolation Level" {bold} "
+
+Read Committed is the default isolation level in Postgres. When a transaction runs on this isolation level, a query sees only data committed before the query began and never sees either dirty data or concurrent transaction changes committed during query execution. 
+
+If a row returned by a query while executing an UPDATE statement (or DELETE or SELECT FOR UPDATE) is being updated by a concurrent uncommitted transaction then the second transaction that tries to update this row will wait for the other transaction to commit or rollback. In the case of rollback, the waiting transaction can proceed to change the row. In the case of commit (and if the row still exists; i.e. was not deleted by the other transaction), the query will be re-executed for this row to check that new row version satisfies query search condition. If the new row version satisfies the query search condition then row will be updated (or deleted or marked for update). 
+
+Note that the results of execution of SELECT or INSERT (with a query) statements will not be affected by concurrent transactions. 
+
+
+" {} "Serializable Isolation Level" {bold} "
+
+Serializable provides the highest transaction isolation. When a transaction is on the serializable level, a query sees only data committed before the transaction began and never see either dirty data or concurrent transaction changes committed during transaction execution. So, this level emulates serial transaction execution, as if transactions would be executed one after another, serially, rather than concurrently. 
+
+If a row returned by query while executing a UPDATE (or DELETE or SELECT FOR UPDATE) statement is being updated by a concurrent uncommitted transaction then the second transaction that tries to update this row will wait for the other transaction to commit or rollback. In the case of rollback, the waiting transaction can proceed to change the row. In the case of a concurrent transaction commit, a serializable transaction will be rolled back with the message 
+
+" {} "ERROR:  Can't serialize access due to concurrent update" {code} "
+
+because a serializable transaction cannot modify rows changed by other transactions after the serializable transaction began. 
+
+" {} "Note" {italic} ":  Note that results of execution of SELECT or INSERT (with a query) will not be affected by concurrent transactions. 
+"

@@ -1,0 +1,15 @@
+.pgaw:Help.f.t insert end "  The " {} "Sequences" {bold} " tab is used to\
+define new sequence number generators or to inspect them.
+
+  Sequences are used sometimes for assigning default values to some unique\
+fields in order to obtain a unique id. Sequences are returning an int4\
+value. For example, a new sequence will be automatically defined if you\
+are adding a 'serial' field type into a table.
+
+  In order to define a new sequence you should supply at least the sequence\
+name. The default increment is 1, the default start value and minvalue is 1.
+
+  Inspecting a sequence will show you the last number generated.
+  
+  For more information see also " {} "CREATE SEQUENCE" {link create_sequence} \
+" SQL command." {}

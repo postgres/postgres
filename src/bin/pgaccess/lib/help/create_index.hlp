@@ -1,0 +1,87 @@
+.pgaw:Help.f.t insert end "CREATE INDEX" {bold} " constructs an index index_name. on the specified table. 
+
+       Tip: Indexes are primarily used to enhance database performance. But inappropriate use will result in slower performance. 
+
+	In the first syntax shown above, the key fields for the index are specified as column names; a column may also have an associated operator class. An operator class is used to specify the \
+operators to be used for a particular index. For example, a btree index on four-byte integers would use the int4_ops class; this operator class includes comparison functions for four-byte \
+integers. The default operator class is the appropriate operator class for that field type. 
+
+	In the second syntax, an index is defined on the result of a user-defined function func_name applied to one or more attributes of a single class. These functional indexes can be used to obtain \
+fast access to data based on operators that would normally require some transformation to apply them to the base data. 
+
+" {} "Synopsis" {bold} "
+
+CREATE \[ UNIQUE \] INDEX index_name
+    ON table \[ USING acc_name \]
+    ( column \[ ops_name\] \[, ...\] )
+CREATE \[ UNIQUE \] INDEX index_name
+    ON table \[ USING acc_name \]
+    ( func_name( column \[, ... \]) ops_name )
+
+" {code} "Inputs" {bold} "
+
+" {} "UNIQUE" {italic} "
+       Causes the system to check for duplicate values in the table when the index is created \
+       \(if data already exist\) and each time data is added. Attempts to insert or update non-duplicate \
+       data will generate an error. 
+
+" {} "index_name" {italic} "
+       The name of the index to be created. 
+
+" {} "table" {italic} "
+       The name of the table to be indexed. 
+
+" {} "acc_name" {italic} "
+       the name of the access method which is to be used for the index. The default access method is BTREE. Postgres provides three access methods for secondary indexes: 
+
+       BTREE
+
+              an implementation of the Lehman-Yao high-concurrency btrees. 
+
+       RTREE
+
+              implements standard rtrees using Guttman's quadratic split algorithm. 
+
+       HASH
+
+              an implementation of Litwin's linear hashing. 
+
+" {} "column" {italic} "
+       The name of a column of the table. 
+
+" {} "ops_name" {italic} "
+       An associated operator class. The following select list returns all ops_names: 
+" {} "
+       SELECT am.amname AS acc_name,
+              opc.opcname AS ops_name,
+              opr.oprname AS ops_comp
+           FROM pg_am am, pg_amop amop,
+                pg_opclass opc, pg_operator opr
+           WHERE amop.amopid = am.oid AND
+                 amop.amopclaid = opc.oid AND
+                 amop.amopopr = opr.oid
+           ORDER BY acc_name, ops_name, ops_comp
+
+" {code} "func_name" {italic} "
+       A user-defined function, which returns a value that can be indexed. 
+
+" {} "Outputs" {bold} "
+
+" {} "CREATE" {italic} "
+       The message returned if the index is successfully created. 
+
+" {} "ERROR: Cannot create index: 'index_name' already exists." {italic} "
+       This error occurs if it is impossible to create the index. 
+       
+" {} "Usage" {bold} "
+
+To create a btree index on the field title in the table films: 
+" {} "
+CREATE UNIQUE INDEX title_idx
+    ON films (title);
+    
+" {code} "Notes" {bold} "
+
+Currently, only the BTREE access method supports multi-column indexes. Up to 7 keys may be specified. 
+
+Use DROP INDEX to remove an index. "
