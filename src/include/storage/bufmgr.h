@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.65 2002/10/21 18:57:34 petere Exp $
+ * $Id: bufmgr.h,v 1.66 2002/10/22 20:00:48 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,14 +23,14 @@
 typedef void *Block;
 
 /* in globals.c ... this duplicates miscadmin.h */
-extern int	NBuffers;
+extern DLLIMPORT int	NBuffers;
 
 /* in buf_init.c */
 extern DLLIMPORT Block *BufferBlockPointers;
 extern long *PrivateRefCount;
 
 /* in localbuf.c */
-extern int	NLocBuffer;
+extern DLLIMPORT int	NLocBuffer;
 extern DLLIMPORT Block *LocalBufferBlockPointers;
 extern long *LocalRefCount;
 
