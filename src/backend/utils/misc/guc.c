@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.37 2001/06/07 04:50:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.38 2001/06/12 22:54:06 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -46,7 +46,6 @@ extern bool FixBTree;
 extern char *Syslog_facility;
 extern char *Syslog_ident;
 static bool check_facility(const char *facility);
-
 #endif
 
 /*
@@ -54,7 +53,6 @@ static bool check_facility(const char *facility);
  */
 #ifdef USE_ASSERT_CHECKING
 bool		assert_enabled = true;
-
 #endif
 bool		Debug_print_query = false;
 bool		Debug_print_plan = false;
@@ -76,7 +74,9 @@ bool		SQL_inheritance = true;
 #endif
 
 
-
+/*
+ * Declarations for GUC tables
+ */
 enum config_type
 {
 	PGC_NONE = 0,
@@ -101,6 +101,8 @@ struct config_bool
 	GucContext	context;
 	bool	   *variable;
 	bool		default_val;
+	/* No need for parse_hook ... presumably both values are legal */
+	void		(*assign_hook) (bool newval);
 };
 
 
@@ -112,6 +114,8 @@ struct config_int
 	int			default_val;
 	int			min;
 	int			max;
+	bool		(*parse_hook) (int proposed);
+	void		(*assign_hook) (int newval);
 };
 
 
@@ -123,6 +127,8 @@ struct config_real
 	double		default_val;
 	double		min;
 	double		max;
+	bool		(*parse_hook) (double proposed);
+	void		(*assign_hook) (double newval);
 };
 
 /*
@@ -171,61 +177,61 @@ struct config_string
 static struct config_bool
 			ConfigureNamesBool[] =
 {
-	{"enable_seqscan", PGC_USERSET, &enable_seqscan, true},
-	{"enable_indexscan", PGC_USERSET, &enable_indexscan, true},
-	{"enable_tidscan", PGC_USERSET, &enable_tidscan, true},
-	{"enable_sort", PGC_USERSET, &enable_sort, true},
-	{"enable_nestloop", PGC_USERSET, &enable_nestloop, true},
-	{"enable_mergejoin", PGC_USERSET, &enable_mergejoin, true},
-	{"enable_hashjoin", PGC_USERSET, &enable_hashjoin, true},
+	{"enable_seqscan", PGC_USERSET, &enable_seqscan, true, NULL},
+	{"enable_indexscan", PGC_USERSET, &enable_indexscan, true, NULL},
+	{"enable_tidscan", PGC_USERSET, &enable_tidscan, true, NULL},
+	{"enable_sort", PGC_USERSET, &enable_sort, true, NULL},
+	{"enable_nestloop", PGC_USERSET, &enable_nestloop, true, NULL},
+	{"enable_mergejoin", PGC_USERSET, &enable_mergejoin, true, NULL},
+	{"enable_hashjoin", PGC_USERSET, &enable_hashjoin, true, NULL},
 
-	{"ksqo", PGC_USERSET, &_use_keyset_query_optimizer, false},
-	{"geqo", PGC_USERSET, &enable_geqo, true},
+	{"ksqo", PGC_USERSET, &_use_keyset_query_optimizer, false, NULL},
+	{"geqo", PGC_USERSET, &enable_geqo, true, NULL},
 
-	{"tcpip_socket", PGC_POSTMASTER, &NetServer, false},
-	{"ssl", PGC_POSTMASTER, &EnableSSL, false},
-	{"fsync", PGC_SIGHUP, &enableFsync, true},
-	{"silent_mode", PGC_POSTMASTER, &SilentMode, false},
+	{"tcpip_socket", PGC_POSTMASTER, &NetServer, false, NULL},
+	{"ssl", PGC_POSTMASTER, &EnableSSL, false, NULL},
+	{"fsync", PGC_SIGHUP, &enableFsync, true, NULL},
+	{"silent_mode", PGC_POSTMASTER, &SilentMode, false, NULL},
 
-	{"log_connections", PGC_SIGHUP, &Log_connections, false},
-	{"log_timestamp", PGC_SIGHUP, &Log_timestamp, false},
-	{"log_pid", PGC_SIGHUP, &Log_pid, false},
+	{"log_connections", PGC_SIGHUP, &Log_connections, false, NULL},
+	{"log_timestamp", PGC_SIGHUP, &Log_timestamp, false, NULL},
+	{"log_pid", PGC_SIGHUP, &Log_pid, false, NULL},
 
 #ifdef USE_ASSERT_CHECKING
-	{"debug_assertions", PGC_USERSET, &assert_enabled, true},
+	{"debug_assertions", PGC_USERSET, &assert_enabled, true, NULL},
 #endif
 
-	{"debug_print_query", PGC_USERSET, &Debug_print_query, false},
-	{"debug_print_parse", PGC_USERSET, &Debug_print_parse, false},
-	{"debug_print_rewritten", PGC_USERSET, &Debug_print_rewritten, false},
-	{"debug_print_plan", PGC_USERSET, &Debug_print_plan, false},
-	{"debug_pretty_print", PGC_USERSET, &Debug_pretty_print, false},
+	{"debug_print_query", PGC_USERSET, &Debug_print_query, false, NULL},
+	{"debug_print_parse", PGC_USERSET, &Debug_print_parse, false, NULL},
+	{"debug_print_rewritten", PGC_USERSET, &Debug_print_rewritten, false, NULL},
+	{"debug_print_plan", PGC_USERSET, &Debug_print_plan, false, NULL},
+	{"debug_pretty_print", PGC_USERSET, &Debug_pretty_print, false, NULL},
 
-	{"show_parser_stats", PGC_USERSET, &Show_parser_stats, false},
-	{"show_planner_stats", PGC_USERSET, &Show_planner_stats, false},
-	{"show_executor_stats", PGC_USERSET, &Show_executor_stats, false},
-	{"show_query_stats", PGC_USERSET, &Show_query_stats, false},
+	{"show_parser_stats", PGC_USERSET, &Show_parser_stats, false, NULL},
+	{"show_planner_stats", PGC_USERSET, &Show_planner_stats, false, NULL},
+	{"show_executor_stats", PGC_USERSET, &Show_executor_stats, false, NULL},
+	{"show_query_stats", PGC_USERSET, &Show_query_stats, false, NULL},
 #ifdef BTREE_BUILD_STATS
-	{"show_btree_build_stats", PGC_SUSET, &Show_btree_build_stats, false},
+	{"show_btree_build_stats", PGC_SUSET, &Show_btree_build_stats, false, NULL},
 #endif
 
-	{"trace_notify", PGC_USERSET, &Trace_notify, false},
+	{"trace_notify", PGC_USERSET, &Trace_notify, false, NULL},
 
 #ifdef LOCK_DEBUG
-	{"trace_locks", PGC_SUSET, &Trace_locks, false},
-	{"trace_userlocks", PGC_SUSET, &Trace_userlocks, false},
-	{"trace_spinlocks", PGC_SUSET, &Trace_spinlocks, false},
-	{"debug_deadlocks", PGC_SUSET, &Debug_deadlocks, false},
+	{"trace_locks", PGC_SUSET, &Trace_locks, false, NULL},
+	{"trace_userlocks", PGC_SUSET, &Trace_userlocks, false, NULL},
+	{"trace_spinlocks", PGC_SUSET, &Trace_spinlocks, false, NULL},
+	{"debug_deadlocks", PGC_SUSET, &Debug_deadlocks, false, NULL},
 #endif
 
-	{"hostname_lookup", PGC_SIGHUP, &HostnameLookup, false},
-	{"show_source_port", PGC_SIGHUP, &ShowPortNumber, false},
+	{"hostname_lookup", PGC_SIGHUP, &HostnameLookup, false, NULL},
+	{"show_source_port", PGC_SIGHUP, &ShowPortNumber, false, NULL},
 
-	{"sql_inheritance", PGC_USERSET, &SQL_inheritance, true},
+	{"sql_inheritance", PGC_USERSET, &SQL_inheritance, true, NULL},
 
-	{"fixbtree", PGC_POSTMASTER, &FixBTree, true},
+	{"fixbtree", PGC_POSTMASTER, &FixBTree, true, NULL},
 
-	{NULL, 0, NULL, false}
+	{NULL, 0, NULL, false, NULL}
 };
 
 
@@ -233,22 +239,22 @@ static struct config_int
 			ConfigureNamesInt[] =
 {
 	{"geqo_threshold", PGC_USERSET, &geqo_rels,
-	DEFAULT_GEQO_RELS, 2, INT_MAX},
+	DEFAULT_GEQO_RELS, 2, INT_MAX, NULL, NULL},
 	{"geqo_pool_size", PGC_USERSET, &Geqo_pool_size,
-	DEFAULT_GEQO_POOL_SIZE, 0, MAX_GEQO_POOL_SIZE},
+	DEFAULT_GEQO_POOL_SIZE, 0, MAX_GEQO_POOL_SIZE, NULL, NULL},
 	{"geqo_effort", PGC_USERSET, &Geqo_effort,
-	1, 1, INT_MAX},
+	1, 1, INT_MAX, NULL, NULL},
 	{"geqo_generations", PGC_USERSET, &Geqo_generations,
-	0, 0, INT_MAX},
+	0, 0, INT_MAX, NULL, NULL},
 	{"geqo_random_seed", PGC_USERSET, &Geqo_random_seed,
-	-1, INT_MIN, INT_MAX},
+	-1, INT_MIN, INT_MAX, NULL, NULL},
 
 	{"deadlock_timeout", PGC_POSTMASTER, &DeadlockTimeout,
-	1000, 0, INT_MAX},
+	1000, 0, INT_MAX, NULL, NULL},
 
 #ifdef ENABLE_SYSLOG
 	{"syslog", PGC_SIGHUP, &Use_syslog,
-	0, 0, 2},
+	0, 0, 2, NULL, NULL},
 #endif
 
 	/*
@@ -257,52 +263,52 @@ static struct config_int
 	 * constraints here are partially unused.
 	 */
 	{"max_connections", PGC_POSTMASTER, &MaxBackends,
-	DEF_MAXBACKENDS, 1, MAXBACKENDS},
+	DEF_MAXBACKENDS, 1, MAXBACKENDS, NULL, NULL},
 	{"shared_buffers", PGC_POSTMASTER, &NBuffers,
-	DEF_NBUFFERS, 16, INT_MAX},
+	DEF_NBUFFERS, 16, INT_MAX, NULL, NULL},
 	{"port", PGC_POSTMASTER, &PostPortNumber,
-	DEF_PGPORT, 1, 65535},
+	DEF_PGPORT, 1, 65535, NULL, NULL},
 
 	{"sort_mem", PGC_USERSET, &SortMem,
-	512, 1, INT_MAX},
+	512, 1, INT_MAX, NULL, NULL},
 
 	{"debug_level", PGC_USERSET, &DebugLvl,
-	0, 0, 16},
+	0, 0, 16, NULL, NULL},
 
 #ifdef LOCK_DEBUG
 	{"trace_lock_oidmin", PGC_SUSET, &Trace_lock_oidmin,
-	BootstrapObjectIdData, 1, INT_MAX},
+	BootstrapObjectIdData, 1, INT_MAX, NULL, NULL},
 	{"trace_lock_table", PGC_SUSET, &Trace_lock_table,
-	0, 0, INT_MAX},
+	0, 0, INT_MAX, NULL, NULL},
 #endif
 	{"max_expr_depth", PGC_USERSET, &max_expr_depth,
-	DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX},
+	DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX, NULL, NULL},
 
 	{"unix_socket_permissions", PGC_POSTMASTER, &Unix_socket_permissions,
-	0777, 0000, 0777},
+	0777, 0000, 0777, NULL, NULL},
 
 	{"checkpoint_segments", PGC_SIGHUP, &CheckPointSegments,
-	3, 1, INT_MAX},
+	3, 1, INT_MAX, NULL, NULL},
 
 	{"checkpoint_timeout", PGC_SIGHUP, &CheckPointTimeout,
-	300, 30, 3600},
+	300, 30, 3600, NULL, NULL},
 
 	{"wal_buffers", PGC_POSTMASTER, &XLOGbuffers,
-	8, 4, INT_MAX},
+	8, 4, INT_MAX, NULL, NULL},
 
 	{"wal_files", PGC_SIGHUP, &XLOGfiles,
-	0, 0, 64},
+	0, 0, 64, NULL, NULL},
 
 	{"wal_debug", PGC_SUSET, &XLOG_DEBUG,
-	0, 0, 16},
+	0, 0, 16, NULL, NULL},
 
 	{"commit_delay", PGC_USERSET, &CommitDelay,
-	0, 0, 100000},
+	0, 0, 100000, NULL, NULL},
 
 	{"commit_siblings", PGC_USERSET, &CommitSiblings,
-	5, 1, 1000},
+	5, 1, 1000, NULL, NULL},
 
-	{NULL, 0, NULL, 0, 0, 0}
+	{NULL, 0, NULL, 0, 0, 0, NULL, NULL}
 };
 
 
@@ -310,20 +316,21 @@ static struct config_real
 			ConfigureNamesReal[] =
 {
 	{"effective_cache_size", PGC_USERSET, &effective_cache_size,
-	DEFAULT_EFFECTIVE_CACHE_SIZE, 0, DBL_MAX},
+	DEFAULT_EFFECTIVE_CACHE_SIZE, 0, DBL_MAX, NULL, NULL},
 	{"random_page_cost", PGC_USERSET, &random_page_cost,
-	DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX},
+	DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX, NULL, NULL},
 	{"cpu_tuple_cost", PGC_USERSET, &cpu_tuple_cost,
-	DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX},
+	DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX, NULL, NULL},
 	{"cpu_index_tuple_cost", PGC_USERSET, &cpu_index_tuple_cost,
-	DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX},
+	DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX, NULL, NULL},
 	{"cpu_operator_cost", PGC_USERSET, &cpu_operator_cost,
-	DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX},
+	DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX, NULL, NULL},
 
 	{"geqo_selection_bias", PGC_USERSET, &Geqo_selection_bias,
-	DEFAULT_GEQO_SELECTION_BIAS, MIN_GEQO_SELECTION_BIAS, MAX_GEQO_SELECTION_BIAS},
+	 DEFAULT_GEQO_SELECTION_BIAS, MIN_GEQO_SELECTION_BIAS,
+	 MAX_GEQO_SELECTION_BIAS, NULL, NULL},
 
-	{NULL, 0, NULL, 0.0, 0.0, 0.0}
+	{NULL, 0, NULL, 0.0, 0.0, 0.0, NULL, NULL}
 };
 
 
@@ -413,47 +420,84 @@ find_option(const char *name, struct config_generic ** record)
 
 
 /*
- * Reset all options to their specified default values. Should only be
- * called at program startup.
+ * Reset all options to their specified default values.  Must be called
+ * with isStartup = true at program startup.  May be called later with
+ * isStartup = false to reset all resettable options.
  */
 void
-ResetAllOptions(void)
+ResetAllOptions(bool isStartup)
 {
 	int			i;
 
 	for (i = 0; ConfigureNamesBool[i].name; i++)
-		*(ConfigureNamesBool[i].variable) = ConfigureNamesBool[i].default_val;
+	{
+		struct config_bool *conf = &ConfigureNamesBool[i];
+
+		if (isStartup ||
+			conf->context == PGC_SUSET || conf->context == PGC_USERSET)
+		{
+			if (conf->assign_hook)
+				(conf->assign_hook) (conf->default_val);
+			*conf->variable = conf->default_val;
+		}
+	}
 
 	for (i = 0; ConfigureNamesInt[i].name; i++)
-		*(ConfigureNamesInt[i].variable) = ConfigureNamesInt[i].default_val;
+	{
+		struct config_int *conf = &ConfigureNamesInt[i];
+
+		if (isStartup ||
+			conf->context == PGC_SUSET || conf->context == PGC_USERSET)
+		{
+			if (conf->assign_hook)
+				(conf->assign_hook) (conf->default_val);
+			*conf->variable = conf->default_val;
+		}
+	}
 
 	for (i = 0; ConfigureNamesReal[i].name; i++)
-		*(ConfigureNamesReal[i].variable) = ConfigureNamesReal[i].default_val;
+	{
+		struct config_real *conf = &ConfigureNamesReal[i];
+
+		if (isStartup ||
+			conf->context == PGC_SUSET || conf->context == PGC_USERSET)
+		{
+			if (conf->assign_hook)
+				(conf->assign_hook) (conf->default_val);
+			*conf->variable = conf->default_val;
+		}
+	}
 
 	for (i = 0; ConfigureNamesString[i].name; i++)
 	{
-		char	   *str = NULL;
+		struct config_string *conf = &ConfigureNamesString[i];
 
-		if (!ConfigureNamesString[i].default_val
-				&& ConfigureNamesString[i].boot_default_val)
+		if (isStartup ||
+			conf->context == PGC_SUSET || conf->context == PGC_USERSET)
 		{
-			str = strdup(ConfigureNamesString[i].boot_default_val);
-			if (str == NULL)
-				elog(ERROR, "out of memory");
+			char	   *str = NULL;
 
-			ConfigureNamesString[i].default_val = str;
+			if (conf->default_val == NULL &&
+				conf->boot_default_val)
+			{
+				str = strdup(conf->boot_default_val);
+				if (str == NULL)
+					elog(ERROR, "out of memory");
+				conf->default_val = str;
+			}
+			if (conf->default_val)
+			{
+				str = strdup(conf->default_val);
+				if (str == NULL)
+					elog(ERROR, "out of memory");
+			}
+			if (conf->assign_hook)
+				(conf->assign_hook) (str);
+			if (*conf->variable)
+				free(*conf->variable);
+			*conf->variable = str;
 		}
-		if (ConfigureNamesString[i].default_val)
-		{
-			str = strdup(ConfigureNamesString[i].default_val);
-			if (str == NULL)
-				elog(ERROR, "out of memory");
-		}
-		*(ConfigureNamesString[i].variable) = str;
 	}
-
-	if (getenv("PGPORT"))
-		PostPortNumber = atoi(getenv("PGPORT"));
 }
 
 
@@ -591,8 +635,8 @@ parse_real(const char *value, double *result)
  * See also SetConfigOption for an external interface.
  */
 bool
-set_config_option(const char *name, const char *value, GucContext
-				  context, bool DoIt, bool makeDefault)
+set_config_option(const char *name, const char *value,
+				  GucContext context, bool DoIt, bool makeDefault)
 {
 	struct config_generic *record;
 	enum config_type type;
@@ -639,8 +683,8 @@ set_config_option(const char *name, const char *value, GucContext
 		else
 			return true;
 	}
-	else if (record->context == PGC_SUSET && (context == PGC_USERSET
-											  || context == PGC_BACKEND))
+	else if (record->context == PGC_SUSET &&
+			 (context == PGC_USERSET || context == PGC_BACKEND))
 		elog(ERROR, "permission denied");
 
 
@@ -662,15 +706,22 @@ set_config_option(const char *name, const char *value, GucContext
 						elog(elevel, "option '%s' requires a boolean value", name);
 						return false;
 					}
+					/* no parse_hook needed for booleans */
 					if (DoIt)
 					{
+						if (conf->assign_hook)
+							(conf->assign_hook) (boolval);
 						*conf->variable = boolval;
 						if (makeDefault)
 							conf->default_val = boolval;
 					}
 				}
 				else if (DoIt)
+				{
+					if (conf->assign_hook)
+						(conf->assign_hook) (conf->default_val);
 					*conf->variable = conf->default_val;
+				}
 				break;
 			}
 
@@ -694,15 +745,27 @@ set_config_option(const char *name, const char *value, GucContext
 							 name, intval, conf->min, conf->max);
 						return false;
 					}
+					if (conf->parse_hook && !(conf->parse_hook) (intval))
+					{
+						elog(elevel, "invalid value for option '%s': %d",
+							 name, intval);
+						return false;
+					}
 					if (DoIt)
 					{
+						if (conf->assign_hook)
+							(conf->assign_hook) (intval);
 						*conf->variable = intval;
 						if (makeDefault)
 							conf->default_val = intval;
 					}
 				}
 				else if (DoIt)
+				{
+					if (conf->assign_hook)
+						(conf->assign_hook) (conf->default_val);
 					*conf->variable = conf->default_val;
+				}
 				break;
 			}
 
@@ -726,15 +789,27 @@ set_config_option(const char *name, const char *value, GucContext
 							 name, dval, conf->min, conf->max);
 						return false;
 					}
+					if (conf->parse_hook && !(conf->parse_hook) (dval))
+					{
+						elog(elevel, "invalid value for option '%s': %g",
+							 name, dval);
+						return false;
+					}
 					if (DoIt)
 					{
+						if (conf->assign_hook)
+							(conf->assign_hook) (dval);
 						*conf->variable = dval;
 						if (makeDefault)
 							conf->default_val = dval;
 					}
 				}
 				else if (DoIt)
+				{
+					if (conf->assign_hook)
+						(conf->assign_hook) (conf->default_val);
 					*conf->variable = conf->default_val;
+				}
 				break;
 			}
 
@@ -746,7 +821,8 @@ set_config_option(const char *name, const char *value, GucContext
 				{
 					if (conf->parse_hook && !(conf->parse_hook) (value))
 					{
-						elog(elevel, "invalid value for option '%s': '%s'", name, value);
+						elog(elevel, "invalid value for option '%s': '%s'",
+							 name, value);
 						return false;
 					}
 					if (DoIt)
@@ -766,13 +842,13 @@ set_config_option(const char *name, const char *value, GucContext
 						*conf->variable = str;
 						if (makeDefault)
 						{
-							if (conf->default_val)
-								free(conf->default_val);
 							str = strdup(value);
 							if (str == NULL) {
 								elog(elevel, "out of memory");
 								return false;
 							}
+							if (conf->default_val)
+								free(conf->default_val);
 							conf->default_val = str;
 						}
 					}
@@ -789,7 +865,7 @@ set_config_option(const char *name, const char *value, GucContext
 							elog(elevel, "out of memory");
 							return false;
 						}
-						conf->boot_default_val = str;
+						conf->default_val = str;
 					}
 					str = strdup(conf->default_val);
 					if (str == NULL)
@@ -818,8 +894,8 @@ set_config_option(const char *name, const char *value, GucContext
  * this is just the wrapper to be called from the outside.
  */
 void
-SetConfigOption(const char *name, const char *value, GucContext
-				context, bool makeDefault)
+SetConfigOption(const char *name, const char *value,
+				GucContext context, bool makeDefault)
 {
 	(void) set_config_option(name, value, context, true, makeDefault);
 }
@@ -829,9 +905,7 @@ SetConfigOption(const char *name, const char *value, GucContext
 /*
  * This is more or less the SHOW command. It returns a string with the
  * value of the option `name'. If the option doesn't exist, throw an
- * elog and don't return. issuper should be true if and only if the
- * current user is a superuser. Normal users don't have read
- * permission on all options.
+ * elog and don't return.
  *
  * The string is *not* allocated for modification and is really only
  * valid until the next call to configuration related functions.
@@ -853,11 +927,13 @@ GetConfigOption(const char *name)
 			return *((struct config_bool *) record)->variable ? "on" : "off";
 
 		case PGC_INT:
-			snprintf(buffer, 256, "%d", *((struct config_int *) record)->variable);
+			snprintf(buffer, sizeof(buffer), "%d",
+					 *((struct config_int *) record)->variable);
 			return buffer;
 
 		case PGC_REAL:
-			snprintf(buffer, 256, "%g", *((struct config_real *) record)->variable);
+			snprintf(buffer, sizeof(buffer), "%g",
+					 *((struct config_real *) record)->variable);
 			return buffer;
 
 		case PGC_STRING:
@@ -872,7 +948,7 @@ GetConfigOption(const char *name)
 static void
 _ShowOption(enum config_type opttype, struct config_generic *record)
 {
-	static char buffer[256];
+	char buffer[256];
 	char *val;
 
 	switch (opttype)
@@ -881,12 +957,14 @@ _ShowOption(enum config_type opttype, struct config_generic *record)
 			val = *((struct config_bool *) record)->variable ? "on" : "off";
 			break;
 		case PGC_INT:
-			snprintf(buffer, 256, "%d", *((struct config_int *) record)->variable);
+			snprintf(buffer, sizeof(buffer), "%d",
+					 *((struct config_int *) record)->variable);
 			val = buffer;
 			break;
 
 		case PGC_REAL:
-			snprintf(buffer, 256, "%g", *((struct config_real *) record)->variable);
+			snprintf(buffer, sizeof(buffer), "%g",
+					 *((struct config_real *) record)->variable);
 			val = buffer;
 			break;
 
@@ -955,8 +1033,8 @@ ParseLongOption(const char *string, char **name, char **value)
 			elog(FATAL, "out of memory");
 	}
 	else
-/* no equal sign in string */
 	{
+		/* no equal sign in string */
 		*name = strdup(string);
 		if (!*name)
 			elog(FATAL, "out of memory");
@@ -971,6 +1049,7 @@ ParseLongOption(const char *string, char **name, char **value)
 
 
 #ifdef ENABLE_SYSLOG
+
 static bool
 check_facility(const char *facility)
 {

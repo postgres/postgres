@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.108 2001/06/03 14:53:56 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.109 2001/06/12 22:54:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,7 +243,7 @@ BootstrapMain(int argc, char *argv[])
 	dbName = NULL;
 	if (!IsUnderPostmaster)
 	{
-		ResetAllOptions();
+		ResetAllOptions(true);
 		potential_DataDir = getenv("PGDATA");	/* Null if no PGDATA
 												 * variable */
 	}

@@ -28,7 +28,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.218 2001/06/11 04:12:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.219 2001/06/12 22:54:05 tgl Exp $
  *
  * NOTES
  *
@@ -362,9 +362,13 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Options setup
 	 */
-	potential_DataDir = getenv("PGDATA");		/* default value */
+	ResetAllOptions(true);
 
-	ResetAllOptions();
+	/* PGPORT environment variable, if set, overrides GUC setting */
+	if (getenv("PGPORT"))
+		PostPortNumber = atoi(getenv("PGPORT"));
+
+	potential_DataDir = getenv("PGDATA");		/* default value */
 
 	/*
 	 * First we must scan for a -D argument to get the data dir. Then read

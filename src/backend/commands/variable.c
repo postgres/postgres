@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.49 2001/06/07 04:50:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.50 2001/06/12 22:54:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -792,7 +792,9 @@ ResetPGVariable(const char *name)
 		reset_datestyle();
 		reset_timezone();
 
-		ResetAllOptions();
+		ResetAllOptions(false);
 	} else
-		SetConfigOption(name, NULL, superuser() ? PGC_SUSET : PGC_USERSET, false);
+		SetConfigOption(name, NULL,
+						superuser() ? PGC_SUSET : PGC_USERSET,
+						false);
 }
