@@ -4,7 +4,7 @@
 #    Makefile for storage/lmgr
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/storage/lmgr/Makefile,v 1.19 2004/06/19 19:43:11 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/storage/lmgr/Makefile,v 1.20 2004/10/07 00:08:04 neilc Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
 s_lock_test: s_lock.c $(top_builddir)/src/port/libpgport.a
-	$(CC) $(CPPFLAGS) $(CFLAGS) -DS_LOCK_TEST=1 s_lock.c \
+	$(CC) $(CPPFLAGS) $(CFLAGS) -DS_LOCK_TEST=1 $(srcdir)/s_lock.c \
 		-L $(top_builddir)/src/port -lpgport -o s_lock_test
 
 check: s_lock_test
