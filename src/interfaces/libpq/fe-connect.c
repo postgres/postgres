@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.219 2003/01/07 04:25:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.220 2003/01/08 16:21:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ static const PQconninfoOption PQconninfoOptions[] = {
 
 	{"hostaddr", "PGHOSTADDR", NULL, NULL,
 	"Database-Host-IP-Address", "", 45},
-	
+
 	{"port", "PGPORT", DEF_PGPORT_STR, NULL,
 	"Database-Port", "", 6},
 
@@ -2338,12 +2338,6 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 			return 1;
 		}
 
-		/* If not already set, set the database name to the name of the service */
-		for (i = 0; options[i].keyword; i++)
-			if (strcmp(options[i].keyword, "dbname") == 0)
-				if (options[i].val == NULL)
-					options[i].val = strdup(service);
-
 		while ((line = fgets(buf, MAXBUFSIZE - 1, f)) != NULL)
 		{
 			linenr++;
@@ -2408,6 +2402,16 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 						fclose(f);
 						return 3;
 					}
+
+					/*
+					 *	If not already set, set the database name to the
+					 *	name of the service
+					 */
+					for (i = 0; options[i].keyword; i++)
+						if (strcmp(options[i].keyword, "dbname") == 0)
+							if (options[i].val == NULL)
+								options[i].val = strdup(service);
+
 					val = line + strlen(line) + 1;
 
 					found_keyword = 0;
