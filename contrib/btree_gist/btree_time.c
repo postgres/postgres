@@ -29,14 +29,15 @@ Datum		gbt_timetz_consistent(PG_FUNCTION_ARGS);
 Datum		gbt_time_penalty(PG_FUNCTION_ARGS);
 Datum		gbt_time_same(PG_FUNCTION_ARGS);
 
-
-#define P_TimeADTGetDatum(x)	PointerGetDatum( &(x) )
+/* bug in utils/date.h: TimeADT is always store as float8 */
+#define P_TimeADTGetDatum(x)	PointerGetDatum( &( (double) (x) ) )
+#define PointerTimeADTGetDatum(x)       PointerGetDatum( &( *(double*)(x) ) )
 
 static bool
 gbt_timegt(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_gt, PointerGetDatum(a), PointerGetDatum(b))
+						DirectFunctionCall2(time_gt, PointerTimeADTGetDatum(a), PointerTimeADTGetDatum(b))
 		);
 }
 
@@ -44,7 +45,7 @@ static bool
 gbt_timege(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_ge, PointerGetDatum(a), PointerGetDatum(b))
+						DirectFunctionCall2(time_ge, PointerTimeADTGetDatum(a), PointerTimeADTGetDatum(b))
 		);
 }
 
@@ -52,7 +53,7 @@ static bool
 gbt_timeeq(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_eq, PointerGetDatum(a), PointerGetDatum(b))
+						DirectFunctionCall2(time_eq, PointerTimeADTGetDatum(a), PointerTimeADTGetDatum(b))
 		);
 }
 
@@ -60,7 +61,7 @@ static bool
 gbt_timele(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_le, PointerGetDatum(a), PointerGetDatum(b))
+						DirectFunctionCall2(time_le, PointerTimeADTGetDatum(a), PointerTimeADTGetDatum(b))
 		);
 }
 
@@ -68,7 +69,7 @@ static bool
 gbt_timelt(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_lt, PointerGetDatum(a), PointerGetDatum(b))
+						DirectFunctionCall2(time_lt, PointerTimeADTGetDatum(a), PointerTimeADTGetDatum(b))
 		);
 }
 
