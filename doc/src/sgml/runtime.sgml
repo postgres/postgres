@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.43 2000/12/21 19:08:05 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.44 2000/12/22 18:06:46 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1841,7 +1841,7 @@ set semsys:seminfo_semmsl=32
      openssl rsa -in cert.pem.pw -out cert.pem 
     </programlisting>
    Enter the old passphrase to unlock the existing key. Now do
-    </programlisting>
+    <programlisting>
      openssl req -x509 -in cert.req -text -key cert.pem -out cert.cert
      cp cert.pem $PGDATA/server.key
      cp cert.cert $PGDATA/server.crt
