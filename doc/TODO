@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Mar 24 00:15:59 EST 2005
+Last updated:		Fri Mar 25 18:13:22 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -760,6 +760,7 @@ Vacuum
 	o Move into the backend code
 	o Scan the buffer cache to find free space or use background writer
 	o Use free-space map information to guide refilling
+	o Do VACUUM FULL if table is nearly empty?
 
 Locking
 =======
