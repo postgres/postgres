@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.42 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.43 2004/03/04 14:32:12 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -42,15 +42,15 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
    define an alternate action to be performed on insertions, updates,
    or deletions in database tables.  Roughly speaking, a rule causes
    additional commands to be executed when a given command on a given
-   table is executed.  Alternatively, a rule can replace a given
-   command by another, or cause a command not to be executed at all.
-   Rules are used to implement table views as well.  It is important
-   to realize that a rule is really a command transformation
-   mechanism, or command macro.  The transformation happens before the
-   execution of the commands starts.  If you actually want an
-   operation that fires independently for each physical row, you
-   probably want to use a trigger, not a rule.  More information about
-   the rules system is in <xref linkend="rules">.
+   table is executed.  Alternatively, an <literal>INSTEAD</literal>
+   rule can replace a given command by another, or cause a command 
+   not to be executed at all.  Rules are used to implement table 
+   views as well.  It is important to realize that a rule is really 
+   a command transformation mechanism, or command macro.  The 
+   transformation happens before the execution of the commands starts.  
+   If you actually want an operation that fires independently for each 
+   physical row, you probably want to use a trigger, not a rule.  
+   More information about the rules system is in <xref linkend="rules">.
   </para>
   
   <para>
@@ -136,6 +136,17 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
       The condition expression may not refer to any tables except
       <literal>NEW</literal> and <literal>OLD</literal>, and may not
       contain aggregate functions.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><option>INSTEAD</option></term>
+    <listitem>
+     <para>
+      <literal>INSTEAD</literal> indicates that the commands should be
+      executed <emphasis>instead</> of the original command, not in
+      addition to the original command.
      </para>
     </listitem>
    </varlistentry>
