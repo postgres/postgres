@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.7 2000/11/08 18:23:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.8 2000/11/14 18:37:46 tgl Exp $
 
 CMDNAME=`basename $0`
 
@@ -151,7 +151,7 @@ echo "${BS}connect template1"
 #
 # Dump users (but not the user created by initdb)
 #
-echo "DELETE FROM pg_shadow WHERE usesysid NOT IN (SELECT datdba FROM pg_database WHERE datname = 'template1');"
+echo "DELETE FROM pg_shadow WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template0');"
 echo
 
 $PSQL -d template1 -At <<__END__
@@ -163,7 +163,7 @@ SELECT
   || CASE WHEN valuntil IS NOT NULL THEN ' VALID UNTIL '''::text
     || CAST(valuntil AS TIMESTAMP) || '''' ELSE '' END || ';'
 FROM pg_shadow
-WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template1');
+WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template0');
 __END__
 echo
 
@@ -187,52 +187,42 @@ done
 test "$accounts_only" = yes && exit 0
 
 
-# First we dump the template in case there are local extensions.
-
-echo
-echo "--"
-echo "-- Database template1"
-echo "--"
-echo "${BS}connect template1"
-$PGDUMP "template1"
-if [ "$?" -ne 0 ] ; then
-    echo "pg_dump failed on template1, exiting" 1>&2
-    exit 1
-fi
-
-
 # For each database, run pg_dump to dump the contents of that database.
+# We skip databases marked not datallowconn, since we'd be unable to
+# connect to them anyway (and besides, we don't want to dump template0).
 
 $PSQL -d template1 -At -F ' ' \
-  -c "SELECT d.datname, u.usename, pg_encoding_to_char(d.encoding), d.datpath FROM pg_database d, pg_shadow u WHERE d.datdba = u.usesysid AND datname <> 'template1';" | \
-while read DATABASE DBOWNER ENCODING DBPATH; do
+  -c "SELECT datname, usename, pg_encoding_to_char(d.encoding), datistemplate, datpath FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) WHERE datallowconn;" | \
+while read DATABASE DBOWNER ENCODING ISTEMPLATE DBPATH; do
     echo
     echo "--"
     echo "-- Database $DATABASE"
     echo "--"
     echo "${BS}connect template1 $DBOWNER"
 
-    if [ "$cleanschema" = yes ] ; then
+    if [ "$cleanschema" = yes -a "$DATABASE" != template1 ] ; then
         echo "DROP DATABASE \"$DATABASE\";"
     fi
 
-    createdbcmd="CREATE DATABASE \"$DATABASE\""
-    if [ x"$DBPATH" != x"" ] || [ x"$MULTIBYTE" != x"" ]; then
-        createdbcmd="$createdbcmd WITH"
+    if [ "$DATABASE" != template1 ] ; then
+	createdbcmd="CREATE DATABASE \"$DATABASE\" WITH TEMPLATE = template0"
+	if [ x"$DBPATH" != x"" ] ; then
+	    createdbcmd="$createdbcmd LOCATION = '$DBPATH'"
+	fi
+	if [ x"$MULTIBYTE" != x"" ] ; then
+	    createdbcmd="$createdbcmd ENCODING = '$ENCODING'"
+	fi
+	echo "$createdbcmd;"
     fi
-    if [ x"$DBPATH" != x"" ] ; then
-        createdbcmd="$createdbcmd LOCATION = '$DBPATH'"
-    fi
-    if [ x"$MULTIBYTE" != x"" ] ; then
-        createdbcmd="$createdbcmd ENCODING = '$ENCODING'"
-    fi
-    echo "$createdbcmd;"
 
     echo "${BS}connect $DATABASE $DBOWNER"
     $PGDUMP "$DATABASE"
     if [ "$?" -ne 0 ] ; then
         echo "pg_dump failed on $DATABASE, exiting" 1>&2
         exit 1
+    fi
+    if [ x"$ISTEMPLATE" = xt ] ; then
+        echo "UPDATE pg_database SET datistemplate = 't' WHERE datname = '$DATABASE';"
     fi
 done
 

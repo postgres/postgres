@@ -7,15 +7,16 @@
 #
 # To create the database cluster, we create the directory that contains
 # all its data, create the files that hold the global tables, create
-# a few other control files for it, and create one database:  the
-# template database.
+# a few other control files for it, and create two databases: the
+# template0 and template1 databases.
 #
-# The template database is an ordinary PostgreSQL database.  Its data
-# never changes, though.  It exists to make it easy for PostgreSQL to 
-# create other databases -- it just copies.
+# The template databases are ordinary PostgreSQL databases.  template0
+# is never supposed to change after initdb, whereas template1 can be
+# changed to add site-local standard data.  Either one can be copied
+# to produce a new database.
 #
 # Optionally, we can skip creating the complete database cluster and
-# just create (or replace) the template database.
+# just create (or replace) the template databases.
 #
 # To create all those things, we run the postgres (backend) program and
 # feed it data from the bki files that were installed.
@@ -23,7 +24,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.113 2000/11/11 22:59:46 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.114 2000/11/14 18:37:45 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -203,7 +204,7 @@ do
                 ;;
         --template|-t)
                 template_only=yes
-                echo "Updating template1 database only."
+                echo "Updating template0 and template1 databases only."
                 ;;
 # The sysid of the database superuser. Can be freely changed.
         --sysid|-i)
@@ -277,7 +278,7 @@ if [ "$usage" ]; then
     echo "  -i, --sysid SYSID           Database sysid for the superuser"
     echo "Less commonly used options: "
     echo "  -L DIRECTORY                Where to find the input files"
-    echo "  -t, --template              Re-initialize template database only"
+    echo "  -t, --template              Re-initialize template databases only"
     echo "  -d, --debug                 Generate lots of debugging output"
     echo "  -n, --noclean               Do not clean up after errors"
     echo
@@ -451,7 +452,7 @@ fi
 BACKENDARGS="-boot -C -F -D$PGDATA $BACKEND_TALK_ARG"
 FIRSTRUN="-boot -x1 -C -F -D$PGDATA $BACKEND_TALK_ARG"
 
-echo "Creating template database in $PGDATA/base/1"
+echo "Creating template1 database in $PGDATA/base/1"
 [ "$debug" = yes ] && echo "Running: $PGPATH/postgres $FIRSTRUN template1"
 
 cat "$TEMPLATE1_BKI" \
@@ -465,6 +466,10 @@ echo $short_version > "$PGDATA"/base/1/PG_VERSION || exit_nicely
 ##########################################################################
 #
 # CREATE GLOBAL TABLES
+#
+# XXX --- I do not believe the "template_only" option can actually work.
+# With this coding, it'll fail to make entries for pg_shadow etc. in
+# template1 ... tgl 11/2000
 
 if [ "$template_only" != yes ]
 then
@@ -491,7 +496,7 @@ fi
 #
 # CREATE VIEWS and other things
 
-echo
+echo "Initializing pg_shadow."
 
 PGSQL_OPT="-o /dev/null -O -F -D$PGDATA"
 
@@ -532,6 +537,7 @@ fi
 
 
 echo "Enabling unlimited row width for system tables."
+
 echo "ALTER TABLE pg_attrdef CREATE TOAST TABLE" \
         | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 echo "ALTER TABLE pg_description CREATE TOAST TABLE" \
@@ -546,7 +552,8 @@ echo "ALTER TABLE pg_statistic CREATE TOAST TABLE" \
         | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 
-echo "Creating view pg_user."
+echo "Creating system views."
+
 echo "CREATE VIEW pg_user AS \
         SELECT \
             usename, \
@@ -560,7 +567,6 @@ echo "CREATE VIEW pg_user AS \
         FROM pg_shadow" \
         | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
-echo "Creating view pg_rules."
 echo "CREATE VIEW pg_rules AS \
         SELECT \
             C.relname AS tablename, \
@@ -571,7 +577,6 @@ echo "CREATE VIEW pg_rules AS \
             AND C.oid = R.ev_class;" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
-echo "Creating view pg_views."
 echo "CREATE VIEW pg_views AS \
         SELECT \
             C.relname AS viewname, \
@@ -585,7 +590,6 @@ echo "CREATE VIEW pg_views AS \
             )" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
-echo "Creating view pg_tables."
 echo "CREATE VIEW pg_tables AS \
         SELECT \
             C.relname AS tablename, \
@@ -601,7 +605,6 @@ echo "CREATE VIEW pg_tables AS \
             )" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
-echo "Creating view pg_indexes."
 echo "CREATE VIEW pg_indexes AS \
         SELECT \
             C.relname AS tablename, \
@@ -622,12 +625,25 @@ cat $TEMPFILE \
 rm -f "$TEMPFILE" || exit_nicely
 
 echo "Setting lastsysoid."
-echo "Update pg_database Set datlastsysoid = (Select max(oid) From pg_description) \
-        Where datname = 'template1'" \
+echo "UPDATE pg_database SET \
+	datistemplate = 't', \
+	datlastsysoid = (SELECT max(oid) FROM pg_description) \
+        WHERE datname = 'template1'" \
 		| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Vacuuming database."
 echo "VACUUM ANALYZE" \
+	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+echo "Copying template1 to template0."
+echo "CREATE DATABASE template0" \
+	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+echo "UPDATE pg_database SET \
+	datistemplate = 't', \
+	datallowconn = 'f' \
+        WHERE datname = 'template0'" \
+		| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+echo "VACUUM pg_database" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 

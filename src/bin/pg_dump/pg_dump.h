@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.53 2000/10/10 13:55:28 pjw Exp $
+ * $Id: pg_dump.h,v 1.54 2000/11/14 18:37:46 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -177,7 +177,7 @@ typedef struct _oprInfo
 /* global decls */
 extern bool g_force_quotes;		/* double-quotes for identifiers flag */
 extern bool g_verbose;			/* verbose flag */
-extern int	g_last_builtin_oid; /* value of the last builtin oid */
+extern Oid	g_last_builtin_oid; /* value of the last builtin oid */
 extern Archive *g_fout;			/* the script file */
 
 /* placeholders for comment starting and ending delimiters */

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.81 2000/11/12 00:36:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.82 2000/11/14 18:37:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1086,6 +1086,8 @@ _equalCreatedbStmt(CreatedbStmt *a, CreatedbStmt *b)
 	if (!equalstr(a->dbname, b->dbname))
 		return false;
 	if (!equalstr(a->dbpath, b->dbpath))
+		return false;
+	if (!equalstr(a->dbtemplate, b->dbtemplate))
 		return false;
 	if (a->encoding != b->encoding)
 		return false;

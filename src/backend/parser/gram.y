@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.208 2000/11/08 22:09:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.209 2000/11/14 18:37:49 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -56,8 +56,8 @@
 #include "miscadmin.h"
 #include "mb/pg_wchar.h"
 #else
-#define GetTemplateEncoding()	0		/* SQL_ASCII */
-#define GetTemplateEncodingName()	"SQL_ASCII"
+#define GetStandardEncoding()	0		/* SQL_ASCII */
+#define GetStandardEncodingName()	"SQL_ASCII"
 #endif
 
 extern List *parsetree;			/* final parse result is delivered here */
@@ -146,8 +146,7 @@ static void doNegateFloat(Value *v);
 %type <node>    alter_column_action
 %type <ival>    drop_behavior
 
-%type <str>		createdb_opt_location
-%type <ival>    createdb_opt_encoding
+%type <list>	createdb_opt_list, createdb_opt_item
 
 %type <ival>	opt_lock, lock_type
 %type <boolean>	opt_lmode, opt_force
@@ -347,7 +346,7 @@ static void doNegateFloat(Value *v);
 		OFFSET, OIDS, OPERATOR, OWNER, PASSWORD, PROCEDURAL,
 		REINDEX, RENAME, RESET, RETURNS, ROW, RULE,
 		SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT, SYSID,
-		TEMP, TOAST, TRUNCATE, TRUSTED, 
+		TEMP, TEMPLATE, TOAST, TRUNCATE, TRUSTED, 
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
 /* The grammar thinks these are keywords, but they are not in the keywords.c
@@ -687,7 +686,8 @@ CreateSchemaStmt:  CREATE SCHEMA UserId
 					CreatedbStmt *n = makeNode(CreatedbStmt);
 					n->dbname = $3;
 					n->dbpath = NULL;
-					n->encoding = GetTemplateEncoding();
+					n->dbtemplate = NULL;
+					n->encoding = -1;
 					$$ = (Node *)n;
 				}
 		;
@@ -2924,16 +2924,34 @@ LoadStmt:  LOAD file_name
  *
  *****************************************************************************/
 
-CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb_opt_encoding
+CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_list
 				{
 					CreatedbStmt *n = makeNode(CreatedbStmt);
-
-					if ($5 == NULL && $6 == -1)
-						elog(ERROR, "CREATE DATABASE WITH requires at least one option");
+					List   *l;
 
 					n->dbname = $3;
-					n->dbpath = $5;
-					n->encoding = ($6 == -1) ? GetTemplateEncoding() : $6;
+					/* set default options */
+					n->dbpath = NULL;
+					n->dbtemplate = NULL;
+					n->encoding = -1;
+					/* process additional options */
+					foreach(l, $5)
+					{
+						List   *optitem = (List *) lfirst(l);
+
+						switch (lfirsti(optitem))
+						{
+							case 1:
+								n->dbpath = (char *) lsecond(optitem);
+								break;
+							case 2:
+								n->dbtemplate = (char *) lsecond(optitem);
+								break;
+							case 3:
+								n->encoding = lfirsti(lnext(optitem));
+								break;
+						}
+					}
 					$$ = (Node *)n;
 				}
 		| CREATE DATABASE database_name
@@ -2941,27 +2959,51 @@ CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb
 					CreatedbStmt *n = makeNode(CreatedbStmt);
 					n->dbname = $3;
 					n->dbpath = NULL;
-					n->encoding = GetTemplateEncoding();
+					n->dbtemplate = NULL;
+					n->encoding = -1;
 					$$ = (Node *)n;
 				}
 		;
 
-createdb_opt_location:  LOCATION '=' Sconst		{ $$ = $3; }
-		| LOCATION '=' DEFAULT					{ $$ = NULL; }
-		| /*EMPTY*/								{ $$ = NULL; }
+createdb_opt_list:  createdb_opt_item
+				{ $$ = makeList1($1); }
+		| createdb_opt_list createdb_opt_item
+				{ $$ = lappend($1, $2); }
 		;
 
-createdb_opt_encoding:  ENCODING '=' Sconst
+/*
+ * createdb_opt_item returns 2-element lists, with the first element
+ * being an integer code to indicate which item was specified.
+ */
+createdb_opt_item:  LOCATION '=' Sconst
 				{
+					$$ = lconsi(1, makeList1($3));
+				}
+		| LOCATION '=' DEFAULT
+				{
+					$$ = lconsi(1, makeList1((char *) NULL));
+				}
+		| TEMPLATE '=' name
+				{
+					$$ = lconsi(2, makeList1($3));
+				}
+		| TEMPLATE '=' DEFAULT
+				{
+					$$ = lconsi(2, makeList1((char *) NULL));
+				}
+		| ENCODING '=' Sconst
+				{
+					int		encoding;
 #ifdef MULTIBYTE
-					$$ = pg_char_to_encoding($3);
-					if ($$ == -1)
+					encoding = pg_char_to_encoding($3);
+					if (encoding == -1)
 						elog(ERROR, "%s is not a valid encoding name", $3);
 #else
-					if (strcasecmp($3, GetTemplateEncodingName()) != 0)
+					if (strcasecmp($3, GetStandardEncodingName()) != 0)
 						elog(ERROR, "Multi-byte support is not enabled");
-					$$ = GetTemplateEncoding();
+					encoding = GetStandardEncoding();
 #endif
+					$$ = lconsi(3, makeListi1(encoding));
 				}
 		| ENCODING '=' Iconst
 				{
@@ -2969,18 +3011,14 @@ createdb_opt_encoding:  ENCODING '=' Sconst
 					if (!pg_get_encent_by_encoding($3))
 						elog(ERROR, "%d is not a valid encoding code", $3);
 #else
-					if ($3 != GetTemplateEncoding())
+					if ($3 != GetStandardEncoding())
 						elog(ERROR, "Multi-byte support is not enabled");
 #endif
-					$$ = $3;
+					$$ = lconsi(3, makeListi1($3));
 				}
 		| ENCODING '=' DEFAULT
 				{
-					$$ = GetTemplateEncoding();
-				}
-		| /*EMPTY*/
-				{
-					$$ = -1;
+					$$ = lconsi(3, makeListi1(-1));
 				}
 		;
 
@@ -5495,6 +5533,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| STDOUT						{ $$ = "stdout"; }
 		| SYSID							{ $$ = "sysid"; }
 		| TEMP							{ $$ = "temp"; }
+		| TEMPLATE						{ $$ = "template"; }
 		| TEMPORARY						{ $$ = "temporary"; }
 		| TIMEZONE_HOUR					{ $$ = "timezone_hour"; }
 		| TIMEZONE_MINUTE				{ $$ = "timezone_minute"; }

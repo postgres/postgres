@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.186 2000/11/14 18:11:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.187 2000/11/14 18:37:42 tgl Exp $
  *
  * NOTES
  *
@@ -279,14 +279,8 @@ checkDataDir(const char *checkdir)
 		exit(2);
 	}
 
-#ifdef OLD_FILE_NAMING
-	snprintf(path, sizeof(path), "%s%cbase%ctemplate1%cpg_class",
-			 checkdir, SEP_CHAR, SEP_CHAR, SEP_CHAR);
-#else
-	snprintf(path, sizeof(path), "%s%cbase%c%u%c%u",
-			 checkdir, SEP_CHAR, SEP_CHAR, 
-			 TemplateDbOid, SEP_CHAR, RelOid_pg_class);
-#endif
+	snprintf(path, sizeof(path), "%s%cglobal%cpg_control",
+			 checkdir, SEP_CHAR, SEP_CHAR);
 
 	fp = AllocateFile(path, PG_BINARY_R);
 	if (fp == NULL)

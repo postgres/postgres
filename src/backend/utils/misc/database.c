@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.40 2000/10/16 14:52:19 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.41 2000/11/14 18:37:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,7 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 		max = PageGetMaxOffsetNumber(pg);
 
 		/* look at each tuple on the page */
-		for (i = 0; i <= max; i++)
+		for (i = 0; i < max; i++)
 		{
 			int			offset;
 
@@ -221,8 +221,11 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 			 * database OID from a flat file, handled the same way we
 			 * handle the password relation?
 			 */
-			if (TransactionIdIsValid((TransactionId) tup.t_data->t_xmax))
-				continue;
+			if (tup.t_data->t_infomask & HEAP_XMIN_INVALID)
+				continue;		/* inserting xact known aborted */
+			if (TransactionIdIsValid((TransactionId) tup.t_data->t_xmax) &&
+				!(tup.t_data->t_infomask & HEAP_XMAX_INVALID))
+				continue;		/* deleting xact happened, not known aborted */
 
 			/*
 			 * Okay, see if this is the one we want.
@@ -240,6 +243,10 @@ GetRawDatabaseInfo(const char *name, Oid *db_id, char *path)
 			}
 		}
 	}
+
+	/* failed to find it... */
+	*db_id = InvalidOid;
+	*path = '\0';
 
 done:
 	close(dbfd);

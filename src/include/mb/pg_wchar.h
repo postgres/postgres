@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.22 2000/10/30 10:41:05 ishii Exp $ */
+/* $Id: pg_wchar.h,v 1.23 2000/11/14 18:37:48 tgl Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -152,8 +152,6 @@ extern int	pg_char_to_encoding(const char *);
 
 extern int	GetDatabaseEncoding(void);
 extern void SetDatabaseEncoding(int);
-extern void SetTemplateEncoding(int);
-extern int	GetTemplateEncoding(void);
 extern unsigned short BIG5toCNS(unsigned short, unsigned char *);
 extern unsigned short CNStoBIG5(unsigned short, unsigned char);
 

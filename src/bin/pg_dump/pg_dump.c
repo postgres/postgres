@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.179 2000/11/13 23:37:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.180 2000/11/14 18:37:45 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -129,6 +129,8 @@
 #include "pg_dump.h"
 #include "pg_backup.h"
 
+#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
+
 static void dumpComment(Archive *outfile, const char *target, const char *oid);
 static void dumpSequence(Archive *fout, TableInfo tbinfo);
 static void dumpACL(Archive *fout, TableInfo tbinfo);
@@ -140,7 +142,7 @@ static char *checkForQuote(const char *s);
 static void clearTableInfo(TableInfo *, int);
 static void dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 			TypeInfo *tinfo, int numTypes);
-static int	findLastBuiltinOid(const char*);
+static Oid	findLastBuiltinOid(const char*);
 static void setMaxOid(Archive *fout);
 
 static void AddAcl(char *aclbuf, const char *keyword);
@@ -156,7 +158,7 @@ extern int	optind,
 /* global decls */
 bool		g_verbose;			/* User wants verbose narration of our
 								 * activities. */
-int			g_last_builtin_oid; /* value of the last builtin oid */
+Oid			g_last_builtin_oid; /* value of the last builtin oid */
 Archive	   *g_fout;				/* the script file */
 PGconn	   *g_conn;				/* the database connection */
 
@@ -2784,7 +2786,7 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 	{
 
 		/* skip all the builtin types */
-		if (atoi(tinfo[i].oid) < g_last_builtin_oid)
+		if (atooid(tinfo[i].oid) <= g_last_builtin_oid)
 			continue;
 
 		/* skip relation types */
@@ -2899,7 +2901,7 @@ dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs,
 
 	for (i = 0; i < ntups; i++)
 	{
-		lanoid = atoi(PQgetvalue(res, i, i_oid));
+		lanoid = atooid(PQgetvalue(res, i, i_oid));
 		if (lanoid <= g_last_builtin_oid)
 			continue;
 
@@ -3127,7 +3129,7 @@ dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators,
 		resetPQExpBuffer(sort2);
 
 		/* skip all the builtin oids */
-		if (atoi(oprinfo[i].oid) < g_last_builtin_oid)
+		if (atooid(oprinfo[i].oid) <= g_last_builtin_oid)
 			continue;
 
 		/*
@@ -3222,7 +3224,7 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 		resetPQExpBuffer(details);
 
 		/* skip all the builtin oids */
-		if (atoi(agginfo[i].oid) < g_last_builtin_oid)
+		if (atooid(agginfo[i].oid) <= g_last_builtin_oid)
 			continue;
 
 		appendPQExpBuffer(details,
@@ -3907,12 +3909,12 @@ setMaxOid(Archive *fout)
  * we do this by retrieving datlastsysoid from the pg_database entry for this database,
  */
 
-static int
+static Oid
 findLastBuiltinOid(const char* dbname)
 {
 	PGresult   *res;
 	int			ntups;
-	int			last_oid;
+	Oid			last_oid;
 	PQExpBuffer query = createPQExpBuffer();
 
 	resetPQExpBuffer(query);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.84 2000/11/08 21:28:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.85 2000/11/14 18:37:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,6 +247,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"sysid", SYSID},
 	{"table", TABLE},
 	{"temp", TEMP},
+	{"template", TEMPLATE},
 	{"temporary", TEMPORARY},
 	{"then", THEN},
 	{"time", TIME},

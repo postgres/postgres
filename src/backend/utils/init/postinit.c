@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.70 2000/11/12 20:51:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.71 2000/11/14 18:37:44 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -79,6 +79,7 @@ ReverifyMyDatabase(const char *name)
 	HeapScanDesc pgdbscan;
 	ScanKeyData key;
 	HeapTuple	tup;
+	Form_pg_database dbform;
 
 	/*
 	 * Because we grab AccessShareLock here, we can be sure that destroydb
@@ -106,25 +107,24 @@ ReverifyMyDatabase(const char *name)
 		 */
 		DropBuffers(MyDatabaseId);
 		/* Now I can commit hara-kiri with a clear conscience... */
-		elog(FATAL, "Database '%s', OID %u, has disappeared from pg_database",
+		elog(FATAL, "Database \"%s\", OID %u, has disappeared from pg_database",
 			 name, MyDatabaseId);
 	}
 
 	/*
+	 * Also check that the database is currently allowing connections.
+	 */
+	dbform = (Form_pg_database) GETSTRUCT(tup);
+	if (! dbform->datallowconn)
+		elog(FATAL, "Database \"%s\" is not currently accepting connections",
+			 name);
+
+	/*
 	 * OK, we're golden.  Only other to-do item is to save the MULTIBYTE
-	 * encoding info out of the pg_database tuple.	Note we also set the
-	 * "template encoding", which is the default encoding for any CREATE
-	 * DATABASE commands executed in this backend; essentially, you get
-	 * the same encoding of the database you connected to as the default.
-	 * (This replaces code that unreliably grabbed template1's encoding
-	 * out of pg_database.	We could do an extra scan to find template1's
-	 * tuple, but for 99.99% of all backend startups it'd be wasted cycles
-	 * --- and the 'createdb' script connects to template1 anyway, so
-	 * there's no difference.)
+	 * encoding info out of the pg_database tuple.
 	 */
 #ifdef MULTIBYTE
-	SetDatabaseEncoding(((Form_pg_database) GETSTRUCT(tup))->encoding);
-	SetTemplateEncoding(((Form_pg_database) GETSTRUCT(tup))->encoding);
+	SetDatabaseEncoding(dbform->encoding);
 #endif
 
 	heap_endscan(pgdbscan);

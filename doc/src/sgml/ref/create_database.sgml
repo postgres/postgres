@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.15 2000/10/05 19:48:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.16 2000/11/14 18:37:40 tgl Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,10 @@ Postgres documentation
    <date>1999-12-11</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATION = '<replaceable class="parameter">dbpath</replaceable>' ]
+CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
+    [ WITH [ LOCATION = '<replaceable class="parameter">dbpath</replaceable>' ]
+           [ TEMPLATE = <replaceable class="parameter">template</replaceable> ]
+           [ ENCODING = <replaceable class="parameter">encoding</replaceable> ] ]
   </synopsis>
 
   <refsect2 id="R2-SQL-CREATEDATABASE-1">
@@ -48,8 +51,30 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATIO
       <term><replaceable class="parameter">dbpath</replaceable></term>
       <listitem>
        <para>
-	An alternate location where to store the new database in the filesystem.
-        See below for caveats.
+	An alternate filesystem location in which to store the new database,
+	specified as a string literal;
+	or <literal>DEFAULT</literal> to use the default location.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">template</replaceable></term>
+      <listitem>
+       <para>
+        Name of template from which to create the new database,
+	or <literal>DEFAULT</literal> to use the default template
+	(<literal>template1</literal>).
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">encoding</replaceable></term>
+      <listitem>
+       <para>
+        Multibyte encoding method to use in the new database.  Specify
+	a string literal name (e.g., <literal>'SQL_ASCII'</literal>),
+	or an integer encoding number, or <literal>DEFAULT</literal>
+	to use the default encoding.
        </para>
       </listitem>
      </varlistentry>
@@ -98,11 +123,10 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATIO
      </varlistentry>
 
      <varlistentry>
-      <term><computeroutput>ERROR:  Single quotes are not allowed in database names.</computeroutput></term>
-      <term><computeroutput>ERROR:  Single quotes are not allowed in database paths.</computeroutput></term>
+      <term><computeroutput>ERROR:  database path may not contain single quotes</computeroutput></term>
       <listitem>
        <para>
-	The database <replaceable class="parameter">name</replaceable> and
+	The database location
         <replaceable class="parameter">dbpath</replaceable> cannot contain
         single quotes. This is required so that the shell commands that
         create the database directory can execute safely.
@@ -111,18 +135,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATIO
      </varlistentry>
 
      <varlistentry>
-      <term><computeroutput>ERROR:  The path 'xxx' is invalid.</computeroutput></term>
-      <listitem>
-       <para>
-        The expansion of the specified <replaceable class="parameter">dbpath</replaceable>
-        (see below) failed. Check the path you entered or make sure that the
-        environment variable you are referencing does exist.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>ERROR:  createdb: May not be called in a transaction block.</computeroutput></term>
+      <term><computeroutput>ERROR:  CREATE DATABASE: may not be called in a transaction block</computeroutput></term>
       <listitem>
        <para>
         If you have an explicit transaction block in progress you cannot call
@@ -133,6 +146,9 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATIO
 
      <varlistentry>
       <term><computeroutput>ERROR:  Unable to create database directory '<replaceable>path</replaceable>'.</computeroutput></term>
+     </varlistentry>
+
+     <varlistentry>
       <term><computeroutput>ERROR:  Could not initialize database directory.</computeroutput></term>
       <listitem>
        <para>
@@ -169,16 +185,39 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATIO
    command.
   </para>
   <para>
-   If the path contains a slash, the leading part is interpreted
-   as an environment variable, which must be known to the
+   If the path name does not contain a slash, it is interpreted
+   as an environment variable name, which must be known to the
    server process. This way the database administrator can
-   exercise control over at which locations databases can be created.
+   exercise control over locations in which databases can be created.
    (A customary choice is, e.g., '<envar>PGDATA2</envar>'.)
    If the server is compiled with <literal>ALLOW_ABSOLUTE_DBPATHS</literal>
    (not so by default), absolute path names, as identified by
    a leading slash
    (e.g., '<filename>/usr/local/pgsql/data</filename>'),
    are allowed as well.
+  </para>
+
+  <para>
+   By default, the new database will be created by cloning the standard
+   system database <literal>template1</>.  A different template can be
+   specified by writing <literal>TEMPLATE =</>
+   <replaceable class="parameter">name</replaceable>.  In particular,
+   by writing <literal>TEMPLATE = template0</>, you can create a virgin
+   database containing only the standard objects predefined by your
+   version of Postgres.  This is useful if you wish to avoid copying
+   any installation-local objects that may have been added to template1.
+  </para>
+
+  <para>
+   The optional encoding parameter allows selection of the database encoding,
+   if your server was compiled with multibyte encoding support.  When not
+   specified, it defaults to the encoding used by the selected template
+   database.
+  </para>
+
+  <para>
+   Optional parameters can be written in any order, not only the order
+   illustrated above.
   </para>
 
   <refsect2 id="R2-SQL-CREATEDATABASE-3">
@@ -221,6 +260,33 @@ comment from Olly; response from Thomas...
    Not sure if the dump/reload would guarantee that
    the alternate data area gets refreshed though...
 -->
+
+  <para>
+   Although it is possible to copy a database other than template1 by
+   specifying its name as the template, this is not (yet) intended as
+   a general-purpose COPY DATABASE facility.  In particular, it is
+   essential that the source database be idle (no data-altering transactions
+   in progress)
+   for the duration of the copying operation.  CREATE DATABASE will check
+   that no backend processes (other than itself) are connected to
+   the source database at the start of the operation, but this does not
+   guarantee that changes cannot be made while the copy proceeds.  Therefore,
+   we recommend that databases used as templates be treated as read-only.
+  </para>
+
+  <para>
+   Two useful flags exist in <literal>pg_database</literal> for each
+   database: <literal>datistemplate</literal> and
+   <literal>datallowconn</literal>.  <literal>datistemplate</literal>
+   may be set to indicate that a database is intended as a template for
+   CREATE DATABASE.  If this flag is set, the database may be cloned by
+   any user with CREATEDB privileges; if it is not set, only superusers
+   and the owner of the database may clone it.
+   If <literal>datallowconn</literal> is false, then no new connections
+   to that database will be allowed (but existing sessions are not killed
+   simply by setting the flag false).  The <literal>template0</literal>
+   database is normally marked this way to prevent modification of it.
+  </para>
   </refsect2>
  </refsect1>
 
