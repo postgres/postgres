@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.15 2001/11/26 22:31:08 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.16 2001/12/03 19:02:58 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -2091,7 +2091,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	hash_ctl.hcxt = use_mcxt;
 	*dbhash = hash_create("Databases hash", PGSTAT_DB_HASH_SIZE, &hash_ctl,
 						  HASH_ELEM | HASH_FUNCTION | mcxt_flags);
-	if (pgStatDBHash == NULL)
+	if (*dbhash == NULL)
 	{
 		if (pgStatRunningInCollector)
 		{
