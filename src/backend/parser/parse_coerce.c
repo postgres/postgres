@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.32 2000/02/20 21:32:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.33 2000/02/27 18:54:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -300,10 +300,12 @@ TypeCategory(Oid inType)
 		case (BPCHAROID):
 		case (VARCHAROID):
 		case (TEXTOID):
+		case (LZTEXTOID):
 			result = STRING_TYPE;
 			break;
 
 		case (OIDOID):
+		case (REGPROCOID):
 		case (INT2OID):
 		case (INT4OID):
 		case (INT8OID):
