@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.91 2002/03/06 06:09:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.92 2002/04/20 21:56:14 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,9 +17,6 @@
 
 #include <ctype.h>
 #include <unistd.h>
-#ifndef __linux__
-#include <math.h>
-#endif
 #include <errno.h>
 
 #include "miscadmin.h"
@@ -28,44 +25,17 @@
 #include "parser/gramparse.h"
 #include "parser/keywords.h"
 #include "parser/parse.h"
-#include "parser/scansup.h"
 #include "utils/builtins.h"
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
 
-extern char *parseString;
-static char *parseCh;
-
-/* some versions of lex define this as a macro */
-#if defined(yywrap)
-#undef yywrap
-#endif /* yywrap */
-
-/* set up my input handler --- need one flavor for flex, one for lex */
-#if defined(FLEX_SCANNER)
-
-#define YY_NEVER_INTERACTIVE 1
-#define YY_NO_UNPUT
-static int myinput(char* buf, int max);
-#undef YY_INPUT
-#define YY_INPUT(buf,result,max) {result = myinput(buf,max);}
-
-/* No reason to constrain amount of data slurped per myinput() call. */
+/* No reason to constrain amount of data slurped */
 #define YY_READ_BUF_SIZE 16777216
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
 #define fprintf(file, fmt, msg)  elog(FATAL, "%s", (msg))
-
-#else /* !FLEX_SCANNER */
-
-#undef input
-int input();
-#undef unput
-void unput(char);
-
-#endif /* FLEX_SCANNER */
 
 extern YYSTYPE yylval;
 
@@ -83,8 +53,23 @@ static int		literalalloc;	/* current allocated buffer size */
 
 #define startlit()  (literalbuf[0] = '\0', literallen = 0)
 static void addlit(char *ytext, int yleng);
+static void addlitchar(unsigned char ychar);
+static char *litbufdup(void);
+
+/* Handles to the buffer that the lexer uses internally */
+static YY_BUFFER_STATE scanbufhandle;
+static char *scanbuf;
+
+unsigned char unescape_single_char(unsigned char c);
 
 %}
+
+%option 8bit
+%option never-interactive
+%option nounput
+%option noyywrap
+%option prefix="base_yy"
+
 /*
  * OK, here is a short description of lex/flex rules behavior.
  * The longest pattern which matches an input string is always chosen.
@@ -126,18 +111,17 @@ xhcat			{quote}{whitespace_with_newline}{quote}
 /* Extended quote
  * xqdouble implements SQL92 embedded quote
  * xqcat allows strings to cross input lines
- * Note: reduction of '' and \ sequences to output text is done in scanstr(),
- * not by rules here.  But we do get rid of xqcat sequences here.
  */
 quote			'
 xqstart			{quote}
 xqstop			{quote}
 xqdouble		{quote}{quote}
 xqinside		[^\\']+
-xqliteral		[\\](.|\n)
+xqescape		[\\][^0-7]
+xqoctesc		[\\][0-7]{1,3}
 xqcat			{quote}{whitespace_with_newline}{quote}
 
-/* Delimited quote
+/* Double quote
  * Allows embedded spaces and other special characters into identifiers.
  */
 dquote			\"
@@ -238,10 +222,7 @@ whitespace_with_newline	({horiz_whitespace}*{newline}{whitespace}*)
 
 other			.
 
-/* DO NOT PUT ANY COMMENTS IN THE FOLLOWING SECTION.
- * AT&T lex does not properly handle C-style comments in this second lex block.
- * So, put comments here. thomas - 1997-09-08
- *
+/*
  * Quoted strings must allow some special characters such as single-quote
  *  and newline.
  * Embedded single-quotes are implemented both in the SQL92-standard
@@ -285,14 +266,14 @@ other			.
 {xbitstart}		{
 					BEGIN(xbit);
 					startlit();
-					addlit("b", 1);
+					addlitchar('b');
 				}
 <xbit>{xbitstop}	{
 					BEGIN(INITIAL);
 					if (literalbuf[strspn(literalbuf + 1, "01") + 1] != '\0')
 						elog(ERROR, "invalid bit string input: '%s'",
 							 literalbuf);
-					yylval.str = pstrdup(literalbuf);
+					yylval.str = litbufdup();
 					return BITCONST;
 				}
 <xh>{xhinside}	|
@@ -335,13 +316,21 @@ other			.
 				}
 <xq>{xqstop}	{
 					BEGIN(INITIAL);
-					yylval.str = scanstr(literalbuf);
+					yylval.str = litbufdup();
 					return SCONST;
 				}
-<xq>{xqdouble}	|
-<xq>{xqinside}	|
-<xq>{xqliteral} {
+<xq>{xqdouble}  {
+					addlitchar('\'');
+				}
+<xq>{xqinside}  {
 					addlit(yytext, yyleng);
+				}
+<xq>{xqescape}  {
+					addlitchar(unescape_single_char(yytext[1]));
+				}
+<xq>{xqoctesc}  {
+					unsigned char c = strtoul(yytext+1, NULL, 8);
+					addlitchar(c);
 				}
 <xq>{xqcat}		{
 					/* ignore */
@@ -371,11 +360,11 @@ other			.
 						literalbuf[NAMEDATALEN-1] = '\0';
 #endif
 					}
-					yylval.str = pstrdup(literalbuf);
+					yylval.str = litbufdup();
 					return IDENT;
 				}
 <xd>{xddouble} {
-					addlit(yytext, yyleng-1);
+					addlitchar('"');
 				}
 <xd>{xdinside}	{
 					addlit(yytext, yyleng);
@@ -540,35 +529,43 @@ yyerror(const char *message)
 	elog(ERROR, "parser: %s at or near \"%s\"", message, yytext);
 }
 
-int
-yywrap(void)
-{
-	return(1);
-}
 
 /*
- scanner_init:
-	called by postgres before any actual parsing is done
-*/
+ * Called before any actual parsing is done
+ */
 void
-scanner_init(void)
+scanner_init(StringInfo str)
 {
-	/* it's important to set this to NULL
-	   because input()/myinput() checks the non-nullness of parseCh
-	   to know when to pass the string to lex/flex */
-	parseCh = NULL;
+	/*
+	 * Might be left over after elog()
+	 */
+	if (YY_CURRENT_BUFFER)
+		yy_delete_buffer(YY_CURRENT_BUFFER);
+
+	scanbuf = palloc(str->len + 2);
+	memcpy(scanbuf, str->data, str->len);
+	scanbuf[str->len] = scanbuf[str->len + 1] = YY_END_OF_BUFFER_CHAR;
+	scanbufhandle = yy_scan_buffer(scanbuf, str->len + 2);
 
 	/* initialize literal buffer to a reasonable but expansible size */
 	literalalloc = 128;
 	literalbuf = (char *) palloc(literalalloc);
 	startlit();
 
-#if defined(FLEX_SCANNER)
-	if (YY_CURRENT_BUFFER)
-		yy_flush_buffer(YY_CURRENT_BUFFER);
-#endif /* FLEX_SCANNER */
-	BEGIN INITIAL;
+	BEGIN(INITIAL);
 }
+
+
+/*
+ * Called after parsing is done to clean up after scanner_init()
+ */
+void
+scanner_finish(void)
+{
+	yy_delete_buffer(scanbufhandle);
+	pfree(scanbuf);
+}
+
 
 static void
 addlit(char *ytext, int yleng)
@@ -587,54 +584,55 @@ addlit(char *ytext, int yleng)
 	literalbuf[literallen] = '\0';
 }
 
-#if !defined(FLEX_SCANNER)
 
-/* get lex input from a string instead of from stdin */
-int
-input()
+static void
+addlitchar(unsigned char ychar)
 {
-	if (parseCh == NULL)
-		parseCh = parseString;
-	if (*parseCh == '\0')
-		return(0);
-	else
-		return(*parseCh++);
+	/* enlarge buffer if needed */
+	if ((literallen+1) >= literalalloc)
+	{
+		literalalloc *= 2;
+		literalbuf = (char *) repalloc(literalbuf, literalalloc);
+	}
+	/* append new data, add trailing null */
+	literalbuf[literallen] = ychar;
+	literallen += 1;
+	literalbuf[literallen] = '\0';
 }
 
-/* undo lex input from a string instead of from stdin */
-void
-unput(char c)
+
+/*
+ * One might be tempted to write pstrdup(literalbuf) instead of this,
+ * but for long literals this is much faster because the length is
+ * already known.
+ */
+static char *
+litbufdup(void)
 {
-	if (parseCh == NULL)
-		elog(FATAL, "Unput() failed.\n");
-	else if (c != 0)
-		*--parseCh = c;
+	char *new;
+
+	new = palloc(literallen + 1);
+	memcpy(new, literalbuf, literallen+1);
+	return new;
 }
 
-#endif /* !defined(FLEX_SCANNER) */
 
-#ifdef FLEX_SCANNER
-
-/* input routine for flex to read input from a string instead of a file */
-static int
-myinput(char* buf, int max)
+unsigned char
+unescape_single_char(unsigned char c)
 {
-	int len;
-
-	if (parseCh == NULL)
-		parseCh = parseString;
-	len = strlen(parseCh);		/* remaining data available */
-	/* Note: this code used to think that flex wants a null-terminated
-	 * string.  It does NOT, and returning 1 less character than it asks
-	 * for will cause failure under the right boundary conditions.  So
-	 * shut up and fill the buffer to the limit, you hear?
-	 */
-	if (len > max)
-		len = max;
-	if (len > 0)
-		memcpy(buf, parseCh, len);
-	parseCh += len;
-	return len;
+	switch (c)
+	{
+		case 'b':
+			return '\b';
+		case 'f':
+			return '\f';
+		case 'n':
+			return '\n';
+		case 'r':
+			return '\r';
+		case 't':
+			return '\t';
+		default:
+			return c;
+	}
 }
-
-#endif /* FLEX_SCANNER */

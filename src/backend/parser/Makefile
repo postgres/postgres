@@ -2,7 +2,7 @@
 #
 # Makefile for parser
 #
-# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.36 2002/03/08 07:12:11 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.37 2002/04/20 21:56:14 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,6 +13,8 @@ include $(top_builddir)/src/Makefile.global
 OBJS= analyze.o gram.o keywords.o parser.o parse_agg.o parse_clause.o \
       parse_expr.o parse_func.o parse_node.o parse_oper.o parse_relation.o \
       parse_type.o parse_coerce.o parse_target.o scan.o scansup.o
+
+FLEXFLAGS = -CF
 
 
 all: SUBSYS.o
@@ -42,7 +44,7 @@ endif
 
 $(srcdir)/scan.c: scan.l
 ifdef FLEX
-	$(FLEX) $(FLEXFLAGS) -Pbase_yy -o'$@' $<
+	$(FLEX) $(FLEXFLAGS) -o'$@' $<
 else
 	@$(missing) flex $< $@
 endif
@@ -59,13 +61,3 @@ clean:
 	rm -f SUBSYS.o $(OBJS)
 # And the garbage that might have been left behind by partial build:
 	@rm -f y.tab.c y.tab.h lex.yy.c
-
-
-# This is unusual:  We actually have to build some of the parts before
-# we know what the header file dependencies are.  
-dep depend: gram.c scan.c
-	$(CC) -MM $(CFLAGS) *.c >depend
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif

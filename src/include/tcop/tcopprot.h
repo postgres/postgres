@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.47 2001/11/10 23:51:14 tgl Exp $
+ * $Id: tcopprot.h,v 1.48 2002/04/20 21:56:15 petere Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -22,6 +22,7 @@
 #include <setjmp.h>
 
 #include "executor/execdesc.h"
+#include "lib/stringinfo.h"
 #include "tcop/dest.h"
 
 
@@ -37,7 +38,7 @@ extern bool ShowPortNumber;
 extern List *pg_parse_and_rewrite(char *query_string,
 					 Oid *typev, int nargs);
 extern Plan *pg_plan_query(Query *querytree);
-extern void pg_exec_query_string(char *query_string,
+extern void pg_exec_query_string(StringInfo query_string,
 					 CommandDest dest,
 					 MemoryContext parse_context);
 #endif   /* BOOTSTRAP_INCLUDE */
