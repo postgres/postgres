@@ -958,7 +958,7 @@ BYTEA           bytea           variable-length array of bytes
     4.22) How do I create a column that will default to the current time?
     
    Use now():
-        CREATE TABLE test (x int, modtime timestamp default now() );
+        CREATE TABLE test (x int, modtime timestamp DEFAULT now() );
 
     4.23) Why are my subqueries using IN so slow?
     
