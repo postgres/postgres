@@ -1,0 +1,21 @@
+Edit postgresql-7.0RC5/src/Makefile.global.in.  Change PG_KRB_SRVTAB to
+somewhere useful for you, and PG_KRB_SRVNAM to whatever you want your
+postgres kerberos service called.
+
+make and install PostgreSQL.
+
+Generate the keytab (PG_KRB_SRVTAB): kadmin% ank -randkey
+postgres/server.my.domain.org kadmin% ktadd -k krb5.keytab
+postgres/server.my.domain.org
+
+Make sure the keytab is read-only to the postgres user. Make sure your
+client binaries can see the new libraries.
+
+edit pg_hba.conf and change the authentication method to krb5.
+
+Everything should then work. If you use mod_auth_krb and mod_perl on
+your web server, you can use AuthType KerberosV5SaveCredentials with a
+mod_perl script. This gives secure database access over the web. No
+extra passwords required. 
+
+Mike Wyer <mw@doc.ic.ac.uk>
