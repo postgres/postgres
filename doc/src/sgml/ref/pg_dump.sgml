@@ -278,17 +278,6 @@ The limitations mostly stem from
 difficulty in extracting certain meta-information from the system
 catalogs.
 
-<variablelist>
-<varlistentry>
-<term>
-rules
-<listitem>
-<para>
-<application>pg_dump</application> 
-does not understand user-defined rules and
-will fail to dump them properly.  (This is due to the fact that
-rules are stored as plans in the catalogs and not textually.)
-
 <varlistentry>
 <term>
 partial indices
