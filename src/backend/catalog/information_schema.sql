@@ -4,7 +4,7 @@
  *
  * Copyright 2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.23 2004/02/03 08:29:56 joe Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.24 2004/06/22 22:30:32 tgl Exp $
  */
 
 /*
@@ -25,6 +25,133 @@
 CREATE SCHEMA information_schema;
 GRANT USAGE ON SCHEMA information_schema TO PUBLIC;
 SET search_path TO information_schema, public;
+
+/*
+ * A few supporting functions first ...
+ */
+
+/* This returns the integers from 1 to INDEX_MAX_KEYS/FUNC_MAX_ARGS */
+CREATE FUNCTION _pg_keypositions() RETURNS SETOF integer
+    LANGUAGE sql
+    IMMUTABLE
+    AS 'select g.s
+        from generate_series(1,current_setting(''max_index_keys'')::int,1)
+        as g(s)';
+
+CREATE FUNCTION _pg_keyissubset(smallint[], smallint[]) RETURNS boolean
+    LANGUAGE sql
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+    AS 'select $1[1] is null or ($1[1] = any ($2) and coalesce(information_schema._pg_keyissubset($1[2:pg_catalog.array_upper($1,1)], $2), true))';
+
+CREATE FUNCTION _pg_keysequal(smallint[], smallint[]) RETURNS boolean
+    LANGUAGE sql
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+    AS 'select information_schema._pg_keyissubset($1, $2) and information_schema._pg_keyissubset($2, $1)';
+
+CREATE FUNCTION _pg_truetypid(pg_attribute, pg_type) RETURNS oid
+    LANGUAGE sql
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+    AS
+$$SELECT CASE WHEN $2.typtype = 'd' THEN $2.typbasetype ELSE $1.atttypid END$$;
+
+CREATE FUNCTION _pg_truetypmod(pg_attribute, pg_type) RETURNS int4
+    LANGUAGE sql
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+    AS
+$$SELECT CASE WHEN $2.typtype = 'd' THEN $2.typtypmod ELSE $1.atttypmod END$$;
+
+-- these functions encapsulate knowledge about the encoding of typmod:
+
+CREATE FUNCTION _pg_char_max_length(typid oid, typmod int4) RETURNS integer
+    LANGUAGE sql
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+    AS
+$$SELECT
+  CASE WHEN $2 = -1 /* default typmod */
+       THEN null
+       WHEN $1 IN (1042, 1043) /* char, varchar */
+       THEN $2 - 4
+       WHEN $1 IN (1560, 1562) /* bit, varbit */
+       THEN $2
+       ELSE null
+  END$$;
+
+CREATE FUNCTION _pg_char_octet_length(typid oid, typmod int4) RETURNS integer
+    LANGUAGE sql
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+    AS
+$$SELECT
+  CASE WHEN $1 IN (25, 1042, 1043) /* text, char, varchar */
+       THEN CAST(2^30 AS integer)
+       ELSE null
+  END$$;
+
+CREATE FUNCTION _pg_numeric_precision(typid oid, typmod int4) RETURNS integer
+    LANGUAGE sql
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+    AS
+$$SELECT
+  CASE $1
+         WHEN 21 /*int2*/ THEN 16
+         WHEN 23 /*int4*/ THEN 32
+         WHEN 20 /*int8*/ THEN 64
+         WHEN 1700 /*numeric*/ THEN
+              CASE WHEN $2 = -1
+                   THEN null
+                   ELSE (($2 - 4) >> 16) & 65535
+                   END
+         WHEN 700 /*float4*/ THEN 24 /*FLT_MANT_DIG*/
+         WHEN 701 /*float8*/ THEN 53 /*DBL_MANT_DIG*/
+         ELSE null
+  END$$;
+
+CREATE FUNCTION _pg_numeric_precision_radix(typid oid, typmod int4) RETURNS integer
+    LANGUAGE sql
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+    AS
+$$SELECT
+  CASE WHEN $1 IN (21, 23, 20, 700, 701) THEN 2
+       WHEN $1 IN (1700) THEN 10
+       ELSE null
+  END$$;
+
+CREATE FUNCTION _pg_numeric_scale(typid oid, typmod int4) RETURNS integer
+    LANGUAGE sql
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+    AS
+$$SELECT
+  CASE WHEN $1 IN (21, 23, 20) THEN 0
+       WHEN $1 IN (1700) THEN
+            CASE WHEN $2 = -1
+                 THEN null
+                 ELSE ($2 - 4) & 65535
+                 END
+       ELSE null
+  END$$;
+
+CREATE FUNCTION _pg_datetime_precision(typid oid, typmod int4) RETURNS integer
+    LANGUAGE sql
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+    AS
+$$SELECT
+  CASE WHEN $2 = -1 /* default typmod */
+       THEN null
+       WHEN $1 IN (1083, 1114, 1184, 1266) /* time, timestamp, same + tz */
+       THEN $2
+       WHEN $1 IN (1186) /* interval */
+       THEN $2 & 65535
+       ELSE null
+  END$$;
 
 
 -- 20.3 INFORMATION_SCHEMA_CATALOG_NAME view appears later.
@@ -237,7 +364,7 @@ CREATE VIEW columns AS
            CAST(a.attname AS sql_identifier) AS column_name,
            CAST(a.attnum AS cardinal_number) AS ordinal_position,
            CAST(
-             CASE WHEN u.usename = current_user THEN a.adsrc ELSE null END
+             CASE WHEN u.usename = current_user THEN ad.adsrc ELSE null END
              AS character_data)
              AS column_default,
            CAST(CASE WHEN a.attnotnull OR (t.typtype = 'd' AND t.typnotnull) THEN 'NO' ELSE 'YES' END
@@ -258,83 +385,32 @@ CREATE VIEW columns AS
              AS data_type,
 
            CAST(
-             CASE WHEN t.typtype = 'd' THEN
-               CASE WHEN t.typbasetype IN (1042, 1043) AND t.typtypmod <> -1
-                    THEN t.typtypmod - 4 /* char, varchar */
-                    WHEN t.typbasetype IN (1560, 1562) AND t.typtypmod <> -1
-                    THEN t.typtypmod /* bit, varbit */
-                    ELSE null END
-             ELSE
-               CASE WHEN a.atttypid IN (1042, 1043) AND a.atttypmod <> -1
-                    THEN a.atttypmod - 4
-                    WHEN a.atttypid IN (1560, 1562) AND a.atttypmod <> -1
-                    THEN a.atttypmod
-                    ELSE null END
-             END
+             _pg_char_max_length(_pg_truetypid(a, t), _pg_truetypmod(a, t))
              AS cardinal_number)
              AS character_maximum_length,
 
            CAST(
-             CASE WHEN t.typtype = 'd' THEN
-               CASE WHEN t.typbasetype IN (25, 1042, 1043) THEN 2^30 ELSE null END
-             ELSE
-               CASE WHEN a.atttypid IN (25, 1042, 1043) THEN 2^30 ELSE null END
-             END
+             _pg_char_octet_length(_pg_truetypid(a, t), _pg_truetypmod(a, t))
              AS cardinal_number)
              AS character_octet_length,
 
            CAST(
-             CASE (CASE WHEN t.typtype = 'd' THEN t.typbasetype ELSE a.atttypid END)
-               WHEN 21 /*int2*/ THEN 16
-               WHEN 23 /*int4*/ THEN 32
-               WHEN 20 /*int8*/ THEN 64
-               WHEN 1700 /*numeric*/ THEN ((CASE WHEN t.typtype = 'd' THEN t.typtypmod ELSE a.atttypmod END - 4) >> 16) & 65535
-               WHEN 700 /*float4*/ THEN 24 /*FLT_MANT_DIG*/
-               WHEN 701 /*float8*/ THEN 53 /*DBL_MANT_DIG*/
-               ELSE null END
+             _pg_numeric_precision(_pg_truetypid(a, t), _pg_truetypmod(a, t))
              AS cardinal_number)
              AS numeric_precision,
 
            CAST(
-             CASE WHEN t.typtype = 'd' THEN
-               CASE WHEN t.typbasetype IN (21, 23, 20, 700, 701) THEN 2
-                    WHEN t.typbasetype IN (1700) THEN 10
-                    ELSE null END
-             ELSE
-               CASE WHEN a.atttypid IN (21, 23, 20, 700, 701) THEN 2
-                    WHEN a.atttypid IN (1700) THEN 10
-                    ELSE null END
-             END
+             _pg_numeric_precision_radix(_pg_truetypid(a, t), _pg_truetypmod(a, t))
              AS cardinal_number)
              AS numeric_precision_radix,
 
            CAST(
-             CASE WHEN t.typtype = 'd' THEN
-               CASE WHEN t.typbasetype IN (21, 23, 20) THEN 0
-                    WHEN t.typbasetype IN (1700) THEN (t.typtypmod - 4) & 65535
-                    ELSE null END
-             ELSE
-               CASE WHEN a.atttypid IN (21, 23, 20) THEN 0
-                    WHEN a.atttypid IN (1700) THEN (a.atttypmod - 4) & 65535
-                    ELSE null END
-             END
+             _pg_numeric_scale(_pg_truetypid(a, t), _pg_truetypmod(a, t))
              AS cardinal_number)
              AS numeric_scale,
 
            CAST(
-             CASE WHEN t.typtype = 'd' THEN
-               CASE WHEN t.typbasetype IN (1083, 1114, 1184, 1266)
-                    THEN (CASE WHEN t.typtypmod <> -1 THEN t.typtypmod ELSE null END)
-                    WHEN t.typbasetype IN (1186)
-                    THEN (CASE WHEN t.typtypmod <> -1 THEN t.typtypmod & 65535 ELSE null END)
-                    ELSE null END
-             ELSE
-               CASE WHEN a.atttypid IN (1083, 1114, 1184, 1266)
-                    THEN (CASE WHEN a.atttypmod <> -1 THEN a.atttypmod ELSE null END)
-                    WHEN a.atttypid IN (1186)
-                    THEN (CASE WHEN a.atttypmod <> -1 THEN a.atttypmod & 65535 ELSE null END)
-                    ELSE null END
-             END
+             _pg_datetime_precision(_pg_truetypid(a, t), _pg_truetypmod(a, t))
              AS cardinal_number)
              AS datetime_precision,
 
@@ -368,7 +444,7 @@ CREATE VIEW columns AS
            CAST(a.attnum AS sql_identifier) AS dtd_identifier,
            CAST('NO' AS character_data) AS is_self_referencing
 
-    FROM (pg_attribute LEFT JOIN pg_attrdef ON attrelid = adrelid AND attnum = adnum) AS a,
+    FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum),
          pg_class c, pg_namespace nc, pg_user u,
          (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid))
            LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
@@ -394,14 +470,6 @@ GRANT SELECT ON columns TO PUBLIC;
  * 20.19
  * CONSTRAINT_COLUMN_USAGE view
  */
-
-/* This returns the integers from 1 to INDEX_MAX_KEYS/FUNC_MAX_ARGS */
-CREATE FUNCTION _pg_keypositions() RETURNS SETOF integer
-    LANGUAGE sql
-    IMMUTABLE
-    AS 'select g.s
-        from generate_series(1,current_setting(''max_index_keys'')::int,1)
-        as g(s)';
 
 CREATE VIEW constraint_column_usage AS
     SELECT CAST(current_database() AS sql_identifier) AS table_catalog,
@@ -551,16 +619,12 @@ CREATE VIEW domains AS
              AS data_type,
 
            CAST(
-             CASE WHEN t.typbasetype IN (1042, 1043) AND t.typtypmod <> -1
-                  THEN t.typtypmod - 4 /* char, varchar */
-                  WHEN t.typbasetype IN (1560, 1562) AND t.typtypmod <> -1
-                  THEN t.typtypmod /* bit, varbit */
-                  ELSE null END
+             _pg_char_max_length(t.typbasetype, t.typtypmod)
              AS cardinal_number)
              AS character_maximum_length,
 
            CAST(
-             CASE WHEN t.typbasetype IN (25, 1042, 1043) THEN 2^30 ELSE null END
+             _pg_char_octet_length(t.typbasetype, t.typtypmod)
              AS cardinal_number)
              AS character_octet_length,
 
@@ -573,37 +637,22 @@ CREATE VIEW domains AS
            CAST(null AS sql_identifier) AS collation_name,
 
            CAST(
-             CASE t.typbasetype
-               WHEN 21 /*int2*/ THEN 16
-               WHEN 23 /*int4*/ THEN 32
-               WHEN 20 /*int8*/ THEN 64
-               WHEN 1700 /*numeric*/ THEN ((t.typtypmod - 4) >> 16) & 65535
-               WHEN 700 /*float4*/ THEN 24 /*FLT_MANT_DIG*/
-               WHEN 701 /*float8*/ THEN 53 /*DBL_MANT_DIG*/
-               ELSE null END
+             _pg_numeric_precision(t.typbasetype, t.typtypmod)
              AS cardinal_number)
              AS numeric_precision,
 
            CAST(
-             CASE WHEN t.typbasetype IN (21, 23, 20, 700, 701) THEN 2
-                  WHEN t.typbasetype IN (1700) THEN 10
-                  ELSE null END
+             _pg_numeric_precision_radix(t.typbasetype, t.typtypmod)
              AS cardinal_number)
              AS numeric_precision_radix,
 
            CAST(
-             CASE WHEN t.typbasetype IN (21, 23, 20) THEN 0
-                  WHEN t.typbasetype IN (1700) THEN (t.typtypmod - 4) & 65535
-                  ELSE null END
+             _pg_numeric_scale(t.typbasetype, t.typtypmod)
              AS cardinal_number)
              AS numeric_scale,
 
            CAST(
-             CASE WHEN t.typbasetype IN (1083, 1114, 1184, 1266)
-                  THEN (CASE WHEN t.typtypmod <> -1 THEN t.typtypmod ELSE null END)
-                  WHEN t.typbasetype IN (1186)
-                  THEN (CASE WHEN t.typtypmod <> -1 THEN t.typtypmod & 65535 ELSE null END)
-                  ELSE null END
+             _pg_datetime_precision(t.typbasetype, t.typtypmod)
              AS cardinal_number)
              AS datetime_precision,
 
@@ -739,18 +788,6 @@ GRANT SELECT ON parameters TO PUBLIC;
  * 20.35
  * REFERENTIAL_CONSTRAINTS view
  */
-
-CREATE FUNCTION _pg_keyissubset(smallint[], smallint[]) RETURNS boolean
-    LANGUAGE sql
-    IMMUTABLE
-    RETURNS NULL ON NULL INPUT
-    AS 'select $1[1] is null or ($1[1] = any ($2) and coalesce(information_schema._pg_keyissubset($1[2:pg_catalog.array_upper($1,1)], $2), true))';
-
-CREATE FUNCTION _pg_keysequal(smallint[], smallint[]) RETURNS boolean
-    LANGUAGE sql
-    IMMUTABLE
-    RETURNS NULL ON NULL INPUT
-    AS 'select information_schema._pg_keyissubset($1, $2) and information_schema._pg_keyissubset($2, $1)';
 
 CREATE VIEW referential_constraints AS
     SELECT CAST(current_database() AS sql_identifier) AS constraint_catalog,
