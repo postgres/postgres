@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.4 1997/03/16 05:12:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.5 1997/03/16 05:32:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,10 +16,14 @@
 #include <math.h>
 #include <string.h>
 #include <sys/types.h>
+#include <errno.h>
 #ifdef HAVE_VALUES_H
-#include <values.h>
+# include <values.h>
 #else
-#include <limits.h>
+# include <float.h>
+# ifndef MINDOUBLE
+#  define MINDOUBLE DBL_MIN
+# endif
 #endif
 
 #include "postgres.h"
