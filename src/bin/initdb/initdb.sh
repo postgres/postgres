@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.128 2001/06/22 19:16:23 wieck Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.129 2001/06/23 23:29:48 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -45,8 +45,6 @@ exit_nicely(){
             echo "Removing $PGDATA." 1>&2
             rm -rf "$PGDATA" || echo "Failed." 1>&2
         fi
-        echo "Removing temp file $TEMPFILE." 1>&2
-        rm -rf "$TEMPFILE" || echo "Failed." 1>&2
     else
         echo "Data directory $PGDATA will not be removed at user's request." 1>&2
     fi
@@ -64,12 +62,6 @@ bindir='@bindir@'
 datadir='@datadir@'
 # as set by configure --enable-multibyte[=XXX].
 MULTIBYTE='@MULTIBYTE@'
-
-if [ "$TMPDIR" ]; then
-    TEMPFILE="$TMPDIR/initdb.$$"
-else
-    TEMPFILE="/tmp/initdb.$$"
-fi
 
 
 # Check for echo -n vs echo \c
@@ -353,7 +345,7 @@ if [ "$show_setting" = yes ] || [ "$debug" = yes ]
 then
     echo
     echo "Initdb variables:"
-    for var in PGDATA datadir PGPATH TEMPFILE MULTIBYTE MULTIBYTEID \
+    for var in PGDATA datadir PGPATH MULTIBYTE MULTIBYTEID \
         POSTGRES_SUPERUSERNAME POSTGRES_SUPERUSERID POSTGRES_BKI \
         POSTGRES_DESCR POSTGRESQL_CONF_SAMPLE \
 	PG_HBA_SAMPLE PG_IDENT_SAMPLE ; do
@@ -807,12 +799,11 @@ echo "CREATE VIEW pg_stat_database AS \
         | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Loading pg_description."
-echo "COPY pg_description FROM STDIN" > $TEMPFILE
-cat "$POSTGRES_DESCR" >> $TEMPFILE
-
-cat $TEMPFILE \
+(
+  echo "COPY pg_description FROM STDIN;";
+  cat "$POSTGRES_DESCR"
+) \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
-rm -f "$TEMPFILE" || exit_nicely
 
 echo "Setting lastsysoid."
 echo "UPDATE pg_database SET \
