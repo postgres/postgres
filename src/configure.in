@@ -1,0 +1,159 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(backend/access/common/heaptuple.c)
+AC_CANONICAL_HOST
+case "$host_os" in
+solaris*)
+  case "$host_cpu" in
+    sparc) PORTNAME='sparc_solaris' ;;
+    i386) PORTNAME='i386_solaris' ;;
+  esac ;;
+linux*) PORTNAME='linux' ;;
+freebsd*) PORTNAME='BSD44_derived' ;;
+dgux*) PORTNAME='dgux';;
+*) echo ""
+   echo "*************************************************************"
+   echo "configure does not currently recognize your operating system,"
+   echo "therefore you must do a manual configuration of:"
+   echo ""
+   echo "             Makefile.global"
+   echo "             include/config.h"
+   echo ""
+   echo "Currently recognized operating systems:"
+   echo ""
+   echo "             FreeBSD v3.0 and v2.2"
+   echo "             Solaris v2.5 under Sparc"
+   echo "             RedHat v3.0"
+   echo ""
+   echo "Please contact scrappy@hub.org to see about rectifying this, "
+   echo "including the above 'checking host system type...' line "
+   echo "*************************************************************"
+   echo ""
+   exit;;
+esac
+AC_SUBST(PORTNAME)
+
+AC_CONFIG_HEADER(include/config.h)
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_CPP
+
+dnl ****************************************************************
+dnl Hold off on the C++ stuff until we can figure out why it doesn't 
+dnl work under Solaris..
+dnl
+dnl AC_PROG_CXX
+dnl
+dnl Check if we should set   Have_Cplusplus
+dnl if test -n "$CXX"; then
+dnl   export HAVECXX
+dnl   HAVECXX='HAVE_Cplusplus=true'
+dnl fi
+dnl AC_SUBST(HAVECXX)
+dnl ****************************************************************
+HAVECXX='HAVE_Cplusplus=false'
+AC_SUBST(HAVECXX)
+
+dnl AC_PROG_INSTALL was broken on my machine (NAT), so here's an
+dnl alternative, built from the various portname options
+AC_PATH_PROG(INSTALL, install, /usr/bin:/usr/ucb:/home/tools/bin)
+AC_PATH_PROG(BSDINST, bsdinst, /usr/bin/X11:/usr/X11R6/bin:/sbin)
+  INSTLOPTS="-m 444"
+  INSTL_EXE_OPTS="-m 555"
+  INSTL_LIB_OPTS="-m 664"
+if test -n "$INSTALL"; then
+  INSTLOPTS="-c $INSTLOPTS"
+  INSTL_EXE_OPTS="-c $INSTL_EXE_OPTS"
+  INSTL_LIB_OPTS="-c $INSTL_LIB_OPTS"
+else
+  INSTALL=$BSDINST
+fi
+AC_SUBST(INSTALL)
+AC_SUBST(INSTLOPTS)
+AC_SUBST(INSTL_LIB_OPTS)
+AC_SUBST(INSTL_EXE_OPTS)
+
+dnl Check the option to echo to inhibit newlines.
+ECHO_N_OUT=`echo -n "" | wc -c`
+ECHO_C_OUT=`echo "\c" | wc -c`
+if test "$ECHO_N_OUT" -eq 0; then
+  DASH_N='-n'
+  BACKSLASH_C=
+else
+  if test "ECHO_C_OUT" -eq 0; then
+    DASH_N=
+    BACKSLASH_C= '\\\\c'
+  else
+    AC_MSG_ERROR("echo behaviour undetermined")
+  fi
+fi
+AC_SUBST(DASH_N)
+AC_SUBST(BACKSLASH_C)
+
+AC_PROG_LEX
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_RANLIB
+AC_PATH_PROG(find, find)
+AC_PATH_PROG(tar, tar)
+AC_PATH_PROG(split, split)
+AC_PATH_PROG(etags, etags)
+AC_PATH_PROG(xargs, xargs)
+AC_PATH_PROG(ipcs, ipcs)
+AC_PATH_PROG(ipcrm, ipcrm)
+
+dnl Checks for libraries.
+dnl readline (used in psql if present)
+dnl   if the library readline is present,
+dnl   set the shell variable USE_READLINE
+dnl   to have the value  USE_READLINE=true
+dnl   and substitute it into the makefiles
+AC_CHECK_LIB(readline, main)
+AC_CHECK_LIB(readline, write_history, AC_DEFINE(HAVE_HISTORY))
+AC_CHECK_LIB(history,  main)
+AC_CHECK_LIB(curses,   main)
+AC_CHECK_LIB(termcap,  main)
+AC_CHECK_LIB(m,        main)
+AC_CHECK_LIB(dl,       main)
+AC_CHECK_LIB(socket,   main)
+AC_CHECK_LIB(nsl,      main)
+AC_CHECK_LIB(ipc,      main)
+AC_CHECK_LIB(IPC,      main)
+AC_CHECK_LIB(lc,       main)
+AC_CHECK_LIB(dld,      main)
+AC_CHECK_LIB(ln,       main)
+AC_CHECK_LIB(bsd,      main)
+AC_CHECK_LIB(ld,       main)
+AC_CHECK_LIB(compat,   main)
+AC_CHECK_LIB(BSD,      main)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS(limits.h unistd.h termios.h values.h sys/select.h)
+AC_CHECK_HEADERS(readline.h history.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_UID_T
+AC_C_INLINE
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+dnl Check for any "odd" conditions
+AC_TRY_LINK([#include <time.h>], 
+            [int res = timezone / 60; ], AC_DEFINE(HAVE_INT_TIMEZONE))
+
+dnl Checks for library functions.
+AC_PROG_GCC_TRADITIONAL
+AC_FUNC_MEMCMP
+AC_TYPE_SIGNAL
+AC_FUNC_VPRINTF
+AC_CHECK_FUNCS(isinf tzset getrusage vfork memmove sigsetjmp kill sysconf)
+AC_CHECK_FUNC(cbrt, AC_DEFINE(HAVE_CBRT), AC_CHECK_LIB(m, cbrt, AC_DEFINE(HAVE_CBRT)))
+AC_CHECK_FUNC(rint, AC_DEFINE(HAVE_RINT), AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT)))
+
+AC_OUTPUT(GNUmakefile Makefile.global)
