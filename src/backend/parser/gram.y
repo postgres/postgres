@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.276 2001/12/09 04:39:39 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.276.2.1 2002/03/09 17:41:04 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -763,14 +763,16 @@ VariableSetStmt:  SET ColId TO var_value
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = $2;
-					n->args = makeList1(makeStringConst($4, NULL));
+					if ($4 != NULL)
+						n->args = makeList1(makeStringConst($4, NULL));
 					$$ = (Node *) n;
 				}
 		| SET ColId '=' var_value
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = $2;
-					n->args = makeList1(makeStringConst($4, NULL));
+					if ($4 != NULL)
+						n->args = makeList1(makeStringConst($4, NULL));
 					$$ = (Node *) n;
 				}
 		| SET TIME ZONE zone_value
@@ -799,7 +801,8 @@ VariableSetStmt:  SET ColId TO var_value
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = "client_encoding";
-					n->args = makeList1(makeStringConst($3, NULL));
+					if ($3 != NULL)
+						n->args = makeList1(makeStringConst($3, NULL));
 					$$ = (Node *) n;
 				}
 		| SET SESSION AUTHORIZATION ColId_or_Sconst
