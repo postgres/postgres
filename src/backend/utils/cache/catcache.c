@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.35 1998/10/12 00:53:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.36 1998/11/27 19:52:26 vadim Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -386,7 +386,7 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 		case 4:
 			cacheInOutP->cc_skey[3].sk_argument =
 				(cacheInOutP->cc_key[3] == ObjectIdAttributeNumber)
-				? (Datum) tuple->t_oid
+				? (Datum) tuple->t_data->t_oid
 				: fastgetattr(tuple,
 							  cacheInOutP->cc_key[3],
 							  RelationGetDescr(relation),
@@ -396,7 +396,7 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 		case 3:
 			cacheInOutP->cc_skey[2].sk_argument =
 				(cacheInOutP->cc_key[2] == ObjectIdAttributeNumber)
-				? (Datum) tuple->t_oid
+				? (Datum) tuple->t_data->t_oid
 				: fastgetattr(tuple,
 							  cacheInOutP->cc_key[2],
 							  RelationGetDescr(relation),
@@ -406,7 +406,7 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 		case 2:
 			cacheInOutP->cc_skey[1].sk_argument =
 				(cacheInOutP->cc_key[1] == ObjectIdAttributeNumber)
-				? (Datum) tuple->t_oid
+				? (Datum) tuple->t_data->t_oid
 				: fastgetattr(tuple,
 							  cacheInOutP->cc_key[1],
 							  RelationGetDescr(relation),
@@ -416,7 +416,7 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 		case 1:
 			cacheInOutP->cc_skey[0].sk_argument =
 				(cacheInOutP->cc_key[0] == ObjectIdAttributeNumber)
-				? (Datum) tuple->t_oid
+				? (Datum) tuple->t_data->t_oid
 				: fastgetattr(tuple,
 							  cacheInOutP->cc_key[0],
 							  RelationGetDescr(relation),
@@ -513,7 +513,7 @@ CatalogCacheIdInvalidate(int cacheId,	/* XXX */
 			 elt = DLGetSucc(elt))
 		{
 			ct = (CatCTup *) DLE_VAL(elt);
-			if (ItemPointerEquals(pointer, &ct->ct_tup->t_ctid))
+			if (ItemPointerEquals(pointer, &ct->ct_tup->t_self))
 				break;
 		}
 
@@ -1141,7 +1141,7 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 
 		(*function) (ccp->id,
 				 CatalogCacheComputeTupleHashIndex(ccp, relation, tuple),
-					 &tuple->t_ctid);
+					 &tuple->t_self);
 
 		heap_close(relation);
 	}

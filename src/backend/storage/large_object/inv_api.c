@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.41 1998/10/06 03:55:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.42 1998/11/27 19:52:19 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@
 /* non-export function prototypes */
 static HeapTuple inv_newtuple(LargeObjectDesc *obj_desc, Buffer buffer,
 			 Page page, char *dbuf, int nwrite);
-static HeapTuple inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *buffer);
+static void inv_fetchtup(LargeObjectDesc *obj_desc, HeapTuple tuple, Buffer *buffer);
 static int	inv_wrnew(LargeObjectDesc *obj_desc, char *buf, int nbytes);
 static int inv_wrold(LargeObjectDesc *obj_desc, char *dbuf, int nbytes,
 		  HeapTuple tuple, Buffer buffer);
@@ -440,13 +440,13 @@ inv_tell(LargeObjectDesc *obj_desc)
 int
 inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 {
-	HeapTuple	tuple;
-	int			nread;
-	int			off;
-	int			ncopy;
-	Datum		d;
+	HeapTupleData	tuple;
+	int				nread;
+	int				off;
+	int				ncopy;
+	Datum			d;
 	struct varlena *fsblock;
-	bool		isNull;
+	bool			isNull;
 
 	Assert(PointerIsValid(obj_desc));
 	Assert(buf != NULL);
@@ -470,16 +470,16 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		Buffer		buffer;
 
 		/* fetch an inversion file system block */
-		tuple = inv_fetchtup(obj_desc, &buffer);
+		inv_fetchtup(obj_desc, &tuple, &buffer);
 
-		if (!HeapTupleIsValid(tuple))
+		if (tuple.t_data == NULL)
 		{
 			obj_desc->flags |= IFS_ATEOF;
 			break;
 		}
 
 		/* copy the data from this block into the buffer */
-		d = heap_getattr(tuple, 2, obj_desc->hdesc, &isNull);
+		d = heap_getattr(&tuple, 2, obj_desc->hdesc, &isNull);
 		ReleaseBuffer(buffer);
 
 		fsblock = (struct varlena *) DatumGetPointer(d);
@@ -502,9 +502,9 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 int
 inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 {
-	HeapTuple	tuple;
-	int			nwritten;
-	int			tuplen;
+	HeapTupleData	tuple;
+	int				nwritten;
+	int				tuplen;
 
 	Assert(PointerIsValid(obj_desc));
 	Assert(buf != NULL);
@@ -536,19 +536,19 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 		if ((obj_desc->flags & IFS_ATEOF)
 			|| obj_desc->heap_r->rd_nblocks == 0)
-			tuple = (HeapTuple) NULL;
+			tuple.t_data = NULL;
 		else
-			tuple = inv_fetchtup(obj_desc, &buffer);
+			inv_fetchtup(obj_desc, &tuple, &buffer);
 
 		/* either append or replace a block, as required */
-		if (!HeapTupleIsValid(tuple))
+		if (tuple.t_data == NULL)
 			tuplen = inv_wrnew(obj_desc, buf, nbytes - nwritten);
 		else
 		{
 			if (obj_desc->offset > obj_desc->highbyte)
 				tuplen = inv_wrnew(obj_desc, buf, nbytes - nwritten);
 			else
-				tuplen = inv_wrold(obj_desc, buf, nbytes - nwritten, tuple, buffer);
+				tuplen = inv_wrold(obj_desc, buf, nbytes - nwritten, &tuple, buffer);
 		}
 		ReleaseBuffer(buffer);
 
@@ -602,10 +602,9 @@ inv_cleanindex(LargeObjectDesc *obj_desc)
  *				A heap tuple containing the desired block, or NULL if no
  *				such tuple exists.
  */
-static HeapTuple
-inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *buffer)
+static void
+inv_fetchtup(LargeObjectDesc *obj_desc, HeapTuple tuple, Buffer *buffer)
 {
-	HeapTuple	tuple;
 	RetrieveIndexResult res;
 	Datum		d;
 	int			firstbyte,
@@ -650,7 +649,8 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *buffer)
 			if (res == (RetrieveIndexResult) NULL)
 			{
 				ItemPointerSetInvalid(&(obj_desc->htid));
-				return (HeapTuple) NULL;
+				tuple->t_data = NULL;
+				return;
 			}
 
 			/*
@@ -662,19 +662,18 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *buffer)
 			 * way...	- vadim 07/28/98
 			 *
 			 */
-
-			tuple = heap_fetch(obj_desc->heap_r, SnapshotNow,
-							   &res->heap_iptr, buffer);
+			tuple->t_self = res->heap_iptr;
+			heap_fetch(obj_desc->heap_r, SnapshotNow, tuple, buffer);
 			pfree(res);
-		} while (tuple == (HeapTuple) NULL);
+		} while (tuple->t_data == NULL);
 
 		/* remember this tid -- we may need it for later reads/writes */
- 		ItemPointerCopy(&tuple->t_ctid, &obj_desc->htid);
+ 		ItemPointerCopy(&(tuple->t_self), &obj_desc->htid);
 	}
 	else
 	{
-		tuple = heap_fetch(obj_desc->heap_r, SnapshotNow,
-						   &(obj_desc->htid), buffer);
+		tuple->t_self = obj_desc->htid;
+		heap_fetch(obj_desc->heap_r, SnapshotNow, tuple, buffer);
 	}
 
 	/*
@@ -697,7 +696,7 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *buffer)
 	obj_desc->lowbyte = firstbyte;
 	obj_desc->highbyte = lastbyte;
 
-	return tuple;
+	return;
 }
 
 /*
@@ -786,6 +785,7 @@ inv_wrnew(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 	ntup = inv_newtuple(obj_desc, buffer, page, buf, nwritten);
 	inv_indextup(obj_desc, ntup);
+	pfree (ntup);
 
 	/* new tuple is inserted */
 	WriteBuffer(buffer);
@@ -822,9 +822,9 @@ inv_wrold(LargeObjectDesc *obj_desc,
 	 * abstraction.
 	 */
 
-	TransactionIdStore(GetCurrentTransactionId(), &(tuple->t_xmax));
-	tuple->t_cmax = GetCurrentCommandId();
-	tuple->t_infomask &= ~(HEAP_XMAX_COMMITTED | HEAP_XMAX_INVALID);
+	TransactionIdStore(GetCurrentTransactionId(), &(tuple->t_data->t_xmax));
+	tuple->t_data->t_cmax = GetCurrentCommandId();
+	tuple->t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED | HEAP_XMAX_INVALID);
 
 	/*
 	 * If we're overwriting the entire block, we're lucky.	All we need to
@@ -953,6 +953,7 @@ inv_wrold(LargeObjectDesc *obj_desc,
 
 	/* index the new tuple */
 	inv_indextup(obj_desc, ntup);
+	pfree (ntup);
 
 	/*
 	 * move the scandesc forward so we don't reread the newly inserted
@@ -985,7 +986,7 @@ inv_newtuple(LargeObjectDesc *obj_desc,
 			 char *dbuf,
 			 int nwrite)
 {
-	HeapTuple	ntup;
+	HeapTuple	ntup = (HeapTuple) palloc (sizeof(HeapTupleData));
 	PageHeader	ph;
 	int			tupsize;
 	int			hoff;
@@ -997,7 +998,7 @@ inv_newtuple(LargeObjectDesc *obj_desc,
 	char	   *attptr;
 
 	/* compute tuple size -- no nulls */
-	hoff = offsetof(HeapTupleData, t_bits);
+	hoff = offsetof(HeapTupleHeaderData, t_bits);
 
 	/* add in olastbyte, varlena.vl_len, varlena.vl_dat */
 	tupsize = hoff + (2 * sizeof(int32)) + nwrite;
@@ -1036,7 +1037,7 @@ inv_newtuple(LargeObjectDesc *obj_desc,
 	ph->pd_lower = lower;
 	ph->pd_upper = upper;
 
-	ntup = (HeapTuple) ((char *) page + upper);
+	ntup->t_data = (HeapTupleHeader) ((char *) page + upper);
 
 	/*
 	 * Tuple is now allocated on the page.	Next, fill in the tuple
@@ -1044,15 +1045,15 @@ inv_newtuple(LargeObjectDesc *obj_desc,
 	 */
 
 	ntup->t_len = tupsize;
-	ItemPointerSet(&ntup->t_ctid, BufferGetBlockNumber(buffer), off);
-	LastOidProcessed = ntup->t_oid = newoid();
-	TransactionIdStore(GetCurrentTransactionId(), &(ntup->t_xmin));
-	ntup->t_cmin = GetCurrentCommandId();
-	StoreInvalidTransactionId(&(ntup->t_xmax));
-	ntup->t_cmax = 0;
-	ntup->t_infomask = HEAP_XMAX_INVALID;
-	ntup->t_natts = 2;
-	ntup->t_hoff = hoff;
+	ItemPointerSet(&ntup->t_self, BufferGetBlockNumber(buffer), off);
+	LastOidProcessed = ntup->t_data->t_oid = newoid();
+	TransactionIdStore(GetCurrentTransactionId(), &(ntup->t_data->t_xmin));
+	ntup->t_data->t_cmin = GetCurrentCommandId();
+	StoreInvalidTransactionId(&(ntup->t_data->t_xmax));
+	ntup->t_data->t_cmax = 0;
+	ntup->t_data->t_infomask = HEAP_XMAX_INVALID;
+	ntup->t_data->t_natts = 2;
+	ntup->t_data->t_hoff = hoff;
 
 	/* if a NULL is passed in, avoid the calculations below */
 	if (dbuf == NULL)
@@ -1063,7 +1064,7 @@ inv_newtuple(LargeObjectDesc *obj_desc,
 	 * the tuple and class abstractions.
 	 */
 
-	attptr = ((char *) ntup) + hoff;
+	attptr = ((char *) ntup->t_data) + hoff;
 	*((int32 *) attptr) = obj_desc->offset + nwrite - 1;
 	attptr += sizeof(int32);
 
@@ -1106,7 +1107,7 @@ inv_indextup(LargeObjectDesc *obj_desc, HeapTuple tuple)
 	n[0] = ' ';
 	v[0] = Int32GetDatum(obj_desc->highbyte);
 	res = index_insert(obj_desc->index_r, &v[0], &n[0],
-					   &(tuple->t_ctid), obj_desc->heap_r);
+					   &(tuple->t_self), obj_desc->heap_r);
 
 	if (res)
 		pfree(res);
@@ -1209,7 +1210,7 @@ _inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln)
 {
 	IndexScanDesc iscan;
 	RetrieveIndexResult res;
-	HeapTuple	tuple;
+	HeapTupleData	tuple;
 	Datum		d;
 	long		size;
 	bool		isNull;
@@ -1239,16 +1240,17 @@ _inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln)
 		 * rather that NowTimeQual.  We currently have no way to pass a
 		 * time qual in.
 		 */
-		tuple = heap_fetch(hreln, SnapshotNow, &res->heap_iptr, &buffer);
+		tuple.t_self = res->heap_iptr;
+		heap_fetch(hreln, SnapshotNow, &tuple, &buffer);
 		pfree(res);
-	} while (!HeapTupleIsValid(tuple));
+	} while (tuple.t_data == NULL);
 
 	/* don't need the index scan anymore */
 	index_endscan(iscan);
 	pfree(iscan);
 
 	/* get olastbyte attribute */
-	d = heap_getattr(tuple, 1, hdesc, &isNull);
+	d = heap_getattr(&tuple, 1, hdesc, &isNull);
 	size = DatumGetInt32(d) + 1;
 	ReleaseBuffer(buffer);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.42 1998/09/01 03:27:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.43 1998/11/27 19:52:32 vadim Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -66,7 +66,6 @@ static void initialrun(Sort *node);
 static void inittapes(Sort *node);
 static void merge(Sort *node, struct tape * dest);
 static FILE *mergeruns(Sort *node);
-static HeapTuple tuplecopy(HeapTuple tup);
 static int	_psort_cmp(HeapTuple *ltup, HeapTuple *rtup);
 
 
@@ -224,9 +223,11 @@ inittapes(Sort *node)
 
 #define PUTTUP(NODE, TUP, FP) \
 ( \
+	(TUP)->t_len += HEAPTUPLESIZE, \
 	((Psortstate *)NODE->psortstate)->BytesWritten += (TUP)->t_len, \
 	fwrite((char *)TUP, (TUP)->t_len, 1, FP), \
-	fwrite((char *)&((TUP)->t_len), sizeof (tlendummy), 1, FP) \
+	fwrite((char *)&((TUP)->t_len), sizeof (tlendummy), 1, FP), \
+	(TUP)->t_len -= HEAPTUPLESIZE \
 )
 
 #define ENDRUN(FP)		fwrite((char *)&tlenzero, sizeof (tlenzero), 1, FP)
@@ -237,10 +238,11 @@ inittapes(Sort *node)
 	IncrProcessed(), \
 	((Psortstate *)NODE->psortstate)->BytesRead += (LEN) - sizeof (tlenzero), \
 	fread((char *)(TUP) + sizeof (tlenzero), (LEN) - sizeof (tlenzero), 1, FP), \
+	(TUP)->t_data = (HeapTupleHeader) ((char *)(TUP) + HEAPTUPLESIZE), \
 	fread((char *)&tlendummy, sizeof (tlendummy), 1, FP) \
 )
 
-#define SETTUPLEN(TUP, LEN)		(TUP)->t_len = LEN
+#define SETTUPLEN(TUP, LEN)		(TUP)->t_len = LEN - HEAPTUPLESIZE
 
  /*
   * USEMEM			- record use of memory FREEMEM		   - record
@@ -407,7 +409,7 @@ createfirstrun(Sort *node)
 			break;
 		}
 
-		tup = tuplecopy(cr_slot->val);
+		tup = heap_copytuple(cr_slot->val);
 		ExecClearTuple(cr_slot);
 
 		IncrProcessed();
@@ -524,7 +526,7 @@ createrun(Sort *node, FILE *file)
 		}
 		else
 		{
-			tup = tuplecopy(cr_slot->val);
+			tup = heap_copytuple(cr_slot->val);
 			ExecClearTuple(cr_slot);
 			PS(node)->tupcount++;
 		}
@@ -575,26 +577,6 @@ createrun(Sort *node, FILE *file)
 	pfree(memtuples);
 
 	return !foundeor;
-}
-
-/*
- *		tuplecopy		- see also tuple.c:palloctup()
- *
- *		This should eventually go there under that name?  And this will
- *		then use palloc directly (see version -r1.2).
- */
-static HeapTuple
-tuplecopy(HeapTuple tup)
-{
-	HeapTuple	rettup;
-
-	if (!HeapTupleIsValid(tup))
-	{
-		return NULL;			/* just in case */
-	}
-	rettup = (HeapTuple) palloc(tup->t_len);
-	memmove((char *) rettup, (char *) tup, tup->t_len); /* XXX */
-	return rettup;
 }
 
 /*
@@ -792,7 +774,7 @@ psort_grabtuple(Sort *node, bool *should_free)
 				return NULL;
 			if (GETLEN(tuplen, PS(node)->psort_grab_file) && tuplen != 0)
 			{
-				tup = (HeapTuple) palloc((unsigned) tuplen);
+				tup = ALLOCTUP(tuplen);
 				SETTUPLEN(tup, tuplen);
 				GETTUP(node, tup, tuplen, PS(node)->psort_grab_file);
 
@@ -864,7 +846,7 @@ psort_grabtuple(Sort *node, bool *should_free)
 		 */
 		fseek(PS(node)->psort_grab_file,
 			  PS(node)->psort_current - tuplen, SEEK_SET);
-		tup = (HeapTuple) palloc((unsigned) tuplen);
+		tup = ALLOCTUP(tuplen);
 		SETTUPLEN(tup, tuplen);
 		GETTUP(node, tup, tuplen, PS(node)->psort_grab_file);
 		return tup;				/* file position is equal to psort_current */

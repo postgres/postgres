@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.13 1998/01/07 21:01:23 momjian Exp $
+ *	  $Id: hio.c,v 1.14 1998/11/27 19:51:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,17 +69,17 @@ RelationPutHeapTuple(Relation relation,
 	len = (unsigned) DOUBLEALIGN(tuple->t_len); /* be conservative */
 	Assert((int) len <= PageGetFreeSpace(pageHeader));
 
-	offnum = PageAddItem((Page) pageHeader, (Item) tuple,
+	offnum = PageAddItem((Page) pageHeader, (Item) tuple->t_data,
 						 tuple->t_len, InvalidOffsetNumber, LP_USED);
 
 	itemId = PageGetItemId((Page) pageHeader, offnum);
 	item = PageGetItem((Page) pageHeader, itemId);
 
-	ItemPointerSet(&((HeapTuple) item)->t_ctid, blockIndex, offnum);
+	ItemPointerSet(&((HeapTupleHeader) item)->t_ctid, blockIndex, offnum);
 
 	WriteBuffer(buffer);
 	/* return an accurate tuple */
-	ItemPointerSet(&tuple->t_ctid, blockIndex, offnum);
+	ItemPointerSet(&tuple->t_self, blockIndex, offnum);
 }
 
 /*
@@ -160,7 +160,7 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 			elog(ERROR, "Tuple is too big: size %d", len);
 	}
 
-	offnum = PageAddItem((Page) pageHeader, (Item) tuple,
+	offnum = PageAddItem((Page) pageHeader, (Item) tuple->t_data,
 						 tuple->t_len, InvalidOffsetNumber, LP_USED);
 
 	itemId = PageGetItemId((Page) pageHeader, offnum);
@@ -168,10 +168,10 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 
 	lastblock = BufferGetBlockNumber(buffer);
 
-	ItemPointerSet(&((HeapTuple) item)->t_ctid, lastblock, offnum);
+	ItemPointerSet(&((HeapTupleHeader) item)->t_ctid, lastblock, offnum);
 
 	/* return an accurate tuple */
-	ItemPointerSet(&tuple->t_ctid, lastblock, offnum);
+	ItemPointerSet(&tuple->t_self, lastblock, offnum);
 
 	WriteBuffer(buffer);
 }

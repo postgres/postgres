@@ -248,16 +248,12 @@ ExecAgg(Agg *node)
 		 */
 		for (;;)
 		{
-			HeapTuple	outerTuple = NULL;
 			TupleTableSlot *outerslot;
 
 			isNull = isNull1 = isNull2 = 0;
 			outerslot = ExecProcNode(outerPlan, (Plan *) node);
-			if (outerslot)
-				outerTuple = outerslot->val;
-			if (!HeapTupleIsValid(outerTuple))
+			if (TupIsNull(outerslot))
 			{
-
 				/*
 				 * when the outerplan doesn't return a single tuple,
 				 * create a dummy heaptuple anyway because we still need
@@ -666,7 +662,7 @@ aggGetAttr(TupleTableSlot *slot,
 			tempSlot->ttc_buffer = InvalidBuffer;
 		tempSlot->ttc_whichplan = -1;
 
-		tup = heap_copytuple(slot->val);
+		tup = heap_copytuple(heapTuple);
 		td = CreateTupleDescCopy(slot->ttc_tupleDescriptor);
 
 		ExecSetSlotDescriptor(tempSlot, td);

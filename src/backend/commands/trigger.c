@@ -159,7 +159,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 
 	values[Anum_pg_trigger_tgrelid - 1] = ObjectIdGetDatum(RelationGetRelid(rel));
 	values[Anum_pg_trigger_tgname - 1] = NameGetDatum(namein(stmt->trigname));
-	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(tuple->t_oid);
+	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(tuple->t_data->t_oid);
 	values[Anum_pg_trigger_tgtype - 1] = Int16GetDatum(tgtype);
 	if (stmt->args)
 	{
@@ -227,7 +227,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	pgrel = heap_openr(RelationRelationName);
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found + 1;
 	RelationInvalidateHeapTuple(pgrel, tuple);
-	heap_replace(pgrel, &tuple->t_ctid, tuple);
+	heap_replace(pgrel, &tuple->t_self, tuple);
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
@@ -280,7 +280,7 @@ DropTrigger(DropTrigStmt *stmt)
 
 		if (namestrcmp(&(pg_trigger->tgname), stmt->trigname) == 0)
 		{
-			heap_delete(tgrel, &tuple->t_ctid);
+			heap_delete(tgrel, &tuple->t_self);
 			tgfound++;
 		}
 		else
@@ -306,7 +306,7 @@ DropTrigger(DropTrigStmt *stmt)
 	pgrel = heap_openr(RelationRelationName);
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found;
 	RelationInvalidateHeapTuple(pgrel, tuple);
-	heap_replace(pgrel, &tuple->t_ctid, tuple);
+	heap_replace(pgrel, &tuple->t_self, tuple);
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
@@ -340,7 +340,7 @@ RelationRemoveTriggers(Relation rel)
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tup = heap_getnext(tgscan, 0)))
-		heap_delete(tgrel, &tup->t_ctid);
+		heap_delete(tgrel, &tup->t_self);
 
 	heap_endscan(tgscan);
 	RelationUnsetLockForWrite(tgrel);
@@ -359,11 +359,10 @@ RelationBuildTriggers(Relation relation)
 	Form_pg_trigger pg_trigger;
 	Relation	irel;
 	ScanKeyData skey;
-	HeapTuple	tuple;
-	IndexScanDesc sd;
-	RetrieveIndexResult indexRes;
+	HeapTupleData	tuple;
+	IndexScanDesc	sd;
+	RetrieveIndexResult	indexRes;
 	Buffer		buffer;
-	ItemPointer iptr;
 	struct varlena *val;
 	bool		isnull;
 	int			found;
@@ -387,16 +386,16 @@ RelationBuildTriggers(Relation relation)
 		if (!indexRes)
 			break;
 
-		iptr = &indexRes->heap_iptr;
-		tuple = heap_fetch(tgrel, SnapshotNow, iptr, &buffer);
+		tuple.t_self = indexRes->heap_iptr;
+		heap_fetch(tgrel, SnapshotNow, &tuple, &buffer);
 		pfree(indexRes);
-		if (!HeapTupleIsValid(tuple))
+		if (!tuple.t_data)
 			continue;
 		if (found == ntrigs)
 			elog(ERROR, "RelationBuildTriggers: unexpected record found for rel %.*s",
 				 NAMEDATALEN, relation->rd_rel->relname.data);
 
-		pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+		pg_trigger = (Form_pg_trigger) GETSTRUCT(&tuple);
 
 		if (triggers == NULL)
 			triggers = (Trigger *) palloc(sizeof(Trigger));
@@ -410,7 +409,7 @@ RelationBuildTriggers(Relation relation)
 		build->tgtype = pg_trigger->tgtype;
 		build->tgnargs = pg_trigger->tgnargs;
 		memcpy(build->tgattr, &(pg_trigger->tgattr), 8 * sizeof(int16));
-		val = (struct varlena *) fastgetattr(tuple,
+		val = (struct varlena *) fastgetattr(&tuple,
 											 Anum_pg_trigger_tgargs,
 											 tgrel->rd_att, &isnull);
 		if (isnull)
@@ -421,7 +420,7 @@ RelationBuildTriggers(Relation relation)
 			char	   *p;
 			int			i;
 
-			val = (struct varlena *) fastgetattr(tuple,
+			val = (struct varlena *) fastgetattr(&tuple,
 												 Anum_pg_trigger_tgargs,
 												 tgrel->rd_att, &isnull);
 			if (isnull)
@@ -792,10 +791,11 @@ ExecARUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple newtuple)
 static HeapTuple
 GetTupleForTrigger(Relation relation, ItemPointer tid, bool before)
 {
-	ItemId		lp;
-	HeapTuple	tuple;
-	PageHeader	dp;
-	Buffer		b;
+	ItemId			lp;
+	HeapTupleData	tuple;
+	HeapTuple		result;
+	PageHeader		dp;
+	Buffer			b;
 
 	b = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
@@ -807,28 +807,30 @@ GetTupleForTrigger(Relation relation, ItemPointer tid, bool before)
 
 	Assert(ItemIdIsUsed(lp));
 
-	tuple = (HeapTuple) PageGetItem((Page) dp, lp);
+	tuple.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
+	tuple.t_len = ItemIdGetLength(lp);
+	tuple.t_self = *tid;
 
 	if (before)
 	{
-		if (TupleUpdatedByCurXactAndCmd(tuple))
+		if (TupleUpdatedByCurXactAndCmd(&tuple))
 		{
 			elog(NOTICE, "GetTupleForTrigger: Non-functional delete/update");
 			ReleaseBuffer(b);
 			return NULL;
 		}
 
-		HeapTupleSatisfies(lp, relation, b, dp,
-						   false, 0, (ScanKey) NULL, tuple);
-		if (!tuple)
+		HeapTupleSatisfies(&tuple, relation, b, dp,
+						   false, 0, (ScanKey) NULL);
+		if (!tuple.t_data)
 		{
 			ReleaseBuffer(b);
 			elog(ERROR, "GetTupleForTrigger: (am)invalid tid");
 		}
 	}
 
-	tuple = heap_copytuple(tuple);
+	result = heap_copytuple(&tuple);
 	ReleaseBuffer(b);
 
-	return tuple;
+	return result;
 }

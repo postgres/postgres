@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.30 1998/09/01 04:27:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.31 1998/11/27 19:51:51 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,7 @@ TypeGetWithOpenRelation(Relation pg_type_desc,
 	heap_endscan(scan);
 	*defined = (bool) ((Form_pg_type) GETSTRUCT(tup))->typisdefined;
 
-	return tup->t_oid;
+	return tup->t_data->t_oid;
 }
 
 /* ----------------------------------------------------------------
@@ -212,7 +212,7 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	 * ----------------
 	 */
 	heap_insert(pg_type_desc, tup);
-	typoid = tup->t_oid;
+	typoid = tup->t_data->t_oid;
 
 	if (RelationGetForm(pg_type_desc)->relhasindex)
 	{
@@ -430,7 +430,7 @@ TypeCreate(char *typeName,
 				func_error("TypeCreate", procname, 1, argList, NULL);
 		}
 
-		values[i++] = (Datum) tup->t_oid;		/* 11 - 14 */
+		values[i++] = (Datum) tup->t_data->t_oid;		/* 11 - 14 */
 	}
 
 	/* ----------------
@@ -484,10 +484,10 @@ TypeCreate(char *typeName,
 							   replaces);
 
 		setheapoverride(true);
-		heap_replace(pg_type_desc, &tup->t_ctid, tup);
+		heap_replace(pg_type_desc, &tup->t_self, tup);
 		setheapoverride(false);
 
-		typeObjectId = tup->t_oid;
+		typeObjectId = tup->t_data->t_oid;
 	}
 	else
 	{
@@ -499,7 +499,7 @@ TypeCreate(char *typeName,
 
 		heap_insert(pg_type_desc, tup);
 
-		typeObjectId = tup->t_oid;
+		typeObjectId = tup->t_data->t_oid;
 	}
 
 	/* ----------------
@@ -561,7 +561,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 	namestrcpy(&(((Form_pg_type) GETSTRUCT(oldtup))->typname), newTypeName);
 
 	setheapoverride(true);
-	heap_replace(pg_type_desc, &oldtup->t_ctid, oldtup);
+	heap_replace(pg_type_desc, &oldtup->t_self, oldtup);
 	setheapoverride(false);
 
 	/* update the system catalog indices */

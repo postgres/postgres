@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.35 1998/09/01 04:26:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.36 1998/11/27 19:51:28 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 	 */
 	j = 0;
 	k = 1 << 7;
-	for (i = 0; i < tuple->t_natts;)
+	for (i = 0; i < tuple->t_data->t_natts;)
 	{
 		i++;					/* heap_getattr is a macro, so no
 								 * increment */
@@ -122,7 +122,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 	 *	send the attributes of this tuple
 	 * ----------------
 	 */
-	for (i = 0; i < tuple->t_natts; ++i)
+	for (i = 0; i < tuple->t_data->t_natts; ++i)
 	{
 		attr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		if (isnull)
@@ -204,7 +204,7 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo)
 	bool		isnull;
 	Oid			typoutput;
 
-	for (i = 0; i < tuple->t_natts; ++i)
+	for (i = 0; i < tuple->t_data->t_natts; ++i)
 	{
 		attr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		typoutput = typtoout((Oid) typeinfo->attrs[i]->atttypid);
@@ -251,7 +251,7 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 	 */
 	j = 0;
 	k = 1 << 7;
-	for (i = 0; i < tuple->t_natts;)
+	for (i = 0; i < tuple->t_data->t_natts;)
 	{
 		i++;					/* heap_getattr is a macro, so no
 								 * increment */
@@ -274,9 +274,9 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 	 * ----------------
 	 */
 #ifdef IPORTAL_DEBUG
-	fprintf(stderr, "sending tuple with %d atts\n", tuple->t_natts);
+	fprintf(stderr, "sending tuple with %d atts\n", tuple->t_data->t_natts);
 #endif
-	for (i = 0; i < tuple->t_natts; ++i)
+	for (i = 0; i < tuple->t_data->t_natts; ++i)
 	{
 		int32		len = typeinfo->attrs[i]->attlen;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.63 1998/09/10 15:32:16 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.64 1998/11/27 19:51:49 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -150,7 +150,7 @@ RelationNameGetObjectId(char *relationName,
 									0, 0, 0);
 
 		if (HeapTupleIsValid(tuple))
-			return tuple->t_oid;
+			return tuple->t_data->t_oid;
 		else
 			return InvalidOid;
 	}
@@ -176,7 +176,7 @@ RelationNameGetObjectId(char *relationName,
 	if (!HeapTupleIsValid(pg_class_tuple))
 		relationObjectId = InvalidOid;
 	else
-		relationObjectId = pg_class_tuple->t_oid;
+		relationObjectId = pg_class_tuple->t_data->t_oid;
 
 	/* ----------------
 	 *	cleanup and return results
@@ -412,7 +412,7 @@ ConstructTupleDescriptor(Oid heapoid,
 			if (!HeapTupleIsValid(tup))
 				elog(ERROR, "create index: type '%s' undefined",
 					 IndexKeyType->name);
-			((Form_pg_attribute) to)->atttypid = tup->t_oid;
+			((Form_pg_attribute) to)->atttypid = tup->t_data->t_oid;
 			((Form_pg_attribute) to)->attbyval =
 				((Form_pg_type) GETSTRUCT(tup))->typbyval;
 			((Form_pg_attribute) to)->attlen =
@@ -558,7 +558,7 @@ UpdateRelationRelation(Relation indexRelation)
 	 *	company.
 	 * ----------------
 	 */
-	tuple->t_oid = RelationGetRelid(indexRelation);
+	tuple->t_data->t_oid = RelationGetRelid(indexRelation);
 	heap_insert(pg_class, tuple);
 
 	/*
@@ -575,7 +575,7 @@ UpdateRelationRelation(Relation indexRelation)
 		CatalogCloseIndices(Num_pg_class_indices, idescs);
 	}
 
-	tupleOid = tuple->t_oid;
+	tupleOid = tuple->t_data->t_oid;
 	pfree(tuple);
 	heap_close(pg_class);
 
@@ -913,7 +913,7 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 
 	newtup = heap_modifytuple(tuple, pg_index, values, nulls, replace);
 
-	heap_replace(pg_index, &newtup->t_ctid, newtup);
+	heap_replace(pg_index, &newtup->t_self, newtup);
 
 	pfree(newtup);
 	heap_close(pg_index);
@@ -1104,7 +1104,7 @@ index_create(char *heapRelationName,
 			func_error("index_create", FIgetname(funcInfo),
 					 FIgetnArgs(funcInfo), FIgetArglist(funcInfo), NULL);
 		}
-		FIgetProcOid(funcInfo) = proc_tup->t_oid;
+		FIgetProcOid(funcInfo) = proc_tup->t_data->t_oid;
 	}
 
 	/* ----------------
@@ -1195,7 +1195,7 @@ index_destroy(Oid indexId)
 
 	AssertState(HeapTupleIsValid(tuple));
 
-	heap_delete(relationRelation, &tuple->t_ctid);
+	heap_delete(relationRelation, &tuple->t_self);
 	pfree(tuple);
 	heap_close(relationRelation);
 
@@ -1212,7 +1212,7 @@ index_destroy(Oid indexId)
 												   Int16GetDatum(attnum),
 															0, 0)))
 	{
-		heap_delete(attributeRelation, &tuple->t_ctid);
+		heap_delete(attributeRelation, &tuple->t_self);
 		pfree(tuple);
 		attnum++;
 	}
@@ -1232,7 +1232,7 @@ index_destroy(Oid indexId)
 
 	indexRelation = heap_openr(IndexRelationName);
 
-	heap_delete(indexRelation, &tuple->t_ctid);
+	heap_delete(indexRelation, &tuple->t_self);
 	pfree(tuple);
 	heap_close(indexRelation);
 
@@ -1424,7 +1424,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 		values[Anum_pg_class_relhasindex - 1] = CharGetDatum(hasindex);
 
 		newtup = heap_modifytuple(tuple, pg_class, values, nulls, replace);
-		heap_replace(pg_class, &tuple->t_ctid, newtup);
+		heap_replace(pg_class, &tuple->t_self, newtup);
 		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, newtup);
 		CatalogCloseIndices(Num_pg_class_indices, idescs);
@@ -1626,10 +1626,10 @@ DefaultBuild(Relation heapRelation,
 									 datum,
 									 nullv);
 
-		indexTuple->t_tid = heapTuple->t_ctid;
+		indexTuple->t_tid = heapTuple->t_self;
 
 		insertResult = index_insert(indexRelation, datum, nullv,
-									&(heapTuple->t_ctid), heapRelation);
+									&(heapTuple->t_self), heapRelation);
 
 		if (insertResult)
 			pfree(insertResult);

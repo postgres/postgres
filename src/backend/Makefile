@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.33 1998/04/27 04:04:05 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.34 1998/11/27 19:51:27 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -84,6 +84,9 @@ catalog/global1.description catalog/local1_template1.description:
 # The postgres.o target is needed by the rule in Makefile.global that
 # creates the exports file when MAKE_EXPORTS = true.
 postgres.o: $(OBJS)
+	$(CC) -r -o postgres.o $(OBJS) $(LDFLAGS)
+
+fast:
 	$(CC) -r -o postgres.o $(OBJS) $(LDFLAGS)
 
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.22 1998/09/01 04:26:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.23 1998/11/27 19:51:31 vadim Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -216,7 +216,7 @@ hashbuild(Relation heap,
 			continue;
 		}
 
-		itup->t_tid = htup->t_ctid;
+		itup->t_tid = htup->t_self;
 		hitem = _hash_formitem(itup);
 		res = _hash_doinsert(index, hitem);
 		pfree(hitem);

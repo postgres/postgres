@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.50 1998/09/01 04:33:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.51 1998/11/27 19:52:28 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,10 +383,7 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 		 *	this bug is discovered and killed by wei on 9/27/91.
 		 * -------------------
 		 */
-		return_tuple = (HeapTuple) palloc((Size) pg_class_tuple->t_len);
-		memmove((char *) return_tuple,
-				(char *) pg_class_tuple,
-				(int) pg_class_tuple->t_len);
+		return_tuple = heap_copytuple(pg_class_tuple);
 	}
 
 	/* all done */
@@ -718,7 +715,7 @@ RelationBuildRuleLock(Relation relation)
 
 		rule = (RewriteRule *) palloc(sizeof(RewriteRule));
 
-		rule->ruleId = pg_rewrite_tuple->t_oid;
+		rule->ruleId = pg_rewrite_tuple->t_data->t_oid;
 
 		rule->event =
 			(int) heap_getattr(pg_rewrite_tuple,
@@ -838,7 +835,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
 	 *	get information from the pg_class_tuple
 	 * ----------------
 	 */
-	relid = pg_class_tuple->t_oid;
+	relid = pg_class_tuple->t_data->t_oid;
 	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
 	natts = relp->relnatts;
 
@@ -1661,11 +1658,10 @@ AttrDefaultFetch(Relation relation)
 	Relation	adrel;
 	Relation	irel;
 	ScanKeyData skey;
-	HeapTuple	tuple;
+	HeapTupleData	tuple;
 	Form_pg_attrdef adform;
 	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
-	ItemPointer iptr;
 	struct varlena *val;
 	bool		isnull;
 	int			found;
@@ -1680,7 +1676,7 @@ AttrDefaultFetch(Relation relation)
 	adrel = heap_openr(AttrDefaultRelationName);
 	irel = index_openr(AttrDefaultIndex);
 	sd = index_beginscan(irel, false, 1, &skey);
-	tuple = (HeapTuple) NULL;
+	tuple.t_data = NULL;
 
 	for (found = 0;;)
 	{
@@ -1690,13 +1686,13 @@ AttrDefaultFetch(Relation relation)
 		if (!indexRes)
 			break;
 
-		iptr = &indexRes->heap_iptr;
-		tuple = heap_fetch(adrel, SnapshotNow, iptr, &buffer);
+		tuple.t_self = indexRes->heap_iptr;
+		heap_fetch(adrel, SnapshotNow, &tuple, &buffer);
 		pfree(indexRes);
-		if (!HeapTupleIsValid(tuple))
+		if (tuple.t_data == NULL)
 			continue;
 		found++;
-		adform = (Form_pg_attrdef) GETSTRUCT(tuple);
+		adform = (Form_pg_attrdef) GETSTRUCT(&tuple);
 		for (i = 0; i < ndef; i++)
 		{
 			if (adform->adnum != attrdef[i].adnum)
@@ -1706,7 +1702,7 @@ AttrDefaultFetch(Relation relation)
 				relation->rd_att->attrs[adform->adnum - 1]->attname.data,
 					 relation->rd_rel->relname.data);
 
-			val = (struct varlena *) fastgetattr(tuple,
+			val = (struct varlena *) fastgetattr(&tuple,
 												 Anum_pg_attrdef_adbin,
 												 adrel->rd_att, &isnull);
 			if (isnull)
@@ -1714,7 +1710,7 @@ AttrDefaultFetch(Relation relation)
 				relation->rd_att->attrs[adform->adnum - 1]->attname.data,
 					 relation->rd_rel->relname.data);
 			attrdef[i].adbin = textout(val);
-			val = (struct varlena *) fastgetattr(tuple,
+			val = (struct varlena *) fastgetattr(&tuple,
 												 Anum_pg_attrdef_adsrc,
 												 adrel->rd_att, &isnull);
 			if (isnull)
@@ -1750,10 +1746,9 @@ RelCheckFetch(Relation relation)
 	Relation	rcrel;
 	Relation	irel;
 	ScanKeyData skey;
-	HeapTuple	tuple;
+	HeapTupleData	tuple;
 	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
-	ItemPointer iptr;
 	Name		rcname;
 	struct varlena *val;
 	bool		isnull;
@@ -1768,7 +1763,7 @@ RelCheckFetch(Relation relation)
 	rcrel = heap_openr(RelCheckRelationName);
 	irel = index_openr(RelCheckIndex);
 	sd = index_beginscan(irel, false, 1, &skey);
-	tuple = (HeapTuple) NULL;
+	tuple.t_data = NULL;
 
 	for (found = 0;;)
 	{
@@ -1778,30 +1773,30 @@ RelCheckFetch(Relation relation)
 		if (!indexRes)
 			break;
 
-		iptr = &indexRes->heap_iptr;
-		tuple = heap_fetch(rcrel, SnapshotNow, iptr, &buffer);
+		tuple.t_self = indexRes->heap_iptr;
+		heap_fetch(rcrel, SnapshotNow, &tuple, &buffer);
 		pfree(indexRes);
-		if (!HeapTupleIsValid(tuple))
+		if (tuple.t_data == NULL)
 			continue;
 		if (found == ncheck)
 			elog(ERROR, "RelCheckFetch: unexpected record found for rel %s",
 				 relation->rd_rel->relname.data);
 
-		rcname = (Name) fastgetattr(tuple,
+		rcname = (Name) fastgetattr(&tuple,
 									Anum_pg_relcheck_rcname,
 									rcrel->rd_att, &isnull);
 		if (isnull)
 			elog(ERROR, "RelCheckFetch: rcname IS NULL for rel %s",
 				 relation->rd_rel->relname.data);
 		check[found].ccname = nameout(rcname);
-		val = (struct varlena *) fastgetattr(tuple,
+		val = (struct varlena *) fastgetattr(&tuple,
 											 Anum_pg_relcheck_rcbin,
 											 rcrel->rd_att, &isnull);
 		if (isnull)
 			elog(ERROR, "RelCheckFetch: rcbin IS NULL for rel %s",
 				 relation->rd_rel->relname.data);
 		check[found].ccbin = textout(val);
-		val = (struct varlena *) fastgetattr(tuple,
+		val = (struct varlena *) fastgetattr(&tuple,
 											 Anum_pg_relcheck_rcsrc,
 											 rcrel->rd_att, &isnull);
 		if (isnull)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.19 1998/09/01 04:33:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.20 1998/11/27 19:52:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ setheapoverride(bool on)
  *			 Xmax is not committed)))			that has not been committed
  */
 bool
-HeapTupleSatisfiesItself(HeapTuple tuple)
+HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 {
 
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
@@ -171,7 +171,7 @@ HeapTupleSatisfiesItself(HeapTuple tuple)
  *		that do catalog accesses.  this is unfortunate, but not critical.
  */
 bool
-HeapTupleSatisfiesNow(HeapTuple tuple)
+HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 {
 	if (AMI_OVERRIDE)
 		return true;

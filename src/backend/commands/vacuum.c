@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.90 1998/10/23 16:49:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.91 1998/11/27 19:51:58 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,7 +327,7 @@ vc_getrels(NameData *VacRelP)
 		}
 		MemoryContextSwitchTo(old);
 
-		cur->vrl_relid = tuple->t_oid;
+		cur->vrl_relid = tuple->t_data->t_oid;
 		cur->vrl_next = (VRelList) NULL;
 	}
 	if (found == false)
@@ -577,9 +577,8 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 	int			nblocks,
 				blkno;
 	ItemId		itemid;
-	ItemPointer itemptr;
 	Buffer		buf;
-	HeapTuple	tuple;
+	HeapTupleData	tuple;
 	Page		page,
 				tempPage = NULL;
 	OffsetNumber offnum,
@@ -675,23 +674,25 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 				continue;
 			}
 
-			tuple = (HeapTuple) PageGetItem(page, itemid);
+			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
+			tuple.t_len = ItemIdGetLength(itemid);
+			ItemPointerSet(&(tuple.t_self), blkno, offnum);
 			tupgone = false;
 
-			if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
+			if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
 			{
-				if (tuple->t_infomask & HEAP_XMIN_INVALID)
+				if (tuple.t_data->t_infomask & HEAP_XMIN_INVALID)
 					tupgone = true;
 				else
 				{
-					if (TransactionIdDidAbort(tuple->t_xmin))
+					if (TransactionIdDidAbort(tuple.t_data->t_xmin))
 						tupgone = true;
-					else if (TransactionIdDidCommit(tuple->t_xmin))
+					else if (TransactionIdDidCommit(tuple.t_data->t_xmin))
 					{
-						tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+						tuple.t_data->t_infomask |= HEAP_XMIN_COMMITTED;
 						pgchanged = true;
 					}
-					else if (!TransactionIdIsInProgress(tuple->t_xmin))
+					else if (!TransactionIdIsInProgress(tuple.t_data->t_xmin))
 					{
 
 						/*
@@ -704,7 +705,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 					else
 					{
 						elog(NOTICE, "Rel %s: TID %u/%u: InsertTransactionInProgress %u - can't shrink relation",
-							 relname, blkno, offnum, tuple->t_xmin);
+							 relname, blkno, offnum, tuple.t_data->t_xmin);
 						do_shrinking = false;
 					}
 				}
@@ -714,60 +715,40 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 			 * here we are concerned about tuples with xmin committed and
 			 * xmax unknown or committed
 			 */
-			if (tuple->t_infomask & HEAP_XMIN_COMMITTED &&
-				!(tuple->t_infomask & HEAP_XMAX_INVALID))
+			if (tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED &&
+				!(tuple.t_data->t_infomask & HEAP_XMAX_INVALID))
 			{
-				if (tuple->t_infomask & HEAP_XMAX_COMMITTED)
+				if (tuple.t_data->t_infomask & HEAP_XMAX_COMMITTED)
 					tupgone = true;
-				else if (TransactionIdDidAbort(tuple->t_xmax))
+				else if (TransactionIdDidAbort(tuple.t_data->t_xmax))
 				{
-					tuple->t_infomask |= HEAP_XMAX_INVALID;
+					tuple.t_data->t_infomask |= HEAP_XMAX_INVALID;
 					pgchanged = true;
 				}
-				else if (TransactionIdDidCommit(tuple->t_xmax))
+				else if (TransactionIdDidCommit(tuple.t_data->t_xmax))
 					tupgone = true;
-				else if (!TransactionIdIsInProgress(tuple->t_xmax))
+				else if (!TransactionIdIsInProgress(tuple.t_data->t_xmax))
 				{
 
 					/*
 					 * Not Aborted, Not Committed, Not in Progress - so it
 					 * from crashed process. - vadim 06/02/97
 					 */
-					tuple->t_infomask |= HEAP_XMAX_INVALID;;
+					tuple.t_data->t_infomask |= HEAP_XMAX_INVALID;;
 					pgchanged = true;
 				}
 				else
 				{
 					elog(NOTICE, "Rel %s: TID %u/%u: DeleteTransactionInProgress %u - can't shrink relation",
-						 relname, blkno, offnum, tuple->t_xmax);
+						 relname, blkno, offnum, tuple.t_data->t_xmax);
 					do_shrinking = false;
 				}
 			}
 
 			/*
-			 * It's possibly! But from where it comes ? And should we fix
-			 * it ?  - vadim 11/28/96
-			 */
-			itemptr = &(tuple->t_ctid);
-			if (!ItemPointerIsValid(itemptr) ||
-				BlockIdGetBlockNumber(&(itemptr->ip_blkid)) != blkno)
-			{
-				elog(NOTICE, "Rel %s: TID %u/%u: TID IN TUPLEHEADER %u/%u IS NOT THE SAME. TUPGONE %d.",
-					 relname, blkno, offnum,
-					 BlockIdGetBlockNumber(&(itemptr->ip_blkid)),
-					 itemptr->ip_posid, tupgone);
-			}
-
-			/*
 			 * Other checks...
 			 */
-			if (tuple->t_len != itemid->lp_len)
-			{
-				elog(NOTICE, "Rel %s: TID %u/%u: TUPLE_LEN IN PAGEHEADER %u IS NOT THE SAME AS IN TUPLEHEADER %u. TUPGONE %d.",
-					 relname, blkno, offnum,
-					 itemid->lp_len, tuple->t_len, tupgone);
-			}
-			if (!OidIsValid(tuple->t_oid))
+			if (!OidIsValid(tuple.t_data->t_oid))
 			{
 				elog(NOTICE, "Rel %s: TID %u/%u: OID IS INVALID. TUPGONE %d.",
 					 relname, blkno, offnum, tupgone);
@@ -799,11 +780,11 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 			{
 				num_tuples++;
 				notup = false;
-				if (tuple->t_len < min_tlen)
-					min_tlen = tuple->t_len;
-				if (tuple->t_len > max_tlen)
-					max_tlen = tuple->t_len;
-				vc_attrstats(onerel, vacrelstats, tuple);
+				if (tuple.t_len < min_tlen)
+					min_tlen = tuple.t_len;
+				if (tuple.t_len > max_tlen)
+					max_tlen = tuple.t_len;
+				vc_attrstats(onerel, vacrelstats, &tuple);
 			}
 		}
 
@@ -916,8 +897,8 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 				max_offset;
 	ItemId		itemid,
 				newitemid;
-	HeapTuple	tuple,
-				newtup;
+	HeapTupleData	tuple,
+					newtup;
 	TupleDesc	tupdesc = NULL;
 	Datum	   *idatum = NULL;
 	char	   *inulls = NULL;
@@ -1034,8 +1015,9 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 			if (!ItemIdIsUsed(itemid))
 				continue;
 
-			tuple = (HeapTuple) PageGetItem(page, itemid);
-			tuple_len = tuple->t_len;
+			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
+			tuple_len = tuple.t_len = ItemIdGetLength(itemid);
+			ItemPointerSet(&(tuple.t_self), blkno, offnum);
 
 			/* try to find new page for this tuple */
 			if (cur_buffer == InvalidBuffer ||
@@ -1081,21 +1063,20 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 			}
 
 			/* copy tuple */
-			newtup = (HeapTuple) palloc(tuple_len);
-			memmove((char *) newtup, (char *) tuple, tuple_len);
+			heap_copytuple_with_tuple(&tuple, &newtup);
 
-			RelationInvalidateHeapTuple(onerel, tuple);
+			RelationInvalidateHeapTuple(onerel, &tuple);
 
 			/* store transaction information */
-			TransactionIdStore(myXID, &(newtup->t_xmin));
-			newtup->t_cmin = myCID;
-			StoreInvalidTransactionId(&(newtup->t_xmax));
+			TransactionIdStore(myXID, &(newtup.t_data->t_xmin));
+			newtup.t_data->t_cmin = myCID;
+			StoreInvalidTransactionId(&(newtup.t_data->t_xmax));
 			/* set xmin to unknown and xmax to invalid */
-			newtup->t_infomask &= ~(HEAP_XACT_MASK);
-			newtup->t_infomask |= HEAP_XMAX_INVALID;
+			newtup.t_data->t_infomask &= ~(HEAP_XACT_MASK);
+			newtup.t_data->t_infomask |= HEAP_XMAX_INVALID;
 
 			/* add tuple to the page */
-			newoff = PageAddItem(ToPage, (Item) newtup, tuple_len,
+			newoff = PageAddItem(ToPage, (Item) newtup.t_data, tuple_len,
 								 InvalidOffsetNumber, LP_USED);
 			if (newoff == InvalidOffsetNumber)
 			{
@@ -1105,15 +1086,16 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 				 cur_page->vpd_offsets_used, cur_page->vpd_offsets_free);
 			}
 			newitemid = PageGetItemId(ToPage, newoff);
-			pfree(newtup);
-			newtup = (HeapTuple) PageGetItem(ToPage, newitemid);
-			ItemPointerSet(&(newtup->t_ctid), cur_page->vpd_blkno, newoff);
+			pfree(newtup.t_data);
+			newtup.t_data = (HeapTupleHeader) PageGetItem(ToPage, newitemid);
+			ItemPointerSet(&(newtup.t_data->t_ctid), cur_page->vpd_blkno, newoff);
+			newtup.t_self = newtup.t_data->t_ctid;
 
 			/* now logically delete end-tuple */
-			TransactionIdStore(myXID, &(tuple->t_xmax));
-			tuple->t_cmax = myCID;
+			TransactionIdStore(myXID, &(tuple.t_data->t_xmax));
+			tuple.t_data->t_cmax = myCID;
 			/* set xmax to unknown */
-			tuple->t_infomask &= ~(HEAP_XMAX_INVALID | HEAP_XMAX_COMMITTED);
+			tuple.t_data->t_infomask &= ~(HEAP_XMAX_INVALID | HEAP_XMAX_COMMITTED);
 
 			cur_page->vpd_offsets_used++;
 			num_moved++;
@@ -1127,7 +1109,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 				{
 					FormIndexDatum(idcur->natts,
 							   (AttrNumber *) &(idcur->tform->indkey[0]),
-								   newtup,
+								   &newtup,
 								   tupdesc,
 								   idatum,
 								   inulls,
@@ -1135,7 +1117,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 					iresult = index_insert(Irel[i],
 										   idatum,
 										   inulls,
-										   &newtup->t_ctid,
+										   &newtup.t_self,
 										   onerel);
 					if (iresult)
 						pfree(iresult);
@@ -1213,10 +1195,10 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 				itemid = PageGetItemId(page, newoff);
 				if (!ItemIdIsUsed(itemid))
 					continue;
-				tuple = (HeapTuple) PageGetItem(page, itemid);
-				if (TransactionIdEquals((TransactionId) tuple->t_xmin, myXID))
+				tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
+				if (TransactionIdEquals((TransactionId) tuple.t_data->t_xmin, myXID))
 				{
-					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+					tuple.t_data->t_infomask |= HEAP_XMIN_COMMITTED;
 					num_tuples++;
 				}
 			}
@@ -1276,8 +1258,8 @@ Elapsed %u/%u sec.",
 				itemid = PageGetItemId(page, offnum);
 				if (!ItemIdIsUsed(itemid))
 					continue;
-				tuple = (HeapTuple) PageGetItem(page, itemid);
-				Assert(TransactionIdEquals((TransactionId) tuple->t_xmax, myXID));
+				tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
+				Assert(TransactionIdEquals((TransactionId) tuple.t_data->t_xmax, myXID));
 				itemid->lp_flags &= ~LP_USED;
 				num_tuples++;
 			}
@@ -1718,18 +1700,18 @@ vc_bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int16 *bucket_l
 static void
 vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *vacrelstats)
 {
-	Relation	rd,
-				ad,
-				sd;
-	HeapScanDesc scan;
-	HeapTuple	rtup,
-				ctup,
-				atup,
-				stup;
-	Form_pg_class pgcform;
-	ScanKeyData askey;
-	Form_pg_attribute attp;
-	Buffer		buffer;
+	Relation			rd,
+						ad,
+						sd;
+	HeapScanDesc 		scan;
+	HeapTupleData		rtup;
+	HeapTuple			ctup,
+						atup,
+						stup;
+	Form_pg_class	 	pgcform;
+	ScanKeyData 		askey;
+	Form_pg_attribute	attp;
+	Buffer				buffer;
 
 	/*
 	 * update number of tuples and number of pages in pg_class
@@ -1744,12 +1726,13 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 	rd = heap_openr(RelationRelationName);
 
 	/* get the buffer cache tuple */
-	rtup = heap_fetch(rd, SnapshotNow, &ctup->t_ctid, &buffer);
+	rtup.t_self = ctup->t_self;
+	heap_fetch(rd, SnapshotNow, &rtup, &buffer);
 	pfree(ctup);
 	
 	/* overwrite the existing statistics in the tuple */
-	vc_setpagelock(rd, ItemPointerGetBlockNumber(&rtup->t_ctid));
-	pgcform = (Form_pg_class) GETSTRUCT(rtup);
+	vc_setpagelock(rd, ItemPointerGetBlockNumber(&(rtup.t_self)));
+	pgcform = (Form_pg_class) GETSTRUCT(&rtup);
 	pgcform->reltuples = num_tuples;
 	pgcform->relpages = num_pages;
 	pgcform->relhasindex = hasindex;
@@ -1792,15 +1775,9 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 			/* overwrite the existing statistics in the tuple */
 			if (VacAttrStatsEqValid(stats))
 			{
-				Buffer		abuffer;
+				Buffer		abuffer = scan->rs_cbuf;
 
-				/*
-				 * We manipulate the heap tuple in the
-				 * buffer, so we fetch it to get the
-				 * buffer number
-				 */
-				atup = heap_fetch(ad, SnapshotNow, &atup->t_ctid, &abuffer);
-				vc_setpagelock(ad, ItemPointerGetBlockNumber(&atup->t_ctid));
+				vc_setpagelock(ad, ItemPointerGetBlockNumber(&atup->t_self));
 				attp = (Form_pg_attribute) GETSTRUCT(atup);
 
 				if (stats->nonnull_cnt + stats->null_cnt == 0 ||
@@ -1837,7 +1814,6 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 				 */
 				RelationInvalidateHeapTuple(ad, atup);
 				WriteNoReleaseBuffer(abuffer);
-				ReleaseBuffer(abuffer);
 
 				/* DO PG_STATISTIC INSERTS */
 
@@ -1894,7 +1870,7 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 	 * Invalidate the cached pg_class tuple and
 	 * write the buffer
 	 */
-	RelationInvalidateHeapTuple(rd, rtup);
+	RelationInvalidateHeapTuple(rd, &rtup);
 
 	WriteNoReleaseBuffer(buffer);
 
@@ -1942,7 +1918,7 @@ vc_delhilowstats(Oid relid, int attcnt, int *attnums)
 			if (i >= attcnt)
 				continue;		/* don't delete it */
 		}
-		heap_delete(pgstatistic, &tuple->t_ctid);
+		heap_delete(pgstatistic, &tuple->t_self);
 	}
 
 	heap_endscan(scan);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.44 1998/09/01 04:26:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.45 1998/11/27 19:51:28 vadim Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -351,7 +351,7 @@ TupleDescInitEntry(TupleDesc desc,
 	 */
 	typeForm = (Form_pg_type) GETSTRUCT(tuple);
 
-	att->atttypid = tuple->t_oid;
+	att->atttypid = tuple->t_data->t_oid;
 	att->attalign = typeForm->typalign;
 
 	/* ------------------------

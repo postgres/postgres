@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.17 1998/09/01 04:27:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.18 1998/11/27 19:51:50 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ AggregateCreate(char *aggName,
 							  0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "AggregateCreate: Type '%s' undefined", aggbasetypeName);
-	xbase = tup->t_oid;
+	xbase = tup->t_data->t_oid;
 
 	if (aggtransfn1Name)
 	{
@@ -105,7 +105,7 @@ AggregateCreate(char *aggName,
 		if (!HeapTupleIsValid(tup))
 			elog(ERROR, "AggregateCreate: Type '%s' undefined",
 				 aggtransfn1typeName);
-		xret1 = tup->t_oid;
+		xret1 = tup->t_data->t_oid;
 
 		fnArgs[0] = xret1;
 		fnArgs[1] = xbase;
@@ -121,7 +121,7 @@ AggregateCreate(char *aggName,
 			elog(ERROR, "AggregateCreate: return type of '%s' is not '%s'",
 				 aggtransfn1Name,
 				 aggtransfn1typeName);
-		xfn1 = tup->t_oid;
+		xfn1 = tup->t_data->t_oid;
 		if (!OidIsValid(xfn1) || !OidIsValid(xret1) ||
 			!OidIsValid(xbase))
 			elog(ERROR, "AggregateCreate: bogus function '%s'", aggfinalfnName);
@@ -135,7 +135,7 @@ AggregateCreate(char *aggName,
 		if (!HeapTupleIsValid(tup))
 			elog(ERROR, "AggregateCreate: Type '%s' undefined",
 				 aggtransfn2typeName);
-		xret2 = tup->t_oid;
+		xret2 = tup->t_data->t_oid;
 
 		fnArgs[0] = xret2;
 		fnArgs[1] = 0;
@@ -150,7 +150,7 @@ AggregateCreate(char *aggName,
 		if (((Form_pg_proc) GETSTRUCT(tup))->prorettype != xret2)
 			elog(ERROR, "AggregateCreate: return type of '%s' is not '%s'",
 				 aggtransfn2Name, aggtransfn2typeName);
-		xfn2 = tup->t_oid;
+		xfn2 = tup->t_data->t_oid;
 		if (!OidIsValid(xfn2) || !OidIsValid(xret2))
 			elog(ERROR, "AggregateCreate: bogus function '%s'", aggfinalfnName);
 	}
@@ -183,7 +183,7 @@ AggregateCreate(char *aggName,
 		if (!HeapTupleIsValid(tup))
 			elog(ERROR, "AggregateCreate: '%s'('%s','%s') does not exist",
 			   aggfinalfnName, aggtransfn1typeName, aggtransfn2typeName);
-		ffn = tup->t_oid;
+		ffn = tup->t_data->t_oid;
 		proc = (Form_pg_proc) GETSTRUCT(tup);
 		fret = proc->prorettype;
 		if (!OidIsValid(ffn) || !OidIsValid(fret))

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.30 1998/10/08 18:29:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.31 1998/11/27 19:52:13 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -516,7 +516,7 @@ func_get_candidates(char *funcname, int nargs)
 	Relation	heapRelation;
 	Relation	idesc;
 	ScanKeyData skey;
-	HeapTuple	tuple;
+	HeapTupleData	tuple;
 	IndexScanDesc sd;
 	RetrieveIndexResult indexRes;
 	Form_pg_proc pgProcP;
@@ -537,20 +537,17 @@ func_get_candidates(char *funcname, int nargs)
 
 	do
 	{
-		tuple = (HeapTuple) NULL;
-
 		indexRes = index_getnext(sd, ForwardScanDirection);
 		if (indexRes)
 		{
-			ItemPointer iptr;
 			Buffer		buffer;
 
-			iptr = &indexRes->heap_iptr;
-			tuple = heap_fetch(heapRelation, SnapshotNow, iptr, &buffer);
+			tuple.t_self = indexRes->heap_iptr;
+			heap_fetch(heapRelation, SnapshotNow, &tuple, &buffer);
 			pfree(indexRes);
-			if (HeapTupleIsValid(tuple))
+			if (tuple.t_data != NULL)
 			{
-				pgProcP = (Form_pg_proc) GETSTRUCT(tuple);
+				pgProcP = (Form_pg_proc) GETSTRUCT(&tuple);
 				if (pgProcP->pronargs == nargs)
 				{
 					current_candidate = (CandidateList)
@@ -884,7 +881,7 @@ func_get_detail(char *funcname,
 	else
 	{
 		pform = (Form_pg_proc) GETSTRUCT(ftup);
-		*funcid = ftup->t_oid;
+		*funcid = ftup->t_data->t_oid;
 		*rettype = pform->prorettype;
 		*retset = pform->proretset;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.17 1998/09/01 04:27:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.18 1998/11/27 19:51:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ renameatt(char *relname,
 		if (!HeapTupleIsValid(reltup))
 			elog(ERROR, "renameatt: unknown relation: \"%s\"", relname);
 
-		myrelid = reltup->t_oid;
+		myrelid = reltup->t_data->t_oid;
 
 		/* this routine is actually in the planner */
 		children = find_all_inheritors(lconsi(myrelid, NIL), NIL);
@@ -153,7 +153,7 @@ renameatt(char *relname,
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "renameatt: relation \"%s\" nonexistent", relname);
 
-	relid = reltup->t_oid;
+	relid = reltup->t_data->t_oid;
 
 	oldatttup = SearchSysCacheTupleCopy(ATTNAME,
 										ObjectIdGetDatum(relid),
@@ -180,7 +180,7 @@ renameatt(char *relname,
 			newattname, NAMEDATALEN);
 
 	attrelation = heap_openr(AttributeRelationName);
-	heap_replace(attrelation, &oldatttup->t_ctid, oldatttup);
+	heap_replace(attrelation, &oldatttup->t_self, oldatttup);
 
 	/* keep system catalog indices current */
 	CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
@@ -248,7 +248,7 @@ renamerel(char *oldrelname, char *newrelname)
 
 	/* insert fixed rel tuple */
 	relrelation = heap_openr(RelationRelationName);
-	heap_replace(relrelation, &oldreltup->t_ctid, oldreltup);
+	heap_replace(relrelation, &oldreltup->t_self, oldreltup);
 
 	/* keep the system catalog indices current */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, irelations);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.30 1998/09/01 04:27:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.31 1998/11/27 19:51:40 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,13 +96,12 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 		/* key on the page before trying to compare it */
 		if (!PageIsEmpty(page) && offset <= maxoff)
 		{
-			TupleDesc	itupdesc;
-			BTItem		btitem;
-			IndexTuple	itup;
-			HeapTuple	htup;
-			BTPageOpaque opaque;
-			Buffer		nbuf;
-			BlockNumber blkno;
+			TupleDesc		itupdesc;
+			BTItem			btitem;
+			HeapTupleData	htup;
+			BTPageOpaque 	opaque;
+			Buffer			nbuf;
+			BlockNumber 	blkno;
 
 			itupdesc = RelationGetDescr(rel);
 			nbuf = InvalidBuffer;
@@ -120,9 +119,9 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 			while (_bt_isequal(itupdesc, page, offset, natts, itup_scankey))
 			{					/* they're equal */
 				btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offset));
-				itup = &(btitem->bti_itup);
-				htup = heap_fetch(heapRel, SnapshotSelf, &(itup->t_tid), &buffer);
-				if (htup != (HeapTuple) NULL)
+				htup.t_self = btitem->bti_itup.t_tid;
+				heap_fetch(heapRel, SnapshotSelf, &htup, &buffer);
+				if (htup.t_data	!= NULL)
 				{				/* it is a duplicate */
 					elog(ERROR, "Cannot insert a duplicate key into a unique index");
 				}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.39 1998/09/23 04:22:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.40 1998/11/27 19:52:01 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1138,7 +1138,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		result = index_insert(relationDescs[i], /* index relation */
 							  datum,	/* array of heaptuple Datums */
 							  nulls,	/* info on nulls */
-							  &(heapTuple->t_ctid),		/* oid of heap tuple */
+							  &(heapTuple->t_self),	/* tid of heap tuple */
 							  heapRelation);
 
 		/* ----------------

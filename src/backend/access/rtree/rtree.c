@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.28 1998/09/01 04:27:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.29 1998/11/27 19:51:41 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,7 +233,7 @@ rtbuild(Relation heap,
 
 		/* form an index tuple and point it at the heap tuple */
 		itup = index_formtuple(id, &d[0], nulls);
-		itup->t_tid = htup->t_ctid;
+		itup->t_tid = htup->t_self;
 
 		/*
 		 * Since we already have the index relation locked, we call

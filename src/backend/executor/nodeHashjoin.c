@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.13 1998/09/01 04:28:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.14 1998/11/27 19:52:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -646,7 +646,10 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 			(*position) = bufstart;
 	}
 	heapTuple = (HeapTuple) (*position);
-	(*position) = (char *) LONGALIGN(*position + heapTuple->t_len);
+	heapTuple->t_data = (HeapTupleHeader) 
+						((char *) heapTuple + HEAPTUPLESIZE);
+	(*position) = (char *) LONGALIGN(*position + 
+									 heapTuple->t_len + HEAPTUPLESIZE);
 
 	return ExecStoreTuple(heapTuple, tupleSlot, InvalidBuffer, false);
 }
@@ -824,7 +827,7 @@ ExecHashJoinSaveTuple(HeapTuple heapTuple,
 	if (position == NULL)
 		position = pagestart;
 
-	if (position + heapTuple->t_len >= pagebound)
+	if (position + heapTuple->t_len + HEAPTUPLESIZE >= pagebound)
 	{
 		cc = FileSeek(file, 0L, SEEK_END);
 		if (cc < 0)
@@ -836,8 +839,9 @@ ExecHashJoinSaveTuple(HeapTuple heapTuple,
 		position = pagestart;
 		*pageend = 0;
 	}
-	memmove(position, heapTuple, heapTuple->t_len);
-	position = (char *) LONGALIGN(position + heapTuple->t_len);
+	memmove(position, heapTuple, HEAPTUPLESIZE);
+	memmove(position + HEAPTUPLESIZE, heapTuple->t_data, heapTuple->t_len);
+	position = (char *) LONGALIGN(position + heapTuple->t_len + HEAPTUPLESIZE);
 	*pageend = position - buffer;
 
 	return position;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.29 1998/09/01 04:27:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.30 1998/11/27 19:51:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,12 +97,12 @@ RemoveOperator(char *operatorName,		/* operator name */
 #ifndef NO_SECURITY
 		userName = GetPgUserName();
 		if (!pg_ownercheck(userName,
-						   (char *) ObjectIdGetDatum(tup->t_oid),
+						   (char *) ObjectIdGetDatum(tup->t_data->t_oid),
 						   OPROID))
 			elog(ERROR, "RemoveOperator: operator '%s': permission denied",
 				 operatorName);
 #endif
-		heap_delete(relation, &tup->t_ctid);
+		heap_delete(relation, &tup->t_self);
 	}
 	else
 	{
@@ -157,7 +157,7 @@ SingleOpOperatorRemove(Oid typeOid)
 		key[0].sk_attno = attnums[i];
 		scan = heap_beginscan(rel, 0, SnapshotNow, 1, key);
 		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
-			heap_delete(rel, &tup->t_ctid);
+			heap_delete(rel, &tup->t_self);
 		heap_endscan(scan);
 	}
 	heap_close(rel);
@@ -267,8 +267,8 @@ RemoveType(char *typeName)		/* type name to be removed */
 	}
 
 	relation = heap_openr(TypeRelationName);
-	typeOid = tup->t_oid;
-	heap_delete(relation, &tup->t_ctid);
+	typeOid = tup->t_data->t_oid;
+	heap_delete(relation, &tup->t_self);
 
 	/* Now, Delete the "array of" that type */
 	shadow_type = makeArrayTypeName(typeName);
@@ -281,8 +281,8 @@ RemoveType(char *typeName)		/* type name to be removed */
 		elog(ERROR, "RemoveType: type '%s' does not exist", typeName);
 	}
 
-	typeOid = tup->t_oid;
-	heap_delete(relation, &tup->t_ctid);
+	typeOid = tup->t_data->t_oid;
+	heap_delete(relation, &tup->t_self);
 
 	heap_close(relation);
 }
@@ -325,7 +325,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 
 			if (!HeapTupleIsValid(tup))
 				elog(ERROR, "RemoveFunction: type '%s' not found", typename);
-			argList[i] = tup->t_oid;
+			argList[i] = tup->t_data->t_oid;
 		}
 	}
 
@@ -357,7 +357,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 		elog(ERROR, "RemoveFunction: function \"%s\" is built-in", functionName);
 	}
 
-	heap_delete(relation, &tup->t_ctid);
+	heap_delete(relation, &tup->t_self);
 
 	heap_close(relation);
 }
@@ -428,7 +428,7 @@ RemoveAggregate(char *aggName, char *aggType)
 				 aggName);
 		}
 	}
-	heap_delete(relation, &tup->t_ctid);
+	heap_delete(relation, &tup->t_self);
 
 	heap_close(relation);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.20 1998/10/08 18:29:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.21 1998/11/27 19:52:14 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ any_ordering_op(int restype)
 Oid
 oprid(Operator op)
 {
-	return op->t_oid;
+	return op->t_data->t_oid;
 }
 
 
@@ -426,7 +426,7 @@ oper_exact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWarn
 			Form_pg_operator opform;
 
 			opform = (Form_pg_operator) GETSTRUCT(tup);
-			if (opform->oprcom == tup->t_oid)
+			if (opform->oprcom == tup->t_data->t_oid)
 			{
 				if ((ltree != NULL) && (rtree != NULL))
 				{

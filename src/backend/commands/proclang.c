@@ -118,7 +118,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	values[i++] = PointerGetDatum(languageName);
 	values[i++] = Int8GetDatum((bool) 1);
 	values[i++] = Int8GetDatum(stmt->pltrusted);
-	values[i++] = ObjectIdGetDatum(procTup->t_oid);
+	values[i++] = ObjectIdGetDatum(procTup->t_data->t_oid);
 	values[i++] = (Datum) fmgr(F_TEXTIN, stmt->plcompiler);
 
 	rel = heap_openr(LanguageRelationName);
@@ -174,7 +174,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	}
 
 	rel = heap_openr(LanguageRelationName);
-	heap_delete(rel, &langTup->t_ctid);
+	heap_delete(rel, &langTup->t_self);
 
 	pfree(langTup);
 	heap_close(rel);

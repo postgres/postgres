@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.20 1998/09/03 02:32:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.21 1998/11/27 19:52:29 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,7 +188,7 @@ GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path, int *encodin
 	int			nbytes;
 	int			max,
 				i;
-	HeapTuple	tup;
+	HeapTupleData	tup;
 	Page		pg;
 	PageHeader	ph;
 	char	   *dbfname;
@@ -238,7 +238,7 @@ GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path, int *encodin
 
 			/* get a pointer to the tuple itself */
 			offset = (int) ph->pd_linp[i].lp_off;
-			tup = (HeapTuple) (((char *) pg) + offset);
+			tup.t_data = (HeapTupleHeader) (((char *) pg) + offset);
 
 			/*
 			 * if the tuple has been deleted (the database was destroyed),
@@ -253,7 +253,7 @@ GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path, int *encodin
 			 * if data is ever moved and no longer the first field this
 			 * will be broken!! -mer 11 Nov 1991.
 			 */
-			if (TransactionIdIsValid((TransactionId) tup->t_xmax))
+			if (TransactionIdIsValid((TransactionId) tup.t_data->t_xmax))
 				continue;
 
 			/*
@@ -267,7 +267,7 @@ GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path, int *encodin
 			 * you exactly how big the header actually is. use the PC
 			 * means of getting at sys cat attrs.
 			 */
-			tup_db = (Form_pg_database) GETSTRUCT(tup);
+			tup_db = (Form_pg_database) GETSTRUCT(&tup);
 #ifdef MULTIBYTE
 
 			/*
@@ -279,7 +279,7 @@ GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path, int *encodin
 #endif
 			if (strcmp(name, tup_db->datname.data) == 0)
 			{
-				*db_id = tup->t_oid;
+				*db_id = tup.t_data->t_oid;
 				strncpy(path, VARDATA(&(tup_db->datpath)),
 						(VARSIZE(&(tup_db->datpath)) - VARHDRSZ));
 				*(path + VARSIZE(&(tup_db->datpath)) - VARHDRSZ) = '\0';

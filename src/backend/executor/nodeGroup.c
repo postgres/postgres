@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.22 1998/09/01 04:28:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.23 1998/11/27 19:52:01 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,13 +102,12 @@ ExecGroupEveryTuple(Group *node)
 	else
 	{
 		outerslot = ExecProcNode(outerPlan(node), (Plan *) node);
-		if (outerslot)
-			outerTuple = outerslot->val;
-		if (!HeapTupleIsValid(outerTuple))
+		if (TupIsNull(outerslot))
 		{
 			grpstate->grp_done = TRUE;
 			return NULL;
 		}
+		outerTuple = outerslot->val;
 
 		firsttuple = grpstate->grp_firstTuple;
 		/* this should occur on the first call only */
@@ -121,7 +120,7 @@ ExecGroupEveryTuple(Group *node)
 			 * Compare with first tuple and see if this tuple is of the
 			 * same group.
 			 */
-			if (!sameGroup(firsttuple, outerslot->val,
+			if (!sameGroup(firsttuple, outerTuple,
 						   node->numCols, node->grpColIdx,
 						   ExecGetScanType(&grpstate->csstate)))
 			{
@@ -189,14 +188,13 @@ ExecGroupOneTuple(Group *node)
 	if (firsttuple == NULL)
 	{
 		outerslot = ExecProcNode(outerPlan(node), (Plan *) node);
-		if (outerslot)
-			outerTuple = outerslot->val;
-		if (!HeapTupleIsValid(outerTuple))
+		if (TupIsNull(outerslot))
 		{
 			grpstate->grp_done = TRUE;
 			return NULL;
 		}
-		grpstate->grp_firstTuple = firsttuple = heap_copytuple(outerTuple);
+		grpstate->grp_firstTuple = firsttuple = 
+						heap_copytuple(outerslot->val);
 	}
 
 	/*
@@ -205,19 +203,20 @@ ExecGroupOneTuple(Group *node)
 	for (;;)
 	{
 		outerslot = ExecProcNode(outerPlan(node), (Plan *) node);
-		outerTuple = (outerslot) ? outerslot->val : NULL;
-		if (!HeapTupleIsValid(outerTuple))
+		if (TupIsNull(outerslot))
 		{
 			grpstate->grp_done = TRUE;
+			outerTuple = NULL;
 			break;
 		}
+		outerTuple = outerslot->val;
 
 		/* ----------------
 		 *	Compare with first tuple and see if this tuple is of
 		 *	the same group.
 		 * ----------------
 		 */
-		if ((!sameGroup(firsttuple, outerslot->val,
+		if ((!sameGroup(firsttuple, outerTuple,
 						node->numCols, node->grpColIdx,
 						ExecGetScanType(&grpstate->csstate))))
 			break;

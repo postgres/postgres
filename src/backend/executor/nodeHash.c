@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.23 1998/09/01 04:28:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.24 1998/11/27 19:52:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -489,16 +489,19 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		 */
 		bucket = (HashBucket)
 			(ABSADDR(hashtable->top) + bucketno * hashtable->bucketsize);
-		if ((char *) LONGALIGN(ABSADDR(bucket->bottom))
-			- (char *) bucket + heapTuple->t_len > hashtable->bucketsize)
+		if ((char *) LONGALIGN(ABSADDR(bucket->bottom)) - (char *) bucket 
+				+ heapTuple->t_len + HEAPTUPLESIZE > hashtable->bucketsize)
 			ExecHashOverflowInsert(hashtable, bucket, heapTuple);
 		else
 		{
 			memmove((char *) LONGALIGN(ABSADDR(bucket->bottom)),
 					heapTuple,
+					HEAPTUPLESIZE);
+			memmove((char *) LONGALIGN(ABSADDR(bucket->bottom)) + HEAPTUPLESIZE,
+					heapTuple->t_data,
 					heapTuple->t_len);
-			bucket->bottom =
-				((RelativeAddr) LONGALIGN(bucket->bottom) + heapTuple->t_len);
+			bucket->bottom = ((RelativeAddr) LONGALIGN(bucket->bottom) + 
+					heapTuple->t_len + HEAPTUPLESIZE);
 		}
 	}
 	else
@@ -611,7 +614,7 @@ ExecHashOverflowInsert(HashJoinTable hashtable,
 	 * ----------------
 	 */
 	newend = (RelativeAddr) LONGALIGN(hashtable->overflownext + sizeof(*otuple)
-									  + heapTuple->t_len);
+									  + heapTuple->t_len + HEAPTUPLESIZE);
 	if (newend > hashtable->bottom)
 	{
 #if 0
@@ -664,6 +667,9 @@ ExecHashOverflowInsert(HashJoinTable hashtable,
 	otuple->tuple = RELADDR(LONGALIGN(((char *) otuple + sizeof(*otuple))));
 	memmove(ABSADDR(otuple->tuple),
 			heapTuple,
+			HEAPTUPLESIZE);
+	memmove(ABSADDR(otuple->tuple) + HEAPTUPLESIZE,
+			heapTuple->t_data,
 			heapTuple->t_len);
 }
 
@@ -704,7 +710,10 @@ ExecScanHashBucket(HashJoinState *hjstate,
 				LONGALIGN(ABSADDR(bucket->top));
 		else
 			heapTuple = (HeapTuple)
-				LONGALIGN(((char *) curtuple + curtuple->t_len));
+				LONGALIGN(((char *) curtuple + curtuple->t_len + HEAPTUPLESIZE));
+		
+		heapTuple->t_data = (HeapTupleHeader) 
+							((char *) heapTuple + HEAPTUPLESIZE);
 
 		while (heapTuple < (HeapTuple) ABSADDR(bucket->bottom))
 		{
@@ -721,7 +730,9 @@ ExecScanHashBucket(HashJoinState *hjstate,
 				return heapTuple;
 
 			heapTuple = (HeapTuple)
-				LONGALIGN(((char *) heapTuple + heapTuple->t_len));
+				LONGALIGN(((char *) heapTuple + heapTuple->t_len + HEAPTUPLESIZE));
+			heapTuple->t_data = (HeapTupleHeader) 
+								((char *) heapTuple + HEAPTUPLESIZE);
 		}
 
 		if (firstotuple == NULL)
@@ -742,6 +753,8 @@ ExecScanHashBucket(HashJoinState *hjstate,
 	while (otuple != NULL)
 	{
 		heapTuple = (HeapTuple) ABSADDR(otuple->tuple);
+		heapTuple->t_data = (HeapTupleHeader) 
+							((char *) heapTuple + HEAPTUPLESIZE);
 
 		inntuple = ExecStoreTuple(heapTuple,	/* tuple to store */
 								  hjstate->hj_HashTupleSlot,	/* slot */

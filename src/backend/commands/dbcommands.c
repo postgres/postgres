@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.25 1998/10/05 02:49:36 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.26 1998/11/27 19:51:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,7 +251,7 @@ check_permissions(char *command,
 									  Anum_pg_database_datdba,
 									  RelationGetDescr(dbrel),
 									  (char *) NULL);
-		*dbIdP = dbtup->t_oid;
+		*dbIdP = dbtup->t_data->t_oid;
 		dbtext = (text *) heap_getattr(dbtup,
 									   Anum_pg_database_datpath,
 									   RelationGetDescr(dbrel),

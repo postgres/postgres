@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.33 1998/10/02 05:10:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.34 1998/11/27 19:51:50 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,7 @@ CatalogIndexInsert(Relation *idescs,
 					   finfoP);
 
 		indexRes = index_insert(idescs[i], datum, nulls,
-								&heapTuple->t_ctid, heapRelation);
+								&heapTuple->t_self, heapRelation);
 		if (indexRes)
 			pfree(indexRes);
 
@@ -228,30 +228,32 @@ CatalogIndexFetchTuple(Relation heapRelation,
 					   ScanKey skey,
 					   int16 num_keys)
 {
-	IndexScanDesc sd;
+	IndexScanDesc		sd;
 	RetrieveIndexResult indexRes;
-	HeapTuple	tuple = NULL;
-	Buffer		buffer;
+	HeapTupleData		tuple;
+	HeapTuple			result = NULL;
+	Buffer				buffer;
 
 	sd = index_beginscan(idesc, false, num_keys, skey);
+	tuple.t_data = NULL;
 	while ((indexRes = index_getnext(sd, ForwardScanDirection)))
 	{
-		tuple = heap_fetch(heapRelation, SnapshotNow, &indexRes->heap_iptr,
-							&buffer);
+		tuple.t_self = indexRes->heap_iptr;
+		heap_fetch(heapRelation, SnapshotNow, &tuple, &buffer);
 		pfree(indexRes);
-		if (HeapTupleIsValid(tuple))
+		if (tuple.t_data != NULL)
 			break;
 	}
 
-	if (HeapTupleIsValid(tuple))
+	if (tuple.t_data != NULL)
 	{
-		tuple = heap_copytuple(tuple);
+		result = heap_copytuple(&tuple);
 		ReleaseBuffer(buffer);
 	}
 
 	index_endscan(sd);
 	pfree(sd);
-	return tuple;
+	return result;
 }
 
 

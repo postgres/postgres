@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.58 1998/10/14 05:10:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.59 1998/11/27 19:51:59 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -963,16 +963,7 @@ ExecAppend(TupleTableSlot *slot,
 
 	if (resultRelationDesc->rd_att->constr)
 	{
-		HeapTuple	newtuple;
-
-		newtuple = ExecConstraints("ExecAppend", resultRelationDesc, tuple);
-
-		if (newtuple != tuple)	/* modified by DEFAULT */
-		{
-			Assert(slot->ttc_shouldFree);
-			pfree(tuple);
-			slot->val = tuple = newtuple;
-		}
+		ExecConstraints("ExecAppend", resultRelationDesc, tuple);
 	}
 
 	/******************
@@ -993,7 +984,7 @@ ExecAppend(TupleTableSlot *slot,
 	 */
 	numIndices = resultRelationInfo->ri_NumIndices;
 	if (numIndices > 0)
-		ExecInsertIndexTuples(slot, &(tuple->t_ctid), estate, false);
+		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 	(estate->es_processed)++;
 	estate->es_lastoid = newId;
 
@@ -1146,16 +1137,7 @@ ExecReplace(TupleTableSlot *slot,
 
 	if (resultRelationDesc->rd_att->constr)
 	{
-		HeapTuple	newtuple;
-
-		newtuple = ExecConstraints("ExecReplace", resultRelationDesc, tuple);
-
-		if (newtuple != tuple)	/* modified by DEFAULT */
-		{
-			Assert(slot->ttc_shouldFree);
-			pfree(tuple);
-			slot->val = tuple = newtuple;
-		}
+		ExecConstraints("ExecReplace", resultRelationDesc, tuple);
 	}
 
 	/******************
@@ -1200,7 +1182,7 @@ ExecReplace(TupleTableSlot *slot,
 
 	numIndices = resultRelationInfo->ri_NumIndices;
 	if (numIndices > 0)
-		ExecInsertIndexTuples(slot, &(tuple->t_ctid), estate, true);
+		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, true);
 
 	/* AFTER ROW UPDATE Triggers */
 	if (resultRelationDesc->trigdesc &&
@@ -1334,17 +1316,11 @@ ExecRelCheck(Relation rel, HeapTuple tuple)
 
 }
 
-HeapTuple
+void
 ExecConstraints(char *caller, Relation rel, HeapTuple tuple)
 {
-	HeapTuple	newtuple = tuple;
 
 	Assert(rel->rd_att->constr);
-
-#if 0
-	if (rel->rd_att->constr->num_defval > 0)
-		newtuple = tuple = ExecAttrDefault(rel, tuple);
-#endif
 
 	if (rel->rd_att->constr->has_not_null)
 	{
@@ -1366,5 +1342,5 @@ ExecConstraints(char *caller, Relation rel, HeapTuple tuple)
 			elog(ERROR, "%s: rejected due to CHECK constraint %s", caller, failed);
 	}
 
-	return newtuple;
+	return;
 }

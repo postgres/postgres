@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.20 1998/09/01 04:28:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.21 1998/11/27 19:52:01 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,7 +270,7 @@ copy_function_result(FunctionCachePtr fcache,
 		int			i = 0;
 		TupleDesc	funcTd = funcSlot->ttc_tupleDescriptor;
 
-		while (i < oldTuple->t_natts)
+		while (i < oldTuple->t_data->t_natts)
 		{
 			funcTd->attrs[i] =
 				(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
@@ -341,13 +341,11 @@ postquel_execute(execution_state *es,
 		resSlot = copy_function_result(fcache, slot);
 		if (fTlist != NIL)
 		{
-			HeapTuple	tup;
 			TargetEntry *tle = lfirst(fTlist);
 
-			tup = resSlot->val;
 			value = ProjectAttribute(resSlot->ttc_tupleDescriptor,
 									 tle,
-									 tup,
+									 resSlot->val,
 									 isNull);
 		}
 		else

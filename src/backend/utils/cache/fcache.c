@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.18 1998/09/01 04:32:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.19 1998/11/27 19:52:27 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ GetDynamicFuncArgType(Var *arg, ExprContext *econtext)
 		elog(ERROR, "Lookup failed on type tuple for class %s",
 			 relname);
 
-	return tup->t_oid;
+	return tup->t_data->t_oid;
 }
 
 static FunctionCachePtr

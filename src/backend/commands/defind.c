@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.27 1998/09/23 04:22:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.28 1998/11/27 19:51:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ DefineIndex(char *heapRelationName,
 		elog(ERROR, "DefineIndex: %s relation not found",
 			 heapRelationName);
 	}
-	relationId = tuple->t_oid;
+	relationId = tuple->t_data->t_oid;
 
 	if (unique && strcmp(accessMethodName, "btree") != 0)
 		elog(ERROR, "DefineIndex: unique indices are only available with the btree access method");
@@ -124,7 +124,7 @@ DefineIndex(char *heapRelationName,
 		elog(ERROR, "DefineIndex: %s access method not found",
 			 accessMethodName);
 	}
-	accessMethodId = tuple->t_oid;
+	accessMethodId = tuple->t_data->t_oid;
 
 
 	/*
@@ -250,7 +250,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 		elog(ERROR, "ExtendIndex: %s index not found",
 			 indexRelationName);
 	}
-	indexId = tuple->t_oid;
+	indexId = tuple->t_data->t_oid;
 	accessMethodId = ((Form_pg_class) GETSTRUCT(tuple))->relam;
 
 	/*
@@ -336,7 +336,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 		namecpy(&(funcInfo->funcName),
 				&(((Form_pg_proc) GETSTRUCT(tuple))->proname));
 
-		FIsetProcOid(funcInfo, tuple->t_oid);
+		FIsetProcOid(funcInfo, tuple->t_data->t_oid);
 	}
 
 	heapRelation = heap_open(relationId);
@@ -429,7 +429,7 @@ FuncIndexArgs(IndexElem *funcIndex,
 		elog(ERROR, "DefineIndex: %s class not found",
 			 funcIndex->class);
 	}
-	*opOidP = tuple->t_oid;
+	*opOidP = tuple->t_data->t_oid;
 
 	MemSet(argTypes, 0, 8 * sizeof(Oid));
 
@@ -531,7 +531,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 			elog(ERROR, "DefineIndex: %s class not found",
 				 attribute->class);
 		}
-		*classOidP++ = tuple->t_oid;
+		*classOidP++ = tuple->t_data->t_oid;
 		pfree(atttuple);
 	}
 }
@@ -578,5 +578,5 @@ RemoveIndex(char *name)
 			 ((Form_pg_class) GETSTRUCT(tuple))->relkind);
 	}
 
-	index_destroy(tuple->t_oid);
+	index_destroy(tuple->t_data->t_oid);
 }

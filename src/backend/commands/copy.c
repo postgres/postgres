@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.63 1998/10/26 00:59:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.64 1998/11/27 19:51:54 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 
 		if (oids && !binary)
 		{
-			fputs(oidout(tuple->t_oid), fp);
+			fputs(oidout(tuple->t_data->t_oid), fp);
 			fputc(delim[0], fp);
 		}
 
@@ -331,10 +331,10 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					null_ct++;
 			}
 
-			length = tuple->t_len - tuple->t_hoff;
+			length = tuple->t_len - tuple->t_data->t_hoff;
 			fwrite(&length, sizeof(int32), 1, fp);
 			if (oids)
-				fwrite((char *) &tuple->t_oid, sizeof(int32), 1, fp);
+				fwrite((char *) &tuple->t_data->t_oid, sizeof(int32), 1, fp);
 
 			fwrite(&null_ct, sizeof(int32), 1, fp);
 			if (null_ct > 0)
@@ -348,7 +348,8 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					}
 				}
 			}
-			fwrite((char *) tuple + tuple->t_hoff, length, 1, fp);
+			fwrite((char *) tuple->t_data + tuple->t_data->t_hoff, 
+					length, 1, fp);
 		}
 	}
 
@@ -678,7 +679,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 		 */
 		tuple = heap_formtuple(tupDesc, values, nulls);
 		if (oids)
-			tuple->t_oid = loaded_oid;
+			tuple->t_data->t_oid = loaded_oid;
 
 		skip_tuple = false;
 		/* BEFORE ROW INSERT Triggers */
@@ -706,17 +707,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 			 */
 
 			if (rel->rd_att->constr)
-			{
-				HeapTuple	newtuple;
-
-				newtuple = ExecConstraints("CopyFrom", rel, tuple);
-
-				if (newtuple != tuple)
-				{
-					pfree(tuple);
-					tuple = newtuple;
-				}
-			}
+				ExecConstraints("CopyFrom", rel, tuple);
 
 			heap_insert(rel, tuple);
 
@@ -746,7 +737,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 								   index_nulls,
 								   finfoP[i]);
 					indexRes = index_insert(index_rels[i], idatum, index_nulls,
-											&(tuple->t_ctid), rel);
+											&(tuple->t_self), rel);
 					if (indexRes)
 						pfree(indexRes);
 				}

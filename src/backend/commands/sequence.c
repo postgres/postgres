@@ -368,7 +368,7 @@ read_info(char *caller, SeqTable elm, Buffer *buf)
 	ItemPointerData iptr;
 	PageHeader	page;
 	ItemId		lp;
-	HeapTuple	tuple;
+	HeapTupleData	tuple;
 	sequence_magic *sm;
 	Form_pg_sequence seq;
 
@@ -391,9 +391,9 @@ read_info(char *caller, SeqTable elm, Buffer *buf)
 
 	lp = PageGetItemId(page, FirstOffsetNumber);
 	Assert(ItemIdIsUsed(lp));
-	tuple = (HeapTuple) PageGetItem((Page) page, lp);
+	tuple.t_data = (HeapTupleHeader) PageGetItem((Page) page, lp);
 
-	seq = (Form_pg_sequence) GETSTRUCT(tuple);
+	seq = (Form_pg_sequence) GETSTRUCT(&tuple);
 
 	elm->increment = seq->increment_by;
 

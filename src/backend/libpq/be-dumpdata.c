@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.17 1998/09/01 03:22:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.18 1998/11/27 19:52:05 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,8 +276,8 @@ be_printtup(HeapTuple tuple, TupleDesc typeinfo)
 	 *	Allocate space for a tuple.
 	 * ----------------
 	 */
-	tuples->values[tuples->tuple_index] = pbuf_addTuple(tuple->t_natts);
-	tuples->lengths[tuples->tuple_index] = pbuf_addTupleValueLengths(tuple->t_natts);
+	tuples->values[tuples->tuple_index] = pbuf_addTuple(tuple->t_data->t_natts);
+	tuples->lengths[tuples->tuple_index] = pbuf_addTupleValueLengths(tuple->t_data->t_natts);
 	/* ----------------
 	 *	copy printable representations of the tuple's attributes
 	 *	to the portal.
@@ -297,7 +297,7 @@ be_printtup(HeapTuple tuple, TupleDesc typeinfo)
 	values = tuples->values[tuples->tuple_index];
 	lengths = tuples->lengths[tuples->tuple_index];
 
-	for (i = 0; i < tuple->t_natts; i++)
+	for (i = 0; i < tuple->t_data->t_natts; i++)
 	{
 		attr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		typoutput = typtoout((Oid) typeinfo->attrs[i]->atttypid);

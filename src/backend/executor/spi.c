@@ -356,11 +356,12 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 	if (i == natts)				/* no errors in *attnum */
 	{
 		mtuple = heap_formtuple(rel->rd_att, v, n);
-		infomask = mtuple->t_infomask;
-		memmove(&(mtuple->t_ctid), &(tuple->t_ctid),
-				((char *) &(tuple->t_hoff) - (char *) &(tuple->t_ctid)));
-		mtuple->t_infomask = infomask;
-		mtuple->t_natts = numberOfAttributes;
+		infomask = mtuple->t_data->t_infomask;
+		memmove(&(mtuple->t_data->t_oid), &(tuple->t_data->t_oid),
+				((char *) &(tuple->t_data->t_hoff) - 
+					(char *) &(tuple->t_data->t_oid)));
+		mtuple->t_data->t_infomask = infomask;
+		mtuple->t_data->t_natts = numberOfAttributes;
 	}
 	else
 	{
@@ -413,7 +414,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 	Oid			foutoid;
 
 	SPI_result = 0;
-	if (tuple->t_natts < fnumber || fnumber <= 0)
+	if (tuple->t_data->t_natts < fnumber || fnumber <= 0)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
 		return NULL;
@@ -441,7 +442,7 @@ SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool *isnull)
 
 	*isnull = true;
 	SPI_result = 0;
-	if (tuple->t_natts < fnumber || fnumber <= 0)
+	if (tuple->t_data->t_natts < fnumber || fnumber <= 0)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
 		return (Datum) NULL;

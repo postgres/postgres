@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.35 1998/10/01 22:45:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.36 1998/11/27 19:51:55 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,11 +409,11 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		/*
 		 * build idList for use below
 		 */
-		idList = lappendi(idList, tuple->t_oid);
+		idList = lappendi(idList, tuple->t_data->t_oid);
 
-		datum[0] = ObjectIdGetDatum(relationId);		/* inhrel */
-		datum[1] = ObjectIdGetDatum(tuple->t_oid);		/* inhparent */
-		datum[2] = Int16GetDatum(seqNumber);	/* inhseqno */
+		datum[0] = ObjectIdGetDatum(relationId);			/* inhrel */
+		datum[1] = ObjectIdGetDatum(tuple->t_data->t_oid);	/* inhparent */
+		datum[2] = Int16GetDatum(seqNumber);				/* inhseqno */
 
 		nullarr[0] = ' ';
 		nullarr[1] = ' ';

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.33 1998/09/07 05:35:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.34 1998/11/27 19:51:40 vadim Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -256,7 +256,7 @@ btbuild(Relation heap,
 		 * if (itup->t_info & INDEX_NULL_MASK) { pfree(itup); continue; }
 		 */
 
-		itup->t_tid = htup->t_ctid;
+		itup->t_tid = htup->t_self;
 		btitem = _bt_formitem(itup);
 
 		/*

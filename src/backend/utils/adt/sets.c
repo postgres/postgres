@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.18 1998/09/01 04:32:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.19 1998/11/27 19:52:23 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,10 +123,10 @@ SetDefine(char *querystr, char *typename)
 									  repl);
 
 			setheapoverride(true);
-			heap_replace(procrel, &tup->t_ctid, newtup);
+			heap_replace(procrel, &tup->t_self, newtup);
 			setheapoverride(false);
 
-			setoid = newtup->t_oid;
+			setoid = newtup->t_data->t_oid;
 		}
 		else
 			elog(ERROR, "setin: could not find new set oid tuple");

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.66 1998/11/17 14:26:39 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.67 1998/11/27 19:51:48 vadim Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -663,7 +663,7 @@ AddPgRelationTuple(Relation pg_class_desc,
 	tup = heap_addheader(Natts_pg_class_fixed,
 						 CLASS_TUPLE_SIZE,
 						 (char *) new_rel_reltup);
-	tup->t_oid = new_rel_oid;
+	tup->t_data->t_oid = new_rel_oid;
 
 	/* ----------------
 	 *	finally insert the new tuple and free it.
@@ -929,7 +929,7 @@ RelationRemoveInheritance(Relation relation)
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
-		heap_delete(catalogRelation, &tuple->t_ctid);
+		heap_delete(catalogRelation, &tuple->t_self);
 		found = true;
 	}
 
@@ -951,7 +951,7 @@ RelationRemoveInheritance(Relation relation)
 						  &entry);
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-		heap_delete(catalogRelation, &tuple->t_ctid);
+		heap_delete(catalogRelation, &tuple->t_self);
 
 	heap_endscan(scan);
 	heap_close(catalogRelation);
@@ -1020,7 +1020,7 @@ DeletePgRelationTuple(Relation rel)
 	 *	delete the relation tuple from pg_class, and finish up.
 	 * ----------------
 	 */
-	heap_delete(pg_class_desc, &tup->t_ctid);
+	heap_delete(pg_class_desc, &tup->t_self);
 	pfree(tup);
 
 	heap_close(pg_class_desc);
@@ -1059,7 +1059,7 @@ DeletePgAttributeTuples(Relation rel)
 												   Int16GetDatum(attnum),
 														   0, 0)))
 		{
-			heap_delete(pg_attribute_desc, &tup->t_ctid);
+			heap_delete(pg_attribute_desc, &tup->t_self);
 			pfree(tup);
 		}
 	}
@@ -1138,7 +1138,7 @@ DeletePgTypeTuple(Relation rel)
 	 *	stonebraker about this.  -cim 6/19/90
 	 * ----------------
 	 */
-	typoid = tup->t_oid;
+	typoid = tup->t_data->t_oid;
 
 	pg_attribute_desc = heap_openr(AttributeRelationName);
 
@@ -1183,7 +1183,7 @@ DeletePgTypeTuple(Relation rel)
 	 *	we release the read lock on pg_type.  -mer 13 Aug 1991
 	 * ----------------
 	 */
-	heap_delete(pg_type_desc, &tup->t_ctid);
+	heap_delete(pg_type_desc, &tup->t_self);
 
 	heap_endscan(pg_type_scan);
 	heap_close(pg_type_desc);
@@ -1604,7 +1604,7 @@ RemoveAttrDefault(Relation rel)
 	adscan = heap_beginscan(adrel, 0, SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tup = heap_getnext(adscan, 0)))
-		heap_delete(adrel, &tup->t_ctid);
+		heap_delete(adrel, &tup->t_self);
 
 	heap_endscan(adscan);
 
@@ -1631,7 +1631,7 @@ RemoveRelCheck(Relation rel)
 	rcscan = heap_beginscan(rcrel, 0, SnapshotNow, 1, &key);
 
 	while (HeapTupleIsValid(tup = heap_getnext(rcscan, 0)))
-		heap_delete(rcrel, &tup->t_ctid);
+		heap_delete(rcrel, &tup->t_self);
 
 	heap_endscan(rcscan);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.17 1998/09/01 04:28:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.18 1998/11/27 19:52:03 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,13 +114,22 @@ ExecMaterial(Material *node)
 		{
 			slot = ExecProcNode(outerNode, (Plan *) node);
 
-			heapTuple = slot->val;
-			if (heapTuple == NULL)
+			if (TupIsNull(slot))
 				break;
+			
+			/*
+			 * heap_insert changes something...
+			 */
+			if (slot->ttc_buffer != InvalidBuffer)
+				heapTuple = heap_copytuple(slot->val);
+			else
+				heapTuple = slot->val;
+			
+			heap_insert(tempRelation, heapTuple);
 
-			heap_insert(tempRelation,	/* relation desc */
-						heapTuple);		/* heap tuple to insert */
-
+			if (slot->ttc_buffer != InvalidBuffer)
+				pfree(heapTuple);
+			
 			ExecClearTuple(slot);
 		}
 		currentRelation = tempRelation;

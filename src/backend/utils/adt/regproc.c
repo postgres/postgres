@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.32 1998/10/02 05:31:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.33 1998/11/27 19:52:22 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,9 @@
 int32
 regprocin(char *pro_name_or_oid)
 {
-	HeapTuple	 proctup = NULL;
-	RegProcedure result = InvalidOid;
+	HeapTuple	 	proctup = NULL;
+	HeapTupleData	tuple;
+	RegProcedure	result = InvalidOid;
 
 	if (pro_name_or_oid == NULL)
 		return InvalidOid;
@@ -60,7 +61,7 @@ regprocin(char *pro_name_or_oid)
 								ObjectIdGetDatum(oidin(pro_name_or_oid)),
 										  0, 0, 0);
 			if (HeapTupleIsValid(proctup))
-				result = (RegProcedure) proctup->t_oid;
+				result = (RegProcedure) proctup->t_data->t_oid;
 			else
 				elog(ERROR, "No procedure with oid %s", pro_name_or_oid);
 		}
@@ -86,13 +87,14 @@ regprocin(char *pro_name_or_oid)
 			sd = index_beginscan(idesc, false, 1, skey);
 			while ((indexRes = index_getnext(sd, ForwardScanDirection)))
 			{
-				proctup = heap_fetch(hdesc, SnapshotNow,
-									&indexRes->heap_iptr,
+				tuple.t_self = indexRes->heap_iptr;
+				heap_fetch(hdesc, SnapshotNow,
+									&tuple,
 									&buffer);
 				pfree(indexRes);
-				if (HeapTupleIsValid(proctup))
+				if (tuple.t_data != NULL)
 				{
-					result = (RegProcedure) proctup->t_oid;
+					result = (RegProcedure) tuple.t_data->t_oid;
 					ReleaseBuffer(buffer);
 
 					if (++matches > 1)

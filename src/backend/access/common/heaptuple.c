@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.45 1998/10/08 18:29:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.46 1998/11/27 19:51:27 vadim Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -36,12 +36,12 @@
 /* Used by heap_getattr() macro, for speed */
 long		heap_sysoffset[] = {
 /* Only the first one is pass-by-ref, and is handled specially in the macro */
-	offsetof(HeapTupleData, t_ctid),
-	offsetof(HeapTupleData, t_oid),
-	offsetof(HeapTupleData, t_xmin),
-	offsetof(HeapTupleData, t_cmin),
-	offsetof(HeapTupleData, t_xmax),
-	offsetof(HeapTupleData, t_cmax)
+	offsetof(HeapTupleHeaderData, t_ctid),
+	offsetof(HeapTupleHeaderData, t_oid),
+	offsetof(HeapTupleHeaderData, t_xmin),
+	offsetof(HeapTupleHeaderData, t_cmin),
+	offsetof(HeapTupleHeaderData, t_xmax),
+	offsetof(HeapTupleHeaderData, t_cmax)
 };
 
 /* ----------------------------------------------------------------
@@ -167,14 +167,14 @@ DataFill(char *data,
 int
 heap_attisnull(HeapTuple tup, int attnum)
 {
-	if (attnum > (int) tup->t_natts)
+	if (attnum > (int) tup->t_data->t_natts)
 		return 1;
 
 	if (HeapTupleNoNulls(tup))
 		return 0;
 
 	if (attnum > 0)
-		return att_isnull(attnum - 1, tup->t_bits);
+		return att_isnull(attnum - 1, tup->t_data->t_bits);
 	else
 		switch (attnum)
 		{
@@ -210,7 +210,7 @@ heap_attisnull(HeapTuple tup, int attnum)
 int
 heap_sysattrlen(AttrNumber attno)
 {
-	HeapTupleData *f = NULL;
+	HeapTupleHeader	f = NULL;
 
 	switch (attno)
 	{
@@ -323,15 +323,16 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
  * ----------------
  */
 Datum
-nocachegetattr(HeapTuple tup,
+nocachegetattr(HeapTuple tuple,
 			   int attnum,
 			   TupleDesc tupleDesc,
 			   bool *isnull)
 {
-	char	   *tp;				/* ptr to att in tuple */
-	bits8	   *bp = tup->t_bits;		/* ptr to att in tuple */
-	int			slow;			/* do we have to walk nulls? */
-	Form_pg_attribute *att = tupleDesc->attrs;
+	char			   *tp;						/* ptr to att in tuple */
+	HeapTupleHeader		tup = tuple->t_data;
+	bits8			   *bp = tup->t_bits;		/* ptr to att in tuple */
+	int					slow;					/* do we have to walk nulls? */
+	Form_pg_attribute  *att = tupleDesc->attrs;
 
 
 #if IN_MACRO
@@ -351,7 +352,7 @@ nocachegetattr(HeapTuple tup,
 	 * ----------------
 	 */
 
-	if (HeapTupleNoNulls(tup))
+	if (HeapTupleNoNulls(tuple))
 	{
 		attnum--;
 
@@ -449,7 +450,7 @@ nocachegetattr(HeapTuple tup,
 		}
 		else if (attnum == 0)
 			return (Datum) fetchatt(&(att[0]), (char *) tp);
-		else if (!HeapTupleAllFixed(tup))
+		else if (!HeapTupleAllFixed(tuple))
 		{
 			int			j = 0;
 
@@ -491,8 +492,8 @@ nocachegetattr(HeapTuple tup,
 		/* Can we compute more?  We will probably need them */
 			 (j < tup->t_natts &&
 			  att[j]->attcacheoff == -1 &&
-			  (HeapTupleNoNulls(tup) || !att_isnull(j, bp)) &&
-			  (HeapTupleAllFixed(tup) ||
+			  (HeapTupleNoNulls(tuple) || !att_isnull(j, bp)) &&
+			  (HeapTupleAllFixed(tuple) ||
 			   att[j]->attlen > 0 || VARLENA_FIXED_SIZE(att[j]))); j++)
 		{
 
@@ -527,7 +528,7 @@ nocachegetattr(HeapTuple tup,
 
 		for (i = 0; i < attnum; i++)
 		{
-			if (!HeapTupleNoNulls(tup))
+			if (!HeapTupleNoNulls(tuple))
 			{
 				if (att_isnull(i, bp))
 				{
@@ -570,12 +571,39 @@ heap_copytuple(HeapTuple tuple)
 {
 	HeapTuple	newTuple;
 
-	if (!HeapTupleIsValid(tuple))
+	if (!HeapTupleIsValid(tuple) || tuple->t_data == NULL)
 		return NULL;
 
-	newTuple = (HeapTuple) palloc(tuple->t_len);
-	memmove((char *) newTuple, (char *) tuple, (int) tuple->t_len);
+	newTuple = (HeapTuple) palloc(HEAPTUPLESIZE + tuple->t_len);
+	newTuple->t_len = tuple->t_len;
+	newTuple->t_self = tuple->t_self;
+	newTuple->t_data = (HeapTupleHeader) ((char *) newTuple + HEAPTUPLESIZE);
+	memmove((char *) newTuple->t_data, 
+			(char *) tuple->t_data, (int) tuple->t_len);
 	return newTuple;
+}
+
+/* ----------------
+ *		heap_copytuple_with_tuple
+ *
+ *		returns a copy of an tuple->t_data
+ * ----------------
+ */
+void
+heap_copytuple_with_tuple(HeapTuple src, HeapTuple dest)
+{
+	if (!HeapTupleIsValid(src) || src->t_data == NULL)
+	{
+		dest->t_data = NULL;
+		return;
+	}
+	
+	dest->t_len = src->t_len;
+	dest->t_self = src->t_self;
+	dest->t_data = (HeapTupleHeader) palloc(src->t_len);
+	memmove((char *) dest->t_data, 
+			(char *) src->t_data, (int) src->t_len);
+	return;
 }
 
 #ifdef NOT_USED
@@ -637,16 +665,16 @@ heap_formtuple(TupleDesc tupleDescriptor,
 			   Datum *value,
 			   char *nulls)
 {
-	char	   *tp;				/* tuple pointer */
-	HeapTuple	tuple;			/* return tuple */
-	int			bitmaplen;
-	long		len;
-	int			hoff;
-	bool		hasnull = false;
-	int			i;
-	int			numberOfAttributes = tupleDescriptor->natts;
+	HeapTuple		tuple;			/* return tuple */
+	HeapTupleHeader	td;				/* tuple data */
+	int				bitmaplen;
+	long			len;
+	int				hoff;
+	bool			hasnull = false;
+	int				i;
+	int				numberOfAttributes = tupleDescriptor->natts;
 
-	len = offsetof(HeapTupleData, t_bits);
+	len = offsetof(HeapTupleHeaderData, t_bits);
 
 	for (i = 0; i < numberOfAttributes && !hasnull; i++)
 	{
@@ -668,23 +696,24 @@ heap_formtuple(TupleDesc tupleDescriptor,
 
 	len += ComputeDataSize(tupleDescriptor, value, nulls);
 
-	tp = (char *) palloc(len);
-	tuple = (HeapTuple) tp;
+	tuple = (HeapTuple) palloc(HEAPTUPLESIZE + len);
+	td = tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);;
 
-	MemSet(tp, 0, (int) len);
+	MemSet((char *) td, 0, (int) len);
 
 	tuple->t_len = len;
-	tuple->t_natts = numberOfAttributes;
-	tuple->t_hoff = hoff;
+	ItemPointerSetInvalid(&(tuple->t_self));
+	td->t_natts = numberOfAttributes;
+	td->t_hoff = hoff;
 
-	DataFill((char *) tuple + tuple->t_hoff,
+	DataFill((char *) td + td->t_hoff,
 			 tupleDescriptor,
 			 value,
 			 nulls,
-			 &tuple->t_infomask,
-			 (hasnull ? tuple->t_bits : NULL));
+			 &td->t_infomask,
+			 (hasnull ? td->t_bits : NULL));
 
-	tuple->t_infomask |= HEAP_XMAX_INVALID;
+	td->t_infomask |= HEAP_XMAX_INVALID;
 
 	return tuple;
 }
@@ -767,13 +796,15 @@ heap_modifytuple(HeapTuple tuple,
 	 *	copy the header except for t_len, t_natts, t_hoff, t_bits, t_infomask
 	 * ----------------
 	 */
-	infomask = newTuple->t_infomask;
-	memmove((char *) &newTuple->t_oid,	/* XXX */
-			(char *) &tuple->t_oid,
-			((char *) &tuple->t_hoff - (char *) &tuple->t_oid));		/* XXX */
-	newTuple->t_infomask = infomask;
-	newTuple->t_natts = numberOfAttributes;		/* fix t_natts just in
-												 * case */
+	infomask = newTuple->t_data->t_infomask;
+	memmove((char *) &newTuple->t_data->t_oid,	/* XXX */
+			(char *) &tuple->t_data->t_oid,
+			((char *) &tuple->t_data->t_hoff - 
+				(char *) &tuple->t_data->t_oid));		/* XXX */
+	newTuple->t_data->t_infomask = infomask;
+	newTuple->t_data->t_natts = numberOfAttributes;
+	newTuple->t_self = tuple->t_self;
+	
 	return newTuple;
 }
 
@@ -787,28 +818,30 @@ heap_addheader(uint32 natts,	/* max domain index */
 			   int structlen,	/* its length */
 			   char *structure) /* pointer to the struct */
 {
-	char	   *tp;				/* tuple data pointer */
-	HeapTuple	tup;
-	long		len;
-	int			hoff;
+	HeapTuple		tuple;
+	HeapTupleHeader	td;				/* tuple data */
+	long			len;
+	int				hoff;
 
 	AssertArg(natts > 0);
 
-	len = offsetof(HeapTupleData, t_bits);
+	len = offsetof(HeapTupleHeaderData, t_bits);
 
 	hoff = len = DOUBLEALIGN(len);		/* be conservative */
 	len += structlen;
-	tp = (char *) palloc(len);
-	tup = (HeapTuple) tp;
-	MemSet((char *) tup, 0, len);
+	tuple = (HeapTuple) palloc(HEAPTUPLESIZE + len);
+	td = tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
-	tup->t_len = len;
-	tp += tup->t_hoff = hoff;
-	tup->t_natts = natts;
-	tup->t_infomask = 0;
-	tup->t_infomask |= HEAP_XMAX_INVALID;
+	MemSet((char *) td, 0, (int) len);
 
-	memmove(tp, structure, structlen);
+	tuple->t_len = len;
+	ItemPointerSetInvalid(&(tuple->t_self));
+	td->t_hoff = hoff;
+	td->t_natts = natts;
+	td->t_infomask = 0;
+	td->t_infomask |= HEAP_XMAX_INVALID;
 
-	return tup;
+	memmove((char *) td + hoff, structure, structlen);
+
+	return tuple;
 }

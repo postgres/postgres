@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.29 1998/09/01 04:27:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.30 1998/11/27 19:51:50 vadim Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -125,7 +125,7 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 	 * ----------------
 	 */
 	tup = heap_getnext(pg_operator_scan, 0);
-	operatorObjectId = HeapTupleIsValid(tup) ? tup->t_oid : InvalidOid;
+	operatorObjectId = HeapTupleIsValid(tup) ? tup->t_data->t_oid : InvalidOid;
 
 	/* ----------------
 	 *	close the scan and return the oid.
@@ -279,7 +279,7 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 	 * ----------------
 	 */
 	heap_insert(pg_operator_desc, tup);
-	operatorObjectId = tup->t_oid;
+	operatorObjectId = tup->t_data->t_oid;
 
 	/* ----------------
 	 *	free the tuple and return the operator oid
@@ -413,7 +413,7 @@ OperatorShellMake(char *operatorName,
  * if the operator shell is being filled in
  *	 access the catalog in order to get a valid buffer
  *	 create a tuple using ModifyHeapTuple
- *	 get the t_ctid from the modified tuple and call RelationReplaceHeapTuple
+ *	 get the t_self from the modified tuple and call RelationReplaceHeapTuple
  * else if a new operator is being created
  *	 create a tuple using heap_formtuple
  *	 call heap_insert
@@ -544,7 +544,7 @@ OperatorDef(char *operatorName,
 	if (!HeapTupleIsValid(tup))
 		func_error("OperatorDef", procedureName, nargs, typeId, NULL);
 
-	values[Anum_pg_operator_oprcode - 1] = ObjectIdGetDatum(tup->t_oid);
+	values[Anum_pg_operator_oprcode - 1] = ObjectIdGetDatum(tup->t_data->t_oid);
 	values[Anum_pg_operator_oprresult - 1] =
 		ObjectIdGetDatum(((Form_pg_proc)
 						  GETSTRUCT(tup))->prorettype);
@@ -569,7 +569,7 @@ OperatorDef(char *operatorName,
 		if (!HeapTupleIsValid(tup))
 			func_error("OperatorDef", restrictionName, 5, typeId, NULL);
 
-		values[Anum_pg_operator_oprrest - 1] = ObjectIdGetDatum(tup->t_oid);
+		values[Anum_pg_operator_oprrest - 1] = ObjectIdGetDatum(tup->t_data->t_oid);
 	}
 	else
 		values[Anum_pg_operator_oprrest - 1] = ObjectIdGetDatum(InvalidOid);
@@ -595,7 +595,7 @@ OperatorDef(char *operatorName,
 		if (!HeapTupleIsValid(tup))
 			func_error("OperatorDef", joinName, 5, typeId, NULL);
 
-		values[Anum_pg_operator_oprjoin - 1] = ObjectIdGetDatum(tup->t_oid);
+		values[Anum_pg_operator_oprjoin - 1] = ObjectIdGetDatum(tup->t_data->t_oid);
 	}
 	else
 		values[Anum_pg_operator_oprjoin - 1] = ObjectIdGetDatum(InvalidOid);
@@ -685,7 +685,7 @@ OperatorDef(char *operatorName,
 	/* last three fields were filled in first */
 
 	/*
-	 * If we are adding to an operator shell, get its t_ctid
+	 * If we are adding to an operator shell, get its t_self
 	 */
 	pg_operator_desc = heap_openr(OperatorRelationName);
 
@@ -711,7 +711,7 @@ OperatorDef(char *operatorName,
 								   replaces);
 
 			setheapoverride(true);
-			heap_replace(pg_operator_desc, &tup->t_ctid, tup);
+			heap_replace(pg_operator_desc, &tup->t_self, tup);
 			setheapoverride(false);
 		}
 		else
@@ -725,7 +725,7 @@ OperatorDef(char *operatorName,
 		tup = heap_formtuple(tupDesc, values, nulls);
 
 		heap_insert(pg_operator_desc, tup);
-		operatorObjectId = tup->t_oid;
+		operatorObjectId = tup->t_data->t_oid;
 	}
 
 	heap_close(pg_operator_desc);
@@ -830,7 +830,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 									   replaces);
 
 				setheapoverride(true);
-				heap_replace(pg_operator_desc, &tup->t_ctid, tup);
+				heap_replace(pg_operator_desc, &tup->t_self, tup);
 				setheapoverride(false);
 
 			}
@@ -855,7 +855,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 							   replaces);
 
 		setheapoverride(true);
-		heap_replace(pg_operator_desc, &tup->t_ctid, tup);
+		heap_replace(pg_operator_desc, &tup->t_self, tup);
 		setheapoverride(false);
 
 		values[Anum_pg_operator_oprcom - 1] = (Datum) NULL;
@@ -884,7 +884,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 							   replaces);
 
 		setheapoverride(true);
-		heap_replace(pg_operator_desc, &tup->t_ctid, tup);
+		heap_replace(pg_operator_desc, &tup->t_self, tup);
 		setheapoverride(false);
 	}
 

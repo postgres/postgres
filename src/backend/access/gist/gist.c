@@ -248,7 +248,7 @@ gistbuild(Relation heap,
 
 		/* form an index tuple and point it at the heap tuple */
 		itup = index_formtuple(id, &d[0], nulls);
-		itup->t_tid = htup->t_ctid;
+		itup->t_tid = htup->t_self;
 
 		/*
 		 * Since we already have the index relation locked, we call

@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.41 1998/10/06 02:39:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.42 1998/11/27 19:51:53 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,7 +321,7 @@ Async_Unlisten(char *relname, int pid)
 	{
 		lRel = heap_openr(ListenerRelationName);
 		RelationSetLockForWrite(lRel);
-		heap_delete(lRel, &lTuple->t_ctid);
+		heap_delete(lRel, &lTuple->t_self);
 		RelationUnsetLockForWrite(lRel);
 		heap_close(lRel);
 	}
@@ -369,7 +369,7 @@ Async_UnlistenAll()
 	sRel = heap_beginscan(lRel, 0, SnapshotNow, 1, key);
 
 	while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0)))
-		heap_delete(lRel, &lTuple->t_ctid);
+		heap_delete(lRel, &lTuple->t_self);
 
 	heap_endscan(sRel);
 	RelationUnsetLockForWrite(lRel);
@@ -516,7 +516,7 @@ AtCommit_Notify()
 					 * but as far as I can see we should just do it for any
 					 * failure (certainly at least for EPERM too...)
 					 */
-					heap_delete(lRel, &lTuple->t_ctid);
+					heap_delete(lRel, &lTuple->t_self);
 				}
 				else
 #endif
@@ -527,7 +527,7 @@ AtCommit_Notify()
 					{
 						rTuple = heap_modifytuple(lTuple, lRel,
 												  value, nulls, repl);
-						heap_replace(lRel, &lTuple->t_ctid, rTuple);
+						heap_replace(lRel, &lTuple->t_self, rTuple);
 					}
 				}
 			}
@@ -772,7 +772,7 @@ ProcessIncomingNotify(void)
 			NotifyMyFrontEnd(relname, sourcePID);
 			/* Rewrite the tuple with 0 in notification column */
 			rTuple = heap_modifytuple(lTuple, lRel, value, nulls, repl);
-			heap_replace(lRel, &lTuple->t_ctid, rTuple);
+			heap_replace(lRel, &lTuple->t_self, rTuple);
 		}
 	}
 	heap_endscan(sRel);

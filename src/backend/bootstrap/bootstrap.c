@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.51 1998/09/01 04:27:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.52 1998/11/27 19:51:45 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -473,7 +473,7 @@ boot_openrel(char *relname)
 		app = Typ;
 		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
 		{
-			(*app)->am_oid = tup->t_oid;
+			(*app)->am_oid = tup->t_data->t_oid;
 			memmove((char *) &(*app++)->am_typ,
 					(char *) GETSTRUCT(tup),
 					sizeof((*app)->am_typ));
@@ -634,7 +634,7 @@ InsertOneTuple(Oid objectid)
 	pfree(tupDesc);				/* just free's tupDesc, not the attrtypes */
 
 	if (objectid != (Oid) 0)
-		tuple->t_oid = objectid;
+		tuple->t_data->t_oid = objectid;
 	heap_insert(reldesc, tuple);
 	pfree(tuple);
 	if (DebugMode)
@@ -830,7 +830,7 @@ gettype(char *type)
 		app = Typ;
 		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
 		{
-			(*app)->am_oid = tup->t_oid;
+			(*app)->am_oid = tup->t_data->t_oid;
 			memmove((char *) &(*app++)->am_typ,
 					(char *) GETSTRUCT(tup),
 					sizeof((*app)->am_typ));

@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.24 1998/10/08 18:29:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.25 1998/11/27 19:52:03 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -342,10 +342,19 @@ ExecTee(Tee *node, Plan *parent)
 		slot = ExecProcNode(childNode, (Plan *) node);
 		if (!TupIsNull(slot))
 		{
-			heapTuple = slot->val;
+			/*
+			 * heap_insert changes something...
+			 */
+			if (slot->ttc_buffer != InvalidBuffer)
+				heapTuple = heap_copytuple(slot->val);
+			else
+				heapTuple = slot->val;
 
 			/* insert into temporary relation */
 			heap_insert(bufferRel, heapTuple);
+
+			if (slot->ttc_buffer != InvalidBuffer)
+				pfree(heapTuple);
 
 			/*
 			 * once there is data in the temporary relation, ensure that

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.28 1998/11/22 10:48:36 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.29 1998/11/27 19:52:03 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ IndexNext(IndexScan *node)
 	IndexScanDesc scandesc;
 	Relation	heapRelation;
 	RetrieveIndexResult result;
-	HeapTuple	tuple;
+	HeapTuple		tuple;
 	TupleTableSlot *slot;
 	Buffer		buffer = InvalidBuffer;
 	int			numIndices;
@@ -109,6 +109,7 @@ IndexNext(IndexScan *node)
 	heapRelation = scanstate->css_currentRelation;
 	numIndices = indexstate->iss_NumIndices;
 	slot = scanstate->css_ScanTupleSlot;
+	tuple = &(indexstate->iss_htup);
 
 	/* ----------------
 	 *	ok, now that we have what we need, fetch an index tuple.
@@ -121,11 +122,11 @@ IndexNext(IndexScan *node)
 		scandesc = scanDescs[indexstate->iss_IndexPtr];
 		while ((result = index_getnext(scandesc, direction)) != NULL)
 		{
-			tuple = heap_fetch(heapRelation, snapshot,
-							   &result->heap_iptr, &buffer);
+			tuple->t_self = result->heap_iptr;
+			heap_fetch(heapRelation, snapshot, tuple, &buffer);
 			pfree(result);
 
-			if (tuple != NULL)
+			if (tuple->t_data != NULL)
 			{
 				bool		prev_matches = false;
 				int			prev_index;

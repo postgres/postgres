@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.23 1998/09/01 04:27:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.24 1998/11/27 19:51:51 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ ProcedureCreate(char *procedureName,
 									  0, 0, 0);
 			pfree(prosrctext);
 			if (HeapTupleIsValid(tup))
-				return tup->t_oid;
+				return tup->t_data->t_oid;
 		}
 	}
 
@@ -155,7 +155,7 @@ ProcedureCreate(char *procedureName,
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "ProcedureCreate: no such language %s", languageName);
 
-	languageObjectId = tup->t_oid;
+	languageObjectId = tup->t_data->t_oid;
 
 	if (strcmp(returnTypeName, "opaque") == 0)
 	{
@@ -276,5 +276,5 @@ ProcedureCreate(char *procedureName,
 		CatalogCloseIndices(Num_pg_proc_indices, idescs);
 	}
 	heap_close(rel);
-	return tup->t_oid;
+	return tup->t_data->t_oid;
 }
