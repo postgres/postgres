@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.16 2001/08/21 16:35:59 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.17 2001/08/31 04:17:13 ishii Exp $
 Postgres documentation
 -->
 
@@ -401,7 +401,7 @@ CREATE OPERATOR = (
      leftarg = complex, rightarg = complex,
      procedure = complex_abs_eq,
      restrict = eqsel, join = eqjoinsel
-         )
+         );
    </programlisting>
 
    The important
