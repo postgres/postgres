@@ -69,6 +69,8 @@ extern void ShowUsage(void);
 
 #endif
 
+/* =================== interface functions =================== */
+
 int
 SPI_connect()
 {
@@ -486,6 +488,69 @@ SPI_getrelname(Relation rel)
 {
 	return (pstrdup(rel->rd_rel->relname.data));
 }
+
+void *
+SPI_palloc (Size size)
+{
+	MemoryContext	oldcxt = NULL;
+	void		   *pointer;
+	
+	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
+	{
+		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
+			elog(FATAL, "SPI: stack corrupted");
+		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
+	}
+	
+	pointer = palloc (size);
+	
+	if (oldcxt)
+		MemoryContextSwitchTo(oldcxt);
+	
+	return (pointer);
+}
+
+void *
+SPI_repalloc (void *pointer, Size size)
+{
+	MemoryContext	oldcxt = NULL;
+	
+	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
+	{
+		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
+			elog(FATAL, "SPI: stack corrupted");
+		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
+	}
+	
+	pointer = repalloc (pointer, size);
+	
+	if (oldcxt)
+		MemoryContextSwitchTo(oldcxt);
+	
+	return (pointer);
+}
+
+void 
+SPI_pfree (void *pointer)
+{
+	MemoryContext	oldcxt = NULL;
+	
+	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
+	{
+		if (_SPI_current != &(_SPI_stack[_SPI_curid + 1]))
+			elog(FATAL, "SPI: stack corrupted");
+		oldcxt = MemoryContextSwitchTo(_SPI_current->savedcxt);
+	}
+	
+	pfree (pointer);
+	
+	if (oldcxt)
+		MemoryContextSwitchTo(oldcxt);
+	
+	return;
+}
+
+/* =================== private functions =================== */
 
 /*
  * spi_printtup --
