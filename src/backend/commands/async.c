@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.98 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.99 2003/09/15 00:26:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,8 +221,6 @@ Async_Listen(char *relname, int pid)
 	if (alreadyListener)
 	{
 		heap_close(lRel, AccessExclusiveLock);
-		ereport(WARNING,
-				(errmsg("already listening on \"%s\"", relname)));
 		return;
 	}
 

@@ -174,12 +174,10 @@ alter domain dnotnulltest set not null; -- fails
 update domnotnull set col2 = 6;
 
 alter domain dnotnulltest set not null;
-alter domain dnotnulltest set not null; -- fails
 
 update domnotnull set col1 = null; -- fails
 
 alter domain dnotnulltest drop not null;
-alter domain dnotnulltest drop not null; -- fails
 
 update domnotnull set col1 = null;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.80 2003/08/30 14:59:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.81 2003/09/15 00:26:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2567,14 +2567,6 @@ AlterTableAlterOids(Oid myrelid, bool recurse, bool setOid)
 	 */
 	if (tuple_class->relhasoids == setOid)
 	{
-		if (setOid)
-			ereport(NOTICE,
-					(errmsg("table \"%s\" is already WITH OIDS",
-							RelationGetRelationName(rel))));
-		else
-			ereport(NOTICE,
-					(errmsg("table \"%s\" is already WITHOUT OIDS",
-							RelationGetRelationName(rel))));
 		heap_close(class_rel, RowExclusiveLock);
 		heap_close(rel, NoLock);	/* close rel, but keep lock! */
 		return;
@@ -4001,9 +3993,6 @@ AlterTableClusterOn(Oid relOid, const char *indexName)
 	 */
 	if (indexForm->indisclustered)
 	{
-		ereport(NOTICE,
-		(errmsg("table \"%s\" is already being clustered on index \"%s\"",
-				NameStr(rel->rd_rel->relname), indexName)));
 		ReleaseSysCache(indexTuple);
 		heap_close(rel, NoLock);
 		return;

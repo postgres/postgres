@@ -205,13 +205,9 @@ alter domain dnotnulltest set not null; -- fails
 ERROR:  relation "domnotnull" attribute "col2" contains NULL values
 update domnotnull set col2 = 6;
 alter domain dnotnulltest set not null;
-alter domain dnotnulltest set not null; -- fails
-NOTICE:  "dnotnulltest" is already set to NOT NULL
 update domnotnull set col1 = null; -- fails
 ERROR:  domain dnotnulltest does not allow NULL values
 alter domain dnotnulltest drop not null;
-alter domain dnotnulltest drop not null; -- fails
-NOTICE:  "dnotnulltest" is already set to NULL
 update domnotnull set col1 = null;
 drop domain dnotnulltest cascade;
 NOTICE:  drop cascades to table domnotnull column col2

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.124 2003/08/04 02:39:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.125 2003/09/15 00:26:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1498,11 +1498,6 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 
 			if (!intMember(sysid, newlist))
 				newlist = lappendi(newlist, sysid);
-			else
-				ereport(WARNING,
-						(errcode(ERRCODE_DUPLICATE_OBJECT),
-						 errmsg("user \"%s\" is already in group \"%s\"",
-								strVal(lfirst(item)), stmt->name)));
 		}
 
 		/* Do the update */

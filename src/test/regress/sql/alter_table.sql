@@ -870,7 +870,7 @@ select oid > 0, * from altwithoid;
 select oid > 0, * from altinhoid;
 
 alter table altwithoid set without oids;
-alter table altinhoid set without oids; -- fails
+alter table altinhoid set without oids;
 
 select oid > 0, * from altwithoid; -- fails
 select oid > 0, * from altinhoid; -- fails

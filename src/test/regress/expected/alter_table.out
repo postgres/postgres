@@ -1209,8 +1209,7 @@ select oid > 0, * from altinhoid;
 (1 row)
 
 alter table altwithoid set without oids;
-alter table altinhoid set without oids; -- fails
-NOTICE:  table "altinhoid" is already WITHOUT OIDS
+alter table altinhoid set without oids;
 select oid > 0, * from altwithoid; -- fails
 ERROR:  attribute "oid" not found
 select oid > 0, * from altinhoid; -- fails
