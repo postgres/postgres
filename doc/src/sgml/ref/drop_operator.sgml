@@ -1,0 +1,209 @@
+<REFENTRY ID="SQL-DROPOPERATOR">
+ <REFMETA>
+  <REFENTRYTITLE>
+   DROP OPERATOR
+  </REFENTRYTITLE>
+  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+ </REFMETA>
+ <REFNAMEDIV>
+  <REFNAME>
+   DROP OPERATOR
+  </REFNAME>
+  <REFPURPOSE>
+   Removes an operator from the database
+  </REFPURPOSE>
+  
+  
+ <REFSYNOPSISDIV>
+  <REFSYNOPSISDIVINFO>
+   <DATE>1998-04-15</DATE>
+  </REFSYNOPSISDIVINFO>
+  <SYNOPSIS>
+   DROP OPERATOR <REPLACEABLE CLASS="PARAMETER">id</REPLACEABLE> ( <REPLACEABLE CLASS="PARAMETER">type</REPLACEABLE> | NONE [,...] );
+  </SYNOPSIS>
+  
+  <REFSECT2 ID="R2-SQL-DROPOPERATOR-1">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Inputs
+   </TITLE>
+   <PARA>
+   </PARA>
+   <VARIABLELIST>
+    <VARLISTENTRY>
+     <TERM>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue><replaceable class="parameter">id</replaceable></ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+          The identifier of an existing operator.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue><replaceable class="parameter">type</replaceable></ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+          The type of function parameters.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </variablelist>
+     </LISTITEM>
+    </VARLISTENTRY>
+   </VARIABLELIST>
+  </REFSECT2>
+  
+  <REFSECT2 ID="R2-SQL-DROPOPERATOR-2">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Outputs
+   </TITLE>
+   <PARA>
+   </PARA>
+   <VARIABLELIST>
+    <VARLISTENTRY>
+     <TERM>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>DROP</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   The message returned if the command is successful.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>ERROR: RemoveOperator: ... does not exist</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+          This message occurs if the operator specified doesn't exist.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </variablelist>
+     </LISTITEM>
+    </VARLISTENTRY>
+   </VARIABLELIST>
+  </REFSECT2>
+ </REFSYNOPSISDIV>
+ 
+ <REFSECT1 ID="R1-SQL-DROPOPERATOR-1">
+  <REFSECT1INFO>
+   <DATE>1998-04-15</DATE>
+  </REFSECT1INFO>
+  <TITLE>
+   Description
+  </TITLE>
+  <PARA>
+   The DROP OPERATOR statement drops an existing operator from the
+   database.
+   To execute this command you must be the owner of the operator.
+  </PARA>
+  <PARA>
+   The left or right type of a left or right unary
+   operator, respectively, may be specified as NONE.
+  </PARA>
+  
+  <REFSECT2 ID="R2-SQL-DROPOPERATOR-3">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Notes
+   </TITLE>
+   <PARA>
+    The <command>DROP OPERATOR</command> statement is a PostgreSQL
+    language extension.
+   </PARA>
+   <PARA>
+    Refer to the <command>CREATE OPERATOR</command> statement for
+    information on how to create operators.
+   </PARA>
+   <PARA>
+    It is the user's responsibility to remove any access methods,
+    operator classes, and so on, that rely on the deleted operator.
+   </PARA>
+  </REFSECT2>
+  
+ <REFSECT1 ID="R1-SQL-DROPOPERATOR-2">
+  <TITLE>
+   Usage
+  </TITLE>
+  <PARA>
+   Remove power operator <literal>a^n</literal> for <literal>int4</literal>:
+  </PARA>
+  <ProgramListing>
+   DROP OPERATOR ^ (int4, int4);
+  </ProgramListing>
+  <PARA>
+   Remove left unary operator <literal>!a</literal> for booleans:
+  </PARA>
+  <ProgramListing>
+   DROP OPERATOR ! (none, bool);
+  </ProgramListing>
+  <PARA>
+   Remove right unary factorial operator <literal>a!</literal> for
+   <literal>int4</literal>:
+  </PARA>
+  <ProgramListing>
+   DROP OPERATOR ! (int4, none);
+  </ProgramListing>
+ </REFSECT1>
+ 
+ <REFSECT1 ID="R1-SQL-DROPOPERATOR-3">
+  <TITLE>
+   Compatibility
+  </TITLE>
+  <PARA>
+  </PARA>
+  
+  <REFSECT2 ID="R2-SQL-DROPOPERATOR-4">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    SQL92
+   </TITLE>
+   <PARA>
+   There is no DROP OPERATOR statement in SQL92.
+   </PARA>
+  </refsect2>
+ </refsect1>
+</REFENTRY>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->
