@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Attic/Makefile.global,v 1.6 1996/07/25 01:11:15 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Attic/Makefile.global,v 1.7 1996/08/14 04:54:24 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,8 @@ LIBPQ:=   -L$(srcdir)/libpq/$(objdir) -lpq
 
 LD_ADD+= $(LIBPQ)
 DPADD+= $(LIBPQ)
-
+# LIB_DEP is the list of dependencies on libraries for the link.
+LIB_DEP+= $(srcdir)/libpq/$(objdir)/libpq.a
 
 #
 # And where libpq goes, so goes the authentication stuff...
@@ -29,3 +30,4 @@ ifdef KRBVERS
 LD_ADD+= $(KRBLIBS)
 CFLAGS+= $(KRBFLAGS)
 endif
+

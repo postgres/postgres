@@ -10,13 +10,13 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/mk/Attic/postgres.prog.mk,v 1.2 1996/08/13 07:48:33 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/mk/Attic/postgres.prog.mk,v 1.3 1996/08/14 04:54:45 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 PROGOBJS:= $(SRCS:%.c=%.o)
 
-$(PROG):  $(addprefix $(objdir)/,$(PROGOBJS))
+$(PROG):  $(addprefix $(objdir)/,$(PROGOBJS)) $(LIB_DEP)
 	$(CC) $(LDFLAGS) -o $(objdir)/$(@F) $(addprefix $(objdir)/,$(PROGOBJS)) $(LD_ADD)
 
 CLEANFILES+= $(PROGOBJS) $(PROG)
