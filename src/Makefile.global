@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.66 1996/11/13 11:43:04 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.67 1996/11/14 00:26:23 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -138,7 +138,7 @@ OIDNAMELEN= 36
 # Use -Werror to stop the compile when any warnings occur
 COPT= -O #-Werror
 
-# Commenting out CASSERT will make things go a LOT faster, but you will
+# Commenting out CASSERT will make things go about 10% faster, but you will
 # also loose a lot of useful error-checking.
 CASSERT= true
 
