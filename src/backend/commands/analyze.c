@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.60 2003/08/26 15:38:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.61 2003/09/11 22:59:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -690,8 +690,10 @@ pageloop:;
 	/*
 	 * Emit some interesting relation info 
 	 */
-	elog(elevel, "  pages = %d rows/page = %d rows = %.0f", 
-		onerel->rd_nblocks, (int)tuplesperpage, *totalrows);
+	ereport(elevel,
+			(errmsg("\"%s\": %u pages, %.1f average rows/page in sample, %.0f estimated rows",
+					RelationGetRelationName(onerel),
+					onerel->rd_nblocks, tuplesperpage, *totalrows)));
 
 	return numrows;
 }
