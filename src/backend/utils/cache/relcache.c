@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.65 1999/07/16 03:14:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.66 1999/07/16 05:23:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,8 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
-#include "catalog/pg_proc.h"
 #include "catalog/pg_log.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_relcheck.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_type.h"

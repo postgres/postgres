@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.25 1999/07/15 23:03:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.26 1999/07/16 05:23:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,6 @@
 #include "postgres.h"
 #include "utils/dynahash.h"
 #include "utils/hsearch.h"
-#ifndef FRONTEND
-#endif	 /* !FRONTEND */
 #include "utils/memutils.h"
 
 /*

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: psort.c,v 1.54 1999/07/15 22:40:14 momjian Exp $
+ *	  $Id: psort.c,v 1.55 1999/07/16 05:23:30 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -37,11 +37,11 @@
 #include <unistd.h>
 
 #include "postgres.h"
-#include "miscadmin.h"
 
 #include "access/heapam.h"
 #include "executor/execdebug.h"
 #include "executor/executor.h"
+#include "miscadmin.h"
 #include "utils/psort.h"
 
 static bool createfirstrun(Sort *node);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.26 1999/07/16 03:14:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.27 1999/07/16 05:23:22 momjian Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
@@ -21,8 +21,8 @@
 
 #include "postgres.h"
 
-#include "utils/exc.h"
 #include "storage/ipc.h"
+#include "utils/exc.h"
 
 static void ExcUnCaught(Exception *excP, ExcDetail detail, ExcData data,
 			ExcMessage message);

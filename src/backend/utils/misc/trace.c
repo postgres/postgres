@@ -19,11 +19,12 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "postgres.h"
+
 #ifdef USE_SYSLOG
 #include <syslog.h>
 #endif
 
-#include "postgres.h"
 #include "miscadmin.h"
 #include "utils/trace.h"
 

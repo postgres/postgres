@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: nabstime.c,v 1.59 1999/07/16 05:00:14 momjian Exp $
+ *	  $Id: nabstime.c,v 1.60 1999/07/16 05:23:19 momjian Exp $
  *
  */
 #include <stdio.h>
@@ -349,8 +349,6 @@ nabstimeout(AbsoluteTime time)
 			break;
 		default:
 			abstime2tm(time, &tz, tm, tzn);
-#if DATEDEBUG
-#endif
 			EncodeDateTime(tm, fsec, &tz, &tzn, DateStyle, buf);
 			break;
 	}

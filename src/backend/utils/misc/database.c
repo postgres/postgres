@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.26 1999/07/15 22:40:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.27 1999/07/16 05:23:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "utils/syscache.h"
 
 #ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
 #endif
 
 #ifdef NOT_USED

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.17 1999/07/15 22:40:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.18 1999/07/16 05:23:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,8 @@
 
 #include "postgres.h"
 
-#include "access/heapam.h"
 
+#include "access/heapam.h"
 #include "utils/lselect.h"
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.26 1999/07/16 03:14:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.27 1999/07/16 05:23:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,10 +78,10 @@
 
 #include "postgres.h"
 
+
+
 #include "lib/hasht.h"
 #include "utils/module.h"
-
-
 #include "utils/portal.h"
 
 static void CollectNamedPortals(Portal *portalP, int destroy);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.44 1999/07/16 03:14:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.45 1999/07/16 05:23:26 momjian Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -35,28 +35,21 @@
 #include <unistd.h>
 
 #include "postgres.h"
-#include "version.h"
-
-#include "storage/backendid.h"
-#include "storage/smgr.h"
-#include "storage/proc.h"
-#include "utils/relcache.h"
 
 #include "access/heapam.h"
-#include "utils/syscache.h"
-#include "storage/bufpage.h"
-#include "storage/sinval.h"
-
-#include "miscadmin.h"
-#include "utils/portal.h"
-
-#include "utils/inval.h"
-
 #include "catalog/catname.h"
-#ifdef MULTIBYTE
-#endif
-
 #include "libpq/libpq.h"
+#include "miscadmin.h"
+#include "storage/backendid.h"
+#include "storage/bufpage.h"
+#include "storage/proc.h"
+#include "storage/sinval.h"
+#include "storage/smgr.h"
+#include "utils/inval.h"
+#include "utils/portal.h"
+#include "utils/relcache.h"
+#include "utils/syscache.h"
+#include "version.h"
 
 static void VerifySystemDatabase(void);
 static void VerifyMyDatabase(void);

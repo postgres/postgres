@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.8 1999/07/15 22:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.9 1999/07/16 05:23:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,10 +26,10 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "utils/temprel.h"
 #include "access/heapam.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
+#include "utils/temprel.h"
 
 GlobalMemory CacheCxt;
 

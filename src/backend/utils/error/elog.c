@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.45 1999/05/25 16:12:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.46 1999/07/16 05:23:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,14 +24,14 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include "postgres.h"
 #ifdef USE_SYSLOG
 #include <syslog.h>
 #endif
 
-#include "postgres.h"
-#include "miscadmin.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
+#include "miscadmin.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/trace.h"

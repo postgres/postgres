@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.29 1999/07/15 22:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.30 1999/07/16 05:23:19 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -16,11 +16,11 @@
 #include <string.h>
 #include "postgres.h"
 
-#include "utils/syscache.h"
-#include "utils/lsyscache.h"
 
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 /*				---------- AMOP CACHES ----------						 */
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.29 1999/07/15 22:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.30 1999/07/16 05:23:21 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -17,31 +17,25 @@
  *
  *-------------------------------------------------------------------------
  */
+#include <string.h>
 #include "postgres.h"
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
-#include "utils/catcache.h"
-#include <string.h>
-
-
-/* ----------------
- *		hardwired attribute information comes from system catalog files.
- * ----------------
- */
+#include "catalog/pg_aggregate.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_group.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_language.h"
+#include "catalog/pg_listener.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
 #include "catalog/pg_rewrite.h"
-#include "catalog/pg_aggregate.h"
 #include "catalog/pg_shadow.h"
-#include "catalog/pg_listener.h"
+#include "catalog/pg_type.h"
+#include "utils/catcache.h"
 
 extern bool AMI_OVERRIDE;		/* XXX style */
 
