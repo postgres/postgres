@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.172 2000/12/07 01:12:08 tgl Exp $
+ *	$Id: analyze.c,v 1.173 2000/12/18 01:37:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -945,9 +945,10 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		index->withClause = NIL;
 		index->whereClause = NULL;
 
-		foreach(keys, constraint->keys)
+		foreach (keys, constraint->keys)
 		{
-			int found=0;
+			bool	found = false;
+
 			key = (Ident *) lfirst(keys);
 			Assert(IsA(key, Ident));
 			column = NULL;
@@ -956,26 +957,58 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 				column = lfirst(columns);
 				Assert(IsA(column, ColumnDef));
 				if (strcmp(column->colname, key->name) == 0)
+				{
+					found = true;
 					break;
+				}
 			}
-			if (columns == NIL) { /* try inherited tables */
+			if (found)
+			{
+				/* found column in the new table; force it to be NOT NULL */
+				if (constraint->contype == CONSTR_PRIMARY)
+					column->is_not_null = TRUE;
+			}
+			else
+			{
+				/* try inherited tables */
+				List *inhRelnames = stmt->inhRelnames;
 				List *inher;
-				List *inhRelnames=stmt->inhRelnames;
-				Relation rel;
-				foreach (inher, inhRelnames) {
-					int count=0;
-					Value *inh=lfirst(inher);
-					if (inh->type!=T_String) {
-						elog(ERROR, "inherited table name list returns a non-string");
-					}
-					rel=heap_openr(inh->val.str, AccessShareLock);
+
+				foreach (inher, inhRelnames)
+				{
+					Value *inh = lfirst(inher);
+					Relation rel;
+					int count;
+
+					Assert(IsA(inh, String));
+					rel = heap_openr(inh->val.str, AccessShareLock);
 					if (rel->rd_rel->relkind != RELKIND_RELATION)
 						elog(ERROR, "inherited table \"%s\" is not a relation",
-							inh->val.str);
-					for (; count<rel->rd_att->natts; count++) {
-						char *name=NameStr(rel->rd_att->attrs[count]->attname);
-						if (strcmp(key->name, name) == 0) {
-							found=1;
+							 inh->val.str);
+					for (count = 0; count < rel->rd_att->natts; count++)
+					{
+						Form_pg_attribute inhattr = rel->rd_att->attrs[count];
+						char *inhname = NameStr(inhattr->attname);
+
+						if (strcmp(key->name, inhname) == 0)
+						{
+							found = true;
+							/*
+							 * If the column is inherited, we currently have
+							 * no easy way to force it to be NOT NULL.
+							 * Only way I can see to fix this would be to
+							 * convert the inherited-column info to ColumnDef
+							 * nodes before we reach this point, and then
+							 * create the table from those nodes rather than
+							 * referencing the parent tables later.  That
+							 * would likely be cleaner, but too much work
+							 * to contemplate right now.  Instead, raise an
+							 * error if the inherited column won't be NOT NULL.
+							 * (Would a NOTICE be more reasonable?)
+							 */
+							if (! inhattr->attnotnull)
+								elog(ERROR, "inherited attribute \"%s\" cannot be a PRIMARY KEY because it is not marked NOT NULL",
+									 inhname);
 							break;
 						}
 					}
@@ -984,16 +1017,11 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						break;
 				}
 			}
-			else {
-				found=1;
-			}
 
 			if (!found)
-				elog(ERROR, "CREATE TABLE: column '%s' named in key does not exist",
+				elog(ERROR, "CREATE TABLE: column \"%s\" named in key does not exist",
 					 key->name);
 
-			if (constraint->contype == CONSTR_PRIMARY)
-				column->is_not_null = TRUE;
 			iparam = makeNode(IndexElem);
 			iparam->name = pstrdup(key->name);
 			iparam->args = NIL;
@@ -1001,7 +1029,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			index->indexParams = lappend(index->indexParams, iparam);
 
 			if (index->idxname == NULL)
-				index->idxname = CreateIndexName(stmt->relname, iparam->name, "key", ilist);
+				index->idxname = CreateIndexName(stmt->relname, iparam->name,
+												 "key", ilist);
 		}
 
 		if (index->idxname == NULL)		/* should not happen */
