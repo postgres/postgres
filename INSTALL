@@ -24,7 +24,7 @@ The long version is the rest of this document.
 Requirements
 
 In general, a modern Unix-compatible platform should be able to run
-PostgreSQL. The platforms that had received explicit testing at the time of
+PostgreSQL. The platforms that had received specific testing at the time of
 release are listed in the Section called Supported Platforms below. In the
 "doc" subdirectory of the distribution there are several platform-specific
 FAQ documents you might wish to consult if you are having trouble.
@@ -38,27 +38,29 @@ The following prerequisites exist for building PostgreSQL:
 
      gmake --version
 
-     If at all possible you should use version 3.76.1 or later.
+     It is recommended to use version 3.76.1 or later.
 
    * You need an ISO/ANSI C compiler. Recent versions of GCC are
      recommendable, but PostgreSQL is known to build with a wide variety of
      compilers from different vendors.
 
-   * gzip
+   * gzip is needed to unpack the distribution in the first place. If you
+     are reading this, you probably already got past that hurdle.
 
-   * The GNU Readline library for comfortable line editing and command
-     history retrieval will automatically be used if found. You might wish
-     to install it before proceeding, but it is not required. (On NetBSD,
+   * The GNU Readline library (for comfortable line editing and command
+     history retrieval) will automatically be used if found. You might wish
+     to install it before proceeding, but it is not essential. (On NetBSD,
      the "libedit" library is readline-compatible and is used if
      "libreadline" is not found.)
 
-   * Flex and Bison are *not* required when building from a released source
-     package because the output files are pre-generated. You will need these
-     programs only when building from a CVS tree or when the actual scanner
-     and parser definition files were changed. If you need them, be sure to
-     get Flex 2.5.4 or later and Bison 1.28 or later. Other yacc programs
-     can sometimes be used, but doing so requires extra efforts and is not
-     recommended. Other lex programs will definitely not work.
+   * GNU Flex and Bison are needed to build from scratch, but they are *not*
+     required when building from a released source package because
+     pre-generated output files are included in released packages. You will
+     need these programs only when building from a CVS tree or if you
+     changed the actual scanner and parser definition files. If you need
+     them, be sure to get Flex 2.5.4 or later and Bison 1.28 or later. Other
+     yacc programs can sometimes be used, but doing so requires extra effort
+     and is not recommended. Other lex programs will definitely not work.
 
    * To build on Windows NT or Windows 2000 you need the Cygwin and cygipc
      packages. See the file "doc/FAQ_MSWIN" for details.
@@ -96,10 +98,11 @@ here. These instructions assume that your existing installation is under the
 
      pg_dumpall > outputfile
 
-     If you need to preserve the OIDs (such as when using them as foreign
-     keys), then use the "-o" option when running "pg_dumpall". "pg_dumpall"
-     does not save large objects. Check the Administrator's Guide if you
-     need to do this.
+     If you need to preserve OIDs (such as when using them as foreign keys),
+     then use the "-o" option when running "pg_dumpall".
+
+     "pg_dumpall" does not save large objects. Check the Administrator's
+     Guide if you need to do this.
 
      Make sure that you use the "pg_dumpall" command from the version you
      are currently running. 7.2's "pg_dumpall" should not be used on older
@@ -122,11 +125,11 @@ here. These instructions assume that your existing installation is under the
 
      /etc/rc.d/init.d/postgresql stop
 
-     works.
+     works. Another possibility is "pg_ctl stop".
 
   4. If you are installing in the same place as the old version then it is
      also a good idea to move the old installation out of the way, in case
-     you still need it later on. Use a command like this:
+     you have trouble and need to revert to it. Use a command like this:
 
      mv /usr/local/pgsql /usr/local/pgsql.old
 
@@ -163,11 +166,11 @@ Installation Procedure
 
      This script will run a number of tests to guess values for various
      system dependent variables and detect some quirks of your operating
-     system, and finally creates several files in the build tree to record
-     what it found.
+     system, and finally will create several files in the build tree to
+     record what it found.
 
      The default configuration will build the server and utilities, as well
-     as all client applications and interfaces that only require a C
+     as all client applications and interfaces that require only a C
      compiler. All files will be installed under "/usr/local/pgsql" by
      default.
 
@@ -246,17 +249,17 @@ Installation Procedure
           and are namespace-clean. The internal header files and the
           server header files are installed into private directories
           under includedir. See the Programmer's Guide for information
-          how to get at the header files for each interface. Finally, a
-          private subdirectory will also be created, if appropriate,
-          under libdir for dynamically loadable modules.
+          about how to get at the header files for each interface.
+          Finally, a private subdirectory will also be created, if
+          appropriate, under libdir for dynamically loadable modules.
 
      --with-includes=DIRECTORIES
 
           "DIRECTORIES" is a colon-separated list of directories that will
           be added to the list the compiler searches for header files. If
           you have optional packages (such as GNU Readline) installed in a
-          non-standard location you have to use this option and probably the
-          corresponding "--with-libraries" option.
+          non-standard location, you have to use this option and probably
+          also the corresponding "--with-libraries" option.
 
           Example: --with-includes=/opt/gnu/include:/usr/sup/include.
 
@@ -293,12 +296,12 @@ Installation Procedure
      --enable-nls[=LANGUAGES]
 
           Enables Native Language Support (NLS), that is, the ability to
-          display a program's message in a language other than English.
+          display a program's messages in a language other than English.
           "LANGUAGES" is a space separated list of codes of the languages
-          that you want supported. (The intersection between your list and
-          the set of actually provided translations will be computed
-          automatically.) If you do not specify it, then all available
-          translations are installed.
+          that you want supported, for example --enable-nls='de fr'. (The
+          intersection between your list and the set of actually provided
+          translations will be computed automatically.) If you do not
+          specify a list, then all available translations are installed.
 
           To use this option, you will need an implementation of the gettext
           API. Some operating systems have this built-in (e.g., Linux,
@@ -314,7 +317,9 @@ Installation Procedure
           Set "NUMBER" as the default port number for server and clients.
           The default is 5432. The port can always be changed later on, but
           if you specify it here then both server and clients will have the
-          same default compiled in, which can be very convenient.
+          same default compiled in, which can be very convenient. Usually
+          the only good reason to select a non-default value is if you
+          intend to run multiple PostgreSQL servers on the same machine.
 
      --with-CXX
 
@@ -350,19 +355,20 @@ Installation Procedure
 
      --with-tclconfig=DIRECTORY, --with-tkconfig=DIRECTORY
 
-          Tcl/Tk installs the files "tclConfig.sh" and "tkConfig.sh" which
-          contain certain configuration information that is needed to build
-          modules interfacing to Tcl or Tk. These files are normally found
-          automatically at their well-known location, but if you want to use
-          a different version of Tcl or Tk you can specify the directory
-          where to find them.
+          Tcl/Tk installs the files "tclConfig.sh" and "tkConfig.sh", which
+          contain configuration information needed to build modules
+          interfacing to Tcl or Tk. These files are normally found
+          automatically at their well-known locations, but if you want to
+          use a different version of Tcl or Tk you can specify the directory
+          in which to find them.
 
      --enable-odbc
 
           Build the ODBC driver. By default, the driver will be independent
           of a driver manager. To work better with a driver manager already
-          installed on your system, use one of the following options. More
-          information can be found in the Programmer's Guide.
+          installed on your system, use one of the following options in
+          addition to this one. More information can be found in the
+          Programmer's Guide.
 
      --with-iodbc
 
@@ -385,12 +391,19 @@ Installation Procedure
           that case the driver manager handles the location of the
           configuration file.
 
-     --with-krb4=DIRECTORY, --with-krb5=DIRECTORY
+     --with-java
+
+          Build the JDBC driver and associated Java packages. This option
+          requires Ant to be installed (as well as a JDK, of course). Refer
+          to the JDBC driver documentation in the Programmer's Guide for
+          more information.
+
+     --with-krb4[=DIRECTORY], --with-krb5[=DIRECTORY]
 
           Build with support for Kerberos authentication. You can use either
           Kerberos version 4 or 5, but not both. The "DIRECTORY" argument
           specifies the root directory of the Kerberos installation;
-          "/usr/athena" is assumed as default. If the relevant headers files
+          "/usr/athena" is assumed as default. If the relevant header files
           and libraries are not under a common parent directory, then you
           must use the "--with-includes" and "--with-libraries" options in
           addition to this option. If, on the other hand, the required files
@@ -406,7 +419,7 @@ Installation Procedure
           The name of the Kerberos service principal. postgres is the
           default. There's probably no reason to change this.
 
-     --with-openssl=DIRECTORY
+     --with-openssl[=DIRECTORY]
 
           Build with support for SSL (encrypted) connections. This requires
           the OpenSSL package to be installed. The "DIRECTORY" argument
@@ -417,19 +430,16 @@ Installation Procedure
           to make sure that your OpenSSL installation is sufficient before
           proceeding.
 
-     --with-java
+     --with-pam
 
-          Build the JDBC driver and associated Java packages. This option
-          requires Ant to be installed (as well as a JDK, of course). Refer
-          to the JDBC driver documentation in the Programmer's Guide for
-          more information.
+          Build with PAM (Pluggable Authentication Modules) support.
 
      --enable-syslog
 
           Enables the PostgreSQL server to use the syslog logging facility.
           (Using this option does not mean that you must log with syslog or
           even that it will be done by default, it simply makes it possible
-          to turn this option on at run time.)
+          to turn that option on at run time.)
 
      --enable-debug
 
@@ -439,9 +449,10 @@ Installation Procedure
           considerably, and on non-GCC compilers it usually also disables
           compiler optimization, causing slowdowns. However, having the
           symbols available is extremely helpful for dealing with any
-          problems that may arise. Currently, this option is considered of
-          marginal value for production installations, but you should have
-          it on if you are doing development work or running a beta version.
+          problems that may arise. Currently, this option is recommended for
+          production installations only if you use GCC. But you should
+          always have it on if you are doing development work or running a
+          beta version.
 
      --enable-cassert
 
@@ -456,13 +467,22 @@ Installation Procedure
           you should have it on for development work or when running a beta
           version.
 
+     --enable-depend
+
+          Enables automatic dependency tracking. With this option, the
+          makefiles are set up so that all affected object files will be
+          rebuilt when any header file is changed. This is useful if you are
+          doing development work, but is just wasted overhead if you intend
+          only to compile once and install. At present, this option will
+          work only if you use GCC.
+
      If you prefer a C or C++ compiler different from the one "configure"
-     picks then you can set the environment variables CC and CXX,
+     picks then you can set the environment variables CC or CXX,
      respectively, to the program of your choice. Similarly, you can
      override the default compiler flags with the CFLAGS and CXXFLAGS
      variables. For example:
 
-     env CC=/opt/bin/gcc CFLAGS='-02 -pipe' ./configure
+     env CC=/opt/bin/gcc CFLAGS='-O2 -pipe' ./configure
 
   2. Build
 
@@ -470,8 +490,9 @@ Installation Procedure
 
      gmake
 
-     (Remember to use GNU make.) The build can take anywhere from 5 minutes
-     to half an hour. The last line displayed should be
+     (Remember to use GNU make.) The build may take anywhere from 5 minutes
+     to half an hour depending on your hardware. The last line displayed
+     should be
 
      All of PostgreSQL is successfully made. Ready to install.
 
@@ -494,7 +515,7 @@ Installation Procedure
   4. Installing The Files
 
           Note: If you are upgrading an existing system and are going
-          to install the new files over the old ones then you should
+          to install the new files over the old ones, then you should
           have backed up your data and shut down the old server by now,
           as explained in the Section called If You Are Upgrading
           above.
@@ -521,11 +542,11 @@ Installation Procedure
      take the required files and place them in other directories where Perl
      or Python can find them, but how to do that is left as an exercise.
 
-     The standard install installs only the header files needed for client
-     application development. If you plan to do any server-side program
-     development (such as custom functions or data types written in C), then
-     you may want to install the entire PostgreSQL include tree into your
-     target include directory. To do that, enter
+     The standard installation provides only the header files needed for
+     client application development. If you plan to do any server-side
+     program development (such as custom functions or data types written in
+     C), then you may want to install the entire PostgreSQL include tree
+     into your target include directory. To do that, enter
 
      gmake install-all-headers
 
@@ -534,23 +555,30 @@ Installation Procedure
      reference. (If you do, you can just use the source's include directory
      when building server-side software.)
 
-     Client-only installation. If you want to install only the client
+     Client-only installation: If you want to install only the client
      applications and interface libraries, then you can use these commands:
 
      gmake -C src/bin install
+     gmake -C src/include install
      gmake -C src/interfaces install
      gmake -C doc install
 
      To undo the installation use the command "gmake uninstall". However,
-     this will not remove any directories.
+     this will not remove any created directories.
 
 After the installation you can make room by removing the built files from
-the source tree with the "gmake clean" command. This will preserve the
-choices made by the configure program, so that you can rebuild everything
-with "gmake" later on. To reset the source tree to the state in which it was
+the source tree with the "gmake clean" command. This will preserve the files
+made by the configure program, so that you can rebuild everything with
+"gmake" later on. To reset the source tree to the state in which it was
 distributed, use "gmake distclean". If you are going to build for several
 platforms from the same source tree you must do this and re-configure for
 each build.
+
+If you perform a build and then discover that your configure options were
+wrong, or if you change anything that configure investigates (for example,
+you install GNU Readline), then it's a good idea to do "gmake distclean"
+before reconfiguring and rebuilding. Without this, your changes in
+configuration choices may not propagate everywhere they need to.
 
   ------------------------------------------------------------------------
 
@@ -578,7 +606,7 @@ setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
 Replace /usr/local/pgsql/lib with whatever you set "--libdir" to in step 1.
 You should put these commands into a shell start-up file such as
 "/etc/profile" or "~/.bash_profile". Some good information about the caveats
-associated with the method can be found at
+associated with this method can be found at
 http://www.visi.com/~barr/ldpath.html.
 
 On some systems it might be preferable to set the environment variable
@@ -610,8 +638,8 @@ Environment Variables
 
 If you installed into "/usr/local/pgsql" or some other location that is not
 searched for programs by default, you need to add "/usr/local/pgsql/bin" (or
-what you set "--bindir" to in step 1) into your PATH. To do this, add the
-following to your shell start-up file, such as "~/.bash_profile" (or
+whatever you set "--bindir" to in step 1) into your PATH. To do this, add
+the following to your shell start-up file, such as "~/.bash_profile" (or
 "/etc/profile", if you want it to affect every user):
 
 PATH=/usr/local/pgsql/bin:$PATH
@@ -628,8 +656,8 @@ MANPATH=/usr/local/pgsql/man:$MANPATH
 The environment variables PGHOST and PGPORT specify to client applications
 the host and port of the database server, overriding the compiled-in
 defaults. If you are going to run client applications remotely then it is
-convenient if every user that plans to use the database sets PGHOST, but it
-is not required and the settings can be communicated via command line
+convenient if every user that plans to use the database sets PGHOST. This is
+not required, however: the settings can be communicated via command line
 options to most client programs.
 
   ------------------------------------------------------------------------
@@ -696,15 +724,17 @@ once installed. The Administrator's Guide contains more information.
 
 What Now?
 
-   * The Tutorial should be your first reading if you are completely new to
-     SQL databases. It should have been installed at
-     "/usr/local/pgsql/doc/html/tutorial.html" unless you changed the
+   * The PostgreSQL distribution contains a comprehensive documentation set,
+     which you should read sometime. After installation, the documentation
+     can be accessed by pointing your browser to
+     "/usr/local/pgsql/doc/html/index.html", unless you changed the
      installation directories.
 
-   * If you are familiar with database concepts then you want to proceed
-     with the Administrator's Guide, which contains information about how to
-     set up the database server, database users, and authentication. It can
-     be found at "/usr/local/pgsql/doc/html/admin.html".
+     The Tutorial should be your first reading if you are completely new to
+     SQL databases. If you are familiar with database concepts then you want
+     to proceed with the Administrator's Guide, which contains information
+     about how to set up the database server, database users, and
+     authentication.
 
    * Usually, you will want to modify your computer so that it will
      automatically start the database server whenever it boots. Some
@@ -728,109 +758,114 @@ tests pass.
      supported platform, please write to <pgsql-bugs@postgresql.org> or
      <pgsql-ports@postgresql.org>, not to the people listed here.
 
- OS       Processor Version Reported                               Remarks
- AIX 4.3.3RS6000    7.1     2001-03-21, Gilles Darold              see also
-                            (<gilles@darold.net>)                  doc/FAQ_AIX
- BeOS     x86       7.1     2001-02-26, Cyril Velter               requires new
- 5.0.4                      (<cyril.velter@libertysurf.fr>)        BONE networking
-                                                                   stack
- BSD/OS   x86       7.1     2001-03-20, Bruce Momjian
- 4.01                       (<pgman@candle.pha.pa.us>)
- FreeBSD  x86       7.2     2001-11-14, Chris Kings-Lynne
+ OS     Processor   Version Reported                         Remarks
+ AIX    RS6000      7.2     2001-12-19, Andreas Zeugswetter  see also
+                            (<ZeugswetterA@spardat.at>),     doc/FAQ_AIX
+                            Tatsuo Ishii
+                            (<t-ishii@sra.co.jp>)
+ BeOS   x86         7.2     2001-11-29, Cyril Velter         5.0.4
+                            (<cyril.velter@libertysurf.fr>)
+ BSD/OS x86         7.2     2001-11-27, Bruce Momjian        4.2
+                            (<pgman@candle.pha.pa.us>)
+ FreeBSDAlpha       7.2     2001-12-18, Chris Kings-Lynne
                             (<chriskl@familyhealth.com.au>)
- HP-UX    PA-RISC   7.2     2001-11-16, 10.20 Tom Lane             32- and 64-bit
-                            (<tgl@sss.pgh.pa.us>), 2001-03-22,     on 11.00; see
-                            11.00, 11i Giles Lean                  also
-                            (<giles@nemeton.com.au>)               doc/FAQ_HPUX
- IRIX     MIPS      7.1     2001-03-22, Robert Bruccoleri          32-bit
- 6.5.11                     (<bruc@acm.org>)                       compilation
-                                                                   model
- Linux    Alpha     7.2     2001-11-16, Tom Lane                   Tested at
- 2.2.18                     (<tgl@sss.pgh.pa.us>)                  SourceForge
- Linux    armv4l    7.1     2001-02-22, Mark Knox
- 2.2.x                      (<segfault@hardline.org>)
- Linux    MIPS      7.2     2001-11-15, Hisao Shibuya              Cobalt Qube2
- 2.0.x                      (<shibuya@alpha.or.jp>)
- Linux    PPC74xx   7.2     2001-11-16, Tom Lane                   Apple G3
- 2.2.18                     (<tgl@sss.pgh.pa.us>)
- Linux    S/390     7.1     2000-11-17, Neale Ferguson
-                            (<Neale.Ferguson@softwareAG-usa.com>)
- Linux    Sparc     7.1     2001-01-30, Ryan Kirkpatrick
- 2.2.15                     (<pgsql@rkirkpat.net>)
- Linux    x86       7.2     2001-11-15, Thomas Lockhart            2.0.x, 2.2.x,
-                            (<lockhart@fourpalms.org>)             2.4.x
- MacOS X  PPC       7.2     2001-11-16, Tom Lane                   Darwin 10.1
+ FreeBSDx86         7.2     2001-11-14, Chris Kings-Lynne
+                            (<chriskl@familyhealth.com.au>)
+ HP-UX  PA-RISC     7.2     2001-11-29, Joseph Conway        11.00 and 10.20;
+                            (<Joseph.Conway@home.com>), Tom  see also
+                            Lane (<tgl@sss.pgh.pa.us>)       doc/FAQ_HPUX
+ IRIX   MIPS        7.2     2001-11-28, Luis Amigo           6.5.13, MIPSPro
+                            (<lamigo@atc.unican.es>)         7.30
+ Linux  Alpha       7.2     2001-11-16, Tom Lane             2.2.18; tested at
+                            (<tgl@sss.pgh.pa.us>)            SourceForge
+ Linux  armv4l      7.2     2001-12-10, Mark Knox            2.2.x
+                            (<segfault@hardline.org>)
+ Linux  MIPS        7.2     2001-11-15, Hisao Shibuya        2.0.x; Cobalt
+                            (<shibuya@alpha.or.jp>)          Qube2
+ Linux  PlayStation 7.2     2001-12-12, Permaine Cheung      #undef
+        2                   <pcheung@redhat.com>)            HAS_TEST_AND_SET,
+                                                             slock_t
+ Linux  PPC74xx     7.2     2001-11-16, Tom Lane             2.2.18; Apple G3
                             (<tgl@sss.pgh.pa.us>)
- NetBSD   Alpha     7.2     2001-11-20, Thomas Thai
- 1.5W                       (<tom@minnesota.com>)
- NetBSD   arm32     7.1     2001-03-21, Patrick Welche
- 1.5E                       (<prlw1@cam.ac.uk>)
- NetBSD   m68k      7.0     2000-04-10, Henry B. Hotz              Mac 8xx
+ Linux  S/390       7.2     2001-12-12, Permaine Cheung
+                            <pcheung@redhat.com>)
+ Linux  Sparc       7.2     2001-11-28, Doug McNaught        2.2.19
+                            (<doug@wireboard.com>)
+ Linux  x86         7.2     2001-11-15, Thomas Lockhart      2.0.x, 2.2.x,
+                            (<lockhart@fourpalms.org>)       2.4.x
+ MacOS XPPC         7.2     2001-11-28, Gavin Sherry         10.1.x
+                            (<swm@linuxworld.com.au>)
+ NetBSD Alpha       7.2     2001-11-20, Thomas Thai          1.5W
+                            (<tom@minnesota.com>)
+ NetBSD arm32       7.1     2001-03-21, Patrick Welche       1.5E
+                            (<prlw1@cam.ac.uk>)
+ NetBSD m68k        7.0     2000-04-10, Henry B. Hotz        Mac 8xx
                             (<hotz@jpl.nasa.gov>)
- NetBSD   PPC       7.1     2001-04-05, Henry B. Hotz              Mac G4
-                            (<hotz@jpl.nasa.gov>)
- NetBSD   Sparc     7.1     2000-04-05, Matthew Green              32- and 64-bit
-                            (<mrg@eterna.com.au>)                  builds
- NetBSD   VAX       7.1     2001-03-30, Tom I. Helbekkmo
- 1.5                        (<tih@kpnQwest.no>)
- NetBSD   x86       7.1     2001-03-23, Giles Lean
- 1.5                        (<giles@nemeton.com.au>)
- OpenBSD  Sparc     7.1     2001-03-23, Brandon Palmer
- 2.8                        (<bpalmer@crimelabs.net>)
- OpenBSD  x86       7.1     2001-03-21, Brandon Palmer
- 2.8                        (<bpalmer@crimelabs.net>)
- SCO      x86       7.1     2001-03-19, Larry Rosenman             UDK FS compiler;
- UnixWare                   (<ler@lerctr.org>)                     see also
- 7.1.1                                                             doc/FAQ_SCO
- Solaris  Sparc     7.2     2001-11-12, Andrew Sullivan            2.6-8; see also
-                            (<andrew@libertyrms.com>)              doc/FAQ_Solaris
- Solaris  x86       7.1     2001-03-27, Mathijs Brands             see also
- 2.8                        (<mathijs@ilse.nl>)                    doc/FAQ_Solaris
- SunOS    Sparc     7.1     2001-03-23, Tatsuo Ishii
- 4.1.4                      (<t-ishii@sra.co.jp>)
- Tru64    Alpha     7.1     2001-03-26, Adriaan Joubert            4.0-5.0, cc and
- UNIX                       (<a.joubert@albourne.com>)             gcc
- Windows  x86       7.1     2001-03-16, Jason Tishler              with Cygwin tool
- NT/2000                    (<Jason.Tishler@dothill.com>)          set, see
- with                                                              doc/FAQ_MSWIN
- Cygwin
+ NetBSD PPC         7.2     2001-11-28, Bill Studenmund      1.5
+                            (<wrstuden@netbsd.org>)
+ NetBSD Sparc       7.2     2001-12-03, Matthew Green        32- and 64-bit
+                            (<mrg@eterna.com.au>)            builds
+ NetBSD VAX         7.1     2001-03-30, Tom I. Helbekkmo     1.5
+                            (<tih@kpnQwest.no>)
+ NetBSD x86         7.2     2001-11-28, Bill Studenmund      1.5
+                            (<wrstuden@netbsd.org>)
+ OpenBSDSparc       7.2     2001-11-27, Brandon Palmer       3.0
+                            (<bpalmer@crimelabs.net>)
+ OpenBSDx86         7.2     2001-11-26, Brandon Palmer       3.0
+                            (<bpalmer@crimelabs.net>)
+ Open   x86         7.2     2001-11-28, OU-8 Larry Rosenman  see also
+ UNIX                       (<ler@lerctr.org>), UW-7 Olivier doc/FAQ_SCO
+                            Prenant (<ohp@pyrenet.fr>)
+ QNX 4  x86         7.2     2001-12-10, Bernd Tegge          4.25; see also
+ RTOS                       (<tegge@repas-aeg.de>)           doc/FAQ_QNX4
+ SolarisSparc       7.2     2001-11-12, Andrew Sullivan      2.6-8; see also
+                            (<andrew@libertyrms.com>)        doc/FAQ_Solaris
+ Solarisx86         7.2     2001-11-28, Martin Renters       2.8; see also
+                            (<martin@datafax.com>)           doc/FAQ_Solaris
+ SunOS 4Sparc       7.2     2001-12-04, Tatsuo Ishii
+                            (<t-ishii@sra.co.jp>)
+ Tru64  Alpha       7.2     2001-11-26, Alessio Bragadini    5.0; 4.0g with cc
+ UNIX                       (<alessio@albourne.com>), Bernd  and gcc
+                            Tegge (<tegge@repas-aeg.de>)
+ Windowsx86         7.2     2001-12-13, Dave Page            with Cygwin; see
+                            (<dpage@vale-housing.co.uk>),    doc/FAQ_MSWIN
+                            Jason Tishler
+                            (<jason@tishler.net>)
+ Windowsx86         7.2     2001-12-10, Dave Page            native is
+                            (<dpage@vale-housing.co.uk>)     client-side only;
+                                                             see
+                                                             Administrator's
+                                                             Guide
 
-Unsupported Platforms. The following platforms have not been verified to
-work. Platforms listed for version 6.3.x and later should also work with
-7.2, but we did not receive explicit confirmation of such at the time this
-list was compiled. We include these here to let you know that these
-platforms *could* be supported if given some attention.
+Unsupported Platforms: The following platforms are either known not to work,
+or they used to work in a previous release and we did not receive explicit
+confirmation of a successful test with version 7.2 at the time this list was
+compiled. We include these here to let you know that these platforms *could*
+be supported if given some attention.
 
- OS          ProcessorVersion Reported                    Remarks
- DGUX        m88k     6.3     1998-03-01, Brian E Gallew  6.4 probably OK
- 5.4R4.11                     (<geek+@cmu.edu>)
- MkLinux DR1 PPC750   7.0     2001-04-03, Tatsuo Ishii    7.1 needs OS
-                              (<t-ishii@sra.co.jp>)       update?
- NextStep    x86      6.x     1998-03-01, David Wetzel    bit rot suspected
-                              (<dave@turbocat.de>)
- QNX 4.25    x86      7.0     2000-04-01, Dr. Andreas     Spinlock code
-                              Kardos                      needs work. See
-                              (<kardos@repas-aeg.de>)     also
-                                                          doc/FAQ_QNX4.
- SCO         x86      6.5     1999-05-25, Andrew Merrill  7.1 should work,
- OpenServer                   (<andrew@compclass.com>)    but no reports;
- 5                                                        see also
-                                                          doc/FAQ_SCO
- System V R4 m88k     6.2.1   1998-03-01, Doug Winterburn needs new TAS
-                              (<dlw@seavme.xroads.com>)   spinlock code
- System V R4 MIPS     6.4     1998-10-28, Frank           no 64-bit integer
-                              Ridderbusch
-                              (<ridderbusch.pad@sni.de>)
- Ultrix      MIPS     7.1     2001-03-26                  TAS spinlock code
-                                                          not detected
- Ultrix      VAX      6.x     1998-03-01                  No recent
-                                                          reports.
-                                                          Obsolete?
- Windows 9x, x86      7.1     2001-03-26, Magnus Hagander client-side
- ME, NT,                      (<mha@sollentuna.net>)      libraries (libpq
- 2000                                                     and psql) or ODBC
- (native)                                                 or JDBC, no
-                                                          server-side; see
-                                                          Administrator's
-                                                          Guide for
-                                                          instructions
+ OS         Processor Version Reported                         Remarks
+ DG/UX      m88k      6.3     1998-03-01, Brian E Gallew       no recent
+ 5.4R4.11                     (<geek+@cmu.edu>)                reports
+ MkLinux DR1PPC750    7.0     2001-04-03, Tatsuo Ishii         7.1 needs OS
+                              (<t-ishii@sra.co.jp>)            update?
+ NeXTSTEP   x86       6.x     1998-03-01, David Wetzel         bit rot
+                              (<dave@turbocat.de>)             suspected
+ QNX RTOS v6x86       7.2     2001-11-20, Igor Kovalenko       patches
+                              (<Igor.Kovalenko@motorola.com>)  available in
+                                                               archives,
+                                                               but too late
+                                                               for 7.2
+ SCO        x86       6.5     1999-05-25, Andrew Merrill       7.2 should
+ OpenServer                   (<andrew@compclass.com>)         work, but no
+ 5                                                             reports; see
+                                                               also
+                                                               doc/FAQ_SCO
+ System V R4m88k      6.2.1   1998-03-01, Doug Winterburn      needs new
+                              (<dlw@seavme.xroads.com>)        TAS spinlock
+                                                               code
+ System V R4MIPS      6.4     1998-10-28, Frank Ridderbusch    no recent
+                              (<ridderbusch.pad@sni.de>)       reports
+ Ultrix     MIPS      7.1     2001-03-26                       TAS spinlock
+                                                               code not
+                                                               detected
+ Ultrix     VAX       6.x     1998-03-01
