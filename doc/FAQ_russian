@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Voskresenie 11 aprelya 23:28:03 EDT 2004
+   Data poslednego obnovleniya: CHetverg 6 maya 23:28:03 EDT 2004
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -126,15 +126,16 @@
                                       
     1.1) CHto takoe PostgreSQL? Kak proiznositsya `eto nazvanie?
     
-   PostgreSQL proiznositsya Post-Gres-Q-L (Post-Gres-K'yu-`El). Takzhe, v
-   razgovorah ispol'zuetsya imya "Postgres".
+   PostgreSQL proiznositsya Post-Gres-Q-L (Post-Gres-K'yu-`El). Po adresu
+   http://www.postgresql.org/postgresql.mp3 dostupen zvukovoj fajl s
+   primerom kak `eto nuzhno proiznosit'.
    
-   PostgreSQL - `eto rasshirenie SUBD POSTGRES, issledovatel'skij
-   prototip novogo pokoleniya SUBD. PostgreSQL odnovremenno sohranyaet
-   moschnuyu model' dannyh i obschirnoe kolichestvo tipov POSTGRES, i
-   zameschaet yazyk zaprosov PostQuel na rasshirennoe podmnozhestvo SQL.
-   PostgreSQL - `eto svobodnoe i polnost'yu otkrytoe programmnoe
-   obespechenie.
+   PostgreSQL - `eto rasshirenie SUBD POSTGRES (i po`etomu inogda
+   govoryat prosto "Postgres"), issledovatel'skij prototip novogo
+   pokoleniya SUBD. PostgreSQL odnovremenno sohranyaet moschnuyu model'
+   dannyh i obschirnoe kolichestvo tipov POSTGRES, i zameschaet yazyk
+   zaprosov PostQuel na rasshirennoe podmnozhestvo SQL. PostgreSQL - `eto
+   svobodnoe i polnost'yu otkrytoe programmnoe obespechenie.
    
    Razrabotku PostgreSQL vypolnyaet komanda razrabotchikov, vse
    uchastniki kotoroj podpisany na spisok rassylki razrabotchikov. V
@@ -164,7 +165,7 @@
    
    Sistema Upravleniya Bazami Dannyh PostgreSQL
    
-   Portion copyright (c) 1996-2002, PostgreSQL Global Development Group
+   Portion copyright (c) 1996-2004, PostgreSQL Global Development Group
    Portions Copyright (c) 1994-6 Regents of the University of California
    
    Predostavlyayutsya prava na ispol'zovanie, kopirovanie, izmenenie i
@@ -492,7 +493,7 @@
    `Eto PgAccess (http://www.pgaccess.org), PgAdmin III
    (http://www.pgadmin.org), RHDB Admin (http://sources.redhat.com/rhdb/)
    i Rekall ( http://www.thekompany.com/products/rekall/, kommercheskij).
-   Takzhe est' PHPPgAdmin ( http://phppgadmin.sourceforge.net/) -
+   Takzhe est' PhpPgAdmin ( http://phppgadmin.sourceforge.net/) -
    interfejs k PostgreSQL, osnovannyj na Web.
    
     2.4) Kakie yazyki mogut vzaimodejstvovat' s PostgreSQL?
@@ -563,8 +564,8 @@
     
    Po umolchaniyu, PostgreSQL razreshaet tol'ko soedineniya na lokal'noj
    mashine cherez sokety domena Unix. Drugie mashiny ne smogut
-   podklyuchit'sya k baze poka dlya postmaster ne budet zadan flag -i i
-   poka ne budet razreshena host-avtorizaciya v fajle
+   podklyuchit'sya k baze poka ne budet vklyuchena opciya tcpip_sockets v
+   postgresql.conf i poka ne budet razreshena host-avtorizaciya v fajle
    $PGDATA/pg_hba.conf. `Eti dejstviya delayut vozmozhnymi TCP/IP
    soedineniya.
    
@@ -572,7 +573,7 @@
     proizvoditel'nosti?
     
    Nesomnenno, indeksy mogut uvelichit' skorost' vypolneniya zaprosov.
-   Komanda EXPLAIN pozvolyaet vam posmotret' kak PostgreSQL
+   Komanda EXPLAIN ANALIZE pozvolyaet vam posmotret' kak PostgreSQL
    interpretiruet vash zapros i kakie indeksy ispol'zuyutsya.
    
    Esli vy vypolnyaete mnogo operatorov INSERT, rassmotrite vozmozhnost'
@@ -741,12 +742,17 @@
 
     4.3) Kak poluchit' spisok tablic ili drugih komponentov v psql?
     
-   Vy mozhete posmotret' ishodnyj kod psql v fajle
+   CHtoby prosmatrivat' tablicy v psql, ispol'zujte komandu \dt. Polnyj
+   spisok komand v psql vy mozhete poluchit', ispol'zuya \?. Krome togo,
+   vy mozhete posmotret' ishodnyj kod psql v fajle
    pgsql/src/bin/psql/describe.c. On soderzhit komandy SQL kotorye
    generiruyutsya pri vvode v psql komand, nachinayuschihsya s obratnoj
-   kosoj cherty. Vy takzhe moezhete zapustit' psql s opciej -E tak,
-   chtoby `eta programma vydavala zaprosy, kotorye ona ispol'zuet dlya
-   vypolneniya zadannyh vami komand.
+   kosoj cherty. Vy takzhe mozhete zapustit' psql s opciej -E tak, chtoby
+   `eta programma vydavala zaprosy, kotorye ona ispol'zuet dlya
+   vypolneniya zadannyh vami komand. PostgreSQL takzhe predostavlyaet
+   SQLi sovmestimyj s INFORMATION SCHEMA interfejs, s pomosch'yu
+   kotorogo, vy mozhete sformirovat' zapros na poluchenie informacii o
+   baze dannyh.
    
     4.4) Kak udalit' kolonku iz tablicy ili izmenit' eio tip dannyh?
     

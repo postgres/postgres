@@ -12,7 +12,7 @@
   <BODY bgcolor="#ffffff" text="#000000" link="#ff0000" vlink="#a00000" alink="#0000ff">
     <H1>Ответы на часто задаваемые вопросы по PostgreSQL</H1>
 
-    <P>Дата последнего обновления: Воскресение 11 апреля 23:28:03 EDT 2004</P>
+    <P>Дата последнего обновления: Четверг 6 мая 23:28:03 EDT 2004</P>
 
     <P>Английский вариант сопровождает: Брюс Момьян (Bruce Momjian) (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -157,9 +157,11 @@
     <H4><A name="1.1">1.1</A>) Что такое PostgreSQL? Как произносится это название?</H4>
 
     <P>PostgreSQL произносится <I>Post-Gres-Q-L (Пост-Грес-Кью-Эл)</I>.
-    Также, в разговорах используется имя "Postgres".</P>
+    По адресу http://www.postgresql.org/postgresql.mp3 доступен звуковой
+    файл с примером как это нужно произносить.</P>
 
-    <P>PostgreSQL - это расширение СУБД POSTGRES, исследовательский
+    <P>PostgreSQL - это расширение СУБД POSTGRES (и поэтому иногда
+    говорят просто "Postgres"), исследовательский
     прототип нового поколения <SMALL>СУБД</SMALL>.
     PostgreSQL одновременно сохраняет мощную модель данных и общирное
     количество типов POSTGRES, и замещает язык запросов PostQuel на
@@ -197,7 +199,7 @@
 
     <P>Система Управления Базами Данных PostgreSQL</P>
 
-    <P>Portion copyright (c) 1996-2002, PostgreSQL Global Development
+    <P>Portion copyright (c) 1996-2004, PostgreSQL Global Development
     Group Portions Copyright (c) 1994-6 Regents of the University of
     California</P>
 
@@ -576,7 +578,7 @@
     RHDB Admin (<A href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/</A>)
     и Rekall (<A href="http://www.thekompany.com/products/rekall/">
     http://www.thekompany.com/products/rekall/</A>, коммерческий). Также есть
-    PHPPgAdmin (<A href="http://phppgadmin.sourceforge.net/">
+    PhpPgAdmin (<A href="http://phppgadmin.sourceforge.net/">
     http://phppgadmin.sourceforge.net/</A>) - интерфейс к PostgreSQL, основанный
     на Web.</P>
 
@@ -659,7 +661,7 @@
 
     <P>По умолчанию, PostgreSQL разрешает только соединения на локальной
     машине через сокеты домена Unix. Другие машины не смогут подключиться к
-    базе пока для <I>postmaster</I> не будет задан флаг <I>-i</I>
+    базе пока не будет включена опция tcpip_sockets в postgresql.conf
     <B>и</B> пока не будет разрешена host-авторизация в файле
     <I>$PGDATA/pg_hba.conf</I>. Эти действия делают возможными TCP/IP
     соединения.</P>
@@ -668,7 +670,7 @@
      производительности?</H4>
 
     <P>Несомненно, индексы могут увеличить скорость выполнения запросов. Команда
-    <SMALL>EXPLAIN</SMALL> позволяет вам посмотреть как PostgreSQL
+    <SMALL>EXPLAIN ANALIZE</SMALL> позволяет вам посмотреть как PostgreSQL
     интерпретирует ваш запрос и какие индексы используются.</P>
 
     <P>Если вы выполняете много операторов <SMALL>INSERT</SMALL>,
@@ -851,13 +853,17 @@
     <H4><A name="4.3">4.3</A>) Как получить список таблиц или других
      компонентов в <I>psql</I>?</H4>
 
-    <P>Вы можете посмотреть исходный код <I>psql</I> в файле
+    <P>Чтобы просматривать таблицы в <I>psql</I>, используйте команду \dt.
+    Полный список команд в <I>psql</I> вы можете получить, используя \?.
+    Кроме того, вы можете посмотреть исходный код <I>psql</I> в файле
     <I>pgsql/src/bin/psql/describe.c</I>. Он содержит команды
-    <SMALL>SQL</SMALL> которые генерируются при вводе в psql команд,
-    начинающихся с обратной косой черты. Вы также моежете запустить
+    <SMALL>SQL</SMALL> которые генерируются при вводе в <I>psql</I> команд,
+    начинающихся с обратной косой черты. Вы также можете запустить
     <I>psql</I> с опцией <I>-E</I> так, чтобы эта программа выдавала
     запросы, которые она использует для выполнения заданных вами
-    команд.</P>
+    команд. PostgreSQL также предоставляет <SMALL>SQLi</SMALL>
+    совместимый с INFORMATION SCHEMA интерфейс, с помощью которого, вы
+    можете сформировать запрос на получение информации о базе данных.</P>
 
     <H4><A name="4.4">4.4</A>) Как удалить колонку из таблицы или
     изменить её тип данных?</H4>
