@@ -130,9 +130,9 @@ TYPES
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Add non-large-object binary field
 * -Add index on NUMERIC/DECIMAL type(Jan)
-* Make Absolutetime/Relativetime int4 because time_t can be int8 on some ports
+* -Make Absolutetime/Relativetime int4 because time_t can be int8 on some ports
 * Functions returning sets don't really work right[function]
-* Make type equivalency apply to aggregates
+* -Make type equivalency apply to aggregates
 
 VIEWS
 
