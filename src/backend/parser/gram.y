@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.156 2000/03/14 23:06:31 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.157 2000/03/15 05:31:55 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5479,12 +5479,17 @@ mapTargetColumns(List *src, List *dst)
  *
  * Do not convert "float", since that is handled elsewhere
  *  for FLOAT(p) syntax.
+ *
+ * Converting "datetime" to "timestamp" is a temporary expedient for
+ *	pre-7.0 to 7.0 compatibility; it should go away again someday.
  */
 static char *
 xlateSqlFunc(char *name)
 {
 	if (!strcasecmp(name,"character_length"))
 		return "char_length";
+	else if (!strcasecmp(name,"datetime"))
+		return "timestamp";
 	else
 		return name;
 } /* xlateSqlFunc() */
