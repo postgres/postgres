@@ -7,12 +7,6 @@
 -- This file is distributed under the GNU General Public License
 -- either version 2, or (at your option) any later version.
 
--- Set the maximum number of tuples returned by a single query.
---
-create function query_limit(int4) returns int4
-  as 'MODULE_PATHNAME'
-  language 'C';
-
 -- Return the pid of the backend.
 --
 create function backend_pid() returns int4
@@ -48,17 +42,5 @@ create function max(int4,int4) returns int4
 create function active_listeners(text) returns int4
   as 'MODULE_PATHNAME'
   language 'C';
-
--- Enable/disable Postgres assert checking.
---
-create function assert_enable(int4) returns int4
-  as 'MODULE_PATHNAME'
-  language 'C';
-
--- Test Postgres assert checking.
---
--- create function assert_test(int4) returns int4
---   as 'MODULE_PATHNAME'
---   language 'C';
 
 -- end of file

@@ -9,12 +9,12 @@
  * either version 2, or (at your option) any later version.
  */
 
+#include "postgres.h"
+
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
-
-#include "postgres.h"
 
 #include "access/heapam.h"
 #include "access/htup.h"
@@ -23,6 +23,7 @@
 #include "access/tupdesc.h"
 #include "catalog/catname.h"
 #include "catalog/pg_listener.h"
+#include "commands/async.h"
 #include "fmgr.h"
 #include "storage/lmgr.h"
 #include "utils/fmgroids.h"
@@ -35,20 +36,6 @@
 #undef MIN
 #define MIN(x,y)	((x)<=(y) ? (x) : (y))
 
-extern int	ExecutorLimit(int limit);
-extern void Async_Unlisten(char *relname, int pid);
-extern int	assertTest(int val);
-
-#ifdef ASSERT_CHECKING_TEST
-extern int	assertEnable(int val);
-
-#endif
-
-int
-query_limit(int limit)
-{
-	return ExecutorLimit(limit);
-}
 
 int
 backend_pid()
@@ -128,22 +115,6 @@ active_listeners(text *relname)
 	return count;
 }
 
-#ifdef USE_ASSERT_CHECKING
-int
-assert_enable(int val)
-{
-	return assertEnable(val);
-}
-
-#ifdef ASSERT_CHECKING_TEST
-int
-assert_test(int val)
-{
-	return assertTest(val);
-}
-
-#endif
-#endif
 
 /* end of file */
 
