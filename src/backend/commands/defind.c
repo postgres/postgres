@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.9 1996/11/13 20:48:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.10 1997/01/18 05:48:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,10 @@ DefineIndex(char *heapRelationName,
 	     heapRelationName);
     }
     relationId = tuple->t_oid;
-    
+
+    if (unique && strcmp(accessMethodName,"btree") != 0)
+	elog(WARN, "DefineIndex: unique indexes are only available with the btree access method");
+
     /*
      * compute access method id
      */
