@@ -1,7 +1,7 @@
 ====================================================
 TODO list (FAQ) for PostgreSQL
 ====================================================
-last updated:		Wed May 14 17:51:33 EDT 1997
+last updated:		Tue Jun  3 16:22:07 EDT 1997
 
 current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -20,6 +20,7 @@ Developers who have claimed items are:
 	Darren is Darren King <darrenk@insightdist.com>
 	Edmund is Edmund Mergl <E.Mergl@bawue.de>
 	Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
+	Igor is Igor <igor@sba.miami.edu>
 	Jun is Jun Kuwamura <juk@rccm.co.jp>
 	Kurt is "Kurt J. Lidl" <lidl@va.pubnix.com>
  	Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>
@@ -53,8 +54,9 @@ INSERT INTO ... SELECT DISTINCT ... generates error on DISTINCT
 pg_database.datdba is oid, should be int4
 fix array diffs in regression test
 can lo_export()/lo_import() read/write anywhere, causing a security problem?
-SELECT ... INTO TABLE ... with varchar()/char() types have zero-length fields
+-SELECT ... INTO TABLE ... with varchar()/char() types have zero-length fields
 Fix UPDATE key_table SET keyval=max(reftab.NUM)+1 WHERE tblname='reftab'
+SELECT COUNT(*) FROM TAB1, TAB2 fails
 
 ENHANCEMENTS
 ------------
@@ -197,6 +199,17 @@ fix join clauses for multiple tables(Vadim)
 fix hash, hashjoin for arrays(Vadim)
 fix btree for abstime type(Vadim)
 large object fixes(Raymond)
+fix buffer leak in hash indices (Vadim)
+fix rtree for use in inner scan (Vadim)
+fix gist for use in inner scan, cleanups (Vadim, Andrea)
+avoid unnecessary local buffers allocation (Vadim, Massimo)
+fix local buffers leak in transaction aborts (Vadim)
+fix file manager memmory leaks, cleanups (Vadim, Massimo)
+fix storage manager memmory leaks (Vadim)
+fix btree duplicates handling (Vadim)
+fix deleted tuples re-incarnation caused by vacuum (Vadim)
+fix SELECT varchar()/char() INTO TABLE made zero-length fields(Bruce)
+many psql, pg_dump, and libpq memory leaks fixed using Purify (Igor)
 
 Enhancements
 ------------
@@ -235,6 +248,15 @@ more comparison operators for sorting types(Thomas)
 new conversion functions(Thomas)
 new more compact btree format(Vadim)
 allow pg_dumpall to preserve database ownership(Bruce)
+new SET GEQO=# and R_PLANS variable(Vadim)
+old (!GEQO) optimizer can use right-sided plans (Vadim)
+typechecking improvement in SQL parser(Bruce)
+new SET, SHOW, RESET commands(Thomas,Vadim)
+new \connect database USER option
+new destroydb -i option (Igor)
+new \dt and \di psql commands (Darren)
+SELECT "\n" now escapes newline (A. Duursma)
+new geometry conversion functions from old format (Thomas)
 
 Source tree changes
 -------------------
@@ -252,3 +274,4 @@ now works with eBones, international Kerberos(Jun)
 more shared library support
 c++ include file cleanup(Bruce)
 warn about buggy flex(Bruce)
+DG-UX, Ultrix, Irix, AIX portability fixes

@@ -22,6 +22,17 @@ fix join clauses for multiple tables(Vadim)
 fix hash, hashjoin for arrays(Vadim)
 fix btree for abstime type(Vadim)
 large object fixes(Raymond)
+fix buffer leak in hash indices (Vadim)
+fix rtree for use in inner scan (Vadim)
+fix gist for use in inner scan, cleanups (Vadim, Andrea)
+avoid unnecessary local buffers allocation (Vadim, Massimo)
+fix local buffers leak in transaction aborts (Vadim)
+fix file manager memmory leaks, cleanups (Vadim, Massimo)
+fix storage manager memmory leaks (Vadim)
+fix btree duplicates handling (Vadim)
+fix deleted tuples re-incarnation caused by vacuum (Vadim)
+fix SELECT varchar()/char() INTO TABLE made zero-length fields(Bruce)
+many psql, pg_dump, and libpq memory leaks fixed using Purify (Igor)
 
 Enhancements
 ------------
@@ -60,6 +71,15 @@ more comparison operators for sorting types(Thomas)
 new conversion functions(Thomas)
 new more compact btree format(Vadim)
 allow pg_dumpall to preserve database ownership(Bruce)
+new SET GEQO=# and R_PLANS variable(Vadim)
+old (!GEQO) optimizer can use right-sided plans (Vadim)
+typechecking improvement in SQL parser(Bruce)
+new SET, SHOW, RESET commands(Thomas,Vadim)
+new \connect database USER option
+new destroydb -i option (Igor)
+new \dt and \di psql commands (Darren)
+SELECT "\n" now escapes newline (A. Duursma)
+new geometry conversion functions from old format (Thomas)
 
 Source tree changes
 -------------------
@@ -77,6 +97,8 @@ now works with eBones, international Kerberos(Jun)
 more shared library support
 c++ include file cleanup(Bruce)
 warn about buggy flex(Bruce)
+DG-UX, Ultrix, Irix, AIX portability fixes
+
 
 PostgreSQL 6.0                   Wed Jan 29 00:19:54 EST 1997
 -------------------------------------------------------------
