@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.98 2004/10/08 15:03:26 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.99 2004/10/22 16:04:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -395,7 +395,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 		if ((reqs & REQ_SCHEMA) != 0)	/* We want the schema */
 		{
-			ahlog(AH, 1, "setting owner and acl for %s %s\n",
+			ahlog(AH, 1, "setting owner and privileges for %s %s\n",
 				  te->desc, te->tag);
 			_printTocEntry(AH, te, ropt, false, true);
 		}
@@ -1269,7 +1269,7 @@ warn_or_die_horribly(ArchiveHandle *AH,
 	}
 	if (AH->currentTE != NULL && AH->currentTE != AH->lastErrorTE)
 	{
-		write_msg(modulename, "Error from TOC Entry %d; %u %u %s %s %s\n", AH->currentTE->dumpId,
+		write_msg(modulename, "Error from TOC entry %d; %u %u %s %s %s\n", AH->currentTE->dumpId,
 		 AH->currentTE->catalogId.tableoid, AH->currentTE->catalogId.oid,
 		  AH->currentTE->desc, AH->currentTE->tag, AH->currentTE->owner);
 	}

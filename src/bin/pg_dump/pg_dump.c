@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.389 2004/10/18 00:20:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.390 2004/10/22 16:04:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6930,7 +6930,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 
 		if (indxinfo == NULL)
 		{
-			write_msg(NULL, "missing index for constraint %s\n",
+			write_msg(NULL, "missing index for constraint \"%s\"\n",
 					  coninfo->dobj.name);
 			exit_nicely();
 		}
@@ -7100,7 +7100,7 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 	}
 	else
 	{
-		write_msg(NULL, "unexpected constraint type\n");
+		write_msg(NULL, "unrecognized constraint type: %c\n", coninfo->contype);
 		exit_nicely();
 	}
 
@@ -7699,7 +7699,7 @@ getDependencies(void)
 		return;
 
 	if (g_verbose)
-		write_msg(NULL, "fetching dependency data\n");
+		write_msg(NULL, "reading dependency data\n");
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
