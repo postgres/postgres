@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.175 2002/09/04 20:31:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.176 2002/09/22 20:56:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1685,10 +1685,14 @@ RelationClearRelation(Relation relation, bool rebuild)
 
 	/*
 	 * Never, never ever blow away a nailed-in system relation, because
-	 * we'd be unable to recover.
+	 * we'd be unable to recover.  However, we must update rd_nblocks
+	 * and reset rd_targblock, in case we got called because of a relation
+	 * cache flush that was triggered by VACUUM.
 	 */
 	if (relation->rd_isnailed)
 	{
+		relation->rd_targblock = InvalidBlockNumber;
+		RelationUpdateNumberOfBlocks(relation);
 #ifdef	ENABLE_REINDEX_NAILED_RELATIONS
 		RelationReloadClassinfo(relation);
 #endif   /* ENABLE_REINDEX_NAILED_RELATIONS */
