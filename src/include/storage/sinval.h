@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.34 2004/05/23 03:50:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.35 2004/06/02 21:29:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,6 +97,7 @@ extern void ReceiveSharedInvalidMessages(
 
 extern bool DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself);
 extern bool TransactionIdIsInProgress(TransactionId xid);
+extern bool IsBackendPid(int pid);
 extern TransactionId GetOldestXmin(bool allDbs);
 extern int	CountActiveBackends(void);
 extern int	CountEmptyBackendSlots(void);

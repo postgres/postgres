@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.240 2004/05/26 18:35:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.241 2004/06/02 21:29:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,6 +354,8 @@ extern Datum float84ge(PG_FUNCTION_ARGS);
 extern Datum nullvalue(PG_FUNCTION_ARGS);
 extern Datum nonnullvalue(PG_FUNCTION_ARGS);
 extern Datum current_database(PG_FUNCTION_ARGS);
+extern Datum pg_terminate_backend(PG_FUNCTION_ARGS);
+extern Datum pg_cancel_backend(PG_FUNCTION_ARGS);
 
 /* not_in.c */
 extern Datum int4notin(PG_FUNCTION_ARGS);

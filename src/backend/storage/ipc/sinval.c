@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.63 2004/05/23 03:50:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.64 2004/06/02 21:29:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -451,6 +451,40 @@ TransactionIdIsInProgress(TransactionId xid)
 			TransactionId pxid = proc->xid;
 
 			if (TransactionIdEquals(pxid, xid))
+			{
+				result = true;
+				break;
+			}
+		}
+	}
+
+	LWLockRelease(SInvalLock);
+
+	return result;
+}
+
+/*
+ * IsBackendPid -- is a given pid a running backend
+ */
+bool
+IsBackendPid(int pid)
+{
+	bool		result = false;
+	SISeg	   *segP = shmInvalBuffer;
+	ProcState  *stateP = segP->procState;
+	int			index;
+
+	LWLockAcquire(SInvalLock, LW_SHARED);
+
+	for (index = 0; index < segP->lastBackend; index++)
+	{
+		SHMEM_OFFSET pOffset = stateP[index].procStruct;
+
+		if (pOffset != INVALID_OFFSET)
+		{
+			PGPROC	   *proc = (PGPROC *) MAKE_PTR(pOffset);
+
+			if (proc->pid == pid)
 			{
 				result = true;
 				break;
