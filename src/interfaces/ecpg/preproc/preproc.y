@@ -814,7 +814,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    ViewStmt LoadStmt CreatedbStmt opt_database1 opt_database2 location
 %type  <str>    DestroydbStmt ClusterStmt grantee RevokeStmt encoding
 %type  <str>	GrantStmt privileges operation_commalist operation
-%type  <str>	cursor_clause opt_cursor opt_readonly opt_of opt_lmode
+%type  <str>	opt_cursor opt_lmode
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
 %type  <str>    select_clause opt_select_limit select_limit_value
 %type  <str>    select_offset_value table_list using_expr join_expr
@@ -2724,7 +2724,9 @@ UpdateStmt:  UPDATE relation_name
  *				CURSOR STATEMENTS
  *
  *****************************************************************************/
-CursorStmt:  DECLARE name opt_cursor CURSOR FOR SelectStmt cursor_clause
+CursorStmt:  DECLARE name opt_cursor CURSOR FOR
+		{ ForUpdateNotAllowed = 1; }
+	     SelectStmt
 				{
 					struct cursor *ptr, *this;
 	
@@ -2744,7 +2746,7 @@ CursorStmt:  DECLARE name opt_cursor CURSOR FOR SelectStmt cursor_clause
 				        this->next = cur;
 				        this->name = $2;
 					this->connection = connection;
-				        this->command =  cat2_str(cat5_str(make1_str("declare"), mm_strdup($2), $3, make1_str("cursor for"), $6), $7);
+				        this->command =  cat5_str(make1_str("declare"), mm_strdup($2), $3, make1_str("cursor for"), $7);
 					this->argsinsert = argsinsert;
 					this->argsresult = argsresult;
 					argsinsert = argsresult = NULL;
@@ -2761,20 +2763,6 @@ opt_cursor:  BINARY             { $$ = make1_str("binary"); }
                | INSENSITIVE SCROLL	{ $$ = make1_str("insensitive scroll"); }
                | /*EMPTY*/      { $$ = make1_str(""); }
                ;
-
-cursor_clause:  FOR opt_readonly	{ $$ = cat2_str(make1_str("for"), $2); }
-               | /*EMPTY*/              { $$ = make1_str(""); }
-
-               ;
-
-opt_readonly:  READ ONLY		{ $$ = make1_str("read only"); }
-               | UPDATE opt_of
-                       {
-                               yyerror("DECLARE/UPDATE not supported; Cursors must be READ ONLY.");
-                       }
-               ;
-
-opt_of:  OF columnList { $$ = make2_str(make1_str("of"), $2); }
 
 /*****************************************************************************
  *
@@ -2793,7 +2781,7 @@ opt_of:  OF columnList { $$ = make2_str(make1_str("of"), $2); }
 SelectStmt:      select_clause sort_clause for_update_clause opt_select_limit
 				{
 					if (strlen($3) > 0 && ForUpdateNotAllowed != 0)
-							yyerror("SELECT FOR UPDATE is not allowed in this context");
+							yyerror("FOR UPDATE is not allowed in this context");
 
 					ForUpdateNotAllowed = 0;
 					$$ = cat4_str($1, $2, $3, $4);
@@ -2940,6 +2928,10 @@ having_clause:  HAVING a_expr
 for_update_clause:  FOR UPDATE update_list
 		{
                 	$$ = make1_str("for update"); 
+		}
+		| FOR READ ONLY
+		{
+			$$ = make1_str("for read only");
 		}
 		| /* EMPTY */
                 {
@@ -3356,11 +3348,7 @@ Character:  character '(' Iconst ')'
 						yyerror(errortext);
 					}
 					else if (atol($3) > BLCKSZ - 128) {
-						/* we can store a char() of length up to the size
-						 * of a page (8KB) - page headers and friends but
-						 * just to be safe here...	- ay 6/95
-						 */
-						sprintf(errortext, "length for type '%s' cannot exceed %d",BLCKSZ-128);
+						sprintf(errortext, "length for type '%s' cannot exceed %d",$1,BLCKSZ - 128);
 						yyerror(errortext);
 					}
 
@@ -4721,7 +4709,7 @@ opt_options: Op ColId
  * Declare a prepared cursor. The syntax is different from the standard
  * declare statement, so we create a new rule.
  */
-ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident cursor_clause
+ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident
 				{
 					struct cursor *ptr, *this;
 					struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
@@ -4742,7 +4730,7 @@ ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident cursor_clause
 				        this->next = cur;
 				        this->name = $2;
 					this->connection = connection;
-				        this->command =  cat5_str(make1_str("declare"), mm_strdup($2), $3, make1_str("cursor for ?"), $7);
+				        this->command =  cat4_str(make1_str("declare"), mm_strdup($2), $3, make1_str("cursor for ?"));
 					this->argsresult = NULL;
 
 					thisquery->type = &ecpg_query;
