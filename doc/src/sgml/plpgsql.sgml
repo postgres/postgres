@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.63 2005/04/05 06:22:14 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.64 2005/04/05 18:05:45 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2179,19 +2179,21 @@ DECLARE
     </para>
 
     <sect3>
-     <title><command>OPEN FOR SELECT</command></title>
+     <title><command>OPEN FOR</command> <replaceable>query</replaceable></title>
 
 <synopsis>
-OPEN <replaceable>unbound_cursor</replaceable> FOR SELECT ...;
+OPEN <replaceable>unbound_cursor</replaceable> FOR <replaceable>query</replaceable> ;
 </synopsis>
 
        <para>
-    The cursor variable is opened and given the specified query to
+        The cursor variable is opened and given the specified query to
         execute.  The cursor cannot be open already, and it must have been
         declared as an unbound cursor (that is, as a simple
-        <type>refcursor</> variable).  The <command>SELECT</command> query
-        is treated in the same way as other <command>SELECT</command>
-        statements in <application>PL/pgSQL</>: <application>PL/pgSQL</>
+        <type>refcursor</> variable).  The query must be a
+        <command>SELECT</command>, or something else that returns rows
+        (such as <command>EXPLAIN</>).  The query
+        is treated in the same way as other SQL commands in
+        <application>PL/pgSQL</>: <application>PL/pgSQL</>
         variable names are substituted, and the query plan is cached for
         possible reuse.
        </para>
@@ -2216,7 +2218,7 @@ OPEN <replaceable>unbound_cursor</replaceable> FOR EXECUTE <replaceable class="c
           execute.  The cursor cannot be open already, and it must have been
           declared as an unbound cursor (that is, as a simple
           <type>refcursor</> variable).  The query is specified as a string
-          expression in the same way as in the <command>EXECUTE</command>
+          expression, in the same way as in the <command>EXECUTE</command>
           command.  As usual, this gives flexibility so the query can vary
           from one run to the next.
        </para>

@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.67 2005/04/05 06:22:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.68 2005/04/05 18:05:46 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1276,7 +1276,6 @@ stmt_open		: K_OPEN lno cursor_varptr
 						if ($3->cursor_explicit_expr == NULL)
 						{
 						    tok = yylex();
-
 							if (tok != K_FOR)
 							{
 								plpgsql_error_lineno = $2;
@@ -1288,26 +1287,15 @@ stmt_open		: K_OPEN lno cursor_varptr
 							}
 
 							tok = yylex();
-							switch (tok)
+							if (tok == K_EXECUTE)
 							{
-								case K_SELECT:
-								case '(':
-									plpgsql_push_back_token(tok);
-									new->query = read_sql_stmt("");
-									break;
-
-								case K_EXECUTE:
-									new->dynquery = read_sql_stmt("SELECT ");
-									break;
-
-								default:
-									plpgsql_error_lineno = $2;
-									ereport(ERROR,
-											(errcode(ERRCODE_SYNTAX_ERROR),
-											 errmsg("syntax error at \"%s\"",
-													yytext)));
+								new->dynquery = read_sql_stmt("SELECT ");
 							}
-
+							else
+							{
+								plpgsql_push_back_token(tok);
+								new->query = read_sql_stmt("");
+							}
 						}
 						else
 						{
@@ -1316,7 +1304,6 @@ stmt_open		: K_OPEN lno cursor_varptr
 								char   *cp;
 
 								tok = yylex();
-
 								if (tok != '(')
 								{
 									plpgsql_error_lineno = plpgsql_scanner_lineno();
@@ -1369,7 +1356,6 @@ stmt_open		: K_OPEN lno cursor_varptr
 							else
 							{
 								tok = yylex();
-
 								if (tok == '(')
 								{
 									plpgsql_error_lineno = plpgsql_scanner_lineno();
