@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.9 1996/12/16 03:34:52 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.10 1997/01/06 00:20:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include <sys/timeb.h>
 #include "postgres.h"
 #include "access/xact.h"
-#include "utils/palloc.h"
 
 #define MAXDATEFIELDS 25
 
