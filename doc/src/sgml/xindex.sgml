@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.32 2003/08/31 17:32:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.33 2003/10/21 23:28:42 tgl Exp $
 -->
 
 <sect1 id="xindex">
@@ -408,7 +408,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.32 2003/08/31 17:32:21 pete
 
   <para>
    Now that we have seen the ideas, here is the promised example of
-   creating a new operator class.  The operator class encapsulates
+   creating a new operator class.
+   (You can find a working copy of this example in
+   <filename>src/tutorial/complex.c</filename> and
+   <filename>src/tutorial/complex.sql</filename> in the source
+   distribution.)
+   The operator class encapsulates
    operators that sort complex numbers in absolute value order, so we
    choose the name <literal>complex_abs_ops</literal>.  First, we need
    a set of operators.  The procedure for defining operators was
@@ -425,40 +430,65 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.32 2003/08/31 17:32:21 pete
   </para>
 
   <para>
-   The C code for the equality operator look like this:
+   The least error-prone way to define a related set of comparison operators
+   is to write the btree comparison support function first, and then write the
+   other functions as one-line wrappers around the support function.  This
+   reduces the odds of getting inconsistent results for corner cases.
+   Following this approach, we first write
 
 <programlisting>
-#define Mag(c) ((c)-&gt;x*(c)-&gt;x + (c)-&gt;y*(c)-&gt;y)
+#define Mag(c)  ((c)-&gt;x*(c)-&gt;x + (c)-&gt;y*(c)-&gt;y)
 
-bool
-complex_abs_eq(Complex *a, Complex *b)
+static int
+complex_abs_cmp_internal(Complex *a, Complex *b)
 {
-    double amag = Mag(a), bmag = Mag(b);
-    return (amag == bmag);
+    double      amag = Mag(a),
+                bmag = Mag(b);
+
+    if (amag &lt; bmag)
+        return -1;
+    if (amag &gt; bmag)
+        return 1;
+    return 0;
 }
 </programlisting>
-   The other four operators are very similar.  You can find their code
-   in <filename>src/tutorial/complex.c</filename> and
-   <filename>src/tutorial/complex.sql</filename> in the source
-   distribution.
+
+   Now the less-than function looks like
+
+<programlisting>
+PG_FUNCTION_INFO_V1(complex_abs_lt);
+
+Datum
+complex_abs_lt(PG_FUNCTION_ARGS)
+{
+    Complex    *a = (Complex *) PG_GETARG_POINTER(0);
+    Complex    *b = (Complex *) PG_GETARG_POINTER(1);
+
+    PG_RETURN_BOOL(complex_abs_cmp_internal(a, b) &lt; 0);
+}
+</programlisting>
+
+   The other four functions differ only in how they compare the internal
+   function's result to zero.
   </para>
 
   <para>
-   Now declare the functions and the operators based on the functions:
-<programlisting>
-CREATE FUNCTION complex_abs_eq(complex, complex) RETURNS boolean
-    AS '<replaceable>filename</replaceable>', 'complex_abs_eq'
-    LANGUAGE C;
+   Next we declare the functions and the operators based on the functions
+   to SQL:
 
-CREATE OPERATOR = (
-    leftarg = complex,
-    rightarg = complex,
-    procedure = complex_abs_eq,
-    restrict = eqsel,
-    join = eqjoinsel
+<programlisting>
+CREATE FUNCTION complex_abs_lt(complex, complex) RETURNS bool
+    AS '<replaceable>filename</replaceable>', 'complex_abs_lt'
+    LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OPERATOR &lt; (
+   leftarg = complex, rightarg = complex, procedure = complex_abs_lt,
+   commutator = &gt; , negator = &gt;= ,
+   restrict = scalarltsel, join = scalarltjoinsel
 );
 </programlisting>
-   It is important to specify the restriction and join selectivity
+   It is important to specify the correct commutator and negator operators,
+   as well as suitable restriction and join selectivity
    functions, otherwise the optimizer will be unable to make effective
    use of the index.  Note that the less-than, equal, and
    greater-than cases should use different selectivity functions.
@@ -518,7 +548,7 @@ CREATE OPERATOR = (
 CREATE FUNCTION complex_abs_cmp(complex, complex)
     RETURNS integer
     AS '<replaceable>filename</replaceable>'
-    LANGUAGE C;
+    LANGUAGE C IMMUTABLE STRICT;
 </programlisting>
   </para>
 
