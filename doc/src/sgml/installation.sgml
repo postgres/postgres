@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.197 2004/04/20 01:11:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.198 2004/05/17 15:00:50 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -603,29 +603,28 @@ su - postgres
 
      <note>
       <para>
-       Care has been taken to make it possible to install <productname>PostgreSQL</> 
-       into shared installation locations (such as
-       <filename>/usr/local/include</filename>) without interfering
-       with the namespace of the rest of the system.  First, the
-       string <quote><literal>/postgresql</literal></quote> is
+       Care has been taken to make it possible to install
+       <productname>PostgreSQL</> into shared installation locations
+       (such as <filename>/usr/local/include</filename>) without
+       interfering with the namespace of the rest of the system. First,
+       the string <quote><literal>/postgresql</literal></quote> is
        automatically appended to <varname>datadir</varname>,
        <varname>sysconfdir</varname>, and <varname>docdir</varname>,
        unless the fully expanded directory name already contains the
-       string <quote><literal>postgres</></quote> or <quote><literal>pgsql</></quote>.  For
-       example, if you choose <filename>/usr/local</filename> as
-       prefix, the documentation will be installed in
-       <filename>/usr/local/doc/postgresql</filename>, but if the
-       prefix is <filename>/opt/postgres</filename>, then it will be
-       in <filename>/opt/postgres/doc</filename>.  The public C header files of the
-       client interfaces are installed into
-       <varname>includedir</varname> and are namespace-clean.  The
+       string <quote><literal>postgres</></quote> or
+       <quote><literal>pgsql</></quote>. For example, if you choose
+       <filename>/usr/local</filename> as prefix, the documentation will
+       be installed in <filename>/usr/local/doc/postgresql</filename>,
+       but if the prefix is <filename>/opt/postgres</filename>, then it
+       will be in <filename>/opt/postgres/doc</filename>. The public C
+       header files of the client interfaces are installed into
+       <varname>includedir</varname> and are namespace-clean. The
        internal header files and the server header files are installed
-       into private directories under
-       <varname>includedir</varname>.
-       See the documentation of each interface for information about how to get at
-       the its header files.
-       Finally, a private subdirectory will also be created, if appropriate,
-       under <varname>libdir</varname> for dynamically loadable modules.       
+       into private directories under <varname>includedir</varname>. See
+       the documentation of each interface for information about how to
+       get at the its header files. Finally, a private subdirectory will
+       also be created, if appropriate, under <varname>libdir</varname>
+       for dynamically loadable modules.
       </para>
      </note>
     </para>
