@@ -81,7 +81,7 @@ EOT
 	TEMPLATE=generic
 	GUESS=`grep "$host_os" template/.similar 2>/dev/null`
 	if test ! "$GUESS"
-	then	host_os_no_ver=`echo "$host_os" | sed 's/[0-9.]*$//'`
+	then	host_os_no_ver=`echo "$host_os" | sed 's/[[0-9.]]*$//'`
 		GUESS=`grep "$host_os_no_ver" template/.similar 2>/dev/null`
 	fi
 	if test "$GUESS"
@@ -319,13 +319,13 @@ AC_PATH_PROG(ipcrm, ipcrm)
 AC_PATH_PROGS(TR, trbsd tr, NOT_FOUND)
 
 dnl Check tr flags to convert from lower to upper case
-TRSTRINGS=`echo ABCdef | $TR '[a-z]' '[A-Z]' 2>/dev/null | grep ABCDEF`
-TRCLASS=`echo ABCdef | $TR '[:lower:]' '[:upper:]' 2>/dev/null | grep ABCDEF`
+TRSTRINGS=`echo ABCdef | $TR '[[a-z]]' '[[A-Z]]' 2>/dev/null | grep ABCDEF`
+TRCLASS=`echo ABCdef | $TR '[[:lower:]]' '[[:upper:]]' 2>/dev/null | grep ABCDEF`
 
 if test "$TRSTRINGS" = "ABCDEF"; then
-  TRARGS="'[a-z]' '[A-Z]'"
+  TRARGS="'[[a-z]]' '[[A-Z]]'"
 elif test "$TRCLASS" = "ABCDEF"; then
-  TRARGS="\"[:lower:]\" \"[:upper:]\""
+  TRARGS="\"[[:lower:]]\" \"[[:upper:]]\""
 else
   AC_MSG_ERROR("Can\'t find method to covert from upper to lower case with tr")
 fi
