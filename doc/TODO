@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jun  3 13:40:49 EDT 2002
+Last updated:		Mon Jun  3 18:45:19 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -156,7 +156,7 @@ Indexes
 * Use index to restrict rows returned by multi-key index when used with
   non-consecutive keys or OR clauses, so fewer heap accesses
 * Be smarter about insertion of already-ordered data into btree index
-* Add deleted bit to index tuples to reduce heap access
+* -Add deleted bit to index tuples to reduce heap access
 * Prevent index uniqueness checks when UPDATE does not modifying column
 * Add bitmap indexes [performance]
 * Improve handling of index scans for NULL
