@@ -6,14 +6,21 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: mcxt.h,v 1.12 1999/02/13 23:22:24 momjian Exp $
+ * $Id: mcxt.h,v 1.13 1999/03/07 23:03:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef MCXT_H
 #define MCXT_H
 
-#include <nodes/memnodes.h>
+/* These types are declared in nodes/memnodes.h, but most users of memory
+ * allocation should just treat them as abstract types, so we do not provide
+ * the struct contents here.
+ */
+
+typedef struct MemoryContextData *MemoryContext;
+typedef struct GlobalMemoryData *GlobalMemory;
+
 
 extern MemoryContext CurrentMemoryContext;
 extern MemoryContext TopMemoryContext;

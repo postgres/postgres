@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.20 1999/03/06 21:17:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.21 1999/03/07 23:03:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@
 #include	   "utils/mcxt.h"
 #endif	 /* !FRONTEND */
 #include	   "utils/palloc.h"
+#include	   "utils/memutils.h"
 
 /*
  * Fast arithmetic, relying on powers of 2,
