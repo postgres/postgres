@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.158 2003/06/29 00:33:42 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.159 2003/07/15 19:19:55 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -6501,9 +6501,9 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
 <programlisting>
 SELECT current_setting('datestyle');
 
-            current_setting
----------------------------------------
- ISO with US (NonEuropean) conventions
+ current_setting
+-----------------
+ ISO, US
 (1 row)
 </programlisting>
    </para>

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.136 2003/07/09 08:51:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.137 2003/07/15 19:19:56 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1265,7 +1265,7 @@ static struct config_string ConfigureNamesString[] =
 			GUC_LIST_INPUT | GUC_REPORT
 		},
 		&datestyle_string,
-		"ISO, US", assign_datestyle, show_datestyle
+		"ISO, US", assign_datestyle, NULL
 	},
 
 	{

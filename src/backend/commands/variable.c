@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.79 2003/06/27 19:08:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.80 2003/07/15 19:19:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 			newDateStyle = USE_SQL_DATES;
 			dcnt++;
 		}
-		else if (strncasecmp(tok, "POSTGRESQL", 8) == 0)
+		else if (strncasecmp(tok, "POSTGRES", 8) == 0)
 		{
 			newDateStyle = USE_POSTGRES_DATES;
 			dcnt++;
@@ -190,13 +190,13 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 			strcpy(result, "SQL");
 			break;
 		case USE_GERMAN_DATES:
-			strcpy(result, "GERMAN");
+			strcpy(result, "German");
 			break;
 		default:
-			strcpy(result, "POSTGRESQL");
+			strcpy(result, "Postgres");
 			break;
 	}
-	strcat(result, newEuroDates ? ", EURO" : ", US");
+	strcat(result, newEuroDates ? ", European" : ", US");
 
 	/*
 	 * Finally, it's safe to assign to the global variables; the
@@ -206,36 +206,6 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 	EuroDates = newEuroDates;
 
 	return result;
-}
-
-/*
- * show_datestyle: GUC show_hook for datestyle
- */
-const char *
-show_datestyle(void)
-{
-	static char buf[64];
-
-	switch (DateStyle)
-	{
-		case USE_ISO_DATES:
-			strcpy(buf, "ISO");
-			break;
-		case USE_SQL_DATES:
-			strcpy(buf, "SQL");
-			break;
-		case USE_GERMAN_DATES:
-			strcpy(buf, "German");
-			break;
-		default:
-			strcpy(buf, "Postgres");
-			break;
-	};
-	strcat(buf, " with ");
-	strcat(buf, ((EuroDates) ? "European" : "US (NonEuropean)"));
-	strcat(buf, " conventions");
-
-	return buf;
 }
 
 

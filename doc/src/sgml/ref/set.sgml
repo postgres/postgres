@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.77 2003/06/21 19:33:36 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.78 2003/07/15 19:19:56 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -154,7 +154,7 @@ SELECT setseed(<replaceable>value</replaceable>);
        for <literal>SET timezone TO <replaceable>value</></>.  The
        syntax <literal>SET TIME ZONE</literal> allows special syntax
        for the time zone specification.  Here are examples of valid
-       values:
+       values (but note some are accepted only on some platforms):
 
        <variablelist>
         <varlistentry>

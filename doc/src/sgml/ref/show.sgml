@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.28 2003/06/27 19:08:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.29 2003/07/15 19:19:56 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -156,9 +156,9 @@ SHOW ALL
 
 <programlisting>
 SHOW DateStyle;
-               DateStyle
----------------------------------------
- ISO with US (NonEuropean) conventions
+ DateStyle
+-----------
+ ISO, US
 (1 row)
 </programlisting>
   </para>

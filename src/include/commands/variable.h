@@ -2,7 +2,7 @@
  * variable.h
  *		Routines for handling specialized SET variables.
  *
- * $Id: variable.h,v 1.20 2003/04/25 19:45:09 tgl Exp $
+ * $Id: variable.h,v 1.21 2003/07/15 19:19:56 tgl Exp $
  *
  */
 #ifndef VARIABLE_H
@@ -10,7 +10,6 @@
 
 extern const char *assign_datestyle(const char *value,
 				 bool doit, bool interactive);
-extern const char *show_datestyle(void);
 extern const char *assign_timezone(const char *value,
 				bool doit, bool interactive);
 extern const char *show_timezone(void);
