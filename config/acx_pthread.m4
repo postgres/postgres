@@ -202,6 +202,9 @@ if test "x$acx_pthread_ok" = xyes; then
         LIBS="$save_LIBS"
         CFLAGS="$save_CFLAGS"
 
+# Not a common AIX compiler so we don't support it and adding a specific
+# compiler usage for every thread compile is ugly
+# AIX threading requires gcc
         # More AIX lossage: must compile with cc_r
         AC_CHECK_PROG(PTHREAD_CC, cc_r, cc_r, ${CC})
 else

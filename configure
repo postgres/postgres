@@ -14236,6 +14236,9 @@ echo "${ECHO_T}${flag}" >&6
         LIBS="$save_LIBS"
         CFLAGS="$save_CFLAGS"
 
+# Not a common AIX compiler so we don't support it and adding a specific
+# compiler usage for every thread compile is ugly
+# AIX threading requires gcc
         # More AIX lossage: must compile with cc_r
         # Extract the first word of "cc_r", so it can be a program name with args.
 set dummy cc_r; ac_word=$2
