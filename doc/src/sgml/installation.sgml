@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.18 2000/09/17 20:35:27 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.19 2000/09/25 22:52:49 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
@@ -515,19 +515,20 @@ su - postgres
        <term>--with-tcl</term>
        <listitem>
         <para>
-         Builds components that require Tcl, which are libpgtcl,
-         pgtclsh, and PL/Tcl.
+         Builds components that require Tcl/Tk, which are libpgtcl,
+         pgtclsh, pgtksh, pgaccess, and PL/Tcl.  But see below about
+         <option>--without-tk</>.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term>--with-x</term>
+       <term>--without-tk</term>
        <listitem>
         <para>
-         Use the X Window System. If you specified --with-tcl then this
-         will enable the build of modules requiring Tcl/Tk, that is,
-         pgtksh and pgaccess.
+         If you specify <option>--with-tcl</> and this option, then
+         programs that require <productname>Tk</> (i.e., pgtksh and pgaccess)
+         will be excluded.
         </para>
        </listitem>
       </varlistentry>
