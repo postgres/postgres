@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.27 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.28 2003/09/01 20:26:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,7 @@ _hash_insertonpg(Relation rel,
 			 * page with enough room.  allocate a new overflow page.
 			 */
 			do_expand = true;
-			ovflbuf = _hash_addovflpage(rel, &metabuf, buf);
+			ovflbuf = _hash_addovflpage(rel, metabuf, buf);
 			_hash_relbuf(rel, buf, HASH_WRITE);
 			buf = ovflbuf;
 			page = BufferGetPage(buf);
@@ -186,18 +186,15 @@ _hash_insertonpg(Relation rel,
 		 * access type just for a moment to allow greater accessibility to
 		 * the metapage.
 		 */
-		metap = (HashMetaPage) _hash_chgbufaccess(rel, &metabuf,
-												  HASH_READ, HASH_WRITE);
-		metap->hashm_nkeys += 1;
-		metap = (HashMetaPage) _hash_chgbufaccess(rel, &metabuf,
-												  HASH_WRITE, HASH_READ);
-
+		_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_WRITE);
+		metap->hashm_ntuples += 1;
+		_hash_chgbufaccess(rel, metabuf, HASH_WRITE, HASH_READ);
 	}
 
 	_hash_wrtbuf(rel, buf);
 
 	if (do_expand ||
-		(metap->hashm_nkeys / (metap->hashm_maxbucket + 1))
+		(metap->hashm_ntuples / (metap->hashm_maxbucket + 1))
 		> metap->hashm_ffactor)
 		_hash_expandtable(rel, metabuf);
 	_hash_relbuf(rel, metabuf, HASH_READ);

@@ -8,18 +8,21 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.38 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.39 2003/09/01 20:26:34 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
  *	  data at high addresses includes information about the page including
- *	  whether a page is an overflow page or a true bucket, the block
- *	  numbers of the preceding and following pages, and the overflow
- *	  address of the page if it is an overflow page.
+ *	  whether a page is an overflow page or a true bucket, the bucket
+ *	  number, and the block numbers of the preceding and following pages
+ *	  in the same bucket.
  *
  *	  The first page in a hash relation, page zero, is special -- it stores
  *	  information describing the hash table; it is referred to as the
  *	  "meta page." Pages one and higher store the actual data.
+ *
+ *	  There are also bitmap pages, which are not manipulated here;
+ *	  see hashovfl.c.
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +34,6 @@
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 
-
-static void _hash_setpagelock(Relation rel, BlockNumber blkno, int access);
-static void _hash_unsetpagelock(Relation rel, BlockNumber blkno, int access);
-static void _hash_splitpage(Relation rel, Buffer metabuf, Bucket obucket, Bucket nbucket);
 
 /*
  *	We use high-concurrency locking on hash indices.  There are two cases in
@@ -62,9 +61,13 @@ static void _hash_splitpage(Relation rel, Buffer metabuf, Bucket obucket, Bucket
  *	the page being deleted, other than an indexscan of our own backend,
  *	which will be taken care of by _hash_adjscans.
  */
-
-
 #define USELOCKING		(!BuildingHash && !IsInitProcessingMode())
+
+
+static void _hash_setpagelock(Relation rel, BlockNumber blkno, int access);
+static void _hash_unsetpagelock(Relation rel, BlockNumber blkno, int access);
+static void _hash_splitbucket(Relation rel, Buffer metabuf,
+							  Bucket obucket, Bucket nbucket);
 
 
 /*
@@ -80,9 +83,6 @@ _hash_metapinit(Relation rel)
 	Buffer		metabuf;
 	Buffer		buf;
 	Page		pg;
-	int			nbuckets;
-	uint32		nelem;			/* number elements */
-	uint32		lg2nelem;		/* _hash_log2(nelem)   */
 	uint16		i;
 
 	/* can't be sharing this with anyone, now... */
@@ -95,63 +95,48 @@ _hash_metapinit(Relation rel)
 
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE);
 	pg = BufferGetPage(metabuf);
-	metap = (HashMetaPage) pg;
 	_hash_pageinit(pg, BufferGetPageSize(metabuf));
 
-	metap->hashm_magic = HASH_MAGIC;
-	metap->hashm_version = HASH_VERSION;
-	metap->hashm_nkeys = 0;
-	metap->hashm_nmaps = 0;
-	metap->hashm_ffactor = DEFAULT_FFACTOR;
-	metap->hashm_bsize = BufferGetPageSize(metabuf);
-	metap->hashm_bshift = _hash_log2(metap->hashm_bsize);
-	for (i = metap->hashm_bshift; i > 0; --i)
-	{
-		if ((1 << i) < (metap->hashm_bsize -
-						(MAXALIGN(sizeof(PageHeaderData)) +
-						 MAXALIGN(sizeof(HashPageOpaqueData)))))
-			break;
-	}
-	Assert(i);
-	metap->hashm_bmsize = 1 << i;
-	metap->hashm_procid = index_getprocid(rel, 1, HASHPROC);
-
-	/*
-	 * Make nelem = 2 rather than 0 so that we end up allocating space for
-	 * the next greater power of two number of buckets.
-	 */
-	nelem = 2;
-	lg2nelem = 1;				/* _hash_log2(MAX(nelem, 2)) */
-	nbuckets = 2;				/* 1 << lg2nelem */
-
-	MemSet((char *) metap->hashm_spares, 0, sizeof(metap->hashm_spares));
-	MemSet((char *) metap->hashm_mapp, 0, sizeof(metap->hashm_mapp));
-
-	metap->hashm_spares[lg2nelem] = 2;	/* lg2nelem + 1 */
-	metap->hashm_spares[lg2nelem + 1] = 2;		/* lg2nelem + 1 */
-	metap->hashm_ovflpoint = 1; /* lg2nelem */
-	metap->hashm_lastfreed = 2;
-
-	metap->hashm_maxbucket = metap->hashm_lowmask = 1;	/* nbuckets - 1 */
-	metap->hashm_highmask = 3;	/* (nbuckets << 1) - 1 */
-
 	pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
-	pageopaque->hasho_oaddr = InvalidOvflAddress;
+	pageopaque->hasho_oaddr = 0;
 	pageopaque->hasho_prevblkno = InvalidBlockNumber;
 	pageopaque->hasho_nextblkno = InvalidBlockNumber;
 	pageopaque->hasho_flag = LH_META_PAGE;
 	pageopaque->hasho_bucket = -1;
 
-	/*
-	 * First bitmap page is at: splitpoint lg2nelem page offset 1 which
-	 * turns out to be page 3. Couldn't initialize page 3  until we
-	 * created the first two buckets above.
-	 */
-	if (_hash_initbitmap(rel, metap, OADDR_OF(lg2nelem, 1), lg2nelem + 1, 0))
-		elog(ERROR, "_hash_initbitmap failed");
+	metap = (HashMetaPage) pg;
 
-	/* all done */
-	_hash_wrtnorelbuf(metabuf);
+	metap->hashm_magic = HASH_MAGIC;
+	metap->hashm_version = HASH_VERSION;
+	metap->hashm_ntuples = 0;
+	metap->hashm_nmaps = 0;
+	metap->hashm_ffactor = DEFAULT_FFACTOR;
+	metap->hashm_bsize = BufferGetPageSize(metabuf);
+	metap->hashm_bshift = _hash_log2(metap->hashm_bsize);
+	/* page size must be power of 2 */
+	Assert(metap->hashm_bsize == (1 << metap->hashm_bshift));
+	/* bitmap size is half of page size, to keep it also power of 2 */
+	metap->hashm_bmsize = (metap->hashm_bsize >> 1);
+	Assert(metap->hashm_bsize >= metap->hashm_bmsize +
+		   MAXALIGN(sizeof(PageHeaderData)) +
+		   MAXALIGN(sizeof(HashPageOpaqueData)));
+	Assert((1 << BMPG_SHIFT(metap)) == (BMPG_MASK(metap) + 1));
+
+	metap->hashm_procid = index_getprocid(rel, 1, HASHPROC);
+
+	/*
+	 * We initialize the index with two buckets, 0 and 1, occupying physical
+	 * blocks 1 and 2.  The first freespace bitmap page is in block 3.
+	 */
+	metap->hashm_maxbucket = metap->hashm_lowmask = 1;	/* nbuckets - 1 */
+	metap->hashm_highmask = 3;	/* (nbuckets << 1) - 1 */
+
+	MemSet((char *) metap->hashm_spares, 0, sizeof(metap->hashm_spares));
+	MemSet((char *) metap->hashm_mapp, 0, sizeof(metap->hashm_mapp));
+
+	metap->hashm_spares[1] = 1;	/* the first bitmap page is only spare */
+	metap->hashm_ovflpoint = 1;
+	metap->hashm_firstfree = 0;
 
 	/*
 	 * initialize the first two buckets
@@ -162,7 +147,7 @@ _hash_metapinit(Relation rel)
 		pg = BufferGetPage(buf);
 		_hash_pageinit(pg, BufferGetPageSize(buf));
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
-		pageopaque->hasho_oaddr = InvalidOvflAddress;
+		pageopaque->hasho_oaddr = 0;
 		pageopaque->hasho_prevblkno = InvalidBlockNumber;
 		pageopaque->hasho_nextblkno = InvalidBlockNumber;
 		pageopaque->hasho_flag = LH_BUCKET_PAGE;
@@ -170,7 +155,14 @@ _hash_metapinit(Relation rel)
 		_hash_wrtbuf(rel, buf);
 	}
 
-	_hash_relbuf(rel, metabuf, HASH_WRITE);
+	/*
+	 * Initialize bitmap page.  Can't do this until we
+	 * create the first two buckets, else smgr will complain.
+	 */
+	_hash_initbitmap(rel, metap, 3);
+
+	/* all done */
+	_hash_wrtbuf(rel, metabuf);
 
 	if (USELOCKING)
 		UnlockRelation(rel, AccessExclusiveLock);
@@ -267,30 +259,28 @@ _hash_wrtnorelbuf(Buffer buf)
 	WriteNoReleaseBuffer(buf);
 }
 
-Page
+/*
+ * _hash_chgbufaccess() -- Change from read to write access or vice versa.
+ *
+ * When changing from write to read, we assume the buffer is dirty and tell
+ * bufmgr it must be written out.
+ */
+void
 _hash_chgbufaccess(Relation rel,
-				   Buffer *bufp,
+				   Buffer buf,
 				   int from_access,
 				   int to_access)
 {
 	BlockNumber blkno;
 
-	blkno = BufferGetBlockNumber(*bufp);
+	blkno = BufferGetBlockNumber(buf);
 
-	switch (from_access)
-	{
-		case HASH_WRITE:
-			_hash_wrtbuf(rel, *bufp);
-			break;
-		case HASH_READ:
-			_hash_relbuf(rel, *bufp, from_access);
-			break;
-		default:
-			elog(ERROR, "unrecognized hash access code: %d", from_access);
-			break;
-	}
-	*bufp = _hash_getbuf(rel, blkno, to_access);
-	return BufferGetPage(*bufp);
+	if (from_access == HASH_WRITE)
+		_hash_wrtnorelbuf(buf);
+
+	_hash_unsetpagelock(rel, blkno, from_access);
+
+	_hash_setpagelock(rel, blkno, to_access);
 }
 
 /*
@@ -303,12 +293,14 @@ _hash_pageinit(Page page, Size size)
 	PageInit(page, size, sizeof(HashPageOpaqueData));
 }
 
+/*
+ *  _hash_setpagelock() -- Acquire the requested type of lock on a page.
+ */
 static void
 _hash_setpagelock(Relation rel,
 				  BlockNumber blkno,
 				  int access)
 {
-
 	if (USELOCKING)
 	{
 		switch (access)
@@ -326,12 +318,14 @@ _hash_setpagelock(Relation rel,
 	}
 }
 
+/*
+ *  _hash_unsetpagelock() -- Release the specified type of lock on a page.
+ */
 static void
 _hash_unsetpagelock(Relation rel,
 					BlockNumber blkno,
 					int access)
 {
-
 	if (USELOCKING)
 	{
 		switch (access)
@@ -379,24 +373,22 @@ _hash_pagedel(Relation rel, ItemPointer tid)
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 
 	PageIndexTupleDelete(page, offno);
-	_hash_wrtnorelbuf(buf);
 
 	if (PageIsEmpty(page) && (opaque->hasho_flag & LH_OVERFLOW_PAGE))
-	{
-		buf = _hash_freeovflpage(rel, buf);
-		if (BufferIsValid(buf))
-			_hash_relbuf(rel, buf, HASH_WRITE);
-	}
+		_hash_freeovflpage(rel, buf);
 	else
-		_hash_relbuf(rel, buf, HASH_WRITE);
+		_hash_wrtbuf(rel, buf);
 
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
 	_hash_checkpage((Page) metap, LH_META_PAGE);
-	metap->hashm_nkeys--;
+	metap->hashm_ntuples--;
 	_hash_wrtbuf(rel, metabuf);
 }
 
+/*
+ * Expand the hash table by creating one new bucket.
+ */
 void
 _hash_expandtable(Relation rel, Buffer metabuf)
 {
@@ -408,53 +400,55 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	metap = (HashMetaPage) BufferGetPage(metabuf);
 	_hash_checkpage((Page) metap, LH_META_PAGE);
 
-	metap = (HashMetaPage) _hash_chgbufaccess(rel, &metabuf, HASH_READ, HASH_WRITE);
+	_hash_chgbufaccess(rel, metabuf, HASH_READ, HASH_WRITE);
+
 	new_bucket = ++metap->hashm_maxbucket;
-	metap = (HashMetaPage) _hash_chgbufaccess(rel, &metabuf, HASH_WRITE, HASH_READ);
-	old_bucket = (metap->hashm_maxbucket & metap->hashm_lowmask);
+	old_bucket = (new_bucket & metap->hashm_lowmask);
+
+	if (new_bucket > metap->hashm_highmask)
+	{
+		/* Starting a new doubling */
+		metap->hashm_lowmask = metap->hashm_highmask;
+		metap->hashm_highmask = new_bucket | metap->hashm_lowmask;
+	}
 
 	/*
-	 * If the split point is increasing (hashm_maxbucket's log base 2 *
-	 * increases), we need to copy the current contents of the spare split
-	 * bucket to the next bucket.
+	 * If the split point is increasing (hashm_maxbucket's log base 2
+	 * increases), we need to adjust the hashm_spares[] array and
+	 * hashm_ovflpoint so that future overflow pages will be created beyond
+	 * this new batch of bucket pages.
+	 *
+	 * XXX should initialize new bucket pages to prevent out-of-order
+	 * page creation.
 	 */
 	spare_ndx = _hash_log2(metap->hashm_maxbucket + 1);
 	if (spare_ndx > metap->hashm_ovflpoint)
 	{
-
-		metap = (HashMetaPage) _hash_chgbufaccess(rel, &metabuf, HASH_READ, HASH_WRITE);
+		Assert(spare_ndx == metap->hashm_ovflpoint + 1);
 		metap->hashm_spares[spare_ndx] = metap->hashm_spares[metap->hashm_ovflpoint];
 		metap->hashm_ovflpoint = spare_ndx;
-		metap = (HashMetaPage) _hash_chgbufaccess(rel, &metabuf, HASH_WRITE, HASH_READ);
 	}
 
-	if (new_bucket > metap->hashm_highmask)
-	{
+	_hash_chgbufaccess(rel, metabuf, HASH_WRITE, HASH_READ);
 
-		/* Starting a new doubling */
-		metap = (HashMetaPage) _hash_chgbufaccess(rel, &metabuf, HASH_READ, HASH_WRITE);
-		metap->hashm_lowmask = metap->hashm_highmask;
-		metap->hashm_highmask = new_bucket | metap->hashm_lowmask;
-		metap = (HashMetaPage) _hash_chgbufaccess(rel, &metabuf, HASH_WRITE, HASH_READ);
-
-	}
 	/* Relocate records to the new bucket */
-	_hash_splitpage(rel, metabuf, old_bucket, new_bucket);
+	_hash_splitbucket(rel, metabuf, old_bucket, new_bucket);
 }
 
 
 /*
- * _hash_splitpage -- split 'obucket' into 'obucket' and 'nbucket'
+ * _hash_splitbucket -- split 'obucket' into 'obucket' and 'nbucket'
  *
- * this routine is actually misnamed -- we are splitting a bucket that
- * consists of a base bucket page and zero or more overflow (bucket
- * chain) pages.
+ * We are splitting a bucket that consists of a base bucket page and zero
+ * or more overflow (bucket chain) pages.  We must relocate tuples that
+ * belong in the new bucket, and compress out any free space in the old
+ * bucket.
  */
 static void
-_hash_splitpage(Relation rel,
-				Buffer metabuf,
-				Bucket obucket,
-				Bucket nbucket)
+_hash_splitbucket(Relation rel,
+				  Buffer metabuf,
+				  Bucket obucket,
+				  Bucket nbucket)
 {
 	Bucket		bucket;
 	Buffer		obuf;
@@ -475,7 +469,7 @@ _hash_splitpage(Relation rel,
 	OffsetNumber omaxoffnum;
 	Page		opage;
 	Page		npage;
-	TupleDesc	itupdesc;
+	TupleDesc	itupdesc = RelationGetDescr(rel);
 
 	metap = (HashMetaPage) BufferGetPage(metabuf);
 	_hash_checkpage((Page) metap, LH_META_PAGE);
@@ -488,13 +482,13 @@ _hash_splitpage(Relation rel,
 	opage = BufferGetPage(obuf);
 	npage = BufferGetPage(nbuf);
 
-	/* initialize the new bucket */
+	/* initialize the new bucket page */
 	_hash_pageinit(npage, BufferGetPageSize(nbuf));
 	nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
 	nopaque->hasho_prevblkno = InvalidBlockNumber;
 	nopaque->hasho_nextblkno = InvalidBlockNumber;
 	nopaque->hasho_flag = LH_BUCKET_PAGE;
-	nopaque->hasho_oaddr = InvalidOvflAddress;
+	nopaque->hasho_oaddr = 0;
 	nopaque->hasho_bucket = nbucket;
 	_hash_wrtnorelbuf(nbuf);
 
@@ -569,11 +563,11 @@ _hash_splitpage(Relation rel,
 			else
 			{
 				/*
-				 * we're at the end of the bucket chain, so now we're
-				 * really done with everything.  before quitting, call
-				 * _hash_squeezebucket to ensure the tuples in the bucket
-				 * (including the overflow pages) are packed as tightly as
-				 * possible.
+				 * We're at the end of the bucket chain, so now we're
+				 * really done with everything.  Before quitting, call
+				 * _hash_squeezebucket to ensure the tuples remaining in the
+				 * old bucket (including the overflow pages) are packed as
+				 * tightly as possible.  The new bucket is already tight.
 				 */
 				_hash_wrtbuf(rel, obuf);
 				_hash_wrtbuf(rel, nbuf);
@@ -585,8 +579,9 @@ _hash_splitpage(Relation rel,
 		/* hash on the tuple */
 		hitem = (HashItem) PageGetItem(opage, PageGetItemId(opage, ooffnum));
 		itup = &(hitem->hash_itup);
-		itupdesc = RelationGetDescr(rel);
 		datum = index_getattr(itup, 1, itupdesc, &null);
+		Assert(!null);
+
 		bucket = _hash_call(rel, metap, datum);
 
 		if (bucket == nbucket)
@@ -603,7 +598,7 @@ _hash_splitpage(Relation rel,
 
 			if (PageGetFreeSpace(npage) < itemsz)
 			{
-				ovflbuf = _hash_addovflpage(rel, &metabuf, nbuf);
+				ovflbuf = _hash_addovflpage(rel, metabuf, nbuf);
 				_hash_wrtbuf(rel, nbuf);
 				nbuf = ovflbuf;
 				npage = BufferGetPage(nbuf);
@@ -638,10 +633,10 @@ _hash_splitpage(Relation rel,
 			if (PageIsEmpty(opage) &&
 				(oopaque->hasho_flag & LH_OVERFLOW_PAGE))
 			{
-				obuf = _hash_freeovflpage(rel, obuf);
+				oblkno = _hash_freeovflpage(rel, obuf);
 
 				/* check that we're not through the bucket chain */
-				if (BufferIsInvalid(obuf))
+				if (!BlockNumberIsValid(oblkno))
 				{
 					_hash_wrtbuf(rel, nbuf);
 					_hash_squeezebucket(rel, metap, obucket);
@@ -652,9 +647,9 @@ _hash_splitpage(Relation rel,
 				 * re-init. again, we're guaranteed that an ovfl page has
 				 * at least one tuple.
 				 */
+				obuf = _hash_getbuf(rel, oblkno, HASH_WRITE);
 				opage = BufferGetPage(obuf);
 				_hash_checkpage(opage, LH_OVERFLOW_PAGE);
-				oblkno = BufferGetBlockNumber(obuf);
 				oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 				if (PageIsEmpty(opage))
 					elog(ERROR, "empty hash overflow page %u", oblkno);
@@ -668,10 +663,8 @@ _hash_splitpage(Relation rel,
 			 * the tuple stays on this page.  we didn't move anything, so
 			 * we didn't delete anything and therefore we don't have to
 			 * change 'omaxoffnum'.
-			 *
-			 * XXX any hash value from [0, nbucket-1] will map to this
-			 * bucket, which doesn't make sense to me.
 			 */
+			Assert(bucket == obucket);
 			ooffnum = OffsetNumberNext(ooffnum);
 		}
 	}
