@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.41 1999/08/09 06:20:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.42 1999/08/12 00:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -741,7 +741,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 			/* ----------------
 			 *	Here we figure out the contents of the index qual.
-			 *	The usual case is (op var const) or (op const var)
+			 *	The usual case is (var op const) or (const op var)
 			 *	which means we form a scan key for the attribute
 			 *	listed in the var node and use the value of the const.
 			 *
@@ -759,6 +759,19 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			 *	Hence, we set have_runtime_keys to true and then set
 			 *	the appropriate flag in run_keys to LEFT_OP or RIGHT_OP.
 			 *	The corresponding scan keys are recomputed at run time.
+			 *
+			 *	XXX Although this code *thinks* it can handle an indexqual
+			 *	with the indexkey on either side, in fact it cannot.
+			 *	Indexscans only work with quals that have the indexkey on
+			 *	the left (the planner/optimizer makes sure it never passes
+			 *	anything else).  The reason: the scankey machinery has no
+			 *	provision for distinguishing which side of the operator is
+			 *	the indexed attribute and which is the compared-to constant.
+			 *	It just assumes that the attribute is on the left :-(
+			 *
+			 *	I am leaving this code able to support both ways, even though
+			 *	half of it is dead code, on the off chance that someone will
+			 *	fix the scankey machinery someday --- tgl 8/11/99.
 			 * ----------------
 			 */
 
@@ -770,7 +783,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			 */
 			leftop = (Node *) get_leftop(clause);
 
-			if (IsA(leftop, Var) &&var_is_rel((Var *) leftop))
+			Assert(leftop != NULL);
+
+			if (IsA(leftop, Var) && var_is_rel((Var *) leftop))
 			{
 				/* ----------------
 				 *	if the leftop is a "rel-var", then it means
@@ -779,6 +794,19 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				 * ----------------
 				 */
 				varattno = ((Var *) leftop)->varattno;
+				scanvar = LEFT_OP;
+			}
+			else if (is_funcclause(leftop) &&
+					 var_is_rel(lfirst(((Expr *) leftop)->args)))
+			{
+				/* ----------------
+				 *	if the leftop is a func node then it means
+				 *	it identifies the value to place in our scan key.
+				 *	Since functional indices have only one attribute
+				 *	the attno must always be set to 1.
+				 * ----------------
+				 */
+				varattno = 1;
 				scanvar = LEFT_OP;
 			}
 			else if (IsA(leftop, Const))
@@ -819,21 +847,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 					run_keys[j] = NO_OP;
 				}
 			}
-			else if (leftop != NULL &&
-					 is_funcclause(leftop) &&
-					 var_is_rel(lfirst(((Expr *) leftop)->args)))
-			{
-				/* ----------------
-				 *	if the leftop is a func node then it means
-				 *	it identifies the value to place in our scan key.
-				 *	Since functional indices have only one attribute
-				 *	the attno must always be set to 1.
-				 * ----------------
-				 */
-				varattno = 1;
-				scanvar = LEFT_OP;
-
-			}
 			else
 			{
 				/* ----------------
@@ -853,7 +866,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			 */
 			rightop = (Node *) get_rightop(clause);
 
-			if (IsA(rightop, Var) &&var_is_rel((Var *) rightop))
+			Assert(rightop != NULL);
+
+			if (IsA(rightop, Var) && var_is_rel((Var *) rightop))
 			{
 				/* ----------------
 				 *	here we make sure only one op identifies the
@@ -872,12 +887,28 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				 */
 				varattno = ((Var *) rightop)->varattno;
 				scanvar = RIGHT_OP;
+			}
+			else if (is_funcclause(rightop) &&
+					 var_is_rel(lfirst(((Expr *) rightop)->args)))
+			{
+				/* ----------------
+				 *	if the rightop is a func node then it means
+				 *	it identifies the value to place in our scan key.
+				 *	Since functional indices have only one attribute
+				 *	the attno must always be set to 1.
+				 * ----------------
+				 */
+				if (scanvar == LEFT_OP)
+					elog(ERROR, "ExecInitIndexScan: %s",
+						 "both left and right ops are rel-vars");
 
+				varattno = 1;
+				scanvar = RIGHT_OP;
 			}
 			else if (IsA(rightop, Const))
 			{
 				/* ----------------
-				 *	if the leftop is a const node then it means
+				 *	if the rightop is a const node then it means
 				 *	it identifies the value to place in our scan key.
 				 * ----------------
 				 */
@@ -912,29 +943,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 					run_keys[j] = NO_OP;
 				}
 			}
-			else if (rightop != NULL &&
-					 is_funcclause(rightop) &&
-					 var_is_rel(lfirst(((Expr *) rightop)->args)))
-			{
-				/* ----------------
-				 *	if the rightop is a func node then it means
-				 *	it identifies the value to place in our scan key.
-				 *	Since functional indices have only one attribute
-				 *	the attno must always be set to 1.
-				 * ----------------
-				 */
-				if (scanvar == LEFT_OP)
-					elog(ERROR, "ExecInitIndexScan: %s",
-						 "both left and right ops are rel-vars");
-
-				varattno = 1;
-				scanvar = RIGHT_OP;
-
-			}
 			else
 			{
 				/* ----------------
-				 *	otherwise, the leftop contains information usable
+				 *	otherwise, the rightop contains information usable
 				 *	at runtime to figure out the value to place in our
 				 *	scan key.
 				 * ----------------
