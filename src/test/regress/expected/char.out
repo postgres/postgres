@@ -88,3 +88,17 @@ two|f1
 (2 rows)
 
 QUERY: DROP TABLE CHAR_TBL;
+QUERY: CREATE TABLE CHAR_TBL(f1 char(4));
+QUERY: INSERT INTO CHAR_TBL (f1) VALUES ('a');
+QUERY: INSERT INTO CHAR_TBL (f1) VALUES ('ab');
+QUERY: INSERT INTO CHAR_TBL (f1) VALUES ('abcd');
+QUERY: INSERT INTO CHAR_TBL (f1) VALUES ('abcde');
+QUERY: SELECT '' AS four, CHAR_TBL.*;
+four|f1  
+----+----
+    |a   
+    |ab  
+    |abcd
+    |abcd
+(4 rows)
+
