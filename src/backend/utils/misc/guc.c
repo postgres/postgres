@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.149 2003/08/11 23:04:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.150 2003/08/17 22:19:15 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -818,7 +818,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"add_missing_from", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("Add missing table references to from clauses"),
+			gettext_noop("Add missing table references to FROM clauses"),
 			NULL
 		},
 		&add_missing_from,

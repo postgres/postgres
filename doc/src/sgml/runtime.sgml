@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.199 2003/08/10 01:20:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.200 2003/08/17 22:19:10 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2396,6 +2396,14 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <indexterm><primary>missing from</></>
       <listitem>
        <para>
+        When <literal>true</>, tables that are referenced by a query will be
+	automatically added to the <literal>FROM</> clause if not already
+	present.  The default is <literal>true</> for compatibility with
+	previous releases of <productname>PostgreSQL</>.  However, this
+	behavior is not SQL-standard, and many people dislike it because it
+	can mask mistakes.  Set to <literal>false</> for the SQL-standard
+	behavior of rejecting references to tables that are not listed in
+	<literal>FROM</>.
        </para>
       </listitem>
      </varlistentry>
