@@ -2,6 +2,8 @@
 -- TINTERVAL
 --
 CREATE TABLE TINTERVAL_TBL (f1  tinterval);
+-- Should accept any abstime,
+-- so do not bother with extensive testing of values
 INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["-infinity" "infinity"]');
 INSERT INTO TINTERVAL_TBL (f1)
@@ -11,7 +13,7 @@ INSERT INTO TINTERVAL_TBL (f1)
 INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["epoch" "Mon May  1 00:30:30 1995"]');
 INSERT INTO TINTERVAL_TBL (f1)
-   VALUES ('["Feb 15 1990 12:15:03" "current"]');
+   VALUES ('["Feb 15 1990 12:15:03" "2001-09-23 11:12:13"]');
 -- badly formatted tintervals 
 INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["bad time specifications" ""]');
@@ -26,8 +28,8 @@ SELECT '' AS five, TINTERVAL_TBL.*;
       | ["-infinity" "infinity"]
       | ["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
       | ["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
-      | ["epoch" "Mon May 01 00:30:30 1995 PDT"]
-      | ["Thu Feb 15 12:15:03 1990 PST" "current"]
+      | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"]
+      | ["Thu Feb 15 12:15:03 1990 PST" "Sun Sep 23 11:12:13 2001 PDT"]
 (5 rows)
 
 -- length ==
@@ -46,8 +48,8 @@ SELECT '' AS three, t.*
  three |                               f1                                
 -------+-----------------------------------------------------------------
        | ["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
-       | ["epoch" "Mon May 01 00:30:30 1995 PDT"]
-       | ["Thu Feb 15 12:15:03 1990 PST" "current"]
+       | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"]
+       | ["Thu Feb 15 12:15:03 1990 PST" "Sun Sep 23 11:12:13 2001 PDT"]
 (3 rows)
 
 -- length <
@@ -74,8 +76,8 @@ SELECT '' AS three, t.*
  three |                               f1                                
 -------+-----------------------------------------------------------------
        | ["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
-       | ["epoch" "Mon May 01 00:30:30 1995 PDT"]
-       | ["Thu Feb 15 12:15:03 1990 PST" "current"]
+       | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"]
+       | ["Thu Feb 15 12:15:03 1990 PST" "Sun Sep 23 11:12:13 2001 PDT"]
 (3 rows)
 
 -- length >=
@@ -85,8 +87,8 @@ SELECT '' AS three, t.*
  three |                               f1                                
 -------+-----------------------------------------------------------------
        | ["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
-       | ["epoch" "Mon May 01 00:30:30 1995 PDT"]
-       | ["Thu Feb 15 12:15:03 1990 PST" "current"]
+       | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"]
+       | ["Thu Feb 15 12:15:03 1990 PST" "Sun Sep 23 11:12:13 2001 PDT"]
 (3 rows)
 
 -- overlaps
@@ -98,7 +100,7 @@ SELECT '' AS three, t1.*
 -------+-----------------------------------------------------------------
        | ["-infinity" "infinity"]
        | ["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
-       | ["epoch" "Mon May 01 00:30:30 1995 PDT"]
+       | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"]
 (3 rows)
 
 SET geqo TO 'off';
@@ -111,8 +113,8 @@ SELECT '' AS five, t1.f1, t2.f1
 ------+-----------------------------------------------------------------+-----------------------------------------------------------------
       | ["-infinity" "infinity"]                                        | ["-infinity" "infinity"]
       | ["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"] | ["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
-      | ["Thu Feb 15 12:15:03 1990 PST" "current"]                      | ["Thu Feb 15 12:15:03 1990 PST" "current"]
-      | ["epoch" "Mon May 01 00:30:30 1995 PDT"]                        | ["epoch" "Mon May 01 00:30:30 1995 PDT"]
+      | ["Thu Feb 15 12:15:03 1990 PST" "Sun Sep 23 11:12:13 2001 PDT"] | ["Thu Feb 15 12:15:03 1990 PST" "Sun Sep 23 11:12:13 2001 PDT"]
+      | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"] | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"]
       | ["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"] | ["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
 (5 rows)
 
@@ -123,19 +125,19 @@ SELECT '' AS fourteen, t1.f1 AS interval1, t2.f1 AS interval2
  fourteen |                            interval1                            |                            interval2                            
 ----------+-----------------------------------------------------------------+-----------------------------------------------------------------
           | ["-infinity" "infinity"]                                        | ["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
-          | ["-infinity" "infinity"]                                        | ["Thu Feb 15 12:15:03 1990 PST" "current"]
-          | ["-infinity" "infinity"]                                        | ["epoch" "Mon May 01 00:30:30 1995 PDT"]
+          | ["-infinity" "infinity"]                                        | ["Thu Feb 15 12:15:03 1990 PST" "Sun Sep 23 11:12:13 2001 PDT"]
+          | ["-infinity" "infinity"]                                        | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"]
           | ["-infinity" "infinity"]                                        | ["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
           | ["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"] | ["-infinity" "infinity"]
-          | ["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"] | ["epoch" "Mon May 01 00:30:30 1995 PDT"]
-          | ["Thu Feb 15 12:15:03 1990 PST" "current"]                      | ["-infinity" "infinity"]
-          | ["Thu Feb 15 12:15:03 1990 PST" "current"]                      | ["epoch" "Mon May 01 00:30:30 1995 PDT"]
-          | ["epoch" "Mon May 01 00:30:30 1995 PDT"]                        | ["-infinity" "infinity"]
-          | ["epoch" "Mon May 01 00:30:30 1995 PDT"]                        | ["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
-          | ["epoch" "Mon May 01 00:30:30 1995 PDT"]                        | ["Thu Feb 15 12:15:03 1990 PST" "current"]
-          | ["epoch" "Mon May 01 00:30:30 1995 PDT"]                        | ["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
+          | ["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"] | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"]
+          | ["Thu Feb 15 12:15:03 1990 PST" "Sun Sep 23 11:12:13 2001 PDT"] | ["-infinity" "infinity"]
+          | ["Thu Feb 15 12:15:03 1990 PST" "Sun Sep 23 11:12:13 2001 PDT"] | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"]
+          | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"] | ["-infinity" "infinity"]
+          | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"] | ["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
+          | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"] | ["Thu Feb 15 12:15:03 1990 PST" "Sun Sep 23 11:12:13 2001 PDT"]
+          | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"] | ["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
           | ["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"] | ["-infinity" "infinity"]
-          | ["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"] | ["epoch" "Mon May 01 00:30:30 1995 PDT"]
+          | ["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"] | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"]
 (14 rows)
 
 -- contains
@@ -147,7 +149,7 @@ SELECT '' AS five, t1.f1
  five |                               f1                                
 ------+-----------------------------------------------------------------
       | ["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
-      | ["Thu Feb 15 12:15:03 1990 PST" "current"]
+      | ["Thu Feb 15 12:15:03 1990 PST" "Sun Sep 23 11:12:13 2001 PDT"]
       | ["Sat May 10 23:59:12 1947 PST" "Sun Jan 14 03:14:21 1973 PST"]
 (3 rows)
 
@@ -162,7 +164,7 @@ SELECT '' AS three, t1.f1
 -------+-----------------------------------------------------------------
        | ["-infinity" "infinity"]
        | ["Sun Sep 04 23:59:12 1983 PDT" "Tue Oct 04 23:59:12 1983 PDT"]
-       | ["epoch" "Mon May 01 00:30:30 1995 PDT"]
+       | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"]
 (3 rows)
 
 RESET geqo;

@@ -85,7 +85,8 @@ WHERE p1.oid != p2.oid AND
  prorettype | prorettype 
 ------------+------------
          25 |       1043
-(1 row)
+       1114 |       1184
+(2 rows)
 
 SELECT DISTINCT p1.proargtypes[0], p2.proargtypes[0]
 FROM pg_proc AS p1, pg_proc AS p2
@@ -97,8 +98,9 @@ WHERE p1.oid != p2.oid AND
  proargtypes | proargtypes 
 -------------+-------------
           25 |        1043
+        1114 |        1184
         1560 |        1562
-(2 rows)
+(3 rows)
 
 SELECT DISTINCT p1.proargtypes[1], p2.proargtypes[1]
 FROM pg_proc AS p1, pg_proc AS p2
@@ -109,8 +111,9 @@ WHERE p1.oid != p2.oid AND
     (p1.proargtypes[1] < p2.proargtypes[1]);
  proargtypes | proargtypes 
 -------------+-------------
+        1114 |        1184
         1560 |        1562
-(1 row)
+(2 rows)
 
 SELECT DISTINCT p1.proargtypes[2], p2.proargtypes[2]
 FROM pg_proc AS p1, pg_proc AS p2
@@ -121,7 +124,8 @@ WHERE p1.oid != p2.oid AND
     (p1.proargtypes[2] < p2.proargtypes[2]);
  proargtypes | proargtypes 
 -------------+-------------
-(0 rows)
+        1114 |        1184
+(1 row)
 
 SELECT DISTINCT p1.proargtypes[3], p2.proargtypes[3]
 FROM pg_proc AS p1, pg_proc AS p2
@@ -132,7 +136,8 @@ WHERE p1.oid != p2.oid AND
     (p1.proargtypes[3] < p2.proargtypes[3]);
  proargtypes | proargtypes 
 -------------+-------------
-(0 rows)
+        1114 |        1184
+(1 row)
 
 SELECT DISTINCT p1.proargtypes[4], p2.proargtypes[4]
 FROM pg_proc AS p1, pg_proc AS p2
@@ -481,7 +486,7 @@ WHERE p1.aggtransfn = p2.oid AND
   oid  | aggname | oid |   proname   
 -------+---------+-----+-------------
  10021 | max     | 768 | int4larger
- 10036 | min     | 769 | int4smaller
+ 10037 | min     | 769 | int4smaller
 (2 rows)
 
 -- Cross-check finalfn (if present) against its entry in pg_proc.

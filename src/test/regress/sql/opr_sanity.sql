@@ -394,7 +394,6 @@ WHERE p1.aggfinalfn = 0 AND p1.aggfinaltype != p1.aggtranstype;
 -- implemented using int4larger/int4smaller.  Until we have
 -- some cleaner way of dealing with binary-equivalent types, just leave
 -- those two tuples in the expected output.
-
 SELECT p1.oid, p1.aggname, p2.oid, p2.proname
 FROM pg_aggregate AS p1, pg_proc AS p2
 WHERE p1.aggtransfn = p2.oid AND

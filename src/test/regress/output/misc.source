@@ -650,11 +650,13 @@ SELECT user_relns() AS user_relns
  text_tbl
  time_tbl
  timestamp_tbl
+ timestamptz_tbl
+ timetz_tbl
  tinterval_tbl
  toyemp
  varchar_tbl
  xacttest
-(91 rows)
+(93 rows)
 
 --SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer'))) AS equip_name;
 SELECT hobbies_by_name('basketball');

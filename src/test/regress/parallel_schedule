@@ -11,11 +11,11 @@ test: numerology
 # ----------
 # The second group of parallel test
 # ----------
-test: point lseg box path polygon circle date time timestamp interval abstime reltime tinterval inet comments oidjoins type_sanity opr_sanity
+test: point lseg box path polygon circle date time timestamp timestamptz interval abstime reltime tinterval inet comments oidjoins type_sanity opr_sanity
 
 # Depends on point, lseg, box, path, polygon and circle
 test: geometry
-# Depends on interval, timestamp, reltime and abstime
+# Depends on interval, timestamp, timestamptz, reltime and abstime
 test: horology	
 
 # ----------

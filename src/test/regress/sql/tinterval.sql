@@ -4,6 +4,9 @@
 
 CREATE TABLE TINTERVAL_TBL (f1  tinterval);
 
+-- Should accept any abstime,
+-- so do not bother with extensive testing of values
+
 INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["-infinity" "infinity"]');
 
@@ -17,7 +20,7 @@ INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["epoch" "Mon May  1 00:30:30 1995"]');
 
 INSERT INTO TINTERVAL_TBL (f1)
-   VALUES ('["Feb 15 1990 12:15:03" "current"]');
+   VALUES ('["Feb 15 1990 12:15:03" "2001-09-23 11:12:13"]');
 
 
 -- badly formatted tintervals 
@@ -96,4 +99,3 @@ SELECT '' AS three, t1.f1
    ORDER BY t1.f1;
 
 RESET geqo;
-

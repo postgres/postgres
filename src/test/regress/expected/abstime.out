@@ -9,11 +9,20 @@
 -- daylight savings time right for times prior to Unix epoch (jan 1 1970).
 --
 CREATE TABLE ABSTIME_TBL (f1 abstime);
+BEGIN;
+INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'current');
+INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'now');
+SELECT count(*) AS two FROM ABSTIME_TBL WHERE f1 = 'now' ;
+ two 
+-----
+   2
+(1 row)
+
+END;
+DELETE FROM ABSTIME_TBL;
 INSERT INTO ABSTIME_TBL (f1) VALUES ('Jan 14, 1973 03:14:21');
--- was INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'now'):
 INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'Mon May  1 00:30:30 1995');
 INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'epoch');
-INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'current');
 INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'infinity');
 INSERT INTO ABSTIME_TBL (f1) VALUES (abstime '-infinity');
 INSERT INTO ABSTIME_TBL (f1) VALUES (abstime 'May 10, 1947 23:59:12');
@@ -32,13 +41,12 @@ SELECT '' AS eight, ABSTIME_TBL.*;
 -------+------------------------------
        | Sun Jan 14 03:14:21 1973 PST
        | Mon May 01 00:30:30 1995 PDT
-       | epoch
-       | current
+       | Wed Dec 31 16:00:00 1969 PST
        | infinity
        | -infinity
        | Sat May 10 23:59:12 1947 PST
        | invalid
-(8 rows)
+(7 rows)
 
 SELECT '' AS six, ABSTIME_TBL.*
    WHERE ABSTIME_TBL.f1 < abstime 'Jun 30, 2001';
@@ -46,7 +54,7 @@ SELECT '' AS six, ABSTIME_TBL.*
 -----+------------------------------
      | Sun Jan 14 03:14:21 1973 PST
      | Mon May 01 00:30:30 1995 PDT
-     | epoch
+     | Wed Dec 31 16:00:00 1969 PST
      | -infinity
      | Sat May 10 23:59:12 1947 PST
 (5 rows)
@@ -57,12 +65,11 @@ SELECT '' AS six, ABSTIME_TBL.*
 -----+------------------------------
      | Sun Jan 14 03:14:21 1973 PST
      | Mon May 01 00:30:30 1995 PDT
-     | epoch
-     | current
+     | Wed Dec 31 16:00:00 1969 PST
      | infinity
      | Sat May 10 23:59:12 1947 PST
      | invalid
-(7 rows)
+(6 rows)
 
 SELECT '' AS six, ABSTIME_TBL.*
    WHERE abstime 'May 10, 1947 23:59:12' <> ABSTIME_TBL.f1;
@@ -70,25 +77,17 @@ SELECT '' AS six, ABSTIME_TBL.*
 -----+------------------------------
      | Sun Jan 14 03:14:21 1973 PST
      | Mon May 01 00:30:30 1995 PDT
-     | epoch
-     | current
+     | Wed Dec 31 16:00:00 1969 PST
      | infinity
      | -infinity
      | invalid
-(7 rows)
-
-SELECT '' AS one, ABSTIME_TBL.*
-   WHERE abstime 'current' = ABSTIME_TBL.f1;
- one |   f1    
------+---------
-     | current
-(1 row)
+(6 rows)
 
 SELECT '' AS three, ABSTIME_TBL.*
    WHERE abstime 'epoch' >= ABSTIME_TBL.f1;
  three |              f1              
 -------+------------------------------
-       | epoch
+       | Wed Dec 31 16:00:00 1969 PST
        | -infinity
        | Sat May 10 23:59:12 1947 PST
 (3 rows)
@@ -98,7 +97,7 @@ SELECT '' AS four, ABSTIME_TBL.*
  four |              f1              
 ------+------------------------------
       | Sun Jan 14 03:14:21 1973 PST
-      | epoch
+      | Wed Dec 31 16:00:00 1969 PST
       | -infinity
       | Sat May 10 23:59:12 1947 PST
 (4 rows)
@@ -110,7 +109,7 @@ SELECT '' AS four, ABSTIME_TBL.*
 ------+------------------------------
       | Sun Jan 14 03:14:21 1973 PST
       | Mon May 01 00:30:30 1995 PDT
-      | epoch
+      | Wed Dec 31 16:00:00 1969 PST
 (3 rows)
 
 SELECT '' AS four, f1 AS abstime,
@@ -118,12 +117,12 @@ SELECT '' AS four, f1 AS abstime,
   date_part('day',f1) AS day, date_part('hour', f1) AS hour,
   date_part('minute', f1) AS minute, date_part('second', f1) AS second
   FROM ABSTIME_TBL
-  WHERE isfinite(f1) and f1 <> abstime 'current'
+  WHERE isfinite(f1)
   ORDER BY abstime;
  four |           abstime            | year | month | day | hour | minute | second 
 ------+------------------------------+------+-------+-----+------+--------+--------
       | Sat May 10 23:59:12 1947 PST | 1947 |     5 |  10 |   23 |     59 |     12
-      | epoch                        | 1969 |    12 |  31 |   16 |      0 |      0
+      | Wed Dec 31 16:00:00 1969 PST | 1969 |    12 |  31 |   16 |      0 |      0
       | Sun Jan 14 03:14:21 1973 PST | 1973 |     1 |  14 |    3 |     14 |     21
       | Mon May 01 00:30:30 1995 PDT | 1995 |     5 |   1 |    0 |     30 |     30
 (4 rows)
