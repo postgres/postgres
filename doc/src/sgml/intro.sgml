@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.22 2003/09/11 21:42:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.23 2003/10/21 22:47:54 tgl Exp $
 -->
 
 <preface id="preface">
@@ -71,6 +71,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.22 2003/09/11 21:42:20 momji
      of SQL commands, client and server programs.  This part supports
      the other parts with structured information sorted by command or
      program.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     <xref linkend="internals"> contains assorted information that can be of
+     use to <productname>PostgreSQL</> developers.
     </para>
    </listitem>
   </itemizedlist>
