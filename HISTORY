@@ -321,7 +321,7 @@ Update mysql
 Update cube (Bruno Wolff III)
 Update earthdistance to use cube (Bruno Wolff III)
 Update btree_gist (Oleg)
-New tsearch2 full-text search module (Oleg)
+New tsearch2 full-text search module (Oleg, Teodor)
 Add hashed based crosstab function to tablefuncs (Joe)
 Add serial column to order connectby() siblings in tablefuncs (Nabil Sayegh,Joe)
 Add named persistent connections to dblink (Shridhar Daithanka)
