@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.4 1996/07/27 02:29:51 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.5 1996/07/31 06:09:46 scrappy Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -51,6 +51,7 @@
 #endif
 
 #include "postgres.h"
+#include "access/htup.h"
 #include "libpq-fe.h"
 
 #include "pg_dump.h"
@@ -1309,7 +1310,10 @@ dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
 	tableInd = findTableByName(tblinfo, numTables,
 				   indinfo[i].indrelname);
 	indkey = atoi(indinfo[i].indkey) - 1; 
-	attname = tblinfo[tableInd].attnames[indkey];
+	if (indkey == ObjectIdAttributeNumber - 1)
+	    attname = "oid";
+	else
+	    attname = tblinfo[tableInd].attnames[indkey];
 	if (strcmp(indinfo[i].indproc,"0") == 0) {
 	    funcname = NULL;
 	} else {
