@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.147 2004/12/31 21:59:42 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.148 2005/01/27 23:23:56 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -958,7 +958,7 @@ AlterUser(AlterUserStmt *stmt)
 		new_record_repl[Anum_pg_shadow_valuntil - 1] = 'r';
 	}
 
-	new_tuple = heap_modifytuple(tuple, pg_shadow_rel, new_record,
+	new_tuple = heap_modifytuple(tuple, pg_shadow_dsc, new_record,
 								 new_record_nulls, new_record_repl);
 	simple_heap_update(pg_shadow_rel, &tuple->t_self, new_tuple);
 
@@ -1050,7 +1050,7 @@ AlterUserSet(AlterUserSetStmt *stmt)
 			repl_null[Anum_pg_shadow_useconfig - 1] = 'n';
 	}
 
-	newtuple = heap_modifytuple(oldtuple, rel, repl_val, repl_null, repl_repl);
+	newtuple = heap_modifytuple(oldtuple, RelationGetDescr(rel), repl_val, repl_null, repl_repl);
 	simple_heap_update(rel, &oldtuple->t_self, newtuple);
 
 	CatalogUpdateIndexes(rel, newtuple);
@@ -1277,7 +1277,7 @@ RenameUser(const char *oldname, const char *newname)
 				(errmsg("MD5 password cleared because of user rename")));
 	}
 
-	newtuple = heap_modifytuple(oldtuple, rel, repl_val, repl_null, repl_repl);
+	newtuple = heap_modifytuple(oldtuple, dsc, repl_val, repl_null, repl_repl);
 	simple_heap_update(rel, &oldtuple->t_self, newtuple);
 
 	CatalogUpdateIndexes(rel, newtuple);
@@ -1672,7 +1672,7 @@ UpdateGroupMembership(Relation group_rel, HeapTuple group_tuple,
 	new_record[Anum_pg_group_grolist - 1] = PointerGetDatum(newarray);
 	new_record_repl[Anum_pg_group_grolist - 1] = 'r';
 
-	tuple = heap_modifytuple(group_tuple, group_rel,
+	tuple = heap_modifytuple(group_tuple, RelationGetDescr(group_rel),
 						  new_record, new_record_nulls, new_record_repl);
 
 	simple_heap_update(group_rel, &group_tuple->t_self, tuple);

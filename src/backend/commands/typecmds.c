@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.66 2005/01/24 23:21:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.67 2005/01/27 23:23:56 neilc Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1230,8 +1230,9 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 		new_record_repl[Anum_pg_type_typdefault - 1] = 'r';
 	}
 
-	newtuple = heap_modifytuple(tup, rel,
-						  new_record, new_record_nulls, new_record_repl);
+	newtuple = heap_modifytuple(tup, RelationGetDescr(rel),
+								new_record, new_record_nulls,
+								new_record_repl);
 
 	simple_heap_update(rel, &tup->t_self, newtuple);
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.108 2004/12/31 22:00:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.109 2005/01/27 23:24:09 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -570,7 +570,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			memset(replace, ' ', sizeof(replace));
 			values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
 			replace[Anum_pg_largeobject_data - 1] = 'r';
-			newtup = heap_modifytuple(oldtuple, lo_heap_r,
+			newtup = heap_modifytuple(oldtuple, RelationGetDescr(lo_heap_r),
 									  values, nulls, replace);
 			simple_heap_update(lo_heap_r, &newtup->t_self, newtup);
 			CatalogIndexInsert(indstate, newtup);

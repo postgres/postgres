@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.108 2004/12/31 21:59:38 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.109 2005/01/27 23:23:51 neilc Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -373,7 +373,7 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 		replaces[Anum_pg_class_relacl - 1] = 'r';
 		values[Anum_pg_class_relacl - 1] = PointerGetDatum(new_acl);
 
-		newtuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
+		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values, nulls, replaces);
 
 		ReleaseSysCache(tuple);
 
@@ -531,7 +531,7 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 		replaces[Anum_pg_database_datacl - 1] = 'r';
 		values[Anum_pg_database_datacl - 1] = PointerGetDatum(new_acl);
 
-		newtuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
+		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values, nulls, replaces);
 
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 
@@ -685,7 +685,7 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		replaces[Anum_pg_proc_proacl - 1] = 'r';
 		values[Anum_pg_proc_proacl - 1] = PointerGetDatum(new_acl);
 
-		newtuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
+		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values, nulls, replaces);
 
 		ReleaseSysCache(tuple);
 
@@ -848,7 +848,7 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 		replaces[Anum_pg_language_lanacl - 1] = 'r';
 		values[Anum_pg_language_lanacl - 1] = PointerGetDatum(new_acl);
 
-		newtuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
+		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values, nulls, replaces);
 
 		ReleaseSysCache(tuple);
 
@@ -1002,7 +1002,7 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 		replaces[Anum_pg_namespace_nspacl - 1] = 'r';
 		values[Anum_pg_namespace_nspacl - 1] = PointerGetDatum(new_acl);
 
-		newtuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
+		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values, nulls, replaces);
 
 		ReleaseSysCache(tuple);
 
@@ -1160,7 +1160,7 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 		replaces[Anum_pg_tablespace_spcacl - 1] = 'r';
 		values[Anum_pg_tablespace_spcacl - 1] = PointerGetDatum(new_acl);
 
-		newtuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
+		newtuple = heap_modifytuple(tuple, RelationGetDescr(relation), values, nulls, replaces);
 
 		simple_heap_update(relation, &newtuple->t_self, newtuple);
 

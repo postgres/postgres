@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.97 2004/12/31 21:59:38 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.98 2005/01/27 23:23:51 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,7 +179,6 @@ TypeCreate(const char *typeName,
 	char		replaces[Natts_pg_type];
 	Datum		values[Natts_pg_type];
 	NameData	name;
-	TupleDesc	tupDesc;
 	int			i;
 
 	/*
@@ -296,7 +295,7 @@ TypeCreate(const char *typeName,
 		 * Okay to update existing "shell" type tuple
 		 */
 		tup = heap_modifytuple(tup,
-							   pg_type_desc,
+							   RelationGetDescr(pg_type_desc),
 							   values,
 							   nulls,
 							   replaces);
@@ -309,9 +308,7 @@ TypeCreate(const char *typeName,
 	}
 	else
 	{
-		tupDesc = pg_type_desc->rd_att;
-
-		tup = heap_formtuple(tupDesc,
+		tup = heap_formtuple(RelationGetDescr(pg_type_desc),
 							 values,
 							 nulls);
 

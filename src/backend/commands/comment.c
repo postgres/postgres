@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.80 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.81 2005/01/27 23:23:54 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,7 +203,7 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 			simple_heap_delete(description, &oldtuple->t_self);
 		else
 		{
-			newtuple = heap_modifytuple(oldtuple, description, values,
+			newtuple = heap_modifytuple(oldtuple, RelationGetDescr(description), values,
 										nulls, replaces);
 			simple_heap_update(description, &oldtuple->t_self, newtuple);
 		}

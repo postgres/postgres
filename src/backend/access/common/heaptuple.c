@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.95 2004/12/31 21:59:07 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.96 2005/01/27 23:23:49 neilc Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -662,19 +662,15 @@ heap_formtuple(TupleDesc tupleDescriptor,
  *
  *		forms a new tuple from an old tuple and a set of replacement values.
  *		returns a new palloc'ed tuple.
- *
- *		XXX it is misdesign that this is passed a Relation and not just a
- *		TupleDesc to describe the tuple structure.
  * ----------------
  */
 HeapTuple
 heap_modifytuple(HeapTuple tuple,
-				 Relation relation,
+				 TupleDesc tupleDesc,
 				 Datum *replValues,
 				 char *replNulls,
 				 char *replActions)
 {
-	TupleDesc	tupleDesc = RelationGetDescr(relation);
 	int			numberOfAttributes = tupleDesc->natts;
 	int			attoff;
 	Datum	   *values;

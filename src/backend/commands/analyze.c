@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.80 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.81 2005/01/27 23:23:53 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1193,7 +1193,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		{
 			/* Yes, replace it */
 			stup = heap_modifytuple(oldtup,
-									sd,
+									RelationGetDescr(sd),
 									values,
 									nulls,
 									replaces);
