@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.94 2000/11/05 00:15:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.95 2000/11/09 02:46:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,8 @@ static List *make_subplanTargetList(Query *parse, List *tlist,
 static Plan *make_groupplan(List *group_tlist, bool tuplePerGroup,
 			   List *groupClause, AttrNumber *grpColIdx,
 			   bool is_presorted, Plan *subplan);
+static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
+
 
 /*****************************************************************************
  *
@@ -635,16 +637,21 @@ union_planner(Query *parse,
 	if (parse->setOperations)
 	{
 		/*
-		 * Construct the plan for set operations.  The result will
-		 * not need any work except perhaps a top-level sort.
+		 * Construct the plan for set operations.  The result will not
+		 * need any work except perhaps a top-level sort and/or LIMIT.
 		 */
 		result_plan = plan_set_operations(parse);
 
 		/*
 		 * We should not need to call preprocess_targetlist, since we must
-		 * be in a SELECT query node.
+		 * be in a SELECT query node.  Instead, use the targetlist
+		 * returned by plan_set_operations (since this tells whether it
+		 * returned any resjunk columns!), and transfer any sort key
+		 * information from the original tlist.
 		 */
 		Assert(parse->commandType == CMD_SELECT);
+
+		tlist = postprocess_setop_tlist(result_plan->targetlist, tlist);
 
 		/*
 		 * We leave current_pathkeys NIL indicating we do not know sort
@@ -1254,4 +1261,42 @@ make_sortplan(List *tlist, Plan *plannode, List *sortcls)
 	Assert(keyno > 0);
 
 	return (Plan *) make_sort(sort_tlist, plannode, keyno);
+}
+
+/*
+ * postprocess_setop_tlist
+ *	  Fix up targetlist returned by plan_set_operations().
+ *
+ * We need to transpose sort key info from the orig_tlist into new_tlist.
+ * NOTE: this would not be good enough if we supported resjunk sort keys
+ * for results of set operations --- then, we'd need to project a whole
+ * new tlist to evaluate the resjunk columns.  For now, just elog if we
+ * find any resjunk columns in orig_tlist.
+ */
+static List *
+postprocess_setop_tlist(List *new_tlist, List *orig_tlist)
+{
+	List	   *l;
+
+	foreach(l, new_tlist)
+	{
+		TargetEntry *new_tle = (TargetEntry *) lfirst(l);
+		TargetEntry *orig_tle;
+
+		/* ignore resjunk columns in setop result */
+		if (new_tle->resdom->resjunk)
+			continue;
+
+		Assert(orig_tlist != NIL);
+		orig_tle = (TargetEntry *) lfirst(orig_tlist);
+		orig_tlist = lnext(orig_tlist);
+		if (orig_tle->resdom->resjunk)
+			elog(ERROR, "postprocess_setop_tlist: resjunk output columns not implemented");
+		Assert(new_tle->resdom->resno == orig_tle->resdom->resno);
+		Assert(new_tle->resdom->restype == orig_tle->resdom->restype);
+		new_tle->resdom->ressortgroupref = orig_tle->resdom->ressortgroupref;
+	}
+	if (orig_tlist != NIL)
+		elog(ERROR, "postprocess_setop_tlist: resjunk output columns not implemented");
+	return new_tlist;
 }

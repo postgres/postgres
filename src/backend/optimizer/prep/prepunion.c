@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.54 2000/10/05 19:11:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.55 2000/11/09 02:46:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,8 @@ typedef struct
 } fix_parsetree_attnums_context;
 
 static Plan *recurse_set_operations(Node *setOp, Query *parse,
-									List *colTypes, int flag,
-									List *refnames_tlist);
+									List *colTypes, bool junkOK,
+									int flag, List *refnames_tlist);
 static Plan *generate_union_plan(SetOperationStmt *op, Query *parse,
 								 List *refnames_tlist);
 static Plan *generate_nonunion_plan(SetOperationStmt *op, Query *parse,
@@ -49,9 +49,10 @@ static List *recurse_union_children(Node *setOp, Query *parse,
 									SetOperationStmt *top_union,
 									List *refnames_tlist);
 static List *generate_setop_tlist(List *colTypes, int flag,
+								  bool hack_constants,
 								  List *input_tlist,
 								  List *refnames_tlist);
-static bool tlist_same_datatypes(List *tlist, List *colTypes);
+static bool tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK);
 static void fix_parsetree_attnums(Index rt_index, Oid old_relid,
 					  Oid new_relid, Query *parsetree);
 static bool fix_parsetree_attnums_walker(Node *node,
@@ -95,10 +96,11 @@ plan_set_operations(Query *parse)
 	/*
 	 * Recurse on setOperations tree to generate plans for set ops.
 	 * The final output plan should have just the column types shown
-	 * as the output from the top-level node.
+	 * as the output from the top-level node, plus possibly a resjunk
+	 * working column (we can rely on upper-level nodes to deal with that).
 	 */
 	return recurse_set_operations((Node *) topop, parse,
-								  topop->colTypes, -1,
+								  topop->colTypes, true, -1,
 								  leftmostQuery->targetList);
 }
 
@@ -107,13 +109,14 @@ plan_set_operations(Query *parse)
  *	  Recursively handle one step in a tree of set operations
  *
  * colTypes: integer list of type OIDs of expected output columns
+ * junkOK: if true, child resjunk columns may be left in the result
  * flag: if >= 0, add a resjunk output column indicating value of flag
  * refnames_tlist: targetlist to take column names from
  */
 static Plan *
 recurse_set_operations(Node *setOp, Query *parse,
-					   List *colTypes, int flag,
-					   List *refnames_tlist)
+					   List *colTypes, bool junkOK,
+					   int flag, List *refnames_tlist)
 {
 	if (IsA(setOp, RangeTblRef))
 	{
@@ -133,7 +136,7 @@ recurse_set_operations(Node *setOp, Query *parse,
 		 * Add a SubqueryScan with the caller-requested targetlist
 		 */
 		plan = (Plan *)
-			make_subqueryscan(generate_setop_tlist(colTypes, flag,
+			make_subqueryscan(generate_setop_tlist(colTypes, flag, true,
 												   subplan->targetlist,
 												   refnames_tlist),
 							  NIL,
@@ -165,10 +168,11 @@ recurse_set_operations(Node *setOp, Query *parse,
 		 * the referencing Vars will equal the tlist entries they reference.
 		 * Ugly but I don't feel like making that code more general right now.
 		 */
-		if (flag >= 0 || ! tlist_same_datatypes(plan->targetlist, colTypes))
+		if (flag >= 0 ||
+			! tlist_same_datatypes(plan->targetlist, colTypes, junkOK))
 		{
 			plan = (Plan *)
-				make_result(generate_setop_tlist(colTypes, flag,
+				make_result(generate_setop_tlist(colTypes, flag, false,
 												 plan->targetlist,
 												 refnames_tlist),
 							NULL,
@@ -215,7 +219,7 @@ generate_union_plan(SetOperationStmt *op, Query *parse,
 		make_append(planlist,
 					0,
 					NIL,
-					generate_setop_tlist(op->colTypes, -1,
+					generate_setop_tlist(op->colTypes, -1, false,
 									((Plan *) lfirst(planlist))->targetlist,
 									refnames_tlist));
 	/*
@@ -251,10 +255,10 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 
 	/* Recurse on children, ensuring their outputs are marked */
 	lplan = recurse_set_operations(op->larg, parse,
-								   op->colTypes, 0,
+								   op->colTypes, false, 0,
 								   refnames_tlist);
 	rplan = recurse_set_operations(op->rarg, parse,
-								   op->colTypes, 1,
+								   op->colTypes, false, 1,
 								   refnames_tlist);
 	/*
 	 * Append the child results together.
@@ -267,7 +271,7 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 		make_append(makeList2(lplan, rplan),
 					0,
 					NIL,
-					generate_setop_tlist(op->colTypes, 0,
+					generate_setop_tlist(op->colTypes, 0, false,
 										 lplan->targetlist,
 										 refnames_tlist));
 	/*
@@ -321,10 +325,19 @@ recurse_union_children(Node *setOp, Query *parse,
 												top_union, refnames_tlist));
 		}
 	}
-	/* Not same, so plan this child separately */
+	/*
+	 * Not same, so plan this child separately.
+	 *
+	 * Note we disallow any resjunk columns in child results.  This
+	 * is necessary since the Append node that implements the union
+	 * won't do any projection, and upper levels will get confused if
+	 * some of our output tuples have junk and some don't.  This case
+	 * only arises when we have an EXCEPT or INTERSECT as child, else
+	 * there won't be resjunk anyway.
+	 */
 	return makeList1(recurse_set_operations(setOp, parse,
-											top_union->colTypes, -1,
-											refnames_tlist));
+											top_union->colTypes, false,
+											-1, refnames_tlist));
 }
 
 /*
@@ -332,6 +345,7 @@ recurse_union_children(Node *setOp, Query *parse,
  */
 static List *
 generate_setop_tlist(List *colTypes, int flag,
+					 bool hack_constants,
 					 List *input_tlist,
 					 List *refnames_tlist)
 {
@@ -359,14 +373,17 @@ generate_setop_tlist(List *colTypes, int flag,
 		 * HACK: constants in the input's targetlist are copied up as-is
 		 * rather than being referenced as subquery outputs.  This is mainly
 		 * to ensure that when we try to coerce them to the output column's
-		 * datatype, the right things happen for UNKNOWN constants.
+		 * datatype, the right things happen for UNKNOWN constants.  But do
+		 * this only at the first level of subquery-scan plans; we don't
+		 * want phony constants appearing in the output tlists of upper-level
+		 * nodes!
 		 */
 		resdom = makeResdom((AttrNumber) resno++,
 							colType,
 							-1,
 							pstrdup(reftle->resdom->resname),
 							false);
-		if (inputtle->expr && IsA(inputtle->expr, Const))
+		if (hack_constants && inputtle->expr && IsA(inputtle->expr, Const))
 			expr = inputtle->expr;
 		else
 			expr = (Node *) makeVar(0,
@@ -407,10 +424,11 @@ generate_setop_tlist(List *colTypes, int flag,
 /*
  * Does tlist have same datatypes as requested colTypes?
  *
- * Resjunk columns are ignored.
+ * Resjunk columns are ignored if junkOK is true; otherwise presence of
+ * a resjunk column will always cause a 'false' result.
  */
 static bool
-tlist_same_datatypes(List *tlist, List *colTypes)
+tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
 {
 	List	   *i;
 
@@ -418,7 +436,12 @@ tlist_same_datatypes(List *tlist, List *colTypes)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(i);
 
-		if (!tle->resdom->resjunk)
+		if (tle->resdom->resjunk)
+		{
+			if (! junkOK)
+				return false;
+		}
+		else
 		{
 			if (colTypes == NIL)
 				return false;
