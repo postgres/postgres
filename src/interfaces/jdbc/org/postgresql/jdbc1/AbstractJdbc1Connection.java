@@ -14,7 +14,7 @@ import org.postgresql.largeobject.LargeObjectManager;
 import org.postgresql.util.*;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.12 2002/10/20 02:55:50 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.13 2002/11/14 05:35:45 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Connection which adds the jdbc2
  * methods.  The real Connection class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Connection
@@ -475,6 +475,10 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	 */
 	public java.sql.ResultSet ExecSQL(String sql, java.sql.Statement stat) throws SQLException
 	{
+		if (isClosed())
+		{
+			throw new PSQLException("postgresql.con.closed");
+		}
 		return new QueryExecutor(new String[] {sql}, EMPTY_OBJECT_ARRAY, stat, pg_stream, (java.sql.Connection)this).execute();
 	}
 	private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
@@ -494,6 +498,10 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	 */
 	public java.sql.ResultSet ExecSQL(String[] p_sqlFragments, Object[] p_binds, java.sql.Statement stat) throws SQLException
 	{
+		if (isClosed())
+		{
+			throw new PSQLException("postgresql.con.closed");
+		}
 		return new QueryExecutor(p_sqlFragments, p_binds, stat, pg_stream, (java.sql.Connection)this).execute();
 	}
 

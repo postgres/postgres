@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.12 2002/10/19 21:53:42 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.13 2002/11/14 05:35:45 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -724,7 +724,55 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public void setNull(int parameterIndex, int sqlType) throws SQLException
 	{
-		bind(parameterIndex, "null", PG_TEXT);
+        String l_pgType;
+		switch (sqlType)
+		{
+			case Types.INTEGER:
+				l_pgType = PG_INTEGER;
+				break;
+			case Types.TINYINT:
+			case Types.SMALLINT:
+				l_pgType = PG_INT2;
+				break;
+			case Types.BIGINT:
+				l_pgType = PG_INT8;
+				break;
+			case Types.REAL:
+			case Types.FLOAT:
+				l_pgType = PG_FLOAT;
+				break;
+			case Types.DOUBLE:
+				l_pgType = PG_DOUBLE;
+				break;
+			case Types.DECIMAL:
+			case Types.NUMERIC:
+				l_pgType = PG_NUMERIC;
+				break;
+			case Types.CHAR:
+			case Types.VARCHAR:
+			case Types.LONGVARCHAR:
+				l_pgType = PG_TEXT;
+				break;
+			case Types.DATE:
+				l_pgType = PG_DATE;
+				break;
+			case Types.TIME:
+				l_pgType = PG_TIME;
+				break;
+			case Types.TIMESTAMP:
+				l_pgType = PG_TIMESTAMPTZ;
+				break;
+			case Types.BINARY:
+			case Types.VARBINARY:
+				l_pgType = PG_BYTEA;
+				break;
+			case Types.OTHER:
+				l_pgType = PG_TEXT;
+				break;
+			default:
+				l_pgType = PG_TEXT;
+		}
+		bind(parameterIndex, "null", l_pgType);
 	}
 
 	/*
@@ -830,7 +878,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException
 	{
 		if (x == null)
-			setNull(parameterIndex, Types.OTHER);
+			setNull(parameterIndex, Types.DECIMAL);
 		else
 		{
 			bind(parameterIndex, x.toString(), PG_NUMERIC);
@@ -856,7 +904,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		// if the passed string is null, then set this column to null
 		if (x == null)
-			setNull(parameterIndex, Types.OTHER);
+			setNull(parameterIndex, Types.VARCHAR);
 		else
 		{
 			// use the shared buffer object. Should never clash but this makes
@@ -902,7 +950,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 			//Version 7.2 supports the bytea datatype for byte arrays
 			if (null == x)
 			{
-				setNull(parameterIndex, Types.OTHER);
+				setNull(parameterIndex, Types.VARBINARY);
 			}
 			else
 			{
@@ -933,7 +981,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		if (null == x)
 		{
-			setNull(parameterIndex, Types.OTHER);
+			setNull(parameterIndex, Types.DATE);
 		}
 		else
 		{
@@ -953,7 +1001,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		if (null == x)
 		{
-			setNull(parameterIndex, Types.OTHER);
+			setNull(parameterIndex, Types.TIME);
 		}
 		else
 		{
@@ -973,7 +1021,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		if (null == x)
 		{
-			setNull(parameterIndex, Types.OTHER);
+			setNull(parameterIndex, Types.TIMESTAMP);
 		}
 		else
 		{
@@ -1288,7 +1336,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		if (x == null)
 		{
-			setNull(parameterIndex, Types.OTHER);
+			setNull(parameterIndex, targetSqlType);
 			return ;
 		}
 		switch (targetSqlType)
@@ -1360,7 +1408,35 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		if (x == null)
 		{
-			setNull(parameterIndex, Types.OTHER);
+			int l_sqlType;
+			if (x instanceof String)
+				l_sqlType = Types.VARCHAR;
+			else if (x instanceof BigDecimal)
+				l_sqlType = Types.DECIMAL;
+			else if (x instanceof Short)
+				l_sqlType = Types.SMALLINT;
+			else if (x instanceof Integer)
+				l_sqlType = Types.INTEGER;
+			else if (x instanceof Long)
+				l_sqlType = Types.BIGINT;
+			else if (x instanceof Float)
+				l_sqlType = Types.FLOAT;
+			else if (x instanceof Double)
+				l_sqlType = Types.DOUBLE;
+			else if (x instanceof byte[])
+				l_sqlType = Types.BINARY;
+			else if (x instanceof java.sql.Date)
+				l_sqlType = Types.DATE;
+			else if (x instanceof Time)
+				l_sqlType = Types.TIME;
+			else if (x instanceof Timestamp)
+				l_sqlType = Types.TIMESTAMP;
+			else if (x instanceof Boolean)
+				l_sqlType = Types.OTHER;
+			else 
+				l_sqlType = Types.OTHER;
+
+			setNull(parameterIndex, l_sqlType);
 			return ;
 		}
 		if (x instanceof String)
@@ -1863,6 +1939,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	private static final String PG_DATE = "date";
 	private static final String PG_TIME = "time";
 	private static final String PG_TIMESTAMPTZ = "timestamptz";
+    private static final String PG_BYTEA = "bytea";
 
 
 }
