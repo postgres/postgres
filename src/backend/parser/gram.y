@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.46 1997/09/16 16:11:20 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.47 1997/09/18 03:46:18 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -124,8 +124,7 @@ static char *FlattenStringList(List *list);
 
 %type <str>		relation_name, copy_file_name, copy_delimiter, def_name,
 		database_name, access_method_clause, access_method, attr_name,
-		class, index_name, name, file_name, recipe_name,
-		var_name, aggr_argtype
+		class, index_name, name, file_name, recipe_name, aggr_argtype
 
 %type <constrdef>		ConstraintElem, ConstraintDef
 
@@ -173,7 +172,7 @@ static char *FlattenStringList(List *list);
 %type <astmt>	insert_rest
 
 %type <typnam>	Typename, typname, opt_type
-%type <coldef>	columnDef
+%type <coldef>	columnDef, alter_clause
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause,
 				a_expr, a_expr_or_null, AexprConst,
@@ -321,18 +320,18 @@ stmt :	  AddAttrStmt
 /*****************************************************************************
  *
  * Set PG internal variable
- *	  SET var_name TO 'var_value'
+ *	  SET name TO 'var_value'
  *
  *****************************************************************************/
 
-VariableSetStmt:  SET var_name TO var_value
+VariableSetStmt:  SET Id TO var_value
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = $2;
 					n->value = $4;
 					$$ = (Node *) n;
 				}
-		|  SET var_name '=' var_value
+		|  SET Id '=' var_value
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = $2;
@@ -348,14 +347,14 @@ VariableSetStmt:  SET var_name TO var_value
 				}
 		;
 
-var_value:		Sconst			{ $$ = $1; }
+var_value:  Sconst			{ $$ = $1; }
 		;
 
-zone_value:  Sconst				{ $$ = $1; }
-		| LOCAL					{ $$ = NULL; }
+zone_value:  Sconst			{ $$ = $1; }
+		| LOCAL				{ $$ = NULL; }
 		;
 
-VariableShowStmt:  SHOW var_name
+VariableShowStmt:  SHOW Id
 				{
 					VariableShowStmt *n = makeNode(VariableShowStmt);
 					n->name  = $2;
@@ -363,7 +362,7 @@ VariableShowStmt:  SHOW var_name
 				}
 		;
 
-VariableResetStmt:	RESET var_name
+VariableResetStmt:	RESET Id
 				{
 					VariableResetStmt *n = makeNode(VariableResetStmt);
 					n->name  = $2;
@@ -378,14 +377,28 @@ VariableResetStmt:	RESET var_name
  *
  *****************************************************************************/
 
-AddAttrStmt:  ALTER TABLE relation_name opt_inh_star ADD COLUMN columnDef
+AddAttrStmt:  ALTER TABLE relation_name opt_inh_star alter_clause
 				{
 					AddAttrStmt *n = makeNode(AddAttrStmt);
 					n->relname = $3;
 					n->inh = $4;
-					n->colDef = $7;
+					n->colDef = $5;
 					$$ = (Node *)n;
 				}
+		;
+
+alter_clause:  ADD opt_column columnDef
+				{
+					$$ = $3;
+				}
+			| DROP opt_column Id
+				{	elog(WARN,"ALTER TABLE/DROP COLUMN not yet implemented",NULL); }
+			| ALTER opt_column Id SET opt_default
+				{	elog(WARN,"ALTER TABLE/ALTER COLUMN/SET DEFAULT not yet implemented",NULL); }
+			| ALTER opt_column Id DROP DEFAULT
+				{	elog(WARN,"ALTER TABLE/ALTER COLUMN/DROP DEFAULT not yet implemented",NULL); }
+			| ADD ConstraintElem
+				{	elog(WARN,"ALTER TABLE/ADD CONSTRAINT not yet implemented",NULL); }
 		;
 
 /* Column definition might include WITH TIME ZONE, but only for the data types
@@ -2070,12 +2083,12 @@ opt_inh_star: '*'						{ $$ = TRUE; }
 		|  /*EMPTY*/					{ $$ = FALSE; }
 		;
 
-relation_name_list:		name_list ;
+relation_name_list:	name_list;
 
 name_list: name
-				{ $$=lcons(makeString($1),NIL); }
+				{	$$ = lcons(makeString($1),NIL); }
 		| name_list ',' name
-				{ $$=lappend($1,makeString($3)); }
+				{	$$ = lappend($1,makeString($3)); }
 		;
 
 group_clause: GROUP BY groupby_list				{ $$ = $3; }
@@ -2141,13 +2154,13 @@ from_list:	from_list ',' from_val
 				{ $$ = lcons($1, NIL); }
 		;
 
-from_val:  relation_expr AS var_name
+from_val:  relation_expr AS Id
 				{
 					$$ = makeNode(RangeVar);
 					$$->relExpr = $1;
 					$$->name = $3;
 				}
-		| relation_expr var_name
+		| relation_expr Id
 				{
 					$$ = makeNode(RangeVar);
 					$$->relExpr = $1;
@@ -2971,7 +2984,6 @@ access_method:			Id				{ $$ = $1; };
 attr_name:				ColId			{ $$ = $1; };
 class:					Id				{ $$ = $1; };
 index_name:				Id				{ $$ = $1; };
-var_name:				Id				{ $$ = $1; };
 name:					Id				{ $$ = $1; };
 
 date:					Sconst			{ $$ = $1; };
