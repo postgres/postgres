@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.23 2003/09/29 00:05:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.24 2003/10/29 17:36:57 tgl Exp $
  *
  *
  * NOTES:
@@ -1432,19 +1432,29 @@ compact_fsm_storage(void)
 
 		/*
 		 * It's possible that we have to move data down, not up, if the
-		 * allocations of previous rels expanded.  This should mean that
+		 * allocations of previous rels expanded.  This normally means that
 		 * our allocation expanded too (or at least got no worse), and
-		 * ditto for later rels.  So there should be room --- but we might
-		 * have to push down following rels to make it.  We don't want to
-		 * do the push more than once, so pack everything against the end
-		 * of the arena if so.
+		 * ditto for later rels.  So there should be room to move all our
+		 * data down without dropping any --- but we might have to push down
+		 * following rels to acquire the room.  We don't want to do the push
+		 * more than once, so pack everything against the end of the arena
+		 * if so.
+		 *
+		 * In corner cases where roundoff has affected our allocation, it's
+		 * possible that we have to move down and compress our data too.
+		 * Since this case is extremely infrequent, we do not try to be smart
+		 * about it --- we just drop pages from the end of the rel's data.
 		 */
 		if (newChunkIndex > oldChunkIndex)
 		{
 			int			limitChunkIndex;
 
 			if (newAllocPages < fsmrel->storedPages)
-				elog(PANIC, "can't juggle and compress too");
+			{
+				/* move and compress --- just drop excess pages */
+				fsmrel->storedPages = newAllocPages;
+				curChunks = fsm_current_chunks(fsmrel);
+			}
 			if (fsmrel->nextPhysical != NULL)
 				limitChunkIndex = fsmrel->nextPhysical->firstChunk;
 			else
@@ -1459,7 +1469,7 @@ compact_fsm_storage(void)
 				else
 					limitChunkIndex = FreeSpaceMap->totalChunks;
 				if (newChunkIndex + curChunks > limitChunkIndex)
-					elog(PANIC, "insufficient room");
+					elog(PANIC, "insufficient room in FSM");
 			}
 			memmove(newLocation, oldLocation, curChunks * CHUNKBYTES);
 		}
@@ -1535,7 +1545,7 @@ push_fsm_rels_after(FSMRelation *afterRel)
 		if (newChunkIndex < oldChunkIndex)
 		{
 			/* trouble... */
-			elog(PANIC, "out of room");
+			elog(PANIC, "insufficient room in FSM");
 		}
 		else if (newChunkIndex > oldChunkIndex)
 		{
