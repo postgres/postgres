@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.23 1997/04/04 10:38:49 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.24 1997/05/22 00:11:23 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -51,13 +51,7 @@ endif
 
 OBJS = $(DIRS:%=%/SUBSYS.o)
 
-ifeq ($(MAKE_EXPORTS), true)
-EXP = postgres$(EXPSUFF)
-else
-EXP =
-endif
-
-all: postgres $(EXP) global1.bki.source local1_template1.bki.source
+all: postgres $(POSTGRES_IMP) global1.bki.source local1_template1.bki.source
 
 postgres: $(OBJS) ../utils/version.o
 	$(CC) -o postgres $(OBJS) ../utils/version.o $(LDFLAGS)
@@ -96,7 +90,7 @@ fmgr.h:
 
 #############################################################################
 clean:
-	rm -f postgres fmgr.h parse.h \
+	rm -f postgres $(POSTGRES_IMP) fmgr.h parse.h \
 	    global1.bki.source local1_template1.bki.source
 	for i in $(DIRS); do $(MAKE) -C $$i clean PORTNAME=$(PORTNAME); done
 
@@ -119,13 +113,13 @@ clean:
 # and (2) the parameters of a database system should be set at initdb time,
 # not at postgres build time.
 
-install: $(LIBDIR) $(BINDIR) $(HEADERDIR) postgres $(EXP) fmgr.h\
+install: $(LIBDIR) $(BINDIR) $(HEADERDIR) postgres $(POSTGRES_IMP) fmgr.h\
          global1.bki.source local1_template1.bki.source \
          libpq/pg_hba.conf.sample optimizer/geqo/pg_geqo.sample
 	
 	$(INSTALL) $(INSTL_EXE_OPTS) postgres $(BINDIR)/postgres
 ifeq ($(MAKE_EXPORTS), true)
-	$(INSTALL) $(INSTLOPTS) postgres$(EXPSUFF) $(LIBDIR)/postgres$(EXPSUFF)
+	$(INSTALL) $(INSTLOPTS) $(POSTGRES_IMP) $(LIBDIR)/$(POSTGRES_IMP)
 endif
 	@rm -f $(BINDIR)/postmaster
 	cd $(BINDIR); ln -s postgres postmaster

@@ -33,7 +33,7 @@ if [ -z "$2" ]; then
 else
 	echo '#!' $2/$OBJNAME
 fi
-$NM -g $1 | \
+$NM -Bg $1 | \
 	egrep ' [TD] ' | \
 	sed -e 's/.* //' | \
 	egrep -v '\$' | \
