@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.53 2002/03/29 19:06:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.54 2002/05/24 19:58:04 tgl Exp $
  *
  **********************************************************************/
 
@@ -1873,7 +1873,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	int			loop_body;
 	Tcl_HashEntry *hashent;
 	pltcl_query_desc *qdesc;
-	Datum	   *argvalues = NULL;
+	Datum	   *volatile argvalues = NULL;
 	char	   *volatile nulls = NULL;
 	char	   *volatile arrayname = NULL;
 	int			count = 0;
