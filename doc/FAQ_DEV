@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Apr 17 01:09:55 EDT 2002
+   Last updated: Wed Apr 17 01:12:20 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -486,7 +486,8 @@
    available at http://www.contrib.andrew.cmu.edu/~shadow/. The SQL99
    standard must be purchased from ANSI at
    http://webstore.ansi.org/ansidocstore/default.asp. The main standards
-   document is ANSI/ISO/IEC 9075-2-1999.
+   documents are ANSI X3.135-1992 for SQL92 and ANSI/ISO/IEC 9075-2-1999
+   for SQL99.
    
    A summary of these standards is at
    http://dbs.uni-leipzig.de/en/lokal/standards.pdf and
