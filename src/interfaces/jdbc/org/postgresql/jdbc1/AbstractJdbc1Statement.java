@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.16 2003/02/04 10:09:32 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.17 2003/02/09 23:14:55 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -63,7 +63,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 
 	//Used by the callablestatement style methods
 	private static final String JDBC_SYNTAX = "{[? =] call <some_function> ([? [,?]*]) }";
-	private static final String RESULT_COLUMN = "result";
+	private static final String RESULT_ALIAS = "result";
 	private String originalSql = "";
 	private boolean isFunction;
 	// functionReturnType contains the user supplied value to check
@@ -1957,6 +1957,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 * {? = call <some_function> (?, [?,..]) }
 	 * into the PostgreSQL format which is
 	 * select <some_function> (?, [?, ...]) as result
+	 * or select * from <some_function> (?, [?, ...]) as result (7.3)
 	 *
 	 */
 	private String modifyJdbcCall(String p_sql) throws SQLException
@@ -2000,7 +2001,11 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		// sure that the parameter numbers are the same as in the original
 		// sql we add a dummy parameter in this case
 		l_sql = (isFunction ? "?" : "") + l_sql.substring (index + 4);
-		l_sql = "select " + l_sql + " as " + RESULT_COLUMN + ";";
+		if (connection.haveMinimumServerVersion("7.3")) {
+			l_sql = "select * from " + l_sql + " as " + RESULT_ALIAS + ";";
+		} else {
+			l_sql = "select " + l_sql + " as " + RESULT_ALIAS + ";";
+		}
 		return l_sql;
 	}
 
