@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.6 2004/06/03 00:07:36 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.7 2004/06/04 04:05:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -730,7 +730,7 @@ do_help(void)
 	printf(_("Options for stop or restart:\n"));
 	printf(_("  -m SHUTDOWN-MODE   may be 'smart', 'fast', or 'immediate'\n\n"));
 	printf(_("Allowed signal names for kill:\n"));
-	printf(_("  -HUP -INT -QUIT -ABRT -TERM -USR1 -USR2\n\n"));
+	printf(_("  HUP INT QUIT ABRT TERM USR1 USR2\n\n"));
 	printf(_("Shutdown modes are:\n"));
 	printf(_("  smart       quit after all clients have disconnected\n"));
 	printf(_("  fast        quit directly, with proper shutdown\n"));
@@ -771,25 +771,25 @@ set_mode(char *modeopt)
 static void
 set_sig(char *signame)
 {
-	if (!strcmp(signame, "-HUP"))
+	if (!strcmp(signame, "HUP"))
 		sig = SIGHUP;
-	else if (!strcmp(signame, "-INT"))
+	else if (!strcmp(signame, "INT"))
 		sig = SIGINT;
-	else if (!strcmp(signame, "-QUIT"))
+	else if (!strcmp(signame, "QUIT"))
 		sig = SIGQUIT;
-	else if (!strcmp(signame, "-ABRT"))
+	else if (!strcmp(signame, "ABRT"))
 		sig = SIGABRT;
 
 	/*
 	 * probably should NOT provide SIGKILL
 	 *
-	 * else if (!strcmp(signame,"-KILL")) sig = SIGKILL;
+	 * else if (!strcmp(signame,"KILL")) sig = SIGKILL;
 	 */
-	else if (!strcmp(signame, "-TERM"))
+	else if (!strcmp(signame, "TERM"))
 		sig = SIGTERM;
-	else if (!strcmp(signame, "-USR1"))
+	else if (!strcmp(signame, "USR1"))
 		sig = SIGUSR1;
-	else if (!strcmp(signame, "-USR2"))
+	else if (!strcmp(signame, "USR2"))
 		sig = SIGUSR2;
 	else
 	{
@@ -936,8 +936,8 @@ main(int argc, char **argv)
 					exit(1);
 				}
 				ctl_command = KILL_COMMAND;
-				set_sig(argv[optind + 1]);
-				killproc = atol(argv[optind + 2]);
+				set_sig(argv[++optind]);
+				killproc = atol(argv[++optind]);
 			}
 			else
 			{
