@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.12 1998/09/01 04:28:07 momjian Exp $
+ * $Id: variable.c,v 1.13 1998/09/03 02:34:29 momjian Exp $
  *
  */
 
@@ -24,6 +24,7 @@ extern Cost _cpu_index_page_wight_;
 extern bool _use_geqo_;
 extern int32 _use_geqo_rels_;
 extern bool _use_right_sided_plans_;
+extern bool _use_keyset_query_optimizer;
 
 /*-----------------------------------------------------------------------*/
 static const char *
@@ -559,6 +560,9 @@ struct VariableParsers
 	},
 #endif
 	{
+		"ksqo", parse_ksqo, show_ksqo, reset_ksqo
+	},
+	{
 		NULL, NULL, NULL, NULL
 	}
 };
@@ -611,5 +615,49 @@ ResetPGVariable(const char *name)
 
 	elog(NOTICE, "Unrecognized variable %s", name);
 
+	return TRUE;
+}
+
+
+/*-----------------------------------------------------------------------
+KSQO code will one day be unnecessary when the optimizer makes use of 
+indexes when multiple ORs are specified in the where clause.
+See optimizer/prep/prepkeyset.c for more on this.
+	daveh@insightdist.com    6/16/98
+-----------------------------------------------------------------------*/
+bool
+parse_ksqo(const char *value)
+{
+	if (value == NULL)
+	{
+		reset_ksqo();
+		return TRUE;
+	}
+
+	if (strcasecmp(value, "on") == 0)
+		_use_keyset_query_optimizer = true;
+	else if (strcasecmp(value, "off") == 0)
+		_use_keyset_query_optimizer = false;
+	else
+		elog(ERROR, "Bad value for Key Set Query Optimizer (%s)", value);
+
+	return TRUE;
+}
+
+bool
+show_ksqo()
+{
+
+	if (_use_keyset_query_optimizer)
+		elog(NOTICE, "Key Set Query Optimizer is ON");
+	else
+		elog(NOTICE, "Key Set Query Optimizer is OFF");
+	return TRUE;
+}
+
+bool
+reset_ksqo()
+{
+	_use_keyset_query_optimizer = false;
 	return TRUE;
 }

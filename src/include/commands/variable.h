@@ -2,7 +2,7 @@
  * Headers for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements
  *
- * $Id: variable.h,v 1.6 1998/09/01 04:35:40 momjian Exp $
+ * $Id: variable.h,v 1.7 1998/09/03 02:34:34 momjian Exp $
  *
  */
 #ifndef VARIABLE_H
@@ -54,5 +54,8 @@ extern bool set_geqo(void);
 extern bool show_geqo(void);
 extern bool reset_geqo(void);
 extern bool parse_geqo(const char *);
+extern bool show_ksqo(void);
+extern bool reset_ksqo(void);
+extern bool parse_ksqo(const char *);
 
 #endif	 /* VARIABLE_H */

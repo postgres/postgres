@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.32 1998/09/01 04:29:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.33 1998/09/03 02:34:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,7 @@ planner(Query *parse)
 	PlannerInitPlan = NULL;
 	PlannerPlanId = 0;
 
+	transformKeySetQuery(parse);
 	result_plan = union_planner(parse);
 
 	Assert(PlannerQueryLevel == 1);
