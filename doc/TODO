@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Jan 31 23:54:39 EST 2005
+Last updated:		Mon Jan 31 23:56:45 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -308,7 +308,7 @@ Commands
 ========
 
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
-* Change LIMIT/OFFSET to use int8
+* Change LIMIT/OFFSET and FETCH/MOVE to use int8
 * Allow CREATE TABLE AS to determine column lengths for complex
   expressions like SELECT col1 || col2
 * Allow UPDATE to handle complex aggregates [update] (?)
