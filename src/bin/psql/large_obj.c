@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright 2000 by PostgreSQL Global Development Group
+ * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.19 2002/03/06 06:10:31 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.20 2002/08/10 03:56:24 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -209,9 +209,10 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 			return false;
 		}
 		sprintf(cmdbuf,
-				"INSERT INTO pg_description VALUES ('%u', "
-		   "(SELECT oid FROM pg_class WHERE relname = 'pg_largeobject'),"
-				" 0, '", loid);
+				"INSERT INTO pg_catalog.pg_description VALUES ('%u', "
+				"'pg_catalog.pg_largeobject'::regclass, "
+				"0, '",
+				loid);
 		bufptr = cmdbuf + strlen(cmdbuf);
 		for (i = 0; i < slen; i++)
 		{
@@ -310,8 +311,8 @@ do_lo_unlink(const char *loid_arg)
 	/* XXX ought to replace this with some kind of COMMENT command */
 	if (pset.issuper)
 	{
-		sprintf(buf, "DELETE FROM pg_description WHERE objoid = '%u' "
-				"AND classoid = (SELECT oid FROM pg_class WHERE relname = 'pg_largeobject')",
+		sprintf(buf, "DELETE FROM pg_catalog.pg_description WHERE objoid = '%u' "
+				"AND classoid = 'pg_catalog.pg_largeobject'::regclass",
 				loid);
 		if (!(res = PSQLexec(buf)))
 		{
@@ -356,8 +357,8 @@ do_lo_list(void)
 	printQueryOpt myopt = pset.popt;
 
 	snprintf(buf, sizeof(buf),
-			 "SELECT loid as \"ID\", obj_description(loid, 'pg_largeobject') as \"%s\"\n"
-			 "FROM (SELECT DISTINCT loid FROM pg_largeobject) x\n"
+			 "SELECT loid as \"ID\", pg_catalog.obj_description(loid, 'pg_largeobject') as \"%s\"\n"
+			 "FROM (SELECT DISTINCT loid FROM pg_catalog.pg_largeobject) x\n"
 			 "ORDER BY \"ID\"",
 			 gettext("Description"));
 

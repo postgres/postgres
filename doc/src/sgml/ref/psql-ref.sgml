@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.69 2002/07/28 15:22:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.70 2002/08/10 03:56:23 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -538,7 +538,7 @@ testdb=>
     </para>
 
     <para>
-    To include whitespace into an argument you must quote it with a
+    To include whitespace into an argument you may quote it with a
     single quote. To include a single quote into such an argument,
     precede it by a backslash. Anything contained in single quotes is
     furthermore subject to C-like substitutions for
@@ -551,25 +551,24 @@ testdb=>
 
     <para>
     If an unquoted argument begins with a colon (<literal>:</literal>),
-    it is taken as a variable and the value of the variable is taken as
-    the argument instead.
+    it is taken as a <application>psql</> variable and the value of the
+    variable is used as the argument instead.
     </para>
 
     <para>
     Arguments that are quoted in <quote>backticks</quote>
     (<literal>`</literal>) are taken as a command line that is passed to
-    the shell. The output of the command (with a trailing newline
+    the shell. The output of the command (with any trailing newline
     removed) is taken as the argument value. The above escape sequences
     also apply in backticks.
     </para>
 
     <para>
-    Some commands take the name of an <acronym>SQL</acronym> identifier
+    Some commands take an <acronym>SQL</acronym> identifier
     (such as a table name) as argument. These arguments follow the
     syntax rules of <acronym>SQL</acronym> regarding double quotes: an
-    identifier without double quotes is coerced to lower-case. For all
-    other commands double quotes are not special and will become part of
-    the argument.
+    identifier without double quotes is coerced to lower-case, while
+    whitespace within double quotes is included in the argument.
     </para>
 
     <para>
@@ -732,18 +731,17 @@ testdb=>
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\d</literal> <replaceable class="parameter">relation</replaceable> </term>
+        <term><literal>\d</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
 
         <listitem>
         <para>
-	Shows all columns of <replaceable
-	class="parameter">relation</replaceable> (which could be a
-	table, view, index, or sequence), their types, and any special
+	For each relation (table, view, index, or sequence) matching the
+	<replaceable class="parameter">pattern</replaceable>, show all
+	columns, their types, and any special
 	attributes such as <literal>NOT NULL</literal> or defaults, if
-	any. If the relation is, in fact, a table, any defined indices,
-	primary keys, unique constraints and check constraints are also
-	listed. If the relation is a view, the view definition is also
-	shown.
+	any. Associated indexes, constraints, rules, and triggers are
+	also shown, as is the view definition if the relation is a view.
+	(<quote>Matching the pattern</> is defined below.)
 	</para>
 
 	<para>
@@ -753,7 +751,8 @@ testdb=>
 
 	<note>
 	<para>
-	If <command>\d</command> is called without any arguments, it is
+	If <command>\d</command> is used without a
+	<replaceable class="parameter">pattern</replaceable> argument, it is
 	equivalent to <command>\dtvs</command> which will show a list of
 	all tables, views, and sequences. This is purely a convenience
 	measure.
@@ -776,34 +775,35 @@ testdb=>
       </varlistentry>
 
       <varlistentry>
-        <term><literal>\dd</literal> [ <replaceable class="parameter">object</replaceable> ]</term>
+        <term><literal>\dd</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
         <listitem>
         <para>
-        Shows the descriptions of <replaceable
-        class="parameter">object</replaceable> (which can be a regular
-        expression), or of all objects if no argument is given.
+        Shows the descriptions of objects matching the <replaceable
+        class="parameter">pattern</replaceable>, or of all visible objects if
+	no argument is given.  But in either case, only objects that have
+	a description are listed.
         (<quote>Object</quote> covers aggregates, functions, operators,
         types, relations (tables, views, indexes, sequences, large
         objects), rules, and triggers.) For example:
 <programlisting>
 => <userinput>\dd version</userinput>
-              Object descriptions
-  Name   |   What   |        Description
----------+----------+---------------------------
- version | function | PostgreSQL version string
+                     Object descriptions
+   Schema   |  Name   |  Object  |        Description
+------------+---------+----------+---------------------------
+ pg_catalog | version | function | PostgreSQL version string
 (1 row)
 </programlisting>
         </para>
 
         <para>
-        Descriptions for objects can be generated with the
+        Descriptions for objects can be created with the
         <command>COMMENT ON</command> <acronym>SQL</acronym> command.
 	</para>
 
         <note>
         <para>
         <productname>PostgreSQL</productname> stores the object
-        descriptions in the pg_description system table.
+        descriptions in the <structname>pg_description</> system table.
         </para>
         </note>
 
@@ -816,7 +816,7 @@ testdb=>
         <listitem>
         <para>
         Lists all available domains (derived types). If <replaceable
-        class="parameter">pattern</replaceable> (a regular expression)
+        class="parameter">pattern</replaceable>
         is specified, only matching domains are shown.
         </para>
         </listitem>
@@ -830,7 +830,7 @@ testdb=>
         <para>
         Lists available functions, together with their argument and
         return types. If <replaceable
-        class="parameter">pattern</replaceable> (a regular expression)
+        class="parameter">pattern</replaceable>
         is specified, only matching functions are shown. If the form
         <literal>\df+</literal> is used, additional information about
         each function, including language and description, is shown.
@@ -844,18 +844,17 @@ testdb=>
 
 	<listitem>
 	<para>
-	This is not the actual command name: The letters i, s, t, v, S
+	This is not the actual command name: the letters i, s, t, v, S
 	stand for index, sequence, table, view, and system table,
-	respectively. You can specify any or all of them in any order to
-	obtain a listing of them, together with who the owner is.
+	respectively. You can specify any or all of these letters, in any
+	order, to obtain a listing of all the matching objects.
+	If <quote>+</quote> is appended to the command name, each object is
+	listed with its associated description, if any.
 	</para>
 
 	<para>
-	If <replaceable class="parameter">pattern</replaceable> is
-	specified, it is a regular expression that restricts the listing
-	to those objects whose name matches. If one appends a
-	<quote>+</quote> to the command name, each object is listed with
-	its associated description, if any.
+	If a <replaceable class="parameter">pattern</replaceable> is
+	specified, only objects whose name matches the pattern are listed.
 	</para>
 	</listitem>
       </varlistentry>
@@ -873,12 +872,12 @@ testdb=>
 
 
       <varlistentry>
-        <term><literal>\do [ <replaceable class="parameter">name</replaceable> ]</literal></term>
+        <term><literal>\do [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
         Lists available operators with their operand and return types.
-        If <replaceable class="parameter">name</replaceable> is
-        specified, only operators with that name will be shown.
+	If a <replaceable class="parameter">pattern</replaceable> is
+	specified, only operators whose name matches the pattern are listed.
         </para>
         </listitem>
       </varlistentry>
@@ -888,9 +887,17 @@ testdb=>
         <term><literal>\dp</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
 	<listitem>
 	<para>
-	This is an alias for <command>\z</command> which was included
-	for its greater mnemonic value (<quote>display
-	permissions</quote>).
+        Produces a list of all available tables with their
+        associated access permissions.
+	If a <replaceable class="parameter">pattern</replaceable> is
+	specified, only tables whose name matches the pattern are listed.
+	</para>
+
+	<para>
+	The commands <xref linkend="SQL-GRANT"> and
+	<xref linkend="SQL-REVOKE">
+	are used to set access permissions.  See <xref linkend="SQL-GRANT">
+	for more information.
 	</para>
 	</listitem>
       </varlistentry>
@@ -912,7 +919,7 @@ testdb=>
         <term><literal>\du [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
         <listitem>
         <para>
-        Lists all configured users or only those that match <replaceable
+        Lists all database users, or only those that match <replaceable
         class="parameter">pattern</replaceable>.
         </para>
         </listitem>
@@ -1608,57 +1615,23 @@ lo_import 152801
         <term><literal>\z</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
         <listitem>
         <para>
-        Produces a list of all tables in the database with their
-        appropriate access permissions listed. If an argument is given
-        it is taken as a regular expression which limits the listing to
-        those tables which match it.
-        </para>
-
-	<para>
-<programlisting>
-test=&gt; <userinput>\z</userinput>
-Access permissions for database "test"
- Relation |           Access permissions
-----------+-------------------------------------
- my_table | {"=r","joe=arwR", "group staff=ar"}
-(1 row )
-</programlisting>
-        Read this as follows:
-
-	<itemizedlist>
-          <listitem>
-          <para>
-          <literal>"=r"</literal>: <literal>PUBLIC</literal> has read
-          (<command>SELECT</command>) permission on the table.
-	  </para>
-	  </listitem>
-
-	  <listitem>
-	  <para>
-	  <literal>"joe=arwR"</literal>: User <literal>joe</literal> has
-	  read, write (<command>UPDATE</command>,
-	  <command>DELETE</command>), <quote>append</quote>
-	  (<command>INSERT</command>) permissions, and permission to
-	  create rules on the table.
-	  </para>
-	  </listitem>
-
-	  <listitem>
-	  <para>
-	  <literal>"group staff=ar"</literal>: Group
-	  <literal>staff</literal> has <command>SELECT</command> and
-	  <command>INSERT</command> permission.
-	  </para>
-	  </listitem>
-	</itemizedlist>
+        Produces a list of all available tables with their
+        associated access permissions.
+	If a <replaceable class="parameter">pattern</replaceable> is
+	specified, only tables whose name matches the pattern are listed.
 	</para>
 
 	<para>
 	The commands <xref linkend="SQL-GRANT"> and
 	<xref linkend="SQL-REVOKE">
-	are used to set access permissions.
+	are used to set access permissions.  See <xref linkend="SQL-GRANT">
+	for more information.
 	</para>
 
+	<para>
+	This is an alias for <command>\dp</command> (<quote>display
+	permissions</quote>).
+        </para>
         </listitem>
       </varlistentry>
 
@@ -1687,6 +1660,46 @@ Access permissions for database "test"
       </varlistentry>
 
     </variablelist>
+  </para>
+
+  <para>
+   The various <literal>\d</> commands accept a <replaceable
+   class="parameter">pattern</replaceable> parameter to specify the
+   object name(s) to be displayed.  Patterns are interpreted similarly
+   to SQL identifiers, in that unquoted letters are forced to lowercase,
+   while double quotes (<literal>"</>) protect letters from case conversion
+   and allow incorporation of whitespace into the identifier.  Within
+   double quotes, paired double quotes reduce to a single double quote in
+   the resulting name.  For example, <literal>FOO"BAR"BAZ</> is interpreted
+   as <literal>fooBARbaz</>, and <literal>"A weird"" name"</> becomes
+   <literal>A weird" name</>.
+  </para>
+
+  <para>
+   More interestingly, <literal>\d</> patterns allow the use of
+   <literal>*</> to mean <quote>any sequence of characters</>, and
+   <literal>?</> to mean <quote>any single character</>.  (This notation
+   is comparable to Unix shell filename patterns.)  Advanced users can
+   also use regular-expression notations such as character classes, for
+   example <literal>[0-9]</> to match <quote>any digit</>.  To make any of
+   these pattern-matching characters be interpreted literally, surround it
+   with double quotes.
+  </para>
+
+  <para>
+   A pattern that contains an (unquoted) dot is interpreted as a schema
+   name pattern followed by an object name pattern.  For example,
+   <literal> \dt foo*.bar*</> displays all tables in schemas whose name
+   starts with <literal>foo</> and whose table name 
+   starts with <literal>bar</>.  If no dot appears, then the pattern
+   matches only objects that are visible in the current schema search path.
+  </para>
+
+  <para>
+   Whenever the <replaceable class="parameter">pattern</replaceable> parameter
+   is omitted completely, the <literal>\d</> commands display all objects
+   that are visible in the current schema search path.  To see all objects
+   in the database, use the pattern <literal>*.*</>.
   </para>
  </refsect2>
 
@@ -2402,11 +2415,12 @@ $ ./configure --with-includes=/opt/gnu/include --with-libs=/opt/gnu/lib  ...
     <itemizedlist>
       <listitem>
       <para>
-      In some earlier life <application>psql</application> allowed the
-      first argument to start directly after the (single-letter)
-      command. For compatibility this is still supported to some extent
+      In an earlier life <application>psql</application> allowed the
+      first argument of a single-letter backslash command to start
+      directly after the command, without intervening whitespace. For
+      compatibility this is still supported to some extent,
       but I am not going to explain the details here as this use is
-      discouraged. But if you get strange messages, keep this in mind.
+      discouraged.  If you get strange messages, keep this in mind.
       For example
 <programlisting>
 testdb=> <userinput>\foo</userinput>
@@ -2421,7 +2435,8 @@ Field separator is "oo",
       <application>psql</application> only works smoothly with servers
       of the same version. That does not mean other combinations will
       fail outright, but subtle and not-so-subtle problems might come
-      up.
+      up.  Backslash commands are particularly likely to fail if the
+      server is of a different version.
       </para>
       </listitem>
 

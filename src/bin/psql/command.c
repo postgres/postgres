@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright 2000 by PostgreSQL Global Development Group
+ * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.74 2002/07/18 02:02:30 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.75 2002/08/10 03:56:23 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -54,7 +54,7 @@ enum option_type
 	OT_NORMAL,					/* normal case */
 	OT_SQLID,					/* treat as SQL identifier */
 	OT_SQLIDHACK,				/* SQL identifier, but don't downcase */
-	OT_FILEPIPE					/* it's a file or pipe */
+	OT_FILEPIPE					/* it's a filename or pipe */
 };
 
 static char *scan_option(char **string, enum option_type type,
@@ -328,10 +328,11 @@ exec_command(const char *cmd,
 	/* \d* commands */
 	else if (cmd[0] == 'd')
 	{
-		char	   *name;
+		char	   *pattern;
 		bool		show_verbose;
 
-		name = scan_option(&string, OT_SQLID, NULL, true);
+		/* We don't do SQLID reduction on the pattern yet */
+		pattern = scan_option(&string, OT_NORMAL, NULL, true);
 
 		show_verbose = strchr(cmd, '+') ? true : false;
 
@@ -339,51 +340,53 @@ exec_command(const char *cmd,
 		{
 			case '\0':
 			case '+':
-				if (name)
-					success = describeTableDetails(name, show_verbose);
+				if (pattern)
+					success = describeTableDetails(pattern, show_verbose);
 				else
 					/* standard listing of interesting things */
 					success = listTables("tvs", NULL, show_verbose);
 				break;
 			case 'a':
-				success = describeAggregates(name);
+				success = describeAggregates(pattern, show_verbose);
 				break;
 			case 'd':
-				success = objectDescription(name);
+				success = objectDescription(pattern);
 				break;
 			case 'f':
-				success = describeFunctions(name, show_verbose);
+				success = describeFunctions(pattern, show_verbose);
 				break;
 			case 'l':
 				success = do_lo_list();
 				break;
 			case 'o':
-				success = describeOperators(name);
+				success = describeOperators(pattern);
 				break;
 			case 'p':
-				success = permissionsList(name);
+				success = permissionsList(pattern);
 				break;
 			case 'T':
-				success = describeTypes(name, show_verbose);
+				success = describeTypes(pattern, show_verbose);
 				break;
 			case 't':
 			case 'v':
 			case 'i':
 			case 's':
 			case 'S':
-				success = listTables(&cmd[1], name, show_verbose);
+				success = listTables(&cmd[1], pattern, show_verbose);
 				break;
 			case 'u':
-				success = describeUsers(name);
+				success = describeUsers(pattern);
 				break;
 			case 'D':
-				success = listDomains(name);
+				success = listDomains(pattern);
 				break;
 
 			default:
 				status = CMD_UNKNOWN;
 		}
-		free(name);
+
+		if (pattern)
+			free(pattern);
 	}
 
 
@@ -815,13 +818,14 @@ exec_command(const char *cmd,
 		success = do_pset("expanded", NULL, &pset.popt, quiet);
 
 
-	/* \z -- list table rights (grant/revoke) */
+	/* \z -- list table rights (equivalent to \dp) */
 	else if (strcmp(cmd, "z") == 0)
 	{
-		char	   *opt = scan_option(&string, OT_SQLID, NULL, true);
+		char	   *pattern = scan_option(&string, OT_NORMAL, NULL, true);
 
-		success = permissionsList(opt);
-		free(opt);
+		success = permissionsList(pattern);
+		if (pattern)
+			free(pattern);
 	}
 
 	/* \! -- shell escape */
@@ -881,11 +885,27 @@ exec_command(const char *cmd,
 
 /*
  * scan_option()
+ *
+ * *string points to possible option string on entry; on exit, it's updated
+ * to point past the option string (if any).
+ *
+ * type tells what processing, if any, to perform on the option string;
+ * for example, if it's a SQL identifier, we want to downcase any unquoted
+ * letters.
+ *
+ * if quote is not NULL, *quote is set to 0 if no quoting was found, else
+ * the quote symbol.
+ *
+ * if semicolon is true, trailing semicolon(s) that would otherwise be taken
+ * as part of the option string will be stripped.
+ *
+ * Return value is NULL if no option found, else a malloc'd copy of the
+ * processed option value.
  */
 static char *
 scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 {
-	unsigned int pos = 0;
+	unsigned int pos;
 	char	   *options_string;
 	char	   *return_val;
 
@@ -897,82 +917,27 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 
 	options_string = *string;
 	/* skip leading whitespace */
-	pos += strspn(options_string + pos, " \t\n\r");
+	pos = strspn(options_string, " \t\n\r");
 
 	switch (options_string[pos])
 	{
 			/*
-			 * Double quoted string
+			 * End of line: no option present
 			 */
-		case '"':
-			{
-				unsigned int jj;
-				unsigned short int bslash_count = 0;
+		case '\0':
+			*string = &options_string[pos];
+			return NULL;
 
-				/* scan for end of quote */
-				for (jj = pos + 1; options_string[jj]; jj += PQmblen(&options_string[jj], pset.encoding))
-				{
-					if (options_string[jj] == '"' && bslash_count % 2 == 0)
-						break;
-
-					if (options_string[jj] == '\\')
-						bslash_count++;
-					else
-						bslash_count = 0;
-				}
-
-				if (options_string[jj] == 0)
-				{
-					psql_error("parse error at the end of line\n");
-					*string = &options_string[jj];
-					return NULL;
-				}
-
-				return_val = malloc(jj - pos + 2);
-				if (!return_val)
-				{
-					psql_error("out of memory\n");
-					exit(EXIT_FAILURE);
-				}
-
-				/*
-				 * If this is expected to be an SQL identifier like option
-				 * then we strip out the double quotes
-				 */
-
-				if (type == OT_SQLID || type == OT_SQLIDHACK)
-				{
-					unsigned int k,
-								cc;
-
-					bslash_count = 0;
-					cc = 0;
-					for (k = pos + 1; options_string[k]; k += PQmblen(&options_string[k], pset.encoding))
-					{
-						if (options_string[k] == '"' && bslash_count % 2 == 0)
-							break;
-
-						if (options_string[jj] == '\\')
-							bslash_count++;
-						else
-							bslash_count = 0;
-
-						return_val[cc++] = options_string[k];
-					}
-					return_val[cc] = '\0';
-				}
-				else
-				{
-					strncpy(return_val, &options_string[pos], jj - pos + 1);
-					return_val[jj - pos + 1] = '\0';
-				}
-
-				*string = options_string + jj + 1;
-				if (quote)
-					*quote = '"';
-
-				return return_val;
-			}
+			/*
+			 * Next command: treat like end of line
+			 *
+			 * XXX this means we can't conveniently accept options that
+			 * start with a backslash; therefore, option processing that
+			 * encourages use of backslashes is rather broken.
+			 */
+		case '\\':
+			*string = &options_string[pos];
+			return NULL;
 
 			/*
 			 * A single quote has a psql internal meaning, such as for
@@ -1015,7 +980,7 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 		case '`':
 			{
 				bool		error = false;
-				FILE	   *fd = NULL;
+				FILE	   *fd;
 				char	   *file;
 				PQExpBufferData output;
 				char		buf[512];
@@ -1040,10 +1005,10 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 					error = true;
 				}
 
+				initPQExpBuffer(&output);
+
 				if (!error)
 				{
-					initPQExpBuffer(&output);
-
 					do
 					{
 						result = fread(buf, 1, 512, fd);
@@ -1056,40 +1021,32 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 						appendBinaryPQExpBuffer(&output, buf, result);
 					} while (!feof(fd));
 					appendPQExpBufferChar(&output, '\0');
+				}
 
-					if (pclose(fd) == -1)
-					{
-						psql_error("%s: %s\n", file, strerror(errno));
-						error = true;
-					}
+				if (fd && pclose(fd) == -1)
+				{
+					psql_error("%s: %s\n", file, strerror(errno));
+					error = true;
 				}
 
 				if (!error)
 				{
 					if (output.data[strlen(output.data) - 1] == '\n')
 						output.data[strlen(output.data) - 1] = '\0';
-				}
-
-				if (!error)
 					return_val = output.data;
+				}
 				else
 				{
 					return_val = xstrdup("");
 					termPQExpBuffer(&output);
 				}
+
 				options_string[pos + 1 + len] = '`';
 				*string = options_string + pos + len + 2;
 				if (quote)
 					*quote = '`';
 				return return_val;
 			}
-
-			/*
-			 * end of line
-			 */
-		case 0:
-			*string = &options_string[pos];
-			return NULL;
 
 			/*
 			 * Variable substitution
@@ -1109,16 +1066,9 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 				return_val = xstrdup(value);
 				options_string[pos + token_end + 1] = save_char;
 				*string = &options_string[pos + token_end + 1];
+				/* XXX should we set *quote to ':' here? */
 				return return_val;
 			}
-
-			/*
-			 * Next command
-			 */
-		case '\\':
-			*string = options_string + pos;
-			return NULL;
-			break;
 
 			/*
 			 * | could be the beginning of a pipe if so, take rest of line
@@ -1127,49 +1077,135 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 		case '|':
 			if (type == OT_FILEPIPE)
 			{
-				*string += strlen(options_string + pos);
+				*string += strlen(*string);
 				return xstrdup(options_string + pos);
-				break;
 			}
 			/* fallthrough for other option types */
 
 			/*
-			 * A normal word
+			 * Default case: token extends to next whitespace, except that
+			 * whitespace within double quotes doesn't end the token.
+			 *
+			 * If we are processing the option as a SQL identifier, then
+			 * downcase unquoted letters and remove double-quotes --- but
+			 * doubled double-quotes become output double-quotes, per spec.
+			 *
+			 * Note that a string like FOO"BAR"BAZ will be converted to
+			 * fooBARbaz; this is somewhat inconsistent with the SQL spec,
+			 * which would have us parse it as several identifiers.  But
+			 * for psql's purposes, we want a string like "foo"."bar" to
+			 * be treated as one option, so there's little choice.
 			 */
 		default:
 			{
-				size_t		token_end;
+				bool		inquotes = false;
+				size_t		token_len;
 				char	   *cp;
 
-				token_end = strcspn(&options_string[pos], " \t\n\r");
-				return_val = malloc(token_end + 1);
+				/* Find end of option */
+
+				cp = &options_string[pos];
+				for (;;)
+				{
+					/* Find next quote, whitespace, or end of string */
+					cp += strcspn(cp, "\" \t\n\r");
+					if (inquotes)
+					{
+						if (*cp == '\0')
+						{
+							psql_error("parse error at the end of line\n");
+							*string = cp;
+							return NULL;
+						}
+						if (*cp == '"')
+							inquotes = false;
+						cp++;
+					}
+					else
+					{
+						if (*cp != '"')
+							break; /* whitespace or end of string */
+						if (quote)
+							*quote = '"';
+						inquotes = true;
+						cp++;
+					}
+				}
+
+				*string = cp;
+
+				/* Copy the option */
+				token_len = cp - &options_string[pos];
+
+				return_val = malloc(token_len + 1);
 				if (!return_val)
 				{
 					psql_error("out of memory\n");
 					exit(EXIT_FAILURE);
 				}
-				strncpy(return_val, &options_string[pos], token_end);
-				return_val[token_end] = 0;
 
-				/* Strip any trailing semi-colons for some types */
+				memcpy(return_val, &options_string[pos], token_len);
+				return_val[token_len] = '\0';
+
+				/* Strip any trailing semi-colons if requested */
 				if (semicolon)
 				{
-					int			i;
+					int		i;
 
-					for (i = strlen(return_val) - 1; i && return_val[i] == ';'; i--);
-					if (i < strlen(return_val) - 1)
+					for (i = token_len - 1;
+						 i >= 0 && return_val[i] == ';';
+						 i--)
+						/* skip */;
+
+					if (i < 0)
+					{
+						/* nothing left after stripping the semicolon... */
+						free(return_val);
+						return NULL;
+					}
+
+					if (i < token_len - 1)
 						return_val[i + 1] = '\0';
 				}
 
-				if (type == OT_SQLID)
-					for (cp = return_val; *cp; cp += PQmblen(cp, pset.encoding))
-						if (isupper((unsigned char) *cp))
-							*cp = tolower((unsigned char) *cp);
+				/*
+				 * If SQL identifier processing was requested,
+				 * then we strip out excess double quotes and downcase
+				 * unquoted letters.
+				 */
+				if (type == OT_SQLID || type == OT_SQLIDHACK)
+				{
+					inquotes = false;
+					cp = return_val;
 
-				*string = &options_string[pos + token_end];
+					while (*cp)
+					{
+						if (*cp == '"')
+						{
+							if (inquotes && cp[1] == '"')
+							{
+								/* Keep the first quote, remove the second */
+								cp++;
+							}
+							inquotes = !inquotes;
+							/* Collapse out quote at *cp */
+							memmove(cp, cp+1, strlen(cp));
+							/* do not advance cp */
+						}
+						else
+						{
+							if (!inquotes && type == OT_SQLID)
+							{
+								if (isupper((unsigned char) *cp))
+									*cp = tolower((unsigned char) *cp);
+							}
+							cp += PQmblen(cp, pset.encoding);
+						}
+					}
+				}
+
 				return return_val;
 			}
-
 	}
 }
 
@@ -1429,7 +1465,7 @@ test_superuser(const char *username)
 		return false;
 
 	initPQExpBuffer(&buf);
-	printfPQExpBuffer(&buf, "SELECT usesuper FROM pg_user WHERE usename = '%s'", username);
+	printfPQExpBuffer(&buf, "SELECT usesuper FROM pg_catalog.pg_user WHERE usename = '%s'", username);
 	res = PSQLexec(buf.data);
 	termPQExpBuffer(&buf);
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.26 2002/05/14 18:47:58 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.27 2002/08/10 03:56:23 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -249,16 +249,17 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
    </para>
 
    <para>
-    Use <xref linkend="app-psql">'s <command>\z</command> command
+    Use <xref linkend="app-psql">'s <command>\dp</command> command
     to obtain information about existing privileges, for example:
 <programlisting>
-lusitania=> \z mytable
-    Access privileges for database "lusitania"
-  Table  |           Access privileges
----------+---------------------------------------
- mytable | {=r,miriam=arwdRxt,"group todos=arw"}
+lusitania=> \dp mytable
+        Access privileges for database "lusitania"
+ Schema |  Table  |           Access privileges
+--------+---------+---------------------------------------
+ public | mytable | {=r,miriam=arwdRxt,"group todos=arw"}
+(1 row)
 </programlisting>
-    The entries shown by <command>\z</command> are interpreted thus:
+    The entries shown by <command>\dp</command> are interpreted thus:
 <programlisting>
               =xxxx -- privileges granted to PUBLIC
          uname=xxxx -- privileges granted to a user

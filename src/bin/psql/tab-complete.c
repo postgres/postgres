@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright 2000 by PostgreSQL Global Development Group
+ * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.55 2002/08/04 05:01:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.56 2002/08/10 03:56:24 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -118,11 +118,20 @@ initialize_readline(void)
 }
 
 
+/*
+ * Queries to get lists of names of various kinds of things, possibly
+ * restricted to names matching a partially entered name.  In these queries,
+ * the %s will be replaced by the text entered so far, the %d by its length.
+ */
+
+#define Query_for_list_of_tables "SELECT relname FROM pg_catalog.pg_class WHERE (relkind='r' or relkind='v') and substr(relname,1,%d)='%s' and pg_catalog.pg_table_is_visible(oid)"
+#define Query_for_list_of_indexes "SELECT relname FROM pg_catalog.pg_class WHERE relkind='i' and substr(relname,1,%d)='%s' and pg_catalog.pg_table_is_visible(oid)"
+#define Query_for_list_of_databases "SELECT datname FROM pg_catalog.pg_database WHERE substr(datname,1,%d)='%s'"
+#define Query_for_list_of_attributes "SELECT a.attname FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c WHERE c.oid = a.attrelid and a.attnum>0 and not a.attisdropped and substr(a.attname,1,%d)='%s' and c.relname='%s' and pg_catalog.pg_table_is_visible(c.oid)"
+#define Query_for_list_of_users "SELECT usename FROM pg_catalog.pg_user WHERE substr(usename,1,%d)='%s'"
+
 /* This is a list of all "things" in Pgsql, which can show up after CREATE or
    DROP; and there is also a query to get a list of them.
-   The %s will be replaced by the text entered so far, the %d by its length.
-   If you change the order here or insert things, make sure to also adjust the
-   referencing macros below.
 */
 typedef struct
 {
@@ -131,37 +140,29 @@ typedef struct
 } pgsql_thing_t;
 
 pgsql_thing_t words_after_create[] = {
-	{"AGGREGATE", "SELECT distinct proname FROM pg_catalog.pg_proc WHERE proisagg AND substr(proname,1,%d)='%s'"},
-	{"DATABASE", "SELECT datname FROM pg_catalog.pg_database WHERE substr(datname,1,%d)='%s'"},
-	{"FUNCTION", "SELECT distinct proname FROM pg_catalog.pg_proc WHERE substr(proname,1,%d)='%s'"},
+	{"AGGREGATE", "SELECT DISTINCT proname FROM pg_catalog.pg_proc WHERE proisagg AND substr(proname,1,%d)='%s'"},
+	{"DATABASE", Query_for_list_of_databases},
+	{"FUNCTION", "SELECT DISTINCT proname FROM pg_catalog.pg_proc WHERE substr(proname,1,%d)='%s'"},
 	{"GROUP", "SELECT groname FROM pg_catalog.pg_group WHERE substr(groname,1,%d)='%s'"},
-	{"INDEX", "SELECT relname FROM pg_catalog.pg_class WHERE relkind='i' and substr(relname,1,%d)='%s'"},
+	{"INDEX", Query_for_list_of_indexes},
 	{"OPERATOR", NULL},			/* Querying for this is probably not such a good idea. */
 	{"RULE", "SELECT rulename FROM pg_catalog.pg_rules WHERE substr(rulename,1,%d)='%s'"},
 	{"SCHEMA", "SELECT nspname FROM pg_catalog.pg_namespace WHERE substr(nspname,1,%d)='%s'"},
 	{"SEQUENCE", "SELECT relname FROM pg_catalog.pg_class WHERE relkind='S' and substr(relname,1,%d)='%s'"},
-	{"TABLE", "SELECT relname FROM pg_catalog.pg_class WHERE (relkind='r' or relkind='v') and substr(relname,1,%d)='%s'"},
+	{"TABLE", Query_for_list_of_tables},
 	{"TEMP", NULL},				/* for CREATE TEMP TABLE ... */
 	{"TRIGGER", "SELECT tgname FROM pg_catalog.pg_trigger WHERE substr(tgname,1,%d)='%s'"},
 	{"TYPE", "SELECT typname FROM pg_catalog.pg_type WHERE substr(typname,1,%d)='%s'"},
 	{"UNIQUE", NULL},			/* for CREATE UNIQUE INDEX ... */
-	{"USER", "SELECT usename FROM pg_catalog.pg_user WHERE substr(usename,1,%d)='%s'"},
+	{"USER", Query_for_list_of_users},
 	{"VIEW", "SELECT viewname FROM pg_catalog.pg_views WHERE substr(viewname,1,%d)='%s'"},
 	{NULL, NULL}				/* end of list */
 };
 
 
-/* The query to get a list of tables and a list of indexes, which are used at
-   various places. */
-#define Query_for_list_of_tables words_after_create[9].query
-#define Query_for_list_of_indexes words_after_create[4].query
-#define Query_for_list_of_databases words_after_create[1].query
-#define Query_for_list_of_attributes "SELECT a.attname FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c WHERE c.oid = a.attrelid and a.attnum>0 and not a.attisdropped and substr(a.attname,1,%d)='%s' and c.relname='%s'"
-#define Query_for_list_of_users words_after_create[14].query
-
 /* A couple of macros to ease typing. You can use these to complete the given
    string with
-   1) The results from a query you pass it. (Perhaps one of those right above?)
+   1) The results from a query you pass it. (Perhaps one of those above?)
    2) The items from a null-pointer-terminated list.
    3) A string constant
    4) The list of attributes to the given table.
@@ -375,7 +376,7 @@ psql_completion(char *text, int start, int end)
 												 * queries. */
 
 		if (snprintf(query_buffer, BUF_SIZE,
-					 "SELECT c1.relname FROM pg_catalog.pg_class c1, pg_catalog.pg_class c2, pg_catalog.pg_index i WHERE c1.oid=i.indrelid and i.indexrelid=c2.oid and c2.relname='%s'",
+					 "SELECT c1.relname FROM pg_catalog.pg_class c1, pg_catalog.pg_class c2, pg_catalog.pg_index i WHERE c1.oid=i.indrelid and i.indexrelid=c2.oid and c2.relname='%s' and pg_catalog.pg_table_is_visible(c2.oid)",
 					 prev2_wd) == -1)
 			ERROR_QUERY_TOO_LONG;
 		else
@@ -389,7 +390,8 @@ psql_completion(char *text, int start, int end)
 	{
 		char	   *list_COMMENT[] =
 		{"DATABASE", "INDEX", "RULE", "SCHEMA", "SEQUENCE", "TABLE", "TYPE", "VIEW",
-		"COLUMN", "AGGREGATE", "FUNCTION", "OPERATOR", "TRIGGER", NULL};
+		 "COLUMN", "AGGREGATE", "FUNCTION", "OPERATOR", "TRIGGER", "CONSTRAINT",
+		 "DOMAIN", NULL};
 
 		COMPLETE_WITH_LIST(list_COMMENT);
 	}
@@ -440,7 +442,7 @@ psql_completion(char *text, int start, int end)
 	/* Complete USING with an index method */
 	else if (strcasecmp(prev_wd, "USING") == 0)
 	{
-		char	   *index_mth[] = {"BTREE", "RTREE", "HASH", NULL};
+		char	   *index_mth[] = {"BTREE", "RTREE", "HASH", "GIST", NULL};
 
 		COMPLETE_WITH_LIST(index_mth);
 	}
@@ -553,7 +555,7 @@ psql_completion(char *text, int start, int end)
 	/* Complete GRANT/REVOKE with a list of privileges */
 	else if (strcasecmp(prev_wd, "GRANT") == 0 || strcasecmp(prev_wd, "REVOKE") == 0)
 	{
-		char	   *list_privileg[] = {"SELECT", "INSERT", "UPDATE", "DELETE", "RULE", "ALL", NULL};
+		char	   *list_privileg[] = {"SELECT", "INSERT", "UPDATE", "DELETE", "RULE", "REFERENCES", "TRIGGER", "CREATE", "TEMPORARY", "EXECUTE", "USAGE", "ALL", NULL};
 
 		COMPLETE_WITH_LIST(list_privileg);
 	}
@@ -563,14 +565,15 @@ psql_completion(char *text, int start, int end)
 
 	/*
 	 * Complete GRANT/REVOKE <sth> ON with a list of tables, views,
-	 * schema, sequences, and indexes
+	 * sequences, and indexes
+	 *
+	 * XXX should also offer DATABASE, FUNCTION, LANGUAGE, SCHEMA here
 	 */
 	else if ((strcasecmp(prev3_wd, "GRANT") == 0 || strcasecmp(prev3_wd, "REVOKE") == 0) &&
 			 strcasecmp(prev_wd, "ON") == 0)
 		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_class "
 							"WHERE relkind in ('r','i','S','v') AND "
-							"substr(relname,1,%d)='%s' UNION "
-							"SELECT nspname FROM pg_catalog.pg_namespace;");
+							"substr(relname,1,%d)='%s' AND pg_catalog.pg_table_is_visible(oid)");
 	/* Complete "GRANT * ON * " with "TO" */
 	else if (strcasecmp(prev4_wd, "GRANT") == 0 && strcasecmp(prev2_wd, "ON") == 0)
 		COMPLETE_WITH_CONST("TO");
@@ -745,7 +748,7 @@ psql_completion(char *text, int start, int end)
 
 /* UNLISTEN */
 	else if (strcasecmp(prev_wd, "UNLISTEN") == 0)
-		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_listener WHERE substr(relname,1,%d)='%s' UNION SELECT '*'::text");
+		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_listener WHERE substr(relname,1,%d)='%s' UNION SELECT '*'::name");
 
 /* UPDATE */
 	/* If prev. word is UPDATE suggest a list of tables */
@@ -765,7 +768,7 @@ psql_completion(char *text, int start, int end)
 
 /* VACUUM */
 	else if (strcasecmp(prev_wd, "VACUUM") == 0)
-		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_class WHERE relkind='r' and substr(relname,1,%d)='%s' UNION SELECT 'FULL'::text UNION SELECT 'ANALYZE'::text");
+		COMPLETE_WITH_QUERY("SELECT relname FROM pg_catalog.pg_class WHERE relkind='r' and substr(relname,1,%d)='%s' and pg_catalog.pg_table_is_visible(oid) UNION SELECT 'FULL'::name UNION SELECT 'ANALYZE'::name");
 	else if (strcasecmp(prev2_wd, "VACUUM") == 0 && (strcasecmp(prev_wd, "FULL") == 0 || strcasecmp(prev_wd, "ANALYZE") == 0))
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
 
