@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_operator.l,v 1.1 1996/11/14 10:15:58 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_operator.l,v 1.2 1996/11/30 04:56:18 momjian Exp $
 .TH "CREATE OPERATOR" SQL 11/05/95 Postgres95 Postgres95
 .SH NAME
 create operator \(em define a new user operator
@@ -33,14 +33,22 @@ The
 is a sequence of up to sixteen punctuation characters.  The following
 characters are valid for single-character operator names:
 .nf
+
+.ce 1
 ~ ! @ # % ^ & ` ?
+
 .fi
 If the operator name is more than one character long, it may consist
 of any combination of the above characters or the following additional
 characters:
 .nf
+
+.ce 1
 | $ : + - * / < > =
+
 .fi
+The operator "!=" is mapped to "<>" on input, and they are
+therefore equivalent.
 .PP
 At least one of
 .IR leftarg
@@ -86,22 +94,34 @@ area-greater-than, <<<.  Suppose that an operator, area-equal, ===,
 exists, as well as an area not equal, !==.  Hence, the query optimizer
 could freely convert:
 .nf
+
+.ce 1
 "0,0,1,1"::box >>> MYBOXES.description
+
 .fi
 to
 .nf
+
+.ce 1
 MYBOXES.description <<< "0,0,1,1"::box
+
 .fi
 This allows the execution code to always use the latter representation
 and simplifies the query optimizer somewhat.
 .PP
 The negator operator allows the query optimizer to convert
 .nf
-not MYBOXES.description === "0,0,1,1"::box
+
+.ce 1
+NOT MYBOXES.description === "0,0,1,1"::box
+
 .fi
 to
 .nf
+
+.ce 1
 MYBOXES.description !== "0,0,1,1"::box
+
 .fi
 If a commutator operator name is supplied, Postgres searches for it in
 the catalog.  If it is found and it does not yet have a commutator
@@ -124,11 +144,17 @@ along the lines of [SHAP86]; however, it must know whether this
 strategy is applicable.  For example, a hash-join algorithm is usable
 for a clause of the form:
 .nf
+
+.ce 1
 MYBOXES.description === MYBOXES2.description
+
 .fi
 but not for a clause of the form:
 .nf
+
+.ce 1
 MYBOXES.description <<< MYBOXES2.description.
+
 .fi
 The
 .BR hashes
@@ -141,7 +167,10 @@ be used to sort the two operand classes.  For the === clause above,
 the optimizer must sort both relations using the operator, <<<.  On
 the other hand, merge-sort is not usable with the clause:
 .nf
+
+.ce 1
 MYBOXES.description <<< MYBOXES2.description
+
 .fi
 If other join strategies are found to be practical, Postgres will change
 the optimizer and run-time system to use them and will require
@@ -153,7 +182,10 @@ be worth the complexity involved.
 The last two pieces of the specification are present so the query
 optimizer can estimate result sizes.  If a clause of the form:
 .nf
+
+.ce 1
 MYBOXES.description <<< "0,0,1,1"::box
+
 .fi
 is present in the qualification, then Postgres may have to estimate the
 fraction of the instances in MYBOXES that satisfy the clause.  The
@@ -162,10 +194,7 @@ defined using
 .IR "define function" (l))
 which accepts one argument of the correct data type and returns a
 floating point number.  The query optimizer simply calls this
-function, passing the parameter
-.nf
-"0,0,1,1"
-.fi
+function, passing the parameter "0,0,1,1"
 and multiplies the result by the relation size to get the desired
 expected number of instances.
 .PP
@@ -177,11 +206,17 @@ classes involved to compute the desired expected result size.
 .PP
 The difference between the function
 .nf
+
+.ce 1
 my_procedure_1 (MYBOXES.description, "0,0,1,1"::box)
+
 .fi
 and the operator
 .nf
+
+.ce 1
 MYBOXES.description === "0,0,1,1"::box
+
 .fi
 is that Postgres attempts to optimize operators and can decide to use an
 index to restrict the search space when operators are involved.
