@@ -1,6 +1,6 @@
 /*-------------------------------------------------------
  *
- * $Id: Pg.xs,v 1.12 1999/02/19 23:27:17 tgl Exp $
+ * $Id: Pg.xs,v 1.13 1999/10/13 02:26:37 momjian Exp $ with patch for NULs
  *
  * Copyright (c) 1997, 1998  Edmund Mergl
  *
@@ -643,7 +643,7 @@ lo_read(conn, fd, buf, len)
 		}
 	OUTPUT:
 		RETVAL
-		buf
+		buf sv_setpvn((SV*)ST(2), buf, RETVAL);   /* to handle NULs */
 
 int
 lo_write(conn, fd, buf, len)
@@ -1029,7 +1029,7 @@ lo_read(conn, fd, buf, len)
 		}
 	OUTPUT:
 		RETVAL
-		buf
+		buf sv_setpvn((SV*)ST(2), buf, RETVAL);   /* to handle NULs */
 
 
 int
