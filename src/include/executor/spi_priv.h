@@ -1,9 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * spi.c
+ * spi_priv.h
  *				Server Programming Interface private declarations
  *
- * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.12 2002/05/21 22:05:55 tgl Exp $
+ * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $Id: spi_priv.h,v 1.13 2002/10/14 23:49:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -12,9 +15,9 @@
 
 #include "executor/spi.h"
 
+
 typedef struct
 {
-	List	   *qtlist;
 	uint32		processed;		/* by Executor */
 	SPITupleTable *tuptable;
 	MemoryContext procCxt;		/* procedure context */
@@ -24,12 +27,19 @@ typedef struct
 
 typedef struct
 {
+	/* context containing _SPI_plan itself as well as subsidiary structures */
 	MemoryContext plancxt;
+	/* List of List of querytrees; one sublist per original parsetree */
 	List	   *qtlist;
+	/* List of plan trees --- length == # of querytrees, but flat list */
 	List	   *ptlist;
+	/* Argument types, if a prepared plan */
 	int			nargs;
 	Oid		   *argtypes;
+	/* Command type of last original parsetree */
+	CmdType		origCmdType;
 } _SPI_plan;
+
 
 #define _SPI_CPLAN_CURCXT	0
 #define _SPI_CPLAN_PROCXT	1

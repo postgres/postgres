@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.302 2002/10/14 22:14:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.303 2002/10/14 23:49:20 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -119,8 +119,6 @@ int			XfuncMode = 0;
 static int	InteractiveBackend(StringInfo inBuf);
 static int	SocketBackend(StringInfo inBuf);
 static int	ReadCommand(StringInfo inBuf);
-static List *pg_parse_query(StringInfo query_string, Oid *typev, int nargs);
-static List *pg_analyze_and_rewrite(Node *parsetree);
 static void start_xact_command(void);
 static void finish_xact_command(bool forceCommit);
 static void SigHupHandler(SIGNAL_ARGS);
@@ -367,7 +365,7 @@ pg_parse_and_rewrite(char *query_string,		/* string to execute */
  * we've seen a COMMIT or ABORT command; when we are in abort state, other
  * commands are not processed any further than the raw parse stage.
  */
-static List *
+List *
 pg_parse_query(StringInfo query_string, Oid *typev, int nargs)
 {
 	List	   *raw_parsetree_list;
@@ -395,7 +393,7 @@ pg_parse_query(StringInfo query_string, Oid *typev, int nargs)
  *
  * NOTE: for reasons mentioned above, this must be separate from raw parsing.
  */
-static List *
+List *
 pg_analyze_and_rewrite(Node *parsetree)
 {
 	List	   *querytree_list;
@@ -1769,7 +1767,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.302 $ $Date: 2002/10/14 22:14:35 $\n");
+		puts("$Revision: 1.303 $ $Date: 2002/10/14 23:49:20 $\n");
 	}
 
 	/*

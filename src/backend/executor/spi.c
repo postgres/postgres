@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.74 2002/09/04 20:31:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.75 2002/10/14 23:49:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,6 @@ SPI_connect(void)
 	_SPI_connected++;
 
 	_SPI_current = &(_SPI_stack[_SPI_connected]);
-	_SPI_current->qtlist = NULL;
 	_SPI_current->processed = 0;
 	_SPI_current->tuptable = NULL;
 
@@ -258,7 +257,6 @@ SPI_prepare(char *src, int nargs, Oid *argtypes)
 	_SPI_end_call(true);
 
 	return (void *) plan;
-
 }
 
 void *
@@ -716,9 +714,9 @@ SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
 	int			k;
 
 	/* Ensure that the plan contains only one regular SELECT query */
-	if (length(ptlist) != 1)
+	if (length(ptlist) != 1 || length(qtlist) != 1)
 		elog(ERROR, "cannot open multi-query plan as cursor");
-	queryTree = (Query *) lfirst(qtlist);
+	queryTree = (Query *) lfirst((List *) lfirst(qtlist));
 	planTree = (Plan *) lfirst(ptlist);
 
 	if (queryTree->commandType != CMD_SELECT)
@@ -948,29 +946,22 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
  * Static functions
  */
 
+/*
+ * Plan and optionally execute a querystring.
+ *
+ * If plan != NULL, just prepare plan tree, else execute immediately.
+ */
 static int
 _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 {
-	List	   *queryTree_list;
-	List	   *planTree_list;
-	List	   *queryTree_list_item;
-	QueryDesc  *qdesc;
-	Query	   *queryTree;
-	Plan	   *planTree;
-	EState	   *state;
+	StringInfoData stri;
+	List	   *raw_parsetree_list;
+	List	   *query_list_list;
+	List	   *plan_list;
+	List	   *list_item;
 	int			nargs = 0;
 	Oid		   *argtypes = NULL;
 	int			res = 0;
-	bool		islastquery;
-
-	/* Increment CommandCounter to see changes made by now */
-	CommandCounterIncrement();
-
-	SPI_processed = 0;
-	SPI_lastoid = InvalidOid;
-	SPI_tuptable = NULL;
-	_SPI_current->tuptable = NULL;
-	_SPI_current->qtlist = NULL;
 
 	if (plan)
 	{
@@ -978,72 +969,149 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 		argtypes = plan->argtypes;
 	}
 
-	queryTree_list = pg_parse_and_rewrite(src, argtypes, nargs);
+	/* Increment CommandCounter to see changes made by now */
+	CommandCounterIncrement();
 
-	_SPI_current->qtlist = queryTree_list;
+	/* Reset state (only needed in case string is empty) */
+	SPI_processed = 0;
+	SPI_lastoid = InvalidOid;
+	SPI_tuptable = NULL;
+	_SPI_current->tuptable = NULL;
 
-	planTree_list = NIL;
+	/*
+	 * Parse the request string into a list of raw parse trees.
+	 */
+	initStringInfo(&stri);
+	appendStringInfo(&stri, "%s", src);
 
-	foreach(queryTree_list_item, queryTree_list)
+	raw_parsetree_list = pg_parse_query(&stri, argtypes, nargs);
+
+	/*
+	 * Do parse analysis and rule rewrite for each raw parsetree.
+	 *
+	 * We save the querytrees from each raw parsetree as a separate
+	 * sublist.  This allows _SPI_execute_plan() to know where the
+	 * boundaries between original queries fall.
+	 */
+	query_list_list = NIL;
+	plan_list = NIL;
+
+	foreach(list_item, raw_parsetree_list)
 	{
-		queryTree = (Query *) lfirst(queryTree_list_item);
-		islastquery = (lnext(queryTree_list_item) == NIL);
+		Node	   *parsetree = (Node *) lfirst(list_item);
+		CmdType		origCmdType;
+		bool		foundOriginalQuery = false;
+		List	   *query_list;
+		List	   *query_list_item;
 
-		planTree = pg_plan_query(queryTree);
-		planTree_list = lappend(planTree_list, planTree);
-
-		if (queryTree->commandType == CMD_UTILITY)
+		switch (nodeTag(parsetree))
 		{
-			if (nodeTag(queryTree->utilityStmt) == T_CopyStmt)
-			{
-				CopyStmt   *stmt = (CopyStmt *) (queryTree->utilityStmt);
+			case T_InsertStmt:
+				origCmdType = CMD_INSERT;
+				break;
+			case T_DeleteStmt:
+				origCmdType = CMD_DELETE;
+				break;
+			case T_UpdateStmt:
+				origCmdType = CMD_UPDATE;
+				break;
+			case T_SelectStmt:
+				origCmdType = CMD_SELECT;
+				break;
+			default:
+				/* Otherwise, never match commandType */
+				origCmdType = CMD_UNKNOWN;
+				break;
+		}
 
-				if (stmt->filename == NULL)
-					return SPI_ERROR_COPY;
-			}
-			else if (nodeTag(queryTree->utilityStmt) == T_ClosePortalStmt ||
-					 nodeTag(queryTree->utilityStmt) == T_FetchStmt)
-				return SPI_ERROR_CURSOR;
-			else if (nodeTag(queryTree->utilityStmt) == T_TransactionStmt)
-				return SPI_ERROR_TRANSACTION;
-			res = SPI_OK_UTILITY;
-			if (plan == NULL)
+		if (plan)
+			plan->origCmdType = origCmdType;
+
+		query_list = pg_analyze_and_rewrite(parsetree);
+
+		query_list_list = lappend(query_list_list, query_list);
+
+		/* Reset state for each original parsetree */
+		SPI_processed = 0;
+		SPI_lastoid = InvalidOid;
+		SPI_tuptable = NULL;
+		_SPI_current->tuptable = NULL;
+
+		foreach(query_list_item, query_list)
+		{
+			Query	   *queryTree = (Query *) lfirst(query_list_item);
+			Plan	   *planTree;
+			bool		canSetResult;
+			QueryDesc  *qdesc;
+			EState	   *state;
+
+			planTree = pg_plan_query(queryTree);
+			plan_list = lappend(plan_list, planTree);
+
+			/*
+			 * This query can set the SPI result if it is the original
+			 * query, or if it is an INSTEAD query of the same kind as the
+			 * original and we haven't yet seen the original query.
+			 */
+			if (queryTree->querySource == QSRC_ORIGINAL)
 			{
-				ProcessUtility(queryTree->utilityStmt, None, NULL);
-				if (!islastquery)
+				canSetResult = true;
+				foundOriginalQuery = true;
+			}
+			else if (!foundOriginalQuery &&
+					 queryTree->commandType == origCmdType &&
+					 (queryTree->querySource == QSRC_INSTEAD_RULE ||
+					  queryTree->querySource == QSRC_QUAL_INSTEAD_RULE))
+				canSetResult = true;
+			else
+				canSetResult = false;
+
+			if (queryTree->commandType == CMD_UTILITY)
+			{
+				if (IsA(queryTree->utilityStmt, CopyStmt))
+				{
+					CopyStmt   *stmt = (CopyStmt *) queryTree->utilityStmt;
+
+					if (stmt->filename == NULL)
+						return SPI_ERROR_COPY;
+				}
+				else if (IsA(queryTree->utilityStmt, ClosePortalStmt) ||
+						 IsA(queryTree->utilityStmt, FetchStmt))
+					return SPI_ERROR_CURSOR;
+				else if (IsA(queryTree->utilityStmt, TransactionStmt))
+					return SPI_ERROR_TRANSACTION;
+				res = SPI_OK_UTILITY;
+				if (plan == NULL)
+				{
+					ProcessUtility(queryTree->utilityStmt, None, NULL);
 					CommandCounterIncrement();
-				else
+				}
+			}
+			else if (plan == NULL)
+			{
+				qdesc = CreateQueryDesc(queryTree, planTree,
+										canSetResult ? SPI : None, NULL);
+				state = CreateExecutorState();
+				res = _SPI_pquery(qdesc, state, canSetResult ? tcount : 0);
+				if (res < 0)
+					return res;
+				CommandCounterIncrement();
+			}
+			else
+			{
+				qdesc = CreateQueryDesc(queryTree, planTree,
+										canSetResult ? SPI : None, NULL);
+				res = _SPI_pquery(qdesc, NULL, 0);
+				if (res < 0)
 					return res;
 			}
-			else if (islastquery)
-				break;
-		}
-		else if (plan == NULL)
-		{
-			qdesc = CreateQueryDesc(queryTree, planTree,
-									islastquery ? SPI : None, NULL);
-			state = CreateExecutorState();
-			res = _SPI_pquery(qdesc, state, islastquery ? tcount : 0);
-			if (res < 0 || islastquery)
-				return res;
-			CommandCounterIncrement();
-		}
-		else
-		{
-			qdesc = CreateQueryDesc(queryTree, planTree,
-									islastquery ? SPI : None, NULL);
-			res = _SPI_pquery(qdesc, NULL, islastquery ? tcount : 0);
-			if (res < 0)
-				return res;
-			if (islastquery)
-				break;
 		}
 	}
 
 	if (plan)
 	{
-		plan->qtlist = queryTree_list;
-		plan->ptlist = planTree_list;
+		plan->qtlist = query_list_list;
+		plan->ptlist = plan_list;
 	}
 
 	return res;
@@ -1052,72 +1120,100 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 static int
 _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 {
-	List	   *queryTree_list = plan->qtlist;
-	List	   *planTree_list = plan->ptlist;
-	List	   *queryTree_list_item;
-	QueryDesc  *qdesc;
-	Query	   *queryTree;
-	Plan	   *planTree;
-	EState	   *state;
+	List	   *query_list_list = plan->qtlist;
+	List	   *plan_list = plan->ptlist;
+	List	   *query_list_list_item;
 	int			nargs = plan->nargs;
 	int			res = 0;
-	bool		islastquery;
-	int			k;
 
 	/* Increment CommandCounter to see changes made by now */
 	CommandCounterIncrement();
 
+	/* Reset state (only needed in case string is empty) */
 	SPI_processed = 0;
 	SPI_lastoid = InvalidOid;
 	SPI_tuptable = NULL;
 	_SPI_current->tuptable = NULL;
-	_SPI_current->qtlist = NULL;
 
-	foreach(queryTree_list_item, queryTree_list)
+	foreach(query_list_list_item, query_list_list)
 	{
-		queryTree = (Query *) lfirst(queryTree_list_item);
-		planTree = lfirst(planTree_list);
-		planTree_list = lnext(planTree_list);
-		islastquery = (planTree_list == NIL);	/* assume lists are same
-												 * len */
+		List   *query_list = lfirst(query_list_list_item);
+		List   *query_list_item;
+		bool	foundOriginalQuery = false;
 
-		if (queryTree->commandType == CMD_UTILITY)
+		/* Reset state for each original parsetree */
+		SPI_processed = 0;
+		SPI_lastoid = InvalidOid;
+		SPI_tuptable = NULL;
+		_SPI_current->tuptable = NULL;
+
+		foreach(query_list_item, query_list)
 		{
-			ProcessUtility(queryTree->utilityStmt, None, NULL);
-			if (!islastquery)
-				CommandCounterIncrement();
-			else
-				return SPI_OK_UTILITY;
-		}
-		else
-		{
-			qdesc = CreateQueryDesc(queryTree, planTree,
-									islastquery ? SPI : None, NULL);
-			state = CreateExecutorState();
-			if (nargs > 0)
+			Query  *queryTree = (Query *) lfirst(query_list_item);
+			Plan	   *planTree;
+			bool		canSetResult;
+			QueryDesc  *qdesc;
+			EState	   *state;
+
+			planTree = lfirst(plan_list);
+			plan_list = lnext(plan_list);
+
+			/*
+			 * This query can set the SPI result if it is the original
+			 * query, or if it is an INSTEAD query of the same kind as the
+			 * original and we haven't yet seen the original query.
+			 */
+			if (queryTree->querySource == QSRC_ORIGINAL)
 			{
-				ParamListInfo paramLI;
+				canSetResult = true;
+				foundOriginalQuery = true;
+			}
+			else if (!foundOriginalQuery &&
+					 queryTree->commandType == plan->origCmdType &&
+					 (queryTree->querySource == QSRC_INSTEAD_RULE ||
+					  queryTree->querySource == QSRC_QUAL_INSTEAD_RULE))
+				canSetResult = true;
+			else
+				canSetResult = false;
 
-				paramLI = (ParamListInfo) palloc((nargs + 1) *
-											  sizeof(ParamListInfoData));
-				MemSet(paramLI, 0, (nargs + 1) * sizeof(ParamListInfoData));
-
-				state->es_param_list_info = paramLI;
-				for (k = 0; k < plan->nargs; paramLI++, k++)
-				{
-					paramLI->kind = PARAM_NUM;
-					paramLI->id = k + 1;
-					paramLI->isnull = (Nulls && Nulls[k] == 'n');
-					paramLI->value = Values[k];
-				}
-				paramLI->kind = PARAM_INVALID;
+			if (queryTree->commandType == CMD_UTILITY)
+			{
+				res = SPI_OK_UTILITY;
+				ProcessUtility(queryTree->utilityStmt, None, NULL);
+				CommandCounterIncrement();
 			}
 			else
-				state->es_param_list_info = NULL;
-			res = _SPI_pquery(qdesc, state, islastquery ? tcount : 0);
-			if (res < 0 || islastquery)
-				return res;
-			CommandCounterIncrement();
+			{
+				qdesc = CreateQueryDesc(queryTree, planTree,
+										canSetResult ? SPI : None, NULL);
+				state = CreateExecutorState();
+				if (nargs > 0)
+				{
+					ParamListInfo paramLI;
+					int			k;
+
+					paramLI = (ParamListInfo)
+						palloc((nargs + 1) * sizeof(ParamListInfoData));
+					MemSet(paramLI, 0,
+						   (nargs + 1) * sizeof(ParamListInfoData));
+
+					state->es_param_list_info = paramLI;
+					for (k = 0; k < plan->nargs; paramLI++, k++)
+					{
+						paramLI->kind = PARAM_NUM;
+						paramLI->id = k + 1;
+						paramLI->isnull = (Nulls && Nulls[k] == 'n');
+						paramLI->value = Values[k];
+					}
+					paramLI->kind = PARAM_INVALID;
+				}
+				else
+					state->es_param_list_info = NULL;
+				res = _SPI_pquery(qdesc, state, canSetResult ? tcount : 0);
+				if (res < 0)
+					return res;
+				CommandCounterIncrement();
+			}
 		}
 	}
 
@@ -1169,7 +1265,7 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 			return SPI_ERROR_OPUNKNOWN;
 	}
 
-	if (state == NULL)			/* plan preparation */
+	if (state == NULL)			/* plan preparation, don't execute */
 		return res;
 
 #ifdef SPI_EXECUTOR_STATS
@@ -1340,11 +1436,9 @@ static int
 _SPI_end_call(bool procmem)
 {
 	/*
-	 * We' returning to procedure where _SPI_curid == _SPI_connected - 1
+	 * We're returning to procedure where _SPI_curid == _SPI_connected - 1
 	 */
 	_SPI_curid--;
-
-	_SPI_current->qtlist = NULL;
 
 	if (procmem)				/* switch to the procedure memory context */
 	{
@@ -1420,6 +1514,7 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 	}
 	else
 		newplan->argtypes = NULL;
+	newplan->origCmdType = plan->origCmdType;
 
 	MemoryContextSwitchTo(oldcxt);
 
