@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.10 1997/01/10 20:19:12 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.11 1997/01/15 08:21:14 scrappy Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -81,7 +81,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh,v 1.10 1997/01/10 20:19:12 momjian Exp $
+ * $Id: Gen_fmgrtab.sh,v 1.11 1997/01/15 08:21:14 scrappy Exp $
  *
  * NOTES
  *	******************************
@@ -95,6 +95,8 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  */
 #ifndef	FMGR_H
 #define FMGR_H
+
+#include "postgres.h"
 
 /*
  *	Maximum number of arguments for a built-in function.
@@ -173,7 +175,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.10 1997/01/10 20:19:12 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.11 1997/01/15 08:21:14 scrappy Exp $
  *
  * NOTES
  *
