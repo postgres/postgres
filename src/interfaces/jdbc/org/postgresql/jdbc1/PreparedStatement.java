@@ -260,7 +260,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	{
 	  // if the passed string is null, then set this column to null
 	  if(x==null)
-	    set(parameterIndex,"null");
+	    setNull(parameterIndex,Types.OTHER);
 	  else {
 	    StringBuffer b = new StringBuffer();
 	    int i;
@@ -312,9 +312,12 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setDate(int parameterIndex, java.sql.Date x) throws SQLException
 	{
-          SimpleDateFormat df = new SimpleDateFormat("''yyyy-MM-dd''");
-	  set(parameterIndex, df.format(x));
-
+	  if (null == x){
+		setNull(parameterIndex,Types.OTHER);
+	  }else{
+            SimpleDateFormat df = new SimpleDateFormat("''yyyy-MM-dd''");
+	    set(parameterIndex, df.format(x));
+	  }
 	  // The above is how the date should be handled.
 	  //
 	  // However, in JDK's prior to 1.1.6 (confirmed with the
@@ -337,7 +340,11 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setTime(int parameterIndex, Time x) throws SQLException
 	{
+	  if (null == x){
+		setNull(parameterIndex,Types.OTHER);
+	  }else{
 		set(parameterIndex, "'" + x.toString() + "'");
+	  }
 	}
 
 	/**
@@ -350,11 +357,15 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException
         {
-          SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-          df.setTimeZone(TimeZone.getTimeZone("GMT"));
-          StringBuffer strBuf = new StringBuffer("'");
-          strBuf.append(df.format(x)).append('.').append(x.getNanos()/10000000).append("+00'");
-	  set(parameterIndex, strBuf.toString());
+	  if (null == x){
+		setNull(parameterIndex,Types.OTHER);
+	  }else{
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            df.setTimeZone(TimeZone.getTimeZone("GMT"));
+            StringBuffer strBuf = new StringBuffer("'");
+            strBuf.append(df.format(x)).append('.').append(x.getNanos()/10000000).append("+00'");
+	    set(parameterIndex, strBuf.toString());
+	  }
 	}
 
 	/**

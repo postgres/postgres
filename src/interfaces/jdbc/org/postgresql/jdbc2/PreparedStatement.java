@@ -267,7 +267,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	{
 	  // if the passed string is null, then set this column to null
 	  if(x==null)
-	    set(parameterIndex,"null");
+        setNull(parameterIndex,Types.OTHER);
 	  else {
             // use the shared buffer object. Should never clash but this makes
             // us thread safe!
@@ -323,14 +323,16 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setDate(int parameterIndex, java.sql.Date x) throws SQLException
 	{
-          SimpleDateFormat df = (SimpleDateFormat) tl_df.get();
-          if(df==null) {
-            df = new SimpleDateFormat("''yyyy-MM-dd''");
-            tl_df.set(df);
-          }
-
-	  set(parameterIndex, df.format(x));
-
+      if(null == x){
+		setNull(parameterIndex,Types.OTHER);
+      } else {
+        SimpleDateFormat df = (SimpleDateFormat) tl_df.get();
+        if(df==null) {
+		  df = new SimpleDateFormat("''yyyy-MM-dd''");
+          tl_df.set(df);
+        }
+        set(parameterIndex, df.format(x));
+      }
 	  // The above is how the date should be handled.
 	  //
 	  // However, in JDK's prior to 1.1.6 (confirmed with the
@@ -353,7 +355,11 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setTime(int parameterIndex, Time x) throws SQLException
 	{
-		set(parameterIndex, "'" + x.toString() + "'");
+       if (null == x){
+               setNull(parameterIndex,Types.OTHER);
+       } else {
+               set(parameterIndex, "'" + x.toString() + "'");
+       }
 	}
 
 	/**
@@ -365,13 +371,16 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * @exception SQLException if a database access error occurs
 	 */
 	public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException
-        {
-          SimpleDateFormat df = (SimpleDateFormat) tl_tsdf.get();
-          if(df==null) {
-            df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            df.setTimeZone(TimeZone.getTimeZone("GMT"));
-            tl_tsdf.set(df);
-          }
+    {
+          if (null == x){
+            setNull(parameterIndex,Types.OTHER);
+          } else {
+            SimpleDateFormat df = (SimpleDateFormat) tl_tsdf.get();
+            if(df==null) {
+              df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+              df.setTimeZone(TimeZone.getTimeZone("GMT"));
+              tl_tsdf.set(df);
+            }
 
           // Use the shared StringBuffer
           synchronized(sbuf) {
@@ -383,6 +392,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
           // The above works, but so does the following. I'm leaving the above in, but this seems
           // to be identical. Pays to read the docs ;-)
           //set(parameterIndex,"'"+x.toString()+"'");
+	  }
 	}
 
 	/**
