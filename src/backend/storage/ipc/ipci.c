@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.51 2003/05/02 21:59:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.52 2003/05/03 03:52:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,3 +134,16 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 	 */
 	PMSignalInit();
 }
+
+
+/*
+ * AttachSharedMemoryAndSemaphores
+ *		Attaches to the existing shared resources when exec()'d off
+ *		by the postmaster.
+ */
+void
+AttachSharedMemoryAndSemaphores(void)
+{
+	CLOGShmemInit();
+}
+

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.319 2003/05/02 22:02:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.320 2003/05/03 03:52:07 momjian Exp $
  *
  * NOTES
  *
@@ -170,6 +170,13 @@ static int	ServerSock_INET = INVALID_SOCK;		/* stream socket server */
 
 #ifdef HAVE_UNIX_SOCKETS
 static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
+#endif
+
+/* Used to reduce macros tests */
+#ifdef EXEC_BACKEND
+const bool ExecBackend = true;
+#else
+const bool ExecBackend = false;
 #endif
 
 /*
@@ -1407,7 +1414,11 @@ processCancelRequest(Port *port, void *pkt)
 		elog(DEBUG1, "processCancelRequest: CheckPointPID in cancel request for process %d", backendPID);
 		return;
 	}
-
+	else if (ExecBackend)
+	{
+		AttachSharedMemoryAndSemaphores();
+	}
+	
 	/* See if we have a matching backend */
 
 	for (curr = DLGetHead(BackendList); curr; curr = DLGetSucc(curr))
