@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.70 2003/11/29 19:51:58 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.71 2003/12/25 03:36:23 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2003, PostgreSQL Global Development Group
@@ -525,6 +525,10 @@ typedef enum
 	DCH_HH12,
 	DCH_HH,
 	DCH_IW,
+	DCH_IYYY,
+	DCH_IYY,
+	DCH_IY,
+	DCH_I,
 	DCH_J,
 	DCH_MI,
 	DCH_MM,
@@ -565,6 +569,10 @@ typedef enum
 	DCH_hh12,
 	DCH_hh,
 	DCH_iw,
+	DCH_iyyy,
+	DCH_iyy,
+	DCH_iy,
+	DCH_i,
 	DCH_j,
 	DCH_mi,
 	DCH_mm,
@@ -659,6 +667,10 @@ static KeyWord DCH_keywords[] = {
 	{"HH12", 4, dch_time, DCH_HH12, TRUE},
 	{"HH", 2, dch_time, DCH_HH, TRUE},
 	{"IW", 2, dch_date, DCH_IW, TRUE},	/* I */
+	{"IYYY", 4, dch_date, DCH_IYYY, TRUE},
+	{"IYY", 3, dch_date, DCH_IYY, TRUE},
+	{"IY", 2, dch_date, DCH_IY, TRUE},
+	{"I", 1, dch_date, DCH_I, TRUE},
 	{"J", 1, dch_date, DCH_J, TRUE},	/* J */
 	{"MI", 2, dch_time, DCH_MI, TRUE},
 	{"MM", 2, dch_date, DCH_MM, TRUE},
@@ -699,6 +711,10 @@ static KeyWord DCH_keywords[] = {
 	{"hh12", 4, dch_time, DCH_HH12, TRUE},
 	{"hh", 2, dch_time, DCH_HH, TRUE},
 	{"iw", 2, dch_date, DCH_IW, TRUE},	/* i */
+	{"iyyy", 4, dch_date, DCH_IYYY, TRUE},
+	{"iyy", 3, dch_date, DCH_IYY, TRUE},
+	{"iy", 2, dch_date, DCH_IY, TRUE},
+	{"i", 1, dch_date, DCH_I, TRUE},
 	{"j", 1, dch_time, DCH_J, TRUE},	/* j */
 	{"mi", 2, dch_time, DCH_MI, TRUE},	/* m */
 	{"mm", 2, dch_date, DCH_MM, TRUE},
@@ -2447,12 +2463,26 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_YYYY:
+		case DCH_IYYY:
 			if (flag == TO_CHAR)
 			{
 				if (tm->tm_year <= 9999 && tm->tm_year >= -9998)
-					sprintf(inout, "%0*d", S_FM(suf) ? 0 : 4, YEAR_ABS(tm->tm_year));
+					sprintf(inout, "%0*d",
+						S_FM(suf) ? 0 : 4,
+						arg == DCH_YYYY ?
+						YEAR_ABS(tm->tm_year) :
+						YEAR_ABS(date2isoyear(
+							tm->tm_year,
+							tm->tm_mon,
+							tm->tm_mday)));
 				else
-					sprintf(inout, "%d", YEAR_ABS(tm->tm_year));
+					sprintf(inout, "%d",
+						arg == DCH_YYYY ?
+						YEAR_ABS(tm->tm_year) :
+						YEAR_ABS(date2isoyear(
+							tm->tm_year,
+							tm->tm_mon,
+							tm->tm_mday)));
 				if (S_THth(suf))
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
 				return strlen(p_inout) - 1;
@@ -2472,9 +2502,14 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_YYY:
+		case DCH_IYY:
 			if (flag == TO_CHAR)
 			{
-				snprintf(buff, sizeof(buff), "%03d", YEAR_ABS(tm->tm_year));
+				snprintf(buff, sizeof(buff), "%03d",
+					arg == DCH_YYY ?
+					YEAR_ABS(tm->tm_year) :
+					YEAR_ABS(date2isoyear(tm->tm_year,
+						tm->tm_mon, tm->tm_mday)));
 				i = strlen(buff);
 				strcpy(inout, buff + (i - 3));
 				if (S_THth(suf))
@@ -2502,9 +2537,14 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_YY:
+		case DCH_IY:
 			if (flag == TO_CHAR)
 			{
-				snprintf(buff, sizeof(buff), "%02d", YEAR_ABS(tm->tm_year));
+				snprintf(buff, sizeof(buff), "%02d",
+					arg == DCH_YY ?
+					YEAR_ABS(tm->tm_year) :
+					YEAR_ABS(date2isoyear(tm->tm_year,
+						tm->tm_mon, tm->tm_mday)));
 				i = strlen(buff);
 				strcpy(inout, buff + (i - 2));
 				if (S_THth(suf))
@@ -2532,9 +2572,14 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_Y:
+		case DCH_I:
 			if (flag == TO_CHAR)
 			{
-				snprintf(buff, sizeof(buff), "%1d", YEAR_ABS(tm->tm_year));
+				snprintf(buff, sizeof(buff), "%1d",
+					arg == DCH_Y ?
+					YEAR_ABS(tm->tm_year) :
+					YEAR_ABS(date2isoyear(tm->tm_year,
+						tm->tm_mon, tm->tm_mday)));
 				i = strlen(buff);
 				strcpy(inout, buff + (i - 1));
 				if (S_THth(suf))

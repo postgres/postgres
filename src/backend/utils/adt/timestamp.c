@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.97 2003/11/29 19:51:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.98 2003/12/25 03:36:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2840,7 +2840,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 
 /* isoweek2date()
  * Convert ISO week of year number to date.
- * The year field must be specified!
+ * The year field must be specified with the ISO year!
  * karel 2000/08/07
  */
 void
@@ -2917,6 +2917,64 @@ date2isoweek(int year, int mon, int mday)
 	}
 
 	return (int) result;
+}
+
+
+/* date2isoyear()
+ *
+ *	Returns ISO 8601 year number.
+ */
+int
+date2isoyear(int year, int mon, int mday)
+{
+	float8	result;
+	int	day0,
+		day4,
+		dayn;
+
+	/* current day */
+	dayn = date2j(year, mon, mday);
+
+	/* fourth day of current year */
+	day4 = date2j(year, 1, 4);
+
+	/* day0 == offset to first day of week (Monday) */
+	day0 = j2day(day4 - 1);
+
+	/*
+	 * We need the first week containing a Thursday, otherwise this day
+	 * falls into the previous year for purposes of counting weeks
+	 */
+	if (dayn < (day4 - day0))
+	{
+		day4 = date2j(year - 1, 1, 4);
+
+		/* day0 == offset to first day of week (Monday) */
+		day0 = j2day(day4 - 1);
+
+		year--;
+	}
+
+	result = (((dayn - (day4 - day0)) / 7) + 1);
+
+	/*
+	 * Sometimes the last few days in a year will fall into the first week
+	 * of the next year, so check for this.
+	 */
+	if (result >= 53)
+	{
+		day4 = date2j(year + 1, 1, 4);
+
+		/* day0 == offset to first day of week (Monday) */
+		day0 = j2day(day4 - 1);
+
+		if (dayn >= (day4 - day0))
+		{
+			year++;
+		}
+	}
+
+	return year;
 }
 
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.32 2003/11/29 22:41:16 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.33 2003/12/25 03:36:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,5 +248,6 @@ extern void GetEpochTime(struct tm * tm);
 
 extern void isoweek2date(int woy, int *year, int *mon, int *mday);
 extern int	date2isoweek(int year, int mon, int mday);
+extern int	date2isoyear(int year, int mon, int mday);
 
 #endif   /* TIMESTAMP_H */

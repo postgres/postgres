@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.183 2003/12/18 03:59:07 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.184 2003/12/25 03:36:23 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -3982,6 +3982,22 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        <row>
 	<entry><literal>Y</literal></entry>
 	<entry>last digit of year</entry>
+       </row>
+       <row>
+	<entry><literal>IYYY</literal></entry>
+	<entry>ISO year (4 and more digits)</entry>
+       </row>
+       <row>
+	<entry><literal>IYY</literal></entry>
+	<entry>last 3 digits of ISO year</entry>
+       </row>
+       <row>
+	<entry><literal>IY</literal></entry>
+	<entry>last 2 digits of ISO year</entry>
+       </row>
+       <row>
+	<entry><literal>I</literal></entry>
+	<entry>last digits of ISO year</entry>
        </row>
        <row>
 	<entry><literal>BC</literal> or <literal>B.C.</literal> or

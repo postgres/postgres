@@ -189,6 +189,9 @@ SELECT '' AS to_char_8, to_char(d1, 'YYYYTH YYYYth Jth')
 SELECT '' AS to_char_9, to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. HH:MI:SS p.m. HH:MI:SS pm') 
    FROM TIMESTAMPTZ_TBL;   
 
+SELECT '' AS to_char_10, to_char(d1, 'YYYY WW IYYY IYY IY I IW') 
+   FROM TIMESTAMPTZ_TBL;
+
 -- TO_TIMESTAMP()
 SELECT '' AS to_timestamp_1, to_timestamp('0097/Feb/16 --> 08:14:30', 'YYYY/Mon/DD --> HH:MI:SS');
 	
@@ -219,5 +222,10 @@ SELECT '' AS to_timestamp_12, to_timestamp('9-1116', 'Y-MMDD');
 SELECT '' AS to_timestamp_13, to_timestamp('95-1116', 'YY-MMDD');
 
 SELECT '' AS to_timestamp_14, to_timestamp('995-1116', 'YYY-MMDD');
+
+SELECT '' AS to_timestamp_15, to_timestamp('200401', 'IYYYIW');
+
+SELECT '' AS to_timestamp_16, to_timestamp('200401', 'YYYYWW');
+
 
 SET DateStyle TO DEFAULT;
