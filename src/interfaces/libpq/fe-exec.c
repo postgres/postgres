@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.143 2003/08/04 02:40:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.144 2003/08/13 16:29:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,15 @@ char	   *const pgresStatus[] = {
 
 
 static bool PQsendQueryStart(PGconn *conn);
+static int PQsendQueryGuts(PGconn *conn,
+						   const char *command,
+						   const char *stmtName,
+						   int nParams,
+						   const Oid *paramTypes,
+						   const char *const * paramValues,
+						   const int *paramLengths,
+						   const int *paramFormats,
+						   int resultFormat);
 static void parseInput(PGconn *conn);
 static bool PQexecStart(PGconn *conn);
 static PGresult *PQexecFinish(PGconn *conn);
@@ -668,10 +677,116 @@ PQsendQueryParams(PGconn *conn,
 				  const int *paramFormats,
 				  int resultFormat)
 {
-	int			i;
-
 	if (!PQsendQueryStart(conn))
 		return 0;
+
+	if (!command)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+					libpq_gettext("command string is a null pointer\n"));
+		return 0;
+	}
+
+	return PQsendQueryGuts(conn,
+						   command,
+						   "",	/* use unnamed statement */
+						   nParams,
+						   paramTypes,
+						   paramValues,
+						   paramLengths,
+						   paramFormats,
+						   resultFormat);
+}
+
+/*
+ * PQsendQueryPrepared
+ *		Like PQsendQuery, but execute a previously prepared statement,
+ *		using 3.0 protocol so we can pass parameters
+ */
+int
+PQsendQueryPrepared(PGconn *conn,
+					const char *stmtName,
+					int nParams,
+					const char *const * paramValues,
+					const int *paramLengths,
+					const int *paramFormats,
+					int resultFormat)
+{
+	if (!PQsendQueryStart(conn))
+		return 0;
+
+	if (!stmtName)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("statement name is a null pointer\n"));
+		return 0;
+	}
+
+	return PQsendQueryGuts(conn,
+						   NULL, /* no command to parse */
+						   stmtName,
+						   nParams,
+						   NULL, /* no param types */
+						   paramValues,
+						   paramLengths,
+						   paramFormats,
+						   resultFormat);
+}
+
+/*
+ * Common startup code for PQsendQuery and sibling routines
+ */
+static bool
+PQsendQueryStart(PGconn *conn)
+{
+	if (!conn)
+		return false;
+
+	/* clear the error string */
+	resetPQExpBuffer(&conn->errorMessage);
+
+	/* Don't try to send if we know there's no live connection. */
+	if (conn->status != CONNECTION_OK)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("no connection to the server\n"));
+		return false;
+	}
+	/* Can't send while already busy, either. */
+	if (conn->asyncStatus != PGASYNC_IDLE)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+			  libpq_gettext("another command is already in progress\n"));
+		return false;
+	}
+
+	/* initialize async result-accumulation state */
+	conn->result = NULL;
+	conn->curTuple = NULL;
+
+	/* ready to send command message */
+	return true;
+}
+
+/*
+ * PQsendQueryGuts
+ *		Common code for 3.0-protocol query sending
+ *		PQsendQueryStart should be done already
+ *
+ * command may be NULL to indicate we use an already-prepared statement
+ */
+static int
+PQsendQueryGuts(PGconn *conn,
+				const char *command,
+				const char *stmtName,
+				int nParams,
+				const Oid *paramTypes,
+				const char *const * paramValues,
+				const int *paramLengths,
+				const int *paramFormats,
+				int resultFormat)
+{
+	int			i;
 
 	/* This isn't gonna work on a 2.0 server */
 	if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
@@ -681,45 +796,41 @@ PQsendQueryParams(PGconn *conn,
 		return 0;
 	}
 
-	if (!command)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-					libpq_gettext("command string is a null pointer\n"));
-		return 0;
-	}
-
 	/*
-	 * We will send Parse, Bind, Describe Portal, Execute, Sync, using
-	 * unnamed statement and portal.
+	 * We will send Parse (if needed), Bind, Describe Portal, Execute, Sync,
+	 * using specified statement name and the unnamed portal.
 	 */
 
-	/* construct the Parse message */
-	if (pqPutMsgStart('P', false, conn) < 0 ||
-		pqPuts("", conn) < 0 ||
-		pqPuts(command, conn) < 0)
-		goto sendFailed;
-	if (nParams > 0 && paramTypes)
+	if (command)
 	{
-		if (pqPutInt(nParams, 2, conn) < 0)
+		/* construct the Parse message */
+		if (pqPutMsgStart('P', false, conn) < 0 ||
+			pqPuts(stmtName, conn) < 0 ||
+			pqPuts(command, conn) < 0)
 			goto sendFailed;
-		for (i = 0; i < nParams; i++)
+		if (nParams > 0 && paramTypes)
 		{
-			if (pqPutInt(paramTypes[i], 4, conn) < 0)
+			if (pqPutInt(nParams, 2, conn) < 0)
+				goto sendFailed;
+			for (i = 0; i < nParams; i++)
+			{
+				if (pqPutInt(paramTypes[i], 4, conn) < 0)
+					goto sendFailed;
+			}
+		}
+		else
+		{
+			if (pqPutInt(0, 2, conn) < 0)
 				goto sendFailed;
 		}
-	}
-	else
-	{
-		if (pqPutInt(0, 2, conn) < 0)
+		if (pqPutMsgEnd(conn) < 0)
 			goto sendFailed;
 	}
-	if (pqPutMsgEnd(conn) < 0)
-		goto sendFailed;
 
 	/* construct the Bind message */
 	if (pqPutMsgStart('B', false, conn) < 0 ||
 		pqPuts("", conn) < 0 ||
-		pqPuts("", conn) < 0)
+		pqPuts(stmtName, conn) < 0)
 		goto sendFailed;
 	if (nParams > 0 && paramFormats)
 	{
@@ -805,41 +916,6 @@ PQsendQueryParams(PGconn *conn,
 sendFailed:
 	pqHandleSendFailure(conn);
 	return 0;
-}
-
-/*
- * Common startup code for PQsendQuery and PQsendQueryParams
- */
-static bool
-PQsendQueryStart(PGconn *conn)
-{
-	if (!conn)
-		return false;
-
-	/* clear the error string */
-	resetPQExpBuffer(&conn->errorMessage);
-
-	/* Don't try to send if we know there's no live connection. */
-	if (conn->status != CONNECTION_OK)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-						  libpq_gettext("no connection to the server\n"));
-		return false;
-	}
-	/* Can't send while already busy, either. */
-	if (conn->asyncStatus != PGASYNC_IDLE)
-	{
-		printfPQExpBuffer(&conn->errorMessage,
-			  libpq_gettext("another command is already in progress\n"));
-		return false;
-	}
-
-	/* initialize async result-accumulation state */
-	conn->result = NULL;
-	conn->curTuple = NULL;
-
-	/* ready to send command message */
-	return true;
 }
 
 /*
@@ -1071,7 +1147,30 @@ PQexecParams(PGconn *conn,
 }
 
 /*
- * Common code for PQexec and PQexecParams: prepare to send command
+ * PQexecPrepared
+ *		Like PQexec, but execute a previously prepared statement,
+ *		using 3.0 protocol so we can pass parameters
+ */
+PGresult *
+PQexecPrepared(PGconn *conn,
+			   const char *stmtName,
+			   int nParams,
+			   const char *const * paramValues,
+			   const int *paramLengths,
+			   const int *paramFormats,
+			   int resultFormat)
+{
+	if (!PQexecStart(conn))
+		return NULL;
+	if (!PQsendQueryPrepared(conn, stmtName,
+							 nParams, paramValues, paramLengths,
+							 paramFormats, resultFormat))
+		return NULL;
+	return PQexecFinish(conn);
+}
+
+/*
+ * Common code for PQexec and sibling routines: prepare to send command
  */
 static bool
 PQexecStart(PGconn *conn)
@@ -1139,7 +1238,7 @@ PQexecStart(PGconn *conn)
 }
 
 /*
- * Common code for PQexec and PQexecParams: wait for command result
+ * Common code for PQexec and sibling routines: wait for command result
  */
 static PGresult *
 PQexecFinish(PGconn *conn)

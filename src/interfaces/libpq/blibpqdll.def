@@ -111,6 +111,8 @@ EXPORTS
     _PQftable                @ 107
     _PQftablecol             @ 108
     _PQfformat               @ 109
+    _PQexecPrepared          @ 110
+    _PQsendQueryPrepared     @ 111
 
 ; Aliases for MS compatible names
     PQconnectdb             = _PQconnectdb            
@@ -222,3 +224,5 @@ EXPORTS
     PQftable                = _PQftable
     PQftablecol             = _PQftablecol
     PQfformat               = _PQfformat
+    PQexecPrepared          = _PQexecPrepared
+    PQsendQueryPrepared     = _PQsendQueryPrepared

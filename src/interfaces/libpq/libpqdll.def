@@ -111,3 +111,5 @@ EXPORTS
     PQftable                @ 107
     PQftablecol             @ 108
     PQfformat               @ 109
+    PQexecPrepared          @ 110
+    PQsendQueryPrepared     @ 111
