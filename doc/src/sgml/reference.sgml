@@ -1,18 +1,22 @@
 <!-- reference.sgml
-
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.4 1998/10/30 19:37:12 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.5 1998/10/31 09:36:37 thomas Exp $
 
 Postgres User's Reference documentation.
 - thomas 1998-08-31
 
 $Log: reference.sgml,v $
+Revision 1.5  1998/10/31 09:36:37  thomas
+Cleanup for v6.4 release.
+Make new file current.sgml to hold release info for the current release.
+ Should be moved to release.sgml before filling with next release info.
+
 Revision 1.4  1998/10/30 19:37:12  thomas
 Minor editing and markup changes as a result of preparing the Postscript
  documentation for v6.4.
 Bigger updates to the installation instructions (install and config).
 
-
 -->
+
 <!doctype book      PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
 <!entity intro      SYSTEM "intro.sgml">
 

@@ -13,22 +13,16 @@ $ ./configure --help
 </programlisting>
 
 <para>
-The following parameters may be of interest to most installers:
+The following parameters may be of interest to installers:
 
 <programlisting>
 Directory and file names:
   --prefix=PREFIX         install architecture-independent files in PREFIX
                           [/usr/local/pgsql]
   --bindir=DIR            user executables in DIR [EPREFIX/bin]
-  --datadir=DIR           read-only architecture-independent data in DIR
-                          [PREFIX/share]
-  --sysconfdir=DIR        read-only single-machine data in DIR [PREFIX/etc]
-  --sharedstatedir=DIR    modifiable architecture-independent data in DIR
-                          [PREFIX/com]
   --libdir=DIR            object code libraries in DIR [EPREFIX/lib]
   --includedir=DIR        C header files in DIR [PREFIX/include]
   --mandir=DIR            man documentation in DIR [PREFIX/man]
-  --srcdir=DIR            find the sources in DIR [configure dir or ..]
 Features and packages:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
@@ -53,8 +47,13 @@ Features and packages:
   --enable-cassert        enable assertion checks (debugging)
   --with-CC=<replaceable>compiler</replaceable>      use specific C compiler
   --with-CXX=<replaceable>compiler</replaceable>     use specific C++ compiler
-  --with-x                use the X Window System
 </programlisting>
+
+<para>
+Some systems may have trouble building a specific feature of
+<productname>Postgres</productname>. For example, systems with a damaged
+C++ compiler may need to specify <option>--without-CXX</option> to encourage
+the build procedure to ignore the <filename>libpq++</filename> construction.
 
 <sect1>
 <title>Parameters for Building (<application>make</application>)</title>

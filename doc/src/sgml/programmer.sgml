@@ -1,16 +1,19 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.9 1998/10/30 19:37:11 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.10 1998/10/31 09:36:36 thomas Exp $
 
-Postgres programmer's guide.
-Derived from postgres.sgml.
-thomas 1998-10-27
+Postgres Programmer's Guide.
+- thomas 1998-10-27
 
 $Log: programmer.sgml,v $
+Revision 1.10  1998/10/31 09:36:36  thomas
+Cleanup for v6.4 release.
+Make new file current.sgml to hold release info for the current release.
+ Should be moved to release.sgml before filling with next release info.
+
 Revision 1.9  1998/10/30 19:37:11  thomas
 Minor editing and markup changes as a result of preparing the Postscript
  documentation for v6.4.
 Bigger updates to the installation instructions (install and config).
-
 
 -->
 
