@@ -294,6 +294,26 @@ SELECT q2 FROM int8_tbl EXCEPT ALL SELECT DISTINCT q1 FROM int8_tbl;
   4567890123456789
 (3 rows)
 
+SELECT q1 FROM int8_tbl EXCEPT SELECT q2 FROM int8_tbl;
+ q1 
+----
+(0 rows)
+
+SELECT q1 FROM int8_tbl EXCEPT ALL SELECT q2 FROM int8_tbl;
+        q1        
+------------------
+              123
+ 4567890123456789
+(2 rows)
+
+SELECT q1 FROM int8_tbl EXCEPT ALL SELECT DISTINCT q2 FROM int8_tbl;
+        q1        
+------------------
+              123
+ 4567890123456789
+ 4567890123456789
+(3 rows)
+
 --
 -- Mixed types
 --
@@ -311,4 +331,100 @@ SELECT f1 FROM float8_tbl EXCEPT SELECT f1 FROM int4_tbl;
                 -34.84
  -1.2345678901234e-200
 (4 rows)
+
+--
+-- Operator precedence and (((((extra))))) parentheses
+--
+SELECT q1 FROM int8_tbl INTERSECT SELECT q2 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl;
+        q1         
+-------------------
+               123
+  4567890123456789
+               456
+  4567890123456789
+               123
+  4567890123456789
+ -4567890123456789
+(7 rows)
+
+SELECT q1 FROM int8_tbl INTERSECT (((SELECT q2 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl)));
+        q1        
+------------------
+              123
+ 4567890123456789
+(2 rows)
+
+(((SELECT q1 FROM int8_tbl INTERSECT SELECT q2 FROM int8_tbl))) UNION ALL SELECT q2 FROM int8_tbl;
+        q1         
+-------------------
+               123
+  4567890123456789
+               456
+  4567890123456789
+               123
+  4567890123456789
+ -4567890123456789
+(7 rows)
+
+SELECT q1 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl EXCEPT SELECT q1 FROM int8_tbl;
+        q1         
+-------------------
+ -4567890123456789
+               456
+(2 rows)
+
+SELECT q1 FROM int8_tbl UNION ALL (((SELECT q2 FROM int8_tbl EXCEPT SELECT q1 FROM int8_tbl)));
+        q1         
+-------------------
+               123
+               123
+  4567890123456789
+  4567890123456789
+  4567890123456789
+ -4567890123456789
+               456
+(7 rows)
+
+(((SELECT q1 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl))) EXCEPT SELECT q1 FROM int8_tbl;
+        q1         
+-------------------
+ -4567890123456789
+               456
+(2 rows)
+
+--
+-- Subqueries with ORDER BY & LIMIT clauses
+--
+-- In this syntax, ORDER BY/LIMIT apply to the result of the EXCEPT
+SELECT q1,q2 FROM int8_tbl EXCEPT SELECT q2,q1 FROM int8_tbl
+ORDER BY q2,q1;
+        q1        |        q2         
+------------------+-------------------
+ 4567890123456789 | -4567890123456789
+              123 |               456
+(2 rows)
+
+-- This should fail, because q2 isn't a name of an EXCEPT output column
+SELECT q1 FROM int8_tbl EXCEPT SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1;
+ERROR:  Attribute 'q2' not found
+-- But this should work:
+SELECT q1 FROM int8_tbl EXCEPT (((SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1)));
+        q1        
+------------------
+              123
+ 4567890123456789
+(2 rows)
+
+--
+-- New syntaxes (7.1) permit new tests
+--
+(((((select * from int8_tbl)))));
+        q1        |        q2         
+------------------+-------------------
+              123 |               456
+              123 |  4567890123456789
+ 4567890123456789 |               123
+ 4567890123456789 |  4567890123456789
+ 4567890123456789 | -4567890123456789
+(5 rows)
 

@@ -98,6 +98,12 @@ SELECT q2 FROM int8_tbl EXCEPT ALL SELECT q1 FROM int8_tbl;
 
 SELECT q2 FROM int8_tbl EXCEPT ALL SELECT DISTINCT q1 FROM int8_tbl;
 
+SELECT q1 FROM int8_tbl EXCEPT SELECT q2 FROM int8_tbl;
+
+SELECT q1 FROM int8_tbl EXCEPT ALL SELECT q2 FROM int8_tbl;
+
+SELECT q1 FROM int8_tbl EXCEPT ALL SELECT DISTINCT q2 FROM int8_tbl;
+
 --
 -- Mixed types
 --
@@ -105,3 +111,41 @@ SELECT q2 FROM int8_tbl EXCEPT ALL SELECT DISTINCT q1 FROM int8_tbl;
 SELECT f1 FROM float8_tbl INTERSECT SELECT f1 FROM int4_tbl;
 
 SELECT f1 FROM float8_tbl EXCEPT SELECT f1 FROM int4_tbl;
+
+--
+-- Operator precedence and (((((extra))))) parentheses
+--
+
+SELECT q1 FROM int8_tbl INTERSECT SELECT q2 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl;
+
+SELECT q1 FROM int8_tbl INTERSECT (((SELECT q2 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl)));
+
+(((SELECT q1 FROM int8_tbl INTERSECT SELECT q2 FROM int8_tbl))) UNION ALL SELECT q2 FROM int8_tbl;
+
+SELECT q1 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl EXCEPT SELECT q1 FROM int8_tbl;
+
+SELECT q1 FROM int8_tbl UNION ALL (((SELECT q2 FROM int8_tbl EXCEPT SELECT q1 FROM int8_tbl)));
+
+(((SELECT q1 FROM int8_tbl UNION ALL SELECT q2 FROM int8_tbl))) EXCEPT SELECT q1 FROM int8_tbl;
+
+--
+-- Subqueries with ORDER BY & LIMIT clauses
+--
+
+-- In this syntax, ORDER BY/LIMIT apply to the result of the EXCEPT
+SELECT q1,q2 FROM int8_tbl EXCEPT SELECT q2,q1 FROM int8_tbl
+ORDER BY q2,q1;
+
+-- This should fail, because q2 isn't a name of an EXCEPT output column
+SELECT q1 FROM int8_tbl EXCEPT SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1;
+
+-- But this should work:
+SELECT q1 FROM int8_tbl EXCEPT (((SELECT q2 FROM int8_tbl ORDER BY q2 LIMIT 1)));
+
+--
+-- New syntaxes (7.1) permit new tests
+--
+
+(((((select * from int8_tbl)))));
+
+
