@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.7 2000/03/27 17:14:43 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.8 2000/05/26 02:07:15 momjian Exp $
 Postgres documentation
 -->
 
@@ -96,7 +96,7 @@ initlocation <replaceable class="parameter">directory</replaceable>
 <programlisting>
 $ export PGDATA2=/opt/postgres/data
 $ initlocation PGDATA2
-$ createdb 'testdb' -D 'PGDATA2'
+$ createdb -D 'PGDATA2' 'testdb' 
 </programlisting>
   </para>
 
@@ -104,7 +104,7 @@ $ createdb 'testdb' -D 'PGDATA2'
   Alternatively, if you allow absolute paths you could write:
 <programlisting>
 $ initlocation /opt/postgres/data
-$ createdb testdb -D '/opt/postgres/data/testdb'
+$ createdb -D '/opt/postgres/data/testdb' testdb 
 </programlisting>
   </para>
  </refsect1>
