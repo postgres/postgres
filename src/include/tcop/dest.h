@@ -26,7 +26,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.4 1996/11/10 03:06:08 momjian Exp $
+ * $Id: dest.h,v 1.5 1997/01/08 08:39:10 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,6 @@ typedef struct AttrInfo {
 } AttrInfo;
 */
 
-extern void donothing(List *tuple, List *attrdesc);
 extern void (*DestToFunction(CommandDest dest))();
 extern void EndCommand(char *commandTag, CommandDest dest);
 extern void SendCopyBegin(void);

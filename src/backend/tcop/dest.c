@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.3 1996/11/10 03:02:42 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.4 1997/01/08 08:36:31 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,12 +45,12 @@
  *	output functions
  * ----------------
  */
-void
-donothing(List *tuple, List *attrdesc)
+static void
+donothing(HeapTuple tuple, TupleDesc attrdesc)
 {
 }
 
-void (*DestToFunction(CommandDest dest))()
+void (*DestToFunction(CommandDest dest))(HeapTuple, TupleDesc)
 {
     switch (dest) {
     case RemoteInternal:
