@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.201 2004/05/18 21:46:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.202 2004/05/23 15:13:43 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -509,6 +509,7 @@ su - postgres
          <filename>configure</filename>'s <literal>--disable-rpath</>
          option.  Also, you will need to tell the operating system how
          to find the shared libraries.
+        </para>
        </listitem>
       </varlistentry>
 
