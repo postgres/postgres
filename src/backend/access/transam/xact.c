@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.177 2004/08/03 15:57:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.178 2004/08/11 04:07:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -574,13 +574,28 @@ RecordTransactionCommit(void)
 		START_CRIT_SECTION();
 
 		/*
-		 * We only need to log the commit in XLOG if the transaction made
-		 * any transaction-controlled XLOG entries or will delete files.
+		 * If our transaction made any transaction-controlled XLOG entries,
+		 * we need to lock out checkpoint start between writing our XLOG
+		 * record and updating pg_clog.  Otherwise it is possible for the
+		 * checkpoint to set REDO after the XLOG record but fail to flush the
+		 * pg_clog update to disk, leading to loss of the transaction commit
+		 * if we crash a little later.  Slightly klugy fix for problem
+		 * discovered 2004-08-10.
+		 *
 		 * (If it made no transaction-controlled XLOG entries, its XID
 		 * appears nowhere in permanent storage, so no one else will ever care
-		 * if it committed.)
+		 * if it committed; so it doesn't matter if we lose the commit flag.)
+		 *
+		 * Note we only need a shared lock.
 		 */
 		madeTCentries = (MyLastRecPtr.xrecoff != 0);
+		if (madeTCentries)
+			LWLockAcquire(CheckpointStartLock, LW_SHARED);
+
+		/*
+		 * We only need to log the commit in XLOG if the transaction made
+		 * any transaction-controlled XLOG entries or will delete files.
+		 */
 		if (madeTCentries || nrels > 0)
 		{
 			XLogRecData rdata[3];
@@ -667,6 +682,10 @@ RecordTransactionCommit(void)
 			/* to avoid race conditions, the parent must commit first */
 			TransactionIdCommitTree(nchildren, children);
 		}
+
+		/* Unlock checkpoint lock if we acquired it */
+		if (madeTCentries)
+			LWLockRelease(CheckpointStartLock);
 
 		END_CRIT_SECTION();
 	}
@@ -850,6 +869,8 @@ RecordTransactionAbort(void)
 		 *
 		 * We do not flush XLOG to disk unless deleting files, since the
 		 * default assumption after a crash would be that we aborted, anyway.
+		 * For the same reason, we don't need to worry about interlocking
+		 * against checkpoint start.
 		 */
 		if (MyLastRecPtr.xrecoff != 0 || nrels > 0)
 		{
