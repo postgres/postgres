@@ -7,14 +7,18 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.4 1996/11/14 10:25:54 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.5 1996/11/18 01:43:54 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ..
 include ../Makefile.global
 
-CXXFLAGS= $(CFLAGS)
+# We have to override -Werror, which makes warnings, fatal, because we
+# inevitably get the warning, "abstract declarator used as declaration"
+# because of our inclusion of c.h and we don't know how to stop that.
+
+CXXFLAGS= $(CFLAGS) -Wno-error
 
 INCLUDE_OPT= \
              -I../backend \
