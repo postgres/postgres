@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.41 1998/10/18 04:16:07 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.42 1999/07/01 00:06:28 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -68,7 +68,7 @@ clean:
 	$(MAKE) -C ../contrib/spi clean
 
 distclean: clean
-	#  The second group of files comes from configure.in
+	# Remove files and symlinks created by configure script
 	rm -f \
 		Makefile.port \
 		config.cache \
@@ -80,6 +80,10 @@ distclean: clean
 		backend/port/tas.s \
 		backend/port/dynloader.c \
 		backend/utils/Gen_fmgrtab.sh \
+		interfaces/odbc/port \
+		interfaces/odbc/makefiles \
+		interfaces/odbc/template \
+		interfaces/odbc/config.h \
 \
 \
 \
