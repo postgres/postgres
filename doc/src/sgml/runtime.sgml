@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.301.4.2 2005/01/23 00:37:26 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.301.4.3 2005/03/03 16:47:43 tgl Exp $
 -->
 
 <chapter id="runtime">
@@ -3873,8 +3873,8 @@ plruby.bar = true        # generates error, unknown class name
       </indexterm>
       <listitem>
        <para>
-        Number of seconds between ARC reports.
-        If set greater than zero, emit ARC statistics to the log every so many
+        Number of seconds between buffer freelist reports.
+        If set greater than zero, emit freelist statistics to the log every so many
         seconds.  Zero (the default) disables reporting.
        </para>
       </listitem>

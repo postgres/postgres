@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.49.4.1 2005/02/03 23:30:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.49.4.2 2005/03/03 16:47:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,14 +34,16 @@
  * Definitions for the buffer replacement strategy
  */
 #define STRAT_LIST_UNUSED	(-1)
-#define STRAT_LIST_B1		0
-#define STRAT_LIST_T1		1
-#define STRAT_LIST_T2		2
-#define STRAT_LIST_B2		3
-#define STRAT_NUM_LISTS		4
+#define STRAT_LIST_B1		0	/* A1out */
+#define STRAT_LIST_T1		1	/* A1 */
+#define STRAT_LIST_T2		2	/* Am */
+#define STRAT_NUM_LISTS		3
 
 /*
- * The Cache Directory Block (CDB) of the Adaptive Replacement Cache (ARC)
+ * We have a cache directory block (CDB) for every file page currently being
+ * tracked by the strategy module.  There can be more CDBs than there are
+ * actual shared buffers, allowing pages no longer in cache to still be
+ * tracked.
  */
 typedef struct
 {
@@ -55,14 +57,13 @@ typedef struct
 } BufferStrategyCDB;
 
 /*
- * The shared ARC control information.
+ * The shared strategy control information.
  */
 typedef struct
 {
 	int			target_T1_size; /* What T1 size are we aiming for */
 	int			listUnusedCDB;	/* All unused StrategyCDB */
-	int			listHead[STRAT_NUM_LISTS];		/* ARC lists B1, T1, T2
-												 * and B2 */
+	int			listHead[STRAT_NUM_LISTS];		/* CDB lists */
 	int			listTail[STRAT_NUM_LISTS];
 	int			listSize[STRAT_NUM_LISTS];
 	Buffer		listFreeBuffers;	/* List of unused buffers */
@@ -91,7 +92,6 @@ static TransactionId strategy_vacuum_xid;
 #define B1_LENGTH	(StrategyControl->listSize[STRAT_LIST_B1])
 #define T1_LENGTH	(StrategyControl->listSize[STRAT_LIST_T1])
 #define T2_LENGTH	(StrategyControl->listSize[STRAT_LIST_T2])
-#define B2_LENGTH	(StrategyControl->listSize[STRAT_LIST_B2])
 
 
 /*
@@ -178,8 +178,7 @@ StrategyStatsDump(void)
 		long		all_hit,
 					b1_hit,
 					t1_hit,
-					t2_hit,
-					b2_hit;
+					t2_hit;
 		int			id,
 					t1_clean,
 					t2_clean;
@@ -205,7 +204,7 @@ StrategyStatsDump(void)
 		}
 
 		if (StrategyControl->num_lookup == 0)
-			all_hit = b1_hit = t1_hit = t2_hit = b2_hit = 0;
+			all_hit = b1_hit = t1_hit = t2_hit = 0;
 		else
 		{
 			b1_hit = (StrategyControl->num_hit[STRAT_LIST_B1] * 100 /
@@ -214,18 +213,16 @@ StrategyStatsDump(void)
 					  StrategyControl->num_lookup);
 			t2_hit = (StrategyControl->num_hit[STRAT_LIST_T2] * 100 /
 					  StrategyControl->num_lookup);
-			b2_hit = (StrategyControl->num_hit[STRAT_LIST_B2] * 100 /
-					  StrategyControl->num_lookup);
-			all_hit = b1_hit + t1_hit + t2_hit + b2_hit;
+			all_hit = b1_hit + t1_hit + t2_hit;
 		}
 
 		errcxtold = error_context_stack;
 		error_context_stack = NULL;
-		elog(DEBUG1, "ARC T1target=%5d B1len=%5d T1len=%5d T2len=%5d B2len=%5d",
-			 T1_TARGET, B1_LENGTH, T1_LENGTH, T2_LENGTH, B2_LENGTH);
-		elog(DEBUG1, "ARC total   =%4ld%% B1hit=%4ld%% T1hit=%4ld%% T2hit=%4ld%% B2hit=%4ld%%",
-			 all_hit, b1_hit, t1_hit, t2_hit, b2_hit);
-		elog(DEBUG1, "ARC clean buffers at LRU       T1=   %5d T2=   %5d",
+		elog(DEBUG1, "2Q T1target=%5d B1len=%5d T1len=%5d T2len=%5d",
+			 T1_TARGET, B1_LENGTH, T1_LENGTH, T2_LENGTH);
+		elog(DEBUG1, "2Q total   =%4ld%% B1hit=%4ld%% T1hit=%4ld%% T2hit=%4ld%%",
+			 all_hit, b1_hit, t1_hit, t2_hit);
+		elog(DEBUG1, "2Q clean buffers at LRU       T1=   %5d T2=   %5d",
 			 t1_clean, t2_clean);
 		error_context_stack = errcxtold;
 
@@ -233,7 +230,6 @@ StrategyStatsDump(void)
 		StrategyControl->num_hit[STRAT_LIST_B1] = 0;
 		StrategyControl->num_hit[STRAT_LIST_T1] = 0;
 		StrategyControl->num_hit[STRAT_LIST_T2] = 0;
-		StrategyControl->num_hit[STRAT_LIST_B2] = 0;
 		StrategyControl->stat_report = now;
 	}
 }
@@ -242,7 +238,7 @@ StrategyStatsDump(void)
  * StrategyBufferLookup
  *
  *	Lookup a page request in the cache directory. A buffer is only
- *	returned for a T1 or T2 cache hit. B1 and B2 hits are just
+ *	returned for a T1 or T2 cache hit. B1 hits are just
  *	remembered here, to possibly affect the behaviour later.
  *
  *	recheck indicates we are rechecking after I/O wait; do not change
@@ -346,55 +342,10 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
 	}
 
 	/*
-	 * In the case of a recheck we don't care about B1 or B2 hits here.
-	 * The bufmgr does this call only to make sure no-one faulted in the
-	 * block while we where busy flushing another; we don't want to doubly
-	 * adjust the T1target.
-	 *
-	 * Now for this really to end up as a B1 or B2 cache hit, we must have
-	 * been flushing for quite some time as the block not only must have
-	 * been read, but also traveled through the queue and evicted from the
-	 * T cache again already.
-	 *
-	 * VACUUM re-reads shouldn't adjust the target either.
-	 */
-	if (recheck || strategy_hint_vacuum)
-		return NULL;
-
-	/*
-	 * Adjust the target size of the T1 cache depending on if this is a B1
-	 * or B2 hit.
-	 */
-	switch (cdb->list)
-	{
-		case STRAT_LIST_B1:
-
-			/*
-			 * B1 hit means that the T1 cache is probably too small.
-			 * Adjust the T1 target size and continue below.
-			 */
-			T1_TARGET = Min(T1_TARGET + Max(B2_LENGTH / B1_LENGTH, 1),
-							NBuffers);
-			break;
-
-		case STRAT_LIST_B2:
-
-			/*
-			 * B2 hit means that the T2 cache is probably too small.
-			 * Adjust the T1 target size and continue below.
-			 */
-			T1_TARGET = Max(T1_TARGET - Max(B1_LENGTH / B2_LENGTH, 1), 0);
-			break;
-
-		default:
-			elog(ERROR, "buffer hash table corrupted: CDB->list = %d",
-				 cdb->list);
-	}
-
-	/*
 	 * Even though we had seen the block in the past, its data is not
 	 * currently in memory ... cache miss to the bufmgr.
 	 */
+	Assert(cdb->list == STRAT_LIST_B1);
 	return NULL;
 }
 
@@ -423,7 +374,7 @@ StrategyGetBuffer(int *cdb_replace_index)
 		 * We don't have a free buffer, must take one from T1 or T2.
 		 * Choose based on trying to converge T1len to T1target.
 		 */
-		if (T1_LENGTH >= Max(1, T1_TARGET))
+		if (T1_LENGTH >= T1_TARGET)
 		{
 			/*
 			 * We should take the first unpinned buffer from T1.
@@ -553,7 +504,7 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 
 	if (cdb_found_index >= 0)
 	{
-		/* This must have been a ghost buffer cache hit (B1 or B2) */
+		/* This must have been a ghost buffer cache hit (B1 list) */
 		cdb_found = &StrategyCDB[cdb_found_index];
 
 		/* Assert that the buffer remembered in cdb_found is the one */
@@ -573,14 +524,14 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 			Assert(BUFFERTAGS_EQUAL(cdb_replace->buf_tag, buf->tag));
 
 			/*
-			 * Under normal circumstances we move the evicted T list entry
-			 * to the corresponding B list.  However, T1 entries that
-			 * exist only because of VACUUM are just thrown into the
-			 * unused list instead. We don't expect them to be touched
-			 * again by the VACUUM, and if we put them into B1 then VACUUM
-			 * would skew T1_target adjusting.
+			 * Under normal circumstances we move evicted T1 list entries
+			 * to the B1 list.  However, T1 entries that exist only because
+			 * of VACUUM are just thrown into the unused list instead,
+			 * since it's unlikely they'll be touched again soon.  Similarly,
+			 * evicted T2 entries are thrown away; the LRU T2 entry cannot
+			 * have been touched recently.
 			 */
-			if (cdb_replace->t1_vacuum)
+			if (cdb_replace->t1_vacuum || cdb_replace->list == STRAT_LIST_T2)
 			{
 				BufTableDelete(&(cdb_replace->buf_tag));
 				STRAT_LIST_REMOVE(cdb_replace);
@@ -589,16 +540,8 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 			}
 			else
 			{
-				if (cdb_replace->list == STRAT_LIST_T1)
-				{
-					STRAT_LIST_REMOVE(cdb_replace);
-					STRAT_MRU_INSERT(cdb_replace, STRAT_LIST_B1);
-				}
-				else
-				{
-					STRAT_LIST_REMOVE(cdb_replace);
-					STRAT_MRU_INSERT(cdb_replace, STRAT_LIST_B2);
-				}
+				STRAT_LIST_REMOVE(cdb_replace);
+				STRAT_MRU_INSERT(cdb_replace, STRAT_LIST_B1);
 			}
 			/* And clear its block reference */
 			cdb_replace->buf_id = -1;
@@ -608,7 +551,7 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 			/* We are satisfying it with an unused buffer */
 		}
 
-		/* Now the found B CDB gets the buffer and is moved to T2 */
+		/* Now the found B1 CDB gets the buffer and is moved to T2 */
 		cdb_found->buf_id = buf->buf_id;
 		STRAT_LIST_REMOVE(cdb_found);
 		STRAT_MRU_INSERT(cdb_found, STRAT_LIST_T2);
@@ -617,36 +560,22 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 	{
 		/*
 		 * This was a complete cache miss, so we need to create a new CDB.
-		 * The goal is to keep T1len+B1len <= c.
+		 * We use a free one if available, else reclaim the tail end of B1.
 		 */
-		if (B1_LENGTH > 0 && (T1_LENGTH + B1_LENGTH) >= NBuffers)
+		if (StrategyControl->listUnusedCDB >= 0)
 		{
-			/* So if B1 isn't empty and T1len+B1len >= c we take B1-LRU */
+			cdb_found = &StrategyCDB[StrategyControl->listUnusedCDB];
+			StrategyControl->listUnusedCDB = cdb_found->next;
+		}
+		else
+		{
+			/* Can't fail because we have more CDBs than buffers... */
+			if (B1_LENGTH == 0)
+				elog(PANIC, "StrategyReplaceBuffer: out of CDBs");
 			cdb_found = &StrategyCDB[StrategyControl->listHead[STRAT_LIST_B1]];
 
 			BufTableDelete(&(cdb_found->buf_tag));
 			STRAT_LIST_REMOVE(cdb_found);
-		}
-		else
-		{
-			/* Otherwise, we try to use a free one */
-			if (StrategyControl->listUnusedCDB >= 0)
-			{
-				cdb_found = &StrategyCDB[StrategyControl->listUnusedCDB];
-				StrategyControl->listUnusedCDB = cdb_found->next;
-			}
-			else
-			{
-				/* If there isn't, we take B2-LRU ... except if */
-				/* T1len+B1len+T2len = c ... oh my */
-				if (B2_LENGTH > 0)
-					cdb_found = &StrategyCDB[StrategyControl->listHead[STRAT_LIST_B2]];
-				else
-					cdb_found = &StrategyCDB[StrategyControl->listHead[STRAT_LIST_B1]];
-
-				BufTableDelete(&(cdb_found->buf_tag));
-				STRAT_LIST_REMOVE(cdb_found);
-			}
 		}
 
 		/* Set the CDB's buf_tag and insert it into the hash table */
@@ -657,7 +586,7 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 		{
 			/*
 			 * The buffer was formerly in a T list, move its CDB to the
-			 * corresponding B list
+			 * appropriate list: B1 if T1, else discard it, as above
 			 */
 			cdb_replace = &StrategyCDB[cdb_replace_index];
 
@@ -673,8 +602,10 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 			}
 			else
 			{
+				BufTableDelete(&(cdb_replace->buf_tag));
 				STRAT_LIST_REMOVE(cdb_replace);
-				STRAT_MRU_INSERT(cdb_replace, STRAT_LIST_B2);
+				cdb_replace->next = StrategyControl->listUnusedCDB;
+				StrategyControl->listUnusedCDB = cdb_replace_index;
 			}
 			/* And clear its block reference */
 			cdb_replace->buf_id = -1;
@@ -744,7 +675,7 @@ StrategyInvalidateBuffer(BufferDesc *buf)
 	cdb = &StrategyCDB[cdb_id];
 
 	/*
-	 * Remove the CDB from the hashtable and the ARC queue it is currently
+	 * Remove the CDB from the hashtable and the queue it is currently
 	 * on.
 	 */
 	BufTableDelete(&(cdb->buf_tag));
@@ -808,7 +739,7 @@ StrategyDirtyBufferList(BufferDesc **buffers, BufferTag *buftags,
 
 	/*
 	 * Traverse the T1 and T2 list LRU to MRU in "parallel" and add all
-	 * dirty buffers found in that order to the list. The ARC strategy
+	 * dirty buffers found in that order to the list. The 2Q strategy
 	 * keeps all used buffers including pinned ones in the T1 or T2 list.
 	 * So we cannot miss any dirty buffers.
 	 */
@@ -870,16 +801,18 @@ StrategyDirtyBufferList(BufferDesc **buffers, BufferTag *buftags,
 int
 StrategyShmemSize(void)
 {
+	/* A1out list can hold 50% of NBuffers, per Johnson and Shasha */
+	int			nCDBs = NBuffers + NBuffers / 2;
 	int			size = 0;
 
 	/* size of CDB lookup hash table */
-	size += BufTableShmemSize(NBuffers * 2);
+	size += BufTableShmemSize(nCDBs);
 
 	/* size of the shared replacement strategy control block */
 	size += MAXALIGN(sizeof(BufferStrategyControl));
 
-	/* size of the ARC directory blocks */
-	size += MAXALIGN(NBuffers * 2 * sizeof(BufferStrategyCDB));
+	/* size of the CDB directory */
+	size += MAXALIGN(nCDBs * sizeof(BufferStrategyCDB));
 
 	return size;
 }
@@ -894,13 +827,15 @@ StrategyShmemSize(void)
 void
 StrategyInitialize(bool init)
 {
+	/* A1out list can hold 50% of NBuffers, per Johnson and Shasha */
+	int			nCDBs = NBuffers + NBuffers / 2;
 	bool		found;
 	int			i;
 
 	/*
 	 * Initialize the shared CDB lookup hashtable
 	 */
-	InitBufTable(NBuffers * 2);
+	InitBufTable(nCDBs);
 
 	/*
 	 * Get or create the shared strategy control block and the CDB's
@@ -908,7 +843,7 @@ StrategyInitialize(bool init)
 	StrategyControl = (BufferStrategyControl *)
 		ShmemInitStruct("Buffer Strategy Status",
 						sizeof(BufferStrategyControl) +
-						sizeof(BufferStrategyCDB) * (NBuffers * 2 - 1),
+						sizeof(BufferStrategyCDB) * (nCDBs - 1),
 						&found);
 	StrategyCDB = &(StrategyControl->cdb[0]);
 
@@ -926,13 +861,13 @@ StrategyInitialize(bool init)
 		StrategyControl->listFreeBuffers = 0;
 
 		/*
-		 * We start off with a target T1 list size of half the available
-		 * cache blocks.
+		 * We set the target T1 size to 1/4th of available buffers.
+		 * Possibly this should be a runtime tunable.
 		 */
-		StrategyControl->target_T1_size = NBuffers / 2;
+		StrategyControl->target_T1_size = NBuffers / 4;
 
 		/*
-		 * Initialize B1, T1, T2 and B2 lists to be empty
+		 * Initialize all lists to be empty
 		 */
 		for (i = 0; i < STRAT_NUM_LISTS; i++)
 		{
@@ -947,14 +882,14 @@ StrategyInitialize(bool init)
 		/*
 		 * All CDB's are linked as the listUnusedCDB
 		 */
-		for (i = 0; i < NBuffers * 2; i++)
+		for (i = 0; i < nCDBs; i++)
 		{
 			StrategyCDB[i].next = i + 1;
 			StrategyCDB[i].list = STRAT_LIST_UNUSED;
 			CLEAR_BUFFERTAG(StrategyCDB[i].buf_tag);
 			StrategyCDB[i].buf_id = -1;
 		}
-		StrategyCDB[NBuffers * 2 - 1].next = -1;
+		StrategyCDB[nCDBs - 1].next = -1;
 		StrategyControl->listUnusedCDB = 0;
 	}
 	else
