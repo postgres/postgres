@@ -1,0 +1,407 @@
+# ru.po
+# PG_CTL Translated Messages into the Russian Language (KOI8-R)
+#
+# $Header: /cvsroot/pgsql/src/bin/pg_ctl/po/ru.po,v 1.1 2004/06/10 02:59:22 momjian Exp $
+#
+# ChangeLog:
+#   - May 29, 2004: Initial translation for 7.5; Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 7.5.x\n"
+"POT-Creation-Date: 2004-05-29 20:53-0400\n"
+"PO-Revision-Date: 2004-05-29 21:57-0500\n"
+"Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
+"Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=koi8-r\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: pg_ctl.c:107
+#: pg_ctl.c:123
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: не хватает памяти\n"
+
+#: pg_ctl.c:337
+#, c-format
+msgid "%s: Another postmaster may be running. Trying to start postmaster anyway.\n"
+msgstr "%s: Возможно запущен другой postmaster. Попытка запустить postmaster в любом случае.\n"
+
+#: pg_ctl.c:355
+#, c-format
+msgid "%s: cannot read %s\n"
+msgstr "%s: не прочитать %s\n"
+
+#: pg_ctl.c:361
+#, c-format
+msgid "%s: option file %s must have exactly 1 line\n"
+msgstr "%s: файл опций %s дожен иметь ровно 1 строку\n"
+
+#: pg_ctl.c:404
+#, c-format
+msgid ""
+"The program \"postmaster\" is needed by %s but was not found in the same directory as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"Программа \"postmaster\" нужна для %s но не найдена в той же директории что и \"%s\".\n"
+"Проверьте вашу инсталляцию.\n"
+
+#: pg_ctl.c:410
+#, c-format
+msgid ""
+"The program \"postmaster\" was found by %s but was not the same version as \"%s\".\n"
+"Check your installation.\n"
+msgstr ""
+"Программа \"postmaster\" найдена рядом с %s но не той же версии что и \"%s\".\n"
+"Проверьте вашу инсталляцию.\n"
+
+#: pg_ctl.c:421
+msgid "Unable to run the postmaster binary\n"
+msgstr "Не в состоянии запустить выполняемый файл postmaster\n"
+
+#: pg_ctl.c:432
+#, c-format
+msgid ""
+"%s: cannot start postmaster\n"
+"Examine the log output\n"
+msgstr ""
+"%s: не в состоянии запустить postmaster\n"
+"Проверьте журнал вывода\n"
+
+#: pg_ctl.c:443
+msgid "waiting for postmaster to start..."
+msgstr "ожидание запуска postmaster'а..."
+
+#: pg_ctl.c:448
+msgid "could not start postmaster\n"
+msgstr "не удалось запустить postmaster\n"
+
+#: pg_ctl.c:450
+msgid ""
+"done\n"
+"postmaster started\n"
+msgstr ""
+"завершено\n"
+"postmaster запущен\n"
+
+#: pg_ctl.c:453
+msgid "postmaster starting\n"
+msgstr "запускается postmaster\n"
+
+#: pg_ctl.c:468
+#: pg_ctl.c:547
+#: pg_ctl.c:617
+#, c-format
+msgid "%s: could not find %s\n"
+msgstr "%s: не удалось найти %s\n"
+
+#: pg_ctl.c:469
+#: pg_ctl.c:618
+msgid "Is postmaster running?\n"
+msgstr "Запущен ли postmaster?\n"
+
+#: pg_ctl.c:476
+#, c-format
+msgid "%s: cannot stop postmaster; postgres is running (PID: %ld)\n"
+msgstr "%s: не остановить postmaster; выполняется postgres (PID: %ld)\n"
+
+#: pg_ctl.c:484
+#: pg_ctl.c:565
+msgid "stop signal failed\n"
+msgstr "сигнал остановки не удался\n"
+
+#: pg_ctl.c:491
+msgid "postmaster shutting down\n"
+msgstr "postmaster отключается\n"
+
+#: pg_ctl.c:498
+#: pg_ctl.c:571
+msgid "waiting for postmaster to shut down..."
+msgstr "ожидание отключения postmaster'а..."
+
+#: pg_ctl.c:508
+msgid "."
+msgstr "."
+
+#: pg_ctl.c:520
+#: pg_ctl.c:595
+msgid " failed\n"
+msgstr " ошибка\n"
+
+#: pg_ctl.c:522
+#: pg_ctl.c:597
+#, c-format
+msgid "%s: postmaster does not shut down\n"
+msgstr "%s: postmaster не отключается\n"
+
+#: pg_ctl.c:526
+#: pg_ctl.c:602
+msgid "done\n"
+msgstr "завершено\n"
+
+#: pg_ctl.c:528
+#: pg_ctl.c:604
+msgid "postmaster stopped\n"
+msgstr "postmaster остановлен\n"
+
+#: pg_ctl.c:548
+msgid ""
+"Is postmaster running?\n"
+"starting postmaster anyway\n"
+msgstr ""
+"Выполняется ли postmaster?\n"
+"производится запуск postmaster'а в любом случае\n"
+
+#: pg_ctl.c:556
+#, c-format
+msgid "%s: cannot restart postmaster; postgres is running (PID: %ld)\n"
+msgstr "%s: нельзя перезапустить postmaster; выполняется postgres (PID: %ld)\n"
+
+#: pg_ctl.c:559
+#: pg_ctl.c:628
+msgid "Please terminate postgres and try again.\n"
+msgstr "Пожалуйста, остановите postgres и попытайтесь снова.\n"
+
+#: pg_ctl.c:625
+#, c-format
+msgid "%s: cannot reload postmaster; postgres is running (PID: %ld)\n"
+msgstr "%s: нельзя перезагрузить postmaster; выполняется postgres (PID: %ld)\n"
+
+#: pg_ctl.c:634
+msgid "reload signal failed\n"
+msgstr "сигнал перезагрузки не удался\n"
+
+#: pg_ctl.c:639
+msgid "postmaster signaled\n"
+msgstr "отправлен сигнал postmaster'у\n"
+
+#: pg_ctl.c:654
+#, c-format
+msgid "%s: postmaster or postgres not running\n"
+msgstr "%s: postmaster или postgres не выполняются\n"
+
+#: pg_ctl.c:660
+#, c-format
+msgid "%s: a standalone backend \"postgres\" is running (PID: %ld)\n"
+msgstr ""
+
+#: pg_ctl.c:666
+#, c-format
+msgid "%s: postmaster is running (PID: %ld)\n"
+msgstr "%s: выполняется postmaster (PID: %ld)\n"
+
+#: pg_ctl.c:682
+#, c-format
+msgid "signal %d failed\n"
+msgstr "сигнал %d не удался\n"
+
+#: pg_ctl.c:692
+#, c-format
+msgid ""
+"\n"
+"Try \"%s --help\" for more information.\n"
+msgstr ""
+"\n"
+"Наберите \"%s --help\" для более подробной информации.\n"
+
+#: pg_ctl.c:700
+#, c-format
+msgid "%s is a utility to start, stop, restart, reload configuration files,\n"
+msgstr "%s является утилитой для запуска, остановки, перезапуска, перезагрузки файлов конфигурации,\n"
+
+#: pg_ctl.c:701
+msgid ""
+"report the status of a PostgreSQL server, or kill a PostgreSQL process\n"
+"\n"
+msgstr ""
+"отчёта статуса сервера PostgreSQL, или остановки a PostgreSQL процесса\n"
+"\n"
+
+#: pg_ctl.c:702
+msgid "Usage:\n"
+msgstr "Использование:\n"
+
+#: pg_ctl.c:703
+#, c-format
+msgid "  %s start   [-w] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
+msgstr ""
+
+#: pg_ctl.c:704
+#, c-format
+msgid "  %s stop    [-W] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
+msgstr ""
+
+#: pg_ctl.c:705
+#, c-format
+msgid "  %s restart [-w] [-D DATADIR] [-s] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]\n"
+msgstr ""
+
+#: pg_ctl.c:706
+#, c-format
+msgid "  %s reload  [-D DATADIR] [-s]\n"
+msgstr ""
+
+#: pg_ctl.c:707
+#, c-format
+msgid "  %s status  [-D DATADIR]\n"
+msgstr ""
+
+#: pg_ctl.c:708
+#, c-format
+msgid "  %s kill    SIGNALNAME PROCESSID\n"
+msgstr ""
+
+#: pg_ctl.c:709
+msgid "Common options:\n"
+msgstr ""
+
+#: pg_ctl.c:710
+msgid "  -D, --pgdata DATADIR   location of the database storage area\n"
+msgstr ""
+
+#: pg_ctl.c:711
+msgid "  -s, --silent only print errors, no informational messages\n"
+msgstr ""
+
+#: pg_ctl.c:712
+msgid "  -w           wait until operation completes\n"
+msgstr ""
+
+#: pg_ctl.c:713
+msgid "  -W           do not wait until operation completes\n"
+msgstr ""
+
+#: pg_ctl.c:714
+msgid "  --help       show this help, then exit\n"
+msgstr ""
+
+#: pg_ctl.c:715
+msgid "  --version    output version information, then exit\n"
+msgstr ""
+
+#: pg_ctl.c:716
+msgid ""
+"(The default is to wait for shutdown, but not for start or restart.)\n"
+"\n"
+msgstr ""
+
+#: pg_ctl.c:717
+msgid ""
+"If the -D option is omitted, the environment variable PGDATA is used.\n"
+"\n"
+msgstr ""
+
+#: pg_ctl.c:718
+msgid "Options for start or restart:\n"
+msgstr ""
+
+#: pg_ctl.c:719
+msgid "  -l, --log FILENAME      write (or append) server log to FILENAME.  The\n"
+msgstr ""
+
+#: pg_ctl.c:720
+msgid "                          use of this option is highly recommended.\n"
+msgstr ""
+
+#: pg_ctl.c:721
+msgid "  -o OPTIONS              command line options to pass to the postmaster\n"
+msgstr ""
+
+#: pg_ctl.c:722
+msgid "                          (PostgreSQL server executable)\n"
+msgstr ""
+
+#: pg_ctl.c:723
+msgid ""
+"  -p PATH-TO-POSTMASTER   normally not necessary\n"
+"\n"
+msgstr ""
+
+#: pg_ctl.c:724
+msgid "Options for stop or restart:\n"
+msgstr ""
+
+#: pg_ctl.c:725
+msgid ""
+"  -m SHUTDOWN-MODE   may be 'smart', 'fast', or 'immediate'\n"
+"\n"
+msgstr ""
+
+#: pg_ctl.c:726
+msgid "Allowed signal names for kill:\n"
+msgstr ""
+
+#: pg_ctl.c:727
+msgid ""
+"  -HUP -INT -QUIT -ABRT -TERM -USR1 -USR2\n"
+"\n"
+msgstr ""
+
+#: pg_ctl.c:728
+msgid "Shutdown modes are:\n"
+msgstr ""
+
+#: pg_ctl.c:729
+msgid "  smart       quit after all clients have disconnected\n"
+msgstr ""
+
+#: pg_ctl.c:730
+msgid "  fast        quit directly, with proper shutdown\n"
+msgstr ""
+
+#: pg_ctl.c:731
+msgid ""
+"  immediate   quit without complete shutdown; will lead to recovery on restart\n"
+"\n"
+msgstr ""
+
+#: pg_ctl.c:732
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+
+#: pg_ctl.c:757
+#, c-format
+msgid "%s: invalid shutdown mode %s\n"
+msgstr ""
+
+#: pg_ctl.c:790
+#, c-format
+msgid "%s: invalid signal \"%s\"\n"
+msgstr ""
+
+#: pg_ctl.c:846
+#, c-format
+msgid "%s (PostgreSQL) %s\n"
+msgstr ""
+
+#: pg_ctl.c:902
+#, c-format
+msgid "%s: invalid option %s\n"
+msgstr ""
+
+#: pg_ctl.c:913
+#, c-format
+msgid "%s: extra operation mode %s\n"
+msgstr ""
+
+#: pg_ctl.c:932
+#, c-format
+msgid "%s: invalid kill syntax\n"
+msgstr ""
+
+#: pg_ctl.c:942
+#, c-format
+msgid "%s: invalid operation mode %s\n"
+msgstr ""
+
+#: pg_ctl.c:952
+#, c-format
+msgid "%s: no operation specified\n"
+msgstr ""
+
+#: pg_ctl.c:963
+#, c-format
+msgid "%s: no database directory specified and environment variable PGDATA unset\n"
+msgstr ""
+
