@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.49 2000/04/12 17:15:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.50 2000/05/23 16:56:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -734,8 +734,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 		 */
 		for (j = 0; j < n_keys; j++)
 		{
-			Expr	   *clause; /* one part of index qual */
-			Oper	   *op;		/* operator used in scan.. */
+			Expr	   *clause; /* one clause of index qual */
+			Oper	   *op;		/* operator used in clause */
 			Node	   *leftop; /* expr on lhs of operator */
 			Node	   *rightop;/* expr on rhs ... */
 			bits16		flags = 0;
@@ -794,6 +794,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			 */
 
 			scanvar = NO_OP;
+			run_keys[j] = NO_OP;
 
 			/* ----------------
 			 *	determine information in leftop
@@ -803,7 +804,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 			Assert(leftop != NULL);
 
-			if (IsA(leftop, Var) &&var_is_rel((Var *) leftop))
+			if (IsA(leftop, Var) && var_is_rel((Var *) leftop))
 			{
 				/* ----------------
 				 *	if the leftop is a "rel-var", then it means
@@ -814,19 +815,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				varattno = ((Var *) leftop)->varattno;
 				scanvar = LEFT_OP;
 			}
-			else if (is_funcclause(leftop) &&
-					 var_is_rel(lfirst(((Expr *) leftop)->args)))
-			{
-				/* ----------------
-				 *	if the leftop is a func node then it means
-				 *	it identifies the value to place in our scan key.
-				 *	Since functional indices have only one attribute
-				 *	the attno must always be set to 1.
-				 * ----------------
-				 */
-				varattno = 1;
-				scanvar = LEFT_OP;
-			}
 			else if (IsA(leftop, Const))
 			{
 				/* ----------------
@@ -834,8 +822,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				 *	it identifies the value to place in our scan key.
 				 * ----------------
 				 */
-				run_keys[j] = NO_OP;
 				scanvalue = ((Const *) leftop)->constvalue;
+				if (((Const *) leftop)->constisnull)
+					flags |= SK_ISNULL;
 			}
 			else if (IsA(leftop, Param))
 			{
@@ -850,32 +839,31 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				/* Life was so easy before ... subselects */
 				if (((Param *) leftop)->paramkind == PARAM_EXEC)
 				{
+					/* treat Param as runtime key */
 					have_runtime_keys = true;
 					run_keys[j] = LEFT_OP;
 					execParam = lappendi(execParam, ((Param *) leftop)->paramid);
 				}
 				else
 				{
+					/* treat Param like a constant */
 					scanvalue = ExecEvalParam((Param *) leftop,
 										scanstate->cstate.cs_ExprContext,
 											  &isnull);
 					if (isnull)
 						flags |= SK_ISNULL;
-
-					run_keys[j] = NO_OP;
 				}
 			}
 			else
 			{
 				/* ----------------
-				 *	otherwise, the leftop contains information usable
+				 *	otherwise, the leftop contains an expression evaluable
 				 *	at runtime to figure out the value to place in our
 				 *	scan key.
 				 * ----------------
 				 */
 				have_runtime_keys = true;
 				run_keys[j] = LEFT_OP;
-				scanvalue = Int32GetDatum((int32) true);
 			}
 
 			/* ----------------
@@ -886,7 +874,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 			Assert(rightop != NULL);
 
-			if (IsA(rightop, Var) &&var_is_rel((Var *) rightop))
+			if (IsA(rightop, Var) && var_is_rel((Var *) rightop))
 			{
 				/* ----------------
 				 *	here we make sure only one op identifies the
@@ -906,23 +894,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				varattno = ((Var *) rightop)->varattno;
 				scanvar = RIGHT_OP;
 			}
-			else if (is_funcclause(rightop) &&
-					 var_is_rel(lfirst(((Expr *) rightop)->args)))
-			{
-				/* ----------------
-				 *	if the rightop is a func node then it means
-				 *	it identifies the value to place in our scan key.
-				 *	Since functional indices have only one attribute
-				 *	the attno must always be set to 1.
-				 * ----------------
-				 */
-				if (scanvar == LEFT_OP)
-					elog(ERROR, "ExecInitIndexScan: %s",
-						 "both left and right ops are rel-vars");
-
-				varattno = 1;
-				scanvar = RIGHT_OP;
-			}
 			else if (IsA(rightop, Const))
 			{
 				/* ----------------
@@ -930,8 +901,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				 *	it identifies the value to place in our scan key.
 				 * ----------------
 				 */
-				run_keys[j] = NO_OP;
 				scanvalue = ((Const *) rightop)->constvalue;
+				if (((Const *) rightop)->constisnull)
+					flags |= SK_ISNULL;
 			}
 			else if (IsA(rightop, Param))
 			{
@@ -946,32 +918,31 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				/* Life was so easy before ... subselects */
 				if (((Param *) rightop)->paramkind == PARAM_EXEC)
 				{
+					/* treat Param as runtime key */
 					have_runtime_keys = true;
 					run_keys[j] = RIGHT_OP;
 					execParam = lappendi(execParam, ((Param *) rightop)->paramid);
 				}
 				else
 				{
+					/* treat Param like a constant */
 					scanvalue = ExecEvalParam((Param *) rightop,
 										scanstate->cstate.cs_ExprContext,
 											  &isnull);
 					if (isnull)
 						flags |= SK_ISNULL;
-
-					run_keys[j] = NO_OP;
 				}
 			}
 			else
 			{
 				/* ----------------
-				 *	otherwise, the rightop contains information usable
+				 *	otherwise, the rightop contains an expression evaluable
 				 *	at runtime to figure out the value to place in our
 				 *	scan key.
 				 * ----------------
 				 */
 				have_runtime_keys = true;
 				run_keys[j] = RIGHT_OP;
-				scanvalue = Int32GetDatum((int32) true);
 			}
 
 			/* ----------------
@@ -992,7 +963,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 								   varattno,	/* attribute number to
 												 * scan */
 								   (RegProcedure) opid, /* reg proc to use */
-								   (Datum) scanvalue);	/* constant */
+								   scanvalue);	/* constant */
 		}
 
 		/* ----------------

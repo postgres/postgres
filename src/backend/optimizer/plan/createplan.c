@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.89 2000/04/12 17:15:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.90 2000/05/23 16:56:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
+#include "parser/parse_expr.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -722,7 +723,7 @@ create_hashjoin_node(HashPath *best_path,
  *	  machinery needs.
  *
  * We have three tasks here:
- *	* Var nodes representing index keys must have varattno equal to the
+ *	* Index keys must be represented by Var nodes with varattno set to the
  *	  index's attribute number, not the attribute number in the original rel.
  *	* indxpath.c may have selected an index that is binary-compatible with
  *	  the actual expression operator, but not exactly the same datatype.
@@ -789,7 +790,7 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path)
  * Fix the sublist of indexquals to be used in a particular scan.
  *
  * For each qual clause, commute if needed to put the indexkey operand on the
- * left, and then change its varno.  (We do not need to change the other side
+ * left, and then fix its varattno.  (We do not need to change the other side
  * of the clause.)	Also change the operator if necessary.
  */
 static List *
@@ -863,8 +864,16 @@ static Node *
 fix_indxqual_operand(Node *node, int baserelid, Form_pg_index index,
 					 Oid *opclass)
 {
+	/*
+	 * We represent index keys by Var nodes having the varno of the base
+	 * table but varattno equal to the index's attribute number (index
+	 * column position).  This is a bit hokey ... would be cleaner to use
+	 * a special-purpose node type that could not be mistaken for a regular
+	 * Var.  But it will do for now.
+	 */
 	if (IsA(node, Var))
 	{
+		/* If it's a var, find which index key position it occupies */
 		if (((Var *) node)->varno == baserelid)
 		{
 			int			varatt = ((Var *) node)->varattno;
@@ -877,6 +886,7 @@ fix_indxqual_operand(Node *node, int baserelid, Form_pg_index index,
 					Node	   *newnode = copyObject(node);
 
 					((Var *) newnode)->varattno = pos + 1;
+					/* return the correct opclass, too */
 					*opclass = index->indclass[pos];
 					return newnode;
 				}
@@ -890,22 +900,17 @@ fix_indxqual_operand(Node *node, int baserelid, Form_pg_index index,
 	}
 
 	/*
-	 * Else, it must be a func expression representing a functional index.
-	 *
-	 * Currently, there is no need for us to do anything here for functional
-	 * indexes.  If nodeIndexscan.c sees a func clause as the left or
-	 * right-hand toplevel operand of an indexqual, it assumes that that
-	 * is a reference to the functional index's value and makes the
-	 * appropriate substitution.  (It would be cleaner to make the
-	 * substitution here, I think --- suspect this issue if a join clause
-	 * involving a function call misbehaves...)
+	 * Else, it must be a func expression matching a functional index.
+	 * Since we currently only support single-column functional indexes,
+	 * the returned varattno must be 1.
 	 */
+
+	Assert(is_funcclause(node)); /* not a very thorough check, but easy */
 
 	/* indclass[0] is the only class of a functional index */
 	*opclass = index->indclass[0];
 
-	/* return the unmodified node */
-	return node;
+	return (Node *) makeVar(baserelid, 1, exprType(node), -1, 0);
 }
 
 /*
