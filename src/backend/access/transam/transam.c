@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.35 2000/08/03 19:18:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.36 2000/11/03 11:39:35 vadim Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -83,6 +83,10 @@ int			RecoveryCheckingEnableState = 0;
  */
 extern int	OidGenLockId;
 
+#ifdef XLOG
+#include "miscadmin.h"
+extern VariableCache ShmemVariableCache;
+#endif
 
 /* ----------------
  *		recovery checking accessors
@@ -438,7 +442,13 @@ InitializeTransactionLog(void)
 		TransactionLogUpdate(AmiTransactionId, XID_COMMIT);
 		TransactionIdStore(AmiTransactionId, &cachedTestXid);
 		cachedTestXidStatus = XID_COMMIT;
+#ifdef XLOG
+		Assert(!IsUnderPostmaster && 
+				ShmemVariableCache->nextXid <= FirstTransactionId);
+		ShmemVariableCache->nextXid = FirstTransactionId;
+#else
 		VariableRelationPutNextXid(FirstTransactionId);
+#endif
 
 	}
 	else if (RecoveryCheckingEnabled())

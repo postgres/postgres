@@ -8,10 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.30 2000/10/28 16:20:53 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.31 2000/11/03 11:39:35 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
+#ifdef XLOG
+
+#include "xlog_varsup.c"
+
+#else
 
 #include "postgres.h"
 
@@ -125,11 +130,7 @@ VariableRelationPutNextXid(TransactionId xid)
 
 	TransactionIdStore(xid, &(var->nextXidData));
 
-#ifdef XLOG
-	WriteBuffer(buf);	/* temp */
-#else
 	FlushBuffer(buf, TRUE);
-#endif
 }
 
 /* --------------------------------
@@ -520,3 +521,5 @@ CheckMaxObjectId(Oid assigned_oid)
 	prefetched_oid_count = 0;	/* force reload */
 	GetNewObjectId(&temp_oid);	/* cause target OID to be allocated */
 }
+
+#endif	/* !XLOG */

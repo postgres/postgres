@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.25 2000/10/28 16:20:59 vadim Exp $
+ * $Id: transam.h,v 1.26 2000/11/03 11:39:36 vadim Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -136,10 +136,12 @@ typedef VariableRelationContentsData *VariableRelationContents;
  */
 typedef struct VariableCacheData
 {
+#ifndef XLOG
 	uint32		xid_count;
+#endif
 	TransactionId nextXid;
-	uint32		oid_count;		/* not implemented, yet */
 	Oid			nextOid;
+	uint32		oidCount;
 } VariableCacheData;
 
 typedef VariableCacheData *VariableCache;

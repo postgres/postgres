@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.22 2000/10/28 16:20:54 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.23 2000/11/03 11:39:35 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,6 +157,7 @@ typedef struct CheckPoint
 } CheckPoint;
 
 #define XLOG_CHECKPOINT		0x00
+#define XLOG_NEXTOID		0x10
 
 /*
  * We break each log file in 16Mb segments
@@ -1373,10 +1374,9 @@ StartupXLOG()
 		elog(LOG, "Invalid NextTransactionId/NextOid");
 #endif
 
-#ifdef XLOG_2
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
-#endif
+	ShmemVariableCache->oidCount = 0;
 
 	ThisStartUpID = checkPoint.ThisStartUpID;
 
@@ -1430,10 +1430,8 @@ StartupXLOG()
 				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 			do
 			{
-#ifdef XLOG_2
 				if (record->xl_xid >= ShmemVariableCache->nextXid)
 					ShmemVariableCache->nextXid = record->xl_xid + 1;
-#endif
 				if (XLOG_DEBUG)
 				{
 					char	buf[8192];
@@ -1609,6 +1607,9 @@ CreateCheckPoint(bool shutdown)
 	SpinRelease(XidGenLockId);
 	SpinAcquire(OidGenLockId);
 	checkPoint.nextOid = ShmemVariableCache->nextOid;
+	if (!shutdown)
+		checkPoint.nextOid += ShmemVariableCache->oidCount;
+
 	SpinRelease(OidGenLockId);
 
 	FlushBufferPool();
@@ -1647,6 +1648,15 @@ CreateCheckPoint(bool shutdown)
 	return;
 }
 
+void XLogPutNextOid(Oid nextOid);
+
+void
+XLogPutNextOid(Oid nextOid)
+{
+	(void) XLogInsert(RM_XLOG_ID, XLOG_NEXTOID, 
+					(char *) &nextOid, sizeof(Oid), NULL, 0);
+}
+
 void xlog_redo(XLogRecPtr lsn, XLogRecord *record);
 void xlog_undo(XLogRecPtr lsn, XLogRecord *record);
 void xlog_desc(char *buf, uint8 xl_info, char* rec);
@@ -1654,6 +1664,16 @@ void xlog_desc(char *buf, uint8 xl_info, char* rec);
 void
 xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 {
+	uint8	info = record->xl_info & ~XLR_INFO_MASK;
+
+	if (info == XLOG_NEXTOID)
+	{
+		Oid		nextOid;
+
+		memcpy(&nextOid, XLogRecGetData(record), sizeof(Oid));
+		if (ShmemVariableCache->nextOid < nextOid)
+			ShmemVariableCache->nextOid = nextOid;
+	}
 }
  
 void
@@ -1676,6 +1696,13 @@ xlog_desc(char *buf, uint8 xl_info, char* rec)
 			checkpoint->ThisStartUpID, checkpoint->nextXid, 
 			checkpoint->nextOid,
 			(checkpoint->Shutdown) ? "shutdown" : "online");
+	}
+	else if (info == XLOG_NEXTOID)
+	{
+		Oid		nextOid;
+
+		memcpy(&nextOid, rec, sizeof(Oid));
+		sprintf(buf + strlen(buf), "nextOid: %u", nextOid);
 	}
 	else
 		strcat(buf, "UNKNOWN");
