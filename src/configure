@@ -17,11 +17,11 @@ ac_help="$ac_help
                           use operating system template file 
                               see template directory"
 ac_help="$ac_help
-  --with-includes=DIR     site header files for tk/tcl, etc in DIR"
+  --with-includes=DIRS    look for header files for tcl/tk, etc in DIRS"
 ac_help="$ac_help
-  --with-libs=DIR         also search for libraries in DIR"
+  --with-libraries=DIRS   look for additional libraries in DIRS"
 ac_help="$ac_help
-  --with-libraries=DIR    also search for libraries in DIR"
+  --with-libs=DIRS        alternate spelling of --with-libraries"
 ac_help="$ac_help
   --enable-locale         enable locale support "
 ac_help="$ac_help
@@ -29,9 +29,9 @@ ac_help="$ac_help
 ac_help="$ac_help
   --enable-multibyte      enable multibyte character support "
 ac_help="$ac_help
-  --with-pgport=<portnum> change default startup port "
+  --with-pgport=PORTNUM   change default postmaster port "
 ac_help="$ac_help
-  --with-maxbackends=<n>  set default maximum number of server processes "
+  --with-maxbackends=N    set default maximum number of server processes "
 ac_help="$ac_help
   --with-tcl              build Tcl interfaces and pgtclsh "
 ac_help="$ac_help
@@ -39,13 +39,13 @@ ac_help="$ac_help
 ac_help="$ac_help
   --with-tkconfig=DIR     tkConfig.sh is in DIR"
 ac_help="$ac_help
-  --with-perl             build Perl interface "
+  --with-perl             build Perl interface and plperl "
 ac_help="$ac_help
   --with-odbc             build ODBC driver package "
 ac_help="$ac_help
-  --with-odbcinst=dir     change default directory for odbcinst.ini"
+  --with-odbcinst=DIR     change default directory for odbcinst.ini"
 ac_help="$ac_help
-  --enable-cassert        enable assertion checks (debugging) "
+  --enable-cassert        enable assertion checks (for debugging) "
 ac_help="$ac_help
   --with-CC=compiler      use specific C compiler"
 ac_help="$ac_help
@@ -777,20 +777,6 @@ if test "$INCLUDE_DIRS" -o "$SRCH_INC"; then
 	done
 fi
 
-# Check whether --with-libs or --without-libs was given.
-if test "${with_libs+set}" = set; then
-  withval="$with_libs"
-  
-	case "$withval" in
-	"" | y | ye | yes | n | no)
-	    { echo "configure: error: *** You must supply an argument to the --with-libs option." 1>&2; exit 1; }
-	  ;;
-	esac
-	LIBRARY_DIRS="$withval"
-    
-fi
-
-
 # Check whether --with-libraries or --without-libraries was given.
 if test "${with_libraries+set}" = set; then
   withval="$with_libraries"
@@ -798,6 +784,20 @@ if test "${with_libraries+set}" = set; then
 	case "$withval" in
 	"" | y | ye | yes | n | no)
 	    { echo "configure: error: *** You must supply an argument to the --with-libraries option." 1>&2; exit 1; }
+	  ;;
+	esac
+	LIBRARY_DIRS="$withval"
+    
+fi
+
+
+# Check whether --with-libs or --without-libs was given.
+if test "${with_libs+set}" = set; then
+  withval="$with_libs"
+  
+	case "$withval" in
+	"" | y | ye | yes | n | no)
+	    { echo "configure: error: *** You must supply an argument to the --with-libs option." 1>&2; exit 1; }
 	  ;;
 	esac
 	LIBRARY_DIRS="$withval"

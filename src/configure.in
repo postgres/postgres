@@ -152,7 +152,7 @@ rm -f conftest.sh
 
 
 AC_ARG_WITH(includes,
-    [  --with-includes=DIR     site header files for tk/tcl, etc in DIR],
+    [  --with-includes=DIRS    look for header files for tcl/tk, etc in DIRS],
     [
 	case "$withval" in
 	"" | y | ye | yes | n | no)
@@ -162,6 +162,8 @@ AC_ARG_WITH(includes,
 	INCLUDE_DIRS="$withval"
     ])
 
+dnl INCLUDE_DIRS comes from command line, SRCH_INC from template file.
+dnl Each can name one or more directories.
 if test "$INCLUDE_DIRS" -o "$SRCH_INC"; then
 	for dir in $INCLUDE_DIRS $SRCH_INC; do
 		if test -d "$dir"; then
@@ -172,19 +174,8 @@ if test "$INCLUDE_DIRS" -o "$SRCH_INC"; then
 	done
 fi
 
-AC_ARG_WITH(libs,
-    [  --with-libs=DIR         also search for libraries in DIR],
-    [
-	case "$withval" in
-	"" | y | ye | yes | n | no)
-	    AC_MSG_ERROR([*** You must supply an argument to the --with-libs option.])
-	  ;;
-	esac
-	LIBRARY_DIRS="$withval"
-    ])
-
 AC_ARG_WITH(libraries,
-    [  --with-libraries=DIR    also search for libraries in DIR],
+    [  --with-libraries=DIRS   look for additional libraries in DIRS],
     [
 	case "$withval" in
 	"" | y | ye | yes | n | no)
@@ -194,6 +185,19 @@ AC_ARG_WITH(libraries,
 	LIBRARY_DIRS="$withval"
     ])
 
+AC_ARG_WITH(libs,
+    [  --with-libs=DIRS        alternate spelling of --with-libraries],
+    [
+	case "$withval" in
+	"" | y | ye | yes | n | no)
+	    AC_MSG_ERROR([*** You must supply an argument to the --with-libs option.])
+	  ;;
+	esac
+	LIBRARY_DIRS="$withval"
+    ])
+
+dnl LIBRARY_DIRS comes from command line, SRCH_LIB from template file.
+dnl Each can name one or more directories.
 if test "$LIBRARY_DIRS" -o "$SRCH_LIB"; then
 	for dir in $LIBRARY_DIRS $SRCH_LIB; do
 		if test -d "$dir"; then
@@ -267,7 +271,7 @@ dnl we over-ride it with --with-pgport=port then we bypass this piece
 AC_MSG_CHECKING(setting DEF_PGPORT)
 AC_ARG_WITH(
    pgport,
-   [  --with-pgport=<portnum> change default startup port ],
+   [  --with-pgport=PORTNUM   change default postmaster port ],
    AC_DEFINE_UNQUOTED(DEF_PGPORT, "${withval}") AC_MSG_RESULT($with_pgport),
    AC_DEFINE_UNQUOTED(DEF_PGPORT, "5432") AC_MSG_RESULT(5432)
 )
@@ -276,7 +280,7 @@ dnl DEF_MAXBACKENDS can be set by --with-maxbackends.  Default value is 32.
 AC_MSG_CHECKING(setting DEF_MAXBACKENDS)
 AC_ARG_WITH(
    maxbackends,
-   [  --with-maxbackends=<n>  set default maximum number of server processes ],
+   [  --with-maxbackends=N    set default maximum number of server processes ],
    AC_DEFINE_UNQUOTED(DEF_MAXBACKENDS, ${withval}) AC_MSG_RESULT($with_maxbackends),
    AC_DEFINE_UNQUOTED(DEF_MAXBACKENDS, 32) AC_MSG_RESULT(32)
 )
@@ -299,7 +303,7 @@ export USE_TCL
 export USE_TK
 
 dnl We see if the path to the TCL/TK configuration scripts is specified.
-dnl This will overide the use of tclsh to find the paths to search.
+dnl This will override the use of tclsh to find the paths to search.
 
 AC_ARG_WITH(tclconfig,
     [  --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR],
@@ -314,7 +318,7 @@ AC_ARG_WITH(tclconfig,
 )
 
 dnl We see if the path to the TK configuration scripts is specified.
-dnl This will overide the use of tclsh to find the paths to search.
+dnl This will override the use of tclsh to find the paths to search.
 
 AC_ARG_WITH(tkconfig,
     [  --with-tkconfig=DIR     tkConfig.sh is in DIR],
@@ -332,7 +336,7 @@ dnl We exclude perl support unless we override it with --with-perl
 AC_MSG_CHECKING(setting USE_PERL)
 AC_ARG_WITH(
    perl,
-   [  --with-perl             build Perl interface ],
+   [  --with-perl             build Perl interface and plperl ],
    [
 	case "$withval" in
 	y | ye | yes)	USE_PERL=true; AC_MSG_RESULT(enabled) ;;
@@ -372,7 +376,7 @@ then
    AC_MSG_CHECKING(setting ODBCINST)
    AC_ARG_WITH(
       odbcinst,
-      [  --with-odbcinst=dir     change default directory for odbcinst.ini],
+      [  --with-odbcinst=DIR     change default directory for odbcinst.ini],
       AC_DEFINE_UNQUOTED(ODBCINST, ${with_odbcinst}) AC_MSG_RESULT($with_odbcinst),
       AC_DEFINE_UNQUOTED(ODBCINST, ${ODBCINSTDIR}) AC_MSG_RESULT(${ODBCINSTDIR})
    )
@@ -389,7 +393,7 @@ dnl If you do not explicitly do it, it defaults to disabled
 AC_MSG_CHECKING(setting ASSERT CHECKING)
 AC_ARG_ENABLE(
    cassert,
-   [  --enable-cassert        enable assertion checks (debugging) ],
+   [  --enable-cassert        enable assertion checks (for debugging) ],
    AC_DEFINE(USE_ASSERT_CHECKING) AC_MSG_RESULT(enabled),
    AC_MSG_RESULT(disabled)
 )
