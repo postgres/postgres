@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.12 2000/01/26 05:56:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.13 2000/04/26 23:35:34 tgl Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -20,6 +20,7 @@
 #include <a.out.h>
 
 #include "postgres.h"
+
 #include "dl.h"
 #include "dynloader.h"
 #include "fmgr.h"
@@ -28,7 +29,12 @@
 void *
 pg_dlopen(char *filename)
 {
-	shl_t		handle = shl_load(filename, BIND_DEFERRED, 0);
+	/*
+	 * Use BIND_IMMEDIATE so that undefined symbols cause a failure return
+	 * from shl_load(), rather than an abort() later on when we attempt to
+	 * call the library!
+	 */
+	shl_t		handle = shl_load(filename, BIND_IMMEDIATE | BIND_VERBOSE, 0);
 
 	return (void *) handle;
 }
@@ -53,6 +59,9 @@ char *
 pg_dlerror()
 {
 	static char errmsg[] = "shl_load failed";
+
+	if (errno)
+		return strerror(errno);
 
 	return errmsg;
 }
