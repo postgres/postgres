@@ -6,14 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xfunc.h,v 1.1 1996/08/28 07:23:30 scrappy Exp $
+ * $Id: xfunc.h,v 1.2 1996/11/06 07:44:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef XFUNC_H
 #define XFUNC_H
 
-#include "nodes/relation.h"
+#include <utils/rel.h>
+#include <nodes/relation.h>
 
 /* command line arg flags */
 #define XFUNC_OFF -1		/* do no optimization of expensive preds */
