@@ -2,12 +2,11 @@
 # Translated and modified from Simplified Chinese translation.
 # Zhenbang Wei <forth@zbwei.net>, 2001.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
 "POT-Creation-Date: 2001-10-01 10:02+0800\n"
-"PO-Revision-Date: 2001-10-05 01:00:00+0800\n"
+"PO-Revision-Date: 2001-10-24 01:00:00+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
@@ -21,36 +20,36 @@ msgstr "警告: 這種語法已經廢棄。\n"
 #: command.c:159
 #, c-format
 msgid "Invalid command \\%s. Try \\? for help.\n"
-msgstr "無效的命令 \\%s. 用 \\? 取得說明。\n"
+msgstr "無效的指令 \\%s. 用 \\? 取得說明。\n"
 
 #: command.c:161
 #, c-format
 msgid "invalid command \\%s\n"
-msgstr "無效的命令 \\%s\n"
+msgstr "無效的指令 \\%s\n"
 
 #: command.c:278
 #, c-format
 msgid "could not get home directory: %s\n"
-msgstr "無法獲得 home 目錄: %s\n"
+msgstr "無法取得 home 目錄: %s\n"
 
 #: command.c:292
 #, c-format
 msgid "\\%s: could not change directory to '%s': %s\n"
-msgstr "\\%s: 不能改變到 '%s' 目錄: %s\n"
+msgstr "\\%s: 不能切換到 '%s' 目錄: %s\n"
 
 #: command.c:380 command.c:726
 msgid "no query buffer\n"
-msgstr "無查詢緩衝區\n"
+msgstr "沒有查詢緩衝區\n"
 
 #: command.c:436
 #, c-format
 msgid "%s: invalid encoding name\n"
-msgstr "%s: 無效編碼名稱\n"
+msgstr "%s: 無效的編碼名稱\n"
 
 #: command.c:445
 #, c-format
 msgid "\\%s: multibyte support is not enabled\n"
-msgstr "\\%s: 多位元組字元支援未打開\n"
+msgstr "\\%s: 未啟動多位元組字元支援\n"
 
 #: command.c:499 command.c:530 command.c:541 command.c:555 command.c:597
 #: command.c:706 command.c:735
@@ -64,7 +63,7 @@ msgstr "查詢緩衝區為空。"
 
 #: command.c:616
 msgid "Query buffer reset (cleared)."
-msgstr "重置(清空)查詢緩衝區."
+msgstr "重置(清空)查詢緩衝區。"
 
 #: command.c:627
 #, c-format
@@ -142,11 +141,11 @@ msgstr "無法執行 /bin/sh\n"
 #: command.c:1486
 #, c-format
 msgid "could not open temporary file %s: %s\n"
-msgstr "無法開敵臨時檔案 %s: %s\n"
+msgstr "無法開啟臨時檔案 %s: %s\n"
 
 #: command.c:1670
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
-msgstr "\\pset: 允許的格式是 unaligned、aligned、html、latex\n"
+msgstr "\\pset: 允許\的格式是 unaligned、aligned、html、latex\n"
 
 #: command.c:1675
 #, c-format
@@ -230,7 +229,7 @@ msgstr "關閉預設足標。"
 #: command.c:1816
 #, c-format
 msgid "\\pset: unknown option: %s\n"
-msgstr "\\pset: 未知選項: %s\n"
+msgstr "\\pset: 不明選項: %s\n"
 
 #: command.c:1859
 msgid "\\!: failed\n"
@@ -259,7 +258,7 @@ msgstr "失敗。\n"
 
 #: common.c:355 common.c:525
 msgid "Succeeded.\n"
-msgstr "成功。\n"
+msgstr "成功\。\n"
 
 #: common.c:393
 #, c-format
@@ -287,7 +286,7 @@ msgstr ""
 #: common.c:531
 #, c-format
 msgid "Asynchronous NOTIFY '%s' from backend with pid %d received.\n"
-msgstr "收到行程編號為 %d 的後端所傳送的非同步 NOTIFY(通知) '%s'。\n"
+msgstr "收到非同步 NOTIFY '%s'，這是由行程編號為 %d 的後端所傳送的。\n"
 
 #: copy.c:81
 msgid "\\copy: arguments required\n"
@@ -319,7 +318,7 @@ msgstr "無法取得目前的使用者名稱: %s\n"
 
 #: help.c:79
 msgid "This is psql, the PostgreSQL interactive terminal.\n"
-msgstr "這是 psql，PostgreSQL 的互動控制臺。\n"
+msgstr "這是 psql，PostgreSQL 的文字模式介面。\n"
 
 #: help.c:80
 msgid "Usage:"
@@ -335,32 +334,32 @@ msgstr "選項:"
 
 #: help.c:83
 msgid "  -a              Echo all input from script"
-msgstr " -a              顯示所有來自腳本的輸入"
+msgstr " -a               顯示所有來自腳本的輸入"
 
 #: help.c:84
 msgid "  -A              Unaligned table output mode (-P format=unaligned)"
-msgstr " -A              非對齊的表格輸出模式(-P format=unaligned)"
+msgstr " -A               非對齊的表格輸出模式(-P format=unaligned)"
 
 #: help.c:85
 msgid "  -c COMMAND      Run only single command (SQL or internal) and exit"
-msgstr " -c 命令         只執行一條命令(SQL 或者內部)然後退出"
+msgstr " -c 指令          只執行一條指令(SQL或內部指令)然後結束"
 
 #: help.c:91
 #, c-format
 msgid "  -d DBNAME       Specify database name to connect to (default: %s)\n"
-msgstr " -d 數據庫名     指定要連接的資料庫名(預設: %s)\n"
+msgstr " -d 資料庫名稱    指定要連接的資料庫名稱(預設: %s)\n"
 
 #: help.c:93
 msgid "  -e              Echo commands sent to server"
-msgstr " -e              顯示發送給伺服器的命令"
+msgstr " -e               顯示傳送給伺服器的指令"
 
 #: help.c:94
 msgid "  -E              Display queries that internal commands generate"
-msgstr "  -E             顯示內部命令產生的查詢"
+msgstr "  -E              顯示內部指令產生的查詢"
 
 #: help.c:95
 msgid "  -f FILENAME     Execute commands from file, then exit"
-msgstr "  -f 文件名      執行來自檔案的命令，然後退出"
+msgstr "  -f 檔案名稱     執行檔案中的指令然後結束"
 
 #: help.c:96
 #, c-format
@@ -372,7 +371,7 @@ msgstr ""
 #: help.c:101
 #, c-format
 msgid "  -h HOSTNAME     Specify database server host (default: %s)\n"
-msgstr "  -h 主機名      指定資料庫伺服器主機 (預設: %s)\n"
+msgstr "  -h 主機名稱     指定資料庫伺服器主機 (預設: %s)\n"
 
 #: help.c:102
 msgid "local socket"
@@ -380,34 +379,34 @@ msgstr ""
 
 #: help.c:104
 msgid "  -H              HTML table output mode (-P format=html)"
-msgstr "  -H             HTML 表格輸出模式 (-P format=html)"
+msgstr "  -H              HTML 表格輸出模式 (-P format=html)"
 
 #: help.c:105
 msgid "  -l              List available databases, then exit"
-msgstr "  -l             列出所有可用資料庫，然後退出"
+msgstr "  -l              列出所有可用資料庫，然後退出"
 
 #: help.c:106
 msgid "  -n              Disable enhanced command line editing (readline)"
-msgstr "  -n             關閉增強的命令列編輯功能 (readline)"
+msgstr "  -n              關閉增強的指令列編輯功\能 (readline)"
 
 #: help.c:107
 msgid "  -o FILENAME     Send query results to file (or |pipe)"
-msgstr " -o 文件名       將查詢結果傳送至檔案(或者 | 管道)"
+msgstr " -o 檔案名稱      將查詢結果傳送至檔案(或者 | 管道)"
 
 #: help.c:111
 #, c-format
 msgid "  -p PORT         Specify database server port (default: %s)\n"
-msgstr " -p PORT         指定資料庫伺服器埠號 (預設: %s)\n"
+msgstr " -p PORT          指定資料庫伺服器埠號 (預設: %s)\n"
 
 #: help.c:114
 msgid ""
 "  -P VAR[=ARG]    Set printing option 'VAR' to 'ARG' (see \\pset command)"
 msgstr ""
-"  -P VAR[=ARG]    把打印選項 'VAR' 設置為 'ARG' (見 \\pset 命令)"
+"  -P VAR[=ARG]    把打印選項 'VAR' 設置為 'ARG' (見 \\pset 指令)"
 
 #: help.c:115
 msgid "  -q              Run quietly (no messages, only query output)"
-msgstr "  -q             安靜執行 (沒有訊息，只有查詢輸出)"
+msgstr "  -q              安靜執行 (沒有訊息，只有查詢輸出)"
 
 #: help.c:116
 msgid ""
@@ -417,15 +416,15 @@ msgstr ""
 
 #: help.c:117
 msgid "  -s              Single step mode (confirm each query)"
-msgstr "  -s             單步模式 (確認每個查詢)"
+msgstr "  -s              單步模式 (確認每個查詢)"
 
 #: help.c:118
 msgid "  -S              Single line mode (end of line terminates SQL command)"
-msgstr "  -S             單行模式 (一行結束同時也表示著 SQL 命令結束)"
+msgstr "  -S              單行模式 (一行結束同時也表示著 SQL 指令結束)"
 
 #: help.c:119
 msgid "  -t              Print rows only (-P tuples_only)"
-msgstr "  -t             只列印行 (-P tuples_onle)"
+msgstr "  -t              只列印行 (-P tuples_onle)"
 
 #: help.c:120
 msgid ""
@@ -438,27 +437,27 @@ msgstr ""
 #: help.c:126
 #, c-format
 msgid "  -U NAME         Specify database user name (default: %s)\n"
-msgstr "  -U 使用者名稱      指定資料庫使用者 (預設: %s)\n"
+msgstr "  -U 使用者名稱   指定資料庫使用者 (預設: %s)\n"
 
 #: help.c:128
 msgid "  -v NAME=VALUE   Set psql variable 'NAME' to 'VALUE'"
-msgstr "  -v 名稱=數值   設定 psql 變數 '名稱' 為 '數值'"
+msgstr "  -v 名稱=數值    設定 psql 變數 '名稱' 為 '數值'"
 
 #: help.c:129
 msgid "  -V              Show version information and exit"
-msgstr "  -V             顯示版本資訊然後退出"
+msgstr "  -V              顯示版本資訊然後結束"
 
 #: help.c:130
 msgid "  -W              Prompt for password (should happen automatically)"
-msgstr "  -W             提示輸入密碼 (應該自動詢問)"
+msgstr "  -W              提示輸入密碼 (應該自動詢問)"
 
 #: help.c:131
 msgid "  -x              Turn on expanded table output (-P expanded)"
-msgstr "  -x             打開擴展表格輸出 (-P expended)"
+msgstr "  -x              打開擴展表格輸出 (-P expended)"
 
 #: help.c:132
 msgid "  -X              Do not read startup file (~/.psqlrc)"
-msgstr "  -X             不要讀取啟動檔案 (~/.psqlrc)"
+msgstr "  -X              不要讀取啟動檔案 (~/.psqlrc)"
 
 #: help.c:135
 msgid ""
@@ -470,14 +469,14 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>."
 msgstr ""
 "\n"
-"在 psql 裡鍵入 \"\\?\" (用於內部命令) 或者 \"\\help\"\n (用於 SQL 命令)，"
+"在 psql 裡鍵入 \"\\?\" (用於內部指令) 或者 \"\\help\"\n (用於 SQL 指令)，"
 "或者參考 PostgreSQL 文件裡的 psql 章節，以取得更多相關資訊。\n"
 "\n"
-"向 <pgsql-bugs@postgresql.org> 匯報臭蟲."
+"向 <pgsql-bugs@postgresql.org> 回報錯誤。"
 
 #: help.c:194
 msgid " \\a             toggle between unaligned and aligned output mode\n"
-msgstr " \\a            在非對齊和對齊的輸出模式之間切換\n"
+msgstr " \\a             在非對齊和對齊的輸出模式之間切換\n"
 
 #: help.c:195
 #, c-format
@@ -490,23 +489,23 @@ msgstr ""
 
 #: help.c:198
 msgid " \\C TITLE       set table title\n"
-msgstr " \\C 標題       設定表格標題\n"
+msgstr " \\C 標題        設定表格標題\n"
 
 #: help.c:199
 msgid " \\cd [DIRNAME]  change the current working directory\n"
-msgstr " \\cd [目錄名]  改變目前的工作目錄\n"
+msgstr " \\cd [目錄名]   改變目前的工作目錄\n"
 
 #: help.c:200
 msgid " \\copy ...      perform SQL COPY with data stream to the client host\n"
-msgstr " \\copy ...     執行 SQL COPY，資料流指向客戶端主機\n"
+msgstr " \\copy ...      執行 SQL COPY，資料流指向客戶端主機\n"
 
 #: help.c:201
 msgid " \\copyright     show PostgreSQL usage and distribution terms\n"
-msgstr " \\copyright     顯示 PostgreSQL 用法和發行條款\n"
+msgstr " \\copyright     顯示 PostgreSQL 使用和發行條款\n"
 
 #: help.c:202
 msgid " \\d TABLE       describe table (or view, index, sequence)\n"
-msgstr " \\d 資料表         描述資料表 (或概觀、索引、序列)\n"
+msgstr " \\d 資料表      描述資料表 (或概觀、索引、序列)\n"
 
 #: help.c:203
 msgid " \\d{t|i|s|v}... list tables/indexes/sequences/views\n"
@@ -520,23 +519,23 @@ msgstr ""
 
 #: help.c:205
 msgid " \\da            list aggregate functions\n"
-msgstr " \\da           列出聚集函數\n"
+msgstr " \\da            列出聚集函數\n"
 
 #: help.c:206
 msgid " \\dd NAME       show comment for table, type, function, or operator\n"
-msgstr " \\dd 名字      顯示資料表、型別、函式或運算子的注釋\n"
+msgstr " \\dd 名字       顯示資料表、型別、函式或運算子的注釋\n"
 
 #: help.c:207
 msgid " \\df            list functions\n"
-msgstr " \\df           列出函式\n"
+msgstr " \\df            列出函式\n"
 
 #: help.c:208
 msgid " \\do            list operators\n"
-msgstr " \\do           列出運算子\n"
+msgstr " \\do            列出運算子\n"
 
 #: help.c:209
 msgid " \\dT            list data types\n"
-msgstr " \\dT           列出資料型別\n"
+msgstr " \\dT            列出資料型別\n"
 
 #: help.c:210
 msgid ""
@@ -546,40 +545,40 @@ msgstr ""
 
 #: help.c:211
 msgid " \\echo TEXT     write text to standard output\n"
-msgstr " \\echo TEXT    將文字寫至標準輸出\n"
+msgstr " \\echo 文字     將文字寫至標準輸出\n"
 
 #: help.c:212
 msgid " \\encoding ENCODING  set client encoding\n"
-msgstr " \\encoding 編碼     設定客戶端編碼\n"
+msgstr " \\encoding 編碼      設定客戶端編碼\n"
 
 #: help.c:213
 msgid " \\f STRING      set field separator\n"
-msgstr " \\f 字串       設定欄位分隔符號\n"
+msgstr " \\f 字串        設定欄位分隔符號\n"
 
 #: help.c:214
 msgid ""
 " \\g FILENAME    send SQL command to server (and write results to file or "
 "|pipe)\n"
 msgstr ""
-" \\g 檔案名稱      向伺服器發送 SQL 命令 (並且把結果寫入檔案或 "
+" \\g 檔案名稱    向伺服器發送 SQL 指令 (並且把結果寫入檔案或 "
 "|管道)\n"
 
 #: help.c:215
 msgid " \\h NAME        help on syntax of SQL commands, * for all commands\n"
-msgstr " \\h 名稱       SQL 命令的語法說明，用 * 可以看所有命令的說明\n"
+msgstr " \\h 名稱        SQL 指令的語法說明，用 * 可以看所有指令的說明\n"
 
 #: help.c:216
 #, c-format
 msgid " \\H             toggle HTML output mode (currently %s)\n"
-msgstr " \\H            在 HTML 輸出模式之間切換 (目前是 %s)\n"
+msgstr " \\H             在 HTML 輸出模式之間切換 (目前是 %s)\n"
 
 #: help.c:218
 msgid " \\i FILENAME    execute commands from file\n"
-msgstr " \\i 檔案名稱     執行來自檔案的命令\n"
+msgstr " \\i 檔案名稱    執行檔案中的指令\n"
 
 #: help.c:219
 msgid " \\l             list all databases\n"
-msgstr " \\l            列出所有資料庫\n"
+msgstr " \\l             列出所有資料庫\n"
 
 #: help.c:220
 msgid ""
@@ -591,11 +590,11 @@ msgstr ""
 
 #: help.c:222
 msgid " \\o FILENAME    send all query results to file or |pipe\n"
-msgstr " \\o 檔案名稱     將查詢結果傳送至檔案或 |管道\n"
+msgstr " \\o 檔案名稱    將查詢結果傳送至檔案或 |管道\n"
 
 #: help.c:223
 msgid " \\p             show the content of the current query buffer\n"
-msgstr " \\p            顯示目前查詢緩衝區的內容\n"
+msgstr " \\p             顯示目前查詢緩衝區的內容\n"
 
 #: help.c:224
 msgid ""
@@ -603,57 +602,57 @@ msgid ""
 "                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"
 msgstr ""
 " \\pset VAR      設定資料表的輸出選項 (VAR := {foramt|border|expaned|\n"
-"                 fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"
+"                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"
 
 #: help.c:226
 msgid " \\q             quit psql\n"
-msgstr " \\q            退出 psql\n"
+msgstr " \\q             退出 psql\n"
 
 #: help.c:227
 msgid " \\qecho TEXT    write text to query output stream (see \\o)\n"
-msgstr " \\qecho 文字   將文字寫入查詢輸出流 (參見 \\o)\n"
+msgstr " \\qecho 文字    將文字寫入查詢輸出串流 (參見 \\o)\n"
 
 #: help.c:228
 msgid " \\r             reset (clear) the query buffer\n"
-msgstr " \\r            重置 (清理) 查詢緩衝區\n"
+msgstr " \\r             重置 (清理) 查詢緩衝區\n"
 
 #: help.c:229
 msgid " \\s FILENAME    print history or save it to file\n"
-msgstr " \\s 檔案名稱     列印歷史記錄或著將其儲存到檔案\n"
+msgstr " \\s 檔案名稱    列印歷史記錄或著將其儲存到檔案\n"
 
 #: help.c:230
 msgid " \\set NAME VALUE  set internal variable\n"
-msgstr " \\set 名稱 數值  設定內部變數\n"
+msgstr " \\set 名稱 數值   設定內部變數\n"
 
 #: help.c:231
 #, c-format
 msgid " \\t             show only rows (currently %s)\n"
-msgstr " \\t            只顯示行 (目前是 %s)\n"
+msgstr " \\t             只顯示列 (目前是 %s)\n"
 
 #: help.c:233
 msgid " \\T TEXT        set HTML table tag attributes\n"
-msgstr " \\T 文本       設定 HTML 表格標籤屬性\n"
+msgstr " \\T 文本        設定 HTML 表格標籤屬性\n"
 
 #: help.c:234
 msgid " \\unset NAME    unset (delete) internal variable\n"
-msgstr " \\unset 名稱   刪除內部變數\n"
+msgstr " \\unset 名稱    刪除內部變數\n"
 
 #: help.c:235
 msgid " \\w FILENAME    write current query buffer to file\n"
-msgstr " \\w 檔案名稱     將目前查詢緩衝區寫入檔案\n"
+msgstr " \\w 檔案名稱    將目前查詢緩衝區寫入檔案\n"
 
 #: help.c:236
 #, c-format
 msgid " \\x             toggle expanded output (currently %s)\n"
-msgstr " \\x            在擴展輸出之間切換 (目前是 %s)\n"
+msgstr " \\x             在擴展輸出之間切換 (目前是 %s)\n"
 
 #: help.c:238
 msgid " \\z             list table access privileges\n"
-msgstr " \\z            列出資料表存取權限\n"
+msgstr " \\z             列出資料表存取權限\n"
 
 #: help.c:239
 msgid " \\! [COMMAND]   execute command in shell or start interactive shell\n"
-msgstr " \\! [命令]     在 shell 裡執行命令或著開始一個互動 shell\n"
+msgstr " \\! [指令]      在 shell 裡執行指令或開啟一個 shell\n"
 
 #: help.c:266
 msgid "Available help:"
@@ -668,7 +667,7 @@ msgid ""
 "%s\n"
 "\n"
 msgstr ""
-"命令:     %s\n"
+"指令:     %s\n"
 "描述:     %s\n"
 "語法:\n"
 "%s\n"
@@ -680,8 +679,8 @@ msgid ""
 "No help available for '%-.*s'.\n"
 "Try \\h with no arguments to see available help.\n"
 msgstr ""
-"還沒有 '%-.*s' 的說明。\n"
-"用不帶參數的 \\h 取得可用說明。\n"
+"沒有 '%-.*s' 的說明。\n"
+"用不帶參數的 \\h 顯示目前擁有的說明。\n"
 
 #: input.c:178
 #, c-format
@@ -724,16 +723,16 @@ msgstr "使用 \"\\q\" 離開 %s.\n"
 
 #: print.c:370
 msgid "(No rows)\n"
-msgstr "(沒有行)\n"
+msgstr "(沒有資料)\n"
 
 #: print.c:1075
 msgid "(1 row)"
-msgstr "(1 行)"
+msgstr "(1 列)"
 
 #: print.c:1077
 #, c-format
 msgid "(%d rows)"
-msgstr "(%d 行)"
+msgstr "(%d 列)"
 
 #: startup.c:141 startup.c:615
 #, c-format
@@ -756,11 +755,11 @@ msgid ""
 "       \\q to quit\n"
 "\n"
 msgstr ""
-"歡迎使用 %s, PostgreSQL 的互動控制臺。\n"
+"歡迎使用 %s, PostgreSQL 的文字操作介面。\n"
 "\n"
-"鍵入:  \\copyright 顯示發行條款\n"
-"       \\h 顯示 SQL 命令的說明\n"
-"       \\? 顯示內部反斜線命令的說明\n"
+"輸入:  \\copyright 顯示發行條款\n"
+"       \\h 顯示 SQL 指令的說明\n"
+"       \\? 顯示內部反斜線指令的說明\n"
 "       \\g 或者以分號結尾執行查詢\n"
 "       \\q 退出\n"
 "\n"
@@ -827,10 +826,10 @@ msgid ""
 "Read the file COPYRIGHT or use the command \\copyright to see the\n"
 "usage and distribution terms."
 msgstr ""
-"部分版權 (c) 1996-2001，PostgreSQL 開發小組\n"
-"部分版權 (c) 1996，加州大學董事\n"
-"閱讀 COPYRIGHT 或使用 \\copyright 命令查看\n"
-"用法和發行條款。"
+"Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
+"Portions Copyright (c) 1996, Regents of the University of California\n"
+"閱\讀 COPYRIGHT 檔案或使用 \\copyright 指令查看\n"
+"使用和發行條款。"
 
 #: startup.c:699
 #, c-format
@@ -868,7 +867,7 @@ msgstr "參數資料型別"
 
 #: describe.c:109 describe.c:260 describe.c:1029
 msgid "Owner"
-msgstr "所有者"
+msgstr "擁有者"
 
 #: describe.c:109
 msgid "Language"
@@ -1117,11 +1116,11 @@ msgstr "特殊"
 
 #: describe.c:1072
 msgid "No matching relations found.\n"
-msgstr "沒有找到匹配的關關。\n"
+msgstr "沒有找到匹配的關聯。\n"
 
 #: describe.c:1074
 msgid "No relations found.\n"
-msgstr "沒有找到關聯。\n"
+msgstr "找不到關聯。\n"
 
 #: describe.c:1079
 msgid "List of relations"

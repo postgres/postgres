@@ -2,12 +2,11 @@
 # Translated and modified from Simplified Chinese translation.
 # Zhenbang Wei <forth@zbwei.net>, 2001.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
 "POT-Creation-Date: 2001-10-01 09:32+0800\n"
-"PO-Revision-Date: 2001-10-05 01:00:00+0800\n"
+"PO-Revision-Date: 2001-10-24 01:00:00+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
@@ -61,10 +60,10 @@ msgid ""
 "more information on how to properly start the server.\n"
 "\n"
 msgstr ""
-"不允許 \"root\" 執行 PostgreSQL 伺服器。\n"
+"不允許\ \"root\" 執行 PostgreSQL 伺服器。\n"
 "\n"
 "伺服器必須以非特權使用者身分啟動以避免\n"
-"可能的系統安全問題，請參閱文件以獲得\n"
+"可能的系統安全問題，請參閱\文件以獲得\n"
 "有關如何正確啟動伺服器的資訊。\n"
 "\n"
 
@@ -111,7 +110,7 @@ msgid ""
 "The number of buffers (-B) must be at least twice the number of allowed "
 "connections (-N) and at least 16."
 msgstr ""
-"緩衝區的數量 (-B) 必須是允許連接數 (-N)"
+"緩衝區的數量 (-B) 必須是允許\連接數 (-N)"
 "的兩倍並且至少為 16."
 
 #: ../postmaster/postmaster.c:587
@@ -204,7 +203,7 @@ msgstr "  -l              打開 SSL 連接\n"
 #: ../postmaster/postmaster.c:787
 #, c-format
 msgid "  -N MAX-CONNECT  maximum number of allowed connections (default %d)\n"
-msgstr "  -N 最大連接數     允許的最大連接數目 (預設是 %d)\n"
+msgstr "  -N 最大連接數     允許\的最大連接數目 (預設是 %d)\n"
 
 #: ../postmaster/postmaster.c:789
 msgid "  -o OPTIONS      pass 'OPTIONS' to each backend server\n"
@@ -249,10 +248,10 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"請閱讀文件取得執行時期配置設定的完整列表以及如\n"
+"請閱\讀文件取得執行時期配置設定的完整列表以及如\n"
 "何在命令列或者在配置文件裡設定它們的詳細訊息。\n"
 "\n"
-"請向 <pgsql-bugs@postgresql.org> 報告臭蟲。\n"
+"請向 <pgsql-bugs@postgresql.org> 回報錯誤。\n"
 
 #: ../postmaster/postmaster.c:2216
 #, c-format
