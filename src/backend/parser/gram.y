@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.36 1998/10/09 07:06:17 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.37 1998/10/14 15:56:43 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4698,6 +4698,7 @@ ColId:  IDENT							{ $$ = $1; }
 		| STDIN							{ $$ = "stdin"; }
 		| STDOUT						{ $$ = "stdout"; }
 		| TIME							{ $$ = "time"; }
+		| TIMESTAMP						{ $$ = "timestamp"; }
 		| TIMEZONE_HOUR					{ $$ = "timezone_hour"; }
 		| TIMEZONE_MINUTE				{ $$ = "timezone_minute"; }
 		| TRIGGER						{ $$ = "trigger"; }
