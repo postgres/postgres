@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
 /*
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.40 2001/11/19 23:16:45 momjian Exp $
+ * $Id: DatabaseMetaData.java,v 1.41 2002/01/18 17:21:51 davec Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -2299,8 +2299,8 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 								+ "pg_class ic,pg_proc p, pg_index i "
 								+ "WHERE t.tgrelid=c.oid AND t.tgconstrrelid=c2.oid "
 								+ "AND t.tgfoid=p.oid AND tgisconstraint "
-								+ ((primaryTable != null) ? "AND c2.relname='" + primaryTable + "' " : "")
-								+ ((foreignTable != null) ? "AND c.relname='" + foreignTable + "' " : "")
+								+ ((primaryTable != null) ? "AND c.relname='" + primaryTable + "' " : "")
+								+ ((foreignTable != null) ? "AND c2.relname='" + foreignTable + "' " : "")
 								+ "AND i.indrelid=c.oid "
 								+ "AND i.indexrelid=ic.oid AND i.indisprimary "
 								+ "ORDER BY c.relname,c2.relname"
@@ -2339,65 +2339,67 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 							else if ("setdefault".equals(rule))
 								action = importedKeySetDefault;
 							tuple[col] = Integer.toString(action).getBytes();
-							foundRule = true;
+
+							if (!foundRule)
+							{
+								tuple[2] = rs.getBytes(1); //PKTABLE_NAME
+								tuple[6] = rs.getBytes(2); //FKTABLE_NAME
+
+								// Parse the tgargs data
+								StringBuffer fkeyColumns = new StringBuffer();
+								StringBuffer pkeyColumns = new StringBuffer();
+								int numColumns = (rs.getInt(7) >> 1) - 2;
+								String s = rs.getString(8);
+								int pos = s.lastIndexOf("\\000");
+								for (int c = 0;c < numColumns;c++)
+								{
+									if (pos > -1)
+									{
+										int pos2 = s.lastIndexOf("\\000", pos - 1);
+										if (pos2 > -1)
+										{
+											if (pkeyColumns.length() > 0)
+											        pkeyColumns.insert(0, ',');
+											pkeyColumns.insert(0, s.substring(pos2 + 4, pos)); //PKCOLUMN_NAME
+											pos = s.lastIndexOf("\\000", pos2 - 1);
+											if (pos > -1)
+											{
+												if (fkeyColumns.length() > 0)
+												    fkeyColumns.insert(0, ',');
+												fkeyColumns.insert(0, s.substring(pos + 4, pos2)); //FKCOLUMN_NAME
+											}
+										}
+									}
+								}
+								tuple[3] = pkeyColumns.toString().getBytes(); //PKCOLUMN_NAME
+								tuple[7] = fkeyColumns.toString().getBytes(); //FKCOLUMN_NAME
+
+								tuple[8] = Integer.toString(seq++).getBytes(); //KEY_SEQ
+								tuple[11] = fKeyName.getBytes(); //FK_NAME
+								tuple[12] = rs.getBytes(4); //PK_NAME
+
+								// DEFERRABILITY
+								int deferrability = importedKeyNotDeferrable;
+								boolean deferrable = rs.getBoolean(5);
+								boolean initiallyDeferred = rs.getBoolean(6);
+								if (deferrable)
+								{
+									if (initiallyDeferred)
+									        deferrability = importedKeyInitiallyDeferred;
+									else
+									        deferrability = importedKeyInitiallyImmediate;
+								}
+								tuple[13] = Integer.toString(deferrability).getBytes();
+
+								foundRule = true;
+							}
 						}
 					}
 				}
 				while ((hasMore = rs.next()) && fKeyName.equals(rs.getString(3)));
 
-				if (foundRule)
-				{
-					tuple[2] = rs.getBytes(2); //PKTABLE_NAME
-					tuple[6] = rs.getBytes(1); //FKTABLE_NAME
+				if(foundRule) tuples.addElement(tuple);
 
-					// Parse the tgargs data
-					StringBuffer fkeyColumns = new StringBuffer();
-					StringBuffer pkeyColumns = new StringBuffer();
-					int numColumns = (rs.getInt(7) >> 1) - 2;
-					String s = rs.getString(8);
-					int pos = s.lastIndexOf("\\000");
-					for (int c = 0;c < numColumns;c++)
-					{
-						if (pos > -1)
-						{
-							int pos2 = s.lastIndexOf("\\000", pos - 1);
-							if (pos2 > -1)
-							{
-								if (fkeyColumns.length() > 0)
-									fkeyColumns.insert(0, ',');
-								fkeyColumns.insert(0, s.substring(pos2 + 4, pos)); //FKCOLUMN_NAME
-								pos = s.lastIndexOf("\\000", pos2 - 1);
-								if (pos > -1)
-								{
-									if (pkeyColumns.length() > 0)
-										pkeyColumns.insert(0, ',');
-									pkeyColumns.insert(0, s.substring(pos + 4, pos2)); //PKCOLUMN_NAME
-								}
-							}
-						}
-					}
-					tuple[7] = fkeyColumns.toString().getBytes(); //FKCOLUMN_NAME
-					tuple[3] = pkeyColumns.toString().getBytes(); //PKCOLUMN_NAME
-
-					tuple[8] = Integer.toString(seq++).getBytes(); //KEY_SEQ
-					tuple[11] = fKeyName.getBytes(); //FK_NAME
-					tuple[12] = rs.getBytes(4); //PK_NAME
-
-					// DEFERRABILITY
-					int deferrability = importedKeyNotDeferrable;
-					boolean deferrable = rs.getBoolean(5);
-					boolean initiallyDeferred = rs.getBoolean(6);
-					if (deferrable)
-					{
-						if (initiallyDeferred)
-							deferrability = importedKeyInitiallyDeferred;
-						else
-							deferrability = importedKeyInitiallyImmediate;
-					}
-					tuple[13] = Integer.toString(deferrability).getBytes();
-
-					tuples.addElement(tuple);
-				}
 			}
 			while (hasMore);
 		}
