@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.67 2002/03/29 19:06:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.68 2002/04/02 01:03:07 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -17,6 +17,7 @@
 
 #include "access/tupmacs.h"
 #include "catalog/pg_amop.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
@@ -1277,6 +1278,35 @@ free_attstatsslot(Oid atttype,
 	}
 	if (numbers)
 		pfree(numbers);
+}
+
+/*				---------- PG_NAMESPACE CACHE ----------				 */
+
+/*
+ * get_namespace_name
+ *		Returns the name of a given namespace
+ *
+ * Returns a palloc'd copy of the string, or NULL if no such namespace.
+ */
+char *
+get_namespace_name(Oid nspid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(NAMESPACEOID,
+						ObjectIdGetDatum(nspid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_namespace nsptup = (Form_pg_namespace) GETSTRUCT(tp);
+		char	   *result;
+
+		result = pstrdup(NameStr(nsptup->nspname));
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return NULL;
 }
 
 /*				---------- PG_SHADOW CACHE ----------					 */

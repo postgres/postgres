@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.29 2002/03/21 23:27:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.30 2002/04/02 01:03:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "access/tuptoaster.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
@@ -30,6 +31,7 @@
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
 
@@ -147,7 +149,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 				numrows;
 	double		totalrows;
 	HeapTuple  *rows;
-	HeapTuple	tuple;
 
 	if (vacstmt->verbose)
 		elevel = INFO;
@@ -173,32 +174,19 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 * Race condition -- if the pg_class tuple has gone away since the
 	 * last time we saw it, we don't need to process it.
 	 */
-	tuple = SearchSysCache(RELOID,
-						   ObjectIdGetDatum(relid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
+	if (!SearchSysCacheExists(RELOID,
+							  ObjectIdGetDatum(relid),
+							  0, 0, 0))
 	{
 		CommitTransactionCommand();
 		return;
 	}
-
-	/*
-	 * We can ANALYZE any table except pg_statistic. See update_attstats
-	 */
-	if (strcmp(NameStr(((Form_pg_class) GETSTRUCT(tuple))->relname),
-			   StatisticRelationName) == 0)
-	{
-		ReleaseSysCache(tuple);
-		CommitTransactionCommand();
-		return;
-	}
-	ReleaseSysCache(tuple);
 
 	/*
 	 * Open the class, getting only a read lock on it, and check
 	 * permissions. Permissions check should match vacuum's check!
 	 */
-	onerel = heap_open(relid, AccessShareLock);
+	onerel = relation_open(relid, AccessShareLock);
 
 	if (!(pg_class_ownercheck(RelationGetRelid(onerel), GetUserId()) ||
 		  (is_dbadmin(MyDatabaseId) && !onerel->rd_rel->relisshared)))
@@ -207,12 +195,40 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		if (!vacstmt->vacuum)
 			elog(WARNING, "Skipping \"%s\" --- only table or database owner can ANALYZE it",
 				 RelationGetRelationName(onerel));
-		heap_close(onerel, NoLock);
+		relation_close(onerel, AccessShareLock);
 		CommitTransactionCommand();
 		return;
 	}
 
-	elog(elevel, "Analyzing %s", RelationGetRelationName(onerel));
+	/*
+	 * Check that it's a plain table; we used to do this in getrels() but
+	 * seems safer to check after we've locked the relation.
+	 */
+	if (onerel->rd_rel->relkind != RELKIND_RELATION)
+	{
+		/* No need for a WARNING if we already complained during VACUUM */
+		if (!vacstmt->vacuum)
+			elog(WARNING, "Skipping \"%s\" --- can not process indexes, views or special system tables",
+				 RelationGetRelationName(onerel));
+		relation_close(onerel, AccessShareLock);
+		CommitTransactionCommand();
+		return;
+	}
+
+	/*
+	 * We can ANALYZE any table except pg_statistic. See update_attstats
+	 */
+	if (RelationGetNamespace(onerel) == PG_CATALOG_NAMESPACE &&
+		strcmp(RelationGetRelationName(onerel), StatisticRelationName) == 0)
+	{
+		relation_close(onerel, AccessShareLock);
+		CommitTransactionCommand();
+		return;
+	}
+
+	elog(elevel, "Analyzing %s.%s",
+		 get_namespace_name(RelationGetNamespace(onerel)),
+		 RelationGetRelationName(onerel));
 
 	/*
 	 * Determine which columns to analyze
@@ -266,7 +282,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 */
 	if (attr_cnt <= 0)
 	{
-		heap_close(onerel, NoLock);
+		relation_close(onerel, NoLock);
 		CommitTransactionCommand();
 		return;
 	}
@@ -353,7 +369,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 * before we commit.  (If someone did, they'd fail to clean up the
 	 * entries we made in pg_statistic.)
 	 */
-	heap_close(onerel, NoLock);
+	relation_close(onerel, NoLock);
 
 	/* Commit and release working memory */
 	CommitTransactionCommand();

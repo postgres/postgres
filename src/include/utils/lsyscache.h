@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.47 2002/03/29 19:06:26 tgl Exp $
+ * $Id: lsyscache.h,v 1.48 2002/04/02 01:03:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@ extern bool get_attstatsslot(HeapTuple statstuple,
 extern void free_attstatsslot(Oid atttype,
 				  Datum *values, int nvalues,
 				  float4 *numbers, int nnumbers);
+extern char *get_namespace_name(Oid nspid);
 extern int32 get_usesysid(const char *username);
 
 #define TypeIsToastable(typid)	(get_typstorage(typid) != 'p')

@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.13 2002/03/06 06:09:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.14 2002/04/02 01:03:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,7 @@
 #include "storage/freespace.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
+#include "utils/lsyscache.h"
 
 
 /*
@@ -207,7 +208,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	vac_init_rusage(&ru0);
 
 	relname = RelationGetRelationName(onerel);
-	elog(elevel, "--Relation %s--", relname);
+	elog(elevel, "--Relation %s.%s--",
+		 get_namespace_name(RelationGetNamespace(onerel)),
+		 relname);
 
 	empty_pages = changed_pages = 0;
 	num_tuples = tups_vacuumed = nkeep = nunused = 0;

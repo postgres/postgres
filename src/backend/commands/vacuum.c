@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.220 2002/03/31 06:26:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.221 2002/04/02 01:03:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_index.h"
 #include "commands/vacuum.h"
@@ -40,18 +41,11 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
+#include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "pgstat.h"
 
-
-typedef struct VRelListData
-{
-	Oid			vrl_relid;
-	struct VRelListData *vrl_next;
-} VRelListData;
-
-typedef VRelListData *VRelList;
 
 typedef struct VacPageData
 {
@@ -118,13 +112,13 @@ static TransactionId initialFreezeLimit;
 /* non-export function prototypes */
 static void vacuum_init(VacuumStmt *vacstmt);
 static void vacuum_shutdown(VacuumStmt *vacstmt);
-static VRelList getrels(Name VacRelP, const char *stmttype);
+static List *getrels(const RangeVar *vacrel, const char *stmttype);
 static void vac_update_dbstats(Oid dbid,
 				   TransactionId vacuumXID,
 				   TransactionId frozenXID);
 static void vac_truncate_clog(TransactionId vacuumXID,
 				  TransactionId frozenXID);
-static void vacuum_rel(Oid relid, VacuumStmt *vacstmt);
+static void vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind);
 static void full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt);
 static void scan_heap(VRelStats *vacrelstats, Relation onerel,
 		  VacPageList vacuum_pages, VacPageList fraged_pages);
@@ -167,10 +161,13 @@ void
 vacuum(VacuumStmt *vacstmt)
 {
 	const char *stmttype = vacstmt->vacuum ? "VACUUM" : "ANALYZE";
-	NameData	VacRel;
-	Name		VacRelName;
-	VRelList	vrl,
-				cur;
+	List	   *vrl,
+			   *cur;
+
+	if (vacstmt->verbose)
+		elevel = INFO;
+	else
+		elevel = DEBUG1;
 
 	/*
 	 * We cannot run VACUUM inside a user transaction block; if we were
@@ -189,11 +186,6 @@ vacuum(VacuumStmt *vacstmt)
 	 */
 	pgstat_vacuum_tabstat();
 
-	if (vacstmt->verbose)
-		elevel = INFO;
-	else
-		elevel = DEBUG1;
-
 	/*
 	 * Create special memory context for cross-transaction storage.
 	 *
@@ -207,17 +199,8 @@ vacuum(VacuumStmt *vacstmt)
 										ALLOCSET_DEFAULT_INITSIZE,
 										ALLOCSET_DEFAULT_MAXSIZE);
 
-	/* Convert relname, which is just a string, to a Name */
-	if (vacstmt->relation)
-	{
-		namestrcpy(&VacRel, vacstmt->relation->relname);
-		VacRelName = &VacRel;
-	}
-	else
-		VacRelName = NULL;
-
 	/* Build list of relations to process (note this lives in vac_context) */
-	vrl = getrels(VacRelName, stmttype);
+	vrl = getrels(vacstmt->relation, stmttype);
 
 	/*
 	 * Start up the vacuum cleaner.
@@ -231,12 +214,14 @@ vacuum(VacuumStmt *vacstmt)
 	 * ANALYZE part runs as a separate transaction from the VACUUM to
 	 * further reduce locking.
 	 */
-	for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
+	foreach(cur, vrl)
 	{
+		Oid		relid = (Oid) lfirsti(cur);
+
 		if (vacstmt->vacuum)
-			vacuum_rel(cur->vrl_relid, vacstmt);
+			vacuum_rel(relid, vacstmt, RELKIND_RELATION);
 		if (vacstmt->analyze)
-			analyze_rel(cur->vrl_relid, vacstmt);
+			analyze_rel(relid, vacstmt);
 	}
 
 	/* clean up */
@@ -323,85 +308,57 @@ vacuum_shutdown(VacuumStmt *vacstmt)
 }
 
 /*
- * Build a list of VRelListData nodes for each relation to be processed
+ * Build a list of Oids for each relation to be processed
  *
  * The list is built in vac_context so that it will survive across our
  * per-relation transactions.
  */
-static VRelList
-getrels(Name VacRelP, const char *stmttype)
+static List *
+getrels(const RangeVar *vacrel, const char *stmttype)
 {
-	Relation	rel;
-	TupleDesc	tupdesc;
-	HeapScanDesc scan;
-	HeapTuple	tuple;
-	VRelList	vrl,
-				cur;
-	Datum		d;
-	char	   *rname;
-	char		rkind;
-	bool		n;
-	ScanKeyData key;
+	List	   *vrl = NIL;
+	MemoryContext oldcontext;
 
-	if (VacRelP)
+	if (vacrel)
 	{
-		/*
-		 * we could use the cache here, but it is clearer to use scankeys
-		 * for both vacuum cases, bjm 2000/01/19
-		 */
-		ScanKeyEntryInitialize(&key, 0x0, Anum_pg_class_relname,
-							   F_NAMEEQ,
-							   PointerGetDatum(NameStr(*VacRelP)));
+		/* Process specific relation */
+		Oid		relid;
+
+		relid = RangeVarGetRelid(vacrel, false);
+
+		/* Make a relation list entry for this guy */
+		oldcontext = MemoryContextSwitchTo(vac_context);
+		vrl = lappendi(vrl, relid);
+		MemoryContextSwitchTo(oldcontext);
 	}
 	else
 	{
-		/* find all plain relations listed in pg_class */
-		ScanKeyEntryInitialize(&key, 0x0, Anum_pg_class_relkind,
-							   F_CHAREQ, CharGetDatum(RELKIND_RELATION));
-	}
+		/* Process all plain relations listed in pg_class */
+		Relation	pgclass;
+		HeapScanDesc scan;
+		HeapTuple	tuple;
+		ScanKeyData key;
 
-	vrl = cur = (VRelList) NULL;
+		ScanKeyEntryInitialize(&key, 0x0,
+							   Anum_pg_class_relkind,
+							   F_CHAREQ,
+							   CharGetDatum(RELKIND_RELATION));
 
-	rel = heap_openr(RelationRelationName, AccessShareLock);
-	tupdesc = RelationGetDescr(rel);
+		pgclass = heap_openr(RelationRelationName, AccessShareLock);
 
-	scan = heap_beginscan(rel, false, SnapshotNow, 1, &key);
+		scan = heap_beginscan(pgclass, false, SnapshotNow, 1, &key);
 
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-	{
-		d = heap_getattr(tuple, Anum_pg_class_relname, tupdesc, &n);
-		rname = (char *) DatumGetName(d);
-
-		d = heap_getattr(tuple, Anum_pg_class_relkind, tupdesc, &n);
-		rkind = DatumGetChar(d);
-
-		if (rkind != RELKIND_RELATION)
+		while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 		{
-			elog(WARNING, "%s: can not process indexes, views or special system tables",
-				 stmttype);
-			continue;
+			/* Make a relation list entry for this guy */
+			oldcontext = MemoryContextSwitchTo(vac_context);
+			vrl = lappendi(vrl, tuple->t_data->t_oid);
+			MemoryContextSwitchTo(oldcontext);
 		}
 
-		/* Make a relation list entry for this guy */
-		if (vrl == (VRelList) NULL)
-			vrl = cur = (VRelList)
-				MemoryContextAlloc(vac_context, sizeof(VRelListData));
-		else
-		{
-			cur->vrl_next = (VRelList)
-				MemoryContextAlloc(vac_context, sizeof(VRelListData));
-			cur = cur->vrl_next;
-		}
-
-		cur->vrl_relid = tuple->t_data->t_oid;
-		cur->vrl_next = (VRelList) NULL;
+		heap_endscan(scan);
+		heap_close(pgclass, AccessShareLock);
 	}
-
-	heap_endscan(scan);
-	heap_close(rel, AccessShareLock);
-
-	if (vrl == NULL)
-		elog(WARNING, "%s: table not found", stmttype);
 
 	return vrl;
 }
@@ -663,7 +620,7 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
  *		At entry and exit, we are not inside a transaction.
  */
 static void
-vacuum_rel(Oid relid, VacuumStmt *vacstmt)
+vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 {
 	LOCKMODE	lmode;
 	Relation	onerel;
@@ -710,14 +667,27 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 	 * Note we choose to treat permissions failure as a WARNING and keep
 	 * trying to vacuum the rest of the DB --- is this appropriate?
 	 */
-	onerel = heap_open(relid, lmode);
+	onerel = relation_open(relid, lmode);
 
 	if (!(pg_class_ownercheck(RelationGetRelid(onerel), GetUserId()) ||
 		  (is_dbadmin(MyDatabaseId) && !onerel->rd_rel->relisshared)))
 	{
 		elog(WARNING, "Skipping \"%s\" --- only table or database owner can VACUUM it",
 			 RelationGetRelationName(onerel));
-		heap_close(onerel, lmode);
+		relation_close(onerel, lmode);
+		CommitTransactionCommand();
+		return;
+	}
+
+	/*
+	 * Check that it's a plain table; we used to do this in getrels() but
+	 * seems safer to check after we've locked the relation.
+	 */
+	if (onerel->rd_rel->relkind != expected_relkind)
+	{
+		elog(WARNING, "Skipping \"%s\" --- can not process indexes, views or special system tables",
+			 RelationGetRelationName(onerel));
+		relation_close(onerel, lmode);
 		CommitTransactionCommand();
 		return;
 	}
@@ -749,7 +719,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 		lazy_vacuum_rel(onerel, vacstmt);
 
 	/* all done with this class, but hold lock until commit */
-	heap_close(onerel, NoLock);
+	relation_close(onerel, NoLock);
 
 	/*
 	 * Complete the transaction and free all temporary memory used.
@@ -764,7 +734,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 	 * statistics are totally unimportant for toast relations.
 	 */
 	if (toast_relid != InvalidOid)
-		vacuum_rel(toast_relid, vacstmt);
+		vacuum_rel(toast_relid, vacstmt, RELKIND_TOASTVALUE);
 
 	/*
 	 * Now release the session-level lock on the master table.
@@ -954,7 +924,9 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	vac_init_rusage(&ru0);
 
 	relname = RelationGetRelationName(onerel);
-	elog(elevel, "--Relation %s--", relname);
+	elog(elevel, "--Relation %s.%s--",
+		 get_namespace_name(RelationGetNamespace(onerel)),
+		 relname);
 
 	empty_pages = new_pages = changed_pages = empty_end_pages = 0;
 	num_tuples = tups_vacuumed = nkeep = nunused = 0;
