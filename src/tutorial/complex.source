@@ -7,7 +7,7 @@
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: complex.source,v 1.6 2000/01/24 07:16:48 tgl Exp $
+-- $Id: complex.source,v 1.7 2000/03/28 02:49:19 tgl Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@
 --	called 'complex' which represents complex numbers.
 -----------------------------
 
--- Assume the user defined functions are in _OBJWD_/complex.so
+-- Assume the user defined functions are in _OBJWD_/complex_DLSUFFIX_
 -- Look at $PWD/complex.c for the source.
 
 -- the input function 'complex_in' takes a null-terminated string (the 
@@ -28,7 +28,7 @@
 
 CREATE FUNCTION complex_in(opaque)
    RETURNS complex
-   AS '_OBJWD_/complex.so'
+   AS '_OBJWD_/complex_DLSUFFIX_'
    LANGUAGE 'c';
 
 -- the output function 'complex_out' takes the internal representation and
@@ -36,7 +36,7 @@ CREATE FUNCTION complex_in(opaque)
 
 CREATE FUNCTION complex_out(opaque)
    RETURNS opaque
-   AS '_OBJWD_/complex.so'
+   AS '_OBJWD_/complex_DLSUFFIX_'
    LANGUAGE 'c';
 
 -- now, we can create the type. The internallength specifies the size of the
@@ -80,7 +80,7 @@ SELECT * FROM test_complex;
 -- first, define a function complex_add (also in complex.c)
 CREATE FUNCTION complex_add(complex, complex)
    RETURNS complex
-   AS '_OBJWD_/complex.so'
+   AS '_OBJWD_/complex_DLSUFFIX_'
    LANGUAGE 'c';
 
 -- we can now define the operator. We show a binary operator here but you
@@ -138,15 +138,15 @@ SELECT 'READ ABOVE!' AS STOP;
 
 -- first, define the required operators
 CREATE FUNCTION complex_abs_lt(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex.so' LANGUAGE 'c';
+   AS '_OBJWD_/complex_DLSUFFIX_' LANGUAGE 'c';
 CREATE FUNCTION complex_abs_le(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex.so' LANGUAGE 'c';
+   AS '_OBJWD_/complex_DLSUFFIX_' LANGUAGE 'c';
 CREATE FUNCTION complex_abs_eq(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex.so' LANGUAGE 'c';
+   AS '_OBJWD_/complex_DLSUFFIX_' LANGUAGE 'c';
 CREATE FUNCTION complex_abs_ge(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex.so' LANGUAGE 'c';
+   AS '_OBJWD_/complex_DLSUFFIX_' LANGUAGE 'c';
 CREATE FUNCTION complex_abs_gt(complex, complex) RETURNS bool
-   AS '_OBJWD_/complex.so' LANGUAGE 'c';
+   AS '_OBJWD_/complex_DLSUFFIX_' LANGUAGE 'c';
 
 CREATE OPERATOR < (
    leftarg = complex, rightarg = complex, procedure = complex_abs_lt,
@@ -169,9 +169,11 @@ CREATE OPERATOR > (
    restrict = scalargtsel, join = scalargtjoinsel
 );
 
-INSERT INTO pg_opclass VALUES ('complex_abs_ops');
+INSERT INTO pg_opclass (opcname, opcdeftype)
+    SELECT 'complex_abs_ops', oid FROM pg_type WHERE typname = 'complex';
 
-SELECT oid, opcname FROM pg_opclass WHERE opcname = 'complex_abs_ops';
+SELECT oid, opcname, opcdeftype
+    FROM pg_opclass WHERE opcname = 'complex_abs_ops';
 
 SELECT o.oid AS opoid, o.oprname
 INTO TABLE complex_ops_tmp
@@ -214,7 +216,7 @@ INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
 
 --
 CREATE FUNCTION complex_abs_cmp(complex, complex) RETURNS int4
-   AS '_OBJWD_/complex.so' LANGUAGE 'c';
+   AS '_OBJWD_/complex_DLSUFFIX_' LANGUAGE 'c';
 
 SELECT oid, proname FROM pg_proc WHERE proname = 'complex_abs_cmp';
 
