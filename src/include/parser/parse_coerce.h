@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.3 1998/07/08 14:18:45 thomas Exp $
+ * $Id: parse_coerce.h,v 1.4 1998/08/14 16:07:00 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,8 @@ typedef enum CATEGORY {
  * - thomas 1998-05-13
  */
 #define IS_BUILTIN_TYPE(t) \
-		  (((t) == BOOLOID) \
+		  (((t) == OIDOID) \
+		|| ((t) == BOOLOID) \
 		|| ((t) == BPCHAROID) \
 		|| ((t) == VARCHAROID) \
 		|| ((t) == TEXTOID) \
@@ -69,12 +70,15 @@ typedef enum CATEGORY {
 		|| ((a) == VARCHAROID && (b) == BPCHAROID) \
 		|| ((a) == TEXTOID && (b) == BPCHAROID) \
 		|| ((a) == TEXTOID && (b) == VARCHAROID) \
+		|| ((a) == OIDOID && (b) == INT4OID) \
+		|| ((a) == INT4OID && (b) == TIMESTAMPOID) \
 		|| ((a) == DATETIMEOID && (b) == FLOAT8OID) \
 		|| ((a) == FLOAT8OID && (b) == DATETIMEOID) \
 		|| ((a) == ABSTIMEOID && (b) == TIMESTAMPOID) \
 		|| ((a) == ABSTIMEOID && (b) == INT4OID) \
 		|| ((a) == TIMESTAMPOID && (b) == ABSTIMEOID) \
 		|| ((a) == TIMESTAMPOID && (b) == INT4OID) \
+		|| ((a) == INT4OID && (b) == OIDOID) \
 		|| ((a) == INT4OID && (b) == ABSTIMEOID) \
 		|| ((a) == INT4OID && (b) == TIMESTAMPOID) \
 		|| ((a) == RELTIMEOID && (b) == INT4OID) \
