@@ -1971,15 +1971,15 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		if (connection.haveMinimumServerVersion("7.3")) {
 			useSchemas = "SCHEMAS";
 			select = "SELECT NULL AS TABLE_CAT, n.nspname AS TABLE_SCHEM, c.relname AS TABLE_NAME, "+
-			" CASE n.nspname LIKE 'pg\\\\_%' "+
-			" WHEN true THEN CASE n.nspname "+
-			"	WHEN 'pg_catalog' THEN CASE c.relkind "+
+			" CASE n.nspname LIKE 'pg\\\\_%' OR n.nspname = 'information_schema' "+
+			" WHEN true THEN CASE "+
+			"	WHEN n.nspname = 'pg_catalog' OR n.nspname = 'information_schema' THEN CASE c.relkind "+
 			"		WHEN 'r' THEN 'SYSTEM TABLE' "+
 			"		WHEN 'v' THEN 'SYSTEM VIEW' "+
 			"		WHEN 'i' THEN 'SYSTEM INDEX' "+
 			"		ELSE NULL "+
 			"		END "+
-			"	WHEN 'pg_toast' THEN CASE c.relkind "+
+			"	WHEN n.nspname = 'pg_toast' THEN CASE c.relkind "+
 			"		WHEN 'r' THEN 'SYSTEM TOAST TABLE' "+
 			"		WHEN 'i' THEN 'SYSTEM TOAST INDEX' "+
 			"		ELSE NULL "+
@@ -2089,15 +2089,15 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		tableTypeClauses = new Hashtable();
 		Hashtable ht = new Hashtable();
 		tableTypeClauses.put("TABLE",ht);
-		ht.put("SCHEMAS","c.relkind = 'r' AND n.nspname NOT LIKE 'pg\\\\_%'");
+		ht.put("SCHEMAS","c.relkind = 'r' AND n.nspname NOT LIKE 'pg\\\\_%' AND n.nspname <> 'information_schema'");
 		ht.put("NOSCHEMAS","c.relkind = 'r' AND c.relname NOT LIKE 'pg\\\\_%'");
 		ht = new Hashtable();
 		tableTypeClauses.put("VIEW",ht);
-		ht.put("SCHEMAS","c.relkind = 'v' AND n.nspname <> 'pg_catalog'");
+		ht.put("SCHEMAS","c.relkind = 'v' AND n.nspname <> 'pg_catalog' AND n.nspname <> 'information_schema'");
 		ht.put("NOSCHEMAS","c.relkind = 'v' AND c.relname NOT LIKE 'pg\\\\_%'");
 		ht = new Hashtable();
 		tableTypeClauses.put("INDEX",ht);
-		ht.put("SCHEMAS","c.relkind = 'i' AND n.nspname NOT LIKE 'pg\\\\_%'");
+		ht.put("SCHEMAS","c.relkind = 'i' AND n.nspname NOT LIKE 'pg\\\\_%' AND n.nspname <> 'information_schema'");
 		ht.put("NOSCHEMAS","c.relkind = 'i' AND c.relname NOT LIKE 'pg\\\\_%'");
 		ht = new Hashtable();
 		tableTypeClauses.put("SEQUENCE",ht);
@@ -2105,7 +2105,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		ht.put("NOSCHEMAS","c.relkind = 'S'");
 		ht = new Hashtable();
 		tableTypeClauses.put("SYSTEM TABLE",ht);
-		ht.put("SCHEMAS","c.relkind = 'r' AND n.nspname = 'pg_catalog'");
+		ht.put("SCHEMAS","c.relkind = 'r' AND (n.nspname = 'pg_catalog' OR n.nspname = 'information_schema')");
 		ht.put("NOSCHEMAS","c.relkind = 'r' AND c.relname LIKE 'pg\\\\_%' AND c.relname NOT LIKE 'pg\\\\_toast\\\\_%' AND c.relname NOT LIKE 'pg\\\\_temp\\\\_%'");
 		ht = new Hashtable();
 		tableTypeClauses.put("SYSTEM TOAST TABLE",ht);
@@ -2117,11 +2117,11 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		ht.put("NOSCHEMAS","c.relkind = 'i' AND c.relname LIKE 'pg\\\\_toast\\\\_%'");
 		ht = new Hashtable();
 		tableTypeClauses.put("SYSTEM VIEW",ht);
-		ht.put("SCHEMAS","c.relkind = 'v' AND n.nspname = 'pg_catalog' ");
+		ht.put("SCHEMAS","c.relkind = 'v' AND (n.nspname = 'pg_catalog' OR n.nspname = 'information_schema') ");
 		ht.put("NOSCHEMAS","c.relkind = 'v' AND c.relname LIKE 'pg\\\\_%'");
 		ht = new Hashtable();
 		tableTypeClauses.put("SYSTEM INDEX",ht);
-		ht.put("SCHEMAS","c.relkind = 'i' AND n.nspname = 'pg_catalog'");
+		ht.put("SCHEMAS","c.relkind = 'i' AND (n.nspname = 'pg_catalog' OR n.nspname = 'information_schema') ");
 		ht.put("NOSCHEMAS","c.relkind = 'v' AND c.relname LIKE 'pg\\\\_%' AND c.relname NOT LIKE 'pg\\\\_toast\\\\_%' AND c.relname NOT LIKE 'pg\\\\_temp\\\\_%'");
 		ht = new Hashtable();
 		tableTypeClauses.put("TEMPORARY TABLE",ht);
