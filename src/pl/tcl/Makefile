@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.40 2003/09/27 19:35:32 tgl Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.40.2.1 2004/01/21 19:25:11 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -44,7 +44,13 @@ all: all-lib
 	$(MAKE) -C modules $@
 
 install: all installdirs
+ifeq ($(enable_shared), yes)
 	$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(pkglibdir)/$(NAME)$(DLSUFFIX)
+else
+	@echo "*****"; \
+	 echo "* PL/Tcl was not installed due to lack of shared library support."; \
+	 echo "*****"
+endif
 	$(MAKE) -C modules $@
 
 installdirs:
@@ -60,7 +66,7 @@ else # TCL_SHARED_BUILD = 0
 # Provide dummy targets for the case where we can't build the shared library.
 all:
 	@echo "*****"; \
-	 echo "* Cannot build pltcl because Tcl is not a shared library; skipping it."; \
+	 echo "* Cannot build PL/Tcl because Tcl is not a shared library; skipping it."; \
 	 echo "*****"
 
 endif # TCL_SHARED_BUILD = 0
