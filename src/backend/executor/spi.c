@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.84 2003/01/21 22:06:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.85 2003/01/29 15:24:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,6 +123,14 @@ SPI_finish(void)
 	/* Release memory used in procedure call */
 	MemoryContextDelete(_SPI_current->execCxt);
 	MemoryContextDelete(_SPI_current->procCxt);
+
+	/*
+	 * Reset result variables, especially SPI_tuptable which is probably
+	 * pointing at a just-deleted tuptable
+	 */
+	SPI_processed = 0;
+	SPI_lastoid = InvalidOid;
+	SPI_tuptable = NULL;
 
 	/*
 	 * After _SPI_begin_call _SPI_connected == _SPI_curid. Now we are
@@ -1313,6 +1321,11 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit, int tcount)
 		SPI_processed = _SPI_current->processed;
 		SPI_lastoid = save_lastoid;
 		SPI_tuptable = _SPI_current->tuptable;
+	}
+	else if (res == SPI_OK_SELECT)
+	{
+		/* Don't return SPI_OK_SELECT if we discarded the result */
+		res = SPI_OK_UTILITY;
 	}
 
 	ExecutorEnd(queryDesc);
