@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.11 1996/11/29 10:27:59 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.12 1997/01/05 10:58:15 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -422,7 +422,11 @@ _vc_vacone (VRelList curvrl)
     if ( Fvpl.vpl_npages > 0 )		/* Try to shrink heap */
     	_vc_rpfheap (curvrl, onerel, &Vvpl, &Fvpl, nindices, Irel);
     else if ( Vvpl.vpl_npages > 0 )	/* Clean pages from Vvpl list */
+    {
+    	if ( Irel != (Relation*) NULL )
+	    _vc_clsindices (nindices, Irel);
 	_vc_vacheap (curvrl, onerel, &Vvpl);
+    }
 
     /* ok - free Vvpl list of reapped pages */
     if ( Vvpl.vpl_npages > 0 )
