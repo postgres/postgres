@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.57 2004/08/29 05:06:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.58 2004/09/16 20:17:33 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -205,6 +205,7 @@ static void AllocSetInit(MemoryContext context);
 static void AllocSetReset(MemoryContext context);
 static void AllocSetDelete(MemoryContext context);
 static Size AllocSetGetChunkSpace(MemoryContext context, void *pointer);
+static bool AllocSetIsEmpty(MemoryContext context);
 static void AllocSetStats(MemoryContext context);
 
 #ifdef MEMORY_CONTEXT_CHECKING
@@ -222,6 +223,7 @@ static MemoryContextMethods AllocSetMethods = {
 	AllocSetReset,
 	AllocSetDelete,
 	AllocSetGetChunkSpace,
+	AllocSetIsEmpty,
 	AllocSetStats
 #ifdef MEMORY_CONTEXT_CHECKING
 	,AllocSetCheck
@@ -989,6 +991,26 @@ AllocSetGetChunkSpace(MemoryContext context, void *pointer)
 	AllocChunk	chunk = AllocPointerGetChunk(pointer);
 
 	return chunk->size + ALLOC_CHUNKHDRSZ;
+}
+
+/*
+ * AllocSetIsEmpty
+ *		Is an allocset empty of any allocated space?
+ */
+static bool
+AllocSetIsEmpty(MemoryContext context)
+{
+	AllocSet	set = (AllocSet) context;
+
+	/*
+	 * For now, we say "empty" only if the context never contained any
+	 * space at all.  We could examine the freelists to determine if all
+	 * space has been freed, but it's not really worth the trouble for
+	 * present uses of this functionality.
+	 */
+	if (set->blocks == NULL)
+		return true;
+	return false;
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.128 2004/09/16 16:58:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.129 2004/09/16 20:17:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,6 +104,8 @@ SPI_connect(void)
 	_SPI_current = &(_SPI_stack[_SPI_connected]);
 	_SPI_current->processed = 0;
 	_SPI_current->tuptable = NULL;
+	_SPI_current->procCxt = NULL; /* in case we fail to create 'em */
+	_SPI_current->execCxt = NULL;
 	_SPI_current->connectSubid = GetCurrentSubTransactionId();
 
 	/*
@@ -144,7 +146,9 @@ SPI_finish(void)
 
 	/* Release memory used in procedure call */
 	MemoryContextDelete(_SPI_current->execCxt);
+	_SPI_current->execCxt = NULL;
 	MemoryContextDelete(_SPI_current->procCxt);
+	_SPI_current->procCxt = NULL;
 
 	/*
 	 * Reset result variables, especially SPI_tuptable which is probably
@@ -215,10 +219,23 @@ AtEOSubXact_SPI(bool isCommit, SubTransactionId mySubid)
 		found = true;
 
 		/*
+		 * Release procedure memory explicitly (see note in SPI_connect)
+		 */
+		if (connection->execCxt)
+		{
+			MemoryContextDelete(connection->execCxt);
+			connection->execCxt = NULL;
+		}
+		if (connection->procCxt)
+		{
+			MemoryContextDelete(connection->procCxt);
+			connection->procCxt = NULL;
+		}
+
+		/*
 		 * Pop the stack entry and reset global variables.	Unlike
 		 * SPI_finish(), we don't risk switching to memory contexts that
-		 * might be already gone, or deleting memory contexts that have
-		 * been or will be thrown away anyway.
+		 * might be already gone.
 		 */
 		_SPI_connected--;
 		_SPI_curid = _SPI_connected;

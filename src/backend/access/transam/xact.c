@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.189 2004/09/16 16:58:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.190 2004/09/16 20:17:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -861,9 +861,6 @@ AtCommit_Memory(void)
 
 /*
  * AtSubCommit_Memory
- *
- * We do not throw away the child's CurTransactionContext, since the data
- * it contains will be needed at upper commit.
  */
 static void
 AtSubCommit_Memory(void)
@@ -875,6 +872,18 @@ AtSubCommit_Memory(void)
 	/* Return to parent transaction level's memory context. */
 	CurTransactionContext = s->parent->curTransactionContext;
 	MemoryContextSwitchTo(CurTransactionContext);
+
+	/*
+	 * Ordinarily we cannot throw away the child's CurTransactionContext,
+	 * since the data it contains will be needed at upper commit.  However,
+	 * if there isn't actually anything in it, we can throw it away.  This
+	 * avoids a small memory leak in the common case of "trivial" subxacts.
+	 */
+	if (MemoryContextIsEmpty(s->curTransactionContext))
+	{
+		MemoryContextDelete(s->curTransactionContext);
+		s->curTransactionContext = NULL;
+	}
 }
 
 /*
@@ -890,13 +899,27 @@ AtSubCommit_childXids(void)
 
 	Assert(s->parent != NULL);
 
-	old_cxt = MemoryContextSwitchTo(s->parent->curTransactionContext);
+	/*
+	 * We keep the child-XID lists in TopTransactionContext; this avoids
+	 * setting up child-transaction contexts for what might be just a few
+	 * bytes of grandchild XIDs.
+	 */
+	old_cxt = MemoryContextSwitchTo(TopTransactionContext);
 
 	s->parent->childXids = lappend_xid(s->parent->childXids,
 									   s->transactionId);
 
-	s->parent->childXids = list_concat(s->parent->childXids, s->childXids);
-	s->childXids = NIL;			/* ensure list not doubly referenced */
+	if (s->childXids != NIL)
+	{
+		s->parent->childXids = list_concat(s->parent->childXids,
+										   s->childXids);
+		/*
+		 * list_concat doesn't free the list header for the second list;
+		 * do so here to avoid memory leakage (kluge)
+		 */
+		pfree(s->childXids);
+		s->childXids = NIL;
+	}
 
 	MemoryContextSwitchTo(old_cxt);
 }
@@ -1090,6 +1113,23 @@ AtSubAbort_Memory(void)
 	Assert(TopTransactionContext != NULL);
 
 	MemoryContextSwitchTo(TopTransactionContext);
+}
+
+/*
+ * AtSubAbort_childXids
+ */
+static void
+AtSubAbort_childXids(void)
+{
+	TransactionState s = CurrentTransactionState;
+
+	/*
+	 * We keep the child-XID lists in TopTransactionContext (see
+	 * AtSubCommit_childXids).  This means we'd better free the list
+	 * explicitly at abort to avoid leakage.
+	 */
+	list_free(s->childXids);
+	s->childXids = NIL;
 }
 
 /*
@@ -3317,7 +3357,10 @@ AbortSubTransaction(void)
 
 		/* Advertise the fact that we aborted in pg_clog. */
 		if (TransactionIdIsValid(s->transactionId))
+		{
 			RecordSubTransactionAbort();
+			AtSubAbort_childXids();
+		}
 
 		/* Post-abort cleanup */
 		CallSubXactCallbacks(SUBXACT_EVENT_ABORT_SUB, s->subTransactionId,

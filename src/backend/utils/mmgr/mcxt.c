@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/mcxt.c,v 1.50 2004/08/29 05:06:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/mcxt.c,v 1.51 2004/09/16 20:17:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,6 +289,25 @@ GetMemoryChunkContext(void *pointer)
 	AssertArg(MemoryContextIsValid(header->context));
 
 	return header->context;
+}
+
+/*
+ * MemoryContextIsEmpty
+ *		Is a memory context empty of any allocated space?
+ */
+bool
+MemoryContextIsEmpty(MemoryContext context)
+{
+	AssertArg(MemoryContextIsValid(context));
+
+	/*
+	 * For now, we consider a memory context nonempty if it has any children;
+	 * perhaps this should be changed later.
+	 */
+	if (context->firstchild != NULL)
+		return false;
+	/* Otherwise use the type-specific inquiry */
+	return (*context->methods->is_empty) (context);
 }
 
 /*
@@ -662,7 +681,6 @@ void
 pgport_pfree(void *pointer)
 {
 	pfree(pointer);
-	return;
 }
 
-#endif
+#endif /* WIN32 */
