@@ -144,10 +144,12 @@ int_agg_state(PG_FUNCTION_ARGS)
 	PGARRAY    *state;
 	PGARRAY    *p;
 
-	if (PG_ARGISNULL(0))
-		state = NULL;
-	else
-		state = (PGARRAY *) PG_GETARG_POINTER(0);
+	/*
+	 * We can keep a pointer in the datum even though nodeAgg thinks it's
+	 * an int4.  Note we assume the initial state of int4 zero will look
+	 * like a null pointer.
+	 */
+	state = (PGARRAY *) PG_GETARG_POINTER(0);
 	p = GetPGArray(state, 1);
 
 	if (!PG_ARGISNULL(1))
