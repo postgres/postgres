@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.18 2004/08/08 01:49:30 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.19 2004/08/08 02:05:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -161,14 +161,14 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
 
   <para>
    This example creates the <type>us_postal_code</type> data type and
-    then uses the type in a table definition:
+   then uses the type in a table definition.  A regular expression test
+   is used to verify that the value looks like a valid US postal code.
 
 <programlisting>
 CREATE DOMAIN us_postal_code AS TEXT
-NOT NULL
 CHECK(
-   VALUE ~ $pc$^\d{5}$$pc$
-OR VALUE ~ $pc$^\d{5}-\d{4}$$pc$
+   VALUE ~ '^\d{5}$'
+OR VALUE ~ '^\d{5}-\d{4}$'
 );
 
 CREATE TABLE us_snail_addy (
@@ -177,7 +177,7 @@ CREATE TABLE us_snail_addy (
 , street2 TEXT
 , street3 TEXT
 , city TEXT NOT NULL
-, postal us_postal_code
+, postal us_postal_code NOT NULL
 );
 </programlisting>
   </para>
