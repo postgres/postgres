@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Sep 30 15:01:35 EDT 2001
+Last updated:		Mon Oct  1 21:19:56 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -92,6 +92,7 @@ MULTILANGUAGE SUPPORT
 * -Make functions more multi-byte aware, e.g. trim() (Tatsuo)
 * -Make n of CHAR(n)/VARCHAR(n) the number of letters, not bytes (Tatsuo)
 * Allow setting database character set without multibyte enabled
+* Improve Unicode combined character handling
 
 VIEWS
 
