@@ -2324,18 +2324,21 @@ static char pg_inserttable__doc__[] =
 static PyObject *
 pg_inserttable(pgobject * self, PyObject * args)
 {
-	PGresult   *result;
-	char	   *table,
-			   *buffer,
-			   *temp;
-	char		temp_buffer[256];
-	PyObject   *list,
-			   *sublist,
-			   *item;
-	PyObject   *(*getitem) (PyObject *, int);
-	PyObject   *(*getsubitem) (PyObject *, int);
+	PGresult	*result;
+	char		*table,
+				*buffer,
+				*bufpt,
+				*temp;
+	size_t		bufsiz;
+	PyObject	*list,
+				*sublist,
+				*item;
+	PyObject	*(*getitem) (PyObject *, int);
+	PyObject	*(*getsubitem) (PyObject *, int);
 	int			i,
-				j;
+				j,
+				m,
+				n;
 
 	if (!self->cnx)
 	{
@@ -2347,123 +2350,203 @@ pg_inserttable(pgobject * self, PyObject * args)
 	if (!PyArg_ParseTuple(args, "sO:filter", &table, &list))
 	{
 		PyErr_SetString(PyExc_TypeError,
-					  "tableinsert(table, content), with table (string) "
-						"and content (list).");
+			"tableinsert(table, content), with table (string) "
+			"and content (list).");
 		return NULL;
 	}
 
 	/* checks list type */
 	if (PyTuple_Check(list))
+	{
+		m = PyTuple_Size(list);
 		getitem = PyTuple_GetItem;
+	}
 	else if (PyList_Check(list))
+	{
+		m = PyList_Size(list);
 		getitem = PyList_GetItem;
+	}
 	else
 	{
 		PyErr_SetString(PyExc_TypeError,
-						"second arg must be some kind of array.");
+			"second arg must be some kind of array.");
 		return NULL;
 	}
 
-	/* checks sublists type */
-	for (i = 0; (sublist = getitem(list, i)) != NULL; i++)
+	if (m)
 	{
-		if (!PyTuple_Check(sublist) && !PyList_Check(sublist))
+		/* checks sublists type and size */
+		for (i = 0; i < m; i++)
 		{
-			PyErr_SetString(PyExc_TypeError,
-						 "second arg must contain some kind of arrays.");
-			return NULL;
-		}
-	}
-
-	/* allocate buffer */
-	if (!(buffer = malloc(MAX_BUFFER_SIZE)))
-	{
-		PyErr_SetString(PyExc_MemoryError, "can't allocate insert buffer.");
-		return NULL;
-	}
-
-	/* starts query */
-	sprintf(buffer, "copy %s from stdin", table);
-
-	Py_BEGIN_ALLOW_THREADS
-		result = PQexec(self->cnx, buffer);
-	Py_END_ALLOW_THREADS
-
-		if (!result)
-	{
-		free(buffer);
-		PyErr_SetString(PyExc_ValueError, PQerrorMessage(self->cnx));
-		return NULL;
-	}
-
-	PQclear(result);
-
-	/* feeds table */
-	for (i = 0; (sublist = getitem(list, i)) != NULL; i++)
-	{
-		if (PyTuple_Check(sublist))
-			getsubitem = PyTuple_GetItem;
-		else
-			getsubitem = PyList_GetItem;
-
-		/* builds insert line */
-		buffer[0] = 0;
-
-		for (j = 0; (item = getsubitem(sublist, j)) != NULL; j++)
-		{
-			/* converts item to string */
-			if (PyString_Check(item))
-				temp = PyString_AS_STRING(item);
-			else if (PyInt_Check(item))
-			{
-				long		k;
-
-				k = PyInt_AsLong(item);
-				sprintf(temp_buffer, "%ld", k);
-				temp = temp_buffer;
-			}
-			else if (PyLong_Check(item))
-			{
-				long		k;
-
-				k = PyLong_AsLong(item);
-				sprintf(temp_buffer, "%ld", k);
-				temp = temp_buffer;
-			}
-			else if (PyFloat_Check(item))
-			{
-				double		k;
-
-				k = PyFloat_AS_DOUBLE(item);
-				sprintf(temp_buffer, "%g", k);
-				temp = temp_buffer;
-			}
+			sublist = getitem(list, i);
+			if (PyTuple_Check(sublist))
+				j = PyTuple_Size(sublist);
+			else if (PyList_Check(sublist))
+				j = PyList_Size(sublist);
 			else
 			{
-				free(buffer);
-				PyErr_SetString(PyExc_ValueError,
-								"items must be strings, integers, "
-								"longs or double (real).");
+				PyErr_SetString(PyExc_TypeError,
+					"second arg must contain some kind of arrays.");
+				return NULL;
+			}
+			if (i)
+			{
+				if (j != n)
+				{
+					PyErr_SetString(PyExc_TypeError,
+						"arrays contained in second arg must have same size.");
+					return NULL;
+				}
+			}
+			else
+				n=j;
+		}
+		if (n)
+		{	
+			/* allocate buffer */
+			if (!(buffer = malloc(MAX_BUFFER_SIZE)))
+			{		
+				PyErr_SetString(PyExc_MemoryError,
+					"can't allocate insert buffer.");
 				return NULL;
 			}
 
-			/* concats buffer */
-			if (strlen(buffer))
-				strncat(buffer, "\t", MAX_BUFFER_SIZE - strlen(buffer));
+			/* starts query */
+			sprintf(buffer, "copy %s from stdin", table);
 
-			strncat(buffer, temp, MAX_BUFFER_SIZE - strlen(buffer));
+			Py_BEGIN_ALLOW_THREADS
+				result = PQexec(self->cnx, buffer);
+			Py_END_ALLOW_THREADS
+
+			if (!result)
+			{
+				free(buffer);
+				PyErr_SetString(PyExc_ValueError, PQerrorMessage(self->cnx));
+				return NULL;
+			}
+
+			PQclear(result);
+
+			/* feeds table */
+			for (i = 0; i < m; i++)
+			{
+				sublist = getitem(list, i);
+				if (PyTuple_Check(sublist))
+					getsubitem = PyTuple_GetItem;
+				else
+					getsubitem = PyList_GetItem;
+	
+				/* builds insert line */
+				bufpt=buffer;
+				bufsiz = MAX_BUFFER_SIZE - 1;
+
+				for (j = 0; j < n; j++)
+				{
+					item = getsubitem(sublist, j);
+					/* converts item to string */
+					if (item == Py_None)
+					{
+						if (bufsiz > 2)
+						{
+							*bufpt++ = '\\'; *bufpt++ = 'N';
+							bufsiz -= 2;
+						}
+						else
+							bufsiz = 0;
+					}
+					else if (PyString_Check(item))
+					{
+						temp = PyString_AS_STRING(item);
+						while (*temp && bufsiz)
+						{
+						     if (*temp == '\\'
+						      || *temp == '\t'
+						      || *temp == '\n')
+						     {
+						        *bufpt++='\\'; --bufsiz;
+						        if (!bufsiz) break;
+						     }
+						     *bufpt++=*temp++; --bufsiz;
+						}
+					}
+					else if (PyInt_Check(item))
+					{
+						long	k;
+						int 	h;
+
+						k = PyInt_AsLong(item);
+						h = snprintf(bufpt, bufsiz, "%ld", k);
+						if (h > 0)
+						{
+							bufpt += h; bufsiz -= h;
+						}
+						else
+							bufsiz = 0;
+					}
+					else if (PyLong_Check(item))
+					{
+						long	k;
+						int 	h;
+
+						k = PyLong_AsLong(item);
+						h = snprintf(bufpt, bufsiz, "%ld", k);
+						if (h > 0)
+						{
+							bufpt += h; bufsiz -= h;
+						}
+						else
+							bufsiz = 0;
+					}
+					else if (PyFloat_Check(item))
+					{
+						double	k;
+						int		h;
+
+						k = PyFloat_AS_DOUBLE(item);
+						h = snprintf(bufpt, bufsiz, "%g", k);
+						if (h > 0)
+						{
+							bufpt += h; bufsiz -= h;
+						}
+						else
+							bufsiz = 0;
+					}
+					else
+					{
+						free(buffer);
+						PyErr_SetString(PyExc_ValueError,
+							"items must be strings, integers, "
+							"longs or double (real).");
+						return NULL;
+					}
+
+					if (j < n-1)
+					{
+						*bufpt++ = '\t'; --bufsiz;
+					}
+			
+					if (bufsiz <= 0)
+					{
+						free(buffer);
+						PyErr_SetString(PyExc_MemoryError,
+							"insert buffer overflow.");
+						return NULL;
+					}
+
+				}
+
+				*bufpt++ = '\n'; *bufpt = '\0';
+
+				/* sends data */
+				PQputline(self->cnx, buffer);
+			}
+	
+			/* ends query */
+			PQputline(self->cnx, "\\.\n");
+			PQendcopy(self->cnx);
+			free(buffer);
 		}
-
-		strncat(buffer, "\n", MAX_BUFFER_SIZE - strlen(buffer));
-
-		/* sends data */
-		PQputline(self->cnx, buffer);
 	}
-
-	/* ends query */
-	PQputline(self->cnx, "\\.\n");
-	PQendcopy(self->cnx);
-	free(buffer);
 
 	/* no error : returns nothing */
 	Py_INCREF(Py_None);
