@@ -1,17 +1,3 @@
-From scrappy@ki.net Wed Jul 31 18:17:54 1996
-Status: RO
-X-Status: 
-Received: from daemun.ilt.com ([204.247.102.21]) by ki.net (8.7.5/8.7.5) with ESMTP id SAA22954 for <scrappy@ki.net>; Wed, 31 Jul 1996 18:14:36 -0400 (EDT)
-From: postgres@madmax.ilt.com
-Received: from madmax.ilt.com (madmax [199.26.203.43]) by daemun.ilt.com (8.7.5/8.7.3) with SMTP id PAA27575 for <scrappy@ki.net>; Wed, 31 Jul 1996 15:14:04 -0700 (PDT)
-Received: by madmax.ilt.com (SMI-8.6/ILT-SVR4-1.1)
-	id PAA14102; Wed, 31 Jul 1996 15:09:21 -0700
-Date: Wed, 31 Jul 1996 15:09:21 -0700
-Message-Id: <199607312209.PAA14102@madmax.ilt.com>
-To: scrappy@ki.net
-Subject: src/test/regress/expected.input
-
-
 =============== destroying old regression database... =================
 WARN:destroydb: database regression does not exist.
 destroydb: database destroy failed on regression.
@@ -493,39 +479,57 @@ road         |t
 shighway     |t          
 tenk1        |t          
 tenk2        |t          
+(19 rows)
+
 =============== running regression queries ... =================
 QUERY: SELECT 1 AS one;
 one
 ---
   1
+(1 row)
+
 QUERY: SELECT 't'::bool AS true;
 true
 ----
 t   
+(1 row)
+
 QUERY: SELECT 'f'::bool AS false;
 false
 -----
 f    
+(1 row)
+
 QUERY: SELECT 't'::bool or 'f'::bool AS true;
 true
 ----
 t   
+(1 row)
+
 QUERY: SELECT 't'::bool and 'f'::bool AS false;
 false
 -----
 f    
+(1 row)
+
 QUERY: SELECT not 'f'::bool AS true;
 true
 ----
 t   
+(1 row)
+
 QUERY: SELECT 't'::bool = 'f'::bool AS false;
 false
 -----
 f    
+(1 row)
+
 QUERY: SELECT 't'::bool <> 'f'::bool AS true;
 true
 ----
 t   
+(1 row)
+
 QUERY: CREATE TABLE BOOLTBL1 (f1 bool);
 QUERY: INSERT INTO BOOLTBL1 (f1) VALUES ('t'::bool);
 QUERY: INSERT INTO BOOLTBL1 (f1) VALUES ('True'::bool);
@@ -536,6 +540,8 @@ t_3|f1
    |t 
    |t 
    |t 
+(3 rows)
+
 QUERY: SELECT '' AS t_3, BOOLTBL1.*
    FROM BOOLTBL1
    WHERE f1 = 'true'::bool;
@@ -544,6 +550,8 @@ t_3|f1
    |t 
    |t 
    |t 
+(3 rows)
+
 QUERY: SELECT '' AS t_3, BOOLTBL1.*
    FROM BOOLTBL1
    WHERE f1 <> 'false'::bool;
@@ -552,11 +560,15 @@ t_3|f1
    |t 
    |t 
    |t 
+(3 rows)
+
 QUERY: SELECT '' AS zero, BOOLTBL1.*
    FROM BOOLTBL1
    WHERE booleq('false'::bool, f1);
 zero|f1
 ----+--
+(0 rows)
+
 QUERY: INSERT INTO BOOLTBL1 (f1) VALUES ('f'::bool);
 QUERY: SELECT '' AS f_1, BOOLTBL1.*
    FROM BOOLTBL1
@@ -564,6 +576,8 @@ QUERY: SELECT '' AS f_1, BOOLTBL1.*
 f_1|f1
 ---+--
    |f 
+(1 row)
+
 QUERY: CREATE TABLE BOOLTBL2 (f1 bool);
 QUERY: INSERT INTO BOOLTBL2 (f1) VALUES ('f'::bool);
 QUERY: INSERT INTO BOOLTBL2 (f1) VALUES ('false'::bool);
@@ -577,6 +591,8 @@ f_4|f1
    |f 
    |f 
    |f 
+(4 rows)
+
 QUERY: SELECT '' AS tf_12, BOOLTBL1.*, BOOLTBL2.*
    WHERE BOOLTBL2.f1 <> BOOLTBL1.f1;
 tf_12|f1|f1
@@ -593,6 +609,8 @@ tf_12|f1|f1
      |t |f 
      |t |f 
      |t |f 
+(12 rows)
+
 QUERY: SELECT '' AS tf_12, BOOLTBL1.*, BOOLTBL2.*
    WHERE boolne(BOOLTBL2.f1,BOOLTBL1.f1);
 tf_12|f1|f1
@@ -609,6 +627,8 @@ tf_12|f1|f1
      |t |f 
      |t |f 
      |t |f 
+(12 rows)
+
 QUERY: SELECT '' AS ff_4, BOOLTBL1.*, BOOLTBL2.*
    WHERE BOOLTBL2.f1 = BOOLTBL1.f1 and BOOLTBL1.f1 = 'false'::bool;
 ff_4|f1|f1
@@ -617,6 +637,8 @@ ff_4|f1|f1
     |f |f 
     |f |f 
     |f |f 
+(4 rows)
+
 QUERY: SELECT '' AS tf_12_ff_4, BOOLTBL1.*, BOOLTBL2.*
    WHERE BOOLTBL2.f1 = BOOLTBL1.f1 or BOOLTBL1.f1 = 'true'::bool;
 tf_12_ff_4|f1|f1
@@ -637,6 +659,8 @@ tf_12_ff_4|f1|f1
           |t |f 
           |t |f 
           |f |f 
+(16 rows)
+
 QUERY: CREATE TABLE ABSTIME_TBL (f1 abstime);
 QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('Jan 14, 1973 03:14:21');
 QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('Mon May  1 00:30:30 PDT 1995'::abstime);
@@ -687,6 +711,8 @@ eleven|f1
       |Wed Dec 31 15:59:59 1969 PST
       |Invalid Abstime             
       |Invalid Abstime             
+(11 rows)
+
 QUERY: SELECT '' AS eight, ABSTIME_TBL.*
    WHERE ABSTIME_TBL.f1 < 'Jun 30, 2001'::abstime;
 eight|f1                          
@@ -699,6 +725,8 @@ eight|f1
      |Mon May 10 23:59:12 1943 PWT
      |Thu Mar 07 10:00:00 1946 PST
      |Wed Dec 31 15:59:59 1969 PST
+(8 rows)
+
 QUERY: SELECT '' AS eight, ABSTIME_TBL.*
    WHERE ABSTIME_TBL.f1 > '-infinity'::abstime;
 eight|f1                          
@@ -711,6 +739,8 @@ eight|f1
      |Mon May 10 23:59:12 1943 PWT
      |Thu Mar 07 10:00:00 1946 PST
      |Wed Dec 31 15:59:59 1969 PST
+(8 rows)
+
 QUERY: SELECT '' AS eight, ABSTIME_TBL.*
    WHERE 'May 10, 1943 23:59:12'::abstime <> ABSTIME_TBL.f1;
 eight|f1                          
@@ -723,11 +753,15 @@ eight|f1
      |-infinity                   
      |Thu Mar 07 10:00:00 1946 PST
      |Wed Dec 31 15:59:59 1969 PST
+(8 rows)
+
 QUERY: SELECT '' AS one, ABSTIME_TBL.*
    WHERE 'current'::abstime = ABSTIME_TBL.f1;
 one|f1     
 ---+-------
    |current
+(1 row)
+
 QUERY: SELECT '' AS five, ABSTIME_TBL.*
    WHERE 'epoch'::abstime >= ABSTIME_TBL.f1;
 five|f1                          
@@ -737,6 +771,8 @@ five|f1
     |Mon May 10 23:59:12 1943 PWT
     |Thu Mar 07 10:00:00 1946 PST
     |Wed Dec 31 15:59:59 1969 PST
+(5 rows)
+
 QUERY: SELECT '' AS six, ABSTIME_TBL.*
    WHERE ABSTIME_TBL.f1 <= 'Jan 14, 1973 03:14:21'::abstime;
 six|f1                          
@@ -747,6 +783,8 @@ six|f1
    |Mon May 10 23:59:12 1943 PWT
    |Thu Mar 07 10:00:00 1946 PST
    |Wed Dec 31 15:59:59 1969 PST
+(6 rows)
+
 QUERY: SELECT '' AS six, ABSTIME_TBL.*
   WHERE ABSTIME_TBL.f1 <?>
 	'["Apr 1 1945 00:00:00" "Dec 30 1999 23:00:00"]'::tinterval;
@@ -758,6 +796,8 @@ six|f1
    |current                     
    |Thu Mar 07 10:00:00 1946 PST
    |Wed Dec 31 15:59:59 1969 PST
+(6 rows)
+
 QUERY: SELECT '' AS five, ABSTIME_TBL.*
   WHERE  (ABSTIME_TBL.f1 + '@ 3 year'::reltime)     -- +3 years
 	< 'Jan 14 14:00:00 1977'::abstime;
@@ -768,6 +808,8 @@ five|f1
     |Mon May 10 23:59:12 1943 PWT
     |Thu Mar 07 10:00:00 1946 PST
     |Wed Dec 31 15:59:59 1969 PST
+(5 rows)
+
 QUERY: SELECT '' AS five, ABSTIME_TBL.*
    WHERE  (ABSTIME_TBL.f1 + '@ 3 year ago'::reltime) -- -3 years
 	< 'Jan 14 14:00:00 1971'::abstime;
@@ -778,6 +820,8 @@ five|f1
     |Mon May 10 23:59:12 1943 PWT
     |Thu Mar 07 10:00:00 1946 PST
     |Wed Dec 31 15:59:59 1969 PST
+(5 rows)
+
 QUERY: SELECT '' AS five, ABSTIME_TBL.*
    WHERE  (ABSTIME_TBL.f1 - '@ 3 year'::reltime)     -- -(+3) years
 	< 'Jan 14 14:00:00 1971'::abstime;
@@ -788,6 +832,8 @@ five|f1
     |Mon May 10 23:59:12 1943 PWT
     |Thu Mar 07 10:00:00 1946 PST
     |Wed Dec 31 15:59:59 1969 PST
+(5 rows)
+
 QUERY: SELECT '' AS five, ABSTIME_TBL.*
    WHERE  (ABSTIME_TBL.f1 - '@ 3 year ago'::reltime) -- -(-3) years
 	< 'Jan 14 14:00:00 1977'::abstime;
@@ -798,6 +844,8 @@ five|f1
     |Mon May 10 23:59:12 1943 PWT
     |Thu Mar 07 10:00:00 1946 PST
     |Wed Dec 31 15:59:59 1969 PST
+(5 rows)
+
 QUERY: SELECT '' AS twenty, ABSTIME_TBL.*, RELTIME_TBL.*
    WHERE (ABSTIME_TBL.f1 + RELTIME_TBL.f1)
 	< 'Jan 14 14:00:00 1971'::abstime;
@@ -823,6 +871,8 @@ twenty|f1                          |f1
       |Mon May 10 23:59:12 1943 PWT|@ 14 seconds ago
       |Thu Mar 07 10:00:00 1946 PST|@ 14 seconds ago
       |Wed Dec 31 15:59:59 1969 PST|@ 14 seconds ago
+(20 rows)
+
 QUERY: SELECT '' AS eight, RELTIME_TBL.*;
 eight|f1               
 -----+-----------------
@@ -834,6 +884,8 @@ eight|f1
      |@ 14 seconds ago 
      |Undefined RelTime
      |Undefined RelTime
+(8 rows)
+
 QUERY: SELECT '' AS five, RELTIME_TBL.*
    WHERE RELTIME_TBL.f1 <> '@ 10 days'::reltime;
 five|f1              
@@ -843,6 +895,8 @@ five|f1
     |@ 34 years      
     |@ 3 months      
     |@ 14 seconds ago
+(5 rows)
+
 QUERY: SELECT '' AS three, RELTIME_TBL.*
    WHERE RELTIME_TBL.f1 <= '@ 5 hours'::reltime;
 three|f1              
@@ -850,6 +904,8 @@ three|f1
      |@ 1 minute      
      |@ 5 hours       
      |@ 14 seconds ago
+(3 rows)
+
 QUERY: SELECT '' AS three, RELTIME_TBL.*
    WHERE RELTIME_TBL.f1 < '@ 1 day'::reltime;
 three|f1              
@@ -857,17 +913,23 @@ three|f1
      |@ 1 minute      
      |@ 5 hours       
      |@ 14 seconds ago
+(3 rows)
+
 QUERY: SELECT '' AS one, RELTIME_TBL.*
    WHERE RELTIME_TBL.f1 = '@ 34 years'::reltime;
 one|f1        
 ---+----------
    |@ 34 years
+(1 row)
+
 QUERY: SELECT '' AS two, RELTIME_TBL.*
    WHERE RELTIME_TBL.f1 >= '@ 1 month'::reltime;
 two|f1        
 ---+----------
    |@ 34 years
    |@ 3 months
+(2 rows)
+
 QUERY: SELECT '' AS five, RELTIME_TBL.*
    WHERE RELTIME_TBL.f1 > '@ 3 seconds ago'::reltime;
 five|f1        
@@ -877,6 +939,8 @@ five|f1
     |@ 10 days 
     |@ 34 years
     |@ 3 months
+(5 rows)
+
 QUERY: SELECT '' AS fifteen, r1.*, r2.*
    FROM RELTIME_TBL r1, RELTIME_TBL r2
    WHERE r1.f1 > r2.f1;
@@ -897,6 +961,8 @@ fifteen|f1        |f1
        |@ 10 days |@ 14 seconds ago
        |@ 34 years|@ 14 seconds ago
        |@ 3 months|@ 14 seconds ago
+(15 rows)
+
 QUERY: SELECT '' AS seven, TINTERVAL_TBL.*;
 seven|f1                                                             
 -----+---------------------------------------------------------------
@@ -907,12 +973,16 @@ seven|f1
      |['Thu Feb 15 12:15:03 1990 PST' 'current']                     
      |['Undefined Range']                                            
      |['Undefined Range']                                            
+(7 rows)
+
 QUERY: SELECT '' AS one, t.*
    FROM TINTERVAL_TBL t
    WHERE t.f1 #= '@ 1 months';
 one|f1                                                             
 ---+---------------------------------------------------------------
    |['Sun Sep 04 23:59:12 1983 PDT' 'Tue Oct 04 23:59:12 1983 PDT']
+(1 row)
+
 QUERY: SELECT '' AS three, t.*
    FROM TINTERVAL_TBL t
    WHERE t.f1 #<> '@ 1 months';
@@ -921,17 +991,23 @@ three|f1
      |['Mon May 10 23:59:12 1943 PWT' 'Sun Jan 14 03:14:21 1973 PST']
      |['epoch' 'Mon May 01 00:30:30 1995 PDT']                       
      |['Thu Feb 15 12:15:03 1990 PST' 'current']                     
+(3 rows)
+
 QUERY: SELECT '' AS zero, t.*
    FROM TINTERVAL_TBL t
    WHERE t.f1 #< '@ 1 month';
 zero|f1
 ----+--
+(0 rows)
+
 QUERY: SELECT '' AS one, t.*
    FROM TINTERVAL_TBL t
    WHERE t.f1 #<= '@ 1 month';
 one|f1                                                             
 ---+---------------------------------------------------------------
    |['Sun Sep 04 23:59:12 1983 PDT' 'Tue Oct 04 23:59:12 1983 PDT']
+(1 row)
+
 QUERY: SELECT '' AS three, t.*
    FROM TINTERVAL_TBL t
    WHERE t.f1 #> '@ 1 year';
@@ -940,6 +1016,8 @@ three|f1
      |['Mon May 10 23:59:12 1943 PWT' 'Sun Jan 14 03:14:21 1973 PST']
      |['epoch' 'Mon May 01 00:30:30 1995 PDT']                       
      |['Thu Feb 15 12:15:03 1990 PST' 'current']                     
+(3 rows)
+
 QUERY: SELECT '' AS three, t.*
    FROM TINTERVAL_TBL t
    WHERE t.f1 #>= '@ 3 years';
@@ -948,6 +1026,8 @@ three|f1
      |['Mon May 10 23:59:12 1943 PWT' 'Sun Jan 14 03:14:21 1973 PST']
      |['epoch' 'Mon May 01 00:30:30 1995 PDT']                       
      |['Thu Feb 15 12:15:03 1990 PST' 'current']                     
+(3 rows)
+
 QUERY: SELECT '' AS three, t1.*
    FROM TINTERVAL_TBL t1
    WHERE t1.f1 &&
@@ -957,6 +1037,8 @@ three|f1
      |['-infinity' 'infinity']                                       
      |['Sun Sep 04 23:59:12 1983 PDT' 'Tue Oct 04 23:59:12 1983 PDT']
      |['epoch' 'Mon May 01 00:30:30 1995 PDT']                       
+(3 rows)
+
 QUERY: SELECT '' AS five, t1.*, t2.*
    FROM TINTERVAL_TBL t1, TINTERVAL_TBL t2
    WHERE t1.f1 && t2.f1 and
@@ -968,6 +1050,8 @@ five|f1                                                             |f1
     |['Sun Sep 04 23:59:12 1983 PDT' 'Tue Oct 04 23:59:12 1983 PDT']|['Sun Sep 04 23:59:12 1983 PDT' 'Tue Oct 04 23:59:12 1983 PDT']
     |['epoch' 'Mon May 01 00:30:30 1995 PDT']                       |['epoch' 'Mon May 01 00:30:30 1995 PDT']                       
     |['Thu Feb 15 12:15:03 1990 PST' 'current']                     |['Thu Feb 15 12:15:03 1990 PST' 'current']                     
+(5 rows)
+
 QUERY: SELECT '' AS fourteen, t1.*, t2.*
    FROM TINTERVAL_TBL t1, TINTERVAL_TBL t2
    WHERE t1.f1 && t2.f1 and
@@ -988,6 +1072,8 @@ fourteen|f1                                                             |f1
         |['Thu Feb 15 12:15:03 1990 PST' 'current']                     |['epoch' 'Mon May 01 00:30:30 1995 PDT']                       
         |['-infinity' 'infinity']                                       |['Thu Feb 15 12:15:03 1990 PST' 'current']                     
         |['epoch' 'Mon May 01 00:30:30 1995 PDT']                       |['Thu Feb 15 12:15:03 1990 PST' 'current']                     
+(14 rows)
+
 QUERY: SELECT '' AS five, t1.*
    FROM TINTERVAL_TBL t1
    WHERE not t1.f1 <<
@@ -999,6 +1085,8 @@ five|f1
     |['Thu Feb 15 12:15:03 1990 PST' 'current']                     
     |['Undefined Range']                                            
     |['Undefined Range']                                            
+(5 rows)
+
 QUERY: SELECT '' AS three, t1.*
    FROM TINTERVAL_TBL t1
    WHERE t1.f1 &&
@@ -1009,6 +1097,8 @@ three|f1
      |['-infinity' 'infinity']                                       
      |['Sun Sep 04 23:59:12 1983 PDT' 'Tue Oct 04 23:59:12 1983 PDT']
      |['epoch' 'Mon May 01 00:30:30 1995 PDT']                       
+(3 rows)
+
 QUERY: CREATE TABLE BOX_TBL (f1 box);
 QUERY: INSERT INTO BOX_TBL (f1) VALUES ('(2.0,2.0,0.0,0.0)');
 QUERY: INSERT INTO BOX_TBL (f1) VALUES ('(1.0,1.0,3.0,3.0)');
@@ -1025,6 +1115,8 @@ four|f1
     |(3,3,1,1)        
     |(2.5,3.5,2.5,2.5)
     |(3,3,3,3)        
+(4 rows)
+
 QUERY: SELECT '' AS four, b.*, box_area(b.f1) as barea
    FROM BOX_TBL b;
 four|f1               |barea
@@ -1033,6 +1125,8 @@ four|f1               |barea
     |(3,3,1,1)        |    4
     |(2.5,3.5,2.5,2.5)|    0
     |(3,3,3,3)        |    0
+(4 rows)
+
 QUERY: SELECT '' AS three, b.f1
    FROM BOX_TBL b
    WHERE b.f1 && '(2.5,2.5,1.0,1.0)'::box;
@@ -1041,6 +1135,8 @@ three|f1
      |(2,2,0,0)        
      |(3,3,1,1)        
      |(2.5,3.5,2.5,2.5)
+(3 rows)
+
 QUERY: SELECT '' AS two, b1.*
    FROM BOX_TBL b1
    WHERE b1.f1 &< '(2.0,2.0,2.5,2.5)'::box;
@@ -1048,6 +1144,8 @@ two|f1
 ---+-----------------
    |(2,2,0,0)        
    |(2.5,3.5,2.5,2.5)
+(2 rows)
+
 QUERY: SELECT '' AS two, b1.*
    FROM BOX_TBL b1
    WHERE b1.f1 &> '(2.0,2.0,2.5,2.5)'::box;
@@ -1055,6 +1153,8 @@ two|f1
 ---+-----------------
    |(2.5,3.5,2.5,2.5)
    |(3,3,3,3)        
+(2 rows)
+
 QUERY: SELECT '' AS two, b.f1
    FROM BOX_TBL b
    WHERE b.f1 << '(3.0,3.0,5.0,5.0)'::box;
@@ -1062,6 +1162,8 @@ two|f1
 ---+-----------------
    |(2,2,0,0)        
    |(2.5,3.5,2.5,2.5)
+(2 rows)
+
 QUERY: SELECT '' AS four, b.f1
    FROM BOX_TBL b
    WHERE b.f1 <= '(3.0,3.0,5.0,5.0)'::box;
@@ -1071,6 +1173,8 @@ four|f1
     |(3,3,1,1)        
     |(2.5,3.5,2.5,2.5)
     |(3,3,3,3)        
+(4 rows)
+
 QUERY: SELECT '' AS two, b.f1
    FROM BOX_TBL b
    WHERE b.f1 < '(3.0,3.0,5.0,5.0)'::box;
@@ -1078,6 +1182,8 @@ two|f1
 ---+-----------------
    |(2.5,3.5,2.5,2.5)
    |(3,3,3,3)        
+(2 rows)
+
 QUERY: SELECT '' AS two, b.f1
    FROM BOX_TBL b
    WHERE b.f1 = '(3.0,3.0,5.0,5.0)'::box;
@@ -1085,6 +1191,8 @@ two|f1
 ---+---------
    |(2,2,0,0)
    |(3,3,1,1)
+(2 rows)
+
 QUERY: SELECT '' AS two, b.f1
    FROM BOX_TBL b				-- zero area
    WHERE b.f1 > '(3.5,3.0,4.5,3.0)'::box;
@@ -1092,6 +1200,8 @@ two|f1
 ---+---------
    |(2,2,0,0)
    |(3,3,1,1)
+(2 rows)
+
 QUERY: SELECT '' AS four, b.f1
    FROM BOX_TBL b				-- zero area
    WHERE b.f1 >= '(3.5,3.0,4.5,3.0)'::box;
@@ -1101,6 +1211,8 @@ four|f1
     |(3,3,1,1)        
     |(2.5,3.5,2.5,2.5)
     |(3,3,3,3)        
+(4 rows)
+
 QUERY: SELECT '' AS two, b.f1
    FROM BOX_TBL b
    WHERE '(3.0,3.0,5.0,5.0)'::box >> b.f1;
@@ -1108,6 +1220,8 @@ two|f1
 ---+-----------------
    |(2,2,0,0)        
    |(2.5,3.5,2.5,2.5)
+(2 rows)
+
 QUERY: SELECT '' AS three, b.f1
    FROM BOX_TBL b
    WHERE b.f1 @ '(0,0,3,3)'::box;
@@ -1116,6 +1230,8 @@ three|f1
      |(2,2,0,0)
      |(3,3,1,1)
      |(3,3,3,3)
+(3 rows)
+
 QUERY: SELECT '' AS three, b.f1
    FROM BOX_TBL b
    WHERE '(0,0,3,3)'::box ~ b.f1;
@@ -1124,12 +1240,16 @@ three|f1
      |(2,2,0,0)
      |(3,3,1,1)
      |(3,3,3,3)
+(3 rows)
+
 QUERY: SELECT '' AS one, b.f1
    FROM BOX_TBL b
    WHERE '(1,1,3,3)'::box ~= b.f1;
 one|f1       
 ---+---------
    |(3,3,1,1)
+(1 row)
+
 QUERY: SELECT '' AS four, @@(b1.f1) AS p
    FROM BOX_TBL b1;
 four|p      
@@ -1138,12 +1258,16 @@ four|p
     |(2,2)  
     |(2.5,3)
     |(3,3)  
+(4 rows)
+
 QUERY: SELECT '' AS one, b1.*, b2.*
    FROM BOX_TBL b1, BOX_TBL b2
    WHERE b1.f1 ~ b2.f1 and not b1.f1 ~= b2.f1;
 one|f1       |f1       
 ---+---------+---------
    |(3,3,1,1)|(3,3,3,3)
+(1 row)
+
 QUERY: CREATE TABLE CHAR_TBL(f1 char);
 QUERY: INSERT INTO CHAR_TBL (f1) VALUES ('a');
 QUERY: INSERT INTO CHAR_TBL (f1) VALUES ('A');
@@ -1162,6 +1286,8 @@ seven|f1
      |3 
      |  
      |c 
+(7 rows)
+
 QUERY: SELECT '' AS six, c.*
    FROM CHAR_TBL c
    WHERE c.f1 <> 'a';
@@ -1173,12 +1299,16 @@ six|f1
    |3 
    |  
    |c 
+(6 rows)
+
 QUERY: SELECT '' AS one, c.*
    FROM CHAR_TBL c
    WHERE c.f1 = 'a';
 one|f1
 ---+--
    |a 
+(1 row)
+
 QUERY: SELECT '' AS five, c.*
    FROM CHAR_TBL c
    WHERE c.f1 < 'a';
@@ -1189,6 +1319,8 @@ five|f1
     |2 
     |3 
     |  
+(5 rows)
+
 QUERY: SELECT '' AS six, c.*
    FROM CHAR_TBL c
    WHERE c.f1 <= 'a';
@@ -1200,12 +1332,16 @@ six|f1
    |2 
    |3 
    |  
+(6 rows)
+
 QUERY: SELECT '' AS one, c.*
    FROM CHAR_TBL c
    WHERE c.f1 > 'a';
 one|f1
 ---+--
    |c 
+(1 row)
+
 QUERY: SELECT '' AS two, c.*
    FROM CHAR_TBL c
    WHERE c.f1 >= 'a';
@@ -1213,6 +1349,8 @@ two|f1
 ---+--
    |a 
    |c 
+(2 rows)
+
 QUERY: CREATE TABLE CHAR2_TBL(f1 char2);
 QUERY: INSERT INTO CHAR2_TBL (f1) VALUES ('AB');
 QUERY: INSERT INTO CHAR2_TBL (f1) VALUES ('ab');
@@ -1231,6 +1369,8 @@ seven|f1
      |d 
      |  
      |12
+(7 rows)
+
 QUERY: SELECT '' AS six, c.f1 FROM CHAR2_TBL c WHERE c.f1 <> 'AB';
 six|f1
 ---+--
@@ -1240,16 +1380,22 @@ six|f1
    |d 
    |  
    |12
+(6 rows)
+
 QUERY: SELECT '' AS one, c.f1 FROM CHAR2_TBL c WHERE c.f1 = 'AB';
 one|f1
 ---+--
    |AB
+(1 row)
+
 QUERY: SELECT '' AS three, c.f1 FROM CHAR2_TBL c WHERE c.f1 < 'AB';
 three|f1
 -----+--
      |34
      |  
      |12
+(3 rows)
+
 QUERY: SELECT '' AS four, c.f1 FROM CHAR2_TBL c WHERE c.f1 <= 'AB';
 four|f1
 ----+--
@@ -1257,12 +1403,16 @@ four|f1
     |34
     |  
     |12
+(4 rows)
+
 QUERY: SELECT '' AS three, c.f1 FROM CHAR2_TBL c WHERE c.f1 > 'AB';
 three|f1
 -----+--
      |ab
      |ZY
      |d 
+(3 rows)
+
 QUERY: SELECT '' AS four, c.f1 FROM CHAR2_TBL c WHERE c.f1 >= 'AB';
 four|f1
 ----+--
@@ -1270,6 +1420,8 @@ four|f1
     |ab
     |ZY
     |d 
+(4 rows)
+
 QUERY: SELECT '' AS seven, c.f1 FROM CHAR2_TBL c WHERE c.f1 ~ '.*';
 seven|f1
 -----+--
@@ -1280,17 +1432,25 @@ seven|f1
      |d 
      |  
      |12
+(7 rows)
+
 QUERY: SELECT '' AS zero, c.f1 FROM CHAR2_TBL c WHERE c.f1 !~ '.*';
 zero|f1
 ----+--
+(0 rows)
+
 QUERY: SELECT '' AS one, c.f1 FROM CHAR2_TBL c WHERE c.f1 ~ '34';
 one|f1
 ---+--
    |34
+(1 row)
+
 QUERY: SELECT '' AS one, c.f1 FROM CHAR2_TBL c WHERE c.f1 ~ '3.*';
 one|f1
 ---+--
    |34
+(1 row)
+
 QUERY: CREATE TABLE CHAR4_TBL (f1  char4);
 QUERY: INSERT INTO CHAR4_TBL(f1) VALUES ('ABCD');
 QUERY: INSERT INTO CHAR4_TBL(f1) VALUES ('abcd');
@@ -1309,6 +1469,8 @@ seven|f1
      |d34a
      |    
      |1234
+(7 rows)
+
 QUERY: SELECT '' AS six, c.f1 FROM CHAR4_TBL c WHERE c.f1 <> 'ABCD';
 six|f1  
 ---+----
@@ -1318,16 +1480,22 @@ six|f1
    |d34a
    |    
    |1234
+(6 rows)
+
 QUERY: SELECT '' AS one, c.f1 FROM CHAR4_TBL c WHERE c.f1 = 'ABCD';
 one|f1  
 ---+----
    |ABCD
+(1 row)
+
 QUERY: SELECT '' AS three, c.f1 FROM CHAR4_TBL c WHERE c.f1 < 'ABCD';
 three|f1  
 -----+----
      |343f
      |    
      |1234
+(3 rows)
+
 QUERY: SELECT '' AS four, c.f1 FROM CHAR4_TBL c WHERE c.f1 <= 'ABCD';
 four|f1  
 ----+----
@@ -1335,12 +1503,16 @@ four|f1
     |343f
     |    
     |1234
+(4 rows)
+
 QUERY: SELECT '' AS three, c.f1 FROM CHAR4_TBL c WHERE c.f1 > 'ABCD';
 three|f1  
 -----+----
      |abcd
      |ZYWZ
      |d34a
+(3 rows)
+
 QUERY: SELECT '' AS four, c.f1 FROM CHAR4_TBL c WHERE c.f1 >= 'ABCD';
 four|f1  
 ----+----
@@ -1348,6 +1520,8 @@ four|f1
     |abcd
     |ZYWZ
     |d34a
+(4 rows)
+
 QUERY: SELECT '' AS seven, c.f1 FROM CHAR4_TBL c WHERE c.f1 ~ '.*';
 seven|f1  
 -----+----
@@ -1358,15 +1532,21 @@ seven|f1
      |d34a
      |    
      |1234
+(7 rows)
+
 QUERY: SELECT '' AS zero, c.f1 FROM CHAR4_TBL c WHERE c.f1 !~ '.*';
 zero|f1
 ----+--
+(0 rows)
+
 QUERY: SELECT '' AS three, c.f1 FROM CHAR4_TBL c WHERE c.f1 ~ '.*34.*';
 three|f1  
 -----+----
      |343f
      |d34a
      |1234
+(3 rows)
+
 QUERY: CREATE TABLE CHAR8_TBL(f1 char8);
 QUERY: INSERT INTO CHAR8_TBL(f1) VALUES ('ABCDEFGH');
 QUERY: INSERT INTO CHAR8_TBL(f1) VALUES ('abcdefgh');
@@ -1385,6 +1565,8 @@ seven|f1
      |d34aas  
      |        
      |12345678
+(7 rows)
+
 QUERY: SELECT '' AS six, c.f1 FROM CHAR8_TBL c WHERE c.f1 <> 'ABCDEFGH';
 six|f1      
 ---+--------
@@ -1394,16 +1576,22 @@ six|f1
    |d34aas  
    |        
    |12345678
+(6 rows)
+
 QUERY: SELECT '' AS one, c.f1 FROM CHAR8_TBL c WHERE c.f1 = 'ABCDEFGH';
 one|f1      
 ---+--------
    |ABCDEFGH
+(1 row)
+
 QUERY: SELECT '' AS three, c.f1 FROM CHAR8_TBL c WHERE c.f1 < 'ABCDEFGH';
 three|f1      
 -----+--------
      |343f%2a 
      |        
      |12345678
+(3 rows)
+
 QUERY: SELECT '' AS four, c.f1 FROM CHAR8_TBL c WHERE c.f1 <= 'ABCDEFGH';
 four|f1      
 ----+--------
@@ -1411,12 +1599,16 @@ four|f1
     |343f%2a 
     |        
     |12345678
+(4 rows)
+
 QUERY: SELECT '' AS three, c.f1 FROM CHAR8_TBL c WHERE c.f1 > 'ABCDEFGH';
 three|f1      
 -----+--------
      |abcdefgh
      |ZYWZ410-
      |d34aas  
+(3 rows)
+
 QUERY: SELECT '' AS four, c.f1 FROM CHAR8_TBL c WHERE c.f1 >= 'ABCDEFGH';
 four|f1      
 ----+--------
@@ -1424,6 +1616,8 @@ four|f1
     |abcdefgh
     |ZYWZ410-
     |d34aas  
+(4 rows)
+
 QUERY: SELECT '' AS seven, c.f1 FROM CHAR8_TBL c WHERE c.f1 ~ '.*';
 seven|f1      
 -----+--------
@@ -1434,9 +1628,13 @@ seven|f1
      |d34aas  
      |        
      |12345678
+(7 rows)
+
 QUERY: SELECT '' AS zero, c.f1 FROM CHAR8_TBL c WHERE c.f1 !~ '.*';
 zero|f1
 ----+--
+(0 rows)
+
 QUERY: SELECT '' AS four, c.f1 FROM CHAR8_TBL c WHERE c.f1 ~ '[0-9]';
 four|f1      
 ----+--------
@@ -1444,12 +1642,16 @@ four|f1
     |343f%2a 
     |d34aas  
     |12345678
+(4 rows)
+
 QUERY: SELECT '' AS three, c.f1 FROM CHAR8_TBL c WHERE c.f1 ~ '.*34.*';
 three|f1      
 -----+--------
      |343f%2a 
      |d34aas  
      |12345678
+(3 rows)
+
 QUERY: CREATE TABLE CHAR16_TBL(f1 char16);
 QUERY: INSERT INTO CHAR16_TBL(f1) VALUES ('ABCDEFGHIJKLMNOP');
 QUERY: INSERT INTO CHAR16_TBL(f1) VALUES ('abcdefghijklmnop');
@@ -1468,6 +1670,8 @@ seven|f1
      |d34aaasdf       
      |                
      |1234567890ABCDEF
+(7 rows)
+
 QUERY: SELECT '' AS six, c.f1 FROM CHAR16_TBL c WHERE c.f1 <> 'ABCDEFGHIJKLMNOP';
 six|f1              
 ---+----------------
@@ -1477,16 +1681,22 @@ six|f1
    |d34aaasdf       
    |                
    |1234567890ABCDEF
+(6 rows)
+
 QUERY: SELECT '' AS one, c.f1 FROM CHAR16_TBL c WHERE c.f1 = 'ABCDEFGHIJKLMNOP';
 one|f1              
 ---+----------------
    |ABCDEFGHIJKLMNOP
+(1 row)
+
 QUERY: SELECT '' AS three, c.f1 FROM CHAR16_TBL c WHERE c.f1 < 'ABCDEFGHIJKLMNOP';
 three|f1              
 -----+----------------
      |343f%2a         
      |                
      |1234567890ABCDEF
+(3 rows)
+
 QUERY: SELECT '' AS four, c.f1 FROM CHAR16_TBL c WHERE c.f1 <= 'ABCDEFGHIJKLMNOP';
 four|f1              
 ----+----------------
@@ -1494,12 +1704,16 @@ four|f1
     |343f%2a         
     |                
     |1234567890ABCDEF
+(4 rows)
+
 QUERY: SELECT '' AS three, c.f1 FROM CHAR16_TBL c WHERE c.f1 > 'ABCDEFGHIJKLMNOP';
 three|f1              
 -----+----------------
      |abcdefghijklmnop
      |asdfghjkl;      
      |d34aaasdf       
+(3 rows)
+
 QUERY: SELECT '' AS four, c.f1 FROM CHAR16_TBL c WHERE c.f1 >= 'ABCDEFGHIJKLMNOP';
 four|f1              
 ----+----------------
@@ -1507,6 +1721,8 @@ four|f1
     |abcdefghijklmnop
     |asdfghjkl;      
     |d34aaasdf       
+(4 rows)
+
 QUERY: SELECT '' AS seven, c.f1 FROM CHAR16_TBL c WHERE c.f1 ~ '.*';
 seven|f1              
 -----+----------------
@@ -1517,20 +1733,28 @@ seven|f1
      |d34aaasdf       
      |                
      |1234567890ABCDEF
+(7 rows)
+
 QUERY: SELECT '' AS zero, c.f1 FROM CHAR16_TBL c WHERE c.f1 !~ '.*';
 zero|f1
 ----+--
+(0 rows)
+
 QUERY: SELECT '' AS three, c.f1 FROM CHAR16_TBL c WHERE c.f1 ~ '[0-9]';
 three|f1              
 -----+----------------
      |343f%2a         
      |d34aaasdf       
      |1234567890ABCDEF
+(3 rows)
+
 QUERY: SELECT '' AS two, c.f1 FROM CHAR16_TBL c WHERE c.f1 ~ '.*asdf.*';
 two|f1        
 ---+----------
    |asdfghjkl;
    |d34aaasdf 
+(2 rows)
+
 QUERY: CREATE TABLE FLOAT4_TBL (f1  float4);
 QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('0.0');
 QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('1004.30');
@@ -1557,6 +1781,8 @@ five|f1
     |-34.84     
     |1.23457e+20
     |1.23457e-20
+(5 rows)
+
 QUERY: SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE f.f1 <> '1004.3';
 four|f1         
 ----+-----------
@@ -1564,22 +1790,30 @@ four|f1
     |-34.84     
     |1.23457e+20
     |1.23457e-20
+(4 rows)
+
 QUERY: SELECT '' AS one, f.* FROM FLOAT4_TBL f WHERE f.f1 = '1004.3';
 one|    f1
 ---+------
    |1004.3
+(1 row)
+
 QUERY: SELECT '' AS three, f.* FROM FLOAT4_TBL f WHERE '1004.3' > f.f1;
 three|         f1
 -----+-----------
      |          0
      |     -34.84
      |1.23457e-20
+(3 rows)
+
 QUERY: SELECT '' AS three, f.* FROM FLOAT4_TBL f WHERE  f.f1 < '1004.3';
 three|         f1
 -----+-----------
      |          0
      |     -34.84
      |1.23457e-20
+(3 rows)
+
 QUERY: SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE '1004.3' >= f.f1;
 four|         f1
 ----+-----------
@@ -1587,6 +1821,8 @@ four|         f1
     |     1004.3
     |     -34.84
     |1.23457e-20
+(4 rows)
+
 QUERY: SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE  f.f1 <= '1004.3';
 four|         f1
 ----+-----------
@@ -1594,6 +1830,8 @@ four|         f1
     |     1004.3
     |     -34.84
     |1.23457e-20
+(4 rows)
+
 QUERY: SELECT '' AS three, f.f1, f.f1 * '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
 three|f1         |x           
@@ -1601,6 +1839,8 @@ three|f1         |x
      |1004.3     |-10043      
      |1.23457e+20|-1.23457e+21
      |1.23457e-20|-1.23457e-19
+(3 rows)
+
 QUERY: SELECT '' AS three, f.f1, f.f1 + '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0'
 SELECT '' AS three, f.f1, f.f1 / '-10' AS x FROM FLOAT4_TBL f
@@ -1610,6 +1850,8 @@ three|f1         |x
      |1004.3     |994.3      
      |1.23457e+20|1.23457e+20
      |1.23457e-20|-10        
+(3 rows)
+
 QUERY: SELECT '' AS three, f.f1, f.f1 - '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
 three|f1         |x           
@@ -1617,12 +1859,16 @@ three|f1         |x
      |1004.3     |-100.43     
      |1.23457e+20|-1.23457e+19
      |1.23457e-20|-1.23457e-21
+(3 rows)
+
 QUERY: SELECT '' AS bad, f.f1 / '0.0' from FLOAT4_TBL f;
 three|f1         |x          
 -----+-----------+-----------
      |1004.3     |1014.3     
      |1.23457e+20|1.23457e+20
      |1.23457e-20|10         
+(3 rows)
+
 QUERY: SELECT '' AS five, FLOAT4_TBL.*;
 WARN:float4div:  divide by 0.0 error
 QUERY: SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
@@ -1633,6 +1879,8 @@ five|f1
     |-34.84     
     |1.23457e+20
     |1.23457e-20
+(5 rows)
+
 QUERY: UPDATE FLOAT4_TBL
    SET f1 = FLOAT4_TBL.f1 * '-1'
    WHERE FLOAT4_TBL.f1 > '0.0';
@@ -1643,6 +1891,8 @@ five|f1         |abs_f1
     |-34.84     |34.84      
     |1.23457e+20|1.23457e+20
     |1.23457e-20|1.23457e-20
+(5 rows)
+
 QUERY: SELECT '' AS five, FLOAT4_TBL.*;
 QUERY: CREATE TABLE FLOAT8_TBL(f1 float8);
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('0.0');
@@ -1670,6 +1920,8 @@ five|f1
     |-34.84              
     |1.2345678901234e+200
     |1.2345678901234e-200
+(5 rows)
+
 QUERY: SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE f.f1 <> '1004.3';
 four|f1                  
 ----+--------------------
@@ -1677,22 +1929,30 @@ four|f1
     |-34.84              
     |1.2345678901234e+200
     |1.2345678901234e-200
+(4 rows)
+
 QUERY: SELECT '' AS one, f.* FROM FLOAT8_TBL f WHERE f.f1 = '1004.3';
 one|    f1
 ---+------
    |1004.3
+(1 row)
+
 QUERY: SELECT '' AS three, f.* FROM FLOAT8_TBL f WHERE '1004.3' > f.f1;
 three|                  f1
 -----+--------------------
      |                   0
      |              -34.84
      |1.2345678901234e-200
+(3 rows)
+
 QUERY: SELECT '' AS three, f.* FROM FLOAT8_TBL f WHERE  f.f1 < '1004.3';
 three|                  f1
 -----+--------------------
      |                   0
      |              -34.84
      |1.2345678901234e-200
+(3 rows)
+
 QUERY: SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE '1004.3' >= f.f1;
 four|                  f1
 ----+--------------------
@@ -1700,6 +1960,8 @@ four|                  f1
     |              1004.3
     |              -34.84
     |1.2345678901234e-200
+(4 rows)
+
 QUERY: SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE  f.f1 <= '1004.3';
 four|                  f1
 ----+--------------------
@@ -1707,6 +1969,8 @@ four|                  f1
     |              1004.3
     |              -34.84
     |1.2345678901234e-200
+(4 rows)
+
 QUERY: SELECT '' AS three, f.f1, f.f1 * '-10' AS x
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0';
@@ -1715,6 +1979,8 @@ three|f1                  |x
      |1004.3              |-10043               
      |1.2345678901234e+200|-1.2345678901234e+201
      |1.2345678901234e-200|-1.2345678901234e-199
+(3 rows)
+
 QUERY: SELECT '' AS three, f.f1, f.f1 + '-10' AS x
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0';
@@ -1723,6 +1989,8 @@ three|f1                  |x
      |1004.3              |994.3               
      |1.2345678901234e+200|1.2345678901234e+200
      |1.2345678901234e-200|-10                 
+(3 rows)
+
 QUERY: SELECT '' AS three, f.f1, f.f1 / '-10' AS x
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0';
@@ -1731,6 +1999,8 @@ three|f1                  |x
      |1004.3              |-100.43              
      |1.2345678901234e+200|-1.2345678901234e+199
      |1.2345678901234e-200|-1.2345678901234e-201
+(3 rows)
+
 QUERY: SELECT '' AS three, f.f1, f.f1 - '-10' AS x
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0';
@@ -1739,11 +2009,15 @@ three|f1                  |x
      |1004.3              |1014.3              
      |1.2345678901234e+200|1.2345678901234e+200
      |1.2345678901234e-200|10                  
+(3 rows)
+
 QUERY: SELECT '' AS one, f.f1 ^ '2.0' AS square_f1
    FROM FLOAT8_TBL f where f.f1 = '1004.3';
 one| square_f1
 ---+----------
    |1008618.49
+(1 row)
+
 QUERY: SELECT '' AS five, f.f1, @f.f1 AS abs_f1
    FROM FLOAT8_TBL f;
 five|f1                  |abs_f1              
@@ -1753,6 +2027,8 @@ five|f1                  |abs_f1
     |-34.84              |34.84               
     |1.2345678901234e+200|1.2345678901234e+200
     |1.2345678901234e-200|1.2345678901234e-200
+(5 rows)
+
 QUERY: SELECT '' AS five, f.f1, %f.f1 AS trunc_f1
    FROM FLOAT8_TBL f;
 five|f1                  |trunc_f1            
@@ -1762,6 +2038,8 @@ five|f1                  |trunc_f1
     |-34.84              |-34                 
     |1.2345678901234e+200|1.2345678901234e+200
     |1.2345678901234e-200|0                   
+(5 rows)
+
 QUERY: SELECT '' AS five, f.f1, f.f1 % AS round_f1
    FROM FLOAT8_TBL f;
 five|f1                  |round_f1            
@@ -1771,6 +2049,8 @@ five|f1                  |round_f1
     |-34.84              |-35                 
     |1.2345678901234e+200|1.2345678901234e+200
     |1.2345678901234e-200|0                   
+(5 rows)
+
 QUERY: SELECT '' AS three, f.f1, |/f.f1 AS sqrt_f1
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0';
@@ -1779,6 +2059,8 @@ three|f1                  |sqrt_f1
      |1004.3              |31.6906926399535     
      |1.2345678901234e+200|1.11111110611109e+100
      |1.2345678901234e-200|1.11111110611109e-100
+(3 rows)
+
 QUERY: SELECT '' AS three, f.f1, : ( ; f.f1) AS exp_ln_f1
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0';
@@ -1787,6 +2069,8 @@ three|f1                  |exp_ln_f1
      |1004.3              |1004.3               
      |1.2345678901234e+200|1.23456789012338e+200
      |1.2345678901234e-200|1.23456789012339e-200
+(3 rows)
+
 QUERY: SELECT '' AS five, f.f1, ||/f.f1 AS cbrt_f1 FROM FLOAT8_TBL f;
 five|f1                  |cbrt_f1             
 ----+--------------------+--------------------
@@ -1795,6 +2079,8 @@ five|f1                  |cbrt_f1
     |-34.84              |-3.26607421344208   
     |1.2345678901234e+200|4.97933859234765e+66
     |1.2345678901234e-200|2.3112042409018e-67 
+(5 rows)
+
 QUERY: SELECT '' AS five, FLOAT8_TBL.*;
 five|f1                  
 ----+--------------------
@@ -1803,6 +2089,8 @@ five|f1
     |-34.84              
     |1.2345678901234e+200
     |1.2345678901234e-200
+(5 rows)
+
 QUERY: UPDATE FLOAT8_TBL
    SET f1 = FLOAT8_TBL.f1 * '-1'
    WHERE FLOAT8_TBL.f1 > '0.0';
@@ -1829,6 +2117,8 @@ five|f1
     |-1004.3              
     |-1.2345678901234e+200
     |-1.2345678901234e-200
+(5 rows)
+
 QUERY: CREATE TABLE INT2_TBL(f1 int2);
 QUERY: INSERT INTO INT2_TBL(f1) VALUES ('0');
 QUERY: INSERT INTO INT2_TBL(f1) VALUES ('1234');
@@ -1849,6 +2139,8 @@ five|    f1
     | -1234
     | 32767
     |-32767
+(5 rows)
+
 QUERY: SELECT '' AS four, i.* FROM INT2_TBL i WHERE i.f1 <> '0'::int2;
 four|    f1
 ----+------
@@ -1856,6 +2148,8 @@ four|    f1
     | -1234
     | 32767
     |-32767
+(4 rows)
+
 QUERY: SELECT '' AS four, i.* FROM INT2_TBL i WHERE i.f1 <> '0'::int4;
 four|    f1
 ----+------
@@ -1863,68 +2157,94 @@ four|    f1
     | -1234
     | 32767
     |-32767
+(4 rows)
+
 QUERY: SELECT '' AS one, i.* FROM INT2_TBL i WHERE i.f1 = '0'::int2;
 one|f1
 ---+--
    | 0
+(1 row)
+
 QUERY: SELECT '' AS one, i.* FROM INT2_TBL i WHERE i.f1 = '0'::int4;
 one|f1
 ---+--
    | 0
+(1 row)
+
 QUERY: SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 < '0'::int2;
 two|    f1
 ---+------
    | -1234
    |-32767
+(2 rows)
+
 QUERY: SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 < '0'::int4;
 two|    f1
 ---+------
    | -1234
    |-32767
+(2 rows)
+
 QUERY: SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 <= '0'::int2;
 three|    f1
 -----+------
      |     0
      | -1234
      |-32767
+(3 rows)
+
 QUERY: SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 <= '0'::int4;
 three|    f1
 -----+------
      |     0
      | -1234
      |-32767
+(3 rows)
+
 QUERY: SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 > '0'::int2;
 two|   f1
 ---+-----
    | 1234
    |32767
+(2 rows)
+
 QUERY: SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 > '0'::int4;
 two|   f1
 ---+-----
    | 1234
    |32767
+(2 rows)
+
 QUERY: SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 >= '0'::int2;
 three|   f1
 -----+-----
      |    0
      | 1234
      |32767
+(3 rows)
+
 QUERY: SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 >= '0'::int4;
 three|   f1
 -----+-----
      |    0
      | 1234
      |32767
+(3 rows)
+
 QUERY: SELECT '' AS one, i.* FROM INT2_TBL i WHERE (i.f1 % '2'::int2) = '1'::int2;
 one|   f1
 ---+-----
    |32767
+(1 row)
+
 QUERY: SELECT '' AS three, i.* FROM INT2_TBL i WHERE (i.f1 % '2'::int4) = '0'::int2;
 three|   f1
 -----+-----
      |    0
      | 1234
      |-1234
+(3 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 * '2'::int2 AS x FROM INT2_TBL i;
 five|    f1|    x
 ----+------+-----
@@ -1933,6 +2253,8 @@ five|    f1|    x
     | -1234|-2468
     | 32767|   -2
     |-32767|    2
+(5 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 * '2'::int4 AS x FROM INT2_TBL i;
 five|    f1|     x
 ----+------+------
@@ -1941,6 +2263,8 @@ five|    f1|     x
     | -1234| -2468
     | 32767| 65534
     |-32767|-65534
+(5 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 + '2'::int2 AS x FROM INT2_TBL i;
 five|    f1|     x
 ----+------+------
@@ -1949,6 +2273,8 @@ five|    f1|     x
     | -1234| -1232
     | 32767|-32767
     |-32767|-32765
+(5 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 + '2'::int4 AS x FROM INT2_TBL i;
 five|    f1|     x
 ----+------+------
@@ -1957,6 +2283,8 @@ five|    f1|     x
     | -1234| -1232
     | 32767| 32769
     |-32767|-32765
+(5 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 - '2'::int2 AS x FROM INT2_TBL i;
 five|    f1|    x
 ----+------+-----
@@ -1965,6 +2293,8 @@ five|    f1|    x
     | -1234|-1236
     | 32767|32765
     |-32767|32767
+(5 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 - '2'::int4 AS x FROM INT2_TBL i;
 five|    f1|     x
 ----+------+------
@@ -1973,6 +2303,8 @@ five|    f1|     x
     | -1234| -1236
     | 32767| 32765
     |-32767|-32769
+(5 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 / '2'::int2 AS x FROM INT2_TBL i;
 five|    f1|     x
 ----+------+------
@@ -1981,6 +2313,8 @@ five|    f1|     x
     | -1234|  -617
     | 32767| 16383
     |-32767|-16383
+(5 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 / '2'::int4 AS x FROM INT2_TBL i;
 five|    f1|     x
 ----+------+------
@@ -1989,6 +2323,8 @@ five|    f1|     x
     | -1234|  -617
     | 32767| 16383
     |-32767|-16383
+(5 rows)
+
 QUERY: CREATE TABLE INT4_TBL(f1 int4);
 QUERY: INSERT INTO INT4_TBL(f1) VALUES ('0');
 QUERY: INSERT INTO INT4_TBL(f1) VALUES ('123456');
@@ -2009,6 +2345,8 @@ five|         f1
     |    -123456
     | 2147483647
     |-2147483647
+(5 rows)
+
 QUERY: SELECT '' AS four, i.* FROM INT4_TBL i WHERE i.f1 <> '0'::int2;
 four|         f1
 ----+-----------
@@ -2016,6 +2354,8 @@ four|         f1
     |    -123456
     | 2147483647
     |-2147483647
+(4 rows)
+
 QUERY: SELECT '' AS four, i.* FROM INT4_TBL i WHERE i.f1 <> '0'::int4;
 four|         f1
 ----+-----------
@@ -2023,68 +2363,94 @@ four|         f1
     |    -123456
     | 2147483647
     |-2147483647
+(4 rows)
+
 QUERY: SELECT '' AS one, i.* FROM INT4_TBL i WHERE i.f1 = '0'::int2;
 one|f1
 ---+--
    | 0
+(1 row)
+
 QUERY: SELECT '' AS one, i.* FROM INT4_TBL i WHERE i.f1 = '0'::int4;
 one|f1
 ---+--
    | 0
+(1 row)
+
 QUERY: SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 < '0'::int2;
 two|         f1
 ---+-----------
    |    -123456
    |-2147483647
+(2 rows)
+
 QUERY: SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 < '0'::int4;
 two|         f1
 ---+-----------
    |    -123456
    |-2147483647
+(2 rows)
+
 QUERY: SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 <= '0'::int2;
 three|         f1
 -----+-----------
      |          0
      |    -123456
      |-2147483647
+(3 rows)
+
 QUERY: SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 <= '0'::int4;
 three|         f1
 -----+-----------
      |          0
      |    -123456
      |-2147483647
+(3 rows)
+
 QUERY: SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 > '0'::int2;
 two|        f1
 ---+----------
    |    123456
    |2147483647
+(2 rows)
+
 QUERY: SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 > '0'::int4;
 two|        f1
 ---+----------
    |    123456
    |2147483647
+(2 rows)
+
 QUERY: SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 >= '0'::int2;
 three|        f1
 -----+----------
      |         0
      |    123456
      |2147483647
+(3 rows)
+
 QUERY: SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 >= '0'::int4;
 three|        f1
 -----+----------
      |         0
      |    123456
      |2147483647
+(3 rows)
+
 QUERY: SELECT '' AS one, i.* FROM INT4_TBL i WHERE (i.f1 % '2'::int2) = '1'::int2;
 one|        f1
 ---+----------
    |2147483647
+(1 row)
+
 QUERY: SELECT '' AS three, i.* FROM INT4_TBL i WHERE (i.f1 % '2'::int4) = '0'::int2;
 three|     f1
 -----+-------
      |      0
      | 123456
      |-123456
+(3 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 * '2'::int2 AS x FROM INT4_TBL i;
 five|         f1|      x
 ----+-----------+-------
@@ -2093,6 +2459,8 @@ five|         f1|      x
     |    -123456|-246912
     | 2147483647|     -2
     |-2147483647|      2
+(5 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 * '2'::int4 AS x FROM INT4_TBL i;
 five|         f1|      x
 ----+-----------+-------
@@ -2101,6 +2469,8 @@ five|         f1|      x
     |    -123456|-246912
     | 2147483647|     -2
     |-2147483647|      2
+(5 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 + '2'::int2 AS x FROM INT4_TBL i;
 five|         f1|          x
 ----+-----------+-----------
@@ -2109,6 +2479,8 @@ five|         f1|          x
     |    -123456|    -123454
     | 2147483647|-2147483647
     |-2147483647|-2147483645
+(5 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 + '2'::int4 AS x FROM INT4_TBL i;
 five|         f1|          x
 ----+-----------+-----------
@@ -2117,6 +2489,8 @@ five|         f1|          x
     |    -123456|    -123454
     | 2147483647|-2147483647
     |-2147483647|-2147483645
+(5 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 - '2'::int2 AS x FROM INT4_TBL i;
 five|         f1|         x
 ----+-----------+----------
@@ -2125,6 +2499,8 @@ five|         f1|         x
     |    -123456|   -123458
     | 2147483647|2147483645
     |-2147483647|2147483647
+(5 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 - '2'::int4 AS x FROM INT4_TBL i;
 five|         f1|         x
 ----+-----------+----------
@@ -2133,6 +2509,8 @@ five|         f1|         x
     |    -123456|   -123458
     | 2147483647|2147483645
     |-2147483647|2147483647
+(5 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 / '2'::int2 AS x FROM INT4_TBL i;
 five|         f1|          x
 ----+-----------+-----------
@@ -2141,6 +2519,8 @@ five|         f1|          x
     |    -123456|     -61728
     | 2147483647| 1073741823
     |-2147483647|-1073741823
+(5 rows)
+
 QUERY: SELECT '' AS five, i.f1, i.f1 / '2'::int4 AS x FROM INT4_TBL i;
 five|         f1|          x
 ----+-----------+-----------
@@ -2149,54 +2529,80 @@ five|         f1|          x
     |    -123456|     -61728
     | 2147483647| 1073741823
     |-2147483647|-1073741823
+(5 rows)
+
 QUERY: SELECT '2'::int2 * '2'::int2 = '16'::int2 / '4'::int2 AS true;
 true
 ----
 t   
+(1 row)
+
 QUERY: SELECT '2'::int4 * '2'::int2 = '16'::int2 / '4'::int4 AS true;
 true
 ----
 t   
+(1 row)
+
 QUERY: SELECT '2'::int2 * '2'::int4 = '16'::int4 / '4'::int2 AS true;
 true
 ----
 t   
+(1 row)
+
 QUERY: SELECT '1000'::int4 < '999'::int4 AS false;
 false
 -----
 f    
+(1 row)
+
 QUERY: SELECT 4! AS twenty_four;
 twenty_four
 -----------
          24
+(1 row)
+
 QUERY: SELECT !!3 AS six;
 six
 ---
   6
+(1 row)
+
 QUERY: SELECT 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 AS ten;
 ten
 ---
  10
+(1 row)
+
 QUERY: SELECT 2 + 2 / 2 AS three;
 three
 -----
     3
+(1 row)
+
 QUERY: SELECT (2 + 2) / 2 AS two;
 two
 ---
   2
+(1 row)
+
 QUERY: SELECT dsqrt('64'::float8) AS eight;
 eight
 -----
     8
+(1 row)
+
 QUERY: SELECT |/'64'::float8 AS eight;
 eight
 -----
     8
+(1 row)
+
 QUERY: SELECT ||/'27'::float8 AS three;
 three
 -----
     3
+(1 row)
+
 QUERY: CREATE TABLE OID_TBL(f1 oid);
 QUERY: INSERT INTO OID_TBL(f1) VALUES ('1234');
 QUERY: INSERT INTO OID_TBL(f1) VALUES ('1235');
@@ -2213,10 +2619,14 @@ five|   f1
     |  987
     |-1040
     |    0
+(5 rows)
+
 QUERY: SELECT '' AS one, o.* FROM OID_TBL o WHERE o.f1 = '1234'::oid;
 one|  f1
 ---+----
    |1234
+(1 row)
+
 QUERY: SELECT '' AS four, o.* FROM OID_TBL o WHERE o.f1 <> '1234';
 four|   f1
 ----+-----
@@ -2224,6 +2634,8 @@ four|   f1
     |  987
     |-1040
     |    0
+(4 rows)
+
 QUERY: SELECT '' AS four, o.* FROM OID_TBL o WHERE o.f1 <= '1234';
 four|   f1
 ----+-----
@@ -2231,21 +2643,29 @@ four|   f1
     |  987
     |-1040
     |    0
+(4 rows)
+
 QUERY: SELECT '' AS three, o.* FROM OID_TBL o WHERE o.f1 < '1234';
 three|   f1
 -----+-----
      |  987
      |-1040
      |    0
+(3 rows)
+
 QUERY: SELECT '' AS two, o.* FROM OID_TBL o WHERE o.f1 >= '1234';
 two|  f1
 ---+----
    |1234
    |1235
+(2 rows)
+
 QUERY: SELECT '' AS one, o.* FROM OID_TBL o WHERE o.f1 > '1234';
 one|  f1
 ---+----
    |1235
+(1 row)
+
 QUERY: CREATE TABLE OIDNAME_TBL(f1 oidname);
 QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('1234,abcd');
 QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('1235,efgh');
@@ -2264,36 +2684,50 @@ four|f1
     |1235,efgh                       
     |987,XXXX                        
     |123456,abcdefghijklmnopqrsutvwyz
+(4 rows)
+
 QUERY: SELECT '' AS one, o.* FROM OIDNAME_TBL o WHERE o.f1 = '1234,abcd';
 one|f1       
 ---+---------
    |1234,abcd
+(1 row)
+
 QUERY: SELECT '' AS three, o.* FROM OIDNAME_TBL o WHERE o.f1 <> '1234,abcd';
 three|f1                              
 -----+--------------------------------
      |1235,efgh                       
      |987,XXXX                        
      |123456,abcdefghijklmnopqrsutvwyz
+(3 rows)
+
 QUERY: SELECT '' AS two, o.* FROM OIDNAME_TBL o WHERE o.f1 <= '1234,abcd';
 two|f1       
 ---+---------
    |1234,abcd
    |987,XXXX 
+(2 rows)
+
 QUERY: SELECT '' AS one, o.* FROM OIDNAME_TBL o WHERE o.f1 < '1234,abcd';
 one|f1      
 ---+--------
    |987,XXXX
+(1 row)
+
 QUERY: SELECT '' AS three, o.* FROM OIDNAME_TBL o WHERE o.f1 >= '1234,abcd';
 three|f1                              
 -----+--------------------------------
      |1234,abcd                       
      |1235,efgh                       
      |123456,abcdefghijklmnopqrsutvwyz
+(3 rows)
+
 QUERY: SELECT '' AS two, o.* FROM OIDNAME_TBL o WHERE o.f1 > '1234,abcd';
 two|f1                              
 ---+--------------------------------
    |1235,efgh                       
    |123456,abcdefghijklmnopqrsutvwyz
+(2 rows)
+
 QUERY: CREATE TABLE OIDINT2_TBL(f1 oidint2);
 QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('1234/9873');
 QUERY: INSERT INTO OIDINT2_TBL(f1) VALUES ('1235/9873');
@@ -2312,10 +2746,14 @@ five|f1
     |987/-1234
     |123456/0 
     |0/0      
+(5 rows)
+
 QUERY: SELECT '' AS one, o.* FROM OIDINT2_TBL o WHERE o.f1 = '1235/9873';
 one|f1       
 ---+---------
    |1235/9873
+(1 row)
+
 QUERY: SELECT '' AS four, o.* FROM OIDINT2_TBL o WHERE o.f1 <> '1235/9873';
 four|f1       
 ----+---------
@@ -2323,6 +2761,8 @@ four|f1
     |987/-1234
     |123456/0 
     |0/0      
+(4 rows)
+
 QUERY: SELECT '' AS four, o.* FROM OIDINT2_TBL o WHERE o.f1 <= '1235/9873';
 four|f1       
 ----+---------
@@ -2330,21 +2770,29 @@ four|f1
     |1235/9873
     |987/-1234
     |0/0      
+(4 rows)
+
 QUERY: SELECT '' AS three, o.* FROM OIDINT2_TBL o WHERE o.f1 < '1235/9873';
 three|f1       
 -----+---------
      |1234/9873
      |987/-1234
      |0/0      
+(3 rows)
+
 QUERY: SELECT '' AS two, o.* FROM OIDINT2_TBL o WHERE o.f1 >= '1235/9873';
 two|f1       
 ---+---------
    |1235/9873
    |123456/0 
+(2 rows)
+
 QUERY: SELECT '' AS one, o.* FROM OIDINT2_TBL o WHERE o.f1 > '1235/9873';
 one|f1      
 ---+--------
    |123456/0
+(1 row)
+
 QUERY: CREATE TABLE OIDINT4_TBL(f1 oidint4);
 QUERY: INSERT INTO OIDINT4_TBL(f1) VALUES ('1234/9873');
 QUERY: INSERT INTO OIDINT4_TBL(f1) VALUES ('1235/9873');
@@ -2363,10 +2811,14 @@ five|f1
     |987/-1234
     |123456/0 
     |0/0      
+(5 rows)
+
 QUERY: SELECT '' AS one, o.* FROM OIDINT4_TBL o WHERE o.f1 = '1235/9873';
 one|f1       
 ---+---------
    |1235/9873
+(1 row)
+
 QUERY: SELECT '' AS four, o.* FROM OIDINT4_TBL o WHERE o.f1 <> '1235/9873';
 four|f1       
 ----+---------
@@ -2374,6 +2826,8 @@ four|f1
     |987/-1234
     |123456/0 
     |0/0      
+(4 rows)
+
 QUERY: SELECT '' AS four, o.* FROM OIDINT4_TBL o WHERE o.f1 <= '1235/9873';
 four|f1       
 ----+---------
@@ -2381,21 +2835,29 @@ four|f1
     |1235/9873
     |987/-1234
     |0/0      
+(4 rows)
+
 QUERY: SELECT '' AS three, o.* FROM OIDINT4_TBL o WHERE o.f1 < '1235/9873';
 three|f1       
 -----+---------
      |1234/9873
      |987/-1234
      |0/0      
+(3 rows)
+
 QUERY: SELECT '' AS two, o.* FROM OIDINT4_TBL o WHERE o.f1 >= '1235/9873';
 two|f1       
 ---+---------
    |1235/9873
    |123456/0 
+(2 rows)
+
 QUERY: SELECT '' AS one, o.* FROM OIDINT4_TBL o WHERE o.f1 > '1235/9873';
 one|f1      
 ---+--------
    |123456/0
+(1 row)
+
 QUERY: CREATE TABLE POINT_TBL(f1 point);
 QUERY: INSERT INTO POINT_TBL(f1) VALUES ('(0.0,0.0)');
 QUERY: INSERT INTO POINT_TBL(f1) VALUES ('(-10.0,0.0)');
@@ -2418,36 +2880,50 @@ five|f1
     |(-3,4)    
     |(5.1,34.5)
     |(-5,-12)  
+(5 rows)
+
 QUERY: SELECT '' AS three, p.* FROM POINT_TBL p WHERE p.f1 !< '(0.0, 0.0)';
 three|f1      
 -----+--------
      |(-10,0) 
      |(-3,4)  
      |(-5,-12)
+(3 rows)
+
 QUERY: SELECT '' AS three, p.* FROM POINT_TBL p WHERE '(0.0,0.0)' !> p.f1;
 three|f1      
 -----+--------
      |(-10,0) 
      |(-3,4)  
      |(-5,-12)
+(3 rows)
+
 QUERY: SELECT '' AS one, p.* FROM POINT_TBL p WHERE '(0.0,0.0)' !^ p.f1;
 one|f1      
 ---+--------
    |(-5,-12)
+(1 row)
+
 QUERY: SELECT '' AS one, p.* FROM POINT_TBL p WHERE p.f1 !| '(0.0, 0.0)';
 one|f1      
 ---+--------
    |(-5,-12)
+(1 row)
+
 QUERY: SELECT '' AS one, p.* FROM POINT_TBL p WHERE p.f1 =|= '(5.1, 34.5)';
 one|f1        
 ---+----------
    |(5.1,34.5)
+(1 row)
+
 QUERY: SELECT '' AS two, p.* FROM POINT_TBL p
    WHERE p.f1 ===> '(0,0,100,100)';
 two|f1        
 ---+----------
    |(0,0)     
    |(5.1,34.5)
+(2 rows)
+
 QUERY: SELECT '' AS three, p.* FROM POINT_TBL p
    WHERE not on_pb(p.f1,'(0,0,100,100)'::box);
 three|f1      
@@ -2455,12 +2931,16 @@ three|f1
      |(-10,0) 
      |(-3,4)  
      |(-5,-12)
+(3 rows)
+
 QUERY: SELECT '' AS two, p.* FROM POINT_TBL p
    WHERE on_ppath(p.f1,'(0,3,0,0,-10,0,-10,10)'::path);
 two|f1     
 ---+-------
    |(0,0)  
    |(-10,0)
+(2 rows)
+
 QUERY: SELECT '' AS five, p.f1, p.f1 <===> '(0,0)' AS dist FROM POINT_TBL p;
 five|f1        |dist
 ----+----------+----
@@ -2469,6 +2949,8 @@ five|f1        |dist
     |(-3,4)    |   5
     |(5.1,34.5)|  34
     |(-5,-12)  |  13
+(5 rows)
+
 QUERY: SELECT '' AS twentyfive, p1.f1, p2.f1, p1.f1 <===> p2.f1 AS dist
    FROM POINT_TBL p1, POINT_TBL p2;
 twentyfive|f1        |f1        |dist
@@ -2498,6 +2980,8 @@ twentyfive|f1        |f1        |dist
           |(-3,4)    |(-5,-12)  |  16
           |(5.1,34.5)|(-5,-12)  |  47
           |(-5,-12)  |(-5,-12)  |   0
+(25 rows)
+
 QUERY: SELECT '' AS twenty, p1.f1, p2.f1
    FROM POINT_TBL p1, POINT_TBL p2
    WHERE (p1.f1 <===> p2.f1) > 3;
@@ -2523,6 +3007,8 @@ twenty|f1        |f1
       |(-10,0)   |(-5,-12)  
       |(-3,4)    |(-5,-12)  
       |(5.1,34.5)|(-5,-12)  
+(20 rows)
+
 QUERY: SELECT '' AS ten, p1.f1, p2.f1
    FROM POINT_TBL p1, POINT_TBL p2
    WHERE (p1.f1 <===> p2.f1) > 3 and
@@ -2539,6 +3025,8 @@ ten|f1      |f1
    |(-3,4)  |(5.1,34.5)
    |(-5,-12)|(5.1,34.5)
    |(-10,0) |(-5,-12)  
+(10 rows)
+
 QUERY: SELECT '' AS two, p1.f1, p2.f1
    FROM POINT_TBL p1, POINT_TBL p2
    WHERE (p1.f1 <===> p2.f1) > 3 and
@@ -2548,6 +3036,8 @@ two|f1     |f1
 ---+-------+--------
    |(-3,4) |(0,0)   
    |(-10,0)|(-5,-12)
+(2 rows)
+
 QUERY: CREATE TABLE POLYGON_TBL(f1 polygon);
 QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(2.0,2.0,0.0,0.0,4.0,0.0)');
 QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(3.0,3.0,1.0,1.0,3.0,0.0)');
@@ -2570,6 +3060,8 @@ four|f1
     |(           3,           3,           1,           1,           3,           0)
     |(           0,           0)                                                    
     |(           0,           0,           1,           1)                          
+(4 rows)
+
 QUERY: SELECT '' AS three, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 && '(3.0,3.0,1.0,1.0,3.0,0.0)';
@@ -2578,6 +3070,8 @@ three|f1
      |(           2,           2,           0,           0,           4,           0)
      |(           3,           3,           1,           1,           3,           0)
      |(           0,           0,           1,           1)                          
+(3 rows)
+
 QUERY: SELECT '' AS four, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 &< '(3.0,3.0,1.0,1.0,3.0,0.0)';
@@ -2587,6 +3081,8 @@ four|f1
     |(           3,           3,           1,           1,           3,           0)
     |(           0,           0)                                                    
     |(           0,           0,           1,           1)                          
+(4 rows)
+
 QUERY: SELECT '' AS two, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 &> '(3.0,3.0,1.0,1.0,3.0,0.0)';
@@ -2594,83 +3090,119 @@ two|f1
 ---+-------------------------------------------------------------------------------
    |(           2,           2,           0,           0,           4,           0)
    |(           3,           3,           1,           1,           3,           0)
+(2 rows)
+
 QUERY: SELECT '' AS one, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 << '(3.0,3.0,1.0,1.0,3.0,0.0)';
 one|f1                         
 ---+---------------------------
    |(           0,           0)
+(1 row)
+
 QUERY: SELECT '' AS zero, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 >> '(3.0,3.0,1.0,1.0,3.0,0.0)';
 zero|f1
 ----+--
+(0 rows)
+
 QUERY: SELECT '' AS one, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 @ '(3.0,3.0,1.0,1.0,3.0,0.0)';
 one|f1                                                                             
 ---+-------------------------------------------------------------------------------
    |(           3,           3,           1,           1,           3,           0)
+(1 row)
+
 QUERY: SELECT '' AS one, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 ~= '(3.0,3.0,1.0,1.0,3.0,0.0)';
 one|f1                                                                             
 ---+-------------------------------------------------------------------------------
    |(           3,           3,           1,           1,           3,           0)
+(1 row)
+
 QUERY: SELECT '' AS one, p.*
    FROM POLYGON_TBL p
    WHERE p.f1 ~ '(3.0,3.0,1.0,1.0,3.0,0.0)';
 one|f1                                                                             
 ---+-------------------------------------------------------------------------------
    |(           3,           3,           1,           1,           3,           0)
+(1 row)
+
 QUERY: SELECT 'char 16 string'::char16 = 'char 16 string '::char16 AS false;
 false
 -----
 f    
+(1 row)
+
 QUERY: SELECT 'c'::char = 'c'::char AS true;
 true
 ----
 t   
+(1 row)
+
 QUERY: SELECT 'this is a text string'::text = 'this is a text string'::text AS true;
 true
 ----
 t   
+(1 row)
+
 QUERY: SELECT 'this is a text string'::text = 'this is a text strin'::text AS false;
 false
 -----
 f    
+(1 row)
+
 QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon << '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS false;
 false
 -----
 f    
+(1 row)
+
 QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon &< '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS true;
 true
 ----
 t   
+(1 row)
+
 QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon &> '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS true;
 true
 ----
 t   
+(1 row)
+
 QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon >> '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS false;
 false
 -----
 f    
+(1 row)
+
 QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon @ '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS false;
 false
 -----
 f    
+(1 row)
+
 QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon ~ '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS false;
 false
 -----
 f    
+(1 row)
+
 QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon ~= '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS false;
 false
 -----
 f    
+(1 row)
+
 QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon && '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS true;
 true
 ----
 t   
+(1 row)
+
 QUERY: SELECT onek.* WHERE onek.unique1 < 10;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -2684,6 +3216,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
       7|    647|  1|   3|  7|     7|      7|       7|          7|        7|       7| 14|  15|HAAAAA  |XYAAAA  |VVVVxx 
       8|    653|  0|   0|  8|     8|      8|       8|          8|        8|       8| 16|  17|IAAAAA  |DZAAAA  |HHHHxx 
       9|     49|  1|   1|  9|     9|      9|       9|          9|        9|       9| 18|  19|JAAAAA  |XBAAAA  |HHHHxx 
+(10 rows)
+
 QUERY: SELECT onek.unique1, onek.stringu1
    WHERE onek.unique1 < 20
    ORDER BY unique1 using >;
@@ -2709,6 +3243,8 @@ unique1|stringu1
       2|CAAAAA  
       1|BAAAAA  
       0|AAAAAA  
+(20 rows)
+
 QUERY: SELECT onek.unique1, onek.stringu1
    WHERE onek.unique1 > 980
    ORDER BY stringu1 using <;
@@ -2733,6 +3269,8 @@ unique1|stringu1
     985|XLAAAA  
     986|YLAAAA  
     987|ZLAAAA  
+(19 rows)
+
 QUERY: SELECT onek.unique1, onek.string4
    WHERE onek.unique1 > 980
    ORDER BY string4 using <, unique1 using >;
@@ -2757,6 +3295,8 @@ unique1|string4
     992|VVVVxx 
     989|VVVVxx 
     984|VVVVxx 
+(19 rows)
+
 QUERY: SELECT onek.unique1, onek.string4
    WHERE onek.unique1 > 980
    ORDER BY string4 using >, unique1 using <;
@@ -2781,6 +3321,8 @@ unique1|string4
     983|AAAAxx 
     995|AAAAxx 
     999|AAAAxx 
+(19 rows)
+
 QUERY: SELECT onek.unique1, onek.string4
    WHERE onek.unique1 < 20
    ORDER BY unique1 using >, string4 using <;
@@ -2806,6 +3348,8 @@ unique1|string4
       2|OOOOxx 
       1|OOOOxx 
       0|OOOOxx 
+(20 rows)
+
 QUERY: SELECT onek.unique1, onek.string4
    WHERE onek.unique1 < 20
    ORDER BY unique1 using <, string4 using >;
@@ -2831,6 +3375,8 @@ unique1|string4
      17|HHHHxx 
      18|VVVVxx 
      19|OOOOxx 
+(20 rows)
+
 QUERY:     WHERE onek2.unique1 < 20
     ORDER BY unique1 using >;
 WARN:parser: syntax error at or near "WHERE"
@@ -2843,6 +3389,8 @@ two
 ---
   0
   1
+(2 rows)
+
 QUERY: SELECT DISTINCT ten FROM temp;
 ten
 ---
@@ -2856,6 +3404,8 @@ ten
   7
   8
   9
+(10 rows)
+
 QUERY: SELECT DISTINCT string4 FROM temp;
 string4
 -------
@@ -2863,6 +3413,8 @@ AAAAxx
 HHHHxx 
 OOOOxx 
 VVVVxx 
+(4 rows)
+
 QUERY: SELECT DISTINCT two, string4, ten
    FROM temp
    ORDER BY two using <, string4 using <, ten using <;
@@ -2908,6 +3460,8 @@ two|string4|ten
   1|VVVVxx |  5
   1|VVVVxx |  7
   1|VVVVxx |  9
+(40 rows)
+
 QUERY: SELECT DISTINCT ON string4 two, string4, ten
 	   FROM temp
    ORDER BY two using <, string4 using <, ten using <;
@@ -2921,6 +3475,8 @@ two|string4|ten
   1|HHHHxx |  1
   1|OOOOxx |  1
   1|VVVVxx |  1
+(8 rows)
+
 QUERY: SELECT *
    INTO TABLE temp1
    FROM temp
@@ -2992,6 +3548,8 @@ larry  | 60
 jeff   | 23
 cim    | 30
 linda  | 19
+(58 rows)
+
 QUERY: SELECT p.name, p.age FROM person* p ORDER BY age using >;
 name   |age
 -------+---
@@ -3053,6 +3611,8 @@ joan   | 18
 pat    | 18
 fanny  |  8
 mary   |  8
+(58 rows)
+
 QUERY: SELECT DISTINCT p.age FROM person* p ORDER BY age using >;
 age
 ---
@@ -3076,114 +3636,156 @@ age
  19
  18
   8
+(20 rows)
+
 QUERY: SELECT hash_i4_heap.*
    WHERE hash_i4_heap.random = 843938989;
 seqno|   random
 -----+---------
    15|843938989
+(1 row)
+
 QUERY: SELECT hash_i4_heap.*
    WHERE hash_i4_heap.random = 66766766;
 seqno|random
 -----+------
+(0 rows)
+
 QUERY: SELECT hash_c16_heap.*
    WHERE hash_c16_heap.random = '1505703298'::char16;
 seqno|    random
 -----+----------
  9838|1505703298
+(1 row)
+
 QUERY: SELECT hash_c16_heap.*
    WHERE hash_c16_heap.random = '7777777'::char16;
 seqno|random
 -----+------
+(0 rows)
+
 QUERY: SELECT hash_txt_heap.*
    WHERE hash_txt_heap.random = '1351610853'::text;
 seqno|    random
 -----+----------
  5677|1351610853
+(1 row)
+
 QUERY: SELECT hash_txt_heap.*
    WHERE hash_txt_heap.random = '111111112222222233333333'::text;
 seqno|random
 -----+------
+(0 rows)
+
 QUERY: SELECT hash_f8_heap.*
    WHERE hash_f8_heap.random = '444705537'::float8;
 seqno|   random
 -----+---------
  7853|444705537
+(1 row)
+
 QUERY: SELECT hash_f8_heap.*
    WHERE hash_f8_heap.random = '88888888'::float8;
 seqno|random
 -----+------
+(0 rows)
+
 QUERY: SELECT b.*
    FROM bt_i4_heap b
    WHERE b.seqno < 1;
 seqno|    random
 -----+----------
     0|1935401906
+(1 row)
+
 QUERY: SELECT b.*
    FROM bt_i4_heap b
    WHERE b.seqno >= 9999;
 seqno|    random
 -----+----------
  9999|1227676208
+(1 row)
+
 QUERY: SELECT b.*
    FROM bt_i4_heap b
    WHERE b.seqno = 4500;
 seqno|    random
 -----+----------
  4500|2080851358
+(1 row)
+
 QUERY: SELECT b.*
    FROM bt_c16_heap b
    WHERE b.seqno < '1'::char16;
 seqno|    random
 -----+----------
     0|1935401906
+(1 row)
+
 QUERY: SELECT b.*
    FROM bt_c16_heap b
    WHERE b.seqno >= '9999'::char16;
 seqno|    random
 -----+----------
  9999|1227676208
+(1 row)
+
 QUERY: SELECT b.*
    FROM bt_c16_heap b
    WHERE b.seqno = '4500'::char16;
 seqno|    random
 -----+----------
  4500|2080851358
+(1 row)
+
 QUERY: SELECT b.*
    FROM bt_txt_heap b
    WHERE b.seqno < '1'::text;
 seqno|    random
 -----+----------
     0|1935401906
+(1 row)
+
 QUERY: SELECT b.*
    FROM bt_txt_heap b
    WHERE b.seqno >= '9999'::text;
 seqno|    random
 -----+----------
  9999|1227676208
+(1 row)
+
 QUERY: SELECT b.*
    FROM bt_txt_heap b
    WHERE b.seqno = '4500'::text;
 seqno|    random
 -----+----------
  4500|2080851358
+(1 row)
+
 QUERY: SELECT b.*
    FROM bt_f8_heap b
    WHERE b.seqno < '1'::float8;
 seqno|    random
 -----+----------
     0|1935401906
+(1 row)
+
 QUERY: SELECT b.*
    FROM bt_f8_heap b
    WHERE b.seqno >= '9999'::float8;
 seqno|    random
 -----+----------
  9999|1227676208
+(1 row)
+
 QUERY: SELECT b.*
    FROM bt_f8_heap b
    WHERE b.seqno = '4500'::float8;
 seqno|    random
 -----+----------
  4500|2080851358
+(1 row)
+
 QUERY: UPDATE onek
    SET unique1 = onek.unique1 + 1;
 QUERY: UPDATE onek
@@ -3210,6 +3812,8 @@ QUERY: SELECT h.seqno AS i1492, h.random AS i1
 i1492|i1
 -----+--
  1492| 1
+(1 row)
+
 QUERY: UPDATE hash_i4_heap
    SET seqno = 20000
    WHERE hash_i4_heap.random = 1492795354;
@@ -3219,6 +3823,8 @@ QUERY: SELECT h.seqno AS i20000
 i20000
 ------
  20000
+(1 row)
+
 QUERY: UPDATE hash_c16_heap
    SET random = '0123456789abcdef'::char16
    WHERE hash_c16_heap.seqno = 6543;
@@ -3228,6 +3834,8 @@ QUERY: SELECT h.seqno AS i6543, h.random AS c0_to_f
 i6543|c0_to_f         
 -----+----------------
  6543|0123456789abcdef
+(1 row)
+
 QUERY: UPDATE hash_c16_heap
    SET seqno = 20000
    WHERE hash_c16_heap.random = '76652222'::char16;
@@ -3236,6 +3844,8 @@ QUERY: SELECT h.seqno AS emptyset
    WHERE h.random = '76652222'::char16;
 emptyset
 --------
+(0 rows)
+
 QUERY: UPDATE hash_txt_heap
    SET random = '0123456789abcdefghijklmnop'::text
    WHERE hash_txt_heap.seqno = 4002;
@@ -3245,6 +3855,8 @@ QUERY: SELECT h.seqno AS i4002, h.random AS c0_to_p
 i4002|c0_to_p                   
 -----+--------------------------
  4002|0123456789abcdefghijklmnop
+(1 row)
+
 QUERY: UPDATE hash_txt_heap
    SET seqno = 20000
    WHERE hash_txt_heap.random = '959363399'::text;
@@ -3254,6 +3866,8 @@ QUERY: SELECT h.seqno AS t20000
 t20000
 ------
  20000
+(1 row)
+
 QUERY: UPDATE hash_f8_heap
    SET random = '-1234.1234'::float8
    WHERE hash_f8_heap.seqno = 8906;
@@ -3263,6 +3877,8 @@ QUERY: SELECT h.seqno AS i8096, h.random AS f1234_1234
 i8096|f1234_1234
 -----+----------
  8906|-1234.1234
+(1 row)
+
 QUERY: UPDATE hash_f8_heap
    SET seqno = 20000
    WHERE hash_f8_heap.random = '488912369'::float8;
@@ -3272,6 +3888,8 @@ QUERY: SELECT h.seqno AS f20000
 f20000
 ------
  20000
+(1 row)
+
 QUERY: COPY onek TO '_CWD_/obj/onek.data';
 QUERY: DELETE FROM onek;
 QUERY: COPY onek FROM '_CWD_/obj/onek.data';
@@ -3280,6 +3898,8 @@ unique1
 -------
       0
       1
+(2 rows)
+
 QUERY: DELETE FROM onek2;
 QUERY: COPY onek2 FROM '_CWD_/obj/onek.data';
 QUERY: SELECT unique1 FROM onek2 WHERE unique1 < 2;
@@ -3287,6 +3907,8 @@ unique1
 -------
       1
       0
+(2 rows)
+
 QUERY: COPY BINARY stud_emp TO '_CWD_/obj/stud_emp.data';
 QUERY: DELETE FROM stud_emp;
 QUERY: COPY BINARY stud_emp FROM '_CWD_/obj/stud_emp.data';
@@ -3296,18 +3918,26 @@ name |age|location  |salary|manager|gpa|percent
 jeff | 23|(8,7.7)   |   600|sharon |3.5|       
 cim  | 30|(10.5,4.7)|   400|       |3.4|       
 linda| 19|(0.9,6.1) |   100|       |2.9|       
+(3 rows)
+
 QUERY: SELECT count(*) FROM onek;
 count
 -----
  1000
+(1 row)
+
 QUERY: SELECT count(*) FROM onek where oidrand(onek.oid, 10);
 count
 -----
    97
+(1 row)
+
 QUERY: SELECT count(*) FROM onek where oidrand(onek.oid, 10);
 count
 -----
   101
+(1 row)
+
 QUERY: BEGIN;
 QUERY: SELECT *
    INTO TABLE xacttest
@@ -3318,19 +3948,27 @@ QUERY: SELECT a FROM xacttest WHERE a > 100;
   a
 ---
 777
+(1 row)
+
 QUERY: BEGIN;
 QUERY: CREATE TABLE disappear (a int4);
 QUERY: DELETE FROM aggtest;
 QUERY: SELECT * FROM aggtest;
 a|b
 -+-
+(0 rows)
+
 QUERY: ABORT;
 QUERY: SELECT oid FROM pg_class WHERE relname = 'disappear';
 oid
 ---
+(0 rows)
+
 QUERY: SELECT * FROM aggtest;
 a|b
 -+-
+(0 rows)
+
 QUERY: BEGIN;
 QUERY: DECLARE foo1 CURSOR FOR SELECT * FROM tenk1;
 QUERY: DECLARE foo2 CURSOR FOR SELECT * FROM tenk2;
@@ -3359,17 +3997,23 @@ QUERY: FETCH 1 in foo1;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
    8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+(1 row)
+
 QUERY: FETCH 2 in foo2;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
    8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
    1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
+(2 rows)
+
 QUERY: FETCH 3 in foo3;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
    8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
    1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
    3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
+(3 rows)
+
 QUERY: FETCH 4 in foo4;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3377,6 +4021,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
    3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
    9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
+(4 rows)
+
 QUERY: FETCH 5 in foo5;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3385,6 +4031,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
    9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
    7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
+(5 rows)
+
 QUERY: FETCH 6 in foo6;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3394,6 +4042,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
    7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
    8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
+(6 rows)
+
 QUERY: FETCH 7 in foo7;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3404,6 +4054,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
    8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
    5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
+(7 rows)
+
 QUERY: FETCH 8 in foo8;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3415,6 +4067,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
    5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
    6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
+(8 rows)
+
 QUERY: FETCH 9 in foo9;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3427,6 +4081,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
    6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
    4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
+(9 rows)
+
 QUERY: FETCH 10 in foo10;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3440,6 +4096,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
    4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
    3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
+(10 rows)
+
 QUERY: FETCH 11 in foo11;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3454,6 +4112,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
    3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
    1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
+(11 rows)
+
 QUERY: FETCH 12 in foo12;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3469,6 +4129,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
    1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
    1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
+(12 rows)
+
 QUERY: FETCH 13 in foo13;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3485,6 +4147,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
    1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
    5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
+(13 rows)
+
 QUERY: FETCH 14 in foo14;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3502,6 +4166,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
    5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
    6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
+(14 rows)
+
 QUERY: FETCH 15 in foo15;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3520,6 +4186,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
    6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
    5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
+(15 rows)
+
 QUERY: FETCH 16 in foo16;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3539,6 +4207,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
    5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
    5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
+(16 rows)
+
 QUERY: FETCH 17 in foo17;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3559,6 +4229,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
    5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
    5387|     16|  1|   3|  7|     7|     87|     387|       1387|      387|    5387|174| 175|FZAAAA  |QAAAAA  |AAAAxx 
+(17 rows)
+
 QUERY: FETCH 18 in foo18;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3580,6 +4252,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
    5387|     16|  1|   3|  7|     7|     87|     387|       1387|      387|    5387|174| 175|FZAAAA  |QAAAAA  |AAAAxx 
    5785|     17|  1|   1|  5|     5|     85|     785|       1785|      785|    5785|170| 171|NOAAAA  |RAAAAA  |HHHHxx 
+(18 rows)
+
 QUERY: FETCH 19 in foo19;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3602,6 +4276,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    5387|     16|  1|   3|  7|     7|     87|     387|       1387|      387|    5387|174| 175|FZAAAA  |QAAAAA  |AAAAxx 
    5785|     17|  1|   1|  5|     5|     85|     785|       1785|      785|    5785|170| 171|NOAAAA  |RAAAAA  |HHHHxx 
    6621|     18|  1|   1|  1|     1|     21|     621|        621|     1621|    6621| 42|  43|RUAAAA  |SAAAAA  |OOOOxx 
+(19 rows)
+
 QUERY: FETCH 20 in foo20;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3625,6 +4301,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    5785|     17|  1|   1|  5|     5|     85|     785|       1785|      785|    5785|170| 171|NOAAAA  |RAAAAA  |HHHHxx 
    6621|     18|  1|   1|  1|     1|     21|     621|        621|     1621|    6621| 42|  43|RUAAAA  |SAAAAA  |OOOOxx 
    6969|     19|  1|   1|  9|     9|     69|     969|        969|     1969|    6969|138| 139|BIAAAA  |TAAAAA  |VVVVxx 
+(20 rows)
+
 QUERY: FETCH 21 in foo21;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3649,6 +4327,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    6621|     18|  1|   1|  1|     1|     21|     621|        621|     1621|    6621| 42|  43|RUAAAA  |SAAAAA  |OOOOxx 
    6969|     19|  1|   1|  9|     9|     69|     969|        969|     1969|    6969|138| 139|BIAAAA  |TAAAAA  |VVVVxx 
    9460|     20|  0|   0|  0|     0|     60|     460|       1460|     4460|    9460|120| 121|WZAAAA  |UAAAAA  |AAAAxx 
+(21 rows)
+
 QUERY: FETCH 22 in foo22;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3674,6 +4354,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    6969|     19|  1|   1|  9|     9|     69|     969|        969|     1969|    6969|138| 139|BIAAAA  |TAAAAA  |VVVVxx 
    9460|     20|  0|   0|  0|     0|     60|     460|       1460|     4460|    9460|120| 121|WZAAAA  |UAAAAA  |AAAAxx 
      59|     21|  1|   3|  9|    19|     59|      59|         59|       59|      59|118| 119|HCAAAA  |VAAAAA  |HHHHxx 
+(22 rows)
+
 QUERY: FETCH 23 in foo23;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3700,21 +4382,29 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    9460|     20|  0|   0|  0|     0|     60|     460|       1460|     4460|    9460|120| 121|WZAAAA  |UAAAAA  |AAAAxx 
      59|     21|  1|   3|  9|    19|     59|      59|         59|       59|      59|118| 119|HCAAAA  |VAAAAA  |HHHHxx 
    8020|     22|  0|   0|  0|     0|     20|      20|         20|     3020|    8020| 40|  41|MWAAAA  |WAAAAA  |OOOOxx 
+(23 rows)
+
 QUERY: FETCH backward 1 in foo23;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
      59|     21|  1|   3|  9|    19|     59|      59|         59|       59|      59|118| 119|HCAAAA  |VAAAAA  |HHHHxx 
+(1 row)
+
 QUERY: FETCH backward 2 in foo22;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
    9460|     20|  0|   0|  0|     0|     60|     460|       1460|     4460|    9460|120| 121|WZAAAA  |UAAAAA  |AAAAxx 
    6969|     19|  1|   1|  9|     9|     69|     969|        969|     1969|    6969|138| 139|BIAAAA  |TAAAAA  |VVVVxx 
+(2 rows)
+
 QUERY: FETCH backward 3 in foo21;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
    6969|     19|  1|   1|  9|     9|     69|     969|        969|     1969|    6969|138| 139|BIAAAA  |TAAAAA  |VVVVxx 
    6621|     18|  1|   1|  1|     1|     21|     621|        621|     1621|    6621| 42|  43|RUAAAA  |SAAAAA  |OOOOxx 
    5785|     17|  1|   1|  5|     5|     85|     785|       1785|      785|    5785|170| 171|NOAAAA  |RAAAAA  |HHHHxx 
+(3 rows)
+
 QUERY: FETCH backward 4 in foo20;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3722,6 +4412,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    5785|     17|  1|   1|  5|     5|     85|     785|       1785|      785|    5785|170| 171|NOAAAA  |RAAAAA  |HHHHxx 
    5387|     16|  1|   3|  7|     7|     87|     387|       1387|      387|    5387|174| 175|FZAAAA  |QAAAAA  |AAAAxx 
    5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
+(4 rows)
+
 QUERY: FETCH backward 5 in foo19;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3730,6 +4422,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    5006|     15|  0|   2|  6|     6|      6|       6|       1006|        6|    5006| 12|  13|OKAAAA  |PAAAAA  |VVVVxx 
    5471|     14|  1|   3|  1|    11|     71|     471|       1471|      471|    5471|142| 143|LCAAAA  |OAAAAA  |OOOOxx 
    6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
+(5 rows)
+
 QUERY: FETCH backward 6 in foo18;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3739,6 +4433,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    6243|     13|  1|   3|  3|     3|     43|     243|        243|     1243|    6243| 86|  87|DGAAAA  |NAAAAA  |HHHHxx 
    5222|     12|  0|   2|  2|     2|     22|     222|       1222|      222|    5222| 44|  45|WSAAAA  |MAAAAA  |AAAAxx 
    1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
+(6 rows)
+
 QUERY: FETCH backward 7 in foo17;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3749,6 +4445,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    1504|     11|  0|   0|  4|     4|      4|     504|       1504|     1504|    1504|  8|   9|WFAAAA  |LAAAAA  |VVVVxx 
    1314|     10|  0|   2|  4|    14|     14|     314|       1314|     1314|    1314| 28|  29|OYAAAA  |KAAAAA  |OOOOxx 
    3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
+(7 rows)
+
 QUERY: FETCH backward 8 in foo16;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3760,6 +4458,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    3043|      9|  1|   3|  3|     3|     43|      43|       1043|     3043|    3043| 86|  87|BNAAAA  |JAAAAA  |HHHHxx 
    4321|      8|  1|   1|  1|     1|     21|     321|        321|     4321|    4321| 42|  43|FKAAAA  |IAAAAA  |AAAAxx 
    6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
+(8 rows)
+
 QUERY: FETCH backward 9 in foo15;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3772,6 +4472,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    6701|      7|  1|   1|  1|     1|      1|     701|        701|     1701|    6701|  2|   3|TXAAAA  |HAAAAA  |VVVVxx 
    5057|      6|  1|   1|  7|    17|     57|      57|       1057|       57|    5057|114| 115|NMAAAA  |GAAAAA  |OOOOxx 
    8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
+(9 rows)
+
 QUERY: FETCH backward 10 in foo14;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3785,6 +4487,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    8009|      5|  1|   1|  9|     9|      9|       9|          9|     3009|    8009| 18|  19|BWAAAA  |FAAAAA  |HHHHxx 
    7164|      4|  0|   0|  4|     4|     64|     164|       1164|     2164|    7164|128| 129|OPAAAA  |EAAAAA  |AAAAxx 
    9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
+(10 rows)
+
 QUERY: FETCH backward 11 in foo13;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3799,6 +4503,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    9850|      3|  0|   2|  0|    10|     50|     850|       1850|     4850|    9850|100| 101|WOAAAA  |DAAAAA  |VVVVxx 
    3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
    1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
+(11 rows)
+
 QUERY: FETCH backward 12 in foo12;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3813,6 +4519,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
    1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
    8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+(11 rows)
+
 QUERY: FETCH backward 13 in foo11;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3826,6 +4534,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
    1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
    8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+(10 rows)
+
 QUERY: FETCH backward 14 in foo10;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3838,6 +4548,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
    1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
    8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+(9 rows)
+
 QUERY: FETCH backward 15 in foo9;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3849,6 +4561,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
    1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
    8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+(8 rows)
+
 QUERY: FETCH backward 16 in foo8;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3859,6 +4573,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
    1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
    8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+(7 rows)
+
 QUERY: FETCH backward 17 in foo7;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3868,6 +4584,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
    1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
    8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+(6 rows)
+
 QUERY: FETCH backward 18 in foo6;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3876,6 +4594,8 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
    1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
    8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+(5 rows)
+
 QUERY: FETCH backward 19 in foo5;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
@@ -3883,24 +4603,34 @@ unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenth
    3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
    1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
    8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+(4 rows)
+
 QUERY: FETCH backward 20 in foo4;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
    3420|      2|  0|   0|  0|     0|     20|     420|       1420|     3420|    3420| 40|  41|OBAAAA  |CAAAAA  |OOOOxx 
    1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
    8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+(3 rows)
+
 QUERY: FETCH backward 21 in foo3;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
    1891|      1|  1|   3|  1|    11|     91|     891|       1891|     1891|    1891|182| 183|TUAAAA  |BAAAAA  |HHHHxx 
    8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+(2 rows)
+
 QUERY: FETCH backward 22 in foo2;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
    8800|      0|  0|   0|  0|     0|      0|     800|        800|     3800|    8800|  0|   1|MAAAAA  |AAAAAA  |AAAAxx 
+(1 row)
+
 QUERY: FETCH backward 23 in foo1;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
+(0 rows)
+
 QUERY: CLOSE foo1;
 QUERY: CLOSE foo2;
 QUERY: CLOSE foo3;
@@ -3947,54 +4677,80 @@ QUERY: FETCH all in foo13;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
      50|    253|  0|   2|  0|    10|      0|      50|         50|       50|      50|  0|   1|YBAAAA  |TJAAAA  |HHHHxx 
+(1 row)
+
 QUERY: FETCH all in foo14;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
      51|     76|  1|   3|  1|    11|      1|      51|         51|       51|      51|  2|   3|ZBAAAA  |YCAAAA  |AAAAxx 
+(1 row)
+
 QUERY: FETCH all in foo15;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
      52|    985|  0|   0|  2|    12|      2|      52|         52|       52|      52|  4|   5|ACAAAA  |XLBAAA  |HHHHxx 
+(1 row)
+
 QUERY: FETCH all in foo16;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
      53|    196|  1|   1|  3|    13|      3|      53|         53|       53|      53|  6|   7|BCAAAA  |OHAAAA  |AAAAxx 
+(1 row)
+
 QUERY: FETCH all in foo17;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
      54|    356|  0|   2|  4|    14|      4|      54|         54|       54|      54|  8|   9|CCAAAA  |SNAAAA  |AAAAxx 
+(1 row)
+
 QUERY: FETCH all in foo18;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
      55|    627|  1|   3|  5|    15|      5|      55|         55|       55|      55| 10|  11|DCAAAA  |DYAAAA  |VVVVxx 
+(1 row)
+
 QUERY: FETCH all in foo19;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
      56|     54|  0|   0|  6|    16|      6|      56|         56|       56|      56| 12|  13|ECAAAA  |CCAAAA  |OOOOxx 
+(1 row)
+
 QUERY: FETCH all in foo20;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
      57|    942|  1|   1|  7|    17|      7|      57|         57|       57|      57| 14|  15|FCAAAA  |GKBAAA  |OOOOxx 
+(1 row)
+
 QUERY: FETCH all in foo21;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
      58|    114|  0|   2|  8|    18|      8|      58|         58|       58|      58| 16|  17|GCAAAA  |KEAAAA  |OOOOxx 
+(1 row)
+
 QUERY: FETCH all in foo22;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
      59|    593|  1|   3|  9|    19|      9|      59|         59|       59|      59| 18|  19|HCAAAA  |VWAAAA  |HHHHxx 
+(1 row)
+
 QUERY: FETCH all in foo23;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
      60|    483|  0|   0|  0|     0|      0|      60|         60|       60|      60|  0|   1|ICAAAA  |PSAAAA  |VVVVxx 
+(1 row)
+
 QUERY: FETCH all in foo24;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
      50|    253|  0|   2|  0|    10|      0|      50|         50|       50|      50|  0|   1|YBAAAA  |TJAAAA  |HHHHxx 
+(1 row)
+
 QUERY: FETCH all in foo25;
 unique1|unique2|two|four|ten|twenty|hundred|thousand|twothousand|fivethous|tenthous|odd|even|stringu1|stringu2|string4
 -------+-------+---+----+---+------+-------+--------+-----------+---------+--------+---+----+--------+--------+-------
      60|    483|  0|   0|  0|     0|      0|      60|         60|       60|      60|  0|   1|ICAAAA  |PSAAAA  |VVVVxx 
+(1 row)
+
 QUERY: CLOSE foo13;
 QUERY: CLOSE foo14;
 QUERY: CLOSE foo15;
@@ -4016,6 +4772,8 @@ QUERY: SELECT count(*) AS has_10000 FROM hash_f8_heap[,] h;
 has_10000
 ---------
     10002
+(1 row)
+
 QUERY: PURGE hash_i4_heap AFTER '@ 1 second ago';	-- relative time
 SELECT count(*) AS has_10002 FROM hash_i4_heap[,] h;
 QUERY: VACUUM hash_i4_heap;
@@ -4023,6 +4781,8 @@ QUERY: SELECT count(*) AS has_10000 FROM hash_i4_heap[,] h;
 has_10000
 ---------
     10002
+(1 row)
+
 QUERY: CREATE TABLE temp (initial int4);
 QUERY: ALTER TABLE temp ADD COLUMN a int4;
 QUERY: ALTER TABLE temp ADD COLUMN b char16;
@@ -4063,6 +4823,8 @@ WARN:Relation temp does not have attribute k
 QUERY: SELECT * FROM temp;
 initial|a|b|c|d|e|f|g|h|i|j|l|m|n|p|q|r|s|t|u|v|w|x|y|z
 -------+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+(0 rows)
+
 QUERY: DROP TABLE temp;
 QUERY: CREATE TABLE temp (
 	initial 	int4
@@ -4106,6 +4868,8 @@ WARN:Relation temp does not have attribute k
 QUERY: SELECT * FROM temp[,];
 initial|a|b|c|d|e|f|g|h|i|j|l|m|n|p|q|r|s|t|u|v|w|x|y|z
 -------+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+(0 rows)
+
 QUERY: DROP TABLE temp;
 QUERY: ALTER TABLE tenk1 RENAME TO ten_k;
 QUERY: SELECT unique1 FROM ten_k WHERE unique1 < 20;
@@ -4131,6 +4895,8 @@ unique1
      17
      18
      19
+(20 rows)
+
 QUERY: SELECT unique2 FROM ten_k WHERE unique2 < 20;
 unique2
 -------
@@ -4154,6 +4920,8 @@ unique2
      17
      18
      19
+(20 rows)
+
 QUERY: SELECT hundred FROM ten_k WHERE hundred = 50;
 hundred
 -------
@@ -4257,6 +5025,8 @@ hundred
      50
      50
      50
+(100 rows)
+
 QUERY: ALTER TABLE ten_k RENAME TO tenk1;
 QUERY: SELECT unique1 FROM tenk1 WHERE unique1 < 5;
 unique1
@@ -4266,6 +5036,8 @@ unique1
       2
       3
       4
+(5 rows)
+
 QUERY: SELECT * from street;
 name                              |thepath                                                                                                                                                                                                                                                                                                                                          |cname    
 ----------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+---------
@@ -4521,6 +5293,8 @@ I- 880                        Ramp|(0,2,-122.277,37.002,-122.278,37)            
 I- 580                            |(0,12,-122.22,37.99,-122.22,37.99,-122.222,37.9952,-122.223,37.998,-122.224,37.9996,-122.226,37.003,-122.228,37.007,-122.23,37.026,-122.232,37.043,-122.234,37.059,-122.235,37.0643,-122.237,37.07)                                                                                                                                              |Lafayette
 State Hwy 24                      |(0,15,-122.267,37.246,-122.267,37.248,-122.267,37.261,-122.267,37.271,-122.266,37.298,-122.266,37.315,-122.266,37.336,-122.265,37.3588,-122.264,37.3729,-122.264,37.381,-122.264,37.388,-122.263,37.396,-122.262,37.405,-122.261,37.407,-122.26,37.412)                                                                                          |Lafayette
 State Hwy 13                  Ramp|(0,4,-122.224,37.427,-122.223,37.414,-122.221,37.396,-122.221,37.388)                                                                                                                                                                                                                                                                            |Lafayette
+(252 rows)
+
 QUERY: SELECT * from iexit;
 name                              |thepath                                                                                                                                                                                                                                                                                                                                                            |exit              
 ----------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------
@@ -5409,74 +6183,110 @@ I- 580                            |(0,14,-122.111,37.023,-122.11,37.02,-122.108,
 I- 580                        Ramp|(0,4,-122.109,37.003,-122.107,37.993,-122.107,37.992,-122.105,37.982)                                                                                                                                                                                                                                                                                              |(-122.107,37.8943)
 I- 580                            |(0,14,-122.111,37.023,-122.11,37.02,-122.108,37.0076,-122.108,37.007,-122.107,37.998,-122.106,37.994,-122.105,37.982,-122.105,37.977,-122.103,37.958,-122.103,37.953,-122.101,37.938,-122.099,37.911,-122.098,37.91,-122.098,37.908)                                                                                                                               |(-122.107,37.8846)
 I- 580                        Ramp|(0,4,-122.109,37.003,-122.107,37.993,-122.107,37.992,-122.105,37.982)                                                                                                                                                                                                                                                                                              |(-122.107,37.8842)
+(885 rows)
+
 QUERY: SELECT * from toyemp where name='sharon';
 name  |age|location|annualsal
 ------+---+--------+---------
 sharon| 25|(15,12) |    12000
+(1 row)
+
 QUERY: SELECT avg(four) AS avg_1 FROM onek;
 avg_1
 -----
     1
+(1 row)
+
 QUERY: SELECT avg(a) AS avg_49 FROM aggtest WHERE a < 100;
 avg_49
 ------
      0
+(1 row)
+
 QUERY: SELECT avg(b) AS avg_107_943 FROM aggtest;
 avg_107_943
 -----------
           0
+(1 row)
+
 QUERY: SELECT avg(gpa) AS avg_3_4 FROM student;
 avg_3_4
 -------
     3.4
+(1 row)
+
 QUERY: SELECT sum(four) AS sum_1500 FROM onek;
 sum_1500
 --------
     1500
+(1 row)
+
 QUERY: SELECT sum(a) AS sum_198 FROM aggtest;
 sum_198
 -------
       0
+(1 row)
+
 QUERY: SELECT sum(b) AS avg_431_773 FROM aggtest;
 avg_431_773
 -----------
           0
+(1 row)
+
 QUERY: SELECT sum(gpa) AS avg_6_8 FROM student;
 avg_6_8
 -------
     6.8
+(1 row)
+
 QUERY: SELECT max(four) AS max_3 FROM onek;
 max_3
 -----
     3
+(1 row)
+
 QUERY: SELECT max(a) AS max_100 FROM aggtest;
 max_100
 -------
        
+(1 row)
+
 QUERY: SELECT max(aggtest.b) AS max_324_78 FROM aggtest;
 max_324_78
 ----------
           
+(1 row)
+
 QUERY: SELECT max(student.gpa) AS max_3_7 FROM student;
 max_3_7
 -------
     3.7
+(1 row)
+
 QUERY: SELECT count(four) AS cnt_1000 FROM onek;
 cnt_1000
 --------
     1000
+(1 row)
+
 QUERY: SELECT newavg(four) AS avg_1 FROM onek;
 avg_1
 -----
     1
+(1 row)
+
 QUERY: SELECT newsum(four) AS sum_1500 FROM onek;
 sum_1500
 --------
     1500
+(1 row)
+
 QUERY: SELECT newcnt(four) AS cnt_1000 FROM onek;
 cnt_1000
 --------
     1000
+(1 row)
+
 QUERY: SELECT * FROM a_star*;
 class| a
 -----+--
@@ -5530,12 +6340,16 @@ f    |
 f    |  
 f    |  
 f    |  
+(50 rows)
+
 QUERY: SELECT *
    FROM b_star* x
    WHERE x.b = 'bumble'::text or x.a < 3;
 class|a|b     
 -----+-+------
 b    | |bumble
+(1 row)
+
 QUERY: SELECT class, a
    FROM c_star* x
    WHERE x.c ~ 'hi'::text;
@@ -5563,6 +6377,8 @@ f    |24
 f    |  
 f    |  
 f    |  
+(22 rows)
+
 QUERY: SELECT class, b, c
    FROM d_star* x
    WHERE x.a < 100;
@@ -5576,6 +6392,8 @@ d    |fumble |
 d    |       |hi avi    
 d    |       |          
 d    |       |          
+(8 rows)
+
 QUERY: SELECT class, c FROM e_star* x WHERE x.c NOTNULL;
 class|c          
 -----+-----------
@@ -5591,6 +6409,8 @@ f    |hi marc
 f    |hi allison 
 f    |hi jeff    
 f    |hi carl    
+(12 rows)
+
 QUERY: SELECT * FROM f_star* x WHERE x.c ISNULL;
 class| a|c|  e|f                                                                                                        
 -----+--+-+---+---------------------------------------------------------------------------------------------------------
@@ -5602,6 +6422,8 @@ f    |27| |   |
 f    |  | |-12|                                                                                                         
 f    |  | |   |( 1.11111e+07, 2.22222e+07, 3.33333e+07, 4.44444e+07)                                                    
 f    |  | |   |                                                                                                         
+(8 rows)
+
 QUERY: ALTER TABLE f_star RENAME COLUMN f TO ff;
 QUERY: ALTER TABLE e_star* RENAME COLUMN e TO ee;
 QUERY: ALTER TABLE d_star* RENAME COLUMN d TO dd;
@@ -5637,6 +6459,8 @@ f    |
 f    |  
 f    |  
 f    |  
+(24 rows)
+
 QUERY: ALTER TABLE a_star RENAME COLUMN aa TO foo;
 QUERY: SELECT class, foo
    FROM a_star x
@@ -5644,6 +6468,8 @@ QUERY: SELECT class, foo
 class|foo
 -----+---
 a    |  2
+(1 row)
+
 QUERY: ALTER TABLE a_star RENAME COLUMN foo TO aa;
 QUERY: SELECT *
    from a_star*
@@ -5676,6 +6502,8 @@ f    |24
 f    |25
 f    |26
 f    |27
+(26 rows)
+
 QUERY: ALTER TABLE f_star ADD COLUMN f int4;
 QUERY: UPDATE f_star SET f = 10;
 QUERY: ALTER TABLE e_star* ADD COLUMN e int4;
@@ -5708,6 +6536,8 @@ f    |  |hi carl    |   |
 f    |  |           |-12| 
 f    |  |           |   | 
 f    |  |           |   | 
+(23 rows)
+
 QUERY: ALTER TABLE a_star* ADD COLUMN a text;
 QUERY: UPDATE b_star*
    SET a = 'gazpacho'::text
@@ -5767,12 +6597,16 @@ f    |  |
 f    |  | 
 f    |  | 
 f    |  | 
+(50 rows)
+
 QUERY: SELECT p.name, p.hobbies.name FROM person p;
 name |name       
 -----+-----------
 mike |posthacking
 joe  |basketball 
 sally|basketball 
+(3 rows)
+
 QUERY: SELECT p.name, p.hobbies.name FROM person* p;
 name |name       
 -----+-----------
@@ -5780,6 +6614,8 @@ mike |posthacking
 joe  |basketball 
 sally|basketball 
 jeff |posthacking
+(4 rows)
+
 QUERY: SELECT DISTINCT hobbies_r.name, hobbies_r.equipment.name FROM hobbies_r;
 name       |name         
 -----------+-------------
@@ -5787,6 +6623,8 @@ basketball |hightops
 posthacking|advil        
 posthacking|peet's coffee
 skywalking |guts         
+(4 rows)
+
 QUERY: SELECT hobbies_r.name, hobbies_r.equipment.name FROM hobbies_r;
 name       |name         
 -----------+-------------
@@ -5797,12 +6635,16 @@ posthacking|peet's coffee
 basketball |hightops     
 basketball |hightops     
 skywalking |guts         
+(7 rows)
+
 QUERY: SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM person p;
 name |name       |name         
 -----+-----------+-------------
 mike |posthacking|advil        
 joe  |basketball |peet's coffee
 sally|basketball |hightops     
+(3 rows)
+
 QUERY: SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM person* p;
 name |name       |name         
 -----+-----------+-------------
@@ -5810,12 +6652,16 @@ mike |posthacking|advil
 joe  |basketball |peet's coffee
 sally|basketball |hightops     
 jeff |posthacking|advil        
+(4 rows)
+
 QUERY: SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM person p;
 name    |name |name       
 --------+-----+-----------
 advil   |mike |posthacking
 hightops|joe  |basketball 
 hightops|sally|basketball 
+(3 rows)
+
 QUERY: SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM person* p;
 name    |name |name       
 --------+-----+-----------
@@ -5823,12 +6669,16 @@ advil   |mike |posthacking
 hightops|joe  |basketball 
 hightops|sally|basketball 
 advil   |jeff |posthacking
+(4 rows)
+
 QUERY: SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM person p;
 name         |name       |name 
 -------------+-----------+-----
 advil        |posthacking|mike 
 peet's coffee|basketball |joe  
 hightops     |basketball |sally
+(3 rows)
+
 QUERY: SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM person* p;
 name         |name       |name 
 -------------+-----------+-----
@@ -5836,6 +6686,8 @@ advil        |posthacking|mike
 peet's coffee|basketball |joe  
 hightops     |basketball |sally
 advil        |posthacking|jeff 
+(4 rows)
+
 QUERY: SELECT user_relns() AS user_relns
    ORDER BY user_relns;
 user_relns   
@@ -5862,7 +6714,7 @@ POINT_TBL
 POLYGON_TBL  
 RELTIME_TBL  
 TINTERVAL_TBL
-a,271900     
+a,775132     
 a_star       
 aggtest      
 arrtest      
@@ -5903,12 +6755,16 @@ tenk1
 tenk2        
 toyemp       
 xacttest     
+(63 rows)
+
 QUERY: SELECT * FROM arrtest;
 a          |b                    |c            |d                |e            
 -----------+---------------------+-------------+-----------------+-------------
 {1,2,3,4,5}|{{{0,0}},{{1,2}}}    |{}           |{}               |             
 {11,12,23} |{{{3},{4}},{{4},{5}}}|{"foobar"}   |{{"elt1","elt2"}}|{"3.4","6.7"}
 {}         |{{{3,4},{0,0}}}      |{"foo","bar"}|{{"bar"},{"foo"}}|             
+(3 rows)
+
 QUERY: SELECT arrtest.a[1],
           arrtest.b[1][1][1],
           arrtest.c[1],
@@ -5920,6 +6776,8 @@ QUERY: SELECT arrtest.a[1],
  1|0|      |    | 
 11|3|foobar|elt1| 
   |3|foo   |bar | 
+(3 rows)
+
 QUERY: SELECT arrtest.a[1:3],
           arrtest.b[1:1][1:2][1:2],
           arrtest.c[1:2],
@@ -5930,18 +6788,24 @@ a         |b              |c            |d
 {1,2,3}   |               |             |                 
 {11,12,23}|               |             |{{"elt1","elt2"}}
           |{{{3,4},{0,0}}}|{"foo","bar"}|                 
+(3 rows)
+
 QUERY: SELECT array_dims(arrtest.b) AS x;
 x              
 ---------------
 [1:2][1:1][1:2]
 [1:2][1:2][1:1]
 [1:1][1:2][1:2]
+(3 rows)
+
 QUERY: SELECT *
    FROM arrtest
    WHERE arrtest.a[1] < 5 and
          arrtest.c = '{"foobar"}'::_char16;
 a|b|c|d|e
 -+-+-+-+-
+(0 rows)
+
 QUERY: SELECT arrtest.a[1:3],
           arrtest.b[1:1][1:2][1:2],
           arrtest.c[1:2],
@@ -5952,6 +6816,8 @@ a         |b              |c            |d
 {1,2,3}   |               |             |                 
 {11,12,23}|               |             |{{"elt1","elt2"}}
           |{{{3,4},{0,0}}}|{"foo","bar"}|                 
+(3 rows)
+
 =============== running error queries ... =================
 QUERY: select 1
 select
@@ -6230,4 +7096,3 @@ QUERY: DROP TABLE  POLYGON_TBL;
 QUERY: DROP VIEW street;
 QUERY: DROP VIEW iexit;
 QUERY: DROP VIEW toyemp;
-
