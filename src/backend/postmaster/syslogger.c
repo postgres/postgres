@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.3 2004/08/06 16:06:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.4 2004/08/06 19:17:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,6 +102,7 @@ static volatile sig_atomic_t got_SIGHUP = false;
 static pid_t syslogger_forkexec(void);
 static void syslogger_parseArgs(int argc, char *argv[]);
 #endif
+static void write_syslogger_file_binary(const char *buffer, int count);
 #ifdef WIN32
 static unsigned int __stdcall pipeThread(void *arg);
 #endif
@@ -309,7 +310,7 @@ SysLoggerMain(int argc, char *argv[])
 			}
 			else if (bytesRead > 0)
 			{
-				write_syslogger_file(logbuffer, bytesRead);
+				write_syslogger_file_binary(logbuffer, bytesRead);
 				continue;
 			}
 			else
@@ -494,13 +495,16 @@ SysLogger_Start(void)
 				close(syslogPipe[1]);
 				syslogPipe[1] = -1;
 #else
+				int		fd;
+
 				fflush(stderr);
-				if (dup2(_open_osfhandle((long)syslogPipe[1],
-										 _O_APPEND | _O_TEXT),
-						 _fileno(stderr)) < 0)
+				fd = _open_osfhandle((long) syslogPipe[1],
+									 _O_APPEND | _O_TEXT);
+				if (dup2(fd, _fileno(stderr)) < 0)
 					ereport(FATAL,
 							(errcode_for_file_access(),
 							 errmsg("could not redirect stderr: %m")));
+				close(fd);
 				/* Now we are done with the write end of the pipe. */
 				CloseHandle(syslogPipe[1]);
 				syslogPipe[1] = 0;
@@ -590,7 +594,7 @@ syslogger_parseArgs(int argc, char *argv[])
 	if (fd != 0)
 	{
 		fd = _open_osfhandle(fd, _O_APPEND);
-		if (fd != 0)
+		if (fd > 0)
 		{
 			syslogFile = fdopen(fd, "a");
 			setvbuf(syslogFile, NULL, LBF_MODE, 0);
@@ -609,7 +613,7 @@ syslogger_parseArgs(int argc, char *argv[])
  */
 
 /*
- * Write to the currently open logfile
+ * Write text to the currently open logfile
  *
  * This is exported so that elog.c can call it when am_syslogger is true.
  * This allows the syslogger process to record elog messages of its own,
@@ -617,6 +621,48 @@ syslogger_parseArgs(int argc, char *argv[])
  */
 void
 write_syslogger_file(const char *buffer, int count)
+{
+#ifdef WIN32
+	/*
+	 * On Windows we need to do our own newline-to-CRLF translation.
+	 */
+	char	convbuf[256];
+	char   *p;
+	int		n;
+
+	p = convbuf;
+	n = 0;
+	while (count-- > 0)
+	{
+        if (*buffer == '\n')
+        {
+            *p++ = '\r';
+			n++;
+        }
+        *p++ = *buffer++;
+		n++;
+		if (n >= sizeof(convbuf) - 1)
+		{
+			write_syslogger_file_binary(convbuf, n);
+			p = convbuf;
+			n = 0;
+		}
+    }
+	if (n > 0)
+		write_syslogger_file_binary(convbuf, n);
+#else  /* !WIN32 */
+	write_syslogger_file_binary(buffer, count);
+#endif
+}
+
+/*
+ * Write binary data to the currently open logfile
+ *
+ * On Windows the data arriving in the pipe already has CR/LF newlines,
+ * so we must send it to the file without further translation.
+ */
+static void
+write_syslogger_file_binary(const char *buffer, int count)
 {
     int rc;
 
@@ -664,7 +710,7 @@ pipeThread(void *arg)
 					 errmsg("could not read from logger pipe: %m")));
 		}
         else if (bytesRead > 0)
-            write_syslogger_file(logbuffer, bytesRead);
+            write_syslogger_file_binary(logbuffer, bytesRead);
     }
 
 	/* We exit the above loop only upon detecting pipe EOF */
