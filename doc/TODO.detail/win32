@@ -6475,7 +6475,7 @@ X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
 X-Spam-Status: Yes, hits=5.0 required=5.0 tests=RCVD_IN_OSIRUSOFT_COM,X_OSIRU_SPAM_SRC version=2.20
 X-Spam-Flag: YES
 X-Spam-Level: *****
-X-Spam-Checker-Version: SpamAssassin 2.20 (devel $Id: win32,v 1.1 2002/06/13 18:00:47 momjian Exp $)
+X-Spam-Checker-Version: SpamAssassin 2.20 (devel $Id: win32,v 1.2 2002/09/16 02:47:05 momjian Exp $)
 X-Spam-Report: Detailed Report
 SPAM: -------------------- Start SpamAssassin results ----------------------
   SPAM: This mail is probably spam.  The original message has been altered
@@ -7318,4 +7318,188 @@ http://www.postgresql.org/users-lounge/docs/faq.html
 
 ---------------------------(end of broadcast)---------------------------
 TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M28769@postgresql.org Thu Sep 12 13:30:45 2002
+Return-path: <pgsql-hackers-owner+M28769@postgresql.org>
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8CHUhE10966
+	for <pgman@candle.pha.pa.us>; Thu, 12 Sep 2002 13:30:44 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id 40E144762BC; Thu, 12 Sep 2002 13:29:53 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with SMTP
+	id 74F634761BD; Thu, 12 Sep 2002 13:29:51 -0400 (EDT)
+Received: from localhost (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP
+	id B0228475BEC; Thu, 12 Sep 2002 13:29:47 -0400 (EDT)
+Received: from corvette.mascari.com (dhcp065-024-158-068.columbus.rr.com [65.24.158.68])
+	by postgresql.org (Postfix) with ESMTP
+	id 54553475AE5; Thu, 12 Sep 2002 13:29:46 -0400 (EDT)
+Received: from mascari.com (ferrari.mascari.com [192.168.2.1])
+	by corvette.mascari.com (8.9.3/8.9.3) with ESMTP id NAA10985;
+	Thu, 12 Sep 2002 13:30:07 -0400
+Message-ID: <3D80CEF0.1010900@mascari.com>
+Date: Thu, 12 Sep 2002 13:29:20 -0400
+From: Mike Mascari <mascarm@mascari.com>
+User-Agent: Mozilla/5.0 (Windows; U; WinNT4.0; en-US; rv:1.0.1) Gecko/20020823 Netscape/7.0
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: Mike Mascari <mascarm@mascari.com>
+cc: "scott.marlowe" <scott.marlowe@ihs.com>,
+   Justin Clift <justin@postgresql.org>, Dave Page <dpage@vale-housing.co.uk>,
+   Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL Hackers Mailing List <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] PGXLOG variable worthwhile?
+References: <Pine.LNX.4.33.0209120945260.10924-100000@css120.ihs.com> <3D80C847.1070000@mascari.com>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+X-MailScanner: Found to be clean
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Status: OR
+
+I wrote:
+> scott.marlowe wrote:
+ >>
+>> I wouldn't assume that.  It's been years since I tested it, but back 
+>> then, the command line and all program I used could see the link 
+>> created by ln that came with the resource kit.  They were distinctly 
+>> different from the shortcut type of links, in that they seems 
+>> transparent like short cuts in unix generally are.
+>>
+>> Do you have the resource kit or the gnu utils from it?
+> 
+> 
+> The situation appears to be this:
+> 
+> 1. Soft links are available on NTFS 5 (2K/XP) as Reparse Points via the 
+> DeviceIoControl() function for any application using the standard C 
+> library routines.
+> 
+> 2. Soft links are available on any filesystem under 95/98/ME/NT4/2K/XP 
+> as OLE streams (.lnk files) for Shell-aware applications.
+> 
+> 3. Hard links are available on NTFS 5 (2K/XP) via the CreateHardLink() API.
+
+<snip>
+
+> 4. Hard links are available on NTFS (NT3.1/NT4) via the BackupWrite() 
+> API by writing a special stream to the NTFS.
+
+I also believe (I could be wrong) that for directories, the only 
+two methods of links are the Soft link methods above. So PGXLOG 
+cannot use soft links on a non-XP/2K machine unless it is 
+"Shell-Aware". For example, in a cygwin bash command window:
+
+mkdir dir1
+ln dir1 dir2 <- Error using Cygwin implementation
+ln -s dir1 dir2 <- Creates a Shell short-cut (NT4)
+echo "Hello" > dir1/test.txt
+cat dir2/test.txt
+"Hello" <- Cygwin's cat(bash?) is shell short-cut aware
+
+Now, in a Windows NT command prompt:
+
+notepad dir2\test.txt <- Notepad can't find file
+notepad dir2.lnk <- Displays link contents
+
+That means for a native port with a different PGXLOG directory 
+running on NT4, the only choice *using links* is to make the 
+native port shell short-cut aware.
+
+I could be wrong but I don't think so.
+
+Mike Mascari
+mascarm@mascari.com
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From mascarm@mascari.com Thu Sep 12 13:01:55 2002
+Return-path: <mascarm@mascari.com>
+Received: from corvette.mascari.com (dhcp065-024-158-068.columbus.rr.com [65.24.158.68])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g8CH1oE07922
+	for <pgman@candle.pha.pa.us>; Thu, 12 Sep 2002 13:01:53 -0400 (EDT)
+Received: from mascari.com (ferrari.mascari.com [192.168.2.1])
+	by corvette.mascari.com (8.9.3/8.9.3) with ESMTP id NAA10893;
+	Thu, 12 Sep 2002 13:01:42 -0400
+Message-ID: <3D80C847.1070000@mascari.com>
+Date: Thu, 12 Sep 2002 13:00:55 -0400
+From: Mike Mascari <mascarm@mascari.com>
+User-Agent: Mozilla/5.0 (Windows; U; WinNT4.0; en-US; rv:1.0.1) Gecko/20020823 Netscape/7.0
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: "scott.marlowe" <scott.marlowe@ihs.com>
+cc: Justin Clift <justin@postgresql.org>,
+   Dave Page
+	<dpage@vale-housing.co.uk>,
+   Bruce Momjian <pgman@candle.pha.pa.us>,
+   PostgreSQL
+	Hackers Mailing List <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] PGXLOG variable worthwhile?
+References: <Pine.LNX.4.33.0209120945260.10924-100000@css120.ihs.com>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+X-MailScanner: Found to be clean
+Status: OR
+
+scott.marlowe wrote:
+> On Fri, 13 Sep 2002, Justin Clift wrote:
+ >
+>>Would it be correct to say that the 'ln' command in the MS Resource Kit
+>>creates this kind of shortcut too, as the Reparse Points feature doesn't
+>>seem to be possible under NT4?
+> 
+> 
+> I wouldn't assume that.  It's been years since I tested it, but back then, 
+> the command line and all program I used could see the link created by ln 
+> that came with the resource kit.  They were distinctly different from the 
+> shortcut type of links, in that they seems transparent like short cuts in 
+> unix generally are.
+> 
+> Do you have the resource kit or the gnu utils from it?
+
+The situation appears to be this:
+
+1. Soft links are available on NTFS 5 (2K/XP) as Reparse Points 
+via the DeviceIoControl() function for any application using the 
+standard C library routines.
+
+2. Soft links are available on any filesystem under 
+95/98/ME/NT4/2K/XP as OLE streams (.lnk files) for Shell-aware 
+applications.
+
+3. Hard links are available on NTFS 5 (2K/XP) via the 
+CreateHardLink() API.
+
+See:
+
+http://msdn.microsoft.com/library/default.asp?url=/library/en-us/fileio/base/createhardlink.asp
+
+4. Hard links are available on NTFS (NT3.1/NT4) via the 
+BackupWrite() API by writing a special stream to the NTFS.
+
+Example:
+
+http://www.mvps.org/win32/ntfs/lnw.cpp
+
+The cygwin implementation of link():
+
+http://sources.redhat.com/cgi-bin/cvsweb.cgi/src/winsup/cygwin/syscalls.cc?rev=1.149.2.23&content-type=text/x-cvsweb-markup&cvsroot=src
+
+1. Will use CreateHardLink() if on 2K/XP
+2. Will try to use the BackupWrite() method
+3. Failing #2 will just copy the file
+
+See how fun Microsoft makes things?
+
+Mike Mascari
+mascarm@mascari.com
+
 
