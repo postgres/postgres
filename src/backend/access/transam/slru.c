@@ -6,15 +6,13 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.12 2004/02/17 03:45:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.13 2004/02/23 23:03:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <fcntl.h>
-#include <dirent.h>
-#include <errno.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -888,7 +886,7 @@ SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions)
 	int			segpage;
 	char		path[MAXPGPATH];
 
-	cldir = opendir(ctl->Dir);
+	cldir = AllocateDir(ctl->Dir);
 	if (cldir == NULL)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -927,7 +925,7 @@ SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 			   errmsg("could not read directory \"%s\": %m", ctl->Dir)));
-	closedir(cldir);
+	FreeDir(cldir);
 
 	return found;
 }

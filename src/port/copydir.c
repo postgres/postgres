@@ -11,17 +11,17 @@
  *	as a service.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.7 2003/11/29 19:52:13 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/copydir.c,v 1.8 2004/02/23 23:03:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "storage/fd.h"
+
 #undef mkdir					/* no reason to use that macro because we
 								 * ignore the 2nd arg */
-
-#include <dirent.h>
 
 
 /*
@@ -47,7 +47,7 @@ copydir(char *fromdir, char *todir)
 				 errmsg("could not create directory \"%s\": %m", todir)));
 		return -1;
 	}
-	xldir = opendir(fromdir);
+	xldir = AllocateDir(fromdir);
 	if (xldir == NULL)
 	{
 		ereport(WARNING,
@@ -65,11 +65,11 @@ copydir(char *fromdir, char *todir)
 			ereport(WARNING,
 					(errcode_for_file_access(),
 					 errmsg("could not copy file \"%s\": %m", fromfl)));
-			closedir(xldir);
+			FreeDir(xldir);
 			return -1;
 		}
 	}
 
-	closedir(xldir);
+	FreeDir(xldir);
 	return 0;
 }
