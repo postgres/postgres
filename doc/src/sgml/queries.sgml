@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.4 2001/02/13 21:13:11 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.5 2001/02/15 04:10:54 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -105,7 +105,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     <para>
      A joined table is a table derived from two other (real or
      derived) tables according to the rules of the particular join
-     type.  INNER, OUTER, NATURAL, and CROSS JOIN are supported.
+     type.  INNER, OUTER, and CROSS JOIN are supported.
     </para>
 
     <variablelist>
@@ -122,10 +122,10 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
        <para>
         For each combination of rows from
         <replaceable>T1</replaceable> and
-        <replaceable>T2</replaceable> the derived table will contain a
+        <replaceable>T2</replaceable>, the derived table will contain a
         row consisting of all columns in <replaceable>T1</replaceable>
         followed by all columns in <replaceable>T2</replaceable>.  If
-        the tables have have N and M rows respectively, the joined
+        the tables have N and M rows respectively, the joined
         table will have N * M rows.  A cross join is equivalent to an
         <literal>INNER JOIN ON TRUE</literal>.
        </para>
@@ -148,30 +148,53 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
 <synopsis>
 <replaceable>T1</replaceable> { <optional>INNER</optional> | { LEFT | RIGHT | FULL } <optional>OUTER</optional> } JOIN <replaceable>T2</replaceable> ON <replaceable>boolean expression</replaceable>
 <replaceable>T1</replaceable> { <optional>INNER</optional> | { LEFT | RIGHT | FULL } <optional>OUTER</optional> } JOIN <replaceable>T2</replaceable> USING ( <replaceable>join column list</replaceable> )
+<replaceable>T1</replaceable> NATURAL { <optional>INNER</optional> | { LEFT | RIGHT | FULL } <optional>OUTER</optional> } JOIN <replaceable>T2</replaceable>
 </synopsis>
         
        <para>
         The words <token>INNER</token> and <token>OUTER</token> are
         optional for all JOINs.  <token>INNER</token> is the default;
         <token>LEFT</token>, <token>RIGHT</token>, and
-        <token>FULL</token> are for OUTER JOINs only.
+        <token>FULL</token> imply an OUTER JOIN.
        </para>
 
        <para>
         The <firstterm>join condition</firstterm> is specified in the
-        ON or USING clause.  (The meaning of the join condition
-        depends on the particular join type; see below.)  The ON
-        clause takes a Boolean value expression of the same kind as is
-        used in a WHERE clause.  The USING clause takes a
+        ON or USING clause, or implicitly by the word NATURAL.  The join
+	condition determines which rows from the two source tables are
+	considered to <quote>match</quote>, as explained in detail below.
+       </para>
+
+       <para>
+        The ON clause is the most general kind of join condition: it takes a
+	Boolean value expression of the same kind as is used in a WHERE
+	clause.  A pair of rows from T1 and T2 match if the ON expression
+	evaluates to TRUE for them.
+       </para>
+
+       <para>
+        USING is a shorthand notation: it takes a
         comma-separated list of column names, which the joined tables
-        must have in common, and joins the tables on the equality of
-        those columns as a set, resulting in a joined table having one
-        column for each common column listed and all of the other
-        columns from both tables.  Thus, <literal>USING (a, b,
-        c)</literal> is equivalent to <literal>ON (t1.a = t2.a AND
-        t1.b = t2.b AND t1.c = t2.c)</literal> with the exception that
+        must have in common, and forms a join condition specifying equality
+	of each of these pairs of columns.  Furthermore, the output of
+	a JOIN USING has one column for each of the equated pairs of
+	input columns, followed by all of the other columns from each table.
+        Thus, <literal>USING (a, b, c)</literal> is equivalent to
+	<literal>ON (t1.a = t2.a AND t1.b = t2.b AND t1.c = t2.c)</literal>
+	with the exception that
         if ON is used there will be two columns a, b, and c in the
         result, whereas with USING there will be only one of each.
+       </para>
+
+       <para>
+        Finally, NATURAL is a shorthand form of USING: it forms a USING
+	list consisting of exactly those column names that appear in both
+	input tables.  As with USING, these columns appear only once in
+	the output table.
+       </para>
+
+       <para>
+        The possible types of qualified JOIN are:
        </para>
 
        <variablelist>
@@ -205,7 +228,10 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
 
          <listitem>
           <para>
-           This is the converse of a left join: the result table will
+           First, an INNER JOIN is performed.  Then, for each row in T2
+           that does not satisfy the join condition with any row in
+           T1, a joined row is returned with NULL values in columns of
+           T1.  This is the converse of a left join: the result table will
            unconditionally have a row for each row in T2.
           </para>
          </listitem>
@@ -226,22 +252,6 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
          </listitem>
         </varlistentry>
        </variablelist>
-      </listitem>
-     </varlistentry>
-      
-     <varlistentry>
-      <term>NATURAL JOIN</term>
-
-      <listitem>
-<synopsis>
-<replaceable>T1</replaceable> NATURAL { <optional>INNER</optional> | { LEFT | RIGHT | FULL } <optional>OUTER</optional> JOIN <replaceable>T2</replaceable>
-</synopsis>
-       <para>
-        A natural join creates a joined table where every pair of matching
-        column names between the two tables are merged into one column. The
-        result is the same as a qualified join with a USING clause that lists
-	all the common column names of the two tables.
-       </para>
       </listitem>
      </varlistentry>
     </variablelist>
@@ -270,8 +280,9 @@ FROM (SELECT * FROM table1) AS alias_name
 
     <para>
      This example is equivalent to <literal>FROM table1 AS
-     alias_name</literal>.  Many subqueries can be written as table
-     joins instead.
+     alias_name</literal>.  More interesting cases, which can't be
+     reduced to a plain join, arise when the subquery involves grouping
+     or aggregation.
     </para>
    </sect3>
 
@@ -331,12 +342,27 @@ FROM <replaceable>table_reference</replaceable> <replaceable>alias</replaceable>
 <synopsis>
 FROM <replaceable>table_reference</replaceable> <optional>AS</optional> <replaceable>alias</replaceable> ( <replaceable>column1</replaceable> <optional>, <replaceable>column2</replaceable> <optional>, ...</optional></optional> )
 </synopsis>
-     In addition to renaming the table as described above, the columns
+     In this form,
+     in addition to renaming the table as described above, the columns
      of the table are also given temporary names for use by the surrounding
      query.  If fewer column 
      aliases are specified than the actual table has columns, the remaining
      columns are not renamed.  This syntax is especially useful for
      self-joins or subqueries.
+    </para>
+
+    <para>
+     When an alias is applied to the output of a JOIN clause, using any of
+     these forms, the alias hides the original names within the JOIN.
+     For example,
+<programlisting>
+SELECT a.* FROM my_table AS a JOIN your_table AS b ON ...
+</programlisting>
+     is valid SQL, but
+<programlisting>
+SELECT a.* FROM (my_table AS a JOIN your_table AS b ON ...) AS c
+</programlisting>
+     is not valid: the table alias A is not visible outside the alias C.
     </para>
    </sect3>
 
@@ -442,13 +468,13 @@ FROM FDT WHERE
     In the examples above, FDT is the table derived in the FROM
     clause. Rows that do not meet the search condition of the where
     clause are eliminated from FDT. Notice the use of scalar
-    subqueries as value expressions (C2 assumed UNIQUE).  Just like
+    subqueries as value expressions.  Just like
     any other query, the subqueries can employ complex table
     expressions.  Notice how FDT is referenced in the subqueries.
     Qualifying C1 as FDT.C1 is only necessary if C1 is also the name of a
     column in the derived input table of the subquery.  Qualifying the
-    column name adds clarity even when it is not needed.  The column
-    naming scope of an outer query extends into its inner queries.
+    column name adds clarity even when it is not needed.  This shows how
+    the column naming scope of an outer query extends into its inner queries.
    </para>
   </sect2>
 
@@ -488,8 +514,8 @@ SELECT <replaceable>select_list</replaceable> FROM ... <optional>WHERE ...</opti
     <function>sum(sales)</function> on a table grouped by product code
     gives the total sales for each product, not the total sales on all
     products.  Aggregates computed on the ungrouped columns are
-    representative of the group, whereas their individual values may
-    not be.
+    representative of the group, whereas individual values of an ungrouped
+    column are not.
    </para>
 
    <para>
@@ -583,7 +609,7 @@ SELECT tbl1.a, tbl2.b, tbl1.c FROM ...
   <para>
    If an arbitrary value expression is used in the select list, it
    conceptually adds a new virtual column to the returned table.  The
-   value expression is effectively evaluated once for each retrieved
+   value expression is evaluated once for each retrieved
    row, with the row's values substituted for any column references.  But
    the expressions in the select list do not have to reference any
    columns in the table expression of the FROM clause; they could be

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.18 2001/01/27 05:07:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.19 2001/02/15 04:10:54 tgl Exp $
 -->
 
  <chapter id="sql">
@@ -1063,15 +1063,11 @@ select sname, pname from supplier
 	 </para>
 
 	 <para>
-	 JOINs of all types can be chained together or nested where either or both of
-	 <replaceable class="parameter">T1</replaceable> and
-	 <replaceable class="parameter">T2</replaceable> may be JOINed tables.
-	 A Qualified JOIN may be JOINed to another table (or JOINed table)
-	 following its join specification, which consists of either an
-	 ON <replaceable>search condition</replaceable> or
-	 USING ( <replaceable>join column list</replaceable> ) clause.
-	 Parenthesis can be used around JOIN clauses to control the order
-	 of JOINs which are otherwise processed left to right.
+	  SQL JOINs come in two main types, CROSS JOINs (unqualified joins)
+	  and <firstterm>qualified JOINs</>.  Qualified joins can be further
+	  subdivided based on the way in which the <firstterm>join condition</>
+	  is specified (ON, USING, or NATURAL) and the way in which it is
+	  applied (INNER or OUTER join).
 	 </para>
 
     <variablelist>
@@ -1081,18 +1077,17 @@ select sname, pname from supplier
 	        <listitem>
 			<cmdsynopsis>
 			    <arg choice="req"> <replaceable class="parameter">T1</replaceable> </arg>
-				<arg choice="plain">CROSS</arg>
-			    <command> JOIN </command>
+			    <command> CROSS JOIN </command>
 			    <arg choice="req"> <replaceable class="parameter">T2</replaceable> </arg>
             </cmdsynopsis>
 
 			<para>
 			A cross join takes two tables T1 and T2 having N and M rows
-			respectively, and returns a joined table containing a cross
-			product, NxM, of joined rows. For each row R1 of T1, each row
+			respectively, and returns a joined table containing all
+			N*M possible joined rows. For each row R1 of T1, each row
 			R2 of T2 is joined with R1 to yield a joined table row JR
 			consisting of all fields in R1 and R2. A CROSS JOIN is
-			essentially an INNER JOIN ON TRUE.
+			equivalent to an INNER JOIN ON TRUE.
 			</para>
 			</listitem>
 		</varlistentry>
@@ -1102,34 +1097,41 @@ select sname, pname from supplier
 		    <listitem>
 
 			<cmdsynopsis>
-				<arg choice="req"> <replaceable class="parameter">T1</replaceable> </arg>
-				<group choice="opt">
-					<arg choice="opt"> INNER </arg>
-					<arg>
-						<group choice="req">
-							<arg choice="plain"> LEFT </arg>
-							<arg choice="plain"> RIGHT </arg>
-							<arg choice="plain"> FULL </arg>
-						</group>
-						<arg choice="opt"> OUTER </arg>
+			<arg choice="req"> <replaceable class="parameter">T1</replaceable> </arg>
+			<arg choice="opt"> NATURAL </arg>
+			<group choice="opt">
+				<arg choice="opt"> INNER </arg>
+				<arg>
+				<group choice="req">
+					<arg choice="plain"> LEFT </arg>
+					<arg choice="plain"> RIGHT </arg>
+					<arg choice="plain"> FULL </arg>
+				</group>
+				<arg choice="opt"> OUTER </arg>
       				</arg>
      			</group>
-				<command> JOIN </command>
-				<arg choice="req"> <replaceable class="parameter">T2</replaceable> </arg>
-				<group choice="req">
-					<arg> ON <replaceable>search condition</replaceable></arg>
-					<arg> USING ( <replaceable>join column list</replaceable> ) </arg>
-				</group>
-				<arg choice="plain"> ... </arg>
+			<command> JOIN </command>
+			<arg choice="req"> <replaceable class="parameter">T2</replaceable> </arg>
+			<group choice="req">
+				<arg> ON <replaceable>search condition</replaceable></arg>
+				<arg> USING ( <replaceable>join column list</replaceable> ) </arg>
+			</group>
 			</cmdsynopsis>
 
 			<para>
-			Only the qualified JOIN types can use ON or USING clauses.  The ON clause
-			takes a <replaceable>search condition</replaceable>, which is the same
-			as in a WHERE clause.  The USING clause takes a comma-separated list of
-			column names, which the joined tables must have in common, and joins
-			the tables on those columns, resulting in a joined table having one
-			column for each common column and all of the other columns from both tables.
+			A qualified JOIN must specify its join condition
+			by providing one (and only one) of NATURAL, ON, or
+			USING.  The ON clause
+			takes a <replaceable>search condition</replaceable>,
+			which is the same as in a WHERE clause.  The USING
+			clause takes a comma-separated list of column names,
+			which the joined tables must have in common, and joins
+			the tables on equality of those columns.  NATURAL is
+			shorthand for a USING clause that lists all the common
+			column names of the two tables.  A side-effect of both
+			USING and NATURAL is that only one copy of each joined
+			column is emitted into the result table (compare the
+			relational-algebra definition of JOIN, shown earlier).
 			</para>
 
 			<!-- begin join semantics -->
@@ -1144,13 +1146,13 @@ select sname, pname from supplier
 				<listitem>
 				<para>
 				For each row R1 of T1, the joined table has a row for each row
-				in T2 that satisfies the join specification with R1. 
+				in T2 that satisfies the join condition with R1. 
 				</para>
 				<tip>
-					<para>
+				<para>
 					The words INNER and OUTER are optional for all JOINs.
-					INNER is the default.  LEFT, RIGHT, and FULL are for
-					OUTER JOINs only.
+					INNER is the default.  LEFT, RIGHT, and FULL imply an
+					OUTER JOIN.
 					</para>
 				</tip>
 				</listitem>
@@ -1166,9 +1168,9 @@ select sname, pname from supplier
 				<listitem>
 				<para>
                 First, an INNER JOIN is performed.
-                Then, where a row in T1 does not satisfy the join specification
-				with any row in T2, a joined row is returned with null fields in
-				columns from T2.
+                Then, for each row in T1 that does not satisfy the join
+				condition with any row in T2, an additional joined row is
+				returned with null fields in the columns from T2.
 				</para>
 				<tip>
 					<para>
@@ -1187,12 +1189,10 @@ select sname, pname from supplier
           		</term>
 				<listitem>
 				<para>
-				Rule 1: For each row R2 of T2, the joined table has a row for each
-				row in T1 that satisfies the join specification with R2 (transposed
-				[INNER] JOIN).
-                Rule 2: Where a row in T2 does not satisfy the join specification
-				with any row in T1, a joined row is returned with null fields in
-				columns from T1.
+                First, an INNER JOIN is performed.
+                Then, for each row in T2 that does not satisfy the join
+				condition with any row in T1, an additional joined row is
+				returned with null fields in the columns from T1.
 				</para>
 				<tip>
 					<para>
@@ -1211,8 +1211,13 @@ select sname, pname from supplier
           		</term>
             	<listitem>
 				<para>
-				First, a LEFT [OUTER] JOIN is performed.
-				Then, Rule 2 of a RIGHT [OUTER] JOIN is performed.
+                First, an INNER JOIN is performed.
+                Then, for each row in T1 that does not satisfy the join
+				condition with any row in T2, an additional joined row is
+				returned with null fields in the columns from T2.
+                Also, for each row in T2 that does not satisfy the join
+				condition with any row in T1, an additional joined row is
+				returned with null fields in the columns from T1.
 				</para>
 				<tip>
 					<para>
@@ -1227,40 +1232,15 @@ select sname, pname from supplier
 
 			</listitem>
         </varlistentry>
-
-		<varlistentry>
-		    <term>NATURAL JOINs</term>
-    		<listitem>
-
-			<cmdsynopsis>
-				<arg choice="req"> <replaceable class="parameter">T1</replaceable> </arg>
-				<arg choice="plain"> NATURAL </arg>
-				<group choice="opt">
-					<arg choice="opt"> INNER </arg>
-					<arg>
-						<group choice="req">
-							<arg choice="plain"> LEFT </arg>
-							<arg choice="plain"> RIGHT </arg>
-							<arg choice="plain"> FULL </arg>
-						</group>
-						<arg choice="opt"> OUTER </arg>
-      				</arg>
-     			</group>
-				<command> JOIN </command>				
-				<arg choice="req"> <replaceable class="parameter">T2</replaceable> </arg>
-			</cmdsynopsis>
-
-			<para>
-			A natural join creates a joined table where every pair of matching
-			column names between the two tables are merged into one column. The
-			join specification is effectively a USING clause containing all the
-            common column names and is otherwise like a Qualified JOIN.
-			</para>
-			</listitem>
-		</varlistentry>
-
 	 </variablelist>
 
+	 <para>
+	 JOINs of all types can be chained together or nested where either or both of
+	 <replaceable class="parameter">T1</replaceable> and
+	 <replaceable class="parameter">T2</replaceable> may be JOINed tables.
+	 Parenthesis can be used around JOIN clauses to control the order
+	 of JOINs which are otherwise processed left to right.
+	 </para>
 
     </sect3>
 
@@ -1302,7 +1282,7 @@ SELECT AVG(PRICE) AS AVG_PRICE
        </para>
 
        <para>
-	If we want to know how many parts are stored in table PART we use
+	If we want to know how many parts are defined in table PART we use
 	the statement:
 
 	<programlisting>
@@ -1332,7 +1312,7 @@ SELECT COUNT(PNO)
       aggregate operators described above can be applied to the groups ---
       i.e. the value of the aggregate operator is no longer calculated over
       all the values of the specified column but over all values of a
-      group. Thus the aggregate operator is evaluated individually for every
+      group. Thus the aggregate operator is evaluated separately for every
       group.
      </para>
 
@@ -1547,7 +1527,7 @@ SELECT *
 	In our example the result will be empty because every supplier sells
 	at least one part. Note that we use S.SNO from the outer SELECT within
 	the WHERE clause of the inner SELECT. Here the subquery must be
-	evaluated for every tuple from the outer query, i.e. the value for
+	evaluated afresh for each tuple from the outer query, i.e. the value for
 	S.SNO is always taken from the current tuple of the outer SELECT. 
        </para>
       </example>
@@ -1605,7 +1585,7 @@ SELECT MAX(subtable.avgprice)
 SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNAME = 'Jones'
-    UNION
+UNION
     SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNAME = 'Adams';    
@@ -1628,7 +1608,7 @@ gives the result:
 SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNO > 1
-    INTERSECT
+INTERSECT
     SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNO < 3;
@@ -1652,7 +1632,7 @@ SELECT S.SNO, S.SNAME, S.CITY
 SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNO > 1
-    EXCEPT
+EXCEPT
     SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNO > 3;
