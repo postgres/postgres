@@ -1,14 +1,23 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.15 2002/09/12 22:05:36 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.16 2002/09/25 21:16:10 petere Exp $
 -->
 
 <chapter id="user-manag">
- <title>Database Users and Permissions</title>
+ <title>Database Users and Privileges</title>
 
  <para>
-  Managing database users and their privileges is in concept similar
-  to managing the users of a Unix operating system, but the details
-  are not identical.
+  Every database cluster contains a set of database users.  Those
+  users are separate from the users managed by the operating system on
+  which the server runs.  Users own database objects (for example,
+  tables) and can assign privileges on those objects to other users to
+  control who has access to which object.
+ </para>
+
+ <para>
+  This chapter describes how to create and manage users and introduces
+  the privilege system.  More information about the various types of
+  database objects and the effects of privileges can be found in
+  &cite-user;.
  </para>
 
  <sect1 id="database-users">
@@ -27,19 +36,27 @@ CREATE USER <replaceable>name</replaceable>
    <replaceable>name</replaceable> follows the rules for SQL
    identifiers: either unadorned without special characters, or
    double-quoted. To remove an existing user, use the analogous
-   <command>DROP USER</command> command.
+   <command>DROP USER</command> command:
+<synopsis>
+DROP USER <replaceable>name</replaceable>
+</synopsis>
   </para>
 
   <para>
-   For convenience, the shell scripts <application>createuser</application>
-   and <application>dropuser</application> are provided as wrappers around these SQL
-   commands.
+   For convenience, the programs <application>createuser</application>
+   and <application>dropuser</application> are provided as wrappers
+   around these SQL commands that can be called from the shell command
+   line:
+<synopsis>
+createuser <replaceable>name</replaceable>
+dropuser <replaceable>name</replaceable>
+</synopsis>
   </para>
 
   <para>
    In order to bootstrap the database system, a freshly initialized
    system always contains one predefined user. This user will have the
-   fixed id 1, and by default (unless altered when running
+   fixed ID 1, and by default (unless altered when running
    <application>initdb</application>) it will have the same name as
    the operating system user that initialized the database
    cluster. Customarily, this user will be named
@@ -48,21 +65,34 @@ CREATE USER <replaceable>name</replaceable>
   </para>
 
   <para>
-   The user name to use for a particular database connection is
-   indicated by the client that is initiating the connection request
-   in an application-specific fashion. For example, the
-   <application>psql</application> program uses the <option>-U</option>
-   command line option to indicate the user to connect as. The set of
-   database users a given client connection may connect as is
-   determined by the client authentication setup, as explained in
+   Exactly one user identity is active for a connection to the
+   database server.  The user name to use for a particular database
+   connection is indicated by the client that is initiating the
+   connection request in an application-specific fashion. For example,
+   the <application>psql</application> program uses the
+   <option>-U</option> command line option to indicate the user to
+   connect as.  Many applications assume the name of the current
+   operating system user by default (including
+   <application>createuser</> and <application>psql</>).  Therefore it
+   is convenient to maintain a naming correspondence between the two
+   user sets.
+  </para>
+
+  <para>
+   The set of database users a given client connection may connect as
+   is determined by the client authentication setup, as explained in
    <xref linkend="client-authentication">. (Thus, a client is not
    necessarily limited to connect as the user with the same name as
    its operating system user, in the same way a person is not
-   constrained in its login name by her real name.)
+   constrained in its login name by her real name.)  Since the user
+   identity determines the set of privileges available to a connected
+   client, it is important to carefully configure this when setting up
+   a multiuser environment.
   </para>
+ </sect1>
 
-  <sect2 id="user-attributes">
-   <title>User attributes</title>
+ <sect1 id="user-attributes">
+  <title>User Attributes</title>
 
    <para>
     A database user may have a number of attributes that define its
@@ -115,7 +145,23 @@ CREATE USER <replaceable>name</replaceable>
     See the reference pages for <command>CREATE USER</command> and
     <command>ALTER USER</command> for details.
    </para>
-  </sect2>
+
+  <para>
+   A user can also set personal defaults for many of the run-time
+   configuration settings described in <xref
+   linkend="runtime-config">.  For example, if for some reason you
+   want to disable index scans (hint: not a good idea) anytime you
+   connect, you can use
+<programlisting>
+ALTER USER myname SET enable_indexscan TO off;
+</programlisting>
+   This will save the setting (but not set it immediately) and in
+   subsequent connections it will appear as though <literal>SET geqo
+   TO off;</literal> had been called right before the session started.
+   You can still alter this setting during the session; it will only
+   be the default. To undo any such setting, use <literal>ALTER USER
+   <replaceable>username</> RESET <replaceable>varname</>;</literal>.
+  </para>
  </sect1>
 
  <sect1 id="groups">
@@ -123,7 +169,7 @@ CREATE USER <replaceable>name</replaceable>
 
   <para>
    As in Unix, groups are a way of logically grouping users to ease
-   management of permissions: permissions can be granted to, or revoked
+   management of privileges: privileges can be granted to, or revoked
    from, a group as a whole.  To create a group, use
 <synopsis>
 CREATE GROUP <replaceable>name</replaceable>
@@ -203,11 +249,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
    server that other users may execute without knowing it. Hence, both
    mechanisms permit users to <firstterm>Trojan horse</firstterm>
    others with relative impunity. The only real protection is tight
-   control over who can define functions (e.g., write to relations
-   with SQL fields) and triggers. Audit trails and alerters on the
-   system catalogs <literal>pg_class</literal>,
-   <literal>pg_shadow</literal> and <literal>pg_group</literal> are also
-   possible.
+   control over who can define functions.
   </para>
 
   <para>
@@ -219,7 +261,6 @@ REVOKE ALL ON accounts FROM PUBLIC;
    system access controls. This is an inherent problem with
    user-defined C functions.
   </para>
-
  </sect1>
 
 </chapter>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.138 2002/09/21 18:32:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.139 2002/09/25 21:16:10 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -57,7 +57,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.138 2002/09/21 18:32:53 pe
    database cluster will contain a database named
    <literal>template1</literal>. As the name suggests, this will be used
    as a template for subsequently created databases; it should not be
-   used for actual work.
+   used for actual work.  (See <xref linkend="managing-databases"> for information
+   about creating databases.)
   </para>
 
   <para>
@@ -120,18 +121,17 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
 
   <para>
    However, while the directory contents are secure, the default
-   <filename>pg_hba.conf</filename> authentication method of
-   <literal>trust</literal> allows any local user to connect to the
+   client authentication setup allows any local user to connect to the
    database and even become the database superuser. If you don't trust
    other local users, we recommend you use <command>initdb</command>'s
    <option>-W</option> or <option>--pwprompt</option> option to assign a
    password to the database superuser. After <command>initdb</command>,
-   modify <filename>pg_hba.conf</filename> to use <literal>md5</> or
+   modify the <filename>pg_hba.conf</filename> file to use <literal>md5</> or
    <literal>password</> instead of <literal>trust</> authentication
    <emphasis>before</> you start the server for the first time. (Other,
    approaches include using <literal>ident</literal> authentication or
    file system permissions to restrict connections. See <xref
-   linkend="client-authentication"> for more information.
+   linkend="client-authentication"> for more information.)
   </para>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.20 2001/11/28 20:49:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.21 2002/09/25 21:16:10 petere Exp $
 -->
 
 <chapter id="managing-databases">
@@ -8,35 +8,64 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.20 2001/11/28 20:49:10 p
  <indexterm zone="managing-databases"><primary>database</></>
 
  <para>
-  A database is a named collection of SQL objects (<quote>database
-  objects</quote>).  Generally, every database object (tables, functions,
-  etc.) belongs to one and only one database.  (But there are a few system
-  catalogs, for example <literal>pg_database</>, that belong to a whole
-  installation and are accessible from each database within the
-  installation.)
-  An application that connects
-  to the database server specifies in its connection request the
-  name of the database it wants to connect to. It is not possible to
-  access more than one database per connection. (But an application
-  is not restricted in the number of connections it opens to the same
-  or other databases.)
+  Every instance of a running PostgreSQL server manages one or more
+  databases.  Databases are therefore the topmost hierarchical level
+  for organizing SQL objects (<quote>database objects</quote>).  This
+  chapter describes the properties of databases, and how to create,
+  manage, and destroy them.
  </para>
 
- <note>
+ <sect1>
+  <title>Overview</title>
+
   <para>
-   <acronym>SQL</> calls databases <quote>catalogs</>, but there is no
-   difference in practice.
+   A database is a named collection of SQL objects (<quote>database
+   objects</quote>).  Generally, every database object (tables,
+   functions, etc.) belongs to one and only one database.  (But there
+   are a few system catalogs, for example <literal>pg_database</>,
+   that belong to a whole installation and are accessible from each
+   database within the installation.)  More accurately, a database is
+   a collection of schemas and the schemas contain the tables,
+   functions, etc.  So the full hierarchy is:
+   server-database-schema-table (or something else instead of a
+   table).
   </para>
- </note>
 
- <para>
-  In order to create or drop databases, the <productname>PostgreSQL</>
-  <application>postmaster</> must be up and running (see <xref
-  linkend="postmaster-start">).
- </para>
+  <para>
+   An application that connects to the database server specifies in
+   its connection request the name of the database it wants to connect
+   to. It is not possible to access more than one database per
+   connection. (But an application is not restricted in the number of
+   connections it opens to the same or other databases.)  It is
+   possible, however, to access more than one schema from the same
+   connection.  Schemas are a purely logical structure and who can
+   access what is managed by the privilege system.  Databases are
+   physically separated and access control is managed at the
+   connection level.  If one PostgreSQL server instance is to house
+   projects or users that should be separate and for the most part
+   unaware of each other, it is therefore recommendable to put them
+   into separate databases.  If the projects or users are interrelated
+   and should be able to use each other's resources they should be put
+   in the same databases but possibly into separate schemas.  More
+   information about managing schemas is in &cite-user;.
+  </para>
+
+  <note>
+   <para>
+    <acronym>SQL</> calls databases <quote>catalogs</>, but there is no
+    difference in practice.
+   </para>
+  </note>
+ </sect1>
 
  <sect1 id="manage-ag-createdb">
   <title>Creating a Database</title>
+
+  <para>
+   In order to create a databases, the <productname>PostgreSQL</>
+   server must be up and running (see <xref
+   linkend="postmaster-start">).
+  </para>
 
   <para>
    Databases are created with the query language command
@@ -56,20 +85,17 @@ CREATE DATABASE <replaceable>name</>
    linkend="user-attributes"> for how to grant permission.
   </para>
 
-  <formalpara>
-   <title>Bootstrapping:</title>
-   <para>
-    Since you need to be connected to the database server in order to
-    execute the <command>CREATE DATABASE</command> command, the
-    question remains how the <emphasis>first</> database at any given
-    site can be created. The first database is always created by the
-    <command>initdb</> command when the data storage area is
-    initialized. (See <xref linkend="creating-cluster">.) By convention
-    this database is called <literal>template1</>. So
-    to create the first <quote>real</> database you can connect to
-    <literal>template1</>.
-   </para>
-  </formalpara>
+  <para>
+   Since you need to be connected to the database server in order to
+   execute the <command>CREATE DATABASE</command> command, the
+   question remains how the <emphasis>first</> database at any given
+   site can be created. The first database is always created by the
+   <command>initdb</> command when the data storage area is
+   initialized. (See <xref linkend="creating-cluster">.) By convention
+   this database is called <literal>template1</>. So to create the
+   first <quote>real</> database you can connect to
+   <literal>template1</>.
+  </para>
 
   <para>
    The name <quote>template1</quote> is no accident: When a new
@@ -77,14 +103,14 @@ CREATE DATABASE <replaceable>name</>
    This means that any changes you make in <literal>template1</> are
    propagated to all subsequently created databases. This implies that
    you should not use the template database for real work, but when
-   used judiciously this feature can be convenient.  More details appear
-   below.
+   used judiciously this feature can be convenient.  More details
+   appear in <xref linkend="manage-ag-templatedbs">.
   </para>
 
   <para>
    As an extra convenience, there is also a program that you can
    execute from the shell to create new databases,
-   <filename>createdb</>.
+   <command>createdb</>.
 
 <synopsis>
 createdb <replaceable class="parameter">dbname</replaceable>
@@ -99,8 +125,32 @@ createdb <replaceable class="parameter">dbname</replaceable>
    you want.
   </para>
 
-  <sect2 id="manage-ag-templatedbs">
-   <title>Template Databases</title>
+  <note>
+   <para>
+    <xref linkend="client-authentication"> contains information about
+    how to restrict who can connect to a given database.
+   </para>
+  </note>
+
+  <para>
+   Sometimes you want to create a database for someone else.  That
+   user should become the owner of the new database, so he can
+   configure and manage it himself.  To achieve that, use one of the
+   following commands:
+<programlisting>
+CREATE DATABASE <replaceable>dbname</> OWNER <replaceable>username</>;
+</programlisting>
+   from the SQL environment, or
+<programlisting>
+createdb -O <replaceable>username</> <replaceable>dbname</>
+</programlisting>
+   You must be a superuser to be allowed to create a database for
+   someone else.
+  </para>
+ </sect1>
+
+ <sect1 id="manage-ag-templatedbs">
+  <title>Template Databases</title>
 
   <para>
    <command>CREATE DATABASE</> actually works by copying an existing
@@ -111,7 +161,7 @@ createdb <replaceable class="parameter">dbname</replaceable>
    will be copied into subsequently created user databases.  This
    behavior allows site-local modifications to the standard set of
    objects in databases.  For example, if you install the procedural
-   language <literal>plpgsql</> in <literal>template1</>, it will
+   language <application>PL/pgSQL</> in <literal>template1</>, it will
    automatically be available in user databases without any extra action
    being taken when those databases are made.
   </para>
@@ -133,11 +183,23 @@ createdb <replaceable class="parameter">dbname</replaceable>
   </para>
 
   <para>
+   To create a database by copying <literal>template0</literal>, use
+<programlisting>
+CREATE DATABASE <replaceable>dbname</> TEMPLATE template0;
+</programlisting>
+   from the SQL environment, or
+<programlisting>
+createdb -T template0 <replaceable>dbname</>
+</programlisting>
+   from the shell.
+  </para>
+
+  <para>
    It is possible to create additional template databases, and indeed
    one might copy any database in an installation by specifying its name
    as the template for <command>CREATE DATABASE</>.  It is important to
    understand, however, that this is not (yet) intended as
-   a general-purpose <quote>COPY DATABASE</quote> facility.  In particular, it is
+   a general-purpose <quote><command>COPY DATABASE</command></quote> facility.  In particular, it is
    essential that the source database be idle (no data-altering transactions
    in progress)
    for the duration of the copying operation.  <command>CREATE DATABASE</>
@@ -151,7 +213,7 @@ createdb <replaceable class="parameter">dbname</replaceable>
 
   <para>
    Two useful flags exist in <literal>pg_database</literal> for each
-   database: <literal>datistemplate</literal> and
+   database: the columns <literal>datistemplate</literal> and
    <literal>datallowconn</literal>.  <literal>datistemplate</literal>
    may be set to indicate that a database is intended as a template for
    <command>CREATE DATABASE</>.  If this flag is set, the database may be
@@ -187,18 +249,47 @@ createdb <replaceable class="parameter">dbname</replaceable>
     <literal>template1</> and <literal>template0</> do not have any special
     status beyond the fact that the name <literal>template1</> is the default
     source database name for <command>CREATE DATABASE</> and the default
-    database-to-connect-to for various scripts such as <literal>createdb</>.
+    database-to-connect-to for various programs such as <command>createdb</>.
     For example, one could drop <literal>template1</> and recreate it from
     <literal>template0</> without any ill effects.  This course of action
     might be advisable if one has carelessly added a bunch of junk in
     <literal>template1</>.
    </para>
   </note>
+ </sect1>
 
-  </sect2>
+ <sect1 id="manage-ag-config">
+  <title>Database Configuration</title>
 
-  <sect2 id="manage-ag-alternate-locs">
-   <title>Alternative Locations</title>
+  <para>
+   Recall from <xref linkend="runtime-config"> that the PostgreSQL
+   server provides a large number of run-time configuration variables.
+   You can set database-specific default values for many of these
+   settings.
+  </para>
+
+  <para>
+   For example, if for some reason you want to disable the
+   <acronym>GEQO</acronym> optimizer for a given database, you'd
+   ordinarily have to either disable it for all databases or make sure
+   that every connecting client is careful to issue <literal>SET geqo
+   TO off;</literal>.  To make this setting the default you can
+   execute the command
+<programlisting>
+ALTER DATABASE mydb SET geqo TO off;
+</programlisting>
+   This will save the setting (but not set it immediately) and in
+   subsequent connections it will appear as though <literal>SET geqo
+   TO off;</literal> had been called right before the session started.
+   Note that users can still alter this setting during the session; it
+   will only be the default.  To undo any such setting, use
+   <literal>ALTER DATABASE <replaceable>dbname</> RESET
+   <replaceable>varname</>;</literal>.
+  </para>
+ </sect1>
+
+ <sect1 id="manage-ag-alternate-locs">
+  <title>Alternative Locations</title>
 
    <para>
     It is possible to create a database in a location other than the
@@ -227,18 +318,14 @@ createdb <replaceable class="parameter">dbname</replaceable>
     initialize the data area, and finally restart the server. (See
     <xref linkend="postmaster-shutdown"> and <xref
     linkend="postmaster-start">.) To set an environment variable, type
-    <informalexample>
 <programlisting>
 PGDATA2=/home/postgres/data
 export PGDATA2
 </programlisting>
-    </informalexample>
     in Bourne shells, or
-    <informalexample>
 <programlisting>
 setenv PGDATA2 /home/postgres/data
 </programlisting>
-    </informalexample>
     in <application>csh</> or <application>tcsh</>. You have to make sure that this environment
     variable is always defined in the server environment, otherwise
     you won't be able to access that database. Therefore you probably
@@ -253,12 +340,11 @@ setenv PGDATA2 /home/postgres/data
     already exists and is writable
     by the user account that runs the server (see <xref
     linkend="postgres-user">). Then from the command line, type
-    <informalexample>
 <programlisting>
 initlocation PGDATA2
 </programlisting>
-    </informalexample>
-    Then you can restart the server.
+    (<emphasis>not</emphasis> <literal>initlocation
+    $PGDATA2</literal>).  Then you can restart the server.
    </para>
 
    <para>
@@ -290,8 +376,6 @@ gmake CPPFLAGS=-DALLOW_ABSOLUTE_DBPATHS all
 </programlisting>
     </para>
    </note>
-
-  </sect2>
  </sect1>
 
  <sect1 id="manage-ag-dropdb">
