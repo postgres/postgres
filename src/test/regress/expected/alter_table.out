@@ -1179,6 +1179,62 @@ order by relname, attnum;
 drop table p1, p2 cascade;
 NOTICE:  Drop cascades to table c1
 NOTICE:  Drop cascades to table gc1
+--
+-- Test the ALTER TABLE WITHOUT OIDS command
+--
+create table altstartwith (col integer) with oids;
+insert into altstartwith values (1);
+select oid > 0, * from altstartwith;
+ ?column? | col 
+----------+-----
+ t        |   1
+(1 row)
+
+alter table altstartwith set without oids;
+select oid > 0, * from altstartwith; -- fails
+ERROR:  Attribute "oid" not found
+select * from altstartwith;
+ col 
+-----
+   1
+(1 row)
+
+-- Run inheritance tests
+create table altwithoid (col integer) with oids;
+-- Inherits parents oid column
+create table altinhoid () inherits (altwithoid) without oids;
+insert into altinhoid values (1);
+select oid > 0, * from altwithoid;
+ ?column? | col 
+----------+-----
+ t        |   1
+(1 row)
+
+select oid > 0, * from altinhoid;
+ ?column? | col 
+----------+-----
+ t        |   1
+(1 row)
+
+alter table altwithoid set without oids;
+alter table altinhoid set without oids; -- fails
+ERROR:  ALTER TABLE: Table is already WITHOUT OIDS
+select oid > 0, * from altwithoid; -- fails
+ERROR:  Attribute "oid" not found
+select oid > 0, * from altinhoid; -- fails
+ERROR:  Attribute "oid" not found
+select * from altwithoid;
+ col 
+-----
+   1
+(1 row)
+
+select * from altinhoid;
+ col 
+-----
+   1
+(1 row)
+
 -- test renumbering of child-table columns in inherited operations
 create table p1 (f1 int);
 create table c1 (f2 text, f3 int) inherits (p1);

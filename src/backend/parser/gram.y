@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.401 2003/02/10 04:44:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.402 2003/02/13 05:19:59 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1132,7 +1132,7 @@ AlterTableStmt:
 			| ALTER TABLE relation_expr ALTER opt_column ColId SET NOT NULL_P
 				{
 					AlterTableStmt *n = makeNode(AlterTableStmt);
-					n->subtype = 'O';
+					n->subtype = 'n';
 					n->relation = $3;
 					n->name = $6;
 					$$ = (Node *)n;
@@ -1185,6 +1185,14 @@ AlterTableStmt:
 					n->relation = $3;
 					n->name = $6;
 					n->behavior = $7;
+					$$ = (Node *)n;
+				}
+			/* ALTER TABLE <relation> SET WITHOUT OIDS  */
+			| ALTER TABLE relation_expr SET WITHOUT OIDS
+				{
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->relation = $3;
+					n->subtype = 'o';
 					$$ = (Node *)n;
 				}
 			/* ALTER TABLE <name> CREATE TOAST TABLE */

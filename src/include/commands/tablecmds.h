@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tablecmds.h,v 1.10 2002/11/11 22:19:24 tgl Exp $
+ * $Id: tablecmds.h,v 1.11 2003/02/13 05:20:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,8 @@ extern void AlterTableDropConstraint(Oid myrelid, bool recurse,
 extern void AlterTableCreateToastTable(Oid relOid, bool silent);
 
 extern void AlterTableOwner(Oid relationOid, int32 newOwnerSysId);
+
+extern void AlterTableAlterOids(Oid myrelid, bool recurse, bool setOid);
 
 extern Oid	DefineRelation(CreateStmt *stmt, char relkind);
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.54 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.55 2003/02/13 05:19:59 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -33,6 +33,8 @@ ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+    SET WITHOUT OIDS
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable
     class="PARAMETER">new_column</replaceable>
@@ -287,10 +289,23 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </varlistentry>
 
    <varlistentry>
+    <term>SET WITHOUT OIDS</term>
+    <listitem>
+     <para>
+      Removes the <literal>OID</literal> column from the the table.  Removing (setting without)
+      oids from a table also do not occur immediately.  The space an <literal>OID</literal>
+      uses will be reclaimed when the tuple is updated.  Without updating the tuple, both the
+      space and the value of the <literal>OID</literal> are maintained indefinitely.  This is
+      semantically similar to the <literal>DROP COLUMN</literal> process.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term>RENAME</term>
     <listitem>
      <para>
-      The <literal>RENAME</literal> forms change the name of  a table
+      The <literal>RENAME</literal> forms change the name of a table
       (or an index, sequence, or view) or the name of an individual column in
       a table. There is no effect on the stored data.
      </para>

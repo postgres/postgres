@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.66 2003/02/09 06:56:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.67 2003/02/13 05:19:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2134,7 +2134,6 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 	heap_close(rel, NoLock);
 }
 
-
 /*
  * ALTER TABLE ALTER COLUMN SET/DROP DEFAULT
  */
@@ -2384,6 +2383,122 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 	heap_close(rel, NoLock);	/* close rel, but keep lock! */
 }
 
+/*
+ * ALTER TABLE SET {WITHOUT} OIDS
+ */
+void
+AlterTableAlterOids(Oid myrelid, bool recurse, bool setOid)
+{
+	Relation	rel;
+	Relation	class_rel;
+	HeapTuple	tuple;
+	Form_pg_class tuple_class;
+
+	rel = heap_open(myrelid, AccessExclusiveLock);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
+			 RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods
+		&& IsSystemRelation(rel))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+			 RelationGetRelationName(rel));
+
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+
+	/* Get its pg_class tuple, too */
+	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+
+	tuple = SearchSysCacheCopy(RELOID,
+							   ObjectIdGetDatum(myrelid),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "ALTER TABLE: relation %u not found", myrelid);
+	tuple_class = (Form_pg_class) GETSTRUCT(tuple);
+
+	/* Can we change the ownership of this tuple? */
+	CheckTupleType(tuple_class);
+
+	/*
+	 * Okay, this is a valid tuple: check it's hasoids flag
+	 * to see if we actually need to change anything
+	 */
+	if (tuple_class->relhasoids == setOid)
+		elog(ERROR, "ALTER TABLE: Table is already %s",
+			 setOid ? "WITH OIDS" : "WITHOUT OIDS");
+
+	/*
+	 * Propagate to children if desired
+	 */
+	if (recurse)
+	{
+		List	   *child,
+				   *children;
+
+		/* this routine is actually in the planner */
+		children = find_all_inheritors(myrelid);
+
+		/*
+		 * find_all_inheritors does the recursive search of the
+		 * inheritance hierarchy, so all we have to do is process all of
+		 * the relids in the list that it returns.
+		 */
+		foreach(child, children)
+		{
+			Oid			childrelid = lfirsti(child);
+
+			if (childrelid == myrelid)
+				continue;
+
+			AlterTableAlterOids(childrelid, false, setOid);
+		}
+	}
+
+
+	tuple_class->relhasoids = setOid;
+	simple_heap_update(class_rel, &tuple->t_self, tuple);
+
+	/* Keep the catalog indexes up to date */
+	CatalogUpdateIndexes(class_rel, tuple);
+
+
+
+	if (setOid)
+		/*
+		 * TODO: Generate the now required OID pg_attribute entry
+		 */
+		elog(ERROR, "ALTER TABLE WITH OIDS is unsupported");
+	else
+	{
+		HeapTuple	atttup;
+		Relation	attrel;
+
+		/* Add / Remove the oid record from pg_attribute */
+		attrel = heap_open(RelOid_pg_attribute, RowExclusiveLock);
+
+		/*
+		 * Oids are being removed from the relation, so we need
+		 * to remove the oid pg_attribute record relating.
+		 */
+		atttup = SearchSysCache(ATTNUM,
+								ObjectIdGetDatum(myrelid),
+								ObjectIdAttributeNumber, 0, 0);
+		if (!HeapTupleIsValid(atttup))
+			elog(ERROR, "ALTER TABLE: relation %u doesn't have an Oid column to remove", myrelid);
+
+		simple_heap_delete(attrel, &atttup->t_self);
+
+		ReleaseSysCache(atttup);
+
+		heap_close(attrel, NoLock);		/* close rel, but keep lock! */
+	}
+
+	heap_close(rel, NoLock);		/* close rel, but keep lock! */
+	heap_close(class_rel, NoLock);	/* close rel, but keep lock! */
+}
 
 /*
  * ALTER TABLE DROP COLUMN

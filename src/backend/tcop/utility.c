@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.191 2003/02/10 04:44:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.192 2003/02/13 05:20:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,7 +549,7 @@ ProcessUtility(Node *parsetree,
 							  interpretInhOption(stmt->relation->inhOpt),
 														 stmt->name);
 						break;
-					case 'O':	/* ALTER COLUMN SET NOT NULL */
+					case 'n':	/* ALTER COLUMN SET NOT NULL */
 						AlterTableAlterColumnSetNotNull(relid,
 							  interpretInhOption(stmt->relation->inhOpt),
 														stmt->name);
@@ -610,6 +610,11 @@ ProcessUtility(Node *parsetree,
 						/* get_usesysid raises an error if no such user */
 						AlterTableOwner(relid,
 										get_usesysid(stmt->name));
+						break;
+					case 'o': /* ADD OIDS */
+						AlterTableAlterOids(relid,
+						 interpretInhOption(stmt->relation->inhOpt),
+											false);
 						break;
 					default:	/* oops */
 						elog(ERROR, "ProcessUtility: Invalid type for AlterTableStmt: %d",

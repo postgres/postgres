@@ -850,6 +850,39 @@ order by relname, attnum;
 
 drop table p1, p2 cascade;
 
+--
+-- Test the ALTER TABLE WITHOUT OIDS command
+--
+create table altstartwith (col integer) with oids;
+
+insert into altstartwith values (1);
+
+select oid > 0, * from altstartwith;
+
+alter table altstartwith set without oids;
+
+select oid > 0, * from altstartwith; -- fails
+select * from altstartwith;
+
+-- Run inheritance tests
+create table altwithoid (col integer) with oids;
+
+-- Inherits parents oid column
+create table altinhoid () inherits (altwithoid) without oids;
+
+insert into altinhoid values (1);
+
+select oid > 0, * from altwithoid;
+select oid > 0, * from altinhoid;
+
+alter table altwithoid set without oids;
+alter table altinhoid set without oids; -- fails
+
+select oid > 0, * from altwithoid; -- fails
+select oid > 0, * from altinhoid; -- fails
+select * from altwithoid;
+select * from altinhoid;
+
 -- test renumbering of child-table columns in inherited operations
 
 create table p1 (f1 int);

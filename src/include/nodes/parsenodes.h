@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.229 2003/02/10 04:44:47 tgl Exp $
+ * $Id: parsenodes.h,v 1.230 2003/02/13 05:20:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -698,7 +698,7 @@ typedef struct AlterTableStmt
 								 *	A = add column
 								 *	T = alter column default
 								 *	N = alter column drop not null
-								 *	O = alter column set not null
+								 *	n = alter column set not null
 								 *	S = alter column statistics
 								 *	M = alter column storage
 								 *	D = drop column
@@ -708,6 +708,7 @@ typedef struct AlterTableStmt
 								 *	X = drop constraint
 								 *	E = create toast table
 								 *	U = change owner
+								 *  o = DROP OIDS
 								 *------------
 								 */
 	RangeVar   *relation;		/* table to work on */
