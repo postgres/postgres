@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.90 2001/11/05 17:46:25 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.90.2.1 2003/01/26 23:16:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "libpq/crypt.h"
 #include "miscadmin.h"
 #include "storage/pmsignal.h"
+#include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -1075,7 +1076,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 		Datum		datum = heap_getattr(group_tuple, Anum_pg_group_grolist, pg_group_dsc, &null);
 		int			i;
 
-		oldarray = (ArrayType *) datum;
+		oldarray = null ? ((IdList *) NULL) : DatumGetIdListP(datum);
 		Assert(null || ARR_NDIM(oldarray) == 1);
 		/* first add the old array to the hitherto empty list */
 		if (!null)
@@ -1195,7 +1196,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 					   *item;
 			int			i;
 
-			oldarray = (ArrayType *) datum;
+			oldarray = DatumGetIdListP(datum);
 			Assert(ARR_NDIM(oldarray) == 1);
 			/* first add the old array to the hitherto empty list */
 			for (i = ARR_LBOUND(oldarray)[0]; i < ARR_LBOUND(oldarray)[0] + ARR_DIMS(oldarray)[0]; i++)
