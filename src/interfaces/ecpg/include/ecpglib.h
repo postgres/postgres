@@ -35,6 +35,8 @@ extern		"C"
 			enum ECPGttype, void *, void *, long, long);
 	char *ecpg_alloc(long, int);
 	char *ecpg_strdup(const char *, int);
+	const char *ECPGtype_name(enum ECPGttype);
+	
 
 /* and some vars */
 	extern struct auto_mem *auto_allocs;

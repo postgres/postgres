@@ -135,7 +135,8 @@ ECPGdeallocate_all(int lineno)
 	        if (!b)
 			return false;
          }
-	                                                                                                                 
+         
+         return true;
 }
 
 /* return the prepared statement */

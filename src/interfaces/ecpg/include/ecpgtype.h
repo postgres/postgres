@@ -49,7 +49,8 @@ extern		"C"
 		ECPGt_EORT,				/* End of result types. */
 		ECPGt_NO_INDICATOR		/* no indicator */
 	};
-	
+
+	/* descriptor items */	
 	enum ECPGdtype
 	{
 		ECPGd_count,
@@ -72,7 +73,32 @@ extern		"C"
 
 #define IS_SIMPLE_TYPE(type) ((type) >= ECPGt_char && (type) <= ECPGt_varchar2)
 
-	const char *ECPGtype_name(enum ECPGttype);
+	/* A generic varchar type. */
+	struct ECPGgeneric_varchar
+	{
+		int			len;
+		char		arr[1];
+	};
+
+/* keep a list of memory we allocated for the user */
+	struct auto_mem
+	{
+        	void       *pointer;
+                struct auto_mem *next;
+        };
+        
+/* structure to store one statement */
+        struct statement
+        {
+                int                     lineno;
+                char       *command;
+                struct connection *connection;
+                struct variable *inlist;
+                struct variable *outlist;
+        };
+                                                
+                
+/* define this for simplicity as well as compatibility */
 
 #ifdef __cplusplus
 }
