@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.5 1997/08/06 03:41:31 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.6 1997/08/21 02:28:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,7 @@ ExecSort(Sort *node)
 	/* *** get_cs_ResultTupleSlot((CommonState) sortstate); */
 
 	slot->ttc_tupleDescriptor = ExecGetTupType(outerNode);
-#ifdef 0
+#if 0
 	slot->ttc_execTupDescriptor = ExecGetExecTupDesc(outerNode);
 #endif
 	/* ----------------

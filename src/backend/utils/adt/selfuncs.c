@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.6 1997/04/09 02:20:32 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.7 1997/08/21 02:28:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,6 @@
 #include "utils/lsyscache.h"	/* for get_oprrest() */
 #include "catalog/pg_statistic.h"
 
-#include "commands/vacuum.h" /* for ATTNVALS_SCALE */
-
 /* N is not a valid var/constant or relation id */
 #define	NONVALUE(N)	((N) == -1)
 
@@ -43,7 +41,7 @@
  */
 #define FunctionalSelectivity(nIndKeys,attNum) (attNum==InvalidAttrNumber)
 
-static int32 getattnvals(Oid relid, AttrNumber attnum);
+static float32data getattnvals(Oid relid, AttrNumber attnum);
 static void gethilokey(Oid relid, AttrNumber attnum, Oid opid,
 		       char **high, char **low);
 
@@ -58,19 +56,13 @@ eqsel(Oid opid,
       char *value,
       int32 flag)
 {
-    int32		nvals;
     float64		result;
     
     result = (float64) palloc(sizeof(float64data));
     if (NONVALUE(attno) || NONVALUE(relid))
 	*result = 0.1;
-    else {
-	nvals = getattnvals(relid, (int) attno);
-	if (nvals == 0)
-	    *result = 0.0;
-	else
-	    *result = ((float64data)nvals) / ((float64data)ATTNVALS_SCALE);
-    }
+    else
+	*result = (float64data)getattnvals(relid, (int) attno);
     return(result);
 }
 
@@ -102,7 +94,7 @@ intltsel(Oid opid,
 	 int32 value,
 	 int32 flag)
 {
-    float64 	result;
+    float64 		result;
     char		*highchar, *lowchar;
     long		val, high, low, top, bottom;
     
@@ -121,12 +113,15 @@ intltsel(Oid opid,
 	low = atol(lowchar);
 	if ((flag & SEL_RIGHT && val < low) ||
 	    (!(flag & SEL_RIGHT) && val > high)) {
-	    int nvals;
+	    float32data nvals;
 	    nvals = getattnvals(relid, (int) attno);
 	    if (nvals == 0)
 		*result = 1.0 / 3.0;
-	    else
-		*result = 3.0 * ((float64data)nvals) / ((float64data)ATTNVALS_SCALE);
+	    else {
+		*result = 3.0 * (float64data)nvals;
+		if (*result > 1.0)
+		    *result = 1;
+	    }
 	}else {
 	    bottom = high - low;
 	    if (bottom == 0)
@@ -180,7 +175,7 @@ eqjoinsel(Oid opid,
 	  AttrNumber attno2)
 {
     float64		result;
-    int32		num1, num2, max;
+    float32data		num1, num2, max;
     
     result = (float64) palloc(sizeof(float64data));
     if (NONVALUE(attno1) || NONVALUE(relid1) ||
@@ -193,7 +188,7 @@ eqjoinsel(Oid opid,
 	if (max == 0)
 	    *result = 1.0;
 	else
-	    *result = ((float64data)max) / ((float64data)ATTNVALS_SCALE);
+	    *result = (float64data)max;
     }
     return(result);
 }
@@ -263,11 +258,12 @@ intgtjoinsel(Oid opid,
  *		more efficient.  However, the cast will not work
  *		for gethilokey which accesses stahikey in struct statistic.
  */
-static int32
+static float32data
 getattnvals(Oid relid, AttrNumber attnum)
 {
     HeapTuple	atp;
-    int		nvals;
+    float32data	nvals;
+    int32 ntuples;
     
     atp = SearchSysCacheTuple(ATTNUM, 
 			      ObjectIdGetDatum(relid), 
@@ -290,15 +286,10 @@ getattnvals(Oid relid, AttrNumber attnum)
 	elog(WARN, "getattnvals: no relation tuple %d", relid);
 	return(0);
     }
-    nvals = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
+    ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
     /* Look above how nvals is used. 	- vadim 04/09/97 */
-    if ( nvals > 0 )
-    {
-    	double selratio = 1.0 / (double)nvals;
-    	
-    	selratio *= (double)ATTNVALS_SCALE;
-    	nvals = (int) ceil (selratio);
-    }
+    if ( ntuples > 0 )
+    	nvals = 1.0 / ntuples;
     
     return(nvals);
 }

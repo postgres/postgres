@@ -27,14 +27,20 @@ echo "${BS}connect template1"
 #
 # delete all users in case they run this twice
 #
-echo "delete from pg_user"
-echo "where usesysid <> $POSTGRES_SUPER_USER_ID;"
+# we don't use POSTGRES_SUPER_USER_ID because the postgres super user id
+# could be different on the two installations
+#
+echo "select datdba into tmp_pguser \
+      from pg_database where datname = 'template1';"
+echo "delete from pg_user where usesysid <> tmp_pguser.datdba;"
+echo "drop table tmp_pguser;"
 #
 # load all the non-postgres users
 #
 echo "copy pg_user from stdin;"
 psql -q template1 <<END
-select pg_user.* into table tmp_pg_user
+select pg_user.* 
+into table tmp_pg_user
 from pg_user
 where usesysid <> $POSTGRES_SUPER_USER_ID;
 copy tmp_pg_user to stdout;
@@ -42,12 +48,12 @@ drop table tmp_pg_user;
 END
 echo "${BS}."
 psql -l -A -q -t| tr '|' ' ' | grep -v '^template1 ' | \
-while read DATABASE PGUSERID DATAPATH
+while read DATABASE DBUSERID DATAPATH
 do
 	POSTGRES_USER="`echo \" \
 		select usename \
 		from pg_user \
-		where usesysid = $PGUSERID; \" | \
+		where usesysid = $DBUSERID; \" | \
 		psql -A -q -t template1`"
 	echo "${BS}connect template1 $POSTGRES_USER"
 	echo "create database $DATABASE;"

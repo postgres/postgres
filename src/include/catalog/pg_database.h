@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_database.h,v 1.2 1996/10/31 09:47:23 scrappy Exp $
+ * $Id: pg_database.h,v 1.3 1997/08/21 02:28:55 momjian Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -32,7 +32,7 @@
  */ 
 CATALOG(pg_database) BOOTSTRAP {
     NameData 	datname;
-    Oid 	datdba;
+    int4 	datdba;
     text 	datpath;	/* VARIABLE LENGTH FIELD */
 } FormData_pg_database;
 

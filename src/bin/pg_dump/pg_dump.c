@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.38 1997/08/19 21:36:40 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.39 1997/08/21 02:28:41 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -805,8 +805,6 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
         if ( tblinfo[i].sequence )
             continue;
 
-	if (tblinfo[i].notnull) free (tblinfo[i].notnull);
-
 	/* Process Attributes */
         for(j=0;j<tblinfo[i].numatts;j++) {
             if(tblinfo[i].attnames[j]) free (tblinfo[i].attnames[j]);
@@ -816,6 +814,8 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
         if(tblinfo[i].inhAttrs) free((int *)tblinfo[i].inhAttrs);
         if(tblinfo[i].attnames) free (tblinfo[i].attnames);
         if(tblinfo[i].typnames) free (tblinfo[i].typnames);
+        if(tblinfo[i].notnull) free (tblinfo[i].notnull);
+
     }
     free(tblinfo);
 }
@@ -1299,7 +1299,7 @@ getTableAttrs(TableInfo* tblinfo, int numTables)
             if (tblinfo[i].attlen[j] > 0) 
               tblinfo[i].attlen[j] = tblinfo[i].attlen[j] - 4;
             tblinfo[i].inhAttrs[j] = 0; /* this flag is set in flagInhAttrs()*/
-	    tblinfo[i].notnull[j]  = PQgetvalue(res,j,i_attnotnull)[0]=='t'?true:false;
+	    tblinfo[i].notnull[j]  = (PQgetvalue(res,j,i_attnotnull)[0]=='t')?true:false;
         }
         PQclear(res);
     } 
@@ -1514,7 +1514,7 @@ dumpOneFunc(FILE* fout, FuncInfo* finfo, int i,
     }
     sprintf(q,"%s ) RETURNS %s%s AS '%s' LANGUAGE '%s';\n",
                 q, 
-            finfo[i].retset ? " SETOF " : "",
+            (finfo[i].retset) ? " SETOF " : "",
             findTypeByOid(tinfo, numTypes, finfo[i].prorettype),
             (finfo[i].lang) ? finfo[i].probin : finfo[i].prosrc,
             (finfo[i].lang) ? "C" : "SQL");
@@ -1779,7 +1779,8 @@ void dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
                                 tblinfo[i].typnames[j]);
                         actual_atts++;
                     }
-		    sprintf(q, "%s%s NULL", q, tblinfo[i].notnull[j]?" NOT":"");
+		    sprintf(q, "%s%s NULL", q,
+					(tblinfo[i].notnull[j])	? " NOT" : "");
                 }
             }
 
