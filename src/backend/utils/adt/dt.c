@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.67 1999/03/20 02:31:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.68 1999/04/15 02:22:39 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,12 +54,6 @@ static int	tm2timespan(struct tm * tm, double fsec, TimeSpan *span);
 
 #define USE_DATE_CACHE 1
 #define ROUND_ALL 0
-
-#if 0
-#define isleap(y) (((y % 4) == 0) && (((y % 100) != 0) || ((y % 400) == 0)))
-
-int			mdays[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0};
-#endif
 
 int	day_tab[2][13] = {
 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0},
@@ -882,15 +876,6 @@ datetime_pl_span(DateTime *datetime, TimeSpan *span)
 				}
 
 				/* adjust for end of month boundary problems... */
-#if 0
-				if (tm->tm_mday > mdays[tm->tm_mon - 1])
-				{
-					if ((tm->tm_mon == 2) && isleap(tm->tm_year))
-						tm->tm_mday = (mdays[tm->tm_mon - 1] + 1);
-					else
-						tm->tm_mday = mdays[tm->tm_mon - 1];
-				}
-#endif
 				if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
 					tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
 
@@ -1197,21 +1182,11 @@ datetime_age(DateTime *datetime1, DateTime *datetime2)
 		{
 			if (dt1 < dt2)
 			{
-#if 0
-				tm->tm_mday += mdays[tm1->tm_mon - 1];
-				if (isleap(tm1->tm_year) && (tm1->tm_mon == 2))
-					tm->tm_mday++;
-#endif
 				tm->tm_mday += day_tab[isleap(tm1->tm_year)][tm1->tm_mon - 1];
 				tm->tm_mon--;
 			}
 			else
 			{
-#if 0
-				tm->tm_mday += mdays[tm2->tm_mon - 1];
-				if (isleap(tm2->tm_year) && (tm2->tm_mon == 2))
-					tm->tm_mday++;
-#endif
 				tm->tm_mday += day_tab[isleap(tm2->tm_year)][tm2->tm_mon - 1];
 				tm->tm_mon--;
 			}
@@ -2302,21 +2277,6 @@ datetkn    *deltacache[MAXDATEFIELDS] = {NULL};
  * These routines will be used by other date/time packages - tgl 97/02/25
  */
 
-#if 0
-XXX moved to dt.h - thomas 1999-01-15
-/* Set the minimum year to one greater than the year of the first valid day
- *	to avoid having to check year and day both. - tgl 97/05/08
- */
-
-#define JULIAN_MINYEAR (-4713)
-#define JULIAN_MINMONTH (11)
-#define JULIAN_MINDAY (23)
-
-#define IS_VALID_JULIAN(y,m,d) ((y > JULIAN_MINYEAR) \
- || ((y == JULIAN_MINYEAR) && ((m > JULIAN_MINMONTH) \
-  || ((m == JULIAN_MINMONTH) && (d >= JULIAN_MINDAY)))))
-#endif
-
 int
 date2j(int y, int m, int d)
 {
@@ -3063,47 +3023,55 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	printf(" %02d:%02d:%02d\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
 #endif
 
-	if ((*dtype == DTK_DATE) && ((fmask & DTK_DATE_M) != DTK_DATE_M))
-		return ((fmask & DTK_TIME_M) == DTK_TIME_M) ? 1 : -1;
-
-	/* timezone not specified? then find local timezone if possible */
-	if ((*dtype == DTK_DATE) && ((fmask & DTK_DATE_M) == DTK_DATE_M)
-		&& (tzp != NULL) && (!(fmask & DTK_M(TZ))))
+	/* do additional checking for full date specs... */
+	if (*dtype == DTK_DATE)
 	{
+		if ((fmask & DTK_DATE_M) != DTK_DATE_M)
+			return ((fmask & DTK_TIME_M) == DTK_TIME_M) ? 1 : -1;
 
-		/*
-		 * daylight savings time modifier but no standard timezone? then
-		 * error
-		 */
-		if (fmask & DTK_M(DTZMOD))
+		/* check for valid day of month, now that we know for sure the month and year... */
+		if ((tm->tm_mday < 1)
+		 || (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]))
 			return -1;
 
-		if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
+		/* timezone not specified? then find local timezone if possible */
+		if (((fmask & DTK_DATE_M) == DTK_DATE_M)
+		 && (tzp != NULL) && (!(fmask & DTK_M(TZ))))
 		{
+			/*
+			 * daylight savings time modifier but no standard timezone? then
+			 * error
+			 */
+			if (fmask & DTK_M(DTZMOD))
+				return -1;
+
+			if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
+			{
 #ifdef USE_POSIX_TIME
-			tm->tm_year -= 1900;
-			tm->tm_mon -= 1;
-			tm->tm_isdst = -1;
-			mktime(tm);
-			tm->tm_year += 1900;
-			tm->tm_mon += 1;
+				tm->tm_year -= 1900;
+				tm->tm_mon -= 1;
+				tm->tm_isdst = -1;
+				mktime(tm);
+				tm->tm_year += 1900;
+				tm->tm_mon += 1;
 
 #if defined(HAVE_TM_ZONE)
-			*tzp = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
+				*tzp = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
 #elif defined(HAVE_INT_TIMEZONE)
-			*tzp = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
+				*tzp = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
 #else
 #error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
 #endif
 
 #else							/* !USE_POSIX_TIME */
-			*tzp = CTimeZone;
+				*tzp = CTimeZone;
 #endif
-		}
-		else
-		{
-			tm->tm_isdst = 0;
-			*tzp = 0;
+			}
+			else
+			{
+				tm->tm_isdst = 0;
+				*tzp = 0;
+			}
 		}
 	}
 
@@ -3230,6 +3198,11 @@ DecodeTimeOnly(char **field, int *ftype, int nf, int *dtype, struct tm * tm, dou
 		tm->tm_hour = 0;
 	else if ((mer == PM) && (tm->tm_hour != 12))
 		tm->tm_hour += 12;
+
+	if (((tm->tm_hour < 0) || (tm->tm_hour > 23))
+	 || ((tm->tm_min < 0) || (tm->tm_min > 59))
+	 || ((tm->tm_sec < 0) || ((tm->tm_sec + *fsec) >= 60)))
+		return -1;
 
 	if ((fmask & DTK_TIME_M) != DTK_TIME_M)
 		return -1;
@@ -3541,15 +3514,6 @@ DecodeNumber(int flen, char *str, int fmask,
 		tm->tm_year = val;
 
 		/* adjust ONLY if exactly two digits... */
-#if 0
-		if (flen == 2)
-		{
-			if (tm->tm_year < 70)
-				tm->tm_year += 2000;
-			else if (tm->tm_year < 100)
-				tm->tm_year += 1900;
-		}
-#endif
 		*is2digits = (flen == 2);
 
 	}
@@ -3615,13 +3579,6 @@ DecodeNumberField(int len, char *str, int fmask,
 			tm->tm_mon = atoi(str + 2);
 			*(str + 2) = '\0';
 			tm->tm_year = atoi(str + 0);
-
-#if 0
-			if (tm->tm_year < 70)
-				tm->tm_year += 2000;
-			else if (tm->tm_year < 100)
-				tm->tm_year += 1900;
-#endif
 			*is2digits = TRUE;
 		}
 
@@ -3636,13 +3593,6 @@ DecodeNumberField(int len, char *str, int fmask,
 		*(str + 2) = '\0';
 		tm->tm_mon = 1;
 		tm->tm_year = atoi(str + 0);
-
-#if 0
-		if (tm->tm_year < 70)
-			tm->tm_year += 2000;
-		else if (tm->tm_year < 100)
-			tm->tm_year += 1900;
-#endif
 		*is2digits = TRUE;
 	}
 	else if (strchr(str, '.') != NULL)

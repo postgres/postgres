@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.30 1999/03/14 16:40:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.31 1999/04/15 02:22:37 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,19 +27,6 @@
 
 static int	date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn);
 
-#define UTIME_MINYEAR (1901)
-#define UTIME_MINMONTH (12)
-#define UTIME_MINDAY (14)
-#define UTIME_MAXYEAR (2038)
-#define UTIME_MAXMONTH (01)
-#define UTIME_MAXDAY (18)
-
-#define IS_VALID_UTIME(y,m,d) (((y > UTIME_MINYEAR) \
- || ((y == UTIME_MINYEAR) && ((m > UTIME_MINMONTH) \
-  || ((m == UTIME_MINMONTH) && (d >= UTIME_MINDAY))))) \
- && ((y < UTIME_MAXYEAR) \
- || ((y == UTIME_MAXYEAR) && ((m < UTIME_MAXMONTH) \
-  || ((m == UTIME_MAXMONTH) && (d <= UTIME_MAXDAY))))))
 
 /*****************************************************************************
  *	 Date ADT
@@ -71,7 +58,7 @@ date_in(char *str)
 #endif
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	 || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp) != 0))
-		elog(ERROR, "Bad date external representation %s", str);
+		elog(ERROR, "Bad date external representation '%s'", str);
 
 	switch (dtype)
 	{
@@ -89,18 +76,8 @@ date_in(char *str)
 			break;
 
 		default:
-			elog(ERROR, "Unrecognized date external representation %s", str);
+			elog(ERROR, "Unrecognized date external representation '%s'", str);
 	}
-
-#ifdef NOT_USED
-	if (tm->tm_year < 0 || tm->tm_year > 32767)
-		elog(ERROR, "date_in: year must be limited to values 0 through 32767 in '%s'", str);
-	if (tm->tm_mon < 1 || tm->tm_mon > 12)
-		elog(ERROR, "date_in: month must be limited to values 1 through 12 in '%s'", str);
-#endif
-	if (tm->tm_mday < 1 || tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
-		elog(ERROR, "date_in: day must be limited to values 1 through %d in '%s'",
-			 day_tab[isleap(tm->tm_year)][tm->tm_mon - 1], str);
 
 	date = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
 
@@ -452,13 +429,6 @@ time_in(char *str)
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 		|| (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec) != 0))
 		elog(ERROR, "Bad time external representation '%s'", str);
-
-	if ((tm->tm_hour < 0) || (tm->tm_hour > 23))
-		elog(ERROR, "Hour must be limited to values 0 through 23 in '%s'", str);
-	if ((tm->tm_min < 0) || (tm->tm_min > 59))
-		elog(ERROR, "Minute must be limited to values 0 through 59 in '%s'", str);
-	if ((tm->tm_sec < 0) || ((tm->tm_sec + fsec) >= 60))
-		elog(ERROR, "Second must be limited to values 0 through < 60 in '%s'", str);
 
 	time = palloc(sizeof(TimeADT));
 
