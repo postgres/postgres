@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.132 2004/09/16 16:58:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.133 2004/09/23 23:20:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,6 +237,8 @@ static void ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 static void ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab);
 static void ATPostAlterTypeParse(char *cmd, List **wqueue);
 static void ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId);
+static void change_owner_recurse_to_sequences(Oid relationOid,
+											  int32 newOwnerSysId);
 static void ATExecClusterOn(Relation rel, const char *indexName);
 static void ATExecDropCluster(Relation rel);
 static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
@@ -5121,8 +5123,10 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 	HeapTuple	tuple;
 	Form_pg_class tuple_class;
 
-	/* Get exclusive lock till end of transaction on the target table */
-	/* Use relation_open here so that we work on indexes... */
+	/*
+	 * Get exclusive lock till end of transaction on the target table.
+	 * Use relation_open so that we can work on indexes and sequences.
+	 */
 	target_rel = relation_open(relationOid, AccessExclusiveLock);
 
 	/* Get its pg_class tuple, too */
@@ -5202,8 +5206,8 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 
 		/*
 		 * If we are operating on a table, also change the ownership of
-		 * any indexes that belong to the table, as well as the table's
-		 * toast table (if it has one)
+		 * any indexes and sequences that belong to the table, as well as
+		 * the table's toast table (if it has one)
 		 */
 		if (tuple_class->relkind == RELKIND_RELATION ||
 			tuple_class->relkind == RELKIND_TOASTVALUE)
@@ -5226,12 +5230,82 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 			/* If it has a toast table, recurse to change its ownership */
 			if (tuple_class->reltoastrelid != InvalidOid)
 				ATExecChangeOwner(tuple_class->reltoastrelid, newOwnerSysId);
+
+			/* If it has dependent sequences, recurse to change them too */
+			change_owner_recurse_to_sequences(relationOid, newOwnerSysId);
 		}
 	}
 
 	ReleaseSysCache(tuple);
 	heap_close(class_rel, RowExclusiveLock);
 	relation_close(target_rel, NoLock);
+}
+
+/*
+ * change_owner_recurse_to_sequences
+ *
+ * Helper function for ATExecChangeOwner.  Examines pg_depend searching
+ * for sequences that are dependent on serial columns, and changes their
+ * ownership.
+ */
+static void
+change_owner_recurse_to_sequences(Oid relationOid, int32 newOwnerSysId)
+{
+	Relation	depRel;
+	SysScanDesc scan;
+	ScanKeyData	key[2];
+	HeapTuple	tup;
+
+	/*
+	 * SERIAL sequences are those having an internal dependency on one
+	 * of the table's columns (we don't care *which* column, exactly).
+	 */
+	depRel = heap_openr(DependRelationName, RowExclusiveLock);
+
+	ScanKeyInit(&key[0],
+			Anum_pg_depend_refclassid,
+			BTEqualStrategyNumber, F_OIDEQ,
+			ObjectIdGetDatum(RelOid_pg_class));
+	ScanKeyInit(&key[1],
+			Anum_pg_depend_refobjid,
+			BTEqualStrategyNumber, F_OIDEQ,
+			ObjectIdGetDatum(relationOid));
+	/* we leave refobjsubid unspecified */
+
+	scan = systable_beginscan(depRel, DependReferenceIndex, true,
+							  SnapshotNow, 2, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		Form_pg_depend depForm = (Form_pg_depend) GETSTRUCT(tup);
+		Relation	seqRel;
+
+		/* skip dependencies other than internal dependencies on columns */
+		if (depForm->refobjsubid == 0 ||
+			depForm->classid != RelOid_pg_class ||
+			depForm->objsubid != 0 ||
+			depForm->deptype != DEPENDENCY_INTERNAL)
+			continue;
+
+		/* Use relation_open just in case it's an index */
+		seqRel = relation_open(depForm->objid, AccessExclusiveLock);
+
+		/* skip non-sequence relations */
+		if (RelationGetForm(seqRel)->relkind != RELKIND_SEQUENCE)
+		{
+			/* No need to keep the lock */
+			relation_close(seqRel, AccessExclusiveLock);
+			continue;
+		}
+
+		/* We don't need to close the sequence while we alter it. */
+		ATExecChangeOwner(depForm->objid, newOwnerSysId);
+
+		/* Now we can close it.  Keep the lock till end of transaction. */
+		relation_close(seqRel, NoLock);
+	}
+
+	systable_endscan(scan);
 }
 
 /*
