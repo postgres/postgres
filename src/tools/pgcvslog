@@ -15,62 +15,58 @@
 
 cat "$@" |
 
-# mark each line with a datetime and line number, for sorting and
-# merging we don't print anything from the -- or == line and the
-# date:
+# mark each line with a datetime and line number, for sorting and merging
+# We don't print anything from the -- or == line and the date:
 
 awk '
+	# store working directory
 	$0 ~ /^Working file:/	{workingfile = "/" $3}
 
-	($0 ~ /^====*$/ || $0 ~ /^----*$/) && skip == "N" \
+	($0 ~ /^====*$/ || $0 ~ /^----*$/) \
 	{
-		/* print blank line separating entries */
+		# print blank line to separate entries
 		if (datetime != "")
 		{
 			printf ("%s| %10d|%s\n", datetime, NR, "");
 			printf ("%s| %10d|%s\n", datetime, NR, "---");
-/*			printf ("%s| %10d|%s\n", datetime, NR+1, "");*/
 		}
-	}
-
-	$0 ~ /^====*$/ || $0 ~ /^----*$/ \
-	{
 		datetime="";
-		skip="N";
 	}
 
-	datetime != "" && skip == "N" \
-		{printf ("%s| %10d| %s\n", datetime, NR, $0);}
+	# if we have a saved datetime, print filename, date line, and committer
+	datetime != "" {printf ("%s| %10d| %s\n", datetime, NR, $0);}
 
 	$1 == "date:"	\
 	{
-		/* get entry date */
+		# get entry date
 		datetime=$2"-"$3
-		if (workingfile != "" && skip == "N")
+		if (workingfile != "")
 		{
+			# remove semicolon from committer's name
 			gsub(";", "", $5);
 			printf ("%s| %10d|%s\n", datetime, NR-2, workingfile);
 			printf ("%s| %10d|%s\n", datetime, NR-1, $0);
-/*			printf ("%s| %10d|%s\n", datetime, NR, "");*/
+			# output name of committer
 			printf ("%s| %10d|  %70s\n", datetime, NR+1, $5);
 		}
 	}
 
-	$0 ~ /^====*$/			{workingfile=""}' |
+	/* clear working file */
+	$0 ~ /^====*$/	{workingfile=""}' |
 
 sort | cut -d'|' -f3 | cat |
 
 # collect duplicate narratives
+
 awk '   BEGIN   { slot = 0; oldslot=0; save_working = ""; }
 	{
-		/* filename */
-		/* We have a filename, so we look at the previous */
-		/* narrative to see if it is new narrative text.*/
-		/* */
-		/* If there are a different number of narrative */
-		/* lines, they can not possibly be the same. */
+		# We have a filename, so we look at the previous
+		# narrative to see if it is new narrative text.
+		#
 		if ($0 ~ /^\//)
 		{
+			# If there are a different number of narrative
+			# lines, they can not possibly be the same.
 			if (slot != oldslot)
 				same = "N";
 			else
@@ -86,36 +82,38 @@ awk '   BEGIN   { slot = 0; oldslot=0; save_working = ""; }
 				}
 			}
 
-			/* dump out the old narrative if it is new */
+			# dump out the old narrative if it is new
 			if (same == "N")
 			{
 				if (oldslot)
 					for (i=1; i <= oldslot; i++)
 						print oldnarr[i];
-				/* save the current narrative */
+
+				# save the current narrative
 				for (i=1; i <= slot; i++)
 					oldnarr[i] = narr[i];
 				oldslot = slot;
 			}
 			slot = 0;
 
-			/* dump out the previous filename */
+			# dump out the previous filename
 			print save_working;
 
-			/* store the current filename for later printing */
+			# store the current filename for later printing
 			save_working = $0;
 		}
+		# we have a narrative line
 		else if ($1 != "date:")
 		{
-			/* accumulate narrative */
+			# accumulate narrative
 			narr[++slot] = $0;
 		}
 	}
 	END	{
-			/* dump out the last filename */
+			# dump out the last filename
 			print save_working;
 
-			/* dump out the last narrative */
+			# dump out the last narrative
 			for (i=1; i <= slot; i++)
 				print narr[i];
 		}'
