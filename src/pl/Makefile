@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.14 2000/09/25 12:43:24 momjian Exp $
+# $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.15 2000/09/25 22:23:01 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ include $(top_builddir)/src/Makefile.global
 
 DIRS := plpgsql
 
-ifeq ($(USE_TCL), true)
+ifeq ($(with_tcl), yes)
 DIRS += tcl
 endif
 

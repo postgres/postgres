@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.42 2000/08/31 16:11:30 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.43 2000/09/25 22:23:00 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ ifeq ($(with_CXX), yes)
 DIRS += libpq++
 endif
 
-ifeq ($(USE_TCL), true)
+ifeq ($(with_tcl), yes)
 DIRS += libpgtcl
 endif
 

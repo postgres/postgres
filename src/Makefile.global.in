@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.94 2000/09/21 20:17:43 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.95 2000/09/25 22:22:54 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -97,18 +97,12 @@ python_moduledir = @python_moduledir@
 
 krb_srvtab = @krb_srvtab@
 
-#
-# Please do not edit USE_TCL and USE_TK by hand.
-#
-USE_TCL= @USE_TCL@
-USE_TK= @USE_TK@
+with_tcl = @with_tcl@
+with_tk = @with_tk@
+
 WISH= @WISH@
 TCL_CONFIG_SH = @TCL_CONFIG_SH@
 TK_CONFIG_SH = @TK_CONFIG_SH@
-
-X_CFLAGS= @X_CFLAGS@
-X_LIBS= @X_LIBS@
-X11_LIBS= -lX11 @X_EXTRA_LIBS@
 
 # flag whether multibyte is on/off
 MULTIBYTE=@MULTIBYTE@

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.31 2000/08/31 16:11:03 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.32 2000/09/25 22:22:54 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,9 +19,8 @@ ifdef MULTIBYTE
 DIRS += pg_encoding
 endif
 
-# TCL/TK programs
-ifeq ($(USE_TCL), true)
-ifeq ($(USE_TK), true)
+ifeq ($(with_tcl), yes)
+ifeq ($(with_tk), yes)
 	DIRS += pgaccess
 endif
 	DIRS += pgtclsh

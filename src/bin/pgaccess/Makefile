@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.12 2000/09/17 13:02:41 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgaccess/Attic/Makefile,v 1.13 2000/09/25 22:22:56 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,8 +16,11 @@ pgaccessdir = $(datadir)/pgaccess
 
 all: pgaccess
 
-pgaccess: pgaccess.sh
-	sed -e 's,__wish__,$(WISH),' -e 's,__PGACCESSHOME__,$(pgaccessdir),' < $< > $@
+pgaccess: pgaccess.sh $(top_builddir)/src/Makefile.global
+	sed -e 's,@WISH@,$(WISH),g' \
+	    -e 's,@PGACCESSHOME@,$(pgaccessdir),g' \
+	  $< >$@
+	chmod a+x $@
 
 install: all installdirs
 	$(INSTALL_SCRIPT) pgaccess $(DESTDIR)$(bindir)/pgaccess

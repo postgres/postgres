@@ -1,9 +1,9 @@
 #! /bin/sh
 
-PATH_TO_WISH=__wish__
-PGACCESS_HOME=__PGACCESSHOME__
+PATH_TO_WISH='@WISH@'
+PGACCESS_HOME='@PGACCESSHOME@'
 
 export PATH_TO_WISH
 export PGACCESS_HOME
 
-exec ${PATH_TO_WISH} ${PGACCESS_HOME}/main.tcl "$@"
+exec "${PATH_TO_WISH}" "${PGACCESS_HOME}/main.tcl" "$@"

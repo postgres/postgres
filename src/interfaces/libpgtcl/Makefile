@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.21 2000/09/17 13:02:49 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.22 2000/09/25 22:23:00 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,7 +27,11 @@ SHLIB_LINK+= $(libpq)
 # braindead; users of libpq should not need to know what it depends on.)
 SHLIB_LINK+= $(findstring -lcrypt,$(LIBS))
 
-all: all-lib
+all: submake all-lib
+
+.PHONY: submake
+submake:
+	$(MAKE) -C $(libpq_builddir) all
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib

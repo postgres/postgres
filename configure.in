@@ -317,28 +317,34 @@ done
 IFS=$ac_save_IFS
 
 
+#
+# Tcl/Tk
+#
+AC_MSG_CHECKING([whether to build with Tcl])
+PGAC_ARG_BOOL(with, tcl, no, [  --with-tcl              build Tcl and Tk interfaces])
+AC_MSG_RESULT([$with_tcl])
+AC_SUBST([with_tcl])
 
-# We exclude tcl support unless user says --with-tcl
-AC_MSG_CHECKING(setting USE_TCL)
-PGAC_ARG_BOOL(with, tcl, no, [  --with-tcl              build Tcl interfaces and pgtclsh],
-              [USE_TCL=true; USE_TK=true; AC_MSG_RESULT(enabled)],
-              [USE_TCL=; USE_TK=; AC_MSG_RESULT(disabled)])
-AC_SUBST(USE_TCL)
-AC_SUBST(USE_TK)
+# If Tcl is enabled (above) then Tk is also, unless the user disables it using --without-tk
+AC_MSG_CHECKING([whether to build with Tk])
+if test "$with_tcl" = yes; then
+  PGAC_ARG_BOOL(with, tk, yes, [  --without-tk            do not build Tk interfaces if Tcl is enabled])
+else
+  with_tk=no
+fi
+AC_MSG_RESULT([$with_tk])
+AC_SUBST([with_tk])
 
 
 # We see if the path to the TCL/TK configuration scripts is specified.
 # This will override the use of tclsh to find the paths to search.
 
-PGAC_ARG_REQ(with, tclconfig, [  --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR],
-             [TCL_DIRS=$withval])
-
+PGAC_ARG_REQ(with, tclconfig, [  --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR])
 
 # We see if the path to the TK configuration scripts is specified.
 # This will override the use of tclsh to find the paths to search.
 
-PGAC_ARG_REQ(with, tkconfig,  [  --with-tkconfig=DIR     tkConfig.sh is in DIR],
-             [TK_DIRS=$withval])
+PGAC_ARG_REQ(with, tkconfig,  [  --with-tkconfig=DIR     tkConfig.sh is in DIR])
 
 
 #
@@ -443,7 +449,7 @@ AC_SUBST(KRB_LIBS)
 # Kerberos configuration parameters
 #
 PGAC_ARG_REQ(with, krb-srvnam,
-             [  --with-krb-srvnam=NAME  name of the PostgreSQL service principal in Kerberos],
+             [  --with-krb-srvnam=NAME  name of the PostgreSQL service principal in Kerberos [postgres]],
              [],
              [with_krb_srvnam="postgres"])
 AC_DEFINE_UNQUOTED([PG_KRB_SRVNAM], ["$with_krb_srvnam"],
@@ -591,6 +597,10 @@ AC_PATH_PROG(tar, tar)
 AC_CHECK_PROGS(PERL, perl,)
 AC_PROG_YACC
 AC_SUBST(YFLAGS)
+if test "$with_tk" = yes; then
+    AC_PATH_PROG(WISH, wish)
+    test -z "$WISH" && AC_MSG_ERROR([\`wish' is required for Tk support])
+fi
 
 
 ##
@@ -1007,120 +1017,18 @@ AC_DEFINE_UNQUOTED(MAXIMUM_ALIGNOF, $MAX_ALIGNOF, [Define as the maximum alignme
 PGAC_FUNC_POSIX_SIGNALS
 
 
-dnl Check for Tcl configuration script tclConfig.sh
-
-dnl If --with-tclconfig was given, don't check for tclsh, tcl
-if test -z "$TCL_DIRS"
-then
-	AC_PATH_PROG(TCLSH, tclsh)
-	if test -z "$TCLSH"
-	then
-		AC_PATH_PROG(TCLSH, tcl)
-		if test -z "$TCLSH"
-		then
-			AC_MSG_WARN(TCL/TK support disabled; tcl shell is not in your path)
-			USE_TCL=
-		fi
-	fi
-fi
-	
-if test "$USE_TCL" = true
-then
-	AC_MSG_CHECKING(for tclConfig.sh)
-	TCL_CONFIG_SH=
-	library_dirs=
-	if test -z "$TCL_DIRS"
-	then
-		library_dirs=`echo 'puts $auto_path' | $TCLSH`
-	fi
-	library_dirs="$TCL_DIRS $TK_DIRS $library_dirs"
-	for dir in $library_dirs; do
-		if test -d "$dir" -a -r "$dir/tclConfig.sh"; then
-			TCL_CONFIG_SH=$dir/tclConfig.sh
-			break
-		fi
-	done
-	if test -z "$TCL_CONFIG_SH"; then
-		AC_MSG_RESULT(no)
-		AC_MSG_WARN(TCL/TK support disabled; Tcl configuration script missing)
-		USE_TCL=
-	else
-		AC_MSG_RESULT($TCL_CONFIG_SH)
-		AC_SUBST(TCL_CONFIG_SH)
-	fi
+# Check for Tcl configuration script tclConfig.sh
+if test "$with_tcl" = yes; then
+    PGAC_PATH_TCLCONFIGSH([$with_tclconfig])
 fi
 
-USE_TK=$USE_TCL		# If TCL is disabled, disable TK
-
-dnl Check for Tk configuration script tkConfig.sh
-if test "$USE_TK" = true
-then
-	AC_MSG_CHECKING(for tkConfig.sh)
-	TK_CONFIG_SH=
-	# library_dirs are set in the check for TCL
-	for dir in $library_dirs
-	do
-		if test -d "$dir" -a -r "$dir/tkConfig.sh"
-		then
-			TK_CONFIG_SH=$dir/tkConfig.sh
-			break
-		fi
-	done
-	if test -z "$TK_CONFIG_SH"
-	then
-		AC_MSG_RESULT(no)
-		AC_MSG_WARN(TK support disabled; Tk configuration script missing)
-		USE_TK=
-	else
-		AC_MSG_RESULT($TK_CONFIG_SH)
-		AC_SUBST(TK_CONFIG_SH)
-		AC_PATH_PROG(WISH, wish)
-	fi
-fi
-AC_SUBST(WISH)
-
-USE_X=$USE_TK
-
-dnl Check for X libraries
-
-if test "$USE_X" = true; then
-
-	ice_save_LIBS="$LIBS"
-	ice_save_CFLAGS="$CFLAGS"
-	ice_save_CPPFLAGS="$CPPFLAGS"
-	ice_save_LDFLAGS="$LDFLAGS"
-
-	AC_PATH_XTRA
-
-	LIBS="$LIBS $X_EXTRA_LIBS"
-	CFLAGS="$CFLAGS $X_CFLAGS"
-	CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-	LDFLAGS="$LDFLAGS $X_LIBS"
-
-	dnl Check for X library
-
-	X11_LIBS=""
-	AC_CHECK_LIB(X11, XOpenDisplay, X11_LIBS="-lX11",,${X_PRE_LIBS})
-	if test "$X11_LIBS" = ""; then
-		dnl Not having X is bad news for pgtksh. Let the user fix this.
-		AC_MSG_WARN([The X11 library '-lX11' could not be found,
-so TK support will be disabled.  To enable TK support,
-please use the configure options '--x-includes=DIR'
-and '--x-libraries=DIR' to specify the X location.
-See the file 'config.log' for further diagnostics.])
-		USE_TK=
-	fi
-	AC_SUBST(X_LIBS)
-	AC_SUBST(X11_LIBS)
-	AC_SUBST(X_PRE_LIBS)
-
-	LIBS="$ice_save_LIBS"
-	CFLAGS="$ice_save_CFLAGS"
-	CPPFLAGS="$ice_save_CPPFLAGS"
-	LDFLAGS="$ice_save_LDFLAGS"
+# Check for Tk configuration script tkConfig.sh
+if test "$with_tk" = yes; then
+    PGAC_PATH_TKCONFIGSH([$with_tkconfig $with_tclconfig])
 fi
 
-dnl Finally ready to produce output files ...
+
+# Finally ready to produce output files ...
 
 AC_OUTPUT(
 [
@@ -1129,5 +1037,5 @@ AC_OUTPUT(
   src/Makefile.global
   src/backend/port/Makefile
 ],
-[echo timestamp > src/include/stamp-h]
+[echo "timestamp file" > src/include/stamp-h]
 )
