@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.82 2002/10/14 17:33:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.83 2002/10/14 18:11:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -824,7 +824,12 @@ retry5:
 		{
 			/*
 			 * 	select() may modify timeout argument on some platforms so
-			 *	use copy
+			 *	use copy.
+			 *	XXX Do we really want to do that?  If select() returns
+			 *	the number of seconds remaining, we are resetting
+			 *	the timeout to its original value.  This will yeild
+			 *	incorrect timings when select() is interrupted.
+			 *	bjm 2002-10-14
 			 */
 			tmp_timeout = *timeout;
 			ptmp_timeout = &tmp_timeout;
