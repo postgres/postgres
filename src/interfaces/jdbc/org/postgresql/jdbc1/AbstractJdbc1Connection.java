@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.21 2003/06/30 21:10:55 davec Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.22 2003/08/11 20:54:55 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1345,16 +1345,18 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 			}
 			rs.close();
 		} else {
-			clearWarnings();
-			execSQL(sql);
-			SQLWarning warning = getWarnings();
+			BaseResultSet l_rs = execSQL(sql);
+			BaseStatement l_stat = l_rs.getPGStatement();
+			SQLWarning warning = l_stat.getWarnings();
 			if (warning != null)
 			{
 				level = warning.getMessage();
 			}
-			clearWarnings();
+			l_rs.close();
+			l_stat.close();
 		}
 		if (level != null) {
+			level = level.toUpperCase();
 			if (level.indexOf("READ COMMITTED") != -1)
 				return Connection.TRANSACTION_READ_COMMITTED;
 			else if (level.indexOf("READ UNCOMMITTED") != -1)
