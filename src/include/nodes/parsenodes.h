@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.104 2000/04/12 17:16:40 momjian Exp $
+ * $Id: parsenodes.h,v 1.105 2000/05/28 20:34:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,7 @@ typedef struct CreateTrigStmt
 	bool		before;			/* BEFORE/AFTER */
 	bool		row;			/* ROW/STATEMENT */
 	char		actions[4];		/* Insert, Update, Delete */
-	char	   *lang;			/* NULL (which means Clanguage) */
+	char	   *lang;			/* currently not used, always NULL */
 	char	   *text;			/* AS 'text' */
 	List	   *attr;			/* UPDATE OF a, b,... (NI) or NULL */
 	char	   *when;			/* WHEN 'a > 10 ...' (NI) or NULL */

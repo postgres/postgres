@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.65 2000/05/28 17:55:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.66 2000/05/28 20:34:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	Relation	idescs[Num_pg_trigger_indices];
 	Relation	ridescs[Num_pg_class_indices];
 	Oid			fargtypes[FUNC_MAX_ARGS];
+	Oid			funclang;
 	int			found = 0;
 	int			i;
 	char		constrtrigname[NAMEDATALEN];
@@ -154,24 +155,26 @@ CreateTrigger(CreateTrigStmt *stmt)
 								Int32GetDatum(0),
 								PointerGetDatum(fargtypes),
 								0);
-	if (!HeapTupleIsValid(tuple) ||
-		((Form_pg_proc) GETSTRUCT(tuple))->pronargs != 0)
+	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "CreateTrigger: function %s() does not exist",
 			 stmt->funcname);
 	if (((Form_pg_proc) GETSTRUCT(tuple))->prorettype != 0)
 		elog(ERROR, "CreateTrigger: function %s() must return OPAQUE",
 			 stmt->funcname);
-	if (((Form_pg_proc) GETSTRUCT(tuple))->prolang != ClanguageId &&
-		((Form_pg_proc) GETSTRUCT(tuple))->prolang != INTERNALlanguageId)
+	funclang = ((Form_pg_proc) GETSTRUCT(tuple))->prolang;
+	if (funclang != ClanguageId &&
+		funclang != NEWClanguageId &&
+		funclang != INTERNALlanguageId &&
+		funclang != NEWINTERNALlanguageId)
 	{
 		HeapTuple	langTup;
 
 		langTup = SearchSysCacheTuple(LANGOID,
-			ObjectIdGetDatum(((Form_pg_proc) GETSTRUCT(tuple))->prolang),
+									  ObjectIdGetDatum(funclang),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(langTup))
 			elog(ERROR, "CreateTrigger: cache lookup for PL %u failed",
-				 ((Form_pg_proc) GETSTRUCT(tuple))->prolang);
+				 funclang);
 		if (((Form_pg_language) GETSTRUCT(langTup))->lanispl == false)
 			elog(ERROR, "CreateTrigger: only builtin, C and PL functions are supported");
 	}
