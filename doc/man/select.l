@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/man/Attic/select.l,v 1.1.1.1 1996/08/18 22:14:27 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/select.l,v 1.2 1996/10/07 02:34:53 momjian Exp $
 .TH SELECT SQL 11/05/95 Postgres95 Postgres95
 .SH NAME
 select \(em retrieve instances from a class
@@ -10,7 +10,7 @@ select \(em retrieve instances from a class
     expression1 [\fBas\fR attr_name-1]
     {, expression-1 [\fBas\fR attr_name-i]}
     [\fBinto\fR \fBtable\fR classname]
-    [\fBfrom\fR from-last]
+    [\fBfrom\fR from-list]
     [\fBwhere\fR where-clause]    
     [\fBgroup by\fR attr_name1 {, attr_name-i....}
     [\fBorder by\fR attr_name1
