@@ -1,0 +1,1509 @@
+<Chapter>
+<DocInfo>
+<Author>
+<FirstName>Phil</FirstName>
+<Surname>Thompson</Surname>
+</Author>
+<Date>1998-02-02</Date>
+</DocInfo>
+<Title>Frontend/Backend Protocol</Title>
+
+<Para>
+<Note>
+<Para>
+Written by <ULink url="mailto:phil@river-bank.demon.co.uk">Phil Thompson</ULink>
+</Para>
+</Note>
+
+<Para>
+<ProductName>Postgres</ProductName> uses a message-based protocol for communication between frontends
+and backends.  The protocol is implemented over <Acronym>TCP/IP</Acronym> and also on Unix sockets.
+<ProductName>Postgres</ProductName> v6.3 introduced version numbers into the protocol.
+This was done in such
+a way as to still allow connections from earlier versions of frontends, but
+this document does not cover the protocol used by those earlier versions.
+
+<Para>
+This document describes the initial version-numbered protocol, designated v1.0.
+Higher level features built on this protocol (for example, how <FileName>libpq</FileName> passes
+certain environment variables after the connection is established)
+are covered elsewhere.
+
+<Sect1>
+<Title>Overview</Title>
+
+<Para>
+The three major components are the frontend (running on the client) and the
+postmaster and backend (running on the server).  The postmaster and backend
+have different roles but may be implemented by the same executable.
+
+<Para>
+A frontend sends a startup packet to the postmaster.  This includes the names
+of the user and the database the user wants to connect to.  The postmaster then
+uses this, and the information in the pg_hba.conf(5) file to determine what
+further authentication information it requires the frontend to send (if any)
+and responds to the frontend accordingly.
+
+<Para>
+The frontend then sends any required authentication information.  Once the
+postmaster validates this it responds to the frontend that it is authenticated
+and hands over to a backend.
+
+<Para>
+Subsequent communications are query and result packets exchanged between the
+frontend and the backend.  The postmaster takes no further part in the
+communication.
+
+<Para>
+When the frontend wishes to disconnect it sends an appropriate packet and
+closes the connection without waiting for a response for the backend.
+
+<Para>
+Packets are sent as a data stream.  The first byte determines what should be
+expected in the rest of the packet.  The exception is packets send from a
+frontend to the postmaster, which comprise a packet length then the packet
+itself.  The difference is historical.
+
+<Sect1>
+<Title>Protocol</Title>
+
+<Para>
+This section describes the message flow.  There are four different types of
+flows depending on the state of the connection:
+ authentication, query, function call, and termination.
+
+<Sect2>
+<Title>Authentication</Title>
+
+<Para>
+The frontend sends a StartupPacket.  The postmaster uses this and the contents
+of the pg_hba.conf(5) file to determine what authentication method the frontend
+must use.  The postmaster then responds with one of the following messages:
+
+<Para>
+<VariableList>
+<VarListEntry>
+<Term>
+	ErrorResponse
+</Term>
+<ListItem>
+<Para>
+		The postmaster then immediately closes the connection.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	AuthenticationOk
+</Term>
+<ListItem>
+<Para>
+		The postmaster then hands over to the backend.  The postmaster
+		takes no further part in the communication.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	AuthenticationKerberosV4
+</Term>
+<ListItem>
+<Para>
+		The frontend must then take part in a Kerberos V4
+		authentication dialog (not described here) with the postmaster.
+		If this is successful, the postmaster responds with an
+		AuthenticationOk, otherwise it responds with an ErrorResponse.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	AuthenticationKerberosV5
+</Term>
+<ListItem>
+<Para>
+		The frontend must then take part in a Kerberos V5
+		authentication dialog (not described here) with the postmaster.
+		If this is successful, the postmaster responds with an
+		AuthenticationOk, otherwise it responds with an ErrorResponse.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	AuthenticationUnencryptedPassword
+</Term>
+<ListItem>
+<Para>
+		The frontend must then send an UnencryptedPasswordPacket.
+		If this is the correct password, the postmaster responds with
+		an AuthenticationOk, otherwise it responds with an
+		ErrorResponse.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	AuthenticationEncryptedPassword
+</Term>
+<ListItem>
+<Para>
+		The frontend must then send an EncryptedPasswordPacket.
+		If this is the correct password, the postmaster responds with
+		an AuthenticationOk, otherwise it responds with an
+		ErrorResponse.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+
+<Para>
+If the frontend does not support the authentication method requested by the
+postmaster, then it should immediately close the connection.
+
+<Sect2>
+<Title>Query</Title>
+
+<Para>
+The frontend sends a Query message to the backend.  The response sent by the
+backend depends on the contents of the query.  The possible responses are as
+follows.
+
+<Para>
+<VariableList>
+<VarListEntry>
+<Term>
+	CompletedResponse
+</Term>
+<ListItem>
+<Para>
+		The query completed normally.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	CopyInResponse
+</Term>
+<ListItem>
+<Para>
+		The backend is ready to copy data from the frontend to a
+		relation.  The frontend should then send a CopyDataRows
+		message.  The backend will then respond with a
+		CompletedResponse message with a tag of "COPY".
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	CopyOutResponse
+</Term>
+<ListItem>
+<Para>
+		The backend is ready to copy data from a relation to the
+		frontend.  It then sends a CopyDataRows message, and then a
+		CompletedResponse message with a tag of "COPY".
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	CursorResponse
+</Term>
+<ListItem>
+<Para>
+		The query was either an insert(l), delete(l), update(l),
+		fetch(l) or a select(l) command.
+                If the transaction has been
+                aborted then the backend sends a CompletedResponse message with
+                a tag of "*ABORT STATE*".  Otherwise the following responses
+                are sent.
+</Para>
+<Para>
+		For an insert(l) command, the backend then sends a
+		CompletedResponse message with a tag of "INSERT <Replaceable>oid</Replaceable> <Replaceable>rows</Replaceable>"
+		where <Replaceable>rows</Replaceable> is the number of rows inserted, and <Replaceable>oid</Replaceable> is the
+		object ID of the inserted row if <Replaceable>rows</Replaceable> is 1, otherwise <Replaceable>oid</Replaceable>
+		is 0.
+</Para>
+<Para>
+		For a delete(l) command, the backend then sends a
+		CompletedResponse message with a tag of "DELETE <Replaceable>rows</Replaceable>" where
+		<Replaceable>rows</Replaceable> is the number of rows deleted.
+</Para>
+<Para>
+		For an update(l) command, the backend then sends a
+		CompletedResponse message with a tag of "UPDATE <Replaceable>rows</Replaceable>" where
+		<Replaceable>rows</Replaceable> is the number of rows deleted.
+</Para>
+<Para>
+		For a fetch(l) or select(l) command, the backend sends a
+		RowDescription message.  This is then followed by an AsciiRow
+		or BinaryRow message (depending on if a binary cursor was
+		specified) for each row being returned to the frontend.
+		Finally, the backend sends a CompletedResponse message with a
+		tag of "SELECT".
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	EmptyQueryResponse
+</Term>
+<ListItem>
+<Para>
+		The query was empty.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	ErrorResponse
+</Term>
+<ListItem>
+<Para>
+		An error has occurred.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	NoticeResponse
+</Term>
+<ListItem>
+<Para>
+		A warning message has been issued in relation to the query.
+		Notices are in addition to other responses, ie. the backend
+		will send another response message immediately afterwards.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	NotificationResponse
+</Term>
+<ListItem>
+<Para>
+		A notify(l) command has been executed for a relation for
+		which a previous listen(l) command was executed.  Notifications
+		are in addition to other responses, ie. the backend will send
+		another response message immediately afterwards.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+
+<Para>
+A frontend must be prepared to accept ErrorResponse and NoticeResponse
+messages whenever it is expecting any other type of message.
+
+<Sect2>
+<Title>Function Call</Title>
+
+<Para>
+The frontend sends a FunctionCall message to the backend.  The response sent by
+the backend depends on the result of the function call.  The possible responses
+are as follows.
+
+<Para>
+<VariableList>
+<VarListEntry>
+<Term>
+	ErrorResponse
+</Term>
+<ListItem>
+<Para>
+		An error has occurred.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	FunctionResultResponse
+</Term>
+<ListItem>
+<Para>
+		The function call was executed and returned a result.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	FunctionVoidResponse
+</Term>
+<ListItem>
+<Para>
+		The function call was executed and returned no result.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	NoticeResponse
+</Term>
+<ListItem>
+<Para>
+		A warning message has been issued in relation to the function
+		call.  Notices are in addition to other responses, ie. the
+		backend will send another response message immediately
+		afterwards.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+
+<Para>
+A frontend must be prepared to accept ErrorResponse and NoticeResponse
+messages whenever it is expecting any other type of message.
+
+<Sect2>
+<Title>Termination</Title>
+
+<Para>
+The frontend sends a Terminate message and immediately closes the connection.
+On receipt of the message, the backend immediately closes the connection and
+terminates.
+
+
+<Sect1>
+<Title>Message Data Types</Title>
+
+<Para>
+This section describes the base data types used in messages.
+
+<Para>
+<VariableList>
+<VarListEntry>
+<Term>
+	Int<Replaceable>n</Replaceable>(<Replaceable>i</Replaceable>)
+</Term>
+<ListItem>
+<Para>
+		An <Replaceable>n</Replaceable> bit integer in network byte order.
+                If <Replaceable>i</Replaceable> is specified it
+		is the literal value.  Eg. Int16, Int32(42).
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	LimString<Replaceable>n</Replaceable>(<Replaceable>s</Replaceable>)
+</Term>
+<ListItem>
+<Para>
+		A character array of exactly <Replaceable>n</Replaceable> bytes interpreted as a '\0'
+		terminated string.  The '\0' is omitted if there is
+		insufficient room.  If <Replaceable>s</Replaceable> is specified it is the literal value.
+		Eg. LimString32, LimString64("user").
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	String(<Replaceable>s</Replaceable>)
+</Term>
+<ListItem>
+<Para>
+		A conventional C '\0' terminated string with no length
+		limitation.  A frontend should always read the full string
+		even though it may have to discard characters if it's buffers
+		aren't big enough.
+<Note>
+<Para>
+Is 8193 bytes the largest allowed size?
+</Para>
+</Note>
+		If <Replaceable>s</Replaceable> is specified it is the literal value.
+		Eg. String, String("user").
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Byte<Replaceable>n</Replaceable>(<Replaceable>c</Replaceable>)
+</Term>
+<ListItem>
+<Para>
+		Exactly <Replaceable>n</Replaceable> bytes.  If <Replaceable>c</Replaceable> is specified it is the literal
+		value.  Eg. Byte, Byte1('\n').
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+
+<Sect1>
+<Title>Message Formats</Title>
+
+<Para>
+This section describes the detailed format of each message.  Each can be sent
+by either a frontend (F), a postmaster/backend (B), or both (F & B).
+
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+AsciiRow (B)
+</Term>
+<ListItem>
+<Para>
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('D')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message, in the context in which it is sent (see
+		CopyInResponse), as an <Acronym>ASCII</Acronym> row.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Byte<Replaceable>n</Replaceable>
+</Term>
+<ListItem>
+<Para>
+
+                A bit map with one bit for each field in the row.  The 1st
+                field corresponds to bit 7 of the 1st byte, the 2nd field
+                corresponds to bit 6 of the 1st byte, the 8th field corresponds
+                to bit 0 of the 1st byte, the 9th field corresponds to bit 8 of
+                the 2nd byte, and so on.  The bit is set if the value of the
+                corresponding field is not NULL.
+</Para>
+<Para>
+	Then, for each field, there is the following:
+<VariableList>
+<VarListEntry>
+<Term>
+		Int32
+</Term>
+<ListItem>
+<Para>
+			Specifies the size of the value of the field, including
+			this size.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+		Byte<Replaceable>n</Replaceable>
+</Term>
+<ListItem>
+<Para>
+			Specifies the value of the field itself in <Acronym>ASCII</Acronym>
+			characters.  <Replaceable>n</Replaceable> is the above size minus 4.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+AuthenticationOk (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('R')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as an authentication request.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32(0)
+</Term>
+<ListItem>
+<Para>
+		Specifies that the authentication was successful.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+AuthenticationKerberosV4 (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('R')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as an authentication request.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32(1)
+</Term>
+<ListItem>
+<Para>
+		Specifies that Kerberos V4 authentication is required.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+AuthenticationKerberosV5 (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('R')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as an authentication request.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32(2)
+</Term>
+<ListItem>
+<Para>
+		Specifies that Kerberos V5 authentication is required.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+AuthenticationUnencryptedPassword (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('R')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as an authentication request.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32(3)
+</Term>
+<ListItem>
+<Para>
+		Specifies that an unencrypted password is required.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+AuthenticationEncryptedPassword (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('R')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as an authentication request.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32(4)
+</Term>
+<ListItem>
+<Para>
+		Specifies that an encrypted password is required.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Byte2
+</Term>
+<ListItem>
+<Para>
+		The salt to use when encrypting the password.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+BinaryRow (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('B')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message, in the context in which it is sent (see
+		CopyOutResponse), as a binary row.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Byte<Replaceable>n</Replaceable>
+</Term>
+<ListItem>
+<Para>
+                A bit map with one bit for each field in the row.  The 1st
+                field corresponds to bit 7 of the 1st byte, the 2nd field
+                corresponds to bit 6 of the 1st byte, the 8th field corresponds
+                to bit 0 of the 1st byte, the 9th field corresponds to bit 8 of
+                the 2nd byte, and so on.  The bit is set if the value of the
+                corresponding field is not NULL.
+</Para>
+<Para>
+	Then, for each field, there is the following:
+<VariableList>
+<VarListEntry>
+<Term>
+		Int32
+</Term>
+<ListItem>
+<Para>
+			Specifies the size of the value of the field, excluding
+			this size.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+		Byte<Replaceable>n</Replaceable>
+</Term>
+<ListItem>
+<Para>
+			Specifies the value of the field itself in binary
+			format.  <Replaceable>n</Replaceable> is the above size.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+CompletedResponse (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('C')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as a completed response.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	String
+</Term>
+<ListItem>
+<Para>
+		The command tag.  This is usually (but not always) a single
+		word that identifies which SQL command was completed.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+CopyDataRows (B & F)
+</Term>
+<ListItem>
+<Para>
+	This is a stream of rows where each row is terminated by a Char1('\n').
+	This is then followed by the sequence Char1('\\'), Char1('.'),
+	Char1('\n').
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+CopyInResponse (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('D')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message, in the context in which it is sent (see
+		AsciiRow), as a copy in started response.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+CopyOutResponse (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('B')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message, in the context in which it is sent (see
+		BinaryRow), as a copy out started response.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+CursorResponse (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('P')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as a cursor response.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	String
+</Term>
+<ListItem>
+<Para>
+		The name of the cursor.  This will be "blank" if the cursor is
+		implicit.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+EmptyQueryResponse (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('I')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as an empty query response.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	String("")
+</Term>
+<ListItem>
+<Para>
+		Unused.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+EncryptedPasswordPacket (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Int32
+</Term>
+<ListItem>
+<Para>
+		The size of the packet in bytes.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	String
+</Term>
+<ListItem>
+<Para>
+		The encrypted (using crypt()) password.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+ErrorResponse (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('E')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as an error.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	String
+</Term>
+<ListItem>
+<Para>
+		The error message itself.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+FunctionCall (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('F')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as a function call.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	String("")
+</Term>
+<ListItem>
+<Para>
+		Unused.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32
+</Term>
+<ListItem>
+<Para>
+		Specifies the object ID of the function to call.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32
+</Term>
+<ListItem>
+<Para>
+		Specifies the number of arguments being supplied to the
+		function.
+</Para>
+<Para>
+	Then, for each argument, there is the following:
+<VariableList>
+<VarListEntry>
+<Term>
+		Int32
+</Term>
+<ListItem>
+<Para>
+			Specifies the size of the value of the argument,
+			excluding this size.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+		Byte<Replaceable>n</Replaceable>
+</Term>
+<ListItem>
+<Para>
+			Specifies the value of the field itself in binary
+			format.  <Replaceable>n</Replaceable> is the above size.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+<Para>
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+FunctionResultResponse (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('V')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as a function call result.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Byte1('G')
+</Term>
+<ListItem>
+<Para>
+		Specifies that an actual result was returned.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32
+</Term>
+<ListItem>
+<Para>
+		Specifies the size of the value of the result, excluding this
+		size.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Byte<Replaceable>n</Replaceable>
+</Term>
+<ListItem>
+<Para>
+		Specifies the value of the result itself in binary format.
+		<Replaceable>n</Replaceable> is the above size.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Byte1('0')
+</Term>
+<ListItem>
+<Para>
+		Unused.  (Strictly speaking, FunctionResultResponse and
+		FunctionVoidResponse are the same thing but with some optional
+		parts to the message.)
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+FunctionVoidResponse (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('V')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as a function call result.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Byte1('0')
+</Term>
+<ListItem>
+<Para>
+		Specifies that no actual result was returned.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+NoticeResponse (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('N')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as a notice.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	String
+</Term>
+<ListItem>
+<Para>
+		The notice message itself.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+NotificationResponse (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('A')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as a notification response.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32
+</Term>
+<ListItem>
+<Para>
+		The process ID of the backend process.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	String
+</Term>
+<ListItem>
+<Para>
+		The name of the relation that the notify has been raised on.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+Query (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('Q')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as query.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	String
+</Term>
+<ListItem>
+<Para>
+		The query itself.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+RowDescription (B)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('T')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as a row description.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int16
+</Term>
+<ListItem>
+<Para>
+		Specifies the number of fields in a row (and may be zero).
+</Para>
+<Para>
+	Then, for each field, there is the following:
+<VariableList>
+<VarListEntry>
+<Term>
+		String
+</Term>
+<ListItem>
+<Para>
+			Specifies the field name.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+		Int32
+</Term>
+<ListItem>
+<Para>
+			Specifies the object ID of the field type.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+		Int16
+</Term>
+<ListItem>
+<Para>
+			Specifies the type size.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+StartupPacket (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Int32(296)
+</Term>
+<ListItem>
+<Para>
+		The size of the packet in bytes.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	Int32
+</Term>
+<ListItem>
+<Para>
+		The protocol version number.  The most significant 16 bits are
+		the major version number.  The least 16 significant bits are
+		the minor version number.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	LimString64
+</Term>
+<ListItem>
+<Para>
+		The database name, defaults to the user name if omitted.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	LimString32
+</Term>
+<ListItem>
+<Para>
+		The user name.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	LimString64
+</Term>
+<ListItem>
+<Para>
+		Any additional command line arguments to be passed to the
+		backend by the postmaster.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	LimString64
+</Term>
+<ListItem>
+<Para>
+		Unused.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	LimString64
+</Term>
+<ListItem>
+<Para>
+		The optional tty the backend should use for debugging messages.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+Terminate (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Byte1('X')
+</Term>
+<ListItem>
+<Para>
+		Identifies the message as a termination.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+UnencryptedPasswordPacket (F)
+</Term>
+<ListItem>
+<Para>
+
+<VariableList>
+<VarListEntry>
+<Term>
+	Int32
+</Term>
+<ListItem>
+<Para>
+		The size of the packet in bytes.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+	String
+</Term>
+<ListItem>
+<Para>
+		The unencrypted password.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+</Para>
+
+</Chapter>

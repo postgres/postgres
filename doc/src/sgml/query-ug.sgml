@@ -1,0 +1,332 @@
+<Chapter>
+<TITLE>The Query Language</TITLE>
+
+<Para>
+<Note>
+<Para>
+This chapter must go into depth on each area of the query language. Currently a copy of the tutorial.
+- thomas 1998-01-12
+</Para>
+</Note>
+</Para>
+
+<Para>
+     The  <ProductName>Postgres</ProductName>  query language is a variant of
+ <Acronym>SQL3</Acronym>. It
+     has many extensions such as an extensible type  system,
+     inheritance,  functions and production rules. Those are
+     features carried over from the original <ProductName>Postgres</ProductName>  query
+     language,  <ProductName>PostQuel</ProductName>.  This section provides an overview
+     of how to use <ProductName>Postgres</ProductName> <Acronym>SQL</Acronym>  to  perform  simple  operations.
+     This manual is only intended to give you an idea of our
+     flavor of <Acronym>SQL</Acronym> and is in no way a complete  tutorial  on
+     <Acronym>SQL</Acronym>.  Numerous  books  have  been  written  on <Acronym>SQL</Acronym>. For
+     instance, consult <Ulink url="refs.html#MELT93">[MELT93]</ULink> or 
+     <Ulink url="refs.html#DATE93">[DATE93]</ULink>. You should also
+     be  aware  that  some features are not part of the <Acronym>ANSI</Acronym>
+     standard.
+</Para>
+
+<Sect1>
+<Title>Concepts</Title>
+
+<Para>
+     The fundamental notion in <ProductName>Postgres</ProductName> is that of a  class,
+     which  is a named collection of object instances.  Each
+     instance has the same collection of  named  attributes,
+     and each attribute is of a specific type.  Furthermore,
+     each instance has a permanent <FirstTerm>object  identifier</FirstTerm> (<Acronym>OID</Acronym>)
+     that  is  unique  throughout the installation.  Because
+     <Acronym>SQL</Acronym> syntax refers to tables,  we  will use  the  terms
+     <FirstTerm>table</FirstTerm> and <FirstTerm>class</FirstTerm> interchangeably.
+  Likewise, an <Acronym>SQL</Acronym> <FirstTerm>row</FirstTerm> is an
+     <FirstTerm>instance</FirstTerm> and <Acronym>SQL</Acronym> <FirstTerm>columns</FirstTerm>
+ are <FirstTerm>attributes</FirstTerm>.
+     As  previously  discussed,  classes  are  grouped  into
+     databases,  and  a collection of databases managed by a
+     single <FileName>postmaster</FileName> process constitutes  an  installation
+     or site.
+</Para>
+
+<Sect1>
+<Title>Creating a New Class</Title>
+
+<Para>
+     You  can  create  a  new  class by specifying the class
+     name, along with all attribute names and their types:
+
+<ProgramListing>
+CREATE TABLE weather (
+    city            varchar(80),
+    temp_lo         int,           -- low temperature
+    temp_hi         int,           -- high temperature
+    prcp            real,          -- precipitation
+    date            date
+);
+</ProgramListing>
+
+<Para>
+     Note that keywords are case-insensitive and identifiers
+     are usually case-insensitive.
+<Acronym>Postgres</Acronym> allows <Acronym>SQL92</Acronym> <FirstTerm>delimited identifiers</FirstTerm>
+(identifiers surrounded by double-quotes) to include mixed-case and spaces, tabs, etc.
+
+<Para>
+  <ProductName>Postgres</ProductName>  <Acronym>SQL</Acronym> supports the usual
+     <Acronym>SQL</Acronym> types <Type>int</Type>,
+ <Type>float</Type>,  <Type>real</Type>,  <Type>smallint</Type>,  <Type>char(N)</Type>,  
+     <Type>varchar(N)</Type>,  <Type>date</Type>, <Type>time</Type>,
+and <Type>timestamp</Type>, as well as other types of general utility and
+a rich set of geometric types.  As we will 
+     see later, <ProductName>Postgres</ProductName> can be customized  with  an  
+     arbitrary  number  of
+     user-defined  data types.  Consequently, type names are
+     not syntactical keywords, except where required to support special cases in the <Acronym>SQL92</Acronym> standard.
+     So far, the <ProductName>Postgres</ProductName> create command looks exactly  like
+     the  command  used  to  create a table in a traditional
+     relational system.  However, we will presently see that
+     classes  have  properties  that  are  extensions of the
+     relational model.
+</Para>
+
+<Sect1>
+<Title>Populating a Class with Instances</Title>
+
+<Para>
+     The <Command>insert</Command> statement is used to populate a  class  with
+     instances:
+
+<ProgramListing>
+INSERT INTO weather
+    VALUES ('San Francisco', 46, 50, 0.25, '11/27/1994')
+</ProgramListing>
+
+<Para>
+     You can also use the <Command>copy</Command> command to perform load large
+     amounts of data from flat (<Acronym>ASCII</Acronym>) files.
+</Para>
+
+<Sect1>
+<Title>Querying a Class</Title>
+
+<Para>
+     The weather class can be queried with normal relational
+     selection  and projection queries.  A <Acronym>SQL</Acronym> <Command>select</Command> 
+     statement is used to do this.  The statement is divided into
+     a target list (the part that lists the attributes to be
+     returned) and a qualification (the part that  specifies
+     any  restrictions).   For  example, to retrieve all the
+     rows of weather, type:
+<ProgramListing>
+SELECT * FROM WEATHER;
+</ProgramListing>
+
+     and the output should be:
+<ProgramListing>
++--------------+---------+---------+------+------------+
+|city          | temp_lo | temp_hi | prcp | date       |
++--------------+---------+---------+------+------------+
+|San Francisco | 46      | 50      | 0.25 | 11-27-1994 |
++--------------+---------+---------+------+------------+
+|San Francisco | 43      | 57      | 0    | 11-29-1994 |
++--------------+---------+---------+------+------------+
+|Hayward       | 37      | 54      |      | 11-29-1994 |
++--------------+---------+---------+------+------------+
+</ProgramListing>
+     You may specify any arbitrary expressions in the  target list. For example, you can do:
+<ProgramListing>
+SELECT city, (temp_hi+temp_lo)/2 AS temp_avg, date FROM weather;
+</ProgramListing>
+
+<Para>
+     Arbitrary  Boolean  operators
+ (<Command>and</Command>,  <Command>or</Command> and <Command>not</Command>) are
+     allowed in the qualification of any query.   For  example,
+
+<ProgramListing>
+SELECT * FROM weather
+    WHERE city = 'San Francisco'
+    AND prcp > 0.0;
+
++--------------+---------+---------+------+------------+
+|city          | temp_lo | temp_hi | prcp | date       |
++--------------+---------+---------+------+------------+
+|San Francisco | 46      | 50      | 0.25 | 11-27-1994 |
++--------------+---------+---------+------+------------+
+</ProgramListing>
+</Para>
+
+<Para>
+     As  a final note, you can specify that the results of a
+     select can be returned in a <FirstTerm>sorted order</FirstTerm>
+ or with <FirstTerm>duplicate instances</FirstTerm> removed.
+
+<ProgramListing>
+SELECT DISTINCT city
+    FROM weather
+    ORDER BY city;
+</ProgramListing>
+</Para>
+
+<Sect1>
+<Title>Redirecting SELECT Queries</Title>
+
+<Para>
+     Any select query can be redirected to a new class
+<ProgramListing>
+SELECT * INTO TABLE temp FROM weather;
+</ProgramListing>
+
+<Para>
+     This forms an implicit <Command>create</Command> command, creating a new
+     class temp with the attribute names and types specified
+     in  the target list of the <Command>select into</Command> command.  We can
+     then, of course, perform any operations on the  resulting 
+     class that we can perform on other classes.
+</Para>
+
+<Sect1>
+<Title>Joins Between Classes</Title>
+
+<Para>
+     Thus far, our queries have only accessed one class at a
+     time.  Queries can access multiple classes at once,  or
+     access  the  same  class  in  such  a way that multiple
+     instances of the class are being processed at the  same
+     time.   A query that accesses multiple instances of the
+     same or different classes at one time is called a  join
+     query.
+     As an example, say we wish to find all the records that
+     are in the  temperature  range  of  other  records.  In
+     effect,  we  need  to  compare  the temp_lo and temp_hi
+     attributes of each EMP  instance  to  the  temp_lo  and
+     temp_hi  attributes of all other EMP instances.
+<Note>
+<Para>
+This  is only a conceptual model.  The actual join may
+   be performed in a more efficient manner, but this is invisible to the user.
+</Para>
+</Note>
+
+ We can do this with the following query:
+
+<ProgramListing>
+SELECT W1.city, W1.temp_lo, W1.temp_hi,
+    W2.city, W2.temp_lo, W2.temp_hi
+    FROM weather W1, weather W2
+    WHERE W1.temp_lo < W2.temp_lo
+    AND W1.temp_hi > W2.temp_hi;
+
++--------------+---------+---------+---------------+---------+---------+
+|city          | temp_lo | temp_hi | city          | temp_lo | temp_hi |
++--------------+---------+---------+---------------+---------+---------+
+|San Francisco | 43      | 57      | San Francisco | 46      | 50      |
++--------------+---------+---------+---------------+---------+---------+
+|San Francisco | 37      | 54      | San Francisco | 46      | 50      |
++--------------+---------+---------+---------------+---------+---------+
+</ProgramListing>     
+
+<Note>
+<Para>
+The semantics of such a join are 
+   that the qualification
+   is a truth expression defined for the Cartesian  product  of
+   the  classes indicated in the query.  For those instances in
+   the Cartesian product for which the qualification  is  true,
+   <ProductName>Postgres</ProductName>  computes  and  returns the values specified in the
+   target list.  <ProductName>Postgres</ProductName> <Acronym>SQL</Acronym> does not assign  any  meaning  to
+   duplicate values in such expressions.  This means that <ProductName>Postgres</ProductName> 
+   sometimes recomputes the same target list several times;
+   this frequently happens when Boolean expressions are connected 
+   with an "or".  To remove such duplicates, you must  use
+   the <Command>select distinct</Command> statement.
+</Para>
+</Note>
+
+<Para>
+     In this case, both W1 and  W2  are  surrogates for  an
+     instance  of the class weather, and both range over all
+     instances of the class.  (In the  terminology  of  most
+     database  systems,  W1 and W2 are known as <FirstTerm>range variables</FirstTerm>.)  
+     A query can contain an  arbitrary  number  of
+     class names and surrogates.
+</Para>
+
+<Sect1>
+<Title>Updates</Title>
+
+<Para>
+     You can update existing instances using the update command. 
+     Suppose you discover the temperature readings are
+     all  off  by 2 degrees as of Nov 28, you may update the
+     data as follow:
+
+<ProgramListing>
+UPDATE weather
+    SET temp_hi = temp_hi - 2,  temp_lo = temp_lo - 2
+    WHERE date > '11/28/1994';
+</ProgramListing>
+</Para>
+
+<Sect1>
+<Title>Deletions</Title>
+
+<Para>
+     Deletions are performed using the <Command>delete</Command> command:
+<ProgramListing>
+DELETE FROM weather WHERE city = 'Hayward';
+</ProgramListing>
+
+     All weather recording belongs to Hayward is removed.
+     One should be wary of queries of the form
+<ProgramListing>
+DELETE FROM classname;
+</ProgramListing>
+
+     Without a qualification, <Command>delete</Command> will simply
+     remove  all  instances  of  the given class, leaving it
+     empty.  The system will not request confirmation before
+     doing this.
+</Para>
+
+<Sect1>
+<Title>Using Aggregate Functions</Title>
+
+<Para>
+     Like  most  other  query  languages,  <ProductName>PostgreSQL</ProductName> supports
+     aggregate functions.
+The current  implementation  of  <ProductName>Postgres</ProductName> aggregate functions have some limitations.
+     Specifically, while there  are  aggregates  to  compute
+     such  functions as the <Function>count</Function>, <Function>sum</Function>,
+ <Function>avg</Function> (average), <Function>max</Function> (maximum) and
+     <Function>min</Function> (minimum) over a set of instances,  aggregates  can  only
+     appear  in  the  target  list of a query and not directly in the
+     qualification (the <FirstTerm>where</FirstTerm> clause). As an example,
+
+<ProgramListing>
+SELECT max(temp_lo) FROM weather;
+</ProgramListing>
+
+is allowed, while
+
+<ProgramListing>
+SELECT city FROM weather WHERE temp_lo = max(temp_lo);
+</ProgramListing>
+
+is not. However, as is often the case the query can be restated to accomplish
+the intended result; here by using a <FirstTerm>subselect</FirstTerm>:
+<ProgramListing>
+SELECT city FROM weather WHERE temp_lo = (SELECT max(temp_lo) FROM weather);
+</ProgramListing>
+</Para>
+
+<Para>
+     Aggregates may also have <FirstTerm>group by</FirstTerm> clauses:
+<ProgramListing>
+SELECT city, max(temp_lo)
+    FROM weather
+    GROUP BY city;
+</ProgramListing>
+</Para>
+
+</Chapter>

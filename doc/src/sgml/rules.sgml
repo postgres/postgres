@@ -1,0 +1,28 @@
+<Chapter>
+<Title>The <ProductName>Postgres</ProductName> Rule System</Title>
+
+<Para>
+     Production  rule  systems  are conceptually simple, but
+     there are many subtle points involved in actually using
+     them.  Consequently, we will not attempt to explain the
+     actual syntax and operation of the <ProductName>Postgres</ProductName> rule system
+     here.  Instead, you should read 
+<XRef LinkEnd="STON90b" EndTerm="[STON90b]"> to understand
+     some of these points and the theoretical foundations of
+     the  <ProductName>Postgres</ProductName>  rule  system before trying to use rules.
+     The discussion in this section is intended  to  provide
+     an  overview  of the <ProductName>Postgres</ProductName> rule system and point the
+     user at helpful references and examples.
+
+     The "query rewrite" rule  system  modifies  queries  to
+     take rules into consideration, and then passes the modified 
+     query to the query optimizer for  execution.   It
+     is  very powerful, and can be used for many things such
+     as query language procedures, views, and versions.  The
+     power  of  this  rule system is discussed in 
+<XRef LinkEnd="ONG90" EndTerm="[ONG90]">
+ as well as
+<XRef LinkEnd="STON90b" EndTerm="[STON90b]">.
+</Para>
+
+</Chapter>

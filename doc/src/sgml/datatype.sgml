@@ -1,0 +1,2064 @@
+<Chapter>
+<Title>Data Types</Title>
+
+<Abstract>
+<Para>
+Describes the built-in data types available in <ProductName>Postgres</ProductName>.
+</Para>
+</Abstract>
+
+<Para>
+<ProductName>Postgres</ProductName> has a rich set of native data types available to users.
+Users may add new types to <ProductName>Postgres</ProductName> using the
+<Command>define type</Command>
+command described elsewhere.
+
+<Para>
+In the context of data types, the following sections will discuss SQL standards
+compliance, porting issues, and usage.
+
+Some <ProductName>Postgres</ProductName> types correspond directly to SQL92-compatible types. In other
+cases, data types defined by SQL92 syntax are mapped directly
+into native <ProductName>Postgres</ProductName> types. 
+
+Many of the built-in types have obvious external formats. However, several
+types are either unique to <ProductName>Postgres</ProductName>, such as open and closed paths, or have
+several possibilities for formats, such as date and time types.
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Data Types</TITLE>
+<TITLEABBREV>Data Types</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY><ProductName>Postgres</ProductName> Type</ENTRY>
+    <ENTRY><Acronym>SQL92</Acronym> or <Acronym>SQL3</Acronym> Type</ENTRY>
+    <ENTRY>Description</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>bool</ENTRY>
+    <ENTRY>boolean</ENTRY>
+    <ENTRY>logical boolean (true/false)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>box</ENTRY>
+    <ENTRY></ENTRY>
+    <ENTRY>rectangular box in 2D plane</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>char(n)</ENTRY>
+    <ENTRY>character(n)</ENTRY>
+    <ENTRY>fixed-length character string</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>circle</ENTRY>
+    <ENTRY></ENTRY>
+    <ENTRY>circle in 2D plane</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>date</ENTRY>
+    <ENTRY>date</ENTRY>
+    <ENTRY>calendar date without time of day</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>float4/8</ENTRY>
+    <ENTRY>float(p)</ENTRY>
+    <ENTRY>floating-point number with precision p</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>float8</ENTRY>
+    <ENTRY>real, double precision</ENTRY>
+    <ENTRY>double-precision floating-point number</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>int2</ENTRY>
+    <ENTRY>smallint</ENTRY>
+    <ENTRY>signed two-byte integer</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>int4</ENTRY>
+    <ENTRY>int, integer</ENTRY>
+    <ENTRY>signed 4-byte integer</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>int4</ENTRY>
+    <ENTRY>decimal(p,s)</ENTRY>
+    <ENTRY>exact numeric for p <= 9, s = 0</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>int4</ENTRY>
+    <ENTRY>numeric(p,s)</ENTRY>
+    <ENTRY>exact numeric for p == 9, s = 0</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>line</ENTRY>
+    <ENTRY></ENTRY>
+    <ENTRY>infinite line in 2D plane</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>lseg</ENTRY>
+    <ENTRY></ENTRY>
+    <ENTRY>line segment in 2D plane</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>money</ENTRY>
+    <ENTRY>decimal(9,2)</ENTRY>
+    <ENTRY>US-style currency</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>path</ENTRY>
+    <ENTRY></ENTRY>
+    <ENTRY>open and closed geometric path in 2D plane</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>point</ENTRY>
+    <ENTRY></ENTRY>
+    <ENTRY>geometric point in 2D plane</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>polygon</ENTRY>
+    <ENTRY></ENTRY>
+    <ENTRY>closed geometric path in 2D plane</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>time</ENTRY>
+    <ENTRY>time</ENTRY>
+    <ENTRY>time of day</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>timespan</ENTRY>
+    <ENTRY>interval</ENTRY>
+    <ENTRY>general-use time span</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>timestamp</ENTRY>
+    <ENTRY>timestamp with time zone</ENTRY>
+    <ENTRY>date/time</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>varchar(n)</ENTRY>
+    <ENTRY>character varying(n)</ENTRY>
+    <ENTRY>variable-length character string</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Function Constants</TITLE>
+<TITLEABBREV>Constants</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY><ProductName>Postgres</ProductName> Function</ENTRY>
+    <ENTRY><Acronym>SQL92</Acronym> Constant</ENTRY>
+    <ENTRY>Description</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>getpgusername()</ENTRY>
+    <ENTRY>current_user</ENTRY>
+    <ENTRY>user name in current session</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>date('now')</ENTRY>
+    <ENTRY>current_date</ENTRY>
+    <ENTRY>date of current transaction</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>time('now')</ENTRY>
+    <ENTRY>current_time</ENTRY>
+    <ENTRY>time of current transaction</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>timestamp('now')</ENTRY>
+    <ENTRY>current_timestamp</ENTRY>
+    <ENTRY>date and time of current transaction</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+<ProductName>Postgres</ProductName> has features at the forefront of ORDBMS development. In addition to
+SQL3 conformance, substantial portions of SQL92 are also supported.
+Although we strive for SQL92 compliance, there are some cases in the standard
+which are ill considered and which should not live through subsequent standards.
+<ProductName>Postgres</ProductName> will not make great efforts to conform to these cases. However, these
+cases tend to be little-used and obsure, and a typical user is not likely to
+run into them.
+
+<Para>
+Although most of the input and output functions corresponding to the
+base types (e.g., integers and floating point numbers) do some
+error-checking, some are not particularly rigorous about it.  More
+importantly, few of the operators and functions (e.g.,
+addition and multiplication) perform any error-checking at all.
+Consequently, many of the numeric operators can (for example)
+silently underflow or overflow.
+</Para>
+
+<Para>
+Some of the input and output functions are not invertible.  That is,
+the result of an output function may lose precision when compared to
+the original input.
+</Para>
+
+<Sect1>
+<Title>Numeric Types</Title>
+
+<Para>
+Numeric types consist of two- and four-byte integers and four- and eight-byte
+floating point numbers.
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Numeric Types</TITLE>
+<TITLEABBREV>Numerics</TITLEABBREV>
+<TGROUP COLS="4">
+<THEAD>
+  <ROW>
+    <ENTRY>Numeric Type</ENTRY>
+    <ENTRY>Storage</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Range</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>int2</ENTRY>
+    <ENTRY>2 bytes</ENTRY>
+    <ENTRY>Fixed-precision</ENTRY>
+    <ENTRY>-32768 to +32767</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>int4</ENTRY>
+    <ENTRY>4 bytes</ENTRY>
+    <ENTRY>Usual choice for fixed-precision</ENTRY>
+    <ENTRY>-2147483648 to +2147483647</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>float4</ENTRY>
+    <ENTRY>4 bytes</ENTRY>
+    <ENTRY>Variable-precision</ENTRY>
+    <ENTRY>7 decimal places</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>float8</ENTRY>
+    <ENTRY>8 bytes</ENTRY>
+    <ENTRY>Variable-precision</ENTRY>
+    <ENTRY>14 decimal places</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+The <FirstTerm>exact numerics</FirstTerm> <Type>decimal</Type> and <Type>numeric</Type>
+have fully implemented syntax but currently (<ProductName>Postgres</ProductName> v6.3)
+ support only a small range of precision and/or range values.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Monetary Type</Title>
+
+<Para>
+The <Type>money</Type> type supports US-style currency with fixed decimal point representation.
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Numeric Types</TITLE>
+<TITLEABBREV>Numerics</TITLEABBREV>
+<TGROUP COLS="4">
+<THEAD>
+  <ROW>
+    <ENTRY>Monetary Type</ENTRY>
+    <ENTRY>Storage</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Range</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>money</ENTRY>
+    <ENTRY>4 bytes</ENTRY>
+    <ENTRY>Fixed-precision</ENTRY>
+    <ENTRY>-21474836.48 to +21474836.47</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+The <FirstTerm>exact numerics</FirstTerm> <Type>decimal</Type> and <Type>numeric</Type>
+have fully implemented syntax but currently (<ProductName>Postgres</ProductName> v6.3)
+ support only a small range of precision and/or range values.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Character Types</Title>
+
+<Para>
+<Acronym>SQL92</Acronym> defines two primary character types: <Type>char</Type> and
+<Type>varchar</Type>. <ProductName>Postgres</ProductName> supports these types, in
+addition to the more general <Type>text</Type> type, which unlike <Type>varchar</Type>
+does not require an upper
+limit to be declared on the size of the field.
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Character Types</TITLE>
+<TITLEABBREV>Characters</TITLEABBREV>
+<TGROUP COLS="4">
+<THEAD>
+  <ROW>
+    <ENTRY>Character Type</ENTRY>
+    <ENTRY>Storage</ENTRY>
+    <ENTRY>Recommendation</ENTRY>
+    <ENTRY>Description</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>char</ENTRY>
+    <ENTRY>1 byte</ENTRY>
+    <ENTRY>SQL92-compatible</ENTRY>
+    <ENTRY>Single character</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>char(n)</ENTRY>
+    <ENTRY>(4+n) bytes</ENTRY>
+    <ENTRY>SQL92-compatible</ENTRY>
+    <ENTRY>Fixed-length blank padded</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>text</ENTRY>
+    <ENTRY>(4+x) bytes</ENTRY>
+    <ENTRY>Best choice</ENTRY>
+    <ENTRY>Variable-length</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>varchar(n)</ENTRY>
+    <ENTRY>(4+n) bytes</ENTRY>
+    <ENTRY>SQL92-compatible</ENTRY>
+    <ENTRY>Variable-length with limit</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+There are currently other fixed-length character types. These provide no additional
+functionality and are likely to be deprecated in the future.
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Specialty Character Types</TITLE>
+<TITLEABBREV>Specialty Characters</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Character Type</ENTRY>
+    <ENTRY>Storage</ENTRY>
+    <ENTRY>Description</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>char2</ENTRY>
+    <ENTRY>2 bytes</ENTRY>
+    <ENTRY>Two characters</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>char4</ENTRY>
+    <ENTRY>4 bytes</ENTRY>
+    <ENTRY>Four characters</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>char8</ENTRY>
+    <ENTRY>8 bytes</ENTRY>
+    <ENTRY>Eight characters</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>char16</ENTRY>
+    <ENTRY>16 bytes</ENTRY>
+    <ENTRY>Sixteen characters</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Date/Time Types</Title>
+
+<Para>
+There are two fundamental kinds of date and time measurements: clock time and time interval.
+Both quantities have continuity and smoothness, as does time itself.
+<ProductName>Postgres</ProductName> supplies two primary user-oriented date and time types,
+<Type>datetime</Type> and timespan, as well as the related SQL92 types date and time.
+</Para>
+
+<Para>
+Other date and time types are available
+also, mostly
+for historical reasons.
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Date/Time Types</TITLE>
+<TITLEABBREV>Date/Time</TITLEABBREV>
+<TGROUP COLS="4">
+<THEAD>
+  <ROW>
+    <ENTRY>Date/Time Type</ENTRY>
+    <ENTRY>Storage</ENTRY>
+    <ENTRY>Recommendation</ENTRY>
+    <ENTRY>Description</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>abstime</ENTRY>
+    <ENTRY>4 bytes</ENTRY>
+    <ENTRY>original date and time</ENTRY>
+    <ENTRY>limited range</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>date</ENTRY>
+    <ENTRY>4 bytes</ENTRY>
+    <ENTRY>SQL92 type</ENTRY>
+    <ENTRY>wide range</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>datetime</ENTRY>
+    <ENTRY>8 bytes</ENTRY>
+    <ENTRY>best general date and time</ENTRY>
+    <ENTRY>wide range, high precision</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>interval</ENTRY>
+    <ENTRY>12 bytes</ENTRY>
+    <ENTRY>SQL92 type</ENTRY>
+    <ENTRY>equivalent to timespan</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>reltime</ENTRY>
+    <ENTRY>4 bytes</ENTRY>
+    <ENTRY>original time interval</ENTRY>
+    <ENTRY>limited range, low precision</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>time</ENTRY>
+    <ENTRY>4 bytes</ENTRY>
+    <ENTRY>SQL92 type</ENTRY>
+    <ENTRY>wide range</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>timespan</ENTRY>
+    <ENTRY>12 bytes</ENTRY>
+    <ENTRY>best general time interval</ENTRY>
+    <ENTRY>wide range, high precision</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>timestamp</ENTRY>
+    <ENTRY>4 bytes</ENTRY>
+    <ENTRY>SQL92 type</ENTRY>
+    <ENTRY>limited range</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Date/Time Ranges</TITLE>
+<TITLEABBREV>Ranges</TITLEABBREV>
+<TGROUP COLS="4">
+<THEAD>
+  <ROW>
+    <ENTRY>Date/Time Type</ENTRY>
+    <ENTRY>Earliest</ENTRY>
+    <ENTRY>Latest</ENTRY>
+    <ENTRY>Resolution</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>abstime</ENTRY>
+    <ENTRY>1901-12-14</ENTRY>
+    <ENTRY>2038-01-19</ENTRY>
+    <ENTRY>1 sec</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>date</ENTRY>
+    <ENTRY>4713 BC</ENTRY>
+    <ENTRY>no limit</ENTRY>
+    <ENTRY>1 day</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>datetime</ENTRY>
+    <ENTRY>4713 BC</ENTRY>
+    <ENTRY>no limit</ENTRY>
+    <ENTRY>1 microsec to 14 digits</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>interval</ENTRY>
+    <ENTRY>no limit</ENTRY>
+    <ENTRY>no limit</ENTRY>
+    <ENTRY>1 microsec</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>reltime</ENTRY>
+    <ENTRY>-68 years</ENTRY>
+    <ENTRY>+68 years</ENTRY>
+    <ENTRY>1 sec</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>time</ENTRY>
+    <ENTRY>00:00:00.00</ENTRY>
+    <ENTRY>23:59:59.99</ENTRY>
+    <ENTRY>1 microsec</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>timespan</ENTRY>
+    <ENTRY>no limit</ENTRY>
+    <ENTRY>no limit</ENTRY>
+    <ENTRY>1 microsec (14 digits)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>timestamp</ENTRY>
+    <ENTRY>1901-12-14</ENTRY>
+    <ENTRY>2038-01-19</ENTRY>
+    <ENTRY>1 sec</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+<ProductName>Postgres</ProductName> endevours to be compatible with
+<Acronym>SQL92</Acronym> definitions for typical usage.
+The <Acronym>SQL92</Acronym> standard has an odd mix of date and
+time types and capabilities. For example, although the date type does not have an associated time zone, the
+time type can. The default time zone is specified as a constant offset from GMT/UTC;
+ however, time zones in the real world can have no meaning unless associated with a
+ date as well
+as a time since the offset will vary through the year.
+
+<Para>
+To obviate these difficulties, <ProductName>Postgres</ProductName> associates time zones
+ only with date and time
+types which contain both date and time, and assumes local time for any type containing only
+date or time. Further, time zone support is derived from the underlying operating system
+time zone capabilities, and hence can handle daylight savings time and other expected behavior.
+
+<Para>
+In future releases, the number of date/time types will decrease, with the current
+implementation of <Type>datetime</Type> becoming <Type>timestamp</Type>, timespan becoming interval,
+and (possibly) abstime
+and reltime being deprecated in favor of <Type>timestamp</Type> and interval.
+The more arcane features
+of the date/time definitions from the <Acronym>SQL92</Acronym> standard are not likely to be pursued.
+</Para>
+
+<Sect2>
+<Title>Date/Time Styles</Title>
+
+<Para>
+Output formats can be set to one of four styles: 
+ISO-8601, SQL (Ingres), traditional
+Postgres, and German.
+
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Date Styles</TITLE>
+<TITLEABBREV>Styles</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Style Specification</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Example</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>ISO</ENTRY>
+    <ENTRY>ISO-8601 standard</ENTRY>
+    <ENTRY>1997-12-17 07:37:16-08</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>SQL</ENTRY>
+    <ENTRY>Traditional style</ENTRY>
+    <ENTRY>12/17/1997 07:37:16.00 PST</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>Postgres</ENTRY>
+    <ENTRY>Original style</ENTRY>
+    <ENTRY>Wed Dec 17 07:37:16 1997 PST</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>German</ENTRY>
+    <ENTRY>Regional style</ENTRY>
+    <ENTRY>17.12.1997 07:37:16.00 PST</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+The SQL style has European and non-European (US) variants, which determines whether
+month follows day or vica versa.
+
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Date Order Conventions</TITLE>
+<TITLEABBREV>Order</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Style Specification</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Example</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>European</ENTRY>
+    <ENTRY>Regional convention</ENTRY>
+    <ENTRY>17/12/1997 15:37:16.00 MET</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>NonEuropean</ENTRY>
+    <ENTRY>Regional convention</ENTRY>
+    <ENTRY>12/17/1997 07:37:16.00 PST</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>US</ENTRY>
+    <ENTRY>Regional convention</ENTRY>
+    <ENTRY>12/17/1997 07:37:16.00 PST</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+There are several ways to affect the appearance of date/time types:
+
+<ItemizedList Mark="bullet" Spacing="compact">
+<ListItem>
+<Para>
+The PGDATESTYLE environment variable used by the backend directly on postmaster startup.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+The PGDATESTYLE environment variable used by the frontend libpq on session startup.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+SET DateStyle <Acronym>SQL</Acronym> command.
+</Para>
+</ListItem>
+</ItemizedList>
+
+<Para>
+For <ProductName>Postgres</ProductName> v6.3 (and earlier) the default date/time style is
+"traditional Postgres". In future releases, the default may become ISO-8601, which alleviates
+date specification ambiguities and Y2K collation problems.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Time Zones</Title>
+
+<Para>
+<ProductName>Postgres</ProductName> obtains time zone support from the underlying operating system.
+All dates and times are stored internally in Universal Coordinated Time (UTC), alternately known as
+Greenwich Mean Time (GMT). Times are converted to local time on the database server before being
+sent to the client frontend, hence by default are in the server time zone.
+
+<Para>
+There are several ways to affect the time zone behavior:
+
+<ItemizedList Mark="bullet" Spacing="compact">
+<ListItem>
+<Para>
+The TZ environment variable used by the backend directly
+ on postmaster startup as the default time zone.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+The PGTZ environment variable set at the client used by libpq to send time zone information to the backend upon connection.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+<Command>set timezone</Command> <Acronym>SQL</Acronym> sets the time zone for the session.
+</Para>
+</ListItem>
+</ItemizedList>
+
+<Para>
+ If an invalid time zone is specified,
+the time zone becomes GMT (on most systems anyway).
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>Date/Time Input</Title>
+
+<Para>
+General-use date and time is input using a wide range of
+styles, including ISO-compatible, SQL-compatible, traditional
+<ProductName>Postgres</ProductName> 
+and other permutations of date and time. In cases where interpretation
+can be ambiguous (quite possible with many traditional styles of date specification)
+<ProductName>Postgres</ProductName> uses a style setting to resolve the ambiguity.
+</Para>
+
+<Para>
+Most date and time types share code for data input. For those types
+the input can have any of a wide variety of styles. For numeric date representations,
+European and US conventions can differ, and the proper interpretation is obtained
+by using the
+<Command>set datestyle</Command>
+command before entering data.
+Note that the style setting does not preclude use of various styles for input; it is
+used primarily to determine the output style and to resolve ambiguities.
+</Para>
+
+<Para>
+The special values `current',
+`infinity' and `-infinity' are provided.
+`infinity' specifies a time later than any other valid time, and
+`-infinity' specifies a time earlier than any other valid time.
+`current' indicates that the current time should be
+substituted whenever this value appears in a computation.
+
+The strings
+`now',
+`today',
+`yesterday',
+`tomorrow',
+and `epoch' can be used to specify
+time values.  `now' means the current transaction time, and differs from
+`current' in that the current time is immediately substituted
+for it.  `epoch' means Jan 1 00:00:00 1970 GMT.
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Date/Time Special Constants</TITLE>
+<TITLEABBREV>Constants</TITLEABBREV>
+<TGROUP COLS="2">
+<THEAD>
+  <ROW>
+    <ENTRY>Constant</ENTRY>
+    <ENTRY>Description</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>current</ENTRY>
+    <ENTRY>Current transaction time, deferred</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>epoch</ENTRY>
+    <ENTRY>1970-01-01 00:00:00+00 (Unix system time zero)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>infinity</ENTRY>
+    <ENTRY>Later than other valid times</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>-infinity</ENTRY>
+    <ENTRY>Earlier than other valid times</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>invalid</ENTRY>
+    <ENTRY>Illegal entry</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>now</ENTRY>
+    <ENTRY>Current transaction time</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>today</ENTRY>
+    <ENTRY>Midnight today</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>tomorrow</ENTRY>
+    <ENTRY>Midnight tomorrow</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>yesterday</ENTRY>
+    <ENTRY>Midnight yesterday</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>datetime</Title>
+
+<Para>
+General-use date and time is input using a wide range of
+styles, including ISO-compatible, SQL-compatible, traditional
+<ProductName>Postgres</ProductName> (see section on "absolute time")
+and other permutations of date and time. Output styles can be ISO-compatible,
+SQL-compatible, or traditional <ProductName>Postgres</ProductName>, with the default set to be compatible
+with <ProductName>Postgres</ProductName> v6.0.
+</Para>
+
+<Para>
+<Type>datetime</Type> is specified using the following syntax:
+
+<ProgramListing>
+Year-Month-Day [ Hour : Minute : Second ]      [AD,BC] [ Timezone ]
+  YearMonthDay [ Hour : Minute : Second ]      [AD,BC] [ Timezone ]
+     Month Day [ Hour : Minute : Second ] Year [AD,BC] [ Timezone ]
+where	
+    Year is 4013 BC, ..., very large
+    Month is Jan, Feb, ..., Dec or 1, 2, ..., 12
+    Day is 1, 2, ..., 31
+    Hour is 00, 02, ..., 23
+    Minute is 00, 01, ..., 59
+    Second is 00, 01, ..., 59 (60 for leap second)
+    Timezone is 3 characters or ISO offset to GMT
+</ProgramListing>
+
+<Para>
+Valid dates are from Nov 13 00:00:00 4013 BC GMT to far into the future.
+Timezones are either three characters (e.g. "GMT" or "PST") or ISO-compatible
+offsets to GMT (e.g. "-08" or "-08:00" when in Pacific Standard Time).
+Dates are stored internally in Greenwich Mean Time. Input and output routines 
+translate time to the local time zone of the server.
+</Para>
+
+<Sect2>
+<Title><Type>timespan</Type></Title>
+
+<Para>
+General-use time span is input using a wide range of
+syntaxes, including ISO-compatible, SQL-compatible, traditional
+<ProductName>Postgres</ProductName> (see section on "relative time")
+ and other permutations of time span. Output formats can be ISO-compatible,
+SQL-compatible, or traditional <ProductName>Postgres</ProductName>, with the default set to be <ProductName>Postgres</ProductName>-compatible.
+Months and years are a "qualitative" time interval, and are stored separately
+from the other "quantitative" time intervals such as day or hour. For date arithmetic,
+the qualitative time units are instantiated in the context of the relevant date or time.
+
+<Para>
+Time span is specified with the following syntax:
+
+<ProgramListing>
+  Quantity Unit [Quantity Unit...] [Direction]
+@ Quantity Unit [Direction]
+where 	
+    Quantity is ..., `-1', `0', `1', `2', ...
+    Unit is `second', `minute', `hour', `day', `week', `month', `year',
+    'decade', 'century', millenium', or abbreviations or plurals of these units.
+    Direction is `ago'.
+</ProgramListing>
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>abstime</Title>
+
+<Para>
+Absolute time (abstime) is a limited-range (+/- 68 years) and limited-precision (1 sec)
+date data type. <Type>datetime</Type> may be preferred, since it
+covers a larger range with greater precision.
+
+<Para>
+Absolute time is specified using the following syntax:
+
+<ProgramListing>
+Month  Day [ Hour : Minute : Second ]  Year [ Timezone ]
+where	
+    Month is Jan, Feb, ..., Dec
+    Day is 1, 2, ..., 31
+    Hour is 01, 02, ..., 24
+    Minute is 00, 01, ..., 59
+    Second is 00, 01, ..., 59
+    Year is 1901, 1902, ..., 2038
+</ProgramListing>
+</Para>
+
+<Para>
+Valid dates are from Dec 13 20:45:53 1901 GMT to Jan 19 03:14:04
+2038 GMT.  As of Version 3.0, times are no longer read and written
+using Greenwich Mean Time; the input and output routines default to
+the local time zone.
+
+All special values allowed for <Type>datetime</Type> are also allowed for "absolute time".
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>reltime</Title>
+
+<Para>
+Relative time <Type>reltime</Type> is a limited-range (+/- 68 years)
+ and limited-precision (1 sec) time span data type.
+<Type>timespan</Type> should be preferred, since it
+covers a larger range with greater precision and, more importantly, can distinguish between
+relative units (months and years) and quantitative units (days, hours, etc). Instead, reltime
+must force months to be exactly 30 days, so time arithmetic does not always work as expected.
+For example, adding one reltime year to abstime today does not produce today's date one year from
+now, but rather a date 360 days from today.
+</Para>
+
+<Para>
+<Type>reltime</Type> shares input and output routines with the other time span types.
+The section on <Type>timespan</Type> covers this in more detail.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title><Type>timestamp</Type></Title>
+
+<Para>
+This is currently a limited-range absolute time which closely resembles the
+abstime
+data type. It shares the general input parser with the other date/time types.
+In future releases this type will absorb the capabilities of the <Type>datetime</Type> type
+and will move toward SQL92 compliance.
+</Para>
+
+<Para>
+<Type>timestamp</Type> is specified using the same syntax as for <Type>datetime</Type>.
+</Para>
+</Sect2>
+
+<Sect2>
+<Title><Type>interval</Type></Title>
+
+<Para>
+<Type>interval</Type> is an <Acronym>SQL92</Acronym> data type which is
+currently mapped to the <Type>timespan</Type> <ProductName>Postgres</ProductName>
+data type.
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>tinterval</Title>
+
+<Para>
+Time ranges are specified as:
+
+<ProgramListing>
+[ 'abstime' 'abstime']
+where
+    abstime is a time in the absolute time format.
+</ProgramListing>
+
+Special abstime values such as 
+`current', `infinity' and `-infinity' can be used.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Boolean Type</Title>
+
+<Para>
+<ProductName>Postgres</ProductName> supports <Type>bool</Type> as
+the <Acronym>SQL3</Acronym> boolean type.
+<Type>bool</Type> can have one of only two states: 'true' or 'false'. A third state, 'unknown', is not
+implemented and is not suggested in <Acronym>SQL3</Acronym>; <Acronym>NULL</Acronym> is an
+effective substitute. <Type>bool</Type> can be used in any boolean expression, and boolean expressions
+always evaluate to a result compatible with this type.
+
+<Para>
+<Type>bool</Type> uses 4 bytes of storage.
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Boolean Type</TITLE>
+<TITLEABBREV>Booleans</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>State</ENTRY>
+    <ENTRY>Output</ENTRY>
+    <ENTRY>Input</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>True</ENTRY>
+    <ENTRY>'t'</ENTRY>
+    <ENTRY>TRUE, 't', 'true', 'y', 'yes', '1'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>False</ENTRY>
+    <ENTRY>'f'</ENTRY>
+    <ENTRY>FALSE, 'f', 'false', 'n', 'no', '0'</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+</Sect1>
+
+<Sect1>
+<Title>Geometric Types</Title>
+
+<Para>
+Geometric types represent two-dimensional spatial objects. The most fundamental type,
+the point, forms the basis for all of the other types.
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Geometric Types</TITLE>
+<TITLEABBREV>Geometrics</TITLEABBREV>
+<TGROUP COLS="4">
+<THEAD>
+  <ROW>
+    <ENTRY>Geometric Type</ENTRY>
+    <ENTRY>Storage</ENTRY>
+    <ENTRY>Representation</ENTRY>
+    <ENTRY>Description</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>point</ENTRY>
+    <ENTRY>16 bytes</ENTRY>
+    <ENTRY>(x,y)</ENTRY>
+    <ENTRY>Point in space</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>line</ENTRY>
+    <ENTRY>32 bytes</ENTRY>
+    <ENTRY>((x1,y1),(x2,y2))</ENTRY>
+    <ENTRY>Infinite line</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>lseg</ENTRY>
+    <ENTRY>32 bytes</ENTRY>
+    <ENTRY>((x1,y1),(x2,y2))</ENTRY>
+    <ENTRY>Finite line segment</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>box</ENTRY>
+    <ENTRY>32 bytes</ENTRY>
+    <ENTRY>((x1,y1),(x2,y2))</ENTRY>
+    <ENTRY>Rectangular box</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>path</ENTRY>
+    <ENTRY>4+32n bytes</ENTRY>
+    <ENTRY>((x1,y1),...)</ENTRY>
+    <ENTRY>Closed path (similar to polygon)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>path</ENTRY>
+    <ENTRY>4+32n bytes</ENTRY>
+    <ENTRY>[(x1,y1),...]</ENTRY>
+    <ENTRY>Open path</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>polygon</ENTRY>
+    <ENTRY>4+32n bytes</ENTRY>
+    <ENTRY>((x1,y1),...)</ENTRY>
+    <ENTRY>Polygon (similar to closed path)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>circle</ENTRY>
+    <ENTRY>24 bytes</ENTRY>
+    <ENTRY><(x,y),r></ENTRY>
+    <ENTRY>Circle (center and radius)</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+A rich set of functions and operators is available to perform various geometric
+operations such as scaling, translation, rotation, and determining intersections.
+</Para>
+
+<Sect2>
+<Title>Point</Title>
+
+<Para>
+Points are specified using the following syntax:
+
+<ProgramListing>
+( x , y )
+  x , y
+where
+    x is the x-axis coordinate as a floating point number
+    y is the y-axis coordinate as a floating point number
+</ProgramListing>
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>Line Segment</Title>
+
+<Para>
+Line segments (lseg) are represented by pairs of points.
+</Para>
+
+<Para>
+lseg is specified using the following syntax:
+<ProgramListing>
+( ( x1 , y1 ) , ( x2 , y2 ) )
+  ( x1 , y1 ) , ( x2 , y2 )  
+    x1 , y1   ,   x2 , y2    
+where
+    (x1,y1) and (x2,y2) are the endpoints of the segment
+</ProgramListing>
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>Box</Title>
+
+<Para>
+Boxes are represented by pairs of points which are opposite
+corners of the box.
+</Para>
+
+<Para>
+box is specified using the following syntax:
+
+<ProgramListing>
+( ( x1 , y1 ) , ( x2 , y2 ) )
+  ( x1 , y1 ) , ( x2 , y2 )  
+    x1 , y1   ,   x2 , y2    
+where
+    (x1,y1) and (x2,y2) are opposite corners
+</ProgramListing>
+
+Boxes are output using the first syntax.
+The corners are reordered on input to store
+the lower left corner first and the upper right corner last.
+Other corners of the box can be entered, but the lower
+left and upper right corners are determined from the input and stored.
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>Path</Title>
+
+<Para>
+Paths are represented by connected sets of points. Paths can be "open", where
+the first and last points in the set are not connected, and "closed",
+where the first and last point are connected. Functions
+<Function>popen(p)</Function>
+and
+<Function>pclose(p)</Function>
+are supplied to force a path to be open or closed, and functions
+<Function>isopen(p)</Function>
+and
+<Function>isclosed(p)</Function>
+are supplied to select either type in a query.
+</Para>
+
+<Para>
+path is specified using the following syntax:
+
+<ProgramListing>
+( ( x1 , y1 ) , ... , ( xn , yn ) )
+[ ( x1 , y1 ) , ... , ( xn , yn ) ]
+  ( x1 , y1 ) , ... , ( xn , yn )  
+  ( x1 , y1   , ... ,   xn , yn )  
+    x1 , y1   , ... ,   xn , yn    
+where
+    (x1,y1),...,(xn,yn) are points 1 through n
+    a leading "[" indicates an open path
+    a leading "(" indicates a closed path
+</ProgramListing>
+Paths are output using the first syntax.
+Note that <ProductName>Postgres</ProductName> versions prior to
+v6.1 used a format for paths which had a single leading parenthesis, a "closed" flag,
+an integer count of the number of points, then the list of points followed by a
+closing parenthesis. The built-in function <Function>upgradepath</Function> is supplied to convert
+paths dumped and reloaded from pre-v6.1 databases.
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>Polygon</Title>
+
+<Para>
+Polygons are represented by sets of points. Polygons should probably be
+considered 
+equivalent to closed paths, but are stored differently and have their own
+set of support routines.
+</Para>
+
+<Para>
+polygon is specified using the following syntax:
+
+<ProgramListing>
+( ( x1 , y1 ) , ... , ( xn , yn ) )
+  ( x1 , y1 ) , ... , ( xn , yn )  
+  ( x1 , y1   , ... ,   xn , yn )  
+    x1 , y1   , ... ,   xn , yn    
+where
+    (x1,y1),...,(xn,yn) are points 1 through n
+</ProgramListing>
+
+Polygons are output using the first syntax.
+Note that <ProductName>Postgres</ProductName> versions prior to
+v6.1 used a format for polygons which had a single leading parenthesis, the list
+of x-axis coordinates, the list of y-axis coordinates, followed by a closing parenthesis.
+The built-in function <Function>upgradepoly</Function> is supplied to convert
+polygons dumped and reloaded from pre-v6.1 databases.
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>Circle</Title>
+
+<Para>
+Circles are represented by a center point and a radius.
+</Para>
+
+<Para>
+circle is specified using the following syntax:
+
+<ProgramListing>
+< ( x , y ) , r >
+( ( x , y ) , r )
+  ( x , y ) , r  
+    x , y   , r  
+where
+    (x,y) is the center of the circle
+    r is the radius of the circle
+</ProgramListing>
+
+Circles are output using the first syntax.
+</Para>
+</Sect2>
+
+</Sect1>
+
+<Chapter>
+<Title>Operators</Title>
+
+<Para>
+<ProductName>Postgres</ProductName> provides a large number of built-in operators on system types.
+These operators are declared in the system catalog
+pg_operator.  Every entry in pg_operator includes
+the name of the procedure that implements the operator and the
+class <Acronym>OIDs</Acronym> of the input and output types.
+
+<Para>
+To view all variations of the <Quote>||</Quote> string concatenation operator, try
+<ProgramListing>
+    SELECT oprleft, oprright, oprresult, oprcode
+    FROM pg_operator WHERE oprname = '||';
+
+oprleft|oprright|oprresult|oprcode
+-------+--------+---------+-------
+     25|      25|       25|textcat
+   1042|    1042|     1042|textcat
+   1043|    1043|     1043|textcat
+(3 rows)
+</ProgramListing>
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Operators</TITLE>
+<TITLEABBREV>Operators</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Operator</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Usage</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY> &lt; </ENTRY>
+    <ENTRY>Less than?</ENTRY>
+    <ENTRY>1 &lt; 2</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;= </ENTRY>
+    <ENTRY>Less than or equal to?</ENTRY>
+    <ENTRY>1 &lt;= 2</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;&gt; </ENTRY>
+    <ENTRY>Not equal?</ENTRY>
+    <ENTRY>1 &lt;&gt; 2</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> = </ENTRY>
+    <ENTRY>Equal?</ENTRY>
+    <ENTRY>1 = 1</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &gt; </ENTRY>
+    <ENTRY>Greater than?</ENTRY>
+    <ENTRY>2 &gt; 1</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &gt;= </ENTRY>
+    <ENTRY>Greater than or equal to?</ENTRY>
+    <ENTRY>2 &gt;= 1</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> || </ENTRY>
+    <ENTRY>Concatenate strings</ENTRY>
+    <ENTRY>'Postgre' || 'SQL'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> !!= </ENTRY>
+    <ENTRY>NOT IN</ENTRY>
+    <ENTRY>3 !!= i</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ~~ </ENTRY>
+    <ENTRY>LIKE</ENTRY>
+    <ENTRY>'scrappy,marc,hermit' ~~ '%scrappy%'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> !~~ </ENTRY>
+    <ENTRY>NOT LIKE</ENTRY>
+    <ENTRY>'bruce' !~~ '%al%'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ~ </ENTRY>
+    <ENTRY>Match (regex), case sensitive</ENTRY>
+    <ENTRY>'thomas' ~ '*.thomas*.'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ~* </ENTRY>
+    <ENTRY>Match (regex), case insensitive</ENTRY>
+    <ENTRY>'thomas' ~* '*.Thomas*.'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> !~ </ENTRY>
+    <ENTRY>Does not match (regex), case sensitive</ENTRY>
+    <ENTRY>'thomas' !~ '*.Thomas*.'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> !~* </ENTRY>
+    <ENTRY>Does not match (regex), case insensitive</ENTRY>
+    <ENTRY>'thomas' !~ '*.vadim*.'</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Numerical Operators</TITLE>
+<TITLEABBREV>Operators</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Operator</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Usage</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY> !  </ENTRY>
+    <ENTRY>Factorial</ENTRY>
+    <ENTRY>3 !</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> !!  </ENTRY>
+    <ENTRY>Factorial (left operator)</ENTRY>
+    <ENTRY>!! 3</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> % </ENTRY>
+    <ENTRY>Modulo</ENTRY>
+    <ENTRY>5 % 4</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> % </ENTRY>
+    <ENTRY>Truncate</ENTRY>
+    <ENTRY>% 4.5</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> * </ENTRY>
+    <ENTRY>Multiplication</ENTRY>
+    <ENTRY>2 * 3</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> + </ENTRY>
+    <ENTRY>Addition</ENTRY>
+    <ENTRY>2 + 3</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> - </ENTRY>
+    <ENTRY>Subtraction</ENTRY>
+    <ENTRY>2 - 3</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> / </ENTRY>
+    <ENTRY>Division</ENTRY>
+    <ENTRY>4 / 2</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> : </ENTRY>
+    <ENTRY>Natural Exponentiation</ENTRY>
+    <ENTRY>: 3.0</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ; </ENTRY>
+    <ENTRY>Natural Logarithm</ENTRY>
+    <ENTRY>(; 5.0)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> @ </ENTRY>
+    <ENTRY>Absolute value</ENTRY>
+    <ENTRY>@ -5.0</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ^ </ENTRY>
+    <ENTRY>Exponentiation</ENTRY>
+    <ENTRY>2.0 ^ 3.0</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> |/ </ENTRY>
+    <ENTRY>Square root</ENTRY>
+    <ENTRY>|/ 25.0</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ||/ </ENTRY>
+    <ENTRY>Cube root</ENTRY>
+    <ENTRY>||/ 27.0</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Geometric Operators</TITLE>
+<TITLEABBREV>Operators</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Operator</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Usage</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY> + </ENTRY>
+    <ENTRY>Translation</ENTRY>
+    <ENTRY>'((0,0),(1,1))'::box + '(2.0,0)'::point</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> - </ENTRY>
+    <ENTRY>Translation</ENTRY>
+    <ENTRY>'((0,0),(1,1))'::box - '(2.0,0)'::point</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> * </ENTRY>
+    <ENTRY>Scaling/rotation</ENTRY>
+    <ENTRY>'((0,0),(1,1))'::box * '(2.0,0)'::point</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> / </ENTRY>
+    <ENTRY>Scaling/rotation</ENTRY>
+    <ENTRY>'((0,0),(2,2))'::box / '(2.0,0)'::point</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> # </ENTRY>
+    <ENTRY>Intersection</ENTRY>
+    <ENTRY>'((1,-1),(-1,1))' # '((1,1),(-1,-1))'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> # </ENTRY>
+    <ENTRY>Number of points in polygon</ENTRY>
+    <ENTRY># '((1,0),(0,1),(-1,0))'</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ## </ENTRY>
+    <ENTRY>Point of closest proximity</ENTRY>
+    <ENTRY>'(0,0)'::point ## '((2,0),(0,2))'::lseg</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &amp;&amp; </ENTRY>
+    <ENTRY>Overlaps?</ENTRY>
+    <ENTRY>'((0,0),(1,1))'::box &amp;&amp; '((0,0),(2,2))'::box</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &amp;&lt; </ENTRY>
+    <ENTRY>Overlaps to left?</ENTRY>
+    <ENTRY>'((0,0),(1,1))'::box &amp;&lt; '((0,0),(2,2))'::box</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &amp;&gt; </ENTRY>
+    <ENTRY>Overlaps to right?</ENTRY>
+    <ENTRY>'((0,0),(3,3))'::box &amp;&gt; '((0,0),(2,2))'::box</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;-&gt; </ENTRY>
+    <ENTRY>Distance between</ENTRY>
+    <ENTRY>'((0,0),1)'::circle &lt;-&gt; '((5,0),1)'::circle</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;&lt; </ENTRY>
+    <ENTRY>Left of?</ENTRY>
+    <ENTRY>'((0,0),1)'::circle &lt;&lt; '((5,0),1)'::circle</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;^ </ENTRY>
+    <ENTRY>Is below?</ENTRY>
+    <ENTRY>'((0,0),1)'::circle &lt;^ '((0,5),1)'::circle</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &gt;&gt; </ENTRY>
+    <ENTRY>Is right of?</ENTRY>
+    <ENTRY>'((5,0),1)'::circle &gt;&gt; '((0,0),1)'::circle</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &gt;^ </ENTRY>
+    <ENTRY>Is above?</ENTRY>
+    <ENTRY>'((0,5),1)'::circle >^ '((0,0),1)'::circle</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ?# </ENTRY>
+    <ENTRY>Intersects or overlaps</ENTRY>
+    <ENTRY>'((-1,0),(1,0))'::lseg ?# '((-2,-2),(2,2))'::box;</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ?- </ENTRY>
+    <ENTRY>Is horizontal?</ENTRY>
+    <ENTRY>'(1,0)'::point ?- '(0,0)'::point</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ?-| </ENTRY>
+    <ENTRY>Is perpendicular?</ENTRY>
+    <ENTRY>'((0,0),(0,1))'::lseg ?-| '((0,0),(1,0))'::lseg</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> @-@  </ENTRY>
+    <ENTRY>Length or circumference</ENTRY>
+    <ENTRY>@-@ '((0,0),(1,0))'::path</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ?| </ENTRY>
+    <ENTRY>Is vertical?</ENTRY>
+    <ENTRY>'(0,1)'::point ?| '(0,0)'::point</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ?|| </ENTRY>
+    <ENTRY>Is parallel?</ENTRY>
+    <ENTRY>'((-1,0),(1,0))'::lseg ?|| '((-1,2),(1,2))'::lseg</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> @ </ENTRY>
+    <ENTRY>Contained or on</ENTRY>
+    <ENTRY>'(1,1)'::point @ '((0,0),2)'::circle</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> @@ </ENTRY>
+    <ENTRY>Center of</ENTRY>
+    <ENTRY>@@ '((0,0),10)'::circle</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ~= </ENTRY>
+    <ENTRY>Same as</ENTRY>
+    <ENTRY>'((0,0),(1,1))'::polygon ~= '((1,1),(0,0))'::polygon</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+The time interval data type <Type>tinterval</Type> is a legacy from the original
+date/time types and is not as well supported as the more modern types. There
+are several operators for this type.
+
+<TABLE TOCENTRY="1">
+<TITLE><ProductName>Postgres</ProductName> Time Interval Operators</TITLE>
+<TITLEABBREV>Operators</TITLEABBREV>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Operator</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Usage</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY> #&lt; </ENTRY>
+    <ENTRY>Interval less than?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> #&lt;= </ENTRY>
+    <ENTRY>Interval less than or equal to?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> #&lt;&gt; </ENTRY>
+    <ENTRY>Interval not equal?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> #= </ENTRY>
+    <ENTRY>Interval equal?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> #&gt; </ENTRY>
+    <ENTRY>Interval greater than?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> #&gt;= </ENTRY>
+    <ENTRY>Interval greater than or equal to?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;#&gt; </ENTRY>
+    <ENTRY>Convert to time interval</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;&lt; </ENTRY>
+    <ENTRY>Interval less than?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> | </ENTRY>
+    <ENTRY>Start of interval</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> ~= </ENTRY>
+    <ENTRY>Same as</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY> &lt;?&gt; </ENTRY>
+    <ENTRY>Time inside interval?</ENTRY>
+    <ENTRY></ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+
+<Para>
+Users may invoke operators using the operator name, as in:
+
+<ProgramListing>
+select * from emp where salary < 40000;
+</ProgramListing>
+
+Alternatively, users may call the functions that implement the
+operators directly.  In this case, the query above would be expressed
+as:
+<ProgramListing>
+select * from emp where int4lt(salary, 40000);
+</ProgramListing>
+
+<Para>
+<Application>psql</Application>
+has a <Command>\dd</Command> command to show these operators.
+</Chapter>
+
+<Chapter>
+<Title>Functions</Title>
+
+<Para>
+Many data types have functions available for conversion to other related types.
+In addition, there are some type-specific functions. Functions which are also
+available through operators are documented as operators only.
+</Para>
+
+<Para>
+Some functions defined for text are also available for char() and varchar().
+</Para>
+
+<Para>
+For the
+<Function>date_part</Function> and <Function>date_trunc</Function>
+functions, arguments can be
+`year', `month', `day', `hour', `minute', and `second',
+as well as the more specialized quantities
+`decade', `century', `millenium', `millisecond', and `microsecond'.
+<Function>date_part</Function> allows `dow'
+to return day of week and `epoch' to return seconds since 1970 (for <Type>datetime</Type>)
+or 'epoch' to return total elapsed seconds (for <Type>timespan</Type>).
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE>Mathematical Functions</TITLE>
+<TGROUP COLS="4">
+<THEAD>
+  <ROW>
+    <ENTRY>Function</ENTRY>
+    <ENTRY>Returns</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Example</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+<ENTRY> float(int) </ENTRY>
+<ENTRY> float8 </ENTRY>
+<ENTRY> convert integer to floating point </ENTRY>
+<ENTRY> float(2) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> float4(int) </ENTRY>
+<ENTRY> float4 </ENTRY>
+<ENTRY> convert integer to floating point </ENTRY>
+<ENTRY> float4(2) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> int </ENTRY>
+<ENTRY> integer(float) </ENTRY>
+<ENTRY> convert floating point to integer </ENTRY>
+<ENTRY> integer(2.0) </ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+Many of the string functions are available for text, varchar(), and char() types.
+At the moment, some functions are available only for the text type.
+
+<TABLE TOCENTRY="1">
+<TITLE>String Functions</TITLE>
+<TGROUP COLS="4">
+<THEAD>
+  <ROW>
+    <ENTRY>Function</ENTRY>
+    <ENTRY>Returns</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Example</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+<ENTRY> lower(text) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> convert text to lower case </ENTRY>
+<ENTRY> lower('TOM') </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> lpad(text,int,text) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> left pad string to specified length </ENTRY>
+<ENTRY> lpad('hi',4,'??') </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> ltrim(text,text) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> left trim characters from text </ENTRY>
+<ENTRY> ltrim('xxxxtrim','x') </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> position(text,text) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> extract specified substring </ENTRY>
+<ENTRY> position('high','ig') </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> rpad(text,int,text) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> right pad string to specified length </ENTRY>
+<ENTRY> rpad('hi',4,'x') </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> rtrim(text,text) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> right trim characters from text </ENTRY>
+<ENTRY> rtrim('trimxxxx','x') </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> substr(text,int[,int]) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> extract specified substring </ENTRY>
+<ENTRY> substr('hi there',3,5) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> upper(text) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> convert text to upper case </ENTRY>
+<ENTRY> upper('tom') </ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE>Date/Time Functions</TITLE>
+<TGROUP COLS="4">
+<THEAD>
+  <ROW>
+    <ENTRY>Function</ENTRY>
+    <ENTRY>Returns</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Example</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+<ENTRY> isfinite(abstime) </ENTRY>
+<ENTRY> bool </ENTRY>
+<ENTRY> TRUE if this is a finite time </ENTRY>
+<ENTRY> isfinite('now'::abstime) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> datetime(abstime) </ENTRY>
+<ENTRY> datetime </ENTRY>
+<ENTRY> convert to datetime </ENTRY>
+<ENTRY> datetime('now'::abstime) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> datetime(date) </ENTRY>
+<ENTRY> datetime </ENTRY>
+<ENTRY> convert to datetime </ENTRY>
+<ENTRY> datetime('today'::date) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> datetime(date,time) </ENTRY>
+<ENTRY> datetime </ENTRY>
+<ENTRY> convert to datetime </ENTRY>
+<ENTRY> datetime('1998-02-24':datetime, '23:07'::time);
+  </ROW>
+  <ROW>
+<ENTRY> age(datetime,datetime) </ENTRY>
+<ENTRY> timespan </ENTRY>
+<ENTRY> span preserving months and years </ENTRY>
+<ENTRY> age('now','1957-06-13':datetime) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> date_part(text,datetime) </ENTRY>
+<ENTRY> float8 </ENTRY>
+<ENTRY> specified portion of date field </ENTRY>
+<ENTRY> date_part('dow','now'::datetime) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> date_trunc(text,datetime) </ENTRY>
+<ENTRY> datetime </ENTRY>
+<ENTRY> truncate date at specified units </ENTRY>
+<ENTRY> date_trunc('month','now'::abstime) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> isfinite(datetime) </ENTRY>
+<ENTRY> bool </ENTRY>
+<ENTRY> TRUE if this is a finite time </ENTRY>
+<ENTRY> isfinite('now'::datetime) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> abstime(datetime) </ENTRY>
+<ENTRY> abstime </ENTRY>
+<ENTRY> convert to abstime </ENTRY>
+<ENTRY> abstime('now'::datetime) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> timespan(reltime) </ENTRY>
+<ENTRY> timespan </ENTRY>
+<ENTRY> convert to timespan </ENTRY>
+<ENTRY> timespan('4 hours'::reltime) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> datetime(date,time) </ENTRY>
+<ENTRY> datetime </ENTRY>
+<ENTRY> convert to datetime </ENTRY>
+<ENTRY> datetime('1998-02-25'::date,'06:41'::time) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> date_part(text,timespan) </ENTRY>
+<ENTRY> float8 </ENTRY>
+<ENTRY> specified portion of time field </ENTRY>
+<ENTRY> date_part('hour','4 hrs 3 mins'::timespan) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> isfinite(timespan) </ENTRY>
+<ENTRY> bool </ENTRY>
+<ENTRY> TRUE if this is a finite time </ENTRY>
+<ENTRY> isfinite('4 hrs'::timespan) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> reltime(timespan) </ENTRY>
+<ENTRY> reltime </ENTRY>
+<ENTRY> convert to reltime </ENTRY>
+<ENTRY> reltime('4 hrs'::timespan) </ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE>Geometric Functions</TITLE>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Function</ENTRY>
+    <ENTRY>Returns</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Example</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+<ENTRY> box(point,point) </ENTRY>
+<ENTRY> box </ENTRY>
+<ENTRY> convert points to box </ENTRY>
+<ENTRY> box('(0,0)'::point,'(1,1)'::point) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> area(box) </ENTRY>
+<ENTRY> float8 </ENTRY>
+<ENTRY> area of box </ENTRY>
+<ENTRY> area('((0,0),(1,1))'::box) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> isopen(path) </ENTRY>
+<ENTRY> bool </ENTRY>
+<ENTRY> TRUE if this is an open path </ENTRY>
+<ENTRY> isopen('[(0,0),(1,1),(2,0)]'::path) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> isclosed(path) </ENTRY>
+<ENTRY> bool </ENTRY>
+<ENTRY> TRUE if this is a closed path </ENTRY>
+<ENTRY> isclosed('((0,0),(1,1),(2,0))'::path) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> circle(point,float8) </ENTRY>
+<ENTRY> circle </ENTRY>
+<ENTRY> convert to circle </ENTRY>
+<ENTRY> circle('(0,0)'::point,2.0) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> polygon(npts,circle) </ENTRY>
+<ENTRY> polygon </ENTRY>
+<ENTRY> convert to polygon with npts points </ENTRY>
+<ENTRY> polygon(12,'((0,0),2.0)'::circle) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> center(circle) </ENTRY>
+<ENTRY> float8 </ENTRY>
+<ENTRY> center of object </ENTRY>
+<ENTRY> center('((0,0),2.0)'::circle) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> radius(circle) </ENTRY>
+<ENTRY> float8 </ENTRY>
+<ENTRY> radius of circle </ENTRY>
+<ENTRY> radius('((0,0),2.0)'::circle) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> diameter(circle) </ENTRY>
+<ENTRY> float8 </ENTRY>
+<ENTRY> diameter of circle </ENTRY>
+<ENTRY> diameter('((0,0),2.0)'::circle) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> area(circle) </ENTRY>
+<ENTRY> float8 </ENTRY>
+<ENTRY> area of circle </ENTRY>
+<ENTRY> area('((0,0),2.0)'::circle) </ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+<Para>
+SQL92 defines functions with specific syntax. Some of these
+are implemented using other <ProductName>Postgres</ProductName> functions.
+</Para>
+
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE><Acronym>SQL92</Acronym> Text Functions</TITLE>
+<TGROUP COLS="3">
+<THEAD>
+  <ROW>
+    <ENTRY>Function</ENTRY>
+    <ENTRY>Returns</ENTRY>
+    <ENTRY>Description</ENTRY>
+    <ENTRY>Example</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+<ENTRY> position(text in text) </ENTRY>
+<ENTRY> int4 </ENTRY>
+<ENTRY> extract specified substring </ENTRY>
+<ENTRY> position('o' in 'Tom') </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> substring(text [from int] [for int]) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> extract specified substring </ENTRY>
+<ENTRY> substring('Tom' from 2 for 2) </ENTRY>
+  </ROW>
+  <ROW>
+<ENTRY> trim([leading|trailing|both] [text] from text) </ENTRY>
+<ENTRY> text </ENTRY>
+<ENTRY> trim characters from text </ENTRY>
+<ENTRY> trim(both 'x' from 'xTomx') </ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+

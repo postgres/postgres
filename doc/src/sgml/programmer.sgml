@@ -1,0 +1,173 @@
+<!-- programmer.sgml
+-
+- Postgres programmer's guide.
+- Derived from postgres.sgml.
+- thomas 1998-02-24
+-
+- -->
+<!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+<!entity intro    SYSTEM "intro.sgml">
+<!entity arch     SYSTEM "arch.sgml">
+<!entity start    SYSTEM "start.sgml">
+<!entity query    SYSTEM "query.sgml">
+
+<!entity advanced SYSTEM "advanced.sgml">
+<!entity environ  SYSTEM "environ.sgml">
+<!entity manage   SYSTEM "manage.sgml">
+<!entity datatype SYSTEM "datatype.sgml">
+<!entity array    SYSTEM "array.sgml">
+<!entity inherit  SYSTEM "inherit.sgml">
+<!entity query-ug SYSTEM "query-ug.sgml">
+<!entity storage  SYSTEM "storage.sgml">
+<!entity psql     SYSTEM "psql.sgml">
+<!entity pgaccess SYSTEM "pgaccess.sgml">
+
+<!entity start-ag SYSTEM "start-ag.sgml">
+<!entity install  SYSTEM "install.sgml">
+<!entity recovery SYSTEM "recovery.sgml">
+<!entity regress  SYSTEM "regress.sgml">
+<!entity ports    SYSTEM "ports.sgml">
+<!entity release  SYSTEM "release.sgml">
+
+<!entity intro-pg SYSTEM "intro-pg.sgml">
+<!entity arch-pg  SYSTEM "arch-pg.sgml">
+<!entity extend   SYSTEM "extend.sgml">
+<!entity rules    SYSTEM "rules.sgml">
+<!entity xfunc    SYSTEM "xfunc.sgml">
+<!entity xtypes   SYSTEM "xtypes.sgml">
+<!entity xoper    SYSTEM "xoper.sgml">
+<!entity xaggr    SYSTEM "xaggr.sgml">
+<!entity xindex   SYSTEM "xindex.sgml">
+<!entity gist     SYSTEM "gist.sgml">
+<!entity dfunc    SYSTEM "dfunc.sgml">
+<!entity lobj     SYSTEM "lobj.sgml">
+<!entity trigger  SYSTEM "trigger.sgml">
+<!entity spi      SYSTEM "spi.sgml">
+<!entity func-ref SYSTEM "func-ref.sgml">
+<!entity libpq    SYSTEM "libpq.sgml">
+<!entity libpgtcl SYSTEM "libpgtcl.sgml">
+<!entity ecpg     SYSTEM "ecpg.sgml">
+<!entity odbc     SYSTEM "odbc.sgml">
+<!entity jdbc     SYSTEM "jdbc.sgml">
+
+<!entity arch-dev SYSTEM "arch-dev.sgml">
+<!entity geqo     SYSTEM "geqo.sgml">
+<!entity protocol SYSTEM "protocol.sgml">
+<!entity compiler SYSTEM "compiler.sgml">
+<!entity docguide SYSTEM "docguide.sgml">
+<!entity biblio   SYSTEM "biblio.sgml">
+<!entity contacts SYSTEM "contacts.sgml">
+]>
+<!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
+<Book>
+
+<!-- Title information -->
+
+<Title>PostgreSQL Programmer's Guide</Title>
+<BookInfo>
+    <ReleaseInfo>Covering v6.3 for general release</ReleaseInfo>
+    <BookBiblio>
+    <AuthorGroup>
+      <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
+    </AuthorGroup>
+<!-- editor in authorgroup is not supported
+    <AuthorGroup>
+-->
+      <Editor>
+        <FirstName>Thomas</FirstName>
+        <SurName>Lockhart</SurName>
+        <Affiliation>
+          <OrgName>Caltech/JPL</OrgName>
+        </Affiliation>
+      </Editor>
+<!--
+    </AuthorGroup>
+-->
+ 
+<!--
+    <AuthorInitials>TGL</AuthorInitials>
+-->
+
+    <Date>(last updated 1998-02-24)</Date>
+    </BookBiblio>
+
+<LegalNotice>
+<Para>
+<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 by the Postgres Global Development Group.
+</Para>
+</LegalNotice>
+
+</BookInfo>
+
+<!--
+<TOC> </TOC>
+<LOT> </LOT>
+-->
+
+<!--
+<Dedication>
+<Para>
+Your name here...
+</Para>
+</Dedication>
+-->
+
+<Preface>
+<Title>Summary</Title>
+
+<Para>
+<ProductName>Postgres</ProductName>, 
+ developed originally in the UC Berkeley Computer Science Department,
+ pioneered many of the object-relational concepts
+ now becoming available in some commercial databases.
+It provides SQL92/SQL3 language support,
+ transaction integrity, and type extensibility.
+ <ProductName>PostgreSQL</ProductName> is a public-domain, open source descendant
+ of this original Berkeley code.
+</Para>
+</Preface>
+
+&intro-pg;
+&arch-pg;
+&extend;
+&xfunc;
+&xtypes;
+&xoper;
+&xaggr;
+&xindex;
+&gist;
+&dfunc;
+&trigger;
+&spi;
+
+<!-- reference -->
+
+&func-ref;
+&lobj;
+&ecpg;
+&libpq;
+&libpgtcl;
+&odbc;
+&jdbc;
+
+<!-- development -->
+
+&arch-dev;
+&geqo;
+&protocol;
+&compiler;
+
+<!-- appendices -->
+
+&docguide;
+<!--
+&contacts;
+-->
+&biblio;
+
+<!--
+<INDEX> </INDEX>
+-->
+
+</Book>
+

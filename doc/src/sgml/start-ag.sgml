@@ -1,0 +1,432 @@
+<!--
+-	This file currently contains several small chapters.
+-	Each chapter should be split off into a separate source file...
+-	- thomas 1998-02-24
+-->
+
+<Chapter>
+<Title>Runtime Environment</Title>
+
+<Para>
+<Figure Id="ADMIN-LAYOUT">
+<Title><ProductName>Postgres</ProductName> file layout</Title>
+<Graphic Align="center" FileRef="layout.gif" Format="GIF"></Graphic>
+</Figure>
+
+<XRef LinkEnd="ADMIN-LAYOUT" EndTerm="ADMIN-LAYOUT">
+shows how the <ProductName>Postgres</ProductName>  distribution  is  laid
+     out  when installed in the default way. For simplicity,
+     we will assume that <ProductName>Postgres</ProductName> has been installed in  the
+     directory  <FileName>/usr/local/pgsql</FileName>.   Therefore, wherever
+     you see the directory <FileName>/usr/local/pgsql</FileName> you  should
+     substitute  the name of the directory where <ProductName>Postgres</ProductName> is
+     actually installed.
+     All <ProductName>Postgres</ProductName> commands are installed  in  the  directory
+     <FileName>/usr/local/pgsql/bin</FileName>.   Therefore,  you should add
+     this directory to your shell command path.  If you  use
+     a variant of the Berkeley C shell, such as csh or tcsh,
+     you would add
+<ProgramListing>
+set path = ( /usr/local/pgsql/bin path )
+</ProgramListing>
+     in the .login file in your home directory.  If you  use
+     a  variant  of  the  Bourne  shell, such as sh, ksh, or
+     bash, then you would add
+<ProgramListing>
+PATH=/usr/local/pgsql/bin PATH
+export PATH
+</ProgramListing>
+     to the .profile file in your home directory.
+     From now on, we will assume that  you  have  added  the
+     <ProductName>Postgres</ProductName>  bin  directory to your path.  In addition, we
+     will make frequent reference to "setting a shell  
+     variable"  or  "setting an environment variable" throughout
+     this document.  If you did  not  fully  understand  the
+     last  paragraph  on  modifying  your  search  path, you
+     should consult the UNIX manual pages that describe your
+     shell before going any further.
+</Para>
+
+<Para>
+If your site administrator has not set things up in the
+default  way,  you may have some more work to do.  For example, if the database server machine is a remote machine, you
+will need to set the <Acronym>PGHOST</Acronym> environment variable to the name
+of the database server machine.   The  environment  variable
+<Acronym>PGPORT</Acronym> may also have to be set.  The bottom line is this: if
+you try to start an application  program  and  it  complains
+that it cannot connect to the <Application>postmaster</Application>, you should immediately consult your site administrator to make sure that your
+environment is properly set up.
+</Para>
+
+<Sect1>
+<Title>Locale Support</Title>
+
+<Para>
+<Note>
+<Para>
+Written by Oleg Bartunov.
+See <ULink url="http://www.sai.msu.su/~megera/postgres/">Oleg's web page</ULink>
+ for additional information on locale and Russian language support.
+
+</Para>
+</Note>
+While doing a project for a company in Moscow, Russia, I encountered the problem that postgresql had no
+support of national alphabets. After looking for possible workarounds I decided to develop support of locale myself.
+I'm not a C-programer but already had some experience with locale programming when I work with perl
+(debugging) and glimpse. After several days of digging through
+ the <ProductName>Postgres</ProductName> source tree I made very minor corections to
+src/backend/utils/adt/varlena.c and src/backend/main/main.c and got what I needed! I did support only for
+LC_CTYPE and LC_COLLATE, but later LC_MONETARY was added by others. I got many
+messages from people about this patch so I decided to send it to developers and (to my surprise) it was
+incorporated into postgresql distribution.
+
+<Para>
+ People often complain that locale doesn't work for them. There are several common mistakes: 
+
+<ItemizedList>
+<ListItem>
+<Para>
+     Didn't properly configure postgresql before compilation. 
+     You must run configure with --enable-locale option to enable locale support. 
+     Didn't setup environment correctly when starting postmaster. 
+     You must define environment variables $LC_CTYPE and $LC_COLLATE before running postmaster
+     because backend gets information about locale from environment. I use following shell script
+     (runpostgres): 
+
+<ProgramListing>
+     #!/bin/sh
+
+     export LC_CTYPE=koi8-r
+     export LC_COLLATE=koi8-r
+     postmaster -B 1024 -S -D/usr/local/pgsql/data/ -o '-Fe'
+</ProgramListing>
+
+     and run it from rc.local as 
+
+<ProgramListing>
+     /bin/su - postgres -c "/home/postgres/runpostgres"
+</ProgramListing>
+
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+     Broken locale support in OS (for example, locale support in libc under Linux several times has changed
+     and this caused a lot of problems). Latest perl has also support of locale and if locale is broken perl -v will
+     complain something like: 
+
+     8:17[mira]:~/WWW/postgres>setenv LC_CTYPE not_exist
+     8:18[mira]:~/WWW/postgres>perl -v
+     perl: warning: Setting locale failed.
+     perl: warning: Please check that your locale settings:
+             LC_ALL = (unset),
+             LC_CTYPE = "not_exist",
+             LANG = (unset)
+         are supported and installed on your system.
+     perl: warning: Falling back to the standard locale ("C").
+
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+     Wrong location of locale files!
+
+     Possible location: <FileName>/usr/lib/locale</FileName> (Linux, Solaris), <FileName>/usr/share/locale</FileName> (Linux), <FileName>/usr/lib/nls/loc</FileName> (DUX 4.0)
+     Check man locale for right place. Under Linux I did a symbolical link between <FileName>/usr/lib/locale</FileName> and
+     <FileName>/usr/share/locale</FileName> to be sure next libc will not break my locale.
+</Para>
+</ListItem>
+</ItemizedList>
+
+<Sect2>
+<Title>What are the Benefits?</Title> 
+
+<Para>
+You can use ~* and order by operators for strings contain characters from national alphabets. Non-english users
+definitely need that. If you won't use locale stuff just undefine USE_LOCALE variable. 
+
+<Sect2>
+<Title>What are the Drawbacks?</Title>
+
+<Para>
+There is one evident drawback of using locale - it's speed ! So, use locale only if you really need it. 
+
+</Chapter>
+
+<Chapter>
+<Title>Starting <Application>postmaster</Application></Title>
+
+<Para>
+     Nothing can happen to a database unless the  <Application>postmaster</Application>
+     process  is  running.  As the site administrator, there
+     are a number  of  things  you  should  remember  before
+     starting  the  <Application>postmaster</Application>.   These are discussed in the
+     section of this  manual  titled,  "Administering  Postgres."  
+     However, if <ProductName>Postgres</ProductName> has been installed by following 
+     the installation instructions exactly  as  written,  the  
+     following  simple  command is all you should
+     need to start the <Application>postmaster</Application>:
+<ProgramListing>
+% postmaster
+</ProgramListing>
+     The <Application>postmaster</Application> occasionally prints out  messages  which
+     are  often helpful during troubleshooting.  If you wish
+     to view debugging messages from the <Application>postmaster</Application>, you can
+     start  it with the -d option and redirect the output to
+     the log file:
+<ProgramListing>
+% postmaster -d >& pm.log &
+</ProgramListing>
+     If you do not wish to see these messages, you can type
+<ProgramListing>
+% postmaster -S
+</ProgramListing>
+     and the <Application>postmaster</Application> will be "S"ilent.  Notice that there
+     is no ampersand ("&amp") at the end of the last example.
+</Para>
+</Chapter>
+
+<Chapter>
+<Title>Adding and Deleting Users</Title>
+
+<Para>
+     <Application>createuser</Application> enables specific users to access
+     <ProductName>Postgres</ProductName>.  <Application>destroyuser</Application> removes  users  and
+     prevents them from accessing <ProductName>Postgres</ProductName>.  Note that these
+     commands only affect users with  respect  to  <ProductName>Postgres</ProductName>;
+     they  have  no  effect on users other privileges or status with regards
+to the underlying 
+     operating system.
+</Para>
+</Chapter>
+
+<Chapter>
+<Title>Disk Management</Title>
+
+<Para>
+</Para>
+
+<Sect1>
+<Title>Alternate Locations</Title>
+
+<Para>
+It is possible to create a database in a location other than the default
+location for the installation. Remember that all database access actually
+occurs through the database backend, so that any location specified must
+be accessible by the backend.
+
+<Para>
+ Either an absolute path name or an environment variable
+may be specified as a location. Note that for security and integrity reasons,
+all paths and environment variables so specified have some
+additional path fields appended.
+
+<Note>
+<Para>
+ The environment variable style of specification
+is to be preferred since it allows the site administrator more flexibility in
+managing disk storage.
+</Para>
+</Note>
+
+<Para>
+Remember that database creation is actually performed by the database backend.
+Therefore, any environment variable specifying an alternate location must have
+been defined before the backend was started. To define an alternate location
+PGDATA2 pointing to <FileName>/home/postgres/data</FileName>, type
+<ProgramListing>
+% setenv PGDATA2 /home/postgres/data
+</ProgramListing>
+
+<Para>
+Usually, you will want to define this variable in the <ProductName>Postgres</ProductName> superuser's
+<FileName>.profile</FileName>
+or
+<FileName>.cshrc</FileName>
+initialization file to ensure that it is defined upon system startup.
+
+<Para>
+To create a data storage area in <FileName>/home/postgres/data</FileName>, ensure
+that <FileName>/home/postgres</FileName> already exists and is writable.
+From the command line, type
+<ProgramListing>
+% initlocation $PGDATA2
+Creating Postgres database system directory /home/postgres/data
+
+Creating Postgres database system directory /home/postgres/data/base
+
+</ProgramListing>
+
+<Para>
+To test the new location, create a database <Database>test</Database> by typing
+<ProgramListing>
+% createdb -D PGDATA2 test
+% destroydb test
+</ProgramListing>
+</Sect1>
+</Chapter>
+
+<Chapter>
+<Title>Troubleshooting</Title>
+
+<Para>
+     Assuming that  your  site  administrator  has  properly
+     started  the  <Application>postmaster</Application>  process and authorized you to
+     use the database, you (as a user) may begin to start up
+     applications.   As previously mentioned, you should add
+     <FileName>/usr/local/pgsql/bin</FileName> to your  shell  search  path.
+     In  most  cases,  this  is all you should have to do in
+     terms of preparation.
+
+<Para>
+     If  you get the following error message from a <ProductName>Postgres</ProductName>
+     command (such as <Application>psql</Application> or <Application>createdb</Application>):
+<ProgramListing>
+connectDB() failed: Is the postmaster running at 'localhost' on port '4322'?
+</ProgramListing>
+     it is usually because either the <Application>postmaster</Application>  is  not  running,
+ or you are attempting to connect to the wrong server host.
+     If you get the following error message:
+<ProgramListing>
+FATAL 1:Feb 17 23:19:55:process userid (2360) != database owner (268)
+</ProgramListing>
+     it means that the site administrator started the  <Application>postmaster</Application>
+  as  the  wrong user.  Tell him to restart it as
+     the <ProductName>Postgres</ProductName> superuser.
+</Para>
+</Chapter>
+
+<Chapter>
+<Title>Managing a Database</Title>
+
+<Para>
+     Now that <ProductName>Postgres</ProductName> is up and running we can create  some
+     databases  to  experiment  with.  Here, we describe the
+     basic commands for managing a database.
+</Para>
+
+<Sect1>
+<Title>Creating a Database</Title>
+
+<Para>
+     Let's say you want to create  a  database  named  mydb.
+     You can do this with the following command:
+<ProgramListing>
+% createdb mydb
+</ProgramListing>
+
+     <ProductName>Postgres</ProductName>  allows  you to create any number of databases
+     at a  given  site  and  you  automatically  become  the
+     database  administrator  of  the database you just created.  Database names must  have  an  alphabetic  first
+     character and are limited to 16 characters in length.
+     Not  every  user has authorization to become a database
+     administrator.  If <ProductName>Postgres</ProductName> refuses to create databases
+     for you, then the site administrator needs to grant you
+     permission to  create  databases.   Consult  your  site
+     administrator if this occurs.
+</Para>
+</Sect1>
+
+<Sect1>
+<Title>Accessing a Database</Title>
+
+<Para>
+     Once you have constructed a database, you can access it
+     by:
+
+<ItemizedList Mark="bullet" Spacing="compact">
+<ListItem>
+<Para>
+running the <ProductName>Postgres</ProductName>  terminal  monitor  programs  (
+        monitor  or  <Application>psql</Application>) which allows you to interactively
+        enter, edit, and execute <Acronym>SQL</Acronym> commands.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+      writing a  C  program  using  the  LIBPQ  subroutine
+        library.   This  allows  you  to submit <Acronym>SQL</Acronym> commands
+        from C and get answers and status messages  back  to
+        your  program.   This interface is discussed further
+        in section ??.
+</Para>
+</ListItem>
+</ItemizedList>
+
+     You might want to start up <Application>psql</Application>, to try out  the  examples  in  this manual. It can be activated for the mydb
+     database by typing the command:
+<ProgramListing>
+% psql mydb
+</ProgramListing>
+
+     You will be greeted with the following message:
+<ProgramListing>
+Welcome to the Postgres interactive sql monitor:
+
+  type \? for help on slash commands
+  type \q to quit
+  type \g or terminate with semicolon to execute query
+You are currently connected to the database: mydb
+
+mydb=>
+</ProgramListing>
+</Para>
+
+<Para>
+This prompt indicates that the terminal monitor is listening  to you and that you can type <Acronym>SQL</Acronym> queries into a
+     workspace maintained by the terminal monitor.
+     The <Application>psql</Application> program responds to escape  codes  that  begin
+     with  the  backslash  character, "\".  For example, you
+     can get help on the syntax of various <ProductName>Postgres</ProductName> <Acronym>SQL</Acronym> commands by typing:
+<ProgramListing>
+mydb=> \h
+</ProgramListing>
+
+     Once  you  have finished entering your queries into the
+     workspace, you can pass the contents of  the  workspace
+     to the <ProductName>Postgres</ProductName> server by typing:
+<ProgramListing>
+mydb=> \g
+</ProgramListing>
+
+     This  tells  the  server  to process the query.  If you
+     terminate your query with a semicolon, the  backslash-g is  not
+     necessary.   <Application>psql</Application> will automatically process semicolon terminated queries.
+     To read queries from a file,  say  myFile,  instead  of
+     entering them interactively, type:
+<ProgramListing>
+mydb=> \i fileName
+</ProgramListing>
+
+     To get out of <Application>psql</Application> and return to UNIX, type
+<ProgramListing>
+mydb=> \q
+</ProgramListing>
+
+     and  <Application>psql</Application>  will  quit  and  return  you to your command
+     shell. (For more escape codes, type backslash-h at  the  monitor
+     prompt.)
+     White  space  (i.e.,  spaces, tabs and newlines) may be
+     used freely in <Acronym>SQL</Acronym> queries.  Single-line comments  are  denoted  by
+     <Quote>--</Quote>.   Everything  after the dashes up to the end of the
+     line is ignored. Multiple-line comments, and comments within a line,
+     are denoted by <Quote>/* ... */</Quote>
+</Para>
+</Sect1>
+     
+<Sect1>
+<Title>Destroying a Database</Title>
+
+<Para>
+     If you are the database administrator for the  database
+     mydb,  you can destroy it using the following UNIX command:
+<ProgramListing>
+% destroydb mydb
+</ProgramListing>
+     This action physically removes all of  the  UNIX  files
+     associated  with  the database and cannot be undone, so
+     this should only be done with a  great  deal  of  forethought.
+</Para>
+</Sect1>
+
+</Chapter>

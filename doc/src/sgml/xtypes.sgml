@@ -1,0 +1,149 @@
+<Chapter>
+<Title>Extending <Acronym>SQL</Acronym>: Types</Title>
+<Para>
+     As previously mentioned, there are two kinds  of  types
+     in  <ProductName>Postgres</ProductName>: base types (defined in a programming language) 
+     and composite types (instances).
+     Examples in this section up to interfacing indices  can
+     be  found in <FileName>complex.sql</FileName> and <FileName>complex.c</FileName>.  Composite examples 
+     are in <FileName>funcs.sql</FileName>.
+</Para>
+
+<Sect1>
+<Title>User-Defined Types</Title>
+
+<Sect2>
+<Title>Functions Needed for a User-Defined Type</Title>
+<Para>
+     A  user-defined  type must always have input and output
+     functions.  These  functions  determine  how  the  type
+     appears in strings (for input by the user and output to
+     the user) and how the type is organized in memory.  The
+     input  function takes a null-delimited character string
+     as its input and returns the internal (in memory)  
+     representation of the type.  The output function takes the
+     internal representation of the type and returns a null
+     delimited character string.
+     Suppose  we  want to define a complex type which represents 
+     complex numbers. Naturally, we choose  to  represent a 
+     complex in memory as the following <Acronym>C</Acronym> structure:
+<ProgramListing>
+         typedef struct Complex {
+             double      x;
+             double      y;
+         } Complex;
+</ProgramListing>
+     and  a  string of the form (x,y) as the external string
+     representation.
+     These functions are usually not hard  to  write,  especially  
+     the output function.  However, there are a number of points 
+     to remember:
+
+<ItemizedList>
+<ListItem>
+<Para>  When defining your external (string) representation,  
+            remember that you must eventually write a
+            complete and robust parser for that  representation 
+            as your input function!
+<ProgramListing>
+                Complex *
+                complex_in(char *str)
+                {
+                    double x, y;
+                    Complex *result;
+                    if (sscanf(str, " ( &percnt;lf , &percnt;lf )", &amp;x, &amp;y) != 2) {
+                        elog(WARN, "complex_in: error in parsing
+                        return NULL;
+                    }
+                    result = (Complex *)palloc(sizeof(Complex));
+                    result-&gt;x = x;
+                    result-&gt;y = y;
+                    return (result);
+                }
+</ProgramListing>
+
+            The output function can simply be:
+<ProgramListing>
+                char *
+                complex_out(Complex *complex)
+                {
+                    char *result;
+                    if (complex == NULL)
+                        return(NULL);
+                    result = (char *) palloc(60);
+                    sprintf(result, "(&percnt;g,&percnt;g)", complex-&gt;x, complex-&gt;y);
+                    return(result);
+                }
+</ProgramListing>
+</Para>
+</ListItem>
+<ListItem>
+<Para>  You  should  try  to  make  the input and output
+            functions inverses of each  other.   If  you  do
+            not, you will have severe problems when you need
+            to dump your data into a file and then  read  it
+            back  in  (say,  into someone else's database on
+            another computer).  This is a particularly  common  
+            problem  when  floating-point  numbers  are
+            involved.
+</Para>
+</ListItem>
+</ItemizedList>
+
+<Para>
+     To define the <Acronym>complex</Acronym> type, we need to create  the  two
+     user-defined   functions   complex_in  and  complex_out
+     before creating the type:
+<ProgramListing>
+         CREATE FUNCTION complex_in(opaque)
+            RETURNS complex
+            AS 'PGROOT/tutorial/obj/complex.so'
+            LANGUAGE 'c';
+
+         CREATE FUNCTION complex_out(opaque)
+            RETURNS opaque
+            AS 'PGROOT/tutorial/obj/complex.so'
+            LANGUAGE 'c';
+
+         CREATE TYPE complex (
+            internallength = 16,
+            input = complex_in,
+            output = complex_out
+         );
+</ProgramListing>
+</Para>
+
+<Para>
+     As discussed earlier, <ProductName>Postgres</ProductName> fully supports arrays of
+     base  types.  Additionally, <ProductName>Postgres</ProductName> supports arrays of
+     user-defined types as well.  When you  define  a  type,
+     <ProductName>Postgres</ProductName>  automatically  provides support for arrays of
+     that type.  For historical reasons, the array type  has
+     the  same name as the user-defined type with the 
+     underscore character _ prepended.
+     Composite types do not need  any  function  defined  on
+     them,  since  the  system already understands what they
+     look like inside.
+</Para>
+
+<Sect2>
+<Title>Large Objects</Title>
+
+<Para>
+     The types discussed  to  this  point  are  all  "small"
+     objects -- that is, they are smaller than 8KB in size.
+<Note>
+<Para>
+ 1024 longwords == 8192 bytes.  In fact, the type must be considerably smaller than 8192 bytes,
+ since the <ProductName>Postgres</ProductName>  tuple
+and  page  overhead  must also fit into this 8KB limitation.
+The actual value that fits depends on the machine  architecture.
+</Para>
+</Note>
+     If you require a larger type for something like a document  
+     retrieval system or for storing bitmaps, you will
+     need to use the <ProductName>Postgres</ProductName> large object interface.
+
+</Sect2>
+</Sect1>
+</Chapter>

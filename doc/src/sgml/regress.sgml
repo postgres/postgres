@@ -1,0 +1,448 @@
+<Chapter>
+<Title>Regression Test</Title>
+
+<Abstract>
+<Para>
+Regression test instructions and analysis.
+</Para>
+</Abstract>
+
+<Para>
+  The PostgreSQL regression tests are a comprehensive set of tests for the
+  SQL implementation embedded in PostgreSQL developed by Jolly Chen and
+  Andrew Yu. It tests standard SQL operations as well as the extended
+  capabilities of PostgreSQL.
+</Para>
+
+<Para>
+  These tests have recently been revised by Marc Fournier and Thomas Lockhart
+and are now packaged as
+  functional units which should make them easier to run and easier to interpret.
+From <ProductName>PostgreSQL</ProductName> v6.1 onward
+ the regression tests are current for every official release. 
+</Para>
+
+<Para>
+  Some properly installed and fully functional PostgreSQL installations
+  can fail some of these regression tests due to artifacts of floating point
+  representation and time zone support. The current tests are evaluated
+  using a simple "diff" algorithm, and are sensitive to small system
+  differences. For apparently failed tests, examining the differences
+  may reveal that the differences are not significant.
+</Para>
+
+<Para>
+The regression testing notes below assume the following (except where noted):
+<ItemizedList Mark="bullet" Spacing="compact">
+<ListItem>
+<Para>
+Commands are Unix-compatible. See note below.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+Defaults are used except where noted.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+User postgres is the <ProductName>Postgres</ProductName> superuser.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+The source path is /usr/src/pgsql (other paths are possible).
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+The runtime path is /usr/local/pgsql (other paths are possible).
+</Para>
+</ListItem>
+</ItemizedList>
+</Para>
+
+<Sect1>
+<Title>Regression Environment</Title>
+
+<Para>
+  The regression test is invoked by the <Command>make</Command> command which compiles
+  a <Acronym>C</Acronym> program into a shared library
+  in the current directory.  Localized shell scripts are also created in
+  the current directory. The output file templates are massaged into the
+  <FileName>./expected/*.out</FileName> files.  The localization replaces macros in the source
+  files with absolute pathnames and user names.
+</Para>
+
+<Para>
+  Normally, the regression test should be run as the pg_superuser since
+  the 'src/test/regress' directory and sub-directories are owned by the
+  pg_superuser. If you run the regression test as another user the
+  'src/test/regress' directory tree should be writeable to that user.
+</Para>
+
+<Para>
+  The postmaster should be invoked with the system time zone set for
+  Berkeley, California. This is done automatically by the regression
+test script. However, it does require machine support for the PST8PDT
+time zone.
+</Para>
+
+<Para>
+To verify that your machine does have this support, type
+the following:
+<ProgramListing>
+    setenv TZ PST8PDT
+    date
+</ProgramListing>
+</Para>
+
+<Para>
+  The "date" command above should have returned the current system time
+  in the PST8PDT time zone. If the PST8PDT database is not available, then
+  your system may have returned the time in GMT. If the PST8PDT time zone
+  is not available, you can set the time zone rules explicitly:
+<ProgramListing>
+    setenv PGTZ PST8PDT7,M04.01.0,M10.05.03
+</ProgramListing>
+</Para>
+
+<Sect1>
+<Title>Directory Layout</Title>
+
+<Para>
+<Note>
+<Para>
+This should become a table in the previous section.
+</Para>
+</Note>
+</Para>
+
+<Para>
+<ProgramListing>
+  input/ .... .source files that are converted using 'make all' into
+              some of the .sql files in the 'sql' subdirectory
+
+  output/ ... .source files that are converted using 'make all' into
+              .out files in the 'expected' subdirectory
+
+  sql/ ...... .sql files used to perform the regression tests
+
+  expected/ . .out files that represent what we *expect* the results to
+              look like
+
+  results/ .. .out files that represent what the results *actually* look
+              like. Also used as temporary storage for table copy testing.
+</ProgramListing>
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Regression Test Procedure</Title>
+
+<Para>
+Commands were tested on RedHat Linux version 4.2 using the bash shell.
+Except where noted, they will probably work on most systems. Commands
+like <FileName>ps</FileName> and <FileName>tar</FileName> vary wildly on what options you should use on each
+platform. <Emphasis>Use common sense</Emphasis> before typing in these commands.
+</Para>
+
+<Para>
+<Procedure>
+<Title><ProductName>Postgres</ProductName> Regression Configuration</Title>
+
+<Para>
+For a fresh install or upgrading from previous releases of
+<ProductName>Postgres</ProductName>:
+</Para>
+
+<Step Performance="required">
+<Para>
+Build the regression test. Type
+<ProgramListing>
+    cd /usr/src/pgsql/src/test/regress
+    gmake all
+</ProgramListing>
+</Para>
+</Step>
+
+<Step Performance="optional">
+<Para>
+  If you have prevously invoked the regression test, clean up the
+  working directory with:
+
+<ProgramListing>
+    cd /usr/src/pgsql/src/test/regress
+    make clean
+</ProgramListing>
+
+<Step Performance="required">
+<Para>
+     The file /usr/src/pgsql/src/test/regress/README has detailed
+     instructions for running and interpreting the regression tests.
+     A short version follows here:
+</Para>
+
+<Para>
+If the postmaster is not already running, start the postmaster on an
+available window by typing
+<ProgramListing>
+    postmaster
+</ProgramListing>
+
+or start the postmaster daemon running in the background by typing
+<ProgramListing>
+    cd
+    nohup postmaster > regress.log 2>&1 &
+</ProgramListing>
+</Para>
+
+<Para>
+     Run postmaster from your <ProductName>Postgres</ProductName> super user account (typically
+     account postgres).
+
+<Note>
+<Para>
+Do not run <FileName>postmaster</FileName> from the root account.
+</Para>
+</Note>
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+ Run the regression tests.  Type
+
+<ProgramListing>
+    cd /usr/src/pgsql/src/test/regress
+    gmake runtest
+</ProgramListing>
+</Para>
+
+<Para>
+
+     You do not need to type "gmake clean" if this is the first time you
+     are running the tests.
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+
+     You should get on the screen (and also written to file ./regress.out)
+     a series of statements stating which tests passed and which tests
+     failed.  Please note that it can be normal for some of the tests to
+     "fail".  For the failed tests, use diff to compare the files in
+     directories ./results and ./expected.  If float8 failed, type
+     something like:
+<ProgramListing>
+    cd /usr/src/pgsql/src/test/regress
+    diff -w expected/float8.out results
+</ProgramListing>
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+     After running the tests, type
+<ProgramListing>
+    destroydb regression
+    cd /usr/src/pgsql/src/test/regress
+    gmake clean
+</ProgramListing>
+</Para>
+</Step>
+
+</Procedure>
+
+</Sect1>
+
+<Sect1>
+<Title>Regression Analysis</Title>
+
+<Para>
+    <Quote>Failed</Quote> tests may have failed due to slightly different error messages,
+     math libraries, or output formatting.
+     "Failures" of this type do not indicate a problem with
+     <ProductName>Postgres</ProductName>.
+</Para>
+
+<Para>
+     For a i686/Linux-ELF platform, no tests failed since this is the
+     v6.2.1 regression testing reference platform.
+</Para>
+
+<Para>
+     For the SPARC/Linux-ELF platform, using the 970525 beta version of
+     <ProductName>Postgres</ProductName> v6.2 the following tests "failed":
+     float8 and geometry "failed" due to minor precision differences in
+     floating point numbers.  select_views produces massively different output,
+     but the differences are due to minor floating point differences.
+</Para>
+
+<Para>
+     Conclusion?  If you do see failures, try to understand the nature of
+     the differences and then decide if those differences will affect your
+     intended use of <ProductName>Postgres</ProductName>.  However, keep in mind that this is likely
+     to be the most solid release of <ProductName>Postgres</ProductName> to date, incorporating many
+     bug fixes from v6.1, and that previous versions of <ProductName>Postgres</ProductName> have been
+     in use successfully for some time now.
+</Para>
+
+<Sect2>
+<Title>Comparing expected/actual output</Title>
+
+<Para>
+  The results are in files in the ./results directory. These results
+  can be compared with results in the ./expected directory using 'diff'.
+  The files might not compare exactly. The following paragraphs attempt
+  to explain the differences.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Error message differences</Title>
+
+<Para>
+  Some of the regression tests involve intentional invalid input values.
+  Error messages can come from either the Postgres code or from the host
+  platform system routines. In the latter case, the messages may vary
+  between platforms, but should reflect similar information. These
+  differences in messages will result in a "failed" regression test which
+  can be validated by inspection.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>OID differences</Title>
+
+<Para>
+  There are several places where PostgreSQL OID (object identifiers) appear
+  in 'regress.out'. OID's are unique 32-bit integers which are generated
+  by the PostgreSQL backend whenever a table row is inserted or updated.
+  If you run the regression test on a non-virgin database or run it multiple
+  times, the OID's reported will have different values. 
+
+  The following SQL statements in 'misc.out' have shown this behavior:
+
+  QUERY: SELECT user_relns() AS user_relns ORDER BY user_relns;
+
+    The 'a,523676' row is composed from an OID.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Date and time differences</Title>
+
+<Para>
+  On many supported platforms, you can force PostgreSQL to believe that it
+  is running in the same time zone as Berkeley, California. See details in
+  the section on how to run the regression tests.
+
+  If you do not explicitly set your time zone environment to PST8PDT, then
+  most of the date and time results will reflect your local time zone and
+  will fail the regression testing.
+
+  There appears to be some systems which do not accept the recommended syntax
+  for explicitly setting the local time zone rules. Some systems using the
+  public domain time zone package exhibit minor problems with pre-1970 PDT
+  times, representing them in PST instead.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Floating point differences</Title>
+
+<Para>
+  Some of the tests involve computing 64-bit (<Type>float8</Type>) number from table
+  columns. Differences in results involving mathematical functions of
+  <Type>float8</Type> columns have been observed. These differences occur where
+  different operating systems are used on the same platform ie:
+  BSDI and SOLARIS on Intel/86, and where the same operating system is
+  used used on different platforms, ie: SOLARIS on SPARC and Intel/86.
+
+  Human eyeball comparison is needed to determine the real significance
+  of these differences which are usually 10 places to the right of
+  the decimal point.
+
+  Some systems signal errors from pow() and exp() differently from
+  the mechanism expected by the current Postgres code.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Polygon differences</Title>
+
+<Para>
+  Several of the tests involve operations on geographic date about the
+  Oakland/Berkley CA street map. The map data is expressed as polygons
+  whose vertices are represented as pairs of <Type>float8</Type> numbers (decimal
+  latitude and longitude). Initially, some tables are created and
+  loaded with geographic data, then some views are created which join
+  two tables using the polygon intersection operator (##), then a select
+  is done on the view. 
+
+  When comparing the results from different platforms, differences occur
+  in the 2nd or 3rd place to the right of the decimal point. The SQL
+  statements where these problems occur are the folowing:
+
+<ProgramListing>
+    QUERY: SELECT * from street;
+    QUERY: SELECT * from iexit;
+</ProgramListing>
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>Random differences</Title>
+
+<Para>
+  There is at least one test case in random.out which is intended to produce
+  random results. This causes random to fail the regression testing.
+  Typing
+<ProgramListing>
+    diff results/random.out expected/random.out
+</ProgramListing>
+
+ should produce only
+  one or a few lines of differences for this reason, but other floating
+  point differences on dissimilar architectures might cause many more
+  differences. See the release notes below.
+</Para>
+
+</Sect2>
+
+<Sect2>
+<Title>The <Quote>expected</Quote> files</Title>
+
+<Para>
+  The <FileName>./expected/*.out</FileName> files were adapted from the original monolithic
+  <FileName>expected.input</FileName> file provided by Jolly Chen et al. Newer versions of these
+  files generated on various development machines have been substituted after
+  careful (?) inspection. Many of the development machines are running a
+  Unix OS variant (FreeBSD, Linux, etc) on Ix86 hardware.
+
+  The original <FileName>expected.input</FileName> file was created on a SPARC Solaris 2.4
+  system using the <FileName>postgres5-1.02a5.tar.gz</FileName> source tree. It was compared
+  with a file created on an I386 Solaris 2.4 system and the differences
+  were only in the floating point polygons in the 3rd digit to the right
+  of the decimal point. (see below)
+
+  The original <FileName>sample.regress.out</FileName> file was from the postgres-1.01 release
+  constructed by Jolly Chen and is included here for reference. It may
+  have been created on a DEC ALPHA machine as the <FileName>Makefile.global</FileName>
+  in the postgres-1.01 release has PORTNAME=alpha.
+</Para>
+
+</Sect2>
+
+</Sect1>
+
+</Chapter>

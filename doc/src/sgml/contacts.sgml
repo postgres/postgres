@@ -1,0 +1,23 @@
+<Appendix label="B">
+<Title>Contacts</Title>
+
+<Sect1>
+<Title>Introduction</Title>
+<Para>
+</Para>
+
+<Sect1>
+<Title>People</Title>
+
+<Para>
+<ItemizedList Mark="bullet" Spacing="compact">
+<ListItem>
+<Para>
+<ULink url="http://alumni.caltech.edu/~lockhart">Thomas Lockhart</ULink>
+ works on SQL standards compliance and documentation.
+</Para>
+</ListItem>
+</ItemizedList>
+</Para>
+
+</Appendix>

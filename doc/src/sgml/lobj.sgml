@@ -1,0 +1,485 @@
+<Chapter>
+<Title>Large Objects</Title>
+
+<Para>
+     In <ProductName>Postgres</ProductName>, data values are stored in tuples and 
+     individual tuples cannot span data pages. Since the size of
+     a data page is 8192 bytes, the upper limit on the  size
+     of a data value is relatively low. To support the storage 
+     of larger atomic values, <ProductName>Postgres</ProductName> provides a  large
+     object   interface.    This  interface  provides  file
+     oriented access to user data that has been declared  to
+     be a large type.
+     This  section describes the implementation and the 
+     programmatic and query  language  interfaces  to  <ProductName>Postgres</ProductName>
+     large object data.
+</Para>
+
+<Sect1>
+<Title>Historical Note</Title>
+
+<Para>
+     Originally, <ProductName>Postgres 4.2</ProductName> supported three standard 
+     implementations of large objects: as files external 
+     to <ProductName>Postgres</ProductName>,  as  <Acronym>UNIX</Acronym>  files managed by <ProductName>Postgres</ProductName>, and as data
+     stored within the <ProductName>Postgres</ProductName> database. It causes  
+     considerable confusion among users. As a result, we only 
+     support large objects as data stored within  the  <ProductName>Postgres</ProductName>
+     database  in  <ProductName>PostgreSQL</ProductName>.  Even  though is is slower to
+     access, it provides stricter data  integrity.
+     For historical reasons, this storage scheme is referred to as 
+     Inversion large objects. (We will use  Inversion  and  large
+     objects  interchangeably to mean the same thing in this
+     section.)
+</Para>
+</Sect1>
+
+<Sect1>
+<Title>Inversion Large Objects</Title>
+
+<Para>
+     The Inversion large object implementation breaks  large
+     objects  up  into  "chunks"  and  stores  the chunks in
+     tuples in the database.  A B-tree index guarantees fast
+     searches for the correct chunk number when doing random
+     access reads and writes.
+</Para>
+</Sect1>
+
+<Sect1>
+<Title>Large Object Interfaces</Title>
+
+<Para>
+     The  facilities  <ProductName>Postgres</ProductName>  provides  to  access   large
+     objects,  both  in  the backend as part of user-defined
+     functions or the front end as part  of  an  application
+     using  the   interface, are described below. (For users
+     familiar with <ProductName>Postgres 4.2</ProductName>, <ProductName>PostgreSQL</ProductName> has a new set of
+     functions  providing  a  more  coherent  interface. The
+     interface is the same for  dynamically-loaded  C  
+     functions as well as for XXX LOST TEXT? WHAT SHOULD GO HERE??.
+
+     The  <ProductName>Postgres</ProductName>  large  object interface is modeled after
+     the <Acronym>UNIX</Acronym>  file  system  interface,  with  analogues  of
+     <Function>open(2)</Function>,  <Function>read(2)</Function>, <Function>write(2)</Function>,
+ <Function>lseek(2)</Function>, etc.  User 
+     functions call these routines to retrieve only the data  of
+     interest  from a large object.  For example, if a large
+     object type called mugshot  existed  that  stored  
+     photographs  of  faces, then a function called beard could
+     be declared on mugshot data.  Beard could look  at  the
+     lower third of a photograph, and determine the color of
+     the beard that appeared  there,  if  any.   The  entire
+     large  object value need not be buffered, or even 
+     examined, by the beard function.
+     Large objects may be accessed from dynamically-loaded <Acronym>C</Acronym>
+     functions  or  database  client  programs that link the
+     library.  <ProductName>Postgres</ProductName> provides a set of routines that 
+     support opening, reading, writing, closing, and seeking on
+     large objects.
+</Para>
+
+<Sect2>
+<Title>Creating a Large Object</Title>
+
+<Para>
+     The routine
+<ProgramListing>
+Oid lo_creat(PGconn *conn, int mode)
+</ProgramListing>
+     creates a new large  object.  The  mode  is  a  bitmask
+     describing  several  different  attributes  of  the new
+     object.  The symbolic constants listed here are defined
+     in
+<FileName>
+PGROOT/src/backend/libpq/libpq-fs.h
+</FileName>
+     The access type (read, write, or both) is controlled by
+     OR ing together the bits <Acronym>INV_READ</Acronym>  and  <Acronym>INV_WRITE</Acronym>.   If
+     the large object should be archived -- that is, if 
+     historical versions of it should be moved periodically  to
+     a  special archive relation -- then the <Acronym>INV_ARCHIVE</Acronym> bit
+     should be set.  The low-order sixteen bits of mask  are
+     the  storage  manager  number on which the large object
+     should reside.  For sites other  than  Berkeley,  these
+     bits should always be zero.
+     The commands below create an (Inversion) large object:
+<ProgramListing>
+inv_oid = lo_creat(INV_READ|INV_WRITE|INV_ARCHIVE);
+</ProgramListing>
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>Importing a Large Object</Title>
+
+<Para>
+To import a <Acronym>UNIX</Acronym> file as
+     a large object, call
+<ProgramListing>
+Oid lo_import(PGconn *conn, text *filename)
+</ProgramListing>
+     The filename argument specifies the  <Acronym>UNIX</Acronym>  pathname  of
+     the file to be imported as a large object.
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>Exporting a Large Object</Title>
+
+<Para>
+To export a large object
+     into <Acronym>UNIX</Acronym> file, call
+<ProgramListing>
+int lo_export(PGconn *conn, Oid lobjId, text *filename)
+</ProgramListing>
+     The lobjId argument specifies  the  Oid  of  the  large
+     object  to  export  and the filename argument specifies
+     the <Acronym>UNIX</Acronym> pathname of the file.
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>Opening an Existing Large Object</Title>
+
+<Para>
+     To open an existing large object, call
+<ProgramListing>
+int lo_open(PGconn *conn, Oid lobjId, int mode, ...)
+</ProgramListing>
+     The lobjId argument specifies  the  Oid  of  the  large
+     object  to  open.   The  mode  bits control whether the
+     object is opened  for  reading  INV_READ),  writing  or
+     both.
+     A  large  object cannot be opened before it is created.
+     lo_open returns a large object descriptor for later use
+     in  lo_read, lo_write, lo_lseek, lo_tell, and lo_close.
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>Writing Data to a Large Object</Title>
+
+<Para>
+     The routine
+<ProgramListing>
+int lo_write(PGconn *conn, int fd, char *buf, int len)
+</ProgramListing>
+     writes len bytes from buf to large object fd.   The  fd
+     argument must have been returned by a previous lo_open.
+     The number of bytes actually written is  returned.   In
+     the event of an error, the return value is negative.
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>Seeking on a Large Object</Title>
+
+<Para>
+     To change the current read or write location on a large
+     object, call
+<ProgramListing>
+int lo_lseek(PGconn *conn, int fd, int offset, int whence)
+</ProgramListing>
+     This routine moves the current location pointer for the
+     large object described by fd to the new location specified 
+     by offset.  The valid values  for  .i  whence  are
+     SEEK_SET SEEK_CUR and SEEK_END.
+</Para>
+</Sect2>
+
+<Sect2>
+<Title>Closing a Large Object Descriptor</Title>
+
+<Para>
+     A large object may be closed by calling
+<ProgramListing>
+int lo_close(PGconn *conn, int fd)
+</ProgramListing>
+     where  fd  is  a  large  object  descriptor returned by
+     lo_open.  On success, <Acronym>lo_close</Acronym> returns zero.  On error,
+     the return value is negative.
+</Para>
+</Sect1>
+
+<Sect1>
+<Title>Built in registered functions</Title>
+
+<Para>
+     There  are two built-in registered functions, <Acronym>lo_import</Acronym>
+     and <Acronym>lo_export</Acronym> which  are  convenient  for  use  in  <Acronym>SQL</Acronym>
+     queries.
+     Here is an example of their use
+<ProgramListing>
+CREATE TABLE image (
+    name            text,
+    raster          oid
+);
+
+INSERT INTO image (name, raster)
+    VALUES ('beautiful image', lo_import('/etc/motd'));
+
+SELECT lo_export(image.raster, "/tmp/motd") from image
+    WHERE name = 'beautiful image';
+</ProgramListing>
+</Para>
+</Sect1>
+
+<Sect1>
+<Title>Accessing Large Objects from LIBPQ</Title>
+
+<Para>
+     Below is a sample program which shows how the large object  
+     interface
+     in  LIBPQ  can  be used.  Parts of the program are 
+     commented out but are left in the source for  the  readers
+     benefit.  This program can be found in
+<FileName>
+../src/test/examples
+</FileName>
+     Frontend applications which use the large object interface  
+     in  LIBPQ  should   include   the   header   file
+     libpq/libpq-fs.h and link with the libpq library.
+</Para>
+</Sect1>
+
+<Sect1>
+<Title>Sample Program</Title>
+
+<Para>
+<ProgramListing>
+/*--------------------------------------------------------------
+          *
+          * testlo.c--
+          *    test using large objects with libpq
+          *
+          * Copyright (c) 1994, Regents of the University of California
+          *
+          *
+          * IDENTIFICATION
+          *    /usr/local/devel/pglite/cvs/src/doc/manual.me,v 1.16 1995/09/01 23:55:00 jolly Exp
+          *
+          *--------------------------------------------------------------
+          */
+         #include &lt;stdio.h&gt;
+         #include "libpq-fe.h"
+         #include "libpq/libpq-fs.h"
+
+         #define BUFSIZE          1024
+
+         /*
+          * importFile *    import file "in_filename" into database as large object "lobjOid"
+          *
+          */
+         Oid importFile(PGconn *conn, char *filename)
+         {
+             Oid lobjId;
+             int lobj_fd;
+             char buf[BUFSIZE];
+             int nbytes, tmp;
+             int fd;
+
+             /*
+              * open the file to be read in
+              */
+             fd = open(filename, O_RDONLY, 0666);
+             if (fd &lt; 0)  {   /* error */
+              fprintf(stderr, "can't open unix file
+             }
+
+             /*
+              * create the large object
+              */
+             lobjId = lo_creat(conn, INV_READ|INV_WRITE);
+             if (lobjId == 0) {
+              fprintf(stderr, "can't create large object");
+             }
+
+             lobj_fd = lo_open(conn, lobjId, INV_WRITE);
+             /*
+              * read in from the Unix file and write to the inversion file
+              */
+             while ((nbytes = read(fd, buf, BUFSIZE)) &gt; 0) {
+              tmp = lo_write(conn, lobj_fd, buf, nbytes);
+              if (tmp &lt; nbytes) {
+                  fprintf(stderr, "error while reading
+              }
+             }
+
+             (void) close(fd);
+             (void) lo_close(conn, lobj_fd);
+
+             return lobjId;
+         }
+
+         void pickout(PGconn *conn, Oid lobjId, int start, int len)
+         {
+             int lobj_fd;
+             char* buf;
+             int nbytes;
+             int nread;
+
+             lobj_fd = lo_open(conn, lobjId, INV_READ);
+             if (lobj_fd &lt; 0) {
+              fprintf(stderr,"can't open large object %d",
+                   lobjId);
+             }
+
+             lo_lseek(conn, lobj_fd, start, SEEK_SET);
+             buf = malloc(len+1);
+
+             nread = 0;
+             while (len - nread &gt; 0) {
+              nbytes = lo_read(conn, lobj_fd, buf, len - nread);
+              buf[nbytes] = ' ';
+              fprintf(stderr,"&gt;&gt;&gt; %s", buf);
+              nread += nbytes;
+             }
+             fprintf(stderr,"0);
+             lo_close(conn, lobj_fd);
+         }
+
+         void overwrite(PGconn *conn, Oid lobjId, int start, int len)
+         {
+             int lobj_fd;
+             char* buf;
+             int nbytes;
+             int nwritten;
+             int i;
+
+             lobj_fd = lo_open(conn, lobjId, INV_READ);
+             if (lobj_fd &lt; 0) {
+              fprintf(stderr,"can't open large object %d",
+                   lobjId);
+             }
+
+             lo_lseek(conn, lobj_fd, start, SEEK_SET);
+             buf = malloc(len+1);
+
+             for (i=0;i&lt;len;i++)
+              buf[i] = 'X';
+             buf[i] = ' ';
+
+             nwritten = 0;
+             while (len - nwritten &gt; 0) {
+              nbytes = lo_write(conn, lobj_fd, buf + nwritten, len - nwritten);
+              nwritten += nbytes;
+             }
+             fprintf(stderr,"0);
+             lo_close(conn, lobj_fd);
+         }
+
+         /*
+          * exportFile *    export large object "lobjOid" to file "out_filename"
+          *
+          */
+         void exportFile(PGconn *conn, Oid lobjId, char *filename)
+         {
+             int lobj_fd;
+             char buf[BUFSIZE];
+             int nbytes, tmp;
+             int fd;
+
+             /*
+              * create an inversion "object"
+              */
+             lobj_fd = lo_open(conn, lobjId, INV_READ);
+             if (lobj_fd &lt; 0) {
+              fprintf(stderr,"can't open large object %d",
+                   lobjId);
+             }
+
+             /*
+              * open the file to be written to
+              */
+             fd = open(filename, O_CREAT|O_WRONLY, 0666);
+             if (fd &lt; 0)  {   /* error */
+              fprintf(stderr, "can't open unix file
+                   filename);
+             }
+
+             /*
+              * read in from the Unix file and write to the inversion file
+              */
+             while ((nbytes = lo_read(conn, lobj_fd, buf, BUFSIZE)) &gt; 0) {
+              tmp = write(fd, buf, nbytes);
+                 if (tmp &lt; nbytes) {
+                  fprintf(stderr,"error while writing
+                       filename);
+              }
+             }
+
+             (void) lo_close(conn, lobj_fd);
+             (void) close(fd);
+
+             return;
+         }
+
+         void
+         exit_nicely(PGconn* conn)
+         {
+           PQfinish(conn);
+           exit(1);
+         }
+
+         int
+         main(int argc, char **argv)
+         {
+             char *in_filename, *out_filename;
+             char *database;
+             Oid lobjOid;
+             PGconn *conn;
+             PGresult *res;
+
+             if (argc != 4) {
+              fprintf(stderr, "Usage: %s database_name in_filename out_filename0,
+                   argv[0]);
+              exit(1);
+             }
+
+             database = argv[1];
+             in_filename = argv[2];
+             out_filename = argv[3];
+
+             /*
+              * set up the connection
+              */
+             conn = PQsetdb(NULL, NULL, NULL, NULL, database);
+
+             /* check to see that the backend connection was successfully made */
+             if (PQstatus(conn) == CONNECTION_BAD) {
+              fprintf(stderr,"Connection to database '%s' failed.0, database);
+              fprintf(stderr,"%s",PQerrorMessage(conn));
+              exit_nicely(conn);
+             }
+
+             res = PQexec(conn, "begin");
+             PQclear(res);
+
+             printf("importing file
+         /*  lobjOid = importFile(conn, in_filename); */
+             lobjOid = lo_import(conn, in_filename);
+         /*
+             printf("as large object %d.0, lobjOid);
+
+             printf("picking out bytes 1000-2000 of the large object0);
+             pickout(conn, lobjOid, 1000, 1000);
+
+             printf("overwriting bytes 1000-2000 of the large object with X's0);
+             overwrite(conn, lobjOid, 1000, 1000);
+         */
+
+             printf("exporting large object to file
+         /*    exportFile(conn, lobjOid, out_filename); */
+             lo_export(conn, lobjOid,out_filename);
+
+             res = PQexec(conn, "end");
+             PQclear(res);
+             PQfinish(conn);
+             exit(0);
+         }
+</ProgramListing>
+</Para>
+
+</Sect1>
+</Chapter>

@@ -1,0 +1,144 @@
+<Chapter>
+<Title>Release Notes</Title>
+
+<Para>
+<Note>
+<Para>
+Should include the migration notes from <FileName>migration/</FileName>.
+</Para>
+</Note>
+</Para>
+
+<Para>
+The release notes have not yet been integrated into the new documentation.
+Check for plain text files in the top of the distribution directory tree
+and in the <FileName>migration/</FileName> directory for current information.
+
+<Sect1>
+<Title>Release 6.3</Title>
+
+<Para>
+TBD
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Release 6.2.1</Title>
+
+<Para>
+<Note>
+<Para>
+v6.2.1 was a bug-fix and usability release on v6.2. Needs only a few notes.
+</Para>
+</Note>
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Release 6.2</Title>
+
+<Para>
+<Note>
+<Para>
+This should include information based on Bruce's release summary.
+</Para>
+</Note>
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Release 6.1</Title>
+
+<Para>
+<Note>
+<Para>
+This should include information based on Bruce's release summary.
+</Para>
+</Note>
+</Para>
+
+<Para>
+  The regression tests have been adapted and extensively modified for the
+  v6.1 release of PostgreSQL.
+</Para>
+
+<Para>
+  Three new data types (datetime, timespan, and circle) have been added to
+  the native set of PostgreSQL types. Points, boxes, paths, and polygons
+  have had their output formats made consistant across the data types.
+  The polygon output in misc.out has only been spot-checked for correctness
+  relative to the original regression output.
+</Para>
+
+<Para>
+  PostgreSQL v6.1 introduces a new, alternate optimizer which uses <FirstTerm>genetic</FirstTerm>
+  algorithms. These algorithms introduce a random behavior in the ordering
+  of query results when the query contains multiple qualifiers or multiple
+  tables (giving the optimizer a choice on order of evaluation). Several
+  regression tests have been modified to explicitly order the results, and
+  hence are insensitive to optimizer choices. A few regression tests are
+  for data types which are inherently unordered (e.g. points and time
+  intervals) and tests involving those types are explicitly bracketed with
+  <Command>set geqo to 'off'</Command> and <Command>reset geqo</Command>.
+</Para>
+
+<Para>
+  The interpretation of array specifiers (the curly braces around atomic
+  values) appears to have changed sometime after the original regression
+  tests were generated. The current <FileName>./expected/*.out</FileName> files reflect this
+  new interpretation, which may not be correct!
+</Para>
+
+<Para>
+  The float8 regression test fails on at least some platforms. This is due
+  to differences in implementations of pow() and exp() and the signaling
+  mechanisms used for overflow and underflow conditions.
+</Para>
+
+<Para>
+  The "random" results in the random test should cause the "random" test
+  to be "failed", since the regression tests are evaluated using a simple
+  diff. However, "random" does not seem to produce random results on my 
+  test machine (Linux/gcc/i686).
+</Para>
+
+<Sect1>
+<Title>Timing Results</Title>
+
+<Para>
+These timing results are from running the regression test with the command
+
+<ProgramListing>
+% time make runtest
+</ProgramListing>
+
+<Para>
+  Timing under Linux 2.0.27 seems to have a roughly 5% variation from run
+  to run, presumably due to the timing vagaries of multitasking systems.
+
+<Sect2>
+<Title>v6.3</Title>
+
+<Para>
+<ProgramListing>
+  Time   System
+  02:30  Dual Pentium Pro 180, 96MB, UW-SCSI, Linux 2.0.30, gcc 2.7.2.1 -O2 -m486
+  04:12  Dual Pentium Pro 180, 96MB, EIDE, Linux 2.0.30, gcc 2.7.2.1 -O2 -m486
+</ProgramListing>
+
+<Sect2>
+<Title>v6.1</Title>
+
+<Para>
+<ProgramListing>
+  Time   System
+  06:12  Pentium Pro 180, 32MB, Linux 2.0.30, gcc 2.7.2 -O2 -m486
+  12:06  P-100, 48MB, Linux 2.0.29, gcc
+  39:58  Sparc IPC 32MB, Solaris 2.5, gcc 2.7.2.1 -O -g
+</ProgramListing>
+
+</Chapter>
+

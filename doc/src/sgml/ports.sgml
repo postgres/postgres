@@ -1,0 +1,264 @@
+<Chapter>
+<Title>Ports</Title>
+
+<Sect1>
+<Title>Currently Supported Platforms</Title>
+
+<Para>
+     <ProductName>Postgres</ProductName>  is  available  free  of charge. This manual
+     describes version 6.3 of <ProductName>Postgres</ProductName>.  The authors  have
+     compiled  and  tested <ProductName>Postgres</ProductName> on the following 
+     platforms:
+
+<TABLE TOCENTRY="1">
+<TITLE>Supported Platforms</TITLE>
+<TGROUP COLS="4">
+<THEAD>
+  <ROW>
+    <ENTRY><Acronym>OS</Acronym></ENTRY>
+    <ENTRY>Processor</ENTRY>
+    <ENTRY>Version</ENTRY>
+    <ENTRY>Reported</ENTRY>
+    <ENTRY>Remarks</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>AIX 4.1.x-4.2</ENTRY>
+    <ENTRY>RS6000</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>4.1.4.0,4.2 (<ULink url="mailto:darrenk@insightdist.com">Darren King</ULink>),
+4.1.5 (<ULink url="mailto:Andreas.Zeugswetter@telecom.at">Andreas Zeugswetter</ULink>);
+3.2.5 confirmed on v6.2.1 (<ULink url="mailto:danaf@ans.net">Frank Dana</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>BSDi</ENTRY>
+    <ENTRY>x86</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>(<ULink url="mailto:maillist@candle.pha.pa.us">Bruce Momjian</ULink></ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>FreeBSD 2.2.x-3.x</ENTRY>
+    <ENTRY>x86</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>(<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>,
+<ULink url="mailto:scrappy@hub.org">Marc Fournier</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>NetBSD 1.3</ENTRY>
+    <ENTRY>x86</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>(<ULink url="mailto:brook@trillium.NMSU.Edu">Brook Milligan</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>NetBSD 1.3</ENTRY>
+    <ENTRY>Sparc</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>(<ULink url="mailto:tih@hamartun.priv.no">Tom I Helbekkmo</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>NetBSD 1.3</ENTRY>
+    <ENTRY>VAX</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>(<ULink url="mailto:tih@hamartun.priv.no">Tom I Helbekkmo</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>DGUX 5.4R4.11</ENTRY>
+    <ENTRY>m88k</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>(<ULink url="mailto:geek+@cmu.edu">Brian E Gallew</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>HPUX 10.20</ENTRY>
+    <ENTRY>PA-RISC</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>9.0.x confirmed on v6.2.1 (<ULink url="mailto:stanb@awod.com">Stan Brown</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>IRIX 6.x</ENTRY>
+    <ENTRY>MIPS</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>5.x is different (<ULink url="mailto:martin@biochemistry.ucl.ac.uk">Andrew Martin</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>Digital 4.0</ENTRY>
+    <ENTRY>Alpha</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>in progress; v6.2.1 confirmed working (<ULink url="mailto:pjlobo@euitt.upm.es">Pedro J. Lobo</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>linux 2.0.x</ENTRY>
+    <ENTRY>Alpha</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>partial success (<ULink url="mailto:rkirkpat@nag.cs.colorado.edu">Ryan Kirkpatrick</ULink>,
+<ULink url="mailto:jsturm@zenacomp.com"> Jeff Sturm </ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>linux 2.0.x</ENTRY>
+    <ENTRY>x86</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>(<ULink url="mailto:lockhart@alumni.caltech.edu">Thomas Lockhart</ULink>,
+<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>linux 2.0.x</ENTRY>
+    <ENTRY>Sparc</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>(<ULink url="mailto:szybist@boxhill.com">Tom Szybist</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>mklinux</ENTRY>
+    <ENTRY>PPC</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>(<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>SCO</ENTRY>
+    <ENTRY>x86</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>partial success (<ULink url="mailto:Bill.Allie@mug.org">Billy G. Allie</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>Solaris</ENTRY>
+    <ENTRY>x86</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>(<ULink url="mailto:scrappy@hub.org">Marc Fournier</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>Solaris 2.5.1-2.6</ENTRY>
+    <ENTRY>x86</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>(<ULink url="mailto:scrappy@hub.org">Marc Fournier</ULink>,
+<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>SunOS 4.1.4</ENTRY>
+    <ENTRY>Sparc</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>patches submitted (<ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>SVR4</ENTRY>
+    <ENTRY>MIPS</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>similar to v6.2.1; "mostly working" (<ULink url="mailto:ridderbusch.pad@sni.de">Frank Ridderbusch</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>SVR4 4.4</ENTRY>
+    <ENTRY>m88k</ENTRY>
+    <ENTRY>v6.2.1</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>confirmed with patching (<ULink url="mailto:dlw@seavme.xroads.com">Doug Winterburn</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>Unixware</ENTRY>
+    <ENTRY>x86</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>aka UNIVEL (<ULink url="mailto:Bill.Allie@mug.org">Billy G. Allie</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>NextStep</ENTRY>
+    <ENTRY>x86</ENTRY>
+    <ENTRY>v6.x</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>client-only support; v1.0.9 worked with patches (<ULink url="mailto:dave@turbocat.de">David Wetzel</ULink>)</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+
+<Sect1>
+<Title>Unsupported Platforms</Title>
+
+<Para>
+A few platforms which have been attempted and which have been
+reported to not work with the standard distribution.
+Others listed here do not provide sufficient library support for an attempt.
+
+<TABLE TOCENTRY="1">
+<TITLE>Possibly Incompatible Platforms</TITLE>
+<TITLEABBREV>Incompatibles</TITLEABBREV>
+<TGROUP COLS="4">
+<THEAD>
+  <ROW>
+    <ENTRY><Acronym>OS</Acronym></ENTRY>
+    <ENTRY>Processor</ENTRY>
+    <ENTRY>Version</ENTRY>
+    <ENTRY>Reported</ENTRY>
+    <ENTRY>Remarks</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+    <ENTRY>MacOS</ENTRY>
+    <ENTRY>all</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>not library compatible; use ODBC/JDBC</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>NetBSD</ENTRY>
+    <ENTRY>arm32</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>not yet working (<ULink url="mailto:dmill@globalnet.co.uk">Dave Millen</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>NetBSD</ENTRY>
+    <ENTRY>m68k</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>Amiga, HP300, Mac; not yet working (<ULink url="mailto:hotz@jpl.nasa.gov">Henry Hotz</ULink>)</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>Ultrix</ENTRY>
+    <ENTRY>MIPS,VAX?</ENTRY>
+    <ENTRY>v6.x</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>no recent reports; obsolete?</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>Windows NT</ENTRY>
+    <ENTRY>all</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>not library compatible; client side maybe; use ODBC/JDBC</ENTRY>
+  </ROW>
+  <ROW>
+    <ENTRY>Windows</ENTRY>
+    <ENTRY>x86</ENTRY>
+    <ENTRY>v6.3</ENTRY>
+    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>not library compatible; client side maybe; use ODBC/JDBC</ENTRY>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+
+<Para>
+Note that Windows ports of the frontend are apparently possible
+using third-party Posix porting tools and libraries.
+</Para>
+</Sect1>
+
+</Chapter>

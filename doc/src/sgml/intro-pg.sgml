@@ -1,0 +1,74 @@
+<Chapter>
+<TITLE>Introduction</TITLE>
+
+<Para>
+     This document is the programmer's  manual  for  the  
+     <Ulink url="http://postgresql.org/"><ProductName>PostgreSQL</ProductName></Ulink>
+     database  management system, originally developed at the University
+     of California at  Berkeley.   <ProductName>PostgreSQL</ProductName>  is  based  on
+     <Ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/postgres.html">
+     <ProductName>Postgres release 4.2</ProductName></Ulink>. 
+The <ProductName>Postgres</ProductName> project, 
+     led by Professor Michael Stonebraker, has been sponsored  by  the
+     Defense  Advanced Research Projects Agency (<Acronym>DARPA</Acronym>), the
+     Army Research Office (<Acronym>ARO</Acronym>), the National Science  
+     Foundation (<Acronym>NSF</Acronym>), and ESL, Inc.
+</Para>
+
+<Para>
+     The first part of this manual 
+     explains  the
+     <ProductName>Postgres</ProductName>  approach  to  extensibility  and describe how
+     users can extend <ProductName>Postgres</ProductName> by adding user-defined types,
+     operators, aggregates, and both query language and programming language functions.
+     After an extremely  brief
+     overview  of  the <ProductName>Postgres</ProductName> rule system, we discuss
+     the trigger and SPI interfaces.
+     The manual concludes with a detailed description of the programming interfaces and
+     support libraries for various languages.
+</Para>
+
+<Para>
+     We assume proficiency with UNIX and C programming.
+</Para>
+
+<Sect1>
+<Title>Copyrights and Trademarks</Title>
+
+<Para>
+<ProductName>PostgreSQL</ProductName> is copyright (C) 1996-8 by the PostgreSQL Global Development Group,
+and is distributed under the terms of the Berkeley license.
+
+<Para>
+<ProductName>Postgres95</ProductName> is copyright (C) 1994-5 by the Regents of the University of California.
+Permission to use, copy, modify, and distribute this software and its documentation
+for any purpose, without fee, and without a written agreement is hereby granted,
+provided that the above copyright notice and this paragraph and the following two
+paragraphs appear in all copies.
+</Para>
+<Para>
+In no event shall the University of California be liable to
+any party for direct, indirect, special, incidental, or consequential
+damages, including lost profits, arising out of the use of this
+software and its documentation, even if the University of California
+has been advised of the possibility of such damage.
+</Para>
+<Para>
+The University of California specifically disclaims any
+warranties, including, but not limited to, the implied warranties
+of merchantability and fitness for a particular purpose.
+The software provided hereunder is on an "as-is" basis, and
+the University of California has no obligations to provide
+maintainance, support, updates, enhancements, or modifications.
+</Para>
+
+<Para>
+<Acronym>UNIX</Acronym> is a trademark of X/Open, Ltd.  Sun4,  SPARC,  SunOS
+and  Solaris  are trademarks of Sun Microsystems, Inc.  DEC,
+DECstation, Alpha AXP and ULTRIX are trademarks  of  Digital
+Equipment   Corp.   PA-RISC  and  HP-UX  are  trademarks  of
+Hewlett-Packard Co.  OSF/1 is a trademark of the Open  
+Software Foundation.
+</Para>
+
+</Chapter>

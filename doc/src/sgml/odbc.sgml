@@ -1,0 +1,98 @@
+<Chapter>
+<DocInfo>
+<AuthorGroup>
+<Author>
+<FirstName>Tim</FirstName>
+<Surname>Goeke</Surname>
+</Author>
+</AuthorGroup>
+<Date>Transcribed 1998-02-12</Date>
+</DocInfo>
+
+<Title>ODBC Interface</Title>
+
+<Para>
+<Note>
+<Para>
+Contributed by <ULink url="mailto:tgoeke@xpressway.com">Tim Goeke</ULink>
+</Para>
+</Note>
+
+<Para>
+ODBC is an abstract API which allows you to write standard "ODBC" code,
+using the ODBC API.
+
+<Sect1>
+<Title>Background</Title>
+
+<Para>
+The ODBC API matches up on the backend to an ODBC compatible data source.
+This could be anything from a text file to an Oracle RDBMS.
+
+<Para>
+The backend access come from ODBC drivers, or vendor specifc drivers that
+allow data access.   PostODBC is such a driver, along with others that are
+available, such as the OpenLink ODBC drivers.
+
+<Para>
+Once you write an ODBC application, you SHOULD be able to connect to ANY
+back end database, regardless of the vendor, as long as the database schema
+is the same.
+
+<Para>
+For example. you could have MS SQL Server and PostgreSQL servers which have
+exactly the same data.  Using ODBC, your Windows app would make exactly the
+same calls and the back end data source would look the same (to the windows
+app).
+
+<Para>
+In the real world, differences in drivers and the level of ODBC support
+lessens the potential of ODBC:
+
+<SimpleList>
+<Member>
+Access, Delphi, and Visual Basic all support ODBC directly.
+
+<Member>
+Under C++, such as Visual C++, you can use the C++ ODBC API.
+
+<Member>
+In Visual C++, you can use the CRecordSet class, which wraps the ODBC API
+set within and MFC 4.2 class.  This is the easiest route if you are doing
+Windows C++ development under Windows NT.
+</SimpleList>
+
+<Para>
+If I write an app for PostgreSQL can I write it using ODBC calls
+to the PostgreSQL server, or is that only when another database program 
+like MS SQL Server or Access needs to access the data?
+
+<Para>
+Again, the ODBC API set is the way to go.   You can find out more at
+Microsoft's web site or in your Visual C++ docs (if that's what you are
+using.)
+
+<Para>
+Visual Basic and the other RAD tools have Recordset objects that use ODBC
+directly to access data.  Using the data-aware controls, you can quickly
+link to the ODBC back end database (<Emphasis>very</Emphasis> quickly).
+
+<Para>
+Playing around with MS Access will help you sort this out.  Try using
+File->Get External Data
+
+<Para>
+<Tip>
+<Para>
+You'll have to set up a DSN first.
+</Para>
+</Tip>
+
+<Para>
+<Tip>
+<Para>
+The PostgreSQL datetime type will break MS Access.
+</Para>
+</Tip>
+
+</Chapter>

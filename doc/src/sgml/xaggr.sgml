@@ -1,0 +1,95 @@
+<Chapter>
+<Title>Extending <Acronym>SQL</Acronym>: Aggregates</Title>
+
+<Para>
+     Aggregates  in <ProductName>Postgres</ProductName> are expressed in terms of state
+     transition functions.  That is,  an  aggregate  can  be
+     defined  in terms of state that is modified whenever an
+     instance is processed.  Some state functions look at  a
+     particular value in the instance when computing the new
+     state (<Acronym>sfunc1</Acronym> in the  create  aggregate  syntax)  while
+     others  only  keep  track  of  their own internal state
+     (<Acronym>sfunc2</Acronym>).
+     If we define an aggregate that  uses  only  <Acronym>sfunc1</Acronym>,  we
+     define an aggregate that computes a running function of
+     the attribute values from each instance.  "Sum"  is  an
+     example  of  this  kind  of aggregate.  "Sum" starts at
+     zero and always adds the current  instance's  value  to
+     its  running  total.   We  will  use the <Acronym>int4pl</Acronym> that is
+     built into <ProductName>Postgres</ProductName> to perform this addition.
+     
+<ProgramListing>
+         CREATE AGGREGATE complex_sum (
+              sfunc1 = complex_add,
+              basetype = complex,
+              stype1 = complex,
+              initcond1 = '(0,0)'
+           );
+
+         SELECT complex_sum(a) FROM test_complex;
+
+         +------------+
+         |complex_sum |
+         +------------+
+         |(34,53.9)   |
+         +------------+
+</ProgramListing>
+</Para>
+
+<Para>
+     If we define only <Acronym>sfunc2</Acronym>, we are specifying  an  aggregate  
+     that computes a running function that is independent  of  
+     the  attribute  values  from  each  instance.
+     "Count"  is  the  most  common  example of this kind of
+     aggregate.  "Count" starts at zero and adds one to  its
+     running  total for each instance, ignoring the instance
+     value.  Here, we use the built-in <Acronym>int4inc</Acronym> routine to do
+     the work for us.  This routine increments (adds one to)
+     its argument.
+     
+<ProgramListing>
+         CREATE AGGREGATE my_count (sfunc2 = int4inc, -- add one
+                                      basetype = int4, stype2 = int4,
+                                      initcond2 = '0')
+
+         SELECT my_count(*) as emp_count from EMP;
+
+         +----------+
+         |emp_count |
+         +----------+
+         |5         |
+         +----------+
+</ProgramListing>
+</Para>
+         
+<Para>
+     "Average" is an example of an aggregate  that  requires
+     both  a function to compute the running sum and a function 
+     to compute the running count.   When  all  of  the
+     instances have been processed, the final answer for the
+     aggregate is the running sum  divided  by  the  running
+     count.   We use the <Acronym>int4pl</Acronym> and <Acronym>int4inc</Acronym> routines we used
+     before as well as the <ProductName>Postgres</ProductName>  integer  division  
+     routine,  <Acronym>int4div</Acronym>,  to  compute the division of the sum by
+     the count.
+     
+<ProgramListing>
+         CREATE AGGREGATE my_average (sfunc1 = int4pl, --  sum
+                                        basetype = int4,
+                                        stype1 = int4,
+                                        sfunc2 = int4inc, -- count
+                                        stype2 = int4,
+                                        finalfunc = int4div, -- division
+                                        initcond1 = '0',
+                                        initcond2 = '0')
+
+         SELECT my_average(salary) as emp_average FROM EMP;
+
+         +------------+
+         |emp_average |
+         +------------+
+         |1640        |
+         +------------+
+</ProgramListing>
+</Para>
+</Chapter>

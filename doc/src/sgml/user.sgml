@@ -1,0 +1,110 @@
+<!-- user.sgml
+-
+- Postgres User's Manual.
+- Derived from postgres.sgml.
+- thomas 1998-02-24
+-
+- -->
+<!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+<!entity intro    SYSTEM "intro.sgml">
+<!entity advanced SYSTEM "advanced.sgml">
+<!entity environ  SYSTEM "environ.sgml">
+<!entity manage   SYSTEM "manage.sgml">
+<!entity datatype SYSTEM "datatype.sgml">
+<!entity array    SYSTEM "array.sgml">
+<!entity inherit  SYSTEM "inherit.sgml">
+<!entity query-ug SYSTEM "query-ug.sgml">
+<!entity storage  SYSTEM "storage.sgml">
+<!entity psql     SYSTEM "psql.sgml">
+<!entity pgaccess SYSTEM "pgaccess.sgml">
+<!entity biblio   SYSTEM "biblio.sgml">
+]>
+<!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
+<Book>
+
+<!-- Title information -->
+
+<Title>PostgreSQL User's Guide</Title>
+<BookInfo>
+    <ReleaseInfo>Covering v6.3 for general release</ReleaseInfo>
+    <BookBiblio>
+    <AuthorGroup>
+      <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
+    </AuthorGroup>
+<!-- editor in authorgroup is not supported
+    <AuthorGroup>
+-->
+      <Editor>
+        <FirstName>Thomas</FirstName>
+        <SurName>Lockhart</SurName>
+        <Affiliation>
+          <OrgName>Caltech/JPL</OrgName>
+        </Affiliation>
+      </Editor>
+<!--
+    </AuthorGroup>
+-->
+ 
+<!--
+    <AuthorInitials>TGL</AuthorInitials>
+-->
+
+    <Date>(last updated 1998-02-23)</Date>
+    </BookBiblio>
+
+<LegalNotice>
+<Para>
+<ProductName>PostgreSQL</ProductName> is copyright (C) 1998 by the Postgres Global Development Group.
+</Para>
+</LegalNotice>
+
+</BookInfo>
+
+<!--
+<TOC> </TOC>
+<LOT> </LOT>
+-->
+
+<!--
+<Dedication>
+<Para>
+Your name here...
+</Para>
+</Dedication>
+-->
+
+<Preface>
+<Title>Summary</Title>
+
+<Para>
+<ProductName>Postgres</ProductName>, 
+ developed originally in the UC Berkeley Computer Science Department,
+ pioneered many of the object-relational concepts
+ now becoming available in some commercial databases.
+It provides SQL92/SQL3 language support,
+ transaction integrity, and type extensibility.
+ <ProductName>PostgreSQL</ProductName> is a public-domain, open source descendant
+ of this original Berkeley code.
+</Para>
+</Preface>
+
+&intro;
+&environ;
+&manage;
+&datatype;
+&array;
+&inherit;
+&query-ug;
+&storage;
+&psql;
+&pgaccess;
+
+<!--
+&contacts;
+-->
+&biblio;
+
+<INDEX> </INDEX>
+
+</Book>
+

@@ -1,0 +1,108 @@
+<Chapter>
+<Title>Arrays</Title>
+
+<Para>
+<Note>
+<Para>
+This must become a chapter on array behavior. Volunteers? - thomas 1998-01-12
+</Para>
+</Note>
+</Para>
+
+<Para>
+     <ProductName>Postgres</ProductName> allows attributes of an instance to be defined
+     as  fixed-length  or  variable-length multi-dimensional
+     arrays. Arrays of any base type  or  user-defined  type
+     can  be created. To illustrate their use, we first create a 
+     class with arrays of base types.
+     
+<ProgramListing>
+CREATE TABLE SAL_EMP (
+    name            text,
+    pay_by_quarter  int4[],
+    schedule        char16[][]
+);
+</ProgramListing>
+</Para>
+
+<Para>
+     The above query will create a class named SAL_EMP  with
+     a  <FirstTerm>text</FirstTerm>  string (name), a one-dimensional array of <FirstTerm>int4</FirstTerm>
+     (pay_by_quarter),  which  represents   the   employee's
+     salary by quarter and a two-dimensional array of <FirstTerm>char16</FirstTerm>
+     (schedule),  which  represents  the  employee's  weekly
+     schedule.   Now  we  do  some  <FirstTerm>INSERTS</FirstTerm>s; note that when
+     appending to an array, we  enclose  the  values  within
+     braces  and  separate  them  by commas.  If you know <FirstTerm>C</FirstTerm>,
+     this is not unlike the syntax for  initializing  structures.
+     
+<ProgramListing>
+INSERT INTO SAL_EMP
+    VALUES ('Bill',
+    '{10000, 10000, 10000, 10000}',
+    '{{"meeting", "lunch"}, {}}');
+
+INSERT INTO SAL_EMP
+    VALUES ('Carol',
+    '{20000, 25000, 25000, 25000}',
+    '{{"talk", "consult"}, {"meeting"}}');
+</ProgramListing>
+
+     By  default,  <ProductName>Postgres</ProductName>  uses  the "one-based" numbering
+     convention for arrays -- that is, an array  of  n  elements starts with array[1] and ends with array[n].
+     Now,  we  can  run  some queries on SAL_EMP.  First, we
+     show how to access a single element of an  array  at  a
+     time.   This query retrieves the names of the employees
+     whose pay changed in the second quarter:
+     
+<ProgramListing>
+SELECT name
+    FROM SAL_EMP
+    WHERE SAL_EMP.pay_by_quarter[1] &lt;&gt;
+    SAL_EMP.pay_by_quarter[2];
+
++------+
+|name  |
++------+
+|Carol |
++------+
+</ProgramListing>
+</Para>
+
+<Para>
+     This query retrieves  the  third  quarter  pay  of  all
+     employees:
+     
+<ProgramListing>
+SELECT SAL_EMP.pay_by_quarter[3] FROM SAL_EMP;
+
+
++---------------+
+|pay_by_quarter |
++---------------+
+|10000          |
++---------------+
+|25000          |
++---------------+
+</ProgramListing>
+</Para>
+
+<Para>
+     We  can  also  access  arbitrary slices of an array, or
+     subarrays.  This query  retrieves  the  first  item  on
+     Bill's schedule for the first two days of the week.
+     
+<ProgramListing>
+SELECT SAL_EMP.schedule[1:2][1:1]
+    FROM SAL_EMP
+    WHERE SAL_EMP.name = 'Bill';
+
++-------------------+
+|schedule           |
++-------------------+
+|{{"meeting"},{""}} |
++-------------------+
+</ProgramListing>
+</Para>
+
+</Chapter>

@@ -1,0 +1,347 @@
+<Appendix label="A">
+<DocInfo>
+<AuthorGroup>
+<Author>
+<FirstName>Thomas</FirstName>
+<Surname>Lockhart</Surname>
+</Author>
+</AuthorGroup>
+<Date>1998-02-26</Date>
+</DocInfo>
+
+<Title>Documentation</Title>
+
+<Para>
+<ProductName>Postgres</ProductName> documentation is written using 
+the <FirstTerm>Standard Generalized Markup Language</FirstTerm>
+(<Acronym>SGML</Acronym>)
+<ULink url="http://www.ora.com/davenport/"><ProductName>DocBook</ProductName></ULink>
+<FirstTerm>Document Type Definition</FirstTerm> (<Acronym>DTD</Acronym>).
+
+<Para>
+Packaged documentation is available in both <FirstTerm>HTML</FirstTerm> and <FirstTerm>Postscript</FirstTerm>
+formats. These are available as part of the standard <ProductName>Postgres</ProductName> installation.
+We discuss here working with the documentation sources and generating documentation packages.
+
+<Note>
+<Para>
+This is the first release of new <ProductName>Postgres</ProductName> documentation in three years.
+The content and environment are in flux and still evolving.
+</Para>
+</Note>
+
+<Sect1>
+<Title>Introduction</Title>
+
+<Para>
+The purpose of <Acronym>SGML</Acronym> is to allow an author to specify the structure and content of
+a document (e.g. using the <ProductName>DocBook</ProductName> <Acronym>DTD</Acronym>), 
+and to have the document style define
+how that content is rendered into a final form
+(e.g. using Norm Walsh's stylesheets).
+
+<Para>
+See
+<ULink url="http://nis-www.lanl.gov/~rosalia/mydocs/docbook-intro.html">Introduction to DocBook</ULink>
+for a nice "quickstart" summary of DocBook features.
+<ULink url="http://www.ora.com/homepages/dtdparse/docbook/3.0/">DocBook Elements</ULink>
+provides a powerful cross-reference for features of <ProductName>DocBook</ProductName>.
+
+<Para>
+This documentation set is constructed using several tools,
+including James Clark's
+<ULink url="http://www.jclark.com/jade/"><ProductName>jade</ProductName></ULink>
+and Norm Walsh's 
+<ULink url="http://www.berkshire.net/~norm/docbook/dsssl">Modular DocBook Stylesheets</ULink>.
+
+<Para>
+Currently, hardcopy is produced by importing <FirstTerm>Rich Text Format</FirstTerm> (<Acronym>RTF</Acronym>)
+output from <Application>jade</Application> to <ProductName>ApplixWare</ProductName>
+for minor formatting fixups then exporting as a Postscript file.
+
+<Para>
+<ULink url="http://sunsite.unc.edu/pub/packages/TeX/systems/unix/"><ProductName>TeX</ProductName></ULink>
+is a supported format for <Application>jade</Application> output, but was not used at this time for
+several reasons, including the inability to make minor format fixes before committing to hardcopy and
+generally inadequate table support in the <ProductName>TeX</ProductName> stylesheets.
+
+<Sect1>
+<Title>Styles and Conventions</Title>
+
+<Para>
+<ProductName>DocBook</ProductName> has a rich set of tags and constructs, and a suprisingly large
+percentage are directly and obviously useful for well-formed documentation.
+The <ProductName>Postgres</ProductName> documentation set has only recently
+been adapted to <Acronym>SGML</Acronym>, and in the near future several sections of the set
+will be selected and maintained as prototypical examples of <ProductName>DocBook</ProductName>
+usage. Also, a short summary of <ProductName>DocBook</ProductName> tags will be included below.
+
+<!--
+<Para>
+<TABLE TOCENTRY="1">
+<TITLE>SGML Constructs</TITLE>
+<TITLEABBREV>SGML Constructs</TITLEABBREV>
+<TGROUP COLS="2">
+<THEAD>
+  <ROW>
+    <ENTRY>SGML Tag</ENTRY>
+    <ENTRY>Usage</ENTRY>
+  </ROW>
+</THEAD>
+<TBODY>
+  <ROW>
+  </ROW>
+</TBODY>
+</TGROUP>
+</TABLE>
+</Para>
+
+-->
+
+</Sect1>
+
+<Sect1>
+<Title>Building Documentation</Title>
+
+<Para>
+HTML documentation packages can be generated from the SGML source by typing
+
+<ProgramListing>
+% cd doc/src
+% make tutorial.tar.gz
+% make user.tar.gz
+% make admin.tar.gz
+% make programmer.tar.gz
+% make postgres.tar.gz
+% make install
+</ProgramListing>
+</Para>
+
+<Para>
+These packages can be installed from the main documentation directory by typing
+<ProgramListing>
+% cd doc
+% make install
+</ProgramListing>
+</Para>
+
+<Sect1>
+<Title>Toolsets</Title>
+
+<Sect2>
+<Title><ProductName>jade</ProductName></Title>
+
+<Para>
+The current stable release of <ProductName>jade</ProductName> is version 1.0.1.
+</Para>
+
+<Sect3>
+<Title>Installation for Linux</Title>
+
+<Para>
+Install <ULink url="ftp://ftp.cygnus.com/pub/home/rosalia/"><Acronym>RPMs</Acronym></ULink>
+for <ProductName>jade</ProductName> and related packages.
+</Para>
+</Sect3>
+
+<Sect3>
+<Title>Installation for non-Linux Platforms</Title>
+
+<Para>
+There are some other packaged distributions for jade. <ProductName>FreeBSD</ProductName> seems
+to have one available. Please report package status to the docs mailing list and we will
+include that information here.
+
+<Para>
+For other platforms, install <ULink url="ftp://ftp.cygnus.com/pub/eichin/docware/SOURCES/">sources</ULink>
+for <ProductName>jade</ProductName> and related packages and build from scratch.
+</Para>
+</Sect3>
+
+<Sect2>
+<Title><ProductName>Modular Style Sheets</ProductName></Title>
+
+<Para>
+The current stable release of the <ProductName>Modular Style Sheets</ProductName> is version 1.0.7.
+</Para>
+
+<Sect1>
+<Title>Hardcopy Generation for v6.3</Title>
+
+<Para>
+The hardcopy Postscript documentation is generated by converting the <Acronym>SGML</Acronym>
+source code to <Acronym>RTF</Acronym>, then importing into Applixware. After a little cleanup
+(see the following section) the output is "printed" to a postscript file.
+
+<Para>
+Some figures were redrawn to avoid having bitmap <Acronym>GIF</Acronym> files in the hardcopy
+documentation. One figure, of the system catalogs, was sufficiently complex that there was
+not time to redraw it. It was converted to fit using the following commands:
+
+<ProgramListing>
+% convert -v -geometry 400x400'>' figure03.gif con.gif
+% convert -v -crop 400x380 con.gif connections.gif
+</ProgramListing>
+
+<Sect2>
+<Title>RTF Cleanup Procedure</Title>
+
+<Para>
+Several items must be addressed in generating Postscript hardcopy:
+
+<Procedure>
+<Title>Applixware RTF Cleanup</Title>
+
+<Para>
+Applixware does not seem to do a complete job of importing RTF generated by jade/MSS. In particular,
+all text is given the <Quote>Header1</Quote> style attribute label, although the text formatting itself
+is acceptable. Also, the Table of Contents page numbers do not refer to the section listed in the
+table, but rather refer to the page of the ToC itself.
+
+<Step Performance="required">
+<Para>
+Generate the <Acronym>RTF</Acronym> input by typing
+<ProgramListing>
+% cd doc/src/sgml
+% make tutorial.rtf
+</ProgramListing>
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+Open a new document in <ProductName>Applix Words</ProductName> and then import the RTF file.
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+Print out the existing Table of Contents, to mark up in the following few steps.
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+Insert figures into the document. Center each figure on the page using the centering margins button.
+
+<Para>
+Not all documents have figures. You can grep the SGML source files for the string <Quote>Graphic</Quote>
+to identify those parts of the documentation which may have figures. A few figures are replicated in
+various parts of the documentation.
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+Work through the document, adjusting page breaks and table column widths.
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+If a bibliography is present, Applix Words seems to mark all remaining text after the first title
+as having an underlined attribute. Select all remaining text, turn off underlining using the underlining button,
+then explicitly underline each document and book title.
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+Work through the document, marking up the ToC hardcopy with the actual page number of each ToC entry.
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+Replace the right-justified incorrect page numbers in the ToC with correct values. This only takes a few
+minutes per document.
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+Save the document as native Applix Words format to allow easier last minute editing later.
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+Export the document to a file in Postscript format.
+</Para>
+</Step>
+
+<Step Performance="required">
+<Para>
+Compress the Postscript file using <Application>gzip</Application>. Place the compressed file into the
+<FileName>doc</FileName> directory.
+</Para>
+</Step>
+</Procedure>
+
+</Sect2>
+</Sect1>
+
+<Sect1>
+<Title>Alternate Toolsets</Title>
+
+<Para>
+The current stable release of <ProductName>sgml-tools</ProductName> is version 1.0.4.
+The v1.0 release includes some restructuring of the directory tree
+to more easily support additional document styles, possibly including <ProductName>DocBook</ProductName>.
+The only version of <ProductName>sgml-tools</ProductName> evaluated for <ProductName>Postgres</ProductName> was v0.99.0. 
+</Para>
+
+<Sect2>
+<Title><ProductName>sgml-tools</ProductName></Title>
+
+<Para>
+Install
+<ProductName>sgml-tools-0.99.0</ProductName>
+</Para>
+
+<Para>
+Apply 
+<ULink url="http://alumni.caltech.edu/~lockhart/postgres/linuxdoc/sgml-tools-patches-0.99.0.tar.gz">
+<ProductName>sgml-tools-patches</ProductName>
+</ULink>
+to the linuxdoc styles. These patches fix small problems with
+table formatting and with figure file names on conversion to postscript or html.
+</Para>
+
+<Sect2>
+<Title><ProductName>sgml2latex</ProductName></Title>
+
+<Para>
+The current stable release of <ProductName>sgml2latex</ProductName> is version 1.4.
+I have misplaced the original reference
+for this package, so will temporarily post it with this example.
+</Para>
+
+<Para>
+Install <ULink url="http://alumni.caltech.edu/~lockhart/postgres/linuxdoc/sgml2latex-format.1.4.tar.gz">
+<ProductName>sgml2latex</ProductName>
+</ULink>.
+</Para>
+
+<Sect2>
+<Title><ProductName>latex</ProductName></Title>
+
+<Para>
+Get and install <ProductName>texmf</ProductName>, <ProductName>teTeX</ProductName>,
+ or another package providing full tex/latex functionality.
+</Para>
+
+<Para>
+Add the 
+<ULink url="http://alumni.caltech.edu/~lockhart/postgres/linuxdoc/latex-styles-0.99.0.tar.gz">required styles</ULink>
+ linuxdoc-sgml.sty, linuxdoc-sgml-a4.sty isolatin.sty, qwertz.sty, and null.sty
+ to texmf/tex/latex/tools/ or the appropriate area.
+<ProgramListing>
+% cat latex-styles-0.99.0.tar.gz | (cd texmf/tex/latex/tools/; tar zxvf -)
+</ProgramListing>
+
+Run <ProductName>texhash</ProductName> to update the tex database.
+</Para>
+
+
+</Appendix>

@@ -1,0 +1,294 @@
+<Chapter>
+<Title>Managing a Database</Title>
+
+<Para>
+<Note>
+<Para>
+This section is currently a thinly disguised copy of the Tutorial. Needs to be augmented.
+- thomas 1998-01-12
+</Para>
+</Note>
+</Para>
+
+<Para>
+Although the <FirstTerm>site administrator</FirstTerm> is responsible for overall management of the
+<ProductName>Postgres</ProductName> installation, some databases within the
+installation may be managed by another person, designated the <FirstTerm>database administrator</FirstTerm>.
+This assignment of responsibilities occurs when a database is created. A user may be assigned
+explicit privileges to create databases and/or to create new users. A user assigned both privileges
+can perform most administrative task within <ProductName>Postgres</ProductName>, but will
+not by default have the same operating system privileges as the site administrator.
+</Para>
+
+<Para>
+The Database Administrator's Guide covers these topics in more detail.
+</Para>
+
+<Sect1>
+<Title>Database Creation</Title>
+
+<Para>
+Databases are created by the <Command>create database</Command> issued from
+within <ProductName>Postgres</ProductName>. <Application>createdb</Application> is a command-line
+utility provided to give the same functionality from outside <ProductName>Postgres</ProductName>.
+</Para>
+
+<Para>
+The <ProductName>Postgres</ProductName> backend must be running for either method
+to succeed, and the user issuing the command must be the <ProductName>Postgres</ProductName>
+<FirstTerm>superuser</FirstTerm> or have been assigned database creation privileges by the
+superuser.
+</Para>
+
+<Para>
+To create a new database named <Quote>mydb</Quote> from the command line, type
+<ProgramListing>
+% createdb mydb
+</ProgramListing>
+
+and to do the same from within <Application>psql</Application> type
+<ProgramListing>
+* CREATE DATABASE mydb;
+</ProgramListing>
+</Para>
+
+<Para>
+If you do not have the privileges required to create a database, you will see
+the following:
+<ProgramListing>
+% createdb mydb
+WARN:user "your username" is not allowed to create/destroy databases
+createdb: database creation failed on mydb.
+</ProgramListing>
+</Para>
+
+<Para>
+<ProductName>Postgres</ProductName>  allows  you to create any number of databases
+at a  given  site  and  you  automatically  become  the
+database  administrator  of  the database you just created.  
+Database names must  have  an  alphabetic  first
+character and are limited to 32 characters in length.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Alternate Database Locations</Title>
+
+<Para>
+It is possible to create a database in a location other than the default
+location for the installation. Remember that all database access actually
+occurs through the database backend, so that any location specified must
+be accessible by the backend.
+
+<Para>
+ Either an absolute path name or an environment variable
+may be specified as a location.
+Any environment variable specifying an alternate location must have
+been defined before the backend was started.
+Consult with the site administrator
+regarding preconfigured alternate database locations.
+
+<Note>
+<Para>
+ The environment variable style of specification
+is to be preferred since it allows the site administrator more flexibility in
+managing disk storage.
+</Para>
+</Note>
+
+<Para>
+For security and integrity reasons,
+any path or environment variable specified has some
+additional path fields appended.
+
+<Para>
+Alternate database locations must be prepared by running <Application>initlocation</Application>.
+
+<Para>
+To create a data storage area in <FileName>/alt/postgres/data</FileName>, ensure
+that <FileName>/alt/postgres</FileName> already exists.
+From the command line, type
+<ProgramListing>
+% initlocation /alt/postgres/data
+Creating Postgres database system directory /alt/postgres/data
+
+Creating Postgres database system directory /alt/postgres/data/base
+
+</ProgramListing>
+
+<Para>
+To do the same using an environment variable PGDATA2, type
+<ProgramListing>
+% initlocation $PGDATA2
+Creating Postgres database system directory /alt/postgres/data
+
+Creating Postgres database system directory /alt/postgres/data/base
+
+</ProgramListing>
+
+<Para>
+To create a database in the alternate storage area <FileName>/alt/postgres/data</FileName>
+from the command line,
+type
+<ProgramListing>
+% createdb -D /alt/postgres/data mydb
+</ProgramListing>
+
+or
+
+<ProgramListing>
+% createdb -D PGDATA2 mydb
+</ProgramListing>
+
+and to do the same from within <Application>psql</Application> type
+<ProgramListing>
+* CREATE DATABASE mydb WITH LOCATION = 'PGDATA2';
+</ProgramListing>
+</Para>
+
+<Para>
+If you do not have the privileges required to create a database, you will see
+the following:
+<ProgramListing>
+% createdb mydb
+WARN:user "your username" is not allowed to create/destroy databases
+createdb: database creation failed on mydb.
+</ProgramListing>
+</Para>
+
+<Para>
+If the specified location does not exist or the database backend does not have
+permission to access it or to write to directories under it, you will see
+the following:
+<ProgramListing>
+% createdb -D /alt/postgres/data mydb
+ERROR:  Unable to create database directory /alt/postgres/data/base/mydb
+createdb: database creation failed on mydb.
+</ProgramListing>
+
+</Sect1>
+
+<Sect1>
+<Title>Accessing a Database</Title>
+
+<Para>
+     Once you have constructed a database, you can access it
+     by:
+
+<ItemizedList Mark="bullet" Spacing="compact">
+<ListItem>
+<Para>
+running the <ProductName>Postgres</ProductName>  terminal  monitor  programs  (e.g.
+        <Application>psql</Application>) which allows you to interactively
+        enter, edit, and execute <Acronym>SQL</Acronym> commands.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+      writing a  C  program  using  the  LIBPQ  subroutine
+        library.   This  allows  you  to submit <Acronym>SQL</Acronym> commands
+        from C and get answers and status messages  back  to
+        your  program.   This interface is discussed further
+        in section ??.
+</Para>
+</ListItem>
+</ItemizedList>
+
+You might want to start up <Application>psql</Application>, to try out the examples in this manual.
+ It can be activated for the <Database>mydb</Database>
+     database by typing the command:
+<ProgramListing>
+% psql mydb
+</ProgramListing>
+
+     You will be greeted with the following message:
+<ProgramListing>
+Welcome to the POSTGRESQL interactive sql monitor:
+  Please read the file COPYRIGHT for copyright terms of POSTGRESQL
+
+   type \? for help on slash commands
+   type \q to quit
+   type \g or terminate with semicolon to execute query
+ You are currently connected to the database: template1
+
+mydb=>
+</ProgramListing>
+</Para>
+
+<Para>
+This prompt indicates that the terminal monitor is listening
+  to you and that you can type <Acronym>SQL</Acronym> queries into a
+     workspace maintained by the terminal monitor.
+     The <Application>psql</Application> program responds to escape  codes  that  begin
+     with  the  backslash  character, <Quote>\</Quote>  For example, you
+     can get help on the syntax of various
+ <ProductName>Postgres</ProductName> <Acronym>SQL</Acronym> commands by typing:
+<ProgramListing>
+mydb=> \h
+</ProgramListing>
+
+     Once  you  have finished entering your queries into the
+     workspace, you can pass the contents of  the  workspace
+     to the <ProductName>Postgres</ProductName> server by typing:
+<ProgramListing>
+mydb=> \g
+</ProgramListing>
+
+     This  tells  the  server  to process the query.  If you
+     terminate your query with a semicolon, the  <Quote>\g</Quote> is  not
+     necessary.   <Application>psql</Application> will automatically process semicolon terminated queries.
+     To read queries from a file,  say  myFile,  instead  of
+     entering them interactively, type:
+<ProgramListing>
+mydb=> \i fileName
+</ProgramListing>
+
+     To get out of <Application>psql</Application> and return to UNIX, type
+<ProgramListing>
+mydb=> \q
+</ProgramListing>
+
+     and  <Application>psql</Application>  will  quit  and  return  you to your command
+     shell. (For more escape codes, type <Command>\h</Command> at  the  monitor
+     prompt.)
+     White  space  (i.e.,  spaces, tabs and newlines) may be
+     used freely in <Acronym>SQL</Acronym> queries.  Single-line comments  are  denoted  by
+     <Quote>--</Quote>.   Everything  after the dashes up to the end of the
+     line is ignored. Multiple-line comments, and comments within a line,
+     are denoted by <Quote>/* ... */</Quote>
+</Para>
+
+<Sect2>
+<Title>Database Privileges</Title>
+
+<Para>
+</Sect2>
+
+<Sect2>
+<Title>Table Privileges</Title>
+
+<Para>
+TBD
+</Para>
+
+</Sect2>
+
+</Sect1>
+     
+<Sect1>
+<Title>Destroying a Database</Title>
+
+<Para>
+     If you are the database administrator for the  database
+     <Database>mydb</Database>,  you can destroy it using the following UNIX command:
+<ProgramListing>
+% destroydb mydb
+</ProgramListing>
+     This action physically removes all of  the  UNIX  files
+     associated  with  the database and cannot be undone, so
+     this should only be done with a  great  deal  of  forethought.
+</Para>
+</Sect1>
+
+</Chapter>

@@ -1,0 +1,304 @@
+<Chapter>
+<Title>Advanced <ProductName>Postgres</ProductName> <Acronym>SQL</Acronym> Features</Title>
+
+<Para>
+     Having covered the basics  of  using  <ProductName>Postgres</ProductName>  <Acronym>SQL</Acronym>  to
+     access your data, we will now discuss those features of
+     <ProductName>Postgres</ProductName> that distinguish  it  from  conventional  data
+     managers.   These  features  include  inheritance, time
+     travel and non-atomic  data  values  (array-  and  
+     set-valued attributes).
+     Examples   in   this  section  can  also  be  found  in
+     <FileName>advance.sql</FileName> in the tutorial directory.
+(Refer to <XRef LinkEnd="QUERY"> for how to use it.)
+</Para>
+
+<Sect1>
+<Title>Inheritance</Title>
+
+<Para>
+     Let's create two classes. The capitals  class  contains
+     state  capitals  which  are also cities. Naturally, the
+     capitals class should inherit from cities.
+     
+<ProgramListing>
+CREATE TABLE cities (
+    name            text,
+    population      float,
+    altitude        int            -- (in ft)
+);
+
+CREATE TABLE capitals (
+    state           char2
+) INHERITS (cities);
+</ProgramListing>
+
+     In this case, an  instance  of  capitals  <FirstTerm>inherits</FirstTerm>  all
+     attributes  (name,  population,  and altitude) from its
+     parent, cities.  The type  of  the  attribute  name  is
+     <Type>text</Type>,  a  native  <ProductName>Postgres</ProductName>  type  for variable length
+     ASCII strings.  The type of the attribute population is
+     <Type>float</Type>,  a  native <ProductName>Postgres</ProductName> type for double precision
+     floating point numbers.  State capitals have  an  extra
+     attribute, state, that shows their state.  In <ProductName>Postgres</ProductName>,
+     a  class  can inherit from zero or more other classes,
+     and a query can reference either  all  instances  of  a
+     class  or  all  instances  of  a  class plus all of its
+     descendants.
+<Note>
+<Para>
+The inheritance hierarchy is a  directed  acyclic graph.
+</Para>
+</Note>
+For example, the  following  query  finds
+     all  the cities that are situated at an attitude of 500ft or higher:
+     
+<ProgramListing>
+SELECT name, altitude
+    FROM cities
+    WHERE altitude &gt; 500;
+
++----------+----------+
+|name      | altitude |
++----------+----------+
+|Las Vegas | 2174     |
++----------+----------+
+|Mariposa  | 1953     |
++----------+----------+
+</ProgramListing>         
+
+<Para>
+     On the other hand, to find the  names  of  all  cities,
+     including  state capitals, that are located at an altitude 
+     over 500ft, the query is:
+
+<ProgramListing>
+SELECT c.name, c.altitude
+    FROM cities* c
+    WHERE c.altitude > 500;
+</ProgramListing>
+
+     which returns:
+     
+<ProgramListing>
++----------+----------+
+|name      | altitude |
++----------+----------+
+|Las Vegas | 2174     |
++----------+----------+
+|Mariposa  | 1953     |
++----------+----------+
+|Madison   | 845      |
++----------+----------+
+</ProgramListing>
+
+     Here the <Quote>*</Quote> after cities indicates that the query should
+     be  run over cities and all classes below cities in the
+     inheritance hierarchy.  Many of the  commands  that  we
+     have  already discussed (<Command>select</Command>, <Command>update</Command> and <Command>delete</Command>)
+     support this <Quote>*</Quote> notation, as do others, like <Command>alter</Command>.
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Non-Atomic Values</Title>
+
+<Para>
+     One  of  the tenets of the relational model is that the
+     attributes of a relation are atomic.  <ProductName>Postgres</ProductName> does not
+     have  this  restriction; attributes can themselves contain 
+     sub-values that can be  accessed  from  the  query
+     language.   For example, you can create attributes that
+     are arrays of base types.
+
+<Sect2>
+<Title>Arrays</Title>
+
+<Para>
+     <ProductName>Postgres</ProductName> allows attributes of an instance to be defined
+     as  fixed-length  or  variable-length multi-dimensional
+     arrays. Arrays of any base type  or  user-defined  type
+     can  be created. To illustrate their use, we first create a 
+     class with arrays of base types.
+     
+<ProgramListing>
+CREATE TABLE SAL_EMP (
+    name            text,
+    pay_by_quarter  int4[],
+    schedule        char16[][]
+);
+</ProgramListing>
+</Para>
+
+<Para>
+     The above query will create a class named SAL_EMP  with
+     a  <FirstTerm>text</FirstTerm>  string (name), a one-dimensional array of <FirstTerm>int4</FirstTerm>
+     (pay_by_quarter),  which  represents   the   employee's
+     salary by quarter and a two-dimensional array of <FirstTerm>char16</FirstTerm>
+     (schedule),  which  represents  the  employee's  weekly
+     schedule.   Now  we  do  some  <FirstTerm>INSERTS</FirstTerm>s; note that when
+     appending to an array, we  enclose  the  values  within
+     braces  and  separate  them  by commas.  If you know <FirstTerm>C</FirstTerm>,
+     this is not unlike the syntax for  initializing  structures.
+     
+<ProgramListing>
+INSERT INTO SAL_EMP
+    VALUES ('Bill',
+    '{10000, 10000, 10000, 10000}',
+    '{{"meeting", "lunch"}, {}}');
+
+INSERT INTO SAL_EMP
+    VALUES ('Carol',
+    '{20000, 25000, 25000, 25000}',
+    '{{"talk", "consult"}, {"meeting"}}');
+</ProgramListing>
+
+     By  default,  <ProductName>Postgres</ProductName>  uses  the "one-based" numbering
+     convention for arrays -- that is, an array  of  n  elements starts with array[1] and ends with array[n].
+     Now,  we  can  run  some queries on SAL_EMP.  First, we
+     show how to access a single element of an  array  at  a
+     time.   This query retrieves the names of the employees
+     whose pay changed in the second quarter:
+     
+<ProgramListing>
+SELECT name
+    FROM SAL_EMP
+    WHERE SAL_EMP.pay_by_quarter[1] &lt;&gt;
+    SAL_EMP.pay_by_quarter[2];
+
++------+
+|name  |
++------+
+|Carol |
++------+
+</ProgramListing>
+</Para>
+
+<Para>
+     This query retrieves  the  third  quarter  pay  of  all
+     employees:
+     
+<ProgramListing>
+SELECT SAL_EMP.pay_by_quarter[3] FROM SAL_EMP;
+
+
++---------------+
+|pay_by_quarter |
++---------------+
+|10000          |
++---------------+
+|25000          |
++---------------+
+</ProgramListing>
+</Para>
+
+<Para>
+     We  can  also  access  arbitrary slices of an array, or
+     subarrays.  This query  retrieves  the  first  item  on
+     Bill's schedule for the first two days of the week.
+     
+<ProgramListing>
+SELECT SAL_EMP.schedule[1:2][1:1]
+    FROM SAL_EMP
+    WHERE SAL_EMP.name = 'Bill';
+
++-------------------+
+|schedule           |
++-------------------+
+|{{"meeting"},{""}} |
++-------------------+
+</ProgramListing>
+</Para>
+
+</Sect1>
+
+<Sect1>
+<Title>Time Travel</Title>
+
+<Para>
+As of <ProductName>Postgres</ProductName> v6.2, <Emphasis>time travel is no longer supported</Emphasis>. There are
+several reasons for this: performance impact, storage size, and a pg_time file which grows
+toward infinite size in a short period of time.
+</Para>
+
+<Para>
+New features such as triggers allow one to mimic the behavior of time travel when desired, without
+incurring the overhead when it is not needed (for most users, this is most of the time).
+See examples in the <FileName>contrib</FileName> directory for more information.
+</Para>
+
+<Note>
+<Title>Time travel is deprecated</Title>
+<Para>
+The remaining text in this section is retained only until it can be rewritten in the context
+of new techniques to accomplish the same purpose. Volunteers? - thomas 1998-01-12
+</Para>
+</Note>
+
+<Para>
+     <ProductName>Postgres</ProductName> supports the notion of time travel.  This feature 
+     allows a user  to  run  historical  queries.   For
+     example,  to  find  the  current population of Mariposa
+     city, one would query:
+     
+<ProgramListing>
+SELECT * FROM cities WHERE name = 'Mariposa';
+
++---------+------------+----------+
+|name     | population | altitude |
++---------+------------+----------+
+|Mariposa | 1320       | 1953     |
++---------+------------+----------+
+</ProgramListing>
+
+     <ProductName>Postgres</ProductName> will automatically find the version  of  Mariposa's 
+     record valid at the current time.
+     One can also give a time range.  For example to see the
+     past and present populations  of  Mariposa,  one  would
+     query:
+     
+<ProgramListing>
+SELECT name, population
+    FROM cities['epoch', 'now']
+    WHERE name = 'Mariposa';
+</ProgramListing>
+
+     where  "epoch"  indicates  the  beginning of the system
+     clock.
+<Note>
+<Para>
+On UNIX systems, this is always  midnight,  January  1, 1970 GMT.
+</Para>
+</Note>
+</Para>
+
+     If  you  have  executed all of the examples so
+     far, then the above query returns:
+     
+<ProgramListing>
++---------+------------+
+|name     | population |
++---------+------------+
+|Mariposa | 1200       |
++---------+------------+
+|Mariposa | 1320       |
++---------+------------+
+</ProgramListing>
+
+<Para>
+     The default beginning of a time range is  the  earliest
+     time representable by the system and the default end is
+     the current time; thus, the above  time  range  can  be
+     abbreviated as ``[,].''
+</Para>
+
+<Sect1>
+<Title>More Advanced Features</Title>
+
+<Para>
+<ProductName>Postgres</ProductName> has many features not touched upon in this
+tutorial introduction, which has been oriented toward newer users of <Acronym>SQL</Acronym>.
+These are discussed in more detail in both the User's and Programmer's Guides.
+
+</Chapter>

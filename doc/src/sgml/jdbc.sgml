@@ -1,0 +1,8 @@
+<Chapter>
+<Title>JDBC Interface</Title>
+
+<Para>
+There is a JDBC interface available for Postgres. It is documented elsewhere using
+the accepted tool for Java-language code.
+
+</Chapter>
