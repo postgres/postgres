@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.87 2001/02/02 18:21:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.88 2001/02/10 04:07:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,8 +222,9 @@ tas(volatile slock_t *lock)
 	register int rv;
 
 	__asm__	__volatile__(
-		"	tas	%1		\n"
-		"	sne	%0		\n"
+		"	clrl	%0		\n"
+		"	tas		%1		\n"
+		"	sne		%0		\n"
 :		"=d"(rv), "=m"(*lock)
 :		"1"(*lock)
 :		"cc");
