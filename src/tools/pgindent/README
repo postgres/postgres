@@ -23,7 +23,7 @@ for the second bug in:
 	/src/tools/pgindent/indent.bsd.patch
 
 Even with the workaround, installation of the patch produces better
-output.
+output.  You can get a patched BSD indent from ftp://ftp.postgresql.org/pub/dev.
 
 GNU indent, version 2.2.6, has several problems, and is not recommended.
 These bugs become pretty major when you are doing >400k lines of code.
