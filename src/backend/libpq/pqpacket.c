@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.1.1.1 1996/07/09 06:21:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.2 1996/11/06 08:48:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,12 +48,10 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "postgres.h"
-#include "miscadmin.h" 
-#include "utils/elog.h"
-#include "storage/ipc.h"
-#include "libpq/pqcomm.h"	/* where the declarations go */
-#include "libpq/libpq.h"
+#include <postgres.h>
+#include <miscadmin.h>
+#include <storage/ipc.h>
+#include <libpq/libpq.h>
 
 /*
  * PacketReceive -- receive a packet on a port.

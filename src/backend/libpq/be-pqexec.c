@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.1.1.1 1996/07/09 06:21:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.2 1996/11/06 08:48:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,19 +20,22 @@
  * NOTES
  *	These routines are compiled into the postgres backend.
  */
-#include "postgres.h"
+#include <postgres.h>
 
-#include "nodes/pg_list.h"
-#include "tcop/dest.h"
-#include "tcop/fastpath.h"
-#include "tcop/tcopprot.h"
-#include "lib/dllist.h"
-#include "libpq/libpq-be.h"
-#include "fmgr.h"
-#include "utils/exc.h"
-#include "utils/builtins.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
+#include <nodes/pg_list.h>
+#include <tcop/dest.h>
+#include <tcop/fastpath.h>
+#include <tcop/tcopprot.h>
+#include <lib/dllist.h>
+#include <libpq/libpq-be.h>
+#include <fmgr.h>
+#include <utils/exc.h>
+#include <utils/builtins.h>
+#ifndef HAVE_MEMMOVE
+# include <regex/utils.h>
+#else
+# include <string.h>
+#endif
 
 /* ----------------------------------------------------------------
  *			PQ interface routines

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/util.c,v 1.2 1996/10/31 10:37:53 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/util.c,v 1.3 1996/11/06 08:48:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,10 @@
 #include <stdio.h>	/* for sprintf() */
 #include <string.h>
 
-#include "postgres.h"
-#include "lib/dllist.h"
-#include "libpq/libpq.h"	/* where the declarations go */
-#include "utils/exc.h"
-#include "utils/palloc.h"
+#include <postgres.h>
+#include <lib/dllist.h>
+#include <libpq/libpq.h>	/* where the declarations go */
+#include <utils/exc.h>
 
 
 /* ----------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.2 1996/11/06 06:48:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.3 1996/11/06 08:48:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,25 +30,22 @@
  *
  */
 #include <string.h>
-#include "postgres.h"
 
-#include "lib/dllist.h"
-#include "libpq/libpq-be.h"
+#include <postgres.h>
 
-#include "access/heapam.h"
-#include "access/htup.h"
-#include "storage/buf.h"
-#include "utils/memutils.h"
-#include "utils/palloc.h"
-#include "fmgr.h"
-#include "utils/mcxt.h"
-#include "utils/elog.h"
-#include "utils/exc.h"
-
-#include "utils/syscache.h"
-#include "catalog/pg_type.h"
-#include "catalog/catalog.h"
-#include "access/printtup.h"
+#include <lib/dllist.h>
+#include <libpq/libpq-be.h>
+#include <access/heapam.h>
+#include <access/htup.h>
+#include <storage/buf.h>
+#include <utils/memutils.h>
+#include <fmgr.h>
+#include <utils/mcxt.h>
+#include <utils/exc.h>
+#include <utils/syscache.h>
+#include <catalog/pg_type.h>
+#include <catalog/catalog.h>
+#include <access/printtup.h>
 
 /* ----------------
  *	backend portal stack for recursive PQexec calls

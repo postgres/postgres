@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.2 1996/10/31 10:37:51 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.3 1996/11/06 08:48:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,12 +47,13 @@
  *	see utils/mmgr/portalmem.c for why. -cim 2/22/91
  *
  */
+#include <string.h>
 #include <sys/types.h>
-#include "postgres.h"
 
-#include "libpq/libpq.h"		/* where the declarations go */
-#include "utils/exc.h"
-#include "utils/palloc.h"
+#include <postgres.h>
+
+#include <libpq/libpq.h>		/* where the declarations go */
+#include <utils/exc.h>
 
 PortalEntry** portals = (PortalEntry**) NULL;
 size_t portals_array_size = 0;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.6 1996/11/06 06:48:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.7 1996/11/06 08:48:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,13 +62,13 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "postgres.h"
-#include "miscadmin.h"
+#include <postgres.h>
+#include <miscadmin.h>
 
-#include "libpq/auth.h"
-#include "libpq/libpq.h"
-#include "libpq/libpq-be.h"
-#include "libpq/hba.h"
+#include <libpq/auth.h>
+#include <libpq/libpq.h>
+#include <libpq/libpq-be.h>
+#include <libpq/hba.h>
 
 /*----------------------------------------------------------------
  * common definitions for generic fe/be routines
@@ -129,7 +129,7 @@ static n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
  *----------------------------------------------------------------
  */
 
-#include "krb.h"
+#include <krb.h>
 
 #ifdef FRONTEND
 /* moves to src/libpq/fe-auth.c  */
@@ -228,7 +228,7 @@ return(STATUS_ERROR);
  *----------------------------------------------------------------
  */
 
-#include "krb5/krb5.h"
+#include <krb5/krb5.h>
 
 /*
  * pg_an_to_ln -- return the local name corresponding to an authentication

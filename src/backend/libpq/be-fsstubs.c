@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.3 1996/10/31 10:37:49 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.4 1996/11/06 08:48:25 scrappy Exp $
  *
  * NOTES
  *    This should be moved to a more appropriate place.  It is here
@@ -21,21 +21,23 @@
  *    closed.
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
-#include "lib/dllist.h"
-#include "libpq/libpq.h"
-#include "libpq/libpq-fs.h"
-#include "nodes/nodes.h"
-#include "utils/memutils.h"
-#include "lib/fstack.h"
-#include "utils/mcxt.h"
-#include "utils/palloc.h"
 
-#include "storage/fd.h"		/* for O_ */
-#include "storage/large_object.h"
+#include <fcntl.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#include "utils/elog.h"
-#include "libpq/be-fsstubs.h"
+#include <postgres.h>
+
+#include <lib/dllist.h>
+#include <libpq/libpq.h>
+#include <libpq/libpq-fs.h>
+#include <nodes/nodes.h>
+#include <utils/memutils.h>
+#include <lib/fstack.h>
+#include <utils/mcxt.h>
+#include <storage/fd.h>		/* for O_ */
+#include <storage/large_object.h>
+#include <libpq/be-fsstubs.h>
 
 /*#define FSDB 1*/
 #define MAX_LOBJ_FDS 256

@@ -4,14 +4,15 @@
 #    Makefile for libpq subsystem (backend half of libpq interface)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.2 1996/10/31 10:37:47 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.3 1996/11/06 08:48:21 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
 
-INCLUDE_OPT = -I../port/$(PORTNAME) \
+INCLUDE_OPT = -I.. \
+              -I../port/$(PORTNAME) \
               -I../../include
 
 CFLAGS+=$(INCLUDE_OPT)
