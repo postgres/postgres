@@ -1,9 +1,10 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.6 2001/02/24 12:40:27 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.7 2001/03/10 16:05:35 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
 <!ENTITY % output-html          "IGNORE">
 <!ENTITY % output-print         "IGNORE">
+<!ENTITY % output-text          "IGNORE">
 
 <![ %output-html; [
 <!ENTITY dbstyle PUBLIC "-//Norman Walsh//DOCUMENT DocBook HTML Stylesheet//EN" CDATA DSSSL>
@@ -11,6 +12,10 @@
 
 <![ %output-print; [
 <!ENTITY dbstyle PUBLIC "-//Norman Walsh//DOCUMENT DocBook Print Stylesheet//EN" CDATA DSSSL>
+]]>
+
+<![ %output-text; [
+<!ENTITY dbstyle PUBLIC "-//Norman Walsh//DOCUMENT DocBook HTML Stylesheet//EN" CDATA DSSSL>
 ]]>
 
 ]>
@@ -22,7 +27,6 @@
 (define pgsql-docs-list "pgsql-docs@postgresql.org")
 
 (define %refentry-xref-manvolnum% #f)
-(define %section-autolabel% #t)
 (define %callout-graphics% #f)
 
 (define %content-title-end-punct% 
@@ -36,6 +40,7 @@
 <![ %output-html; [
 ;; customize the html stylesheet
 
+(define %section-autolabel% #t)
 (define %generate-legalnotice-link% #t)
 (define %html-ext%              ".html")
 (define %link-mailto-url%       (string-append "mailto:" pgsql-docs-list))
@@ -58,12 +63,23 @@
 <![ %output-print; [
 ;; customize the print stylesheet
 
+(define %section-autolabel%     #t)
 (define %default-quadding%      'justify)
 (define bop-footnotes           #t)
 (define %hyphenation%
   (if tex-backend #t #f))
 
 ]]> <!-- %output-print -->
+
+<![ %output-text; [
+;; customize HTML stylesheet to be suitable for dumping plain text
+;; (for INSTALL file)
+
+(define %section-autolabel% #f)
+(define %chapter-autolabel% #f)
+(define $generate-chapter-toc$ (lambda () #f))
+
+]]> <!-- %output-text -->
 
   </style-specification-body>
  </style-specification>
