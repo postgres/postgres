@@ -26,7 +26,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.52 2003/06/24 23:14:46 momjian Exp $
+ * $Id: pg_opclass.h,v 1.53 2003/06/25 21:30:32 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -87,8 +87,6 @@ typedef FormData_pg_opclass *Form_pg_opclass;
  */
 
 DATA(insert OID =  421 (	403		abstime_ops		PGNSP PGUID  702 t 0 ));
-DATA(insert OID =  397 (	403		array_ops		PGNSP PGUID 2277 t 0 ));
-#define ARRAY_BTREE_OPS_OID 397
 DATA(insert OID =  422 (	402		bigbox_ops		PGNSP PGUID  603 f 0 ));
 DATA(insert OID =  423 (	403		bit_ops			PGNSP PGUID 1560 t 0 ));
 DATA(insert OID =  424 (	403		bool_ops		PGNSP PGUID   16 t 0 ));

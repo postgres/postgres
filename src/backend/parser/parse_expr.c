@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.149 2003/06/24 23:14:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.150 2003/06/25 21:30:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,7 +436,6 @@ transformExpr(ParseState *pstate, Node *expr)
 					sublink->operName = NIL;
 					sublink->operOids = NIL;
 					sublink->useOr = FALSE;
-					sublink->isExpr = FALSE;
 				}
 				else if (sublink->subLinkType == EXPR_SUBLINK ||
 						 sublink->subLinkType == ARRAY_SUBLINK)
@@ -464,7 +463,6 @@ transformExpr(ParseState *pstate, Node *expr)
 					sublink->operName = NIL;
 					sublink->operOids = NIL;
 					sublink->useOr = FALSE;
-					sublink->isExpr = FALSE;
 				}
 				else
 				{
@@ -540,30 +538,10 @@ transformExpr(ParseState *pstate, Node *expr)
 						 * here, because make_subplan() will insert type
 						 * coercion calls if needed.
 						 */
-						if (!sublink->isExpr)
-						{
-							optup = oper(op,
-										 exprType(lexpr),
-										 exprType((Node *) tent->expr),
-										 false);
-						}
-						else
-						{
-							Oid		exprtype = exprType((Node *) tent->expr);
-							Oid		elemtype = get_element_type(exprtype);
-
-							if (elemtype != InvalidOid)
-								optup = oper(op,
-											 exprType(lexpr),
-											 elemtype,
-											 false);
-							else
-								optup = oper(op,
-											 exprType(lexpr),
-											 exprtype,
-											 false);
-						}
-
+						optup = oper(op,
+									 exprType(lexpr),
+									 exprType((Node *) tent->expr),
+									 false);
 						opform = (Form_pg_operator) GETSTRUCT(optup);
 
 						if (opform->oprresult != BOOLOID)
@@ -765,7 +743,7 @@ transformExpr(ParseState *pstate, Node *expr)
 						ArrayExpr  *e = (ArrayExpr *) lfirst(element);
 
 						if (!IsA(e, ArrayExpr))
-							elog(ERROR, "Multidimensional ARRAY[] must be built from nested array expressions");
+							elog(ERROR, "Multi-dimensional ARRAY[] must be built from nested array expressions");
 						if (ndims == 0)
 							ndims = e->ndims;
 						else if (e->ndims != ndims)

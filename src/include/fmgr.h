@@ -11,14 +11,13 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.28 2003/06/24 23:14:46 momjian Exp $
+ * $Id: fmgr.h,v 1.29 2003/06/25 21:30:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef FMGR_H
 #define FMGR_H
 
-#include "nodes/nodes.h"
 
 /*
  * All functions that can be called directly by fmgr must have this signature.
@@ -373,14 +372,14 @@ extern Datum OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
 				 Datum arg6, Datum arg7, Datum arg8,
 				 Datum arg9);
 
+
 /*
  * Routines in fmgr.c
  */
 extern Pg_finfo_record *fetch_finfo_record(void *filehandle, char *funcname);
-extern Oid fmgr_internal_function(const char *proname);
-extern Oid get_fn_expr_rettype(FunctionCallInfo fcinfo);
-extern Oid get_fn_expr_argtype(FunctionCallInfo fcinfo, int argnum);
-extern Oid get_fn_expr_functype(FunctionCallInfo fcinfo);
+extern Oid	fmgr_internal_function(const char *proname);
+extern Oid	get_fn_expr_rettype(FunctionCallInfo fcinfo);
+extern Oid	get_fn_expr_argtype(FunctionCallInfo fcinfo, int argnum);
 
 /*
  * Routines in dfmgr.c

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.69 2003/06/24 23:14:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.70 2003/06/25 21:30:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1672,30 +1672,4 @@ get_fn_expr_argtype(FunctionCallInfo fcinfo, int argnum)
 		return InvalidOid;
 
 	return exprType((Node *) nth(argnum, args));
-}
-
-/*
- * Get the OID of the function or operator
- *
- * Returns InvalidOid if information is not available
- */
-Oid
-get_fn_expr_functype(FunctionCallInfo fcinfo)
-{
-	Node   *expr;
-
-	/*
-	 * can't return anything useful if we have no FmgrInfo or if
-	 * its fn_expr node has not been initialized
-	 */
-	if (!fcinfo || !fcinfo->flinfo || !fcinfo->flinfo->fn_expr)
-		return InvalidOid;
-
-	expr = fcinfo->flinfo->fn_expr;
-	if (IsA(expr, FuncExpr))
-		return ((FuncExpr *) expr)->funcid;
-	else if (IsA(expr, OpExpr))
-		return ((OpExpr *) expr)->opno;
-	else
-		return InvalidOid;
 }

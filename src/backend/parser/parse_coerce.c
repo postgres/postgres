@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.99 2003/06/25 04:32:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.100 2003/06/25 21:30:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -859,11 +859,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 	/* Get the element type based on the array type, if we have one */
 	if (OidIsValid(array_typeid))
 	{
-		if (array_typeid != ANYARRAYOID)
-			array_typelem = get_element_type(array_typeid);
-		else
-			array_typelem = ANYELEMENTOID;
-
+		array_typelem = get_element_type(array_typeid);
 		if (!OidIsValid(array_typelem))
 			elog(ERROR, "Argument declared ANYARRAY is not an array: %s",
 				 format_type_be(array_typeid));
@@ -923,11 +919,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 	{
 		if (!OidIsValid(array_typeid))
 		{
-			if (elem_typeid != ANYELEMENTOID)
-				array_typeid = get_array_type(elem_typeid);
-			else
-				array_typeid = ANYARRAYOID;
-
+			array_typeid = get_array_type(elem_typeid);
 			if (!OidIsValid(array_typeid))
 				elog(ERROR, "Cannot find array type for datatype %s",
 					 format_type_be(elem_typeid));
@@ -1177,11 +1169,6 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 	/* Somewhat-fast path for domain -> base type case */
 	if (srctype == targettype)
 		return true;
-
-	/* Last of the fast-paths: check for matching polymorphic arrays */
-	if (targettype == ANYARRAYOID)
-		if (get_element_type(srctype) != InvalidOid)
-			return true;
 
 	/* Else look in pg_cast */
 	tuple = SearchSysCache(CASTSOURCETARGET,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.209 2003/06/24 23:14:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.210 2003/06/25 21:30:29 momjian Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -616,7 +616,6 @@ _outAggref(StringInfo str, Aggref *node)
 	WRITE_UINT_FIELD(agglevelsup);
 	WRITE_BOOL_FIELD(aggstar);
 	WRITE_BOOL_FIELD(aggdistinct);
-	WRITE_NODE_FIELD(args);
 }
 
 static void
@@ -702,7 +701,6 @@ _outSubLink(StringInfo str, SubLink *node)
 
 	WRITE_ENUM_FIELD(subLinkType, SubLinkType);
 	WRITE_BOOL_FIELD(useOr);
-	WRITE_BOOL_FIELD(isExpr);
 	WRITE_NODE_FIELD(lefthand);
 	WRITE_NODE_FIELD(operName);
 	WRITE_OIDLIST_FIELD(operOids);
@@ -716,12 +714,6 @@ _outSubPlan(StringInfo str, SubPlan *node)
 
 	WRITE_ENUM_FIELD(subLinkType, SubLinkType);
 	WRITE_BOOL_FIELD(useOr);
-	WRITE_BOOL_FIELD(isExpr);
-	WRITE_OID_FIELD(exprtype);
-	WRITE_OID_FIELD(elemtype);
-	WRITE_INT_FIELD(elmlen);
-	WRITE_BOOL_FIELD(elmbyval);
-	WRITE_CHAR_FIELD(elmalign);
 	WRITE_NODE_FIELD(exprs);
 	WRITE_INTLIST_FIELD(paramIds);
 	WRITE_NODE_FIELD(plan);

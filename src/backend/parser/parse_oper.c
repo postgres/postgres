@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.65 2003/06/24 23:14:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.66 2003/06/25 21:30:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,33 +137,6 @@ Operator
 equality_oper(Oid argtype, bool noError)
 {
 	Operator	optup;
-	Oid			elem_type = get_element_type(argtype);
-
-	if (OidIsValid(elem_type))
-	{
-		bool	found = false;
-		/*
-		 * If the datatype is an array, look for an "=" operator for the
-		 * element datatype.  We require it to be an exact or binary-compatible
-		 * match, since most callers are not prepared to cope with adding any
-		 * run-time type coercion steps.
-		 */
-		optup = equality_oper(elem_type, true);
-		if (optup != NULL)
-		{
-			found = true;
-			ReleaseSysCache(optup);
-		}
-
-		if (!found)
-		{
-			if (!noError)
-				elog(ERROR, "Unable to identify an equality operator for " \
-							"array type's element type %s",
-							 format_type_be(elem_type));
-			return NULL;
-		}
-	}
 
 	/*
 	 * Look for an "=" operator for the datatype.  We require it to be
@@ -202,33 +175,6 @@ Operator
 ordering_oper(Oid argtype, bool noError)
 {
 	Operator	optup;
-	Oid			elem_type = get_element_type(argtype);
-
-	if (OidIsValid(elem_type))
-	{
-		bool	found = false;
-		/*
-		 * If the datatype is an array, find the array element type's equality
-		 * operator, and use its lsortop (it *must* be mergejoinable).  We use
-		 * this definition because for sorting and grouping purposes, it's
-		 * important that the equality and ordering operators are consistent.
-		 */
-		optup = ordering_oper(elem_type, true);
-		if (optup != NULL)
-		{
-			found = true;
-			ReleaseSysCache(optup);
-		}
-
-		if (!found)
-		{
-			if (!noError)
-				elog(ERROR, "Unable to identify an ordering operator for " \
-							"array type's element type %s",
-							 format_type_be(elem_type));
-			return NULL;
-		}
-	}
 
 	/*
 	 * Find the type's equality operator, and use its lsortop (it *must*
@@ -269,21 +215,6 @@ equality_oper_funcid(Oid argtype)
 	Oid			result;
 
 	optup = equality_oper(argtype, false);
-	result = oprfuncid(optup);
-	ReleaseSysCache(optup);
-	return result;
-}
-
-/*
- * ordering_oper_funcid - convenience routine for oprfuncid(ordering_oper())
- */
-Oid
-ordering_oper_funcid(Oid argtype)
-{
-	Operator	optup;
-	Oid			result;
-
-	optup = ordering_oper(argtype, false);
 	result = oprfuncid(optup);
 	ReleaseSysCache(optup);
 	return result;

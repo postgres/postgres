@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.89 2003/06/24 23:14:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.90 2003/06/25 21:30:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -427,15 +427,6 @@ aclitemeq(const AclItem *a1, const AclItem *a2)
 		a1->ai_grantor == a2->ai_grantor;
 }
 
-/*
- * user-facing version of aclitemeq() for use as the
- * aclitem equality operator
- */
-Datum
-aclitem_eq(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_BOOL(aclitemeq(PG_GETARG_ACLITEM_P(0), PG_GETARG_ACLITEM_P(1)));
-}
 
 /*
  * acldefault()  --- create an ACL describing default access permissions

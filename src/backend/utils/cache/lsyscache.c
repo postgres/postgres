@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.98 2003/06/25 03:56:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.99 2003/06/25 21:30:32 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -719,40 +719,6 @@ get_func_rettype(Oid funcid)
 }
 
 /*
- * get_func_argtypes
- *		Given procedure id, return the function's argument types.
- *		Also pass back the number of arguments.
- */
-Oid *
-get_func_argtypes(Oid funcid, int *nargs)
-{
-	HeapTuple		tp;
-	Form_pg_proc	procstruct;
-	Oid			   *result = NULL;
-	int				i;
-
-	tp = SearchSysCache(PROCOID,
-						ObjectIdGetDatum(funcid),
-						0, 0, 0);
-	if (!HeapTupleIsValid(tp))
-		elog(ERROR, "Function OID %u does not exist", funcid);
-
-	procstruct = (Form_pg_proc) GETSTRUCT(tp);
-	*nargs = (int) procstruct->pronargs;
-
-	if (*nargs > 0)
-	{
-		result = (Oid *) palloc(*nargs * sizeof(Oid));
-
-		for (i = 0; i < *nargs; i++)
-			result[i] = procstruct->proargtypes[i];
-	}
-
-	ReleaseSysCache(tp);
-	return result;
-}
-
-/*
  * get_func_retset
  *		Given procedure id, return the function's proretset flag.
  */
@@ -1122,56 +1088,6 @@ get_typlenbyvalalign(Oid typid, int16 *typlen, bool *typbyval,
 	*typbyval = typtup->typbyval;
 	*typalign = typtup->typalign;
 	ReleaseSysCache(tp);
-}
-
-/*
- * get_type_metadata
- *
- *		A six-fer:	given the type OID, return typlen, typbyval, typalign,
- *					typdelim, typelem, IO function Oid. The IO function
- *					returned is controlled by IOFuncSelector
- */
-void
-get_type_metadata(Oid element_type,
-					IOFuncSelector which_func,
-					int *typlen,
-					bool *typbyval,
-					char *typdelim,
-					Oid *typelem,
-					Oid *proc,
-					char *typalign)
-{
-	HeapTuple	typeTuple;
-	Form_pg_type typeStruct;
-
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(element_type),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "cache lookup failed for type %u", element_type);
-	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
-
-	*typlen = typeStruct->typlen;
-	*typbyval = typeStruct->typbyval;
-	*typdelim = typeStruct->typdelim;
-	*typelem = typeStruct->typelem;
-	*typalign = typeStruct->typalign;
-	switch (which_func)
-	{
-		case IOFunc_input:
-			*proc = typeStruct->typinput;
-			break;
-		case IOFunc_output:
-			*proc = typeStruct->typoutput;
-			break;
-		case IOFunc_receive:
-			*proc = typeStruct->typreceive;
-			break;
-		case IOFunc_send:
-			*proc = typeStruct->typsend;
-			break;
-	}
-	ReleaseSysCache(typeTuple);
 }
 
 #ifdef NOT_USED

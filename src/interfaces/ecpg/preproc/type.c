@@ -504,7 +504,7 @@ ECPGfree_type(struct ECPGtype * type)
 				switch (type->u.element->type)
 				{
 					case ECPGt_array:
-						yyerror("internal error, found multidimensional array\n");
+						yyerror("internal error, found multi-dimensional array\n");
 						break;
 					case ECPGt_struct:
 					case ECPGt_union:

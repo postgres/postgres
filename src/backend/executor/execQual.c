@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.131 2003/06/24 23:14:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.132 2003/06/25 21:30:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1528,17 +1528,17 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 			{
 				/* Check other sub-arrays are compatible */
 				if (elem_ndims != ARR_NDIM(array))
-					elog(ERROR, "Multidimensional arrays must have array "
+					elog(ERROR, "Multiple dimension arrays must have array "
 						 "expressions with matching number of dimensions");
 
 				if (memcmp(elem_dims, ARR_DIMS(array),
 						   elem_ndims * sizeof(int)) != 0)
-					elog(ERROR, "Multidimensional arrays must have array "
+					elog(ERROR, "Multiple dimension arrays must have array "
 						 "expressions with matching dimensions");
 
 				if (memcmp(elem_lbs, ARR_LBOUND(array),
 						   elem_ndims * sizeof(int)) != 0)
-					elog(ERROR, "Multidimensional arrays must have array "
+					elog(ERROR, "Multiple dimension arrays must have array "
 						 "expressions with matching dimensions");
 			}
 

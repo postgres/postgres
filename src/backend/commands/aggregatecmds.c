@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.6 2003/06/24 23:14:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.7 2003/06/25 21:30:26 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -119,9 +119,7 @@ DefineAggregate(List *names, List *parameters)
 		baseTypeId = typenameTypeId(baseType);
 
 	transTypeId = typenameTypeId(transType);
-	if (get_typtype(transTypeId) == 'p' &&
-		transTypeId != ANYARRAYOID &&
-		transTypeId != ANYELEMENTOID)
+	if (get_typtype(transTypeId) == 'p')
 		elog(ERROR, "Aggregate transition datatype cannot be %s",
 			 format_type_be(transTypeId));
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.73 2003/06/25 03:56:31 momjian Exp $
+ * $Id: lsyscache.h,v 1.74 2003/06/25 21:30:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,15 +14,6 @@
 #define LSYSCACHE_H
 
 #include "access/htup.h"
-
-/* I/O function selector for system_cache_lookup */
-typedef enum IOFuncSelector
-{
-	IOFunc_input,
-	IOFunc_output,
-	IOFunc_receive,
-	IOFunc_send
-} IOFuncSelector;
 
 extern bool op_in_opclass(Oid opno, Oid opclass);
 extern bool op_requires_recheck(Oid opno, Oid opclass);
@@ -50,7 +41,6 @@ extern RegProcedure get_oprrest(Oid opno);
 extern RegProcedure get_oprjoin(Oid opno);
 extern char *get_func_name(Oid funcid);
 extern Oid	get_func_rettype(Oid funcid);
-extern Oid *get_func_argtypes(Oid funcid, int *nargs);
 extern bool get_func_retset(Oid funcid);
 extern bool func_strict(Oid funcid);
 extern char func_volatile(Oid funcid);
@@ -66,14 +56,6 @@ extern bool get_typbyval(Oid typid);
 extern void get_typlenbyval(Oid typid, int16 *typlen, bool *typbyval);
 extern void get_typlenbyvalalign(Oid typid, int16 *typlen, bool *typbyval,
 					 char *typalign);
-extern void get_type_metadata(Oid element_type,
-								IOFuncSelector which_func,
-								int *typlen,
-								bool *typbyval,
-								char *typdelim,
-								Oid *typelem,
-								Oid *proc,
-								char *typalign);
 extern char get_typstorage(Oid typid);
 extern int32 get_typtypmod(Oid typid);
 extern Node *get_typdefault(Oid typid);

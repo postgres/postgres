@@ -436,7 +436,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 	if (atoi(type_index) >= 0)
 	{
 		if (atoi(*length) >= 0)
-			mmerror(PARSE_ERROR, ET_FATAL, "No multidimensional array support");
+			mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support");
 
 		*length = type_index;
 	}
@@ -444,7 +444,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 	if (atoi(type_dimension) >= 0)
 	{
 		if (atoi(*dimension) >= 0 && atoi(*length) >= 0)
-			mmerror(PARSE_ERROR, ET_FATAL, "No multidimensional array support");
+			mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support");
 
 		if (atoi(*dimension) >= 0)
 			*length = *dimension;
@@ -463,10 +463,10 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 		mmerror(PARSE_ERROR, ET_FATAL, "No pointer to pointer supported for this type");
 
 	if (pointer_len > 1 && (atoi(*length) >= 0 || atoi(*dimension) >= 0))
-		mmerror(PARSE_ERROR, ET_FATAL, "No multidimensional array support");
+		mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support");
 
 	if (atoi(*length) >= 0 && atoi(*dimension) >= 0 && pointer_len)
-		mmerror(PARSE_ERROR, ET_FATAL, "No multidimensional array support");
+		mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support");
 
 	switch (type_enum)
 	{
@@ -480,7 +480,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			}
 
 			if (atoi(*length) >= 0)
-				mmerror(PARSE_ERROR, ET_FATAL, "No multidimensional array support for structures");
+				mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support for structures");
 
 			break;
 		case ECPGt_varchar:
@@ -525,7 +525,7 @@ adjust_array(enum ECPGttype type_enum, char **dimension, char **length, char *ty
 			}
 
 			if (atoi(*length) >= 0)
-				mmerror(PARSE_ERROR, ET_FATAL, "No multidimensional array support for simple data types");
+				mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support for simple data types");
 
 			break;
 	}

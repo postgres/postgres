@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.39 2003/06/24 23:14:49 momjian Exp $
+ * $Id: array.h,v 1.40 2003/06/25 21:30:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,37 +31,6 @@ typedef struct
 	/* flags field is currently unused, always zero. */
 	Oid			elemtype;		/* element type OID */
 } ArrayType;
-
-typedef struct ArrayBuildState
-{
-	MemoryContext mcontext;		/* where all the temp stuff is kept */
-	Datum	   *dvalues;		/* array of accumulated Datums */
-	/*
-	 * The allocated size of dvalues[] is always a multiple of
-	 * ARRAY_ELEMS_CHUNKSIZE
-	 */
-#define ARRAY_ELEMS_CHUNKSIZE	64
-	int			nelems;			/* number of valid Datums in dvalues[] */
-	Oid			element_type;	/* data type of the Datums */
-	int16		typlen;			/* needed info about datatype */
-	bool		typbyval;
-	char		typalign;
-} ArrayBuildState;
-
-/*
- * structure to cache type metadata needed for array manipulation
- */
-typedef struct ArrayMetaState
-{
-	Oid				element_type;
-	int				typlen;
-	bool			typbyval;
-	char			typdelim;
-	Oid				typelem;
-	Oid				typiofunc;
-	char			typalign;
-	FmgrInfo		proc;
-} ArrayMetaState;
 
 /*
  * fmgr macros for array objects
@@ -117,15 +86,11 @@ extern Datum array_recv(PG_FUNCTION_ARGS);
 extern Datum array_send(PG_FUNCTION_ARGS);
 extern Datum array_length_coerce(PG_FUNCTION_ARGS);
 extern Datum array_eq(PG_FUNCTION_ARGS);
-extern Datum array_ne(PG_FUNCTION_ARGS);
-extern Datum array_lt(PG_FUNCTION_ARGS);
-extern Datum array_gt(PG_FUNCTION_ARGS);
-extern Datum array_le(PG_FUNCTION_ARGS);
-extern Datum array_ge(PG_FUNCTION_ARGS);
-extern Datum btarraycmp(PG_FUNCTION_ARGS);
 extern Datum array_dims(PG_FUNCTION_ARGS);
 extern Datum array_lower(PG_FUNCTION_ARGS);
 extern Datum array_upper(PG_FUNCTION_ARGS);
+extern Datum array_assign(PG_FUNCTION_ARGS);
+extern Datum array_subscript(PG_FUNCTION_ARGS);
 extern Datum array_type_coerce(PG_FUNCTION_ARGS);
 
 extern Datum array_ref(ArrayType *array, int nSubscripts, int *indx,
@@ -159,14 +124,7 @@ extern void deconstruct_array(ArrayType *array,
 				  Oid elmtype,
 				  int elmlen, bool elmbyval, char elmalign,
 				  Datum **elemsp, int *nelemsp);
-extern ArrayBuildState *accumArrayResult(ArrayBuildState *astate,
-										 Datum dvalue, bool disnull,
-										 Oid element_type,
-										 MemoryContext rcontext);
-extern Datum makeArrayResult(ArrayBuildState *astate,
-							 MemoryContext rcontext);
-extern Datum makeMdArrayResult(ArrayBuildState *astate, int ndims,
-							   int *dims, int *lbs, MemoryContext rcontext);
+
 
 /*
  * prototypes for functions defined in arrayutils.c
@@ -183,11 +141,12 @@ extern int	mda_next_tuple(int n, int *curr, int *span);
 /*
  * prototypes for functions defined in array_userfuncs.c
  */
+extern Datum singleton_array(PG_FUNCTION_ARGS);
 extern Datum array_push(PG_FUNCTION_ARGS);
+extern Datum array_accum(PG_FUNCTION_ARGS);
 extern Datum array_cat(PG_FUNCTION_ARGS);
 
-extern ArrayType *create_singleton_array(FunctionCallInfo fcinfo,
-										 Oid element_type,
+extern ArrayType *create_singleton_array(Oid element_type,
 										 Datum element,
 										 int ndims);
 
