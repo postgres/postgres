@@ -365,7 +365,9 @@ Inputs
 
   branch_delim
 
-    if optional branch value is desired, this string is used as the delimiter
+    If optional branch value is desired, this string is used as the delimiter.
+    When not provided, a default value of '~' is used for internal 
+    recursion detection only, and no "branch" field is returned.
 
 Outputs
 
@@ -388,7 +390,10 @@ Notes
      the level value output
 
   3. If the branch field is not desired, omit both the branch_delim input
-     parameter *and* the branch field in the query column definition
+     parameter *and* the branch field in the query column definition. Note
+     that when branch_delim is not provided, a default value of '~' is used
+     for branch_delim for internal recursion detection, even though the branch
+     field is not returned.
 
   4. If the branch field is desired, it must be the forth column in the query
      column definition, and it must be type TEXT

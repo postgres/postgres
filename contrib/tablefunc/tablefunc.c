@@ -652,6 +652,9 @@ connectby_text(PG_FUNCTION_ARGS)
 		branch_delim = GET_STR(PG_GETARG_TEXT_P(5));
 		show_branch = true;
 	}
+	else
+		/* default is no show, tilde for the delimiter */
+		branch_delim = pstrdup("~");
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);
@@ -798,9 +801,15 @@ build_tuplestore_recursively(char *key_fld,
 		char	   *current_branch;
 		char	  **values;
 		StringInfo	branchstr = NULL;
+		StringInfo	chk_branchstr = NULL;
+		StringInfo	chk_current_key = NULL;
 
 		/* start a new branch */
 		branchstr = makeStringInfo();
+
+		/* need these to check for recursion */
+		chk_branchstr = makeStringInfo();
+		chk_current_key = makeStringInfo();
 
 		if (show_branch)
 			values = (char **) palloc(CONNECTBY_NCOLS * sizeof(char *));
@@ -854,22 +863,24 @@ build_tuplestore_recursively(char *key_fld,
 		{
 			/* initialize branch for this pass */
 			appendStringInfo(branchstr, "%s", branch);
+			appendStringInfo(chk_branchstr, "%s%s%s", branch_delim, branch, branch_delim);
 
 			/* get the next sql result tuple */
 			spi_tuple = tuptable->vals[i];
 
 			/* get the current key and parent */
 			current_key = SPI_getvalue(spi_tuple, spi_tupdesc, 1);
+			appendStringInfo(chk_current_key, "%s%s%s", branch_delim, current_key, branch_delim);
 			current_key_parent = pstrdup(SPI_getvalue(spi_tuple, spi_tupdesc, 2));
-
-			/* check to see if this key is also an ancestor */
-			if (strstr(branchstr->data, current_key))
-				elog(ERROR, "infinite recursion detected");
 
 			/* get the current level */
 			sprintf(current_level, "%d", level);
 
-			/* extend the branch */
+			/* check to see if this key is also an ancestor */
+			if (strstr(chk_branchstr->data, chk_current_key->data))
+				elog(ERROR, "infinite recursion detected");
+
+			/* OK, extend the branch */
 			appendStringInfo(branchstr, "%s%s", branch_delim, current_key);
 			current_branch = branchstr->data;
 
@@ -913,6 +924,12 @@ build_tuplestore_recursively(char *key_fld,
 			/* reset branch for next pass */
 			xpfree(branchstr->data);
 			initStringInfo(branchstr);
+
+			xpfree(chk_branchstr->data);
+			initStringInfo(chk_branchstr);
+
+			xpfree(chk_current_key->data);
+			initStringInfo(chk_current_key);
 		}
 	}
 
