@@ -1161,6 +1161,7 @@ main(int argc, char *argv[])
 			 "%i All DBs checked in: %.0f usec, will sleep for %i secs.",
 					loops, diff, sleep_secs);
 			log_entry(logbuffer);
+			fflush(LOGOUTPUT);
 		}
 
 		sleep(sleep_secs);		/* Larger Pause between outer loops */
