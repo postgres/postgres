@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.28 1999/07/17 20:17:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.29 1999/09/02 02:57:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,13 +191,12 @@ smgropen(int16 which, Relation reln)
 /*
  *	smgrclose() -- Close a relation.
  *
- *		NOTE: mdclose frees fd vector! It may be re-used for other relation!
- *		reln should be flushed from cache after closing !..
- *		Currently, smgrclose is calling by
- *		relcache.c:RelationPurgeLocalRelation() only.
- *		It would be nice to have smgrfree(), but because of
- *		smgrclose is called from single place...		- vadim 05/22/97
- *
+ *		NOTE: underlying manager should allow case where relation is
+ *		already closed.  Indeed relation may have been unlinked!
+ *		This is currently called only from RelationFlushRelation() when
+ *		the relation cache entry is about to be dropped; could be doing
+ *		simple relation cache clear, or finishing up DROP TABLE.
+ *		
  *		Returns SM_SUCCESS on success, aborts on failure.
  */
 int

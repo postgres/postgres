@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.67 1999/07/17 20:18:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.68 1999/09/02 02:57:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1256,8 +1256,12 @@ RelationFlushRelation(Relation *relationPtr,
 	if (!onlyFlushReferenceCountZero ||
 		RelationHasReferenceCountZero(relation))
 	{
-
 		oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+
+		/* make sure smgr and lower levels close the relation's files,
+		 * if they weren't closed already
+		 */
+		smgrclose(DEFAULT_SMGR, relation);
 
 		RelationCacheDelete(relation);
 
@@ -1515,17 +1519,6 @@ RelationPurgeLocalRelation(bool xactCommitted)
 			else
 				smgrunlink(DEFAULT_SMGR, reln);
 		}
-		else if (!IsBootstrapProcessingMode() && !(reln->rd_isnoname))
-
-			/*
-			 * RelationFlushRelation () below will flush relation
-			 * information from the cache. We must call smgrclose to flush
-			 * relation information from SMGR & FMGR, too. We assume that
-			 * for temp relations smgrunlink is already called by
-			 * heap_destroyr and we skip smgrclose for them.		  -
-			 * vadim 05/22/97
-			 */
-			smgrclose(DEFAULT_SMGR, reln);
 
 		reln->rd_myxactonly = FALSE;
 

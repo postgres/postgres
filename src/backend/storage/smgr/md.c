@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.51 1999/07/17 20:17:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.52 1999/09/02 02:57:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,15 @@
  *	In order to do that, we break relations up into chunks of < 2GBytes
  *	and store one chunk in each of several files that represent the relation.
  *	See the BLCKSZ and RELSEG_SIZE configuration constants in include/config.h.
+ *
+ *	The file descriptor stored in the relation cache (see RelationGetFile())
+ *	is actually an index into the Md_fdvec array.  -1 indicates not open.
+ *
+ *	When a relation is broken into multiple chunks, only the first chunk
+ *	has its own entry in the Md_fdvec array; the remaining chunks have
+ *	palloc'd MdfdVec objects that are chained onto the first chunk via the
+ *	mdfd_chain links.  All chunks except the last MUST have size exactly
+ *	equal to RELSEG_SIZE blocks --- see mdnblocks() and mdtruncate().
  */
 
 typedef struct _MdfdVec
@@ -45,18 +54,19 @@ typedef struct _MdfdVec
 #endif
 } MdfdVec;
 
-static int	Nfds = 100;
+static int	Nfds = 100;			/* initial/current size of Md_fdvec array */
 static MdfdVec *Md_fdvec = (MdfdVec *) NULL;
-static int	Md_Free = -1;
-static int	CurFd = 0;
-static MemoryContext MdCxt;
+static int	Md_Free = -1;		/* head of freelist of unused fdvec entries */
+static int	CurFd = 0;			/* first never-used fdvec index */
+static MemoryContext MdCxt;		/* context for all my allocations */
 
 #define MDFD_DIRTY		(uint16) 0x01
 #define MDFD_FREE		(uint16) 0x02
 
 /* routines declared here */
+static int _mdfd_getrelnfd(Relation reln);
 static MdfdVec *_mdfd_openseg(Relation reln, int segno, int oflags);
-static MdfdVec *_mdfd_getseg(Relation reln, int blkno, int oflag);
+static MdfdVec *_mdfd_getseg(Relation reln, int blkno);
 static int	_fdvec_alloc(void);
 static void _fdvec_free(int);
 static BlockNumber _mdnblocks(File file, Size blcksz);
@@ -161,43 +171,39 @@ mdcreate(Relation reln)
 int
 mdunlink(Relation reln)
 {
+	int			nblocks;
 	int			fd;
-	int			i;
-	MdfdVec    *v,
-			   *ov;
+	MdfdVec    *v;
 	MemoryContext oldcxt;
-	char		fname[NAMEDATALEN];
-	char		tname[NAMEDATALEN + 10];		/* leave room for overflow
-												 * suffixes */
 
 	/*
-	 * On Windows NT you can't unlink a file if it is open so we have * to
-	 * do this.
+	 * Force all segments of the relation to be opened, so that we
+	 * won't miss deleting any of them.
 	 */
+	nblocks = mdnblocks(reln);
 
-	StrNCpy(fname, RelationGetRelationName(reln)->data, NAMEDATALEN);
-
-	if (FileNameUnlink(fname) < 0)
-		return SM_FAIL;
-
-	/* unlink all the overflow files for large relations */
-	for (i = 1;; i++)
-	{
-		sprintf(tname, "%s.%d", fname, i);
-		if (FileNameUnlink(tname) < 0)
-			break;
-	}
-
-	/* finally, clean out the mdfd vector */
+	/*
+	 * Clean out the mdfd vector, letting fd.c unlink the physical files.
+	 *
+	 * NOTE: We truncate the file(s) before deleting 'em, because if other
+	 * backends are holding the files open, the unlink will fail on some
+	 * platforms (think Microsoft).  Better a zero-size file gets left around
+	 * than a big file.  Those other backends will be forced to close the
+	 * relation by cache invalidation, but that probably hasn't happened yet.
+	 */
 	fd = RelationGetFile(reln);
+	if (fd < 0)					/* should not happen */
+		elog(ERROR, "mdunlink: mdnblocks didn't open relation");
+
 	Md_fdvec[fd].mdfd_flags = (uint16) 0;
 
 	oldcxt = MemoryContextSwitchTo(MdCxt);
 #ifndef LET_OS_MANAGE_FILESIZE
 	for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL;)
 	{
+		MdfdVec    *ov = v;
+		FileTruncate(v->mdfd_vfd, 0);
 		FileUnlink(v->mdfd_vfd);
-		ov = v;
 		v = v->mdfd_chain;
 		if (ov != &Md_fdvec[fd])
 			pfree(ov);
@@ -205,12 +211,15 @@ mdunlink(Relation reln)
 	Md_fdvec[fd].mdfd_chain = (MdfdVec *) NULL;
 #else
 	v = &Md_fdvec[fd];
-	if (v != (MdfdVec *) NULL)
-		FileUnlink(v->mdfd_vfd);
+	FileTruncate(v->mdfd_vfd, 0);
+	FileUnlink(v->mdfd_vfd);
 #endif
 	MemoryContextSwitchTo(oldcxt);
 
 	_fdvec_free(fd);
+
+	/* be sure to mark relation closed */
+	reln->rd_fd = -1;
 
 	return SM_SUCCESS;
 }
@@ -229,7 +238,7 @@ mdextend(Relation reln, char *buffer)
 	MdfdVec    *v;
 
 	nblocks = mdnblocks(reln);
-	v = _mdfd_getseg(reln, nblocks, O_CREAT);
+	v = _mdfd_getseg(reln, nblocks);
 
 	if ((pos = FileSeek(v->mdfd_vfd, 0L, SEEK_END)) < 0)
 		return SM_FAIL;
@@ -303,7 +312,7 @@ mdopen(Relation reln)
 }
 
 /*
- *	mdclose() -- Close the specified relation
+ *	mdclose() -- Close the specified relation, if it isn't closed already.
  *
  *		AND FREE fd vector! It may be re-used for other relation!
  *		reln should be flushed from cache after closing !..
@@ -314,16 +323,19 @@ int
 mdclose(Relation reln)
 {
 	int			fd;
-	MdfdVec    *v,
-			   *ov;
+	MdfdVec    *v;
 	MemoryContext oldcxt;
 
 	fd = RelationGetFile(reln);
+	if (fd < 0)
+		return SM_SUCCESS;		/* already closed, so no work */
 
 	oldcxt = MemoryContextSwitchTo(MdCxt);
 #ifndef LET_OS_MANAGE_FILESIZE
 	for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL;)
 	{
+		MdfdVec    *ov = v;
+
 		/* if not closed already */
 		if (v->mdfd_vfd >= 0)
 		{
@@ -340,7 +352,6 @@ mdclose(Relation reln)
 			v->mdfd_flags &= ~MDFD_DIRTY;
 		}
 		/* Now free vector */
-		ov = v;
 		v = v->mdfd_chain;
 		if (ov != &Md_fdvec[fd])
 			pfree(ov);
@@ -371,6 +382,9 @@ mdclose(Relation reln)
 
 	_fdvec_free(fd);
 
+	/* be sure to mark relation closed */
+	reln->rd_fd = -1;
+
 	return SM_SUCCESS;
 }
 
@@ -387,7 +401,7 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 	int			nbytes;
 	MdfdVec    *v;
 
-	v = _mdfd_getseg(reln, blocknum, 0);
+	v = _mdfd_getseg(reln, blocknum);
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	seekpos = (long) (BLCKSZ * (blocknum % RELSEG_SIZE));
@@ -427,7 +441,7 @@ mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
 	long		seekpos;
 	MdfdVec    *v;
 
-	v = _mdfd_getseg(reln, blocknum, 0);
+	v = _mdfd_getseg(reln, blocknum);
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	seekpos = (long) (BLCKSZ * (blocknum % RELSEG_SIZE));
@@ -464,7 +478,7 @@ mdflush(Relation reln, BlockNumber blocknum, char *buffer)
 	long		seekpos;
 	MdfdVec    *v;
 
-	v = _mdfd_getseg(reln, blocknum, 0);
+	v = _mdfd_getseg(reln, blocknum);
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	seekpos = (long) (BLCKSZ * (blocknum % RELSEG_SIZE));
@@ -646,25 +660,27 @@ mdblindwrt(char *dbstr,
 /*
  *	mdnblocks() -- Get the number of blocks stored in a relation.
  *
- *		Returns # of blocks or -1 on error.
+ *		Important side effect: all segments of the relation are opened
+ *		and added to the mdfd_chain list.  If this routine has not been
+ *		called, then only segments up to the last one actually touched
+ *		are present in the chain...
+ *
+ *		Returns # of blocks, elog's on error.
  */
 int
 mdnblocks(Relation reln)
 {
 	int			fd;
 	MdfdVec    *v;
+#ifndef LET_OS_MANAGE_FILESIZE
 	int			nblocks;
 	int			segno;
+#endif
 
-	fd = RelationGetFile(reln);
+	fd = _mdfd_getrelnfd(reln);
 	v = &Md_fdvec[fd];
 
 #ifndef LET_OS_MANAGE_FILESIZE
-#ifdef DIAGNOSTIC
-	if (_mdnblocks(v->mdfd_vfd, BLCKSZ) > RELSEG_SIZE)
-		elog(FATAL, "segment too big in getseg!");
-#endif
-
 	segno = 0;
 	for (;;)
 	{
@@ -702,54 +718,74 @@ mdnblocks(Relation reln)
 int
 mdtruncate(Relation reln, int nblocks)
 {
+	int			curnblk;
 	int			fd;
 	MdfdVec    *v;
-
 #ifndef LET_OS_MANAGE_FILESIZE
-	int			curnblk,
-				i,
-				oldsegno,
-				newsegno,
-				lastsegblocks;
-	MdfdVec			**varray;
-
-	curnblk = mdnblocks(reln);
-	if (nblocks > curnblk)
-		return -1;
-	oldsegno = curnblk / RELSEG_SIZE;
-	newsegno = nblocks / RELSEG_SIZE;
-
+	MemoryContext oldcxt;
+	int			priorblocks;
 #endif
 
-	fd = RelationGetFile(reln);
+	/* NOTE: mdnblocks makes sure we have opened all existing segments,
+	 * so that truncate/delete loop will get them all!
+	 */
+	curnblk = mdnblocks(reln);
+	if (nblocks < 0 || nblocks > curnblk)
+		return -1;				/* bogus request */
+	if (nblocks == curnblk)
+		return nblocks;			/* no work */
+
+	fd = _mdfd_getrelnfd(reln);
 	v = &Md_fdvec[fd];
 
 #ifndef LET_OS_MANAGE_FILESIZE
-	varray = (MdfdVec **)palloc((oldsegno + 1) * sizeof(MdfdVec *));
-	for (i = 0; i <= oldsegno; i++)
+	oldcxt = MemoryContextSwitchTo(MdCxt);
+	priorblocks = 0;
+	while (v != (MdfdVec *) NULL)
 	{
-		if (!v)
-			elog(ERROR,"segment isn't open in mdtruncate!");
-		varray[i] = v;
-		v = v->mdfd_chain;
-	}
-	for (i = oldsegno; i > newsegno; i--)
-	{
-		v = varray[i];
-		if (FileTruncate(v->mdfd_vfd, 0) < 0)
+		MdfdVec    *ov = v;
+
+		if (priorblocks > nblocks)
 		{
-			pfree(varray);
-			return -1;
+			/* This segment is no longer wanted at all (and has already been
+			 * unlinked from the mdfd_chain).
+			 * We truncate the file before deleting it because if other
+			 * backends are holding the file open, the unlink will fail on
+			 * some platforms.  Better a zero-size file gets left around than
+			 * a big file...
+			 */
+			FileTruncate(v->mdfd_vfd, 0);
+			FileUnlink(v->mdfd_vfd);
+			v = v->mdfd_chain;
+			Assert(ov != &Md_fdvec[fd]); /* we never drop the 1st segment */
+			pfree(ov);
 		}
-		v->mdfd_lstbcnt = 0;
+		else if (priorblocks + RELSEG_SIZE > nblocks)
+		{
+			/* This is the last segment we want to keep.
+			 * Truncate the file to the right length, and clear chain link
+			 * that points to any remaining segments (which we shall zap).
+			 * NOTE: if nblocks is exactly a multiple K of RELSEG_SIZE,
+			 * we will truncate the K+1st segment to 0 length but keep it.
+			 * This is mainly so that the right thing happens if nblocks=0.
+			 */
+			int lastsegblocks = nblocks - priorblocks;
+			if (FileTruncate(v->mdfd_vfd, lastsegblocks * BLCKSZ) < 0)
+				return -1;
+			v->mdfd_lstbcnt = lastsegblocks;
+			v = v->mdfd_chain;
+			ov->mdfd_chain = (MdfdVec *) NULL;
+		}
+		else
+		{
+			/* We still need this segment and 0 or more blocks beyond it,
+			 * so nothing to do here.
+			 */
+			v = v->mdfd_chain;
+		}
+		priorblocks += RELSEG_SIZE;
 	}
-	/* Calculate the # of blocks in the last segment */
-	lastsegblocks = nblocks - (newsegno * RELSEG_SIZE);
-	v = varray[i];
-	pfree(varray);
-	if (FileTruncate(v->mdfd_vfd, lastsegblocks * BLCKSZ) < 0)
-		return -1;
-	v->mdfd_lstbcnt = lastsegblocks;
+	MemoryContextSwitchTo(oldcxt);
 #else
 	if (FileTruncate(v->mdfd_vfd, nblocks * BLCKSZ) < 0)
 		return -1;
@@ -814,11 +850,11 @@ mdabort()
 	{
 #ifndef LET_OS_MANAGE_FILESIZE
 		for (v = &Md_fdvec[i]; v != (MdfdVec *) NULL; v = v->mdfd_chain)
+			v->mdfd_flags &= ~MDFD_DIRTY;
 #else
 		v = &Md_fdvec[i];
-		if (v != (MdfdVec *) NULL)
+		v->mdfd_flags &= ~MDFD_DIRTY;
 #endif
-			v->mdfd_flags &= ~MDFD_DIRTY;
 	}
 
 	return SM_SUCCESS;
@@ -895,6 +931,7 @@ _fdvec_free(int fdvec)
 {
 
 	Assert(Md_Free < 0 || Md_fdvec[Md_Free].mdfd_flags == MDFD_FREE);
+	Assert(Md_fdvec[fdvec].mdfd_flags != MDFD_FREE);
 	Md_fdvec[fdvec].mdfd_nextFree = Md_Free;
 	Md_fdvec[fdvec].mdfd_flags = MDFD_FREE;
 	Md_Free = fdvec;
@@ -926,9 +963,9 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 
 	/* open the file */
 #ifndef __CYGWIN32__
-	fd = PathNameOpenFile(fullpath, O_RDWR | oflags, 0600);
+	fd = FileNameOpenFile(fullpath, O_RDWR | oflags, 0600);
 #else
-	fd = PathNameOpenFile(fullpath, O_RDWR | O_BINARY | oflags, 0600);
+	fd = FileNameOpenFile(fullpath, O_RDWR | O_BINARY | oflags, 0600);
 #endif
 
 	if (dofree)
@@ -959,13 +996,12 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 	return v;
 }
 
-static MdfdVec *
-_mdfd_getseg(Relation reln, int blkno, int oflag)
+/* Get the fd for the relation, opening it if it's not already open */
+
+static int
+_mdfd_getrelnfd(Relation reln)
 {
-	MdfdVec    *v;
-	int			segno;
 	int			fd;
-	int			i;
 
 	fd = RelationGetFile(reln);
 	if (fd < 0)
@@ -975,6 +1011,20 @@ _mdfd_getseg(Relation reln, int blkno, int oflag)
 				 RelationGetRelationName(reln));
 		reln->rd_fd = fd;
 	}
+	return fd;
+}
+
+/* Find the segment of the relation holding the specified block */
+
+static MdfdVec *
+_mdfd_getseg(Relation reln, int blkno)
+{
+	MdfdVec    *v;
+	int			segno;
+	int			fd;
+	int			i;
+
+	fd = _mdfd_getrelnfd(reln);
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	for (v = &Md_fdvec[fd], segno = blkno / RELSEG_SIZE, i = 1;
@@ -984,7 +1034,7 @@ _mdfd_getseg(Relation reln, int blkno, int oflag)
 
 		if (v->mdfd_chain == (MdfdVec *) NULL)
 		{
-			v->mdfd_chain = _mdfd_openseg(reln, i, oflag);
+			v->mdfd_chain = _mdfd_openseg(reln, i, O_CREAT);
 
 			if (v->mdfd_chain == (MdfdVec *) NULL)
 				elog(ERROR, "cannot open segment %d of relation %s",
