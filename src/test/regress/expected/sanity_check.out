@@ -16,13 +16,16 @@ hash_i4_heap |t
 hash_txt_heap|t          
 ihighway     |t          
 onek         |t          
+pg_attrdef   |t          
 pg_attribute |t          
 pg_class     |t          
 pg_proc      |t          
+pg_relcheck  |t          
+pg_trigger   |t          
 pg_type      |t          
 road         |t          
 shighway     |t          
 tenk1        |t          
 tenk2        |t          
-(19 rows)
+(22 rows)
 
