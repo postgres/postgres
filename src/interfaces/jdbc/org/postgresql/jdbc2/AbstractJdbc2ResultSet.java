@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.23 2003/09/13 04:02:15 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.24 2003/09/17 05:14:52 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -778,7 +778,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		}
 		catch (IOException ie)
 		{
-			throw new PSQLException("postgresql.updateable.ioerror" + ie);
+			throw new PSQLException("postgresql.updateable.ioerror", ie);
 		}
 
 		updateValue(columnIndex, theData);
@@ -811,7 +811,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		}
 		catch (IOException ie)
 		{
-			throw new PSQLException("postgresql.updateable.ioerror" + ie);
+			throw new PSQLException("postgresql.updateable.ioerror", ie);
 		}
 		updateValue(columnIndex, theData);
 	}
@@ -858,7 +858,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		}
 		catch (IOException ie)
 		{
-			throw new PSQLException("postgresql.updateable.ioerror" + ie);
+			throw new PSQLException("postgresql.updateable.ioerror", ie);
 		}
 		updateValue(columnIndex, theData);
 	}
