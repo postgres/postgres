@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.77 2002/05/12 20:10:02 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.78 2002/05/18 21:38:40 tgl Exp $
  *
  */
 
@@ -56,6 +56,8 @@ static void show_upper_qual(List *qual, const char *qlabel,
 							const char *outer_name, int outer_varno, Plan *outer_plan,
 							const char *inner_name, int inner_varno, Plan *inner_plan,
 							StringInfo str, int indent, ExplainState *es);
+static void show_sort_keys(List *tlist, int nkeys, const char *qlabel,
+						   StringInfo str, int indent, ExplainState *es);
 static Node *make_ors_ands_explicit(List *orclauses);
 static TextOutputState *begin_text_output(CommandDest dest, char *title);
 static void do_text_output(TextOutputState *tstate, char *aline);
@@ -410,7 +412,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 	}
 	appendStringInfo(str, "\n");
 
-	/* quals */
+	/* quals, sort keys, etc */
 	switch (nodeTag(plan))
 	{
 		case T_IndexScan:
@@ -494,6 +496,11 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 							"subplan", 0, outerPlan(plan),
 							"", 0, NULL,
 							str, indent, es);
+			break;
+		case T_Sort:
+			show_sort_keys(plan->targetlist, ((Sort *) plan)->keycount,
+						   "Sort Key",
+						   str, indent, es);
 			break;
 		case T_Result:
 			show_upper_qual((List *) ((Result *) plan)->resconstantqual,
@@ -729,6 +736,60 @@ show_upper_qual(List *qual, const char *qlabel,
 	for (i = 0; i < indent; i++)
 		appendStringInfo(str, "  ");
 	appendStringInfo(str, "  %s: %s\n", qlabel, exprstr);
+}
+
+/*
+ * Show the sort keys for a Sort node.
+ */
+static void
+show_sort_keys(List *tlist, int nkeys, const char *qlabel,
+			   StringInfo str, int indent, ExplainState *es)
+{
+	List	   *context;
+	bool		useprefix;
+	int			keyno;
+	List	   *tl;
+	char	   *exprstr;
+	int			i;
+
+	if (nkeys <= 0)
+		return;
+
+	for (i = 0; i < indent; i++)
+		appendStringInfo(str, "  ");
+	appendStringInfo(str, "  %s: ", qlabel);
+
+	/*
+	 * In this routine we expect that the plan node's tlist has not been
+	 * processed by set_plan_references(), so any Vars will contain valid
+	 * varnos referencing the actual rtable.
+	 */
+	context = deparse_context_from_rtable(es->rtable);
+	useprefix = length(es->rtable) > 1;
+
+	for (keyno = 1; keyno <= nkeys; keyno++)
+	{
+		/* find key expression in tlist */
+		foreach(tl, tlist)
+		{
+			TargetEntry *target = (TargetEntry *) lfirst(tl);
+
+			if (target->resdom->reskey == keyno)
+			{
+				/* Deparse the expression */
+				exprstr = deparse_expression(target->expr, context, useprefix);
+				/* And add to str */
+				if (keyno > 1)
+					appendStringInfo(str, ", ");
+				appendStringInfo(str, "%s", exprstr);
+				break;
+			}
+		}
+		if (tl == NIL)
+			elog(ERROR, "show_sort_keys: no tlist entry for key %d", keyno);
+	}
+
+	appendStringInfo(str, "\n");
 }
 
 /*

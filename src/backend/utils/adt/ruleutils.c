@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.105 2002/05/17 01:19:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.106 2002/05/18 21:38:40 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -777,6 +777,27 @@ deparse_context_for_subplan(const char *name, List *tlist,
 	rte->inFromCl = true;
 
 	return (Node *) rte;
+}
+
+/*
+ * deparse_context_from_rtable	- Build deparse context given a rangetable
+ *
+ * This is suitable for deparsing expressions that refer to only a single
+ * level of variables (no outer-reference Vars).
+ */
+List *
+deparse_context_from_rtable(List *rtable)
+{
+	deparse_namespace *dpns;
+
+	dpns = (deparse_namespace *) palloc(sizeof(deparse_namespace));
+
+	dpns->rtable = rtable;
+	dpns->outer_varno = dpns->inner_varno = 0;
+	dpns->outer_rte = dpns->inner_rte = NULL;
+
+	/* Return a one-deep namespace stack */
+	return makeList1(dpns);
 }
 
 /* ----------

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.181 2002/05/12 20:10:05 tgl Exp $
+ * $Id: builtins.h,v 1.182 2002/05/18 21:38:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -357,6 +357,7 @@ extern List *deparse_context_for_plan(int outer_varno, Node *outercontext,
 extern Node *deparse_context_for_rte(RangeTblEntry *rte);
 extern Node *deparse_context_for_subplan(const char *name, List *tlist,
 										 List *rtable);
+extern List *deparse_context_from_rtable(List *rtable);
 extern const char *quote_identifier(const char *ident);
 extern char *quote_qualified_identifier(const char *namespace,
 										const char *ident);
