@@ -6,12 +6,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.2 1996/11/06 06:49:43 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.3 1996/11/06 10:30:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
 #include "postgres.h"
+
+#include <libpq/be-fsstubs.h>
 #include "utils/memutils.h"
 #include "libpq/libpq-fs.h"
 
@@ -19,11 +21,16 @@
 
 #include "catalog/pg_type.h"
 
-#include "utils/palloc.h"
 #include "fmgr.h"
 #include "utils/array.h"
 
 #include "optimizer/internal.h"
+#ifndef HAVE_MEMMOVE
+# include <regex/utils.h>
+#else
+# include <string.h>
+#endif
+
 
 #define INFTY 500000000
 #define MANY  10000

@@ -7,13 +7,16 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.1.1.1 1996/07/09 06:22:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.2 1996/11/06 10:31:24 scrappy Exp $
  *
  * Note - this code is real crufty...
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
+#include <miscadmin.h>
+
 #include "access/heapam.h"	/* XXX to support hacks below */
 #include "access/htup.h"
 #include "catalog/catalog.h"
@@ -23,7 +26,6 @@
 #include "storage/sinval.h"
 #include "utils/catcache.h"
 #include "utils/inval.h"
-#include "utils/elog.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "catalog/catname.h"	/* XXX to support hacks below */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/magic.c,v 1.2 1996/10/07 03:29:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/magic.c,v 1.3 1996/11/06 10:31:56 scrappy Exp $
  *
  * NOTES
  *	XXX eventually, should be able to handle version identifiers
@@ -23,10 +23,10 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "postgres.h"
 
-#include "utils/elog.h"
 #include "miscadmin.h"		/* for global decls */
 
 #include "storage/fd.h"		/* for O_ */

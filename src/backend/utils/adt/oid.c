@@ -7,12 +7,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.2 1996/11/06 06:49:55 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.3 1996/11/06 10:31:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include <stdio.h>
+
 #include "postgres.h"
-#include "utils/palloc.h"
 #include "utils/builtins.h"	/* where function declarations go */
 
 /***************************************************************************** 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.1.1.1 1996/07/09 06:22:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.2 1996/11/06 10:31:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <stdio.h>
+#include <unistd.h>
 #ifndef WIN32
 #include <grp.h>		/* for getgrgid */
 #include <pwd.h>		/* for getpwuid */

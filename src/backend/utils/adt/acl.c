@@ -7,17 +7,18 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.4 1996/11/06 06:49:34 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.5 1996/11/06 10:30:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
 #include <string.h>
 #include "postgres.h"
+
+#include <utils/memutils.h>
 #include "utils/acl.h"
 #include "catalog/pg_user.h"
 #include "utils/syscache.h"
-#include "utils/palloc.h"
 #include "miscadmin.h"
 
 static char *getid(char *s, char *n);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.1.1.1 1996/07/09 06:22:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.2 1996/11/06 10:31:54 scrappy Exp $
  *
  * NOTES
  *    Globals used all over the place should be declared here and not
@@ -21,10 +21,12 @@
 #include <sys/file.h>
 #include <sys/types.h>
 #include <math.h>
+#include <unistd.h>
 
 #include "postgres.h"
 #include "miscadmin.h"		/* where the declarations go */
 
+#include <storage/backendid.h>
 #include "access/heapam.h"
 #include "utils/tqual.h"
 #include "storage/sinval.h"

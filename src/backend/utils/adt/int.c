@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.2 1996/11/06 06:49:49 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.3 1996/11/06 10:30:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,11 +28,11 @@
  * XXX makes massive and possibly unwarranted type promotion assumptions.
  * fix me when we figure out what we want to do about ANSIfication...
  */
+#include <stdio.h>
 
 #include "postgres.h"
 #include "fmgr.h"
 #include "utils/builtins.h"	/* where the declarations go */
-#include "utils/palloc.h"
 
 /***************************************************************************** 
  *   USER I/O ROUTINES                                                       *

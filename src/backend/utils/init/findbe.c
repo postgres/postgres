@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.1.1.1 1996/07/09 06:22:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.2 1996/11/06 10:31:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,9 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
-#include "c.h"
+#include "postgres.h"
 #include "miscadmin.h"	/* for DebugLvl */
 
 #ifndef S_IRUSR			/* XXX [TRH] should be in a header */

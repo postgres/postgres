@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.3 1996/11/03 06:53:19 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.4 1996/11/06 10:31:29 scrappy Exp $
  *
  * NOTES
  *    These routines allow the parser/planner/executor to perform
@@ -23,8 +23,12 @@
 #include "access/htup.h"
 #include "catalog/catname.h"
 #include "utils/catcache.h"
-#include "utils/palloc.h"
-#include "nodes/pg_list.h"
+#ifndef HAVE_MEMMOVE
+# include <regex/utils.h>
+#else
+# include <string.h>
+#endif
+
  
 /* ----------------
  *	hardwired attribute information comes from system catalog files.

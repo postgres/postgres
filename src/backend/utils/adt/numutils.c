@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.5 1996/11/06 06:49:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.6 1996/11/06 10:30:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,11 @@
 #include <math.h>
 #include "postgres.h"
 #include "utils/builtins.h"		/* where the declarations go */
+#ifndef HAVE_MEMMOVE
+# include <regex/utils.h>
+#else
+# include <string.h>
+#endif
 
 int32
 pg_atoi(char *s, int size, int c)

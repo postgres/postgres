@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.2 1996/11/03 06:54:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.3 1996/11/06 10:32:10 scrappy Exp $
  *
  * NOTES
  *	Sorts the first relation into the second relation.  The sort may
@@ -21,6 +21,7 @@
  */
 #include <stdio.h>
 #include <math.h>
+#include <unistd.h>
 
 #include "postgres.h"
 
@@ -40,6 +41,12 @@
 #include "utils/lselect.h"
 
 #include "storage/fd.h"
+
+#ifndef HAVE_MEMMOVE
+# include <regex/utils.h>
+#else
+# include <string.h>
+#endif
 
 #define	TEMPDIR	"./"
 

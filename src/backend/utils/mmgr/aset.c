@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.1.1.1 1996/07/09 06:22:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.2 1996/11/06 10:32:04 scrappy Exp $
  *
  * NOTE
  *    XXX This is a preliminary implementation which lacks fail-fast
@@ -16,11 +16,14 @@
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
-#include "c.h"
+#include "postgres.h"
 #include "utils/excid.h"	/* for ExhaustedMemory */
 #include "utils/memutils.h"	/* where funnction declarations go */
-#include "utils/elog.h"
-#include "utils/palloc.h"
+#ifndef HAVE_MEMMOVE
+# include <regex/utils.h>
+#else
+# include <string.h>
+#endif
 
 #undef AllocSetReset
 #undef malloc

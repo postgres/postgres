@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.3 1996/10/24 07:55:29 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.4 1996/11/06 10:31:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,8 @@
 #include "postgres.h"
 #include "miscadmin.h"
 
-#include "access/attnum.h"
+#include <storage/smgr.h>
+
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup.h"
@@ -45,7 +46,6 @@
 #include "access/itup.h"
 #include "access/skey.h"
 #include "utils/builtins.h"
-#include "utils/tqual.h"	/* for NowTimeQual */
 #include "access/tupdesc.h"
 #include "access/tupmacs.h"
 #include "access/xact.h"
@@ -54,17 +54,14 @@
 #include "storage/fd.h"		/* for SEEK_ */
 #include "storage/lmgr.h"
 #include "storage/bufmgr.h"
-
  
 #include "lib/hasht.h"
  
 #include "utils/memutils.h"
-#include "utils/elog.h"
 #include "utils/mcxt.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/hsearch.h"
-#include "utils/palloc.h"
 #include "utils/relcache.h"
  
 #include "catalog/catname.h"

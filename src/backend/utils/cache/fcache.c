@@ -7,11 +7,15 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.2 1996/11/03 06:53:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.3 1996/11/06 10:31:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
+#include <nodes/parsenodes.h>
+#include <fmgr.h>
+
 #include "access/htup.h"
 #include "utils/catcache.h"
 #include "utils/syscache.h"
@@ -22,9 +26,13 @@
 #include "parser/parsetree.h"		/* for getrelname() */
 #include "utils/builtins.h"
 #include "utils/fcache.h"
-#include "utils/palloc.h"
 #include "nodes/primnodes.h"
 #include "nodes/execnodes.h"
+#ifndef HAVE_MEMMOVE
+# include <regex/utils.h>
+#else
+# include <string.h>
+#endif
 
 static Oid GetDynamicFuncArgType(Var *arg, ExprContext *econtext);
 static FunctionCachePtr init_fcache(Oid foid,

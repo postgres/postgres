@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.7 1996/10/31 10:23:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.8 1996/11/06 10:31:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,10 +21,11 @@
 #include <sys/types.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <unistd.h>
+#include <signal.h>
 
 #include "postgres.h"
 #include "miscadmin.h"
-#include "utils/elog.h"
 #include "libpq/libpq.h"
 #include "storage/proc.h"
 

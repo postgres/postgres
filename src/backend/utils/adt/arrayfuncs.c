@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.8 1996/11/06 06:49:36 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.9 1996/11/06 10:30:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "postgres.h"
 
@@ -21,7 +22,6 @@
 #include "catalog/pg_type.h"
 
 #include "utils/syscache.h"
-#include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "storage/fd.h"		/* for SEEK_ */
 #include "fmgr.h"
@@ -783,7 +783,10 @@ array_clip(ArrayType *array,
     mda_get_range(n, span, lowerIndx, upperIndx);
     
     if (ARR_IS_LO(array)) {
-        char * lo_name, * newname;
+#ifdef LOARRAY
+        char * lo_name;
+#endif
+	char * newname;
         int fd, newfd, isDestLO = true, rsize;
 	
         if (len < 0) 
@@ -906,12 +909,13 @@ array_set(ArrayType *array,
     
     if (ARR_IS_LO(array)) {
         int fd;
-        char * lo_name;
         struct varlena *v;
 	
         /* We are assuming fixed element lengths here */
         offset *= elmlen;
 #ifdef LOARRAY
+        char * lo_name;
+
         lo_name = ARR_DATA_PTR(array);
         if ((fd = LOopen(lo_name, ARR_IS_INV(array)?INV_WRITE:O_WRONLY)) < 0)
             return((char *)array);
@@ -1013,10 +1017,11 @@ array_assgn(ArrayType *array,
             elog(WARN, "lowerIndex larger than upperIndx"); 
     
     if (ARR_IS_LO(array)) {
-        char * lo_name;
         int fd, newfd;
 	
 #ifdef LOARRAY
+        char * lo_name;
+
         lo_name = (char *)ARR_DATA_PTR(array);
         if ((fd = LOopen(lo_name,  ARR_IS_INV(array)?INV_WRITE:O_WRONLY)) < 0)
             return((char *)array);

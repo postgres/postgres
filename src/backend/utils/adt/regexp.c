@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.3 1996/11/06 06:49:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.4 1996/11/06 10:31:04 scrappy Exp $
  *
  *      Alistair Crooks added the code for the regex caching
  *	agc - cached the regular expressions used - there's a good chance
@@ -29,7 +29,9 @@
  */
 #include <string.h>
 #include "postgres.h"		/* postgres system include file */
-#include "utils/palloc.h"
+
+#include <regex/regex.h>
+
 #include "utils/builtins.h"	/* where the function declarations go */
 
 #if defined(DISABLE_XOPEN_NLS)
