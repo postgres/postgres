@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.83 2004/08/30 02:54:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.84 2004/09/13 01:44:46 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
  * %d0. So if a function pointer is declared to return a pointer, the
  * compiler may look only into %a0, but if the called function was declared
  * to return an integer type, it puts its value only into %d0. So the
- * caller doesn't pink up the correct return value. The solution is to
+ * caller doesn't pick up the correct return value. The solution is to
  * declare the function pointer to return int, so the compiler picks up the
  * return value from %d0. (Functions returning pointers put their value
  * *additionally* into %d0 for compatibility.) The price is that there are

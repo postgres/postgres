@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.36 2004/07/31 23:04:56 tgl Exp $
+ *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.37 2004/09/13 01:45:32 neilc Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -118,7 +118,7 @@ dolqinside		[^$]+
 
     /* ----------
      * On the first call to a new source report the
-     * functions type (T_FUNCTION or T_TRIGGER)
+     * function's type (T_FUNCTION or T_TRIGGER)
      * ----------
      */
 	if (!scanner_typereported)
