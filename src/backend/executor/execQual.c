@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.17 1997/09/12 04:07:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.18 1997/09/22 04:19:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1044,7 +1044,22 @@ ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
 		 * ----------------
 		 */
 		if (*isNull)
+		{
 			IsNull = *isNull;
+			/*
+			 * Many functions don't (or can't!) check is an argument
+			 * NULL or NOT_NULL and may return TRUE (1) with *isNull TRUE
+			 * (an_int4_column <> 1: int4ne returns TRUE for NULLs).
+			 * Not having time to fix function manager I want to fix
+			 * OR: if we had 'x <> 1 OR x isnull' then TRUE, TRUE were
+			 * returned by 'x <> 1' for NULL ... but ExecQualClause say
+			 * that qualification *fails* if isnull is TRUE for all values
+			 * returned by ExecEvalExpr. So, force this rule here: if isnull 
+			 * is TRUE then clause failed. Note: nullvalue() & nonnullvalue() 
+			 * always set isnull to FALSE for NULLs.	- vadim 09/22/97
+			 */
+		    const_value = 0;
+		}
 
 		/* ----------------
 		 *	 if we have a true result, then we return it.
