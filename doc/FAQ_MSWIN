@@ -1,15 +1,16 @@
 How do I installing PostgreSQL on Windows NT or Windows 2000?
 =============================================================
-$Date: 2001/03/16 22:12:13 $
+$Date: 2001/04/03 18:14:39 $
 
 1.  Install the Cygwin package.
 
     The Cygwin package provides a UNIX-like API on top of the Win32
     API.  It is available at <http://sources.redhat.com/cygwin/>.  At
     the time of this writing, it is recommended to use either version
-    1.1.7 or the 1.3.x series.  Version 1.1.8 contains a bug that will
-    prevent the server to work.  Using older versions such as 1.0 or
-    B20 might require extra efforts.
+    1.1.7, a snapshot built after 2001/02/05 12:36:41, or the 1.3.x series
+    (when available).  Version 1.1.8 contains a bug that will prevent the
+    server to work.  Using older versions such as 1.0 or B20 might require
+    extra efforts.
 
 2.  Install the cygipc package, available at
     <http://www.neuro.gatech.edu/users/cwilson/cygutils/V1.1/cygipc/>.
@@ -23,19 +24,20 @@ $Date: 2001/03/16 22:12:13 $
     Windows program directories, because the sort.exe has to be taken
     from Cygwin, not Windows.
 
-5.  Start `ipc-daemon &' (background process) from the cygipc package.
+5.  Start ipc-daemon from the cygipc package.  Use "net start ipc-daemon",
+    if ipc-daemon is installed as a service; otherwise, use "ipc-daemon &".
     This program needs to be running anytime you start the PostgreSQL
     server (postmaster).
 
 6.  Proceed according to the INSTALL file.  (./configure; make; etc.)
 
-NOTE:  There are two issues with Cygwin's current UNIX domain socket
-support:
+NOTE:  The following are known issues with PostgreSQL on Windows:
 
-1.  psql (and other clients) will hang if postmaster is not running and
-    the socket file (e.g., /tmp/.s.PGSQL.5432) exists.
-
-2.  Cygwin's AF_UNIX sockets are really implemented as AF_INET sockets
+1.  Cygwin's AF_UNIX sockets are really implemented as AF_INET sockets
     so they are inherently insecure.
+
+2.  make check can generate spurious regression test failures due to
+    overflowing the the listen() backlog queue which causes connection
+    refused errors.
 
 Problem reports can be sent to <pgsql-ports@postgresql.org>.
