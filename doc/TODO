@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun May 23 23:22:58 EDT 2004
+Last updated:		Sun May 30 22:58:42 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -237,7 +237,7 @@ Commands
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions
 	o Change PL/PgSQL to use palloc() instead of malloc()
-	o Allow Java server-side programming [java] (Dave)
+	o -Allow Java server-side programming
 	o Fix problems with complex temporary table creation/destruction
 	  without using PL/PgSQL EXECUTE, needs cache prevention/invalidation
         o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
