@@ -8,7 +8,7 @@ import org.postgresql.util.*;
 /*
  * Converts to and from the character encoding used by the backend.
  *
- * $Id: Encoding.java,v 1.4 2001/11/19 22:33:37 momjian Exp $
+ * $Id: Encoding.java,v 1.5 2002/03/19 02:48:45 momjian Exp $
  */
 
 public class Encoding
@@ -40,10 +40,16 @@ public class Encoding
 		encodings.put("EUC_JP", new String[] { "EUC_JP" });
 		encodings.put("EUC_CN", new String[] { "EUC_CN" });
 		encodings.put("EUC_KR", new String[] { "EUC_KR" });
+		encodings.put("JOHAB", new String[] { "Johab" });
 		encodings.put("EUC_TW", new String[] { "EUC_TW" });
-		encodings.put("SJIS", new String[] { "SJIS" });
-		encodings.put("BIG5", new String[] { "Big5" });
+		encodings.put("SJIS", new String[] { "MS932","SJIS" });
+		encodings.put("BIG5", new String[] { "Big5","MS950","Cp950" });
+		encodings.put("GBK", new String[] { "GBK","MS936" });
+		encodings.put("UHC", new String[] { "MS949","Cp949","Cp949C" });
+		encodings.put("TCVN", new String[] { "Cp1258" });
+		encodings.put("WIN1256", new String[] { "Cp1256" });
 		encodings.put("WIN1250", new String[] { "Cp1250" });
+		encodings.put("WIN874", new String[] { "MS874","Cp874" });
 		encodings.put("WIN", new String[] { "Cp1251" });
 		encodings.put("ALT", new String[] { "Cp866" });
 		// We prefer KOI8-U, since it is a superset of KOI8-R.
