@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.234 2002/05/12 20:10:03 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.235 2002/05/28 22:15:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -856,8 +856,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		 * Create an expression tree representing the function call
 		 * nextval('"sequencename"')
 		 */
-		qstring = palloc(strlen(snamespace) + strlen(sname) + 5 + 1);
-		sprintf(qstring, "\"%s\".\"%s\"", snamespace, sname);
+		qstring = quote_qualified_identifier(snamespace, sname);
 		snamenode = makeNode(A_Const);
 		snamenode->val.type = T_String;
 		snamenode->val.val.str = qstring;
