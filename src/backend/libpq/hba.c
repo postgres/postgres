@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.129 2004/08/29 05:06:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.130 2004/09/18 01:22:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,6 +213,9 @@ next_token(FILE *fp, char *buf, int bufsz)
  *	 Tokenize file and handle file inclusion and comma lists. We have
  *	 to  break	apart  the	commas	to	expand	any  file names then
  *	 reconstruct with commas.
+ *
+ * The result is always a palloc'd string.  If it's zero-length then
+ * we have reached EOL.
  */
 static char *
 next_token_expand(FILE *file)
@@ -225,7 +228,7 @@ next_token_expand(FILE *file)
 	do
 	{
 		next_token(file, buf, sizeof(buf));
-		if (!*buf)
+		if (!buf[0])
 			break;
 
 		if (buf[strlen(buf) - 1] == ',')
@@ -382,7 +385,7 @@ tokenize_file(FILE *file, List **lines, List **line_nums)
 		buf = next_token_expand(file);
 
 		/* add token to list, unless we are at EOL or comment start */
-		if (buf[0] != '\0')
+		if (buf[0])
 		{
 			if (current_line == NIL)
 			{
@@ -403,6 +406,8 @@ tokenize_file(FILE *file, List **lines, List **line_nums)
 			current_line = NIL;
 			/* Advance line number whenever we reach EOL */
 			line_number++;
+			/* Don't forget to pfree the next_token_expand result */
+			pfree(buf);
 		}
 	}
 }
