@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.368 2004/07/17 18:53:56 petere Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.369 2004/07/20 20:37:13 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -360,8 +360,8 @@ IFS=$ac_save_IFS
 AC_MSG_CHECKING([allow thread-safe client libraries])
 PGAC_ARG_BOOL(enable, thread-safety, no, [  --enable-thread-safety  make client libraries thread-safe])
 PGAC_ARG_BOOL(enable, thread-safety-force, no, [  --enable-thread-safety-force  force thread-safety in spite of thread test failure])
-if test "$enable_thread_safety" = yes -o
-   test "$enable_thread_safety_force" = yes; then
+if test "$enable_thread_safety" = yes -o \
+        "$enable_thread_safety_force" = yes; then
   enable_thread_safety="yes"	# for 'force'
   AC_DEFINE([ENABLE_THREAD_SAFETY], 1,
           [Define to 1 to build client libraries as thread-safe code. (--enable-thread-safety)])
@@ -480,6 +480,16 @@ AC_SUBST(with_openssl)
 #
 PGAC_ARG_BOOL(with, readline, yes,
               [  --without-readline      do not use Readline])
+# readline on MinGW has problems with backslashes in psql and other bugs.
+# This is particularly a problem with non-US code pages.
+# Therefore disable its use until we understand the cause. 2004-07-20
+case $host_os in mingw*)
+  if test "$with_readline" = yes; then
+    AC_MSG_WARN([*** Readline does not work on MinGW --- disabling])
+    with_readline=no
+  fi;;
+esac
+
 
 #
 # Zlib

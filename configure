@@ -2980,8 +2980,8 @@ else
 
 fi;
 
-if test "$enable_thread_safety" = yes -o
-   test "$enable_thread_safety_force" = yes; then
+if test "$enable_thread_safety" = yes -o \
+        "$enable_thread_safety_force" = yes; then
   enable_thread_safety="yes"	# for 'force'
 
 cat >>confdefs.h <<\_ACEOF
@@ -3408,6 +3408,17 @@ else
   with_readline=yes
 
 fi;
+
+# readline on MinGW has problems with backslashes in psql and other bugs.
+# This is particularly a problem with non-US code pages.
+# Therefore disable its use until we understand the cause. 2004-07-20
+case $host_os in mingw*)
+  if test "$with_readline" = yes; then
+    { echo "$as_me:$LINENO: WARNING: *** Readline does not work on MinGW --- disabling" >&5
+echo "$as_me: WARNING: *** Readline does not work on MinGW --- disabling" >&2;}
+    with_readline=no
+  fi;;
+esac
 
 
 #
