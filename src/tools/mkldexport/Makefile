@@ -7,14 +7,15 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/tools/mkldexport/Attic/Makefile,v 1.1.1.1 1996/07/09 06:22:32 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/tools/mkldexport/Attic/Makefile,v 1.2 1996/11/12 11:43:12 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-SHPROG=mkldexport
+all: mkldexport
 
-MKDIR=	../../mk
-include ../../Makefile.global
-include $(MKDIR)/postgres.mk
+mkldexport: mkldexport.sh
+	cp mkldexport.sh mkldexport
+	chmod a+x mkldexport
 
-include $(MKDIR)/postgres.shell.mk
+clean:
+	rm -f mkldexport

@@ -7,74 +7,85 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.7 1996/11/12 11:16:44 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.8 1996/11/12 11:43:05 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-MKDIR=	../../mk
-include $(MKDIR)/postgres.mk
-include $(MKDIR)/postgres.user.mk
+SRCDIR= ../..
+LIBPQDIR= $(SRCDIR)/libpq
+include ../../Makefile.global
 
-CFLAGS+=-I../../include
+CFLAGS+= -I$(LIBPQDIR) -I../../include
 
+LDADD+= -L$(LIBPQDIR) -lpq
+        
 #
-# try locating libpq.a in the following places
-#
-LIBPQ:=  -L$(srcdir)/libpq/$(objdir) -L$(LIBDIR) -lpq
-
-LDADD+= $(LIBPQ)
-
-
-#
-# build dynamically-loaded object files
+# DLOBJS is the dynamically-loaded object file.  The regression test uses 
+# this when it does a CREATE FUNCTION ... LANGUAGE 'C').
 #
 DLOBJS= regress$(SLSUFF)
 
 #
 # ... plus test query inputs
 #
-CREATEFILES= $(DLOBJS:%=$(objdir)/%) \
-	create.sql queries.sql errors.sql destroy.sql security.sql expected.out
+# INFILES is the files the regression test uses for input.
+INFILES= $(DLOBJS) \
+         create.sql queries.sql errors.sql destroy.sql security.sql \
+         expected.out
+#
+# plus exports files
+#
+ifdef EXPSUFF
+INFILES+= $(DLOBJS:.o=$(EXPSUFF))
+endif
 
-
+# OUTFILES is the files that get created by running the regression test.
 OUTFILES= stud_emp.data onek.data regress.out aportal.out
-
-CLEANFILES+= $(notdir $(CREATEFILES)) $(OUTFILES)
-
-$(OUTFILES): $(CREATEFILES)
-	$(SHELL) ./regress.sh 2>&1 | tee $(objdir)/regress.out
-	@echo "RESULTS OF REGRESSION ARE SAVED IN $(objdir)/regress.out"
-
-#
-# expected results file -- expand macros for user and location
-#
-# the expected.input file is make by hand from 'regress.out' when the
-# regression test has been updated and a successful output obtained
-#
-expected.out: expected.input
-	if [ -z "$$USER" ]; then USER=$$LOGNAME; fi; \
-	if [ -z "$$USER" ]; then USER=`whoami`; fi; \
-	if [ -z "$$USER" ]; then echo 'Cannot deduce $USER.'; exit 1; fi; \
-	rm -f $(objdir)/expected.out; \
-	C="`pwd`"; \
-	sed -e "s:_CWD_:$$C:g" \
-	    -e "s:_OBJWD_:$$C/$(objdir):g" \
-            -e "s:_SLSUFF_:$(SLSUFF):g" \
-	    -e "s/_USER_/$$USER/g" < expected.input > $(objdir)/expected.out
 
 #
 # prepare to run the test (including clean-up after the last run)
 #
-all:: $(CREATEFILES)
-	cd $(objdir); rm -f $(OUTFILES)
+all: $(INFILES)
+	rm -f $(OUTFILES)
 
 #
 # run the test
 #
-runtest: expected.out regress.out
+runtest: $(INFILES) expected.out 
+	$(SHELL) ./regress.sh 2>&1 | tee regress.out
+	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILE regress.out"
 
-#
-# installation
-#
-install: localobj all
+# The expected.input file is part of the distribution.  It was made by hand
+# from 'regress.out' from a reference run of the regression test, replacing
+# installation-dependent things with names like _CWD_.  The following rule
+# turns those names back into real values for the instant installation to
+# create a standard (expected.out) against which to compare regress.out 
+# from the experimental run.
+
+expected.out: expected.input
+	if [ -z "$$USER" ]; then USER=$$LOGNAME; fi; \
+	if [ -z "$$USER" ]; then USER=`whoami`; fi; \
+	if [ -z "$$USER" ]; then echo 'Cannot deduce $USER.'; exit 1; fi; \
+	rm -f expected.out; \
+	C="`pwd`"; \
+	sed -e "s:_CWD_:$$C:g" \
+	    -e "s:_OBJWD_:$$C:g" \
+            -e "s:_SLSUFF_:$(SLSUFF):g" \
+	    -e "s/_USER_/$$USER/g" < expected.input > expected.out
+	@echo "YOUR EXPECTED RESULTS ARE NOW IN FILE expected.out."
+
+%.sql: %.source
+	if [ -z "$$USER" ]; then USER=$$LOGNAME; fi; \
+	if [ -z "$$USER" ]; then USER=`whoami`; fi; \
+	if [ -z "$$USER" ]; then echo 'Cannot deduce $$USER.'; exit 1; fi; \
+	rm -f $@; \
+	C=`pwd`; \
+	sed -e "s:_CWD_:$$C:g" \
+	    -e "s:_OBJWD_:$$C:g" \
+	    -e "s:_SLSUFF_:$(SLSUFF):g" \
+	    -e "s/_USER_/$$USER/g" < $< > $@
+
+clean:
+	rm -f $(INFILES)
+	rm -f $(OUTFILES)
 

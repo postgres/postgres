@@ -2,15 +2,21 @@
 # Makefile for example programs
 #
 
-CPP_PROG = true
+SRCDIR= ../..
+LIBPQDIR= $(SRCDIR)/libpq
+include ../../Makefile.global
 
-MKDIR=	../../mk
-include $(MKDIR)/postgres.mk
+CXXFLAGS= $(CFLAGS)
 
-CXXFLAGS+= -I$(HEADERDIR) -I$(srcdir)/libpq -I$(srcdir)/backend \
- 	 -I$(srcdir)/backend/include
+INCLUDE_OPT= \
+             -I.. \
+             -I../../backend \
+             -I../../include \
+             -I$(LIBPQDIR) 
 
-LD_ADD+=-L$(LIBDIR) -lpq++ -lpq
+CXXFLAGS+= $(INCLUDE_OPT)
+
+LD_ADD+= -L.. -lpq++ -L$(LIBPQDIR) -lpq 
 
 #
 # And where libpq goes, so goes the authentication stuff...
@@ -20,51 +26,19 @@ LD_ADD+= $(KRBLIBS)
 CXXFLAGS+= $(KRBFLAGS)
 endif
 
-P0_PROG:= testlibpq0
-P0_OBJS:= testlibpq0.o
+PROGS= testlibpq0 testlibpq1 testlibpq2 testlibpq3 testlibpq4 testlo
 
-$(P0_PROG):  $(addprefix $(objdir)/,$(P0_OBJS))
-	$(CXX) $(CFLAGS) -o $(objdir)/$(@F) $< $(LD_ADD)
+all: submake $(PROGS)
 
-P1_PROG:= testlibpq1
-P1_OBJS:= testlibpq1.o
+$(PROGS): % : %.cc ../libpq++.a
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $@.cc $(LD_ADD)
 
-$(P1_PROG):  $(addprefix $(objdir)/,$(P1_OBJS))
-	$(CXX) $(CFLAGS) -o $(objdir)/$(@F) $< $(LD_ADD)
+.PHONY: submake
+submake: 
+	$(MAKE) -C.. libpq++.a
 
-P2_PROG:= testlibpq2
-P2_OBJS:= testlibpq2.o
+../libpq++.a:
+	$(MAKE) -C.. libpq++.a
 
-$(P2_PROG):  $(addprefix $(objdir)/,$(P2_OBJS))
-	$(CXX) $(CFLAGS) -o $(objdir)/$(@F) $< $(LD_ADD)
-
-P3_PROG:= testlibpq3
-P3_OBJS:= testlibpq3.o
-
-$(P3_PROG):  $(addprefix $(objdir)/,$(P3_OBJS))
-	$(CXX) $(CFLAGS) -o $(objdir)/$(@F) $< $(LD_ADD)
-
-P4_PROG:= testlibpq4
-P4_OBJS:= testlibpq4.o
-
-$(P4_PROG):  $(addprefix $(objdir)/,$(P4_OBJS))
-	$(CXX) $(CFLAGS) -o $(objdir)/$(@F) $< $(LD_ADD)
-
-P5_PROG:= testlo
-P5_OBJS:= testlo.o
-
-$(P5_PROG):  $(addprefix $(objdir)/,$(P5_OBJS))
-	$(CXX) $(CFLAGS) -o $(objdir)/$(@F) $< $(LD_ADD)
-
-OBJS:= $(P0_OBJS) $(P1_OBJS) $(P2_OBJS) $(P3_OBJS) $(P4_OBJS) $(P5_OBJS)
-PROGS:= $(P0_PROG) $(P1_PROG) $(P2_PROG) $(P3_PROG) $(P4_PROG) $(P5_PROG)
-
-CLEANFILES+= $(OBJS) $(PROGS)
-
-all:: $(PROGS)
-
-install:: $(PROGS)
-	@for i in ${PROGS}; do \
-		echo "Installing $$i"; \
-		$(INSTALL) $(objdir)/$$i $(DESTDIR)$(BINDIR)/$$i;\
-	done
+clean: 
+	rm -f $(PROGS)

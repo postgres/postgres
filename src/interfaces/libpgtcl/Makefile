@@ -7,40 +7,55 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.4 1996/11/08 00:58:07 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.5 1996/11/12 11:42:09 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-LIB=	pgtcl
+SRCDIR= ..
+LIBPQDIR= $(SRCDIR)/libpq
+include ../Makefile.global
 
-MKDIR=	../mk
-include $(MKDIR)/postgres.mk
+INCLUDE_OPT= \
+             -I../backend \
+             -I../include \
+             -I$(LIBPQDIR) \
+             -I$(TCL_INCDIR)
 
-CFLAGS+= -I$(HEADERDIR) \
-	 -I$(srcdir)/backend/include \
-	 -I$(srcdir)/backend \
-	 -I$(CURDIR) \
-	 -I$(TCL_INCDIR) \
-	 -I$(srcdir)/libpq
-
-LIBLDLIBS+= -L$(LIBDIR) -lpq
-
+CFLAGS+= $(INCLUDE_OPT)
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
 endif
 
 ifdef LINUX_ELF
 CFLAGS += -fPIC
-CC += -L $(POSTGRESDIR)/lib -lpq
 endif
 
-LIBSRCS= pgtcl.c pgtclCmds.c pgtclId.c
+OBJS= pgtcl.o pgtclCmds.o pgtclId.o
 
-install-headers:
+all: libpgtcl.a
+
+libpgtcl.a: $(OBJS)
+ifdef MK_NO_LORDER
+	$(AR) $(AROPT) libpgtcl.a $(OBJS)
+else
+	$(AR) $(AROPT) libpgtcl.a `lorder $(OBJS) | tsort`
+endif
+	$(RANLIB) libpgtcl.a
+
+.PHONY: beforeinstall-headers install-headers
+.PHONY: install install-libpgtcl
+
+install: install-headers install-libpgtcl
+
+install-headers: beforeinstall-headers libpgtcl.h
 	$(INSTALL) $(INSTLOPTS) libpgtcl.h $(HEADERDIR)/libpgtcl.h
 
+beforeinstall-headers:
+	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
 
-install:: install-headers
+install-libpgtcl: libpgtcl.a
+	$(INSTALL) $(INSTL_LIB_OPTS) libpgtcl.a $(DESTDIR)$(LIBDIR)/libpgtcl.a
 
-include $(MKDIR)/postgres.lib.mk
-
+.PHONY: clean
+clean: 
+	rm -f $(OBJS)

@@ -14,7 +14,7 @@
  *
  *   IDENTIFICATION
  *
- * $Id: libpq++.H,v 1.2 1996/08/21 04:32:09 scrappy Exp $
+ * $Id: libpq++.H,v 1.3 1996/11/12 11:42:27 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,8 @@
 #include <strings.h>
 
 extern "C" {
+#include "config.h"
+#include "postgres.h"
 #include "libpq-fe.h"
 #include "fe-auth.h"
 }

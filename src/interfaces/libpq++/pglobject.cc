@@ -11,13 +11,15 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pglobject.cc,v 1.1.1.1 1996/07/09 06:22:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pglobject.cc,v 1.2 1996/11/12 11:42:31 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "libpq++.H"
 
 extern "C" {
+#include <unistd.h>
+#include <fcntl.h>
 #include "libpq/libpq-fs.h"
 }
 

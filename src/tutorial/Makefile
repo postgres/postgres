@@ -1,39 +1,55 @@
 #-------------------------------------------------------------------------
 #
 # Makefile--
-#    Makefile for tutorial/C-code
-#
-# Copyright (c) 1994, Regents of the University of California
-#
+#    Makefile for tutorial
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.1.1.1 1996/07/09 06:22:33 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/tutorial/Makefile,v 1.2 1996/11/12 11:43:20 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-MKDIR=	../mk
-include $(MKDIR)/postgres.mk
+SRCDIR= ..
+LIBPQDIR= $(SRCDIR)/libpq
+include ../Makefile.global
 
-VPATH:= $(VPATH):C-code
+CFLAGS+= -I$(LIBPQDIR) -I../../include
 
+LDADD+= -L$(LIBPQDIR) -lpq
+        
 #
-# build dynamically-loaded object files
+# DLOBJS is the dynamically-loaded object files.  The "funcs" queries
+# include CREATE FUNCTIONs that load routines from these files.
 #
-DLOBJS= complex$(SLSUFF) funcs$(SLSUFF) 
+DLOBJS= complex$(SLSUFF) funcs$(SLSUFF)
 
+QUERIES= advanced.sql basics.sql complex.sql funcs.sql syscat.sql
 #
-# ... plus test query inputs
+# plus exports files
 #
-CREATEFILES= $(DLOBJS:%=$(objdir)/%) \
-	advanced.sql basics.sql complex.sql funcs.sql syscat.sql
+ifdef EXPSUFF
+DLOBJS+= $(DLOBJS:.o=$(EXPSUFF))
+endif
 
-include $(MKDIR)/postgres.user.mk
+all: $(QUERIES)
 
-CFLAGS+= -I$(srcdir)/backend
+%.sql: %.source
+	if [ -z "$$USER" ]; then USER=$$LOGNAME; fi; \
+	if [ -z "$$USER" ]; then USER=`whoami`; fi; \
+	if [ -z "$$USER" ]; then echo 'Cannot deduce $$USER.'; exit 1; fi; \
+	rm -f $@; \
+	C=`pwd`; \
+	sed -e "s:_CWD_:$$C:g" \
+	    -e "s:_OBJWD_:$$C:g" \
+	    -e "s:_SLSUFF_:$(SLSUFF):g" \
+	    -e "s/_USER_/$$USER/g" < $< > $@
 
-CLEANFILES+= $(notdir $(CREATEFILES))
+funcs.sql:: $(DLOBJS)
 
-all:: $(CREATEFILES)
+$(DLOBJS): 
+	$(MAKE) -C C-code $@
+	cp C-code/$@ .
 
-
-
+clean:
+	$(MAKE) -C C-code clean
+	rm -f $(QUERIES)
+	rm -f $(DLOBJS)

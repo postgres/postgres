@@ -7,48 +7,60 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.1.1.1 1996/07/09 06:22:18 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.2 1996/11/12 11:42:24 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
-CPP_LIB=	true
+SRCDIR= ..
+LIBPQDIR= $(SRCDIR)/libpq
+include ../Makefile.global
 
-LIB=	pq++
+CXXFLAGS= $(CFLAGS)
 
-MKDIR=	../mk
-include $(MKDIR)/postgres.mk
+INCLUDE_OPT= \
+             -I../backend \
+             -I../include \
+             -I$(LIBPQDIR) 
 
-CXXFLAGS = $(CFLAGS)
-
-CXXFLAGS+= -I$(srcdir)/backend/include \
-	-I$(srcdir)/backend \
-	-I$(srcdir)/libpq \
-	-I$(CURDIR) \
+CXXFLAGS+= $(INCLUDE_OPT) -DPOSTPORT='"$(POSTPORT)"'
 
 ifdef KRBVERS
 CXXFLAGS+= $(KRBFLAGS)
 endif
 
+OBJS= pgenv.o pgconnection.o pglobject.o
 
-LIBSRCS =  pgenv.cc pgconnection.cc pglobject.cc
+all: libpq++.a examples
 
-.PHONY: beforeinstall-headers install-headers
-
-ifndef NO_BEFOREINSTL
-beforeinstall-headers:
-	@-if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
+libpq++.a: $(OBJS)
+ifdef MK_NO_LORDER
+	$(AR) $(AROPT) libpq++.a $(OBJS)
 else
-beforeinstall-headers: .dosomething
+	$(AR) $(AROPT) libpq++.a `lorder $(OBJS) | tsort`
 endif
+	$(RANLIB) libpq++.a
 
-HEADERFILES = libpq++.H
+.PHONY: examples
+examples:
+	$(MAKE) -C examples all
 
-install-headers: beforeinstall-headers
-	@for i in ${HEADERFILES}; do \
-		echo "Installing $(HEADERDIR)/$$i."; \
-		$(INSTALL) -c -m 444 $$i $(HEADERDIR)/$$i; \
-	done
+.PHONY: beforeinstall-headers install-headers 
+.PHONY: install install-libpq++ doc
 
-install:: install-headers
+install: install-headers install-libpq++ doc
 
-include $(MKDIR)/postgres.lib.mk
+install-headers: beforeinstall-headers libpq++.H
+	$(INSTALL) $(INSTLOPTS) libpq++.H $(HEADERDIR)/libpq++.H
+
+beforeinstall-headers:
+	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
+
+install-libpq++: libpq++.a
+	$(INSTALL) $(INSTL_LIB_OPTS) libpq++.a $(DESTDIR)$(LIBDIR)/libpq++.a
+
+doc:
+	$(MAKE) -C man install
+
+clean:
+	rm libpq++.a $(OBJS)
+	$(MAKE) -C examples clean

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.15 1996/11/09 06:24:51 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.16 1996/11/12 11:42:21 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -127,10 +127,10 @@ else
 install-shlib-dep :=
 endif
 
-install-libpq:
+install-libpq: libpq.a
 	$(INSTALL) $(INSTL_LIB_OPTS) libpq.a $(DESTDIR)$(LIBDIR)/libpq.a
 
-install-shlib:
+install-shlib: libpq.so.1
 	$(INSTALL) $(INSTL_LIB_OPTS) libpq.so.1 $(DESTDIR)$(LIBDIR)/libpq.so.1
 
 depend dep:
