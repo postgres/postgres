@@ -98,6 +98,8 @@ static char *func = "SQLConnect";
 
 	/*	get the values for the DSN from the registry */
 	getDSNinfo(ci, CONN_OVERWRITE);
+	/*	initialize pg_version from connInfo.protocol	*/
+	CC_initialize_pg_version(conn); 
 	
 	/*	override values from DSN info with UID and authStr(pwd) 
 		This only occurs if the values are actually there.
@@ -253,6 +255,10 @@ ConnectionClass *rv;
 		rv->translation_handle = NULL;
 		rv->DataSourceToDriver = NULL;
 		rv->DriverToDataSource = NULL;
+		memset(rv->pg_version, 0, sizeof(rv->pg_version));
+		rv->pg_version_number = .0;
+		rv->pg_version_major = 0;
+		rv->pg_version_minor = 0;
 
 
 		/*	Initialize statement options to defaults */
@@ -1365,6 +1371,28 @@ static char *func = "CC_lookup_lo";
 	result = SQLFreeStmt(hstmt, SQL_DROP);
 }
 
+/*	This function initializes the version of PostgreSQL from
+	connInfo.protocol that we're connected to.
+	h-inoue 01-2-2001
+*/
+void
+CC_initialize_pg_version(ConnectionClass *self) 
+{
+	strcpy(self->pg_version, self->connInfo.protocol); 
+	if (PROTOCOL_62(&self->connInfo)) {
+		self->pg_version_number = (float) 6.2;
+		self->pg_version_major = 6;
+		self->pg_version_minor = 2;
+	} else if (PROTOCOL_63(&self->connInfo)) {
+		self->pg_version_number = (float) 6.3;
+		self->pg_version_major = 6;
+		self->pg_version_minor = 3;
+	} else {
+		self->pg_version_number = (float) 6.4;
+		self->pg_version_major = 6;
+		self->pg_version_minor = 4;
+	}
+}
 /*	This function gets the version of PostgreSQL that we're connected to.
     This is used to return the correct info in SQLGetInfo
 	DJP - 25-1-2001
@@ -1376,6 +1404,7 @@ HSTMT hstmt;
 StatementClass *stmt;
 RETCODE result;
 char *szVersion = "0.0";
+int	major, minor;
 static char *func = "CC_lookup_pg_version";
 
 	mylog( "%s: entering...\n", func);
@@ -1389,6 +1418,7 @@ static char *func = "CC_lookup_pg_version";
 	}
 	stmt = (StatementClass *) hstmt;
 
+	/*	get the server's version if possible	*/
 	result = SQLExecDirect(hstmt, "select version()", SQL_NTS);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		SQLFreeStmt(hstmt, SQL_DROP);
@@ -1407,10 +1437,13 @@ static char *func = "CC_lookup_pg_version";
 		return;
 	}
 
-	/* There's proably a nicer way of doing this... */
 	/* Extract the Major and Minor numbers from the string. */
 	/* This assumes the string starts 'Postgresql X.X' */
-	sprintf(szVersion, "%c.%c", self->pg_version[11], self->pg_version[13]);
+	if (sscanf(self->pg_version, "%*s %d.%d", &major, &minor) >= 2) {
+		sprintf(szVersion, "%d.%d", major, minor);
+		self->pg_version_major = major;
+		self->pg_version_minor = minor;
+	}
 	self->pg_version_number = (float) atof(szVersion);
 
 	mylog("Got the PostgreSQL version string: '%s'\n", self->pg_version);

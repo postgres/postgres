@@ -69,7 +69,7 @@ RETCODE SQL_API SQLGetInfo(
 static char *func = "SQLGetInfo";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 ConnInfo *ci;
-char *p = NULL;
+char *p = NULL, tmp[MAX_INFO_STRING];
 int len = 0, value = 0;
 RETCODE result;
 
@@ -193,9 +193,8 @@ RETCODE result;
     case SQL_DBMS_VER: /* ODBC 1.0 */
 		/* The ODBC spec wants ##.##.#### ...whatever... so prepend the driver */
 		/* version number to the dbms version string */
-		p = POSTGRESDRIVERVERSION;
-		strcat(p, " ");
-		strcat(p, conn->pg_version);
+		sprintf(tmp, "%s %s", POSTGRESDRIVERVERSION, conn->pg_version);
+		p = tmp;
         break;
 
     case SQL_DEFAULT_TXN_ISOLATION: /* ODBC 1.0 */
@@ -255,7 +254,7 @@ RETCODE result;
 
     case SQL_IDENTIFIER_QUOTE_CHAR: /* ODBC 1.0 */
         /* the character used to quote "identifiers" */
-		p = PROTOCOL_62(ci) ? " " : "\"";
+		p = PG_VERSION_LE(conn, 6.2) ? " " : "\"";
         break;
 
     case SQL_KEYWORDS: /* ODBC 2.0 */
@@ -341,7 +340,7 @@ RETCODE result;
 
     case SQL_MAX_ROW_SIZE: /* ODBC 2.0 */
 		len = 4;
-		if (conn->pg_version_number >= (float) 7.1) { /* Large Rowa in 7.1+ */
+		if (PG_VERSION_GE(conn, 7.1)) { /* Large Rowa in 7.1+ */
 			value = MAX_ROW_SIZE;
 		} else { /* Without the Toaster we're limited to the blocksize */
 			value = BLCKSZ;
@@ -358,11 +357,13 @@ RETCODE result;
     case SQL_MAX_STATEMENT_LEN: /* ODBC 2.0 */
         /* maybe this should be 0? */
 		len = 4;
-		if (conn->pg_version_number >= (float) 7.0) { /* Long Queries in 7.0+ */
+		if (PG_VERSION_GE(conn, 7.0)) { /* Long Queries in 7.0+ */
 			value = MAX_STATEMENT_LEN;
-		} else { /* Prior to 7.0 we used 2*BLCKSZ */
+		} else if (PG_VERSION_GE(conn, 6.5)) /* Prior to 7.0 we used 2*BLCKSZ */
 			value = (2*BLCKSZ);
-		}
+		else /* Prior to 6.5 we used BLCKSZ */
+			value = BLCKSZ;
+
         break;
 
     case SQL_MAX_TABLE_NAME_LEN: /* ODBC 1.0 */
@@ -431,7 +432,7 @@ RETCODE result;
 
 	case SQL_OJ_CAPABILITIES: /* ODBC 2.01 */
 		len = 4;
-		if (conn->pg_version_number >= (float) 7.1) { /* OJs in 7.1+ */
+		if (PG_VERSION_GE(conn, 7.1)) { /* OJs in 7.1+ */
 			value = (SQL_OJ_LEFT |
 					SQL_OJ_RIGHT |
 					SQL_OJ_FULL |
@@ -445,11 +446,11 @@ RETCODE result;
 		break;
 
     case SQL_ORDER_BY_COLUMNS_IN_SELECT: /* ODBC 2.0 */
-		p = (PROTOCOL_62(ci) || PROTOCOL_63(ci)) ? "Y" : "N";		
+		p = (PG_VERSION_LE(conn, 6.3)) ? "Y" : "N";		
         break;
 
     case SQL_OUTER_JOINS: /* ODBC 1.0 */
-		if (conn->pg_version_number >= (float) 7.1) { /* OJs in 7.1+ */
+		if (PG_VERSION_GE(conn, 7.1)) { /* OJs in 7.1+ */
 			p = "Y";
 		} else { /* OJs not in <7.1 */
 			p = "N";
@@ -937,7 +938,8 @@ HSTMT htbl_stmt;
 RETCODE result;
 char *tableType;
 char tables_query[STD_STATEMENT_LEN];
-char table_name[MAX_INFO_STRING], table_owner[MAX_INFO_STRING], relhasrules[MAX_INFO_STRING];
+char table_name[MAX_INFO_STRING], table_owner[MAX_INFO_STRING], relkind_or_hasrules[MAX_INFO_STRING];
+ConnectionClass *conn;
 ConnInfo *ci;
 char *prefix[32], prefixes[MEDIUM_REGISTRY_LEN];
 char *table_type[32], table_types[MAX_INFO_STRING];
@@ -955,6 +957,7 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
 	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
 
+	conn = (ConnectionClass *) (stmt->hdbc);
 	ci = &stmt->hdbc->connInfo;
 
 	result = SQLAllocStmt( stmt->hdbc, &htbl_stmt);
@@ -970,8 +973,14 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
 	/*	Create the query to find out the tables */
 	/* ********************************************************************** */
 
-	strcpy(tables_query, "select relname, usename, relhasrules from pg_class, pg_user");
-	strcat(tables_query, " where relkind = 'r'");
+	if (PG_VERSION_GE(conn, 7.1)) { /* view is represented by its relkind since 7.1 */
+		strcpy(tables_query, "select relname, usename, relkind from pg_class, pg_user");
+		strcat(tables_query, " where relkind in ('r', 'v')");
+	}
+	else {
+		strcpy(tables_query, "select relname, usename, relhasrules from pg_class, pg_user");
+		strcat(tables_query, " where relkind = 'r'");
+	}
 
 	my_strcat(tables_query, " and usename like '%.*s'", szTableOwner, cbTableOwner);
 	my_strcat(tables_query, " and relname like '%.*s'", szTableName, cbTableName);
@@ -1039,6 +1048,9 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
 
 
 	/* match users */
+	if (PG_VERSION_LT(conn, 7.1)) /* filter out large objects in older versions */ 
+		strcat(tables_query, " and relname !~ '^xinv[0-9]+'"); 
+
 	strcat(tables_query, " and usesysid = relowner");
 	strcat(tables_query, " order by relname");
 
@@ -1073,7 +1085,7 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
         return SQL_ERROR;
     }
     result = SQLBindCol(htbl_stmt, 3, SQL_C_CHAR,
-                        relhasrules, MAX_INFO_STRING, NULL);
+                        relkind_or_hasrules, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
@@ -1131,7 +1143,10 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
 		}
 
 		/*	Determine if the table name is a view */
-		view = (relhasrules[0] == '1');
+		if (PG_VERSION_GE(conn, 7.1)) /* view is represented by its relkind since 7.1 */
+			view = (relkind_or_hasrules[0] == 'v');
+		else
+			view = (relkind_or_hasrules[0] == '1');
 
 		/*	It must be a regular table */
 		regular_table = ( ! systable && ! view);
@@ -1214,6 +1229,7 @@ Int4 field_type, the_type, field_length, mod_length, precision;
 char useStaticPrecision;
 char not_null[MAX_INFO_STRING], relhasrules[MAX_INFO_STRING];
 ConnInfo *ci;
+ConnectionClass *conn;
 
 
 	mylog("%s: entering...stmt=%u\n", func, stmt);
@@ -1226,6 +1242,7 @@ ConnInfo *ci;
 	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
 
+	conn = (ConnectionClass *) (stmt->hdbc);
 	ci = &stmt->hdbc->connInfo;
 
 	/* ********************************************************************** */
@@ -1236,7 +1253,7 @@ ConnInfo *ci;
 			" from pg_user u, pg_class c, pg_attribute a, pg_type t"
 			" where u.usesysid = c.relowner"
 			" and c.oid= a.attrelid and a.atttypid = t.oid and (a.attnum > 0)",
-			PROTOCOL_62(ci) ? "a.attlen" : "a.atttypmod");
+			PG_VERSION_LE(conn, 6.2) ? "a.attlen" : "a.atttypmod");
 
 	my_strcat(columns_query, " and c.relname like '%.*s'", szTableName, cbTableName);
 	my_strcat(columns_query, " and u.usename like '%.*s'", szTableOwner, cbTableOwner);
@@ -2315,7 +2332,6 @@ Int2 result_cols;
 		stmt->errormsg = "Couldn't allocate memory for SQLForeignKeys result.";
         stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
         return SQL_ERROR;
     }
 

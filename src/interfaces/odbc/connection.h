@@ -163,6 +163,41 @@ typedef struct {
 /*	Macro to determine is the connection using 6.3 protocol? */
 #define PROTOCOL_63(conninfo_)		(strncmp((conninfo_)->protocol, PG63, strlen(PG63)) == 0)
 
+/*
+ *	Macros to compare the server's version with a specified version
+ *		1st parameter: pointer to a ConnectionClass object
+ *		2nd parameter: major version number
+ *		3rd parameter: minor version number
+ */
+#define SERVER_VERSION_GT(conn, major, minor) \
+	((conn)->pg_version_major > major || \
+	((conn)->pg_version_major == major && (conn)->pg_version_minor > minor))
+#define SERVER_VERSION_GE(conn, major, minor) \
+	((conn)->pg_version_major > major || \
+	((conn)->pg_version_major == major && (conn)->pg_version_minor >= minor))
+#define SERVER_VERSION_EQ(conn, major, minor) \
+	((conn)->pg_version_major == major && (conn)->pg_version_minor == minor)
+#define SERVER_VERSION_LE(conn, major, minor) (! SERVER_VERSION_GT(conn, major, minor))
+#define SERVER_VERSION_LT(conn, major, minor) (! SERVER_VERSION_GE(conn, major, minor))
+/*#if ! defined(HAVE_CONFIG_H) || defined(HAVE_STRINGIZE)*/
+#define	STRING_AFTER_DOT(string)	(strchr(#string, '.') + 1)
+/*#else
+#define	STRING_AFTER_DOT(str)	(strchr("str", '.') + 1)
+#endif*/
+/*
+ *	Simplified macros to compare the server's version with a
+ *		specified version
+ *	Note: Never pass a variable as the second parameter.
+ *	      It must be a decimal constant of the form %d.%d . 
+ */
+#define PG_VERSION_GT(conn, ver) \
+ (SERVER_VERSION_GT(conn, (int) ver, atoi(STRING_AFTER_DOT(ver))))
+#define PG_VERSION_GE(conn, ver) \
+ (SERVER_VERSION_GE(conn, (int) ver, atoi(STRING_AFTER_DOT(ver))))
+#define PG_VERSION_EQ(conn, ver) \
+ (SERVER_VERSION_EQ(conn, (int) ver, atoi(STRING_AFTER_DOT(ver))))
+#define PG_VERSION_LE(conn, ver) (! PG_VERSION_GT(conn, ver))
+#define PG_VERSION_LT(conn, ver) (! PG_VERSION_GE(conn, ver))
 
 /*	This is used to store cached table information in the connection */
 struct col_info {
@@ -223,6 +258,8 @@ struct ConnectionClass_ {
 	char			errormsg_created;		/* has an informative error msg been created?  */
 	char			pg_version[MAX_INFO_STRING];	/* Version of PostgreSQL we're connected to - DJP 25-1-2001 */
 	float			pg_version_number;
+	Int2			pg_version_major;
+	Int2			pg_version_minor;
 };
 
 
@@ -258,6 +295,7 @@ int CC_send_function(ConnectionClass *conn, int fnid, void *result_buf, int *act
 char CC_send_settings(ConnectionClass *self);
 void CC_lookup_lo(ConnectionClass *conn);
 void CC_lookup_pg_version(ConnectionClass *conn);
+void CC_initialize_pg_version(ConnectionClass *conn);
 void CC_log_error(char *func, char *desc, ConnectionClass *self);
 
 

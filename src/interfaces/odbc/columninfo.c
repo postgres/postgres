@@ -81,7 +81,7 @@ ConnInfo *ci;
 		new_adtsize = (Int2) SOCK_get_int(sock, 2);
 
 		/*	If 6.4 protocol, then read the atttypmod field */
-		if ( ! PROTOCOL_63(ci) && ! PROTOCOL_62(ci)) {
+		if (PG_VERSION_GE(conn, 6.4)) {
 
 			mylog("READING ATTTYPMOD\n");
 			new_atttypmod = (Int4) SOCK_get_int(sock, 4);

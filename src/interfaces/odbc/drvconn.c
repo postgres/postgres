@@ -113,6 +113,8 @@ int len = 0;
 
 	/*	Fill in any default parameters if they are not there. */
 	getDSNdefaults(ci);
+	/*	initialize pg_version */
+	CC_initialize_pg_version(conn);
 
 #ifdef WIN32
 dialog:
