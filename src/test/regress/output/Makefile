@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/output/Attic/Makefile,v 1.5 1997/04/27 19:28:20 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/output/Attic/Makefile,v 1.6 1997/05/02 13:43:14 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,8 +32,9 @@ all: $(INFILES)
 	rm -f $@; \
 	PWD=`pwd`; \
 	OBJ=`pwd`; \
-	sed -e "s:_CWD_:$(PWD):g" \
+	sed -e "s:_CWD_:$$PWD:g" \
 	    -e "s:_OBJWD_:$$OBJ/\.\.:g" \
 	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
-	    -e "s/_USER_/$$USER/g" < $< > ../expected/$@
+	    -e "s/_USER_/$$USER/g" < $< | \
+	sed -e "s:output/\.\.:input/\.\.:g" > ../expected/$@
 
