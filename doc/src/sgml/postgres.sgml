@@ -1,11 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.18 1999/02/13 03:52:46 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.19 1999/03/30 15:23:03 thomas Exp $
 
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.19  1999/03/30 15:23:03  thomas
+Include libpq+.sgml in the doc set.
+Had been omitted from the integrated doc for no good reason.
+
 Revision 1.18  1999/02/13 03:52:46  thomas
 Include chapter on SQL language elements (keywords, etc).
 Should merge with or complement Stefan's Master's Thesis intro to SQL.
@@ -118,6 +122,7 @@ Move SQL reference pages up into the User's Guide.
 <!entity spi      SYSTEM "spi.sgml">
 <!entity func-ref SYSTEM "func-ref.sgml">
 <!entity libpq    SYSTEM "libpq.sgml">
+<!entity libpqpp  SYSTEM "libpq++.sgml">
 <!entity libpgtcl SYSTEM "libpgtcl.sgml">
 <!entity ecpg     SYSTEM "ecpg.sgml">
 <!entity odbc     SYSTEM "odbc.sgml">
@@ -299,6 +304,7 @@ Your name here...
    &lobj;
    &ecpg;
    &libpq;
+   &libpqpp;
    &libpgtcl;
    &odbc;
    &jdbc;
