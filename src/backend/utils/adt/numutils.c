@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.51 2002/07/16 18:34:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.52 2002/08/27 20:29:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,9 +58,9 @@ pg_atoi(char *s, int size, int c)
 	 */
 
 	if (s == (char *) NULL)
-		elog(ERROR, "pg_atoi: NULL pointer!");
+		elog(ERROR, "pg_atoi: NULL pointer");
 	else if (*s == 0)
-		l = (long) 0;
+		elog(ERROR, "pg_atoi: zero-length string");
 	else
 		l = strtol(s, &badp, 10);
 

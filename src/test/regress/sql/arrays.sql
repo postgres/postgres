@@ -18,7 +18,7 @@ CREATE TABLE arrtest (
 --
 
 INSERT INTO arrtest (a[5], b[2][1][2], c, d, f, g)
-   VALUES ('{1,2,3,4,5}', '{{{},{1,2}}}', '{}', '{}', '{}', '{}');
+   VALUES ('{1,2,3,4,5}', '{{{0,0},{1,2}}}', '{}', '{}', '{}', '{}');
 
 UPDATE arrtest SET e[0] = '1.1';
 
