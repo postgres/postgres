@@ -72,16 +72,6 @@ then
 	AC_SUBST(TAS)
 fi
 
-echo "checking echo setting..."
-if echo '\c' | grep -s c >/dev/null 2>&1
-then
-	ECHO_N="echo -n"
-	ECHO_C=""
-else
-	ECHO_N="echo"
-	ECHO_C='\c'
-fi
-
 dnl this part selects the template from the ones in the template directory.
 
 AC_MSG_CHECKING(setting template to)
@@ -316,6 +306,7 @@ dnl Find CPP, then check traditional.
 dnl Caution: these macros must be called in this order...
 AC_PROG_CPP
 AC_PROG_GCC_TRADITIONAL
+AC_SUBST(GCC)
 
 if test "$CC" = "gcc"
 then
@@ -565,82 +556,28 @@ AC_SUBST(WISH)
 AC_SUBST(USE_ODBC)
 AC_SUBST(MULTIBYTE)
 
-dnl Check for C++ support (allow override if needed)
-dnl XXX: probably should default to HAVECXX='false'
-HAVECXX='true'
-AC_ARG_WITH(CXX,
-    [  --with-CXX=compiler     use specific C++ compiler
-  --without-CXX           prevent building C++ code ],
-    [
-	case "$withval" in
-	"" | y | ye | yes)
-	    HAVECXX='true'
-	    # allow configure to choose C++ compiler
-	  ;;
-	n | no)
-	    HAVECXX='false'
-	  ;;
-	*)
-	    HAVECXX='true'
-	    CXX="$withval"
-	  ;;
-	esac
-    ])
-AC_SUBST(HAVECXX)
 
-if test "$HAVECXX" = 'true' ; then
-    dnl Even if CXX value was given to us, need to run AC_PROG_CXX ...
-    AC_PROG_CXX
-    AC_LANG_CPLUSPLUS
+dnl
+dnl Optionally build C++ code (i.e., libpq++)
+dnl
+AC_MSG_CHECKING(whether to build C++ modules)
+AC_ARG_WITH(CXX, [  --with-CXX              build C++ modules (libpq++)],
+[if test "x${withval+set}" = xset; then
+  AC_MSG_RESULT(yes)
+  if test x"$withval" != xyes ; then
+    CXX=$withval
+  fi
+  AC_PROG_CXX
+  AC_PROG_CXXCPP
+  PGAC_CLASS_STRING
+  PGAC_CXX_NAMESPACE_STD
+else
+  AC_MSG_RESULT(no)
+fi],
+[AC_MSG_RESULT(no)])
+AC_SUBST(with_CXX)
 
-    dnl check whether "#include <string>" works on this C++ compiler
-    AC_MSG_CHECKING([for include <string> in C++])
-    AC_TRY_COMPILE([#include <stdio.h>
-#include <stdlib.h>
-#include <string>
-], [],
-    [AC_DEFINE(HAVE_CXX_STRING_HEADER) AC_MSG_RESULT(yes)],
-    [AC_MSG_RESULT(no)
 
-    dnl If we found a <string> header then it's probably safe to assume
-    dnl class string exists.  But if not, check to make sure that <string.h>
-    dnl defines class string; libpq++ can't build without class string.
-    AC_MSG_CHECKING([for class string in C++])
-    AC_TRY_COMPILE([#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-], [string foo = "test"],
-    [AC_MSG_RESULT(yes)],
-    [AC_MSG_RESULT(no)
-     AC_MSG_WARN([
-***
-Disabling build of libpq++ because we cannot find class string in the
-system's C++ header files.
-***])
-     HAVECXX='false'
-])
-])
-fi
-
-if test "$HAVECXX" = 'true' ; then
-    dnl check whether "using namespace std" works on this C++ compiler.
-    dnl NOTE: on at least some compilers, it will not work until you've
-    dnl included a header that mentions namespace std.  Thus, include
-    dnl the usual suspects before trying it.
-    AC_MSG_CHECKING([for namespace std in C++])
-    AC_TRY_COMPILE([#include <stdio.h>
-#include <stdlib.h>
-#ifdef HAVE_CXX_STRING_HEADER
-#include <string>
-#endif
-using namespace std;
-], [],
-    [AC_DEFINE(HAVE_NAMESPACE_STD) AC_MSG_RESULT(yes)],
-    [AC_MSG_RESULT(no)])
-fi
-
-dnl make sure we revert to C compiler, not C++, for subsequent tests
-AC_LANG_C
 
 dnl Figure out how to invoke "install" and what install options to use.
 
@@ -667,23 +604,6 @@ AC_PROG_AWK
 AM_MISSING_PROG(AUTOCONF, autoconf, [\${SHELL} \${top_srcdir}/config])
 AM_MISSING_PROG(ACLOCAL, aclocal, [\${SHELL} \${top_srcdir}/config])
 
-dnl Check the option to echo to inhibit newlines.
-ECHO_N_OUT=`echo -n "" | wc -c`
-ECHO_C_OUT=`echo "\c" | wc -c`
-if test "$ECHO_N_OUT" -eq 0; then
-	DASH_N='-n'
-	BACKSLASH_C=
-else
-	if test "ECHO_C_OUT" -eq 0; then
-		DASH_N=
-		BACKSLASH_C='\\\\c'
-	else
-		AC_MSG_ERROR("echo behaviour undetermined")
-	fi
-fi
-AC_SUBST(DASH_N)
-AC_SUBST(BACKSLASH_C)
-
 AC_PROG_LEX
 if test "$LEX" = "flex"; then
         $LEX --version 2> /dev/null | grep -s '2\.5\.3' > /dev/null 2>&1
@@ -709,6 +629,7 @@ AC_PATH_PROG(xargs, xargs)
 AC_PATH_PROGS(GZCAT, gzcat zcat, gzcat)
 AC_CHECK_PROGS(PERL, perl,)
 AC_PROG_YACC
+AC_SUBST(YFLAGS)
 
 
 AC_CHECK_LIB(sfio,     main)
@@ -765,6 +686,7 @@ AC_CHECK_HEADERS(termios.h)
 AC_CHECK_HEADERS(unistd.h)
 AC_CHECK_HEADERS(values.h)
 AC_CHECK_HEADERS(sys/exec.h sys/pstat.h machine/vmparam.h)
+AC_CHECK_HEADERS(sys/types.h sys/socket.h)
 dnl ODBC headers...
 AC_CHECK_HEADERS(sys/param.h pwd.h)
 dnl
@@ -777,51 +699,16 @@ AC_TYPE_UID_T
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
-AC_HEADER_TIME
-AC_STRUCT_TM
 AC_STRUCT_TIMEZONE
+PGAC_C_SIGNED
+PGAC_C_VOLATILE
+AC_FUNC_ACCEPT_ARGTYPES
 
-AC_MSG_CHECKING(for signed types)
-AC_TRY_COMPILE([],
-[signed char c; signed short s; signed int i;],
-[AC_MSG_RESULT(yes)],
-[AC_DEFINE(signed, ) AC_MSG_RESULT(no)])
 
-AC_MSG_CHECKING(for volatile)
-AC_TRY_COMPILE([],
-[extern volatile int i;],
-[AC_MSG_RESULT(yes)],
-[AC_DEFINE(volatile, ) AC_MSG_RESULT(no)])
+PGAC_VAR_INT_TIMEZONE
+PGAC_FUNC_GETTIMEOFDAY_1ARG
+PGAC_UNION_SEMUN
 
-AC_MSG_CHECKING(for type of last arg to accept)
-AC_TRY_COMPILE([#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-],
-[int a = accept(1, (struct sockaddr *) 0, (size_t *) 0);],
-[AC_DEFINE(SOCKET_SIZE_TYPE, size_t) AC_MSG_RESULT(size_t)],
-[AC_DEFINE(SOCKET_SIZE_TYPE, int) AC_MSG_RESULT(int)])
-
-dnl Check for any "odd" conditions
-AC_MSG_CHECKING(for int timezone)
-AC_TRY_LINK([#include <time.h>],
-	    [int res = timezone / 60; ],
-	    [AC_DEFINE(HAVE_INT_TIMEZONE) AC_MSG_RESULT(yes)],
-	    AC_MSG_RESULT(no))
-
-AC_MSG_CHECKING(for gettimeofday args)
-AC_TRY_LINK([#include <sys/time.h>],
-	    [struct timeval *tp; struct timezone *tzp; gettimeofday(tp,tzp); ],
-	    [AC_DEFINE(HAVE_GETTIMEOFDAY_2_ARGS) AC_MSG_RESULT(2 args)],
-	    AC_MSG_RESULT(no))
-
-AC_MSG_CHECKING(for union semun)
-AC_TRY_LINK([#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>],
-	    [union semun semun;],
-	    [AC_DEFINE(HAVE_UNION_SEMUN) AC_MSG_RESULT(yes)],
-	    AC_MSG_RESULT(no))
 
 AC_MSG_CHECKING(for fcntl(F_SETLK))
 AC_TRY_LINK([#include <fcntl.h>],
@@ -1011,73 +898,12 @@ dnl If there is no native snprintf() or it does not handle the 64-bit type,
 dnl we force our own version of snprintf() to be used instead.
 dnl Note this test must be run after our initial check for snprintf/vsnprintf.
 
-HAVE_LONG_INT_64=0
-AC_MSG_CHECKING(whether 'long int' is 64 bits)
-AC_TRY_RUN([typedef long int int64;
+PGAC_TYPE_64BIT_INT([long int])
 
-/* These are globals to discourage the compiler from folding all the
- * arithmetic tests down to compile-time constants.
- */
-int64 a = 20000001;
-int64 b = 40000005;
-
-int does_int64_work()
-{
-  int64 c,d;
-
-  if (sizeof(int64) != 8)
-    return 0;			/* doesn't look like the right size */
-
-  /* Do perfunctory checks to see if 64-bit arithmetic seems to work */
-  c = a * b;
-  d = (c + b) / b;
-  if (d != a+1)
-    return 0;
-  return 1;
-}
-main() {
-  exit(! does_int64_work());
-}],
-	[HAVE_LONG_INT_64=1
-	 AC_DEFINE(HAVE_LONG_INT_64)
-	 AC_MSG_RESULT(yes)],
-	AC_MSG_RESULT(no),
-	AC_MSG_RESULT(assuming not on target machine))
-
-HAVE_LONG_LONG_INT_64=0
-if [[ $HAVE_LONG_INT_64 -eq 0 ]] ; then
-AC_MSG_CHECKING(whether 'long long int' is 64 bits)
-AC_TRY_RUN([typedef long long int int64;
-
-/* These are globals to discourage the compiler from folding all the
- * arithmetic tests down to compile-time constants.
- */
-int64 a = 20000001;
-int64 b = 40000005;
-
-int does_int64_work()
-{
-  int64 c,d;
-
-  if (sizeof(int64) != 8)
-    return 0;			/* doesn't look like the right size */
-
-  /* Do perfunctory checks to see if 64-bit arithmetic seems to work */
-  c = a * b;
-  d = (c + b) / b;
-  if (d != a+1)
-    return 0;
-  return 1;
-}
-main() {
-  exit(! does_int64_work());
-}],
-	[HAVE_LONG_LONG_INT_64=1
-	 AC_DEFINE(HAVE_LONG_LONG_INT_64)
-	 AC_MSG_RESULT(yes)],
-	AC_MSG_RESULT(no),
-	AC_MSG_RESULT(assuming not on target machine))
+if test x"$HAVE_LONG_INT_64" = x"no" ; then
+  PGAC_TYPE_64BIT_INT([long long int])
 fi
+
 
 dnl If we found "long int" is 64 bits, assume snprintf handles it.
 dnl If we found we need to use "long long int", better check.
@@ -1173,87 +999,34 @@ AC_DEFINE_UNQUOTED(INT64_FORMAT, $INT64_FORMAT)
 
 dnl Determine memory alignment requirements for the basic C datatypes.
 
-dnl CHECK_ALIGNOF(TYPE)
-dnl This is modeled on the standard autoconf macro AC_CHECK_SIZEOF,
-dnl except it finds the alignment requirement of the type instead of the size.
-dnl The defined symbol is named ALIGNOF_TYPE, where the type name is
-dnl converted in the same way as for AC_CHECK_SIZEOF.
-dnl If cross-compiling, sizeof(type) is used as a default assumption.
-
-AC_DEFUN(CHECK_ALIGNOF,
-[changequote(<<, >>)dnl
-dnl The name to #define.
-define(<<AC_TYPE_NAME>>, translit(alignof_$1, [a-z *], [A-Z_P]))dnl
-dnl The cache variable name.
-define(<<AC_CV_NAME>>, translit(ac_cv_alignof_$1, [ *], [_p]))dnl
-changequote([, ])dnl
-AC_MSG_CHECKING(alignment of $1)
-AC_CACHE_VAL(AC_CV_NAME,
-[AC_TRY_RUN([#include <stdio.h>
-struct { char filler; $1 field; } mystruct;
-main()
-{
-  FILE *f=fopen("conftestval", "w");
-  if (!f) exit(1);
-  fprintf(f, "%d\n", ((char*) & mystruct.field) - ((char*) & mystruct));
-  exit(0);
-}], AC_CV_NAME=`cat conftestval`,
-AC_CV_NAME='sizeof($1)',
-AC_CV_NAME='sizeof($1)')])dnl
-AC_MSG_RESULT($AC_CV_NAME)
-AC_DEFINE_UNQUOTED(AC_TYPE_NAME, $AC_CV_NAME)
-undefine([AC_TYPE_NAME])dnl
-undefine([AC_CV_NAME])dnl
-])
-
-CHECK_ALIGNOF(short)
-CHECK_ALIGNOF(int)
-CHECK_ALIGNOF(long)
+PGAC_CHECK_ALIGNOF(short)
+PGAC_CHECK_ALIGNOF(int)
+PGAC_CHECK_ALIGNOF(long)
 if [[ $HAVE_LONG_LONG_INT_64 -eq 1 ]] ; then
-  CHECK_ALIGNOF(long long int)
+  PGAC_CHECK_ALIGNOF(long long int)
 fi
-CHECK_ALIGNOF(double)
+PGAC_CHECK_ALIGNOF(double)
 
 dnl Compute maximum alignment of any basic type.
 dnl We assume long's alignment is at least as strong as char, short, or int;
 dnl but we must check long long (if it exists) and double.
 
-if [[ $ac_cv_alignof_double != 'sizeof(double)' ]] ; then
-  MAX_ALIGNOF="$ac_cv_alignof_long"
-  if [[ $MAX_ALIGNOF -lt $ac_cv_alignof_double ]] ; then
-    MAX_ALIGNOF="$ac_cv_alignof_double"
+if test $pgac_cv_alignof_double != 'sizeof(double)' ; then
+  MAX_ALIGNOF=$pgac_cv_alignof_long
+  if test $MAX_ALIGNOF -lt $pgac_cv_alignof_double ; then
+    MAX_ALIGNOF=$pgac_cv_alignof_double
   fi
-  if [[ $HAVE_LONG_LONG_INT_64 -eq 1 ]] ; then
-    if [[ $MAX_ALIGNOF -lt $ac_cv_alignof_long_long_int ]] ; then
-      MAX_ALIGNOF="$ac_cv_alignof_long_long_int"
-    fi
+  if test $HAVE_LONG_LONG_INT_64 -eq 1 && test $MAX_ALIGNOF -lt $pgac_cv_alignof_long_long_int ; then
+    MAX_ALIGNOF="$pgac_cv_alignof_long_long_int"
   fi
 else
   dnl cross-compiling: assume that double's alignment is worst case
-  MAX_ALIGNOF="$ac_cv_alignof_double"
+  MAX_ALIGNOF="$pgac_cv_alignof_double"
 fi
-AC_DEFINE_UNQUOTED(MAXIMUM_ALIGNOF, $MAX_ALIGNOF)
+AC_DEFINE_UNQUOTED(MAXIMUM_ALIGNOF, $MAX_ALIGNOF, [Define as the maximum alignment requirement of any type])
 
+PGAC_FUNC_POSIX_SIGNALS
 
-dnl Check to see if platform has POSIX signal interface.
-dnl NOTE: if this test fails then POSIX signals definitely don't work.
-dnl It could be that the test compiles but the POSIX routines don't
-dnl really work ... in that case the platform-specific port files
-dnl can unset USE_POSIX_SIGNALS and HAVE_POSIX_SIGNALS.  (The former
-dnl goes into config.h, the latter into Makefile.global.)
-
-AC_MSG_CHECKING(for POSIX signal interface)
-AC_TRY_LINK([#include <signal.h>],
-[struct sigaction act, oact;
-sigemptyset(&act.sa_mask);
-act.sa_flags = SA_RESTART;
-sigaction(0, &act, &oact);],
-[AC_DEFINE(USE_POSIX_SIGNALS)
-HAVE_POSIX_SIGNALS="1"
-AC_MSG_RESULT(yes)],
-[HAVE_POSIX_SIGNALS=""
-AC_MSG_RESULT(no)])
-AC_SUBST(HAVE_POSIX_SIGNALS)
 
 dnl Check for Tcl configuration script tclConfig.sh
 

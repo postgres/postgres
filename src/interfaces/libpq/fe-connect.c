@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.128 2000/05/31 00:28:41 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.129 2000/06/11 11:40:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1076,7 +1076,7 @@ keep_going:						/* We will come back to here until there
 	{
 		case CONNECTION_STARTED:
 			{
-				SOCKET_SIZE_TYPE laddrlen;
+				ACCEPT_TYPE_ARG3 laddrlen;
 
 #ifndef WIN32
 				int			optval;
@@ -1085,7 +1085,7 @@ keep_going:						/* We will come back to here until there
 				char		optval;
 
 #endif
-				SOCKET_SIZE_TYPE optlen = sizeof(optval);
+				ACCEPT_TYPE_ARG3 optlen = sizeof(optval);
 
 				/*
 				 * Write ready, since we've made it here, so the

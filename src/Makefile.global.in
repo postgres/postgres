@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.76 2000/06/10 18:01:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.77 2000/06/11 11:39:47 petere Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -99,9 +99,6 @@ ODBCINST= $(POSTGRESDIR)
 # To disable a feature, comment out the entire definition
 # (that is, prepend '#', don't set it to "0" or "no").
 
-# Compile libpq++
-HAVE_Cplusplus=@HAVECXX@
-
 # Comment out ENFORCE_ALIGNMENT if you do NOT want unaligned access to
 # multi-byte types to generate a bus error.
 ENFORCE_ALIGNMENT= true
@@ -170,22 +167,6 @@ INSTL_EXE_OPTS= @INSTL_EXE_OPTS@
 INSTL_LIB_OPTS= @INSTL_LIB_OPTS@
 INSTL_SHLIB_OPTS= @INSTL_SHLIB_OPTS@
 
-##############################################################################
-#
-# For building shell scripts:
-#
-# For many ports, these are overridden below.
-
-# DASH_N is what we put before the text on an echo command when we don't
-# want a trailing newline.  BACKSLASH_C is what we put at the end of the
-# string on a echo command when we don't want a trailing newline.  On
-# some systems, you do echo -n "no newline after this", while on others
-# you do echo "no newline after this\c".
-
-DASH_N= @DASH_N@
-BACKSLASH_C= @BACKSLASH_C@
-
-
 
 #-------------------------------------------------------------
 # See the subdirectory template for default settings for these
@@ -193,6 +174,7 @@ BACKSLASH_C= @BACKSLASH_C@
 CC= @CC@
 CPP= @CPP@
 YACC= @YACC@
+YFLAGS = @YFLAGS@
 LEX= @LEX@
 AROPT= @AROPT@
 CFLAGS= -I$(SRCDIR)/include @CPPFLAGS@ @CFLAGS@
@@ -275,7 +257,9 @@ ifneq ($(CUSTOM_COPT),)
   COPT= $(CUSTOM_COPT)
 endif
 
-ifeq ($(CC), gcc)
+GCC = @GCC@
+
+ifeq ($(GCC), yes)
 CFLAGS+= -Wall -Wmissing-prototypes -Wmissing-declarations
 endif
 

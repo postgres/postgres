@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.96 2000/06/06 16:04:29 petere Exp $
+ *	$Id: pqcomm.c,v 1.97 2000/06/11 11:39:50 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,7 +315,7 @@ StreamServerPort(int family, unsigned short portName, int *fdP)
 int
 StreamConnection(int server_fd, Port *port)
 {
-	SOCKET_SIZE_TYPE addrlen;
+	ACCEPT_TYPE_ARG3 addrlen;
 
 	/* accept connection (and fill in the client (remote) address) */
 	addrlen = sizeof(port->raddr);

@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.117 2000/06/09 16:03:07 momjian Exp $
+ * $Id: config.h.in,v 1.118 2000/06/11 11:39:58 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -322,8 +322,8 @@
  */
 
 /* Set to 1 if you gettimeofday(a,b) vs gettimeofday(a) */
-#undef HAVE_GETTIMEOFDAY_2_ARGS
-#ifndef HAVE_GETTIMEOFDAY_2_ARGS
+#undef GETTIMEOFDAY_1ARG
+#ifdef GETTIMEOFDAY_1ARG
 # define gettimeofday(a,b) gettimeofday(a)
 #endif
 
@@ -512,11 +512,11 @@ extern void srandom(unsigned int seed);
 #undef ALIGNOF_DOUBLE
 #undef MAXIMUM_ALIGNOF
 
-/* Define as the base type of the last arg to accept */
-#undef SOCKET_SIZE_TYPE
+/* Define as the type of the type of the 3rd argument to accept() */
+#undef ACCEPT_TYPE_ARG3
 
 /* Define if POSIX signal interface is available */
-#undef USE_POSIX_SIGNALS
+#undef HAVE_POSIX_SIGNALS
 
 /* Define if C++ compiler accepts "using namespace std" */
 #undef HAVE_NAMESPACE_STD

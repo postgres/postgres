@@ -7,7 +7,7 @@ LDFLAGS:= -lc $(LDFLAGS)
 # On the other hand, if we don't have POSIX signals, we need to use the
 # libBSD signal routines.  (HPUX 9 and early HPUX 10 releases don't have
 # POSIX signals.)  Make sure libBSD comes before libc in that case.
-ifeq ($(HAVE_POSIX_SIGNALS),)
+ifeq ($(HAVE_POSIX_SIGNALS), no)
    LDFLAGS:= -lBSD $(LDFLAGS)
 endif
 

@@ -6,7 +6,7 @@
 #define strcasecmp(a,b) stricmp(a,b)
 #define strncasecmp(a,b,c) _strnicmp(a,b,c)
 
-#define SOCKET_SIZE_TYPE int
+#define ACCEPT_TYPE_ARG3 int
 
 /*
  * Some compat functions
