@@ -229,7 +229,7 @@
    to pgsql-general-request@postgreSQL.org.
    
    There is also a digest list available. To subscribe to this list, send
-   email to: pgsql-general-digest-request@postgreSQL.org with a BODY of:
+   email to: pgsql-general-digest-request@postgreSQL.org with a body of:
         subscribe
         end
 
