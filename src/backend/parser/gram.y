@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.161 2000/03/20 05:20:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.162 2000/03/21 06:00:40 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -249,8 +249,8 @@ static void doNegateFloat(Value *v);
 %type <paramno> ParamNo
 
 %type <typnam>	Typename, opt_type, SimpleTypename,
-				Generic, Numeric, Character, Datetime
-%type <str>		generic, numeric, character, datetime
+				Generic, Numeric, Character, Datetime, Bit
+%type <str>		generic, numeric, character, datetime, bit
 %type <str>		extract_arg
 %type <str>		opt_charset, opt_collate
 %type <str>		opt_float
@@ -334,7 +334,7 @@ static void doNegateFloat(Value *v);
  * - Todd A. Brandys 1998-01-01?
  */
 %token	ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYZE,
-		BACKWARD, BEFORE, BINARY, 
+		BACKWARD, BEFORE, BINARY, BIT,
 		CACHE, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
 		DATABASE, DELIMITERS, DO,
 		EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
@@ -3766,6 +3766,7 @@ Typename:  SimpleTypename opt_array_bounds
 
 SimpleTypename:  Generic
 		| Numeric
+		| Bit
 		| Character
 		| Datetime
 		;
@@ -3902,18 +3903,52 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 
 
 /*
+ * SQL92 bit-field data types
+ * The following implements BIT() and BIT VARYING().
+ */
+Bit:  bit '(' Iconst ')'
+				{
+					$$ = makeNode(TypeName);
+					$$->name = $1;
+					if ($3 < 1)
+						elog(ERROR,"length for type '%s' must be at least 1",$1);
+					else if ($3 > (MaxAttrSize * sizeof(char)))
+						elog(ERROR,"length for type '%s' cannot exceed %ld",$1,
+							 (MaxAttrSize * sizeof(char)));
+					$$->typmod = $3;
+				}
+		| bit
+				{
+					$$ = makeNode(TypeName);
+					$$->name = $1;
+					/* default length, if needed, will be inserted later */
+					$$->typmod = -1;
+				}
+		;
+
+bit:  BIT opt_varying
+				{
+					char *type;
+
+					if ($2) type = xlateSqlType("varbit");
+					else type = xlateSqlType("bit");
+					$$ = type;
+				}
+
+
+/*
  * SQL92 character data types
  * The following implements CHAR() and VARCHAR().
  */
 Character:  character '(' Iconst ')'
 				{
 					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType($1);
+					$$->name = $1;
 					if ($3 < 1)
 						elog(ERROR,"length for type '%s' must be at least 1",$1);
 					else if ($3 > MaxAttrSize)
 						elog(ERROR,"length for type '%s' cannot exceed %ld",$1,
-							MaxAttrSize);
+							 MaxAttrSize);
 
 					/* we actually implement these like a varlen, so
 					 * the first 4 bytes is the length. (the difference
@@ -3925,7 +3960,7 @@ Character:  character '(' Iconst ')'
 		| character
 				{
 					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType($1);
+					$$->name = $1;
 					/* default length, if needed, will be inserted later */
 					$$->typmod = -1;
 				}
@@ -5198,9 +5233,12 @@ TypeId:  ColId
 			{	$$ = xlateSqlType($1); }
 		| numeric
 			{	$$ = xlateSqlType($1); }
+		| bit
+			{	$$ = xlateSqlType($1); }
 		| character
 			{	$$ = xlateSqlType($1); }
 		;
+
 /* Column identifier
  * Include date/time keywords as SQL92 extension.
  * Include TYPE as a SQL92 unreserved keyword. - thomas 1997-10-05
@@ -5316,7 +5354,9 @@ ColLabel:  ColId						{ $$ = $1; }
 		| ABORT_TRANS					{ $$ = "abort"; }
 		| ANALYZE						{ $$ = "analyze"; }
 		| BINARY						{ $$ = "binary"; }
+		| BIT							{ $$ = "bit"; }
 		| CASE							{ $$ = "case"; }
+		| CHARACTER						{ $$ = "character"; }
 		| CLUSTER						{ $$ = "cluster"; }
 		| COALESCE						{ $$ = "coalesce"; }
 		| CONSTRAINT					{ $$ = "constraint"; }
