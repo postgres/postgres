@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.5 1999/02/02 18:51:23 momjian Exp $
+ * $Id: wchar.c,v 1.6 1999/03/24 07:02:17 ishii Exp $
  */
 
 #include "mb/pg_wchar.h"
@@ -416,40 +416,40 @@ pg_big5_mblen(const unsigned char *s)
 }
 
 pg_wchar_tbl pg_wchar_table[] = {
-	{pg_ascii2wchar_with_len, pg_ascii_mblen},
-	{pg_eucjp2wchar_with_len, pg_eucjp_mblen},
-	{pg_euccn2wchar_with_len, pg_euccn_mblen},
-	{pg_euckr2wchar_with_len, pg_euckr_mblen},
-	{pg_euctw2wchar_with_len, pg_euctw_mblen},
-	{pg_utf2wchar_with_len, pg_utf_mblen},
-	{pg_mule2wchar_with_len, pg_mule_mblen},
-	{pg_latin12wchar_with_len, pg_latin1_mblen},
-	{pg_latin12wchar_with_len, pg_latin1_mblen},
-	{pg_latin12wchar_with_len, pg_latin1_mblen},
-	{pg_latin12wchar_with_len, pg_latin1_mblen},
-	{pg_latin12wchar_with_len, pg_latin1_mblen},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, 0},
-	{0, pg_sjis_mblen},
-	{0, pg_big5_mblen}
+	{pg_ascii2wchar_with_len, pg_ascii_mblen},	/* 0 */
+	{pg_eucjp2wchar_with_len, pg_eucjp_mblen},	/* 1 */
+	{pg_euccn2wchar_with_len, pg_euccn_mblen},	/* 2 */
+	{pg_euckr2wchar_with_len, pg_euckr_mblen},	/* 3 */
+	{pg_euctw2wchar_with_len, pg_euctw_mblen},	/* 4 */
+	{pg_utf2wchar_with_len, pg_utf_mblen},		/* 5 */
+	{pg_mule2wchar_with_len, pg_mule_mblen},	/* 6 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 7 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 9 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 10 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 11 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 12 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 13 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 14 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 15 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 16 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 17 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 18 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 19 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 20 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 21 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 22 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 23 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 24 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 25 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 26 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 27 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 28 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 29 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 30 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 31 */
+	{0, pg_sjis_mblen},				/* 32 */
+	{0, pg_big5_mblen}				/* 33 */
 };
 
 /* returns the byte length of a word for mule internal code */
