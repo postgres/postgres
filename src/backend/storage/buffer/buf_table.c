@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.30 2003/11/13 00:40:01 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.31 2003/11/13 05:34:58 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ static HTAB *SharedBufHash;
  * Initialize shmem hash table for mapping buffers
  */
 void
-InitBufTable(int size)
+InitBufTable(void)
 {
 	HASHCTL		info;
 
@@ -50,7 +50,7 @@ InitBufTable(int size)
 	info.hash = tag_hash;
 
 	SharedBufHash = ShmemInitHash("Shared Buffer Lookup Table",
-								  size, size,
+								  NBuffers, NBuffers,
 								  &info,
 								  HASH_ELEM | HASH_FUNCTION);
 
@@ -58,36 +58,69 @@ InitBufTable(int size)
 		elog(FATAL, "could not initialize shared buffer hash table");
 }
 
-/*
- * BufTableLookup
- */
-int
+BufferDesc *
 BufTableLookup(BufferTag *tagPtr)
 {
 	BufferLookupEnt *result;
 
 	if (tagPtr->blockNum == P_NEW)
-		return -1;
+		return NULL;
 
 	result = (BufferLookupEnt *)
 		hash_search(SharedBufHash, (void *) tagPtr, HASH_FIND, NULL);
 	if (!result)
-		return -1;
+		return NULL;
 
-	return result->id;
+	return &(BufferDescriptors[result->id]);
 }
 
 /*
  * BufTableDelete
  */
 bool
-BufTableInsert(BufferTag *tagPtr, Buffer buf_id)
+BufTableDelete(BufferDesc *buf)
+{
+	BufferLookupEnt *result;
+
+	/*
+	 * buffer not initialized or has been removed from table already.
+	 * BM_DELETED keeps us from removing buffer twice.
+	 */
+	if (buf->flags & BM_DELETED)
+		return TRUE;
+
+	buf->flags |= BM_DELETED;
+
+	result = (BufferLookupEnt *)
+		hash_search(SharedBufHash, (void *) &(buf->tag), HASH_REMOVE, NULL);
+
+	if (!result)				/* shouldn't happen */
+		elog(ERROR, "shared buffer hash table corrupted");
+
+	/*
+	 * Clear the buffer's tag.  This doesn't matter for the hash table,
+	 * since the buffer is already removed from it, but it ensures that
+	 * sequential searches through the buffer table won't think the buffer
+	 * is still valid for its old page.
+	 */
+	buf->tag.rnode.relNode = InvalidOid;
+	buf->tag.rnode.tblNode = InvalidOid;
+
+	return TRUE;
+}
+
+bool
+BufTableInsert(BufferDesc *buf)
 {
 	BufferLookupEnt *result;
 	bool		found;
 
+	/* cannot insert it twice */
+	Assert(buf->flags & BM_DELETED);
+	buf->flags &= ~(BM_DELETED);
+
 	result = (BufferLookupEnt *)
-		hash_search(SharedBufHash, (void *) tagPtr, HASH_ENTER, &found);
+		hash_search(SharedBufHash, (void *) &(buf->tag), HASH_ENTER, &found);
 
 	if (!result)
 		ereport(ERROR,
@@ -97,24 +130,7 @@ BufTableInsert(BufferTag *tagPtr, Buffer buf_id)
 	if (found)					/* found something else in the table? */
 		elog(ERROR, "shared buffer hash table corrupted");
 
-	result->id = buf_id;
-	return TRUE;
-}
-
-/*
- * BufTableDelete
- */
-bool
-BufTableDelete(BufferTag *tagPtr)
-{
-	BufferLookupEnt *result;
-
-	result = (BufferLookupEnt *)
-		hash_search(SharedBufHash, (void *) tagPtr, HASH_REMOVE, NULL);
-
-	if (!result)				/* shouldn't happen */
-		elog(ERROR, "shared buffer hash table corrupted");
-
+	result->id = buf->buf_id;
 	return TRUE;
 }
 

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.266 2003/11/13 00:40:00 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.267 2003/11/13 05:34:57 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,6 @@
 #include "commands/vacuum.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
-#include "storage/buf_internals.h"
 #include "storage/freespace.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
@@ -311,15 +310,7 @@ vacuum(VacuumStmt *vacstmt)
 			else
 				old_context = MemoryContextSwitchTo(anl_context);
 
-			/*
-			 * Tell the buffer replacement strategy that vacuum is
-			 * causing the IO
-			 */
-			StrategyHintVacuum(true);
-
 			analyze_rel(relid, vacstmt);
-
-			StrategyHintVacuum(false);
 
 			if (vacstmt->vacuum)
 				CommitTransactionCommand();
@@ -759,12 +750,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 								 * indexes */
 
 	/*
-	 * Tell the cache replacement strategy that vacuum is causing
-	 * all following IO
-	 */
-	StrategyHintVacuum(true);
-
-	/*
 	 * Check for user-requested abort.	Note we want this to be inside a
 	 * transaction, so xact.c doesn't issue useless WARNING.
 	 */
@@ -778,7 +763,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 							  ObjectIdGetDatum(relid),
 							  0, 0, 0))
 	{
-		StrategyHintVacuum(false);
 		CommitTransactionCommand();
 		return true;			/* okay 'cause no data there */
 	}
@@ -812,7 +796,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 				(errmsg("skipping \"%s\" --- only table or database owner can vacuum it",
 						RelationGetRelationName(onerel))));
 		relation_close(onerel, lmode);
-		StrategyHintVacuum(false);
 		CommitTransactionCommand();
 		return false;
 	}
@@ -827,7 +810,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 				(errmsg("skipping \"%s\" --- cannot vacuum indexes, views, or special system tables",
 						RelationGetRelationName(onerel))));
 		relation_close(onerel, lmode);
-		StrategyHintVacuum(false);
 		CommitTransactionCommand();
 		return false;
 	}
@@ -842,7 +824,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	if (isOtherTempNamespace(RelationGetNamespace(onerel)))
 	{
 		relation_close(onerel, lmode);
-		StrategyHintVacuum(false);
 		CommitTransactionCommand();
 		return true;			/* assume no long-lived data in temp
 								 * tables */
@@ -882,7 +863,6 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	/*
 	 * Complete the transaction and free all temporary memory used.
 	 */
-	StrategyHintVacuum(false);
 	CommitTransactionCommand();
 
 	/*

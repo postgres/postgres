@@ -58,7 +58,6 @@
 #shared_buffers = 1000		# min 16, at least max_connections*2, 8KB each
 #sort_mem = 1024		# min 64, size in KB
 #vacuum_mem = 8192		# min 1024, size in KB
-#buffer_strategy_status_interval = 0	# 0-600 seconds
 
 # - Free Space Map -
 

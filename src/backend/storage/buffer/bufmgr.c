@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.142 2003/11/13 00:40:01 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.143 2003/11/13 05:34:58 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,8 +260,12 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 	if (status == SM_FAIL)
 	{
 		/* IO Failed.  cleanup the data structures and go home */
-		StrategyInvalidateBuffer(bufHdr);
 
+		if (!BufTableDelete(bufHdr))
+		{
+			LWLockRelease(BufMgrLock);
+			elog(FATAL, "buffer table broken after I/O error");
+		}
 		/* remember that BufferAlloc() pinned the buffer */
 		UnpinBuffer(bufHdr);
 
@@ -314,7 +318,7 @@ BufferAlloc(Relation reln,
 	INIT_BUFFERTAG(&newTag, reln, blockNum);
 
 	/* see if the block is in the buffer pool already */
-	buf = StrategyBufferLookup(&newTag, false);
+	buf = BufTableLookup(&newTag);
 	if (buf != NULL)
 	{
 		/*
@@ -375,7 +379,7 @@ BufferAlloc(Relation reln,
 	inProgress = FALSE;
 	for (buf = (BufferDesc *) NULL; buf == (BufferDesc *) NULL;)
 	{
-		buf = StrategyGetBuffer();
+		buf = GetFreeBuffer();
 
 		/* GetFreeBuffer will abort if it can't find a free buffer */
 		Assert(buf);
@@ -488,7 +492,7 @@ BufferAlloc(Relation reln,
 			 * we haven't gotten around to insert the new tag into the
 			 * buffer table. So we need to check here.		-ay 3/95
 			 */
-			buf2 = StrategyBufferLookup(&newTag, true);
+			buf2 = BufTableLookup(&newTag);
 			if (buf2 != NULL)
 			{
 				/*
@@ -531,11 +535,28 @@ BufferAlloc(Relation reln,
 	 */
 
 	/*
-	 * Tell the buffer replacement strategy that we are replacing the
-	 * buffer content. Then rename the buffer.
+	 * Change the name of the buffer in the lookup table:
+	 *
+	 * Need to update the lookup table before the read starts. If someone
+	 * comes along looking for the buffer while we are reading it in, we
+	 * don't want them to allocate a new buffer.  For the same reason, we
+	 * didn't want to erase the buf table entry for the buffer we were
+	 * writing back until now, either.
 	 */
-	StrategyReplaceBuffer(buf, reln, blockNum);
+
+	if (!BufTableDelete(buf))
+	{
+		LWLockRelease(BufMgrLock);
+		elog(FATAL, "buffer wasn't in the buffer hash table");
+	}
+
 	INIT_BUFFERTAG(&(buf->tag), reln, blockNum);
+
+	if (!BufTableInsert(buf))
+	{
+		LWLockRelease(BufMgrLock);
+		elog(FATAL, "buffer in buffer hash table twice");
+	}
 
 	/*
 	 * Buffer contents are currently invalid.  Have to mark IO IN PROGRESS
@@ -688,28 +709,13 @@ BufferSync(void)
 	BufferDesc *bufHdr;
 	ErrorContextCallback errcontext;
 
-	int			num_buffer_dirty;
-	int		   *buffer_dirty;
-
 	/* Setup error traceback support for ereport() */
 	errcontext.callback = buffer_write_error_callback;
 	errcontext.arg = NULL;
 	errcontext.previous = error_context_stack;
 	error_context_stack = &errcontext;
 
-	/*
-	 * Get a list of all currently dirty buffers and how many there are.
-	 * We do not flush buffers that get dirtied after we started. They
-	 * have to wait until the next checkpoint.
-	 */
-	buffer_dirty = (int *)palloc(NBuffers * sizeof(int));
-	num_buffer_dirty = 0;
-
-	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
-	num_buffer_dirty = StrategyDirtyBufferList(buffer_dirty, NBuffers);
-	LWLockRelease(BufMgrLock);
-
-	for (i = 0; i < num_buffer_dirty; i++)
+	for (i = 0, bufHdr = BufferDescriptors; i < NBuffers; i++, bufHdr++)
 	{
 		Buffer		buffer;
 		int			status;
@@ -717,10 +723,9 @@ BufferSync(void)
 		XLogRecPtr	recptr;
 		Relation	reln;
 
-		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
-
-		bufHdr = &BufferDescriptors[buffer_dirty[i]];
 		errcontext.arg = bufHdr;
+
+		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 
 		if (!(bufHdr->flags & BM_VALID))
 		{
@@ -850,8 +855,6 @@ BufferSync(void)
 			RelationDecrementReferenceCount(reln);
 	}
 
-	pfree(buffer_dirty);
-
 	/* Pop the error context stack */
 	error_context_stack = errcontext.previous;
 }
@@ -956,9 +959,9 @@ AtEOXact_Buffers(bool isCommit)
 
 			if (isCommit)
 				elog(WARNING,
-				"buffer refcount leak: [%03d] (bufNext=%d, "
+				"buffer refcount leak: [%03d] (freeNext=%d, freePrev=%d, "
 				  "rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
-					 i, buf->bufNext,
+					 i, buf->freeNext, buf->freePrev,
 					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 					 buf->tag.blockNum, buf->flags,
 					 buf->refcount, PrivateRefCount[i]);
@@ -1226,7 +1229,7 @@ recheck:
 			/*
 			 * And mark the buffer as no longer occupied by this rel.
 			 */
-			StrategyInvalidateBuffer(bufHdr);
+			BufTableDelete(bufHdr);
 		}
 	}
 
@@ -1292,7 +1295,7 @@ recheck:
 			/*
 			 * And mark the buffer as no longer occupied by this page.
 			 */
-			StrategyInvalidateBuffer(bufHdr);
+			BufTableDelete(bufHdr);
 		}
 	}
 
@@ -1540,7 +1543,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 				return -2;
 			}
 			if (bufHdr->tag.blockNum >= firstDelBlock)
-				StrategyInvalidateBuffer(bufHdr);
+				BufTableDelete(bufHdr);
 		}
 	}
 
