@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.6 1997/08/06 03:41:55 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.7 1997/08/06 04:45:39 momjian Exp $
  *
  * NOTES
  *      Sorts the first relation into the second relation.
@@ -570,7 +570,7 @@ dumptuples(Sort *node)
     HeapTuple	tup;
     int memtupindex = 0;
 
-    if (! PS(node)->using_tape_files) {
+    if (! PS(node)->using_tape_files && PS(node)->tupcount) {
 	Assert(PS(node)->memtuples == NULL);
     	PS(node)->memtuples = palloc(PS(node)->tupcount * sizeof(HeapTuple));
     }
