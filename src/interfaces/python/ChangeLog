@@ -5,6 +5,11 @@ This software is copyright (c) 1995, Pascal Andre (andre@via.ecp.fr)
 Further copyright 1997, 1998 and 1999 by D'Arcy J.M. Cain (darcy@druid.net)
 See file README for copyright information.
 
+Version 3.2
+  - Add WIN32 support (gerhard@bigfoot.de)
+  - Fix some DB-API quoting problems (niall.smart@ebeon.com)
+  - Moved development into PostgreSQL development tree.
+
 Version 3.1
   - Fix some quoting functions.  In particular handle NULLs better.
   - Use a method to add primary key information rather than direct

@@ -1,6 +1,6 @@
 
-Announce: Release of PyGreSQL version 3.2 (beta)
-===============================================
+Announce: Release of PyGreSQL version 3.2
+=========================================
 
 PyGreSQL v3.2 has been released.
 It is available at: ftp://ftp.druid.net/pub/distrib/PyGreSQL.tgz.  If
@@ -43,6 +43,14 @@ code for Python 1.5 and PostgreSQL 6.2.1.  While I was at it I upgraded
 the code to use full ANSI style prototypes and changed the order of
 arguments to connect.  Later versions are fixes and enhancements to that.
 The latest version of PyGreSQL works with Python 1.5.2 and PostgreSQL 7.0.x
+
+Important changes from PyGreSQL 3.1 to PyGreSQL 3.2
+  Note that there are very few changes to PostgreSQL between 3.1 and
+  3.2.  The main reason for the release is the move into the PostgreSQL
+  development tree.  Even the WIN32 changes are pretty minor.
+  - Add WIN32 support (gerhard@bigfoot.de)
+  - Fix some DB-API quoting problems (niall.smart@ebeon.com)
+  - Moved development into PostgreSQL development tree.
 
 Important changes from PyGreSQL 3.0 to PyGreSQL 3.1
   - Fix some quoting functions.  In particular handle NULLs better.
