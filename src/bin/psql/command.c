@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.134 2004/11/09 14:39:43 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.135 2004/11/15 23:15:12 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1096,12 +1096,20 @@ editFile(const char *fname)
 	if (!editorName)
 		editorName = DEFAULT_EDITOR;
 
+	/*
+	 * On Unix the EDITOR value should *not* be quoted, since it might include
+	 * switches, eg, EDITOR="pico -t"; it's up to the user to put quotes in it
+	 * if necessary.  But this policy is not very workable on Windows, due to
+	 * severe brain damage in their command shell plus the fact that standard
+	 * program paths include spaces.
+	 */
 	sys = pg_malloc(strlen(editorName) + strlen(fname) + 10 + 1);
-	sprintf(sys,
 #ifndef WIN32
-			"exec "
+	sprintf(sys, "exec %s '%s'", editorName, fname);
+#else
+	sprintf(sys, "%s\"%s\" \"%s\"%s",
+			SYSTEMQUOTE, editorName, fname, SYSTEMQUOTE);
 #endif
-			"%s\"%s\" \"%s\"%s", SYSTEMQUOTE, editorName, fname, SYSTEMQUOTE);
 	result = system(sys);
 	if (result == -1)
 		psql_error("could not start editor \"%s\"\n", editorName);
