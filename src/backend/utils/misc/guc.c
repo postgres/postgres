@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.212 2004/07/01 00:51:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.213 2004/07/05 23:14:14 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1608,7 +1608,7 @@ static struct config_string ConfigureNamesString[] =
 		 gettext_noop("Sets the target for log output."),
 		 gettext_noop("Valid values are combinations of stderr, syslog "
 					  "and eventlog, depending on platform."),
-		 GUC_LIST_INPUT | GUC_REPORT
+		 GUC_LIST_INPUT
 		},
 		&log_destination_string,
 		"stderr", assign_log_destination, NULL
@@ -1750,6 +1750,49 @@ static char *_ShowOption(struct config_generic * record);
 
 
 /*
+ * Some infrastructure for checking malloc/strdup/realloc calls
+ */
+static void *
+guc_malloc(int elevel, size_t size)
+{
+	void	*data;
+
+	data = malloc(size);
+	if (data == NULL)
+		ereport(elevel,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+	return data;
+}
+
+static void *
+guc_realloc(int elevel, void *old, size_t size)
+{
+	void	*data;
+
+	data = realloc(old, size);
+	if (data == NULL)
+		ereport(elevel,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+	return data;
+}
+
+static char *
+guc_strdup(int elevel, const char *src)
+{
+	char	*data;
+
+	data = strdup(src);
+	if (data == NULL)
+		ereport(elevel,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+	return data;
+}
+
+
+/*
  * Support for assigning to a field of a string GUC item.  Free the prior
  * value if it's not referenced anywhere else in the item (including stacked
  * states).
@@ -1860,11 +1903,7 @@ build_guc_variables(void)
 	size_vars = num_vars + num_vars / 4;
 
 	guc_vars = (struct config_generic **)
-		malloc(size_vars * sizeof(struct config_generic *));
-	if (!guc_vars)
-		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
+		guc_malloc(FATAL, size_vars * sizeof(struct config_generic *));
 
 	num_vars = 0;
 
@@ -1923,28 +1962,30 @@ is_custom_class(const char *name, int dotPos)
  * Add a new GUC variable to the list of known variables. The
  * list is expanded if needed.
  */
-static void
-add_guc_variable(struct config_generic *var)
+static bool
+add_guc_variable(struct config_generic *var, int elevel)
 {
 	if(num_guc_variables + 1 >= size_guc_variables)
 	{
-		/* Increase the vector with 20%
+		/* Increase the vector by 25%
 		 */
 		int size_vars = size_guc_variables + size_guc_variables / 4;
 		struct config_generic** guc_vars;
 
 		if(size_vars == 0)
-			size_vars = 100;
-
-		guc_vars = (struct config_generic**)
-					malloc(size_vars * sizeof(struct config_generic*));
-
-		if (guc_variables != NULL)
 		{
-			memcpy(guc_vars, guc_variables,
-					num_guc_variables * sizeof(struct config_generic*));
-			free(guc_variables);
+			size_vars = 100;
+			guc_vars = (struct config_generic**)
+					guc_malloc(elevel, size_vars * sizeof(struct config_generic*));
 		}
+		else
+		{
+			guc_vars = (struct config_generic**)
+					guc_realloc(elevel, guc_variables, size_vars * sizeof(struct config_generic*));
+		}
+
+		if(guc_vars == NULL)
+			return false;		/* out of memory */
 
 		guc_variables = guc_vars;
 		size_guc_variables = size_vars;
@@ -1952,22 +1993,34 @@ add_guc_variable(struct config_generic *var)
 	guc_variables[num_guc_variables++] = var;
 	qsort((void*) guc_variables, num_guc_variables,
 		sizeof(struct config_generic*), guc_var_compare);
+	return true;
 }
 
 /*
- * Create and add a placeholder variable. Its presumed to belong
+ * Create and add a placeholder variable. It's presumed to belong
  * to a valid custom variable class at this point.
  */
 static struct config_string*
-add_placeholder_variable(const char *name)
+add_placeholder_variable(const char *name, int elevel)
 {
 	size_t sz = sizeof(struct config_string) + sizeof(char*);
-	struct config_string*  var = (struct config_string*)malloc(sz);
-	struct config_generic* gen = &var->gen;
+	struct config_string*  var;
+	struct config_generic* gen;
 
+	var = (struct config_string*)guc_malloc(elevel, sz);
+	if(var == NULL)
+		return NULL;
+
+	gen = &var->gen;
 	memset(var, 0, sz);
 
-	gen->name       = strdup(name);
+	gen->name = guc_strdup(elevel, name);
+	if(gen->name == NULL)
+	{
+		free(var);
+		return NULL;
+	}
+
 	gen->context    = PGC_USERSET;
 	gen->group      = CUSTOM_OPTIONS;
 	gen->short_desc = "GUC placeholder variable";
@@ -1978,7 +2031,14 @@ add_placeholder_variable(const char *name)
 	 * no 'static' place to point to.
 	 */	
 	var->variable = (char**)(var + 1);
-	add_guc_variable((struct config_generic*)var);
+
+	if(!add_guc_variable((struct config_generic*) var, elevel))
+	{
+		free((void *) gen->name);
+		free(var);
+		return NULL;
+	}
+
 	return var;
 }
 
@@ -1987,7 +2047,7 @@ add_placeholder_variable(const char *name)
  * else return NULL.
  */
 static struct config_generic *
-find_option(const char *name)
+find_option(const char *name, int elevel)
 {
 	const char *dot;
 	const char **key = &name;
@@ -2016,7 +2076,7 @@ find_option(const char *name)
 	for (i = 0; map_old_guc_names[i] != NULL; i += 2)
 	{
 		if (guc_name_compare(name, map_old_guc_names[i]) == 0)
-			return find_option(map_old_guc_names[i+1]);
+			return find_option(map_old_guc_names[i+1], elevel);
 	}
 
 	/*
@@ -2026,7 +2086,7 @@ find_option(const char *name)
 	dot = strchr(name, GUC_QUALIFIER_SEPARATOR);
 	if(dot != NULL && is_custom_class(name, dot - name))
 		/* Add a placeholder variable for this name */
-		return (struct config_generic*)add_placeholder_variable(name);
+		return (struct config_generic*)add_placeholder_variable(name, elevel);
 
 	/* Unknown name */
 	return NULL;
@@ -2172,11 +2232,7 @@ InitializeGUCOptions(void)
 						break;
 					}
 
-					str = strdup(conf->boot_val);
-					if (str == NULL)
-						ereport(FATAL,
-								(errcode(ERRCODE_OUT_OF_MEMORY),
-								 errmsg("out of memory")));
+					str = guc_strdup(FATAL, conf->boot_val);
 					conf->reset_val = str;
 
 					if (conf->assign_hook)
@@ -2912,7 +2968,7 @@ set_config_option(const char *name, const char *value,
 	else
 		elevel = ERROR;
 
-	record = find_option(name);
+	record = find_option(name, elevel);
 	if (record == NULL)
 	{
 		ereport(elevel,
@@ -3368,14 +3424,9 @@ set_config_option(const char *name, const char *value,
 
 				if (value)
 				{
-					newval = strdup(value);
+					newval = guc_strdup(elevel, value);
 					if (newval == NULL)
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_OUT_OF_MEMORY),
-								 errmsg("out of memory")));
 						return false;
-					}
 
 					if (record->context == PGC_USERLIMIT)
 					{
@@ -3426,14 +3477,9 @@ set_config_option(const char *name, const char *value,
 					 * make this case work the same as the normal
 					 * assignment case.
 					 */
-					newval = strdup(conf->reset_val);
+					newval = guc_strdup(elevel, conf->reset_val);
 					if (newval == NULL)
-					{
-						ereport(elevel,
-								(errcode(ERRCODE_OUT_OF_MEMORY),
-								 errmsg("out of memory")));
 						return false;
-					}
 					source = conf->gen.reset_source;
 				}
 				else
@@ -3571,7 +3617,7 @@ GetConfigOption(const char *name)
 	struct config_generic *record;
 	static char buffer[256];
 
-	record = find_option(name);
+	record = find_option(name, ERROR);
 	if (record == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -3607,7 +3653,7 @@ GetConfigOptionResetString(const char *name)
 	struct config_generic *record;
 	static char buffer[256];
 
-	record = find_option(name);
+	record = find_option(name, ERROR);
 	if (record == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -3663,7 +3709,7 @@ flatten_set_variable_args(const char *name, List *args)
 		return NULL;
 
 	/* Else get flags for the variable */
-	record = find_option(name);
+	record = find_option(name, ERROR);
 	if (record == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -3834,7 +3880,7 @@ define_custom_variable(struct config_generic* variable)
 
 	if(res == NULL)
 	{
-		add_guc_variable(variable);
+		add_guc_variable(variable, ERROR);
 		return;
 	}
 
@@ -3883,7 +3929,7 @@ static void init_custom_variable(
 	GucContext  context,
 	enum config_type type)
 {
-	gen->name       = strdup(name);
+	gen->name       = guc_strdup(ERROR, name);
 	gen->context    = context;
 	gen->group      = CUSTOM_OPTIONS;
 	gen->short_desc = short_desc;
@@ -3901,7 +3947,7 @@ void DefineCustomBoolVariable(
 	GucShowHook show_hook)
 {
 	size_t sz = sizeof(struct config_bool);
-	struct config_bool*  var = (struct config_bool*)malloc(sz);
+	struct config_bool* var = (struct config_bool*)guc_malloc(ERROR, sz);
 
 	memset(var, 0, sz);
 	init_custom_variable(&var->gen, name, short_desc, long_desc, context, PGC_BOOL);
@@ -3923,7 +3969,7 @@ void DefineCustomIntVariable(
 	GucShowHook show_hook)
 {
 	size_t sz = sizeof(struct config_int);
-	struct config_int*  var = (struct config_int*)malloc(sz);
+	struct config_int*  var = (struct config_int*)guc_malloc(ERROR, sz);
 
 	memset(var, 0, sz);
 	init_custom_variable(&var->gen, name, short_desc, long_desc, context, PGC_INT);
@@ -3945,7 +3991,7 @@ void DefineCustomRealVariable(
 	GucShowHook show_hook)
 {
 	size_t sz = sizeof(struct config_real);
-	struct config_real*  var = (struct config_real*)malloc(sz);
+	struct config_real*  var = (struct config_real*)guc_malloc(ERROR, sz);
 
 	memset(var, 0, sz);
 	init_custom_variable(&var->gen, name, short_desc, long_desc, context, PGC_REAL);
@@ -3967,7 +4013,7 @@ void DefineCustomStringVariable(
 	GucShowHook show_hook)
 {
 	size_t sz = sizeof(struct config_string);
-	struct config_string*  var = (struct config_string*)malloc(sz);
+	struct config_string*  var = (struct config_string*)guc_malloc(ERROR, sz);
 
 	memset(var, 0, sz);
 	init_custom_variable(&var->gen, name, short_desc, long_desc, context, PGC_STRING);
@@ -4139,7 +4185,7 @@ GetConfigOptionByName(const char *name, const char **varname)
 {
 	struct config_generic *record;
 
-	record = find_option(name);
+	record = find_option(name, ERROR);
 	if (record == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4506,16 +4552,18 @@ write_nondefault_variables(GucContext context)
 	/*
 	 * Open file
 	 */
-	new_filename = malloc(strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) +
+	new_filename = guc_malloc(elevel, strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) +
 						  strlen(".new") + 2);
-	filename = malloc(strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) + 2);
-	if (new_filename == NULL || filename == NULL)
+	if(new_filename == NULL)
+		return;
+
+	filename = guc_malloc(elevel, strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) + 2);
+	if (filename == NULL)
 	{
-		ereport(elevel,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
+		free(new_filename);
 		return;
 	}
+
 	sprintf(new_filename, "%s/" CONFIG_EXEC_PARAMS ".new", DataDir);
 	sprintf(filename, "%s/" CONFIG_EXEC_PARAMS, DataDir);
 
@@ -4627,9 +4675,9 @@ read_string_with_null(FILE *fp)
 				elog(FATAL, "invalid format of exec config params file");
 		}
 		if (i == 0)
-			str = malloc(maxlen);
+			str = guc_malloc(FATAL, maxlen);
 		else if (i == maxlen)
-			str = realloc(str, maxlen *= 2);
+			str = guc_realloc(FATAL, str, maxlen *= 2);
 		str[i++] = ch;
 	} while (ch != 0);
 
@@ -4655,14 +4703,7 @@ read_nondefault_variables(void)
 	/*
 	 * Open file
 	 */
-	filename = malloc(strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) + 2);
-	if (filename == NULL)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-		return;
-	}
+	filename = guc_malloc(FATAL, strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) + 2);
 	sprintf(filename, "%s/" CONFIG_EXEC_PARAMS, DataDir);
 
 	fp = AllocateFile(filename, "r");
@@ -4684,7 +4725,7 @@ read_nondefault_variables(void)
 		if ((varname = read_string_with_null(fp)) == NULL)
 			break;
 
-		if ((record = find_option(varname)) == NULL)
+		if ((record = find_option(varname, FATAL)) == NULL)
 			elog(FATAL, "failed to locate variable %s in exec config params file",varname);
 		if ((varvalue = read_string_with_null(fp)) == NULL)
 			elog(FATAL, "invalid format of exec config params file");
@@ -4725,28 +4766,16 @@ ParseLongOption(const char *string, char **name, char **value)
 
 	if (string[equal_pos] == '=')
 	{
-		*name = malloc(equal_pos + 1);
-		if (!*name)
-			ereport(FATAL,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
+		*name = guc_malloc(FATAL, equal_pos + 1);
 		strncpy(*name, string, equal_pos);
 		(*name)[equal_pos] = '\0';
 
-		*value = strdup(&string[equal_pos + 1]);
-		if (!*value)
-			ereport(FATAL,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
+		*value = guc_strdup(FATAL, &string[equal_pos + 1]);
 	}
 	else
 	{
 		/* no equal sign in string */
-		*name = strdup(string);
-		if (!*name)
-			ereport(FATAL,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
+		*name = guc_strdup(FATAL, string);
 		*value = NULL;
 	}
 
