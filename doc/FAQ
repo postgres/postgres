@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jan 16 23:27:08 EST 2005
+   Last updated: Tue Jan 18 22:11:34 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -62,8 +62,7 @@
    4.2) How do I SELECT only the first few rows of a query? A random row?
    4.3) How do I find out what tables, indexes, databases, and users are
    defined? How do I see the queries used by psql to display them?
-   4.4) How do you remove a column from a table, or change it's data
-   type?
+   4.4) How do you remove a column from a table, or change its data type?
    4.5) What is the maximum size for a row, a table, and a database?
    4.6) How much database disk space is required to store data from a
    typical text file?
