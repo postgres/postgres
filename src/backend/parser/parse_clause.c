@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.21 1998/07/14 03:51:42 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.22 1998/08/02 13:34:26 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,6 +317,10 @@ transformSortClause(ParseState *pstate,
 {
 	List	   *s = NIL;
 
+#ifdef PARSEDEBUG
+printf("transformSortClause: entering\n");
+#endif
+
 	while (orderlist != NIL)
 	{
 		SortGroupBy *sortby = lfirst(orderlist);
@@ -326,7 +330,17 @@ transformSortClause(ParseState *pstate,
 
 		restarget = find_targetlist_entry(pstate, sortby, targetlist);
 
+#ifdef PARSEDEBUG
+printf("transformSortClause: find sorting operator for type %d\n",
+  restarget->resdom->restype);
+#endif
+
 		sortcl->resdom = resdom = restarget->resdom;
+
+		/* if we have InvalidOid, then this is a NULL field and don't need to sort */
+		if (resdom->restype == InvalidOid)
+			resdom->restype = INT4OID;
+
 		sortcl->opoid = oprid(oper(sortby->useOp,
 								   resdom->restype,
 								   resdom->restype, false));
@@ -389,6 +403,14 @@ transformSortClause(ParseState *pstate,
 					/* not a member of the sortclauses yet */
 					SortClause *sortcl = makeNode(SortClause);
 
+#ifdef PARSEDEBUG
+printf("transformSortClause: (2) find sorting operator for type %d\n",
+  tlelt->resdom->restype);
+#endif
+
+					if (tlelt->resdom->restype == InvalidOid)
+						tlelt->resdom->restype = INT4OID;
+
 					sortcl->resdom = tlelt->resdom;
 					sortcl->opoid = any_ordering_op(tlelt->resdom->restype);
 
@@ -422,6 +444,11 @@ transformSortClause(ParseState *pstate,
 			{
 				/* not a member of the sortclauses yet */
 				SortClause *sortcl = makeNode(SortClause);
+
+#ifdef PARSEDEBUG
+printf("transformSortClause: try sorting type %d\n",
+  tlelt->resdom->restype);
+#endif
 
 				sortcl->resdom = tlelt->resdom;
 				sortcl->opoid = any_ordering_op(tlelt->resdom->restype);
@@ -485,6 +512,13 @@ printf("transformUnionClause: types are %d -> %d\n", itype, otype);
 					{
 						((TargetEntry *)lfirst(prev_target))->resdom->restype = itype;
 					}
+#if FALSE
+					else
+					{
+						((TargetEntry *)lfirst(prev_target))->resdom->restype = UNKNOWNOID;
+						((TargetEntry *)lfirst(next_target))->resdom->restype = UNKNOWNOID;
+					}
+#endif
 				}
 				else if (itype == InvalidOid)
 				{
