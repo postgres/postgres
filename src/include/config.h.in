@@ -47,8 +47,11 @@
 /* Set to 1 if you have cbrt() */
 #undef HAVE_CBRT
 
-/* Set to 1 if you have cbrt() */
+/* Set to 1 if you have inet_aton() */
 #undef HAVE_INET_ATON
+
+/* Set to 1 if you have strerror() */
+#undef HAVE_STRERROR
 
 /* Set to 1 if you have rint() */
 #undef HAVE_RINT 
