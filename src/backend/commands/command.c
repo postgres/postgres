@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.52 1999/07/17 20:16:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.53 1999/09/04 21:19:33 tgl Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -494,13 +494,6 @@ PerformAddAttribute(char *relationName,
 
 	((Form_pg_class) GETSTRUCT(reltup))->relnatts = maxatts;
 	heap_replace(rel, &reltup->t_self, reltup, NULL);
-
-	{
-		HeapTuple	temptup;
-
-		if ((temptup = get_temp_rel_by_name(relationName)) != NULL)
-			((Form_pg_class) GETSTRUCT(temptup))->relnatts = maxatts;
-	}
 
 	/* keep catalog indices current */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
