@@ -753,10 +753,10 @@ probably should be more than that for best performance. For large
 numbers of backend processes, you are also likely to find that you need
 to increase various Unix kernel configuration parameters. Things to
 check include the maximum size of shared memory blocks,
-<SMALL>SHMMAX,</SMALL> the maximum number of semaphores,
-<SMALL>SEMMNS</SMALL> and <SMALL>SEMMNI,</SMALL> the maximum number of
-processes, <SMALL>NPROC,</SMALL> the maximum number of processes per
-user, <SMALL>MAXUPRC,</SMALL> and the maximum number of open files,
+<SMALL>SHMMAX;</SMALL> the maximum number of semaphores,
+<SMALL>SEMMNS</SMALL> and <SMALL>SEMMNI;</SMALL> the maximum number of
+processes, <SMALL>NPROC;</SMALL> the maximum number of processes per
+user, <SMALL>MAXUPRC;</SMALL> and the maximum number of open files,
 <SMALL>NFILE</SMALL> and <SMALL>NINODE.</SMALL> The reason that PostgreSQL
 has a limit on the number of allowed backend processes is so 
 your system won't run out of resources.<P>
