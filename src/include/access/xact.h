@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.55 2003/08/08 21:42:32 momjian Exp $
+ * $Id: xact.h,v 1.56 2003/09/28 23:26:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,9 +59,13 @@ typedef enum TBlockState
 	TBLOCK_ENDABORT
 } TBlockState;
 
-/* ----------------
- *		transaction state structure
- * ----------------
+/*
+ *	end-of-transaction cleanup callbacks for dynamically loaded modules
+ */
+typedef void (*EOXactCallback) (bool isCommit, void *arg);
+
+/*
+ *	transaction state structure
  */
 typedef struct TransactionStateData
 {
@@ -130,6 +134,8 @@ extern void UserAbortTransactionBlock(void);
 extern void AbortOutOfAnyTransaction(void);
 extern void PreventTransactionChain(void *stmtNode, const char *stmtType);
 extern void RequireTransactionChain(void *stmtNode, const char *stmtType);
+extern void RegisterEOXactCallback(EOXactCallback callback, void *arg);
+extern void UnregisterEOXactCallback(EOXactCallback callback, void *arg);
 
 extern void RecordTransactionCommit(void);
 

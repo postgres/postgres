@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.154 2003/09/25 06:57:57 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.155 2003/09/28 23:26:20 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -183,6 +183,7 @@ static void AtCommit_Memory(void);
 static void AtStart_Cache(void);
 static void AtStart_Locks(void);
 static void AtStart_Memory(void);
+static void CallEOXactCallbacks(bool isCommit);
 static void CleanupTransaction(void);
 static void CommitTransaction(void);
 static void RecordTransactionAbort(void);
@@ -216,6 +217,18 @@ int			CommitDelay = 0;	/* precommit delay in microseconds */
 int			CommitSiblings = 5; /* number of concurrent xacts needed to
 								 * sleep */
 
+
+/*
+ * List of add-on end-of-xact callbacks
+ */
+typedef struct EOXactCallbackItem
+{
+	struct EOXactCallbackItem *next;
+	EOXactCallback callback;
+	void	   *arg;
+} EOXactCallbackItem;
+
+static EOXactCallbackItem *EOXact_callbacks = NULL;
 
 static void (*_RollbackFunc) (void *) = NULL;
 static void *_RollbackData = NULL;
@@ -964,6 +977,7 @@ CommitTransaction(void)
 
 	AtCommit_Locks();
 
+	CallEOXactCallbacks(true);
 	AtEOXact_GUC(true);
 	AtEOXact_SPI();
 	AtEOXact_gist();
@@ -1073,6 +1087,7 @@ AbortTransaction(void)
 
 	AtAbort_Locks();
 
+	CallEOXactCallbacks(false);
 	AtEOXact_GUC(false);
 	AtEOXact_SPI();
 	AtEOXact_gist();
@@ -1427,6 +1442,62 @@ RequireTransactionChain(void *stmtNode, const char *stmtType)
 	/* translator: %s represents an SQL statement name */
 			 errmsg("%s may only be used in transaction blocks",
 					stmtType)));
+}
+
+
+/*
+ * Register or deregister callback functions for end-of-xact cleanup
+ *
+ * These functions are intended for use by dynamically loaded modules.
+ * For built-in modules we generally just hardwire the appropriate calls
+ * (mainly because it's easier to control the order that way, where needed).
+ *
+ * Note that the callback occurs post-commit or post-abort, so the callback
+ * functions can only do noncritical cleanup.
+ */
+void
+RegisterEOXactCallback(EOXactCallback callback, void *arg)
+{
+	EOXactCallbackItem *item;
+
+	item = (EOXactCallbackItem *)
+		MemoryContextAlloc(TopMemoryContext, sizeof(EOXactCallbackItem));
+	item->callback = callback;
+	item->arg = arg;
+	item->next = EOXact_callbacks;
+	EOXact_callbacks = item;
+}
+
+void
+UnregisterEOXactCallback(EOXactCallback callback, void *arg)
+{
+	EOXactCallbackItem *item;
+	EOXactCallbackItem *prev;
+
+	prev = NULL;
+	for (item = EOXact_callbacks; item; prev = item, item = item->next)
+	{
+		if (item->callback == callback && item->arg == arg)
+		{
+			if (prev)
+				prev->next = item->next;
+			else
+				EOXact_callbacks = item->next;
+			pfree(item);
+			break;
+		}
+	}
+}
+
+static void
+CallEOXactCallbacks(bool isCommit)
+{
+	EOXactCallbackItem *item;
+
+	for (item = EOXact_callbacks; item; item = item->next)
+	{
+		(*item->callback) (isCommit, item->arg);
+	}
 }
 
 
