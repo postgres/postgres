@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $PostgreSQL: pgsql/src/pl/tcl/Makefile,v 1.42 2004/01/21 19:04:11 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/tcl/Makefile,v 1.43 2004/09/14 03:21:27 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,7 +29,11 @@ endif
 endif
 
 
+ifneq ($(PORTNAME), win32)
 SHLIB_LINK = $(BE_DLLLIBS) $(TCL_LIB_SPEC) $(TCL_LIBS) -lc
+else
+SHLIB_LINK = $(TCL_LIB_SPEC) $(BE_DLLLIBS)
+endif
 
 NAME = pltcl
 SO_MAJOR_VERSION = 2
