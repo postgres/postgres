@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.90 2003/01/15 23:10:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.91 2003/01/20 18:54:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@ typedef struct
 	List	   *outer_tlist;
 	List	   *inner_tlist;
 	Index		acceptable_rel;
+	bool		tlists_have_non_vars;
 } join_references_context;
 
 typedef struct
@@ -44,11 +45,13 @@ static void fix_expr_references(Plan *plan, Node *node);
 static bool fix_expr_references_walker(Node *node, void *context);
 static void set_join_references(Join *join, List *rtable);
 static void set_uppernode_references(Plan *plan, Index subvarno);
+static bool targetlist_has_non_vars(List *tlist);
 static List *join_references(List *clauses,
 							 List *rtable,
 							 List *outer_tlist,
 							 List *inner_tlist,
-							 Index acceptable_rel);
+							 Index acceptable_rel,
+							 bool tlists_have_non_vars);
 static Node *join_references_mutator(Node *node,
 						join_references_context *context);
 static Node *replace_vars_with_subplan_refs(Node *node,
@@ -175,7 +178,10 @@ set_plan_references(Plan *plan, List *rtable)
 								rtable,
 								NIL,
 								plan->lefttree->targetlist,
-								(Index) 0);
+								(Index) 0,
+								targetlist_has_non_vars(plan->lefttree->targetlist));
+			fix_expr_references(plan,
+								(Node *) ((Hash *) plan)->hashkeys);
 			break;
 		case T_Material:
 		case T_Sort:
@@ -308,23 +314,30 @@ set_join_references(Join *join, List *rtable)
 	Plan	   *inner_plan = join->plan.righttree;
 	List	   *outer_tlist = outer_plan->targetlist;
 	List	   *inner_tlist = inner_plan->targetlist;
+	bool		tlists_have_non_vars;
+
+	tlists_have_non_vars = targetlist_has_non_vars(outer_tlist) ||
+		targetlist_has_non_vars(inner_tlist);
 
 	/* All join plans have tlist, qual, and joinqual */
 	join->plan.targetlist = join_references(join->plan.targetlist,
 											rtable,
 											outer_tlist,
 											inner_tlist,
-											(Index) 0);
+											(Index) 0,
+											tlists_have_non_vars);
 	join->plan.qual = join_references(join->plan.qual,
 									  rtable,
 									  outer_tlist,
 									  inner_tlist,
-									  (Index) 0);
+									  (Index) 0,
+									  tlists_have_non_vars);
 	join->joinqual = join_references(join->joinqual,
 									 rtable,
 									 outer_tlist,
 									 inner_tlist,
-									 (Index) 0);
+									 (Index) 0,
+									 tlists_have_non_vars);
 
 	/* Now do join-type-specific stuff */
 	if (IsA(join, NestLoop))
@@ -350,12 +363,14 @@ set_join_references(Join *join, List *rtable)
 														  rtable,
 														  outer_tlist,
 														  NIL,
-														  innerrel);
+														  innerrel,
+														  tlists_have_non_vars);
 				innerscan->indxqual = join_references(innerscan->indxqual,
 													  rtable,
 													  outer_tlist,
 													  NIL,
-													  innerrel);
+													  innerrel,
+													  tlists_have_non_vars);
 				/*
 				 * We must fix the inner qpqual too, if it has join clauses
 				 * (this could happen if the index is lossy: some indxquals
@@ -366,7 +381,8 @@ set_join_references(Join *join, List *rtable)
 													   rtable,
 													   outer_tlist,
 													   NIL,
-													   innerrel);
+													   innerrel,
+													   tlists_have_non_vars);
 			}
 		}
 		else if (IsA(inner_plan, TidScan))
@@ -378,7 +394,8 @@ set_join_references(Join *join, List *rtable)
 												 rtable,
 												 outer_tlist,
 												 NIL,
-												 innerrel);
+												 innerrel,
+												 tlists_have_non_vars);
 		}
 	}
 	else if (IsA(join, MergeJoin))
@@ -389,7 +406,8 @@ set_join_references(Join *join, List *rtable)
 										   rtable,
 										   outer_tlist,
 										   inner_tlist,
-										   (Index) 0);
+										   (Index) 0,
+										   tlists_have_non_vars);
 	}
 	else if (IsA(join, HashJoin))
 	{
@@ -399,7 +417,8 @@ set_join_references(Join *join, List *rtable)
 										  rtable,
 										  outer_tlist,
 										  inner_tlist,
-										  (Index) 0);
+										  (Index) 0,
+										  tlists_have_non_vars);
 	}
 }
 
@@ -433,22 +452,7 @@ set_uppernode_references(Plan *plan, Index subvarno)
 	else
 		subplan_targetlist = NIL;
 
-	/*
-	 * Detect whether subplan tlist has any non-Vars (typically it won't
-	 * because it's been flattened).  This allows us to save comparisons
-	 * in common cases.
-	 */
-	tlist_has_non_vars = false;
-	foreach(l, subplan_targetlist)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
-
-		if (tle->expr && !IsA(tle->expr, Var))
-		{
-			tlist_has_non_vars = true;
-			break;
-		}
-	}
+	tlist_has_non_vars = targetlist_has_non_vars(subplan_targetlist);
 
 	output_targetlist = NIL;
 	foreach(l, plan->targetlist)
@@ -471,6 +475,27 @@ set_uppernode_references(Plan *plan, Index subvarno)
 									   subvarno,
 									   subplan_targetlist,
 									   tlist_has_non_vars);
+}
+
+/*
+ * targetlist_has_non_vars --- are there any non-Var entries in tlist?
+ *
+ * In most cases, subplan tlists will be "flat" tlists with only Vars.
+ * Checking for this allows us to save comparisons in common cases.
+ */
+static bool
+targetlist_has_non_vars(List *tlist)
+{
+	List   *l;
+
+	foreach(l, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+
+		if (tle->expr && !IsA(tle->expr, Var))
+			return true;
+	}
+	return false;
 }
 
 /*
@@ -505,7 +530,8 @@ join_references(List *clauses,
 				List *rtable,
 				List *outer_tlist,
 				List *inner_tlist,
-				Index acceptable_rel)
+				Index acceptable_rel,
+				bool tlists_have_non_vars)
 {
 	join_references_context context;
 
@@ -513,6 +539,7 @@ join_references(List *clauses,
 	context.outer_tlist = outer_tlist;
 	context.inner_tlist = inner_tlist;
 	context.acceptable_rel = acceptable_rel;
+	context.tlists_have_non_vars = tlists_have_non_vars;
 	return (List *) join_references_mutator((Node *) clauses, &context);
 }
 
@@ -553,6 +580,42 @@ join_references_mutator(Node *node,
 
 		/* No referent found for Var */
 		elog(ERROR, "join_references: variable not in subplan target lists");
+	}
+	/* Try matching more complex expressions too, if tlists have any */
+	if (context->tlists_have_non_vars)
+	{
+		Resdom	   *resdom;
+
+		resdom = tlist_member(node, context->outer_tlist);
+		if (resdom)
+		{
+			/* Found a matching subplan output expression */
+			Var		   *newvar;
+
+			newvar = makeVar(OUTER,
+							 resdom->resno,
+							 resdom->restype,
+							 resdom->restypmod,
+							 0);
+			newvar->varnoold = 0;		/* wasn't ever a plain Var */
+			newvar->varoattno = 0;
+			return (Node *) newvar;
+		}
+		resdom = tlist_member(node, context->inner_tlist);
+		if (resdom)
+		{
+			/* Found a matching subplan output expression */
+			Var		   *newvar;
+
+			newvar = makeVar(INNER,
+							 resdom->resno,
+							 resdom->restype,
+							 resdom->restypmod,
+							 0);
+			newvar->varnoold = 0;		/* wasn't ever a plain Var */
+			newvar->varoattno = 0;
+			return (Node *) newvar;
+		}
 	}
 	return expression_tree_mutator(node,
 								   join_references_mutator,

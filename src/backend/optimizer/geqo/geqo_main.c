@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.33 2002/12/16 21:30:29 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.34 2003/01/20 18:54:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,20 +228,25 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 #endif
 
 
-/* got the cheapest query tree processed by geqo;
-   first element of the population indicates the best query tree */
-
+	/*
+	 * got the cheapest query tree processed by geqo;
+	 * first element of the population indicates the best query tree
+	 */
 	best_tour = (Gene *) pool->data[0].string;
 
-/* root->join_rel_list will be modified during this ! */
+	/* root->join_rel_list will be modified during this ! */
 	best_rel = gimme_tree(root, initial_rels,
 						  best_tour, pool->string_length);
 
-/* DBG: show the query plan
-print_plan(best_plan, root);
-   DBG */
+	if (best_rel == NULL)
+		elog(ERROR, "geqo: failed to make a valid plan");
 
-/* ... free memory stuff */
+	/* DBG: show the query plan */
+#ifdef NOT_USED
+	print_plan(best_plan, root);
+#endif
+
+	/* ... free memory stuff */
 	free_chromo(momma);
 	free_chromo(daddy);
 

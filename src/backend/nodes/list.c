@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.43 2002/12/17 01:18:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.44 2003/01/20 18:54:47 tgl Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -638,10 +638,10 @@ lreverse(List *l)
 }
 
 /*
- * Return t if two integer lists have no members in common.
+ * Return t if two integer lists have any members in common.
  */
 bool
-nonoverlap_setsi(List *list1, List *list2)
+overlap_setsi(List *list1, List *list2)
 {
 	List	   *x;
 
@@ -650,9 +650,9 @@ nonoverlap_setsi(List *list1, List *list2)
 		int			e = lfirsti(x);
 
 		if (intMember(e, list2))
-			return false;
+			return true;
 	}
-	return true;
+	return false;
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.193 2003/01/15 19:35:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.194 2003/01/20 18:54:47 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -906,6 +906,18 @@ _outMaterialPath(StringInfo str, MaterialPath *node)
 }
 
 static void
+_outUniquePath(StringInfo str, UniquePath *node)
+{
+	WRITE_NODE_TYPE("UNIQUEPATH");
+
+	_outPathInfo(str, (Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+	WRITE_BOOL_FIELD(use_hash);
+	WRITE_FLOAT_FIELD(rows, "%.0f");
+}
+
+static void
 _outNestPath(StringInfo str, NestPath *node)
 {
 	WRITE_NODE_TYPE("NESTPATH");
@@ -967,6 +979,16 @@ _outJoinInfo(StringInfo str, JoinInfo *node)
 
 	WRITE_INTLIST_FIELD(unjoined_relids);
 	WRITE_NODE_FIELD(jinfo_restrictinfo);
+}
+
+static void
+_outInClauseInfo(StringInfo str, InClauseInfo *node)
+{
+	WRITE_NODE_TYPE("INCLAUSEINFO");
+
+	WRITE_INTLIST_FIELD(lefthand);
+	WRITE_INTLIST_FIELD(righthand);
+	WRITE_NODE_FIELD(sub_targetlist);
 }
 
 /*****************************************************************************
@@ -1563,6 +1585,9 @@ _outNode(StringInfo str, void *obj)
 			case T_MaterialPath:
 				_outMaterialPath(str, obj);
 				break;
+			case T_UniquePath:
+				_outUniquePath(str, obj);
+				break;
 			case T_NestPath:
 				_outNestPath(str, obj);
 				break;
@@ -1580,6 +1605,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_JoinInfo:
 				_outJoinInfo(str, obj);
+				break;
+			case T_InClauseInfo:
+				_outInClauseInfo(str, obj);
 				break;
 
 			case T_CreateStmt:

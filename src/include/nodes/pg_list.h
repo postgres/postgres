@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.30 2002/11/24 21:52:15 tgl Exp $
+ * $Id: pg_list.h,v 1.31 2003/01/20 18:55:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,7 +145,8 @@ extern List *set_intersecti(List *list1, List *list2);
 
 extern bool equali(List *list1, List *list2);
 extern bool sameseti(List *list1, List *list2);
-extern bool nonoverlap_setsi(List *list1, List *list2);
+extern bool overlap_setsi(List *list1, List *list2);
+#define nonoverlap_setsi(list1, list2) (!overlap_setsi(list1, list2))
 extern bool is_subseti(List *list1, List *list2);
 
 extern void freeList(List *list);

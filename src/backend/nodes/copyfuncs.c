@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.236 2003/01/15 19:35:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.237 2003/01/20 18:54:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1095,6 +1095,21 @@ _copyJoinInfo(JoinInfo *from)
 	return newnode;
 }
 
+/*
+ * _copyInClauseInfo
+ */
+static InClauseInfo *
+_copyInClauseInfo(InClauseInfo *from)
+{
+	InClauseInfo *newnode = makeNode(InClauseInfo);
+
+	COPY_INTLIST_FIELD(lefthand);
+	COPY_INTLIST_FIELD(righthand);
+	COPY_NODE_FIELD(sub_targetlist);
+
+	return newnode;
+}
+
 /* ****************************************************************
  *					parsenodes.h copy functions
  * ****************************************************************
@@ -1424,9 +1439,9 @@ _copyQuery(Query *from)
 
 	/*
 	 * We do not copy the planner internal fields: base_rel_list,
-	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys,
-	 * hasJoinRTEs.  That would get us into copying RelOptInfo/Path
-	 * trees, which we don't want to do.
+	 * other_rel_list, join_rel_list, equi_key_list, in_info_list,
+	 * query_pathkeys, hasJoinRTEs.  That would get us into copying
+	 * RelOptInfo/Path trees, which we don't want to do.
 	 */
 
 	return newnode;
@@ -2489,6 +2504,9 @@ copyObject(void *from)
 			break;
 		case T_JoinInfo:
 			retval = _copyJoinInfo(from);
+			break;
+		case T_InClauseInfo:
+			retval = _copyInClauseInfo(from);
 			break;
 
 			/*

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.87 2003/01/17 02:01:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.88 2003/01/20 18:54:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,7 @@ static List *generate_append_tlist(List *colTypes, bool flag,
 					  List *refnames_tlist);
 static Node *adjust_inherited_attrs_mutator(Node *node,
 							   adjust_inherited_attrs_context *context);
+static List *adjust_rtindex_list(List *relids, Index oldrelid, Index newrelid);
 static List *adjust_inherited_tlist(List *tlist, Oid new_relid);
 
 
@@ -239,8 +240,9 @@ generate_union_plan(SetOperationStmt *op, Query *parse,
 
 		tlist = new_unsorted_tlist(tlist);
 		sortList = addAllTargetsToSortList(NIL, tlist);
-		plan = make_sortplan(parse, tlist, plan, sortList);
-		plan = (Plan *) make_unique(tlist, plan, copyObject(sortList));
+		plan = (Plan *) make_sort_from_sortclauses(parse, tlist,
+												   plan, sortList);
+		plan = (Plan *) make_unique(tlist, plan, sortList);
 	}
 	return plan;
 }
@@ -292,7 +294,7 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 	 */
 	tlist = new_unsorted_tlist(tlist);
 	sortList = addAllTargetsToSortList(NIL, tlist);
-	plan = make_sortplan(parse, tlist, plan, sortList);
+	plan = (Plan *) make_sort_from_sortclauses(parse, tlist, plan, sortList);
 	switch (op->op)
 	{
 		case SETOP_INTERSECT:
@@ -830,6 +832,23 @@ adjust_inherited_attrs_mutator(Node *node,
 			j->rtindex = context->new_rt_index;
 		return (Node *) j;
 	}
+	if (IsA(node, InClauseInfo))
+	{
+		/* Copy the InClauseInfo node with correct mutation of subnodes */
+		InClauseInfo   *ininfo;
+
+		ininfo = (InClauseInfo *) expression_tree_mutator(node,
+										  adjust_inherited_attrs_mutator,
+														  (void *) context);
+		/* now fix InClauseInfo's rtindex lists */
+		ininfo->lefthand = adjust_rtindex_list(ininfo->lefthand,
+											   context->old_rt_index,
+											   context->new_rt_index);
+		ininfo->righthand = adjust_rtindex_list(ininfo->righthand,
+												context->old_rt_index,
+												context->new_rt_index);
+		return (Node *) ininfo;
+	}
 
 	/*
 	 * We have to process RestrictInfo nodes specially.
@@ -856,26 +875,12 @@ adjust_inherited_attrs_mutator(Node *node,
 		/*
 		 * Adjust left/right relids lists too.
 		 */
-		if (intMember(context->old_rt_index, oldinfo->left_relids))
-		{
-			newinfo->left_relids = listCopy(oldinfo->left_relids);
-			newinfo->left_relids = lremovei(context->old_rt_index,
-											newinfo->left_relids);
-			newinfo->left_relids = lconsi(context->new_rt_index,
-										  newinfo->left_relids);
-		}
-		else
-			newinfo->left_relids = oldinfo->left_relids;
-		if (intMember(context->old_rt_index, oldinfo->right_relids))
-		{
-			newinfo->right_relids = listCopy(oldinfo->right_relids);
-			newinfo->right_relids = lremovei(context->old_rt_index,
-											 newinfo->right_relids);
-			newinfo->right_relids = lconsi(context->new_rt_index,
-										   newinfo->right_relids);
-		}
-		else
-			newinfo->right_relids = oldinfo->right_relids;
+		newinfo->left_relids = adjust_rtindex_list(oldinfo->left_relids,
+												   context->old_rt_index,
+												   context->new_rt_index);
+		newinfo->right_relids = adjust_rtindex_list(oldinfo->right_relids,
+													context->old_rt_index,
+													context->new_rt_index);
 
 		newinfo->eval_cost.startup = -1; /* reset these too */
 		newinfo->this_selec = -1;
@@ -920,6 +925,23 @@ adjust_inherited_attrs_mutator(Node *node,
 
 	return expression_tree_mutator(node, adjust_inherited_attrs_mutator,
 								   (void *) context);
+}
+
+/*
+ * Substitute newrelid for oldrelid in a list of RT indexes
+ */
+static List *
+adjust_rtindex_list(List *relids, Index oldrelid, Index newrelid)
+{
+	if (intMember(oldrelid, relids))
+	{
+		/* Ensure we have a modifiable copy */
+		relids = listCopy(relids);
+		/* Remove old, add new */
+		relids = lremovei(oldrelid, relids);
+		relids = lconsi(newrelid, relids);
+	}
+	return relids;
 }
 
 /*

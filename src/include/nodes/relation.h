@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.76 2003/01/15 19:35:44 tgl Exp $
+ * $Id: relation.h,v 1.77 2003/01/20 18:55:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,6 +97,8 @@ typedef struct QualCost
  *								(regardless of its ordering)
  *		cheapest_total_path - the pathlist member with lowest total cost
  *							  (regardless of its ordering)
+ *		cheapest_unique_path - for caching cheapest path to produce unique
+ *							   (no duplicates) output from relation
  *		pruneable - flag to let the planner know whether it can prune the
  *					pathlist of this RelOptInfo or not.
  *
@@ -183,6 +185,7 @@ typedef struct RelOptInfo
 	List	   *pathlist;		/* Path structures */
 	struct Path *cheapest_startup_path;
 	struct Path *cheapest_total_path;
+	struct Path *cheapest_unique_path;
 	bool		pruneable;
 
 	/* information about a base rel (not set for join rels!) */
@@ -402,6 +405,23 @@ typedef struct MaterialPath
 	Path		path;
 	Path	   *subpath;
 } MaterialPath;
+
+/*
+ * UniquePath represents elimination of distinct rows from the output of
+ * its subpath.
+ *
+ * This is unlike the other Path nodes in that it can actually generate
+ * two different plans: either hash-based or sort-based implementation.
+ * The decision is sufficiently localized that it's not worth having two
+ * separate Path node types.
+ */
+typedef struct UniquePath
+{
+	Path		path;
+	Path	   *subpath;
+	bool		use_hash;
+	double		rows;			/* estimated number of result tuples */
+} UniquePath;
 
 /*
  * All join-type paths share these fields.
@@ -648,5 +668,26 @@ typedef struct InnerIndexscanInfo
 	/* Best path for this lookup key: */
 	Path	   *best_innerpath;	/* best inner indexscan, or NULL if none */
 } InnerIndexscanInfo;
+
+/*
+ * IN clause info.
+ *
+ * When we convert top-level IN quals into join operations, we must restrict
+ * the order of joining and use special join methods at some join points.
+ * We record information about each such IN clause in an InClauseInfo struct.
+ * These structs are kept in the Query node's in_info_list.
+ */
+
+typedef struct InClauseInfo
+{
+	NodeTag		type;
+	List	   *lefthand;		/* base relids in lefthand expressions */
+	List	   *righthand;		/* base relids coming from the subselect */
+	List	   *sub_targetlist;	/* targetlist of original RHS subquery */
+	/*
+	 * Note: sub_targetlist is just a list of Vars or expressions;
+	 * it does not contain TargetEntry nodes.
+	 */
+} InClauseInfo;
 
 #endif   /* RELATION_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.140 2003/01/17 03:25:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.141 2003/01/20 18:54:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,24 +38,17 @@
 #include "parser/parsetree.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
-#include "rewrite/rewriteManip.h"
-#include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
 
 
 /* Expression kind codes for preprocess_expression */
-#define EXPRKIND_TARGET 0
-#define EXPRKIND_WHERE	1
-#define EXPRKIND_HAVING 2
+#define EXPRKIND_QUAL	0
+#define EXPRKIND_TARGET	1
+#define EXPRKIND_RTFUNC	2
+#define EXPRKIND_ININFO	3
 
 
-static Node *pull_up_subqueries(Query *parse, Node *jtnode,
-				   bool below_outer_join);
-static bool is_simple_subquery(Query *subquery);
-static bool has_nullable_targetlist(Query *subquery);
-static void resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist);
-static Node *preprocess_jointree(Query *parse, Node *jtnode);
 static Node *preprocess_expression(Query *parse, Node *expr, int kind);
 static void preprocess_qual_conditions(Query *parse, Node *jtnode);
 static Plan *inheritance_planner(Query *parse, List *inheritlist);
@@ -156,6 +149,17 @@ subquery_planner(Query *parse, double tuple_fraction)
 	PlannerInitPlan = NIL;
 
 	/*
+	 * Look for IN clauses at the top level of WHERE, and transform them
+	 * into joins.  Note that this step only handles IN clauses originally
+	 * at top level of WHERE; if we pull up any subqueries in the next step,
+	 * their INs are processed just before pulling them up.
+	 */
+	parse->in_info_list = NIL;
+	if (parse->hasSubLinks)
+		parse->jointree->quals = pull_up_IN_clauses(parse,
+													parse->jointree->quals);
+
+	/*
 	 * Check to see if any subqueries in the rangetable can be merged into
 	 * this query.
 	 */
@@ -195,7 +199,11 @@ subquery_planner(Query *parse, double tuple_fraction)
 	preprocess_qual_conditions(parse, (Node *) parse->jointree);
 
 	parse->havingQual = preprocess_expression(parse, parse->havingQual,
-											  EXPRKIND_HAVING);
+											  EXPRKIND_QUAL);
+
+	parse->in_info_list = (List *)
+		preprocess_expression(parse, (Node *) parse->in_info_list,
+							  EXPRKIND_ININFO);
 
 	/* Also need to preprocess expressions for function RTEs */
 	foreach(lst, parse->rtable)
@@ -204,8 +212,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 
 		if (rte->rtekind == RTE_FUNCTION)
 			rte->funcexpr = preprocess_expression(parse, rte->funcexpr,
-												  EXPRKIND_TARGET);
-		/* These are not targetlist items, but close enough... */
+												  EXPRKIND_RTFUNC);
 	}
 
 	/*
@@ -296,427 +303,6 @@ subquery_planner(Query *parse, double tuple_fraction)
 }
 
 /*
- * pull_up_subqueries
- *		Look for subqueries in the rangetable that can be pulled up into
- *		the parent query.  If the subquery has no special features like
- *		grouping/aggregation then we can merge it into the parent's jointree.
- *
- * below_outer_join is true if this jointree node is within the nullable
- * side of an outer join.  This restricts what we can do.
- *
- * A tricky aspect of this code is that if we pull up a subquery we have
- * to replace Vars that reference the subquery's outputs throughout the
- * parent query, including quals attached to jointree nodes above the one
- * we are currently processing!  We handle this by being careful not to
- * change the jointree structure while recursing: no nodes other than
- * subquery RangeTblRef entries will be replaced.  Also, we can't turn
- * ResolveNew loose on the whole jointree, because it'll return a mutated
- * copy of the tree; we have to invoke it just on the quals, instead.
- */
-static Node *
-pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
-{
-	if (jtnode == NULL)
-		return NULL;
-	if (IsA(jtnode, RangeTblRef))
-	{
-		int			varno = ((RangeTblRef *) jtnode)->rtindex;
-		RangeTblEntry *rte = rt_fetch(varno, parse->rtable);
-		Query	   *subquery = rte->subquery;
-
-		/*
-		 * Is this a subquery RTE, and if so, is the subquery simple
-		 * enough to pull up?  (If not, do nothing at this node.)
-		 *
-		 * If we are inside an outer join, only pull up subqueries whose
-		 * targetlists are nullable --- otherwise substituting their tlist
-		 * entries for upper Var references would do the wrong thing (the
-		 * results wouldn't become NULL when they're supposed to). XXX
-		 * This could be improved by generating pseudo-variables for such
-		 * expressions; we'd have to figure out how to get the pseudo-
-		 * variables evaluated at the right place in the modified plan
-		 * tree. Fix it someday.
-		 *
-		 * Note: even if the subquery itself is simple enough, we can't pull
-		 * it up if there is a reference to its whole tuple result.
-		 * Perhaps a pseudo-variable is the answer here too.
-		 */
-		if (rte->rtekind == RTE_SUBQUERY && is_simple_subquery(subquery) &&
-			(!below_outer_join || has_nullable_targetlist(subquery)) &&
-			!contain_whole_tuple_var((Node *) parse, varno, 0))
-		{
-			int			rtoffset;
-			List	   *subtlist;
-			List	   *rt;
-
-			/*
-			 * First, recursively pull up the subquery's subqueries, so
-			 * that this routine's processing is complete for its jointree
-			 * and rangetable.	NB: if the same subquery is referenced
-			 * from multiple jointree items (which can't happen normally,
-			 * but might after rule rewriting), then we will invoke this
-			 * processing multiple times on that subquery.	OK because
-			 * nothing will happen after the first time.  We do have to be
-			 * careful to copy everything we pull up, however, or risk
-			 * having chunks of structure multiply linked.
-			 *
-			 * Note: 'false' is correct here even if we are within an outer
-			 * join in the upper query; the lower query starts with a clean
-			 * slate for outer-join semantics.
-			 */
-			subquery->jointree = (FromExpr *)
-				pull_up_subqueries(subquery, (Node *) subquery->jointree,
-								   false);
-
-			/*
-			 * Now make a modifiable copy of the subquery that we can run
-			 * OffsetVarNodes and IncrementVarSublevelsUp on.
-			 */
-			subquery = copyObject(subquery);
-
-			/*
-			 * Adjust level-0 varnos in subquery so that we can append its
-			 * rangetable to upper query's.
-			 */
-			rtoffset = length(parse->rtable);
-			OffsetVarNodes((Node *) subquery, rtoffset, 0);
-
-			/*
-			 * Upper-level vars in subquery are now one level closer to their
-			 * parent than before.
-			 */
-			IncrementVarSublevelsUp((Node *) subquery, -1, 1);
-
-			/*
-			 * Replace all of the top query's references to the subquery's
-			 * outputs with copies of the adjusted subtlist items, being
-			 * careful not to replace any of the jointree structure.
-			 * (This'd be a lot cleaner if we could use
-			 * query_tree_mutator.)
-			 */
-			subtlist = subquery->targetList;
-			parse->targetList = (List *)
-				ResolveNew((Node *) parse->targetList,
-						   varno, 0, subtlist, CMD_SELECT, 0);
-			resolvenew_in_jointree((Node *) parse->jointree, varno, subtlist);
-			Assert(parse->setOperations == NULL);
-			parse->havingQual =
-				ResolveNew(parse->havingQual,
-						   varno, 0, subtlist, CMD_SELECT, 0);
-
-			foreach(rt, parse->rtable)
-			{
-				RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
-
-				if (rte->rtekind == RTE_JOIN)
-					rte->joinaliasvars = (List *)
-						ResolveNew((Node *) rte->joinaliasvars,
-								   varno, 0, subtlist, CMD_SELECT, 0);
-			}
-
-			/*
-			 * Now append the adjusted rtable entries to upper query. (We
-			 * hold off until after fixing the upper rtable entries; no
-			 * point in running that code on the subquery ones too.)
-			 */
-			parse->rtable = nconc(parse->rtable, subquery->rtable);
-
-			/*
-			 * Pull up any FOR UPDATE markers, too.  (OffsetVarNodes
-			 * already adjusted the marker values, so just nconc the
-			 * list.)
-			 */
-			parse->rowMarks = nconc(parse->rowMarks, subquery->rowMarks);
-
-			/*
-			 * Miscellaneous housekeeping.
-			 */
-			parse->hasSubLinks |= subquery->hasSubLinks;
-			/* subquery won't be pulled up if it hasAggs, so no work there */
-
-			/*
-			 * Return the adjusted subquery jointree to replace the
-			 * RangeTblRef entry in my jointree.
-			 */
-			return (Node *) subquery->jointree;
-		}
-	}
-	else if (IsA(jtnode, FromExpr))
-	{
-		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *l;
-
-		foreach(l, f->fromlist)
-			lfirst(l) = pull_up_subqueries(parse, lfirst(l),
-										   below_outer_join);
-	}
-	else if (IsA(jtnode, JoinExpr))
-	{
-		JoinExpr   *j = (JoinExpr *) jtnode;
-
-		/* Recurse, being careful to tell myself when inside outer join */
-		switch (j->jointype)
-		{
-			case JOIN_INNER:
-				j->larg = pull_up_subqueries(parse, j->larg,
-											 below_outer_join);
-				j->rarg = pull_up_subqueries(parse, j->rarg,
-											 below_outer_join);
-				break;
-			case JOIN_LEFT:
-				j->larg = pull_up_subqueries(parse, j->larg,
-											 below_outer_join);
-				j->rarg = pull_up_subqueries(parse, j->rarg,
-											 true);
-				break;
-			case JOIN_FULL:
-				j->larg = pull_up_subqueries(parse, j->larg,
-											 true);
-				j->rarg = pull_up_subqueries(parse, j->rarg,
-											 true);
-				break;
-			case JOIN_RIGHT:
-				j->larg = pull_up_subqueries(parse, j->larg,
-											 true);
-				j->rarg = pull_up_subqueries(parse, j->rarg,
-											 below_outer_join);
-				break;
-			case JOIN_UNION:
-
-				/*
-				 * This is where we fail if upper levels of planner
-				 * haven't rewritten UNION JOIN as an Append ...
-				 */
-				elog(ERROR, "UNION JOIN is not implemented yet");
-				break;
-			default:
-				elog(ERROR, "pull_up_subqueries: unexpected join type %d",
-					 j->jointype);
-				break;
-		}
-	}
-	else
-		elog(ERROR, "pull_up_subqueries: unexpected node type %d",
-			 nodeTag(jtnode));
-	return jtnode;
-}
-
-/*
- * is_simple_subquery
- *	  Check a subquery in the range table to see if it's simple enough
- *	  to pull up into the parent query.
- */
-static bool
-is_simple_subquery(Query *subquery)
-{
-	/*
-	 * Let's just make sure it's a valid subselect ...
-	 */
-	if (!IsA(subquery, Query) ||
-		subquery->commandType != CMD_SELECT ||
-		subquery->resultRelation != 0 ||
-		subquery->into != NULL ||
-		subquery->isPortal)
-		elog(ERROR, "is_simple_subquery: subquery is bogus");
-
-	/*
-	 * Can't currently pull up a query with setops. Maybe after querytree
-	 * redesign...
-	 */
-	if (subquery->setOperations)
-		return false;
-
-	/*
-	 * Can't pull up a subquery involving grouping, aggregation, sorting,
-	 * or limiting.
-	 */
-	if (subquery->hasAggs ||
-		subquery->groupClause ||
-		subquery->havingQual ||
-		subquery->sortClause ||
-		subquery->distinctClause ||
-		subquery->limitOffset ||
-		subquery->limitCount)
-		return false;
-
-	/*
-	 * Don't pull up a subquery that has any set-returning functions in
-	 * its targetlist.	Otherwise we might well wind up inserting
-	 * set-returning functions into places where they mustn't go, such as
-	 * quals of higher queries.
-	 */
-	if (expression_returns_set((Node *) subquery->targetList))
-		return false;
-
-	/*
-	 * Hack: don't try to pull up a subquery with an empty jointree.
-	 * query_planner() will correctly generate a Result plan for a
-	 * jointree that's totally empty, but I don't think the right things
-	 * happen if an empty FromExpr appears lower down in a jointree. Not
-	 * worth working hard on this, just to collapse SubqueryScan/Result
-	 * into Result...
-	 */
-	if (subquery->jointree->fromlist == NIL)
-		return false;
-
-	return true;
-}
-
-/*
- * has_nullable_targetlist
- *	  Check a subquery in the range table to see if all the non-junk
- *	  targetlist items are simple variables (and, hence, will correctly
- *	  go to NULL when examined above the point of an outer join).
- *
- * A possible future extension is to accept strict functions of simple
- * variables, eg, "x + 1".
- */
-static bool
-has_nullable_targetlist(Query *subquery)
-{
-	List	   *l;
-
-	foreach(l, subquery->targetList)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(l);
-
-		/* ignore resjunk columns */
-		if (tle->resdom->resjunk)
-			continue;
-
-		/* Okay if tlist item is a simple Var */
-		if (tle->expr && IsA(tle->expr, Var))
-			continue;
-
-		return false;
-	}
-	return true;
-}
-
-/*
- * Helper routine for pull_up_subqueries: do ResolveNew on every expression
- * in the jointree, without changing the jointree structure itself.  Ugly,
- * but there's no other way...
- */
-static void
-resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist)
-{
-	if (jtnode == NULL)
-		return;
-	if (IsA(jtnode, RangeTblRef))
-	{
-		/* nothing to do here */
-	}
-	else if (IsA(jtnode, FromExpr))
-	{
-		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *l;
-
-		foreach(l, f->fromlist)
-			resolvenew_in_jointree(lfirst(l), varno, subtlist);
-		f->quals = ResolveNew(f->quals,
-							  varno, 0, subtlist, CMD_SELECT, 0);
-	}
-	else if (IsA(jtnode, JoinExpr))
-	{
-		JoinExpr   *j = (JoinExpr *) jtnode;
-
-		resolvenew_in_jointree(j->larg, varno, subtlist);
-		resolvenew_in_jointree(j->rarg, varno, subtlist);
-		j->quals = ResolveNew(j->quals,
-							  varno, 0, subtlist, CMD_SELECT, 0);
-
-		/*
-		 * We don't bother to update the colvars list, since it won't be
-		 * used again ...
-		 */
-	}
-	else
-		elog(ERROR, "resolvenew_in_jointree: unexpected node type %d",
-			 nodeTag(jtnode));
-}
-
-/*
- * preprocess_jointree
- *		Attempt to simplify a query's jointree.
- *
- * If we succeed in pulling up a subquery then we might form a jointree
- * in which a FromExpr is a direct child of another FromExpr.  In that
- * case we can consider collapsing the two FromExprs into one.	This is
- * an optional conversion, since the planner will work correctly either
- * way.  But we may find a better plan (at the cost of more planning time)
- * if we merge the two nodes.
- *
- * NOTE: don't try to do this in the same jointree scan that does subquery
- * pullup!	Since we're changing the jointree structure here, that wouldn't
- * work reliably --- see comments for pull_up_subqueries().
- */
-static Node *
-preprocess_jointree(Query *parse, Node *jtnode)
-{
-	if (jtnode == NULL)
-		return NULL;
-	if (IsA(jtnode, RangeTblRef))
-	{
-		/* nothing to do here... */
-	}
-	else if (IsA(jtnode, FromExpr))
-	{
-		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *newlist = NIL;
-		List	   *l;
-
-		foreach(l, f->fromlist)
-		{
-			Node	   *child = (Node *) lfirst(l);
-
-			/* Recursively simplify the child... */
-			child = preprocess_jointree(parse, child);
-			/* Now, is it a FromExpr? */
-			if (child && IsA(child, FromExpr))
-			{
-				/*
-				 * Yes, so do we want to merge it into parent?	Always do
-				 * so if child has just one element (since that doesn't
-				 * make the parent's list any longer).  Otherwise we have
-				 * to be careful about the increase in planning time
-				 * caused by combining the two join search spaces into
-				 * one.  Our heuristic is to merge if the merge will
-				 * produce a join list no longer than GEQO_RELS/2.
-				 * (Perhaps need an additional user parameter?)
-				 */
-				FromExpr   *subf = (FromExpr *) child;
-				int			childlen = length(subf->fromlist);
-				int			myothers = length(newlist) + length(lnext(l));
-
-				if (childlen <= 1 || (childlen + myothers) <= geqo_rels / 2)
-				{
-					newlist = nconc(newlist, subf->fromlist);
-					f->quals = make_and_qual(subf->quals, f->quals);
-				}
-				else
-					newlist = lappend(newlist, child);
-			}
-			else
-				newlist = lappend(newlist, child);
-		}
-		f->fromlist = newlist;
-	}
-	else if (IsA(jtnode, JoinExpr))
-	{
-		JoinExpr   *j = (JoinExpr *) jtnode;
-
-		/* Can't usefully change the JoinExpr, but recurse on children */
-		j->larg = preprocess_jointree(parse, j->larg);
-		j->rarg = preprocess_jointree(parse, j->rarg);
-	}
-	else
-		elog(ERROR, "preprocess_jointree: unexpected node type %d",
-			 nodeTag(jtnode));
-	return jtnode;
-}
-
-/*
  * preprocess_expression
  *		Do subquery_planner's preprocessing work for an expression,
  *		which can be a targetlist, a WHERE clause (including JOIN/ON
@@ -731,7 +317,7 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 	 * else sublinks expanded out from join aliases wouldn't get processed.
 	 */
 	if (parse->hasJoinRTEs)
-		expr = flatten_join_alias_vars(expr, parse->rtable);
+		expr = flatten_join_alias_vars(parse, expr);
 
 	/*
 	 * Simplify constant expressions.
@@ -748,7 +334,7 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 	 * XXX Is there any value in re-applying eval_const_expressions after
 	 * canonicalize_qual?
 	 */
-	if (kind != EXPRKIND_TARGET)
+	if (kind == EXPRKIND_QUAL)
 	{
 		expr = (Node *) canonicalize_qual((Expr *) expr, true);
 
@@ -760,7 +346,7 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 
 	/* Expand SubLinks to SubPlans */
 	if (parse->hasSubLinks)
-		expr = SS_process_sublinks(expr, (kind != EXPRKIND_TARGET));
+		expr = SS_process_sublinks(expr, (kind == EXPRKIND_QUAL));
 
 	/* Replace uplevel vars with Param nodes */
 	if (PlannerQueryLevel > 1)
@@ -791,7 +377,7 @@ preprocess_qual_conditions(Query *parse, Node *jtnode)
 		foreach(l, f->fromlist)
 			preprocess_qual_conditions(parse, lfirst(l));
 
-		f->quals = preprocess_expression(parse, f->quals, EXPRKIND_WHERE);
+		f->quals = preprocess_expression(parse, f->quals, EXPRKIND_QUAL);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
@@ -800,7 +386,7 @@ preprocess_qual_conditions(Query *parse, Node *jtnode)
 		preprocess_qual_conditions(parse, j->larg);
 		preprocess_qual_conditions(parse, j->rarg);
 
-		j->quals = preprocess_expression(parse, j->quals, EXPRKIND_WHERE);
+		j->quals = preprocess_expression(parse, j->quals, EXPRKIND_QUAL);
 	}
 	else
 		elog(ERROR, "preprocess_qual_conditions: unexpected node type %d",
@@ -1251,12 +837,16 @@ grouping_planner(Query *parse, double tuple_fraction)
 		 */
 		if (parse->groupClause)
 		{
+			List   *groupExprs;
+
 			/*
 			 * Always estimate the number of groups.  We can't do this until
 			 * after running query_planner(), either.
 			 */
+			groupExprs = get_sortgrouplist_exprs(parse->groupClause,
+												 parse->targetList);
 			dNumGroups = estimate_num_groups(parse,
-											 parse->groupClause,
+											 groupExprs,
 											 cheapest_path->parent->rows);
 			/* Also want it as a long int --- but 'ware overflow! */
 			numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
@@ -1552,8 +1142,10 @@ grouping_planner(Query *parse, double tuple_fraction)
 	if (parse->sortClause)
 	{
 		if (!pathkeys_contained_in(sort_pathkeys, current_pathkeys))
-			result_plan = make_sortplan(parse, tlist, result_plan,
-										parse->sortClause);
+			result_plan = (Plan *) make_sort_from_sortclauses(parse,
+															  tlist,
+															  result_plan,
+															  parse->sortClause);
 	}
 
 	/*
@@ -1570,9 +1162,15 @@ grouping_planner(Query *parse, double tuple_fraction)
 		 * comparable to GROUP BY.
 		 */
 		if (!parse->groupClause && !parse->hasAggs)
+		{
+			List   *distinctExprs;
+
+			distinctExprs = get_sortgrouplist_exprs(parse->distinctClause,
+													parse->targetList);
 			result_plan->plan_rows = estimate_num_groups(parse,
-														 parse->distinctClause,
+														 distinctExprs,
 														 result_plan->plan_rows);
+		}
 	}
 
 	/*
@@ -1771,47 +1369,6 @@ make_groupsortplan(Query *parse,
 	Assert(keyno > 0);
 
 	return (Plan *) make_sort(parse, sort_tlist, subplan, keyno);
-}
-
-/*
- * make_sortplan
- *	  Add a Sort node to implement an explicit ORDER BY clause.
- */
-Plan *
-make_sortplan(Query *parse, List *tlist, Plan *plannode, List *sortcls)
-{
-	List	   *sort_tlist;
-	List	   *i;
-	int			keyno = 0;
-
-	/*
-	 * First make a copy of the tlist so that we don't corrupt the
-	 * original.
-	 */
-	sort_tlist = new_unsorted_tlist(tlist);
-
-	foreach(i, sortcls)
-	{
-		SortClause *sortcl = (SortClause *) lfirst(i);
-		TargetEntry *tle = get_sortgroupclause_tle(sortcl, sort_tlist);
-		Resdom	   *resdom = tle->resdom;
-
-		/*
-		 * Check for the possibility of duplicate order-by clauses --- the
-		 * parser should have removed 'em, but the executor will get
-		 * terribly confused if any get through!
-		 */
-		if (resdom->reskey == 0)
-		{
-			/* OK, insert the ordering info needed by the executor. */
-			resdom->reskey = ++keyno;
-			resdom->reskeyop = sortcl->sortop;
-		}
-	}
-
-	Assert(keyno > 0);
-
-	return (Plan *) make_sort(parse, sort_tlist, plannode, keyno);
 }
 
 /*

@@ -263,6 +263,7 @@ RelOptInfo      - a relation or joined relations
   AppendPath    - append multiple subpaths together
   ResultPath    - a Result plan node (used for variable-free tlist or qual)
   MaterialPath  - a Material plan node
+  UniquePath    - remove duplicate rows
   NestPath      - nested-loop joins
   MergePath     - merge joins
   HashPath      - hash joins

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.93 2002/11/30 05:21:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.94 2003/01/20 18:54:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -749,6 +749,10 @@ print_path(Query *root, Path *path, int indent)
 		case T_MaterialPath:
 			ptype = "Material";
 			subpath = ((MaterialPath *) path)->subpath;
+			break;
+		case T_UniquePath:
+			ptype = "Unique";
+			subpath = ((UniquePath *) path)->subpath;
 			break;
 		case T_NestPath:
 			ptype = "NestLoop";

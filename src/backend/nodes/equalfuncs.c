@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.180 2003/01/15 19:35:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.181 2003/01/20 18:54:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -486,6 +486,16 @@ _equalJoinInfo(JoinInfo *a, JoinInfo *b)
 	return true;
 }
 
+static bool
+_equalInClauseInfo(InClauseInfo *a, InClauseInfo *b)
+{
+	COMPARE_INTLIST_FIELD(lefthand);
+	COMPARE_INTLIST_FIELD(righthand);
+	COMPARE_NODE_FIELD(sub_targetlist);
+
+	return true;
+}
+
 
 /*
  * Stuff from parsenodes.h
@@ -518,9 +528,9 @@ _equalQuery(Query *a, Query *b)
 
 	/*
 	 * We do not check the internal-to-the-planner fields: base_rel_list,
-	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys,
-	 * hasJoinRTEs.  They might not be set yet, and in any case they should
-	 * be derivable from the other fields.
+	 * other_rel_list, join_rel_list, equi_key_list, in_info_list,
+	 * query_pathkeys, hasJoinRTEs.  They might not be set yet, and in any
+	 * case they should be derivable from the other fields.
 	 */
 	return true;
 }
@@ -1617,6 +1627,9 @@ equal(void *a, void *b)
 			break;
 		case T_JoinInfo:
 			retval = _equalJoinInfo(a, b);
+			break;
+		case T_InClauseInfo:
+			retval = _equalInClauseInfo(a, b);
 			break;
 
 			/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.83 2002/12/05 15:50:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.84 2003/01/20 18:54:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,8 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/restrictinfo.h"
+#include "utils/memutils.h"
+#include "utils/selfuncs.h"
 
 
 /*****************************************************************************
@@ -149,6 +151,7 @@ set_cheapest(RelOptInfo *parent_rel)
 
 	parent_rel->cheapest_startup_path = cheapest_startup_path;
 	parent_rel->cheapest_total_path = cheapest_total_path;
+	parent_rel->cheapest_unique_path = NULL; /* computed only if needed */
 }
 
 /*
@@ -485,6 +488,111 @@ create_material_path(RelOptInfo *rel, Path *subpath)
 				  subpath->total_cost,
 				  rel->rows,
 				  rel->width);
+
+	return pathnode;
+}
+
+/*
+ * create_unique_path
+ *	  Creates a path representing elimination of distinct rows from the
+ *	  input data.
+ *
+ * If used at all, this is likely to be called repeatedly on the same rel;
+ * and the input subpath should always be the same (the cheapest_total path
+ * for the rel).  So we cache the result.
+ */
+UniquePath *
+create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
+{
+	UniquePath *pathnode;
+	Path		sort_path;		/* dummy for result of cost_sort */
+	MemoryContext oldcontext;
+	List	   *sub_targetlist;
+	List	   *l;
+	int			numCols;
+
+	/* Caller made a mistake if subpath isn't cheapest_total */
+	Assert(subpath == rel->cheapest_total_path);
+
+	/* If result already cached, return it */
+	if (rel->cheapest_unique_path)
+		return (UniquePath *) rel->cheapest_unique_path;
+
+	/*
+	 * We must ensure path struct is allocated in same context as parent
+	 * rel; otherwise GEQO memory management causes trouble.  (Compare
+	 * best_inner_indexscan().)
+	 */
+	oldcontext = MemoryContextSwitchTo(GetMemoryChunkContext(rel));
+
+	pathnode = makeNode(UniquePath);
+
+	/* There is no substructure to allocate, so can switch back right away */
+	MemoryContextSwitchTo(oldcontext);
+
+	pathnode->path.pathtype = T_Unique;
+	pathnode->path.parent = rel;
+
+	/*
+	 * Treat the output as always unsorted, since we don't necessarily have
+	 * pathkeys to represent it.
+	 */
+	pathnode->path.pathkeys = NIL;
+
+	pathnode->subpath = subpath;
+
+	/*
+	 * Try to identify the targetlist that will actually be unique-ified.
+	 * In current usage, this routine is only used for sub-selects of IN
+	 * clauses, so we should be able to find the tlist in in_info_list.
+	 */
+	sub_targetlist = NIL;
+	foreach(l, root->in_info_list)
+	{
+		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
+
+		if (sameseti(ininfo->righthand, rel->relids))
+		{
+			sub_targetlist = ininfo->sub_targetlist;
+			break;
+		}
+	}
+
+	/*
+	 * If we know the targetlist, try to estimate number of result rows;
+	 * otherwise punt.
+	 */
+	if (sub_targetlist)
+	{
+		pathnode->rows = estimate_num_groups(root, sub_targetlist, rel->rows);
+		numCols = length(sub_targetlist);
+	}
+	else
+	{
+		pathnode->rows = rel->rows;
+		numCols = length(rel->targetlist); /* second-best estimate */
+	}
+
+	/*
+	 * Estimate cost for sort+unique implementation
+	 */
+	cost_sort(&sort_path, root, NIL,
+			  subpath->total_cost,
+			  rel->rows,
+			  rel->width);
+	/*
+	 * Charge one cpu_operator_cost per comparison per input tuple. We
+	 * assume all columns get compared at most of the tuples.  (XXX probably
+	 * this is an overestimate.)  This should agree with make_unique.
+	 */
+	sort_path.total_cost += cpu_operator_cost * rel->rows * numCols;
+
+	pathnode->use_hash = false;	/* for now */
+
+	pathnode->path.startup_cost = sort_path.startup_cost;
+	pathnode->path.total_cost = sort_path.total_cost;
+
+	rel->cheapest_unique_path = (Path *) pathnode;
 
 	return pathnode;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.69 2003/01/17 02:01:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.70 2003/01/20 18:54:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,8 +90,8 @@ checkExprHasSubLink_walker(Node *node, void *context)
  *
  * Find all Var nodes in the given tree with varlevelsup == sublevels_up,
  * and increment their varno fields (rangetable indexes) by 'offset'.
- * The varnoold fields are adjusted similarly.	Also, RangeTblRef and
- * JoinExpr nodes in join trees and setOp trees are adjusted.
+ * The varnoold fields are adjusted similarly.	Also, adjust other nodes
+ * that contain rangetable indexes, such as RangeTblRef and JoinExpr.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * nodes in-place.	The given expression tree should have been copied
@@ -135,6 +135,25 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 
 		if (context->sublevels_up == 0)
 			j->rtindex += context->offset;
+		/* fall through to examine children */
+	}
+	if (IsA(node, InClauseInfo))
+	{
+		InClauseInfo   *ininfo = (InClauseInfo *) node;
+
+		if (context->sublevels_up == 0)
+		{
+			List	*rt;
+
+			foreach(rt, ininfo->lefthand)
+			{
+				lfirsti(rt) += context->offset;
+			}
+			foreach(rt, ininfo->righthand)
+			{
+				lfirsti(rt) += context->offset;
+			}
+		}
 		/* fall through to examine children */
 	}
 	if (IsA(node, Query))
@@ -196,8 +215,8 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
  *
  * Find all Var nodes in the given tree belonging to a specific relation
  * (identified by sublevels_up and rt_index), and change their varno fields
- * to 'new_index'.	The varnoold fields are changed too.  Also, RangeTblRef
- * and JoinExpr nodes in join trees and setOp trees are adjusted.
+ * to 'new_index'.	The varnoold fields are changed too.  Also, adjust other
+ * nodes that contain rangetable indexes, such as RangeTblRef and JoinExpr.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * nodes in-place.	The given expression tree should have been copied
@@ -245,6 +264,27 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 		if (context->sublevels_up == 0 &&
 			j->rtindex == context->rt_index)
 			j->rtindex = context->new_index;
+		/* fall through to examine children */
+	}
+	if (IsA(node, InClauseInfo))
+	{
+		InClauseInfo   *ininfo = (InClauseInfo *) node;
+
+		if (context->sublevels_up == 0)
+		{
+			List	*rt;
+
+			foreach(rt, ininfo->lefthand)
+			{
+				if (lfirsti(rt) == context->rt_index)
+					lfirsti(rt) = context->new_index;
+			}
+			foreach(rt, ininfo->righthand)
+			{
+				if (lfirsti(rt) == context->rt_index)
+					lfirsti(rt) = context->new_index;
+			}
+		}
 		/* fall through to examine children */
 	}
 	if (IsA(node, Query))
@@ -420,6 +460,16 @@ rangeTableEntry_used_walker(Node *node,
 
 		if (j->rtindex == context->rt_index &&
 			context->sublevels_up == 0)
+			return true;
+		/* fall through to examine children */
+	}
+	if (IsA(node, InClauseInfo))
+	{
+		InClauseInfo   *ininfo = (InClauseInfo *) node;
+
+		if (context->sublevels_up == 0 &&
+			(intMember(context->rt_index, ininfo->lefthand) ||
+			 intMember(context->rt_index, ininfo->righthand)))
 			return true;
 		/* fall through to examine children */
 	}

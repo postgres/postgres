@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.32 2002/06/20 20:29:51 momjian Exp $
+ * $Id: tlist.h,v 1.33 2003/01/20 18:55:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,8 @@ extern Var *get_expr(TargetEntry *tle);
 extern TargetEntry *get_sortgroupclause_tle(SortClause *sortClause,
 						List *targetList);
 extern Node *get_sortgroupclause_expr(SortClause *sortClause,
+						 List *targetList);
+extern List *get_sortgrouplist_exprs(List *sortClauses,
 						 List *targetList);
 
 #endif   /* TLIST_H */

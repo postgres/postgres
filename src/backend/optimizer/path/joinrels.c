@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.58 2002/12/16 21:30:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.59 2003/01/20 18:54:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,7 +172,7 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 							jrel = make_join_rel(root, old_rel, new_rel,
 												 JOIN_INNER);
 							/* Avoid making duplicate entries ... */
-							if (!ptrMember(jrel, result_rels))
+							if (jrel && !ptrMember(jrel, result_rels))
 								result_rels = lcons(jrel, result_rels);
 							break;		/* need not consider more
 										 * joininfos */
@@ -276,10 +276,9 @@ make_rels_by_clause_joins(Query *root,
 
 				/*
 				 * Avoid entering same joinrel into our output list more
-				 * than once.  (make_rels_by_joins doesn't really care,
-				 * but GEQO does.)
+				 * than once.
 				 */
-				if (!ptrMember(jrel, result))
+				if (jrel && !ptrMember(jrel, result))
 					result = lcons(jrel, result);
 			}
 		}
@@ -323,7 +322,8 @@ make_rels_by_clauseless_joins(Query *root,
 			 * As long as given other_rels are distinct, don't need to
 			 * test to see if jrel is already part of output list.
 			 */
-			result = lcons(jrel, result);
+			if (jrel)
+				result = lcons(jrel, result);
 		}
 	}
 
@@ -367,6 +367,9 @@ make_jointree_rel(Query *root, Node *jtnode)
 		/* Make this join rel */
 		rel = make_join_rel(root, lrel, rrel, j->jointype);
 
+		if (rel == NULL)
+			elog(ERROR, "make_jointree_rel: invalid join order!?");
+
 		/*
 		 * Since we are only going to consider this one way to do it,
 		 * we're done generating Paths for this joinrel and can now select
@@ -395,19 +398,121 @@ make_jointree_rel(Query *root, Node *jtnode)
  *	   created with the two rels as outer and inner rel.
  *	   (The join rel may already contain paths generated from other
  *	   pairs of rels that add up to the same set of base rels.)
+ *
+ * NB: will return NULL if attempted join is not valid.  This can only
+ * happen when working with IN clauses that have been turned into joins.
  */
 RelOptInfo *
 make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			  JoinType jointype)
 {
+	List	   *joinrelids;
 	RelOptInfo *joinrel;
 	List	   *restrictlist;
+
+	/* We should never try to join two overlapping sets of rels. */
+	Assert(nonoverlap_setsi(rel1->relids, rel2->relids));
+
+	/* Construct Relids set that identifies the joinrel. */
+	joinrelids = nconc(listCopy(rel1->relids), listCopy(rel2->relids));
+
+	/*
+	 * If we are implementing IN clauses as joins, there are some joins
+	 * that are illegal.  Check to see if the proposed join is trouble.
+	 * We can skip the work if looking at an outer join, however, because
+	 * only top-level joins might be affected.
+	 */
+	if (jointype == JOIN_INNER)
+	{
+		List	   *l;
+
+		foreach(l, root->in_info_list)
+		{
+			InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
+
+			/*
+			 * Cannot join if proposed join contains part, but only
+			 * part, of the RHS, *and* it contains rels not in the RHS.
+			 *
+			 * Singleton RHS cannot be a problem, so skip expensive tests.
+			 */
+			if (length(ininfo->righthand) > 1 &&
+				overlap_setsi(ininfo->righthand, joinrelids) &&
+				!is_subseti(ininfo->righthand, joinrelids) &&
+				!is_subseti(joinrelids, ininfo->righthand))
+			{
+				freeList(joinrelids);
+				return NULL;
+			}
+
+			/*
+			 * No issue unless we are looking at a join of the IN's RHS
+			 * to other stuff.
+			 */
+			if (! (length(ininfo->righthand) < length(joinrelids) &&
+				   is_subseti(ininfo->righthand, joinrelids)))
+				continue;
+			/*
+			 * If we already joined IN's RHS to any part of its LHS in either
+			 * input path, then this join is not constrained (the necessary
+			 * work was done at a lower level).
+			 */
+			if (overlap_setsi(ininfo->lefthand, rel1->relids) &&
+				is_subseti(ininfo->righthand, rel1->relids))
+				continue;
+			if (overlap_setsi(ininfo->lefthand, rel2->relids) &&
+				is_subseti(ininfo->righthand, rel2->relids))
+				continue;
+			/*
+			 * JOIN_IN technique will work if outerrel includes LHS and
+			 * innerrel is exactly RHS; conversely JOIN_REVERSE_IN handles
+			 * RHS/LHS.
+			 *
+			 * JOIN_UNIQUE_OUTER will work if outerrel is exactly RHS;
+			 * conversely JOIN_UNIQUE_INNER will work if innerrel is
+			 * exactly RHS.
+			 *
+			 * But none of these will work if we already found another IN
+			 * that needs to trigger here.
+			 */
+			if (jointype != JOIN_INNER)
+			{
+				freeList(joinrelids);
+				return NULL;
+			}
+			if (is_subseti(ininfo->lefthand, rel1->relids) &&
+				sameseti(ininfo->righthand, rel2->relids))
+			{
+				jointype = JOIN_IN;
+			}
+			else if (is_subseti(ininfo->lefthand, rel2->relids) &&
+					 sameseti(ininfo->righthand, rel1->relids))
+			{
+				jointype = JOIN_REVERSE_IN;
+			}
+			else if (sameseti(ininfo->righthand, rel1->relids))
+			{
+				jointype = JOIN_UNIQUE_OUTER;
+			}
+			else if (sameseti(ininfo->righthand, rel2->relids))
+			{
+				jointype = JOIN_UNIQUE_INNER;
+			}
+			else
+			{
+				/* invalid join path */
+				freeList(joinrelids);
+				return NULL;
+			}
+		}
+	}
 
 	/*
 	 * Find or build the join RelOptInfo, and compute the restrictlist
 	 * that goes with this particular joining.
 	 */
-	joinrel = build_join_rel(root, rel1, rel2, jointype, &restrictlist);
+	joinrel = build_join_rel(root, joinrelids, rel1, rel2, jointype,
+							 &restrictlist);
 
 	/*
 	 * Consider paths using each rel as both outer and inner.
@@ -438,11 +543,43 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_LEFT,
 								 restrictlist);
 			break;
+		case JOIN_IN:
+			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_IN,
+								 restrictlist);
+			/* REVERSE_IN isn't supported by joinpath.c */
+			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_UNIQUE_INNER,
+								 restrictlist);
+			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_UNIQUE_OUTER,
+								 restrictlist);
+			break;
+		case JOIN_REVERSE_IN:
+			/* REVERSE_IN isn't supported by joinpath.c */
+			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_IN,
+								 restrictlist);
+			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_UNIQUE_OUTER,
+								 restrictlist);
+			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_UNIQUE_INNER,
+								 restrictlist);
+			break;
+		case JOIN_UNIQUE_OUTER:
+			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_UNIQUE_OUTER,
+								 restrictlist);
+			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_UNIQUE_INNER,
+								 restrictlist);
+			break;
+		case JOIN_UNIQUE_INNER:
+			add_paths_to_joinrel(root, joinrel, rel1, rel2, JOIN_UNIQUE_INNER,
+								 restrictlist);
+			add_paths_to_joinrel(root, joinrel, rel2, rel1, JOIN_UNIQUE_OUTER,
+								 restrictlist);
+			break;
 		default:
 			elog(ERROR, "make_join_rel: unsupported join type %d",
 				 (int) jointype);
 			break;
 	}
+
+	freeList(joinrelids);
 
 	return joinrel;
 }

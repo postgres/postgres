@@ -8,12 +8,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.81 2003/01/15 19:35:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.82 2003/01/20 18:54:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-
 
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
@@ -579,6 +578,11 @@ distribute_qual_to_rels(Query *root, Node *clause,
  *	  the appropriate joininfo list (creating a new list and adding it to the
  *	  appropriate rel node if necessary).
  *
+ * Note that the same copy of the restrictinfo node is linked to by all the
+ * lists it is in.  This allows us to exploit caching of information about
+ * the restriction clause (but we must be careful that the information does
+ * not depend on context).
+ *
  * 'restrictinfo' describes the join clause
  * 'join_relids' is the list of relations participating in the join clause
  */
@@ -602,12 +606,13 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 			if (lfirsti(otherrel) != cur_relid)
 				unjoined_relids = lappendi(unjoined_relids, lfirsti(otherrel));
 		}
+		Assert(unjoined_relids != NIL);
 
 		/*
 		 * Find or make the joininfo node for this combination of rels,
 		 * and add the restrictinfo node to it.
 		 */
-		joininfo = find_joininfo_node(find_base_rel(root, cur_relid),
+		joininfo = make_joininfo_node(find_base_rel(root, cur_relid),
 									  unjoined_relids);
 		joininfo->jinfo_restrictinfo = lappend(joininfo->jinfo_restrictinfo,
 											   restrictinfo);
@@ -731,7 +736,7 @@ exprs_known_equal(Query *root, Node *item1, Node *item2)
 	{
 		JoinInfo   *joininfo = find_joininfo_node(rel1, relids);
 
-		restrictlist = joininfo->jinfo_restrictinfo;
+		restrictlist = joininfo ? joininfo->jinfo_restrictinfo : NIL;
 	}
 
 	/*

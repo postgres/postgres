@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.225 2003/01/06 00:31:45 tgl Exp $
+ * $Id: parsenodes.h,v 1.226 2003/01/20 18:55:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +101,7 @@ typedef struct Query
 	List	   *join_rel_list;	/* list of join-relation RelOptInfos */
 	List	   *equi_key_list;	/* list of lists of equijoined
 								 * PathKeyItems */
+	List	   *in_info_list;	/* list of InClauseInfos */
 	List	   *query_pathkeys; /* desired pathkeys for query_planner() */
 	bool		hasJoinRTEs;	/* true if any RTEs are RTE_JOIN kind */
 } Query;

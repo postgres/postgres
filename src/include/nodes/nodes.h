@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.134 2002/12/16 16:22:46 tgl Exp $
+ * $Id: nodes.h,v 1.135 2003/01/20 18:55:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,10 +152,12 @@ typedef enum NodeTag
 	T_AppendPath,
 	T_ResultPath,
 	T_MaterialPath,
+	T_UniquePath,
 	T_PathKeyItem,
 	T_RestrictInfo,
 	T_JoinInfo,
 	T_InnerIndexscanInfo,
+	T_InClauseInfo,
 
 	/*
 	 * TAGS FOR MEMORY NODES (memnodes.h)
@@ -408,11 +410,20 @@ typedef enum JoinType
 	 * join in the executor.  (The planner must convert it to an Append
 	 * plan.)
 	 */
-	JOIN_UNION
+	JOIN_UNION,
 
 	/*
-	 * Eventually we will have some additional join types for efficient
-	 * support of queries like WHERE foo IN (SELECT bar FROM ...).
+	 * These are used for queries like WHERE foo IN (SELECT bar FROM ...).
+	 * Only JOIN_IN is actually implemented in the executor; the others
+	 * are defined for internal use in the planner.
+	 */
+	JOIN_IN,					/* at most one result per outer row */
+	JOIN_REVERSE_IN,			/* at most one result per inner row */
+	JOIN_UNIQUE_OUTER,			/* outer path must be made unique */
+	JOIN_UNIQUE_INNER			/* inner path must be made unique */
+
+	/*
+	 * We might need additional join types someday.
 	 */
 } JoinType;
 

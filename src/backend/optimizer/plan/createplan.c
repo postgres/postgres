@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.131 2003/01/15 23:10:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.132 2003/01/20 18:54:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
+#include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -36,6 +37,7 @@ static Join *create_join_plan(Query *root, JoinPath *best_path);
 static Append *create_append_plan(Query *root, AppendPath *best_path);
 static Result *create_result_plan(Query *root, ResultPath *best_path);
 static Material *create_material_plan(Query *root, MaterialPath *best_path);
+static Plan *create_unique_plan(Query *root, UniquePath *best_path);
 static SeqScan *create_seqscan_plan(Path *best_path, List *tlist,
 					List *scan_clauses);
 static IndexScan *create_indexscan_plan(Query *root, IndexPath *best_path,
@@ -145,6 +147,10 @@ create_plan(Query *root, Path *best_path)
 		case T_Material:
 			plan = (Plan *) create_material_plan(root,
 												 (MaterialPath *) best_path);
+			break;
+		case T_Unique:
+			plan = (Plan *) create_unique_plan(root,
+											   (UniquePath *) best_path);
 			break;
 		default:
 			elog(ERROR, "create_plan: unknown pathtype %d",
@@ -395,6 +401,97 @@ create_material_plan(Query *root, MaterialPath *best_path)
 	plan = make_material(best_path->path.parent->targetlist, subplan);
 
 	copy_path_costsize(&plan->plan, (Path *) best_path);
+
+	return plan;
+}
+
+/*
+ * create_unique_plan
+ *	  Create a Unique plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ *
+ *	  Returns a Plan node.
+ */
+static Plan *
+create_unique_plan(Query *root, UniquePath *best_path)
+{
+	Plan	   *plan;
+	Plan	   *subplan;
+	List	   *sub_targetlist;
+	List	   *l;
+
+	subplan = create_plan(root, best_path->subpath);
+
+	/*
+	 * If the subplan came from an IN subselect (currently always the case),
+	 * we need to instantiate the correct output targetlist for the subselect,
+	 * rather than using the flattened tlist.
+	 */
+	sub_targetlist = NIL;
+	foreach(l, root->in_info_list)
+	{
+		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
+
+		if (sameseti(ininfo->righthand, best_path->path.parent->relids))
+		{
+			sub_targetlist = ininfo->sub_targetlist;
+			break;
+		}
+	}
+
+	if (sub_targetlist)
+	{
+		/*
+		 * Transform list of plain Vars into targetlist
+		 */
+		List   *newtlist = NIL;
+		int		resno = 1;
+
+		foreach(l, sub_targetlist)
+		{
+			Node	   *tlexpr = lfirst(l);
+			TargetEntry *tle;
+
+			tle = makeTargetEntry(makeResdom(resno,
+											 exprType(tlexpr),
+											 exprTypmod(tlexpr),
+											 NULL,
+											 false),
+								  (Expr *) tlexpr);
+			newtlist = lappend(newtlist, tle);
+			resno++;
+		}
+		/*
+		 * If the top plan node can't do projections, we need to add a
+		 * Result node to help it along.
+		 *
+		 * Currently, the only non-projection-capable plan type
+		 * we can see here is Append.
+		 */
+		if (IsA(subplan, Append))
+			subplan = (Plan *) make_result(newtlist, NULL, subplan);
+		else
+			subplan->targetlist = newtlist;
+	}
+
+	if (best_path->use_hash)
+	{
+		elog(ERROR, "create_unique_plan: hash case not implemented yet");
+		plan = NULL;
+	}
+	else
+	{
+		List	   *sort_tlist;
+		List	   *sortList;
+
+		sort_tlist = new_unsorted_tlist(subplan->targetlist);
+		sortList = addAllTargetsToSortList(NIL, sort_tlist);
+		plan = (Plan *) make_sort_from_sortclauses(root, sort_tlist,
+												   subplan, sortList);
+		plan = (Plan *) make_unique(sort_tlist, plan, sortList);
+	}
+
+	plan->plan_rows = best_path->rows;
 
 	return plan;
 }
@@ -1546,6 +1643,52 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 	Assert(numsortkeys > 0);
 
 	return make_sort(root, sort_tlist, lefttree, numsortkeys);
+}
+
+/*
+ * make_sort_from_sortclauses
+ *	  Create sort plan to sort according to given sortclauses
+ *
+ *	  'tlist' is the targetlist
+ *	  'lefttree' is the node which yields input tuples
+ *	  'sortcls' is a list of SortClauses
+ */
+Sort *
+make_sort_from_sortclauses(Query *root, List *tlist,
+						   Plan *lefttree, List *sortcls)
+{
+	List	   *sort_tlist;
+	List	   *i;
+	int			keyno = 0;
+
+	/*
+	 * First make a copy of the tlist so that we don't corrupt the
+	 * original.
+	 */
+	sort_tlist = new_unsorted_tlist(tlist);
+
+	foreach(i, sortcls)
+	{
+		SortClause *sortcl = (SortClause *) lfirst(i);
+		TargetEntry *tle = get_sortgroupclause_tle(sortcl, sort_tlist);
+		Resdom	   *resdom = tle->resdom;
+
+		/*
+		 * Check for the possibility of duplicate order-by clauses --- the
+		 * parser should have removed 'em, but the executor will get
+		 * terribly confused if any get through!
+		 */
+		if (resdom->reskey == 0)
+		{
+			/* OK, insert the ordering info needed by the executor. */
+			resdom->reskey = ++keyno;
+			resdom->reskeyop = sortcl->sortop;
+		}
+	}
+
+	Assert(keyno > 0);
+
+	return make_sort(root, sort_tlist, lefttree, keyno);
 }
 
 Material *

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.29 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.30 2003/01/20 18:54:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,6 +100,15 @@ ExecNestLoop(NestLoopState *node)
 		/* Done with that source tuple... */
 		node->js.ps.ps_TupFromTlist = false;
 	}
+
+	/*
+	 * If we're doing an IN join, we want to return at most one row per
+	 * outer tuple; so we can stop scanning the inner scan if we matched on
+	 * the previous try.
+	 */
+	if (node->js.jointype == JOIN_IN &&
+		node->nl_MatchedOuter)
+		node->nl_NeedNewOuter = true;
 
 	/*
 	 * Reset per-tuple memory context to free any expression evaluation
@@ -312,6 +321,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate)
 	switch (node->join.jointype)
 	{
 		case JOIN_INNER:
+		case JOIN_IN:
 			break;
 		case JOIN_LEFT:
 			nlstate->nl_NullInnerTupleSlot =

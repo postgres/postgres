@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.124 2003/01/17 03:25:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.125 2003/01/20 18:54:54 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2200,6 +2200,15 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
+		case T_InClauseInfo:
+			{
+				InClauseInfo *ininfo = (InClauseInfo *) node;
+
+				if (expression_tree_walker((Node *) ininfo->sub_targetlist,
+										   walker, context))
+					return true;
+			}
+			break;
 		default:
 			elog(ERROR, "expression_tree_walker: Unexpected node type %d",
 				 nodeTag(node));
@@ -2240,6 +2249,8 @@ query_tree_walker(Query *query,
 	if (walker(query->setOperations, context))
 		return true;
 	if (walker(query->havingQual, context))
+		return true;
+	if (walker(query->in_info_list, context))
 		return true;
 	foreach(rt, query->rtable)
 	{
@@ -2610,6 +2621,16 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
+		case T_InClauseInfo:
+			{
+				InClauseInfo *ininfo = (InClauseInfo *) node;
+				InClauseInfo *newnode;
+
+				FLATCOPY(newnode, ininfo, InClauseInfo);
+				MUTATE(newnode->sub_targetlist, ininfo->sub_targetlist, List *);
+				return (Node *) newnode;
+			}
+			break;
 		default:
 			elog(ERROR, "expression_tree_mutator: Unexpected node type %d",
 				 nodeTag(node));
@@ -2662,6 +2683,7 @@ query_tree_mutator(Query *query,
 	MUTATE(query->jointree, query->jointree, FromExpr *);
 	MUTATE(query->setOperations, query->setOperations, Node *);
 	MUTATE(query->havingQual, query->havingQual, Node *);
+	MUTATE(query->in_info_list, query->in_info_list, List *);
 	foreach(rt, query->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);

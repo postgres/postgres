@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.67 2003/01/17 02:01:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.68 2003/01/20 18:54:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,11 @@
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "optimizer/subselect.h"
+#include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
+#include "parser/parse_relation.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -62,7 +64,8 @@ typedef struct finalize_primnode_results
 
 
 static List *convert_sublink_opers(List *lefthand, List *operOids,
-								   List *targetlist, List **paramIds);
+								   List *targetlist, int rtindex,
+								   List **righthandIds);
 static bool subplan_is_hashable(SubLink *slink, SubPlan *node);
 static Node *replace_correlation_vars_mutator(Node *node, void *context);
 static Node *process_sublinks_mutator(Node *node, bool *isTopQual);
@@ -289,6 +292,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		exprs = convert_sublink_opers(lefthand,
 									  slink->operOids,
 									  plan->targetlist,
+									  0,
 									  &node->paramIds);
 		node->setParam = nconc(node->setParam, listCopy(node->paramIds));
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
@@ -393,6 +397,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		node->exprs = convert_sublink_opers(lefthand,
 											slink->operOids,
 											plan->targetlist,
+											0,
 											&node->paramIds);
 
 		/*
@@ -424,26 +429,32 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 /*
  * convert_sublink_opers: given a lefthand-expressions list and a list of
  * operator OIDs, build a list of actually executable expressions.  The
- * righthand sides of the expressions are Params representing the results
- * of the sub-select.
+ * righthand sides of the expressions are Params or Vars representing the
+ * results of the sub-select.
  *
- * The paramids of the Params created are returned in the *paramIds list.
+ * If rtindex is 0, we build Params to represent the sub-select outputs.
+ * The paramids of the Params created are returned in the *righthandIds list.
+ *
+ * If rtindex is not 0, we build Vars using that rtindex as varno.  The
+ * Vars themselves are returned in *righthandIds (this is a bit of a type
+ * cheat, but we can get away with it).
  */
 static List *
 convert_sublink_opers(List *lefthand, List *operOids,
-					  List *targetlist, List **paramIds)
+					  List *targetlist, int rtindex,
+					  List **righthandIds)
 {
 	List	   *result = NIL;
 	List	   *lst;
 
-	*paramIds = NIL;
+	*righthandIds = NIL;
 
 	foreach(lst, operOids)
 	{
 		Oid			opid = (Oid) lfirsti(lst);
 		Node	   *leftop = lfirst(lefthand);
 		TargetEntry *te = lfirst(targetlist);
-		Param	   *prm;
+		Node	   *rightop;
 		Operator	tup;
 		Form_pg_operator opform;
 		Node	   *left,
@@ -451,12 +462,28 @@ convert_sublink_opers(List *lefthand, List *operOids,
 
 		Assert(!te->resdom->resjunk);
 
-		/* Make the Param node representing the subplan's result */
-		prm = generate_new_param(te->resdom->restype,
-								 te->resdom->restypmod);
+		if (rtindex)
+		{
+			/* Make the Var node representing the subplan's result */
+			rightop = (Node *) makeVar(rtindex,
+									   te->resdom->resno,
+									   te->resdom->restype,
+									   te->resdom->restypmod,
+									   0);
+			/* Record it for caller */
+			*righthandIds = lappend(*righthandIds, rightop);
+		}
+		else
+		{
+			/* Make the Param node representing the subplan's result */
+			Param	   *prm;
 
-		/* Record its ID */
-		*paramIds = lappendi(*paramIds, prm->paramid);
+			prm = generate_new_param(te->resdom->restype,
+									 te->resdom->restypmod);
+			/* Record its ID */
+			*righthandIds = lappendi(*righthandIds, prm->paramid);
+			rightop = (Node *) prm;
+		}
 
 		/* Look up the operator to get its declared input types */
 		tup = SearchSysCache(OPEROID,
@@ -473,7 +500,7 @@ convert_sublink_opers(List *lefthand, List *operOids,
 		 * function calls must be inserted for this operator!
 		 */
 		left = make_operand(leftop, exprType(leftop), opform->oprleft);
-		right = make_operand((Node *) prm, prm->paramtype, opform->oprright);
+		right = make_operand(rightop, te->resdom->restype, opform->oprright);
 		result = lappend(result,
 						 make_opclause(opid,
 									   opform->oprresult,
@@ -562,6 +589,96 @@ subplan_is_hashable(SubLink *slink, SubPlan *node)
 		ReleaseSysCache(tup);
 	}
 	return true;
+}
+
+/*
+ * convert_IN_to_join: can we convert an IN SubLink to join style?
+ *
+ * The caller has found a SubLink at the top level of WHERE, but has not
+ * checked the properties of the SubLink at all.  Decide whether it is
+ * appropriate to process this SubLink in join style.  If not, return NULL.
+ * If so, build the qual clause(s) to replace the SubLink, and return them.
+ *
+ * Side effects of a successful conversion include adding the SubLink's
+ * subselect to the query's rangetable and adding an InClauseInfo node to
+ * its in_info_list.
+ */
+Node *
+convert_IN_to_join(Query *parse, SubLink *sublink)
+{
+	Query	   *subselect = (Query *) sublink->subselect;
+	List	   *left_varnos;
+	int			rtindex;
+	RangeTblEntry *rte;
+	RangeTblRef *rtr;
+	InClauseInfo  *ininfo;
+	List	   *exprs;
+
+	/*
+	 * The sublink type must be "= ANY" --- that is, an IN operator.
+	 * (We require the operator name to be unqualified, which may be
+	 * overly paranoid, or may not be.)
+	 */
+	if (sublink->subLinkType != ANY_SUBLINK)
+		return NULL;
+	if (length(sublink->operName) != 1 ||
+		strcmp(strVal(lfirst(sublink->operName)), "=") != 0)
+		return NULL;
+	/*
+	 * The sub-select must not refer to any Vars of the parent query.
+	 * (Vars of higher levels should be okay, though.)
+	 */
+	if (contain_vars_of_level((Node *) subselect, 1))
+		return NULL;
+	/*
+	 * The left-hand expressions must contain some Vars of the current
+	 * query, else it's not gonna be a join.
+	 */
+	left_varnos = pull_varnos((Node *) sublink->lefthand);
+	if (left_varnos == NIL)
+		return NULL;
+	/*
+	 * The left-hand expressions mustn't be volatile.  (Perhaps we should
+	 * test the combining operators, too?  We'd only need to point the
+	 * function directly at the sublink ...)
+	 */
+	if (contain_volatile_functions((Node *) sublink->lefthand))
+		return NULL;
+	/*
+	 * Okay, pull up the sub-select into top range table and jointree.
+	 *
+	 * We rely here on the assumption that the outer query has no references
+	 * to the inner (necessarily true, other than the Vars that we build
+	 * below).  Therefore this is a lot easier than what pull_up_subqueries
+	 * has to go through.
+	 */
+	rte = addRangeTableEntryForSubquery(NULL,
+										subselect,
+										makeAlias("IN_subquery", NIL),
+										false);
+	parse->rtable = lappend(parse->rtable, rte);
+	rtindex = length(parse->rtable);
+	rtr = makeNode(RangeTblRef);
+	rtr->rtindex = rtindex;
+	parse->jointree->fromlist = lappend(parse->jointree->fromlist, rtr);
+	/*
+	 * Now build the InClauseInfo node.
+	 */
+	ininfo = makeNode(InClauseInfo);
+	ininfo->lefthand = left_varnos;
+	ininfo->righthand = makeListi1(rtindex);
+	parse->in_info_list = lcons(ininfo, parse->in_info_list);
+	/*
+	 * Build the result qual expressions.  As a side effect,
+	 * ininfo->sub_targetlist is filled with a list of the Vars
+	 * representing the subselect outputs.
+	 */
+	exprs = convert_sublink_opers(sublink->lefthand,
+								  sublink->operOids,
+								  subselect->targetList,
+								  rtindex,
+								  &ininfo->sub_targetlist);
+	return (Node *) make_ands_explicit(exprs);
 }
 
 /*

@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.100 2003/01/15 19:35:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.101 2003/01/20 18:54:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1024,12 +1024,17 @@ cost_hashjoin(Path *path, Query *root,
 	 * Bias against putting larger relation on inside.	We don't want an
 	 * absolute prohibition, though, since larger relation might have
 	 * better bucketsize --- and we can't trust the size estimates
-	 * unreservedly, anyway.  Instead, inflate the startup cost by the
+	 * unreservedly, anyway.  Instead, inflate the run cost by the
 	 * square root of the size ratio.  (Why square root?  No real good
 	 * reason, but it seems reasonable...)
+	 *
+	 * Note: before 7.4 we implemented this by inflating startup cost;
+	 * but if there's a disable_cost component in the input paths'
+	 * startup cost, that unfairly penalizes the hash.  Probably it'd
+	 * be better to keep track of disable penalty separately from cost.
 	 */
 	if (innerbytes > outerbytes && outerbytes > 0)
-		startup_cost *= sqrt(innerbytes / outerbytes);
+		run_cost *= sqrt(innerbytes / outerbytes);
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
@@ -1492,22 +1497,26 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 						   JoinType jointype,
 						   List *restrictlist)
 {
+	Selectivity selec;
 	double		temp;
-
-	/* Start with the Cartesian product */
-	temp = outer_rel->rows * inner_rel->rows;
+	UniquePath *upath;
 
 	/*
-	 * Apply join restrictivity.  Note that we are only considering
+	 * Compute joinclause selectivity.  Note that we are only considering
 	 * clauses that become restriction clauses at this join level; we are
 	 * not double-counting them because they were not considered in
 	 * estimating the sizes of the component rels.
 	 */
-	temp *= restrictlist_selectivity(root,
+	selec = restrictlist_selectivity(root,
 									 restrictlist,
 									 0);
 
 	/*
+	 * Normally, we multiply size of Cartesian product by selectivity.
+	 * But for JOIN_IN, we just multiply the lefthand size by the selectivity
+	 * (is that really right?).  For UNIQUE_OUTER or UNIQUE_INNER, use
+	 * the estimated number of distinct rows (again, is that right?)
+	 *
 	 * If we are doing an outer join, take that into account: the output
 	 * must be at least as large as the non-nullable input.  (Is there any
 	 * chance of being even smarter?)
@@ -1515,24 +1524,45 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 	switch (jointype)
 	{
 		case JOIN_INNER:
+			temp = outer_rel->rows * inner_rel->rows * selec;
 			break;
 		case JOIN_LEFT:
+			temp = outer_rel->rows * inner_rel->rows * selec;
 			if (temp < outer_rel->rows)
 				temp = outer_rel->rows;
 			break;
 		case JOIN_RIGHT:
+			temp = outer_rel->rows * inner_rel->rows * selec;
 			if (temp < inner_rel->rows)
 				temp = inner_rel->rows;
 			break;
 		case JOIN_FULL:
+			temp = outer_rel->rows * inner_rel->rows * selec;
 			if (temp < outer_rel->rows)
 				temp = outer_rel->rows;
 			if (temp < inner_rel->rows)
 				temp = inner_rel->rows;
 			break;
+		case JOIN_IN:
+			temp = outer_rel->rows * selec;
+			break;
+		case JOIN_REVERSE_IN:
+			temp = inner_rel->rows * selec;
+			break;
+		case JOIN_UNIQUE_OUTER:
+			upath = create_unique_path(root, outer_rel,
+									   outer_rel->cheapest_total_path);
+			temp = upath->rows * inner_rel->rows * selec;
+			break;
+		case JOIN_UNIQUE_INNER:
+			upath = create_unique_path(root, inner_rel,
+									   inner_rel->cheapest_total_path);
+			temp = outer_rel->rows * upath->rows * selec;
+			break;
 		default:
 			elog(ERROR, "set_joinrel_size_estimates: unsupported join type %d",
 				 (int) jointype);
+			temp = 0;			/* keep compiler quiet */
 			break;
 	}
 

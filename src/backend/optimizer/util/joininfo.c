@@ -8,37 +8,29 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.31 2002/06/20 20:29:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.32 2003/01/20 18:54:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-
 #include "optimizer/joininfo.h"
 
-static JoinInfo *joininfo_member(List *join_relids, List *joininfo_list);
 
 /*
- * joininfo_member
- *	  Determines whether a node has already been created for a join
- *	  between a set of join relations and the relation described by
- *	  'joininfo_list'.
+ * find_joininfo_node
+ *	  Find the joininfo node within a relation entry corresponding
+ *	  to a join between 'this_rel' and the relations in 'join_relids'.
+ *	  If there is no such node, return NULL.
  *
- * 'join_relids' is a list of relids corresponding to the join relation
- * 'joininfo_list' is the list of joininfo nodes against which this is
- *				checked
- *
- * Returns the corresponding node in 'joininfo_list' if such a node
- * exists.
- *
+ * Returns a joininfo node, or NULL.
  */
-static JoinInfo *
-joininfo_member(List *join_relids, List *joininfo_list)
+JoinInfo *
+find_joininfo_node(RelOptInfo *this_rel, Relids join_relids)
 {
 	List	   *i;
 
-	foreach(i, joininfo_list)
+	foreach(i, this_rel->joininfo)
 	{
 		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
 
@@ -48,22 +40,19 @@ joininfo_member(List *join_relids, List *joininfo_list)
 	return NULL;
 }
 
-
 /*
- * find_joininfo_node
+ * make_joininfo_node
  *	  Find the joininfo node within a relation entry corresponding
  *	  to a join between 'this_rel' and the relations in 'join_relids'.
  *	  A new node is created and added to the relation entry's joininfo
  *	  field if the desired one can't be found.
  *
  * Returns a joininfo node.
- *
  */
 JoinInfo *
-find_joininfo_node(RelOptInfo *this_rel, Relids join_relids)
+make_joininfo_node(RelOptInfo *this_rel, Relids join_relids)
 {
-	JoinInfo   *joininfo = joininfo_member(join_relids,
-										   this_rel->joininfo);
+	JoinInfo   *joininfo = find_joininfo_node(this_rel, join_relids);
 
 	if (joininfo == NULL)
 	{

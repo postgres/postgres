@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.55 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.56 2003/01/20 18:54:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,6 +381,7 @@ ExecMergeJoin(MergeJoinState *node)
 	switch (node->js.jointype)
 	{
 		case JOIN_INNER:
+		case JOIN_IN:
 			doFillOuter = false;
 			doFillInner = false;
 			break;
@@ -581,9 +582,15 @@ ExecMergeJoin(MergeJoinState *node)
 				 * the econtext's tuple pointers were set up before
 				 * checking the merge qual, so we needn't do it again.
 				 */
-				qualResult = (joinqual == NIL ||
-							  ExecQual(joinqual, econtext, false));
-				MJ_DEBUG_QUAL(joinqual, qualResult);
+				if (node->js.jointype == JOIN_IN &&
+					node->mj_MatchedOuter)
+					qualResult = false;
+				else
+				{
+					qualResult = (joinqual == NIL ||
+								  ExecQual(joinqual, econtext, false));
+					MJ_DEBUG_QUAL(joinqual, qualResult);
+				}
 
 				if (qualResult)
 				{
@@ -1452,6 +1459,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 	switch (node->join.jointype)
 	{
 		case JOIN_INNER:
+		case JOIN_IN:
 			break;
 		case JOIN_LEFT:
 			mergestate->mj_NullInnerTupleSlot =

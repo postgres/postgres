@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: selfuncs.h,v 1.10 2002/11/19 23:22:00 tgl Exp $
+ * $Id: selfuncs.h,v 1.11 2003/01/20 18:55:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ extern void mergejoinscansel(Query *root, Node *clause,
 				 Selectivity *leftscan,
 				 Selectivity *rightscan);
 
-extern double estimate_num_groups(Query *root, List *groupClauses,
+extern double estimate_num_groups(Query *root, List *groupExprs,
 								  double input_rows);
 
 extern Datum btcostestimate(PG_FUNCTION_ARGS);

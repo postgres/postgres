@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.46 2003/01/17 02:01:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.47 2003/01/20 18:54:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
+#include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
 
@@ -41,7 +42,7 @@ typedef struct
 
 typedef struct
 {
-	List	   *rtable;
+	Query	   *root;
 	int			sublevels_up;
 } flatten_join_alias_vars_context;
 
@@ -50,10 +51,13 @@ static bool pull_varnos_walker(Node *node,
 static bool contain_var_reference_walker(Node *node,
 							 contain_var_reference_context *context);
 static bool contain_var_clause_walker(Node *node, void *context);
+static bool contain_vars_of_level_walker(Node *node, int *sublevels_up);
+static bool contain_vars_above_level_walker(Node *node, int *sublevels_up);
 static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
 static Node *flatten_join_alias_vars_mutator(Node *node,
 								flatten_join_alias_vars_context *context);
+static List *alias_rtindex_list(Query *root, List *rtlist);
 
 
 /*
@@ -224,6 +228,103 @@ contain_var_clause_walker(Node *node, void *context)
 	return expression_tree_walker(node, contain_var_clause_walker, context);
 }
 
+/*
+ * contain_vars_of_level
+ *	  Recursively scan a clause to discover whether it contains any Var nodes
+ *	  of the specified query level.
+ *
+ *	  Returns true if any such Var found.
+ *
+ * Will recurse into sublinks.  Also, may be invoked directly on a Query.
+ */
+bool
+contain_vars_of_level(Node *node, int levelsup)
+{
+	int		sublevels_up = levelsup;
+
+	return query_or_expression_tree_walker(node,
+										   contain_vars_of_level_walker,
+										   (void *) &sublevels_up,
+										   0);
+}
+
+static bool
+contain_vars_of_level_walker(Node *node, int *sublevels_up)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		if (((Var *) node)->varlevelsup == *sublevels_up)
+			return true;		/* abort tree traversal and return true */
+	}
+	if (IsA(node, Query))
+	{
+		/* Recurse into subselects */
+		bool		result;
+
+		(*sublevels_up)++;
+		result = query_tree_walker((Query *) node,
+								   contain_vars_of_level_walker,
+								   (void *) sublevels_up,
+								   0);
+		(*sublevels_up)--;
+		return result;
+	}
+	return expression_tree_walker(node,
+								  contain_vars_of_level_walker,
+								  (void *) sublevels_up);
+}
+
+/*
+ * contain_vars_above_level
+ *	  Recursively scan a clause to discover whether it contains any Var nodes
+ *	  above the specified query level.  (For example, pass zero to detect
+ *	  all nonlocal Vars.)
+ *
+ *	  Returns true if any such Var found.
+ *
+ * Will recurse into sublinks.  Also, may be invoked directly on a Query.
+ */
+bool
+contain_vars_above_level(Node *node, int levelsup)
+{
+	int		sublevels_up = levelsup;
+
+	return query_or_expression_tree_walker(node,
+										   contain_vars_above_level_walker,
+										   (void *) &sublevels_up,
+										   0);
+}
+
+static bool
+contain_vars_above_level_walker(Node *node, int *sublevels_up)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		if (((Var *) node)->varlevelsup > *sublevels_up)
+			return true;		/* abort tree traversal and return true */
+	}
+	if (IsA(node, Query))
+	{
+		/* Recurse into subselects */
+		bool		result;
+
+		(*sublevels_up)++;
+		result = query_tree_walker((Query *) node,
+								   contain_vars_above_level_walker,
+								   (void *) sublevels_up,
+								   0);
+		(*sublevels_up)--;
+		return result;
+	}
+	return expression_tree_walker(node,
+								  contain_vars_above_level_walker,
+								  (void *) sublevels_up);
+}
+
 
 /*
  * pull_var_clause
@@ -277,11 +378,11 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
  * to be applied directly to a Query node.
  */
 Node *
-flatten_join_alias_vars(Node *node, List *rtable)
+flatten_join_alias_vars(Query *root, Node *node)
 {
 	flatten_join_alias_vars_context context;
 
-	context.rtable = rtable;
+	context.root = root;
 	context.sublevels_up = 0;
 
 	return flatten_join_alias_vars_mutator(node, &context);
@@ -301,13 +402,31 @@ flatten_join_alias_vars_mutator(Node *node,
 
 		if (var->varlevelsup != context->sublevels_up)
 			return node;		/* no need to copy, really */
-		rte = rt_fetch(var->varno, context->rtable);
+		rte = rt_fetch(var->varno, context->root->rtable);
 		if (rte->rtekind != RTE_JOIN)
 			return node;
 		Assert(var->varattno > 0);
 		newvar = (Node *) nth(var->varattno - 1, rte->joinaliasvars);
 		/* expand it; recurse in case join input is itself a join */
 		return flatten_join_alias_vars_mutator(newvar, context);
+	}
+	if (IsA(node, InClauseInfo))
+	{
+		/* Copy the InClauseInfo node with correct mutation of subnodes */
+		InClauseInfo   *ininfo;
+
+		ininfo = (InClauseInfo *) expression_tree_mutator(node,
+														  flatten_join_alias_vars_mutator,
+														  (void *) context);
+		/* now fix InClauseInfo's rtindex lists */
+		if (context->sublevels_up == 0)
+		{
+			ininfo->lefthand = alias_rtindex_list(context->root,
+												  ininfo->lefthand);
+			ininfo->righthand = alias_rtindex_list(context->root,
+												   ininfo->righthand);
+		}
+		return (Node *) ininfo;
 	}
 
 	if (IsA(node, Query))
@@ -328,4 +447,28 @@ flatten_join_alias_vars_mutator(Node *node,
 
 	return expression_tree_mutator(node, flatten_join_alias_vars_mutator,
 								   (void *) context);
+}
+
+/*
+ * alias_rtindex_list: in a list of RT indexes, replace joins by their
+ * underlying base relids
+ */
+static List *
+alias_rtindex_list(Query *root, List *rtlist)
+{
+	List   *result = NIL;
+	List   *l;
+
+	foreach(l, rtlist)
+	{
+		int		rtindex = lfirsti(l);
+		RangeTblEntry *rte;
+
+		rte = rt_fetch(rtindex, root->rtable);
+		if (rte->rtekind == RTE_JOIN)
+			result = nconc(result, get_relids_for_join(root, rtindex));
+		else
+			result = lappendi(result, rtindex);
+	}
+	return result;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.53 2002/12/12 15:49:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.54 2003/01/20 18:54:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,4 +254,26 @@ get_sortgroupclause_expr(SortClause *sortClause, List *targetList)
 	TargetEntry *tle = get_sortgroupclause_tle(sortClause, targetList);
 
 	return (Node *) tle->expr;
+}
+
+/*
+ * get_sortgrouplist_exprs
+ *		Given a list of SortClauses (or GroupClauses), build a list
+ *		of the referenced targetlist expressions.
+ */
+List *
+get_sortgrouplist_exprs(List *sortClauses, List *targetList)
+{
+	List   *result = NIL;
+	List   *l;
+
+	foreach(l, sortClauses)
+	{
+		SortClause *sortcl = (SortClause *) lfirst(l);
+		Node	   *sortexpr;
+
+		sortexpr = get_sortgroupclause_expr(sortcl, targetList);
+		result = lappend(result, sortexpr);
+	}
+	return result;
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.131 2003/01/15 19:35:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.132 2003/01/20 18:54:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1401,11 +1401,13 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 	MemoryContext oldcontext;
 
 	/*
-	 * Nestloop only supports inner and left joins.
+	 * Nestloop only supports inner, left, and IN joins.
 	 */
 	switch (jointype)
 	{
 		case JOIN_INNER:
+		case JOIN_IN:
+		case JOIN_UNIQUE_OUTER:
 			isouterjoin = false;
 			break;
 		case JOIN_LEFT:

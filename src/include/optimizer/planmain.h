@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.66 2003/01/15 23:10:32 tgl Exp $
+ * $Id: planmain.h,v 1.67 2003/01/20 18:55:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,8 @@ extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
 extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
 extern Sort *make_sort(Query *root, List *tlist,
 		  Plan *lefttree, int keycount);
+extern Sort *make_sort_from_sortclauses(Query *root, List *tlist,
+										Plan *lefttree, List *sortcls);
 extern Agg *make_agg(Query *root, List *tlist, List *qual,
 					 AggStrategy aggstrategy,
 					 int numGroupCols, AttrNumber *grpColIdx,

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.73 2003/01/15 19:35:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.74 2003/01/20 18:54:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,6 +108,8 @@ query_planner(Query *root, List *tlist, double tuple_fraction,
 
 	/*
 	 * init planner lists to empty
+	 *
+	 * NOTE: in_info_list was set up by subquery_planner, do not touch here
 	 */
 	root->base_rel_list = NIL;
 	root->other_rel_list = NIL;

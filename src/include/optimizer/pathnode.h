@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.47 2003/01/15 19:35:47 tgl Exp $
+ * $Id: pathnode.h,v 1.48 2003/01/20 18:55:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,8 @@ extern AppendPath *create_append_path(RelOptInfo *rel, List *subpaths);
 extern ResultPath *create_result_path(RelOptInfo *rel, Path *subpath,
 									  List *constantqual);
 extern MaterialPath *create_material_path(RelOptInfo *rel, Path *subpath);
+extern UniquePath *create_unique_path(Query *root, RelOptInfo *rel,
+									  Path *subpath);
 extern Path *create_subqueryscan_path(RelOptInfo *rel);
 extern Path *create_functionscan_path(Query *root, RelOptInfo *rel);
 
@@ -75,6 +77,7 @@ extern void build_base_rel(Query *root, int relid);
 extern RelOptInfo *build_other_rel(Query *root, int relid);
 extern RelOptInfo *find_base_rel(Query *root, int relid);
 extern RelOptInfo *build_join_rel(Query *root,
+			   List *joinrelids,
 			   RelOptInfo *outer_rel,
 			   RelOptInfo *inner_rel,
 			   JoinType jointype,

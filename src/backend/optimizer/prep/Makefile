@@ -4,7 +4,7 @@
 #    Makefile for optimizer/prep
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/prep/Makefile,v 1.13 2002/06/16 00:09:11 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/prep/Makefile,v 1.14 2003/01/20 18:54:54 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/optimizer/prep
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = prepqual.o preptlist.o prepunion.o
+OBJS = prepjointree.o prepqual.o preptlist.o prepunion.o
 
 all: SUBSYS.o
 

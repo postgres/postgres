@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.43 2003/01/15 19:35:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.44 2003/01/20 18:54:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,6 +140,7 @@ make_base_rel(Query *root, int relid)
 	rel->pathlist = NIL;
 	rel->cheapest_startup_path = NULL;
 	rel->cheapest_total_path = NULL;
+	rel->cheapest_unique_path = NULL;
 	rel->pruneable = true;
 	rel->rtekind = rte->rtekind;
 	rel->indexlist = NIL;
@@ -244,6 +245,7 @@ find_join_rel(Query *root, Relids relids)
  *	  Returns relation entry corresponding to the union of two given rels,
  *	  creating a new relation entry if none already exists.
  *
+ * 'joinrelids' is the Relids list that uniquely identifies the join
  * 'outer_rel' and 'inner_rel' are relation nodes for the relations to be
  *		joined
  * 'jointype': type of join (inner/outer)
@@ -256,27 +258,20 @@ find_join_rel(Query *root, Relids relids)
  */
 RelOptInfo *
 build_join_rel(Query *root,
+			   List *joinrelids,
 			   RelOptInfo *outer_rel,
 			   RelOptInfo *inner_rel,
 			   JoinType jointype,
 			   List **restrictlist_ptr)
 {
-	List	   *joinrelids;
 	RelOptInfo *joinrel;
 	List	   *restrictlist;
 	List	   *new_outer_tlist;
 	List	   *new_inner_tlist;
 
-	/* We should never try to join two overlapping sets of rels. */
-	Assert(nonoverlap_setsi(outer_rel->relids, inner_rel->relids));
-
 	/*
 	 * See if we already have a joinrel for this set of base rels.
-	 *
-	 * nconc(listCopy(x), y) is an idiom for making a new list without
-	 * changing either input list.
 	 */
-	joinrelids = nconc(listCopy(outer_rel->relids), inner_rel->relids);
 	joinrel = find_join_rel(root, joinrelids);
 
 	if (joinrel)
@@ -299,13 +294,14 @@ build_join_rel(Query *root,
 	 */
 	joinrel = makeNode(RelOptInfo);
 	joinrel->reloptkind = RELOPT_JOINREL;
-	joinrel->relids = joinrelids;
+	joinrel->relids = listCopy(joinrelids);
 	joinrel->rows = 0;
 	joinrel->width = 0;
 	joinrel->targetlist = NIL;
 	joinrel->pathlist = NIL;
 	joinrel->cheapest_startup_path = NULL;
 	joinrel->cheapest_total_path = NULL;
+	joinrel->cheapest_unique_path = NULL;
 	joinrel->pruneable = true;
 	joinrel->rtekind = RTE_JOIN;
 	joinrel->indexlist = NIL;
@@ -557,7 +553,7 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 			 */
 			JoinInfo   *new_joininfo;
 
-			new_joininfo = find_joininfo_node(joinrel, new_unjoined_relids);
+			new_joininfo = make_joininfo_node(joinrel, new_unjoined_relids);
 			new_joininfo->jinfo_restrictinfo =
 				set_union(new_joininfo->jinfo_restrictinfo,
 						  joininfo->jinfo_restrictinfo);
