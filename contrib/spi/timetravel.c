@@ -309,6 +309,7 @@ timetravel(PG_FUNCTION_ARGS)
 		void	   *pplan;
 		Oid		   *ctypes;
 		char		sql[8192];
+		char		separ=' ';
 
 		/* allocate ctypes for preparation */
 		ctypes = (Oid *) palloc(natts * sizeof(Oid));
@@ -321,13 +322,12 @@ timetravel(PG_FUNCTION_ARGS)
 		{
 			ctypes[i - 1] = SPI_gettypeid(tupdesc, i);
 			if (!(tupdesc->attrs[i - 1]->attisdropped)) /* skip dropped columns */
-				snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql), "$%d%s",
-						 i, (i < natts) ? ", " : ")");
-#if 0
-			snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql), "$%d /* %d */ %s",
-					 i, ctypes[i - 1], (i < natts) ? ", " : ")");
-#endif
+			{
+			    snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql), "%c$%d", separ,i);
+			    separ = ',';
+			}
 		}
+		snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql), ")");
 
 		elog(DEBUG4, "timetravel (%s) update: sql: %s", relname, sql);
 
