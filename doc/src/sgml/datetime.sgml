@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.40 2004/03/30 21:58:20 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.41 2004/03/31 16:20:53 momjian Exp $
 -->
 
  <appendix id="datetime-appendix">
@@ -11,8 +11,8 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.40 2004/03/30 21:58:20 momjian
    strings, and are broken up into distinct fields with a preliminary
    determination of what kind of information may be in the
    field. Each field is interpreted and either assigned a numeric
-   value, ignored, or rejected.</para>
-   <para> The parser contains internal lookup tables for all textual fields,
+   value, ignored, or rejected.
+   The parser contains internal lookup tables for all textual fields,
    including months, days of the week, and time
    zones.
   </para>
@@ -1056,21 +1056,21 @@ $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.40 2004/03/30 21:58:20 momjian
    years.
   </para>
 
-  <para> The papal bull of February 1582 decreed that 10 days should
-  be dropped from October 1582 so that 15 October should follow
-  immediately after 4 October.</para>
-  
-  <para> This was observed in Italy, Poland, Portugal, and Spain.
-  Other Catholic countries followed shortly after, but Protestant
-  countries were reluctant to change, and the Greek orthodox countries
-  didn't change until the start of the 20th century.</para>
+  <para>
+   The papal bull of February 1582 decreed that 10 days should be dropped
+   from October 1582 so that 15 October should follow immediately after
+   4 October.
+   This was observed in Italy, Poland, Portugal, and Spain. Other Catholic
+   countries followed shortly after, but Protestant countries were
+   reluctant to change, and the Greek orthodox countries didn't change
+   until the start of the 20th century.
 
-  <para> The reform was observed by Great Britain and Dominions
-  (including what is now the USA) in 1752.  Thus 2 September 1752 was
-  followed by 14 September 1752.</para>
+   The reform was observed by Great Britain and Dominions (including what is
+   now the USA) in 1752.
+   Thus 2 September 1752 was followed by 14 September 1752.
 
-   <para> This is why Unix systems have the <command>cal</command>
-   program produce the following:
+   This is why Unix systems have the <command>cal</command> program
+   produce the following:
 
 <screen>
 $ <userinput>cal 9 1752</userinput>
@@ -1094,24 +1094,19 @@ $ <userinput>cal 9 1752</userinput>
     </para>
    </note>
 
-  <para> Different calendars have been developed in various parts of
-  the world, many predating the Gregorian system.</para>
+  <para>
+   Different calendars have been developed in various parts of the
+   world, many predating the Gregorian system.
 
-  <para> For example, the beginnings of the Chinese calendar can be
-  traced back to the 14th century BC. Legend has it that the Emperor
-  Huangdi invented the calendar in 2637 BC.</para>
+   For example,
+   the beginnings of the Chinese calendar can be traced back to the 14th
+   century BC. Legend has it that the Emperor Huangdi invented the
+   calendar in 2637 BC.
    
-  <para> The People's Republic of China uses the Gregorian calendar
-  for civil purposes. The Chinese calendar is used for determining
-  festivals.
+   The People's Republic of China uses the Gregorian calendar
+   for civil purposes. The Chinese calendar is used for determining
+   festivals.
   </para>
-
-  <para> If you are interested in this sort of thing, <citation>
-  Calendrical Calculations: The Millennium Edition </citation> by by
-  Edward M. Reingold and Nachum Dershowitz is an excellent reference,
-  describing some 25 calendars, and providing software for displaying
-  them and converting between them.</para>
-
  </sect1>
 </appendix>
 
