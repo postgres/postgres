@@ -1,9 +1,10 @@
 How to install PostgreSQL on Windows
 ====================================
-$Date: 2003/11/09 03:47:51 $
 
-PostgreSQL requires the Cygwin set of libraries to be installed in
-order that it functions under Windows.
+$Date: 2003/11/12 04:14:30 $
+
+PostgreSQL requires the appropriate subset of Cygwin DLLs to be 
+installed in order that it functions under Windows.
 
 This document assumes that you do not have Cygwin already installed
 on your system.  If that is not the case, then you will need to
@@ -16,7 +17,8 @@ adjust these instructions accordingly.
 
 2.  Proceed through the Cygwin install wizard.  Choose 'Install from
     Internet', specify a Local Package Directory and choose a mirror
-    site that's close to you.  Leave everything else as-is.
+    site that's close to you.  Answer the other installer questions
+    appropriately for your configuration. 
 
     When you come to the point of choosing which packages to install,
     expand the 'Database' section and click 'Skip' next to PostgreSQL
@@ -24,11 +26,10 @@ adjust these instructions accordingly.
     Cygwin.
 
 3.  Once the download and install process is complete, open a Cygwin
-    shell and do the following:
+    shell and do the following for a basic installation:
 
-    3a.  Start ipc-daemon2 for shared memory support. Use 
-         "net start ipc-daemon2", if you want ipc-daemon2 installed 
-         as a service; otherwise, use "ipc-daemon2 &".  This program 
+    3a.  Start ipc-daemon2 for shared memory support.  To do this, 
+         enter the command "ipc-daemon2 &".  This program 
          needs to be running anytime you start the PostgreSQL server 
          (postmaster) or initialize a database (initdb).
 
@@ -52,6 +53,12 @@ adjust these instructions accordingly.
 
 4.  You are now running a PostgreSQL server on your Windows machine.
 
+5.  It is possible to install ipc-daemon2 and the postmaster as
+    Windows NT services.  For information on how to do this, please
+    refer to one of the README documents here:
+
+	http://www.tishler.net/jason/software/postgresql/
+
 Building from source
 --------------------
 
@@ -59,7 +66,7 @@ There are some points that are only relevant if you are building Cygwin
 PostgreSQL from source:
 
 1.  Set your path to use the Cygwin bin directory before the Windows
-    utilities.  Cygwin sort must be used in preference to Windows sort.exe. 
+    utilities.  This will help prevent problems with compilation.
 
 2.  Proceed according to the INSTALL file (i.e., ./configure; make; etc.)
     noting the following Cygwin specific differences:
