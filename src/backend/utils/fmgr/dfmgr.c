@@ -8,16 +8,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.48 2001/03/22 03:59:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.49 2001/05/17 17:44:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include "dynloader.h"
+#include "miscadmin.h"
 #include "utils/dynamic_loader.h"
 
 
@@ -44,6 +46,12 @@ static DynamicFileList *file_tail = (DynamicFileList *) NULL;
 
 #define SAME_INODE(A,B) ((A).st_ino == (B).inode && (A).st_dev == (B).device)
 
+char * Dynamic_library_path;
+
+static bool file_exists(const char *name);
+static char * find_in_dynamic_libpath(const char * basename);
+static char * expand_dynamic_library_name(const char *name);
+
 
 /*
  * Load the specified dynamic-link library file, and look for a function
@@ -60,6 +68,11 @@ load_external_function(char *filename, char *funcname,
 	PGFunction	retval;
 	char	   *load_error;
 	struct stat stat_buf;
+	char	   *fullname;
+
+	fullname = expand_dynamic_library_name(filename);
+	if (fullname)
+		filename = fullname;
 
 	/*
 	 * Scan the list of loaded FILES to see if the file has been loaded.
@@ -143,6 +156,11 @@ load_file(char *filename)
 	DynamicFileList *file_scanner,
 			   *p;
 	struct stat stat_buf;
+	char	   *fullname;
+
+	fullname = expand_dynamic_library_name(filename);
+	if (fullname)
+		filename = fullname;
 
 	/*
 	 * We need to do stat() in order to determine whether this is the same
@@ -180,4 +198,182 @@ load_file(char *filename)
 	}
 
 	load_external_function(filename, (char *) NULL, false);
+}
+
+
+
+static bool
+file_exists(const char *name)
+{
+	struct stat st;
+
+	AssertArg(name != NULL);
+
+	if (stat(name, &st) == 0)
+		return true;
+	else if (!(errno == ENOENT || errno == ENOTDIR || errno == EACCES))
+			elog(ERROR, "stat failed on %s: %s", name, strerror(errno));
+
+	return false;
+}
+
+
+/* Example format: ".so" */
+#ifndef DLSUFFIX
+#error "DLSUFFIX must be defined to compile this file."
+#endif
+
+/* Example format: "/usr/local/pgsql/lib" */
+#ifndef LIBDIR
+#error "LIBDIR needs to be defined to compile this file."
+#endif
+
+
+/*
+ * If name contains a slash, check if the file exists, if so return
+ * the name.  Else (no slash) try to expand using search path (see
+ * find_in_dynamic_libpath below); if that works, return the fully
+ * expanded file name.  If the previous failed, append DLSUFFIX and
+ * try again.  If all fails, return NULL.  The return value is
+ * palloc'ed.
+ */
+static char *
+expand_dynamic_library_name(const char *name)
+{
+	bool have_slash;
+	char * new;
+	size_t len;
+
+	AssertArg(name);
+
+	have_slash = (strchr(name, '/') != NULL);
+
+	if (!have_slash)
+	{
+		char * full;
+
+		full = find_in_dynamic_libpath(name);
+		if (full)
+			return full;
+	}
+	else
+	{
+		if (file_exists(name))
+			return pstrdup(name);
+	}
+
+	len = strlen(name);
+
+	new = palloc(len + strlen(DLSUFFIX) + 1);
+	strcpy(new, name);
+	strcpy(new + len, DLSUFFIX);
+
+	if (!have_slash)
+	{
+		char * full;
+
+		full = find_in_dynamic_libpath(new);
+		pfree(new);
+		if (full)
+			return full;
+	}
+	else
+	{
+		if (file_exists(new))
+			return new;
+	}
+		
+	return NULL;
+}
+
+
+
+/*
+ * Search for a file called 'basename' in the colon-separated search
+ * path 'path'.  If the file is found, the full file name is returned
+ * in palloced memory.  The the file is not found, return NULL.
+ */
+static char *
+find_in_dynamic_libpath(const char * basename)
+{
+	const char *p;
+	char *full;
+	size_t len;
+	size_t baselen;
+
+	AssertArg(basename != NULL);
+	AssertArg(strchr(basename, '/') == NULL);
+	AssertState(Dynamic_library_path != NULL);
+
+	p = Dynamic_library_path;
+	if (strlen(p) == 0)
+		return NULL;
+
+	baselen = strlen(basename);
+
+	do {
+		len = strcspn(p, ":");
+
+		if (len == 0)
+			elog(ERROR, "zero length dynamic_library_path component");
+
+		/* substitute special value */
+		if (p[0] == '$')
+		{
+			size_t varname_len = strcspn(p + 1, "/") + 1;
+			const char * replacement = NULL;
+			size_t repl_len;
+
+			if (strncmp(p, "$libdir", varname_len)==0)
+				replacement = LIBDIR;
+			else
+				elog(ERROR, "invalid dynamic_library_path specification");
+
+			repl_len = strlen(replacement);
+
+			if (p[varname_len] == '\0')
+			{
+				full = palloc(repl_len + 1 + baselen + 1);
+				snprintf(full, repl_len + 1 + baselen + 1,
+						 "%s/%s", replacement, basename);
+			}
+			else
+			{
+				full = palloc(repl_len + (len - varname_len) + 1 + baselen + 1);
+
+				strcpy(full, replacement);
+				strncat(full, p + varname_len, len - varname_len);
+				full[repl_len + (len - varname_len)] = '\0';
+				strcat(full, "/");
+				strcat(full, basename);
+			}
+		}
+
+		/* regular case */
+		else
+		{
+			/* only absolute paths */
+			if (p[0] != '/')
+				elog(ERROR, "dynamic_library_path component is not absolute");
+
+			full = palloc(len + 1 + baselen + 1);
+			strncpy(full, p, len);
+			full[len] = '/';
+			strcpy(full + len + 1, basename);
+		}
+
+		if (DebugLvl > 1)
+			elog(DEBUG, "find_in_dynamic_libpath: trying %s", full);
+
+		if (file_exists(full))
+			return full;
+
+		pfree(full);
+		if (p[len] == '\0')
+			break;
+		else
+			p += len + 1;
+	} while(1);
+
+	return NULL;
 }

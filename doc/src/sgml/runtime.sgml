@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.66 2001/05/12 22:51:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.67 2001/05/17 17:44:17 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -992,6 +992,49 @@ env PGOPTIONS='-c geqo=off' psql
 	odds that the lock will be released before the waiter decides to
 	check for deadlock. 
 	This option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>DYNAMIC_LIBRARY_PATH (<type>string</type>)</term>
+      <listitem>
+       <para>
+        If a dynamically loadable module needs to be opened and the
+        specified name does not have a directory component (i.e., the
+        name does not contain a slash), the system will search this
+        path for the specified file.  (The name that is used is the
+        name specified in the <command>CREATE FUNCTION</command> or
+        <command>LOAD</command> command.)
+       </para>
+
+       <para>
+        The value for dynamic_library_path has to be a colon-separated
+        list of absolute directory names.  If a directory name starts
+        with the special value <literal>$libdir</literal>, the
+        compiled-in PostgreSQL library directory, which is where the
+        modules provided by the PostgreSQL distribution are installed,
+        is substituted.  An example value:
+        <informalexample>
+<programlisting>
+dynamic_library_path = '/usr/local/lib:/home/my_project/lib:$libdir:$libdir/contrib'
+</programlisting>
+        </informalexample>
+       </para>
+
+       <para>
+        The default value for this parameter is
+        <literal>$libdir</literal>.  If the value is set to the empty
+        string, the automatic path search is turned off.
+       </para>
+
+       <para>
+        This parameter can be changed at run time by superusers, but
+        note that a setting done that way will only persist till the
+        end of the client connection, so this method should be
+        reserved for development purposes.  The recommended way to set
+        this parameter is in the <filename>postgresql.conf</filename>
+        configuration file.
        </para>
       </listitem>
      </varlistentry>

@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.35 2001/03/22 17:41:47 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.36 2001/05/17 17:44:18 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -22,6 +22,7 @@
 
 #include "access/xlog.h"
 #include "commands/async.h"
+#include "fmgr.h"
 #include "libpq/auth.h"
 #include "libpq/pqcomm.h"
 #include "miscadmin.h"
@@ -328,6 +329,9 @@ static struct config_real
 static struct config_string
 			ConfigureNamesString[] =
 {
+	{"dynamic_library_path", PGC_SUSET, &Dynamic_library_path,
+	 "$libdir", NULL, NULL},
+
 	{"krb_server_keyfile", PGC_POSTMASTER, &pg_krb_server_keyfile,
 	PG_KRB_SRVTAB, NULL, NULL},
 

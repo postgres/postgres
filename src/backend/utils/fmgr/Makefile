@@ -4,7 +4,7 @@
 #    Makefile for utils/fmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/Makefile,v 1.10 2000/08/31 16:10:50 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/Makefile,v 1.11 2001/05/17 17:44:18 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,6 +13,9 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = dfmgr.o fmgr.o
+
+override CPPFLAGS += -DLIBDIR=\"$(libdir)\" -DDLSUFFIX=\"$(DLSUFFIX)\"
+
 
 all: SUBSYS.o
 
