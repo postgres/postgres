@@ -37,7 +37,7 @@
 
 /* PyObject_Del does not exist in older versions of Python. */
 #if PY_VERSION_HEX < 0x01060000
-#define PyObject_Del(op) PyMem_Del((op))
+#define PyObject_Del(op) PyMem_DEL((op))
 #endif
 
 static PyObject *PGError;
