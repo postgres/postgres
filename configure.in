@@ -297,7 +297,7 @@ AC_SUBST(GCC)
 
 # Create compiler version string
 if test x"$GCC" = x"yes" ; then
-  cc_string="GCC `${CC} --version`"
+  cc_string="GCC `${CC} --version | head -1`"
 else
   cc_string=$CC
 fi

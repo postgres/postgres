@@ -1481,7 +1481,7 @@ else
   if { (eval echo configure:1482: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; }; then
     for file in conftest.*; do
       case $file in
-      *.c | *.C | *.o | *.obj) ;;
+      *.c | *.o | *.obj) ;;
       *) ac_cv_exeext=`echo $file | sed -e s/conftest//` ;;
       esac
     done
@@ -1629,7 +1629,7 @@ fi
 
 # Create compiler version string
 if test x"$GCC" = x"yes" ; then
-  cc_string="GCC `${CC} --version`"
+  cc_string="GCC `${CC} --version | head -1`"
 else
   cc_string=$CC
 fi
