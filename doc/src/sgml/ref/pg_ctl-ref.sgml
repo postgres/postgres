@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.29 2004/11/27 21:56:05 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.30 2004/12/22 02:17:15 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -237,7 +237,9 @@ PostgreSQL documentation
         has been set in the <filename>postgresql.conf</filename> file. 
         If neither of those is used, it will use the default port that 
         <productname>PostgreSQL</productname> was compiled with 
-        (5432 by default).
+        (5432 by default). When waiting, <command>pg_ctl</command> will
+        return an accurate exit code based on the success of the startup 
+	or shutdown.
        </para>
       </listitem>
      </varlistentry>
