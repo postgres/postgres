@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.191 2003/07/09 06:47:34 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.192 2003/07/09 08:52:56 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1595,8 +1595,8 @@ SET ENABLE_SEQSCAN TO OFF;
          than 250ms will be logged.  Enabling this
          option can be useful in tracking down unoptimized queries in
          your applications.
-         Only superusers can increase this option if it is set to
-         non-zero by the administrator.
+         Only superusers can increase this or set it to zero if this option
+         is set to non-zero by the administrator.
         </para>
        </listitem>
       </varlistentry>
