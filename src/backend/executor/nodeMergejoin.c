@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.30 1999/10/16 21:31:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.31 1999/10/17 18:00:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,6 @@
 #include "executor/executor.h"
 #include "executor/nodeMergejoin.h"
 #include "utils/lsyscache.h"
-#include "utils/psort.h"
 #include "utils/syscache.h"
 
 
