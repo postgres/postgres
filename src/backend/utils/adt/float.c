@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.54 2000/03/14 23:06:36 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.55 2000/03/23 07:40:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -830,8 +830,8 @@ dtoi4(float64 num)
 {
 	int32		result;
 
-	if (!PointerIsValid(num))
-		elog(ERROR, "dtoi4: unable to convert null");
+	if (!num)
+		return 0;				/* fmgr will return NULL anyway */
 
 	if ((*num < INT_MIN) || (*num > INT_MAX))
 		elog(ERROR, "dtoi4: integer out of range");
@@ -849,8 +849,8 @@ dtoi2(float64 num)
 {
 	int16		result;
 
-	if (!PointerIsValid(num))
-		elog(ERROR, "dtoi2: unable to convert null");
+	if (!num)
+		return 0;				/* fmgr will return NULL anyway */
 
 	if ((*num < SHRT_MIN) || (*num > SHRT_MAX))
 		elog(ERROR, "dtoi2: integer out of range");
@@ -898,8 +898,8 @@ ftoi4(float32 num)
 {
 	int32		result;
 
-	if (!PointerIsValid(num))
-		elog(ERROR, "ftoi4: unable to convert null");
+	if (!num)
+		return 0;				/* fmgr will return NULL anyway */
 
 	if ((*num < INT_MIN) || (*num > INT_MAX))
 		elog(ERROR, "ftoi4: integer out of range");
@@ -917,8 +917,8 @@ ftoi2(float32 num)
 {
 	int16		result;
 
-	if (!PointerIsValid(num))
-		elog(ERROR, "ftoi2: unable to convert null");
+	if (!num)
+		return 0;				/* fmgr will return NULL anyway */
 
 	if ((*num < SHRT_MIN) || (*num > SHRT_MAX))
 		elog(ERROR, "ftoi2: integer out of range");
