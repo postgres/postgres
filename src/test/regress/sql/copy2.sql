@@ -116,6 +116,19 @@ COPY x TO stdout;
 COPY x (c, e) TO stdout;
 COPY x (b, e) TO stdout WITH NULL 'I''m null';
 
+CREATE TABLE y (
+	col1 text,
+	col2 text
+);
+
+INSERT INTO y VALUES ('Jackson, Sam', '\\h');
+INSERT INTO y VALUES ('It is "perfect".','\t');
+INSERT INTO y VALUES ('', NULL);
+
+COPY y TO stdout WITH CSV;
+COPY y TO stdout WITH CSV QUOTE '''' DELIMITER '|';
+COPY y TO stdout WITH CSV FORCE QUOTE col2 ESCAPE '\\';
+
 DROP TABLE x;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();

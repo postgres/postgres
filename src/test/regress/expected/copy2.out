@@ -172,6 +172,25 @@ I'm null	before trigger fired
 3	after trigger fired
 4	after trigger fired
 5	after trigger fired
+CREATE TABLE y (
+	col1 text,
+	col2 text
+);
+INSERT INTO y VALUES ('Jackson, Sam', '\\h');
+INSERT INTO y VALUES ('It is "perfect".','\t');
+INSERT INTO y VALUES ('', NULL);
+COPY y TO stdout WITH CSV;
+"Jackson, Sam",\h
+"It is ""perfect"".",	
+"",
+COPY y TO stdout WITH CSV QUOTE '''' DELIMITER '|';
+Jackson, Sam|\h
+It is "perfect".|	
+''|
+COPY y TO stdout WITH CSV FORCE QUOTE col2 ESCAPE '\\';
+"Jackson, Sam","\\h"
+"It is \"perfect\".","	"
+"",
 DROP TABLE x;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();
