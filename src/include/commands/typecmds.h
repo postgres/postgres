@@ -1,18 +1,22 @@
 /*-------------------------------------------------------------------------
  *
- * tablecmds.h
- *	  prototypes for tablecmds.c.
+ * typecmds.h
+ *	  prototypes for typecmds.c.
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: typecmds.h,v 1.1 2002/12/06 05:00:31 momjian Exp $
+ * $Id: typecmds.h,v 1.2 2002/12/10 16:12:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TYPECMDS_H
 #define TYPECMDS_H
+
+#include "nodes/parsenodes.h"
+
+#define DEFAULT_TYPDELIM		','
 
 extern void DefineType(List *names, List *parameters);
 extern void RemoveType(List *names, DropBehavior behavior);

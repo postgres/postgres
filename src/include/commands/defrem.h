@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.49 2002/12/06 05:00:31 momjian Exp $
+ * $Id: defrem.h,v 1.50 2002/12/10 16:12:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "nodes/parsenodes.h"
 
-#define DEFAULT_TYPDELIM		','
 
 /* commands/indexcmds.c */
 extern void DefineIndex(RangeVar *heapRelation,
