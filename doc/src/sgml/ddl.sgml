@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.25 2003/11/29 19:51:36 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.26 2004/03/07 04:31:01 neilc Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -77,8 +77,8 @@
   </indexterm>
 
   <para>
-   To create a table, you use the aptly named <literal>CREATE
-   TABLE</literal> command.  In this command you specify at least a
+   To create a table, you use the aptly named <command>CREATE
+   TABLE</command> command.  In this command you specify at least a
    name for the new table, the names of the columns and the data type
    of each column.  For example:
 <programlisting>
@@ -302,18 +302,38 @@ DROP TABLE products;
   </variablelist>
 
    <para>
-    OIDs are 32-bit quantities and are assigned from a single cluster-wide
-    counter.  In a large or long-lived database, it is possible for the
-    counter to wrap around.  Hence, it is bad practice to assume that OIDs
-    are unique, unless you take steps to ensure that they are unique.
-    Recommended practice when using OIDs for row identification is to create
-    a unique constraint on the OID column of each table for which the OID will
-    be used.  Never assume that OIDs are unique across tables; use the
-    combination of <structfield>tableoid</> and row OID if you need a
-    database-wide identifier.  (Future releases of
-    <productname>PostgreSQL</productname> are likely to use a separate
-    OID counter for each table, so that <structfield>tableoid</>
-    <emphasis>must</> be included to arrive at a globally unique identifier.)
+    OIDs are 32-bit quantities and are assigned from a single
+    cluster-wide counter.  In a large or long-lived database, it is
+    possible for the counter to wrap around.  Hence, it is bad
+    practice to assume that OIDs are unique, unless you take steps to
+    ensure that this is the case.  If you need to identify the rows in
+    a table, using a sequence generator is strongly recommended.
+    However, OIDs can be used as well, provided that a few additional
+    precautions are taken:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       A unique constraint should be created on the OID column of each
+       table for which the OID will be used to identify rows.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       OIDs should never be assumed to be unique across tables; use
+       the combination of <structfield>tableoid</> and row OID if you
+       need a database-wide identifier.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       The tables in question should be created using <literal>WITH
+       OIDS</literal> to ensure forward compatibility with future
+       releases of <productname>PostgreSQL</productname> in which OIDs
+       are not included in all tables by default.
+      </para>
+     </listitem>
+    </itemizedlist>
    </para>
 
    <para>
@@ -798,7 +818,7 @@ CREATE TABLE orders (
 );
 </programlisting>
     Now it is impossible to create orders with
-    <literal>product_no</literal> entries that do not appear in the
+    <structfield>product_no</structfield> entries that do not appear in the
     products table.
    </para>
 
@@ -892,7 +912,7 @@ CREATE TABLE order_items (
 
    <para>
     To illustrate this, let's implement the following policy on the
-    many-to-many relationship example above: When someone wants to
+    many-to-many relationship example above: when someone wants to
     remove a product that is still referenced by an order (via
     <literal>order_items</literal>), we disallow it.  If someone
     removes an order, the order items are removed as well.
