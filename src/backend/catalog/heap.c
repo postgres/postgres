@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.110 1999/11/24 00:44:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.111 1999/11/28 02:03:04 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -44,6 +44,7 @@
 #include "catalog/pg_ipl.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_relcheck.h"
+#include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "commands/trigger.h"
@@ -82,6 +83,7 @@ static void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
 static void StoreConstraints(Relation rel);
 static void RemoveConstraints(Relation rel);
+static void RemoveStatistics(Relation rel);
 
 
 /* ----------------------------------------------------------------
@@ -1232,7 +1234,7 @@ heap_truncate(char *relname)
 	/* Open relation for processing, and grab exclusive access on it. */
 
 	rel = heap_openr(relname, AccessExclusiveLock);
-	rid = rel->rd_id;
+	rid = RelationGetRelid(rel);
 
 	/* ----------------
 	 *	TRUNCATE TABLE within a transaction block is dangerous, because
@@ -1455,7 +1457,7 @@ heap_destroy_with_catalog(char *relname)
 	 * ----------------
 	 */
 	rel = heap_openr(relname, AccessExclusiveLock);
-	rid = rel->rd_id;
+	rid = RelationGetRelid(rel);
 
 	/* ----------------
 	 *	prevent deletion of system relations
@@ -1512,11 +1514,16 @@ heap_destroy_with_catalog(char *relname)
 	DeleteAttributeTuples(rel);
 
 	/* ----------------
-	 *      delete comments
-         * ----------------
-         */
-
+	 *	delete comments
+	 * ----------------
+	 */
 	DeleteComments(RelationGetRelid(rel));
+
+	/* ----------------
+	 *	delete statistics
+	 * ----------------
+	 */
+	RemoveStatistics(rel);
 
 	/* ----------------
 	 *	delete type tuple.	here we want to see the effects
@@ -1731,7 +1738,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	rte->skipAcl = false;
 	adsrc = deparse_expression(expr, lcons(lcons(rte, NIL), NIL), false);
 
-	values[Anum_pg_attrdef_adrelid - 1] = rel->rd_id;
+	values[Anum_pg_attrdef_adrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_attrdef_adnum - 1] = attnum;
 	values[Anum_pg_attrdef_adbin - 1] = PointerGetDatum(textin(adbin));
 	values[Anum_pg_attrdef_adsrc - 1] = PointerGetDatum(textin(adsrc));
@@ -1754,11 +1761,11 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 
 	attrrel = heap_openr(AttributeRelationName, RowExclusiveLock);
 	atttup = SearchSysCacheTupleCopy(ATTNUM,
-									 ObjectIdGetDatum(rel->rd_id),
+									 ObjectIdGetDatum(RelationGetRelid(rel)),
 									 (Datum) attnum, 0, 0);
 	if (!HeapTupleIsValid(atttup))
 		elog(ERROR, "cache lookup of attribute %d in relation %u failed",
-			 attnum, rel->rd_id);
+			 attnum, RelationGetRelid(rel));
 	attStruct = (Form_pg_attribute) GETSTRUCT(atttup);
 	if (! attStruct->atthasdef)
 	{
@@ -1810,7 +1817,7 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 	rte->skipAcl = false;
 	ccsrc = deparse_expression(expr, lcons(lcons(rte, NIL), NIL), false);
 
-	values[Anum_pg_relcheck_rcrelid - 1] = rel->rd_id;
+	values[Anum_pg_relcheck_rcrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_relcheck_rcname - 1] = PointerGetDatum(namein(ccname));
 	values[Anum_pg_relcheck_rcbin - 1] = PointerGetDatum(textin(ccbin));
 	values[Anum_pg_relcheck_rcsrc - 1] = PointerGetDatum(textin(ccsrc));
@@ -2077,10 +2084,10 @@ AddRelationRawConstraints(Relation rel,
 	 */
 	relrel = heap_openr(RelationRelationName, RowExclusiveLock);
 	reltup = SearchSysCacheTupleCopy(RELOID,
-									 ObjectIdGetDatum(rel->rd_id),
+									 ObjectIdGetDatum(RelationGetRelid(rel)),
 									 0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "cache lookup of relation %u failed", rel->rd_id);
+		elog(ERROR, "cache lookup of relation %u failed", RelationGetRelid(rel));
 	relStruct = (Form_pg_class) GETSTRUCT(reltup);
 
 	relStruct->relchecks = numchecks;
@@ -2120,7 +2127,7 @@ RemoveAttrDefault(Relation rel)
 	adrel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
 
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_attrdef_adrelid,
-						   F_OIDEQ, rel->rd_id);
+						   F_OIDEQ, RelationGetRelid(rel));
 
 	adscan = heap_beginscan(adrel, 0, SnapshotNow, 1, &key);
 
@@ -2142,7 +2149,7 @@ RemoveRelCheck(Relation rel)
 	rcrel = heap_openr(RelCheckRelationName, RowExclusiveLock);
 
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_relcheck_rcrelid,
-						   F_OIDEQ, rel->rd_id);
+						   F_OIDEQ, RelationGetRelid(rel));
 
 	rcscan = heap_beginscan(rcrel, 0, SnapshotNow, 1, &key);
 
@@ -2166,4 +2173,26 @@ RemoveConstraints(Relation rel)
 
 	if (constr->num_check > 0)
 		RemoveRelCheck(rel);
+}
+
+static void
+RemoveStatistics(Relation rel)
+{
+	Relation	pgstatistic;
+	HeapScanDesc scan;
+	ScanKeyData key;
+	HeapTuple	tuple;
+
+	pgstatistic = heap_openr(StatisticRelationName, RowExclusiveLock);
+
+	ScanKeyEntryInitialize(&key, 0x0, Anum_pg_statistic_starelid,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(rel)));
+	scan = heap_beginscan(pgstatistic, false, SnapshotNow, 1, &key);
+
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+		heap_delete(pgstatistic, &tuple->t_self, NULL);
+
+	heap_endscan(scan);
+	heap_close(pgstatistic, RowExclusiveLock);
 }
