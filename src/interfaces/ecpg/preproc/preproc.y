@@ -5033,6 +5033,9 @@ coutputvariable : cvariable indicator {
 }
 
 cinputvariable : cvariable indicator {
+		if ($2 != NULL && (find_variable($2))->type->typ == ECPGt_array)
+			mmerror(ET_ERROR, "arrays of indicators are not allowed on input");
+
 		add_variable(&argsinsert, find_variable($1), ($2 == NULL) ? &no_indicator : find_variable($2)); 
 }
 

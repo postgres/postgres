@@ -843,5 +843,10 @@ Thu Mar  2 11:25:09 CET 2000
 	- Fixed some parsing problems. A variable can now be a reserved
 	  SQL keyword.
 	- Made sure double quotes in statements are correctly quoted.
+
+Thu Mar  2 17:42:16 CET 2000
+
+	- Print error message if an indicator array is given for input
+	  variables.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.
