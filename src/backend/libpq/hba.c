@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.70 2001/09/07 19:52:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.71 2001/09/07 19:59:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -923,7 +923,7 @@ ident_unix(int sock, char *ident_user)
 	Cred *cred;
 
 	/* Compute size without padding */
-	char cmsgmem[sizeof(struct cmsghdr) + sizeof(Cred)];
+	char cmsgmem[sizeof(struct cmsghdr) + ALIGN(sizeof(Cred))]; /*for NetBSD*/
 	/* Point to start of first structure */
 	struct cmsghdr *cmsg = (struct cmsghdr *)cmsgmem;
 
