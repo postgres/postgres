@@ -1,4 +1,6 @@
---  *************testing built-in type float8 ****************
+--
+-- FLOAT8
+--
 
 CREATE TABLE FLOAT8_TBL(f1 float8);
 

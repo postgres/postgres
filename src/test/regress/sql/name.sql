@@ -1,12 +1,12 @@
---**************** testing built-in type name **************
 --
+-- NAME
 -- all inputs are silently truncated at NAMEDATALEN (32) characters
 --
 
 -- fixed-length by reference
-SELECT 'name string'::name = 'name string'::name AS "True";
+SELECT name 'name string' = name 'name string' AS "True";
 
-SELECT 'name string'::name = 'name string '::name AS "False";
+SELECT name 'name string' = name 'name string ' AS "False";
 
 --
 --

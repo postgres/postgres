@@ -1,8 +1,10 @@
--- *************testing built-in type text  ****************
+--
+-- TEXT
+--
 
-SELECT 'this is a text string'::text = 'this is a text string'::text AS true;
+SELECT text 'this is a text string' = text 'this is a text string' AS true;
 
-SELECT 'this is a text string'::text = 'this is a text strin'::text AS false;
+SELECT text 'this is a text string' = text 'this is a text strin' AS false;
 
 CREATE TABLE TEXT_TBL (f1 text);
 

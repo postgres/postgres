@@ -1,14 +1,12 @@
---  ****************** test built-in type char **************
 --
+-- CHAR
 -- all inputs are SILENTLY truncated at 1 character
 --
 
 -- fixed-length by value
 -- internally passed by value if <= 4 bytes in storage
--- Not sure why this is a really useful test,
---  but this test has been here forever. - thomas 1997-11-30
 
-SELECT 'c'::char = 'c'::char AS true;
+SELECT char 'c' = char 'c' AS true;
 
 --
 -- Build a table for testing

@@ -1,5 +1,5 @@
--- *************testing built-in type int2 ****************
 --
+-- INT2
 -- NOTE: int2 operators never check for over/underflow!
 -- Some of these answers are consequently numerically incorrect.
 --
@@ -27,49 +27,49 @@ INSERT INTO INT2_TBL(f1) VALUES ('asdf');
 
 SELECT '' AS five, INT2_TBL.*;
 
-SELECT '' AS four, i.* FROM INT2_TBL i WHERE i.f1 <> '0'::int2;
+SELECT '' AS four, i.* FROM INT2_TBL i WHERE i.f1 <> int2 '0';
 
-SELECT '' AS four, i.* FROM INT2_TBL i WHERE i.f1 <> '0'::int4;
+SELECT '' AS four, i.* FROM INT2_TBL i WHERE i.f1 <> int4 '0';
 
-SELECT '' AS one, i.* FROM INT2_TBL i WHERE i.f1 = '0'::int2;
+SELECT '' AS one, i.* FROM INT2_TBL i WHERE i.f1 = int2 '0';
 
-SELECT '' AS one, i.* FROM INT2_TBL i WHERE i.f1 = '0'::int4;
+SELECT '' AS one, i.* FROM INT2_TBL i WHERE i.f1 = int4 '0';
 
-SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 < '0'::int2;
+SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 < int2 '0';
 
-SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 < '0'::int4;
+SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 < int4 '0';
 
-SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 <= '0'::int2;
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 <= int2 '0';
 
-SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 <= '0'::int4;
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 <= int4 '0';
 
-SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 > '0'::int2;
+SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 > int2 '0';
 
-SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 > '0'::int4;
+SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 > int4 '0';
 
-SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 >= '0'::int2;
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 >= int2 '0';
 
-SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 >= '0'::int4;
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 >= int4 '0';
 
 -- positive odds 
-SELECT '' AS one, i.* FROM INT2_TBL i WHERE (i.f1 % '2'::int2) = '1'::int2;
+SELECT '' AS one, i.* FROM INT2_TBL i WHERE (i.f1 % int2 '2') = int2 '1';
 
 -- any evens 
-SELECT '' AS three, i.* FROM INT2_TBL i WHERE (i.f1 % '2'::int4) = '0'::int2;
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE (i.f1 % int4 '2') = int2 '0';
 
-SELECT '' AS five, i.f1, i.f1 * '2'::int2 AS x FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 * int2 '2' AS x FROM INT2_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 * '2'::int4 AS x FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 * int4 '2' AS x FROM INT2_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 + '2'::int2 AS x FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 + int2 '2' AS x FROM INT2_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 + '2'::int4 AS x FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 + int4 '2' AS x FROM INT2_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 - '2'::int2 AS x FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 - int2 '2' AS x FROM INT2_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 - '2'::int4 AS x FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 - int4 '2' AS x FROM INT2_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 / '2'::int2 AS x FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 / int2 '2' AS x FROM INT2_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 / '2'::int4 AS x FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 / int4 '2' AS x FROM INT2_TBL i;
 

@@ -1,5 +1,5 @@
---  *************testing built-in type int4 ****************
 --
+-- INT4
 -- WARNING: int4 operators never check for over/underflow!
 -- Some of these answers are consequently numerically incorrect.
 --
@@ -27,51 +27,51 @@ INSERT INTO INT4_TBL(f1) VALUES ('asdf');
 
 SELECT '' AS five, INT4_TBL.*;
 
-SELECT '' AS four, i.* FROM INT4_TBL i WHERE i.f1 <> '0'::int2;
+SELECT '' AS four, i.* FROM INT4_TBL i WHERE i.f1 <> int2 '0';
 
-SELECT '' AS four, i.* FROM INT4_TBL i WHERE i.f1 <> '0'::int4;
+SELECT '' AS four, i.* FROM INT4_TBL i WHERE i.f1 <> int4 '0';
 
-SELECT '' AS one, i.* FROM INT4_TBL i WHERE i.f1 = '0'::int2;
+SELECT '' AS one, i.* FROM INT4_TBL i WHERE i.f1 = int2 '0';
 
-SELECT '' AS one, i.* FROM INT4_TBL i WHERE i.f1 = '0'::int4;
+SELECT '' AS one, i.* FROM INT4_TBL i WHERE i.f1 = int4 '0';
 
-SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 < '0'::int2;
+SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 < int2 '0';
 
-SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 < '0'::int4;
+SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 < int4 '0';
 
-SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 <= '0'::int2;
+SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 <= int2 '0';
 
-SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 <= '0'::int4;
+SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 <= int4 '0';
 
-SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 > '0'::int2;
+SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 > int2 '0';
 
-SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 > '0'::int4;
+SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 > int4 '0';
 
-SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 >= '0'::int2;
+SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 >= int2 '0';
 
-SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 >= '0'::int4;
+SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 >= int4 '0';
 
 -- positive odds 
-SELECT '' AS one, i.* FROM INT4_TBL i WHERE (i.f1 % '2'::int2) = '1'::int2;
+SELECT '' AS one, i.* FROM INT4_TBL i WHERE (i.f1 % int2 '2') = int2 '1';
 
 -- any evens 
-SELECT '' AS three, i.* FROM INT4_TBL i WHERE (i.f1 % '2'::int4) = '0'::int2;
+SELECT '' AS three, i.* FROM INT4_TBL i WHERE (i.f1 % int4 '2') = int2 '0';
 
-SELECT '' AS five, i.f1, i.f1 * '2'::int2 AS x FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 * int2 '2' AS x FROM INT4_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 * '2'::int4 AS x FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 * int4 '2' AS x FROM INT4_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 + '2'::int2 AS x FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 + int2 '2' AS x FROM INT4_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 + '2'::int4 AS x FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 + int4 '2' AS x FROM INT4_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 - '2'::int2 AS x FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 - int2 '2' AS x FROM INT4_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 - '2'::int4 AS x FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 - int4 '2' AS x FROM INT4_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 / '2'::int2 AS x FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 / int2 '2' AS x FROM INT4_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 / '2'::int4 AS x FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 / int4 '2' AS x FROM INT4_TBL i;
 
 --
 -- more complex expressions
@@ -86,13 +86,13 @@ SELECT 2- -1 AS three;
 
 SELECT 2 - -2 AS four;
 
-SELECT '2'::int2 * '2'::int2 = '16'::int2 / '4'::int2 AS true;
+SELECT int2 '2' * int2 '2' = int2 '16' / int2 '4' AS true;
 
-SELECT '2'::int4 * '2'::int2 = '16'::int2 / '4'::int4 AS true;
+SELECT int4 '2' * int2 '2' = int2 '16' / int4 '4' AS true;
 
-SELECT '2'::int2 * '2'::int4 = '16'::int4 / '4'::int2 AS true;
+SELECT int2 '2' * int4 '2' = int4 '16' / int2 '4' AS true;
 
-SELECT '1000'::int4 < '999'::int4 AS false;
+SELECT int4 '1000' < int4 '999' AS false;
 
 SELECT 4! AS twenty_four;
 
@@ -104,9 +104,9 @@ SELECT 2 + 2 / 2 AS three;
 
 SELECT (2 + 2) / 2 AS two;
 
-SELECT dsqrt('64'::float8) AS eight;
+SELECT dsqrt(float8 '64') AS eight;
 
-SELECT |/'64'::float8 AS eight;
+SELECT |/float8 '64' AS eight;
 
-SELECT ||/'27'::float8 AS three;
+SELECT ||/float8 '27' AS three;
 

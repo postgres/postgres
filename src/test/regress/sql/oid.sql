@@ -1,4 +1,7 @@
--- *************testing built-in type oid ****************
+--
+-- OID
+--
+
 CREATE TABLE OID_TBL(f1 oid);
 
 INSERT INTO OID_TBL(f1) VALUES ('1234');
@@ -17,7 +20,7 @@ INSERT INTO OID_TBL(f1) VALUES ('asdfasd');
 SELECT '' AS five, OID_TBL.*;
 
 
-SELECT '' AS one, o.* FROM OID_TBL o WHERE o.f1 = '1234'::oid;
+SELECT '' AS one, o.* FROM OID_TBL o WHERE o.f1 = oid '1234';
 
 SELECT '' AS four, o.* FROM OID_TBL o WHERE o.f1 <> '1234';
 
@@ -29,4 +32,4 @@ SELECT '' AS two, o.* FROM OID_TBL o WHERE o.f1 >= '1234';
 
 SELECT '' AS one, o.* FROM OID_TBL o WHERE o.f1 > '1234';
 
-DROP TABLE  OID_TBL;
+DROP TABLE OID_TBL;

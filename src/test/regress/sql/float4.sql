@@ -1,4 +1,6 @@
---  *************testing built-in type float4 ****************
+--
+-- FLOAT4
+--
 
 CREATE TABLE FLOAT4_TBL (f1  float4);
 

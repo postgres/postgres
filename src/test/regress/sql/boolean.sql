@@ -1,7 +1,5 @@
 --
--- boolean.source
---
--- $Header: /cvsroot/pgsql/src/test/regress/sql/boolean.sql,v 1.5 1997/12/01 02:45:59 thomas Exp $
+-- BOOLEAN
 --
 
 --
@@ -14,28 +12,28 @@ SELECT 1 AS one;
 
 -- check bool type-casting as well as and, or, not in qualifications--
 
-SELECT 't'::bool AS true;
+SELECT bool 't' AS true;
 
-SELECT 'f'::bool AS false;
+SELECT bool 'f' AS false;
 
-SELECT 't'::bool or 'f'::bool AS true;
+SELECT bool 't' or bool 'f' AS true;
 
-SELECT 't'::bool and 'f'::bool AS false;
+SELECT bool 't' and bool 'f' AS false;
 
-SELECT not 'f'::bool AS true;
+SELECT not bool 'f' AS true;
 
-SELECT 't'::bool = 'f'::bool AS false;
+SELECT bool 't' = bool 'f' AS false;
 
-SELECT 't'::bool <> 'f'::bool AS true;
+SELECT bool 't' <> bool 'f' AS true;
 
 
 CREATE TABLE BOOLTBL1 (f1 bool);
 
-INSERT INTO BOOLTBL1 (f1) VALUES ('t'::bool);
+INSERT INTO BOOLTBL1 (f1) VALUES (bool 't');
 
-INSERT INTO BOOLTBL1 (f1) VALUES ('True'::bool);
+INSERT INTO BOOLTBL1 (f1) VALUES (bool 'True');
 
-INSERT INTO BOOLTBL1 (f1) VALUES ('true'::bool);
+INSERT INTO BOOLTBL1 (f1) VALUES (bool 'true');
 
 
 -- BOOLTBL1 should be full of true's at this point 
@@ -44,38 +42,38 @@ SELECT '' AS t_3, BOOLTBL1.*;
 
 SELECT '' AS t_3, BOOLTBL1.*
    FROM BOOLTBL1
-   WHERE f1 = 'true'::bool;
+   WHERE f1 = bool 'true';
 
 
 SELECT '' AS t_3, BOOLTBL1.* 
    FROM BOOLTBL1
-   WHERE f1 <> 'false'::bool;
+   WHERE f1 <> bool 'false';
 
 SELECT '' AS zero, BOOLTBL1.*
    FROM BOOLTBL1
-   WHERE booleq('false'::bool, f1);
+   WHERE booleq(bool 'false', f1);
 
-INSERT INTO BOOLTBL1 (f1) VALUES ('f'::bool);
+INSERT INTO BOOLTBL1 (f1) VALUES (bool 'f');
 
 SELECT '' AS f_1, BOOLTBL1.* 
    FROM BOOLTBL1
-   WHERE f1 = 'false'::bool;
+   WHERE f1 = bool 'false';
 
 
 CREATE TABLE BOOLTBL2 (f1 bool);
 
-INSERT INTO BOOLTBL2 (f1) VALUES ('f'::bool);
+INSERT INTO BOOLTBL2 (f1) VALUES (bool 'f');
 
-INSERT INTO BOOLTBL2 (f1) VALUES ('false'::bool);
+INSERT INTO BOOLTBL2 (f1) VALUES (bool 'false');
 
-INSERT INTO BOOLTBL2 (f1) VALUES ('False'::bool);
+INSERT INTO BOOLTBL2 (f1) VALUES (bool 'False');
 
-INSERT INTO BOOLTBL2 (f1) VALUES ('FALSE'::bool);
+INSERT INTO BOOLTBL2 (f1) VALUES (bool 'FALSE');
 
 -- This is now an invalid expression
 -- For pre-v6.3 this evaluated to false - thomas 1997-10-23
 INSERT INTO BOOLTBL2 (f1) 
-   VALUES ('XXX'::bool);  
+   VALUES (bool 'XXX');  
 
 -- BOOLTBL2 should be full of false's at this point 
 SELECT '' AS f_4, BOOLTBL2.*;
@@ -90,31 +88,49 @@ SELECT '' AS tf_12, BOOLTBL1.*, BOOLTBL2.*
 
 
 SELECT '' AS ff_4, BOOLTBL1.*, BOOLTBL2.*
-   WHERE BOOLTBL2.f1 = BOOLTBL1.f1 and BOOLTBL1.f1 = 'false'::bool;
+   WHERE BOOLTBL2.f1 = BOOLTBL1.f1 and BOOLTBL1.f1 = bool 'false';
 
 
 SELECT '' AS tf_12_ff_4, BOOLTBL1.*, BOOLTBL2.*
-   WHERE BOOLTBL2.f1 = BOOLTBL1.f1 or BOOLTBL1.f1 = 'true'::bool
+   WHERE BOOLTBL2.f1 = BOOLTBL1.f1 or BOOLTBL1.f1 = bool 'true'
    ORDER BY BOOLTBL1.f1, BOOLTBL2.f1;
 
 --
--- SQL92 syntax - thomas 1997-11-30
+-- SQL92 syntax
+-- Try all combinations to ensure that we get nothing when we expect nothing
+-- - thomas 2000-01-04
 --
 
-SELECT '' AS "True", BOOLTBL1.* 
+SELECT '' AS "True", f1
    FROM BOOLTBL1
    WHERE f1 IS TRUE;
 
-SELECT '' AS "Not False", BOOLTBL1.* 
+SELECT '' AS "Not False", f1
    FROM BOOLTBL1
    WHERE f1 IS NOT FALSE;
 
-SELECT '' AS "False", BOOLTBL1.* 
+SELECT '' AS "False", f1
    FROM BOOLTBL1
    WHERE f1 IS FALSE;
 
-SELECT '' AS "Not True", BOOLTBL1.* 
+SELECT '' AS "Not True", f1
    FROM BOOLTBL1
+   WHERE f1 IS NOT TRUE;
+
+SELECT '' AS "True", f1
+   FROM BOOLTBL2
+   WHERE f1 IS TRUE;
+
+SELECT '' AS "Not False", f1
+   FROM BOOLTBL2
+   WHERE f1 IS NOT FALSE;
+
+SELECT '' AS "False", f1
+   FROM BOOLTBL2
+   WHERE f1 IS FALSE;
+
+SELECT '' AS "Not True", f1
+   FROM BOOLTBL2
    WHERE f1 IS NOT TRUE;
 
 --

@@ -1,4 +1,5 @@
---  ****************** test built-in type varchar **************
+--
+-- VARCHAR
 --
 
 CREATE TABLE VARCHAR_TBL(f1 varchar(1));
