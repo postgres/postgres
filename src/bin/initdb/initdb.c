@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.66 2004/11/09 15:57:52 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.67 2004/11/14 23:36:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2472,7 +2472,7 @@ main(int argc, char *argv[])
 
 			if (chmod(pg_data, 0700) != 0)
 			{
-				fprintf(stderr, _("%s: could not change permissions of directory »%s«: %s\n"),
+				fprintf(stderr, _("%s: could not change permissions of directory \"%s\": %s\n"),
 						progname, pg_data, strerror(errno));
 				exit_nicely();
 			}
@@ -2494,7 +2494,7 @@ main(int argc, char *argv[])
 
 		default:
 			/* Trouble accessing directory */
-			fprintf(stderr, _("%s: could not access directory »%s«: %s\n"),
+			fprintf(stderr, _("%s: could not access directory \"%s\": %s\n"),
 					progname, pg_data, strerror(errno));
 			exit_nicely();
 	}
