@@ -1,8 +1,8 @@
 #! /usr/bin/perl
 #
-# Copyright 2001 by PostgreSQL Global Development Group
+# Copyright (c) 2001-2003, PostgreSQL Global Development Group
 #
-# $Id: UCS_to_GBK.pl,v 1.1 2002/03/06 06:12:55 momjian Exp $
+# $Id: UCS_to_GBK.pl,v 1.2 2003/08/04 23:59:39 tgl Exp $
 #
 #
 # Generate UTF-8 <--> GBK code conversion tables from

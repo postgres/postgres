@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright 2000 by PostgreSQL Global Development Group
+ * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/sprompt.c,v 1.4 2003/03/18 22:09:37 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/sprompt.c,v 1.5 2003/08/04 23:59:39 tgl Exp $
  */
 
 /*

@@ -1,8 +1,8 @@
 #! /usr/bin/perl
 #
-# Copyright 2001 by PostgreSQL Global Development Group
+# Copyright (c) 2001-2003, PostgreSQL Global Development Group
 #
-# $Id: UCS_to_cyrillic.pl,v 1.2 2001/09/06 04:57:29 ishii Exp $
+# $Id: UCS_to_cyrillic.pl,v 1.3 2003/08/04 23:59:39 tgl Exp $
 #
 # Generate UTF-8 <--> ISO8859 code conversion tables from
 # map files provided by Unicode organization.

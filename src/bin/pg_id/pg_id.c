@@ -4,9 +4,9 @@
  * A crippled id utility for use in various shell scripts in use by PostgreSQL
  * (in particular initdb)
  *
- * Copyright (C) 2000 by PostgreSQL Global Development Group
+ * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.20 2001/03/22 04:00:16 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.21 2003/08/04 23:59:39 tgl Exp $
  */
 #include "postgres_fe.h"
 

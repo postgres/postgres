@@ -1,9 +1,9 @@
 /*
  * findoidjoins.c
  *
- * Copyright 2002 by PostgreSQL Global Development Group
+ * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/contrib/findoidjoins/Attic/findoidjoins.c,v 1.21 2003/08/04 00:43:10 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/findoidjoins/Attic/findoidjoins.c,v 1.22 2003/08/04 23:59:37 tgl Exp $
  */
 #include "postgres_fe.h"
 

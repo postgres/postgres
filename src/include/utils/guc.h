@@ -4,10 +4,10 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * Copyright 2000-2003 by PostgreSQL Global Development Group
+ * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $Id: guc.h,v 1.39 2003/08/04 00:43:32 momjian Exp $
+ * $Id: guc.h,v 1.40 2003/08/04 23:59:41 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H

@@ -4,11 +4,11 @@
 # pg_ctl.sh--
 #    Start/Stop/Restart/HUP/Report status of postmaster
 #
-# Copyright (c) 2001  PostgreSQL Global Development Group
+# Copyright (c) 2001-2003, PostgreSQL Global Development Group
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.34 2003/07/28 00:09:16 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.35 2003/08/04 23:59:39 tgl Exp $
 #
 #-------------------------------------------------------------------------
 

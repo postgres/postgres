@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright 2000-2002 by PostgreSQL Global Development Group
+ * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Id: stringutils.h,v 1.18 2002/10/19 00:22:14 tgl Exp $
+ * $Id: stringutils.h,v 1.19 2003/08/04 23:59:40 tgl Exp $
  */
 #ifndef STRINGUTILS_H
 #define STRINGUTILS_H

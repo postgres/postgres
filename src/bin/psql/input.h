@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright 2000 by PostgreSQL Global Development Group
+ * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.h,v 1.19 2003/03/20 06:00:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.h,v 1.20 2003/08/04 23:59:40 tgl Exp $
  */
 #ifndef INPUT_H
 #define INPUT_H

@@ -2,9 +2,9 @@
  *
  * PostgreSQL locale utilities
  *
- * $Id: pg_locale.h,v 1.14 2002/09/04 20:31:45 momjian Exp $
+ * $Id: pg_locale.h,v 1.15 2003/08/04 23:59:41 tgl Exp $
  *
- * Copyright (c) 2002, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  *-----------------------------------------------------------------------
  */

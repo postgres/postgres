@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright 2000 by PostgreSQL Global Development Group
+ * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.16 2003/07/28 00:14:43 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.17 2003/08/04 23:59:39 tgl Exp $
  */
 #ifndef COMMAND_H
 #define COMMAND_H

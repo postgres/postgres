@@ -3,11 +3,11 @@
  * pg_encoding.c
  *
  *
- * Copyright (c) 1998, PostgreSQL development group
+ * Copyright (c) 1998-2003, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/pg_encoding.c,v 1.12 2003/08/04 00:43:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/pg_encoding.c,v 1.13 2003/08/04 23:59:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */

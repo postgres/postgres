@@ -5,10 +5,10 @@
 --    use this new type.
 -- 
 --
--- Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+-- Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
 -- Portions Copyright (c) 1994, Regents of the University of California
 --
--- $Header: /cvsroot/pgsql/src/tutorial/complex.source,v 1.14 2002/08/22 00:01:51 tgl Exp $
+-- $Header: /cvsroot/pgsql/src/tutorial/complex.source,v 1.15 2003/08/04 23:59:41 tgl Exp $
 --
 ---------------------------------------------------------------------------
 

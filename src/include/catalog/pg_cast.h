@@ -5,9 +5,9 @@
  *	  along with the relation's initial contents.
  *
  *
- * Copyright (c) 2002, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
- * $Id: pg_cast.h,v 1.8 2003/08/04 00:43:30 momjian Exp $
+ * $Id: pg_cast.h,v 1.9 2003/08/04 23:59:40 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
