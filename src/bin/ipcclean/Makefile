@@ -1,16 +1,15 @@
 #-------------------------------------------------------------------------
 #
-# Makefile for bin/ipcclean
+# Makefile for src/bin/ipcclean
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-#
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/Makefile,v 1.10 2000/04/14 23:43:43 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/Makefile,v 1.11 2000/06/27 00:31:05 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR= ../..
+subdir = src/bin/ipcclean
+top_builddir = ../../..
 include ../../Makefile.global
 
 all: ipcclean
@@ -18,10 +17,14 @@ all: ipcclean
 ipcclean: ipcclean.sh
 	cp $< $@
 
-install: ipcclean
-	$(INSTALL) $(INSTL_EXE_OPTS) $^ $(BINDIR)
+install: all installdirs
+	$(INSTALL_SCRIPT) ipcclean $(bindir)/ipcclean
 
-clean:
+installdirs:
+	$(mkinstalldirs) $(bindir)
+
+uninstall:
+	rm -f $(bindir)/ipcclean
+
+clean distclean maintainer-clean:
 	rm -f ipcclean
-
-dep depend:

@@ -1,28 +1,30 @@
 #-------------------------------------------------------------------------
 #
-# Makefile.inc--
-#    Makefile for bin/initlocation
+# Makefile for src/bin/initlocation
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-#
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/Makefile,v 1.8 1999/12/08 10:29:43 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/Makefile,v 1.9 2000/06/27 00:31:00 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR= ../..
+subdir = src/bin/initlocation
+top_builddir = ../../..
 include ../../Makefile.global
 
 all: initlocation
 
 initlocation: initlocation.sh
-	cp -p initlocation.sh initlocation
+	cp $< $@
 
-install: initlocation
-	$(INSTALL) $(INSTL_EXE_OPTS) $+ $(BINDIR)
+install: all installdirs
+	$(INSTALL_SCRIPT) initlocation $(bindir)/initlocation
 
-clean:
+installdirs:
+	$(mkinstalldirs) $(bindir)
+
+uninstall:
+	rm -f $(bindir)/initlocation
+
+clean distclean maintainer-clean:
 	rm -f initlocation
-
-dep depend:

@@ -1,28 +1,30 @@
 #-------------------------------------------------------------------------
 #
-# Makefile.inc--
-#    Makefile for bin/pg_ctl
+# Makefile for src/bin/pg_ctl
 #
 # Copyright (c) 1999, PostgreSQL Global Development Group
 #
-#
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Makefile,v 1.5 2000/06/04 01:44:36 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_ctl/Makefile,v 1.6 2000/06/27 00:31:08 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR= ../..
+subdir = src/bin/pg_ctl
+top_builddir = ../../..
 include ../../Makefile.global
 
 all: pg_ctl
 
 pg_ctl: pg_ctl.sh
-	cat pg_ctl.sh > pg_ctl
+	cp $< $@
 
-install: pg_ctl
-	$(INSTALL) $(INSTL_EXE_OPTS) $+ $(BINDIR)
+install: all installdirs
+	$(INSTALL_SCRIPT) pg_ctl $(bindir)/pg_ctl
 
-clean:
+installdirs:
+	$(mkinstalldirs) $(bindir)
+
+uninstall:
+	rm -f $(bindir)/pg_ctl
+
+clean distclean maintainer-clean:
 	rm -f pg_ctl
-
-dep depend:

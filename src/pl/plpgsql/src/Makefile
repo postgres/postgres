@@ -2,42 +2,25 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.26 2000/06/20 16:40:10 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.3 2000/06/27 00:32:01 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-srcdir = @srcdir@
-VPATH = @srcdir@
-
-top_srcdir = @top_srcdir@
-top_builddir = ../../../..
 subdir = src/pl/plpgsql/src
-
-
-INSTALL = @INSTALL@
-INSTALL_SHLIB = @INSTALL_SHLIB@
-mkinstalldirs = @mkinstalldirs@
-prefix = @prefix@
-exec_prefix = @exec_prefix@
-libdir = @libdir@
-
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
 # Shared library parameters
 NAME= plpgsql
 SO_MAJOR_VERSION= 1
 SO_MINOR_VERSION= 0
-DLSUFFIX = @DLSUFFIX@
-
-SRCDIR = $(top_srcdir)/src
-include $(SRCDIR)/Makefile.global
-
 
 CPPFLAGS += -I$(srcdir)
 
-OBJS=	pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
+OBJS = pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
 
-# Shared library stuff, also default 'all' target
-include $(SRCDIR)/Makefile.shlib
+# Shared library stuff, also default `all' target
+include $(top_srcdir)/src/Makefile.shlib
 
 
 # In order to use Makefile.shlib, we allow it to build a static
@@ -46,8 +29,8 @@ include $(SRCDIR)/Makefile.shlib
 # call it that when installed, however, so we ignore the install-shlib
 # rule and do this instead:
 
-install: installdirs $(shlib)
-ifneq ($(shlib),)
+install: installdirs all
+ifdef shlib
 	$(INSTALL_SHLIB) $(shlib) $(libdir)/plpgsql$(DLSUFFIX)
 else
 	@echo "*****"; \
@@ -58,9 +41,12 @@ endif
 installdirs:
 	$(mkinstalldirs) $(libdir)
 
-pl_handler.o pl_comp.o pl_exec.o pl_funcs.o: plpgsql.h pl.tab.h
+uninstall:
+	rm -f $(libdir)/plpgsql$(DLSUFFIX)
 
-pl_parse.o: pl_gram.c pl_scan.c plpgsql.h
+pl_handler.o pl_comp.o pl_exec.o pl_funcs.o: plpgsql.h $(srcdir)/pl.tab.h
+
+pl_parse.o: $(srcdir)/pl_gram.c $(srcdir)/pl_scan.c plpgsql.h
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 # Note: Since the yacc and lex files are shipped in the distribution,
@@ -82,25 +68,8 @@ mklang.sql: mklang.sql.in
 	sed -e 's%__libdir__%$(libdir)%g' -e 's%__DLSUFFIX__%$(DLSUFFIX)%g' < $< > $@
 
 
-clean: clean-shlib
+clean distclean: clean-shlib
 	rm -f lib$(NAME).a *.o y.tab.c y.tab.h lex.yy.c mklang.sql
-
-distclean: clean
-	rm -f Makefile
 
 maintainer-clean: clean
 	rm -f $(srcdir)/pl_gram.c $(srcdir)/pl.tab.h $(srcdir)/pl_scan.c
-	rm -f Makefile
-
-
-.PHONY: all install installdirs clean distclean maintainer-clean
-
-
-Makefile: Makefile.in $(top_builddir)/config.status
-	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= ./config.status
-
-$(top_builddir)/src/Makefile.global: $(top_srcdir)/src/Makefile.global.in $(top_builddir)/config.status
-	cd $(top_builddir) && CONFIG_FILES=src/Makefile.global CONFIG_HEADERS= ./config.status
-
-$(top_builddir)/config.status: $(top_srcdir)/configure
-	cd $(top_builddir) && ./config.status --recheck

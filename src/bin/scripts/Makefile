@@ -1,40 +1,32 @@
 #-------------------------------------------------------------------------
 #
-# Makefile.inc--
-#    Makefile for bin/scripts
+# Makefile for src/bin/scripts
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-#
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.4 1999/12/16 01:25:11 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.5 2000/06/27 00:31:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-.SUFFIXES:
-
-SRCDIR=../..
+subdir = src/bin/scripts
+top_builddir = ../../..
 include ../../Makefile.global
 
-SCRIPTS=createdb dropdb createuser dropuser createlang droplang vacuumdb
+SCRIPTS := createdb dropdb createuser dropuser createlang droplang vacuumdb
 
 all: $(SCRIPTS)
 
-createdb:
-dropdb:
-createuser:
-dropuser:
-
 createlang: createlang.sh
-	sed -e 's/__DLSUFFIX__/$(DLSUFFIX)/' createlang.sh > createlang
-droplang:
+	sed -e 's/__DLSUFFIX__/$(DLSUFFIX)/' $< > $@
 
-vacuumdb:
+install: all installdirs
+	$(INSTALL_SCRIPT) $(SCRIPTS) $(bindir)
 
-install: $(SCRIPTS)
-	for i in $+; do $(INSTALL) $(INSTL_EXE_OPTS) $$i $(BINDIR); done
+installdirs:
+	$(mkinstalldirs) $(bindir)
 
-clean:
+uninstall:
+	rm -f $(addprefix $(bindir)/, $(SCRIPTS))
+
+clean distclean maintainer-clean:
 	rm -f createlang
-
-dep depend:

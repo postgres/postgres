@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.52 2000/06/10 18:01:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.53 2000/06/27 00:30:48 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -50,18 +50,15 @@ clean:
 	$(MAKE) -C ../contrib/spi clean
 
 # Not all subdirectories have a make distclean target yet
-distclean:
+distclean maintainer-clean:
 	-$(MAKE) -C utils clean
 	-$(MAKE) -C backend clean
 	rm -f backend/port/Makefile backend/catalog/genbki.sh \
 		backend/utils/Gen_fmgrtab.sh \
 		backend/port/tas.s backend/port/dynloader.c
 	-$(MAKE) -C interfaces distclean
-	-$(MAKE) -C bin clean
-	rm -f bin/pg_dump/Makefile bin/pg_version/Makefile \
-		bin/psql/Makefile bin/pgtclsh/mkMakefile.tcldefs.sh \
-		bin/pgtclsh/mkMakefile.tkdefs.sh
-	-$(MAKE) -C pl distclean
+	-$(MAKE) -C bin $@
+	-$(MAKE) -C pl $@
 	-$(MAKE) -C test clean
 	rm -f test/regress/GNUmakefile
 	-$(MAKE) -C ../contrib/spi clean

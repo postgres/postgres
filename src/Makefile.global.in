@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.80 2000/06/19 16:58:35 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.81 2000/06/27 00:30:48 petere Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -35,6 +35,17 @@
 #
 #-------------------------------------------------------------------------
 
+ifndef SRCDIR
+# This should be changed once we have separate build dirs.
+top_srcdir = $(top_builddir)
+ifeq ($(top_builddir), $(top_srcdir))
+srcdir = .
+else
+srcdir = $(top_srcdir)/$(subdir)
+endif
+VPATH = $(srcdir)
+SRCDIR = $(top_builddir)/src
+endif
 
 ##############################################################################
 #
@@ -61,33 +72,29 @@ LIBPQ= -L$(LIBPQDIR) -lpq
 LIBPGTCL= -L$(LIBPGTCLDIR) -lpgtcl
 LIBPGEASY= -L$(LIBPGEASYDIR) -lpgeasy
 
-# For convenience, POSTGRESDIR is where BINDIR, and LIBDIR
-# and other target destinations are rooted.  Of course, each of these is
-# changable separately.
-POSTGRESDIR= @prefix@
+# installation directories
 
-# Where the postgres executables live (changeable by just putting them
-# somewhere else and putting that directory in your shell PATH)
-BINDIR= $(POSTGRESDIR)/bin
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+sbindir = @sbindir@
+libexecdir = @libexecdir@
+datadir = @datadir@
+sysconfdir = @sysconfdir@
+sharedstatedir = @sharedstatedir@
+localstatedir = @localstatedir@
+libdir = @libdir@
+includedir = @includedir@
 
-# Where libpq.a gets installed.  You must put it where your loader will
-# look for it if you wish to use the -lpq convention.  Otherwise you
-# can just put the absolute pathname to the library at the end of your
-# command line.
-LIBDIR= $(POSTGRESDIR)/lib
+# old variable names for installation directories
 
-# Where the database templates are stored
-#
-TEMPLATEDIR= $(POSTGRESDIR)/lib
-
-# Where the man pages (suitable for use with "man") get installed.
+POSTGRESDIR= $(prefix)
+BINDIR= $(bindir)
+LIBDIR= $(libdir)
+TEMPLATEDIR= $(libdir)
 POSTMANDIR= $(POSTGRESDIR)/man
-
-# Where the formatted documents (e.g., the reference manual) get installed.
 POSTDOCDIR= $(POSTGRESDIR)/doc
-
-# Where the header files necessary to build frontend programs get installed.
-HEADERDIR= $(POSTGRESDIR)/include
+HEADERDIR= $(includedir)
 
 
 ##############################################################################
@@ -104,6 +111,8 @@ ENFORCE_ALIGNMENT= true
 # Comment out PROFILE to generate a profile version of the binaries
 #PROFILE= -p -non_shared
 
+
+with_perl = @with_perl@
 
 #
 # Please do not edit USE_TCL and USE_TK by hand.
@@ -125,13 +134,21 @@ MULTIBYTE=@MULTIBYTE@
 #
 # For many ports, INSTALL is overridden below.
 INSTALL= @INSTALL@
-RANLIB= @RANLIB@
 
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SHLIB = @INSTALL_SHLIB@
+
+mkinstalldirs = @mkinstalldirs@
+
+# don't use these any more
 INSTLOPTS= @INSTLOPTS@
 INSTL_EXE_OPTS= @INSTL_EXE_OPTS@
 INSTL_LIB_OPTS= @INSTL_LIB_OPTS@
 INSTL_SHLIB_OPTS= @INSTL_SHLIB_OPTS@
 
+RANLIB= @RANLIB@
 
 #-------------------------------------------------------------
 # See the subdirectory template for default settings for these
@@ -154,6 +171,8 @@ DLSUFFIX= @DLSUFFIX@
 LN_S= @LN_S@
 TAR= @tar@
 GZCAT= @GZCAT@
+PERL = @PERL@
+
 
 ##############################################################################
 #
@@ -238,3 +257,13 @@ ifdef PROFILE
    CFLAGS+= $(PROFILE)
    LDFLAGS+= $(PROFILE)
 endif
+
+
+# substitute implementations of the C library
+STRERROR = @STRERROR@
+STRERROR2 = @STRERROR2@
+SNPRINTF = @SNPRINTF@
+STRDUP = @STRDUP@
+
+.DEFAULT: all
+.PHONY: all install installdirs uninstall dep depend clean distclean maintainer-clean

@@ -1193,11 +1193,8 @@ AC_OUTPUT(
 	src/backend/port/Makefile
 	src/backend/catalog/genbki.sh
 	src/backend/utils/Gen_fmgrtab.sh
-	src/bin/pg_dump/Makefile
-	src/bin/pg_version/Makefile
 	src/bin/pgtclsh/mkMakefile.tcldefs.sh
 	src/bin/pgtclsh/mkMakefile.tkdefs.sh
-	src/bin/psql/Makefile
 	src/include/version.h
 	src/interfaces/Makefile
 	src/interfaces/libpq/Makefile
@@ -1209,10 +1206,6 @@ AC_OUTPUT(
 	src/interfaces/libpgtcl/Makefile
 	src/interfaces/odbc/GNUmakefile
 	src/interfaces/python/GNUmakefile
-	src/pl/Makefile
-	src/pl/plpgsql/Makefile
-	src/pl/plpgsql/src/Makefile
 	src/pl/tcl/mkMakefile.tcldefs.sh
-	src/pl/plperl/GNUmakefile
 	src/test/regress/GNUmakefile
 )

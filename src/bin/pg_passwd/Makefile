@@ -1,31 +1,30 @@
-#-------------------------------------------------------------------------
 #
-# Makefile
-#    Makefile for bin/pg_passwd
-#-------------------------------------------------------------------------
+# Makefile for src/bin/pg_passwd
+#
 
-SRCDIR= ../..
+subdir = src/bin/pg_passwd
+top_builddir = ../../..
 include ../../Makefile.global
 
-OBJS= pg_passwd.o
+all: pg_passwd$(X)
 
-all: pg_passwd
+pg_passwd$(X): pg_passwd.o
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-pg_passwd: $(OBJS)
-	$(CC) $(CFLAGS) -o pg_passwd $(OBJS) $(LDFLAGS)
+install: all installdirs
+	$(INSTALL_PROGRAM) pg_passwd$(X) $(bindir)/pg_passwd$(X)
 
-install: pg_passwd
-	$(INSTALL) $(INSTL_EXE_OPTS) pg_passwd$(X) $(BINDIR)/pg_passwd$(X)
+installdirs:
+	$(mkinstalldirs) $(bindir)
 
-.PHONY: submake
-submake:
-	$(MAKE) -C $(LIBPQDIR) libpq.a
+uninstall:
+	rm -f $(bindir)/pg_passwd$(X)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
 
-clean:
-	rm -f pg_passwd$(X) $(OBJS)
+clean distclean maintainer-clean:
+	rm -f pg_passwd$(X) pg_passwd.o
 
 ifeq (depend,$(wildcard depend))
 include depend
