@@ -44,7 +44,7 @@ global PgAcVar CurrentDB
 	set PgAcVar(tblinfo,isunique) {}
 	set PgAcVar(tblinfo,isclustered) {}
 	set PgAcVar(tblinfo,indexfields) {}
-	wpg_select $CurrentDB "select attnum,attname,typname,attlen,attnotnull,atttypmod,usename,usesysid,pg_class.oid,relpages,reltuples,relhasrules,relacl from pg_class,pg_user,pg_attribute,pg_type where (pg_class.relname='$PgAcVar(tblinfo,tablename)') and (pg_class.oid=pg_attribute.attrelid) and (pg_class.relowner=pg_user.usesysid) and (pg_attribute.atttypid=pg_type.oid) order by attnum" rec {
+	wpg_select $CurrentDB "select attnum,attname,typname,attlen,attnotnull,atttypmod,usename,usesysid,pg_class.oid,relpages,reltuples,relhaspkey,relhasrules,relacl from pg_class,pg_user,pg_attribute,pg_type where (pg_class.relname='$PgAcVar(tblinfo,tablename)') and (pg_class.oid=pg_attribute.attrelid) and (pg_class.relowner=pg_user.usesysid) and (pg_attribute.atttypid=pg_type.oid) order by attnum" rec {
 		set fsize $rec(attlen)
 		set fsize1 $rec(atttypmod)
 		set ftype $rec(typname)
@@ -68,6 +68,11 @@ global PgAcVar CurrentDB
 		set PgAcVar(tblinfo,numtuples) $rec(reltuples)
 		set PgAcVar(tblinfo,numpages) $rec(relpages)
 		set PgAcVar(tblinfo,permissions) $rec(relacl)
+		if {$rec(relhaspkey)=="t"} {
+			set PgAcVar(tblinfo,hasprimarykey) [intlmsg Yes]
+		} else {
+			set PgAcVar(tblinfo,hasprimarykey) [intlmsg No]
+		}
 		if {$rec(relhasrules)=="t"} {
 			set PgAcVar(tblinfo,hasrules) [intlmsg Yes]
 		} else {
@@ -75,8 +80,8 @@ global PgAcVar CurrentDB
 		}
 	}
 	set PgAcVar(tblinfo,indexlist) {}
-	wpg_select $CurrentDB "select pg_index.oid,indexrelid from pg_index, pg_class where (pg_class.relname='$PgAcVar(tblinfo,tablename)') and (pg_class.oid=pg_index.indrelid)" rec {
-		lappend PgAcVar(tblinfo,indexlist) $rec(oid)
+	wpg_select $CurrentDB "select indexrelid from pg_index, pg_class where (pg_class.relname='$PgAcVar(tblinfo,tablename)') and (pg_class.oid=pg_index.indrelid)" rec {
+		lappend PgAcVar(tblinfo,indexlist) $rec(indexrelid)
 		wpg_select $CurrentDB "select relname from pg_class where oid=$rec(indexrelid)" rec1 {
 			.pgaw:TableInfo.f2.fl.ilb insert end $rec1(relname)
 		}
@@ -1718,6 +1723,13 @@ if {[set PgAcVar(tblinfo,col_id) [.pgaw:TableInfo.f1.lb curselection]]==""} then
 		-anchor w -borderwidth 1 \
 		-relief sunken -text {} -textvariable PgAcVar(tblinfo,ownerid) \
 		-width 200 
+	label $base.f0.fi.l9 \
+		-borderwidth 0 \
+		-relief raised -text [intlmsg {Has primary key ?}]
+	label $base.f0.fi.l10 \
+		-anchor w -borderwidth 1 \
+		-relief sunken -text {} \
+		-textvariable PgAcVar(tblinfo,hasprimarykey) -width 200 
 	label $base.f0.fi.l11 \
 		-borderwidth 0 \
 		-relief raised -text [intlmsg {Has rules ?}]
@@ -1880,6 +1892,11 @@ if {[set PgAcVar(tblinfo,col_id) [.pgaw:TableInfo.f1.lb curselection]]==""} then
 		-in .pgaw:TableInfo.f0.fi -column 0 -row 3 -columnspan 1 -rowspan 1 -sticky w 
 	grid $base.f0.fi.l8 \
 		-in .pgaw:TableInfo.f0.fi -column 1 -row 3 -columnspan 1 -rowspan 1 -padx 2 \
+		-pady 2 
+	grid $base.f0.fi.l9 \
+		-in .pgaw:TableInfo.f0.fi -column 0 -row 4 -columnspan 1 -rowspan 1 -sticky w 
+	grid $base.f0.fi.l10 \
+		-in .pgaw:TableInfo.f0.fi -column 1 -row 4 -columnspan 1 -rowspan 1 -padx 2 \
 		-pady 2 
 	grid $base.f0.fi.l11 \
 		-in .pgaw:TableInfo.f0.fi -column 0 -row 5 -columnspan 1 -rowspan 1 -sticky w 
@@ -2158,7 +2175,7 @@ proc vTclWindow.pgaw:Permissions {base} {
 #
 # This file contains Tcl procedures used to input Japanese text.
 #
-# $Header: /cvsroot/pgsql/src/bin/pgaccess/lib/Attic/tables.tcl,v 1.9 2001/05/30 15:37:38 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgaccess/lib/Attic/tables.tcl,v 1.10 2001/08/10 23:29:46 tgl Exp $
 #
 # Copyright (c) 1993  Software Research Associates, Inc.
 #
