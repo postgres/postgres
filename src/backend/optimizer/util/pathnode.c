@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.28 1999/02/11 17:00:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.29 1999/02/11 17:03:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,12 +198,12 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 				 * over unsorted keys in the same way.
 				 */
 								/* same keys, and new is cheaper, use it */
-			    if ((better_key == 0 && better_sort == 0 &&
-					new_path->path_cost <  path->path_cost) ||
+			    if (((better_key == 0 && better_sort == 0 &&
+					 new_path->path_cost <  path->path_cost) ||
 
 								/* new is better, and cheaper, use it */
 					((better_key == 1 && better_sort != 2) ||
-					 (better_key != 2 && better_sort == 1)) &&
+					 (better_key != 2 && better_sort == 1))) &&
 					 new_path->path_cost <= path->path_cost)
 				{
 					*is_new = false;
@@ -212,12 +212,12 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 
 								/* same keys, new is more expensive, stop */
 			    else if
-					((better_key == 0 && better_sort == 0 &&
-					 new_path->path_cost >= path->path_cost) ||
+					(((better_key == 0 && better_sort == 0 &&
+					   new_path->path_cost >= path->path_cost) ||
 
 								/* old is better, and less expensive, stop */
 					((better_key == 2 && better_sort != 1) ||
-					 (better_key != 1 && better_sort == 2)) &&
+					 (better_key != 1 && better_sort == 2))) &&
 					  new_path->path_cost >= path->path_cost)
 				{
 					*is_new = false;
