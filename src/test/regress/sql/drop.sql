@@ -1,8 +1,6 @@
 --
 -- drop.source
 --
--- $Header: /cvsroot/pgsql/src/test/regress/sql/drop.sql,v 1.2 1999/12/10 17:32:57 momjian Exp $
---
 
 --
 -- this will fail if the user is not the postgres superuser.

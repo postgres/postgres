@@ -100,8 +100,6 @@ create unique index PHone_name on PHone using btree (slotname bpchar_ops);
 -- * Trigger procedures and functions for the patchfield
 -- * test of PL/pgSQL
 -- * 
--- * $Header: /cvsroot/pgsql/src/test/regress/sql/plpgsql.sql,v 1.2 2000/01/06 06:41:55 thomas Exp $
--- * 
 -- ************************************************************
 
 
