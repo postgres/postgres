@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.251 2004/03/15 17:57:51 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.252 2004/03/23 01:23:48 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -186,11 +186,7 @@ $ <userinput>postmaster -D /usr/local/pgsql/data &gt;logfile 2&gt;&amp;1 &amp;</
   <para>
    The <command>postmaster</command> also takes a number of other
    command line options. For more information, see the reference page
-   and <xref linkend="runtime-config"> below. In particular, in order
-   for the server to accept
-   TCP/IP<indexterm><primary>TCP/IP</primary></indexterm> connections
-   (rather than just Unix-domain socket ones), you must specify the
-   <option>-i</option> option.
+   and <xref linkend="runtime-config"> below.
   </para>
 
   <para>
@@ -333,7 +329,7 @@ FATAL:  could not create TCP/IP listen socket
      be a different problem. For example, trying to start a <command>postmaster</command>
      on a reserved port number may draw something like:
 <screen>
-$ <userinput>postmaster -i -p 666</userinput>
+$ <userinput>postmaster -p 666</userinput>
 LOG:  could not bind IPv4 socket: Permission denied
 HINT:  Is another postmaster already running on port 666? If not, wait a few seconds and retry.
 FATAL:  could not create TCP/IP listen socket
@@ -570,19 +566,38 @@ SET ENABLE_SEQSCAN TO OFF;
      <title>Connection Settings</title>
 
      <variablelist>
-     
-     <varlistentry id="guc-tcpip-socket" xreflabel="tcpip_socket">
-      <term><varname>tcpip_socket</varname> (<type>boolean</type>)</term>
+
+     <varlistentry id="guc-listen-addresses" xreflabel="listen_addresses">
+      <term><varname>listen_addresses</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        If this is true, then the server will accept TCP/IP connections.<indexterm><primary>TCP/IP</></>
-        Otherwise only local Unix domain socket connections are
-        accepted. It is off by default. This option can only be set at
-        server start.
+         Specifies the TCP/IP address(es) on which the server is
+         to listen for connections from client applications.  
+         The value takes the form of a space-separated list of host names
+         and/or numeric IP addresses.  The special entry <literal>*</>
+         corresponds to all available IP interfaces.
+         If the list is empty, the server does not listen on any IP interface
+         at all, in which case only Unix-domain sockets can be used to connect
+         to it.
+         The default value is <systemitem class="systemname">localhost</>,
+         which allows only local <quote>loopback</> connections to be made.
+         This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
-  
+
+     <varlistentry id="guc-port" xreflabel="port">
+      <term><varname>port</varname> (<type>integer</type>)</term>
+      <indexterm><primary>port</></>
+      <listitem>
+       <para>
+        The TCP port the server listens on; 5432 by default.  Note that the
+        same port number is used for all IP addresses the server listens on.
+        This parameter can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-max-connections" xreflabel="max_connections">
       <term><varname>max_connections</varname> (<type>integer</type>)</term>
       <listitem>
@@ -628,17 +643,6 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-port" xreflabel="port">
-      <term><varname>port</varname> (<type>integer</type>)</term>
-      <indexterm><primary>port</></>
-      <listitem>
-       <para>
-        The TCP port the server listens on; 5432 by default. This
-        option can only be set at server start.
-       </para>
-      </listitem>
-     </varlistentry>
-
 
      <varlistentry id="guc-unix-socket-directory" xreflabel="unix_socket_directory">
       <term><varname>unix_socket_directory</varname> (<type>string</type>)</term>
@@ -648,6 +652,7 @@ SET ENABLE_SEQSCAN TO OFF;
         server is to listen for
         connections from client applications.  The default is normally
         <filename>/tmp</filename>, but can be changed at build time.
+	This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -701,27 +706,15 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry id="guc-virtual-host" xreflabel="virtual_host">
-      <term><varname>virtual_host</varname> (<type>string</type>)</term>
-      <listitem>
-       <para>
-        Specifies the IP address(es) on which the server is
-        to listen for connections from client applications.  If specified,
-        it takes the form of a space-separated list of host names and/or
-        numeric IP addresses.  If the list is empty, the server listens
-        on all available addresses (including
-        <systemitem class="systemname">localhost</>).
-       </para>
-      </listitem>
-     </varlistentry>
      
      <varlistentry id="guc-rendezvous-name" xreflabel="rendezvous_name">
       <term><varname>rendezvous_name</varname> (<type>string</type>)</term>
       <listitem>
        <para>
         Specifies the Rendezvous broadcast name.  By default, the
-        computer name is used, specified as ''.
+        computer name is used, specified as an empty string ''.
+	This option is only meaningful on platforms that support Rendezvous.
+        This option can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -3009,11 +3002,11 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        </row>
        <row>
         <entry><option>-h <replaceable>x</replaceable></option></entry>
-        <entry><literal>virtual_host = <replaceable>x</replaceable></></entry>
+        <entry><literal>listen_addresses = <replaceable>x</replaceable></></entry>
        </row>
        <row>
         <entry><option>-i</option></entry>
-        <entry><literal>tcpip_socket = on</></entry>
+        <entry><literal>listen_addresses = '*'</></entry>
        </row>
        <row>
         <entry><option>-k <replaceable>x</replaceable></option></entry>

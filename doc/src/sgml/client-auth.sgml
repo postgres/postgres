@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.64 2004/03/09 16:57:46 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.65 2004/03/23 01:23:48 tgl Exp $
 -->
 
 <chapter id="client-authentication">
@@ -112,13 +112,19 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <listitem>
       <para>
        This record matches connection attempts made using TCP/IP.
-       Note that TCP/IP connections are disabled unless the server is
-       started with the <option>-i</option> option or the <xref
-       linkend="guc-tcpip-socket"> configuration parameter is
-       enabled. <literal>host</literal> records match either
+       <literal>host</literal> records match either
        <acronym>SSL</acronym> or non-<acronym>SSL</acronym> connection
        attempts.
       </para>
+     <note>
+      <para>
+       Remote TCP/IP connections will not be possible unless
+       the server is started with an appropriate value for the
+       <xref linkend="guc-listen-addresses"> configuration parameter,
+       since the default behavior is to listen for TCP/IP connections
+       only on the local loopback address <literal>localhost</>.
+      </para>
+     </note>
      </listitem>
     </varlistentry>
 
@@ -126,17 +132,17 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <term><literal>hostssl</literal></term>
      <listitem>
       <para>
-       This record matches connection attempts made using TCP/IP. In
-       addition, this record requires that the connection is made with
-       <acronym>SSL</acronym>.
+       This record matches connection attempts made using TCP/IP,
+       but only when the connection is made with <acronym>SSL</acronym>
+       encryption.
       </para>
 
       <para>
        To make use of this option the server must be built with
-       <acronym>SSL</acronym> support enabled. Furthermore,
-       <acronym>SSL</acronym> must be enabled by setting the <xref
-       linkend="guc-ssl"> configuration parameter (see <xref
-       linkend="ssl-tcp"> for more information).
+       <acronym>SSL</acronym> support. Furthermore,
+       <acronym>SSL</acronym> must be enabled at server start time
+       by setting the <xref linkend="guc-ssl"> configuration parameter (see
+       <xref linkend="ssl-tcp"> for more information).
       </para>
      </listitem>
     </varlistentry>
@@ -146,8 +152,8 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <listitem>
       <para>
        This record is similar to <literal>hostssl</> but with the
-	   opposite logic: it only matches connection attempts made over
-	   TCP/IP that do not use <acronym>SSL</acronym>.
+       opposite logic: it only matches connection attempts made over
+       TCP/IP that do not use <acronym>SSL</acronym>.
       </para>
      </listitem>
     </varlistentry>

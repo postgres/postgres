@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.46 2004/03/09 16:57:47 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.47 2004/03/23 01:23:48 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -165,11 +165,17 @@ PostgreSQL documentation
       <term><option>-h <replaceable class="parameter">hostname</replaceable></option></term>
       <listitem>
        <para>
-	Specifies the IP host name or address on which the
-	<command>postmaster</command> is to listen for
-	connections from client applications.  Defaults to
-	listening on all configured addresses (including
-        <systemitem class="systemname">localhost</systemitem>).
+        Specifies the IP host name or address on which the
+        <command>postmaster</command> is to listen for TCP/IP
+        connections from client applications.  The value can also be
+        a space-separated list of addresses, or <literal>*</> to specify
+        listening on all available interfaces.  An empty value specifies
+        not listening on any IP addresses, in which case only Unix-domain
+        sockets can be used to connect to the <command>postmaster</command>.
+        Defaults to listening only
+        on <systemitem class="systemname">localhost</systemitem>.
+        This option is equivalent to setting <literal>listen_addresses</> in
+        <filename>postgresql.conf</>.
        </para>
       </listitem>
      </varlistentry>
@@ -178,14 +184,16 @@ PostgreSQL documentation
       <term><option>-i</option></term>
       <listitem>
        <para>
-        Allows clients to connect via TCP/IP (Internet domain)
-	connections.  Without this option, only local Unix domain
-        socket connections are accepted. This option corresponds
-        to setting <literal>tcpip_socket=true</> in <filename>postgresql.conf</>.
+        Allows remote clients to connect via TCP/IP (Internet domain)
+        connections.  Without this option, only local connections are
+        accepted.  This option is equivalent to setting
+        <literal>listen_addresses</> to <literal>*</> in
+        <filename>postgresql.conf</> or via <option>-h</>.
        </para>
        <para>
-        <option>--tcpip-socket=false</option> has the opposite
-        effect of this option.
+        This option is deprecated since it does not allow access to the
+        full functionality of <literal>listen_addresses</>.  It's usually
+        better to set <literal>listen_addresses</> directly.
        </para>
       </listitem>
      </varlistentry>
@@ -206,8 +214,7 @@ PostgreSQL documentation
       <term><option>-l</option></term>
       <listitem>
        <para>
-	Enables secure connections using SSL.  The <option>-i</option>
-	option is also required.  You must have compiled with SSL
+	Enables secure connections using SSL.  You must have compiled with SSL
 	enabled to use this option.
        </para>
       </listitem>

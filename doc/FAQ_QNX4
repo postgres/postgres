@@ -1,6 +1,6 @@
 PostgreSQL on QNX 4
 --------------------
-last updated:           $Date: 2002/07/09 04:47:07 $
+last updated:           $Date: 2004/03/23 01:23:47 $
 
 current maintainer:     Bernd Tegge (tegge@repas-aeg.de)
 original author:        Andreas Kardos (kardos@repas-aeg.de)
@@ -23,10 +23,9 @@ functionality cannot be used. Shared library support could probably be
 implemented in future.
 
 QNX 4 does not support UNIX domain sockets. Clients must use TCP/IP
-sockets. Therefore you either have to set "tcpip_socket = true" in
-your postgresql.conf or to start postmaster with the -i option.
-Furthermore it's advisable to set to set the PGHOST or SOCK environment
-variable for postmaster in an environment using native QNX networking.
+sockets. Therefore, do not set "listen_addresses" to empty in your
+postgresql.conf file.  In fact, it's advisable to explicitly set
+"listen_addresses" in an environment using native QNX networking.
 Otherwise the postmaster might not use the IP-Address you think it does :-)
 
 Prerequisites:

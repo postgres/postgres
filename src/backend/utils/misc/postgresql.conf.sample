@@ -27,17 +27,17 @@
 
 # - Connection Settings -
 
-#tcpip_socket = false
+#listen_addresses = 'localhost'	# what IP interface(s) to listen on; 
+				# defaults to localhost, '*' = any
+#port = 5432
 #max_connections = 100
 	# note: increasing max_connections costs about 500 bytes of shared
 	# memory per connection slot, in addition to costs from shared_buffers
         # and max_locks_per_transaction.
 #superuser_reserved_connections = 2
-#port = 5432
 #unix_socket_directory = ''
 #unix_socket_group = ''
 #unix_socket_permissions = 0777	# octal
-#virtual_host = ''		# what interface to listen on; defaults to any
 #rendezvous_name = ''		# defaults to the computer name
 
 # - Security & Authentication -

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.375 2004/03/15 16:18:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.376 2004/03/23 01:23:48 tgl Exp $
  *
  * NOTES
  *
@@ -149,7 +149,7 @@ static Backend *ShmemBackendArray;
 /* The socket number we are listening for connections on */
 int			PostPortNumber;
 char	   *UnixSocketDir;
-char	   *VirtualHost;
+char	   *ListenAddresses;
 
 /*
  * MaxBackends is the limit on the number of backends we can start.
@@ -202,7 +202,6 @@ static bool Reinit = true;
 static int	SendStop = false;
 
 /* still more option variables */
-bool		NetServer = false;	/* listen on TCP/IP */
 bool		EnableSSL = false;
 bool		SilentMode = false; /* silent mode (-S) */
 
@@ -513,10 +512,10 @@ PostmasterMain(int argc, char *argv[])
 				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'h':
-				SetConfigOption("virtual_host", optarg, PGC_POSTMASTER, PGC_S_ARGV);
+				SetConfigOption("listen_addresses", optarg, PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'i':
-				SetConfigOption("tcpip_socket", "true", PGC_POSTMASTER, PGC_S_ARGV);
+				SetConfigOption("listen_addresses", "*", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'k':
 				SetConfigOption("unix_socket_directory", optarg, PGC_POSTMASTER, PGC_S_ARGV);
@@ -704,11 +703,6 @@ PostmasterMain(int argc, char *argv[])
 	 * Initialize SSL library, if specified.
 	 */
 #ifdef USE_SSL
-	if (EnableSSL && !NetServer)
-	{
-		postmaster_error("TCP/IP connections must be enabled for SSL");
-		ExitPostmaster(1);
-	}
 	if (EnableSSL)
 		secure_initialize();
 #endif
@@ -753,68 +747,60 @@ PostmasterMain(int argc, char *argv[])
 	for (i = 0; i < MAXLISTEN; i++)
 		ListenSocket[i] = -1;
 
-	if (NetServer)
+	if (ListenAddresses)
 	{
-		if (VirtualHost && VirtualHost[0])
-		{
-			char	   *curhost,
-					   *endptr;
-			char		c = 0;
+		char	   *curhost,
+				   *endptr;
+		char		c;
 
-			curhost = VirtualHost;
-			for (;;)
-			{
-				while (*curhost == ' ') /* skip any extra spaces */
-					curhost++;
-				if (*curhost == '\0')
-					break;
-				endptr = strchr(curhost, ' ');
-				if (endptr)
-				{
-					c = *endptr;
-					*endptr = '\0';
-				}
+		curhost = ListenAddresses;
+		for (;;)
+		{
+			/* ignore whitespace */
+			while (isspace((unsigned char) *curhost))
+				curhost++;
+			if (*curhost == '\0')
+				break;
+			endptr = curhost;
+			while (*endptr != '\0' && !isspace((unsigned char) *endptr))
+				endptr++;
+			c = *endptr;
+			*endptr = '\0';
+			if (strcmp(curhost,"*") == 0)
+				status = StreamServerPort(AF_UNSPEC, NULL,
+										  (unsigned short) PostPortNumber,
+										  UnixSocketDir,
+										  ListenSocket, MAXLISTEN);
+			else
 				status = StreamServerPort(AF_UNSPEC, curhost,
 										  (unsigned short) PostPortNumber,
 										  UnixSocketDir,
 										  ListenSocket, MAXLISTEN);
-				if (status != STATUS_OK)
-					ereport(FATAL,
-					 (errmsg("could not create listen socket for \"%s\"",
-							 curhost)));
-				if (endptr)
-				{
-					*endptr = c;
-					curhost = endptr + 1;
-				}
-				else
-					break;
-			}
-		}
-		else
-		{
-			status = StreamServerPort(AF_UNSPEC, NULL,
-									  (unsigned short) PostPortNumber,
-									  UnixSocketDir,
-									  ListenSocket, MAXLISTEN);
 			if (status != STATUS_OK)
-				ereport(FATAL,
-					  (errmsg("could not create TCP/IP listen socket")));
+				ereport(WARNING,
+						(errmsg("could not create listen socket for \"%s\"",
+								curhost)));
+			*endptr = c;
+			if (c != '\0')
+				curhost = endptr+1;
+			else
+				break;
 		}
+	}
 
 #ifdef USE_RENDEZVOUS
-		if (rendezvous_name != NULL)
-		{
-			DNSServiceRegistrationCreate(rendezvous_name,
-										 "_postgresql._tcp.",
-										 "",
-										 htonl(PostPortNumber),
-										 "",
-								 (DNSServiceRegistrationReply) reg_reply,
-										 NULL);
-		}
-#endif
+	/* Register for Rendezvous only if we opened TCP socket(s) */
+	if (ListenSocket[0] != -1 && rendezvous_name != NULL)
+	{
+		DNSServiceRegistrationCreate(rendezvous_name,
+									 "_postgresql._tcp.",
+									 "",
+									 htonl(PostPortNumber),
+									 "",
+									 (DNSServiceRegistrationReply) reg_reply,
+									 NULL);
 	}
+#endif
 
 #ifdef HAVE_UNIX_SOCKETS
 	status = StreamServerPort(AF_UNIX, NULL,
@@ -822,9 +808,16 @@ PostmasterMain(int argc, char *argv[])
 							  UnixSocketDir,
 							  ListenSocket, MAXLISTEN);
 	if (status != STATUS_OK)
-		ereport(FATAL,
+		ereport(WARNING,
 				(errmsg("could not create Unix-domain socket")));
 #endif
+
+	/*
+	 * check that we have some socket to listen on
+	 */
+	if (ListenSocket[0] == -1)
+		ereport(FATAL,
+				(errmsg("no socket configured to listen on")));
 
 	XLOGPathInit();
 
