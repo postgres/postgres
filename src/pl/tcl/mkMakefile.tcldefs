@@ -1,0 +1,22 @@
+#!/bin/sh
+if [ -f ./tclConfig.sh ]; then
+    . ./tclConfig.sh
+else
+    if [ -f /usr/lib/tclConfig.sh ]; then
+	echo "using tclConfig.sh from /usr/lib"
+	. /usr/lib/tclConfig.sh
+    else
+	if [ -f /usr/local/lib/tclConfig.sh ]; then
+	    echo "using tclConfig.sh from /usr/local/lib"
+	    . /usr/local/lib/tclConfig.sh
+	else
+	    echo "tclConfig.sh not found in /usr/lib or /usr/local/lib"
+	    echo "I need this file! Please make a symbolic link to this file"
+	    echo "and start make again."
+	    exit 1
+        fi
+    fi
+fi
+
+set | grep '^TCL' >Makefile.tcldefs
+exit 0
