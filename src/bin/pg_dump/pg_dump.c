@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.324 2003/03/27 16:43:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.325 2003/03/31 20:48:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6171,9 +6171,13 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query,
-				   "CREATE SEQUENCE %s\n    START WITH %s\n    INCREMENT BY %s\n",
-						  fmtId(tbinfo->relname),
-						  (called ? minv : last), incby);
+				   "CREATE SEQUENCE %s\n",
+						  fmtId(tbinfo->relname));
+
+		if (!called)
+			appendPQExpBuffer(query, "    START WITH %s\n", last);
+
+		appendPQExpBuffer(query, "    INCREMENT BY %s\n", incby);
 
 		if (maxv)
 			appendPQExpBuffer(query, "    MAXVALUE %s\n", maxv);
