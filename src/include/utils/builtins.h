@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.61 1998/10/12 04:07:51 momjian Exp $
+ * $Id: builtins.h,v 1.62 1998/10/20 23:03:20 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -535,9 +535,6 @@ int4		inet_cmp(inet * a1, inet * a2);
 
 text	   *inet_netmask(inet * addr);
 int4		inet_masklen(inet * addr);
-text	   *inet_host(inet * addr);
-text	   *inet_network_without_bits(inet * addr);
-text	   *inet_network_with_bits(inet * addr);
 text	   *inet_broadcast(inet * addr);
 
 

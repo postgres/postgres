@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: inet.c,v 1.5 1998/10/17 04:08:40 momjian Exp $
+ *	$Id: inet.c,v 1.6 1998/10/20 23:03:19 momjian Exp $
  */
 
 #include <sys/types.h>
@@ -310,115 +310,6 @@ int4
 inet_masklen(inet *ip)
 {
 	return ip_bits(ip);
-}
-
-text *
-inet_host(inet *ip)
-{
-	char	   *dst,
-				tmp[sizeof("255.255.255.255/32")];
-
-	if (ip_family(ip) == AF_INET)
-	{
-#ifdef BAD
-		/* It's an IP V4 address: */
-		if (inet_cidr_ntop(AF_INET, &ip_v4addr(ip), 4, -1,
-						  tmp, sizeof(tmp)) < 0)
-		{
-			elog(ERROR, "unable to print host (%s)", strerror(errno));
-			return (NULL);
-		}
-#endif
-	}
-	else
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "unknown address family (%d)", ip_family(ip));
-		return (NULL);
-	}
-	dst = palloc(strlen(tmp) + 1);
-	if (dst == NULL)
-	{
-		elog(ERROR, "unable to allocate memory in inet_out()");
-		return (NULL);
-	}
-	strcpy(dst, tmp);
-	return (dst);
-	
-}
-
-text *
-inet_network_without_bits(inet *ip)
-{
-	char	   *dst,
-				tmp[sizeof("255.255.255.255/32")];
-
-	if (ip_family(ip) == AF_INET)
-	{
-		/* It's an IP V4 address: */
-		int addr = ip_v4addr(ip) & (-1 << (32 - ip_bits(ip)));
-#ifdef BAD
-
-		if (inet_cidr_ntop(AF_INET, &addr, (int)(ip_bits(ip)/8), -1,
-						  tmp, sizeof(tmp)) < 0)
-		{
-			elog(ERROR, "unable to print address (%s)", strerror(errno));
-			return (NULL);
-		}
-#endif
-	}
-	else
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "unknown address family (%d)", ip_family(ip));
-		return (NULL);
-	}
-	dst = palloc(strlen(tmp) + 1);
-	if (dst == NULL)
-	{
-		elog(ERROR, "unable to allocate memory in inet_out()");
-		return (NULL);
-	}
-	strcpy(dst, tmp);
-	return (dst);
-	
-}
-
-text *
-inet_network_with_bits(inet *ip)
-{
-	char	   *dst,
-				tmp[sizeof("255.255.255.255/32")];
-
-	if (ip_family(ip) == AF_INET)
-	{
-		/* It's an IP V4 address: */
-		int addr = ip_v4addr(ip) & (-1 << (32 - ip_bits(ip)));
-#ifdef BAD
-
-		if (inet_cidr_ntop(AF_INET, &addr, (int)(ip_bits(ip)/8),
-						  ip_bits(ip), tmp, sizeof(tmp)) < 0)
-		{
-			elog(ERROR, "unable to print address (%s)", strerror(errno));
-			return (NULL);
-		}
-#endif
-	}
-	else
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "unknown address family (%d)", ip_family(ip));
-		return (NULL);
-	}
-	dst = palloc(strlen(tmp) + 1);
-	if (dst == NULL)
-	{
-		elog(ERROR, "unable to allocate memory in inet_out()");
-		return (NULL);
-	}
-	strcpy(dst, tmp);
-	return (dst);
-	
 }
 
 text *

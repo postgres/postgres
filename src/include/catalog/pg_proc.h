@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.73 1998/10/12 04:07:48 momjian Exp $
+ * $Id: pg_proc.h,v 1.74 1998/10/20 23:03:19 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2101,12 +2101,6 @@ DATA(insert OID = 940 (  inet_netmask		PGUID 11 f t f 1 f 25 "869" 100 0 0 100  
 DESCR("netmask of inet address");
 DATA(insert OID = 941 (  inet_masklen		PGUID 11 f t f 1 f 23 "869" 100 0 0 100  foo bar ));
 DESCR("netmask length");
-DATA(insert OID = 942 (  inet_host		PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
-DESCR("host adress");
-DATA(insert OID = 943 (  inet_network_without_bits		PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
-DESCR("netmask without bits");
-DATA(insert OID = 944 (  inet_network_with_bits		PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
-DESCR("netmask with bits");
 DATA(insert OID = 945 (  inet_broadcast		PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
 DESCR("broadcast address");
 
