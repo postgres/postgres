@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.50 2001/01/14 05:08:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.51 2001/01/19 22:08:47 tgl Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -39,6 +39,7 @@ volatile bool InterruptPending = false;
 volatile bool QueryCancelPending = false;
 volatile bool ProcDiePending = false;
 volatile bool ImmediateInterruptOK = false;
+volatile uint32 InterruptHoldoffCount = 0;
 volatile uint32 CritSectionCount = 0;
 
 int			MyProcPid;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.60 2001/01/14 05:08:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.61 2001/01/19 22:08:46 tgl Exp $
  *
  * NOTES
  *
@@ -136,7 +136,8 @@ proc_exit(int code)
 	QueryCancelPending = false;
 	/* And let's just make *sure* we're not interrupted ... */
 	ImmediateInterruptOK = false;
-	CritSectionCount = 1;
+	InterruptHoldoffCount = 1;
+	CritSectionCount = 0;
 
 	if (DebugLvl > 1)
 		elog(DEBUG, "proc_exit(%d)", code);

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.29 2001/01/14 05:08:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.30 2001/01/19 22:08:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,19 +148,19 @@ SpinAcquire(SPINLOCK lockid)
 	PRINT_SLDEBUG("SpinAcquire", lockid, slckP);
 	/*
 	 * Acquire the lock, then record that we have done so (for recovery
-	 * in case of elog(ERROR) during the critical section).  Note we assume
+	 * in case of elog(ERROR) while holding the lock).  Note we assume
 	 * here that S_LOCK will not accept cancel/die interrupts once it has
 	 * acquired the lock.  However, interrupts should be accepted while
-	 * waiting, if CritSectionCount is zero.
+	 * waiting, if InterruptHoldoffCount is zero.
 	 */
 	S_LOCK(&(slckP->shlock));
 	PROC_INCR_SLOCK(lockid);
 	/*
-	 * Lock out cancel/die interrupts until we exit the critical section
+	 * Lock out cancel/die interrupts until we exit the code section
 	 * protected by the spinlock.  This ensures that interrupts will not
 	 * interfere with manipulations of data structures in shared memory.
 	 */
-	START_CRIT_SECTION();
+	HOLD_INTERRUPTS();
 
     PRINT_SLDEBUG("SpinAcquire/done", lockid, slckP);
 }
@@ -182,9 +182,9 @@ SpinRelease(SPINLOCK lockid)
 	PROC_DECR_SLOCK(lockid);
 	S_UNLOCK(&(slckP->shlock));
 	/*
-	 * Exit the critical section entered in SpinAcquire().
+	 * Exit the interrupt holdoff entered in SpinAcquire().
 	 */
-	END_CRIT_SECTION();
+	RESUME_INTERRUPTS();
 
     PRINT_SLDEBUG("SpinRelease/done", lockid, slckP);
 }
@@ -329,7 +329,7 @@ SpinAcquire(SPINLOCK lock)
 	 */
 	IpcSemaphoreLock(SpinLockIds[0], lock, false);
 	PROC_INCR_SLOCK(lock);
-	START_CRIT_SECTION();
+	HOLD_INTERRUPTS();
 }
 
 /*
@@ -351,7 +351,7 @@ SpinRelease(SPINLOCK lock)
     Assert(!MyProc || MyProc->sLocks[lockid] > 0);
 	PROC_DECR_SLOCK(lock);
 	IpcSemaphoreUnlock(SpinLockIds[0], lock);
-	END_CRIT_SECTION();
+	RESUME_INTERRUPTS();
 }
 
 /*

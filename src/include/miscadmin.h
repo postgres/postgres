@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.77 2001/01/14 05:08:16 tgl Exp $
+ * $Id: miscadmin.h,v 1.78 2001/01/19 22:08:47 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -26,7 +26,7 @@
 #include "storage/ipc.h"
 
 /*****************************************************************************
- *    System interrupt handling
+ *    System interrupt and critical section handling
  *
  * There are two types of interrupts that a running backend needs to accept
  * without messing up its state: QueryCancel (SIGINT) and ProcDie (SIGTERM).
@@ -40,14 +40,22 @@
  * where it is normally safe to accept a cancel or die interrupt.  In some
  * cases, we invoke CHECK_FOR_INTERRUPTS() inside low-level subroutines that
  * might sometimes be called in contexts that do *not* want to allow a cancel
- * or die interrupt.  The CRIT_SECTION mechanism allows code to ensure that
- * no cancel or die interrupt will be accepted, even if CHECK_FOR_INTERRUPTS
- * gets called in a subroutine.
+ * or die interrupt.  The HOLD_INTERRUPTS() and RESUME_INTERRUPTS() macros
+ * allow code to ensure that no cancel or die interrupt will be accepted,
+ * even if CHECK_FOR_INTERRUPTS() gets called in a subroutine.  The interrupt
+ * will be held off until the last matching RESUME_INTERRUPTS() occurs.
  *
  * Special mechanisms are used to let an interrupt be accepted when we are
  * waiting for a lock or spinlock, and when we are waiting for command input
- * (but, of course, only if the critical section counter is zero).  See the
+ * (but, of course, only if the interrupt holdoff counter is zero).  See the
  * related code for details.
+ *
+ * A related, but conceptually distinct, mechanism is the "critical section"
+ * mechanism.  A critical section not only holds off cancel/die interrupts,
+ * but causes any elog(ERROR) or elog(FATAL) to become elog(STOP) --- that is,
+ * a system-wide reset is forced.  Needless to say, only really *critical*
+ * code should be marked as a critical section!  Currently, this mechanism
+ * is only used for XLOG-related code.
  *
  *****************************************************************************/
 
@@ -58,6 +66,7 @@ extern volatile bool QueryCancelPending;
 extern volatile bool ProcDiePending;
 /* these are marked volatile because they are examined by signal handlers: */
 extern volatile bool ImmediateInterruptOK;
+extern volatile uint32 InterruptHoldoffCount;
 extern volatile uint32 CritSectionCount;
 
 /* in postgres.c */
@@ -69,13 +78,23 @@ extern void ProcessInterrupts(void);
 			ProcessInterrupts(); \
 	} while(0)
 
+#define	HOLD_INTERRUPTS()  (InterruptHoldoffCount++)
+
+#define RESUME_INTERRUPTS() \
+	do { \
+		Assert(InterruptHoldoffCount > 0); \
+		InterruptHoldoffCount--; \
+		if (InterruptPending) \
+			ProcessInterrupts(); \
+	} while(0)
+
 #define	START_CRIT_SECTION()  (CritSectionCount++)
 
 #define END_CRIT_SECTION() \
 	do { \
 		Assert(CritSectionCount > 0); \
 		CritSectionCount--; \
-		if (CritSectionCount == 0 && InterruptPending) \
+		if (InterruptPending) \
 			ProcessInterrupts(); \
 	} while(0)
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.104 2001/01/14 05:08:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.105 2001/01/19 22:08:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -873,10 +873,10 @@ WaitIO(BufferDesc *buf, SPINLOCK spinlock)
 	while ((buf->flags & BM_IO_IN_PROGRESS) != 0)
 	{
 		SpinRelease(spinlock);
-		START_CRIT_SECTION();	/* don't want to die() holding the lock... */
+		HOLD_INTERRUPTS();		/* don't want to die() holding the lock... */
 		S_LOCK(&(buf->io_in_progress_lock));
 		S_UNLOCK(&(buf->io_in_progress_lock));
-		END_CRIT_SECTION();
+		RESUME_INTERRUPTS();
 		SpinAcquire(spinlock);
 	}
 }
@@ -1027,14 +1027,14 @@ BufmgrCommit(void)
  *		Returns the block number associated with a buffer.
  *
  * Note:
- *		Assumes that the buffer is valid.
+ *		Assumes that the buffer is valid and pinned, else the
+ *		value may be obsolete immediately...
  */
 BlockNumber
 BufferGetBlockNumber(Buffer buffer)
 {
 	Assert(BufferIsValid(buffer));
 
-	/* XXX should be a critical section */
 	if (BufferIsLocal(buffer))
 		return LocalBufferDescriptors[-buffer - 1].tag.blockNum;
 	else
@@ -1956,7 +1956,7 @@ UnlockBuffers(void)
 		Assert(BufferIsValid(i + 1));
 		buf = &(BufferDescriptors[i]);
 
-		START_CRIT_SECTION();	/* don't want to die() holding the lock... */
+		HOLD_INTERRUPTS();		/* don't want to die() holding the lock... */
 
 		S_LOCK(&(buf->cntx_lock));
 
@@ -1986,7 +1986,7 @@ UnlockBuffers(void)
 
 		BufferLocks[i] = 0;
 
-		END_CRIT_SECTION();
+		RESUME_INTERRUPTS();
 	}
 }
 
@@ -2003,7 +2003,7 @@ LockBuffer(Buffer buffer, int mode)
 	buf = &(BufferDescriptors[buffer - 1]);
 	buflock = &(BufferLocks[buffer - 1]);
 
-	START_CRIT_SECTION();		/* don't want to die() holding the lock... */
+	HOLD_INTERRUPTS();			/* don't want to die() holding the lock... */
 
 	S_LOCK(&(buf->cntx_lock));
 
@@ -2028,7 +2028,7 @@ LockBuffer(Buffer buffer, int mode)
 		else
 		{
 			S_UNLOCK(&(buf->cntx_lock));
-			END_CRIT_SECTION();
+			RESUME_INTERRUPTS();
 			elog(ERROR, "UNLockBuffer: buffer %lu is not locked", buffer);
 		}
 	}
@@ -2040,9 +2040,9 @@ LockBuffer(Buffer buffer, int mode)
 		while (buf->ri_lock || buf->w_lock)
 		{
 			S_UNLOCK(&(buf->cntx_lock));
-			END_CRIT_SECTION();
+			RESUME_INTERRUPTS();
 			S_LOCK_SLEEP(&(buf->cntx_lock), i++);
-			START_CRIT_SECTION();
+			HOLD_INTERRUPTS();
 			S_LOCK(&(buf->cntx_lock));
 		}
 		(buf->r_locks)++;
@@ -2068,9 +2068,9 @@ LockBuffer(Buffer buffer, int mode)
 				buf->ri_lock = true;
 			}
 			S_UNLOCK(&(buf->cntx_lock));
-			END_CRIT_SECTION();
+			RESUME_INTERRUPTS();
 			S_LOCK_SLEEP(&(buf->cntx_lock), i++);
-			START_CRIT_SECTION();
+			HOLD_INTERRUPTS();
 			S_LOCK(&(buf->cntx_lock));
 		}
 		buf->w_lock = true;
@@ -2092,12 +2092,12 @@ LockBuffer(Buffer buffer, int mode)
 	else
 	{
 		S_UNLOCK(&(buf->cntx_lock));
-		END_CRIT_SECTION();
+		RESUME_INTERRUPTS();
 		elog(ERROR, "LockBuffer: unknown lock mode %d", mode);
 	}
 
 	S_UNLOCK(&(buf->cntx_lock));
-	END_CRIT_SECTION();
+	RESUME_INTERRUPTS();
 }
 
 /*
@@ -2118,7 +2118,7 @@ static bool IsForInput;
  *	BM_IO_IN_PROGRESS mask is not set for the buffer
  *	The buffer is Pinned
  *
- * Because BufMgrLock is held, we are already in a CRIT_SECTION here,
+ * Because BufMgrLock is held, we are already in an interrupt holdoff here,
  * and do not need another.
  */
 static void
@@ -2152,7 +2152,7 @@ StartBufferIO(BufferDesc *buf, bool forInput)
  *	BufMgrLock is held
  *	The buffer is Pinned
  *
- * Because BufMgrLock is held, we are already in a CRIT_SECTION here,
+ * Because BufMgrLock is held, we are already in an interrupt holdoff here,
  * and do not need another.
  */
 static void
@@ -2170,7 +2170,7 @@ TerminateBufferIO(BufferDesc *buf)
  *	BufMgrLock is held
  *	The buffer is Pinned
  *
- * Because BufMgrLock is held, we are already in a CRIT_SECTION here,
+ * Because BufMgrLock is held, we are already in an interrupt holdoff here,
  * and do not need another.
  */
 static void

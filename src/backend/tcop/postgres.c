@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.202 2001/01/16 20:59:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.203 2001/01/19 22:08:47 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -943,7 +943,8 @@ die(SIGNAL_ARGS)
 		 * If it's safe to interrupt, and we're waiting for input or a lock,
 		 * service the interrupt immediately
 		 */
-		if (ImmediateInterruptOK && CritSectionCount == 0)
+		if (ImmediateInterruptOK && InterruptHoldoffCount == 0 &&
+			CritSectionCount == 0)
 		{
 			DisableNotifyInterrupt();
 			/* Make sure HandleDeadLock won't run while shutting down... */
@@ -974,8 +975,8 @@ QueryCancelHandler(SIGNAL_ARGS)
 		 * service the interrupt immediately.  No point in interrupting
 		 * if we're waiting for input, however.
 		 */
-		if (ImmediateInterruptOK && CritSectionCount == 0 &&
-			LockWaitCancel())
+		if (ImmediateInterruptOK && InterruptHoldoffCount == 0 &&
+			CritSectionCount == 0 && LockWaitCancel())
 		{
 			DisableNotifyInterrupt();
 			ProcessInterrupts();
@@ -1012,8 +1013,8 @@ SigHupHandler(SIGNAL_ARGS)
 void
 ProcessInterrupts(void)
 {
-	/* Cannot accept interrupts inside critical sections */
-	if (CritSectionCount != 0)
+	/* OK to accept interrupt now? */
+	if (InterruptHoldoffCount != 0 || CritSectionCount != 0)
 		return;
 	InterruptPending = false;
 	if (ProcDiePending)
@@ -1679,7 +1680,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.202 $ $Date: 2001/01/16 20:59:34 $\n");
+		puts("$Revision: 1.203 $ $Date: 2001/01/19 22:08:47 $\n");
 	}
 
 	/*
@@ -1712,12 +1713,13 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		 *
 		 * Make sure we're not interrupted while cleaning up.  Also forget
 		 * any pending QueryCancel request, since we're aborting anyway.
-		 * Force CritSectionCount to a known state in case we elog'd
-		 * from inside a critical section.
+		 * Force InterruptHoldoffCount to a known state in case we elog'd
+		 * from inside a holdoff section.
 		 */
 		ImmediateInterruptOK = false;
 		QueryCancelPending = false;
-		CritSectionCount = 1;
+		InterruptHoldoffCount = 1;
+		CritSectionCount = 0;	/* should be unnecessary, but... */
 
 		/*
 		 * Make sure we are in a valid memory context during recovery.
@@ -1746,10 +1748,10 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		InError = false;
 
 		/*
-		 * Exit critical section we implicitly established above.
+		 * Exit interrupt holdoff section we implicitly established above.
 		 * (This could result in accepting a cancel or die interrupt.)
 		 */
-		END_CRIT_SECTION();
+		RESUME_INTERRUPTS();
 	}
 
 	Warn_restart_ready = true;	/* we can now handle elog(ERROR) */

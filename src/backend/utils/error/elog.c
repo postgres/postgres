@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.76 2001/01/14 05:08:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.77 2001/01/19 22:08:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ elog(int lev, const char *fmt, ...)
 	int			space_needed;
 	int			len;
 	/* size of the prefix needed for timestamp and pid, if enabled */
-	size_t      timestamp_size;
+	size_t		timestamp_size;
 
 	if (lev <= DEBUG && Debugfile < 0)
 		return;					/* ignore debug msgs if noplace to send */
@@ -148,15 +148,25 @@ elog(int lev, const char *fmt, ...)
 	}
 #else
 	/* assume strerror() will cope gracefully with bogus errno values */
-    errorstr = strerror(errno);
+	errorstr = strerror(errno);
 #endif
 
-	/* Convert initialization errors into fatal errors.
-	 * This is probably redundant, because Warn_restart_ready won't
-	 * be set anyway...
-	 */
-	if (lev == ERROR && IsInitProcessingMode())
-		lev = FATAL;
+	if (lev == ERROR || lev == FATAL)
+	{
+		/*
+		 * Convert initialization errors into fatal errors.
+		 * This is probably redundant, because Warn_restart_ready won't
+		 * be set anyway...
+		 */
+		if (IsInitProcessingMode())
+			lev = FATAL;
+		/*
+		 * If we are inside a critical section, all errors become STOP errors.
+		 * See miscadmin.h.
+		 */
+		if (CritSectionCount > 0)
+			lev = STOP;
+	}
 
 	/* choose message prefix and indent level */
 	switch (lev)
