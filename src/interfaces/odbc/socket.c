@@ -77,14 +77,10 @@ SOCK_Destructor(SocketClass *self)
 {
 	if (self->socket != -1)
 	{
+		SOCK_put_char(self, 'X');
+		SOCK_flush_output(self);
 		if (!shutdown(self->socket, 2)) /* no sends or receives */
-		{
-#ifdef DOES_NOT_WORK
-			SOCK_put_char(self, 'X');
-			SOCK_flush_output(self);
-#endif
 			closesocket(self->socket);
-		}
 	}
 
 	if (self->buffer_in)
