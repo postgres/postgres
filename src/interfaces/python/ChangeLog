@@ -9,6 +9,7 @@ Version 3.2
   - Add WIN32 support (gerhard@bigfoot.de)
   - Fix some DB-API quoting problems (niall.smart@ebeon.com)
   - Moved development into PostgreSQL development tree.
+  - Added NUMERICOID to list of returned types.
 
 Version 3.1
   - Fix some quoting functions.  In particular handle NULLs better.

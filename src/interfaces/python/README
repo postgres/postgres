@@ -64,7 +64,7 @@ based on the PyGres95 code written by Pascal Andre, andre@chimay.via.ecp.fr.
 I changed the version to 2.0 and updated the code for Python 1.5 and
 PostgreSQL 6.2.1.  While I was at it I upgraded the code to use full ANSI 
 style prototypes and changed the order of arguments to connect.  The latest
-version of PyGreSQL works with PostgreSQL 6.5 and Python 1.5.2.
+version of PyGreSQL works with PostgreSQL 7.1.2 and Python 2.0.
 
 
 1.2. Distribution files
