@@ -40,15 +40,22 @@
 
 #include "regex/cdefs.h"
 
+#include <stdio.h>
 #include <stdarg.h>
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
 
-/* IRIX doesn't do 'long long' in va_arg(), so use a typedef */
+/*
+ * We do all internal arithmetic in the widest available integer type,
+ * here called long_long (or ulong_long for unsigned).
+ */
 #ifdef HAVE_LONG_LONG_INT_64
-typedef long long long_long;
-typedef unsigned long long ulong_long;
+typedef long long			long_long;
+typedef unsigned long long	ulong_long;
+#else
+typedef long				long_long;
+typedef unsigned long		ulong_long;
 #endif
 
 /*
@@ -64,7 +71,7 @@ typedef unsigned long long ulong_long;
  * Patrick Powell Tue Apr 11 09:48:21 PDT 1995
  * A bombproof version of doprnt (dopr) included.
  * Sigh.  This sort of thing is always nasty do deal with.	Note that
- * the version here does not include floating point...
+ * the version here does not include floating point. (now it does ... tgl)
  *
  * snprintf() is used instead of sprintf() as it does limit checks
  * for string length.  This covers a nasty loophole.
@@ -73,7 +80,7 @@ typedef unsigned long long ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.19 1999/02/03 21:17:00 momjian Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.20 1999/02/06 21:51:03 tgl Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
@@ -113,28 +120,22 @@ vsnprintf(char *str, size_t count, const char *fmt, va_list args)
  * dopr(): poor man's version of doprintf
  */
 
-static void fmtstr __P((char *value, int ljust, int len, int zpad, int maxwidth));
+static void fmtstr (char *value, int ljust, int len, int zpad, int maxwidth);
+static void fmtnum (long_long value, int base, int dosign, int ljust, int len, int zpad);
+static void fmtfloat (double value, char type, int ljust, int len, int precision, int pointflag);
+static void dostr (char *str, int cut);
+static void dopr_outch (int c);
 
-#ifndef HAVE_LONG_LONG_INT_64
-static void fmtnum __P((long value, int base, int dosign, int ljust, int len, int zpad));
-#else
-static void fmtnum __P((long_long value, int base, int dosign, int ljust, int len, int zpad));
-#endif
-
-static void dostr __P((char *, int));
 static char *output;
-static void dopr_outch __P((int c));
+
 
 static void
 dopr(char *buffer, const char *format, va_list args)
 {
 	int			ch;
-#ifdef HAVE_LONG_LONG_INT_64
 	long_long	value;
+	double		fvalue;
 	int			longlongflag = 0;
-#else
-	long		value;
-#endif
 	int			longflag = 0;
 	int			pointflag = 0;
 	int			maxwidth = 0;
@@ -150,10 +151,7 @@ dopr(char *buffer, const char *format, va_list args)
 		{
 			case '%':
 				ljust = len = zpad = maxwidth = 0;
-				longflag = pointflag = 0;
-#ifdef HAVE_LONG_LONG_INT_64
-				longlongflag = 0;
-#endif
+				longflag = longlongflag = pointflag = 0;
 		nextch:
 				ch = *format++;
 				switch (ch)
@@ -191,11 +189,9 @@ dopr(char *buffer, const char *format, va_list args)
 						pointflag = 1;
 						goto nextch;
 					case 'l':
-#ifdef HAVE_LONG_LONG_INT_64
 						if (longflag)
 							longlongflag = 1;
 						else
-#endif
 							longflag = 1;
 						goto nextch;
 					case 'u':
@@ -203,11 +199,9 @@ dopr(char *buffer, const char *format, va_list args)
 						/* fmtnum(value,base,dosign,ljust,len,zpad) */
 						if (longflag)
 						{
-#ifdef HAVE_LONG_LONG_INT_64
 							if (longlongflag)
 								value = va_arg(args, long_long);
 							else
-#endif
 								value = va_arg(args, long);
 						}
 						else
@@ -219,12 +213,10 @@ dopr(char *buffer, const char *format, va_list args)
 						/* fmtnum(value,base,dosign,ljust,len,zpad) */
 						if (longflag)
 						{
-#ifdef HAVE_LONG_LONG_INT_64
 							if (longlongflag)
 								value = va_arg(args, long_long);
 							else
-#endif
-							value = va_arg(args, long);
+								value = va_arg(args, long);
 						}
 						else
 							value = va_arg(args, int);
@@ -234,11 +226,9 @@ dopr(char *buffer, const char *format, va_list args)
 					case 'D':
 						if (longflag)
 						{
-#ifdef HAVE_LONG_LONG_INT_64
 							if (longlongflag)
 								value = va_arg(args, long_long);
 							else
-#endif
 								value = va_arg(args, long);
 						}
 						else
@@ -249,12 +239,10 @@ dopr(char *buffer, const char *format, va_list args)
 					case 'x':
 						if (longflag)
 						{
-#ifdef HAVE_LONG_LONG_INT_64
 							if (longlongflag)
 								value = va_arg(args, long_long);
 							else
-#endif
-							value = va_arg(args, long);
+								value = va_arg(args, long);
 						}
 						else
 							value = va_arg(args, int);
@@ -263,11 +251,9 @@ dopr(char *buffer, const char *format, va_list args)
 					case 'X':
 						if (longflag)
 						{
-#ifdef HAVE_LONG_LONG_INT_64
 							if (longlongflag)
 								value = va_arg(args, long_long);
 							else
-#endif
 								value = va_arg(args, long);
 						}
 						else
@@ -287,6 +273,14 @@ dopr(char *buffer, const char *format, va_list args)
 						ch = va_arg(args, int);
 						dopr_outch(ch);
 						break;
+					case 'e':
+					case 'E':
+					case 'f':
+					case 'g':
+					case 'G':
+						fvalue = va_arg(args, double);
+						fmtfloat(fvalue, ch, ljust, len, maxwidth, pointflag);
+						break;
 					case '%':
 						dopr_outch(ch);
 						continue;
@@ -303,12 +297,7 @@ dopr(char *buffer, const char *format, va_list args)
 }
 
 static void
-fmtstr(value, ljust, len, zpad, maxwidth)
-char	   *value;
-int			ljust,
-			len,
-			zpad,
-			maxwidth;
+fmtstr(char *value, int ljust, int len, int zpad, int maxwidth)
 {
 	int			padlen,
 				strlen;			/* amount to pad */
@@ -337,25 +326,11 @@ int			ljust,
 }
 
 static void
-fmtnum(value, base, dosign, ljust, len, zpad)
-#ifdef HAVE_LONG_LONG_INT_64
-	long_long	value;
-#else
-	long		value;
-#endif
-int			base,
-			dosign,
-			ljust,
-			len,
-			zpad;
+fmtnum(long_long value, int base, int dosign, int ljust, int len, int zpad)
 {
 	int			signvalue = 0;
-#ifdef HAVE_LONG_LONG_INT_64
-	ulong_long uvalue;
-#else
-	unsigned long uvalue;
-#endif
-	char		convert[20];
+	ulong_long	uvalue;
+	char		convert[64];
 	int			place = 0;
 	int			padlen = 0;		/* amount to pad */
 	int			caps = 0;
@@ -385,6 +360,13 @@ int			base,
 		uvalue = (uvalue / (unsigned) base);
 	} while (uvalue);
 	convert[place] = 0;
+
+	if (len < 0)
+	{
+		/* this could happen with a "*" width spec */
+		ljust = 1;
+		len = -len;
+	}
 	padlen = len - place;
 	if (padlen < 0)
 		padlen = 0;
@@ -426,9 +408,46 @@ int			base,
 }
 
 static void
-dostr(str, cut)
-char	   *str;
-int			cut;
+fmtfloat (double value, char type, int ljust, int len, int precision, int pointflag)
+{
+	char		fmt[32];
+	char		convert[512];
+	int			padlen = 0;		/* amount to pad */
+
+	/* we rely on regular C library's sprintf to do the basic conversion */
+	if (pointflag)
+		sprintf(fmt, "%%.%d%c", precision, type);
+	else
+		sprintf(fmt, "%%%c", type);
+	sprintf(convert, fmt, value);
+
+	if (len < 0)
+	{
+		/* this could happen with a "*" width spec */
+		ljust = 1;
+		len = -len;
+	}
+	padlen = len - strlen(convert);
+	if (padlen < 0)
+		padlen = 0;
+	if (ljust)
+		padlen = -padlen;
+
+	while (padlen > 0)
+	{
+		dopr_outch(' ');
+		--padlen;
+	}
+	dostr(convert, 0);
+	while (padlen < 0)
+	{
+		dopr_outch(' ');
+		++padlen;
+	}
+}
+
+static void
+dostr(char *str, int cut)
 {
 	if (cut)
 	{
@@ -443,8 +462,7 @@ int			cut;
 }
 
 static void
-dopr_outch(c)
-int			c;
+dopr_outch(int c)
 {
 #if 0
 	if (iscntrl(c) && c != '\n' && c != '\t')
