@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.18 2003/05/14 03:26:02 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.19 2003/05/30 22:55:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,10 +248,18 @@ dumpUsers(PGconn *conn)
 	printf("--\n-- Users\n--\n\n");
 	printf("DELETE FROM pg_shadow WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template0');\n\n");
 
-	res = executeQuery(conn,
-					   "SELECT usename, usesysid, passwd, usecreatedb, usesuper, CAST(valuntil AS timestamp) "
-					   "FROM pg_shadow "
-					   "WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template0');");
+	if (server_version >= 70100)
+		res = executeQuery(conn,
+						   "SELECT usename, usesysid, passwd, usecreatedb, "
+						   "usesuper, CAST(valuntil AS timestamp) "
+						   "FROM pg_shadow "
+						   "WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template0')");
+	else
+		res = executeQuery(conn,
+						   "SELECT usename, usesysid, passwd, usecreatedb, "
+						   "usesuper, CAST(valuntil AS timestamp) "
+						   "FROM pg_shadow "
+						   "WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template1')");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -280,7 +288,8 @@ dumpUsers(PGconn *conn)
 			appendPQExpBuffer(buf, " NOCREATEUSER");
 
 		if (!PQgetisnull(res, i, 5))
-			appendPQExpBuffer(buf, " VALID UNTIL '%s'", PQgetvalue(res, i, 5));
+			appendPQExpBuffer(buf, " VALID UNTIL '%s'",
+							  PQgetvalue(res, i, 5));
 
 		appendPQExpBuffer(buf, ";\n");
 
@@ -309,7 +318,7 @@ dumpGroups(PGconn *conn)
 	printf("--\n-- Groups\n--\n\n");
 	printf("DELETE FROM pg_group;\n\n");
 
-	res = executeQuery(conn, "SELECT groname, grosysid, grolist FROM pg_group;");
+	res = executeQuery(conn, "SELECT groname, grosysid, grolist FROM pg_group");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -374,11 +383,38 @@ dumpCreateDB(PGconn *conn)
 
 	printf("--\n-- Database creation\n--\n\n");
 
-	/*
-	 * Basically this query returns: dbname, dbowner, encoding,
-	 * istemplate, dbpath
-	 */
-	res = executeQuery(conn, "SELECT datname, coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), pg_encoding_to_char(d.encoding), datistemplate, datpath FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) WHERE datallowconn ORDER BY 1;");
+	if (server_version >= 70300)
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "datistemplate, datpath, datacl "
+						   "FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) "
+						   "WHERE datallowconn ORDER BY 1");
+	else if (server_version >= 70100)
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "coalesce("
+						   "(select usename from pg_shadow where usesysid=datdba), "
+						   "(select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "datistemplate, datpath, '' as datacl "
+						   "FROM pg_database d "
+						   "WHERE datallowconn ORDER BY 1");
+	else
+	{
+		/*
+		 * Note: 7.0 fails to cope with sub-select in COALESCE, so just
+		 * deal with getting a NULL by not printing any OWNER clause.
+		 */
+		res = executeQuery(conn,
+						   "SELECT datname, "
+						   "(select usename from pg_shadow where usesysid=datdba), "
+						   "pg_encoding_to_char(d.encoding), "
+						   "'f' as datistemplate, datpath, '' as datacl "
+						   "FROM pg_database d "
+						   "ORDER BY 1");
+	}
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -388,19 +424,27 @@ dumpCreateDB(PGconn *conn)
 		char	   *dbencoding = PQgetvalue(res, i, 2);
 		char	   *dbistemplate = PQgetvalue(res, i, 3);
 		char	   *dbpath = PQgetvalue(res, i, 4);
+		char	   *dbacl = PQgetvalue(res, i, 5);
+		char	   *fdbname;
 
 		if (strcmp(dbname, "template1") == 0)
 			continue;
 
 		buf = createPQExpBuffer();
 
+		/* needed for buildACLCommands() */
+		fdbname = strdup(fmtId(dbname));
+
 		if (output_clean)
-			appendPQExpBuffer(buf, "DROP DATABASE %s;\n", fmtId(dbname));
+			appendPQExpBuffer(buf, "DROP DATABASE %s;\n", fdbname);
 
-		appendPQExpBuffer(buf, "CREATE DATABASE %s", fmtId(dbname));
-		appendPQExpBuffer(buf, " WITH OWNER = %s TEMPLATE = template0", fmtId(dbowner));
+		appendPQExpBuffer(buf, "CREATE DATABASE %s", fdbname);
+		if (strlen(dbowner) != 0)
+			appendPQExpBuffer(buf, " WITH OWNER = %s",
+							  fmtId(dbowner));
+		appendPQExpBuffer(buf, " TEMPLATE = template0");
 
-		if (strcmp(dbpath, "") != 0)
+		if (strlen(dbpath) != 0)
 		{
 			appendPQExpBuffer(buf, " LOCATION = ");
 			appendStringLiteral(buf, dbpath, true);
@@ -417,8 +461,19 @@ dumpCreateDB(PGconn *conn)
 			appendStringLiteral(buf, dbname, true);
 			appendPQExpBuffer(buf, ";\n");
 		}
+
+		if (!buildACLCommands(fdbname, "DATABASE", dbacl, dbowner,
+							  server_version, buf))
+		{
+			fprintf(stderr, _("%s: could not parse ACL list (%s) for database %s\n"),
+					progname, dbacl, fdbname);
+			PQfinish(conn);
+			exit(1);
+		}
+
 		printf("%s", buf->data);
 		destroyPQExpBuffer(buf);
+		free(fdbname);
 
 		if (server_version >= 70300)
 			dumpDatabaseConfig(conn, dbname);
@@ -539,7 +594,11 @@ dumpDatabases(PGconn *conn)
 	PGresult   *res;
 	int			i;
 
-	res = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;");
+	if (server_version >= 70100)
+		res = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1");
+	else
+		res = executeQuery(conn, "SELECT datname FROM pg_database ORDER BY 1");
+
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		int			ret;
@@ -687,6 +746,9 @@ static PGresult *
 executeQuery(PGconn *conn, const char *query)
 {
 	PGresult   *res;
+
+	if (verbose)
+		fprintf(stderr, _("%s: executing %s\n"), progname, query);
 
 	res = PQexec(conn, query);
 	if (!res ||
