@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.3 1996/08/01 05:04:29 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.4 1996/08/28 23:02:43 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,6 +17,7 @@ MKDIR=	../mk
 include $(MKDIR)/postgres.mk
 
 CFLAGS+= -I$(srcdir)/backend/include \
+	-I$(srcdir)/include \
 	-I$(srcdir)/backend \
 	-I$(CURDIR) \
 
