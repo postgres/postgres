@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.86 2001/11/08 04:05:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.87 2001/11/18 12:07:07 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -598,6 +598,10 @@ bpcharlen(PG_FUNCTION_ARGS)
 	BpChar	   *arg = PG_GETARG_BPCHAR_P(0);
 
 #ifdef MULTIBYTE
+	/* optimization for single byte encoding */
+	if (pg_database_encoding_max_length() <= 1)
+		PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
+
 	PG_RETURN_INT32(
 			  pg_mbstrlen_with_len(VARDATA(arg), VARSIZE(arg) - VARHDRSZ)
 		);
@@ -806,6 +810,10 @@ varcharlen(PG_FUNCTION_ARGS)
 	VarChar    *arg = PG_GETARG_VARCHAR_P(0);
 
 #ifdef MULTIBYTE
+	/* optimization for single byte encoding */
+	if (pg_database_encoding_max_length() <= 1)
+		PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
+
 	PG_RETURN_INT32(
 			  pg_mbstrlen_with_len(VARDATA(arg), VARSIZE(arg) - VARHDRSZ)
 		);
