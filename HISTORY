@@ -1,4 +1,4 @@
-  ------------------------------------------------------------------------
+ ------------------------------------------------------------------------
                                 Release 7.1.2
   ------------------------------------------------------------------------
 
@@ -2348,10 +2348,11 @@ Unused/uninialized variables corrected
   ------------------------------------------------------------------------
 
 
-Release v1.09
+Release v1.09  (1996-11-04)
 
-Sorry, we stopped keeping track of changes from 1.02 to 1.09. Some of the
-changes listed in 6.0 were actually included in the 1.02.1 to 1.09 releases.
+Sorry, we didn't keep track of changes from 1.02 to 1.09. Some of the
+changes listed in 6.0 were actually included in the 1.02.1 to 1.09
+releases.
 
 
 
