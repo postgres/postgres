@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.72 2004/06/02 21:04:40 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.73 2004/07/11 23:13:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -39,10 +39,11 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }
     ADD <replaceable class="PARAMETER">table_constraint</replaceable>
     DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
-    SET WITHOUT OIDS
-    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
     CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
     SET WITHOUT CLUSTER
+    SET WITHOUT OIDS
+    OWNER TO <replaceable class="PARAMETER">new_owner</replaceable>
+    SET TABLESPACE <replaceable class="PARAMETER">tablespace_name</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -182,6 +183,29 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    </varlistentry>
 
    <varlistentry>
+    <term><literal>CLUSTER</literal></term>
+    <listitem>
+     <para>
+      This form selects the default index for future 
+      <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
+      operations.  It does not actually re-cluster the table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SET WITHOUT CLUSTER</literal></term>
+    <listitem>
+     <para>
+      This form removes the most recently used
+      <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
+      index specification from the table.  This affects
+      future cluster operations that don't specify an index.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><literal>SET WITHOUT OIDS</literal></term>
     <listitem>
      <para>
@@ -211,28 +235,19 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>CLUSTER</literal></term>
+    <term><literal>SET TABLESPACE</literal></term>
     <listitem>
      <para>
-      This form selects the default index for future 
-      <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
-      operations.
+      This form changes the table's tablespace to the specified tablespace and
+      moves the data file(s) associated with the table to the new tablespace.
+      Indexes on the table, if any, are not moved; but they can be moved
+      separately with additional <literal>SET TABLESPACE</literal> commands.
+      See also 
+      <xref linkend="SQL-CREATETABLESPACE" endterm="sql-createtablespace-title">.
      </para>
     </listitem>
    </varlistentry>
 
-   <varlistentry>
-    <term><literal>SET WITHOUT CLUSTER</literal></term>
-    <listitem>
-     <para>
-      This form removes the most recently used
-      <xref linkend="SQL-CLUSTER" endterm="sql-cluster-title">
-      index specification from the table.  This affects
-      future cluster operations that don't specify an index.
-     </para>
-    </listitem>
-   </varlistentry>
- 
    <varlistentry>
     <term><literal>RENAME</literal></term>
     <listitem>
@@ -293,16 +308,6 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">type</replaceable></term>
-      <listitem>
-       <para>
-	Data type of the new column, or new data type for an existing
-	column.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><replaceable class="PARAMETER">new_column</replaceable></term>
       <listitem>
        <para>
@@ -316,6 +321,16 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <listitem>
        <para>
 	New name for the table.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">type</replaceable></term>
+      <listitem>
+       <para>
+	Data type of the new column, or new data type for an existing
+	column.
        </para>
       </listitem>
      </varlistentry>
@@ -339,24 +354,6 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">new_owner</replaceable></term>
-      <listitem>
-       <para>
-	The user name of the new owner of the table.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">index_name</replaceable></term>
-      <listitem>
-       <para>
-	The index name on which the table should be marked for clustering.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><literal>CASCADE</literal></term>
       <listitem>
        <para>
@@ -372,6 +369,33 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
        <para>
         Refuse to drop the column or constraint if there are any dependent
 	objects. This is the default behavior.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">index_name</replaceable></term>
+      <listitem>
+       <para>
+	The index name on which the table should be marked for clustering.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">new_owner</replaceable></term>
+      <listitem>
+       <para>
+	The user name of the new owner of the table.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">tablespace_name</replaceable></term>
+      <listitem>
+       <para>
+	The tablespace name to which the table will be moved.
        </para>
       </listitem>
      </varlistentry>
@@ -551,6 +575,14 @@ ALTER TABLE distributors ADD CONSTRAINT dist_id_zipcode_key UNIQUE (dist_id, zip
 ALTER TABLE distributors ADD PRIMARY KEY (dist_id);
 </programlisting>
   </para>
+
+  <para> 
+	To move a table to a different tablespace:
+<programlisting>
+ALTER TABLE distributors SET TABLESPACE fasttablespace;
+</programlisting>
+  </para>
+
  </refsect1>
 
  <refsect1>

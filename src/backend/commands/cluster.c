@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.126 2004/06/18 06:13:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.127 2004/07/11 23:13:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -485,6 +485,7 @@ static void
 rebuild_relation(Relation OldHeap, Oid indexOid)
 {
 	Oid			tableOid = RelationGetRelid(OldHeap);
+	Oid			tableSpace = OldHeap->rd_rel->reltablespace;
 	Oid			OIDNewHeap;
 	char		NewHeapName[NAMEDATALEN];
 	ObjectAddress object;
@@ -505,7 +506,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	 */
 	snprintf(NewHeapName, sizeof(NewHeapName), "pg_temp_%u", tableOid);
 
-	OIDNewHeap = make_new_heap(tableOid, NewHeapName);
+	OIDNewHeap = make_new_heap(tableOid, NewHeapName, tableSpace);
 
 	/*
 	 * We don't need CommandCounterIncrement() because make_new_heap did
@@ -520,8 +521,8 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	/* To make the new heap's data visible (probably not needed?). */
 	CommandCounterIncrement();
 
-	/* Swap the relfilenodes of the old and new heaps. */
-	swap_relfilenodes(tableOid, OIDNewHeap);
+	/* Swap the physical files of the old and new heaps. */
+	swap_relation_files(tableOid, OIDNewHeap);
 
 	CommandCounterIncrement();
 
@@ -550,7 +551,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
  * Create the new table that we will fill with correctly-ordered data.
  */
 Oid
-make_new_heap(Oid OIDOldHeap, const char *NewName)
+make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 {
 	TupleDesc	OldHeapDesc,
 				tupdesc;
@@ -568,7 +569,7 @@ make_new_heap(Oid OIDOldHeap, const char *NewName)
 
 	OIDNewHeap = heap_create_with_catalog(NewName,
 										  RelationGetNamespace(OldHeap),
-		                                  OldHeap->rd_rel->reltablespace,
+		                                  NewTableSpace,
 										  tupdesc,
 										  OldHeap->rd_rel->relkind,
 										  OldHeap->rd_rel->relisshared,
@@ -646,13 +647,16 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 }
 
 /*
- * Swap the relfilenodes for two given relations.
+ * Swap the physical files of two given relations.
+ *
+ * We swap the physical identity (reltablespace and relfilenode) while
+ * keeping the same logical identities of the two relations.
  *
  * Also swap any TOAST links, so that the toast data moves along with
  * the main-table data.
  */
 void
-swap_relfilenodes(Oid r1, Oid r2)
+swap_relation_files(Oid r1, Oid r2)
 {
 	Relation	relRelation,
 				rel;
@@ -695,11 +699,15 @@ swap_relfilenodes(Oid r1, Oid r2)
 	relation_close(rel, NoLock);
 
 	/*
-	 * Actually swap the filenode and TOAST fields in the two tuples
+	 * Actually swap the fields in the two tuples
 	 */
 	swaptemp = relform1->relfilenode;
 	relform1->relfilenode = relform2->relfilenode;
 	relform2->relfilenode = swaptemp;
+
+	swaptemp = relform1->reltablespace;
+	relform1->reltablespace = relform2->reltablespace;
+	relform2->reltablespace = swaptemp;
 
 	swaptemp = relform1->reltoastrelid;
 	relform1->reltoastrelid = relform2->reltoastrelid;
@@ -793,13 +801,16 @@ swap_relfilenodes(Oid r1, Oid r2)
 
 	/*
 	 * Blow away the old relcache entries now.	We need this kluge because
-	 * relcache.c indexes relcache entries by rd_node as well as OID. It
-	 * will get confused if it is asked to (re)build an entry with a new
-	 * rd_node value when there is still another entry laying about with
-	 * that same rd_node value.  (Fortunately, since one of the entries is
-	 * local in our transaction, it's sufficient to clear out our own
-	 * relcache this way; the problem cannot arise for other backends when
-	 * they see our update on the non-local relation.)
+	 * relcache.c keeps a link to the smgr relation for the physical file,
+	 * and that will be out of date as soon as we do CommandCounterIncrement.
+	 * Whichever of the rels is the second to be cleared during cache
+	 * invalidation will have a dangling reference to an already-deleted smgr
+	 * relation.  Rather than trying to avoid this by ordering operations
+	 * just so, it's easiest to not have the relcache entries there at all.
+	 * (Fortunately, since one of the entries is local in our transaction,
+	 * it's sufficient to clear out our own relcache this way; the problem
+	 * cannot arise for other backends when they see our update on the
+	 * non-local relation.)
 	 */
 	RelationForgetRelation(r1);
 	RelationForgetRelation(r2);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.260 2004/06/25 21:55:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.261 2004/07/11 23:13:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -806,7 +806,8 @@ typedef enum AlterTableType
 	AT_ChangeOwner,				/* change owner */
 	AT_ClusterOn,				/* CLUSTER ON */
 	AT_DropCluster,				/* SET WITHOUT CLUSTER */
-	AT_DropOids					/* SET WITHOUT OIDS */
+	AT_DropOids,				/* SET WITHOUT OIDS */
+	AT_SetTableSpace			/* SET TABLESPACE */
 } AlterTableType;
 
 typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
@@ -814,7 +815,7 @@ typedef struct AlterTableCmd	/* one subcommand of an ALTER TABLE */
 	NodeTag		type;
 	AlterTableType subtype;		/* Type of table alteration to apply */
 	char	   *name;			/* column or constraint name to act on, or
-								 * new owner */
+								 * new owner or tablespace */
 	Node	   *def;			/* definition of new column, column type,
 								 * index, or constraint */
 	Node	   *transform;		/* transformation expr for ALTER TYPE */
