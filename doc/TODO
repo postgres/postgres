@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jan 12 20:53:32 EST 2000
+Last updated:		Wed Jan 12 21:34:10 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -226,7 +226,6 @@ FSYNC
 
 INDEXES
 
-* Use indexes in ORDER BY for restrictive data sets
 * Use indexes in ORDER BY for min(), max()
 * Pull requested data directly from indexes, bypassing heap data
 * Use index to restrict rows returned by multi-key index when used with
