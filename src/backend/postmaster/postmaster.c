@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.265 2002/02/19 19:53:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.266 2002/02/19 20:45:04 tgl Exp $
  *
  * NOTES
  *
@@ -1459,7 +1459,7 @@ pmdie(SIGNAL_ARGS)
 			if (ShutdownPID > 0)
 			{
 				elog(REALLYFATAL, "shutdown process %d already running",
-					 ShutdownPID);
+					 (int) ShutdownPID);
 				abort();
 			}
 
@@ -1503,7 +1503,7 @@ pmdie(SIGNAL_ARGS)
 			if (ShutdownPID > 0)
 			{
 				elog(REALLYFATAL, "shutdown process %d already running",
-					 ShutdownPID);
+					 (int) ShutdownPID);
 				abort();
 			}
 
@@ -1607,7 +1607,7 @@ reaper(SIGNAL_ARGS)
 				if (ShutdownPID > 0)
 				{
 					elog(STOP, "startup process %d died while shutdown process %d already running",
-						 pid, ShutdownPID);
+						 pid, (int) ShutdownPID);
 					abort();
 				}
 				ShutdownPID = ShutdownDataBase();
@@ -1747,7 +1747,7 @@ CleanupProc(int pid,
 				if (DebugLvl)
 					elog(DEBUG, "CleanupProc: sending %s to process %d",
 						 (SendStop ? "SIGSTOP" : "SIGQUIT"),
-						 bp->pid);
+						 (int) bp->pid);
 				kill(bp->pid, (SendStop ? SIGSTOP : SIGQUIT));
 			}
 		}
@@ -1820,7 +1820,7 @@ SignalChildren(int signal)
 		{
 			if (DebugLvl >= 1)
 				elog(DEBUG, "SignalChildren: sending signal %d to process %d",
-					 signal, bp->pid);
+					 signal, (int) bp->pid);
 
 			kill(bp->pid, signal);
 		}
@@ -1915,7 +1915,7 @@ BackendStartup(Port *port)
 	/* in parent, normal */
 	if (DebugLvl >= 1)
 		elog(DEBUG, "BackendStartup: forked pid=%d socket=%d",
-			 pid, port->sock);
+			 (int) pid, port->sock);
 
 	/*
 	 * Everything's been successful, it's safe to add this backend to our
