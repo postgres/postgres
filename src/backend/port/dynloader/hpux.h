@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/dynloader/hpux.h,v 1.8 2003/11/29 19:51:54 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/dynloader/hpux.h,v 1.9 2004/01/04 04:06:37 tgl Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -19,7 +19,7 @@
 /* System includes */
 #include "fmgr.h"
 
-void	   *pg_dlopen(char *filename);
-PGFunction	pg_dlsym(void *handle, char *funcname);
-void		pg_dlclose(void *handle);
-char	   *pg_dlerror();
+extern void *pg_dlopen(char *filename);
+extern PGFunction pg_dlsym(void *handle, char *funcname);
+extern void pg_dlclose(void *handle);
+extern char *pg_dlerror(void);
