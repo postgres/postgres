@@ -39,7 +39,7 @@ getlexem(char *start, char *end, int *len)
 }
 
 bool
-			compare_subnode(ltree_level * t, char *qn, int len, int (*cmpptr) (const char *, const char *, size_t), bool anyend)
+compare_subnode(ltree_level * t, char *qn, int len, int (*cmpptr) (const char *, const char *, size_t), bool anyend)
 {
 	char	   *endt = t->name + t->len;
 	char	   *endq = qn + len;
@@ -117,6 +117,11 @@ printFieldNot(FieldNot *fn ) {
 }
 */
 
+static struct {
+	bool muse;
+	uint32	high_pos;
+} SomeStack = {false,0,};
+
 static bool
 checkCond(lquery_level * curq, int query_numlevel, ltree_level * curt, int tree_numlevel, FieldNot * ptr)
 {
@@ -128,6 +133,14 @@ checkCond(lquery_level * curq, int query_numlevel, ltree_level * curt, int tree_
 	int			isok;
 	lquery_level *prevq = NULL;
 	ltree_level *prevt = NULL;
+
+	if ( SomeStack.muse ) {
+		high_pos = SomeStack.high_pos;
+		qlen--;
+		prevq = curq;
+		curq = LQL_NEXT(curq);
+		SomeStack.muse = false;
+	}
 
 	while (tlen > 0 && qlen > 0)
 	{
@@ -181,6 +194,15 @@ checkCond(lquery_level * curq, int query_numlevel, ltree_level * curt, int tree_
 					curt = LEVEL_NEXT(curt);
 					tlen--;
 					cur_tpos++;
+					if ( isok && prevq && prevq->numvar==0 && tlen>0 && cur_tpos <= high_pos ) {
+						FieldNot tmpptr;
+						if ( ptr )
+							memcpy(&tmpptr,ptr,sizeof(FieldNot));
+						SomeStack.high_pos = high_pos-cur_tpos;
+						SomeStack.muse = true;
+						if ( checkCond(prevq, qlen+1, curt, tlen, (ptr) ? &tmpptr : NULL) )
+							return true;
+					}
 					if (!isok && ptr)
 						ptr->nt++;
 				}

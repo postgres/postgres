@@ -3071,9 +3071,17 @@ SELECT * FROM ltreetest WHERE t ~ '*.1' order by t asc;
                t                
 --------------------------------
  1
+ 1.1
+ 1.1.1
+ 1.1.1.1
+ 1.1.1.2.1
+ 1.1.2.1
+ 1.26.15.23.5.31.29.11.19.28.1
+ 10.13.22.1.8.30.9.24.1.2.1
  10.22.1
  10.26.30.15.1
  11.1
+ 12.1.1
  17.25.2.13.10.27.13.1
  18.13.6.12.26.26.26.29.18.20.1
  19.20.25.7.27.28.27.17.9.3.1
@@ -3083,6 +3091,7 @@ SELECT * FROM ltreetest WHERE t ~ '*.1' order by t asc;
  21.18.2.1
  21.23.17.8.23.11.8.1
  22.30.31.24.23.22.5.20.28.1
+ 23.17.22.1.23.4.29.32.4.1
  23.28.1
  23.3.32.21.5.14.10.17.1
  25.6.12.16.1
@@ -3095,14 +3104,15 @@ SELECT * FROM ltreetest WHERE t ~ '*.1' order by t asc;
  8.2.18.23.5.16.17.1
  8.32.30.1
  9.21.20.29.1
-(25 rows)
+(34 rows)
 
 SELECT * FROM ltreetest WHERE t ~ '23.*.1' order by t asc;
-            t            
--------------------------
+             t             
+---------------------------
+ 23.17.22.1.23.4.29.32.4.1
  23.28.1
  23.3.32.21.5.14.10.17.1
-(2 rows)
+(3 rows)
 
 SELECT * FROM ltreetest WHERE t ~ '23.*{1}.1' order by t asc;
     t    
@@ -7266,9 +7276,17 @@ SELECT * FROM ltreetest WHERE t ~ '*.1' order by t asc;
                t                
 --------------------------------
  1
+ 1.1
+ 1.1.1
+ 1.1.1.1
+ 1.1.1.2.1
+ 1.1.2.1
+ 1.26.15.23.5.31.29.11.19.28.1
+ 10.13.22.1.8.30.9.24.1.2.1
  10.22.1
  10.26.30.15.1
  11.1
+ 12.1.1
  17.25.2.13.10.27.13.1
  18.13.6.12.26.26.26.29.18.20.1
  19.20.25.7.27.28.27.17.9.3.1
@@ -7278,6 +7296,7 @@ SELECT * FROM ltreetest WHERE t ~ '*.1' order by t asc;
  21.18.2.1
  21.23.17.8.23.11.8.1
  22.30.31.24.23.22.5.20.28.1
+ 23.17.22.1.23.4.29.32.4.1
  23.28.1
  23.3.32.21.5.14.10.17.1
  25.6.12.16.1
@@ -7290,14 +7309,15 @@ SELECT * FROM ltreetest WHERE t ~ '*.1' order by t asc;
  8.2.18.23.5.16.17.1
  8.32.30.1
  9.21.20.29.1
-(25 rows)
+(34 rows)
 
 SELECT * FROM ltreetest WHERE t ~ '23.*.1' order by t asc;
-            t            
--------------------------
+             t             
+---------------------------
+ 23.17.22.1.23.4.29.32.4.1
  23.28.1
  23.3.32.21.5.14.10.17.1
-(2 rows)
+(3 rows)
 
 SELECT * FROM ltreetest WHERE t ~ '23.*{1}.1' order by t asc;
     t    
@@ -7372,13 +7392,13 @@ SELECT count(*) FROM _ltreetest WHERE t ~ '1.1.1.*' ;
 SELECT count(*) FROM _ltreetest WHERE t ~ '*.1' ;
  count 
 -------
-    83
+   109
 (1 row)
 
 SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.1' ;
  count 
 -------
-    10
+    11
 (1 row)
 
 SELECT count(*) FROM _ltreetest WHERE t ~ '23.*{1}.1' ;
@@ -7416,13 +7436,13 @@ SELECT count(*) FROM _ltreetest WHERE t ~ '1.1.1.*' ;
 SELECT count(*) FROM _ltreetest WHERE t ~ '*.1' ;
  count 
 -------
-    83
+   109
 (1 row)
 
 SELECT count(*) FROM _ltreetest WHERE t ~ '23.*.1' ;
  count 
 -------
-    10
+    11
 (1 row)
 
 SELECT count(*) FROM _ltreetest WHERE t ~ '23.*{1}.1' ;

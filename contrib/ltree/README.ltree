@@ -426,6 +426,8 @@ appreciate your input. So far, below some (rather obvious) results:
 
 CHANGES
 
+Feb 7, 2003
+   Fix ~ operation bug: eg '1.1.1' ~ '*.1'
 Aug 9, 2002
    Fixed very stupid but important bug :-)
 July 31, 2002
