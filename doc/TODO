@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Mar 12 00:25:49 EST 2005
+Last updated:		Sat Mar 12 00:41:33 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -441,10 +441,8 @@ Commands
 	o Allow COPY to understand \x as a hex byte
 	o Have COPY return the number of rows loaded/unloaded (?)
 	o Allow COPY to optionally include column headings in the first line
-	o Allow COPY FROM ... CSV to interpret newlines and carriage
+	o -Allow COPY FROM ... CSV to interpret newlines and carriage
 	  returns in data
-
-	  This would require major refactoring of the copy source code.
 
 
 * CURSOR
