@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/backend/Attic/makeID,v 1.1.1.1 1996/07/09 06:21:08 scrappy Exp $
+# $Header: /cvsroot/pgsql/src/Attic/MAKE_ID,v 1.1 1996/10/03 17:26:13 momjian Exp $
 #
 
 

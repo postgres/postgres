@@ -1,0 +1,10 @@
+#!/bin/sh
+trap "rm -f /tmp/$$" 0 1 2 3 15
+rm -f ./tags
+find `pwd`/ -type f -name '*.[chyl]' -print|xargs ctags -t -a -f tags
+sort tags >/tmp/$$ && mv /tmp/$$ tags
+
+find . -type d -print |while read DIR
+do
+	[ "$DIR" != "." ] && ln -f -s `pwd`/tags $DIR/tags
+done
