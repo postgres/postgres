@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.26 2001/05/23 22:00:43 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.27 2001/05/24 00:13:13 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,6 +19,7 @@ dbname=
 langname=
 list=
 showsql=
+PGLIB=
 
 # Check for echo -n vs echo \c
 
