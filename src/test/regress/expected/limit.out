@@ -98,7 +98,7 @@ SELECT ''::text AS five, unique1, unique2, stringu1
 
 SELECT ''::text AS five, unique1, unique2, stringu1 
 		FROM onek
-		ORDER BY unique1 LIMIT 5, 900;
+		ORDER BY unique1 LIMIT 900, 5;
  five | unique1 | unique2 | stringu1 
 ------+---------+---------+----------
       |     900 |     913 | QIAAAA
