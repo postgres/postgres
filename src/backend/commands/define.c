@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.56 2001/06/13 21:44:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.57 2001/06/21 18:25:54 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -64,10 +64,10 @@ static int	defGetTypeLength(DefElem *def);
 static void
 case_translate_language_name(const char *input, char *output)
 {
-/*-------------------------------------------------------------------------
-  Translate the input language name to lower case, except if it's "C",
-  translate to upper case.
---------------------------------------------------------------------------*/
+/*
+ *  Translate the input language name to lower case, except if it's "C",
+ * translate to upper case.
+ */
 	int			i;
 
 	for (i = 0; i < NAMEDATALEN - 1 && input[i]; ++i)
@@ -85,10 +85,10 @@ static void
 compute_return_type(TypeName *returnType,
 					char **prorettype_p, bool *returnsSet_p)
 {
-/*---------------------------------------------------------------------------
-   Examine the "returns" clause returnType of the CREATE FUNCTION statement
-   and return information about it as *prorettype_p and *returnsSet.
-----------------------------------------------------------------------------*/
+/*
+ *   Examine the "returns" clause returnType of the CREATE FUNCTION statement
+ *   and return information about it as *prorettype_p and *returnsSet.
+ */
 	*prorettype_p = TypeNameToInternalName(returnType);
 	*returnsSet_p = returnType->setof;
 }
@@ -100,28 +100,29 @@ compute_full_attributes(List *parameters,
 						int32 *percall_cpu_p, int32 *outin_ratio_p,
 						bool *canCache_p, bool *isStrict_p)
 {
-/*--------------------------------------------------------------------------
-  Interpret the parameters *parameters and return their contents as
-  *byte_pct_p, etc.
-
-  These parameters supply optional information about a function.
-  All have defaults if not specified.
-
-  Note: currently, only two of these parameters actually do anything:
-
-  * canCache means the optimizer's constant-folder is allowed to
-	pre-evaluate the function when all its inputs are constants.
-
-  * isStrict means the function should not be called when any NULL
-	inputs are present; instead a NULL result value should be assumed.
-
-  The other four parameters are not used anywhere.	They used to be
-  used in the "expensive functions" optimizer, but that's been dead code
-  for a long time.
-
-  Since canCache and isStrict are useful for any function, we now allow
-  attributes to be supplied for all functions regardless of language.
----------------------------------------------------------------------------*/
+/*-------------
+ *   Interpret the parameters *parameters and return their contents as
+ *   *byte_pct_p, etc.
+ *
+ *  These parameters supply optional information about a function.
+ *  All have defaults if not specified.
+ *
+ *  Note: currently, only two of these parameters actually do anything:
+ *
+ *   * canCache means the optimizer's constant-folder is allowed to
+ * 	   pre-evaluate the function when all its inputs are constants.
+ *
+ *   * isStrict means the function should not be called when any NULL
+ *     inputs are present; instead a NULL result value should be assumed.
+ *
+ *  The other four parameters are not used anywhere.	They used to be
+ *  used in the "expensive functions" optimizer, but that's been dead code
+ *  for a long time.
+ *
+ *  Since canCache and isStrict are useful for any function, we now allow
+ *  attributes to be supplied for all functions regardless of language.
+ *------------
+ */
 	List	   *pl;
 
 	/* the defaults */
@@ -530,7 +531,6 @@ DefineAggregate(char *aggName, List *parameters)
 /*
  * DefineType
  *		Registers a new type.
- *
  */
 void
 DefineType(char *typeName, List *parameters)
