@@ -1,10 +1,10 @@
 # ru.po
 # PG_RESETXLOG Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/po/ru.po,v 1.4 2003/08/04 14:01:37 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/po/ru.po,v 1.5 2003/08/24 21:18:51 petere Exp $
 #
 # ChangeLog:
-#   - July 24-26, 2003: Update for 7.4.*; <mokhov@cs.concordia.ca>
+#   - July 24 - August 23, 2003: Update for 7.4.*; <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Complete post-7.3beta2 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - September 7, 2002: Complete post-7.3beta1 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - August 31, 2002: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -12,8 +12,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2003-07-23 04:18-0300\n"
-"PO-Revision-Date: 2003-08-01 14:15-0500\n"
+"POT-Creation-Date: 2003-08-23 04:18-0300\n"
+"PO-Revision-Date: 2003-08-23 13:34-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -105,7 +105,7 @@ msgid ""
 "  touch %s\n"
 "and try again.\n"
 msgstr ""
-"Если вы уверены что путь к директории данных правельный, наберите\n"
+"Если вы уверены что путь к директории данных правильный, наберите\n"
 "  touch %s\n"
 "и попробуйте снова.\n"
 
@@ -122,7 +122,7 @@ msgstr "%s: pg_control существует, но его контрольная сумма CRC неверна; продолж
 #: pg_resetxlog.c:356
 #, c-format
 msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
-msgstr "%s: pg_control существует но повреждён или неизвестной версии; игнорируется...\n"
+msgstr "%s: pg_control существует, но повреждён или неизвестной версии; игнорируется...\n"
 
 #: pg_resetxlog.c:407
 #, c-format

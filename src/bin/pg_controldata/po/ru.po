@@ -1,18 +1,18 @@
 # ru.po
 # PG_CONTROLDATA Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_controldata/po/Attic/ru.po,v 1.4 2003/08/04 14:01:32 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_controldata/po/Attic/ru.po,v 1.5 2003/08/24 21:18:51 petere Exp $
 #
 # ChangeLog:
-#   - July 24-26, 2003: Update for 7.4.*; <mokhov@cs.concordia.ca>
+#   - July 24 - August 23, 2003: Update for 7.4.*; <mokhov@cs.concordia.ca>
 #   - September 7, 2002: Complete post 7.3beta1 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - August 31, 2002: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2003-07-23 04:18-0300\n"
-"PO-Revision-Date: 2003-08-01 14:10-0500\n"
+"POT-Creation-Date: 2003-08-23 04:18-0300\n"
+"PO-Revision-Date: 2003-08-23 13:28-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -25,7 +25,7 @@ msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s отображает информацию по управлению кластерами базы PostgreSQL.\n"
+"%s отображает информацию по управлению кластером баз PostgreSQL.\n"
 "\n"
 
 #: pg_controldata.c:32
@@ -45,7 +45,7 @@ msgstr ""
 "Опции:\n"
 "  ДИРДАННЫХ      показать информацию по управлению кластера для ДИРДАННЫХ\n"
 "  --help         показать эту подсказку и выйти\n"
-"  --version      показать версию pg_controldata и выйтиt\n"
+"  --version      показать версию pg_controldata и выйти\n"
 "\n"
 
 #: pg_controldata.c:41
@@ -116,7 +116,7 @@ msgid ""
 "\n"
 msgstr ""
 "ВНИМАНИЕ: Сосчитанная контрольная сумма CRC не совпадает со значением в файле.\n"
-"Файл либо повреждён либо его формат отличатется от ожидаемого этой программой.\n"
+"Файл либо повреждён, либо его формат отличается от ожидаемого этой программой.\n"
 "Не стоит доверять результатам представленным ниже.\n"
 "\n"
 
@@ -208,7 +208,7 @@ msgstr "Максимальная длина идентификаторов:   %u\n"
 #: pg_controldata.c:171
 #, c-format
 msgid "Maximum number of function arguments: %u\n"
-msgstr "Максмальное число аргументов функции: %u\n"
+msgstr "Максимальное число аргументов функции: %u\n"
 
 #: pg_controldata.c:172
 #, c-format
