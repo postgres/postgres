@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Aug 12 22:47:54 EDT 2004
+Last updated:		Fri Aug 13 21:30:49 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -714,6 +714,15 @@ Write-Ahead Log
   Currently fsync of WAL requires the disk platter to perform a full
   rotation to fsync again. One idea is to write the WAL to different
   offsets that might reduce the rotational delay.
+
+* Allow buffered WAL writes and fsync
+
+  Instead of guaranteeing recovery of all committed transactions, this
+  would provide improved performance by delaying WAL writes and fsync
+  so an abrupt operating system restart might lose a few seconds of 
+  committed transactions but still be consistent.  We could perhaps
+  remove the 'fsync' parameter (which results in an an inconsistent
+  database) in favor of this capability.
 
 
 Optimizer / Executor
