@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.7 2003/08/12 21:34:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.8 2003/08/13 18:56:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1086,6 +1086,16 @@ pqEndcopy3(PGconn *conn)
 		if (pqPutMsgStart('c', false, conn) < 0 ||
 			pqPutMsgEnd(conn) < 0)
 			return 1;
+		/*
+		 * If we sent the COPY command in extended-query mode, we must
+		 * issue a Sync as well.
+		 */
+		if (conn->ext_query)
+		{
+			if (pqPutMsgStart('S', false, conn) < 0 ||
+				pqPutMsgEnd(conn) < 0)
+				return 1;
+		}
 	}
 
 	/*

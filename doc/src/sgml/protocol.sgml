@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.39 2003/06/27 19:08:37 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.40 2003/08/13 18:56:21 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -919,8 +919,7 @@
 
    <para>
     In the event of a backend-detected error during copy-in mode (including
-    receipt of a CopyFail message, or indeed any frontend message other than
-    CopyData or CopyDone), the backend will issue an ErrorResponse 
+    receipt of a CopyFail message), the backend will issue an ErrorResponse 
     message.  If the <command>COPY</> command was issued via an extended-query
     message, the backend will now discard frontend messages until a Sync
     message is received, then it will issue ReadyForQuery and return to normal
@@ -928,6 +927,15 @@
     Query message, the rest of that message is discarded and ReadyForQuery
     is issued.  In either case, any subsequent CopyData, CopyDone, or CopyFail
     messages issued by the frontend will simply be dropped.
+   </para>
+
+   <para>
+    The backend will ignore Flush and Sync messages received during copy-in
+    mode.  Receipt of any other non-copy message type constitutes an error
+    that will abort the copy-in state as described above.  (The exception for
+    Flush and Sync is for the convenience of client libraries that always
+    send Flush or Sync after an Execute message, without checking whether
+    the command to be executed is a <command>COPY FROM STDIN</>.)
    </para>
 
    <para>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.144 2003/08/13 16:29:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.145 2003/08/13 18:56:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -647,6 +647,9 @@ PQsendQuery(PGconn *conn, const char *query)
 		return 0;
 	}
 
+	/* remember we are using simple query protocol */
+	conn->ext_query = false;
+
 	/*
 	 * Give the data a push.  In nonblock mode, don't complain if we're
 	 * unable to send it all; PQgetResult() will do any additional
@@ -900,6 +903,9 @@ PQsendQueryGuts(PGconn *conn,
 	if (pqPutMsgStart('S', false, conn) < 0 ||
 		pqPutMsgEnd(conn) < 0)
 		goto sendFailed;
+
+	/* remember we are using extended query protocol */
+	conn->ext_query = true;
 
 	/*
 	 * Give the data a push.  In nonblock mode, don't complain if we're
@@ -1187,29 +1193,28 @@ PQexecStart(PGconn *conn)
 	 */
 	while ((result = PQgetResult(conn)) != NULL)
 	{
-		if (result->resultStatus == PGRES_COPY_IN)
+		ExecStatusType resultStatus = result->resultStatus;
+
+		PQclear(result);		/* only need its status */
+		if (resultStatus == PGRES_COPY_IN)
 		{
 			if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
 			{
 				/* In protocol 3, we can get out of a COPY IN state */
 				if (PQputCopyEnd(conn,
 					 libpq_gettext("COPY terminated by new PQexec")) < 0)
-				{
-					PQclear(result);
 					return false;
-				}
 				/* keep waiting to swallow the copy's failure message */
 			}
 			else
 			{
 				/* In older protocols we have to punt */
-				PQclear(result);
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("COPY IN state must be terminated first\n"));
 				return false;
 			}
 		}
-		else if (result->resultStatus == PGRES_COPY_OUT)
+		else if (resultStatus == PGRES_COPY_OUT)
 		{
 			if (PG_PROTOCOL_MAJOR(conn->pversion) >= 3)
 			{
@@ -1224,13 +1229,11 @@ PQexecStart(PGconn *conn)
 			else
 			{
 				/* In older protocols we have to punt */
-				PQclear(result);
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("COPY OUT state must be terminated first\n"));
 				return false;
 			}
 		}
-		PQclear(result);
 	}
 
 	/* OK to send a command */
@@ -1406,6 +1409,16 @@ PQputCopyEnd(PGconn *conn, const char *errormsg)
 		{
 			/* Send COPY DONE */
 			if (pqPutMsgStart('c', false, conn) < 0 ||
+				pqPutMsgEnd(conn) < 0)
+				return -1;
+		}
+		/*
+		 * If we sent the COPY command in extended-query mode, we must
+		 * issue a Sync as well.
+		 */
+		if (conn->ext_query)
+		{
+			if (pqPutMsgStart('S', false, conn) < 0 ||
 				pqPutMsgEnd(conn) < 0)
 				return -1;
 		}
@@ -2055,12 +2068,15 @@ PQgetisnull(const PGresult *res, int tup_num, int field_num)
 int
 PQsetnonblocking(PGconn *conn, int arg)
 {
+	bool	barg;
+
 	if (!conn || conn->status == CONNECTION_BAD)
 		return -1;
 
-	arg = (arg == TRUE) ? 1 : 0;
+	barg = (arg ? TRUE : FALSE);
+
 	/* early out if the socket is already in the state requested */
-	if (arg == conn->nonblocking)
+	if (barg == conn->nonblocking)
 		return (0);
 
 	/*
@@ -2074,7 +2090,7 @@ PQsetnonblocking(PGconn *conn, int arg)
 	if (pqFlush(conn))
 		return (-1);
 
-	conn->nonblocking = arg;
+	conn->nonblocking = barg;
 
 	return (0);
 }

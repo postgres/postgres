@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.80 2003/08/04 02:40:20 momjian Exp $
+ * $Id: libpq-int.h,v 1.81 2003/08/13 18:56:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,8 +262,10 @@ struct pg_conn
 	PGAsyncStatusType asyncStatus;
 	PGTransactionStatusType xactStatus;
 	/* note: xactStatus never changes to ACTIVE */
-	int			nonblocking;	/* whether this connection is using a
-								 * blocking socket to the backend or not */
+	bool		nonblocking;	/* whether this connection is using
+								 * nonblock sending semantics */
+	bool		ext_query;		/* was our last query sent with extended
+								 * query protocol? */
 	char		copy_is_binary; /* 1 = copy binary, 0 = copy text */
 	int			copy_already_done;		/* # bytes already returned in
 										 * COPY OUT */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.208 2003/08/08 21:41:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.209 2003/08/13 18:56:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -386,6 +386,7 @@ CopyGetData(void *databuf, int datasize)
 					/* Try to receive another message */
 					int			mtype;
 
+				readmessage:
 					mtype = pq_getbyte();
 					if (mtype == EOF)
 						ereport(ERROR,
@@ -409,6 +410,15 @@ CopyGetData(void *databuf, int datasize)
 									 errmsg("COPY from stdin failed: %s",
 										 pq_getmsgstring(copy_msgbuf))));
 							break;
+						case 'H':		/* Flush */
+						case 'S':		/* Sync */
+							/*
+							 * Ignore Flush/Sync for the convenience of
+							 * client libraries (such as libpq) that may
+							 * send those without noticing that the command
+							 * they just sent was COPY.
+							 */
+							goto readmessage;
 						default:
 							ereport(ERROR,
 									(errcode(ERRCODE_PROTOCOL_VIOLATION),
