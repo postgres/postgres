@@ -124,8 +124,13 @@ static void findmust(struct parse * p, struct re_guts * g);
 static sopno pluscount(struct parse * p, struct re_guts * g);
 static int	pg_isdigit(int c);
 static int	pg_isalpha(int c);
+static int	pg_isalnum(int c);
 static int	pg_isupper(int c);
 static int	pg_islower(int c);
+static int	pg_iscntrl(int c);
+static int	pg_isgraph(int c);
+static int	pg_isprint(int c);
+static int	pg_ispunct(int c);
 
 static pg_wchar nuls[10];		/* place to point scanner in event of
 								 * error */
@@ -1710,6 +1715,16 @@ pg_isalpha(int c)
 }
 
 static int
+pg_isalnum(int c)
+{
+#ifdef MULTIBYTE
+	return (c >= 0 && c <= UCHAR_MAX && isalnum((unsigned char) c));
+#else
+	return (isalnum((unsigned char) c));
+#endif
+}
+
+static int
 pg_isupper(int c)
 {
 #ifdef MULTIBYTE
@@ -1726,6 +1741,46 @@ pg_islower(int c)
 	return (c >= 0 && c <= UCHAR_MAX && islower((unsigned char) c));
 #else
 	return (islower((unsigned char) c));
+#endif
+}
+
+static int
+pg_iscntrl(int c)
+{
+#ifdef MULTIBYTE
+	return (c >= 0 && c <= UCHAR_MAX && iscntrl((unsigned char) c));
+#else
+	return (iscntrl((unsigned char) c));
+#endif
+}
+
+static int
+pg_isgraph(int c)
+{
+#ifdef MULTIBYTE
+	return (c >= 0 && c <= UCHAR_MAX && isgraph((unsigned char) c));
+#else
+	return (isgraph((unsigned char) c));
+#endif
+}
+
+static int
+pg_isprint(int c)
+{
+#ifdef MULTIBYTE
+	return (c >= 0 && c <= UCHAR_MAX && isprint((unsigned char) c));
+#else
+	return (isprint((unsigned char) c));
+#endif
+}
+
+static int
+pg_ispunct(int c)
+{
+#ifdef MULTIBYTE
+	return (c >= 0 && c <= UCHAR_MAX && ispunct((unsigned char) c));
+#else
+	return (ispunct((unsigned char) c));
 #endif
 }
 
@@ -1756,17 +1811,17 @@ cclass_init(void)
         char *chars;
     } cclass_factories [] =
         {
-            { "alnum", isalnum, NULL },
-            { "alpha", isalpha, NULL },
+            { "alnum", pg_isalnum, NULL },
+            { "alpha", pg_isalpha, NULL },
             { "blank", NULL, " \t" },
-            { "cntrl", iscntrl, NULL },
+            { "cntrl", pg_iscntrl, NULL },
             { "digit", NULL, "0123456789" },
-            { "graph", isgraph, NULL },
-            { "lower", islower, NULL },
-            { "print", isprint, NULL },
-            { "punct", ispunct, NULL },
+            { "graph", pg_isgraph, NULL },
+            { "lower", pg_islower, NULL },
+            { "print", pg_isprint, NULL },
+            { "punct", pg_ispunct, NULL },
             { "space", NULL, "\t\n\v\f\r " },
-            { "upper", isupper, NULL },
+            { "upper", pg_isupper, NULL },
             { "xdigit", NULL, "0123456789ABCDEFabcdef" },
             { NULL, NULL, NULL }
         };
