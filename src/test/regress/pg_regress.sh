@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.5 2000/10/03 19:37:39 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.6 2000/10/07 14:55:16 momjian Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -147,11 +147,11 @@ done
 
 
 # ----------
-# When on Windows or QNX, don't use Unix sockets.
+# When on Windows, QNX or BeOS, don't use Unix sockets.
 # ----------
 
 case $host_platform in
-    *-*-cygwin* | *-*-qnx*)
+    *-*-cygwin* | *-*-qnx* | *beos*)
         unix_sockets=no;;
     *)
         unix_sockets=yes;;
@@ -167,6 +167,17 @@ case $host_platform in
         DIFFFLAGS=-b;;
     *)
         DIFFFLAGS=-w;;
+esac
+
+# ----------
+# Set up the GMAKE variable correctly.
+# ----------
+
+case $host_platform in
+    *beos*)
+        GMAKE=make;;
+    *)
+        GMAKE=gmake;;
 esac
 
 
@@ -286,7 +297,7 @@ then
 
     message "creating temporary installation"
     mkdir -p "$LOGDIR" || { (exit 2); exit; }
-    ${MAKE:-gmake} -C "$top_builddir" DESTDIR="$temp_install" install >"$LOGDIR/install.log" 2>&1
+    ${MAKE:-$GMAKE} -C "$top_builddir" DESTDIR="$temp_install" install >"$LOGDIR/install.log" 2>&1
 
     if [ $? -ne 0 ]
     then

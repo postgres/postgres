@@ -56,6 +56,7 @@ PGAC_ARG_REQ(with, template, [],
 
 case $host_os in
      aix*) template=aix ;;
+    beos*) template=beos ;;
     bsdi*) template=bsdi ;;
   cygwin*) template=win ;;
     dgux*) template=dgux ;;
