@@ -1541,6 +1541,11 @@ Tue Jul  1 11:57:56 CEST 2003
 	- Added a new data type "decimal" which is mostly the same as our
 	  "numeric" but uses a fixed length array to store the digits. This is
 	  for compatibility with Informix and maybe others.
+	  
+Wed Jul  2 09:45:59 CEST 2003
+
+	- Fixed initialization bug in compatlib.
+	- Added postgres_fe.h to all files in pgtypeslib.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

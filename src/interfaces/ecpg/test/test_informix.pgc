@@ -47,6 +47,12 @@ int main()
 	$delete from test where i=:n;
 	printf("delete: %ld\n", sqlca.sqlcode);
 
+	$select 1 from test where i=14;
+	printf("Exists: %ld\n", sqlca.sqlcode);
+
+	$select 1 from test where i=147;
+	printf("Does not exist: %ld\n", sqlca.sqlcode);
+	
 	$commit;
 	$drop table test;
 	$commit;

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.14 2003/07/01 12:40:51 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.15 2003/07/04 11:30:48 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1173,15 +1173,16 @@ ECPGexecute(struct statement * stmt)
 				else
 					for (act_field = 0; act_field < nfields && status; act_field++)
 					{
-						if (var == NULL)
+						if (var != NULL)
+						{
+							status = ECPGstore_result(results, act_field, stmt, var);
+							var = var->next;
+						}
+						else if (!INFORMIX_MODE(stmt->compat))
 						{
 							ECPGraise(stmt->lineno, ECPG_TOO_FEW_ARGUMENTS, NULL);
 							return (false);
 						}
-
-						status = ECPGstore_result(results, act_field, stmt, var);
-
-						var = var->next;
 					}
 
 				if (status && var != NULL)
