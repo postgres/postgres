@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.86 1999/05/26 22:57:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.87 1999/06/04 02:19:46 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -812,13 +812,7 @@ heap_create_with_catalog(char *relname,
 
 		if (relid != InvalidOid)
 		{
-
-			/*
-			 * This is heavy-handed, but appears necessary bjm 1999/02/01
-			 * SystemCacheRelationFlushed(relid) is not enough either.
-			 */
 			RelationForgetRelation(relid);
-			ResetSystemCache();
 		}
 	}
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.14 1999/02/13 23:22:16 momjian Exp $
+ * $Id: catcache.h,v 1.15 1999/06/04 02:19:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,9 +28,11 @@
 typedef struct catctup
 {
 	HeapTuple	ct_tup;			/* A pointer to a tuple			*/
-	Dlelem	   *ct_node;		/* points to LRU list is the CatCTup is in
-								 * the cache, else, points to the cache if
-								 * the CatCTup is in LRU list */
+	/* Each tuple in the cache has two catctup items, one in the LRU list
+	 * and one in the hashbucket list for its hash value.  ct_node in each
+	 * one points to the other one.
+	 */
+	Dlelem	   *ct_node;		/* the other catctup for this tuple */
 } CatCTup;
 
 /* voodoo constants */
@@ -46,6 +48,7 @@ typedef struct catcache
 	HeapTuple	(*cc_iscanfunc) ();		/* index scanfunction */
 	TupleDesc	cc_tupdesc;		/* tuple descriptor from reldesc */
 	int			id;				/* XXX could be improved -hirohama */
+	bool		busy;			/* for detecting recursive lookups */
 	short		cc_ntup;		/* # of tuples in this cache	*/
 	short		cc_maxtup;		/* max # of tuples allowed (LRU) */
 	short		cc_nkeys;
@@ -55,12 +58,11 @@ typedef struct catcache
 	ScanKeyData cc_skey[4];
 	struct catcache *cc_next;
 	Dllist	   *cc_lrulist;		/* LRU list, most recent first */
-	Dllist	   *cc_cache[NCCBUCK + 1];
+	Dllist	   *cc_cache[NCCBUCK + 1]; /* hash buckets */
 } CatCache;
 
 #define InvalidCatalogCacheId	(-1)
 
-extern struct catcache *Caches;
 extern GlobalMemory CacheCxt;
 
 extern void CatalogCacheIdInvalidate(int cacheId, Index hashIndex,

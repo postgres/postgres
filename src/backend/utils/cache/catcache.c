@@ -7,11 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.42 1999/05/31 23:48:04 tgl Exp $
- *
- * Notes:
- *		XXX This needs to use exception.h to handle recovery when
- *				an abort occurs during DisableCache.
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.43 1999/06/04 02:19:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,10 +62,11 @@ static long comphash(long l, char *v);
 #define CACHE6_elog(a,b,c,d,e,f,g)
 #endif
 
-CatCache   *Caches = NULL;
-GlobalMemory CacheCxt;
+static CatCache   *Caches = NULL; /* head of list of caches */
 
-static int	DisableCache;
+GlobalMemory CacheCxt;			/* context in which caches are allocated */
+/* CacheCxt is global because relcache uses it too. */
+
 
 /* ----------------
  *		EQPROC is used in CatalogCacheInitializeCache
@@ -559,16 +556,7 @@ ResetSystemCache()
 	MemoryContext oldcxt;
 	struct catcache *cache;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
 	CACHE1_elog(DEBUG, "ResetSystemCache called");
-	if (DisableCache)
-	{
-		elog(ERROR, "ResetSystemCache: Called while cache disabled");
-		return;
-	}
 
 	/* ----------------
 	 *	first switch to the cache context so our allocations
@@ -602,11 +590,13 @@ ResetSystemCache()
 			{
 				nextelt = DLGetSucc(elt);
 				CatCacheRemoveCTup(cache, elt);
-				if (cache->cc_ntup == -1)
-					elog(ERROR, "ResetSystemCache: cc_ntup<0 (software error)");
+				if (cache->cc_ntup < 0)
+					elog(NOTICE,
+						 "ResetSystemCache: cc_ntup<0 (software error)");
 			}
 		}
 		cache->cc_ntup = 0;		/* in case of WARN error above */
+		cache->busy = false;	/* to recover from recursive-use error */
 	}
 
 	CACHE1_elog(DEBUG, "end of ResetSystemCache call");
@@ -621,10 +611,18 @@ ResetSystemCache()
 /* --------------------------------
  *		SystemCacheRelationFlushed
  *
- *	RelationFlushRelation() frees some information referenced in the
- *	cache structures. So we get informed when this is done and arrange
- *	for the next SearchSysCache() call that this information is setup
- *	again.
+ *	This is called by RelationFlushRelation() to clear out cached information
+ *	about a relation being dropped.  (This could be a DROP TABLE command,
+ *	or a temp table being dropped at end of transaction, or a table created
+ *	during the current transaction that is being dropped because of abort.)
+ *	Remove all cache entries relevant to the specified relation OID.
+ *
+ *	A special case occurs when relId is itself one of the cacheable system
+ *	tables --- although those'll never be dropped, they can get flushed from
+ *	the relcache (VACUUM causes this, for example).  In that case we need to
+ *	force the next SearchSysCache() call to reinitialize the cache itself,
+ *	because we have info (such as cc_tupdesc) that is pointing at the about-
+ *	to-be-deleted relcache entry.
  * --------------------------------
  */
 void
@@ -632,6 +630,18 @@ SystemCacheRelationFlushed(Oid relId)
 {
 	struct catcache *cache;
 
+	/*
+	 * XXX Ideally we'd search the caches and just zap entries that actually
+	 * refer to the indicated relation.  For now, we take the brute-force
+	 * approach: just flush the caches entirely.
+	 */
+	ResetSystemCache();
+
+	/*
+	 * If relcache is dropping a system relation's cache entry, mark the
+	 * associated cache structures invalid, so we can rebuild them from
+	 * scratch (not just repopulate them) next time they are used.
+	 */
 	for (cache = Caches; PointerIsValid(cache); cache = cache->cc_next)
 	{
 		if (cache->relationId == relId)
@@ -746,6 +756,7 @@ InitSysCache(char *relname,
 	cp->cc_indname = indname;
 	cp->cc_tupdesc = (TupleDesc) NULL;
 	cp->id = id;
+	cp->busy = false;
 	cp->cc_maxtup = MAXTUP;
 	cp->cc_size = NCCBUCK;
 	cp->cc_nkeys = nkeys;
@@ -902,19 +913,23 @@ SearchSysCache(struct catcache * cache,
 	/* ----------------
 	 *	Tuple was not found in cache, so we have to try and
 	 *	retrieve it directly from the relation.  If it's found,
-	 *	we add it to the cache.  We must avoid recursion here,
-	 *	so we disable cache operations.  If operations are
-	 *	currently disabled and we couldn't find the requested item
-	 *	in the cache, then this may be a recursive request, and we
-	 *	abort with an error.
+	 *	we add it to the cache.
+	 *
+	 *	To guard against possible infinite recursion, we mark this cache
+	 *	"busy" while trying to load a new entry for it.  It is OK to
+	 *	recursively invoke SearchSysCache for a different cache, but
+	 *	a recursive call for the same cache will error out.  (We could
+	 *	store the specific key(s) being looked for, and consider only
+	 *	a recursive request for the same key to be an error, but this
+	 *	simple scheme is sufficient for now.)
 	 * ----------------
 	 */
 
-	if (DisableCache)
+	if (cache->busy)
 	{
-		elog(ERROR, "SearchSysCache: Called while cache disabled");
-		return (HeapTuple) NULL;
+		elog(ERROR, "SearchSysCache: recursive use of cache %d", cache->id);
 	}
+	cache->busy = true;
 
 	/* ----------------
 	 *	open the relation associated with the cache
@@ -925,10 +940,9 @@ SearchSysCache(struct catcache * cache,
 				RelationGetRelationName(relation));
 
 	/* ----------------
-	 *	DisableCache and then switch to the cache memory context.
+	 *	Switch to the cache memory context.
 	 * ----------------
 	 */
-	DisableCache = 1;
 
 	if (!CacheCxt)
 		CacheCxt = CreateGlobalMemory("Cache");
@@ -1011,7 +1025,7 @@ SearchSysCache(struct catcache * cache,
 		MemoryContextSwitchTo((MemoryContext) CacheCxt);
 	}
 
-	DisableCache = 0;
+	cache->busy = false;
 
 	/* ----------------
 	 *	scan is complete.  if tup is valid, we copy it and add the copy to
@@ -1046,7 +1060,8 @@ SearchSysCache(struct catcache * cache,
 		DLAddHead(cache->cc_cache[hash], elt);
 
 		/* ----------------
-		 *	deal with hash bucket overflow
+		 *	If we've exceeded the desired size of this cache,
+		 *	throw away the least recently used entry.
 		 * ----------------
 		 */
 		if (++cache->cc_ntup > cache->cc_maxtup)
@@ -1056,13 +1071,12 @@ SearchSysCache(struct catcache * cache,
 			elt = DLGetTail(cache->cc_lrulist);
 			ct = (CatCTup *) DLE_VAL(elt);
 
-			if (ct != nct)
+			if (ct != nct)		/* shouldn't be possible, but be safe... */
 			{
 				CACHE2_elog(DEBUG, "SearchSysCache(%s): Overflow, LRU removal",
 							RelationGetRelationName(relation));
 
 				CatCacheRemoveCTup(cache, elt);
-
 			}
 		}
 

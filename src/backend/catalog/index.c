@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.76 1999/05/26 22:57:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.77 1999/06/04 02:19:47 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -991,13 +991,7 @@ index_create(char *heapRelationName,
 
 		if (relid != InvalidOid)
 		{
-
-			/*
-			 * This is heavy-handed, but appears necessary bjm 1999/02/01
-			 * SystemCacheRelationFlushed(relid) is not enough either.
-			 */
 			RelationForgetRelation(relid);
-			ResetSystemCache();
 		}
 	}
 
