@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Nov 26 21:48:19 EST 2001
+   Last updated: Tue Nov 27 19:09:59 EST 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -465,8 +465,8 @@ answer is that I maintain:
 I then download and build on as many different canonical distributions
 as I can -- currently I am able to build on Red Hat 6.2, 7.0, and 7.1 on
 my personal hardware.  Occasionally I receive opportunity from certain
-commercial enterprises such as Great Bridge and PostgreSQL Inc to build
-on other distributions.
+commercial enterprises such as Great Bridge and PostgreSQL, Inc. to
+build on other distributions.
 
 I test the build by installing the resulting packages and running the
 regression tests.  Once the build passes these tests, I upload to the
@@ -545,51 +545,14 @@ for a stable release just before starting the development cycle for the
 next release.
 
 The first thing you have to know is the branch name for the branch you
-are interested in getting at.  Unfortunately Marc has been less than
-100% consistent in naming the things.  One way to check is to apply
-"cvs log" to any file that goes back a long time, for example HISTORY
-in the top directory:
+are interested in getting at.  To do this, look at some long-lived file,
+say the top-level HISTORY file, with "cvs status -v" to see what the
+branch names are.  (Thanks to Ian Lance Taylor for pointing out that
+this is the easiest way to do it.)  Typical branch names are:
 
-$ cvs log HISTORY | more
-
-RCS file: /home/projects/pgsql/cvsroot/pgsql/HISTORY,v
-Working file: HISTORY
-head: 1.106
-branch:
-locks: strict
-access list:
-symbolic names:
-        REL7_1_STABLE: 1.106.0.2
-        REL7_1_BETA: 1.79
-        REL7_1_BETA3: 1.86
-        REL7_1_BETA2: 1.86
-        REL7_1: 1.102
-        REL7_0_PATCHES: 1.70.0.2
-        REL7_0: 1.70
-        REL6_5_PATCHES: 1.52.0.2
-        REL6_5: 1.52
-        REL6_4: 1.44.0.2
-        release-6-3: 1.33
-        SUPPORT: 1.1.1.1
-        PG95-DIST: 1.1.1
-keyword substitution: kv
-total revisions: 129;   selected revisions: 129
-More---q
-
-Unfortunately "cvs log" isn't all that great about distinguishing
-branches from tags --- it calls 'em all "symbolic names".  (A "tag" just
-marks a specific timepoint across all files --- it's essentially a
-snapshot whereas a branch is a changeable fileset.)  Rule of thumb is
-that names attached to four-number versions where the third number is
-zero represent branches, the others are just tags.  Here we can see that
-the extant branches are
     REL7_1_STABLE
     REL7_0_PATCHES
     REL6_5_PATCHES
-The next commit to the head will be revision 1.107, whereas any changes
-committed into the REL7_1_STABLE branch will have revision numbers like
-1.106.2.*, corresponding to the branch number 1.106.0.2 (don't ask where
-the zero went...).
 
 OK, so how do you do work on a branch?  By far the best way is to create
 a separate checkout tree for the branch and do your work in that.  Not
@@ -629,9 +592,6 @@ tree.  This is kind of a pain, which is why we don't normally fork
 the tree right away after a major release --- we wait for a dot-release
 or two, so that we won't have to double-patch the first wave of fixes.
 
-   Also, Ian Lance Taylor points out that branches and tags can be
-   distiguished by using "cvs status -v".
-   
   17) How go I get involved in PostgreSQL development?
   
    This was written by Lamar Owen:
@@ -647,11 +607,12 @@ Really.  HACKERS _is_the process.  The process is not well documented (AFAIK
 > -  Find the development environment (OS, system, compilers, etc)
 > required to develop code.
 
-Developers Corner on the website has links to this information.  The
-distribution tarball itself includes all the extra tools and documents that
-go beyond a good Unix-like development environment.  In general, a modern
-unix with a modern gcc, GNU make or equivalent, autoconf (of a particular
-version), and good working knowledge of those tools are required.
+Developers Corner on the website
+has links to this information.  The  distribution tarball itself
+includes all the extra tools and documents that  go beyond a good
+Unix-like development environment.  In general, a modern  unix with a
+modern gcc, GNU make or equivalent, autoconf (of a particular  version),
+and good working knowledge of those tools are required.
 
 > -  Find an area or two that needs some support.
 
