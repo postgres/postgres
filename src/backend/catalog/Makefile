@@ -2,7 +2,7 @@
 #
 # Makefile for catalog
 #
-# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.29 2000/10/21 15:55:21 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.30 2000/10/22 05:27:10 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -11,8 +11,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = catalog.o heap.o index.o indexing.o aclchk.o \
-       pg_aggregate.o pg_largeobject.o pg_operator.o pg_proc.o \
-       pg_type.o
+       pg_aggregate.o pg_operator.o pg_proc.o pg_type.o
 
 BKIFILES = global.bki template1.bki global.description template1.description
 
@@ -30,7 +29,7 @@ TEMPLATE1_BKI_SRCS := $(addprefix $(top_srcdir)/src/include/catalog/,\
 	pg_proc.h pg_type.h pg_attribute.h pg_class.h \
 	pg_inherits.h pg_index.h pg_statistic.h \
 	pg_operator.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
-	pg_language.h pg_largeobject.h \
+	pg_language.h \
 	pg_aggregate.h pg_ipl.h pg_inheritproc.h \
 	pg_rewrite.h pg_listener.h pg_description.h indexing.h \
     )

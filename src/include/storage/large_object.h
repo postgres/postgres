@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: large_object.h,v 1.16 2000/10/21 15:55:29 momjian Exp $
+ * $Id: large_object.h,v 1.17 2000/10/22 05:27:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,17 @@
 /*
  * This structure will eventually have lots more stuff associated with it.
  */
-typedef struct LargeObjectDesc {
-	Relation	heap_r;
-	Relation	index_r;
+typedef struct LargeObjectDesc
+{
+	Relation	heap_r;			/* heap relation */
+	Relation	index_r;		/* index relation on seqno attribute */
+	IndexScanDesc iscan;		/* index scan we're using */
+	TupleDesc	hdesc;			/* heap relation tuple desc */
+	TupleDesc	idesc;			/* index relation tuple desc */
+	uint32		lowbyte;		/* low byte on the current page */
+	uint32		highbyte;		/* high byte on the current page */
 	uint32		offset;			/* current seek pointer */
-	Oid		id;
+	ItemPointerData htid;		/* tid of current heap tuple */
 
 #define IFS_RDLOCK		(1 << 0)
 #define IFS_WRLOCK		(1 << 1)
@@ -48,5 +54,8 @@ extern int	inv_seek(LargeObjectDesc *obj_desc, int offset, int whence);
 extern int	inv_tell(LargeObjectDesc *obj_desc);
 extern int	inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes);
 extern int	inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes);
+
+/* added for buffer leak prevention [ PA ] */
+extern void inv_cleanindex(LargeObjectDesc *obj_desc);
 
 #endif	 /* LARGE_OBJECT_H */
