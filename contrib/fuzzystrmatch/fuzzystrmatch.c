@@ -341,8 +341,8 @@ _metaphone(
 		/* On the off chance we were given nothing but crap... */
 		if (Curr_Letter == '\0')
 		{
-			End_Phoned_Word
-				return META_SUCCESS;	/* For testing */
+			End_Phoned_Word;
+			return META_SUCCESS;	/* For testing */
 		}
 	}
 
