@@ -5,7 +5,7 @@ CREATE FUNCTION widget_in(opaque)
    RETURNS widget
    AS '@abs_builddir@/regress@DLSUFFIX@'
    LANGUAGE 'c';
-NOTICE:  ProcedureCreate: type 'widget' is not yet defined
+NOTICE:  ProcedureCreate: type widget is not yet defined
 CREATE FUNCTION widget_out(opaque)
    RETURNS opaque
    AS '@abs_builddir@/regress@DLSUFFIX@'
