@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jun 26 11:07:53 EDT 2001
+Last updated:		Tue Jun 26 15:43:04 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -195,7 +195,7 @@ CLIENTS
 * Fix libpq to properly handle socket failures under native MS Win32 [libpq]
 * JDBC
 	* Comprehensive test suite. This may be available already.
-	* Updateable resultSet
+	* Updateable resultSet (must be done in backend code)
 	* Improved DatabaseMetaData
 	* Compatible blob support
 	* Error Codes (pending backend implementation)
