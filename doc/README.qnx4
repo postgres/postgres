@@ -1,18 +1,14 @@
 PostgresSQL on QNX 4
 --------------------
 
-PosgresSQL 6.5.2 could be ported to QNX 4.25.
-
 This port is an important step because PostgreSQL is now the only free
 relational database with full SQL and ODBC support available for QNX 4.
 The only commercial databases available are Empress RDBMS and Velocis
 Database Server (not supported for Digital Unix).
 
-The most expensive topics where the emulation of System V semaphore sets,
+The most effort required the emulation of System V semaphore sets,
 shared memory and IPC and of some IEEE floating-point functionality. For
 the Watcom compiler spinlocks have been implemented using POSIX semaphores.
-A lot of make files had to be changed because $(LD) doesn't support the
--r option on QNX 4.
 
 It is recomended to use the GNU C compiler instead of the Watcom compiler
 because the Watcom compiler doesn't support a int8 datatype (long or
@@ -24,7 +20,7 @@ have to be made which are not described here.
 
 QNX 4 does not offer native support of shared libraries. Therefore the related
 functionality cannot be used. Shared library support could probably be
-implemented.
+implemented in future.
 
 QNX 4 does not support UNIX domain sockets. Connections can only be made
 with TCP/IP sockets. Therefore postmaster must always be started with the
@@ -36,6 +32,7 @@ Prerequisites:
 The following prerequisites have been used:
 
 QNX 4.25
+Watcom C 10.6
 GNU make
 flex-2.5.4a.tar.gz (flex)
 egcs111-qnx4-r20.tar[.gz] (GNU C)
@@ -77,25 +74,17 @@ modifications of the code the following links should be made:
 ln -s /usr/local/bin/perl /usr/local/bin/perl5
 ln -s /usr/include/errno.h /usr/include/sys/errno.h
 ln -s /usr/include/ioctl.h /usr/include/sys/ioctl.h
+ln -s /usr/src/pgsql/src/backend/port/qnx4/ipc.h /usr/include/sys/ipc.h
+ln -s /usr/src/pgsql/src/backend/port/qnx4/sem.h /usr/include/sys/sem.h
+ln -s /usr/src/pgsql/src/backend/port/qnx4/shm.h /usr/include/sys/shm.h
 
-The sources can be unpacked by
-cd /usr/src
-gunzip -c postgresql-6.5.2.tar.gz | tar xvf -
-mv postgresql-6.5.2 pgsql
-gunzip -c postgresql-6.5.2-qnx4-gcc-patch.tar.gz | tar xvf -
-
-Furthermore the header files ipc.h, sem.h and shm.h must be installed.
-They are not available on QNX 4. stl_alloc.h must be modified
-(extern "C++" { ... }).
-su
-cd /usr
-gunzip -c qnx4-gcc-header-patch.tar.gz | tar xvf -
-exit
-Possibly the file
+For ecgs-2.91.60 the file
 /usr/local/lib/gcc-lib/i386-pc-qnx4/egcs-2.91.60/include/g++/stl_alloc.h
-must be copied to the right path in your environment.
-If this ist the case the path has to be adopted in src/Makefile.custom too
-(CXXFLAGS).
+had to be patched (extern "C++" { ... } // extern "C++").
+See attached patch.
+
+If you use another ecpg version the include/g++ path in Makefile.qnx4
+(CXXFLAGS) has to be adopted.
 
 If all prerequisites are available postgres can be built and installed by
 cd pgsql/src
@@ -108,6 +97,23 @@ gmake install
 exit
 
 All other steps can be carried out as stated in the INSTALL file.
+
+Make problems:
+--------------
+
+Sometimes the Watcom library manager wlib crashes with SIGSEGV on some
+object files. This is a general problem and not PostgreSQL related.
+Currently bootstrap.o causes such a crash. The workaround is not to include
+the object file into the SUBSYS.o but link it directly. For further information
+see backend/Makefile and backend/bootstrap/Makefile.
+libpgsql.a currently cannot be generated because of the same problem. But this
+doesn't matter since shared libraries are not supported.
+
+Currently yacc fails on interfaces/ecpg/preproc/preproc.y because of
+exceeded maximum table size. You can generate the preproc.h and preproc.c
+files on another platform and use them. This is only a problem when you use
+the current source tree since preproc.h and preporc.c are included in official
+distributions.
 
 Regression tests:
 -----------------
@@ -122,7 +128,7 @@ int8, float4:
 Exponent expression "e+nnn" instead of "e+nn". Can be ignored.
 
 float8:
-Exponent expression "e+nnn" instead of "e+nn" and some slight deviation
+Exponent expression "e+nnn" instead of "e+nn" and some slight difference
 in the last digit.
 Can be ignored.
 
@@ -143,7 +149,8 @@ Subject of further investigation.
 
 numeric, numeric_big:
 ERROR:  Cannot create unique index. Table contains non-unique values
-Subject of further investigation.
+Subject of further investigation. Probably because of the missing indices
+these tests take a long time.
 
 The reached state of this port should be sufficient for lot of applications.
 
@@ -151,4 +158,31 @@ Have fun!
 
 Andreas Kardos
 kardos@repas-aeg.de
-1999-12-09
+1999-12-16
+
+
+---------------------------------------------------------------------------
+
+*** ./stl_alloc.h.orig	Sat Feb 28 05:17:28 1998
+--- ./stl_alloc.h	Tue Nov 23 04:14:09 1999
+***************
+*** 120,125 ****
+--- 120,126 ----
+  #pragma set woff 1174
+  #endif
+  
++ extern "C++" {
+  // Malloc-based allocator.  Typically slower than default alloc below.
+  // Typically thread-safe and more storage efficient.
+  #ifdef __STL_STATIC_TEMPLATE_MEMBER_BUG
+***************
+*** 682,687 ****
+--- 683,689 ----
+  # endif
+  
+  #endif /* ! __USE_MALLOC */
++ } // extern "C++"
+  
+  #if defined(__sgi) && !defined(__GNUC__) && (_MIPS_SIM != _MIPS_SIM_ABI32)
+  #pragma reset woff 1174
+

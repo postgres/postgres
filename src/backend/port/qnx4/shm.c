@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx/Attic/shm.c,v 1.1 1999/12/16 01:25:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/shm.c,v 1.1 1999/12/16 16:52:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

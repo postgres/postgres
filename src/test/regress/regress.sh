@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.34 1999/12/16 01:25:23 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.35 1999/12/16 16:52:53 momjian Exp $
 #
 if [ $# -eq 0 ]
 then
@@ -110,7 +110,6 @@ do
 		echo "----------------------"; \
 		echo "" ) >> regression.diffs
 		echo failed
-		echo "diff ${DIFFOPT} -C3 ${EXPECTED} results/${i}.out"
 	else
 		echo ok
 	fi

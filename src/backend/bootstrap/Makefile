@@ -4,7 +4,7 @@
 #    Makefile for the bootstrap module
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.18 1999/12/16 01:25:01 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.19 1999/12/16 16:52:46 momjian Exp $
 #
 #
 # We must build bootparse.c and bootscanner.c with yacc and lex and sed,
@@ -32,17 +32,20 @@ endif
 
 BOOTYACCS= bootstrap_tokens.h bootparse.c
 
-ifneq ($(PORTNAME), qnx4)
 OBJS= bootparse.o bootscanner.o bootstrap.o 
-else
-# wlink crashes with bootstrap.o
-OBJS= bootparse.o bootscanner.o
+ifeq ($(PORTNAME), qnx4)
+# wlink currently crashes with bootstrap.o
+OBJS1= bootparse.o bootscanner.o
 endif
 
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
+ifneq ($(PORTNAME), qnx4)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
+else
+	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS1)
+endif
 
 # bootstrap.o's dependency on bootstrap_tokens.h is computed by the
 # make depend, but we state it here explicitly anyway because 
