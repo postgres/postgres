@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.137 2000/03/17 02:36:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.138 2000/03/19 22:10:08 tgl Exp $
  *
  * NOTES
  *
@@ -1146,15 +1146,15 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 	 * silently added and a long packet is silently truncated.
 	 */
 
-	StrNCpy(port->database, si->database, sizeof(port->database) - 1);
-	StrNCpy(port->user, si->user, sizeof(port->user) - 1);
-	StrNCpy(port->options, si->options, sizeof(port->options) - 1);
-	StrNCpy(port->tty, si->tty, sizeof(port->tty) - 1);
+	StrNCpy(port->database, si->database, sizeof(port->database));
+	StrNCpy(port->user, si->user, sizeof(port->user));
+	StrNCpy(port->options, si->options, sizeof(port->options));
+	StrNCpy(port->tty, si->tty, sizeof(port->tty));
 
 	/* The database defaults to the user name. */
 
 	if (port->database[0] == '\0')
-		StrNCpy(port->database, si->user, sizeof(port->database) - 1);
+		StrNCpy(port->database, si->user, sizeof(port->database));
 
 	/* Check a user name was given. */
 

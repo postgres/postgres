@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.24 2000/01/26 05:56:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.25 2000/03/19 22:10:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,7 +197,7 @@ PacketSendError(Packet *pkt, char *errormsg)
 	fprintf(stderr, "%s\n", errormsg);
 
 	pkt->pkt.em.data[0] = 'E';
-	StrNCpy(&pkt->pkt.em.data[1], errormsg, sizeof(pkt->pkt.em.data) - 2);
+	StrNCpy(&pkt->pkt.em.data[1], errormsg, sizeof(pkt->pkt.em.data) - 1);
 
 	/*
 	 * The NULL i/o callback will cause the connection to be broken when
