@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.58 2001/03/04 18:54:07 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.59 2001/03/21 19:09:03 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -239,14 +239,14 @@ PGconn *PQsetdb(char *pghost,
 
  <listitem>
   <para>
-   <function>PQconnectStart</function>
+   <function>PQconnectStart</function>,
    <function>PQconnectPoll</function>
    Make a connection to the database server in a non-blocking manner.
 <synopsis>
 PGconn *PQconnectStart(const char *conninfo)
 </synopsis>
 <synopsis>
-PostgresPollingStatusType *PQconnectPoll(PQconn *conn)
+PostgresPollingStatusType PQconnectPoll(PGconn *conn)
 </synopsis>
    These two routines are used to open a connection to a database server such
    that your application's thread of execution is not blocked on remote I/O
