@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.69 1998/06/21 16:39:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.70 1998/07/03 04:24:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -407,6 +407,7 @@ connectDB(PGconn *conn)
 				family,
 				len;
 	char		beresp;
+	int			on = 1;
 
 	/*
 	 * Initialize the startup packet.
@@ -456,8 +457,11 @@ connectDB(PGconn *conn)
 		conn->raddr.in.sin_port = htons((unsigned short) (portno));
 		len = sizeof(struct sockaddr_in);
 	}
+#ifndef WIN32
 	else
 		len = UNIXSOCK_PATH(conn->raddr.un, portno);
+#endif
+	
 
 	/* Connect to the server  */
 	if ((conn->sock = socket(family, SOCK_STREAM, 0)) < 0)
@@ -482,7 +486,11 @@ connectDB(PGconn *conn)
 	 * We need nonblocking I/O, and we don't want delay of outgoing data.
 	 */
 
+#ifndef WIN32
 	if (fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
+#else
+	if (ioctlsocket(conn->sock,FIONBIO, &on) != 0) 
+#endif
 	{
 		(void) sprintf(conn->errorMessage,
 					   "connectDB() -- fcntl() failed: errno=%d\n%s\n",
@@ -493,7 +501,6 @@ connectDB(PGconn *conn)
 	if (family == AF_INET)
 	{
 		struct protoent *pe;
-		int			on = 1;
 
 		pe = getprotobyname("TCP");
 		if (pe == NULL)
@@ -503,11 +510,18 @@ connectDB(PGconn *conn)
 			goto connect_errReturn;
 		}
 		if (setsockopt(conn->sock, pe->p_proto, TCP_NODELAY,
-					   &on, sizeof(on)) < 0)
+#ifdef WIN32
+			(char *)
+#endif
+					   &on, 
+					   sizeof(on)) < 0)
 		{
 			(void) sprintf(conn->errorMessage,
 						   "connectDB() -- setsockopt failed: errno=%d\n%s\n",
 						   errno, strerror(errno));
+#ifdef WIN32
+			printf("Winsock error: %i\n",WSAGetLastError());
+#endif
 			goto connect_errReturn;
 		}
 	}
@@ -666,7 +680,11 @@ connectDB(PGconn *conn)
 connect_errReturn:
 	if (conn->sock >= 0)
 	{
+#ifdef WIN32
+		closesocket(conn->sock);
+#else
 		close(conn->sock);
+#endif
 		conn->sock = -1;
 	}
 	return CONNECTION_BAD;
@@ -742,7 +760,11 @@ freePGconn(PGconn *conn)
 		return;
 	PQclearAsyncResult(conn);	/* deallocate result and curTuple */
 	if (conn->sock >= 0)
-		close(conn->sock);		/* shouldn't happen, but... */
+#ifdef WIN32
+		closesocket(conn->sock);
+#else
+		close(conn->sock);
+#endif
 	if (conn->pghost)
 		free(conn->pghost);
 	if (conn->pgport)
@@ -783,6 +805,7 @@ closePGconn(PGconn *conn)
 		 * If connection is already gone, that's cool.  No reason for kernel
 		 * to kill us when we try to write to it.  So ignore SIGPIPE signals.
 		 */
+#ifndef WIN32
 #if defined(USE_POSIX_SIGNALS)
 		struct sigaction ignore_action;
 		struct sigaction oldaction;
@@ -806,13 +829,18 @@ closePGconn(PGconn *conn)
 
 		signal(SIGPIPE, oldsignal);
 #endif
+#endif /* Win32 uses no signals at all */
 	}
 
 	/*
 	 * Close the connection, reset all transient state, flush I/O buffers.
 	 */
 	if (conn->sock >= 0)
+#ifdef WIN32
+		closesocket(conn->sock);
+#else
 		close(conn->sock);
+#endif
 	conn->sock = -1;
 	conn->status = CONNECTION_BAD;		/* Well, not really _bad_ - just
 										 * absent */

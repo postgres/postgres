@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.16 1998/04/26 04:08:18 momjian Exp $
+ * $Id: postgres.h,v 1.17 1998/07/03 04:24:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,9 @@
 #define POSTGRES_H
 
 #include "postgres_ext.h"
+#ifndef WIN32
 #include "config.h"
+#endif
 #include "c.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"

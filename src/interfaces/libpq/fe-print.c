@@ -9,24 +9,31 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.5 1998/06/16 07:29:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.6 1998/07/03 04:24:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+#ifdef WIN32
+#include "win32.h"
+#endif
 #include <postgres.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
+#ifndef WIN32
 #include <unistd.h>
 #include <sys/ioctl.h>
+#endif
 #include "libpq/pqsignal.h"
 #include "libpq-fe.h"
+#ifndef WIN32
 #ifndef HAVE_TERMIOS_H
 #include <sys/termios.h>
 #else
 #include <termios.h>
 #endif
+#endif /* WIN32 */
 
 #ifdef MB
 #include "regex/pg_wchar.h"
@@ -143,9 +150,13 @@ PQprint(FILE *fout,
 
 		if (fout == NULL)
 			fout = stdout;
-		if (po->pager && fout == stdout &&
+		if (po->pager && fout == stdout 
+#ifndef WIN32
+			&&
 			isatty(fileno(stdin)) &&
-			isatty(fileno(stdout)))
+			isatty(fileno(stdout))
+#endif
+			)
 		{
 			/* try to pipe to the pager program if possible */
 #ifdef TIOCGWINSZ
@@ -174,11 +185,17 @@ PQprint(FILE *fout,
 				  - (po->header != 0) * 2		/* row count and newline */
 				  )))
 			{
+#ifdef WIN32
+				fout = _popen(pagerenv, "w");
+#else
 				fout = popen(pagerenv, "w");
+#endif
 				if (fout)
 				{
 					usePipe = 1;
+#ifndef WIN32
 					pqsignal(SIGPIPE, SIG_IGN);
+#endif
 				}
 				else
 					fout = stdout;
@@ -289,8 +306,12 @@ PQprint(FILE *fout,
 		free(fieldNames);
 		if (usePipe)
 		{
+#ifdef WIN32
+			_pclose(fout);
+#else
 			pclose(fout);
 			pqsignal(SIGPIPE, SIG_DFL);
+#endif
 		}
 		if (po->html3 && !po->expanded)
 			fputs("</table>\n", fout);

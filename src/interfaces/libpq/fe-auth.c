@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.17 1998/06/15 19:30:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.18 1998/07/03 04:24:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,9 @@
  *
  *
  */
+#ifdef WIN32
+#include "win32.h"
+#else
 #include <stdio.h>
 #include <string.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
@@ -33,6 +36,7 @@
 #endif
 #include <unistd.h>
 #include <pwd.h>
+#endif /* WIN32 */
 
 #include "postgres.h"
 
@@ -600,10 +604,18 @@ fe_getauthname(char *PQerrormsg)
 #endif
 		case STARTUP_MSG:
 			{
+#ifdef WIN32
+				char username[128];
+				DWORD namesize = sizeof(username) - 1;
+
+				if (GetUserName(username,&namesize)) 
+					name = username;
+#else
 				struct passwd *pw = getpwuid(geteuid());
 
 				if (pw)
 					name = pw->pw_name;
+#endif
 			}
 			break;
 		default:

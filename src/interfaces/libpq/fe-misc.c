@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.15 1998/06/15 19:30:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.16 1998/07/03 04:24:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,10 +34,14 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#ifdef WIN32
+#include "win32.h"
+#else
 #include <sys/time.h>
 #if !defined(NO_UNISTD_H)
 #include <unistd.h>
 #endif
+#endif /* WIN32 */
 #include <sys/types.h>			/* for fd_set stuff */
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -412,7 +416,11 @@ tryAgain2:
 			" before or while processing the request.\n");
 	conn->status = CONNECTION_BAD; /* No more connection to
 									* backend */
+#ifdef WIN32
+	closesocket(conn->sock);
+#else
 	close(conn->sock);
+#endif
 	conn->sock = -1;
 	
 	return -1;

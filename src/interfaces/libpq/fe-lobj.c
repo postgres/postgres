@@ -7,11 +7,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.13 1998/06/15 19:30:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.14 1998/07/03 04:24:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+#ifdef WIN32
+#include "win32.h"
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
