@@ -1563,6 +1563,12 @@ Tue Jul  8 12:34:00 CEST 2003
 
 	- Made Informix decimal-ascii conversion honor Informix NULLs.
 	- Informix variable handling didn't cope well with arrays.
+	
+Wed Jul  9 11:45:02 CEST 2003
+
+	- Made all Informix functions honor Informix NULLs.
+	- Extended compatibility functions for INFORMIX handling of DECLARE
+	  statement to work with indicators.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

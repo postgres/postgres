@@ -55,6 +55,12 @@ deccall3(Decimal *arg1, Decimal *arg2, Decimal *result, int (*ptr)(Numeric *, Nu
 	Numeric *a1, *a2, *nres;
 	int i;
 
+	if (risnull(CDECIMALTYPE, (char *)arg1) || risnull(CDECIMALTYPE, (char *)arg2))
+	{
+		rsetnull(CDECIMALTYPE, (char *)result);
+		return 0;
+	}
+	
 	if ((a1 = PGTYPESnumeric_new()) == NULL)
 		return -1211;
 	
@@ -191,6 +197,12 @@ deccvdbl(double dbl, Decimal *np)
 	Numeric *nres = PGTYPESnumeric_new();
 	int result = 1;
 	
+	if (risnull(CDOUBLETYPE, (char *)&dbl))
+	{
+		rsetnull(CDECIMALTYPE, (char *)np);
+		return 0;
+	}
+
 	if (nres == NULL)
 		return -1211;
 
@@ -208,6 +220,12 @@ deccvint(int in, Decimal *np)
 	Numeric *nres = PGTYPESnumeric_new();
 	int result = 1;
 	
+	if (risnull(CINTTYPE, (char *)&in))
+	{
+		rsetnull(CDECIMALTYPE, (char *)np);
+		return 0;
+	}
+
 	if (nres == NULL)
 		return -1211;
 
@@ -225,6 +243,12 @@ deccvlong(long lng, Decimal *np)
 	Numeric *nres = PGTYPESnumeric_new();
 	int result = 1;
 	
+	if (risnull(CLONGTYPE, (char *)&lng))
+	{
+		rsetnull(CDECIMALTYPE, (char *)np);
+		return 0;
+	}
+
 	if (nres == NULL)
 		return -1211;
 
