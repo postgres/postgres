@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.60 1999/11/02 00:05:29 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.61 1999/12/10 05:00:36 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -210,6 +210,7 @@ CFLAGS= -I$(SRCDIR)/include -I$(SRCDIR)/backend @CPPFLAGS@ @CFLAGS@
 CFLAGS_SL= @SHARED_LIB@
 LIBS= @LIBS@
 LDFLAGS= @LDFLAGS@ $(LIBS)
+LDREL= -r
 DLSUFFIX= @DLSUFFIX@
 LN_S= @LN_S@
 TAR= @tar@
