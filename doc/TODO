@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jan 26 23:22:17 EST 2002
+Last updated:		Fri Feb  1 11:59:54 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -61,6 +61,8 @@ ADMIN
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
 * Allow logging of query durations
+* Prevent SIGHUP and 'pg_ctl reload' from changing command line
+  specified parameters to postgresql.conf defaults
 
 DATA TYPES
 
