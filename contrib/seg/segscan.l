@@ -8,8 +8,6 @@
 #include "segparse.h"
 #include "buffer.h"
 
-#define YY_NO_UNPUT 1
-#undef  yywrap
 
 /* flex screws a couple symbols when used with the -P otion; fix those */
 #define YY_DECL int seg_yylex YY_PROTO(( void )); \
@@ -26,6 +24,12 @@ int seg_yylex YY_PROTO(( void ))
 
 void seg_flush_scanner_buffer(void); 
 %}
+
+%option 8bit
+%option never-interactive
+%option nounput
+%option noyywrap
+
 
 range        (\.\.)(\.)?
 plumin       (\'\+\-\')|(\(\+\-)\)

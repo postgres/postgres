@@ -10,8 +10,6 @@
 #include "cubeparse.h"
 #include "buffer.h"
 
-#define YY_NO_UNPUT 1
-#undef  yywrap
 
 /* flex screws a couple symbols when used with the -P otion; fix those */
 #define YY_DECL int cube_yylex YY_PROTO(( void )); \
@@ -27,6 +25,12 @@ int cube_yylex YY_PROTO(( void ))
 
 void cube_flush_scanner_buffer(void); 
 %}
+
+%option 8bit
+%option never-interactive
+%option nounput
+%option noyywrap
+
 
 n            [0-9]+
 integer      [+-]?{n}

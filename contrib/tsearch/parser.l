@@ -50,8 +50,13 @@ int bytestoread = 0;	/* for limiting read from filehandle */
 		} \
 	}
 
-#define YY_NO_UNPUT
 %}
+
+%option 8bit
+%option never-interactive
+%option nounput
+%option noyywrap
+
 
 /* parser's state for parsing defis-word */
 %x DELIM  
@@ -288,10 +293,6 @@ ftp"://"        {
 } 
 
 %%
-
-int tsearch_yywrap(void) {
-	return 1;
-}
 
 /* clearing after parsing from string */
 void end_parse() {

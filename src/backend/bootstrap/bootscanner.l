@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.24 2002/06/20 20:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.25 2002/07/30 16:33:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,17 +42,17 @@
 
 #include "bootstrap_tokens.h"
 
-#define			YY_NO_UNPUT
-
-/* some versions of lex define this as a macro */
-#if defined(yywrap)
-#undef yywrap
-#endif /* yywrap */
 
 YYSTYPE yylval;
 int		yyline;  /* keep track of the line number for error reporting */
 
 %}
+
+%option 8bit
+%option never-interactive
+%option nounput
+%option noyywrap
+
 
 D		[0-9]
 oct		\\{D}{D}{D}
@@ -131,12 +131,6 @@ insert			{ return(INSERT_TUPLE); }
 
 
 %%
-
-int
-yywrap(void)
-{
-	return 1;
-}
 
 void
 yyerror(const char *str)

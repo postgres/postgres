@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.97 2002/07/20 08:24:18 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.98 2002/07/30 16:33:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,12 +26,6 @@
 #include "extern.h"
 #include "preproc.h"
 
-/* some versions of lex define this as a macro */
-#if defined(yywrap)
-#undef yywrap
-#endif /* yywrap */
-
-#define YY_NO_UNPUT
 
 extern YYSTYPE yylval;
 
@@ -75,7 +69,13 @@ static struct _if_value
 
 %}
 
+%option 8bit
+%option never-interactive
+%option nounput
+%option noyywrap
+
 %option yylineno
+
 %s C SQL incl def def_ident
 
 /*
@@ -945,10 +945,3 @@ addlitchar(unsigned char ychar)
 	literallen += 1;
 	literalbuf[literallen] = '\0';
 }
-
-int
-yywrap(void)
-{
-	return(1);
-}
-
