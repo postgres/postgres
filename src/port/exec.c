@@ -7,13 +7,16 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.10 2004/05/19 17:15:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.11 2004/05/20 15:35:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #ifndef FRONTEND
 #include "postgres.h"
+#define malloc(l)	palloc(l)
+#define free(p)		pfree(p)
+#define strdup(p)	pstrdup(p)
 #else
 #include "postgres_fe.h"
 #endif
@@ -178,11 +181,14 @@ validate_exec(char *path)
 int
 find_my_exec(const char *argv0, char *full_path)
 {
-	char		buf[MAXPGPATH + 2];
+	char		cwd[MAXPGPATH];
 	char	   *p;
 	char	   *path,
 			   *startp,
 			   *endp;
+
+	if (!getcwd(cwd, MAXPGPATH))
+		cwd[0] = '\0';
 
 	/*
 	 * First try: use the binary that's located in the
@@ -195,30 +201,41 @@ find_my_exec(const char *argv0, char *full_path)
 	 * it).
 	 */
 	/* Does argv0 have a separator? */
-	if (argv0 && (p = last_path_separator(argv0)))
+	if ((p = last_path_separator(argv0)))
 	{
 		if (*++p == '\0')
 		{
 			log_error("argv[0] ends with a path separator \"%s\"", argv0);
 			return -1;
 		}
-		if (is_absolute_path(argv0) || !getcwd(buf, MAXPGPATH))
-			buf[0] = '\0';
-		else	/* path is not absolute and getcwd worked */
-			strcat(buf, "/");
-		strcat(buf, argv0);
-		if (validate_exec(buf) == 0)
+
+		if (is_absolute_path(argv0))
+			StrNCpy(full_path, argv0, MAXPGPATH);
+		else
+			snprintf(full_path, MAXPGPATH, "%s/%s", cwd, argv0);
+		
+		canonicalize_path(full_path);
+		if (validate_exec(full_path) == 0)
 		{
-			strncpy(full_path, buf, MAXPGPATH);
 			win32_make_absolute(full_path);
 			return 0;
 		}
 		else
 		{
-			log_error("invalid binary \"%s\"", buf);
+			log_error("invalid binary \"%s\"", full_path);
 			return -1;
 		}
 	}
+
+#ifdef WIN32
+	/* Win32 checks the current directory first for names without slashes */
+	if (validate_exec(argv0) == 0)
+	{
+		snprintf(full_path, MAXPGPATH, "%s/%s", cwd, argv0);
+		win32_make_absolute(full_path);
+		return 0;
+	}
+#endif
 
 	/*
 	 * Second try: since no explicit path was supplied, the user must have
@@ -235,24 +252,23 @@ find_my_exec(const char *argv0, char *full_path)
 				continue;
 			if (endp)
 				*endp = '\0';
-			if (is_absolute_path(startp) || !getcwd(buf, MAXPGPATH))
-				buf[0] = '\0';
-			else	/* path is not absolute and getcwd worked */
-				strcat(buf, "/");
-			strcat(buf, startp);
-			strcat(buf, "/");
-			strcat(buf, argv0);
-			switch (validate_exec(buf))
+
+			if (is_absolute_path(startp))
+				snprintf(full_path, MAXPGPATH, "%s/%s", startp, argv0);
+			else
+				snprintf(full_path, MAXPGPATH, "%s/%s/%s", cwd, startp, argv0);
+
+			canonicalize_path(full_path);
+			switch (validate_exec(full_path))
 			{
 				case 0: /* found ok */
-					strncpy(full_path, buf, MAXPGPATH);
 					win32_make_absolute(full_path);
 					free(path);
 					return 0;
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
 				case -2:		/* found but disqualified */
-					log_error("could not read binary \"%s\"", buf);
+					log_error("could not read binary \"%s\"", full_path);
 					free(path);
 					return -1;
 			}
@@ -270,9 +286,8 @@ find_my_exec(const char *argv0, char *full_path)
 	 *	Win32 has a native way to find the executable name, but the above
 	 *	method works too.
 	 */
-	if (GetModuleFileName(NULL,basename,MAXPGPATH) == 0)
-		ereport(FATAL,
-				(errmsg("GetModuleFileName failed (%i)",(int)GetLastError())));
+	if (GetModuleFileName(NULL,full_path,MAXPGPATH) == 0)
+		log_error("GetModuleFileName failed (%i)",(int)GetLastError());
 #endif
 }
 
