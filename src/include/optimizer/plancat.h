@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plancat.h,v 1.27 2002/06/20 20:29:51 momjian Exp $
+ * $Id: plancat.h,v 1.28 2003/01/28 22:13:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,8 @@ extern Selectivity restriction_selectivity(Query *root,
 						int varRelid);
 
 extern Selectivity join_selectivity(Query *root,
-				 Oid operator,
-				 List *args);
+									Oid operator,
+									List *args,
+									JoinType jointype);
 
 #endif   /* PLANCAT_H */

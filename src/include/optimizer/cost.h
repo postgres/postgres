@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.51 2003/01/27 20:51:54 tgl Exp $
+ * $Id: cost.h,v 1.52 2003/01/28 22:13:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,13 +88,16 @@ extern void set_function_size_estimates(Query *root, RelOptInfo *rel);
  *	  routines to compute clause selectivities
  */
 extern Selectivity restrictlist_selectivity(Query *root,
-						 List *restrictinfo_list,
-						 int varRelid);
+											List *restrictinfo_list,
+											int varRelid,
+											JoinType jointype);
 extern Selectivity clauselist_selectivity(Query *root,
-					   List *clauses,
-					   int varRelid);
+										  List *clauses,
+										  int varRelid,
+										  JoinType jointype);
 extern Selectivity clause_selectivity(Query *root,
-				   Node *clause,
-				   int varRelid);
+									  Node *clause,
+									  int varRelid,
+									  JoinType jointype);
 
 #endif   /* COST_H */

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.130 2003/01/27 20:51:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.131 2003/01/28 22:13:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,13 +56,18 @@
  *		float8 oprrest (internal, oid, internal, int4);
  *
  * The call convention for a join estimator (oprjoin function) is similar
- * except that varRelid is not needed:
+ * except that varRelid is not needed, and instead the join type is
+ * supplied:
  *
  *		Selectivity oprjoin (Query *root,
  *							 Oid operator,
- *							 List *args);
+ *							 List *args,
+ *							 JoinType jointype);
  *
- *		float8 oprjoin (internal, oid, internal);
+ *		float8 oprjoin (internal, oid, internal, int2);
+ *
+ * (We deliberately make the SQL signature different to facilitate
+ * catching errors.)
  *----------
  */
 
@@ -1009,7 +1014,8 @@ icnlikesel(PG_FUNCTION_ARGS)
  *		booltestsel		- Selectivity of BooleanTest Node.
  */
 Selectivity
-booltestsel(Query *root, BoolTestType booltesttype, Node *arg, int varRelid)
+booltestsel(Query *root, BoolTestType booltesttype, Node *arg,
+			int varRelid, JoinType jointype)
 {
 	Var		   *var;
 	Oid			relid;
@@ -1047,11 +1053,13 @@ booltestsel(Query *root, BoolTestType booltesttype, Node *arg, int varRelid)
 				break;
 			case IS_TRUE:
 			case IS_NOT_FALSE:
-				selec = (double) clause_selectivity(root, arg, varRelid);
+				selec = (double) clause_selectivity(root, arg,
+													varRelid, jointype);
 				break;
 			case IS_FALSE:
 			case IS_NOT_TRUE:
-				selec = 1.0 - (double) clause_selectivity(root, arg, varRelid);
+				selec = 1.0 - (double) clause_selectivity(root, arg,
+														  varRelid, jointype);
 				break;
 			default:
 				elog(ERROR, "booltestsel: unexpected booltesttype %d",
@@ -1321,6 +1329,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 	Query	   *root = (Query *) PG_GETARG_POINTER(0);
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
+	JoinType	jointype = (JoinType) PG_GETARG_INT16(3);
 	Var		   *var1;
 	Var		   *var2;
 	double		selec;
@@ -1421,6 +1430,8 @@ eqjoinsel(PG_FUNCTION_ARGS)
 			FmgrInfo	eqproc;
 			bool	   *hasmatch1;
 			bool	   *hasmatch2;
+			double		nullfrac1 = stats1->stanullfrac;
+			double		nullfrac2 = stats2->stanullfrac;
 			double		matchprodfreq,
 						matchfreq1,
 						matchfreq2,
@@ -1434,10 +1445,36 @@ eqjoinsel(PG_FUNCTION_ARGS)
 						nmatches;
 
 			fmgr_info(get_opcode(operator), &eqproc);
-			hasmatch1 = (bool *) palloc(nvalues1 * sizeof(bool));
-			memset(hasmatch1, 0, nvalues1 * sizeof(bool));
-			hasmatch2 = (bool *) palloc(nvalues2 * sizeof(bool));
-			memset(hasmatch2, 0, nvalues2 * sizeof(bool));
+			hasmatch1 = (bool *) palloc0(nvalues1 * sizeof(bool));
+			hasmatch2 = (bool *) palloc0(nvalues2 * sizeof(bool));
+
+			/*
+			 * If we are doing any variant of JOIN_IN, pretend all the values
+			 * of the righthand relation are unique (ie, act as if it's been
+			 * DISTINCT'd).
+			 *
+			 * NOTE: it might seem that we should unique-ify the lefthand
+			 * input when considering JOIN_REVERSE_IN.  But this is not so,
+			 * because the join clause we've been handed has not been
+			 * commuted from the way the parser originally wrote it.  We know
+			 * that the unique side of the IN clause is *always* on the right.
+			 *
+			 * NOTE: it would be dangerous to try to be smart about JOIN_LEFT
+			 * or JOIN_RIGHT here, because we do not have enough information
+			 * to determine which var is really on which side of the join.
+			 * Perhaps someday we should pass in more information.
+			 */
+			if (jointype == JOIN_IN ||
+				jointype == JOIN_REVERSE_IN ||
+				jointype == JOIN_UNIQUE_INNER ||
+				jointype == JOIN_UNIQUE_OUTER)
+			{
+				float4	oneovern = 1.0 / nd2;
+
+				for (i = 0; i < nvalues2; i++)
+					numbers2[i] = oneovern;
+				nullfrac2 = oneovern;
+			}
 
 			/*
 			 * Note we assume that each MCV will match at most one member
@@ -1496,8 +1533,8 @@ eqjoinsel(PG_FUNCTION_ARGS)
 			 * Compute total frequency of non-null values that are not in
 			 * the MCV lists.
 			 */
-			otherfreq1 = 1.0 - stats1->stanullfrac - matchfreq1 - unmatchfreq1;
-			otherfreq2 = 1.0 - stats2->stanullfrac - matchfreq2 - unmatchfreq2;
+			otherfreq1 = 1.0 - nullfrac1 - matchfreq1 - unmatchfreq1;
+			otherfreq2 = 1.0 - nullfrac2 - matchfreq2 - unmatchfreq2;
 			CLAMP_PROBABILITY(otherfreq1);
 			CLAMP_PROBABILITY(otherfreq2);
 
@@ -1585,6 +1622,7 @@ neqjoinsel(PG_FUNCTION_ARGS)
 	Query	   *root = (Query *) PG_GETARG_POINTER(0);
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
+	JoinType	jointype = (JoinType) PG_GETARG_INT16(3);
 	Oid			eqop;
 	float8		result;
 
@@ -1595,11 +1633,11 @@ neqjoinsel(PG_FUNCTION_ARGS)
 	eqop = get_negator(operator);
 	if (eqop)
 	{
-		result = DatumGetFloat8(DirectFunctionCall3(eqjoinsel,
+		result = DatumGetFloat8(DirectFunctionCall4(eqjoinsel,
 													PointerGetDatum(root),
-												  ObjectIdGetDatum(eqop),
-												 PointerGetDatum(args)));
-
+													ObjectIdGetDatum(eqop),
+													PointerGetDatum(args),
+													Int16GetDatum(jointype)));
 	}
 	else
 	{
@@ -3784,7 +3822,8 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 
 	/* Estimate the fraction of main-table tuples that will be visited */
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
-											   lfirsti(rel->relids));
+											   lfirsti(rel->relids),
+											   JOIN_INNER);
 
 	/*
 	 * Estimate the number of tuples that will be visited.	We do it in

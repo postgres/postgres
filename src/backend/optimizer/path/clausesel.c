@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.55 2003/01/15 19:35:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.56 2003/01/28 22:13:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,12 +65,13 @@ static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
 Selectivity
 restrictlist_selectivity(Query *root,
 						 List *restrictinfo_list,
-						 int varRelid)
+						 int varRelid,
+						 JoinType jointype)
 {
 	List	   *clauselist = get_actual_clauses(restrictinfo_list);
 	Selectivity result;
 
-	result = clauselist_selectivity(root, clauselist, varRelid);
+	result = clauselist_selectivity(root, clauselist, varRelid, jointype);
 	freeList(clauselist);
 	return result;
 }
@@ -81,7 +82,7 @@ restrictlist_selectivity(Query *root,
  *	  expression clauses.  The list can be empty, in which case 1.0
  *	  must be returned.
  *
- * See clause_selectivity() for the meaning of the varRelid parameter.
+ * See clause_selectivity() for the meaning of the additional parameters.
  *
  * Our basic approach is to take the product of the selectivities of the
  * subclauses.	However, that's only right if the subclauses have independent
@@ -113,7 +114,8 @@ restrictlist_selectivity(Query *root,
 Selectivity
 clauselist_selectivity(Query *root,
 					   List *clauses,
-					   int varRelid)
+					   int varRelid,
+					   JoinType jointype)
 {
 	Selectivity s1 = 1.0;
 	RangeQueryClause *rqlist = NULL;
@@ -184,7 +186,7 @@ clauselist_selectivity(Query *root,
 			}
 		}
 		/* Not the right form, so treat it generically. */
-		s2 = clause_selectivity(root, clause, varRelid);
+		s2 = clause_selectivity(root, clause, varRelid, jointype);
 		s1 = s1 * s2;
 	}
 
@@ -362,11 +364,15 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
  *
  * When varRelid is 0, all variables are treated as variables.	This
  * is appropriate for ordinary join clauses and restriction clauses.
+ *
+ * jointype is the join type, if the clause is a join clause.  Pass JOIN_INNER
+ * if the clause isn't a join clause or the context is uncertain.
  */
 Selectivity
 clause_selectivity(Query *root,
 				   Node *clause,
-				   int varRelid)
+				   int varRelid,
+				   JoinType jointype)
 {
 	Selectivity s1 = 1.0;		/* default for any unhandled clause type */
 
@@ -424,14 +430,16 @@ clause_selectivity(Query *root,
 		/* inverse of the selectivity of the underlying clause */
 		s1 = 1.0 - clause_selectivity(root,
 							  (Node *) get_notclausearg((Expr *) clause),
-									  varRelid);
+									  varRelid,
+									  jointype);
 	}
 	else if (and_clause(clause))
 	{
 		/* share code with clauselist_selectivity() */
 		s1 = clauselist_selectivity(root,
 									((BoolExpr *) clause)->args,
-									varRelid);
+									varRelid,
+									jointype);
 	}
 	else if (or_clause(clause))
 	{
@@ -447,7 +455,8 @@ clause_selectivity(Query *root,
 		{
 			Selectivity s2 = clause_selectivity(root,
 												(Node *) lfirst(arg),
-												varRelid);
+												varRelid,
+												jointype);
 
 			s1 = s1 + s2 - s1 * s2;
 		}
@@ -479,7 +488,8 @@ clause_selectivity(Query *root,
 		{
 			/* Estimate selectivity for a join clause. */
 			s1 = join_selectivity(root, opno,
-								  ((OpExpr *) clause)->args);
+								  ((OpExpr *) clause)->args,
+								  jointype);
 		}
 		else
 		{
@@ -519,14 +529,16 @@ clause_selectivity(Query *root,
 		s1 = booltestsel(root,
 						 ((BooleanTest *) clause)->booltesttype,
 						 (Node *) ((BooleanTest *) clause)->arg,
-						 varRelid);
+						 varRelid,
+						 jointype);
 	}
 	else if (IsA(clause, RelabelType))
 	{
 		/* Not sure this case is needed, but it can't hurt */
 		s1 = clause_selectivity(root,
 								(Node *) ((RelabelType *) clause)->arg,
-								varRelid);
+								varRelid,
+								jointype);
 	}
 
 #ifdef SELECTIVITY_DEBUG

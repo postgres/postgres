@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.75 2002/11/24 21:52:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.76 2003/01/28 22:13:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,8 +196,7 @@ find_secondary_indexes(Oid relationObjectId)
  * This code executes registered procedures stored in the
  * operator relation, by calling the function manager.
  *
- * varRelid is either 0 or a rangetable index.	See clause_selectivity()
- * for details about its meaning.
+ * See clause_selectivity() for the meaning of the additional parameters.
  */
 Selectivity
 restriction_selectivity(Query *root,
@@ -237,7 +236,8 @@ restriction_selectivity(Query *root,
 Selectivity
 join_selectivity(Query *root,
 				 Oid operator,
-				 List *args)
+				 List *args,
+				 JoinType jointype)
 {
 	RegProcedure oprjoin = get_oprjoin(operator);
 	float8		result;
@@ -249,10 +249,11 @@ join_selectivity(Query *root,
 	if (!oprjoin)
 		return (Selectivity) 0.5;
 
-	result = DatumGetFloat8(OidFunctionCall3(oprjoin,
+	result = DatumGetFloat8(OidFunctionCall4(oprjoin,
 											 PointerGetDatum(root),
 											 ObjectIdGetDatum(operator),
-											 PointerGetDatum(args)));
+											 PointerGetDatum(args),
+											 Int16GetDatum(jointype)));
 
 	if (result < 0.0 || result > 1.0)
 		elog(ERROR, "join_selectivity: bad value %f", result);

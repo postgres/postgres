@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.133 2003/01/24 03:58:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.134 2003/01/28 22:13:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1599,12 +1599,16 @@ make_innerjoin_index_path(Query *root,
 	 * selectivity.  However, since RestrictInfo nodes aren't copied when
 	 * linking them into different lists, it should be sufficient to use
 	 * pointer comparison to remove duplicates.)
+	 *
+	 * Always assume the join type is JOIN_INNER; even if some of the
+	 * join clauses come from other contexts, that's not our problem.
 	 */
 	pathnode->rows = rel->tuples *
 		restrictlist_selectivity(root,
 								 set_ptrUnion(rel->baserestrictinfo,
 											  clausegroup),
-								 lfirsti(rel->relids));
+								 lfirsti(rel->relids),
+								 JOIN_INNER);
 	/* Like costsize.c, force estimate to be at least one row */
 	if (pathnode->rows < 1.0)
 		pathnode->rows = 1.0;

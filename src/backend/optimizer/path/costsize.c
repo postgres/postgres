@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.103 2003/01/27 20:51:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.104 2003/01/28 22:13:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,8 @@ bool		enable_hashjoin = true;
 static Selectivity estimate_hash_bucketsize(Query *root, Var *var,
 											int nbuckets);
 static bool cost_qual_eval_walker(Node *node, QualCost *total);
-static Selectivity approx_selectivity(Query *root, List *quals);
+static Selectivity approx_selectivity(Query *root, List *quals,
+									  JoinType jointype);
 static void set_rel_width(Query *root, RelOptInfo *rel);
 static double relation_byte_size(double tuples, int width);
 static double page_size(double tuples, int width);
@@ -697,7 +698,8 @@ cost_nestloop(NestPath *path, Query *root)
 	 */
 	if (path->jointype == JOIN_IN)
 	{
-		Selectivity	qual_selec = approx_selectivity(root, restrictlist);
+		Selectivity	qual_selec = approx_selectivity(root, restrictlist,
+													path->jointype);
 		double	qptuples;
 
 		qptuples = ceil(qual_selec * outer_path_rows * inner_path_rows);
@@ -816,10 +818,12 @@ cost_mergejoin(MergePath *path, Query *root)
 	 * Note: it's probably bogus to use the normal selectivity calculation
 	 * here when either the outer or inner path is a UniquePath.
 	 */
-	merge_selec = approx_selectivity(root, mergeclauses);
+	merge_selec = approx_selectivity(root, mergeclauses,
+									 path->jpath.jointype);
 	cost_qual_eval(&merge_qual_cost, mergeclauses);
 	qpquals = set_ptrDifference(restrictlist, mergeclauses);
-	qp_selec = approx_selectivity(root, qpquals);
+	qp_selec = approx_selectivity(root, qpquals,
+								  path->jpath.jointype);
 	cost_qual_eval(&qp_qual_cost, qpquals);
 	freeList(qpquals);
 
@@ -1044,10 +1048,12 @@ cost_hashjoin(HashPath *path, Query *root)
 	 * Note: it's probably bogus to use the normal selectivity calculation
 	 * here when either the outer or inner path is a UniquePath.
 	 */
-	hash_selec = approx_selectivity(root, hashclauses);
+	hash_selec = approx_selectivity(root, hashclauses,
+									path->jpath.jointype);
 	cost_qual_eval(&hash_qual_cost, hashclauses);
 	qpquals = set_ptrDifference(restrictlist, hashclauses);
-	qp_selec = approx_selectivity(root, qpquals);
+	qp_selec = approx_selectivity(root, qpquals,
+								  path->jpath.jointype);
 	cost_qual_eval(&qp_qual_cost, qpquals);
 	freeList(qpquals);
 
@@ -1084,54 +1090,67 @@ cost_hashjoin(HashPath *path, Query *root)
 	 * Determine bucketsize fraction for inner relation.  We use the
 	 * smallest bucketsize estimated for any individual hashclause;
 	 * this is undoubtedly conservative.
+	 *
+	 * BUT: if inner relation has been unique-ified, we can assume it's
+	 * good for hashing.  This is important both because it's the right
+	 * answer, and because we avoid contaminating the cache with a value
+	 * that's wrong for non-unique-ified paths.
 	 */
-	innerbucketsize = 1.0;
-	foreach(hcl, hashclauses)
+	if (IsA(inner_path, UniquePath))
+		innerbucketsize = 1.0 / virtualbuckets;
+	else
 	{
-		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(hcl);
-		Selectivity thisbucketsize;
-
-		Assert(IsA(restrictinfo, RestrictInfo));
-
-		/*
-		 * First we have to figure out which side of the hashjoin clause is the
-		 * inner side.
-		 *
-		 * Since we tend to visit the same clauses over and over when planning
-		 * a large query, we cache the bucketsize estimate in the RestrictInfo
-		 * node to avoid repeated lookups of statistics.
-		 */
-		if (is_subseti(restrictinfo->right_relids, inner_path->parent->relids))
+		innerbucketsize = 1.0;
+		foreach(hcl, hashclauses)
 		{
-			/* righthand side is inner */
-			thisbucketsize = restrictinfo->right_bucketsize;
-			if (thisbucketsize < 0)
+			RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(hcl);
+			Selectivity thisbucketsize;
+
+			Assert(IsA(restrictinfo, RestrictInfo));
+
+			/*
+			 * First we have to figure out which side of the hashjoin clause
+			 * is the inner side.
+			 *
+			 * Since we tend to visit the same clauses over and over when
+			 * planning a large query, we cache the bucketsize estimate in the
+			 * RestrictInfo node to avoid repeated lookups of statistics.
+			 */
+			if (is_subseti(restrictinfo->right_relids,
+						   inner_path->parent->relids))
 			{
-				/* not cached yet */
-				thisbucketsize = estimate_hash_bucketsize(root,
+				/* righthand side is inner */
+				thisbucketsize = restrictinfo->right_bucketsize;
+				if (thisbucketsize < 0)
+				{
+					/* not cached yet */
+					thisbucketsize =
+						estimate_hash_bucketsize(root,
 									(Var *) get_rightop(restrictinfo->clause),
-														  virtualbuckets);
-				restrictinfo->right_bucketsize = thisbucketsize;
+												 virtualbuckets);
+					restrictinfo->right_bucketsize = thisbucketsize;
+				}
 			}
-		}
-		else
-		{
-			Assert(is_subseti(restrictinfo->left_relids,
-							  inner_path->parent->relids));
-			/* lefthand side is inner */
-			thisbucketsize = restrictinfo->left_bucketsize;
-			if (thisbucketsize < 0)
+			else
 			{
-				/* not cached yet */
-				thisbucketsize = estimate_hash_bucketsize(root,
+				Assert(is_subseti(restrictinfo->left_relids,
+								  inner_path->parent->relids));
+				/* lefthand side is inner */
+				thisbucketsize = restrictinfo->left_bucketsize;
+				if (thisbucketsize < 0)
+				{
+					/* not cached yet */
+					thisbucketsize =
+						estimate_hash_bucketsize(root,
 									(Var *) get_leftop(restrictinfo->clause),
-														  virtualbuckets);
-				restrictinfo->left_bucketsize = thisbucketsize;
+												 virtualbuckets);
+					restrictinfo->left_bucketsize = thisbucketsize;
+				}
 			}
-		}
 
-		if (innerbucketsize > thisbucketsize)
-			innerbucketsize = thisbucketsize;
+			if (innerbucketsize > thisbucketsize)
+				innerbucketsize = thisbucketsize;
+		}
 	}
 
 	/*
@@ -1557,7 +1576,7 @@ cost_qual_eval_walker(Node *node, QualCost *total)
  * seems OK to live with the approximation.
  */
 static Selectivity
-approx_selectivity(Query *root, List *quals)
+approx_selectivity(Query *root, List *quals, JoinType jointype)
 {
 	Selectivity total = 1.0;
 	List	   *l;
@@ -1582,13 +1601,14 @@ approx_selectivity(Query *root, List *quals)
 				restrictinfo->this_selec =
 					clause_selectivity(root,
 									   (Node *) restrictinfo->clause,
-									   0);
+									   0,
+									   jointype);
 			selec = restrictinfo->this_selec;
 		}
 		else
 		{
 			/* If it's a bare expression, must always do it the hard way */
-			selec = clause_selectivity(root, qual, 0);
+			selec = clause_selectivity(root, qual, 0, jointype);
 		}
 		total *= selec;
 	}
@@ -1620,7 +1640,8 @@ set_baserel_size_estimates(Query *root, RelOptInfo *rel)
 	temp = rel->tuples *
 		restrictlist_selectivity(root,
 								 rel->baserestrictinfo,
-								 lfirsti(rel->relids));
+								 lfirsti(rel->relids),
+								 JOIN_INNER);
 
 	/*
 	 * Force estimate to be at least one row, to make explain output look
@@ -1682,7 +1703,8 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 	 */
 	selec = restrictlist_selectivity(root,
 									 restrictlist,
-									 0);
+									 0,
+									 jointype);
 
 	/*
 	 * Basically, we multiply size of Cartesian product by selectivity.
@@ -1694,8 +1716,6 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 	 * For JOIN_IN and variants, the Cartesian product is figured with
 	 * respect to a unique-ified input, and then we can clamp to the size
 	 * of the other input.
-	 * XXX it's not at all clear that the ordinary selectivity calculation
-	 * is appropriate in this case.
 	 */
 	switch (jointype)
 	{
@@ -1798,7 +1818,8 @@ set_function_size_estimates(Query *root, RelOptInfo *rel)
 	temp = rel->tuples *
 		restrictlist_selectivity(root,
 								 rel->baserestrictinfo,
-								 lfirsti(rel->relids));
+								 lfirsti(rel->relids),
+								 JOIN_INNER);
 
 	/*
 	 * Force estimate to be at least one row, to make explain output look

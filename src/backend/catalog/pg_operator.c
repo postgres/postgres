@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.77 2002/09/04 20:31:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.78 2003/01/28 22:13:25 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -485,10 +485,11 @@ OperatorCreate(const char *operatorName,
 		typeId[0] = INTERNALOID;	/* Query */
 		typeId[1] = OIDOID;		/* operator OID */
 		typeId[2] = INTERNALOID;	/* args list */
+		typeId[3] = INT2OID;	/* jointype */
 
-		joinOid = LookupFuncName(joinName, 3, typeId);
+		joinOid = LookupFuncName(joinName, 4, typeId);
 		if (!OidIsValid(joinOid))
-			func_error("OperatorDef", joinName, 3, typeId, NULL);
+			func_error("OperatorDef", joinName, 4, typeId, NULL);
 	}
 	else
 		joinOid = InvalidOid;

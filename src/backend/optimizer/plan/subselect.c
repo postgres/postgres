@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.68 2003/01/20 18:54:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.69 2003/01/28 22:13:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,7 +351,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 
 						qualsel = clauselist_selectivity(subquery,
 														 plan->qual,
-														 0);
+														 0, JOIN_INNER);
 						/* Is 10% selectivity a good threshold?? */
 						use_material = qualsel < 0.10;
 					}
