@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.67 2003/08/04 02:40:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.68 2003/09/22 00:47:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -868,7 +868,16 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 			}
 		}
 		else if (TransactionIdIsInProgress(HeapTupleHeaderGetXmin(tuple)))
-			return HEAPTUPLE_INSERT_IN_PROGRESS;
+		{
+			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
+				return HEAPTUPLE_INSERT_IN_PROGRESS;
+			Assert(HeapTupleHeaderGetXmin(tuple) ==
+				   HeapTupleHeaderGetXmax(tuple));
+			if (tuple->t_infomask & HEAP_MARKED_FOR_UPDATE)
+				return HEAPTUPLE_INSERT_IN_PROGRESS;
+			/* inserted and then deleted by same xact */
+			return HEAPTUPLE_DELETE_IN_PROGRESS;
+		}
 		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
 			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 		else
