@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.47 2000/10/05 19:11:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.48 2000/11/09 04:14:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,6 +374,22 @@ select_common_type(List *typeids, const char *context)
 			}
 		}
 	}
+
+	/*
+	 * If all the inputs were UNKNOWN type --- ie, unknown-type literals ---
+	 * then resolve as type TEXT.  This situation comes up with constructs
+	 * like
+	 *			SELECT (CASE WHEN foo THEN 'bar' ELSE 'baz' END);
+	 *			SELECT 'foo' UNION SELECT 'bar';
+	 * It might seem desirable to leave the construct's output type as
+	 * UNKNOWN, but that really doesn't work, because we'd probably end up
+	 * needing a runtime coercion from UNKNOWN to something else, and we
+	 * usually won't have it.  We need to coerce the unknown literals while
+	 * they are still literals, so a decision has to be made now.
+	 */
+	if (ptype == UNKNOWNOID)
+		ptype = TEXTOID;
+
 	return ptype;
 }
 
