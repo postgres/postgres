@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.6 1997/09/08 02:31:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.7 1997/09/08 20:57:39 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -60,7 +60,7 @@ typedef union AnyInvalidation
 {
 	CatalogInvalidationData catalog;
 	RelationInvalidationData relation;
-}			AnyInvalidation;
+} AnyInvalidation;
 
 typedef struct InvalidationMessageData
 {

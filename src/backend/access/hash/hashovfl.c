@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.11 1997/09/08 02:20:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.12 1997/09/08 20:53:59 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -26,7 +26,7 @@
 #include <string.h>
 #endif
 
-static OverflowPageAddress _hash_getovfladdr(Relation rel, Buffer * metabufp);
+static OverflowPageAddress _hash_getovfladdr(Relation rel, Buffer *metabufp);
 static uint32 _hash_firstfreebit(uint32 map);
 
 /*
@@ -40,7 +40,7 @@ static uint32 _hash_firstfreebit(uint32 map);
  *
  */
 Buffer
-_hash_addovflpage(Relation rel, Buffer * metabufp, Buffer buf)
+_hash_addovflpage(Relation rel, Buffer *metabufp, Buffer buf)
 {
 
 	OverflowPageAddress oaddr;
@@ -100,7 +100,7 @@ _hash_addovflpage(Relation rel, Buffer * metabufp, Buffer buf)
  *
  */
 static OverflowPageAddress
-_hash_getovfladdr(Relation rel, Buffer * metabufp)
+_hash_getovfladdr(Relation rel, Buffer *metabufp)
 {
 	HashMetaPage metap;
 	Buffer		mapbuf = 0;

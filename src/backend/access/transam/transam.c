@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.11 1997/09/08 02:21:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.12 1997/09/08 20:54:36 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -273,8 +273,8 @@ TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
  */
 
 AbsoluteTime					/* commit time of transaction id */
-TransactionIdGetCommitTime(TransactionId transactionId)			/* transaction id to
-																 * test */
+TransactionIdGetCommitTime(TransactionId transactionId) /* transaction id to
+														 * test */
 {
 	BlockNumber blockNumber;
 	AbsoluteTime commitTime;	/* commit time */

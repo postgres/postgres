@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.7 1997/09/08 02:22:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.8 1997/09/08 20:55:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@
 #include "utils/mcxt.h"
 #include "parser/parsetree.h"	/* for rt_store() macro */
 
-static bool exec_append_initialize_next(Append * node);
+static bool exec_append_initialize_next(Append *node);
 
 /* ----------------------------------------------------------------
  *		exec-append-initialize-next
@@ -76,7 +76,7 @@ static bool exec_append_initialize_next(Append * node);
  * ----------------------------------------------------------------
  */
 static bool
-exec_append_initialize_next(Append * node)
+exec_append_initialize_next(Append *node)
 {
 	EState	   *estate;
 	AppendState *unionstate;
@@ -182,7 +182,7 @@ exec_append_initialize_next(Append * node)
  * ----------------------------------------------------------------
  */
 bool
-ExecInitAppend(Append * node, EState * estate, Plan * parent)
+ExecInitAppend(Append *node, EState * estate, Plan * parent)
 {
 	AppendState *unionstate;
 	int			nplans;
@@ -341,7 +341,7 @@ ExecInitAppend(Append * node, EState * estate, Plan * parent)
 }
 
 int
-ExecCountSlotsAppend(Append * node)
+ExecCountSlotsAppend(Append *node)
 {
 	List	   *plan;
 	List	   *unionplans = node->unionplans;
@@ -363,7 +363,7 @@ ExecCountSlotsAppend(Append * node)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecProcAppend(Append * node)
+ExecProcAppend(Append *node)
 {
 	EState	   *estate;
 	AppendState *unionstate;
@@ -456,7 +456,7 @@ ExecProcAppend(Append * node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndAppend(Append * node)
+ExecEndAppend(Append *node)
 {
 	AppendState *unionstate;
 	int			nplans;

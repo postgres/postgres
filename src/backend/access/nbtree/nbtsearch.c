@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.25 1997/09/08 02:20:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.26 1997/09/08 20:54:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 
 static BTStack
 _bt_searchr(Relation rel, int keysz, ScanKey scankey,
-			Buffer * bufP, BTStack stack_in);
+			Buffer *bufP, BTStack stack_in);
 static OffsetNumber
 _bt_firsteq(Relation rel, TupleDesc itupdesc, Page page,
 			Size keysz, ScanKey scankey, OffsetNumber offnum);
@@ -38,7 +38,7 @@ static int
 _bt_compare(Relation rel, TupleDesc itupdesc, Page page,
 			int keysz, ScanKey scankey, OffsetNumber offnum);
 static bool
-			_bt_twostep(IndexScanDesc scan, Buffer * bufP, ScanDirection dir);
+			_bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
 static RetrieveIndexResult
 			_bt_endpoint(IndexScanDesc scan, ScanDirection dir);
 
@@ -49,7 +49,7 @@ static RetrieveIndexResult
  *		calls a recursive-descent search routine on the tree.
  */
 BTStack
-_bt_search(Relation rel, int keysz, ScanKey scankey, Buffer * bufP)
+_bt_search(Relation rel, int keysz, ScanKey scankey, Buffer *bufP)
 {
 	*bufP = _bt_getroot(rel, BT_READ);
 	return (_bt_searchr(rel, keysz, scankey, bufP, (BTStack) NULL));
@@ -62,7 +62,7 @@ static BTStack
 _bt_searchr(Relation rel,
 			int keysz,
 			ScanKey scankey,
-			Buffer * bufP,
+			Buffer *bufP,
 			BTStack stack_in)
 {
 	BTStack		stack;
@@ -1060,7 +1060,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
  *		scan to the right thing.
  */
 bool
-_bt_step(IndexScanDesc scan, Buffer * bufP, ScanDirection dir)
+_bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 {
 	Page		page;
 	BTPageOpaque opaque;
@@ -1236,7 +1236,7 @@ _bt_step(IndexScanDesc scan, Buffer * bufP, ScanDirection dir)
  *		succeeded, we return true; otherwise, we return false.
  */
 static bool
-_bt_twostep(IndexScanDesc scan, Buffer * bufP, ScanDirection dir)
+_bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 {
 	Page		page;
 	BTPageOpaque opaque;

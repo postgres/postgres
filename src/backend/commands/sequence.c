@@ -61,7 +61,7 @@ typedef SeqTableData *SeqTable;
 static SeqTable seqtab = NULL;
 
 static SeqTable init_sequence(char *caller, char *name);
-static SequenceTupleForm read_info(char *caller, SeqTable elm, Buffer * buf);
+static SequenceTupleForm read_info(char *caller, SeqTable elm, Buffer *buf);
 static void init_params(CreateSeqStmt * seq, SequenceTupleForm new);
 static int	get_param(DefElem * def);
 
@@ -323,7 +323,7 @@ currval(struct varlena * seqin)
 }
 
 static SequenceTupleForm
-read_info(char *caller, SeqTable elm, Buffer * buf)
+read_info(char *caller, SeqTable elm, Buffer *buf)
 {
 	ItemPointerData iptr;
 	PageHeader	page;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.12 1997/09/08 02:37:08 momjian Exp $
+ * $Id: pqcomm.h,v 1.13 1997/09/08 20:58:26 momjian Exp $
  *
  * NOTES
  *	  Some of this should move to libpq.h
@@ -111,7 +111,7 @@ typedef struct Port
 
 	/*
 	 * PacketBufId				id;
-	 *//* id of packet buf currently in use */
+*//* id of packet buf currently in use */
 	PacketBuf	buf;			/* stream implementation (curr pack buf) */
 }			Port;
 

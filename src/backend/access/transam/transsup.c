@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.11 1997/09/08 02:21:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.12 1997/09/08 20:54:37 momjian Exp $
  *
  * NOTES
  *	  This file contains support functions for the high
@@ -61,7 +61,7 @@ void
 TransComputeBlockNumber(Relation relation,		/* relation to test */
 						TransactionId transactionId,	/* transaction id to
 														 * test */
-						BlockNumber * blockNumberOutP)
+						BlockNumber *blockNumberOutP)
 {
 	long		itemsPerBlock = 0;
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.10 1997/09/08 02:34:31 momjian Exp $
+ * $Id: tupdesc.h,v 1.11 1997/09/08 20:58:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@ typedef struct attrDefault
 	AttrNumber	adnum;
 	char	   *adbin;
 	char	   *adsrc;
-}			AttrDefault;
+} AttrDefault;
 
 typedef struct constrCheck
 {
@@ -57,7 +57,7 @@ typedef struct tupleDesc
 
 extern TupleDesc CreateTemplateTupleDesc(int natts);
 
-extern TupleDesc CreateTupleDesc(int natts, AttributeTupleForm * attrs);
+extern TupleDesc CreateTupleDesc(int natts, AttributeTupleForm *attrs);
 
 extern TupleDesc CreateTupleDescCopy(TupleDesc tupdesc);
 

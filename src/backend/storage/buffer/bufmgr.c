@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.21 1997/09/08 02:28:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.22 1997/09/08 20:56:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,10 +80,10 @@ extern long int LocalBufferFlushCount;
 static int	WriteMode = BUFFER_LATE_WRITE;		/* Delayed write is
 												 * default */
 
-static void WaitIO(BufferDesc * buf, SPINLOCK spinlock);
+static void WaitIO(BufferDesc *buf, SPINLOCK spinlock);
 
 #ifndef HAS_TEST_AND_SET
-static void SignalIO(BufferDesc * buf);
+static void SignalIO(BufferDesc *buf);
 extern long *NWaitIOBackendP;	/* defined in buf_init.c */
 
 #endif							/* HAS_TEST_AND_SET */
@@ -96,7 +96,7 @@ BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool * foundPtr, bool bufferLockHeld);
 static int	FlushBuffer(Buffer buffer, bool release);
 static void BufferSync(void);
-static int	BufferReplace(BufferDesc * bufHdr, bool bufferLockHeld);
+static int	BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld);
 
 /* ---------------------------------------------------
  * RelationGetBufferWithBuffer
@@ -1105,7 +1105,7 @@ BufferSync()
  */
 #ifdef HAS_TEST_AND_SET
 static void
-WaitIO(BufferDesc * buf, SPINLOCK spinlock)
+WaitIO(BufferDesc *buf, SPINLOCK spinlock)
 {
 	SpinRelease(spinlock);
 	S_LOCK(&(buf->io_in_progress_lock));
@@ -1117,7 +1117,7 @@ WaitIO(BufferDesc * buf, SPINLOCK spinlock)
 IpcSemaphoreId WaitIOSemId;
 
 static void
-WaitIO(BufferDesc * buf, SPINLOCK spinlock)
+WaitIO(BufferDesc *buf, SPINLOCK spinlock)
 {
 	bool		inProgress;
 
@@ -1139,7 +1139,7 @@ WaitIO(BufferDesc * buf, SPINLOCK spinlock)
  * SignalIO --
  */
 static void
-SignalIO(BufferDesc * buf)
+SignalIO(BufferDesc *buf)
 {
 	/* somebody better be waiting. */
 	Assert(buf->refcount > 1);
@@ -1346,7 +1346,7 @@ BufferGetRelation(Buffer buffer)
  *
  */
 static int
-BufferReplace(BufferDesc * bufHdr, bool bufferLockHeld)
+BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld)
 {
 	Relation	reln;
 	Oid			bufdb,
@@ -1410,8 +1410,8 @@ BlockNumber
 RelationGetNumberOfBlocks(Relation relation)
 {
 	return
-		((relation->rd_islocal) ? relation->rd_nblocks :
-		 smgrnblocks(relation->rd_rel->relsmgr, relation));
+	((relation->rd_islocal) ? relation->rd_nblocks :
+	 smgrnblocks(relation->rd_rel->relsmgr, relation));
 }
 
 /*

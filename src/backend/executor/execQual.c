@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.14 1997/09/08 02:22:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.15 1997/09/08 20:55:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,9 +69,9 @@ bool		execConstByVal;
 int			execConstLen;
 
 /* static functions decls */
-static Datum ExecEvalAggreg(Aggreg * agg, ExprContext * econtext, bool * isNull);
+static Datum ExecEvalAggreg(Aggreg *agg, ExprContext * econtext, bool * isNull);
 static Datum
-ExecEvalArrayRef(ArrayRef * arrayRef, ExprContext * econtext,
+ExecEvalArrayRef(ArrayRef *arrayRef, ExprContext * econtext,
 				 bool * isNull, bool * isDone);
 static Datum ExecEvalAnd(Expr * andExpr, ExprContext * econtext, bool * isNull);
 static Datum
@@ -101,7 +101,7 @@ static bool ExecQualClause(Node * clause, ExprContext * econtext);
  * --------------------------------
  */
 static Datum
-ExecEvalArrayRef(ArrayRef * arrayRef,
+ExecEvalArrayRef(ArrayRef *arrayRef,
 				 ExprContext * econtext,
 				 bool * isNull,
 				 bool * isDone)
@@ -200,7 +200,7 @@ ExecEvalArrayRef(ArrayRef * arrayRef,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalAggreg(Aggreg * agg, ExprContext * econtext, bool * isNull)
+ExecEvalAggreg(Aggreg *agg, ExprContext * econtext, bool * isNull)
 {
 
 	*isNull = econtext->ecxt_nulls[agg->aggno];

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.8 1997/09/08 02:23:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.9 1997/09/08 20:55:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ _copyResult(Result * from)
  * ----------------
  */
 static Append *
-_copyAppend(Append * from)
+_copyAppend(Append *from)
 {
 	Append	   *newnode = makeNode(Append);
 
@@ -486,7 +486,7 @@ _copySort(Sort * from)
  * --------------
  */
 static Agg *
-_copyAgg(Agg * from)
+_copyAgg(Agg *from)
 {
 	Agg		   *newnode = makeNode(Agg);
 	int			i;
@@ -870,7 +870,7 @@ _copyFunc(Func * from)
  * ----------------
  */
 static Aggreg *
-_copyAggreg(Aggreg * from)
+_copyAggreg(Aggreg *from)
 {
 	Aggreg	   *newnode = makeNode(Aggreg);
 
@@ -890,7 +890,7 @@ _copyAggreg(Aggreg * from)
 }
 
 static Array *
-_copyArray(Array * from)
+_copyArray(Array *from)
 {
 	Array	   *newnode = makeNode(Array);
 
@@ -910,7 +910,7 @@ _copyArray(Array * from)
 }
 
 static ArrayRef *
-_copyArrayRef(ArrayRef * from)
+_copyArrayRef(ArrayRef *from)
 {
 	ArrayRef   *newnode = makeNode(ArrayRef);
 
@@ -1479,7 +1479,7 @@ _copySortClause(SortClause * from)
 }
 
 static A_Const *
-_copyAConst(A_Const * from)
+_copyAConst(A_Const *from)
 {
 	A_Const    *newnode = makeNode(A_Const);
 

@@ -189,7 +189,7 @@ typedef struct intrange
 extern void
 gistbuild(Relation heap,
 		  Relation index, int natts,
-		  AttrNumber * attnum, IndexStrategy istrat,
+		  AttrNumber *attnum, IndexStrategy istrat,
 		  uint16 pint, Datum * params,
 		  FuncIndexInfo * finfo,
 		  PredInfo * predInfo);

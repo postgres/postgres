@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.26 1997/09/08 02:21:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.27 1997/09/08 20:54:54 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_creatr()			- Create an uncataloged heap relation
@@ -1524,7 +1524,7 @@ pg_plan(char *query_string, Oid * typev, int nargs,
 		QueryTreeList ** queryListP, CommandDest dest);
 
 static void
-StoreAttrDefault(Relation rel, AttrDefault * attrdef)
+StoreAttrDefault(Relation rel, AttrDefault *attrdef)
 {
 	char		str[MAX_PARSE_BUFFER];
 	char		cast[2 * NAMEDATALEN] = {0};

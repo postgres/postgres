@@ -59,7 +59,7 @@ static void GISTInitBuffer(Buffer b, uint32 f);
 static BlockNumber
 gistChooseSubtree(Relation r, IndexTuple itup, int level,
 				  GISTSTATE * giststate,
-				  GISTSTACK ** retstack, Buffer * leafbuf);
+				  GISTSTACK ** retstack, Buffer *leafbuf);
 static OffsetNumber
 gistchoose(Relation r, Page p, IndexTuple it,
 		   GISTSTATE * giststate);
@@ -78,7 +78,7 @@ void
 gistbuild(Relation heap,
 		  Relation index,
 		  int natts,
-		  AttrNumber * attnum,
+		  AttrNumber *attnum,
 		  IndexStrategy istrat,
 		  uint16 pint,
 		  Datum * params,
@@ -470,7 +470,7 @@ gistChooseSubtree(Relation r, IndexTuple itup,	/* itup has compressed
 				  int level,
 				  GISTSTATE * giststate,
 				  GISTSTACK ** retstack /* out */ ,
-				  Buffer * leafbuf /* out */ )
+				  Buffer *leafbuf /* out */ )
 {
 	Buffer		buffer;
 	BlockNumber blk;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.6 1997/09/08 02:30:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.7 1997/09/08 20:57:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,26 +248,31 @@ int4eq(int32 arg1, int32 arg2)
 {
 	return (arg1 == arg2);
 }
+
 bool
 int4ne(int32 arg1, int32 arg2)
 {
 	return (arg1 != arg2);
 }
+
 bool
 int4lt(int32 arg1, int32 arg2)
 {
 	return (arg1 < arg2);
 }
+
 bool
 int4le(int32 arg1, int32 arg2)
 {
 	return (arg1 <= arg2);
 }
+
 bool
 int4gt(int32 arg1, int32 arg2)
 {
 	return (arg1 > arg2);
 }
+
 bool
 int4ge(int32 arg1, int32 arg2)
 {
@@ -279,26 +284,31 @@ int2eq(int16 arg1, int16 arg2)
 {
 	return (arg1 == arg2);
 }
+
 bool
 int2ne(int16 arg1, int16 arg2)
 {
 	return (arg1 != arg2);
 }
+
 bool
 int2lt(int16 arg1, int16 arg2)
 {
 	return (arg1 < arg2);
 }
+
 bool
 int2le(int16 arg1, int16 arg2)
 {
 	return (arg1 <= arg2);
 }
+
 bool
 int2gt(int16 arg1, int16 arg2)
 {
 	return (arg1 > arg2);
 }
+
 bool
 int2ge(int16 arg1, int16 arg2)
 {
@@ -310,26 +320,31 @@ int24eq(int32 arg1, int32 arg2)
 {
 	return (arg1 == arg2);
 }
+
 bool
 int24ne(int32 arg1, int32 arg2)
 {
 	return (arg1 != arg2);
 }
+
 bool
 int24lt(int32 arg1, int32 arg2)
 {
 	return (arg1 < arg2);
 }
+
 bool
 int24le(int32 arg1, int32 arg2)
 {
 	return (arg1 <= arg2);
 }
+
 bool
 int24gt(int32 arg1, int32 arg2)
 {
 	return (arg1 > arg2);
 }
+
 bool
 int24ge(int32 arg1, int32 arg2)
 {
@@ -341,26 +356,31 @@ int42eq(int32 arg1, int32 arg2)
 {
 	return (arg1 == arg2);
 }
+
 bool
 int42ne(int32 arg1, int32 arg2)
 {
 	return (arg1 != arg2);
 }
+
 bool
 int42lt(int32 arg1, int32 arg2)
 {
 	return (arg1 < arg2);
 }
+
 bool
 int42le(int32 arg1, int32 arg2)
 {
 	return (arg1 <= arg2);
 }
+
 bool
 int42gt(int32 arg1, int32 arg2)
 {
 	return (arg1 > arg2);
 }
+
 bool
 int42ge(int32 arg1, int32 arg2)
 {
@@ -385,26 +405,31 @@ int4um(int32 arg)
 {
 	return (-arg);
 }
+
 int32
 int4pl(int32 arg1, int32 arg2)
 {
 	return (arg1 + arg2);
 }
+
 int32
 int4mi(int32 arg1, int32 arg2)
 {
 	return (arg1 - arg2);
 }
+
 int32
 int4mul(int32 arg1, int32 arg2)
 {
 	return (arg1 * arg2);
 }
+
 int32
 int4div(int32 arg1, int32 arg2)
 {
 	return (arg1 / arg2);
 }
+
 int32
 int4inc(int32 arg)
 {
@@ -416,26 +441,31 @@ int2um(int16 arg)
 {
 	return (-arg);
 }
+
 int16
 int2pl(int16 arg1, int16 arg2)
 {
 	return (arg1 + arg2);
 }
+
 int16
 int2mi(int16 arg1, int16 arg2)
 {
 	return (arg1 - arg2);
 }
+
 int16
 int2mul(int16 arg1, int16 arg2)
 {
 	return (arg1 * arg2);
 }
+
 int16
 int2div(int16 arg1, int16 arg2)
 {
 	return (arg1 / arg2);
 }
+
 int16
 int2inc(int16 arg)
 {
@@ -447,16 +477,19 @@ int24pl(int32 arg1, int32 arg2)
 {
 	return (arg1 + arg2);
 }
+
 int32
 int24mi(int32 arg1, int32 arg2)
 {
 	return (arg1 - arg2);
 }
+
 int32
 int24mul(int32 arg1, int32 arg2)
 {
 	return (arg1 * arg2);
 }
+
 int32
 int24div(int32 arg1, int32 arg2)
 {
@@ -468,16 +501,19 @@ int42pl(int32 arg1, int32 arg2)
 {
 	return (arg1 + arg2);
 }
+
 int32
 int42mi(int32 arg1, int32 arg2)
 {
 	return (arg1 - arg2);
 }
+
 int32
 int42mul(int32 arg1, int32 arg2)
 {
 	return (arg1 * arg2);
 }
+
 int32
 int42div(int32 arg1, int32 arg2)
 {
@@ -492,16 +528,19 @@ int4mod(int32 arg1, int32 arg2)
 {
 	return (arg1 % arg2);
 }
+
 int32
 int2mod(int16 arg1, int16 arg2)
 {
 	return (arg1 % arg2);
 }
+
 int32
 int24mod(int32 arg1, int32 arg2)
 {
 	return (arg1 % arg2);
 }
+
 int32
 int42mod(int32 arg1, int32 arg2)
 {

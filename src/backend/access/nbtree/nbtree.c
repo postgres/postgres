@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.21 1997/09/08 02:20:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.22 1997/09/08 20:54:21 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -56,7 +56,7 @@ void
 btbuild(Relation heap,
 		Relation index,
 		int natts,
-		AttrNumber * attnum,
+		AttrNumber *attnum,
 		IndexStrategy istrat,
 		uint16 pcount,
 		Datum * params,

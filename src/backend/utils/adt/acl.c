@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.15 1997/09/08 02:30:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.16 1997/09/08 20:57:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +22,9 @@
 #include "miscadmin.h"
 
 static char *getid(char *s, char *n);
-static int32 aclitemeq(AclItem * a1, AclItem * a2);
-static int32 aclitemgt(AclItem * a1, AclItem * a2);
-static char *aclparse(char *s, AclItem * aip, unsigned *modechg);
+static int32 aclitemeq(AclItem *a1, AclItem *a2);
+static int32 aclitemgt(AclItem *a1, AclItem *a2);
+static char *aclparse(char *s, AclItem *aip, unsigned *modechg);
 
 #define ACL_IDTYPE_GID_KEYWORD	"group"
 #define ACL_IDTYPE_UID_KEYWORD	"user"
@@ -83,7 +83,7 @@ getid(char *s, char *n)
  *		- loads 'modechg' with the mode change flag.
  */
 static char *
-aclparse(char *s, AclItem * aip, unsigned *modechg)
+aclparse(char *s, AclItem *aip, unsigned *modechg)
 {
 	HeapTuple	htp;
 	char		name[NAMEDATALEN];
@@ -240,7 +240,7 @@ aclitemin(char *s)
  *		the new string
  */
 char	   *
-aclitemout(AclItem * aip)
+aclitemout(AclItem *aip)
 {
 	register char *p;
 	char	   *out;
@@ -312,7 +312,7 @@ aclitemout(AclItem * aip)
  *		a boolean value indicating = or >
  */
 static int32
-aclitemeq(AclItem * a1, AclItem * a2)
+aclitemeq(AclItem *a1, AclItem *a2)
 {
 	if (!a1 && !a2)
 		return (1);
@@ -322,7 +322,7 @@ aclitemeq(AclItem * a1, AclItem * a2)
 }
 
 static int32
-aclitemgt(AclItem * a1, AclItem * a2)
+aclitemgt(AclItem *a1, AclItem *a2)
 {
 	if (a1 && !a2)
 		return (1);
@@ -364,7 +364,7 @@ acldefault(void)
 }
 
 Acl		   *
-aclinsert3(Acl * old_acl, AclItem * mod_aip, unsigned modechg)
+aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 {
 	Acl		   *new_acl;
 	AclItem    *old_aip,
@@ -481,13 +481,13 @@ aclinsert3(Acl * old_acl, AclItem * mod_aip, unsigned modechg)
  *
  */
 Acl		   *
-aclinsert(Acl * old_acl, AclItem * mod_aip)
+aclinsert(Acl *old_acl, AclItem *mod_aip)
 {
 	return (aclinsert3(old_acl, mod_aip, ACL_MODECHG_EQL));
 }
 
 Acl		   *
-aclremove(Acl * old_acl, AclItem * mod_aip)
+aclremove(Acl *old_acl, AclItem *mod_aip)
 {
 	Acl		   *new_acl;
 	AclItem    *old_aip,
@@ -547,7 +547,7 @@ aclremove(Acl * old_acl, AclItem * mod_aip)
 }
 
 int32
-aclcontains(Acl * acl, AclItem * aip)
+aclcontains(Acl *acl, AclItem *aip)
 {
 	unsigned	i,
 				num;

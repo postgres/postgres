@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.21 1997/09/08 02:19:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.22 1997/09/08 20:53:40 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -75,7 +75,7 @@ CreateTemplateTupleDesc(int natts)
  * ----------------------------------------------------------------
  */
 TupleDesc
-CreateTupleDesc(int natts, AttributeTupleForm * attrs)
+CreateTupleDesc(int natts, AttributeTupleForm *attrs)
 {
 	TupleDesc	desc;
 

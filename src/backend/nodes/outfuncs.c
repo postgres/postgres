@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.8 1997/09/08 02:23:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.9 1997/09/08 20:55:56 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -186,7 +186,7 @@ _outExistential(StringInfo str, Existential * node)
  *	Append is a subclass of Plan.
  */
 static void
-_outAppend(StringInfo str, Append * node)
+_outAppend(StringInfo str, Append *node)
 {
 	char		buf[500];
 
@@ -387,7 +387,7 @@ _outSort(StringInfo str, Sort * node)
 }
 
 static void
-_outAgg(StringInfo str, Agg * node)
+_outAgg(StringInfo str, Agg *node)
 {
 	char		buf[500];
 
@@ -646,7 +646,7 @@ _outConst(StringInfo str, Const * node)
  *	Aggreg
  */
 static void
-_outAggreg(StringInfo str, Aggreg * node)
+_outAggreg(StringInfo str, Aggreg *node)
 {
 	char		buf[500];
 
@@ -670,7 +670,7 @@ _outAggreg(StringInfo str, Aggreg * node)
  *	Array is a subclass of Expr
  */
 static void
-_outArray(StringInfo str, Array * node)
+_outArray(StringInfo str, Array *node)
 {
 	char		buf[500];
 	int			i;
@@ -707,7 +707,7 @@ _outArray(StringInfo str, Array * node)
  *	ArrayRef is a subclass of Expr
  */
 static void
-_outArrayRef(StringInfo str, ArrayRef * node)
+_outArrayRef(StringInfo str, ArrayRef *node)
 {
 	char		buf[500];
 

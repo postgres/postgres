@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.14 1997/09/08 02:20:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.15 1997/09/08 20:53:53 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -45,7 +45,7 @@ void
 hashbuild(Relation heap,
 		  Relation index,
 		  int natts,
-		  AttrNumber * attnum,
+		  AttrNumber *attnum,
 		  IndexStrategy istrat,
 		  uint16 pcount,
 		  Datum * params,

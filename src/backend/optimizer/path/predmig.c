@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.4 1997/09/08 02:24:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.5 1997/09/08 20:56:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ static int	xfunc_stream_compare(void *arg1, void *arg2);
 static bool xfunc_check_stream(Stream node);
 static bool xfunc_in_stream(Stream node, Stream stream);
 
-/* -----------------	   MAIN FUNCTIONS		------------------------ */
+/* -----------------	 MAIN FUNCTIONS		  ------------------------ */
 /*
 ** xfunc_do_predmig
 **	  wrapper for Predicate Migration.	It calls xfunc_predmig until no
@@ -495,7 +495,7 @@ xfunc_form_groups(Query * queryInfo, Stream root, Stream bottom)
 }
 
 
-/* -------------------	 UTILITY FUNCTIONS	   ------------------------- */
+/* -------------------	   UTILITY FUNCTIONS	 ------------------------- */
 
 /*
  ** xfunc_free_stream --
@@ -765,7 +765,7 @@ xfunc_stream_compare(void *arg1, void *arg2)
 	}
 }
 
-/* ------------------	 DEBUGGING ROUTINES		---------------------------- */
+/* ------------------  DEBUGGING ROUTINES	  ---------------------------- */
 
 /*
  ** Make sure all pointers in stream make sense.  Make sure no joins are

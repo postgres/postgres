@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.7 1997/09/08 02:34:36 momjian Exp $
+ * $Id: bootstrap.h,v 1.8 1997/09/08 20:58:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ extern void
 index_register(char *heap,
 			   char *ind,
 			   int natts,
-			   AttrNumber * attnos,
+			   AttrNumber *attnos,
 			   uint16 nparams,
 			   Datum * params,
 			   FuncIndexInfo * finfo,

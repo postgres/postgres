@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.15 1997/09/08 02:29:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.16 1997/09/08 20:56:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@
 static HeapTuple
 inv_newtuple(LargeObjectDesc * obj_desc, Buffer buffer,
 			 Page page, char *dbuf, int nwrite);
-static HeapTuple inv_fetchtup(LargeObjectDesc * obj_desc, Buffer * bufP);
+static HeapTuple inv_fetchtup(LargeObjectDesc * obj_desc, Buffer *bufP);
 static int	inv_wrnew(LargeObjectDesc * obj_desc, char *buf, int nbytes);
 static int
 inv_wrold(LargeObjectDesc * obj_desc, char *dbuf, int nbytes,
@@ -576,7 +576,7 @@ inv_write(LargeObjectDesc * obj_desc, char *buf, int nbytes)
  *				such tuple exists.
  */
 static HeapTuple
-inv_fetchtup(LargeObjectDesc * obj_desc, Buffer * bufP)
+inv_fetchtup(LargeObjectDesc * obj_desc, Buffer *bufP)
 {
 	HeapTuple	htup;
 	RetrieveIndexResult res;
@@ -1035,7 +1035,7 @@ inv_newtuple(LargeObjectDesc * obj_desc,
 	 * *  mer fixed disk layout of varlenas to get rid of the need for
 	 * this. *
 	 *
-	 *((int32 *) attptr) = nwrite + sizeof(int32); *  attptr +=
+	 * ((int32 *) attptr) = nwrite + sizeof(int32); *  attptr +=
 	 * sizeof(int32);
 	 */
 

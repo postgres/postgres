@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.23 1997/09/08 02:21:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.24 1997/09/08 20:54:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1111,7 +1111,7 @@ void
 index_register(char *heap,
 			   char *ind,
 			   int natts,
-			   AttrNumber * attnos,
+			   AttrNumber *attnos,
 			   uint16 nparams,
 			   Datum * params,
 			   FuncIndexInfo * finfo,

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.31 1997/09/08 02:22:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.32 1997/09/08 20:55:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -775,7 +775,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE * fp, char *delim)
 #endif							/* OMIT_PARTIAL_INDEX */
 					}
 					FormIndexDatum(indexNatts[i],
-							   (AttrNumber *) & (pgIndexP[i]->indkey[0]),
+								(AttrNumber *) &(pgIndexP[i]->indkey[0]),
 								   tuple,
 								   tupDesc,
 								   InvalidBuffer,

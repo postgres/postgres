@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.21 1997/09/08 02:32:50 momjian Exp $
+ * $Id: pg_dump.h,v 1.22 1997/09/08 20:57:56 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -124,7 +124,7 @@ typedef struct _aggInfo
 	char	   *agginitval1;
 	char	   *agginitval2;
 	char	   *usename;
-}			AggInfo;
+} AggInfo;
 
 typedef struct _oprInfo
 {
@@ -216,7 +216,7 @@ extern void
 dumpFuncs(FILE * fout, FuncInfo * finfo, int numFuncs,
 		  TypeInfo * tinfo, int numTypes);
 extern void
-dumpAggs(FILE * fout, AggInfo * agginfo, int numAggregates,
+dumpAggs(FILE * fout, AggInfo *agginfo, int numAggregates,
 		 TypeInfo * tinfo, int numTypes);
 extern void
 dumpOprs(FILE * fout, OprInfo * agginfo, int numOperators,

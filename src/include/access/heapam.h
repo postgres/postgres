@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.13 1997/09/08 02:34:10 momjian Exp $
+ * $Id: heapam.h,v 1.14 1997/09/08 20:58:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,10 +122,10 @@ heap_beginscan(Relation relation, int atend,
 			   TimeQual timeQual, unsigned nkeys, ScanKey key);
 extern void heap_rescan(HeapScanDesc sdesc, bool scanFromEnd, ScanKey key);
 extern void heap_endscan(HeapScanDesc sdesc);
-extern HeapTuple heap_getnext(HeapScanDesc scandesc, int backw, Buffer * b);
+extern HeapTuple heap_getnext(HeapScanDesc scandesc, int backw, Buffer *b);
 extern		HeapTuple
 heap_fetch(Relation relation, TimeQual timeQual,
-		   ItemPointer tid, Buffer * b);
+		   ItemPointer tid, Buffer *b);
 extern Oid	heap_insert(Relation relation, HeapTuple tup);
 extern int	heap_delete(Relation relation, ItemPointer tid);
 extern int

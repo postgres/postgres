@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.25 1997/09/08 02:37:23 momjian Exp $
+ * $Id: parsenodes.h,v 1.26 1997/09/08 20:58:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,7 @@ typedef struct AddAttrStmt
 	char	   *relname;		/* the relation to add attr */
 	bool		inh;			/* add recursively to children? */
 	struct ColumnDef *colDef;	/* the attribute definition */
-}			AddAttrStmt;
+} AddAttrStmt;
 
 /* ----------------------
  *		Change ACL Statement
@@ -132,7 +132,7 @@ typedef struct CopyStmt
 typedef enum ArchType
 {
 	ARCH_NONE, ARCH_LIGHT, ARCH_HEAVY	/* archive mode */
-}			ArchType;
+} ArchType;
 
 typedef struct CreateStmt
 {
@@ -562,7 +562,7 @@ typedef struct AppendStmt
 	List	   *targetList;		/* the target list (of ResTarget) */
 	List	   *fromClause;		/* the from clause */
 	Node	   *whereClause;	/* qualifications */
-}			AppendStmt;
+} AppendStmt;
 
 /* ----------------------
  *		Delete Statement
@@ -676,7 +676,7 @@ typedef struct A_Expr
 	char	   *opname;			/* name of operator/function */
 	Node	   *lexpr;			/* left argument */
 	Node	   *rexpr;			/* right argument */
-}			A_Expr;
+} A_Expr;
 
 /*
  * Attr -
@@ -692,7 +692,7 @@ typedef struct Attr
 	List	   *attrs;			/* attributes (possibly nested); list of
 								 * Values (strings) */
 	List	   *indirection;	/* array refs (list of A_Indices') */
-}			Attr;
+} Attr;
 
 /*
  * A_Const - a constant expression
@@ -702,7 +702,7 @@ typedef struct A_Const
 	NodeTag		type;
 	Value		val;			/* the value (with the tag) */
 	TypeName   *typename;		/* typecast */
-}			A_Const;
+} A_Const;
 
 /*
  * ColumnDef - column definition (used in various creates)
@@ -750,7 +750,7 @@ typedef struct A_Indices
 	NodeTag		type;
 	Node	   *lidx;			/* could be NULL */
 	Node	   *uidx;
-}			A_Indices;
+} A_Indices;
 
 /*
  * ResTarget -

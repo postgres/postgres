@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.21 1997/09/08 02:30:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.22 1997/09/08 20:57:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,10 @@
 static int	point_inside(Point * p, int npts, Point plist[]);
 static int	lseg_crossing(double x, double y, double px, double py);
 static BOX *box_construct(double x1, double x2, double y1, double y2);
-static BOX *box_copy(BOX * box);
-static BOX *box_fill(BOX * result, double x1, double x2, double y1, double y2);
-static double box_ht(BOX * box);
-static double box_wd(BOX * box);
+static BOX *box_copy(BOX *box);
+static BOX *box_fill(BOX *result, double x1, double x2, double y1, double y2);
+static double box_ht(BOX *box);
+static double box_wd(BOX *box);
 static double circle_ar(CIRCLE * circle);
 static CIRCLE *circle_copy(CIRCLE * circle);
 static LINE *line_construct_pm(Point * pt, double m);
@@ -57,7 +57,7 @@ static int	pair_count(char *s, char delim);
 static int	path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point * p);
 static char *path_encode(bool closed, int npts, Point * pt);
 static void statlseg_construct(LSEG * lseg, Point * pt1, Point * pt2);
-static double box_ar(BOX * box);
+static double box_ar(BOX *box);
 static Point *interpt_sl(LSEG * lseg, LINE * line);
 static LINE *line_construct_pp(Point * pt1, Point * pt2);
 
@@ -384,7 +384,7 @@ box_in(char *str)
 /*		box_out -		convert a box to external form.
  */
 char	   *
-box_out(BOX * box)
+box_out(BOX *box)
 {
 	if (!PointerIsValid(box))
 		return (NULL);
@@ -407,7 +407,7 @@ box_construct(double x1, double x2, double y1, double y2)
 /*		box_fill		-		fill in a static box
  */
 static BOX *
-box_fill(BOX * result, double x1, double x2, double y1, double y2)
+box_fill(BOX *result, double x1, double x2, double y1, double y2)
 {
 	if (x1 > x2)
 	{
@@ -437,7 +437,7 @@ box_fill(BOX * result, double x1, double x2, double y1, double y2)
 /*		box_copy		-		copy a box
  */
 static BOX *
-box_copy(BOX * box)
+box_copy(BOX *box)
 {
 	BOX		   *result = PALLOCTYPE(BOX);
 
@@ -455,7 +455,7 @@ box_copy(BOX * box)
 /*		box_same		-		are two boxes identical?
  */
 bool
-box_same(BOX * box1, BOX * box2)
+box_same(BOX *box1, BOX *box2)
 {
 	return ((FPeq(box1->high.x, box2->high.x) && FPeq(box1->low.x, box2->low.x)) &&
 	(FPeq(box1->high.y, box2->high.y) && FPeq(box1->low.y, box2->low.y)));
@@ -464,7 +464,7 @@ box_same(BOX * box1, BOX * box2)
 /*		box_overlap		-		does box1 overlap box2?
  */
 bool
-box_overlap(BOX * box1, BOX * box2)
+box_overlap(BOX *box1, BOX *box2)
 {
 	return (((FPge(box1->high.x, box2->high.x) && FPle(box1->low.x, box2->high.x)) ||
 			 (FPge(box2->high.x, box1->high.x) && FPle(box2->low.x, box1->high.x))) &&
@@ -479,7 +479,7 @@ box_overlap(BOX * box1, BOX * box2)
  *		when time ranges are stored as rectangles.
  */
 bool
-box_overleft(BOX * box1, BOX * box2)
+box_overleft(BOX *box1, BOX *box2)
 {
 	return (FPle(box1->high.x, box2->high.x));
 }
@@ -487,7 +487,7 @@ box_overleft(BOX * box1, BOX * box2)
 /*		box_left		-		is box1 strictly left of box2?
  */
 bool
-box_left(BOX * box1, BOX * box2)
+box_left(BOX *box1, BOX *box2)
 {
 	return (FPlt(box1->high.x, box2->low.x));
 }
@@ -495,7 +495,7 @@ box_left(BOX * box1, BOX * box2)
 /*		box_right		-		is box1 strictly right of box2?
  */
 bool
-box_right(BOX * box1, BOX * box2)
+box_right(BOX *box1, BOX *box2)
 {
 	return (FPgt(box1->low.x, box2->high.x));
 }
@@ -507,7 +507,7 @@ box_right(BOX * box1, BOX * box2)
  *		are stored as rectangles.
  */
 bool
-box_overright(BOX * box1, BOX * box2)
+box_overright(BOX *box1, BOX *box2)
 {
 	return (box1->low.x >= box2->low.x);
 }
@@ -515,7 +515,7 @@ box_overright(BOX * box1, BOX * box2)
 /*		box_contained	-		is box1 contained by box2?
  */
 bool
-box_contained(BOX * box1, BOX * box2)
+box_contained(BOX *box1, BOX *box2)
 {
 	return ((FPle(box1->high.x, box2->high.x) && FPge(box1->low.x, box2->low.x)) &&
 	(FPle(box1->high.y, box2->high.y) && FPge(box1->low.y, box2->low.y)));
@@ -524,7 +524,7 @@ box_contained(BOX * box1, BOX * box2)
 /*		box_contain		-		does box1 contain box2?
  */
 bool
-box_contain(BOX * box1, BOX * box2)
+box_contain(BOX *box1, BOX *box2)
 {
 	return ((FPge(box1->high.x, box2->high.x) && FPle(box1->low.x, box2->low.x) &&
 	FPge(box1->high.y, box2->high.y) && FPle(box1->low.y, box2->low.y)));
@@ -535,13 +535,13 @@ box_contain(BOX * box1, BOX * box2)
  *				is box1 entirely {above,below} box2?
  */
 bool
-box_below(BOX * box1, BOX * box2)
+box_below(BOX *box1, BOX *box2)
 {
 	return (FPle(box1->high.y, box2->low.y));
 }
 
 bool
-box_above(BOX * box1, BOX * box2)
+box_above(BOX *box1, BOX *box2)
 {
 	return (FPge(box1->low.y, box2->high.y));
 }
@@ -551,31 +551,31 @@ box_above(BOX * box1, BOX * box2)
  *								our accuracy constraint?
  */
 bool
-box_lt(BOX * box1, BOX * box2)
+box_lt(BOX *box1, BOX *box2)
 {
 	return (FPlt(box_ar(box1), box_ar(box2)));
 }
 
 bool
-box_gt(BOX * box1, BOX * box2)
+box_gt(BOX *box1, BOX *box2)
 {
 	return (FPgt(box_ar(box1), box_ar(box2)));
 }
 
 bool
-box_eq(BOX * box1, BOX * box2)
+box_eq(BOX *box1, BOX *box2)
 {
 	return (FPeq(box_ar(box1), box_ar(box2)));
 }
 
 bool
-box_le(BOX * box1, BOX * box2)
+box_le(BOX *box1, BOX *box2)
 {
 	return (FPle(box_ar(box1), box_ar(box2)));
 }
 
 bool
-box_ge(BOX * box1, BOX * box2)
+box_ge(BOX *box1, BOX *box2)
 {
 	return (FPge(box_ar(box1), box_ar(box2)));
 }
@@ -593,7 +593,7 @@ box_ge(BOX * box1, BOX * box2)
 /*		box_area		-		returns the area of the box.
  */
 double	   *
-box_area(BOX * box)
+box_area(BOX *box)
 {
 	double	   *result = PALLOCTYPE(double);
 
@@ -607,7 +607,7 @@ box_area(BOX * box)
  *								  (horizontal magnitude).
  */
 double	   *
-box_width(BOX * box)
+box_width(BOX *box)
 {
 	double	   *result = PALLOCTYPE(double);
 
@@ -621,7 +621,7 @@ box_width(BOX * box)
  *								  (vertical magnitude).
  */
 double	   *
-box_height(BOX * box)
+box_height(BOX *box)
 {
 	double	   *result = PALLOCTYPE(double);
 
@@ -635,7 +635,7 @@ box_height(BOX * box)
  *								  center points of two boxes.
  */
 double	   *
-box_distance(BOX * box1, BOX * box2)
+box_distance(BOX *box1, BOX *box2)
 {
 	double	   *result = PALLOCTYPE(double);
 	Point	   *a,
@@ -654,7 +654,7 @@ box_distance(BOX * box1, BOX * box2)
 /*		box_center		-		returns the center point of the box.
  */
 Point	   *
-box_center(BOX * box)
+box_center(BOX *box)
 {
 	Point	   *result = PALLOCTYPE(Point);
 
@@ -668,7 +668,7 @@ box_center(BOX * box)
 /*		box_ar	-		returns the area of the box.
  */
 static double
-box_ar(BOX * box)
+box_ar(BOX *box)
 {
 	return (box_wd(box) * box_ht(box));
 }
@@ -678,7 +678,7 @@ box_ar(BOX * box)
  *								  (horizontal magnitude).
  */
 static double
-box_wd(BOX * box)
+box_wd(BOX *box)
 {
 	return (box->high.x - box->low.x);
 }
@@ -688,7 +688,7 @@ box_wd(BOX * box)
  *								  (vertical magnitude).
  */
 static double
-box_ht(BOX * box)
+box_ht(BOX *box)
 {
 	return (box->high.y - box->low.y);
 }
@@ -699,7 +699,7 @@ box_ht(BOX * box)
  */
 #ifdef NOT_USED
 static double
-box_dt(BOX * box1, BOX * box2)
+box_dt(BOX *box1, BOX *box2)
 {
 	double		result;
 	Point	   *a,
@@ -725,7 +725,7 @@ box_dt(BOX * box1, BOX * box2)
  *				  or NULL if they do not intersect.
  */
 BOX		   *
-box_intersect(BOX * box1, BOX * box2)
+box_intersect(BOX *box1, BOX *box2)
 {
 	BOX		   *result;
 
@@ -749,7 +749,7 @@ box_intersect(BOX * box1, BOX * box2)
  *				provided, of course, we have LSEGs.
  */
 LSEG	   *
-box_diagonal(BOX * box)
+box_diagonal(BOX *box)
 {
 	Point		p1,
 				p2;
@@ -1928,7 +1928,7 @@ dist_ppath(Point * pt, PATH * path)
 }
 
 double	   *
-dist_pb(Point * pt, BOX * box)
+dist_pb(Point * pt, BOX *box)
 {
 	Point	   *tmp;
 	double	   *result;
@@ -1973,7 +1973,7 @@ dist_sl(LSEG * lseg, LINE * line)
 
 
 double	   *
-dist_sb(LSEG * lseg, BOX * box)
+dist_sb(LSEG * lseg, BOX *box)
 {
 	Point	   *tmp;
 	double	   *result;
@@ -1995,7 +1995,7 @@ dist_sb(LSEG * lseg, BOX * box)
 
 
 double	   *
-dist_lb(LINE * line, BOX * box)
+dist_lb(LINE * line, BOX *box)
 {
 	Point	   *tmp;
 	double	   *result;
@@ -2227,7 +2227,7 @@ close_ps(Point * pt, LSEG * lseg)
 }								/* close_ps() */
 
 Point	   *
-close_pb(Point * pt, BOX * box)
+close_pb(Point * pt, BOX *box)
 {
 	/* think about this one for a while */
 	elog(WARN, "close_pb not implemented", NULL);
@@ -2258,7 +2258,7 @@ close_sl(LSEG * lseg, LINE * line)
 }
 
 Point	   *
-close_sb(LSEG * lseg, BOX * box)
+close_sb(LSEG * lseg, BOX *box)
 {
 	/* think about this one for a while */
 	elog(WARN, "close_sb not implemented", NULL);
@@ -2267,7 +2267,7 @@ close_sb(LSEG * lseg, BOX * box)
 }
 
 Point	   *
-close_lb(LINE * line, BOX * box)
+close_lb(LINE * line, BOX *box)
 {
 	/* think about this one for a while */
 	elog(WARN, "close_lb not implemented", NULL);
@@ -2308,7 +2308,7 @@ on_ps(Point * pt, LSEG * lseg)
 }
 
 bool
-on_pb(Point * pt, BOX * box)
+on_pb(Point * pt, BOX *box)
 {
 	if (!PointerIsValid(pt) || !PointerIsValid(box))
 		return (FALSE);
@@ -2433,7 +2433,7 @@ on_sl(LSEG * lseg, LINE * line)
 }								/* on_sl() */
 
 bool
-on_sb(LSEG * lseg, BOX * box)
+on_sb(LSEG * lseg, BOX *box)
 {
 	if (!PointerIsValid(lseg) || !PointerIsValid(box))
 		return (FALSE);
@@ -2466,7 +2466,7 @@ inter_sl(LSEG * lseg, LINE * line)
 /* XXX segment and box should be able to intersect; tgl - 97/01/09 */
 
 bool
-inter_sb(LSEG * lseg, BOX * box)
+inter_sb(LSEG * lseg, BOX *box)
 {
 	return (0);
 }
@@ -2474,7 +2474,7 @@ inter_sb(LSEG * lseg, BOX * box)
 /* XXX line and box should be able to intersect; tgl - 97/01/09 */
 
 bool
-inter_lb(LINE * line, BOX * box)
+inter_lb(LINE * line, BOX *box)
 {
 	return (0);
 }
@@ -2887,7 +2887,7 @@ box(Point * p1, Point * p2)
 }								/* box() */
 
 BOX		   *
-box_add(BOX * box, Point * p)
+box_add(BOX *box, Point * p)
 {
 	BOX		   *result;
 
@@ -2901,7 +2901,7 @@ box_add(BOX * box, Point * p)
 }								/* box_add() */
 
 BOX		   *
-box_sub(BOX * box, Point * p)
+box_sub(BOX *box, Point * p)
 {
 	BOX		   *result;
 
@@ -2915,7 +2915,7 @@ box_sub(BOX * box, Point * p)
 }								/* box_sub() */
 
 BOX		   *
-box_mul(BOX * box, Point * p)
+box_mul(BOX *box, Point * p)
 {
 	BOX		   *result;
 	Point	   *high,
@@ -2935,7 +2935,7 @@ box_mul(BOX * box, Point * p)
 }								/* box_mul() */
 
 BOX		   *
-box_div(BOX * box, Point * p)
+box_div(BOX *box, Point * p)
 {
 	BOX		   *result;
 	Point	   *high,
@@ -3273,7 +3273,7 @@ poly_box(POLYGON * poly)
  * Convert a box to a polygon.
  */
 POLYGON    *
-box_poly(BOX * box)
+box_poly(BOX *box)
 {
 	POLYGON    *poly;
 	int			size;
@@ -3958,7 +3958,7 @@ circle_box(CIRCLE * circle)
  * Convert a box to a circle.
  */
 CIRCLE	   *
-box_circle(BOX * box)
+box_circle(BOX *box)
 {
 	CIRCLE	   *circle;
 

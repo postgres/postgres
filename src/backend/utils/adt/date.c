@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.16 1997/09/08 02:30:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.17 1997/09/08 20:57:26 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -104,8 +104,8 @@ static int	correct_dir(char direction[], int *signptr);
 
 static int
 istinterval(char *i_string,
-			AbsoluteTime * i_start,
-			AbsoluteTime * i_end);
+			AbsoluteTime *i_start,
+			AbsoluteTime *i_end);
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *
@@ -952,8 +952,8 @@ correct_dir(char direction[], int *signptr)
  */
 static int
 istinterval(char *i_string,
-			AbsoluteTime * i_start,
-			AbsoluteTime * i_end)
+			AbsoluteTime *i_start,
+			AbsoluteTime *i_end)
 {
 	register char *p,
 			   *p1;

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.55 1997/09/08 02:27:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.56 1997/09/08 20:56:38 momjian Exp $
  *
  * NOTES
  *
@@ -112,7 +112,7 @@
 typedef struct bkend
 {
 	int			pid;			/* process id of backend */
-}			Backend;
+} Backend;
 
 /* list of active backends.  For garbage collection only now. */
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.11 1997/09/08 02:20:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.12 1997/09/08 20:54:15 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -56,7 +56,7 @@ typedef struct BTMetaPageData
 #ifdef BTREE_VERSION_1
 	int32		btm_level;
 #endif
-}			BTMetaPageData;
+} BTMetaPageData;
 
 #define BTPageGetMeta(p) \
 	((BTMetaPageData *) &((PageHeader) p)->pd_linp[0])

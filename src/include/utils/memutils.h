@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.10 1997/09/08 02:39:50 momjian Exp $
+ * $Id: memutils.h,v 1.11 1997/09/08 20:59:22 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -193,7 +193,7 @@ typedef enum AllocMode
 	StaticAllocMode,			/* always "statically" allocate */
 	TunableAllocMode,			/* allocations are "tuned" */
 	BoundedAllocMode			/* allocations bounded to fixed usage */
-}			AllocMode;
+} AllocMode;
 
 #define DefaultAllocMode		DynamicAllocMode
 
@@ -205,7 +205,7 @@ typedef struct AllocSetData
 {
 	OrderedSetData setData;
 	/* Note: this will change in the future to support other modes */
-}			AllocSetData;
+} AllocSetData;
 
 typedef AllocSetData *AllocSet;
 
@@ -228,7 +228,7 @@ extern void AllocSetReset(AllocSet set);
 extern bool AllocSetContains(AllocSet set, AllocPointer pointer);
 extern AllocPointer AllocSetAlloc(AllocSet set, Size size);
 extern void AllocSetFree(AllocSet set, AllocPointer pointer);
-extern		AllocPointer
+extern AllocPointer
 AllocSetRealloc(AllocSet set, AllocPointer pointer,
 				Size size);
 

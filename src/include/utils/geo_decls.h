@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.10 1997/09/08 02:39:46 momjian Exp $
+ * $Id: geo_decls.h,v 1.11 1997/09/08 20:59:21 momjian Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -120,7 +120,7 @@ typedef struct
 {
 	Point		high,
 				low;			/* corner POINTs */
-}			BOX;
+} BOX;
 
 /*---------------------------------------------------------------------
  * POLYGON - Specified by an array of doubles defining the points,
@@ -187,65 +187,65 @@ extern Point *lseg_interpt(LSEG * l1, LSEG * l2);
 extern double *dist_pl(Point * pt, LINE * line);
 extern double *dist_ps(Point * pt, LSEG * lseg);
 extern double *dist_ppath(Point * pt, PATH * path);
-extern double *dist_pb(Point * pt, BOX * box);
+extern double *dist_pb(Point * pt, BOX *box);
 extern double *dist_sl(LSEG * lseg, LINE * line);
-extern double *dist_sb(LSEG * lseg, BOX * box);
-extern double *dist_lb(LINE * line, BOX * box);
+extern double *dist_sb(LSEG * lseg, BOX *box);
+extern double *dist_lb(LINE * line, BOX *box);
 extern Point *close_pl(Point * pt, LINE * line);
 extern Point *close_ps(Point * pt, LSEG * lseg);
-extern Point *close_pb(Point * pt, BOX * box);
+extern Point *close_pb(Point * pt, BOX *box);
 extern Point *close_sl(LSEG * lseg, LINE * line);
-extern Point *close_sb(LSEG * lseg, BOX * box);
-extern Point *close_lb(LINE * line, BOX * box);
+extern Point *close_sb(LSEG * lseg, BOX *box);
+extern Point *close_lb(LINE * line, BOX *box);
 extern bool on_pl(Point * pt, LINE * line);
 extern bool on_ps(Point * pt, LSEG * lseg);
-extern bool on_pb(Point * pt, BOX * box);
+extern bool on_pb(Point * pt, BOX *box);
 extern bool on_ppath(Point * pt, PATH * path);
 extern bool on_sl(LSEG * lseg, LINE * line);
-extern bool on_sb(LSEG * lseg, BOX * box);
+extern bool on_sb(LSEG * lseg, BOX *box);
 extern bool inter_sl(LSEG * lseg, LINE * line);
-extern bool inter_sb(LSEG * lseg, BOX * box);
-extern bool inter_lb(LINE * line, BOX * box);
+extern bool inter_sb(LSEG * lseg, BOX *box);
+extern bool inter_lb(LINE * line, BOX *box);
 
 /* private routines */
 extern LSEG *lseg_construct(Point * pt1, Point * pt2);
 
 /* public box routines */
 extern BOX *box_in(char *str);
-extern char *box_out(BOX * box);
-extern bool box_same(BOX * box1, BOX * box2);
-extern bool box_overlap(BOX * box1, BOX * box2);
-extern bool box_overleft(BOX * box1, BOX * box2);
-extern bool box_left(BOX * box1, BOX * box2);
-extern bool box_right(BOX * box1, BOX * box2);
-extern bool box_overright(BOX * box1, BOX * box2);
-extern bool box_contained(BOX * box1, BOX * box2);
-extern bool box_contain(BOX * box1, BOX * box2);
-extern bool box_below(BOX * box1, BOX * box2);
-extern bool box_above(BOX * box1, BOX * box2);
-extern bool box_lt(BOX * box1, BOX * box2);
-extern bool box_gt(BOX * box1, BOX * box2);
-extern bool box_eq(BOX * box1, BOX * box2);
-extern bool box_le(BOX * box1, BOX * box2);
-extern bool box_ge(BOX * box1, BOX * box2);
-extern Point *box_center(BOX * box);
-extern double *box_area(BOX * box);
-extern double *box_width(BOX * box);
-extern double *box_height(BOX * box);
-extern double *box_distance(BOX * box1, BOX * box2);
-extern Point *box_center(BOX * box);
-extern BOX *box_intersect(BOX * box1, BOX * box2);
-extern LSEG *box_diagonal(BOX * box);
+extern char *box_out(BOX *box);
+extern bool box_same(BOX *box1, BOX *box2);
+extern bool box_overlap(BOX *box1, BOX *box2);
+extern bool box_overleft(BOX *box1, BOX *box2);
+extern bool box_left(BOX *box1, BOX *box2);
+extern bool box_right(BOX *box1, BOX *box2);
+extern bool box_overright(BOX *box1, BOX *box2);
+extern bool box_contained(BOX *box1, BOX *box2);
+extern bool box_contain(BOX *box1, BOX *box2);
+extern bool box_below(BOX *box1, BOX *box2);
+extern bool box_above(BOX *box1, BOX *box2);
+extern bool box_lt(BOX *box1, BOX *box2);
+extern bool box_gt(BOX *box1, BOX *box2);
+extern bool box_eq(BOX *box1, BOX *box2);
+extern bool box_le(BOX *box1, BOX *box2);
+extern bool box_ge(BOX *box1, BOX *box2);
+extern Point *box_center(BOX *box);
+extern double *box_area(BOX *box);
+extern double *box_width(BOX *box);
+extern double *box_height(BOX *box);
+extern double *box_distance(BOX *box1, BOX *box2);
+extern Point *box_center(BOX *box);
+extern BOX *box_intersect(BOX *box1, BOX *box2);
+extern LSEG *box_diagonal(BOX *box);
 
 /* private routines */
 
-extern double box_dt(BOX * box1, BOX * box2);
+extern double box_dt(BOX *box1, BOX *box2);
 
 extern BOX *box(Point * p1, Point * p2);
-extern BOX *box_add(BOX * box, Point * p);
-extern BOX *box_sub(BOX * box, Point * p);
-extern BOX *box_mul(BOX * box, Point * p);
-extern BOX *box_div(BOX * box, Point * p);
+extern BOX *box_add(BOX *box, Point * p);
+extern BOX *box_sub(BOX *box, Point * p);
+extern BOX *box_mul(BOX *box, Point * p);
+extern BOX *box_div(BOX *box, Point * p);
 
 /* private line routines */
 extern double *line_distance(LINE * l1, LINE * l2);
@@ -301,7 +301,7 @@ extern int4 poly_npoints(POLYGON * poly);
 extern Point *poly_center(POLYGON * poly);
 extern BOX *poly_box(POLYGON * poly);
 extern PATH *poly_path(POLYGON * poly);
-extern POLYGON *box_poly(BOX * box);
+extern POLYGON *box_poly(BOX *box);
 
 extern POLYGON *upgradepoly(POLYGON * poly);
 extern POLYGON *revertpoly(POLYGON * poly);
@@ -341,7 +341,7 @@ extern double *dist_pc(Point * point, CIRCLE * circle);
 extern double *dist_cpoly(CIRCLE * circle, POLYGON * poly);
 extern Point *circle_center(CIRCLE * circle);
 extern CIRCLE *circle(Point * center, float8 * radius);
-extern CIRCLE *box_circle(BOX * box);
+extern CIRCLE *box_circle(BOX *box);
 extern BOX *circle_box(CIRCLE * circle);
 extern CIRCLE *poly_circle(POLYGON * poly);
 extern POLYGON *circle_poly(int npts, CIRCLE * circle);

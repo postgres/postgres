@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.7 1997/09/08 02:22:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.8 1997/09/08 20:55:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ static TupleTableSlot *ExecGroupEveryTuple(Group * node);
 static TupleTableSlot *ExecGroupOneTuple(Group * node);
 static bool
 sameGroup(TupleTableSlot * oldslot, TupleTableSlot * newslot,
-		  int numCols, AttrNumber * grpColIdx, TupleDesc tupdesc);
+		  int numCols, AttrNumber *grpColIdx, TupleDesc tupdesc);
 
 /* ---------------------------------------
  *	 ExecGroup -
@@ -383,7 +383,7 @@ static bool
 sameGroup(TupleTableSlot * oldslot,
 		  TupleTableSlot * newslot,
 		  int numCols,
-		  AttrNumber * grpColIdx,
+		  AttrNumber *grpColIdx,
 		  TupleDesc tupdesc)
 {
 	bool		isNull1,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.40 1997/09/08 02:25:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.41 1997/09/08 20:56:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,14 +47,14 @@
 static Query *transformStmt(ParseState * pstate, Node * stmt);
 
 static Query *transformDeleteStmt(ParseState * pstate, DeleteStmt * stmt);
-static Query *transformInsertStmt(ParseState * pstate, AppendStmt * stmt);
+static Query *transformInsertStmt(ParseState * pstate, AppendStmt *stmt);
 static Query *transformIndexStmt(ParseState * pstate, IndexStmt * stmt);
 static Query *transformExtendStmt(ParseState * pstate, ExtendStmt * stmt);
 static Query *transformRuleStmt(ParseState * query, RuleStmt * stmt);
 static Query *transformSelectStmt(ParseState * pstate, RetrieveStmt * stmt);
 static Query *transformUpdateStmt(ParseState * pstate, ReplaceStmt * stmt);
 static Query *transformCursorStmt(ParseState * pstate, CursorStmt * stmt);
-static Node *handleNestedDots(ParseState * pstate, Attr * attr, int *curr_resno);
+static Node *handleNestedDots(ParseState * pstate, Attr *attr, int *curr_resno);
 
 #define EXPR_COLUMN_FIRST	 1
 #define EXPR_RELATION_FIRST  2
@@ -89,7 +89,7 @@ static List *setup_base_tlist(Oid typeid);
 static void
 make_arguments(int nargs, List * fargs, Oid * input_typeids,
 			   Oid * function_typeids);
-static void AddAggToParseState(ParseState * pstate, Aggreg * aggreg);
+static void AddAggToParseState(ParseState * pstate, Aggreg *aggreg);
 static void finalizeAggregates(ParseState * pstate, Query * qry);
 static void parseCheckAggregates(ParseState * pstate, Query * qry);
 static ParseState *makeParseState(void);
@@ -300,7 +300,7 @@ transformDeleteStmt(ParseState * pstate, DeleteStmt * stmt)
  *	  transform an Insert Statement
  */
 static Query *
-transformInsertStmt(ParseState * pstate, AppendStmt * stmt)
+transformInsertStmt(ParseState * pstate, AppendStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);	/* make a new query tree */
 
@@ -1872,7 +1872,7 @@ transformSortClause(ParseState * pstate,
  ** a tree with of Iter and Func nodes.
  */
 static Node *
-handleNestedDots(ParseState * pstate, Attr * attr, int *curr_resno)
+handleNestedDots(ParseState * pstate, Attr *attr, int *curr_resno)
 {
 	List	   *mutator_iter;
 	Node	   *retval = NULL;
@@ -2524,7 +2524,7 @@ ParseFunc(ParseState * pstate, char *funcname, List * fargs, int *curr_resno)
  * SIDE EFFECT: aggno in target list entry will be modified
  */
 static void
-AddAggToParseState(ParseState * pstate, Aggreg * aggreg)
+AddAggToParseState(ParseState * pstate, Aggreg *aggreg)
 {
 	List	   *ag;
 	int			i;

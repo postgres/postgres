@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.8 1997/09/08 02:30:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.9 1997/09/08 20:57:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -439,7 +439,7 @@ _ReadChunkArray(int st[],
 				int bsize,
 				int fp,
 				char *destfp,
-				ArrayType * array,
+				ArrayType *array,
 				int isDestLO,
 				bool * isNull)
 {
@@ -637,7 +637,7 @@ struct varlena *
 _ReadChunkArray1El(int st[],
 				   int bsize,
 				   int fp,
-				   ArrayType * array,
+				   ArrayType *array,
 				   bool * isNull)
 {
 	int			i,

@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.21 1997/09/08 02:20:58 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.22 1997/09/08 20:54:28 momjian Exp $
  *
  * NOTES
  *
@@ -72,7 +72,7 @@ extern int	ShowExecutorStats;
 static BTItem _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags);
 static BTItem _bt_minitem(Page opage, BlockNumber oblkno, int atend);
 static void *_bt_pagestate(Relation index, int flags, int level, bool doupper);
-static void _bt_uppershutdown(Relation index, BTPageState * state);
+static void _bt_uppershutdown(Relation index, BTPageState *state);
 
 /*
  * turn on debugging output.
@@ -113,7 +113,7 @@ typedef struct
 	short		bttb_ntup;		/* number of tuples in this block */
 	short		bttb_eor;		/* End-Of-Run marker */
 	char		bttb_data[TAPEBLCKSZ - 2 * sizeof(double)];
-}			BTTapeBlock;
+} BTTapeBlock;
 
 /*
  * this structure holds the bookkeeping for a simple balanced multiway
@@ -129,7 +129,7 @@ typedef struct
 	BTTapeBlock **bts_itape;	/* input tape blocks */
 	BTTapeBlock **bts_otape;	/* output tape blocks */
 	bool		isunique;
-}			BTSpool;
+} BTSpool;
 
 /*-------------------------------------------------------------------------
  * sorting comparison routine - returns {-1,0,1} depending on whether
@@ -154,14 +154,14 @@ typedef struct
 	Datum	   *btsk_datum;
 	char	   *btsk_nulls;
 	BTItem		btsk_item;
-}			BTSortKey;
+} BTSortKey;
 
 static Relation _bt_sortrel;
 static int	_bt_nattr;
 static BTSpool *_bt_inspool;
 
 static void
-_bt_isortcmpinit(Relation index, BTSpool * spool)
+_bt_isortcmpinit(Relation index, BTSpool *spool)
 {
 	_bt_sortrel = index;
 	_bt_inspool = spool;
@@ -169,7 +169,7 @@ _bt_isortcmpinit(Relation index, BTSpool * spool)
 }
 
 static int
-_bt_isortcmp(BTSortKey * k1, BTSortKey * k2)
+_bt_isortcmp(BTSortKey *k1, BTSortKey *k2)
 {
 	Datum	   *k1_datum = k1->btsk_datum;
 	Datum	   *k2_datum = k2->btsk_datum;
@@ -218,7 +218,7 @@ _bt_isortcmp(BTSortKey * k1, BTSortKey * k2)
 }
 
 static void
-_bt_setsortkey(Relation index, BTItem bti, BTSortKey * sk)
+_bt_setsortkey(Relation index, BTItem bti, BTSortKey *sk)
 {
 	sk->btsk_item = (BTItem) NULL;
 	sk->btsk_datum = (Datum *) NULL;
@@ -262,7 +262,7 @@ typedef struct
 {
 	int			btpqe_tape;		/* tape identifier */
 	BTSortKey	btpqe_item;		/* pointer to BTItem in tape buffer */
-}			BTPriQueueElem;
+} BTPriQueueElem;
 
 #define MAXELEM MAXTAPES
 typedef struct
@@ -270,14 +270,14 @@ typedef struct
 	int			btpq_nelem;
 	BTPriQueueElem btpq_queue[MAXELEM];
 	Relation	btpq_rel;
-}			BTPriQueue;
+} BTPriQueue;
 
 /* be sure to call _bt_isortcmpinit first */
 #define GREATER(a, b) \
 	(_bt_isortcmp(&((a)->btpqe_item), &((b)->btpqe_item)) > 0)
 
 static void
-_bt_pqsift(BTPriQueue * q, int parent)
+_bt_pqsift(BTPriQueue *q, int parent)
 {
 	int			child;
 	BTPriQueueElem e;
@@ -308,7 +308,7 @@ _bt_pqsift(BTPriQueue * q, int parent)
 }
 
 static int
-_bt_pqnext(BTPriQueue * q, BTPriQueueElem * e)
+_bt_pqnext(BTPriQueue *q, BTPriQueueElem *e)
 {
 	if (q->btpq_nelem < 1)
 	{							/* already empty */
@@ -326,7 +326,7 @@ _bt_pqnext(BTPriQueue * q, BTPriQueueElem * e)
 }
 
 static void
-_bt_pqadd(BTPriQueue * q, BTPriQueueElem * e)
+_bt_pqadd(BTPriQueue *q, BTPriQueueElem *e)
 {
 	int			child,
 				parent;
@@ -376,7 +376,7 @@ _bt_pqadd(BTPriQueue * q, BTPriQueueElem * e)
  * empty.)
  */
 static void
-_bt_tapereset(BTTapeBlock * tape)
+_bt_tapereset(BTTapeBlock *tape)
 {
 	tape->bttb_eor = 0;
 	tape->bttb_top = 0;
@@ -387,7 +387,7 @@ _bt_tapereset(BTTapeBlock * tape)
  * rewind the physical tape file.
  */
 static void
-_bt_taperewind(BTTapeBlock * tape)
+_bt_taperewind(BTTapeBlock *tape)
 {
 	FileSeek(tape->bttb_fd, 0, SEEK_SET);
 }
@@ -402,7 +402,7 @@ _bt_taperewind(BTTapeBlock * tape)
  * least you don't have to delete and reinsert the directory entries.
  */
 static void
-_bt_tapeclear(BTTapeBlock * tape)
+_bt_tapeclear(BTTapeBlock *tape)
 {
 	/* blow away the contents of the old file */
 	_bt_taperewind(tape);
@@ -444,7 +444,7 @@ _bt_tapecreate(char *fname)
  * destroy the BTTapeBlock structure and its physical tape file.
  */
 static void
-_bt_tapedestroy(BTTapeBlock * tape)
+_bt_tapedestroy(BTTapeBlock *tape)
 {
 	FileUnlink(tape->bttb_fd);
 	pfree((void *) tape);
@@ -454,7 +454,7 @@ _bt_tapedestroy(BTTapeBlock * tape)
  * flush the tape block to the file, marking End-Of-Run if requested.
  */
 static void
-_bt_tapewrite(BTTapeBlock * tape, int eor)
+_bt_tapewrite(BTTapeBlock *tape, int eor)
 {
 	tape->bttb_eor = eor;
 	FileWrite(tape->bttb_fd, (char *) tape, TAPEBLCKSZ);
@@ -472,7 +472,7 @@ _bt_tapewrite(BTTapeBlock * tape, int eor)
  * - 1 if a valid block was read
  */
 static int
-_bt_taperead(BTTapeBlock * tape)
+_bt_taperead(BTTapeBlock *tape)
 {
 	int			fd;
 	int			nread;
@@ -511,7 +511,7 @@ _bt_taperead(BTTapeBlock * tape)
  * - sets 'pos' to the current position within the block.
  */
 static BTItem
-_bt_tapenext(BTTapeBlock * tape, char **pos)
+_bt_tapenext(BTTapeBlock *tape, char **pos)
 {
 	Size		itemsz;
 	BTItem		bti;
@@ -520,7 +520,7 @@ _bt_tapenext(BTTapeBlock * tape, char **pos)
 	{
 		return ((BTItem) NULL);
 	}
-	bti = (BTItem) * pos;
+	bti = (BTItem) *pos;
 	itemsz = BTITEMSZ(bti);
 	*pos += DOUBLEALIGN(itemsz);
 	return (bti);
@@ -538,7 +538,7 @@ _bt_tapenext(BTTapeBlock * tape, char **pos)
  * the beginning of free space.
  */
 static void
-_bt_tapeadd(BTTapeBlock * tape, BTItem item, int itemsz)
+_bt_tapeadd(BTTapeBlock *tape, BTItem item, int itemsz)
 {
 	memcpy(tape->bttb_data + tape->bttb_top, item, itemsz);
 	++tape->bttb_ntup;
@@ -615,7 +615,7 @@ _bt_spooldestroy(void *spool)
  * flush out any dirty output tape blocks
  */
 static void
-_bt_spoolflush(BTSpool * btspool)
+_bt_spoolflush(BTSpool *btspool)
 {
 	int			i;
 
@@ -635,7 +635,7 @@ _bt_spoolflush(BTSpool * btspool)
  * output tapes.
  */
 static void
-_bt_spoolswap(BTSpool * btspool)
+_bt_spoolswap(BTSpool *btspool)
 {
 	File		tmpfd;
 	BTTapeBlock *itape;
@@ -800,7 +800,7 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
  * allocate a new, clean btree page, not linked to any siblings.
  */
 static void
-_bt_blnewpage(Relation index, Buffer * buf, Page * page, int flags)
+_bt_blnewpage(Relation index, Buffer *buf, Page * page, int flags)
 {
 	BTPageOpaque opaque;
 
@@ -1107,7 +1107,7 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 }
 
 static void
-_bt_uppershutdown(Relation index, BTPageState * state)
+_bt_uppershutdown(Relation index, BTPageState *state)
 {
 	BTPageState *s;
 	BlockNumber blkno;
@@ -1158,7 +1158,7 @@ _bt_uppershutdown(Relation index, BTPageState * state)
  * XXX three nested loops?	gross.	cut me up into smaller routines.
  */
 static void
-_bt_merge(Relation index, BTSpool * btspool)
+_bt_merge(Relation index, BTSpool *btspool)
 {
 	BTPageState *state;
 	BTPriQueue	q;

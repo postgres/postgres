@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.16 1997/09/08 02:22:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.17 1997/09/08 20:55:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@
 
 static void
 ExecGetIndexKeyInfo(IndexTupleForm indexTuple, int *numAttsOutP,
-					AttrNumber ** attsOutP, FuncIndexInfoPtr fInfoP);
+					AttrNumber **attsOutP, FuncIndexInfoPtr fInfoP);
 
 /* ----------------------------------------------------------------
  *		global counters for number of tuples processed, retrieved,
@@ -608,7 +608,7 @@ QueryDescGetTypeInfo(QueryDesc * queryDesc)
 static void
 ExecGetIndexKeyInfo(IndexTupleForm indexTuple,
 					int *numAttsOutP,
-					AttrNumber ** attsOutP,
+					AttrNumber **attsOutP,
 					FuncIndexInfoPtr fInfoP)
 {
 	int			i;

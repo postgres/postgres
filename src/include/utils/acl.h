@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.9 1997/09/08 02:39:24 momjian Exp $
+ * $Id: acl.h,v 1.10 1997/09/08 20:59:15 momjian Exp $
  *
  * NOTES
  *	  For backward-compatability purposes we have to allow there
@@ -74,7 +74,7 @@ typedef struct AclItem
 	AclId		ai_id;
 	AclIdType	ai_idtype;
 	AclMode		ai_mode;
-}			AclItem;
+} AclItem;
 
 /* Note: if the size of AclItem changes,
    change the aclitem typlen in pg_type.h */
@@ -137,7 +137,7 @@ extern char *aclcheck_error_strings[];
  */
 extern Acl *aclownerdefault(AclId ownerid);
 extern Acl *acldefault(void);
-extern Acl *aclinsert3(Acl * old_acl, AclItem * mod_aip, unsigned modechg);
+extern Acl *aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg);
 
 extern char *aclmakepriv(char *old_privlist, char new_priv);
 extern char *aclmakeuser(char *user_type, char *user);
@@ -150,15 +150,15 @@ makeAclStmt(char *privs, List * rel_list, char *grantee,
  */
 extern Acl *makeacl(int n);
 extern AclItem *aclitemin(char *s);
-extern char *aclitemout(AclItem * aip);
-extern Acl *aclinsert(Acl * old_acl, AclItem * mod_aip);
-extern Acl *aclremove(Acl * old_acl, AclItem * mod_aip);
-extern int32 aclcontains(Acl * acl, AclItem * aip);
+extern char *aclitemout(AclItem *aip);
+extern Acl *aclinsert(Acl *old_acl, AclItem *mod_aip);
+extern Acl *aclremove(Acl *old_acl, AclItem *mod_aip);
+extern int32 aclcontains(Acl *acl, AclItem *aip);
 
 /*
  * prototypes for functions in aclchk.c
  */
-extern void ChangeAcl(char *relname, AclItem * mod_aip, unsigned modechg);
+extern void ChangeAcl(char *relname, AclItem *mod_aip, unsigned modechg);
 extern AclId get_grosysid(char *groname);
 extern char *get_groname(AclId grosysid);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.12 1997/09/08 02:22:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.13 1997/09/08 20:55:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -398,7 +398,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 			ReleaseBuffer(buffer);
 			bufferUsed = FALSE;
 		}
-		tup = heap_getnext(scan, 0, (Buffer *) & buffer);
+		tup = heap_getnext(scan, 0, (Buffer *) &buffer);
 		if (!HeapTupleIsValid(tup))
 			break;
 		bufferUsed = TRUE;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.8 1997/09/08 02:23:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.9 1997/09/08 20:55:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,7 +138,7 @@ _equalVar(Var * a, Var * b)
 }
 
 static bool
-_equalArray(Array * a, Array * b)
+_equalArray(Array *a, Array *b)
 {
 	if (a->arrayelemtype != b->arrayelemtype)
 		return (false);
@@ -154,7 +154,7 @@ _equalArray(Array * a, Array * b)
 }
 
 static bool
-_equalArrayRef(ArrayRef * a, ArrayRef * b)
+_equalArrayRef(ArrayRef *a, ArrayRef *b)
 {
 	if (a->refelemtype != b->refelemtype)
 		return (false);

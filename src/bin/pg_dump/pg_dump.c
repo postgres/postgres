@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.42 1997/09/08 02:32:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.43 1997/09/08 20:57:50 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1027,7 +1027,7 @@ clearIndInfo(IndInfo * ind, int numIndices)
 }
 
 void
-clearAggInfo(AggInfo * agginfo, int numArgs)
+clearAggInfo(AggInfo *agginfo, int numArgs)
 {
 	int			i;
 
@@ -1837,7 +1837,7 @@ dumpOprs(FILE * fout, OprInfo * oprinfo, int numOperators,
  *
  */
 void
-dumpAggs(FILE * fout, AggInfo * agginfo, int numAggs,
+dumpAggs(FILE * fout, AggInfo *agginfo, int numAggs,
 		 TypeInfo * tinfo, int numTypes)
 {
 	int			i;

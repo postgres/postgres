@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.6 1997/09/08 02:39:26 momjian Exp $
+ * $Id: array.h,v 1.7 1997/09/08 20:59:18 momjian Exp $
  *
  * NOTES
  *	  XXX the data array should be LONGALIGN'd -- notice that the array
@@ -29,7 +29,7 @@ typedef struct
 	int			size;			/* total array size (in bytes) */
 	int			ndim;			/* # of dimensions */
 	int			flags;			/* implementation flags */
-}			ArrayType;
+} ArrayType;
 
 /*
  * bitmask of ArrayType flags field:
@@ -115,22 +115,22 @@ typedef struct
  * prototypes for functions defined in arrayfuncs.c
  */
 extern char *array_in(char *string, Oid element_type);
-extern char *array_out(ArrayType * v, Oid element_type);
-extern char *array_dims(ArrayType * v, bool * isNull);
+extern char *array_out(ArrayType *v, Oid element_type);
+extern char *array_dims(ArrayType *v, bool * isNull);
 extern		Datum
-array_ref(ArrayType * array, int n, int indx[], int reftype,
+array_ref(ArrayType *array, int n, int indx[], int reftype,
 		  int elmlen, int arraylen, bool * isNull);
 extern		Datum
-array_clip(ArrayType * array, int n, int upperIndx[],
+array_clip(ArrayType *array, int n, int upperIndx[],
 		   int lowerIndx[], int reftype, int len, bool * isNull);
 extern char *
-array_set(ArrayType * array, int n, int indx[], char *dataPtr,
+array_set(ArrayType *array, int n, int indx[], char *dataPtr,
 		  int reftype, int elmlen, int arraylen, bool * isNull);
 extern char *
-array_assgn(ArrayType * array, int n, int upperIndx[],
-			int lowerIndx[], ArrayType * newArr, int reftype,
+array_assgn(ArrayType *array, int n, int upperIndx[],
+			int lowerIndx[], ArrayType *newArr, int reftype,
 			int len, bool * isNull);
-extern int	array_eq(ArrayType * array1, ArrayType * array2);
+extern int	array_eq(ArrayType *array1, ArrayType *array2);
 extern int
 _LOtransfer(char **destfd, int size, int nitems, char **srcfd,
 			int isSrcLO, int isDestLO);
@@ -161,10 +161,10 @@ _ChunkArray(int fd, FILE * afd, int ndim, int dim[], int baseSize,
 			int *nbytes, char *chunkfile);
 extern int
 _ReadChunkArray(int st[], int endp[], int bsize, int fp,
-		   char *destfp, ArrayType * array, int isDestLO, bool * isNull);
+			char *destfp, ArrayType *array, int isDestLO, bool * isNull);
 extern struct varlena *
 _ReadChunkArray1El(int st[], int bsize, int fp,
-				   ArrayType * array, bool * isNull);
+				   ArrayType *array, bool * isNull);
 
 
 #endif							/* ARRAY_H */

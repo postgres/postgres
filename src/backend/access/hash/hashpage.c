@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.11 1997/09/08 02:20:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.12 1997/09/08 20:54:03 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -270,7 +270,7 @@ _hash_wrtnorelbuf(Relation rel, Buffer buf)
 
 Page
 _hash_chgbufaccess(Relation rel,
-				   Buffer * bufp,
+				   Buffer *bufp,
 				   int from_access,
 				   int to_access)
 {

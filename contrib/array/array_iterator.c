@@ -41,7 +41,7 @@
 #include "utils/elog.h"
 
 static int32
-array_iterator(Oid elemtype, Oid proc, int and, ArrayType * array, Datum value)
+array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 {
 	HeapTuple	typ_tuple;
 	TypeTupleForm typ_struct;
@@ -157,7 +157,7 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType * array, Datum value)
  */
 
 int32
-array_texteq(ArrayType * array, char *value)
+array_texteq(ArrayType *array, char *value)
 {
 	return array_iterator((Oid) 25,		/* text */
 						  (Oid) 67,		/* texteq */
@@ -166,7 +166,7 @@ array_texteq(ArrayType * array, char *value)
 }
 
 int32
-array_all_texteq(ArrayType * array, char *value)
+array_all_texteq(ArrayType *array, char *value)
 {
 	return array_iterator((Oid) 25,		/* text */
 						  (Oid) 67,		/* texteq */
@@ -175,7 +175,7 @@ array_all_texteq(ArrayType * array, char *value)
 }
 
 int32
-array_textregexeq(ArrayType * array, char *value)
+array_textregexeq(ArrayType *array, char *value)
 {
 	return array_iterator((Oid) 25,		/* text */
 						  (Oid) 81,		/* textregexeq */
@@ -184,7 +184,7 @@ array_textregexeq(ArrayType * array, char *value)
 }
 
 int32
-array_all_textregexeq(ArrayType * array, char *value)
+array_all_textregexeq(ArrayType *array, char *value)
 {
 	return array_iterator((Oid) 25,		/* text */
 						  (Oid) 81,		/* textregexeq */
@@ -198,7 +198,7 @@ array_all_textregexeq(ArrayType * array, char *value)
  */
 
 int32
-array_char16eq(ArrayType * array, char *value)
+array_char16eq(ArrayType *array, char *value)
 {
 	return array_iterator((Oid) 20,		/* char16 */
 						  (Oid) 490,	/* char16eq */
@@ -207,7 +207,7 @@ array_char16eq(ArrayType * array, char *value)
 }
 
 int32
-array_all_char16eq(ArrayType * array, char *value)
+array_all_char16eq(ArrayType *array, char *value)
 {
 	return array_iterator((Oid) 20,		/* char16 */
 						  (Oid) 490,	/* char16eq */
@@ -216,7 +216,7 @@ array_all_char16eq(ArrayType * array, char *value)
 }
 
 int32
-array_char16regexeq(ArrayType * array, char *value)
+array_char16regexeq(ArrayType *array, char *value)
 {
 	return array_iterator((Oid) 20,		/* char16 */
 						  (Oid) 700,	/* char16regexeq */
@@ -225,7 +225,7 @@ array_char16regexeq(ArrayType * array, char *value)
 }
 
 int32
-array_all_char16regexeq(ArrayType * array, char *value)
+array_all_char16regexeq(ArrayType *array, char *value)
 {
 	return array_iterator((Oid) 20,		/* char16 */
 						  (Oid) 700,	/* char16regexeq */
@@ -238,7 +238,7 @@ array_all_char16regexeq(ArrayType * array, char *value)
  */
 
 int32
-array_int4eq(ArrayType * array, int4 value)
+array_int4eq(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 65,		/* int4eq */
@@ -247,7 +247,7 @@ array_int4eq(ArrayType * array, int4 value)
 }
 
 int32
-array_all_int4eq(ArrayType * array, int4 value)
+array_all_int4eq(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 65,		/* int4eq */
@@ -256,7 +256,7 @@ array_all_int4eq(ArrayType * array, int4 value)
 }
 
 int32
-array_int4gt(ArrayType * array, int4 value)
+array_int4gt(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 147,	/* int4gt */
@@ -265,7 +265,7 @@ array_int4gt(ArrayType * array, int4 value)
 }
 
 int32
-array_all_int4gt(ArrayType * array, int4 value)
+array_all_int4gt(ArrayType *array, int4 value)
 {
 	return array_iterator((Oid) 23,		/* int4 */
 						  (Oid) 147,	/* int4gt */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.17 1997/09/08 02:30:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.18 1997/09/08 20:57:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,14 +70,14 @@ static char *_AdvanceBy1word(char *str, char **word);
 #endif
 static void
 _ArrayRange(int st[], int endp[], int bsize, char *destPtr,
-			ArrayType * array, int from);
-static int	_ArrayClipCount(int stI[], int endpI[], ArrayType * array);
+			ArrayType *array, int from);
+static int	_ArrayClipCount(int stI[], int endpI[], ArrayType *array);
 static void
 _LOArrayRange(int st[], int endp[], int bsize, int srcfd,
-			  int destfd, ArrayType * array, int isSrcLO, bool * isNull);
+			  int destfd, ArrayType *array, int isSrcLO, bool * isNull);
 static void
 _ReadArray(int st[], int endp[], int bsize, int srcfd, int destfd,
-		   ArrayType * array, int isDestLO, bool * isNull);
+		   ArrayType *array, int isDestLO, bool * isNull);
 static ArrayCastAndSet(char *src, bool typbyval, int typlen, char *dest);
 static SanityCheckInput(int ndim, int n, int dim[], int lb[], int indx[]);
 static int	array_read(char *destptr, int eltsize, int nitems, char *srcptr);
@@ -613,7 +613,7 @@ _CopyArrayEls(char **values,
  *-------------------------------------------------------------------------
  */
 char	   *
-array_out(ArrayType * v, Oid element_type)
+array_out(ArrayType *v, Oid element_type)
 {
 	int			typlen;
 	bool		typbyval;
@@ -771,7 +771,7 @@ array_out(ArrayType * v, Oid element_type)
  *----------------------------------------------------------------------------
  */
 char	   *
-array_dims(ArrayType * v, bool * isNull)
+array_dims(ArrayType *v, bool * isNull)
 {
 	char	   *p,
 			   *save_p;
@@ -810,7 +810,7 @@ array_dims(ArrayType * v, bool * isNull)
  *---------------------------------------------------------------------------
  */
 Datum
-array_ref(ArrayType * array,
+array_ref(ArrayType *array,
 		  int n,
 		  int indx[],
 		  int reftype,
@@ -931,7 +931,7 @@ array_ref(ArrayType * array,
  *-----------------------------------------------------------------------------
  */
 Datum
-array_clip(ArrayType * array,
+array_clip(ArrayType *array,
 		   int n,
 		   int upperIndx[],
 		   int lowerIndx[],
@@ -1073,7 +1073,7 @@ array_clip(ArrayType * array,
  *-----------------------------------------------------------------------------
  */
 char	   *
-array_set(ArrayType * array,
+array_set(ArrayType *array,
 		  int n,
 		  int indx[],
 		  char *dataPtr,
@@ -1208,11 +1208,11 @@ array_set(ArrayType * array,
  *----------------------------------------------------------------------------
  */
 char	   *
-array_assgn(ArrayType * array,
+array_assgn(ArrayType *array,
 			int n,
 			int upperIndx[],
 			int lowerIndx[],
-			ArrayType * newArr,
+			ArrayType *newArr,
 			int reftype,
 			int len,
 			bool * isNull)
@@ -1283,7 +1283,7 @@ array_assgn(ArrayType * array,
  *-----------------------------------------------------------------------------
  */
 int
-array_eq(ArrayType * array1, ArrayType * array2)
+array_eq(ArrayType *array1, ArrayType *array2)
 {
 	if ((array1 == NULL) || (array2 == NULL))
 		return (0);
@@ -1445,7 +1445,7 @@ _ArrayRange(int st[],
 			int endp[],
 			int bsize,
 			char *destPtr,
-			ArrayType * array,
+			ArrayType *array,
 			int from)
 {
 	int			n,
@@ -1487,7 +1487,7 @@ _ArrayRange(int st[],
 }
 
 static int
-_ArrayClipCount(int stI[], int endpI[], ArrayType * array)
+_ArrayClipCount(int stI[], int endpI[], ArrayType *array)
 {
 	int			n,
 			   *dim,
@@ -1568,7 +1568,7 @@ _LOArrayRange(int st[],
 			  int bsize,
 			  int srcfd,
 			  int destfd,
-			  ArrayType * array,
+			  ArrayType *array,
 			  int isSrcLO,
 			  bool * isNull)
 {
@@ -1622,7 +1622,7 @@ _ReadArray(int st[],
 		   int bsize,
 		   int srcfd,
 		   int destfd,
-		   ArrayType * array,
+		   ArrayType *array,
 		   int isDestLO,
 		   bool * isNull)
 {

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.16 1997/09/08 02:34:17 momjian Exp $
+ * $Id: nbtree.h,v 1.17 1997/09/08 20:58:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ typedef struct BTPageOpaqueData
 #define BTP_META		(1 << 3)
 #define BTP_CHAIN		(1 << 4)
 
-}			BTPageOpaqueData;
+} BTPageOpaqueData;
 
 typedef BTPageOpaqueData *BTPageOpaque;
 
@@ -74,7 +74,7 @@ typedef struct BTScanOpaqueData
 	uint16		numberOfFirstKeys;		/* number of keys for 1st
 										 * attribute */
 	ScanKey		keyData;		/* key descriptor */
-}			BTScanOpaqueData;
+} BTScanOpaqueData;
 
 typedef BTScanOpaqueData *BTScanOpaque;
 
@@ -104,7 +104,7 @@ typedef struct BTItemData
 								 * 8-byte boundary */
 #endif
 	IndexTupleData bti_itup;
-}			BTItemData;
+} BTItemData;
 
 typedef BTItemData *BTItem;
 
@@ -135,7 +135,7 @@ typedef struct BTStackData
 	OffsetNumber bts_offset;
 	BTItem		bts_btitem;
 	struct BTStackData *bts_parent;
-}			BTStackData;
+} BTStackData;
 
 typedef BTStackData *BTStack;
 
@@ -149,7 +149,7 @@ typedef struct BTPageState
 	int			btps_level;
 	bool		btps_doupper;
 	struct BTPageState *btps_next;
-}			BTPageState;
+} BTPageState;
 
 /*
  *	We need to be able to tell the difference between read and write
@@ -243,7 +243,7 @@ extern bool BuildingBtree;		/* in nbtree.c */
 
 extern void
 btbuild(Relation heap, Relation index, int natts,
-		AttrNumber * attnum, IndexStrategy istrat, uint16 pcount,
+		AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
 		Datum * params, FuncIndexInfo * finfo, PredInfo * predInfo);
 extern		InsertIndexResult
 btinsert(Relation rel, Datum * datum, char *nulls,
@@ -270,10 +270,10 @@ extern void _bt_adjscans(Relation rel, ItemPointer tid, int op);
 /*
  * prototypes for functions in nbtsearch.c
  */
-extern		BTStack
+extern BTStack
 _bt_search(Relation rel, int keysz, ScanKey scankey,
-		   Buffer * bufP);
-extern		Buffer
+		   Buffer *bufP);
+extern Buffer
 _bt_moveright(Relation rel, Buffer buf, int keysz,
 			  ScanKey scankey, int access);
 extern		bool
@@ -284,7 +284,7 @@ _bt_binsrch(Relation rel, Buffer buf, int keysz,
 			ScanKey scankey, int srchtype);
 extern RetrieveIndexResult _bt_next(IndexScanDesc scan, ScanDirection dir);
 extern RetrieveIndexResult _bt_first(IndexScanDesc scan, ScanDirection dir);
-extern bool _bt_step(IndexScanDesc scan, Buffer * bufP, ScanDirection dir);
+extern bool _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
 
 /*
  * prototypes for functions in nbtstrat.c

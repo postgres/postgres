@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.13 1997/09/08 02:24:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.14 1997/09/08 20:56:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1113,7 +1113,7 @@ make_material(List * tlist,
 }
 
 Agg		   *
-make_agg(List * tlist, int nagg, Aggreg ** aggs)
+make_agg(List * tlist, int nagg, Aggreg **aggs)
 {
 	Agg		   *node = makeNode(Agg);
 
@@ -1133,7 +1133,7 @@ Group	   *
 make_group(List * tlist,
 		   bool tuplePerGroup,
 		   int ngrp,
-		   AttrNumber * grpColIdx,
+		   AttrNumber *grpColIdx,
 		   Sort * lefttree)
 {
 	Group	   *node = makeNode(Group);

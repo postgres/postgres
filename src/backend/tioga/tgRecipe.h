@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tgRecipe.h,v 1.3 1997/09/08 02:30:12 momjian Exp $
+ * $Id: tgRecipe.h,v 1.4 1997/09/08 20:57:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@ typedef struct
 				y;
 }			Point;				/* this should match whatever is in
 
+								 *
 								 *
 								 * geo-decls.h */
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.7 1997/09/08 02:32:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.8 1997/09/08 20:57:46 momjian Exp $
  *
  * NOTE
  *	  XXX This is a preliminary implementation which lacks fail-fast
@@ -46,7 +46,7 @@ typedef struct AllocElemData
 {
 	OrderedElemData elemData;	/* elem in AllocSet */
 	Size		size;
-}			AllocElemData;
+} AllocElemData;
 
 typedef AllocElemData *AllocElem;
 

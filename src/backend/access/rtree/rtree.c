@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.15 1997/09/08 02:21:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.16 1997/09/08 20:54:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ void
 rtbuild(Relation heap,
 		Relation index,
 		int natts,
-		AttrNumber * attnum,
+		AttrNumber *attnum,
 		IndexStrategy istrat,
 		uint16 pcount,
 		Datum * params,

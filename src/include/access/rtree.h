@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.8 1997/09/08 02:34:23 momjian Exp $
+ * $Id: rtree.h,v 1.9 1997/09/08 20:58:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,7 @@ extern void rtrestrpos(IndexScanDesc s);
 extern void rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key);
 extern void
 rtbuild(Relation heap, Relation index, int natts,
-		AttrNumber * attnum, IndexStrategy istrat, uint16 pcount,
+		AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
 		Datum * params, FuncIndexInfo * finfo, PredInfo * predInfo);
 extern void _rtdump(Relation r);
 

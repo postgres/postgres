@@ -45,9 +45,9 @@ typedef struct AggFuncInfo
 	int			xfn1_nargs;
 	int			xfn2_nargs;
 	int			finalfn_nargs;
-}			AggFuncInfo;
+} AggFuncInfo;
 
-static Datum aggGetAttr(TupleTableSlot * tuple, Aggreg * agg, bool * isNull);
+static Datum aggGetAttr(TupleTableSlot * tuple, Aggreg *agg, bool * isNull);
 
 
 /* ---------------------------------------
@@ -88,7 +88,7 @@ static Datum aggGetAttr(TupleTableSlot * tuple, Aggreg * agg, bool * isNull);
  * ------------------------------------------
  */
 TupleTableSlot *
-ExecAgg(Agg * node)
+ExecAgg(Agg *node)
 {
 	AggState   *aggstate;
 	EState	   *estate;
@@ -488,7 +488,7 @@ ExecAgg(Agg * node)
  * -----------------
  */
 bool
-ExecInitAgg(Agg * node, EState * estate, Plan * parent)
+ExecInitAgg(Agg *node, EState * estate, Plan * parent)
 {
 	AggState   *aggstate;
 	Plan	   *outerPlan;
@@ -551,7 +551,7 @@ ExecInitAgg(Agg * node, EState * estate, Plan * parent)
 }
 
 int
-ExecCountSlotsAgg(Agg * node)
+ExecCountSlotsAgg(Agg *node)
 {
 	return ExecCountSlotsNode(outerPlan(node)) +
 	ExecCountSlotsNode(innerPlan(node)) +
@@ -564,7 +564,7 @@ ExecCountSlotsAgg(Agg * node)
  * -----------------------
  */
 void
-ExecEndAgg(Agg * node)
+ExecEndAgg(Agg *node)
 {
 	AggState   *aggstate;
 	Plan	   *outerPlan;
@@ -592,7 +592,7 @@ ExecEndAgg(Agg * node)
  */
 static Datum
 aggGetAttr(TupleTableSlot * slot,
-		   Aggreg * agg,
+		   Aggreg *agg,
 		   bool * isNull)
 {
 	Datum		result;

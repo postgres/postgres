@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.10 1997/09/08 02:37:12 momjian Exp $
+ * $Id: execnodes.h,v 1.11 1997/09/08 20:58:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,7 +328,7 @@ typedef struct AppendState
 	List	   *as_rtentries;
 	List	   *as_result_relation_info_list;
 	List	   *as_junkFilter_list;
-}			AppendState;
+} AppendState;
 
 /* ----------------------------------------------------------------
  *				 Scan State Information
@@ -574,7 +574,7 @@ typedef struct AggState
 {
 	CommonScanState csstate;	/* its first field is NodeTag */
 	bool		agg_done;
-}			AggState;
+} AggState;
 
 /* ---------------------
  *	GroupState information

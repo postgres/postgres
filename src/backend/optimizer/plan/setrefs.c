@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.6 1997/09/08 02:24:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.7 1997/09/08 20:56:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -686,7 +686,7 @@ OperandIsInner(Node * opnd, int inner_relid)
  *
  */
 void
-set_agg_tlist_references(Agg * aggNode)
+set_agg_tlist_references(Agg *aggNode)
 {
 	List	   *aggTargetList;
 	List	   *subplanTargetList;
@@ -704,7 +704,7 @@ set_agg_tlist_references(Agg * aggNode)
 }
 
 void
-set_agg_agglist_references(Agg * aggNode)
+set_agg_agglist_references(Agg *aggNode)
 {
 	List	   *subplanTargetList;
 	Aggreg	  **aggs;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: block.h,v 1.4 1997/09/08 02:38:55 momjian Exp $
+ * $Id: block.h,v 1.5 1997/09/08 20:58:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ typedef struct BlockIdData
 {
 	uint16		bi_hi;
 	uint16		bi_lo;
-}			BlockIdData;
+} BlockIdData;
 
 typedef BlockIdData *BlockId;	/* block identifier */
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.3 1997/09/08 02:37:55 momjian Exp $
+ * $Id: planmain.h,v 1.4 1997/09/08 20:58:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,10 +32,10 @@ make_seqscan(List * qptlist, List * qpqual, Index scanrelid,
 extern Sort *
 make_sort(List * tlist, Oid tempid, Plan * lefttree,
 		  int keycount);
-extern Agg *make_agg(List * tlist, int nagg, Aggreg ** aggs);
+extern Agg *make_agg(List * tlist, int nagg, Aggreg **aggs);
 extern Group *
 make_group(List * tlist, bool tuplePerGroup, int ngrp,
-		   AttrNumber * grpColIdx, Sort * lefttree);
+		   AttrNumber *grpColIdx, Sort * lefttree);
 extern Unique *make_unique(List * tlist, Plan * lefttree, char *uniqueAttr);
 extern List *generate_fjoin(List * tlist);
 
@@ -59,8 +59,8 @@ extern List *
 index_outerjoin_references(List * inner_indxqual,
 						   List * outer_tlist, Index inner_relid);
 extern void set_result_tlist_references(Result * resultNode);
-extern void set_agg_tlist_references(Agg * aggNode);
-extern void set_agg_agglist_references(Agg * aggNode);
+extern void set_agg_tlist_references(Agg *aggNode);
+extern void set_agg_agglist_references(Agg *aggNode);
 
 
 #endif							/* PLANMAIN_H */

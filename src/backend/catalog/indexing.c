@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.13 1997/09/08 02:21:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.14 1997/09/08 20:55:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ CatalogIndexInsert(Relation * idescs,
 			finfoP = (FuncIndexInfo *) NULL;
 
 		FormIndexDatum(natts,
-					   (AttrNumber *) & pgIndexP->indkey[0],
+					   (AttrNumber *) &pgIndexP->indkey[0],
 					   heapTuple,
 					   heapDescriptor,
 					   InvalidBuffer,

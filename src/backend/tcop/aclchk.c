@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.15 1997/09/08 02:29:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.16 1997/09/08 20:56:53 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -36,7 +36,7 @@
 #include "parser/catalog_utils.h"
 #include "fmgr.h"
 
-static int32 aclcheck(Acl * acl, AclId id, AclIdType idtype, AclMode mode);
+static int32 aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode);
 
 /*
  * Enable use of user relations in place of real system catalogs.
@@ -69,7 +69,7 @@ char	   *aclcheck_error_strings[] = {
 
 #ifdef ACLDEBUG_TRACE
 static
-dumpacl(Acl * acl)
+dumpacl(Acl *acl)
 {
 	register unsigned i;
 	AclItem    *aip;
@@ -88,7 +88,7 @@ dumpacl(Acl * acl)
  */
 void
 ChangeAcl(char *relname,
-		  AclItem * mod_aip,
+		  AclItem *mod_aip,
 		  unsigned modechg)
 {
 	register unsigned i;
@@ -277,7 +277,7 @@ in_group(AclId uid, AclId gid)
  * any one of the requirements of 'mode'.  Returns 0 otherwise.
  */
 static int32
-aclcheck(Acl * acl, AclId id, AclIdType idtype, AclMode mode)
+aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 {
 	register unsigned i;
 	register AclItem *aip,

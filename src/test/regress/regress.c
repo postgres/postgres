@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.11 1997/09/08 02:40:56 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.12 1997/09/08 20:59:27 momjian Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -24,7 +24,7 @@ extern PATH *poly2path(POLYGON * poly);
 extern Point *interpt_pp(PATH * p1, PATH * p2);
 extern void regress_lseg_construct(LSEG * lseg, Point * pt1, Point * pt2);
 extern char overpaid(TUPLE tuple);
-extern int	boxarea(BOX * box);
+extern int	boxarea(BOX *box);
 extern char *reverse_c16(char *string);
 
 /*

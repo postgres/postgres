@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.9 1997/09/08 02:21:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.10 1997/09/08 20:54:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,8 @@
 #endif
 
 BOX
-* rt_box_union(BOX * a, BOX * b)
+		   *
+rt_box_union(BOX *a, BOX *b)
 {
 	BOX		   *n;
 
@@ -39,7 +40,7 @@ BOX
 }
 
 BOX		   *
-rt_box_inter(BOX * a, BOX * b)
+rt_box_inter(BOX *a, BOX *b)
 {
 	BOX		   *n;
 
@@ -61,7 +62,7 @@ rt_box_inter(BOX * a, BOX * b)
 }
 
 void
-rt_box_size(BOX * a, float *size)
+rt_box_size(BOX *a, float *size)
 {
 	if (a == (BOX *) NULL || a->high.x <= a->low.x || a->high.y <= a->low.y)
 		*size = 0.0;
@@ -80,7 +81,7 @@ rt_box_size(BOX * a, float *size)
  *		have a special return type for big boxes.
  */
 void
-rt_bigbox_size(BOX * a, float *size)
+rt_bigbox_size(BOX *a, float *size)
 {
 	rt_box_size(a, size);
 }

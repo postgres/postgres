@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.8 1997/09/08 02:37:26 momjian Exp $
+ * $Id: plannodes.h,v 1.9 1997/09/08 20:58:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ typedef struct Append
 	Index		unionrelid;
 	List	   *unionrtentries;
 	AppendState *unionstate;
-}			Append;
+} Append;
 
 /*
  * ==========
@@ -223,7 +223,7 @@ typedef struct Agg
 	int			numAgg;
 	Aggreg	  **aggs;
 	AggState   *aggstate;
-}			Agg;
+} Agg;
 
 /* ---------------
  *	 group node -

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.9 1997/09/08 02:30:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.10 1997/09/08 20:57:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,46 +138,55 @@ chareq(int8 arg1, int8 arg2)
 {
 	return (arg1 == arg2);
 }
+
 bool
 charne(int8 arg1, int8 arg2)
 {
 	return (arg1 != arg2);
 }
+
 bool
 charlt(int8 arg1, int8 arg2)
 {
 	return ((uint8) arg1 < (uint8) arg2);
 }
+
 bool
 charle(int8 arg1, int8 arg2)
 {
 	return ((uint8) arg1 <= (uint8) arg2);
 }
+
 bool
 chargt(int8 arg1, int8 arg2)
 {
 	return ((uint8) arg1 > (uint8) arg2);
 }
+
 bool
 charge(int8 arg1, int8 arg2)
 {
 	return ((uint8) arg1 >= (uint8) arg2);
 }
+
 int8
 charpl(int8 arg1, int8 arg2)
 {
 	return (arg1 + arg2);
 }
+
 int8
 charmi(int8 arg1, int8 arg2)
 {
 	return (arg1 - arg2);
 }
+
 int8
 charmul(int8 arg1, int8 arg2)
 {
 	return (arg1 * arg2);
 }
+
 int8
 chardiv(int8 arg1, int8 arg2)
 {

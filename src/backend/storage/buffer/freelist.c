@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.6 1997/09/08 02:28:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.7 1997/09/08 20:56:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ extern SPINLOCK BufMgrLock;
  * Currently, they are added on an LRU basis.
  */
 void
-AddBufferToFreelist(BufferDesc * bf)
+AddBufferToFreelist(BufferDesc *bf)
 {
 #ifdef BMTRACE
 	_bm_trace(bf->tag.relId.dbId, bf->tag.relId.relId, bf->tag.blockNum,
@@ -82,7 +82,7 @@ AddBufferToFreelist(BufferDesc * bf)
  * PinBuffer -- make buffer unavailable for replacement.
  */
 void
-PinBuffer(BufferDesc * buf)
+PinBuffer(BufferDesc *buf)
 {
 	long		b;
 
@@ -114,7 +114,7 @@ PinBuffer(BufferDesc * buf)
 
 #ifdef NOT_USED
 void
-PinBuffer_Debug(char *file, int line, BufferDesc * buf)
+PinBuffer_Debug(char *file, int line, BufferDesc *buf)
 {
 	PinBuffer(buf);
 	if (ShowPinTrace)
@@ -136,7 +136,7 @@ refcount = %ld, file: %s, line: %d\n",
  * UnpinBuffer -- make buffer available for replacement.
  */
 void
-UnpinBuffer(BufferDesc * buf)
+UnpinBuffer(BufferDesc *buf)
 {
 	long		b = BufferDescriptorGetBuffer(buf) - 1;
 
@@ -160,7 +160,7 @@ UnpinBuffer(BufferDesc * buf)
 
 #ifdef NOT_USED
 void
-UnpinBuffer_Debug(char *file, int line, BufferDesc * buf)
+UnpinBuffer_Debug(char *file, int line, BufferDesc *buf)
 {
 	UnpinBuffer(buf);
 	if (ShowPinTrace)

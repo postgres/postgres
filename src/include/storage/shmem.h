@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.7 1997/09/08 02:39:08 momjian Exp $
+ * $Id: shmem.h,v 1.8 1997/09/08 20:59:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ typedef struct
 	char		key[BTABLE_KEYSIZE];	/* string name */
 	unsigned long location;		/* location in shared mem */
 	unsigned long size;			/* numbytes allocated for the structure */
-}			BindingEnt;
+} BindingEnt;
 
 /*
  * prototypes for functions in shmqueue.c

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.6 1997/09/08 02:28:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.7 1997/09/08 20:56:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,7 +101,7 @@ BufTableLookup(BufferTag * tagPtr)
  * BufTableDelete
  */
 bool
-BufTableDelete(BufferDesc * buf)
+BufTableDelete(BufferDesc *buf)
 {
 	LookupEnt  *result;
 	bool		found;
@@ -130,7 +130,7 @@ BufTableDelete(BufferDesc * buf)
 }
 
 bool
-BufTableInsert(BufferDesc * buf)
+BufTableInsert(BufferDesc *buf)
 {
 	LookupEnt  *result;
 	bool		found;
