@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.67 1998/03/30 16:47:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.68 1998/04/07 16:41:11 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2507,34 +2507,7 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 			fputs(q, fout);
 
 			if (acls)
-			{
-				ACLlist = ParseACL(tblinfo[i].relacl, &l);
-				if (ACLlist == (ACL *) NULL)
-				{
-					if (l == 0)
-						continue;
-					else
-					{
-						fprintf(stderr, "Could not parse ACL list for %s...Exiting!\n",
-								tblinfo[i].relname);
-						exit_nicely(g_conn);
-					}
-				}
-
-				/* Revoke Default permissions for PUBLIC */
-				fprintf(fout,
-						"REVOKE ALL on %s from PUBLIC;\n",
-						tblinfo[i].relname);
-
-				for (k = 0; k < l; k++)
-				{
-					if (ACLlist[k].privledges != (char *) NULL)
-						fprintf(fout,
-								"GRANT %s on %s to %s;\n",
-								ACLlist[k].privledges, tblinfo[i].relname,
-								ACLlist[k].user);
-				}
-			}
+				dumpACL(fout, tblinfo[i]);
 		}
 	}
 }
