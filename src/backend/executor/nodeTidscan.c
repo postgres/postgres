@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.34 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.35 2003/09/26 01:17:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,19 +29,32 @@
 #include "access/heapam.h"
 #include "parser/parsetree.h"
 
-static int	TidListCreate(List *, ExprContext *, ItemPointerData[]);
+
+static void TidListCreate(TidScanState *tidstate);
 static TupleTableSlot *TidNext(TidScanState *node);
 
-static int
-TidListCreate(List *evalList, ExprContext *econtext, ItemPointerData tidList[])
+
+/*
+ * Compute the list of TIDs to be visited, by evaluating the expressions
+ * for them.
+ */
+static void
+TidListCreate(TidScanState *tidstate)
 {
-	List	   *lst;
-	ItemPointer itemptr;
-	bool		isNull;
+	List	   *evalList = tidstate->tss_tideval;
+	ExprContext *econtext = tidstate->ss.ps.ps_ExprContext;
+	ItemPointerData *tidList;
 	int			numTids = 0;
+	List	   *lst;
+
+	tidList = (ItemPointerData *)
+		palloc(length(tidstate->tss_tideval) * sizeof(ItemPointerData));
 
 	foreach(lst, evalList)
 	{
+		ItemPointer itemptr;
+		bool		isNull;
+
 		itemptr = (ItemPointer)
 			DatumGetPointer(ExecEvalExprSwitchContext(lfirst(lst),
 													  econtext,
@@ -53,7 +66,10 @@ TidListCreate(List *evalList, ExprContext *econtext, ItemPointerData tidList[])
 			numTids++;
 		}
 	}
-	return numTids;
+
+	tidstate->tss_TidList = tidList;
+	tidstate->tss_NumTids = numTids;
+	tidstate->tss_TidPtr = -1;
 }
 
 /* ----------------------------------------------------------------
@@ -75,10 +91,10 @@ TidNext(TidScanState *node)
 	TupleTableSlot *slot;
 	Index		scanrelid;
 	Buffer		buffer = InvalidBuffer;
+	ItemPointerData *tidList;
 	int			numTids;
 	bool		bBackward;
 	int			tidNumber;
-	ItemPointerData *tidList;
 
 	/*
 	 * extract necessary information from tid scan node
@@ -87,8 +103,6 @@ TidNext(TidScanState *node)
 	direction = estate->es_direction;
 	snapshot = estate->es_snapshot;
 	heapRelation = node->ss.ss_currentRelation;
-	numTids = node->tss_NumTids;
-	tidList = node->tss_TidList;
 	slot = node->ss.ss_ScanTupleSlot;
 	scanrelid = ((TidScan *) node->ss.ps.plan)->scan.scanrelid;
 
@@ -117,6 +131,15 @@ TidNext(TidScanState *node)
 		estate->es_evTupleNull[scanrelid - 1] = true;
 		return (slot);
 	}
+
+	/*
+	 * First time through, compute the list of TIDs to be visited
+	 */
+	if (node->tss_TidList == NULL)
+		TidListCreate(node);
+
+	tidList = node->tss_TidList;
+	numTids = node->tss_NumTids;
 
 	tuple = &(node->tss_htup);
 
@@ -174,9 +197,7 @@ TidNext(TidScanState *node)
 
 			/*
 			 * We must check to see if the current tuple would have been
-			 * matched by an earlier tid, so we don't double report it. We
-			 * do this by passing the tuple through ExecQual and look for
-			 * failure with all previous qualifications.
+			 * matched by an earlier tid, so we don't double report it.
 			 */
 			for (prev_tid = 0; prev_tid < node->tss_TidPtr;
 				 prev_tid++)
@@ -244,11 +265,9 @@ void
 ExecTidReScan(TidScanState *node, ExprContext *exprCtxt)
 {
 	EState	   *estate;
-	ItemPointerData *tidList;
 	Index		scanrelid;
 
 	estate = node->ss.ps.state;
-	tidList = node->tss_TidList;
 	scanrelid = ((TidScan *) node->ss.ps.plan)->scan.scanrelid;
 
 	/* If we are being passed an outer tuple, save it for runtime key calc */
@@ -264,6 +283,10 @@ ExecTidReScan(TidScanState *node, ExprContext *exprCtxt)
 		return;
 	}
 
+	if (node->tss_TidList)
+		pfree(node->tss_TidList);
+	node->tss_TidList = NULL;
+	node->tss_NumTids = 0;
 	node->tss_TidPtr = -1;
 }
 
@@ -341,9 +364,6 @@ TidScanState *
 ExecInitTidScan(TidScan *node, EState *estate)
 {
 	TidScanState *tidstate;
-	ItemPointerData *tidList;
-	int			numTids;
-	int			tidPtr;
 	List	   *rangeTable;
 	RangeTblEntry *rtentry;
 	Oid			relid;
@@ -375,6 +395,10 @@ ExecInitTidScan(TidScan *node, EState *estate)
 		ExecInitExpr((Expr *) node->scan.plan.qual,
 					 (PlanState *) tidstate);
 
+	tidstate->tss_tideval = (List *)
+		ExecInitExpr((Expr *) node->tideval,
+					 (PlanState *) tidstate);
+
 #define TIDSCAN_NSLOTS 2
 
 	/*
@@ -384,22 +408,11 @@ ExecInitTidScan(TidScan *node, EState *estate)
 	ExecInitScanTupleSlot(estate, &tidstate->ss);
 
 	/*
-	 * get the tid node information
+	 * mark tid list as not computed yet
 	 */
-	tidList = (ItemPointerData *) palloc(length(node->tideval) * sizeof(ItemPointerData));
-	tidstate->tss_tideval = (List *)
-		ExecInitExpr((Expr *) node->tideval,
-					 (PlanState *) tidstate);
-	numTids = TidListCreate(tidstate->tss_tideval,
-							tidstate->ss.ps.ps_ExprContext,
-							tidList);
-	tidPtr = -1;
-
-	CXT1_printf("ExecInitTidScan: context is %d\n", CurrentMemoryContext);
-
-	tidstate->tss_NumTids = numTids;
-	tidstate->tss_TidPtr = tidPtr;
-	tidstate->tss_TidList = tidList;
+	tidstate->tss_TidList = NULL;
+	tidstate->tss_NumTids = 0;
+	tidstate->tss_TidPtr = -1;
 
 	/*
 	 * get the range table and direction information from the execution
