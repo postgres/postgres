@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.40 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.41 2003/03/09 02:19:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "executor/executor.h"
 #include "executor/nodeMaterial.h"
 #include "miscadmin.h"
@@ -29,16 +30,10 @@
 /* ----------------------------------------------------------------
  *		ExecMaterial
  *
- *		The first time this is called, ExecMaterial retrieves tuples
- *		from this node's outer subplan and inserts them into a tuplestore
- *		(a temporary tuple storage structure).	The first tuple is then
- *		returned.  Successive calls to ExecMaterial return successive
- *		tuples from the tuplestore.
- *
- *		Initial State:
- *
- *		matstate->tuplestorestate is initially NULL, indicating we
- *		haven't yet collected the results of the subplan.
+ *		As long as we are at the end of the data collected in the tuplestore,
+ *		we collect one new row from the subplan on each call, and stash it
+ *		aside in the tuplestore before returning it.  The tuplestore is
+ *		only read if we are asked to scan backwards, rescan, or mark/restore.
  *
  * ----------------------------------------------------------------
  */
@@ -47,79 +42,106 @@ ExecMaterial(MaterialState *node)
 {
 	EState	   *estate;
 	ScanDirection dir;
+	bool		forward;
 	Tuplestorestate *tuplestorestate;
-	HeapTuple	heapTuple;
+	HeapTuple	heapTuple = NULL;
+	bool		should_free = false;
+	bool		eof_tuplestore;
 	TupleTableSlot *slot;
-	bool		should_free;
 
 	/*
 	 * get state info from node
 	 */
 	estate = node->ss.ps.state;
 	dir = estate->es_direction;
+	forward = ScanDirectionIsForward(dir);
 	tuplestorestate = (Tuplestorestate *) node->tuplestorestate;
 
 	/*
-	 * If first time through, read all tuples from outer plan and pass
-	 * them to tuplestore.c. Subsequent calls just fetch tuples from
-	 * tuplestore.
+	 * If first time through, initialize the tuplestore.
 	 */
-
 	if (tuplestorestate == NULL)
 	{
-		PlanState  *outerNode;
-
-		/*
-		 * Want to scan subplan in the forward direction while creating
-		 * the stored data.  (Does setting my direction actually affect
-		 * the subplan?  I bet this is useless code...)
-		 */
-		estate->es_direction = ForwardScanDirection;
-
-		/*
-		 * Initialize tuplestore module.
-		 */
 		tuplestorestate = tuplestore_begin_heap(true,	/* randomAccess */
 												SortMem);
 
 		node->tuplestorestate = (void *) tuplestorestate;
-
-		/*
-		 * Scan the subplan and feed all the tuples to tuplestore.
-		 */
-		outerNode = outerPlanState(node);
-
-		for (;;)
-		{
-			slot = ExecProcNode(outerNode);
-
-			if (TupIsNull(slot))
-				break;
-
-			tuplestore_puttuple(tuplestorestate, (void *) slot->val);
-			ExecClearTuple(slot);
-		}
-
-		/*
-		 * Complete the store.
-		 */
-		tuplestore_donestoring(tuplestorestate);
-
-		/*
-		 * restore to user specified direction
-		 */
-		estate->es_direction = dir;
 	}
 
 	/*
-	 * Get the first or next tuple from tuplestore. Returns NULL if no
-	 * more tuples.
+	 * If we are not at the end of the tuplestore, or are going backwards,
+	 * try to fetch a tuple from tuplestore.
+	 */
+	eof_tuplestore = tuplestore_ateof(tuplestorestate);
+
+	if (!forward && eof_tuplestore)
+	{
+		if (!node->eof_underlying)
+		{
+			/*
+			 * When reversing direction at tuplestore EOF, the first
+			 * getheaptuple call will fetch the last-added tuple; but
+			 * we want to return the one before that, if possible.
+			 * So do an extra fetch.
+			 */
+			heapTuple = tuplestore_getheaptuple(tuplestorestate,
+												forward,
+												&should_free);
+			if (heapTuple == NULL)
+				return NULL;		/* the tuplestore must be empty */
+			if (should_free)
+				heap_freetuple(heapTuple);
+		}
+		eof_tuplestore = false;
+	}
+
+	if (!eof_tuplestore)
+	{
+		heapTuple = tuplestore_getheaptuple(tuplestorestate,
+											forward,
+											&should_free);
+		if (heapTuple == NULL && forward)
+			eof_tuplestore = true;
+	}
+
+	/*
+	 * If necessary, try to fetch another row from the subplan.
+	 *
+	 * Note: the eof_underlying state variable exists to short-circuit
+	 * further subplan calls.  It's not optional, unfortunately, because
+	 * some plan node types are not robust about being called again when
+	 * they've already returned NULL.
+	 */
+	if (eof_tuplestore && !node->eof_underlying)
+	{
+		PlanState  *outerNode;
+		TupleTableSlot *outerslot;
+
+		/*
+		 * We can only get here with forward==true, so no need to worry
+		 * about which direction the subplan will go.
+		 */
+		outerNode = outerPlanState(node);
+		outerslot = ExecProcNode(outerNode);
+		if (TupIsNull(outerslot))
+		{
+			node->eof_underlying = true;
+			return NULL;
+		}
+		heapTuple = outerslot->val;
+		should_free = false;
+		/*
+		 * Append returned tuple to tuplestore, too.  NOTE: because the
+		 * tuplestore is certainly in EOF state, its read position will move
+		 * forward over the added tuple.  This is what we want.
+		 */
+		tuplestore_puttuple(tuplestorestate, (void *) heapTuple);
+	}
+
+	/*
+	 * Return the obtained tuple.
 	 */
 	slot = (TupleTableSlot *) node->ss.ps.ps_ResultTupleSlot;
-	heapTuple = tuplestore_getheaptuple(tuplestorestate,
-										ScanDirectionIsForward(dir),
-										&should_free);
-
 	return ExecStoreTuple(heapTuple, slot, InvalidBuffer, should_free);
 }
 
@@ -141,6 +163,7 @@ ExecInitMaterial(Material *node, EState *estate)
 	matstate->ss.ps.state = estate;
 
 	matstate->tuplestorestate = NULL;
+	matstate->eof_underlying = false;
 
 	/*
 	 * Miscellaneous initialization
@@ -272,12 +295,16 @@ ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt)
 	 * results; we have to re-read the subplan and re-store.
 	 *
 	 * Otherwise we can just rewind and rescan the stored output.
+	 * The state of the subnode does not change.
 	 */
 	if (((PlanState *) node)->lefttree->chgParam != NULL)
 	{
 		tuplestore_end((Tuplestorestate *) node->tuplestorestate);
 		node->tuplestorestate = NULL;
+		node->eof_underlying = false;
 	}
 	else
+	{
 		tuplestore_rescan((Tuplestorestate *) node->tuplestorestate);
+	}
 }

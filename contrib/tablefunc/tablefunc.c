@@ -743,10 +743,6 @@ connectby(char *relname,
 
 	SPI_finish();
 
-	oldcontext = MemoryContextSwitchTo(per_query_ctx);
-	tuplestore_donestoring(tupstore);
-	MemoryContextSwitchTo(oldcontext);
-
 	return tupstore;
 }
 

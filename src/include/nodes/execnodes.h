@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.95 2003/02/16 02:30:39 tgl Exp $
+ * $Id: execnodes.h,v 1.96 2003/03/09 02:19:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -917,14 +917,13 @@ typedef struct HashJoinState
  *		of a subplan into a temporary file.
  *
  *		ss.ss_ScanTupleSlot refers to output of underlying plan.
- *
- *		tuplestorestate		private state of tuplestore.c
  * ----------------
  */
 typedef struct MaterialState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-	void	   *tuplestorestate;
+	void	   *tuplestorestate; /* private state of tuplestore.c */
+	bool		eof_underlying;	/* reached end of underlying plan? */
 } MaterialState;
 
 /* ----------------

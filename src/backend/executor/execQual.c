@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.125 2003/02/16 02:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.126 2003/03/09 02:19:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1105,13 +1105,6 @@ ExecMakeTableFunctionResult(ExprState *funcexpr,
 				 (int) rsinfo.returnMode);
 
 		first_time = false;
-	}
-
-	/* If we have a locally-created tupstore, close it up */
-	if (tupstore)
-	{
-		MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
-		tuplestore_donestoring(tupstore);
 	}
 
 	MemoryContextSwitchTo(callerContext);
