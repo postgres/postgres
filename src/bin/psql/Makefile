@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.2 1996/07/19 06:53:40 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.3 1996/07/20 07:40:03 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ ifeq ($(USE_READLINE), true)
 # uncomment this
 # CFLAGS += -DOLD_READLINE
 
-   LIBCURSES=	-lcurses -ltermcap
+   LIBCURSES=	-lcurses 
    LD_ADD += -L$(READLINE_LIBDIR) -L$(HISTORY_LIBDIR) -lreadline -lhistory $(LIBCURSES)
 # use the following if your readline has no separate history lib
 #   LD_ADD += -L$(READLINE_LIBDIR) -lreadline $(LIBCURSES)
@@ -45,6 +45,12 @@ ifeq ($(USE_READLINE), true)
    endif
    ifeq ($(PORTNAME), next)
    LD_ADD += -ltermcap
+   ifeq ($(PORTNAME), bsdi)
+   LD_ADD += -ltermcap
+   ifeq ($(PORTNAME), bsdi_2_1)
+   LD_ADD += -ltermcap
+   endif
+   endif
    endif
    endif
    endif
