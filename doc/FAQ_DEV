@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Apr 17 01:12:20 EDT 2002
+   Last updated: Tue Aug 13 16:41:02 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -560,7 +560,7 @@
    Table, column, type, function, and view names are stored in system
    tables in columns of type Name. Name is a fixed-length,
    null-terminated type of NAMEDATALEN bytes. (The default value for
-   NAMEDATALEN is 64 bytes.)
+   NAMEDATALEN is 32 bytes.)
 typedef struct nameData
     {
         char        data[NAMEDATALEN];
