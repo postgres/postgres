@@ -1,7 +1,7 @@
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $Header: /cvsroot/pgsql/config/python.m4,v 1.2 2001/05/12 17:49:32 petere Exp $
+# $Header: /cvsroot/pgsql/config/python.m4,v 1.3 2001/07/10 16:33:01 petere Exp $
 #
 
 # PGAC_PATH_PYTHON
@@ -21,48 +21,44 @@ fi
 # Determine the name of various directory of a given Python installation.
 AC_DEFUN([_PGAC_CHECK_PYTHON_DIRS],
 [AC_REQUIRE([PGAC_PATH_PYTHON])
+AC_MSG_CHECKING([Python installation directories])
 python_version=`${PYTHON} -c "import sys; print sys.version[[:3]]"`
 python_prefix=`${PYTHON} -c "import sys; print sys.prefix"`
 python_execprefix=`${PYTHON} -c "import sys; print sys.exec_prefix"`
 python_configdir="${python_execprefix}/lib/python${python_version}/config"
-python_moduledir="${python_prefix}/lib/python${python_version}"
-python_includedir="${python_prefix}/include/python${python_version}"
-python_dynlibdir="${python_execprefix}/lib/python${python_version}/lib-dynload"
+python_moduledir="${python_prefix}/lib/python${python_version}/site-packages"
+python_moduleexecdir="${python_execprefix}/lib/python${python_version}/site-packages"
+python_includespec="-I${python_prefix}/include/python${python_version}"
+if test "$python_prefix" != "$python_execprefix"; then
+  python_includespec="-I${python_execprefix}/include/python${python_version} $python_includespec"
+fi
 
 AC_SUBST(python_version)[]dnl
 AC_SUBST(python_prefix)[]dnl
 AC_SUBST(python_execprefix)[]dnl
 AC_SUBST(python_configdir)[]dnl
 AC_SUBST(python_moduledir)[]dnl
-AC_SUBST(python_includedir)[]dnl
-AC_SUBST(python_dynlibdir)[]dnl
+AC_SUBST(python_moduleexecdir)[]dnl
+AC_SUBST(python_includespec)[]dnl
+# This should be enough of a message.
+if test "$python_prefix" != "$python_execprefix"; then
+  AC_MSG_RESULT([$python_prefix/lib/python${python_version} and $python_execprefix/lib/python${python_version}])
+else
+  AC_MSG_RESULT([$python_prefix/lib/python${python_version}])
+fi
 ])# _PGAC_CHECK_PYTHON_DIRS
 
 
 # PGAC_CHECK_PYTHON_MODULE_SETUP
 # ------------------------------
-# Finds things required to build a Python extension module, in
-# particular the makefile.
+# Finds things required to build a Python extension module.
+# This used to do more, that's why it's separate.
 #
 # It would be nice if we could check whether the current setup allows
 # the build of the shared module. Future project.
 AC_DEFUN([PGAC_CHECK_PYTHON_MODULE_SETUP],
-[AC_REQUIRE([_PGAC_CHECK_PYTHON_DIRS])
-AC_MSG_CHECKING([for makefile to build Python module])
-python_makefile_pre_in="${python_configdir}/Makefile.pre.in"
-
-if test -f "${python_makefile_pre_in}" ; then
-  AC_MSG_RESULT([${python_makefile_pre_in}])
-else
-  AC_MSG_RESULT(no)
-  AC_MSG_ERROR(
-[The file
-    ${python_makefile_pre_in}
-required to build Python modules does not exist.  Make sure that you have
-a full Python installation and that this is the right location.])
-fi
-
-AC_SUBST(python_makefile_pre_in)[]dnl
+[
+  AC_REQUIRE([_PGAC_CHECK_PYTHON_DIRS])
 ])# PGAC_CHECK_PYTHON_MODULE_SETUP
 
 

@@ -1,58 +1,60 @@
-#-------------------------------------------------------------------
-#
-# GNUmakefile for src/interfaces/python, a.k.a. "PyGreSQL"
-#
-# Written by Peter Eisentraut  <peter_e@gmx.net>
-#
-# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.9 2001/05/25 15:32:33 momjian Exp $
-#
-#-------------------------------------------------------------------
+# $Header: /cvsroot/pgsql/src/interfaces/python/Attic/GNUmakefile,v 1.10 2001/07/10 16:33:02 petere Exp $
 
 subdir = src/interfaces/python
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-all: Makefile pgmodule.c libpq-all
-	$(MAKE) -f Makefile
+NAME = _pgmodule
+SO_MAJOR_VERSION = 0
+SO_MINOR_VERSION = 0
+OBJS = pgmodule.o
+SHLIB_LINK = $(libpq)
+ifeq ($(PORTNAME), win)
+override CPPFLAGS += -DUSE_DL_IMPORT
+SHLIB_LINK += $(python_libspec)
+endif
+
+
+include $(top_srcdir)/src/Makefile.shlib
+
+# (Python also has a config.h file.  Be sure to use ours.)
+override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS) $(python_includespec)
+
+all: all-lib
+
+all-lib: libpq-all
 
 .PHONY: libpq-all
 libpq-all:
 	$(MAKE) -C $(libpq_builddir) all
 
-Makefile: Setup.in Makefile.pre.in
-	$(MAKE) -f Makefile.pre.in boot srcdir=$(srcdir) VPATH=$(srcdir)
+install-warning-msg := { \
+echo "*** Skipping the installation of the Python interface module for lack"; \
+echo "*** of permissions.  To install it, change to the directory"; \
+echo "***     `pwd`,"; \
+echo "*** become the appropriate user, and do '$(MAKE) install'."; }
 
-Makefile.pre.in: $(python_makefile_pre_in)
-	cp $< $@
-
-Setup.in: Setup.in.raw
-	sed -e 's,@libpq_srcdir@,$(libpq_srcdir),g' \
-	    -e 's,@libpq_builddir@,$(libpq_builddir),g' \
-	    -e 's%@EXTRA_LIBS@%$(filter -L%, $(LDFLAGS)) $(LIBS)%g' \
-	    -e 's%@INCLUDES@%$(filter -I%, $(CPPFLAGS))%g' \
-	    $< > $@
-
-install: all
-	@echo "Installing Python module"
-	@if ( $(INSTALL_DATA) pg.py $(python_moduledir) && \
-	    $(MAKE) -f Makefile install ); then : ; else \
-		echo "*****" ;\
-		echo "* Skipping the installation of the Python interface module for lack"; \
-		echo "* of permissions. To install it, change to the directory"; \
-		echo "* "`pwd`", become the appropriate"; \
-		echo "* user, and do \`$(MAKE) install'."; \
-		echo "*****"; \
+install: all installdirs
+	@if test -w $(DESTDIR)$(python_moduleexecdir) && test -w $(DESTDIR)$(python_moduledir); then \
+	  echo "$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(python_moduleexecdir)/_pgmodule$(DLSUFFIX)"; \
+	  $(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(python_moduleexecdir)/_pgmodule$(DLSUFFIX); \
+	\
+	  echo "$(INSTALL_DATA) $(srcdir)/pg.py $(DESTDIR)$(python_moduledir)/pg.py"; \
+	  $(INSTALL_DATA) $(srcdir)/pg.py $(DESTDIR)$(python_moduledir)/pg.py; \
+	\
+	  echo "$(INSTALL_DATA) $(srcdir)/pgdb.py $(DESTDIR)$(python_moduledir)/pgdb.py"; \
+	  $(INSTALL_DATA) $(srcdir)/pgdb.py $(DESTDIR)$(python_moduledir)/pgdb.py; \
+	else \
+	  $(install-warning-msg); \
 	fi
 
+installdirs:
+	$(mkinstalldirs) $(DESTDIR)$(python_moduleexecdir) $(DESTDIR)$(python_moduledir)
+
 uninstall:
-	@echo "*****"; \
-	 echo "* Unfortunately, the Python interface module cannot be uninstalled"; \
-	 echo "* automatically. To do it yourself, look in or near the directory"; \
-	 echo "* \`$(python_moduledir)' for files \`pg.py' and \`_pgmodule$(DLSUFFIX)'."; \
-	 echo "*****"
+	rm -f $(DESTDIR)$(python_moduleexecdir)/_pgmodule$(DLSUFFIX) \
+	      $(DESTDIR)$(python_moduledir)/pg.py \
+	      $(DESTDIR)$(python_moduledir)/pgdb.py
 
-# Python sometimes has a different idea what exactly "clean" is.
-
-clean distclean maintainer-clean:
-	-[ -f Makefile ] && $(MAKE) -f Makefile clobber
-	rm -f Makefile.pre.in Makefile Setup Setup.in
+clean distclean maintainer-clean: clean-lib
+	rm -f $(OBJS)

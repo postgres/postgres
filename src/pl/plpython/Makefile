@@ -1,11 +1,11 @@
-# $Header: /cvsroot/pgsql/src/pl/plpython/Makefile,v 1.7 2001/05/25 15:48:33 momjian Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpython/Makefile,v 1.8 2001/07/10 16:33:02 petere Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 
-override CPPFLAGS := -I$(srcdir) -I$(python_includedir) $(CPPFLAGS)
+override CPPFLAGS := -I$(srcdir) $(python_includespec) $(CPPFLAGS)
 
 override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
