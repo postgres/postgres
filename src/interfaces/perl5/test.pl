@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl -w
 
-# $Id: test.pl,v 1.11 1999/10/08 17:14:45 momjian Exp $
+# $Id: test.pl,v 1.12 2000/03/11 02:57:24 tgl Exp $
 
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl test.pl'
@@ -114,7 +114,7 @@ $result = $conn->exec("CREATE DATABASE $dbname");
     or  die   "\$conn->exec ............. not ok: ", $conn->errorMessage;
 
 $conn = Pg::connectdb("dbname=rumpumpel");
-( $conn->errorMessage =~ 'Database rumpumpel does not exist' )
+( $conn->errorMessage =~ 'Database "rumpumpel" does not exist' )
     and print "\$conn->errorMessage ..... ok\n"
     or  die   "\$conn->errorMessage ..... not ok: ", $conn->errorMessage;
 
