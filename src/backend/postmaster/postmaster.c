@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.28 1996/12/07 04:38:40 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.29 1996/12/26 17:49:05 momjian Exp $
  *
  * NOTES
  *
@@ -601,6 +601,7 @@ ServerLoop(void)
                 StreamClose(port->sock);
                 next = DLGetSucc(curr);
                 DLRemove(curr);
+                free(port);
                 DLFreeElem(curr);
                 curr = next;
                 continue;
@@ -857,6 +858,7 @@ CleanupProc(int pid,
             bp = (Backend*)DLE_VAL(curr);
             if (bp->pid == pid) {
                 DLRemove(curr);
+                free(bp);
                 DLFreeElem(curr);
                 break;
             }
@@ -897,12 +899,13 @@ CleanupProc(int pid,
         
         prev = DLGetPred(curr);
         DLRemove(curr);
+        free(bp);
         DLFreeElem(curr);
         if (!prev) {            /* removed head */
             curr = DLGetHead(BackendList); 
             continue;
         }
-        curr = DLGetSucc(curr);
+        curr = DLGetSucc(prev);
     }
     /*
      * -------------
