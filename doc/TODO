@@ -6,7 +6,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Nov  6 00:38:05 EST 2004
+Last updated:		Mon Nov  8 09:53:53 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -199,7 +199,11 @@ Multi-Language Support
 Views / Rules
 =============
 
-* Automatically create rules on views so they are updateable, per SQL99 [view]
+* Automatically create rules on views so they are updateable, per SQL99
+
+  We can only auto-create rules for simple views.  For more complex
+  cases users will still have to write rules.
+
 * Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
 * Allow NOTIFY in rules involving conditionals
 * Have views on temporary tables exist in the temporary namespace
