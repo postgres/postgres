@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.5 1999/01/03 05:30:47 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.6 1999/01/04 11:20:33 wieck Exp $
  *
  * ----------
  */
@@ -523,6 +523,7 @@ Numeric
 numeric_round(Numeric num, int32 scale)
 {
 	int32		typmod;
+	int		precision;
 
 	/* ----------
 	 * Handle NULL
@@ -553,7 +554,9 @@ numeric_round(Numeric num, int32 scale)
 	 * Let numeric() and in turn apply_typmod() do the job
 	 * ----------
 	 */
-	typmod = (((num->n_weight + scale + 1) << 16) | scale) + VARHDRSZ;
+	precision = MAX(0, num->n_weight) + scale;
+	precision = MIN(precision, NUMERIC_MAX_PRECISION);
+	typmod = (((precision + 2) << 16) | scale) + VARHDRSZ;
 	return numeric(num, typmod);
 }
 
