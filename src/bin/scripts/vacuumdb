@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.14 2001/01/08 20:32:27 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.15 2001/01/08 23:02:36 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -142,7 +142,7 @@ if [ "$alldb" ]; then
                 echo "$CMDNAME: cannot vacuum all databases and a specific one at the same time" 1>&2
                 exit 1
         fi
-	dbname=`${PATHNAME}psql $PSQLOPT -q -t -A -d template1 -c 'SELECT datname FROM pg_database'`
+	dbname=`${PATHNAME}psql $PSQLOPT -q -t -A -d template1 -c 'SELECT datname FROM pg_database WHERE datallowconn'`
 
 elif [ -z "$dbname" ]; then
 	echo "$CMDNAME: missing required argument: database name" 1>&2
