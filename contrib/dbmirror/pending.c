@@ -1,6 +1,6 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.13 2003/08/04 00:43:10 momjian Exp $
+ * $Id: pending.c,v 1.14 2003/09/29 18:16:48 momjian Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -437,6 +437,16 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc,
 				continue;
 			}
 		}						/* KeyUsage!=ALL */
+#ifndef  NODROPCOLUMN
+		if(tTupleDesc->attrs[iColumnCounter-1]->attisdropped)
+		  {
+		    /**
+		     * This column has been dropped.
+		     * Do not mirror it.
+		     */
+		    continue;
+		  }
+#endif
 		cpFieldName = DatumGetPointer(NameGetDatum(&tTupleDesc->attrs
 										 [iColumnCounter - 1]->attname));
 #if defined DEBUG_OUTPUT

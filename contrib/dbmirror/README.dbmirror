@@ -66,7 +66,7 @@ time a row inside of a table being mirrored changes.
 
 To build the trigger run  make on the "Makefile" in the DBMirror directory.
 
-Postgres-7.3 Make Instructions:
+Postgres-7.3 & 7.4  Make Instructions:
 
   If you have already run "configure" in the pgsql-server directory 
   then run "make" in the dbmirror directory to compile the trigger.
@@ -78,7 +78,7 @@ Postgres-7.1 & Postgres-7.2 Make Instructions:
 
   Run the following commands
 
-  gcc -fpic -I/usr/local/pgsql/include/server -c pending.c -DNOSCHEMAS
+  gcc -fpic -I/usr/local/pgsql/include/server -c pending.c -DNOSCHEMAS -DNODROPCOLUMN
   ld -shared -o pending.so pending.o
 
   Assuming the postgres include files are in /usr/local/pgsql/include/server.  
@@ -236,6 +236,7 @@ RedHat Linux 7.1 & 6.2
 Mandrake Linux 8.0(Limited Testing)
  -Postgres 7.2
  -Postgres 7.3
+ -Postgres 7.4
  -Perl 5.6
 
 
