@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.51 2000/12/03 20:45:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.52 2000/12/29 22:46:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1648,7 +1648,7 @@ Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 	PGresult   *result;
 	int			r,
 				retval;
-	size_t		tupno,
+	int			tupno,
 				column,
 				ncols;
 	Tcl_DString headers;
