@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.16 1998/11/14 01:56:36 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.17 1998/12/18 17:53:21 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,6 +25,9 @@ endif
 # TCL/TK programs
 #
 ifeq ($(USE_TCL), true)
+ifeq ($(USE_TK), true)
+	DIRS += pgaccess
+endif
 	DIRS += pgtclsh
 endif
 
