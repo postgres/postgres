@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.153.2.3 2004/03/05 01:54:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.153.2.4 2004/03/14 22:01:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1469,7 +1469,7 @@ PQputCopyEnd(PGconn *conn, const char *errormsg)
 		{
 			/* Send old-style end-of-data marker */
 			if (pqPutMsgStart(0, false, conn) < 0 ||
-				pqPuts("\\.\n", conn) < 0 ||
+				pqPutnchar("\\.\n", 3, conn) < 0 ||
 				pqPutMsgEnd(conn) < 0)
 				return -1;
 		}
