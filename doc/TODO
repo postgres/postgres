@@ -308,6 +308,7 @@ SOURCE CODE
 * Does Mariposa source contain any other bug fixes?
 * Remove SET KSQO option if OR processing is improved(Tom)
 * -Pre-generate lex and yacc output so not required for install(Peter E)
+* Use macros to define NT open() file parameters, remove NT-specific defines
 
 ---------------------------------------------------------------------------
 
