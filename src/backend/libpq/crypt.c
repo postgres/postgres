@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.35 2001/08/17 02:59:19 momjian Exp $
+ * $Id: crypt.c,v 1.36 2001/08/17 03:09:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,7 +281,7 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 	if (isMD5(passwd) && port->auth_method != uaMD5)
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-		 	"Password is stored MD5 encrypted.  "
+			"Password is stored MD5 encrypted.  "
 			"Only pg_hba.conf's MD5 protocol can be used for this user.\n");
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
@@ -295,8 +295,12 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 	switch (port->auth_method)
 	{
 		case uaCrypt:
-			crypt_pwd = crypt(passwd, port->cryptSalt);
+		{
+			char salt[3];
+			StrNCpy(salt, port->cryptSalt,3);
+			crypt_pwd = crypt(passwd, salt);
 			break;
+		}
 		case uaMD5:
 			crypt_pwd = palloc(MD5_PASSWD_LEN+1);
 			if (isMD5(passwd))

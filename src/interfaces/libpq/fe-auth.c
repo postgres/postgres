@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.51 2001/08/17 02:59:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.52 2001/08/17 03:09:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -443,8 +443,13 @@ pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
 	switch (areq)
 	{
 		case AUTH_REQ_CRYPT:
-			crypt_pwd = crypt(password, conn->cryptSalt);
+		{
+			char salt[3];
+
+			StrNCpy(salt, conn->cryptSalt,3);
+			crypt_pwd = crypt(password, salt);
 			break;
+		}
 		case AUTH_REQ_MD5:
 			{
 				char *crypt_pwd2;
