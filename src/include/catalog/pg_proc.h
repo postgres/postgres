@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.4 1996/11/05 10:37:16 scrappy Exp $
+ * $Id: pg_proc.h,v 1.5 1996/11/08 01:08:37 scrappy Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -571,8 +571,8 @@ DATA(insert OID = 766 (  int4inc           PGUID 11 f t f 1 f 23 "23" 100 0 0 10
 DATA(insert OID = 767 (  int2inc           PGUID 11 f t f 1 f 21 "21" 100 0 0 100  foo bar ));
 DATA(insert OID = 768 (  int4larger        PGUID 11 f t f 2 f 23 "23 23" 100 0 0 100  foo bar ));
 DATA(insert OID = 769 (  int4smaller       PGUID 11 f t f 2 f 23 "23 23" 100 0 0 100  foo bar ));
-DATA(insert OID = 770 (  int2larger        PGUID 11 f t f 2 f 23 "21 21" 100 0 0 100  foo bar ));
-DATA(insert OID = 771 (  int2smaller       PGUID 11 f t f 2 f 23 "21 21" 100 0 0 100  foo bar ));
+DATA(insert OID = 770 (  int2larger        PGUID 11 f t f 2 f 21 "21 21" 100 0 0 100  foo bar ));
+DATA(insert OID = 771 (  int2smaller       PGUID 11 f t f 2 f 21 "21 21" 100 0 0 100  foo bar ));
 DATA(insert OID =  772 (  gistsel          PGUID 11 f t t 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
 DATA(insert OID =  773 (  gistnpage        PGUID 11 f t t 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
 DATA(insert OID = 774 (  gistgettuple     PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
