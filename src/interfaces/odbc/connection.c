@@ -19,6 +19,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#ifndef	WIN32
+#include <errno.h>
+#endif /* WIN32 */
 
 #include "environ.h"
 #include "socket.h"
@@ -289,6 +292,7 @@ CC_Constructor()
 		rv->ms_jet = 0;
 		rv->unicode = 0;
 		rv->result_uncommitted = 0;
+		rv->schema_support = 0;
 #ifdef	MULTIBYTE
 		rv->client_encoding = NULL;
 		rv->server_encoding = NULL;
@@ -882,8 +886,8 @@ another_version_retry:
 					}
 					break;
 				case 'K':		/* Secret key (6.4 protocol) */
-					(void) SOCK_get_int(sock, 4);		/* pid */
-					(void) SOCK_get_int(sock, 4);		/* key */
+					self->be_pid = SOCK_get_int(sock, 4);		/* pid */
+					self->be_key = SOCK_get_int(sock, 4);		/* key */
 
 					break;
 				case 'Z':		/* Backend is ready for new query (6.4) */
@@ -1960,6 +1964,8 @@ CC_lookup_pg_version(ConnectionClass *self)
 		self->pg_version_minor = minor;
 	}
 	self->pg_version_number = (float) atof(szVersion);
+	if (PG_VERSION_GE(self, 7.3))
+		self->schema_support = 1;
 
 	mylog("Got the PostgreSQL version string: '%s'\n", self->pg_version);
 	mylog("Extracted PostgreSQL version number: '%1.1f'\n", self->pg_version_number);
@@ -2018,4 +2024,65 @@ CC_get_max_query_len(const ConnectionClass *conn)
 		/* Prior to 6.5 we used BLCKSZ */
 		value = BLCKSZ;
 	return value;
+}
+
+int
+CC_send_cancel_request(const ConnectionClass *conn)
+{
+#ifdef WIN32
+	int			save_errno = (WSAGetLastError());
+#else
+	int			save_errno = errno;
+#endif
+	int			tmpsock = -1;
+	struct
+	{
+		uint32		packetlen;
+		CancelRequestPacket cp;
+	}			crp;
+
+	/* Check we have an open connection */
+	if (!conn)
+		return FALSE;
+
+	if (conn->sock == NULL )
+	{
+		return FALSE;
+	}
+
+	/*
+	 * We need to open a temporary connection to the postmaster. Use the
+	 * information saved by connectDB to do this with only kernel calls.
+	*/
+	if ((tmpsock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	{
+		return FALSE;
+	}
+	if (connect(tmpsock, (struct sockaddr *)&(conn->sock->sadr),
+				sizeof(conn->sock->sadr)) < 0)
+	{
+		return FALSE;
+	}
+
+	/*
+	 * We needn't set nonblocking I/O or NODELAY options here.
+	 */
+	crp.packetlen = htonl((uint32) sizeof(crp));
+	crp.cp.cancelRequestCode = (MsgType) htonl(CANCEL_REQUEST_CODE);
+	crp.cp.backendPID = htonl(conn->be_pid);
+	crp.cp.cancelAuthCode = htonl(conn->be_key);
+
+	if (send(tmpsock, (char *) &crp, sizeof(crp), 0) != (int) sizeof(crp))
+	{
+		return FALSE;
+	}
+
+	/* Sent it, done */
+	closesocket(tmpsock);
+#ifdef WIN32
+	WSASetLastError(save_errno);
+#else
+	errno = save_errno;
+#endif
+	return TRUE;
 }

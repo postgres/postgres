@@ -573,6 +573,7 @@ PGAPI_Cancel(
 {
 	static char *func = "PGAPI_Cancel";
 	StatementClass *stmt = (StatementClass *) hstmt;
+	ConnectionClass *conn;
 	RETCODE		result;
 	ConnInfo   *ci;
 
@@ -589,7 +590,8 @@ PGAPI_Cancel(
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
-	ci = &(SC_get_conn(stmt)->connInfo);
+	conn = SC_get_conn(stmt);
+	ci = &(conn->connInfo);
 
 	/*
 	 * Not in the middle of SQLParamData/SQLPutData so cancel like a
@@ -597,6 +599,11 @@ PGAPI_Cancel(
 	 */
 	if (stmt->data_at_exec < 0)
 	{
+		/*
+		 * Tell the Backend that we're cancelling this request
+		 */
+		if (stmt->status == STMT_EXECUTING)
+			CC_send_cancel_request(conn);
 		/*
 		 * MAJOR HACK for Windows to reset the driver manager's cursor
 		 * state: Because of what seems like a bug in the Odbc driver

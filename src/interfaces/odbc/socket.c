@@ -107,7 +107,6 @@ char
 SOCK_connect_to(SocketClass *self, unsigned short port, char *hostname)
 {
 	struct hostent *host;
-	struct sockaddr_in sadr;
 	unsigned long iaddr;
 
 	if (self->socket != -1)
@@ -117,7 +116,7 @@ SOCK_connect_to(SocketClass *self, unsigned short port, char *hostname)
 		return 0;
 	}
 
-	memset((char *) &sadr, 0, sizeof(sadr));
+	memset((char *) &(self->sadr), 0, sizeof(self->sadr));
 
 	/*
 	 * If it is a valid IP address, use it. Otherwise use hostname lookup.
@@ -132,13 +131,13 @@ SOCK_connect_to(SocketClass *self, unsigned short port, char *hostname)
 			self->errormsg = "Could not resolve hostname.";
 			return 0;
 		}
-		memcpy(&(sadr.sin_addr), host->h_addr, host->h_length);
+		memcpy(&(self->sadr.sin_addr), host->h_addr, host->h_length);
 	}
 	else
-		memcpy(&(sadr.sin_addr), (struct in_addr *) & iaddr, sizeof(iaddr));
+		memcpy(&(self->sadr.sin_addr), (struct in_addr *) & iaddr, sizeof(iaddr));
 
-	sadr.sin_family = AF_INET;
-	sadr.sin_port = htons(port);
+	self->sadr.sin_family = AF_INET;
+	self->sadr.sin_port = htons(port);
 
 	self->socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (self->socket == -1)
@@ -148,8 +147,8 @@ SOCK_connect_to(SocketClass *self, unsigned short port, char *hostname)
 		return 0;
 	}
 
-	if (connect(self->socket, (struct sockaddr *) & (sadr),
-				sizeof(sadr)) < 0)
+	if (connect(self->socket, (struct sockaddr *) & (self->sadr),
+				sizeof(self->sadr)) < 0)
 	{
 		self->errornumber = SOCKET_COULD_NOT_CONNECT;
 		self->errormsg = "Could not connect to remote socket.";

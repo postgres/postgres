@@ -61,6 +61,7 @@ struct SocketClass_
 
 	char	   *errormsg;
 	int			errornumber;
+	struct sockaddr_in	sadr; /* Used for handling connections for cancel */
 
 	char		reverse;		/* used to handle Postgres 6.2 protocol
 								 * (reverse byte order) */

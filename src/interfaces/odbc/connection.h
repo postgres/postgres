@@ -126,6 +126,21 @@ typedef struct _StartupPacket6_2
 	char		tty[PATH_SIZE];
 } StartupPacket6_2;
 
+/* Transferred from pqcomm.h:  */
+
+
+typedef ProtocolVersion MsgType;
+
+#define PG_PROTOCOL(m,n)   (((m) << 16) | (n))
+#define CANCEL_REQUEST_CODE PG_PROTOCOL(1234,5678)
+
+typedef struct CancelRequestPacket
+{
+	/* Note that each field is stored in network byte order! */
+	MsgType		cancelRequestCode;	/* code to identify a cancel request */
+	unsigned int	backendPID;	/* PID of client's backend */
+	unsigned int	cancelAuthCode; /* secret key to authorize cancel */
+} CancelRequestPacket;
 
 /*	Structure to hold all the connection attributes for a specific
 	connection (used for both registry and file, DSN and DRIVER)
@@ -273,11 +288,14 @@ struct ConnectionClass_
 	char		ms_jet;
 	char		unicode;
 	char		result_uncommitted;
+	char		schema_support;
 #ifdef	MULTIBYTE
 	char	   *client_encoding;
 	char	   *server_encoding;
 #endif   /* MULTIBYTE */
 	int	ccsc;
+	int		be_pid;	/* pid returned by backend */
+	int		be_key; /* auth code needed to send cancel */
 };
 
 
@@ -319,6 +337,7 @@ void		CC_lookup_pg_version(ConnectionClass *conn);
 void		CC_initialize_pg_version(ConnectionClass *conn);
 void		CC_log_error(const char *func, const char *desc, const ConnectionClass *self);
 int			CC_get_max_query_len(const ConnectionClass *self);
+int		CC_send_cancel_request(const ConnectionClass *conn);
 void		CC_on_commit(ConnectionClass *conn);
 void		CC_on_abort(ConnectionClass *conn, BOOL set_no_trans);
 void		ProcessRollback(ConnectionClass *conn, BOOL undo);

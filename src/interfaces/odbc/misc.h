@@ -89,6 +89,9 @@ char	   *strncpy_null(char *dst, const char *src, int len);
 char	   *trim(char *string);
 char	   *make_string(const char *s, int len, char *buf);
 char	   *my_strcat(char *buf, const char *fmt, const char *s, int len);
+char	   *schema_strcat(char *buf, const char *fmt, const char *s, int len,
+			const char *, int);
+#define	GET_SCHEMA_NAME(nspname) 	(stricmp(nspname, "public") ? nspname : "")
 
 /* defines for return value of my_strcpy */
 #define STRCPY_SUCCESS		1

@@ -171,10 +171,10 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 			break;
 		case SQL_CREATE_SCHEMA:
 			len = 4;
-			if (PG_VERSION_LE(conn, 7.2))
-				value = 0;
+			if (conn->schema_support)
+				value = SQL_CS_CREATE_SCHEMA | SQL_CS_AUTHORIZATION;
 			else
-				value = SQL_CS_CREATE_SCHEMA | SQL_CS_AUTHORIZATION; /* hopefully */
+				value = 0;
 			break;
 		case SQL_CREATE_TABLE:
 			len = 4;
@@ -218,10 +218,10 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 			break;
 		case SQL_DROP_SCHEMA:
 			len = 4;
-			if (PG_VERSION_LE(conn, 7.2))
-				value = 0;
+			if (conn->schema_support)
+				value = SQL_DS_DROP_SCHEMA | SQL_DS_RESTRICT | SQL_DS_CASCADE;
 			else
-				value = SQL_DS_DROP_SCHEMA | SQL_DS_RESTRICT | SQL_DS_CASCADE; /* hopefully */
+				value = 0;
 			break;
 		case SQL_DROP_TABLE:
 			len = 4;

@@ -279,6 +279,18 @@ my_strcat(char *buf, const char *fmt, const char *s, int len)
 	return NULL;
 }
 
+char *
+schema_strcat(char *buf, const char *fmt, const char *s, int len, const char *tbname, int tbnmlen)
+{
+	if (!s || 0 == len)
+	{
+		if (tbname && (tbnmlen > 0 || tbnmlen == SQL_NTS))
+			return my_strcat(buf, fmt, "public", 6);
+		return NULL;
+	}
+	return my_strcat(buf, fmt, s, len);
+}
+
 
 void
 remove_newlines(char *string)

@@ -543,15 +543,21 @@ parse_statement(StatementClass *stmt)
 			 */
 			if (in_dot)
 			{
-				irdflds->nfields--;
-				strcpy(fi[irdflds->nfields]->dot, fi[irdflds->nfields]->name);
-				strcpy(fi[irdflds->nfields]->name, token);
-				irdflds->nfields++;
-				in_dot = FALSE;
+				int	ifld = irdflds->nfields - 1;
+
+				if (fi[ifld]->dot[0])
+				{
+					strcat(fi[ifld]->dot, ".");
+					strcat(fi[ifld]->dot, fi[ifld]->name);
+				}
+				else
+					strcpy(fi[ifld]->dot, fi[ifld]->name);
+				strcpy(fi[ifld]->name, token);
 
 				if (delim == ',')
 				{
 					mylog("in_dot: got comma\n");
+					in_dot = FALSE;
 					in_field = FALSE;
 				}
 				continue;
@@ -575,6 +581,7 @@ parse_statement(StatementClass *stmt)
 			/* Function */
 			if (token[0] == '(')
 			{
+				in_dot = FALSE;
 				in_func = TRUE;
 				blevel = 1;
 				fi[irdflds->nfields - 1]->func = TRUE;
@@ -594,6 +601,7 @@ parse_statement(StatementClass *stmt)
 				continue;
 			}
 
+			in_dot = FALSE;
 			if (!stricmp(token, "as"))
 			{
 				in_as = TRUE;
@@ -644,6 +652,7 @@ parse_statement(StatementClass *stmt)
 					return FALSE;
 				}
 
+				ti[stmt->ntab]->schema[0] = '\0';
 				ti[stmt->ntab]->alias[0] = '\0';
 
 				strcpy(ti[stmt->ntab]->name, token);
@@ -680,6 +689,7 @@ parse_statement(StatementClass *stmt)
 					in_table = TRUE;
 				}
 				stmt->ntab++;
+				in_dot = FALSE;
 				continue;
 			}
 
@@ -689,9 +699,21 @@ parse_statement(StatementClass *stmt)
 				out_table = TRUE;
 				continue;
 			}
-			if (in_table && stricmp(token, "as"))
+			if (in_table)
 			{
-				if (!dquote)
+				if (in_dot)
+				{
+					strcpy(ti[stmt->ntab - 1]->schema, ti[stmt->ntab - 1]->name);
+					strcpy(ti[stmt->ntab - 1]->name, token);
+					in_dot = FALSE;
+					continue;
+				}
+				if (strcmp(token, ".") == 0)
+				{
+					in_dot = TRUE;
+					continue;
+				}
+				if (!dquote && stricmp(token, "as"))
 				{
 					if (stricmp(token, "LEFT") == 0 ||
 					    stricmp(token, "RIGHT") == 0 ||
@@ -702,14 +724,14 @@ parse_statement(StatementClass *stmt)
 						in_table = FALSE;
 						continue;
 					}
-				}
-				strcpy(ti[stmt->ntab - 1]->alias, token);
-				mylog("alias for table '%s' is '%s'\n", ti[stmt->ntab - 1]->name, ti[stmt->ntab - 1]->alias);
-				in_table = FALSE;
-				if (delim == ',')
-				{
-					out_table = TRUE;
-					mylog("more than 1 tables\n");
+					strcpy(ti[stmt->ntab - 1]->alias, token);
+					mylog("alias for table '%s' is '%s'\n", ti[stmt->ntab - 1]->name, ti[stmt->ntab - 1]->alias);
+					in_table = FALSE;
+					if (delim == ',')
+					{
+						out_table = TRUE;
+						mylog("more than 1 tables\n");
+					}
 				}
 			}
 		} /* in_from */
@@ -823,8 +845,8 @@ parse_statement(StatementClass *stmt)
 			col_stmt = (StatementClass *) hcol_stmt;
 			col_stmt->internal = TRUE;
 
-			result = PGAPI_Columns(hcol_stmt, "", 0, "", 0,
-						ti[i]->name, (SWORD) strlen(ti[i]->name), "", 0, PODBC_NOT_SEARCH_PATTERN);
+			result = PGAPI_Columns(hcol_stmt, "", 0, ti[i]->schema,
+					 SQL_NTS, ti[i]->name, SQL_NTS, "", 0, PODBC_NOT_SEARCH_PATTERN);
 
 			mylog("        Past PG_Columns\n");
 			if (result == SQL_SUCCESS)

@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: descriptor.h,v 1.2 2002/04/01 03:01:14 inoue Exp $
+ * $Id: descriptor.h,v 1.3 2002/04/02 10:50:44 inoue Exp $
  *
  */
 
@@ -17,6 +17,7 @@
 typedef struct
 {
 	COL_INFO	*col_info; /* cached SQLColumns info for this table */
+	char		schema[MAX_TABLE_LEN + 1];
 	char		name[MAX_TABLE_LEN + 1];
 	char		alias[MAX_TABLE_LEN + 1];
 } TABLE_INFO;
