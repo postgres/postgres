@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.168 2002/08/04 04:31:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.169 2002/08/07 21:45:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,22 +399,17 @@ ProcessUtility(Node *parsetree,
 						/*
 						 * RENAME TABLE requires that we (still) hold CREATE
 						 * rights on the containing namespace, as well as
-						 * ownership of the table.  But skip check for
-						 * temp tables.
+						 * ownership of the table.
 						 */
 						Oid			namespaceId = get_rel_namespace(relid);
+						AclResult	aclresult;
 
-						if (!isTempNamespace(namespaceId))
-						{
-							AclResult	aclresult;
-
-							aclresult = pg_namespace_aclcheck(namespaceId,
-															  GetUserId(),
-															  ACL_CREATE);
-							if (aclresult != ACLCHECK_OK)
-								aclcheck_error(aclresult,
-											get_namespace_name(namespaceId));
-						}
+						aclresult = pg_namespace_aclcheck(namespaceId,
+														  GetUserId(),
+														  ACL_CREATE);
+						if (aclresult != ACLCHECK_OK)
+							aclcheck_error(aclresult,
+										   get_namespace_name(namespaceId));
 
 						renamerel(relid, stmt->newname);
 						break;

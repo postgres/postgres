@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.80 2002/08/02 18:15:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.81 2002/08/07 21:45:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,9 +119,9 @@ DefineIndex(RangeVar *heapRelation,
 	 * Verify we (still) have CREATE rights in the rel's namespace.
 	 * (Presumably we did when the rel was created, but maybe not anymore.)
 	 * Skip check if bootstrapping, since permissions machinery may not
-	 * be working yet; also, always allow if it's a temp table.
+	 * be working yet.
 	 */
-	if (!IsBootstrapProcessingMode() && !isTempNamespace(namespaceId))
+	if (!IsBootstrapProcessingMode())
 	{
 		AclResult	aclresult;
 

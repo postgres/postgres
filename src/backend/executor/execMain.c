@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.172 2002/08/04 05:04:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.173 2002/08/07 21:45:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -696,6 +696,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 			{
 				char	   *intoName;
 				Oid			namespaceId;
+				AclResult	aclresult;
 				Oid			intoRelationId;
 				TupleDesc	tupdesc;
 
@@ -705,16 +706,11 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				intoName = parseTree->into->relname;
 				namespaceId = RangeVarGetCreationNamespace(parseTree->into);
 
-				if (!isTempNamespace(namespaceId))
-				{
-					AclResult	aclresult;
-
-					aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
-													  ACL_CREATE);
-					if (aclresult != ACLCHECK_OK)
-						aclcheck_error(aclresult,
-									   get_namespace_name(namespaceId));
-				}
+				aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
+												  ACL_CREATE);
+				if (aclresult != ACLCHECK_OK)
+					aclcheck_error(aclresult,
+								   get_namespace_name(namespaceId));
 
 				/*
 				 * new "INTO" table is created WITH OIDS

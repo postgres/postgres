@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.73 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.74 2002/08/07 21:45:01 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1162,6 +1162,13 @@ pg_namespace_aclcheck(Oid nsp_oid, Oid userid, AclMode mode)
 	Datum		aclDatum;
 	bool		isNull;
 	Acl		   *acl;
+
+	/*
+	 * If we have been assigned this namespace as a temp namespace,
+	 * assume we have all grantable privileges on it.
+	 */
+	if (isTempNamespace(nsp_oid))
+		return ACLCHECK_OK;
 
 	/* Superusers bypass all permission checking. */
 	if (superuser_arg(userid))
