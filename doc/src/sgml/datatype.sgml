@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.87 2002/04/03 05:39:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.88 2002/04/13 01:35:09 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -506,13 +506,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.87 2002/04/03 05:39:27 pe
     <title>Arbitrary Precision Numbers</title>
 
     <para>
-     The type <type>numeric</type> can store numbers of practically
-     unlimited size and precision, while being able to store all
-     numbers and carry out all calculations exactly.  It is especially
-     recommended for storing monetary amounts and other quantities
-     where exactness is required.  However, the <type>numeric</type>
-     type is very slow compared to the floating-point types described
-     in the next section.
+     The type <type>numeric</type> can store numbers with up to 1,000
+     digits of precision and perform calculations exactly. It is
+     especially recommended for storing monetary amounts and other
+     quantities where exactness is required. However, the
+     <type>numeric</type> type is very slow compared to the
+     floating-point types described in the next section.
     </para>
 
     <para>
