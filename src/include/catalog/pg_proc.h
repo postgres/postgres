@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.190 2001/06/12 15:58:34 momjian Exp $
+ * $Id: pg_proc.h,v 1.191 2001/06/12 16:34:26 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2626,35 +2626,6 @@ DATA(insert OID = 1914 (  float8up		   PGUID 12 f t t t 1 f 701 "701"  100 0 0 1
 DESCR("unary plus");
 DATA(insert OID = 1915 (  numeric_uplus	   PGUID 12 f t t t 1 f 1700 "1700" 100 0 0 100  numeric_uplus - ));
 DESCR("unary plus");
-
-DATA(insert OID = 1920 (  has_table_privilege		   PGUID 12 f t f t 3 f 16 "25 25 25" 100 0 0 100	has_table_privilege_tname_tname - ));
-DESCR("user privilege on relation by text username, text relname");
-DATA(insert OID = 1921 (  has_table_privilege		   PGUID 12 f t f t 3 f 16 "25 19 25" 100 0 0 100	has_table_privilege_tname_name - ));
-DESCR("user privilege on relation by text username, name relname");
-DATA(insert OID = 1922 (  has_table_privilege		   PGUID 12 f t f t 3 f 16 "19 25 25" 100 0 0 100	has_table_privilege_name_tname - ));
-DESCR("user privilege on relation by name username, text relname");
-DATA(insert OID = 1923 (  has_table_privilege		   PGUID 12 f t f t 3 f 16 "19 19 25" 100 0 0 100	has_table_privilege_name_name - ));
-DESCR("user privilege on relation by name username, name relname");
-DATA(insert OID = 1924 (  has_table_privilege		   PGUID 12 f t f t 2 f 16 "25 25" 100 0 0 100	has_table_privilege_tname - ));
-DESCR("current user privilege on relation by text relname");
-DATA(insert OID = 1925 (  has_table_privilege		   PGUID 12 f t f t 2 f 16 "19 25" 100 0 0 100	has_table_privilege_name - ));
-DESCR("current user privilege on relation by name relname");
-
-DATA(insert OID = 1926 (  has_table_privilege		   PGUID 12 f t f t 3 f 16 "25 26 25" 100 0 0 100	has_table_privilege_tname_id - ));
-DESCR("user privilege on relation by text username, rel oid");
-DATA(insert OID = 1927 (  has_table_privilege		   PGUID 12 f t f t 3 f 16 "19 26 25" 100 0 0 100	has_table_privilege_name_id - ));
-DESCR("user privilege on relation by text username, rel oid");
-DATA(insert OID = 1928 (  has_table_privilege		   PGUID 12 f t f t 2 f 16 "26 25" 100 0 0 100	has_table_privilege_id - ));
-DESCR("current user privilege on relation by rel oid");
-
-DATA(insert OID = 1929 (  has_table_privilege		   PGUID 12 f t f t 3 f 16 "26 25 25" 100 0 0 100	has_table_privilege_id_tname - ));
-DESCR("user privilege on relation by usesysid, relname");
-DATA(insert OID = 1930 (  has_table_privilege		   PGUID 12 f t f t 3 f 16 "26 19 25" 100 0 0 100	has_table_privilege_id_name - ));
-DESCR("user privilege on relation by usesysid, relname");
-
-DATA(insert OID = 1931 (  has_table_privilege		   PGUID 12 f t f t 3 f 16 "26 26 25" 100 0 0 100	has_table_privilege_id_id - ));
-DESCR("user privilege on relation by usesysid, rel oid");
-
 
 /*
  * prototypes for functions pg_proc.c
