@@ -25,11 +25,13 @@ Prevent file descriptor leaks in failed COPY's(Bruce)
 Fix memory leak in libpgtcl's pg_select(Constantin)
 Fix problems with username/passwords over 8 characters(Tom)
 Fix problems with handling of asynchronous NOTIFY in backend(Tom)
+Fix of many bad system table entries(Tom)
 
 Enhancements
 ------------
 Upgrade ecpg and ecpglib,see src/interfaces/ecpc/ChangeLog(Michael)
-Show the index used in an explain(Zeugswetter)
+Show the index used in an EXPLAIN(Zeugswetter)
+EXPLAIN  invokes  rule system and shows plan(s) for rewritten queries(Jan)
 Multi-byte awareness of many data types and functions, via configure(Tatsuo)
 New configure --with-mb option(Tatsuo)
 New initdb --pgencoding option(Tatsuo)
@@ -81,11 +83,9 @@ feature, see /doc/README.mb(Tatsuo)
 /contrib/noupdate code to revoke update permission on a column
 Libpq can now be compiled on win32(Magnus)
 Add PQsetdbLogin() in libpq
-Two styles we agreed upon for database descriptors(Thomas)
 New 8-byte integer type, checked by configure for OS support(Thomas)
-Better support for quited table/column names(Thomas)
-Surround table and column names with double-quotes(Thomas) in generated 
-	sql code to preserve case (SQL92 syntax)(Thomas)
+Better support for quoted table/column names(Thomas)
+Surround table and column names with double-quotes in pg_dump(Thomas)
 PQreset() now works with passwords(Tom)
 Handle case of GROUP BY target list column number out of range(David)
 Allow UNION in subselects
@@ -133,8 +133,6 @@ New rewrite system fixes many problems with rules and views(Jan)
 	* handle subselects
 	* handle aggregates on views
 	* handle insert into select from view works
-	* 
-
 System indexes are now multi-key(Bruce)
 Oidint2, oidint4, and oidname types are removed(Bruce)
 Use system cache for more system table lookups(Bruce)
@@ -150,7 +148,6 @@ Psql and libpq now compile under win32 using win32.mak(Magnus)
 Lo_read no longer stores trailing NULL(Bruce)
 Identifiers are now truncated to 31 characters internally(Bruce)
 Createuser options now availble on the command line
-PL/pgSQL backend programming language(Jan)
 Code for 64-bit integer supported added, configure tested, int8 type(Thomas)
 Prevent file descriptor leaf from failed COPY(Bruce)
 New pg_upgrade command(Bruce)
@@ -199,6 +196,7 @@ merged all OS-specific shared library defines into one file
 smarter TCL/TK configuration checking(Billy)
 smarter perl configuration(Brook)
 configure uses supplied install-sh if no install script found(Tom)
+new Makefile.shlib for shared library configuration(Tom)
 
 
 
