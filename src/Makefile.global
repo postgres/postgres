@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.84 1997/01/08 08:30:21 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.85 1997/01/10 18:54:49 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -71,7 +71,7 @@ PORTNAME= UNDEFINED
 # Ignore LINUX_ELF if you're not using Linux.  But if you are, and you're
 # compiling to a.out (which means you're using the dld dynamic loading 
 # library), set LINUX_ELF to null in Makefile.custom.
-LINUX_ELF= 1
+LINUX_ELF= true
 
 LIBPQDIR:= $(SRCDIR)/libpq
 

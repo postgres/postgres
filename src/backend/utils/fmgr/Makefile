@@ -4,7 +4,7 @@
 #    Makefile for utils/fmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/Makefile,v 1.2 1996/11/09 06:23:18 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/Makefile,v 1.3 1997/01/10 18:55:00 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,9 +20,9 @@ CFLAGS+=$(INCLUDE_OPT)
 ifeq ($(PORTNAME), linux)
 # LINUX_ELF tells us to use the ELF dynamic load facilities that come with
 # Linux.
-ifdef LINUX_ELF
-CFLAGS+=-DLINUX_ELF
-endif
+  ifdef LINUX_ELF
+    CFLAGS+=-DLINUX_ELF
+  endif
 endif
 
 OBJS = dfmgr.o fmgr.o

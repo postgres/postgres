@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.7 1997/01/10 17:40:07 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.8 1997/01/10 18:55:14 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,8 +25,12 @@ ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
 endif
 
-ifdef LINUX_ELF
-CFLAGS += -fPIC
+ifeq ($(PORTNAME), linux)
+  ifdef LINUX_ELF
+    ifeq ($(CC), gcc)
+      CFLAGS += -fpic -fPIC
+    endif
+  endif
 endif
 
 OBJS= pgtcl.o pgtclCmds.o pgtclId.o
