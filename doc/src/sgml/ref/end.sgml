@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/end.sgml,v 1.6 2001/12/08 03:24:36 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/end.sgml,v 1.7 2002/03/06 06:48:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -72,7 +72,7 @@ COMMIT
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-NOTICE:  COMMIT: no transaction in progress
+WARNING:  COMMIT: no transaction in progress
        </computeroutput></term>
       <listitem>
        <para>

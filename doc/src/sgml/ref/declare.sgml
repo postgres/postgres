@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.15 2001/12/08 03:24:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.16 2002/03/06 06:48:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -153,7 +153,7 @@ SELECT
 
      <varlistentry>
       <term><computeroutput>
-NOTICE:  Closing pre-existing portal "<replaceable class="parameter">cursorname</replaceable>"
+WARNING:  Closing pre-existing portal "<replaceable class="parameter">cursorname</replaceable>"
        </computeroutput></term>
       <listitem>
        <para>

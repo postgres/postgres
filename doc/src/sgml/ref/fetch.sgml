@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.19 2002/02/21 22:42:04 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.20 2002/03/06 06:48:05 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -159,7 +159,7 @@ FETCH [ FORWARD | BACKWARD | RELATIVE ] [ <replaceable class="PARAMETER">#</repl
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-NOTICE:  PerformPortalFetch: portal "<replaceable class="PARAMETER">cursor</replaceable>" not found
+WARNING:  PerformPortalFetch: portal "<replaceable class="PARAMETER">cursor</replaceable>" not found
        </computeroutput></term>
       <listitem>
        <para>
@@ -172,7 +172,7 @@ NOTICE:  PerformPortalFetch: portal "<replaceable class="PARAMETER">cursor</repl
 
      <varlistentry>
       <term><computeroutput>
-NOTICE:  FETCH/ABSOLUTE not supported, using RELATIVE
+WARNING:  FETCH/ABSOLUTE not supported, using RELATIVE
        </computeroutput></term>
       <listitem>
        <para>

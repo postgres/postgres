@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.10 2001/12/08 03:24:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.11 2002/03/06 06:48:05 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -61,7 +61,7 @@ ABORT
      
      <varlistentry>
       <term><computeroutput>
-NOTICE:  ROLLBACK: no transaction in progress
+WARNING:  ROLLBACK: no transaction in progress
        </computeroutput></term>
       <listitem>
        <para>

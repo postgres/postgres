@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.14 2001/12/08 03:24:36 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.15 2002/03/06 06:48:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -77,7 +77,7 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="PARAMETER">query</replaceabl
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-NOTICE:  QUERY PLAN:
+INFO:  QUERY PLAN:
 <replaceable>plan</replaceable>
       </computeroutput></term>
       <listitem>
@@ -193,7 +193,7 @@ ROLLBACK;
    <programlisting>
 EXPLAIN SELECT * FROM foo;
     <computeroutput>
-NOTICE:  QUERY PLAN:
+INFO:  QUERY PLAN:
 
 Seq Scan on foo  (cost=0.00..2.28 rows=128 width=4)
 
@@ -210,7 +210,7 @@ EXPLAIN
    <programlisting>
 EXPLAIN SELECT * FROM foo WHERE i = 4;
     <computeroutput>
-NOTICE:  QUERY PLAN:
+INFO:  QUERY PLAN:
 
 Index Scan using fi on foo  (cost=0.00..0.42 rows=1 width=4)
 
@@ -228,7 +228,7 @@ EXPLAIN
    <programlisting>
 EXPLAIN SELECT sum(i) FROM foo WHERE i = 4;
     <computeroutput>
-NOTICE:  QUERY PLAN:
+INFO:  QUERY PLAN:
 
 Aggregate  (cost=0.42..0.42 rows=1 width=4)
   ->  Index Scan using fi on foo  (cost=0.00..0.42 rows=1 width=4)

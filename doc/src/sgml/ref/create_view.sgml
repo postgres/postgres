@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.14 2001/12/08 03:24:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.15 2002/03/06 06:48:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -102,7 +102,7 @@ ERROR:  Relation '<replaceable class="parameter">view</replaceable>' already exi
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-NOTICE:  Attribute '<replaceable class="parameter">column</replaceable>' has an unknown type
+WARNING:  Attribute '<replaceable class="parameter">column</replaceable>' has an unknown type
        </computeroutput></term>
       <listitem>
        <para>

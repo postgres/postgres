@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.22 2001/12/08 03:24:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.23 2002/03/06 06:48:05 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -115,7 +115,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
 
      <varlistentry>
       <term><computeroutput>
-NOTICE:  --Relation <replaceable class="PARAMETER">table</replaceable>--
+INFO:  --Relation <replaceable class="PARAMETER">table</replaceable>--
        </computeroutput></term>
       <listitem>
        <para>
@@ -126,7 +126,7 @@ NOTICE:  --Relation <replaceable class="PARAMETER">table</replaceable>--
 
      <varlistentry>
       <term><computeroutput>
-NOTICE:  Pages 98: Changed 25, Reapped 74, Empty 0, New 0;
+INFO:  Pages 98: Changed 25, Reapped 74, Empty 0, New 0;
          Tup 1000: Vac 3000, Crash 0, UnUsed 0, MinLen 188, MaxLen 188;
          Re-using: Free/Avail. Space 586952/586952; EndEmpty/Avail. Pages 0/74.
          Elapsed 0/0 sec.
@@ -140,7 +140,7 @@ NOTICE:  Pages 98: Changed 25, Reapped 74, Empty 0, New 0;
 
      <varlistentry>
       <term><computeroutput>
-NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
+INFO:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
          Tuples 1000: Deleted 3000. Elapsed 0/0 sec.
        </computeroutput></term>
       <listitem>
@@ -251,20 +251,20 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
 
    <programlisting>
 regression=> VACUUM VERBOSE ANALYZE onek;
-NOTICE:  --Relation onek--
-NOTICE:  Index onek_unique1: Pages 14; Tuples 1000: Deleted 3000.
+INFO:  --Relation onek--
+INFO:  Index onek_unique1: Pages 14; Tuples 1000: Deleted 3000.
         CPU 0.00s/0.11u sec elapsed 0.12 sec.
-NOTICE:  Index onek_unique2: Pages 16; Tuples 1000: Deleted 3000.
+INFO:  Index onek_unique2: Pages 16; Tuples 1000: Deleted 3000.
         CPU 0.00s/0.10u sec elapsed 0.10 sec.
-NOTICE:  Index onek_hundred: Pages 13; Tuples 1000: Deleted 3000.
+INFO:  Index onek_hundred: Pages 13; Tuples 1000: Deleted 3000.
         CPU 0.00s/0.10u sec elapsed 0.10 sec.
-NOTICE:  Index onek_stringu1: Pages 31; Tuples 1000: Deleted 3000.
+INFO:  Index onek_stringu1: Pages 31; Tuples 1000: Deleted 3000.
         CPU 0.01s/0.09u sec elapsed 0.10 sec.
-NOTICE:  Removed 3000 tuples in 70 pages.
+INFO:  Removed 3000 tuples in 70 pages.
         CPU 0.02s/0.04u sec elapsed 0.07 sec.
-NOTICE:  Pages 94: Changed 0, Empty 0; Tup 1000: Vac 3000, Keep 0, UnUsed 0.
+INFO:  Pages 94: Changed 0, Empty 0; Tup 1000: Vac 3000, Keep 0, UnUsed 0.
         Total CPU 0.05s/0.45u sec elapsed 0.59 sec.
-NOTICE:  Analyzing onek
+INFO:  Analyzing onek
 VACUUM
    </programlisting>
   </para>

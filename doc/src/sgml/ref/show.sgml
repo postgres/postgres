@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.15 2001/12/08 03:24:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.16 2002/03/06 06:48:05 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -83,7 +83,7 @@ SHOW ALL
      </varlistentry>
 
      <varlistentry>
-      <term><computeroutput>NOTICE:  Time zone is unknown</computeroutput></term>
+      <term><computeroutput>WARNING:  Time zone is unknown</computeroutput></term>
       <listitem>
        <para>
 	If the <envar>TZ</envar> or <envar>PGTZ</envar> environment
@@ -102,7 +102,7 @@ SHOW ALL
 
 <screen>
 SHOW DateStyle;
-NOTICE:  DateStyle is ISO with US (NonEuropean) conventions
+INFO:  DateStyle is ISO with US (NonEuropean) conventions
 </screen>
   </para>
 
@@ -110,7 +110,7 @@ NOTICE:  DateStyle is ISO with US (NonEuropean) conventions
    Show the current genetic optimizer (<literal>geqo</literal>) setting:
 <screen>
 SHOW GEQO;
-NOTICE:  geqo is on
+INFO:  geqo is on
 </screen>
   </para>
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.11 2001/12/08 03:24:37 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.12 2002/03/06 06:48:05 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -70,7 +70,7 @@ LISTEN
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-NOTICE Async_Listen: We are already listening on <replaceable class="PARAMETER">name</replaceable>
+WARNING:  Async_Listen: We are already listening on <replaceable class="PARAMETER">name</replaceable>
        </computeroutput></term>
       <listitem>
        <para>
