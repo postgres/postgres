@@ -694,3 +694,9 @@ Wed Oct 27 18:08:09 CEST 1999
 
 	- Synced preproc.y with gram.y.
 	- Set ecpg version to 2.6.8
+
+Fri Oct 29 21:36:25 CEST 1999
+
+	- Fixed bug that caused ecpg to not allow FOR UPDATE.
+	- Set ecpg version to 2.6.9
+

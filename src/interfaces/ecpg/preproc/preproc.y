@@ -2792,9 +2792,9 @@ SubSelect:     SELECT opt_unique target_list
                          result from_clause where_clause
                          group_clause having_clause
 				{
-					$$ = cat4_str(cat5_str(make1_str("select"), $2, $3, $4, $5), $6, $7, $8);
 					if (strlen($7) > 0 || strlen($8) > 0)
 						ForUpdateNotAllowed = 1;
+					$$ = cat4_str(cat5_str(make1_str("select"), $2, $3, $4, $5), $6, $7, $8);
 				}
 		;
 
