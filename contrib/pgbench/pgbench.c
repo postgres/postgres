@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.26 2003/08/04 00:43:11 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.27 2003/09/27 19:15:34 wieck Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -567,7 +567,7 @@ init(void)
 			PQclear(res);
 		}
 
-		snprintf(sql, 256, "%d\t%d\t%d\t\n", j, j / naccounts, 0);
+		snprintf(sql, 256, "%d\t%d\t%d\t\n", j, i / naccounts + 1, 0);
 		if (PQputline(con, sql))
 		{
 			fprintf(stderr, "PQputline failed\n");
