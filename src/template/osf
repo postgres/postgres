@@ -6,3 +6,4 @@ else
   CFLAGS='-O4 -Olimit 2000'
   CCC=cxx
 fi
+VENDOR_CXXFLAGS='-O4 -Olimit 2000'

@@ -3,3 +3,4 @@ if test "$GCC" = yes; then
 else
   CFLAGS='-O -K inline'
 fi
+VENDOR_CXXFLAGS="-O"

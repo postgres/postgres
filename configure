@@ -1916,6 +1916,10 @@ echo "$as_me: error: argument required for --with-CC option" >&2;}
 fi;
 
 
+# Set here so it can be over-ridden in the template file
+GCC_CXXFLAGS="-O2"
+VENDOR_CXXFLAGS=""
+
 case $template in
   aix) pgac_cc_list="gcc xlc";;
  irix) pgac_cc_list="cc";; # no gcc
@@ -4043,13 +4047,9 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
   if test "$ac_env_CXXFLAGS" != set; then
     if test "$GXX" = yes; then
-      CXXFLAGS=-O2
+      CXXFLAGS="$GCC_CXXFLAGS"
     else
-      case $template in
-	osf)		CXXFLAGS='-O4 -Olimit 2000' ;;
-        unixware)	CXXFLAGS='-O' ;;
-	*)		CXXFLAGS= ;;
-      esac
+      CXXFLAGS="$VENDOR_CXXFLAGS"
     fi
   fi
   if test "$enable_debug" = yes && test "$ac_cv_prog_cxx_g" = yes; then
