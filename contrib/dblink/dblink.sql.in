@@ -1,0 +1,5 @@
+CREATE FUNCTION dblink (text,text) RETURNS setof int
+  AS 'MODULE_PATHNAME','dblink' LANGUAGE 'c';
+
+CREATE FUNCTION dblink_tok (int,int) RETURNS text
+  AS 'MODULE_PATHNAME','dblink_tok' LANGUAGE 'c';

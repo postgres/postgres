@@ -1,0 +1,157 @@
+/*
+ * dblink
+ *
+ * Functions returning results from a remote database
+ *
+ * Copyright (c) Joseph Conway <joe.conway@mail.com>, 2001;
+ * 
+ * Permission to use, copy, modify, and distribute this software and its
+ * documentation for any purpose, without fee, and without a written agreement
+ * is hereby granted, provided that the above copyright notice and this
+ * paragraph and the following two paragraphs appear in all copies.
+ * 
+ * IN NO EVENT SHALL THE AUTHOR OR DISTRIBUTORS BE LIABLE TO ANY PARTY FOR
+ * DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+ * LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+ * DOCUMENTATION, EVEN IF THE AUTHOR OR DISTRIBUTORS HAVE BEEN ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * THE AUTHOR AND DISTRIBUTORS SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
+ * ON AN "AS IS" BASIS, AND THE AUTHOR AND DISTRIBUTORS HAS NO OBLIGATIONS TO
+ * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+ *
+ */
+
+Version 0.2 (29 May, 2001):
+  Function to test returning data set from remote database
+  Tested under Linux (Red Hat 6.2 and 7.0) and PostgreSQL 7.1 and 7.2devel
+
+Release Notes:
+
+  Version 0.2
+    - initial release    
+
+Installation:
+  Place these files in a directory called 'dblink' under 'contrib' in the PostgreSQL source tree. Then run:
+
+    make
+    make install
+
+  You can use dblink.sql to create the functions in your database of choice, e.g.
+
+    psql -U postgres template1 < dblink.sql
+
+  installs following functions into database template1:
+
+     dblink() - returns a pointer to results from remote query
+     dblink_tok() - extracts and returns individual field results
+
+Documentation
+==================================================================
+Name
+
+dblink -- Returns a pointer to a data set from a remote database
+
+Synopsis
+
+dblink(text connstr, text sql)
+
+Inputs
+
+  connstr
+
+    standard libpq format connection srting, 
+    e.g. "hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd"
+
+  sql
+
+    sql statement that you wish to execute on the remote host
+    e.g. "select * from pg_class"
+
+Outputs
+
+  Returns setof int (pointer)
+
+Example usage
+
+  select dblink('hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd','select f1, f2 from mytable');
+
+
+==================================================================
+
+Name
+
+dblink_tok -- Returns individual select field results from a dblink remote query
+
+Synopsis
+
+dblink_tok(int pointer, int fnumber)
+
+Inputs
+
+  pointer
+
+    a pointer returned by a call to dblink()
+
+  fnumber
+
+    the ordinal position (zero based) of the field to be returned from the dblink result set
+
+Outputs
+
+  Returns text
+
+Example usage
+
+  select dblink_tok(t1.dblink_p,0) as f1, dblink_tok(t1.dblink_p,1) as f2
+  from (select dblink('hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd'
+                     ,'select f1, f2 from mytable') as dblink_p) as t1;
+
+
+==================================================================
+
+NOTE: If you need to provide selection criteria in a WHERE clause, it is necessary
+to 'fake' a UNION, e.g.
+
+  select
+     dblink_tok(t1.dblink_p,0) as f1
+    ,dblink_tok(t1.dblink_p,1) as f2
+  from
+   (
+    select dblink(
+                   'hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd'
+                  ,'select f1, f2 from mytable'
+                 ) as dblink_p
+    union
+    select null,null where false
+   ) as t1
+  where
+    f1 = 'mycriteria';
+
+in order to work around an issue with the query optimizer. A more convenient way to approach
+this problem is to create a view:
+
+  create view myremotetable as
+  select
+     dblink_tok(t1.dblink_p,0) as f1
+    ,dblink_tok(t1.dblink_p,1) as f2
+  from
+   (
+    select dblink(
+                   'hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd'
+                  ,'select f1, f2 from mytable'
+                 ) as dblink_p
+    union
+    select null,null where false
+   ) as t1;
+
+Then you can simply write:
+
+   select f1,f2 from myremotetable where f1 = 'mycriteria';
+
+==================================================================
+
+-- Joe Conway
+

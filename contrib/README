@@ -38,6 +38,10 @@ dbase -
 	Converts from dbase/xbase to PostgreSQL
 	by Ivan Baldo, lubaldo@adinet.com.uy
 
+dblink -
+	Allows remote query execution
+	by  Joe Conway, joe.conway@mail.com
+
 earthdistance -
 	Operator for computing earth distance for two points
 	by Hal Snyder <hal@vailsys.com>
