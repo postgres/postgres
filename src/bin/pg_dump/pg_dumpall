@@ -30,7 +30,7 @@ echo "${BS}connect template1"
 # we don't use POSTGRES_SUPER_USER_ID because the postgres super user id
 # could be different on the two installations
 #
-echo "select datdba into tmp_pguser \
+echo "select datdba into table tmp_pguser \
       from pg_database where datname = 'template1';"
 echo "delete from pg_user where usesysid <> tmp_pguser.datdba;"
 echo "drop table tmp_pguser;"
