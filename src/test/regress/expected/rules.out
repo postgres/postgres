@@ -1018,13 +1018,13 @@ sl7       |       6|brown     |    60|cm      |       60
 sl8       |      21|brown     |    40|inch    |    101.6
 (8 rows)
 
-QUERY: SELECT * FROM shoelace_log;
+QUERY: SELECT * FROM shoelace_log ORDER BY sl_name;
 sl_name   |sl_avail|log_who |log_when
 ----------+--------+--------+--------
-sl7       |       6|Al Bundy|epoch   
-sl6       |      20|Al Bundy|epoch   
-sl8       |      21|Al Bundy|epoch   
 sl3       |      10|Al Bundy|epoch   
+sl6       |      20|Al Bundy|epoch   
+sl7       |       6|Al Bundy|epoch   
+sl8       |      21|Al Bundy|epoch   
 (4 rows)
 
 QUERY:     CREATE VIEW shoelace_obsolete AS

@@ -661,7 +661,7 @@ insert into shoelace_ok select * from shoelace_arrive;
 
 SELECT * FROM shoelace ORDER BY sl_name;
 
-SELECT * FROM shoelace_log;
+SELECT * FROM shoelace_log ORDER BY sl_name;
 
     CREATE VIEW shoelace_obsolete AS
 	SELECT * FROM shoelace WHERE NOT EXISTS
