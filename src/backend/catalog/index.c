@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.11 1997/01/10 09:51:38 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.12 1997/03/19 07:44:45 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -68,7 +68,7 @@ static Oid RelationNameGetObjectId(char *relationName, Relation pg_class,
 static Oid GetHeapRelationOid(char *heapRelationName, char *indexRelationName);
 static TupleDesc BuildFuncTupleDesc(FuncIndexInfo *funcInfo);
 static TupleDesc ConstructTupleDescriptor(Oid heapoid, Relation heapRelation,
-					  TypeName *IndexKeyType,
+					  List *attributeList,
 					  int numatts, AttrNumber attNums[]);
 
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
@@ -81,7 +81,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts);
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 	FuncIndexInfo *funcInfo, int natts,
 	AttrNumber attNums[], Oid classOids[], Node *predicate,
-	TypeName *indexKeyType, bool islossy, bool unique);
+	List *attributeList, bool islossy, bool unique);
 static void DefaultBuild(Relation heapRelation, Relation indexRelation,
 	int numberOfAttributes, AttrNumber attributeNumber[],
 	IndexStrategy indexStrategy, uint16 parameterCount,
@@ -325,12 +325,14 @@ BuildFuncTupleDesc(FuncIndexInfo *funcInfo)
 static TupleDesc
 ConstructTupleDescriptor(Oid heapoid,
 			 Relation heapRelation,
-			 TypeName *IndexKeyType,
+			 List *attributeList,
 			 int numatts,
 			 AttrNumber attNums[])
 {
     TupleDesc 	heapTupDesc;
     TupleDesc 	indexTupDesc;
+    IndexElem *IndexKey;
+    TypeName *IndexKeyType;
     AttrNumber 	atnum;		/* attributeNumber[attributeOffset] */
     AttrNumber 	atind;
     int 	natts;		/* RelationTupleForm->relnatts */
@@ -367,6 +369,9 @@ ConstructTupleDescriptor(Oid heapoid,
 	if (atnum > natts)
 	    elog(WARN, "Cannot create index: attribute %d does not exist",
 		 atnum);
+	IndexKey = (IndexElem*) lfirst(attributeList);
+	attributeList = lnext(attributeList);
+	IndexKeyType = IndexKey->tname;
 	
 	indexTupDesc->attrs[i] = (AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
 	
@@ -693,7 +698,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	 */
 	memmove(GETSTRUCT(tuple),
 	       (char *)indexTupDesc->attrs[i],
-	       sizeof (AttributeTupleForm));
+	       sizeof (FormData_pg_attribute));
 	
 	value[ Anum_pg_attribute_attnum - 1 ] = Int16GetDatum(i + 1);
 	
@@ -741,11 +746,12 @@ UpdateIndexRelation(Oid indexoid,
 		    AttrNumber attNums[],
 		    Oid classOids[],
 		    Node *predicate,
-		    TypeName *indexKeyType,
+		    List *attributeList,
 		    bool islossy,
 		    bool unique)
 {
     IndexTupleForm	indexForm;
+    IndexElem *IndexKey;
     char		*predString;
     text		*predText;
     int			predLen, itupLen;
@@ -781,10 +787,18 @@ UpdateIndexRelation(Oid indexoid,
 	FIgetProcOid(funcInfo) : InvalidOid;
     indexForm->indislossy = islossy;
     indexForm->indisunique = unique;
-    if (indexKeyType != NULL)
-        indexForm->indhaskeytype = 1;
-    else
-        indexForm->indhaskeytype = 0;
+
+    indexForm->indhaskeytype = 0;
+    while (attributeList != NIL )
+    {
+	IndexKey = (IndexElem*) lfirst(attributeList);
+	if ( IndexKey->tname != NULL )
+	{
+    	    indexForm->indhaskeytype = 1;
+    	    break;
+    	}
+	attributeList = lnext(attributeList);
+    }
     
     memset((char *)& indexForm->indkey[0], 0, sizeof indexForm->indkey);
     memset((char *)& indexForm->indclass[0], 0, sizeof indexForm->indclass);
@@ -1002,7 +1016,7 @@ void
 index_create(char *heapRelationName,
 	     char *indexRelationName,
 	     FuncIndexInfo *funcInfo,
-	     TypeName *IndexKeyType,
+	     List *attributeList,
 	     Oid accessMethodObjectId,
 	     int numatts,
 	     AttrNumber attNums[],
@@ -1052,7 +1066,7 @@ index_create(char *heapRelationName,
     else
 	indexTupDesc = ConstructTupleDescriptor(heapoid,
 						heapRelation,
-						IndexKeyType,
+						attributeList,
 						numatts,
 						attNums);
     
@@ -1125,7 +1139,7 @@ index_create(char *heapRelationName,
      */
     UpdateIndexRelation(indexoid, heapoid, funcInfo,
 			numatts, attNums, classObjectId, predicate,
-			IndexKeyType, islossy, unique);
+			attributeList, islossy, unique);
     
     predInfo = (PredInfo*)palloc(sizeof(PredInfo));
     predInfo->pred = predicate;
