@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.84.2.1 2003/11/26 15:54:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.84.2.2 2003/12/20 18:25:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -447,12 +447,19 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname)
 }
 #endif   /* KRB5 */
 
+/*
+ * Respond to AUTH_REQ_SCM_CREDS challenge.
+ *
+ * Note: the backend will not use this challenge if HAVE_GETPEEREID
+ * or SO_PEERCRED is defined, so we don't bother to compile any code
+ * in that case, even if the facility is available.
+ */
 static int
 pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 {
-#if defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || \
-	(defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS)) && \
-	!defined(HAVE_GETPEEREID) && !defined(SO_PEERCRED)
+#if !defined(HAVE_GETPEEREID) && !defined(SO_PEERCRED) && \
+	(defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || \
+	 (defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS)))
 	char		buf;
 	struct iovec iov;
 	struct msghdr msg;
