@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.15 2003/02/04 09:20:08 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.16 2003/02/04 10:09:32 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -1890,6 +1890,9 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public String toString()
 	{
+		if (m_sqlFragments == null)
+			return "";
+
 		synchronized (sbuf)
 		{
 			sbuf.setLength(0);
@@ -1897,11 +1900,11 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 
 			for (i = 0 ; i < m_binds.length ; ++i)
 			{
+				sbuf.append (m_sqlFragments[i]);
 				if (m_binds[i] == null)
 					sbuf.append( '?' );
 				else
-					sbuf.append (m_sqlFragments[i]);
-				sbuf.append (m_binds[i]);
+					sbuf.append (m_binds[i]);
 			}
 			sbuf.append(m_sqlFragments[m_binds.length]);
 			return sbuf.toString();
@@ -2070,7 +2073,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	private static final String PG_INT8 = "int8";
 	private static final String PG_NUMERIC = "numeric";
 	private static final String PG_FLOAT = "float";
-	private static final String PG_DOUBLE = "double";
+	private static final String PG_DOUBLE = "double precision";
 	private static final String PG_BOOLEAN = "boolean";
 	private static final String PG_DATE = "date";
 	private static final String PG_TIME = "time";
