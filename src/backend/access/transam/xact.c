@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.76 2000/10/24 09:56:08 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.77 2000/10/24 20:06:39 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -344,7 +344,7 @@ IsTransactionState(void)
  * --------------------------------
  */
 bool
-IsAbortedTransactionBlockState()
+IsAbortedTransactionBlockState(void)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -395,7 +395,7 @@ OverrideTransactionSystem(bool flag)
  * --------------------------------
  */
 TransactionId
-GetCurrentTransactionId()
+GetCurrentTransactionId(void)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -420,7 +420,7 @@ GetCurrentTransactionId()
  * --------------------------------
  */
 CommandId
-GetCurrentCommandId()
+GetCurrentCommandId(void)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -436,7 +436,7 @@ GetCurrentCommandId()
 }
 
 CommandId
-GetScanCommandId()
+GetScanCommandId(void)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -457,7 +457,7 @@ GetScanCommandId()
  * --------------------------------
  */
 AbsoluteTime
-GetCurrentTransactionStartTime()
+GetCurrentTransactionStartTime(void)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -523,7 +523,7 @@ CommandIdGEScanCommandId(CommandId cid)
  */
 #ifdef NOT_USED
 void
-ClearCommandIdCounterOverflowFlag()
+ClearCommandIdCounterOverflowFlag(void)
 {
 	CommandIdCounterOverflowFlag = false;
 }
@@ -535,7 +535,7 @@ ClearCommandIdCounterOverflowFlag()
  * --------------------------------
  */
 void
-CommandCounterIncrement()
+CommandCounterIncrement(void)
 {
 	CurrentTransactionStateData.commandId += 1;
 	if (CurrentTransactionStateData.commandId == FirstCommandId)
@@ -568,7 +568,7 @@ SetScanCommandId(CommandId savedId)
  * ----------------------------------------------------------------
  */
 void
-InitializeTransactionSystem()
+InitializeTransactionSystem(void)
 {
 	InitializeTransactionLog();
 }
@@ -583,7 +583,7 @@ InitializeTransactionSystem()
  * --------------------------------
  */
 static void
-AtStart_Cache()
+AtStart_Cache(void)
 {
 	DiscardInvalid();
 }
@@ -593,7 +593,7 @@ AtStart_Cache()
  * --------------------------------
  */
 static void
-AtStart_Locks()
+AtStart_Locks(void)
 {
 
 	/*
@@ -609,7 +609,7 @@ AtStart_Locks()
  * --------------------------------
  */
 static void
-AtStart_Memory()
+AtStart_Memory(void)
 {
 	/* ----------------
 	 *	We shouldn't have any transaction contexts already.
@@ -659,7 +659,7 @@ AtStart_Memory()
  * --------------------------------
  */
 static void
-RecordTransactionCommit()
+RecordTransactionCommit(void)
 {
 	TransactionId xid;
 	int			leak;
@@ -740,7 +740,7 @@ RecordTransactionCommit()
  * --------------------------------
  */
 static void
-AtCommit_Cache()
+AtCommit_Cache(void)
 {
 	/* ----------------
 	 * Make catalog changes visible to all backend.
@@ -754,7 +754,7 @@ AtCommit_Cache()
  * --------------------------------
  */
 static void
-AtCommit_LocalCache()
+AtCommit_LocalCache(void)
 {
 	/* ----------------
 	 * Make catalog changes visible to me for the next command.
@@ -768,7 +768,7 @@ AtCommit_LocalCache()
  * --------------------------------
  */
 static void
-AtCommit_Locks()
+AtCommit_Locks(void)
 {
 	/* ----------------
 	 *	XXX What if ProcReleaseLocks fails?  (race condition?)
@@ -784,7 +784,7 @@ AtCommit_Locks()
  * --------------------------------
  */
 static void
-AtCommit_Memory()
+AtCommit_Memory(void)
 {
 	/* ----------------
 	 *	Now that we're "out" of a transaction, have the
@@ -814,7 +814,7 @@ AtCommit_Memory()
  * --------------------------------
  */
 static void
-RecordTransactionAbort()
+RecordTransactionAbort(void)
 {
 	TransactionId xid;
 
@@ -855,7 +855,7 @@ RecordTransactionAbort()
  * --------------------------------
  */
 static void
-AtAbort_Cache()
+AtAbort_Cache(void)
 {
 	RelationCacheAbort();
 	SystemCacheAbort();
@@ -867,7 +867,7 @@ AtAbort_Cache()
  * --------------------------------
  */
 static void
-AtAbort_Locks()
+AtAbort_Locks(void)
 {
 	/* ----------------
 	 *	XXX What if ProcReleaseLocks() fails?  (race condition?)
@@ -884,7 +884,7 @@ AtAbort_Locks()
  * --------------------------------
  */
 static void
-AtAbort_Memory()
+AtAbort_Memory(void)
 {
 	/* ----------------
 	 *	Make sure we are in a valid context (not a child of
@@ -921,7 +921,7 @@ AtAbort_Memory()
  * --------------------------------
  */
 static void
-AtCleanup_Memory()
+AtCleanup_Memory(void)
 {
 	/* ----------------
 	 *	Now that we're "out" of a transaction, have the
@@ -953,7 +953,7 @@ AtCleanup_Memory()
  * --------------------------------
  */
 static void
-StartTransaction()
+StartTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -1026,7 +1026,7 @@ StartTransaction()
  * ---------------
  */
 bool
-CurrentXactInProgress()
+CurrentXactInProgress(void)
 {
 	return CurrentTransactionState->state == TRANS_INPROGRESS;
 }
@@ -1038,7 +1038,7 @@ CurrentXactInProgress()
  * --------------------------------
  */
 static void
-CommitTransaction()
+CommitTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -1124,7 +1124,7 @@ CommitTransaction()
  * --------------------------------
  */
 static void
-AbortTransaction()
+AbortTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -1205,7 +1205,7 @@ AbortTransaction()
  * --------------------------------
  */
 static void
-CleanupTransaction()
+CleanupTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -1238,7 +1238,7 @@ CleanupTransaction()
  * --------------------------------
  */
 void
-StartTransactionCommand()
+StartTransactionCommand(void)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -1326,7 +1326,7 @@ StartTransactionCommand()
  * --------------------------------
  */
 void
-CommitTransactionCommand()
+CommitTransactionCommand(void)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -1407,7 +1407,7 @@ CommitTransactionCommand()
  * --------------------------------
  */
 void
-AbortCurrentTransaction()
+AbortCurrentTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -1636,7 +1636,7 @@ AbortTransactionBlock(void)
  * --------------------------------
  */
 void
-UserAbortTransactionBlock()
+UserAbortTransactionBlock(void)
 {
 	TransactionState s = CurrentTransactionState;
 
@@ -1696,17 +1696,30 @@ UserAbortTransactionBlock()
  * --------------------------------
  */
 void
-AbortOutOfAnyTransaction()
+AbortOutOfAnyTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
 
 	/*
 	 * Get out of any low-level transaction
 	 */
-	if (s->state != TRANS_DEFAULT)
+	switch (s->state)
 	{
-		AbortTransaction();
-		CleanupTransaction();
+		case TRANS_START:
+		case TRANS_INPROGRESS:
+		case TRANS_COMMIT:
+			/* In a transaction, so clean up */
+			AbortTransaction();
+			CleanupTransaction();
+			break;
+		case TRANS_ABORT:
+			/* AbortTransaction already done, still need Cleanup */
+			CleanupTransaction();
+			break;
+		case TRANS_DEFAULT:
+		case TRANS_DISABLED:
+			/* Not in a transaction, do nothing */
+			break;
 	}
 
 	/*
@@ -1716,7 +1729,7 @@ AbortOutOfAnyTransaction()
 }
 
 bool
-IsTransactionBlock()
+IsTransactionBlock(void)
 {
 	TransactionState s = CurrentTransactionState;
 
