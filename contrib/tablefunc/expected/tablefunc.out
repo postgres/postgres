@@ -127,7 +127,7 @@ SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''
 -- hash based crosstab
 --
 create table cth(id serial, rowid text, rowdt timestamp, attribute text, val text);
-NOTICE:  CREATE TABLE will create implicit sequence "cth_id_seq" for SERIAL column "cth.id"
+NOTICE:  CREATE TABLE will create implicit sequence "cth_id_seq" for "serial" column "cth.id"
 insert into cth values(DEFAULT,'test1','01 March 2003','temperature','42');
 insert into cth values(DEFAULT,'test1','01 March 2003','test_result','PASS');
 -- the next line is intentionally left commented and is therefore a "missing" attribute

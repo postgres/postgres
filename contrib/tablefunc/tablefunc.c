@@ -1295,33 +1295,98 @@ build_tuplestore_recursively(char *key_fld,
 	int			ret;
 	int			proc;
 	int			serial_column;
+	StringInfo	branchstr = NULL;
+	StringInfo	chk_branchstr = NULL;
+	StringInfo	chk_current_key = NULL;
+	char	  **values;
+	char	   *current_key;
+	char	   *current_key_parent;
+	char		current_level[INT32_STRLEN];
+	char		serial_str[INT32_STRLEN];
+	char	   *current_branch;
+	HeapTuple	tuple;
 
 	if (max_depth > 0 && level > max_depth)
 		return tupstore;
 
+	/* start a new branch */
+	branchstr = makeStringInfo();
+
+	/* need these to check for recursion */
+	chk_branchstr = makeStringInfo();
+	chk_current_key = makeStringInfo();
+
 	/* Build initial sql statement */
 	if (!show_serial)
 	{
-		appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = '%s' AND %s IS NOT NULL",
+		appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = '%s' AND %s IS NOT NULL AND %s <> %s",
 						 key_fld,
 						 parent_key_fld,
 						 relname,
 						 parent_key_fld,
 						 start_with,
-						 key_fld);
+						 key_fld, key_fld, parent_key_fld);
 		serial_column = 0;
 	}
 	else
 	{
-		appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = '%s' AND %s IS NOT NULL ORDER BY %s",
+		appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = '%s' AND %s IS NOT NULL AND %s <> %s ORDER BY %s",
 						 key_fld,
 						 parent_key_fld,
 						 relname,
 						 parent_key_fld,
 						 start_with,
-						 key_fld,
+						 key_fld, key_fld, parent_key_fld,
 						 orderby_fld);
 		serial_column = 1;
+	}
+
+	if (show_branch)
+		values = (char **) palloc((CONNECTBY_NCOLS + serial_column) * sizeof(char *));
+	else
+		values = (char **) palloc((CONNECTBY_NCOLS_NOBRANCH + serial_column) * sizeof(char *));
+
+	/* First time through, do a little setup */
+	if (level == 0)
+	{
+		/* root value is the one we initially start with */
+		values[0] = start_with;
+
+		/* root value has no parent */
+		values[1] = NULL;
+
+		/* root level is 0 */
+		sprintf(current_level, "%d", level);
+		values[2] = current_level;
+
+		/* root branch is just starting root value */
+		if (show_branch)
+			values[3] = start_with;
+
+		/* root starts the serial with 1 */
+		if (show_serial)
+		{
+			sprintf(serial_str, "%d", (*serial)++);
+			if (show_branch)
+				values[4] = serial_str;
+			else
+				values[3] = serial_str;
+		}
+
+		/* construct the tuple */
+		tuple = BuildTupleFromCStrings(attinmeta, values);
+
+		/* switch to long lived context while storing the tuple */
+		oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+		/* now store it */
+		tuplestore_puttuple(tupstore, tuple);
+
+		/* now reset the context */
+		MemoryContextSwitchTo(oldcontext);
+
+		/* increment level */
+		level++;
 	}
 
 	/* Retrieve the desired rows */
@@ -1331,34 +1396,12 @@ build_tuplestore_recursively(char *key_fld,
 	/* Check for qualifying tuples */
 	if ((ret == SPI_OK_SELECT) && (proc > 0))
 	{
-		HeapTuple	tuple;
 		HeapTuple	spi_tuple;
 		SPITupleTable *tuptable = SPI_tuptable;
 		TupleDesc	spi_tupdesc = tuptable->tupdesc;
 		int			i;
-		char	   *current_key;
-		char	   *current_key_parent;
-		char		current_level[INT32_STRLEN];
-		char		serial_str[INT32_STRLEN];
-		char	   *current_branch;
-		char	  **values;
-		StringInfo	branchstr = NULL;
-		StringInfo	chk_branchstr = NULL;
-		StringInfo	chk_current_key = NULL;
 
-		/* start a new branch */
-		branchstr = makeStringInfo();
-
-		/* need these to check for recursion */
-		chk_branchstr = makeStringInfo();
-		chk_current_key = makeStringInfo();
-
-		if (show_branch)
-			values = (char **) palloc((CONNECTBY_NCOLS + serial_column) * sizeof(char *));
-		else
-			values = (char **) palloc((CONNECTBY_NCOLS_NOBRANCH + serial_column) * sizeof(char *));
-
-		/* First time through, do a little setup */
+		/* First time through, do a little more setup */
 		if (level == 0)
 		{
 			/*
@@ -1373,45 +1416,6 @@ build_tuplestore_recursively(char *key_fld,
 						 errmsg("invalid return type"),
 					 errdetail("Return and SQL tuple descriptions are " \
 							   "incompatible.")));
-
-			/* root value is the one we initially start with */
-			values[0] = start_with;
-
-			/* root value has no parent */
-			values[1] = NULL;
-
-			/* root level is 0 */
-			sprintf(current_level, "%d", level);
-			values[2] = current_level;
-
-			/* root branch is just starting root value */
-			if (show_branch)
-				values[3] = start_with;
-
-			/* root starts the serial with 1 */
-			if (show_serial)
-			{
-				sprintf(serial_str, "%d", (*serial)++);
-				if (show_branch)
-					values[4] = serial_str;
-				else
-					values[3] = serial_str;
-			}
-
-			/* construct the tuple */
-			tuple = BuildTupleFromCStrings(attinmeta, values);
-
-			/* switch to long lived context while storing the tuple */
-			oldcontext = MemoryContextSwitchTo(per_query_ctx);
-
-			/* now store it */
-			tuplestore_puttuple(tupstore, tuple);
-
-			/* now reset the context */
-			MemoryContextSwitchTo(oldcontext);
-
-			/* increment level */
-			level++;
 		}
 
 		for (i = 0; i < proc; i++)
