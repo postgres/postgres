@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305.2.1 2002/12/01 18:44:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305.2.2 2002/12/27 17:10:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5444,12 +5444,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 	/* Dump Table Comments */
 	dumpTableComment(fout, tbinfo, reltypename, commentDeps);
 
-	if (commentDeps)
-	{
-		for (j = 0; (*commentDeps)[j] != NULL; j++)
-			free((void *) (*commentDeps)[j]);
-		free(commentDeps);
-	}
+	/* commentDeps now belongs to the archive entry ... don't free it! */
 
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(q);
