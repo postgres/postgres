@@ -4,7 +4,7 @@
 #    Makefile for utils/misc
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.2 1996/11/06 06:52:23 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.3 1997/11/07 07:03:37 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ INCLUDE_OPT = -I../../port/$(PORTNAME) \
 
 CFLAGS += $(INCLUDE_OPT)
 
-OBJS = superuser.o 
+OBJS = database.o superuser.o 
 
 all: SUBSYS.o
 
