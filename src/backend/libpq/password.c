@@ -2,7 +2,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.32 2000/08/27 21:50:18 tgl Exp $
+ * $Id: password.c,v 1.33 2000/11/27 03:43:49 tgl Exp $
  *
  */
 
@@ -56,9 +56,11 @@ verify_password(const Port *port, const char *user, const char *password)
 				   *test_user,
 				   *test_pw;
 
-		fgets(pw_file_line, sizeof(pw_file_line), pw_file);
+		if (fgets(pw_file_line, sizeof(pw_file_line), pw_file) == NULL)
+			pw_file_line[0] = '\0';
 		/* kill the newline */
-		if (pw_file_line[strlen(pw_file_line) - 1] == '\n')
+		if (strlen(pw_file_line) > 0 &&
+			pw_file_line[strlen(pw_file_line) - 1] == '\n')
 			pw_file_line[strlen(pw_file_line) - 1] = '\0';
 
 		p = pw_file_line;
