@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.8 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.9 2000/10/11 17:38:36 tgl Exp $
 -->
 
  <chapter id="mvcc">
@@ -70,7 +70,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.8 2000/09/29 20:21:34 petere 
      <listitem>
       <para>
 	A transaction re-reads data it has previously read and finds that data
-	has been modified by another committed transaction.
+	has been modified by another transaction (that committed since the
+	initial read).
        </para>
       </listitem>
      </varlistentry>
@@ -82,8 +83,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.8 2000/09/29 20:21:34 petere 
      <listitem>
       <para>
 	A transaction re-executes a query returning a set of rows that satisfy a
-	search condition and finds that additional rows satisfying the condition
-	has been inserted by another committed transaction.
+	search condition and finds that the set of rows satisfying the condition
+	has changed due to another recently-committed transaction.
        </para>
       </listitem>
      </varlistentry>
@@ -175,7 +176,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.8 2000/09/29 20:21:34 petere 
       </tbody>
      </tgroup>
     </table>
+   </para>
 
+   <para>
     <productname>Postgres</productname>
     offers the read committed and serializable isolation levels.
    </para>
@@ -187,32 +190,40 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.8 2000/09/29 20:21:34 petere 
    <para>
     <firstterm>Read Committed</firstterm>
     is the default isolation level in <productname>Postgres</productname>. 
-    When a transaction runs on this isolation level, a query sees only
-    data committed before the query began and never sees either dirty data or
-    concurrent transaction changes committed during query execution.
+    When a transaction runs on this isolation level,
+    a <command>SELECT</command> query sees only data committed before the
+    transaction began and never sees either dirty data or concurrent
+    transaction changes committed during transaction execution.  (However, the
+    <command>SELECT</command> does see the effects of previous updates
+    executed within this same transaction.)
    </para>
 
    <para>
-    If a row returned by a query while executing an
+    If a target row found by a query while executing an
     <command>UPDATE</command> statement
-    (or <command>DELETE</command>
-    or <command>SELECT FOR UPDATE</command>)
-    is being updated by a
+    (or <command>DELETE</command> or <command>SELECT FOR UPDATE</command>)
+    has already been updated by a
     concurrent uncommitted transaction then the second transaction
     that tries to update this row will wait for the other transaction to
     commit or rollback. In the case of rollback, the waiting transaction
     can proceed to change the row. In the case of commit (and if the
     row still exists; i.e. was not deleted by the other transaction), the
-    query will be re-executed for this row to check that new row
-    version satisfies query search condition. If the new row version
-    satisfies the query search condition then row will be
-    updated (or deleted or marked for update).
+    query will be re-executed for this row to check that the new row
+    version still satisfies the query search condition. If the new row version
+    satisfies the query search condition then the row will be
+    updated (or deleted or marked for update).  Note that the starting point
+    for the update will be the new row version; moreover, after the update
+    the doubly-updated row is visible to subsequent <command>SELECT</command>s
+    in the current transaction.  Thus, the current transaction is able to see
+    the effects of the other transaction for this specific row.
    </para>
 
    <para>
-    Note that the results of execution of <command>SELECT</command>
-    or <command>INSERT</command> (with a query) 
-    statements will not be affected by concurrent transactions.
+    The partial transaction isolation provided by Read Committed level is
+    adequate for many applications, and this level is fast and simple to use.
+    However, for applications that do complex queries and updates, it may
+    be necessary to guarantee a more rigorously consistent view of the
+    database than Read Committed level provides.
    </para>
   </sect1>
 
@@ -220,22 +231,29 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.8 2000/09/29 20:21:34 petere 
    <title>Serializable Isolation Level</title>
 
    <para>
-    <firstterm>Serializable</firstterm> provides the highest transaction isolation.
-    When a transaction is on the serializable level,
-    a query sees only data
-    committed before the transaction began and never see either dirty data
-    or concurrent transaction changes committed during transaction
-    execution. So, this level emulates serial transaction execution,
-    as if transactions would be executed one after another, serially,
-    rather than concurrently.
+    <firstterm>Serializable</firstterm> provides the highest transaction
+    isolation.  This level emulates serial transaction execution,
+    as if transactions had been executed one after another, serially,
+    rather than concurrently.  However, applications using this level must
+    be prepared to retry transactions due to serialization failures.
    </para>
 
    <para>
-    If a row returned by query while executing a
-    <command>UPDATE</command>
+    When a transaction is on the serializable level,
+    a <command>SELECT</command> query sees only data committed before the
+    transaction began and never sees either dirty data or concurrent
+    transaction changes committed during transaction execution.  (However, the
+    <command>SELECT</command> does see the effects of previous updates
+    executed within this same transaction.)  This is the same behavior as
+    for Read Committed level.
+   </para>
+
+   <para>
+    If a target row found by a query while executing an
+    <command>UPDATE</command> statement
     (or <command>DELETE</command> or <command>SELECT FOR UPDATE</command>)
-    statement is being updated by
-    a concurrent uncommitted transaction then the second transaction
+    has already been updated by a
+    concurrent uncommitted transaction then the second transaction
     that tries to update this row will wait for the other transaction to
     commit or rollback. In the case of rollback, the waiting transaction
     can proceed to change the row. In the case of a concurrent
@@ -250,13 +268,75 @@ ERROR:  Can't serialize access due to concurrent update
     other transactions after the serializable transaction began.
    </para>
 
-   <note>
-    <para>
-     Note that results of execution of <command>SELECT</command>
-     or <command>INSERT</command> (with a query) 
-     will not be affected by concurrent transactions.
-    </para>
-   </note>
+   <para>
+    When the application receives this error message, it should abort
+    the current transaction and then retry the whole transaction from
+    the beginning.  The second time through, the transaction sees the
+    previously-committed change as part of its initial view of the database,
+    so there is no logical conflict in using the new version of the row
+    as the starting point for the new transaction's update.
+    Note that only updating transactions may need to be retried --- read-only
+    transactions never have serialization conflicts.
+   </para>
+
+   <para>
+    Serializable transaction level provides a rigorous guarantee that each
+    transaction sees a wholly consistent view of the database.  However,
+    the application has to be prepared to retry transactions when concurrent
+    updates make it impossible to sustain the illusion of serial execution,
+    and the cost of redoing complex transactions may be significant.  So
+    this level is recommended only when update queries contain logic
+    sufficiently complex that it may give wrong answers in Read Committed
+    level.
+   </para>
+  </sect1>
+
+  <sect1 id="applevel-consistency">
+   <title>Data consistency checks at the application level</title>
+
+   <para>
+    Because readers in <productname>Postgres</productname>
+    don't lock data, regardless of
+    transaction isolation level, data read by one transaction can be
+    overwritten by another concurrent transaction. In other words,
+    if a row is returned by <command>SELECT</command> it doesn't mean that
+    the row still exists at the time it is returned (i.e. sometime after the
+    current transaction began); the row might have been modified or deleted
+    by an already-committed transaction that committed after this one started.
+    Even if the row is still valid "now", it could be changed or deleted
+    before the current transaction does a commit or rollback.
+   </para>
+
+   <para>
+    Another way to think about it is that each
+    transaction sees a snapshot of the database contents, and concurrently
+    executing transactions may very well see different snapshots.  So the
+    whole concept of "now" is somewhat suspect anyway.  This is not normally
+    a big problem if the client applications are isolated from each other,
+    but if the clients can communicate via channels outside the database
+    then serious confusion may ensue.
+   </para>
+
+   <para>
+    To ensure the current existence of a row and protect it against
+    concurrent updates one must use <command>SELECT FOR UPDATE</command> or
+    an appropriate <command>LOCK TABLE</command> statement.
+    (<command>SELECT FOR UPDATE</command> locks just the returned rows against
+    concurrent updates, while <command>LOCK TABLE</command> protects the
+    whole table.)
+    This should be taken into account when porting applications to
+    <productname>Postgres</productname> from other environments.
+
+    <note>
+     <para>
+      Before version 6.5 <productname>Postgres</productname>
+      used read-locks and so the
+      above consideration is also the case
+      when upgrading to 6.5 (or higher) from previous
+      <productname>Postgres</productname> versions.
+     </para>
+    </note>
+   </para>
   </sect1>
 
   <sect1 id="locking-tables">
@@ -268,15 +348,9 @@ ERROR:  Can't serialize access due to concurrent update
     access to data in tables. Some of these lock modes are acquired by
     <productname>Postgres</productname>
     automatically before statement execution, while others are
-    provided to be used by applications. All lock modes (except for
-    AccessShareLock) acquired in a transaction are held for the duration
+    provided to be used by applications. All lock modes acquired in a
+    transaction are held for the duration 
     of the transaction.
-   </para>
-
-   <para>
-    In addition to locks, short-term share/exclusive latches are used
-    to control read/write access to table pages in shared buffer pool.
-    Latches are released immediately after a tuple is fetched or updated.
    </para>
 
    <sect2>
@@ -290,10 +364,8 @@ ERROR:  Can't serialize access due to concurrent update
        </term>
        <listitem>
 	<para>
-	 An internal lock mode acquiring automatically over tables
-	 being queried. <productname>Postgres</productname>
-	 releases these locks after statement is
-	 done.
+	 A read-lock mode acquired automatically on tables
+	 being queried.
 	</para>
 
 	<para>
@@ -425,22 +497,28 @@ ERROR:  Can't serialize access due to concurrent update
     <title>Row-level locks</title>
 
     <para>
-     These locks are acquired when internal
-     fields of a row are being updated (or deleted or marked for update).
-     <productname>Postgres</productname>
-     doesn't remember any information about modified rows in memory and
-     so has no limit to the number of rows locked without lock escalation.
-    </para>
-
-    <para>
-     However, take into account that <command>SELECT FOR UPDATE</command> will modify
-     selected rows to mark them and so will results in disk writes.
-    </para>
-
-    <para>
-     Row-level locks don't affect data querying. They are used to block
+     These locks are acquired when rows are being updated (or deleted or
+     marked for update).
+     Row-level locks don't affect data querying. They block
      writers to <emphasis>the same row</emphasis> only.
     </para>
+
+    <para>
+     <productname>Postgres</productname>
+     doesn't remember any information about modified rows in memory and
+     so has no limit to the number of rows locked at one time.  However,
+     locking a row may cause a disk write; thus, for example,
+     <command>SELECT FOR UPDATE</command> will modify
+     selected rows to mark them and so will result in disk writes.
+    </para>
+
+    <para>
+    In addition to table and row locks, short-term share/exclusive locks are
+    used to control read/write access to table pages in the shared buffer
+    pool.  These locks are released immediately after a tuple is fetched or
+    updated.  Application writers normally need not be concerned with
+    page-level locks, but we mention them for completeness.
+   </para>
    </sect2>
   </sect1>
 
@@ -449,9 +527,9 @@ ERROR:  Can't serialize access due to concurrent update
 
    <para>
     Though <productname>Postgres</productname>
-    provides unblocking read/write access to table
-    data, unblocked read/write access is not provided for every
-    index access methods implemented
+    provides nonblocking read/write access to table
+    data, nonblocking read/write access is not currently offered for every
+    index access method implemented
     in <productname>Postgres</productname>.
    </para>
 
@@ -482,7 +560,7 @@ ERROR:  Can't serialize access due to concurrent update
        </para>
 
        <para>
-	Page-level locks produces better concurrency than index-level ones
+	Page-level locks provide better concurrency than index-level ones
 	but are subject to deadlocks.
        </para>
       </listitem>
@@ -490,13 +568,13 @@ ERROR:  Can't serialize access due to concurrent update
 
      <varlistentry>
       <term>
-       Btree
+       Btree indices
       </term>
       <listitem>
        <para>
-	Short-term share/exclusive page-level latches are used for
-	read/write access. Latches are released immediately after the index
-	tuple is inserted/fetched.
+	Short-term share/exclusive page-level locks are used for
+	read/write access. Locks are released immediately after each index
+	tuple is fetched/inserted.
        </para>
 
        <para>
@@ -507,39 +585,10 @@ ERROR:  Can't serialize access due to concurrent update
      </varlistentry>
     </variablelist>
    </para>
-  </sect1>
-
-  <sect1 id="applevel-consistency">
-   <title>Data consistency checks at the application level</title>
 
    <para>
-    Because readers in <productname>Postgres</productname>
-    don't lock data, regardless of
-    transaction isolation level, data read by one transaction can be
-    overwritten by another. In the other words, if a row is returned
-    by <command>SELECT</command> it doesn't mean that this row really
-    exists at the time it is returned (i.e. sometime after the
-    statement or transaction began) nor
-    that the row is protected from deletion or update by concurrent
-    transactions before the current transaction does a commit or rollback. 
-   </para>
-
-   <para>
-    To ensure the actual existance of a row and protect it against
-    concurrent updates one must use <command>SELECT FOR UPDATE</command> or
-    an appropriate <command>LOCK TABLE</command> statement.
-    This should be taken into account when porting applications using
-    serializable mode to <productname>Postgres</productname> from other environments.
-
-    <note>
-     <para>
-      Before version 6.5 <productname>Postgres</productname>
-      used read-locks and so the
-      above consideration is also the case
-      when upgrading to 6.5 (or higher) from previous
-      <productname>Postgres</productname> versions.
-     </para>
-    </note>
+    In short, btree indices are the recommended index type for concurrent
+    applications.
    </para>
   </sect1>
  </chapter>
