@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.55 1999/09/28 11:41:07 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.56 1999/10/06 06:38:04 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,7 +233,7 @@ mdunlink(Relation reln)
 int
 mdextend(Relation reln, char *buffer)
 {
-	long		pos;
+	long		pos, nbytes;
 	int			nblocks;
 	MdfdVec    *v;
 
@@ -243,8 +243,22 @@ mdextend(Relation reln, char *buffer)
 	if ((pos = FileSeek(v->mdfd_vfd, 0L, SEEK_END)) < 0)
 		return SM_FAIL;
 
-	if (FileWrite(v->mdfd_vfd, buffer, BLCKSZ) != BLCKSZ)
+	if (pos % BLCKSZ != 0) /* the last block is incomplete */
+	{
+		pos -= pos % BLCKSZ;
+		if (FileSeek(v->mdfd_vfd, pos, SEEK_SET) < 0)
+			return SM_FAIL;
+	}
+
+	if ((nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
+	{
+		if (nbytes > 0)
+		{
+			FileTruncate(v->mdfd_vfd, pos);
+			FileSeek(v->mdfd_vfd, pos, SEEK_SET);
+		}
 		return SM_FAIL;
+	}
 
 	/* remember that we did a write, so we can sync at xact commit */
 	v->mdfd_flags |= MDFD_DIRTY;
@@ -431,6 +445,8 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 	if ((nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
 	{
 		if (nbytes == 0)
+			MemSet(buffer, 0, BLCKSZ);
+		else if (blocknum == 0 && nbytes > 0 && mdnblocks(reln) == 0)
 			MemSet(buffer, 0, BLCKSZ);
 		else
 			status = SM_FAIL;
@@ -1067,6 +1083,7 @@ _mdnblocks(File file, Size blcksz)
 {
 	long		len;
 
-	len = FileSeek(file, 0L, SEEK_END) - 1;
-	return (BlockNumber) ((len < 0) ? 0 : 1 + len / blcksz);
+	len = FileSeek(file, 0L, SEEK_END);
+	if (len < 0) return 0;	/* on failure, assume file is empty */
+	return (BlockNumber) (len / blcksz);
 }
