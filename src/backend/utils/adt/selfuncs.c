@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.134 2003/03/23 05:14:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.135 2003/04/15 05:18:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1591,27 +1591,33 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		{
 			/*
 			 * We do not have MCV lists for both sides.  Estimate the join
-			 * selectivity as MIN(1/nd1, 1/nd2).  This is plausible if we
-			 * assume that the values are about equally distributed: a
-			 * given tuple of rel1 will join to either 0 or N2/nd2 rows of
-			 * rel2, so total join rows are at most N1*N2/nd2 giving a
-			 * join selectivity of not more than 1/nd2.  By the same logic
-			 * it is not more than 1/nd1, so MIN(1/nd1, 1/nd2) is an upper
-			 * bound.  Using the MIN() means we estimate from the point of
-			 * view of the relation with smaller nd (since the larger nd
-			 * is determining the MIN).  It is reasonable to assume that
-			 * most tuples in this rel will have join partners, so the
-			 * bound is probably reasonably tight and should be taken
-			 * as-is.
+			 * selectivity as MIN(1/nd1,1/nd2)*(1-nullfrac1)*(1-nullfrac2).
+			 * This is plausible if we assume that the join operator is
+			 * strict and the non-null values are about equally distributed:
+			 * a given non-null tuple of rel1 will join to either zero or
+			 * N2*(1-nullfrac2)/nd2 rows of rel2, so total join rows are at
+			 * most N1*(1-nullfrac1)*N2*(1-nullfrac2)/nd2 giving a join
+			 * selectivity of not more than (1-nullfrac1)*(1-nullfrac2)/nd2.
+			 * By the same logic it is not more than
+			 * (1-nullfrac1)*(1-nullfrac2)/nd1, so the expression with MIN()
+			 * is an upper bound.  Using the MIN() means we estimate from the
+			 * point of view of the relation with smaller nd (since the larger
+			 * nd is determining the MIN).  It is reasonable to assume that
+			 * most tuples in this rel will have join partners, so the bound
+			 * is probably reasonably tight and should be taken as-is.
 			 *
 			 * XXX Can we be smarter if we have an MCV list for just one
 			 * side? It seems that if we assume equal distribution for the
 			 * other side, we end up with the same answer anyway.
 			 */
+			double		nullfrac1 = stats1->stanullfrac;
+			double		nullfrac2 = stats2->stanullfrac;
+
+			selec = (1.0 - nullfrac1) * (1.0 - nullfrac2);
 			if (nd1 > nd2)
-				selec = 1.0 / nd1;
+				selec /= nd1;
 			else
-				selec = 1.0 / nd2;
+				selec /= nd2;
 		}
 
 		if (have_mcvs1)
