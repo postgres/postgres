@@ -7,7 +7,7 @@
  * Copyright 2000-2003 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $Id: guc.h,v 1.31 2003/05/06 20:26:28 tgl Exp $
+ * $Id: guc.h,v 1.32 2003/06/11 18:01:14 momjian Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -141,5 +141,7 @@ extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
 void write_nondefault_variables(GucContext context);
 void read_nondefault_variables(void);
 #endif
+
+extern int	log_min_duration_statement;
 
 #endif   /* GUC_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.346 2003/05/27 17:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.347 2003/06/11 18:01:14 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -663,6 +663,7 @@ exec_simple_query(const char *query_string)
 	struct timeval start_t,
 				stop_t;
 	bool		save_log_duration = log_duration;
+	int			save_log_min_duration_statement = log_min_duration_statement;
 	bool		save_log_statement_stats = log_statement_stats;
 
 	/*
@@ -673,11 +674,12 @@ exec_simple_query(const char *query_string)
 	pgstat_report_activity(query_string);
 
 	/*
-	 * We use save_log_duration so "SET log_duration = true" doesn't
-	 * report incorrect time because gettimeofday() wasn't called.
+	 * We use save_log_* so "SET log_duration = true"  and
+	 * "SET log_min_duration_statement = true" don't report incorrect
+	 * time because gettimeofday() wasn't called.
 	 * Similarly, log_statement_stats has to be captured once.
 	 */
-	if (save_log_duration)
+	if (save_log_duration || save_log_min_duration_statement > 0)
 		gettimeofday(&start_t, NULL);
 
 	if (save_log_statement_stats)
@@ -915,19 +917,38 @@ exec_simple_query(const char *query_string)
 	QueryContext = NULL;
 
 	/*
-	 * Finish up monitoring.
+	 * Combine processing here as we need to calculate the query
+	 * duration in both instances.
 	 */
-	if (save_log_duration)
+	if (save_log_duration || save_log_min_duration_statement > 0)
 	{
+		long usecs;
 		gettimeofday(&stop_t, NULL);
 		if (stop_t.tv_usec < start_t.tv_usec)
 		{
 			stop_t.tv_sec--;
 			stop_t.tv_usec += 1000000;
 		}
-		elog(LOG, "duration: %ld.%06ld sec",
-			 (long) (stop_t.tv_sec - start_t.tv_sec),
-			 (long) (stop_t.tv_usec - start_t.tv_usec));
+		usecs = (long) (stop_t.tv_sec - start_t.tv_sec) * 1000000 + (long) (stop_t.tv_usec - start_t.tv_usec);
+
+		/* 
+		 * Output a duration_query to the log if the query has exceeded the
+		 * min duration.
+		 */
+		if (usecs >= save_log_min_duration_statement * 1000)
+			elog(LOG, "duration_statement: %ld.%06ld %s",
+				(long) (stop_t.tv_sec - start_t.tv_sec),
+				(long) (stop_t.tv_usec - start_t.tv_usec),
+				query_string);
+
+		/* 
+		 * If the user is requesting logging of all durations, then log
+		 * that as well.
+		 */
+		if (save_log_duration)
+			elog(LOG, "duration: %ld.%06ld sec",
+				 (long) (stop_t.tv_sec - start_t.tv_sec),
+				 (long) (stop_t.tv_usec - start_t.tv_usec));
 	}
 
 	if (save_log_statement_stats)
@@ -2526,7 +2547,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.346 $ $Date: 2003/05/27 17:49:46 $\n");
+		puts("$Revision: 1.347 $ $Date: 2003/06/11 18:01:14 $\n");
 	}
 
 	/*

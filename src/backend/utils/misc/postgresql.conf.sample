@@ -140,6 +140,10 @@
 				 #   debug5, debug4, debug3, debug2, debug1,
 				 #   info, notice, warning, error, panic(off)
 
+#log_min_duration_statement = 0  # Log all statements whose
+				 # execution time exceeds the value, in
+				 # milliseconds.  Zero disables.
+
 #debug_print_parse = false
 #debug_print_rewritten = false
 #debug_print_plan = false

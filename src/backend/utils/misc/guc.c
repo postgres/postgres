@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.128 2003/06/11 05:04:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.129 2003/06/11 18:01:14 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -54,6 +54,8 @@
 #include "utils/elog.h"
 #include "utils/pg_locale.h"
 #include "pgstat.h"
+
+int			log_min_duration_statement = 0;
 
 
 #ifndef PG_KRB_SRVTAB
@@ -733,6 +735,11 @@ static struct config_int
 	{
 		{"extra_float_digits", PGC_USERSET}, &extra_float_digits,
 		0, -15, 2, NULL, NULL
+	},
+
+	{
+		{"log_min_duration_statement", PGC_USERSET}, &log_min_duration_statement,
+		0, 0, INT_MAX / 1000, NULL, NULL
 	},
 
 	{

@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.77 2003/05/14 03:26:02 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.78 2003/06/11 18:01:14 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -538,6 +538,7 @@ psql_completion(char *text, int start, int end)
 		"lc_time",
 		"log_duration",
 		"log_executor_stats",
+		"log_min_duration_statement",
 		"log_min_error_statement",
 		"log_min_messages",
 		"log_parser_stats",

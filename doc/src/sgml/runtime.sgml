@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.182 2003/05/27 17:49:45 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.183 2003/06/11 18:01:13 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1047,6 +1047,23 @@ SET ENABLE_SEQSCAN TO OFF;
         To use this option, enable <varname>LOG_STATEMENT</> and
         <varname>LOG_PID</> so you can link the statement to the
         duration using the process ID.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>LOG_MIN_DURATION_STATEMENT</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Sets a minimum statement execution time (in milliseconds)
+	above which a statement will be logged.  All SQL statements
+	that run longer than the time specified will be logged together
+	with the duration, in seconds.  The default is <literal>0</literal>
+	(turning this feature off).  For example, if you set it
+	to <literal>250</literal> then all SQL statements that run longer
+	than 250ms will be logged along with the duration.  Enabling this
+	option can be useful in tracking down unoptimized queries in
+	your applications.
        </para>
       </listitem>
      </varlistentry>
