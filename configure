@@ -2370,6 +2370,12 @@ fi
 { echo "$as_me:$LINENO: using CFLAGS=$CFLAGS" >&5
 echo "$as_me: using CFLAGS=$CFLAGS" >&6;}
 
+# We already have this in Makefile.win32, but configure needs it too
+if test "$PORTNAME" = "win32"
+then
+	CPPFLAGS="$CPPFLAGS -Isrc/include/port/win32"
+fi
+
 # Check if the compiler still works with the template settings
 echo "$as_me:$LINENO: checking whether the C compiler still works" >&5
 echo $ECHO_N "checking whether the C compiler still works... $ECHO_C" >&6
@@ -10810,19 +10816,23 @@ _ACEOF
 fi
 echo "$as_me:$LINENO: checking types of arguments for accept()" >&5
 echo $ECHO_N "checking types of arguments for accept()... $ECHO_C" >&6
- if test "${ac_cv_func_accept_arg1+set}" = set; then
+ if test "${ac_cv_func_accept_return+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-   if test "${ac_cv_func_accept_arg2+set}" = set; then
+   if test "${ac_cv_func_accept_arg1+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-    if test "${ac_cv_func_accept_arg3+set}" = set; then
+    if test "${ac_cv_func_accept_arg2+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-     for ac_cv_func_accept_arg1 in 'int' 'unsigned int'; do
-     for ac_cv_func_accept_arg2 in 'struct sockaddr *' 'const struct sockaddr *' 'void *'; do
-      for ac_cv_func_accept_arg3 in 'int' 'size_t' 'socklen_t' 'unsigned int' 'void'; do
-       cat >conftest.$ac_ext <<_ACEOF
+     if test "${ac_cv_func_accept_arg3+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+      for ac_cv_func_accept_return in 'int' 'unsigned int PASCAL'; do
+      for ac_cv_func_accept_arg1 in 'int' 'unsigned int'; do
+       for ac_cv_func_accept_arg2 in 'struct sockaddr *' 'const struct sockaddr *' 'void *'; do
+        for ac_cv_func_accept_arg3 in 'int' 'size_t' 'socklen_t' 'unsigned int' 'void'; do
+         cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
 #ifdef HAVE_SYS_TYPES_H
@@ -10831,7 +10841,7 @@ else
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
-extern int accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *);
+extern $ac_cv_func_accept_return accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *);
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus
      extern "C"
@@ -10858,13 +10868,14 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_not_found=no; break 3
+  ac_not_found=no; break 4
 else
   echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
 ac_not_found=yes
 fi
 rm -f conftest.$ac_objext conftest.$ac_ext
+       done
       done
      done
     done
@@ -10882,8 +10893,15 @@ fi
 fi
 
 fi
- echo "$as_me:$LINENO: result: $ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *" >&5
-echo "${ECHO_T}$ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *" >&6
+
+fi
+ echo "$as_me:$LINENO: result: $ac_cv_func_accept_return, $ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *" >&5
+echo "${ECHO_T}$ac_cv_func_accept_return, $ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *" >&6
+
+cat >>confdefs.h <<_ACEOF
+#define ACCEPT_TYPE_RETURN $ac_cv_func_accept_return
+_ACEOF
+
 
 cat >>confdefs.h <<_ACEOF
 #define ACCEPT_TYPE_ARG1 $ac_cv_func_accept_arg1

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.92 2003/08/23 04:21:59 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.93 2003/09/07 03:43:57 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,6 +24,9 @@ OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
       dllist.o md5.o ip.o wchar.o encnames.o \
       $(filter crypt.o getaddrinfo.o inet_aton.o snprintf.o strerror.o path.o thread.o, $(LIBOBJS))
+ifeq ($(PORTNAME), win32)
+OBJS+=win32.o
+endif
 
 
 # Add libraries that libpq depends (or might depend) on into the

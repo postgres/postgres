@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/scripts/common.c,v 1.4 2003/08/04 00:43:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/scripts/common.c,v 1.5 2003/09/07 03:43:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 const char *
 get_user_name(const char *progname)
 {
+#ifndef WIN32
 	struct passwd *pw;
 
 	pw = getpwuid(getuid());
@@ -32,6 +33,12 @@ get_user_name(const char *progname)
 		exit(1);
 	}
 	return pw->pw_name;
+#else
+	static char username[128];	/* remains after function exit */
+
+	GetUserName(username, sizeof(username)-1);
+	return username;
+#endif	
 }
 
 

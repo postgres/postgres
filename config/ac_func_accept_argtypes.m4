@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/ac_func_accept_argtypes.m4,v 1.4 2002/03/29 17:32:53 petere Exp $
+# $Header: /cvsroot/pgsql/config/ac_func_accept_argtypes.m4,v 1.5 2003/09/07 03:43:53 momjian Exp $
 # This comes from the official Autoconf macro archive at
 # <http://research.cys.de/autoconf-archive/>
 # (I removed the $ before the Id CVS keyword below.)
@@ -7,9 +7,10 @@
 dnl @synopsis AC_FUNC_ACCEPT_ARGTYPES
 dnl
 dnl Checks the data types of the three arguments to accept(). Results are
-dnl placed into the symbols ACCEPT_TYPE_ARG[123], consistent with the
-dnl following example:
+dnl placed into the symbols ACCEPT_TYPE_RETURN and ACCEPT_TYPE_ARG[123], 
+dnl consistent with the following example:
 dnl
+dnl       #define ACCEPT_TYPE_RETURN int
 dnl       #define ACCEPT_TYPE_ARG1 int
 dnl       #define ACCEPT_TYPE_ARG2 struct sockaddr *
 dnl       #define ACCEPT_TYPE_ARG3 socklen_t
@@ -36,24 +37,29 @@ dnl
 # Solaris 7 and 8 have arg3 as 'void *' (disguised as 'Psocklen_t'
 # which is *not* 'socklen_t *').  If we detect that, then we assume
 # 'int' as the result, because that ought to work best.
+#
+# On Win32, accept() returns 'unsigned int PASCAL' 
 
 AC_DEFUN([AC_FUNC_ACCEPT_ARGTYPES],
 [AC_MSG_CHECKING([types of arguments for accept()])
- AC_CACHE_VAL(ac_cv_func_accept_arg1,dnl
- [AC_CACHE_VAL(ac_cv_func_accept_arg2,dnl
-  [AC_CACHE_VAL(ac_cv_func_accept_arg3,dnl
-   [for ac_cv_func_accept_arg1 in 'int' 'unsigned int'; do
-     for ac_cv_func_accept_arg2 in 'struct sockaddr *' 'const struct sockaddr *' 'void *'; do
-      for ac_cv_func_accept_arg3 in 'int' 'size_t' 'socklen_t' 'unsigned int' 'void'; do
-       AC_TRY_COMPILE(
+ AC_CACHE_VAL(ac_cv_func_accept_return,dnl
+ [AC_CACHE_VAL(ac_cv_func_accept_arg1,dnl
+  [AC_CACHE_VAL(ac_cv_func_accept_arg2,dnl
+   [AC_CACHE_VAL(ac_cv_func_accept_arg3,dnl
+    [for ac_cv_func_accept_return in 'int' 'unsigned int PASCAL'; do
+      for ac_cv_func_accept_arg1 in 'int' 'unsigned int'; do
+       for ac_cv_func_accept_arg2 in 'struct sockaddr *' 'const struct sockaddr *' 'void *'; do
+        for ac_cv_func_accept_arg3 in 'int' 'size_t' 'socklen_t' 'unsigned int' 'void'; do
+         AC_TRY_COMPILE(
 [#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
-extern int accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *);],
-        [], [ac_not_found=no; break 3], [ac_not_found=yes])
+extern $ac_cv_func_accept_return accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *);],
+         [], [ac_not_found=no; break 4], [ac_not_found=yes])
+       done
       done
      done
     done
@@ -63,10 +69,13 @@ extern int accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func
     if test "$ac_cv_func_accept_arg3" = "void"; then
       ac_cv_func_accept_arg3=int
     fi
+    ])dnl AC_CACHE_VAL
    ])dnl AC_CACHE_VAL
   ])dnl AC_CACHE_VAL
  ])dnl AC_CACHE_VAL
- AC_MSG_RESULT([$ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *])
+ AC_MSG_RESULT([$ac_cv_func_accept_return, $ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *])
+ AC_DEFINE_UNQUOTED(ACCEPT_TYPE_RETURN, $ac_cv_func_accept_return,
+                    [Define to the return type of 'accept'])
  AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG1, $ac_cv_func_accept_arg1,
                     [Define to the type of arg 1 of 'accept'])
  AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG2, $ac_cv_func_accept_arg2,

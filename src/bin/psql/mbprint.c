@@ -3,10 +3,13 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mbprint.c,v 1.10 2003/09/05 02:31:10 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mbprint.c,v 1.11 2003/09/07 03:43:54 momjian Exp $
  */
 
 #include "postgres_fe.h"
+#ifndef PGSCRIPTS
+#include "settings.h"
+#endif
 #include "mbprint.h"
 
 #include "mb/pg_wchar.h"
@@ -334,7 +337,7 @@ mbvalidate(unsigned char *pwcs, int encoding)
 		return mb_utf_validate(pwcs);
 	else
 	{
-#ifdef WIN32
+#if defined(WIN32) && !defined(PGSCRIPTS)
 		/*
 		 * translate characters to DOS console encoding, e.g. needed for
 		 * German umlauts

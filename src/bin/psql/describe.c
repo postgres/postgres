@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.84 2003/08/09 01:21:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.85 2003/09/07 03:43:53 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -765,7 +765,7 @@ describeOneTableDetails(const char *schemaname,
 	{
 		/* Name */
 #ifdef WIN32
-		cells[i * cols + 0] = mbvalidate(PQgetvalue(res, i, 0));
+		cells[i * cols + 0] = mbvalidate(PQgetvalue(res, i, 0), myopt.encoding);
 #else
 		cells[i * cols + 0] = PQgetvalue(res, i, 0);	/* don't free this
 														 * afterwards */
@@ -773,7 +773,7 @@ describeOneTableDetails(const char *schemaname,
 
 		/* Type */
 #ifdef WIN32
-		cells[i * cols + 1] = mbvalidate(PQgetvalue(res, i, 1));
+		cells[i * cols + 1] = mbvalidate(PQgetvalue(res, i, 1), myopt.encoding);
 #else
 		cells[i * cols + 1] = PQgetvalue(res, i, 1);	/* don't free this
 														 * either */
@@ -797,7 +797,7 @@ describeOneTableDetails(const char *schemaname,
 			}
 
 #ifdef WIN32
-			cells[i * cols + 2] = xstrdup(mbvalidate(tmpbuf.data));
+			cells[i * cols + 2] = xstrdup(mbvalidate(tmpbuf.data, myopt.encoding));
 #else
 			cells[i * cols + 2] = xstrdup(tmpbuf.data);
 #endif
@@ -806,7 +806,7 @@ describeOneTableDetails(const char *schemaname,
 		/* Description */
 		if (verbose)
 #ifdef WIN32
-			cells[i * cols + cols - 1] = mbvalidate(PQgetvalue(res, i, 5));
+			cells[i * cols + cols - 1] = mbvalidate(PQgetvalue(res, i, 5), myopt.encoding);
 #else
 			cells[i * cols + cols - 1] = PQgetvalue(res, i, 5);
 #endif

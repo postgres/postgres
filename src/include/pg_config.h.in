@@ -9,6 +9,9 @@
 /* Define to the type of arg 3 of 'accept' */
 #undef ACCEPT_TYPE_ARG3
 
+/* Define to the return type of 'accept' */
+#undef ACCEPT_TYPE_RETURN
+
 /* The alignment requirement of a `double'. */
 #undef ALIGNOF_DOUBLE
 

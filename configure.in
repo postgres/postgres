@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.284 2003/09/07 03:36:02 tgl Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.285 2003/09/07 03:43:52 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -237,6 +237,12 @@ if test "$enable_debug" = yes && test "$ac_cv_prog_cc_g" = yes; then
   CFLAGS="$CFLAGS -g"
 fi
 AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
+
+# We already have this in Makefile.win32, but configure needs it too
+if test "$PORTNAME" = "win32"
+then
+	CPPFLAGS="$CPPFLAGS -Isrc/include/port/win32"
+fi
 
 # Check if the compiler still works with the template settings
 AC_MSG_CHECKING([whether the C compiler still works])
