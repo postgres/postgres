@@ -1,5 +1,5 @@
 QUERY: drop table ’·×’»»’µ¡’ÍÑ’¸ì;
-ERROR:  Relation ’·×’»»’µ¡’ÍÑ’¸ì Does Not Exist!
+ERROR:  Relation ’·×’»»’µ¡’ÍÑ’¸ì does not exist!
 QUERY: create table ’·×’»»’µ¡’ÍÑ’¸ì (’ÍÑ’¸ì text, ’Ê¬’Îà’¥³’¡¼’¥É varchar, ’È÷’¹Í1A’¤À’¤è char(16));
 QUERY: create index ’·×’»»’µ¡’ÍÑ’¸ìindex1 on ’·×’»»’µ¡’ÍÑ’¸ì using btree (’ÍÑ’¸ì);
 QUERY: create index ’·×’»»’µ¡’ÍÑ’¸ìindex2 on ’·×’»»’µ¡’ÍÑ’¸ì using hash (’Ê¬’Îà’¥³’¡¼’¥É);
@@ -86,7 +86,7 @@ QUERY: select *,substring(’ÍÑ’¸ì from 10 for 4) from ’·×’»»’µ¡’ÍÑ’¸ì;
 (3 rows)
 
 QUERY: drop table ‘¼Æ‘Ëã‘»ú‘Êõ‘Óï;
-ERROR:  Relation ‘¼Æ‘Ëã‘»ú‘Êõ‘Óï Does Not Exist!
+ERROR:  Relation ‘¼Æ‘Ëã‘»ú‘Êõ‘Óï does not exist!
 QUERY: create table ‘¼Æ‘Ëã‘»ú‘Êõ‘Óï(‘Êõ‘Óï text, ‘·Ö‘Àà‘ºÅ varchar, ‘±¸‘×¢1A char(16));
 QUERY: create index ‘¼Æ‘Ëã‘»ú‘Êõ‘Óïindex1 on ‘¼Æ‘Ëã‘»ú‘Êõ‘Óï using btree(‘Êõ‘Óï);
 QUERY: create index ‘¼Æ‘Ëã‘»ú‘Êõ‘Óïindex2 on ‘¼Æ‘Ëã‘»ú‘Êõ‘Óï using btree(‘·Ö‘Àà‘ºÅ);
@@ -173,7 +173,7 @@ QUERY: select *,substring(‘Êõ‘Óï from 3 for 4) from ‘¼Æ‘Ëã‘»ú‘Êõ‘Óï;
 (3 rows)
 
 QUERY: drop table “Íª“ß©“Ñ¦“¿ë“¾î;
-ERROR:  Relation “Íª“ß©“Ñ¦“¿ë“¾î Does Not Exist!
+ERROR:  Relation “Íª“ß©“Ñ¦“¿ë“¾î does not exist!
 QUERY: create table “Íª“ß©“Ñ¦“¿ë“¾î (“¿ë“¾î text, “İÂ“×¾“ÄÚ“µå varchar, “ºñ“°í1A“¶ó“±¸ char(16));
 QUERY: create index “Íª“ß©“Ñ¦“¿ë“¾îindex1 on “Íª“ß©“Ñ¦“¿ë“¾î using btree (“¿ë“¾î);
 QUERY: create index “Íª“ß©“Ñ¦“¿ë“¾îindex2 on “Íª“ß©“Ñ¦“¿ë“¾î using hash (“İÂ“×¾“ÄÚ“µå);
@@ -260,7 +260,7 @@ QUERY: select *,substring(“¿ë“¾î from 3 for 4) from “Íª“ß©“Ñ¦“¿ë“¾î;
 (3 rows)
 
 QUERY: drop table test;
-ERROR:  Relation test Does Not Exist!
+ERROR:  Relation test does not exist!
 QUERY: create table test (t text);
 QUERY: insert into test values('ENGLISH');
 QUERY: insert into test values('FRANÇAIS');
