@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Nov 20 10:28:34 EST 2001
+Last updated:		Wed Nov 21 13:49:01 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -100,7 +100,7 @@ MULTILANGUAGE SUPPORT
 * Optimize locale to have minimal performance impact when not used (Peter E)
 * -Optimize textlength(), etc. for single-byte encodings (Tatsuo)
 * Add octet_length_server() and octet_length_client() (Thomas, Tatsuo)
-* Make octet_length_client the same as octet_length()
+* Make octet_length_client the same as octet_length() (?)
 
 VIEWS
 
