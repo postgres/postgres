@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.82 2002/09/21 18:32:53 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.83 2002/10/12 16:29:51 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1836,7 +1836,7 @@ gunzip -c user.ps.gz \
       <entry><systemitem>x86</></entry>
       <entry>6.5</entry>
       <entry>1999-05-25, Andrew Merrill (<email>andrew@compclass.com</>)</entry>
-      <entry>&version; should work, but no reports; see also <filename>doc/FAQ_SCO</filename></entry>
+      <entry>7.2 should work, but no reports; see also <filename>doc/FAQ_SCO</filename></entry>
      </row>
      <row>
       <entry><systemitem class="osname">System V R4</></entry>
