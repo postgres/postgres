@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.53 1998/07/20 11:28:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.54 1998/07/20 19:21:41 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -97,32 +97,32 @@ static void RemoveConstraints(Relation rel);
  */
 
 static FormData_pg_attribute a1 = {
-	0xffffffff, {"ctid"}, 27, 0, sizeof(ItemPointerData),
+	0xffffffff, {"ctid"}, TIDOID, 0, sizeof(ItemPointerData),
 	SelfItemPointerAttributeNumber, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'
 };
 
 static FormData_pg_attribute a2 = {
-	0xffffffff, {"oid"}, 26, 0, sizeof(Oid),
+	0xffffffff, {"oid"}, OIDOID, 0, sizeof(Oid),
 	ObjectIdAttributeNumber, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'
 };
 
 static FormData_pg_attribute a3 = {
-	0xffffffff, {"xmin"}, 28, 0, sizeof(TransactionId),
+	0xffffffff, {"xmin"}, XIDOID, 0, sizeof(TransactionId),
 	MinTransactionIdAttributeNumber, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'
 };
 
 static FormData_pg_attribute a4 = {
-	0xffffffff, {"cmin"}, 29, 0, sizeof(CommandId),
+	0xffffffff, {"cmin"}, CIDOID, 0, sizeof(CommandId),
 	MinCommandIdAttributeNumber, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'
 };
 
 static FormData_pg_attribute a5 = {
-	0xffffffff, {"xmax"}, 28, 0, sizeof(TransactionId),
+	0xffffffff, {"xmax"}, XIDOID, 0, sizeof(TransactionId),
 	MaxTransactionIdAttributeNumber, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'
 };
 
 static FormData_pg_attribute a6 = {
-	0xffffffff, {"cmax"}, 29, 0, sizeof(CommandId),
+	0xffffffff, {"cmax"}, CIDOID, 0, sizeof(CommandId),
 	MaxCommandIdAttributeNumber, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'
 };
 

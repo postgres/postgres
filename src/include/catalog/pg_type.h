@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.41 1998/07/08 14:09:00 thomas Exp $
+ * $Id: pg_type.h,v 1.42 1998/07/20 19:21:45 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -201,10 +201,16 @@ DESCR("object identifier type");
 
 DATA(insert OID = 27 (	tid		   PGUID  6  19 f b t \054 0   0 tidin tidout tidin tidout i _null_ ));
 DESCR("tuple identifier type, physical location of tuple");
+#define TIDOID		27
+
 DATA(insert OID = 28 (	xid		   PGUID  4  12 t b t \054 0   0 xidin xidout xidin xidout i _null_ ));
 DESCR("transaction id");
+#define XIDOID 28
+
 DATA(insert OID = 29 (	cid		   PGUID  4  10 t b t \054 0   0 cidin cidout cidin cidout i _null_ ));
 DESCR("command identifier type, sequence in transaction id");
+#define CIDOID 29
+
 DATA(insert OID = 30 (	oid8	   PGUID 32  89 f b t \054 0  26 oid8in oid8out oid8in oid8out i _null_ ));
 DESCR("array of 8 oid, used in system tables");
 DATA(insert OID = 32 (	SET		   PGUID -1  -1 f r t \054 0  -1 textin textout textin textout i _null_ ));
