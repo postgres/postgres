@@ -1,7 +1,7 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003.
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/po/de.po,v 1.4 2003/07/23 08:49:29 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/po/de.po,v 1.5 2003/08/24 21:26:34 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -393,7 +393,7 @@ msgstr "  -X              lese die Startdatei nicht (~/.psqlrc)"
 
 #: help.c:99
 msgid "  --help          show this help, then exit"
-msgstr "  -l              zeige verfügbare Datenbanken und beende"
+msgstr "  --help          diese Hilfe anzeigen, dann beenden"
 
 #: help.c:100
 msgid "  --version       output version information, then exit"
