@@ -13,7 +13,7 @@ import org.postgresql.core.QueryExecutor;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.19 2003/04/13 04:10:07 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.20 2003/04/17 04:37:07 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -1512,35 +1512,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	{
 		if (x == null)
 		{
-			int l_sqlType;
-			if (x instanceof String)
-				l_sqlType = Types.VARCHAR;
-			else if (x instanceof BigDecimal)
-				l_sqlType = Types.DECIMAL;
-			else if (x instanceof Short)
-				l_sqlType = Types.SMALLINT;
-			else if (x instanceof Integer)
-				l_sqlType = Types.INTEGER;
-			else if (x instanceof Long)
-				l_sqlType = Types.BIGINT;
-			else if (x instanceof Float)
-				l_sqlType = Types.FLOAT;
-			else if (x instanceof Double)
-				l_sqlType = Types.DOUBLE;
-			else if (x instanceof byte[])
-				l_sqlType = Types.BINARY;
-			else if (x instanceof java.sql.Date)
-				l_sqlType = Types.DATE;
-			else if (x instanceof Time)
-				l_sqlType = Types.TIME;
-			else if (x instanceof Timestamp)
-				l_sqlType = Types.TIMESTAMP;
-			else if (x instanceof Boolean)
-				l_sqlType = Types.OTHER;
-			else 
-				l_sqlType = Types.OTHER;
-
-			setNull(parameterIndex, l_sqlType);
+			setNull(parameterIndex, Types.OTHER);
 			return ;
 		}
 		if (x instanceof String)
@@ -1879,7 +1851,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	public String toString()
 	{
 		if (m_sqlFragments == null)
-			return "";
+			return super.toString();
 
 		synchronized (sbuf)
 		{
