@@ -254,7 +254,7 @@ CREATE TABLE image (
 INSERT INTO image (name, raster)
     VALUES ('beautiful image', lo_import('/etc/motd'));
 
-SELECT lo_export(image.raster, "/tmp/motd") from image
+SELECT lo_export(image.raster, '/tmp/motd') from image
     WHERE name = 'beautiful image';
 </programlisting>
 </para>
