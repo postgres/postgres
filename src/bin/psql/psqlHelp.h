@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.5 1996/10/03 15:46:31 momjian Exp $
+ * $Id: psqlHelp.h,v 1.6 1996/10/07 02:32:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@ static struct _helpStruct QL_HELP[] = {
       "abort [transaction];"},
   { "alter table",
       "add/rename attributes, rename tables",
-      "alter table <class_name> [*] add column <attr> <type>;\n\talter table <class_name> [*] rename [column] <attr1> to <attr2>;\n\talter table <class_name1> rename to <class_name2>"},
+      "\talter table <class_name> [*] add column <attr> <type>;\n\talter table <class_name> [*] rename [column] <attr1> to <attr2>;\n\talter table <class_name1> rename to <class_name2>"},
   { "begin",
       "begin a new transaction",
       "begin [transaction|work];"},
@@ -125,9 +125,6 @@ static struct _helpStruct QL_HELP[] = {
   { "explain",
       "explain the query execution plan",
       "explain [with {cost|full_plan}] <query>"},
-  { "extend index",
-      "extend a partial index",
-      "extend index <indexname> [where <qual>];"},
   { "fetch",
       "retrieve tuples from a cursor",
       "fetch [forward|backward] [<number>|all] [in <cursorname>];"},
