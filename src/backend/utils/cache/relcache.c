@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.193 2003/11/29 19:52:00 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.194 2003/12/28 21:57:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
+#include "optimizer/prep.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
@@ -2770,11 +2771,13 @@ RelationGetIndexExpressions(Relation relation)
 	pfree(exprsString);
 
 	/*
-	 * Run the expressions through eval_const_expressions.	This is not
-	 * just an optimization, but is necessary, because the planner will be
-	 * comparing them to const-folded qual clauses, and may fail to detect
-	 * valid matches without this.
+	 * Run the expressions through flatten_andors and eval_const_expressions.
+	 * This is not just an optimization, but is necessary, because the planner
+	 * will be comparing them to similarly-processed qual clauses, and may
+	 * fail to detect valid matches without this.
 	 */
+	result = (List *) flatten_andors((Node *) result);
+
 	result = (List *) eval_const_expressions((Node *) result);
 
 	/* May as well fix opfuncids too */
@@ -2791,7 +2794,8 @@ RelationGetIndexExpressions(Relation relation)
 /*
  * RelationGetIndexPredicate -- get the index predicate for an index
  *
- * We cache the result of transforming pg_index.indpred into a node tree.
+ * We cache the result of transforming pg_index.indpred into an implicit-AND
+ * node tree (suitable for ExecQual).
  * If the rel is not an index or has no predicate, we return NIL.
  * Otherwise, the returned tree is copied into the caller's memory context.
  * (We don't want to return a pointer to the relcache copy, since it could
@@ -2835,12 +2839,17 @@ RelationGetIndexPredicate(Relation relation)
 	pfree(predString);
 
 	/*
-	 * Run the expression through eval_const_expressions.  This is not
-	 * just an optimization, but is necessary, because the planner will be
-	 * comparing it to const-folded qual clauses, and may fail to detect
-	 * valid matches without this.
+	 * Run the expression through canonicalize_qual and eval_const_expressions.
+	 * This is not just an optimization, but is necessary, because the planner
+	 * will be comparing it to similarly-processed qual clauses, and may fail
+	 * to detect valid matches without this.
 	 */
+	result = (List *) canonicalize_qual((Expr *) result);
+
 	result = (List *) eval_const_expressions((Node *) result);
+
+	/* Also convert to implicit-AND format */
+	result = make_ands_implicit((Expr *) result);
 
 	/* May as well fix opfuncids too */
 	fix_opfuncids((Node *) result);

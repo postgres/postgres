@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.86 2003/11/29 22:41:06 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.87 2003/12/28 21:57:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,7 +245,8 @@ typedef struct RelOptInfo
  *		zero entry, rather than looking at ncolumns.
  *
  *		The indexprs and indpred expressions have been run through
- *		eval_const_expressions() for ease of matching to WHERE clauses.
+ *		prepqual.c and eval_const_expressions() for ease of matching to
+ *		WHERE clauses.  indpred is in implicit-AND form.
  */
 
 typedef struct IndexOptInfo

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.150 2003/12/07 04:14:10 joe Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.151 2003/12/28 21:57:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3902,12 +3902,12 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	 * If the index is partial, AND the index predicate with the
 	 * explicitly given indexquals to produce a more accurate idea of the
 	 * index restriction.  This may produce redundant clauses, which we
-	 * hope that cnfify and clauselist_selectivity will deal with
+	 * hope that canonicalize_qual and clauselist_selectivity will deal with
 	 * intelligently.
 	 *
 	 * Note that index->indpred and indexQuals are both in implicit-AND form
 	 * to start with, which we have to make explicit to hand to
-	 * canonicalize_qual, and then we get back implicit-AND form again.
+	 * canonicalize_qual, and then we convert back to implicit-AND form.
 	 */
 	if (index->indpred != NIL)
 	{
@@ -3915,7 +3915,8 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 
 		andedQuals = make_ands_explicit(nconc(listCopy(index->indpred),
 											  indexQuals));
-		selectivityQuals = canonicalize_qual(andedQuals, true);
+		andedQuals = canonicalize_qual(andedQuals);
+		selectivityQuals = make_ands_implicit(andedQuals);
 	}
 
 	/* Estimate the fraction of main-table tuples that will be visited */

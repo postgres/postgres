@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.39 2003/11/29 19:51:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.40 2003/12/28 21:57:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 #include "optimizer/prep.h"
 #include "utils/lsyscache.h"
 
-static Expr *flatten_andors(Expr *qual);
+static Node *flatten_andors_mutator(Node *node, void *context);
 static void flatten_andors_and_walker(FastList *out_list, List *andlist);
 static void flatten_andors_or_walker(FastList *out_list, List *orlist);
 static List *pull_ands(List *andlist);
@@ -61,8 +61,7 @@ static void count_bool_nodes(Expr *qual, double *nodes,
  *
  *		canonicalize_qual() does "smart" conversion to either CNF or DNF, per
  *		the above considerations, while cnfify() and dnfify() simply perform
- *		the demanded transformation.  The latter two may become dead code
- *		eventually.
+ *		the demanded transformation.  The latter two are presently dead code.
  *****************************************************************************/
 
 
@@ -72,11 +71,6 @@ static void count_bool_nodes(Expr *qual, double *nodes,
  *
  * Returns the modified qualification.
  *
- * If 'removeAndFlag' is true then it removes explicit AND at the top level,
- * producing a list of implicitly-ANDed conditions.  Otherwise, a regular
- * boolean expression is returned.	Since most callers pass 'true', we
- * prefer to declare the result as List *, not Expr *.
- *
  * XXX This code could be much smarter, at the cost of also being slower,
  * if we tried to compute selectivities and/or see whether there are
  * actually indexes to support an indexscan implementation of a DNF qual.
@@ -85,8 +79,8 @@ static void count_bool_nodes(Expr *qual, double *nodes,
  * implement.  For now, though, we just try to avoid doing anything
  * quite as stupid as unconditionally converting to CNF was...
  */
-List *
-canonicalize_qual(Expr *qual, bool removeAndFlag)
+Expr *
+canonicalize_qual(Expr *qual)
 {
 	Expr	   *newqual;
 	double		nodes,
@@ -95,23 +89,23 @@ canonicalize_qual(Expr *qual, bool removeAndFlag)
 	bool		cnfok,
 				dnfok;
 
+	/* Quick exit for empty qual */
 	if (qual == NULL)
-		return NIL;
+		return NULL;
 
 	/*
 	 * Flatten AND and OR groups throughout the tree. This improvement is
 	 * always worthwhile, so do it unconditionally.
 	 */
-	qual = flatten_andors(qual);
+	newqual = (Expr *) flatten_andors((Node *) qual);
 
 	/*
 	 * Push down NOTs.	We do this only in the top-level boolean
 	 * expression, without examining arguments of operators/functions.
-	 * Even so, it might not be a win if we are unable to find negators
-	 * for all the operators involved; perhaps we should compare before-
-	 * and-after tree sizes?
+	 * The main reason for doing this is to expose as much top-level AND/OR
+	 * structure as we can, so there's no point in descending further.
 	 */
-	newqual = find_nots(qual);
+	newqual = find_nots(newqual);
 
 	/*
 	 * Choose whether to convert to CNF, or DNF, or leave well enough
@@ -175,13 +169,10 @@ canonicalize_qual(Expr *qual, bool removeAndFlag)
 		newqual = qual_cleanup(find_ands(newqual));
 	}
 
-	/* Convert to implicit-AND list if requested */
-	if (removeAndFlag)
-		newqual = (Expr *) make_ands_implicit(newqual);
-
-	return (List *) newqual;
+	return newqual;
 }
 
+#ifdef NOT_USED
 /*
  * cnfify
  *	  Convert a qualification to conjunctive normal form by applying
@@ -223,6 +214,7 @@ cnfify(Expr *qual, bool removeAndFlag)
 
 	return (List *) newqual;
 }
+#endif
 
 #ifdef NOT_USED
 /*
@@ -281,50 +273,46 @@ dnfify(Expr *qual)
 
 /*--------------------
  * flatten_andors
- *	  Given a qualification, simplify nested AND/OR clauses into flat
- *	  AND/OR clauses with more arguments.
+ *	  Given an expression tree, simplify nested AND/OR clauses into flat
+ *	  AND/OR clauses with more arguments.  The entire tree is processed.
  *
- * Returns the rebuilt expr (note original list structure is not touched).
+ * Returns the rebuilt expr (note original structure is not touched).
  *--------------------
  */
-static Expr *
-flatten_andors(Expr *qual)
+Node *
+flatten_andors(Node *node)
 {
-	if (qual == NULL)
+	return flatten_andors_mutator(node, NULL);
+}
+
+static Node *
+flatten_andors_mutator(Node *node, void *context)
+{
+	if (node == NULL)
 		return NULL;
-
-	if (and_clause((Node *) qual))
+	if (IsA(node, BoolExpr))
 	{
-		FastList	out_list;
+		BoolExpr   *bexpr = (BoolExpr *) node;
 
-		FastListInit(&out_list);
-		flatten_andors_and_walker(&out_list, ((BoolExpr *) qual)->args);
-		return make_andclause(FastListValue(&out_list));
-	}
-	else if (or_clause((Node *) qual))
-	{
-		FastList	out_list;
+		if (bexpr->boolop == AND_EXPR)
+		{
+			FastList	out_list;
 
-		FastListInit(&out_list);
-		flatten_andors_or_walker(&out_list, ((BoolExpr *) qual)->args);
-		return make_orclause(FastListValue(&out_list));
-	}
-	else if (not_clause((Node *) qual))
-		return make_notclause(flatten_andors(get_notclausearg(qual)));
-	else if (is_opclause(qual))
-	{
-		OpExpr	   *opexpr = (OpExpr *) qual;
-		Expr	   *left = (Expr *) get_leftop(qual);
-		Expr	   *right = (Expr *) get_rightop(qual);
+			FastListInit(&out_list);
+			flatten_andors_and_walker(&out_list, bexpr->args);
+			return (Node *) make_andclause(FastListValue(&out_list));
+		}
+		if (bexpr->boolop == OR_EXPR)
+		{
+			FastList	out_list;
 
-		return make_opclause(opexpr->opno,
-							 opexpr->opresulttype,
-							 opexpr->opretset,
-							 flatten_andors(left),
-							 flatten_andors(right));
+			FastListInit(&out_list);
+			flatten_andors_or_walker(&out_list, bexpr->args);
+			return (Node *) make_orclause(FastListValue(&out_list));
+		}
+		/* else it's a NOT clause, fall through */
 	}
-	else
-		return qual;
+	return expression_tree_mutator(node, flatten_andors_mutator, context);
 }
 
 static void
@@ -334,9 +322,9 @@ flatten_andors_and_walker(FastList *out_list, List *andlist)
 
 	foreach(arg, andlist)
 	{
-		Expr	   *subexpr = (Expr *) lfirst(arg);
+		Node	   *subexpr = (Node *) lfirst(arg);
 
-		if (and_clause((Node *) subexpr))
+		if (and_clause(subexpr))
 			flatten_andors_and_walker(out_list, ((BoolExpr *) subexpr)->args);
 		else
 			FastAppend(out_list, flatten_andors(subexpr));
@@ -350,9 +338,9 @@ flatten_andors_or_walker(FastList *out_list, List *orlist)
 
 	foreach(arg, orlist)
 	{
-		Expr	   *subexpr = (Expr *) lfirst(arg);
+		Node	   *subexpr = (Node *) lfirst(arg);
 
-		if (or_clause((Node *) subexpr))
+		if (or_clause(subexpr))
 			flatten_andors_or_walker(out_list, ((BoolExpr *) subexpr)->args);
 		else
 			FastAppend(out_list, flatten_andors(subexpr));
@@ -383,9 +371,9 @@ pull_ands_walker(FastList *out_list, List *andlist)
 
 	foreach(arg, andlist)
 	{
-		Expr	   *subexpr = (Expr *) lfirst(arg);
+		Node	   *subexpr = (Node *) lfirst(arg);
 
-		if (and_clause((Node *) subexpr))
+		if (and_clause(subexpr))
 			pull_ands_walker(out_list, ((BoolExpr *) subexpr)->args);
 		else
 			FastAppend(out_list, subexpr);
@@ -416,9 +404,9 @@ pull_ors_walker(FastList *out_list, List *orlist)
 
 	foreach(arg, orlist)
 	{
-		Expr	   *subexpr = (Expr *) lfirst(arg);
+		Node	   *subexpr = (Node *) lfirst(arg);
 
-		if (or_clause((Node *) subexpr))
+		if (or_clause(subexpr))
 			pull_ors_walker(out_list, ((BoolExpr *) subexpr)->args);
 		else
 			FastAppend(out_list, subexpr);
@@ -427,9 +415,10 @@ pull_ors_walker(FastList *out_list, List *orlist)
 
 /*
  * find_nots
- *	  Traverse the qualification, looking for 'NOT's to take care of.
- *	  For 'NOT' clauses, apply push_not() to try to push down the 'NOT'.
- *	  For all other clause types, simply recurse.
+ *	  Traverse the qualification, looking for NOTs to take care of.
+ *	  For NOT clauses, apply push_nots() to try to push down the NOT.
+ *	  For AND and OR clause types, simply recurse.  Otherwise stop
+ *	  recursing (we do not worry about structure below the top AND/OR tree).
  *
  * Returns the modified qualification.	AND/OR flatness is preserved.
  */
@@ -439,21 +428,6 @@ find_nots(Expr *qual)
 	if (qual == NULL)
 		return NULL;
 
-#ifdef NOT_USED
-	/* recursing into operator expressions is probably not worth it. */
-	if (is_opclause(qual))
-	{
-		OpExpr	   *opexpr = (OpExpr *) qual;
-		Expr	   *left = (Expr *) get_leftop(qual);
-		Expr	   *right = (Expr *) get_rightop(qual);
-
-		return make_opclause(opexpr->opno,
-							 opexpr->opresulttype,
-							 opexpr->opretset,
-							 find_nots(left),
-							 find_nots(right));
-	}
-#endif
 	if (and_clause((Node *) qual))
 	{
 		FastList	t_list;
@@ -482,7 +456,7 @@ find_nots(Expr *qual)
 
 /*
  * push_nots
- *	  Push down a 'NOT' as far as possible.
+ *	  Push down a NOT as far as possible.
  *
  * Input is an expression to be negated (e.g., the argument of a NOT clause).
  * Returns a new qual equivalent to the negation of the given qual.
@@ -496,7 +470,7 @@ push_nots(Expr *qual)
 
 	/*
 	 * Negate an operator clause if possible: ("NOT" (< A B)) => (> A B)
-	 * Otherwise, retain the clause as it is (the 'not' can't be pushed
+	 * Otherwise, retain the clause as it is (the NOT can't be pushed
 	 * down any farther).
 	 */
 	if (is_opclause(qual))
@@ -543,16 +517,15 @@ push_nots(Expr *qual)
 	else if (not_clause((Node *) qual))
 	{
 		/*
-		 * Another 'not' cancels this 'not', so eliminate the 'not' and
-		 * stop negating this branch.  But search the subexpression for
-		 * more 'not's to simplify.
+		 * Another NOT cancels this NOT, so eliminate the NOT and
+		 * stop negating this branch.
 		 */
-		return find_nots(get_notclausearg(qual));
+		return get_notclausearg(qual);
 	}
 	else
 	{
 		/*
-		 * We don't know how to negate anything else, place a 'not' at
+		 * We don't know how to negate anything else, place a NOT at
 		 * this level.
 		 */
 		return make_notclause(qual);
@@ -561,12 +534,13 @@ push_nots(Expr *qual)
 
 /*
  * find_ors
- *	  Given a qualification tree with the 'not's pushed down, convert it
+ *	  Given a qualification tree with the NOTs pushed down, convert it
  *	  to a tree in CNF by repeatedly applying the rule:
  *				("OR" A ("AND" B C))  => ("AND" ("OR" A B) ("OR" A C))
  *
  *	  Note that 'or' clauses will always be turned into 'and' clauses
- *	  if they contain any 'and' subclauses.
+ *	  if they contain any 'and' subclauses.  Also, we do not descend
+ *	  below the top-level AND/OR structure.
  *
  * Returns the modified qualification.	AND/OR flatness is preserved.
  */
@@ -576,7 +550,6 @@ find_ors(Expr *qual)
 	if (qual == NULL)
 		return NULL;
 
-	/* We used to recurse into opclauses here, but I see no reason to... */
 	if (and_clause((Node *) qual))
 	{
 		List	   *andlist = NIL;
@@ -595,8 +568,6 @@ find_ors(Expr *qual)
 			orlist = lappend(orlist, find_ors(lfirst(temp)));
 		return or_normalize(pull_ors(orlist));
 	}
-	else if (not_clause((Node *) qual))
-		return make_notclause(find_ors(get_notclausearg(qual)));
 	else
 		return qual;
 }
@@ -688,12 +659,13 @@ or_normalize(List *orlist)
 
 /*
  * find_ands
- *	  Given a qualification tree with the 'not's pushed down, convert it
+ *	  Given a qualification tree with the NOTs pushed down, convert it
  *	  to a tree in DNF by repeatedly applying the rule:
  *				("AND" A ("OR" B C))  => ("OR" ("AND" A B) ("AND" A C))
  *
  *	  Note that 'and' clauses will always be turned into 'or' clauses
- *	  if they contain any 'or' subclauses.
+ *	  if they contain any 'or' subclauses.  Also, we do not descend
+ *	  below the top-level AND/OR structure.
  *
  * Returns the modified qualification.	AND/OR flatness is preserved.
  */
@@ -703,7 +675,6 @@ find_ands(Expr *qual)
 	if (qual == NULL)
 		return NULL;
 
-	/* We used to recurse into opclauses here, but I see no reason to... */
 	if (or_clause((Node *) qual))
 	{
 		List	   *orlist = NIL;
@@ -722,8 +693,6 @@ find_ands(Expr *qual)
 			andlist = lappend(andlist, find_ands(lfirst(temp)));
 		return and_normalize(pull_ands(andlist));
 	}
-	else if (not_clause((Node *) qual))
-		return make_notclause(find_ands(get_notclausearg(qual)));
 	else
 		return qual;
 }
@@ -860,8 +829,6 @@ qual_cleanup(Expr *qual)
 		else
 			return lfirst(orlist);
 	}
-	else if (not_clause((Node *) qual))
-		return make_notclause(qual_cleanup(get_notclausearg(qual)));
 	else
 		return qual;
 }
@@ -889,14 +856,14 @@ remove_duplicates(List *list)
 /*
  * count_bool_nodes
  *		Support for heuristics in canonicalize_qual(): count the
- *		number of nodes that are inputs to the top level AND/OR/NOT
+ *		number of nodes that are inputs to the top level AND/OR
  *		part of a qual tree, and estimate how many nodes will appear
  *		in the CNF'ified or DNF'ified equivalent of the expression.
  *
- * This is just an approximate calculation; it doesn't deal with NOTs
- * very well, and of course it cannot detect possible simplifications
- * from eliminating duplicate subclauses.  The idea is just to cheaply
- * determine whether CNF will be markedly worse than DNF or vice versa.
+ * This is just an approximate calculation; it cannot detect possible
+ * simplifications from eliminating duplicate subclauses.  The idea is just to
+ * cheaply determine whether CNF will be markedly worse than DNF or vice
+ * versa.
  *
  * The counts/estimates are represented as doubles to avoid risk of overflow.
  */
@@ -952,11 +919,6 @@ count_bool_nodes(Expr *qual,
 		 */
 		if (*cnfnodes < *dnfnodes)
 			*cnfnodes = *dnfnodes;
-	}
-	else if (not_clause((Node *) qual))
-	{
-		count_bool_nodes(get_notclausearg(qual),
-						 nodes, cnfnodes, dnfnodes);
 	}
 	else if (contain_subplans((Node *) qual))
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.162 2003/11/29 19:51:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.163 2003/12/28 21:57:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -377,29 +377,32 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 		expr = flatten_join_alias_vars(parse, expr);
 
 	/*
-	 * Simplify constant expressions.
-	 *
-	 * Note that at this point quals have not yet been converted to
-	 * implicit-AND form, so we can apply eval_const_expressions directly.
-	 */
-	expr = eval_const_expressions(expr);
-
-	/*
-	 * If it's a qual or havingQual, canonicalize it, and convert it to
-	 * implicit-AND format.
-	 *
-	 * XXX Is there any value in re-applying eval_const_expressions after
-	 * canonicalize_qual?
+	 * If it's a qual or havingQual, canonicalize it.  It seems most useful
+	 * to do this before applying eval_const_expressions, since the latter
+	 * can optimize flattened AND/ORs better than unflattened ones.
 	 */
 	if (kind == EXPRKIND_QUAL)
 	{
-		expr = (Node *) canonicalize_qual((Expr *) expr, true);
+		expr = (Node *) canonicalize_qual((Expr *) expr);
 
 #ifdef OPTIMIZER_DEBUG
 		printf("After canonicalize_qual()\n");
 		pprint(expr);
 #endif
 	}
+
+	/*
+	 * Simplify constant expressions.
+	 */
+	expr = eval_const_expressions(expr);
+
+	/*
+	 * If it's a qual or havingQual, convert it to implicit-AND format.
+	 * (We don't want to do this before eval_const_expressions, since the
+	 * latter would be unable to simplify a top-level AND correctly.)
+	 */
+	if (kind == EXPRKIND_QUAL)
+		expr = (Node *) make_ands_implicit((Expr *) expr);
 
 	/* Expand SubLinks to SubPlans */
 	if (parse->hasSubLinks)

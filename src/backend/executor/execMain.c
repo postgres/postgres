@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.223 2003/12/01 22:07:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.224 2003/12/28 21:57:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #include "executor/execdebug.h"
 #include "executor/execdefs.h"
 #include "miscadmin.h"
+#include "optimizer/clauses.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "utils/acl.h"
@@ -1658,7 +1659,8 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 			(List **) palloc(ncheck * sizeof(List *));
 		for (i = 0; i < ncheck; i++)
 		{
-			qual = (List *) stringToNode(check[i].ccbin);
+			/* ExecQual wants implicit-AND form */
+			qual = make_ands_implicit(stringToNode(check[i].ccbin));
 			resultRelInfo->ri_ConstraintExprs[i] = (List *)
 				ExecPrepareExpr((Expr *) qual, estate);
 		}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.116 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.117 2003/12/28 21:57:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@
 
 
 /* non-export function prototypes */
-static void CheckPredicate(List *predList);
+static void CheckPredicate(Expr *predicate);
 static void ComputeIndexAttrs(IndexInfo *indexInfo, Oid *classOidP,
 				  List *attList,
 				  Oid relId,
@@ -80,7 +80,6 @@ DefineIndex(RangeVar *heapRelation,
 	Form_pg_am	accessMethodForm;
 	IndexInfo  *indexInfo;
 	int			numberOfAttributes;
-	List	   *cnfPred = NIL;
 
 	/*
 	 * count attributes in index
@@ -172,16 +171,10 @@ DefineIndex(RangeVar *heapRelation,
 	}
 
 	/*
-	 * Convert the partial-index predicate from parsetree form to an
-	 * implicit-AND qual expression, for easier evaluation at runtime.
-	 * While we are at it, we reduce it to a canonical (CNF or DNF) form
-	 * to simplify the task of proving implications.
+	 * Validate predicate, if given
 	 */
 	if (predicate)
-	{
-		cnfPred = canonicalize_qual((Expr *) copyObject(predicate), true);
-		CheckPredicate(cnfPred);
-	}
+		CheckPredicate(predicate);
 
 	/*
 	 * Check that all of the attributes in a primary key are marked as not
@@ -237,13 +230,13 @@ DefineIndex(RangeVar *heapRelation,
 
 	/*
 	 * Prepare arguments for index_create, primarily an IndexInfo
-	 * structure
+	 * structure.  Note that ii_Predicate must be in implicit-AND format.
 	 */
 	indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_NumIndexAttrs = numberOfAttributes;
 	indexInfo->ii_Expressions = NIL;	/* for now */
 	indexInfo->ii_ExpressionsState = NIL;
-	indexInfo->ii_Predicate = cnfPred;
+	indexInfo->ii_Predicate = make_ands_implicit(predicate);
 	indexInfo->ii_PredicateState = NIL;
 	indexInfo->ii_Unique = unique;
 
@@ -268,7 +261,7 @@ DefineIndex(RangeVar *heapRelation,
 
 /*
  * CheckPredicate
- *		Checks that the given list of partial-index predicates is valid.
+ *		Checks that the given partial-index predicate is valid.
  *
  * This used to also constrain the form of the predicate to forms that
  * indxpath.c could do something with.	However, that seems overly
@@ -278,18 +271,18 @@ DefineIndex(RangeVar *heapRelation,
  * (except ones requiring a plan), and let indxpath.c fend for itself.
  */
 static void
-CheckPredicate(List *predList)
+CheckPredicate(Expr *predicate)
 {
 	/*
 	 * We don't currently support generation of an actual query plan for a
 	 * predicate, only simple scalar expressions; hence these
 	 * restrictions.
 	 */
-	if (contain_subplans((Node *) predList))
+	if (contain_subplans((Node *) predicate))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("cannot use subquery in index predicate")));
-	if (contain_agg_clause((Node *) predList))
+	if (contain_agg_clause((Node *) predicate))
 		ereport(ERROR,
 				(errcode(ERRCODE_GROUPING_ERROR),
 				 errmsg("cannot use aggregate in index predicate")));
@@ -298,7 +291,7 @@ CheckPredicate(List *predList)
 	 * A predicate using mutable functions is probably wrong, for the same
 	 * reasons that we don't allow an index expression to use one.
 	 */
-	if (contain_mutable_functions((Node *) predList))
+	if (contain_mutable_functions((Node *) predicate))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 		errmsg("functions in index predicate must be marked IMMUTABLE")));

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.160 2003/11/29 19:51:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.161 2003/12/28 21:57:37 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -810,13 +810,6 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 			node = (Node *) stringToNode(predString);
 			pfree(predString);
 
-			/*
-			 * If top level is a List, assume it is an implicit-AND
-			 * structure, and convert to explicit AND.	This is needed for
-			 * partial index predicates.
-			 */
-			if (node && IsA(node, List))
-				node = (Node *) make_ands_explicit((List *) node);
 			/* Deparse */
 			str = deparse_expression_pretty(node, context, false, false,
 											prettyFlags, 0);
@@ -1060,14 +1053,6 @@ pg_get_constraintdef_worker(Oid constraintId, int prettyFlags)
 				conbin = DatumGetCString(DirectFunctionCall1(textout, val));
 				expr = stringToNode(conbin);
 
-				/*
-				 * If top level is a List, assume it is an implicit-AND
-				 * structure, and convert to explicit AND.	This is needed
-				 * for partial index predicates.
-				 */
-				if (expr && IsA(expr, List))
-					expr = (Node *) make_ands_explicit((List *) expr);
-
 				/* Set up deparsing context for Var nodes in constraint */
 				if (conForm->conrelid != InvalidOid)
 				{
@@ -1211,14 +1196,6 @@ pg_get_expr_worker(text *expr, Oid relid, char *relname, int prettyFlags)
 
 	/* Convert expression to node tree */
 	node = (Node *) stringToNode(exprstr);
-
-	/*
-	 * If top level is a List, assume it is an implicit-AND structure, and
-	 * convert to explicit AND.  This is needed for partial index
-	 * predicates.
-	 */
-	if (node && IsA(node, List))
-		node = (Node *) make_ands_explicit((List *) node);
 
 	/* Deparse */
 	context = deparse_context_for(relname, relid);
