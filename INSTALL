@@ -1,12 +1,8 @@
-
-
 PostgreSQL Installation Guide
 by The PostgreSQL Development Team
-
 Edited by Thomas Lockhart
 
-PostgreSQL is copyright (C) 1998
-by the Postgres Global Development Group.
+PostgreSQL is © 1996-9 by the Postgres Global Development Group.
 
 Table of Contents
 
@@ -21,12 +17,6 @@ Table of Contents
           Playing with Postgres                           
           The Next Step                                   
           Porting Notes                                   
-             Ultrix4.x                                    
-             Linux                                        
-                 Linux ELF                                
-                 Linux a.out                              
-             BSD/OS                                       
-             NeXT                                         
        4. Configuration Options                           
           Parameters for Configuration (configure)        
           Parameters for Building (make)                  
@@ -38,15 +28,16 @@ Table of Contents
              Installation                                 
              Operation                                    
        5. Release Notes                                   
-          Release 6.4                                     
-             Migration to v6.4                            
+          Release 6.5                                     
+             Migration to v6.5                            
+                 Multi-Version Concurrency Control        
              Detailed Change List                         
 
 List of Tables
 
-       2-1. Supported Platforms                          
-       2-2. Possibly Incompatible Platforms              
-       4-1. Kerberos Parameter Examples                  
+       2-1. Supported Platforms                           
+       2-2. Possibly Incompatible Platforms               
+       4-1. Kerberos Parameter Examples                   
 
 Summary
 
@@ -71,152 +62,175 @@ Chapter 1. Introduction
 
 Chapter 2. Ports
 
-       This manual describes version 6.4 of Postgres. The 
+        This manual describes version 6.5 of Postgres. The 
        Postgres developer community has compiled and tested 
        Postgres on a number of platforms. Check the web site 
-       for the latest information.
+       (http://www.postgresql.org/docs/admin/ports.htm) for 
+       the latest information. 
 
 Currently Supported Platforms
 
-       At the time of publication, the following platforms 
+        At the time of publication, the following platforms 
        have been tested: 
 
        Table 2-1. Supported Platforms
-       OS             Processor     Version  Reported     Remarks
-       AIX 4.2.1      RS6000        v6.4     1998-10-27   (Andreas Zeugswetter)
-       BSDI           x86           v6.4     1998-10-25   (Bruce Momjian
-       FreeBSD        x86           v6.4     1998-10-26   (Tatsuo Ishii, Marc 
-       2.2.x-3.x                                          Fournier)
-       DGUX 5.4R4.11  m88k          v6.3     1998-03-01   v6.4 probably OK. Needs 
-                                                          new maintainer. (Brian E 
-                                                          Gallew)
-       Digital Unix   Alpha         v6.4     1998-10-29   Minor patchable problems 
-       4.0                                                (Pedro J. Lobo)
-       HPUX           PA-RISC       v6.4     1998-10-25   Both 9.0x and 10.20 
-                                                          (Tom Lane, Stan Brown)
-       IRIX 6.x       MIPS          v6.3     1998-03-01   5.x is different (Andrew 
-                                                          Martin)
-       linux 2.0.x    Alpha         v6.3.2   1998-04-16   Mostly successful. Needs 
-                                                          work for v6.4. (Ryan 
-                                                          Kirkpatrick)
-       linux 2.0.x    x86           v6.4     1998-10-27   (Thomas Lockhart)
-       linux          x86           v6.4     1998-10-25   (Oliver Elphick, Taral)
-       2.0.x/glibc2
-       linux 2.0.x    Sparc         v6.4     1998-10-25   (Tom Szybist)
-       linuxPPC       PPC603e       v6.4     1998-10-26   Powerbook 2400c (Tatsuo 
-       2.1.24                                             Ishii)
-       mklinux DR3    PPC750        v6.4     1998-09-16   PowerMac 7600 (Tatsuo 
-                                                          Ishii)
-       NetBSD/i386    x86           v6.4     1998-10-25   (Brook Milligan)
-       1.3.2
-       NetBSD-        NS32532       v6.4     1998-10-27   (small problems in 
-       current                                            date/time math 
-                                                          (Jon Buller)
-       NetBSD/sparc   Sparc         v6.4     1998-10-27   (Tom I Helbekkmo)
-       1.3H
-       NetBSD 1.3     VAX           v6.3     1998-03-01   (Tom I Helbekkmo)
-       SCO UnixWare   x86           v6.3     1998-03-01   aka UNIVEL (Billy G. 
-       2.x                                                Allie)
-       SCO UnixWare   x86           v6.4     1998-10-04   (Billy G. Allie)
-       7
-       Solaris        x86           v6.4     1998-10-28   (Marc Fournier)
-       Solaris        Sparc         v6.4     1998-10-28   (Tom Szybist, Frank 
-       2.6-2.7                                            Ridderbusch)
-       SunOS 4.1.4    Sparc         v6.3     1998-03-01   patches submitted (Tatsuo 
-                                                          Ishii)
-       SVR4           MIPS          v6.4     1998-10-28   no 64-bit int support 
-                                                          (Frank Ridderbusch)
-       SVR4 4.4       m88k          v6.2.1   1998-03-01   confirmed with patching 
-                                                          (Doug Winterburn)
-       Windows NT     x86           v6.4     1998-10-08   Mostly working with the 
-                                                          Cygwin library. No DLLs 
-                                                          yet. (Horak Daniel) 
+       OS          Processor   Version    Reported    Remarks
+       AIX 4.3.2   RS6000      v6.5       1999-05-26  (Andreas Zeugswetter 
+                                                      (mailto:Andreas.Zeugswetter@telecom.at))
+       BSDI        x86         v6.5       1999-05-25  (Bruce Momjian 
+                                                      (mailto:maillist@candle.pha.pa.us)
+       FreeBSD     x86         v6.5       1999-05-25  (Tatsuo Ishii 
+       2.2.x-4.0                                      (mailto:t-ishii@sra.co.jp), 
+                                                      Marc Fournier 
+                                                      (mailto:scrappy@hub.org))
+       DGUX        m88k        v6.3       1998-03-01  v6.4 probably OK. Needs new 
+       5.4R4.11                                       maintainer. (Brian E Gallew 
+                                                      (mailto:geek+@cmu.edu))
+       Digital     Alpha       v6.4       1998-10-29  Minor patchable problems 
+       Unix 4.0                                       (Pedro J. Lobo 
+                                                      (mailto:pjlobo@euitt.upm.es))
+       HPUX        PA-RISC     v6.4       1998-10-25  Both 9.0x and 10.20 (Tom Lane 
+                                                      (mailto:tgl@sss.pgh.pa.us), 
+                                                      Stan Brown 
+                                                      (mailto:stanb@awod.com))
+       IRIX 6.5    MIPS        v6.4       1998-12-29  IRIX 5.x is different (Mark Dalphin 
+                                                      (mdalphin@amgen.com))
+       linux       Alpha       v6.3.2     1998-04-16  Mostly successful. Needs 
+       2.0.x                                          work for v6.4. (Ryan Kirkpatrick 
+                                                      (mailto:rkirkpat@nag.cs.colorado.edu))
+       linux       x86         v6.4       1998-10-27  (Thomas Lockhart 
+       2.0.x/libc5                                    (mailto:lockhart@alumni.caltech.edu))
+       linux       x86         v6.5       1999-05-24  (Thomas Lockhart 
+       2.0.x/glibc                                    (mailto:lockhart@alumni.caltech.edu))
+       linux       MIPS        v6.4       1998-12-16  Cobalt Qube (Tatsuo Ishii 
+       2.0.x                                          (mailto:t-ishii@sra.co.jp))
+       linux       Sparc       v6.4       1998-10-25  (Tom Szybist 
+       2.0.x                                          (mailto:szybist@boxhill.com))
+       linuxPPC    PPC603e     v6.4       1998-10-26  Powerbook 2400c (Tatsuo Ishii
+       2.1.24                                         (mailto:t-ishii@sra.co.jp))
+       mklinux DR3 PPC750      v6.4       1998-09-16  PowerMac 7600 (Tatsuo Ishii 
+                                                      (mailto:t-ishii@sra.co.jp))
+       NetBSD      arm32       v6.5       1999-04-14  (Andrew McMurry 
+                                                      (mailto:a.mcmurry1@physics.oxford.ac.uk))
+       NetBSD/i3-  x86         v6.4       1998-10-25  (Brook Milligan 
+       86 1.3.2                                       (mailto:brook@trillium.NMSU.Edu))
+       NetBSD      m68k        v6.4.2     1998-12-28  Mac SE/30 (Mr. Mutsuki 
+                                                      Nakajima, Tatsuo Ishii 
+                                                      (mailto:t-ishii@sra.co.jp))
+       NetBSD-     NS32532     v6.4       1998-10-27  small problems in date/time 
+       current                                        math (Jon Buller 
+                                                      (mailto:jonb@metronet.com))
+       NetBSD/sp-  Sparc       v6.4       1998-10-27  (Tom I Helbekkmo 
+       arc 1.3H                                       (mailto:tih@hamartun.priv.no))
+       NetBSD 1.3  VAX         v6.3       1998-03-01  (Tom I Helbekkmo 
+                                                      (mailto:tih@hamartun.priv.no))
+       SCO         x86         v6.5       1999-05-25  (Andrew Merrill 
+       OpenServer 5                                   (mailto:andrew@compclass.com))
+       SCO         x86         v6.5       1999-05-25  (Andrew Merrill 
+       UnixWare 7                                     (mailto:andrew@compclass.com))
+       Solaris     x86         v6.4       1998-10-28  (Marc Fournier 
+                                                      (mailto:scrappy@hub.org))
+       Solaris     Sparc       v6.4       1998-10-28  (Tom Szybist 
+       2.6-2.7                                        (mailto:szybist@boxhill.com),
+                                                      Frank Ridderbusch 
+                                                      (mailto:ridderbusch.pad@sni.de))
+       SunOS       Sparc       v6.3       1998-03-01  Patches submitted (Tatsuo Ishii
+       4.1.4                                          (mailto:t-ishii@sra.co.jp))
+       SVR4        MIPS        v6.4       1998-10-28  No 64-bit int compiler 
+                                                      support (Frank Ridderbusch 
+                                                      (mailto:ridderbusch.pad@sni.de))
+       Windows     x86         v6.4       1999-01-06  Client-side libraries or 
+                                                      ODBC/JDBC. No server yet. 
+                                                      (Magnus Hagander 
+                                                      (mha@sollentuna.net)
+       Windows NT  x86         v6.5       1999-05-26  Working with the Cygwin 
+                                                      library. (Daniel Horak 
+                                                      (mailto:Dan.Horak@email.cz)) 
 
 
-       Platforms listed for v6.3.x should also work with 
-       v6.4, but we did not receive confirmation of such at 
-       the time this list was compiled. 
+        
+        Platforms listed for v6.3.x and v6.4.x should also 
+       work with v6.5, but we did not receive explicit 
+       confirmation of such at the time this list was 
+       compiled. 
 
          Note: For Windows NT, the server-side port of 
-         Postgres has recently been accomplished. Check the 
-         Askesis Postgres Home Page for up to date 
-         information. You may also want to look for 
-         possible patches on the Postgres web site.
+         Postgres has recently been accomplished. The 
+         Cygnus library is required to compile it.
 
 Unsupported Platforms
 
-       There are a few platforms which have been attempted 
+        There are a few platforms which have been attempted 
        and which have been reported to not work with the 
        standard distribution. Others listed here do not 
        provide sufficient library support for an attempt. 
 
        Table 2-2. Possibly Incompatible Platforms
-       OS        Processor  Version  Reported      Remarks
-       MacOS     all        v6.3     1998-03-01    not library compatible; 
-                                                   use ODBC/JDBC
-       NetBSD    arm32      v6.3     1998-03-01    not yet working (Dave 
-                                                   Millen)
-       NetBSD    m68k       v6.3     1998-03-01    Amiga, HP300, Mac; not 
-                                                   yet working (Henry Hotz)
-       NextStep  x86        v6.x     1998-03-01    client-only support; 
-                                                   v1.0.9 worked with 
-                                                   patches (David Wetzel)
-       Ultrix    MIPS,VAX?  v6.x     1998-03-01    no recent reports; 
-                                                   obsolete?
-       Windows   x86        v6.3     1998-03-01    not library compatible; 
-                                                   client side maybe; use 
-                                                   ODBC/JDBC
+       OS          Processor   Version    Reported    Remarks
+       MacOS       all         v6.3       1998-03-01  Not library compatible; 
+                                                      use ODBC/JDBC
+       NextStep    x86         v6.x       1998-03-01  Client-only support; 
+                                                      v1.0.9 worked with 
+                                                      patches (David Wetzel 
+                                                      (mailto:dave@turbocat.de))
+       SVR4 4.4    m88k        v6.2.1     1998-03-01  Confirmed with patching; 
+                                                      v6.4.x will need TAS 
+                                                      spinlock code (Doug Winterburn 
+                                                      (mailto:dlw@seavme.xroads.com))
+       Ultrix      MIPS,VAX?   v6.x       1998-03-01  No recent reports; obsolete?
 
 
-       Note that Windows ports of the frontend are 
-       apparently possible using third-party Posix porting 
-       tools and libraries.
+        
 
 Chapter 3. Installation
 
-       Complete installation instructions for Postgres v6.4.
-       Before installing Postgres, you may wish to visit 
-       www.postgresql.org for up to date information, 
-       patches, etc.
-       These installation instructions assume: 
-       o Commands are Unix-compatible. See note below.
-       o Defaults are used except where noted.
-       o User postgres is the Postgres superuser.
-       o The source path is /usr/src/pgsql (other paths are possible).
-       o The runtime path is /usr/local/pgsql (other paths are possible).
-       Commands were tested on RedHat Linux version 4.2 
+        Complete installation instructions for Postgres 
+       v6.5. 
+
+        Before installing Postgres, you may wish to visit 
+       www.postgresql.org (http://www.postgresql.org) for up 
+       to date information, patches, etc. 
+        These installation instructions assume: 
+       o  Commands are Unix-compatible. See note below. 
+       o  Defaults are used except where noted. 
+       o  User postgres is the Postgres superuser. 
+       o  The source path is /usr/src/pgsql (other paths are possible). 
+       o  The runtime path is /usr/local/pgsql (other paths are possible). 
+        
+        Commands were tested on RedHat Linux version 5.2 
        using the tcsh shell. Except where noted, they will 
        probably work on most systems. Commands like ps and 
        tar may vary wildly between platforms on what options 
        you should use. Use common sense before typing in 
-       these commands.
-       Our Makefiles require GNU make (called ?gmake? in this 
+       these commands. 
+        Our Makefiles require GNU make (called ?gmake? in this 
        document). They will not work with non-GNU make 
        programs. If you have GNU make installed under the 
        name ?make? instead of ?gmake?, then you will use the 
        command make instead. That's OK, but you need to have 
-       the GNU form of make to succeed with an installation.
+       the GNU form of make to succeed with an installation. 
 
 Requirements to Run Postgres
 
-       Up to date information on supported platforms is at 
-       http://www.postgresql.org/docs/admin/install.htm. In 
-       general, most Unix-compatible platforms with modern 
-       libraries should be able to run Postgres.
-       Although the minimum required memory for running 
+        Up to date information on supported platforms is at 
+       http://www.postgresql.org/docs/admin/install.htm 
+       (http://www.postgresql.org/docs/admin/install.htm). 
+       In general, most Unix-compatible platforms with 
+       modern libraries should be able to run Postgres. 
+        Although the minimum required memory for running 
        Postgres is as little as 8MB, there are noticable 
        improvements in runtimes for the regression tests 
        when expanding memory up to 96MB on a relatively fast 
        dual-processor system running X-Windows. The rule is 
-       you can never have too much memory.
-       Check that you have sufficient disk space. You will 
+       you can never have too much memory. 
+        Check that you have sufficient disk space. You will 
        need about 30 Mbytes for /usr/src/pgsql, about 5 
        Mbytes for /usr/local/pgsql (excluding your database) 
        and 1 Mbyte for an empty database. The database will 
        temporarily grow to about 20 Mbytes during the 
        regression tests. You will also need about 3 Mbytes 
-       for the distribution tar file.
-       We therefore recommend that during installation and 
+       for the distribution tar file. 
+        We therefore recommend that during installation and 
        testing you have well over 20 Mbytes free under 
        /usr/local and another 25 Mbytes free on the disk 
        partition containing your database. Once you delete 
@@ -224,18 +238,18 @@ Requirements to Run Postgres
        you will need 2 Mbytes for /usr/local/pgsql, 1 Mbyte 
        for the empty database, plus about five times the 
        space you would require to store your database data 
-       in a flat file.
-       To check for disk space, use 
+       in a flat file. 
+        To check for disk space, use 
 
        $ df -k
+           
+        
 
 Installation Procedure
 
-       Procedure 3.1. Postgres Installation
-
+       Postgres Installation
        For a fresh install or upgrading from previous 
        releases of Postgres:
-
        1. Read any last minute information and platform 
          specific porting notes. There are some platform 
          specific notes at the end of this file for 
@@ -246,7 +260,7 @@ Installation Procedure
          is a file called INSTALL in this directory then 
          this file will contain the latest installation 
          information.
-         Please note that a "tested" platform in the list 
+          Please note that a "tested" platform in the list 
          given earlier simply means that someone went to 
          the effort at some point of making sure that a 
          Postgres distribution would compile and run on 
@@ -257,34 +271,29 @@ Installation Procedure
          current release due to minor problems. Any such 
          known problems and their solutions will be posted 
          in ftp://ftp.postgresql.org/pub/INSTALL.
-
        2. Create the Postgres superuser account (postgres is 
-         commonly used) if it does not already exist. 
+         commonly used) if it does not already exist.
          The owner of the Postgres files can be any 
          unprivileged user account. It must not be root, 
          bin, or any other account with special access 
          rights, as that would create a security risk.
-
        3. Log in to the Postgres superuser account. Most of 
          the remaining steps in the installation will 
-         happen in this account. 
-
+         happen in this account.
        4. Ftp file 
-         ftp://ftp.postgresql.org/pub/postgresql-v6.4.tar.gz
+         ftp://ftp.postgresql.org/pub/postgresql-v6.5.tar.gz 
          from the Internet. Store it in your home directory.
-
        5. Some platforms use flex. If your system uses flex 
          then make sure you have a good version. To check, 
          type 
          $ flex --version
-
-         If the flex command is not found then you probably 
-         do not need it. If the version is 2.5.2 or 2.5.4 
-         or greater then you are okay. If it is 2.5.3 or 
-         before 2.5.2 then you will have to upgrade flex. 
-         You may get it at 
+          If the flex command is not found then you 
+         probably do not need it. If the version is 2.5.2 
+         or 2.5.4 or greater then you are okay. If it is 
+         2.5.3 or before 2.5.2 then you will have to 
+         upgrade flex. You may get it at 
          ftp://prep.ai.mit.edu/pub/gnu/flex-2.5.4.tar.gz.
-         If you need flex and don't have it or have the 
+          If you need flex and don't have it or have the 
          wrong version, then you will be told so when you 
          attempt to compile the program. Feel free to skip 
          this step if you aren't sure you need it. If you 
@@ -312,13 +321,12 @@ Installation Procedure
          $ gmake install
          $ cd /usr/local/src
          $ rm -rf flex-2.5.4
-         This will update files /usr/man/man1/flex.1, 
+          This will update files /usr/man/man1/flex.1, 
          /usr/bin/flex, /usr/lib/libfl.a, 
          /usr/include/FlexLexer.h and will add a link 
          /usr/bin/flex++ which points to flex.
-
        6. If you are not upgrading an existing system then 
-         skip to  step 9. If you are upgrading an existing 
+         skip to step 9. If you are upgrading an existing 
          system then back up your database. For alpha- and 
          beta-level releases, the database format is liable 
          to change, often every few weeks, with no notice 
@@ -327,35 +335,35 @@ Installation Procedure
          from previous releases. It is therefore a bad idea 
          to skip this step. 
 
-         Tip: Do not use the pg_dumpall script from v6.0 or 
-            everything will be owned by the Postgres super 
-            user.
+            Tip: Do not use the pg_dumpall script from v6.0 
+            or everything will be owned by the Postgres 
+            super user.
 
          To dump your fairly recent post-v6.0 database 
          installation, type 
-         $ pg_dumpall -z > db.out
+         $ pg_dumpall > db.out
          To use the latest pg_dumpall script on your 
          existing older database before upgrading Postgres, 
          pull the most recent version of pg_dumpall from 
          the new distribution: 
          $ cd
-         $ gunzip -c postgresql-v6.4.tar.gz \
+         $ gunzip -c postgresql-v6.5.tar.gz \
              | tar xvf - src/bin/pg_dump/pg_dumpall
          $ chmod a+x src/bin/pg_dump/pg_dumpall
-         $ src/bin/pg_dump/pg_dumpall -z > db.out
+         $ src/bin/pg_dump/pg_dumpall > db.out
          $ rm -rf src
-         If you wish to preserve object id's (oids), then 
+          If you wish to preserve object id's (oids), then 
          use the -o option when running pg_dumpall. 
          However, unless you have a special reason for 
          doing this (such as using OIDs as keys in tables), 
          don't do it.
-         If the pg_dumpall command seems to take a long 
+          If the pg_dumpall command seems to take a long 
          time and you think it might have died, then, from 
          another terminal, type 
          $ ls -l db.out
           several times to see if the size of the file is 
          growing.
-         Please note that if you are upgrading from a 
+          Please note that if you are upgrading from a 
          version prior to Postgres95 v1.09 then you must 
          back up your database, install Postgres95 v1.09, 
          restore your database, then back it up again. You 
@@ -363,7 +371,7 @@ Installation Procedure
          cover any release-specific issues.
 
                                  Caution
-              You must make sure that your database is not 
+               You must make sure that your database is not 
               updated in the middle of your backup. If 
               necessary, bring down postmaster, edit the 
               permissions in file 
@@ -379,7 +387,6 @@ Installation Procedure
          of processes. Type the following line, with pid 
          replaced by the process id for process postmaster. 
          (Do not use the id for process "grep postmaster".) 
-
          Type 
          $ kill pid
          to actually stop the process. 
@@ -399,32 +406,31 @@ Installation Procedure
          /usr/local/pgsql/data directory tree. At a 
          minimum, save file 
          /usr/local/pgsql/data/pg_hba.conf.
-         Type the following: 
+          Type the following: 
          $ su -
          $ cd /usr/src
          $ mv pgsql pgsql_6_0
          $ cd /usr/local
          $ mv pgsql pgsql_6_0
          $ exit
-         If you are not using /usr/local/pgsql/data as your 
-         data directory (check to see if environment 
+          If you are not using /usr/local/pgsql/data as 
+         your data directory (check to see if environment 
          variable PGDATA is set to something else) then you 
          will also want to move this directory in the same 
          manner.
-
        9. Make new source and install directories. The 
          actual paths can be different for your 
-         installation but you must be consistant throughout 
-         this procedure. 
+         installation but you must be consistent throughout 
+         this procedure.
 
-         Note: There are two places in this installation 
+            Note: There are two places in this installation 
             procedure where you will have an opportunity to 
             specify installation locations for programs, 
             libraries, documentation, and other files. 
             Usually it is sufficient to specify these at the 
-            make install stage of installation.
+            gmake install stage of installation.
 
-         Type 
+          Type 
          $ su
          $ cd /usr/src
          $ mkdir pgsql
@@ -435,7 +441,7 @@ Installation Procedure
          $ exit
        10.     Unzip and untar the new source file. Type 
          $ cd /usr/src/pgsql
-         $ gunzip -c ~/postgresql-v6.4.tar.gz | tar xvf -
+         $ gunzip -c ~/postgresql-v6.5.tar.gz | tar xvf -
        11.     Configure the source code for your system. It 
          is this step at which you can specify your actual 
          installation path for the build process (see the 
@@ -455,11 +461,12 @@ Installation Procedure
                Please Report Problems: If your system is not 
                  automatically recognized by configure and 
                  you have to do this, please send email to 
-                 scrappy@hub.org with the output of the 
-                 program ./config.guess. Indicate what the 
-                 template file should be.
+                 scrappy@hub.org (mailto:scrappy@hub.org) 
+                 with the output of the program 
+                 ./config.guess. Indicate what the template 
+                 file should be.
 
-            b. Choose configuration options. Check  
+            b. Choose configuration options. Check 
               Configuration Options for details. However, 
               for a plain-vanilla first installation with 
               no extra options like multi-byte character 
@@ -472,7 +479,8 @@ Installation Procedure
               configuration. To see them all, type 
                    ./configure --help
                Some of the more commonly used ones are: 
-                     --prefix=BASEDIR   Selects a different base directory
+                     --prefix=BASEDIR   Selects a different base directory for the
+                                        installation of the Postgres configuration.
                                         The default is /usr/local/pgsql.
                      --with-template=TEMPLATE
                                         Use template file TEMPLATE - the template
@@ -485,8 +493,7 @@ Installation Procedure
                      --enable-hba       Enables Host Based Authentication (DEFAULT)
                      --disable-hba      Disables Host Based Authentication
                      --enable-locale    Enables USE_LOCALE
-                     --enable-cassert   Enables 
-              ASSERT_CHECKING
+                     --enable-cassert   Enables ASSERT_CHECKING
                      --with-CC=compiler
                                         Use a specific C compiler that the configure
                                         script cannot find.
@@ -496,7 +503,8 @@ Installation Procedure
                                         script cannot find, or exclude C++ compilation
                                         altogether.   (This only affects libpq++ at
                                         present.)
-            c. Here is the configure script used on a Sparc Solaris 2.5 system with /opt/postgres 
+            c. Here is the configure script used on a Sparc 
+              Solaris 2.5 system with /opt/postgres 
               specified as the installation base directory: 
               $ ./configure --prefix=/opt/postgres \
                   --with-template=sparc_solaris-gcc 
@@ -512,17 +520,15 @@ Installation Procedure
          The documentation is also available in Postscript 
          format. Look for files ending with .ps.gz in the 
          same directory.
-
-       13.     <removed>
-
-       14.     Compile the program. Type 
+       13.     Compile the program. Type 
          $ cd /usr/src/pgsql/src
          $ gmake all >& make.log &
          $ tail -f make.log
-         The last line displayed will hopefully be 
+          The last line displayed will hopefully be 
          All of PostgreSQL is successfully made. Ready to 
          install.
-          At this point, or earlier if you wish, type 
+         Remember, ?gmake? may be called ?make? on your system. 
+         At this point, or earlier if you wish, type 
          control-C to get out of tail. (If you have 
          problems later on you may wish to examine file 
          make.log for warning and error messages.) 
@@ -531,33 +537,32 @@ Installation Procedure
             messages in make.log. Unless you have problems 
             later on, these messages may be safely ignored.
 
-         If the compiler fails with a message stating that 
+          If the compiler fails with a message stating that 
          the flex command cannot be found then install flex 
          as described earlier. Next, change directory back 
          to this directory, type 
-         $ make clean
+         $ gmake clean
          then recompile again.
-         Compiler options, such as optimization and 
+          Compiler options, such as optimization and 
          debugging, may be specified on the command line 
          using the COPT variable. For example, typing 
          $ gmake COPT="-g" all >& make.log &
           would invoke your compiler's -g option in all 
          steps of the build. See src/Makefile.global.in for 
          further details.
-
-       15.     Install the program. Type 
+       14.     Install the program. Type 
          $ cd /usr/src/pgsql/src
          $ gmake install >& make.install.log &
          $ tail -f make.install.log
-         The last line displayed will be 
+          The last line displayed will be 
          gmake[1]: Leaving directory 
          `/usr/src/pgsql/src/man'
          At this point, or earlier if you wish, type 
-         control-C to get out of tail.
-
-       16.     If necessary, tell your system how to find 
+         control-C to get out of tail. Remember, ?gmake? may 
+         be called ?make? on your system.
+       15.     If necessary, tell your system how to find 
          the new shared libraries. You can do one of the 
-         following, preferably the first: 
+         following, preferably the first:
             a. As root, edit file /etc/ld.so.conf. Add a 
               line 
               /usr/local/pgsql/lib
@@ -568,17 +573,16 @@ Installation Procedure
             c. In a csh shell, type 
                   setenv LD_LIBRARY_PATH 
               /usr/local/pgsql/lib
-         Please note that the above commands may vary 
+          Please note that the above commands may vary 
          wildly for different operating systems. Check the 
          platform specific notes, such as those for 
          Ultrix4.x or and for non-ELF Linux.
-         If, when you create the database, you get the 
+          If, when you create the database, you get the 
          message 
          pg_id: can't load library 'libpq.so'
           then the above step was necessary. Simply do this 
          step, then try to create the database again.
-
-       17.     If you used the --with-perl option to 
+       16.     If you used the --with-perl option to 
          configure, check the install log to see whether 
          the Perl module was actually installed. If you've 
          followed our advice to make the Postgres files be 
@@ -588,13 +592,14 @@ Installation Procedure
          You can complete its installation, either now or 
          later, by becoming the user that does own the Perl 
          library (often root) (via su) and doing 
-         $ cd /usr/src/pgsql/src/interfaces/perl5
-         $ gmake install
-
-       18.     If it has not already been done, then prepare 
+               $ cd /usr/src/pgsql/src/interfaces/perl5
+               $ gmake install
+              
+          
+       17.     If it has not already been done, then prepare 
          account postgres for using Postgres. Any account 
          that will use Postgres must be similarly prepared. 
-         There are several ways to influence the runtime 
+          There are several ways to influence the runtime 
          environment of the Postgres server. Refer to the 
          Administrator's Guide for more information. 
 
@@ -602,39 +607,47 @@ Installation Procedure
             bash/sh shell. Adapt accordingly for other 
             shells.
 
+          
             a. Add the following lines to your login 
               environment: shell, ~/.bash_profile: 
-              PATH=$PATH:/usr/local/pgsql/bin
-              MANPATH=$MANPATH:/usr/local/pgsql/man
-              PGLIB=/usr/local/pgsql/lib
-              PGDATA=/usr/local/pgsql/data
-              export PATH MANPATH PGLIB PGDATA
-            b. Several regression tests could failed if the 
+                PATH=$PATH:/usr/local/pgsql/bin
+                      MANPATH=$MANPATH:/usr/local/pgsql/man
+                      PGLIB=/usr/local/pgsql/lib
+                      PGDATA=/usr/local/pgsql/data
+                      export PATH MANPATH PGLIB PGDATA
+                     
+               
+            b. Several regression tests could fail if the 
               user's locale collation scheme is different 
               from that of standard C locale. 
-              If you configure and compile Postgres with 
+               If you configure and compile Postgres with 
               the --enable-locale option then set locale 
               environment to C (or unset all LC_* 
               variables) by putting these additional lines 
               to your login environment before starting 
               postmaster: 
-              LC_COLLATE=C
-              LC_CTYPE=C
-              LC_COLLATE=C
-              export LC_COLLATE LC_CTYPE LC_COLLATE
+                      LC_COLLATE=C
+                      LC_CTYPE=C
+                      LC_COLLATE=C
+                      export LC_COLLATE LC_CTYPE LC_COLLATE
+                     
+               
+                      
+                     
+               
             c. Make sure that you have defined these 
               variables before continuing with the 
               remaining steps. The easiest way to do this 
               is to type: 
-              $ source ~/.bash_profile
-
-       19.     Create the database installation from your 
+                $ source ~/.bash_profile
+                     
+               
+       18.     Create the database installation from your 
          Postgres superuser account (typically account 
          postgres). Do not do the following as root! This 
          would be a major security hole. Type 
          $ initdb
-
-       20.     Set up permissions to access the database 
+       19.     Set up permissions to access the database 
          system. Do this by editing file 
          /usr/local/pgsql/data/pg_hba.conf. The 
          instructions are included in the file. (If your 
@@ -646,9 +659,8 @@ Installation Procedure
          later you can copy file pg_hba.conf from your old 
          database on top of the one in your new database, 
          rather than redoing the file from scratch.
-
-       21.     Briefly test that the backend will start and 
-         run by running it from the command line. 
+       20.     Briefly test that the backend will start and 
+         run by running it from the command line.
             a. Start the postmaster daemon running in the 
               background by typing 
               $ cd
@@ -664,19 +676,18 @@ Installation Procedure
             f. Remove the test database (unless you will 
               want to use it later for other tests): 
               $ destroydb
-
-       22.     Run postmaster in the background from your 
+       21.     Run postmaster in the background from your 
          Postgres superuser account (typically account 
          postgres). Do not run postmaster from the root 
-         account! 
+         account!
          Usually, you will want to modify your computer so 
          that it will automatically start postmaster 
          whenever it boots. It is not required; the 
          Postgres server can be run successfully from 
          non-privileged accounts without root intervention.
-         Here are some suggestions on how to do this, 
+          Here are some suggestions on how to do this, 
          contributed by various users.
-         Whatever you do, postmaster must be run by the 
+          Whatever you do, postmaster must be run by the 
          Postgres superuser (postgres?) and not by root. 
          This is why all of the examples below start by 
          switching user (su) to postgres. These commands 
@@ -692,7 +703,7 @@ Installation Procedure
          o  Edit file rc.local on NetBSD or file rc2.d on 
            SPARC Solaris 2.5.1 to contain the following 
            single line: 
-           su postgres -c "/usr/local/pgsql/bin/postmaster 
+           su postgres -c "/usr/local/pgsql/bin/postmaster \
            -S -D /usr/local/pgsql/data"
          o  In FreeBSD 2.2-RELEASE edit 
            /usr/local/etc/rc.d/pgsql.sh to contain the 
@@ -701,32 +712,32 @@ Installation Procedure
            #!/bin/sh
            [ -x /usr/local/pgsql/bin/postmaster ] && {
                su -l pgsql -c 'exec 
-           /usr/local/pgsql/bin/postmaster
-                   -D/usr/local/pgsql/data
-                   -S -o -F > /usr/local/pgsql/errlog' &
-               echo -n ' pgsql'
+                 /usr/local/pgsql/bin/postmaster \
+                   -D/usr/local/pgsql/data \
+                   -S -o -F > /usr/local/pgsql/errlog' \
+                 & echo -n ' pgsql'
            }
             You may put the line breaks as shown above. The 
            shell is smart enough to keep parsing beyond 
            end-of-line if there is an expression unfinished. 
            The exec saves one layer of shell under the 
-           postmaster process so the parent is init. 
+           postmaster process so the parent is init.
          o  In RedHat Linux add a file 
            /etc/rc.d/init.d/postgres.init which is based on 
            the example in contrib/linux/. Then make a 
            softlink to this file from 
-           /etc/rc.d/rc5.d/S98postgres.init. 
+           /etc/rc.d/rc5.d/S98postgres.init.
          o  In RedHat Linux edit file /etc/inittab to add the 
            following as a single line: 
-           pg:2345:respawn:/bin/su - postgres -c 
-               "/usr/local/pgsql/bin/postmaster -D/usr/local/pgsql/data
-               >> /usr/local/pgsql/server.log 2>&1 </dev/null"
-
+           pg:2345:respawn:/bin/su - postgres -c
+               "/usr/local/pgsql/bin/postmaster \
+           -D/usr/local/pgsql/data \
+               >> /usr/local/pgsql/server.log 2>&1 \
+           </dev/null"
             (The author of this example says this example 
            will revive the postmaster if it dies, but he 
-           doesn't know if there are other side effects.) 
-
-       23.     Run the regression tests. The file 
+           doesn't know if there are other side effects.)
+       22.     Run the regression tests. The file 
          /usr/src/pgsql/src/test/regress/README has 
          detailed instructions for running and interpreting 
          the regression tests. A short version follows 
@@ -735,9 +746,9 @@ Installation Procedure
               $ cd /usr/src/pgsql/src/test/regress
               $ gmake clean
               $ gmake all runtest
-              You do not need to type gmake clean if this 
+               You do not need to type gmake clean if this 
               is the first time you are running the tests.
-              You should get on the screen (and also 
+               You should get on the screen (and also 
               written to file ./regress.out) a series of 
               statements stating which tests passed and 
               which tests failed. Please note that it can 
@@ -760,17 +771,9 @@ Installation Procedure
               it appears to be a significant issue.
               For example, 
               o   For a i686/Linux-ELF platform, no tests 
-                failed since this is the v6.4 regression 
+                failed since this is the v6.5 regression 
                 testing reference platform.
-              o   For the SPARC/Linux-ELF platform, using the 
-                970525 beta version of Postgres v6.2 the 
-                following tests "failed": float8 and 
-                geometry "failed" due to minor precision 
-                differences in floating point numbers. 
-                select_views produces massively different 
-                output, but the differences are due to minor 
-                floating point differences.
-              Even if a test result clearly indicates a 
+               Even if a test result clearly indicates a 
               real failure, it may be a localized problem 
               that will not affect you. An example is that 
               the int8 test will fail, producing obviously 
@@ -780,13 +783,13 @@ Installation Procedure
               discover it). This is not something to worry 
               about unless you need to store 64-bit 
               integers.
-              Conclusion? If you do see failures, try to 
+               Conclusion? If you do see failures, try to 
               understand the nature of the differences and 
               then decide if those differences will affect 
               your intended use of Postgres. The regression 
               tests are a helpful tool, but they may 
               require some study to be useful.
-              After running the regression tests, type 
+               After running the regression tests, type 
               $ destroydb regression
               $ cd /usr/src/pgsql/src/test/regress
               $ gmake clean
@@ -794,28 +797,27 @@ Installation Procedure
               tests. (You may want to save the 
               regression.diffs file in another place before 
               doing this.)
-
-       24.     If you haven't already done so, this would be 
+       23.     If you haven't already done so, this would be 
          a good time to modify your computer to do regular 
          maintainence. The following should be done at 
-         regular intervals: 
+         regular intervals:
 
-         Procedure 3.2. Minimal Backup Procedure
+         Minimal Backup Procedure
          1.    Run the SQL command VACUUM. This will clean 
-            up your database. 
+            up your database.
          2.    Back up your system. (You should probably 
             keep the last few backups on hand.) Preferably, 
             no one else should be using the system at the 
-            time. 
+            time.
 
-         Ideally, the above tasks should be done by a shell 
-         script that is run nightly or weekly by cron. Look 
-         at the man page for crontab for a starting point 
-         on how to do this. (If you do it, please e-mail us 
-         a copy of your shell script. We would like to set 
-         up our own systems to do this too.)
-
-       25.     If you are upgrading an existing system then 
+          Ideally, the above tasks should be done by a 
+         shell script that is run nightly or weekly by 
+         cron. Look at the man page for crontab for a 
+         starting point on how to do this. (If you do it, 
+         please e-mail us a copy of your shell script. We 
+         would like to set up our own systems to do this 
+         too.)
+       24.     If you are upgrading an existing system then 
          reinstall your old database. Type 
          $ cd
          $ psql -e template1 < db.out
@@ -834,52 +836,51 @@ Installation Procedure
          fact from an old syntax, but RevertPoly() is 
          provided to reverse the effects of a mis-applied 
          upgrade.
-
-       26.     If you are a new user, you may wish to play 
+       25.     If you are a new user, you may wish to play 
          with Postgres as described below.
-
-       27.     Clean up after yourself. Type 
-         $ rm -rf /usr/src/pgsql_6_0
-         $ rm -rf /usr/local/pgsql_6_0
-         # Also delete old database directory tree if it is 
-         not in
-         #  /usr/local/pgsql_6_0/data
-         $ rm ~/postgresql-v6.2.1.tar.gz
-
-       28.     You will probably want to print out the 
+       26.     Clean up after yourself. Type 
+         $ rm -rf /usr/src/pgsql_6_5
+         $ rm -rf /usr/local/pgsql_6_5
+         # Also delete old database directory tree if it is not in
+         #  /usr/local/pgsql_6_5/data
+         $ rm ~/postgresql-v6.5.tar.gz
+       27.     You will probably want to print out the 
          documentation. If you have a Postscript printer, 
          or have your machine already set up to accept 
          Postscript files using a print filter, then to 
          print the User's Guide simply type 
          $ cd /usr/local/pgsql/doc
          $ gunzip user.ps.tz | lpr
-         Here is how you might do it if you have 
+          Here is how you might do it if you have 
          Ghostscript on your system and are writing to a 
          laserjet printer. 
-         $ alias gshp='gs -sDEVICE=laserjet -r300 -dNOPAUSE'
+         $ alias gshp='gs -sDEVICE=laserjet -r300 
+         -dNOPAUSE'
          $ export 
          GS_LIB=/usr/share/ghostscript:/usr/share/ghostscript/fonts
          $ gunzip user.ps.gz
          $ gshp -sOUTPUTFILE=user.hp user.ps
          $ gzip user.ps
          $ lpr -l -s -r manpage.hp
-
-       29.     The Postgres team wants to keep Postgres 
+       28.     The Postgres team wants to keep Postgres 
          working on all of the supported platforms. We 
          therefore ask you to let us know if you did or did 
          not get Postgres to work on you system. Please 
          send a mail message to pgsql-ports@postgresql.org 
-         telling us the following: 
-         o  The version of Postgres (v6.4, 6.3.2, beta 981014, etc.). 
-         o  Your operating system (i.e. RedHat v5.1 Linux v2.0.34). 
-         o  Your hardware (SPARC, i486, etc.). 
+         (mailto:pgsql-ports@postgresql.org) telling us the 
+         following: 
+         o  The version of Postgres (v6.5, 6.4.2, beta 
+           981014, etc.).
+         o  Your operating system (i.e. RedHat v5.1 Linux 
+           v2.0.34).
+         o  Your hardware (SPARC, i486, etc.).
          o  Did you compile, install and run the regression 
            tests cleanly? If not, what source code did you 
            change (i.e. patches you applied, changes you 
            made, etc.), what tests failed, etc. It is normal 
            to get many warning when you compile. You do not 
-           need to report these. 
-       30.     Now create, access and manipulate databases 
+           need to report these.
+       29.     Now create, access and manipulate databases 
          as desired. Write client programs to access the 
          database server. In other words, enjoy!
 
@@ -939,12 +940,12 @@ Playing with Postgres
        foo=> \d bar
 
        Table    = bar
-       +--------------+--------------+-------+
-       |    Field     |    Type      | Length|
-       +--------------+--------------+-------+
-       | i            | int4         |     4 |
-       | c            | (bp)char     |    16 |
-       +--------------+--------------+-------+
+       +--------------+---------------+-------+
+       |    Field     |     Type      | Length|
+       +--------------+---------------+-------+
+       | i            | int4          |     4 |
+       | c            | (bp)char      |    16 |
+       +--------------+---------------+-------+
 
        And so on. You get the idea.
 
@@ -963,67 +964,21 @@ The Next Step
 
 Porting Notes
 
-         Note: Check for any platform-specific FAQs in the 
-         doc/ directory of the source distribution. For 
-         some ports, the notes below may be out of date.
-
-Ultrix4.x
-
-         Note: There have been no recent reports of Ultrix 
-         usage with Postgres.
-
-       You need to install the libdl-1.1 package since 
-       Ultrix 4.x doesn't have a dynamic loader. It's 
-       available in 
-       s2k-ftp.CS.Berkeley.EDU:pub/personal/andrew/libdl-1.-
-       1.tar.Z
-
-Linux
-
-       Linux ELF
-       The regression test reference machine is a 
-       linux-2.0.30/libc-5.3.12/RedHat-4.2 installation 
-       running on a dual processor i686. The linux-elf port 
-       installs cleanly. See the Linux FAQ for more details.
-
-       Linux a.out
-       For non-ELF Linux, the dld library MUST be obtained 
-       and installed on the system. It enables dynamic link 
-       loading capability to the Postgres port. The dld 
-       library can be obtained from the sunsite linux 
-       distributions. The current name is dld-3.2.5. Jalon 
-       Q. Zimmerman
-
-BSD/OS
-
-       For BSD/OS 2.0 and 2.01, you will need to get the GNU 
-       dld library.
-
-NeXT
-
-       The NeXT port for v1.09 was supplied by Tom R. 
-       Hageman. It requires a SysV IPC emulation library and 
-       header files for shared libary and semaphore stuff. 
-       Tom just happens to sell such a product so contact 
-       him for information. He has also indicated that 
-       binary releases of Postgres for NEXTSTEP will be made 
-       available to the general public. Contact Info@RnA.nl 
-       for information.
-       We have no recent reports of successful NeXT 
-       installations (as of v6.2.1). However, the 
-       client-side libraries should work even if the backend 
-       is not supported.
+        Check for any platform-specific FAQs in the doc/ 
+       directory of the source distribution. 
 
 Chapter 4. Configuration Options
 
 Parameters for Configuration (configure)
 
-       The full set of parameters available in configure can 
-       be obtained by typing 
+        The full set of parameters available in configure 
+       can be obtained by typing 
 
-       $ ./configure --help
+           $ ./configure --help
+          
 
-       The following parameters may be of interest to 
+        
+        The following parameters may be of interest to 
        installers: 
 
        Directory and file names:
@@ -1046,32 +1001,35 @@ Parameters for Configuration (configure)
          --with-libs=incdir      also search for libraries in DIR
          --with-libraries=libdir also search for libraries in DIR
          --enable-locale         enable locale support
-         --enable-recode         enable cyrillic recode 
-       support
+         --enable-recode         enable cyrillic recode support
          --with-mb=encoding    enable multi-byte support
          --with-pgport=portnum change default startup port
-         --with-tcl              use tcl
+         --with-maxbackends=n  set default maximum number of 
+       server processes 
+         --with-tcl              build Tcl interfaces and pgtclsh
          --with-tclconfig=tcldir tclConfig.sh and tkConfig.sh are in DIR
-         --with-perl             use perl
+         --with-perl             build Perl interface
          --with-odbc             build ODBC driver package
          --with-odbcinst=odbcdir change default directory for odbcinst.ini
          --enable-cassert        enable assertion checks (debugging)
          --with-CC=compiler      use specific C compiler
          --with-CXX=compiler     use specific C++ compiler
-         --without-CXX           do not build libpq++
+         --without-CXX           prevent building C++ code 
+          
 
-       Some systems may have trouble building a specific 
+        
+        Some systems may have trouble building a specific 
        feature of Postgres. For example, systems with a 
        damaged C++ compiler may need to specify 
-       --without-CXX to encourage the build procedure to 
-       ignore the libpq++ construction.
+       --without-CXX to instruct the build procedure to skip 
+       construction of libpq++. 
 
 Parameters for Building (make)
 
-       Many installation-related parameters can be set in 
-       the building stage of Postgres installation.
-       In most cases, these parameters should be place in a 
-       file, Makefile.custom, intended just for that 
+        Many installation-related parameters can be set in 
+       the building stage of Postgres installation. 
+        In most cases, these parameters should be placed in 
+       a file, Makefile.custom, intended just for that 
        purpose. The default distribution does not contain 
        this optional file, so you will create it using a 
        text editor of your choice. When upgrading 
@@ -1079,49 +1037,63 @@ Parameters for Building (make)
        Makefile.custom to the new installation before doing 
        the build. 
 
-       make [ variable=value [,...] ]
+           make [ variable=value [,...] ]
+          
 
-       A few of the many variables which can be specified 
+        
+        A few of the many variables which can be specified 
        are: 
-       POSTGRESDIR 
-         Top of the installation tree. 
-       BINDIR 
-         Location of applications and utilities. 
-       LIBDIR 
-         Location of object libraries, including shared 
+
+        POSTGRESDIR 
+          Top of the installation tree. 
+
+        BINDIR 
+          Location of applications and utilities. 
+
+        LIBDIR 
+          Location of object libraries, including shared 
          libraries. 
-       HEADERDIR 
-         Location of include files. 
-       ODBCINST 
-         Location of installation-wide psqlODBC (ODBC) 
+
+        HEADERDIR 
+          Location of include files. 
+
+        ODBCINST 
+          Location of installation-wide psqlODBC (ODBC) 
          configuration file. 
-       There are other optional parameters which are not as 
+        
+        There are other optional parameters which are not as 
        commonly used. Many of those listed below are 
        appropriate when doing Postgres server code 
        development. 
-       CFLAGS 
-         Set flags for the C compiler. Should be assigned 
+
+        CFLAGS 
+          Set flags for the C compiler. Should be assigned 
          with "+=" to retain relevant default parameters. 
-       YFLAGS 
-         Set flags for the yacc/bison parser. -v might be 
+
+        YFLAGS 
+          Set flags for the yacc/bison parser. -v might be 
          used to help diagnose problems building a new 
          parser. Should be assigned with "+=" to retain 
          relevant default parameters. 
-       USE_TCL 
-         Enable Tcl interface building. 
-       HSTYLE 
-         DocBook HTML style sheets for building the 
+
+        USE_TCL 
+          Enable Tcl interface building. 
+
+        HSTYLE 
+          DocBook HTML style sheets for building the 
          documentation from scratch. Not used unless you 
          are developing new documentation from the 
          DocBook-compatible SGML source documents in 
          doc/src/sgml/. 
-       PSTYLE 
-         DocBook style sheets for building printed 
+
+        PSTYLE 
+          DocBook style sheets for building printed 
          documentation from scratch. Not used unless you 
          are developing new documentation from the 
          DocBook-compatible SGML source documents in 
          doc/src/sgml/. 
-       Here is an example Makefile.custom for a PentiumPro 
+        
+        Here is an example Makefile.custom for a PentiumPro 
        Linux system: 
 
        # Makefile.custom
@@ -1132,16 +1104,22 @@ Parameters for Building (make)
 
        # documentation
 
-       HSTYLE= /home/tgl/SGML/db118.d/docbook/html
-       PSTYLE= /home/tgl/SGML/db118.d/docbook/print
+       HSTYLE= /home/lockhart/SGML/db118.d/docbook/html
+       PSTYLE= /home/lockhart/SGML/db118.d/docbook/print
+          
+
+        
 
 Locale Support
 
-         Note: Written by Oleg Bartunov. See Oleg's web 
-         page for additional information on locale and 
-         Russian language support.
+        
 
-       While doing a project for a company in Moscow, 
+         Note: Written by Oleg Bartunov. See Oleg's web 
+         page (http://www.sai.msu.su/~megera/postgres/) for 
+         additional information on locale and Russian 
+         language support.
+
+        While doing a project for a company in Moscow, 
        Russia, I encountered the problem that postgresql had 
        no support of national alphabets. After looking for 
        possible workarounds I decided to develop support of 
@@ -1156,10 +1134,9 @@ Locale Support
        LC_MONETARY was added by others. I got many messages 
        from people about this patch so I decided to send it 
        to developers and (to my surprise) it was 
-       incorporated into the Postgres distribution.
-       People often complain that locale doesn't work for 
+       incorporated into the Postgres distribution. 
+        People often complain that locale doesn't work for 
        them. There are several common mistakes: 
-
        o  Didn't properly configure postgresql before 
         compilation. You must run configure with 
         --enable-locale option to enable locale support. 
@@ -1169,379 +1146,448 @@ Locale Support
         because backend gets information about locale from 
         environment. I use following shell script 
         (runpostgres): 
-             #!/bin/sh
-
-             export LC_CTYPE=koi8-r
-             export LC_COLLATE=koi8-r
-             postmaster -B 1024 -S -D/usr/local/pgsql/data/ -o '-Fe'
-
+               #!/bin/sh
+               
+               export LC_CTYPE=koi8-r
+               export LC_COLLATE=koi8-r
+               postmaster -B 1024 -S 
+        -D/usr/local/pgsql/data/ -o '-Fe'
+              
          and run it from rc.local as 
-             /bin/su - postgres -c "/home/postgres/runpostgres"
-
+               /bin/su - postgres -c 
+        "/home/postgres/runpostgres"
+              
+         
        o  Broken locale support in OS (for example, locale 
         support in libc under Linux several times has 
         changed and this caused a lot of problems). Latest 
         perl has also support of locale and if locale is 
         broken perl -v will complain something like: 
-             8:17[mira]:~/WWW/postgres>setenv LC_CTYPE 
+               8:17[mira]:~/WWW/postgres>setenv LC_CTYPE 
         not_exist
-             8:18[mira]:~/WWW/postgres>perl -v
-             perl: warning: Setting locale failed.
-             perl: warning: Please check that your locale 
+               8:18[mira]:~/WWW/postgres>perl -v
+               perl: warning: Setting locale failed.
+               perl: warning: Please check that your locale 
         settings:
-                     LC_ALL = (unset),
-                     LC_CTYPE = "not_exist",
-                     LANG = (unset)
-                 are supported and installed on your 
-        system.
-             perl: warning: Falling back to the standard 
+               LC_ALL = (unset),
+                   LC_CTYPE = "not_exist",
+                   LANG = (unset)
+               are supported and installed on your system.
+               perl: warning: Falling back to the standard 
         locale ("C").
-
+              
+         
        o  Wrong location of locale files! Possible locations 
         include: /usr/lib/locale (Linux, Solaris), 
         /usr/share/locale (Linux), /usr/lib/nls/loc (DUX 
         4.0). Check man locale to find the correct 
         location. Under Linux I did a symbolic link between 
         /usr/lib/locale and /usr/share/locale to be sure 
-        that the next libc will not break my locale.
+        that the next libc will not break my locale. 
+        
 
 What are the Benefits?
 
-       You can use ~* and order by operators for strings 
+        You can use ~* and order by operators for strings 
        contain characters from national alphabets. 
        Non-english users definitely need that. If you won't 
        use locale stuff just undefine the USE_LOCALE 
-       variable.
+       variable. 
 
 What are the Drawbacks?
 
-       There is one evident drawback of using locale - it's 
-       speed! So, use locale only if you really need it.
+        There is one evident drawback of using locale - its 
+       speed! So, use locale only if you really need it. 
 
 Kerberos Authentication
 
-       Kerberos is an industry-standard secure 
+        Kerberos is an industry-standard secure 
        authentication system suitable for distributed 
-       computing over a public network.
+       computing over a public network. 
 
 Availability
 
-       The Kerberos authentication system is not distributed 
-       with Postgres. Versions of Kerberos are typically 
-       available as optional software from operating system 
-       vendors. In addition, a source code distribution may 
-       be obtained through MIT Project Athena. 
+        The Kerberos authentication system is not 
+       distributed with Postgres. Versions of Kerberos are 
+       typically available as optional software from 
+       operating system vendors. In addition, a source code 
+       distribution may be obtained through MIT Project 
+       Athena (ftp://athena-dist.mit.edu). 
 
          Note: You may wish to obtain the MIT version even 
          if your vendor provides a version, since some 
          vendor ports have been deliberately crippled or 
          rendered non-interoperable with the MIT version.
 
-       Users located outside the United States of America 
+        Users located outside the United States of America 
        and Canada are warned that distribution of the actual 
        encryption code in Kerberos is restricted by U. S. 
-       Government export regulations.
-       Inquiries regarding your Kerberos should be directed 
-       to your vendor or MIT Project Athena. Note that FAQLs 
+       Government export regulations. 
+        Inquiries regarding your Kerberos should be directed 
+       to your vendor or MIT Project Athena 
+       (info-kerberos@athena.mit.edu). Note that FAQLs 
        (Frequently-Asked Questions Lists) are periodically 
-       posted to the Kerberos mailing list (send mail to 
-       subscribe), and USENET news group.
+       posted to the Kerberos mailing list 
+       (mailto:kerberos@ATHENA.MIT.EDU) (send mail to 
+       subscribe (mailto:kerberos-request@ATHENA.MIT.EDU)), 
+       and USENET news group (news:comp.protocols.kerberos). 
 
 Installation
 
-       Installation of Kerberos itself is covered in detail 
+        Installation of Kerberos itself is covered in detail 
        in the Kerberos Installation Notes . Make sure that 
        the server key file (the srvtab or keytab) is somehow 
-       readable by the Postgres account.
-       Postgres and its clients can be compiled to use 
+       readable by the Postgres account. 
+        Postgres and its clients can be compiled to use 
        either Version 4 or Version 5 of the MIT Kerberos 
        protocols by setting the KRBVERS variable in the file 
        src/Makefile.global to the appropriate value. You can 
        also change the location where Postgres expects to 
        find the associated libraries, header files and its 
-       own server key file.
-       After compilation is complete, Postgres must be 
+       own server key file. 
+        After compilation is complete, Postgres must be 
        registered as a Kerberos service. See the Kerberos 
        Operations Notes and related manual pages for more 
-       details on registering services.
+       details on registering services. 
 
 Operation
 
-       After initial installation, Postgres should operate 
+        After initial installation, Postgres should operate 
        in all ways as a normal Kerberos service. For details 
        on the use of authentication, see the PostgreSQL 
        User's Guide reference sections for postmaster and 
-       psql.
-       In the Kerberos Version 5 hooks, the following 
+       psql. 
+        In the Kerberos Version 5 hooks, the following 
        assumptions are made about user and service naming: 
-       o User principal names (anames) are assumed to 
+       o  User principal names (anames) are assumed to 
         contain the actual Unix/Postgres user name in the 
         first component. 
-       o The Postgres service is assumed to be have two 
+       o  The Postgres service is assumed to be have two 
         components, the service name and a hostname, 
         canonicalized as in Version 4 (i.e., with all 
         domain suffixes removed). 
+        
+        
 
        Table 4-1. Kerberos Parameter Examples
-       Param-   Example
-       eter
-       user     frew@S2K.ORG
-       user     aoki/HOST=miyu.S2K.Berkeley-
-                .EDU@S2K.ORG
-       host     postgres_dbms/ucbvax@S2K.ORG
+        Parameter                     Example 
+        user                          frew@S2K.ORG 
+        user                          aoki/HOST=miyu.S2K.Berkel-
+                                     ey.EDU@S2K.ORG 
+        host                          postgres_dbms/ucbvax@S2K.-
+                                     ORG 
 
 
-       Support for Version 4 will disappear sometime after 
-       the production release of Version 5 by MIT.
+        
+        Support for Version 4 will disappear sometime after 
+       the production release of Version 5 by MIT. 
 
 Chapter 5. Release Notes
 
-Release 6.4
+Release 6.5
 
-       There are many new features and improvements in this 
-       release. Thanks to our developers and maintainers, 
-       nearly every aspect of the system has received some 
-       attention since the previous release. Here is a 
-       brief, incomplete summary: 
-       o Views and rules are now functional thanks to 
-        extensive new code in the rewrite rules system from 
-        Jan Wieck. He also wrote a chapter on it for the 
-        Programmer's Guide. 
-       o Jan also contributed a second procedural language, 
-        PL/pgSQL, to go with the original PL/pgTCL 
-        procedural language he contributed last release. 
-       o We have optional multiple-byte character set 
-        support from Tatsuo Iishi to complement our 
-        existing locale support. 
-       o Client/server communications has been cleaned up, 
-        with better support for asynchronous messages and 
-        interrupts thanks to Tom Lane. 
-       o The parser will now perform automatic type coersion 
-        to match arguments to available operators and 
-        functions, and to match columns and expressions 
-        with target columns. This uses a generic mechanism 
-        which supports the type extensibility features of 
-        Postgres. There is a new chapter in the User's 
-        Guide which covers this topic. 
-       o Three new data types have been added. Two types, 
-        inet and cidr, support various forms of IP network, 
-        subnet, and machine addressing. There is now an 
-        8-byte integer type available on some platforms. 
-        See the chapter on data types in the User's Guide 
-        for details. A fourth type, serial, is now 
-        supported by the parser as an amalgam of the int4 
-        type, a sequence, and a unique index. 
-       o Several more SQL92-compatible syntax features have 
-        been added, including INSERT DEFAULT VALUES 
-       o The automatic configuration and installation system 
-        has received some attention, and should be more 
-        robust for more platforms than it has ever been. 
+        This release marks a major step in the development 
+       team's mastery of the source code we inherited from 
+       Berkeley. You will see we are now easily adding major 
+       features, thanks to the increasing size and 
+       experience of our world-wide development team. 
+        Here is a brief summary of some of the more 
+       noticable changes: 
 
-Migration to v6.4
+        Multi-version concurrency control(MVCC) 
+          This removes our old table-level locking, and 
+         replaces it with a locking system that is superior 
+         to most commercial database systems. In a 
+         traditional system, each row that is modified is 
+         locked until committed, preventing reads by other 
+         users. MVCC uses the natural multi-version nature 
+         of PostgreSQL to allow readers to continue reading 
+         consistent data during writer activity. Writers 
+         continue to use the compact pg_log transaction 
+         system. This is all performed without having to 
+         allocate a lock for every row like traditional 
+         database systems. So, basically, we no longer are 
+         restricted by simple table-level locking; we have 
+         something better than row-level locking. 
 
-       A dump/restore using pg_dump or pg_dumpall is 
+        Numeric data type 
+          We now have a true numeric data type, with 
+         user-specified precision. 
+
+        Temporary tables 
+          Temporary tables are guaranteed to have unique 
+         names within a database session, and are destroyed 
+         on session exit. 
+
+        New SQL features 
+          We now have CASE, INTERSECT, and EXCEPT statement 
+         support. We have new LIMIT/OFFSET, SET TRANSACTION 
+         ISOLATION LEVEL, SELECT ... FOR UPDATE, and an 
+         improved LOCK command. 
+
+        Speedups 
+          We continue to speed up PostgreSQL, thanks to the 
+         variety of talents within our team. We have sped 
+         up memory allocation, optimization, table joins, 
+         and row transfer routines. 
+
+        Ports 
+          We continue to expand our port list, this time 
+         including WinNT/ix86 and NetBSD/arm32. 
+
+        Interfaces 
+          Most interfaces have new versions, and existing 
+         functionality has been improved. 
+        
+
+Migration to v6.5
+
+        A dump/restore using pg_dump or pg_dumpall is 
        required for those wishing to migrate data from any 
-       previous release of Postgres.
+       previous release of Postgres. 
+        The new Multi-Version Concurrency Control (MVCC) 
+       features can give somewhat different behaviors in 
+       multi-user environments. Read and understand the 
+       following section to ensure that your existing 
+       applications will give you the behavior you need. 
+
+       Multi-Version Concurrency Control
+        Because readers in 6.5 don't lock data, regardless 
+       of transaction isolation level, data read by one 
+       transaction can be overwritten by another. In the 
+       other words, if a row is returned by SELECT it 
+       doesn't mean that this row really exists at the time 
+       it is returned (i.e. sometime after the statement or 
+       transaction began) nor that the row is protected from 
+       deletion or updation by concurrent transactions 
+       before the current transaction does a commit or 
+       rollback. 
+        To ensure the actual existance of a row and protect 
+       it against concurrent updates one must use SELECT FOR 
+       UPDATE or an appropriate LOCK TABLE statement. This 
+       should be taken into account when porting 
+       applications from previous releases of Postgres and 
+       other environments. 
+        Keep above in mind if you are using contrib/refint.* 
+       triggers for referential integrity. Additional 
+       technics are required now. One way is to use LOCK 
+       parent_table IN SHARE ROW EXCLUSIVE MODE command if a 
+       transaction is going to update/delete a primary key 
+       and use LOCK parent_table IN SHARE MODE command if a 
+       transaction is going to update/insert a foreign key. 
+
+         Note: Note that if you run a transaction in 
+         SERIALIZABLE mode then you must execute LOCK 
+         commands above before execution of any DML 
+         statement 
+         (SELECT/INSERT/DELETE/UPDATE/FETCH/COPY_TO) in the 
+         transaction.
+
+        
+        These inconveniences will disappear in the future 
+       when the ability to read dirty (uncommitted) data 
+       (regardless of isolation level) and true referential 
+       integrity will be implemented. 
 
 Detailed Change List
 
+        
+
        Bug Fixes
        ---------
-       Fix for a tiny memory leak in PQsetdb/PQfinish(Bryan)
-       Remove char2-16 data types, use char/varchar(Darren)
-       Pqfn not handles a NOTICE message(Anders)
-       Reduced busywaiting overhead for spinlocks with many 
-       backends (dg)
-       Stuck spinlock detection (dg)
-       Fix up "ISO-style" timespan decoding and 
-       encoding(Thomas)
-       Fix problem with table drop after rollback of 
-       transaction(Vadim)
-       Change error message and remove non-functional update 
-       message(Vadim)
-       Fix for COPY array checking
-       Fix for SELECT 1 UNION SELECT NULL
-       Fix for buffer leaks in large object calls(Pascal)
-       Change owner from oid to int4 type(Bruce)
-       Fix a bug in the oracle compatibility functions 
-       btrim() ltrim() and rtrim()
-       Fix for shared invalidation cache overflow(Massimo)
-       Prevent file descriptor leaks in failed COPY's(Bruce)
-       Fix memory leak in libpgtcl's pg_select(Constantin)
-       Fix problems with username/passwords over 8 
-       characters(Tom)
-       Fix problems with handling of asynchronous NOTIFY in 
-       backend(Tom)
-       Fix of many bad system table entries(Tom)
+       Fix text<->float8 and text<->float4 conversion 
+       functions(Thomas)
+       Fix for creating tables with mixed-case 
+       constraints(Billy)
+       Change exp()/pow() behavior to generate error on 
+       underflow/overflow(Jan)
+       Fix bug in pg_dump -z
+       Memory overrun cleanups(Tatsuo)
+       Fix for lo_import crash(Tatsuo)
+       Adjust handling of data type names to suppress double 
+       quotes(Thomas)
+       Use type coersion for matching columns and 
+       DEFAULT(Thomas)
+       Fix deadlock so it only checks once after one second 
+       of sleep(Bruce)
+       Fixes for aggregates and PL/pgsql(Hiroshi)
+       Fix for subquery crash(Vadim)
+       Fix for libpq function PQfnumber and case-insensitive 
+       names(Bahman Rafatjoo)
+       Fix for large object write-in-middle, no extra block, 
+       memory consumption(Tatsuo)
+       Fix for pg_dump -d or -D and  quote special 
+       characters in INSERT
+       Repair serious problems with dynahash(Tom)
+       Fix INET/CIDR portability problems
+       Fix problem with selectivity error in ALTER TABLE ADD 
+       COLUMN(Bruce)
+       Fix executor so mergejoin of different column types 
+       works(Tom)
+       Fix for Alpha OR selectivity bug
+       Fix OR index selectivity problem(Bruce)
+       Fix so \d shows proper length for 
+       char()/varchar()(Ryan)
+       Fix tutorial code(Clark)
+       Improve destroyuser checking(Oliver)
+       Fix for Kerberos(Rodney McDuff)
+       Fix for dropping database while dirty buffers(Bruce)
+       Fix so sequence nextval() can be 
+       case-sensitive(Bruce)
+       Fix !!= operator
+       Drop buffers before destroying database files(Bruce)
+       Fix case where executor evaluates functions 
+       twice(Tatsuo)
+       Allow sequence nextval actions to be 
+       case-sensitive(Bruce)
+       Fix optimizer indexing not working for negative 
+       numbers(Bruce)
+       Fix for memory leak in executor with fjIsNull
+       Fix for aggregate memory leaks(Erik Riedel)
+       Allow username containing a dash GRANT permissions
+       Cleanup of NULL in inet types
+       Clean up system table bugs(Tom)
+       Fix problems of PAGER and \? command(Masaaki Sakaida)
+       Reduce default multi-segment file size limit to 
+       1GB(Peter)
+       Fix for dumping of CREATE OPERATOR(Tom)
+       Fix for backward scanning of cursors(Hiroshi Inoue)
+       Fix for COPY FROM STDIN when using \i(Tom)
+       Fix for subselect is compared inside an 
+       expression(Jan)
+       Fix handling of error reporting while returning 
+       rows(Tom)
+       Fix problems with reference to array types(Tom,Jan)
+       Prevent UPDATE SET oid(Jan)
+       Fix pg_dump so -t option can handle case-sensitive 
+       tablenames
+       Fixes for GROUP BY in special cases(Tom, Jan)
+       Fix for memory leak in failed queries(Tom)
+       DEFAULT now supports mixed-case identifiers(Tom)
+       Fix for multi-segment uses of DROP/RENAME table, 
+       indexes(Ole Gjerde)
 
        Enhancements
        ------------
-       Upgrade ecpg and ecpglib,see 
-       src/interfaces/ecpc/ChangeLog(Michael)
-       Show the index used in an EXPLAIN(Zeugswetter)
-       EXPLAIN  invokes  rule system and shows plan(s) for rewritten queries(Jan)
-       Multi-byte awareness of many data types and functions, via configure(Tatsuo)
-       New configure --with-mb option(Tatsuo)
-       New initdb --pgencoding option(Tatsuo)
-       New createdb -E multibyte option(Tatsuo)
-       Select version(); now returns PostgreSQL version(Jeroen)
-       Libpq now allows asynchronous clients(Tom)
-       Allow cancel from client of backend query(Tom)
-       Psql now cancels query with Control-C(Tom)
-       Libpq users need not issue dummy queries to get NOTIFY messages(Tom)
-       NOTIFY now sends sender's PID, so you can tell whether it was your own(Tom)
-       PGresult struct now includes associated error message, if any(Tom)
-       Define "tz_hour" and "tz_minute" arguments to date_part()(Thomas)
-       Add routines to convert between varchar and bpchar(Thomas)
-       Add routines to allow sizing of varchar and bpchar into target columns(Thomas)
-       Add bit flags to support timezonehour and minute in data retrieval(Thomas)
-       Allow more variations on valid floating point numbers (e.g. ".1", "1e6")(Thomas)
-       Fixes for unary minus parsing with leading spaces(Thomas)
-       Implement TIMEZONE_HOUR, TIMEZONE_MINUTE per SQL92 specs(Thomas)
-       Check for and properly ignore FOREIGN KEY column constraints(Thomas)
-       Define USER as synonym for CURRENT_USER per SQL92 specs(Thomas)
-       Enable HAVING clause but no fixes elsewhere yet.
-       Make "char" type a synonym for "char(1)" (actually implemented as bpchar)(Thomas)
-       Save string type if specified for DEFAULT clause handling(Thomas)
-       Coerce operations involving different data types(Thomas)
-       Allow some index use for columns of different types(Thomas)
-       Add capabilities for automatic type conversion(Thomas)
-       Cleanups for large objects, so file is truncated on open(Peter)
-       Readline cleanups(Tom)
-       Allow psql  \f \ to make spaces as delimiter(Bruce)
-       Pass pg_attribute.atttypmod to the frontend for column field lengths(Tom,Bruce)
-       Msql compatibility library in /contrib(Aldrin)
-       Remove the requirement that ORDER/GROUP BY clause identifiers be 
-       included in the target list(David)
-       Convert columns to match columns in UNION clauses(Thomas)
-       Remove fork()/exec() and only do fork()(Bruce)
-       Jdbc cleanups(Peter)
-       Show backend status on ps command line(only works on some platforms)(Bruce)
-       Pg_hba.conf now has a sameuser option in the database field
-       Make lo_unlink take oid param, not int4
-       New DISABLE_COMPLEX_MACRO for compilers that can't handle our macros(Bruce)
-       Libpgtcl now handles NOTIFY as a Tcl event, need not send dummy queries(Tom)
-       libpgtcl cleanups(Tom)
-       Add -error option to libpgtcl's pg_result command(Tom)
-       New locale patch, see docs/README/locale(Oleg)
-       Fix for pg_dump so CONSTRAINT and CHECK syntax is correct(ccb)
-       New contrib/lo code for large object orphan removal(Peter)
-       New psql command "SET CLIENT_ENCODING TO 'encoding'" for multi-bytes
-       feature, see /doc/README.mb(Tatsuo)
-       /contrib/noupdate code to revoke update permission on a column
-       Libpq can now be compiled on win32(Magnus)
-       Add PQsetdbLogin() in libpq
-       New 8-byte integer type, checked by configure for OS support(Thomas)
-       Better support for quoted table/column names(Thomas)
-       Surround table and column names with double-quotes in pg_dump(Thomas)
-       PQreset() now works with passwords(Tom)
-       Handle case of GROUP BY target list column number out of range(David)
-       Allow UNION in subselects
-       Add auto-size to screen to \d? commands(Bruce)
-       Use UNION to show all \d? results in one query(Bruce)
-       Add \d? field search feature(Bruce)
-       Pg_dump issues fewer \connect requests(Tom)
-       Make pg_dump -z flag work better, document it in manual page(Tom)
-       Add HAVING clause with full support for subselects 
-       and unions(Stephan)
-       Full text indexing routines in contrib/fulltextindex(Maarten)
-       Transaction ids now stored in shared memory(Vadim)
-       New PGCLIENTENCODING when issuing COPY command(Tatsuo)
-       Support for SQL92 syntax "SET NAMES"(Tatsuo)
-       Support for LATIN2-5(Tatsuo)
-       Add UNICODE regression test case(Tatsuo)
-       Lock manager cleanup, new locking modes for LLL(Vadim)
-       Allow index use with OR clauses(Bruce)
-       Allows "SELECT NULL ORDER BY 1;"
-       Explain VERBOSE prints the plan, and now pretty-prints the plan to
-       the postmaster log file(Bruce)
-       Add Indices display to \d command(Bruce)
-       Allow GROUP BY on functions(David)
-       New pg_class.relkind for large objects(Bruce)
-       New way to send libpq NOTICE messages to a different location(Tom)
-       New \w write command to psql(Bruce)
-       New /contrib/findoidjoins scans oid columns to find join relationships(Bruce)
-       Allow binary-compatible indices to be considered when checking for valid
-       indices for restriction clauses containing a constant(Thomas)
-       New ISBN/ISSN code in /contrib/isbn_issn
-       Allow NOT LIKE, IN, NOT IN, BETWEEN, and NOT BETWEEN constraint(Thomas)
-       New rewrite system fixes many problems with rules and views(Jan)
-               * Rules on relations work
-               * Event qualifications on insert/update/delete work
-               * New OLD variable to reference CURRENT, CURRENT will be remove in future
-               * Update rules can reference NEW and OLD in rule qualifications/actions
-               * Insert/update/delete rules on views work
-               * Multiple rule actions are now supported, surrounded by parentheses
-               * Regular users can create views/rules on tables they have RULE permits
-               * Rules and views inherit the permissions on the creator
-               * No rules at the column level
-               * No UPDATE NEW/OLD rules
-               * New pg_tables, pg_indexes, pg_rules and pg_views system views
-               * Only a single action on SELECT rules
-               * Total rewrite overhaul, perhaps for 6.5
-               * handle subselects
-               * handle aggregates on views
-               * handle insert into select from view works
-       System indexes are now multi-key(Bruce)
-       Oidint2, oidint4, and oidname types are removed(Bruce)
-       Use system cache for more system table lookups(Bruce)
-       New backend programming language PL/pgSQL in backend/pl(Jan)
-       New SERIAL data type, auto-creates sequence/index(Thomas)
-       Enable assert checking without a recompile(Massimo)
-       User lock enhancements(Massimo)
-       New setval() command to set sequence value(Massimo)
-       Auto-remove unix socket file on startup if no postmaster running(Massimo)
-       Conditional trace package(Massimo)
-       New UNLISTEN command(Massimo)
-       Psql and libpq now compile under win32 using win32.mak(Magnus)
-       Lo_read no longer stores trailing NULL(Bruce)
-       Identifiers are now truncated to 31 characters internally(Bruce)
-       Createuser options now availble on the command line
-       Code for 64-bit integer supported added, configure tested, int8 type(Thomas)
-       Prevent file descriptor leaf from failed COPY(Bruce)
-       New pg_upgrade command(Bruce)
-       Updated /contrib directories(Massimo)
-       New CREATE TABLE DEFAULT VALUES statement available(Thomas)
-       New INSERT INTO TABLE DEFAULT VALUES statement available(Thomas)
-       New DECLARE and FETCH feature(Thomas)
-       libpq's internal structures now not exported(Tom)
-       Allow up to 8 key indexes(Bruce)
-       Remove ARCHIVE keyword, that is no longer used(Thomas)
-       pg_dump -n flag to supress quotes around indentifiers
-       disable system columns for views(Jan)
-       new INET and CIDR types for network addresses(TomH, Paul)
-       no more double quotes in psql output pg_dump now dumps views(Terry)
-       new SET QUERY_LIMIT(Tatsuo,Jan)
+       Add "vacuumdb" utility
+       Speed up libpq by allocating memory better(Tom)
+       EXPLAIN all indices used(Tom)
+       Implement CASE, COALESCE, NULLIF  expression(Thomas)
+       New pg_dump table output format(Constantin)
+       Add string min()/max() functions(Thomas)
+       Extend new type coersion techniques to 
+       aggregates(Thomas)
+       New moddatetime contrib(Terry)
+       Update to pgaccess 0.96(Constantin)
+       Add routines for single-byte "char" type(Thomas)
+       Improved substr() function(Thomas)
+       Improved multi-byte handling(Tatsuo)
+       Multi-version concurrency control/MVCC(Vadim)
+       New Serialized mode(Vadim)
+       Fix for tables over 2gigs(Peter)
+       New SET TRANSACTION ISOLATION LEVEL(Vadim)
+       New LOCK TABLE IN ... MODE(Vadim)
+       Update ODBC driver(Byron)
+       New NUMERIC data type(Jan)
+       New SELECT FOR UPDATE(Vadim)
+       Handle "NaN" and "Infinity" for input values(Jan)
+       Improved date/year handling(Thomas)
+       Improved handling of backend connections(Magnus)
+       New options ELOG_TIMESTAMPS and USE_SYSLOG options 
+       for log files(Massimo)
+       New TCL_ARRAYS option(Massimo)
+       New INTERSECT and EXCEPT(Stefan)
+       New pg_index.indisprimary for primary key 
+       tracking(D'Arcy)
+       New pg_dump option to allow dropping of tables before 
+       creation(Brook)
+       Speedup of row output routines(Tom)
+       New READ COMMITTED isolation level(Vadim)
+       New TEMP tables/indexes(Bruce)
+       Prevent sorting if result is already sorted(Jan)
+       New memory allocation optimization(Jan)
+       Allow psql to do \p\g(Bruce)
+       Allow multiple rule actions(Jan)
+       Added LIMIT/OFFSET functionality(Jan)
+       Improve optimizer when joining a large number of 
+       tables(Bruce)
+       New intro to SQL from S. Simkovics' Master's Thesis 
+       (Stefan, Thomas)
+       New intro to backend processing from S. Simkovics' 
+       Master's Thesis (Stefan)
+       Improved int8 support(Ryan Bradetich, Thomas, Tom)
+       New routines to convert between int8 and text/varchar 
+       types(Thomas)
+       New bushy plans, where meta-tables are joined(Bruce)
+       Enable right-hand queries by default(Bruce)
+       Allow reliable maximum number of backends to be set 
+       at configure time
+             (--with-maxbackends and postmaster switch (-N 
+       backends))(Tom)
+       GEQO default now 10 tables because of optimizer 
+       speedups(Tom)
+       Allow NULL=Var for MS-SQL portability(Michael, Bruce)
+       Modify contrib check_primary_key() so either 
+       "automatic" or "dependent"(Anand)
+       Allow psql \d on a view show query(Ryan)
+       Speedup for LIKE(Bruce)
+       Ecpg fixes/features, see 
+       src/interfaces/ecpg/ChangeLog file(Michael)
+       JDBC fixes/features, see 
+       src/interfaces/jdbc/CHANGELOG(Peter)
+       Make % operator have precedence like /(Bruce)
+       Add new postgres -O option to allow system table 
+       structure changes(Bruce)
+       Update contrib/pginterface/findoidjoins script(Tom)
+       Major speedup in vacuum of deleted rows with 
+       indexes(Vadim) 
+       Allow non-SQL functions to run different versions 
+       based on arguments(Tom)
+       Add -E option that shows actual queries sent by \dt 
+       and friends(Masaaki Sakaida)
+       Add version number in startup banners for 
+       psql(Masaaki Sakaida)
+       New contrib/vacuumlo removes large objects not 
+       referenced(Peter)
+       New initialization for table sizes so non-vacuumed 
+       tables perform better(Tom)
+       Improve error messages when a connection is 
+       rejected(Tom)
+       Support for arrays of char() and varchar() 
+       fields(Massimo)
+       Overhaul of hash code to increase reliability and 
+       performance(Tom)
+       Update to PyGreSQL 2.4(D'Arcy)
+       Changed debug options so -d4 and -d5 produce 
+       different node displays(Jan)
+       New pg_options: pretty_plan, pretty_parse, 
+       pretty_rewritten(Jan)
+       Better optimization statistics for system table 
+       access(Tom)
+       Better handling of non-default block sizes(Massimo)
+       Improve GEQO optimizer memory consumption(Tom)
+       UNION now suppports ORDER BY of columns not in target 
+       list(Jan)
+       Major libpq++ improvements(Vince Vielhaber)
 
        Source Tree Changes
        -------------------
-       /contrib cleanup(Jun)
-       Inline some small functions called for every row(Bruce)
-       Alpha/linux fixes
-       Hp/UX cleanups(Tom)
-       Multi-byte regression tests(Soonmyung.)
-       Remove --disabled options from configure
-       Define PGDOC to use POSTGRESDIR by default
-       Make regression optional
-       Remove extra braces code to pgindent(Bruce)
-       Add bsdi shared library support(Bruce)
-       New --without-CXX support configure option(Brook)
-       New FAQ_CVS
-       Update backend flowchart in tools/backend(Bruce)
-       Change atttypmod from int16 to int32(Bruce, Tom)
-       Getrusage() fix for platforms that do not have it(Tom)
-       Add PQconnectdb, PGUSER, PGPASSWORD to libpq man page
-       NS32K platform fixes(Phil Nelson, John Buller)
-       Sco 7/UnixWare 2.x fixes(Billy,others)
-       Sparc/Solaris 2.5 fixes(Ryan)
-       Pgbuiltin.3 is obsolete, move to doc files(Thomas)
-       Even more documention(Thomas)
-       Nextstep support(Jacek)
-       Aix support(David)
-       pginterface manual page(Bruce)
-       shared libraries all have version numbers
-       merged all OS-specific shared library defines into one file
-       smarter TCL/TK configuration checking(Billy)
-       smarter perl configuration(Brook)
-       configure uses supplied install-sh if no install script found(Tom)
-       new Makefile.shlib for shared library configuration(Tom)
+       Improve port matching(Tom)
+       Portability fixes for SunOS
+       Add NT/Win32 backend port and enable dynamic 
+       loading(Magnus and Daniel Horak)
+       New port to Cobalt Qube(Mips) running Linux(Tatsuo)
+       Port to NetBSD/m68k(Mr. Mutsuki Nakajima)
+       Port to NetBSD/sun3(Mr. Mutsuki Nakajima)
+       Port to NetBSD/macppc(Toshimi Aoki)
+       Fix for tcl/tk configuration(Vince)
+       Removed CURRENT keyword for rule queries(Jan)
+       NT dynamic loading now works(Daniel Horak)
+       Add ARM32 support(Andrew McMurry)
+       Better support for HPUX 11 and Unixware
+       Improve file handling to be more uniform, prevent 
+       file descriptor leak(Tom)
+       New install commands for plpgsql(Jan)
+            
+
+
