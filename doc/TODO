@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Jun 22 23:52:20 EDT 2003
+Last updated:		Mon Jun 23 00:00:08 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -253,6 +253,7 @@ Clients
 * Allow psql to do table completion for SELECT * FROM schema_part and
   table completion for SELECT * FROM schema_name.
 * Add XML capability to pg_dump and COPY, when backend XML capability
+* Allow SSL-enabled clients to turn off SSL transfers
 
 
 * JDBC
@@ -451,7 +452,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1057 2003/06/23 03:52:24 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1057 2003/06/23 03:52:24 momjian Exp $
+* Change CVS $Id: TODO,v 1.1058 2003/06/23 04:00:10 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1058 2003/06/23 04:00:10 momjian Exp $
 
 * Wire Protocol Changes
 	o Show transaction status in psql
