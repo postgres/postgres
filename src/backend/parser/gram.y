@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.86 1998/01/09 20:05:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.87 1998/01/09 21:26:12 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1960,7 +1960,7 @@ ViewStmt:  CREATE VIEW name AS SelectStmt
 					ViewStmt *n = makeNode(ViewStmt);
 					n->viewname = $3;
 					n->query = (Query *)$5;
-					if (n->query->unionClause != NULL)
+					if (((SelectStmt *)n->query)->unionClause != NULL)
 						elog(ERROR,"Views on unions not implemented.");
 					$$ = (Node *)n;
 				}
