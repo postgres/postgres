@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.43 1998/01/24 22:48:41 momjian Exp $
+ * $Id: pg_proc.h,v 1.44 1998/01/25 20:23:40 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1178,6 +1178,8 @@ DATA(insert OID =  886 (  cash_in		   PGUID 11 f t f 1 f 790 "0" 100 0 0 100  fo
 DESCR("(internal)");
 DATA(insert OID =  887 (  cash_out		   PGUID 11 f t f 1 f  23 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
+DATA(insert OID =  1273 (  cash_words_out  PGUID 11 f t f 1 f  23 "0" 100 0 0 100  foo bar ));
+DESCR("output amount as words");
 DATA(insert OID =  888 (  cash_eq		   PGUID 11 f t f 2 f  16 "790 790" 100 0 0 100  foo bar ));
 DESCR("equals");
 DATA(insert OID =  889 (  cash_ne		   PGUID 11 f t f 2 f  16 "790 790" 100 0 0 100  foo bar ));

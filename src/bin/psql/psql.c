@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.129 1998/01/23 19:22:24 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.130 1998/01/25 20:23:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1770,7 +1770,7 @@ HandleSlashCmds(PsqlSettings *pset,
 				SendQuery(&success, pset,"\
 					SELECT	t.typname as return_type, \
 							p.proname as function, \
-							oid8types(p.proargtypes) as arguments, \
+							substr(oid8types(p.proargtypes),1,20) as arguments, \
 							substr(obj_description(p.oid),1,23) \
 					FROM 	pg_proc p, pg_type t \
 					WHERE 	p.prorettype = t.oid and \
