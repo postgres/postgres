@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/abort.l,v 1.1 1996/11/14 10:15:07 scrappy Exp $
-.TH ABORT SQL 01/23/93 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/abort.l,v 1.2 1996/12/11 00:26:52 momjian Exp $
+.TH ABORT SQL 01/23/93 PostgreSQL PostgreSQL
 .\" XXX This .XA has to go after the .TH so that the index page number goes
 .\"	in the right place...
 .SH Abort

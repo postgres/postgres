@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/vacuum.l,v 1.1 1996/11/14 10:18:14 scrappy Exp $
-.TH VACUUM SQL 11/05/95 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/vacuum.l,v 1.2 1996/12/11 00:28:15 momjian Exp $
+.TH VACUUM SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 vacuum \(em vacuum a database
 .SH SYNOPSIS

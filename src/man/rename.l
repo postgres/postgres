@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/rename.l,v 1.1 1996/11/14 10:17:56 scrappy Exp $
-.TH RENAME SQL 02/08/94 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/rename.l,v 1.2 1996/12/11 00:28:06 momjian Exp $
+.TH RENAME SQL 02/08/94 PostgreSQL PostgreSQL
 .SH NAME
 rename \(em rename a class or an attribute in a class
 .SH SYNOPSIS

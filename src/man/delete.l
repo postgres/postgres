@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/delete.l,v 1.1 1996/11/14 10:16:29 scrappy Exp $
-.TH DELETE SQL 11/05/95 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/delete.l,v 1.2 1996/12/11 00:27:26 momjian Exp $
+.TH DELETE SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 delete \(em delete instances from a class
 .SH SYNOPSIS

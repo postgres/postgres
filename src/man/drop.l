@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop.l,v 1.1 1996/11/14 10:16:43 scrappy Exp $
-.TH "DROP TABLE" SQL 11/05/95 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop.l,v 1.2 1996/12/11 00:27:37 momjian Exp $
+.TH "DROP TABLE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 drop table \(em destroy existing classes
 .SH SYNOPSIS

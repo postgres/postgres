@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.2 1996/12/07 04:39:38 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.3 1996/12/11 00:28:00 momjian Exp $
 .TH POSTGRES95 UNIX 11/05/95 Postgres95 Postgres95
 .SH NAME
 postgres \(em the Postgres backend server
@@ -10,11 +10,15 @@ postgres \(em the Postgres backend server
 .BR "-B"
 n_buffers]
 [\c
+.BR "-D"
+data_directory]
+[\c
 .BR "-E"
 ]
 [\c
 .BR "-F"
 ]
+.br
 [\c
 .BR "-P"
 filedes]
@@ -22,7 +26,6 @@ filedes]
 .BR "-Q"
 ]
 .br
-.in +5n
 [\c
 .BR "-d"
 debug_level]
@@ -53,6 +56,18 @@ The
 .IR postgres
 server understands the following command-line options:
 .TP 5n
+.BR "-D" " data_directory"
+This option specifies the pathname of the directory that contains the
+database system data (the tables, the catalogs, etc.).  If you don't 
+specify this option, Postgres uses the value of the PGDATA environment
+variable.  You must either specify a -D option or set PGDATA.
+ 
+The data directory pathname for a database system is normally determined when
+the database system is created with
+.IR initdb ,
+with a --pgdata option to
+.IR initdb .
+.TP
 .BR "-B" " n_buffers"
 If the backend is running under the 
 .IR postmaster ,
@@ -67,7 +82,7 @@ allocate.  This value defaults to 64.
 Echo all queries.
 .TP
 .BR "-F"
-Disbable automatic fsync() call after each transaction.
+Disable automatic fsync() call after each transaction.
 This option improves performance, but an operating system crash
 while a transaction is in progress will probably cause data loss.
 .TP

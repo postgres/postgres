@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_operator.l,v 1.1 1996/11/14 10:17:04 scrappy Exp $
-.TH "DROP OPERATOR" SQL 11/05/95 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_operator.l,v 1.2 1996/12/11 00:27:41 momjian Exp $
+.TH "DROP OPERATOR" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 drop operator \(em remove an operator from the system
 .SH SYNOPSIS

@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/rollback.l,v 1.1 1996/11/14 10:18:00 scrappy Exp $
-.TH ROLLBACK SQL 01/20/96 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/rollback.l,v 1.2 1996/12/11 00:28:08 momjian Exp $
+.TH ROLLBACK SQL 01/20/96 PostgreSQL PostgreSQL
 .\" XXX This .XA has to go after the .TH so that the index page number goes
 .\"	in the right place...
 .SH NAME

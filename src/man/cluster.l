@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/cluster.l,v 1.1 1996/11/14 10:15:32 scrappy Exp $
-.TH CLUSTER SQL 01/23/93 Postgres95 Postgres95
+.\" $Header: /cvsroot/pgsql/src/man/Attic/cluster.l,v 1.2 1996/12/11 00:27:07 momjian Exp $
+.TH CLUSTER SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 cluster \(em give storage clustering advice to Postgres
 .SH SYNOPSIS
