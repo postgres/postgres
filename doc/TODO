@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Oct 14 18:17:50 EDT 2004
+Last updated:		Sun Oct 17 22:56:37 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -56,6 +56,18 @@ Administration
   When a pg_dump is restored, all tablespaces will attempt to be created
   in their original locations. If this fails, the user must be able to 
   adjust the restore process.
+
+* Allow a database in tablespace t1 with tables created in tablespace t2
+  to be used as a template for a new database created with default
+  tablespace t2
+
+  All objects in the default database tablespace must have default tablespace
+  specifications.  This is because new databases are created by copying 
+  directories.  If you mix default tablespace tables and tablespace-specified
+  tables in the same directory, creating a new database from such a mixed
+  directory would create a new database with tables that had incorrect 
+  explicit tablespaces.  To fix this would require modifying pg_class in the
+  newly copied database, which we don't currently do.
 
 * Add "include file" functionality in postgresql.conf
 * Add session start time and last statement time to pg_stat_activity
