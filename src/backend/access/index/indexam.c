@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.74 2004/08/29 04:12:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.75 2004/09/30 23:21:14 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -112,10 +112,15 @@
 /* ----------------
  *		index_open - open an index relation by relation OID
  *
- *		Note: we acquire no lock on the index.	An AccessShareLock is
- *		acquired by index_beginscan (and released by index_endscan).
- *		Generally, the caller should already hold some type of lock on
- *		the parent relation to ensure that the index doesn't disappear.
+ *		Note: we acquire no lock on the index.  A lock is not needed when
+ *		simply examining the index reldesc; the index's schema information
+ *		is considered to be protected by the lock that the caller had better
+ *		be holding on the parent relation.  Some type of lock should be
+ *		obtained on the index before physically accessing it, however.
+ *		This is handled automatically for most uses by index_beginscan
+ *		and index_endscan for scan cases, or by ExecOpenIndices and
+ *		ExecCloseIndices for update cases.  Other callers will need to
+ *		obtain their own locks.
  *
  *		This is a convenience routine adapted for indexscan use.
  *		Some callers may prefer to use relation_open directly.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.115 2004/09/11 18:28:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.116 2004/09/30 23:21:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -682,28 +682,29 @@ ExecOpenIndices(ResultRelInfo *resultRelInfo)
 		IndexInfo  *ii;
 
 		/*
-		 * Open (and lock, if necessary) the index relation
+		 * Open and lock the index relation
+		 *
+		 * If the index AM supports concurrent updates, obtain RowExclusiveLock
+		 * to signify that we are updating the index.  This locks out only
+		 * operations that need exclusive access, such as relocating the index
+		 * to a new tablespace.
 		 *
 		 * If the index AM is not safe for concurrent updates, obtain an
 		 * exclusive lock on the index to lock out other updaters as well
-		 * as readers (index_beginscan places AccessShareLock). We will
-		 * release this lock in ExecCloseIndices.
-		 *
-		 * If the index AM supports concurrent updates, we obtain no lock
-		 * here at all, which is a tad weird, but safe since any critical
-		 * operation on the index (like deleting it) will acquire
-		 * exclusive lock on the parent table.	Perhaps someday we should
-		 * acquire RowExclusiveLock on the index here?
+		 * as readers (index_beginscan places AccessShareLock).
 		 *
 		 * If there are multiple not-concurrent-safe indexes, all backends
-		 * must lock the indexes in the same order or we will get
-		 * deadlocks here during concurrent updates.  This is guaranteed
-		 * by RelationGetIndexList(), which promises to return the index
-		 * list in OID order.
+		 * must lock the indexes in the same order or we will get deadlocks
+		 * here.  This is guaranteed by RelationGetIndexList(), which promises
+		 * to return the index list in OID order.
+		 *
+		 * The locks will be released in ExecCloseIndices.
 		 */
 		indexDesc = index_open(indexOid);
 
-		if (!indexDesc->rd_am->amconcurrent)
+		if (indexDesc->rd_am->amconcurrent)
+			LockRelation(indexDesc, RowExclusiveLock);
+		else
 			LockRelation(indexDesc, AccessExclusiveLock);
 
 		/* extract index key information from the index's pg_index info */
@@ -736,10 +737,12 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
 	for (i = 0; i < numIndices; i++)
 	{
 		if (indexDescs[i] == NULL)
-			continue;
+			continue;			/* shouldn't happen? */
 
-		/* Drop lock, if one was acquired by ExecOpenIndices */
-		if (!indexDescs[i]->rd_am->amconcurrent)
+		/* Drop lock acquired by ExecOpenIndices */
+		if (indexDescs[i]->rd_am->amconcurrent)
+			UnlockRelation(indexDescs[i], RowExclusiveLock);
+		else
 			UnlockRelation(indexDescs[i], AccessExclusiveLock);
 
 		index_close(indexDescs[i]);

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.291 2004/09/13 20:06:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.292 2004/09/30 23:21:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1062,7 +1062,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	scan_heap(vacrelstats, onerel, &vacuum_pages, &fraged_pages);
 
 	/* Now open all indexes of the relation */
-	vac_open_indexes(onerel, &nindexes, &Irel);
+	vac_open_indexes(onerel, AccessExclusiveLock, &nindexes, &Irel);
 	if (nindexes > 0)
 		vacrelstats->hasindex = true;
 
@@ -1088,11 +1088,11 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 		/* Try to shrink heap */
 		repair_frag(vacrelstats, onerel, &vacuum_pages, &fraged_pages,
 					nindexes, Irel);
-		vac_close_indexes(nindexes, Irel);
+		vac_close_indexes(nindexes, Irel, NoLock);
 	}
 	else
 	{
-		vac_close_indexes(nindexes, Irel);
+		vac_close_indexes(nindexes, Irel, NoLock);
 		if (vacuum_pages.num_pages > 0)
 		{
 			/* Clean pages from vacuum_pages list */
@@ -3210,8 +3210,14 @@ vac_cmp_vtlinks(const void *left, const void *right)
 }
 
 
+/*
+ * Open all the indexes of the given relation, obtaining the specified kind
+ * of lock on each.  Return an array of Relation pointers for the indexes
+ * into *Irel, and the number of indexes into *nindexes.
+ */
 void
-vac_open_indexes(Relation relation, int *nindexes, Relation **Irel)
+vac_open_indexes(Relation relation, LOCKMODE lockmode,
+				 int *nindexes, Relation **Irel)
 {
 	List	   *indexoidlist;
 	ListCell   *indexoidscan;
@@ -3230,23 +3236,34 @@ vac_open_indexes(Relation relation, int *nindexes, Relation **Irel)
 	foreach(indexoidscan, indexoidlist)
 	{
 		Oid			indexoid = lfirst_oid(indexoidscan);
+		Relation	ind;
 
-		(*Irel)[i] = index_open(indexoid);
-		i++;
+		ind = index_open(indexoid);
+		(*Irel)[i++] = ind;
+		LockRelation(ind, lockmode);
 	}
 
 	list_free(indexoidlist);
 }
 
-
+/*
+ * Release the resources acquired by vac_open_indexes.  Optionally release
+ * the locks (say NoLock to keep 'em).
+ */
 void
-vac_close_indexes(int nindexes, Relation *Irel)
+vac_close_indexes(int nindexes, Relation *Irel, LOCKMODE lockmode)
 {
 	if (Irel == NULL)
 		return;
 
 	while (nindexes--)
-		index_close(Irel[nindexes]);
+	{
+		Relation	ind = Irel[nindexes];
+
+		if (lockmode != NoLock)
+			UnlockRelation(ind, lockmode);
+		index_close(ind);
+	}
 	pfree(Irel);
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.45 2004/08/29 05:06:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.46 2004/09/30 23:21:06 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1007,11 +1007,13 @@ toast_save_datum(Relation rel, Datum value)
 	data_todo = VARATT_SIZE(value) - VARHDRSZ;
 
 	/*
-	 * Open the toast relation
+	 * Open the toast relation.  We must explicitly lock the toast index
+	 * because we aren't using an index scan here.
 	 */
 	toastrel = heap_open(rel->rd_rel->reltoastrelid, RowExclusiveLock);
 	toasttupDesc = toastrel->rd_att;
 	toastidx = index_open(toastrel->rd_rel->reltoastidxid);
+	LockRelation(toastidx, RowExclusiveLock);
 
 	/*
 	 * Split up the item into chunks
@@ -1065,6 +1067,7 @@ toast_save_datum(Relation rel, Datum value)
 	/*
 	 * Done - close toast relation and return the reference
 	 */
+	UnlockRelation(toastidx, RowExclusiveLock);
 	index_close(toastidx);
 	heap_close(toastrel, RowExclusiveLock);
 

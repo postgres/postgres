@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.76 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.77 2004/09/30 23:21:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,7 +243,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 * if there was an explicit column list in the ANALYZE command,
 	 * however.
 	 */
-	vac_open_indexes(onerel, &nindexes, &Irel);
+	vac_open_indexes(onerel, AccessShareLock, &nindexes, &Irel);
 	hasindex = (nindexes > 0);
 	indexdata = NULL;
 	analyzableindex = false;
@@ -310,7 +310,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 */
 	if (attr_cnt <= 0 && !analyzableindex)
 	{
-		vac_close_indexes(nindexes, Irel);
+		vac_close_indexes(nindexes, Irel, AccessShareLock);
 		relation_close(onerel, AccessShareLock);
 		return;
 	}
@@ -427,7 +427,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	}
 
 	/* Done with indexes */
-	vac_close_indexes(nindexes, Irel);
+	vac_close_indexes(nindexes, Irel, NoLock);
 
 	/*
 	 * Close source relation now, but keep lock so that no one deletes it
