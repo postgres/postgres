@@ -1,0 +1,89 @@
+/* RCS $Id: CosQuery.idl,v 1.1 1998/11/17 03:10:35 scrappy Exp $
+ *
+ * ----------------------------------------------------------------------------
+ * This is unmarked software provided by the Object Management Group,Inc. (OMG)
+ * ----------------------------------------------------------------------------
+ */
+
+
+/**
+ * CosQuery is the Common Object Services Specification query module
+ * as it it appears in COSS1, v1.0.
+ */
+
+
+#ifndef CosQuery_idl
+#define CosQuery_idl
+
+#ifndef CosQueryCollection_idl
+#include "CosQueryCollection.idl"
+#endif
+
+module CosQuery {
+
+  exception QueryInvalid {string why;}; 
+  exception QueryProcessingError {string why;}; 
+  exception QueryTypeInvalid {};
+
+  enum QueryStatus {complete, incomplete};
+
+  typedef CosQueryCollection::ParameterList ParameterList;
+
+  typedef CORBA::InterfaceDef QLType;
+  typedef sequence<QLType> QLTypeSeq;
+
+  interface Query;
+  interface QueryLanguageType {}; 
+  interface SQLQuery : QueryLanguageType {}; 
+  interface SQL_92Query : SQLQuery {}; 
+  interface OQL : QueryLanguageType {}; 
+  interface OQLBasic : OQL {}; 
+  interface OQL_93 : OQL {}; 
+  interface OQL_93Basic : OQL_93, OQLBasic {};
+
+  interface QueryEvaluator { 
+
+    readonly attribute QLTypeSeq ql_types; 
+    readonly attribute QLType default_ql_type;
+
+    any evaluate (in string         query,
+		  in QLType         ql_type, 
+		  in ParameterList  params) 
+      raises(QueryTypeInvalid,
+	     QueryInvalid,
+	     QueryProcessingError); 
+  };
+
+  interface QueryableCollection : QueryEvaluator, 
+    CosQueryCollection::Collection {
+
+  };
+
+  interface QueryManager : QueryEvaluator { 
+
+    Query create (in string          query,
+		  in QLType          ql_type, 
+		  in  ParameterList  params) 
+      raises(QueryTypeInvalid,
+	     QueryInvalid);
+
+  };
+
+  interface Query { 
+
+    readonly attribute QueryManager query_mgr;
+
+    void prepare (in ParameterList params) 
+      raises(QueryProcessingError); 
+
+    void execute (in ParameterList params) 
+      raises(QueryProcessingError);
+
+    QueryStatus get_status (); 
+
+    any get_result (); 
+  };
+
+};
+
+#endif // CosQuery_idl

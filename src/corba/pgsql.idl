@@ -1,78 +1,79 @@
-#include "CosQueryCollection.idl"
-
 #ifndef pgsql_idl
 #define pgsql_idl
 
+#ifndef CosQuery_idl
+#include "CosQuery.idl"
+#endif
+
+#ifndef CosQueryCollection_idl
+#include "CosQueryCollection.idl"
+#endif
+
 module PostgreSQL {
-    
-    // Built-in types
-    
-    module Types {
-        // Arrays in network order
-        typedef short int2;
-        typedef long int4;
-        typedef long int8[2];
-    };
-    
-    
-    // NULL support
-    
-    typedef boolean Null;
-    
-    union Value switch (Null) {
-      case false: any value;
-    };
-    
-    typedef sequence<Value> Row;
-    
-    // <info>
-    // More about the application of COSS:
-    // 
-    // A Table will be a QueryableCollection of Rows
-    // A Database will be a QueryableCollection of Tables
-    // Both will be queryable via the Query Service
-    // 
-    // Other relations will be representable using the Relationship Service
-    // This includes primary/foreign keys and anything else :)
-    // 
-    // GRANT/REVOKE can be supplied via the Security Service
-    // 
-    // See a pattern here? The whole of SQL can be implemented by these services!
-    // The statements go through a parser. Queries and subqueries are passed to the
-    // database for processing. Returned items are handled appropriately:
-    // 
-    // SELECT: return the items to the caller
-    // UPDATE: modify the items (direct)
-    // DELETE: call delete() on each Row (direct)
-    // GRANT/REVOKE: modify ACLs (via Security Service)
-    // ALTER: modify the items (direct) and/or the relations (via Relationship Service)
-    // etc.
-    // 
-    // I'm not sure yet about LOCK and UNLOCK.
-    // </info>
-    
-    
-    // Query result interface
-    // 
-    // Should the iterator support a 'boolean skip(in long n)' extension?
-    
-    interface QueryResult : CosQueryCollection::Collection {};
-    interface QueryResultIterator : CosQueryCollection::Iterator {};
-    
-    
-    // Connected database object
-    
-    interface Database {
-        QueryResult exec(in string query);
-        void disconnect();
-    };
-    
-    
-    // Server object (stateless)
-    
-    interface Server {
-        Database connect(in string db, in string user, in string password);
-    };
+	
+	// Built-in types
+	
+	module Types {
+		// Arrays in network order
+		typedef short int2;
+		typedef long int4;
+		typedef long int8[2];
+	};
+	
+	
+	// NULL support
+	
+	typedef boolean Null;
+	
+	union Value switch (Null) {
+	  case false: any value;
+	};
+	
+	
+	// Row definition
+	
+	typedef sequence<Value> Row;
+	
+	// <info>
+	// More about the application of COSS:
+	// 
+	// A Table will be a QueryableCollection of Rows
+	// A Database will be a QueryableCollection of Tables
+	// (Currently Tables are not exported... maybe later.)
+	// Both will be queryable via the Query Service
+	// 
+	// Other relations will be representable using the Relationship Service
+	// This includes primary/foreign keys and anything else :)
+	// 
+	// GRANT/REVOKE can be supplied via the Security Service
+	// 
+	// See a pattern here? The whole of SQL can be implemented by these services!
+	// The statements go through a parser. Queries and subqueries are passed to the
+	// database for processing. Returned items are handled appropriately:
+	// 
+	// SELECT: return the items to the caller
+	// UPDATE: modify the items (direct)
+	// DELETE: call delete() on each Row (direct)
+	// GRANT/REVOKE: modify ACLs (via Security Service)
+	// ALTER: modify the items (direct) and/or the relations (via Relationship Service)
+	// etc.
+	// 
+	// I'm not sure yet about LOCK and UNLOCK.
+	// </info>
+	
+	
+	// Connected database object
+	
+	interface Database : CosQuery::QueryableCollection {
+		void disconnect();
+	};
+	
+	
+	// Server object (stateless)
+	
+	interface Server {
+		Database connect(in string db, in string user, in string password);
+	};
 };
 
 #endif // pgsql_idl
