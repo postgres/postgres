@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.22 1999/06/19 04:54:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.23 1999/06/19 05:00:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,7 +234,7 @@ PortalVariableMemoryRealloc(PortalVariableMemory this,
 static char *
 PortalVariableMemoryGetName(PortalVariableMemory this)
 {
-	return varargform("%s-var", PortalVariableMemoryGetPortal(this)->name);
+	return vararg_format("%s-var", PortalVariableMemoryGetPortal(this)->name);
 }
 
 /* ----------------
@@ -312,7 +312,7 @@ PortalHeapMemoryRealloc(PortalHeapMemory this,
 static char *
 PortalHeapMemoryGetName(PortalHeapMemory this)
 {
-	return varargform("%s-heap", PortalHeapMemoryGetPortal(this)->name);
+	return vararg_format("%s-heap", PortalHeapMemoryGetPortal(this)->name);
 }
 
 /* ----------------
