@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.10 1997/03/25 20:02:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.11 1997/03/28 06:53:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,9 @@
 #include <miscadmin.h>
 #ifdef HAVE_FLOAT_H
 # include <float.h>
+#endif
+#ifdef HAVE_LIMITS_H
+# include <limits.h>
 #endif
 #ifndef USE_POSIX_TIME
 #include <sys/timeb.h>
