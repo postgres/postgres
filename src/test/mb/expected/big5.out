@@ -1,12 +1,12 @@
-drop table 廠商資料
-create table 廠商資料 (行業別 text, 公司抬頭 varchar, 地址 varchar(16))
-create index 廠商資料index1 on 廠商資料 using btree (行業別)
-create index 廠商資料index2 on 廠商資料 using hash (公司抬頭)
-insert into 廠商資料 values ('電腦業', '達達科技', '北A01仁')
-insert into 廠商資料 values ('製造業', '財源有限公司', '中B10中')
-insert into 廠商資料 values ('餐飲業', '美味股份有限公司', '高Z01九')
-vacuum 廠商資料
-select * from 廠商資料
+drop table 廠商資料;
+create table 廠商資料 (行業別 text, 公司抬頭 varchar, 地址 varchar(16));
+create index 廠商資料index1 on 廠商資料 using btree (行業別);
+create index 廠商資料index2 on 廠商資料 using hash (公司抬頭);
+insert into 廠商資料 values ('電腦業', '達達科技', '北A01仁');
+insert into 廠商資料 values ('製造業', '財源有限公司', '中B10中');
+insert into 廠商資料 values ('餐飲業', '美味股份有限公司', '高Z01九');
+vacuum 廠商資料;
+select * from 廠商資料;
  行業別 |     公司抬頭     |  地址   
 --------+------------------+---------
  電腦業 | 達達科技         | 北A01仁
@@ -14,51 +14,51 @@ select * from 廠商資料
  餐飲業 | 美味股份有限公司 | 高Z01九
 (3 rows)
 
-select * from 廠商資料 where 地址 = '高Z01九'
+select * from 廠商資料 where 地址 = '高Z01九';
  行業別 |     公司抬頭     |  地址   
 --------+------------------+---------
  餐飲業 | 美味股份有限公司 | 高Z01九
 (1 row)
 
-select * from 廠商資料 where 地址 ~* '高z01九'
+select * from 廠商資料 where 地址 ~* '高z01九';
  行業別 |     公司抬頭     |  地址   
 --------+------------------+---------
  餐飲業 | 美味股份有限公司 | 高Z01九
 (1 row)
 
-select * from 廠商資料 where 地址 like '_Z01_'
+select * from 廠商資料 where 地址 like '_Z01_';
  行業別 |     公司抬頭     |  地址   
 --------+------------------+---------
  餐飲業 | 美味股份有限公司 | 高Z01九
 (1 row)
 
-select * from 廠商資料 where 地址 like '_Z%'
+select * from 廠商資料 where 地址 like '_Z%';
  行業別 |     公司抬頭     |  地址   
 --------+------------------+---------
  餐飲業 | 美味股份有限公司 | 高Z01九
 (1 row)
 
-select * from 廠商資料 where 公司抬頭 ~ '達達科[寄記技]'
+select * from 廠商資料 where 公司抬頭 ~ '達達科[寄記技]';
  行業別 | 公司抬頭 |  地址   
 --------+----------+---------
  電腦業 | 達達科技 | 北A01仁
 (1 row)
 
-select * from 廠商資料 where 公司抬頭 ~* '達達科[寄記技]'
+select * from 廠商資料 where 公司抬頭 ~* '達達科[寄記技]';
  行業別 | 公司抬頭 |  地址   
 --------+----------+---------
  電腦業 | 達達科技 | 北A01仁
 (1 row)
 
-select *, character_length(行業別) from 廠商資料
- 行業別 |     公司抬頭     |  地址   | length 
---------+------------------+---------+--------
- 電腦業 | 達達科技         | 北A01仁 |      3
- 製造業 | 財源有限公司     | 中B10中 |      3
- 餐飲業 | 美味股份有限公司 | 高Z01九 |      3
+select *, character_length(行業別) from 廠商資料;
+ 行業別 |     公司抬頭     |  地址   | char_length 
+--------+------------------+---------+-------------
+ 電腦業 | 達達科技         | 北A01仁 |           3
+ 製造業 | 財源有限公司     | 中B10中 |           3
+ 餐飲業 | 美味股份有限公司 | 高Z01九 |           3
 (3 rows)
 
-select *, octet_length(行業別) from 廠商資料
+select *, octet_length(行業別) from 廠商資料;
  行業別 |     公司抬頭     |  地址   | octet_length 
 --------+------------------+---------+--------------
  電腦業 | 達達科技         | 北A01仁 |            6
@@ -66,7 +66,7 @@ select *, octet_length(行業別) from 廠商資料
  餐飲業 | 美味股份有限公司 | 高Z01九 |            6
 (3 rows)
 
-select *, position('有限' in 公司抬頭) from 廠商資料
+select *, position('有限' in 公司抬頭) from 廠商資料;
  行業別 |     公司抬頭     |  地址   | strpos 
 --------+------------------+---------+--------
  電腦業 | 達達科技         | 北A01仁 |      0
@@ -74,7 +74,7 @@ select *, position('有限' in 公司抬頭) from 廠商資料
  餐飲業 | 美味股份有限公司 | 高Z01九 |      5
 (3 rows)
 
-select *, substring(公司抬頭 from 3 for 6 ) from 廠商資料
+select *, substring(公司抬頭 from 3 for 6 ) from 廠商資料;
  行業別 |     公司抬頭     |  地址   |    substr    
 --------+------------------+---------+--------------
  電腦業 | 達達科技         | 北A01仁 | 科技

@@ -1,13 +1,13 @@
-drop table ìÞÙ¸æñÕè
+drop table ìÞÙ¸æñÕè;
 ERROR:  Relation 'ìÞÙ¸æñÕè' does not exist
-create table ìÞÙ¸æñÕè (ÈçäÆÉ± text, ÄüÆ³Íñó¤ varchar, ÇâÉß varchar(16))
-create index ìÞÙ¸æñÕèindex1 on ìÞÙ¸æñÕè using btree (ÈçäÆÉ±)
-create index ìÞÙ¸æñÕèindex2 on ìÞÙ¸æñÕè using hash (ÄüÆ³Íñó¤)
-insert into ìÞÙ¸æñÕè values ('çÙæªäÆ', 'ç®ç®ÒïÊÀ', 'Æ¡A01Äî')
-insert into ìÞÙ¸æñÕè values ('êûÝßäÆ', 'ØÂäãÈ´ÓîÄüÆ³', 'ÄãB10Äã')
-insert into ìÞÙ¸æñÕè values ('ó§ã£äÆ', 'Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³', 'ØíZ01Ä¦')
-vacuum ìÞÙ¸æñÕè
-select * from ìÞÙ¸æñÕè
+create table ìÞÙ¸æñÕè (ÈçäÆÉ± text, ÄüÆ³Íñó¤ varchar, ÇâÉß varchar(16));
+create index ìÞÙ¸æñÕèindex1 on ìÞÙ¸æñÕè using btree (ÈçäÆÉ±);
+create index ìÞÙ¸æñÕèindex2 on ìÞÙ¸æñÕè using hash (ÄüÆ³Íñó¤);
+insert into ìÞÙ¸æñÕè values ('çÙæªäÆ', 'ç®ç®ÒïÊÀ', 'Æ¡A01Äî');
+insert into ìÞÙ¸æñÕè values ('êûÝßäÆ', 'ØÂäãÈ´ÓîÄüÆ³', 'ÄãB10Äã');
+insert into ìÞÙ¸æñÕè values ('ó§ã£äÆ', 'Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³', 'ØíZ01Ä¦');
+vacuum ìÞÙ¸æñÕè;
+select * from ìÞÙ¸æñÕè;
  ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   
 --------+------------------+---------
  çÙæªäÆ | ç®ç®ÒïÊÀ         | Æ¡A01Äî
@@ -15,51 +15,51 @@ select * from ìÞÙ¸æñÕè
  ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦
 (3 rows)
 
-select * from ìÞÙ¸æñÕè where ÇâÉß = 'ØíZ01Ä¦'
+select * from ìÞÙ¸æñÕè where ÇâÉß = 'ØíZ01Ä¦';
  ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   
 --------+------------------+---------
  ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦
 (1 row)
 
-select * from ìÞÙ¸æñÕè where ÇâÉß ~* 'Øíz01Ä¦'
+select * from ìÞÙ¸æñÕè where ÇâÉß ~* 'Øíz01Ä¦';
  ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   
 --------+------------------+---------
  ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦
 (1 row)
 
-select * from ìÞÙ¸æñÕè where ÇâÉß like '_Z01_'
+select * from ìÞÙ¸æñÕè where ÇâÉß like '_Z01_';
  ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   
 --------+------------------+---------
  ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦
 (1 row)
 
-select * from ìÞÙ¸æñÕè where ÇâÉß like '_Z%'
+select * from ìÞÙ¸æñÕè where ÇâÉß like '_Z%';
  ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   
 --------+------------------+---------
  ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦
 (1 row)
 
-select * from ìÞÙ¸æñÕè where ÄüÆ³Íñó¤ ~ 'ç®ç®Òï[ÙìØ´ÊÀ]'
+select * from ìÞÙ¸æñÕè where ÄüÆ³Íñó¤ ~ 'ç®ç®Òï[ÙìØ´ÊÀ]';
  ÈçäÆÉ± | ÄüÆ³Íñó¤ |  ÇâÉß   
 --------+----------+---------
  çÙæªäÆ | ç®ç®ÒïÊÀ | Æ¡A01Äî
 (1 row)
 
-select * from ìÞÙ¸æñÕè where ÄüÆ³Íñó¤ ~* 'ç®ç®Òï[ÙìØ´ÊÀ]'
+select * from ìÞÙ¸æñÕè where ÄüÆ³Íñó¤ ~* 'ç®ç®Òï[ÙìØ´ÊÀ]';
  ÈçäÆÉ± | ÄüÆ³Íñó¤ |  ÇâÉß   
 --------+----------+---------
  çÙæªäÆ | ç®ç®ÒïÊÀ | Æ¡A01Äî
 (1 row)
 
-select *, character_length(ÈçäÆÉ±) from ìÞÙ¸æñÕè
- ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   | length 
---------+------------------+---------+--------
- çÙæªäÆ | ç®ç®ÒïÊÀ         | Æ¡A01Äî |      3
- êûÝßäÆ | ØÂäãÈ´ÓîÄüÆ³     | ÄãB10Äã |      3
- ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦ |      3
+select *, character_length(ÈçäÆÉ±) from ìÞÙ¸æñÕè;
+ ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   | char_length 
+--------+------------------+---------+-------------
+ çÙæªäÆ | ç®ç®ÒïÊÀ         | Æ¡A01Äî |           3
+ êûÝßäÆ | ØÂäãÈ´ÓîÄüÆ³     | ÄãB10Äã |           3
+ ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦ |           3
 (3 rows)
 
-select *, octet_length(ÈçäÆÉ±) from ìÞÙ¸æñÕè
+select *, octet_length(ÈçäÆÉ±) from ìÞÙ¸æñÕè;
  ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   | octet_length 
 --------+------------------+---------+--------------
  çÙæªäÆ | ç®ç®ÒïÊÀ         | Æ¡A01Äî |            6
@@ -67,7 +67,7 @@ select *, octet_length(ÈçäÆÉ±) from ìÞÙ¸æñÕè
  ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦ |            6
 (3 rows)
 
-select *, position('È´Óî' in ÄüÆ³Íñó¤) from ìÞÙ¸æñÕè
+select *, position('È´Óî' in ÄüÆ³Íñó¤) from ìÞÙ¸æñÕè;
  ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   | strpos 
 --------+------------------+---------+--------
  çÙæªäÆ | ç®ç®ÒïÊÀ         | Æ¡A01Äî |      0
@@ -75,7 +75,7 @@ select *, position('È´Óî' in ÄüÆ³Íñó¤) from ìÞÙ¸æñÕè
  ó§ã£äÆ | Ó¡ÌÀÏ´Ç¹È´ÓîÄüÆ³ | ØíZ01Ä¦ |      5
 (3 rows)
 
-select *, substring(ÄüÆ³Íñó¤ from 3 for 6 ) from ìÞÙ¸æñÕè
+select *, substring(ÄüÆ³Íñó¤ from 3 for 6 ) from ìÞÙ¸æñÕè;
  ÈçäÆÉ± |     ÄüÆ³Íñó¤     |  ÇâÉß   |    substr    
 --------+------------------+---------+--------------
  çÙæªäÆ | ç®ç®ÒïÊÀ         | Æ¡A01Äî | ÒïÊÀ
