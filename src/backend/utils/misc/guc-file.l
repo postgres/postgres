@@ -4,7 +4,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.8 2001/06/07 04:50:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.9 2001/08/06 13:45:15 petere Exp $
  */
 
 %{
@@ -130,7 +130,6 @@ ProcessConfigFile(GucContext context)
 	int token, parse_state;
 	char *opt_name, *opt_value;
 	char *filename;
-	struct stat stat_buf;
 	struct name_value_pair *item, *head, *tail;
 	int elevel;
 	FILE * fp;
@@ -160,25 +159,6 @@ ProcessConfigFile(GucContext context)
             elog(elevel, "could not read configuration file `" CONFIG_FILENAME "': %s", strerror(errno));
 		return;
     }
-
-    /*
-     * Check if the file is group or world writeable. If so, reject.
-     */
-    if (fstat(fileno(fp), &stat_buf) == -1)
-	{
-		FreeFile(fp);
-		free(filename);
-        elog(elevel, "could not stat configuration file `" CONFIG_FILENAME "': %s", strerror(errno));
-		return;
-	}
-
-    if (stat_buf.st_mode & (S_IWGRP | S_IXGRP | S_IWOTH | S_IXOTH))
-	{
-		FreeFile(fp);
-		free(filename);
-        elog(elevel, "configuration file `" CONFIG_FILENAME "' has wrong permissions");
-		return;
-	}
 
 	/*
 	 * Parse
