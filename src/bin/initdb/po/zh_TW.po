@@ -197,7 +197,7 @@ msgstr "無法寫至子行程\n"
 
 #: initdb.c:1864
 msgid "ok\n"
-msgstr "成功n"
+msgstr "成功\\n"
 
 #: initdb.c:1894
 #, c-format
@@ -257,7 +257,7 @@ msgstr ""
 
 #: initdb.c:1973
 msgid "  --no-locale               equivalent to --locale=C\n"
-msgstr "  --no-locale               弁鄏P --locale=C\n"
+msgstr "  --no-locale               功\能同 --locale=C\n"
 
 #: initdb.c:1974
 msgid "  -U, --username=NAME       database superuser name\n"
@@ -468,7 +468,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"執行成央A現在你可以用下列命令啟動資料庫伺服器:\n"
+"執行成功\，現在你可以用下列命令啟動資料庫伺服器:\n"
 "\n"
 "    %s%s%s/postmaster -D %s%s%s\n"
 "或\n"
