@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.198 2003/01/12 18:19:37 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.199 2003/01/23 05:10:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,6 +450,7 @@ InitPlan(QueryDesc *queryDesc)
 	PlanState  *planstate;
 	List	   *rangeTable;
 	Relation	intoRelationDesc;
+	bool		do_select_into;
 	TupleDesc	tupType;
 
 	/*
@@ -527,6 +528,26 @@ InitPlan(QueryDesc *queryDesc)
 		estate->es_result_relations = NULL;
 		estate->es_num_result_relations = 0;
 		estate->es_result_relation_info = NULL;
+	}
+
+	/*
+	 * Detect whether we're doing SELECT INTO.  If so, set the force_oids
+	 * flag appropriately so that the plan tree will be initialized with
+	 * the correct tuple descriptors.
+	 */
+	do_select_into = false;
+
+	if (operation == CMD_SELECT &&
+		!parseTree->isPortal &&
+		parseTree->into != NULL)
+	{
+		do_select_into = true;
+		/*
+		 * For now, always create OIDs in SELECT INTO; this is for backwards
+		 * compatibility with pre-7.3 behavior.  Eventually we might want
+		 * to allow the user to choose.
+		 */
+		estate->es_force_oids = true;
 	}
 
 	/*
@@ -687,79 +708,64 @@ InitPlan(QueryDesc *queryDesc)
 	}
 
 	/*
-	 * initialize the "into" relation
+	 * If doing SELECT INTO, initialize the "into" relation.  We must wait
+	 * till now so we have the "clean" result tuple type to create the
+	 * new table from.
 	 */
 	intoRelationDesc = (Relation) NULL;
 
-	if (operation == CMD_SELECT)
+	if (do_select_into)
 	{
-		if (!parseTree->isPortal)
-		{
-			/*
-			 * a select into table --- need to create the "into" table
-			 */
-			if (parseTree->into != NULL)
-			{
-				char	   *intoName;
-				Oid			namespaceId;
-				AclResult	aclresult;
-				Oid			intoRelationId;
-				TupleDesc	tupdesc;
+		char	   *intoName;
+		Oid			namespaceId;
+		AclResult	aclresult;
+		Oid			intoRelationId;
+		TupleDesc	tupdesc;
 
-				/*
-				 * find namespace to create in, check permissions
-				 */
-				intoName = parseTree->into->relname;
-				namespaceId = RangeVarGetCreationNamespace(parseTree->into);
+		/*
+		 * find namespace to create in, check permissions
+		 */
+		intoName = parseTree->into->relname;
+		namespaceId = RangeVarGetCreationNamespace(parseTree->into);
 
-				aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
-												  ACL_CREATE);
-				if (aclresult != ACLCHECK_OK)
-					aclcheck_error(aclresult,
-								   get_namespace_name(namespaceId));
+		aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
+										  ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, get_namespace_name(namespaceId));
 
-				/*
-				 * have to copy tupType to get rid of constraints
-				 */
-				tupdesc = CreateTupleDescCopy(tupType);
+		/*
+		 * have to copy tupType to get rid of constraints
+		 */
+		tupdesc = CreateTupleDescCopy(tupType);
 
-				/*
-				 * Formerly we forced the output table to have OIDs, but
-				 * as of 7.3 it will not have OIDs, because it's too late
-				 * here to change the tupdescs of the already-initialized
-				 * plan tree.  (Perhaps we could recurse and change them
-				 * all, but it's not really worth the trouble IMHO...)
-				 */
+		intoRelationId = heap_create_with_catalog(intoName,
+												  namespaceId,
+												  tupdesc,
+												  RELKIND_RELATION,
+												  false,
+												  ONCOMMIT_NOOP,
+												  allowSystemTableMods);
 
-				intoRelationId =
-					heap_create_with_catalog(intoName,
-											 namespaceId,
-											 tupdesc,
-											 RELKIND_RELATION,
-											 false,
-											 ONCOMMIT_NOOP,
-											 allowSystemTableMods);
+		FreeTupleDesc(tupdesc);
 
-				FreeTupleDesc(tupdesc);
+		/*
+		 * Advance command counter so that the newly-created
+		 * relation's catalog tuples will be visible to heap_open.
+		 */
+		CommandCounterIncrement();
 
-				/*
-				 * Advance command counter so that the newly-created
-				 * relation's catalog tuples will be visible to heap_open.
-				 */
-				CommandCounterIncrement();
+		/*
+		 * If necessary, create a TOAST table for the into
+		 * relation. Note that AlterTableCreateToastTable ends
+		 * with CommandCounterIncrement(), so that the TOAST table
+		 * will be visible for insertion.
+		 */
+		AlterTableCreateToastTable(intoRelationId, true);
 
-				/*
-				 * If necessary, create a TOAST table for the into
-				 * relation. Note that AlterTableCreateToastTable ends
-				 * with CommandCounterIncrement(), so that the TOAST table
-				 * will be visible for insertion.
-				 */
-				AlterTableCreateToastTable(intoRelationId, true);
-
-				intoRelationDesc = heap_open(intoRelationId,
-											 AccessExclusiveLock);
-			}
-		}
+		/*
+		 * And open the constructed table for writing.
+		 */
+		intoRelationDesc = heap_open(intoRelationId, AccessExclusiveLock);
 	}
 
 	estate->es_into_relation_descriptor = intoRelationDesc;
@@ -1964,6 +1970,7 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 			palloc0(estate->es_topPlan->nParamExec * sizeof(ParamExecData));
 	epqstate->es_rowMark = estate->es_rowMark;
 	epqstate->es_instrument = estate->es_instrument;
+	epqstate->es_force_oids = estate->es_force_oids;
 	epqstate->es_topPlan = estate->es_topPlan;
 	/*
 	 * Each epqstate must have its own es_evTupleNull state, but

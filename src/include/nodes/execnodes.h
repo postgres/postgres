@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.91 2003/01/12 04:03:34 tgl Exp $
+ * $Id: execnodes.h,v 1.92 2003/01/23 05:10:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -311,6 +311,8 @@ typedef struct EState
 	List	   *es_rowMark;		/* not good place, but there is no other */
 
 	bool		es_instrument;	/* true requests runtime instrumentation */
+	bool		es_force_oids;	/* true forces result tuples to have (space
+								 * for) OIDs --- used for SELECT INTO */
 
 	List	   *es_exprcontexts; /* List of ExprContexts within EState */
 

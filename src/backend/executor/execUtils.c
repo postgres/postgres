@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.95 2003/01/12 04:03:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.96 2003/01/23 05:10:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,6 +199,7 @@ CreateExecutorState(void)
 	estate->es_rowMark = NIL;
 
 	estate->es_instrument = false;
+	estate->es_force_oids = false;
 
 	estate->es_exprcontexts = NIL;
 
@@ -424,7 +425,6 @@ ExecAssignResultTypeFromOuterPlan(PlanState *planstate)
 void
 ExecAssignResultTypeFromTL(PlanState *planstate)
 {
-	ResultRelInfo *ri;
 	bool		hasoid = false;
 	TupleDesc	tupDesc;
 
@@ -444,14 +444,24 @@ ExecAssignResultTypeFromTL(PlanState *planstate)
 	 * have to make the decision on a per-relation basis as we initialize
 	 * each of the child plans of the topmost Append plan.	So, this is
 	 * ugly but it works, for now ...
+	 *
+	 * SELECT INTO is also pretty grotty, because we don't yet have the
+	 * INTO relation's descriptor at this point; we have to look aside
+	 * at a flag set by InitPlan().
 	 */
-	ri = planstate->state->es_result_relation_info;
-	if (ri != NULL)
+	if (planstate->state->es_force_oids)
+		hasoid = true;
+	else
 	{
-		Relation	rel = ri->ri_RelationDesc;
+		ResultRelInfo *ri = planstate->state->es_result_relation_info;
 
-		if (rel != NULL)
-			hasoid = rel->rd_rel->relhasoids;
+		if (ri != NULL)
+		{
+			Relation	rel = ri->ri_RelationDesc;
+
+			if (rel != NULL)
+				hasoid = rel->rd_rel->relhasoids;
+		}
 	}
 
 	/*
