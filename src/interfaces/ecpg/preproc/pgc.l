@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.52 2000/03/03 09:56:03 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.53 2000/03/08 22:03:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,7 +315,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 				}
 
 {xqstart}			{
-					state_before == YYSTATE;
+					state_before = YYSTATE;
 					BEGIN(xq);
 					startlit();
 				}
