@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.53 2003/11/29 22:41:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.54 2004/02/17 00:52:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,6 +77,7 @@ extern HashPath *create_hashjoin_path(Query *root,
 extern void build_base_rel(Query *root, int relid);
 extern RelOptInfo *build_other_rel(Query *root, int relid);
 extern RelOptInfo *find_base_rel(Query *root, int relid);
+extern RelOptInfo *find_join_rel(Query *root, Relids relids);
 extern RelOptInfo *build_join_rel(Query *root,
 			   Relids joinrelids,
 			   RelOptInfo *outer_rel,

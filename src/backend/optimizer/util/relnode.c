@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.54 2003/12/08 18:19:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.55 2004/02/17 00:52:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,12 +214,8 @@ find_base_rel(Query *root, int relid)
  * find_join_rel
  *	  Returns relation entry corresponding to 'relids' (a set of RT indexes),
  *	  or NULL if none exists.  This is for join relations.
- *
- * Note: there is probably no good reason for this to be called from
- * anywhere except build_join_rel, but keep it as a separate routine
- * just in case.
  */
-static RelOptInfo *
+RelOptInfo *
 find_join_rel(Query *root, Relids relids)
 {
 	List	   *joinrels;

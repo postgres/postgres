@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.124 2004/02/03 17:34:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.125 2004/02/17 00:52:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,8 +102,6 @@ bool		enable_mergejoin = true;
 bool		enable_hashjoin = true;
 
 
-static Selectivity estimate_hash_bucketsize(Query *root, Var *var,
-						 int nbuckets);
 static bool cost_qual_eval_walker(Node *node, QualCost *total);
 static Selectivity approx_selectivity(Query *root, List *quals,
 				   JoinType jointype);
@@ -1152,7 +1150,7 @@ cost_hashjoin(HashPath *path, Query *root)
 					/* not cached yet */
 					thisbucketsize =
 						estimate_hash_bucketsize(root,
-							   (Var *) get_rightop(restrictinfo->clause),
+												 get_rightop(restrictinfo->clause),
 												 virtualbuckets);
 					restrictinfo->right_bucketsize = thisbucketsize;
 				}
@@ -1168,7 +1166,7 @@ cost_hashjoin(HashPath *path, Query *root)
 					/* not cached yet */
 					thisbucketsize =
 						estimate_hash_bucketsize(root,
-								(Var *) get_leftop(restrictinfo->clause),
+												 get_leftop(restrictinfo->clause),
 												 virtualbuckets);
 					restrictinfo->left_bucketsize = thisbucketsize;
 				}
@@ -1247,179 +1245,6 @@ cost_hashjoin(HashPath *path, Query *root)
 
 	path->jpath.path.startup_cost = startup_cost;
 	path->jpath.path.total_cost = startup_cost + run_cost;
-}
-
-/*
- * Estimate hash bucketsize fraction (ie, number of entries in a bucket
- * divided by total tuples in relation) if the specified Var is used
- * as a hash key.
- *
- * XXX This is really pretty bogus since we're effectively assuming that the
- * distribution of hash keys will be the same after applying restriction
- * clauses as it was in the underlying relation.  However, we are not nearly
- * smart enough to figure out how the restrict clauses might change the
- * distribution, so this will have to do for now.
- *
- * We are passed the number of buckets the executor will use for the given
- * input relation.	If the data were perfectly distributed, with the same
- * number of tuples going into each available bucket, then the bucketsize
- * fraction would be 1/nbuckets.  But this happy state of affairs will occur
- * only if (a) there are at least nbuckets distinct data values, and (b)
- * we have a not-too-skewed data distribution.	Otherwise the buckets will
- * be nonuniformly occupied.  If the other relation in the join has a key
- * distribution similar to this one's, then the most-loaded buckets are
- * exactly those that will be probed most often.  Therefore, the "average"
- * bucket size for costing purposes should really be taken as something close
- * to the "worst case" bucket size.  We try to estimate this by adjusting the
- * fraction if there are too few distinct data values, and then scaling up
- * by the ratio of the most common value's frequency to the average frequency.
- *
- * If no statistics are available, use a default estimate of 0.1.  This will
- * discourage use of a hash rather strongly if the inner relation is large,
- * which is what we want.  We do not want to hash unless we know that the
- * inner rel is well-dispersed (or the alternatives seem much worse).
- */
-static Selectivity
-estimate_hash_bucketsize(Query *root, Var *var, int nbuckets)
-{
-	Oid			relid;
-	RelOptInfo *rel;
-	HeapTuple	tuple;
-	Form_pg_statistic stats;
-	double		estfract,
-				ndistinct,
-				mcvfreq,
-				avgfreq;
-	float4	   *numbers;
-	int			nnumbers;
-
-	/* Ignore any binary-compatible relabeling */
-	if (var && IsA(var, RelabelType))
-		var = (Var *) ((RelabelType *) var)->arg;
-
-	/*
-	 * Lookup info about var's relation and attribute; if none available,
-	 * return default estimate.
-	 */
-	if (var == NULL || !IsA(var, Var))
-		return 0.1;
-
-	relid = getrelid(var->varno, root->rtable);
-	if (relid == InvalidOid)
-		return 0.1;
-
-	rel = find_base_rel(root, var->varno);
-
-	if (rel->tuples <= 0.0 || rel->rows <= 0.0)
-		return 0.1;				/* ensure we can divide below */
-
-	tuple = SearchSysCache(STATRELATT,
-						   ObjectIdGetDatum(relid),
-						   Int16GetDatum(var->varattno),
-						   0, 0);
-	if (!HeapTupleIsValid(tuple))
-	{
-		/*
-		 * If the attribute is known unique because of an index,
-		 * we can treat it as well-distributed.
-		 */
-		if (has_unique_index(rel, var->varattno))
-			return 1.0 / (double) nbuckets;
-
-		/*
-		 * Perhaps the Var is a system attribute; if so, it will have no
-		 * entry in pg_statistic, but we may be able to guess something
-		 * about its distribution anyway.
-		 */
-		switch (var->varattno)
-		{
-			case ObjectIdAttributeNumber:
-			case SelfItemPointerAttributeNumber:
-				/* these are unique, so buckets should be well-distributed */
-				return 1.0 / (double) nbuckets;
-			case TableOidAttributeNumber:
-				/* hashing this is a terrible idea... */
-				return 1.0;
-		}
-		return 0.1;
-	}
-	stats = (Form_pg_statistic) GETSTRUCT(tuple);
-
-	/*
-	 * Obtain number of distinct data values in raw relation.
-	 */
-	ndistinct = stats->stadistinct;
-	if (ndistinct < 0.0)
-		ndistinct = -ndistinct * rel->tuples;
-
-	if (ndistinct <= 0.0)		/* ensure we can divide */
-	{
-		ReleaseSysCache(tuple);
-		return 0.1;
-	}
-
-	/* Also compute avg freq of all distinct data values in raw relation */
-	avgfreq = (1.0 - stats->stanullfrac) / ndistinct;
-
-	/*
-	 * Adjust ndistinct to account for restriction clauses.  Observe we
-	 * are assuming that the data distribution is affected uniformly by
-	 * the restriction clauses!
-	 *
-	 * XXX Possibly better way, but much more expensive: multiply by
-	 * selectivity of rel's restriction clauses that mention the target
-	 * Var.
-	 */
-	ndistinct *= rel->rows / rel->tuples;
-
-	/*
-	 * Initial estimate of bucketsize fraction is 1/nbuckets as long as
-	 * the number of buckets is less than the expected number of distinct
-	 * values; otherwise it is 1/ndistinct.
-	 */
-	if (ndistinct > (double) nbuckets)
-		estfract = 1.0 / (double) nbuckets;
-	else
-		estfract = 1.0 / ndistinct;
-
-	/*
-	 * Look up the frequency of the most common value, if available.
-	 */
-	mcvfreq = 0.0;
-
-	if (get_attstatsslot(tuple, var->vartype, var->vartypmod,
-						 STATISTIC_KIND_MCV, InvalidOid,
-						 NULL, NULL, &numbers, &nnumbers))
-	{
-		/*
-		 * The first MCV stat is for the most common value.
-		 */
-		if (nnumbers > 0)
-			mcvfreq = numbers[0];
-		free_attstatsslot(var->vartype, NULL, 0,
-						  numbers, nnumbers);
-	}
-
-	/*
-	 * Adjust estimated bucketsize upward to account for skewed
-	 * distribution.
-	 */
-	if (avgfreq > 0.0 && mcvfreq > avgfreq)
-		estfract *= mcvfreq / avgfreq;
-
-	/*
-	 * Clamp bucketsize to sane range (the above adjustment could easily
-	 * produce an out-of-range result).  We set the lower bound a little
-	 * above zero, since zero isn't a very sane result.
-	 */
-	if (estfract < 1.0e-6)
-		estfract = 1.0e-6;
-	else if (estfract > 1.0)
-		estfract = 1.0;
-
-	ReleaseSysCache(tuple);
-
-	return (Selectivity) estfract;
 }
 
 
