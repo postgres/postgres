@@ -1,0 +1,33 @@
+.\" This is -*-nroff-*-
+.\" $Header: /cvsroot/pgsql/src/man/Attic/initlocation.1,v 1.1 1997/11/07 06:40:45 thomas Exp $
+.TH INITDB UNIX 11/05/97 PostgreSQL
+.SH NAME
+initlocation \(em create a new Postgres storage area
+.SH SYNOPSIS
+.BR "initlocation"
+.IR "directory"
+.PP
+.BR "initlocation"
+.IR "$environment_variable"
+
+.SH DESCRIPTION
+.IR initlocation
+creates a new Postgres database storage area. A storage area contains
+distinct Postgres databases, with each database in a separate directory
+and managed by a single postmaster.
+.PP
+Creating a database storage area consists of creating the directories in which
+the database data will live.
+There are 2 types of arguments for
+.IR initlocation .
+First, you can specify an explicit
+absolute path to the top directory of the storage area.
+Second, you can specify an environment variable (e.g. $PGDATA2).
+This environment variable should be known to the backend for later use in
+.IR "create database" .
+In either case Postgres will add /base/
+to the specified path to create the storage area.
+
+.SH "SEE ALSO"
+create_database(l),
+initdb(1).
