@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.62 2002/01/12 04:38:27 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.63 2002/03/04 03:55:46 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2410,11 +2410,11 @@ timestamp_part(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_MICROSEC:
-				result = (fsec * 1000000);
+				result = (tm->tm_sec + fsec) * 1000000;
 				break;
 
 			case DTK_MILLISEC:
-				result = (fsec * 1000);
+				result = (tm->tm_sec + fsec) * 1000;
 				break;
 
 			case DTK_SECOND:
@@ -2574,11 +2574,11 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_MICROSEC:
-				result = (fsec * 1000000);
+				result = (tm->tm_sec + fsec) * 1000000;
 				break;
 
 			case DTK_MILLISEC:
-				result = (fsec * 1000);
+				result = (tm->tm_sec + fsec) * 1000;
 				break;
 
 			case DTK_SECOND:
