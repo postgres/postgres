@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.183 2004/12/31 22:00:49 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.184 2005/01/03 18:49:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ static Buffer ReadBufferInternal(Relation reln, BlockNumber blockNum,
 				   bool bufferLockHeld);
 static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool *foundPtr);
-static void FlushBuffer(BufferDesc *buf, SMgrRelation reln);
+static void FlushBuffer(BufferDesc *buf, SMgrRelation reln, bool earlylock);
 static void write_buffer(Buffer buffer, bool unpin);
 
 
@@ -340,6 +340,10 @@ BufferAlloc(Relation reln,
 		 * allocated -- ours.  If it had a pin it wouldn't have been on
 		 * the free list.  No one else could have pinned it between
 		 * StrategyGetBuffer and here because we have the BufMgrLock.
+		 *
+		 * (We must pin the buffer before releasing BufMgrLock ourselves,
+		 * to ensure StrategyGetBuffer won't give the same buffer to someone
+		 * else.)
 		 */
 		Assert(buf->refcount == 0);
 		buf->refcount = 1;
@@ -367,9 +371,20 @@ BufferAlloc(Relation reln,
 
 			/*
 			 * Write the buffer out, being careful to release BufMgrLock
-			 * while doing the I/O.
+			 * while doing the I/O.  We also tell FlushBuffer to share-lock
+			 * the buffer before releasing BufMgrLock.  This is safe because
+			 * we know no other backend currently has the buffer pinned,
+			 * therefore no one can have it locked either, so we can always
+			 * get the lock without blocking.  It is necessary because if
+			 * we release BufMgrLock first, it's possible for someone else
+			 * to pin and exclusive-lock the buffer before we get to the
+			 * share-lock, causing us to block.  If the someone else then
+			 * blocks on a lock we hold, deadlock ensues.  This has been
+			 * observed to happen when two backends are both trying to split
+			 * btree index pages, and the second one just happens to be
+			 * trying to split the page the first one got from the freelist.
 			 */
-			FlushBuffer(buf, NULL);
+			FlushBuffer(buf, NULL, true);
 
 			/*
 			 * Somebody could have allocated another buffer for the same
@@ -766,7 +781,7 @@ BufferSync(int percent, int maxpages)
 		PinBuffer(bufHdr, true);
 		StartBufferIO(bufHdr, false);
 
-		FlushBuffer(bufHdr, NULL);
+		FlushBuffer(bufHdr, NULL, false);
 
 		TerminateBufferIO(bufHdr, 0);
 		UnpinBuffer(bufHdr, true);
@@ -1018,11 +1033,16 @@ BufferGetFileNode(Buffer buffer)
  * If the caller has an smgr reference for the buffer's relation, pass it
  * as the second parameter.  If not, pass NULL.  (Do not open relation
  * while holding BufMgrLock!)
+ *
+ * When earlylock is TRUE, we grab the per-buffer sharelock before releasing
+ * BufMgrLock, rather than after.  Normally this would be a bad idea since
+ * we might deadlock, but it is safe and necessary when called from
+ * BufferAlloc() --- see comments therein.
  */
 static void
-FlushBuffer(BufferDesc *buf, SMgrRelation reln)
+FlushBuffer(BufferDesc *buf, SMgrRelation reln, bool earlylock)
 {
-	Buffer		buffer;
+	Buffer		buffer = BufferDescriptorGetBuffer(buf);
 	XLogRecPtr	recptr;
 	ErrorContextCallback errcontext;
 
@@ -1032,6 +1052,13 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 
 	/* To check if block content changed while flushing. - vadim 01/17/97 */
 	buf->flags &= ~BM_JUST_DIRTIED;
+
+	/*
+	 * If earlylock, grab buffer sharelock before anyone else could re-lock
+	 * the buffer.
+	 */
+	if (earlylock)
+		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
 	/* Release BufMgrLock while doing xlog work */
 	LWLockRelease(BufMgrLock);
@@ -1046,14 +1073,13 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 	if (reln == NULL)
 		reln = smgropen(buf->tag.rnode);
 
-	buffer = BufferDescriptorGetBuffer(buf);
-
 	/*
 	 * Protect buffer content against concurrent update.  (Note that
 	 * hint-bit updates can still occur while the write is in progress,
 	 * but we assume that that will not invalidate the data written.)
 	 */
-	LockBuffer(buffer, BUFFER_LOCK_SHARE);
+	if (!earlylock)
+		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
 	/*
 	 * Force XLOG flush for buffer' LSN.  This implements the basic WAL
@@ -1485,7 +1511,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 				{
 					StartBufferIO(bufHdr, false);
 
-					FlushBuffer(bufHdr, rel->rd_smgr);
+					FlushBuffer(bufHdr, rel->rd_smgr, false);
 
 					TerminateBufferIO(bufHdr, 0);
 				}
