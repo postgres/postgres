@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.20 1998/08/19 02:01:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.21 1998/08/20 15:16:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,7 +254,7 @@ CatalogIndexFetchTuple(Relation heapRelation,
 
 	index_endscan(sd);
 	pfree(sd);
-	return (tuple);
+	return tuple;
 }
 
 /*
@@ -276,7 +276,7 @@ AttributeNameIndexScan(Relation heapRelation,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
 						   (RegProcedure)F_OIDEQ,
-						   Int32GetDatum(relid));
+						   ObjectIdGetDatum(relid));
 
 	ScanKeyEntryInitialize(&skey[1],
 						   (bits16) 0x0,
@@ -456,7 +456,7 @@ ClassNameIndexScan(Relation heapRelation, char *relName)
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
 						   (RegProcedure) F_NAMEEQ,
-						   (Datum) relName);
+						   PointerGetDatum(relName));
 
 	idesc = index_openr(ClassNameIndex);
 	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 1);

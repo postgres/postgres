@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.48 1998/08/19 02:01:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.49 1998/08/20 15:16:54 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1308,6 +1308,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	Datum		values[Natts_pg_class];
 	char		nulls[Natts_pg_class];
 	char		replace[Natts_pg_class];
+	HeapScanDesc	pg_class_scan = NULL;
 
 	/* ----------------
 	 * This routine handles updates for both the heap and index relation
@@ -1340,11 +1341,30 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	if (!RelationIsValid(pg_class))
 		elog(ERROR, "UpdateStats: could not open RELATION relation");
 
-	tuple = SearchSysCacheTupleCopy(RELOID,
-									ObjectIdGetDatum(relid),
-									0, 0, 0);
+
+	if (!IsBootstrapProcessingMode())
+	{
+		tuple = SearchSysCacheTupleCopy(RELOID,
+										ObjectIdGetDatum(relid),
+										0, 0, 0);
+	}
+	else
+	{
+		ScanKeyData key[1];
+
+		ScanKeyEntryInitialize(&key[0], 0,
+								ObjectIdAttributeNumber,
+								F_OIDEQ,
+								ObjectIdGetDatum(relid));
+
+		pg_class_scan = heap_beginscan(pg_class, 0, SnapshotNow, 1, key);
+		tuple = heap_getnext(pg_class_scan, 0);
+	}
+	
 	if (!HeapTupleIsValid(tuple))
 	{
+		if (IsBootstrapProcessingMode())
+			heap_endscan(pg_class_scan);
 		heap_close(pg_class);
 		elog(ERROR, "UpdateStats: cannot scan RELATION relation");
 	}
@@ -1385,11 +1405,11 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 		 * At bootstrap time, we don't need to worry about concurrency or
 		 * visibility of changes, so we cheat.
 		 */
-
 		rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 		rd_rel->relpages = relpages;
 		rd_rel->reltuples = reltuples;
 		rd_rel->relhasindex = hasindex;
+		WriteBuffer(pg_class_scan->rs_cbuf);
 	}
 	else
 	{
@@ -1402,14 +1422,18 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 		values[Anum_pg_class_relhasindex - 1] = CharGetDatum(hasindex);
 
 		newtup = heap_modifytuple(tuple, pg_class, values, nulls, replace);
-		heap_replace(pg_class, &newtup->t_ctid, newtup);
+		heap_replace(pg_class, &tuple->t_ctid, newtup);
 		pfree(newtup);
 		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, newtup);
 		CatalogCloseIndices(Num_pg_class_indices, idescs);
 	}
 
-	pfree(tuple);
+	if (!IsBootstrapProcessingMode())
+		pfree(tuple);
+	else
+		heap_endscan(pg_class_scan);
+	
 	heap_close(pg_class);
 	heap_close(whichRel);
 }

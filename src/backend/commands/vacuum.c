@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.74 1998/08/19 23:48:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.75 1998/08/20 15:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,7 +188,7 @@ vc_init()
 
 	if ((fd = open("pg_vlock", O_CREAT | O_EXCL, 0600)) < 0)
 	{
-		elog(ERROR, "Can't create lock file -- another vacuum cleaner running?\n\
+		elog(ERROR, "Can't create lock file.  Is another vacuum cleaner running?\n\
 \tIf not, you may remove the pg_vlock file in the pgsql/data/base/your_db\n\
 \tdirectory");
 	}
@@ -2204,24 +2204,25 @@ static void
 vc_mkindesc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc)
 {
 	IndDesc    *idcur;
-	HeapTuple	tuple;
+	HeapTuple	tuple, cachetuple;
 	AttrNumber *attnumP;
 	int			natts;
 	int			i;
 	Buffer		buffer;
-	
+		
 	*Idesc = (IndDesc *) palloc(nindices * sizeof(IndDesc));
 
 	for (i = 0, idcur = *Idesc; i < nindices; i++, idcur++)
 	{
-		tuple = SearchSysCacheTuple(INDEXRELID,
-									ObjectIdGetDatum(RelationGetRelid(Irel[i])),
-									0, 0, 0);
+		cachetuple = SearchSysCacheTupleCopy(INDEXRELID,
+										ObjectIdGetDatum(RelationGetRelid(Irel[i])),
+										0, 0, 0);
 		Assert(tuple);
 
 		/* get the buffer cache tuple */
-		tuple = heap_fetch(onerel, SnapshotNow, &tuple->t_ctid, &buffer);
+		tuple = heap_fetch(onerel, SnapshotNow, &cachetuple->t_ctid, &buffer);
 		Assert(tuple);
+		pfree(cachetuple);
 
 		idcur->tform = (IndexTupleForm) GETSTRUCT(tuple);
 		for (attnumP = &(idcur->tform->indkey[0]), natts = 0;

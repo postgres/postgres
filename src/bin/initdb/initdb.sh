@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.48 1998/08/19 23:48:23 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.49 1998/08/20 15:16:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -316,7 +316,7 @@ fi
 
 BACKENDARGS="-boot -C -F -D$PGDATA $BACKEND_TALK_ARG"
 
-echo "$CMDNAME: creating template database in $PGDATA/base/template1"
+echo "Creating template database in $PGDATA/base/template1"
 [ "$debug" -ne 0 ] && echo "Running: postgres $BACKENDARGS template1"
 
 cat $TEMPLATE \
