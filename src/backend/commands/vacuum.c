@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.228 2002/06/15 19:54:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.229 2002/06/15 21:52:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,9 +158,8 @@ static bool enough_space(VacPage vacpage, Size len);
 void
 vacuum(VacuumStmt *vacstmt)
 {
-	MemoryContext anl_context,
-				  old_context;
 	const char *stmttype = vacstmt->vacuum ? "VACUUM" : "ANALYZE";
+	MemoryContext anl_context = NULL;
 	List	   *vrl,
 			   *cur;
 
@@ -188,7 +187,8 @@ vacuum(VacuumStmt *vacstmt)
 	/*
 	 * Send info about dead objects to the statistics collector
 	 */
-	pgstat_vacuum_tabstat();
+	if (vacstmt->vacuum)
+		pgstat_vacuum_tabstat();
 
 	/*
 	 * Create special memory context for cross-transaction storage.
@@ -203,6 +203,10 @@ vacuum(VacuumStmt *vacstmt)
 										ALLOCSET_DEFAULT_INITSIZE,
 										ALLOCSET_DEFAULT_MAXSIZE);
 
+	/*
+	 * If we are running only ANALYZE, we don't need per-table transactions,
+	 * but we still need a memory context with table lifetime.
+	 */
 	if (vacstmt->analyze && !vacstmt->vacuum)
 		anl_context = AllocSetContextCreate(QueryContext,
 											"Analyze",
@@ -214,28 +218,40 @@ vacuum(VacuumStmt *vacstmt)
 	vrl = getrels(vacstmt->relation, stmttype);
 
 	/*
-	 *		Formerly, there was code here to prevent more than one VACUUM from
-	 *		executing concurrently in the same database.  However, there's no
-	 *		good reason to prevent that, and manually removing lockfiles after
-	 *		a vacuum crash was a pain for dbadmins.  So, forget about lockfiles,
-	 *		and just rely on the locks we grab on each target table
-	 *		to ensure that there aren't two VACUUMs running on the same table
-	 *		at the same time.
+	 * Formerly, there was code here to prevent more than one VACUUM from
+	 * executing concurrently in the same database.  However, there's no
+	 * good reason to prevent that, and manually removing lockfiles after
+	 * a vacuum crash was a pain for dbadmins.  So, forget about lockfiles,
+	 * and just rely on the locks we grab on each target table
+	 * to ensure that there aren't two VACUUMs running on the same table
+	 * at the same time.
+	 */
+
+	/*
+	 * The strangeness with committing and starting transactions here is due
+	 * to wanting to run each table's VACUUM as a separate transaction, so
+	 * that we don't hold locks unnecessarily long.  Also, if we are doing
+	 * VACUUM ANALYZE, the ANALYZE part runs as a separate transaction from
+	 * the VACUUM to further reduce locking.
 	 *
-	 *		The strangeness with committing and starting transactions in the
-	 *		init and shutdown routines is due to the fact that the vacuum cleaner
-	 *		is invoked via an SQL command, and so is already executing inside
-	 *		a transaction.	We need to leave ourselves in a predictable state
-	 *		on entry and exit to the vacuum cleaner.  We commit the transaction
-	 *		started in PostgresMain() inside vacuum_init(), and start one in
-	 *		vacuum_shutdown() to match the commit waiting for us back in
-	 *		PostgresMain().
+	 * vacuum_rel expects to be entered with no transaction active; it will
+	 * start and commit its own transaction.  But we are called by an SQL
+	 * command, and so we are executing inside a transaction already.  We
+	 * commit the transaction started in PostgresMain() here, and start
+	 * another one before exiting to match the commit waiting for us back in
+	 * PostgresMain().
+	 *
+	 * In the case of an ANALYZE statement (no vacuum, just analyze) it's
+	 * okay to run the whole thing in the outer transaction, and so we skip
+	 * transaction start/stop operations.
 	 */
 	if (vacstmt->vacuum)
 	{
 		if (vacstmt->relation == NULL)
 		{
 			/*
+			 * It's a database-wide VACUUM.
+			 *
 			 * Compute the initially applicable OldestXmin and FreezeLimit
 			 * XIDs, so that we can record these values at the end of the
 			 * VACUUM. Note that individual tables may well be processed with
@@ -261,11 +277,7 @@ vacuum(VacuumStmt *vacstmt)
 	}
 
 	/*
-	 * Process each selected relation.	We are careful to process each
-	 * relation in a separate transaction in order to avoid holding too
-	 * many locks at one time.	Also, if we are doing VACUUM ANALYZE, the
-	 * ANALYZE part runs as a separate transaction from the VACUUM to
-	 * further reduce locking.
+	 * Loop to process each selected relation.
 	 */
 	foreach(cur, vrl)
 	{
@@ -275,7 +287,14 @@ vacuum(VacuumStmt *vacstmt)
 			vacuum_rel(relid, vacstmt, RELKIND_RELATION);
 		if (vacstmt->analyze)
 		{
-			/* If we vacuumed, use new transaction for analyze. */
+			MemoryContext old_context = NULL;
+
+			/*
+			 * If we vacuumed, use new transaction for analyze.  Otherwise,
+			 * we can use the outer transaction, but we still need to call
+			 * analyze_rel in a memory context that will be cleaned up on
+			 * return (else we leak memory while processing multiple tables).
+			 */
 			if (vacstmt->vacuum)
 				StartTransactionCommand();
 			else
@@ -287,16 +306,18 @@ vacuum(VacuumStmt *vacstmt)
 				CommitTransactionCommand();
 			else
 			{
-				MemoryContextResetAndDeleteChildren(anl_context);
 				MemoryContextSwitchTo(old_context);
+				MemoryContextResetAndDeleteChildren(anl_context);
 			}
 		}
 	}
 
-	/* clean up */
+	/*
+	 * Finish up processing.
+	 */
 	if (vacstmt->vacuum)
 	{
-		/* on entry, we are not in a transaction */
+		/* here, we are not in a transaction */
 
 		/* matches the CommitTransaction in PostgresMain() */
 		StartTransactionCommand();
@@ -322,9 +343,8 @@ vacuum(VacuumStmt *vacstmt)
 	MemoryContextDelete(vac_context);
 	vac_context = NULL;
 
-	if (vacstmt->analyze && !vacstmt->vacuum)
+	if (anl_context)
 		MemoryContextDelete(anl_context);
-
 }
 
 /*
