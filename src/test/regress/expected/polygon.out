@@ -1,0 +1,141 @@
+QUERY: CREATE TABLE POLYGON_TBL(f1 polygon);
+QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(2.0,2.0,0.0,0.0,4.0,0.0)');
+QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(3.0,3.0,1.0,1.0,3.0,0.0)');
+QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(0.0,0.0)');
+QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(0.0,0.0,1.0,1.0)');
+QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('0.0');
+WARN:Bad polygon external representation '0.0'
+QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(0.0 0.0');
+WARN:Bad polygon external representation '(0.0 0.0'
+QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(0,1,2)');
+WARN:Bad polygon external representation '(0,1,2)'
+QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(0,1,2,3');
+WARN:Bad polygon external representation '(0,1,2,3'
+QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('asdf');
+WARN:Bad polygon external representation 'asdf'
+QUERY: SELECT '' AS four, POLYGON_TBL.*;
+four|f1                                                                             
+----+-------------------------------------------------------------------------------
+    |(           2,           2,           0,           0,           4,           0)
+    |(           3,           3,           1,           1,           3,           0)
+    |(           0,           0)                                                    
+    |(           0,           0,           1,           1)                          
+(4 rows)
+
+QUERY: SELECT '' AS three, p.*
+   FROM POLYGON_TBL p
+   WHERE p.f1 && '(3.0,3.0,1.0,1.0,3.0,0.0)';
+three|f1                                                                             
+-----+-------------------------------------------------------------------------------
+     |(           2,           2,           0,           0,           4,           0)
+     |(           3,           3,           1,           1,           3,           0)
+     |(           0,           0,           1,           1)                          
+(3 rows)
+
+QUERY: SELECT '' AS four, p.*
+   FROM POLYGON_TBL p
+   WHERE p.f1 &< '(3.0,3.0,1.0,1.0,3.0,0.0)';
+four|f1                                                                             
+----+-------------------------------------------------------------------------------
+    |(           2,           2,           0,           0,           4,           0)
+    |(           3,           3,           1,           1,           3,           0)
+    |(           0,           0)                                                    
+    |(           0,           0,           1,           1)                          
+(4 rows)
+
+QUERY: SELECT '' AS two, p.*
+   FROM POLYGON_TBL p
+   WHERE p.f1 &> '(3.0,3.0,1.0,1.0,3.0,0.0)';
+two|f1                                                                             
+---+-------------------------------------------------------------------------------
+   |(           2,           2,           0,           0,           4,           0)
+   |(           3,           3,           1,           1,           3,           0)
+(2 rows)
+
+QUERY: SELECT '' AS one, p.*
+   FROM POLYGON_TBL p
+   WHERE p.f1 << '(3.0,3.0,1.0,1.0,3.0,0.0)';
+one|f1                         
+---+---------------------------
+   |(           0,           0)
+(1 row)
+
+QUERY: SELECT '' AS zero, p.*
+   FROM POLYGON_TBL p
+   WHERE p.f1 >> '(3.0,3.0,1.0,1.0,3.0,0.0)';
+zero|f1
+----+--
+(0 rows)
+
+QUERY: SELECT '' AS one, p.*
+   FROM POLYGON_TBL p
+   WHERE p.f1 @ '(3.0,3.0,1.0,1.0,3.0,0.0)';
+one|f1                                                                             
+---+-------------------------------------------------------------------------------
+   |(           3,           3,           1,           1,           3,           0)
+(1 row)
+
+QUERY: SELECT '' AS one, p.*
+   FROM POLYGON_TBL p
+   WHERE p.f1 ~= '(3.0,3.0,1.0,1.0,3.0,0.0)';
+one|f1                                                                             
+---+-------------------------------------------------------------------------------
+   |(           3,           3,           1,           1,           3,           0)
+(1 row)
+
+QUERY: SELECT '' AS one, p.*
+   FROM POLYGON_TBL p
+   WHERE p.f1 ~ '(3.0,3.0,1.0,1.0,3.0,0.0)';
+one|f1                                                                             
+---+-------------------------------------------------------------------------------
+   |(           3,           3,           1,           1,           3,           0)
+(1 row)
+
+QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon << '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS false;
+false
+-----
+f    
+(1 row)
+
+QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon &< '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS true;
+true
+----
+t   
+(1 row)
+
+QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon &> '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS true;
+true
+----
+t   
+(1 row)
+
+QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon >> '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS false;
+false
+-----
+f    
+(1 row)
+
+QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon @ '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS false;
+false
+-----
+f    
+(1 row)
+
+QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon ~ '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS false;
+false
+-----
+f    
+(1 row)
+
+QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon ~= '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS false;
+false
+-----
+f    
+(1 row)
+
+QUERY: SELECT '(2.0,2.0,0.0,0.0,4.0,0.0)'::polygon && '(3.0,3.0,1.0,1.0,3.0,0.0)'::polygon AS true;
+true
+----
+t   
+(1 row)
+

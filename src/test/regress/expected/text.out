@@ -1,0 +1,24 @@
+QUERY: SELECT 'char 16 string'::char16 = 'char 16 string '::char16 AS false;
+false
+-----
+f    
+(1 row)
+
+QUERY: SELECT 'c'::char = 'c'::char AS true;
+true
+----
+t   
+(1 row)
+
+QUERY: SELECT 'this is a text string'::text = 'this is a text string'::text AS true;
+true
+----
+t   
+(1 row)
+
+QUERY: SELECT 'this is a text string'::text = 'this is a text strin'::text AS false;
+false
+-----
+f    
+(1 row)
+

@@ -1,0 +1,180 @@
+QUERY: CREATE TABLE POINT_TBL(f1 point);
+QUERY: INSERT INTO POINT_TBL(f1) VALUES ('(0.0,0.0)');
+QUERY: INSERT INTO POINT_TBL(f1) VALUES ('(-10.0,0.0)');
+QUERY: INSERT INTO POINT_TBL(f1) VALUES ('(-3.0,4.0)');
+QUERY: INSERT INTO POINT_TBL(f1) VALUES ('(5.1, 34.5)');
+QUERY: INSERT INTO POINT_TBL(f1) VALUES ('(-5.0,-12.0)');
+QUERY: INSERT INTO POINT_TBL(f1) VALUES ('asdfasdf');
+WARN:Bad point external representation 'asdfasdf'
+QUERY: INSERT INTO POINT_TBL(f1) VALUES ('10.0,10.0');
+WARN:Bad point external representation '10.0,10.0'
+QUERY: INSERT INTO POINT_TBL(f1) VALUES ('(10.0 10.0)');
+WARN:Bad point external representation '(10.0 10.0)'
+QUERY: INSERT INTO POINT_TBL(f1) VALUES ('(10.0,10.0');
+WARN:Bad point external representation '(10.0,10.0'
+QUERY: SELECT '' AS five, POINT_TBL.*;
+five|f1        
+----+----------
+    |(0,0)     
+    |(-10,0)   
+    |(-3,4)    
+    |(5.1,34.5)
+    |(-5,-12)  
+(5 rows)
+
+QUERY: SELECT '' AS three, p.* FROM POINT_TBL p WHERE p.f1 !< '(0.0, 0.0)';
+three|f1      
+-----+--------
+     |(-10,0) 
+     |(-3,4)  
+     |(-5,-12)
+(3 rows)
+
+QUERY: SELECT '' AS three, p.* FROM POINT_TBL p WHERE '(0.0,0.0)' !> p.f1;
+three|f1      
+-----+--------
+     |(-10,0) 
+     |(-3,4)  
+     |(-5,-12)
+(3 rows)
+
+QUERY: SELECT '' AS one, p.* FROM POINT_TBL p WHERE '(0.0,0.0)' !^ p.f1;
+one|f1      
+---+--------
+   |(-5,-12)
+(1 row)
+
+QUERY: SELECT '' AS one, p.* FROM POINT_TBL p WHERE p.f1 !| '(0.0, 0.0)';
+one|f1      
+---+--------
+   |(-5,-12)
+(1 row)
+
+QUERY: SELECT '' AS one, p.* FROM POINT_TBL p WHERE p.f1 =|= '(5.1, 34.5)';
+one|f1        
+---+----------
+   |(5.1,34.5)
+(1 row)
+
+QUERY: SELECT '' AS two, p.* FROM POINT_TBL p
+   WHERE p.f1 ===> '(0,0,100,100)';
+two|f1        
+---+----------
+   |(0,0)     
+   |(5.1,34.5)
+(2 rows)
+
+QUERY: SELECT '' AS three, p.* FROM POINT_TBL p
+   WHERE not on_pb(p.f1,'(0,0,100,100)'::box);
+three|f1      
+-----+--------
+     |(-10,0) 
+     |(-3,4)  
+     |(-5,-12)
+(3 rows)
+
+QUERY: SELECT '' AS two, p.* FROM POINT_TBL p
+   WHERE on_ppath(p.f1,'(0,3,0,0,-10,0,-10,10)'::path);
+two|f1     
+---+-------
+   |(0,0)  
+   |(-10,0)
+(2 rows)
+
+QUERY: SELECT '' AS five, p.f1, p.f1 <===> '(0,0)' AS dist FROM POINT_TBL p;
+five|f1        |dist
+----+----------+----
+    |(0,0)     |   0
+    |(-10,0)   |  10
+    |(-3,4)    |   5
+    |(5.1,34.5)|  34
+    |(-5,-12)  |  13
+(5 rows)
+
+QUERY: SELECT '' AS twentyfive, p1.f1, p2.f1, p1.f1 <===> p2.f1 AS dist
+   FROM POINT_TBL p1, POINT_TBL p2;
+twentyfive|f1        |f1        |dist
+----------+----------+----------+----
+          |(0,0)     |(0,0)     |   0
+          |(-10,0)   |(0,0)     |  10
+          |(-3,4)    |(0,0)     |   5
+          |(5.1,34.5)|(0,0)     |  34
+          |(-5,-12)  |(0,0)     |  13
+          |(0,0)     |(-10,0)   |  10
+          |(-10,0)   |(-10,0)   |   0
+          |(-3,4)    |(-10,0)   |   8
+          |(5.1,34.5)|(-10,0)   |  37
+          |(-5,-12)  |(-10,0)   |  13
+          |(0,0)     |(-3,4)    |   5
+          |(-10,0)   |(-3,4)    |   8
+          |(-3,4)    |(-3,4)    |   0
+          |(5.1,34.5)|(-3,4)    |  31
+          |(-5,-12)  |(-3,4)    |  16
+          |(0,0)     |(5.1,34.5)|  34
+          |(-10,0)   |(5.1,34.5)|  37
+          |(-3,4)    |(5.1,34.5)|  31
+          |(5.1,34.5)|(5.1,34.5)|   0
+          |(-5,-12)  |(5.1,34.5)|  47
+          |(0,0)     |(-5,-12)  |  13
+          |(-10,0)   |(-5,-12)  |  13
+          |(-3,4)    |(-5,-12)  |  16
+          |(5.1,34.5)|(-5,-12)  |  47
+          |(-5,-12)  |(-5,-12)  |   0
+(25 rows)
+
+QUERY: SELECT '' AS twenty, p1.f1, p2.f1
+   FROM POINT_TBL p1, POINT_TBL p2
+   WHERE (p1.f1 <===> p2.f1) > 3;
+twenty|f1        |f1        
+------+----------+----------
+      |(-10,0)   |(0,0)     
+      |(-3,4)    |(0,0)     
+      |(5.1,34.5)|(0,0)     
+      |(-5,-12)  |(0,0)     
+      |(0,0)     |(-10,0)   
+      |(-3,4)    |(-10,0)   
+      |(5.1,34.5)|(-10,0)   
+      |(-5,-12)  |(-10,0)   
+      |(0,0)     |(-3,4)    
+      |(-10,0)   |(-3,4)    
+      |(5.1,34.5)|(-3,4)    
+      |(-5,-12)  |(-3,4)    
+      |(0,0)     |(5.1,34.5)
+      |(-10,0)   |(5.1,34.5)
+      |(-3,4)    |(5.1,34.5)
+      |(-5,-12)  |(5.1,34.5)
+      |(0,0)     |(-5,-12)  
+      |(-10,0)   |(-5,-12)  
+      |(-3,4)    |(-5,-12)  
+      |(5.1,34.5)|(-5,-12)  
+(20 rows)
+
+QUERY: SELECT '' AS ten, p1.f1, p2.f1
+   FROM POINT_TBL p1, POINT_TBL p2
+   WHERE (p1.f1 <===> p2.f1) > 3 and
+	p1.f1 !< p2.f1;
+ten|f1      |f1        
+---+--------+----------
+   |(-10,0) |(0,0)     
+   |(-3,4)  |(0,0)     
+   |(-5,-12)|(0,0)     
+   |(-10,0) |(-3,4)    
+   |(-5,-12)|(-3,4)    
+   |(0,0)   |(5.1,34.5)
+   |(-10,0) |(5.1,34.5)
+   |(-3,4)  |(5.1,34.5)
+   |(-5,-12)|(5.1,34.5)
+   |(-10,0) |(-5,-12)  
+(10 rows)
+
+QUERY: SELECT '' AS two, p1.f1, p2.f1
+   FROM POINT_TBL p1, POINT_TBL p2
+   WHERE (p1.f1 <===> p2.f1) > 3 and
+	p1.f1 !< p2.f1 and
+	p1.f1 !^ p2.f1;
+two|f1     |f1      
+---+-------+--------
+   |(-3,4) |(0,0)   
+   |(-10,0)|(-5,-12)
+(2 rows)
+
