@@ -316,6 +316,8 @@ Improved compiled function caching mechanism in PL/pgSQL with full
 Add new $0 parameter in PL/pgSQL representing the function's actual
   return type (Joe)
 Allow pltcl and plpython use the same trigger on multiple tables (Tom)
+Fixed PL/Tcl's spi_prepare to accept full qualified type names in
+  the parameter type list (Jan)
 
      _________________________________________________________________
 
