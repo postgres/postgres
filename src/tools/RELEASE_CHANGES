@@ -6,6 +6,7 @@ doc/bug.template
 update include/version.h.in after release, including subversion
 update pgaccess
 update odbc
+update pg_upgrade to handle new version, or disable
 update doc/src/sgml/release.sgml 
 update doc/src/sgml/install.sgml 
 update interfaces/libpq/libpq.rc
