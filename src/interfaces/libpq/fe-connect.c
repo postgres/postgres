@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.138 2000/10/14 23:56:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.139 2000/10/17 01:00:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,6 +111,9 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	{"authtype", "PGAUTHTYPE", DefaultAuthtype, NULL,
 	"Database-Authtype", "D", 20},
 
+	{"service", "PGSERVICE", NULL, NULL,
+	 "Database-Service", "", 20},
+
 	{"user", "PGUSER", NULL, NULL,
 	"Database-User", "", 20},
 
@@ -187,6 +190,8 @@ static PQconninfoOption *conninfo_parse(const char *conninfo,
 static char *conninfo_getval(PQconninfoOption *connOptions,
 				const char *keyword);
 static void defaultNoticeProcessor(void *arg, const char *message);
+static int  parseServiceInfo(PQconninfoOption *options, 
+			     PQExpBuffer errorMessage);
 
 
 /* ----------------
@@ -2090,6 +2095,114 @@ pqPacketSend(PGconn *conn, const char *buf, size_t len)
 	return STATUS_OK;
 }
 
+int parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage) {
+  char *service = conninfo_getval(options, "service");
+  char *serviceFile = "/etc/pg_service.conf";
+  int  MAXBUFSIZE = 256;
+  int  group_found = 0;
+  int  linenr=0, i;
+
+  if(service != NULL) {
+    FILE *f;
+    char buf[MAXBUFSIZE], *line;
+    
+    f = fopen(serviceFile, "r");
+    if(f == NULL) {
+      printfPQExpBuffer(errorMessage, "ERROR: Service file '%s' not found\n",
+			serviceFile);
+      return 1;
+    }
+
+    /* As default, set the database name to the name of the service */
+    for(i = 0; options[i].keyword; i++)
+      if(strcmp(options[i].keyword, "dbname") == 0) {
+	if(options[i].val != NULL)
+	  free(options[i].val);
+	options[i].val = strdup(service);
+      }
+    
+    while((line = fgets(buf, MAXBUFSIZE-1, f)) != NULL) {
+      linenr++;
+
+      if(strlen(line) >= MAXBUFSIZE - 2) {
+	fclose(f);
+	printfPQExpBuffer(errorMessage,
+			 "ERROR: line %d too long in service file '%s'\n",
+			  linenr,
+			 serviceFile);
+	return 2;
+      }
+
+      /* ignore EOL at end of line */
+      if(strlen(line) && line[strlen(line)-1] == '\n')
+	line[strlen(line)-1] = 0;
+
+      /* ignore leading blanks */
+      while(*line && isspace(line[0]))
+	line++;
+
+      /* ignore comments and empty lines */
+      if(strlen(line) == 0 || line[0] == '#')
+	continue;
+
+      /* Check for right groupname */
+      if(line[0] == '[') {
+	if(group_found) {
+	  /* group info already read */
+	  fclose(f);
+	  return 0;
+	}
+
+	if(strncmp(line+1, service, strlen(service)) == 0 &&
+	   line[strlen(service)+1] == ']')
+	  group_found = 1;
+	else
+	  group_found = 0;
+      } else {
+	if(group_found) {
+	  /* Finally, we are in the right group and can parse the line */
+	  char *key, *val;
+	  int found_keyword;
+
+	  key = strtok(line, "=");
+	  if(key == NULL) {
+	    printfPQExpBuffer(errorMessage,
+			      "ERROR: syntax error in service file '%s', line %d\n",
+			      serviceFile,
+			      linenr);
+	    fclose(f);
+	    return 3;
+	  }
+	  val = line + strlen(line) + 1;
+	  
+	  found_keyword = 0;
+	  for(i = 0; options[i].keyword; i++) {
+	    if(strcmp(options[i].keyword, key) == 0) {
+ 	      if(options[i].val != NULL)
+ 		free(options[i].val);
+ 	      options[i].val = strdup(val);
+	      found_keyword = 1;
+	    }
+	  }
+
+	  if(!found_keyword) {
+	    printfPQExpBuffer(errorMessage,
+			      "ERROR: syntax error in service file '%s', line %d\n",
+			      serviceFile,
+			      linenr);
+	    fclose(f);
+	    return 3;
+	  }
+	}
+      }
+    }
+
+    fclose(f);
+  }
+
+  return 0;
+}
+
 
 /* ----------------
  * Conninfo parser routine
@@ -2263,6 +2376,14 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		if (option->val)
 			free(option->val);
 		option->val = strdup(pval);
+
+	}
+
+	/* Now check for service info */	
+	if(parseServiceInfo(options, errorMessage)) {
+	  PQconninfoFree(options);
+	  free(buf);
+	  return NULL;
 	}
 
 	/* Done with the modifiable input string */
