@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Apr 9 10:53:30 EDT 2002
+   Last updated: Wed Apr 17 22:48:04 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -571,7 +571,8 @@
    You can also compile with profiling to see what functions are taking
    execution time. The backend profile files will be deposited in the
    pgsql/data/base/dbname directory. The client profile file will be put
-   in the client's current directory.
+   in the client's current directory. Linux requires a compile with
+   -DLINUX_PROFILE for proper profiling.
    
     3.8) Why do I get "Sorry, too many clients" when trying to connect?
     

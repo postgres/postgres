@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Tue Apr  9 10:53:30 EDT 2002</P>
+    <P>Last updated: Wed Apr 17 22:48:04 EDT 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -742,7 +742,8 @@
     <P>You can also compile with profiling to see what functions are
     taking execution time. The backend profile files will be deposited
     in the <I>pgsql/data/base/dbname</I> directory. The client profile
-    file will be put in the client's current directory.</P>
+    file will be put in the client's current directory.  Linux requires
+    a compile with <I>-DLINUX_PROFILE</I> for proper profiling.</P>
 
     <H4><A name="3.8">3.8</A>) Why do I get <I>"Sorry, too many
     clients"</I> when trying to connect?</H4>
