@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_dump.1,v 1.13 1998/10/06 03:09:02 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_dump.1,v 1.14 1998/10/06 05:05:48 thomas Exp $
 .TH PG_DUMP UNIX 7/15/98 PostgreSQL PostgreSQL
 .SH NAME
 pg_dump - dumps out a Postgres database into a script file
@@ -22,6 +22,9 @@ filename
 [\c
 .BR "-h"
 hostname
+]
+[\c
+.BR "-n"
 ]
 [\c
 .BR "-o"
@@ -82,6 +85,9 @@ Specifies the output file
 .TP
 .BR "-h" " hostname"
 Specifies the server host name
+.TP
+.BR "-n" ""
+Suppress most double quotes around identifiers.
 .TP
 .BR "-o" ""
 Dump object id's (oids)
