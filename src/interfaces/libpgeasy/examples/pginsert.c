@@ -18,7 +18,6 @@ main(int argc, char **argv)
 	float		afloat;
 	double		adouble;
 	char		achar[11],
-				achar16[17],
 				abpchar[11],
 				avarchar[51],
 				atext[51];
@@ -41,7 +40,6 @@ main(int argc, char **argv)
 			afloat 	float4, \
 			adouble float8, \
 			achar	char, \
-			achar16	char(16), \
 			abpchar char(10), \
 			avarchar varchar(50), \
 			atext	text, \
@@ -58,7 +56,6 @@ main(int argc, char **argv)
 			'Betty', \
 			'Charley', \
 			'Doug', \
-			'Ernie', \
 			'now' )", row);
 		doquery(query);
 
@@ -73,18 +70,16 @@ main(int argc, char **argv)
 					 &afloat,
 					 &adouble,
 					 achar,
-					 achar16,
 					 abpchar,
 					 avarchar,
 					 atext,
 					 &aabstime) != END_OF_TUPLES)
-			printf("int %d\nfloat %f\ndouble %f\nchar %s\nchar16 %s\n\
+			printf("int %d\nfloat %f\ndouble %f\nchar %s\n\
 bpchar %s\nvarchar %s\ntext %s\nabstime %s",
 				   aint,
 				   afloat,
 				   adouble,
 				   achar,
-				   achar16,
 				   abpchar,
 				   avarchar,
 				   atext,

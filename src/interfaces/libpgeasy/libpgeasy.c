@@ -92,11 +92,11 @@ doquery(char *query)
 		 PQresultStatus(res) == PGRES_FATAL_ERROR))
 	{
 		if (res != NULL)
-			fprintf(stderr, "query error:  %s\n", PQcmdStatus(res));
+			fprintf(stderr, "query error:  %s\n", PQresultErrorMessage(res));
 		else
 			fprintf(stderr, "connection error:  %s\n", PQerrorMessage(conn));
 		PQfinish(conn);
-		halt("failed request:  %s\n", query);
+		halt("failed query:  %s\n", query);
 	}
 	tuple = 0;
 	return res;
