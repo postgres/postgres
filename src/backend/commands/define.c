@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.10 1996/11/10 02:59:38 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.11 1996/11/30 17:47:07 momjian Exp $
  *
  * DESCRIPTION
  *    The "DefineFoo" routines take the parse tree and pick out the
@@ -87,7 +87,7 @@ compute_return_type(const Node *returnType,
     if (nodeTag(returnType) == T_TypeName) {
         /* a set of values */
         TypeName *setType = (TypeName *)returnType;
-        *prorettype_p = setType->name,
+        *prorettype_p = setType->name;
         *returnsSet_p = true;
     }else {
         /* singleton */
