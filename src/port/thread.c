@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: thread.c,v 1.12 2003/10/26 04:29:15 momjian Exp $
+ * $Id: thread.c,v 1.13 2003/11/24 13:16:22 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 #else
 #include <pwd.h>
 #endif
-#if defined(USE_THREADS)
+#if defined(ENABLE_THREAD_SAFETY)
 #include <pthread.h>
 #endif
 
@@ -73,7 +73,7 @@
 char *
 pqStrerror(int errnum, char *strerrbuf, size_t buflen)
 {
-#if defined(FRONTEND) && defined(USE_THREADS) && defined(NEED_REENTRANT_FUNCS) && defined(HAVE_STRERROR_R)
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && defined(HAVE_STRERROR_R)
 	/* reentrant strerror_r is available */
 	/* some early standards had strerror_r returning char * */
 	strerror_r(errnum, strerrbuf, buflen);
@@ -81,7 +81,7 @@ pqStrerror(int errnum, char *strerrbuf, size_t buflen)
 
 #else
 
-#if defined(FRONTEND) && defined(USE_THREADS) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_STRERROR_R)
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_STRERROR_R)
 	static pthread_mutex_t strerror_lock = PTHREAD_MUTEX_INITIALIZER;
 	pthread_mutex_lock(&strerror_lock);
 #endif
@@ -89,7 +89,7 @@ pqStrerror(int errnum, char *strerrbuf, size_t buflen)
 	/* no strerror_r() available, just use strerror */
 	StrNCpy(strerrbuf, strerror(errnum), buflen);
 
-#if defined(FRONTEND) && defined(USE_THREADS) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_STRERROR_R)
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_STRERROR_R)
 	pthread_mutex_unlock(&strerror_lock);
 #endif
 
@@ -106,7 +106,7 @@ int
 pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
 		   size_t buflen, struct passwd **result)
 {
-#if defined(FRONTEND) && defined(USE_THREADS) && defined(NEED_REENTRANT_FUNCS) && defined(HAVE_GETPWUID_R)
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && defined(HAVE_GETPWUID_R)
 	/*
 	 * Early POSIX draft of getpwuid_r() returns 'struct passwd *'.
 	 *    getpwuid_r(uid, resultbuf, buffer, buflen)
@@ -117,7 +117,7 @@ pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
 
 #else
 
-#if defined(FRONTEND) && defined(USE_THREADS) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETPWUID_R)
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETPWUID_R)
 	static pthread_mutex_t getpwuid_lock = PTHREAD_MUTEX_INITIALIZER;
 	pthread_mutex_lock(&getpwuid_lock);
 #endif
@@ -125,7 +125,7 @@ pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
 	/* no getpwuid_r() available, just use getpwuid() */
 	*result = getpwuid(uid);
 
-#if defined(FRONTEND) && defined(USE_THREADS) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETPWUID_R)
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETPWUID_R)
 
 	/* Use 'buffer' memory for storage of strings used by struct passwd */
 	if (*result &&
@@ -181,7 +181,7 @@ pqGethostbyname(const char *name,
 				struct hostent **result,
 				int *herrno)
 {
-#if defined(FRONTEND) && defined(USE_THREADS) && defined(NEED_REENTRANT_FUNCS) && defined(HAVE_GETHOSTBYNAME_R)
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && defined(HAVE_GETHOSTBYNAME_R)
 	/*
 	 * broken (well early POSIX draft) gethostbyname_r() which returns
 	 * 'struct hostent *'
@@ -191,7 +191,7 @@ pqGethostbyname(const char *name,
 
 #else
 
-#if defined(FRONTEND) && defined(USE_THREADS) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETHOSTBYNAME_R)
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETHOSTBYNAME_R)
 	static pthread_mutex_t gethostbyname_lock = PTHREAD_MUTEX_INITIALIZER;
 	pthread_mutex_lock(&gethostbyname_lock);
 #endif
@@ -199,7 +199,7 @@ pqGethostbyname(const char *name,
 	/* no gethostbyname_r(), just use gethostbyname() */
 	*result = gethostbyname(name);
 
-#if defined(FRONTEND) && defined(USE_THREADS) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETHOSTBYNAME_R)
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETHOSTBYNAME_R)
 
 	/*
 	 *	Use 'buffer' memory for storage of structures used by struct hostent.
@@ -268,7 +268,7 @@ pqGethostbyname(const char *name,
 	if (*result != NULL)
 		*herrno = h_errno;
 		
-#if defined(FRONTEND) && defined(USE_THREADS) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETHOSTBYNAME_R)
+#if defined(FRONTEND) && defined(ENABLE_THREAD_SAFETY) && defined(NEED_REENTRANT_FUNCS) && !defined(HAVE_GETHOSTBYNAME_R)
 	pthread_mutex_unlock(&gethostbyname_lock);
 #endif
 

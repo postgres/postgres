@@ -1,9 +1,9 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.17 2003/08/24 18:36:38 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.18 2003/11/24 13:16:22 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
-#ifdef USE_THREADS
+#ifdef ENABLE_THREAD_SAFETY
 #include <pthread.h>
 #endif
 #include "ecpgtype.h"
@@ -12,7 +12,7 @@
 #include "extern.h"
 #include "sqlca.h"
 
-#ifdef USE_THREADS
+#ifdef ENABLE_THREAD_SAFETY
 static pthread_mutex_t connections_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 static struct connection *all_connections = NULL;
@@ -45,13 +45,13 @@ ECPGget_connection(const char *connection_name)
 {
 	struct connection *ret = NULL;
 
-#ifdef USE_THREADS
+#ifdef ENABLE_THREAD_SAFETY
 	pthread_mutex_lock(&connections_mutex);
 #endif
 
 	ret = ecpg_get_connection_nr(connection_name);
 
-#ifdef USE_THREADS
+#ifdef ENABLE_THREAD_SAFETY
 	pthread_mutex_unlock(&connections_mutex);
 #endif
 
@@ -355,7 +355,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		realname = strdup(dbname);
 
 	/* add connection to our list */
-#ifdef USE_THREADS
+#ifdef ENABLE_THREAD_SAFETY
 	pthread_mutex_lock(&connections_mutex);
 #endif
 	if (connection_name != NULL)
@@ -387,7 +387,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		char	   *db = realname ? realname : "<DEFAULT>";
 
 		ecpg_finish(this);
-#ifdef USE_THREADS
+#ifdef ENABLE_THREAD_SAFETY
 		pthread_mutex_unlock(&connections_mutex);
 #endif
 		ECPGlog("connect: could not open database %s on %s port %s %s%s%s%s in line %d\n\t%s\n",
@@ -411,7 +411,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 			ECPGfree(dbname);
 		return false;
 	}
-#ifdef USE_THREADS
+#ifdef ENABLE_THREAD_SAFETY
 	pthread_mutex_unlock(&connections_mutex);
 #endif
 
@@ -440,7 +440,7 @@ ECPGdisconnect(int lineno, const char *connection_name)
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	struct connection *con;
 
-#ifdef USE_THREADS
+#ifdef ENABLE_THREAD_SAFETY
 	pthread_mutex_lock(&connections_mutex);
 #endif
 
@@ -461,7 +461,7 @@ ECPGdisconnect(int lineno, const char *connection_name)
 
 		if (!ECPGinit(con, connection_name, lineno))
 		{
-#ifdef USE_THREADS
+#ifdef ENABLE_THREAD_SAFETY
 			pthread_mutex_unlock(&connections_mutex);
 #endif
 			return (false);
@@ -470,7 +470,7 @@ ECPGdisconnect(int lineno, const char *connection_name)
 			ecpg_finish(con);
 	}
 
-#ifdef USE_THREADS
+#ifdef ENABLE_THREAD_SAFETY
 	pthread_mutex_unlock(&connections_mutex);
 #endif
 
