@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.91 2001/05/11 01:34:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.92 2001/05/17 13:28:30 momjian Exp $
 -->
 
  <appendix id="release">
@@ -44,6 +44,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.91 2001/05/11 01:34:14 mom
     <para>
      <programlisting>
 Fix PL/PgSQL SELECTs when returning no rows
+Fix for psql backslash core dump
+Referential integrity permission fix
+Optimizer fixes
+pg_dump cleanups 
      </programlisting>
     </para>
    </sect2>
