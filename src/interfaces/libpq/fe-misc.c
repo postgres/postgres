@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.24 1999/05/25 16:15:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.25 1999/05/28 01:54:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -471,7 +471,6 @@ pqFlush(PGconn *conn)
 		/* Prevent being SIGPIPEd if backend has closed the connection. */
 #ifndef WIN32
 		pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
-
 #endif
 
 		int			sent = send(conn->sock, ptr, len, 0);
@@ -498,6 +497,7 @@ pqFlush(PGconn *conn)
 				case EWOULDBLOCK:
 					break;
 #endif
+
 				case EPIPE:
 #ifdef ECONNRESET
 				case ECONNRESET:
@@ -506,14 +506,15 @@ pqFlush(PGconn *conn)
 							"pqFlush() -- backend closed the channel unexpectedly.\n"
 							"\tThis probably means the backend terminated abnormally"
 							" before or while processing the request.\n");
-					conn->status = CONNECTION_BAD;		/* No more connection */
-#ifdef WIN32
-					closesocket(conn->sock);
-#else
-					close(conn->sock);
-#endif
-					conn->sock = -1;
+					/*
+					 * We used to close the socket here, but that's a bad
+					 * idea since there might be unread data waiting
+					 * (typically, a NOTICE message from the backend telling
+					 * us it's committing hara-kiri...).  Leave the socket
+					 * open until pqReadData finds no more data can be read.
+					 */
 					return EOF;
+
 				default:
 					sprintf(conn->errorMessage,
 					  "pqFlush() --  couldn't send data: errno=%d\n%s\n",
