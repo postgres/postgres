@@ -5,6 +5,7 @@ SRCH_INC:
 SRCH_LIB:
 USE_LOCALE:no
 DLSUFFIX:.so
-YACC=/usr/ccs/bin/yacc
 YACC:yacc
+YFLAGS:-d
 CC:cc
+LIBS:-lc89 

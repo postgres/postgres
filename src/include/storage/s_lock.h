@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.27 1998/02/26 04:43:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.28 1998/03/01 04:47:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,21 +305,21 @@ tas_dummy()
 
 #if defined(NEED_I386_TAS_ASM)
 
-#if defined(USE_UNIVEL_CC_ASM)
+#if defined(USE_UNIVEL_CC)
 asm void
 S_LOCK(char *lval)
 {
-	%lab again;
+% lab again;
 /* Upon entry, %eax will contain the pointer to the lock byte */
-	pushl % ebx
-		xchgl % eax, %ebx
-		movb $ - 1, %al
+	pushl %ebx
+	xchgl %eax, %ebx
+	movb $255, %al
 again:
 	lock
-		xchgb % al, (%ebx)
-		cmpb $0, %al
-		jne again
-		popl % ebx
+	xchgb %al, (%ebx)
+	cmpb $0, %al
+	jne again
+	popl %ebx
 }
 
 #else

@@ -9,13 +9,14 @@
  * Define this if you are compiling with
  * the native UNIXWARE C compiler.
  ***************************************/
-#define USE_UNIVEL_CC_ASM
+#define USE_UNIVEL_CC
 typedef unsigned char slock_t;
 
 /***************************************************************
- * strcasecmp() is in c89, but is not in any include file :-(
+ * strcasecmp() is in c89.a. The following include will get the
+ * needed prototype. 
  ***************************************************************/
-int			strcasecmp(char *, char *);
+#include <strings.h>
 
 #ifndef			BIG_ENDIAN
 #define			BIG_ENDIAN		4321

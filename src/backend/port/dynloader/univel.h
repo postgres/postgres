@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * port-protos.h--
+ * univel.h--
  *	  port-specific prototypes for Intel x86/UNIXWARE
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * port-protos.h,v 1.2 1995/03/17 06:40:18 andrew Exp
+ * univel.h,v 1.2 1995/03/17 06:40:18 andrew Exp
  *
  *-------------------------------------------------------------------------
   */
