@@ -72,6 +72,10 @@ string -
 	C-like input/output conversion routines for strings
 	by Massimo Dal Zotto <dz@cs.unitn.it>
 
+tools -
+	Assorted developer tools
+	by Massimo Dal Zotto <dz@cs.unitn.it>
+
 unixdate -
 	Conversions from integer to datetime
 	by Thomas Lockhart <lockhart@alumni.caltech.edu>
