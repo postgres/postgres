@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.43 2001/08/10 18:57:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.44 2001/11/16 23:30:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,6 +77,10 @@ GetDatabasePath(Oid tblNode)
  * IsSystemRelationName
  *		True iff name is the name of a system catalog relation.
  *
+ *		NB: TOAST relations are considered system relations by this test.
+ *		This is appropriate in many places but not all.  Where it's not,
+ *		also check IsToastRelationName.
+ *
  *		We now make a new requirement where system catalog relns must begin
  *		with pg_ while user relns are forbidden to do so.  Make the test
  *		trivial and instantaneous.
@@ -86,12 +90,20 @@ GetDatabasePath(Oid tblNode)
 bool
 IsSystemRelationName(const char *relname)
 {
-	if (relname[0] && relname[1] && relname[2])
-		return (relname[0] == 'p' &&
-				relname[1] == 'g' &&
-				relname[2] == '_');
-	else
-		return FALSE;
+	/* ugly coding for speed */
+	return (relname[0] == 'p' &&
+			relname[1] == 'g' &&
+			relname[2] == '_');
+}
+
+/*
+ * IsToastRelationName
+ *		True iff name is the name of a TOAST support relation (or index).
+ */
+bool
+IsToastRelationName(const char *relname)
+{
+	return strncmp(relname, "pg_toast_", 9) == 0;
 }
 
 /*

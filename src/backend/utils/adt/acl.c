@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.65 2001/10/25 05:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.66 2001/11/16 23:30:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -385,7 +385,9 @@ acldefault(const char *relname, AclId ownerid)
 	aip = ACL_DAT(acl);
 	aip[0].ai_idtype = ACL_IDTYPE_WORLD;
 	aip[0].ai_id = ACL_ID_WORLD;
-	aip[0].ai_mode = IsSystemRelationName(relname) ? ACL_SELECT : ACL_WORLD_DEFAULT;
+	aip[0].ai_mode = (IsSystemRelationName(relname) &&
+					  !IsToastRelationName(relname)) ? ACL_SELECT
+		: ACL_WORLD_DEFAULT;
 	aip[1].ai_idtype = ACL_IDTYPE_UID;
 	aip[1].ai_id = ownerid;
 	aip[1].ai_mode = ACL_OWNER_DEFAULT;

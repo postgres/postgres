@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.46 2001/10/25 05:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.47 2001/11/16 23:30:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,8 +437,12 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
 	 * We only need to worry about invalidation for tuples that are in
 	 * system relations; user-relation tuples are never in catcaches and
 	 * can't affect the relcache either.
+	 *
+	 * TOAST tuples can likewise be ignored here.
 	 */
 	if (!IsSystemRelationName(NameStr(RelationGetForm(relation)->relname)))
+		return;
+	if (IsToastRelationName(NameStr(RelationGetForm(relation)->relname)))
 		return;
 
 	/*
