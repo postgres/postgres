@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.44 1998/01/25 20:23:40 momjian Exp $
+ * $Id: pg_proc.h,v 1.45 1998/01/26 01:01:31 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -251,7 +251,7 @@ DATA(insert OID = 108 (  intgtjoinsel	   PGUID 11 f t f 5 f 701 "26 26 21 26 21"
 DESCR("selectivity");
 
 DATA(insert OID = 112 (  int4_text		   PGUID 11 f t f 1 f  25 "23" 100 0 0 100	foo bar ));
-DESCR("convert");
+ DESCR("convert");
 DATA(insert OID = 113 (  int2_text		   PGUID 11 f t f 1 f  25 "21" 100 0 0 100	foo bar ));
 DESCR("convert");
 DATA(insert OID = 114 (  oid_text		   PGUID 11 f t f 1 f  25 "26" 100 0 0 100	foo bar ));
@@ -1178,7 +1178,7 @@ DATA(insert OID =  886 (  cash_in		   PGUID 11 f t f 1 f 790 "0" 100 0 0 100  fo
 DESCR("(internal)");
 DATA(insert OID =  887 (  cash_out		   PGUID 11 f t f 1 f  23 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
-DATA(insert OID =  1273 (  cash_words_out  PGUID 11 f t f 1 f  23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID =  1273 (  cash_words_out  PGUID 11 f t f 1 f  25 "790" 100 0 0 100  foo bar ));
 DESCR("output amount as words");
 DATA(insert OID =  888 (  cash_eq		   PGUID 11 f t f 2 f  16 "790 790" 100 0 0 100  foo bar ));
 DESCR("equals");
