@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.14 1996/11/22 04:33:34 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.15 1996/11/23 09:42:51 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ CMDNAME=`basename $0`
 
 # The x=x below is to satisfy export if postconfig returns nothing.
 
-export x=x $(postconfig 2>/dev/null)
+export x=x $(exec postconfig 2>/dev/null)
 
 # Set defaults:
 debug=0
