@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.7 1996/11/05 06:10:54 scrappy Exp $
+ * $Id: bufmgr.h,v 1.8 1997/01/14 05:36:15 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,7 @@ extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern Relation BufferGetRelation(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
 extern Block BufferGetBlock(Buffer buffer);
-extern void ReleaseTmpRelBuffers(Relation tempreldesc);
+extern void ReleaseRelationBuffers(Relation rdesc);
 extern void DropBuffers(Oid dbid);
 extern void PrintBufferDescs(void);
 extern void PrintPinnedBufs(void);
