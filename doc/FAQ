@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jan 30 20:37:18 EST 2005
+   Last updated: Sun Jan 30 20:53:02 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -167,48 +167,20 @@
    
     1.5) Where can I get support?
     
-   The main mailing list is: pgsql-general@PostgreSQL.org. It is
-   available for discussion of matters pertaining to PostgreSQL. To
-   subscribe, send mail with the following lines in the body (not the
-   subject line):
-    subscribe
-    end
-
-   to pgsql-general-request@PostgreSQL.org.
+   The PostgreSQL community provides assistance to many of its users via
+   email. The main web site to subscribe to the email lists is
+   http://www.postgresql.org/community/lists/. The general or bugs lists
+   are a good place to start.
    
-   There is also a digest list available. To subscribe to this list, send
-   email to: pgsql-general-digest-request@PostgreSQL.org with a body of:
-    subscribe
-    end
-
-   Digests are sent out to members of this list whenever the main list
-   has received around 30k of messages.
-   
-   The bugs mailing list is available. To subscribe to this list, send
-   email to pgsql-bugs-request@PostgreSQL.org with a body of:
-    subscribe
-    end
-
-   There is also a developers discussion mailing list available. To
-   subscribe to this list, send email to
-   pgsql-hackers-request@PostgreSQL.org with a body of:
-    subscribe
-    end
-
-   Additional mailing lists and information about PostgreSQL can be found
-   via the PostgreSQL WWW home page at:
-   
-     http://www.PostgreSQL.org
-     
    The major IRC channel is #postgresql on Freenode (irc.freenode.net).
-   To connect you can use the Unix command irc -c '#postgresql' "$USER"
+   To connect you can use the Unix program irc -c '#postgresql' "$USER"
    irc.freenode.net or use any of the other popular IRC clients. A
    Spanish one also exists on the same network, (#postgresql-es), and a
    French one, (#postgresqlfr). There is also a PostgreSQL channel on
    EFNet.
    
    A list of commercial support companies is available at
-   http://techdocs.postgresql.org/companies.php.
+   http://techdocs.postg resql.org/companies.php.
    
     1.6) What is the latest release?
     
