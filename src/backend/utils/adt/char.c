@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.19 1998/09/01 03:25:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.19.2.1 1998/12/14 00:13:55 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ int32
 charin(char *ch)
 {
 	if (ch == NULL)
-		return (int32) NULL;
+		return (int32) '\0';
 	return (int32) *ch;
 }
 
@@ -152,4 +152,22 @@ bool
 cideq(int8 arg1, int8 arg2)
 {
 	return arg1 == arg2;
+}
+
+int8
+text_char(text *arg1)
+{
+	return ((int8) *(VARDATA(arg1)));
+}
+
+text *
+char_text(int8 arg1)
+{
+	text *result;
+
+	result = palloc(VARHDRSZ+1);
+	VARSIZE(result) = VARHDRSZ+1;
+	*(VARDATA(result)) = arg1;
+
+	return result;
 }
