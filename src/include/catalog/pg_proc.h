@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.105 1999/10/11 06:28:28 inoue Exp $
+ * $Id: pg_proc.h,v 1.106 1999/11/17 21:21:50 wieck Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2337,6 +2337,28 @@ DATA(insert OID = 1767 ( numeric_larger			PGUID 11 f t t 2 f 1700 "1700 1700" 10
 DESCR("larger of two numbers");
 DATA(insert OID = 1769 ( numeric_cmp			PGUID 11 f t t 2 f 23 "1700 1700" 100 0 0 100  numeric_cmp - ));
 DESCR("compare two numbers");
+
+/* OID's 1625 - 1639 LZTEXT data type */
+DATA(insert OID = 1626 ( lztextin				PGUID 11 f t t 1 f 1625 "0" 100 0 0 100  lztextin - ));
+DESCR("(internal)");
+DATA(insert OID = 1627 ( lztextout				PGUID 11 f t t 1 f 23 "0" 100 0 0 100  lztextout - ));
+DESCR("(internal)");
+DATA(insert OID = 1628 ( lztext_text	   		PGUID 11 f t t 1 f 25 "1625" 100 0 0 100  lztext_text -));
+DESCR("convert lztext to text");
+DATA(insert OID = 1629 ( text			   		PGUID 11 f t t 1 f 25 "1625" 100 0 0 100  lztext_text -));
+DESCR("convert lztext to text");
+DATA(insert OID = 1630 ( text_lztext	   		PGUID 11 f t t 1 f 1625 "25" 100 0 0 100  text_lztext -));
+DESCR("convert text to lztext");
+DATA(insert OID = 1631 ( lztext			   		PGUID 11 f t t 1 f 1625 "25" 100 0 0 100  text_lztext -));
+DESCR("convert text to lztext");
+DATA(insert OID = 1632 ( lztextlen		   		PGUID 11 f t t 1 f 23 "1625" 100 0 1 0  lztextlen - ));
+DESCR("length");
+DATA(insert OID = 1633 ( length			   		PGUID 11 f t t 1 f 23 "1625" 100 0 1 0  lztextlen - ));
+DESCR("length");
+DATA(insert OID = 1634 ( lztextoctetlen	   		PGUID 11 f t t 1 f 23 "1625" 100 0 1 0  lztextoctetlen - ));
+DESCR("octet length");
+DATA(insert OID = 1635 ( octet_length	   		PGUID 11 f t t 1 f 23 "1625" 100 0 1 0  lztextoctetlen - ));
+DESCR("octet length");
 
 
 /*

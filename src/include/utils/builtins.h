@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.89 1999/10/11 06:28:28 inoue Exp $
+ * $Id: builtins.h,v 1.90 1999/11/17 21:21:51 wieck Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -30,6 +30,7 @@
 #include "utils/int8.h"
 #include "utils/nabstime.h"
 #include "utils/numeric.h"
+#include "utils/lztext.h"
 #include "access/heapam.h"		/* for HeapTuple */
 
 /*
@@ -626,5 +627,13 @@ HeapTuple	RI_FKey_setnull_del(FmgrInfo *proinfo);
 HeapTuple	RI_FKey_setnull_upd(FmgrInfo *proinfo);
 HeapTuple	RI_FKey_setdefault_del(FmgrInfo *proinfo);
 HeapTuple	RI_FKey_setdefault_upd(FmgrInfo *proinfo);
+
+/* lztext.c */
+lztext	   *lztextin(char *str);
+char	   *lztextout(lztext *lz);
+text	   *lztext_text(lztext *lz);
+lztext	   *text_lztext(text *txt);
+int32		lztextlen(lztext *lz);
+int32		lztextoctetlen(lztext *lz);
 
 #endif	 /* BUILTINS_H */

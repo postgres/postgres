@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.70 1999/10/18 14:14:04 momjian Exp $
+ * $Id: pg_type.h,v 1.71 1999/11/17 21:21:51 wieck Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -381,6 +381,11 @@ DATA(insert OID = 1187 ( _timespan	 PGUID	-1 -1 f b t \054 0	1186 array_in array
 DATA(insert OID = 1296 ( timestamp	 PGUID	4  19 t b t \054 0	0 timestamp_in timestamp_out timestamp_in timestamp_out i _null_ ));
 DESCR("date time timezone, limited-range ISO-formated date and time");
 #define TIMESTAMPOID	1296
+
+/* OIDS 1625 - 1639 */
+DATA(insert OID = 1625 ( lztext	   PGUID -1  -1 f b t \054 0  0 lztextin lztextout lztextin lztextout i _null_ ));
+DESCR("variable-length string, stored compressed");
+#define LZTEXTOID		1625
 
 /* OIDS 1700 - 1799 */
 DATA(insert OID = 1700 ( numeric	   PGUID -1  -1 f b t \054 0  0 numeric_in numeric_out numeric_in numeric_out i _null_ ));
