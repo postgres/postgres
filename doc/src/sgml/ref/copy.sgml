@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.43 2003/04/19 19:55:37 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.44 2003/04/20 01:52:55 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -363,8 +363,9 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
    <para>
     <command>COPY TO</command> will terminate each row with a Unix-style 
     newline (<quote><literal>\n</></>),  or carriage return/newline 
-    ("\r\n") on  MS Windows.  <command>COPY FROM</command> can handle lines 
-    ending with newlines, carriage returns, or carriage return/newlines.
+    ("\r\n") for servers running MS Windows.
+    <command>COPY FROM</command> can handle lines ending with newlines,
+    carriage returns, or carriage return/newlines.
    </para>
   </refsect2>
 
