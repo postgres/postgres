@@ -4,7 +4,10 @@
   PSQLODBC.DLL - A library to talk to the PostgreSQL DBMS using ODBC.
 
 
-  Copyright (C) 1998; Insight Distribution Systems
+  Copyright (C) 1998          Insight Distribution Systems
+  Copyright (C) 1998 - 2002   The PostgreSQL Global Development Group
+
+  Multibyte support was added by Sankyo Unyu Service, (C) 2001.
 
   The code contained in this library is based on code written by 
   Christian Czezatke and Dan McGuirk, (C) 1996.
@@ -26,9 +29,9 @@
   02139, USA.
 
 
-  How to contact the author:
+  How to contact the authors:
 
-  email:  byronn@insightdist.com	(Byron Nikolaidis)
+  email:  pgsql-odbc@postgresql.org
 
 
 ***********************************************************************/
