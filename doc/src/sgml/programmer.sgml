@@ -134,6 +134,7 @@ It provides SQL92/SQL3 language support,
 &xtypes;
 &xoper;
 &xaggr;
+&rules;
 &xindex;
 &gist;
 &dfunc;

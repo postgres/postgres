@@ -188,6 +188,7 @@ Information for extending <ProductName>Postgres</ProductName>.
 &xtypes;
 &xoper;
 &xaggr;
+&rules;
 &xindex;
 &gist;
 &dfunc;
