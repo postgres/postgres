@@ -55,6 +55,7 @@ ALL : "$(OUTDIR)\libpq.lib" "$(OUTDIR)\libpq.dll"
 
 CLEAN :
 	-@erase "$(INTDIR)\dllist.obj"
+	-@erase "$(INTDIR)\md5.obj"
 	-@erase "$(INTDIR)\fe-auth.obj"
 	-@erase "$(INTDIR)\fe-connect.obj"
 	-@erase "$(INTDIR)\fe-exec.obj"
@@ -95,6 +96,7 @@ LIB32=link.exe -lib
 LIB32_FLAGS=/nologo /out:"$(OUTDIR)\libpq.lib" 
 LIB32_OBJS= \
 	"$(INTDIR)\dllist.obj" \
+	"$(INTDIR)\md5.obj" \
 	"$(INTDIR)\fe-auth.obj" \
 	"$(INTDIR)\fe-connect.obj" \
 	"$(INTDIR)\fe-exec.obj" \
@@ -139,6 +141,12 @@ LINK32_OBJS= \
 "$(OUTDIR)\dllist.obj" : ..\..\backend\lib\dllist.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\backend\lib\dllist.c
+<<
+
+    
+"$(OUTDIR)\md5.obj" : ..\..\backend\libpq\md5.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\backend\libpq\md5.c
 <<
 
     
