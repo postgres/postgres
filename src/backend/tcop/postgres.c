@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.334 2003/05/06 04:16:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.335 2003/05/06 05:15:45 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1748,7 +1748,7 @@ int
 PostgresMain(int argc, char *argv[], const char *username)
 {
 	int			flag;
-	const char *DBName = NULL;
+	const char *dbname = NULL;
 	char	   *potential_DataDir = NULL;
 	bool		secure;
 	int			errs = 0;
@@ -1987,7 +1987,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				 */
 				if (secure)
 				{
-					DBName = strdup(optarg);
+					dbname = strdup(optarg);
 					secure = false;		/* subsequent switches are NOT
 										 * secure */
 					ctx = PGC_BACKEND;
@@ -2238,7 +2238,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (IsUnderPostmaster)
 	{
 		/* noninteractive case: nothing should be left after switches */
-		if (errs || argc != optind || DBName == NULL)
+		if (errs || argc != optind || dbname == NULL)
 		{
 			elog(WARNING, "%s: invalid command line arguments\nTry -? for help.",
 				 argv[0]);
@@ -2260,8 +2260,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 			proc_exit(1);
 		}
 		else if (argc - optind == 1)
-			DBName = argv[optind];
-		else if ((DBName = username) == NULL)
+			dbname = argv[optind];
+		else if ((dbname = username) == NULL)
 		{
 			elog(WARNING, "%s: user name undefined and no database specified",
 				 argv[0]);
@@ -2322,7 +2322,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * that involves database access should be there, not here.
 	 */
 	elog(DEBUG2, "InitPostgres");
-	InitPostgres(DBName, username);
+	InitPostgres(dbname, username);
 
 	SetProcessingMode(NormalProcessing);
 
@@ -2344,7 +2344,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.334 $ $Date: 2003/05/06 04:16:35 $\n");
+		puts("$Revision: 1.335 $ $Date: 2003/05/06 05:15:45 $\n");
 	}
 
 	/*
