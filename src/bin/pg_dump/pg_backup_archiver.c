@@ -1357,7 +1357,7 @@ static void _reconnectAsOwner(ArchiveHandle* AH, TocEntry* te)
 		if (RestoringToDB(AH))
 		{
 			ReconnectDatabase(AH, te->owner);
-			//todo pjw - ???? fix for db connection...
+			/* todo pjw - ???? fix for db connection... */
 		}
 		else
 		{

@@ -115,8 +115,10 @@ extern void	ArchiveEntry(Archive* AH, const char* oid, const char* name,
 /* Called to write *data* to the archive */
 extern int	WriteData(Archive* AH, const void* data, int dLen);
 
-//extern int 	StartBlobs(Archive* AH);
-//extern int	EndBlobs(Archive* AH);
+/* 
+extern int 	StartBlobs(Archive* AH);
+extern int	EndBlobs(Archive* AH);
+*/
 extern int	StartBlob(Archive* AH, int oid);
 extern int	EndBlob(Archive* AH, int oid);
 

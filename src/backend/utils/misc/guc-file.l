@@ -4,7 +4,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.3 2000/06/04 01:44:34 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.4 2000/07/27 19:49:18 momjian Exp $
  */
 
 %{
@@ -33,7 +33,7 @@ enum {
 	GUC_REAL = 4,
 	GUC_EQUALS = 5,
 	GUC_EOL = 99,
-	GUC_ERROR = 100,
+	GUC_ERROR = 100
 };
 
 #if defined(yywrap)

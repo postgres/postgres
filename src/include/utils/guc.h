@@ -4,7 +4,7 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Header: /cvsroot/pgsql/src/include/utils/guc.h,v 1.3 2000/07/03 20:46:10 petere Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/guc.h,v 1.4 2000/07/27 19:49:24 momjian Exp $
  */
 #ifndef GUC_H
 #define GUC_H
@@ -43,7 +43,7 @@ typedef enum {
 	PGC_SIGHUP,
 	PGC_BACKEND,
 	PGC_SUSET,
-	PGC_USERSET,
+	PGC_USERSET
 } GucContext;
 
 
