@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.95 2002/11/18 17:12:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.96 2002/11/23 04:05:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,12 +20,13 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catalog.h"
+#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
-#include "catalog/catname.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_constraint.h"
 #include "commands/cluster.h"
 #include "commands/tablecmds.h"
 #include "miscadmin.h"
@@ -63,7 +64,6 @@ typedef struct
 
 static Oid	make_new_heap(Oid OIDOldHeap, const char *NewName);
 static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
-static List *get_indexattr_list(Relation OldHeap, Oid OldIndex);
 static void recreate_indexattr(Oid OIDOldHeap, List *indexes);
 static void swap_relfilenodes(Oid r1, Oid r2);
 static void cluster_rel(relToCluster *rv);
@@ -92,11 +92,8 @@ static MemoryContext cluster_context = NULL;
 void
 cluster_rel(relToCluster *rvtc)
 {
-	Oid			OIDNewHeap;
 	Relation	OldHeap,
 				OldIndex;
-	char		NewHeapName[NAMEDATALEN];
-	ObjectAddress object;
 	List	   *indexes;
 
 	/* Check for user-requested abort. */
@@ -172,6 +169,22 @@ cluster_rel(relToCluster *rvtc)
 	index_close(OldIndex);
 	heap_close(OldHeap, NoLock);
 
+	/* rebuild_rel does all the dirty work */
+	rebuild_rel(rvtc->tableOid, rvtc->indexOid, indexes, true);
+}
+
+void
+rebuild_rel(Oid tableOid, Oid indexOid, List *indexes, bool dataCopy)
+{
+	Oid			OIDNewHeap;
+	char		NewHeapName[NAMEDATALEN];
+	ObjectAddress object;
+
+	/*
+	 * If dataCopy is true, we assume that we will be basing the
+	 * copy off an index for cluster operations.
+	 */
+	Assert(!dataCopy || indexOid != NULL);
 	/*
 	 * Create the new heap, using a temporary name in the same namespace
 	 * as the existing table.  NOTE: there is some risk of collision with
@@ -180,10 +193,9 @@ cluster_rel(relToCluster *rvtc)
 	 * namespace from the old, or we will have problems with the TEMP
 	 * status of temp tables.
 	 */
-	snprintf(NewHeapName, NAMEDATALEN, "pg_temp_%u", rvtc->tableOid);
+	snprintf(NewHeapName, NAMEDATALEN, "pg_temp_%u", tableOid);
 
-	OIDNewHeap = make_new_heap(rvtc->tableOid, NewHeapName);
-
+	OIDNewHeap = make_new_heap(tableOid, NewHeapName);
 	/*
 	 * We don't need CommandCounterIncrement() because make_new_heap did
 	 * it.
@@ -192,13 +204,14 @@ cluster_rel(relToCluster *rvtc)
 	/*
 	 * Copy the heap data into the new table in the desired order.
 	 */
-	copy_heap_data(OIDNewHeap, rvtc->tableOid, rvtc->indexOid);
+	if (dataCopy)
+		copy_heap_data(OIDNewHeap, tableOid, indexOid);
 
 	/* To make the new heap's data visible (probably not needed?). */
 	CommandCounterIncrement();
 
 	/* Swap the relfilenodes of the old and new heaps. */
-	swap_relfilenodes(rvtc->tableOid, OIDNewHeap);
+	swap_relfilenodes(tableOid, OIDNewHeap);
 
 	CommandCounterIncrement();
 
@@ -219,7 +232,7 @@ cluster_rel(relToCluster *rvtc)
 	 * Recreate each index on the relation.  We do not need
 	 * CommandCounterIncrement() because recreate_indexattr does it.
 	 */
-	recreate_indexattr(rvtc->tableOid, indexes);
+	recreate_indexattr(tableOid, indexes);
 }
 
 /*
@@ -322,7 +335,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
  * Get the necessary info about the indexes of the relation and
  * return a list of IndexAttrs structures.
  */
-static List *
+List *
 get_indexattr_list(Relation OldHeap, Oid OldIndex)
 {
 	List	   *indexes = NIL;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.55 2002/11/23 03:59:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.56 2002/11/23 04:05:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
+#include "commands/cluster.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "executor/executor.h"
@@ -360,7 +361,7 @@ RemoveRelation(const RangeVar *relation, DropBehavior behavior)
  *		Removes all the rows from a relation.
  *
  * Note: This routine only does safety and permissions checks;
- * heap_truncate does the actual work.
+ * rebuild_rel in cluster.c does the actual work.
  */
 void
 TruncateRelation(const RangeVar *relation)
@@ -371,6 +372,7 @@ TruncateRelation(const RangeVar *relation)
 	Relation	fkeyRel;
 	SysScanDesc fkeyScan;
 	HeapTuple	tuple;
+	List	   *indexes;
 
 	/* Grab exclusive lock in preparation for truncate */
 	rel = heap_openrv(relation, AccessExclusiveLock);
@@ -398,16 +400,6 @@ TruncateRelation(const RangeVar *relation)
 
 	if (!pg_class_ownercheck(relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
-
-	/*
-	 * Truncate within a transaction block is dangerous, because if
-	 * the transaction is later rolled back we have no way to undo
-	 * truncation of the relation's physical file.  Disallow it except for
-	 * a rel created in the current xact (which would be deleted on abort,
-	 * anyway).
-	 */
-	if (!rel->rd_isnew)
-		PreventTransactionChain((void *) relation, "TRUNCATE TABLE");
 
 	/*
 	 * Don't allow truncate on temp tables of other backends ... their
@@ -438,7 +430,8 @@ TruncateRelation(const RangeVar *relation)
 		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
 
 		if (con->contype == 'f' && con->conrelid != relid)
-			elog(ERROR, "TRUNCATE cannot be used as table %s references this one via foreign key constraint %s",
+			elog(ERROR, "TRUNCATE cannot be used as table %s references "
+						"this one via foreign key constraint %s",
 				 get_rel_name(con->conrelid),
 				 NameStr(con->conname));
 	}
@@ -446,11 +439,17 @@ TruncateRelation(const RangeVar *relation)
 	systable_endscan(fkeyScan);
 	heap_close(fkeyRel, AccessShareLock);
 
+	/* Save the information of all indexes on the relation. */
+	indexes = get_indexattr_list(rel, InvalidOid);
+
 	/* Keep the lock until transaction commit */
 	heap_close(rel, NoLock);
 
-	/* Do the real work */
-	heap_truncate(relid);
+	/*
+	 * Do the real work using the same technique as cluster, but
+	 * without the code copy portion
+	 */
+	rebuild_rel(relid, NULL, indexes, false);
 }
 
 /*----------

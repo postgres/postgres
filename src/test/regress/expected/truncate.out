@@ -10,7 +10,21 @@ SELECT * FROM truncate_a;
     2
 (2 rows)
 
+-- Roll truncate back
+BEGIN;
 TRUNCATE truncate_a;
+ROLLBACK;
+SELECT * FROM truncate_a;
+ col1 
+------
+    1
+    2
+(2 rows)
+
+-- Commit the truncate this time
+BEGIN;
+TRUNCATE truncate_a;
+COMMIT;
 SELECT * FROM truncate_a;
  col1 
 ------
