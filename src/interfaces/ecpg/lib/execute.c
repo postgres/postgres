@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.26 2001/10/01 12:02:28 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.27 2001/10/02 14:08:28 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1040,23 +1040,26 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 	va_list		args;
 	struct statement *stmt;
 	struct connection *con = get_connection(connection_name);
-	bool		status = true;
-	char	   	*locale;
+	bool		status;
+	char	   	*oldlocale;
 
 	/* Make sure we do NOT honor the locale for numeric input/output */
 	/* since the database wants the standard decimal point */
-	locale = setlocale(LC_NUMERIC, "C");
+	oldlocale = strdup(setlocale(LC_NUMERIC, NULL));
+	setlocale(LC_NUMERIC, "C");
 
 	if (!ecpg_init(con, connection_name, lineno))
 	{
-		setlocale(LC_NUMERIC, locale);
+		setlocale(LC_NUMERIC, oldlocale);
+		free(oldlocale);
 		return (false);
 	}
 
 	va_start(args, query);
 	if (create_statement(lineno, con, &stmt, query, args) == false)
 	{
-		setlocale(LC_NUMERIC, locale);
+		setlocale(LC_NUMERIC, oldlocale);
+		free(oldlocale);
 		return (false);
 	}
 	va_end(args);
@@ -1067,7 +1070,8 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 		free_statement(stmt);
 		ECPGlog("ECPGdo: not connected to %s\n", con->name);
 		ECPGraise(lineno, ECPG_NOT_CONN, NULL);
-		setlocale(LC_NUMERIC, locale);
+		setlocale(LC_NUMERIC, oldlocale);
+		free(oldlocale);
 		return false;
 	}
 
@@ -1075,7 +1079,9 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 	free_statement(stmt);
 
 	/* and reset locale value so our application is not affected */
-	setlocale(LC_NUMERIC, locale);
+	setlocale(LC_NUMERIC, oldlocale);
+	free(oldlocale);
+
 	return (status);
 }
 

@@ -1107,5 +1107,10 @@ Mon Okt  1 13:49:40 CEST 2001
 	- Fixed truncate bug.
 	- Added patch by Christof Petig <christof.petig@wtal.de> to clean up
 	  ecpglib.
+
+TUe Okt  2 16:09:26 CEST 2001
+
+	- Re-added Tom's patch fixing my setlocale patch. I accidently
+	  deleted it.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.
