@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.33 2000/03/26 18:32:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.34 2000/03/31 03:20:17 thomas Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-SET <replaceable class="PARAMETER">variable</replaceable> { TO | = } { '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
+SET <replaceable class="PARAMETER">variable</replaceable> { TO | = } { <replaceable class="PARAMETER">value</replaceable> | '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
 SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL | DEFAULT }
 SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
   </synopsis>
@@ -51,7 +51,9 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
       <listitem>
        <para>
 	New value of parameter.  <option>DEFAULT</option> can be
-	used to specify resetting the parameter to its default value.
+	used to specify resetting the parameter to its default
+	value. Lists of strings are allowed, but more complex
+	constructs may need to be single or double quoted.
        </para>
       </listitem>
      </varlistentry>
@@ -125,7 +127,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	  <term>European</term>
 	  <listitem>
 	   <para>
-	    use dd/mm/yyyy for numeric date representations.
+	    use <literal>dd/mm/yyyy</literal> for numeric date representations.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -133,7 +135,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	  <term>NonEuropean</term>
 	  <listitem>
 	   <para>
-	    use mm/dd/yyyy for numeric date representations.
+	    use <literal>mm/dd/yyyy</literal> for numeric date representations.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -141,7 +143,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	  <term>German</term>
 	  <listitem>
 	   <para>
-	    use dd.mm.yyyy for numeric date representations.
+	    use <literal>dd.mm.yyyy</literal> for numeric date representations.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -149,7 +151,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	  <term>US</term>
 	  <listitem>
 	   <para>
-	    same as 'NonEuropean'
+	    same as <literal>NonEuropean</literal>
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -157,7 +159,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	  <term>DEFAULT</term>
 	  <listitem>
 	   <para>
-	    restores the default values ('US,Postgres')
+	    restores the default values (<literal>US,Postgres</literal>)
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -237,7 +239,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 				
 	<variablelist>
 	 <varlistentry>
-	  <term>'PST8PDT'</term>
+	  <term>PST8PDT</term>
 	  <listitem>
 	   <para>
 	    set the timezone for California
@@ -245,7 +247,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	  </listitem>
 	 </varlistentry>
 	 <varlistentry>
-	  <term>'Portugal'</term>
+	  <term>Portugal</term>
 	  <listitem>
 	   <para>
 	    set time zone for Portugal.
@@ -755,7 +757,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE }
 	  <term>DEFAULT</term>
 	  <listitem>
 	   <para>
-	    Equivalent to specifying <command>SET KSQO='OFF'</command>.
+	    Equivalent to specifying <command>SET KSQO=OFF</command>.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -885,13 +887,14 @@ WARN:  Bad value for <replaceable class="parameter">variable</replaceable> (<rep
    Usage
   </title>
   <para>
-   Set the style of date to ISO:
-   
+   Set the style of date to ISO (no quotes on the argument is required):
+
    <programlisting>
-SET DATESTYLE TO 'ISO';
+SET DATESTYLE TO ISO;
    </programlisting>
 
-   Enable GEQO for queries with 4 or more tables:
+   Enable GEQO for queries with 4 or more tables (note the use of
+   single quotes to handle the equal sign inside the value argument):
 
    <programlisting> 
 SET GEQO = 'ON=4';
@@ -903,10 +906,12 @@ SET GEQO = 'ON=4';
 SET GEQO = DEFAULT;
    </programlisting>
 
-   Set the timezone for Berkeley, California:
+   Set the timezone for Berkeley, California, using double quotes to
+   preserve the uppercase
+   attributes of the time zone specifier:
 
 <programlisting> 
-SET TIME ZONE 'PST8PDT';
+SET TIME ZONE "PST8PDT";
 SELECT CURRENT_TIMESTAMP AS today;
    
          today
@@ -914,7 +919,8 @@ SELECT CURRENT_TIMESTAMP AS today;
  1998-03-31 07:41:21-08
 </programlisting>
 
-Set the timezone for Italy:
+   Set the timezone for Italy (note the required single or double quotes to handle 
+   the special characters):
 
 <programlisting> 
 SET TIME ZONE 'Europe/Rome';
@@ -959,7 +965,7 @@ SET TIME ZONE { interval_value_expression | LOCAL }
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -969,7 +975,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"../reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->
