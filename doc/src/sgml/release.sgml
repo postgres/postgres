@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.293 2004/08/30 00:33:52 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.294 2004/08/30 00:47:31 tgl Exp $
 -->
 
 <appendix id="release">
@@ -367,7 +367,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.293 2004/08/30 00:33:52 tgl Exp
       that contains OIDs, the <literal>WITH OIDS</literal> clause must
       be specified or the <varname>default_with_oids</varname>
       configuration parameter must be enabled. Users are encouraged to
-      explicitely specify <literal>WITH OIDS</literal> if their tables
+      explicitly specify <literal>WITH OIDS</literal> if their tables
       require OIDs for compatibility with future releases of
       <productname>PostgreSQL</productname>.
      </para>
@@ -1827,6 +1827,12 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.293 2004/08/30 00:33:52 tgl Exp
     <listitem>
      <para>
       Major documentation improvements (Neil, Peter)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Remove contrib/rserv: obsoleted by various separate projects
      </para>
     </listitem>
 
