@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: network.c,v 1.7 1999/03/22 05:00:57 momjian Exp $
+ *	$Id: network.c,v 1.8 1999/04/15 02:20:50 thomas Exp $
  *	Jon Postel RIP 16 Oct 1998
  */
 
@@ -221,7 +221,7 @@ bool
 network_sub(inet *a1, inet *a2)
 {
 	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return NULL;
+		return FALSE;
 		
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
@@ -241,7 +241,7 @@ bool
 network_subeq(inet *a1, inet *a2)
 {
 	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return NULL;
+		return FALSE;
 
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
@@ -261,7 +261,7 @@ bool
 network_sup(inet *a1, inet *a2)
 {
 	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return NULL;
+		return FALSE;
 
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
@@ -281,7 +281,7 @@ bool
 network_supeq(inet *a1, inet *a2)
 {
 	if (!PointerIsValid(a1) || !PointerIsValid(a2))
-		return NULL;
+		return FALSE;
 
 	if ((ip_family(a1) == AF_INET) && (ip_family(a2) == AF_INET))
 	{
