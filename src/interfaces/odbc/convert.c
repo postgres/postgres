@@ -1001,10 +1001,8 @@ copy_statement_with_parameters(StatementClass *stmt)
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	BOOL search_from_pos = FALSE;
 #endif /* DRIVER_CURSOR_IMPLEMENT */
-#ifdef	PREPARE_TRIAL
-	prepare_dummy_cursor = stmt->pre_executing;
-#endif /* PREPARE_TRIAL */
-
+	if (ci->disallow_premature)
+		prepare_dummy_cursor = stmt->pre_executing;
 
 	if (!old_statement)
 	{
@@ -1704,7 +1702,6 @@ copy_statement_with_parameters(StatementClass *stmt)
 	if (search_from_pos)
 		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 #endif /* DRIVER_CURSOR_IMPLEMENT */
-#ifdef	PREPARE_TRIAL
 	if (prepare_dummy_cursor && SC_is_pre_executable(stmt))
 	{
 		char fetchstr[128];	
@@ -1715,7 +1712,6 @@ copy_statement_with_parameters(StatementClass *stmt)
 		CVT_APPEND_STR(fetchstr);
 		stmt->inaccurate_result = TRUE;
 	}
-#endif /* PREPARE_TRIAL */
 
 	return SQL_SUCCESS;
 }

@@ -245,11 +245,13 @@ driver_optionsProc(HWND hdlg,
 			ci = (ConnInfo *) lParam;
 			if (ci && ci->dsn && ci->dsn[0])
 			{
+				SetWindowText(hdlg, "Advanced Options (Common)");
 				driver_optionsDraw(hdlg, NULL, 0, TRUE);
 			}
 			else
 			{
 				CheckDlgButton(hdlg, DRV_OR_DSN, 1);
+				SetWindowText(hdlg, "Advanced Options (Connection)");
 				ShowWindow(GetDlgItem(hdlg, DRV_OR_DSN), SW_HIDE);
 				driver_optionsDraw(hdlg, ci, 1, FALSE);
 			}
@@ -284,10 +286,14 @@ driver_optionsProc(HWND hdlg,
 						if (IsDlgButtonChecked(hdlg, DRV_OR_DSN))
 						{
 							ConnInfo   *ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
+							SetWindowText(hdlg, "Advanced Options (per DSN)");
 							driver_optionsDraw(hdlg, ci, ci ? 1 : 0, ci == NULL);
 						}
 						else
+						{
+							SetWindowText(hdlg, "Advanced Options (Common)");
 							driver_optionsDraw(hdlg, NULL, 0, TRUE);
+						}
 					}
 					break;
 			}
@@ -337,6 +343,7 @@ ds_optionsProc(HWND hdlg,
 			CheckDlgButton(hdlg, DS_FAKEOIDINDEX, atoi(ci->fake_oid_index));
 			CheckDlgButton(hdlg, DS_ROWVERSIONING, atoi(ci->row_versioning));
 			CheckDlgButton(hdlg, DS_SHOWSYSTEMTABLES, atoi(ci->show_system_tables));
+			CheckDlgButton(hdlg, DS_DISALLOWPREMATURE, ci->disallow_premature);
 
 			EnableWindow(GetDlgItem(hdlg, DS_FAKEOIDINDEX), atoi(ci->show_oid_column));
 
@@ -371,6 +378,7 @@ ds_optionsProc(HWND hdlg,
 					sprintf(ci->show_system_tables, "%d", IsDlgButtonChecked(hdlg, DS_SHOWSYSTEMTABLES));
 
 					sprintf(ci->row_versioning, "%d", IsDlgButtonChecked(hdlg, DS_ROWVERSIONING));
+					ci->disallow_premature = IsDlgButtonChecked(hdlg, DS_DISALLOWPREMATURE);
 
 					/* OID Options */
 					sprintf(ci->fake_oid_index, "%d", IsDlgButtonChecked(hdlg, DS_FAKEOIDINDEX));
@@ -620,8 +628,13 @@ copyAttributes(ConnInfo *ci, const char *attribute, const char *value)
 		decode(value, ci->conn_settings);
 		/* strcpy(ci->conn_settings, value); */
 	}
+	else if (stricmp(attribute, INI_DISALLOWPREMATURE) == 0 || stricmp(attribute, "C3") == 0)
+	{
+		ci->disallow_premature = atoi(value);
+		/* strcpy(ci->conn_settings, value); */
+	}
 
-	mylog("copyAttributes: DSN='%s',server='%s',dbase='%s',user='%s',passwd='%s',port='%s',onlyread='%s',protocol='%s', conn_settings='%s')\n", ci->dsn, ci->server, ci->database, ci->username, ci->password, ci->port, ci->onlyread, ci->protocol, ci->conn_settings);
+	mylog("copyAttributes: DSN='%s',server='%s',dbase='%s',user='%s',passwd='%s',port='%s',onlyread='%s',protocol='%s',conn_settings='%s',disallow_premature=%d)\n", ci->dsn, ci->server, ci->database, ci->username, ci->password, ci->port, ci->onlyread, ci->protocol, ci->conn_settings, ci->disallow_premature);
 }
 
 void
@@ -715,7 +728,8 @@ void
 getDSNinfo(ConnInfo *ci, char overwrite)
 {
 	char	   *DSN = ci->dsn;
-	char		encoded_conn_settings[LARGE_REGISTRY_LEN];
+	char		encoded_conn_settings[LARGE_REGISTRY_LEN],
+			temp[SMALL_REGISTRY_LEN];
 
 /*
  *	If a driver keyword was present, then dont use a DSN and return.
@@ -784,8 +798,13 @@ getDSNinfo(ConnInfo *ci, char overwrite)
 	if (ci->translation_option[0] == '\0' || overwrite)
 		SQLGetPrivateProfileString(DSN, INI_TRANSLATIONOPTION, "", ci->translation_option, sizeof(ci->translation_option), ODBC_INI);
 
+	if (ci->disallow_premature == 0 || overwrite)
+	{
+		SQLGetPrivateProfileString(DSN, INI_DISALLOWPREMATURE, "", temp, sizeof(temp), ODBC_INI);
+		ci->disallow_premature = atoi(temp);
+	}
+
 	/* Allow override of odbcinst.ini parameters here */
-	/* getGlobalDefaults(DSN, ODBC_INI, TRUE); */
 	getCommonDefaults(DSN, ODBC_INI, ci);
 
 	qlog("DSN info: DSN='%s',server='%s',port='%s',dbase='%s',user='%s',passwd='%s'\n",
@@ -823,7 +842,8 @@ void
 writeDSNinfo(const ConnInfo *ci)
 {
 	const char   *DSN = ci->dsn;
-	char		encoded_conn_settings[LARGE_REGISTRY_LEN];
+	char		encoded_conn_settings[LARGE_REGISTRY_LEN],
+			temp[SMALL_REGISTRY_LEN];
 
 	encode(ci->conn_settings, encoded_conn_settings);
 
@@ -890,6 +910,12 @@ writeDSNinfo(const ConnInfo *ci)
 	SQLWritePrivateProfileString(DSN,
 								 INI_CONNSETTINGS,
 								 encoded_conn_settings,
+								 ODBC_INI);
+
+	sprintf(temp, "%d", ci->disallow_premature); 
+	SQLWritePrivateProfileString(DSN,
+								 INI_DISALLOWPREMATURE,
+								 temp,
 								 ODBC_INI);
 }
 

@@ -938,7 +938,7 @@ QResultClass *
 CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 {
 	QResultClass *result_in = NULL, *res = NULL, *retres = NULL;
-	char		swallow;
+	char		swallow, *wq;
 	int			id;
 	SocketClass *sock = self->sock;
 	int		maxlen, empty_reqs;
@@ -999,7 +999,9 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 
 	ReadyToReturn = FALSE;
 	empty_reqs = 0;
-	if (strcmp(query, " ") == 0)
+	for (wq = query; isspace(*wq); wq++)
+		;
+	if (*wq == '\0')
 		empty_reqs = 1;
 	while (!ReadyToReturn)
 	{

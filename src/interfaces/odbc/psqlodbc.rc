@@ -149,6 +149,8 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,149,13,72,10
     CONTROL         "Show System &Tables",DS_SHOWSYSTEMTABLES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,45,28,88,10
+    CONTROL         "Disallow &Premature",DS_DISALLOWPREMATURE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,149,28,72,10
     GROUPBOX        "Protocol",IDC_STATIC,43,44,180,25
     CONTROL         "7.X,6.4+",DS_PG64,"Button",BS_AUTORADIOBUTTON | 
                     WS_GROUP,53,54,47,10
@@ -264,6 +266,8 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,130,10,85,10
     CONTROL         "Show System &Tables",DS_SHOWSYSTEMTABLES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,25,25,85,10
+    CONTROL         "Disallow &Premature",DS_DISALLOWPREMATURE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,130,25,85,10
     GROUPBOX        "Protocol",IDC_STATIC,15,40,180,25
     CONTROL         "7.X,6.4+",DS_PG64,"Button",BS_AUTORADIOBUTTON | WS_GROUP,25,
                     50,35,10
@@ -350,8 +354,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 7,1,0,6
- PRODUCTVERSION 7,1,0,6
+ FILEVERSION 7,1,0,7
+ PRODUCTVERSION 7,1,0,7
  FILEFLAGSMASK 0x3L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -373,14 +377,14 @@ BEGIN
             VALUE "CompanyName", "Insight Distribution Systems\0"
 #endif
             VALUE "FileDescription", "PostgreSQL Driver\0"
-            VALUE "FileVersion", " 07.01.0006\0"
+            VALUE "FileVersion", " 07.01.0007\0"
             VALUE "InternalName", "psqlodbc\0"
             VALUE "LegalCopyright", "\0"
             VALUE "LegalTrademarks", "ODBC(TM) is a trademark of Microsoft Corporation.  Microsoft® is a registered trademark of Microsoft Corporation. Windows(TM) is a trademark of Microsoft Corporation.\0"
             VALUE "OriginalFilename", "psqlodbc.dll\0"
             VALUE "PrivateBuild", "\0"
             VALUE "ProductName", "Microsoft Open Database Connectivity\0"
-            VALUE "ProductVersion", " 07.01.0006\0"
+            VALUE "ProductVersion", " 07.01.0007\0"
             VALUE "SpecialBuild", "\0"
         END
     END

@@ -238,6 +238,7 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 	if (conn != NULL)
 	{
 		ConnInfo *ci = &(conn->connInfo);
+		BOOL	fetch_cursor = (ci->drivers.use_declarefetch && cursor && cursor[0]);
 		self->conn = conn;
 
 		mylog("QR_fetch_tuples: cursor = '%s', self->cursor=%u\n", (cursor == NULL) ? "" : cursor, self->cursor);
@@ -245,7 +246,7 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 		if (self->cursor)
 			free(self->cursor);
 
-		if (ci->drivers.use_declarefetch)
+		if (fetch_cursor)
 		{
 			if (!cursor || cursor[0] == '\0')
 			{
@@ -275,7 +276,7 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 
 		mylog("QR_fetch_tuples: past CI_read_fields: num_fields = %d\n", self->num_fields);
 
-		if (ci->drivers.use_declarefetch)
+		if (fetch_cursor)
 			tuple_size = self->cache_size;
 		else
 			tuple_size = TUPLE_MALLOC_INC;
@@ -432,7 +433,7 @@ QR_next_tuple(QResultClass *self)
 		if (!self->inTuples)
 		{
 			ci = &(self->conn->connInfo);
-			if (!ci->drivers.use_declarefetch)
+			if (!self->cursor || !ci->drivers.use_declarefetch)
 			{
 				mylog("next_tuple: ALL_ROWS: done, fcount = %d, fetch_count = %d\n", fcount, fetch_count);
 				self->tupleField = NULL;
@@ -535,7 +536,7 @@ QR_next_tuple(QResultClass *self)
 			case 'B':			/* Tuples in binary format */
 			case 'D':			/* Tuples in ASCII format  */
 
-				if (!ci->drivers.use_declarefetch && self->fcount >= self->count_allocated)
+				if ((!self->cursor || !ci->drivers.use_declarefetch) && self->fcount >= self->count_allocated)
 				{
 					int tuple_size = self->count_allocated;
 

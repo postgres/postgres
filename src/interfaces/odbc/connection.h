@@ -159,6 +159,7 @@ typedef struct
 	char		translation_dll[MEDIUM_REGISTRY_LEN];
 	char		translation_option[SMALL_REGISTRY_LEN];
 	char		focus_password;
+	char		disallow_premature;
 	GLOBAL_VALUES	drivers; /* moved from driver's option */
 } ConnInfo;
 

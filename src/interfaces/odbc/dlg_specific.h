@@ -95,6 +95,7 @@
 #define INI_TRANSLATIONNAME				"TranslationName"
 #define INI_TRANSLATIONDLL				"TranslationDLL"
 #define INI_TRANSLATIONOPTION			"TranslationOption"
+#define INI_DISALLOWPREMATURE			"DisallowPremature"
 
 
 /*	Connection Defaults */

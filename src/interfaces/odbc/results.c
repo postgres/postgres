@@ -73,7 +73,7 @@ PGAPI_RowCount(
 
 			if (res && pcrow)
 			{
-				*pcrow = ci->drivers.use_declarefetch ? -1 : QR_get_num_tuples(res);
+				*pcrow = SC_is_fetchcursor(stmt) ? -1 : QR_get_num_tuples(res);
 				return SQL_SUCCESS;
 			}
 		}
@@ -728,7 +728,7 @@ PGAPI_GetData(
 		}
 	}
 
-	if (stmt->manual_result || !ci->drivers.use_declarefetch)
+	if (stmt->manual_result || !SC_is_fetchcursor(stmt))
 	{
 		/* make sure we're positioned on a valid row */
 		num_rows = QR_get_num_tuples(res);
@@ -929,7 +929,7 @@ PGAPI_ExtendedFetch(
 	}
 	ci = &(SC_get_conn(stmt)->connInfo);
 
-	if (ci->drivers.use_declarefetch && !stmt->manual_result)
+	if (SC_is_fetchcursor(stmt) && !stmt->manual_result)
 	{
 		if (fFetchType != SQL_FETCH_NEXT)
 		{
@@ -1108,7 +1108,7 @@ PGAPI_ExtendedFetch(
 	 * Handle Declare Fetch style specially because the end is not really
 	 * the end...
 	 */
-	if (ci->drivers.use_declarefetch && !stmt->manual_result)
+	if (SC_is_fetchcursor(stmt) && !stmt->manual_result)
 	{
 		if (QR_end_tuples(res))
 			return SQL_NO_DATA_FOUND;
@@ -1190,7 +1190,7 @@ PGAPI_ExtendedFetch(
 	stmt->currTuple = stmt->rowset_start;
 
 	/* For declare/fetch, need to reset cursor to beginning of rowset */
-	if (ci->drivers.use_declarefetch && !stmt->manual_result)
+	if (SC_is_fetchcursor(stmt) && !stmt->manual_result)
 		QR_set_position(res, 0);
 
 	/* Set the number of rows retrieved */

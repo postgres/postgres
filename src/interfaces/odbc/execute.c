@@ -340,8 +340,12 @@ PGAPI_Execute(
 		return retval;
 
 	mylog("   stmt_with_params = '%s'\n", stmt->stmt_with_params);
-#ifdef PREPARE_TRIAL
-	if (stmt->inaccurate_result)
+	/*
+	 *	Get the field info for the prepared
+	 *	query using dummy backward fetch.
+	 */
+	if (stmt->inaccurate_result && conn->connInfo.disallow_premature)
+	{
 		if (SC_is_pre_executable(stmt))
 		{
 			BOOL	in_trans = CC_is_in_trans(conn);
@@ -365,7 +369,8 @@ PGAPI_Execute(
 		}
 		else
 			return SQL_SUCCESS;
-#endif	/* PREPARE_TRIAL */
+	}
+
 	return SC_execute(stmt);
 }
 

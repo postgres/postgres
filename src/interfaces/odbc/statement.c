@@ -728,7 +728,7 @@ SC_fetch(StatementClass *self)
 
 	mylog("manual_result = %d, use_declarefetch = %d\n", self->manual_result, ci->drivers.use_declarefetch);
 
-	if (self->manual_result || !ci->drivers.use_declarefetch)
+	if (self->manual_result || !SC_is_fetchcursor(self))
 	{
 		if (self->currTuple >= QR_get_num_tuples(res) - 1 ||
 			(self->options.maxRows > 0 && self->currTuple == self->options.maxRows - 1))
@@ -818,7 +818,7 @@ SC_fetch(StatementClass *self)
 				value = QR_get_value_manual(res, self->currTuple, lf);
 				mylog("manual_result\n");
 			}
-			else if (ci->drivers.use_declarefetch)
+			else if (SC_is_fetchcursor(self))
 				value = QR_get_value_backend(res, lf);
 			else
 				value = QR_get_value_backend_row(res, self->currTuple, lf);
@@ -914,7 +914,7 @@ SC_execute(StatementClass *self)
 	 * OTHER.
 	 */
 	if (!self->internal && !CC_is_in_trans(conn) &&
-	    ((ci->drivers.use_declarefetch && self->statement_type == STMT_TYPE_SELECT) ||
+	    (SC_is_fetchcursor(self) ||
 	     (!CC_is_in_autocommit(conn) && self->statement_type != STMT_TYPE_OTHER)))
 	{
 		mylog("   about to begin a transaction on statement = %u\n", self);
@@ -964,7 +964,7 @@ SC_execute(StatementClass *self)
 		/* send the declare/select */
 		self->result = CC_send_query(conn, self->stmt_with_params, NULL);
 
-		if (ci->drivers.use_declarefetch && self->result != NULL &&
+		if (SC_is_fetchcursor(self) && self->result != NULL &&
 			QR_command_successful(self->result))
 		{
 			QR_Destructor(self->result);
