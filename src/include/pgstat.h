@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.19 2004/03/02 18:35:58 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.20 2004/03/02 18:37:52 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -69,8 +69,7 @@
 
 
 /* ----------
- * The initial size hints for the hash tables used in the
- * collector.
+ * The initial size hints for the hash tables used in the collector.
  * ----------
  */
 #define PGSTAT_DB_HASH_SIZE		16
