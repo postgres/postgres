@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.13 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.13.2.1 2005/01/30 21:32:38 tgl Exp $
 -->
 
 <sect1 id="bug-reporting">
@@ -287,6 +287,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/problems.sgml,v 2.13 2002/01/20 22:19:56 pe
    <ulink url="http://www.postgresql.org/">http://www.postgresql.org/</ulink>.
    Entering a bug report this way causes it to be mailed to the
    <email>pgsql-bugs@postgresql.org</email> mailing list.
+  </para>
+
+  <para>
+   If your bug report has security implications and you'd prefer that it
+   not become immediately visible in public archives, don't send it to
+   <literal>pgsql-bugs</literal>.  Security issues can be
+   reported privately to <email>security@postgresql.org</email>.
   </para>
 
   <para> 
