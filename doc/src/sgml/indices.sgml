@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.47 2003/11/29 19:51:37 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.48 2004/12/23 23:07:38 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -71,7 +71,7 @@ CREATE INDEX test1_id_index ON test1 (id);
   </para>
 
   <para>
-   Once the index is created, no further intervention is required: the
+   Once an index is created, no further intervention is required: the
    system will update the index when the table is modified, and it will
    use the index in queries when it thinks this would be more efficient
    than a sequential table scan.  But you may have to run the
@@ -761,7 +761,7 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
     </para>
 
     <para>
-     It is especially fatal to use proportionally reduced data sets.
+     It is especially fatal to use very small test data sets.
      While selecting 1000 out of 100000 rows could be a candidate for
      an index, selecting 1 out of 100 rows will hardly be, because the
      100 rows will probably fit within a single disk page, and there

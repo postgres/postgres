@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.45 2004/11/15 06:32:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.46 2004/12/23 23:07:38 tgl Exp $
 -->
 
  <chapter id="mvcc">
@@ -206,9 +206,9 @@ $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.45 2004/11/15 06:32:14 neilc Exp $
     </table>
 
    <para>
-    In <productname>PostgreSQL</productname>, you can use all four
-    possible transaction isolation levels.  Internally, there are only
-    two distinct isolation levels, which correspond to the levels Read
+    In <productname>PostgreSQL</productname>, you can request any of the
+    four standard transaction isolation levels.  But internally, there are
+    only two distinct isolation levels, which correspond to the levels Read
     Committed and Serializable.  When you select the level Read
     Uncommitted you really get Read Committed, and when you select
     Repeatable Read you really get Serializable, so the actual
@@ -217,7 +217,7 @@ $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.45 2004/11/15 06:32:14 neilc Exp $
     define which phenomena must not happen, they do not define which
     phenomena must happen.  The reason that <productname>PostgreSQL</>
     only provides two isolation levels is that this is the only
-    sensible way to map the isolation levels to the multiversion
+    sensible way to map the standard isolation levels to the multiversion
     concurrency control architecture.  The behavior of the available
     isolation levels is detailed in the following subsections.
    </para>

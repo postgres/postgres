@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.48 2004/12/01 19:00:27 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.49 2004/12/23 23:07:38 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -78,7 +78,7 @@ $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.48 2004/12/01 19:00:27 tgl Exp 
     estimates are converted into disk-page units using some
     fairly arbitrary fudge factors. If you want to experiment with these
     factors, see the list of run-time configuration parameters in
-    <xref linkend="runtime-config-resource">.)
+    <xref linkend="runtime-config-query-constants">.)
    </para>
 
    <para>
@@ -657,16 +657,6 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     point would be rolled back, so you won't be stuck with partially
     loaded data.
    </para>
-
-   <para>
-    If you are issuing a large sequence of <command>INSERT</command>
-    commands to bulk load some data, also consider using <xref
-    linkend="sql-prepare" endterm="sql-prepare-title"> to create a
-    prepared <command>INSERT</command> statement. Since you are
-    executing the same command multiple times, it is more efficient to
-    prepare the command once and then use <command>EXECUTE</command>
-    as many times as required.
-   </para>
   </sect2>
 
   <sect2 id="populate-copy-from">
@@ -684,11 +674,19 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    </para>
 
    <para>
+    If you cannot use <command>COPY</command>, it may help to use <xref
+    linkend="sql-prepare" endterm="sql-prepare-title"> to create a
+    prepared <command>INSERT</command> statement, and then use
+    <command>EXECUTE</command> as many times as required.  This avoids
+    some of the overhead of repeatedly parsing and planning
+    <command>INSERT</command>.
+   </para>
+
+   <para>
     Note that loading a large number of rows using
     <command>COPY</command> is almost always faster than using
-    <command>INSERT</command>, even if multiple
-    <command>INSERT</command> commands are batched into a single
-    transaction.
+    <command>INSERT</command>, even if <command>PREPARE</> is used and
+    multiple insertions are batched into a single transaction.
    </para>
   </sect2>
 
@@ -719,10 +717,10 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
    <para>
     Temporarily increasing the <xref linkend="guc-maintenance-work-mem">
-    configuration variable when restoring large amounts of data can
+    configuration variable when loading large amounts of data can
     lead to improved performance. This is because when a B-tree index
     is created from scratch, the existing content of the table needs
-    to be sorted. Allowing the external merge sort to use more memory
+    to be sorted. Allowing the merge sort to use more memory
     means that fewer merge passes will be required.  A larger setting for
     <varname>maintenance_work_mem</varname> may also speed up validation
     of foreign-key constraints.
@@ -754,8 +752,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     Whenever you have significantly altered the distribution of data
     within a table, running <xref linkend="sql-analyze"
     endterm="sql-analyze-title"> is strongly recommended. This
-    includes when bulk loading large amounts of data into
-    <productname>PostgreSQL</productname>.  Running
+    includes bulk loading large amounts of data into the table.  Running
     <command>ANALYZE</command> (or <command>VACUUM ANALYZE</command>)
     ensures that the planner has up-to-date statistics about the
     table.  With no statistics or obsolete statistics, the planner may

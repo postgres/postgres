@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.42 2003/12/14 00:10:32 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.43 2004/12/23 23:07:38 tgl Exp $
 -->
 
 <chapter Id="typeconv">
@@ -22,8 +22,7 @@ In many cases a user will not need
 to understand the details of the type conversion mechanism.
 However, the implicit conversions done by <productname>PostgreSQL</productname>
 can affect the results of a query.  When necessary, these results
-can be tailored by a user or programmer
-using <emphasis>explicit</emphasis> type conversion.
+can be tailored by using <emphasis>explicit</emphasis> type conversion.
 </para>
 
 <para>
@@ -43,16 +42,17 @@ has an associated data type which determines its behavior and allowed usage.
 <productname>PostgreSQL</productname> has an extensible type system that is
 much more general and flexible than other <acronym>SQL</acronym> implementations.
 Hence, most type conversion behavior in <productname>PostgreSQL</productname>
-should be governed by general rules rather than by <foreignphrase>ad hoc</> heuristics, to allow
+is governed by general rules rather than by <foreignphrase>ad hoc</>
+heuristics.  This allows
 mixed-type expressions to be meaningful even with user-defined types.
 </para>
 
 <para>
-The <productname>PostgreSQL</productname> scanner/parser decodes lexical
-elements into only five fundamental categories: integers, floating-point numbers, strings,
-names, and key words.  Constants of most non-numeric types are first classified as
-strings. The <acronym>SQL</acronym> language definition allows specifying type
-names with strings, and this mechanism can be used in
+The <productname>PostgreSQL</productname> scanner/parser divides lexical
+elements into only five fundamental categories: integers, non-integer numbers,
+strings, identifiers, and key words.  Constants of most non-numeric types are
+first classified as strings. The <acronym>SQL</acronym> language definition
+allows specifying type names with strings, and this mechanism can be used in
 <productname>PostgreSQL</productname> to start the parser down the correct
 path. For example, the query
 
@@ -79,28 +79,30 @@ parser:
 <variablelist>
 <varlistentry>
 <term>
+Function calls
+</term>
+<listitem>
+<para>
+Much of the <productname>PostgreSQL</productname> type system is built around a
+rich set of functions. Functions can have one or more arguments.
+Since <productname>PostgreSQL</productname> permits function
+overloading, the function name alone does not uniquely identify the function
+to be called; the parser must select the right function based on the data
+types of the supplied arguments.
+</para>
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
 Operators
 </term>
 <listitem>
 <para>
 <productname>PostgreSQL</productname> allows expressions with
 prefix and postfix unary (one-argument) operators,
-as well as binary (two-argument) operators.
-</para>
-</listitem>
-</varlistentry>
-<varlistentry>
-<term>
-Function calls
-</term>
-<listitem>
-<para>
-Much of the <productname>PostgreSQL</productname> type system is built around a
-rich set of functions. Function calls can have one or more arguments.
-Since <productname>PostgreSQL</productname> permits function
-overloading, the function name alone does not uniquely identify the function
-to be called; the parser must select the right function based on the data
-types of the supplied arguments.
+as well as binary (two-argument) operators.  Like functions, operators can
+be overloaded, and so the same problem of selecting the right operator
+exists.
 </para>
 </listitem>
 </varlistentry>
@@ -125,7 +127,7 @@ with, and perhaps converted to, the types of the target columns.
 Since all query results from a unionized <command>SELECT</command> statement
 must appear in a single set of columns, the types of the results of each
 <command>SELECT</> clause must be matched up and converted to a uniform set.
-Similarly, the branch expressions of a <literal>CASE</> construct must be
+Similarly, the result expressions of a <literal>CASE</> construct must be
 converted to a common type so that the <literal>CASE</> expression as a whole
 has a known output type.  The same holds for <literal>ARRAY</> constructs.
 </para>
@@ -728,12 +730,16 @@ type.
 
 <step performance="required">
 <para>
-If the target is a fixed-length type (e.g., <type>char</type> or <type>varchar</type>
-declared with a length) then try to find a sizing function for the target
-type.  A sizing function is a function of the same name as the type,
-taking two arguments of which the first is that type and the second is of type
-<type>integer</type>, and returning the same type.  If one is found, it is applied,
-passing the column's declared length as the second parameter.
+Check to see if there is a sizing cast for the target type.  A sizing
+cast is a cast from that type to itself.  If one is found in the
+<structname>pg_cast</> catalog, apply it to the expression before storing
+into the destination column.  The implementation function for such a cast
+always takes an extra parameter of type <type>integer</type>, which receives
+the destination column's declared length (actually, its
+<structfield>atttypmod</> value; the interpretation of
+<structfield>atttypmod</> varies for different datatypes).  The cast function
+is responsible for applying any length-dependent semantics such as size
+checking or truncation.
 </para>
 </step>
 
