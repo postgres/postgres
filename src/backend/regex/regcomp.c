@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.41 2004/05/07 00:24:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.42 2004/11/24 22:56:54 tgl Exp $
  *
  */
 
@@ -589,8 +589,13 @@ makesearch(struct vars * v,
 				break;
 		if (b != NULL)
 		{						/* must be split */
-			s->tmp = slist;
-			slist = s;
+			if (s->tmp == NULL)
+			{					/* if not already in the list */
+								/* (fixes bugs 505048, 230589, */
+								/* 840258, 504785) */
+				s->tmp = slist;
+				slist = s;
+			}
 		}
 	}
 
@@ -2226,12 +2231,12 @@ stid(struct subre * t,
 	 size_t bufsize)
 {
 	/* big enough for hex int or decimal t->retry? */
-	if (bufsize < sizeof(int) * 2 + 3 || bufsize < sizeof(t->retry) * 3 + 1)
+	if (bufsize < sizeof(void *) * 2 + 3 || bufsize < sizeof(t->retry) * 3 + 1)
 		return "unable";
 	if (t->retry != 0)
 		sprintf(buf, "%d", t->retry);
 	else
-		sprintf(buf, "0x%x", (int) t);	/* may lose bits, that's okay */
+		sprintf(buf, "%p", t);
 	return buf;
 }
 #endif   /* REG_DEBUG */
