@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amop.h,v 1.1.1.1 1996/07/09 06:21:16 scrappy Exp $
+ * $Id: pg_amop.h,v 1.2 1996/07/20 08:19:11 scrappy Exp $
  *
  * NOTES
  *   the genbki.sh script reads this file and generates .bki
@@ -541,6 +541,16 @@ DATA(insert OID = 0 (  405 1076 1054 1 hashsel hashnpage ));
  *  hash table varchar_ops
  */
 DATA(insert OID = 0 (  405 1077 1062 1 hashsel hashnpage ));
+
+/*
+ *  hash table date_ops
+ */
+DATA(insert OID = 0 (  405 1114 1093 1 hashsel hashnpage ));
+
+/*
+ *  hash table time_ops
+ */
+DATA(insert OID = 0 (  405 1115 1108 1 hashsel hashnpage ));
 
 
 #endif /* PG_AMOP_H */

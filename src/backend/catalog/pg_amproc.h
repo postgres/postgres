@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.1.1.1 1996/07/09 06:21:16 scrappy Exp $
+ * $Id: pg_amproc.h,v 1.2 1996/07/20 08:19:13 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -130,5 +130,7 @@ DATA(insert OID = 0 (405 430 499 1));
 DATA(insert OID = 0 (405 431 456 1));
 DATA(insert OID = 0 (405 1076 1080 1));
 DATA(insert OID = 0 (405 1077 1081 1));
+DATA(insert OID = 0 (405 1114 450 1));
+DATA(insert OID = 0 (405 1115 694 1));
 
 #endif /* PG_AMPROC_H */
