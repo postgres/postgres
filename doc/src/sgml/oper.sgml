@@ -60,7 +60,7 @@ select * from emp where int4lt(salary, 40000);
     Operators have a precedence which is currently hardcoded into the parser.
     Most operators have the same precedence and are left-associative. This may lead
     to non-intuitive behavior; for example the boolean operators "&lt;" and "&gt;"
-    have a different precedence that the boolean operators "&lt;=" and "&gt;=".
+    have a different precedence than the boolean operators "&lt;=" and "&gt;=".
 
 <table tocentry="1">
 <title>
@@ -178,7 +178,7 @@ start of interval
 left
 </entry>
 <entry>
-multiplication, division
+multiplication, division, modulo
 </entry>
 </row>
 <row>
@@ -250,6 +250,16 @@ BETWEEN
 </entry>
 <entry>
 containment
+</entry>
+</row>
+<row>
+<entry>
+OVERLAPS
+</entry>
+<entry>
+</entry>
+<entry>
+time interval overlap
 </entry>
 </row>
 <row>
@@ -509,6 +519,17 @@ logical union
      </TGROUP>
     </TABLE>
    </Para>
+
+   <para>
+    <note>
+     <para>
+      The operators ":" and ";" are deprecated, and will be removed in
+      the near future.  Use the equivalent functions exp() and ln()
+      instead.
+     </para>
+    </note>
+   </para>
+
   </sect1>
 
   <sect1>
