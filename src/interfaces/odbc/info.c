@@ -984,7 +984,6 @@ RETCODE result;
 char *tableType;
 char tables_query[MAX_STATEMENT_LEN];
 char table_name[MAX_INFO_STRING], table_owner[MAX_INFO_STRING], relhasrules[MAX_INFO_STRING];
-// SDWORD table_name_len, table_owner_len, relhasrules_len;
 ConnInfo *ci;
 char *prefix[32], prefixes[MEDIUM_REGISTRY_LEN];
 char *table_type[32], table_types[MAX_INFO_STRING];
@@ -1092,7 +1091,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 	}
 
     result = SQLBindCol(htbl_stmt, 1, SQL_C_CHAR,
-                        table_name, MAX_INFO_STRING, NULL /* &table_name_len */);
+                        table_name, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
@@ -1101,7 +1100,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(htbl_stmt, 2, SQL_C_CHAR,
-                        table_owner, MAX_INFO_STRING, NULL /* &table_owner_len */);
+                        table_owner, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
@@ -1109,7 +1108,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
         return SQL_ERROR;
     }
     result = SQLBindCol(htbl_stmt, 3, SQL_C_CHAR,
-                        relhasrules, MAX_INFO_STRING, NULL /* &relhasrules_len */);
+                        relhasrules, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
@@ -1239,11 +1238,7 @@ RETCODE result;
 char table_owner[MAX_INFO_STRING], table_name[MAX_INFO_STRING], field_name[MAX_INFO_STRING], field_type_name[MAX_INFO_STRING];
 Int2 field_number, field_length, mod_length;
 Int4 field_type;
-char not_null[2];
-/* SDWORD table_owner_len, table_name_len, field_name_len,
-    field_type_len, field_type_name_len, field_number_len,
-	field_length_len, mod_length_len, not_null_len;
-*/
+char not_null[MAX_INFO_STRING];
 ConnInfo *ci;
 
 
@@ -1292,7 +1287,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 1, SQL_C_CHAR,
-                        table_owner, MAX_INFO_STRING, NULL /* &table_owner_len */);
+                        table_owner, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1301,7 +1296,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 2, SQL_C_CHAR,
-                        table_name, MAX_INFO_STRING, NULL /* &table_name_len */);
+                        table_name, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1310,7 +1305,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 3, SQL_C_CHAR,
-                        field_name, MAX_INFO_STRING, NULL /* &field_name_len */);
+                        field_name, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1319,7 +1314,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 4, SQL_C_DEFAULT,
-                        &field_type, 4, NULL /* &field_type_len */);
+                        &field_type, 4, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1328,7 +1323,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 5, SQL_C_CHAR,
-                        field_type_name, MAX_INFO_STRING, NULL /* &field_type_name_len */);
+                        field_type_name, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1337,7 +1332,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 6, SQL_C_DEFAULT,
-                        &field_number, MAX_INFO_STRING, NULL /* &field_number_len */);
+                        &field_number, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1346,7 +1341,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 7, SQL_C_DEFAULT,
-                        &field_length, MAX_INFO_STRING, NULL /* &field_length_len */);
+                        &field_length, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1355,7 +1350,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 8, SQL_C_DEFAULT,
-                        &mod_length, MAX_INFO_STRING, NULL /* &mod_length_len */);
+                        &mod_length, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
@@ -1364,7 +1359,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     }
 
     result = SQLBindCol(hcol_stmt, 9, SQL_C_CHAR,
-                        &not_null, MAX_INFO_STRING, NULL /* &not_null_len */);
+                        not_null, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
