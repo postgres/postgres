@@ -7,7 +7,7 @@
  * Copyright 2000-2003 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $Id: guc.h,v 1.32 2003/06/11 18:01:14 momjian Exp $
+ * $Id: guc.h,v 1.33 2003/07/09 06:47:34 momjian Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -48,6 +48,9 @@
  * be set in the connection startup packet, because when it is processed
  * we don't yet know if the user is a superuser.
  *
+ * USERLIMIT options can only be manipulated in certain ways by
+ * non-super users.
+ *
  * USERSET options can be set by anyone any time.
  */
 typedef enum
@@ -57,6 +60,7 @@ typedef enum
 	PGC_SIGHUP,
 	PGC_BACKEND,
 	PGC_SUSET,
+	PGC_USERLIMIT,
 	PGC_USERSET
 } GucContext;
 
@@ -76,11 +80,16 @@ typedef enum
 	PGC_S_ENV_VAR = 1,			/* postmaster environment variable */
 	PGC_S_FILE = 2,				/* postgresql.conf */
 	PGC_S_ARGV = 3,				/* postmaster command line */
-	PGC_S_DATABASE = 4,			/* per-database setting */
-	PGC_S_USER = 5,				/* per-user setting */
-	PGC_S_CLIENT = 6,			/* from client connection request */
-	PGC_S_OVERRIDE = 7,			/* special case to forcibly set default */
-	PGC_S_SESSION = 8			/* SET command */
+	PGC_S_USERSTART=4,			/*
+								 *	Settings below are controlled by users.
+								 *	This is used by PGC_USERLIMT to prevent
+								 *	non-super users from changing certain settings.
+								 */
+	PGC_S_DATABASE = 5,			/* per-database setting */
+	PGC_S_USER = 6,				/* per-user setting */
+	PGC_S_CLIENT = 7,			/* from client connection request */
+	PGC_S_OVERRIDE = 8,			/* special case to forcibly set default */
+	PGC_S_SESSION = 9			/* SET command */
 } GucSource;
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.349 2003/07/04 16:41:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.350 2003/07/09 06:47:34 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1943,7 +1943,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	bool		secure;
 	int			errs = 0;
 	int			debug_flag = 0;
-	GucContext	ctx;
+	GucContext	ctx, debug_context;
 	GucSource	gucsource;
 	char	   *tmp;
 	int			firstchar;
@@ -2018,7 +2018,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	/* all options are allowed until '-p' */
 	secure = true;
-	ctx = PGC_POSTMASTER;
+	ctx = debug_context = PGC_POSTMASTER;
 	gucsource = PGC_S_ARGV;		/* initial switches came from command line */
 
 	while ((flag = getopt(argc, argv, "A:B:c:CD:d:Eef:FiNOPo:p:S:st:v:W:x:-:")) != -1)
@@ -2055,25 +2055,34 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 			case 'd':			/* debug level */
 				{
-					debug_flag = atoi(optarg);
-					/* Set server debugging level. */
-					if (atoi(optarg) != 0)
+					/*
+					 *	Client option can't decrease debug level.
+					 *	We have to do the test here because we group priv and client
+					 *	set GUC calls below, after we know the final debug value.
+					 */					   
+					if (ctx != PGC_BACKEND || atoi(optarg) > debug_flag)
 					{
-						char	   *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
-
-						sprintf(debugstr, "debug%s", optarg);
-						SetConfigOption("log_min_messages", debugstr, ctx, gucsource);
-						pfree(debugstr);
-
+						debug_flag = atoi(optarg);
+						debug_context = ctx;	/* save context for use below */
+						/* Set server debugging level. */
+						if (debug_flag != 0)
+						{
+							char	   *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
+	
+							sprintf(debugstr, "debug%s", optarg);
+							SetConfigOption("log_min_messages", debugstr, ctx, gucsource);
+							pfree(debugstr);
+	
+						}
+						else
+							/*
+							 * -d0 allows user to prevent postmaster debug
+							 * from propagating to backend.  It would be nice
+							 * to set it to the postgresql.conf value here.
+							 */
+							SetConfigOption("log_min_messages", "notice",
+											ctx, gucsource);
 					}
-					else
-						/*
-						 * -d0 allows user to prevent postmaster debug
-						 * from propagating to backend.  It would be nice
-						 * to set it to the postgresql.conf value here.
-						 */
-						SetConfigOption("log_min_messages", "notice",
-										ctx, gucsource);
 				}
 				break;
 
@@ -2323,20 +2332,19 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 
 	/*
-	 * -d is not the same as setting
-	 * log_min_messages because it enables other
-	 * output options.
+	 * -d is not the same as setting log_min_messages because it enables
+	 * other output options.
 	 */
 	if (debug_flag >= 1)
-		SetConfigOption("log_connections", "true", ctx, gucsource);
+		SetConfigOption("log_connections", "true", debug_context, gucsource);
 	if (debug_flag >= 2)
-		SetConfigOption("log_statement", "true", ctx, gucsource);
+		SetConfigOption("log_statement", "true", debug_context, gucsource);
 	if (debug_flag >= 3)
-		SetConfigOption("debug_print_parse", "true", ctx, gucsource);
+		SetConfigOption("debug_print_parse", "true", debug_context, gucsource);
 	if (debug_flag >= 4)
-		SetConfigOption("debug_print_plan", "true", ctx, gucsource);
+		SetConfigOption("debug_print_plan", "true", debug_context, gucsource);
 	if (debug_flag >= 5)
-		SetConfigOption("debug_print_rewritten", "true", ctx, gucsource);
+		SetConfigOption("debug_print_rewritten", "true", debug_context, gucsource);
 
 	/*
 	 * Process any additional GUC variable settings passed in startup packet.
@@ -2548,7 +2556,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.349 $ $Date: 2003/07/04 16:41:21 $\n");
+		puts("$Revision: 1.350 $ $Date: 2003/07/09 06:47:34 $\n");
 	}
 
 	/*

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.190 2003/07/04 16:41:21 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.191 2003/07/09 06:47:34 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1541,6 +1541,7 @@ SET ENABLE_SEQSCAN TO OFF;
         to the log.  The default is <literal>NOTICE</>.  Note that
         <literal>LOG</> has a different rank here than in
         <literal>CLIENT_MIN_MESSAGES</>.
+        Only superusers can increase this option.
        </para>
       </listitem>
      </varlistentry>
@@ -1576,6 +1577,7 @@ SET ENABLE_SEQSCAN TO OFF;
         SQL statements causing errors, fatal errors, or panics will be
         logged. Enabling this option can be helpful in tracking down
         the source of any errors that appear in the server log.
+        Only superusers can increase this option.
        </para>
       </listitem>
      </varlistentry>
@@ -1593,6 +1595,8 @@ SET ENABLE_SEQSCAN TO OFF;
          than 250ms will be logged.  Enabling this
          option can be useful in tracking down unoptimized queries in
          your applications.
+         Only superusers can increase this option if it is set to
+         non-zero by the administrator.
         </para>
        </listitem>
       </varlistentry>
@@ -1743,6 +1747,8 @@ SET ENABLE_SEQSCAN TO OFF;
         To use this option, enable <varname>LOG_STATEMENT</> and
         <varname>LOG_PID</> so you can link the statement to the
         duration using the process ID.
+        Only superusers can turn off this option if it is enabled by
+        the administrator.
        </para>
       </listitem>
      </varlistentry>
@@ -1765,6 +1771,8 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Causes each SQL statement to be logged.
+        Only superusers can turn off this option if it is enabled by
+        the administrator.
        </para>
       </listitem>
      </varlistentry>
@@ -1826,6 +1834,8 @@ SET ENABLE_SEQSCAN TO OFF;
         For each query, write performance statistics of the respective
         module to the server log. This is a crude profiling
         instrument.
+        Only superusers can turn off this option if it is enabled by
+        the administrator.
        </para>
       </listitem>
      </varlistentry>

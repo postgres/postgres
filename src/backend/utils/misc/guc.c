@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.134 2003/07/04 16:41:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.135 2003/07/09 06:47:34 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -449,7 +449,7 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 	},
 	{
-		{"log_statement", PGC_SUSET, LOGGING_WHAT,
+		{"log_statement", PGC_USERLIMIT, LOGGING_WHAT,
 			gettext_noop("Causes each SQL statement to be logged"),
 			NULL
 		},
@@ -457,7 +457,7 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 	},
 	{
-		{"log_duration", PGC_SUSET, LOGGING_WHAT,
+		{"log_duration", PGC_USERLIMIT, LOGGING_WHAT,
 			gettext_noop("Duration of every completed statement is logged"),
 			NULL
 		},
@@ -497,7 +497,7 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 	},
 	{
-		{"log_parser_stats", PGC_SUSET, STATS_MONITORING,
+		{"log_parser_stats", PGC_USERLIMIT, STATS_MONITORING,
 			gettext_noop("Write parser performance stats to server log"),
 			NULL
 		},
@@ -505,7 +505,7 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 	},
 	{
-		{"log_planner_stats", PGC_SUSET, STATS_MONITORING,
+		{"log_planner_stats", PGC_USERLIMIT, STATS_MONITORING,
 			gettext_noop("Write planner performance stats to server log"),
 			NULL
 		},
@@ -513,7 +513,7 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 	},
 	{
-		{"log_executor_stats", PGC_SUSET, STATS_MONITORING,
+		{"log_executor_stats", PGC_USERLIMIT, STATS_MONITORING,
 			gettext_noop("Write executor performance stats to server log"),
 			NULL
 		},
@@ -521,7 +521,7 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 	},
 	{
-		{"log_statement_stats", PGC_SUSET, STATS_MONITORING,
+		{"log_statement_stats", PGC_USERLIMIT, STATS_MONITORING,
 			gettext_noop("Write statement performance stats to server log"),
 			NULL
 		},
@@ -1107,7 +1107,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"log_min_duration_statement", PGC_SUSET, LOGGING_WHEN,
+		{"log_min_duration_statement", PGC_USERLIMIT, LOGGING_WHEN,
 			gettext_noop("Min execution time (msec) above which statements will "
 						 "be logged"),
 			gettext_noop("The default is 0 (turning this feature off).")
@@ -1228,7 +1228,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"log_min_messages", PGC_SUSET, LOGGING_WHEN,
+		{"log_min_messages", PGC_USERLIMIT, LOGGING_WHEN,
 			gettext_noop("Controls which message levels logged"),
 			gettext_noop("Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, "
 						 "INFO, NOTICE, WARNING, ERROR, LOG, FATAL, and PANIC. Each level "
@@ -1248,7 +1248,7 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"log_min_error_statement", PGC_SUSET, LOGGING_WHEN,
+		{"log_min_error_statement", PGC_USERLIMIT, LOGGING_WHEN,
 			gettext_noop("Controls whether the erroneous statement is logged"),
 			gettext_noop("All SQL statements that cause an error of the "
 						 "specified level, or a higher level, are logged")
@@ -1714,6 +1714,9 @@ InitializeGUCOptions(void)
 
 					Assert(conf->reset_val >= conf->min);
 					Assert(conf->reset_val <= conf->max);
+					/* Check to make sure we only have valid PGC_USERLIMITs */
+					Assert(conf->gen.context != PGC_USERLIMIT ||
+						   strcmp(conf->gen.name, "log_min_duration_statement") == 0);
 					if (conf->assign_hook)
 						if (!(*conf->assign_hook) (conf->reset_val, true, false))
 							fprintf(stderr, "Failed to initialize %s to %d\n",
@@ -1728,6 +1731,7 @@ InitializeGUCOptions(void)
 
 					Assert(conf->reset_val >= conf->min);
 					Assert(conf->reset_val <= conf->max);
+					Assert(conf->gen.context != PGC_USERLIMIT);
 					if (conf->assign_hook)
 						if (!(*conf->assign_hook) (conf->reset_val, true, false))
 							fprintf(stderr, "Failed to initialize %s to %g\n",
@@ -1741,6 +1745,11 @@ InitializeGUCOptions(void)
 					struct config_string *conf = (struct config_string *) gconf;
 					char	   *str;
 
+					/* Check to make sure we only have valid PGC_USERLIMITs */
+					Assert(conf->gen.context != PGC_USERLIMIT ||
+						   conf->assign_hook == assign_log_min_messages ||
+						   conf->assign_hook == assign_client_min_messages ||
+						   conf->assign_hook == assign_min_error_statement);
 					*conf->variable = NULL;
 					conf->reset_val = NULL;
 					conf->session_val = NULL;
@@ -1837,7 +1846,9 @@ ResetAllOptions(void)
 		struct config_generic *gconf = guc_variables[i];
 
 		/* Don't reset non-SET-able values */
-		if (gconf->context != PGC_SUSET && gconf->context != PGC_USERSET)
+		if (gconf->context != PGC_SUSET &&
+			gconf->context != PGC_USERLIMIT &&
+			gconf->context != PGC_USERSET)
 			continue;
 		/* Don't reset if special exclusion from RESET ALL */
 		if (gconf->flags & GUC_NO_RESET_ALL)
@@ -2286,6 +2297,7 @@ set_config_option(const char *name, const char *value,
 	int			elevel;
 	bool		interactive;
 	bool		makeDefault;
+	bool		DoIt_orig;
 
 	if (context == PGC_SIGHUP || source == PGC_S_DEFAULT)
 		elevel = DEBUG2;
@@ -2371,6 +2383,7 @@ set_config_option(const char *name, const char *value,
 				return false;
 			}
 			break;
+		case PGC_USERLIMIT:	/* USERLIMIT permissions checked below */
 		case PGC_USERSET:
 			/* always okay */
 			break;
@@ -2393,6 +2406,7 @@ set_config_option(const char *name, const char *value,
 	 * to set the reset/session values even if we can't set the variable
 	 * itself.
 	 */
+	DoIt_orig = DoIt;	/* we might have to reverse this later */
 	if (record->source > source)
 	{
 		if (DoIt && !makeDefault)
@@ -2422,6 +2436,24 @@ set_config_option(const char *name, const char *value,
 							 name);
 						return false;
 					}
+					/* Limit non-super user changes */
+					if (record->context == PGC_USERLIMIT &&
+						source > PGC_S_USERSTART &&
+						newval < conf->session_val &&
+						!superuser())
+					{
+						elog(elevel, "'%s': permission denied\n"
+								"Only super-users can set this value to false.",
+								name);
+						return false;
+					}
+					/* Allow admin to override non-super user setting */
+					if (record->context == PGC_USERLIMIT &&
+						source < PGC_S_USERSTART &&
+						record->session_source > PGC_S_USERSTART &&
+						newval > conf->session_val &&
+						!superuser())
+							DoIt = DoIt_orig;
 				}
 				else
 				{
@@ -2493,6 +2525,25 @@ set_config_option(const char *name, const char *value,
 							 name, newval, conf->min, conf->max);
 						return false;
 					}
+					/* Limit non-super user changes */
+					if (record->context == PGC_USERLIMIT &&
+						source > PGC_S_USERSTART &&
+						conf->session_val != 0 &&
+						newval > conf->session_val &&
+						!superuser())
+					{
+						elog(elevel, "'%s': permission denied\n"
+								"Only super-users can increase this value.",
+								name);
+						return false;
+					}
+					/* Allow admin to override non-super user setting */
+					if (record->context == PGC_USERLIMIT &&
+						source < PGC_S_USERSTART &&
+						record->session_source > PGC_S_USERSTART &&
+						newval < conf->session_val &&
+						!superuser())
+							DoIt = DoIt_orig;
 				}
 				else
 				{
@@ -2564,6 +2615,24 @@ set_config_option(const char *name, const char *value,
 							 name, newval, conf->min, conf->max);
 						return false;
 					}
+					/* Limit non-super user changes */
+					if (record->context == PGC_USERLIMIT &&
+						source > PGC_S_USERSTART &&
+						newval > conf->session_val &&
+						!superuser())
+					{
+						elog(elevel, "'%s': permission denied\n"
+								"Only super-users can increase this value.",
+								name);
+						return false;
+					}
+					/* Allow admin to override non-super user setting */
+					if (record->context == PGC_USERLIMIT &&
+						source < PGC_S_USERSTART &&
+						record->session_source > PGC_S_USERSTART &&
+						newval < conf->session_val &&
+						!superuser())
+							DoIt = DoIt_orig;
 				}
 				else
 				{
@@ -2628,6 +2697,32 @@ set_config_option(const char *name, const char *value,
 						elog(elevel, "out of memory");
 						return false;
 					}
+
+					if (*conf->variable)
+					{
+						int old_int_value, new_int_value;
+
+						/* Limit non-super user changes */
+						assign_msglvl(&old_int_value, conf->reset_val, true, interactive);
+						assign_msglvl(&new_int_value, newval, true, interactive);
+						if (record->context == PGC_USERLIMIT &&
+							source > PGC_S_USERSTART &&
+							new_int_value > old_int_value &&
+							!superuser())
+						{
+							elog(elevel, "'%s': permission denied\n"
+										"Only super-users can increase this value.",
+										name);
+							return false;
+						}
+						/* Allow admin to override non-super user setting */
+						if (record->context == PGC_USERLIMIT &&
+							source < PGC_S_USERSTART &&
+							record->session_source > PGC_S_USERSTART &&
+							newval < conf->session_val &&
+							!superuser())
+								DoIt = DoIt_orig;
+						}
 				}
 				else if (conf->reset_val)
 				{
