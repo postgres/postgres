@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.36 2004/12/31 22:03:53 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.37 2005/01/14 17:47:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@
 
 #ifndef FRONTEND
 /* We use only 3-parameter elog calls in this file, for simplicity */
+/* NOTE: caller must provide gettext call around str! */
 #define log_error(str, param)	elog(LOG, str, param)
 #else
 #define log_error(str, param)	(fprintf(stderr, str, param), fputc('\n', stderr))
@@ -209,7 +210,7 @@ find_my_exec(const char *argv0, char *retpath)
 		if (validate_exec(retpath) == 0)
 			return resolve_symlinks(retpath);
 
-		log_error("invalid binary \"%s\"", retpath);
+		log_error(gettext("invalid binary \"%s\""), retpath);
 		return -1;
 	}
 
@@ -258,13 +259,14 @@ find_my_exec(const char *argv0, char *retpath)
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
 				case -2:		/* found but disqualified */
-					log_error("could not read binary \"%s\"", retpath);
+					log_error(gettext("could not read binary \"%s\""),
+							  retpath);
 					break;
 			}
 		} while (*endp);
 	}
 
-	log_error("could not find a \"%s\" to execute", argv0);
+	log_error(gettext("could not find a \"%s\" to execute"), argv0);
 	return -1;
 }
 
