@@ -1,7 +1,7 @@
 # PSQL Translated Messages in Russian Language (KOI8-R)
 # Serguei A. Mokhov <stgunya@yahoo.com>, August-September 2001.
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/Attic/ru.po,v 1.2 2001/09/10 14:51:33 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/Attic/ru.po,v 1.3 2001/09/10 19:34:18 petere Exp $
 #
 msgid ""
 msgstr ""
@@ -733,7 +733,7 @@ msgstr "Используйте \"\\q\" чтобы выйти из %s.\n"
 
 #: print.c:370
 msgid "(No rows)\n"
-msgstr "(Нет строк)\n "
+msgstr "(Нет строк)\n"
 
 #: print.c:1075
 msgid "(1 row)"
