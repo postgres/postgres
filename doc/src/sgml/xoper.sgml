@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.29 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.30 2003/11/02 12:59:28 petere Exp $
 -->
 
  <sect1 id="xoper">
-  <title>User-defined Operators</title>
+  <title>User-Defined Operators</title>
 
   <indexterm zone="xoper">
    <primary>operator</primary>
