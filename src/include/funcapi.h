@@ -66,10 +66,10 @@ typedef struct
 typedef struct
 {
 	/* Number of times we've been called before */
-	uint			call_cntr;
+	uint32			call_cntr;
 
 	/* Maximum number of calls */
-	uint			max_calls;
+	uint32			max_calls;
 
 	/* pointer to result slot */
 	TupleTableSlot *slot;

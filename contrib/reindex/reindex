@@ -1,6 +1,6 @@
 #!/bin/sh
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
-# Package : reindexdb                 Version : $Revision: 1.1 $
+# Package : reindexdb                 Version : $Revision: 1.2 $
 # Date    : 05/08/2002                Author  : Shaun Thomas
 # Req     : psql, sh, perl, sed         Type  : Utility
 #
@@ -10,7 +10,7 @@
 # Function Definitions
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
 
-function usage()
+usage()
 {
   echo "$CMDNAME reindexes a PostgreSQL database."
   echo

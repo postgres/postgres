@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.14 2002/06/13 05:15:22 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.15 2002/06/22 04:08:07 momjian Exp $
 -->
 
 <chapter id="maintenance">
@@ -364,6 +364,25 @@ VACUUM
    </para>
 
   </sect2>
+ </sect1>
+
+
+ <sect1 id="routine-reindex">
+  <title>Routine Reindexing</title>
+
+  <indexterm zone="routine-reindex">
+   <primary>reindex</primary>
+  </indexterm>
+
+  <para>
+   <productname>PostgreSQL</productname> is unable to reuse index pages
+   in some cases. The problem is that if indexed rows are deleted, those
+   indexes pages can only be reused by rows with similar values. In
+   cases where low indexed rows are deleted and newly inserted rows have
+   high values, disk space used by the index will grow indefinately, even
+   if <command>VACUUM</> is run frequently.
+   TO BE COMPLETED 2002-06-22 bjm
+  </para>
  </sect1>
 
 
