@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.10.2.1 2003/11/04 05:43:33 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.10.2.2 2004/04/22 08:34:13 petere Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -4128,7 +4128,7 @@ ORDER BY c.ordinal_position;
       <entry><literal>table_catalog</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
-       Name of the database that contains the table the table that is
+       Name of the database that contains the table that is
        used by the view (always the current database)
       </entry>
      </row>
