@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Feb 21 15:14:52 EST 2002
+   Last updated: Thu Feb 21 17:19:22 EST 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -251,9 +251,9 @@
    There are two PostgreSQL books available online at
    http://www.PostgreSQL.org/docs/awbook.html and
    http://www.commandprompt.com/ppbook/. There is a list of PostgreSQL
-   books available for purchase at
-   http://www.postgresql.org/books/index.html. There is also a collection
-   of PostgreSQL technical articles at http://techdocs.postgresql.org/.
+   books available for purchase at http://www.postgresql.org/books/.
+   There is also a collection of PostgreSQL technical articles at
+   http://techdocs.postgresql.org/.
    
    psql has some nice \d commands to show information about types,
    operators, functions, aggregates, etc.
