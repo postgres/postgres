@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_depend.c,v 1.8 2003/11/09 21:30:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_depend.c,v 1.9 2003/11/12 21:15:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "catalog/indexing.h"
 #include "catalog/dependency.h"
 #include "catalog/pg_depend.h"
-#include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "utils/fmgroids.h"
 
@@ -139,14 +138,14 @@ deleteDependencyRecordsFor(Oid classId, Oid objectId)
 
 	depRel = heap_openr(DependRelationName, RowExclusiveLock);
 
-	ScanKeyEntryInitialize(&key[0], 0,
-						   Anum_pg_depend_classid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(classId), OIDOID);
-	ScanKeyEntryInitialize(&key[1], 0,
-						   Anum_pg_depend_objid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(objectId), OIDOID);
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(classId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(objectId));
 
 	scan = systable_beginscan(depRel, DependDependerIndex, true,
 							  SnapshotNow, 2, key);
@@ -181,15 +180,15 @@ isObjectPinned(const ObjectAddress *object, Relation rel)
 	HeapTuple	tup;
 	ScanKeyData key[2];
 
-	ScanKeyEntryInitialize(&key[0], 0,
-						   Anum_pg_depend_refclassid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(object->classId), OIDOID);
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->classId));
 
-	ScanKeyEntryInitialize(&key[1], 0,
-						   Anum_pg_depend_refobjid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(object->objectId), OIDOID);
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->objectId));
 
 	scan = systable_beginscan(rel, DependReferenceIndex, true,
 							  SnapshotNow, 2, key);

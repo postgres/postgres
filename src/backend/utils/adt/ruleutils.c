@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.158 2003/11/09 21:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.159 2003/11/12 21:15:55 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -488,10 +488,10 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 	 */
 	tgrel = heap_openr(TriggerRelationName, AccessShareLock);
 
-	ScanKeyEntryInitialize(&skey[0], 0,
-						   ObjectIdAttributeNumber,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(trigid), OIDOID);
+	ScanKeyInit(&skey[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(trigid));
 
 	tgscan = systable_beginscan(tgrel, TriggerOidIndex, true,
 								SnapshotNow, 1, skey);
@@ -886,10 +886,10 @@ pg_get_constraintdef_worker(Oid constraintId, int prettyFlags)
 	 */
 	conDesc = heap_openr(ConstraintRelationName, AccessShareLock);
 
-	ScanKeyEntryInitialize(&skey[0], 0,
-						   ObjectIdAttributeNumber,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(constraintId), OIDOID);
+	ScanKeyInit(&skey[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(constraintId));
 
 	conscan = systable_beginscan(conDesc, ConstraintOidIndex, true,
 								 SnapshotNow, 1, skey);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.18 2003/11/09 21:30:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.19 2003/11/12 21:15:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_largeobject.h"
-#include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -82,10 +81,10 @@ LargeObjectDrop(Oid loid)
 	SysScanDesc sd;
 	HeapTuple	tuple;
 
-	ScanKeyEntryInitialize(&skey[0], 0,
-						   Anum_pg_largeobject_loid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(loid), OIDOID);
+	ScanKeyInit(&skey[0],
+				Anum_pg_largeobject_loid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(loid));
 
 	pg_largeobject = heap_openr(LargeObjectRelationName, RowExclusiveLock);
 
@@ -120,10 +119,10 @@ LargeObjectExists(Oid loid)
 	/*
 	 * See if we can find any tuples belonging to the specified LO
 	 */
-	ScanKeyEntryInitialize(&skey[0], 0,
-						   Anum_pg_largeobject_loid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(loid), OIDOID);
+	ScanKeyInit(&skey[0],
+				Anum_pg_largeobject_loid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(loid));
 
 	pg_largeobject = heap_openr(LargeObjectRelationName, AccessShareLock);
 

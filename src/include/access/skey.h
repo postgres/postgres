@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: skey.h,v 1.23 2003/11/09 21:30:37 tgl Exp $
+ * $Id: skey.h,v 1.24 2003/11/12 21:15:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,8 @@
 
 /*
  * Strategy numbers identify the semantics that particular operators have
- * with respect to particular operator classes.
+ * with respect to particular operator classes.  In some cases a strategy
+ * subtype (an OID) is used as further information.
  */
 typedef uint16 StrategyNumber;
 
@@ -47,23 +48,23 @@ typedef uint16 StrategyNumber;
  * (The data structure can support unary indexable operators too; in that
  * case sk_argument would go unused.  This is not currently implemented.)
  *
- * For an index scan, sk_strategy must be set correctly for the operator.
- * When using a ScanKey in a heap scan, sk_strategy is not used and may be
- * set to InvalidStrategy.
+ * For an index scan, sk_strategy and sk_subtype must be set correctly for
+ * the operator.  When using a ScanKey in a heap scan, these fields are not
+ * used and may be set to InvalidStrategy/InvalidOid.
  *
  * Note: in some places, ScanKeys are used as a convenient representation
  * for the invocation of an access method support procedure.  In this case
- * sk_strategy is not meaningful, and sk_func may refer to a function that
- * returns something other than boolean.
+ * sk_strategy/sk_subtype are not meaningful, and sk_func may refer to a
+ * function that returns something other than boolean.
  */
 typedef struct ScanKeyData
 {
 	int			sk_flags;		/* flags, see below */
 	AttrNumber	sk_attno;		/* table or index column number */
 	StrategyNumber sk_strategy;	/* operator strategy number */
+	Oid			sk_subtype;		/* strategy subtype */
 	FmgrInfo	sk_func;		/* lookup info for function to call */
 	Datum		sk_argument;	/* data to compare */
-	Oid			sk_argtype;		/* datatype of sk_argument */
 } ScanKeyData;
 
 typedef ScanKeyData *ScanKey;
@@ -76,19 +77,24 @@ typedef ScanKeyData *ScanKey;
 /*
  * prototypes for functions in access/common/scankey.c
  */
+extern void ScanKeyInit(ScanKey entry,
+						AttrNumber attributeNumber,
+						StrategyNumber strategy,
+						RegProcedure procedure,
+						Datum argument);
 extern void ScanKeyEntryInitialize(ScanKey entry,
 								   int flags,
 								   AttrNumber attributeNumber,
 								   StrategyNumber strategy,
+								   Oid subtype,
 								   RegProcedure procedure,
-								   Datum argument,
-								   Oid argtype);
+								   Datum argument);
 extern void ScanKeyEntryInitializeWithInfo(ScanKey entry,
 										   int flags,
 										   AttrNumber attributeNumber,
 										   StrategyNumber strategy,
+										   Oid subtype,
 										   FmgrInfo *finfo,
-										   Datum argument,
-										   Oid argtype);
+										   Datum argument);
 
 #endif   /* SKEY_H */

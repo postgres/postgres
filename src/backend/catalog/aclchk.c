@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.92 2003/11/09 21:30:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.93 2003/11/12 21:15:48 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -366,10 +366,10 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 		char		replaces[Natts_pg_database];
 
 		relation = heap_openr(DatabaseRelationName, RowExclusiveLock);
-		ScanKeyEntryInitialize(&entry[0], 0,
-							   Anum_pg_database_datname,
-							   BTEqualStrategyNumber, F_NAMEEQ,
-							   CStringGetDatum(dbname), NAMEOID);
+		ScanKeyInit(&entry[0],
+					Anum_pg_database_datname,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(dbname));
 		scan = heap_beginscan(relation, SnapshotNow, 1, entry);
 		tuple = heap_getnext(scan, ForwardScanDirection);
 		if (!HeapTupleIsValid(tuple))
@@ -1131,10 +1131,10 @@ pg_database_aclcheck(Oid db_oid, AclId userid, AclMode mode)
 	 * There's no syscache for pg_database, so must look the hard way
 	 */
 	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry[0], 0,
-						   ObjectIdAttributeNumber,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(db_oid), OIDOID);
+	ScanKeyInit(&entry[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(db_oid));
 	scan = heap_beginscan(pg_database, SnapshotNow, 1, entry);
 	tuple = heap_getnext(scan, ForwardScanDirection);
 	if (!HeapTupleIsValid(tuple))
@@ -1531,10 +1531,10 @@ pg_database_ownercheck(Oid db_oid, AclId userid)
 
 	/* There's no syscache for pg_database, so must look the hard way */
 	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry[0], 0,
-						   ObjectIdAttributeNumber,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(db_oid), OIDOID);
+	ScanKeyInit(&entry[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(db_oid));
 	scan = heap_beginscan(pg_database, SnapshotNow, 1, entry);
 
 	dbtuple = heap_getnext(scan, ForwardScanDirection);

@@ -16,17 +16,18 @@
  * such an index.
  *
  * Normally opckeytype = InvalidOid (zero), indicating that the data stored
- * in the index is the same as the input data.	If opckeytype is nonzero
- * then it indicates that a conversion step is needed to produce the stored
- * index data, which will be of type opckeytype (which might be the same or
- * different from the input data).	Performing such a conversion is the
- * responsibility of the index access method --- not all AMs support this.
+ * in the index is the same as the data in the indexed column.  If opckeytype
+ * is nonzero then it indicates that a conversion step is needed to produce
+ * the stored index data, which will be of type opckeytype (which might be
+ * the same or different from the input datatype).  Performing such a
+ * conversion is the responsibility of the index access method --- not all
+ * AMs support this.
  *
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.57 2003/08/17 19:58:06 tgl Exp $
+ * $Id: pg_opclass.h,v 1.58 2003/11/12 21:15:57 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -56,9 +57,9 @@ CATALOG(pg_opclass)
 	NameData	opcname;		/* name of this opclass */
 	Oid			opcnamespace;	/* namespace of this opclass */
 	int4		opcowner;		/* opclass owner */
-	Oid			opcintype;		/* type of input data for opclass */
+	Oid			opcintype;		/* type of data indexed by opclass */
 	bool		opcdefault;		/* T if opclass is default for opcintype */
-	Oid			opckeytype;		/* type of index data, or InvalidOid */
+	Oid			opckeytype;		/* type of data in index, or InvalidOid */
 } FormData_pg_opclass;
 
 /* ----------------
@@ -89,7 +90,6 @@ typedef FormData_pg_opclass *Form_pg_opclass;
 DATA(insert OID =  421 (	403		abstime_ops		PGNSP PGUID  702 t 0 ));
 DATA(insert OID =  397 (	403		array_ops		PGNSP PGUID 2277 t 0 ));
 #define ARRAY_BTREE_OPS_OID 397
-DATA(insert OID =  422 (	402		bigbox_ops		PGNSP PGUID  603 f 0 ));
 DATA(insert OID =  423 (	403		bit_ops			PGNSP PGUID 1560 t 0 ));
 DATA(insert OID =  424 (	403		bool_ops		PGNSP PGUID   16 t 0 ));
 DATA(insert OID =  425 (	402		box_ops			PGNSP PGUID  603 t 0 ));

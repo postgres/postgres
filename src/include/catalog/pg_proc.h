@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.314 2003/10/21 16:23:16 tgl Exp $
+ * $Id: pg_proc.h,v 1.315 2003/11/12 21:15:57 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -399,8 +399,6 @@ DESCR("r-tree");
 DATA(insert OID = 194 (  rt_box_inter	   PGNSP PGUID 12 f f t f i 2 2278 "603 603"  rt_box_inter - _null_ ));
 DESCR("r-tree");
 DATA(insert OID = 195 (  rt_box_size	   PGNSP PGUID 12 f f t f i 2 2278 "603 2281"  rt_box_size - _null_ ));
-DESCR("r-tree");
-DATA(insert OID = 196 (  rt_bigbox_size    PGNSP PGUID 12 f f t f i 2 2278 "603 2281"  rt_bigbox_size - _null_ ));
 DESCR("r-tree");
 DATA(insert OID = 197 (  rt_poly_union	   PGNSP PGUID 12 f f t f i 2 604 "604 604"  rt_poly_union - _null_ ));
 DESCR("r-tree");
@@ -3075,6 +3073,15 @@ DATA(insert OID = 2185 ( name_pattern_gt	PGNSP PGUID 12 f f t f i 2 16 "19 19" n
 DATA(insert OID = 2186 ( name_pattern_ne	PGNSP PGUID 12 f f t f i 2 16 "19 19" name_pattern_ne - _null_ ));
 DATA(insert OID = 2187 ( btname_pattern_cmp PGNSP PGUID 12 f f t f i 2 23 "19 19" btname_pattern_cmp - _null_ ));
 
+DATA(insert OID = 2188 ( btint48cmp         PGNSP PGUID 12 f f t f i 2 23 "23 20" btint48cmp - _null_ ));
+DATA(insert OID = 2189 ( btint84cmp         PGNSP PGUID 12 f f t f i 2 23 "20 23" btint84cmp - _null_ ));
+DATA(insert OID = 2190 ( btint24cmp         PGNSP PGUID 12 f f t f i 2 23 "21 23" btint24cmp - _null_ ));
+DATA(insert OID = 2191 ( btint42cmp         PGNSP PGUID 12 f f t f i 2 23 "23 21" btint42cmp - _null_ ));
+DATA(insert OID = 2192 ( btint28cmp         PGNSP PGUID 12 f f t f i 2 23 "21 20" btint28cmp - _null_ ));
+DATA(insert OID = 2193 ( btint82cmp         PGNSP PGUID 12 f f t f i 2 23 "20 21" btint82cmp - _null_ ));
+DATA(insert OID = 2194 ( btfloat48cmp       PGNSP PGUID 12 f f t f i 2 23 "700 701" btfloat48cmp - _null_ ));
+DATA(insert OID = 2195 ( btfloat84cmp       PGNSP PGUID 12 f f t f i 2 23 "701 700" btfloat84cmp - _null_ ));
+
 
 DATA(insert OID = 2212 (  regprocedurein	PGNSP PGUID 12 f f t f s 1 2202 "2275"	regprocedurein - _null_ ));
 DESCR("I/O");
@@ -3155,7 +3162,6 @@ DATA(insert OID = 2272 (  has_schema_privilege		   PGNSP PGUID 12 f f t f s 2 16
 DESCR("current user privilege on schema by schema name");
 DATA(insert OID = 2273 (  has_schema_privilege		   PGNSP PGUID 12 f f t f s 2 16 "26 25"	has_schema_privilege_id - _null_ ));
 DESCR("current user privilege on schema by schema oid");
-
 
 
 DATA(insert OID = 2290 (  record_in			PGNSP PGUID 12 f f t f i 1 2249 "2275"	record_in - _null_ ));

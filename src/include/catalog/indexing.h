@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.79 2003/08/04 02:40:10 momjian Exp $
+ * $Id: indexing.h,v 1.80 2003/11/12 21:15:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,8 @@
  * macros rather than hardwiring the actual index name.
  */
 #define AccessMethodOperatorIndex	"pg_amop_opr_opc_index"
-#define AccessMethodStrategyIndex	"pg_amop_opc_strategy_index"
-#define AccessMethodProcedureIndex	"pg_amproc_opc_procnum_index"
+#define AccessMethodStrategyIndex	"pg_amop_opc_strat_index"
+#define AccessMethodProcedureIndex	"pg_amproc_opc_proc_index"
 #define AggregateFnoidIndex			"pg_aggregate_fnoid_index"
 #define AmNameIndex					"pg_am_name_index"
 #define AmOidIndex					"pg_am_oid_index"
@@ -115,9 +115,9 @@ extern void CatalogUpdateIndexes(Relation heapRel, HeapTuple heapTuple);
 DECLARE_UNIQUE_INDEX(pg_aggregate_fnoid_index on pg_aggregate using btree(aggfnoid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_am_name_index on pg_am using btree(amname name_ops));
 DECLARE_UNIQUE_INDEX(pg_am_oid_index on pg_am using btree(oid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_amop_opc_strat_index on pg_amop using btree(amopclaid oid_ops, amopsubtype oid_ops, amopstrategy int2_ops));
 DECLARE_UNIQUE_INDEX(pg_amop_opr_opc_index on pg_amop using btree(amopopr oid_ops, amopclaid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_amop_opc_strategy_index on pg_amop using btree(amopclaid oid_ops, amopstrategy int2_ops));
-DECLARE_UNIQUE_INDEX(pg_amproc_opc_procnum_index on pg_amproc using btree(amopclaid oid_ops, amprocnum int2_ops));
+DECLARE_UNIQUE_INDEX(pg_amproc_opc_proc_index on pg_amproc using btree(amopclaid oid_ops, amprocsubtype oid_ops, amprocnum int2_ops));
 DECLARE_UNIQUE_INDEX(pg_attrdef_adrelid_adnum_index on pg_attrdef using btree(adrelid oid_ops, adnum int2_ops));
 DECLARE_UNIQUE_INDEX(pg_attrdef_oid_index on pg_attrdef using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_attribute_relid_attnam_index on pg_attribute using btree(attrelid oid_ops, attname name_ops));

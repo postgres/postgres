@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.109 2003/11/09 21:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.110 2003/11/12 21:15:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -967,9 +967,9 @@ CatalogCacheInitializeCache(CatCache *cache)
 		/* Initialize sk_attno suitably for HeapKeyTest() and heap scans */
 		cache->cc_skey[i].sk_attno = cache->cc_key[i];
 
-		/* Fill in sk_strategy and sk_argtype correctly as well */
+		/* Fill in sk_strategy as well --- always standard equality */
 		cache->cc_skey[i].sk_strategy = BTEqualStrategyNumber;
-		cache->cc_skey[i].sk_argtype = keytype;
+		cache->cc_skey[i].sk_subtype = InvalidOid;
 
 		CACHE4_elog(DEBUG2, "CatalogCacheInit %s %d %p",
 					cache->cc_relname,

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.83 2003/11/09 21:30:38 tgl Exp $
+ * $Id: lsyscache.h,v 1.84 2003/11/12 21:15:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,10 +26,11 @@ typedef enum IOFuncSelector
 
 extern bool op_in_opclass(Oid opno, Oid opclass);
 extern void get_op_opclass_properties(Oid opno, Oid opclass,
-									  int *strategy, bool *recheck);
-extern Oid	get_opclass_member(Oid opclass, int16 strategy);
+									  int *strategy, Oid *subtype,
+									  bool *recheck);
+extern Oid	get_opclass_member(Oid opclass, Oid subtype, int16 strategy);
 extern Oid	get_op_hash_function(Oid opno);
-extern Oid	get_opclass_proc(Oid opclass, int16 procnum);
+extern Oid	get_opclass_proc(Oid opclass, Oid subtype, int16 procnum);
 extern char *get_attname(Oid relid, AttrNumber attnum);
 extern char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
 extern AttrNumber get_attnum(Oid relid, const char *attname);

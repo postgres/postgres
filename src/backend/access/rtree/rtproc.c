@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.37 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.38 2003/11/12 21:15:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,20 +80,6 @@ rt_box_size(PG_FUNCTION_ARGS)
 		*size = (float) ((a->high.x - a->low.x) * (a->high.y - a->low.y));
 
 	PG_RETURN_VOID();
-}
-
-/*
- *	rt_bigbox_size() -- Compute a size for big boxes.
- *
- *		In an earlier release of the system, this routine did something
- *		different from rt_box_size.  We now use floats, rather than ints,
- *		as the return type for the size routine, so we no longer need to
- *		have a special return type for big boxes.
- */
-Datum
-rt_bigbox_size(PG_FUNCTION_ARGS)
-{
-	return rt_box_size(fcinfo);
 }
 
 Datum

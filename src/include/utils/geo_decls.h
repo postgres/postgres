@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.41 2003/08/04 02:40:15 momjian Exp $
+ * $Id: geo_decls.h,v 1.42 2003/11/12 21:15:59 tgl Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -399,7 +399,6 @@ extern Datum circle_area(PG_FUNCTION_ARGS);
 extern Datum rt_box_union(PG_FUNCTION_ARGS);
 extern Datum rt_box_inter(PG_FUNCTION_ARGS);
 extern Datum rt_box_size(PG_FUNCTION_ARGS);
-extern Datum rt_bigbox_size(PG_FUNCTION_ARGS);
 extern Datum rt_poly_size(PG_FUNCTION_ARGS);
 extern Datum rt_poly_union(PG_FUNCTION_ARGS);
 extern Datum rt_poly_inter(PG_FUNCTION_ARGS);

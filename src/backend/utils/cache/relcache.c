@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.191 2003/11/09 21:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.192 2003/11/12 21:15:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,7 +262,7 @@ do { \
 /*
  * Special cache for opclass-related information
  *
- * Note: only non-cross-type operators and support procs get cached
+ * Note: only default-subtype operators and support procs get cached
  */
 typedef struct opclasscacheent
 {
@@ -336,26 +336,23 @@ ScanPgRelation(RelationBuildDescInfo buildinfo, bool indexOK)
 	switch (buildinfo.infotype)
 	{
 		case INFO_RELID:
-			ScanKeyEntryInitialize(&key[0], 0,
-								   ObjectIdAttributeNumber,
-								   BTEqualStrategyNumber, F_OIDEQ,
-								   ObjectIdGetDatum(buildinfo.i.info_id),
-								   OIDOID);
+			ScanKeyInit(&key[0],
+						ObjectIdAttributeNumber,
+						BTEqualStrategyNumber, F_OIDEQ,
+						ObjectIdGetDatum(buildinfo.i.info_id));
 			nkeys = 1;
 			indexRelname = ClassOidIndex;
 			break;
 
 		case INFO_RELNAME:
-			ScanKeyEntryInitialize(&key[0], 0,
-								   Anum_pg_class_relname,
-								   BTEqualStrategyNumber, F_NAMEEQ,
-								   NameGetDatum(buildinfo.i.info_name),
-								   NAMEOID);
-			ScanKeyEntryInitialize(&key[1], 0,
-								   Anum_pg_class_relnamespace,
-								   BTEqualStrategyNumber, F_OIDEQ,
-								   ObjectIdGetDatum(PG_CATALOG_NAMESPACE),
-								   OIDOID);
+			ScanKeyInit(&key[0],
+						Anum_pg_class_relname,
+						BTEqualStrategyNumber, F_NAMEEQ,
+						NameGetDatum(buildinfo.i.info_name));
+			ScanKeyInit(&key[1],
+						Anum_pg_class_relnamespace,
+						BTEqualStrategyNumber, F_OIDEQ,
+						ObjectIdGetDatum(PG_CATALOG_NAMESPACE));
 			nkeys = 2;
 			indexRelname = ClassNameNspIndex;
 			break;
@@ -483,15 +480,14 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 	 * (Eliminating system attribute rows at the index level is lots
 	 * faster than fetching them.)
 	 */
-	ScanKeyEntryInitialize(&skey[0], 0,
-						   Anum_pg_attribute_attrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)),
-						   OIDOID);
-	ScanKeyEntryInitialize(&skey[1], 0,
-						   Anum_pg_attribute_attnum,
-						   BTGreaterStrategyNumber, F_INT2GT,
-						   Int16GetDatum(0), INT2OID);
+	ScanKeyInit(&skey[0],
+				Anum_pg_attribute_attrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(relation)));
+	ScanKeyInit(&skey[1],
+				Anum_pg_attribute_attnum,
+				BTGreaterStrategyNumber, F_INT2GT,
+				Int16GetDatum(0));
 
 	/*
 	 * Open pg_attribute and begin a scan.	Force heap scan if we haven't
@@ -673,11 +669,10 @@ RelationBuildRuleLock(Relation relation)
 	/*
 	 * form a scan key
 	 */
-	ScanKeyEntryInitialize(&key, 0,
-						   Anum_pg_rewrite_ev_class,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)),
-						   OIDOID);
+	ScanKeyInit(&key,
+				Anum_pg_rewrite_ev_class,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	/*
 	 * open pg_rewrite and begin a scan
@@ -1058,7 +1053,7 @@ RelationInitIndexAccessInfo(Relation relation)
 
 /*
  * IndexSupportInitialize
- *		Initializes an index's cached lists of operators and support procs,
+ *		Initializes an index's cached opclass information,
  *		given the index's pg_index tuple.
  *
  * Data is returned into *indexOperator and *indexSupport, which are arrays
@@ -1131,11 +1126,9 @@ LookupOpclassInfo(Oid operatorClassOid,
 {
 	OpClassCacheEnt *opcentry;
 	bool		found;
-	Relation	pg_amop_desc;
-	Relation	pg_amproc_desc;
-	SysScanDesc pg_amop_scan;
-	SysScanDesc pg_amproc_scan;
-	ScanKeyData key;
+	Relation	rel;
+	SysScanDesc scan;
+	ScanKeyData skey[2];
 	HeapTuple	htup;
 	bool		indexOK;
 
@@ -1191,7 +1184,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 		opcentry->supportProcs = NULL;
 
 	/*
-	 * To avoid infinite recursion during startup, force a heap scan if
+	 * To avoid infinite recursion during startup, force heap scans if
 	 * we're looking up info for the opclasses used by the indexes we
 	 * would like to reference here.
 	 */
@@ -1200,24 +1193,25 @@ LookupOpclassInfo(Oid operatorClassOid,
 		 operatorClassOid != INT2_BTREE_OPS_OID);
 
 	/*
-	 * Scan pg_amop to obtain operators for the opclass
+	 * Scan pg_amop to obtain operators for the opclass.  We only fetch
+	 * the default ones (those with subtype zero).
 	 */
 	if (numStrats > 0)
 	{
-		ScanKeyEntryInitialize(&key, 0,
-							   Anum_pg_amop_amopclaid,
-							   BTEqualStrategyNumber, F_OIDEQ,
-							   ObjectIdGetDatum(operatorClassOid),
-							   OIDOID);
-		pg_amop_desc = heap_openr(AccessMethodOperatorRelationName,
-								  AccessShareLock);
-		pg_amop_scan = systable_beginscan(pg_amop_desc,
-										  AccessMethodStrategyIndex,
-										  indexOK,
-										  SnapshotNow,
-										  1, &key);
+		ScanKeyInit(&skey[0],
+					Anum_pg_amop_amopclaid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(operatorClassOid));
+		ScanKeyInit(&skey[1],
+					Anum_pg_amop_amopsubtype,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(InvalidOid));
+		rel = heap_openr(AccessMethodOperatorRelationName,
+						 AccessShareLock);
+		scan = systable_beginscan(rel, AccessMethodStrategyIndex, indexOK,
+								  SnapshotNow, 2, skey);
 
-		while (HeapTupleIsValid(htup = systable_getnext(pg_amop_scan)))
+		while (HeapTupleIsValid(htup = systable_getnext(scan)))
 		{
 			Form_pg_amop amopform = (Form_pg_amop) GETSTRUCT(htup);
 
@@ -1229,29 +1223,30 @@ LookupOpclassInfo(Oid operatorClassOid,
 				amopform->amopopr;
 		}
 
-		systable_endscan(pg_amop_scan);
-		heap_close(pg_amop_desc, AccessShareLock);
+		systable_endscan(scan);
+		heap_close(rel, AccessShareLock);
 	}
 
 	/*
-	 * Scan pg_amproc to obtain support procs for the opclass
+	 * Scan pg_amproc to obtain support procs for the opclass.  We only fetch
+	 * the default ones (those with subtype zero).
 	 */
 	if (numSupport > 0)
 	{
-		ScanKeyEntryInitialize(&key, 0,
-							   Anum_pg_amproc_amopclaid,
-							   BTEqualStrategyNumber, F_OIDEQ,
-							   ObjectIdGetDatum(operatorClassOid),
-							   OIDOID);
-		pg_amproc_desc = heap_openr(AccessMethodProcedureRelationName,
-									AccessShareLock);
-		pg_amproc_scan = systable_beginscan(pg_amproc_desc,
-											AccessMethodProcedureIndex,
-											indexOK,
-											SnapshotNow,
-											1, &key);
+		ScanKeyInit(&skey[0],
+					Anum_pg_amproc_amopclaid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(operatorClassOid));
+		ScanKeyInit(&skey[1],
+					Anum_pg_amproc_amprocsubtype,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(InvalidOid));
+		rel = heap_openr(AccessMethodProcedureRelationName,
+						 AccessShareLock);
+		scan = systable_beginscan(rel, AccessMethodProcedureIndex, indexOK,
+								  SnapshotNow, 2, skey);
 
-		while (HeapTupleIsValid(htup = systable_getnext(pg_amproc_scan)))
+		while (HeapTupleIsValid(htup = systable_getnext(scan)))
 		{
 			Form_pg_amproc amprocform = (Form_pg_amproc) GETSTRUCT(htup);
 
@@ -1264,8 +1259,8 @@ LookupOpclassInfo(Oid operatorClassOid,
 				amprocform->amproc;
 		}
 
-		systable_endscan(pg_amproc_scan);
-		heap_close(pg_amproc_desc, AccessShareLock);
+		systable_endscan(scan);
+		heap_close(rel, AccessShareLock);
 	}
 
 	opcentry->valid = true;
@@ -2483,16 +2478,14 @@ AttrDefaultFetch(Relation relation)
 	int			found;
 	int			i;
 
-	ScanKeyEntryInitialize(&skey, 0,
-						   Anum_pg_attrdef_adrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)),
-						   OIDOID);
+	ScanKeyInit(&skey,
+				Anum_pg_attrdef_adrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	adrel = heap_openr(AttrDefaultRelationName, AccessShareLock);
 	adscan = systable_beginscan(adrel, AttrDefaultIndex, true,
-								SnapshotNow,
-								1, &skey);
+								SnapshotNow, 1, &skey);
 	found = 0;
 
 	while (HeapTupleIsValid(htup = systable_getnext(adscan)))
@@ -2550,11 +2543,10 @@ CheckConstraintFetch(Relation relation)
 	bool		isnull;
 	int			found = 0;
 
-	ScanKeyEntryInitialize(&skey[0], 0,
-						   Anum_pg_constraint_conrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)),
-						   OIDOID);
+	ScanKeyInit(&skey[0],
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	conrel = heap_openr(ConstraintRelationName, AccessShareLock);
 	conscan = systable_beginscan(conrel, ConstraintRelidIndex, true,
@@ -2642,16 +2634,14 @@ RelationGetIndexList(Relation relation)
 	result = NIL;
 
 	/* Prepare to scan pg_index for entries having indrelid = this rel. */
-	ScanKeyEntryInitialize(&skey, 0,
-						   Anum_pg_index_indrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)),
-						   OIDOID);
+	ScanKeyInit(&skey,
+				Anum_pg_index_indrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	indrel = heap_openr(IndexRelationName, AccessShareLock);
 	indscan = systable_beginscan(indrel, IndexIndrelidIndex, true,
-								 SnapshotNow,
-								 1, &skey);
+								 SnapshotNow, 1, &skey);
 
 	while (HeapTupleIsValid(htup = systable_getnext(indscan)))
 	{

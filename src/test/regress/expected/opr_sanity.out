@@ -685,29 +685,60 @@ WHERE p1.amopclaid = p3.oid AND p3.opcamid = p2.oid AND
 -----------+---------+-----+--------
 (0 rows)
 
--- Detect missing pg_amop entries: should have as many strategy functions
--- as AM expects for each opclass for the AM
-SELECT p1.oid, p1.amname, p2.oid, p2.opcname
-FROM pg_am AS p1, pg_opclass AS p2
-WHERE p2.opcamid = p1.oid AND
-    p1.amstrategies != (SELECT count(*) FROM pg_amop AS p3
-                        WHERE p3.amopclaid = p2.oid);
- oid | amname | oid | opcname 
------+--------+-----+---------
+-- Detect missing pg_amop entries: should have as many strategy operators
+-- as AM expects for each opclass for the AM.  When nondefault subtypes are
+-- present, enforce condition separately for each subtype.
+SELECT p1.oid, p1.amname, p2.oid, p2.opcname, p3.amopsubtype
+FROM pg_am AS p1, pg_opclass AS p2, pg_amop AS p3
+WHERE p2.opcamid = p1.oid AND p3.amopclaid = p2.oid AND
+    p1.amstrategies != (SELECT count(*) FROM pg_amop AS p4
+                        WHERE p4.amopclaid = p2.oid AND
+                              p4.amopsubtype = p3.amopsubtype);
+ oid | amname | oid | opcname | amopsubtype 
+-----+--------+-----+---------+-------------
 (0 rows)
 
 -- Check that amopopr points at a reasonable-looking operator, ie a binary
 -- operator yielding boolean.
--- NOTE: for 7.1, add restriction that operator inputs are of same type.
--- We used to have opclasses like "int24_ops" but these were broken.
 SELECT p1.amopclaid, p1.amopopr, p2.oid, p2.oprname
 FROM pg_amop AS p1, pg_operator AS p2
 WHERE p1.amopopr = p2.oid AND
-    (p2.oprkind != 'b' OR p2.oprresult != 'bool'::regtype OR
-     p2.oprleft != p2.oprright);
+    (p2.oprkind != 'b' OR p2.oprresult != 'bool'::regtype);
  amopclaid | amopopr | oid | oprname 
 -----------+---------+-----+---------
 (0 rows)
+
+-- Make a list of all the distinct operator names being used in particular
+-- strategy slots.  This is a bit hokey, since the list might need to change
+-- in future releases, but it's an effective way of spotting mistakes such as
+-- swapping two operators within a class.
+SELECT DISTINCT opcamid, amopstrategy, oprname
+FROM pg_amop p1 LEFT JOIN pg_opclass p2 ON amopclaid = p2.oid
+                LEFT JOIN pg_operator p3 ON amopopr = p3.oid
+ORDER BY 1, 2, 3;
+ opcamid | amopstrategy | oprname 
+---------+--------------+---------
+     402 |            1 | <<
+     402 |            2 | &<
+     402 |            3 | &&
+     402 |            4 | &>
+     402 |            5 | >>
+     402 |            6 | ~=
+     402 |            7 | ~
+     402 |            8 | @
+     403 |            1 | <
+     403 |            1 | ~<~
+     403 |            2 | <=
+     403 |            2 | ~<=~
+     403 |            3 | =
+     403 |            3 | ~=~
+     403 |            4 | >=
+     403 |            4 | ~>=~
+     403 |            5 | >
+     403 |            5 | ~>~
+     405 |            1 | =
+     405 |            1 | ~=~
+(20 rows)
 
 -- Check that all operators linked to by opclass entries have selectivity
 -- estimators.  This is not absolutely required, but it seems a reasonable
@@ -721,11 +752,31 @@ WHERE p1.amopopr = p2.oid AND
 (0 rows)
 
 -- Check that operator input types match the opclass
+-- For 7.5, we require that oprleft match opcintype (possibly by coercion).
+-- When amopsubtype is zero (default), oprright must equal oprleft;
+-- when amopsubtype is not zero, oprright must equal amopsubtype.
 SELECT p1.amopclaid, p1.amopopr, p2.oid, p2.oprname, p3.opcname
 FROM pg_amop AS p1, pg_operator AS p2, pg_opclass AS p3
 WHERE p1.amopopr = p2.oid AND p1.amopclaid = p3.oid AND
-    (NOT binary_coercible(p3.opcintype, p2.oprleft) OR
-     p2.oprleft != p2.oprright);
+    NOT binary_coercible(p3.opcintype, p2.oprleft);
+ amopclaid | amopopr | oid | oprname | opcname 
+-----------+---------+-----+---------+---------
+(0 rows)
+
+SELECT p1.amopclaid, p1.amopopr, p2.oid, p2.oprname, p3.opcname
+FROM pg_amop AS p1, pg_operator AS p2, pg_opclass AS p3
+WHERE p1.amopopr = p2.oid AND p1.amopclaid = p3.oid AND
+    p1.amopsubtype = 0 AND
+    p2.oprleft != p2.oprright;
+ amopclaid | amopopr | oid | oprname | opcname 
+-----------+---------+-----+---------+---------
+(0 rows)
+
+SELECT p1.amopclaid, p1.amopopr, p2.oid, p2.oprname, p3.opcname
+FROM pg_amop AS p1, pg_operator AS p2, pg_opclass AS p3
+WHERE p1.amopopr = p2.oid AND p1.amopclaid = p3.oid AND
+    p1.amopsubtype != 0 AND
+    p1.amopsubtype != p2.oprright;
  amopclaid | amopopr | oid | oprname | opcname 
 -----------+---------+-----+---------+---------
 (0 rows)
@@ -749,14 +800,16 @@ WHERE p1.amopclaid = p3.oid AND p3.opcamid = p2.oid AND
 (0 rows)
 
 -- Detect missing pg_amproc entries: should have as many support functions
--- as AM expects for each opclass for the AM
-SELECT p1.oid, p1.amname, p2.oid, p2.opcname
-FROM pg_am AS p1, pg_opclass AS p2
-WHERE p2.opcamid = p1.oid AND
-    p1.amsupport != (SELECT count(*) FROM pg_amproc AS p3
-                     WHERE p3.amopclaid = p2.oid);
- oid | amname | oid | opcname 
------+--------+-----+---------
+-- as AM expects for each opclass for the AM.  When nondefault subtypes are
+-- present, enforce condition separately for each subtype.
+SELECT p1.oid, p1.amname, p2.oid, p2.opcname, p3.amprocsubtype
+FROM pg_am AS p1, pg_opclass AS p2, pg_amproc AS p3
+WHERE p2.opcamid = p1.oid AND p3.amopclaid = p2.oid AND
+    p1.amsupport != (SELECT count(*) FROM pg_amproc AS p4
+                     WHERE p4.amopclaid = p2.oid AND
+                           p4.amprocsubtype = p3.amprocsubtype);
+ oid | amname | oid | opcname | amprocsubtype 
+-----+--------+-----+---------+---------------
 (0 rows)
 
 -- Unfortunately, we can't check the amproc link very well because the
@@ -782,13 +835,15 @@ WHERE p1.amopclaid = p3.oid AND p4.amopclaid = p6.oid AND
 (0 rows)
 
 -- For btree, though, we can do better since we know the support routines
--- must be of the form cmp(input, input) returns int4.
+-- must be of the form cmp(input, input) returns int4 in the default case
+-- (subtype = 0), and cmp(input, subtype) returns int4 when subtype != 0.
 SELECT p1.amopclaid, p1.amprocnum,
 	p2.oid, p2.proname,
 	p3.opcname
 FROM pg_amproc AS p1, pg_proc AS p2, pg_opclass AS p3
 WHERE p3.opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
     AND p1.amopclaid = p3.oid AND p1.amproc = p2.oid AND
+    amprocsubtype = 0 AND
     (opckeytype != 0
      OR amprocnum != 1
      OR proretset
@@ -796,6 +851,24 @@ WHERE p3.opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
      OR pronargs != 2
      OR NOT binary_coercible(opcintype, proargtypes[0])
      OR proargtypes[0] != proargtypes[1]);
+ amopclaid | amprocnum | oid | proname | opcname 
+-----------+-----------+-----+---------+---------
+(0 rows)
+
+SELECT p1.amopclaid, p1.amprocnum,
+	p2.oid, p2.proname,
+	p3.opcname
+FROM pg_amproc AS p1, pg_proc AS p2, pg_opclass AS p3
+WHERE p3.opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
+    AND p1.amopclaid = p3.oid AND p1.amproc = p2.oid AND
+    amprocsubtype != 0 AND
+    (opckeytype != 0
+     OR amprocnum != 1
+     OR proretset
+     OR prorettype != 23
+     OR pronargs != 2
+     OR NOT binary_coercible(opcintype, proargtypes[0])
+     OR proargtypes[1] != amprocsubtype);
  amopclaid | amprocnum | oid | proname | opcname 
 -----------+-----------+-----+---------+---------
 (0 rows)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.55 2003/11/09 21:30:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.56 2003/11/12 21:15:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include "access/nbtree.h"
 #include "catalog/catalog.h"
 #include "executor/execdebug.h"
-#include "utils/lsyscache.h"
 
 
 /*
@@ -49,8 +48,8 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 		bool		null;
 
 		/*
-		 * We can use the cached support procs since no cross-type comparison
-		 * can be needed.
+		 * We can use the cached (default) support procs since no cross-type
+		 * comparison can be needed.
 		 */
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 		arg = index_getattr(itup, i + 1, itupdesc, &null);
@@ -58,9 +57,9 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 									   null ? SK_ISNULL : 0,
 									   (AttrNumber) (i + 1),
 									   InvalidStrategy,
+									   InvalidOid,
 									   procinfo,
-									   arg,
-									   itupdesc->attrs[i]->atttypid);
+									   arg);
 	}
 
 	return skey;
@@ -94,17 +93,17 @@ _bt_mkscankey_nodata(Relation rel)
 		FmgrInfo   *procinfo;
 
 		/*
-		 * We can use the cached support procs since no cross-type comparison
-		 * can be needed.
+		 * We can use the cached (default) support procs since no cross-type
+		 * comparison can be needed.
 		 */
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 		ScanKeyEntryInitializeWithInfo(&skey[i],
 									   SK_ISNULL,
 									   (AttrNumber) (i + 1),
 									   InvalidStrategy,
+									   InvalidOid,
 									   procinfo,
-									   (Datum) 0,
-									   itupdesc->attrs[i]->atttypid);
+									   (Datum) 0);
 	}
 
 	return skey;
@@ -161,97 +160,96 @@ _bt_formitem(IndexTuple itup)
 }
 
 /*----------
- *	_bt_orderkeys() -- Put keys in a sensible order for conjunctive quals.
+ *	_bt_preprocess_keys() -- Preprocess scan keys
  *
- * After this routine runs, the scan keys are ordered by index attribute
- * (all quals for attr 1, then all for attr 2, etc) and within each attr
- * the keys are ordered by constraint type: ">", ">=", "=", "<=", "<".
- * Furthermore, redundant keys are eliminated: we keep only the tightest
- * >/>= bound and the tightest </<= bound, and if there's an = key then
- * that's the only one returned.  (So, we return either a single = key,
- * or one or two boundary-condition keys for each attr.)
+ * The caller-supplied keys (in scan->keyData[]) are copied to
+ * so->keyData[] with possible transformation.  scan->numberOfKeys is
+ * the number of input keys, so->numberOfKeys gets the number of output
+ * keys (possibly less, never greater).
  *
- * As a byproduct of this work, we can detect contradictory quals such
- * as "x = 1 AND x > 2".  If we see that, we return so->quals_ok = FALSE,
- * indicating the scan need not be run at all since no tuples can match.
+ * The primary purpose of this routine is to discover how many scan keys
+ * must be satisfied to continue the scan.  It also attempts to eliminate
+ * redundant keys and detect contradictory keys.  At present, redundant and
+ * contradictory keys can only be detected for same-data-type comparisons,
+ * but that's the usual case so it seems worth doing.
  *
- * Another byproduct is to determine how many quals must be satisfied to
+ * The output keys must be sorted by index attribute.  Presently we expect
+ * (but verify) that the input keys are already so sorted --- this is done
+ * by group_clauses_by_indexkey() in indxpath.c.  Some reordering of the keys
+ * within each attribute may be done as a byproduct of the processing here,
+ * but no other code depends on that.
+ *
+ * Aside from preparing so->keyData[], this routine sets
+ * so->numberOfRequiredKeys to the number of quals that must be satisfied to
  * continue the scan.  _bt_checkkeys uses this.  For example, if the quals
  * are "x = 1 AND y < 4 AND z < 5", then _bt_checkkeys will reject a tuple
  * (1,2,7), but we must continue the scan in case there are tuples (1,3,z).
  * But once we reach tuples like (1,4,z) we can stop scanning because no
  * later tuples could match.  This is reflected by setting
- * so->numberOfRequiredKeys to the number of leading keys that must be
- * matched to continue the scan.  numberOfRequiredKeys is equal to the
- * number of leading "=" keys plus the key(s) for the first non "="
- * attribute, which can be seen to be correct by considering the above
- * example.
+ * so->numberOfRequiredKeys to 2, the number of leading keys that must be
+ * matched to continue the scan.  In general, numberOfRequiredKeys is equal
+ * to the number of keys for leading attributes with "=" keys, plus the
+ * key(s) for the first non "=" attribute, which can be seen to be correct
+ * by considering the above example.
+ *
+ * If possible, redundant keys are eliminated: we keep only the tightest
+ * >/>= bound and the tightest </<= bound, and if there's an = key then
+ * that's the only one returned.  (So, we return either a single = key,
+ * or one or two boundary-condition keys for each attr.)  However, we can
+ * only detect redundant keys when the right-hand datatypes are all equal
+ * to the index datatype, because we do not know suitable operators for
+ * comparing right-hand values of two different datatypes.  (In theory
+ * we could handle comparison of a RHS of the index datatype with a RHS of
+ * another type, but that seems too much pain for too little gain.)  So,
+ * keys whose operator has a nondefault subtype (ie, its RHS is not of the
+ * index datatype) are ignored here, except for noting whether they impose
+ * an "=" condition or not.
+ *
+ * As a byproduct of this work, we can detect contradictory quals such
+ * as "x = 1 AND x > 2".  If we see that, we return so->quals_ok = FALSE,
+ * indicating the scan need not be run at all since no tuples can match.
+ * Again though, only keys with RHS datatype equal to the index datatype
+ * can be checked for contradictions.
  *
  * Furthermore, we detect the case where the index is unique and we have
  * equality quals for all columns.	In this case there can be at most one
  * (visible) matching tuple.  index_getnext uses this to avoid uselessly
  * continuing the scan after finding one match.
- *
- * The initial ordering of the keys is expected to be by attribute already
- * (see group_clauses_by_indexkey() in indxpath.c).  The task here is to
- * standardize the appearance of multiple keys for the same attribute.
  *----------
  */
 void
-_bt_orderkeys(IndexScanDesc scan)
+_bt_preprocess_keys(IndexScanDesc scan)
 {
 	Relation	relation = scan->indexRelation;
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	ScanKeyData xform[BTMaxStrategyNumber];
-	bool		init[BTMaxStrategyNumber];
-	int			numberOfKeys = so->numberOfKeys;
-	ScanKey		key;
+	int			numberOfKeys = scan->numberOfKeys;
+	int			new_numberOfKeys;
+	ScanKey		inkeys;
+	ScanKey		outkeys;
 	ScanKey		cur;
+	ScanKey		xform[BTMaxStrategyNumber];
+	bool		allEqualSoFar;
+	bool		hasOtherTypeEqual;
 	Datum		test;
 	int			i,
 				j;
 	AttrNumber	attno;
-	int			new_numberOfKeys;
-	bool		allEqualSoFar;
 
+	/* initialize result variables */
 	so->qual_ok = true;
+	so->numberOfKeys = 0;
 	so->numberOfRequiredKeys = 0;
 	scan->keys_are_unique = false;
 
 	if (numberOfKeys < 1)
 		return;					/* done if qual-less scan */
 
-	key = so->keyData;
-	cur = &key[0];
-	/* check input keys are correctly ordered */
+	inkeys = scan->keyData;
+	outkeys = so->keyData;
+	cur = &inkeys[0];
+	/* we check that input keys are correctly ordered */
 	if (cur->sk_attno != 1)
 		elog(ERROR, "key(s) for attribute 1 missed");
-
-#if 0
-	/* XXX verify that operator strategy info is correct */
-	/* XXX this is temporary for debugging; it's pretty expensive */
-	/* XXX can't do it during bootstrap, else will recurse infinitely */
-	{
-		extern bool criticalRelcachesBuilt;
-		static bool inRecursion = false;
-
-		if (criticalRelcachesBuilt && !inRecursion)
-		{
-			inRecursion = true;
-			for (i = 0; i < numberOfKeys; i++)
-			{
-				AttrNumber	attno = key[i].sk_attno;
-				Oid			opclass;
-				Oid			chk_oper;
-
-				opclass = relation->rd_index->indclass[attno-1];
-				chk_oper = get_opclass_member(opclass, key[i].sk_strategy);
-				Assert(key[i].sk_func.fn_oid == get_opcode(chk_oper));
-			}
-			inRecursion = false;
-		}
-	}
-#endif
 
 	/* We can short-circuit most of the work if there's just one key */
 	if (numberOfKeys == 1)
@@ -259,7 +257,7 @@ _bt_orderkeys(IndexScanDesc scan)
 		/*
 		 * We don't use indices for 'A is null' and 'A is not null'
 		 * currently and 'A < = > <> NULL' will always fail - so qual is
-		 * not Ok if comparison value is NULL.		- vadim 03/21/97
+		 * not OK if comparison value is NULL.		- vadim 03/21/97
 		 */
 		if (cur->sk_flags & SK_ISNULL)
 			so->qual_ok = false;
@@ -270,6 +268,8 @@ _bt_orderkeys(IndexScanDesc scan)
 			if (cur->sk_strategy == BTEqualStrategyNumber)
 				scan->keys_are_unique = true;
 		}
+		memcpy(outkeys, inkeys, sizeof(ScanKeyData));
+		so->numberOfKeys = 1;
 		so->numberOfRequiredKeys = 1;
 		return;
 	}
@@ -283,12 +283,15 @@ _bt_orderkeys(IndexScanDesc scan)
 	/*
 	 * Initialize for processing of keys for attr 1.
 	 *
-	 * xform[i] holds a copy of the current scan key of strategy type i+1, if
-	 * any; init[i] is TRUE if we have found such a key for this attr.
+	 * xform[i] points to the currently best scan key of strategy type i+1,
+	 * if any is found with a default operator subtype; it is NULL if we
+	 * haven't yet found such a key for this attr.  Scan keys of nondefault
+	 * subtypes are transferred to the output with no processing except for
+	 * noting if they are of "=" type.
 	 */
 	attno = 1;
-	MemSet(xform, 0, sizeof(xform));	/* not really necessary */
-	MemSet(init, 0, sizeof(init));
+	memset(xform, 0, sizeof(xform));
+	hasOtherTypeEqual = false;
 
 	/*
 	 * Loop iterates from 0 to numberOfKeys inclusive; we use the last
@@ -329,80 +332,78 @@ _bt_orderkeys(IndexScanDesc scan)
 			 * of key > 2 && key == 1 and so on we have to set qual_ok to
 			 * false before discarding the other keys.
 			 */
-			if (init[BTEqualStrategyNumber - 1])
+			if (xform[BTEqualStrategyNumber - 1])
 			{
-				ScanKeyData *eq,
-						   *chk;
+				ScanKey		eq = xform[BTEqualStrategyNumber - 1];
 
-				eq = &xform[BTEqualStrategyNumber - 1];
 				for (j = BTMaxStrategyNumber; --j >= 0;)
 				{
-					if (!init[j] ||
-						j == (BTEqualStrategyNumber - 1))
+					ScanKey		chk = xform[j];
+
+					if (!chk || j == (BTEqualStrategyNumber - 1))
 						continue;
-					chk = &xform[j];
 					test = FunctionCall2(&chk->sk_func,
 										 eq->sk_argument,
 										 chk->sk_argument);
 					if (!DatumGetBool(test))
+					{
 						so->qual_ok = false;
+						break;
+					}
 				}
-				init[BTLessStrategyNumber - 1] = false;
-				init[BTLessEqualStrategyNumber - 1] = false;
-				init[BTGreaterEqualStrategyNumber - 1] = false;
-				init[BTGreaterStrategyNumber - 1] = false;
+				xform[BTLessStrategyNumber - 1] = NULL;
+				xform[BTLessEqualStrategyNumber - 1] = NULL;
+				xform[BTGreaterEqualStrategyNumber - 1] = NULL;
+				xform[BTGreaterStrategyNumber - 1] = NULL;
 			}
 			else
 			{
 				/*
-				 * No "=" for this key, so we're done with required keys
+				 * If no "=" for this key, we're done with required keys
 				 */
-				allEqualSoFar = false;
+				if (! hasOtherTypeEqual)
+					allEqualSoFar = false;
 			}
 
 			/* keep only one of <, <= */
-			if (init[BTLessStrategyNumber - 1]
-				&& init[BTLessEqualStrategyNumber - 1])
+			if (xform[BTLessStrategyNumber - 1]
+				&& xform[BTLessEqualStrategyNumber - 1])
 			{
-				ScanKeyData *lt = &xform[BTLessStrategyNumber - 1];
-				ScanKeyData *le = &xform[BTLessEqualStrategyNumber - 1];
+				ScanKey lt = xform[BTLessStrategyNumber - 1];
+				ScanKey le = xform[BTLessEqualStrategyNumber - 1];
 
 				test = FunctionCall2(&le->sk_func,
 									 lt->sk_argument,
 									 le->sk_argument);
 				if (DatumGetBool(test))
-					init[BTLessEqualStrategyNumber - 1] = false;
+					xform[BTLessEqualStrategyNumber - 1] = NULL;
 				else
-					init[BTLessStrategyNumber - 1] = false;
+					xform[BTLessStrategyNumber - 1] = NULL;
 			}
 
 			/* keep only one of >, >= */
-			if (init[BTGreaterStrategyNumber - 1]
-				&& init[BTGreaterEqualStrategyNumber - 1])
+			if (xform[BTGreaterStrategyNumber - 1]
+				&& xform[BTGreaterEqualStrategyNumber - 1])
 			{
-				ScanKeyData *gt = &xform[BTGreaterStrategyNumber - 1];
-				ScanKeyData *ge = &xform[BTGreaterEqualStrategyNumber - 1];
+				ScanKey gt = xform[BTGreaterStrategyNumber - 1];
+				ScanKey ge = xform[BTGreaterEqualStrategyNumber - 1];
 
 				test = FunctionCall2(&ge->sk_func,
 									 gt->sk_argument,
 									 ge->sk_argument);
 				if (DatumGetBool(test))
-					init[BTGreaterEqualStrategyNumber - 1] = false;
+					xform[BTGreaterEqualStrategyNumber - 1] = NULL;
 				else
-					init[BTGreaterStrategyNumber - 1] = false;
+					xform[BTGreaterStrategyNumber - 1] = NULL;
 			}
 
 			/*
-			 * Emit the cleaned-up keys back into the key[] array in the
-			 * correct order.  Note we are overwriting our input here!
-			 * It's OK because (a) xform[] is a physical copy of the keys
-			 * we want, (b) we cannot emit more keys than we input, so we
-			 * won't overwrite as-yet-unprocessed keys.
+			 * Emit the cleaned-up keys into the outkeys[] array.
 			 */
 			for (j = BTMaxStrategyNumber; --j >= 0;)
 			{
-				if (init[j])
-					memcpy(&key[new_numberOfKeys++], &xform[j],
+				if (xform[j])
+					memcpy(&outkeys[new_numberOfKeys++], xform[j],
 						   sizeof(ScanKeyData));
 			}
 
@@ -421,31 +422,43 @@ _bt_orderkeys(IndexScanDesc scan)
 
 			/* Re-initialize for new attno */
 			attno = cur->sk_attno;
-			MemSet(xform, 0, sizeof(xform));	/* not really necessary */
-			MemSet(init, 0, sizeof(init));
+			memset(xform, 0, sizeof(xform));
+			hasOtherTypeEqual = false;
 		}
 
-		/* figure out which strategy this key's operator corresponds to */
+		/* check strategy this key's operator corresponds to */
 		j = cur->sk_strategy - 1;
 
-		/* have we seen one of these before? */
-		if (init[j])
+		/* if wrong RHS data type, punt */
+		if (cur->sk_subtype != InvalidOid)
 		{
-			/* yup, keep the more restrictive value */
+			memcpy(&outkeys[new_numberOfKeys++], cur,
+				   sizeof(ScanKeyData));
+			if (j == (BTEqualStrategyNumber - 1))
+				hasOtherTypeEqual = true;
+			continue;
+		}
+
+		/* have we seen one of these before? */
+		if (xform[j])
+		{
+			/* yup, keep the more restrictive key */
 			test = FunctionCall2(&cur->sk_func,
 								 cur->sk_argument,
-								 xform[j].sk_argument);
+								 xform[j]->sk_argument);
 			if (DatumGetBool(test))
-				xform[j].sk_argument = cur->sk_argument;
+				xform[j] = cur;
 			else if (j == (BTEqualStrategyNumber - 1))
+			{
+				/* key == a && key == b, but a != b */
 				so->qual_ok = false;
-			/* key == a && key == b, but a != b */
+				return;
+			}
 		}
 		else
 		{
 			/* nope, so remember this scankey */
-			memcpy(&xform[j], cur, sizeof(ScanKeyData));
-			init[j] = true;
+			xform[j] = cur;
 		}
 	}
 
@@ -465,8 +478,8 @@ _bt_orderkeys(IndexScanDesc scan)
  *
  * If the tuple fails to pass the qual, we also determine whether there's
  * any need to continue the scan beyond this tuple, and set *continuescan
- * accordingly.  See comments for _bt_orderkeys(), above, about how this is
- * done.
+ * accordingly.  See comments for _bt_preprocess_keys(), above, about how
+ * this is done.
  */
 bool
 _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
@@ -474,7 +487,7 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	int			keysz = so->numberOfKeys;
-	int			keysok;
+	int			ikey;
 	TupleDesc	tupdesc;
 	ScanKey		key;
 
@@ -484,13 +497,11 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 	if (keysz == 0)
 		return true;
 
-	tupdesc = RelationGetDescr(scan->indexRelation);
-	key = so->keyData;
-	keysok = 0;
-
 	IncrIndexProcessed();
 
-	while (keysz > 0)
+	tupdesc = RelationGetDescr(scan->indexRelation);
+
+	for (key = so->keyData, ikey = 0; ikey < keysz; key++, ikey++)
 	{
 		Datum		datum;
 		bool		isNull;
@@ -504,7 +515,7 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 		/* btree doesn't support 'A is null' clauses, yet */
 		if (key->sk_flags & SK_ISNULL)
 		{
-			/* we shouldn't get here, really; see _bt_orderkeys() */
+			/* we shouldn't get here, really; see _bt_preprocess_keys() */
 			*continuescan = false;
 			return false;
 		}
@@ -518,7 +529,7 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 			 * one of the "must match" subset.	On a backward scan,
 			 * however, we should keep going.
 			 */
-			if (keysok < so->numberOfRequiredKeys &&
+			if (ikey < so->numberOfRequiredKeys &&
 				ScanDirectionIsForward(dir))
 				*continuescan = false;
 
@@ -534,16 +545,50 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 		{
 			/*
 			 * Tuple fails this qual.  If it's a required qual, then we
-			 * can conclude no further tuples will pass, either.
+			 * may be able to conclude no further tuples will pass, either.
+			 * We have to look at the scan direction and the qual type.
+			 *
+			 * Note: the only case in which we would keep going after failing
+			 * a required qual is if there are partially-redundant quals that
+			 * _bt_preprocess_keys() was unable to eliminate.  For example,
+			 * given "x > 4 AND x > 10" where both are cross-type comparisons
+			 * and so not removable, we might start the scan at the x = 4
+			 * boundary point.  The "x > 10" condition will fail until we
+			 * pass x = 10, but we must not stop the scan on its account.
+			 *
+			 * Note: because we stop the scan as soon as any required equality
+			 * qual fails, it is critical that equality quals be used for the
+			 * initial positioning in _bt_first() when they are available.
+			 * See comments in _bt_first().
 			 */
-			if (keysok < so->numberOfRequiredKeys)
-				*continuescan = false;
+			if (ikey < so->numberOfRequiredKeys)
+			{
+				switch (key->sk_strategy)
+				{
+					case BTLessStrategyNumber:
+					case BTLessEqualStrategyNumber:
+						if (ScanDirectionIsForward(dir))
+							*continuescan = false;
+						break;
+					case BTEqualStrategyNumber:
+						*continuescan = false;
+						break;
+					case BTGreaterEqualStrategyNumber:
+					case BTGreaterStrategyNumber:
+						if (ScanDirectionIsBackward(dir))
+							*continuescan = false;
+						break;
+					default:
+						elog(ERROR, "unrecognized StrategyNumber: %d",
+							 key->sk_strategy);
+				}
+			}
+
+			/*
+			 * In any case, this indextuple doesn't match the qual.
+			 */
 			return false;
 		}
-
-		keysok++;
-		key++;
-		keysz--;
 	}
 
 	/* If we get here, the tuple passes all quals. */

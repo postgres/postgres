@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.16 2003/11/09 21:30:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.17 2003/11/12 21:15:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "catalog/pg_class.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_type.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -177,10 +176,10 @@ RemoveConversionById(Oid conversionOid)
 	HeapScanDesc scan;
 	ScanKeyData scanKeyData;
 
-	ScanKeyEntryInitialize(&scanKeyData, 0,
-						   ObjectIdAttributeNumber,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(conversionOid), OIDOID);
+	ScanKeyInit(&scanKeyData,
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(conversionOid));
 
 	/* open pg_conversion */
 	rel = heap_openr(ConversionRelationName, RowExclusiveLock);

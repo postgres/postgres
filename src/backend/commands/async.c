@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.103 2003/11/09 21:30:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.104 2003/11/12 21:15:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,6 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_listener.h"
-#include "catalog/pg_type.h"
 #include "commands/async.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
@@ -353,10 +352,10 @@ Async_UnlistenAll(void)
 	tdesc = RelationGetDescr(lRel);
 
 	/* Find and delete all entries with my listenerPID */
-	ScanKeyEntryInitialize(&key[0], 0,
-						   Anum_pg_listener_pid,
-						   BTEqualStrategyNumber, F_INT4EQ,
-						   Int32GetDatum(MyProcPid), INT4OID);
+	ScanKeyInit(&key[0],
+				Anum_pg_listener_pid,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(MyProcPid));
 	scan = heap_beginscan(lRel, SnapshotNow, 1, key);
 
 	while ((lTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -817,10 +816,10 @@ ProcessIncomingNotify(void)
 	tdesc = RelationGetDescr(lRel);
 
 	/* Scan only entries with my listenerPID */
-	ScanKeyEntryInitialize(&key[0], 0,
-						   Anum_pg_listener_pid,
-						   BTEqualStrategyNumber, F_INT4EQ,
-						   Int32GetDatum(MyProcPid), INT4OID);
+	ScanKeyInit(&key[0],
+				Anum_pg_listener_pid,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(MyProcPid));
 	scan = heap_beginscan(lRel, SnapshotNow, 1, key);
 
 	/* Prepare data for rewriting 0 into notification field */

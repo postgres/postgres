@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.37 2003/11/09 21:30:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.38 2003/11/12 21:15:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,40 +221,50 @@ gistindex_keytest(IndexTuple tuple,
 				  Page p,
 				  OffsetNumber offset)
 {
-	bool		isNull;
-	Datum		datum;
-	Datum		test;
-	GISTENTRY	de;
-
 	IncrIndexProcessed();
 
 	while (scanKeySize > 0)
 	{
+		Datum		datum;
+		bool		isNull;
+		Datum		test;
+		GISTENTRY	de;
+
 		datum = index_getattr(tuple,
-							  key[0].sk_attno,
+							  key->sk_attno,
 							  giststate->tupdesc,
 							  &isNull);
+		/* is the index entry NULL? */
 		if (isNull)
 		{
 			/* XXX eventually should check if SK_ISNULL */
 			return false;
 		}
-
-/* this code from backend/access/common/indexvalid.c. But why and what???
-		if (key[0].sk_flags & SK_ISNULL)
+		/* is the compared-to datum NULL? */
+		if (key->sk_flags & SK_ISNULL)
 			return false;
-*/
-		gistdentryinit(giststate, key[0].sk_attno - 1, &de,
+
+		gistdentryinit(giststate, key->sk_attno - 1, &de,
 					   datum, r, p, offset,
 					   IndexTupleSize(tuple) - sizeof(IndexTupleData),
 					   FALSE, isNull);
 
-		test = FunctionCall3(&key[0].sk_func,
+		/*
+		 * Call the Consistent function to evaluate the test.  The arguments
+		 * are the index datum (as a GISTENTRY*), the comparison datum, and
+		 * the comparison operator's strategy number and subtype from pg_amop.
+		 *
+		 * (Presently there's no need to pass the subtype since it'll always
+		 * be zero, but might as well pass it for possible future use.)
+		 */
+		test = FunctionCall4(&key->sk_func,
 							 PointerGetDatum(&de),
-							 key[0].sk_argument,
-							 Int32GetDatum(key[0].sk_strategy));
+							 key->sk_argument,
+							 Int32GetDatum(key->sk_strategy),
+							 ObjectIdGetDatum(key->sk_subtype));
 
-		if (de.key != datum && !isAttByVal(giststate, key[0].sk_attno - 1))
+		/* if index datum had to be decompressed, free it */
+		if (de.key != datum && !isAttByVal(giststate, key->sk_attno - 1))
 			if (DatumGetPointer(de.key) != NULL)
 				pfree(DatumGetPointer(de.key));
 
@@ -264,6 +274,7 @@ gistindex_keytest(IndexTuple tuple,
 		scanKeySize--;
 		key++;
 	}
+
 	return true;
 }
 

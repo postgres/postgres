@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: namespace.h,v 1.27 2003/08/04 02:40:10 momjian Exp $
+ * $Id: namespace.h,v 1.28 2003/11/12 21:15:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,9 +42,9 @@ typedef struct _OpclassCandidateList
 	char	   *opcname_tmp;	/* for internal use of namespace lookup */
 	int			pathpos;		/* for internal use of namespace lookup */
 	Oid			oid;			/* the opclass's OID */
-	Oid			opcintype;		/* type of input data for opclass */
+	Oid			opcintype;		/* type of data indexed by opclass */
 	bool		opcdefault;		/* T if opclass is default for opcintype */
-	Oid			opckeytype;		/* type of index data, or InvalidOid */
+	Oid			opckeytype;		/* type of data in index, or InvalidOid */
 }	*OpclassCandidateList;
 
 

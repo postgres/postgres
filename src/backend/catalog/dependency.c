@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.32 2003/11/09 21:30:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.33 2003/11/12 21:15:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,6 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_trigger.h"
-#include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "commands/defrem.h"
 #include "commands/proclang.h"
@@ -283,20 +282,20 @@ findAutoDeletableObjects(const ObjectAddress *object,
 	 * When dropping a whole object (subId = 0), find pg_depend records for
 	 * its sub-objects too.
 	 */
-	ScanKeyEntryInitialize(&key[0], 0,
-						   Anum_pg_depend_refclassid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(object->classId), OIDOID);
-	ScanKeyEntryInitialize(&key[1], 0,
-						   Anum_pg_depend_refobjid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(object->objectId), OIDOID);
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->classId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->objectId));
 	if (object->objectSubId != 0)
 	{
-		ScanKeyEntryInitialize(&key[2], 0,
-							   Anum_pg_depend_refobjsubid,
-							   BTEqualStrategyNumber, F_INT4EQ,
-							   Int32GetDatum(object->objectSubId), INT4OID);
+		ScanKeyInit(&key[2],
+					Anum_pg_depend_refobjsubid,
+					BTEqualStrategyNumber, F_INT4EQ,
+					Int32GetDatum(object->objectSubId));
 		nkeys = 3;
 	}
 	else
@@ -418,20 +417,20 @@ recursiveDeletion(const ObjectAddress *object,
 	 * When dropping a whole object (subId = 0), remove all pg_depend records
 	 * for its sub-objects too.
 	 */
-	ScanKeyEntryInitialize(&key[0], 0,
-						   Anum_pg_depend_classid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(object->classId), OIDOID);
-	ScanKeyEntryInitialize(&key[1], 0,
-						   Anum_pg_depend_objid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(object->objectId), OIDOID);
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_classid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->classId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_objid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->objectId));
 	if (object->objectSubId != 0)
 	{
-		ScanKeyEntryInitialize(&key[2], 0,
-							   Anum_pg_depend_objsubid,
-							   BTEqualStrategyNumber, F_INT4EQ,
-							   Int32GetDatum(object->objectSubId), INT4OID);
+		ScanKeyInit(&key[2],
+					Anum_pg_depend_objsubid,
+					BTEqualStrategyNumber, F_INT4EQ,
+					Int32GetDatum(object->objectSubId));
 		nkeys = 3;
 	}
 	else
@@ -651,20 +650,20 @@ deleteDependentObjects(const ObjectAddress *object,
 	HeapTuple	tup;
 	ObjectAddress otherObject;
 
-	ScanKeyEntryInitialize(&key[0], 0,
-						   Anum_pg_depend_refclassid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(object->classId), OIDOID);
-	ScanKeyEntryInitialize(&key[1], 0,
-						   Anum_pg_depend_refobjid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(object->objectId), OIDOID);
+	ScanKeyInit(&key[0],
+				Anum_pg_depend_refclassid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->classId));
+	ScanKeyInit(&key[1],
+				Anum_pg_depend_refobjid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(object->objectId));
 	if (object->objectSubId != 0)
 	{
-		ScanKeyEntryInitialize(&key[2], 0,
-							   Anum_pg_depend_refobjsubid,
-							   BTEqualStrategyNumber, F_INT4EQ,
-							   Int32GetDatum(object->objectSubId), INT4OID);
+		ScanKeyInit(&key[2],
+					Anum_pg_depend_refobjsubid,
+					BTEqualStrategyNumber, F_INT4EQ,
+					Int32GetDatum(object->objectSubId));
 		nkeys = 3;
 	}
 	else
@@ -1473,11 +1472,10 @@ getObjectDescription(const ObjectAddress *object)
 
 				castDesc = heap_openr(CastRelationName, AccessShareLock);
 
-				ScanKeyEntryInitialize(&skey[0], 0,
-									   ObjectIdAttributeNumber,
-									   BTEqualStrategyNumber, F_OIDEQ,
-									   ObjectIdGetDatum(object->objectId),
-									   OIDOID);
+				ScanKeyInit(&skey[0],
+							ObjectIdAttributeNumber,
+							BTEqualStrategyNumber, F_OIDEQ,
+							ObjectIdGetDatum(object->objectId));
 
 				rcscan = systable_beginscan(castDesc, CastOidIndex, true,
 											SnapshotNow, 1, skey);
@@ -1509,11 +1507,10 @@ getObjectDescription(const ObjectAddress *object)
 
 				conDesc = heap_openr(ConstraintRelationName, AccessShareLock);
 
-				ScanKeyEntryInitialize(&skey[0], 0,
-									   ObjectIdAttributeNumber,
-									   BTEqualStrategyNumber, F_OIDEQ,
-									   ObjectIdGetDatum(object->objectId),
-									   OIDOID);
+				ScanKeyInit(&skey[0],
+							ObjectIdAttributeNumber,
+							BTEqualStrategyNumber, F_OIDEQ,
+							ObjectIdGetDatum(object->objectId));
 
 				rcscan = systable_beginscan(conDesc, ConstraintOidIndex, true,
 											SnapshotNow, 1, skey);
@@ -1570,11 +1567,10 @@ getObjectDescription(const ObjectAddress *object)
 
 				attrdefDesc = heap_openr(AttrDefaultRelationName, AccessShareLock);
 
-				ScanKeyEntryInitialize(&skey[0], 0,
-									   ObjectIdAttributeNumber,
-									   BTEqualStrategyNumber, F_OIDEQ,
-									   ObjectIdGetDatum(object->objectId),
-									   OIDOID);
+				ScanKeyInit(&skey[0],
+							ObjectIdAttributeNumber,
+							BTEqualStrategyNumber, F_OIDEQ,
+							ObjectIdGetDatum(object->objectId));
 
 				adscan = systable_beginscan(attrdefDesc, AttrDefaultOidIndex,
 											true, SnapshotNow, 1, skey);
@@ -1672,11 +1668,10 @@ getObjectDescription(const ObjectAddress *object)
 
 				ruleDesc = heap_openr(RewriteRelationName, AccessShareLock);
 
-				ScanKeyEntryInitialize(&skey[0], 0,
-									   ObjectIdAttributeNumber,
-									   BTEqualStrategyNumber, F_OIDEQ,
-									   ObjectIdGetDatum(object->objectId),
-									   OIDOID);
+				ScanKeyInit(&skey[0],
+							ObjectIdAttributeNumber,
+							BTEqualStrategyNumber, F_OIDEQ,
+							ObjectIdGetDatum(object->objectId));
 
 				rcscan = systable_beginscan(ruleDesc, RewriteOidIndex, true,
 											SnapshotNow, 1, skey);
@@ -1708,11 +1703,10 @@ getObjectDescription(const ObjectAddress *object)
 
 				trigDesc = heap_openr(TriggerRelationName, AccessShareLock);
 
-				ScanKeyEntryInitialize(&skey[0], 0,
-									   ObjectIdAttributeNumber,
-									   BTEqualStrategyNumber, F_OIDEQ,
-									   ObjectIdGetDatum(object->objectId),
-									   OIDOID);
+				ScanKeyInit(&skey[0],
+							ObjectIdAttributeNumber,
+							BTEqualStrategyNumber, F_OIDEQ,
+							ObjectIdGetDatum(object->objectId));
 
 				tgscan = systable_beginscan(trigDesc, TriggerOidIndex, true,
 											SnapshotNow, 1, skey);

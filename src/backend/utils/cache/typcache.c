@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/typcache.c,v 1.2 2003/11/09 21:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/typcache.c,v 1.3 2003/11/12 21:15:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,22 +158,26 @@ lookup_type_cache(Oid type_id, int flags)
 	{
 		if (typentry->btree_opc != InvalidOid)
 			typentry->eq_opr = get_opclass_member(typentry->btree_opc,
+												  InvalidOid,
 												  BTEqualStrategyNumber);
 		if (typentry->eq_opr == InvalidOid &&
 			typentry->hash_opc != InvalidOid)
 			typentry->eq_opr = get_opclass_member(typentry->hash_opc,
+												  InvalidOid,
 												  HTEqualStrategyNumber);
 	}
 	if ((flags & TYPECACHE_LT_OPR) && typentry->lt_opr == InvalidOid)
 	{
 		if (typentry->btree_opc != InvalidOid)
 			typentry->lt_opr = get_opclass_member(typentry->btree_opc,
+												  InvalidOid,
 												  BTLessStrategyNumber);
 	}
 	if ((flags & TYPECACHE_GT_OPR) && typentry->gt_opr == InvalidOid)
 	{
 		if (typentry->btree_opc != InvalidOid)
 			typentry->gt_opr = get_opclass_member(typentry->btree_opc,
+												  InvalidOid,
 												  BTGreaterStrategyNumber);
 	}
 	if ((flags & (TYPECACHE_CMP_PROC | TYPECACHE_CMP_PROC_FINFO)) &&
@@ -181,6 +185,7 @@ lookup_type_cache(Oid type_id, int flags)
 	{
 		if (typentry->btree_opc != InvalidOid)
 			typentry->cmp_proc = get_opclass_proc(typentry->btree_opc,
+												  InvalidOid,
 												  BTORDER_PROC);
 	}
 
@@ -248,10 +253,10 @@ lookup_default_opclass(Oid type_id, Oid am_id)
 	 */
 	rel = heap_openr(OperatorClassRelationName, AccessShareLock);
 
-	ScanKeyEntryInitialize(&skey[0], 0,
-						   Anum_pg_opclass_opcamid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(am_id), OIDOID);
+	ScanKeyInit(&skey[0],
+				Anum_pg_opclass_opcamid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(am_id));
 
 	scan = systable_beginscan(rel, OpclassAmNameNspIndex, true,
 							  SnapshotNow, 1, skey);

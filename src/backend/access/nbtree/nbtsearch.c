@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.81 2003/11/09 21:30:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.82 2003/11/12 21:15:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include "access/genam.h"
 #include "access/nbtree.h"
+#include "utils/lsyscache.h"
 
 
 static Buffer _bt_walk_left(Relation rel, Buffer buf);
@@ -325,17 +326,16 @@ _bt_compare(Relation rel,
 	 * (see _bt_first).
 	 */
 
-	for (i = 0; i < keysz; i++)
+	for (i = 1; i <= keysz; i++)
 	{
-		ScanKey		entry = &scankey[i];
 		Datum		datum;
 		bool		isNull;
 		int32		result;
 
-		datum = index_getattr(itup, entry->sk_attno, itupdesc, &isNull);
+		datum = index_getattr(itup, scankey->sk_attno, itupdesc, &isNull);
 
 		/* see comments about NULLs handling in btbuild */
-		if (entry->sk_flags & SK_ISNULL)		/* key is NULL */
+		if (scankey->sk_flags & SK_ISNULL)		/* key is NULL */
 		{
 			if (isNull)
 				result = 0;		/* NULL "=" NULL */
@@ -348,14 +348,28 @@ _bt_compare(Relation rel,
 		}
 		else
 		{
-			result = DatumGetInt32(FunctionCall2(&entry->sk_func,
-												 entry->sk_argument,
-												 datum));
+			/*
+			 * The sk_func needs to be passed the index value as left arg
+			 * and the sk_argument as right arg (they might be of different
+			 * types).  Since it is convenient for callers to think of
+			 * _bt_compare as comparing the scankey to the index item,
+			 * we have to flip the sign of the comparison result.
+			 *
+			 * Note: curious-looking coding is to avoid overflow if
+			 * comparison function returns INT_MIN.  There is no risk of
+			 * overflow for positive results.
+			 */
+			result = DatumGetInt32(FunctionCall2(&scankey->sk_func,
+												 datum,
+												 scankey->sk_argument));
+			result = (result < 0) ? 1 : -result;
 		}
 
 		/* if the keys are unequal, return the difference */
 		if (result != 0)
 			return result;
+
+		scankey++;
 	}
 
 	/* if we get here, the keys are equal */
@@ -448,126 +462,203 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	StrategyNumber strat;
 	bool		res;
 	int32		result;
-	bool		scanFromEnd;
 	bool		continuescan;
 	ScanKey		scankeys = NULL;
+	ScanKey	   *startKeys = NULL;
 	int			keysCount = 0;
-	int		   *nKeyIs = NULL;
-	int			i,
-				j;
+	int			i;
 	StrategyNumber strat_total;
 
 	/*
-	 * Order the scan keys in our canonical fashion and eliminate any
-	 * redundant keys.
+	 * Examine the scan keys and eliminate any redundant keys; also
+	 * discover how many keys must be matched to continue the scan.
 	 */
-	_bt_orderkeys(scan);
+	_bt_preprocess_keys(scan);
 
 	/*
-	 * Quit now if _bt_orderkeys() discovered that the scan keys can never
-	 * be satisfied (eg, x == 1 AND x > 2).
+	 * Quit now if _bt_preprocess_keys() discovered that the scan keys can
+	 * never be satisfied (eg, x == 1 AND x > 2).
 	 */
 	if (!so->qual_ok)
 		return false;
 
-	/*
+	/*----------
 	 * Examine the scan keys to discover where we need to start the scan.
+	 *
+	 * We want to identify the keys that can be used as starting boundaries;
+	 * these are =, >, or >= keys for a forward scan or =, <, <= keys for
+	 * a backwards scan.  We can use keys for multiple attributes so long as
+	 * the prior attributes had only =, >= (resp. =, <=) keys.  Once we accept
+	 * a > or < boundary or find an attribute with no boundary (which can be
+	 * thought of as the same as "> -infinity"), we can't use keys for any
+	 * attributes to its right, because it would break our simplistic notion
+	 * of what initial positioning strategy to use.
+	 *
+	 * When the scan keys include non-default operators, _bt_preprocess_keys
+	 * may not be able to eliminate redundant keys; in such cases we will
+	 * arbitrarily pick a usable one for each attribute.  This is correct
+	 * but possibly not optimal behavior.  (For example, with keys like
+	 * "x >= 4 AND x >= 5" we would elect to scan starting at x=4 when
+	 * x=5 would be more efficient.)  Since the situation only arises in
+	 * hokily-worded queries, live with it.
+	 *
+	 * When both equality and inequality keys appear for a single attribute
+	 * (again, only possible when non-default operators appear), we *must*
+	 * select one of the equality keys for the starting point, because
+	 * _bt_checkkeys() will stop the scan as soon as an equality qual fails.
+	 * For example, if we have keys like "x >= 4 AND x = 10" and we elect to
+	 * start at x=4, we will fail and stop before reaching x=10.  If multiple
+	 * equality quals survive preprocessing, however, it doesn't matter which
+	 * one we use --- by definition, they are either redundant or
+	 * contradictory.
+	 *----------
 	 */
-	scanFromEnd = false;
 	strat_total = BTEqualStrategyNumber;
 	if (so->numberOfKeys > 0)
 	{
-		nKeyIs = (int *) palloc(so->numberOfKeys * sizeof(int));
-		for (i = 0; i < so->numberOfKeys; i++)
+		AttrNumber	curattr;
+		ScanKey		chosen;
+		ScanKey		cur;
+
+		startKeys = (ScanKey *) palloc(so->numberOfKeys * sizeof(ScanKey));
+		/*
+		 * chosen is the so-far-chosen key for the current attribute, if any.
+		 * We don't cast the decision in stone until we reach keys for the
+		 * next attribute.
+		 */
+		curattr = 1;
+		chosen = NULL;
+		/*
+		 * Loop iterates from 0 to numberOfKeys inclusive; we use the last
+		 * pass to handle after-last-key processing.  Actual exit from the
+		 * loop is at one of the "break" statements below.
+		 */
+		for (cur = so->keyData, i = 0;; cur++, i++)
 		{
-			AttrNumber	attno = so->keyData[i].sk_attno;
-
-			/* ignore keys for already-determined attrs */
-			if (attno <= keysCount)
-				continue;
-			/* if we didn't find a boundary for the preceding attr, quit */
-			if (attno > keysCount + 1)
-				break;
-
-			/*
-			 * Can we use this key as a starting boundary for this attr?
-			 *
-			 * We can use multiple keys if they look like, say, = >= = but we
-			 * have to stop after accepting a > or < boundary.
-			 */
-			strat = so->keyData[i].sk_strategy;
-			if (strat == strat_total ||
-				strat == BTEqualStrategyNumber)
-				nKeyIs[keysCount++] = i;
-			else if (ScanDirectionIsBackward(dir) &&
-					 (strat == BTLessStrategyNumber ||
-					  strat == BTLessEqualStrategyNumber))
+			if (i >= so->numberOfKeys || cur->sk_attno != curattr)
 			{
-				nKeyIs[keysCount++] = i;
-				strat_total = strat;
-				if (strat == BTLessStrategyNumber)
+				/*
+				 * Done looking at keys for curattr.  If we didn't find a
+				 * usable boundary key, quit; else save the boundary key
+				 * pointer in startKeys.
+				 */
+				if (chosen == NULL)
 					break;
+				startKeys[keysCount++] = chosen;
+				/*
+				 * Adjust strat_total, and quit if we have stored a > or < key.
+				 */
+				strat = chosen->sk_strategy;
+				if (strat != BTEqualStrategyNumber)
+				{
+					strat_total = strat;
+					if (strat == BTGreaterStrategyNumber ||
+						strat == BTLessStrategyNumber)
+						break;
+				}
+				/*
+				 * Done if that was the last attribute.
+				 */
+				if (i >= so->numberOfKeys)
+					break;
+				/*
+				 * Reset for next attr, which should be in sequence.
+				 */
+				Assert(cur->sk_attno == curattr + 1);
+				curattr = cur->sk_attno;
+				chosen = NULL;
 			}
-			else if (ScanDirectionIsForward(dir) &&
-					 (strat == BTGreaterStrategyNumber ||
-					  strat == BTGreaterEqualStrategyNumber))
+
+			/* Can we use this key as a starting boundary for this attr? */
+			switch (cur->sk_strategy)
 			{
-				nKeyIs[keysCount++] = i;
-				strat_total = strat;
-				if (strat == BTGreaterStrategyNumber)
+				case BTLessStrategyNumber:
+				case BTLessEqualStrategyNumber:
+					if (chosen == NULL && ScanDirectionIsBackward(dir))
+						chosen = cur;
+					break;
+				case BTEqualStrategyNumber:
+					/* override any non-equality choice */
+					chosen = cur;
+					break;
+				case BTGreaterEqualStrategyNumber:
+				case BTGreaterStrategyNumber:
+					if (chosen == NULL && ScanDirectionIsForward(dir))
+						chosen = cur;
 					break;
 			}
 		}
-		if (keysCount == 0)
-			scanFromEnd = true;
 	}
-	else
-		scanFromEnd = true;
 
-	/* if we just need to walk down one edge of the tree, do that */
-	if (scanFromEnd)
+	/*
+	 * If we found no usable boundary keys, we have to start from one end
+	 * of the tree.  Walk down that edge to the first or last key, and
+	 * scan from there.
+	 */
+	if (keysCount == 0)
 	{
-		if (nKeyIs)
-			pfree(nKeyIs);
+		if (startKeys)
+			pfree(startKeys);
 		return _bt_endpoint(scan, dir);
 	}
 
 	/*
 	 * We want to start the scan somewhere within the index.  Set up a
-	 * scankey we can use to search for the correct starting point.
+	 * 3-way-comparison scankey we can use to search for the boundary
+	 * point we identified above.
 	 */
 	scankeys = (ScanKey) palloc(keysCount * sizeof(ScanKeyData));
 	for (i = 0; i < keysCount; i++)
 	{
-		FmgrInfo   *procinfo;
-
-		j = nKeyIs[i];
+		ScanKey		cur = startKeys[i];
 
 		/*
-		 * _bt_orderkeys disallows it, but it's place to add some code
+		 * _bt_preprocess_keys disallows it, but it's place to add some code
 		 * later
 		 */
-		if (so->keyData[j].sk_flags & SK_ISNULL)
+		if (cur->sk_flags & SK_ISNULL)
 		{
-			pfree(nKeyIs);
+			pfree(startKeys);
 			pfree(scankeys);
 			elog(ERROR, "btree doesn't support is(not)null, yet");
 			return false;
 		}
 		/*
-		 * XXX what if sk_argtype is not same as index?
+		 * If scankey operator is of default subtype, we can use the
+		 * cached comparison procedure; otherwise gotta look it up in
+		 * the catalogs.
 		 */
-		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
-		ScanKeyEntryInitializeWithInfo(scankeys + i,
-									   so->keyData[j].sk_flags,
-									   i + 1,
-									   InvalidStrategy,
-									   procinfo,
-									   so->keyData[j].sk_argument,
-									   so->keyData[j].sk_argtype);
+		if (cur->sk_subtype == InvalidOid)
+		{
+			FmgrInfo   *procinfo;
+
+			procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
+			ScanKeyEntryInitializeWithInfo(scankeys + i,
+										   cur->sk_flags,
+										   i + 1,
+										   InvalidStrategy,
+										   InvalidOid,
+										   procinfo,
+										   cur->sk_argument);
+		}
+		else
+		{
+			RegProcedure cmp_proc;
+
+			cmp_proc = get_opclass_proc(rel->rd_index->indclass[i],
+										cur->sk_subtype,
+										BTORDER_PROC);
+			ScanKeyEntryInitialize(scankeys + i,
+								   cur->sk_flags,
+								   i + 1,
+								   InvalidStrategy,
+								   cur->sk_subtype,
+								   cmp_proc,
+								   cur->sk_argument);
+		}
 	}
-	if (nKeyIs)
-		pfree(nKeyIs);
+
+	pfree(startKeys);
 
 	current = &(scan->currentItemData);
 
@@ -607,7 +698,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 *
 	 * We could step forward in the latter case, but that'd be a waste of
 	 * time if we want to scan backwards.  So, it's now time to examine
-	 * the scan strategy to find the exact place to start the scan.
+	 * the initial-positioning strategy to find the exact place to start
+	 * the scan.
 	 *
 	 * Note: if _bt_step fails (meaning we fell off the end of the index in
 	 * one direction or the other), we either return false (no matches) or
@@ -855,8 +947,8 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 		}
 	}
 	else
-/* backwards scan */
 	{
+		/* backwards scan */
 		if (offnum > P_FIRSTDATAKEY(opaque))
 			offnum = OffsetNumberPrev(offnum);
 		else
@@ -1115,7 +1207,8 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 }
 
 /*
- *	_bt_endpoint() -- Find the first or last key in the index.
+ *	_bt_endpoint() -- Find the first or last key in the index, and scan
+ * from there to the first key satisfying all the quals.
  *
  * This is used by _bt_first() to set up a scan when we've determined
  * that the scan must start at the beginning or end of the index (for
@@ -1205,7 +1298,9 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, start));
 	itup = &(btitem->bti_itup);
 
-	/* see if we picked a winner */
+	/*
+	 * Okay, we are on the first or last tuple.  Does it pass all the quals?
+	 */
 	if (_bt_checkkeys(scan, itup, dir, &continuescan))
 	{
 		/* yes, return it */
@@ -1214,7 +1309,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	}
 	else if (continuescan)
 	{
-		/* no, but there might be another one that is */
+		/* no, but there might be another one that does */
 		res = _bt_next(scan, dir);
 	}
 	else

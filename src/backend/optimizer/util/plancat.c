@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.88 2003/11/09 21:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.89 2003/11/12 21:15:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #include "catalog/pg_amop.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_index.h"
-#include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
@@ -329,10 +328,10 @@ find_inheritance_children(Oid inhparent)
 	if (!has_subclass(inhparent))
 		return NIL;
 
-	ScanKeyEntryInitialize(&key[0], 0,
-						   Anum_pg_inherits_inhparent,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(inhparent), OIDOID);
+	ScanKeyInit(&key[0],
+				Anum_pg_inherits_inhparent,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(inhparent));
 	relation = heap_openr(InheritsRelationName, AccessShareLock);
 	scan = heap_beginscan(relation, SnapshotNow, 1, key);
 	while ((inheritsTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)

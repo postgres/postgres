@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.266 2003/11/09 21:30:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.267 2003/11/12 21:15:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,6 +272,17 @@ _copyIndexScan(IndexScan *from)
 			newstrat = lappend(newstrat, listCopy(lfirst(tmp)));
 		}
 		newnode->indxstrategy = newstrat;
+	}
+	/* this can become COPY_NODE_FIELD when OID lists are normal objects: */
+	{
+		List	*newsubtype = NIL;
+		List    *tmp;
+
+		foreach(tmp, from->indxsubtype)
+		{
+			newsubtype = lappend(newsubtype, listCopy(lfirst(tmp)));
+		}
+		newnode->indxsubtype = newsubtype;
 	}
 	COPY_SCALAR_FIELD(indxorderdir);
 

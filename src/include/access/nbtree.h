@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.72 2003/11/09 21:30:37 tgl Exp $
+ * $Id: nbtree.h,v 1.73 2003/11/12 21:15:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,7 +341,7 @@ typedef struct xl_btree_newpage
 
 /*
  *	Operator strategy numbers for B-tree have been moved to access/skey.h,
- *	because many places need to use them in ScanKeyEntryInitialize() calls.
+ *	because many places need to use them in ScanKeyInit() calls.
  */
 
 /*
@@ -404,12 +404,12 @@ typedef struct BTScanOpaqueData
 	Buffer		btso_mrkbuf;
 	ItemPointerData curHeapIptr;
 	ItemPointerData mrkHeapIptr;
-	/* these fields are set by _bt_orderkeys(), which see for more info: */
+	/* these fields are set by _bt_preprocess_keys(): */
 	bool		qual_ok;		/* false if qual can never be satisfied */
-	int			numberOfKeys;	/* number of scan keys */
+	int			numberOfKeys;	/* number of preprocessed scan keys */
 	int			numberOfRequiredKeys;	/* number of keys that must be
 										 * matched to continue the scan */
-	ScanKey		keyData;		/* array of scan keys */
+	ScanKey		keyData;		/* array of preprocessed scan keys */
 } BTScanOpaqueData;
 
 typedef BTScanOpaqueData *BTScanOpaque;
@@ -424,7 +424,6 @@ extern Datum btinsert(PG_FUNCTION_ARGS);
 extern Datum btgettuple(PG_FUNCTION_ARGS);
 extern Datum btbeginscan(PG_FUNCTION_ARGS);
 extern Datum btrescan(PG_FUNCTION_ARGS);
-extern void btmovescan(IndexScanDesc scan, Datum v);
 extern Datum btendscan(PG_FUNCTION_ARGS);
 extern Datum btmarkpos(PG_FUNCTION_ARGS);
 extern Datum btrestrpos(PG_FUNCTION_ARGS);
@@ -480,7 +479,7 @@ extern ScanKey _bt_mkscankey(Relation rel, IndexTuple itup);
 extern ScanKey _bt_mkscankey_nodata(Relation rel);
 extern void _bt_freeskey(ScanKey skey);
 extern void _bt_freestack(BTStack stack);
-extern void _bt_orderkeys(IndexScanDesc scan);
+extern void _bt_preprocess_keys(IndexScanDesc scan);
 extern bool _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 			  ScanDirection dir, bool *continuescan);
 extern BTItem _bt_formitem(IndexTuple itup);

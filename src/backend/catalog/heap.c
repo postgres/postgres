@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.254 2003/11/09 21:30:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.255 2003/11/12 21:15:48 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -853,11 +853,10 @@ RelationRemoveInheritance(Relation relation)
 
 	catalogRelation = heap_openr(InheritsRelationName, RowExclusiveLock);
 
-	ScanKeyEntryInitialize(&key, 0,
-						   Anum_pg_inherits_inhrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)),
-						   OIDOID);
+	ScanKeyInit(&key,
+				Anum_pg_inherits_inhrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	scan = systable_beginscan(catalogRelation, InheritsRelidSeqnoIndex, true,
 							  SnapshotNow, 1, &key);
@@ -920,10 +919,10 @@ DeleteAttributeTuples(Oid relid)
 	attrel = heap_openr(AttributeRelationName, RowExclusiveLock);
 
 	/* Use the index to scan only attributes of the target relation */
-	ScanKeyEntryInitialize(&key[0], 0,
-						   Anum_pg_attribute_attrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(relid), OIDOID);
+	ScanKeyInit(&key[0],
+				Anum_pg_attribute_attrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
 
 	scan = systable_beginscan(attrel, AttributeRelidNumIndex, true,
 							  SnapshotNow, 1, key);
@@ -1035,14 +1034,14 @@ RemoveAttrDefault(Oid relid, AttrNumber attnum,
 
 	attrdef_rel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
 
-	ScanKeyEntryInitialize(&scankeys[0], 0,
-						   Anum_pg_attrdef_adrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(relid), OIDOID);
-	ScanKeyEntryInitialize(&scankeys[1], 0,
-						   Anum_pg_attrdef_adnum,
-						   BTEqualStrategyNumber, F_INT2EQ,
-						   Int16GetDatum(attnum), INT2OID);
+	ScanKeyInit(&scankeys[0],
+				Anum_pg_attrdef_adrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
+	ScanKeyInit(&scankeys[1],
+				Anum_pg_attrdef_adnum,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(attnum));
 
 	scan = systable_beginscan(attrdef_rel, AttrDefaultIndex, true,
 							  SnapshotNow, 2, scankeys);
@@ -1092,10 +1091,10 @@ RemoveAttrDefaultById(Oid attrdefId)
 	attrdef_rel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
 
 	/* Find the pg_attrdef tuple */
-	ScanKeyEntryInitialize(&scankeys[0], 0,
-						   ObjectIdAttributeNumber,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(attrdefId), OIDOID);
+	ScanKeyInit(&scankeys[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(attrdefId));
 
 	scan = systable_beginscan(attrdef_rel, AttrDefaultOidIndex, true,
 							  SnapshotNow, 1, scankeys);
@@ -1829,10 +1828,10 @@ RemoveRelConstraints(Relation rel, const char *constrName,
 	conrel = heap_openr(ConstraintRelationName, RowExclusiveLock);
 
 	/* Use the index to scan only constraints of the target relation */
-	ScanKeyEntryInitialize(&key[0], 0,
-						   Anum_pg_constraint_conrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(rel)), OIDOID);
+	ScanKeyInit(&key[0],
+				Anum_pg_constraint_conrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(rel)));
 
 	conscan = systable_beginscan(conrel, ConstraintRelidIndex, true,
 								 SnapshotNow, 1, key);
@@ -1883,19 +1882,19 @@ RemoveStatistics(Relation rel, AttrNumber attnum)
 
 	pgstatistic = heap_openr(StatisticRelationName, RowExclusiveLock);
 
-	ScanKeyEntryInitialize(&key[0], 0,
-						   Anum_pg_statistic_starelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(rel)), OIDOID);
+	ScanKeyInit(&key[0],
+				Anum_pg_statistic_starelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(rel)));
 
 	if (attnum == 0)
 		nkeys = 1;
 	else
 	{
-		ScanKeyEntryInitialize(&key[1], 0,
-							   Anum_pg_statistic_staattnum,
-							   BTEqualStrategyNumber, F_INT2EQ,
-							   Int16GetDatum(attnum), INT2OID);
+		ScanKeyInit(&key[1],
+					Anum_pg_statistic_staattnum,
+					BTEqualStrategyNumber, F_INT2EQ,
+					Int16GetDatum(attnum));
 		nkeys = 2;
 	}
 
@@ -2050,10 +2049,10 @@ heap_truncate_check_FKs(Relation rel)
 	 */
 	fkeyRel = heap_openr(ConstraintRelationName, AccessShareLock);
 
-	ScanKeyEntryInitialize(&key, 0,
-						   Anum_pg_constraint_confrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(relid), OIDOID);
+	ScanKeyInit(&key,
+				Anum_pg_constraint_confrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
 
 	fkeyScan = systable_beginscan(fkeyRel, NULL, false,
 								  SnapshotNow, 1, &key);

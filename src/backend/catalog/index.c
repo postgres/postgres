@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.220 2003/11/09 21:30:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.221 2003/11/12 21:15:48 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -992,10 +992,10 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 	{
 		ScanKeyData key[1];
 
-		ScanKeyEntryInitialize(&key[0], 0,
-							   ObjectIdAttributeNumber,
-							   BTEqualStrategyNumber, F_OIDEQ,
-							   ObjectIdGetDatum(relid), OIDOID);
+		ScanKeyInit(&key[0],
+					ObjectIdAttributeNumber,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(relid));
 
 		pg_class_scan = heap_beginscan(pg_class, SnapshotNow, 1, key);
 		tuple = heap_getnext(pg_class_scan, ForwardScanDirection);
@@ -1195,10 +1195,10 @@ UpdateStats(Oid relid, double reltuples)
 	{
 		ScanKeyData key[1];
 
-		ScanKeyEntryInitialize(&key[0], 0,
-							   ObjectIdAttributeNumber,
-							   BTEqualStrategyNumber, F_OIDEQ,
-							   ObjectIdGetDatum(relid), OIDOID);
+		ScanKeyInit(&key[0],
+					ObjectIdAttributeNumber,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(relid));
 
 		pg_class_scan = heap_beginscan(pg_class, SnapshotNow, 1, key);
 		tuple = heap_getnext(pg_class_scan, ForwardScanDirection);

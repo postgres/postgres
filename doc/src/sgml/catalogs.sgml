@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.78 2003/11/02 12:53:57 petere Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.79 2003/11/12 21:15:42 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -500,6 +500,14 @@
      </row>
 
      <row>
+      <entry><structfield>amopsubtype</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>Subtype to distinguish multiple entries for one strategy;
+             zero for default</entry>
+     </row>
+
+     <row>
       <entry><structfield>amopstrategy</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
@@ -560,6 +568,13 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
       <entry>The index operator class this entry is for</entry>
+     </row>
+
+     <row>
+      <entry><structfield>amprocsubtype</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>Subtype, if cross-type routine, else zero</entry>
      </row>
 
      <row>
@@ -2435,7 +2450,7 @@
       <entry><structfield>opcintype</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
-      <entry>Input data type of the operator class</entry>
+      <entry>Data type that the operator class indexes</entry>
      </row>
 
      <row>
@@ -2449,7 +2464,7 @@
       <entry><structfield>opckeytype</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
-      <entry>Type of index data, or zero if same as <structfield>opcintype</></entry>
+      <entry>Type of data stored in index, or zero if same as <structfield>opcintype</></entry>
      </row>
 
     </tbody>

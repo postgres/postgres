@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.34 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.35 2003/11/12 21:15:45 tgl Exp $
 -->
 
 <sect1 id="xindex">
@@ -80,7 +80,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.34 2003/11/01 01:56:29 pete
    The same operator class name
    can be used for several different index methods (for example, both B-tree
    and hash index methods have operator classes named
-   <literal>oid_ops</literal>), but each such class is an independent
+   <literal>int4_ops</literal>), but each such class is an independent
    entity and must be defined separately.
   </para>
  </sect2>
@@ -586,6 +586,71 @@ CREATE OPERATOR CLASS complex_abs_ops
    The above example assumes that you want to make this new operator class the
    default B-tree operator class for the <type>complex</type> data type.
    If you don't, just leave out the word <literal>DEFAULT</>.
+  </para>
+ </sect2>
+
+ <sect2 id="xindex-opclass-crosstype">
+  <title>Cross-Data-Type Operator Classes</title>
+
+  <para>
+   So far we have implicitly assumed that an operator class deals with
+   only one data type.  While there certainly can be only one data type in
+   a particular index column, it is often useful to index operations that
+   compare an indexed column to a value of a different data type.  This is
+   presently supported by the B-tree and GiST index methods.
+  </para>
+
+  <para>
+   B-trees require the left-hand operand of each operator to be the indexed
+   data type, but the right-hand operand can be of a different type.  There
+   must be a support function having a matching signature.  For example,
+   the built-in operator class for type <type>bigint</> (<type>int8</>)
+   allows cross-type comparisons to <type>int4</> and <type>int2</>.  It
+   could be duplicated by this definition:
+
+<programlisting>
+CREATE OPERATOR CLASS int8_ops
+DEFAULT FOR TYPE int8 USING btree AS
+  -- standard int8 comparisons
+  OPERATOR 1 &lt; ,
+  OPERATOR 2 &lt;= ,
+  OPERATOR 3 = ,
+  OPERATOR 4 &gt;= ,
+  OPERATOR 5 &gt; ,
+  FUNCTION 1 btint8cmp(int8, int8) ,
+
+  -- cross-type comparisons to int2 (smallint)
+  OPERATOR 1 &lt; (int8, int2) ,
+  OPERATOR 2 &lt;= (int8, int2) ,
+  OPERATOR 3 = (int8, int2) ,
+  OPERATOR 4 &gt;= (int8, int2) ,
+  OPERATOR 5 &gt; (int8, int2) ,
+  FUNCTION 1 btint82cmp(int8, int2) ,
+
+  -- cross-type comparisons to int4 (integer)
+  OPERATOR 1 &lt; (int8, int4) ,
+  OPERATOR 2 &lt;= (int8, int4) ,
+  OPERATOR 3 = (int8, int4) ,
+  OPERATOR 4 &gt;= (int8, int4) ,
+  OPERATOR 5 &gt; (int8, int4) ,
+  FUNCTION 1 btint84cmp(int8, int4) ;
+</programlisting>
+
+   Notice that this definition <quote>overloads</> the operator strategy and
+   support function numbers.  This is allowed (for B-tree operator classes
+   only) so long as each instance of a particular number has a different
+   right-hand data type.  The instances that are not cross-type are the
+   default or primary operators of the operator class.
+  </para>
+
+  <para>
+   GiST indexes do not allow overloading of strategy or support function
+   numbers, but it is still possible to get the effect of supporting
+   multiple right-hand data types, by assigning a distinct strategy number
+   to each operator that needs to be supported.  The <literal>consistent</>
+   support function must determine what it needs to do based on the strategy
+   number, and must be prepared to accept comparison values of the appropriate
+   data types.
   </para>
  </sect2>
 

@@ -68,7 +68,7 @@ CREATE INDEX onek2_stu1_prtl ON onek2 USING btree(stringu1 name_ops)
 -- in the regression test (we check them using the sequoia 2000
 -- benchmark).
 --
-CREATE INDEX rect2ind ON fast_emp4000 USING rtree (home_base bigbox_ops);
+CREATE INDEX rect2ind ON fast_emp4000 USING rtree (home_base);
 
 -- there's no easy way to check that this command actually is using
 -- the index, unfortunately.  (EXPLAIN would work, but its output

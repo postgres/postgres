@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.125 2003/11/09 21:30:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.126 2003/11/12 21:15:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/indexing.h"
-#include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
@@ -531,10 +530,10 @@ dropdb(const char *dbname)
 	/*
 	 * Find the database's tuple by OID (should be unique).
 	 */
-	ScanKeyEntryInitialize(&key, 0,
-						   ObjectIdAttributeNumber,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(db_id), OIDOID);
+	ScanKeyInit(&key,
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(db_id));
 
 	pgdbscan = systable_beginscan(pgdbrel, DatabaseOidIndex, true,
 								  SnapshotNow, 1, &key);
@@ -616,10 +615,10 @@ RenameDatabase(const char *oldname, const char *newname)
 	 */
 	rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
 
-	ScanKeyEntryInitialize(&key, 0,
-						   Anum_pg_database_datname,
-						   BTEqualStrategyNumber, F_NAMEEQ,
-						   NameGetDatum(oldname), NAMEOID);
+	ScanKeyInit(&key,
+				Anum_pg_database_datname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(oldname));
 	scan = systable_beginscan(rel, DatabaseNameIndex, true,
 							  SnapshotNow, 1, &key);
 
@@ -651,10 +650,10 @@ RenameDatabase(const char *oldname, const char *newname)
 					  oldname)));
 
 	/* make sure the new name doesn't exist */
-	ScanKeyEntryInitialize(&key2, 0,
-						   Anum_pg_database_datname,
-						   BTEqualStrategyNumber, F_NAMEEQ,
-						   NameGetDatum(newname), NAMEOID);
+	ScanKeyInit(&key2,
+				Anum_pg_database_datname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(newname));
 	scan2 = systable_beginscan(rel, DatabaseNameIndex, true,
 							   SnapshotNow, 1, &key2);
 	if (HeapTupleIsValid(systable_getnext(scan2)))
@@ -712,10 +711,10 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	valuestr = flatten_set_variable_args(stmt->variable, stmt->value);
 
 	rel = heap_openr(DatabaseRelationName, RowExclusiveLock);
-	ScanKeyEntryInitialize(&scankey, 0,
-						   Anum_pg_database_datname,
-						   BTEqualStrategyNumber, F_NAMEEQ,
-						   NameGetDatum(stmt->dbname), NAMEOID);
+	ScanKeyInit(&scankey,
+				Anum_pg_database_datname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(stmt->dbname));
 	scan = systable_beginscan(rel, DatabaseNameIndex, true,
 							  SnapshotNow, 1, &scankey);
 	tuple = systable_getnext(scan);
@@ -795,10 +794,10 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 	/* Caller may wish to grab a better lock on pg_database beforehand... */
 	relation = heap_openr(DatabaseRelationName, AccessShareLock);
 
-	ScanKeyEntryInitialize(&scanKey, 0,
-						   Anum_pg_database_datname,
-						   BTEqualStrategyNumber, F_NAMEEQ,
-						   NameGetDatum(name), NAMEOID);
+	ScanKeyInit(&scanKey,
+				Anum_pg_database_datname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(name));
 
 	scan = systable_beginscan(relation, DatabaseNameIndex, true,
 							  SnapshotNow, 1, &scanKey);
@@ -1001,10 +1000,10 @@ get_database_oid(const char *dbname)
 
 	/* There's no syscache for pg_database, so must look the hard way */
 	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry[0], 0,
-						   Anum_pg_database_datname,
-						   BTEqualStrategyNumber, F_NAMEEQ,
-						   CStringGetDatum(dbname), NAMEOID);
+	ScanKeyInit(&entry[0],
+				Anum_pg_database_datname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(dbname));
 	scan = systable_beginscan(pg_database, DatabaseNameIndex, true,
 							  SnapshotNow, 1, entry);
 
@@ -1041,10 +1040,10 @@ get_database_name(Oid dbid)
 
 	/* There's no syscache for pg_database, so must look the hard way */
 	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry[0], 0,
-						   ObjectIdAttributeNumber,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(dbid), OIDOID);
+	ScanKeyInit(&entry[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(dbid));
 	scan = systable_beginscan(pg_database, DatabaseOidIndex, true,
 							  SnapshotNow, 1, entry);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.162 2003/11/09 21:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.163 2003/11/12 21:15:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1039,10 +1039,10 @@ find_inheritors(Oid relid, Oid **supervec)
 	{
 		/* find all types this relid inherits from, and add them to queue */
 
-		ScanKeyEntryInitialize(&skey, 0,
-							   Anum_pg_inherits_inhrelid,
-							   BTEqualStrategyNumber, F_OIDEQ,
-							   ObjectIdGetDatum(relid), OIDOID);
+		ScanKeyInit(&skey,
+					Anum_pg_inherits_inhrelid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(relid));
 
 		inhscan = heap_beginscan(inhrel, SnapshotNow, 1, &skey);
 

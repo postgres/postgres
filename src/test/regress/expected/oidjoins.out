@@ -129,6 +129,14 @@ WHERE	amopclaid != 0 AND
 ------+-----------
 (0 rows)
 
+SELECT	ctid, amopsubtype 
+FROM	pg_catalog.pg_amop fk 
+WHERE	amopsubtype != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.amopsubtype);
+ ctid | amopsubtype 
+------+-------------
+(0 rows)
+
 SELECT	ctid, amopopr 
 FROM	pg_catalog.pg_amop fk 
 WHERE	amopopr != 0 AND 
@@ -143,6 +151,14 @@ WHERE	amopclaid != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_opclass pk WHERE pk.oid = fk.amopclaid);
  ctid | amopclaid 
 ------+-----------
+(0 rows)
+
+SELECT	ctid, amprocsubtype 
+FROM	pg_catalog.pg_amproc fk 
+WHERE	amprocsubtype != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.amprocsubtype);
+ ctid | amprocsubtype 
+------+---------------
 (0 rows)
 
 SELECT	ctid, amproc 

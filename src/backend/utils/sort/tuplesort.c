@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.38 2003/11/09 21:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.39 2003/11/12 21:15:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -472,15 +472,14 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 						   &state->sortFnKinds[i]);
 
 		/*
-		 * We needn't fill in sk_strategy or sk_argtype since these scankeys
+		 * We needn't fill in sk_strategy or sk_subtype since these scankeys
 		 * will never be passed to an index.
 		 */
-		ScanKeyEntryInitialize(&state->scanKeys[i], 0,
-							   attNums[i],
-							   InvalidStrategy,
-							   sortFunction,
-							   (Datum) 0,
-							   InvalidOid);
+		ScanKeyInit(&state->scanKeys[i],
+					attNums[i],
+					InvalidStrategy,
+					sortFunction,
+					(Datum) 0);
 	}
 
 	return state;
@@ -1739,6 +1738,10 @@ SelectSortFunction(Oid sortOperator,
 
 		if (!opclass_is_btree(aform->amopclaid))
 			continue;
+		/* must be of default subtype, too */
+		if (aform->amopsubtype != InvalidOid)
+			continue;
+
 		if (aform->amopstrategy == BTLessStrategyNumber)
 		{
 			opclass = aform->amopclaid;
@@ -1757,8 +1760,8 @@ SelectSortFunction(Oid sortOperator,
 
 	if (OidIsValid(opclass))
 	{
-		/* Found a suitable opclass, get its comparator support function */
-		*sortFunction = get_opclass_proc(opclass, BTORDER_PROC);
+		/* Found a suitable opclass, get its default comparator function */
+		*sortFunction = get_opclass_proc(opclass, InvalidOid, BTORDER_PROC);
 		Assert(RegProcedureIsValid(*sortFunction));
 		return;
 	}

@@ -1357,10 +1357,10 @@ get_pkey_attnames(Oid relid, int16 *numatts)
 
 	/* use relid to get all related indexes */
 	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry, 0,
-						   Anum_pg_index_indrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(relid), OIDOID);
+	ScanKeyInit(&entry,
+				Anum_pg_index_indrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
 	scan = heap_beginscan(indexRelation, SnapshotNow, 1, &entry);
 
 	while ((indexTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)

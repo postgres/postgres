@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.147 2003/08/04 02:40:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.148 2003/11/12 21:15:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1072,7 +1072,7 @@ pred_test_recurse_pred(Expr *predicate, Node *clause)
  *
  *	 If you know, for some ATTR, that "ATTR given_op CONST1" is true, and you
  *	 want to determine whether "ATTR target_op CONST2" must also be true, then
- *	 you can use "CONST1 test_op CONST2" as a test.  If this test returns true,
+ *	 you can use "CONST2 test_op CONST1" as a test.  If this test returns true,
  *	 then the target expression must be true; if the test returns false, then
  *	 the target expression may be false.
  *
@@ -1082,11 +1082,11 @@ pred_test_recurse_pred(Expr *predicate, Node *clause)
 
 static const StrategyNumber
 			BT_implic_table[BTMaxStrategyNumber][BTMaxStrategyNumber] = {
-	{2, 2, 0, 0, 0},
-	{1, 2, 0, 0, 0},
-	{1, 2, 3, 4, 5},
-	{0, 0, 0, 4, 5},
-	{0, 0, 0, 4, 4}
+	{4, 4, 0, 0, 0},
+	{5, 4, 0, 0, 0},
+	{5, 4, 3, 2, 1},
+	{0, 0, 0, 2, 1},
+	{0, 0, 0, 2, 2}
 };
 
 
@@ -1118,12 +1118,13 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 			   *clause_const;
 	Oid			pred_op,
 				clause_op,
-				test_op;
-	Oid			opclass_id = InvalidOid;
+				test_op = InvalidOid;
+	Oid			opclass_id;
 	bool		found = false;
-	StrategyNumber pred_strategy = 0,
-				clause_strategy = 0,
+	StrategyNumber pred_strategy,
+				clause_strategy,
 				test_strategy;
+	Oid			clause_subtype;
 	Expr	   *test_expr;
 	ExprState  *test_exprstate;
 	Datum		test_result;
@@ -1140,7 +1141,9 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	/*
 	 * Can't do anything more unless they are both binary opclauses with a
 	 * Var on the left and a Const on the right.  (XXX someday try to
-	 * commute Const/Var cases?)
+	 * commute Const/Var cases?)  Note we don't have to think about binary
+	 * relabeling of the Const node, since that would have been folded right
+	 * into the Const.
 	 */
 	if (!is_opclause(predicate))
 		return false;
@@ -1173,14 +1176,20 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	clause_op = ((OpExpr *) clause)->opno;
 
 	/*
-	 * 1. Find "btree" strategy numbers for the pred_op and clause_op.
+	 * Try to find a btree opclass containing the needed operators.
 	 *
 	 * We must find a btree opclass that contains both operators, else the
-	 * implication can't be determined.  If there are multiple such
-	 * opclasses, assume we can use any one to determine the logical
-	 * relationship of the two operators and the correct corresponding
-	 * test operator.  This should work for any logically consistent
-	 * opclasses.
+	 * implication can't be determined.  Also, the pred_op has to be of
+	 * default subtype (implying left and right input datatypes are the same);
+	 * otherwise it's unsafe to put the pred_const on the left side of the
+	 * test.  Also, the opclass must contain a suitable test operator
+	 * matching the clause_const's type (which we take to mean that it has
+	 * the same subtype as the original clause_operator).
+	 *
+	 * If there are multiple matching opclasses, assume we can use any one to
+	 * determine the logical relationship of the two operators and the correct
+	 * corresponding test operator.  This should work for any logically
+	 * consistent opclasses.
 	 */
 	catlist = SearchSysCacheList(AMOPOPID, 1,
 								 ObjectIdGetDatum(pred_op),
@@ -1192,7 +1201,13 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 		Form_pg_amop pred_form = (Form_pg_amop) GETSTRUCT(pred_tuple);
 		HeapTuple	clause_tuple;
 
-		if (!opclass_is_btree(pred_form->amopclaid))
+		opclass_id = pred_form->amopclaid;
+
+		/* must be btree */
+		if (!opclass_is_btree(opclass_id))
+			continue;
+		/* predicate operator must be default within this opclass */
+		if (pred_form->amopsubtype != InvalidOid)
 			continue;
 
 		/* Get the predicate operator's btree strategy number */
@@ -1200,12 +1215,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 		Assert(pred_strategy >= 1 && pred_strategy <= 5);
 
 		/*
-		 * Remember which operator class this strategy number came from
-		 */
-		opclass_id = pred_form->amopclaid;
-
-		/*
-		 * From the same opclass, find a strategy num for the clause_op,
+		 * From the same opclass, find a strategy number for the clause_op,
 		 * if possible
 		 */
 		clause_tuple = SearchSysCache(AMOPOPID,
@@ -1216,13 +1226,35 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 		{
 			Form_pg_amop clause_form = (Form_pg_amop) GETSTRUCT(clause_tuple);
 
-			/* Get the restriction clause operator's strategy number */
+			/* Get the restriction clause operator's strategy/subtype */
 			clause_strategy = (StrategyNumber) clause_form->amopstrategy;
 			Assert(clause_strategy >= 1 && clause_strategy <= 5);
+			clause_subtype = clause_form->amopsubtype;
 
+			/* done with clause_tuple */
 			ReleaseSysCache(clause_tuple);
-			found = true;
-			break;
+
+			/*
+			 * Look up the "test" strategy number in the implication table
+			 */
+			test_strategy = BT_implic_table[clause_strategy - 1][pred_strategy - 1];
+			if (test_strategy == 0)
+			{
+				/* Can't determine implication using this interpretation */
+				continue;
+			}
+
+			/*
+			 * See if opclass has an operator for the test strategy and the
+			 * clause datatype.
+			 */
+			test_op = get_opclass_member(opclass_id, clause_subtype,
+										 test_strategy);
+			if (OidIsValid(test_op))
+			{
+				found = true;
+				break;
+			}
 		}
 	}
 
@@ -1235,25 +1267,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	}
 
 	/*
-	 * 2. Look up the "test" strategy number in the implication table
-	 */
-	test_strategy = BT_implic_table[clause_strategy - 1][pred_strategy - 1];
-	if (test_strategy == 0)
-		return false;			/* the implication cannot be determined */
-
-	/*
-	 * 3. From the same opclass, find the operator for the test strategy
-	 */
-	test_op = get_opclass_member(opclass_id, test_strategy);
-	if (!OidIsValid(test_op))
-	{
-		/* This should not fail, else pg_amop entry is missing */
-		elog(ERROR, "missing pg_amop entry for opclass %u strategy %d",
-			 opclass_id, test_strategy);
-	}
-
-	/*
-	 * 4. Evaluate the test.  For this we need an EState.
+	 * Evaluate the test.  For this we need an EState.
 	 */
 	estate = CreateExecutorState();
 
@@ -1264,8 +1278,8 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	test_expr = make_opclause(test_op,
 							  BOOLOID,
 							  false,
-							  (Expr *) clause_const,
-							  (Expr *) pred_const);
+							  (Expr *) pred_const,
+							  (Expr *) clause_const);
 
 	/* Prepare it for execution */
 	test_exprstate = ExecPrepareExpr(test_expr, estate);
@@ -1907,7 +1921,7 @@ match_special_index_operator(Expr *clause, Oid opclass,
  * (The latter is not depended on by any part of the planner, so far as I can
  * tell; but some parts of the executor do assume that the indxqual list
  * ultimately delivered to the executor is so ordered.	One such place is
- * _bt_orderkeys() in the btree support.  Perhaps that ought to be fixed
+ * _bt_preprocess_keys() in the btree support.  Perhaps that ought to be fixed
  * someday --- tgl 7/00)
  */
 List *
@@ -2103,7 +2117,8 @@ prefix_quals(Node *leftop, Oid opclass,
 	 */
 	if (pstatus == Pattern_Prefix_Exact)
 	{
-		oproid = get_opclass_member(opclass, BTEqualStrategyNumber);
+		oproid = get_opclass_member(opclass, InvalidOid,
+									BTEqualStrategyNumber);
 		if (oproid == InvalidOid)
 			elog(ERROR, "no = operator for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
@@ -2117,7 +2132,8 @@ prefix_quals(Node *leftop, Oid opclass,
 	 *
 	 * We can always say "x >= prefix".
 	 */
-	oproid = get_opclass_member(opclass, BTGreaterEqualStrategyNumber);
+	oproid = get_opclass_member(opclass, InvalidOid,
+								BTGreaterEqualStrategyNumber);
 	if (oproid == InvalidOid)
 		elog(ERROR, "no >= operator for opclass %u", opclass);
 	expr = make_opclause(oproid, BOOLOID, false,
@@ -2132,7 +2148,8 @@ prefix_quals(Node *leftop, Oid opclass,
 	greaterstr = make_greater_string(prefix_const);
 	if (greaterstr)
 	{
-		oproid = get_opclass_member(opclass, BTLessStrategyNumber);
+		oproid = get_opclass_member(opclass, InvalidOid,
+									BTLessStrategyNumber);
 		if (oproid == InvalidOid)
 			elog(ERROR, "no < operator for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
@@ -2189,13 +2206,15 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 	 */
 	if (is_eq)
 	{
-		opr1oid = get_opclass_member(opclass, BTGreaterEqualStrategyNumber);
+		opr1oid = get_opclass_member(opclass, InvalidOid,
+									 BTGreaterEqualStrategyNumber);
 		if (opr1oid == InvalidOid)
 			elog(ERROR, "no >= operator for opclass %u", opclass);
 	}
 	else
 	{
-		opr1oid = get_opclass_member(opclass, BTGreaterStrategyNumber);
+		opr1oid = get_opclass_member(opclass, InvalidOid,
+									 BTGreaterStrategyNumber);
 		if (opr1oid == InvalidOid)
 			elog(ERROR, "no > operator for opclass %u", opclass);
 	}
@@ -2210,7 +2229,8 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 
 	/* create clause "key <= network_scan_last( rightop )" */
 
-	opr2oid = get_opclass_member(opclass, BTLessEqualStrategyNumber);
+	opr2oid = get_opclass_member(opclass, InvalidOid,
+								 BTLessEqualStrategyNumber);
 	if (opr2oid == InvalidOid)
 		elog(ERROR, "no <= operator for opclass %u", opclass);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.161 2003/11/09 21:30:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.162 2003/11/12 21:15:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,10 +253,10 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	 * relation, so the trigger set won't be changing underneath us.
 	 */
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
-	ScanKeyEntryInitialize(&key, 0,
-						   Anum_pg_trigger_tgrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(rel)), OIDOID);
+	ScanKeyInit(&key,
+				Anum_pg_trigger_tgrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(rel)));
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
 								SnapshotNow, 1, &key);
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
@@ -465,15 +465,15 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
 	 */
 	tgrel = heap_openr(TriggerRelationName, AccessShareLock);
 
-	ScanKeyEntryInitialize(&skey[0], 0,
-						   Anum_pg_trigger_tgrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(relid), OIDOID);
+	ScanKeyInit(&skey[0],
+				Anum_pg_trigger_tgrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
 
-	ScanKeyEntryInitialize(&skey[1], 0,
-						   Anum_pg_trigger_tgname,
-						   BTEqualStrategyNumber, F_NAMEEQ,
-						   CStringGetDatum(trigname), NAMEOID);
+	ScanKeyInit(&skey[1],
+				Anum_pg_trigger_tgname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(trigname));
 
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
 								SnapshotNow, 2, skey);
@@ -524,10 +524,10 @@ RemoveTriggerById(Oid trigOid)
 	/*
 	 * Find the trigger to delete.
 	 */
-	ScanKeyEntryInitialize(&skey[0], 0,
-						   ObjectIdAttributeNumber,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(trigOid), OIDOID);
+	ScanKeyInit(&skey[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(trigOid));
 
 	tgscan = systable_beginscan(tgrel, TriggerOidIndex, true,
 								SnapshotNow, 1, skey);
@@ -641,14 +641,14 @@ renametrig(Oid relid,
 	/*
 	 * First pass -- look for name conflict
 	 */
-	ScanKeyEntryInitialize(&key[0], 0,
-						   Anum_pg_trigger_tgrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(relid), OIDOID);
-	ScanKeyEntryInitialize(&key[1], 0,
-						   Anum_pg_trigger_tgname,
-						   BTEqualStrategyNumber, F_NAMEEQ,
-						   PointerGetDatum(newname), NAMEOID);
+	ScanKeyInit(&key[0],
+				Anum_pg_trigger_tgrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
+	ScanKeyInit(&key[1],
+				Anum_pg_trigger_tgname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				PointerGetDatum(newname));
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
 								SnapshotNow, 2, key);
 	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
@@ -661,14 +661,14 @@ renametrig(Oid relid,
 	/*
 	 * Second pass -- look for trigger existing with oldname and update
 	 */
-	ScanKeyEntryInitialize(&key[0], 0,
-						   Anum_pg_trigger_tgrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(relid), OIDOID);
-	ScanKeyEntryInitialize(&key[1], 0,
-						   Anum_pg_trigger_tgname,
-						   BTEqualStrategyNumber, F_NAMEEQ,
-						   PointerGetDatum(oldname), NAMEOID);
+	ScanKeyInit(&key[0],
+				Anum_pg_trigger_tgrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
+	ScanKeyInit(&key[1],
+				Anum_pg_trigger_tgname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				PointerGetDatum(oldname));
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
 								SnapshotNow, 2, key);
 	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
@@ -744,11 +744,10 @@ RelationBuildTriggers(Relation relation)
 	 * emergency-recovery operations (ie, IsIgnoringSystemIndexes). This
 	 * in turn ensures that triggers will be fired in name order.
 	 */
-	ScanKeyEntryInitialize(&skey, 0,
-						   Anum_pg_trigger_tgrelid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(RelationGetRelid(relation)),
-						   OIDOID);
+	ScanKeyInit(&skey,
+				Anum_pg_trigger_tgrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	tgrel = heap_openr(TriggerRelationName, AccessShareLock);
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
@@ -2262,10 +2261,10 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			/*
 			 * Setup to scan pg_trigger by tgconstrname ...
 			 */
-			ScanKeyEntryInitialize(&skey, 0,
-								   Anum_pg_trigger_tgconstrname,
-								   BTEqualStrategyNumber, F_NAMEEQ,
-								   PointerGetDatum(cname), NAMEOID);
+			ScanKeyInit(&skey,
+						Anum_pg_trigger_tgconstrname,
+						BTEqualStrategyNumber, F_NAMEEQ,
+						PointerGetDatum(cname));
 
 			tgscan = systable_beginscan(tgrel, TriggerConstrNameIndex, true,
 										SnapshotNow, 1, &skey);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.69 2003/11/09 21:30:38 tgl Exp $
+ * $Id: rel.h,v 1.70 2003/11/12 21:15:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,8 +139,8 @@ typedef struct RelationData
 	/*
 	 * index access support info (used only for an index relation)
 	 *
-	 * Note: only operators and support procs for the index's own datatype
-	 * are cached, not any cross-type operators.  The arrays are indexed by
+	 * Note: only default operators and support procs for each opclass are
+	 * cached, namely those with subtype zero.  The arrays are indexed by
 	 * strategy or support number, which is a sufficient identifier given
 	 * that restriction.
 	 */

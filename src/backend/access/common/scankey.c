@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.23 2003/11/09 21:30:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.24 2003/11/12 21:15:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,15 +31,43 @@ ScanKeyEntryInitialize(ScanKey entry,
 					   int flags,
 					   AttrNumber attributeNumber,
 					   StrategyNumber strategy,
+					   Oid subtype,
 					   RegProcedure procedure,
-					   Datum argument,
-					   Oid argtype)
+					   Datum argument)
 {
 	entry->sk_flags = flags;
 	entry->sk_attno = attributeNumber;
 	entry->sk_strategy = strategy;
+	entry->sk_subtype = subtype;
 	entry->sk_argument = argument;
-	entry->sk_argtype = argtype;
+	fmgr_info(procedure, &entry->sk_func);
+}
+
+/*
+ * ScanKeyInit
+ *		Shorthand version of ScanKeyEntryInitialize: flags and subtype
+ *		are assumed to be zero (the usual value).
+ *
+ * This is the recommended version for hardwired lookups in system catalogs.
+ * It cannot handle NULL arguments, unary operators, or nondefault operators,
+ * but we need none of those features for most hardwired lookups.
+ *
+ * Note: CurrentMemoryContext at call should be as long-lived as the ScanKey
+ * itself, because that's what will be used for any subsidiary info attached
+ * to the ScanKey's FmgrInfo record.
+ */
+void
+ScanKeyInit(ScanKey entry,
+			AttrNumber attributeNumber,
+			StrategyNumber strategy,
+			RegProcedure procedure,
+			Datum argument)
+{
+	entry->sk_flags = 0;
+	entry->sk_attno = attributeNumber;
+	entry->sk_strategy = strategy;
+	entry->sk_subtype = InvalidOid;
+	entry->sk_argument = argument;
 	fmgr_info(procedure, &entry->sk_func);
 }
 
@@ -57,14 +85,14 @@ ScanKeyEntryInitializeWithInfo(ScanKey entry,
 							   int flags,
 							   AttrNumber attributeNumber,
 							   StrategyNumber strategy,
+							   Oid subtype,
 							   FmgrInfo *finfo,
-							   Datum argument,
-							   Oid argtype)
+							   Datum argument)
 {
 	entry->sk_flags = flags;
 	entry->sk_attno = attributeNumber;
 	entry->sk_strategy = strategy;
+	entry->sk_subtype = subtype;
 	entry->sk_argument = argument;
-	entry->sk_argtype = argtype;
 	fmgr_info_copy(&entry->sk_func, finfo, CurrentMemoryContext);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.85 2003/11/09 21:30:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.86 2003/11/12 21:15:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,6 @@
 #include "miscadmin.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
-#include "parser/parse_expr.h"
 #include "parser/parsetree.h"
 
 
@@ -615,6 +614,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	IndexScanState *indexstate;
 	List	   *indxqual;
 	List	   *indxstrategy;
+	List	   *indxsubtype;
 	List	   *indxid;
 	int			i;
 	int			numIndices;
@@ -711,10 +711,12 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	 */
 	indxqual = node->indxqual;
 	indxstrategy = node->indxstrategy;
+	indxsubtype = node->indxsubtype;
 	for (i = 0; i < numIndices; i++)
 	{
 		List	   *quals;
 		List	   *strategies;
+		List	   *subtypes;
 		int			n_keys;
 		ScanKey		scan_keys;
 		ExprState **run_keys;
@@ -724,6 +726,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 		indxqual = lnext(indxqual);
 		strategies = lfirst(indxstrategy);
 		indxstrategy = lnext(indxstrategy);
+		subtypes = lfirst(indxsubtype);
+		indxsubtype = lnext(indxsubtype);
 		n_keys = length(quals);
 		scan_keys = (n_keys <= 0) ? (ScanKey) NULL :
 			(ScanKey) palloc(n_keys * sizeof(ScanKeyData));
@@ -742,9 +746,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 			int			flags = 0;
 			AttrNumber	varattno;		/* att number used in scan */
 			StrategyNumber strategy;	/* op's strategy number */
+			Oid			subtype;		/* op's strategy subtype */
 			RegProcedure opfuncid;		/* operator proc id used in scan */
 			Datum		scanvalue;		/* value used in scan (if const) */
-			Oid			rhstype;		/* datatype of comparison value */
 
 			/*
 			 * extract clause information from the qualification
@@ -753,6 +757,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 			quals = lnext(quals);
 			strategy = lfirsti(strategies);
 			strategies = lnext(strategies);
+			subtype = lfirsto(subtypes);
+			subtypes = lnext(subtypes);
 
 			if (!IsA(clause, OpExpr))
 				elog(ERROR, "indxqual is not an OpExpr");
@@ -795,8 +801,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 			 */
 			rightop = (Expr *) get_rightop((Expr *) clause);
 
-			rhstype = exprType((Node *) rightop);
-
 			if (rightop && IsA(rightop, RelabelType))
 				rightop = ((RelabelType *) rightop)->arg;
 
@@ -832,9 +836,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 								   varattno,	/* attribute number to
 												 * scan */
 								   strategy,	/* op's strategy */
+								   subtype,		/* strategy subtype */
 								   opfuncid,	/* reg proc to use */
-								   scanvalue,	/* constant */
-								   rhstype);	/* constant's type */
+								   scanvalue);	/* constant */
 		}
 
 		/*

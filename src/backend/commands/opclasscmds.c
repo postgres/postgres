@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.22 2003/11/09 21:30:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.23 2003/11/12 21:15:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,8 @@
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
@@ -38,9 +40,24 @@
 #include "utils/syscache.h"
 
 
-static void storeOperators(Oid opclassoid, int numOperators,
-			   Oid *operators, bool *recheck);
-static void storeProcedures(Oid opclassoid, int numProcs, Oid *procedures);
+/*
+ * We use lists of this struct type to keep track of both operators and
+ * procedures during DefineOpClass.
+ */
+typedef struct
+{
+	Oid			object;			/* operator or support proc's OID */
+	int			number;			/* strategy or support proc number */
+	Oid			subtype;		/* subtype */
+	bool		recheck;		/* oper recheck flag (unused for proc) */
+} OpClassMember;
+
+
+static Oid	assignOperSubtype(Oid amoid, Oid typeoid, Oid operOid);
+static Oid	assignProcSubtype(Oid amoid, Oid typeoid, Oid procOid);
+static void addClassMember(List **list, OpClassMember *member, bool isProc);
+static void storeOperators(Oid opclassoid, List *operators);
+static void storeProcedures(Oid opclassoid, List *procedures);
 
 
 /*
@@ -58,10 +75,9 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				opclassoid;		/* oid of opclass we create */
 	int			numOperators,	/* amstrategies value */
 				numProcs;		/* amsupport value */
-	Oid		   *operators,		/* oids of operators, by strategy num */
-			   *procedures;		/* oids of support procs */
-	bool	   *recheck;		/* do operators need recheck */
-	List	   *iteml;
+	List	   *operators;		/* OpClassMember list for operators */
+	List	   *procedures;		/* OpClassMember list for support procs */
+	List	   *l;
 	Relation	rel;
 	HeapTuple	tup;
 	Datum		values[Natts_pg_opclass];
@@ -123,26 +139,21 @@ DefineOpClass(CreateOpClassStmt *stmt)
 					   format_type_be(typeoid));
 #endif
 
+	operators = NIL;
+	procedures = NIL;
+
 	/* Storage datatype is optional */
 	storageoid = InvalidOid;
 
 	/*
-	 * Create work arrays to hold info about operators and procedures. We
-	 * do this mainly so that we can detect duplicate strategy numbers and
-	 * support-proc numbers.
-	 */
-	operators = (Oid *) palloc0(sizeof(Oid) * numOperators);
-	procedures = (Oid *) palloc0(sizeof(Oid) * numProcs);
-	recheck = (bool *) palloc0(sizeof(bool) * numOperators);
-
-	/*
 	 * Scan the "items" list to obtain additional info.
 	 */
-	foreach(iteml, stmt->items)
+	foreach(l, stmt->items)
 	{
-		CreateOpClassItem *item = lfirst(iteml);
+		CreateOpClassItem *item = lfirst(l);
 		Oid			operOid;
 		Oid			funcOid;
+		OpClassMember *member;
 		AclResult	aclresult;
 
 		Assert(IsA(item, CreateOpClassItem));
@@ -155,11 +166,6 @@ DefineOpClass(CreateOpClassStmt *stmt)
 							 errmsg("invalid operator number %d,"
 									" must be between 1 and %d",
 									item->number, numOperators)));
-				if (operators[item->number - 1] != InvalidOid)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					  errmsg("operator number %d appears more than once",
-							 item->number)));
 				if (item->args != NIL)
 				{
 					TypeName   *typeName1 = (TypeName *) lfirst(item->args);
@@ -183,8 +189,13 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				if (aclresult != ACLCHECK_OK)
 					aclcheck_error(aclresult, ACL_KIND_PROC,
 								   get_func_name(funcOid));
-				operators[item->number - 1] = operOid;
-				recheck[item->number - 1] = item->recheck;
+				/* Save the info */
+				member = (OpClassMember *) palloc0(sizeof(OpClassMember));
+				member->object = operOid;
+				member->number = item->number;
+				member->subtype = assignOperSubtype(amoid, typeoid, operOid);
+				member->recheck = item->recheck;
+				addClassMember(&operators, member, false);
 				break;
 			case OPCLASS_ITEM_FUNCTION:
 				if (item->number <= 0 || item->number > numProcs)
@@ -193,11 +204,6 @@ DefineOpClass(CreateOpClassStmt *stmt)
 							 errmsg("invalid procedure number %d,"
 									" must be between 1 and %d",
 									item->number, numProcs)));
-				if (procedures[item->number - 1] != InvalidOid)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-							 errmsg("procedure number %d appears more than once",
-									item->number)));
 				funcOid = LookupFuncNameTypeNames(item->name, item->args,
 												  false);
 				/* Caller must have execute permission on functions */
@@ -206,7 +212,12 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				if (aclresult != ACLCHECK_OK)
 					aclcheck_error(aclresult, ACL_KIND_PROC,
 								   get_func_name(funcOid));
-				procedures[item->number - 1] = funcOid;
+				/* Save the info */
+				member = (OpClassMember *) palloc0(sizeof(OpClassMember));
+				member->object = funcOid;
+				member->number = item->number;
+				member->subtype = assignProcSubtype(amoid, typeoid, funcOid);
+				addClassMember(&procedures, member, true);
 				break;
 			case OPCLASS_ITEM_STORAGETYPE:
 				if (OidIsValid(storageoid))
@@ -271,10 +282,10 @@ DefineOpClass(CreateOpClassStmt *stmt)
 		ScanKeyData skey[1];
 		SysScanDesc scan;
 
-		ScanKeyEntryInitialize(&skey[0], 0,
-							   Anum_pg_opclass_opcamid,
-							   BTEqualStrategyNumber, F_OIDEQ,
-							   ObjectIdGetDatum(amoid), OIDOID);
+		ScanKeyInit(&skey[0],
+					Anum_pg_opclass_opcamid,
+					BTEqualStrategyNumber, F_OIDEQ,
+					ObjectIdGetDatum(amoid));
 
 		scan = systable_beginscan(rel, OpclassAmNameNspIndex, true,
 								  SnapshotNow, 1, skey);
@@ -327,8 +338,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	 * Now add tuples to pg_amop and pg_amproc tying in the operators and
 	 * functions.
 	 */
-	storeOperators(opclassoid, numOperators, operators, recheck);
-	storeProcedures(opclassoid, numProcs, procedures);
+	storeOperators(opclassoid, operators);
+	storeProcedures(opclassoid, procedures);
 
 	/*
 	 * Create dependencies.  Note: we do not create a dependency link to
@@ -361,22 +372,22 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	/* dependencies on operators */
 	referenced.classId = get_system_catalog_relid(OperatorRelationName);
-	for (i = 0; i < numOperators; i++)
+	foreach(l, operators)
 	{
-		if (operators[i] == InvalidOid)
-			continue;
-		referenced.objectId = operators[i];
+		OpClassMember *op = (OpClassMember *) lfirst(l);
+
+		referenced.objectId = op->object;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
 	/* dependencies on procedures */
-	for (i = 0; i < numProcs; i++)
+	foreach(l, procedures)
 	{
-		if (procedures[i] == InvalidOid)
-			continue;
+		OpClassMember *proc = (OpClassMember *) lfirst(l);
+
 		referenced.classId = RelOid_pg_proc;
-		referenced.objectId = procedures[i];
+		referenced.objectId = proc->object;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
@@ -385,25 +396,158 @@ DefineOpClass(CreateOpClassStmt *stmt)
 }
 
 /*
+ * Determine the subtype to assign to an operator, and do any validity
+ * checking we can manage
+ *
+ * Currently this is done using hardwired rules; we don't let the user
+ * specify it directly.
+ */
+static Oid
+assignOperSubtype(Oid amoid, Oid typeoid, Oid operOid)
+{
+	Oid			subtype;
+	Operator	optup;
+	Form_pg_operator opform;
+
+	/* Subtypes are currently only supported by btree, others use 0 */
+	if (amoid != BTREE_AM_OID)
+		return InvalidOid;
+
+	optup = SearchSysCache(OPEROID,
+						   ObjectIdGetDatum(operOid),
+						   0, 0, 0);
+	if (optup == NULL)
+		elog(ERROR, "cache lookup failed for operator %u", operOid);
+	opform = (Form_pg_operator) GETSTRUCT(optup);
+	/*
+	 * btree operators must be binary ops returning boolean, and the
+	 * left-side input type must match the operator class' input type.
+	 */
+	if (opform->oprkind != 'b')
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("btree operators must be binary")));
+	if (opform->oprresult != BOOLOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("btree operators must return boolean")));
+	if (opform->oprleft != typeoid)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("btree operators must have index type as left input")));
+	/*
+	 * The subtype is "default" (0) if oprright matches the operator class,
+	 * otherwise it is oprright.
+	 */
+	if (opform->oprright == typeoid)
+		subtype = InvalidOid;
+	else
+		subtype = opform->oprright;
+	ReleaseSysCache(optup);
+	return subtype;
+}
+
+/*
+ * Determine the subtype to assign to a support procedure, and do any validity
+ * checking we can manage
+ *
+ * Currently this is done using hardwired rules; we don't let the user
+ * specify it directly.
+ */
+static Oid
+assignProcSubtype(Oid amoid, Oid typeoid, Oid procOid)
+{
+	Oid			subtype;
+	HeapTuple	proctup;
+	Form_pg_proc procform;
+
+	/* Subtypes are currently only supported by btree, others use 0 */
+	if (amoid != BTREE_AM_OID)
+		return InvalidOid;
+
+	proctup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(procOid),
+							 0, 0, 0);
+	if (proctup == NULL)
+		elog(ERROR, "cache lookup failed for function %u", procOid);
+	procform = (Form_pg_proc) GETSTRUCT(proctup);
+	/*
+	 * btree support procs must be 2-arg procs returning int4, and the
+	 * first input type must match the operator class' input type.
+	 */
+	if (procform->pronargs != 2)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("btree procedures must have two arguments")));
+	if (procform->prorettype != INT4OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("btree procedures must return integer")));
+	if (procform->proargtypes[0] != typeoid)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("btree procedures must have index type as first input")));
+	/*
+	 * The subtype is "default" (0) if second input type matches the operator
+	 * class, otherwise it is the second input type.
+	 */
+	if (procform->proargtypes[1] == typeoid)
+		subtype = InvalidOid;
+	else
+		subtype = procform->proargtypes[1];
+	ReleaseSysCache(proctup);
+	return subtype;
+}
+
+/*
+ * Add a new class member to the appropriate list, after checking for
+ * duplicated strategy or proc number.
+ */
+static void
+addClassMember(List **list, OpClassMember *member, bool isProc)
+{
+	List	   *l;
+
+	foreach(l, *list)
+	{
+		OpClassMember *old = (OpClassMember *) lfirst(l);
+
+		if (old->number == member->number &&
+			old->subtype == member->subtype)
+		{
+			if (isProc)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("procedure number %d appears more than once",
+								member->number)));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+						 errmsg("operator number %d appears more than once",
+								member->number)));
+		}
+	}
+	*list = lappend(*list, member);
+}
+
+/*
  * Dump the operators to pg_amop
  */
 static void
-storeOperators(Oid opclassoid, int numOperators,
-			   Oid *operators, bool *recheck)
+storeOperators(Oid opclassoid, List *operators)
 {
 	Relation	rel;
 	Datum		values[Natts_pg_amop];
 	char		nulls[Natts_pg_amop];
 	HeapTuple	tup;
-	int			i,
-				j;
+	List	   *l;
+	int			i;
 
 	rel = heap_openr(AccessMethodOperatorRelationName, RowExclusiveLock);
 
-	for (j = 0; j < numOperators; j++)
+	foreach(l, operators)
 	{
-		if (operators[j] == InvalidOid)
-			continue;
+		OpClassMember *op = (OpClassMember *) lfirst(l);
 
 		for (i = 0; i < Natts_pg_amop; ++i)
 		{
@@ -413,9 +557,10 @@ storeOperators(Oid opclassoid, int numOperators,
 
 		i = 0;
 		values[i++] = ObjectIdGetDatum(opclassoid);		/* amopclaid */
-		values[i++] = Int16GetDatum(j + 1);		/* amopstrategy */
-		values[i++] = BoolGetDatum(recheck[j]); /* amopreqcheck */
-		values[i++] = ObjectIdGetDatum(operators[j]);	/* amopopr */
+		values[i++] = ObjectIdGetDatum(op->subtype);	/* amopsubtype */
+		values[i++] = Int16GetDatum(op->number);		/* amopstrategy */
+		values[i++] = BoolGetDatum(op->recheck);		/* amopreqcheck */
+		values[i++] = ObjectIdGetDatum(op->object);		/* amopopr */
 
 		tup = heap_formtuple(rel->rd_att, values, nulls);
 
@@ -433,21 +578,20 @@ storeOperators(Oid opclassoid, int numOperators,
  * Dump the procedures (support routines) to pg_amproc
  */
 static void
-storeProcedures(Oid opclassoid, int numProcs, Oid *procedures)
+storeProcedures(Oid opclassoid, List *procedures)
 {
 	Relation	rel;
 	Datum		values[Natts_pg_amproc];
 	char		nulls[Natts_pg_amproc];
 	HeapTuple	tup;
-	int			i,
-				j;
+	List	   *l;
+	int			i;
 
 	rel = heap_openr(AccessMethodProcedureRelationName, RowExclusiveLock);
 
-	for (j = 0; j < numProcs; j++)
+	foreach(l, procedures)
 	{
-		if (procedures[j] == InvalidOid)
-			continue;
+		OpClassMember *proc = (OpClassMember *) lfirst(l);
 
 		for (i = 0; i < Natts_pg_amproc; ++i)
 		{
@@ -457,8 +601,9 @@ storeProcedures(Oid opclassoid, int numProcs, Oid *procedures)
 
 		i = 0;
 		values[i++] = ObjectIdGetDatum(opclassoid);		/* amopclaid */
-		values[i++] = Int16GetDatum(j + 1);		/* amprocnum */
-		values[i++] = ObjectIdGetDatum(procedures[j]);	/* amproc */
+		values[i++] = ObjectIdGetDatum(proc->subtype);	/* amprocsubtype */
+		values[i++] = Int16GetDatum(proc->number);		/* amprocnum */
+		values[i++] = ObjectIdGetDatum(proc->object);	/* amproc */
 
 		tup = heap_formtuple(rel->rd_att, values, nulls);
 
@@ -590,10 +735,10 @@ RemoveOpClassById(Oid opclassOid)
 	/*
 	 * Remove associated entries in pg_amop.
 	 */
-	ScanKeyEntryInitialize(&skey[0], 0,
-						   Anum_pg_amop_amopclaid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(opclassOid), OIDOID);
+	ScanKeyInit(&skey[0],
+				Anum_pg_amop_amopclaid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(opclassOid));
 
 	rel = heap_openr(AccessMethodOperatorRelationName, RowExclusiveLock);
 
@@ -609,10 +754,10 @@ RemoveOpClassById(Oid opclassOid)
 	/*
 	 * Remove associated entries in pg_amproc.
 	 */
-	ScanKeyEntryInitialize(&skey[0], 0,
-						   Anum_pg_amproc_amopclaid,
-						   BTEqualStrategyNumber, F_OIDEQ,
-						   ObjectIdGetDatum(opclassOid), OIDOID);
+	ScanKeyInit(&skey[0],
+				Anum_pg_amproc_amopclaid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(opclassOid));
 
 	rel = heap_openr(AccessMethodProcedureRelationName, RowExclusiveLock);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.228 2003/08/17 19:58:06 tgl Exp $
+ * $Id: builtins.h,v 1.229 2003/11/12 21:15:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,6 +219,14 @@ extern Datum btint4cmp(PG_FUNCTION_ARGS);
 extern Datum btint8cmp(PG_FUNCTION_ARGS);
 extern Datum btfloat4cmp(PG_FUNCTION_ARGS);
 extern Datum btfloat8cmp(PG_FUNCTION_ARGS);
+extern Datum btint48cmp(PG_FUNCTION_ARGS);
+extern Datum btint84cmp(PG_FUNCTION_ARGS);
+extern Datum btint24cmp(PG_FUNCTION_ARGS);
+extern Datum btint42cmp(PG_FUNCTION_ARGS);
+extern Datum btint28cmp(PG_FUNCTION_ARGS);
+extern Datum btint82cmp(PG_FUNCTION_ARGS);
+extern Datum btfloat48cmp(PG_FUNCTION_ARGS);
+extern Datum btfloat84cmp(PG_FUNCTION_ARGS);
 extern Datum btoidcmp(PG_FUNCTION_ARGS);
 extern Datum btoidvectorcmp(PG_FUNCTION_ARGS);
 extern Datum btabstimecmp(PG_FUNCTION_ARGS);

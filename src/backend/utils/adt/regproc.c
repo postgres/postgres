@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.83 2003/11/09 21:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.84 2003/11/12 21:15:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,10 +92,10 @@ regprocin(PG_FUNCTION_ARGS)
 		SysScanDesc sysscan;
 		HeapTuple	tuple;
 
-		ScanKeyEntryInitialize(&skey[0], 0,
-							   Anum_pg_proc_proname,
-							   BTEqualStrategyNumber, F_NAMEEQ,
-							   CStringGetDatum(pro_name_or_oid), NAMEOID);
+		ScanKeyInit(&skey[0],
+					Anum_pg_proc_proname,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(pro_name_or_oid));
 
 		hdesc = heap_openr(ProcedureRelationName, AccessShareLock);
 		sysscan = systable_beginscan(hdesc, ProcedureNameNspIndex, true,
@@ -442,10 +442,10 @@ regoperin(PG_FUNCTION_ARGS)
 		SysScanDesc sysscan;
 		HeapTuple	tuple;
 
-		ScanKeyEntryInitialize(&skey[0], 0,
-							   Anum_pg_operator_oprname,
-							   BTEqualStrategyNumber, F_NAMEEQ,
-							   CStringGetDatum(opr_name_or_oid), NAMEOID);
+		ScanKeyInit(&skey[0],
+					Anum_pg_operator_oprname,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(opr_name_or_oid));
 
 		hdesc = heap_openr(OperatorRelationName, AccessShareLock);
 		sysscan = systable_beginscan(hdesc, OperatorNameNspIndex, true,
@@ -820,10 +820,10 @@ regclassin(PG_FUNCTION_ARGS)
 		SysScanDesc sysscan;
 		HeapTuple	tuple;
 
-		ScanKeyEntryInitialize(&skey[0], 0,
-							   Anum_pg_class_relname,
-							   BTEqualStrategyNumber, F_NAMEEQ,
-							   CStringGetDatum(class_name_or_oid), NAMEOID);
+		ScanKeyInit(&skey[0],
+					Anum_pg_class_relname,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(class_name_or_oid));
 
 		hdesc = heap_openr(RelationRelationName, AccessShareLock);
 		sysscan = systable_beginscan(hdesc, ClassNameNspIndex, true,
@@ -986,10 +986,10 @@ regtypein(PG_FUNCTION_ARGS)
 		SysScanDesc sysscan;
 		HeapTuple	tuple;
 
-		ScanKeyEntryInitialize(&skey[0], 0,
-							   Anum_pg_type_typname,
-							   BTEqualStrategyNumber, F_NAMEEQ,
-							   CStringGetDatum(typ_name_or_oid), NAMEOID);
+		ScanKeyInit(&skey[0],
+					Anum_pg_type_typname,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(typ_name_or_oid));
 
 		hdesc = heap_openr(TypeRelationName, AccessShareLock);
 		sysscan = systable_beginscan(hdesc, TypeNameNspIndex, true,

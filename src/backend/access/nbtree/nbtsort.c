@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.77 2003/09/29 23:40:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.78 2003/11/12 21:15:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -594,33 +594,37 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 		 * Another BTSpool for dead tuples exists. Now we have to merge
 		 * btspool and btspool2.
 		 */
-		ScanKey		entry;
-		Datum		attrDatum1,
-					attrDatum2;
-		bool		isFirstNull,
-					isSecondNull;
-		int32		compare;
 
 		/* the preparation of merge */
-		bti = (BTItem) tuplesort_getindextuple(btspool->sortstate, true, &should_free);
-		bti2 = (BTItem) tuplesort_getindextuple(btspool2->sortstate, true, &should_free2);
+		bti = (BTItem) tuplesort_getindextuple(btspool->sortstate,
+											   true, &should_free);
+		bti2 = (BTItem) tuplesort_getindextuple(btspool2->sortstate,
+												true, &should_free2);
 		indexScanKey = _bt_mkscankey_nodata(index);
+
 		for (;;)
 		{
 			load1 = true;		/* load BTSpool next ? */
-			if (NULL == bti2)
+			if (bti2 == NULL)
 			{
-				if (NULL == bti)
+				if (bti == NULL)
 					break;
 			}
-			else if (NULL != bti)
+			else if (bti != NULL)
 			{
-
 				for (i = 1; i <= keysz; i++)
 				{
+					ScanKey		entry;
+					Datum		attrDatum1,
+								attrDatum2;
+					bool		isFirstNull,
+								isSecondNull;
+
 					entry = indexScanKey + i - 1;
-					attrDatum1 = index_getattr((IndexTuple) bti, i, tupdes, &isFirstNull);
-					attrDatum2 = index_getattr((IndexTuple) bti2, i, tupdes, &isSecondNull);
+					attrDatum1 = index_getattr((IndexTuple) bti, i, tupdes,
+											   &isFirstNull);
+					attrDatum2 = index_getattr((IndexTuple) bti2, i, tupdes,
+											   &isSecondNull);
 					if (isFirstNull)
 					{
 						if (!isSecondNull)
@@ -633,7 +637,11 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 						break;
 					else
 					{
-						compare = DatumGetInt32(FunctionCall2(&entry->sk_func, attrDatum1, attrDatum2));
+						int32		compare;
+
+						compare = DatumGetInt32(FunctionCall2(&entry->sk_func,
+															  attrDatum1,
+															  attrDatum2));
 						if (compare > 0)
 						{
 							load1 = false;
@@ -656,14 +664,16 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 				_bt_buildadd(index, state, bti);
 				if (should_free)
 					pfree((void *) bti);
-				bti = (BTItem) tuplesort_getindextuple(btspool->sortstate, true, &should_free);
+				bti = (BTItem) tuplesort_getindextuple(btspool->sortstate,
+													   true, &should_free);
 			}
 			else
 			{
 				_bt_buildadd(index, state, bti2);
 				if (should_free2)
 					pfree((void *) bti2);
-				bti2 = (BTItem) tuplesort_getindextuple(btspool2->sortstate, true, &should_free2);
+				bti2 = (BTItem) tuplesort_getindextuple(btspool2->sortstate,
+														true, &should_free2);
 			}
 		}
 		_bt_freeskey(indexScanKey);
@@ -671,7 +681,8 @@ _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 	else
 	{
 		/* merge is unnecessary */
-		while (bti = (BTItem) tuplesort_getindextuple(btspool->sortstate, true, &should_free), bti != (BTItem) NULL)
+		while ((bti = (BTItem) tuplesort_getindextuple(btspool->sortstate,
+												true, &should_free)) != NULL)
 		{
 			/* When we see first tuple, create first index page */
 			if (state == NULL)

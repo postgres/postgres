@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.109 2003/11/09 21:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.110 2003/11/12 21:15:55 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -55,7 +55,7 @@ op_in_opclass(Oid opno, Oid opclass)
 /*
  * get_op_opclass_properties
  *
- *		Get the operator's strategy number and recheck (lossy) flag
+ *		Get the operator's strategy number, subtype, and recheck (lossy) flag
  *		within the specified opclass.
  *
  * Caller should already have verified that opno is a member of opclass,
@@ -63,7 +63,7 @@ op_in_opclass(Oid opno, Oid opclass)
  */
 void
 get_op_opclass_properties(Oid opno, Oid opclass,
-						  int *strategy, bool *recheck)
+						  int *strategy, Oid *subtype, bool *recheck)
 {
 	HeapTuple	tp;
 	Form_pg_amop amop_tup;
@@ -77,6 +77,7 @@ get_op_opclass_properties(Oid opno, Oid opclass,
 			 opno, opclass);
 	amop_tup = (Form_pg_amop) GETSTRUCT(tp);
 	*strategy = amop_tup->amopstrategy;
+	*subtype = amop_tup->amopsubtype;
 	*recheck = amop_tup->amopreqcheck;
 	ReleaseSysCache(tp);
 }
@@ -84,12 +85,12 @@ get_op_opclass_properties(Oid opno, Oid opclass,
 /*
  * get_opclass_member
  *		Get the OID of the operator that implements the specified strategy
- *		for the specified opclass.
+ *		with the specified subtype for the specified opclass.
  *
  * Returns InvalidOid if there is no pg_amop entry for the given keys.
  */
 Oid
-get_opclass_member(Oid opclass, int16 strategy)
+get_opclass_member(Oid opclass, Oid subtype, int16 strategy)
 {
 	HeapTuple	tp;
 	Form_pg_amop amop_tup;
@@ -97,8 +98,9 @@ get_opclass_member(Oid opclass, int16 strategy)
 
 	tp = SearchSysCache(AMOPSTRATEGY,
 						ObjectIdGetDatum(opclass),
+						ObjectIdGetDatum(subtype),
 						Int16GetDatum(strategy),
-						0, 0);
+						0);
 	if (!HeapTupleIsValid(tp))
 		return InvalidOid;
 	amop_tup = (Form_pg_amop) GETSTRUCT(tp);
@@ -149,8 +151,8 @@ get_op_hash_function(Oid opno)
 
 	if (OidIsValid(opclass))
 	{
-		/* Found a suitable opclass, get its hash support function */
-		return get_opclass_proc(opclass, HASHPROC);
+		/* Found a suitable opclass, get its default hash support function */
+		return get_opclass_proc(opclass, InvalidOid, HASHPROC);
 	}
 
 	/* Didn't find a match... */
@@ -163,12 +165,12 @@ get_op_hash_function(Oid opno)
 /*
  * get_opclass_proc
  *		Get the OID of the specified support function
- *		for the specified opclass.
+ *		for the specified opclass and subtype.
  *
  * Returns InvalidOid if there is no pg_amproc entry for the given keys.
  */
 Oid
-get_opclass_proc(Oid opclass, int16 procnum)
+get_opclass_proc(Oid opclass, Oid subtype, int16 procnum)
 {
 	HeapTuple	tp;
 	Form_pg_amproc amproc_tup;
@@ -176,8 +178,9 @@ get_opclass_proc(Oid opclass, int16 procnum)
 
 	tp = SearchSysCache(AMPROCNUM,
 						ObjectIdGetDatum(opclass),
+						ObjectIdGetDatum(subtype),
 						Int16GetDatum(procnum),
-						0, 0);
+						0);
 	if (!HeapTupleIsValid(tp))
 		return InvalidOid;
 	amproc_tup = (Form_pg_amproc) GETSTRUCT(tp);
