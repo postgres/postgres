@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.243 2004/10/12 21:54:42 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.244 2004/10/16 19:08:38 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -949,7 +949,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&MaxBackends,
-		100, 1, INT_MAX, NULL, NULL
+		100, 1, INT_MAX / BLCKSZ, NULL, NULL
 	},
 
 	{
@@ -958,7 +958,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&ReservedBackends,
-		2, 0, INT_MAX, NULL, NULL
+		2, 0, INT_MAX / BLCKSZ, NULL, NULL
 	},
 
 	{
@@ -967,7 +967,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&NBuffers,
-		1000, 16, INT_MAX, NULL, NULL
+		1000, 16, INT_MAX / BLCKSZ, NULL, NULL
 	},
 
 	{
@@ -1107,8 +1107,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"max_fsm_relations", PGC_POSTMASTER, RESOURCES_FSM,
-			gettext_noop("Sets the maximum number of tables and indexes for which free space is "
-						 "tracked."),
+			gettext_noop("Sets the maximum number of tables and indexes for which free space is tracked."),
 			NULL
 		},
 		&MaxFSMRelations,
@@ -1116,8 +1115,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 	{
 		{"max_fsm_pages", PGC_POSTMASTER, RESOURCES_FSM,
-			gettext_noop("Sets the maximum number of disk pages for which free space is "
-						 "tracked."),
+			gettext_noop("Sets the maximum number of disk pages for which free space is tracked."),
 			NULL
 		},
 		&MaxFSMPages,
@@ -1129,7 +1127,7 @@ static struct config_int ConfigureNamesInt[] =
 			gettext_noop("Sets the maximum number of locks per transaction."),
 			gettext_noop("The shared lock table is sized on the assumption that "
 						 "at most max_locks_per_transaction * max_connections distinct "
-					   "objects will need to be locked at any one time.")
+						 "objects will need to be locked at any one time.")
 		},
 		&max_locks_per_xact,
 		64, 10, INT_MAX, NULL, NULL
@@ -1191,7 +1189,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&XLOGbuffers,
-		8, 4, INT_MAX, NULL, NULL
+		8, 4, INT_MAX / BLCKSZ, NULL, NULL
 	},
 
 	{
@@ -1277,7 +1275,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&Log_RotationAge,
-		24 * 60, 0, INT_MAX, NULL, NULL
+		24 * 60, 0, INT_MAX / 60, NULL, NULL
 	},
 
 	{
@@ -1286,7 +1284,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&Log_RotationSize,
-		10 * 1024, 0, INT_MAX, NULL, NULL
+		10 * 1024, 0, INT_MAX / 1024, NULL, NULL
 	},
 
 	{
