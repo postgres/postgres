@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.51 1997/01/25 21:58:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.52 1997/01/25 22:16:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,12 +35,12 @@
 #else
 # ifdef HAVE_READLINE_H
 #  include <readline.h>
-#  ifdef HAVE_HISTORY_H
+#  ifndef NO_HISTORY
 #   include <history.h>
 #  endif
 # else
 #  include <readline/readline.h>
-#  ifdef HAVE_READLINE_HISTORY_H
+#  ifndef NO_HISTORY
 #   include <readline/history.h>
 #  endif
 # endif
