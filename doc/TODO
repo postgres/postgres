@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Oct  5 11:50:32 EDT 1999
+Last updated:		Tue Oct  5 17:11:29 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -68,7 +68,7 @@ MISC
 * Fix btree to give a useful elog when key > 1/2 (page - overhead)
 * pg_dump should preserve primary key information
 * plpgsql regression tests fail on BSD/OS
-* line containing only comment fails in direct backend connection
+* database names with spaces fail
 
 ENHANCEMENTS
 ------------
