@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.36 1996/11/30 03:41:20 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.37 1996/12/01 20:28:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,8 @@
 #include <readline/history.h>
 #endif
 #endif
+
+#define PROMPT "=> "
 
 #define MAX_QUERY_BUFFER 20000
 
@@ -789,7 +791,7 @@ do_connect(const char *new_dbname, PsqlSettings * settings)
 	    PQfinish(olddb);
 	    free(settings->prompt);
 	    settings->prompt = malloc(strlen(PQdb(settings->db)) + 10);
-	    sprintf(settings->prompt, "%s=> ", PQdb(settings->db));
+	    sprintf(settings->prompt, "%s%s ", PQdb(settings->db), PROMPT);
 	}
     }
 }
@@ -1243,7 +1245,6 @@ MainLoop(PsqlSettings * settings, FILE * source)
     char           *query_start;
 
     interactive = ((source == stdin) && !settings->notty);
-#define PROMPT "=> "
     if (interactive) {
 	if (settings->prompt)
 	    free(settings->prompt);
@@ -1272,13 +1273,14 @@ MainLoop(PsqlSettings * settings, FILE * source)
 	    line = strdup(query);
 	    query[0] = '\0';
 	} else {
-	    sprintf(settings->prompt, "%s%s", PQdb(settings->db), PROMPT);
-	    if (in_quote)
-	    	settings->prompt[strlen(settings->prompt)-3] = '\'';
-	    else if (query[0] != '\0' && !querySent)
-	    	settings->prompt[strlen(settings->prompt)-3] = '-';
-	    else
-	    	settings->prompt[strlen(settings->prompt)-3] = '=';
+	    if (interactive && !settings->quiet) {
+	    	if (in_quote)
+	    	    settings->prompt[strlen(settings->prompt)-3] = '\'';
+	    	else if (query[0] != '\0' && !querySent)
+	    	    settings->prompt[strlen(settings->prompt)-3] = '-';
+	    	else
+	    	    settings->prompt[strlen(settings->prompt)-3] = '=';
+	    }
 	    line = GetNextLine(settings->prompt, source);
 	    if (interactive && settings->useReadline && line != NULL)
 		add_history(line);	/* save non-empty lines in history */
