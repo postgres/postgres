@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.28 1998/09/22 20:28:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.29 1998/09/23 17:50:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,7 @@ oid8types(Oid *oidArray)
 	result = (text *) palloc(NAMEDATALEN * 8 + 8 + VARHDRSZ);
 	*VARDATA(result) = '\0';
 
-	sp = *oidArray;
+	sp = oidArray;
 	for (num = 8; num != 0; num--, sp++)
 	{
 		if (*sp != InvalidOid)
