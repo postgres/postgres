@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.9 1998/05/09 23:31:34 thomas Exp $
+ * $Id: parse_func.h,v 1.10 1998/05/29 14:03:08 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,10 @@ extern Node *
 ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				  int *curr_resno, int precedence);
 
-extern void func_error(char *caller, char *funcname, int nargs, Oid *argtypes, char *msg);
+extern Oid *
+func_select_candidate(int nargs, Oid *input_typeids, CandidateList candidates);
+
+extern void
+func_error(char *caller, char *funcname, int nargs, Oid *argtypes, char *msg);
 
 #endif							/* PARSE_FUNC_H */
