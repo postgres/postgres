@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.31 2000/07/21 06:42:39 tgl Exp $
+ * $Id: bufpage.h,v 1.32 2000/09/07 09:58:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,6 +296,19 @@ typedef enum
 			 (sizeof(PageHeaderData) - sizeof(ItemIdData)))) \
 	 / ((int) sizeof(ItemIdData)))
 
+#ifdef XLOG
+
+#define PageGetLSN(page) \
+	(((PageHeader) (page))->pd_lsn)
+#define PageSetLSN(page, lsn) \
+	(((PageHeader) (page))->pd_lsn = (XLogRecPtr) (lsn))
+
+#define PageGetSUI(page) \
+	(((PageHeader) (page))->pd_sui)
+#define PageSetSUI(page, sui) \
+	(((PageHeader) (page))->pd_sui = (StartUpID) (sui))
+
+#endif
 
 /* ----------------------------------------------------------------
  *		extern declarations

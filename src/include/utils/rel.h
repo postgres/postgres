@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.40 2000/07/14 22:18:02 tgl Exp $
+ * $Id: rel.h,v 1.41 2000/09/07 09:58:38 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
 #include "rewrite/prs2lock.h"
+#include "storage/relfilenode.h"
 #include "storage/fd.h"
 
 /* added to prevent circular dependency.  bjm 1999/11/15 */
@@ -86,6 +87,7 @@ typedef struct TriggerDesc
 typedef struct RelationData
 {
 	File		rd_fd;			/* open file descriptor, or -1 if none */
+	RelFileNode	rd_node;		/* relation file node */
 	int			rd_nblocks;		/* number of blocks in rel */
 	uint16		rd_refcnt;		/* reference count */
 	bool		rd_myxactonly;	/* rel uses the local buffer mgr */

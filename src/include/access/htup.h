@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.34 2000/08/07 20:15:40 tgl Exp $
+ * $Id: htup.h,v 1.35 2000/09/07 09:58:35 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define HTUP_H
 
 #include "storage/bufpage.h"
+#include "storage/relfilenode.h"
 
 #define MinHeapTupleBitmapSize	32		/* 8 * 4 */
 
@@ -81,8 +82,7 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
  */
 typedef struct xl_heaptid
 {
-	Oid					dbId;		/* database */
-	Oid					relId;		/* relation */
+	RelFileNode			node;
 	CommandId			cid;		/* this is for "better" tuple' */
 									/* identification - it allows to avoid */
 									/* "compensation" records for undo */
@@ -92,7 +92,7 @@ typedef struct xl_heaptid
 /* This is what we need to know about delete - ALIGN(18) = 24 bytes */
 typedef struct xl_heap_delete
 {
-	xl_heaptid			dtid;		/* deleted tuple id */
+	xl_heaptid			target;		/* deleted tuple id */
 } xl_heap_delete;
 
 #define	SizeOfHeapDelete	(offsetof(xl_heaptid, tid) + SizeOfIptrData))
@@ -100,7 +100,7 @@ typedef struct xl_heap_delete
 /* This is what we need to know about insert - 26 + data */
 typedef struct xl_heap_insert
 {
-	xl_heaptid			itid;		/* inserted tuple id */
+	xl_heaptid			target;		/* inserted tuple id */
 	/* something from tuple header */
 	int16				t_natts;
 	Oid					t_oid;
@@ -114,8 +114,8 @@ typedef struct xl_heap_insert
 /* This is what we need to know about update - 28 + data */
 typedef struct xl_heap_update
 {
-	xl_heaptid			dtid;		/* deleted tuple id */
-	ItemPointerData		itid;		/* new inserted tuple id */
+	xl_heaptid			target;		/* deleted tuple id */
+	ItemPointerData		newtid;		/* new inserted tuple id */
 	/* something from header of new tuple version */
 	int16				t_natts;
 	uint8				t_hoff;
@@ -128,8 +128,8 @@ typedef struct xl_heap_update
 /* This is what we need to know about tuple move - 24 bytes */
 typedef struct xl_heap_move
 {
-	xl_heaptid			ftid;		/* moved from */
-	ItemPointerData		ttid;		/* moved to */
+	xl_heaptid			target;		/* moved from */
+	ItemPointerData		newtid;		/* moved to */
 } xl_heap_move;
 
 #define	SizeOfHeapMove	(offsetof(xl_heap_move, ttid) + SizeOfIptrData))
@@ -238,6 +238,9 @@ typedef HeapTupleData *HeapTuple;
 #define HEAP_HASCOMPRESSED		0x0008	/* has compressed stored */
  /* attribute(s) */
 #define HEAP_HASEXTENDED		0x000C	/* the two above combined */
+
+#define HEAP_XMAX_UNLOGGED		0x0080	/* to lock tuple for update */
+										/* without logging */
 #define HEAP_XMIN_COMMITTED		0x0100	/* t_xmin committed */
 #define HEAP_XMIN_INVALID		0x0200	/* t_xmin invalid/aborted */
 #define HEAP_XMAX_COMMITTED		0x0400	/* t_xmax committed */
@@ -249,7 +252,7 @@ typedef HeapTupleData *HeapTuple;
 #define HEAP_MOVED_IN			0x8000	/* moved from another place by
 										 * vacuum */
 
-#define HEAP_XACT_MASK			0xFF00	/* */
+#define HEAP_XACT_MASK			0xFFF0	/* */
 
 #define HeapTupleNoNulls(tuple) \
 		(!(((HeapTuple) (tuple))->t_data->t_infomask & HEAP_HASNULL))

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.32 2000/07/03 02:54:15 vadim Exp $
+ *	  $Id: hio.c,v 1.33 2000/09/07 09:58:35 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,16 +67,19 @@ RelationPutHeapTuple(Relation relation,
 /*
  * RelationGetBufferForTuple
  *
- * Returns (locked) buffer to add tuple with given len.
- * If Ubuf is valid then no attempt to lock it should be made -
- * this is for heap_update...
+ * Returns (locked) buffer with free space >= given len.
+ *
+ * Note that we use LockPage to lock relation for extension. We can 
+ * do this as long as in all other places we use page-level locking
+ * for indices only. Alternatively, we could define pseudo-table as
+ * we do for transactions with XactLockTable.
  *
  * ELOG(ERROR) is allowed here, so this routine *must* be called
  * before any (unlogged) changes are made in buffer pool.
  *
  */
 Buffer
-RelationGetBufferForTuple(Relation relation, Size len, Buffer Ubuf)
+RelationGetBufferForTuple(Relation relation, Size len)
 {
 	Buffer		buffer;
 	Page		pageHeader;
@@ -91,12 +94,6 @@ RelationGetBufferForTuple(Relation relation, Size len, Buffer Ubuf)
 		elog(ERROR, "Tuple is too big: size %u, max size %ld",
 			 len, MaxTupleSize);
 
-	/*
-	 * Lock relation for extension. We can use LockPage here as long as in
-	 * all other places we use page-level locking for indices only.
-	 * Alternatively, we could define pseudo-table as we do for
-	 * transactions with XactLockTable.
-	 */
 	if (!relation->rd_myxactonly)
 		LockPage(relation, 0, ExclusiveLock);
 
@@ -114,31 +111,29 @@ RelationGetBufferForTuple(Relation relation, Size len, Buffer Ubuf)
 	 */
 	if (lastblock == 0)
 	{
-		/* what exactly is this all about??? */
-		buffer = ReadBuffer(relation, lastblock);
+		buffer = ReadBuffer(relation, P_NEW);
+		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		pageHeader = (Page) BufferGetPage(buffer);
 		Assert(PageIsNew((PageHeader) pageHeader));
-		buffer = ReleaseAndReadBuffer(buffer, relation, P_NEW);
-		pageHeader = (Page) BufferGetPage(buffer);
 		PageInit(pageHeader, BufferGetPageSize(buffer), 0);
 	}
 	else
+	{
 		buffer = ReadBuffer(relation, lastblock - 1);
-
-	if (buffer != Ubuf)
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-	pageHeader = (Page) BufferGetPage(buffer);
+		pageHeader = (Page) BufferGetPage(buffer);
+	}
 
 	/*
 	 * Is there room on the last existing page?
 	 */
 	if (len > PageGetFreeSpace(pageHeader))
 	{
-		if (buffer != Ubuf)
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		buffer = ReleaseAndReadBuffer(buffer, relation, P_NEW);
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		pageHeader = (Page) BufferGetPage(buffer);
+		Assert(PageIsNew((PageHeader) pageHeader));
 		PageInit(pageHeader, BufferGetPageSize(buffer), 0);
 
 		if (len > PageGetFreeSpace(pageHeader))
@@ -146,14 +141,6 @@ RelationGetBufferForTuple(Relation relation, Size len, Buffer Ubuf)
 			/* We should not get here given the test at the top */
 			elog(STOP, "Tuple is too big: size %u", len);
 		}
-	}
-	/*
-	 * Caller should check space in Ubuf but...
-	 */
-	else if (buffer == Ubuf)
-	{
-		ReleaseBuffer(buffer);
-		buffer = Ubuf;
 	}
 
 	if (!relation->rd_myxactonly)

@@ -7,13 +7,12 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemid.h,v 1.11 2000/08/07 20:15:50 tgl Exp $
+ * $Id: itemid.h,v 1.12 2000/09/07 09:58:36 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ITEMID_H
 #define ITEMID_H
-
 
 /*
  * An item pointer (also called line pointer) on a buffer page
@@ -31,8 +30,15 @@ typedef ItemIdData *ItemId;
  * lp_flags contains these flags:
  */
 #define LP_USED			0x01	/* this line pointer is being used */
-/* currently, there is one unused flag bit ... */
 
+#ifdef XLOG
+
+#define LP_DELETE		0x02    /* item is to be deleted */
+
+#define ItemIdDeleted(itemId) \
+	(((itemId)->lp_flags & LP_DELETE) != 0)
+
+#endif
 
 /*
  * Item offsets, lengths, and flags are represented by these types when
