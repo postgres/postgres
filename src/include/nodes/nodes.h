@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.26 1998/08/05 04:49:12 scrappy Exp $
+ * $Id: nodes.h,v 1.27 1998/08/18 00:49:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,8 +305,12 @@ typedef enum CmdType
 	CMD_INSERT,					/* insert stmt (formerly append) */
 	CMD_DELETE,
 	CMD_NOTIFY,
-	CMD_UTILITY					/* cmds like create, destroy, copy,
+	CMD_UTILITY,					/* cmds like create, destroy, copy,
 								 * vacuum, etc. */
+	CMD_NOTHING					/* dummy command for
+							 * instead nothing
+							 * rules with qual
+							 */
 } CmdType;
 
 

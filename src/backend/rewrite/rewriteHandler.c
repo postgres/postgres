@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.17 1998/07/19 05:49:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.18 1998/08/18 00:48:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "nodes/primnodes.h"
 
 #include "parser/parsetree.h"	/* for parsetree manipulation */
+#include "parser/parse_relation.h"
 #include "nodes/parsenodes.h"
 
 #include "rewrite/rewriteSupport.h"
@@ -45,6 +46,8 @@ static void QueryRewriteSubLink(Node *node);
 static List *QueryRewriteOne(Query *parsetree);
 static List *deepRewriteQuery(Query *parsetree);
 static void CheckViewPerms(Relation view, List *rtable);
+static void RewritePreprocessQuery(Query *parsetree);
+static Query *RewritePostprocessNonSelect(Query *parsetree);
 
 /*
  * gatherRewriteMeta -
@@ -138,25 +141,30 @@ OptimizeRIRRules(List *locks)
 }
 
 /*
- * idea is to put instead rules before regular rules so that
- * excess semantically queasy queries aren't processed
+ * idea is to fire regular rules first, then qualified instead
+ * rules and unqualified instead rules last. Any lemming is counted for.
  */
 static List *
 orderRules(List *locks)
 {
-	List	   *regular = NIL,
-			   *i;
-	List	   *instead_rules = NIL;
+	List	*regular = NIL;
+	List	*instead_rules = NIL;
+	List	*instead_qualified = NIL;
+	List	*i;
 
 	foreach(i, locks)
 	{
 		RewriteRule *rule_lock = (RewriteRule *) lfirst(i);
 
-		if (rule_lock->isInstead)
-			instead_rules = lappend(instead_rules, rule_lock);
-		else
+		if (rule_lock->isInstead) {
+			if (rule_lock->qual == NULL)
+				instead_rules = lappend(instead_rules, rule_lock);
+			else
+				instead_qualified = lappend(instead_qualified, rule_lock);
+		} else
 			regular = lappend(regular, rule_lock);
 	}
+	regular = nconc(regular, instead_qualified);
 	return nconc(regular, instead_rules);
 }
 
@@ -234,7 +242,6 @@ FireRetrieveRulesAtQuery(Query *parsetree,
 			{
 				*instead_flag = TRUE;
 				FixResdomTypes(parsetree->targetList);
-
 				return lcons(parsetree, NIL);
 			}
 		}
@@ -411,8 +418,9 @@ ProcessRetrieveQuery(Query *parsetree,
 										 rule);
 		}
 		heap_close(rt_entry_relation);
-		if (*instead_flag)
+		if (*instead_flag) {
 			return result;
+		}
 	}
 	if (rule)
 		return NIL;
@@ -486,10 +494,13 @@ CopyAndAddQual(Query *parsetree,
 
 /*
  *	fireRules -
- *	   Iterate through rule locks applying rules.  After an instead rule
- *	   rule has been applied, return just new parsetree and let RewriteQuery
- *	   start the process all over again.  The locks are reordered to maintain
- *	   sensible semantics.	remember: reality is for dead birds -- glass
+ *	   Iterate through rule locks applying rules.
+ *	   All rules create their own parsetrees. Instead rules
+ *	   with rule qualification save the original parsetree
+ *	   and add their negated qualification to it. Real instead
+ *	   rules finally throw away the original parsetree.
+ *	   
+ *	   remember: reality is for dead birds -- glass
  *
  */
 static List *
@@ -516,7 +527,7 @@ fireRules(Query *parsetree,
 			return NIL;
 	}
 
-	locks = orderRules(locks);	/* instead rules first */
+	locks = orderRules(locks);	/* real instead rules last */
 	foreach(i, locks)
 	{
 		RewriteRule *rule_lock = (RewriteRule *) lfirst(i);
@@ -530,15 +541,51 @@ fireRules(Query *parsetree,
 		*instead_flag = rule_lock->isInstead;
 		event_qual = rule_lock->qual;
 		actions = rule_lock->actions;
-		if (event_qual != NULL && *instead_flag)
-			*qual_products =
-				lappend(*qual_products,
-						CopyAndAddQual(parsetree, actions, event_qual,
-									   rt_index, event));
+		if (event_qual != NULL && *instead_flag) {
+			Query		*qual_product;
+			RewriteInfo	qual_info;
+
+			/* ----------
+			 * If there are instead rules with qualifications,
+			 * the original query is still performed. But all
+			 * the negated rule qualifications of the instead
+			 * rules are added so it does it's actions only
+			 * in cases where the rule quals of all instead
+			 * rules are false. Think of it as the default
+			 * action in a case. We save this in *qual_products
+			 * so deepRewriteQuery() can add it to the query
+			 * list after we mangled it up enough.
+			 * ----------
+			 */
+			if (*qual_products == NIL) {
+				qual_product = parsetree;
+			} else {
+				qual_product = (Query *)nth(0, *qual_products);
+			}
+
+			qual_info.event		= qual_product->commandType;
+			qual_info.new_varno	= length(qual_product->rtable) + 2;
+			qual_product = CopyAndAddQual(qual_product, 
+					actions, 
+					event_qual,
+					rt_index,
+					event);
+			
+			qual_info.rule_action	= qual_product;
+
+			if (event == CMD_INSERT || event == CMD_UPDATE)
+				FixNew(&qual_info, qual_product);
+
+			*qual_products = lappend(NIL, qual_product);
+		}
+
 		foreach(r, actions)
 		{
 			Query	   *rule_action = lfirst(r);
 			Node	   *rule_qual = copyObject(event_qual);
+
+			if (rule_action->commandType == CMD_NOTHING)
+				continue;
 
 			/*--------------------------------------------------
 			 * Step 1:
@@ -563,7 +610,7 @@ fireRules(Query *parsetree,
 				continue;
 
 			/*
-			 * Event Qualification forces copying of parsetree --- XXX and
+			 * Event Qualification forces copying of parsetree and
 			 * splitting into two queries one w/rule_qual, one w/NOT
 			 * rule_qual. Also add user query qual onto rule action
 			 */
@@ -601,10 +648,124 @@ fireRules(Query *parsetree,
 
 			pfree(info);
 		}
-		if (*instead_flag)
-			break;
+
+		/* ----------
+		 * If this was an unqualified instead rule,
+		 * throw away an eventually saved 'default' parsetree
+		 * ----------
+		 */
+		if (event_qual == NULL && *instead_flag) {
+			*qual_products = NIL;
+		}
 	}
 	return results;
+}
+
+/* ----------
+ * RewritePreprocessQuery -
+ *	adjust details in the parsetree, the rule system
+ *	depends on
+ * ----------
+ */
+static void
+RewritePreprocessQuery(Query *parsetree)
+{
+	/* ----------
+	 * if the query has a resultRelation, reassign the
+	 * result domain numbers to the attribute numbers in the
+	 * target relation. FixNew() depends on it when replacing
+	 * *new* references in a rule action by the expressions
+	 * from the rewritten query.
+	 * ----------
+	 */
+	if (parsetree->resultRelation > 0) {
+		RangeTblEntry	*rte;
+		Relation	rd;
+		List		*tl;
+		TargetEntry	*tle;
+		int		resdomno;
+	
+		rte = (RangeTblEntry *)nth(parsetree->resultRelation - 1,
+					parsetree->rtable);
+		rd = heap_openr(rte->relname);
+
+		foreach (tl, parsetree->targetList) {
+			tle = (TargetEntry *)lfirst(tl);
+			resdomno = attnameAttNum(rd, tle->resdom->resname);
+			tle->resdom->resno = resdomno;
+		}
+
+		heap_close(rd);
+	}
+}
+
+
+/* ----------
+ * RewritePostprocessNonSelect -
+ *	apply instead select rules on a query fired in by
+ *	the rewrite system
+ * ----------
+ */
+static Query *
+RewritePostprocessNonSelect(Query *parsetree)
+{
+	List		*rt;
+	int		rt_index = 0;
+	Query		*newtree = copyObject(parsetree);
+	
+	foreach(rt, parsetree->rtable)
+	{
+		RangeTblEntry	*rt_entry = lfirst(rt);
+		Relation	rt_entry_relation = NULL;
+		RuleLock	*rt_entry_locks = NULL;
+		List		*locks = NIL;
+		List		*instead_locks = NIL;
+		List		*lock;
+		RewriteRule	*rule;
+
+		rt_index++;
+		rt_entry_relation = heap_openr(rt_entry->relname);
+		rt_entry_locks = rt_entry_relation->rd_rules;
+
+		if (rt_entry_locks)
+		{
+			int	origcmdtype = newtree->commandType;
+			newtree->commandType = CMD_SELECT;
+			locks =
+				matchLocks(CMD_SELECT, rt_entry_locks, rt_index, newtree);
+			newtree->commandType = origcmdtype;
+		}
+		if (locks != NIL)
+		{
+			foreach (lock, locks) {
+				rule = (RewriteRule *)lfirst(lock);
+				if (rule->isInstead) {
+					instead_locks = nconc(instead_locks, lock);
+				}
+			}
+		}
+		if (instead_locks != NIL)
+		{
+			foreach (lock, instead_locks) {
+				int	relation_level;
+				int	modified = 0;
+
+				rule = (RewriteRule *)lfirst(lock);
+				relation_level = (rule->attrno == -1);
+
+				ApplyRetrieveRule(newtree,
+					rule,
+					rt_index,
+					relation_level,
+					rt_entry_relation,
+					&modified);
+			}
+		}
+
+		heap_close(rt_entry_relation);
+	}
+
+	return newtree;
 }
 
 static List *
@@ -648,7 +809,6 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 		{
 			List	   *locks =
 			matchLocks(event, rt_entry_locks, result_relation, parsetree);
-
 			product_queries =
 				fireRules(parsetree,
 						  result_relation,
@@ -657,6 +817,27 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 						  locks,
 						  qual_products);
 		}
+
+		/* ----------
+		 * deepRewriteQuery does not handle the situation
+		 * where a query fired by a rule uses relations that
+		 * have instead select rules defined (views and the like).
+		 * So we care for them here.
+		 * ----------
+		 */
+		if (product_queries != NIL) {
+			List	*pq;
+			Query	*tmp;
+			List	*new_products = NIL;
+		
+			foreach (pq, product_queries) {
+				tmp = (Query *)lfirst(pq);
+				tmp = RewritePostprocessNonSelect(tmp);
+				new_products = lappend(new_products, tmp);
+		    	}
+			product_queries = new_products;
+		}
+
 		return product_queries;
 	}
 	else
@@ -697,6 +878,8 @@ static int	numQueryRewriteInvoked = 0;
 List *
 QueryRewrite(Query *parsetree)
 {
+	RewritePreprocessQuery(parsetree);
+
 	QueryRewriteSubLink(parsetree->qual);
 	QueryRewriteSubLink(parsetree->havingQual);
 
@@ -807,8 +990,6 @@ deepRewriteQuery(Query *parsetree)
 
 	instead = FALSE;
 	result = RewriteQuery(parsetree, &instead, &qual_products);
-	if (!instead)
-		rewritten = lcons(parsetree, NIL);
 
 	foreach(n, result)
 	{
@@ -819,8 +1000,27 @@ deepRewriteQuery(Query *parsetree)
 		if (newstuff != NIL)
 			rewritten = nconc(rewritten, newstuff);
 	}
+
+	/* ----------
+	 * qual_products are the original query with the negated
+	 * rule qualification of an instead rule
+	 * ----------
+	 */
 	if (qual_products != NIL)
 		rewritten = nconc(rewritten, qual_products);
+
+	/* ----------
+	 * The original query is appended last if not instead
+	 * because update and delete rule actions might not do
+	 * anything if they are invoked after the update or
+	 * delete is performed. The command counter increment
+	 * between the query execution makes the deleted (and
+	 * maybe the updated) tuples disappear so the scans
+	 * for them in the rule actions cannot find them.
+	 * ----------
+	 */
+	if (!instead)
+		rewritten = lappend(rewritten, parsetree);
 
 	return rewritten;
 }

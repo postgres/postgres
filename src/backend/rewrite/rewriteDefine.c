@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.16 1998/06/15 19:29:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.17 1998/08/18 00:48:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,12 +155,7 @@ ValidateRule(int event_type,
 		"rules not allowed for insert or delete events to an attribute");
 	}
 
-	if (event_qual && !*action && is_instead)
-		elog(ERROR,
-		"event_quals on 'instead nothing' rules not currently supported");
-
 #if 0
-
 	/*
 	 * on retrieve to class.attribute do instead nothing is converted to
 	 * 'on retrieve to class.attribute do instead retrieve (attribute =

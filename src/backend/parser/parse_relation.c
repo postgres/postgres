@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.12 1998/07/08 14:04:11 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.13 1998/08/18 00:48:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,8 +191,13 @@ addRangeTableEntry(ParseState *pstate,
 	if (pstate != NULL)
 	{
 		if (refnameRangeTablePosn(pstate, refname, &sublevels_up) != 0 &&
-			(!inFromCl || sublevels_up == 0))
+			(!inFromCl || sublevels_up == 0)) {
+			if (!strcmp(refname, "*CURRENT*") || !strcmp(refname, "*NEW*")) {
+				int	rt_index = refnameRangeTablePosn(pstate, refname, &sublevels_up);
+				return (RangeTblEntry *)nth(rt_index - 1, pstate->p_rtable);
+			}
 			elog(ERROR, "Table name %s specified more than once", refname);
+		}
 	}
 
 	rte->relname = pstrdup(relname);

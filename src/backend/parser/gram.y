@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.22 1998/08/17 16:08:34 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.23 1998/08/18 00:48:55 scrappy Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1955,6 +1955,7 @@ RuleStmt:  CREATE RULE name AS
 OptStmtList:  NOTHING					{ $$ = NIL; }
 		| OptimizableStmt				{ $$ = lcons($1, NIL); }
 		| '[' OptStmtBlock ']'			{ $$ = $2; }
+		| '(' OptStmtBlock ')'			{ $$ = $2; }
 		;
 
 OptStmtBlock:  OptStmtMulti
