@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.24 2000/08/07 19:53:27 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.25 2000/09/29 20:21:34 petere Exp $
 -->
 
  <chapter id="syntax">
@@ -19,7 +19,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.24 2000/08/07 19:53:27 tgl 
    types, functions, and operators.
   </para>
 
-  <sect1>
+  <sect1 id="sql-keywords">
    <title>Key Words</title>
 
    <para>
@@ -338,7 +338,7 @@ UNCOMMITTED UNNAMED
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="sql-comments">
    <title>Comments</title>
 
    <para>
@@ -367,7 +367,7 @@ UNCOMMITTED UNNAMED
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="sql-names">
    <title>Names</title>
 
    <para>
@@ -404,7 +404,7 @@ UNCOMMITTED UNNAMED
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="sql-constants">
    <title>Constants</title>
 
    <para>
@@ -548,7 +548,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="sql-columns">
    <title>Fields and Columns</title>
 
    <sect2>
@@ -650,7 +650,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="sql-operators">
    <title>Operators</title>
 
    <para>
@@ -663,7 +663,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="sql-expressions">
    <title>Expressions</title>
 
    <para>

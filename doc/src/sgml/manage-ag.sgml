@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.10 2000/08/29 20:02:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.11 2000/09/29 20:21:34 petere Exp $
 -->
 
 <chapter id="managing-databases">
@@ -29,7 +29,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/manage-ag.sgml,v 2.10 2000/08/29 20:02:07 m
   linkend="postmaster-start">).
  </para>
 
- <sect1>
+ <sect1 id="manage-ag-createdb">
   <title>Creating a Database</title>
 
   <para>
@@ -181,7 +181,7 @@ CREATE DATABASE <replaceable>name</> WITH LOCATION = '<replaceable>location</>'
   </sect2>
  </sect1>
 
- <sect1>
+ <sect1 id="manage-ag-accessdb">
   <title>Accessing a Database</title>
 
   <para>
@@ -282,7 +282,7 @@ Type:  \copyright for distribution terms
    </para>
  </sect1>
      
- <sect1>
+ <sect1 id="manage-ag-dropdb">
   <title>Destroying a Database</title>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.15 2000/06/22 22:31:15 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.16 2000/09/29 20:21:33 petere Exp $
 -->
 
  <chapter id="advanced">
@@ -18,7 +18,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.15 2000/06/22 22:31:15 pe
    (Refer to <xref linkend="QUERY"> for how to use it.)
   </para>
 
-  <sect1>
+  <sect1 id="inheritance">
    <title>Inheritance</title>
 
    <para>
@@ -137,7 +137,7 @@ SET SQL_Inheritance TO OFF;
    </note>
   </sect1>
 
-  <sect1>
+  <sect1 id="non-atomic-values">
    <title>Non-Atomic Values</title>
 
    <para>
@@ -258,7 +258,7 @@ SELECT SAL_EMP.schedule[1:2][1:1]
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="more-advanced">
    <title>More Advanced Features</title>
 
    <para>

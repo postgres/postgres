@@ -1,8 +1,8 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.4 2000/08/29 20:02:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.5 2000/09/29 20:21:34 petere Exp $
 -->
 
- <chapter>
+ <chapter id="indexcost">
   <title>Index Cost Estimation Functions</title>
 
   <note>

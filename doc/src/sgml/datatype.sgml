@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.36 2000/09/19 18:17:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.37 2000/09/29 20:21:33 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -271,7 +271,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.36 2000/09/19 18:17:53 pe
    </note>
   </para>
 
-  <sect1>
+  <sect1 id="numeric-types">
    <title>Numeric Types</title>
 
    <para>
@@ -349,8 +349,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.36 2000/09/19 18:17:53 pe
 
    <para>
     The numeric types have a full set of corresponding arithmetic operators and
-    functions. Refer to <xref endterm="math-opers" linkend="math-opers"> 
-    and <xref endterm="math-funcs" linkend="math-funcs"> for more information.
+    functions. Refer to <xref linkend="numerical-operators"> 
+    and <xref linkend="math-functions"> for more information.
    </para>
 
    <para>
@@ -404,7 +404,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="monetary-types">
    <title>Monetary Type</title>
 
    <note>
@@ -456,7 +456,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
   </sect1>
 
-  <sect1>
+  <sect1 id="character-types">
    <title>Character Types</title>
 
    <para>
@@ -549,7 +549,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
   </sect1>
 
-  <sect1>
+  <sect1 id="datetime-types">
    <title>Date/Time Types</title>
 
    <para>
@@ -1355,7 +1355,7 @@ January 8 04:05:06 1999 PST
 
   </sect1>
 
-  <sect1>
+  <sect1 id="boolean-type">
    <title>Boolean Type</title>
 
    <para>
@@ -1402,7 +1402,7 @@ January 8 04:05:06 1999 PST
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="geometric-types">
    <title>Geometric Types</title>
 
    <para>
@@ -1731,7 +1731,7 @@ January 8 04:05:06 1999 PST
 
   </sect1>
 
-  <sect1>
+  <sect1 id="net-types">
    <title>IP Version 4 Networks and Host Addresses</title>
 
    <para>

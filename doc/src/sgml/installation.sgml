@@ -1,9 +1,9 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.20 2000/09/27 15:17:53 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.21 2000/09/29 20:21:34 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</> ]]>Installation Instructions</title>
 
- <sect1 id="short">
+ <sect1 id="install-short">
   <title>Short Version</title>
 
   <para>
@@ -25,7 +25,7 @@ su - postgres
  </sect1>
 
 
- <sect1 id="requirements">
+ <sect1 id="install-requirements">
   <title>Requirements</title>
 
   <para>
@@ -124,7 +124,7 @@ su - postgres
  </sect1>
 
 <![%flattext-install-ignore;[
- <sect1>
+ <sect1 id="install-getsource">
   <title>Getting The Source</title>
 
   <para>
@@ -254,7 +254,7 @@ su - postgres
  </sect1>
 
 
- <sect1>
+ <sect1 id="install-procedure">
   <title>Installation Procedure</title>
 
   <procedure>
@@ -793,7 +793,7 @@ All of PostgreSQL is successfully made. Ready to install.
 
  </sect1>
 
- <sect1>
+ <sect1 id="install-post">
   <title>Post-Installation Setup</title>
 
   <sect2>
@@ -883,7 +883,7 @@ MANPATH=$MANPATH:/usr/local/pgsql/man
 
 
 <![%flattext-install-include;[
- <sect1>
+ <sect1 id="install-getting-started">
   <title>Getting Started</title>
 
   <para>
@@ -978,7 +978,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
   </procedure>
  </sect1>
 
- <sect1>
+ <sect1 id="install-whatnow">
   <title>What Now?</title>
 
   <para>

@@ -1,7 +1,7 @@
 <Chapter Id="arch-pg">
 	<TITLE>Architecture</TITLE>
 
-<Sect1>
+<Sect1 id="arch-pg-concepts">
 <Title><ProductName>Postgres</ProductName> Architectural Concepts</Title>
 
 <Para>

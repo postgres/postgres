@@ -1,8 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/keys.sgml,v 1.4 2000/08/23 05:59:02 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/keys.sgml,v 1.5 2000/09/29 20:21:34 petere Exp $
 Indices and Keys
 
 $Log: keys.sgml,v $
+Revision 1.5  2000/09/29 20:21:34  petere
+Add `id' attributes to all `chapter' and `sect1' tags, to generate useful
+names for the HTML files (e.g., not x4856.htm).
+
 Revision 1.4  2000/08/23 05:59:02  thomas
 Fix several <ulink> tags which refer to e-mail addresses
  but were missing the "mailto:" prefix.
@@ -24,7 +28,7 @@ Will go into the User's Guide.
 
 -->
 
- <chapter>
+ <chapter id="keys">
   <docinfo>
    <authorgroup>
     <author>

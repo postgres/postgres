@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.8 2000/04/02 22:59:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.9 2000/09/29 20:21:34 petere Exp $
 -->
 
  <chapter id="xplang">
@@ -23,7 +23,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.8 2000/04/02 22:59:40 tgl E
    is outside the scope of this manual. 
   </para>
 
-  <sect1>
+  <sect1 id="xplang-install">
    <title>Installing Procedural Languages</title>
 
    <procedure>

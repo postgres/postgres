@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.5 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.6 2000/09/29 20:21:33 petere Exp $
 -->
 
  <chapter id="extend">
@@ -34,7 +34,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.5 2000/03/31 03:27:40 thoma
    </itemizedlist>
   </para>
 
-  <sect1>
+  <sect1 id="extend-how">
    <title>How Extensibility Works</title>
 
    <para>
@@ -73,7 +73,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.5 2000/03/31 03:27:40 thoma
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="type-system">
    <title>The <productname>Postgres</productname> Type System</title>
 
    <para>
@@ -107,7 +107,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.5 2000/03/31 03:27:40 thoma
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="system-catalogs">
    <title>About the <productname>Postgres</productname> System Catalogs</title>
 
    <para>

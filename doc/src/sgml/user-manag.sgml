@@ -7,7 +7,7 @@
   enough to not warrant explanation.
  </para>
 
- <sect1>
+ <sect1 id="database-users">
   <title>Database Users</title>
 
   <para>
@@ -108,7 +108,7 @@ CREATE USER <replaceable>name</replaceable>
   </sect2>
  </sect1>
 
- <sect1>
+ <sect1 id="groups">
   <title>Groups</title>
 
   <para>
@@ -125,7 +125,7 @@ ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</repla
   </para>
  </sect1>
 
- <sect1>
+ <sect1 id="privileges">
   <title>Privileges</title>
 
   <para>
@@ -172,7 +172,7 @@ REVOKE ALL ON accounts FROM PUBLIC;
   </para>
  </sect1>
 
- <sect1>
+ <sect1 id="perm-functions">
   <title>Functions and Triggers</title>
 
   <para>

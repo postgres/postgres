@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.2 2000/07/21 00:44:12 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.3 2000/09/29 20:21:33 petere Exp $ -->
 <chapter id="backup">
  <title>Backup and Restore</title>
 
@@ -18,7 +18,7 @@
   </itemizedlist>
  </para>
 
- <sect1>
+ <sect1 id="backup-dump">
   <title><acronym>SQL</> Dump</title>
 
   <para>
@@ -271,7 +271,7 @@ cat <replaceable class="parameter">filename</replaceable>.* | psql <replaceable 
   </sect2>
  </sect1>
 
- <sect1>
+ <sect1 id="backup-file">
   <title>File system level backup</title>
 
   <para>

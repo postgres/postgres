@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.3 2000/05/02 20:01:51 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/bki.sgml,v 1.4 2000/09/29 20:21:33 petere Exp $
 
 Transcribed from the original bki.man.5 documentation
 - Thomas Lockhart 1998-08-03
@@ -37,7 +37,7 @@ Related information may be found in documentation for
 and the <acronym>SQL</acronym> command <command>CREATE DATABASE</command>.
 </para>
 
-  <sect1>
+  <sect1 id="bki-format">
    <title><acronym>BKI</acronym> File Format</title>
 
    <para>
@@ -82,7 +82,7 @@ follow.
 </para>
 </sect1>
 
-<sect1>
+<sect1 id="bki-commands">
 <title>General Commands</title>
 
 <variablelist>
@@ -229,7 +229,7 @@ This last sentence doesn't reference anything in the example. Should be changed 
 </note>
 </sect1>
 
-<sect1>
+<sect1 id="bki-macros">
 <title>Macro Commands</title>
 
 <para>
@@ -272,7 +272,7 @@ read from the file called
 </para>
 </sect1>
 
-<sect1>
+<sect1 id="bki-debug">
 <title>Debugging Commands</title>
 
 <para>
@@ -397,7 +397,7 @@ to
 </para>
 </sect1>
 
-<sect1>
+<sect1 id="bki-example">
 <title>Example</title>
 
 <para>

@@ -59,7 +59,7 @@ a returned integer value or in SPI_result global variable, as described below).
 On error, a negative or NULL result will be returned.
 </Para>
 
-<Sect1>
+<Sect1 id="spi-interface">
 <Title>Interface Functions</Title>
 
 <REFENTRY ID="SPI-SPICONNECT">
@@ -1096,7 +1096,7 @@ TBD
 
 </Sect1>
 
-<Sect1>
+<Sect1 id="spi-interface-support">
 <Title>Interface Support Functions</Title>
 
 <Para>
@@ -2608,7 +2608,7 @@ TBD
 
 </Sect1>
 
-<Sect1>
+<Sect1 id="spi-memory">
 <Title>Memory Management</Title>
 
 <Para>
@@ -2675,7 +2675,7 @@ this query is done!
 
 </Sect1>
 
-<Sect1>
+<Sect1 id="spi-visibility">
 <Title>Visibility of Data Changes</Title>
 
 <Para>
@@ -2697,7 +2697,7 @@ of Q) or after Q is done.
 </Para>
 </Sect1>
 
-<Sect1>
+<Sect1 id="spi-examples">
 <Title>Examples</Title>
 
 <Para>

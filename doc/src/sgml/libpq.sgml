@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.40 2000/08/29 20:02:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.41 2000/09/29 20:21:34 petere Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -38,7 +38,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.40 2000/08/29 20:02:07 momji
    <filename>libpq</filename> library.
   </para>
 
-  <sect1>
+  <sect1 id="libpq-connect">
    <title>Database Connection Functions</title>
 
    <para>
@@ -667,7 +667,7 @@ SSL *PQgetssl(const PGconn *conn);
    </para>
   </sect1>
 
-<sect1>
+<sect1 id="libpq-exec">
 <title>Query Execution Functions</title>
 
 <para>
@@ -1077,7 +1077,7 @@ as with a PGresult returned by libpq itself.
 </para>
 </sect1>
 
-<sect1>
+<sect1 id="libpq-async">
 <title>Asynchronous Query Processing</title>
 
 <para>
@@ -1368,7 +1368,7 @@ is not currently open or the backend is not currently processing a query.
 
 </sect1>
 
-<sect1>
+<sect1 id="libpq-fastpath">
 <title>Fast Path</title>
 
 <para>
@@ -1424,7 +1424,7 @@ typedef struct {
 
 </sect1>
 
-<sect1>
+<sect1 id="libpq-notify">
 <title>Asynchronous Notification</title>
 
 <para>
@@ -1510,7 +1510,7 @@ if any notifications came in during the processing of the query.
 
 </sect1>
 
-<sect1>
+<sect1 id="libpq-copy">
 <title>Functions Associated with the COPY Command</title>
 
 <para>
@@ -1694,7 +1694,7 @@ This will work correctly only if the copy in/out is the only
 
 </sect1>
 
-<sect1>
+<sect1 id="libpq-trace">
 <title><application>libpq</application> Tracing Functions</title>
 
 <para>
@@ -1724,7 +1724,7 @@ void PQuntrace(PGconn *conn)
 
 </sect1>
 
-<sect1>
+<sect1 id="libpq-control">
 <title>
 <application>libpq</application> Control Functions</title>
 
@@ -1930,7 +1930,7 @@ call <function>fe_setauthsvc</function> at all.
 
 </sect1>
 
-<sect1>
+<sect1 id="libpq-sample">
 <title>Sample Programs</title>
 
 <sect2>

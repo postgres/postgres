@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.10 2000/05/02 20:01:51 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.11 2000/09/29 20:21:33 petere Exp $
 -->
 
  <chapter id="dfunc">
@@ -148,7 +148,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.10 2000/05/02 20:01:51 thoma
    </itemizedlist>
   </para>
 
-  <sect1>
+  <sect1 id="dload-linux">
    <title>Linux</title>
 
    <para>
@@ -171,7 +171,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.10 2000/05/02 20:01:51 thoma
   </sect1>
 
 <!--
-  <sect1>
+  <sect1 id="dload-ultrix">
    <title><acronym>ULTRIX</acronym></title>
 
    <para>
@@ -196,7 +196,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.10 2000/05/02 20:01:51 thoma
   </sect1>
 -->
 
-  <sect1>
+  <sect1 id="dload-osf">
    <title><acronym>DEC OSF/1</acronym></title>
 
    <para>
@@ -240,7 +240,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.10 2000/05/02 20:01:51 thoma
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="dload-other">
    <title>
     <acronym>SunOS 4.x</acronym>, <acronym>Solaris 2.x</acronym> and
     <acronym>HP-UX</acronym></title>

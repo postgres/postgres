@@ -1,8 +1,8 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/populate.sgml,v 2.2 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/populate.sgml,v 2.3 2000/09/29 20:21:34 petere Exp $
 -->
 
- <chapter>
+ <chapter id="populate">
   <title>Populating a Database</title>
 
   <note>
@@ -18,7 +18,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/populate.sgml,v 2.2 2000/03/31 03:27:
    efficient as possible.
   </para>
 
-  <sect1>
+  <sect1 id="disable-autocommit">
    <title>Disable Auto-commit</title>
 
    <para>
@@ -30,7 +30,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/populate.sgml,v 2.2 2000/03/31 03:27:
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="populate-copy-from">
    <title>Use COPY FROM</title>
 
    <para>
@@ -42,7 +42,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/populate.sgml,v 2.2 2000/03/31 03:27:
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="populate-rm-indices">
    <title>Remove Indices</title>
 
    <para>

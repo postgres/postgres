@@ -9,7 +9,7 @@
    are in <filename>funcs.sql</filename>.
   </para>
 
-  <sect1>
+  <sect1 id="xtypes-userdefined">
    <title>User-Defined Types</title>
 
    <sect2>

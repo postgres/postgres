@@ -1,8 +1,8 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.5 2000/08/25 15:17:36 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.6 2000/09/29 20:21:34 petere Exp $
 -->
 
- <chapter>
+ <chapter id="pltcl">
   <title>PL/Tcl - TCL Procedural Language</title>
 
   <para>
@@ -18,7 +18,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.5 2000/08/25 15:17:36 thomas
 
   <!-- **** PL/Tcl overview **** -->
 
-  <sect1>
+  <sect1 id="pltcl-overview">
    <title>Overview</title>
 
    <para>
@@ -49,7 +49,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.5 2000/08/25 15:17:36 thomas
 
   <!-- **** PL/Tcl description **** -->
 
-  <sect1>
+  <sect1 id="pltcl-description">
    <title>Description</title>
 
    <sect2>

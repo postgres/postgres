@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.59 2000/09/12 21:12:44 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.60 2000/09/29 20:21:34 petere Exp $
 -->
 
  <chapter id="release">
   <title>Release Notes</title>
 
-  <sect1>
+  <sect1 id="release-7-1">
    <title>Release 7.1</title>
    <!--
   <docinfo>
@@ -59,7 +59,7 @@ Set session-wide transaction mode READ COMMITTED or SERIALIZABLE (Thomas)
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="release-7-0-2">
    <title>Release 7.0.2</title>
    <!--
   <docinfo>
@@ -99,7 +99,7 @@ Added documentation to tarball.
   </sect1>
 
 
-  <sect1>
+  <sect1 id="release-7-0-1">
    <title>Release 7.0.1</title>
    <!--
   <docinfo>
@@ -161,7 +161,7 @@ ecpg changes (Michael)
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="release-7-0">
    <title>Release 7.0</title>
    <!--
   <docinfo>
@@ -660,7 +660,7 @@ New multibyte encodings
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="release-6-5-3">
    <title>Release 6.5.3</title>
    <!--
   <docinfo>
@@ -703,7 +703,7 @@ Fix dumping rules on inherited tables
   </sect1>
 
 
-  <sect1>
+  <sect1 id="release-6-5-2">
    <title>Release 6.5.2</title>
    <!--
   <docinfo>
@@ -767,7 +767,7 @@ Updated version of pgaccess 0.98
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="release-6-5-1">
    <title>Release 6.5.1</title>
    <!--
   <docinfo>
@@ -831,7 +831,7 @@ Add Win1250 (Czech) support (Pavel Behal)
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="release-6-5">
    <title>Release 6.5</title>
    <!--
   <docinfo>
@@ -1236,7 +1236,7 @@ New install commands for plpgsql(Jan)
   </sect1>
 
 
-<sect1>
+<sect1 id="release-6-4-2">
 <title>Release 6.4.2</title>
 <!--
 <docinfo>
@@ -1280,7 +1280,7 @@ Fix for datetime constant problem on some platforms(Thomas)
 
 
 
-<sect1>
+<sect1 id="release-6-4-1">
 <title>Release 6.4.1</title>
 <!--
 <docinfo>
@@ -1353,7 +1353,7 @@ Upgrade to PyGreSQL 2.2(D'Arcy)
 
 
 
-<sect1>
+<sect1 id="release-6-4">
 <title>Release 6.4</title>
 <!--
 <docinfo>
@@ -1659,7 +1659,7 @@ new Makefile.shlib for shared library configuration(Tom)
 </sect2>
 </sect1>
 
-<sect1>
+<sect1 id="release-6-3-2">
 <title>Release 6.3.2</title>
 <!--
 <docinfo>
@@ -1738,7 +1738,7 @@ ASSERT fixes(Bruce)
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="release-6-3-1">
    <title>Release 6.3.1</title>
    <!--
   <docinfo>
@@ -1831,7 +1831,7 @@ Better identify tcl and tk libs and includes(Bruce)
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="release-6-3">
    <title>Release 6.3</title>
    <!--
   <docinfo>
@@ -2150,7 +2150,7 @@ Remove un-needed malloc() calls and replace with palloc()(Bruce)
 </sect2>
 </sect1>
 
-<sect1>
+<sect1 id="release-6-2-1">
 <title>Release 6.2.1</title>
 <!--
 <docinfo>
@@ -2241,7 +2241,7 @@ Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
    </sect2>
   </sect1>
 
-<sect1>
+<sect1 id="release-6-2">
 <title>Release 6.2</title>
 <!--
 <docinfo>
@@ -2404,7 +2404,7 @@ SPI and Trigger programming guides (Vadim & D'Arcy)
 </sect2>
 </sect1>
 
-<sect1>
+<sect1 id="release-6-1-1">
 <title>Release 6.1.1</title>
 <!--
 <docinfo>
@@ -2459,7 +2459,7 @@ pg_dumpall now returns proper status, portability fix(Bruce)
    </sect2>
   </sect1>
 
-<sect1>
+<sect1 id="release-6-1">
 <title>Release 6.1</title>
 <!--
 <docinfo>
@@ -2639,7 +2639,7 @@ DG-UX, Ultrix, Irix, AIX portability fixes
 </sect2>
 </sect1>
 
-<sect1>
+<sect1 id="release-6-0">
 <title>Release v6.0</title>
 <!--
 <docinfo>
@@ -2792,7 +2792,7 @@ Unused/uninialized variables corrected
 </sect2>
 </sect1>
 
-<sect1>
+<sect1 id="release-1-09">
 <title>Release v1.09</title>
 <!--
 <docinfo>
@@ -2817,7 +2817,7 @@ releases.
 </para>
 </sect1>
 
-<sect1>
+<sect1 id="release-1-02">
 <title>Release v1.02</title>
 <!--
 <docinfo>
@@ -2975,7 +2975,7 @@ Contributors (appologies to any missed)
 </sect2>
 </sect1>
 
-<sect1>
+<sect1 id="release-1-01">
 <title>Release v1.01</title>
 <!--
 <docinfo>
@@ -3175,7 +3175,7 @@ Bug fixes:
 </sect2>
 </sect1>
 
-<sect1>
+<sect1 id="release-1-0">
 <title>Release v1.0</title>
 <!--
 <docinfo>
@@ -3241,7 +3241,7 @@ Bug fixes:
 </sect2>
 </sect1>
 
-<sect1>
+<sect1 id="release-0-03">
 <title><productname>Postgres95</productname> Beta 0.03</title>
 <!--
 <docinfo>
@@ -3373,7 +3373,7 @@ New documentation:
 </sect2>
 </sect1>
 
-<sect1>
+<sect1 id="release-0-02">
 <title><productname>Postgres95</productname> Beta 0.02</title>
 <!--
 <docinfo>
@@ -3433,7 +3433,7 @@ The following bugs have been fixed in postgres95-beta-0.02:
 </sect2>
 </sect1>
 
-<sect1>
+<sect1 id="release-0-01">
 <title><productname>Postgres95</productname> Beta 0.01</title>
 <!--
 <docinfo>
@@ -3455,7 +3455,7 @@ Initial release.
 </para>
 </sect1>
 
-  <sect1>
+  <sect1 id="timing-results">
    <title>Timing Results</title>
 
    <para>

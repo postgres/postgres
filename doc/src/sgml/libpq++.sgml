@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.16 2000/05/02 20:01:51 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.17 2000/09/29 20:21:34 petere Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -46,7 +46,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.16 2000/05/02 20:01:
    code for the three examples in this chapter.
   </para>
 
-  <sect1>
+  <sect1 id="libpqpp-init">
    <title>Control and Initialization</title>
     
    <sect2>
@@ -178,7 +178,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.16 2000/05/02 20:01:
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="libpqpp-classes">
    <title>libpq++ Classes</title>
 
    <sect2>
@@ -203,7 +203,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.16 2000/05/02 20:01:
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="libpqpp-connect">
    <title>Database Connection Functions</title>
    <para>
     <itemizedlist>
@@ -278,7 +278,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.16 2000/05/02 20:01:
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="libpqpp-exec">
    <title>Query Execution Functions</title>
    <para>  
     <itemizedlist>
@@ -574,7 +574,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.16 2000/05/02 20:01:
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="libpqpp-notify">
    <title>Asynchronous Notification</title>
     
    <para>
@@ -639,7 +639,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.16 2000/05/02 20:01:
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="libpqpp-copy">
    <title>Functions Associated with the COPY Command</title>
    
    <para>

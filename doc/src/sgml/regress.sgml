@@ -45,7 +45,7 @@
    the regression tests are current for every official release. 
   </para>
 
-  <sect1>
+  <sect1 id="regress-environment">
    <title>Regression Environment</title>
 
    <para>
@@ -191,7 +191,7 @@ setenv PGTZ PST8PDT7,M04.01.0,M10.05.03
    </para>
   </sect1>
   
-  <sect1>
+  <sect1 id="regress-procedure">
     <title>Regression Test Procedure</title>
     
     <para>
@@ -305,7 +305,7 @@ setenv PGTZ PST8PDT7,M04.01.0,M10.05.03
     </procedure>
   </sect1>
   
-  <sect1>
+  <sect1 id="regress-analysis">
     <title>Regression Analysis</title>
 
      <para>
@@ -476,7 +476,7 @@ setenv PGTZ PST8PDT7,M04.01.0,M10.05.03
     
   </sect1>
 
-  <sect1>
+  <sect1 id="regress-platform">
     <title>Platform-specific comparison files</title>
 
      <para>

@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.2 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.3 2000/09/29 20:21:34 petere Exp $
 -->
 
- <chapter>
+ <chapter id="source">
   <title>Postgres Source Code</title>
 
-  <sect1>
+  <sect1 id="source-format">
    <title>Formatting</title>
 
    <para>

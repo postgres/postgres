@@ -1,12 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.11 2000/08/23 05:59:01 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.12 2000/09/29 20:21:33 petere Exp $
 Date/time details
 -->
 
 <appendix label="UG1" id="datetime-appendix">
  <title id="datetime-appendix-title">Date/Time Support</title>
 
- <sect1>
+ <sect1 id="timezones">
   <title>Time Zones</title>
 
   <para>
@@ -623,7 +623,7 @@ Date/time details
   </sect2>
  </sect1>
 
- <sect1>
+ <sect1 id="units-history">
   <title>History of Units</title>
 
   <note>

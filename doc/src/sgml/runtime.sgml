@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.24 2000/09/06 19:54:45 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.25 2000/09/29 20:21:34 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -362,7 +362,7 @@ Is the postmaster running at 'localhost' and accepting connections on Unix socke
    </sect2>
   </sect1>
 
-  <sect1 Id="runtime-config">
+  <sect1 id="runtime-config">
    <Title>Run-time configuration</Title>
 
    <para>
@@ -1800,7 +1800,7 @@ openssl x509 -inform PEM -outform PEM -in newreq.pem -out newkey_no_passphrase.p
   </para>
  </sect1>
 
- <sect1>
+ <sect1 id="ssh">
   <title>Secure TCP/IP Connections with SSH tunnels</title>
 
   <note>

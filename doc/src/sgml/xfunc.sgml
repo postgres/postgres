@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.20 2000/08/25 15:17:37 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.21 2000/09/29 20:21:34 petere Exp $
 -->
 
  <chapter id="xfunc">
@@ -51,7 +51,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.20 2000/08/25 15:17:37 thoma
    and <filename>funcs.c</filename>.
   </para>
 
-  <sect1>
+  <sect1 id="xfunc-sql">
    <title>Query Language (<acronym>SQL</acronym>) Functions</title>
 
    <para>
@@ -328,7 +328,7 @@ SELECT clean_EMP();
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="xfunc-pl">
    <title>Procedural Language Functions</title>
 
    <para>
@@ -347,7 +347,7 @@ SELECT clean_EMP();
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="xfunc-internal">
    <title>Internal Functions</title>
 
    <para>
@@ -375,7 +375,7 @@ SELECT clean_EMP();
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="xfunc-c">
    <title>Compiled (C) Language Functions</title>
 
    <para>
@@ -1198,7 +1198,7 @@ LANGUAGE 'c';
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="xfunc-overload">
    <title>Function Overloading</title>
 
    <para>

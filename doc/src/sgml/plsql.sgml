@@ -1,8 +1,8 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.9 2000/08/25 15:17:36 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.10 2000/09/29 20:21:34 petere Exp $
 -->
 
- <chapter>
+ <chapter id="plsql">
   <title>PL/pgSQL - SQL Procedural Language</title>
 
   <para>
@@ -14,7 +14,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.9 2000/08/25 15:17:36 
    This package was originally written by Jan Wieck.
   </para>
 
-  <sect1>
+  <sect1 id="plsql-overview">
    <title>Overview</title>
 
    <para>
@@ -83,7 +83,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.9 2000/08/25 15:17:36 
 
   <!-- **** PL/pgSQL Description **** -->
 
-  <sect1>
+  <sect1 id="plpgsql-description">
    <title>Description</title>
 
    <!-- **** PL/pgSQL structure **** -->
@@ -773,7 +773,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
 
   <!-- **** PL/pgSQL Examples **** -->
 
-  <sect1>
+  <sect1 id="plpgsql-examples">
    <title>Examples</title>
 
    <para>

@@ -1,8 +1,8 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.9 2000/08/29 20:02:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.10 2000/09/29 20:21:34 petere Exp $
 -->
 
-<sect1>
+<sect1 id="history">
  <title>A Short History of <productname>Postgres</productname></title>
 
  <para>

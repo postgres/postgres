@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.4 2000/05/09 18:30:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.5 2000/09/29 20:21:34 petere Exp $
 -->
 
  <chapter id="pl-perl">
@@ -9,7 +9,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.4 2000/05/09 18:30:43 momji
    This chapter describes how to compile, install and
    use PL/Perl.
   </para>
-  <sect1>
+  <sect1 id="plperl-overview">
    <title>Overview</title>
    <para>
     PL/Perl allows you to write functions in the Perl scripting
@@ -34,7 +34,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.4 2000/05/09 18:30:43 momji
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="plperl-install">
    <title>Building and Installing</title>
    <para>
     Assuming that the <productname>Postgres</productname>
@@ -65,7 +65,7 @@ make
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="plperl-use">
    <title>Using PL/Perl</title>
    <para>
     Assume you have the following table:

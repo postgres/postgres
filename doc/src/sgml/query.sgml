@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.12 2000/06/14 13:12:17 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.13 2000/09/29 20:21:34 petere Exp $
 -->
 
  <chapter id="query">
@@ -27,7 +27,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.12 2000/06/14 13:12:17 thoma
    are extensions to the <acronym>ANSI</acronym> standard.
   </para>
 
-  <sect1>
+  <sect1 id="query-psql">
    <title>Interactive Monitor</title>
 
    <para>
@@ -69,7 +69,7 @@ mydb=> \i basics.sql
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="query-concepts">
    <title>Concepts</title>
 
    <para>
@@ -93,7 +93,7 @@ mydb=> \i basics.sql
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="query-table">
    <title>Creating a New Class</title>
 
    <para>
@@ -140,7 +140,7 @@ CREATE TABLE weather (
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="query-populate">
    <title>Populating a Class with Instances</title>
 
    <para>
@@ -171,7 +171,7 @@ COPY weather FROM '/home/user/weather.txt'
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="query-query">
    <title>Querying a Class</title>
 
    <para>
@@ -240,7 +240,7 @@ SELECT DISTINCT city
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="query-selectinto">
    <title>Redirecting SELECT Queries</title>
 
    <para>
@@ -259,7 +259,7 @@ SELECT * INTO TABLE temp FROM weather;
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="query-join">
    <title>Joins Between Classes</title>
 
    <para>
@@ -334,7 +334,7 @@ SELECT W1.city, W1.temp_lo AS low, W1.temp_hi AS high,
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="query-update">
    <title>Updates</title>
 
    <para>
@@ -352,7 +352,7 @@ UPDATE weather
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="query-delete">
    <title>Deletions</title>
 
    <para>
@@ -374,7 +374,7 @@ DELETE FROM classname;
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="query-agg">
    <title>Using Aggregate Functions</title>
 
    <para>

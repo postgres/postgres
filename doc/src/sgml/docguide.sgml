@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.26 2000/05/02 20:01:51 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.27 2000/09/29 20:21:33 petere Exp $
 Documentation Guide
 Thomas Lockhart
 -->
@@ -31,7 +31,7 @@ Thomas Lockhart
   without resorting to mailing list support.
  </para>
 
- <sect1>
+ <sect1 id="doc-roadmap">
   <title>Documentation Roadmap</title>
 
   <para>
@@ -144,7 +144,7 @@ Thomas Lockhart
   </para>
  </sect1>
 
- <sect1>
+ <sect1 id="doc-project">
   <title>The Documentation Project</title>
 
   <para>
@@ -206,7 +206,7 @@ Thomas Lockhart
 
  </sect1>
 
- <sect1>
+ <sect1 id="doc-sources">
   <title>Documentation Sources</title>
 
   <para>
@@ -848,7 +848,7 @@ End:
   </sect2>
  </sect1>
 
- <sect1>
+ <sect1 id="doc-build">
   <title>Building Documentation</title>
 
   <para>
@@ -913,7 +913,7 @@ PSTYLE= /home/lockhart/SGML/db143.d/docbook/print
   </para>
  </sect1>
 
- <sect1>
+ <sect1 id="doc-manpages">
   <title>Manpages</title>
 
   <para>
@@ -968,7 +968,7 @@ $ make man
   </procedure>
  </sect1>
 
- <sect1>
+ <sect1 id="doc-hardcopy">
   <title>Hardcopy Generation for v7.0</title>
 
   <para>
@@ -1325,7 +1325,7 @@ exit
   </sect2>
  </sect1>
 
- <sect1>
+ <sect1 id="doc-toolsets">
   <title>Toolsets</title>
 
   <para>
@@ -2051,7 +2051,7 @@ dvips postgres.dvi
   </sect2>
  </sect1>
 
- <sect1>
+ <sect1 id="doc-alt-toolsets">
   <title>Alternate Toolsets</title>
 
   <para>

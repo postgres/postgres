@@ -10,7 +10,7 @@
    AFTER on INSERT, DELETE or UPDATE of a tuple as a trigger event.
   </para>
 
-  <sect1>
+  <sect1 id="trigger-create">
    <title>Trigger Creation</title>
 
    <para>
@@ -176,7 +176,7 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="trigger-manager">
    <title>Interaction with the Trigger Manager</title>
 
    <para>
@@ -389,7 +389,7 @@ typedef struct Trigger
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="trigger-datachanges">
    <title>Visibility of Data Changes</title>
 
    <para>
@@ -426,7 +426,7 @@ execution of Q) or after Q is done.
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="trigger-examples">
    <title>Examples</title>
 
    <para>

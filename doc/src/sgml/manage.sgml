@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.10 2000/05/02 20:01:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.11 2000/09/29 20:21:34 petere Exp $
 -->
 
  <Chapter Id="manage">
@@ -29,7 +29,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.10 2000/05/02 20:01:5
    The Database Administrator's Guide covers these topics in more detail.
   </Para>
 
-  <Sect1>
+  <Sect1 id="db-creation">
    <Title>Database Creation</Title>
 
    <Para>
@@ -75,7 +75,7 @@ ERROR:  CREATE DATABASE: Permission denied.
 
   </Sect1>
 
-  <Sect1>
+  <Sect1 id="altern-locations">
    <Title>Alternate Database Locations</Title>
 
    <Para>
@@ -164,7 +164,7 @@ ERROR:  The database path '/no/where' is invalid. This may be due to a character
 
   </Sect1>
 
-<Sect1>
+<Sect1 id="db-accessing">
 <Title>Accessing a Database</Title>
 
 <Para>
@@ -274,7 +274,7 @@ TBD
 
 </Sect1>
      
-<Sect1>
+<Sect1 id="db-destroy">
 <Title>Destroying a Database</Title>
 
 <Para>

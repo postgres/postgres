@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.9 2000/09/12 05:34:28 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.10 2000/09/29 20:21:33 petere Exp $
 -->
 
  <chapter id="overview">
@@ -28,7 +28,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.9 2000/09/12 05:34:28 tho
    sending the results.
   </para>
 
-  <sect1>
+  <sect1 id="query-path">
    <title>The Path of a Query</title>
 
    <para>
@@ -114,7 +114,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.9 2000/09/12 05:34:28 tho
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="connect-estab">
    <title>How Connections are Established</title>
 
    <para>
@@ -167,7 +167,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.9 2000/09/12 05:34:28 tho
 
   </sect1>
 
-  <sect1>
+  <sect1 id="parser-stage">
    <title>The Parser Stage</title>
 
    <para>
@@ -442,7 +442,7 @@ current context are performed.
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="rule-system">
    <title>The <productname>Postgres</productname> Rule System</title>
 
    <para>
@@ -585,7 +585,7 @@ current context are performed.
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="planner-optimizer">
    <title>Planner/Optimizer</title>
 
    <para>
@@ -711,7 +711,7 @@ current context are performed.
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="executor">
    <title>Executor</title>
 
    <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.7 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.8 2000/09/29 20:21:34 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -16,7 +16,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.7 2000/03/31 03:27:41 thomas 
    </para>
   </abstract>
 
-  <sect1>
+  <sect1 id="mvcc-intro">
    <title>Introduction</title>
 
    <para>
@@ -41,7 +41,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.7 2000/03/31 03:27:41 thomas 
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="transaction-iso">
    <title>Transaction Isolation</title>
 
    <para>
@@ -181,7 +181,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.7 2000/03/31 03:27:41 thomas 
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="xact-read-committed">
    <title>Read Committed Isolation Level</title>
 
    <para>
@@ -216,7 +216,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.7 2000/03/31 03:27:41 thomas 
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="xact-serializable">
    <title>Serializable Isolation Level</title>
 
    <para>
@@ -259,7 +259,7 @@ ERROR:  Can't serialize access due to concurrent update
    </note>
   </sect1>
 
-  <sect1>
+  <sect1 id="locking-tables">
    <title>Locking and Tables</title>
 
    <para>
@@ -444,7 +444,7 @@ ERROR:  Can't serialize access due to concurrent update
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="locking-indices">
    <title>Locking and Indices</title>
 
    <para>
@@ -509,7 +509,7 @@ ERROR:  Can't serialize access due to concurrent update
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="applevel-consistency">
    <title>Data consistency checks at the application level</title>
 
    <para>

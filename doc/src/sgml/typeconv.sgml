@@ -29,7 +29,7 @@ The Programmer's Guide has more details on the exact algorithms used for
 implicit type conversion and coercion.
 </para>
 
-<sect1>
+<sect1 id="typeconv-overview">
 <title>Overview</title>
 
 <para>
@@ -204,7 +204,7 @@ should use this new function and will no longer do the implicit conversion using
 </sect2>
 </sect1>
 
-<sect1>
+<sect1 id="typeconv-oper">
 <title>Operators</title>
 
 <sect2>
@@ -419,7 +419,7 @@ will try to oblige.
 </sect2>
 </sect1>
 
-<sect1>
+<sect1 id="typeconv-func">
 <title>Functions</title>
 
 <procedure>
@@ -569,7 +569,7 @@ tgl=> select substr(text(1234), 3);
 </sect2>
 </sect1>
 
-<sect1>
+<sect1 id="typeconv-query">
 <title>Query Targets</title>
 
 <procedure>
@@ -620,7 +620,7 @@ tgl=> SELECT * FROM vv;
 </sect2>
 </sect1>
 
-<sect1>
+<sect1 id="typeconv-union">
 <title>UNION Queries</title>
 
 <para>

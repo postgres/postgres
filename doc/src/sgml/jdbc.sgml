@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.12 2000/08/29 20:02:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.13 2000/09/29 20:21:34 petere Exp $
 -->
 
  <chapter id="jdbc">
@@ -30,7 +30,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.12 2000/08/29 20:02:07 
    the driver can be used on any platform.
   </para>
 
-  <sect1>
+  <sect1 id="jdbc-build">
    <title>Building the <acronym>JDBC</acronym> Interface</title>
 
    <sect2>
@@ -97,7 +97,7 @@ java uk.org.retep.finder.Main
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="jdbc-prepare">
    <title>Preparing the Database for <acronym>JDBC</acronym></title>
 
    <para>
@@ -125,7 +125,7 @@ host         all         127.0.0.1     255.255.255.255   password
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="jdbc-use">
    <title>Using the Driver</title>
 
    <para>
@@ -138,7 +138,7 @@ host         all         127.0.0.1     255.255.255.255   password
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="jdbc-import">
    <title>Importing <acronym>JDBC</acronym></title>
 
    <para>
@@ -158,7 +158,7 @@ import java.sql.*;
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="jdbc-load">
    <title>Loading the Driver</title>
 
    <para>
@@ -219,7 +219,7 @@ Class.forName("postgresql.Driver");
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="jdbc-connect">
    <title>Connecting to the Database</title>
 
    <para>
@@ -298,7 +298,7 @@ Connection db = DriverManager.getConnection(url,user,pwd);
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="jdbc-query">
    <title>Issuing a Query and Processing the Result</title>
 
    <para>
@@ -397,7 +397,7 @@ st.close();
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="jdbc-update">
    <title>Performing Updates</title>
 
    <para>
@@ -410,7 +410,7 @@ st.executeUpdate("create table basic (a int2, b int2)");
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="jdbc-disconnect">
    <title>Closing the Connection</title>
 
    <para>
@@ -422,7 +422,7 @@ db.close();
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="jdbc-lo">
    <title>Using Large Objects</title>
 
    <para>
@@ -528,7 +528,7 @@ ps.close();
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="jdbc-ext">
    <title><application>Postgres</application> Extensions to the
     <acronym>JDBC</acronym> <acronym>API</acronym></title>
 
@@ -2627,7 +2627,7 @@ It's up to you, and your applications requirements.
 </para>
 </sect1>
 
-<sect1>
+<sect1 id="jdbc-reading">
 <title>Further Reading</title>
 
 <para>

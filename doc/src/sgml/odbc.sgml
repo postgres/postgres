@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.17 2000/09/18 20:11:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.18 2000/09/29 20:21:34 petere Exp $
 -->
 
  <chapter id="odbc">
@@ -37,7 +37,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.17 2000/09/18 20:11:37 
    transportable between servers from different manufacturers..
   </para>
 
-  <sect1>
+  <sect1 id="odbc-background">
    <title>Background</title>
 
    <para>
@@ -72,7 +72,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.17 2000/09/18 20:11:37 
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="odbc-install">
    <title>Installation</title>
 
    <para>
@@ -136,7 +136,7 @@ psql -d template1 -f <replaceable>LOCATION</>/odbc.sql
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="odbc-config">
    <title>Configuration Files</title>
 
    <para>
@@ -220,7 +220,7 @@ InstallDir = /opt/applix/axdata/axshlib
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="odbc-windows">
    <title><productname>Windows</productname> Applications</title>
 
    <para>
@@ -301,8 +301,7 @@ InstallDir = /opt/applix/axdata/axshlib
    </sect2>
   </sect1>
 
-
-  <sect1>
+  <sect1 id="odbc-applixware">
    <title>ApplixWare</title>
 
    <para>

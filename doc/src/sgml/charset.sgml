@@ -37,7 +37,7 @@
    </itemizedlist>
   </para>
 
-  <sect1>
+  <sect1 id="multibyte">
    <title>Multi-byte Support</title>
 
    <note>

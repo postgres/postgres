@@ -37,7 +37,7 @@ certain environment variables after the connection is established)
 are covered elsewhere.
 </para>
 
-<Sect1>
+<Sect1 id="protocol-overview">
 <Title>Overview</Title>
 
 <Para>
@@ -85,7 +85,7 @@ itself.  The difference is historical.
 </para>
 </sect1>
 
-<Sect1>
+<Sect1 id="protocol-protocol">
 <Title>Protocol</Title>
 
 <Para>
@@ -620,7 +620,7 @@ to terminate itself.
 </sect2>
 </sect1>
 
-<Sect1>
+<Sect1 id="protocol-message-types">
 <Title>Message Data Types</Title>
 
 <Para>
@@ -690,7 +690,7 @@ characters that don't fit into your fixed-size buffer.
 </Para>
 </sect1>
 
-<Sect1>
+<Sect1 id="protocol-message-formats">
 <Title>Message Formats</Title>
 
 <Para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.12 2000/05/15 12:42:23 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.13 2000/09/29 20:21:34 petere Exp $
 -->
 
  <chapter id="largeObjects">
@@ -22,7 +22,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.12 2000/05/15 12:42:23 momjia
    large object data.
   </para>
 
-  <sect1>
+  <sect1 id="lo-history">
    <title>Historical Note</title>
 
    <para>
@@ -42,7 +42,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.12 2000/05/15 12:42:23 momjia
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="lo-implementation">
    <title>Implementation Features</title>
 
    <para>
@@ -54,7 +54,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.12 2000/05/15 12:42:23 momjia
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="lo-interfaces">
    <title>Interfaces</title>
 
    <para>
@@ -255,7 +255,7 @@ Oid lo_unlink(PGconn *<replaceable class="parameter">conn</replaceable>, Oid lob
 
 </sect1>
 
-<sect1>
+<sect1 id="lo-funcs">
 <title>Built in registered functions</title>
 
 <para>
@@ -279,7 +279,7 @@ SELECT lo_export(image.raster, '/tmp/motd') from image
 </para>
 </sect1>
 
-<sect1>
+<sect1 id="lo-libpq">
 <title>Accessing Large Objects from LIBPQ</title>
 
 <para>
@@ -297,7 +297,7 @@ SELECT lo_export(image.raster, '/tmp/motd') from image
 </para>
 </sect1>
 
-<sect1>
+<sect1 id="lo-sample">
 <title>Sample Program</title>
 
 <para>

@@ -29,7 +29,7 @@
  as well as
 [<XRef LinkEnd="STON90b" EndTerm="STON90b">].
 </para>
-<Sect1>
+<Sect1 id="querytree">
 <Title>What is a Querytree?</Title>
 
 <Para>
@@ -228,7 +228,7 @@
 </Sect2>
 </Sect1>
 
-<Sect1>
+<Sect1 id="rules-views">
 <Title>Views and the Rule System</Title>
 
 <Sect2>
@@ -973,7 +973,7 @@
 
 </Sect1>
 
-<Sect1>
+<Sect1 id="rules-insert">
 <Title>Rules on INSERT, UPDATE and DELETE</Title>
 
 <Sect2>
@@ -1824,7 +1824,7 @@ Merge Join
 
 </Sect1>
 
-<Sect1>
+<Sect1 id="rules-permissions">
 <Title>Rules and Permissions</Title>
 
 <Para>
@@ -1912,7 +1912,7 @@ Merge Join
 </Para>
 </Sect1>
 
-<Sect1>
+<Sect1 id="rules-triggers">
 <Title>Rules versus Triggers</Title>
 
 <Para>

@@ -14,8 +14,8 @@
    available through operators and may be documented as operators only.
   </para>
 
-  <sect1>
-   <title id="sql-funcs">SQL Functions</title>
+  <sect1 id="sql-functions">
+   <title>SQL Functions</title>
 
    <para>
     <firstterm><acronym>SQL</acronym> functions</firstterm> are constructs
@@ -65,8 +65,8 @@
    </para>
   </sect1>
 
-  <sect1>
-   <title id="math-funcs">Mathematical Functions</title>
+  <sect1 id="math-functions">
+   <title>Mathematical Functions</title>
 
    <para>
     <table tocentry="1">
@@ -261,7 +261,7 @@
 
   </sect1>
 
-  <sect1>
+  <sect1 id="string-functions">
    <title>String Functions</title>
 
    <para>
@@ -380,12 +380,12 @@
 	<entry>char(varchar 'varchar string')</entry>
        </row>
        <row>
-       <row>
 	<entry>chr(int)</entry>
 	<entry>text</entry>
 	<entry>returns the character having the binary equivalent to int</entry>
 	<entry>chr(65)</entry>
        </row>
+       <row>
 	<entry>initcap(text)</entry>
 	<entry>text</entry>
 	<entry>first letter of each word to upper case</entry>
@@ -482,7 +482,7 @@
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="datetime-functions">
    <title>Date/Time Functions</title>
 
    <para>
@@ -607,9 +607,8 @@
   </sect1>
 
   
-  <sect1>
-
-   <title id="formatting-funcs">Formatting Functions</title>
+  <sect1 id="formatting-functions">
+   <title>Formatting Functions</title>
 
    <note>
     <title>Author</title>
@@ -1252,7 +1251,7 @@
   </sect1>
 
 
-  <sect1>
+  <sect1 id="geometric-functions">
    <title>Geometric Functions</title>
 
    <para>
@@ -1474,8 +1473,8 @@ Not defined by this name. Implements the intersection operator '#'
    </para>
   </sect1>
 
-  <sect1>
-   <title id="cidr-funcs">IP V4 Functions</title>
+  <sect1 id="cidr-functions">
+   <title>IP V4 Functions</title>
 
    <para>
     <table tocentry="1">
@@ -1533,8 +1532,8 @@ Not defined by this name. Implements the intersection operator '#'
 
   </sect1>
 
-  <sect1>
-   <title id="misc-funcs">Miscellaneous Functions</>
+  <sect1 id="misc-functions">
+   <title>Miscellaneous Functions</>
 
    <table>
     <title>Miscellaneous Functions</>
@@ -1588,8 +1587,8 @@ Not defined by this name. Implements the intersection operator '#'
    </note>
   </sect1>
 
-  <sect1>
-   <title id="aggregate-funcs">Aggregate Functions</title>
+  <sect1 id="aggregate-functions">
+   <title>Aggregate Functions</title>
 
    <note>
     <title>Author</title>

@@ -8,7 +8,7 @@
    </para>
   </abstract>
 
-  <sect1>
+  <sect1 id="win32-install-build">
    <title>Building the libraries</title>
 
    <para>
@@ -64,7 +64,7 @@ nmake /f win32.mak
 
   </sect1>
 
-  <sect1>
+  <sect1 id="win32-install-install">
    <title>Installing the libraries</title>
    <para>
     The only part of the library to really be installed is the 
@@ -83,7 +83,7 @@ nmake /f win32.mak
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="win32-install-use">
    <title>Using the libraries</title>
    <para>
     To use the libraries, you must add the <filename>libpqdll.lib</filename>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.9 2000/05/29 15:44:54 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.10 2000/09/29 20:21:33 petere Exp $
 CVS code repository
 Thomas Lockhart
 -->
@@ -37,7 +37,7 @@ Thomas Lockhart
   <productname>Postgres</productname> server to your local machine.
  </para>
 
- <sect1>
+ <sect1 id="cvs-tree">
   <title><productname>CVS</productname> Tree Organization</title>
 
   <para>
@@ -154,7 +154,7 @@ cvs commit
   </para>
  </sect1>
 
- <sect1>
+ <sect1 id="anoncvs">
   <title>Getting The Source Via Anonymous <productname>CVS</productname></title>
 
   <para>
@@ -286,7 +286,7 @@ $ chmod -R go-w pgsql
   </para>
  </sect1>
 
- <sect1>
+ <sect1 id="cvsup">
   <title>Getting The Source Via <productname>CVSup</productname></title>
 
   <para>

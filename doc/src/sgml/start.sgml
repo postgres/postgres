@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.12 2000/05/18 14:24:32 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.13 2000/09/29 20:21:34 petere Exp $
 -->
 
  <chapter id="start">
@@ -40,7 +40,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.12 2000/05/18 14:24:32 momji
    language, Postgres <acronym>SQL</acronym>.
   </para>
 
-  <sect1>
+  <sect1 id="start-env">
    <title>Setting Up Your Environment</title>
 
    <para>
@@ -121,7 +121,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.12 2000/05/18 14:24:32 momji
 
   </sect1>
 
-  <sect1>
+  <sect1 id="start-psql">
    <title>Starting the Interactive Monitor (psql)</title>
 
    <para>
@@ -200,7 +200,7 @@ FATAL 1:Feb 17 23:19:55:process userid (2360) != database owner (268)
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="start-manage-db">
    <title>Managing a Database</title>
 
    <para>

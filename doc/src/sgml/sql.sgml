@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.11 2000/06/20 18:04:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.12 2000/09/29 20:21:34 petere Exp $
 -->
 
  <chapter id="sql">
@@ -191,7 +191,7 @@ PART:                         4  |  3
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="relmodel-formal">
    <title id="formal-notion">Relational Data Model Formalities</title>
 
    <para>
@@ -372,7 +372,7 @@ attributes are taken from. We often write a relation scheme as
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="relmodel-oper">
    <title id="operations">Operations in the Relational Data Model</title>
 
    <para>

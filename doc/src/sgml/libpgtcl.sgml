@@ -12,7 +12,7 @@ tcl scripts.
 This package was originally written by Jolly Chen.
 </Para>
 
-<Sect1>
+<Sect1 id="libpgtcl-commands">
 <Title>Commands</Title>
 
 <Para>
@@ -117,7 +117,7 @@ in a BEGIN/END transaction block.
 
 </Sect1>
 
-<Sect1>
+<Sect1 id="libpgtcl-examples">
 <Title>Examples</Title>
 
 <Para>
@@ -145,7 +145,7 @@ proc getDBs { {host "localhost"} {port "5432"} } {
 </Para>
 </Sect1>
 
-<Sect1>
+<Sect1 id="libpgtcl-ref">
 <Title>pgtcl Command Reference Information</Title>
 
 <REFENTRY ID="PGTCL-PGCONNECT">

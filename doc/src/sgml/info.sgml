@@ -1,8 +1,8 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.8 2000/05/11 17:32:32 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.9 2000/09/29 20:21:34 petere Exp $
 -->
 
-<sect1>
+<sect1 id="resources">
  <title>Resources</title>
 
  <para>

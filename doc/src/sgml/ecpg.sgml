@@ -1,8 +1,8 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.16 2000/09/18 20:11:36 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.17 2000/09/29 20:21:33 petere Exp $
 -->
 
- <chapter>
+ <chapter id="ecpg">
   <docinfo>
    <authorgroup>
     <author>
@@ -43,7 +43,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.16 2000/09/18 20:11:36 petere
    </note>
   </para>
 
-  <sect1>
+  <sect1 id="ecpg-why">
    <title>Why Embedded <acronym>SQL</acronym>?</title>
 
    <para>
@@ -65,7 +65,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.16 2000/09/18 20:11:36 petere
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="ecpg-concept">
    <title>The Concept</title>
 
    <para>
@@ -106,7 +106,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.16 2000/09/18 20:11:36 petere
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="ecpg-use">
    <title>How To Use <application>ecpg</application></title>
 
    <para>
@@ -425,7 +425,7 @@ struct sqlca
    </sect2>
   </sect1>
 
-  <sect1>
+  <sect1 id="ecpg-limitations">
    <title>Limitations</title>
 
    <abstract>
@@ -460,7 +460,7 @@ struct sqlca
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="ecpg-porting">
    <title>Porting From Other <acronym>RDBMS</acronym> Packages</title>
 
    <para>
@@ -503,7 +503,7 @@ struct sqlca
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="ecpg-develop">
    <title>For the Developer</title>
 
    <para>

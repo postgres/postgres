@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/oper.sgml,v 1.18 2000/09/15 20:20:11 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/oper.sgml,v 1.19 2000/09/29 20:21:34 petere Exp $
 -->
 
  <Chapter Id="operators">
@@ -57,7 +57,7 @@ select * from emp where int4lt(salary, 40000);
    has a command (<Command>\dd</Command>) to show these operators.
   </Para>
 
-  <sect1>
+  <sect1 id="oper-precedence">
    <title>Lexical Precedence</title>
 
    <para>
@@ -310,7 +310,7 @@ logical union
 </para>
 </sect1>
 
-  <sect1>
+  <sect1 id="general-operators">
    <title>General Operators</title>
 
    <para>
@@ -417,8 +417,8 @@ logical union
    </Para>
   </sect1>
 
-  <sect1>
-   <title id="math-opers">Numerical Operators</title>
+  <sect1 id="numerical-operators">
+   <title>Numerical Operators</title>
 
    <Para>
     <TABLE TOCENTRY="1">
@@ -499,7 +499,7 @@ logical union
    </Para>
   </sect1>
 
-  <sect1>
+  <sect1 id="geometric-operators">
    <title>Geometric Operators</title>
 
    <Para>
@@ -641,7 +641,7 @@ logical union
    </Para>
   </sect1>
   
-  <sect1>
+  <sect1 id="interval-operators">
    <title>Time Interval Operators</title>
    
    <Para>
@@ -722,8 +722,8 @@ logical union
    </Para>
   </sect1>
 
-  <Sect1>
-   <title id="cidr-opers">IP V4 CIDR Operators</title>
+  <sect1 id="cidr-operators">
+   <title>IP V4 CIDR Operators</title>
 
    <Para>
     <TABLE TOCENTRY="1">
@@ -792,10 +792,10 @@ logical union
      </TGROUP>
     </TABLE>
    </Para>
-  </Sect1>
+  </sect1>
 
-  <Sect1>
-   <title id="inet-opers">IP V4 INET Operators</title>
+  <sect1 id="inet-operators">
+   <title>IP V4 INET Operators</title>
    
    <Para>
     <TABLE TOCENTRY="1">
@@ -864,7 +864,7 @@ logical union
      </TGROUP>
     </TABLE>
    </Para>
-  </Sect1>
+  </sect1>
 
  </Chapter>
 

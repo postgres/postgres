@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.12 2000/09/18 20:11:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.13 2000/09/29 20:21:33 petere Exp $
 Genetic Optimizer
 -->
 
@@ -40,7 +40,7 @@ Genetic Optimizer
    </note>
   </para>
 
-  <sect1>
+  <sect1 id="geqo-intro">
    <title>Query Handling as a Complex Optimization Problem</title>
 
    <para>
@@ -84,7 +84,7 @@ Genetic Optimizer
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="geqo-intro2">
    <title>Genetic Algorithms (<acronym>GA</acronym>)</title>
 
    <para>
@@ -150,7 +150,7 @@ P''(t)  generation of descendants at a time t
    </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="geqo-pg-intro">
    <title>Genetic Query Optimization (<acronym>GEQO</acronym>) in Postgres</title>
 
    <para>
@@ -231,7 +231,7 @@ P''(t)  generation of descendants at a time t
 
   </sect1>
 
-  <sect1>
+  <sect1 id="geqo-future">
    <title>Future Implementation Tasks for
     <productname>PostgreSQL</> <acronym>GEQO</acronym></title>
 
