@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.47 1999/09/11 19:06:36 tgl Exp $
+ *	  $Id: explain.c,v 1.48 1999/09/18 19:06:40 tgl Exp $
  *
  */
 
@@ -211,11 +211,14 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			i = 0;
 			foreach(l, ((IndexScan *) plan)->indxid)
 			{
-				relation = RelationIdCacheGetRelation((int) lfirst(l));
+				relation = RelationIdGetRelation(lfirsti(l));
+				Assert(relation);
 				if (++i > 1)
 					appendStringInfo(str, ", ");
 				appendStringInfo(str,
 								 stringStringInfo((RelationGetRelationName(relation))->data));
+				/* drop relcache refcount from RelationIdGetRelation */
+				RelationDecrementReferenceCount(relation);
 			}
 		case T_SeqScan:
 			if (((Scan *) plan)->scanrelid > 0)

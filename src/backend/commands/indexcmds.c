@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.10 1999/08/22 20:14:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.11 1999/09/18 19:06:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,15 +324,15 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 		FIsetProcOid(funcInfo, tuple->t_data->t_oid);
 	}
 
-	heapRelation = heap_open(relationId);
+	heapRelation = heap_open(relationId, ShareLock);
 	indexRelation = index_open(indexId);
-
-	LockRelation(heapRelation, ShareLock);
 
 	InitIndexStrategy(numberOfAttributes, indexRelation, accessMethodId);
 
 	index_build(heapRelation, indexRelation, numberOfAttributes,
 				attributeNumberA, 0, NULL, funcInfo, predInfo);
+
+	/* heap and index rels are closed as a side-effect of index_build */
 }
 
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.64 1999/07/16 04:59:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.65 1999/09/18 19:07:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,38 +165,39 @@ ProcessUtility(Node *parsetree,
 		case T_DestroyStmt:
 			{
 				DestroyStmt *stmt = (DestroyStmt *) parsetree;
-				List	   *arg;
 				List	   *args = stmt->relNames;
-				Relation	rel;
+				List	   *arg;
 
 				PS_SET_STATUS(commandTag = "DROP");
 				CHECK_IF_ABORTED();
 
+				/* check as much as we can before we start dropping ... */
 				foreach(arg, args)
 				{
+					Relation	rel;
+
 					relname = strVal(lfirst(arg));
 					if (!allowSystemTableMods && IsSystemRelationName(relname))
 						elog(ERROR, "class \"%s\" is a system catalog",
 							 relname);
-					rel = heap_openr(relname);
-					if (RelationIsValid(rel))
-					{
-						if (stmt->sequence &&
-							rel->rd_rel->relkind != RELKIND_SEQUENCE)
-							elog(ERROR, "Use DROP TABLE to drop table '%s'",
-								 relname);
-						if (!(stmt->sequence) &&
-							rel->rd_rel->relkind == RELKIND_SEQUENCE)
-							elog(ERROR, "Use DROP SEQUENCE to drop sequence '%s'",
-								 relname);
-						heap_close(rel);
-					}
+					rel = heap_openr(relname, AccessExclusiveLock);
+					if (stmt->sequence &&
+						rel->rd_rel->relkind != RELKIND_SEQUENCE)
+						elog(ERROR, "Use DROP TABLE to drop table '%s'",
+							 relname);
+					if (!(stmt->sequence) &&
+						rel->rd_rel->relkind == RELKIND_SEQUENCE)
+						elog(ERROR, "Use DROP SEQUENCE to drop sequence '%s'",
+							 relname);
+					/* close rel, but keep lock until end of xact */
+					heap_close(rel, NoLock);
 #ifndef NO_SECURITY
 					if (!pg_ownercheck(userName, relname, RELNAME))
 						elog(ERROR, "you do not own class \"%s\"",
 							 relname);
 #endif
 				}
+				/* OK, terminate 'em all */
 				foreach(arg, args)
 				{
 					relname = strVal(lfirst(arg));

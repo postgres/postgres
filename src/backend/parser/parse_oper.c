@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.31 1999/08/26 04:59:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.32 1999/09/18 19:07:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,6 @@ binary_oper_get_candidates(char *opname,
 	HeapScanDesc pg_operator_scan;
 	HeapTuple	tup;
 	Form_pg_operator oper;
-	int			nkeys;
 	int			ncandidates = 0;
 	ScanKeyData opKey[3];
 
@@ -91,13 +90,11 @@ binary_oper_get_candidates(char *opname,
 						   F_CHAREQ,
 						   CharGetDatum('b'));
 
-	nkeys = 2;
-
-	pg_operator_desc = heap_openr(OperatorRelationName);
+	pg_operator_desc = heap_openr(OperatorRelationName, AccessShareLock);
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
 									  SnapshotSelf,		/* ??? */
-									  nkeys,
+									  2,
 									  opKey);
 
 	while (HeapTupleIsValid(tup = heap_getnext(pg_operator_scan, 0)))
@@ -114,7 +111,7 @@ binary_oper_get_candidates(char *opname,
 	}
 
 	heap_endscan(pg_operator_scan);
-	heap_close(pg_operator_desc);
+	heap_close(pg_operator_desc, AccessShareLock);
 
 	return ncandidates;
 }	/* binary_oper_get_candidates() */
@@ -522,7 +519,7 @@ unary_oper_get_candidates(char *op,
 	fmgr_info(F_CHAREQ, (FmgrInfo *) &opKey[1].sk_func);
 	opKey[1].sk_argument = CharGetDatum(rightleft);
 
-	pg_operator_desc = heap_openr(OperatorRelationName);
+	pg_operator_desc = heap_openr(OperatorRelationName, AccessShareLock);
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
 									  SnapshotSelf,		/* ??? */
@@ -545,7 +542,7 @@ unary_oper_get_candidates(char *op,
 	}
 
 	heap_endscan(pg_operator_scan);
-	heap_close(pg_operator_desc);
+	heap_close(pg_operator_desc, AccessShareLock);
 
 	return ncandidates;
 }	/* unary_oper_get_candidates() */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.35 1999/07/19 07:07:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.36 1999/09/18 19:07:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,9 +78,7 @@ InsertRule(char *rulname,
 	extern void eval_as_new_xact();
 	char	   *template;
 
-	eventrel = heap_openr(evobj);
-	if (eventrel == NULL)
-		elog(ERROR, "rules cannot be defined on relations not in schema");
+	eventrel = heap_openr(evobj, AccessShareLock);
 	eventrel_oid = RelationGetRelid(eventrel);
 
 	/*
@@ -90,7 +88,7 @@ InsertRule(char *rulname,
 		evslot_index = -1;
 	else
 		evslot_index = attnameAttNum(eventrel, (char *) evslot);
-	heap_close(eventrel);
+	heap_close(eventrel, AccessShareLock);
 
 	if (evinstead)
 		is_instead = "t";
@@ -258,9 +256,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 * ... the targetlist of the SELECT action must exactly match the
 		 * event relation, ...
 		 */
-		event_relation = heap_openr(event_obj->relname);
-		if (event_relation == NULL)
-			elog(ERROR, "virtual relations not supported yet");
+		event_relation = heap_openr(event_obj->relname, AccessShareLock);
 
 		if (event_relation->rd_att->natts != length(query->targetList))
 			elog(ERROR, "select rules target list must match event relations structure");
@@ -297,7 +293,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 			}
 		}
 
-		heap_close(event_relation);
+		heap_close(event_relation, AccessShareLock);
 
 		/*
 		 * LIMIT in view is not supported
@@ -332,9 +328,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 * This rule is allowed - install it.
 	 */
 
-	event_relation = heap_openr(event_obj->relname);
-	if (event_relation == NULL)
-		elog(ERROR, "virtual relations not supported yet");
+	event_relation = heap_openr(event_obj->relname, AccessShareLock);
 	ev_relid = RelationGetRelid(event_relation);
 
 	if (eslot_string == NULL)
@@ -347,7 +341,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		event_attno = attnameAttNum(event_relation, eslot_string);
 		event_attype = attnumTypeId(event_relation, event_attno);
 	}
-	heap_close(event_relation);
+	heap_close(event_relation, AccessShareLock);
 
 	/* fix bug about instead nothing */
 	ValidateRule(event_type, event_obj->relname,

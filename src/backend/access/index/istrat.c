@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.35 1999/07/16 04:58:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.36 1999/09/18 19:06:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -558,7 +558,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 							   F_OIDEQ,
 							   ObjectIdGetDatum(indexObjectId));
 
-		relation = heap_openr(IndexRelationName);
+		relation = heap_openr(IndexRelationName, AccessShareLock);
 		scan = heap_beginscan(relation, false, SnapshotNow, 1, entry);
 		tuple = heap_getnext(scan, 0);
 	}
@@ -591,7 +591,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	if (IsBootstrapProcessingMode())
 	{
 		heap_endscan(scan);
-		heap_close(relation);
+		heap_close(relation, AccessShareLock);
 	}
 
 	/* if support routines exist for this access method, load them */
@@ -604,7 +604,8 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 		ScanKeyEntryInitialize(&entry[1], 0, Anum_pg_amproc_amopclaid,
 							   F_OIDEQ, 0);
 
-		relation = heap_openr(AccessMethodProcedureRelationName);
+		relation = heap_openr(AccessMethodProcedureRelationName,
+							  AccessShareLock);
 
 		for (attributeNumber = 1; attributeNumber <= maxAttributeNumber;
 			 attributeNumber++)
@@ -631,7 +632,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 
 			heap_endscan(scan);
 		}
-		heap_close(relation);
+		heap_close(relation, AccessShareLock);
 	}
 
 	ScanKeyEntryInitialize(&entry[0], 0,
@@ -643,8 +644,8 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 						   Anum_pg_amop_amopclaid,
 						   F_OIDEQ, 0);
 
-	relation = heap_openr(AccessMethodOperatorRelationName);
-	operatorRelation = heap_openr(OperatorRelationName);
+	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
+	operatorRelation = heap_openr(OperatorRelationName, AccessShareLock);
 
 	for (attributeNumber = maxAttributeNumber; attributeNumber > 0;
 		 attributeNumber--)
@@ -676,8 +677,8 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 		heap_endscan(scan);
 	}
 
-	heap_close(operatorRelation);
-	heap_close(relation);
+	heap_close(operatorRelation, AccessShareLock);
+	heap_close(relation, AccessShareLock);
 }
 
 /* ----------------

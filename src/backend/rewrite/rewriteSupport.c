@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.36 1999/07/16 04:59:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.37 1999/09/18 19:07:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ RuleIdGetActionInfo(Oid ruleoid, bool *instead_flag, Query **parseTrees)
 	char	   *rule_evqual_string = NULL;
 	Node	   *rule_evqual = NULL;
 
-	ruleRelation = heap_openr(RewriteRelationName);
+	ruleRelation = heap_openr(RewriteRelationName, AccessShareLock);
 	ruleTupdesc = RelationGetDescr(ruleRelation);
 	ruletuple = SearchSysCacheTuple(RULOID,
 									ObjectIdGetDatum(ruleoid),
@@ -68,7 +68,7 @@ RuleIdGetActionInfo(Oid ruleoid, bool *instead_flag, Query **parseTrees)
 	ruleparse = (Query *) stringToNode(ruleaction);
 	rule_evqual = (Node *) stringToNode(rule_evqual_string);
 
-	heap_close(ruleRelation);
+	heap_close(ruleRelation, AccessShareLock);
 
 	*parseTrees = ruleparse;
 	return rule_evqual;
@@ -79,23 +79,11 @@ RuleIdGetActionInfo(Oid ruleoid, bool *instead_flag, Query **parseTrees)
 int
 IsDefinedRewriteRule(char *ruleName)
 {
-	Relation	RewriteRelation = NULL;
 	HeapTuple	tuple;
-
-
-	/*
-	 * Open the pg_rewrite relation.
-	 */
-	RewriteRelation = heap_openr(RewriteRelationName);
 
 	tuple = SearchSysCacheTuple(REWRITENAME,
 								PointerGetDatum(ruleName),
 								0, 0, 0);
-
-	/*
-	 * return whether or not the rewrite rule existed
-	 */
-	heap_close(RewriteRelation);
 	return HeapTupleIsValid(tuple);
 }
 
@@ -111,12 +99,12 @@ setRelhasrulesInRelation(Oid relationId, bool relhasrules)
 	 * pg_relation), find the appropriate tuple, and add the specified
 	 * lock to it.
 	 */
+	relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheTupleCopy(RELOID,
 									ObjectIdGetDatum(relationId),
 									0, 0, 0);
 	Assert(HeapTupleIsValid(tuple));
 
-	relationRelation = heap_openr(RelationRelationName);
 	((Form_pg_class) GETSTRUCT(tuple))->relhasrules = relhasrules;
 	heap_replace(relationRelation, &tuple->t_self, tuple, NULL);
 
@@ -126,7 +114,7 @@ setRelhasrulesInRelation(Oid relationId, bool relhasrules)
 	CatalogCloseIndices(Num_pg_class_indices, idescs);
 
 	pfree(tuple);
-	heap_close(relationRelation);
+	heap_close(relationRelation, RowExclusiveLock);
 }
 
 void
@@ -162,7 +150,7 @@ prs2_addToRelation(Oid relid,
 	thisRule->actions = actions;
 	thisRule->isInstead = isInstead;
 
-	relation = heap_open(relid);
+	relation = heap_open(relid, AccessShareLock);
 
 	/*
 	 * modify or create a RuleLock cached by Relation
@@ -200,9 +188,7 @@ prs2_addToRelation(Oid relid,
 		rulelock->numLocks++;
 	}
 
-	heap_close(relation);
-
-	return;
+	heap_close(relation, AccessShareLock);
 }
 
 void
@@ -214,7 +200,7 @@ prs2_deleteFromRelation(Oid relid, Oid ruleId)
 	int			i;
 	MemoryContext oldcxt;
 
-	relation = heap_open(relid);
+	relation = heap_open(relid, AccessShareLock);
 	rulelock = relation->rd_rules;
 	Assert(rulelock != NULL);
 
@@ -245,5 +231,5 @@ prs2_deleteFromRelation(Oid relid, Oid ruleId)
 		rulelock->numLocks--;
 	}
 
-	heap_close(relation);
+	heap_close(relation, AccessShareLock);
 }

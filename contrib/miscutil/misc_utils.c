@@ -89,9 +89,8 @@ active_listeners(text *relname)
 	int			ourpid = getpid();
 	char		listen_name[NAMEDATALEN];
 
-	lRel = heap_openr(ListenerRelationName);
+	lRel = heap_openr(ListenerRelationName, AccessShareLock);
 	tdesc = RelationGetDescr(lRel);
-	LockRelation(lRel, AccessShareLock);
 
 	if (relname && (VARSIZE(relname) > VARHDRSZ)) {
 		len = MIN(VARSIZE(relname)-VARHDRSZ, NAMEDATALEN-1);
@@ -110,19 +109,14 @@ active_listeners(text *relname)
 	{
 		d = heap_getattr(lTuple, Anum_pg_listener_pid, tdesc, &isnull);
 		pid = DatumGetInt32(d);
-#ifdef HAVE_KILL
 		if ((pid == ourpid) || (kill(pid, SIGTSTP) == 0)) {
 			/* elog(NOTICE, "%d ok", pid); */
 			count++;
 		}
-#else
-		count++;
-#endif
 	}
 	heap_endscan(sRel);
 
-	UnlockRelation(lRel, AccessShareLock);
-	heap_close(lRel);
+	heap_close(lRel, AccessShareLock);
 
 	return count;
 }

@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
  * execAmi.c
- *	  miscellanious executor access method routines
+ *	  miscellaneous executor access method routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.41 1999/07/17 20:16:56 momjian Exp $
+ *	$Id: execAmi.c,v 1.42 1999/09/18 19:06:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,6 @@
 
 static Pointer ExecBeginScan(Relation relation, int nkeys, ScanKey skeys,
 			  bool isindex, ScanDirection dir, Snapshot snapshot);
-static Relation ExecOpenR(Oid relationOid, bool isindex);
 
 /* ----------------------------------------------------------------
  *		ExecOpenScanR
@@ -90,7 +89,22 @@ ExecOpenScanR(Oid relOid,
 	 *		  abstraction someday -cim 9/9/89
 	 * ----------------
 	 */
-	relation = ExecOpenR(relOid, isindex);
+
+	/* ----------------
+	 *	open the relation with the correct call depending
+	 *	on whether this is a heap relation or an index relation.
+	 *
+	 *	Do not lock the rel here; beginscan will acquire AccessShareLock.
+	 * ----------------
+	 */
+	if (isindex)
+		relation = index_open(relOid);
+	else
+		relation = heap_open(relOid, NoLock);
+
+	if (relation == NULL)
+		elog(ERROR, "ExecOpenScanR: failed to open relation %u", relOid);
+
 	scanDesc = ExecBeginScan(relation,
 							 nkeys,
 							 skeys,
@@ -102,35 +116,6 @@ ExecOpenScanR(Oid relOid,
 		*returnRelation = relation;
 	if (scanDesc != NULL)
 		*returnScanDesc = scanDesc;
-}
-
-/* ----------------------------------------------------------------
- *		ExecOpenR
- *
- *		returns a relation descriptor given an object id.
- * ----------------------------------------------------------------
- */
-static Relation
-ExecOpenR(Oid relationOid, bool isindex)
-{
-	Relation	relation;
-
-	relation = (Relation) NULL;
-
-	/* ----------------
-	 *	open the relation with the correct call depending
-	 *	on whether this is a heap relation or an index relation.
-	 * ----------------
-	 */
-	if (isindex)
-		relation = index_open(relationOid);
-	else
-		relation = heap_open(relationOid);
-
-	if (relation == NULL)
-		elog(DEBUG, "ExecOpenR: relation == NULL, heap_open failed.");
-
-	return relation;
 }
 
 /* ----------------------------------------------------------------
@@ -243,15 +228,20 @@ ExecCloseR(Plan *node)
 	if (scanDesc != NULL)
 		heap_endscan(scanDesc);
 
+	/*
+	 * endscan released AccessShareLock acquired by beginscan.  If we are
+	 * holding any stronger locks on the rel, they should be held till end of
+	 * xact.  Therefore, we need only close the rel and not release locks.
+	 */
 	if (relation != NULL)
-		heap_close(relation);
+		heap_close(relation, NoLock);
 
 	/* ----------------
 	 *	if this is an index scan then we have to take care
 	 *	of the index relations as well..
 	 * ----------------
 	 */
-	if (nodeTag(node) == T_IndexScan)
+	if (IsA(node, IndexScan))
 	{
 		IndexScan  *iscan = (IndexScan *) node;
 		IndexScanState *indexstate;

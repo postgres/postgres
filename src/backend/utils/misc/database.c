@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.28 1999/07/17 20:18:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.29 1999/09/18 19:08:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,10 +43,7 @@ GetDatabaseInfo(char *name, int4 *owner, char *path)
 	HeapScanDesc scan;
 	ScanKeyData scanKey;
 
-	dbrel = heap_openr(DatabaseRelationName);
-	if (!RelationIsValid(dbrel))
-		elog(FATAL, "GetDatabaseInfo: cannot open relation \"%-.*s\"",
-			 DatabaseRelationName);
+	dbrel = heap_openr(DatabaseRelationName, AccessShareLock);
 
 	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_database_datname,
 						   F_NAMEEQ, NameGetDatum(name));
@@ -71,6 +68,7 @@ GetDatabaseInfo(char *name, int4 *owner, char *path)
 	{
 		elog(NOTICE, "GetDatabaseInfo: %s entry not found %s",
 			 DatabaseRelationName, name);
+		heap_close(dbrel, AccessShareLock);
 		return TRUE;
 	}
 
@@ -88,7 +86,7 @@ GetDatabaseInfo(char *name, int4 *owner, char *path)
 	memcpy(dbpath, VARDATA(dbtext), (VARSIZE(dbtext) - VARHDRSZ));
 	*(dbpath + (VARSIZE(dbtext) - VARHDRSZ)) = '\0';
 
-	heap_close(dbrel);
+	heap_close(dbrel, AccessShareLock);
 
 	owner = palloc(sizeof(Oid));
 	*owner = dbowner;

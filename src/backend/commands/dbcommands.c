@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.39 1999/07/17 20:16:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.40 1999/09/18 19:06:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,6 +103,8 @@ destroydb(char *dbname, CommandDest dest)
 	/* stop the vacuum daemon */
 	stop_vacuum(dbpath, dbname);
 
+	/* XXX what about stopping backends connected to the target database? */
+
 	path = ExpandDatabasePath(dbpath);
 	if (path == NULL)
 		elog(ERROR, "Unable to locate path '%s'"
@@ -189,6 +191,7 @@ check_permissions(char *command,
 	utup = SearchSysCacheTuple(USENAME,
 							   PointerGetDatum(userName),
 							   0, 0, 0);
+	Assert(utup);
 	*userIdP = ((Form_pg_shadow) GETSTRUCT(utup))->usesysid;
 	use_super = ((Form_pg_shadow) GETSTRUCT(utup))->usesuper;
 	use_createdb = ((Form_pg_shadow) GETSTRUCT(utup))->usecreatedb;
@@ -211,22 +214,13 @@ check_permissions(char *command,
 	/* Check to make sure database is owned by this user */
 
 	/*
-	 * need the reldesc to get the database owner out of dbtup and to set
-	 * a write lock on it.
+	 * Acquire exclusive lock on pg_database from the beginning, even though
+	 * we only need read access right here, to avoid potential deadlocks
+	 * from upgrading our lock later.  (Is this still necessary?  Could we
+	 * use something weaker than exclusive lock?)
 	 */
-	dbrel = heap_openr(DatabaseRelationName);
+	dbrel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
 
-	if (!RelationIsValid(dbrel))
-		elog(FATAL, "%s: cannot open relation \"%-.*s\"",
-			 command, DatabaseRelationName);
-
-	/*
-	 * Acquire a write lock on pg_database from the beginning to avoid
-	 * upgrading a read lock to a write lock.  Upgrading causes long
-	 * delays when multiple 'createdb's or 'destroydb's are run simult.
-	 * -mer 7/3/91
-	 */
-	LockRelation(dbrel, AccessExclusiveLock);
 	dbtup = get_pg_dbtup(command, dbname, dbrel);
 	dbfound = HeapTupleIsValid(dbtup);
 
@@ -248,7 +242,8 @@ check_permissions(char *command,
 	else
 		*dbIdP = InvalidOid;
 
-	heap_close(dbrel);
+	/* We will keep the lock on dbrel until end of transaction. */
+	heap_close(dbrel, NoLock);
 
 	/*
 	 * Now be sure that the user is allowed to do this.

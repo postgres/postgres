@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.20 1999/07/17 20:17:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.21 1999/09/18 19:07:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,12 +58,7 @@ int4notin(int32 not_in_arg, char *relation_and_attr)
 
 	/* Open the relation and get a relation descriptor */
 
-	relation_to_scan = heap_openr(relation);
-	if (!RelationIsValid(relation_to_scan))
-	{
-		elog(ERROR, "int4notin: unknown relation %s",
-			 relation);
-	}
+	relation_to_scan = heap_openr(relation, AccessShareLock);
 
 	/* Find the column to search */
 
@@ -95,7 +90,9 @@ int4notin(int32 not_in_arg, char *relation_and_attr)
 	}
 
 	/* close the relation */
-	heap_close(relation_to_scan);
+	heap_endscan(scan_descriptor);
+	heap_close(relation_to_scan, AccessShareLock);
+
 	return retval;
 }
 

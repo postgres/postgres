@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.21 1999/07/16 04:59:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.22 1999/09/18 19:07:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ checkLockPerms(List *locks, Query *parsetree, int rt_index)
 	 * Get the usename of the rules event relation owner
 	 */
 	rte = (RangeTblEntry *) nth(rt_index - 1, parsetree->rtable);
-	ev_rel = heap_openr(rte->relname);
+	ev_rel = heap_openr(rte->relname, AccessShareLock);
 	usertup = SearchSysCacheTuple(USESYSID,
 							  ObjectIdGetDatum(ev_rel->rd_rel->relowner),
 								  0, 0, 0);
@@ -193,7 +193,7 @@ checkLockPerms(List *locks, Query *parsetree, int rt_index)
 		elog(ERROR, "cache lookup for userid %d failed",
 			 ev_rel->rd_rel->relowner);
 	}
-	heap_close(ev_rel);
+	heap_close(ev_rel, AccessShareLock);
 	evowner = nameout(&(((Form_pg_shadow) GETSTRUCT(usertup))->usename));
 
 	/*

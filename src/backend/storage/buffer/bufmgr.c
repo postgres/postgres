@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.61 1999/07/17 20:17:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.62 1999/09/18 19:07:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ RelationGetBufferWithBuffer(Relation relation,
 	{
 		if (!BufferIsLocal(buffer))
 		{
-			LockRelId  *lrelId = &(((LockInfo) (relation->lockInfo))->lockRelId);
+			LockRelId  *lrelId = & relation->rd_lockInfo.lockRelId;
 
 			bufHdr = &BufferDescriptors[buffer - 1];
 			SpinAcquire(BufMgrLock);
@@ -813,6 +813,7 @@ FlushBuffer(Buffer buffer, bool release)
 	status = smgrflush(DEFAULT_SMGR, bufrel, bufHdr->tag.blockNum,
 					   (char *) MAKE_PTR(bufHdr->data));
 
+	/* drop relcache refcount incremented by RelationIdCacheGetRelation */
 	RelationDecrementReferenceCount(bufrel);
 
 	if (status == SM_FAIL)
@@ -993,6 +994,7 @@ BufferSync()
 						elog(ERROR, "BufferSync: write error %u for %s",
 							 bufHdr->tag.blockNum, bufHdr->sb_relname);
 					}
+					/* drop refcount from RelationIdCacheGetRelation */
 					if (reln != (Relation) NULL)
 						RelationDecrementReferenceCount(reln);
 					continue;
@@ -1047,6 +1049,7 @@ BufferSync()
 				 */
 				if (!(bufHdr->flags & BM_JUST_DIRTIED))
 					bufHdr->flags &= ~BM_DIRTY;
+				/* drop refcount from RelationIdCacheGetRelation */
 				if (reln != (Relation) NULL)
 					RelationDecrementReferenceCount(reln);
 			}
@@ -1282,14 +1285,16 @@ BufferGetRelation(Buffer buffer)
 	/* XXX should be a critical section */
 	relid = BufferDescriptors[buffer - 1].tag.relId.relId;
 	relation = RelationIdGetRelation(relid);
+	Assert(relation);
 
+	/* drop relcache refcount incremented by RelationIdGetRelation */
 	RelationDecrementReferenceCount(relation);
 
 	if (RelationHasReferenceCountZero(relation))
 	{
 
 		/*
-		 * elog(NOTICE, "BufferGetRelation: 0->1");
+		 * XXX why??
 		 */
 
 		RelationIncrementReferenceCount(relation);
@@ -1342,7 +1347,6 @@ BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld)
 	}
 	else
 	{
-
 		/* blind write always flushes */
 		status = smgrblindwrt(DEFAULT_SMGR, bufHdr->sb_dbname,
 							  bufHdr->sb_relname, bufdb, bufrel,
@@ -1350,6 +1354,7 @@ BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld)
 							  (char *) MAKE_PTR(bufHdr->data));
 	}
 
+	/* drop relcache refcount incremented by RelationIdCacheGetRelation */
 	if (reln != (Relation) NULL)
 		RelationDecrementReferenceCount(reln);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.48 1999/07/16 04:58:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.49 1999/09/18 19:06:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -772,7 +772,7 @@ ExecOpenIndices(Oid resultRelationOid,
 	 *	open pg_index
 	 * ----------------
 	 */
-	indexRd = heap_openr(IndexRelationName);
+	indexRd = heap_openr(IndexRelationName, AccessShareLock);
 
 	/* ----------------
 	 *	form a scan key
@@ -856,7 +856,7 @@ ExecOpenIndices(Oid resultRelationOid,
 	 * ----------------
 	 */
 	heap_endscan(indexSd);
-	heap_close(indexRd);
+	heap_close(indexRd, AccessShareLock);
 
 	/* ----------------
 	 *	Now that we've collected the index information into three
@@ -913,7 +913,7 @@ ExecOpenIndices(Oid resultRelationOid,
 
 				/*
 				 * Hack for not btree and hash indices: they use relation
-				 * level exclusive locking on updation (i.e. - they are
+				 * level exclusive locking on update (i.e. - they are
 				 * not ready for MVCC) and so we have to exclusively lock
 				 * indices here to prevent deadlocks if we will scan them
 				 * - index_beginscan places AccessShareLock, indices
@@ -1010,7 +1010,7 @@ ExecCloseIndices(RelationInfo *resultRelationInfo)
 			continue;
 
 		/*
-		 * Notes in ExecOpenIndices.
+		 * See notes in ExecOpenIndices.
 		 */
 		if (relationDescs[i]->rd_rel->relam != BTREE_AM_OID &&
 			relationDescs[i]->rd_rel->relam != HASH_AM_OID)

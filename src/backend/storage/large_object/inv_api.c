@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.58 1999/07/19 07:07:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.59 1999/09/18 19:07:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,13 +139,16 @@ inv_create(int flags)
 
 	/* make the relation visible in this transaction */
 	CommandCounterIncrement();
-	r = heap_openr(objname);
 
-	if (!RelationIsValid(r))
-	{
-		elog(ERROR, "cannot create large object on %s under inversion",
-			 smgrout(DEFAULT_SMGR));
-	}
+	/*--------------------
+	 * We hold AccessShareLock on any large object we have open
+	 * by inv_create or inv_open; it is released by inv_close.
+	 * Note this will not conflict with ExclusiveLock or ShareLock
+	 * that we acquire when actually reading/writing; it just prevents
+	 * deletion of the large object while we have it open.
+	 *--------------------
+	 */
+	r = heap_openr(objname, AccessShareLock);
 
 	/*
 	 * Now create a btree index on the relation's olastbyte attribute to
@@ -205,10 +208,7 @@ inv_open(Oid lobjId, int flags)
 	char	   *indname;
 	Relation	indrel;
 
-	r = heap_open(lobjId);
-
-	if (!RelationIsValid(r))
-		return (LargeObjectDesc *) NULL;
+	r = heap_open(lobjId, AccessShareLock);
 
 	indname = pstrdup((r->rd_rel->relname).data);
 
@@ -262,8 +262,8 @@ inv_close(LargeObjectDesc *obj_desc)
 		obj_desc->iscan = NULL;
 	}
 
-	heap_close(obj_desc->heap_r);
 	index_close(obj_desc->index_r);
+	heap_close(obj_desc->heap_r, AccessShareLock);
 
 	pfree(obj_desc);
 }
@@ -279,7 +279,7 @@ inv_destroy(Oid lobjId)
 	Relation	r;
 
 	r = (Relation) RelationIdGetRelation(lobjId);
-	if (!RelationIsValid(r) || r->rd_rel->relkind == RELKIND_INDEX)
+	if (!RelationIsValid(r) || r->rd_rel->relkind != RELKIND_LOBJECT)
 		return -1;
 
 	heap_destroy_with_catalog(r->rd_rel->relname.data);
@@ -497,7 +497,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 	if (!(obj_desc->flags & IFS_WRLOCK))
 	{
-		LockRelation(obj_desc->heap_r, ShareLock);
+		LockRelation(obj_desc->heap_r, ExclusiveLock);
 		obj_desc->flags |= (IFS_WRLOCK | IFS_RDLOCK);
 	}
 

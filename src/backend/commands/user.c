@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.33 1999/07/30 18:09:47 momjian Exp $
+ * $Id: user.c,v 1.34 1999/09/18 19:06:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,13 +36,15 @@ static void CheckPgUserAclNotNull(void);
  *
  * copy the modified contents of pg_shadow to a file used by the postmaster
  * for user authentication.  The file is stored as $PGDATA/pg_pwd.
+ *
+ * NB: caller is responsible for ensuring that only one backend can
+ * execute this routine at a time.  Acquiring AccessExclusiveLock on
+ * pg_shadow is the standard way to do that.
  *---------------------------------------------------------------------
  */
-static
-void
+static void
 UpdatePgPwdFile(char *sql, CommandDest dest)
 {
-
 	char	   *filename,
 			   *tempname;
 	int			bufsize;
@@ -125,16 +127,12 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 
 	/*
 	 * Scan the pg_shadow relation to be certain the user doesn't already
-	 * exist.
+	 * exist.  Note we secure exclusive lock, because we also need to be
+	 * sure of what the next usesysid should be, and we need to protect
+	 * our update of the flat password file.
 	 */
-	pg_shadow_rel = heap_openr(ShadowRelationName);
+	pg_shadow_rel = heap_openr(ShadowRelationName, AccessExclusiveLock);
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
-
-	/*
-	 * Secure a write lock on pg_shadow so we can be sure of what the next
-	 * usesysid should be.
-	 */
-	LockRelation(pg_shadow_rel, AccessExclusiveLock);
 
 	scan = heap_beginscan(pg_shadow_rel, false, SnapshotNow, 0, NULL);
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
@@ -152,8 +150,7 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 
 	if (exists)
 	{
-		UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
-		heap_close(pg_shadow_rel);
+		heap_close(pg_shadow_rel, AccessExclusiveLock);
 		UserAbortTransactionBlock();
 		elog(ERROR,
 		 "defineUser: user \"%s\" has already been created", stmt->user);
@@ -165,6 +162,12 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 	 *
 	 * XXX Ugly as this code is, it still fails to cope with ' or \ in any of
 	 * the provided strings.
+	 *
+	 * XXX This routine would be *lots* better if it inserted the new
+	 * tuple with formtuple/heap_insert.  For one thing, all of the
+	 * transaction-block gamesmanship could be eliminated, because
+	 * it's only there to make the world safe for a recursive call
+	 * to pg_exec_query_dest().
 	 */
 	snprintf(sql, SQL_LENGTH,
 			 "insert into %s (usename,usesysid,usecreatedb,usetrace,"
@@ -189,17 +192,21 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 	pg_exec_query_dest(sql, dest, false);
 
 	/*
-	 * Add the stuff here for groups.
+	 * Add stuff here for groups?
 	 */
 
+	/*
+	 * Write the updated pg_shadow data to the flat password file.
+	 * Because we are still holding AccessExclusiveLock on pg_shadow,
+	 * we can be sure no other backend will try to write the flat
+	 * file at the same time.
+	 */
 	UpdatePgPwdFile(sql, dest);
 
 	/*
-	 * This goes after the UpdatePgPwdFile to be certain that two backends
-	 * to not attempt to write to the pg_pwd file at the same time.
+	 * Now we can clean up.
 	 */
-	UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
-	heap_close(pg_shadow_rel);
+	heap_close(pg_shadow_rel, AccessExclusiveLock);
 
 	if (IsTransactionBlock() && !inblock)
 		EndTransactionBlock();
@@ -237,70 +244,79 @@ AlterUser(AlterUserStmt *stmt, CommandDest dest)
 
 	/*
 	 * Scan the pg_shadow relation to be certain the user exists.
+	 * Note we secure exclusive lock to protect our update of the
+	 * flat password file.
 	 */
-	pg_shadow_rel = heap_openr(ShadowRelationName);
+	pg_shadow_rel = heap_openr(ShadowRelationName, AccessExclusiveLock);
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
-
-	/*
-	 * Secure a write lock on pg_shadow so we can be sure that when the
-	 * dump of the pg_pwd file is done, there is not another backend doing
-	 * the same.
-	 */
-	LockRelation(pg_shadow_rel, AccessExclusiveLock);
 
 	tuple = SearchSysCacheTuple(USENAME,
 								PointerGetDatum(stmt->user),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
-		heap_close(pg_shadow_rel);
-		UserAbortTransactionBlock();	/* needed? */
+		heap_close(pg_shadow_rel, AccessExclusiveLock);
+		UserAbortTransactionBlock();
 		elog(ERROR, "alterUser: user \"%s\" does not exist", stmt->user);
-		return;
 	}
 
 	/*
 	 * Create the update statement to modify the user.
+	 *
+	 * XXX see diatribe in preceding routine.  This code is just as bogus.
 	 */
 	snprintf(sql, SQL_LENGTH, "update %s set", ShadowRelationName);
 
 	if (stmt->password)
-		snprintf(sql, SQL_LENGTH, "%s passwd = '%s'", pstrdup(sql), stmt->password);
+		snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
+				 " passwd = '%s'", stmt->password);
 
 	if (stmt->createdb)
 	{
-		snprintf(sql, SQL_LENGTH, "%s %susecreatedb='%s'",
-				 pstrdup(sql), stmt->password ? "," : "",
+		snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
+				 "%s usecreatedb='%s'",
+				 stmt->password ? "," : "",
 				 *stmt->createdb ? "t" : "f");
 	}
 
 	if (stmt->createuser)
 	{
-		snprintf(sql, SQL_LENGTH, "%s %susesuper='%s'",
-			 pstrdup(sql), (stmt->password || stmt->createdb) ? "," : "",
+		snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
+				 "%s usesuper='%s'",
+				 (stmt->password || stmt->createdb) ? "," : "",
 				 *stmt->createuser ? "t" : "f");
 	}
 
 	if (stmt->validUntil)
 	{
-		snprintf(sql, SQL_LENGTH, "%s %svaluntil='%s'",
-				 pstrdup(sql),
+		snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
+				 "%s valuntil='%s'",
 		(stmt->password || stmt->createdb || stmt->createuser) ? "," : "",
 				 stmt->validUntil);
 	}
 
-	snprintf(sql, SQL_LENGTH, "%s where usename = '%s'",
-			 pstrdup(sql), stmt->user);
+	snprintf(sql + strlen(sql), SQL_LENGTH - strlen(sql),
+			 " where usename = '%s'",
+			 stmt->user);
 
 	pg_exec_query_dest(sql, dest, false);
 
-	/* do the pg_group stuff here */
+	/*
+	 * Add stuff here for groups?
+	 */
 
+	/*
+	 * Write the updated pg_shadow data to the flat password file.
+	 * Because we are still holding AccessExclusiveLock on pg_shadow,
+	 * we can be sure no other backend will try to write the flat
+	 * file at the same time.
+	 */
 	UpdatePgPwdFile(sql, dest);
 
-	UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
-	heap_close(pg_shadow_rel);
+	/*
+	 * Now we can clean up.
+	 */
+	heap_close(pg_shadow_rel, AccessExclusiveLock);
 
 	if (IsTransactionBlock() && !inblock)
 		EndTransactionBlock();
@@ -310,7 +326,6 @@ AlterUser(AlterUserStmt *stmt, CommandDest dest)
 extern void
 RemoveUser(char *user, CommandDest dest)
 {
-
 	char	   *pg_shadow;
 	Relation	pg_shadow_rel,
 				pg_rel;
@@ -318,7 +333,7 @@ RemoveUser(char *user, CommandDest dest)
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	Datum		datum;
-	char		sql[512];
+	char		sql[SQL_LENGTH];
 	bool		n,
 				inblock;
 	int32		usesysid;
@@ -341,27 +356,19 @@ RemoveUser(char *user, CommandDest dest)
 	}
 
 	/*
-	 * Perform a scan of the pg_shadow relation to find the usesysid of
-	 * the user to be deleted.	If it is not found, then return a warning
-	 * message.
+	 * Scan the pg_shadow relation to find the usesysid of the user to be
+	 * deleted.  Note we secure exclusive lock, because we need to protect
+	 * our update of the flat password file.
 	 */
-	pg_shadow_rel = heap_openr(ShadowRelationName);
+	pg_shadow_rel = heap_openr(ShadowRelationName, AccessExclusiveLock);
 	pg_dsc = RelationGetDescr(pg_shadow_rel);
-
-	/*
-	 * Secure a write lock on pg_shadow so we can be sure that when the
-	 * dump of the pg_pwd file is done, there is not another backend doing
-	 * the same.
-	 */
-	LockRelation(pg_shadow_rel, AccessExclusiveLock);
 
 	tuple = SearchSysCacheTuple(USENAME,
 								PointerGetDatum(user),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
-		heap_close(pg_shadow_rel);
+		heap_close(pg_shadow_rel, AccessExclusiveLock);
 		UserAbortTransactionBlock();
 		elog(ERROR, "removeUser: user \"%s\" does not exist", user);
 	}
@@ -372,7 +379,7 @@ RemoveUser(char *user, CommandDest dest)
 	 * Perform a scan of the pg_database relation to find the databases
 	 * owned by usesysid.  Then drop them.
 	 */
-	pg_rel = heap_openr(DatabaseRelationName);
+	pg_rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
 	pg_dsc = RelationGetDescr(pg_rel);
 
 	scan = heap_beginscan(pg_rel, false, SnapshotNow, 0, NULL);
@@ -383,7 +390,7 @@ RemoveUser(char *user, CommandDest dest)
 		if ((int) datum == usesysid)
 		{
 			datum = heap_getattr(tuple, Anum_pg_database_datname, pg_dsc, &n);
-			if (memcmp((void *) datum, "template1", 9))
+			if (memcmp((void *) datum, "template1", 9) != 0)
 			{
 				dbase =
 					(char **) repalloc((void *) dbase, sizeof(char *) * (ndbase + 1));
@@ -394,12 +401,12 @@ RemoveUser(char *user, CommandDest dest)
 		}
 	}
 	heap_endscan(scan);
-	heap_close(pg_rel);
+	heap_close(pg_rel, AccessExclusiveLock);
 
 	while (ndbase--)
 	{
 		elog(NOTICE, "Dropping database %s", dbase[ndbase]);
-		snprintf(sql, SQL_LENGTH, "drop database %s", dbase[ndbase]);
+		snprintf(sql, SQL_LENGTH, "DROP DATABASE %s", dbase[ndbase]);
 		pfree((void *) dbase[ndbase]);
 		pg_exec_query_dest(sql, dest, false);
 	}
@@ -431,10 +438,18 @@ RemoveUser(char *user, CommandDest dest)
 		"delete from %s where usename = '%s'", ShadowRelationName, user);
 	pg_exec_query_dest(sql, dest, false);
 
+	/*
+	 * Write the updated pg_shadow data to the flat password file.
+	 * Because we are still holding AccessExclusiveLock on pg_shadow,
+	 * we can be sure no other backend will try to write the flat
+	 * file at the same time.
+	 */
 	UpdatePgPwdFile(sql, dest);
 
-	UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
-	heap_close(pg_shadow_rel);
+	/*
+	 * Now we can clean up.
+	 */
+	heap_close(pg_shadow_rel, AccessExclusiveLock);
 
 	if (IsTransactionBlock() && !inblock)
 		EndTransactionBlock();

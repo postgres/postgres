@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.119 1999/08/25 12:20:57 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.120 1999/09/18 19:06:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,7 +304,7 @@ vc_getrels(NameData *VacRelP)
 	portalmem = PortalGetVariableMemory(vc_portal);
 	vrl = cur = (VRelList) NULL;
 
-	rel = heap_openr(RelationRelationName);
+	rel = heap_openr(RelationRelationName, AccessShareLock);
 	tupdesc = RelationGetDescr(rel);
 
 	scan = heap_beginscan(rel, false, SnapshotNow, 1, &key);
@@ -343,9 +343,8 @@ vc_getrels(NameData *VacRelP)
 	if (found == false)
 		elog(NOTICE, "Vacuum: table not found");
 
-
 	heap_endscan(scan);
-	heap_close(rel);
+	heap_close(rel, AccessShareLock);
 
 	CommitTransactionCommand();
 
@@ -395,8 +394,10 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 		return;
 	}
 
-	/* now open the class and vacuum it */
-	onerel = heap_open(relid);
+	/*
+	 * Open the class, get an exclusive lock on it, and vacuum it
+	 */
+	onerel = heap_open(relid, AccessExclusiveLock);
 
 	vacrelstats = (VRelStats *) palloc(sizeof(VRelStats));
 	vacrelstats->relid = relid;
@@ -509,9 +510,6 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 		vacrelstats->vacattrstats = (VacAttrStats *) NULL;
 	}
 
-	/* we require the relation to be locked until the indices are cleaned */
-	LockRelation(onerel, AccessExclusiveLock);
-
 	GetXmaxRecent(&XmaxRecent);
 
 	/* scan it */
@@ -565,12 +563,12 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 			pfree(fraged_pages.vpl_pagedesc);
 	}
 
-	/* all done with this class */
-	heap_close(onerel);
-
 	/* update statistics in pg_class */
 	vc_updstats(vacrelstats->relid, vacrelstats->num_pages,
 			vacrelstats->num_tuples, vacrelstats->hasindex, vacrelstats);
+
+	/* all done with this class, but hold lock until commit */
+	heap_close(onerel, NoLock);
 
 	/* next command frees attribute stats */
 	CommitTransactionCommand();
@@ -2281,14 +2279,14 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 	/*
 	 * update number of tuples and number of pages in pg_class
 	 */
+	rd = heap_openr(RelationRelationName, RowExclusiveLock);
+
 	ctup = SearchSysCacheTupleCopy(RELOID,
 								   ObjectIdGetDatum(relid),
 								   0, 0, 0);
 	if (!HeapTupleIsValid(ctup))
 		elog(ERROR, "pg_class entry for relid %u vanished during vacuuming",
 			 relid);
-
-	rd = heap_openr(RelationRelationName);
 
 	/* get the buffer cache tuple */
 	rtup.t_self = ctup->t_self;
@@ -2306,8 +2304,8 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 		VacAttrStats *vacattrstats = vacrelstats->vacattrstats;
 		int			natts = vacrelstats->va_natts;
 
-		ad = heap_openr(AttributeRelationName);
-		sd = heap_openr(StatisticRelationName);
+		ad = heap_openr(AttributeRelationName, RowExclusiveLock);
+		sd = heap_openr(StatisticRelationName, RowExclusiveLock);
 		ScanKeyEntryInitialize(&askey, 0, Anum_pg_attribute_attrelid,
 							   F_INT4EQ, relid);
 
@@ -2458,8 +2456,8 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 			}
 		}
 		heap_endscan(scan);
-		heap_close(ad);
-		heap_close(sd);
+		heap_close(ad, RowExclusiveLock);
+		heap_close(sd, RowExclusiveLock);
 	}
 
 	/*
@@ -2469,7 +2467,7 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 
 	WriteBuffer(buffer);
 
-	heap_close(rd);
+	heap_close(rd, RowExclusiveLock);
 }
 
 /*
@@ -2484,7 +2482,7 @@ vc_delhilowstats(Oid relid, int attcnt, int *attnums)
 	HeapTuple	tuple;
 	ScanKeyData key;
 
-	pgstatistic = heap_openr(StatisticRelationName);
+	pgstatistic = heap_openr(StatisticRelationName, RowExclusiveLock);
 
 	if (relid != InvalidOid)
 	{
@@ -2515,7 +2513,7 @@ vc_delhilowstats(Oid relid, int attcnt, int *attnums)
 	}
 
 	heap_endscan(scan);
-	heap_close(pgstatistic);
+	heap_close(pgstatistic, RowExclusiveLock);
 }
 
 /*
@@ -2721,7 +2719,7 @@ vc_getindices(Oid relid, int *nindices, Relation **Irel)
 	ioid = (Oid *) palloc(10 * sizeof(Oid));
 
 	/* prepare a heap scan on the pg_index relation */
-	pgindex = heap_openr(IndexRelationName);
+	pgindex = heap_openr(IndexRelationName, AccessShareLock);
 	tupdesc = RelationGetDescr(pgindex);
 
 	ScanKeyEntryInitialize(&key, 0x0, Anum_pg_index_indrelid,
@@ -2741,7 +2739,7 @@ vc_getindices(Oid relid, int *nindices, Relation **Irel)
 	}
 
 	heap_endscan(scan);
-	heap_close(pgindex);
+	heap_close(pgindex, AccessShareLock);
 
 	if (i == 0)
 	{							/* No one index found */

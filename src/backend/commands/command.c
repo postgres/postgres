@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.53 1999/09/04 21:19:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.54 1999/09/18 19:06:40 tgl Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -283,6 +283,7 @@ PerformAddAttribute(char *relationName,
 {
 	Relation	rel,
 				attrdesc;
+	Oid			myrelid;
 	HeapTuple	reltup;
 	HeapTuple	attributeTuple;
 	Form_pg_attribute attribute;
@@ -311,6 +312,14 @@ PerformAddAttribute(char *relationName,
 #endif
 
 	/*
+	 * Grab an exclusive lock on the target table, which we will NOT release
+	 * until end of transaction.
+	 */
+	rel = heap_openr(relationName, AccessExclusiveLock);
+	myrelid = RelationGetRelid(rel);
+	heap_close(rel, NoLock);	/* close rel but keep lock! */
+
+	/*
 	 * we can't add a not null attribute
 	 */
 	if (colDef->is_not_null)
@@ -331,19 +340,9 @@ PerformAddAttribute(char *relationName,
 	{
 		if (inherits)
 		{
-			Oid			myrelid,
-						childrelid;
+			Oid			childrelid;
 			List	   *child,
 					   *children;
-
-			rel = heap_openr(relationName);
-			if (!RelationIsValid(rel))
-			{
-				elog(ERROR, "PerformAddAttribute: unknown relation: \"%s\"",
-					 relationName);
-			}
-			myrelid = RelationGetRelid(rel);
-			heap_close(rel);
 
 			/* this routine is actually in the planner */
 			children = find_all_inheritors(lconsi(myrelid, NIL), NIL);
@@ -358,31 +357,23 @@ PerformAddAttribute(char *relationName,
 				childrelid = lfirsti(child);
 				if (childrelid == myrelid)
 					continue;
-				rel = heap_open(childrelid);
-				if (!RelationIsValid(rel))
-				{
-					elog(ERROR, "PerformAddAttribute: can't find catalog entry for inheriting class with oid %u",
-						 childrelid);
-				}
+				rel = heap_open(childrelid, AccessExclusiveLock);
 				PerformAddAttribute((rel->rd_rel->relname).data,
 									userName, false, colDef);
-				heap_close(rel);
+				heap_close(rel, AccessExclusiveLock);
 			}
 		}
 	}
 
-	rel = heap_openr(RelationRelationName);
+	rel = heap_openr(RelationRelationName, RowExclusiveLock);
 
 	reltup = SearchSysCacheTupleCopy(RELNAME,
 									 PointerGetDatum(relationName),
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(reltup))
-	{
-		heap_close(rel);
 		elog(ERROR, "PerformAddAttribute: relation \"%s\" not found",
 			 relationName);
-	}
 
 	/*
 	 * XXX is the following check sufficient?
@@ -391,23 +382,15 @@ PerformAddAttribute(char *relationName,
 	{
 		elog(ERROR, "PerformAddAttribute: index relation \"%s\" not changed",
 			 relationName);
-		return;
 	}
 
 	minattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts;
 	maxatts = minattnum + 1;
 	if (maxatts > MaxHeapAttributeNumber)
-	{
-		pfree(reltup);
-		heap_close(rel);
 		elog(ERROR, "PerformAddAttribute: relations limited to %d attributes",
 			 MaxHeapAttributeNumber);
-	}
 
-	attrdesc = heap_openr(AttributeRelationName);
-
-	Assert(attrdesc);
-	Assert(RelationGetForm(attrdesc));
+	attrdesc = heap_openr(AttributeRelationName, RowExclusiveLock);
 
 	/*
 	 * Open all (if any) pg_attribute indices
@@ -438,12 +421,8 @@ PerformAddAttribute(char *relationName,
 								  0, 0);
 
 		if (HeapTupleIsValid(tup))
-		{
-			heap_close(attrdesc);
-			heap_close(rel);
 			elog(ERROR, "PerformAddAttribute: attribute \"%s\" already exists in class \"%s\"",
 				 colDef->colname, relationName);
-		}
 
 		/*
 		 * check to see if it is an array attribute.
@@ -490,7 +469,8 @@ PerformAddAttribute(char *relationName,
 
 	if (hasindex)
 		CatalogCloseIndices(Num_pg_attr_indices, idescs);
-	heap_close(attrdesc);
+
+	heap_close(attrdesc, RowExclusiveLock);
 
 	((Form_pg_class) GETSTRUCT(reltup))->relnatts = maxatts;
 	heap_replace(rel, &reltup->t_self, reltup, NULL);
@@ -501,7 +481,7 @@ PerformAddAttribute(char *relationName,
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
 
 	pfree(reltup);
-	heap_close(rel);
+	heap_close(rel, RowExclusiveLock);
 }
 
 void
@@ -510,9 +490,9 @@ LockTableCommand(LockStmt *lockstmt)
 	Relation	rel;
 	int			aclresult;
 
-	rel = heap_openr(lockstmt->relname);
-	if (rel == NULL)
-		elog(ERROR, "LOCK TABLE: relation %s can't be openned", lockstmt->relname);
+	rel = heap_openr(lockstmt->relname, NoLock);
+	if (! RelationIsValid(rel))
+		elog(ERROR, "Relation '%s' does not exist", lockstmt->relname);
 
 	if (lockstmt->mode == AccessShareLock)
 		aclresult = pg_aclcheck(lockstmt->relname, GetPgUserName(), ACL_RD);
@@ -524,4 +504,5 @@ LockTableCommand(LockStmt *lockstmt)
 
 	LockRelation(rel, lockstmt->mode);
 
+	heap_close(rel, NoLock);	/* close rel, keep lock */
 }

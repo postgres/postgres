@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.54 1999/08/22 20:15:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.55 1999/09/18 19:07:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,7 @@ agg_get_candidates(char *aggname,
 	fmgr_info(F_NAMEEQ, (FmgrInfo *) &aggKey[0].sk_func);
 	aggKey[0].sk_argument = NameGetDatum(aggname);
 
-	pg_aggregate_desc = heap_openr(AggregateRelationName);
+	pg_aggregate_desc = heap_openr(AggregateRelationName, AccessShareLock);
 	pg_aggregate_scan = heap_beginscan(pg_aggregate_desc,
 									   0,
 									   SnapshotSelf,	/* ??? */
@@ -159,7 +159,7 @@ agg_get_candidates(char *aggname,
 	}
 
 	heap_endscan(pg_aggregate_scan);
-	heap_close(pg_aggregate_desc);
+	heap_close(pg_aggregate_desc, AccessShareLock);
 
 	return ncandidates;
 }	/* agg_get_candidates() */
@@ -310,11 +310,11 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			if (attisset)
 			{
 				toid = exprType(first_arg);
-				rd = heap_openr(typeidTypeName(toid));
+				rd = heap_openr(typeidTypeName(toid), NoLock);
 				if (RelationIsValid(rd))
 				{
 					relname = RelationGetRelationName(rd)->data;
-					heap_close(rd);
+					heap_close(rd, NoLock);
 				}
 				else
 					elog(ERROR, "Type '%s' is not a relation type",
@@ -646,7 +646,7 @@ func_get_candidates(char *funcname, int nargs)
 	CandidateList current_candidate;
 	int			i;
 
-	heapRelation = heap_openr(ProcedureRelationName);
+	heapRelation = heap_openr(ProcedureRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
@@ -690,7 +690,7 @@ func_get_candidates(char *funcname, int nargs)
 
 	index_endscan(sd);
 	index_close(idesc);
-	heap_close(heapRelation);
+	heap_close(heapRelation, AccessShareLock);
 
 	return candidates;
 }
@@ -1086,7 +1086,7 @@ find_inheritors(Oid relid, Oid **supervec)
 	visited = DLNewList();
 
 
-	inhrel = heap_openr(InheritsRelationName);
+	inhrel = heap_openr(InheritsRelationName, AccessShareLock);
 	inhtupdesc = RelationGetDescr(inhrel);
 
 	/*
@@ -1140,12 +1140,12 @@ find_inheritors(Oid relid, Oid **supervec)
 
 		if (qentry != (SuperQE *) NULL)
 		{
-
 			/* save the type id, rather than the relation id */
-			if ((rd = heap_open(qentry->sqe_relid)) == (Relation) NULL)
+			rd = heap_open(qentry->sqe_relid, NoLock);
+			if (! RelationIsValid(rd))
 				elog(ERROR, "Relid %u does not exist", qentry->sqe_relid);
 			qentry->sqe_relid = typeTypeId(typenameType(RelationGetRelationName(rd)->data));
-			heap_close(rd);
+			heap_close(rd, NoLock);
 
 			DLAddTail(visited, qe);
 
@@ -1153,7 +1153,7 @@ find_inheritors(Oid relid, Oid **supervec)
 		}
 	} while (qentry != (SuperQE *) NULL);
 
-	heap_close(inhrel);
+	heap_close(inhrel, AccessShareLock);
 
 	if (nvisited > 0)
 	{
@@ -1370,16 +1370,13 @@ ParseComplexProjection(ParseState *pstate,
 					 */
 
 					/* add a tlist to the func node and return the Iter */
-					rd = heap_openr(typeidTypeName(argtype));
+					rd = heap_openr(typeidTypeName(argtype), NoLock);
 					if (RelationIsValid(rd))
 					{
 						relid = RelationGetRelid(rd);
-						heap_close(rd);
-					}
-					if (RelationIsValid(rd))
-					{
 						func->func_tlist = setup_tlist(funcname, argrelid);
 						iter->itertype = attnumTypeId(rd, attnum);
+						heap_close(rd, NoLock);
 						return (Node *) iter;
 					}
 					else
@@ -1427,16 +1424,12 @@ ParseComplexProjection(ParseState *pstate,
 				{
 
 					/* add a tlist to the func node */
-					rd = heap_openr(typeidTypeName(argtype));
-					if (RelationIsValid(rd))
-					{
-						relid = RelationGetRelid(rd);
-						heap_close(rd);
-					}
+					rd = heap_openr(typeidTypeName(argtype), NoLock);
 					if (RelationIsValid(rd))
 					{
 						Expr	   *newexpr;
 
+						relid = RelationGetRelid(rd);
 						funcnode->func_tlist = setup_tlist(funcname, argrelid);
 						funcnode->functype = attnumTypeId(rd, attnum);
 
@@ -1446,8 +1439,11 @@ ParseComplexProjection(ParseState *pstate,
 						newexpr->oper = (Node *) funcnode;
 						newexpr->args = expr->args;
 
+						heap_close(rd, NoLock);
+
 						return (Node *) newexpr;
 					}
+					/* XXX why not an error condition if it's not there? */
 
 				}
 
@@ -1461,18 +1457,19 @@ ParseComplexProjection(ParseState *pstate,
 				 * If the Param is a complex type, this could be a
 				 * projection
 				 */
-				rd = heap_openr(typeidTypeName(param->paramtype));
+				rd = heap_openr(typeidTypeName(param->paramtype), NoLock);
 				if (RelationIsValid(rd))
 				{
 					relid = RelationGetRelid(rd);
-					heap_close(rd);
 					if ((attnum = get_attnum(relid, funcname))
 						!= InvalidAttrNumber)
 					{
 						param->paramtype = attnumTypeId(rd, attnum);
 						param->param_tlist = setup_tlist(funcname, relid);
+						heap_close(rd, NoLock);
 						return (Node *) param;
 					}
+					heap_close(rd, NoLock);
 				}
 				break;
 			}

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.93 1999/07/17 20:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.94 1999/09/18 19:06:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -587,13 +587,11 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		resultRelationIndex = resultRelation;
 		rtentry = rt_fetch(resultRelationIndex, rangeTable);
 		resultRelationOid = rtentry->relid;
-		resultRelationDesc = heap_open(resultRelationOid);
+		resultRelationDesc = heap_open(resultRelationOid, RowExclusiveLock);
 
 		if (resultRelationDesc->rd_rel->relkind == RELKIND_SEQUENCE)
 			elog(ERROR, "You can't change sequence relation %s",
 				 resultRelationDesc->rd_rel->relname.data);
-
-		LockRelation(resultRelationDesc, RowExclusiveLock);
 
 		resultRelationInfo = makeNode(RelationInfo);
 		resultRelationInfo->ri_RangeTableIndex = resultRelationIndex;
@@ -636,8 +634,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		{
 			rm = lfirst(l);
 			relid = ((RangeTblEntry *) nth(rm->rti - 1, rangeTable))->relid;
-			relation = heap_open(relid);
-			LockRelation(relation, RowShareLock);
+			relation = heap_open(relid, RowShareLock);
 			if (!(rm->info & ROW_MARK_FOR_UPDATE))
 				continue;
 			erm = (execRowMark *) palloc(sizeof(execRowMark));
@@ -758,7 +755,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				 */
 				setheapoverride(true);
 
-				intoRelationDesc = heap_open(intoRelationId);
+				intoRelationDesc = heap_open(intoRelationId,
+											 AccessExclusiveLock);
 
 				setheapoverride(false);
 			}
@@ -809,14 +807,15 @@ EndPlan(Plan *plan, EState *estate)
 	}
 
 	/*
-	 * close the result relations if necessary
+	 * close the result relations if necessary,
+	 * but hold locks on them until xact commit
 	 */
 	if (resultRelationInfo != NULL)
 	{
 		Relation	resultRelationDesc;
 
 		resultRelationDesc = resultRelationInfo->ri_RelationDesc;
-		heap_close(resultRelationDesc);
+		heap_close(resultRelationDesc, NoLock);
 
 		/*
 		 * close indices on the result relation
@@ -828,7 +827,7 @@ EndPlan(Plan *plan, EState *estate)
 	 * close the "into" relation if necessary
 	 */
 	if (intoRelationDesc != NULL)
-		heap_close(intoRelationDesc);
+		heap_close(intoRelationDesc, NoLock);
 }
 
 /* ----------------------------------------------------------------

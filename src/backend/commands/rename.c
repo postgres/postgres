@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.32 1999/07/17 20:16:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.33 1999/09/18 19:06:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@ renameatt(char *relname,
 		  char *userName,
 		  int recurse)
 {
+	Relation	targetrelation;
 	Relation	attrelation;
 	HeapTuple	reltup,
 				oldatttup,
@@ -72,6 +73,14 @@ renameatt(char *relname,
 #endif
 
 	/*
+	 * Grab an exclusive lock on the target table, which we will NOT release
+	 * until end of transaction.
+	 */
+	targetrelation = heap_openr(relname, AccessExclusiveLock);
+	relid = RelationGetRelid(targetrelation);
+	heap_close(targetrelation, NoLock);	/* close rel but keep lock! */
+
+	/*
 	 * if the 'recurse' flag is set then we are supposed to rename this
 	 * attribute in all classes that inherit from 'relname' (as well as in
 	 * 'relname').
@@ -82,16 +91,11 @@ renameatt(char *relname,
 	 */
 	if (recurse)
 	{
-		Oid			myrelid,
-					childrelid;
 		List	   *child,
 				   *children;
 
-		if ((myrelid = RelnameFindRelid(relname)) == InvalidOid)
-			elog(ERROR, "renameatt: unknown relation: \"%s\"", relname);
-
 		/* this routine is actually in the planner */
-		children = find_all_inheritors(lconsi(myrelid, NIL), NIL);
+		children = find_all_inheritors(lconsi(relid, NIL), NIL);
 
 		/*
 		 * find_all_inheritors does the recursive search of the
@@ -100,10 +104,11 @@ renameatt(char *relname,
 		 */
 		foreach(child, children)
 		{
+			Oid			childrelid;
 			char		childname[NAMEDATALEN];
 
 			childrelid = lfirsti(child);
-			if (childrelid == myrelid)
+			if (childrelid == relid)
 				continue;
 			reltup = SearchSysCacheTuple(RELOID,
 										 ObjectIdGetDatum(childrelid),
@@ -117,14 +122,12 @@ renameatt(char *relname,
 			StrNCpy(childname,
 					((Form_pg_class) GETSTRUCT(reltup))->relname.data,
 					NAMEDATALEN);
-			/* no more recursion! */
+			/* note we need not recurse again! */
 			renameatt(childname, oldattname, newattname, userName, 0);
 		}
 	}
 
-
-	if ((relid = RelnameFindRelid(relname)) == InvalidOid)
-		elog(ERROR, "renameatt: relation \"%s\" nonexistent", relname);
+	attrelation = heap_openr(AttributeRelationName, RowExclusiveLock);
 
 	oldatttup = SearchSysCacheTupleCopy(ATTNAME,
 										ObjectIdGetDatum(relid),
@@ -150,7 +153,6 @@ renameatt(char *relname,
 	StrNCpy((((Form_pg_attribute) (GETSTRUCT(oldatttup)))->attname.data),
 			newattname, NAMEDATALEN);
 
-	attrelation = heap_openr(AttributeRelationName);
 	heap_replace(attrelation, &oldatttup->t_self, oldatttup, NULL);
 
 	/* keep system catalog indices current */
@@ -159,7 +161,7 @@ renameatt(char *relname,
 	CatalogCloseIndices(Num_pg_attr_indices, irelations);
 
 	pfree(oldatttup);
-	heap_close(attrelation);
+	heap_close(attrelation, RowExclusiveLock);
 }
 
 /*
@@ -182,6 +184,7 @@ void
 renamerel(char *oldrelname, char *newrelname)
 {
 	int			i;
+	Relation	targetrelation;
 	Relation	relrelation;	/* for RELATION relation */
 	HeapTuple	oldreltup;
 	char		oldpath[MAXPGPATH],
@@ -198,6 +201,15 @@ renamerel(char *oldrelname, char *newrelname)
 		elog(ERROR, "renamerel: Illegal class name: \"%s\" -- pg_ is reserved for system catalogs",
 			 newrelname);
 
+	/*
+	 * Grab an exclusive lock on the target table, which we will NOT release
+	 * until end of transaction.
+	 */
+	targetrelation = heap_openr(oldrelname, AccessExclusiveLock);
+	heap_close(targetrelation, NoLock);	/* close rel but keep lock! */
+
+	relrelation = heap_openr(RelationRelationName, RowExclusiveLock);
+
 	oldreltup = SearchSysCacheTupleCopy(RELNAME,
 										PointerGetDatum(oldrelname),
 										0, 0, 0);
@@ -207,12 +219,17 @@ renamerel(char *oldrelname, char *newrelname)
 	if (RelnameFindRelid(newrelname) != InvalidOid)
 		elog(ERROR, "renamerel: relation \"%s\" exists", newrelname);
 
+	/*
+	 * XXX need to close relation and flush dirty buffers here!
+	 */
+
 	/* rename the path first, so if this fails the rename's not done */
 	strcpy(oldpath, relpath(oldrelname));
 	strcpy(newpath, relpath(newrelname));
 	if (rename(oldpath, newpath) < 0)
 		elog(ERROR, "renamerel: unable to rename file: %s", oldpath);
 
+	/* rename additional segments of relation, too */
 	for (i = 1;; i++)
 	{
 		sprintf(toldpath, "%s.%d", oldpath, i);
@@ -225,7 +242,6 @@ renamerel(char *oldrelname, char *newrelname)
 			newrelname, NAMEDATALEN);
 
 	/* insert fixed rel tuple */
-	relrelation = heap_openr(RelationRelationName);
 	heap_replace(relrelation, &oldreltup->t_self, oldreltup, NULL);
 
 	/* keep the system catalog indices current */
@@ -233,5 +249,5 @@ renamerel(char *oldrelname, char *newrelname)
 	CatalogIndexInsert(irelations, Num_pg_class_indices, relrelation, oldreltup);
 	CatalogCloseIndices(Num_pg_class_indices, irelations);
 
-	heap_close(relrelation);
+	heap_close(relrelation, RowExclusiveLock);
 }

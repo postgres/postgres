@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.42 1999/07/17 20:17:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.43 1999/09/18 19:07:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ regprocin(char *pro_name_or_oid)
 								   (RegProcedure) F_NAMEEQ,
 								   PointerGetDatum(pro_name_or_oid));
 
-			hdesc = heap_openr(ProcedureRelationName);
+			hdesc = heap_openr(ProcedureRelationName, AccessShareLock);
 			idesc = index_openr(ProcedureNameIndex);
 
 			sd = index_beginscan(idesc, false, 1, skey);
@@ -102,6 +102,7 @@ regprocin(char *pro_name_or_oid)
 			index_endscan(sd);
 			pfree(sd);
 			index_close(idesc);
+			heap_close(hdesc, AccessShareLock);
 
 			if (matches > 1)
 				elog(ERROR, "There is more than one procedure named %s.\n\tSupply the pg_proc oid inside single quotes.", pro_name_or_oid);
@@ -116,13 +117,7 @@ regprocin(char *pro_name_or_oid)
 		ScanKeyData key;
 		bool		isnull;
 
-		proc = heap_openr(ProcedureRelationName);
-		if (!RelationIsValid(proc))
-		{
-			elog(ERROR, "regprocin: could not open %s",
-				 ProcedureRelationName);
-			return 0;
-		}
+		proc = heap_openr(ProcedureRelationName, AccessShareLock);
 		ScanKeyEntryInitialize(&key,
 							   (bits16) 0,
 							   (AttrNumber) 1,
@@ -132,8 +127,8 @@ regprocin(char *pro_name_or_oid)
 		procscan = heap_beginscan(proc, 0, SnapshotNow, 1, &key);
 		if (!HeapScanIsValid(procscan))
 		{
-			heap_close(proc);
-			elog(ERROR, "regprocin: could not being scan of %s",
+			heap_close(proc, AccessShareLock);
+			elog(ERROR, "regprocin: could not begin scan of %s",
 				 ProcedureRelationName);
 			return 0;
 		}
@@ -151,7 +146,7 @@ regprocin(char *pro_name_or_oid)
 			result = (RegProcedure) 0;
 
 		heap_endscan(procscan);
-		heap_close(proc);
+		heap_close(proc, AccessShareLock);
 	}
 
 	return (int32) result;
@@ -193,12 +188,7 @@ regprocout(RegProcedure proid)
 		HeapScanDesc procscan;
 		ScanKeyData key;
 
-		proc = heap_openr(ProcedureRelationName);
-		if (!RelationIsValid(proc))
-		{
-			elog(ERROR, "regprocout: could not open %s", ProcedureRelationName);
-			return 0;
-		}
+		proc = heap_openr(ProcedureRelationName, AccessShareLock);
 		ScanKeyEntryInitialize(&key,
 							   (bits16) 0,
 							   (AttrNumber) ObjectIdAttributeNumber,
@@ -208,8 +198,8 @@ regprocout(RegProcedure proid)
 		procscan = heap_beginscan(proc, 0, SnapshotNow, 1, &key);
 		if (!HeapScanIsValid(procscan))
 		{
-			heap_close(proc);
-			elog(ERROR, "regprocout: could not being scan of %s",
+			heap_close(proc, AccessShareLock);
+			elog(ERROR, "regprocout: could not begin scan of %s",
 				 ProcedureRelationName);
 			return 0;
 		}
@@ -232,8 +222,7 @@ regprocout(RegProcedure proid)
 			result[1] = '\0';
 		}
 		heap_endscan(procscan);
-		heap_close(proc);
-		return result;
+		heap_close(proc, AccessShareLock);
 	}
 
 	return result;

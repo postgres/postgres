@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.55 1999/08/25 23:21:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.56 1999/09/18 19:07:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2059,10 +2059,10 @@ fireRIRrules(Query *parsetree)
 			continue;
 		}
 
-		rel = heap_openr(rte->relname);
+		rel = heap_openr(rte->relname, AccessShareLock);
 		if (rel->rd_rules == NULL)
 		{
-			heap_close(rel);
+			heap_close(rel, AccessShareLock);
 			continue;
 		}
 
@@ -2112,7 +2112,7 @@ fireRIRrules(Query *parsetree)
 							  &modified);
 		}
 
-		heap_close(rel);
+		heap_close(rel, AccessShareLock);
 	}
 
 	fireRIRonSubselect((Node *) parsetree);
@@ -2452,9 +2452,9 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 	 * the statement is an update, insert or delete - fire rules on it.
 	 */
 	rt_entry = rt_fetch(result_relation, parsetree->rtable);
-	rt_entry_relation = heap_openr(rt_entry->relname);
+	rt_entry_relation = heap_openr(rt_entry->relname, AccessShareLock);
 	rt_entry_locks = rt_entry_relation->rd_rules;
-	heap_close(rt_entry_relation);
+	heap_close(rt_entry_relation, AccessShareLock);
 
 	if (rt_entry_locks != NULL)
 	{
@@ -2469,7 +2469,6 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 	}
 
 	return product_queries;
-
 }
 
 
@@ -2585,7 +2584,7 @@ RewritePreprocessQuery(Query *parsetree)
 
 		rte = (RangeTblEntry *) nth(parsetree->resultRelation - 1,
 									parsetree->rtable);
-		rd = heap_openr(rte->relname);
+		rd = heap_openr(rte->relname, AccessShareLock);
 
 		foreach(tl, parsetree->targetList)
 		{
@@ -2597,7 +2596,7 @@ RewritePreprocessQuery(Query *parsetree)
 				tle->resdom->resno = 0;
 		}
 
-		heap_close(rd);
+		heap_close(rd, AccessShareLock);
 	}
 }
 

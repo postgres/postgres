@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.66 1999/07/19 02:27:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.67 1999/09/18 19:06:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,7 +396,8 @@ boot_openrel(char *relname)
 	if (Typ == (struct typmap **) NULL)
 	{
 		StartPortalAllocMode(DefaultAllocMode, 0);
-		rel = heap_openr(TypeRelationName);
+		rel = heap_openr(TypeRelationName, NoLock);
+		Assert(rel);
 		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
 		i = 0;
 		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
@@ -416,7 +417,7 @@ boot_openrel(char *relname)
 					sizeof((*app)->am_typ));
 		}
 		heap_endscan(scan);
-		heap_close(rel);
+		heap_close(rel, NoLock);
 		EndPortalAllocMode();
 	}
 
@@ -427,7 +428,7 @@ boot_openrel(char *relname)
 		printf("Amopen: relation %s. attrsize %d\n", relname ? relname : "(null)",
 			   (int) ATTRIBUTE_TUPLE_SIZE);
 
-	reldesc = heap_openr(relname);
+	reldesc = heap_openr(relname, NoLock);
 	Assert(reldesc);
 	numattr = reldesc->rd_rel->relnatts;
 	for (i = 0; i < numattr; i++)
@@ -490,7 +491,7 @@ closerel(char *name)
 	{
 		if (!Quiet)
 			printf("Amclose: relation %s.\n", relname ? relname : "(null)");
-		heap_close(reldesc);
+		heap_close(reldesc, NoLock);
 		reldesc = (Relation) NULL;
 	}
 }
@@ -737,7 +738,7 @@ cleanup()
 		proc_exit(1);
 	}
 	if (reldesc != (Relation) NULL)
-		heap_close(reldesc);
+		heap_close(reldesc, NoLock);
 	CommitTransactionCommand();
 	proc_exit(Warnings);
 }
@@ -775,7 +776,8 @@ gettype(char *type)
 		}
 		if (DebugMode)
 			printf("bootstrap.c: External Type: %s\n", type);
-		rel = heap_openr(TypeRelationName);
+		rel = heap_openr(TypeRelationName, NoLock);
+		Assert(rel);
 		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
 		i = 0;
 		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
@@ -795,7 +797,7 @@ gettype(char *type)
 					sizeof((*app)->am_typ));
 		}
 		heap_endscan(scan);
-		heap_close(rel);
+		heap_close(rel, NoLock);
 		return gettype(type);
 	}
 	elog(ERROR, "Error: unknown type '%s'.\n", type);
@@ -1106,11 +1108,16 @@ build_indices()
 
 	for (; ILHead != (IndexList *) NULL; ILHead = ILHead->il_next)
 	{
-		heap = heap_openr(ILHead->il_heap);
+		heap = heap_openr(ILHead->il_heap, NoLock);
+		Assert(heap);
 		ind = index_openr(ILHead->il_ind);
+		Assert(ind);
 		index_build(heap, ind, ILHead->il_natts, ILHead->il_attnos,
 				 ILHead->il_nparams, ILHead->il_params, ILHead->il_finfo,
 					ILHead->il_predInfo);
+		/* In normal processing mode, index_build would close the heap
+		 * and index, but in bootstrap mode it will not.
+		 */
 
 		/*
 		 * All of the rest of this routine is needed only because in
@@ -1128,9 +1135,9 @@ build_indices()
 		 *
 		 * -mer
 		 */
-		heap = heap_openr(ILHead->il_heap);
-
 		if (!BootstrapAlreadySeen(RelationGetRelid(heap)))
 			UpdateStats(RelationGetRelid(heap), 0, true);
+
+		/* XXX Probably we ought to close the heap and index here? */
 	}
 }

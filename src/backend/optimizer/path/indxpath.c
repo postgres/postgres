@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.71 1999/09/13 00:17:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.72 1999/09/18 19:06:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1163,7 +1163,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 						   F_OIDEQ,
 						   ObjectIdGetDatum(pred_op));
 
-	relation = heap_openr(AccessMethodOperatorRelationName);
+	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
 
 	/*
 	 * The following assumes that any given operator will only be in a
@@ -1178,6 +1178,8 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	if (!HeapTupleIsValid(tuple))
 	{
 		elog(DEBUG, "clause_pred_clause_test: unknown pred_op");
+		heap_endscan(scan);
+		heap_close(relation, AccessShareLock);
 		return false;
 	}
 	aform = (Form_pg_amop) GETSTRUCT(tuple);
@@ -1209,6 +1211,8 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	if (!HeapTupleIsValid(tuple))
 	{
 		elog(DEBUG, "clause_pred_clause_test: unknown clause_op");
+		heap_endscan(scan);
+		heap_close(relation, AccessShareLock);
 		return false;
 	}
 	aform = (Form_pg_amop) GETSTRUCT(tuple);
@@ -1224,8 +1228,10 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 
 	test_strategy = BT_implic_table[clause_strategy - 1][pred_strategy - 1];
 	if (test_strategy == 0)
+	{
+		heap_close(relation, AccessShareLock);
 		return false;			/* the implication cannot be determined */
-
+	}
 
 	/*
 	 * 4. From the same opclass, find the operator for the test strategy
@@ -1241,14 +1247,18 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	if (!HeapTupleIsValid(tuple))
 	{
 		elog(DEBUG, "clause_pred_clause_test: unknown test_op");
+		heap_endscan(scan);
+		heap_close(relation, AccessShareLock);
 		return false;
 	}
 	aform = (Form_pg_amop) GETSTRUCT(tuple);
 
 	/* Get the test operator */
 	test_op = aform->amopopr;
+
 	heap_endscan(scan);
 
+	heap_close(relation, AccessShareLock);
 
 	/*
 	 * 5. Evaluate the test

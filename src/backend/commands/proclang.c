@@ -120,15 +120,14 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	values[i++] = ObjectIdGetDatum(procTup->t_data->t_oid);
 	values[i++] = (Datum) fmgr(F_TEXTIN, stmt->plcompiler);
 
-	rel = heap_openr(LanguageRelationName);
+	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
 
 	tupDesc = rel->rd_att;
 	tup = heap_formtuple(tupDesc, values, nulls);
 
 	heap_insert(rel, tup);
 
-	heap_close(rel);
-	return;
+	heap_close(rel, RowExclusiveLock);
 }
 
 
@@ -160,6 +159,8 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	 */
 	case_translate_language_name(stmt->plname, languageName);
 
+	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
+
 	langTup = SearchSysCacheTupleCopy(LANNAME,
 									  PointerGetDatum(languageName),
 									  0, 0, 0);
@@ -167,14 +168,11 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 		elog(ERROR, "Language %s doesn't exist", languageName);
 
 	if (!((Form_pg_language) GETSTRUCT(langTup))->lanispl)
-	{
 		elog(ERROR, "Language %s isn't a created procedural language",
 			 languageName);
-	}
 
-	rel = heap_openr(LanguageRelationName);
 	heap_delete(rel, &langTup->t_self, NULL);
 
 	pfree(langTup);
-	heap_close(rel);
+	heap_close(rel, RowExclusiveLock);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.34 1999/09/04 18:42:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.35 1999/09/18 19:07:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,11 +20,12 @@
 
 
 #include "postgres.h"
+
 #include "access/transam.h"
 #include "catalog/catalog.h"
+#include "miscadmin.h"
 #include "utils/inval.h"
 
-extern Oid	MyDatabaseId;
 
 static LOCKMASK LockConflicts[] = {
 	(int) NULL,
@@ -106,37 +107,25 @@ InitLockTable()
 /*
  * RelationInitLockInfo
  *		Initializes the lock information in a relation descriptor.
+ *
+ *		relcache.c must call this during creation of any reldesc.
  */
 void
 RelationInitLockInfo(Relation relation)
 {
-	LockInfo	info;
 	char	   *relname;
-	MemoryContext oldcxt;
-	extern Oid	MyDatabaseId;	/* XXX use include */
-	extern GlobalMemory CacheCxt;
 
 	Assert(RelationIsValid(relation));
 	Assert(OidIsValid(RelationGetRelid(relation)));
 
-	info = (LockInfo) relation->lockInfo;
-
-	if (LockInfoIsValid(info))
-		return;
-
 	relname = (char *) RelationGetRelationName(relation);
 
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
-	info = (LockInfo) palloc(sizeof(LockInfoData));
-	MemoryContextSwitchTo(oldcxt);
+	relation->rd_lockInfo.lockRelId.relId = RelationGetRelid(relation);
 
-	info->lockRelId.relId = RelationGetRelid(relation);
 	if (IsSharedSystemRelationName(relname))
-		info->lockRelId.dbId = InvalidOid;
+		relation->rd_lockInfo.lockRelId.dbId = InvalidOid;
 	else
-		info->lockRelId.dbId = MyDatabaseId;
-
-	relation->lockInfo = (Pointer) info;
+		relation->rd_lockInfo.lockRelId.dbId = MyDatabaseId;
 }
 
 /*
@@ -145,20 +134,14 @@ RelationInitLockInfo(Relation relation)
 void
 LockRelation(Relation relation, LOCKMODE lockmode)
 {
-	LockInfo	lockinfo;
 	LOCKTAG		tag;
 
 	if (LockingDisabled())
 		return;
 
-	if (!LockInfoIsValid(relation->lockInfo))
-		RelationInitLockInfo(relation);
-
-	lockinfo = (LockInfo) relation->lockInfo;
-
 	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = lockinfo->lockRelId.relId;
-	tag.dbId = lockinfo->lockRelId.dbId;
+	tag.relId = relation->rd_lockInfo.lockRelId.relId;
+	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = InvalidBlockNumber;
 
 	LockAcquire(LockTableId, &tag, lockmode);
@@ -180,28 +163,17 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 void
 UnlockRelation(Relation relation, LOCKMODE lockmode)
 {
-	LockInfo	lockinfo;
 	LOCKTAG		tag;
 
 	if (LockingDisabled())
 		return;
 
-	lockinfo = (LockInfo) relation->lockInfo;
-
-	if (!LockInfoIsValid(lockinfo))
-	{
-		elog(ERROR,
-			 "Releasing a lock on %s with invalid lock information",
-			 RelationGetRelationName(relation));
-	}
-
 	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = lockinfo->lockRelId.relId;
-	tag.dbId = lockinfo->lockRelId.dbId;
+	tag.relId = relation->rd_lockInfo.lockRelId.relId;
+	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = InvalidBlockNumber;
 
 	LockRelease(LockTableId, &tag, lockmode);
-	return;
 }
 
 /*
@@ -210,24 +182,17 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
 void
 LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 {
-	LockInfo	lockinfo;
 	LOCKTAG		tag;
 
 	if (LockingDisabled())
 		return;
 
-	if (!LockInfoIsValid(relation->lockInfo))
-		RelationInitLockInfo(relation);
-
-	lockinfo = (LockInfo) relation->lockInfo;
-
 	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = lockinfo->lockRelId.relId;
-	tag.dbId = lockinfo->lockRelId.dbId;
+	tag.relId = relation->rd_lockInfo.lockRelId.relId;
+	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = blkno;
 
 	LockAcquire(LockTableId, &tag, lockmode);
-	return;
 }
 
 /*
@@ -236,28 +201,17 @@ LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 void
 UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 {
-	LockInfo	lockinfo;
 	LOCKTAG		tag;
 
 	if (LockingDisabled())
 		return;
 
-	lockinfo = (LockInfo) relation->lockInfo;
-
-	if (!LockInfoIsValid(lockinfo))
-	{
-		elog(ERROR,
-			 "Releasing a lock on %s with invalid lock information",
-			 RelationGetRelationName(relation));
-	}
-
 	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = lockinfo->lockRelId.relId;
-	tag.dbId = lockinfo->lockRelId.dbId;
+	tag.relId = relation->rd_lockInfo.lockRelId.relId;
+	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = blkno;
 
 	LockRelease(LockTableId, &tag, lockmode);
-	return;
 }
 
 void
@@ -274,7 +228,6 @@ XactLockTableInsert(TransactionId xid)
 	tag.objId.xid = xid;
 
 	LockAcquire(LockTableId, &tag, ExclusiveLock);
-	return;
 }
 
 void
@@ -291,7 +244,6 @@ XactLockTableDelete(TransactionId xid)
 	tag.objId.xid = xid;
 
 	LockRelease(LockTableId, &tag, ExclusiveLock);
-	return;
 }
 
 void
@@ -316,6 +268,4 @@ XactLockTableWait(TransactionId xid)
 	 */
 	if (!TransactionIdDidCommit(xid) && !TransactionIdDidAbort(xid))
 		TransactionIdAbort(xid);
-
-	return;
 }

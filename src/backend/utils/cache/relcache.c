@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.72 1999/09/06 19:33:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.73 1999/09/18 19:07:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,7 +337,7 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 	 *	open pg_class and fetch a tuple
 	 * ----------------
 	 */
-	pg_class_desc = heap_openr(RelationRelationName);
+	pg_class_desc = heap_openr(RelationRelationName, AccessShareLock);
 	pg_class_scan = heap_beginscan(pg_class_desc, 0, SnapshotNow, 1, &key);
 	pg_class_tuple = heap_getnext(pg_class_scan, 0);
 
@@ -361,7 +361,7 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 
 	/* all done */
 	heap_endscan(pg_class_scan);
-	heap_close(pg_class_desc);
+	heap_close(pg_class_desc, AccessShareLock);
 
 	return return_tuple;
 }
@@ -372,9 +372,7 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 	Relation	pg_class_desc;
 	HeapTuple	return_tuple;
 
-	pg_class_desc = heap_openr(RelationRelationName);
-	if (!IsInitProcessingMode())
-		LockRelation(pg_class_desc, AccessShareLock);
+	pg_class_desc = heap_openr(RelationRelationName, AccessShareLock);
 
 	switch (buildinfo.infotype)
 	{
@@ -389,18 +387,10 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 
 		default:
 			elog(ERROR, "ScanPgRelation: bad buildinfo");
-
-			/*
-			 * XXX I hope this is right.  It seems better than returning
-			 * an uninitialized value
-			 */
-			return_tuple = NULL;
+			return_tuple = NULL; /* keep compiler quiet */
 	}
 
-	/* all done */
-	if (!IsInitProcessingMode())
-		UnlockRelation(pg_class_desc, AccessShareLock);
-	heap_close(pg_class_desc);
+	heap_close(pg_class_desc, AccessShareLock);
 
 	return return_tuple;
 }
@@ -508,7 +498,7 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	 *	open pg_attribute and begin a scan
 	 * ----------------
 	 */
-	pg_attribute_desc = heap_openr(AttributeRelationName);
+	pg_attribute_desc = heap_openr(AttributeRelationName, AccessShareLock);
 	pg_attribute_scan = heap_beginscan(pg_attribute_desc, 0, SnapshotNow, 1, &key);
 
 	/* ----------------
@@ -544,7 +534,7 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	 * ----------------
 	 */
 	heap_endscan(pg_attribute_scan);
-	heap_close(pg_attribute_desc);
+	heap_close(pg_attribute_desc, AccessShareLock);
 }
 
 static void
@@ -562,7 +552,7 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 
 	constr->has_not_null = false;
 
-	attrel = heap_openr(AttributeRelationName);
+	attrel = heap_openr(AttributeRelationName, AccessShareLock);
 
 	for (i = 1; i <= relation->rd_rel->relnatts; i++)
 	{
@@ -597,7 +587,7 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 		}
 	}
 
-	heap_close(attrel);
+	heap_close(attrel, AccessShareLock);
 
 	if (constr->has_not_null || ndef > 0 || relation->rd_rel->relchecks)
 	{
@@ -677,7 +667,7 @@ RelationBuildRuleLock(Relation relation)
 	 *	open pg_attribute and begin a scan
 	 * ----------------
 	 */
-	pg_rewrite_desc = heap_openr(RewriteRelationName);
+	pg_rewrite_desc = heap_openr(RewriteRelationName, AccessShareLock);
 	pg_rewrite_scan = heap_beginscan(pg_rewrite_desc, 0, SnapshotNow, 1, &key);
 	pg_rewrite_tupdesc = RelationGetDescr(pg_rewrite_desc);
 
@@ -732,7 +722,7 @@ RelationBuildRuleLock(Relation relation)
 	 * ----------------
 	 */
 	heap_endscan(pg_rewrite_scan);
-	heap_close(pg_rewrite_desc);
+	heap_close(pg_rewrite_desc, AccessShareLock);
 
 	/* ----------------
 	 *	form a RuleLock and insert into relation
@@ -765,9 +755,9 @@ RelationBuildRuleLock(Relation relation)
  *	uint16				   rd_refcnt;	 reference count
  *	Form_pg_am			   rd_am;		 AM tuple
  *	Form_pg_class		   rd_rel;		 RELATION tuple
- *	Oid					   rd_id;		 relations's object id
- *	Pointer				   lockInfo;	 ptr. to misc. info.
- *	TupleDesc			   rd_att;		 tuple desciptor
+ *	Oid					   rd_id;		 relation's object id
+ *	LockInfoData		   rd_lockInfo;	 lock manager's info
+ *	TupleDesc			   rd_att;		 tuple descriptor
  *
  *		Note: rd_ismem (rel is in-memory only) is currently unused
  *		by any part of the system.	someday this will indicate that
@@ -1049,12 +1039,16 @@ formrdesc(char *relationName,
 	RelationGetRelid(relation) = relation->rd_att->attrs[0]->attrelid;
 
 	/* ----------------
+	 *	initialize the relation lock manager information
+	 * ----------------
+	 */
+	RelationInitLockInfo(relation);		/* see lmgr.c */
+
+	/* ----------------
 	 *	add new reldesc to relcache
 	 * ----------------
 	 */
 	RelationCacheInsert(relation);
-
-	RelationInitLockInfo(relation);
 
 	/*
 	 * Determining this requires a scan on pg_class, but to do the scan
@@ -1074,9 +1068,13 @@ formrdesc(char *relationName,
 /* --------------------------------
  *		RelationIdCacheGetRelation
  *
- *		only try to get the reldesc by looking up the cache
- *		do not go to the disk.	this is used by BlockPrepareFile()
- *		and RelationIdGetRelation below.
+ *		Lookup a reldesc by OID.
+ *		Only try to get the reldesc by looking up the cache
+ *		do not go to the disk.
+ *
+ *		NB: relation ref count is incremented if successful.
+ *		Caller should eventually decrement count.  (Usually,
+ *		that happens by calling RelationClose().)
  * --------------------------------
  */
 Relation
@@ -1103,6 +1101,8 @@ RelationIdCacheGetRelation(Oid relationId)
 
 /* --------------------------------
  *		RelationNameCacheGetRelation
+ *
+ *		As above, but lookup by name.
  * --------------------------------
  */
 static Relation
@@ -1136,8 +1136,11 @@ RelationNameCacheGetRelation(char *relationName)
 /* --------------------------------
  *		RelationIdGetRelation
  *
- *		return a relation descriptor based on its id.
- *		return a cached value if possible
+ *		Lookup a reldesc by OID; make one if not already in cache.
+ *
+ *		NB: relation ref count is incremented, or set to 1 if new entry.
+ *		Caller should eventually decrement count.  (Usually,
+ *		that happens by calling RelationClose().)
  * --------------------------------
  */
 Relation
@@ -1176,8 +1179,7 @@ RelationIdGetRelation(Oid relationId)
 /* --------------------------------
  *		RelationNameGetRelation
  *
- *		return a relation descriptor based on its name.
- *		return a cached value if possible
+ *		As above, but lookup by name.
  * --------------------------------
  */
 Relation
@@ -1289,7 +1291,6 @@ RelationFlushRelation(Relation *relationPtr,
 	/* Free all the subsidiary data structures of the relcache entry */
 	FreeTupleDesc(relation->rd_att);
 	FreeTriggerDesc(relation);
-	pfree(RelationGetLockInfo(relation));
 	pfree(RelationGetForm(relation));
 
 	/* If we're really done with the relcache entry, blow it away.
@@ -1530,9 +1531,9 @@ RelationRegisterRelation(Relation relation)
 	if (oldcxt != (MemoryContext) CacheCxt)
 		elog(NOIND, "RelationRegisterRelation: WARNING: Context != CacheCxt");
 
-	RelationCacheInsert(relation);
-
 	RelationInitLockInfo(relation);
+
+	RelationCacheInsert(relation);
 
 	/*
 	 * we've just created the relation. It is invisible to anyone else
@@ -1692,7 +1693,7 @@ AttrDefaultFetch(Relation relation)
 						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	adrel = heap_openr(AttrDefaultRelationName);
+	adrel = heap_openr(AttrDefaultRelationName, AccessShareLock);
 	irel = index_openr(AttrDefaultIndex);
 	sd = index_beginscan(irel, false, 1, &skey);
 	tuple.t_data = NULL;
@@ -1754,7 +1755,7 @@ AttrDefaultFetch(Relation relation)
 	index_endscan(sd);
 	pfree(sd);
 	index_close(irel);
-	heap_close(adrel);
+	heap_close(adrel, AccessShareLock);
 }
 
 static void
@@ -1779,7 +1780,7 @@ RelCheckFetch(Relation relation)
 						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	rcrel = heap_openr(RelCheckRelationName);
+	rcrel = heap_openr(RelCheckRelationName, AccessShareLock);
 	irel = index_openr(RelCheckIndex);
 	sd = index_beginscan(irel, false, 1, &skey);
 	tuple.t_data = NULL;
@@ -1834,8 +1835,7 @@ RelCheckFetch(Relation relation)
 	index_endscan(sd);
 	pfree(sd);
 	index_close(irel);
-	heap_close(rcrel);
-
+	heap_close(rcrel, AccessShareLock);
 }
 
 /*
@@ -1928,9 +1928,6 @@ init_irels(void)
 
 		/* the file descriptor is not yet opened */
 		ird->rd_fd = -1;
-
-		/* lock info is not initialized */
-		ird->lockInfo = (char *) NULL;
 
 		/* next, read the access method tuple form */
 		if ((nread = FileRead(fd, (char *) &len, sizeof(len))) != sizeof(len))
@@ -2038,8 +2035,9 @@ init_irels(void)
 
 		ird->rd_support = support;
 
-		RelationCacheInsert(ird);
 		RelationInitLockInfo(ird);
+
+		RelationCacheInsert(ird);
 	}
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.67 1999/09/13 00:17:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.68 1999/09/18 19:07:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -627,7 +627,6 @@ pg_checkretval(Oid rettype, List *queryTreeList)
 	Resdom	   *resnode;
 	Relation	reln;
 	Oid			relid;
-	Oid			tletype;
 	int			relnatts;
 	int			i;
 
@@ -713,11 +712,7 @@ pg_checkretval(Oid rettype, List *queryTreeList)
 	 * declared return type, and be sure that attributes 1 .. n in the
 	 * target list match the declared types.
 	 */
-	reln = heap_open(typeTypeRelid(typ));
-
-	if (!RelationIsValid(reln))
-		elog(ERROR, "cannot open relation relid %u", typeTypeRelid(typ));
-
+	reln = heap_open(typeTypeRelid(typ), AccessShareLock);
 	relid = reln->rd_id;
 	relnatts = reln->rd_rel->relnatts;
 
@@ -729,41 +724,12 @@ pg_checkretval(Oid rettype, List *queryTreeList)
 	{
 		TargetEntry *tle = lfirst(tlist);
 		Node	   *thenode = tle->expr;
+		Oid			tletype = exprType(thenode);
 
-		tlist = lnext(tlist);
-		tletype = exprType(thenode);
-
-#ifdef NOT_USED					/* fix me */
-		/* this is tedious */
-		if (IsA(thenode, Var))
-			tletype = (Oid) ((Var *) thenode)->vartype;
-		else if (IsA(thenode, Const))
-			tletype = (Oid) ((Const *) thenode)->consttype;
-		else if (IsA(thenode, Param))
-			tletype = (Oid) ((Param *) thenode)->paramtype;
-		else if (IsA(thenode, Expr))
-			tletype = Expr;
-
-		else if (IsA(thenode, LispList))
-		{
-			thenode = lfirst(thenode);
-			if (IsA(thenode, Oper))
-				tletype = (Oid) get_opresulttype((Oper *) thenode);
-			else if (IsA(thenode, Func))
-				tletype = (Oid) get_functype((Func *) thenode);
-			else
-				elog(ERROR, "function declared to return type %s does not retrieve (%s.all)", typeTypeName(typ), typeTypeName(typ));
-		}
-		else
-			elog(ERROR, "function declared to return type %s does not retrieve (%s.all)", typeTypeName(typ), typeTypeName(typ));
-#endif
-		/* reach right in there, why don't you? */
 		if (tletype != reln->rd_att->attrs[i - 1]->atttypid)
 			elog(ERROR, "function declared to return type %s does not retrieve (%s.all)", typeTypeName(typ), typeTypeName(typ));
+		tlist = lnext(tlist);
 	}
 
-	heap_close(reln);
-
-	/* success */
-	return;
+	heap_close(reln, AccessShareLock);
 }

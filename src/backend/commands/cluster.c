@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.44 1999/07/17 20:16:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.45 1999/09/18 19:06:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,29 +101,20 @@ cluster(char *oldrelname, char *oldindexname)
 
 	/*
 	 * Like vacuum, cluster spans transactions, so I'm going to handle it
-	 * in the same way.
+	 * in the same way: commit and restart transactions where needed.
+	 *
+	 * We grab exclusive access to the target rel and index for the
+	 * duration of the initial transaction.
 	 */
 
-	/* matches the StartTransaction in PostgresMain() */
-
-	OldHeap = heap_openr(oldrelname);
-	if (!RelationIsValid(OldHeap))
-	{
-		elog(ERROR, "cluster: unknown relation: \"%s\"",
-			 oldrelname);
-	}
-	OIDOldHeap = RelationGetRelid(OldHeap);		/* Get OID for the index
-												 * scan    */
+	OldHeap = heap_openr(oldrelname, AccessExclusiveLock);
+	OIDOldHeap = RelationGetRelid(OldHeap);
 
 	OldIndex = index_openr(oldindexname);		/* Open old index relation	*/
-	if (!RelationIsValid(OldIndex))
-	{
-		elog(ERROR, "cluster: unknown index: \"%s\"",
-			 oldindexname);
-	}
-	OIDOldIndex = RelationGetRelid(OldIndex);	/* OID for the index scan		  */
+	LockRelation(OldIndex, AccessExclusiveLock);
+	OIDOldIndex = RelationGetRelid(OldIndex);
 
-	heap_close(OldHeap);
+	heap_close(OldHeap, NoLock); /* do NOT give up the locks */
 	index_close(OldIndex);
 
 	/*
@@ -132,7 +123,7 @@ cluster(char *oldrelname, char *oldindexname)
 	 * will get the lock after being blocked and add rows which won't be
 	 * present in the new table. Bleagh! I'd be best to try and ensure
 	 * that no-one's in the tables for the entire duration of this process
-	 * with a pg_vlock.
+	 * with a pg_vlock.  XXX Isn't the above comment now invalid?
 	 */
 	NewHeap = copy_heap(OIDOldHeap);
 	OIDNewHeap = RelationGetRelid(NewHeap);
@@ -171,7 +162,7 @@ cluster(char *oldrelname, char *oldindexname)
 	renamerel(NewIndexName, saveoldindexname);
 
 	/*
-	 * Again flush all the buffers.
+	 * Again flush all the buffers.  XXX perhaps not needed?
 	 */
 	CommitTransactionCommand();
 	StartTransactionCommand();
@@ -193,7 +184,7 @@ copy_heap(Oid OIDOldHeap)
 	 */
 	snprintf(NewName, NAMEDATALEN, "temp_%x", OIDOldHeap);
 
-	OldHeap = heap_open(OIDOldHeap);
+	OldHeap = heap_open(OIDOldHeap, AccessExclusiveLock);
 	OldHeapDesc = RelationGetDescr(OldHeap);
 
 	/*
@@ -209,10 +200,11 @@ copy_heap(Oid OIDOldHeap)
 	if (!OidIsValid(OIDNewHeap))
 		elog(ERROR, "clusterheap: cannot create temporary heap relation\n");
 
-	NewHeap = heap_open(OIDNewHeap);
+	/* XXX why are we bothering to do this: */
+	NewHeap = heap_open(OIDNewHeap, AccessExclusiveLock);
 
-	heap_close(NewHeap);
-	heap_close(OldHeap);
+	heap_close(NewHeap, AccessExclusiveLock);
+	heap_close(OldHeap, AccessExclusiveLock);
 
 	return NewHeap;
 }
@@ -233,7 +225,7 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 	int			natts;
 	FuncIndexInfo *finfo;
 
-	NewHeap = heap_open(OIDNewHeap);
+	NewHeap = heap_open(OIDNewHeap, AccessExclusiveLock);
 	OldIndex = index_open(OIDOldIndex);
 
 	/*
@@ -305,8 +297,8 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 				 Old_pg_index_Form->indisunique,
 				 Old_pg_index_Form->indisprimary);
 
-	heap_close(OldIndex);
-	heap_close(NewHeap);
+	index_close(OldIndex);
+	heap_close(NewHeap, AccessExclusiveLock);
 }
 
 
@@ -326,8 +318,8 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	 * Open the relations I need. Scan through the OldHeap on the OldIndex
 	 * and insert each tuple into the NewHeap.
 	 */
-	LocalNewHeap = (Relation) heap_open(OIDNewHeap);
-	LocalOldHeap = (Relation) heap_open(OIDOldHeap);
+	LocalNewHeap = heap_open(OIDNewHeap, AccessExclusiveLock);
+	LocalOldHeap = heap_open(OIDOldHeap, AccessExclusiveLock);
 	LocalOldIndex = (Relation) index_open(OIDOldIndex);
 
 	ScanDesc = index_beginscan(LocalOldIndex, false, 0, (ScanKey) NULL);
@@ -344,6 +336,6 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	index_endscan(ScanDesc);
 
 	index_close(LocalOldIndex);
-	heap_close(LocalOldHeap);
-	heap_close(LocalNewHeap);
+	heap_close(LocalOldHeap, AccessExclusiveLock);
+	heap_close(LocalNewHeap, AccessExclusiveLock);
 }

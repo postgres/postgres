@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.36 1999/07/17 20:16:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.37 1999/09/18 19:06:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,13 +75,14 @@ RemoveOperator(char *operatorName,		/* operator name */
 	else
 		oprtype = 'r';
 
+	relation = heap_openr(OperatorRelationName, RowExclusiveLock);
+
 	tup = SearchSysCacheTupleCopy(OPRNAME,
 								  PointerGetDatum(operatorName),
 								  ObjectIdGetDatum(typeId1),
 								  ObjectIdGetDatum(typeId2),
 								  CharGetDatum(oprtype));
 
-	relation = heap_openr(OperatorRelationName);
 	if (HeapTupleIsValid(tup))
 	{
 #ifndef NO_SECURITY
@@ -117,7 +118,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 		}
 	}
 	pfree(tup);
-	heap_close(relation);
+	heap_close(relation, RowExclusiveLock);
 }
 
 #ifdef NOTYET
@@ -141,7 +142,7 @@ SingleOpOperatorRemove(Oid typeOid)
 
 	ScanKeyEntryInitialize(&key[0],
 						   0, 0, F_OIDEQ, (Datum) typeOid);
-	rel = heap_openr(OperatorRelationName);
+	rel = heap_openr(OperatorRelationName, RowExclusiveLock);
 	for (i = 0; i < 3; ++i)
 	{
 		key[0].sk_attno = attnums[i];
@@ -150,7 +151,7 @@ SingleOpOperatorRemove(Oid typeOid)
 			heap_delete(rel, &tup->t_self, NULL);
 		heap_endscan(scan);
 	}
-	heap_close(rel);
+	heap_close(rel, RowExclusiveLock);
 }
 
 /*
@@ -187,7 +188,7 @@ AttributeAndRelationRemove(Oid typeOid)
 	oidptr = (struct oidlist *) palloc(sizeof(*oidptr));
 	oidptr->next = NULL;
 	optr = oidptr;
-	rel = heap_openr(AttributeRelationName);
+	rel = heap_openr(AttributeRelationName, AccessShareLock);
 	scan = heap_beginscan(rel, 0, SnapshotNow, 1, key);
 	while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
 	{
@@ -197,14 +198,15 @@ AttributeAndRelationRemove(Oid typeOid)
 	}
 	optr->next = NULL;
 	heap_endscan(scan);
-	heap_close(rel);
+	heap_close(rel, AccessShareLock);
 
+	optr = oidptr;
 
 	ScanKeyEntryInitialize(&key[0], 0,
 						   ObjectIdAttributeNumber,
 						   F_OIDEQ, (Datum) 0);
-	optr = oidptr;
-	rel = heap_openr(RelationRelationName);
+	/* get RowExclusiveLock because heap_destroy will need it */
+	rel = heap_openr(RelationRelationName, RowExclusiveLock);
 	while (PointerIsValid((char *) optr->next))
 	{
 		key[0].sk_argument = (Datum) (optr++)->reloid;
@@ -217,9 +219,9 @@ AttributeAndRelationRemove(Oid typeOid)
 			name = (((Form_pg_class) GETSTRUCT(tup))->relname).data;
 			heap_destroy_with_catalog(name);
 		}
+		heap_endscan(scan);
 	}
-	heap_endscan(scan);
-	heap_close(rel);
+	heap_close(rel, RowExclusiveLock);
 }
 
 #endif	 /* NOTYET */
@@ -245,18 +247,17 @@ RemoveType(char *typeName)		/* type name to be removed */
 			 typeName);
 #endif
 
-	relation = heap_openr(TypeRelationName);
+	relation = heap_openr(TypeRelationName, RowExclusiveLock);
+
 	tup = SearchSysCacheTuple(TYPNAME,
 							  PointerGetDatum(typeName),
 							  0, 0, 0);
-
 	if (!HeapTupleIsValid(tup))
 	{
-		heap_close(relation);
+		heap_close(relation, RowExclusiveLock);
 		elog(ERROR, "RemoveType: type '%s' does not exist", typeName);
 	}
 
-	relation = heap_openr(TypeRelationName);
 	typeOid = tup->t_data->t_oid;
 	heap_delete(relation, &tup->t_self, NULL);
 
@@ -267,14 +268,13 @@ RemoveType(char *typeName)		/* type name to be removed */
 							  0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 	{
-		heap_close(relation);
-		elog(ERROR, "RemoveType: type '%s' does not exist", typeName);
+		heap_close(relation, RowExclusiveLock);
+		elog(ERROR, "RemoveType: type '%s' does not exist", shadow_type);
 	}
 
-	typeOid = tup->t_data->t_oid;
 	heap_delete(relation, &tup->t_self, NULL);
 
-	heap_close(relation);
+	heap_close(relation, RowExclusiveLock);
 }
 
 /*
@@ -328,7 +328,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 	}
 #endif
 
-	relation = heap_openr(ProcedureRelationName);
+	relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
 	tup = SearchSysCacheTuple(PRONAME,
 							  PointerGetDatum(functionName),
 							  Int32GetDatum(nargs),
@@ -337,19 +337,19 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 
 	if (!HeapTupleIsValid(tup))
 	{
-		heap_close(relation);
+		heap_close(relation, RowExclusiveLock);
 		func_error("RemoveFunction", functionName, nargs, argList, NULL);
 	}
 
 	if ((((Form_pg_proc) GETSTRUCT(tup))->prolang) == INTERNALlanguageId)
 	{
-		heap_close(relation);
+		heap_close(relation, RowExclusiveLock);
 		elog(ERROR, "RemoveFunction: function \"%s\" is built-in", functionName);
 	}
 
 	heap_delete(relation, &tup->t_self, NULL);
 
-	heap_close(relation);
+	heap_close(relation, RowExclusiveLock);
 }
 
 void
@@ -398,7 +398,7 @@ RemoveAggregate(char *aggName, char *aggType)
 	}
 #endif
 
-	relation = heap_openr(AggregateRelationName);
+	relation = heap_openr(AggregateRelationName, RowExclusiveLock);
 	tup = SearchSysCacheTuple(AGGNAME,
 							  PointerGetDatum(aggName),
 							  ObjectIdGetDatum(basetypeID),
@@ -406,7 +406,7 @@ RemoveAggregate(char *aggName, char *aggType)
 
 	if (!HeapTupleIsValid(tup))
 	{
-		heap_close(relation);
+		heap_close(relation, RowExclusiveLock);
 		if (aggType)
 		{
 			elog(ERROR, "RemoveAggregate: aggregate '%s' for '%s' does not exist",
@@ -420,5 +420,5 @@ RemoveAggregate(char *aggName, char *aggType)
 	}
 	heap_delete(relation, &tup->t_self, NULL);
 
-	heap_close(relation);
+	heap_close(relation, RowExclusiveLock);
 }

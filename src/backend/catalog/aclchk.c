@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.27 1999/07/30 18:09:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.28 1999/09/18 19:06:33 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -105,19 +105,15 @@ ChangeAcl(char *relname,
 	 * We can't use the syscache here, since we need to do a heap_replace on
 	 * the tuple we find.
 	 */
-	relation = heap_openr(RelationRelationName);
-	if (!RelationIsValid(relation))
-		elog(ERROR, "ChangeAcl: could not open '%s'??",
-			 RelationRelationName);
+	relation = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheTuple(RELNAME,
 								PointerGetDatum(relname),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		heap_close(relation);
+		heap_close(relation, RowExclusiveLock);
 		elog(ERROR, "ChangeAcl: class \"%s\" not found",
 			 relname);
-		return;
 	}
 
 	if (!heap_attisnull(tuple, Anum_pg_class_relacl))
@@ -164,7 +160,7 @@ ChangeAcl(char *relname,
 	CatalogIndexInsert(idescs, Num_pg_class_indices, relation, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, idescs);
 
-	heap_close(relation);
+	heap_close(relation, RowExclusiveLock);
 	if (free_old_acl)
 		pfree(old_acl);
 	pfree(new_acl);
@@ -213,13 +209,7 @@ in_group(AclId uid, AclId gid)
 	AclId	   *aidp;
 	int32		found = 0;
 
-	relation = heap_openr(GroupRelationName);
-	if (!RelationIsValid(relation))
-	{
-		elog(NOTICE, "in_group: could not open \"%s\"??",
-			 GroupRelationName);
-		return 0;
-	}
+	relation = heap_openr(GroupRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheTuple(GROSYSID,
 								ObjectIdGetDatum(gid),
 								0, 0, 0);
@@ -242,7 +232,7 @@ in_group(AclId uid, AclId gid)
 	}
 	else
 		elog(NOTICE, "in_group: group %d not found", gid);
-	heap_close(relation);
+	heap_close(relation, RowExclusiveLock);
 	return found;
 }
 
@@ -413,6 +403,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	}
 
 #ifndef ACLDEBUG
+	relation = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheTuple(RELNAME,
 								PointerGetDatum(relname),
 								0, 0, 0);
@@ -420,18 +411,15 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	{
 		elog(ERROR, "pg_aclcheck: class \"%s\" not found",
 			 relname);
-		/* an elog(ERROR) kills us, so no need to return anything. */
 	}
 	if (!heap_attisnull(tuple, Anum_pg_class_relacl))
 	{
-		relation = heap_openr(RelationRelationName);
 		tmp = (Acl *) heap_getattr(tuple,
 								   Anum_pg_class_relacl,
 								   RelationGetDescr(relation),
 								   (bool *) NULL);
 		acl = makeacl(ACL_NUM(tmp));
 		memmove((char *) acl, (char *) tmp, ACL_SIZE(tmp));
-		heap_close(relation);
 	}
 	else
 	{
@@ -442,42 +430,29 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 		 */
 		int4		ownerId;
 
-		relation = heap_openr(RelationRelationName);
 		ownerId = (int4) heap_getattr(tuple,
 									  Anum_pg_class_relowner,
 									  RelationGetDescr(relation),
 									  (bool *) NULL);
 		acl = aclownerdefault(relname, (AclId) ownerId);
-		heap_close(relation);
 	}
+	heap_close(relation, RowExclusiveLock);
 #else
-	{							/* This is why the syscache is great... */
-		static ScanKeyData relkey[1] = {
-			{0, Anum_pg_class_relname, F_NAMEEQ}
-		};
-
-		relation = heap_openr(RelationRelationName);
-		if (!RelationIsValid(relation))
-		{
-			elog(NOTICE, "pg_checkacl: could not open \"%-.*s\"??",
-				 RelationRelationName);
-			return ACLCHECK_NO_CLASS;
-		}
-		tuple = SearchSysCacheTuple(RELNAME,
-									PointerGetDatum(relname),
-									0, 0, 0);
-		if (HeapTupleIsValid(tuple) &&
-			!heap_attisnull(tuple, Anum_pg_class_relacl))
-		{
-			tmp = (Acl *) heap_getattr(tuple,
-									   Anum_pg_class_relacl,
-									   RelationGetDescr(relation),
-									   (bool *) NULL);
-			acl = makeacl(ACL_NUM(tmp));
-			memmove((char *) acl, (char *) tmp, ACL_SIZE(tmp));
-		}
-		heap_close(relation);
+	relation = heap_openr(RelationRelationName, RowExclusiveLock);
+	tuple = SearchSysCacheTuple(RELNAME,
+								PointerGetDatum(relname),
+								0, 0, 0);
+	if (HeapTupleIsValid(tuple) &&
+		!heap_attisnull(tuple, Anum_pg_class_relacl))
+	{
+		tmp = (Acl *) heap_getattr(tuple,
+								   Anum_pg_class_relacl,
+								   RelationGetDescr(relation),
+								   (bool *) NULL);
+		acl = makeacl(ACL_NUM(tmp));
+		memmove((char *) acl, (char *) tmp, ACL_SIZE(tmp));
 	}
+	heap_close(relation, RowExclusiveLock);
 #endif
 	result = aclcheck(relname, acl, id, (AclIdType) ACL_IDTYPE_UID, mode);
 	if (acl)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.37 1999/09/09 02:35:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.38 1999/09/18 19:07:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,17 +126,19 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 	/* Find an index on the given relation */
 	if (first)
 	{
-		if (RelationIsValid(relation))
-			heap_close(relation);
 		if (HeapScanIsValid(scan))
 			heap_endscan(scan);
+		scan = (HeapScanDesc) NULL;
+		if (RelationIsValid(relation))
+			heap_close(relation, AccessShareLock);
+		relation = (Relation) NULL;
 
 		ScanKeyEntryInitialize(&indexKey, 0,
 							   Anum_pg_index_indrelid,
 							   F_OIDEQ,
 							   ObjectIdGetDatum(indrelid));
 
-		relation = heap_openr(IndexRelationName);
+		relation = heap_openr(IndexRelationName, AccessShareLock);
 		scan = heap_beginscan(relation, 0, SnapshotNow,
 							  1, &indexKey);
 	}
@@ -146,7 +148,7 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 	if (!HeapTupleIsValid(indexTuple))
 	{
 		heap_endscan(scan);
-		heap_close(relation);
+		heap_close(relation, AccessShareLock);
 		scan = (HeapScanDesc) NULL;
 		relation = (Relation) NULL;
 		return 0;
@@ -190,7 +192,7 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 	info->relam = relam;
 	info->pages = indexRelation->rd_rel->relpages;
 	info->tuples = indexRelation->rd_rel->reltuples;
-	heap_close(indexRelation);
+	index_close(indexRelation);
 
 	/*
 	 * Find the index ordering keys
@@ -390,7 +392,7 @@ find_inheritance_children(Oid inhparent)
 	key[0].sk_nargs = key[0].sk_func.fn_nargs;
 
 	key[0].sk_argument = ObjectIdGetDatum((Oid) inhparent);
-	relation = heap_openr(InheritsRelationName);
+	relation = heap_openr(InheritsRelationName, AccessShareLock);
 	scan = heap_beginscan(relation, 0, SnapshotNow, 1, key);
 	while (HeapTupleIsValid(inheritsTuple = heap_getnext(scan, 0)))
 	{
@@ -398,7 +400,7 @@ find_inheritance_children(Oid inhparent)
 		list = lappendi(list, inhrelid);
 	}
 	heap_endscan(scan);
-	heap_close(relation);
+	heap_close(relation, AccessShareLock);
 	return list;
 }
 
@@ -424,8 +426,8 @@ VersionGetParents(Oid verrelid)
 
 	fmgr_info(F_OIDEQ, &key[0].sk_func);
 	key[0].sk_nargs = key[0].sk_func.fn_nargs;
-	relation = heap_openr(VersionRelationName);
 	key[0].sk_argument = ObjectIdGetDatum(verrelid);
+	relation = heap_openr(VersionRelationName, AccessShareLock);
 	scan = heap_beginscan(relation, 0, SnapshotNow, 1, key);
 	while (HeapTupleIsValid(versionTuple = heap_getnext(scan, 0)))
 	{
@@ -438,7 +440,7 @@ VersionGetParents(Oid verrelid)
 		heap_rescan(scan, 0, key);
 	}
 	heap_endscan(scan);
-	heap_close(relation);
+	heap_close(relation, AccessShareLock);
 	return list;
 }
 

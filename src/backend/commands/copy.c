@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.87 1999/09/11 22:28:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.88 1999/09/18 19:06:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,22 +251,22 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	Relation	rel;
 	extern char *UserName;		/* defined in global.c */
 	const AclMode required_access = from ? ACL_WR : ACL_RD;
+	LOCKMODE	required_lock = from ? AccessExclusiveLock : AccessShareLock;
+	/* Note: AccessExclusive is probably overkill for copying to a relation,
+	 * but that's what the existing code grabs on the rel's indices.  If
+	 * this is relaxed then I think the index locks need relaxed also.
+	 */
 	int			result;
 
-	rel = heap_openr(relname);
-	if (rel == NULL)
-		elog(ERROR, "COPY command failed.  Class %s "
-			 "does not exist.", relname);
+	rel = heap_openr(relname, required_lock);
 
 	result = pg_aclcheck(relname, UserName, required_access);
 	if (result != ACLCHECK_OK)
 		elog(ERROR, "%s: %s", relname, aclcheck_error_strings[result]);
-	/* Above should not return */
-	else if (!superuser() && !pipe)
+	else if (!pipe && !superuser())
 		elog(ERROR, "You must have Postgres superuser privilege to do a COPY "
 			 "directly to or from a file.  Anyone can COPY to stdout or "
 			 "from stdin.  Psql's \\copy command also works for anyone.");
-	/* Above should not return. */
 	else
 	{
 		if (from)
@@ -342,6 +342,8 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 				pq_endcopyout(false);
 		}
 	}
+
+	heap_close(rel, required_lock);
 }
 
 
@@ -500,8 +502,6 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 		pfree(elements);
 		pfree(typmod);
 	}
-
-	heap_close(rel);
 }
 
 static void
@@ -905,20 +905,19 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 		pfree(typmod);
 	}
 
-	/* comments in execUtils.c */
 	if (has_index)
 	{
 		for (i = 0; i < n_indices; i++)
 		{
 			if (index_rels[i] == NULL)
 				continue;
+			/* see comments in ExecOpenIndices() in execUtils.c */
 			if ((index_rels[i])->rd_rel->relam != BTREE_AM_OID &&
 				(index_rels[i])->rd_rel->relam != HASH_AM_OID)
 				UnlockRelation(index_rels[i], AccessExclusiveLock);
 			index_close(index_rels[i]);
 		}
 	}
-	heap_close(rel);
 }
 
 
@@ -991,7 +990,7 @@ IsTypeByVal(Oid type)
 /*
  * Given the OID of a relation, return an array of index relation descriptors
  * and the number of index relations.  These relation descriptors are open
- * using heap_open().
+ * using index_open().
  *
  * Space for the array itself is palloc'ed.
  */
@@ -1017,7 +1016,7 @@ GetIndexRelations(Oid main_relation_oid,
 	int			i;
 	bool		isnull;
 
-	pg_index_rel = heap_openr(IndexRelationName);
+	pg_index_rel = heap_openr(IndexRelationName, AccessShareLock);
 	scandesc = heap_beginscan(pg_index_rel, 0, SnapshotNow, 0, NULL);
 	tupDesc = RelationGetDescr(pg_index_rel);
 
@@ -1044,7 +1043,7 @@ GetIndexRelations(Oid main_relation_oid,
 	}
 
 	heap_endscan(scandesc);
-	heap_close(pg_index_rel);
+	heap_close(pg_index_rel, AccessShareLock);
 
 	/* We cannot trust to relhasindex of the main_relation now, so... */
 	if (*n_indices == 0)
@@ -1055,7 +1054,7 @@ GetIndexRelations(Oid main_relation_oid,
 	for (i = 0, scan = head; i < *n_indices; i++, scan = scan->next)
 	{
 		(*index_rels)[i] = index_open(scan->index_rel_oid);
-		/* comments in execUtils.c */
+		/* see comments in ExecOpenIndices() in execUtils.c */
 		if ((*index_rels)[i] != NULL &&
 			((*index_rels)[i])->rd_rel->relam != BTREE_AM_OID &&
 			((*index_rels)[i])->rd_rel->relam != HASH_AM_OID)

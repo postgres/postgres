@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.31 1999/07/16 17:07:37 momjian Exp $
+ * $Id: buf_internals.h,v 1.32 1999/09/18 19:08:18 tgl Exp $
  *
  * NOTE
  *		If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -64,8 +64,8 @@ struct buftag
 
 #define INIT_BUFFERTAG(a,xx_reln,xx_blockNum) \
 ( \
-	(a)->blockNum = xx_blockNum, \
-	(a)->relId = ((LockInfo)(xx_reln->lockInfo))->lockRelId \
+	(a)->blockNum = (xx_blockNum), \
+	(a)->relId = (xx_reln)->rd_lockInfo.lockRelId \
 )
 
 #define BAD_BUFFER_ID(bid) ((bid<1) || (bid>(NBuffers)))

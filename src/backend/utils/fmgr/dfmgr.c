@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.31 1999/07/17 20:18:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.32 1999/09/18 19:08:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,8 +56,13 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 
 	/*
 	 * The procedure isn't a builtin, so we'll have to do a catalog lookup
-	 * to find its pg_proc entry.
+	 * to find its pg_proc entry.  Moreover, since probin is varlena, we're
+	 * going to have to use heap_getattr, which means we need the reldesc,
+	 * which means we need to open the relation.  So we might as well do that
+	 * first and get the benefit of SI inval if needed.
 	 */
+	rel = heap_openr(ProcedureRelationName, AccessShareLock);
+
 	procedureTuple = SearchSysCacheTuple(PROOID,
 										 ObjectIdGetDatum(procedureId),
 										 0, 0, 0);
@@ -71,35 +76,23 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
 	proname = procedureStruct->proname.data;
 	pronargs_save = *pronargs = procedureStruct->pronargs;
-
-	/*
-	 * Extract the procedure info from the pg_proc tuple. Since probin is
-	 * varlena, do a amgetattr() on the procedure tuple.  To do that, we
-	 * need the rel for the procedure relation, so...
-	 */
-
-	/* open pg_procedure */
-
-	rel = heap_openr(ProcedureRelationName);
-	if (!RelationIsValid(rel))
-	{
-		elog(ERROR, "fmgr: Could not open relation %s",
-			 ProcedureRelationName);
-		return (func_ptr) NULL;
-	}
 	probinattr = heap_getattr(procedureTuple,
 							  Anum_pg_proc_probin,
 							  RelationGetDescr(rel), &isnull);
 	if (!PointerIsValid(probinattr) /* || isnull */ )
 	{
-		heap_close(rel);
+		heap_close(rel, AccessShareLock);
 		elog(ERROR, "fmgr: Could not extract probin for %u from %s",
 			 procedureId, ProcedureRelationName);
 		return (func_ptr) NULL;
 	}
 	probinstring = textout((struct varlena *) probinattr);
 
+	heap_close(rel, AccessShareLock);
+
 	user_fn = handle_load(probinstring, proname);
+
+	pfree(probinstring);
 
 	procedureId_save = procedureId;
 	user_fn_save = user_fn;

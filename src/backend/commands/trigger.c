@@ -63,11 +63,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 		elog(ERROR, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 #endif
 
-	rel = heap_openr(stmt->relname);
-	if (!RelationIsValid(rel))
-		elog(ERROR, "CreateTrigger: there is no relation %s", stmt->relname);
-
-	LockRelation(rel, AccessExclusiveLock);
+	rel = heap_openr(stmt->relname, AccessExclusiveLock);
 
 	TRIGGER_CLEAR_TYPE(tgtype);
 	if (stmt->before)
@@ -103,8 +99,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	}
 
 	/* Scan pg_trigger */
-	tgrel = heap_openr(TriggerRelationName);
-	LockRelation(tgrel, AccessExclusiveLock);
+	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ, RelationGetRelid(rel));
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
@@ -203,20 +198,19 @@ CreateTrigger(CreateTrigStmt *stmt)
 	CatalogIndexInsert(idescs, Num_pg_trigger_indices, tgrel, tuple);
 	CatalogCloseIndices(Num_pg_trigger_indices, idescs);
 	pfree(tuple);
-	UnlockRelation(tgrel, AccessExclusiveLock);
-	heap_close(tgrel);
+	heap_close(tgrel, RowExclusiveLock);
 
 	pfree(DatumGetPointer(values[Anum_pg_trigger_tgname - 1]));
 	pfree(DatumGetPointer(values[Anum_pg_trigger_tgargs - 1]));
 
 	/* update pg_class */
+	pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheTupleCopy(RELNAME,
 									PointerGetDatum(stmt->relname),
 									0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "CreateTrigger: relation %s not found in pg_class", stmt->relname);
 
-	pgrel = heap_openr(RelationRelationName);
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found + 1;
 	RelationInvalidateHeapTuple(pgrel, tuple);
 	heap_replace(pgrel, &tuple->t_self, tuple, NULL);
@@ -224,7 +218,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
 	pfree(tuple);
-	heap_close(pgrel);
+	heap_close(pgrel, RowExclusiveLock);
 
 	CommandCounterIncrement();
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
@@ -232,8 +226,8 @@ CreateTrigger(CreateTrigStmt *stmt)
 	rel->rd_rel->reltriggers = found + 1;
 	RelationBuildTriggers(rel);
 	MemoryContextSwitchTo(oldcxt);
-	heap_close(rel);
-	return;
+	/* Keep lock on target rel until end of xact */
+	heap_close(rel, NoLock);
 }
 
 void
@@ -255,14 +249,9 @@ DropTrigger(DropTrigStmt *stmt)
 		elog(ERROR, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 #endif
 
-	rel = heap_openr(stmt->relname);
-	if (!RelationIsValid(rel))
-		elog(ERROR, "DropTrigger: there is no relation %s", stmt->relname);
+	rel = heap_openr(stmt->relname, AccessExclusiveLock);
 
-	LockRelation(rel, AccessExclusiveLock);
-
-	tgrel = heap_openr(TriggerRelationName);
-	LockRelation(tgrel, AccessExclusiveLock);
+	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ, RelationGetRelid(rel));
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
@@ -282,20 +271,19 @@ DropTrigger(DropTrigStmt *stmt)
 		elog(ERROR, "DropTrigger: there is no trigger %s on relation %s",
 			 stmt->trigname, stmt->relname);
 	if (tgfound > 1)
-		elog(NOTICE, "DropTrigger: found (and deleted) %d trigger %s on relation %s",
+		elog(NOTICE, "DropTrigger: found (and deleted) %d triggers %s on relation %s",
 			 tgfound, stmt->trigname, stmt->relname);
 	heap_endscan(tgscan);
-	UnlockRelation(tgrel, AccessExclusiveLock);
-	heap_close(tgrel);
+	heap_close(tgrel, RowExclusiveLock);
 
+	/* update pg_class */
+	pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheTupleCopy(RELNAME,
 									PointerGetDatum(stmt->relname),
 									0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "DropTrigger: relation %s not found in pg_class", stmt->relname);
 
-	/* update pg_class */
-	pgrel = heap_openr(RelationRelationName);
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found;
 	RelationInvalidateHeapTuple(pgrel, tuple);
 	heap_replace(pgrel, &tuple->t_self, tuple, NULL);
@@ -303,7 +291,7 @@ DropTrigger(DropTrigStmt *stmt)
 	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
 	pfree(tuple);
-	heap_close(pgrel);
+	heap_close(pgrel, RowExclusiveLock);
 
 	CommandCounterIncrement();
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
@@ -312,8 +300,8 @@ DropTrigger(DropTrigStmt *stmt)
 	if (found > 0)
 		RelationBuildTriggers(rel);
 	MemoryContextSwitchTo(oldcxt);
-	heap_close(rel);
-	return;
+	/* Keep lock on target rel until end of xact */
+	heap_close(rel, NoLock);
 }
 
 void
@@ -324,8 +312,7 @@ RelationRemoveTriggers(Relation rel)
 	ScanKeyData key;
 	HeapTuple	tup;
 
-	tgrel = heap_openr(TriggerRelationName);
-	LockRelation(tgrel, AccessExclusiveLock);
+	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
 						   F_OIDEQ, RelationGetRelid(rel));
 
@@ -335,9 +322,7 @@ RelationRemoveTriggers(Relation rel)
 		heap_delete(tgrel, &tup->t_self, NULL);
 
 	heap_endscan(tgscan);
-	UnlockRelation(tgrel, AccessExclusiveLock);
-	heap_close(tgrel);
-
+	heap_close(tgrel, RowExclusiveLock);
 }
 
 void
@@ -367,7 +352,7 @@ RelationBuildTriggers(Relation relation)
 						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	tgrel = heap_openr(TriggerRelationName);
+	tgrel = heap_openr(TriggerRelationName, AccessShareLock);
 	irel = index_openr(TriggerRelidIndex);
 	sd = index_beginscan(irel, false, 1, &skey);
 
@@ -441,7 +426,7 @@ RelationBuildTriggers(Relation relation)
 	index_endscan(sd);
 	pfree(sd);
 	index_close(irel);
-	heap_close(tgrel);
+	heap_close(tgrel, AccessShareLock);
 
 	/* Build trigdesc */
 	trigdesc->triggers = triggers;

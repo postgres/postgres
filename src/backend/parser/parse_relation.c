@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.26 1999/07/19 00:26:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.27 1999/09/18 19:07:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,14 +202,9 @@ addRangeTableEntry(ParseState *pstate,
 	rte->relname = pstrdup(relname);
 	rte->refname = pstrdup(refname);
 
-	relation = heap_openr(relname);
-	if (relation == NULL)
-		elog(ERROR, "%s: %s",
-			 relname, aclcheck_error_strings[ACLCHECK_NO_CLASS]);
-
+	relation = heap_openr(relname, AccessShareLock);
 	rte->relid = RelationGetRelid(relation);
-
-	heap_close(relation);
+	heap_close(relation, AccessShareLock);
 
 	/*
 	 * Flags - zero or more from inheritance,union,version or recursive
@@ -246,10 +241,7 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 	if (rte == NULL)
 		rte = addRangeTableEntry(pstate, relname, refname, FALSE, FALSE);
 
-	rel = heap_open(rte->relid);
-	if (rel == NULL)
-		elog(ERROR, "Unable to expand all -- heap_open failed on %s",
-			 rte->refname);
+	rel = heap_open(rte->relid, AccessShareLock);
 
 	maxattrs = RelationGetNumberOfAttributes(rel);
 
@@ -278,7 +270,7 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 		te_list = lappend(te_list, te);
 	}
 
-	heap_close(rel);
+	heap_close(rel, AccessShareLock);
 
 	return te_list;
 }

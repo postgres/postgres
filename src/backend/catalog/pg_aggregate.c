@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.24 1999/07/17 20:16:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.25 1999/09/18 19:06:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,10 +234,7 @@ AggregateCreate(char *aggName,
 	else
 		nulls[Anum_pg_aggregate_agginitval2 - 1] = 'n';
 
-	if (!RelationIsValid(aggdesc = heap_openr(AggregateRelationName)))
-		elog(ERROR, "AggregateCreate: could not open '%s'",
-			 AggregateRelationName);
-
+	aggdesc = heap_openr(AggregateRelationName, RowExclusiveLock);
 	tupDesc = aggdesc->rd_att;
 	if (!HeapTupleIsValid(tup = heap_formtuple(tupDesc,
 											   values,
@@ -245,8 +242,7 @@ AggregateCreate(char *aggName,
 		elog(ERROR, "AggregateCreate: heap_formtuple failed");
 	if (!OidIsValid(heap_insert(aggdesc, tup)))
 		elog(ERROR, "AggregateCreate: heap_insert failed");
-	heap_close(aggdesc);
-
+	heap_close(aggdesc, RowExclusiveLock);
 }
 
 char *
@@ -264,6 +260,14 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 	Assert(PointerIsValid(isNull));
 	Assert(xfuncno == 1 || xfuncno == 2);
 
+	/*
+	 * since we will have to use fastgetattr (in case one or both init vals
+	 * are NULL), we will need to open the relation.  Do that first to
+	 * ensure we don't get a stale tuple from the cache.
+	 */
+
+	aggRel = heap_openr(AggregateRelationName, AccessShareLock);
+
 	tup = SearchSysCacheTuple(AGGNAME,
 							  PointerGetDatum(aggName),
 							  ObjectIdGetDatum(basetype),
@@ -277,21 +281,12 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 		initValAttno = Anum_pg_aggregate_agginitval1;
 	}
 	else
-		/* can only be 1 or 2 */
 	{
+		/* can only be 1 or 2 */
 		transtype = ((Form_pg_aggregate) GETSTRUCT(tup))->aggtranstype2;
 		initValAttno = Anum_pg_aggregate_agginitval2;
 	}
 
-	aggRel = heap_openr(AggregateRelationName);
-	if (!RelationIsValid(aggRel))
-		elog(ERROR, "AggNameGetInitVal: could not open \"%-.*s\"",
-			 AggregateRelationName);
-
-	/*
-	 * must use fastgetattr in case one or other of the init values is
-	 * NULL
-	 */
 	textInitVal = (text *) fastgetattr(tup, initValAttno,
 									   RelationGetDescr(aggRel),
 									   isNull);
@@ -299,11 +294,12 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 		*isNull = true;
 	if (*isNull)
 	{
-		heap_close(aggRel);
+		heap_close(aggRel, AccessShareLock);
 		return (char *) NULL;
 	}
 	strInitVal = textout(textInitVal);
-	heap_close(aggRel);
+
+	heap_close(aggRel, AccessShareLock);
 
 	tup = SearchSysCacheTuple(TYPOID,
 							  ObjectIdGetDatum(transtype),

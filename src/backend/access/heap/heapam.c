@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.53 1999/07/19 07:07:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.54 1999/09/18 19:05:58 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -486,14 +486,19 @@ heapgettup(Relation relation,
 /* ----------------
  *		heap_open - open a heap relation by relationId
  *
- *		presently the relcache routines do all the work we need
- *		to open/close heap relations.
+ *		If lockmode is "NoLock", no lock is obtained on the relation,
+ *		and the caller must check for a NULL return value indicating
+ *		that no such relation exists.
+ *		Otherwise, an error is raised if the relation does not exist,
+ *		and the specified kind of lock is obtained on the relation.
  * ----------------
  */
 Relation
-heap_open(Oid relationId)
+heap_open(Oid relationId, LOCKMODE lockmode)
 {
 	Relation	r;
+
+	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
 	/* ----------------
 	 *	increment access statistics
@@ -502,10 +507,20 @@ heap_open(Oid relationId)
 	IncrHeapAccessStat(local_open);
 	IncrHeapAccessStat(global_open);
 
-	r = (Relation) RelationIdGetRelation(relationId);
+	/* The relcache does all the real work... */
+	r = RelationIdGetRelation(relationId);
 
+	/* Under no circumstances will we return an index as a relation. */
 	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
 		elog(ERROR, "%s is an index relation", r->rd_rel->relname.data);
+
+	if (lockmode == NoLock)
+		return r;				/* caller must check RelationIsValid! */
+
+	if (! RelationIsValid(r))
+		elog(ERROR, "Relation %u does not exist", relationId);
+
+	LockRelation(r, lockmode);
 
 	return r;
 }
@@ -513,14 +528,19 @@ heap_open(Oid relationId)
 /* ----------------
  *		heap_openr - open a heap relation by name
  *
- *		presently the relcache routines do all the work we need
- *		to open/close heap relations.
+ *		If lockmode is "NoLock", no lock is obtained on the relation,
+ *		and the caller must check for a NULL return value indicating
+ *		that no such relation exists.
+ *		Otherwise, an error is raised if the relation does not exist,
+ *		and the specified kind of lock is obtained on the relation.
  * ----------------
  */
 Relation
-heap_openr(char *relationName)
+heap_openr(char *relationName, LOCKMODE lockmode)
 {
 	Relation	r;
+
+	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
 
 	/* ----------------
 	 *	increment access statistics
@@ -529,10 +549,20 @@ heap_openr(char *relationName)
 	IncrHeapAccessStat(local_openr);
 	IncrHeapAccessStat(global_openr);
 
+	/* The relcache does all the real work... */
 	r = RelationNameGetRelation(relationName);
 
+	/* Under no circumstances will we return an index as a relation. */
 	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
 		elog(ERROR, "%s is an index relation", r->rd_rel->relname.data);
+
+	if (lockmode == NoLock)
+		return r;				/* caller must check RelationIsValid! */
+
+	if (! RelationIsValid(r))
+		elog(ERROR, "Relation '%s' does not exist", relationName);
+
+	LockRelation(r, lockmode);
 
 	return r;
 }
@@ -540,13 +570,16 @@ heap_openr(char *relationName)
 /* ----------------
  *		heap_close - close a heap relation
  *
- *		presently the relcache routines do all the work we need
- *		to open/close heap relations.
+ *		If lockmode is not "NoLock", we first release the specified lock.
+ *		Note that it is often sensible to hold a lock beyond heap_close;
+ *		in that case, the lock is released automatically at xact end.
  * ----------------
  */
 void
-heap_close(Relation relation)
+heap_close(Relation relation, LOCKMODE lockmode)
 {
+	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
+
 	/* ----------------
 	 *	increment access statistics
 	 * ----------------
@@ -554,6 +587,10 @@ heap_close(Relation relation)
 	IncrHeapAccessStat(local_close);
 	IncrHeapAccessStat(global_close);
 
+	if (lockmode != NoLock)
+		UnlockRelation(relation, lockmode);
+
+	/* The relcache does the real work... */
 	RelationClose(relation);
 }
 
@@ -582,20 +619,28 @@ heap_beginscan(Relation relation,
 	 *	sanity checks
 	 * ----------------
 	 */
-	if (RelationIsValid(relation) == false)
+	if (! RelationIsValid(relation))
 		elog(ERROR, "heap_beginscan: !RelationIsValid(relation)");
-
-	LockRelation(relation, AccessShareLock);
-
-	/* XXX someday assert SelfTimeQual if relkind == RELKIND_UNCATALOGED */
-	if (relation->rd_rel->relkind == RELKIND_UNCATALOGED)
-		snapshot = SnapshotSelf;
 
 	/* ----------------
 	 *	increment relation ref count while scanning relation
 	 * ----------------
 	 */
 	RelationIncrementReferenceCount(relation);
+
+	/* ----------------
+	 *	Acquire AccessShareLock for the duration of the scan
+	 *
+	 *	Note: we could get an SI inval message here and consequently have
+	 *	to rebuild the relcache entry.  The refcount increment above
+	 *	ensures that we will rebuild it and not just flush it...
+	 * ----------------
+	 */
+	LockRelation(relation, AccessShareLock);
+
+	/* XXX someday assert SelfTimeQual if relkind == RELKIND_UNCATALOGED */
+	if (relation->rd_rel->relkind == RELKIND_UNCATALOGED)
+		snapshot = SnapshotSelf;
 
 	/* ----------------
 	 *	allocate and initialize scan descriptor
@@ -684,14 +729,18 @@ heap_endscan(HeapScanDesc scan)
 	unpinscan(scan);
 
 	/* ----------------
+	 *	Release AccessShareLock acquired by heap_beginscan()
+	 * ----------------
+	 */
+	UnlockRelation(scan->rs_rd, AccessShareLock);
+
+	/* ----------------
 	 *	decrement relation reference count and free scan descriptor storage
 	 * ----------------
 	 */
 	RelationDecrementReferenceCount(scan->rs_rd);
 
-	UnlockRelation(scan->rs_rd, AccessShareLock);
-
-	pfree(scan);				/* XXX */
+	pfree(scan);
 }
 
 /* ----------------

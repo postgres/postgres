@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.48 1999/07/17 20:18:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.49 1999/09/18 19:07:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,8 @@ CatalogCacheInitializeCache(struct catcache * cache,
 	/* ----------------
 	 *	If no relation was passed we must open it to get access to
 	 *	its fields.  If one of the other caches has already opened
-	 *	it we use heap_open() instead of heap_openr()
+	 *	it we use heap_open() instead of heap_openr().
+	 *	XXX is that really worth the trouble of checking?
 	 * ----------------
 	 */
 	if (!RelationIsValid(relation))
@@ -155,9 +156,9 @@ CatalogCacheInitializeCache(struct catcache * cache,
 		 * ----------------
 		 */
 		if (cp)
-			relation = heap_open(cp->relationId);
+			relation = heap_open(cp->relationId, NoLock);
 		else
-			relation = heap_openr(cache->cc_relname);
+			relation = heap_openr(cache->cc_relname, NoLock);
 
 		didopen = 1;
 	}
@@ -217,7 +218,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
 	 * ----------------
 	 */
 	if (didopen)
-		heap_close(relation);
+		heap_close(relation, NoLock);
 
 	/* ----------------
 	 *	initialize index information for the cache.  this
@@ -891,10 +892,10 @@ SearchSysCache(struct catcache * cache,
 		DLMoveToFront(elt);
 
 #ifdef CACHEDEBUG
-		relation = heap_open(cache->relationId);
+		relation = heap_open(cache->relationId, NoLock);
 		CACHE3_elog(DEBUG, "SearchSysCache(%s): found in bucket %d",
 					RelationGetRelationName(relation), hash);
-		heap_close(relation);
+		heap_close(relation, NoLock);
 #endif	 /* CACHEDEBUG */
 
 		return ct->ct_tup;
@@ -925,7 +926,7 @@ SearchSysCache(struct catcache * cache,
 	 *	open the relation associated with the cache
 	 * ----------------
 	 */
-	relation = heap_open(cache->relationId);
+	relation = heap_open(cache->relationId, AccessShareLock);
 	CACHE2_elog(DEBUG, "SearchSysCache(%s)",
 				RelationGetRelationName(relation));
 
@@ -1082,7 +1083,7 @@ SearchSysCache(struct catcache * cache,
 	 *	and return the tuple we found (or NULL)
 	 * ----------------
 	 */
-	heap_close(relation);
+	heap_close(relation, AccessShareLock);
 
 	MemoryContextSwitchTo(oldcxt);
 	return ntp;
@@ -1146,8 +1147,6 @@ RelationInvalidateCatalogCacheTuple(Relation relation,
 		(*function) (ccp->id,
 				 CatalogCacheComputeTupleHashIndex(ccp, relation, tuple),
 					 &tuple->t_self);
-
-		heap_close(relation);
 	}
 
 	/* ----------------

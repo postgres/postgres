@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.33 1999/07/17 20:16:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.34 1999/09/18 19:06:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,7 @@ ProcedureCreate(char *procedureName,
 	values[i++] = (Datum) fmgr(F_TEXTIN, prosrc);		/* prosrc */
 	values[i++] = (Datum) fmgr(F_TEXTIN, probin);		/* probin */
 
-	rel = heap_openr(ProcedureRelationName);
+	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
 
 	tupDesc = rel->rd_att;
 	tup = heap_formtuple(tupDesc,
@@ -294,6 +294,6 @@ ProcedureCreate(char *procedureName,
 		CatalogIndexInsert(idescs, Num_pg_proc_indices, rel, tup);
 		CatalogCloseIndices(Num_pg_proc_indices, idescs);
 	}
-	heap_close(rel);
+	heap_close(rel, RowExclusiveLock);
 	return tup->t_data->t_oid;
 }

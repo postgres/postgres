@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.40 1999/07/17 20:16:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.41 1999/09/18 19:06:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ TypeGet(char *typeName,			/* name of type to be fetched */
 	 *	open the pg_type relation
 	 * ----------------
 	 */
-	pg_type_desc = heap_openr(TypeRelationName);
+	pg_type_desc = heap_openr(TypeRelationName, AccessShareLock);
 
 	/* ----------------
 	 *	scan the type relation for the information we want
@@ -133,7 +133,7 @@ TypeGet(char *typeName,			/* name of type to be fetched */
 	 *	close the type relation and return the type oid.
 	 * ----------------
 	 */
-	heap_close(pg_type_desc);
+	heap_close(pg_type_desc, AccessShareLock);
 
 	return typeoid;
 }
@@ -248,7 +248,7 @@ TypeShellMake(char *typeName)
 	 *	open pg_type
 	 * ----------------
 	 */
-	pg_type_desc = heap_openr(TypeRelationName);
+	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
 
 	/* ----------------
 	 *	insert the shell tuple
@@ -260,7 +260,7 @@ TypeShellMake(char *typeName)
 	 *	close pg_type and return the tuple's oid.
 	 * ----------------
 	 */
-	heap_close(pg_type_desc);
+	heap_close(pg_type_desc, RowExclusiveLock);
 
 	return typoid;
 }
@@ -457,14 +457,7 @@ TypeCreate(char *typeName,
 	 *	open pg_type and begin a scan for the type name.
 	 * ----------------
 	 */
-	pg_type_desc = heap_openr(TypeRelationName);
-
-	/* -----------------
-	 * Set a write lock initially so as not upgrade a read to a write
-	 * when the heap_insert() or heap_replace() is called.
-	 * -----------------
-	 */
-	LockRelation(pg_type_desc, AccessExclusiveLock);
+	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
 
 	typeKey[0].sk_argument = PointerGetDatum(typeName);
 	pg_type_scan = heap_beginscan(pg_type_desc,
@@ -521,8 +514,8 @@ TypeCreate(char *typeName,
 		CatalogIndexInsert(idescs, Num_pg_type_indices, pg_type_desc, tup);
 		CatalogCloseIndices(Num_pg_type_indices, idescs);
 	}
-	UnlockRelation(pg_type_desc, AccessExclusiveLock);
-	heap_close(pg_type_desc);
+
+	heap_close(pg_type_desc, RowExclusiveLock);
 
 	return typeObjectId;
 }
@@ -541,7 +534,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 	HeapTuple	oldtup,
 				newtup;
 
-	pg_type_desc = heap_openr(TypeRelationName);
+	pg_type_desc = heap_openr(TypeRelationName, RowExclusiveLock);
 
 	oldtup = SearchSysCacheTupleCopy(TYPNAME,
 									 PointerGetDatum(oldTypeName),
@@ -549,7 +542,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 
 	if (!HeapTupleIsValid(oldtup))
 	{
-		heap_close(pg_type_desc);
+		heap_close(pg_type_desc, RowExclusiveLock);
 		elog(ERROR, "TypeRename: type %s not defined", oldTypeName);
 	}
 
@@ -559,7 +552,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 	if (HeapTupleIsValid(newtup))
 	{
 		pfree(oldtup);
-		heap_close(pg_type_desc);
+		heap_close(pg_type_desc, RowExclusiveLock);
 		elog(ERROR, "TypeRename: type %s already defined", newTypeName);
 	}
 
@@ -575,7 +568,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 	CatalogCloseIndices(Num_pg_type_indices, idescs);
 
 	pfree(oldtup);
-	heap_close(pg_type_desc);
+	heap_close(pg_type_desc, RowExclusiveLock);
 }
 
 /*

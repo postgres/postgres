@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.35 1999/09/04 22:00:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.36 1999/09/18 19:07:55 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -575,11 +575,19 @@ SearchSysCacheGetAttribute(int cacheId,
 	Datum		attributeValue;
 	void	   *returnValue;
 
-	tp = SearchSysCacheTuple(cacheId, key1, key2, key3, key4);
+	/*
+	 * Open the relation first, to ensure we are in sync with SI inval
+	 * events --- we don't want the tuple found in the cache to be
+	 * invalidated out from under us.
+	 */
 	cacheName = cacheinfo[cacheId].name;
+	relation = heap_openr(cacheName, AccessShareLock);
+
+	tp = SearchSysCacheTuple(cacheId, key1, key2, key3, key4);
 
 	if (!HeapTupleIsValid(tp))
 	{
+		heap_close(relation, AccessShareLock);
 #ifdef	CACHEDEBUG
 		elog(DEBUG,
 			 "SearchSysCacheGetAttribute: Lookup in %s(%d) failed",
@@ -587,8 +595,6 @@ SearchSysCacheGetAttribute(int cacheId,
 #endif	 /* defined(CACHEDEBUG) */
 		return NULL;
 	}
-
-	relation = heap_openr(cacheName);
 
 	if (attributeNumber < 0 &&
 		attributeNumber > FirstLowInvalidHeapAttributeNumber)
@@ -604,6 +610,7 @@ SearchSysCacheGetAttribute(int cacheId,
 	}
 	else
 	{
+		heap_close(relation, AccessShareLock);
 		elog(ERROR,
 			 "SearchSysCacheGetAttribute: Bad attr # %d in %s(%d)",
 			 attributeNumber, cacheName, cacheId);
@@ -617,11 +624,11 @@ SearchSysCacheGetAttribute(int cacheId,
 
 	if (isNull)
 	{
-
 		/*
 		 * Used to be an elog(DEBUG, ...) here and a claim that it should
 		 * be a FATAL error, I don't think either is warranted -mer 6/9/92
 		 */
+		heap_close(relation, AccessShareLock);
 		return NULL;
 	}
 
@@ -639,6 +646,6 @@ SearchSysCacheGetAttribute(int cacheId,
 		returnValue = (void *) tmp;
 	}
 
-	heap_close(relation);
+	heap_close(relation, AccessShareLock);
 	return returnValue;
 }

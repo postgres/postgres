@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.24 1999/07/17 19:01:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.25 1999/09/18 19:06:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,7 +257,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 			reloid = rtentry->relid;
 			rri = makeNode(RelationInfo);
 			rri->ri_RangeTableIndex = es_rri->ri_RangeTableIndex;
-			rri->ri_RelationDesc = heap_open(reloid);
+			rri->ri_RelationDesc = heap_open(reloid, RowExclusiveLock);
 			rri->ri_NumIndices = 0;
 			rri->ri_IndexRelationDescs = NULL;	/* index descs */
 			rri->ri_IndexRelationInfo = NULL;	/* index key info */
@@ -484,7 +484,7 @@ ExecEndAppend(Append *node)
 
 		resultRelationInfo = (RelationInfo *) lfirst(resultRelationInfoList);
 		resultRelationDesc = resultRelationInfo->ri_RelationDesc;
-		heap_close(resultRelationDesc);
+		heap_close(resultRelationDesc, NoLock);
 		pfree(resultRelationInfo);
 		resultRelationInfoList = lnext(resultRelationInfoList);
 	}

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.45 1999/07/16 17:07:26 momjian Exp $
+ * $Id: heapam.h,v 1.46 1999/09/18 19:08:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/relscan.h"
 #include "access/tupmacs.h"
 #include "storage/block.h"
+#include "storage/lmgr.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
 
@@ -246,9 +247,9 @@ extern HeapAccessStatistics heap_access_stats;	/* in stats.c */
 
 /* heapam.c */
 
-extern Relation heap_open(Oid relationId);
-extern Relation heap_openr(char *relationName);
-extern void heap_close(Relation relation);
+extern Relation heap_open(Oid relationId, LOCKMODE lockmode);
+extern Relation heap_openr(char *relationName, LOCKMODE lockmode);
+extern void heap_close(Relation relation, LOCKMODE lockmode);
 extern HeapScanDesc heap_beginscan(Relation relation, int atend,
 			   Snapshot snapshot, unsigned nkeys, ScanKey key);
 extern void heap_rescan(HeapScanDesc scan, bool scanFromEnd, ScanKey key);

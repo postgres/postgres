@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.28 1999/07/17 20:17:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.29 1999/09/18 19:07:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ RemoveRewriteRule(char *ruleName)
 	/*
 	 * Open the pg_rewrite relation.
 	 */
-	RewriteRelation = heap_openr(RewriteRelationName);
+	RewriteRelation = heap_openr(RewriteRelationName, RowExclusiveLock);
 
 	/*
 	 * Scan the RuleRelation ('pg_rewrite') until we find a tuple
@@ -90,7 +90,7 @@ RemoveRewriteRule(char *ruleName)
 	 */
 	if (!HeapTupleIsValid(tuple))
 	{
-		heap_close(RewriteRelation);
+		heap_close(RewriteRelation, RowExclusiveLock);
 		elog(ERROR, "Rule '%s' not found\n", ruleName);
 	}
 
@@ -125,7 +125,7 @@ RemoveRewriteRule(char *ruleName)
 	heap_delete(RewriteRelation, &tuple->t_self, NULL);
 
 	pfree(tuple);
-	heap_close(RewriteRelation);
+	heap_close(RewriteRelation, RowExclusiveLock);
 }
 
 /*
@@ -144,7 +144,7 @@ RelationRemoveRules(Oid relid)
 	/*
 	 * Open the pg_rewrite relation.
 	 */
-	RewriteRelation = heap_openr(RewriteRelationName);
+	RewriteRelation = heap_openr(RewriteRelationName, RowExclusiveLock);
 
 	/*
 	 * Scan the RuleRelation ('pg_rewrite') for all the tuples that has
@@ -162,5 +162,5 @@ RelationRemoveRules(Oid relid)
 		heap_delete(RewriteRelation, &tuple->t_self, NULL);
 
 	heap_endscan(scanDesc);
-	heap_close(RewriteRelation);
+	heap_close(RewriteRelation, RowExclusiveLock);
 }

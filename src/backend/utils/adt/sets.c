@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.25 1999/07/17 20:18:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.26 1999/09/18 19:07:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,8 +100,7 @@ SetDefine(char *querystr, char *typename)
 			replNull[i] = ' ';
 
 		/* change the pg_proc tuple */
-		procrel = heap_openr(ProcedureRelationName);
-		LockRelation(procrel, AccessExclusiveLock);
+		procrel = heap_openr(ProcedureRelationName, RowExclusiveLock);
 
 		tup = SearchSysCacheTuple(PROOID,
 								  ObjectIdGetDatum(setoid),
@@ -131,8 +130,7 @@ SetDefine(char *querystr, char *typename)
 			CatalogIndexInsert(idescs, Num_pg_proc_indices, procrel, newtup);
 			CatalogCloseIndices(Num_pg_proc_indices, idescs);
 		}
-		UnlockRelation(procrel, AccessExclusiveLock);
-		heap_close(procrel);
+		heap_close(procrel, RowExclusiveLock);
 	}
 	return setoid;
 }

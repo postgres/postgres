@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.24 1999/07/15 23:03:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.25 1999/09/18 19:06:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -441,7 +441,7 @@ GetNewObjectId(Oid *oid_return) /* place to return the new object id */
 		 * ----------------
 		 */
 		if (!RelationIsValid(VariableRelation))
-			VariableRelation = heap_openr(VariableRelationName);
+			VariableRelation = heap_openr(VariableRelationName, NoLock);
 
 		/* ----------------
 		 *		get a new block of prefetched object ids.

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.41 1999/07/17 20:16:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.42 1999/09/18 19:06:33 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -199,7 +199,7 @@ OperatorGet(char *operatorName,
 	 *	open the pg_operator relation
 	 * ----------------
 	 */
-	pg_operator_desc = heap_openr(OperatorRelationName);
+	pg_operator_desc = heap_openr(OperatorRelationName, AccessShareLock);
 
 	/* ----------------
 	 *	get the oid for the operator with the appropriate name
@@ -216,7 +216,7 @@ OperatorGet(char *operatorName,
 	 *	close the relation and return the operator oid.
 	 * ----------------
 	 */
-	heap_close(pg_operator_desc);
+	heap_close(pg_operator_desc, AccessShareLock);
 
 	return operatorObjectId;
 }
@@ -341,7 +341,7 @@ OperatorShellMake(char *operatorName,
 	 *	open pg_operator
 	 * ----------------
 	 */
-	pg_operator_desc = heap_openr(OperatorRelationName);
+	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
 
 	/* ----------------
 	 *	add a "shell" operator tuple to the operator relation
@@ -356,7 +356,7 @@ OperatorShellMake(char *operatorName,
 	 *	close the operator relation and return the oid.
 	 * ----------------
 	 */
-	heap_close(pg_operator_desc);
+	heap_close(pg_operator_desc, RowExclusiveLock);
 
 	return operatorObjectId;
 }
@@ -754,10 +754,11 @@ OperatorDef(char *operatorName,
 
 	/* last three fields were filled in above */
 
+	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
+
 	/*
 	 * If we are adding to an operator shell, get its t_self
 	 */
-	pg_operator_desc = heap_openr(OperatorRelationName);
 
 	if (operatorObjectId)
 	{
@@ -798,7 +799,7 @@ OperatorDef(char *operatorName,
 		operatorObjectId = tup->t_data->t_oid;
 	}
 
-	heap_close(pg_operator_desc);
+	heap_close(pg_operator_desc, RowExclusiveLock);
 
 	/*
 	 * If a commutator and/or negator link is provided, update the other
@@ -853,7 +854,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		nulls[i] = ' ';
 	}
 
-	pg_operator_desc = heap_openr(OperatorRelationName);
+	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
 
 	/* check and update the commutator, if necessary */
 	opKey[0].sk_argument = ObjectIdGetDatum(commId);
@@ -908,7 +909,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		}
 		heap_endscan(pg_operator_scan);
 
-		heap_close(pg_operator_desc);
+		heap_close(pg_operator_desc, RowExclusiveLock);
 
 		return;
 	}
@@ -964,7 +965,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 	heap_endscan(pg_operator_scan);
 
-	heap_close(pg_operator_desc);
+	heap_close(pg_operator_desc, RowExclusiveLock);
 }
 
 

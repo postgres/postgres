@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.36 1999/07/17 20:16:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.37 1999/09/18 19:06:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "access/rtree.h"
 #include "catalog/index.h"
 #include "executor/executor.h"
+#include "miscadmin.h"
 #include "utils/geo_decls.h"
 
 
@@ -89,8 +90,6 @@ rtbuild(Relation heap,
 	TupleTableSlot *slot;
 
 #endif
-	Oid			hrelid,
-				irelid;
 	Node	   *pred,
 			   *oldPred;
 	RTSTATE		rtState;
@@ -248,27 +247,30 @@ rtbuild(Relation heap,
 
 	/*
 	 * Since we just counted the tuples in the heap, we update its stats
-	 * in pg_relation to guarantee that the planner takes advantage of the
-	 * index we just created.  UpdateStats() does a
-	 * CommandCounterIncrement(), which flushes changed entries from the
-	 * system relcache.  The act of constructing an index changes these
-	 * heap and index tuples in the system catalogs, so they need to be
-	 * flushed.  We close them to guarantee that they will be.
+	 * in pg_class to guarantee that the planner takes advantage of the
+	 * index we just created.  But, only update statistics during
+	 * normal index definitions, not for indices on system catalogs
+	 * created during bootstrap processing.  We must close the relations
+	 * before updating statistics to guarantee that the relcache entries
+	 * are flushed when we increment the command counter in UpdateStats().
+	 * But we do not release any locks on the relations; those will be
+	 * held until end of transaction.
 	 */
-
-	hrelid = RelationGetRelid(heap);
-	irelid = RelationGetRelid(index);
-	heap_close(heap);
-	index_close(index);
-
-	UpdateStats(hrelid, nh, true);
-	UpdateStats(irelid, ni, false);
-
-	if (oldPred != NULL)
+	if (IsNormalProcessingMode())
 	{
-		if (ni == nh)
-			pred = NULL;
-		UpdateIndexPredicate(irelid, oldPred, pred);
+		Oid		hrelid = RelationGetRelid(heap);
+		Oid		irelid = RelationGetRelid(index);
+
+		heap_close(heap, NoLock);
+		index_close(index);
+		UpdateStats(hrelid, nh, true);
+		UpdateStats(irelid, ni, false);
+		if (oldPred != NULL)
+		{
+			if (ni == nh)
+				pred = NULL;
+			UpdateIndexPredicate(irelid, oldPred, pred);
+		}
 	}
 
 	/* be tidy */

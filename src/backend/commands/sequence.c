@@ -153,10 +153,7 @@ DefineSequence(CreateSeqStmt *seq)
 
 	DefineRelation(stmt, RELKIND_SEQUENCE);
 
-	rel = heap_openr(seq->seqname);
-	Assert(RelationIsValid(rel));
-
-	LockRelation(rel, AccessExclusiveLock);
+	rel = heap_openr(seq->seqname, AccessExclusiveLock);
 
 	tupDesc = RelationGetDescr(rel);
 
@@ -179,11 +176,7 @@ DefineSequence(CreateSeqStmt *seq)
 	if (WriteBuffer(buf) == STATUS_ERROR)
 		elog(ERROR, "DefineSequence: WriteBuffer failed");
 
-	UnlockRelation(rel, AccessExclusiveLock);
-	heap_close(rel);
-
-	return;
-
+	heap_close(rel, AccessExclusiveLock);
 }
 
 
@@ -422,12 +415,7 @@ init_sequence(char *caller, char *name)
 		temp = elm;
 	}
 
-	temp->rel = heap_openr(name);
-
-	if (!RelationIsValid(temp->rel))
-		elog(ERROR, "%s.%s: sequence does not exist", name, caller);
-
-	LockRelation(temp->rel, AccessShareLock);
+	temp->rel = heap_openr(name, AccessShareLock);
 
 	if (temp->rel->rd_rel->relkind != RELKIND_SEQUENCE)
 		elog(ERROR, "%s.%s: %s is not sequence !", name, caller, name);
@@ -453,7 +441,6 @@ init_sequence(char *caller, char *name)
 	}
 
 	return elm;
-
 }
 
 
@@ -467,20 +454,15 @@ CloseSequences(void)
 	SeqTable	elm;
 	Relation	rel;
 
-	for (elm = seqtab; elm != (SeqTable) NULL;)
+	for (elm = seqtab; elm != (SeqTable) NULL; elm = elm->next)
 	{
 		if (elm->rel != (Relation) NULL)		/* opened in current xact */
 		{
 			rel = elm->rel;
 			elm->rel = (Relation) NULL;
-			UnlockRelation(rel, AccessShareLock);
-			heap_close(rel);
+			heap_close(rel, AccessShareLock);
 		}
-		elm = elm->next;
 	}
-
-	return;
-
 }
 
 

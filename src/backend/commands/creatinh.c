@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.45 1999/07/17 20:16:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.46 1999/09/18 19:06:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,14 +202,13 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 	 */
 	foreach(entry, schema)
 	{
-		List	   *rest;
 		ColumnDef  *coldef = lfirst(entry);
+		List	   *rest;
 
 		foreach(rest, lnext(entry))
 		{
-
 			/*
-			 * check for duplicated relation names
+			 * check for duplicated names within the new relation
 			 */
 			ColumnDef  *restdef = lfirst(rest);
 
@@ -246,16 +245,13 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 		TupleDesc	tupleDesc;
 		TupleConstr *constr;
 
-		relation = heap_openr(name);
-		if (relation == NULL)
-		{
-			elog(ERROR,
-				 "MergeAttr: Can't inherit from non-existent superclass '%s'", name);
-		}
-		if (relation->rd_rel->relkind == 'S')
-			elog(ERROR, "MergeAttr: Can't inherit from sequence superclass '%s'", name);
+		relation = heap_openr(name, AccessShareLock);
 		tupleDesc = RelationGetDescr(relation);
 		constr = tupleDesc->constr;
+
+		/* XXX shouldn't this test be stricter?  No indexes, for example? */
+		if (relation->rd_rel->relkind == 'S')
+			elog(ERROR, "MergeAttr: Can't inherit from sequence superclass '%s'", name);
 
 		for (attrno = relation->rd_rel->relnatts - 1; attrno >= 0; attrno--)
 		{
@@ -340,9 +336,11 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 		}
 
 		/*
-		 * iteration cleanup and result collection
+		 * Close the parent rel, but keep our AccessShareLock on it until
+		 * xact commit.  That will prevent someone else from deleting or
+		 * ALTERing the parent before the child is committed.
 		 */
-		heap_close(relation);
+		heap_close(relation, NoLock);
 
 		/*
 		 * wants the inherited schema to appear in the order they are
@@ -386,7 +384,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	 * Catalog INHERITS information.
 	 * ----------------
 	 */
-	relation = heap_openr(InheritsRelationName);
+	relation = heap_openr(InheritsRelationName, RowExclusiveLock);
 	desc = RelationGetDescr(relation);
 
 	seqNumber = 1;
@@ -422,7 +420,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		seqNumber += 1;
 	}
 
-	heap_close(relation);
+	heap_close(relation, RowExclusiveLock);
 
 	/* ----------------
 	 * Catalog IPL information.
@@ -510,7 +508,7 @@ again:
 	 *	3.
 	 * ----------------
 	 */
-	relation = heap_openr(InheritancePrecidenceListRelationName);
+	relation = heap_openr(InheritancePrecidenceListRelationName, RowExclusiveLock);
 	desc = RelationGetDescr(relation);
 
 	seqNumber = 1;
@@ -537,7 +535,7 @@ again:
 		seqNumber += 1;
 	}
 
-	heap_close(relation);
+	heap_close(relation, RowExclusiveLock);
 }
 
 /*

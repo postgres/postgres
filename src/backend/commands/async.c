@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.53 1999/07/18 18:03:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.54 1999/09/18 19:06:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,16 +51,9 @@
  *	  transaction, since by assumption it is only called from outside any
  *	  transaction.
  *
- * Note that the system's use of pg_listener is confined to very short
- * intervals at the end of a transaction that contains NOTIFY statements,
- * or during the transaction caused by an inbound SIGUSR2.	So the fact that
- * pg_listener is a global resource shouldn't cause too much performance
- * problem.  But application authors ought to be discouraged from doing
- * LISTEN or UNLISTEN near the start of a long transaction --- that would
- * result in holding the pg_listener write lock for a long time, possibly
- * blocking unrelated activity.  It could even lead to deadlock against another
- * transaction that touches the same user tables and then tries to NOTIFY.
- * Probably best to do LISTEN or UNLISTEN outside of transaction blocks.
+ * Although we grab AccessExclusiveLock on pg_listener for any operation,
+ * the lock is never held very long, so it shouldn't cause too much of
+ * a performance problem.
  *
  * An application that listens on the same relname it notifies will get
  * NOTIFY messages for its own NOTIFYs.  These can be ignored, if not useful,
@@ -155,26 +148,21 @@ Async_Notify(char *relname)
 
 	TPRINTF(TRACE_NOTIFY, "Async_Notify: %s", relname);
 
-	/*
-	 * We allocate list memory from the global malloc pool to ensure that
-	 * it will live until we want to use it.  This is probably not
-	 * necessary any longer, since we will use it before the end of the
-	 * transaction. DLList only knows how to use malloc() anyway, but we
-	 * could probably palloc() the strings...
-	 */
 	if (!pendingNotifies)
 		pendingNotifies = DLNewList();
-	notifyName = strdup(relname);
-	DLAddHead(pendingNotifies, DLNewElem(notifyName));
-
-	/*
-	 * NOTE: we could check to see if pendingNotifies already has an entry
-	 * for relname, and thus avoid making duplicate entries.  However,
-	 * most apps probably don't notify the same name multiple times per
-	 * transaction, so we'd likely just be wasting cycles to make such a
-	 * check. AsyncExistsPendingNotify() doesn't really care whether the
-	 * list contains duplicates...
-	 */
+	/* no point in making duplicate entries in the list ... */
+	if (!AsyncExistsPendingNotify(relname))
+	{
+		/*
+		 * We allocate list memory from the global malloc pool to ensure
+		 * that it will live until we want to use it.  This is probably not
+		 * necessary any longer, since we will use it before the end of the
+		 * transaction. DLList only knows how to use malloc() anyway, but we
+		 * could probably palloc() the strings...
+		 */
+		notifyName = strdup(relname);
+		DLAddHead(pendingNotifies, DLNewElem(notifyName));
+	}
 }
 
 /*
@@ -212,8 +200,7 @@ Async_Listen(char *relname, int pid)
 
 	TPRINTF(TRACE_NOTIFY, "Async_Listen: %s", relname);
 
-	lRel = heap_openr(ListenerRelationName);
-	LockRelation(lRel, AccessExclusiveLock);
+	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
 
 	/* Detect whether we are already listening on this relname */
@@ -236,9 +223,8 @@ Async_Listen(char *relname, int pid)
 
 	if (alreadyListener)
 	{
+		heap_close(lRel, AccessExclusiveLock);
 		elog(NOTICE, "Async_Listen: We are already listening on %s", relname);
-		UnlockRelation(lRel, AccessExclusiveLock);
-		heap_close(lRel);
 		return;
 	}
 
@@ -262,8 +248,7 @@ Async_Listen(char *relname, int pid)
 	heap_insert(lRel, newtup);
 	pfree(newtup);
 
-	UnlockRelation(lRel, AccessExclusiveLock);
-	heap_close(lRel);
+	heap_close(lRel, AccessExclusiveLock);
 
 	/*
 	 * now that we are listening, make sure we will unlisten before dying.
@@ -308,18 +293,14 @@ Async_Unlisten(char *relname, int pid)
 
 	TPRINTF(TRACE_NOTIFY, "Async_Unlisten %s", relname);
 
+	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 	/* Note we assume there can be only one matching tuple. */
 	lTuple = SearchSysCacheTuple(LISTENREL, PointerGetDatum(relname),
 								 Int32GetDatum(pid),
 								 0, 0);
 	if (lTuple != NULL)
-	{
-		lRel = heap_openr(ListenerRelationName);
-		LockRelation(lRel, AccessExclusiveLock);
 		heap_delete(lRel, &lTuple->t_self, NULL);
-		UnlockRelation(lRel, AccessExclusiveLock);
-		heap_close(lRel);
-	}
+	heap_close(lRel, AccessExclusiveLock);
 
 	/*
 	 * We do not complain about unlistening something not being listened;
@@ -354,8 +335,7 @@ Async_UnlistenAll()
 
 	TPRINTF(TRACE_NOTIFY, "Async_UnlistenAll");
 
-	lRel = heap_openr(ListenerRelationName);
-	LockRelation(lRel, AccessExclusiveLock);
+	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
 
 	/* Find and delete all entries with my listenerPID */
@@ -369,8 +349,7 @@ Async_UnlistenAll()
 		heap_delete(lRel, &lTuple->t_self, NULL);
 
 	heap_endscan(sRel);
-	UnlockRelation(lRel, AccessExclusiveLock);
-	heap_close(lRel);
+	heap_close(lRel, AccessExclusiveLock);
 }
 
 /*
@@ -462,8 +441,7 @@ AtCommit_Notify()
 
 	TPRINTF(TRACE_NOTIFY, "AtCommit_Notify");
 
-	lRel = heap_openr(ListenerRelationName);
-	LockRelation(lRel, AccessExclusiveLock);
+	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
 	sRel = heap_beginscan(lRel, 0, SnapshotNow, 0, (ScanKey) NULL);
 
@@ -542,10 +520,13 @@ AtCommit_Notify()
 	heap_endscan(sRel);
 
 	/*
-	 * We do not do RelationUnsetLockForWrite(lRel) here, because the
-	 * transaction is about to be committed anyway.
+	 * We do NOT release the lock on pg_listener here; we need to hold it
+	 * until end of transaction (which is about to happen, anyway) to
+	 * ensure that notified backends see our tuple updates when they look.
+	 * Else they might disregard the signal, which would make the
+	 * application programmer very unhappy.
 	 */
-	heap_close(lRel);
+	heap_close(lRel, NoLock);
 
 	ClearPendingNotifies();
 
@@ -756,8 +737,7 @@ ProcessIncomingNotify(void)
 
 	StartTransactionCommand();
 
-	lRel = heap_openr(ListenerRelationName);
-	LockRelation(lRel, AccessExclusiveLock);
+	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
 
 	/* Scan only entries with my listenerPID */
@@ -794,10 +774,13 @@ ProcessIncomingNotify(void)
 	heap_endscan(sRel);
 
 	/*
-	 * We do not do RelationUnsetLockForWrite(lRel) here, because the
-	 * transaction is about to be committed anyway.
+	 * We do NOT release the lock on pg_listener here; we need to hold it
+	 * until end of transaction (which is about to happen, anyway) to
+	 * ensure that other backends see our tuple updates when they look.
+	 * Otherwise, a transaction started after this one might mistakenly
+	 * think it doesn't need to send this backend a new NOTIFY.
 	 */
-	heap_close(lRel);
+	heap_close(lRel, NoLock);
 
 	CommitTransactionCommand();
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.35 1999/07/16 04:58:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.36 1999/09/18 19:06:04 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -129,26 +129,49 @@
  *		index_open - open an index relation by relationId
  *
  *		presently the relcache routines do all the work we need
- *		to open/close index relations.
+ *		to open/close index relations.  However, callers of index_open
+ *		expect it to succeed, so we need to check for a failure return.
+ *
+ *		Note: we acquire no lock on the index.  An AccessShareLock is
+ *		acquired by index_beginscan (and released by index_endscan).
  * ----------------
  */
 Relation
 index_open(Oid relationId)
 {
-	return RelationIdGetRelation(relationId);
+	Relation	r;
+
+	r = RelationIdGetRelation(relationId);
+
+	if (! RelationIsValid(r))
+		elog(ERROR, "Index %u does not exist", relationId);
+
+	if (r->rd_rel->relkind != RELKIND_INDEX)
+		elog(ERROR, "%s is not an index relation", r->rd_rel->relname.data);
+
+	return r;
 }
 
 /* ----------------
  *		index_openr - open a index relation by name
  *
- *		presently the relcache routines do all the work we need
- *		to open/close index relations.
+ *		As above, but lookup by name instead of OID.
  * ----------------
  */
 Relation
 index_openr(char *relationName)
 {
-	return RelationNameGetRelation(relationName);
+	Relation	r;
+
+	r = RelationNameGetRelation(relationName);
+
+	if (! RelationIsValid(r))
+		elog(ERROR, "Index '%s' does not exist", relationName);
+
+	if (r->rd_rel->relkind != RELKIND_INDEX)
+		elog(ERROR, "%s is not an index relation", r->rd_rel->relname.data);
+
+	return r;
 }
 
 /* ----------------
@@ -223,6 +246,16 @@ index_beginscan(Relation relation,
 	RELATION_CHECKS;
 	GET_REL_PROCEDURE(beginscan, ambeginscan);
 
+	RelationIncrementReferenceCount(relation);
+
+	/* ----------------
+	 *	Acquire AccessShareLock for the duration of the scan
+	 *
+	 *	Note: we could get an SI inval message here and consequently have
+	 *	to rebuild the relcache entry.  The refcount increment above
+	 *	ensures that we will rebuild it and not just flush it...
+	 * ----------------
+	 */
 	LockRelation(relation, AccessShareLock);
 
 	scandesc = (IndexScanDesc)
@@ -260,7 +293,11 @@ index_endscan(IndexScanDesc scan)
 
 	fmgr(procedure, scan);
 
+	/* Release lock and refcount acquired by index_beginscan */
+
 	UnlockRelation(scan->relation, AccessShareLock);
+
+	RelationDecrementReferenceCount(scan->relation);
 }
 
 /* ----------------

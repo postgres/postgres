@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.31 1999/08/08 20:12:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.32 1999/09/18 19:06:21 tgl Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -405,8 +405,11 @@ InitializeTransactionLog(void)
 	 *	 (these are created by amiint so they are guaranteed to exist)
 	 * ----------------
 	 */
-	logRelation = heap_openr(LogRelationName);
-	VariableRelation = heap_openr(VariableRelationName);
+	logRelation = heap_openr(LogRelationName, NoLock);
+	Assert(logRelation != NULL);
+	VariableRelation = heap_openr(VariableRelationName, NoLock);
+	Assert(VariableRelation != NULL);
+
 	/* ----------------
 	 *	 XXX TransactionLogUpdate requires that LogRelation
 	 *	 is valid so we temporarily set it so we can initialize
