@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.37 2001/10/25 05:50:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.38 2002/03/06 06:10:45 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -156,7 +156,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 		 */
 		if (plpgsql_error_funcname != NULL)
 		{
-			elog(NOTICE, "plpgsql: ERROR during compile of %s near line %d",
+			elog(WARNING, "plpgsql: ERROR during compile of %s near line %d",
 				 plpgsql_error_funcname, plpgsql_error_lineno);
 
 			plpgsql_error_funcname = NULL;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.48 2001/11/05 17:46:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.49 2002/03/06 06:09:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -519,7 +519,7 @@ clause_selectivity(Query *root,
 	}
 
 #ifdef SELECTIVITY_DEBUG
-	elog(NOTICE, "clause_selectivity: s1 %f", s1);
+	elog(DEBUG3, "clause_selectivity: s1 %f", s1);
 #endif   /* SELECTIVITY_DEBUG */
 
 	return s1;

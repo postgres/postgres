@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.105 2002/03/02 21:39:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.106 2002/03/06 06:10:06 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -248,7 +248,7 @@ LockMethodTableInit(char *tabName,
 
 	if (numModes >= MAX_LOCKMODES)
 	{
-		elog(NOTICE, "LockMethodTableInit: too many lock types %d greater than %d",
+		elog(WARNING, "LockMethodTableInit: too many lock types %d greater than %d",
 			 numModes, MAX_LOCKMODES);
 		return INVALID_LOCKMETHOD;
 	}
@@ -472,7 +472,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	lockMethodTable = LockMethodTable[lockmethod];
 	if (!lockMethodTable)
 	{
-		elog(NOTICE, "LockAcquire: bad lock table %d", lockmethod);
+		elog(WARNING, "LockAcquire: bad lock table %d", lockmethod);
 		return FALSE;
 	}
 
@@ -662,7 +662,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 												(void *) holder,
 												HASH_REMOVE, NULL);
 				if (!holder)
-					elog(NOTICE, "LockAcquire: remove holder, table corrupted");
+					elog(WARNING, "LockAcquire: remove holder, table corrupted");
 			}
 			else
 				HOLDER_PRINT("LockAcquire: NHOLDING", holder);
@@ -1010,7 +1010,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	lockMethodTable = LockMethodTable[lockmethod];
 	if (!lockMethodTable)
 	{
-		elog(NOTICE, "lockMethodTable is null in LockRelease");
+		elog(WARNING, "lockMethodTable is null in LockRelease");
 		return FALSE;
 	}
 
@@ -1032,7 +1032,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	if (!lock)
 	{
 		LWLockRelease(masterLock);
-		elog(NOTICE, "LockRelease: no such lock");
+		elog(WARNING, "LockRelease: no such lock");
 		return FALSE;
 	}
 	LOCK_PRINT("LockRelease: found", lock, lockmode);
@@ -1055,10 +1055,10 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		LWLockRelease(masterLock);
 #ifdef USER_LOCKS
 		if (lockmethod == USER_LOCKMETHOD)
-			elog(NOTICE, "LockRelease: no lock with this tag");
+			elog(WARNING, "LockRelease: no lock with this tag");
 		else
 #endif
-			elog(NOTICE, "LockRelease: holder table corrupted");
+			elog(WARNING, "LockRelease: holder table corrupted");
 		return FALSE;
 	}
 	HOLDER_PRINT("LockRelease: found", holder);
@@ -1072,7 +1072,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		HOLDER_PRINT("LockRelease: WRONGTYPE", holder);
 		Assert(holder->holding[lockmode] >= 0);
 		LWLockRelease(masterLock);
-		elog(NOTICE, "LockRelease: you don't own a lock of type %s",
+		elog(WARNING, "LockRelease: you don't own a lock of type %s",
 			 lock_mode_names[lockmode]);
 		return FALSE;
 	}
@@ -1126,7 +1126,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		if (!lock)
 		{
 			LWLockRelease(masterLock);
-			elog(NOTICE, "LockRelease: remove lock, table corrupted");
+			elog(WARNING, "LockRelease: remove lock, table corrupted");
 			return FALSE;
 		}
 		wakeupNeeded = false;	/* should be false, but make sure */
@@ -1155,7 +1155,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		if (!holder)
 		{
 			LWLockRelease(masterLock);
-			elog(NOTICE, "LockRelease: remove holder, table corrupted");
+			elog(WARNING, "LockRelease: remove holder, table corrupted");
 			return FALSE;
 		}
 	}
@@ -1204,7 +1204,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 	lockMethodTable = LockMethodTable[lockmethod];
 	if (!lockMethodTable)
 	{
-		elog(NOTICE, "LockReleaseAll: bad lockmethod %d", lockmethod);
+		elog(WARNING, "LockReleaseAll: bad lockmethod %d", lockmethod);
 		return FALSE;
 	}
 
@@ -1308,7 +1308,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 		if (!holder)
 		{
 			LWLockRelease(masterLock);
-			elog(NOTICE, "LockReleaseAll: holder table corrupted");
+			elog(WARNING, "LockReleaseAll: holder table corrupted");
 			return FALSE;
 		}
 
@@ -1326,7 +1326,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 			if (!lock)
 			{
 				LWLockRelease(masterLock);
-				elog(NOTICE, "LockReleaseAll: cannot remove lock from HTAB");
+				elog(WARNING, "LockReleaseAll: cannot remove lock from HTAB");
 				return FALSE;
 			}
 		}

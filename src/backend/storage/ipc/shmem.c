@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.63 2001/12/28 18:16:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.64 2002/03/06 06:10:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,7 +156,7 @@ ShmemAlloc(Size size)
 	SpinLockRelease(ShmemLock);
 
 	if (!newSpace)
-		elog(NOTICE, "ShmemAlloc: out of memory");
+		elog(WARNING, "ShmemAlloc: out of memory");
 
 	return newSpace;
 }
@@ -346,7 +346,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 		{
 			LWLockRelease(ShmemIndexLock);
 
-			elog(NOTICE, "ShmemInitStruct: ShmemIndex entry size is wrong");
+			elog(WARNING, "ShmemInitStruct: ShmemIndex entry size is wrong");
 			/* let caller print its message too */
 			return NULL;
 		}
@@ -363,7 +363,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			hash_search(ShmemIndex, (void *) &item, HASH_REMOVE, NULL);
 			LWLockRelease(ShmemIndexLock);
 
-			elog(NOTICE, "ShmemInitStruct: cannot allocate '%s'",
+			elog(WARNING, "ShmemInitStruct: cannot allocate '%s'",
 				 name);
 			*foundPtr = FALSE;
 			return NULL;

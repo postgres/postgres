@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.62 2002/01/03 23:19:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.63 2002/03/06 06:09:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -556,7 +556,7 @@ ReindexIndex(const char *name, bool force /* currently unused */ )
 	if (IsIgnoringSystemIndexes())
 		overwrite = true;
 	if (!reindex_index(tuple->t_data->t_oid, force, overwrite))
-		elog(NOTICE, "index \"%s\" wasn't reindexed", name);
+		elog(WARNING, "index \"%s\" wasn't reindexed", name);
 
 	ReleaseSysCache(tuple);
 }
@@ -593,7 +593,7 @@ ReindexTable(const char *name, bool force)
 			 name, ((Form_pg_class) GETSTRUCT(tuple))->relkind);
 
 	if (!reindex_relation(tuple->t_data->t_oid, force))
-		elog(NOTICE, "table \"%s\" wasn't reindexed", name);
+		elog(WARNING, "table \"%s\" wasn't reindexed", name);
 
 	ReleaseSysCache(tuple);
 }
@@ -688,7 +688,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	{
 		StartTransactionCommand();
 		if (reindex_relation(relids[i], force))
-			elog(NOTICE, "relation %u was reindexed", relids[i]);
+			elog(WARNING, "relation %u was reindexed", relids[i]);
 		CommitTransactionCommand();
 	}
 	StartTransactionCommand();

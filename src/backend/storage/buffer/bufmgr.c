@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.121 2002/03/02 21:39:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.122 2002/03/06 06:10:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -425,7 +425,7 @@ BufferAlloc(Relation reln,
 
 			if (smok == FALSE)
 			{
-				elog(NOTICE, "BufferAlloc: cannot write block %u for %u/%u",
+				elog(WARNING, "BufferAlloc: cannot write block %u for %u/%u",
 					 buf->tag.blockNum,
 					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode);
 				inProgress = FALSE;
@@ -974,7 +974,7 @@ BufferPoolCheckLeak(void)
 		{
 			BufferDesc *buf = &(BufferDescriptors[i]);
 
-			elog(NOTICE,
+			elog(WARNING,
 				 "Buffer Leak: [%03d] (freeNext=%d, freePrev=%d, \
 rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
 				 i, buf->freeNext, buf->freePrev,
@@ -1403,7 +1403,7 @@ PrintPinnedBufs()
 	for (i = 0; i < NBuffers; ++i, ++buf)
 	{
 		if (PrivateRefCount[i] > 0)
-			elog(NOTICE, "[%02d] (freeNext=%d, freePrev=%d, rel=%u/%u, \
+			elog(WARNING, "[%02d] (freeNext=%d, freePrev=%d, rel=%u/%u, \
 blockNum=%u, flags=0x%x, refcount=%d %ld)",
 				 i, buf->freeNext, buf->freePrev,
 				 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
@@ -1504,7 +1504,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 									   (char *) MAKE_PTR(bufHdr->data));
 					if (status == SM_FAIL)
 					{
-						elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is dirty, could not flush it",
+						elog(WARNING, "FlushRelationBuffers(%s (local), %u): block %u is dirty, could not flush it",
 							 RelationGetRelationName(rel), firstDelBlock,
 							 bufHdr->tag.blockNum);
 						return (-1);
@@ -1514,7 +1514,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 				}
 				if (LocalRefCount[i] > 0)
 				{
-					elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is referenced (%ld)",
+					elog(WARNING, "FlushRelationBuffers(%s (local), %u): block %u is referenced (%ld)",
 						 RelationGetRelationName(rel), firstDelBlock,
 						 bufHdr->tag.blockNum, LocalRefCount[i]);
 					return (-2);
@@ -1592,7 +1592,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 			if (!(bufHdr->flags & BM_FREE))
 			{
 				LWLockRelease(BufMgrLock);
-				elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is referenced (private %ld, global %d)",
+				elog(WARNING, "FlushRelationBuffers(%s, %u): block %u is referenced (private %ld, global %d)",
 					 RelationGetRelationName(rel), firstDelBlock,
 					 bufHdr->tag.blockNum,
 					 PrivateRefCount[i], bufHdr->refcount);
@@ -2198,7 +2198,7 @@ AbortBufferIO(void)
 			/* Issue notice if this is not the first failure... */
 			if (buf->flags & BM_IO_ERROR)
 			{
-				elog(NOTICE, "write error may be permanent: cannot write block %u for %u/%u",
+				elog(WARNING, "write error may be permanent: cannot write block %u for %u/%u",
 					 buf->tag.blockNum,
 					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode);
 			}

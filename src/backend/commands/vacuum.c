@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.216 2002/03/03 17:47:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.217 2002/03/06 06:09:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,7 +195,7 @@ vacuum(VacuumStmt *vacstmt)
 		elevel = INFO;
 	else
 		elevel = DEBUG1;
-		
+
 	/*
 	 * Create special memory context for cross-transaction storage.
 	 *
@@ -386,7 +386,7 @@ getrels(Name VacRelP, const char *stmttype)
 
 		if (rkind != RELKIND_RELATION)
 		{
-			elog(NOTICE, "%s: can not process indexes, views or special system tables",
+			elog(WARNING, "%s: can not process indexes, views or special system tables",
 				 stmttype);
 			continue;
 		}
@@ -410,7 +410,7 @@ getrels(Name VacRelP, const char *stmttype)
 	heap_close(rel, AccessShareLock);
 
 	if (vrl == NULL)
-		elog(NOTICE, "%s: table not found", stmttype);
+		elog(WARNING, "%s: table not found", stmttype);
 
 	return vrl;
 }
@@ -454,7 +454,7 @@ vacuum_set_xid_limits(VacuumStmt *vacstmt, bool sharedRel,
 	 */
 	if (TransactionIdFollows(limit, *oldestXmin))
 	{
-		elog(NOTICE, "oldest Xmin is far in the past --- close open transactions soon to avoid wraparound problems");
+		elog(WARNING, "oldest Xmin is far in the past --- close open transactions soon to avoid wraparound problems");
 		limit = *oldestXmin;
 	}
 
@@ -645,7 +645,7 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
 	/* Give warning about impending wraparound problems */
 	age = (int32) (GetCurrentTransactionId() - frozenXID);
 	if (age > (int32) ((MaxTransactionId >> 3) * 3))
-		elog(NOTICE, "Some databases have not been vacuumed in %d transactions."
+		elog(WARNING, "Some databases have not been vacuumed in %d transactions."
 			 "\n\tBetter vacuum them within %d transactions,"
 			 "\n\tor you may have a wraparound failure.",
 			 age, (int32) (MaxTransactionId >> 1) - age);
@@ -684,7 +684,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 
 	/*
 	 * Check for user-requested abort.	Note we want this to be inside a
-	 * transaction, so xact.c doesn't issue useless NOTICE.
+	 * transaction, so xact.c doesn't issue useless WARNING.
 	 */
 	CHECK_FOR_INTERRUPTS();
 
@@ -716,7 +716,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 	 * owner, or the database owner (but in the latter case, only if it's
 	 * not a shared relation).	pg_ownercheck includes the superuser case.
 	 *
-	 * Note we choose to treat permissions failure as a NOTICE and keep
+	 * Note we choose to treat permissions failure as a WARNING and keep
 	 * trying to vacuum the rest of the DB --- is this appropriate?
 	 */
 	onerel = heap_open(relid, lmode);
@@ -725,7 +725,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 						RELNAME) ||
 		  (is_dbadmin(MyDatabaseId) && !onerel->rd_rel->relisshared)))
 	{
-		elog(NOTICE, "Skipping \"%s\" --- only table or database owner can VACUUM it",
+		elog(WARNING, "Skipping \"%s\" --- only table or database owner can VACUUM it",
 			 RelationGetRelationName(onerel));
 		heap_close(onerel, lmode);
 		CommitTransactionCommand();
@@ -996,7 +996,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 		if (PageIsNew(page))
 		{
-			elog(NOTICE, "Rel %s: Uninitialized page %u - fixing",
+			elog(WARNING, "Rel %s: Uninitialized page %u - fixing",
 				 relname, blkno);
 			PageInit(page, BufferGetPageSize(buf), 0);
 			vacpage->free = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
@@ -1110,7 +1110,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					 * This should not happen, since we hold exclusive
 					 * lock on the relation; shouldn't we raise an error?
 					 */
-					elog(NOTICE, "Rel %s: TID %u/%u: InsertTransactionInProgress %u - can't shrink relation",
+					elog(WARNING, "Rel %s: TID %u/%u: InsertTransactionInProgress %u - can't shrink relation",
 						 relname, blkno, offnum, tuple.t_data->t_xmin);
 					do_shrinking = false;
 					break;
@@ -1120,7 +1120,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					 * This should not happen, since we hold exclusive
 					 * lock on the relation; shouldn't we raise an error?
 					 */
-					elog(NOTICE, "Rel %s: TID %u/%u: DeleteTransactionInProgress %u - can't shrink relation",
+					elog(WARNING, "Rel %s: TID %u/%u: DeleteTransactionInProgress %u - can't shrink relation",
 						 relname, blkno, offnum, tuple.t_data->t_xmax);
 					do_shrinking = false;
 					break;
@@ -1138,7 +1138,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			 */
 			if (!OidIsValid(tuple.t_data->t_oid) &&
 				onerel->rd_rel->relhasoids)
-				elog(NOTICE, "Rel %s: TID %u/%u: OID IS INVALID. TUPGONE %d.",
+				elog(WARNING, "Rel %s: TID %u/%u: OID IS INVALID. TUPGONE %d.",
 					 relname, blkno, offnum, (int) tupgone);
 
 			if (tupgone)
@@ -1601,7 +1601,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						ReleaseBuffer(Cbuf);
 						pfree(vtmove);
 						vtmove = NULL;
-						elog(NOTICE, "Child itemid in update-chain marked as unused - can't continue repair_frag");
+						elog(WARNING, "Child itemid in update-chain marked as unused - can't continue repair_frag");
 						break;
 					}
 					tp.t_datamcxt = NULL;
@@ -1720,7 +1720,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 								(vtmove[i].vacpage->offsets_used)--;
 							}
 							num_vtmove = 0;
-							elog(NOTICE, "Too old parent tuple found - can't continue repair_frag");
+							elog(WARNING, "Too old parent tuple found - can't continue repair_frag");
 							break;
 						}
 #ifdef NOT_USED					/* I'm not sure that this will wotk
@@ -2155,7 +2155,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	 * status bits.  This is not really necessary, but will save time for
 	 * future transactions examining these tuples.
 	 *
-	 * XXX Notice that this code fails to clear HEAP_MOVED_OFF tuples from
+	 * XXX WARNING that this code fails to clear HEAP_MOVED_OFF tuples from
 	 * pages that were move source pages but not move dest pages.  One
 	 * also wonders whether it wouldn't be better to skip this step and
 	 * let the tuple status updates happen someplace that's not holding an
@@ -2467,7 +2467,7 @@ scan_index(Relation indrel, double num_tuples)
 	{
 		if (stats->num_index_tuples > num_tuples ||
 			!vac_is_partial_index(indrel))
-			elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
+			elog(WARNING, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
 \n\tRecreate the index.",
 				 RelationGetRelationName(indrel),
 				 stats->num_index_tuples, num_tuples);
@@ -2521,7 +2521,7 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 	{
 		if (stats->num_index_tuples > num_tuples + keep_tuples ||
 			!vac_is_partial_index(indrel))
-			elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
+			elog(WARNING, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
 \n\tRecreate the index.",
 				 RelationGetRelationName(indrel),
 				 stats->num_index_tuples, num_tuples);

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.85 2002/02/15 17:46:57 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.86 2002/03/06 06:10:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -394,7 +394,7 @@ cppline			{space}*#(.*\\{space})*.*
                                                         literalbuf, NAMEDATALEN-1, literalbuf);
                                                 literalbuf[NAMEDATALEN-1] = '\0';
 #endif
- 						mmerror(PARSE_ERROR, ET_NOTICE, errortext);
+ 						mmerror(PARSE_ERROR, ET_WARNING, errortext);
                                         }
 
 					yylval.str = mm_strdup(literalbuf);

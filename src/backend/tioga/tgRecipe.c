@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.20 2001/10/25 05:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.21 2002/03/06 06:10:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ TextArray2ArrTgString(char *str)
 
 	if (*str != ARRAY_LEFT_DELIM)
 	{
-		elog(NOTICE, "TextArray2ArrTgString: badly formed string, must have %c as \
+		elog(WARNING, "TextArray2ArrTgString: badly formed string, must have %c as \
 first character\n", ARRAY_LEFT_DELIM);
 		return result;
 	}
@@ -88,18 +88,18 @@ first character\n", ARRAY_LEFT_DELIM);
 	{
 		if (*str == '\0')
 		{
-			elog(NOTICE, "TextArray2ArrTgString: text string ended prematurely\n");
+			elog(WARNING, "TextArray2ArrTgString: text string ended prematurely\n");
 			return result;
 		}
 
 		if ((beginQuote = strchr(str, ARRAY_ELEM_LEFT)) == NULL)
 		{
-			elog(NOTICE, "textArray2ArrTgString:  missing a begin quote\n");
+			elog(WARNING, "textArray2ArrTgString:  missing a begin quote\n");
 			return result;
 		}
 		if ((endQuote = strchr(beginQuote + 1, '"')) == NULL)
 		{
-			elog(NOTICE, "textArray2ArrTgString:  missing an end quote\n");
+			elog(WARNING, "textArray2ArrTgString:  missing an end quote\n");
 			return result;
 		}
 		nextlen = endQuote - beginQuote;		/* don't subtract one here
@@ -135,7 +135,7 @@ findElemInRecipe(TgRecipe * r, char *elemName)
 		if (strcmp(e->elemName, elemName) == 0)
 			return e;
 	}
-	elog(NOTICE, "Element named %s not found in recipe named %s", elemName, r->elmValue.elemName);
+	elog(WARNING, "Element named %s not found in recipe named %s", elemName, r->elmValue.elemName);
 	return NULL;
 }
 
@@ -159,7 +159,7 @@ findNodeInRecipe(TgRecipe * r, char *nodeName)
 		if (strcmp(n->nodeName, nodeName) == 0)
 			return n;
 	}
-	elog(NOTICE, "Node named %s not found in recipe named %s", nodeName, r->elmValue.elemName);
+	elog(WARNING, "Node named %s not found in recipe named %s", nodeName, r->elmValue.elemName);
 	return NULL;
 }
 
@@ -245,7 +245,7 @@ fillTgNode(TgRecipe * r, TgNode * node, PortalBuffer * pbuf, int tupno)
 	else if (strcmp(nodeType, "Recipe") == 0)
 		node->nodeType = TG_RECIPE_NODE;
 	else
-		elog(NOTICE, "fillTgNode: unknown nodeType field value : %s\n", nodeType);
+		elog(WARNING, "fillTgNode: unknown nodeType field value : %s\n", nodeType);
 
 }
 
@@ -323,7 +323,7 @@ fillTgElement(TgElement * elem, PortalBuffer * pbuf, int tupno)
 	else if (strcmp(srcLang, "Compiled") == 0)
 		elem->srcLang = TG_COMPILED;
 	else
-		elog(NOTICE, "fillTgElement(): unknown srcLang field value : %s\n", srcLang);
+		elog(WARNING, "fillTgElement(): unknown srcLang field value : %s\n", srcLang);
 
 	elemType = PQgetvalue(pbuf, tupno, elemType_attnum);
 	if (strcmp(elemType, "Ingred") == 0)
@@ -333,7 +333,7 @@ fillTgElement(TgElement * elem, PortalBuffer * pbuf, int tupno)
 	else if (strcmp(elemType, "Recipe") == 0)
 		elem->elemType = TG_RECIPE;
 	else
-		elog(NOTICE, "fillTgElement(): unknown elemType field value : %s\n", elemType);
+		elog(WARNING, "fillTgElement(): unknown elemType field value : %s\n", elemType);
 
 
 }
@@ -373,8 +373,8 @@ lookupEdges(TgRecipe * r, char *name)
 	pqres = PQexec(qbuf);
 	if (*pqres == 'R' || *pqres == 'E')
 	{
-		elog(NOTICE, "lookupEdges(): Error while executing query : %s\n", qbuf);
-		elog(NOTICE, "result = %s, error is %s\n", pqres, PQerrormsg);
+		elog(WARNING, "lookupEdges(): Error while executing query : %s\n", qbuf);
+		elog(WARNING, "result = %s, error is %s\n", pqres, PQerrormsg);
 		return;
 	}
 	pbufname = ++pqres;
@@ -399,12 +399,12 @@ lookupEdges(TgRecipe * r, char *name)
 
 		if (!fromPortStr || fromPortStr[0] == '\0')
 		{
-			elog(NOTICE, "lookupEdges():  SANITY CHECK failed.  Edge with invalid fromPort value!");
+			elog(WARNING, "lookupEdges():  SANITY CHECK failed.  Edge with invalid fromPort value!");
 			return;
 		}
 		if (!toPortStr || toPortStr[0] == '\0')
 		{
-			elog(NOTICE, "lookupEdges():  SANITY CHECK failed.  Edge with invalid toPort value!!");
+			elog(WARNING, "lookupEdges():  SANITY CHECK failed.  Edge with invalid toPort value!!");
 			return;
 		}
 		fromPort = atoi(fromPortStr);
@@ -413,13 +413,13 @@ lookupEdges(TgRecipe * r, char *name)
 		fromNodePtr = findNodeInRecipe(r, fromNode);
 		if (!fromNodePtr)
 		{
-			elog(NOTICE, "lookupEdges():  SANITY CHECK failed.  Edge with bad fromNode value!");
+			elog(WARNING, "lookupEdges():  SANITY CHECK failed.  Edge with bad fromNode value!");
 			return;
 		}
 		toNodePtr = findNodeInRecipe(r, toNode);
 		if (!toNodePtr)
 		{
-			elog(NOTICE, "lookupEdges():  SANITY CHECK failed.  Edge with bad toNode value!");
+			elog(WARNING, "lookupEdges():  SANITY CHECK failed.  Edge with bad toNode value!");
 			return;
 		}
 
@@ -466,7 +466,7 @@ connectTee(TgRecipe * r, TgNodePtr fromNode, TgNodePtr toNode,
 
 	if (origToNode == NULL)
 	{
-		elog(NOTICE, "Internal Error: connectTee() called with a null origToNode");
+		elog(WARNING, "Internal Error: connectTee() called with a null origToNode");
 		return;
 	}
 
@@ -536,8 +536,8 @@ fillAllNodes(TgRecipe * r, char *name)
 	pqres = PQexec(qbuf);
 	if (*pqres == 'R' || *pqres == 'E')
 	{
-		elog(NOTICE, "fillAllNodes(): Error while executing query : %s\n", qbuf);
-		elog(NOTICE, "result = %s, error is %s\n", pqres, PQerrormsg);
+		elog(WARNING, "fillAllNodes(): Error while executing query : %s\n", qbuf);
+		elog(WARNING, "result = %s, error is %s\n", pqres, PQerrormsg);
 		return;
 	}
 	pbufname = ++pqres;
@@ -555,8 +555,8 @@ fillAllNodes(TgRecipe * r, char *name)
 	pqres = PQexec(qbuf);
 	if (*pqres == 'R' || *pqres == 'E')
 	{
-		elog(NOTICE, "fillAllNodes(): Error while executing query : %s\n", qbuf);
-		elog(NOTICE, "result = %s, error is %s\n", pqres, PQerrormsg);
+		elog(WARNING, "fillAllNodes(): Error while executing query : %s\n", qbuf);
+		elog(WARNING, "result = %s, error is %s\n", pqres, PQerrormsg);
 		return;
 	}
 	pbufname = ++pqres;
@@ -592,8 +592,8 @@ fillAllElements(TgRecipe * r, char *name)
 	pqres = PQexec(qbuf);
 	if (*pqres == 'R' || *pqres == 'E')
 	{
-		elog(NOTICE, "fillAllElements(): Error while executing query : %s\n", qbuf);
-		elog(NOTICE, "result = %s, error is %s\n", pqres, PQerrormsg);
+		elog(WARNING, "fillAllElements(): Error while executing query : %s\n", qbuf);
+		elog(WARNING, "result = %s, error is %s\n", pqres, PQerrormsg);
 		return;
 	}
 	pbufname = ++pqres;
@@ -703,8 +703,8 @@ retrieveRecipe(char *name)
 	pqres = PQexec(qbuf);
 	if (*pqres == 'R' || *pqres == 'E')
 	{
-		elog(NOTICE, "retrieveRecipe: Error while executing query : %s\n", qbuf);
-		elog(NOTICE, "result = %s, error is %s\n", pqres, PQerrormsg);
+		elog(WARNING, "retrieveRecipe: Error while executing query : %s\n", qbuf);
+		elog(WARNING, "result = %s, error is %s\n", pqres, PQerrormsg);
 		return NULL;
 	}
 	pbufname = ++pqres;
@@ -712,12 +712,12 @@ retrieveRecipe(char *name)
 	ntups = PQntuplesGroup(pbuf, 0);
 	if (ntups == 0)
 	{
-		elog(NOTICE, "retrieveRecipe():  No recipe named %s exists\n", name);
+		elog(WARNING, "retrieveRecipe():  No recipe named %s exists\n", name);
 		return NULL;
 	}
 	if (ntups != 1)
 	{
-		elog(NOTICE, "retrieveRecipe():  Multiple (%d) recipes named %s exists\n", ntups, name);
+		elog(WARNING, "retrieveRecipe():  Multiple (%d) recipes named %s exists\n", ntups, name);
 		return NULL;
 	}
 

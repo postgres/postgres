@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.57 2001/10/28 06:25:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.58 2002/03/06 06:09:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -483,7 +483,7 @@ make_const(Value *value)
 			break;
 
 		default:
-			elog(NOTICE, "make_const: unknown type %d", nodeTag(value));
+			elog(WARNING, "make_const: unknown type %d", nodeTag(value));
 			/* FALLTHROUGH */
 
 		case T_Null:

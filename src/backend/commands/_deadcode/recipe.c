@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.15 2001/11/05 17:46:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.16 2002/03/06 06:09:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ extern CommandDest whereToSendOutput;
 void
 beginRecipe(RecipeStmt *stmt)
 {
-	elog(NOTICE, "You must compile with TIOGA defined in order to use recipes\n");
+	elog(WARNING, "You must compile with TIOGA defined in order to use recipes\n");
 }
 
 #else
@@ -175,7 +175,7 @@ beginRecipe(RecipeStmt *stmt)
 		e = r->eyes->val[i];
 		if (e->inNodes->num > 1)
 		{
-			elog(NOTICE,
+			elog(WARNING,
 				 "beginRecipe: Currently eyes cannot have more than one input");
 		}
 		if (e->inNodes->num == 0)
@@ -185,7 +185,7 @@ beginRecipe(RecipeStmt *stmt)
 		}
 
 #ifdef DEBUG_RECIPE
-		elog(NOTICE, "beginRecipe: eyes[%d] = %s\n", i, e->nodeName);
+		elog(WARNING, "beginRecipe: eyes[%d] = %s\n", i, e->nodeName);
 #endif   /* DEBUG_RECIPE */
 
 		qList = tg_parseSubQuery(r, e->inNodes->val[0], teeInfo);
@@ -237,7 +237,7 @@ beginRecipe(RecipeStmt *stmt)
 					tplan = planner(teeInfo->val[t].tpi_parsetree);
 
 					/* now add a tee node to the root of the plan */
-					elog(NOTICE, "adding tee plan node to the root of the %s\n",
+					elog(WARNING, "adding tee plan node to the root of the %s\n",
 						 teeInfo->val[t].tpi_relName);
 					newplan = (Tee *) makeNode(Tee);
 					newplan->plan.targetlist = tplan->targetlist;
@@ -285,7 +285,7 @@ beginRecipe(RecipeStmt *stmt)
 					  plan,
 					  attinfo,
 					  whereToSendOutput);
-		elog(NOTICE, "beginRecipe: cursor named %s is now available", portalName);
+		elog(WARNING, "beginRecipe: cursor named %s is now available", portalName);
 	}
 
 }
@@ -499,7 +499,7 @@ tg_replaceNumberedParam(Node *expression,
 					}
 				}
 				else
-					elog(NOTICE, "tg_replaceNumberedParam: unexpected paramkind value of %d", p->paramkind);
+					elog(WARNING, "tg_replaceNumberedParam: unexpected paramkind value of %d", p->paramkind);
 			}
 			break;
 		case T_Expr:
@@ -624,7 +624,7 @@ tg_rewriteParamsInExpr(Node *expression, QueryTreeList * inputQlist)
 					}
 				}
 				else
-					elog(NOTICE, "tg_rewriteParamsInExpr: unexpected paramkind value of %d", p->paramkind);
+					elog(WARNING, "tg_rewriteParamsInExpr: unexpected paramkind value of %d", p->paramkind);
 			}
 			break;
 		case T_Expr:
@@ -709,7 +709,7 @@ getParamTypes(TgElement * elem, Oid *typev)
 			if (!OidIsValid(toid))
 				elog(ERROR, "getParamTypes: arg type '%s' is not defined", t);
 			if (!defined)
-				elog(NOTICE, "getParamTypes: arg type '%s' is only a shell", t);
+				elog(WARNING, "getParamTypes: arg type '%s' is only a shell", t);
 		}
 		typev[parameterCount++] = toid;
 	}
@@ -834,7 +834,7 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 					 */
 
 #ifdef DEBUG_RECIPE
-					elog(NOTICE, "calling parser with %s", elem->src);
+					elog(WARNING, "calling parser with %s", elem->src);
 #endif   /* DEBUG_RECIPE */
 
 					parameterCount = getParamTypes(elem, typev);
@@ -843,7 +843,7 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 
 					if (qList->len > 1)
 					{
-						elog(NOTICE,
+						elog(WARNING,
 							 "tg_parseSubQuery: parser produced > 1 query tree");
 					}
 				}
@@ -877,25 +877,25 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 						snprintf(newquery, 1000, "select %s()", funcName);
 
 #ifdef DEBUG_RECIPE
-					elog(NOTICE, "calling parser with %s", newquery);
+					elog(WARNING, "calling parser with %s", newquery);
 #endif   /* DEBUG_RECIPE */
 
 					qList = parser(newquery, typev, parameterCount);
 					if (qList->len > 1)
 					{
-						elog(NOTICE,
+						elog(WARNING,
 							 "tg_parseSubQuery: parser produced > 1 query tree");
 					}
 				}
 				break;
 			case TG_RECIPE_GRAPH:
-				elog(NOTICE, "tg_parseSubQuery: can't parse recipe graph ingredients yet!");
+				elog(WARNING, "tg_parseSubQuery: can't parse recipe graph ingredients yet!");
 				break;
 			case TG_COMPILED:
-				elog(NOTICE, "tg_parseSubQuery: can't parse compiled ingredients yet!");
+				elog(WARNING, "tg_parseSubQuery: can't parse compiled ingredients yet!");
 				break;
 			default:
-				elog(NOTICE, "tg_parseSubQuery: unknown srcLang: %d", elem->srcLang);
+				elog(WARNING, "tg_parseSubQuery: unknown srcLang: %d", elem->srcLang);
 		}
 
 		/* parse each of the subrecipes that are input to this node */
@@ -937,7 +937,7 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 		 * if we hit an eye, we need to stop and make what we have into a
 		 * subrecipe query block
 		 */
-		elog(NOTICE, "tg_parseSubQuery: can't handle eye nodes yet");
+		elog(WARNING, "tg_parseSubQuery: can't handle eye nodes yet");
 	}
 	else if (n->nodeType == TG_TEE_NODE)
 	{
@@ -1031,7 +1031,7 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 										"result",
 										InvalidOid,
 										-1, 0, false))
-					elog(NOTICE, "tg_parseSubQuery: unexpected result from TupleDescInitEntry");
+					elog(WARNING, "tg_parseSubQuery: unexpected result from TupleDescInitEntry");
 				else
 				{
 					relid = heap_create_with_catalog(
@@ -1042,9 +1042,9 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 		}
 	}
 	else if (n->nodeType == TG_RECIPE_NODE)
-		elog(NOTICE, "tg_parseSubQuery: can't handle embedded recipes yet!");
+		elog(WARNING, "tg_parseSubQuery: can't handle embedded recipes yet!");
 	else
-		elog(NOTICE, "unknown nodeType: %d", n->nodeType);
+		elog(WARNING, "unknown nodeType: %d", n->nodeType);
 
 	return qList;
 }
@@ -1155,7 +1155,7 @@ appendTeeQuery(TeeInfo * teeInfo, QueryTreeList * q, char *teeNodeName)
 			return;
 		}
 	}
-	elog(NOTICE, "appendTeeQuery: teeNodeName '%s' not found in teeInfo");
+	elog(WARNING, "appendTeeQuery: teeNodeName '%s' not found in teeInfo");
 }
 
 
@@ -1301,7 +1301,7 @@ replaceTeeScans(Plan *plan, Query *parsetree, TeeInfo * teeInfo)
 					tplan = teeInfo->val[i].tpi_plan;
 			}
 			if (tplan == NULL)
-				elog(NOTICE, "replaceTeeScans didn't find the corresponding tee plan");
+				elog(WARNING, "replaceTeeScans didn't find the corresponding tee plan");
 
 			/*
 			 * replace the sequential scan node with that var number with

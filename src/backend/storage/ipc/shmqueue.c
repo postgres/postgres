@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.19 2001/11/05 17:46:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.20 2002/03/06 06:10:06 momjian Exp $
  *
  * NOTES
  *
@@ -30,7 +30,7 @@
 /*#define SHMQUEUE_DEBUG*/
 #ifdef SHMQUEUE_DEBUG
 
-#define SHMQUEUE_DEBUG_ELOG NOTICE
+#define SHMQUEUE_DEBUG_ELOG WARNING
 
 static void dumpQ(SHM_QUEUE *q, char *s);
 #endif

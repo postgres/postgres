@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.67 2002/03/05 06:07:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.68 2002/03/06 06:10:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 	while (nbytes)
 	{
 		size_t avail, remaining;
-		
+
 		/* fill the output buffer */
 		avail = Max(conn->outBufSize - conn->outCount, 0);
 		remaining = Min(avail, nbytes);
@@ -703,7 +703,7 @@ pqSendSome(PGconn *conn)
 					/*
 					 * We used to close the socket here, but that's a bad
 					 * idea since there might be unread data waiting
-					 * (typically, a NOTICE message from the backend
+					 * (typically, a WARNING message from the backend
 					 * telling us it's committing hara-kiri...).  Leave
 					 * the socket open until pqReadData finds no more data
 					 * can be read.

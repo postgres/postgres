@@ -156,7 +156,7 @@ struct assignment
 
 enum errortype
 {
-	ET_NOTICE, ET_ERROR, ET_FATAL
+	ET_WARNING, ET_ERROR, ET_FATAL
 };
 
 struct fetch_desc

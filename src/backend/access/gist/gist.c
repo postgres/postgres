@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.90 2002/03/05 05:30:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.91 2002/03/06 06:09:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1926,7 +1926,7 @@ gist_dumptree(Relation r, int level, BlockNumber blk, OffsetNumber coff)
 
 	maxoff = PageGetMaxOffsetNumber(page);
 
-	elog(NOTICE, "%sPage: %d %s blk: %d maxoff: %d free: %d", pred,
+	elog(DEBUG3, "%sPage: %d %s blk: %d maxoff: %d free: %d", pred,
 		 coff, (opaque->flags & F_LEAF) ? "LEAF" : "INTE", (int) blk,
 		 (int) maxoff, PageGetFreeSpace(page));
 
@@ -1936,7 +1936,7 @@ gist_dumptree(Relation r, int level, BlockNumber blk, OffsetNumber coff)
 		which = (IndexTuple) PageGetItem(page, iid);
 		cblk = ItemPointerGetBlockNumber(&(which->t_tid));
 #ifdef PRINTTUPLE
-		elog(NOTICE, "%s  Tuple. blk: %d size: %d", pred, (int) cblk,
+		elog(DEBUG3, "%s  Tuple. blk: %d size: %d", pred, (int) cblk,
 			 IndexTupleSize(which));
 #endif
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.46 2002/02/27 19:35:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.47 2002/03/06 06:10:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ do { \
 	if (hentry == NULL) \
 		elog(ERROR, "out of memory in PortalHashTable"); \
 	if (found) \
-		elog(NOTICE, "trying to insert a portal name that exists."); \
+		elog(WARNING, "trying to insert a portal name that exists."); \
 	hentry->portal = PORTAL; \
 } while(0)
 
@@ -90,7 +90,7 @@ do { \
 	hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
 										 key, HASH_REMOVE, NULL); \
 	if (hentry == NULL) \
-		elog(NOTICE, "trying to delete portal name that does not exist."); \
+		elog(WARNING, "trying to delete portal name that does not exist."); \
 } while(0)
 
 static MemoryContext PortalMemory = NULL;
@@ -182,7 +182,7 @@ PortalSetQuery(Portal portal,
  * Exceptions:
  *		BadState if called when disabled.
  *		BadArg if portal name is invalid.
- *		"NOTICE" if portal name is in use (existing portal is returned!)
+ *		"WARNING" if portal name is in use (existing portal is returned!)
  */
 Portal
 CreatePortal(char *name)
@@ -194,7 +194,7 @@ CreatePortal(char *name)
 	portal = GetPortalByName(name);
 	if (PortalIsValid(portal))
 	{
-		elog(NOTICE, "CreatePortal: portal \"%s\" already exists", name);
+		elog(WARNING, "CreatePortal: portal \"%s\" already exists", name);
 		return portal;
 	}
 

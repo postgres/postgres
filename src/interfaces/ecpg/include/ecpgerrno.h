@@ -44,23 +44,23 @@
 #define ECPG_TRANS			-401
 #define ECPG_CONNECT			-402
 
-/* backend notices, starting at 600 */
-#define ECPG_NOTICE_UNRECOGNIZED	   -600
- /* NOTICE:  (transaction aborted): queries ignored until END */
+/* backend WARNINGs, starting at 600 */
+#define ECPG_WARNING_UNRECOGNIZED	   -600
+ /* WARNING:  (transaction aborted): queries ignored until END */
 
  /*
-  * NOTICE:  current transaction is aborted, queries ignored until end of
+  * WARNING:  current transaction is aborted, queries ignored until end of
   * transaction block
   */
-#define ECPG_NOTICE_QUERY_IGNORED	   -601
- /* NOTICE:  PerformPortalClose: portal "*" not found */
-#define ECPG_NOTICE_UNKNOWN_PORTAL	   -602
- /* NOTICE:  BEGIN: already a transaction in progress */
-#define ECPG_NOTICE_IN_TRANSACTION	   -603
- /* NOTICE:  AbortTransaction and not in in-progress state */
- /* NOTICE:  COMMIT: no transaction in progress */
-#define ECPG_NOTICE_NO_TRANSACTION	   -604
- /* NOTICE:  BlankPortalAssignName: portal * already exists */
-#define ECPG_NOTICE_PORTAL_EXISTS	   -605
+#define ECPG_WARNING_QUERY_IGNORED	   -601
+ /* WARNING:  PerformPortalClose: portal "*" not found */
+#define ECPG_WARNING_UNKNOWN_PORTAL	   -602
+ /* WARNING:  BEGIN: already a transaction in progress */
+#define ECPG_WARNING_IN_TRANSACTION	   -603
+ /* WARNING:  AbortTransaction and not in in-progress state */
+ /* WARNING:  COMMIT: no transaction in progress */
+#define ECPG_WARNING_NO_TRANSACTION	   -604
+ /* WARNING:  BlankPortalAssignName: portal * already exists */
+#define ECPG_WARNING_PORTAL_EXISTS	   -605
 
 #endif   /* !_ECPG_ERROR_H */

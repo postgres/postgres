@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.76 2002/03/02 21:39:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.77 2002/03/06 06:10:05 momjian Exp $
  *
  * NOTES
  *
@@ -350,7 +350,7 @@ IpcSemaphoreKill(IpcSemaphoreId semId)
 				semId, strerror(errno));
 
 	/*
-	 * We used to report a failure via elog(NOTICE), but that's pretty
+	 * We used to report a failure via elog(WARNING), but that's pretty
 	 * pointless considering any client has long since disconnected ...
 	 */
 }
@@ -663,7 +663,7 @@ IpcMemoryDetach(int status, Datum shmaddr)
 				DatumGetPointer(shmaddr), strerror(errno));
 
 	/*
-	 * We used to report a failure via elog(NOTICE), but that's pretty
+	 * We used to report a failure via elog(WARNING), but that's pretty
 	 * pointless considering any client has long since disconnected ...
 	 */
 }
@@ -680,7 +680,7 @@ IpcMemoryDelete(int status, Datum shmId)
 				DatumGetInt32(shmId), IPC_RMID, strerror(errno));
 
 	/*
-	 * We used to report a failure via elog(NOTICE), but that's pretty
+	 * We used to report a failure via elog(WARNING), but that's pretty
 	 * pointless considering any client has long since disconnected ...
 	 */
 }

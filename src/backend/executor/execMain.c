@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.151 2002/03/02 21:39:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.152 2002/03/06 06:09:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1359,7 +1359,7 @@ ExecReplace(TupleTableSlot *slot,
 	 */
 	if (IsBootstrapProcessingMode())
 	{
-		elog(NOTICE, "ExecReplace: replace can't run without transactions");
+		elog(WARNING, "ExecReplace: replace can't run without transactions");
 		return;
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.64 2002/02/18 23:11:08 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.65 2002/03/06 06:09:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ ProcedureCreate(char *procedureName,
 				elog(ERROR, "argument type %s does not exist",
 					 typnam);
 			if (!defined)
-				elog(NOTICE, "argument type %s is only a shell",
+				elog(WARNING, "argument type %s is only a shell",
 					 typnam);
 		}
 
@@ -166,7 +166,7 @@ ProcedureCreate(char *procedureName,
 
 		if (!OidIsValid(typeObjectId))
 		{
-			elog(NOTICE, "ProcedureCreate: type %s is not yet defined",
+			elog(WARNING, "ProcedureCreate: type %s is not yet defined",
 				 returnTypeName);
 			typeObjectId = TypeShellMake(returnTypeName);
 			if (!OidIsValid(typeObjectId))
@@ -174,7 +174,7 @@ ProcedureCreate(char *procedureName,
 					 returnTypeName);
 		}
 		else if (!defined)
-			elog(NOTICE, "return type %s is only a shell",
+			elog(WARNING, "return type %s is only a shell",
 				 returnTypeName);
 	}
 

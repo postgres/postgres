@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.112 2002/03/01 22:45:12 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.113 2002/03/06 06:09:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2171,7 +2171,7 @@ equal(void *a, void *b)
 			break;
 
 		default:
-			elog(NOTICE, "equal: don't know whether nodes of type %d are equal",
+			elog(WARNING, "equal: don't know whether nodes of type %d are equal",
 				 nodeTag(a));
 			break;
 	}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.33 2002/03/04 23:59:14 momjian Exp $
+ * $Id: elog.h,v 1.34 2002/03/06 06:10:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,14 +26,13 @@
 #define COMMERROR 	16		/* Client communication problems; same as
 							 * LOG for server reporting, but never ever
 							 * try to send to client. */
-#define INFO		17		/* Informative messages that are part of
-							 * normal query operation; sent only to
-							 * client by default. */
-#define INFOALWAYS	18		/* Like INFO, but always prints to client */	
-#define NOTICE		19		/* Important messages, for unusual cases that
-							 * should be reported but are not serious 
+#define INFO		17		/* Informative messages that always sent to the 
+							 * clent;  is not affected by client_min_messages */
+#define NOTICE		18		/* Important messages, for unusual cases that
+							 * should be reported but are not serious
 							 * enough to abort the query.  Sent to client
 							 * and server log by default. */
+#define WARNING		19		/* Important warnings */
 #define ERROR		20		/* user error - return to known state */
 #define FATAL		21		/* fatal error - abort process */
 #define PANIC		22		/* take down the other backends with me */

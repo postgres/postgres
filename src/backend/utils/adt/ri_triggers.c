@@ -18,7 +18,7 @@
  * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
  * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.31 2001/11/12 06:09:09 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.32 2002/03/06 06:10:14 momjian Exp $
  *
  * ----------
  */
@@ -251,7 +251,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 		 * Execute the plan
 		 */
 		if (SPI_connect() != SPI_OK_CONNECT)
-			elog(NOTICE, "SPI_connect() failed in RI_FKey_check()");
+			elog(WARNING, "SPI_connect() failed in RI_FKey_check()");
 
 		SetUserId(RelationGetForm(pk_rel)->relowner);
 		/* pk_rel is no longer neede OK ? */
@@ -269,7 +269,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 				 tgargs[RI_PK_RELNAME_ARGNO]);
 
 		if (SPI_finish() != SPI_OK_FINISH)
-			elog(NOTICE, "SPI_finish() failed in RI_FKey_check()");
+			elog(WARNING, "SPI_finish() failed in RI_FKey_check()");
 
 		return PointerGetDatum(NULL);
 
@@ -362,7 +362,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 * to see it).
 	 */
 	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(NOTICE, "SPI_connect() failed in RI_FKey_check()");
+		elog(WARNING, "SPI_connect() failed in RI_FKey_check()");
 
 	/*
 	 * Fetch or prepare a saved plan for the real check
@@ -452,7 +452,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 			 tgargs[RI_PK_RELNAME_ARGNO]);
 
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(NOTICE, "SPI_finish() failed in RI_FKey_check()");
+		elog(WARNING, "SPI_finish() failed in RI_FKey_check()");
 
 	return PointerGetDatum(NULL);
 
@@ -594,7 +594,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 			heap_close(fk_rel, NoLock);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(NOTICE, "SPI_connect() failed in RI_FKey_noaction_del()");
+				elog(WARNING, "SPI_connect() failed in RI_FKey_noaction_del()");
 
 			/*
 			 * Fetch or prepare a saved plan for the restrict delete
@@ -675,7 +675,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 					 tgargs[RI_FK_RELNAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(NOTICE, "SPI_finish() failed in RI_FKey_noaction_del()");
+				elog(WARNING, "SPI_finish() failed in RI_FKey_noaction_del()");
 
 			return PointerGetDatum(NULL);
 
@@ -808,7 +808,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 				return PointerGetDatum(NULL);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(NOTICE, "SPI_connect() failed in RI_FKey_noaction_upd()");
+				elog(WARNING, "SPI_connect() failed in RI_FKey_noaction_upd()");
 
 			/*
 			 * Fetch or prepare a saved plan for the noaction update
@@ -889,7 +889,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 					 tgargs[RI_FK_RELNAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(NOTICE, "SPI_finish() failed in RI_FKey_noaction_upd()");
+				elog(WARNING, "SPI_finish() failed in RI_FKey_noaction_upd()");
 
 			return PointerGetDatum(NULL);
 
@@ -1011,7 +1011,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			heap_close(fk_rel, NoLock);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(NOTICE, "SPI_connect() failed in RI_FKey_cascade_del()");
+				elog(WARNING, "SPI_connect() failed in RI_FKey_cascade_del()");
 
 			/*
 			 * Fetch or prepare a saved plan for the cascaded delete
@@ -1082,7 +1082,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			SetUserId(save_uid);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(NOTICE, "SPI_finish() failed in RI_FKey_cascade_del()");
+				elog(WARNING, "SPI_finish() failed in RI_FKey_cascade_del()");
 
 			return PointerGetDatum(NULL);
 
@@ -1214,7 +1214,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 				return PointerGetDatum(NULL);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(NOTICE, "SPI_connect() failed in RI_FKey_cascade_upd()");
+				elog(WARNING, "SPI_connect() failed in RI_FKey_cascade_upd()");
 
 			/*
 			 * Fetch or prepare a saved plan for the cascaded update of
@@ -1306,7 +1306,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			SetUserId(save_uid);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(NOTICE, "SPI_finish() failed in RI_FKey_cascade_upd()");
+				elog(WARNING, "SPI_finish() failed in RI_FKey_cascade_upd()");
 
 			return PointerGetDatum(NULL);
 
@@ -1435,7 +1435,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 			heap_close(fk_rel, NoLock);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(NOTICE, "SPI_connect() failed in RI_FKey_restrict_del()");
+				elog(WARNING, "SPI_connect() failed in RI_FKey_restrict_del()");
 
 			/*
 			 * Fetch or prepare a saved plan for the restrict delete
@@ -1517,7 +1517,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 					 tgargs[RI_FK_RELNAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(NOTICE, "SPI_finish() failed in RI_FKey_restrict_del()");
+				elog(WARNING, "SPI_finish() failed in RI_FKey_restrict_del()");
 
 			return PointerGetDatum(NULL);
 
@@ -1655,7 +1655,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 				return PointerGetDatum(NULL);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(NOTICE, "SPI_connect() failed in RI_FKey_restrict_upd()");
+				elog(WARNING, "SPI_connect() failed in RI_FKey_restrict_upd()");
 
 			/*
 			 * Fetch or prepare a saved plan for the restrict update
@@ -1739,7 +1739,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 					 tgargs[RI_FK_RELNAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(NOTICE, "SPI_finish() failed in RI_FKey_restrict_upd()");
+				elog(WARNING, "SPI_finish() failed in RI_FKey_restrict_upd()");
 
 			return PointerGetDatum(NULL);
 
@@ -1861,7 +1861,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			heap_close(fk_rel, NoLock);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(NOTICE, "SPI_connect() failed in RI_FKey_setnull_del()");
+				elog(WARNING, "SPI_connect() failed in RI_FKey_setnull_del()");
 
 			/*
 			 * Fetch or prepare a saved plan for the set null delete
@@ -1943,7 +1943,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			SetUserId(save_uid);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(NOTICE, "SPI_finish() failed in RI_FKey_setnull_del()");
+				elog(WARNING, "SPI_finish() failed in RI_FKey_setnull_del()");
 
 			return PointerGetDatum(NULL);
 
@@ -2078,7 +2078,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 				return PointerGetDatum(NULL);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(NOTICE, "SPI_connect() failed in RI_FKey_setnull_upd()");
+				elog(WARNING, "SPI_connect() failed in RI_FKey_setnull_upd()");
 
 			/*
 			 * "MATCH <unspecified>" only changes columns corresponding to
@@ -2196,7 +2196,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			SetUserId(save_uid);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(NOTICE, "SPI_finish() failed in RI_FKey_setnull_upd()");
+				elog(WARNING, "SPI_finish() failed in RI_FKey_setnull_upd()");
 
 			return PointerGetDatum(NULL);
 
@@ -2317,7 +2317,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(NOTICE, "SPI_connect() failed in RI_FKey_setdefault_del()");
+				elog(WARNING, "SPI_connect() failed in RI_FKey_setdefault_del()");
 
 			/*
 			 * Prepare a plan for the set defalt delete operation.
@@ -2445,7 +2445,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			SetUserId(save_uid);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(NOTICE, "SPI_finish() failed in RI_FKey_setdefault_del()");
+				elog(WARNING, "SPI_finish() failed in RI_FKey_setdefault_del()");
 
 			return PointerGetDatum(NULL);
 
@@ -2578,7 +2578,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				return PointerGetDatum(NULL);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(NOTICE, "SPI_connect() failed in RI_FKey_setdefault_upd()");
+				elog(WARNING, "SPI_connect() failed in RI_FKey_setdefault_upd()");
 
 			/*
 			 * Prepare a plan for the set defalt delete operation.
@@ -2721,7 +2721,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			SetUserId(save_uid);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(NOTICE, "SPI_finish() failed in RI_FKey_setdefault_upd()");
+				elog(WARNING, "SPI_finish() failed in RI_FKey_setdefault_upd()");
 
 			return PointerGetDatum(NULL);
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.90 2001/09/07 23:17:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.91 2002/03/06 06:09:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,11 +362,11 @@ other			.
 #ifdef MULTIBYTE
 						int len;
 						len = pg_mbcliplen(literalbuf,strlen(literalbuf),NAMEDATALEN-1);
-						elog(NOTICE, "identifier \"%s\" will be truncated to \"%.*s\"",
+						elog(WARNING, "identifier \"%s\" will be truncated to \"%.*s\"",
 							 literalbuf, len, literalbuf);
 						literalbuf[len] = '\0';
 #else
-						elog(NOTICE, "identifier \"%s\" will be truncated to \"%.*s\"",
+						elog(WARNING, "identifier \"%s\" will be truncated to \"%.*s\"",
 							 literalbuf, NAMEDATALEN-1, literalbuf);
 						literalbuf[NAMEDATALEN-1] = '\0';
 #endif
@@ -517,11 +517,11 @@ other			.
 #ifdef MULTIBYTE
 						int len;
 						len = pg_mbcliplen(yytext,i,NAMEDATALEN-1);
-                        elog(NOTICE, "identifier \"%s\" will be truncated to \"%.*s\"",
+                        elog(WARNING, "identifier \"%s\" will be truncated to \"%.*s\"",
                              yytext, len, yytext);
 						yytext[len] = '\0';
 #else
-                        elog(NOTICE, "identifier \"%s\" will be truncated to \"%.*s\"",
+                        elog(WARNING, "identifier \"%s\" will be truncated to \"%.*s\"",
                              yytext, NAMEDATALEN-1, yytext);
 						yytext[NAMEDATALEN-1] = '\0';
 #endif

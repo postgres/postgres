@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.27 2002/03/02 21:39:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.28 2002/03/06 06:09:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,7 +153,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		elevel = INFO;
 	else
 		elevel = DEBUG1;
-		
+
 	/*
 	 * Begin a transaction for analyzing this relation.
 	 *
@@ -165,7 +165,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 
 	/*
 	 * Check for user-requested abort.	Note we want this to be inside a
-	 * transaction, so xact.c doesn't issue useless NOTICE.
+	 * transaction, so xact.c doesn't issue useless WARNING.
 	 */
 	CHECK_FOR_INTERRUPTS();
 
@@ -204,9 +204,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 						RELNAME) ||
 		  (is_dbadmin(MyDatabaseId) && !onerel->rd_rel->relisshared)))
 	{
-		/* No need for a notice if we already complained during VACUUM */
+		/* No need for a WARNING if we already complained during VACUUM */
 		if (!vacstmt->vacuum)
-			elog(NOTICE, "Skipping \"%s\" --- only table or database owner can ANALYZE it",
+			elog(WARNING, "Skipping \"%s\" --- only table or database owner can ANALYZE it",
 				 RelationGetRelationName(onerel));
 		heap_close(onerel, NoLock);
 		CommitTransactionCommand();

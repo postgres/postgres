@@ -33,8 +33,8 @@
 /* dimension of array */
 #define NDIM 1
 
-/* 
- * flags for gist__int_ops, use ArrayType->flags 
+/*
+ * flags for gist__int_ops, use ArrayType->flags
  * which is unused (see array.h)
  */
 #define LEAFKEY		(1<<31)
@@ -112,7 +112,7 @@ printarr(ArrayType *a, int num)
 		sprintf(cur, "%d ", d[l]);
 		cur = strchr(cur, '\0');
 	}
-	elog(NOTICE, "\t\t%s", bbb);
+	elog(DEBUG3, "\t\t%s", bbb);
 }
 static void
 printbitvec(BITVEC bv)
@@ -123,7 +123,7 @@ printbitvec(BITVEC bv)
 	str[SIGLENBIT] = '\0';
 	LOOPBIT(str[i] = (GETBIT(bv, i)) ? '1' : '0');
 
-	elog(NOTICE, "BV: %s", str);
+	elog(DEBUG3, "BV: %s", str);
 }
 
 #endif
@@ -234,7 +234,7 @@ static void rt__intbig_size(ArrayType *a, float *sz);
 
 
 /*****************************************************************************
- *		 	Boolean Search	
+ *		 	Boolean Search
  *****************************************************************************/
 
 #define BooleanSearchStrategy	20
@@ -261,17 +261,17 @@ typedef struct {
 
 PG_FUNCTION_INFO_V1(bqarr_in);
 PG_FUNCTION_INFO_V1(bqarr_out);
-Datum   bqarr_in(PG_FUNCTION_ARGS);  
+Datum   bqarr_in(PG_FUNCTION_ARGS);
 Datum   bqarr_out(PG_FUNCTION_ARGS);
- 
+
 PG_FUNCTION_INFO_V1(boolop);
-Datum   boolop(PG_FUNCTION_ARGS);  
+Datum   boolop(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(rboolop);
-Datum   rboolop(PG_FUNCTION_ARGS);  
+Datum   rboolop(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(querytree);
-Datum   querytree(PG_FUNCTION_ARGS);  
+Datum   querytree(PG_FUNCTION_ARGS);
 
 static bool signconsistent( QUERYTYPE *query, BITVEC sign, bool leaf );
 static bool execconsistent( QUERYTYPE *query, ArrayType *array, bool leaf );
@@ -294,10 +294,10 @@ g_int_consistent(PG_FUNCTION_ARGS) {
 	bool		retval;
 
 	if ( strategy == BooleanSearchStrategy )
-		PG_RETURN_BOOL(execconsistent( (QUERYTYPE*)query, 
+		PG_RETURN_BOOL(execconsistent( (QUERYTYPE*)query,
 						(ArrayType *) DatumGetPointer(entry->key),
 						ISLEAFKEY( (ArrayType *) DatumGetPointer(entry->key) ) ) );
-	
+
 	/* XXX are we sure it's safe to scribble on the query object here? */
 	/* XXX what about toasted input? */
 	/* sort query for fast search, key is already sorted */
@@ -317,10 +317,10 @@ g_int_consistent(PG_FUNCTION_ARGS) {
 										query);
 			break;
 		case RTContainedByStrategyNumber:
-			if ( GIST_LEAF(entry) ) 
+			if ( GIST_LEAF(entry) )
 				retval = inner_int_contains(query,
 					(ArrayType *) DatumGetPointer(entry->key) );
-			else 
+			else
 				retval = inner_int_overlap((ArrayType *) DatumGetPointer(entry->key),
 									   query);
 			break;
@@ -334,9 +334,9 @@ Datum
 g_int_union(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER( _int_common_union(
-		(bytea *) PG_GETARG_POINTER(0), 
-		(int *) PG_GETARG_POINTER(1), 
-		inner_int_union 
+		(bytea *) PG_GETARG_POINTER(0),
+		(int *) PG_GETARG_POINTER(1),
+		inner_int_union
 	) );
 }
 
@@ -371,10 +371,10 @@ g_int_compress(PG_FUNCTION_ARGS)
 		if ( r != (ArrayType*)DatumGetPointer(entry->key) )
 			pfree(r);
 		PG_RETURN_POINTER(entry);
-	} 
+	}
 
 	if ( (len=ARRNELEMS(r)) >= 2 * MAXNUMRANGE) {	/* compress */
-		if ( r == (ArrayType*)DatumGetPointer( entry->key) ) 
+		if ( r == (ArrayType*)DatumGetPointer( entry->key) )
 			r = (ArrayType *) PG_DETOAST_DATUM_COPY(entry->key);
 		r = resize_intArrayType(r, 2 * (len));
 
@@ -434,11 +434,11 @@ g_int_decompress(PG_FUNCTION_ARGS)
 	if (lenin < 2 * MAXNUMRANGE || ISLEAFKEY( in ) ) { /* not comressed value */
 		if ( in != (ArrayType *) DatumGetPointer(entry->key)) {
 			retval = palloc(sizeof(GISTENTRY));
-			gistentryinit(*retval, PointerGetDatum(in), 
+			gistentryinit(*retval, PointerGetDatum(in),
 				entry->rel, entry->page, entry->offset, VARSIZE(in), FALSE);
 
 			PG_RETURN_POINTER(retval);
-		} 
+		}
 		PG_RETURN_POINTER(entry);
 	}
 
@@ -456,7 +456,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 	if (in != (ArrayType *) DatumGetPointer(entry->key))
 		pfree(in);
 	retval = palloc(sizeof(GISTENTRY));
-	gistentryinit(*retval, PointerGetDatum(r), 
+	gistentryinit(*retval, PointerGetDatum(r),
 		entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 
 	PG_RETURN_POINTER(retval);
@@ -468,10 +468,10 @@ g_int_decompress(PG_FUNCTION_ARGS)
 Datum
 g_int_penalty(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER( _int_common_penalty( 
-		(GISTENTRY *)PG_GETARG_POINTER(0), 
-		(GISTENTRY *)PG_GETARG_POINTER(1), 
-		(float *)    PG_GETARG_POINTER(2), 
+	PG_RETURN_POINTER( _int_common_penalty(
+		(GISTENTRY *)PG_GETARG_POINTER(0),
+		(GISTENTRY *)PG_GETARG_POINTER(1),
+		(float *)    PG_GETARG_POINTER(2),
 		inner_int_union, rt__int_size
 	) );
 }
@@ -481,12 +481,12 @@ Datum
 g_int_picksplit(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER( _int_common_picksplit(
-		(bytea *)PG_GETARG_POINTER(0), 
+		(bytea *)PG_GETARG_POINTER(0),
 		(GIST_SPLITVEC *)PG_GETARG_POINTER(1),
 		inner_int_union,
 		inner_int_inter,
 		rt__int_size,
-		0.01	
+		0.01
 	) );
 }
 
@@ -520,14 +520,14 @@ g_int_same(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(result);
 }
 
-Datum 
+Datum
 _int_contained(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_BOOL( DatumGetBool( 
-		DirectFunctionCall2( 
-			_int_contains, 
-			PointerGetDatum(PG_GETARG_POINTER(1)), 
-			PointerGetDatum(PG_GETARG_POINTER(0)) 
+	PG_RETURN_BOOL( DatumGetBool(
+		DirectFunctionCall2(
+			_int_contains,
+			PointerGetDatum(PG_GETARG_POINTER(1)),
+			PointerGetDatum(PG_GETARG_POINTER(0))
 		)
 	));
 }
@@ -570,7 +570,7 @@ inner_int_contains(ArrayType *a, ArrayType *b)
 	db = ARRPTR(b);
 
 #ifdef GIST_DEBUG
-	elog(NOTICE, "contains %d %d", na, nb);
+	elog(DEBUG3, "contains %d %d", na, nb);
 #endif
 
 	i = j = n = 0;
@@ -593,14 +593,14 @@ inner_int_contains(ArrayType *a, ArrayType *b)
  * Operator class for R-tree indexing
  *****************************************************************************/
 
-Datum 
+Datum
 _int_different(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_BOOL( ! DatumGetBool( 
-		DirectFunctionCall2( 
-			_int_same, 
-			PointerGetDatum(PG_GETARG_POINTER(0)), 
-			PointerGetDatum(PG_GETARG_POINTER(1)) 
+	PG_RETURN_BOOL( ! DatumGetBool(
+		DirectFunctionCall2(
+			_int_same,
+			PointerGetDatum(PG_GETARG_POINTER(0)),
+			PointerGetDatum(PG_GETARG_POINTER(1))
 		)
 	));
 }
@@ -690,7 +690,7 @@ inner_int_overlap(ArrayType *a, ArrayType *b)
 	db = ARRPTR(b);
 
 #ifdef GIST_DEBUG
-	elog(NOTICE, "g_int_overlap");
+	elog(DEBUG3, "g_int_overlap");
 #endif
 
 	i = j = 0;
@@ -1030,7 +1030,7 @@ rt__intbig_size(ArrayType *a, float *sz)
 			GETBITBYTE(bv,7) ;
 		bv = (BITVECP) ( ((char*)bv) + 1 );
 	);
-	
+
 	*sz = (float) len;
 	return;
 }
@@ -1116,19 +1116,19 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 		in = NULL;
 
 	if (!entry->leafkey) {
-		LOOPBYTE( 
+		LOOPBYTE(
 			if ( ( ((char*)ARRPTR(in))[i] & 0xff ) != 0xff ) {
 				maycompress = false;
 				break;
 			}
-		); 
+		);
 		if ( maycompress ) {
 			retval = palloc(sizeof(GISTENTRY));
 			r = new_intArrayType(1);
-			gistentryinit(*retval, PointerGetDatum(r), 
+			gistentryinit(*retval, PointerGetDatum(r),
 				entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 			PG_RETURN_POINTER( retval );
-		}	
+		}
 		PG_RETURN_POINTER( entry );
 	}
 
@@ -1148,17 +1148,17 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 			ARRPTR(in),
 			ARRNELEMS(in));
 
-	LOOPBYTE( 
+	LOOPBYTE(
 		if( ( ((char*)ARRPTR(in))[i] & 0xff ) != 0xff ) {
 			maycompress = false;
 			break;
 		}
-	); 
+	);
 
 	if ( maycompress ) {
 		pfree(r);
 		r = new_intArrayType(1);
-	}	
+	}
 
 	gistentryinit(*retval, PointerGetDatum(r), entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 
@@ -1182,7 +1182,7 @@ g_intbig_decompress(PG_FUNCTION_ARGS)
 
 		retval = palloc(sizeof(GISTENTRY));
 
-		gistentryinit(*retval, PointerGetDatum(key), 
+		gistentryinit(*retval, PointerGetDatum(key),
 			entry->rel, entry->page, entry->offset, (key) ? VARSIZE(key) : 0, FALSE);
 		PG_RETURN_POINTER( retval );
 	}
@@ -1192,9 +1192,9 @@ g_intbig_decompress(PG_FUNCTION_ARGS)
 
 		retval = palloc(sizeof(GISTENTRY));
 		newkey = new_intArrayType(SIGLENINT);
-		MemSet( (void*)ARRPTR(newkey), 0xff, SIGLEN ); 
+		MemSet( (void*)ARRPTR(newkey), 0xff, SIGLEN );
 
-		gistentryinit(*retval, PointerGetDatum(newkey), 
+		gistentryinit(*retval, PointerGetDatum(newkey),
 			entry->rel, entry->page, entry->offset, VARSIZE(newkey), FALSE);
 		PG_RETURN_POINTER( retval );
 	}
@@ -1205,7 +1205,7 @@ Datum
 g_intbig_picksplit(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_POINTER( _int_common_picksplit(
-		(bytea *)PG_GETARG_POINTER(0), 
+		(bytea *)PG_GETARG_POINTER(0),
 		(GIST_SPLITVEC *)PG_GETARG_POINTER(1),
 		_intbig_union,
 		_intbig_inter,
@@ -1217,37 +1217,37 @@ g_intbig_picksplit(PG_FUNCTION_ARGS)
 Datum
 g_intbig_union(PG_FUNCTION_ARGS)
 {
-        PG_RETURN_POINTER( _int_common_union(
-                (bytea *) PG_GETARG_POINTER(0),
-                (int *) PG_GETARG_POINTER(1),
-                _intbig_union
-        ) );
+		PG_RETURN_POINTER( _int_common_union(
+				(bytea *) PG_GETARG_POINTER(0),
+				(int *) PG_GETARG_POINTER(1),
+				_intbig_union
+		) );
 }
 
 Datum
 g_intbig_penalty(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER( _int_common_penalty( 
-		(GISTENTRY *)PG_GETARG_POINTER(0), 
-		(GISTENTRY *)PG_GETARG_POINTER(1), 
-		(float *)    PG_GETARG_POINTER(2), 
+	PG_RETURN_POINTER( _int_common_penalty(
+		(GISTENTRY *)PG_GETARG_POINTER(0),
+		(GISTENTRY *)PG_GETARG_POINTER(1),
+		(float *)    PG_GETARG_POINTER(2),
 		_intbig_union, rt__intbig_size
 	) );
 }
 
 Datum
 g_intbig_consistent(PG_FUNCTION_ARGS) {
-        GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
-        ArrayType *query = ( ArrayType * )PG_GETARG_POINTER(1);
-        StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+		GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
+		ArrayType *query = ( ArrayType * )PG_GETARG_POINTER(1);
+		StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		retval;
 	ArrayType  *q;
 
 	if ( strategy == BooleanSearchStrategy )
-		PG_RETURN_BOOL(signconsistent( (QUERYTYPE*)query, 
+		PG_RETURN_BOOL(signconsistent( (QUERYTYPE*)query,
 						SIGPTR((ArrayType *) DatumGetPointer(entry->key)),
 						false ) );
-	
+
 	/* XXX what about toasted input? */
 	if (ARRISVOID(query))
 		return FALSE;
@@ -1293,7 +1293,7 @@ _int_common_union(bytea *entryvec, int *sizep, formarray unionf)
 	ArrayType  *tmp;
 
 #ifdef GIST_DEBUG
-	elog(NOTICE, "_int_common_union in");
+	elog(DEBUG3, "_int_common_union in");
 #endif
 
 	numranges = (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY);
@@ -1314,12 +1314,12 @@ _int_common_union(bytea *entryvec, int *sizep, formarray unionf)
 	{
 		pfree(out);
 #ifdef GIST_DEBUG
-		elog(NOTICE, "_int_common_union out1");
+		elog(DEBUG3, "_int_common_union out1");
 #endif
 		return NULL;
 	}
 #ifdef GIST_DEBUG
-	elog(NOTICE, "_int_common_union out");
+	elog(DEBUG3, "_int_common_union out");
 #endif
 	return (out);
 
@@ -1339,7 +1339,7 @@ _int_common_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result,
 				tmp2;
 
 #ifdef GIST_DEBUG
-	elog(NOTICE, "penalty");
+	elog(DEBUG3, "penalty");
 #endif
 	ud = (*unionf) ((ArrayType *) DatumGetPointer(origentry->key),
 					(ArrayType *) DatumGetPointer(newentry->key));
@@ -1349,7 +1349,7 @@ _int_common_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result,
 	pfree(ud);
 
 #ifdef GIST_DEBUG
-	elog(NOTICE, "--penalty\t%g", *result);
+	elog(DEBUG3, "--penalty\t%g", *result);
 #endif
 
 	return (result);
@@ -1360,7 +1360,7 @@ typedef struct {
 	float		cost;
 } SPLITCOST;
 
-static int 
+static int
 comparecost( const void *a, const void *b ) {
 	if ( ((SPLITCOST*)a)->cost == ((SPLITCOST*)b)->cost )
 		return 0;
@@ -1408,7 +1408,7 @@ _int_common_picksplit(bytea *entryvec,
 	SPLITCOST	*costvector;
 
 #ifdef GIST_DEBUG
-	elog(NOTICE, "--------picksplit %d", (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY));
+	elog(DEBUG3, "--------picksplit %d", (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY));
 #endif
 
 	maxoff = ((VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY)) - 2;
@@ -1471,7 +1471,7 @@ _int_common_picksplit(bytea *entryvec,
 
 	maxoff = OffsetNumberNext(maxoff);
 	/*
-     	 * sort entries
+		 * sort entries
 	 */
 	costvector=(SPLITCOST*)palloc( sizeof(SPLITCOST)*maxoff );
 	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i)) {
@@ -1486,7 +1486,7 @@ _int_common_picksplit(bytea *entryvec,
 		costvector[i-1].cost = abs( (size_alpha - size_l) - (size_beta - size_r) );
 	}
 	qsort( (void*)costvector, maxoff, sizeof(SPLITCOST), comparecost );
- 
+
 	/*
 	 * Now split up the regions between the two seeds.	An important
 	 * property of this split algorithm is that the split vector v has the
@@ -1499,7 +1499,7 @@ _int_common_picksplit(bytea *entryvec,
 	 * tuples and i == maxoff + 1.
 	 */
 
-	
+
 	for (j = 0; j < maxoff; j++) {
 		i = costvector[j].pos;
 
@@ -1562,13 +1562,13 @@ _int_common_picksplit(bytea *entryvec,
 	v->spl_rdatum = PointerGetDatum(datum_r);
 
 #ifdef GIST_DEBUG
-	elog(NOTICE, "--------ENDpicksplit %d %d", v->spl_nleft, v->spl_nright);
+	elog(DEBUG3, "--------ENDpicksplit %d %d", v->spl_nleft, v->spl_nright);
 #endif
 	return v;
 }
 
 /*****************************************************************************
- *	 	BoolSearch	
+ *	 	BoolSearch
  *****************************************************************************/
 
 
@@ -1607,7 +1607,7 @@ typedef struct {
 /*
  * get token from query string
  */
-static int4 
+static int4
 gettoken( WORKSTATE* state, int4* val ) {
 	char nnn[16], *curnnn;
 
@@ -1616,7 +1616,7 @@ gettoken( WORKSTATE* state, int4* val ) {
 		switch(state->state) {
 			case WAITOPERAND:
 				curnnn=nnn;
-				if ( (*(state->buf)>='0' && *(state->buf)<='9') || 
+				if ( (*(state->buf)>='0' && *(state->buf)<='9') ||
 						*(state->buf)=='-' ) {
 					state->state = WAITENDOPERAND;
 					*curnnn = *(state->buf);
@@ -1629,7 +1629,7 @@ gettoken( WORKSTATE* state, int4* val ) {
 					state->count++;
 					(state->buf)++;
 					return OPEN;
-				} else if ( *(state->buf) != ' ' ) 
+				} else if ( *(state->buf) != ' ' )
 					return ERR;
 				break;
 			case WAITENDOPERAND:
@@ -1640,7 +1640,7 @@ gettoken( WORKSTATE* state, int4* val ) {
 					*curnnn = '\0';
 					*val=(int4)atoi( nnn );
 					state->state = WAITOPERATOR;
-					return ( state->count && *(state->buf) == '\0' ) 
+					return ( state->count && *(state->buf) == '\0' )
 						? ERR : VAL;
 				}
 				break;
@@ -1648,7 +1648,7 @@ gettoken( WORKSTATE* state, int4* val ) {
 				if ( *(state->buf) == '&' || *(state->buf) == '|' ) {
 					state->state = WAITOPERAND;
 					*val = (int4) *(state->buf);
-	 				(state->buf)++;
+					(state->buf)++;
 					return OPR;
 				} else if ( *(state->buf) == ')' ) {
 					(state->buf)++;
@@ -1659,11 +1659,11 @@ gettoken( WORKSTATE* state, int4* val ) {
 				} else if ( *(state->buf) != ' ' )
 					return ERR;
 				break;
-	   		default:
+			default:
 				return ERR;
 				break;
-	 	}
-	 	(state->buf)++;
+		}
+		(state->buf)++;
 	}
 	return END;
 }
@@ -1686,7 +1686,7 @@ pushquery( WORKSTATE *state, int4 type, int4 val ) {
 /*
  * make polish notaion of query
  */
-static int4 
+static int4
 makepol(WORKSTATE *state) {
 	int4 val,type;
 	int4	stack[STACKDEPTH];
@@ -1696,7 +1696,7 @@ makepol(WORKSTATE *state) {
 		switch(type) {
 			case VAL:
 				pushquery(state, type, val);
-				while ( lenstack && (stack[ lenstack-1 ] == (int4)'&' || 
+				while ( lenstack && (stack[ lenstack-1 ] == (int4)'&' ||
 						stack[ lenstack-1 ] == (int4)'!') ) {
 					lenstack--;
 					pushquery(state, OPR, stack[ lenstack ]);
@@ -1705,7 +1705,7 @@ makepol(WORKSTATE *state) {
 			case OPR:
 				if ( lenstack && val == (int4) '|' ) {
 					pushquery(state, OPR, val);
-				} else { 
+				} else {
 					if ( lenstack == STACKDEPTH )
 						elog(ERROR,"Stack too short");
 					stack[ lenstack ] = val;
@@ -1714,7 +1714,7 @@ makepol(WORKSTATE *state) {
 				break;
 			case OPEN:
 				if ( makepol( state ) == ERR ) return ERR;
-				if ( lenstack && (stack[ lenstack-1 ] == (int4)'&' || 
+				if ( lenstack && (stack[ lenstack-1 ] == (int4)'&' ||
 						stack[ lenstack-1 ] == (int4)'!') ) {
 					lenstack--;
 					pushquery(state, OPR, stack[ lenstack ]);
@@ -1731,7 +1731,7 @@ makepol(WORKSTATE *state) {
 			default:
 				elog(ERROR,"Syntax error");
 				return ERR;
-			
+
 		}
 	}
 
@@ -1772,7 +1772,7 @@ checkcondition_arr( void *checkval, int4 val ) {
 
 static bool
 checkcondition_bit( void *checkval, int4 val ) {
-	return GETBIT( checkval, HASHVAL( val ) ); 	
+	return GETBIT( checkval, HASHVAL( val ) );
 }
 
 /*
@@ -1784,8 +1784,8 @@ execute( ITEM* curitem, void *checkval, bool calcnot, bool (*chkcond)(void *chec
 	if (  curitem->type == VAL ) {
 		return (*chkcond)( checkval, curitem->val );
 	} else if ( curitem->val == (int4)'!' ) {
-		return ( calcnot ) ? 
-			( ( execute(curitem - 1, checkval, calcnot, chkcond) ) ? false : true ) 
+		return ( calcnot ) ?
+			( ( execute(curitem - 1, checkval, calcnot, chkcond) ) ? false : true )
 			: true;
 	} else if ( curitem->val == (int4)'&' ) {
 		if ( execute(curitem + curitem->left, checkval, calcnot, chkcond) )
@@ -1799,35 +1799,35 @@ execute( ITEM* curitem, void *checkval, bool calcnot, bool (*chkcond)(void *chec
 			return execute(curitem - 1, checkval, calcnot, chkcond);
 	}
 	return false;
-} 
+}
 
 /*
  * signconsistent & execconsistent called by *_consistent
  */
-static bool 
+static bool
 signconsistent( QUERYTYPE *query, BITVEC sign, bool calcnot ) {
-	return execute( 
-		GETQUERY(query) + query->size-1 , 
-		(void*)sign, calcnot, 
-		checkcondition_bit 
-	); 
+	return execute(
+		GETQUERY(query) + query->size-1 ,
+		(void*)sign, calcnot,
+		checkcondition_bit
+	);
 }
 
-static bool 
+static bool
 execconsistent( QUERYTYPE *query, ArrayType *array, bool calcnot ) {
 	CHKVAL  chkval;
 
 	chkval.arrb = ARRPTR(array);
 	chkval.arre = chkval.arrb + ARRNELEMS(array);
-	return execute( 
-		GETQUERY(query) + query->size-1 , 
-		(void*)&chkval, calcnot, 
-		checkcondition_arr 
+	return execute(
+		GETQUERY(query) + query->size-1 ,
+		(void*)&chkval, calcnot,
+		checkcondition_arr
 	);
 }
 
 /*
- * boolean operations 
+ * boolean operations
  */
 Datum
 rboolop(PG_FUNCTION_ARGS) {
@@ -1844,7 +1844,7 @@ boolop(PG_FUNCTION_ARGS) {
 	QUERYTYPE *query = ( QUERYTYPE * )PG_DETOAST_DATUM(PG_GETARG_POINTER(1));
 	CHKVAL  chkval;
 	bool result;
-	
+
 	if ( ARRISVOID( val ) ) {
 		pfree(val);
 		PG_FREE_IF_COPY(query,1);
@@ -1854,10 +1854,10 @@ boolop(PG_FUNCTION_ARGS) {
 	PREPAREARR(val);
 	chkval.arrb = ARRPTR(val);
 	chkval.arre = chkval.arrb + ARRNELEMS(val);
-	result = execute( 
-		GETQUERY(query) + query->size-1 , 
-		&chkval, true, 
-		checkcondition_arr 
+	result = execute(
+		GETQUERY(query) + query->size-1 ,
+		&chkval, true,
+		checkcondition_arr
 	);
 	pfree(val);
 
@@ -1868,7 +1868,7 @@ boolop(PG_FUNCTION_ARGS) {
 static void
 findoprnd( ITEM *ptr, int4 *pos ) {
 #ifdef BS_DEBUG
-	elog(NOTICE, ( ptr[*pos].type == OPR ) ? 
+	elog(DEBUG3, ( ptr[*pos].type == OPR ) ?
 		"%d  %c" : "%d  %d ", *pos, ptr[*pos].val );
 #endif
 	if ( ptr[*pos].type == VAL ) {
@@ -1880,7 +1880,7 @@ findoprnd( ITEM *ptr, int4 *pos ) {
 		findoprnd( ptr, pos );
 	} else {
 		ITEM *curitem = &ptr[*pos];
-		int4 tmp = *pos; 
+		int4 tmp = *pos;
 		(*pos)--;
 		findoprnd(ptr,pos);
 		curitem->left = *pos - tmp;
@@ -1914,7 +1914,7 @@ bqarr_in(PG_FUNCTION_ARGS) {
 
 	/* make polish notation (postfix, but in reverse order) */
 	makepol( &state );
-	if (!state.num) 
+	if (!state.num)
 		elog( ERROR,"Empty query");
 
 	commonlen = COMPUTESIZE(state.num);
@@ -1924,26 +1924,26 @@ bqarr_in(PG_FUNCTION_ARGS) {
 	ptr = GETQUERY(query);
 
 	for(i=state.num-1; i>=0; i-- ) {
-		ptr[i].type = state.str->type; 
+		ptr[i].type = state.str->type;
 		ptr[i].val = state.str->val;
 		tmp = state.str->next;
 		pfree( state.str );
 		state.str = tmp;
 	}
-	
+
 	pos = query->size-1;
 	findoprnd( ptr, &pos );
 #ifdef BS_DEBUG
 	cur = pbuf;
 	*cur = '\0';
 	for( i=0;i<query->size;i++ ) {
-		if ( ptr[i].type == OPR ) 
+		if ( ptr[i].type == OPR )
 			sprintf(cur, "%c(%d) ", ptr[i].val, ptr[i].left);
-		else 
+		else
 			sprintf(cur, "%d ", ptr[i].val );
-		cur = strchr(cur,'\0');	
+		cur = strchr(cur,'\0');
 	}
-	elog(NOTICE,"POR: %s", pbuf);
+	elog(DEBUG3,"POR: %s", pbuf);
 #endif
 
 	PG_RETURN_POINTER( query );
@@ -1986,17 +1986,17 @@ infix(INFIX *in, bool first) {
 			RESIZEBUF(in, 2);
 			sprintf(in->cur, "( ");
 			in->cur = strchr( in->cur, '\0' );
-		} 
+		}
 		infix( in, isopr );
 		if ( isopr ) {
 			RESIZEBUF(in, 2);
 			sprintf(in->cur, " )");
 			in->cur = strchr( in->cur, '\0' );
-		} 
+		}
 	} else {
 		int4 op = in->curpol->val;
 		INFIX   nrm;
-		
+
 		in->curpol--;
 		if ( op == (int4)'|' && ! first) {
 			RESIZEBUF(in, 2);
@@ -2007,10 +2007,10 @@ infix(INFIX *in, bool first) {
 		nrm.curpol = in->curpol;
 		nrm.buflen = 16;
 		nrm.cur = nrm.buf = (char*)palloc( sizeof(char) * nrm.buflen );
-		
+
 		/* get right operand */
 		infix( &nrm, false );
-		
+
 		/* get & print left operand */
 		in->curpol = nrm.curpol;
 		infix( in, false );
@@ -2036,13 +2036,13 @@ bqarr_out(PG_FUNCTION_ARGS) {
 	INFIX   nrm;
 
 	if ( query->size == 0 )
-		elog(ERROR,"Empty");	
+		elog(ERROR,"Empty");
 	nrm.curpol = GETQUERY(query) + query->size - 1;
 	nrm.buflen = 32;
 	nrm.cur = nrm.buf = (char*)palloc( sizeof(char) * nrm.buflen );
 	*(nrm.cur) = '\0';
 	infix( &nrm, true );
-	
+
 	PG_FREE_IF_COPY(query,0);
 	PG_RETURN_POINTER( nrm.buf );
 }
@@ -2054,16 +2054,16 @@ countdroptree( ITEM *q, int4 pos ) {
 	} else if ( q[pos].val == (int4)'!' ) {
 		return 1+countdroptree(q, pos-1);
 	} else {
-		return 1 + countdroptree(q, pos-1) + countdroptree(q, pos + q[pos].left); 
-	} 
+		return 1 + countdroptree(q, pos-1) + countdroptree(q, pos + q[pos].left);
+	}
 }
 
 /*
  * common algorithm:
- * result of all '!' will be = 'true', so 
+ * result of all '!' will be = 'true', so
  * we can modify query tree for clearing
  */
-static int4 
+static int4
 shorterquery( ITEM *q, int4 len ) {
 	int4 index,posnot,poscor;
 	bool notisleft = false;
@@ -2093,7 +2093,7 @@ shorterquery( ITEM *q, int4 len ) {
 				if ( poscor == posnot+1 ) {
 					notisleft = false;
 					break;
-				} else if ( q[poscor].left + poscor == posnot ) { 
+				} else if ( q[poscor].left + poscor == posnot ) {
 					notisleft = true;
 					break;
 				}
@@ -2104,9 +2104,9 @@ shorterquery( ITEM *q, int4 len ) {
 			q[poscor-1].type=VAL;
 			for(i=poscor+1;i<len;i++)
 				if ( q[i].type == OPR && q[i].left + i <= poscor )
-					q[i].left += drop - 2; 
-			memcpy( (void*)&q[poscor-drop+1], 
-				(void*)&q[poscor-1], 
+					q[i].left += drop - 2;
+			memcpy( (void*)&q[poscor-drop+1],
+				(void*)&q[poscor-1],
 				sizeof(ITEM) * ( len - (poscor-1) ));
 			len -= drop - 2;
 		} else if ( q[poscor].val == (int4)'|' ) {
@@ -2116,16 +2116,16 @@ shorterquery( ITEM *q, int4 len ) {
 			q[poscor].left=-1;
 			for(i=poscor+1;i<len;i++)
 				if ( q[i].type == OPR && q[i].left + i < poscor )
-					q[i].left += drop - 2; 
-			memcpy( (void*)&q[poscor-drop+1], 
-				(void*)&q[poscor-1], 
+					q[i].left += drop - 2;
+			memcpy( (void*)&q[poscor-drop+1],
+				(void*)&q[poscor-1],
 				sizeof(ITEM) * ( len - (poscor-1) ));
 			len -= drop - 2;
 		} else { /* &-operator */
-			if ( 
-					(notisleft && q[poscor-1].type == OPR && 
+			if (
+					(notisleft && q[poscor-1].type == OPR &&
 						q[poscor-1].val == (int4)'!' ) ||
-					(!notisleft && q[poscor+q[poscor].left].type == OPR && 
+					(!notisleft && q[poscor+q[poscor].left].type == OPR &&
 						q[poscor+q[poscor].left].val == (int4)'!' )
 				) { /* drop subtree */
 				drop = countdroptree(q, poscor);
@@ -2134,26 +2134,26 @@ shorterquery( ITEM *q, int4 len ) {
 				q[poscor].left=-1;
 				for(i=poscor+1;i<len;i++)
 					if ( q[i].type == OPR && q[i].left + i < poscor )
-						q[i].left += drop - 2; 
-				memcpy( (void*)&q[poscor-drop+1], 
-					(void*)&q[poscor-1], 
+						q[i].left += drop - 2;
+				memcpy( (void*)&q[poscor-drop+1],
+					(void*)&q[poscor-1],
 					sizeof(ITEM) * ( len - (poscor-1) ));
 				len -= drop - 2;
 			} else { /* drop only operator */
-				int4 subtreepos = ( notisleft ) ? 
+				int4 subtreepos = ( notisleft ) ?
 					poscor-1 : poscor+q[poscor].left;
 				int4 subtreelen = countdroptree( q, subtreepos );
 				drop = countdroptree(q, poscor);
 				for(i=poscor+1;i<len;i++)
 					if ( q[i].type == OPR && q[i].left + i < poscor )
-						q[i].left += drop - subtreelen; 
-				memcpy( (void*)&q[ subtreepos+1 ], 
-					(void*)&q[poscor+1], 
-					sizeof(ITEM)*( len - (poscor-1) ) ); 
-				memcpy( (void*)&q[ poscor-drop+1 ], 
-					(void*)&q[subtreepos-subtreelen+1], 
+						q[i].left += drop - subtreelen;
+				memcpy( (void*)&q[ subtreepos+1 ],
+					(void*)&q[poscor+1],
+					sizeof(ITEM)*( len - (poscor-1) ) );
+				memcpy( (void*)&q[ poscor-drop+1 ],
+					(void*)&q[subtreepos-subtreelen+1],
 					sizeof(ITEM)*( len - (drop-subtreelen) ) );
-				len -= drop - subtreelen;  
+				len -= drop - subtreelen;
 			}
 		}
 	} while( index );

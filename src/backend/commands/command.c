@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.158 2002/03/05 05:33:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.159 2002/03/06 06:09:29 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -126,7 +126,7 @@ PerformPortalFetch(char *name,
 	 */
 	if (name == NULL)
 	{
-		elog(NOTICE, "PerformPortalFetch: missing portal name");
+		elog(WARNING, "PerformPortalFetch: missing portal name");
 		return;
 	}
 
@@ -136,7 +136,7 @@ PerformPortalFetch(char *name,
 	portal = GetPortalByName(name);
 	if (!PortalIsValid(portal))
 	{
-		elog(NOTICE, "PerformPortalFetch: portal \"%s\" not found",
+		elog(WARNING, "PerformPortalFetch: portal \"%s\" not found",
 			 name);
 		return;
 	}
@@ -253,7 +253,7 @@ PerformPortalClose(char *name, CommandDest dest)
 	 */
 	if (name == NULL)
 	{
-		elog(NOTICE, "PerformPortalClose: missing portal name");
+		elog(WARNING, "PerformPortalClose: missing portal name");
 		return;
 	}
 
@@ -263,7 +263,7 @@ PerformPortalClose(char *name, CommandDest dest)
 	portal = GetPortalByName(name);
 	if (!PortalIsValid(portal))
 	{
-		elog(NOTICE, "PerformPortalClose: portal \"%s\" not found",
+		elog(WARNING, "PerformPortalClose: portal \"%s\" not found",
 			 name);
 		return;
 	}
@@ -749,7 +749,7 @@ AlterTableAlterColumnFlags(const char *relationName,
 	myrelid = RelationGetRelid(rel);
 	heap_close(rel, NoLock);	/* close rel, but keep lock! */
 
-	
+
 	/*
 	 * Check the supplied parameters before anything else
 	 */
@@ -759,7 +759,7 @@ AlterTableAlterColumnFlags(const char *relationName,
 	{
 		Assert(IsA(flagValue, Integer));
 		newtarget = intVal(flagValue);
-		
+
 		/*
 		 * Limit target to sane range (should we raise an error instead?)
 		 */
@@ -773,7 +773,7 @@ AlterTableAlterColumnFlags(const char *relationName,
 									 */
 	{
 		Assert(IsA(flagValue, Value));
-		
+
 		storagemode = strVal(flagValue);
 		if (strcasecmp(storagemode, "plain") == 0)
 			newstorage = 'p';
@@ -1556,7 +1556,7 @@ AlterTableDropConstraint(const char *relationName,
 			 constrName);
 	/* Otherwise if more than one constraint deleted, notify */
 	else if (deleted > 1)
-		elog(INFO, "Multiple constraints dropped");
+		elog(NOTICE, "Multiple constraints dropped");
 }
 
 

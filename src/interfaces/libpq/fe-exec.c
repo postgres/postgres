@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.116 2002/03/05 06:07:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.117 2002/03/06 06:10:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,16 +202,16 @@ PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
  *		6	\\
  */
 unsigned char *
-PQunescapeBytea(unsigned char *strtext, size_t *retbuflen) 
+PQunescapeBytea(unsigned char *strtext, size_t *retbuflen)
 {
 	size_t buflen;
 	unsigned char *buffer, *sp, *bp;
 	unsigned int state=0;
 
-    if(strtext == NULL)return NULL;
+	if(strtext == NULL)return NULL;
 	buflen = strlen(strtext); /* will shrink, also we discover if strtext */
 	buffer = (unsigned char *) malloc(buflen);   /* isn't NULL terminated */
-    if(buffer == NULL)return NULL;
+	if(buffer == NULL)return NULL;
 	for(bp = buffer, sp = strtext; *sp != '\0'; bp++, sp++)
 	{
 		switch(state)
@@ -798,7 +798,7 @@ PQsendQuery(PGconn *conn, const char *query)
  * handleSendFailure: try to clean up after failure to send command.
  *
  * Primarily, what we want to accomplish here is to process an async
- * NOTICE message that the backend might have sent just before it died.
+ * WARNING message that the backend might have sent just before it died.
  *
  * NOTE: this routine should only be called in PGASYNC_IDLE state.
  */
@@ -816,7 +816,7 @@ handleSendFailure(PGconn *conn)
 
 	/*
 	 * Parse any available input messages.	Since we are in PGASYNC_IDLE
-	 * state, only NOTICE and NOTIFY messages will be eaten.
+	 * state, only WARNING and NOTIFY messages will be eaten.
 	 */
 	parseInput(conn);
 }
@@ -890,7 +890,7 @@ parseInput(PGconn *conn)
 			return;
 
 		/*
-		 * NOTIFY and NOTICE messages can happen in any state besides COPY
+		 * NOTIFY and WARNING messages can happen in any state besides COPY
 		 * OUT; always process them right away.
 		 *
 		 * Most other messages should only be processed while in BUSY state.

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.59 2002/03/02 21:39:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.60 2002/03/06 06:09:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,7 +250,7 @@ parse_datestyle_internal(char *value)
 	}
 
 	if (dcnt > 1 || ecnt > 1)
-		elog(NOTICE, "Conflicting settings for date");
+		elog(WARNING, "Conflicting settings for date");
 
 	return TRUE;
 }

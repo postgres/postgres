@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/bsdi.c,v 1.18 2001/11/05 17:46:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/bsdi.c,v 1.19 2002/03/06 06:09:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,14 +56,14 @@ pg_dlopen(char *filename)
 	{
 		if (dld_link("/usr/lib/libc.a"))
 		{
-			elog(NOTICE, "dld: Cannot link C library!");
+			elog(WARNING, "dld: Cannot link C library!");
 			return NULL;
 		}
 		if (dld_undefined_sym_count > 0)
 		{
 			if (dld_link("/usr/lib/libm.a"))
 			{
-				elog(NOTICE, "dld: Cannot link math library!");
+				elog(WARNING, "dld: Cannot link math library!");
 				return NULL;
 			}
 			if (dld_undefined_sym_count > 0)
@@ -72,10 +72,10 @@ pg_dlopen(char *filename)
 				char	  **list = dld_list_undefined_sym();
 
 				/* list the undefined symbols, if any */
-				elog(NOTICE, "dld: Undefined:");
+				elog(WARNING, "dld: Undefined:");
 				do
 				{
-					elog(NOTICE, "  %s", *list);
+					elog(WARNING, "  %s", *list);
 					list++;
 					count--;
 				} while (count > 0);

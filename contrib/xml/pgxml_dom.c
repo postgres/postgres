@@ -213,7 +213,7 @@ pgxml_xpath(PG_FUNCTION_ARGS)
 	comppath = xmlXPathCompile(xpath);
 	if (comppath == NULL)
 	{
-		elog(NOTICE, "XPath syntax error");
+		elog(WARNING, "XPath syntax error");
 		xmlFreeDoc(doctree);
 		pfree((void *) xpath);
 		PG_RETURN_NULL();
@@ -242,7 +242,7 @@ pgxml_xpath(PG_FUNCTION_ARGS)
 			xpresstr = xmlStrdup(res->stringval);
 			break;
 		default:
-			elog(NOTICE, "Unsupported XQuery result: %d", res->type);
+			elog(WARNING, "Unsupported XQuery result: %d", res->type);
 			xpresstr = xmlStrdup("<unsupported/>");
 	}
 

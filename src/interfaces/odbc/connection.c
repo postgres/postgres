@@ -578,12 +578,12 @@ md5_auth_send(ConnectionClass *self, const char *salt)
 	{
 		free(pwd1);
 		return 1;
-	} 
+	}
 	if (!(pwd2 = malloc(MD5_PASSWD_LEN + 1)))
 	{
 		free(pwd1);
 		return 1;
-	} 
+	}
 	if (!EncryptMD5(pwd1 + strlen("md5"), salt, 4, pwd2))
 	{
 		free(pwd2);
@@ -595,7 +595,7 @@ md5_auth_send(ConnectionClass *self, const char *salt)
 	SOCK_put_n_char(sock, pwd2, strlen(pwd2) + 1);
 	SOCK_flush_output(sock);
 	free(pwd2);
-	return 0; 
+	return 0;
 }
 
 char
@@ -1199,7 +1199,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				{
 					mylog("send_query: ok - 'C' - %s\n", cmdbuffer);
 
-					if (res == NULL)	/* allow for "show" style notices */
+					if (res == NULL)	/* allow for "show" style info */
 						res = QR_Constructor();
 
 					mylog("send_query: setting cmdbuffer = '%s'\n", cmdbuffer);
@@ -1243,7 +1243,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 						ReadyToReturn = FALSE;
 				}
 				break;
-			case 'N':			/* NOTICE: */
+			case 'N':			/* INFO, NOTICE, WARNING */
 				msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 				if (!res)
 					res = QR_Constructor();
@@ -1257,19 +1257,19 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 						strcpy(PG_CCSS, cmdbuffer + 36);
 					if (strstr(cmdbuffer,"Current server encoding is"))
 						strcpy(PG_SCSS, cmdbuffer + 36);
-					mylog("~~~ NOTICE: '%s'\n", cmdbuffer);
-					qlog("NOTICE from backend during send_query: '%s'\n ClientEncoding = %s\n ServerEncoding = %s\n", cmdbuffer, PG_CCSS, PG_SCSS);
+					mylog("~~~ WARNING: '%s'\n", cmdbuffer);
+					qlog("WARNING from backend during send_query: '%s'\n ClientEncoding = %s\n ServerEncoding = %s\n", cmdbuffer, PG_CCSS, PG_SCSS);
 
 				}
 				else
 				{
 
-					mylog("~~~ NOTICE: '%s'\n", cmdbuffer);
-					qlog("NOTICE from backend during send_query: '%s'\n", cmdbuffer);
+					mylog("~~~ WARNING: '%s'\n", cmdbuffer);
+					qlog("WARNING from backend during send_query: '%s'\n", cmdbuffer);
 				}
 #else
-				mylog("~~~ NOTICE: '%s'\n", cmdbuffer);
-				qlog("NOTICE from backend during send_query: '%s'\n", cmdbuffer);
+				mylog("~~~ WARNING: '%s'\n", cmdbuffer);
+				qlog("WARNING from backend during send_query: '%s'\n", cmdbuffer);
 #endif
 				while (msg_truncated)
 					msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
@@ -1591,7 +1591,7 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
 				SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
 
 				mylog("send_function(G): 'N' - %s\n", msgbuffer);
-				qlog("NOTICE from backend during send_function: '%s'\n", msgbuffer);
+				qlog("WARNING from backend during send_function: '%s'\n", msgbuffer);
 
 				continue;		/* dont return a result -- continue
 								 * reading */

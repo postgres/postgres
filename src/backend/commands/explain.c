@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.69 2002/03/02 21:39:23 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.70 2002/03/06 06:09:33 momjian Exp $
  *
  */
 
@@ -51,7 +51,7 @@ ExplainQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 	/* rewriter and planner may not work in aborted state? */
 	if (IsAbortedTransactionBlockState())
 	{
-		elog(NOTICE, "(transaction aborted): %s",
+		elog(WARNING, "(transaction aborted): %s",
 			 "queries ignored until END");
 		return;
 	}
@@ -59,7 +59,7 @@ ExplainQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 	/* rewriter will not cope with utility statements */
 	if (query->commandType == CMD_UTILITY)
 	{
-		elog(INFO, "Utility statements have no plan structure");
+		elog(NOTICE, "Utility statements have no plan structure");
 		return;
 	}
 
@@ -69,7 +69,7 @@ ExplainQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 	/* In the case of an INSTEAD NOTHING, tell at least that */
 	if (rewritten == NIL)
 	{
-		elog(INFO, "Query rewrites to nothing");
+		elog(NOTICE, "Query rewrites to nothing");
 		return;
 	}
 

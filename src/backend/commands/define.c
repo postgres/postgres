@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.66 2002/03/02 21:39:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.67 2002/03/06 06:09:32 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -154,7 +154,7 @@ compute_full_attributes(List *parameters,
 		else if (strcasecmp(param->defname, "outin_ratio") == 0)
 			*outin_ratio_p = (int) defGetNumeric(param);
 		else
-			elog(NOTICE, "Unrecognized function attribute '%s' ignored",
+			elog(WARNING, "Unrecognized function attribute '%s' ignored",
 				 param->defname);
 	}
 }
@@ -348,12 +348,12 @@ DefineOperator(char *oprName,
 		else if (strcasecmp(defel->defname, "precedence") == 0)
 		{
 			/* NOT IMPLEMENTED (never worked in v4.2) */
-			elog(INFO, "CREATE OPERATOR: precedence not implemented");
+			elog(NOTICE, "CREATE OPERATOR: precedence not implemented");
 		}
 		else if (strcasecmp(defel->defname, "associativity") == 0)
 		{
 			/* NOT IMPLEMENTED (never worked in v4.2) */
-			elog(INFO, "CREATE OPERATOR: associativity not implemented");
+			elog(NOTICE, "CREATE OPERATOR: associativity not implemented");
 		}
 		else if (strcasecmp(defel->defname, "commutator") == 0)
 			commutatorName = defGetString(defel);
@@ -379,7 +379,7 @@ DefineOperator(char *oprName,
 			sortName2 = defGetString(defel);
 		else
 		{
-			elog(NOTICE, "DefineOperator: attribute \"%s\" not recognized",
+			elog(WARNING, "DefineOperator: attribute \"%s\" not recognized",
 				 defel->defname);
 		}
 	}
@@ -450,7 +450,7 @@ DefineAggregate(char *aggName, List *parameters)
 		else if (strcasecmp(defel->defname, "initcond1") == 0)
 			initval = defGetString(defel);
 		else
-			elog(NOTICE, "DefineAggregate: attribute \"%s\" not recognized",
+			elog(WARNING, "DefineAggregate: attribute \"%s\" not recognized",
 				 defel->defname);
 	}
 
@@ -578,7 +578,7 @@ DefineType(char *typeName, List *parameters)
 		}
 		else
 		{
-			elog(NOTICE, "DefineType: attribute \"%s\" not recognized",
+			elog(WARNING, "DefineType: attribute \"%s\" not recognized",
 				 defel->defname);
 		}
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.65 2001/11/05 17:46:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.66 2002/03/06 06:09:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,8 +336,8 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 
 	if (((Form_pg_proc) GETSTRUCT(tup))->prolang == INTERNALlanguageId)
 	{
-		/* "Helpful" notice when removing a builtin function ... */
-		elog(NOTICE, "Removing built-in function \"%s\"", functionName);
+		/* "Helpful" WARNING when removing a builtin function ... */
+		elog(WARNING, "Removing built-in function \"%s\"", functionName);
 	}
 
 	/* Delete any comments associated with this function */

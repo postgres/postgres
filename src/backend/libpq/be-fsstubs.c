@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.59 2001/06/13 21:44:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.60 2002/03/06 06:09:46 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -82,7 +82,7 @@ lo_open(PG_FUNCTION_ARGS)
 	MemoryContext currentContext;
 
 #if FSDB
-	elog(NOTICE, "lo_open(%u,%d)", lobjId, mode);
+	elog(DEBUG3, "lo_open(%u,%d)", lobjId, mode);
 #endif
 
 	if (fscxt == NULL)
@@ -100,7 +100,7 @@ lo_open(PG_FUNCTION_ARGS)
 	{							/* lookup failed */
 		MemoryContextSwitchTo(currentContext);
 #if FSDB
-		elog(NOTICE, "cannot open large object %u", lobjId);
+		elog(DEBUG3, "cannot open large object %u", lobjId);
 #endif
 		PG_RETURN_INT32(-1);
 	}
@@ -124,7 +124,7 @@ lo_close(PG_FUNCTION_ARGS)
 		PG_RETURN_INT32(-1);
 	}
 #if FSDB
-	elog(NOTICE, "lo_close(%d)", fd);
+	elog(DEBUG3, "lo_close(%d)", fd);
 #endif
 
 	Assert(fscxt != NULL);

@@ -75,7 +75,7 @@ pgxml_parse(PG_FUNCTION_ARGS)
 	if (!XML_Parse(p, (char *) VARDATA(t), docsize, 1))
 	{
 		/*
-		 * elog(NOTICE, "Parse error at line %d:%s",
+		 * elog(WARNING, "Parse error at line %d:%s",
 		 * XML_GetCurrentLineNumber(p),
 		 * XML_ErrorString(XML_GetErrorCode(p)));
 		 */
@@ -158,7 +158,7 @@ build_xpath_results(text *doc, text *pathstr)
 	if (!XML_Parse(p, (char *) VARDATA(doc), docsize, 1))
 	{
 		/*
-		 * elog(NOTICE, "Parse error at line %d:%s",
+		 * elog(WARNING, "Parse error at line %d:%s",
 		 * XML_GetCurrentLineNumber(p),
 		 * XML_ErrorString(XML_GetErrorCode(p)));
 		 */
@@ -267,7 +267,7 @@ pgxml_starthandler(void *userData, const XML_Char * name,
 	char		sepstr[] = "/";
 
 	if ((strlen(name) + strlen(UD->currentpath)) > MAXPATHLENGTH - 2)
-		elog(NOTICE, "Path too long");
+		elog(WARNING, "Path too long");
 	else
 	{
 		strncat(UD->currentpath, sepstr, 1);
@@ -302,7 +302,7 @@ pgxml_endhandler(void *userData, const XML_Char * name)
 	}
 	if (strcmp(name, sepptr + 1) != 0)
 	{
-		elog(NOTICE, "Wanted [%s], got [%s]", sepptr, name);
+		elog(WARNING, "Wanted [%s], got [%s]", sepptr, name);
 		/* unmatched entry, so do nothing */
 	}
 	else

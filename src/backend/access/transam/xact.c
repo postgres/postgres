@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.116 2002/03/02 21:39:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.117 2002/03/06 06:09:21 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -920,7 +920,7 @@ CommitTransaction(void)
 	 * check the current transaction state
 	 */
 	if (s->state != TRANS_INPROGRESS)
-		elog(NOTICE, "CommitTransaction and not in in-progress state");
+		elog(WARNING, "CommitTransaction and not in in-progress state");
 
 	/*
 	 * Tell the trigger manager that this transaction is about to be
@@ -1044,7 +1044,7 @@ AbortTransaction(void)
 	 * check the current transaction state
 	 */
 	if (s->state != TRANS_INPROGRESS)
-		elog(NOTICE, "AbortTransaction and not in in-progress state");
+		elog(WARNING, "AbortTransaction and not in in-progress state");
 
 	/*
 	 * set the current transaction state information appropriately during
@@ -1163,7 +1163,7 @@ StartTransactionCommand(void)
 			 * warning and change to the in-progress state.
 			 */
 		case TBLOCK_BEGIN:
-			elog(NOTICE, "StartTransactionCommand: unexpected TBLOCK_BEGIN");
+			elog(WARNING, "StartTransactionCommand: unexpected TBLOCK_BEGIN");
 			s->blockState = TBLOCK_INPROGRESS;
 			break;
 
@@ -1184,7 +1184,7 @@ StartTransactionCommand(void)
 			 * and change to the default state.
 			 */
 		case TBLOCK_END:
-			elog(NOTICE, "StartTransactionCommand: unexpected TBLOCK_END");
+			elog(WARNING, "StartTransactionCommand: unexpected TBLOCK_END");
 			s->blockState = TBLOCK_DEFAULT;
 			CommitTransaction();
 			StartTransaction();
@@ -1207,7 +1207,7 @@ StartTransactionCommand(void)
 			 * default.
 			 */
 		case TBLOCK_ENDABORT:
-			elog(NOTICE, "StartTransactionCommand: unexpected TBLOCK_ENDABORT");
+			elog(WARNING, "StartTransactionCommand: unexpected TBLOCK_ENDABORT");
 			break;
 	}
 
@@ -1387,7 +1387,7 @@ BeginTransactionBlock(void)
 	 * check the current transaction state
 	 */
 	if (s->blockState != TBLOCK_DEFAULT)
-		elog(NOTICE, "BEGIN: already a transaction in progress");
+		elog(WARNING, "BEGIN: already a transaction in progress");
 
 	/*
 	 * set the current transaction block state information appropriately
@@ -1444,11 +1444,11 @@ EndTransactionBlock(void)
 
 	/*
 	 * here, the user issued COMMIT when not inside a transaction. Issue a
-	 * notice and go to abort state.  The upcoming call to
+	 * WARNING and go to abort state.  The upcoming call to
 	 * CommitTransactionCommand() will then put us back into the default
 	 * state.
 	 */
-	elog(NOTICE, "COMMIT: no transaction in progress");
+	elog(WARNING, "COMMIT: no transaction in progress");
 	AbortTransaction();
 	s->blockState = TBLOCK_ENDABORT;
 }
@@ -1481,11 +1481,11 @@ AbortTransactionBlock(void)
 
 	/*
 	 * here, the user issued ABORT when not inside a transaction. Issue a
-	 * notice and go to abort state.  The upcoming call to
+	 * WARNING and go to abort state.  The upcoming call to
 	 * CommitTransactionCommand() will then put us back into the default
 	 * state.
 	 */
-	elog(NOTICE, "ROLLBACK: no transaction in progress");
+	elog(WARNING, "ROLLBACK: no transaction in progress");
 	AbortTransaction();
 	s->blockState = TBLOCK_ENDABORT;
 }
@@ -1528,11 +1528,11 @@ UserAbortTransactionBlock(void)
 
 	/*
 	 * here, the user issued ABORT when not inside a transaction. Issue a
-	 * notice and go to abort state.  The upcoming call to
+	 * WARNING and go to abort state.  The upcoming call to
 	 * CommitTransactionCommand() will then put us back into the default
 	 * state.
 	 */
-	elog(NOTICE, "ROLLBACK: no transaction in progress");
+	elog(WARNING, "ROLLBACK: no transaction in progress");
 	AbortTransaction();
 	s->blockState = TBLOCK_ENDABORT;
 }

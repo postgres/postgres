@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.12 2002/03/02 21:39:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.13 2002/03/06 06:09:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 		elevel = INFO;
 	else
 		elevel = DEBUG1;
-		
+
 	vacuum_set_xid_limits(vacstmt, onerel->rd_rel->relisshared,
 						  &OldestXmin, &FreezeLimit);
 
@@ -263,7 +263,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 			if (PageIsNew(page))
 			{
-				elog(NOTICE, "Rel %s: Uninitialized page %u - fixing",
+				elog(WARNING, "Rel %s: Uninitialized page %u - fixing",
 					 relname, blkno);
 				PageInit(page, BufferGetPageSize(buf), 0);
 				lazy_record_free_space(vacrelstats, blkno,
@@ -367,7 +367,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 */
 			if (!OidIsValid(tuple.t_data->t_oid) &&
 				onerel->rd_rel->relhasoids)
-				elog(NOTICE, "Rel %s: TID %u/%u: OID IS INVALID. TUPGONE %d.",
+				elog(WARNING, "Rel %s: TID %u/%u: OID IS INVALID. TUPGONE %d.",
 					 relname, blkno, offnum, (int) tupgone);
 
 			if (tupgone)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.90 2002/03/03 17:47:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.91 2002/03/06 06:10:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -463,7 +463,7 @@ AtEOXact_CatCache(bool isCommit)
 		if (ct->refcount != 0)
 		{
 			if (isCommit)
-				elog(NOTICE, "Cache reference leak: cache %s (%d), tuple %u has count %d",
+				elog(WARNING, "Cache reference leak: cache %s (%d), tuple %u has count %d",
 					 ct->my_cache->cc_relname, ct->my_cache->id,
 					 ct->tuple.t_data->t_oid,
 					 ct->refcount);

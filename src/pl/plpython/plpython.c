@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.14 2002/03/02 21:39:35 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.15 2002/03/06 06:10:47 momjian Exp $
  *
  *********************************************************************
  */
@@ -415,7 +415,7 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * elog(NOTICE, "PLy_restart_in_progress is %d",
+	 * elog(DEBUG3, "PLy_restart_in_progress is %d",
 	 * PLy_restart_in_progress);
 	 */
 
@@ -506,7 +506,7 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 				(TRIGGER_FIRED_BY_UPDATE(tdata->tg_event)))
 				rv = PLy_modify_tuple(proc, plargs, tdata, rv);
 			else
-				elog(NOTICE, "plpython: Ignoring modified tuple in DELETE trigger");
+				elog(WARNING, "plpython: Ignoring modified tuple in DELETE trigger");
 		}
 		else if (strcasecmp(srv, "OK"))
 		{
@@ -2037,7 +2037,7 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 		if (!PyErr_Occurred())
 			PyErr_SetString(PLy_exc_spi_error,
 							"Unknown error in PLy_spi_prepare.");
-		PLy_elog(NOTICE,"in function %s:",PLy_procedure_name(PLy_last_procedure));
+		PLy_elog(WARNING,"in function %s:",PLy_procedure_name(PLy_last_procedure));
 		RERAISE_EXC();
 	}
 
@@ -2234,7 +2234,7 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 		if (!PyErr_Occurred())
 			PyErr_SetString(PLy_exc_error,
 							"Unknown error in PLy_spi_execute_plan");
-		PLy_elog(NOTICE,"in function %s:",PLy_procedure_name(PLy_last_procedure));
+		PLy_elog(WARNING,"in function %s:",PLy_procedure_name(PLy_last_procedure));
 		RERAISE_EXC();
 	}
 
@@ -2300,7 +2300,7 @@ PLy_spi_execute_query(char *query, int limit)
 		if ((!PLy_restart_in_progress) && (!PyErr_Occurred()))
 			PyErr_SetString(PLy_exc_spi_error,
 							"Unknown error in PLy_spi_execute_query.");
-		PLy_elog(NOTICE,"in function %s:",PLy_procedure_name(PLy_last_procedure));
+		PLy_elog(WARNING,"in function %s:",PLy_procedure_name(PLy_last_procedure));
 		RERAISE_EXC();
 	}
 
@@ -2664,7 +2664,7 @@ PLy_log(volatile int level, PyObject * self, PyObject * args)
 	enter();
 
 	if (args == NULL)
-		elog(NOTICE, "plpython, args is NULL in %s", __FUNCTION__);
+		elog(WARNING, "plpython, args is NULL in %s", __FUNCTION__);
 
 	so = PyObject_Str(args);
 	if ((so == NULL) || ((sv = PyString_AsString(so)) == NULL))
@@ -2690,7 +2690,7 @@ PLy_log(volatile int level, PyObject * self, PyObject * args)
 	}
 
 	/*
-	 * ok, this is a NOTICE, or LOG message
+	 * ok, this is a WARNING, or LOG message
 	 *
 	 * but just in case DON'T long jump out of the interpreter!
 	 */
@@ -2828,7 +2828,7 @@ PLy_traceback(int *xlevel)
 	 */
 	if (e == NULL)
 	{
-		*xlevel = NOTICE;
+		*xlevel = WARNING;
 		return NULL;
 	}
 

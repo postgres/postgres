@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.18 2001/10/25 05:49:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.19 2002/03/06 06:10:31 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -59,8 +59,8 @@ handle_transaction(void)
 
 	if (notice[0])
 	{
-		if ((!commit && strcmp(notice, "NOTICE:  ROLLBACK: no transaction in progress\n") != 0) ||
-			(commit && strcmp(notice, "NOTICE:  COMMIT: no transaction in progress\n") != 0))
+		if ((!commit && strcmp(notice, "WARNING:  ROLLBACK: no transaction in progress\n") != 0) ||
+			(commit && strcmp(notice, "WARNING:  COMMIT: no transaction in progress\n") != 0))
 			fputs(notice, stderr);
 	}
 	else if (!QUIET())

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.20 2001/10/25 05:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.21 2002/03/06 06:10:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1197,7 +1197,7 @@ bitposition(PG_FUNCTION_ARGS)
 					mask2 = end_mask << (BITS_PER_BYTE - is);
 					is_match = mask2 == 0;
 #if 0
-					elog(NOTICE, "S. %d %d em=%2x sm=%2x r=%d",
+					elog(DEBUG3, "S. %d %d em=%2x sm=%2x r=%d",
 						 i, is, end_mask, mask2, is_match);
 #endif
 					break;

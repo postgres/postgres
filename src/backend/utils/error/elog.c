@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.93 2002/03/04 01:46:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.94 2002/03/06 06:10:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ const char	server_min_messages_str_default[] = "notice";
 
 int			client_min_messages;
 char	   *client_min_messages_str = NULL;
-const char	client_min_messages_str_default[] = "info";
+const char	client_min_messages_str_default[] = "notice";
 
 #ifdef ENABLE_SYSLOG
 /*
@@ -74,10 +74,6 @@ static const char *print_pid(void);
 static void send_message_to_frontend(int type, const char *msg);
 static const char *useful_strerror(int errnum);
 static const char *elog_message_prefix(int lev);
-
-#define send_notice_to_frontend(msg)  send_message_to_frontend(NOTICE, msg)
-#define send_error_to_frontend(msg)  send_message_to_frontend(ERROR, msg)
-
 
 static int	Debugfile = -1;
 
@@ -190,7 +186,7 @@ elog(int lev, const char *fmt,...)
 		if (ClientAuthInProgress)
 			output_to_client = (lev >= ERROR);
 		else
-			output_to_client = (lev >= client_min_messages);
+			output_to_client = (lev >= client_min_messages || lev == INFO);
 	}
 
 	/* Skip formatting effort if non-error message will not be output */
@@ -376,6 +372,7 @@ elog(int lev, const char *fmt,...)
 				syslog_level = LOG_INFO;
 				break;
 			case NOTICE:
+			case WARNING:
 				syslog_level = LOG_NOTICE;
 				break;
 			case ERROR:
@@ -415,9 +412,9 @@ elog(int lev, const char *fmt,...)
 		 */
 		oldcxt = MemoryContextSwitchTo(ErrorContext);
 
-		if (lev <= NOTICE)
+		if (lev <= WARNING)
 			/* exclude the timestamp from msg sent to frontend */
-			send_notice_to_frontend(msg_buf + timestamp_size);
+			send_message_to_frontend(lev, msg_buf + timestamp_size);
 		else
 		{
 			/*
@@ -426,7 +423,7 @@ elog(int lev, const char *fmt,...)
 			 * protocol.
 			 */
 			pq_endcopyout(true);
-			send_error_to_frontend(msg_buf + timestamp_size);
+			send_message_to_frontend(ERROR, msg_buf + timestamp_size);
 		}
 
 		MemoryContextSwitchTo(oldcxt);
@@ -509,7 +506,7 @@ elog(int lev, const char *fmt,...)
 		proc_exit(2);
 	}
 
-	/* We reach here if lev <= NOTICE.	OK to return to caller. */
+	/* We reach here if lev <= WARNING.	OK to return to caller. */
 }
 
 
@@ -747,7 +744,8 @@ send_message_to_frontend(int type, const char *msg)
 	AssertArg(type <= ERROR);
 
 	pq_beginmessage(&buf);
-	pq_sendbyte(&buf, type != ERROR ? 'N' : 'E'); /* N is INFO or NOTICE */
+	pq_sendbyte(&buf, type != ERROR ? 'N' : 'E'); /* N is INFO, NOTICE,
+												   * or WARNING */
 	pq_sendstring(&buf, msg);
 	pq_endmessage(&buf);
 
@@ -820,6 +818,9 @@ elog_message_prefix(int lev)
 		case NOTICE:
 			prefix = gettext("NOTICE:  ");
 			break;
+		case WARNING:
+			prefix = gettext("WARNING:  ");
+			break;
 		case ERROR:
 			prefix = gettext("ERROR:  ");
 			break;
@@ -852,6 +853,7 @@ check_server_min_messages(const char *lev)
 		strcasecmp(lev, "log") == 0 ||
 		strcasecmp(lev, "info") == 0 ||
 		strcasecmp(lev, "notice") == 0 ||
+		strcasecmp(lev, "warning") == 0 ||
 		strcasecmp(lev, "error") == 0 ||
 		strcasecmp(lev, "fatal") == 0 ||
 		strcasecmp(lev, "panic") == 0)
@@ -880,6 +882,8 @@ assign_server_min_messages(const char *lev)
 		server_min_messages = INFO;
 	else if (strcasecmp(lev, "notice") == 0)
 		server_min_messages = NOTICE;
+	else if (strcasecmp(lev, "warning") == 0)
+		server_min_messages = WARNING;
 	else if (strcasecmp(lev, "error") == 0)
 		server_min_messages = ERROR;
 	else if (strcasecmp(lev, "fatal") == 0)
@@ -901,8 +905,8 @@ check_client_min_messages(const char *lev)
 		strcasecmp(lev, "debug4") == 0 ||
 		strcasecmp(lev, "debug5") == 0 ||
 		strcasecmp(lev, "log") == 0 ||
-		strcasecmp(lev, "info") == 0 ||
 		strcasecmp(lev, "notice") == 0 ||
+		strcasecmp(lev, "warning") == 0 ||
 		strcasecmp(lev, "error") == 0)
 		return true;
 	return false;
@@ -925,10 +929,10 @@ assign_client_min_messages(const char *lev)
 		client_min_messages = DEBUG5;
 	else if (strcasecmp(lev, "log") == 0)
 		client_min_messages = LOG;
-	else if (strcasecmp(lev, "info") == 0)
-		client_min_messages = INFO;
 	else if (strcasecmp(lev, "notice") == 0)
 		client_min_messages = NOTICE;
+	else if (strcasecmp(lev, "warning") == 0)
+		client_min_messages = WARNING;
 	else if (strcasecmp(lev, "error") == 0)
 		client_min_messages = ERROR;
 	else

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.55 2002/03/02 21:39:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.56 2002/03/06 06:09:24 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -631,7 +631,7 @@ in_group(AclId uid, AclId gid)
 		ReleaseSysCache(tuple);
 	}
 	else
-		elog(NOTICE, "in_group: group %u not found", gid);
+		elog(WARNING, "in_group: group %u not found", gid);
 	return result;
 }
 

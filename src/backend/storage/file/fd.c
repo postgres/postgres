@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.89 2002/03/02 21:39:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.90 2002/03/06 06:10:03 momjian Exp $
  *
  * NOTES:
  *
@@ -1193,7 +1193,7 @@ FreeFile(FILE *file)
 		}
 	}
 	if (i < 0)
-		elog(NOTICE, "FreeFile: file was not obtained from AllocateFile");
+		elog(WARNING, "FreeFile: file was not obtained from AllocateFile");
 
 	fclose(file);
 }

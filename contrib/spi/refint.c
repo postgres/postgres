@@ -59,7 +59,7 @@ check_primary_key(PG_FUNCTION_ARGS)
 	int			i;
 
 #ifdef	DEBUG_QUERY
-	elog(NOTICE, "Check_primary_key Enter Function");
+	elog(DEBUG3, "Check_primary_key Enter Function");
 #endif
 
 	/*
@@ -249,7 +249,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 				r;
 
 #ifdef DEBUG_QUERY
-	elog(NOTICE, "Check_foreign_key Enter Function");
+	elog(DEBUG3, "Check_foreign_key Enter Function");
 #endif
 
 	/*
@@ -453,7 +453,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 							 strcmp(type, "date") && strcmp(type, "datetime")) == 0)
 							is_char_type = 1;
 #ifdef	DEBUG_QUERY
-						elog(NOTICE, "Check_foreign_key Debug value %s type %s %d",
+						elog(DEBUG3, "Check_foreign_key Debug value %s type %s %d",
 							 nv, type, is_char_type);
 #endif
 
@@ -519,7 +519,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 		}
 		plan->nplans = nrefs;
 #ifdef	DEBUG_QUERY
-		elog(NOTICE, "Check_foreign_key Debug Query is :  %s ", sql);
+		elog(DEBUG3, "Check_foreign_key Debug Query is :  %s ", sql);
 #endif
 	}
 
@@ -563,7 +563,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 		}
 #ifdef REFINT_VERBOSE
 		else
-			elog(NOTICE, "%s: %d tuple(s) of %s are %s",
+			elog(DEBUG3, "%s: %d tuple(s) of %s are %s",
 				 trigger->tgname, SPI_processed, relname,
 				 (action == 'c') ? "deleted" : "setted to null");
 #endif

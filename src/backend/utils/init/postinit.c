@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.99 2002/03/01 22:45:15 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.100 2002/03/06 06:10:25 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -354,8 +354,8 @@ InitPostgres(const char *dbname, const char *username)
 		InitializeSessionUserIdStandalone();
 		if (!ThereIsAtLeastOneUser())
 		{
-			elog(NOTICE, "There are currently no users defined in this database system.");
-			elog(NOTICE, "You should immediately run 'CREATE USER \"%s\" WITH SYSID %d CREATEUSER;'.",
+			elog(WARNING, "There are currently no users defined in this database system.");
+			elog(WARNING, "You should immediately run 'CREATE USER \"%s\" WITH SYSID %d CREATEUSER;'.",
 				 username, BOOTSTRAP_USESYSID);
 		}
 	}

@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px.c,v 1.6 2001/11/20 18:54:07 momjian Exp $
+ * $Id: px.c,v 1.7 2002/03/06 06:09:10 momjian Exp $
  */
 
 #include <postgres.h>
@@ -217,7 +217,7 @@ combo_decrypt(PX_Combo * cx, const uint8 *data, unsigned dlen,
 
 	/* error reporting should be done in pgcrypto.c */
 block_error:
-	elog(NOTICE, "Data not a multiple of block size");
+	elog(WARNING, "Data not a multiple of block size");
 	return -1;
 }
 

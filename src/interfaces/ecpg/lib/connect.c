@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.17 2001/12/23 12:17:41 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.18 2002/03/06 06:10:35 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -142,117 +142,117 @@ static void
 ECPGnoticeProcessor(void *arg, const char *message)
 {
 	/* these notices raise an error */
-	if (strncmp(message, "NOTICE: ", 8))
+	if (strncmp(message, "WARNING: ", 9))
 	{
-		ECPGlog("ECPGnoticeProcessor: strange notice '%s'\n", message);
-		ECPGnoticeProcessor_raise(ECPG_NOTICE_UNRECOGNIZED, message);
+		ECPGlog("ECPGnoticeProcessor: strange warning '%s'\n", message);
+		ECPGnoticeProcessor_raise(ECPG_WARNING_UNRECOGNIZED, message);
 		return;
 	}
 
 	message += 8;
 	while (*message == ' ')
 		message++;
-	ECPGlog("NOTICE: %s", message);
+	ECPGlog("WARNING: %s", message);
 
-	/* NOTICE:	(transaction aborted): queries ignored until END */
+	/* WARNING:	(transaction aborted): queries ignored until END */
 
 	/*
-	 * NOTICE:	current transaction is aborted, queries ignored until end
+	 * WARNING:	current transaction is aborted, queries ignored until end
 	 * of transaction block
 	 */
 	if (strstr(message, "queries ignored") && strstr(message, "transaction")
 		&& strstr(message, "aborted"))
 	{
-		ECPGnoticeProcessor_raise(ECPG_NOTICE_QUERY_IGNORED, message);
+		ECPGnoticeProcessor_raise(ECPG_WARNING_QUERY_IGNORED, message);
 		return;
 	}
 
-	/* NOTICE:	PerformPortalClose: portal "*" not found */
+	/* WARNING:	PerformPortalClose: portal "*" not found */
 	if ((!strncmp(message, "PerformPortalClose: portal", 26)
 		 || !strncmp(message, "PerformPortalFetch: portal", 26))
 		&& strstr(message + 26, "not found"))
 	{
-		ECPGnoticeProcessor_raise(ECPG_NOTICE_UNKNOWN_PORTAL, message);
+		ECPGnoticeProcessor_raise(ECPG_WARNING_UNKNOWN_PORTAL, message);
 		return;
 	}
 
-	/* NOTICE:	BEGIN: already a transaction in progress */
+	/* WARNING:	BEGIN: already a transaction in progress */
 	if (!strncmp(message, "BEGIN: already a transaction in progress", 40))
 	{
-		ECPGnoticeProcessor_raise(ECPG_NOTICE_IN_TRANSACTION, message);
+		ECPGnoticeProcessor_raise(ECPG_WARNING_IN_TRANSACTION, message);
 		return;
 	}
 
-	/* NOTICE:	AbortTransaction and not in in-progress state */
-	/* NOTICE:	COMMIT: no transaction in progress */
-	/* NOTICE:	ROLLBACK: no transaction in progress */
+	/* WARNING:	AbortTransaction and not in in-progress state */
+	/* WARNING:	COMMIT: no transaction in progress */
+	/* WARNING:	ROLLBACK: no transaction in progress */
 	if (!strncmp(message, "AbortTransaction and not in in-progress state", 45)
 		|| !strncmp(message, "COMMIT: no transaction in progress", 34)
 		|| !strncmp(message, "ROLLBACK: no transaction in progress", 36))
 	{
-		ECPGnoticeProcessor_raise(ECPG_NOTICE_NO_TRANSACTION, message);
+		ECPGnoticeProcessor_raise(ECPG_WARNING_NO_TRANSACTION, message);
 		return;
 	}
 
-	/* NOTICE:	BlankPortalAssignName: portal * already exists */
+	/* WARNING:	BlankPortalAssignName: portal * already exists */
 	if (!strncmp(message, "BlankPortalAssignName: portal", 29)
 		&& strstr(message + 29, "already exists"))
 	{
-		ECPGnoticeProcessor_raise(ECPG_NOTICE_PORTAL_EXISTS, message);
+		ECPGnoticeProcessor_raise(ECPG_WARNING_PORTAL_EXISTS, message);
 		return;
 	}
 
 	/* these are harmless - do nothing */
 
 	/*
-	 * NOTICE:	CREATE TABLE / PRIMARY KEY will create implicit index '*'
+	 * WARNING:	CREATE TABLE / PRIMARY KEY will create implicit index '*'
 	 * for table '*'
 	 */
 
 	/*
-	 * NOTICE:	ALTER TABLE ... ADD CONSTRAINT will create implicit
+	 * WARNING:	ALTER TABLE ... ADD CONSTRAINT will create implicit
 	 * trigger(s) for FOREIGN KEY check(s)
 	 */
 
 	/*
-	 * NOTICE:	CREATE TABLE will create implicit sequence '*' for SERIAL
+	 * WARNING:	CREATE TABLE will create implicit sequence '*' for SERIAL
 	 * column '*.*'
 	 */
 
 	/*
-	 * NOTICE:	CREATE TABLE will create implicit trigger(s) for FOREIGN
+	 * WARNING:	CREATE TABLE will create implicit trigger(s) for FOREIGN
 	 * KEY check(s)
 	 */
 	if ((!strncmp(message, "CREATE TABLE", 12) || !strncmp(message, "ALTER TABLE", 11))
 		&& strstr(message + 11, "will create implicit"))
 		return;
 
-	/* NOTICE:	QUERY PLAN: */
+	/* WARNING:	QUERY PLAN: */
 	if (!strncmp(message, "QUERY PLAN:", 11))	/* do we really see these? */
 		return;
 
 	/*
-	 * NOTICE:	DROP TABLE implicitly drops referential integrity trigger
+	 * WARNING:	DROP TABLE implicitly drops referential integrity trigger
 	 * from table "*"
 	 */
 	if (!strncmp(message, "DROP TABLE implicitly drops", 27))
 		return;
 
 	/*
-	 * NOTICE:	Caution: DROP INDEX cannot be rolled back, so don't abort
+	 * WARNING:	Caution: DROP INDEX cannot be rolled back, so don't abort
 	 * now
 	 */
 	if (strstr(message, "cannot be rolled back"))
 		return;
 
 	/* these and other unmentioned should set sqlca.sqlwarn[2] */
-	/* NOTICE:	The ':' operator is deprecated.  Use exp(x) instead. */
-	/* NOTICE:	Rel *: Uninitialized page 0 - fixing */
-	/* NOTICE:	PortalHeapMemoryFree: * not in alloc set! */
-	/* NOTICE:	Too old parent tuple found - can't continue vc_repair_frag */
-	/* NOTICE:	identifier "*" will be truncated to "*" */
-	/* NOTICE:	InvalidateSharedInvalid: cache state reset */
-	/* NOTICE:	RegisterSharedInvalid: SI buffer overflow */
+	/* WARNING:	The ':' operator is deprecated.  Use exp(x) instead. */
+	/* WARNING:	Rel *: Uninitialized page 0 - fixing */
+	/* WARNING:	PortalHeapMemoryFree: * not in alloc set! */
+	/* WARNING:	Too old parent tuple found - can't continue vc_repair_frag */
+	/* WARNING:	identifier "*" will be truncated to "*" */
+	/* WARNING:	InvalidateSharedInvalid: cache state reset */
+	/* WARNING:	RegisterSharedInvalid: SI buffer overflow */
 	sqlca.sqlwarn[2] = 'W';
 	sqlca.sqlwarn[0] = 'W';
 }

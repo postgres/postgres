@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.128 2002/03/04 01:46:03 tgl Exp $
+ *	$Id: pqcomm.c,v 1.129 2002/03/06 06:09:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -716,7 +716,7 @@ pq_eof(void)
  *		If msgtype is '\0', then the buffer already includes the type code.
  *
  *		All normal messages are suppressed while COPY OUT is in progress.
- *		(In practice only NOTICE messages might get emitted then; dropping
+ *		(In practice only a few messages might get emitted then; dropping
  *		them is annoying, but at least they will still appear in the
  *		postmaster log.)
  *

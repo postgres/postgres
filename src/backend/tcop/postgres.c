@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.253 2002/03/04 01:46:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.254 2002/03/06 06:10:09 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -464,7 +464,7 @@ pg_analyze_and_rewrite(Node *parsetree)
 	new_list = (List *) copyObject(querytree_list);
 	/* This checks both copyObject() and the equal() routines... */
 	if (!equal(new_list, querytree_list))
-		elog(NOTICE, "pg_analyze_and_rewrite: copyObject failed on parse tree");
+		elog(WARNING, "pg_analyze_and_rewrite: copyObject failed on parse tree");
 	else
 		querytree_list = new_list;
 #endif
@@ -527,7 +527,7 @@ pg_plan_query(Query *querytree)
 #ifdef NOT_USED
 		/* This checks both copyObject() and the equal() routines... */
 		if (!equal(new_plan, plan))
-			elog(NOTICE, "pg_plan_query: copyObject failed on plan tree");
+			elog(WARNING, "pg_plan_query: copyObject failed on plan tree");
 		else
 #endif
 			plan = new_plan;
@@ -686,7 +686,7 @@ pg_exec_query_string(char *query_string,		/* string to execute */
 
 			if (!allowit)
 			{
-				elog(NOTICE, "current transaction is aborted, "
+				elog(WARNING, "current transaction is aborted, "
 					 "queries ignored until end of transaction block");
 
 				/*
@@ -952,7 +952,7 @@ void
 quickdie(SIGNAL_ARGS)
 {
 	PG_SETMASK(&BlockSig);
-	elog(NOTICE, "Message from PostgreSQL backend:"
+	elog(WARNING, "Message from PostgreSQL backend:"
 		 "\n\tThe Postmaster has informed me that some other backend"
 		 "\n\tdied abnormally and possibly corrupted shared memory."
 		 "\n\tI have rolled back the current transaction and am"
@@ -1251,7 +1251,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 #ifdef USE_ASSERT_CHECKING
 				SetConfigOption("debug_assertions", optarg, ctx, gucsource);
 #else
-				elog(NOTICE, "Assert checking is not compiled in");
+				elog(WARNING, "Assert checking is not compiled in");
 #endif
 				break;
 
@@ -1493,7 +1493,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				 */
 				if (XfuncMode != 0)
 				{
-					elog(NOTICE, "only one -x flag is allowed");
+					elog(WARNING, "only one -x flag is allowed");
 					errs++;
 					break;
 				}
@@ -1511,7 +1511,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 					XfuncMode = XFUNC_WAIT;
 				else
 				{
-					elog(NOTICE, "use -x {off,nor,nopull,nopm,pullall,wait}");
+					elog(WARNING, "use -x {off,nor,nopull,nopm,pullall,wait}");
 					errs++;
 				}
 #endif
@@ -1550,7 +1550,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (Show_query_stats &&
 		(Show_parser_stats || Show_planner_stats || Show_executor_stats))
 	{
-		elog(NOTICE, "Query statistics are disabled because parser, planner, or executor statistics are on.");
+		elog(WARNING, "Query statistics are disabled because parser, planner, or executor statistics are on.");
 		SetConfigOption("show_query_stats", "false", ctx, gucsource);
 	}
 
@@ -1627,7 +1627,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		/* noninteractive case: nothing should be left after switches */
 		if (errs || argc != optind || DBName == NULL)
 		{
-			elog(NOTICE, "%s: invalid command line arguments\nTry -? for help.",
+			elog(WARNING, "%s: invalid command line arguments\nTry -? for help.",
 				 argv[0]);
 			proc_exit(0);		/* not 1, that causes system-wide
 								 * restart... */
@@ -1639,7 +1639,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		/* interactive case: database name can be last arg on command line */
 		if (errs || argc - optind > 1)
 		{
-			elog(NOTICE, "%s: invalid command line arguments\nTry -? for help.",
+			elog(WARNING, "%s: invalid command line arguments\nTry -? for help.",
 				 argv[0]);
 			proc_exit(1);
 		}
@@ -1647,7 +1647,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 			DBName = argv[optind];
 		else if ((DBName = username) == NULL)
 		{
-			elog(NOTICE, "%s: user name undefined and no database specified",
+			elog(WARNING, "%s: user name undefined and no database specified",
 				 argv[0]);
 			proc_exit(1);
 		}
@@ -1722,7 +1722,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.253 $ $Date: 2002/03/04 01:46:03 $\n");
+		puts("$Revision: 1.254 $ $Date: 2002/03/06 06:10:09 $\n");
 	}
 
 	/*
@@ -2134,10 +2134,10 @@ assertTest(int val)
 	if (assert_enabled)
 	{
 		/* val != 0 should be trapped by previous Assert */
-		elog(INFO, "Assert test successful (val = %d)", val);
+		elog(DEBUG3, "Assert test successful (val = %d)", val);
 	}
 	else
-		elog(INFO, "Assert checking is disabled (val = %d)", val);
+		elog(DEBUG3, "Assert checking is disabled (val = %d)", val);
 
 	return val;
 }

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.55 2002/03/02 21:39:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.56 2002/03/06 06:10:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -516,12 +516,12 @@ smgrDoPendingDeletes(bool isCommit)
 			/*
 			 * And delete the physical files.
 			 *
-			 * Note: we treat deletion failure as a NOTICE, not an error,
+			 * Note: we treat deletion failure as a WARNING, not an error,
 			 * because we've already decided to commit or abort the
 			 * current xact.
 			 */
 			if ((*(smgrsw[pending->which].smgr_unlink)) (pending->relnode) == SM_FAIL)
-				elog(NOTICE, "cannot unlink %u/%u: %m",
+				elog(WARNING, "cannot unlink %u/%u: %m",
 					 pending->relnode.tblNode, pending->relnode.relNode);
 		}
 		pfree(pending);

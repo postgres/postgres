@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.183 2002/03/03 17:47:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.184 2002/03/06 06:09:25 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -378,7 +378,7 @@ CheckAttributeNames(TupleDesc tupdesc, bool relhasoids)
 			elog(ERROR, "name of column \"%s\" conflicts with an existing system column",
 				 NameStr(tupdesc->attrs[i]->attname));
 		if (tupdesc->attrs[i]->atttypid == UNKNOWNOID)
-			elog(NOTICE, "Attribute '%s' has an unknown type"
+			elog(WARNING, "Attribute '%s' has an unknown type"
 				 "\n\tProceeding with relation creation anyway",
 				 NameStr(tupdesc->attrs[i]->attname));
 	}

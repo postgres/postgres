@@ -95,7 +95,7 @@ noup(PG_FUNCTION_ARGS)
 		if (!isnull)
 		{
 
-			elog(NOTICE, "%s: update not allowed", args[i]);
+			elog(WARNING, "%s: update not allowed", args[i]);
 			SPI_finish();
 			return PointerGetDatum(NULL);
 		}

@@ -93,10 +93,10 @@ ERROR:  renameatt: attribute "oid" exists
  
 -- not in a xact 
 abort;
-NOTICE:  ROLLBACK: no transaction in progress
+WARNING:  ROLLBACK: no transaction in progress
 -- not in a xact 
 end;
-NOTICE:  COMMIT: no transaction in progress
+WARNING:  COMMIT: no transaction in progress
 --
 -- DEFINE AGGREGATE
 -- sfunc/finalfunc type disagreement 

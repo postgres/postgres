@@ -1,7 +1,7 @@
 /*
  * Integer array aggregator / enumerator
  *
- * Mark L. Woodward 
+ * Mark L. Woodward
  * DMN Digital Music Network.
  * www.dmn.com
  *
@@ -73,9 +73,9 @@ PG_FUNCTION_INFO_V1(int_agg_final_count);
 PG_FUNCTION_INFO_V1(int_agg_final_array);
 PG_FUNCTION_INFO_V1(int_enum);
 
-/* 
- * Manage the aggregation state of the array 
- * You need to specify the correct memory context, or it will vanish! 
+/*
+ * Manage the aggregation state of the array
+ * You need to specify the correct memory context, or it will vanish!
  */
 static PGARRAY * GetPGArray(int4 state, int fAdd)
 {
@@ -129,7 +129,7 @@ static PGARRAY * GetPGArray(int4 state, int fAdd)
 	return p;
 }
 
-/* Shrinks the array to its actual size and moves it into the standard 
+/* Shrinks the array to its actual size and moves it into the standard
  * memory allocation context, frees working memory  */
 static PGARRAY *ShrinkPGArray(PGARRAY *p)
 {
@@ -156,7 +156,7 @@ static PGARRAY *ShrinkPGArray(PGARRAY *p)
 			elog(ERROR, "Integer aggregator, can't allocate memory");
 		}
 		pfree(p);
-	}	
+	}
 	return pnew;
 }
 
@@ -206,14 +206,14 @@ Datum int_enum(PG_FUNCTION_ARGS)
 
 	if(!p)
 	{
-		elog(NOTICE, "No data sent\n");
+		elog(WARNING, "No data sent\n");
 		return 0;
 	}
 	if(!rsi)
 	{
 		elog(ERROR, "No ReturnSetInfo sent! function must be declared returning a 'setof' integer");
 		PG_RETURN_NULL();
-		
+
 	}
 	if(!fcinfo->context)
 	{

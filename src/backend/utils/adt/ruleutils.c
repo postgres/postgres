@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.90 2002/02/19 20:11:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.91 2002/03/06 06:10:16 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2631,7 +2631,7 @@ tleIsArrayAssign(TargetEntry *tle)
 	 */
 	if (aref->refexpr == NULL || !IsA(aref->refexpr, Var) ||
 		((Var *) aref->refexpr)->varattno != tle->resdom->resno)
-		elog(NOTICE, "tleIsArrayAssign: I'm confused ...");
+		elog(WARNING, "tleIsArrayAssign: I'm confused ...");
 	return true;
 }
 

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.53 2002/02/26 00:00:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.54 2002/03/06 06:10:46 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -189,15 +189,15 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 		 */
 		if (error_info_func != NULL)
 		{
-			elog(NOTICE, "Error occurred while executing PL/pgSQL function %s",
+			elog(WARNING, "Error occurred while executing PL/pgSQL function %s",
 				 error_info_func->fn_name);
 			if (error_info_stmt != NULL)
-				elog(NOTICE, "line %d at %s", error_info_stmt->lineno,
+				elog(WARNING, "line %d at %s", error_info_stmt->lineno,
 					 plpgsql_stmt_typename(error_info_stmt));
 			else if (error_info_text != NULL)
-				elog(NOTICE, "%s", error_info_text);
+				elog(WARNING, "%s", error_info_text);
 			else
-				elog(NOTICE, "no more error information available");
+				elog(WARNING, "no more error information available");
 
 			error_info_func = NULL;
 			error_info_stmt = NULL;
@@ -437,15 +437,15 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		 */
 		if (error_info_func != NULL)
 		{
-			elog(NOTICE, "Error occurred while executing PL/pgSQL function %s",
+			elog(WARNING, "Error occurred while executing PL/pgSQL function %s",
 				 error_info_func->fn_name);
 			if (error_info_stmt != NULL)
-				elog(NOTICE, "line %d at %s", error_info_stmt->lineno,
+				elog(WARNING, "line %d at %s", error_info_stmt->lineno,
 					 plpgsql_stmt_typename(error_info_stmt));
 			else if (error_info_text != NULL)
-				elog(NOTICE, "%s", error_info_text);
+				elog(WARNING, "%s", error_info_text);
 			else
-				elog(NOTICE, "no more error information available");
+				elog(WARNING, "no more error information available");
 
 			error_info_func = NULL;
 			error_info_stmt = NULL;

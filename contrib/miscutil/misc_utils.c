@@ -103,10 +103,7 @@ active_listeners(text *relname)
 		d = heap_getattr(lTuple, Anum_pg_listener_pid, tdesc, &isnull);
 		pid = DatumGetInt32(d);
 		if ((pid == ourpid) || (kill(pid, SIGTSTP) == 0))
-		{
-			/* elog(NOTICE, "%d ok", pid); */
 			count++;
-		}
 	}
 	heap_endscan(sRel);
 

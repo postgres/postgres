@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.92 2002/03/02 21:39:23 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.93 2002/03/06 06:09:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -547,7 +547,7 @@ AlterUser(AlterUserStmt *stmt)
 
 	/* changes to the flat password file cannot be rolled back */
 	if (IsTransactionBlock() && password)
-		elog(INFO, "ALTER USER: password changes cannot be rolled back");
+		elog(NOTICE, "ALTER USER: password changes cannot be rolled back");
 
 	/*
 	 * Scan the pg_shadow relation to be certain the user exists. Note we
@@ -785,7 +785,7 @@ DropUser(DropUserStmt *stmt)
 		elog(ERROR, "DROP USER: permission denied");
 
 	if (IsTransactionBlock())
-		elog(INFO, "DROP USER cannot be rolled back completely");
+		elog(NOTICE, "DROP USER cannot be rolled back completely");
 
 	/*
 	 * Scan the pg_shadow relation to find the usesysid of the user to be
@@ -1212,12 +1212,11 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 			if (!member(v, newlist))
 				newlist = lappend(newlist, v);
 			else
-
 				/*
 				 * we silently assume here that this error will only come
 				 * up in a ALTER GROUP statement
 				 */
-				elog(NOTICE, "%s: user \"%s\" is already in group \"%s\"",
+				elog(WARNING, "%s: user \"%s\" is already in group \"%s\"",
 					 tag, strVal(lfirst(item)), stmt->name);
 		}
 
@@ -1269,7 +1268,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 		if (null)
 		{
 			if (!is_dropuser)
-				elog(NOTICE, "ALTER GROUP: group \"%s\" does not have any members", stmt->name);
+				elog(WARNING, "ALTER GROUP: group \"%s\" does not have any members", stmt->name);
 		}
 		else
 		{
@@ -1322,7 +1321,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 				if (member(v, newlist))
 					newlist = LispRemove(v, newlist);
 				else if (!is_dropuser)
-					elog(NOTICE, "ALTER GROUP: user \"%s\" is not in group \"%s\"", strVal(lfirst(item)), stmt->name);
+					elog(WARNING, "ALTER GROUP: user \"%s\" is not in group \"%s\"", strVal(lfirst(item)), stmt->name);
 			}
 
 			newarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));

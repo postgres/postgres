@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.284 2002/03/05 05:33:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.285 2002/03/06 06:09:53 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1349,7 +1349,7 @@ columnDef:  ColId Typename ColQualList opt_collate
 					n->constraints = $3;
 
 					if ($4 != NULL)
-						elog(INFO,"CREATE TABLE / COLLATE %s not yet implemented"
+						elog(NOTICE,"CREATE TABLE / COLLATE %s not yet implemented"
 							 "; clause ignored", $4);
 
 					$$ = (Node *)n;
@@ -2347,7 +2347,7 @@ direction:	FORWARD					{ $$ = FORWARD; }
 		| RELATIVE						{ $$ = RELATIVE; }
 		| ABSOLUTE
 			{
-				elog(INFO,"FETCH / ABSOLUTE not supported, using RELATIVE");
+				elog(NOTICE,"FETCH / ABSOLUTE not supported, using RELATIVE");
 				$$ = RELATIVE;
 			}
 		;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.69 2002/03/02 21:39:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.70 2002/03/06 06:09:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -699,7 +699,7 @@ init_sequence(char *caller, char *name)
 		elm->rel = seqrel;
 		if (RelationGetRelid(seqrel) != elm->relid)
 		{
-			elog(NOTICE, "%s.%s: sequence was re-created",
+			elog(WARNING, "%s.%s: sequence was re-created",
 				 name, caller);
 			elm->relid = RelationGetRelid(seqrel);
 			elm->cached = elm->last = elm->increment = 0;

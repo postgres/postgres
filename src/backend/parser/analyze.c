@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.216 2002/03/02 21:39:27 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.217 2002/03/06 06:09:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -425,7 +425,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		/*
 		 * Note: we are not expecting that extras_before and extras_after
 		 * are going to be used by the transformation of the SELECT statement.
- 		 */
+		 */
 		selectQuery = transformStmt(sub_pstate, stmt->selectStmt,
 								extras_before, extras_after);
 
@@ -849,7 +849,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		sequence->istemp = cxt->istemp;
 		sequence->options = NIL;
 
-		elog(INFO, "%s will create implicit sequence '%s' for SERIAL column '%s.%s'",
+		elog(NOTICE, "%s will create implicit sequence '%s' for SERIAL column '%s.%s'",
 		cxt->stmtType, sequence->seqname, cxt->relname, column->colname);
 
 		cxt->blist = lappend(cxt->blist, sequence);
@@ -1125,7 +1125,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 							 * later.  That would likely be cleaner, but
 							 * too much work to contemplate right now.
 							 * Instead, raise an error if the inherited
-							 * column won't be NOT NULL. (Would a NOTICE
+							 * column won't be NOT NULL. (Would a WARNING
 							 * be more reasonable?)
 							 */
 							if (constraint->contype == CONSTR_PRIMARY &&
@@ -1245,7 +1245,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 
 	/*
 	 * Finally, select unique names for all not-previously-named indices,
-	 * and display notice messages.
+	 * and display WARNING messages.
 	 *
 	 * XXX in ALTER TABLE case, we fail to consider name collisions against
 	 * pre-existing indexes.
@@ -1264,7 +1264,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			elog(ERROR, "%s: failed to make implicit index name",
 				 cxt->stmtType);
 
-		elog(INFO, "%s / %s%s will create implicit index '%s' for table '%s'",
+		elog(NOTICE, "%s / %s%s will create implicit index '%s' for table '%s'",
 			 cxt->stmtType,
 			 (strcmp(cxt->stmtType, "ALTER TABLE") == 0) ? "ADD " : "",
 			 (index->primary ? "PRIMARY KEY" : "UNIQUE"),
@@ -1288,7 +1288,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 	if (cxt->fkconstraints == NIL)
 		return;
 
-	elog(INFO, "%s will create implicit trigger(s) for FOREIGN KEY check(s)",
+	elog(NOTICE, "%s will create implicit trigger(s) for FOREIGN KEY check(s)",
 		 cxt->stmtType);
 
 	foreach(fkclist, cxt->fkconstraints)
@@ -2710,7 +2710,7 @@ transformTypeRef(ParseState *pstate, TypeName *tn)
 		elog(ERROR, "unsupported expression in %%TYPE");
 	v = (Var *) n;
 	tyn = typeidTypeName(v->vartype);
-	elog(INFO, "%s.%s%%TYPE converted to %s", tn->name, tn->attrname, tyn);
+	elog(NOTICE, "%s.%s%%TYPE converted to %s", tn->name, tn->attrname, tyn);
 	tn->name = tyn;
 	tn->typmod = v->vartypmod;
 	tn->attrname = NULL;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.49 2002/02/27 19:52:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.50 2002/03/06 06:10:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ PreparePortal(char *portalName)
 		 * XXX Should we raise an error rather than closing the old
 		 * portal?
 		 */
-		elog(NOTICE, "Closing pre-existing portal \"%s\"",
+		elog(WARNING, "Closing pre-existing portal \"%s\"",
 			 portalName);
 		PortalDrop(portal);
 	}

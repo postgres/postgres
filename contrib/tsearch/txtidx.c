@@ -556,7 +556,7 @@ tsearch(PG_FUNCTION_ARGS)
 		oidtype = SPI_gettypeid(rel->rd_att, numattr);
 		if (numattr < 0 || (!(oidtype == TEXTOID || oidtype == VARCHAROID)))
 		{
-			elog(NOTICE, "TSearch: can not find field '%s'", trigger->tgargs[i]);
+			elog(WARNING, "TSearch: can not find field '%s'", trigger->tgargs[i]);
 			continue;
 		}
 		txt_toasted = (text *) DatumGetPointer(SPI_getbinval(rettuple, rel->rd_att, numattr, &isnull));

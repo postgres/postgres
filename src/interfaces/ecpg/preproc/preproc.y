@@ -38,7 +38,7 @@ mmerror(int error_code, enum errortype type, char * error)
 {
     switch(type)
     {
-	case ET_NOTICE: 
+	case ET_WARNING: 
 		fprintf(stderr, "%s:%d: WARNING: %s\n", input_filename, yylineno, error); 
 		break;
 	case ET_ERROR:
@@ -1101,11 +1101,11 @@ OptTemp:  	TEMPORARY		{ $$ = make_str("temporary"); }
 		| LOCAL TEMPORARY	{ $$ = make_str("local temporary"); }
 		| LOCAL TEMP		{ $$ = make_str("local temp"); }
 		| GLOBAL TEMPORARY	{
-					  mmerror(PARSE_ERROR, ET_NOTICE, "Currently unsupported CREATE TABLE / GLOBAL TEMPORARY will be passed to backend");
+					  mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported CREATE TABLE / GLOBAL TEMPORARY will be passed to backend");
 					  $$ = make_str("global temporary");
 					}
 		| GLOBAL TEMP		{
-					  mmerror(PARSE_ERROR, ET_NOTICE, "Currently unsupported CREATE TABLE / GLOBAL TEMP will be passed to backend");
+					  mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported CREATE TABLE / GLOBAL TEMP will be passed to backend");
 					  $$ = make_str("global temp");
 					}
 		| /*EMPTY*/		{ $$ = EMPTY; }
@@ -1131,7 +1131,7 @@ columnDef:  ColId Typename ColQualList opt_collate
 					if (strlen($4) > 0)
 					{
  						sprintf(errortext, "Currently unsupported CREATE TABLE / COLLATE %s will be passed to backend", $4);
- 						mmerror(PARSE_ERROR, ET_NOTICE, errortext);
+ 						mmerror(PARSE_ERROR, ET_WARNING, errortext);
 					}
 					$$ = cat_str(4, $1, $2, $3, $4);
 				}
@@ -1246,7 +1246,7 @@ key_match:  MATCH FULL
 		}
 		| MATCH PARTIAL		
 		{
-			mmerror(PARSE_ERROR, ET_NOTICE, "Currently unsupported FOREIGN KEY/MATCH PARTIAL will be passed to backend");
+			mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported FOREIGN KEY/MATCH PARTIAL will be passed to backend");
 			$$ = make_str("match partial");
 		}
 		| /*EMPTY*/
@@ -1641,7 +1641,7 @@ direction:	FORWARD		{ $$ = make_str("forward"); }
 		| BACKWARD	{ $$ = make_str("backward"); }
 		| RELATIVE      { $$ = make_str("relative"); }
                 | ABSOLUTE	{
-					mmerror(PARSE_ERROR, ET_NOTICE, "Currently unsupported FETCH/ABSOLUTE will be passed to backend, backend will use RELATIVE");
+					mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported FETCH/ABSOLUTE will be passed to backend, backend will use RELATIVE");
 					$$ = make_str("absolute");
 				}
 		;
@@ -1798,7 +1798,7 @@ grantee_list: grantee  				{ $$ = $1; }
 
 opt_with_grant:  WITH GRANT OPTION
                                 {
-					mmerror(PARSE_ERROR, ET_NOTICE, "Currently unsupported GRANT/WITH GRANT OPTION will be passed to backend");
+					mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported GRANT/WITH GRANT OPTION will be passed to backend");
 					$$ = make_str("with grant option");
 				}
 		| /*EMPTY*/ { $$ = EMPTY; }
@@ -1950,12 +1950,12 @@ func_arg:  opt_arg func_type
 
 opt_arg:  IN    { $$ = make_str("in"); }
 	| OUT	{ 
-		  mmerror(PARSE_ERROR, ET_NOTICE, "Currently unsupported CREATE FUNCTION/OUT will be passed to backend");
+		  mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported CREATE FUNCTION/OUT will be passed to backend");
 
 	 	  $$ = make_str("out");
 		}
 	| INOUT	{ 
-		  mmerror(PARSE_ERROR, ET_NOTICE, "Currently unsupported CREATE FUNCTION/INOUT will be passed to backend");
+		  mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported CREATE FUNCTION/INOUT will be passed to backend");
 
 	 	  $$ = make_str("inout");
 		}
@@ -2195,7 +2195,7 @@ opt_trans: WORK 	{ $$ = ""; }
 
 opt_chain: AND NO CHAIN 	{ $$ = make_str("and no chain"); }
 	| AND CHAIN		{
-				  mmerror(PARSE_ERROR, ET_NOTICE, "Currently unsupported COMMIT/CHAIN will be passed to backend");
+				  mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported COMMIT/CHAIN will be passed to backend");
 
 				  $$ = make_str("and chain");
 				}
@@ -2640,12 +2640,12 @@ OptTempTableName:  TEMPORARY opt_table relation_name
 			}
                        | GLOBAL TEMPORARY opt_table relation_name
                         {
-				mmerror(PARSE_ERROR, ET_NOTICE, "Currently unsupported CREATE TABLE / GLOBAL TEMPORARY will be passed to backend");
+				mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported CREATE TABLE / GLOBAL TEMPORARY will be passed to backend");
 				$$ = cat_str(3, make_str("global temporary"), $3, $4);
                         }
                        | GLOBAL TEMP opt_table relation_name
                         {
-				mmerror(PARSE_ERROR, ET_NOTICE, "Currently unsupported CREATE TABLE / GLOBAL TEMP will be passed to backend");
+				mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported CREATE TABLE / GLOBAL TEMP will be passed to backend");
 				$$ = cat_str(3, make_str("global temp"), $3, $4);
                         }
                        | TABLE relation_name
@@ -2704,7 +2704,7 @@ select_limit:      LIMIT select_limit_value OFFSET select_offset_value
 		| LIMIT select_limit_value ',' select_offset_value
                        { $$ = cat_str(4, make_str("limit"), $2, make_str(","), $4); }
                        /* enable this in 7.3, bjm 2001-10-22
-		       { mmerror(PARSE_ERROR, ET_NOTICE, "No longer supported LIMIT #,# syntax passed to backend."); }
+		       { mmerror(PARSE_ERROR, ET_WARNING, "No longer supported LIMIT #,# syntax passed to backend."); }
                        */
                 ;
 

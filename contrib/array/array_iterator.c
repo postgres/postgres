@@ -49,7 +49,7 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 	/* Sanity checks */
 	if (array == (ArrayType *) NULL)
 	{
-		/* elog(NOTICE, "array_iterator: array is null"); */
+		/* elog(WARNING, "array_iterator: array is null"); */
 		return (0);
 	}
 
@@ -60,10 +60,7 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 	dim = ARR_DIMS(array);
 	nitems = ArrayGetNItems(ndim, dim);
 	if (nitems == 0)
-	{
-		/* elog(NOTICE, "array_iterator: nitems = 0"); */
 		return (0);
-	}
 
 	/* Lookup element type information */
 	get_typlenbyval(elemtype, &typlen, &typbyval);

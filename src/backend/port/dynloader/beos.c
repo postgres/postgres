@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.9 2001/10/25 05:49:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.10 2002/03/06 06:09:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ pg_dlsym(void *handle, char *funcname)
 		beos_dl_sym(*((int *) (handle)), funcname, (void **) &fpt);
 		return fpt;
 	}
-	elog(NOTICE, "add-on not loaded correctly");
+	elog(WARNING, "add-on not loaded correctly");
 	return NULL;
 }
 
@@ -63,7 +63,7 @@ pg_dlclose(void *handle)
 	if ((handle) && ((*(int *) (handle)) >= 0))
 	{
 		if (beos_dl_close(*(image_id *) handle) != B_OK)
-			elog(NOTICE, "error while unloading add-on");
+			elog(WARNING, "error while unloading add-on");
 		free(handle);
 	}
 }

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.39 2002/03/05 00:01:00 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.40 2002/03/06 06:10:31 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -147,7 +147,7 @@ psql_error(const char *fmt,...)
 
 
 /*
- * for backend NOTICES
+ * for backend INFO, WARNING, ERROR
  */
 void
 NoticeProcessor(void *arg, const char *message)
@@ -574,14 +574,11 @@ SendQuery(const char *query)
 
 		if (results)
 			PQclear(results);
-  	}
+	}
 
 	/* Possible microtiming output */
-
 	if (pset.timing && success)
-	{
-		! 			printf(gettext("Total time: %.3fs\n"), ((after.tv_sec-before.tv_sec)*1000000 + after.tv_usec - before.tv_usec) / 1000000.0);
-	}
+		printf(gettext("Total time: %.3fs\n"), ((after.tv_sec-before.tv_sec)*1000000 + after.tv_usec - before.tv_usec) / 1000000.0);
 
 	return success;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.48 2002/03/01 04:09:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.49 2002/03/06 06:09:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1376,7 +1376,7 @@ ExecMergeJoin(MergeJoin *node)
 				 * just end the join prematurely.
 				 */
 			default:
-				elog(NOTICE, "ExecMergeJoin: invalid join state %d, aborting",
+				elog(WARNING, "ExecMergeJoin: invalid join state %d, aborting",
 					 mergestate->mj_JoinState);
 				return NULL;
 		}

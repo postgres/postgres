@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.91 2001/10/25 05:49:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.92 2002/03/06 06:10:13 momjian Exp $
  *
  * NOTES
  *
@@ -367,7 +367,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 				 */
 				StrNCpy(*tzn, tm->tm_zone, MAXTZLEN + 1);
 				if (strlen(tm->tm_zone) > MAXTZLEN)
-					elog(NOTICE, "Invalid timezone \'%s\'", tm->tm_zone);
+					elog(WARNING, "Invalid timezone \'%s\'", tm->tm_zone);
 			}
 		}
 	}
@@ -400,7 +400,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 				 */
 				StrNCpy(*tzn, tzname[tm->tm_isdst], MAXTZLEN + 1);
 				if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
-					elog(NOTICE, "Invalid timezone \'%s\'", tzname[tm->tm_isdst]);
+					elog(WARNING, "Invalid timezone \'%s\'", tzname[tm->tm_isdst]);
 			}
 		}
 	}

@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.36 2002/03/05 05:52:43 momjian Exp $
+ * $Id: conv.c,v 1.37 2002/03/06 06:10:26 momjian Exp $
  *
  *
  */
@@ -1311,7 +1311,7 @@ utf_to_local(unsigned char *utf, unsigned char *iso,
 					sizeof(pg_utf_to_local), compare1);
 		if (p == NULL)
 		{
-			elog(NOTICE, "utf_to_local: could not convert UTF-8 (0x%04x). Ignored", iutf);
+			elog(WARNING, "utf_to_local: could not convert UTF-8 (0x%04x). Ignored", iutf);
 			continue;
 		}
 		if (p->code & 0xff000000)
@@ -1447,7 +1447,7 @@ local_to_utf(unsigned char *iso, unsigned char *utf,
 					sizeof(pg_local_to_utf), compare2);
 		if (p == NULL)
 		{
-			elog(NOTICE, "local_to_utf: could not convert (0x%04x) %s to UTF-8. Ignored",
+			elog(WARNING, "local_to_utf: could not convert (0x%04x) %s to UTF-8. Ignored",
 				 iiso, (&pg_enc2name_tbl[encoding])->name);
 			continue;
 		}
@@ -1750,8 +1750,8 @@ static void
 utf_to_win1250(unsigned char *utf, unsigned char *euc, int len)
 
 {
-        utf_to_local(utf, euc, ULmapWIN1250,
-                                 sizeof(ULmapWIN1250) / sizeof(pg_utf_to_local), len);
+		utf_to_local(utf, euc, ULmapWIN1250,
+								 sizeof(ULmapWIN1250) / sizeof(pg_utf_to_local), len);
 }
 
 /*
@@ -1760,8 +1760,8 @@ utf_to_win1250(unsigned char *utf, unsigned char *euc, int len)
 static void
 win1250_to_utf(unsigned char *euc, unsigned char *utf, int len)
 {
-        local_to_utf(euc, utf, LUmapWIN1250,
-                          sizeof(LUmapWIN1250) / sizeof(pg_local_to_utf), PG_WIN1250, len);
+		local_to_utf(euc, utf, LUmapWIN1250,
+						  sizeof(LUmapWIN1250) / sizeof(pg_local_to_utf), PG_WIN1250, len);
 }
 
 /*
@@ -1771,8 +1771,8 @@ static void
 utf_to_win1256(unsigned char *utf, unsigned char *euc, int len)
 
 {
-        utf_to_local(utf, euc, ULmapWIN1256,
-                                 sizeof(ULmapWIN1256) / sizeof(pg_utf_to_local), len);
+		utf_to_local(utf, euc, ULmapWIN1256,
+								 sizeof(ULmapWIN1256) / sizeof(pg_utf_to_local), len);
 }
 
 /*

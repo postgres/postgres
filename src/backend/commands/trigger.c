@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.103 2002/03/02 21:39:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.104 2002/03/06 06:09:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,7 +368,7 @@ DropTrigger(DropTrigStmt *stmt)
 		elog(ERROR, "DropTrigger: there is no trigger %s on relation %s",
 			 stmt->trigname, stmt->relname);
 	if (tgfound > 1)
-		elog(INFO, "DropTrigger: found (and deleted) %d triggers %s on relation %s",
+		elog(NOTICE, "DropTrigger: found (and deleted) %d triggers %s on relation %s",
 			 tgfound, stmt->trigname, stmt->relname);
 
 	/*
@@ -489,7 +489,7 @@ RelationRemoveTriggers(Relation rel)
 		stmt.relname = pstrdup(RelationGetRelationName(refrel));
 		heap_close(refrel, NoLock);
 
-		elog(INFO, "DROP TABLE implicitly drops referential integrity trigger from table \"%s\"", stmt.relname);
+		elog(NOTICE, "DROP TABLE implicitly drops referential integrity trigger from table \"%s\"", stmt.relname);
 
 		DropTrigger(&stmt);
 
@@ -1419,8 +1419,8 @@ deferredTriggerInvokeEvents(bool immediate_only)
 	 * deferred-to-end-of-transaction triggers, it could get annoying
 	 * to rescan all the deferred triggers at each command end.
 	 * To speed this up, we could remember the actual end of the queue at
-	 * EndQuery and examine only events that are newer. On state changes 
-	 * we simply reset the saved position to the beginning of the queue 
+	 * EndQuery and examine only events that are newer. On state changes
+	 * we simply reset the saved position to the beginning of the queue
 	 * and process all events once with the new states.
 	 */
 

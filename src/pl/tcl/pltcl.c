@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.50 2002/03/02 21:39:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.51 2002/03/06 06:10:48 momjian Exp $
  *
  **********************************************************************/
 
@@ -345,7 +345,7 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	if (SPI_processed == 0)
 	{
 		Tcl_DStringFree(&unknown_src);
-		elog(NOTICE, "pltcl: Module unknown not found in pltcl_modules");
+		elog(WARNING, "pltcl: Module unknown not found in pltcl_modules");
 		return;
 	}
 
@@ -826,7 +826,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	if (Tcl_SplitList(interp, interp->result,
 					  &ret_numvals, &ret_values) != TCL_OK)
 	{
-		elog(NOTICE, "pltcl: cannot split return value from trigger");
+		elog(WARNING, "pltcl: cannot split return value from trigger");
 		elog(ERROR, "pltcl: %s", interp->result);
 	}
 
@@ -1259,9 +1259,11 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		return TCL_ERROR;
 	}
 
-	if (strcmp(argv[1], "NOTICE") == 0)
+	if (strcmp(argv[1], "INFO") == 0)
+		level = INFO;
+	else if (strcmp(argv[1], "NOTICE") == 0)
 		level = NOTICE;
-	else if (strcmp(argv[1], "WARN") == 0)
+	else if (strcmp(argv[1], "WARNING") == 0)
 		level = ERROR;
 	else if (strcmp(argv[1], "ERROR") == 0)
 		level = ERROR;

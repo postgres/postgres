@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.153 2002/03/03 17:47:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.154 2002/03/06 06:10:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,17 +236,17 @@ do { \
 											   relname, \
 											   HASH_REMOVE, NULL); \
 	if (namehentry == NULL) \
-		elog(NOTICE, "trying to delete a reldesc that does not exist."); \
+		elog(WARNING, "trying to delete a reldesc that does not exist."); \
 	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
 										   (void *)&(RELATION->rd_id), \
 										   HASH_REMOVE, NULL); \
 	if (idhentry == NULL) \
-		elog(NOTICE, "trying to delete a reldesc that does not exist."); \
+		elog(WARNING, "trying to delete a reldesc that does not exist."); \
 	nodentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
 										   (void *)&(RELATION->rd_node), \
 										   HASH_REMOVE, NULL); \
 	if (nodentry == NULL) \
-		elog(NOTICE, "trying to delete a reldesc that does not exist."); \
+		elog(WARNING, "trying to delete a reldesc that does not exist."); \
 } while(0)
 
 
@@ -2471,7 +2471,7 @@ AttrDefaultFetch(Relation relation)
 			if (adform->adnum != attrdef[i].adnum)
 				continue;
 			if (attrdef[i].adbin != NULL)
-				elog(NOTICE, "AttrDefaultFetch: second record found for attr %s in rel %s",
+				elog(WARNING, "AttrDefaultFetch: second record found for attr %s in rel %s",
 					 NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
 					 RelationGetRelationName(relation));
 
@@ -2479,7 +2479,7 @@ AttrDefaultFetch(Relation relation)
 							  Anum_pg_attrdef_adbin,
 							  adrel->rd_att, &isnull);
 			if (isnull)
-				elog(NOTICE, "AttrDefaultFetch: adbin IS NULL for attr %s in rel %s",
+				elog(WARNING, "AttrDefaultFetch: adbin IS NULL for attr %s in rel %s",
 					 NameStr(relation->rd_att->attrs[adform->adnum - 1]->attname),
 					 RelationGetRelationName(relation));
 			else
@@ -2490,7 +2490,7 @@ AttrDefaultFetch(Relation relation)
 		}
 
 		if (i >= ndef)
-			elog(NOTICE, "AttrDefaultFetch: unexpected record found for attr %d in rel %s",
+			elog(WARNING, "AttrDefaultFetch: unexpected record found for attr %d in rel %s",
 				 adform->adnum,
 				 RelationGetRelationName(relation));
 	}
@@ -2499,7 +2499,7 @@ AttrDefaultFetch(Relation relation)
 	heap_close(adrel, AccessShareLock);
 
 	if (found != ndef)
-		elog(NOTICE, "AttrDefaultFetch: %d record(s) not found for rel %s",
+		elog(WARNING, "AttrDefaultFetch: %d record(s) not found for rel %s",
 			 ndef - found, RelationGetRelationName(relation));
 }
 
@@ -3020,7 +3020,7 @@ write_relcache_init_file(void)
 		 * We used to consider this a fatal error, but we might as well
 		 * continue with backend startup ...
 		 */
-		elog(NOTICE, "Cannot create init file %s: %m\n\tContinuing anyway, but there's something wrong.", tempfilename);
+		elog(WARNING, "Cannot create init file %s: %m\n\tContinuing anyway, but there's something wrong.", tempfilename);
 		return;
 	}
 
@@ -3168,7 +3168,7 @@ write_relcache_init_file(void)
 		 */
 		if (rename(tempfilename, finalfilename) < 0)
 		{
-			elog(NOTICE, "Cannot rename init file %s to %s: %m\n\tContinuing anyway, but there's something wrong.", tempfilename, finalfilename);
+			elog(WARNING, "Cannot rename init file %s to %s: %m\n\tContinuing anyway, but there's something wrong.", tempfilename, finalfilename);
 			/*
 			 * If we fail, try to clean up the useless temp file; don't bother
 			 * to complain if this fails too.

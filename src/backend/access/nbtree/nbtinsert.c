@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.89 2002/03/02 21:39:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.90 2002/03/06 06:09:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -520,7 +520,7 @@ _bt_insertonpg(Relation rel,
 						elog(ERROR, "bt_insertonpg[%s]: no root page found", RelationGetRelationName(rel));
 					_bt_wrtbuf(rel, rbuf);
 					_bt_wrtnorelbuf(rel, buf);
-					elog(NOTICE, "bt_insertonpg[%s]: root page unfound - fixing upper levels", RelationGetRelationName(rel));
+					elog(WARNING, "bt_insertonpg[%s]: root page unfound - fixing upper levels", RelationGetRelationName(rel));
 					_bt_fixup(rel, buf);
 					goto formres;
 				}
@@ -570,7 +570,7 @@ _bt_insertonpg(Relation rel,
 					elog(ERROR, "_bt_getstackbuf: my bits moved right off the end of the world!"
 						 "\n\tRecreate index %s.", RelationGetRelationName(rel));
 				pfree(new_item);
-				elog(NOTICE, "bt_insertonpg[%s]: parent page unfound - fixing branch", RelationGetRelationName(rel));
+				elog(WARNING, "bt_insertonpg[%s]: parent page unfound - fixing branch", RelationGetRelationName(rel));
 				_bt_fixbranch(rel, bknum, rbknum, stack);
 				goto formres;
 			}
@@ -1574,7 +1574,7 @@ _bt_fixtree(Relation rel, BlockNumber blkno)
 			/* Call _bt_fixroot() if there is no upper level */
 			if (BTreeInvalidParent(opaque))
 			{
-				elog(NOTICE, "bt_fixtree[%s]: fixing root page", RelationGetRelationName(rel));
+				elog(WARNING, "bt_fixtree[%s]: fixing root page", RelationGetRelationName(rel));
 				buf = _bt_fixroot(rel, buf, true);
 				_bt_relbuf(rel, buf);
 				return;
@@ -1925,7 +1925,7 @@ _bt_fixbranch(Relation rel, BlockNumber lblkno,
 		break;
 	}
 
-	elog(NOTICE, "bt_fixbranch[%s]: fixing upper levels", RelationGetRelationName(rel));
+	elog(WARNING, "bt_fixbranch[%s]: fixing upper levels", RelationGetRelationName(rel));
 	_bt_fixup(rel, buf);
 
 	return;
@@ -1956,7 +1956,7 @@ _bt_fixup(Relation rel, Buffer buf)
 		{
 			blkno = opaque->btpo_parent;
 			_bt_relbuf(rel, buf);
-			elog(NOTICE, "bt_fixup[%s]: checking/fixing upper levels", RelationGetRelationName(rel));
+			elog(WARNING, "bt_fixup[%s]: checking/fixing upper levels", RelationGetRelationName(rel));
 			_bt_fixtree(rel, blkno);
 			return;
 		}
@@ -1971,7 +1971,7 @@ _bt_fixup(Relation rel, Buffer buf)
 	 * Ok, we are on the leftmost page, it's write locked by us and its
 	 * btpo_parent points to meta page - time for _bt_fixroot().
 	 */
-	elog(NOTICE, "bt_fixup[%s]: fixing root page", RelationGetRelationName(rel));
+	elog(WARNING, "bt_fixup[%s]: fixing root page", RelationGetRelationName(rel));
 	buf = _bt_fixroot(rel, buf, true);
 	_bt_relbuf(rel, buf);
 }

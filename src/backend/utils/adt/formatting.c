@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.50 2002/02/18 14:24:35 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.51 2002/03/06 06:10:12 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -64,7 +64,7 @@
  */
 /***
 #define DEBUG_TO_FROM_CHAR
-#define DEBUG_elog_output	NOTICE
+#define DEBUG_elog_output	DEBUG3
 ***/
 
 #include "postgres.h"
@@ -1867,7 +1867,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					x == 2 ? 10 : 1;
 
 				/*
-				 * elog(NOTICE, "X: %d, MS: %d, LEN: %d", x, tmfc->ms,
+				 * elog(DEBUG3, "X: %d, MS: %d, LEN: %d", x, tmfc->ms,
 				 * len);
 				 */
 				return len - 1 + SKIP_THth(suf);
@@ -1908,7 +1908,7 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					x == 5 ? 10 : 1;
 
 				/*
-				 * elog(NOTICE, "X: %d, US: %d, LEN: %d", x, tmfc->us,
+				 * elog(DEBUG3, "X: %d, US: %d, LEN: %d", x, tmfc->us,
 				 * len);
 				 */
 				return len - 1 + SKIP_THth(suf);
@@ -2430,7 +2430,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			else if (flag == FROM_CHAR)
 			{
 				sscanf(inout, "%03d", &tmfc->year);
-				
+
 				/*
 				 * 3-digit year:
 				 *	'100' ... '999' = 1100 ... 1999
@@ -2466,7 +2466,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				 * 2-digit year:
 				 * '00' ... '69'  = 2000 ... 2069
 				 * '70' ... '99'  = 1970 ... 1999
-		 		 */
+				 */
 				if (tmfc->year < 70)
 					tmfc->year += 2000;
 				else
@@ -2492,7 +2492,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			else if (flag == FROM_CHAR)
 			{
 				sscanf(inout, "%1d", &tmfc->year);
-				
+
 				/*
 				 * 1-digit year: always +2000
 				 */

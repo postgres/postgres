@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.61 2002/03/02 21:39:34 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.62 2002/03/06 06:10:27 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -896,7 +896,7 @@ set_config_option(const char *name, const char *value,
 	if (context == PGC_SIGHUP)
 		elevel = DEBUG1;
 	else if (guc_session_init)
-		elevel = NOTICE;
+		elevel = INFO;
 	else
 		elevel = ERROR;
 
@@ -1259,7 +1259,7 @@ _ShowOption(enum config_type opttype, struct config_generic * record)
 		default:
 			val = "???";
 	}
-	elog(NOTICE, "%s is %s", record->name, val);
+	elog(INFO, "%s is %s", record->name, val);
 }
 
 void
@@ -1408,13 +1408,13 @@ ProcessGUCArray(ArrayType *array, GucSource source)
 		ParseLongOption(s, &name, &value);
 		if (!value)
 		{
-		    elog(NOTICE, "cannot to parse setting \"%s\"", name);
-		    continue;
+			elog(WARNING, "cannot to parse setting \"%s\"", name);
+			continue;
 		}
 
 		/* prevent errors from incorrect options */
 		guc_session_init = true;
-		
+
 		SetConfigOption(name, value, PGC_SUSET, source);
 
 		guc_session_init = false;
@@ -1441,7 +1441,7 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 	newval = palloc(strlen(name) + 1 + strlen(value) + 1);
 	sprintf(newval, "%s=%s", name, value);
 	datum = DirectFunctionCall1(textin, CStringGetDatum(newval));
-	
+
 	if (array)
 	{
 		int		index;

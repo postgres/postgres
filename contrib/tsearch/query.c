@@ -449,7 +449,7 @@ static void
 findoprnd(ITEM * ptr, int4 *pos)
 {
 #ifdef BS_DEBUG
-	elog(NOTICE, (ptr[*pos].type == OPR) ?
+	elog(DEBUG3, (ptr[*pos].type == OPR) ?
 		 "%d  %c" : "%d  %d ", *pos, ptr[*pos].val);
 #endif
 	if (ptr[*pos].type == VAL || ptr[*pos].type == VALTRUE)
@@ -557,7 +557,7 @@ queryin(char *buf, void (*pushval) (QPRS_STATE *, int, char *, int))
 			sprintf(cur, "%d(%s) ", ptr[i].val, GETOPERAND(query) + ptr[i].distance);
 		cur = strchr(cur, '\0');
 	}
-	elog(NOTICE, "POR: %s", pbuf);
+	elog(DEBUG3, "POR: %s", pbuf);
 #endif
 
 	return query;
@@ -609,7 +609,7 @@ mqtxt_in(PG_FUNCTION_ARGS)
 			sprintf(cur, "%d(%s) ", ptr[i].val, GETOPERAND(query) + ptr[i].distance);
 		cur = strchr(cur, '\0');
 	}
-	elog(NOTICE, "POR: %s", pbuf);
+	elog(DEBUG3, "POR: %s", pbuf);
 #endif
 	pfree(res);
 	PG_RETURN_POINTER(query);

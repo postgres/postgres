@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.63 2002/03/04 03:55:46 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.64 2002/03/06 06:10:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2270,7 +2270,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			elog(NOTICE, "Unable to decode INTERVAL; internal coding error");
+			elog(WARNING, "Unable to decode INTERVAL; internal coding error");
 			*result = *interval;
 		}
 	}
@@ -2771,7 +2771,7 @@ interval_part(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			elog(NOTICE, "Unable to decode INTERVAL"
+			elog(WARNING, "Unable to decode INTERVAL"
 				 "\n\tinterval_part() internal coding error");
 			result = 0;
 		}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.149 2002/02/27 01:34:41 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.150 2002/03/06 06:09:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1019,7 +1019,7 @@ CopyReadNewline(FILE *fp, int *newline)
 {
 	if (!*newline)
 	{
-		elog(NOTICE, "CopyReadNewline: extra fields ignored");
+		elog(WARNING, "CopyReadNewline: extra fields ignored");
 		while (!CopyGetEof(fp) && (CopyGetChar(fp) != '\n'));
 	}
 	*newline = 0;
