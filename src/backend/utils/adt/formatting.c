@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.56 2002/09/20 03:57:09 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.56.2.1 2003/09/03 15:00:07 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
@@ -1264,6 +1264,16 @@ DCH_processor(FormatNode *node, char *inout, int flag, void *data)
 
 	for (n = node, s = inout; n->type != NODE_TYPE_END; n++)
 	{
+		if (flag == FROM_CHAR && *s=='\0')
+			/*
+			 * The input string is shorter than format picture, 
+			 * so it's good time to break this loop...
+			 * 
+			 * Note: this isn't relevant for TO_CHAR mode, beacuse 
+			 *       it use 'inout' allocated by format picture length.
+			 */
+			break;
+
 		if (n->type == NODE_TYPE_ACTION)
 		{
 			int			len;
