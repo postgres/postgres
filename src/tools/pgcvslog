@@ -56,7 +56,7 @@ awk '	BEGIN	{html="'"$HTML"'"; lineno = 0;}
 	}
 
 	# if we have a saved datetime, print filename, date line, and committer
-	datetime != "" {printf ("%s| %10d| %s\n", datetime, lineno++, $0);}
+	datetime != "" && $1 != "branches:" {printf ("%s| %10d| %s\n", datetime, lineno++, $0);}
 
 	$1 == "date:" \
 	{
