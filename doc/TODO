@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Apr 17 17:41:41 EDT 2002
+Last updated:		Wed Apr 17 21:41:09 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -449,7 +449,7 @@ MISCELLANEOUS
 * Improve caching of attribute offsets when NULLs exist in the row
 * Add Intimate Shared Memory(ISM) for Solaris
 * Add documentation to lock shared memory into RAM for each OS, if possible
-
+* Try flex flags -Cf and -CF to see if performance improves
 
 SOURCE CODE
 ===========
