@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.10 1997/01/18 05:48:07 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.11 1997/03/19 07:52:03 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,7 +193,7 @@ DefineIndex(char *heapRelationName,
 		       classObjectId, relationId);
 	
 	index_create(heapRelationName, indexRelationName, NULL,
-		     ((IndexElem*)lfirst(attributeList))->tname,
+		     attributeList,
 		     accessMethodId, numberOfAttributes, attributeNumberA,
 		     classObjectId, parameterCount, parameterA, (Node*)cnfPred,
 		     lossy, unique);
