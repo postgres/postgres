@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.21 2000/01/26 05:56:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.22 2000/01/28 03:22:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,8 @@ static Expr *find_ands(Expr *qual);
 static Expr *and_normalize(List *andlist);
 static Expr *qual_cleanup(Expr *qual);
 static List *remove_duplicates(List *list);
-static int	count_bool_nodes(Expr *qual);
+static void count_bool_nodes(Expr *qual, double *nodes,
+							 double *cnfnodes, double *dnfnodes);
 
 /*****************************************************************************
  *
@@ -84,12 +85,12 @@ static int	count_bool_nodes(Expr *qual);
 List *
 canonicalize_qual(Expr *qual, bool removeAndFlag)
 {
-	Expr	   *newqual,
-			   *cnfqual,
-			   *dnfqual;
-	int			qualcnt,
-				cnfcnt,
-				dnfcnt;
+	Expr	   *newqual;
+	double		nodes,
+				cnfnodes,
+				dnfnodes;
+	bool		cnfok,
+				dnfok;
 
 	if (qual == NULL)
 		return NIL;
@@ -98,57 +99,64 @@ canonicalize_qual(Expr *qual, bool removeAndFlag)
 	 * This improvement is always worthwhile, so do it unconditionally.
 	 */
 	qual = flatten_andors(qual);
+
 	/* Push down NOTs.  We do this only in the top-level boolean
 	 * expression, without examining arguments of operators/functions.
 	 * Even so, it might not be a win if we are unable to find negators
-	 * for all the operators involved; so we keep the flattened-but-not-
-	 * NOT-pushed qual as the reference point for comparsions.
+	 * for all the operators involved; perhaps we should compare before-
+	 * and-after tree sizes?
 	 */
 	newqual = find_nots(qual);
-	/*
-	 * Generate both CNF and DNF forms from newqual.
-	 */
-	/* Normalize into conjunctive normal form, and clean up the result. */
-	cnfqual = qual_cleanup(find_ors(newqual));
-	/* Likewise for DNF */
-	dnfqual = qual_cleanup(find_ands(newqual));
 
 	/*
-	 * Now, choose whether to return qual, cnfqual, or dnfqual.
+	 * Choose whether to convert to CNF, or DNF, or leave well enough alone.
 	 *
-	 * First heuristic is to forget about either CNF or DNF if it shows
+	 * We make an approximate estimate of the number of bottom-level nodes
+	 * that will appear in the CNF and DNF forms of the query.
+	 */
+	count_bool_nodes(newqual, &nodes, &cnfnodes, &dnfnodes);
+	/*
+	 * First heuristic is to forget about *both* normal forms if there are
+	 * a huge number of terms in the qual clause.  This would only happen
+	 * with machine-generated queries, presumably; and most likely such
+	 * a query is already in either CNF or DNF.
+	 */
+	cnfok = dnfok = true;
+	if (nodes >= 500.0)
+		cnfok = dnfok = false;
+	/*
+	 * Second heuristic is to forget about either CNF or DNF if it shows
 	 * unreasonable growth compared to the original form of the qual,
 	 * where we define "unreasonable" a tad arbitrarily as 4x more
 	 * operators.
 	 */
-	qualcnt = count_bool_nodes(qual);
-	cnfcnt = count_bool_nodes(cnfqual);
-	dnfcnt = count_bool_nodes(dnfqual);
-	if (cnfcnt >= 4 * qualcnt)
-		cnfqual = NULL;			/* mark CNF not usable */
-	if (dnfcnt >= 4 * qualcnt)
-		dnfqual = NULL;			/* mark DNF not usable */
-
+	if (cnfnodes >= 4.0 * nodes)
+		cnfok = false;
+	if (dnfnodes >= 4.0 * nodes)
+		dnfok = false;
 	/*
-	 * Second heuristic is to prefer DNF if only one relation is mentioned
-	 * and it is smaller than the CNF representation.
+	 * Third heuristic is to prefer DNF if top level is already an OR,
+	 * and only one relation is mentioned, and DNF is no larger than
+	 * the CNF representation.  (Pretty shaky; can we improve on this?)
 	 */
-	if (dnfqual && dnfcnt < cnfcnt && NumRelids((Node *) dnfqual) == 1)
-		cnfqual = NULL;
-
+	if (dnfok && dnfnodes <= cnfnodes && or_clause((Node *) newqual) &&
+		NumRelids((Node *) newqual) == 1)
+		cnfok = false;
 	/*
 	 * Otherwise, we prefer CNF.
 	 *
 	 * XXX obviously, these rules could be improved upon.
 	 */
-
-	/* pick preferred survivor */
-	if (cnfqual)
-		newqual = cnfqual;
-	else if (dnfqual)
-		newqual = dnfqual;
-	else
-		newqual = qual;
+	if (cnfok)
+	{
+		/* Normalize into conjunctive normal form, and clean up the result. */
+		newqual = qual_cleanup(find_ors(newqual));
+	}
+	else if (dnfok)
+	{
+		/* Normalize into disjunctive normal form, and clean up the result. */
+		newqual = qual_cleanup(find_ands(newqual));
+	}
 
 	/* Convert to implicit-AND list if requested */
 	if (removeAndFlag)
@@ -828,27 +836,72 @@ remove_duplicates(List *list)
 /*
  * count_bool_nodes
  *		Support for heuristics in canonicalize_qual(): count the
- *		number of nodes in the top level AND/OR/NOT part of a qual tree
+ *		number of nodes that are inputs to the top level AND/OR/NOT
+ *		part of a qual tree, and estimate how many nodes will appear
+ *		in the CNF'ified or DNF'ified equivalent of the expression.
+ *
+ * This is just an approximate calculation; it doesn't deal with NOTs
+ * very well, and of course it cannot detect possible simplifications
+ * from eliminating duplicate subclauses.  The idea is just to cheaply
+ * determine whether CNF will be markedly worse than DNF or vice versa.
+ *
+ * The counts/estimates are represented as doubles to avoid risk of overflow.
  */
-static int
-count_bool_nodes(Expr *qual)
+static void
+count_bool_nodes(Expr *qual,
+				 double *nodes,
+				 double *cnfnodes,
+				 double *dnfnodes)
 {
-	if (qual == NULL)
-		return 0;
+	List	   *temp;
+	double		subnodes, subcnfnodes, subdnfnodes;
 
-	if (and_clause((Node *) qual) ||
-		or_clause((Node *) qual))
+	if (and_clause((Node *) qual))
 	{
-		int			sum = 1;	/* for the and/or itself */
-		List	   *temp;
+		*nodes = *cnfnodes = 0.0;
+		*dnfnodes = 1.0;		/* DNF nodes will be product of sub-counts */
 
 		foreach(temp, qual->args)
-			sum += count_bool_nodes(lfirst(temp));
+		{
+			count_bool_nodes(lfirst(temp), 
+							 &subnodes, &subcnfnodes, &subdnfnodes);
+			*nodes += subnodes;
+			*cnfnodes += subcnfnodes;
+			*dnfnodes *= subdnfnodes;
+		}
+		/* we could get dnfnodes < cnfnodes here, if all the sub-nodes are
+		 * simple ones with count 1.  Make sure dnfnodes isn't too small.
+		 */
+		if (*dnfnodes < *cnfnodes)
+			*dnfnodes = *cnfnodes;
+	}
+	else if (or_clause((Node *) qual))
+	{
+		*nodes = *dnfnodes = 0.0;
+		*cnfnodes = 1.0;		/* CNF nodes will be product of sub-counts */
 
-		return sum;
+		foreach(temp, qual->args)
+		{
+			count_bool_nodes(lfirst(temp), 
+							 &subnodes, &subcnfnodes, &subdnfnodes);
+			*nodes += subnodes;
+			*cnfnodes *= subcnfnodes;
+			*dnfnodes += subdnfnodes;
+		}
+		/* we could get cnfnodes < dnfnodes here, if all the sub-nodes are
+		 * simple ones with count 1.  Make sure cnfnodes isn't too small.
+		 */
+		if (*cnfnodes < *dnfnodes)
+			*cnfnodes = *dnfnodes;
 	}
 	else if (not_clause((Node *) qual))
-		return count_bool_nodes(get_notclausearg(qual)) + 1;
+	{
+		count_bool_nodes(get_notclausearg(qual),
+						 nodes, cnfnodes, dnfnodes);
+	}
 	else
-		return 1;				/* anything else counts 1 for my purposes */
+	{
+		/* anything else counts 1 for my purposes */
+		*nodes = *cnfnodes = *dnfnodes = 1.0;
+	}
 }
