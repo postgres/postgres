@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: date.h,v 1.21 2002/09/04 20:31:45 momjian Exp $
+ * $Id: date.h,v 1.21.2.1 2003/01/29 01:09:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ typedef struct
 #ifdef HAVE_INT64_TIMESTAMP
 #define MAX_TIME_PRECISION 6
 #else
-#define MAX_TIME_PRECISION 13
+#define MAX_TIME_PRECISION 10
 #endif
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.73.2.2 2003/01/09 01:07:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.73.2.3 2003/01/29 01:09:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -619,7 +619,7 @@ static void
 AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	static const int64 TimeScales[MAX_TIMESTAMP_PRECISION + 1] = {
+	static const int64 TimeScales[MAX_TIME_PRECISION + 1] = {
 		INT64CONST(1000000),
 		INT64CONST(100000),
 		INT64CONST(10000),
@@ -629,7 +629,7 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 		INT64CONST(1)
 	};
 
-	static const int64 TimeOffsets[MAX_TIMESTAMP_PRECISION + 1] = {
+	static const int64 TimeOffsets[MAX_TIME_PRECISION + 1] = {
 		INT64CONST(500000),
 		INT64CONST(50000),
 		INT64CONST(5000),
@@ -640,14 +640,19 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 	};
 
 #else
-	static const double TimeScales[MAX_TIMESTAMP_PRECISION + 1] = {
+	/* note MAX_TIME_PRECISION differs in this case */
+	static const double TimeScales[MAX_TIME_PRECISION + 1] = {
 		1,
 		10,
 		100,
 		1000,
 		10000,
 		100000,
-		1000000
+		1000000,
+		10000000,
+		100000000,
+		1000000000,
+		10000000000
 	};
 #endif
 
@@ -656,7 +661,7 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 		/*
 		 * Note: this round-to-nearest code is not completely consistent
 		 * about rounding values that are exactly halfway between integral
-		 * values.  On most platforms, rint() will implement round-to-nearest,
+		 * values.  On most platforms, rint() will implement round-to-nearest-even,
 		 * but the integer code always rounds up (away from zero).  Is it
 		 * worth trying to be consistent?
 		 */
