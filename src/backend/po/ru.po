@@ -1,22 +1,22 @@
 # ru.po
 # POSTGRES Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.20 2004/08/13 16:43:06 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.21 2004/08/14 19:16:07 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - August 9, 2004: updates for 7.4/8.0 branches; <mokhov@cs.concordia.ca>
-#   - July - August 23, 2003: updates for 7.4.x; <mokhov@cs.concordia.ca>
-#   - January 2, 2003: Fuzzy Fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
-#   - October 12, 2002: Post-7.3 beta 2, Fuzzy Fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - March 27 - August 14, 2004: Updates for 7.4/8.0 branches; <mokhov@cs.concordia.ca>
+#   - July - August 23, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>
+#   - January 2, 2003: Fuzzy fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - October 12, 2002: Post-7.3 beta 2, Fuzzy fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - September 14, 2002: Post-7.3 beta 1, Take II, Serguei A. Mokhov <mokhov@cs.concordia.ca>
-#   - September 7, 2002: Post-7.3 beta 1 updates messages, Serguei A. Mokhov <mokhov@cs.concordia.ca>
-#   - September 2001 - August 2002: Maintenance, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - September 7, 2002: Post-7.3 beta 1 updated messages, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - September 2001 - August 2002: Initial translation and maintenance, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2004-08-11 19:21-0300\n"
-"PO-Revision-Date: 2004-08-12 00:31-0500\n"
+"POT-Creation-Date: 2004-08-13 19:12-0300\n"
+"PO-Revision-Date: 2004-08-14 13:28-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -132,7 +132,7 @@ msgstr "\"%s\" не является индексом"
 #: access/nbtree/nbtinsert.c:254
 #, c-format
 msgid "duplicate key violates unique constraint \"%s\""
-msgstr ""
+msgstr "повторный ключ нарушает констрейнт UNIQUE \"%s\""
 
 #: access/nbtree/nbtinsert.c:406
 #: access/nbtree/nbtsort.c:402
@@ -159,39 +159,7 @@ msgstr ""
 #: access/rtree/rtree.c:785
 #, c-format
 msgid "index row size %lu exceeds rtree maximum, %lu"
-msgstr ""
-
-#: access/transam/xact.c:418
-msgid "cannot have more than 2^32-1 commands in a transaction"
-msgstr "нельзя иметь более 2^32-1 команд в одной транзакции"
-
-#. translator: %s represents an SQL statement name
-#: access/transam/xact.c:1410
-#, c-format
-msgid "%s cannot run inside a transaction block"
-msgstr "%s не может выполняться внутри транзакционного блока"
-
-#. translator: %s represents an SQL statement name
-#: access/transam/xact.c:1422
-#, c-format
-msgid "%s cannot be executed from a function"
-msgstr "%s не может выполняться внутри функции"
-
-#. translator: %s represents an SQL statement name
-#: access/transam/xact.c:1465
-#, c-format
-msgid "%s may only be used in transaction blocks"
-msgstr "%s может выполняться только внутри блоков транзакций"
-
-#: access/transam/xact.c:1544
-msgid "there is already a transaction in progress"
-msgstr "транзакция уже в процессе выполнения"
-
-#: access/transam/xact.c:1606
-#: access/transam/xact.c:1644
-#: access/transam/xact.c:1692
-msgid "there is no transaction in progress"
-msgstr "нет транзакции в процессе выполнения"
+msgstr "размер строки индекса (%lu) превышает максимальный для rtree: %lu"
 
 #: access/transam/slru.c:490
 #, c-format
@@ -205,7 +173,7 @@ msgstr "файл \"%s\" не существует, читается как нули"
 #: access/transam/slru.c:639
 #, c-format
 msgid "could not access status of transaction %u"
-msgstr ""
+msgstr "статус транзакции %u не доступен"
 
 #: access/transam/slru.c:612
 #: libpq/hba.c:826
@@ -260,6 +228,38 @@ msgstr "удаление файла \"%s/%s\""
 msgid "could not read directory \"%s\": %m"
 msgstr "не получилось считать директорию \"%s\": %m"
 
+#: access/transam/xact.c:418
+msgid "cannot have more than 2^32-1 commands in a transaction"
+msgstr "нельзя иметь более 2^32-1 команд в одной транзакции"
+
+#. translator: %s represents an SQL statement name
+#: access/transam/xact.c:1410
+#, c-format
+msgid "%s cannot run inside a transaction block"
+msgstr "%s не может выполняться внутри транзакционного блока"
+
+#. translator: %s represents an SQL statement name
+#: access/transam/xact.c:1422
+#, c-format
+msgid "%s cannot be executed from a function"
+msgstr "%s не может выполняться внутри функции"
+
+#. translator: %s represents an SQL statement name
+#: access/transam/xact.c:1465
+#, c-format
+msgid "%s may only be used in transaction blocks"
+msgstr "%s может выполняться только внутри блоков транзакций"
+
+#: access/transam/xact.c:1544
+msgid "there is already a transaction in progress"
+msgstr "транзакция уже в процессе выполнения"
+
+#: access/transam/xact.c:1606
+#: access/transam/xact.c:1644
+#: access/transam/xact.c:1692
+msgid "there is no transaction in progress"
+msgstr "нет транзакции в процессе выполнения"
+
 #: access/transam/xlog.c:1047
 #: access/transam/xlog.c:1163
 #: access/transam/xlog.c:3575
@@ -311,7 +311,7 @@ msgstr "не удалось переименовать файл \"%s\" в \"%s\" (инициализация лог-файла: 
 #: access/transam/xlog.c:1622
 #, c-format
 msgid "could not open transaction log directory \"%s\": %m"
-msgstr ""
+msgstr "не удалось открыть директорию журнала транзакций \"%s\": %m"
 
 #: access/transam/xlog.c:1638
 #, c-format
@@ -346,7 +346,7 @@ msgstr ""
 #: access/transam/xlog.c:1840
 #, c-format
 msgid "invalid record offset at %X/%X"
-msgstr ""
+msgstr "неверное смещение записи в %X/%X"
 
 #: access/transam/xlog.c:1873
 #, c-format
@@ -361,17 +361,17 @@ msgstr ""
 #: access/transam/xlog.c:1899
 #, c-format
 msgid "record with zero length at %X/%X"
-msgstr ""
+msgstr "запись с нулевой длинноц в %X/%X"
 
 #: access/transam/xlog.c:1924
 #, c-format
 msgid "record length %u at %X/%X too long"
-msgstr ""
+msgstr "длина записи %u в %X/%X слишком велика"
 
 #: access/transam/xlog.c:1931
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
-msgstr ""
+msgstr "неверный ID менеджера ресурсов %u в %X/%X"
 
 #: access/transam/xlog.c:1963
 #, c-format
@@ -419,12 +419,12 @@ msgstr "неверное значение LC_CTYPE"
 
 #: access/transam/xlog.c:2171
 msgid "sizeof(ControlFileData) is larger than BLCKSZ; fix either one"
-msgstr ""
+msgstr "sizeof(ControlFileData) больше чем BLCKSZ; исправьте любой из них"
 
 #: access/transam/xlog.c:2181
 #, c-format
 msgid "could not create control file \"%s\": %m"
-msgstr ""
+msgstr "не получилось создать файл управления \"%s\": %m"
 
 #: access/transam/xlog.c:2192
 #: access/transam/xlog.c:2369
@@ -460,12 +460,12 @@ msgstr "не получилось считать из файла управления: %m"
 #: access/transam/xlog.c:2316
 #: utils/init/miscinit.c:844
 msgid "database files are incompatible with server"
-msgstr ""
+msgstr "файлы базы данных не совместимы с сервером"
 
 #: access/transam/xlog.c:2235
 #, c-format
 msgid "The database cluster was initialized with PG_CONTROL_VERSION %d, but the server was compiled with PG_CONTROL_VERSION %d."
-msgstr ""
+msgstr "Кластер баз данных был инициализирован с PG_CONTROL_VERSION %d, но сервер был скомпилирован с PG_CONTROL_VERSION %d."
 
 #: access/transam/xlog.c:2238
 #: access/transam/xlog.c:2268
@@ -474,17 +474,17 @@ msgstr "Похоже вам надо выполнить initdb."
 
 #: access/transam/xlog.c:2248
 msgid "incorrect checksum in control file"
-msgstr ""
+msgstr "неверная контрольная сумма в файле управления"
 
 #: access/transam/xlog.c:2265
 #, c-format
 msgid "The database cluster was initialized with CATALOG_VERSION_NO %d, but the server was compiled with CATALOG_VERSION_NO %d."
-msgstr ""
+msgstr "Кластер баз данных был инициализирован с CATALOG_VERSION_NO %d, но сервер был скомпилирован с CATALOG_VERSION_NO %d."
 
 #: access/transam/xlog.c:2272
 #, c-format
 msgid "The database cluster was initialized with BLCKSZ %d, but the server was compiled with BLCKSZ %d."
-msgstr ""
+msgstr "Кластер баз данных был инициализирован с BLCKSZ %d, но сервер был скомпилирован с BLCKSZ %d."
 
 #: access/transam/xlog.c:2275
 #: access/transam/xlog.c:2282
@@ -499,50 +499,50 @@ msgstr "Похоже вам надо перекомпилировать или выполнить initdb."
 #: access/transam/xlog.c:2279
 #, c-format
 msgid "The database cluster was initialized with RELSEG_SIZE %d, but the server was compiled with RELSEG_SIZE %d."
-msgstr ""
+msgstr "Кластер баз данных был инициализирован с RELSEG_SIZE %d, но сервер был скомпилирован с RELSEG_SIZE %d."
 
 #: access/transam/xlog.c:2286
 #, c-format
 msgid "The database cluster was initialized with NAMEDATALEN %d, but the server was compiled with NAMEDATALEN %d."
-msgstr ""
+msgstr "Кластер баз данных был инициализирован с NAMEDATALEN %d, но сервер был скомпилирован с NAMEDATALEN %d."
 
 #: access/transam/xlog.c:2293
 #, c-format
 msgid "The database cluster was initialized with FUNC_MAX_ARGS %d, but the server was compiled with FUNC_MAX_ARGS %d."
-msgstr ""
+msgstr "Кластер баз данных был инициализирован с FUNC_MAX_ARGS %d, но сервер был скомпилирован с FUNC_MAX_ARGS %d."
 
 #: access/transam/xlog.c:2302
 msgid "The database cluster was initialized without HAVE_INT64_TIMESTAMP but the server was compiled with HAVE_INT64_TIMESTAMP."
-msgstr ""
+msgstr "Кластер баз данных был инициализирован без HAVE_INT64_TIMESTAMP, но сервер был скомпилирован с HAVE_INT64_TIMESTAMP."
 
 #: access/transam/xlog.c:2309
 msgid "The database cluster was initialized with HAVE_INT64_TIMESTAMP but the server was compiled without HAVE_INT64_TIMESTAMP."
-msgstr ""
+msgstr "Кластер баз данных был инициализирован с PG_CONTROL_VERSION, но сервер был скомпилирован без PG_CONTROL_VERSION."
 
 #: access/transam/xlog.c:2317
 #, c-format
 msgid "The database cluster was initialized with LOCALE_NAME_BUFLEN %d, but the server was compiled with LOCALE_NAME_BUFLEN %d."
-msgstr ""
+msgstr "Кластер баз данных был инициализирован с LOCALE_NAME_BUFLEN %d, но сервер был скомпилирован с LOCALE_NAME_BUFLEN %d."
 
 #: access/transam/xlog.c:2323
 #: access/transam/xlog.c:2330
 msgid "database files are incompatible with operating system"
-msgstr ""
+msgstr "файлы базы данныз не совместимы с операционной системой"
 
 #: access/transam/xlog.c:2324
 #, c-format
 msgid "The database cluster was initialized with LC_COLLATE \"%s\", which is not recognized by setlocale()."
-msgstr ""
+msgstr "Кластер баз данных был инициализирован с LC_COLLATE \"%s\", которую не распознасть с setlocale()."
 
 #: access/transam/xlog.c:2327
 #: access/transam/xlog.c:2334
 msgid "It looks like you need to initdb or install locale support."
-msgstr ""
+msgstr "Похоже вам нужно выполнить initdb или инсталировать поддержку локали."
 
 #: access/transam/xlog.c:2331
 #, c-format
 msgid "The database cluster was initialized with LC_CTYPE \"%s\", which is not recognized by setlocale()."
-msgstr ""
+msgstr "Кластер баз данных был инициализирован с LC_CTYPE \"%s\", который не распознать с setlocale()."
 
 #: access/transam/xlog.c:2517
 #, c-format
@@ -556,7 +556,7 @@ msgstr "не получилось синхронизировать (fsync) файл лога стартовых транзакций: %
 
 #: access/transam/xlog.c:2591
 msgid "control file contains invalid data"
-msgstr ""
+msgstr "файл управления содержит неверные данные"
 
 #: access/transam/xlog.c:2595
 #, c-format
@@ -575,7 +575,7 @@ msgstr "система была прервана во время восстановления на %s"
 
 #: access/transam/xlog.c:2605
 msgid "This probably means that some data is corrupted and you will have to use the last backup for recovery."
-msgstr ""
+msgstr "Это скорее всего означает что некоторые данные повреждены и вам придёться использовать последний бэкап для восстановления."
 
 #: access/transam/xlog.c:2609
 #, c-format
@@ -608,47 +608,47 @@ msgstr "ID следующей транзакции: %u; следующий OID: %u"
 
 #: access/transam/xlog.c:2659
 msgid "invalid next transaction ID"
-msgstr ""
+msgstr "неверный ID следующей транзакции"
 
 #: access/transam/xlog.c:2683
 msgid "invalid redo in checkpoint record"
-msgstr ""
+msgstr "неверная запись REDO (повторить) в записи контрольной точки"
 
 #: access/transam/xlog.c:2692
 msgid "invalid redo/undo record in shutdown checkpoint"
-msgstr ""
+msgstr "неверная запись REDO/UNDO (повторить/отменить) в записи контрольной точки останова"
 
 #: access/transam/xlog.c:2704
 msgid "database system was not properly shut down; automatic recovery in progress"
-msgstr ""
+msgstr "система баз данных была неправильно остановлена; производится автоматическое восстановление"
 
 #: access/transam/xlog.c:2732
 #, c-format
 msgid "redo starts at %X/%X"
-msgstr ""
+msgstr "REDO (повторить) начинается с %X/%X"
 
 #: access/transam/xlog.c:2764
 #, c-format
 msgid "redo done at %X/%X"
-msgstr ""
+msgstr "REDO (повторить) завершено на %X/%X"
 
 #: access/transam/xlog.c:2771
 msgid "redo is not required"
-msgstr ""
+msgstr "REDO (повторить) не требуется"
 
 #: access/transam/xlog.c:2840
 #, c-format
 msgid "undo starts at %X/%X"
-msgstr ""
+msgstr "UNDO (отменить) начинается с %X/%X"
 
 #: access/transam/xlog.c:2851
 #, c-format
 msgid "undo done at %X/%X"
-msgstr ""
+msgstr "UNDO (отменить) завершено на %X/%X"
 
 #: access/transam/xlog.c:2856
 msgid "undo is not required"
-msgstr ""
+msgstr "UNDO (отменить) не требуется"
 
 #: access/transam/xlog.c:2946
 msgid "database system is ready"
@@ -708,7 +708,7 @@ msgstr "контрольная точка не может располагаться внутри транзакционного блока"
 
 #: access/transam/xlog.c:3327
 msgid "concurrent transaction log activity while database system is shutting down"
-msgstr ""
+msgstr "замечена параллельная активность в журнале транзакций при остановке системы баз данных"
 
 #: access/transam/xlog.c:3568
 #: access/transam/xlog.c:3600
@@ -773,32 +773,32 @@ msgstr ""
 #: catalog/dependency.c:173
 #, c-format
 msgid "cannot drop %s because other objects depend on it"
-msgstr ""
+msgstr "нельзя удалить %s по причине наличия зависимых объектов"
 
 #: catalog/dependency.c:175
 msgid "Use DROP ... CASCADE to drop the dependent objects too."
-msgstr ""
+msgstr "Используйте DROP ... CASCADE чтобы также удалить зависимые объекты."
 
 #: catalog/dependency.c:233
 #, c-format
 msgid "failed to drop all objects depending on %s"
-msgstr ""
+msgstr "ошибка при удалении всех объектов завимых от %s"
 
 #: catalog/dependency.c:330
 #: catalog/dependency.c:729
 #, c-format
 msgid "cannot drop %s because it is required by the database system"
-msgstr ""
+msgstr "нельзя удалить %s: этот объект нужен системе баз данных"
 
 #: catalog/dependency.c:466
 #, c-format
 msgid "cannot drop %s because %s requires it"
-msgstr ""
+msgstr "нельзя удалить %s: этот объект нужен %s"
 
 #: catalog/dependency.c:468
 #, c-format
 msgid "You may drop %s instead."
-msgstr ""
+msgstr "Вместо этого вы можете удалить %s."
 
 #: catalog/dependency.c:536
 #: catalog/dependency.c:686
@@ -1067,7 +1067,7 @@ msgstr ""
 #: catalog/pg_proc.c:116
 #: catalog/pg_proc.c:539
 msgid "cannot determine result data type"
-msgstr ""
+msgstr "не в состоянии определить тип результата"
 
 #: catalog/pg_aggregate.c:166
 msgid "An aggregate returning \"anyarray\" or \"anyelement\" must have one of them as its base type."
@@ -1087,7 +1087,7 @@ msgstr "функция %s не существует"
 #: catalog/pg_aggregate.c:285
 #, c-format
 msgid "function %s returns a set"
-msgstr ""
+msgstr "функция %s возвращает множество"
 
 #: catalog/pg_aggregate.c:316
 #: catalog/pg_aggregate.c:325
@@ -1102,7 +1102,7 @@ msgstr "доступ запрещён по созданию \"%s.%s\""
 
 #: catalog/heap.c:229
 msgid "System catalog modifications are currently disallowed."
-msgstr ""
+msgstr "Изменения системного каталога в данный момент не дозволены."
 
 #: catalog/heap.c:356
 #: commands/tablecmds.c:1771
@@ -1123,7 +1123,7 @@ msgstr "повторное имя колонки: \"%s\""
 #: catalog/heap.c:429
 #, c-format
 msgid "column \"%s\" has type \"unknown\""
-msgstr ""
+msgstr "тип колонки \"%s\" -- \"unknown\""
 
 #: catalog/heap.c:430
 msgid "Proceeding with relation creation anyway."
@@ -1247,12 +1247,12 @@ msgstr "связь \"%s\" не существует"
 
 #: catalog/namespace.c:229
 msgid "temporary tables may not specify a schema name"
-msgstr ""
+msgstr "временные таблицы не могут указывать имя схемы"
 
 #: catalog/namespace.c:257
 #: catalog/namespace.c:1249
 msgid "no schema has been selected to create in"
-msgstr ""
+msgstr "не выбрана схема для создания объектов"
 
 #: catalog/namespace.c:1172
 #: gram.y:2340
@@ -2466,58 +2466,6 @@ msgstr ""
 msgid "table \"%s\" was reindexed"
 msgstr "таблица \"%s\" переиндексована"
 
-#: commands/variable.c:75
-msgid "invalid list syntax for parameter \"datestyle\""
-msgstr ""
-
-#: commands/variable.c:161
-#, c-format
-msgid "unrecognized \"datestyle\" key word: \"%s\""
-msgstr ""
-
-#: commands/variable.c:179
-msgid "conflicting \"datestyle\" specifications"
-msgstr ""
-
-#: commands/variable.c:450
-msgid "invalid interval value for time zone: month not allowed"
-msgstr ""
-
-#: commands/variable.c:557
-#, c-format
-msgid "unrecognized time zone name: \"%s\""
-msgstr ""
-
-#: commands/variable.c:565
-#, c-format
-msgid "time zone \"%s\" appears to use leap seconds"
-msgstr ""
-
-#: commands/variable.c:567
-msgid "PostgreSQL does not support leap seconds."
-msgstr ""
-
-#: commands/variable.c:636
-msgid "SET TRANSACTION ISOLATION LEVEL must be called before any query"
-msgstr ""
-
-#: commands/variable.c:713
-#: utils/mb/mbutils.c:188
-#, c-format
-msgid "conversion between %s and %s is not supported"
-msgstr ""
-
-#: commands/user.c:848
-#: commands/user.c:961
-#: commands/user.c:1053
-#: commands/user.c:1172
-#: commands/variable.c:784
-#: utils/cache/lsyscache.c:1981
-#: utils/init/miscinit.c:310
-#, c-format
-msgid "user \"%s\" does not exist"
-msgstr "пользователь \"%s\" не существует"
-
 #: commands/operatorcmds.c:106
 #: commands/operatorcmds.c:114
 msgid "setof type not allowed for operator argument"
@@ -3294,6 +3242,17 @@ msgstr "пользователь \"%s\" уже существует"
 msgid "user ID %d is already assigned"
 msgstr "ID пользователя %d  уже присвоено"
 
+#: commands/user.c:848
+#: commands/user.c:961
+#: commands/user.c:1053
+#: commands/user.c:1172
+#: commands/variable.c:784
+#: utils/cache/lsyscache.c:1981
+#: utils/init/miscinit.c:310
+#, c-format
+msgid "user \"%s\" does not exist"
+msgstr "пользователь \"%s\" не существует"
+
 #: commands/user.c:1026
 msgid "must be superuser to drop users"
 msgstr ""
@@ -3537,6 +3496,47 @@ msgstr ""
 #: commands/vacuumlazy.c:486
 #, c-format
 msgid "\"%s\": removed %d row versions in %d pages"
+msgstr ""
+
+#: commands/variable.c:75
+msgid "invalid list syntax for parameter \"datestyle\""
+msgstr ""
+
+#: commands/variable.c:161
+#, c-format
+msgid "unrecognized \"datestyle\" key word: \"%s\""
+msgstr ""
+
+#: commands/variable.c:179
+msgid "conflicting \"datestyle\" specifications"
+msgstr ""
+
+#: commands/variable.c:450
+msgid "invalid interval value for time zone: month not allowed"
+msgstr ""
+
+#: commands/variable.c:557
+#, c-format
+msgid "unrecognized time zone name: \"%s\""
+msgstr ""
+
+#: commands/variable.c:565
+#, c-format
+msgid "time zone \"%s\" appears to use leap seconds"
+msgstr ""
+
+#: commands/variable.c:567
+msgid "PostgreSQL does not support leap seconds."
+msgstr ""
+
+#: commands/variable.c:636
+msgid "SET TRANSACTION ISOLATION LEVEL must be called before any query"
+msgstr ""
+
+#: commands/variable.c:713
+#: utils/mb/mbutils.c:188
+#, c-format
+msgid "conversion between %s and %s is not supported"
 msgstr ""
 
 #: commands/view.c:89
