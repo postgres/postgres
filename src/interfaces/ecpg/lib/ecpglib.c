@@ -238,7 +238,7 @@ quote_postgres(char *arg, int lineno)
 		return (res);
 
 	res[ri++] = '\'';
-	for (i = 0, ri = 0; arg[i]; i++, ri++)
+	for (i = 0; arg[i]; i++, ri++)
 	{
 		switch (arg[i])
 		{
