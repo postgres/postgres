@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.166 2004/01/07 18:56:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.167 2004/01/18 00:50:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,13 +97,13 @@ static HashJoin *make_hashjoin(List *tlist,
 			  List *hashclauses,
 			  Plan *lefttree, Plan *righttree,
 			  JoinType jointype);
-static Hash *make_hash(List *tlist, Plan *lefttree);
+static Hash *make_hash(Plan *lefttree);
 static MergeJoin *make_mergejoin(List *tlist,
 			   List *joinclauses, List *otherclauses,
 			   List *mergeclauses,
 			   Plan *lefttree, Plan *righttree,
 			   JoinType jointype);
-static Sort *make_sort(Query *root, List *tlist, Plan *lefttree, int numCols,
+static Sort *make_sort(Query *root, Plan *lefttree, int numCols,
 		  AttrNumber *sortColIdx, Oid *sortOperators);
 static Sort *make_sort_from_pathkeys(Query *root, Plan *lefttree,
 						Relids relids, List *pathkeys);
@@ -492,7 +492,7 @@ create_material_plan(Query *root, MaterialPath *best_path)
 	/* We don't want any excess columns in the materialized tuples */
 	disuse_physical_tlist(subplan, best_path->subpath);
 
-	plan = make_material(subplan->targetlist, subplan);
+	plan = make_material(subplan);
 
 	copy_path_costsize(&plan->plan, (Path *) best_path);
 
@@ -518,7 +518,6 @@ create_unique_plan(Query *root, UniquePath *best_path)
 	List	   *newtlist;
 	int			nextresno;
 	bool		newitems;
-	List	   *my_tlist;
 	List	   *l;
 
 	subplan = create_plan(root, best_path->subpath);
@@ -596,11 +595,8 @@ create_unique_plan(Query *root, UniquePath *best_path)
 		/*
 		 * If the top plan node can't do projections, we need to add a
 		 * Result node to help it along.
-		 *
-		 * Currently, the only non-projection-capable plan type we can see
-		 * here is Append.
 		 */
-		if (IsA(subplan, Append))
+		if (!is_projection_capable_plan(subplan))
 			subplan = (Plan *) make_result(newtlist, NULL, subplan);
 		else
 			subplan->targetlist = newtlist;
@@ -610,9 +606,6 @@ create_unique_plan(Query *root, UniquePath *best_path)
 	if (best_path->umethod == UNIQUE_PATH_NOOP)
 		return subplan;
 
-	/* Copy tlist again to make one we can put sorting labels on */
-	my_tlist = copyObject(subplan->targetlist);
-
 	if (best_path->umethod == UNIQUE_PATH_HASH)
 	{
 		long		numGroups;
@@ -620,7 +613,7 @@ create_unique_plan(Query *root, UniquePath *best_path)
 		numGroups = (long) Min(best_path->rows, (double) LONG_MAX);
 
 		plan = (Plan *) make_agg(root,
-								 my_tlist,
+								 copyObject(subplan->targetlist),
 								 NIL,
 								 AGG_HASHED,
 								 numGroupCols,
@@ -637,15 +630,15 @@ create_unique_plan(Query *root, UniquePath *best_path)
 		{
 			TargetEntry *tle;
 
-			tle = get_tle_by_resno(my_tlist, groupColIdx[groupColPos]);
+			tle = get_tle_by_resno(subplan->targetlist,
+								   groupColIdx[groupColPos]);
 			Assert(tle != NULL);
 			sortList = addTargetToSortList(NULL, tle,
-										   sortList, my_tlist,
+										   sortList, subplan->targetlist,
 										   SORTBY_ASC, NIL, false);
 		}
-		plan = (Plan *) make_sort_from_sortclauses(root, my_tlist,
-												   subplan, sortList);
-		plan = (Plan *) make_unique(my_tlist, plan, sortList);
+		plan = (Plan *) make_sort_from_sortclauses(root, sortList, subplan);
+		plan = (Plan *) make_unique(plan, sortList);
 	}
 
 	/* Adjust output size estimate (other fields should be OK already) */
@@ -1145,8 +1138,7 @@ create_hashjoin_plan(Query *root,
 	/*
 	 * Build the hash node and hash join node.
 	 */
-	hash_plan = make_hash(inner_plan->targetlist,
-						  inner_plan);
+	hash_plan = make_hash(inner_plan);
 	join_plan = make_hashjoin(tlist,
 							  joinclauses,
 							  otherclauses,
@@ -1735,7 +1727,7 @@ make_hashjoin(List *tlist,
 }
 
 static Hash *
-make_hash(List *tlist, Plan *lefttree)
+make_hash(Plan *lefttree)
 {
 	Hash	   *node = makeNode(Hash);
 	Plan	   *plan = &node->plan;
@@ -1747,7 +1739,7 @@ make_hash(List *tlist, Plan *lefttree)
 	 * input plan; this only affects EXPLAIN display not decisions.
 	 */
 	plan->startup_cost = plan->total_cost;
-	plan->targetlist = tlist;
+	plan->targetlist = copyObject(lefttree->targetlist);
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
@@ -1785,7 +1777,7 @@ make_mergejoin(List *tlist,
  * Caller must have built the sortColIdx and sortOperators arrays already.
  */
 static Sort *
-make_sort(Query *root, List *tlist, Plan *lefttree, int numCols,
+make_sort(Query *root, Plan *lefttree, int numCols,
 		  AttrNumber *sortColIdx, Oid *sortOperators)
 {
 	Sort	   *node = makeNode(Sort);
@@ -1799,7 +1791,7 @@ make_sort(Query *root, List *tlist, Plan *lefttree, int numCols,
 			  lefttree->plan_width);
 	plan->startup_cost = sort_path.startup_cost;
 	plan->total_cost = sort_path.total_cost;
-	plan->targetlist = tlist;
+	plan->targetlist = copyObject(lefttree->targetlist);
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
@@ -1862,7 +1854,6 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 						Relids relids, List *pathkeys)
 {
 	List	   *tlist = lefttree->targetlist;
-	List	   *sort_tlist;
 	List	   *i;
 	int			numsortkeys;
 	AttrNumber *sortColIdx;
@@ -1916,11 +1907,8 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 
 			/*
 			 * Do we need to insert a Result node?
-			 *
-			 * Currently, the only non-projection-capable plan type we can
-			 * see here is Append.
 			 */
-			if (IsA(lefttree, Append))
+			if (!is_projection_capable_plan(lefttree))
 			{
 				tlist = copyObject(tlist);
 				lefttree = (Plan *) make_result(tlist, NULL, lefttree);
@@ -1952,10 +1940,7 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 
 	Assert(numsortkeys > 0);
 
-	/* Give Sort node its own copy of the tlist (still necessary?) */
-	sort_tlist = copyObject(tlist);
-
-	return make_sort(root, sort_tlist, lefttree, numsortkeys,
+	return make_sort(root, lefttree, numsortkeys,
 					 sortColIdx, sortOperators);
 }
 
@@ -1963,15 +1948,13 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
  * make_sort_from_sortclauses
  *	  Create sort plan to sort according to given sortclauses
  *
- *	  'tlist' is the targetlist
- *	  'lefttree' is the node which yields input tuples
  *	  'sortcls' is a list of SortClauses
+ *	  'lefttree' is the node which yields input tuples
  */
 Sort *
-make_sort_from_sortclauses(Query *root, List *tlist,
-						   Plan *lefttree, List *sortcls)
+make_sort_from_sortclauses(Query *root, List *sortcls, Plan *lefttree)
 {
-	List	   *sort_tlist;
+	List	   *sub_tlist = lefttree->targetlist;
 	List	   *i;
 	int			numsortkeys;
 	AttrNumber *sortColIdx;
@@ -1987,24 +1970,20 @@ make_sort_from_sortclauses(Query *root, List *tlist,
 	foreach(i, sortcls)
 	{
 		SortClause *sortcl = (SortClause *) lfirst(i);
-		TargetEntry *tle = get_sortgroupclause_tle(sortcl, tlist);
-		Resdom	   *resdom = tle->resdom;
+		TargetEntry *tle = get_sortgroupclause_tle(sortcl, sub_tlist);
 
 		/*
 		 * Check for the possibility of duplicate order-by clauses --- the
 		 * parser should have removed 'em, but no point in sorting
 		 * redundantly.
 		 */
-		numsortkeys = add_sort_column(resdom->resno, sortcl->sortop,
+		numsortkeys = add_sort_column(tle->resdom->resno, sortcl->sortop,
 								 numsortkeys, sortColIdx, sortOperators);
 	}
 
 	Assert(numsortkeys > 0);
 
-	/* Give Sort node its own copy of the tlist (still necessary?) */
-	sort_tlist = copyObject(tlist);
-
-	return make_sort(root, sort_tlist, lefttree, numsortkeys,
+	return make_sort(root, lefttree, numsortkeys,
 					 sortColIdx, sortOperators);
 }
 
@@ -2028,7 +2007,6 @@ make_sort_from_groupcols(Query *root,
 						 Plan *lefttree)
 {
 	List	   *sub_tlist = lefttree->targetlist;
-	List	   *sort_tlist;
 	int			grpno = 0;
 	List	   *i;
 	int			numsortkeys;
@@ -2046,35 +2024,31 @@ make_sort_from_groupcols(Query *root,
 	{
 		GroupClause *grpcl = (GroupClause *) lfirst(i);
 		TargetEntry *tle = get_tle_by_resno(sub_tlist, grpColIdx[grpno]);
-		Resdom	   *resdom = tle->resdom;
 
 		/*
 		 * Check for the possibility of duplicate group-by clauses --- the
 		 * parser should have removed 'em, but no point in sorting
 		 * redundantly.
 		 */
-		numsortkeys = add_sort_column(resdom->resno, grpcl->sortop,
+		numsortkeys = add_sort_column(tle->resdom->resno, grpcl->sortop,
 								 numsortkeys, sortColIdx, sortOperators);
 		grpno++;
 	}
 
 	Assert(numsortkeys > 0);
 
-	/* Give Sort node its own copy of the tlist (still necessary?) */
-	sort_tlist = copyObject(sub_tlist);
-
-	return make_sort(root, sort_tlist, lefttree, numsortkeys,
+	return make_sort(root, lefttree, numsortkeys,
 					 sortColIdx, sortOperators);
 }
 
 Material *
-make_material(List *tlist, Plan *lefttree)
+make_material(Plan *lefttree)
 {
 	Material   *node = makeNode(Material);
 	Plan	   *plan = &node->plan;
 
 	/* cost should be inserted by caller */
-	plan->targetlist = tlist;
+	plan->targetlist = copyObject(lefttree->targetlist);
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
@@ -2098,7 +2072,7 @@ materialize_finished_plan(Plan *subplan)
 	Plan	   *matplan;
 	Path		matpath;		/* dummy for result of cost_material */
 
-	matplan = (Plan *) make_material(subplan->targetlist, subplan);
+	matplan = (Plan *) make_material(subplan);
 
 	/* Set cost data */
 	cost_material(&matpath,
@@ -2239,7 +2213,7 @@ make_group(Query *root,
  * that should be considered by the Unique filter.
  */
 Unique *
-make_unique(List *tlist, Plan *lefttree, List *distinctList)
+make_unique(Plan *lefttree, List *distinctList)
 {
 	Unique	   *node = makeNode(Unique);
 	Plan	   *plan = &node->plan;
@@ -2263,7 +2237,7 @@ make_unique(List *tlist, Plan *lefttree, List *distinctList)
 	 * this if he has a better idea.
 	 */
 
-	plan->targetlist = tlist;
+	plan->targetlist = copyObject(lefttree->targetlist);
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
@@ -2278,7 +2252,7 @@ make_unique(List *tlist, Plan *lefttree, List *distinctList)
 	foreach(slitem, distinctList)
 	{
 		SortClause *sortcl = (SortClause *) lfirst(slitem);
-		TargetEntry *tle = get_sortgroupclause_tle(sortcl, tlist);
+		TargetEntry *tle = get_sortgroupclause_tle(sortcl, plan->targetlist);
 
 		uniqColIdx[keyno++] = tle->resdom->resno;
 	}
@@ -2295,7 +2269,7 @@ make_unique(List *tlist, Plan *lefttree, List *distinctList)
  */
 
 SetOp *
-make_setop(SetOpCmd cmd, List *tlist, Plan *lefttree,
+make_setop(SetOpCmd cmd, Plan *lefttree,
 		   List *distinctList, AttrNumber flagColIdx)
 {
 	SetOp	   *node = makeNode(SetOp);
@@ -2321,7 +2295,7 @@ make_setop(SetOpCmd cmd, List *tlist, Plan *lefttree,
 	if (plan->plan_rows < 1)
 		plan->plan_rows = 1;
 
-	plan->targetlist = tlist;
+	plan->targetlist = copyObject(lefttree->targetlist);
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
@@ -2336,7 +2310,7 @@ make_setop(SetOpCmd cmd, List *tlist, Plan *lefttree,
 	foreach(slitem, distinctList)
 	{
 		SortClause *sortcl = (SortClause *) lfirst(slitem);
-		TargetEntry *tle = get_sortgroupclause_tle(sortcl, tlist);
+		TargetEntry *tle = get_sortgroupclause_tle(sortcl, plan->targetlist);
 
 		dupColIdx[keyno++] = tle->resdom->resno;
 	}
@@ -2350,8 +2324,7 @@ make_setop(SetOpCmd cmd, List *tlist, Plan *lefttree,
 }
 
 Limit *
-make_limit(List *tlist, Plan *lefttree,
-		   Node *limitOffset, Node *limitCount)
+make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount)
 {
 	Limit	   *node = makeNode(Limit);
 	Plan	   *plan = &node->plan;
@@ -2401,7 +2374,7 @@ make_limit(List *tlist, Plan *lefttree,
 		}
 	}
 
-	plan->targetlist = tlist;
+	plan->targetlist = copyObject(lefttree->targetlist);
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
@@ -2447,4 +2420,28 @@ make_result(List *tlist,
 	node->resconstantqual = resconstantqual;
 
 	return node;
+}
+
+/*
+ * is_projection_capable_plan
+ *		Check whether a given Plan node is able to do projection.
+ */
+bool
+is_projection_capable_plan(Plan *plan)
+{
+	/* Most plan types can project, so just list the ones that can't */
+	switch (nodeTag(plan))
+	{
+		case T_Hash:
+		case T_Material:
+		case T_Sort:
+		case T_Unique:
+		case T_SetOp:
+		case T_Limit:
+		case T_Append:
+			return false;
+		default:
+			break;
+	}
+	return true;
 }

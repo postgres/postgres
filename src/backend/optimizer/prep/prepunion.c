@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.107 2004/01/04 03:51:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.108 2004/01/18 00:50:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,11 +246,9 @@ generate_union_plan(SetOperationStmt *op, Query *parse,
 	{
 		List	   *sortList;
 
-		tlist = copyObject(tlist);
 		sortList = addAllTargetsToSortList(NULL, NIL, tlist, false);
-		plan = (Plan *) make_sort_from_sortclauses(parse, tlist,
-												   plan, sortList);
-		plan = (Plan *) make_unique(tlist, plan, sortList);
+		plan = (Plan *) make_sort_from_sortclauses(parse, sortList, plan);
+		plan = (Plan *) make_unique(plan, sortList);
 	}
 	return plan;
 }
@@ -300,9 +298,8 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 	 * Sort the child results, then add a SetOp plan node to generate the
 	 * correct output.
 	 */
-	tlist = copyObject(tlist);
 	sortList = addAllTargetsToSortList(NULL, NIL, tlist, false);
-	plan = (Plan *) make_sort_from_sortclauses(parse, tlist, plan, sortList);
+	plan = (Plan *) make_sort_from_sortclauses(parse, sortList, plan);
 	switch (op->op)
 	{
 		case SETOP_INTERSECT:
@@ -317,8 +314,7 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 			cmd = SETOPCMD_INTERSECT;	/* keep compiler quiet */
 			break;
 	}
-	plan = (Plan *) make_setop(cmd, tlist, plan, sortList,
-							   length(op->colTypes) + 1);
+	plan = (Plan *) make_setop(cmd, plan, sortList, length(op->colTypes) + 1);
 	return plan;
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.164 2004/01/12 22:20:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.165 2004/01/18 00:50:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1103,10 +1103,9 @@ grouping_planner(Query *parse, double tuple_fraction)
 			/*
 			 * If the top-level plan node is one that cannot do expression
 			 * evaluation, we must insert a Result node to project the
-			 * desired tlist. Currently, the only plan node we might see
-			 * here that falls into that category is Append.
+			 * desired tlist.
 			 */
-			if (IsA(result_plan, Append))
+			if (!is_projection_capable_plan(result_plan))
 			{
 				result_plan = (Plan *) make_result(sub_tlist, NULL,
 												   result_plan);
@@ -1265,9 +1264,8 @@ grouping_planner(Query *parse, double tuple_fraction)
 		{
 			result_plan = (Plan *)
 				make_sort_from_sortclauses(parse,
-										   tlist,
-										   result_plan,
-										   parse->sortClause);
+										   parse->sortClause,
+										   result_plan);
 			current_pathkeys = sort_pathkeys;
 		}
 	}
@@ -1277,8 +1275,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 	 */
 	if (parse->distinctClause)
 	{
-		result_plan = (Plan *) make_unique(tlist, result_plan,
-										   parse->distinctClause);
+		result_plan = (Plan *) make_unique(result_plan, parse->distinctClause);
 
 		/*
 		 * If there was grouping or aggregation, leave plan_rows as-is
@@ -1303,7 +1300,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 	 */
 	if (parse->limitOffset || parse->limitCount)
 	{
-		result_plan = (Plan *) make_limit(tlist, result_plan,
+		result_plan = (Plan *) make_limit(result_plan,
 										  parse->limitOffset,
 										  parse->limitCount);
 	}

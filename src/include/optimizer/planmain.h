@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.76 2003/11/29 22:41:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.77 2004/01/18 00:50:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,8 @@ extern Plan *create_plan(Query *root, Path *best_path);
 extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
 				  Index scanrelid, Plan *subplan);
 extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
-extern Sort *make_sort_from_sortclauses(Query *root, List *tlist,
-						   Plan *lefttree, List *sortcls);
+extern Sort *make_sort_from_sortclauses(Query *root, List *sortcls,
+						   Plan *lefttree);
 extern Sort *make_sort_from_groupcols(Query *root, List *groupcls,
 						 AttrNumber *grpColIdx, Plan *lefttree);
 extern Agg *make_agg(Query *root, List *tlist, List *qual,
@@ -43,14 +43,14 @@ extern Group *make_group(Query *root, List *tlist,
 		   int numGroupCols, AttrNumber *grpColIdx,
 		   double numGroups,
 		   Plan *lefttree);
-extern Material *make_material(List *tlist, Plan *lefttree);
+extern Material *make_material(Plan *lefttree);
 extern Plan *materialize_finished_plan(Plan *subplan);
-extern Unique *make_unique(List *tlist, Plan *lefttree, List *distinctList);
-extern Limit *make_limit(List *tlist, Plan *lefttree,
-		   Node *limitOffset, Node *limitCount);
-extern SetOp *make_setop(SetOpCmd cmd, List *tlist, Plan *lefttree,
+extern Unique *make_unique(Plan *lefttree, List *distinctList);
+extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount);
+extern SetOp *make_setop(SetOpCmd cmd, Plan *lefttree,
 		   List *distinctList, AttrNumber flagColIdx);
 extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
+extern bool is_projection_capable_plan(Plan *plan);
 
 /*
  * prototypes for plan/initsplan.c
