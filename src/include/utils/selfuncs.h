@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: selfuncs.h,v 1.6 2002/06/20 20:29:53 momjian Exp $
+ * $Id: selfuncs.h,v 1.7 2002/09/02 06:22:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,12 +33,12 @@ typedef enum
 
 /* selfuncs.c */
 
-extern Pattern_Prefix_Status pattern_fixed_prefix(char *patt,
+extern Pattern_Prefix_Status pattern_fixed_prefix(Const *patt,
 					 Pattern_Type ptype,
-					 char **prefix,
-					 char **rest);
+					 Const **prefix,
+					 Const **rest);
 extern bool locale_is_like_safe(void);
-extern char *make_greater_string(const char *str, Oid datatype);
+extern Const *make_greater_string(const Const *str_const);
 
 extern Datum eqsel(PG_FUNCTION_ARGS);
 extern Datum neqsel(PG_FUNCTION_ARGS);

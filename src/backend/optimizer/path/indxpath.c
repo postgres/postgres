@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.120 2002/07/13 19:20:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.121 2002/09/02 06:22:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel,
 static bool match_special_index_operator(Expr *clause, Oid opclass,
 							 bool indexkey_on_left);
 static List *prefix_quals(Var *leftop, Oid expr_op,
-			 char *prefix, Pattern_Prefix_Status pstatus);
+			 Const *prefix, Pattern_Prefix_Status pstatus);
 static List *network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop);
 static Oid	find_operator(const char *opname, Oid datatype);
 static Datum string_to_datum(const char *str, Oid datatype);
@@ -1675,10 +1675,9 @@ match_special_index_operator(Expr *clause, Oid opclass,
 	Var		   *leftop,
 			   *rightop;
 	Oid			expr_op;
-	Datum		constvalue;
-	char	   *patt;
-	char	   *prefix;
-	char	   *rest;
+	Const	   *patt = NULL;
+	Const	   *prefix = NULL;
+	Const	   *rest = NULL;
 
 	/*
 	 * Currently, all known special operators require the indexkey on the
@@ -1697,7 +1696,7 @@ match_special_index_operator(Expr *clause, Oid opclass,
 	if (!IsA(rightop, Const) ||
 		((Const *) rightop)->constisnull)
 		return false;
-	constvalue = ((Const *) rightop)->constvalue;
+	patt = (Const *) rightop;
 
 	switch (expr_op)
 	{
@@ -1705,68 +1704,45 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_BPCHAR_LIKE_OP:
 		case OID_VARCHAR_LIKE_OP:
 		case OID_NAME_LIKE_OP:
+			/* the right-hand const is type text for all of these */
 			if (locale_is_like_safe())
-			{
-				/* the right-hand const is type text for all of these */
-				patt = DatumGetCString(DirectFunctionCall1(textout,
-														   constvalue));
 				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
 								  &prefix, &rest) != Pattern_Prefix_None;
-				if (prefix)
-					pfree(prefix);
-				pfree(patt);
-			}
+			break;
+
+		case OID_BYTEA_LIKE_OP:
+			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
+							  &prefix, &rest) != Pattern_Prefix_None;
 			break;
 
 		case OID_TEXT_ICLIKE_OP:
 		case OID_BPCHAR_ICLIKE_OP:
 		case OID_VARCHAR_ICLIKE_OP:
 		case OID_NAME_ICLIKE_OP:
+			/* the right-hand const is type text for all of these */
 			if (locale_is_like_safe())
-			{
-				/* the right-hand const is type text for all of these */
-				patt = DatumGetCString(DirectFunctionCall1(textout,
-														   constvalue));
 				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
 								  &prefix, &rest) != Pattern_Prefix_None;
-				if (prefix)
-					pfree(prefix);
-				pfree(patt);
-			}
 			break;
 
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_VARCHAR_REGEXEQ_OP:
 		case OID_NAME_REGEXEQ_OP:
+			/* the right-hand const is type text for all of these */
 			if (locale_is_like_safe())
-			{
-				/* the right-hand const is type text for all of these */
-				patt = DatumGetCString(DirectFunctionCall1(textout,
-														   constvalue));
 				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex,
 								  &prefix, &rest) != Pattern_Prefix_None;
-				if (prefix)
-					pfree(prefix);
-				pfree(patt);
-			}
 			break;
 
 		case OID_TEXT_ICREGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
 		case OID_VARCHAR_ICREGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
+			/* the right-hand const is type text for all of these */
 			if (locale_is_like_safe())
-			{
-				/* the right-hand const is type text for all of these */
-				patt = DatumGetCString(DirectFunctionCall1(textout,
-														   constvalue));
 				isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
 								  &prefix, &rest) != Pattern_Prefix_None;
-				if (prefix)
-					pfree(prefix);
-				pfree(patt);
-			}
 			break;
 
 		case OID_INET_SUB_OP:
@@ -1775,6 +1751,12 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_CIDR_SUBEQ_OP:
 			isIndexable = true;
 			break;
+	}
+
+	if (prefix)
+	{
+		pfree(DatumGetPointer(prefix->constvalue));
+		pfree(prefix);
 	}
 
 	/* done if the expression doesn't look indexable */
@@ -1795,6 +1777,12 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_TEXT_ICREGEXEQ_OP:
 			if (!op_in_opclass(find_operator(">=", TEXTOID), opclass) ||
 				!op_in_opclass(find_operator("<", TEXTOID), opclass))
+				isIndexable = false;
+			break;
+
+		case OID_BYTEA_LIKE_OP:
+			if (!op_in_opclass(find_operator(">=", BYTEAOID), opclass) ||
+				!op_in_opclass(find_operator("<", BYTEAOID), opclass))
 				isIndexable = false;
 			break;
 
@@ -1867,10 +1855,9 @@ expand_indexqual_conditions(List *indexquals)
 		Var		   *leftop = get_leftop(clause);
 		Var		   *rightop = get_rightop(clause);
 		Oid			expr_op = ((Oper *) clause->oper)->opno;
-		Datum		constvalue;
-		char	   *patt;
-		char	   *prefix;
-		char	   *rest;
+		Const	   *patt = (Const *) rightop;
+		Const	   *prefix = NULL;
+		Const	   *rest = NULL;
 		Pattern_Prefix_Status pstatus;
 
 		switch (expr_op)
@@ -1885,18 +1872,12 @@ expand_indexqual_conditions(List *indexquals)
 			case OID_BPCHAR_LIKE_OP:
 			case OID_VARCHAR_LIKE_OP:
 			case OID_NAME_LIKE_OP:
-				/* the right-hand const is type text for all of these */
-				constvalue = ((Const *) rightop)->constvalue;
-				patt = DatumGetCString(DirectFunctionCall1(textout,
-														   constvalue));
+			case OID_BYTEA_LIKE_OP:
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
 											   &prefix, &rest);
 				resultquals = nconc(resultquals,
 									prefix_quals(leftop, expr_op,
 												 prefix, pstatus));
-				if (prefix)
-					pfree(prefix);
-				pfree(patt);
 				break;
 
 			case OID_TEXT_ICLIKE_OP:
@@ -1904,17 +1885,11 @@ expand_indexqual_conditions(List *indexquals)
 			case OID_VARCHAR_ICLIKE_OP:
 			case OID_NAME_ICLIKE_OP:
 				/* the right-hand const is type text for all of these */
-				constvalue = ((Const *) rightop)->constvalue;
-				patt = DatumGetCString(DirectFunctionCall1(textout,
-														   constvalue));
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
 											   &prefix, &rest);
 				resultquals = nconc(resultquals,
 									prefix_quals(leftop, expr_op,
 												 prefix, pstatus));
-				if (prefix)
-					pfree(prefix);
-				pfree(patt);
 				break;
 
 			case OID_TEXT_REGEXEQ_OP:
@@ -1922,17 +1897,11 @@ expand_indexqual_conditions(List *indexquals)
 			case OID_VARCHAR_REGEXEQ_OP:
 			case OID_NAME_REGEXEQ_OP:
 				/* the right-hand const is type text for all of these */
-				constvalue = ((Const *) rightop)->constvalue;
-				patt = DatumGetCString(DirectFunctionCall1(textout,
-														   constvalue));
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
 											   &prefix, &rest);
 				resultquals = nconc(resultquals,
 									prefix_quals(leftop, expr_op,
 												 prefix, pstatus));
-				if (prefix)
-					pfree(prefix);
-				pfree(patt);
 				break;
 
 			case OID_TEXT_ICREGEXEQ_OP:
@@ -1940,27 +1909,20 @@ expand_indexqual_conditions(List *indexquals)
 			case OID_VARCHAR_ICREGEXEQ_OP:
 			case OID_NAME_ICREGEXEQ_OP:
 				/* the right-hand const is type text for all of these */
-				constvalue = ((Const *) rightop)->constvalue;
-				patt = DatumGetCString(DirectFunctionCall1(textout,
-														   constvalue));
 				pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
 											   &prefix, &rest);
 				resultquals = nconc(resultquals,
 									prefix_quals(leftop, expr_op,
 												 prefix, pstatus));
-				if (prefix)
-					pfree(prefix);
-				pfree(patt);
 				break;
 
 			case OID_INET_SUB_OP:
 			case OID_INET_SUBEQ_OP:
 			case OID_CIDR_SUB_OP:
 			case OID_CIDR_SUBEQ_OP:
-				constvalue = ((Const *) rightop)->constvalue;
 				resultquals = nconc(resultquals,
 									network_prefix_quals(leftop, expr_op,
-														 constvalue));
+														 patt->constvalue));
 				break;
 
 			default:
@@ -1980,15 +1942,16 @@ expand_indexqual_conditions(List *indexquals)
  */
 static List *
 prefix_quals(Var *leftop, Oid expr_op,
-			 char *prefix, Pattern_Prefix_Status pstatus)
+			 Const *prefix_const, Pattern_Prefix_Status pstatus)
 {
 	List	   *result;
 	Oid			datatype;
 	Oid			oproid;
+	char	   *prefix;
 	Const	   *con;
 	Oper	   *op;
 	Expr	   *expr;
-	char	   *greaterstr;
+	Const	   *greaterstr = NULL;
 
 	Assert(pstatus != Pattern_Prefix_None);
 
@@ -1999,6 +1962,10 @@ prefix_quals(Var *leftop, Oid expr_op,
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_TEXT_ICREGEXEQ_OP:
 			datatype = TEXTOID;
+			break;
+
+		case OID_BYTEA_LIKE_OP:
+			datatype = BYTEAOID;
 			break;
 
 		case OID_BPCHAR_LIKE_OP:
@@ -2026,6 +1993,11 @@ prefix_quals(Var *leftop, Oid expr_op,
 			elog(ERROR, "prefix_quals: unexpected operator %u", expr_op);
 			return NIL;
 	}
+
+	if (prefix_const->consttype != BYTEAOID)
+		prefix = DatumGetCString(DirectFunctionCall1(textout, prefix_const->constvalue));
+	else
+		prefix = DatumGetCString(DirectFunctionCall1(byteaout, prefix_const->constvalue));
 
 	/*
 	 * If we found an exact-match pattern, generate an "=" indexqual.
@@ -2060,17 +2032,15 @@ prefix_quals(Var *leftop, Oid expr_op,
 	 * "x < greaterstr".
 	 *-------
 	 */
-	greaterstr = make_greater_string(prefix, datatype);
+	greaterstr = make_greater_string(con);
 	if (greaterstr)
 	{
 		oproid = find_operator("<", datatype);
 		if (oproid == InvalidOid)
 			elog(ERROR, "prefix_quals: no < operator for type %u", datatype);
-		con = string_to_const(greaterstr, datatype);
 		op = makeOper(oproid, InvalidOid, BOOLOID, false);
-		expr = make_opclause(op, leftop, (Var *) con);
+		expr = make_opclause(op, leftop, (Var *) greaterstr);
 		result = lappend(result, expr);
-		pfree(greaterstr);
 	}
 
 	return result;
@@ -2186,6 +2156,8 @@ string_to_datum(const char *str, Oid datatype)
 	 */
 	if (datatype == NAMEOID)
 		return DirectFunctionCall1(namein, CStringGetDatum(str));
+	else if (datatype == BYTEAOID)
+		return DirectFunctionCall1(byteain, CStringGetDatum(str));
 	else
 		return DirectFunctionCall1(textin, CStringGetDatum(str));
 }

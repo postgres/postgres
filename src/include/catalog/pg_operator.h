@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.107 2002/08/22 04:45:11 momjian Exp $
+ * $Id: pg_operator.h,v 1.108 2002/09/02 06:22:19 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -827,9 +827,9 @@ DATA(insert OID = 1957 ( "<"	   PGNSP PGUID b f 17 17	16 1959 1960 0	  0   0   0
 DATA(insert OID = 1958 ( "<="	   PGNSP PGUID b f 17 17	16 1960 1959 0	  0   0   0 byteale scalarltsel scalarltjoinsel ));
 DATA(insert OID = 1959 ( ">"	   PGNSP PGUID b f 17 17	16 1957 1958 0	  0   0   0 byteagt scalargtsel scalargtjoinsel ));
 DATA(insert OID = 1960 ( ">="	   PGNSP PGUID b f 17 17	16 1958 1957 0	  0   0   0 byteage scalargtsel scalargtjoinsel ));
-DATA(insert OID = 2016 (  "~~"	   PGNSP PGUID b f 17 25	16 0	2017 0	  0   0   0 bytealike likesel likejoinsel ));
+DATA(insert OID = 2016 (  "~~"	   PGNSP PGUID b f 17 17	16 0	2017 0	  0   0   0 bytealike likesel likejoinsel ));
 #define OID_BYTEA_LIKE_OP		2016
-DATA(insert OID = 2017 (  "!~~"    PGNSP PGUID b f 17 25	16 0	2016 0	  0   0   0 byteanlike nlikesel nlikejoinsel ));
+DATA(insert OID = 2017 (  "!~~"    PGNSP PGUID b f 17 17	16 0	2016 0	  0   0   0 byteanlike nlikesel nlikejoinsel ));
 DATA(insert OID = 2018 (  "||"	   PGNSP PGUID b f 17 17	17 0	0	 0	  0   0   0 byteacat - - ));
 
 /* timestamp operators */

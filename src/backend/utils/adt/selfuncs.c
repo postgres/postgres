@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.114 2002/08/29 07:22:27 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.115 2002/09/02 06:22:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,7 @@
 #include <locale.h>
 
 #include "access/heapam.h"
+#include "access/tuptoaster.h"
 #include "catalog/catname.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
@@ -168,8 +169,8 @@ static bool get_restriction_var(List *args, int varRelid,
 					Var **var, Node **other,
 					bool *varonleft);
 static void get_join_vars(List *args, Var **var1, Var **var2);
-static Selectivity prefix_selectivity(Query *root, Var *var, char *prefix);
-static Selectivity pattern_selectivity(char *patt, Pattern_Type ptype);
+static Selectivity prefix_selectivity(Query *root, Var *var, Const *prefix);
+static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
 static bool string_lessthan(const char *str1, const char *str2,
 				Oid datatype);
 static Oid	find_operator(const char *opname, Oid datatype);
@@ -826,10 +827,10 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	bool		varonleft;
 	Oid			relid;
 	Datum		constval;
-	char	   *patt;
 	Pattern_Prefix_Status pstatus;
-	char	   *prefix;
-	char	   *rest;
+	Const	   *patt = NULL;
+	Const	   *prefix = NULL;
+	Const	   *rest = NULL;
 	double		result;
 
 	/*
@@ -853,11 +854,13 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	if (((Const *) other)->constisnull)
 		return 0.0;
 	constval = ((Const *) other)->constvalue;
-	/* the right-hand const is type text for all supported operators */
-	Assert(((Const *) other)->consttype == TEXTOID);
-	patt = DatumGetCString(DirectFunctionCall1(textout, constval));
+
+	/* the right-hand const is type text or bytea for all supported operators */
+	Assert(((Const *) other)->consttype == TEXTOID ||
+				((Const *) other)->consttype == BYTEAOID);
 
 	/* divide pattern into fixed prefix and remainder */
+	patt = (Const *) other;
 	pstatus = pattern_fixed_prefix(patt, ptype, &prefix, &rest);
 
 	if (pstatus == Pattern_Prefix_Exact)
@@ -866,14 +869,12 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		 * Pattern specifies an exact match, so pretend operator is '='
 		 */
 		Oid			eqopr = find_operator("=", var->vartype);
-		Const	   *eqcon;
 		List	   *eqargs;
 
 		if (eqopr == InvalidOid)
 			elog(ERROR, "patternsel: no = operator for type %u",
 				 var->vartype);
-		eqcon = string_to_const(prefix, var->vartype);
-		eqargs = makeList2(var, eqcon);
+		eqargs = makeList2(var, prefix);
 		result = DatumGetFloat8(DirectFunctionCall4(eqsel,
 													PointerGetDatum(root),
 												 ObjectIdGetDatum(eqopr),
@@ -903,8 +904,10 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	}
 
 	if (prefix)
+	{
+		pfree(DatumGetPointer(prefix->constvalue));
 		pfree(prefix);
-	pfree(patt);
+	}
 
 	return result;
 }
@@ -2693,17 +2696,39 @@ get_join_vars(List *args, Var **var1, Var **var2)
  */
 
 static Pattern_Prefix_Status
-like_fixed_prefix(char *patt, bool case_insensitive,
-				  char **prefix, char **rest)
+like_fixed_prefix(Const *patt_const, bool case_insensitive,
+				  Const **prefix_const, Const **rest_const)
 {
 	char	   *match;
+	char	   *patt;
+	int			pattlen;
+	char	   *prefix;
+	char	   *rest;
+	Oid			typeid = patt_const->consttype;
 	int			pos,
 				match_pos;
 
-	*prefix = match = palloc(strlen(patt) + 1);
+	/* the right-hand const is type text or bytea */
+	Assert(typeid == BYTEAOID || typeid == TEXTOID);
+
+	if (typeid == BYTEAOID && case_insensitive)
+		elog(ERROR, "Cannot perform case insensitive matching on type BYTEA");
+
+	if (typeid != BYTEAOID)
+	{
+		patt = DatumGetCString(DirectFunctionCall1(textout, patt_const->constvalue));
+		pattlen = strlen(patt);
+	}
+	else
+	{
+		patt = DatumGetCString(DirectFunctionCall1(byteaout, patt_const->constvalue));
+		pattlen = toast_raw_datum_size(patt_const->constvalue) - VARHDRSZ;
+	}
+	
+	prefix = match = palloc(pattlen + 1);
 	match_pos = 0;
 
-	for (pos = 0; patt[pos]; pos++)
+	for (pos = 0; pos < pattlen; pos++)
 	{
 		/* % and _ are wildcard characters in LIKE */
 		if (patt[pos] == '%' ||
@@ -2713,7 +2738,7 @@ like_fixed_prefix(char *patt, bool case_insensitive,
 		if (patt[pos] == '\\')
 		{
 			pos++;
-			if (patt[pos] == '\0')
+			if (patt[pos] == '\0' && typeid != BYTEAOID)
 				break;
 		}
 
@@ -2733,35 +2758,58 @@ like_fixed_prefix(char *patt, bool case_insensitive,
 	}
 
 	match[match_pos] = '\0';
-	*rest = &patt[pos];
+	rest = &patt[pos];
+
+   *prefix_const = string_to_const(prefix, typeid);
+   *rest_const = string_to_const(rest, typeid);
+
+	pfree(patt);
+	pfree(match);
+	prefix = NULL;
 
 	/* in LIKE, an empty pattern is an exact match! */
-	if (patt[pos] == '\0')
+	if (pos == pattlen)
 		return Pattern_Prefix_Exact;	/* reached end of pattern, so
 										 * exact */
 
 	if (match_pos > 0)
 		return Pattern_Prefix_Partial;
 
-	pfree(match);
-	*prefix = NULL;
 	return Pattern_Prefix_None;
 }
 
 static Pattern_Prefix_Status
-regex_fixed_prefix(char *patt, bool case_insensitive,
-				   char **prefix, char **rest)
+regex_fixed_prefix(Const *patt_const, bool case_insensitive,
+				   Const **prefix_const, Const **rest_const)
 {
 	char	   *match;
 	int			pos,
 				match_pos,
 				paren_depth;
+	char	   *patt;
+	char	   *prefix;
+	char	   *rest;
+	Oid			typeid = patt_const->consttype;
+
+	/*
+	 * Should be unnecessary, there are no bytea regex operators defined.
+	 * As such, it should be noted that the rest of this function has *not*
+	 * been made safe for binary (possibly NULL containing) strings.
+	 */
+	if (typeid == BYTEAOID)
+		elog(ERROR, "Regex matching not supported on type BYTEA");
+
+	/* the right-hand const is type text for all of these */
+	patt = DatumGetCString(DirectFunctionCall1(textout, patt_const->constvalue));
 
 	/* Pattern must be anchored left */
 	if (patt[0] != '^')
 	{
-		*prefix = NULL;
-		*rest = patt;
+		rest = patt;
+
+	   *prefix_const = NULL;
+	   *rest_const = string_to_const(rest, typeid);
+
 		return Pattern_Prefix_None;
 	}
 
@@ -2774,8 +2822,11 @@ regex_fixed_prefix(char *patt, bool case_insensitive,
 	{
 		if (patt[pos] == '|' && paren_depth == 0)
 		{
-			*prefix = NULL;
-			*rest = patt;
+			rest = patt;
+
+		   *prefix_const = NULL;
+		   *rest_const = string_to_const(rest, typeid);
+
 			return Pattern_Prefix_None;
 		}
 		else if (patt[pos] == '(')
@@ -2792,7 +2843,7 @@ regex_fixed_prefix(char *patt, bool case_insensitive,
 	}
 
 	/* OK, allocate space for pattern */
-	*prefix = match = palloc(strlen(patt) + 1);
+	prefix = match = palloc(strlen(patt) + 1);
 	match_pos = 0;
 
 	/* note start at pos 1 to skip leading ^ */
@@ -2841,25 +2892,34 @@ regex_fixed_prefix(char *patt, bool case_insensitive,
 	}
 
 	match[match_pos] = '\0';
-	*rest = &patt[pos];
+	rest = &patt[pos];
 
 	if (patt[pos] == '$' && patt[pos + 1] == '\0')
 	{
-		*rest = &patt[pos + 1];
+		rest = &patt[pos + 1];
+
+	   *prefix_const = string_to_const(prefix, typeid);
+	   *rest_const = string_to_const(rest, typeid);
+
 		return Pattern_Prefix_Exact;	/* pattern specifies exact match */
 	}
+
+   *prefix_const = string_to_const(prefix, typeid);
+   *rest_const = string_to_const(rest, typeid);
+
+	pfree(patt);
+	pfree(match);
+	prefix = NULL;
 
 	if (match_pos > 0)
 		return Pattern_Prefix_Partial;
 
-	pfree(match);
-	*prefix = NULL;
 	return Pattern_Prefix_None;
 }
 
 Pattern_Prefix_Status
-pattern_fixed_prefix(char *patt, Pattern_Type ptype,
-					 char **prefix, char **rest)
+pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
+					 Const **prefix, Const **rest)
 {
 	Pattern_Prefix_Status result;
 
@@ -2897,19 +2957,23 @@ pattern_fixed_prefix(char *patt, Pattern_Type ptype,
  * more useful to use the upper-bound code than not.
  */
 static Selectivity
-prefix_selectivity(Query *root, Var *var, char *prefix)
+prefix_selectivity(Query *root, Var *var, Const *prefixcon)
 {
 	Selectivity prefixsel;
 	Oid			cmpopr;
-	Const	   *prefixcon;
+	char	   *prefix;
 	List	   *cmpargs;
-	char	   *greaterstr;
+	Const	   *greaterstrcon;
 
 	cmpopr = find_operator(">=", var->vartype);
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "prefix_selectivity: no >= operator for type %u",
 			 var->vartype);
-	prefixcon = string_to_const(prefix, var->vartype);
+	if (prefixcon->consttype != BYTEAOID)
+		prefix = DatumGetCString(DirectFunctionCall1(textout, prefixcon->constvalue));
+	else
+		prefix = DatumGetCString(DirectFunctionCall1(byteaout, prefixcon->constvalue));
+
 	cmpargs = makeList2(var, prefixcon);
 	/* Assume scalargtsel is appropriate for all supported types */
 	prefixsel = DatumGetFloat8(DirectFunctionCall4(scalargtsel,
@@ -2923,8 +2987,8 @@ prefix_selectivity(Query *root, Var *var, char *prefix)
 	 *	"x < greaterstr".
 	 *-------
 	 */
-	greaterstr = make_greater_string(prefix, var->vartype);
-	if (greaterstr)
+	greaterstrcon = make_greater_string(prefixcon);
+	if (greaterstrcon)
 	{
 		Selectivity topsel;
 
@@ -2932,8 +2996,7 @@ prefix_selectivity(Query *root, Var *var, char *prefix)
 		if (cmpopr == InvalidOid)
 			elog(ERROR, "prefix_selectivity: no < operator for type %u",
 				 var->vartype);
-		prefixcon = string_to_const(greaterstr, var->vartype);
-		cmpargs = makeList2(var, prefixcon);
+		cmpargs = makeList2(var, greaterstrcon);
 		/* Assume scalarltsel is appropriate for all supported types */
 		topsel = DatumGetFloat8(DirectFunctionCall4(scalarltsel,
 													PointerGetDatum(root),
@@ -2997,14 +3060,35 @@ prefix_selectivity(Query *root, Var *var, char *prefix)
 #define PARTIAL_WILDCARD_SEL 2.0
 
 static Selectivity
-like_selectivity(char *patt, bool case_insensitive)
+like_selectivity(Const *patt_const, bool case_insensitive)
 {
 	Selectivity sel = 1.0;
 	int			pos;
+	int			start;
+	Oid			typeid = patt_const->consttype;
+	char	   *patt;
+	int			pattlen;
+
+	/* the right-hand const is type text or bytea */
+	Assert(typeid == BYTEAOID || typeid == TEXTOID);
+
+	if (typeid == BYTEAOID && case_insensitive)
+		elog(ERROR, "Cannot perform case insensitive matching on type BYTEA");
+
+	if (typeid != BYTEAOID)
+	{
+		patt = DatumGetCString(DirectFunctionCall1(textout, patt_const->constvalue));
+		pattlen = strlen(patt);
+	}
+	else
+	{
+		patt = DatumGetCString(DirectFunctionCall1(byteaout, patt_const->constvalue));
+		pattlen = toast_raw_datum_size(patt_const->constvalue) - VARHDRSZ;
+	}
 
 	/* Skip any leading %; it's already factored into initial sel */
-	pos = (*patt == '%') ? 1 : 0;
-	for (; patt[pos]; pos++)
+	start = (*patt == '%') ? 1 : 0;
+	for (pos = start; pos < pattlen; pos++)
 	{
 		/* % and _ are wildcard characters in LIKE */
 		if (patt[pos] == '%')
@@ -3015,7 +3099,7 @@ like_selectivity(char *patt, bool case_insensitive)
 		{
 			/* Backslash quotes the next character */
 			pos++;
-			if (patt[pos] == '\0')
+			if (patt[pos] == '\0' && typeid != BYTEAOID)
 				break;
 			sel *= FIXED_CHAR_SEL;
 		}
@@ -3122,10 +3206,24 @@ regex_selectivity_sub(char *patt, int pattlen, bool case_insensitive)
 }
 
 static Selectivity
-regex_selectivity(char *patt, bool case_insensitive)
+regex_selectivity(Const *patt_const, bool case_insensitive)
 {
 	Selectivity sel;
-	int			pattlen = strlen(patt);
+	char	   *patt;
+	int			pattlen;
+	Oid			typeid = patt_const->consttype;
+
+	/*
+	 * Should be unnecessary, there are no bytea regex operators defined.
+	 * As such, it should be noted that the rest of this function has *not*
+	 * been made safe for binary (possibly NULL containing) strings.
+	 */
+	if (typeid == BYTEAOID)
+		elog(ERROR, "Regex matching not supported on type BYTEA");
+
+	/* the right-hand const is type text for all of these */
+	patt = DatumGetCString(DirectFunctionCall1(textout, patt_const->constvalue));
+	pattlen = strlen(patt);
 
 	/* If patt doesn't end with $, consider it to have a trailing wildcard */
 	if (pattlen > 0 && patt[pattlen - 1] == '$' &&
@@ -3146,7 +3244,7 @@ regex_selectivity(char *patt, bool case_insensitive)
 }
 
 static Selectivity
-pattern_selectivity(char *patt, Pattern_Type ptype)
+pattern_selectivity(Const *patt, Pattern_Type ptype)
 {
 	Selectivity result;
 
@@ -3220,19 +3318,33 @@ locale_is_like_safe(void)
  * sort passes, etc.  For now, we just shut down the whole thing in locales
  * that do such things :-(
  */
-char *
-make_greater_string(const char *str, Oid datatype)
+Const *
+make_greater_string(const Const *str_const)
 {
+	Oid			datatype = str_const->consttype;
+	char	   *str;
 	char	   *workstr;
 	int			len;
 
-	/*
-	 * Make a modifiable copy, which will be our return value if
-	 * successful
-	 */
-	workstr = pstrdup((char *) str);
+	/* Get the string and a modifiable copy */
+	if (datatype == NAMEOID)
+	{
+		str = DatumGetCString(DirectFunctionCall1(nameout, str_const->constvalue));
+		len = strlen(str);
+	}
+	else if (datatype == BYTEAOID)
+	{
+		str = DatumGetCString(DirectFunctionCall1(byteaout, str_const->constvalue));
+		len = toast_raw_datum_size(str_const->constvalue) - VARHDRSZ;
+	}
+	else
+	{
+		str = DatumGetCString(DirectFunctionCall1(textout, str_const->constvalue));
+		len = strlen(str);
+	}
+	workstr = pstrdup(str);
 
-	while ((len = strlen(workstr)) > 0)
+	while (len > 0)
 	{
 		unsigned char *lastchar = (unsigned char *) (workstr + len - 1);
 
@@ -3243,20 +3355,34 @@ make_greater_string(const char *str, Oid datatype)
 		{
 			(*lastchar)++;
 			if (string_lessthan(str, workstr, datatype))
-				return workstr; /* Success! */
+			{
+				 /* Success! */
+				Const *workstr_const = string_to_const(workstr, datatype);
+
+				pfree(str);
+				pfree(workstr);
+				return workstr_const;
+			}
 		}
 
 		/*
 		 * Truncate off the last character, which might be more than 1
 		 * byte in MULTIBYTE case.
 		 */
-		len = pg_mbcliplen((const unsigned char *) workstr, len, len - 1);
-		workstr[len] = '\0';
+		if (datatype != BYTEAOID && pg_database_encoding_max_length() > 1)
+			len = pg_mbcliplen((const unsigned char *) workstr, len, len - 1);
+		else
+			len -= - 1;
+
+		if (datatype != BYTEAOID)
+			workstr[len] = '\0';
 	}
 
 	/* Failed... */
+	pfree(str);
 	pfree(workstr);
-	return NULL;
+
+	return (Const *) NULL;
 }
 
 /*
@@ -3330,12 +3456,16 @@ find_operator(const char *opname, Oid datatype)
 static Datum
 string_to_datum(const char *str, Oid datatype)
 {
+	Assert(str != NULL);
+
 	/*
 	 * We cheat a little by assuming that textin() will do for bpchar and
 	 * varchar constants too...
 	 */
 	if (datatype == NAMEOID)
 		return DirectFunctionCall1(namein, CStringGetDatum(str));
+	else if (datatype == BYTEAOID)
+		return DirectFunctionCall1(byteain, CStringGetDatum(str));
 	else
 		return DirectFunctionCall1(textin, CStringGetDatum(str));
 }
