@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.18 1998/09/01 04:30:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.19 1998/09/22 20:28:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -429,11 +429,9 @@ flatten_tlist_vars(List *full_tlist, List *flat_tlist)
 	{
 		TargetEntry *tle = lfirst(x);
 
-		result =
-			lappend(result,
-					makeTargetEntry(tle->resdom,
-							   flatten_tlistentry((Node *) get_expr(tle),
-												  flat_tlist)));
+		result = lappend(result, makeTargetEntry(tle->resdom,
+							   		flatten_tlistentry((Node *) get_expr(tle),
+												  		flat_tlist)));
 	}
 
 	return result;

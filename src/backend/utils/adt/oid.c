@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.19 1998/09/01 05:34:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.20 1998/09/22 20:28:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,34 +31,35 @@
 Oid *
 oid8in(char *oidString)
 {
-	Oid		   (*result)[];
+	Oid		   *result;
 	int			nums;
 
 	if (oidString == NULL)
 		return NULL;
-	result = (Oid (*)[]) palloc(sizeof(Oid[8]));
+
+	result = (Oid *) palloc(sizeof(Oid[8]));
 	if ((nums = sscanf(oidString, "%d%d%d%d%d%d%d%d",
-					   &(*result)[0],
-					   &(*result)[1],
-					   &(*result)[2],
-					   &(*result)[3],
-					   &(*result)[4],
-					   &(*result)[5],
-					   &(*result)[6],
-					   &(*result)[7])) != 8)
+					   &result[0],
+					   &result[1],
+					   &result[2],
+					   &result[3],
+					   &result[4],
+					   &result[5],
+					   &result[6],
+					   &result[7])) != 8)
 	{
 		do
-			(*result)[nums++] = 0;
+			result[nums++] = 0;
 		while (nums < 8);
 	}
-	return (Oid *) result;
+	return result;
 }
 
 /*
  *		oid8out - converts internal form to "num num ..."
  */
 char *
-oid8out(Oid (*oidArray)[])
+oid8out(Oid *oidArray)
 {
 	int			num;
 	Oid		   *sp;
@@ -75,7 +76,7 @@ oid8out(Oid (*oidArray)[])
 
 	/* assumes sign, 10 digits, ' ' */
 	rp = result = (char *) palloc(8 * 12);
-	sp = *oidArray;
+	sp = oidArray;
 	for (num = 8; num != 0; num--)
 	{
 		ltoa(*sp++, rp);

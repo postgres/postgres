@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.18 1998/09/01 06:22:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.19 1998/09/22 20:28:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,34 +80,35 @@ int2out(int16 sh)
 int16 *
 int28in(char *shs)
 {
-	int16	  (*result)[];
+	int16	   *result;
 	int			nums;
 
 	if (shs == NULL)
 		return NULL;
-	result = (int16 (*)[]) palloc(sizeof(int16[8]));
+
+	result = (int16 *) palloc(sizeof(int16[8]));
 	if ((nums = sscanf(shs, "%hd%hd%hd%hd%hd%hd%hd%hd",
-					   *result,
-					   *result + 1,
-					   *result + 2,
-					   *result + 3,
-					   *result + 4,
-					   *result + 5,
-					   *result + 6,
-					   *result + 7)) != 8)
+					   &result[0],
+					   &result[1],
+					   &result[2],
+					   &result[3],
+					   &result[4],
+					   &result[5],
+					   &result[6],
+					   &result[7])) != 8)
 	{
 		do
-			(*result)[nums++] = 0;
+			result[nums++] = 0;
 		while (nums < 8);
 	}
-	return (int16 *) result;
+	return result;
 }
 
 /*
  *		int28out		- converts internal form to "num num ..."
  */
 char *
-int28out(int16 (*shs)[])
+int28out(int16 *shs)
 {
 	int			num;
 	int16	   *sp;
@@ -123,7 +124,7 @@ int28out(int16 (*shs)[])
 	}
 	rp = result = (char *) palloc(8 * 7);		/* assumes sign, 5 digits,
 												 * ' ' */
-	sp = *shs;
+	sp = shs;
 	for (num = 8; num != 0; num--)
 	{
 		itoa(*sp++, rp);
@@ -136,7 +137,7 @@ int28out(int16 (*shs)[])
 }
 
 /*
- *		int28in			- converts "num num ..." to internal form
+ *		int44in			- converts "num num ..." to internal form
  *
  *		Note:
  *				Fills any nonexistent digits with NULLs.

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.54 1998/09/18 04:43:20 momjian Exp $
+ * $Id: builtins.h,v 1.55 1998/09/22 20:28:13 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -64,7 +64,7 @@ extern bool cideq(int8 arg1, int8 arg2);
 extern int32 int2in(char *num);
 extern char *int2out(int16 sh);
 extern int16 *int28in(char *shs);
-extern char *int28out(int16 (*shs)[]);
+extern char *int28out(int16 *shs);
 extern int32 *int44in(char *input_string);
 extern char *int44out(int32 *an_array);
 extern int32 int4in(char *num);
@@ -329,7 +329,7 @@ extern bool oidnotin(Oid the_oid, char *compare);
 
 /* oid.c */
 extern Oid *oid8in(char *oidString);
-extern char *oid8out(Oid (*oidArray)[]);
+extern char *oid8out(Oid *oidArray);
 extern Oid	oidin(char *s);
 extern char *oidout(Oid o);
 extern bool oideq(Oid arg1, Oid arg2);
@@ -358,7 +358,7 @@ extern bool texticregexne(struct varlena * s, struct varlena * p);
 /* regproc.c */
 extern int32 regprocin(char *pro_name_and_oid);
 extern char *regprocout(RegProcedure proid);
-extern text *oid8types(Oid (*oidArray)[]);
+extern text *oid8types(Oid *oidArray);
 extern Oid	regproctooid(RegProcedure rp);
 
 /* define macro to replace mixed-case function call - tgl 97/04/27 */
