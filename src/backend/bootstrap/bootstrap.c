@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.75 2000/01/10 16:13:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.76 2000/01/11 04:00:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,6 @@
 #include "utils/portal.h"
 
 #define ALLOC(t, c)		(t *)calloc((unsigned)(c), sizeof(t))
-#define FIRST_TYPE_OID 16		/* OID of the first type */
 
 extern void		BaseInit(void);
 extern void		StartupXLOG(void);
@@ -102,24 +101,22 @@ struct typinfo
 };
 
 static struct typinfo Procid[] = {
-	{"bool", 16, 0, 1, F_BOOLIN, F_BOOLOUT},
-	{"bytea", 17, 0, -1, F_BYTEAIN, F_BYTEAOUT},
-	{"char", 18, 0, 1, F_CHARIN, F_CHAROUT},
-	{"name", 19, 0, NAMEDATALEN, F_NAMEIN, F_NAMEOUT},
-	{"dummy", 20, 0, 16, 0, 0},
-/*	  { "dt",		  20,	 0,  4, F_DTIN,			F_DTOUT}, */
-	{"int2", 21, 0, 2, F_INT2IN, F_INT2OUT},
-	{"int2vector", 22, 0, 16, F_INT2VECTORIN, F_INT2VECTOROUT},
-	{"int4", 23, 0, 4, F_INT4IN, F_INT4OUT},
-	{"regproc", 24, 0, 4, F_REGPROCIN, F_REGPROCOUT},
-	{"text", 25, 0, -1, F_TEXTIN, F_TEXTOUT},
-	{"oid", 26, 0, 4, F_INT4IN, F_INT4OUT},
-	{"tid", 27, 0, 6, F_TIDIN, F_TIDOUT},
-	{"xid", 28, 0, 5, F_XIDIN, F_XIDOUT},
-	{"iid", 29, 0, 1, F_CIDIN, F_CIDOUT},
-	{"oidvector", 30, 0, 32, F_OIDVECTORIN, F_OIDVECTOROUT},
+	{"bool", BOOLOID, 0, 1, F_BOOLIN, F_BOOLOUT},
+	{"bytea", BYTEAOID, 0, -1, F_BYTEAIN, F_BYTEAOUT},
+	{"char", CHAROID, 0, 1, F_CHARIN, F_CHAROUT},
+	{"name", NAMEOID, 0, NAMEDATALEN, F_NAMEIN, F_NAMEOUT},
+	{"int2", INT2OID, 0, 2, F_INT2IN, F_INT2OUT},
+	{"int2vector", INT2VECTOROID, 0, INDEX_MAX_KEYS*2, F_INT2VECTORIN, F_INT2VECTOROUT},
+	{"int4", INT4OID, 0, 4, F_INT4IN, F_INT4OUT},
+	{"regproc", REGPROCOID, 0, 4, F_REGPROCIN, F_REGPROCOUT},
+	{"text", TEXTOID, 0, -1, F_TEXTIN, F_TEXTOUT},
+	{"oid", OIDOID, 0, 4, F_INT4IN, F_INT4OUT},
+	{"tid", TIDOID, 0, 6, F_TIDIN, F_TIDOUT},
+	{"xid", XIDOID, 0, 4, F_XIDIN, F_XIDOUT},
+	{"cid", CIDOID, 0, 4, F_CIDIN, F_CIDOUT},
+	{"oidvector", 30, 0, INDEX_MAX_KEYS*4, F_OIDVECTORIN, F_OIDVECTOROUT},
 	{"smgr", 210, 0, 2, F_SMGRIN, F_SMGROUT},
-	{"_int4", 1007, 23, -1, F_ARRAY_IN, F_ARRAY_OUT},
+	{"_int4", 1007, INT4OID, -1, F_ARRAY_IN, F_ARRAY_OUT},
 	{"_aclitem", 1034, 1033, -1, F_ARRAY_IN, F_ARRAY_OUT}
 };
 
@@ -694,7 +691,13 @@ InsertOneValue(Oid objectid, char *value, int i)
 	}
 	else
 	{
-		typeindex = attrtypes[i]->atttypid - FIRST_TYPE_OID;
+		for (typeindex = 0; typeindex < n_types; typeindex++)
+		{
+			if (Procid[typeindex].oid == attrtypes[i]->atttypid)
+				break;
+		}
+		if (typeindex >= n_types)
+			elog(ERROR, "can't find type OID %u", attrtypes[i]->atttypid);
 		if (DebugMode)
 			printf("Typ == NULL, typeindex = %u idx = %d\n", typeindex, i);
 		values[i] = fmgr(Procid[typeindex].inproc, value,
