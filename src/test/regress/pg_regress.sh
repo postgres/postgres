@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.2 2000/10/01 22:23:14 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.3 2000/10/02 06:03:25 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -72,7 +72,7 @@ fi
 libdir='@libdir@'
 bindir='@bindir@'
 datadir='@datadir@'
-host_platform='@host_triple@'
+host_platform='@host_tuple@'
 
 unset mode
 unset schedule
