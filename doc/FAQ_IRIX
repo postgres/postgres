@@ -1,9 +1,9 @@
 =======================================================
-Frequently Asked Questions (FAQ) for PostgreSQL 7.2
+Frequently Asked Questions (FAQ) for PostgreSQL
 IRIX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           $Date: 2001/12/19 18:50:48 $
+last updated:           $Date: 2002/11/11 19:59:56 $
 
 current maintainer:     Luis Amigo (lamigo@atc.unican.es)
 original author:        Luis Amigo (lamigo@atc.unican.es)
@@ -38,20 +38,7 @@ libgcc, but this has not been tested yet.
 
 1.2)	Anything special about the build/install procedure?
 
-In order to compile with cc you will need to execute:
-
-CC=cc ./configure
-
-You may want to edit src/templates/irix5 to include something like:
-
-CFLAGS='-O2'
-LDFLAGS='-O2'
-
-It is a good place to improve performance of PostgreSQK, because here you
-may use all MIPSPro power generating specific objects, see man cc.
-
-Another known problem is include location, it may be different from some
-compiler installations to others.  This may manifest itself with something like:
+There may be a compilation problem like the following:
 
 cc-1020 cc: ERROR File = pqcomm.c, Line = 427
   The identifier "TCP_NODELAY" is undefined.
@@ -69,7 +56,6 @@ There are several "expected failures" due to differences between your platform
 and the regression test reference platform used by the PostgreSQL group.  All
 of these should be compensated for by the regression test comparison
 mechanism, with the possible exception of some low-order-digit differences in
-the geometry tests (depending on which FPU are you using) or order differences
-between zero and NULL in join tests(depending on compiler version).
+the geometry tests (depending on which FPU are you using).
 
 Any other error is cause for suspicion.
