@@ -41,8 +41,9 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
+ * Portions taken from FreeBSD.
  *
- * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.10 2003/11/14 18:32:34 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.11 2003/11/17 20:35:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
