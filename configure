@@ -11257,7 +11257,8 @@ esac
 
 # Win32 can't to rename or unlink on an open file
 case $host_os in win32*)
-LIBOBJS="$LIBOBJS dirmod.$ac_objext" ;;
+LIBOBJS="$LIBOBJS dirmod.$ac_objext"
+LIBOBJS="$LIBOBJS opendir.$ac_objext" ;;
 esac
 
 # On HPUX 9, rint() is not in regular libm.a but in /lib/pa1.1/libm.a;

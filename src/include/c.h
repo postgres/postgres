@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.141 2003/04/25 16:18:40 momjian Exp $
+ * $Id: c.h,v 1.142 2003/05/09 01:16:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -719,6 +719,31 @@ int pgrename(const char *from, const char *to);
 int pgunlink(const char *path);      
 #define rename(path)		pgrename(path)
 #define unlink(from, to)	pgunlink(from, to)
+#endif
+
+/*
+ * Win32 doesn't have opendir/readdir/closedir()
+ */
+#ifdef WIN32
+struct dirent {
+	ino_t d_ino;					/* inode (always 1 on WIN32) */
+	char d_name[MAX_PATH + 1];	/* filename (null terminated) */
+};
+
+typedef struct {
+	HANDLE handle;				/* handle for FindFirstFile or
+								 * FindNextFile */
+	long offset;				/* offset into directory */
+	int finished;				/* 1 if there are not more files */
+	WIN32_FIND_DATA finddata;	/* file data FindFirstFile or FindNextFile
+								 * returns */
+	char *dir;					/* the directory path we are reading */
+	struct dirent ent;			/* the dirent to return */
+} DIR;
+
+extern DIR *opendir(const char *);
+extern struct dirent *readdir(DIR *);
+extern int closedir(DIR *);
 #endif
 
 /*
