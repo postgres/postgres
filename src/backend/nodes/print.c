@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.49 2001/10/25 05:49:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.50 2001/12/19 22:35:35 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -41,6 +41,7 @@ print(void *obj)
 	s = nodeToString(obj);
 	printf("%s\n", s);
 	fflush(stdout);
+	pfree(s);
 }
 
 /*
@@ -49,59 +50,77 @@ print(void *obj)
 void
 pprint(void *obj)
 {
+#define INDENTSTOP	3
+#define MAXINDENT	60
+#define LINELEN		80
 	char	   *s;
 	int			i;
-	char		line[80];
+	char		line[LINELEN];
 	int			indentLev;
+	int			indentDist;
 	int			j;
 
 	s = nodeToString(obj);
 
-	indentLev = 0;
+	indentLev = 0;				/* logical indent level */
+	indentDist = 0;				/* physical indent distance */
 	i = 0;
 	for (;;)
 	{
-		for (j = 0; j < indentLev * 3; j++)
+		for (j = 0; j < indentDist; j++)
 			line[j] = ' ';
-		for (; j < 75 && s[i] != '\0'; i++, j++)
+		for (; j < LINELEN-1 && s[i] != '\0'; i++, j++)
 		{
 			line[j] = s[i];
 			switch (line[j])
 			{
 				case '}':
-					if (j != indentLev * 3)
+					if (j != indentDist)
 					{
+						/* print data before the } */
 						line[j] = '\0';
 						printf("%s\n", line);
-						line[indentLev * 3] = '\0';
-						printf("%s}\n", line);
 					}
-					else
+					/* print the } at indentDist */
+					line[indentDist] = '\0';
+					printf("%s}\n", line);
+					/* outdent */
+					if (indentLev > 0)
 					{
-						line[j] = '\0';
-						printf("%s}\n", line);
+						indentLev--;
+						indentDist = MIN(indentLev * INDENTSTOP, MAXINDENT);
 					}
-					indentLev--;
-					j = indentLev * 3 - 1;		/* print the line before :
-												 * and resets */
+					j = indentDist - 1;
+					/* j will equal indentDist on next loop iteration */
 					break;
 				case ')':
+					/* force line break after ')' */
 					line[j + 1] = '\0';
 					printf("%s\n", line);
-					j = indentLev * 3 - 1;
+					j = indentDist - 1;
 					break;
 				case '{':
-					indentLev++;
-					/* !!! FALLS THROUGH */
-				case ':':
-					if (j != 0)
+					/* force line break before { */
+					if (j != indentDist)
 					{
 						line[j] = '\0';
 						printf("%s\n", line);
-						/* print the line before : and resets */
-						for (j = 0; j < indentLev * 3; j++)
-							line[j] = ' ';
 					}
+					/* indent */
+					indentLev++;
+					indentDist = MIN(indentLev * INDENTSTOP, MAXINDENT);
+					for (j = 0; j < indentDist; j++)
+						line[j] = ' ';
+					line[j] = s[i];
+					break;
+				case ':':
+					/* force line break before : */
+					if (j != indentDist)
+					{
+						line[j] = '\0';
+						printf("%s\n", line);
+					}
+					j = indentDist;
 					line[j] = s[i];
 					break;
 			}
@@ -114,7 +133,7 @@ pprint(void *obj)
 	if (j != 0)
 		printf("%s\n", line);
 	fflush(stdout);
-	return;
+	pfree(s);
 }
 
 /*
@@ -378,7 +397,7 @@ void
 print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 {
 	int			i;
-	char		extraInfo[100];
+	char		extraInfo[NAMEDATALEN + 100];
 
 	if (!p)
 		return;
