@@ -92,12 +92,12 @@ for flag in $acx_pthread_flags; do
                 PTHREAD_CFLAGS="$flag"
                 ;;
 
-		pthread-config)
-		AC_CHECK_PROG(acx_pthread_config, pthread-config, yes, no)
-		if test x"$acx_pthread_config" = xno; then continue; fi
-		PTHREAD_CFLAGS="`pthread-config --cflags`"
-		PTHREAD_LIBS="`pthread-config --ldflags` `pthread-config --libs`"
-		;;
+                pthread-config)
+                AC_CHECK_PROG(acx_pthread_config, pthread-config, yes, no)
+                if test x"$acx_pthread_config" = xno; then continue; fi
+                PTHREAD_CFLAGS="`pthread-config --cflags`"
+                PTHREAD_LIBS="`pthread-config --ldflags` `pthread-config --libs`"
+                ;;
 
                 *)
                 AC_MSG_CHECKING([for the pthreads library -l$flag])
@@ -168,11 +168,11 @@ if test "x$acx_pthread_ok" = xyes; then
 
         AC_MSG_CHECKING([if more special flags are required for pthreads])
         flag=no
-# We handle this ourselves in PostgreSQL
-#        case "${host_cpu}-${host_os}" in
-#                *-aix* | *-freebsd*)     flag="-D_THREAD_SAFE";;
-#                *solaris* | *-osf* | *-hpux*) flag="-D_REENTRANT";;
-#        esac
+# We always add these in PostgreSQL
+#       case "${host_cpu}-${host_os}" in
+#               *-aix* | *-freebsd* | *-darwin*) flag="-D_THREAD_SAFE";;
+#               *solaris* | *-osf* | *-hpux*) flag="-D_REENTRANT";;
+#       esac
         AC_MSG_RESULT(${flag})
         if test "x$flag" != xno; then
                 PTHREAD_CFLAGS="$flag $PTHREAD_CFLAGS"
