@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jul 16 10:34:15 EDT 2001
+Last updated:		Mon Jul 16 17:18:03 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -154,6 +154,7 @@ COMMANDS
 	o -Add ALTER TABLE DROP CHECK CONSTRAINT (Christopher Kings-Lynne)
 	o ALTER TABLE ADD PRIMARY KEY (Christopher Kings-Lynne)
 	o ALTER TABLE ADD UNIQUE (Christopher Kings-Lynne)
+	o ALTER TABLE table ADD COLUMN column SERIAL doesn't create sequence
 
 * CLUSTER
 	o cluster all tables at once
