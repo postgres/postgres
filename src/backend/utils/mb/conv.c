@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.16 2000/06/28 03:32:45 tgl Exp $
+ * $Id: conv.c,v 1.17 2000/08/27 10:40:48 ishii Exp $
  *
  *
  */
@@ -1519,70 +1519,3 @@ pg_encoding_conv_tbl pg_conv_tbl[] = {
 	{WIN1250, "WIN1250", 1, win12502mic, mic2win1250},	/* WIN 1250 */
 	{-1, "", 0, 0, 0}			/* end mark */
 };
-
-#ifdef DEBUGMAIN
-#include "postgres.h"
-#include "utils/memutils.h"
-/*
- *	testing for sjis2mic() and mic2sjis()
- */
-
-int
-main()
-{
-	unsigned char eucbuf[1024];
-	unsigned char sjisbuf[1024];
-	unsigned char sjis[] = {0x81, 0x40, 0xa1, 0xf0, 0x40, 0xf0, 0x9e, 0xf5, 0x40, 0xfa, 0x40, 0xfa, 0x54, 0xfa, 0x7b, 0x00};
-
-	int			i;
-
-	sjis2mic(sjis, eucbuf, 1024);
-	for (i = 0; i < 1024; i++)
-	{
-		if (eucbuf[i])
-			printf("%02x ", eucbuf[i]);
-		else
-		{
-			printf("\n");
-			break;
-		}
-	}
-
-	mic2sjis(eucbuf, sjisbuf, 1024);
-	for (i = 0; i < 1024; i++)
-	{
-		if (sjisbuf[i])
-			printf("%02x ", sjisbuf[i]);
-		else
-		{
-			printf("\n");
-			break;
-		}
-	}
-
-	return (0);
-}
-
-void
-elog(int lev, const char *fmt,...)
-{
-}
-
-MemoryContext CurrentMemoryContext;
-
-void *
-MemoryContextAlloc(MemoryContext context, Size size)
-{
-}
-
-void
-pfree(void *pointer)
-{
-}
-
-void *
-repalloc(void *pointer, Size size)
-{
-}
-
-#endif

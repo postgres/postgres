@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.11 2000/04/12 17:16:06 momjian Exp $
+ * $Id: wchar.c,v 1.12 2000/08/27 10:40:48 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -20,15 +20,19 @@
 /*
  * SQL/ASCII
  */
-static void pg_ascii2wchar_with_len
+static int pg_ascii2wchar_with_len
 			(const unsigned char *from, pg_wchar * to, int len)
 {
+	int cnt = 0;
+
 	while (*from && len > 0)
 	{
 		*to++ = *from++;
 		len--;
+		cnt++;
 	}
 	*to = 0;
+	return(cnt);
 }
 
 static int
@@ -41,9 +45,11 @@ pg_ascii_mblen(const unsigned char *s)
  * EUC
  */
 
-static void pg_euc2wchar_with_len
+static int pg_euc2wchar_with_len
 			(const unsigned char *from, pg_wchar * to, int len)
 {
+	int cnt = 0;
+
 	while (*from && len > 0)
 	{
 		if (*from == SS2)
@@ -72,8 +78,10 @@ static void pg_euc2wchar_with_len
 			len--;
 		}
 		to++;
+		cnt++;
 	}
 	*to = 0;
+	return(cnt);
 }
 
 static int
@@ -95,10 +103,10 @@ pg_euc_mblen(const unsigned char *s)
 /*
  * EUC_JP
  */
-static void pg_eucjp2wchar_with_len
+static int pg_eucjp2wchar_with_len
 			(const unsigned char *from, pg_wchar * to, int len)
 {
-	pg_euc2wchar_with_len(from, to, len);
+	return(pg_euc2wchar_with_len(from, to, len));
 }
 
 static int
@@ -110,10 +118,10 @@ pg_eucjp_mblen(const unsigned char *s)
 /*
  * EUC_KR
  */
-static void pg_euckr2wchar_with_len
+static int pg_euckr2wchar_with_len
 			(const unsigned char *from, pg_wchar * to, int len)
 {
-	pg_euc2wchar_with_len(from, to, len);
+	return(pg_euc2wchar_with_len(from, to, len));
 }
 
 static int
@@ -125,9 +133,11 @@ pg_euckr_mblen(const unsigned char *s)
 /*
  * EUC_CN
  */
-static void pg_euccn2wchar_with_len
+static int pg_euccn2wchar_with_len
 			(const unsigned char *from, pg_wchar * to, int len)
 {
+	int cnt = 0;
+
 	while (*from && len > 0)
 	{
 		if (*from == SS2)
@@ -157,8 +167,10 @@ static void pg_euccn2wchar_with_len
 			len--;
 		}
 		to++;
+		cnt++;
 	}
 	*to = 0;
+	return(cnt);
 }
 
 static int
@@ -176,9 +188,11 @@ pg_euccn_mblen(const unsigned char *s)
 /*
  * EUC_TW
  */
-static void pg_euctw2wchar_with_len
+static int pg_euctw2wchar_with_len
 			(const unsigned char *from, pg_wchar * to, int len)
 {
+	int cnt = 0;
+
 	while (*from && len > 0)
 	{
 		if (*from == SS2)
@@ -209,8 +223,10 @@ static void pg_euctw2wchar_with_len
 			len--;
 		}
 		to++;
+		cnt++;
 	}
 	*to = 0;
+	return(cnt);
 }
 
 static int
@@ -235,12 +251,13 @@ pg_euctw_mblen(const unsigned char *s)
  * len: length of from.
  * "from" not necessarily null terminated.
  */
-static void
+static int
 pg_utf2wchar_with_len(const unsigned char *from, pg_wchar * to, int len)
 {
 	unsigned char c1,
 				c2,
 				c3;
+	int cnt = 0;
 
 	while (*from && len > 0)
 	{
@@ -273,8 +290,10 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar * to, int len)
 			len--;
 		}
 		to++;
+		cnt++;
 	}
 	*to = 0;
+	return(cnt);
 }
 
 static int
@@ -297,9 +316,11 @@ pg_utf_mblen(const unsigned char *s)
  * len: length of from.
  * "from" not necessarily null terminated.
  */
-static void
+static int
 pg_mule2wchar_with_len(const unsigned char *from, pg_wchar * to, int len)
 {
+	int cnt = 0;
+
 	while (*from && len > 0)
 	{
 		if (IS_LC1(*from))
@@ -336,8 +357,10 @@ pg_mule2wchar_with_len(const unsigned char *from, pg_wchar * to, int len)
 			len--;
 		}
 		to++;
+		cnt++;
 	}
 	*to = 0;
+	return(cnt);
 }
 
 int
@@ -363,12 +386,18 @@ pg_mule_mblen(const unsigned char *s)
 /*
  * ISO8859-1
  */
-static void
+static int
 pg_latin12wchar_with_len(const unsigned char *from, pg_wchar * to, int len)
 {
+	int cnt = 0;
+
 	while (*from && len-- > 0)
+	{
 		*to++ = *from++;
+		cnt++;
+	}
 	*to = 0;
+	return(cnt);
 }
 
 static int

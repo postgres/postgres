@@ -4,7 +4,7 @@
 #    Makefile for utils/mb
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.8 2000/05/29 05:45:34 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.9 2000/08/27 10:40:48 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,9 +19,22 @@ all: SUBSYS.o
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
-sjistest: $(OBJS)
-	$(CC) -c $(CFLAGS) -DDEBUGMAIN conv.c
-	$(CC) -o sjistest conv.o \
+palloc.o: palloc.c
+	$(CC) -c $(CFLAGS) palloc.c
+
+sjistest.o: sjistest.c
+	$(CC) -c $(CFLAGS) sjistest.c
+
+liketest.o: liketest.c
+	$(CC) -c $(CFLAGS) liketest.c
+
+sjistest: $(OBJS) sjistest.o palloc.o
+	$(CC) -o sjistest sjistest.o palloc.o \
+	common.o mbutils.o wchar.o wstrcmp.o wstrncmp.o variable.o \
+       big5.o $(LDFLAGS)
+
+liketest: $(OBJS) liketest.o palloc.o
+	$(CC) -o liketest liketest.o palloc.o conv.o \
 	common.o mbutils.o wchar.o wstrcmp.o wstrncmp.o variable.o \
        big5.o $(LDFLAGS)
 
