@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.75 2001/06/05 05:26:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.76 2001/06/10 02:59:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -873,6 +873,9 @@ estimate_hash_bucketsize(Query *root, Var *var)
 	if (ndistinct < 0.0)
 		ndistinct = -ndistinct * rel->tuples;
 
+	/* Also compute avg freq of all distinct data values in raw relation */
+	avgfreq = (1.0 - stats->stanullfrac) / ndistinct;
+
 	/*
 	 * Adjust ndistinct to account for restriction clauses.  Observe we are
 	 * assuming that the data distribution is affected uniformly by the
@@ -884,17 +887,6 @@ estimate_hash_bucketsize(Query *root, Var *var)
 	ndistinct *= rel->rows / rel->tuples;
 
 	/*
-	 * Discourage use of hash join if there seem not to be very many distinct
-	 * data values.  The threshold here is somewhat arbitrary, as is the
-	 * fraction used to "discourage" the choice.
-	 */
-	if (ndistinct < 50.0)
-	{
-		ReleaseSysCache(tuple);
-		return 0.5;
-	}
-
-	/*
 	 * Form initial estimate of bucketsize fraction.  Here we use rel->rows,
 	 * ie the number of rows after applying restriction clauses, because
 	 * that's what the fraction will eventually be multiplied by in
@@ -903,8 +895,8 @@ estimate_hash_bucketsize(Query *root, Var *var)
 	estfract = (double) NTUP_PER_BUCKET / rel->rows;
 
 	/*
-	 * Adjust estimated bucketsize if too few distinct values to fill
-	 * all the buckets.
+	 * Adjust estimated bucketsize if too few distinct values (after
+	 * restriction clauses) to fill all the buckets.
 	 */
 	needdistinct = rel->rows / (double) NTUP_PER_BUCKET;
 	if (ndistinct < needdistinct)
@@ -931,8 +923,6 @@ estimate_hash_bucketsize(Query *root, Var *var)
 	/*
 	 * Adjust estimated bucketsize upward to account for skewed distribution.
 	 */
-	avgfreq = (1.0 - stats->stanullfrac) / ndistinct;
-
 	if (avgfreq > 0.0 && mcvfreq > avgfreq)
 		estfract *= mcvfreq / avgfreq;
 
