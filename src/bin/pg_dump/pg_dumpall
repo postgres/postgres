@@ -47,7 +47,8 @@ copy tmp_pg_shadow to stdout;
 drop table tmp_pg_shadow;
 END
 echo "${BS}."
-psql -l -A -q -t| tr '|' ' ' | grep -v '^template1 ' | \
+psql -l -A -q -t | grep '|' | tr '|' ' ' | sed -n '2,$p' | \
+grep -v '^template1 ' | \
 while read DATABASE DBUSERID ENCODING DATAPATH
 do
 	POSTGRES_USER="`echo \" \
