@@ -230,7 +230,7 @@ AC_MSG_CHECKING(setting DEF_PGPORT)
 AC_ARG_WITH(
    pgport,
    [   --with-pgport=<portnum> change default startup port ],
-   AC_DEFINE_UNQUOTED(DEF_PGPORT, "${DEF_PGPORT}") AC_MSG_RESULT($with_pgport),
+   AC_DEFINE_UNQUOTED(DEF_PGPORT, "${withval}") AC_MSG_RESULT($with_pgport),
    AC_DEFINE_UNQUOTED(DEF_PGPORT, "5432") AC_MSG_RESULT(5432)
 )
 

@@ -808,7 +808,7 @@ echo "configure:807: checking setting DEF_PGPORT" >&5
 if test "${with_pgport+set}" = set; then
   withval="$with_pgport"
   cat >> confdefs.h <<EOF
-#define DEF_PGPORT "${DEF_PGPORT}"
+#define DEF_PGPORT "${withval}"
 EOF
  echo "$ac_t""$with_pgport" 1>&6
 else
@@ -1003,7 +1003,7 @@ fi
 
 echo "$ac_t""$ac_cv_prog_gcc" 1>&6
 
-if test "$ac_cv_prog_gcc" = "yes"; then
+if test $ac_cv_prog_gcc = yes; then
   GCC=yes
   ac_test_CFLAGS="${CFLAGS+set}"
   ac_save_CFLAGS="$CFLAGS"
