@@ -248,7 +248,7 @@ SELECT a,b,c,substring(d for 30), length(d) from clstr_tst;
 
 -- Verify that foreign key link still works
 INSERT INTO clstr_tst (b, c) VALUES (1111, 'this should fail');
-ERROR:  clstr_tst_con referential integrity violation - key referenced from clstr_tst not found in clstr_tst_s
+ERROR:  clstr_tst_con referential integrity violation - key (b)=(1111) referenced from clstr_tst not found in clstr_tst_s
 SELECT conname FROM pg_constraint WHERE conrelid = 'clstr_tst'::regclass;
     conname     
 ----------------

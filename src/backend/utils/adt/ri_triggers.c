@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.46 2002/12/12 15:49:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.47 2003/03/15 21:19:40 tgl Exp $
  *
  * ----------
  */
@@ -57,20 +57,26 @@
 #define RI_KEYS_SOME_NULL				1
 #define RI_KEYS_NONE_NULL				2
 
-
+/* queryno values must be distinct for the convenience of ri_PerformCheck */
 #define RI_PLAN_CHECK_LOOKUPPK_NOCOLS	1
 #define RI_PLAN_CHECK_LOOKUPPK			2
-#define RI_PLAN_CASCADE_DEL_DODELETE	1
-#define RI_PLAN_CASCADE_UPD_DOUPDATE	1
-#define RI_PLAN_NOACTION_DEL_CHECKREF	1
-#define RI_PLAN_NOACTION_UPD_CHECKREF	1
-#define RI_PLAN_RESTRICT_DEL_CHECKREF	1
-#define RI_PLAN_RESTRICT_UPD_CHECKREF	1
-#define RI_PLAN_SETNULL_DEL_DOUPDATE	1
-#define RI_PLAN_SETNULL_UPD_DOUPDATE	1
+#define RI_PLAN_CASCADE_DEL_DODELETE	3
+#define RI_PLAN_CASCADE_UPD_DOUPDATE	4
+#define RI_PLAN_NOACTION_DEL_CHECKREF	5
+#define RI_PLAN_NOACTION_UPD_CHECKREF	6
+#define RI_PLAN_RESTRICT_DEL_CHECKREF	7
+#define RI_PLAN_RESTRICT_UPD_CHECKREF	8
+#define RI_PLAN_SETNULL_DEL_DOUPDATE	9
+#define RI_PLAN_SETNULL_UPD_DOUPDATE	10
+#define RI_PLAN_KEYEQUAL_UPD			11
 
 #define MAX_QUOTED_NAME_LEN  (NAMEDATALEN*2+3)
 #define MAX_QUOTED_REL_NAME_LEN  (MAX_QUOTED_NAME_LEN*2)
+
+#define RI_TRIGTYPE_INSERT 1
+#define RI_TRIGTYPE_UPDATE 2
+#define RI_TRIGTYPE_INUP   3
+#define RI_TRIGTYPE_DELETE 4
 
 
 /* ----------
@@ -142,12 +148,28 @@ static bool ri_AllKeysUnequal(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 static bool ri_OneKeyEqual(Relation rel, int column, HeapTuple oldtup,
 			   HeapTuple newtup, RI_QueryKey *key, int pairidx);
 static bool ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue);
-static bool ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row,
-				  Oid tgoid, int match_type, int tgnargs, char **tgargs);
+static bool ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
+							  HeapTuple old_row,
+							  Oid tgoid, int match_type,
+							  int tgnargs, char **tgargs);
 
 static void ri_InitHashTables(void);
 static void *ri_FetchPreparedPlan(RI_QueryKey *key);
 static void ri_HashPreparedPlan(RI_QueryKey *key, void *plan);
+
+static void ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname,
+							int tgkind);
+static bool ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
+							Relation fk_rel, Relation pk_rel,
+							HeapTuple old_tuple, HeapTuple new_tuple,
+							int expect_OK, const char *constrname);
+static void ri_ExtractValues(RI_QueryKey *qkey, int key_idx,
+							 Relation rel, HeapTuple tuple,
+							 Datum *vals, char *nulls);
+static void ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
+							   Relation pk_rel, Relation fk_rel,
+							   HeapTuple violator, bool spi_err);
+
 
 /* ----------
  * RI_FKey_check -
@@ -167,14 +189,8 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
 	void	   *qplan;
-	Datum		check_values[RI_MAX_NUMKEYS];
-	char		check_nulls[RI_MAX_NUMKEYS + 1];
-	bool		isnull;
 	int			i;
 	int			match_type;
-	AclId		save_uid;
-
-	save_uid = GetUserId();
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -182,14 +198,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
 	 */
-	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "RI_FKey_check() not fired by trigger manager");
-	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
-		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_check() must be fired AFTER ROW");
-	if (!TRIGGER_FIRED_BY_INSERT(trigdata->tg_event) &&
-		!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_check() must be fired for INSERT or UPDATE");
+	ri_CheckTrigger(fcinfo, "RI_FKey_check", RI_TRIGTYPE_INUP);
 
 	/*
 	 * Check for the correct # of call arguments
@@ -289,23 +298,16 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 		 * Execute the plan
 		 */
 		if (SPI_connect() != SPI_OK_CONNECT)
-			elog(WARNING, "SPI_connect() failed in RI_FKey_check()");
+			elog(ERROR, "SPI_connect() failed in RI_FKey_check()");
 
-		SetUserId(RelationGetForm(pk_rel)->relowner);
-
-		if (SPI_execp(qplan, check_values, check_nulls, 1) != SPI_OK_SELECT)
-			elog(ERROR, "SPI_execp() failed in RI_FKey_check()");
-
-		SetUserId(save_uid);
-
-		if (SPI_processed == 0)
-			elog(ERROR, "%s referential integrity violation - "
-				 "no rows found in %s",
-				 tgargs[RI_CONSTRAINT_NAME_ARGNO],
-				 RelationGetRelationName(pk_rel));
+		ri_PerformCheck(&qkey, qplan,
+						fk_rel, pk_rel,
+						NULL, NULL,
+						SPI_OK_SELECT,
+						tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 		if (SPI_finish() != SPI_OK_FINISH)
-			elog(WARNING, "SPI_finish() failed in RI_FKey_check()");
+			elog(ERROR, "SPI_finish() failed in RI_FKey_check()");
 
 		heap_close(pk_rel, RowShareLock);
 
@@ -396,12 +398,11 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 * are the same. Otherwise, someone could DELETE the PK that consists
 	 * of the DEFAULT values, and if there are any references, a ON DELETE
 	 * SET DEFAULT action would update the references to exactly these
-	 * values but we wouldn't see that weired case (this is the only place
+	 * values but we wouldn't see that weird case (this is the only place
 	 * to see it).
 	 */
 	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(WARNING, "SPI_connect() failed in RI_FKey_check()");
-
+		elog(ERROR, "SPI_connect() failed in RI_FKey_check()");
 
 	/*
 	 * Fetch or prepare a saved plan for the real check
@@ -448,58 +449,19 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * We have a plan now. Build up the arguments for SPI_execp() from the
-	 * key values in the new FK tuple.
-	 */
-	for (i = 0; i < qkey.nkeypairs; i++)
-	{
-		/*
-		 * We can implement MATCH PARTIAL by excluding this column from
-		 * the query if it is null.  Simple!  Unfortunately, the
-		 * referential actions aren't so I've not bothered to do so for
-		 * the moment.
-		 */
-
-		check_values[i] = SPI_getbinval(new_row,
-										fk_rel->rd_att,
-									  qkey.keypair[i][RI_KEYPAIR_FK_IDX],
-										&isnull);
-		if (isnull)
-			check_nulls[i] = 'n';
-		else
-			check_nulls[i] = ' ';
-	}
-	check_nulls[i] = '\0';
-
-	/*
 	 * Now check that foreign key exists in PK table
 	 */
-
-	SetUserId(RelationGetForm(pk_rel)->relowner);
-
-	if (SPI_execp(qplan, check_values, check_nulls, 1) != SPI_OK_SELECT)
-		elog(ERROR, "SPI_execp() failed in RI_FKey_check()");
-
-	SetUserId(save_uid);
-
-	if (SPI_processed == 0)
-		elog(ERROR, "%s referential integrity violation - "
-			 "key referenced from %s not found in %s",
-			 tgargs[RI_CONSTRAINT_NAME_ARGNO],
-			 RelationGetRelationName(fk_rel),
-			 RelationGetRelationName(pk_rel));
+	ri_PerformCheck(&qkey, qplan,
+					fk_rel, pk_rel,
+					NULL, new_row,
+					SPI_OK_SELECT,
+					tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(WARNING, "SPI_finish() failed in RI_FKey_check()");
+		elog(ERROR, "SPI_finish() failed in RI_FKey_check()");
 
 	heap_close(pk_rel, RowShareLock);
 
-	return PointerGetDatum(NULL);
-
-	/*
-	 * Never reached
-	 */
-	elog(ERROR, "internal error #1 in ri_triggers.c");
 	return PointerGetDatum(NULL);
 }
 
@@ -539,18 +501,15 @@ RI_FKey_check_upd(PG_FUNCTION_ARGS)
  * ----------
  */
 static bool
-ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row, Oid tgoid, int match_type, int tgnargs, char **tgargs)
+ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
+				  HeapTuple old_row,
+				  Oid tgoid, int match_type,
+				  int tgnargs, char **tgargs)
 {
 	void	   *qplan;
 	RI_QueryKey qkey;
-	bool		isnull;
-	Datum		check_values[RI_MAX_NUMKEYS];
-	char		check_nulls[RI_MAX_NUMKEYS + 1];
 	int			i;
-	AclId		save_uid;
 	bool		result;
-
-	save_uid = GetUserId();
 
 	ri_BuildQueryKeyPkCheck(&qkey, tgoid,
 							RI_PLAN_CHECK_LOOKUPPK, pk_rel,
@@ -605,8 +564,7 @@ ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row, Oid tgoid, int match_type,
 	}
 
 	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(WARNING, "SPI_connect() failed in RI_FKey_check()");
-
+		elog(ERROR, "SPI_connect() failed in RI_FKey_check()");
 
 	/*
 	 * Fetch or prepare a saved plan for the real check
@@ -653,37 +611,15 @@ ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row, Oid tgoid, int match_type,
 	}
 
 	/*
-	 * We have a plan now. Build up the arguments for SPI_execp() from the
-	 * key values in the new FK tuple.
+	 * We have a plan now. Run it.
 	 */
-	for (i = 0; i < qkey.nkeypairs; i++)
-	{
-		check_values[i] = SPI_getbinval(old_row,
-										pk_rel->rd_att,
-									  qkey.keypair[i][RI_KEYPAIR_PK_IDX],
-										&isnull);
-		if (isnull)
-			check_nulls[i] = 'n';
-		else
-			check_nulls[i] = ' ';
-	}
-	check_nulls[i] = '\0';
-
-	/*
-	 * Now check that foreign key exists in PK table
-	 */
-
-	SetUserId(RelationGetForm(pk_rel)->relowner);
-
-	if (SPI_execp(qplan, check_values, check_nulls, 1) != SPI_OK_SELECT)
-		elog(ERROR, "SPI_execp() failed in ri_Check_Pk_Match()");
-
-	SetUserId(save_uid);
-
-	result = (SPI_processed != 0);
+	result = ri_PerformCheck(&qkey, qplan,
+							 fk_rel, pk_rel,
+							 old_row, NULL,
+							 SPI_OK_SELECT, NULL);
 
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(WARNING, "SPI_finish() failed in ri_Check_Pk_Match()");
+		elog(ERROR, "SPI_finish() failed in ri_Check_Pk_Match()");
 
 	return result;
 }
@@ -708,14 +644,8 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
 	void	   *qplan;
-	Datum		del_values[RI_MAX_NUMKEYS];
-	char		del_nulls[RI_MAX_NUMKEYS + 1];
-	bool		isnull;
 	int			i;
 	int			match_type;
-	AclId		save_uid;
-
-	save_uid = GetUserId();
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -723,13 +653,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
 	 */
-	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "RI_FKey_noaction_del() not fired by trigger manager");
-	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
-		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_noaction_del() must be fired AFTER ROW");
-	if (!TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_noaction_del() must be fired for DELETE");
+	ri_CheckTrigger(fcinfo, "RI_FKey_noaction_del", RI_TRIGTYPE_DELETE);
 
 	/*
 	 * Check for the correct # of call arguments
@@ -766,7 +690,8 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	old_row = trigdata->tg_trigtuple;
 
 	match_type = ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]);
-	if (ri_Check_Pk_Match(pk_rel, old_row, trigdata->tg_trigger->tgoid,
+	if (ri_Check_Pk_Match(pk_rel, fk_rel,
+						  old_row, trigdata->tg_trigger->tgoid,
 						  match_type, tgnargs, tgargs))
 	{
 		/*
@@ -814,7 +739,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(WARNING, "SPI_connect() failed in RI_FKey_noaction_del()");
+				elog(ERROR, "SPI_connect() failed in RI_FKey_noaction_del()");
 
 			/*
 			 * Fetch or prepare a saved plan for the restrict delete
@@ -862,41 +787,16 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Build up the arguments for SPI_execp()
-			 * from the key values in the deleted PK tuple.
+			 * We have a plan now. Run it to check for existing references.
 			 */
-			for (i = 0; i < qkey.nkeypairs; i++)
-			{
-				del_values[i] = SPI_getbinval(old_row,
-											  pk_rel->rd_att,
-									  qkey.keypair[i][RI_KEYPAIR_PK_IDX],
-											  &isnull);
-				if (isnull)
-					del_nulls[i] = 'n';
-				else
-					del_nulls[i] = ' ';
-			}
-			del_nulls[i] = '\0';
-
-			/*
-			 * Now check for existing references
-			 */
-			SetUserId(RelationGetForm(pk_rel)->relowner);
-
-			if (SPI_execp(qplan, del_values, del_nulls, 1) != SPI_OK_SELECT)
-				elog(ERROR, "SPI_execp() failed in RI_FKey_noaction_del()");
-
-			SetUserId(save_uid);
-
-			if (SPI_processed > 0)
-				elog(ERROR, "%s referential integrity violation - "
-					 "key in %s still referenced from %s",
-					 tgargs[RI_CONSTRAINT_NAME_ARGNO],
-					 RelationGetRelationName(pk_rel),
-					 RelationGetRelationName(fk_rel));
+			ri_PerformCheck(&qkey, qplan,
+							fk_rel, pk_rel,
+							old_row, NULL,
+							SPI_OK_SELECT,
+							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(WARNING, "SPI_finish() failed in RI_FKey_noaction_del()");
+				elog(ERROR, "SPI_finish() failed in RI_FKey_noaction_del()");
 
 			heap_close(fk_rel, RowShareLock);
 
@@ -938,14 +838,8 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
 	void	   *qplan;
-	Datum		upd_values[RI_MAX_NUMKEYS];
-	char		upd_nulls[RI_MAX_NUMKEYS + 1];
-	bool		isnull;
 	int			i;
 	int			match_type;
-	AclId		save_uid;
-
-	save_uid = GetUserId();
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -953,13 +847,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
 	 */
-	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "RI_FKey_noaction_upd() not fired by trigger manager");
-	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
-		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_noaction_upd() must be fired AFTER ROW");
-	if (!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_noaction_upd() must be fired for UPDATE");
+	ri_CheckTrigger(fcinfo, "RI_FKey_noaction_upd", RI_TRIGTYPE_UPDATE);
 
 	/*
 	 * Check for the correct # of call arguments
@@ -997,7 +885,8 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	old_row = trigdata->tg_trigtuple;
 
 	match_type = ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]);
-	if (ri_Check_Pk_Match(pk_rel, old_row, trigdata->tg_trigger->tgoid,
+	if (ri_Check_Pk_Match(pk_rel, fk_rel,
+						  old_row, trigdata->tg_trigger->tgoid,
 						  match_type, tgnargs, tgargs))
 	{
 		/*
@@ -1055,7 +944,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(WARNING, "SPI_connect() failed in RI_FKey_noaction_upd()");
+				elog(ERROR, "SPI_connect() failed in RI_FKey_noaction_upd()");
 
 			/*
 			 * Fetch or prepare a saved plan for the noaction update
@@ -1103,41 +992,16 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Build up the arguments for SPI_execp()
-			 * from the key values in the updated PK tuple.
+			 * We have a plan now. Run it to check for existing references.
 			 */
-			for (i = 0; i < qkey.nkeypairs; i++)
-			{
-				upd_values[i] = SPI_getbinval(old_row,
-											  pk_rel->rd_att,
-									  qkey.keypair[i][RI_KEYPAIR_PK_IDX],
-											  &isnull);
-				if (isnull)
-					upd_nulls[i] = 'n';
-				else
-					upd_nulls[i] = ' ';
-			}
-			upd_nulls[i] = '\0';
-
-			/*
-			 * Now check for existing references
-			 */
-			SetUserId(RelationGetForm(pk_rel)->relowner);
-
-			if (SPI_execp(qplan, upd_values, upd_nulls, 1) != SPI_OK_SELECT)
-				elog(ERROR, "SPI_execp() failed in RI_FKey_noaction_upd()");
-
-			SetUserId(save_uid);
-
-			if (SPI_processed > 0)
-				elog(ERROR, "%s referential integrity violation - "
-					 "key in %s still referenced from %s",
-					 tgargs[RI_CONSTRAINT_NAME_ARGNO],
-					 RelationGetRelationName(pk_rel),
-					 RelationGetRelationName(fk_rel));
+			ri_PerformCheck(&qkey, qplan,
+							fk_rel, pk_rel,
+							old_row, NULL,
+							SPI_OK_SELECT,
+							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(WARNING, "SPI_finish() failed in RI_FKey_noaction_upd()");
+				elog(ERROR, "SPI_finish() failed in RI_FKey_noaction_upd()");
 
 			heap_close(fk_rel, RowShareLock);
 
@@ -1176,12 +1040,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
 	void	   *qplan;
-	Datum		del_values[RI_MAX_NUMKEYS];
-	char		del_nulls[RI_MAX_NUMKEYS + 1];
-	bool		isnull;
 	int			i;
-	AclId		save_uid;
-	AclId		fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -1189,13 +1048,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
 	 */
-	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "RI_FKey_cascade_del() not fired by trigger manager");
-	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
-		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_cascade_del() must be fired AFTER ROW");
-	if (!TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_cascade_del() must be fired for DELETE");
+	ri_CheckTrigger(fcinfo, "RI_FKey_cascade_del", RI_TRIGTYPE_DELETE);
 
 	/*
 	 * Check for the correct # of call arguments
@@ -1230,7 +1083,6 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
-	fk_owner = RelationGetForm(fk_rel)->relowner;
 
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
@@ -1269,7 +1121,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(WARNING, "SPI_connect() failed in RI_FKey_cascade_del()");
+				elog(ERROR, "SPI_connect() failed in RI_FKey_cascade_del()");
 
 			/*
 			 * Fetch or prepare a saved plan for the cascaded delete
@@ -1315,35 +1167,18 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Build up the arguments for SPI_execp()
-			 * from the key values in the deleted PK tuple.
+			 * We have a plan now. Build up the arguments
+			 * from the key values in the deleted PK tuple and delete the
+			 * referencing rows
 			 */
-			for (i = 0; i < qkey.nkeypairs; i++)
-			{
-				del_values[i] = SPI_getbinval(old_row,
-											  pk_rel->rd_att,
-									  qkey.keypair[i][RI_KEYPAIR_PK_IDX],
-											  &isnull);
-				if (isnull)
-					del_nulls[i] = 'n';
-				else
-					del_nulls[i] = ' ';
-			}
-			del_nulls[i] = '\0';
-
-			/*
-			 * Now delete constraint
-			 */
-			save_uid = GetUserId();
-			SetUserId(fk_owner);
-
-			if (SPI_execp(qplan, del_values, del_nulls, 0) != SPI_OK_DELETE)
-				elog(ERROR, "SPI_execp() failed in RI_FKey_cascade_del()");
-
-			SetUserId(save_uid);
+			ri_PerformCheck(&qkey, qplan,
+							fk_rel, pk_rel,
+							old_row, NULL,
+							SPI_OK_DELETE,
+							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(WARNING, "SPI_finish() failed in RI_FKey_cascade_del()");
+				elog(ERROR, "SPI_finish() failed in RI_FKey_cascade_del()");
 
 			heap_close(fk_rel, RowExclusiveLock);
 
@@ -1383,13 +1218,8 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
 	void	   *qplan;
-	Datum		upd_values[RI_MAX_NUMKEYS * 2];
-	char		upd_nulls[RI_MAX_NUMKEYS * 2 + 1];
-	bool		isnull;
 	int			i;
 	int			j;
-	AclId		save_uid;
-	AclId		fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -1397,13 +1227,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
 	 */
-	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "RI_FKey_cascade_upd() not fired by trigger manager");
-	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
-		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_cascade_upd() must be fired AFTER ROW");
-	if (!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_cascade_upd() must be fired for UPDATE");
+	ri_CheckTrigger(fcinfo, "RI_FKey_cascade_upd", RI_TRIGTYPE_UPDATE);
 
 	/*
 	 * Check for the correct # of call arguments
@@ -1439,7 +1263,6 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
-	fk_owner = RelationGetForm(fk_rel)->relowner;
 
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
@@ -1488,7 +1311,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(WARNING, "SPI_connect() failed in RI_FKey_cascade_upd()");
+				elog(ERROR, "SPI_connect() failed in RI_FKey_cascade_upd()");
 
 			/*
 			 * Fetch or prepare a saved plan for the cascaded update of
@@ -1545,44 +1368,16 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Build up the arguments for SPI_execp()
-			 * from the key values in the updated PK tuple.
+			 * We have a plan now. Run it to update the existing references.
 			 */
-			for (i = 0, j = qkey.nkeypairs; i < qkey.nkeypairs; i++, j++)
-			{
-				upd_values[i] = SPI_getbinval(new_row,
-											  pk_rel->rd_att,
-									  qkey.keypair[i][RI_KEYPAIR_PK_IDX],
-											  &isnull);
-				if (isnull)
-					upd_nulls[i] = 'n';
-				else
-					upd_nulls[i] = ' ';
-
-				upd_values[j] = SPI_getbinval(old_row,
-											  pk_rel->rd_att,
-									  qkey.keypair[i][RI_KEYPAIR_PK_IDX],
-											  &isnull);
-				if (isnull)
-					upd_nulls[j] = 'n';
-				else
-					upd_nulls[j] = ' ';
-			}
-			upd_nulls[j] = '\0';
-
-			/*
-			 * Now update the existing references
-			 */
-			save_uid = GetUserId();
-			SetUserId(fk_owner);
-
-			if (SPI_execp(qplan, upd_values, upd_nulls, 0) != SPI_OK_UPDATE)
-				elog(ERROR, "SPI_execp() failed in RI_FKey_cascade_upd()");
-
-			SetUserId(save_uid);
+			ri_PerformCheck(&qkey, qplan,
+							fk_rel, pk_rel,
+							old_row, new_row,
+							SPI_OK_UPDATE,
+							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(WARNING, "SPI_finish() failed in RI_FKey_cascade_upd()");
+				elog(ERROR, "SPI_finish() failed in RI_FKey_cascade_upd()");
 
 			heap_close(fk_rel, RowExclusiveLock);
 
@@ -1628,12 +1423,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
 	void	   *qplan;
-	Datum		del_values[RI_MAX_NUMKEYS];
-	char		del_nulls[RI_MAX_NUMKEYS + 1];
-	bool		isnull;
 	int			i;
-	AclId		save_uid;
-	AclId		fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -1641,13 +1431,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
 	 */
-	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "RI_FKey_restrict_del() not fired by trigger manager");
-	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
-		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_restrict_del() must be fired AFTER ROW");
-	if (!TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_restrict_del() must be fired for DELETE");
+	ri_CheckTrigger(fcinfo, "RI_FKey_restrict_del", RI_TRIGTYPE_DELETE);
 
 	/*
 	 * Check for the correct # of call arguments
@@ -1682,7 +1466,6 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
-	fk_owner = RelationGetForm(fk_rel)->relowner;
 
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
@@ -1721,7 +1504,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(WARNING, "SPI_connect() failed in RI_FKey_restrict_del()");
+				elog(ERROR, "SPI_connect() failed in RI_FKey_restrict_del()");
 
 			/*
 			 * Fetch or prepare a saved plan for the restrict delete
@@ -1769,42 +1552,16 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Build up the arguments for SPI_execp()
-			 * from the key values in the deleted PK tuple.
+			 * We have a plan now. Run it to check for existing references.
 			 */
-			for (i = 0; i < qkey.nkeypairs; i++)
-			{
-				del_values[i] = SPI_getbinval(old_row,
-											  pk_rel->rd_att,
-									  qkey.keypair[i][RI_KEYPAIR_PK_IDX],
-											  &isnull);
-				if (isnull)
-					del_nulls[i] = 'n';
-				else
-					del_nulls[i] = ' ';
-			}
-			del_nulls[i] = '\0';
-
-			/*
-			 * Now check for existing references
-			 */
-			save_uid = GetUserId();
-			SetUserId(fk_owner);
-
-			if (SPI_execp(qplan, del_values, del_nulls, 1) != SPI_OK_SELECT)
-				elog(ERROR, "SPI_execp() failed in RI_FKey_restrict_del()");
-
-			SetUserId(save_uid);
-
-			if (SPI_processed > 0)
-				elog(ERROR, "%s referential integrity violation - "
-					 "key in %s still referenced from %s",
-					 tgargs[RI_CONSTRAINT_NAME_ARGNO],
-					 RelationGetRelationName(pk_rel),
-					 RelationGetRelationName(fk_rel));
+			ri_PerformCheck(&qkey, qplan,
+							fk_rel, pk_rel,
+							old_row, NULL,
+							SPI_OK_SELECT,
+							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(WARNING, "SPI_finish() failed in RI_FKey_restrict_del()");
+				elog(ERROR, "SPI_finish() failed in RI_FKey_restrict_del()");
 
 			heap_close(fk_rel, RowShareLock);
 
@@ -1851,12 +1608,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
 	void	   *qplan;
-	Datum		upd_values[RI_MAX_NUMKEYS];
-	char		upd_nulls[RI_MAX_NUMKEYS + 1];
-	bool		isnull;
 	int			i;
-	AclId		save_uid;
-	AclId		fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -1864,13 +1616,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
 	 */
-	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "RI_FKey_restrict_upd() not fired by trigger manager");
-	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
-		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_restrict_upd() must be fired AFTER ROW");
-	if (!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_restrict_upd() must be fired for UPDATE");
+	ri_CheckTrigger(fcinfo, "RI_FKey_restrict_upd", RI_TRIGTYPE_UPDATE);
 
 	/*
 	 * Check for the correct # of call arguments
@@ -1906,7 +1652,6 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
-	fk_owner = RelationGetForm(fk_rel)->relowner;
 
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
@@ -1955,7 +1700,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(WARNING, "SPI_connect() failed in RI_FKey_restrict_upd()");
+				elog(ERROR, "SPI_connect() failed in RI_FKey_restrict_upd()");
 
 			/*
 			 * Fetch or prepare a saved plan for the restrict update
@@ -2003,44 +1748,16 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Build up the arguments for SPI_execp()
-			 * from the key values in the updated PK tuple.
+			 * We have a plan now. Run it to check for existing references.
 			 */
-			for (i = 0; i < qkey.nkeypairs; i++)
-			{
-				upd_values[i] = SPI_getbinval(old_row,
-											  pk_rel->rd_att,
-									  qkey.keypair[i][RI_KEYPAIR_PK_IDX],
-											  &isnull);
-				if (isnull)
-					upd_nulls[i] = 'n';
-				else
-					upd_nulls[i] = ' ';
-			}
-			upd_nulls[i] = '\0';
-
-			/*
-			 * Now check for existing references
-			 */
-			save_uid = GetUserId();
-			SetUserId(fk_owner);
-
-			SetUserId(RelationGetForm(pk_rel)->relowner);
-
-			if (SPI_execp(qplan, upd_values, upd_nulls, 1) != SPI_OK_SELECT)
-				elog(ERROR, "SPI_execp() failed in RI_FKey_restrict_upd()");
-
-			SetUserId(save_uid);
-
-			if (SPI_processed > 0)
-				elog(ERROR, "%s referential integrity violation - "
-					 "key in %s still referenced from %s",
-					 tgargs[RI_CONSTRAINT_NAME_ARGNO],
-					 RelationGetRelationName(pk_rel),
-					 RelationGetRelationName(fk_rel));
+			ri_PerformCheck(&qkey, qplan,
+							fk_rel, pk_rel,
+							old_row, NULL,
+							SPI_OK_SELECT,
+							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(WARNING, "SPI_finish() failed in RI_FKey_restrict_upd()");
+				elog(ERROR, "SPI_finish() failed in RI_FKey_restrict_upd()");
 
 			heap_close(fk_rel, RowShareLock);
 
@@ -2079,12 +1796,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
 	void	   *qplan;
-	Datum		upd_values[RI_MAX_NUMKEYS];
-	char		upd_nulls[RI_MAX_NUMKEYS + 1];
-	bool		isnull;
 	int			i;
-	AclId		save_uid;
-	AclId		fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -2092,13 +1804,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
 	 */
-	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "RI_FKey_setnull_del() not fired by trigger manager");
-	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
-		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_setnull_del() must be fired AFTER ROW");
-	if (!TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_setnull_del() must be fired for DELETE");
+	ri_CheckTrigger(fcinfo, "RI_FKey_setnull_del", RI_TRIGTYPE_DELETE);
 
 	/*
 	 * Check for the correct # of call arguments
@@ -2133,7 +1839,6 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
-	fk_owner = RelationGetForm(fk_rel)->relowner;
 
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
@@ -2172,7 +1877,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(WARNING, "SPI_connect() failed in RI_FKey_setnull_del()");
+				elog(ERROR, "SPI_connect() failed in RI_FKey_setnull_del()");
 
 			/*
 			 * Fetch or prepare a saved plan for the set null delete
@@ -2228,35 +1933,16 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Build up the arguments for SPI_execp()
-			 * from the key values in the updated PK tuple.
+			 * We have a plan now. Run it to check for existing references.
 			 */
-			for (i = 0; i < qkey.nkeypairs; i++)
-			{
-				upd_values[i] = SPI_getbinval(old_row,
-											  pk_rel->rd_att,
-									  qkey.keypair[i][RI_KEYPAIR_PK_IDX],
-											  &isnull);
-				if (isnull)
-					upd_nulls[i] = 'n';
-				else
-					upd_nulls[i] = ' ';
-			}
-			upd_nulls[i] = '\0';
-
-			/*
-			 * Now update the existing references
-			 */
-			save_uid = GetUserId();
-			SetUserId(fk_owner);
-
-			if (SPI_execp(qplan, upd_values, upd_nulls, 0) != SPI_OK_UPDATE)
-				elog(ERROR, "SPI_execp() failed in RI_FKey_setnull_del()");
-
-			SetUserId(save_uid);
+			ri_PerformCheck(&qkey, qplan,
+							fk_rel, pk_rel,
+							old_row, NULL,
+							SPI_OK_UPDATE,
+							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(WARNING, "SPI_finish() failed in RI_FKey_setnull_del()");
+				elog(ERROR, "SPI_finish() failed in RI_FKey_setnull_del()");
 
 			heap_close(fk_rel, RowExclusiveLock);
 
@@ -2296,14 +1982,9 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
 	void	   *qplan;
-	Datum		upd_values[RI_MAX_NUMKEYS];
-	char		upd_nulls[RI_MAX_NUMKEYS + 1];
-	bool		isnull;
 	int			i;
 	int			match_type;
 	bool		use_cached_query;
-	AclId		save_uid;
-	AclId		fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -2311,13 +1992,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
 	 */
-	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "RI_FKey_setnull_upd() not fired by trigger manager");
-	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
-		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_setnull_upd() must be fired AFTER ROW");
-	if (!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_setnull_upd() must be fired for UPDATE");
+	ri_CheckTrigger(fcinfo, "RI_FKey_setnull_upd", RI_TRIGTYPE_UPDATE);
 
 	/*
 	 * Check for the correct # of call arguments
@@ -2354,7 +2029,6 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
 	match_type = ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]);
-	fk_owner = RelationGetForm(fk_rel)->relowner;
 
 	switch (match_type)
 	{
@@ -2403,7 +2077,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(WARNING, "SPI_connect() failed in RI_FKey_setnull_upd()");
+				elog(ERROR, "SPI_connect() failed in RI_FKey_setnull_upd()");
 
 			/*
 			 * "MATCH <unspecified>" only changes columns corresponding to
@@ -2496,35 +2170,16 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Build up the arguments for SPI_execp()
-			 * from the key values in the updated PK tuple.
+			 * We have a plan now. Run it to update the existing references.
 			 */
-			for (i = 0; i < qkey.nkeypairs; i++)
-			{
-				upd_values[i] = SPI_getbinval(old_row,
-											  pk_rel->rd_att,
-									  qkey.keypair[i][RI_KEYPAIR_PK_IDX],
-											  &isnull);
-				if (isnull)
-					upd_nulls[i] = 'n';
-				else
-					upd_nulls[i] = ' ';
-			}
-			upd_nulls[i] = '\0';
-
-			/*
-			 * Now update the existing references
-			 */
-			save_uid = GetUserId();
-			SetUserId(fk_owner);
-
-			if (SPI_execp(qplan, upd_values, upd_nulls, 0) != SPI_OK_UPDATE)
-				elog(ERROR, "SPI_execp() failed in RI_FKey_setnull_upd()");
-
-			SetUserId(save_uid);
+			ri_PerformCheck(&qkey, qplan,
+							fk_rel, pk_rel,
+							old_row, NULL,
+							SPI_OK_UPDATE,
+							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(WARNING, "SPI_finish() failed in RI_FKey_setnull_upd()");
+				elog(ERROR, "SPI_finish() failed in RI_FKey_setnull_upd()");
 
 			heap_close(fk_rel, RowExclusiveLock);
 
@@ -2563,12 +2218,6 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
 	void	   *qplan;
-	Datum		upd_values[RI_MAX_NUMKEYS];
-	char		upd_nulls[RI_MAX_NUMKEYS + 1];
-	bool		isnull;
-	int			i;
-	AclId		save_uid;
-	AclId			fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -2576,13 +2225,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
 	 */
-	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "RI_FKey_setdefault_del() not fired by trigger manager");
-	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
-		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_setdefault_del() must be fired AFTER ROW");
-	if (!TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_setdefault_del() must be fired for DELETE");
+	ri_CheckTrigger(fcinfo, "RI_FKey_setdefault_del", RI_TRIGTYPE_DELETE);
 
 	/*
 	 * Check for the correct # of call arguments
@@ -2617,7 +2260,6 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
-	fk_owner = RelationGetForm(fk_rel)->relowner;
 
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
@@ -2656,7 +2298,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(WARNING, "SPI_connect() failed in RI_FKey_setdefault_del()");
+				elog(ERROR, "SPI_connect() failed in RI_FKey_setdefault_del()");
 
 			/*
 			 * Prepare a plan for the set default delete operation.
@@ -2757,35 +2399,16 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Build up the arguments for SPI_execp()
-			 * from the key values in the deleted PK tuple.
+			 * We have a plan now. Run it to update the existing references.
 			 */
-			for (i = 0; i < qkey.nkeypairs; i++)
-			{
-				upd_values[i] = SPI_getbinval(old_row,
-											  pk_rel->rd_att,
-									  qkey.keypair[i][RI_KEYPAIR_PK_IDX],
-											  &isnull);
-				if (isnull)
-					upd_nulls[i] = 'n';
-				else
-					upd_nulls[i] = ' ';
-			}
-			upd_nulls[i] = '\0';
-
-			/*
-			 * Now update the existing references
-			 */
-			save_uid = GetUserId();
-			SetUserId(fk_owner);
-
-			if (SPI_execp(qplan, upd_values, upd_nulls, 0) != SPI_OK_UPDATE)
-				elog(ERROR, "SPI_execp() failed in RI_FKey_setdefault_del()");
-
-			SetUserId(save_uid);
+			ri_PerformCheck(&qkey, qplan,
+							fk_rel, pk_rel,
+							old_row, NULL,
+							SPI_OK_UPDATE,
+							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(WARNING, "SPI_finish() failed in RI_FKey_setdefault_del()");
+				elog(ERROR, "SPI_finish() failed in RI_FKey_setdefault_del()");
 
 			heap_close(fk_rel, RowExclusiveLock);
 
@@ -2825,13 +2448,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
 	void	   *qplan;
-	Datum		upd_values[RI_MAX_NUMKEYS];
-	char		upd_nulls[RI_MAX_NUMKEYS + 1];
-	bool		isnull;
-	int			i;
 	int			match_type;
-	AclId		save_uid;
-	AclId		fk_owner;
 
 	ReferentialIntegritySnapshotOverride = true;
 
@@ -2839,13 +2456,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	 * Check that this is a valid trigger call on the right time and
 	 * event.
 	 */
-	if (!CALLED_AS_TRIGGER(fcinfo))
-		elog(ERROR, "RI_FKey_setdefault_upd() not fired by trigger manager");
-	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
-		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_setdefault_upd() must be fired AFTER ROW");
-	if (!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-		elog(ERROR, "RI_FKey_setdefault_upd() must be fired for UPDATE");
+	ri_CheckTrigger(fcinfo, "RI_FKey_setdefault_upd", RI_TRIGTYPE_UPDATE);
 
 	/*
 	 * Check for the correct # of call arguments
@@ -2881,7 +2492,6 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
-	fk_owner = RelationGetForm(fk_rel)->relowner;
 
 	match_type = ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]);
 
@@ -2932,7 +2542,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			}
 
 			if (SPI_connect() != SPI_OK_CONNECT)
-				elog(WARNING, "SPI_connect() failed in RI_FKey_setdefault_upd()");
+				elog(ERROR, "SPI_connect() failed in RI_FKey_setdefault_upd()");
 
 			/*
 			 * Prepare a plan for the set default delete operation.
@@ -3049,35 +2659,16 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			}
 
 			/*
-			 * We have a plan now. Build up the arguments for SPI_execp()
-			 * from the key values in the deleted PK tuple.
+			 * We have a plan now. Run it to update the existing references.
 			 */
-			for (i = 0; i < qkey.nkeypairs; i++)
-			{
-				upd_values[i] = SPI_getbinval(old_row,
-											  pk_rel->rd_att,
-									  qkey.keypair[i][RI_KEYPAIR_PK_IDX],
-											  &isnull);
-				if (isnull)
-					upd_nulls[i] = 'n';
-				else
-					upd_nulls[i] = ' ';
-			}
-			upd_nulls[i] = '\0';
-
-			/*
-			 * Now update the existing references
-			 */
-			save_uid = GetUserId();
-			SetUserId(fk_owner);
-
-			if (SPI_execp(qplan, upd_values, upd_nulls, 0) != SPI_OK_UPDATE)
-				elog(ERROR, "SPI_execp() failed in RI_FKey_setdefault_upd()");
-
-			SetUserId(save_uid);
+			ri_PerformCheck(&qkey, qplan,
+							fk_rel, pk_rel,
+							old_row, NULL,
+							SPI_OK_UPDATE,
+							tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 
 			if (SPI_finish() != SPI_OK_FINISH)
-				elog(WARNING, "SPI_finish() failed in RI_FKey_setdefault_upd()");
+				elog(ERROR, "SPI_finish() failed in RI_FKey_setdefault_upd()");
 
 			heap_close(fk_rel, RowExclusiveLock);
 
@@ -3161,7 +2752,7 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
 		case RI_MATCH_TYPE_UNSPECIFIED:
 		case RI_MATCH_TYPE_FULL:
 			ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid,
-								 0,
+								 RI_PLAN_KEYEQUAL_UPD,
 								 fk_rel, pk_rel,
 								 tgnargs, tgargs);
 
@@ -3313,6 +2904,271 @@ ri_BuildQueryKeyFull(RI_QueryKey *key, Oid constr_id, int32 constr_queryno,
 				 argv[j + 1]);
 		key->keypair[i][RI_KEYPAIR_PK_IDX] = fno;
 	}
+}
+
+/*
+ * Check that RI trigger function was called in expected context
+ */
+static void
+ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname, int tgkind)
+{
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
+
+	if (!CALLED_AS_TRIGGER(fcinfo))
+		elog(ERROR, "%s() not fired by trigger manager", funcname);
+	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
+		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
+		elog(ERROR, "%s() must be fired AFTER ROW", funcname);
+
+	switch (tgkind)
+	{
+		case RI_TRIGTYPE_INSERT:
+			if (!TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
+				elog(ERROR, "%s() must be fired for INSERT", funcname);
+			break;
+		case RI_TRIGTYPE_UPDATE:
+			if (!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+				elog(ERROR, "%s() must be fired for UPDATE", funcname);
+			break;
+		case RI_TRIGTYPE_INUP:
+			if (!TRIGGER_FIRED_BY_INSERT(trigdata->tg_event) &&
+				!TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+				elog(ERROR, "%s() must be fired for INSERT or UPDATE",
+					 funcname);
+			break;
+		case RI_TRIGTYPE_DELETE:
+			if (!TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
+				elog(ERROR, "%s() must be fired for DELETE", funcname);
+			break;
+	}
+}
+
+
+/*
+ * Perform a query to enforce an RI restriction
+ */
+static bool
+ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
+				Relation fk_rel, Relation pk_rel,
+				HeapTuple old_tuple, HeapTuple new_tuple,
+				int expect_OK, const char *constrname)
+{
+	Relation	query_rel,
+				source_rel;
+	int			key_idx;
+	int			limit;
+	int			spi_result;
+	AclId		save_uid;
+	Datum		vals[RI_MAX_NUMKEYS * 2];
+	char		nulls[RI_MAX_NUMKEYS * 2];
+
+	/*
+	 * The query is always run against the FK table except
+	 * when this is an update/insert trigger on the FK table itself -
+	 * either RI_PLAN_CHECK_LOOKUPPK or RI_PLAN_CHECK_LOOKUPPK_NOCOLS
+	 */
+	if (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK ||
+		qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK_NOCOLS)
+		query_rel = pk_rel;
+	else
+		query_rel = fk_rel;
+
+	/*
+	 * The values for the query are taken from the table on which the trigger
+	 * is called - it is normally the other one with respect to query_rel.
+	 * An exception is ri_Check_Pk_Match(), which uses the PK table for both
+	 * (the case when constrname == NULL)
+	 */
+	if (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK && constrname != NULL)
+	{
+		source_rel = fk_rel;
+		key_idx = RI_KEYPAIR_FK_IDX;
+	}
+	else
+	{
+		source_rel = pk_rel;
+		key_idx = RI_KEYPAIR_PK_IDX;
+	}
+
+	/* Extract the parameters to be passed into the query */
+	if (new_tuple)
+	{
+		ri_ExtractValues(qkey, key_idx, source_rel, new_tuple,
+						 vals, nulls);
+		if (old_tuple)
+			ri_ExtractValues(qkey, key_idx, source_rel, old_tuple,
+							 vals + qkey->nkeypairs, nulls + qkey->nkeypairs);
+	}
+	else
+	{
+		ri_ExtractValues(qkey, key_idx, source_rel, old_tuple,
+						 vals, nulls);
+	}
+
+	/* Switch to proper UID to perform check as */
+	save_uid = GetUserId();
+	SetUserId(RelationGetForm(query_rel)->relowner);
+
+	/*
+	 * If this is a select query (e.g., for a 'no action' or 'restrict'
+	 * trigger), we only need to see if there is a single row in the table,
+	 * matching the key.  Otherwise, limit = 0 - because we want the query to
+	 * affect ALL the matching rows.
+	 */
+	limit = (expect_OK == SPI_OK_SELECT) ? 1 : 0;
+
+	/* Run the plan */
+	spi_result = SPI_execp(qplan, vals, nulls, limit);
+
+	/* Restore UID */
+	SetUserId(save_uid);
+
+	/* Check result */
+	if (spi_result < 0)
+		elog(ERROR, "SPI_execp() failed in ri_PerformCheck()");
+
+	if (expect_OK >= 0 && spi_result != expect_OK)
+		ri_ReportViolation(qkey, constrname ? constrname : "",
+						   pk_rel, fk_rel,
+						   new_tuple ? new_tuple : old_tuple,
+						   true);
+
+	/* XXX wouldn't it be clearer to do this part at the caller? */
+	if (constrname && expect_OK == SPI_OK_SELECT &&
+		(SPI_processed==0) == (qkey->constr_queryno==RI_PLAN_CHECK_LOOKUPPK))
+		ri_ReportViolation(qkey, constrname,
+						   pk_rel, fk_rel,
+						   new_tuple ? new_tuple : old_tuple,
+						   false);
+
+	return SPI_processed != 0;
+}
+
+/*
+ * Extract fields from a tuple into Datum/nulls arrays
+ */
+static void
+ri_ExtractValues(RI_QueryKey *qkey, int key_idx,
+				 Relation rel, HeapTuple tuple,
+				 Datum *vals, char *nulls)
+{
+	int			i;
+	bool		isnull;
+
+	for (i = 0; i < qkey->nkeypairs; i++)
+	{
+		vals[i] = SPI_getbinval(tuple, rel->rd_att,
+								qkey->keypair[i][key_idx],
+								&isnull);
+		nulls[i] = isnull ? 'n' : ' ';
+	}
+}
+
+/*
+ * Produce an error report
+ *
+ * If the failed constraint was on insert/update to the FK table,
+ * we want the key names and values extracted from there, and the error
+ * message to look like 'key blah referenced from FK not found in PK'.
+ * Otherwise, the attr names and values come from the PK table and the
+ * message looks like 'key blah in PK still referenced from FK'.
+ */
+static void
+ri_ReportViolation(RI_QueryKey *qkey, const char *constrname,
+				   Relation pk_rel, Relation fk_rel,
+				   HeapTuple violator, bool spi_err)
+{
+#define BUFLENGTH	512
+	char		key_names[BUFLENGTH];
+	char		key_values[BUFLENGTH];
+	char	   *name_ptr = key_names;
+	char	   *val_ptr = key_values;
+	bool		onfk;
+	Relation	rel,
+				other_rel;
+	int			idx,
+				key_idx;
+
+	/*
+	 * rel is set to where the tuple description is coming from, and it also
+	 * is the first relation mentioned in the message, other_rel is
+	 * respectively the other relation.
+	 */
+	onfk = (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK);
+	if (onfk)
+	{
+		rel = fk_rel;
+		other_rel = pk_rel;
+		key_idx = RI_KEYPAIR_FK_IDX;
+	}
+	else
+	{
+		rel = pk_rel;
+		other_rel = fk_rel;
+		key_idx = RI_KEYPAIR_PK_IDX;
+	}
+
+	/*
+	 * Special case - if there are no keys at all, this is a 'no column'
+	 * constraint - no need to try to extract the values, and the message
+	 * in this case looks different.
+	 */
+	if (qkey->nkeypairs == 0)
+	{
+		if (spi_err)
+			elog(ERROR, "%s referential action on %s from %s rewritten by rule",
+				 constrname,
+				 RelationGetRelationName(fk_rel),
+				 RelationGetRelationName(pk_rel));
+		else
+			elog(ERROR, "%s referential integrity violation - no rows found in %s",
+				 constrname, RelationGetRelationName(pk_rel));
+	}
+
+	/* Get printable versions of the keys involved */
+	for (idx = 0; idx < qkey->nkeypairs; idx++)
+	{
+		int		fnum = qkey->keypair[idx][key_idx];
+		char   *name,
+			   *val;
+
+		name = SPI_fname(rel->rd_att, fnum);
+		val = SPI_getvalue(violator, rel->rd_att, fnum);
+		if (!val)
+			val = "null";
+
+		/*
+		 * Go to "..." if name or value doesn't fit in buffer.  We reserve
+		 * 5 bytes to ensure we can add comma, "...", null.
+		 */
+		if (strlen(name) >= (key_names + BUFLENGTH - 5) - name_ptr ||
+			strlen(val) >= (key_values + BUFLENGTH - 5) - val_ptr)
+		{
+			sprintf(name_ptr, "...");
+			sprintf(val_ptr, "...");
+			break;
+		}
+
+		name_ptr += sprintf(name_ptr, "%s%s", idx > 0 ? "," : "", name);
+		val_ptr += sprintf(val_ptr, "%s%s", idx > 0 ? "," : "", val);
+  }
+
+  if (spi_err)
+	  elog(ERROR, "%s referential action on %s from %s for (%s)=(%s) rewritten by rule",
+		   constrname,
+		   RelationGetRelationName(fk_rel),
+		   RelationGetRelationName(pk_rel),
+		   key_names, key_values);
+  else if (onfk)
+	  elog(ERROR, "%s referential integrity violation - key (%s)=(%s) referenced from %s not found in %s",
+		   constrname, key_names, key_values,
+		   RelationGetRelationName(rel),
+		   RelationGetRelationName(other_rel));
+  else
+	  elog(ERROR, "%s referential integrity violation - key (%s)=(%s) in %s still referenced from %s",
+		   constrname, key_names, key_values,
+		   RelationGetRelationName(rel),
+		   RelationGetRelationName(other_rel));
 }
 
 /* ----------
