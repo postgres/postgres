@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.26 1997/05/11 15:11:45 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.27 1997/06/23 14:56:15 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,35 +97,67 @@ GetCurrentTime(struct tm *tm)
 {
     int tz;
 
-    abstime2tm( GetCurrentTransactionStartTime(), &tz, tm);
+    abstime2tm( GetCurrentTransactionStartTime(), &tz, tm, NULL);
 
     return;
 } /* GetCurrentTime() */
 
 
 void
-abstime2tm(AbsoluteTime time, int *tzp, struct tm *tm)
+abstime2tm(AbsoluteTime time, int *tzp, struct tm *tm, char *tzn)
 {
-    struct tm *tt;
+#ifdef USE_POSIX_TIME
+    struct tm *tx;
+#else /* ! USE_POSIX_TIME */
+    struct timeb tb;		/* the old V7-ism */
 
-#if FALSE
-    if (tzp != NULL) time -= *tzp;
-    tt = gmtime((time_t *) &time);
+    (void) ftime(&tb);
 #endif
-    /* XXX HACK to get time behavior compatible with Postgres v6.0 - tgl 97/04/07 */
-    if (tzp != NULL) {
-	tt = localtime((time_t *) &time);
-    } else {
-	tt = gmtime((time_t *) &time);
-    };
 
-    tm->tm_year = tt->tm_year+1900;
-    tm->tm_mon = tt->tm_mon+1;
-    tm->tm_mday = tt->tm_mday;
-    tm->tm_hour = tt->tm_hour;
-    tm->tm_min = tt->tm_min;
-    tm->tm_sec = tt->tm_sec;
-    tm->tm_isdst = tt->tm_isdst;
+#ifdef USE_POSIX_TIME
+    if (tzp != NULL) {
+	tx = localtime((time_t *) &time);
+    } else {
+	tx = gmtime((time_t *) &time);
+    };
+#else
+#endif
+
+#ifdef DATEDEBUG
+#ifdef HAVE_INT_TIMEZONE
+printf( "datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02d %s %s dst=%d\n",
+ tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, tx->tm_sec,
+ tzname[0], tzname[1], tx->tm_isdst);
+#else
+printf( "datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02d %s dst=%d\n",
+ tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, tx->tm_sec,
+ tx->tm_zone, tx->tm_isdst);
+#endif
+#else
+#endif
+
+    tm->tm_year = tx->tm_year+1900;
+    tm->tm_mon = tx->tm_mon+1;
+    tm->tm_mday = tx->tm_mday;
+    tm->tm_hour = tx->tm_hour;
+    tm->tm_min = tx->tm_min;
+    tm->tm_sec = tx->tm_sec;
+    tm->tm_isdst = tx->tm_isdst;
+
+#ifdef USE_POSIX_TIME
+#ifdef HAVE_INT_TIMEZONE
+    if (tzp != NULL) *tzp = (tm->tm_isdst? (timezone - 3600): timezone);
+    if (tzn != NULL) strcpy( tzn, tzname[tm->tm_isdst]);
+#else /* !HAVE_INT_TIMEZONE */
+    if (tzp != NULL) *tzp = - tm->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
+    /* XXX FreeBSD man pages indicate that this should work - tgl 97/04/23 */
+    if (tzn != NULL) strcpy( tzn, tm->tm_zone);
+#endif
+#else /* ! USE_POSIX_TIME */
+    if (tzp != NULL) *tzp = tb.timezone * 60;
+    /* XXX does this work to get the local timezone string in V7? - tgl 97/03/18 */
+    if (tzn != NULL) strftime( tzn, MAXTZLEN, "%Z", localtime(&now));
+#endif 
 
     return;
 } /* abstime2tm() */
@@ -162,15 +194,6 @@ tm2abstime( struct tm *tm, int tz)
     if ((day == MAX_DAYNUM && sec < 0) ||
       (day == MIN_DAYNUM && sec > 0))
 	return(INVALID_ABSTIME);
-
-#if FALSE
-    /* daylight correction */
-    if (tm->tm_isdst < 0) {		/* unknown; find out */
-	tm->tm_isdst = (CDayLight > 0);
-    };
-    if (tm->tm_isdst > 0)
-	sec -= 60*60;
-#endif
 
     /* check for reserved values (e.g. "current" on edge of usual range */
     if (!AbsoluteTimeIsReal(sec))
@@ -246,22 +269,18 @@ printf( "nabstimein- %d fields are type %d (DTK_DATE=%d)\n", nf, dtype, DTK_DATE
 } /* nabstimein() */
 
 
-/*
+/* nabstimeout()
  * Given an AbsoluteTime return the English text version of the date
  */
 char *
 nabstimeout(AbsoluteTime time)
 {
-    /*
-     * Fri Jan 28 23:05:29 1994 PST
-     * 0        1         2
-     * 12345678901234567890123456789
-     *
-     * we allocate some extra -- timezones are usually 3 characters but
-     * this is not in the POSIX standard...
-     */
-    char buf[40];
     char* result;
+    int tz;
+    double fsec = 0;
+    struct tm tt, *tm = &tt;
+    char buf[MAXDATELEN+1];
+    char zone[MAXDATELEN+1], *tzn = zone;
 
     switch (time) {
     case EPOCH_ABSTIME:	  (void) strcpy(buf, EPOCH);	break;
@@ -270,96 +289,18 @@ nabstimeout(AbsoluteTime time)
     case NOEND_ABSTIME:   (void) strcpy(buf, LATE);	break;
     case NOSTART_ABSTIME: (void) strcpy(buf, EARLY);	break;
     default:
-	/* hack -- localtime happens to work for negative times */
-	(void) strftime(buf, sizeof(buf), "%a %b %d %H:%M:%S %Y %Z",
-			localtime((time_t *) &time));
+	abstime2tm( time, &tz, tm, tzn);
+#if DATEDEBUG
+#endif
+	EncodeDateTime(tm, fsec, &tz, &tzn, DateStyle, buf);
 	break;
     }
-    result = (char*)palloc(strlen(buf) + 1);
+
+    result = PALLOC(strlen(buf) + 1);
     strcpy(result, buf);
-    return result;
-}
 
-
-/* turn a (struct tm) and a few variables into a time_t, with range checking */
-AbsoluteTime
-dateconv(register struct tm *tm, int zone)
-{
-    tm->tm_wday = tm->tm_yday = 0;
-
-#if FALSE
-    if (tm->tm_year < 70) {
-	tm->tm_year += 2000;
-    } else if (tm->tm_year < 1000) {
-	tm->tm_year += 1900;
-    };
-#endif
-
-    /* validate, before going out of range on some members */
-    if (tm->tm_year < 1901 || tm->tm_year > 2038
-      || tm->tm_mon < 1 || tm->tm_mon > 12
-      || tm->tm_mday < 1 || tm->tm_mday > 31
-      || tm->tm_hour < 0 || tm->tm_hour >= 24
-      || tm->tm_min < 0 || tm->tm_min > 59
-      || tm->tm_sec < 0 || tm->tm_sec > 59)
-	return INVALID_ABSTIME;
-
-    /*
-     * zone should really be -zone, and tz should be set to tp->value, not
-     * -tp->value.  Or the table could be fixed.
-     */
-    tm->tm_sec += zone;		/* mktime lets it be out of range */
-
-    /* convert to seconds */
-    return qmktime(tm);
-}
-
-
-/*
- * near-ANSI qmktime suitable for use by dateconv; not necessarily as paranoid
- * as ANSI requires, and it may not canonicalise the struct tm.  Ignores tm_wday
- * and tm_yday.
- */
-time_t
-qmktime(struct tm *tm)
-{
-    time_t sec;
-
-    int day;
-
-#if FALSE
-    /* If it was a 2 digit year */
-    if (tm->tm_year < 100)
-	tm->tm_year += 1900;
-#endif
-
-    day = (date2j( tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j( 1970, 1, 1));
-
-    /* check for time out of range */
-    if ((day < MIN_DAYNUM) || (day > MAX_DAYNUM))
-	return INVALID_ABSTIME;
-
-    /* convert to seconds */
-    sec = tm->tm_sec + (tm->tm_min +(day*24 + tm->tm_hour)*60)*60;
-
-    /* check for overflow */
-    if ((day == MAX_DAYNUM && sec < 0) ||
-	(day == MIN_DAYNUM && sec > 0))
-	return INVALID_ABSTIME;
-
-    /* check for reserved values (e.g. "current" on edge of usual range */
-    if (!AbsoluteTimeIsReal(sec))
-	return INVALID_ABSTIME;
-
-    /* daylight correction */
-    if (tm->tm_isdst < 0) {		/* unknown; find out */
-	tm->tm_isdst = (CDayLight > 0);
-    };
-    if (tm->tm_isdst > 0)
-	sec -= 60*60;
-
-    return sec;
-} /* qmktime() */
+    return(result);
+} /* nabstimeout() */
 
 
 /*
