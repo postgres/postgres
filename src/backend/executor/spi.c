@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.133 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.134 2005/02/10 20:36:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -832,7 +832,7 @@ SPI_cursor_open(const char *name, void *plan,
 	Portal		portal;
 	int			k;
 
-	/* Ensure that the plan contains only one regular SELECT query */
+	/* Ensure that the plan contains only one query */
 	if (list_length(ptlist) != 1 || list_length(qtlist) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
@@ -840,14 +840,27 @@ SPI_cursor_open(const char *name, void *plan,
 	queryTree = (Query *) linitial((List *) linitial(qtlist));
 	planTree = (Plan *) linitial(ptlist);
 
-	if (queryTree->commandType != CMD_SELECT)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
-				 errmsg("cannot open non-SELECT query as cursor")));
-	if (queryTree->into != NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
-				 errmsg("cannot open SELECT INTO query as cursor")));
+	/* Must be a query that returns tuples */
+	switch (queryTree->commandType)
+	{
+		case CMD_SELECT:
+			if (queryTree->into != NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+						 errmsg("cannot open SELECT INTO query as cursor")));
+			break;
+		case CMD_UTILITY:
+			if (!UtilityReturnsTuples(queryTree->utilityStmt))
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+						 errmsg("cannot open non-SELECT query as cursor")));
+			break;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+					 errmsg("cannot open non-SELECT query as cursor")));
+			break;
+	}
 
 	/* Reset SPI result */
 	SPI_processed = 0;
@@ -911,7 +924,7 @@ SPI_cursor_open(const char *name, void *plan,
 	 */
 	PortalDefineQuery(portal,
 					  NULL,		/* unfortunately don't have sourceText */
-					  "SELECT", /* cursor's query is always a SELECT */
+					  "SELECT", /* nor the raw parse tree... */
 					  list_make1(queryTree),
 					  list_make1(planTree),
 					  PortalGetHeapMemory(portal));
@@ -922,7 +935,7 @@ SPI_cursor_open(const char *name, void *plan,
 	 * Set up options for portal.
 	 */
 	portal->cursorOptions &= ~(CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL);
-	if (ExecSupportsBackwardScan(plan))
+	if (planTree == NULL || ExecSupportsBackwardScan(planTree))
 		portal->cursorOptions |= CURSOR_OPT_SCROLL;
 	else
 		portal->cursorOptions |= CURSOR_OPT_NO_SCROLL;
@@ -944,7 +957,8 @@ SPI_cursor_open(const char *name, void *plan,
 	 */
 	PortalStart(portal, paramLI, snapshot);
 
-	Assert(portal->strategy == PORTAL_ONE_SELECT);
+	Assert(portal->strategy == PORTAL_ONE_SELECT ||
+		   portal->strategy == PORTAL_UTIL_SELECT);
 
 	/* Return the created portal */
 	return portal;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.90 2005/02/01 23:28:40 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.91 2005/02/10 20:36:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1120,6 +1120,30 @@ PortalRunFetch(Portal portal,
 				result = DoPortalRunFetch(portal, fdirection, count, dest);
 				break;
 
+			case PORTAL_UTIL_SELECT:
+
+				/*
+				 * If we have not yet run the utility statement, do so,
+				 * storing its results in the portal's tuplestore.
+				 */
+				if (!portal->portalUtilReady)
+				{
+					DestReceiver *treceiver;
+
+					PortalCreateHoldStore(portal);
+					treceiver = CreateDestReceiver(Tuplestore, portal);
+					PortalRunUtility(portal, linitial(portal->parseTrees),
+									 treceiver, NULL);
+					(*treceiver->rDestroy) (treceiver);
+					portal->portalUtilReady = true;
+				}
+
+				/*
+				 * Now fetch desired portion of results.
+				 */
+				result = DoPortalRunFetch(portal, fdirection, count, dest);
+				break;
+
 			default:
 				elog(ERROR, "unsupported portal strategy");
 				result = 0;		/* keep compiler quiet */
@@ -1170,7 +1194,8 @@ DoPortalRunFetch(Portal portal,
 {
 	bool		forward;
 
-	Assert(portal->strategy == PORTAL_ONE_SELECT);
+	Assert(portal->strategy == PORTAL_ONE_SELECT ||
+		   portal->strategy == PORTAL_UTIL_SELECT);
 
 	switch (fdirection)
 	{
