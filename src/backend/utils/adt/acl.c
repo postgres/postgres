@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.8 1996/11/20 22:53:10 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.9 1997/07/10 02:27:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ getid(char *s, char *n)
     
     while (isspace(*s))
 	++s;
-    for (id = s, len = 0; isalnum(*s); ++len, ++s)
+    for (id = s, len = 0; isalnum(*s) || *s == '_'; ++len, ++s)
 	;
     if (len > sizeof(NameData))
 	elog(WARN, "getid: identifier cannot be >%d characters",
