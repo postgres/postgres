@@ -1,0 +1,17 @@
+2001 05 09 - Initial version 1.0
+
+2001 05 09 - Version 1.1
+	- Add table grant extraction based on group. Oracle ROLES are groups in PG
+
+2001 05 11 - Version 1.2
+	- Views extraction is now really done with the option type=>'VIEWS'
+	- Add indexes extraction on tables.
+	- Changes name of constraints, default is now used.
+	- Add debug printing to see that the process is running :-)
+	- Add extraction of only required tablename.
+	- Add extraction of only n to n table indice. Indices of extraction can be obtained
+	  with the option showtableid set to 1.
+	- Fix print of NOT NULL field.
+	- Complete rewrite of the grant extraction
+	- Complete rewrite of most things
+

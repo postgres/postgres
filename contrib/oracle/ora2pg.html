@@ -1,330 +1,324 @@
 <HTML>
 <HEAD>
 <TITLE>Ora2Pg - Oracle to PostgreSQL database schema converter</TITLE>
-<LINK REV="made" HREF="mailto:root@porky.devel.redhat.com">
+<LINK REV="made" HREF="mailto:darold@localhost.localdomain">
 </HEAD>
 
 <BODY>
 
+<A NAME="__index__"></A>
 <!-- INDEX BEGIN -->
 
 <UL>
 
-	<LI><A HREF="#NAME">NAME</A>
-	<LI><A HREF="#SYNOPSIS">SYNOPSIS</A>
-	<LI><A HREF="#DESCRIPTION">DESCRIPTION</A>
-	<LI><A HREF="#ABSTRACT">ABSTRACT</A>
-	<LI><A HREF="#REQUIREMENT">REQUIREMENT</A>
-	<LI><A HREF="#PUBLIC_METHODS">PUBLIC METHODS</A>
+	<LI><A HREF="#name">NAME</A></LI>
+	<LI><A HREF="#synopsis">SYNOPSIS</A></LI>
+	<LI><A HREF="#description">DESCRIPTION</A></LI>
+	<LI><A HREF="#abstract">ABSTRACT</A></LI>
+	<LI><A HREF="#requirement">REQUIREMENT</A></LI>
+	<LI><A HREF="#public methods">PUBLIC METHODS</A></LI>
 	<UL>
 
-		<LI><A HREF="#new_HASH_OPTIONS">new HASH_OPTIONS</A>
-		<LI><A HREF="#export_sql_FILENAME">export_sql FILENAME</A>
+		<LI><A HREF="#new hash_options">new HASH_OPTIONS</A></LI>
+		<LI><A HREF="#export_sql filename">export_sql FILENAME</A></LI>
 	</UL>
 
-	<LI><A HREF="#PUBLIC_METHODS">PUBLIC METHODS</A>
+	<LI><A HREF="#public methods">PUBLIC METHODS</A></LI>
 	<UL>
 
-		<LI><A HREF="#_init_HASH_OPTIONS">_init HASH_OPTIONS</A>
-		<LI><A HREF="#_tables">_tables</A>
-		<LI><A HREF="#_get_sql_data">_get_sql_data</A>
-		<LI><A HREF="#_sql_type_INTERNAL_TYPE_LENGTH">_sql_type INTERNAL_TYPE LENGTH</A>
-		<LI><A HREF="#_column_info_TABLE">_column_info TABLE</A>
-		<LI><A HREF="#_primary_key_TABLE">_primary_key TABLE</A>
-		<LI><A HREF="#_unique_key_TABLE">_unique_key TABLE</A>
-		<LI><A HREF="#_foreign_key_TABLE">_foreign_key TABLE</A>
-		<LI><A HREF="#_get_privilege">_get_privilege </A>
+		<LI><A HREF="#_init hash_options">_init HASH_OPTIONS</A></LI>
+		<LI><A HREF="#_tables">_tables</A></LI>
+		<LI><A HREF="#_views">_views</A></LI>
+		<LI><A HREF="#_get_sql_data">_get_sql_data</A></LI>
+		<LI><A HREF="#_sql_type internal_type length">_sql_type INTERNAL_TYPE LENGTH</A></LI>
+		<LI><A HREF="#_column_info table">_column_info TABLE</A></LI>
+		<LI><A HREF="#_primary_key table">_primary_key TABLE</A></LI>
+		<LI><A HREF="#_unique_key table">_unique_key TABLE</A></LI>
+		<LI><A HREF="#_foreign_key table">_foreign_key TABLE</A></LI>
+		<LI><A HREF="#_get_table_privilege table">_get_table_privilege TABLE</A></LI>
+		<LI><A HREF="#_get_roles">_get_roles</A></LI>
+		<LI><A HREF="#_get_indexes table">_get_indexes TABLE</A></LI>
+		<LI><A HREF="#_get_sequences table">_get_sequences TABLE</A></LI>
+		<LI><A HREF="#_get_views">_get_views</A></LI>
 	</UL>
 
-	<LI><A HREF="#AUTHOR">AUTHOR</A>
-	<LI><A HREF="#COPYRIGHT">COPYRIGHT</A>
-	<LI><A HREF="#BUGS">BUGS</A>
-	<LI><A HREF="#SEE_ALSO">SEE ALSO</A>
+	<LI><A HREF="#author">AUTHOR</A></LI>
+	<LI><A HREF="#copyright">COPYRIGHT</A></LI>
+	<LI><A HREF="#bugs">BUGS</A></LI>
+	<LI><A HREF="#see also">SEE ALSO</A></LI>
 </UL>
 <!-- INDEX END -->
 
 <HR>
 <P>
-<H1><A NAME="NAME">NAME</A></H1>
-<P>
-Ora2Pg - Oracle to PostgreSQL database schema converter
-
+<H1><A NAME="name">NAME</A></H1>
+<P>Ora2Pg - Oracle to PostgreSQL database schema converter</P>
 <P>
 <HR>
-<H1><A NAME="SYNOPSIS">SYNOPSIS</A></H1>
-<P>
-<PRE>        BEGIN {
+<H1><A NAME="synopsis">SYNOPSIS</A></H1>
+<PRE>
+        BEGIN {
                 $ENV{ORACLE_HOME} = '/usr/local/oracle/oracle816';
-        }
-</PRE>
-<P>
-<PRE>        use strict;
-</PRE>
-<P>
-<PRE>        use Ora2Pg;
-</PRE>
-<P>
-<PRE>        # Init the database connection
+        }</PRE>
+<PRE>
+        use strict;</PRE>
+<PRE>
+        use Ora2Pg;</PRE>
+<PRE>
+        # Init the database connection
         my $dbsrc = 'dbi:Oracle:host=testdb.samse.fr;sid=TEST;port=1521';
         my $dbuser = 'system';
-        my $dbpwd = 'manager';
-</PRE>
-<P>
-<PRE>        # Create an instance of the Ora2Pg perl module
+        my $dbpwd = 'manager';</PRE>
+<PRE>
+        # Create an instance of the Ora2Pg perl module
         my $schema = new Ora2Pg (
                 datasource =&gt; $dbsrc,           # Database DBD datasource
                 user =&gt; $dbuser,                # Database user
                 password =&gt; $dbpwd,             # Database password
-        );
-</PRE>
-<P>
-<PRE>        # Create the POSTGRESQL representation of all objects in the database
-        $schema-&gt;export_schema(&quot;output.sql&quot;);
-</PRE>
-<P>
-<PRE>        exit(0);
-</PRE>
+        );</PRE>
+<PRE>
+        # Create the POSTGRESQL representation of all objects in the database
+        $schema-&gt;export_schema(&quot;output.sql&quot;);</PRE>
+<PRE>
+        exit(0);</PRE>
+<P>or if you only want to extract some tables:</P>
+<PRE>
+        # Create an instance of the Ora2Pg perl module
+        my @tables = ('tab1', 'tab2', 'tab3');
+        my $schema = new Ora2Pg (
+                datasource =&gt; $dbsrc,           # Database DBD datasource
+                user =&gt; $dbuser,                # Database user
+                password =&gt; $dbpwd,             # Database password
+                tables =&gt; \@tables,             # Tables to extract
+                debug =&gt; 1                      # To show somethings when running
+        );</PRE>
+<P>or if you only want to extract the 10 first tables:</P>
+<PRE>
+        # Create an instance of the Ora2Pg perl module
+        my $schema = new Ora2Pg (
+                datasource =&gt; $dbsrc,           # Database DBD datasource
+                user =&gt; $dbuser,                # Database user
+                password =&gt; $dbpwd,             # Database password
+                max =&gt; 10                       # 10 first tables to extract
+        );</PRE>
+<P>or if you only want to extract tables 10 to 20:</P>
+<PRE>
+        # Create an instance of the Ora2Pg perl module
+        my $schema = new Ora2Pg (
+                datasource =&gt; $dbsrc,           # Database DBD datasource
+                user =&gt; $dbuser,                # Database user
+                password =&gt; $dbpwd,             # Database password
+                min =&gt; 10                       # Begin extraction at indice 10
+                max =&gt; 20                       # End extraction at indice 20
+        );</PRE>
+<P>To know at which indices table can be found during extraction use the option:</P>
+<PRE>
+        showtableid =&gt; 1</PRE>
+<P>To extract all views set the option type as follow:</P>
+<PRE>
+        type =&gt; 'VIEW'</PRE>
+<P>Default is table schema extraction</P>
 <P>
 <HR>
-<H1><A NAME="DESCRIPTION">DESCRIPTION</A></H1>
-<P>
-Ora2Pg is a perl OO module used to export an Oracle database schema to a
-PostgreSQL compatible schema.
-
-<P>
-It simply connect to your Oracle database, extract its structure and
-generate a SQL script that you can load into your PostgreSQL database.
-
-<P>
-I'm not a Oracle DBA so I don't really know something about its internal
+<H1><A NAME="description">DESCRIPTION</A></H1>
+<P>Ora2Pg is a perl OO module used to export an Oracle database schema
+to a PostgreSQL compatible schema.</P>
+<P>It simply connect to your Oracle database, extract its structure and
+generate a SQL script that you can load into your PostgreSQL database.</P>
+<P>I'm not a Oracle DBA so I don't really know something about its internal
 structure so you may find some incorrect things. Please tell me what is
-wrong and what can be better.
-
-<P>
-It currently only dump the database schema, with primary, unique and
-foreign keys. I've tried to excluded internal system tables but perhaps not
-enougt, please let me know.
-
+wrong and what can be better.</P>
+<P>It currently only dump the database schema, with primary, unique and
+foreign keys. I've tried to excluded internal system tables but perhaps
+not enougt, please let me know.</P>
 <P>
 <HR>
-<H1><A NAME="ABSTRACT">ABSTRACT</A></H1>
-<P>
-The goal of the Ora2Pg perl module is to cover all part needed to export an
-Oracle database to a PostgreSQL database without other thing that provide
-the connection parameters to the Oracle database.
-
-<P>
-Features must include:
-
-<P>
-<PRE>        - database schema export (done)
-        - grant export (done)
-        - predefined function/trigger export (todo)
-        - data export (todo)
-        - sql query converter (todo)
-</PRE>
-<P>
-My knowledge regarding database is really poor especially for Oracle so
-contribution is welcome.
-
+<H1><A NAME="abstract">ABSTRACT</A></H1>
+<P>The goal of the Ora2Pg perl module is to cover all part needed to export
+an Oracle database to a PostgreSQL database without other thing that provide
+the connection parameters to the Oracle database.</P>
+<P>Features must include:</P>
+<PRE>
+        - Database schema export, with unique, primary and foreign key.
+        - Grants/privileges export by user and group.
+        - Indexes and unique indexes export.
+        - Table or view selection (by name and max table) export.
+        - Predefined function/trigger export (todo)
+        - Data export (todo)
+        - Sql query converter (todo)</PRE>
+<P>My knowledge regarding database is really poor especially for Oracle
+so contribution is welcome.</P>
 <P>
 <HR>
-<H1><A NAME="REQUIREMENT">REQUIREMENT</A></H1>
-<P>
-You just need the DBI and DBD::Oracle perl module to be installed
-
+<H1><A NAME="requirement">REQUIREMENT</A></H1>
+<P>You just need the DBI and DBD::Oracle perl module to be installed</P>
 <P>
 <HR>
-<H1><A NAME="PUBLIC_METHODS">PUBLIC METHODS</A></H1>
+<H1><A NAME="public methods">PUBLIC METHODS</A></H1>
 <P>
-<HR>
-<H2><A NAME="new_HASH_OPTIONS">new HASH_OPTIONS</A></H2>
-<P>
-Creates a new Ora2Pg object.
-
-<P>
-Supported options are:
-
-<P>
-<PRE>        - datasource    : DBD datasource (required)
+<H2><A NAME="new hash_options">new HASH_OPTIONS</A></H2>
+<P>Creates a new Ora2Pg object.</P>
+<P>Supported options are:</P>
+<PRE>
+        - datasource    : DBD datasource (required)
         - user          : DBD user (optional with public access)
         - password      : DBD password (optional with public access)
-</PRE>
+        - type          : Type of data to extract, can be TABLE (default) or VIEW
+        - debug         : Print the current state of the parsing
+        - tables        : Extract only the given tables (arrayref)
+        - showtableid   : Display only the table indice during extraction
+        - min           : Indice to begin extraction. Default to 0
+        - max           : Indice to end extraction. Default to 0 mean no limits</PRE>
+<P>Attempt that this list should grow a little more because all initialization is
+done by this way.</P>
 <P>
-Attempt that this list should grow a little more because all initialization
-is done by this way.
-
-<P>
-<HR>
-<H2><A NAME="export_sql_FILENAME">export_sql FILENAME</A></H2>
-<P>
-Print SQL conversion output to a filename or to STDOUT if no file is given. 
-
-<P>
-<HR>
-<H1><A NAME="PUBLIC_METHODS">PUBLIC METHODS</A></H1>
+<H2><A NAME="export_sql filename">export_sql FILENAME</A></H2>
+<P>Print SQL conversion output to a filename or
+to STDOUT if no file is given.</P>
 <P>
 <HR>
-<H2><A NAME="_init_HASH_OPTIONS">_init HASH_OPTIONS</A></H2>
+<H1><A NAME="public methods">PUBLIC METHODS</A></H1>
 <P>
-Initialize a Ora2Pg object instance with a connexion to the Oracle
-database.
-
+<H2><A NAME="_init hash_options">_init HASH_OPTIONS</A></H2>
+<P>Initialize a Ora2Pg object instance with a connexion to the
+Oracle database.</P>
 <P>
-<HR>
 <H2><A NAME="_tables">_tables</A></H2>
-<P>
-This function is used to retrieve all table information.
-
-<P>
-Set the main hash of the database structure $self-&gt;{tables}. Keys are
-the names of all tables retrieved from the current database. Each table
-information compose an array associated to the table_info key as array
-reference. In other way:
-
-<P>
-<PRE>    $self-&gt;{tables}{$class_name}{table_info} = [(OWNER,TYPE)];
-</PRE>
-<P>
-TYPE Can be TABLE, VIEW, SYSTEM TABLE, GLOBAL TEMPORARY, LOCAL TEMPORARY,
-ALIAS, SYNONYM or a data source specific type identifier.
-
-<P>
-It also get the following informations in the DBI object to affect the main
-hash of the database structure :
-
-<P>
-<PRE>    $self-&gt;{tables}{$class_name}{field_name} = $sth-&gt;{NAME};
-    $self-&gt;{tables}{$class_name}{field_type} = $sth-&gt;{TYPE};
-</PRE>
-<P>
-It also call these other private subroutine to affect the main hash of the
-database structure :
-
-<P>
-<PRE>    @{$self-&gt;{tables}{$class_name}{column_info}} = &amp;_column_info($self, $class_name);
+<P>This function is used to retrieve all table information.</P>
+<P>Set the main hash of the database structure $self-&gt;{tables}.
+Keys are the names of all tables retrieved from the current
+database. Each table information compose an array associated
+to the table_info key as array reference. In other way:</P>
+<PRE>
+    $self-&gt;{tables}{$class_name}{table_info} = [(OWNER,TYPE)];</PRE>
+<P>DBI TYPE can be TABLE, VIEW, SYSTEM TABLE, GLOBAL TEMPORARY, LOCAL TEMPORARY,
+ALIAS, SYNONYM or a data source specific type identifier. This only extract
+TABLE type.</P>
+<P>It also get the following informations in the DBI object to affect the
+main hash of the database structure :</P>
+<PRE>
+    $self-&gt;{tables}{$class_name}{field_name} = $sth-&gt;{NAME};
+    $self-&gt;{tables}{$class_name}{field_type} = $sth-&gt;{TYPE};</PRE>
+<P>It also call these other private subroutine to affect the main hash
+of the database structure :</P>
+<PRE>
+    @{$self-&gt;{tables}{$class_name}{column_info}} = &amp;_column_info($self, $class_name);
     @{$self-&gt;{tables}{$class_name}{primary_key}} = &amp;_primary_key($self, $class_name);
     @{$self-&gt;{tables}{$class_name}{unique_key}}  = &amp;_unique_key($self, $class_name);
-    @{$self-&gt;{tables}{$class_name}{foreign_key}} = &amp;_foreign_key($self, $class_name);
-</PRE>
+    @{$self-&gt;{tables}{$class_name}{foreign_key}} = &amp;_foreign_key($self, $class_name);</PRE>
 <P>
-<HR>
+<H2><A NAME="_views">_views</A></H2>
+<P>This function is used to retrieve all views information.</P>
+<P>Set the main hash of the views definition $self-&gt;{views}.
+Keys are the names of all views retrieved from the current
+database values are the text definition of the views.</P>
+<P>It then set the main hash as follow:</P>
+<PRE>
+    # Definition of the view
+    $self-&gt;{views}{$table}{text} = $view_infos{$table};
+    # Grants defined on the views 
+    $self-&gt;{views}{$table}{grants} = when I find how...</PRE>
+<P>
 <H2><A NAME="_get_sql_data">_get_sql_data</A></H2>
+<P>Returns a string containing the entire SQL Schema definition compatible with PostgreSQL</P>
 <P>
-Returns a string containing the entire SQL Schema definition compatible
-with PostgreSQL
-
+<H2><A NAME="_sql_type internal_type length">_sql_type INTERNAL_TYPE LENGTH</A></H2>
+<P>This function return the PostgreSQL datatype corresponding to the
+Oracle internal type.</P>
 <P>
-<HR>
-<H2><A NAME="_sql_type_INTERNAL_TYPE_LENGTH">_sql_type INTERNAL_TYPE LENGTH</A></H2>
+<H2><A NAME="_column_info table">_column_info TABLE</A></H2>
+<P>This function implements a Oracle-native column information.</P>
+<P>Return a list of array reference containing the following informations
+for each column the given a table</P>
+<P>[(
+  column name,
+  column type,
+  column length,
+  nullable column,
+  default value
+)]</P>
 <P>
-This function return the PostgreSQL datatype corresponding to the Oracle
-internal type.
-
+<H2><A NAME="_primary_key table">_primary_key TABLE</A></H2>
+<P>This function implements a Oracle-native primary key column
+information.</P>
+<P>Return a list of all column name defined as primary key
+for the given table.</P>
 <P>
-<HR>
-<H2><A NAME="_column_info_TABLE">_column_info TABLE</A></H2>
+<H2><A NAME="_unique_key table">_unique_key TABLE</A></H2>
+<P>This function implements a Oracle-native unique key column
+information.</P>
+<P>Return a list of all column name defined as unique key
+for the given table.</P>
 <P>
-This function implements a Oracle-native column information.
-
+<H2><A NAME="_foreign_key table">_foreign_key TABLE</A></H2>
+<P>This function implements a Oracle-native foreign key reference
+information.</P>
+<P>Return a list of hash of hash of array reference. Ouuf! Nothing very difficult.
+The first hash is composed of all foreign key name. The second hash just have
+two key known as 'local' and remote' corresponding to the local table where the
+foreign key is defined and the remote table where the key refer.</P>
+<P>The foreign key name is composed as follow:</P>
+<PRE>
+    'local_table_name-&gt;remote_table_name'</PRE>
+<P>Foreign key data consist in two array representing at the same indice the local
+field and the remote field where the first one refer to the second.
+Just like this:</P>
+<PRE>
+    @{$link{$fkey_name}{local}} = @local_columns;
+    @{$link{$fkey_name}{remote}} = @remote_columns;</PRE>
 <P>
-Return a list of array reference containing the following informations for
-each column the given a table
-
+<H2><A NAME="_get_table_privilege table">_get_table_privilege TABLE</A></H2>
+<P>This function implements a Oracle-native table grants
+information.</P>
+<P>Return a hash of array of all users and their grants on the
+given table.</P>
 <P>
-[( column name, column type, column length, nullable column, default value
-)]
-
+<H2><A NAME="_get_roles">_get_roles</A></H2>
+<P>This function implements a Oracle-native roles/users
+information.</P>
+<P>Return a hash of all groups (roles) as an array of associated users.</P>
 <P>
-<HR>
-<H2><A NAME="_primary_key_TABLE">_primary_key TABLE</A></H2>
+<H2><A NAME="_get_indexes table">_get_indexes TABLE</A></H2>
+<P>This function implements a Oracle-native indexes
+information.</P>
+<P>Return an array of all indexes name which are not primary keys
+for the given table.</P>
+<P>Note: Indexes name must be created like this tablename_fieldname
+else they will not be retrieved or if tablename false in the output
+fieldname.</P>
 <P>
-This function implements a Oracle-native primary key column information.
-
+<H2><A NAME="_get_sequences table">_get_sequences TABLE</A></H2>
+<P>This function implements a Oracle-native sequence
+information.</P>
+<P>Return a hash of array of sequence name with MIN_VALUE, MAX_VALUE,
+INCREMENT and LAST_NUMBER for the given table.</P>
+<P>Not working yet.</P>
 <P>
-Return a list of all column name defined as primary key for the given
-table.
-
-<P>
-<HR>
-<H2><A NAME="_unique_key_TABLE">_unique_key TABLE</A></H2>
-<P>
-This function implements a Oracle-native unique key column information.
-
-<P>
-Return a list of all column name defined as unique key for the given table.
-
-<P>
-<HR>
-<H2><A NAME="_foreign_key_TABLE">_foreign_key TABLE</A></H2>
-<P>
-This function implements a Oracle-native foreign key reference information.
-
-<P>
-Return a list of hash of hash of array reference. Ouuf! Nothing very
-difficult. The first hash is composed of all foreign key name. The second
-hash just have two key known as 'local' and remote' corresponding to the
-local table where the foreign key is defined and the remote table where the
-key refer.
-
-<P>
-The foreign key name is composed as follow:
-
-<P>
-<PRE>    'local_table_name-&gt;remote_table_name'
-</PRE>
-<P>
-Foreign key data consist in two array representing at the same indice the
-local field and the remote field where the first one refer to the second.
-Just like this:
-
-<P>
-<PRE>    @{$link{$fkey_name}{local}} = @local_columns;
-    @{$link{$fkey_name}{remote}} = @remote_columns;
-</PRE>
-<P>
-<HR>
-<H2><A NAME="_get_privilege">_get_privilege</A></H2>
-<P>
-This function implements a Oracle-native tables grants information.
-
-<P>
-Return a hash of all groups (roles) with associated users and a hash of
-arrays of all grants on related tables.
-
+<H2><A NAME="_get_views">_get_views</A></H2>
+<P>This function implements a Oracle-native views information.</P>
+<P>Return a hash of array of sequence name with MIN_VALUE, MAX_VALUE,
+INCREMENT and LAST_NUMBER for the given table.</P>
 <P>
 <HR>
-<H1><A NAME="AUTHOR">AUTHOR</A></H1>
-<P>
-Gilles Darold &lt;<A
-HREF="mailto:gilles@darold.net">gilles@darold.net</A>&gt;
-
+<H1><A NAME="author">AUTHOR</A></H1>
+<P>Gilles Darold &lt;<A HREF="mailto:gilles@darold.net">gilles@darold.net</A>&gt;</P>
 <P>
 <HR>
-<H1><A NAME="COPYRIGHT">COPYRIGHT</A></H1>
-<P>
-Copyright (c) 2001 Gilles Darold - All rights reserved.
-
-<P>
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
-
+<H1><A NAME="copyright">COPYRIGHT</A></H1>
+<P>Copyright (c) 2001 Gilles Darold - All rights reserved.</P>
+<P>This program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.</P>
 <P>
 <HR>
-<H1><A NAME="BUGS">BUGS</A></H1>
-<P>
-This perl module is in the same state as my knowledge regarding database,
+<H1><A NAME="bugs">BUGS</A></H1>
+<P>This perl module is in the same state as my knowledge regarding database,
 it can move and not be compatible with older version so I will do my best
-to give you official support for Ora2Pg. Your volontee to help construct it
-and your contribution are welcome.
-
+to give you official support for Ora2Pg. Your volontee to help construct
+it and your contribution are welcome.</P>
 <P>
 <HR>
-<H1><A NAME="SEE_ALSO">SEE ALSO</A></H1>
-<P>
-<EM>DBI</EM>, <A HREF="/DBD/Oracle.html">DBD::Oracle</A>
-
-
+<H1><A NAME="see also">SEE ALSO</A></H1>
+<P><EM>DBI</EM>, <A HREF="/DBD/Oracle.html">the DBD::Oracle manpage</A></P>
 
 </BODY>
 

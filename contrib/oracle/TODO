@@ -1,0 +1,6 @@
+- Extract sequences on tables. Seem to be difficult, can't find the way to link
+  a sequence with one or more column. So problably just dump and edit manually
+- More precision in type conversion based on length (I've no good DB to do that)
+- Extract triggers and internal function.
+- Extract datas.
+- SQL queries converter.

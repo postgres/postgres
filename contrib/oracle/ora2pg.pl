@@ -20,7 +20,7 @@ use strict;
 use Ora2Pg;
 
 # Initialyze the database connection
-my $dbsrc = 'dbi:Oracle:host=aliciadb.samse.fr;sid=ALIC;port=1521';
+my $dbsrc = 'dbi:Oracle:host=test.mydomain.com;sid=TEST;port=1521';
 my $dbuser = 'system';
 my $dbpwd = 'manager';
 
@@ -29,6 +29,12 @@ my $schema = new Ora2Pg (
 	datasource => $dbsrc,		# Database DBD datasource
 	user => $dbuser,		# Database user
 	password => $dbpwd,		# Database password
+	debug => 1,			# Verbose mode
+#	type => 'VIEW',			# Extract views
+#	tables => [('MY_TABLE1','MY_TABLE2')],	# Extract only these table
+#	showtableid => 1,		# Display only table indice during extraction
+#	min => 1,			# Extract begin at indice 1
+#	max => 10			# Extract ended at indice 10
 );
 
 # Create the POSTGRESQL representation of all objects in the database
