@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.42 2000/02/20 21:32:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.43 2000/02/21 20:18:10 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -991,22 +991,39 @@ get_select_query_def(Query *query, deparse_context *context)
 				appendStringInfo(buf, "%s%s",
 								 quote_identifier(rte->relname),
 								 inherit_marker(rte));
+				/*
+				 * NOTE: SQL92 says you can't write column aliases unless
+				 * you write a table alias --- but the table alias could
+				 * be spelled the same as the table's real name.  This
+				 * logic is therefore all wet: it should go something like
+				 * IF we-need-to-dump-column-aliases OR relname != refname
+				 * THEN print refname;
+				 * IF we-need-to-dump-column-aliases
+				 * THEN print column alias list.
+				 * But currently we can't tell whether we need to dump
+				 * column aliases or not... without that, this clearly
+				 * backwards logic seems the best short-term approach.
+				 * Since we don't really support SQL joins yet, dropping
+				 * the list of column aliases doesn't hurt anything...
+				 */
 				if (strcmp(rte->relname, rte->ref->relname) != 0)
+				{
 					appendStringInfo(buf, " %s",
 									 quote_identifier(rte->ref->relname));
-				if (rte->ref->attrs != NIL)
-				{
-					List *col;
-
-					appendStringInfo(buf, " (");
-					foreach(col, rte->ref->attrs)
+					if (rte->ref->attrs != NIL)
 					{
-						if (col != rte->ref->attrs)
-							appendStringInfo(buf, ", ");
-						appendStringInfo(buf, "%s",
-										 quote_identifier(strVal(lfirst(col))));
+						List *col;
+
+						appendStringInfo(buf, " (");
+						foreach(col, rte->ref->attrs)
+						{
+							if (col != rte->ref->attrs)
+								appendStringInfo(buf, ", ");
+							appendStringInfo(buf, "%s",
+											 quote_identifier(strVal(lfirst(col))));
+						}
+						appendStringInfoChar(buf, ')');
 					}
-					appendStringInfoChar(buf, ')');
 				}
 			}
 		}
