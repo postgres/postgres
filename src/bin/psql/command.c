@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.44 2001/01/24 03:42:37 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.45 2001/01/27 21:49:58 momjian Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -19,7 +19,7 @@
 #else
 #include <win32.h>
 #include <io.h>
-#include <fnctl.h>
+#include <fcntl.h>
 #endif
 
 #include "libpq-fe.h"
