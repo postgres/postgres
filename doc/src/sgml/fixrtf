@@ -5,15 +5,35 @@
 #  M$Word does not care about it.
 # (c) 2001, Thomas Lockhart, PostgreSQL Inc.
 
-flist=$@
+flist=""
+RPAT=""
+for i in $@ ; do
+  case "$i" in
+    -r|--refentry)
+      RPAT='-e s/\\\keepn/\\\keep/g'
+      ;;
+    -?|--help)
+      echo "$0 [--refentry] <rtf file> ..."
+      exit 0
+      ;;
+    -*)
+      echo "Command $i not recognized"
+      $0 --help
+      exit 1
+      ;;
+    *)
+      flist="$flist $i"
+  esac
+done
+
 if [ "$flist" = "" ] ; then
   flist=*.rtf
 fi
 
 for f in $flist ; do
-  echo -n "Repairing $f..."
+  echo -n "Repairing '$f' ..."
   if [ -r $f ] ; then
-    (sed 's/{\\stylesheet{\\s1/{\\stylesheet{\\s0 Normal 0;}{\\s1/g' $f > $f.new \
+    (sed -e 's/{\\stylesheet{\\s1/{\\stylesheet{\\s0 Normal 0;}{\\s1/g' $RPAT $f > $f.new \
       && mv -f $f.new $f \
       && echo " done") || echo " failed"
   else
