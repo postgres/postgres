@@ -373,6 +373,10 @@ Changes
    Fix for GRANT parameters (Lee Kindness)
    Fix INITIALLY DEFERRED bug
    Various bug fixes (Michael, Christof Petig)
+   Auto allocation for indicator variable arrays (int *ind_p=NULL)
+   Auto allocation for string arrays (char **foo_pp=NULL)
+   ECPGfree_auto_mem fixed
+   All function names with external linkage are now prefixed by ECPG
 
      ----------------------------------------------------------------------
 
