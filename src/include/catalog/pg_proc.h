@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.347 2004/10/04 22:49:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.348 2004/10/07 18:38:50 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -22,8 +22,6 @@
  */
 #ifndef PG_PROC_H
 #define PG_PROC_H
-
-#include "nodes/pg_list.h"
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
@@ -3639,9 +3637,6 @@ extern Oid ProcedureCreate(const char *procedureName,
 				int parameterCount,
 				const Oid *parameterTypes,
 				const char *parameterNames[]);
-
-extern bool check_sql_fn_retval(Oid rettype, char fn_typtype,
-					List *queryTreeList);
 
 extern bool function_parse_error_transpose(const char *prosrc);
 

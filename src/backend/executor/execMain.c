@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.238 2004/09/13 20:06:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.239 2004/10/07 18:38:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -684,8 +684,8 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 					JunkFilter *j;
 
 					j = ExecInitJunkFilter(subplan->plan->targetlist,
-										   ExecGetResultType(subplan),
-							  ExecAllocTableSlot(estate->es_tupleTable));
+										   resultRelInfo->ri_RelationDesc->rd_att->tdhasoid,
+										   ExecAllocTableSlot(estate->es_tupleTable));
 					resultRelInfo->ri_junkFilter = j;
 					resultRelInfo++;
 				}
@@ -703,7 +703,7 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 				JunkFilter *j;
 
 				j = ExecInitJunkFilter(planstate->plan->targetlist,
-									   tupType,
+									   tupType->tdhasoid,
 							  ExecAllocTableSlot(estate->es_tupleTable));
 				estate->es_junkFilter = j;
 				if (estate->es_result_relation_info)

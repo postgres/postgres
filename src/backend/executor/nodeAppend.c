@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.60 2004/09/24 01:36:30 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.61 2004/10/07 18:38:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,7 +220,10 @@ ExecInitAppend(Append *node, EState *estate)
 	}
 
 	/*
-	 * initialize tuple type
+	 * Initialize tuple type.  (Note: in an inherited UPDATE situation,
+	 * the tuple type computed here corresponds to the parent table, which
+	 * is really a lie since tuples returned from child subplans will not
+	 * all look the same.)
 	 */
 	ExecAssignResultTypeFromTL(&appendstate->ps);
 	appendstate->ps.ps_ProjInfo = NULL;
@@ -282,13 +285,12 @@ ExecAppend(AppendState *node)
 	if (!TupIsNull(result))
 	{
 		/*
-		 * if the subplan gave us something then place a copy of whatever
-		 * we get into our result slot and return it.
-		 *
-		 * Note we rely on the subplan to retain ownership of the tuple for
-		 * as long as we need it --- we don't copy it.
+		 * if the subplan gave us something then return it as-is.  We do
+		 * NOT make use of the result slot that was set up in ExecInitAppend,
+		 * first because there's no reason to and second because it may have
+		 * the wrong tuple descriptor in inherited-UPDATE cases.
 		 */
-		return ExecStoreTuple(result->val, result_slot, InvalidBuffer, false);
+		return result;
 	}
 	else
 	{
@@ -303,13 +305,11 @@ ExecAppend(AppendState *node)
 
 		/*
 		 * return something from next node or an empty slot if all of our
-		 * subplans have been exhausted.
+		 * subplans have been exhausted.  The empty slot is the one set up
+		 * by ExecInitAppend.
 		 */
 		if (exec_append_initialize_next(node))
-		{
-			ExecSetSlotDescriptorIsNew(result_slot, true);
 			return ExecAppend(node);
-		}
 		else
 			return ExecClearTuple(result_slot);
 	}

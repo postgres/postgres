@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.119 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.120 2004/10/07 18:38:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,14 +18,11 @@
 #include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
-#include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
-#include "executor/executor.h"
-#include "fmgr.h"
+#include "catalog/pg_type.h"
+#include "executor/functions.h"
 #include "miscadmin.h"
 #include "mb/pg_wchar.h"
-#include "parser/parse_coerce.h"
-#include "parser/parse_expr.h"
 #include "parser/parse_type.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
@@ -350,242 +347,6 @@ create_parameternames_array(int parameterCount, const char *parameterNames[])
 }
 
 
-/*
- * check_sql_fn_retval() -- check return value of a list of sql parse trees.
- *
- * The return value of a sql function is the value returned by
- * the final query in the function.  We do some ad-hoc type checking here
- * to be sure that the user is returning the type he claims.
- *
- * This is normally applied during function definition, but in the case
- * of a function with polymorphic arguments, we instead apply it during
- * function execution startup.	The rettype is then the actual resolved
- * output type of the function, rather than the declared type.	(Therefore,
- * we should never see ANYARRAY or ANYELEMENT as rettype.)
- *
- * The return value is true if the function returns the entire tuple result
- * of its final SELECT, and false otherwise.  Note that because we allow
- * "SELECT rowtype_expression", this may be false even when the declared
- * function return type is a rowtype.
- */
-bool
-check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
-{
-	Query	   *parse;
-	int			cmd;
-	List	   *tlist;
-	ListCell   *tlistitem;
-	int			tlistlen;
-	Oid			typerelid;
-	Oid			restype;
-	Relation	reln;
-	int			relnatts;		/* physical number of columns in rel */
-	int			rellogcols;		/* # of nondeleted columns in rel */
-	int			colindex;		/* physical column index */
-
-	/* guard against empty function body; OK only if void return type */
-	if (queryTreeList == NIL)
-	{
-		if (rettype != VOIDOID)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("return type mismatch in function declared to return %s",
-							format_type_be(rettype)),
-			 errdetail("Function's final statement must be a SELECT.")));
-		return false;
-	}
-
-	/* find the final query */
-	parse = (Query *) lfirst(list_tail(queryTreeList));
-
-	cmd = parse->commandType;
-	tlist = parse->targetList;
-
-	/*
-	 * The last query must be a SELECT if and only if return type isn't
-	 * VOID.
-	 */
-	if (rettype == VOIDOID)
-	{
-		if (cmd == CMD_SELECT)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("return type mismatch in function declared to return %s",
-							format_type_be(rettype)),
-					 errdetail("Function's final statement must not be a SELECT.")));
-		return false;
-	}
-
-	/* by here, the function is declared to return some type */
-	if (cmd != CMD_SELECT)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-		 errmsg("return type mismatch in function declared to return %s",
-				format_type_be(rettype)),
-			 errdetail("Function's final statement must be a SELECT.")));
-
-	/*
-	 * Count the non-junk entries in the result targetlist.
-	 */
-	tlistlen = ExecCleanTargetListLength(tlist);
-
-	typerelid = typeidTypeRelid(rettype);
-
-	if (fn_typtype == 'b' || fn_typtype == 'd')
-	{
-		/* Shouldn't have a typerelid */
-		Assert(typerelid == InvalidOid);
-
-		/*
-		 * For base-type returns, the target list should have exactly one
-		 * entry, and its type should agree with what the user declared.
-		 * (As of Postgres 7.2, we accept binary-compatible types too.)
-		 */
-		if (tlistlen != 1)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("return type mismatch in function declared to return %s",
-							format_type_be(rettype)),
-			 errdetail("Final SELECT must return exactly one column.")));
-
-		restype = ((TargetEntry *) linitial(tlist))->resdom->restype;
-		if (!IsBinaryCoercible(restype, rettype))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("return type mismatch in function declared to return %s",
-							format_type_be(rettype)),
-					 errdetail("Actual return type is %s.",
-							   format_type_be(restype))));
-	}
-	else if (fn_typtype == 'c')
-	{
-		/* Must have a typerelid */
-		Assert(typerelid != InvalidOid);
-
-		/*
-		 * If the target list is of length 1, and the type of the varnode
-		 * in the target list matches the declared return type, this is
-		 * okay. This can happen, for example, where the body of the
-		 * function is 'SELECT func2()', where func2 has the same return
-		 * type as the function that's calling it.
-		 */
-		if (tlistlen == 1)
-		{
-			restype = ((TargetEntry *) linitial(tlist))->resdom->restype;
-			if (IsBinaryCoercible(restype, rettype))
-				return false;	/* NOT returning whole tuple */
-		}
-
-		/*
-		 * Otherwise verify that the targetlist matches the return tuple
-		 * type. This part of the typechecking is a hack. We look up the
-		 * relation that is the declared return type, and scan the
-		 * non-deleted attributes to ensure that they match the datatypes
-		 * of the non-resjunk columns.
-		 */
-		reln = relation_open(typerelid, AccessShareLock);
-		relnatts = reln->rd_rel->relnatts;
-		rellogcols = 0;			/* we'll count nondeleted cols as we go */
-		colindex = 0;
-
-		foreach(tlistitem, tlist)
-		{
-			TargetEntry *tle = (TargetEntry *) lfirst(tlistitem);
-			Form_pg_attribute attr;
-			Oid			tletype;
-			Oid			atttype;
-
-			if (tle->resdom->resjunk)
-				continue;
-
-			do
-			{
-				colindex++;
-				if (colindex > relnatts)
-					ereport(ERROR,
-							(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-							 errmsg("return type mismatch in function declared to return %s",
-									format_type_be(rettype)),
-					errdetail("Final SELECT returns too many columns.")));
-				attr = reln->rd_att->attrs[colindex - 1];
-			} while (attr->attisdropped);
-			rellogcols++;
-
-			tletype = exprType((Node *) tle->expr);
-			atttype = attr->atttypid;
-			if (!IsBinaryCoercible(tletype, atttype))
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						 errmsg("return type mismatch in function declared to return %s",
-								format_type_be(rettype)),
-						 errdetail("Final SELECT returns %s instead of %s at column %d.",
-								   format_type_be(tletype),
-								   format_type_be(atttype),
-								   rellogcols)));
-		}
-
-		for (;;)
-		{
-			colindex++;
-			if (colindex > relnatts)
-				break;
-			if (!reln->rd_att->attrs[colindex - 1]->attisdropped)
-				rellogcols++;
-		}
-
-		if (tlistlen != rellogcols)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("return type mismatch in function declared to return %s",
-							format_type_be(rettype)),
-					 errdetail("Final SELECT returns too few columns.")));
-
-		relation_close(reln, AccessShareLock);
-
-		/* Report that we are returning entire tuple result */
-		return true;
-	}
-	else if (rettype == RECORDOID)
-	{
-		/*
-		 * If the target list is of length 1, and the type of the varnode
-		 * in the target list matches the declared return type, this is
-		 * okay. This can happen, for example, where the body of the
-		 * function is 'SELECT func2()', where func2 has the same return
-		 * type as the function that's calling it.
-		 */
-		if (tlistlen == 1)
-		{
-			restype = ((TargetEntry *) linitial(tlist))->resdom->restype;
-			if (IsBinaryCoercible(restype, rettype))
-				return false;	/* NOT returning whole tuple */
-		}
-
-		/*
-		 * Otherwise assume we are returning the whole tuple.
-		 * Crosschecking against what the caller expects will happen at
-		 * runtime.
-		 */
-		return true;
-	}
-	else if (rettype == ANYARRAYOID || rettype == ANYELEMENTOID)
-	{
-		/* This should already have been caught ... */
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-				 errmsg("cannot determine result data type"),
-				 errdetail("A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type.")));
-	}
-	else
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-			  errmsg("return type %s is not supported for SQL functions",
-					 format_type_be(rettype))));
-
-	return false;
-}
-
-
 
 /*
  * Validator for internal functions
@@ -776,7 +537,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 												  proc->proargtypes,
 												  proc->pronargs);
 			(void) check_sql_fn_retval(proc->prorettype, functyptype,
-									   querytree_list);
+									   querytree_list, NULL);
 		}
 		else
 			querytree_list = pg_parse_query(prosrc);
