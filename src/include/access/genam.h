@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.12 1998/02/26 04:39:52 momjian Exp $
+ * $Id: genam.h,v 1.13 1998/02/26 12:14:54 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,8 @@ index_beginscan(Relation relation, bool scanFromEnd,
 				uint16 numberOfKeys, ScanKey key);
 extern void index_rescan(IndexScanDesc scan, bool scanFromEnd, ScanKey key);
 extern void index_endscan(IndexScanDesc scan);
+extern void index_markpos(IndexScanDesc scan);
+extern void index_restrpos(IndexScanDesc scan);
 extern RetrieveIndexResult
 index_getnext(IndexScanDesc scan,
 			  ScanDirection direction);
