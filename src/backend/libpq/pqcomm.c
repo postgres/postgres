@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.2 1996/07/23 02:23:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.3 1996/10/31 10:16:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,11 +49,11 @@
 #include <errno.h>
 #include <fcntl.h>
 
-#ifdef PORTNAME_linux
+#if defined(linux)
 #ifndef SOMAXCONN
 #define SOMAXCONN 5		/* from Linux listen(2) man page */
 #endif /* SOMAXCONN */
-#endif /* PORTNAME_linux */
+#endif /* linux */
 
 #include "c.h"
 #include "libpq/auth.h"
@@ -491,11 +491,11 @@ pq_regoob(void (*fptr)())
     return;
 #else
     int fd = fileno(Pfout);
-#ifdef PORTNAME_hpux
+#if defined(hpux)
     ioctl(fd, FIOSSAIOOWN, getpid());
-#else /* PORTNAME_hpux */
+#else /* hpux */
     fcntl(fd, F_SETOWN, getpid());
-#endif /* PORTNAME_hpux */
+#endif /* hpux */
     (void) signal(SIGURG,fptr);
 #endif /* WIN32 */    
 }

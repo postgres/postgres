@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.3 1996/10/28 09:03:50 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.4 1996/10/31 10:16:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#if PORTNAME == sparc_solaris
+#if defined(sparc_solaris)
 #include <port/inet_aton.h>
 #endif
 
