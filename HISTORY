@@ -1,6 +1,49 @@
  
                                Release Notes
 
+                               Release 7.3.6
+
+     Release date: 2004-03-02
+
+   This release contains a variety of fixes from 7.3.5.
+     _________________________________________________________________
+
+                         Migration to version 7.3.6
+
+   A dump/restore is *not* required for those running 7.3.*.
+     _________________________________________________________________
+
+                                  Changes
+
+     * Revert erroneous changes in rule permissions checking
+       A patch applied in 7.3.3 to fix a corner case in rule permissions
+       checks turns out to have disabled rule-related permissions checks
+       in many not-so-corner cases. This would for example allow users to
+       insert into views they weren't supposed to have permission to
+       insert into. We have therefore reverted the 7.3.3 patch. The
+       original bug will be fixed in 7.5.
+     * Repair incorrect order of operations in GetNewTransactionId()
+       This bug could result in failure under out-of-disk-space
+       conditions, including inability to restart even after disk space
+       is freed.
+     * Ensure configure selects -fno-strict-aliasing even when an
+       external value for CFLAGS is supplied
+       On some platforms, building with -fstrict-aliasing causes bugs.
+     * Make pg_restore handle 64-bit off_t correctly
+       This bug prevented proper restoration from archive files exceeding
+       4Gb.
+     * Make contrib/dblink not assume that local and remote type OIDs
+       match (Joe)
+     * Quote connectby()'s start_with argument properly (Joe)
+     * Don't crash when a rowtype argument to a plpgsql function is NULL
+     * Avoid generating invalid character encoding sequences in corner
+       cases when planning LIKE operations
+     * Ensure text_position() cannot scan past end of source string in
+       multibyte cases (Korea PostgreSQL Users' Group)
+     * Fix index optimization and selectivity estimates for LIKE
+       operations on bytea columns (Joe)
+     _________________________________________________________________
+
                                Release 7.3.5
 
      Release date: 2003-12-03
