@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.9 1997/01/10 20:16:47 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.10 1997/08/21 01:32:06 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,39 +39,9 @@
  *	pg_type
  *	pg_naming
  *	pg_class
+ *	pg_attrdef
+ *	pg_relcheck
  */
-/*
-static NameData	AttributeNameIndexData = { "pg_attnameind" };
-static NameData	AttributeNumIndexData  = { "pg_attnumind" };
-static NameData AttributeRelidIndexData= { "pg_attrelidind" };
-static NameData	ProcedureNameIndexData = { "pg_procnameind" };
-static NameData	ProcedureOidIndexData  = { "pg_procidind" };
-static NameData	ProcedureSrcIndexData  = { "pg_procsrcind" };
-static NameData	TypeNameIndexData      = { "pg_typenameind" };
-static NameData	TypeOidIndexData       = { "pg_typeidind" };
-static NameData ClassNameIndexData     = { "pg_classnameind" };
-static NameData ClassOidIndexData      = { "pg_classoidind" };
-
-Name	AttributeNameIndex = &AttributeNameIndexData;
-Name	AttributeNumIndex  = &AttributeNumIndexData;
-Name	AttributeRelidIndex= &AttributeRelidIndexData;
-Name	ProcedureNameIndex = &ProcedureNameIndexData;
-Name	ProcedureOidIndex  = &ProcedureOidIndexData;
-Name	ProcedureSrcIndex  = &ProcedureSrcIndexData;
-Name	TypeNameIndex      = &TypeNameIndexData;
-Name	TypeOidIndex       = &TypeOidIndexData;
-Name	ClassNameIndex     = &ClassNameIndexData;
-Name	ClassOidIndex      = &ClassOidIndexData;
-char *Name_pg_attr_indices[Num_pg_attr_indices] = {AttributeNameIndexData.data,
-						   AttributeNumIndexData.data,
-						   AttributeRelidIndexData.data};
-char *Name_pg_proc_indices[Num_pg_proc_indices] = {ProcedureNameIndexData.data,
-						   ProcedureOidIndexData.data,
-						   ProcedureSrcIndexData.data};char *Name_pg_type_indices[Num_pg_type_indices] = {TypeNameIndexData.data,
-						   TypeOidIndexData.data};
-char *Name_pg_class_indices[Num_pg_class_indices]= {ClassNameIndexData.data,
-						   ClassOidIndexData.data};
-*/
 
 char *Name_pg_attr_indices[Num_pg_attr_indices] = {AttributeNameIndex,
 						   AttributeNumIndex,
@@ -83,6 +53,9 @@ char *Name_pg_type_indices[Num_pg_type_indices] = { TypeNameIndex,
 						    TypeOidIndex};
 char *Name_pg_class_indices[Num_pg_class_indices]= { ClassNameIndex,
 						     ClassOidIndex};
+char *Name_pg_attrdef_indices[Num_pg_attrdef_indices]= { AttrDefaultIndex };
+
+char *Name_pg_relcheck_indices[Num_pg_relcheck_indices]= { RelCheckIndex };
 
 
 static HeapTuple CatalogIndexFetchTuple(Relation heapRelation,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.17 1997/08/19 04:42:55 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.18 1997/08/21 01:32:04 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -93,36 +93,35 @@ static void DefaultBuild(Relation heapRelation, Relation indexRelation,
  *    should be generated or eliminated or moved elsewhere. -cim 1/19/91
  *
  * typedef struct FormData_pg_attribute {
- *	Oid	attrelid;
+ *	Oid		attrelid;
  *	NameData	attname;
- *	Oid	atttypid;
- *	Oid	attdefrel;
+ *	Oid		atttypid;
  *	uint32		attnvals;
- *	Oid	atttyparg;	type arg for arrays/spquel/procs
  *	int16		attlen;
  *	AttrNumber	attnum;
- *	uint16		attbound;
+ *	uint32		attnelems;
+ *	int32		attcacheoff;
  *	bool		attbyval;
- *	bool		attcanindex;
- *	Oid		attproc;	spquel?
+ *	bool		attisset;
+ *	char		attalign;
+ *	bool		attnotnull;
+ *	bool		atthasdef;
  * } FormData_pg_attribute;
  *
- *    The data in this table was taken from local1_template.ami
- *    but tmin and tmax were switched because local1 was incorrect.
  * ----------------------------------------------------------------
  */
 static FormData_pg_attribute	sysatts[] = {
-   { 0l, {"ctid"},   27l,  0l, 0l, 0l,  6,  -1, 0,   '\0', '\001', 0l, 'i', '\0' },
-   { 0l, {"oid"},    26l,  0l, 0l, 0l,  4,  -2, 0, '\001', '\001', 0l, 'i', '\0' },
-   { 0l, {"xmin"},   28l,  0l, 0l, 0l,  5,  -3, 0,   '\0', '\001', 0l, 'i', '\0' },
-   { 0l, {"cmin"},   29l,  0l, 0l, 0l,  1,  -4, 0, '\001', '\001', 0l, 's', '\0' },
-   { 0l, {"xmax"},   28l,  0l, 0l, 0l,  5,  -5, 0,   '\0', '\001', 0l, 'i', '\0' },
-   { 0l, {"cmax"},   29l,  0l, 0l, 0l,  1,  -6, 0, '\001', '\001', 0l, 's', '\0' },
-   { 0l, {"chain"},  27l,  0l, 0l, 0l,  6,  -7, 0,   '\0', '\001', 0l, 'i', '\0' },
-   { 0l, {"anchor"}, 27l,  0l, 0l, 0l,  6,  -8, 0,   '\0', '\001', 0l, 'i', '\0' },
-   { 0l, {"tmin"},   20l,  0l, 0l, 0l,  4,  -9, 0, '\001', '\001', 0l, 'i', '\0' },
-   { 0l, {"tmax"},   20l,  0l, 0l, 0l,  4, -10, 0, '\001', '\001', 0l, 'i', '\0' },
-   { 0l, {"vtype"},  18l,  0l, 0l, 0l,  1, -11, 0, '\001', '\001', 0l, 'c', '\0' },
+   { 0l, {"ctid"},   27l,  0l,  6,  -1, 0, -1,   '\0', '\0', 'i', '\0', '\0' },
+   { 0l, {"oid"},    26l,  0l,  4,  -2, 0, -1, '\001', '\0', 'i', '\0', '\0' },
+   { 0l, {"xmin"},   28l,  0l,  4,  -3, 0, -1,   '\0', '\0', 'i', '\0', '\0' },
+   { 0l, {"cmin"},   29l,  0l,  2,  -4, 0, -1, '\001', '\0', 's', '\0', '\0' },
+   { 0l, {"xmax"},   28l,  0l,  4,  -5, 0, -1,   '\0', '\0', 'i', '\0', '\0' },
+   { 0l, {"cmax"},   29l,  0l,  2,  -6, 0, -1, '\001', '\0', 's', '\0', '\0' },
+   { 0l, {"chain"},  27l,  0l,  6,  -7, 0, -1,   '\0', '\0', 'i', '\0', '\0' },
+   { 0l, {"anchor"}, 27l,  0l,  6,  -8, 0, -1,   '\0', '\0', 'i', '\0', '\0' },
+   { 0l, {"tmin"},   702l, 0l,  4,  -9, 0, -1, '\001', '\0', 'i', '\0', '\0' },
+   { 0l, {"tmax"},   702l, 0l,  4, -10, 0, -1, '\001', '\0', 'i', '\0', '\0' },
+   { 0l, {"vtype"},  18l,  0l,  1, -11, 0, -1, '\001', '\0', 'c', '\0', '\0' },
 };
 
 /* ----------------------------------------------------------------
@@ -308,7 +307,6 @@ BuildFuncTupleDesc(FuncIndexInfo *funcInfo)
     funcTupDesc->attrs[0]->atttypid = retType;
     funcTupDesc->attrs[0]->attnum = 1;
     funcTupDesc->attrs[0]->attbyval = ((TypeTupleForm)GETSTRUCT(tuple))->typbyval;
-    funcTupDesc->attrs[0]->attcanindex = 0;
     
     /*
      * make the attributes name the same as the functions

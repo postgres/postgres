@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.17 1997/08/19 21:30:30 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.18 1997/08/21 01:32:03 vadim Exp $
  *
  * INTERFACE ROUTINES
  *	heap_creatr()		- Create an uncataloged heap relation
@@ -84,58 +84,58 @@ static void addNewRelationType(char *typeName, Oid new_rel_oid);
  */
 
 static	FormData_pg_attribute a1 = {
-    0xffffffff, {"ctid"}, 27l, 0l, 0l, 0l, sizeof (ItemPointerData),
-    SelfItemPointerAttributeNumber, 0, '\0', '\001', 0l, 'i', '\0'
+    0xffffffff, {"ctid"}, 27l, 0l, sizeof (ItemPointerData),
+    SelfItemPointerAttributeNumber, 0, -1, '\0', '\0', 'i', '\0', '\0'
 };
 
 static	FormData_pg_attribute a2 = {
-    0xffffffff, {"oid"}, 26l, 0l, 0l, 0l, sizeof(Oid),
-    ObjectIdAttributeNumber, 0, '\001', '\001', 0l, 'i','\0'
+    0xffffffff, {"oid"}, 26l, 0l, sizeof(Oid),
+    ObjectIdAttributeNumber, 0, -1, '\001', '\0', 'i', '\0', '\0'
 };
 
 static	FormData_pg_attribute a3 = {
-    0xffffffff, {"xmin"}, 28l, 0l, 0l, 0l, sizeof (TransactionId),
-    MinTransactionIdAttributeNumber, 0, '\0', '\001', 0l, 'i', '\0'
+    0xffffffff, {"xmin"}, 28l, 0l, sizeof (TransactionId),
+    MinTransactionIdAttributeNumber, 0, -1, '\0', '\0', 'i', '\0', '\0'
 };
 
 static	FormData_pg_attribute a4 = {
-    0xffffffff, {"cmin"}, 29l, 0l, 0l, 0l, sizeof (CommandId),
-    MinCommandIdAttributeNumber, 0, '\001', '\001', 0l, 's', '\0'
+    0xffffffff, {"cmin"}, 29l, 0l, sizeof (CommandId),
+    MinCommandIdAttributeNumber, 0, -1, '\001', '\0', 's', '\0', '\0'
 };
 
 static	FormData_pg_attribute a5 = {
-    0xffffffff, {"xmax"}, 28l, 0l, 0l, 0l, sizeof (TransactionId),
-    MaxTransactionIdAttributeNumber, 0, '\0', '\001', 0l, 'i', '\0'
+    0xffffffff, {"xmax"}, 28l, 0l, sizeof (TransactionId),
+    MaxTransactionIdAttributeNumber, 0, -1, '\0', '\0', 'i', '\0', '\0'
 };
 
 static	FormData_pg_attribute a6 = {
-    0xffffffff, {"cmax"}, 29l, 0l, 0l, 0l, sizeof (CommandId),
-    MaxCommandIdAttributeNumber, 0, '\001', '\001', 0l, 's', '\0'
+    0xffffffff, {"cmax"}, 29l, 0l, sizeof (CommandId),
+    MaxCommandIdAttributeNumber, 0, -1, '\001', '\0', 's', '\0', '\0'
 };
 
 static	FormData_pg_attribute a7 = {
-    0xffffffff, {"chain"}, 27l, 0l, 0l, 0l, sizeof (ItemPointerData),
-    ChainItemPointerAttributeNumber, 0, '\0', '\001', 0l, 'i', '\0'
+    0xffffffff, {"chain"}, 27l, 0l, sizeof (ItemPointerData),
+    ChainItemPointerAttributeNumber, 0, -1, '\0', '\0', 'i', '\0', '\0'
 };
 
 static	FormData_pg_attribute a8 = {
-    0xffffffff, {"anchor"}, 27l, 0l, 0l, 0l, sizeof (ItemPointerData),
-    AnchorItemPointerAttributeNumber, 0, '\0', '\001', 0l, 'i', '\0'
+    0xffffffff, {"anchor"}, 27l, 0l, sizeof (ItemPointerData),
+    AnchorItemPointerAttributeNumber, 0, -1, '\0', '\0', 'i', '\0', '\0'
 };
 
 static	FormData_pg_attribute a9 = {
-    0xffffffff, {"tmin"}, 20l, 0l, 0l, 0l, sizeof (AbsoluteTime),
-    MinAbsoluteTimeAttributeNumber, 0, '\001', '\001', 0l, 'i', '\0'
+    0xffffffff, {"tmin"}, 702l, 0l, sizeof (AbsoluteTime),
+    MinAbsoluteTimeAttributeNumber, 0, -1, '\001', '\0', 'i', '\0', '\0'
 };
 
 static	FormData_pg_attribute a10 = {
-    0xffffffff, {"tmax"}, 20l, 0l, 0l, 0l, sizeof (AbsoluteTime),
-    MaxAbsoluteTimeAttributeNumber, 0, '\001', '\001', 0l, 'i', '\0'
+    0xffffffff, {"tmax"}, 702l, 0l, sizeof (AbsoluteTime),
+    MaxAbsoluteTimeAttributeNumber, 0, -1, '\001', '\0', 'i', '\0', '\0'
 };
 
 static	FormData_pg_attribute a11 = {
-    0xffffffff, {"vtype"}, 18l, 0l, 0l, 0l, sizeof (char),
-    VersionTypeAttributeNumber, 0, '\001', '\001', 0l, 'c', '\0'
+    0xffffffff, {"vtype"}, 18l, 0l, sizeof (char),
+    VersionTypeAttributeNumber, 0, -1, '\001', '\0', 'c', '\0', '\0'
 };
 
 static	AttributeTupleForm HeapAtt[] =

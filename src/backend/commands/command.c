@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.10 1997/08/19 04:43:27 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.11 1997/08/21 01:32:19 vadim Exp $
  *
  * NOTES
  *    The PortalExecutorHeapMemory crap needs to be eliminated
@@ -382,12 +382,7 @@ PerformAddAttribute(char *relationName,
 			   (Datum) NULL);
     
     attributeD.attrelid = reltup->t_oid;
-    attributeD.attdefrel = InvalidOid;	/* XXX temporary */
     attributeD.attnvals = 0;		/* XXX temporary */
-    attributeD.atttyparg = InvalidOid;	/* XXX temporary */
-    attributeD.attbound = 0;		/* XXX temporary */
-    attributeD.attcanindex = 0;		/* XXX need this info */
-    attributeD.attproc = InvalidOid;	/* XXX tempoirary */
     attributeD.attcacheoff = -1;
     
     attributeTuple = heap_addheader(Natts_pg_attribute,
