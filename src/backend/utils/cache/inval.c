@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.63 2004/07/01 00:51:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.64 2004/07/28 14:23:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -678,7 +678,7 @@ AtEOXact_Inval(bool isCommit)
 }
 
 /*
- * AtSubEOXact_Inval
+ * AtEOSubXact_Inval
  *		Process queued-up invalidation messages at end of subtransaction.
  *
  * If isCommit, process CurrentCmdInvalidMsgs if any (there probably aren't),
@@ -695,7 +695,7 @@ AtEOXact_Inval(bool isCommit)
  * (if aborting).
  */
 void
-AtSubEOXact_Inval(bool isCommit)
+AtEOSubXact_Inval(bool isCommit)
 {
 	TransInvalidationInfo *myInfo = transInvalInfo;
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.108 2004/07/27 05:11:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.109 2004/07/28 14:23:30 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -722,7 +722,7 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev2_wd, "ANALYZE") == 0)
 		COMPLETE_WITH_CONST(";");
 
-/* BEGIN, COMMIT, ABORT */
+/* BEGIN, END, COMMIT, ABORT */
 	else if (pg_strcasecmp(prev_wd, "BEGIN") == 0 ||
 	         pg_strcasecmp(prev_wd, "END") == 0 ||
 	         pg_strcasecmp(prev_wd, "COMMIT") == 0 ||

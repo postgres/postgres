@@ -9,36 +9,92 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.102 2003/11/29 19:51:56 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.103 2004/07/28 14:23:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <errno.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/htup.h"
 #include "access/tuptoaster.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
-#include "catalog/heap.h"
-#include "catalog/index.h"
 #include "catalog/indexing.h"
-#include "catalog/pg_opclass.h"
 #include "catalog/pg_largeobject.h"
-#include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "libpq/libpq-fs.h"
-#include "miscadmin.h"
 #include "storage/large_object.h"
-#include "storage/smgr.h"
-#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/resowner.h"
+
+
+/*
+ * All accesses to pg_largeobject and its index make use of a single Relation
+ * reference, so that we only need to open pg_relation once per transaction.
+ * To avoid problems when the first such reference occurs inside a
+ * subtransaction, we execute a slightly klugy maneuver to assign ownership of
+ * the Relation reference to TopTransactionResourceOwner.
+ */
+static Relation lo_heap_r = NULL;
+static Relation lo_index_r = NULL;
+
+
+/*
+ * Open pg_largeobject and its index, if not already done in current xact
+ */
+static void
+open_lo_relation(void)
+{
+	ResourceOwner currentOwner;
+
+	if (lo_heap_r && lo_index_r)
+		return;					/* already open in current xact */
+
+	/* Arrange for the top xact to own these relation references */
+	currentOwner = CurrentResourceOwner;
+	CurrentResourceOwner = TopTransactionResourceOwner;
+
+	/* Use RowExclusiveLock since we might either read or write */
+	if (lo_heap_r == NULL)
+		lo_heap_r = heap_openr(LargeObjectRelationName, RowExclusiveLock);
+	if (lo_index_r == NULL)
+		lo_index_r = index_openr(LargeObjectLOidPNIndex);
+
+	CurrentResourceOwner = currentOwner;
+}
+
+/*
+ * Clean up at main transaction end
+ */
+void
+close_lo_relation(bool isCommit)
+{
+	if (lo_heap_r || lo_index_r)
+	{
+		/*
+		 * Only bother to close if committing; else abort cleanup will
+		 * handle it
+		 */
+		if (isCommit)
+		{
+			ResourceOwner currentOwner;
+
+			currentOwner = CurrentResourceOwner;
+			CurrentResourceOwner = TopTransactionResourceOwner;
+
+			if (lo_index_r)
+				index_close(lo_index_r);
+			if (lo_heap_r)
+				heap_close(lo_heap_r, NoLock);
+
+			CurrentResourceOwner = currentOwner;
+		}
+		lo_heap_r = NULL;
+		lo_index_r = NULL;
+	}
+}
 
 
 static int32
@@ -49,6 +105,7 @@ getbytealen(bytea *data)
 		elog(ERROR, "invalid VARSIZE(data)");
 	return (VARSIZE(data) - VARHDRSZ);
 }
+
 
 /*
  *	inv_create -- create a new large object.
@@ -92,22 +149,19 @@ inv_create(int flags)
 	retval = (LargeObjectDesc *) palloc(sizeof(LargeObjectDesc));
 
 	retval->id = file_oid;
+	retval->xid = GetCurrentTransactionId();
 	retval->offset = 0;
 
 	if (flags & INV_WRITE)
 	{
 		retval->flags = IFS_WRLOCK | IFS_RDLOCK;
-		retval->heap_r = heap_openr(LargeObjectRelationName, RowExclusiveLock);
 	}
 	else if (flags & INV_READ)
 	{
 		retval->flags = IFS_RDLOCK;
-		retval->heap_r = heap_openr(LargeObjectRelationName, AccessShareLock);
 	}
 	else
 		elog(ERROR, "invalid flags: %d", flags);
-
-	retval->index_r = index_openr(LargeObjectLOidPNIndex);
 
 	return retval;
 }
@@ -131,22 +185,19 @@ inv_open(Oid lobjId, int flags)
 	retval = (LargeObjectDesc *) palloc(sizeof(LargeObjectDesc));
 
 	retval->id = lobjId;
+	retval->xid = GetCurrentTransactionId();
 	retval->offset = 0;
 
 	if (flags & INV_WRITE)
 	{
 		retval->flags = IFS_WRLOCK | IFS_RDLOCK;
-		retval->heap_r = heap_openr(LargeObjectRelationName, RowExclusiveLock);
 	}
 	else if (flags & INV_READ)
 	{
 		retval->flags = IFS_RDLOCK;
-		retval->heap_r = heap_openr(LargeObjectRelationName, AccessShareLock);
 	}
 	else
 		elog(ERROR, "invalid flags: %d", flags);
-
-	retval->index_r = index_openr(LargeObjectLOidPNIndex);
 
 	return retval;
 }
@@ -158,13 +209,6 @@ void
 inv_close(LargeObjectDesc *obj_desc)
 {
 	Assert(PointerIsValid(obj_desc));
-
-	if (obj_desc->flags & IFS_WRLOCK)
-		heap_close(obj_desc->heap_r, RowExclusiveLock);
-	else if (obj_desc->flags & IFS_RDLOCK)
-		heap_close(obj_desc->heap_r, AccessShareLock);
-	index_close(obj_desc->index_r);
-
 	pfree(obj_desc);
 }
 
@@ -212,12 +256,14 @@ inv_getsize(LargeObjectDesc *obj_desc)
 
 	Assert(PointerIsValid(obj_desc));
 
+	open_lo_relation();
+
 	ScanKeyInit(&skey[0],
 				Anum_pg_largeobject_loid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(obj_desc->id));
 
-	sd = index_beginscan(obj_desc->heap_r, obj_desc->index_r,
+	sd = index_beginscan(lo_heap_r, lo_index_r,
 						 SnapshotNow, 1, skey);
 
 	/*
@@ -316,6 +362,8 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	if (nbytes <= 0)
 		return 0;
 
+	open_lo_relation();
+
 	ScanKeyInit(&skey[0],
 				Anum_pg_largeobject_loid,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -326,7 +374,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 				BTGreaterEqualStrategyNumber, F_INT4GE,
 				Int32GetDatum(pageno));
 
-	sd = index_beginscan(obj_desc->heap_r, obj_desc->index_r,
+	sd = index_beginscan(lo_heap_r, lo_index_r,
 						 SnapshotNow, 2, skey);
 
 	while ((tuple = index_getnext(sd, ForwardScanDirection)) != NULL)
@@ -421,7 +469,9 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	if (nbytes <= 0)
 		return 0;
 
-	indstate = CatalogOpenIndexes(obj_desc->heap_r);
+	open_lo_relation();
+
+	indstate = CatalogOpenIndexes(lo_heap_r);
 
 	ScanKeyInit(&skey[0],
 				Anum_pg_largeobject_loid,
@@ -433,7 +483,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 				BTGreaterEqualStrategyNumber, F_INT4GE,
 				Int32GetDatum(pageno));
 
-	sd = index_beginscan(obj_desc->heap_r, obj_desc->index_r,
+	sd = index_beginscan(lo_heap_r, lo_index_r,
 						 SnapshotNow, 2, skey);
 
 	oldtuple = NULL;
@@ -510,9 +560,9 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			memset(replace, ' ', sizeof(replace));
 			values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
 			replace[Anum_pg_largeobject_data - 1] = 'r';
-			newtup = heap_modifytuple(oldtuple, obj_desc->heap_r,
+			newtup = heap_modifytuple(oldtuple, lo_heap_r,
 									  values, nulls, replace);
-			simple_heap_update(obj_desc->heap_r, &newtup->t_self, newtup);
+			simple_heap_update(lo_heap_r, &newtup->t_self, newtup);
 			CatalogIndexInsert(indstate, newtup);
 			heap_freetuple(newtup);
 
@@ -554,8 +604,8 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			values[Anum_pg_largeobject_loid - 1] = ObjectIdGetDatum(obj_desc->id);
 			values[Anum_pg_largeobject_pageno - 1] = Int32GetDatum(pageno);
 			values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
-			newtup = heap_formtuple(obj_desc->heap_r->rd_att, values, nulls);
-			simple_heap_insert(obj_desc->heap_r, newtup);
+			newtup = heap_formtuple(lo_heap_r->rd_att, values, nulls);
+			simple_heap_insert(lo_heap_r, newtup);
 			CatalogIndexInsert(indstate, newtup);
 			heap_freetuple(newtup);
 		}

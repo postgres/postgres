@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.73 2004/07/01 00:51:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.74 2004/07/28 14:23:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,10 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 
 			/* deleting subtransaction aborted */
 			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
+			{
+				tuple->t_infomask |= HEAP_XMAX_INVALID;
 				return true;
+			}
 
 			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
 
@@ -268,7 +271,10 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 
 			/* deleting subtransaction aborted */
 			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
+			{
+				tuple->t_infomask |= HEAP_XMAX_INVALID;
 				return true;
+			}
 
 			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
 
@@ -452,7 +458,10 @@ HeapTupleSatisfiesUpdate(HeapTupleHeader tuple, CommandId curcid)
 
 			/* deleting subtransaction aborted */
 			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
+			{
+				tuple->t_infomask |= HEAP_XMAX_INVALID;
 				return HeapTupleMayBeUpdated;
+			}
 
 			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
 
@@ -590,7 +599,10 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 
 			/* deleting subtransaction aborted */
 			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
+			{
+				tuple->t_infomask |= HEAP_XMAX_INVALID;
 				return true;
+			}
 
 			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
 
@@ -732,7 +744,10 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 			/* deleting subtransaction aborted */
 			/* FIXME -- is this correct w.r.t. the cmax of the tuple? */
 			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
+			{
+				tuple->t_infomask |= HEAP_XMAX_INVALID;
 				return true;
+			}
 
 			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
 
@@ -757,21 +772,36 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 	/*
 	 * By here, the inserting transaction has committed - have to check
 	 * when...
+	 *
+	 * Note that the provided snapshot contains only top-level XIDs, so
+	 * we have to convert a subxact XID to its parent for comparison.
+	 * However, we can make first-pass range checks with the given XID,
+	 * because a subxact with XID < xmin has surely also got a parent with
+	 * XID < xmin, while one with XID >= xmax must belong to a parent that
+	 * was not yet committed at the time of this snapshot.
 	 */
 	if (TransactionIdFollowsOrEquals(HeapTupleHeaderGetXmin(tuple),
 									 snapshot->xmin))
 	{
-		uint32		i;
+		TransactionId parentXid;
 
 		if (TransactionIdFollowsOrEquals(HeapTupleHeaderGetXmin(tuple),
 										 snapshot->xmax))
 			return false;
 
-		for (i = 0; i < snapshot->xcnt; i++)
+		parentXid = SubTransGetTopmostTransaction(HeapTupleHeaderGetXmin(tuple));
+
+		if (TransactionIdFollowsOrEquals(parentXid, snapshot->xmin))
 		{
-			if (SubTransXidsHaveCommonAncestor(HeapTupleHeaderGetXmin(tuple),
-									snapshot->xip[i]))
-				return false;
+			uint32		i;
+
+			/* no point in checking parentXid against xmax here */
+
+			for (i = 0; i < snapshot->xcnt; i++)
+			{
+				if (TransactionIdEquals(parentXid, snapshot->xip[i]))
+					return false;
+			}
 		}
 	}
 
@@ -804,18 +834,31 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 
 	/*
 	 * OK, the deleting transaction committed too ... but when?
+	 *
+	 * See notes for the similar tests on tuple xmin, above.
 	 */
-	if (TransactionIdFollowsOrEquals(HeapTupleHeaderGetXmax(tuple), snapshot->xmin))
+	if (TransactionIdFollowsOrEquals(HeapTupleHeaderGetXmax(tuple),
+									 snapshot->xmin))
 	{
-		uint32		i;
+		TransactionId parentXid;
 
 		if (TransactionIdFollowsOrEquals(HeapTupleHeaderGetXmax(tuple),
 										 snapshot->xmax))
 			return true;
-		for (i = 0; i < snapshot->xcnt; i++)
+
+		parentXid = SubTransGetTopmostTransaction(HeapTupleHeaderGetXmax(tuple));
+
+		if (TransactionIdFollowsOrEquals(parentXid, snapshot->xmin))
 		{
-			if (SubTransXidsHaveCommonAncestor(HeapTupleHeaderGetXmax(tuple), snapshot->xip[i]))
-				return true;
+			uint32		i;
+
+			/* no point in checking parentXid against xmax here */
+
+			for (i = 0; i < snapshot->xcnt; i++)
+			{
+				if (TransactionIdEquals(parentXid, snapshot->xip[i]))
+					return true;
+			}
 		}
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.65 2004/07/27 05:10:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.66 2004/07/28 14:23:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,7 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = InvalidBlockNumber;
 
-	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
+	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
 					 lockmode, false))
 		elog(ERROR, "LockAcquire failed");
 
@@ -171,7 +171,7 @@ ConditionalLockRelation(Relation relation, LOCKMODE lockmode)
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = InvalidBlockNumber;
 
-	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
+	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
 					 lockmode, true))
 		return false;
 
@@ -201,7 +201,7 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = InvalidBlockNumber;
 
-	LockRelease(LockTableId, &tag, GetCurrentTransactionId(), lockmode);
+	LockRelease(LockTableId, &tag, GetTopTransactionId(), lockmode);
 }
 
 /*
@@ -264,7 +264,7 @@ LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = blkno;
 
-	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
+	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
 					 lockmode, false))
 		elog(ERROR, "LockAcquire failed");
 }
@@ -285,7 +285,7 @@ ConditionalLockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = blkno;
 
-	return LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
+	return LockAcquire(LockTableId, &tag, GetTopTransactionId(),
 					   lockmode, true);
 }
 
@@ -302,7 +302,7 @@ UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
 	tag.objId.blkno = blkno;
 
-	LockRelease(LockTableId, &tag, GetCurrentTransactionId(), lockmode);
+	LockRelease(LockTableId, &tag, GetTopTransactionId(), lockmode);
 }
 
 /*
@@ -343,7 +343,7 @@ void
 XactLockTableWait(TransactionId xid)
 {
 	LOCKTAG		tag;
-	TransactionId myxid = GetCurrentTransactionId();
+	TransactionId myxid = GetTopTransactionId();
 
 	Assert(!SubTransXidsHaveCommonAncestor(xid, myxid));
 

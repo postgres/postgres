@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.172 2004/07/27 05:10:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.173 2004/07/28 14:23:27 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -224,6 +224,7 @@ typedef struct TransactionStateData
 	ResourceOwner	curTransactionOwner;	/* my query resources */
 	List		   *childXids;				/* subcommitted child XIDs */
 	AclId			currentUser;			/* subxact start current_user */
+	bool			prevXactReadOnly;		/* entry-time xact r/o state */
 	struct TransactionStateData *parent;	/* back link to parent */
 } TransactionStateData;
 
@@ -284,6 +285,7 @@ static TransactionStateData TopTransactionStateData = {
 	NULL,						/* cur transaction resource owner */
 	NIL,						/* subcommitted child Xids */
 	0,							/* entry-time current userid */
+	false,						/* entry-time xact r/o state */
 	NULL						/* link to parent state block */
 };
 
@@ -1242,7 +1244,8 @@ StartTransaction(void)
 	 * check the current transaction state
 	 */
 	if (s->state != TRANS_DEFAULT)
-		elog(WARNING, "StartTransaction and not in default state");
+		elog(WARNING, "StartTransaction while in %s state",
+			 TransStateAsString(s->state));
 
 	/*
 	 * set the current transaction state information appropriately during
@@ -1287,6 +1290,8 @@ StartTransaction(void)
 	 * you won't because it doesn't work during startup; the userid isn't
 	 * set yet during a backend's first transaction start.  We only use
 	 * the currentUser field in sub-transaction state structs.
+	 *
+	 * prevXactReadOnly is also valid only in sub-transactions.
 	 */
 
 	/*
@@ -1319,7 +1324,8 @@ CommitTransaction(void)
 	 * check the current transaction state
 	 */
 	if (s->state != TRANS_INPROGRESS)
-		elog(WARNING, "CommitTransaction and not in in-progress state");
+		elog(WARNING, "CommitTransaction while in %s state",
+			 TransStateAsString(s->state));
 	Assert(s->parent == NULL);
 
 	/*
@@ -1351,14 +1357,14 @@ CommitTransaction(void)
 
 	AtCommit_Portals();
 
-	/* handle commit for large objects [ PA, 7/17/98 ] */
-	/* XXX probably this does not belong here */
-	lo_commit(true);
+	/* close large objects before lower-level cleanup */
+	AtEOXact_LargeObject(true);
 
 	/* NOTIFY commit must come before lower-level cleanup */
 	AtCommit_Notify();
 
 	/* Update the flat password file if we changed pg_shadow or pg_group */
+	/* This should be the last step before commit */
 	AtEOXact_UpdatePasswordFile(true);
 
 	/*
@@ -1486,7 +1492,8 @@ AbortTransaction(void)
 	 * check the current transaction state
 	 */
 	if (s->state != TRANS_INPROGRESS)
-		elog(WARNING, "AbortTransaction and not in in-progress state");
+		elog(WARNING, "AbortTransaction while in %s state",
+			 TransStateAsString(s->state));
 	Assert(s->parent == NULL);
 
 	/*
@@ -1515,7 +1522,7 @@ AbortTransaction(void)
 	 */
 	DeferredTriggerAbortXact();
 	AtAbort_Portals();
-	lo_commit(false);			/* 'false' means it's abort */
+	AtEOXact_LargeObject(false);			/* 'false' means it's abort */
 	AtAbort_Notify();
 	AtEOXact_UpdatePasswordFile(false);
 
@@ -1869,6 +1876,9 @@ CleanupAbortedSubTransactions(bool returnName)
 		PopTransaction();
 		s = CurrentTransactionState;
 	}
+
+	AssertState(s->blockState == TBLOCK_SUBINPROGRESS ||
+				s->blockState == TBLOCK_INPROGRESS);
 
 	return name;
 }
@@ -2866,7 +2876,8 @@ StartSubTransaction(void)
 	TransactionState s = CurrentTransactionState;
 
 	if (s->state != TRANS_DEFAULT)
-		elog(WARNING, "StartSubTransaction and not in default state");
+		elog(WARNING, "StartSubTransaction while in %s state",
+			 TransStateAsString(s->state));
 
 	s->state = TRANS_START;
 
@@ -2889,6 +2900,7 @@ StartSubTransaction(void)
 	 * Finish setup of other transaction state fields.
 	 */
 	s->currentUser = GetUserId();
+	s->prevXactReadOnly = XactReadOnly;
 	
 	/*
 	 * Initialize other subsystems for new subtransaction
@@ -2913,7 +2925,8 @@ CommitSubTransaction(void)
 	ShowTransactionState("CommitSubTransaction");
 
 	if (s->state != TRANS_INPROGRESS)
-		elog(WARNING, "CommitSubTransaction and not in in-progress state");
+		elog(WARNING, "CommitSubTransaction while in %s state",
+			 TransStateAsString(s->state));
 
 	/* Pre-commit processing */
 	AtSubCommit_Portals(s->parent->transactionIdData,
@@ -2930,8 +2943,17 @@ CommitSubTransaction(void)
 	/* Post-commit cleanup */
 	AtSubCommit_smgr();
 
-	AtSubEOXact_Inval(true);
+	AtEOSubXact_Inval(true);
 	AtEOSubXact_SPI(true, s->transactionIdData);
+
+	AtEOSubXact_LargeObject(true, s->transactionIdData,
+							s->parent->transactionIdData);
+	AtEOSubXact_UpdatePasswordFile(true, s->transactionIdData,
+								   s->parent->transactionIdData);
+	AtEOSubXact_Files(true, s->transactionIdData,
+					  s->parent->transactionIdData);
+	AtEOSubXact_Namespace(true, s->transactionIdData,
+						  s->parent->transactionIdData);
 
 	/*
 	 * Note that we just release the resource owner's resources and don't
@@ -2953,6 +2975,13 @@ CommitSubTransaction(void)
 	AtEOSubXact_on_commit_actions(true, s->transactionIdData,
 								  s->parent->transactionIdData);
 
+	/*
+	 * We need to restore the upper transaction's read-only state,
+	 * in case the upper is read-write while the child is read-only;
+	 * GUC will incorrectly think it should leave the child state in place.
+	 */
+	XactReadOnly = s->prevXactReadOnly;
+
 	CurrentResourceOwner = s->parent->curTransactionOwner;
 	CurTransactionResourceOwner = s->parent->curTransactionOwner;
 	s->curTransactionOwner = NULL;
@@ -2973,7 +3002,8 @@ AbortSubTransaction(void)
 	ShowTransactionState("AbortSubTransaction");
 
 	if (s->state != TRANS_INPROGRESS)
-		elog(WARNING, "AbortSubTransaction and not in in-progress state");
+		elog(WARNING, "AbortSubTransaction while in %s state",
+			 TransStateAsString(s->state));
 
 	HOLD_INTERRUPTS();
 
@@ -3010,7 +3040,16 @@ AbortSubTransaction(void)
 	AtEOSubXact_SPI(false, s->transactionIdData);
 	AtSubAbort_Portals(s->parent->transactionIdData,
 					   s->parent->curTransactionOwner);
-	AtSubEOXact_Inval(false);
+	AtEOSubXact_Inval(false);
+
+	AtEOSubXact_LargeObject(false, s->transactionIdData,
+							s->parent->transactionIdData);
+	AtEOSubXact_UpdatePasswordFile(false, s->transactionIdData,
+								   s->parent->transactionIdData);
+	AtEOSubXact_Files(false, s->transactionIdData,
+					  s->parent->transactionIdData);
+	AtEOSubXact_Namespace(false, s->transactionIdData,
+						  s->parent->transactionIdData);
 
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
@@ -3041,6 +3080,13 @@ AbortSubTransaction(void)
 	 */
 	SetUserId(s->currentUser);
 
+	/*
+	 * Restore the upper transaction's read-only state, too.  This should
+	 * be redundant with GUC's cleanup but we may as well do it for
+	 * consistency with the commit case.
+	 */
+	XactReadOnly = s->prevXactReadOnly;
+
 	CommandCounterIncrement();
 
 	RESUME_INTERRUPTS();
@@ -3057,7 +3103,8 @@ CleanupSubTransaction(void)
 	ShowTransactionState("CleanupSubTransaction");
 
 	if (s->state != TRANS_ABORT)
-		elog(WARNING, "CleanupSubTransaction and not in aborted state");
+		elog(WARNING, "CleanupSubTransaction while in %s state",
+			 TransStateAsString(s->state));
 
 	AtSubCleanup_Portals();
 
@@ -3088,7 +3135,8 @@ StartAbortedSubTransaction(void)
 	TransactionState s = CurrentTransactionState;
 
 	if (s->state != TRANS_DEFAULT)
-		elog(WARNING, "StartAbortedSubTransaction and not in default state");
+		elog(WARNING, "StartAbortedSubTransaction while in %s state",
+			 TransStateAsString(s->state));
 
 	s->state = TRANS_START;
 
@@ -3168,7 +3216,8 @@ PopTransaction(void)
 	TransactionState s = CurrentTransactionState;
 
 	if (s->state != TRANS_DEFAULT)
-		elog(WARNING, "PopTransaction and not in default state");
+		elog(WARNING, "PopTransaction while in %s state",
+			 TransStateAsString(s->state));
 
 	if (s->parent == NULL)
 		elog(FATAL, "PopTransaction with no parent");

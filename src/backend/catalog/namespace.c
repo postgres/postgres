@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.67 2004/06/18 06:13:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.68 2004/07/28 14:23:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,12 +107,17 @@ static bool namespaceSearchPathValid = true;
  * myTempNamespace is InvalidOid until and unless a TEMP namespace is set up
  * in a particular backend session (this happens when a CREATE TEMP TABLE
  * command is first executed).	Thereafter it's the OID of the temp namespace.
- * firstTempTransaction flags whether we've committed creation of the TEMP
- * namespace or not.
+ *
+ * myTempNamespaceXID shows whether we've created the TEMP namespace in the
+ * current transaction.  The TransactionId propagates up the transaction tree,
+ * so the main transaction will correctly recognize the flag if all
+ * intermediate subtransactions commit.  When it is InvalidTransactionId,
+ * we either haven't made the TEMP namespace yet, or have successfully
+ * committed its creation, depending on whether myTempNamespace is valid.
  */
 static Oid	myTempNamespace = InvalidOid;
 
-static bool firstTempTransaction = false;
+static TransactionId myTempNamespaceXID = InvalidTransactionId;
 
 /*
  * "Special" namespace for CREATE SCHEMA.  If set, it's the first search
@@ -1688,7 +1693,9 @@ InitTempTableNamespace(void)
 	 */
 	myTempNamespace = namespaceId;
 
-	firstTempTransaction = true;
+	/* It should not be done already. */
+	AssertState(myTempNamespaceXID == InvalidTransactionId);
+	myTempNamespaceXID = GetCurrentTransactionId();
 
 	namespaceSearchPathValid = false;	/* need to rebuild list */
 }
@@ -1707,7 +1714,7 @@ AtEOXact_Namespace(bool isCommit)
 	 * temp tables at backend shutdown.  (We only want to register the
 	 * callback once per session, so this is a good place to do it.)
 	 */
-	if (firstTempTransaction)
+	if (myTempNamespaceXID == GetCurrentTransactionId())
 	{
 		if (isCommit)
 			on_shmem_exit(RemoveTempRelationsCallback, 0);
@@ -1716,7 +1723,7 @@ AtEOXact_Namespace(bool isCommit)
 			myTempNamespace = InvalidOid;
 			namespaceSearchPathValid = false;	/* need to rebuild list */
 		}
-		firstTempTransaction = false;
+		myTempNamespaceXID = InvalidTransactionId;
 	}
 
 	/*
@@ -1726,6 +1733,32 @@ AtEOXact_Namespace(bool isCommit)
 	{
 		mySpecialNamespace = InvalidOid;
 		namespaceSearchPathValid = false;		/* need to rebuild list */
+	}
+}
+
+/*
+ * AtEOSubXact_Namespace
+ *
+ * At subtransaction commit, propagate the temp-namespace-creation
+ * flag to the parent transaction.
+ *
+ * At subtransaction abort, forget the flag if we set it up.
+ */
+void
+AtEOSubXact_Namespace(bool isCommit, TransactionId myXid,
+					  TransactionId parentXid)
+{
+	if (myTempNamespaceXID == myXid)
+	{
+		if (isCommit)
+			myTempNamespaceXID = parentXid;
+		else
+		{
+			myTempNamespaceXID = InvalidTransactionId;
+			/* TEMP namespace creation failed, so reset state */
+			myTempNamespace = InvalidOid;
+			namespaceSearchPathValid = false;	/* need to rebuild list */
+		}
 	}
 }
 

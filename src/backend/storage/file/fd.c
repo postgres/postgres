@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.109 2004/05/31 03:48:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.110 2004/07/28 14:23:28 tgl Exp $
  *
  * NOTES:
  *
@@ -47,6 +47,7 @@
 #include <fcntl.h>
 
 #include "miscadmin.h"
+#include "access/xact.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 
@@ -122,6 +123,7 @@ typedef struct vfd
 {
 	signed short fd;			/* current FD, or VFD_CLOSED if none */
 	unsigned short fdstate;		/* bitflags for VFD's state */
+	TransactionId create_xid;	/* for XACT_TEMPORARY fds, creating Xid */
 	File		nextFree;		/* link to next free VFD, if in freelist */
 	File		lruMoreRecently;	/* doubly linked recency-of-use list */
 	File		lruLessRecently;
@@ -146,27 +148,31 @@ static Size SizeVfdCache = 0;
 static int	nfile = 0;
 
 /*
- * List of stdio FILEs opened with AllocateFile.
+ * List of stdio FILEs and <dirent.h> DIRs opened with AllocateFile
+ * and AllocateDir.
  *
- * Since we don't want to encourage heavy use of AllocateFile, it seems
- * OK to put a pretty small maximum limit on the number of simultaneously
- * allocated files.
+ * Since we don't want to encourage heavy use of AllocateFile or AllocateDir,
+ * it seems OK to put a pretty small maximum limit on the number of
+ * simultaneously allocated descs.
  */
-#define MAX_ALLOCATED_FILES  32
+#define MAX_ALLOCATED_DESCS  32
 
-static int	numAllocatedFiles = 0;
-static FILE *allocatedFiles[MAX_ALLOCATED_FILES];
+typedef enum {
+	AllocateDescFile,
+	AllocateDescDir
+} AllocateDescKind;
 
-/*
- * List of <dirent.h> DIRs opened with AllocateDir.
- *
- * Since we don't have heavy use of AllocateDir, it seems OK to put a pretty
- * small maximum limit on the number of simultaneously allocated dirs.
- */
-#define MAX_ALLOCATED_DIRS  10
+typedef struct {
+	AllocateDescKind	kind;
+	union	{
+		FILE	*file;
+		DIR		*dir;
+	} desc;
+	TransactionId create_xid;
+} AllocateDesc;
 
-static int	numAllocatedDirs = 0;
-static DIR *allocatedDirs[MAX_ALLOCATED_DIRS];
+static int numAllocatedDescs = 0;
+static AllocateDesc allocatedDescs[MAX_ALLOCATED_DESCS];
 
 /*
  * Number of temporary files opened during the current session;
@@ -499,7 +505,7 @@ LruInsert(File file)
 
 	if (FileIsNotOpen(file))
 	{
-		while (nfile + numAllocatedFiles + numAllocatedDirs >= max_safe_fds)
+		while (nfile + numAllocatedDescs >= max_safe_fds)
 		{
 			if (!ReleaseLruFile())
 				break;
@@ -759,7 +765,7 @@ fileNameOpenFile(FileName fileName,
 	file = AllocateVfd();
 	vfdP = &VfdCache[file];
 
-	while (nfile + numAllocatedFiles + numAllocatedDirs >= max_safe_fds)
+	while (nfile + numAllocatedDescs >= max_safe_fds)
 	{
 		if (!ReleaseLruFile())
 			break;
@@ -876,7 +882,10 @@ OpenTemporaryFile(bool interXact)
 
 	/* Mark it for deletion at EOXact */
 	if (!interXact)
+	{
 		VfdCache[file].fdstate |= FD_XACT_TEMPORARY;
+		VfdCache[file].create_xid = GetCurrentTransactionId();
+	}
 
 	return file;
 }
@@ -1134,24 +1143,29 @@ AllocateFile(char *name, char *mode)
 {
 	FILE	   *file;
 
-	DO_DB(elog(LOG, "AllocateFile: Allocated %d", numAllocatedFiles));
+	DO_DB(elog(LOG, "AllocateFile: Allocated %d (%s)",
+			   numAllocatedDescs, name));
 
 	/*
-	 * The test against MAX_ALLOCATED_FILES prevents us from overflowing
+	 * The test against MAX_ALLOCATED_DESCS prevents us from overflowing
 	 * allocatedFiles[]; the test against max_safe_fds prevents AllocateFile
 	 * from hogging every one of the available FDs, which'd lead to infinite
 	 * looping.
 	 */
-	if (numAllocatedFiles >= MAX_ALLOCATED_FILES ||
-		numAllocatedFiles + numAllocatedDirs >= max_safe_fds - 1)
+	if (numAllocatedDescs >= MAX_ALLOCATED_DESCS ||
+		numAllocatedDescs >= max_safe_fds - 1)
 		elog(ERROR, "too many private files demanded");
 
 TryAgain:
 	if ((file = fopen(name, mode)) != NULL)
 	{
-		allocatedFiles[numAllocatedFiles] = file;
-		numAllocatedFiles++;
-		return file;
+		AllocateDesc *desc = &allocatedDescs[numAllocatedDescs];
+
+		desc->kind = AllocateDescFile;
+		desc->desc.file = file;
+		desc->create_xid = GetCurrentTransactionId();
+		numAllocatedDescs++;
+		return desc->desc.file;
 	}
 
 	if (errno == EMFILE || errno == ENFILE)
@@ -1171,6 +1185,38 @@ TryAgain:
 }
 
 /*
+ * Free an AllocateDesc of either type.
+ *
+ * The argument *must* point into the allocatedDescs[] array.
+ */
+static int
+FreeDesc(AllocateDesc *desc)
+{
+	int		result;
+
+	/* Close the underlying object */
+	switch (desc->kind)
+	{
+		case AllocateDescFile:
+			result = fclose(desc->desc.file);
+			break;
+		case AllocateDescDir:
+			result = closedir(desc->desc.dir);
+			break;
+		default:
+			elog(ERROR, "AllocateDesc kind not recognized");
+			result = 0;			/* keep compiler quiet */
+			break;
+	}
+
+	/* Compact storage in the allocatedDescs array */
+	numAllocatedDescs--;
+	*desc = allocatedDescs[numAllocatedDescs];
+
+	return result;
+}
+
+/*
  * Close a file returned by AllocateFile.
  *
  * Note we do not check fclose's return value --- it is up to the caller
@@ -1181,20 +1227,19 @@ FreeFile(FILE *file)
 {
 	int			i;
 
-	DO_DB(elog(LOG, "FreeFile: Allocated %d", numAllocatedFiles));
+	DO_DB(elog(LOG, "FreeFile: Allocated %d", numAllocatedDescs));
 
 	/* Remove file from list of allocated files, if it's present */
-	for (i = numAllocatedFiles; --i >= 0;)
+	for (i = numAllocatedDescs; --i >= 0;)
 	{
-		if (allocatedFiles[i] == file)
-		{
-			numAllocatedFiles--;
-			allocatedFiles[i] = allocatedFiles[numAllocatedFiles];
-			break;
-		}
+		AllocateDesc *desc = &allocatedDescs[i];
+
+		if (desc->kind == AllocateDescFile && desc->desc.file == file)
+			return FreeDesc(desc);
 	}
-	if (i < 0)
-		elog(WARNING, "file passed to FreeFile was not obtained from AllocateFile");
+
+	/* Only get here if someone passes us a file not in allocatedDescs */
+	elog(WARNING, "file passed to FreeFile was not obtained from AllocateFile");
 
 	return fclose(file);
 }
@@ -1213,24 +1258,29 @@ AllocateDir(const char *dirname)
 {
 	DIR	   *dir;
 
-	DO_DB(elog(LOG, "AllocateDir: Allocated %d", numAllocatedDirs));
+	DO_DB(elog(LOG, "AllocateDir: Allocated %d (%s)",
+			   numAllocatedDescs, dirname));
 
 	/*
-	 * The test against MAX_ALLOCATED_DIRS prevents us from overflowing
-	 * allocatedDirs[]; the test against max_safe_fds prevents AllocateDir
+	 * The test against MAX_ALLOCATED_DESCS prevents us from overflowing
+	 * allocatedDescs[]; the test against max_safe_fds prevents AllocateDir
 	 * from hogging every one of the available FDs, which'd lead to infinite
 	 * looping.
 	 */
-	if (numAllocatedDirs >= MAX_ALLOCATED_DIRS ||
-		numAllocatedDirs + numAllocatedFiles >= max_safe_fds - 1)
+	if (numAllocatedDescs >= MAX_ALLOCATED_DESCS ||
+		numAllocatedDescs >= max_safe_fds - 1)
 		elog(ERROR, "too many private dirs demanded");
 
 TryAgain:
 	if ((dir = opendir(dirname)) != NULL)
 	{
-		allocatedDirs[numAllocatedDirs] = dir;
-		numAllocatedDirs++;
-		return dir;
+		AllocateDesc *desc = &allocatedDescs[numAllocatedDescs];
+
+		desc->kind = AllocateDescDir;
+		desc->desc.dir = dir;
+		desc->create_xid = GetCurrentTransactionId();
+		numAllocatedDescs++;
+		return desc->desc.dir;
 	}
 
 	if (errno == EMFILE || errno == ENFILE)
@@ -1260,20 +1310,19 @@ FreeDir(DIR *dir)
 {
 	int			i;
 
-	DO_DB(elog(LOG, "FreeDir: Allocated %d", numAllocatedDirs));
+	DO_DB(elog(LOG, "FreeDir: Allocated %d", numAllocatedDescs));
 
 	/* Remove dir from list of allocated dirs, if it's present */
-	for (i = numAllocatedDirs; --i >= 0;)
+	for (i = numAllocatedDescs; --i >= 0;)
 	{
-		if (allocatedDirs[i] == dir)
-		{
-			numAllocatedDirs--;
-			allocatedDirs[i] = allocatedDirs[numAllocatedDirs];
-			break;
-		}
+		AllocateDesc *desc = &allocatedDescs[i];
+
+		if (desc->kind == AllocateDescDir && desc->desc.dir == dir)
+			return FreeDesc(desc);
 	}
-	if (i < 0)
-		elog(WARNING, "dir passed to FreeDir was not obtained from AllocateDir");
+
+	/* Only get here if someone passes us a dir not in allocatedDescs */
+	elog(WARNING, "dir passed to FreeDir was not obtained from AllocateDir");
 
 	return closedir(dir);
 }
@@ -1298,6 +1347,51 @@ closeAllVfds(void)
 		{
 			if (!FileIsNotOpen(i))
 				LruDelete(i);
+		}
+	}
+}
+
+/*
+ * AtEOSubXact_Files
+ *
+ * Take care of subtransaction commit/abort.  At abort, we close temp files
+ * that the subtransaction may have opened.  At commit, we reassign the
+ * files that were opened to the parent transaction.
+ */
+void
+AtEOSubXact_Files(bool isCommit, TransactionId myXid, TransactionId parentXid)
+{
+	Index i;
+
+	if (SizeVfdCache > 0)
+	{
+		Assert(FileIsNotOpen(0));		/* Make sure ring not corrupted */
+		for (i = 1; i < SizeVfdCache; i++)
+		{
+			unsigned short fdstate = VfdCache[i].fdstate;
+
+			if ((fdstate & FD_XACT_TEMPORARY) &&
+				VfdCache[i].create_xid == myXid)
+			{
+				if (isCommit)
+					VfdCache[i].create_xid = parentXid;
+				else if (VfdCache[i].fileName != NULL)
+					FileClose(i);
+			}
+		}
+	}
+
+	for (i = 0; i < numAllocatedDescs; i++)
+	{
+		if (allocatedDescs[i].create_xid == myXid)
+		{
+			if (isCommit)
+				allocatedDescs[i].create_xid = parentXid;
+			else
+			{
+				/* have to recheck the item after FreeDesc (ugly) */
+				FreeDesc(&allocatedDescs[i--]);
+			}
 		}
 	}
 }
@@ -1362,11 +1456,8 @@ CleanupTempFiles(bool isProcExit)
 		}
 	}
 
-	while (numAllocatedFiles > 0)
-		FreeFile(allocatedFiles[0]);
-
-	while (numAllocatedDirs > 0)
-		FreeDir(allocatedDirs[0]);
+	while (numAllocatedDescs > 0)
+		FreeDesc(&allocatedDescs[0]);
 }
 
 

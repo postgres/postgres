@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.141 2004/05/26 04:41:12 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.142 2004/07/28 14:23:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,8 +44,30 @@
 
 extern bool Password_encryption;
 
-static bool user_file_update_needed = false;
-static bool group_file_update_needed = false;
+/*
+ * The need-to-update-files flags are a pair of TransactionIds that show what
+ * level of the transaction tree requested the update.  To register an update,
+ * the transaction saves its own TransactionId in the flag, unless the value
+ * was already set to a valid TransactionId.  If it aborts and the value is its
+ * TransactionId, it resets the value to InvalidTransactionId.  If it commits,
+ * it changes the value to its parent's TransactionId.  This way the value is
+ * propagated up to the topmost transaction, which will update the files if a
+ * valid TransactionId is detected.
+ */
+static TransactionId user_file_update_xid = InvalidTransactionId;
+static TransactionId group_file_update_xid = InvalidTransactionId;
+
+#define user_file_update_needed() \
+	do { \
+		if (user_file_update_xid == InvalidTransactionId) \
+			user_file_update_xid = GetCurrentTransactionId(); \
+	} while (0)
+
+#define group_file_update_needed() \
+	do { \
+		if (group_file_update_xid == InvalidTransactionId) \
+			group_file_update_xid = GetCurrentTransactionId(); \
+	} while (0)
 
 
 static void CheckPgUserAclNotNull(void);
@@ -402,8 +424,8 @@ write_user_file(Relation urel)
 Datum
 update_pg_pwd_and_pg_group(PG_FUNCTION_ARGS)
 {
-	user_file_update_needed = true;
-	group_file_update_needed = true;
+	user_file_update_needed();
+	group_file_update_needed();
 
 	return PointerGetDatum(NULL);
 }
@@ -429,13 +451,14 @@ AtEOXact_UpdatePasswordFile(bool isCommit)
 	Relation	urel = NULL;
 	Relation	grel = NULL;
 
-	if (!(user_file_update_needed || group_file_update_needed))
+	if (user_file_update_xid == InvalidTransactionId &&
+		group_file_update_xid == InvalidTransactionId)
 		return;
 
 	if (!isCommit)
 	{
-		user_file_update_needed = false;
-		group_file_update_needed = false;
+		user_file_update_xid = InvalidTransactionId;
+		group_file_update_xid = InvalidTransactionId;
 		return;
 	}
 
@@ -447,22 +470,22 @@ AtEOXact_UpdatePasswordFile(bool isCommit)
 	 * pg_shadow or pg_group, which likely won't have gotten a strong
 	 * enough lock), so get the locks we need before writing anything.
 	 */
-	if (user_file_update_needed)
+	if (user_file_update_xid != InvalidTransactionId)
 		urel = heap_openr(ShadowRelationName, ExclusiveLock);
-	if (group_file_update_needed)
+	if (group_file_update_xid != InvalidTransactionId)
 		grel = heap_openr(GroupRelationName, ExclusiveLock);
 
 	/* Okay to write the files */
-	if (user_file_update_needed)
+	if (user_file_update_xid != InvalidTransactionId)
 	{
-		user_file_update_needed = false;
+		user_file_update_xid = InvalidTransactionId;
 		write_user_file(urel);
 		heap_close(urel, NoLock);
 	}
 
-	if (group_file_update_needed)
+	if (group_file_update_xid != InvalidTransactionId)
 	{
-		group_file_update_needed = false;
+		group_file_update_xid = InvalidTransactionId;
 		write_group_file(grel);
 		heap_close(grel, NoLock);
 	}
@@ -473,7 +496,33 @@ AtEOXact_UpdatePasswordFile(bool isCommit)
 	SendPostmasterSignal(PMSIGNAL_PASSWORD_CHANGE);
 }
 
+/*
+ * AtEOSubXact_UpdatePasswordFile
+ *
+ * Called at subtransaction end, this routine resets or updates the
+ * need-to-update-files flags.
+ */
+void
+AtEOSubXact_UpdatePasswordFile(bool isCommit, TransactionId myXid,
+							   TransactionId parentXid)
+{
+	if (isCommit)
+	{
+		if (user_file_update_xid == myXid)
+			user_file_update_xid = parentXid;
 
+		if (group_file_update_xid == myXid)
+			group_file_update_xid = parentXid;
+	}
+	else
+	{
+		if (user_file_update_xid == myXid)
+			user_file_update_xid = InvalidTransactionId;
+
+		if (group_file_update_xid == myXid)
+			group_file_update_xid = InvalidTransactionId;
+	}
+}
 
 /*
  * CREATE USER
@@ -728,7 +777,7 @@ CreateUser(CreateUserStmt *stmt)
 	/*
 	 * Set flag to update flat password file at commit.
 	 */
-	user_file_update_needed = true;
+	user_file_update_needed();
 }
 
 
@@ -925,7 +974,7 @@ AlterUser(AlterUserStmt *stmt)
 	/*
 	 * Set flag to update flat password file at commit.
 	 */
-	user_file_update_needed = true;
+	user_file_update_needed();
 }
 
 
@@ -1147,7 +1196,7 @@ DropUser(DropUserStmt *stmt)
 	/*
 	 * Set flag to update flat password file at commit.
 	 */
-	user_file_update_needed = true;
+	user_file_update_needed();
 }
 
 
@@ -1233,7 +1282,7 @@ RenameUser(const char *oldname, const char *newname)
 	ReleaseSysCache(oldtuple);
 	heap_close(rel, NoLock);
 
-	user_file_update_needed = true;
+	user_file_update_needed();
 }
 
 
@@ -1438,7 +1487,7 @@ CreateGroup(CreateGroupStmt *stmt)
 	/*
 	 * Set flag to update flat group file at commit.
 	 */
-	group_file_update_needed = true;
+	group_file_update_needed();
 }
 
 
@@ -1590,7 +1639,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	/*
 	 * Set flag to update flat group file at commit.
 	 */
-	group_file_update_needed = true;
+	group_file_update_needed();
 }
 
 /*
@@ -1730,7 +1779,7 @@ DropGroup(DropGroupStmt *stmt)
 	/*
 	 * Set flag to update flat group file at commit.
 	 */
-	group_file_update_needed = true;
+	group_file_update_needed();
 }
 
 
@@ -1776,5 +1825,5 @@ RenameGroup(const char *oldname, const char *newname)
 	heap_close(rel, NoLock);
 	heap_freetuple(tup);
 
-	group_file_update_needed = true;
+	group_file_update_needed();
 }

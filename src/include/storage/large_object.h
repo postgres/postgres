@@ -1,47 +1,44 @@
 /*-------------------------------------------------------------------------
  *
  * large_object.h
- *	  file of info for Postgres large objects. POSTGRES 4.2 supports
+ *	  Declarations for PostgreSQL large objects.  POSTGRES 4.2 supported
  *	  zillions of large objects (internal, external, jaquith, inversion).
  *	  Now we only support inversion.
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/large_object.h,v 1.27 2003/11/29 22:41:13 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/large_object.h,v 1.28 2004/07/28 14:23:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LARGE_OBJECT_H
 #define LARGE_OBJECT_H
 
-#include "utils/rel.h"
-
 
 /*----------
  * Data about a currently-open large object.
  *
  * id is the logical OID of the large object
+ * xid is the transaction Id that opened the LO (or currently owns it)
  * offset is the current seek offset within the LO
- * heap_r holds an open-relation reference to pg_largeobject
- * index_r holds an open-relation reference to pg_largeobject_loid_pn_index
+ * flags contains some flag bits
  *
- * NOTE: before 7.1, heap_r and index_r held references to the separate
- * table and index of a specific large object.	Now they all live in one rel.
+ * NOTE: before 7.1, we also had to store references to the separate table
+ * and index of a specific large object.  Now they all live in pg_largeobject
+ * and are accessed via a common relation descriptor.
  *----------
  */
 typedef struct LargeObjectDesc
 {
-	Oid			id;
+	Oid			id;				/* LO's identifier */
+	TransactionId xid;			/* owning XID */
 	uint32		offset;			/* current seek pointer */
 	int			flags;			/* locking info, etc */
 
 /* flag bits: */
 #define IFS_RDLOCK		(1 << 0)
 #define IFS_WRLOCK		(1 << 1)
-
-	Relation	heap_r;
-	Relation	index_r;
 } LargeObjectDesc;
 
 
@@ -67,6 +64,7 @@ typedef struct LargeObjectDesc
  */
 
 /* inversion stuff in inv_api.c */
+extern void close_lo_relation(bool isCommit);
 extern LargeObjectDesc *inv_create(int flags);
 extern LargeObjectDesc *inv_open(Oid lobjId, int flags);
 extern void inv_close(LargeObjectDesc *obj_desc);

@@ -1,24 +1,22 @@
 /*-------------------------------------------------------------------------
  *
  * be-fsstubs.c
- *	  support for filesystem operations on large objects
+ *	  Builtin functions for open/close/read/write operations on large objects
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.70 2004/02/10 01:55:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.71 2004/07/28 14:23:28 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
  *	  for lack of a better place.
  *
- *	  Builtin functions for open/close/read/write operations on large objects.
- *
  *	  These functions operate in a private MemoryContext, which means
- *	  that large object descriptors hang around until we destroy the context.
- *	  That happens in lo_commit().	It'd be possible to prolong the lifetime
+ *	  that large object descriptors hang around until we destroy the context
+ *	  at transaction end.  It'd be possible to prolong the lifetime
  *	  of the context so that LO FDs are good across transactions (for example,
  *	  we could release the context only if we see that no FDs remain open).
  *	  But we'd need additional state in order to do the right thing at the
@@ -28,6 +26,11 @@
  *	  if LOs stay open across transactions.  For now, we'll stick with the
  *	  existing documented semantics of LO FDs: they're only good within a
  *	  transaction.
+ *
+ *	  As of PostgreSQL 7.5, much of the angst expressed above is no longer
+ *	  relevant, and in fact it'd be pretty easy to allow LO FDs to stay
+ *	  open across transactions.  However backwards compatibility suggests
+ *	  that we should stick to the status quo.
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +48,6 @@
 #include "storage/large_object.h"
 #include "utils/memutils.h"
 
-
-/* [PA] is Pascal André <andre@via.ecp.fr> */
 
 /*#define FSDB 1*/
 #define BUFSIZE			8192
@@ -67,6 +68,7 @@ static MemoryContext fscxt = NULL;
 
 static int	newLOfd(LargeObjectDesc *lobjCookie);
 static void deleteLOfd(int fd);
+
 
 /*****************************************************************************
  *	File Interfaces for Large Objects
@@ -399,7 +401,7 @@ lo_import(PG_FUNCTION_ARGS)
 	lobjOid = lobj->id;
 
 	/*
-	 * read in from the Unix file and write to the inversion file
+	 * read in from the filesystem and write to the inversion file
 	 */
 	while ((nbytes = FileRead(fd, buf, BUFSIZE)) > 0)
 	{
@@ -471,7 +473,7 @@ lo_export(PG_FUNCTION_ARGS)
 						fnamebuf)));
 
 	/*
-	 * read in from the inversion file and write to the Unix file
+	 * read in from the inversion file and write to the filesystem
 	 */
 	while ((nbytes = inv_read(lobj, buf, BUFSIZE)) > 0)
 	{
@@ -490,11 +492,11 @@ lo_export(PG_FUNCTION_ARGS)
 }
 
 /*
- * lo_commit -
- *		 prepares large objects for transaction commit [PA, 7/17/98]
+ * AtEOXact_LargeObject -
+ *		 prepares large objects for transaction commit
  */
 void
-lo_commit(bool isCommit)
+AtEOXact_LargeObject(bool isCommit)
 {
 	int			i;
 	MemoryContext currentContext;
@@ -505,8 +507,8 @@ lo_commit(bool isCommit)
 	currentContext = MemoryContextSwitchTo(fscxt);
 
 	/*
-	 * Clean out still-open index scans (not necessary if aborting) and
-	 * clear cookies array so that LO fds are no longer good.
+	 * Close LO fds and clear cookies array so that LO fds are no longer good.
+	 * On abort we skip the close step.
 	 */
 	for (i = 0; i < cookies_size; i++)
 	{
@@ -514,7 +516,7 @@ lo_commit(bool isCommit)
 		{
 			if (isCommit)
 				inv_close(cookies[i]);
-			cookies[i] = NULL;
+			deleteLOfd(i);
 		}
 	}
 
@@ -527,8 +529,47 @@ lo_commit(bool isCommit)
 	/* Release the LO memory context to prevent permanent memory leaks. */
 	MemoryContextDelete(fscxt);
 	fscxt = NULL;
+
+	/* Give inv_api.c a chance to clean up, too */
+	close_lo_relation(isCommit);
 }
 
+/*
+ * AtEOSubXact_LargeObject
+ * 		Take care of large objects at subtransaction commit/abort
+ *
+ * Reassign LOs created/opened during a committing subtransaction
+ * to the parent transaction.  On abort, just close them.
+ */
+void
+AtEOSubXact_LargeObject(bool isCommit, TransactionId myXid,
+						TransactionId parentXid)
+{
+	int				i;
+
+	if (fscxt == NULL)			/* no LO operations in this xact */
+		return;
+
+	for (i = 0; i < cookies_size; i++)
+	{
+		LargeObjectDesc *lo = cookies[i];
+
+		if (lo != NULL && lo->xid == myXid)
+		{
+			if (isCommit)
+				lo->xid = parentXid;
+			else
+			{
+				/*
+				 * Make sure we do not call inv_close twice if it errors out
+				 * for some reason.  Better a leak than a crash.
+				 */
+				deleteLOfd(i);
+				inv_close(lo);
+			}
+		}
+	}
+}
 
 /*****************************************************************************
  *	Support routines for this file
