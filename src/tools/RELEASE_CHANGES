@@ -23,6 +23,4 @@
     register.txt
     doc/bug.template
 
-* Update pgaccess
-
 * Update pg_upgrade to handle new version, or disable
