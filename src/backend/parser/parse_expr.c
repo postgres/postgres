@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.74 2000/03/17 05:29:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.75 2000/03/19 07:13:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,10 +61,27 @@ parse_expr_init(void)
 
 /*
  * transformExpr -
- *	  analyze and transform expressions. Type checking and type casting is
+ *	  Analyze and transform expressions. Type checking and type casting is
  *	  done here. The optimizer and the executor cannot handle the original
  *	  (raw) expressions collected by the parse tree. Hence the transformation
  *	  here.
+ *
+ * NOTE: there are various cases in which this routine will get applied to
+ * an already-transformed expression.  Some examples:
+ *	1. At least one construct (BETWEEN/AND) puts the same nodes
+ *	into two branches of the parse tree; hence, some nodes
+ *	are transformed twice.
+ *	2. Another way it can happen is that coercion of an operator or
+ *	function argument to the required type (via coerce_type())
+ *	can apply transformExpr to an already-transformed subexpression.
+ *	An example here is "SELECT count(*) + 1.0 FROM table".
+ * While it might be possible to eliminate these cases, the path of
+ * least resistance so far has been to ensure that transformExpr() does
+ * no damage if applied to an already-transformed tree.  This is pretty
+ * easy for cases where the transformation replaces one node type with
+ * another, such as A_Const => Const; we just do nothing when handed
+ * a Const.  More care is needed for node types that are used as both
+ * input and output of transformExpr; see SubLink for example.
  */
 Node *
 transformExpr(ParseState *pstate, Node *expr, int precedence)
@@ -254,6 +271,12 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				List	   *qtrees;
 				Query	   *qtree;
 
+				/* If we already transformed this node, do nothing */
+				if (IsA(sublink->subselect, Query))
+				{
+					result = expr;
+					break;
+				}
 				pstate->p_hasSubLinks = true;
 				qtrees = parse_analyze(lcons(sublink->subselect, NIL), pstate);
 				if (length(qtrees) != 1)
@@ -390,7 +413,9 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				/*
 				 * It's not shorthand anymore, so drop the implicit
 				 * argument. This is necessary to keep the executor from
-				 * seeing an untransformed expression...
+				 * seeing an untransformed expression... not to mention
+				 * keeping a re-application of transformExpr from doing
+				 * the wrong thing.
 				 */
 				c->arg = NULL;
 
@@ -528,22 +553,14 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				break;
 			}
 
-/* Some nodes do _not_ come from the original parse tree,
- *	but result from parser transformation in this phase.
- * At least one construct (BETWEEN/AND) puts the same nodes
- *	into two branches of the parse tree; hence, some nodes
- *	are transformed twice.
- * Another way it can happen is that coercion of an operator or
- *	function argument to the required type (via coerce_type())
- *	can apply transformExpr to an already-transformed subexpression.
- *	An example here is "SELECT count(*) + 1.0 FROM table".
- * Thus, we can see node types in this routine that do not appear in the
- *	original parse tree.  Assume they are already transformed, and just
- *	pass them through.
- * Do any other node types need to be accepted?  For now we are taking
- *	a conservative approach, and only accepting node types that are
- *	demonstrably necessary to accept.
- */
+		/*
+		 * Quietly accept node types that may be presented when we are called
+		 * on an already-transformed tree.
+		 *
+		 * Do any other node types need to be accepted?  For now we are taking
+		 * a conservative approach, and only accepting node types that are
+ 		 * demonstrably necessary to accept.
+		 */
 		case T_Expr:
 		case T_Var:
 		case T_Const:
@@ -555,6 +572,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				result = (Node *) expr;
 				break;
 			}
+
 		default:
 			/* should not reach here */
 			elog(ERROR, "transformExpr: does not know how to transform node %d"
