@@ -1560,9 +1560,9 @@ SELECT '' AS to_timestamp_5, to_timestamp('1,582nd VIII 21', 'Y,YYYth FMRM DD');
 
 SELECT '' AS to_timestamp_6, to_timestamp('15 "text bettween quote marks" 98 54 45', 
                     'HH "\\text bettween quote marks\\"" YY MI SS');
- to_timestamp_6 |       to_timestamp       
-----------------+--------------------------
-                | Wed Jan 01 15:54:45 0098
+ to_timestamp_6 |         to_timestamp         
+----------------+------------------------------
+                | Thu Jan 01 15:54:45 1998 PST
 (1 row)
 
     
@@ -1576,6 +1576,38 @@ SELECT '' AS to_timestamp_8, to_timestamp('2000January09Sunday', 'YYYYFMMonthDDF
  to_timestamp_8 |         to_timestamp         
 ----------------+------------------------------
                 | Sun Jan 09 00:00:00 2000 PST
+(1 row)
+
+SELECT '' AS to_timestamp_9, to_timestamp('97/Feb/16', 'YYMonDD');
+ERROR:  to_timestamp(): bad value for MON/Mon/mon
+SELECT '' AS to_timestamp_10, to_timestamp('19971116', 'YYYYMMDD');
+ to_timestamp_10 |         to_timestamp         
+-----------------+------------------------------
+                 | Sun Nov 16 00:00:00 1997 PST
+(1 row)
+
+SELECT '' AS to_timestamp_11, to_timestamp('20000-1116', 'YYYY-MMDD');
+ to_timestamp_11 |       to_timestamp        
+-----------------+---------------------------
+                 | Thu Nov 16 00:00:00 20000
+(1 row)
+
+SELECT '' AS to_timestamp_12, to_timestamp('9-1116', 'Y-MMDD');
+ to_timestamp_12 |         to_timestamp         
+-----------------+------------------------------
+                 | Mon Nov 16 00:00:00 2009 PST
+(1 row)
+
+SELECT '' AS to_timestamp_13, to_timestamp('95-1116', 'YY-MMDD');
+ to_timestamp_13 |         to_timestamp         
+-----------------+------------------------------
+                 | Thu Nov 16 00:00:00 1995 PST
+(1 row)
+
+SELECT '' AS to_timestamp_14, to_timestamp('995-1116', 'YYY-MMDD');
+ to_timestamp_14 |         to_timestamp         
+-----------------+------------------------------
+                 | Thu Nov 16 00:00:00 1995 PST
 (1 row)
 
 SET DateStyle TO DEFAULT;

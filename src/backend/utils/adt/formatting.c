@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.23 2000/10/29 13:17:34 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.24 2000/11/25 05:00:29 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -127,6 +127,7 @@ typedef struct
 	int	len,			/* keyword length		*/
 		(*action) (),
 		id;			/* keyword id			*/
+	bool	isdigit;		/* is expected output/input digit */	
 } KeyWord;
 
 typedef struct
@@ -344,14 +345,16 @@ static int	NUMCounter = 0;
  * ----------
  */
 typedef struct {
-	int	hh, am, pm, mi, ss, ssss, d, dd, ddd, mm, yyyy, bc, iw, ww, w, cc, q, j;
+	int	hh, am, pm, mi, ss, ssss, d, dd, ddd, mm, yyyy, yyy, yy, y, 
+		bc, iw, ww, w, cc, q, j;
 } TmFromChar;
 
 #define ZERO_tmfc( _X )	\
 	do { \
 		(_X)->hh= (_X)->am= (_X)->pm= (_X)->mi= (_X)->ss= (_X)->ssss= \
-		(_X)->d= (_X)->dd= (_X)->ddd= (_X)->mm= (_X)->yyyy= (_X)->bc= \
-		(_X)->iw= (_X)->ww= (_X)->w= (_X)->cc= (_X)->q= (_X)->j= 0; \
+		(_X)->d= (_X)->dd= (_X)->ddd= (_X)->mm= (_X)->yyyy= (_X)->yyy= \
+		(_X)->yy= (_X)->y= (_X)->bc= (_X)->iw= (_X)->ww= (_X)->w= \
+		(_X)->cc= (_X)->q= (_X)->j= 0; \
 	} while(0) 
 
 #ifdef DEBUG_TO_FROM_CHAR
@@ -453,7 +456,7 @@ static KeySuffix DCH_suff[] = {
  * it is not good.
  *
  * (!)
- *	  Position for the keyword is simular as position in the enum DCH/NUM_poz
+ *	 - Position for the keyword is simular as position in the enum DCH/NUM_poz.
  * (!)
  *
  * For fast search is used the 'int index[]', index is ascii table from position
@@ -598,88 +601,88 @@ typedef enum
  * ----------
  */
 static KeyWord DCH_keywords[] = {
-/*	keyword,len,func.type			 is in Index */
-	{"A.D.", 4, dch_date, DCH_A_D},		/* A */
-	{"A.M.", 4, dch_time, DCH_A_M},
-	{"AD", 2, dch_date, DCH_AD},
-	{"AM", 2, dch_time, DCH_AM},
-	{"B.C.", 4, dch_date, DCH_B_C},		/* B */
-	{"BC", 2, dch_date, DCH_BC},
-	{"CC", 2, dch_date, DCH_CC},		/* C */
-	{"DAY", 3, dch_date, DCH_DAY},		/* D */
-	{"DDD", 3, dch_date, DCH_DDD},
-	{"DD", 2, dch_date, DCH_DD},
-	{"DY", 2, dch_date, DCH_DY},
-	{"Day", 3, dch_date, DCH_Day},
-	{"Dy", 2, dch_date, DCH_Dy},
-	{"D", 1, dch_date, DCH_D},
-	{"FX", 2, dch_global, DCH_FX},		/* F */
-	{"HH24", 4, dch_time, DCH_HH24},	/* H */
-	{"HH12", 4, dch_time, DCH_HH12},
-	{"HH", 2, dch_time, DCH_HH},
-	{"IW", 2, dch_date, DCH_IW},		/* I */	
-	{"J", 1, dch_date, DCH_J},		/* J */
-	{"MI", 2, dch_time, DCH_MI},
-	{"MM", 2, dch_date, DCH_MM},
-	{"MONTH", 5, dch_date, DCH_MONTH},
-	{"MON", 3, dch_date, DCH_MON},
-	{"Month", 5, dch_date, DCH_Month},
-	{"Mon", 3, dch_date, DCH_Mon},
-	{"P.M.", 4, dch_time, DCH_P_M},		/* P */
-	{"PM", 2, dch_time, DCH_PM},
-	{"Q", 1, dch_date, DCH_Q},		/* Q */
-	{"RM", 2, dch_date, DCH_RM},		/* R */
-	{"SSSS", 4, dch_time, DCH_SSSS},	/* S */
-	{"SS", 2, dch_time, DCH_SS},
-	{"TZ", 2, dch_time, DCH_TZ},		/* T */
-	{"WW", 2, dch_date, DCH_WW},		/* W */
-	{"W", 1, dch_date, DCH_W},
-	{"Y,YYY", 5, dch_date, DCH_Y_YYY},	/* Y */
-	{"YYYY", 4, dch_date, DCH_YYYY},
-	{"YYY", 3, dch_date, DCH_YYY},
-	{"YY", 2, dch_date, DCH_YY},
-	{"Y", 1, dch_date, DCH_Y},
-	{"a.d.", 4, dch_date, DCH_a_d},		/* a */
-	{"a.m.", 4, dch_time, DCH_a_m},
-	{"ad", 2, dch_date, DCH_ad},
-	{"am", 2, dch_time, DCH_am},
-	{"b.c.", 4, dch_date, DCH_b_c},		/* b */
-	{"bc", 2, dch_date, DCH_bc},
-	{"cc", 2, dch_date, DCH_CC},		/* c */
-	{"day", 3, dch_date, DCH_day},		/* d */
-	{"ddd", 3, dch_date, DCH_DDD},
-	{"dd", 2, dch_date, DCH_DD},
-	{"dy", 2, dch_date, DCH_dy},
-	{"d", 1, dch_date, DCH_D},
-	{"fx", 2, dch_global, DCH_FX},		/* f */
-	{"hh24", 4, dch_time, DCH_HH24},	/* h */
-	{"hh12", 4, dch_time, DCH_HH12},
-	{"hh", 2, dch_time, DCH_HH},
-	{"iw", 2, dch_date, DCH_IW},		/* i */
-	{"j", 1, dch_time, DCH_J},		/* j */
-	{"mi", 2, dch_time, DCH_MI},		/* m */
-	{"mm", 2, dch_date, DCH_MM},
-	{"month", 5, dch_date, DCH_month},
-	{"mon", 3, dch_date, DCH_mon},
-	{"p.m.", 4, dch_time, DCH_p_m},		/* p */
-	{"pm", 2, dch_time, DCH_pm},
-	{"q", 1, dch_date, DCH_Q},		/* q */
-	{"rm", 2, dch_date, DCH_rm},		/* r */
-	{"ssss", 4, dch_time, DCH_SSSS},	/* s */
-	{"ss", 2, dch_time, DCH_SS},
-	{"tz", 2, dch_time, DCH_tz},		/* t */
-	{"ww", 2, dch_date, DCH_WW},		/* w */
-	{"w", 1, dch_date, DCH_W},
-	{"y,yyy", 5, dch_date, DCH_Y_YYY},	/* y */
-	{"yyyy", 4, dch_date, DCH_YYYY},
-	{"yyy", 3, dch_date, DCH_YYY},
-	{"yy", 2, dch_date, DCH_YY},
-	{"y", 1, dch_date, DCH_Y},
+/*	keyword, len, func, type, isdigit			 is in Index */
+	{"A.D.", 4, dch_date, DCH_A_D, FALSE},		/* A */
+	{"A.M.", 4, dch_time, DCH_A_M, FALSE},
+	{"AD", 2, dch_date, DCH_AD, FALSE},
+	{"AM", 2, dch_time, DCH_AM, FALSE},
+	{"B.C.", 4, dch_date, DCH_B_C, FALSE},		/* B */
+	{"BC", 2, dch_date, DCH_BC, FALSE},
+	{"CC", 2, dch_date, DCH_CC, TRUE},		/* C */
+	{"DAY", 3, dch_date, DCH_DAY, FALSE},		/* D */
+	{"DDD", 3, dch_date, DCH_DDD, TRUE},
+	{"DD", 2, dch_date, DCH_DD, TRUE},
+	{"DY", 2, dch_date, DCH_DY, FALSE},
+	{"Day", 3, dch_date, DCH_Day, FALSE},
+	{"Dy", 2, dch_date, DCH_Dy, FALSE},
+	{"D", 1, dch_date, DCH_D, TRUE},
+	{"FX", 2, dch_global, DCH_FX, FALSE},		/* F */
+	{"HH24", 4, dch_time, DCH_HH24, TRUE},		/* H */
+	{"HH12", 4, dch_time, DCH_HH12, TRUE},
+	{"HH", 2, dch_time, DCH_HH, TRUE},
+	{"IW", 2, dch_date, DCH_IW, TRUE},		/* I */	
+	{"J", 1, dch_date, DCH_J, TRUE},		/* J */
+	{"MI", 2, dch_time, DCH_MI, TRUE},
+	{"MM", 2, dch_date, DCH_MM, TRUE},
+	{"MONTH", 5, dch_date, DCH_MONTH, FALSE},
+	{"MON", 3, dch_date, DCH_MON, FALSE},
+	{"Month", 5, dch_date, DCH_Month, FALSE},
+	{"Mon", 3, dch_date, DCH_Mon, FALSE},
+	{"P.M.", 4, dch_time, DCH_P_M, FALSE},		/* P */
+	{"PM", 2, dch_time, DCH_PM, FALSE},
+	{"Q", 1, dch_date, DCH_Q, TRUE},		/* Q */
+	{"RM", 2, dch_date, DCH_RM, FALSE},		/* R */
+	{"SSSS", 4, dch_time, DCH_SSSS, TRUE},	/* S */
+	{"SS", 2, dch_time, DCH_SS, TRUE},
+	{"TZ", 2, dch_time, DCH_TZ, FALSE},		/* T */
+	{"WW", 2, dch_date, DCH_WW, TRUE},		/* W */
+	{"W", 1, dch_date, DCH_W, TRUE},
+	{"Y,YYY", 5, dch_date, DCH_Y_YYY, TRUE},	/* Y */
+	{"YYYY", 4, dch_date, DCH_YYYY, TRUE},
+	{"YYY", 3, dch_date, DCH_YYY, TRUE},
+	{"YY", 2, dch_date, DCH_YY, TRUE},
+	{"Y", 1, dch_date, DCH_Y, TRUE},
+	{"a.d.", 4, dch_date, DCH_a_d, FALSE},		/* a */
+	{"a.m.", 4, dch_time, DCH_a_m, FALSE},
+	{"ad", 2, dch_date, DCH_ad, FALSE},
+	{"am", 2, dch_time, DCH_am, FALSE},
+	{"b.c.", 4, dch_date, DCH_b_c, FALSE},		/* b */
+	{"bc", 2, dch_date, DCH_bc, FALSE},
+	{"cc", 2, dch_date, DCH_CC, TRUE},		/* c */
+	{"day", 3, dch_date, DCH_day, FALSE},		/* d */
+	{"ddd", 3, dch_date, DCH_DDD, TRUE},
+	{"dd", 2, dch_date, DCH_DD, TRUE},
+	{"dy", 2, dch_date, DCH_dy, FALSE},
+	{"d", 1, dch_date, DCH_D, TRUE},
+	{"fx", 2, dch_global, DCH_FX, FALSE},		/* f */
+	{"hh24", 4, dch_time, DCH_HH24, TRUE},		/* h */
+	{"hh12", 4, dch_time, DCH_HH12, TRUE},
+	{"hh", 2, dch_time, DCH_HH, TRUE},
+	{"iw", 2, dch_date, DCH_IW, TRUE},		/* i */
+	{"j", 1, dch_time, DCH_J, TRUE},		/* j */
+	{"mi", 2, dch_time, DCH_MI, TRUE},		/* m */
+	{"mm", 2, dch_date, DCH_MM, TRUE},
+	{"month", 5, dch_date, DCH_month, FALSE},
+	{"mon", 3, dch_date, DCH_mon, FALSE},
+	{"p.m.", 4, dch_time, DCH_p_m, FALSE},		/* p */
+	{"pm", 2, dch_time, DCH_pm, FALSE},
+	{"q", 1, dch_date, DCH_Q, TRUE},		/* q */
+	{"rm", 2, dch_date, DCH_rm, FALSE},		/* r */
+	{"ssss", 4, dch_time, DCH_SSSS, TRUE},	/* s */
+	{"ss", 2, dch_time, DCH_SS, TRUE},
+	{"tz", 2, dch_time, DCH_tz, FALSE},		/* t */
+	{"ww", 2, dch_date, DCH_WW, TRUE},		/* w */
+	{"w", 1, dch_date, DCH_W, TRUE},
+	{"y,yyy", 5, dch_date, DCH_Y_YYY, TRUE},	/* y */
+	{"yyyy", 4, dch_date, DCH_YYYY, TRUE},
+	{"yyy", 3, dch_date, DCH_YYY, TRUE},
+	{"yy", 2, dch_date, DCH_YY, TRUE},
+	{"y", 1, dch_date, DCH_Y, TRUE},
 /* last */
 {NULL, 0, NULL, 0}};
 
 /* ----------
- * KeyWords for NUMBER version
+ * KeyWords for NUMBER version (now, isdigit info is not needful here..)
  * ----------
  */
 static KeyWord NUM_keywords[] = {
@@ -1230,7 +1233,7 @@ DCH_processor(FormatNode *node, char *inout, int flag)
 				 * Skip blank space in FROM_CHAR's input
 				 * ----------
 				 */
-				if (isspace(n->character) && IS_FX == 0)
+		        	if (isspace(n->character) && IS_FX == 0)
 				{
 					while (*s != '\0' && isspace((int) *(s + 1)))
 						++s;
@@ -1526,6 +1529,40 @@ dch_global(int arg, char *inout, int suf, int flag, FormatNode *node)
 	return -1;
 }
 
+/* ----------
+ * Return TRUE if next format picture is not digit value
+ * ----------
+ */
+static bool
+is_next_separator(FormatNode *n)
+{
+	if (n->type == NODE_TYPE_END)
+		return FALSE;
+	
+	if (n->type == NODE_TYPE_ACTION && S_THth(n->suffix))
+		return TRUE;
+	
+	/* 
+	 * Next node 
+	 */
+	n++;	
+	
+	if (n->type == NODE_TYPE_END)
+		return FALSE;
+	
+	if (n->type == NODE_TYPE_ACTION)
+	{
+		if (n->key->isdigit)
+			return FALSE;
+	
+		return TRUE;	
+	} 
+	else if (isdigit(n->character))
+		return FALSE;
+	
+	return TRUE;		/* some non-digit input (separator) */	
+}
+
 #define AMPM_ERROR	elog(ERROR, "to_timestamp(): bad AM/PM string")
 
 /* ----------
@@ -1736,7 +1773,10 @@ dch_time(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR) 
 			{
-				sscanf(inout, "%d", &tmfc->ssss);
+				if (is_next_separator(node))
+					sscanf(inout, "%d", &tmfc->ssss);
+				else
+					sscanf(inout, "%05d", &tmfc->ssss);	
 				return int4len((int4) tmfc->ssss) - 1 + SKIP_THth(suf);
 			}
 			break;
@@ -2192,7 +2232,11 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				sscanf(inout, "%d", &tmfc->yyyy);
+				if (is_next_separator(node))
+					sscanf(inout, "%d", &tmfc->yyyy);
+				else
+					sscanf(inout, "%04d", &tmfc->yyyy);
+						
 				if (!S_FM(suf) && tmfc->yyyy <= 9999 && tmfc->yyyy >= -9999)
 					len = 4;
 				else
@@ -2217,7 +2261,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				sscanf(inout, "%03d", &tmfc->yyyy);
+				sscanf(inout, "%03d", &tmfc->yyy);
 				return 2 + SKIP_THth(suf);
 			}
 			break;
@@ -2237,7 +2281,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				sscanf(inout, "%02d", &tmfc->yyyy);
+				sscanf(inout, "%02d", &tmfc->yy);
 				return 1 + SKIP_THth(suf);
 			}
 			break;
@@ -2257,7 +2301,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				sscanf(inout, "%1d", &tmfc->yyyy);
+				sscanf(inout, "%1d", &tmfc->y);
 				return 0 + SKIP_THth(suf);
 			}
 			break;
@@ -2725,15 +2769,55 @@ to_timestamp(PG_FUNCTION_ARGS)
 	
 	if (tmfc->yyyy)	
 		tm->tm_year = tmfc->yyyy;
+
+	else if (tmfc->y)
+	{
+		/*
+		 * 1-digit year:
+		 *	always +2000
+		 */
+		tm->tm_year = tmfc->y + 2000;	
+	}	
+	else if (tmfc->yy)
+	{
+		/*
+		 * 2-digit year:
+		 *	'00' ... '69'  = 2000 ... 2069
+		 *	'70' ... '99'  = 1970 ... 1999
+		 */	
+		tm->tm_year = tmfc->yy;
+	
+		if (tm->tm_year < 70)
+			tm->tm_year += 2000;
+		else 
+			tm->tm_year += 1900;
+	}
+	else if (tmfc->yyy)
+	{
+		/*
+		 * 3-digit year:
+		 *	'100' ... '999' = 1100 ... 1999
+		 *	'000' ... '099' = 2000 ... 2099
+		 */
+		tm->tm_year = tmfc->yyy;
+	
+		if (tm->tm_year >= 100)
+			tm->tm_year += 1000;
+		else 
+			tm->tm_year += 2000;
+	}
+
+		
+	if (tmfc->bc)
+	{
+		if (tm->tm_year > 0)
+			tm->tm_year = -(tm->tm_year - 1);
+		else
+			elog(ERROR, "Inconsistant use of year %04d and 'BC'", tm->tm_year);
+	}	
 	
 	if (tmfc->j)
 		j2date(tmfc->j, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
-	
-	if (tmfc->bc && tm->tm_year > 0)
-		tm->tm_year = -(tm->tm_year);
-	
-	if (tm->tm_year < 0)
-		tm->tm_year = tm->tm_year + 1;
 	
 	if (tmfc->iw)
 		isoweek2date(tmfc->iw, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);

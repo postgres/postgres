@@ -223,4 +223,16 @@ SELECT '' AS to_timestamp_7, to_timestamp('05121445482000', 'MMDDHHMISSYYYY');
 
 SELECT '' AS to_timestamp_8, to_timestamp('2000January09Sunday', 'YYYYFMMonthDDFMDay');
 
+SELECT '' AS to_timestamp_9, to_timestamp('97/Feb/16', 'YYMonDD');
+
+SELECT '' AS to_timestamp_10, to_timestamp('19971116', 'YYYYMMDD');
+
+SELECT '' AS to_timestamp_11, to_timestamp('20000-1116', 'YYYY-MMDD');
+
+SELECT '' AS to_timestamp_12, to_timestamp('9-1116', 'Y-MMDD');
+
+SELECT '' AS to_timestamp_13, to_timestamp('95-1116', 'YY-MMDD');
+
+SELECT '' AS to_timestamp_14, to_timestamp('995-1116', 'YYY-MMDD');
+
 SET DateStyle TO DEFAULT;
