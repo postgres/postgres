@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.16 2000/07/16 14:50:38 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.17 2000/07/21 00:44:11 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -199,3 +199,22 @@ distclean:
 %.gif:
 	cp -p ../graphics/$@ .
 
+
+# Generation of the INSTALL text file. Not fully automated, but better
+# than nothing.
+.PHONY: INSTALL
+INSTALL: INSTALL.html
+	@echo "|";\
+	 echo "| You should now take \`$<', save it as a text file in Netscape,";\
+	 echo "| and put it in place of the existing \`INSTALL' file.";\
+	 echo "|"
+	@rm -f tempfile.html tempfile.sgml
+
+INSTALL.html: tempfile.html
+	sed -e 's/Chapter 1. *//g' < $< > $@
+
+tempfile.html: tempfile.sgml
+	jade -d $(HDSL) -V nochunks -t sgml $< > $@
+
+tempfile.sgml: standalone-install.sgml installation.sgml
+	cat $+ > $@

@@ -1,417 +1,682 @@
-     Installation instructions for PostgreSQL 7.0.2.
+PostgreSQL Installation Instructions
 
-If you haven't gotten the PostgreSQL distribution, get it from
-ftp.postgresql.org, then unpack it:
+Table of Contents
+Short Version
+Requirements
+If You Are Upgrading
+Installation Procedure
+Post-Installation Setup
+Getting Started
+What Now?
+Supported Platforms
 
-> gunzip postgresql-7.0.2.tar.gz
-> tar -xf postgresql-7.0.2.tar
-> mv postgresql-7.0.2 /usr/src
+Short Version
 
+./configure
+gmake
+gmake install
+adduser postgres
+su - postgres
+/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data
+/usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data >logfile 2>&1 &
+/usr/local/pgsql/bin/createdb test
+/usr/local/pgsql/bin/psql test
 
-Before you start
+The long version is the rest of this document.
 
-Building PostgreSQL requires GNU make. It will not work with other make
-programs. On GNU/Linux systems GNU make is the default tool, on other
-systems you may find that GNU make is installed under the name gmake. We
-will use that name from now on to indicate GNU make, no matter what name it
-has on your system. To test for GNU make enter
+  ------------------------------------------------------------------------
 
-> gmake --version
+Requirements
 
+In general, a modern Unix-compatible platform should be able to run
+PostgreSQL. The platforms that had received explicit testing at the time of
+release are listed in the section called Supported Platforms below. In the
+doc subdirectory of the distribution there are several platform-specific FAQ
+documents you might wish to consult if you are having trouble.
 
-If you need to get GNU make, you can find it at ftp://ftp.gnu.org.
+Compiler. You need a Standard ("ANSI") C compiler. Recent versions of GCC
+are recommendable, but PostgreSQL is known to build with a wide variety of
+compilers from different vendors.
 
-Up to date information on supported platforms is at
-http://www.postgresql.org/docs/admin/ports.htm. In general, most
-Unix-compatible platforms with modern libraries should be able to run
-PostgreSQL. In the doc subdirectory of the distribution are several
-platform-specific FAQ and README documents you might wish to consult if you
-are having trouble.
+Make. Building PostgreSQL requires GNU make; it will not work with other
+make programs. GNU make is often installed under the name gmake. This
+document will always refer to it by that name. (On GNU/Linux systems GNU
+make is the default tool with the name make.) To test for GNU make enter
 
-Although the minimum required memory for running PostgreSQL can be as little
-as 8MB, there are noticeable speed improvements when expanding memory up to
-96MB or beyond. The rule is you can never have too much memory.
+gmake --version
 
-Check that you have sufficient disk space. You will need about 30 Mbytes for
-the source tree during compilation and about 5 Mbytes for the installation
-directory. An empty database takes about 1 Mbyte, otherwise they take about
-five times the amount of space that a flat text file with the same data
-would take. If you run the regression tests you will temporarily need an
-extra 20MB.
+If at all possible you should try to use version 3.76.1 or later. If you
+need to get GNU make, you can find it at your local GNU mirror site (see
+http://www.gnu.org/order/ftp.html) or at ftp://ftp.gnu.org/gnu/make.
 
-To check for disk space, use
+Resources. Check that you have sufficient disk space. You will need about 30
+MB for the source tree during compilation and about 5 MB for the
+installation directory. An empty database takes about 1 MB, later it takes
+about five times the amount of space that a flat text file with the same
+data would take. If you are going to run the regression tests you will
+temporarily need an extra 20 MB. Use the df command to check for disk space.
 
-> df -k
+  ------------------------------------------------------------------------
 
-Considering today's prices for hard disks, getting a large and fast hard
-disk should probably be in your plans before putting a database into
-production use.
+If You Are Upgrading
 
+The internal data storage format changes with new releases of PostgreSQL.
+Therefore, if you are upgrading an existing installation that does not have
+a version number "7.1.x", you must back up and restore your data as shown
+here. These instructions assume that your existing installation is under the
+/usr/local/pgsql directory, and that the data area is in
+/usr/local/pgsql/data. Substitute your paths appropriately.
+
+  1. Make sure that your database is not updated during or after the backup.
+     This does not affect the integrity of the backup, but the changed data
+     would of course not be included. If necessary, edit the permissions in
+     the file /usr/local/pgsql/data/pg_hba.conf (or equivalent) to disallow
+     access from everyone except you.
+
+  2. To dump your database installation, type:
+
+     pg_dumpall > outputfile
+
+     If you need to preserve the oids (such as when using them as foreign
+     keys), then use the -o option when running pg_dumpall.
+
+     Make sure that you use the pg_dumpall command from the version you are
+     currently running. 7.1's pg_dumpall should not be used on older
+     databases.
+
+  3. If you are installing the new version at the same location as the old
+     one then shut down the old server, at the latest before you install the
+     new files:
+
+     kill -INT `cat /usr/local/pgsql/data/postmaster.pid`
+
+     Versions prior to 7.0 do not have this postmaster.pid file. If you are
+     using such a version you must find out the process id of the server
+     yourself, for example by typing ps ax | grep postmaster, and supply it
+     to the kill command.
+
+     On systems which have PostgreSQL started at boot time, there is
+     probably a startup file that will accomplish the same thing. For
+     example, on a Redhat Linux system one might find that
+
+     /etc/rc.d/init.d/postgres.init stop
+
+     works.
+
+  4. If you are installing in the same place as the old version then it is
+     also a good idea to move the old installation out of the way, in case
+     you still need it later on. Use a command like this:
+
+     mv /usr/local/pgsql /usr/local/pgsql.old
+
+After you have installed PostgreSQL 7.1, create a new database directory and
+start the new server. Remember that you must execute these commands while
+logged in to the special database user account (which you already have if
+you are upgrading).
+
+/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/bin
+/usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/bin
+
+Finally, restore your data with
+
+/usr/local/pgsql/bin/psql -d template1 -f outputfile
+
+using the new psql.
+
+You can also install the new version in parallel with the old one to
+decrease the downtime. These topic are discussed at length in the
+Administrator's Guide, which you are encouraged to read in any case. The
+pg_upgrade utility can also often be used.
+
+  ------------------------------------------------------------------------
 
 Installation Procedure
 
-PostgreSQL Installation
+  1. Configuration
 
-For a fresh install or upgrading from previous releases of PostgreSQL:
+     The first step of the installation procedure to configure the source
+     tree for your system and choose the options you would like. This is
+     done by running the configure script. For a default installation,
+     simply type
 
-  1. Create the PostgreSQL superuser account. This is the user the server
-     will run as. For production use you should create a separate,
-     unprivileged account (postgres is commonly used). If you do not have
-     root access or just want to play around, your own user account is
-     enough.
+     ./configure
 
-     Running PostgreSQL as root, bin, or any other account with special
-     access rights is a security risk; don't do it. The postmaster will in
-     fact refuse to start as root.
+     This script will run a number of tests to guess values for various
+     system dependent variables and detect some quirks of your operating
+     system, and finally creates several files in the build tree to record
+     what it found.
 
-     You need not do the building and installation itself under this account
-     (although you can). You will be told when you need to login as the
-     database superuser.
+     The default configuration will build the server and utilities, as well
+     as all client applications and interfaces that only require a C
+     compiler. All files will be installed under /usr/local/pgsql by
+     default.
 
-  2. Configure the source code for your system. It is this step at which you
-     can specify your actual installation path for the build process and
-     make choices about what gets installed. Change into the src
-     subdirectory and type:
+     You can customize the build and installation process by giving one or
+     more of the following command line options to configure:
 
-     > ./configure
+     --prefix=PREFIX
 
+          Install all files under the directory PREFIX instead of
+          /usr/local/pgsql. The actual files will be installed into various
+          subdirectories; no files will ever be installed directly into the
+          PREFIX directory.
 
-     followed by any options you might want to give it. For a first
-     installation you should be able to do fine without any. For a complete
-     list of options, type:
+          If you have special needs, you can also customize the individual
+          subdirectories with the following options.
 
-     > ./configure --help
+     --exec-prefix=EXEC-PREFIX
 
+          You can install architecture-dependent files under a different
+          prefix, EXEC-PREFIX, than what PREFIX was set to. This can be
+          useful to share architecture-independent files between hosts. If
+          you omit this, then EXEC-PREFIX is set equal to PREFIX and both
+          architecture dependent and independent files will be installed
+          under the same tree, which is probably what you want.
 
-     Some of the more commonly used ones are:
+     --bindir=DIRECTORY
 
-     --prefix=BASEDIR
+          Specifies the directory for executable programs. The default is
+          EXEC-PREFIX/bin, which normally means /usr/local/pgsql/bin.
 
-          Selects a different base directory for the installation of
-          PostgreSQL. The default is /usr/local/pgsql.
+     --datadir=DIRECTORY
+
+          Sets the directory for read-only data files used by the installed
+          programs. The default is PREFIX/share. Note that this has nothing
+          to do with where your database files will be placed.
+
+     --sysconfdir=DIRECTORY
+
+          The directory for various configuration files, PREFIX/etc by
+          default.
+
+     --libdir=DIRECTORY
+
+          The location to install libraries and dynamically loadable
+          modules. The default is EXEC-PREFIX/lib.
+
+     --includedir=DIRECTORY
+
+          The directory for installing C and C++ header files. The default
+          is PREFIX/include.
+
+     --docdir=DIRECTORY
+
+          Documentation files, except "man" pages, will be installed into
+          this directory. The default is PREFIX/doc.
+
+     --mandir=DIRECTORY
+
+          The man pages that come with PostgreSQL will be installed under
+          this directory, in their respective manx subdirectories.
+          PREFIX/man.
+
+     --with-includes=DIRECTORIES
+
+          DIRECTORIES is a colon-separated list of directories that will be
+          added to the list the compiler searches for header files. If you
+          have optional packages (such as GNU Readline) installed in a
+          non-standard location you have to use this option and probably the
+          corresponding --with-libraries option.
+
+          Example: --with-includes=/opt/gnu/include:/usr/sup/include.
+
+     --with-libraries=DIRECTORIES
+
+          DIRECTORIES is a colon-separated list of directories to search for
+          libraries. You will probably have to use this option (and the
+          corresponding --with-includes option) if you have packages
+          installed in non-standard locations.
+
+          Example: --with-libraries=/opt/gnu/lib:/usr/sup/lib.
 
      --enable-locale
 
-          If you want to use locales.
+          Enables locale support. There is a performance penalty associated
+          with locale support, but if you are not in an English-speaking
+          environment you will most likely need this.
+
+     --enable-recode
+
+          Enables character set recode support. See doc/README.Charsets for
+          details on this feature.
 
      --enable-multibyte
 
           Allows the use of multibyte character encodings. This is primarily
-          for languages like Japanese, Korean, or Chinese.
+          for languages like Japanese, Korean, and Chinese. Read
+          doc/README.mb for details.
+
+     --with-pgport=NUMBER
+
+          Set NUMBER as the default port number for server and clients. The
+          default is 5432. The port can always be changed later on, but if
+          you specify it here then both server and clients will have the
+          same default compiled in, which can be very convenient.
+
+     --with-CXX
+
+          Build the C++ interface library. configure will automatically pick
+          the C++ compiler that goes with the C compiler you are using. It
+          is not recommended or supported to use C and C++ compilers of
+          different origin in the same build.
 
      --with-perl
 
-          Builds the Perl interface and plperl extension language. Please
-          note that the Perl interface needs to be installed into the usual
-          place for Perl modules (typically under /usr/lib/perl), so you
-          must have root access to perform the installation step. (It is
-          often easiest to leave out --with-perl initially, and then build
-          and install the Perl interface after completing the installation
-          of PostgreSQL itself.)
+          Build the Perl interface module. The Perl interface will be
+          installed at the usual place for Perl modules (typically under
+          /usr/lib/perl), so you must have root access to perform the
+          installation step (see step 4). You need to have Perl 5 installed
+          to use this option.
 
-     --with-odbc
+     --with-python
 
-          Builds the ODBC driver package.
+          Build the Python interface module. You need to have root access to
+          be able to install the Python module at its default place
+          (/usr/lib/pythonx.y). To be able to use this option, you must have
+          Python installed and your system needs to support shared
+          libraries. If you instead want to build a new complete interpreter
+          binary, you will have to do it manually.
 
      --with-tcl
 
-          Builds interface libraries and programs requiring Tcl/Tk,
-          including libpgtcl, pgtclsh, and pgtksh.
+          Builds components that require Tcl, which are libpgtcl, pgtclsh,
+          and PL/Tcl.
 
-  3. Compile the program. Type
+     --with-x
 
-     > gmake
+          Use the X Window System. If you specified --with-tcl then this
+          will enable the build of modules requiring Tcl/Tk, that is, pgtksh
+          and pgaccess.
 
+     --with-tclconfig=DIRECTORY, --with-tkconfig=DIRECTORY
 
-     The compilation process can take anywhere from 10 minutes to an hour.
-     Your mileage will most certainly vary. Remember to use GNU make.
+          Tcl/Tk installs the files tclConfig.sh and tkConfig.sh which
+          contain certain configuration information that is needed to build
+          modules interfacing to Tcl or Tk. These files are normally found
+          automatically at their well-known location, but if you want to use
+          a different version of Tcl or Tk you can specify the directory
+          where to find them.
 
-     The last line displayed will hopefully be
+     --enable-odbc
+
+          Build the ODBC driver package.
+
+     --with-odbcinst=DIRECTORY
+
+          Specifies the directory where the ODBC driver will expect its
+          odbcinst.ini configuration file. The default is
+          /usr/local/pgsql/etc or whatever you specified as --sysconfdir. A
+          default file will be installed there.
+
+     --with-krb4=DIRECTORY, --with-krb5=DIRECTORY
+
+          Build with suppport for Kerberos authentication. You can use
+          either Kerberos version 4 or 5, but not both. The DIRECTORY
+          argument specifies the root directory of the Kerberos
+          installation; /usr/athena is assumed as default. If the relevant
+          headers files and libraries are not under a common parent
+          directory, then you must use the --with-includes and
+          --with-libraries options in addition to this option. If, on the
+          other hand, the required files are in a location that is searched
+          by default (e.g., /usr/lib), then you can leave off the argument.
+
+          configure will check for the required header files and libraries
+          to make sure that your Kerberos installation is sufficient before
+          proceeding.
+
+     --with-krb-srvnam=NAME
+
+          The name of the Kerberos service principal. "postgres" is the
+          default. There's probably no reason to change this.
+
+     --with-krb-srvtab=FILE
+
+          Specifies the location of the Kerberos server shared key file
+          ("srvtab"). If you are using Kerberos 4, this defaults to
+          /etc/srvtab, with Kerberos 5 to
+          FILE:/usr/local/pgsql/etc/krb5.keytab, or equivalent, depending on
+          what you set --sysconfdir to above.
+
+     --enable-syslog
+
+          Enables the PostgreSQL server to use the syslog logging facility.
+          (Using this option does not mean that you have to log with syslog
+          or even that it will be done by default, it simply makes it
+          possible to turn this option on at run time.)
+
+     --enable-debug
+
+          Compiles all programs and libraries with debugging symbols. This
+          means that you can run the programs through a debugger to analyze
+          problems. This option is not recommended for production use.
+
+     Environment variables. You can set the CC environment variable to
+     choose the C compiler to use. If you don't then configure will look for
+     one. For example:
+
+     CC=/opt/bin/gcc ./configure
+
+  2. Build
+
+     To start the build, type
+
+     gmake
+
+     (Remember to use GNU make.) The build can take anywhere from 5 minutes
+     to half an hour. The last line displayed should be
 
      All of PostgreSQL is successfully made. Ready to install.
 
+  3. Regression Tests
 
-  4. If you want to test the newly built server before you install it, you
+     If you want to test the newly built server before you install it, you
      can run the regression tests at this point. The regression tests are a
      test suite to verify that PostgreSQL runs on your machine in the way
-     the developers expected it to. For detailed instructions see Regression
-     Test. (Be sure to use the "parallel regress test" method, since the
-     sequential method only works with an already-installed server.)
+     the developers expected it to. Type
 
-  5. If you are not upgrading an existing system, skip to step 7.
-     If you are running 7.*, skip to step 6.
+     gmake -C src/test/regress all runcheck
 
-     You now need to back up your existing database. To dump your 
-     database installation, type:
+     It is possible that some tests fail, due to differences in error
+     message wording or floating point results. The file
+     src/test/regress/README and the Administrator's Guide contain detailed
+     information about interpreting the test results. You can repeat this
+     test at any later time by issuing the same command.
 
-     > pg_dumpall > db.out
+  4. Installing The Files
 
+          Note: If you are upgrading an existing system and are going
+          to install the new files over the old ones then you should
+          have backed up your data and shut down the old server by now,
+          as explained in the section called If You Are Upgrading
+          above.
 
-     If you wish to preserve object id's (oids), then use the -o option when
-     running pg_dumpall. However, unless you have a special reason for doing
-     this (such as using OIDs as keys in tables), don't do it.
+     To install PostgreSQL enter
 
-     Make sure to use the pg_dumpall command from the version you are
-     currently running. 7.0.2's pg_dumpall should not be used on older
-     databases.
+     gmake install
 
-                                        Caution
-      You must make sure that your database is not updated in the middle of your
-      backup. If necessary, bring down postmaster, edit the permissions in file
-      /usr/local/pgsql/data/pg_hba.conf to allow only you on, then bring
-      postmaster back up.
+     This will install files into the directories that were specified in
+     step 1. Make sure that you have appropriate permissions to write into
+     that area. Normally you need to do this step as root. Alternatively,
+     you could create the target directories in advance and arrange for
+     appropriate permissions to be granted.
 
-      Rather than using pg_dumpall, pg_upgrade can often be used.
+     If you built the Perl or Python interfaces and you were not the root
+     user when you executed the above command then that part of the
+     installation probably failed. In that case you should become the root
+     user and then do
 
-  6. If you are upgrading an existing system, kill the database server
-     now. Type
+     gmake -C src/interfaces/perl5 install
+     gmake -C src/interfaces/python install
 
-     > ps ax | grep postmaster
+     Due to a quirk in the Perl build environment the first command will
+     actually rebuild the complete interface and then install it. This is
+     not harmful, just unusual. If you do not have superuser access you are
+     on your own: you can still take the required files and place them in
+     other directories where Perl or Python can find them, but how to do
+     that is left as an exercise.
 
+     Client-only installation. If you want to install only the client
+     applications and interfaces, then you can use these commands:
 
-     or
+     gmake -C src/bin install
+     gmake -C src/interfaces install
+     gmake -C doc install
 
-     > ps -e | grep postmaster
+     To undo the installation use the command gmake uninstall. However, this
+     will not remove the Perl and Python interfaces and it will not remove
+     any directories.
 
+Cleanup. After the installation you can make room by removing the built
+files from the source tree with the gmake clean command. This will preserve
+the choices made by the configure program, so that you can rebuild
+everything with gmake later on. To reset the source tree to the state in
+which it was distributed, use gmake distclean. If you are going to build for
+several platforms from the same source tree you must do this and
+re-configure for each build.
 
-     (It depends on your system which one of these two works. No harm can be
-     done by typing the wrong one.) This should list the process numbers for
-     a number of processes, similar to this:
+  ------------------------------------------------------------------------
 
-       263  ?  SW   0:00 (postmaster)
-       777  p1 S    0:00 grep postmaster
+Post-Installation Setup
 
+Shared Libraries
 
-     Type the following line, with pid replaced by the process id for
-     process postmaster (263 in the above case). (Do not use the id for the
-     process "grep postmaster".)
+On most systems that have shared libraries (which most systems do) you need
+to tell your system how to find the newly installed shared libraries. How to
+do this varies between platforms, but the most widely usable method is to
+set the environment variable LD_LIBRARY_PATH like so: In Bourne shells (sh,
+ksh, bash, zsh)
 
-     > kill pid
+LD_LIBRARY_PATH=/usr/local/pgsql/lib
+export LD_LIBRARY_PATH
 
+or in csh or tcsh
 
-          Tip: On systems which have PostgreSQL started at boot time,
-          there is probably a startup file that will accomplish the
-          same thing. For example, on a Redhat Linux system one might
-          find that
+setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
 
-          > /etc/rc.d/init.d/postgres.init stop
+Replace /usr/local/pgsql/lib with whatever you set --libdir to in step 1.
+You should put these commands into a shell startup file such as /etc/profile
+or ~/.bash_profile.
 
+On Linux systems the following is the preferred method, but you must have
+root access. Edit the file /etc/ld.so.conf to add a line
 
-          works.
+/usr/local/pgsql/lib
 
-     If you used pg_dumpall, move the old directory out of the
-     way.  Type the following:
+Then run command /sbin/ldconfig.
 
-     > mv /usr/local/pgsql /usr/local/pgsql.old
+If in doubt, refer to the manual pages of your system. If you later on get a
+message like
 
+psql: error in loading shared libraries
+libpq.so.2.1: cannot open shared object file: No such file or directory
 
-     (substitute your particular paths).
+then this step was necessary. Simply take care of it then.
 
-  7. Install the PostgreSQL executable files and libraries. Type
+  ------------------------------------------------------------------------
 
-     > gmake install
+Environment Variables
 
+If you installed into /usr/local/pgsql or some other location that is not
+searched for programs by default, you need to add /usr/local/pgsql/bin (or
+what you set --bindir to in step 1) into your PATH. To do this, add the
+following to your shell startup file, such as ~/.bash_profile (or
+/etc/profile, if you want it to affect every user):
 
-     You should do this step as the user that you want the installed
-     executables to be owned by. This does not have to be the same as the
-     database superuser; some people prefer to have the installed files be
-     owned by root.
+PATH=$PATH:/usr/local/pgsql/bin
 
-  8. If necessary, tell your system how to find the new shared libraries.
-     How to do this varies between platforms. The most widely usable method
-     is to set the environment variable LD_LIBRARY_PATH:
+If you are using csh or tcsh, then use this command:
 
-     > LD_LIBRARY_PATH=/usr/local/pgsql/lib
-     > export LD_LIBRARY_PATH
+set path = ( /usr/local/pgsql/bin path )
 
+To enable your system to find the man documentation, you need to add a line
+like the following to a shell startup file:
 
-     on sh, ksh, bash, zsh or
+MANPATH=$MANPATH:/usr/local/pgsql/man
 
-     > setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
+The environment variables PGHOST and PGPORT specify to client applications
+the host and port of the database server, overriding the compiled-in
+defaults. If you are going to run client applications remotely then it is
+convenient if every user that plans to use the database sets PGHOST, but it
+is not required and the settings can be communicated via command line
+options to most client programs.
 
+  ------------------------------------------------------------------------
 
-     on csh or tcsh. You might want to put this into a shell startup file
-     such as /etc/profile.
+Getting Started
 
-     On some systems the following is the preferred method, but you must
-     have root access. Edit file /etc/ld.so.conf to add a line
+The following is a quick summary of how to get PostgreSQL up and running
+once installed. The Administrator's Guide contains more information.
 
-     /usr/local/pgsql/lib
+  1. Create the PostgreSQL server account. This is the user the server will
+     run as. For production use you should create a separate, unprivileged
+     account ("postgres" is commonly used). If you do not have root access
+     or just want to play around, your own user account is enough, but
+     running the server as root is a security risk and therefore not
+     allowed.
 
+     adduser postgres
 
-     Then run command /sbin/ldconfig.
+  2. Create a database installation with the initdb command. To run initdb
+     you must be logged in to your PostgreSQL server account. It will not
+     work as root.
 
-     If in doubt, refer to the manual pages of your system. If you later on
-     get a message like
-
-     psql: error in loading shared libraries
-     libpq.so.2.1: cannot open shared object file: No such file or directory
-
-
-     then the above was necessary. Simply do this step then.
-
-  9. If you moved the old directory out of the way, 
-     create the database installation (the working data files). To do this
-     you must log in to your PostgreSQL superuser account. It will not work
-     as root.
-
-     > mkdir /usr/local/pgsql/data
-     > chown postgres /usr/local/pgsql/data
-     > su - postgres
-     > /usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data
-
+     root# mkdir /usr/local/pgsql/data
+     root# chown postgres /usr/local/pgsql/data
+     root# su - postgres
+     postgres$ /usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data
 
      The -D option specifies the location where the data will be stored. You
      can use any path you want, it does not have to be under the
-     installation directory. Just make sure that the superuser account can
+     installation directory. Just make sure that the server account can
      write to the directory (or create it, if it doesn't already exist)
-     before starting initdb. (If you have already been doing the
-     installation up to now as the PostgreSQL superuser, you may have to log
-     in as root temporarily to create the data directory underneath a
-     root-owned directory.)
+     before starting initdb, as illustrated here.
 
- 10. The previous step should have told you how to start up the database
+  3. The previous step should have told you how to start up the database
      server. Do so now. The command should look something like
 
-     > /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data
+     /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data
 
+     This will start the server in the foreground. To put the server in the
+     background use something like
 
-     This will start the server in the foreground. To make it detach to the
-     background, you can use the -S option, but then you won't see any log
-     messages the server produces. A better way to put the server in the
-     background is
+     nohup /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data \
+         </dev/null >>server.log 2>&1 </dev/null &
 
-     > nohup /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data \
-         </dev/null >>server.log 2>>1 &
+     To stop a server running in the background you can type
 
+     kill `cat /usr/local/psgql/data/postmaster.pid`
 
- 11. If you did a pg_dumpall, reload your data back in:
+     In order to allow TCP/IP connections (rather than only Unix domain
+     socket ones) you need to pass the -i option to postmaster.
 
-     > /usr/local/pgsql/bin/psql -d template1 -f db.out
+  4. Create a database:
 
+     createdb testdb
 
-     You also might want to copy over the old pg_hba.conf file and any other
-     files you might have had set up for authentication, such as password
-     files.
+     Then enter
 
-This concludes the installation proper. To make your life more productive
-and enjoyable you should look at the following optional steps and
-suggestions:
+     psql testdb
 
-   * Life will be more convenient if you set up some environment variables.
-     First of all you probably want to include /usr/local/pgsql/bin (or
-     equivalent) into your PATH. To do this, add the following to your shell
-     startup file, such as ~/.bash_profile (or /etc/profile, if you want it
-     to affect every user):
+     to connect to that database. At the prompt you can enter SQL commands
+     and start experimenting.
 
-     > PATH=$PATH:/usr/local/pgsql/bin
+  ------------------------------------------------------------------------
 
+What Now?
 
-     Furthermore, if you set PGDATA in the environment of the PostgreSQL
-     superuser, you can omit the -D for postmaster and initdb.
+   * The Tutorial should be your first reading if you are completely new to
+     SQL databases. It should have been installed at
+     /usr/local/pgsql/doc/tutorial/index.html unless you changed the
+     installation directories.
 
-   * You probably want to install the man and HTML documentation. Type
-
-     > cd /usr/src/pgsql/postgresql-7.0.2/doc
-     > gmake install
-
-
-     This will install files under /usr/local/pgsql/doc and
-     /usr/local/pgsql/man. To enable your system to find the man
-     documentation, you need to add a line like the following to a shell
-     startup file:
-
-     > MANPATH=$MANPATH:/usr/local/pgsql/man
-
-
-     The documentation is also available in Postscript format. If you have a
-     Postscript printer, or have your machine already set up to accept
-     Postscript files using a print filter, then to print the User's Guide
-     simply type
-
-     > cd /usr/local/pgsql/doc
-     > gunzip -c user.ps.tz | lpr
-
-
-     Here is how you might do it if you have Ghostscript on your system and
-     are writing to a laserjet printer.
-
-     > gunzip -c user.ps.gz \
-         | gs -sDEVICE=laserjet -r300 -q -dNOPAUSE -sOutputFile=- \
-         | lpr
-
-
-     Printer setups can vary wildly from system to system. If in doubt,
-     consult your manuals or your local expert.
-
-     The Adminstrator's Guide should probably be your first reading if you
-     are completely new to PostgreSQL, as it contains information about how
-     to set up database users and authentication.
+   * If you are familiar with database concepts then you want to proceed
+     with the Administrator's Guide, which contains information about how to
+     set up the database server, database users, and authentication. It can
+     be found at /usr/local/pgsql/doc/admin/index.html.
 
    * Usually, you will want to modify your computer so that it will
-     automatically start the database server whenever it boots. This is not
-     required; the PostgreSQL server can be run successfully from
-     non-privileged accounts without root intervention.
-
-     Different systems have different conventions for starting up daemons at
-     boot time, so you are advised to familiarize yourself with them. Most
-     systems have a file /etc/rc.local or /etc/rc.d/rc.local which is almost
-     certainly no bad place to put such a command. Whatever you do,
-     postmaster must be run by the PostgreSQL superuser (postgres) and not
-     by root or any other user. Therefore you probably always want to form
-     your command lines along the lines of su -c '...' postgres.
-
-     It might be advisable to keep a log of the server output. To start the
-     server that way try:
-
-     > nohup su -c 'postmaster -D /usr/local/pgsql/data > server.log 2>&1' postgres &
-
-
-     Here are a few more operating system specific suggestions.
-
-        o Edit file rc.local on NetBSD or file rc2.d on SPARC Solaris 2.5.1
-          to contain the following single line:
-
-          > su postgres -c "/usr/local/pgsql/bin/postmaster -S -D /usr/local/pgsql/data"
-
-
-        o In FreeBSD 2.2-RELEASE edit /usr/local/etc/rc.d/pgsql.sh to
-          contain the following lines and make it chmod 755 and chown
-          root:bin.
-
-          #!/bin/sh
-          [ -x /usr/local/pgsql/bin/postmaster ] && {
-              su -l pgsql -c 'exec /usr/local/pgsql/bin/postmaster
-                  -D/usr/local/pgsql/data
-                  -S -o -F > /usr/local/pgsql/errlog' &
-              echo -n ' pgsql'
-          }
-
-
-          You may put the line breaks as shown above. The shell is smart
-          enough to keep parsing beyond end-of-line if there is an
-          expression unfinished. The exec saves one layer of shell under the
-          postmaster process so the parent is init.
-
-        o In RedHat Linux add a file /etc/rc.d/init.d/postgres.init which is
-          based on the example in contrib/linux/. Then make a softlink to
-          this file from /etc/rc.d/rc5.d/S98postgres.init.
+     automatically start the database server whenever it boots. Some
+     suggestions for this are in the Administrator's Guide.
 
    * Run the regression tests against the installed server (using the
      sequential test method). If you didn't run the tests before
-     installation, you should definitely do it now. For detailed
-     instructions see Regression Test.
+     installation, you should definitely do it now. This is also explained
+     in the Administrator's Guide.
 
-To start experimenting with Postgres, set up the paths as explained above
-and start the server. To create a database, type
+  ------------------------------------------------------------------------
 
-> createdb testdb
+Supported Platforms
 
+At the time of release, PostgreSQL 7.1 has been verified by the developer
+community to work on the following platforms. A supported platform generally
+means that PostgreSQL builds and installs according to these instructions
+and that the regression tests pass, except for minor differences.
 
-Then enter
+     Note: If you are having problems with the installation on a
+     supported platform, please write to <pgsql-bugs@postgresql.org> or
+     <pgsql-ports@postgresql.org>, not to the people listed here.
 
-> psql testdb
+ OS           Processor Version Reported                            Remarks
+ AIX 4.3.2    RS6000    7.0     2000-04-05, Andread Zeugswetter     See also
+                                (<Andreas.Zeugswetter@telecom.at>)  doc/FAQ_AIX
+ BSDI 4.01    x86       7.0     2000-04-04, Bruce Momjian
+                                (<pgman@candle.pha.pa.us>)
+ Compaq Tru64 Alpha     7.0     2000-04-11, Andrew McMurry
+ 5.0                            (<andrew.mcmurry@astro.uio.no>)
+ FreeBSD 4.0  x86       7.0     2000-04-04, Marc Fournier
+                                (<scrappy@hub.org>)
+ HPUX 9.0x andPA-RISC   7.0     2000-04-12, Tom Lane
+ 10.20                          (<tgl@sss.pgh.pa.us>)
+ IRIX 6.5.6f  MIPS      6.5.3   2000-02-18, Kevin Wheatley          MIPSPro
+                                (<hxpro@cinesite.co.uk>)            7.3.1.1m N32
+                                                                    build
+ Linux 2.0.x  Alpha     7.0     2000-04-05, Ryan Kirkpatrick        with published
+                                (<pgsql@rkirkpat.net>)              patches
+ Linux 2.2.x  armv4l    7.0     2000-04-17, Mark Knox               Regression
+                                (<segfault@hardline.org>)           test needs
+                                                                    work.
+ Linux 2.2.x  x86       7.0     2000-03-26, Lamar Owen
+                                (<lamar.owen@wgcr.org>)
+ Linux 2.0.x  MIPS      7.0     2000-04-13, Tatsuo Ishii            Cobalt Qube
+                                (<t-ishii@sra.co.jp>)
+ Linux 2.2.5  Sparc     7.0     2000-04-02, Tom Szybist
+                                (<szybist@boxhill.com>)
+ LinuxPPC R4  PPC603e   7.0     2000-04-13, Tatsuo Ishii
+                                (<t-ishii@sra.co.jp>)
+ mklinux      PPC750    7.0     2000-04-13, Tatsuo Ishii
+                                (<t-ishii@sra.co.jp>)
+ NetBSD 1.4   arm32     7.0     2000-04-08, Patrick Welche
+                                (<prlw1@newn.cam.ac.uk>)
+ NetBSD 1.4U  x86       7.0     2000-03-26, Patrick Welche
+                                (<prlw1@newn.cam.ac.uk>)
+ NetBSD       m68k      7.0     2000-04-10, Henry B. Hotz           Mac 8xx
+                                (<hotz@jpl.nasa.gov>)
+ NetBSD       Sparc     7.0     2000-04-13, Tom I. Helbekkmo
+                                (<tih@kpnQwest.no>)
+ QNX 4.25     x86       7.0     2000-04-01, Dr. Andreas Kardos
+                                (<kardos@repas-aeg.de>)
+ SCO          x86       6.5     1999-05-25, Andrew Merrill
+ OpenServer 5                   (<andrew@compclass.com>)
+ SCO UnixWare x86       7.0     2000-04-18, Billy G. Allie          See also
+ 7                              (<Bill.Allie@mug.org>)              doc/FAQ_SCO
+ Solaris      x86       7.0     2000-04-12, Marc Fournier
+                                (<scrappy@hub.org>)
+ Solaris      Sparc     7.0     2000-04-12, Peter Eisentraut
+ 2.5.1-2.7                      (<peter_e@gmx.net>), Marc Fournier
+                                (<scrappy@hub.org>)
+ SunOS 4.1.4  Sparc     7.0     2000-04-13, Tatsuo Ishii
+                                (<t-ishii@sra.co.jp>)
+ Windows/Win32x86       7.0     2000-04-02, Magnus Hagander         Client-side
+                                (<mha@sollentuna.net>)              libraries or
+                                                                    ODBC/JDBC, no
+                                                                    server-side
+ WinNT/Cygwin x86       7.0     2000-03-30, Daniel Horak            with
+                                (<horak@sit.plzen-city.cz>)         RedHat/Cygnus
+                                                                    Cygwin toolset
 
+Unsupported Platforms. The following platforms have not been verified to
+work. Platforms listed for version 6.3.x and later should also work with
+7.1, but we did not receive explicit confirmation of such at the time this
+list was compiled. We include these here to let you know that these
+platforms could be supported if given some attention.
 
-to connect to that database. At the prompt you can enter SQL commands and
-start experimenting.
+ OS        Processor Version Reported                        Remarks
+ BeOS      x86       7.0     2000-05-01, Adam Haberlach      Client-side
+                             (<adam@newsnipple.com>)         coming soon?
+ DGUX      m88k      6.3     1998-03-01, Brian E Gallew      6.4 probably
+ 5.4R4.11                    (<geek+@cmu.edu>)               OK. Needs new
+                                                             maintainer.
+ NetBSD 1.3VAX       6.3     1998-03-01, Tom I Helbekkmo     7.0 should
+                             (<tih@kpnQwest.no>)             work.
+ System V  m88k      6.2.1   1998-03-01, Doug Winterburn     Needs new TAS
+ R4 4.4                      (<dlw@seavme.xroads.com>)       spinlock code
+ System V  MIPS      6.4     1998-10-28, Frank Ridderbusch   No 64-bit
+ R4                          (<ridderbusch.pad@sni.de>)      integer
+ Ultrix    MIPS, VAX 6.x     1998-03-01                      No recent
+                                                             reports.
+                                                             Obsolete?
+ MacOS     all       6.x     1998-03-01                      Not library
+                                                             compatible;
+                                                             use ODBC/JDBC.
+ NextStep  x86       6.x     1998-03-01, David Wetzel        Client-only
+                             (<dave@turbocat.de>)            support

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.1 2000/06/30 16:14:21 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.2 2000/07/21 00:44:12 petere Exp $ -->
 <chapter id="backup">
  <title>Backup and Restore</title>
 
@@ -340,7 +340,7 @@ tar -cf backup.tar /usr/local/pgsql/data
 
  </sect1>
 
- <sect1>
+ <sect1 id="migration">
   <title>Migration between releases</title>
 
   <para>

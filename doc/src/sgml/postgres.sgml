@@ -1,8 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.38 2000/07/01 15:05:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.39 2000/07/21 00:44:13 petere Exp $
 -->
 
 <!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
+
+<!entity version "7.1">
+<!entity majorversion "7.1">
 
 <!entity about      SYSTEM "about.sgml">
 <!entity history    SYSTEM "history.sgml">
@@ -47,12 +50,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.38 2000/07/01 15:05:47 pe
 %allfiles;
 
 <!-- administrator's guide -->
-<!entity config      SYSTEM "config.sgml">
 <!entity intro-ag    SYSTEM "intro-ag.sgml">
-<!entity install     SYSTEM "install.sgml">
+<!entity installation SYSTEM "installation.sgml">
 <!entity installw    SYSTEM "install-win32.sgml">
-<!entity layout      SYSTEM "layout.sgml">
-<!entity ports       SYSTEM "ports.sgml">
 <!entity recovery    SYSTEM "recovery.sgml">
 <!entity regress     SYSTEM "regress.sgml">
 <!entity release     SYSTEM "release.sgml">
@@ -103,6 +103,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.38 2000/07/01 15:05:47 pe
 <!entity page       SYSTEM "page.sgml">
 <!entity protocol   SYSTEM "protocol.sgml">
 <!entity sources    SYSTEM "sources.sgml">
+
+
+<!-- see standalone-install.sgml about these -->
+<!entity % flattext-install-ignore  "INCLUDE">
+<!entity % flattext-install-include "IGNORE">
+
 ]>
 <!-- entity manpages SYSTEM "man/manpages.sgml" subdoc -->
 
@@ -217,10 +223,7 @@ Your name here...
   included twice.
    &intro-ag;
 -->
-   &ports;
-   &config;
-   &layout;
-   &install;
+   &installation;
    &installw;
    &runtime;
    &client-auth;
