@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.25 2000/02/13 21:45:13 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.26 2000/02/20 14:29:21 petere Exp $
 Postgres documentation
 -->
 
@@ -532,6 +532,18 @@ Tue Oct 26 21:40:57 CEST 1999
 	</para>
 	</tip>
 	</listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\encoding</literal> [ <replaceable class="parameter">encoding</replaceable> ]</term>
+
+        <listitem>
+        <para>
+        Sets the client encoding, if you are using multibyte encodings.
+        Without an argument, this command shows the current encoding.
+        </para>
+        </listitem>
       </varlistentry>
 
 
@@ -1653,6 +1665,17 @@ bar
 	internals and provide similar functionality in your own programs. If you set the
 	variable to the value <quote>noexec</quote>, the queries are just shown but are
 	not actually sent to the backend and executed.
+	</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><envar>ENCODING</envar></term>
+	<listitem>
+	<para>
+        The current client multibyte encoding. If you are not set up to use
+        multibyte characters, this variable will always contain
+        <quote>SQL_ASCII</quote>.
 	</para>
 	</listitem>
       </varlistentry>
