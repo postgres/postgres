@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.148 2002/04/12 20:38:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.149 2002/04/15 05:22:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,16 +22,17 @@
 #include "catalog/pg_shadow.h"
 #include "commands/async.h"
 #include "commands/cluster.h"
-#include "commands/command.h"
 #include "commands/comment.h"
 #include "commands/copy.h"
-#include "commands/creatinh.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/explain.h"
+#include "commands/lockcmds.h"
+#include "commands/portalcmds.h"
 #include "commands/proclang.h"
-#include "commands/rename.h"
+#include "commands/schemacmds.h"
 #include "commands/sequence.h"
+#include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "commands/user.h"
 #include "commands/vacuum.h"

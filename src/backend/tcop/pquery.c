@@ -8,14 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.51 2002/03/21 16:01:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.52 2002/04/15 05:22:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "commands/command.h"
+#include "commands/portalcmds.h"
 #include "executor/execdefs.h"
 #include "executor/executor.h"
 #include "tcop/pquery.h"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.76 2002/03/30 01:02:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.77 2002/04/15 05:22:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include "access/heapam.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
-#include "commands/creatinh.h"
+#include "commands/tablecmds.h"
 #include "commands/sequence.h"
 #include "miscadmin.h"
 #include "utils/acl.h"

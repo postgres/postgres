@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.30 2002/04/09 20:35:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.31 2002/04/15 05:22:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,27 +22,13 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "commands/proclang.h"
+#include "commands/defrem.h"
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-
-
-/*
- * Translate the input language name to lower case.
- */
-static void
-case_translate_language_name(const char *input, char *output)
-{
-	int			i;
-
-	for (i = 0; i < NAMEDATALEN && input[i]; ++i)
-		output[i] = tolower((unsigned char) input[i]);
-
-	output[i] = '\0';
-}
 
 
 /* ---------------------------------------------------------------------

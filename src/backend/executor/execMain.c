@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.157 2002/04/08 22:42:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.158 2002/04/15 05:22:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
 #include "access/heapam.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
-#include "commands/command.h"
+#include "commands/tablecmds.h"
 #include "commands/trigger.h"
 #include "executor/execdebug.h"
 #include "executor/execdefs.h"

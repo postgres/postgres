@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.77 2002/03/31 07:49:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.78 2002/04/15 05:22:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,7 @@
 #include "catalog/pg_index.h"
 #include "catalog/pg_proc.h"
 #include "commands/cluster.h"
-#include "commands/command.h"
-#include "commands/rename.h"
+#include "commands/tablecmds.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"

@@ -1,10 +1,10 @@
 #-------------------------------------------------------------------------
 #
 # Makefile--
-#    Makefile for commands
+#    Makefile for backend/commands
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.27 2001/07/13 22:55:59 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.28 2002/04/15 05:22:03 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,10 +12,11 @@ subdir = src/backend/commands
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = async.o creatinh.o command.o comment.o copy.o indexcmds.o define.o \
-       remove.o rename.o vacuum.o vacuumlazy.o analyze.o view.o cluster.o \
-       explain.o sequence.o trigger.o user.o proclang.o \
-       dbcommands.o variable.o
+OBJS = aggregatecmds.o analyze.o async.o cluster.o comment.o copy.o \
+	dbcommands.o define.o explain.o functioncmds.o \
+	indexcmds.o lockcmds.o operatorcmds.o portalcmds.o proclang.o \
+	schemacmds.o sequence.o tablecmds.o trigger.o typecmds.o user.o \
+	vacuum.o vacuumlazy.o variable.o view.o
 
 all: SUBSYS.o
 
