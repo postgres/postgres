@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.166 2001/10/25 05:49:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.167 2001/10/25 20:37:30 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1492,7 +1492,7 @@ UpdateStats(Oid relid, double reltuples)
 			reltuples = 1000;
 		}
 		else
-			reltuples = (double) relpages *NTUPLES_PER_PAGE(whichRel->rd_rel->relnatts);
+			reltuples = ((double) relpages) * NTUPLES_PER_PAGE(whichRel->rd_rel->relnatts);
 	}
 
 	/*

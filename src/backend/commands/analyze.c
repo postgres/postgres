@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.23 2001/10/25 05:49:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.24 2001/10/25 20:37:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1244,8 +1244,7 @@ compute_scalar_stats(VacAttrStats *stats,
 		{
 			int			tupno = values[i].tupno;
 
-			corr_xysum += (double) i *(double) tupno;
-
+			corr_xysum += ((double) i) * ((double) tupno);
 			dups_cnt++;
 			if (tupnoLink[tupno] == tupno)
 			{
@@ -1519,9 +1518,10 @@ compute_scalar_stats(VacAttrStats *stats,
 			 *		(values_cnt-1)*values_cnt*(2*values_cnt-1) / 6.
 			 *----------
 			 */
-			corr_xsum = (double) (values_cnt - 1) * (double) values_cnt / 2.0;
-			corr_x2sum = (double) (values_cnt - 1) * (double) values_cnt *
-						(double) (2 * values_cnt - 1) / 6.0;
+			corr_xsum = ((double) (values_cnt - 1)) *
+				((double) values_cnt) / 2.0;
+			corr_x2sum = ((double) (values_cnt - 1)) *
+				((double) values_cnt) * (double) (2 * values_cnt - 1) / 6.0;
 
 			/* And the correlation coefficient reduces to */
 			corrs[0] = (values_cnt * corr_xysum - corr_xsum * corr_xsum) /

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.5 2001/10/25 05:49:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.6 2001/10/25 20:37:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -936,11 +936,9 @@ CLOGPagePrecedes(int page1, int page2)
 	TransactionId xid1;
 	TransactionId xid2;
 
-	xid1 = (TransactionId) page1 *CLOG_XACTS_PER_PAGE;
-
+	xid1 = ((TransactionId) page1) * CLOG_XACTS_PER_PAGE;
 	xid1 += FirstNormalTransactionId;
-	xid2 = (TransactionId) page2 *CLOG_XACTS_PER_PAGE;
-
+	xid2 = ((TransactionId) page2) * CLOG_XACTS_PER_PAGE;
 	xid2 += FirstNormalTransactionId;
 
 	return TransactionIdPrecedes(xid1, xid2);
