@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.55 2001/03/15 01:07:51 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.56 2001/03/25 18:14:31 tgl Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -1205,9 +1205,9 @@
     expression), an empty set of <literal>()</literal> (matching the
     null string), a <firstterm>bracket expression</firstterm> (see
     below), <literal>.</literal> (matching any single character),
-    <literal>^</literal> (matching the null string at the beginning of
-    a line), <literal>$</literal> (matching the null string at the end
-    of a line), a <literal>\</literal> followed by one of the
+    <literal>^</literal> (matching the null string at the beginning of the
+    input string), <literal>$</literal> (matching the null string at the end
+    of the input string), a <literal>\</literal> followed by one of the
     characters <literal>^.[$()|*+?{\</literal> (matching that
     character taken as an ordinary character), a <literal>\</literal>
     followed by any other character (matching that character taken as
