@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.23 1997/11/16 04:36:43 momjian Exp $
+ * $Id: pg_type.h,v 1.24 1997/11/17 16:39:16 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -151,13 +151,13 @@ typedef TypeTupleFormData *TypeTupleForm;
 
 /* OIDS 1 - 99 */
 DATA(insert OID = 16 (	bool	   PGUID  1   1 t b t \054 0   0 boolin boolout boolin boolout c _null_ ));
-DESCR("");
+DESCR("boolean 'true'/'false'");
 #define BOOLOID			16
 
 DATA(insert OID = 17 (	bytea	   PGUID -1  -1 f b t \054 0  18 byteain byteaout byteain byteaout i _null_ ));
 DESCR("");
 DATA(insert OID = 18 (	char	   PGUID  1   1 t b t \054 0   0 charin charout charin charout c _null_ ));
-DESCR("");
+DESCR("single character 'c'");
 #define CHAROID 18
 
 DATA(insert OID = 19 (	name	   PGUID NAMEDATALEN NAMEDATALEN  f b t \054 0	18 namein nameout namein nameout d _null_ ));
@@ -165,9 +165,9 @@ DESCR("");
 #define NAMEOID 19
 
 DATA(insert OID = 20 (	char16	   PGUID 16  16 f b t \054 0  18 char16in char16out char16in char16out i _null_ ));
-DESCR("");
+DESCR("sixteen characters");
 DATA(insert OID = 21 (	int2	   PGUID  2   5 t b t \054 0   0 int2in int2out int2in int2out s _null_ ));
-DESCR("");
+DESCR("two-byte integer");
 #define INT2OID			21
 
 DATA(insert OID = 22 (	int28	   PGUID 16  50 f b t \054 0  21 int28in int28out int28in int28out i _null_ ));
@@ -182,13 +182,13 @@ DESCR("");
 #define INT28OID		22
 
 DATA(insert OID = 23 (	int4	   PGUID  4  10 t b t \054 0   0 int4in int4out int4in int4out i _null_ ));
-DESCR("");
+DESCR("4-byte integer");
 #define INT4OID			23
 
 DATA(insert OID = 24 (	regproc    PGUID  4  16 t b t \054 0   0 regprocin regprocout regprocin regprocout i _null_ ));
 DESCR("");
 DATA(insert OID = 25 (	text	   PGUID -1  -1 f b t \054 0  18 textin textout textin textout i _null_ ));
-DESCR("");
+DESCR("native variable-length string");
 #define TEXTOID 25
 
 DATA(insert OID = 26 (	oid		   PGUID  4  10 t b t \054 0   0 int4in int4out int4in int4out i _null_ ));
@@ -207,7 +207,7 @@ DATA(insert OID = 32 (	SET		   PGUID -1  -1 f r t \054 0  -1 textin textout text
 DESCR("");
 
 DATA(insert OID = 71 (	pg_type		 PGUID 1 1 t b t \054 1247 0 foo bar foo bar c _null_));
-DESCR("");
+DESCR("types table");
 DATA(insert OID = 75 (	pg_attribute PGUID 1 1 t b t \054 1249 0 foo bar foo bar c _null_));
 DESCR("");
 DATA(insert OID = 81 (	pg_proc		 PGUID 1 1 t b t \054 1255 0 foo bar foo bar c _null_));
@@ -219,7 +219,7 @@ DESCR("");
 DATA(insert OID = 87 (	pg_group	 PGUID 1 1 t b t \054 1261 0 foo bar foo bar c _null_));
 DESCR("");
 DATA(insert OID = 88 (	pg_database  PGUID 1 1 t b t \054 1262 0 foo bar foo bar c _null_));
-DESCR("");
+DESCR("known databases");
 DATA(insert OID = 90 (	pg_variable  PGUID 1 1 t b t \054 1264 0 foo bar foo bar c _null_));
 DESCR("");
 DATA(insert OID = 99 (	pg_log		 PGUID 1 1 t b t \054 1269 0 foo bar foo bar c _null_));
@@ -243,57 +243,57 @@ DESCR("");
 
 /* OIDS 400 - 499 */
 DATA(insert OID = 409 (  char2	   PGUID 2	2 t b t \054 0	18 char2in char2out char2in char2out s _null_ ));
-DESCR("");
+DESCR("two characters");
 DATA(insert OID = 410 (  char4	   PGUID 4	4 t b t \054 0	18 char4in char4out char4in char4out i _null_ ));
-DESCR("");
+DESCR("four characters");
 DATA(insert OID = 411 (  char8	   PGUID 8	8 f b t \054 0	18 char8in char8out char8in char8out i _null_ ));
-DESCR("");
+DESCR("eight characters");
 
 /* OIDS 500 - 599 */
 
 /* OIDS 600 - 699 */
 DATA(insert OID = 600 (  point	   PGUID 16  24 f b t \054 0 701 point_in point_out point_in point_out d _null_ ));
-DESCR("");
+DESCR("geometric point '(x, y)'");
 DATA(insert OID = 601 (  lseg	   PGUID 32  48 f b t \054 0 600 lseg_in lseg_out lseg_in lseg_out d _null_ ));
-DESCR("");
+DESCR("geometric line segment '(pt1,pt2)'");
 DATA(insert OID = 602 (  path	   PGUID -1  -1 f b t \054 0 600 path_in path_out path_in path_out d _null_ ));
-DESCR("");
+DESCR("geometric path '(pt1,...)'");
 DATA(insert OID = 603 (  box	   PGUID 32 100 f b t \073 0 600 box_in box_out box_in box_out d _null_ ));
-DESCR("");
+DESCR("geometric box '(lower left,upper right)'");
 DATA(insert OID = 604 (  polygon   PGUID -1  -1 f b t \054 0  -1 poly_in poly_out poly_in poly_out d _null_ ));
-DESCR("");
+DESCR("geometric polygon '(pt1,...)'");
 DATA(insert OID = 605 (  filename  PGUID 256 -1 f b t \054 0  18 filename_in filename_out filename_in filename_out i _null_ ));
 DESCR("");
 
 DATA(insert OID = 628 (  line	   PGUID 32  48 f b t \054 0 701 line_in line_out line_in line_out d _null_ ));
-DESCR("");
+DESCR("geometric line '(pt1,pt2)'");
 DATA(insert OID = 629 (  _line	   PGUID  -1 -1 f b t \054 0 628 array_in array_out array_in array_out d _null_ ));
 DESCR("");
 
 /* OIDS 700 - 799 */
 
 DATA(insert OID = 700 (  float4    PGUID  4  12 f b t \054 0   0 float4in float4out float4in float4out i _null_ ));
-DESCR("");
+DESCR("single-precision floating point number");
 #define FLOAT4OID 700
 DATA(insert OID = 701 (  float8    PGUID  8  24 f b t \054 0   0 float8in float8out float8in float8out d _null_ ));
-DESCR("");
+DESCR("double-precision floating point number");
 #define FLOAT8OID 701
 DATA(insert OID = 702 (  abstime   PGUID  4  20 t b t \054 0   0 nabstimein nabstimeout nabstimein nabstimeout i _null_ ));
-DESCR("");
+DESCR("internal date and time (Unix system time)");
 DATA(insert OID = 703 (  reltime   PGUID  4  20 t b t \054 0   0 reltimein reltimeout reltimein reltimeout i _null_ ));
-DESCR("");
+DESCR("internal time interval (Unix delta time)");
 DATA(insert OID = 704 (  tinterval PGUID 12  47 f b t \054 0   0 tintervalin tintervalout tintervalin tintervalout i _null_ ));
-DESCR("");
+DESCR("time interval '(abstime,abstime)'");
 DATA(insert OID = 705 (  unknown   PGUID -1  -1 f b t \054 0   18 textin textout textin textout i _null_ ));
 DESCR("");
 #define UNKNOWNOID		705
 
 DATA(insert OID = 718 (  circle    PGUID  24 47 f b t \054 0	0 circle_in circle_out circle_in circle_out d _null_ ));
-DESCR("");
+DESCR("geometric circle '(center,radius>'");
 DATA(insert OID = 719 (  _circle   PGUID  -1 -1 f b t \054 0  718 array_in array_out array_in array_out d _null_ ));
 DESCR("");
 DATA(insert OID = 790 (  money	   PGUID   4 24 f b t \054 0	0 cash_in cash_out cash_in cash_out i _null_ ));
-DESCR("");
+DESCR("money '$xx.yy'");
 #define CASHOID 790
 DATA(insert OID = 791 (  _money    PGUID  -1 -1 f b t \054 0  790 array_in array_out array_in array_out i _null_ ));
 DESCR("");
@@ -384,14 +384,14 @@ DATA(insert OID = 1042 ( bpchar		 PGUID -1  -1 f b t \054 0	18 bpcharin bpcharou
 DESCR("");
 #define BPCHAROID		1042
 DATA(insert OID = 1043 ( varchar	 PGUID -1  -1 f b t \054 0	18 varcharin varcharout varcharin varcharout i _null_ ));
-DESCR("");
+DESCR("variable-length string with maximum size");
 #define VARCHAROID		1043
 
 DATA(insert OID = 1082 ( date		 PGUID	4  10 t b t \054 0	0 date_in date_out date_in date_out i _null_ ));
-DESCR("");
+DESCR("date 'yyyy-mm-dd'");
 #define DATEOID			1082
 DATA(insert OID = 1083 ( time		 PGUID	8  16 f b t \054 0	0 time_in time_out time_in time_out d _null_ ));
-DESCR("");
+DESCR("time 'hh:mm:ss'");
 #define TIMEOID			1083
 
 /* OIDS 1100 - 1199 */
@@ -400,19 +400,19 @@ DESCR("");
 DATA(insert OID = 1183 ( _time		 PGUID	-1 -1 f b t \054 0	1083 array_in array_out array_in array_out d _null_ ));
 DESCR("");
 DATA(insert OID = 1184 ( datetime	 PGUID	8  47 f b t \054 0	0 datetime_in datetime_out datetime_in datetime_out d _null_ ));
-DESCR("");
+DESCR("date and time 'yyyy-mm-dd hh:mm:ss'");
 #define DATETIMEOID		1184
 DATA(insert OID = 1185 ( _datetime	 PGUID	-1 -1 f b t \054 0	1184 array_in array_out array_in array_out d _null_ ));
 DESCR("");
 DATA(insert OID = 1186 ( timespan	 PGUID 12  47 f b t \054 0	0 timespan_in timespan_out timespan_in timespan_out d _null_ ));
-DESCR("");
+DESCR("time interval '@ <number> <units>'");
 #define TIMESPANOID		1186
 DATA(insert OID = 1187 ( _timespan	 PGUID	-1 -1 f b t \054 0	1186 array_in array_out array_in array_out d _null_ ));
 DESCR("");
 
 /* OIDS 1200 - 1299 */
 DATA(insert OID = 1296 ( timestamp	 PGUID	4  19 t b t \054 0	0 timestamp_in timestamp_out timestamp_in timestamp_out i _null_ ));
-DESCR("");
+DESCR("date and time");
 #define TIMESTAMPOID	1296
 
 /*
