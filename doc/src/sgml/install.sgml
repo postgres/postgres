@@ -310,7 +310,7 @@ $ ls -l db.out
      your backup.  If necessary, bring down postmaster, edit the permissions
      in file <filename>/usr/local/pgsql/data/pg_hba.conf</filename>
  to allow only you on, then
-     bring <application>postmaste</application>r back up.
+     bring <application>postmaster</application> back up.
 </Para>
 </caution>
 
@@ -380,7 +380,7 @@ $ exit
 <Step Performance="required" id="newdirs">
 <Para>
   Make new source and install directories.  The actual paths can be
-     different for your installation but you must be consistant throughout this procedure.
+     different for your installation but you must be consistent throughout this procedure.
 </para>
 <note>
 <para>
@@ -711,7 +711,7 @@ pg_id: can't load library 'libpq.so'
      </step>
      <Step Performance="required">
       <para>
-       Several regression tests could failed if the user's locale collation
+       Several regression tests could fail if the user's locale collation
        scheme is different from that of standard C locale.
       </para>
       <para>

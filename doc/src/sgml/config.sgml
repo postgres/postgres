@@ -39,21 +39,23 @@ Features and packages:
   --enable-recode         enable cyrillic recode support
   --with-mb=<replaceable>encoding</replaceable>    enable multi-byte support
   --with-pgport=<replaceable>portnum</replaceable> change default startup port
-  --with-tcl              use tcl
+  --with-maxbackends=<replaceable>n</replaceable>  set default maximum number of server processes 
+  --with-tcl              build Tcl interfaces and pgtclsh
   --with-tclconfig=<replaceable>tcldir</replaceable> tclConfig.sh and tkConfig.sh are in DIR
-  --with-perl             use perl
+  --with-perl             build Perl interface
   --with-odbc             build ODBC driver package
   --with-odbcinst=<replaceable>odbcdir</replaceable> change default directory for odbcinst.ini
   --enable-cassert        enable assertion checks (debugging)
   --with-CC=<replaceable>compiler</replaceable>      use specific C compiler
   --with-CXX=<replaceable>compiler</replaceable>     use specific C++ compiler
+  --without-CXX           prevent building C++ code 
    </programlisting>
   </para>
   <para>
    Some systems may have trouble building a specific feature of
    <productname>Postgres</productname>. For example, systems with a damaged
-   C++ compiler may need to specify <option>--without-CXX</option> to encourage
-   the build procedure to ignore the <filename>libpq++</filename> construction.
+   C++ compiler may need to specify <option>--without-CXX</option> to instruct
+   the build procedure to skip construction of <filename>libpq++</filename>.
   </para>
  </sect1>
  <sect1>
@@ -64,7 +66,7 @@ Features and packages:
    stage of <productname>Postgres</productname> installation.
   </para>
   <para>
-   In most cases, these parameters should be place in a file,
+   In most cases, these parameters should be placed in a file,
    <filename>Makefile.custom</filename>, intended just for that purpose.
    The default distribution does not contain this optional file, so you
    will create it using a text editor of your choice. When upgrading installations,
@@ -348,7 +350,7 @@ PSTYLE= /home/tgl/SGML/db118.d/docbook/print
    <Title>What are the Drawbacks?</Title>
    
    <Para>
-    There is one evident drawback of using locale - it's speed! 
+    There is one evident drawback of using locale - its speed! 
     So, use locale only if you really need it. 
    </para>
   </sect2>
