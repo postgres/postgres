@@ -79,3 +79,12 @@ EXPORTS
 	destroyPQExpBuffer	@ 76
 	createPQExpBuffer	@ 77
 	PQconninfoFree		@ 78
+	PQconnectPoll		@ 79
+	PQconnectStart		@ 80
+	PQflush			@ 81
+	PQisnonblocking		@ 82
+	PQresetPoll		@ 83
+	PQresetStart		@ 84
+	PQsetClientEncoding	@ 85
+	PQsetnonblocking	@ 86
+
