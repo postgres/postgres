@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.59 2001/10/05 19:01:13 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.60 2001/10/11 16:54:18 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1287,7 +1287,8 @@ do_connect(const char *new_dbname, const char *new_user)
 	 * Use old password if no new one given (if you didn't have an old
 	 * one, fine)
 	 */
-	if (!pwparam && oldconn)
+	if (!pwparam && oldconn && PQuser(oldconn) && userparam &&
+		strcmp(PQuser(oldconn), userparam) == 0)
 		pwparam = PQpass(oldconn);
 
 	do
