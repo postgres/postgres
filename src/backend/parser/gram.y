@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.216 2001/01/17 17:26:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.217 2001/01/20 17:37:52 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3604,10 +3604,6 @@ from_list:  from_list ',' table_ref				{ $$ = lappend($1, $3); }
  * between table_ref := '(' joined_table ')' alias_clause
  * and joined_table := '(' joined_table ')'.  So, we must have the
  * redundant-looking productions here instead.
- *
- * Note that the SQL spec does not permit a subselect (<derived_table>)
- * without an alias clause, so we don't either.  This avoids the problem
- * of needing to invent a refname for an unlabeled subselect.
  */
 table_ref:  relation_expr
 				{
@@ -3617,6 +3613,23 @@ table_ref:  relation_expr
 				{
 					$1->name = $2;
 					$$ = (Node *) $1;
+				}
+		| select_with_parens
+				{
+					/*
+					 * The SQL spec does not permit a subselect
+					 * (<derived_table>) without an alias clause,
+					 * so we don't either.  This avoids the problem
+					 * of needing to invent a unique refname for it.
+					 * That could be surmounted if there's sufficient
+					 * popular demand, but for now let's just implement
+					 * the spec and see if anyone complains.
+					 * However, it does seem like a good idea to emit
+					 * an error message that's better than "parse error".
+					 */
+					elog(ERROR, "sub-SELECT in FROM must have an alias"
+						 "\n\tFor example, FROM (SELECT ...) [AS] foo");
+					$$ = NULL;
 				}
 		| select_with_parens alias_clause
 				{
