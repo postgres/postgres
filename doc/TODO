@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Aug  8 19:13:54 EDT 2002
+Last updated:		Thu Aug  8 19:50:27 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -243,7 +243,7 @@ Commands
 
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions
-	o Fix PL/PgSQL to handle quoted mixed-case identifiers
+	o -Fix PL/PgSQL to handle quoted mixed-case identifiers
 	o Change PL/PgSQL to use palloc() instead of malloc()
 	o Add untrusted version of plpython
 	o Add plsh server-side shell language (Peter E)
