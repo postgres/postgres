@@ -70,7 +70,6 @@ static Oid	get_relid_from_relname(text *relname_text);
 static dblink_results *get_res_ptr(int32 res_id_index);
 static void append_res_ptr(dblink_results * results);
 static void remove_res_ptr(dblink_results * results);
-static TupleDesc pgresultGetTupleDesc(PGresult *res);
 static char *generate_relation_name(Oid relid);
 
 /* Global */
@@ -273,6 +272,7 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		StringInfo	str = makeStringInfo();
 		char	   *curname = GET_STR(PG_GETARG_TEXT_P(0));
 		int			howmany = PG_GETARG_INT32(1);
+		ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -326,7 +326,14 @@ dblink_fetch(PG_FUNCTION_ARGS)
 		if (functyptype == 'c')
 			tupdesc = TypeGetTupleDesc(functypeid, NIL);
 		else if (functyptype == 'p' && functypeid == RECORDOID)
-			tupdesc = pgresultGetTupleDesc(res);
+		{
+			if (!rsinfo || !IsA(rsinfo, ReturnSetInfo))
+				elog(ERROR, "function returning record called in context "
+							"that cannot accept type record");
+
+			/* get the requested return tuple description */
+			tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+		}
 		else if (functyptype == 'b')
 			elog(ERROR, "dblink_fetch: invalid kind of return type specified for function");
 		else
@@ -417,6 +424,7 @@ dblink_record(PG_FUNCTION_ARGS)
 		PGconn	   *conn = NULL;
 		char	   *connstr = NULL;
 		char	   *sql = NULL;
+		ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -505,7 +513,14 @@ dblink_record(PG_FUNCTION_ARGS)
 			if (functyptype == 'c')
 				tupdesc = TypeGetTupleDesc(functypeid, NIL);
 			else if (functyptype == 'p' && functypeid == RECORDOID)
-				tupdesc = pgresultGetTupleDesc(res);
+			{
+				if (!rsinfo || !IsA(rsinfo, ReturnSetInfo))
+					elog(ERROR, "function returning record called in context "
+								"that cannot accept type record");
+
+				/* get the requested return tuple description */
+				tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+			}
 			else if (functyptype == 'b')
 				elog(ERROR, "Invalid kind of return type specified for function");
 			else
@@ -1962,59 +1977,6 @@ remove_res_ptr(dblink_results * results)
 
 	if (res_id == NIL)
 		res_id_index = 0;
-}
-
-static TupleDesc
-pgresultGetTupleDesc(PGresult *res)
-{
-	int			natts;
-	AttrNumber	attnum;
-	TupleDesc	desc;
-	char	   *attname;
-	int32		atttypmod;
-	int			attdim;
-	bool		attisset;
-	Oid			atttypid;
-	int			i;
-
-	/*
-	 * allocate a new tuple descriptor
-	 */
-	natts = PQnfields(res);
-	if (natts < 1)
-		elog(ERROR, "cannot create a description for empty results");
-
-	desc = CreateTemplateTupleDesc(natts, false);
-
-	attnum = 0;
-
-	for (i = 0; i < natts; i++)
-	{
-		/*
-		 * for each field, get the name and type information from the
-		 * query result and have TupleDescInitEntry fill in the attribute
-		 * information we need.
-		 */
-		attnum++;
-
-		attname = PQfname(res, i);
-		atttypid = PQftype(res, i);
-		atttypmod = PQfmod(res, i);
-
-		if (PQfsize(res, i) != get_typlen(atttypid))
-			elog(ERROR, "Size of remote field \"%s\" does not match size "
-				 "of local type \"%s\"",
-				 attname,
-				 format_type_with_typemod(atttypid, atttypmod));
-
-		attdim = 0;
-		attisset = false;
-
-		TupleDescInitEntry(desc, attnum, attname, atttypid,
-						   atttypmod, attdim, attisset);
-	}
-
-	return desc;
 }
 
 /*
