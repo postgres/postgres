@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.81.2.1 2002/09/30 20:47:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.81.2.2 2003/03/13 23:44:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -613,6 +613,16 @@ Async_NotifyHandler(SIGNAL_ARGS)
 
 	if (notifyInterruptEnabled)
 	{
+		bool		save_ImmediateInterruptOK = ImmediateInterruptOK;
+
+		/*
+		 * We may be called while ImmediateInterruptOK is true; turn it off
+		 * while messing with the NOTIFY state.  (We would have to save
+		 * and restore it anyway, because PGSemaphore operations inside
+		 * ProcessIncomingNotify() might reset it.)
+		 */
+		ImmediateInterruptOK = false;
+
 		/*
 		 * I'm not sure whether some flavors of Unix might allow another
 		 * SIGUSR2 occurrence to recursively interrupt this routine. To
@@ -640,6 +650,13 @@ Async_NotifyHandler(SIGNAL_ARGS)
 					elog(DEBUG, "Async_NotifyHandler: done");
 			}
 		}
+
+		/*
+		 * Restore ImmediateInterruptOK, and check for interrupts if needed.
+		 */
+		ImmediateInterruptOK = save_ImmediateInterruptOK;
+		if (save_ImmediateInterruptOK)
+			CHECK_FOR_INTERRUPTS();
 	}
 	else
 	{
