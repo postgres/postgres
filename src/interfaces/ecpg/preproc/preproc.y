@@ -1935,6 +1935,8 @@ opt_force: FORCE			{ $$ = make_str("force"); }
 
 RenameStmt:  ALTER TABLE relation_expr RENAME opt_column opt_name TO name
 			{ $$ = cat_str(7, make_str("alter table"), $3, make_str("rename"), $5, $6, make_str("to"), $8); }
+	| ALTER TRIGGER name ON relation_expr RENAME TO name
+			{ $$ = cat_str(6, make_str("alter trigger"), $3, make_str("on"), $5, make_str("rename to"), $8); }
 		;
 
 opt_name:  name				{ $$ = $1; }
