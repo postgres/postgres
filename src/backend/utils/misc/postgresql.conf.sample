@@ -11,6 +11,9 @@
 # allowed values can be found in the PostgreSQL documentation. The
 # commented-out settings shown in this file represent the default values.
 #
+# Please note that re-commenting a setting is NOT sufficient to revert it
+# to the default value, unless you restart the postmaster.
+#
 # Any option can also be given as a command line switch to the
 # postmaster, e.g. 'postmaster -c log_connections=on'. Some options
 # can be changed at run-time with the 'SET' SQL command.
@@ -18,7 +21,8 @@
 # This file is read on postmaster startup and when the postmaster
 # receives a SIGHUP. If you edit the file on a running system, you have 
 # to SIGHUP the postmaster for the changes to take effect, or use 
-# "pg_ctl reload".
+# "pg_ctl reload". Some settings, such as listen_address, require
+# a postmaster shutdown and restart to take effect.
 
 
 #---------------------------------------------------------------------------
