@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.144 2001/12/04 21:19:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.145 2002/02/12 21:25:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 #endif
 
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
-#define VALUE(c) ((c) - '0')
+#define OCTVALUE(c) ((c) - '0')
 
 
 /* non-export function prototypes */
@@ -83,13 +83,13 @@ static int	server_encoding;
  * Internal communications functions
  */
 static void CopySendData(void *databuf, int datasize, FILE *fp);
-static void CopySendString(char *str, FILE *fp);
+static void CopySendString(const char *str, FILE *fp);
 static void CopySendChar(char c, FILE *fp);
 static void CopyGetData(void *databuf, int datasize, FILE *fp);
 static int	CopyGetChar(FILE *fp);
 static int	CopyGetEof(FILE *fp);
 static int	CopyPeekChar(FILE *fp);
-static void CopyDonePeek(FILE *fp, int c, int pickup);
+static void CopyDonePeek(FILE *fp, int c, bool pickup);
 
 /*
  * CopySendData sends output data either to the file
@@ -118,9 +118,9 @@ CopySendData(void *databuf, int datasize, FILE *fp)
 }
 
 static void
-CopySendString(char *str, FILE *fp)
+CopySendString(const char *str, FILE *fp)
 {
-	CopySendData(str, strlen(str), fp);
+	CopySendData((void *) str, strlen(str), fp);
 }
 
 static void
@@ -178,10 +178,12 @@ CopyGetEof(FILE *fp)
 
 /*
  * CopyPeekChar reads a byte in "peekable" mode.
+ *
  * after each call to CopyPeekChar, a call to CopyDonePeek _must_
  * follow, unless EOF was returned.
- * CopyDonePeek will either take the peeked char off the steam
- * (if pickup is != 0) or leave it on the stream (if pickup == 0)
+ *
+ * CopyDonePeek will either take the peeked char off the stream
+ * (if pickup is true) or leave it on the stream (if pickup is false).
  */
 static int
 CopyPeekChar(FILE *fp)
@@ -199,15 +201,13 @@ CopyPeekChar(FILE *fp)
 }
 
 static void
-CopyDonePeek(FILE *fp, int c, int pickup)
+CopyDonePeek(FILE *fp, int c, bool pickup)
 {
 	if (!fp)
 	{
 		if (pickup)
 		{
-			/*
-			 * We want to pick it up
-			 */
+			/* We want to pick it up */
 			(void) pq_getbyte();
 		}
 		/* If we didn't want to pick it up, just leave it where it sits */
@@ -219,7 +219,7 @@ CopyDonePeek(FILE *fp, int c, int pickup)
 			/* We don't want to pick it up - so put it back in there */
 			ungetc(c, fp);
 		}
-		/* If we wanted to pick it up, it's already there */
+		/* If we wanted to pick it up, it's already done */
 	}
 }
 
@@ -1078,31 +1078,30 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 					{
 						int			val;
 
-						val = VALUE(c);
+						val = OCTVALUE(c);
 						c = CopyPeekChar(fp);
 						if (ISOCTAL(c))
 						{
-							val = (val << 3) + VALUE(c);
-							CopyDonePeek(fp, c, 1);		/* Pick up the
-														 * character! */
+							val = (val << 3) + OCTVALUE(c);
+							CopyDonePeek(fp, c, true /*pick up*/);
 							c = CopyPeekChar(fp);
 							if (ISOCTAL(c))
 							{
-								CopyDonePeek(fp, c, 1); /* pick up! */
-								val = (val << 3) + VALUE(c);
+								val = (val << 3) + OCTVALUE(c);
+								CopyDonePeek(fp, c, true /*pick up*/);
 							}
 							else
 							{
 								if (c == EOF)
 									goto endOfFile;
-								CopyDonePeek(fp, c, 0); /* Return to stream! */
+								CopyDonePeek(fp, c, false /*put back*/);
 							}
 						}
 						else
 						{
 							if (c == EOF)
 								goto endOfFile;
-							CopyDonePeek(fp, c, 0);		/* Return to stream! */
+							CopyDonePeek(fp, c, false /*put back*/);
 						}
 						c = val & 0377;
 					}
@@ -1144,6 +1143,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_
 		}
 		appendStringInfoCharMacro(&attribute_buf, c);
 #ifdef MULTIBYTE
+		/* XXX shouldn't this be done even when encoding is the same? */
 		if (client_encoding != server_encoding)
 		{
 			/* get additional bytes of the char, if any */
@@ -1190,15 +1190,18 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 {
 	char	   *string;
 	char		c;
+	char		delimc = delim[0];
 
 #ifdef MULTIBYTE
+	bool		same_encoding;
 	char	   *string_start;
 	int			mblen;
 	int			i;
 #endif
 
 #ifdef MULTIBYTE
-	if (client_encoding != server_encoding)
+	same_encoding = (server_encoding == client_encoding);
+	if (!same_encoding)
 	{
 		string = (char *) pg_server_to_client((unsigned char *) server_string,
 											  strlen(server_string));
@@ -1207,31 +1210,64 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 	else
 	{
 		string = server_string;
-		string_start = NULL;	/* unused, but keep compiler quiet */
+		string_start = NULL;
 	}
 #else
 	string = server_string;
 #endif
 
 #ifdef MULTIBYTE
-	for (; (mblen = (server_encoding == client_encoding ? 1 : pg_encoding_mblen(client_encoding, string))) &&
-		 ((c = *string) != '\0'); string += mblen)
+	for (; (c = *string) != '\0'; string += mblen)
 #else
 	for (; (c = *string) != '\0'; string++)
 #endif
 	{
-		if (c == delim[0] || c == '\n' || c == '\\')
-			CopySendChar('\\', fp);
 #ifdef MULTIBYTE
-		for (i = 0; i < mblen; i++)
-			CopySendChar(*(string + i), fp);
-#else
-		CopySendChar(c, fp);
+		mblen = 1;
 #endif
+		switch (c)
+		{
+			case '\b':
+				CopySendString("\\b", fp);
+				break;
+			case '\f':
+				CopySendString("\\f", fp);
+				break;
+			case '\n':
+				CopySendString("\\n", fp);
+				break;
+			case '\r':
+				CopySendString("\\r", fp);
+				break;
+			case '\t':
+				CopySendString("\\t", fp);
+				break;
+			case '\v':
+				CopySendString("\\v", fp);
+				break;
+			case '\\':
+				CopySendString("\\\\", fp);
+				break;
+			default:
+				if (c == delimc)
+					CopySendChar('\\', fp);
+				CopySendChar(c, fp);
+#ifdef MULTIBYTE
+				/* XXX shouldn't this be done even when encoding is same? */
+				if (!same_encoding)
+				{
+					/* send additional bytes of the char, if any */
+					mblen = pg_encoding_mblen(client_encoding, string);
+					for (i = 1; i < mblen; i++)
+						CopySendChar(string[i], fp);
+				}
+#endif
+				break;
+		}
 	}
 
 #ifdef MULTIBYTE
-	if (client_encoding != server_encoding)
+	if (string_start)
 		pfree(string_start);	/* pfree pg_server_to_client result */
 #endif
 }
