@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.104 2004/04/19 17:42:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.105 2004/05/31 03:48:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,10 @@
 
 #include "catalog/catalog.h"
 #include "miscadmin.h"
+#include "postmaster/bgwriter.h"
 #include "storage/fd.h"
 #include "storage/smgr.h"
+#include "utils/hsearch.h"
 #include "utils/memutils.h"
 
 
@@ -33,13 +35,19 @@
  *	system's file size limit (often 2GBytes).  In order to do that,
  *	we break relations up into chunks of < 2GBytes and store one chunk
  *	in each of several files that represent the relation.  See the
- *	BLCKSZ and RELSEG_SIZE configuration constants in
- *	include/pg_config.h.  All chunks except the last MUST have size exactly
- *	equal to RELSEG_SIZE blocks --- see mdnblocks() and mdtruncate().
+ *	BLCKSZ and RELSEG_SIZE configuration constants in pg_config_manual.h.
+ *	All chunks except the last MUST have size exactly equal to RELSEG_SIZE
+ *	blocks --- see mdnblocks() and mdtruncate().
  *
  *	The file descriptor pointer (md_fd field) stored in the SMgrRelation
  *	cache is, therefore, just the head of a list of MdfdVec objects.
  *	But note the md_fd pointer can be NULL, indicating relation not open.
+ *
+ *	Note that mdfd_chain == NULL does not necessarily mean the relation
+ *	doesn't have another segment after this one; we may just not have
+ *	opened the next segment yet.  (We could not have "all segments are
+ *	in the chain" as an invariant anyway, since another backend could
+ *	extend the relation when we weren't looking.)
  *
  *	All MdfdVec objects are palloc'd in the MdCxt memory context.
  */
@@ -47,23 +55,48 @@
 typedef struct _MdfdVec
 {
 	File		mdfd_vfd;			/* fd number in fd.c's pool */
-
-#ifndef LET_OS_MANAGE_FILESIZE
-	struct _MdfdVec *mdfd_chain;	/* for large relations */
+	BlockNumber	mdfd_segno;			/* segment number, from 0 */
+#ifndef LET_OS_MANAGE_FILESIZE		/* for large relations */
+	struct _MdfdVec *mdfd_chain;	/* next segment, or NULL */
 #endif
 } MdfdVec;
 
 static MemoryContext MdCxt;		/* context for all md.c allocations */
 
 
-/* routines declared here */
-static MdfdVec *mdopen(SMgrRelation reln);
+/*
+ * In some contexts (currently, standalone backends and the bgwriter process)
+ * we keep track of pending fsync operations: we need to remember all relation
+ * segments that have been written since the last checkpoint, so that we can
+ * fsync them down to disk before completing the next checkpoint.  This hash
+ * table remembers the pending operations.  We use a hash table not because
+ * we want to look up individual operations, but simply as a convenient way
+ * of eliminating duplicate requests.
+ *
+ * (Regular backends do not track pending operations locally, but forward
+ * them to the bgwriter.)
+ *
+ * XXX for WIN32, may want to expand this to track pending deletes, too.
+ */
+typedef struct
+{
+	RelFileNode	rnode;			/* the targeted relation */
+	BlockNumber	segno;			/* which segment */
+} PendingOperationEntry;
+
+static HTAB *pendingOpsTable = NULL;
+
+
+/* local routines */
+static MdfdVec *mdopen(SMgrRelation reln, bool allowNotFound);
+static bool register_dirty_segment(SMgrRelation reln, MdfdVec *seg);
 static MdfdVec *_fdvec_alloc(void);
 #ifndef LET_OS_MANAGE_FILESIZE
 static MdfdVec *_mdfd_openseg(SMgrRelation reln, BlockNumber segno,
 							  int oflags);
 #endif
-static MdfdVec *_mdfd_getseg(SMgrRelation reln, BlockNumber blkno);
+static MdfdVec *_mdfd_getseg(SMgrRelation reln, BlockNumber blkno,
+							 bool allowNotFound);
 static BlockNumber _mdnblocks(File file, Size blcksz);
 
 
@@ -78,6 +111,31 @@ mdinit(void)
 								  ALLOCSET_DEFAULT_MINSIZE,
 								  ALLOCSET_DEFAULT_INITSIZE,
 								  ALLOCSET_DEFAULT_MAXSIZE);
+
+	/*
+	 * Create pending-operations hashtable if we need it.  Currently,
+	 * we need it if we are standalone (not under a postmaster) OR
+	 * if we are a bootstrap-mode subprocess of a postmaster (that is,
+	 * a startup or bgwriter process).
+	 */
+	if (!IsUnderPostmaster || IsBootstrapProcessingMode())
+	{
+		HASHCTL		hash_ctl;
+
+		MemSet(&hash_ctl, 0, sizeof(hash_ctl));
+		hash_ctl.keysize = sizeof(PendingOperationEntry);
+		hash_ctl.entrysize = sizeof(PendingOperationEntry);
+		hash_ctl.hash = tag_hash;
+		hash_ctl.hcxt = MdCxt;
+		pendingOpsTable = hash_create("Pending Ops Table",
+									  100L,
+									  &hash_ctl,
+									  HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
+		if (pendingOpsTable == NULL)
+			ereport(FATAL,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
+	}
 
 	return true;
 }
@@ -130,6 +188,7 @@ mdcreate(SMgrRelation reln, bool isRedo)
 	reln->md_fd = _fdvec_alloc();
 
 	reln->md_fd->mdfd_vfd = fd;
+	reln->md_fd->mdfd_segno = 0;
 #ifndef LET_OS_MANAGE_FILESIZE
 	reln->md_fd->mdfd_chain = NULL;
 #endif
@@ -217,7 +276,7 @@ mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 	int			nbytes;
 	MdfdVec    *v;
 
-	v = _mdfd_getseg(reln, blocknum);
+	v = _mdfd_getseg(reln, blocknum, false);
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
@@ -252,6 +311,9 @@ mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 		return false;
 	}
 
+	if (!register_dirty_segment(reln, v))
+		return false;
+
 #ifndef LET_OS_MANAGE_FILESIZE
 	Assert(_mdnblocks(v->mdfd_vfd, BLCKSZ) <= ((BlockNumber) RELSEG_SIZE));
 #endif
@@ -261,12 +323,14 @@ mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 
 /*
  *	mdopen() -- Open the specified relation.  ereport's on failure.
+ *		(Optionally, can return NULL instead of ereport for ENOENT.)
  *
  * Note we only open the first segment, when there are multiple segments.
  */
 static MdfdVec *
-mdopen(SMgrRelation reln)
+mdopen(SMgrRelation reln, bool allowNotFound)
 {
+	MdfdVec	   *mdfd;
 	char	   *path;
 	File		fd;
 
@@ -292,6 +356,8 @@ mdopen(SMgrRelation reln)
 		if (fd < 0)
 		{
 			pfree(path);
+			if (allowNotFound && errno == ENOENT)
+				return NULL;
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not open relation %u/%u: %m",
@@ -302,15 +368,16 @@ mdopen(SMgrRelation reln)
 
 	pfree(path);
 
-	reln->md_fd = _fdvec_alloc();
+	reln->md_fd = mdfd = _fdvec_alloc();
 
-	reln->md_fd->mdfd_vfd = fd;
+	mdfd->mdfd_vfd = fd;
+	mdfd->mdfd_segno = 0;
 #ifndef LET_OS_MANAGE_FILESIZE
-	reln->md_fd->mdfd_chain = NULL;
+	mdfd->mdfd_chain = NULL;
 	Assert(_mdnblocks(fd, BLCKSZ) <= ((BlockNumber) RELSEG_SIZE));
 #endif
 
-	return reln->md_fd;
+	return mdfd;
 }
 
 /*
@@ -361,7 +428,7 @@ mdread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 	int			nbytes;
 	MdfdVec    *v;
 
-	v = _mdfd_getseg(reln, blocknum);
+	v = _mdfd_getseg(reln, blocknum, false);
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
@@ -403,7 +470,7 @@ mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 	long		seekpos;
 	MdfdVec    *v;
 
-	v = _mdfd_getseg(reln, blocknum);
+	v = _mdfd_getseg(reln, blocknum, false);
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
@@ -416,6 +483,9 @@ mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 		return false;
 
 	if (FileWrite(v->mdfd_vfd, buffer, BLCKSZ) != BLCKSZ)
+		return false;
+
+	if (!register_dirty_segment(reln, v))
 		return false;
 
 	return true;
@@ -434,7 +504,7 @@ mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 BlockNumber
 mdnblocks(SMgrRelation reln)
 {
-	MdfdVec    *v = mdopen(reln);
+	MdfdVec    *v = mdopen(reln, false);
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	BlockNumber nblocks;
@@ -516,7 +586,7 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks)
 	if (nblocks == curnblk)
 		return nblocks;			/* no work */
 
-	v = mdopen(reln);
+	v = mdopen(reln, false);
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	priorblocks = 0;
@@ -576,40 +646,154 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks)
 }
 
 /*
- *	mdcommit() -- Commit a transaction.
- */
-bool
-mdcommit(void)
-{
-	/*
-	 * We don't actually have to do anything here...
-	 */
-	return true;
-}
-
-/*
- *	mdabort() -- Abort a transaction.
- */
-bool
-mdabort(void)
-{
-	/*
-	 * We don't actually have to do anything here...
-	 */
-	return true;
-}
-
-/*
  *	mdsync() -- Sync previous writes to stable storage.
+ *
+ * This is only called during checkpoints, and checkpoints should only
+ * occur in processes that have created a pendingOpsTable.
  */
 bool
 mdsync(void)
 {
-	sync();
-	if (IsUnderPostmaster)
-		pg_usleep(2000000L);
-	sync();
+	HASH_SEQ_STATUS hstat;
+	PendingOperationEntry *entry;
+
+	if (!pendingOpsTable)
+		return false;
+
+	/*
+	 * If we are in the bgwriter, the sync had better include all fsync
+	 * requests that were queued by backends before the checkpoint REDO
+	 * point was determined.  We go that a little better by accepting
+	 * all requests queued up to the point where we start fsync'ing.
+	 */
+	AbsorbFsyncRequests();
+
+	hash_seq_init(&hstat, pendingOpsTable);
+	while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
+	{
+		/*
+		 * If fsync is off then we don't have to bother opening the file
+		 * at all.  (We delay checking until this point so that changing
+		 * fsync on the fly behaves sensibly.)
+		 */
+		if (enableFsync)
+		{
+			SMgrRelation reln;
+			MdfdVec *seg;
+
+			/*
+			 * Find or create an smgr hash entry for this relation.
+			 * This may seem a bit unclean -- md calling smgr?  But it's
+			 * really the best solution.  It ensures that the open file
+			 * reference isn't permanently leaked if we get an error here.
+			 * (You may say "but an unreferenced SMgrRelation is still a
+			 * leak!"  Not really, because the only case in which a checkpoint
+			 * is done by a process that isn't about to shut down is in the
+			 * bgwriter, and it will periodically do smgrcloseall().  This
+			 * fact justifies our not closing the reln in the success path
+			 * either, which is a good thing since in non-bgwriter cases
+			 * we couldn't safely do that.)  Furthermore, in many cases
+			 * the relation will have been dirtied through this same smgr
+			 * relation, and so we can save a file open/close cycle.
+			 */
+			reln = smgropen(entry->rnode);
+
+			/*
+			 * It is possible that the relation has been dropped or truncated
+			 * since the fsync request was entered.  Therefore, we have to
+			 * allow file-not-found errors.  This applies both during
+			 * _mdfd_getseg() and during FileSync, since fd.c might have
+			 * closed the file behind our back.
+			 */
+			seg = _mdfd_getseg(reln,
+							   entry->segno * ((BlockNumber) RELSEG_SIZE),
+							   true);
+			if (seg)
+			{
+				if (FileSync(seg->mdfd_vfd) < 0 &&
+					errno != ENOENT)
+				{
+					ereport(LOG,
+							(errcode_for_file_access(),
+							 errmsg("could not fsync segment %u of relation %u/%u: %m",
+									entry->segno,
+									entry->rnode.tblNode,
+									entry->rnode.relNode)));
+					return false;
+				}
+			}
+		}
+
+		/* Okay, delete this entry */
+		if (hash_search(pendingOpsTable, entry,
+						HASH_REMOVE, NULL) == NULL)
+			elog(ERROR, "pendingOpsTable corrupted");
+	}
+
 	return true;
+}
+
+/*
+ * register_dirty_segment() -- Mark a relation segment as needing fsync
+ *
+ * If there is a local pending-ops table, just make an entry in it for
+ * mdsync to process later.  Otherwise, try to pass off the fsync request
+ * to the background writer process.  If that fails, just do the fsync
+ * locally before returning (we expect this will not happen often enough
+ * to be a performance problem).
+ *
+ * A false result implies I/O failure during local fsync.  errno will be
+ * valid for error reporting.
+ */
+static bool
+register_dirty_segment(SMgrRelation reln, MdfdVec *seg)
+{
+	if (pendingOpsTable)
+	{
+		PendingOperationEntry entry;
+
+		/* ensure any pad bytes in the struct are zeroed */
+		MemSet(&entry, 0, sizeof(entry));
+		entry.rnode = reln->smgr_rnode;
+		entry.segno = seg->mdfd_segno;
+
+		if (hash_search(pendingOpsTable, &entry, HASH_ENTER, NULL) != NULL)
+			return true;
+		/* out of memory: fall through to do it locally */
+	}
+	else
+	{
+		if (ForwardFsyncRequest(reln->smgr_rnode, seg->mdfd_segno))
+			return true;
+	}
+
+	if (FileSync(seg->mdfd_vfd) < 0)
+		return false;
+	return true;
+}
+
+/*
+ * RememberFsyncRequest() -- callback from bgwriter side of fsync request
+ *
+ * We stuff the fsync request into the local hash table for execution
+ * during the bgwriter's next checkpoint.
+ */
+void
+RememberFsyncRequest(RelFileNode rnode, BlockNumber segno)
+{
+	PendingOperationEntry entry;
+
+	Assert(pendingOpsTable);
+
+	/* ensure any pad bytes in the struct are zeroed */
+	MemSet(&entry, 0, sizeof(entry));
+	entry.rnode = rnode;
+	entry.segno = segno;
+
+	if (hash_search(pendingOpsTable, &entry, HASH_ENTER, NULL) == NULL)
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 }
 
 /*
@@ -618,18 +802,11 @@ mdsync(void)
 static MdfdVec *
 _fdvec_alloc(void)
 {
-	MdfdVec *v;
-
-	v = (MdfdVec *) MemoryContextAlloc(MdCxt, sizeof(MdfdVec));
-	v->mdfd_vfd = -1;
-#ifndef LET_OS_MANAGE_FILESIZE
-	v->mdfd_chain = NULL;
-#endif
-
-	return v;
+	return (MdfdVec *) MemoryContextAlloc(MdCxt, sizeof(MdfdVec));
 }
 
 #ifndef LET_OS_MANAGE_FILESIZE
+
 /*
  * Open the specified segment of the relation,
  * and make a MdfdVec object for it.  Returns NULL on failure.
@@ -642,11 +819,11 @@ _mdfd_openseg(SMgrRelation reln, BlockNumber segno, int oflags)
 	char	   *path,
 			   *fullpath;
 
-	/* be sure we have enough space for the '.segno', if any */
 	path = relpath(reln->smgr_rnode);
 
 	if (segno > 0)
 	{
+		/* be sure we have enough space for the '.segno' */
 		fullpath = (char *) palloc(strlen(path) + 12);
 		sprintf(fullpath, "%s.%u", path, segno);
 		pfree(path);
@@ -667,32 +844,36 @@ _mdfd_openseg(SMgrRelation reln, BlockNumber segno, int oflags)
 
 	/* fill the entry */
 	v->mdfd_vfd = fd;
+	v->mdfd_segno = segno;
 	v->mdfd_chain = NULL;
 	Assert(_mdnblocks(fd, BLCKSZ) <= ((BlockNumber) RELSEG_SIZE));
 
 	/* all done */
 	return v;
 }
-#endif
+
+#endif /* LET_OS_MANAGE_FILESIZE */
 
 /*
  *	_mdfd_getseg() -- Find the segment of the relation holding the
- *					  specified block.  ereport's on failure.
+ *		specified block.  ereport's on failure.
+ *		(Optionally, can return NULL instead of ereport for ENOENT.)
  */
 static MdfdVec *
-_mdfd_getseg(SMgrRelation reln, BlockNumber blkno)
+_mdfd_getseg(SMgrRelation reln, BlockNumber blkno, bool allowNotFound)
 {
-	MdfdVec    *v = mdopen(reln);
-
+	MdfdVec    *v = mdopen(reln, allowNotFound);
 #ifndef LET_OS_MANAGE_FILESIZE
-	BlockNumber segno;
-	BlockNumber i;
+	BlockNumber segstogo;
+	BlockNumber nextsegno;
 
-	for (segno = blkno / ((BlockNumber) RELSEG_SIZE), i = 1;
-		 segno > 0;
-		 i++, segno--)
+	if (!v)
+		return NULL;			/* only possible if allowNotFound */
+
+	for (segstogo = blkno / ((BlockNumber) RELSEG_SIZE), nextsegno = 1;
+		 segstogo > 0;
+		 nextsegno++, segstogo--)
 	{
-
 		if (v->mdfd_chain == NULL)
 		{
 			/*
@@ -705,16 +886,21 @@ _mdfd_getseg(SMgrRelation reln, BlockNumber blkno)
 			 * one new segment per call, so this restriction seems
 			 * reasonable.
 			 */
-			v->mdfd_chain = _mdfd_openseg(reln, i, (segno == 1) ? O_CREAT : 0);
-
+			v->mdfd_chain = _mdfd_openseg(reln,
+										  nextsegno,
+										  (segstogo == 1) ? O_CREAT : 0);
 			if (v->mdfd_chain == NULL)
+			{
+				if (allowNotFound && errno == ENOENT)
+					return NULL;
 				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not open segment %u of relation %u/%u (target block %u): %m",
-								i,
+								nextsegno,
 								reln->smgr_rnode.tblNode,
 								reln->smgr_rnode.relNode,
 								blkno)));
+			}
 		}
 		v = v->mdfd_chain;
 	}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.44 2004/02/23 23:03:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.45 2004/05/31 03:48:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 /*
  * calls:
  *
- *	File {Close, Read, Write, Seek, Tell, MarkDirty, Sync}
+ *	File {Close, Read, Write, Seek, Tell, Sync}
  *	{File Name Open, Allocate, Free} File
  *
  * These are NOT JUST RENAMINGS OF THE UNIX ROUTINES.
@@ -66,6 +66,7 @@ extern void FileClose(File file);
 extern void FileUnlink(File file);
 extern int	FileRead(File file, char *buffer, int amount);
 extern int	FileWrite(File file, char *buffer, int amount);
+extern int	FileSync(File file);
 extern long FileSeek(File file, long offset, int whence);
 extern int	FileTruncate(File file, long offset);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.41 2004/02/11 22:55:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.42 2004/05/31 03:48:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,9 +83,9 @@ extern bool mdread(SMgrRelation reln, BlockNumber blocknum, char *buffer);
 extern bool mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer);
 extern BlockNumber mdnblocks(SMgrRelation reln);
 extern BlockNumber mdtruncate(SMgrRelation reln, BlockNumber nblocks);
-extern bool mdcommit(void);
-extern bool mdabort(void);
 extern bool mdsync(void);
+
+extern void RememberFsyncRequest(RelFileNode rnode, BlockNumber segno);
 
 /* smgrtype.c */
 extern Datum smgrout(PG_FUNCTION_ARGS);

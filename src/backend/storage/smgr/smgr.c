@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.70 2004/02/11 22:55:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.71 2004/05/31 03:48:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ typedef struct f_smgr
 static const f_smgr smgrsw[] = {
 	/* magnetic disk */
 	{mdinit, NULL, mdclose, mdcreate, mdunlink, mdextend,
-	 mdread, mdwrite, mdnblocks, mdtruncate, mdcommit, mdabort, mdsync
+	 mdread, mdwrite, mdnblocks, mdtruncate, NULL, NULL, mdsync
 	}
 };
 
@@ -407,7 +407,7 @@ smgr_internal_unlink(RelFileNode rnode, int which, bool isTemp, bool isRedo)
 	 * Get rid of any leftover buffers for the rel (shouldn't be any in the
 	 * commit case, but there can be in the abort case).
 	 */
-	DropRelFileNodeBuffers(rnode, isTemp);
+	DropRelFileNodeBuffers(rnode, isTemp, 0);
 
 	/*
 	 * Tell the free space map to forget this relation.  It won't be accessed
@@ -638,7 +638,7 @@ smgrcommit(void)
 		if (smgrsw[i].smgr_commit)
 		{
 			if (! (*(smgrsw[i].smgr_commit)) ())
-				elog(FATAL, "transaction commit failed on %s: %m",
+				elog(ERROR, "transaction commit failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 													 Int16GetDatum(i))));
 		}
@@ -658,7 +658,7 @@ smgrabort(void)
 		if (smgrsw[i].smgr_abort)
 		{
 			if (! (*(smgrsw[i].smgr_abort)) ())
-				elog(FATAL, "transaction abort failed on %s: %m",
+				elog(ERROR, "transaction abort failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 													 Int16GetDatum(i))));
 		}
@@ -678,7 +678,7 @@ smgrsync(void)
 		if (smgrsw[i].smgr_sync)
 		{
 			if (! (*(smgrsw[i].smgr_sync)) ())
-				elog(PANIC, "storage sync failed on %s: %m",
+				elog(ERROR, "storage sync failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 													 Int16GetDatum(i))));
 		}
@@ -706,6 +706,13 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 		BlockNumber newblks;
 
 		reln = smgropen(xlrec->rnode);
+
+		/*
+		 * First, force bufmgr to drop any buffers it has for the to-be-
+		 * truncated blocks.  We must do this, else subsequent XLogReadBuffer
+		 * operations will not re-extend the file properly.
+		 */
+		DropRelFileNodeBuffers(xlrec->rnode, false, xlrec->blkno);
 
 		/* Can't use smgrtruncate because it would try to xlog */
 

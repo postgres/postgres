@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.108 2004/02/23 23:03:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.109 2004/05/31 03:48:04 tgl Exp $
  *
  * NOTES:
  *
@@ -484,6 +484,7 @@ Insert(File file)
 	DO_DB(_dump_lru());
 }
 
+/* returns 0 on success, -1 on re-open failure (with errno set) */
 static int
 LruInsert(File file)
 {
@@ -685,6 +686,7 @@ filepath(const char *filename)
 	return buf;
 }
 
+/* returns 0 on success, -1 on re-open failure (with errno set) */
 static int
 FileAccess(File file)
 {
@@ -954,7 +956,10 @@ FileRead(File file, char *buffer, int amount)
 			   file, VfdCache[file].fileName,
 			   VfdCache[file].seekPos, amount, buffer));
 
-	FileAccess(file);
+	returnCode = FileAccess(file);
+	if (returnCode < 0)
+		return returnCode;
+
 	returnCode = read(VfdCache[file].fd, buffer, amount);
 	if (returnCode > 0)
 		VfdCache[file].seekPos += returnCode;
@@ -975,7 +980,9 @@ FileWrite(File file, char *buffer, int amount)
 			   file, VfdCache[file].fileName,
 			   VfdCache[file].seekPos, amount, buffer));
 
-	FileAccess(file);
+	returnCode = FileAccess(file);
+	if (returnCode < 0)
+		return returnCode;
 
 	errno = 0;
 	returnCode = write(VfdCache[file].fd, buffer, amount);
@@ -992,9 +999,28 @@ FileWrite(File file, char *buffer, int amount)
 	return returnCode;
 }
 
+int
+FileSync(File file)
+{
+	int			returnCode;
+
+	Assert(FileIsValid(file));
+
+	DO_DB(elog(LOG, "FileSync: %d (%s)",
+			   file, VfdCache[file].fileName));
+
+	returnCode = FileAccess(file);
+	if (returnCode < 0)
+		return returnCode;
+
+	return pg_fsync(VfdCache[file].fd);
+}
+
 long
 FileSeek(File file, long offset, int whence)
 {
+	int			returnCode;
+
 	Assert(FileIsValid(file));
 
 	DO_DB(elog(LOG, "FileSeek: %d (%s) %ld %ld %d",
@@ -1014,8 +1040,11 @@ FileSeek(File file, long offset, int whence)
 				VfdCache[file].seekPos += offset;
 				break;
 			case SEEK_END:
-				FileAccess(file);
-				VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
+				returnCode = FileAccess(file);
+				if (returnCode < 0)
+					return returnCode;
+				VfdCache[file].seekPos = lseek(VfdCache[file].fd,
+											   offset, whence);
 				break;
 			default:
 				elog(ERROR, "invalid whence: %d", whence);
@@ -1030,14 +1059,17 @@ FileSeek(File file, long offset, int whence)
 				if (offset < 0)
 					elog(ERROR, "invalid seek offset: %ld", offset);
 				if (VfdCache[file].seekPos != offset)
-					VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
+					VfdCache[file].seekPos = lseek(VfdCache[file].fd,
+												   offset, whence);
 				break;
 			case SEEK_CUR:
 				if (offset != 0 || VfdCache[file].seekPos == FileUnknownPos)
-					VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
+					VfdCache[file].seekPos = lseek(VfdCache[file].fd,
+												   offset, whence);
 				break;
 			case SEEK_END:
-				VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
+				VfdCache[file].seekPos = lseek(VfdCache[file].fd,
+											   offset, whence);
 				break;
 			default:
 				elog(ERROR, "invalid whence: %d", whence);
@@ -1071,7 +1103,10 @@ FileTruncate(File file, long offset)
 	DO_DB(elog(LOG, "FileTruncate %d (%s)",
 			   file, VfdCache[file].fileName));
 
-	FileAccess(file);
+	returnCode = FileAccess(file);
+	if (returnCode < 0)
+		return returnCode;
+
 	returnCode = ftruncate(VfdCache[file].fd, (size_t) offset);
 	return returnCode;
 }

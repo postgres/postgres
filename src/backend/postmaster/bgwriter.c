@@ -27,14 +27,17 @@
  *
  * If the bgwriter exits unexpectedly, the postmaster treats that the same
  * as a backend crash: shared memory may be corrupted, so remaining backends
- * should be killed by SIGQUIT and then a recovery cycle started.
+ * should be killed by SIGQUIT and then a recovery cycle started.  (Even if
+ * shared memory isn't corrupted, we have lost information about which
+ * files need to be fsync'd for the next checkpoint, and so a system
+ * restart needs to be forced.)
  *
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.1 2004/05/29 22:48:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.2 2004/05/31 03:47:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,13 +58,54 @@
 #include "utils/guc.h"
 
 
-/*
+/*----------
  * Shared memory area for communication between bgwriter and backends
+ *
+ * The ckpt counters allow backends to watch for completion of a checkpoint
+ * request they send.  Here's how it works:
+ *	* At start of a checkpoint, bgwriter increments ckpt_started.
+ *	* On completion of a checkpoint, bgwriter sets ckpt_done to
+ *	  equal ckpt_started.
+ *	* On failure of a checkpoint, bgwrite first increments ckpt_failed,
+ *	  then sets ckpt_done to equal ckpt_started.
+ * All three fields are declared sig_atomic_t to ensure they can be read
+ * and written without explicit locking.  The algorithm for backends is:
+ *	1. Record current values of ckpt_failed and ckpt_started (in that
+ *	   order!).
+ *	2. Send signal to request checkpoint.
+ *	3. Sleep until ckpt_started changes.  Now you know a checkpoint has
+ *	   begun since you started this algorithm (although *not* that it was
+ *	   specifically initiated by your signal).
+ *	4. Record new value of ckpt_started.
+ *	5. Sleep until ckpt_done >= saved value of ckpt_started.  (Use modulo
+ *	   arithmetic here in case counters wrap around.)  Now you know a
+ *	   checkpoint has started and completed, but not whether it was
+ *	   successful.
+ *	6. If ckpt_failed is different from the originally saved value,
+ *	   assume request failed; otherwise it was definitely successful.
+ *
+ * The requests array holds fsync requests sent by backends and not yet
+ * absorbed by the bgwriter.
+ *----------
  */
 typedef struct
 {
+	RelFileNode		rnode;
+	BlockNumber		segno;
+	/* might add a request-type field later */
+} BgWriterRequest;
+
+typedef struct
+{
 	pid_t	bgwriter_pid;		/* PID of bgwriter (0 if not started) */
-	sig_atomic_t	checkpoint_count; /* advances when checkpoint done */
+
+	sig_atomic_t	ckpt_started;	/* advances when checkpoint starts */
+	sig_atomic_t	ckpt_done;		/* advances when checkpoint done */
+	sig_atomic_t	ckpt_failed;	/* advances when checkpoint fails */
+
+	int				num_requests;	/* current # of requests */
+	int				max_requests;	/* allocated array size */
+	BgWriterRequest	requests[1];	/* VARIABLE LENGTH ARRAY */
 } BgWriterShmemStruct;
 
 static BgWriterShmemStruct *BgWriterShmem;
@@ -86,6 +130,10 @@ static volatile sig_atomic_t shutdown_requested = false;
 /*
  * Private state
  */
+static bool		am_bg_writer = false;
+
+static bool		ckpt_active = false;
+
 static time_t	last_checkpoint_time;
 
 
@@ -106,6 +154,7 @@ BackgroundWriterMain(void)
 {
 	Assert(BgWriterShmem != NULL);
 	BgWriterShmem->bgwriter_pid = MyProcPid;
+	am_bg_writer = true;
 
 	/*
 	 * Properly accept or ignore signals the postmaster might send us
@@ -180,6 +229,17 @@ BackgroundWriterMain(void)
 		 */
 		InError = false;
 
+		/* Warn any waiting backends that the checkpoint failed. */
+		if (ckpt_active)
+		{
+			/* use volatile pointer to prevent code rearrangement */
+			volatile BgWriterShmemStruct *bgs = BgWriterShmem;
+
+			bgs->ckpt_failed++;
+			bgs->ckpt_done = bgs->ckpt_started;
+			ckpt_active = false;
+		}
+
 		/*
 		 * Exit interrupt holdoff section we implicitly established above.
 		 */
@@ -214,8 +274,17 @@ BackgroundWriterMain(void)
 		long		udelay;
 
 		/*
-		 * Process any signals received recently.
+		 * Emergency bailout if postmaster has died.  This is to avoid the
+		 * necessity for manual cleanup of all postmaster children.
 		 */
+		if (!PostmasterIsAlive(true))
+			exit(1);
+
+		/*
+		 * Process any requests or signals received recently.
+		 */
+		AbsorbFsyncRequests();
+
 		if (got_SIGHUP)
 		{
 			got_SIGHUP = false;
@@ -265,7 +334,19 @@ BackgroundWriterMain(void)
 							 errhint("Consider increasing the configuration parameter \"checkpoint_segments\".")));
 			}
 
+			/*
+			 * Indicate checkpoint start to any waiting backends.
+			 */
+			ckpt_active = true;
+			BgWriterShmem->ckpt_started++;
+
 			CreateCheckPoint(false, force_checkpoint);
+
+			/*
+			 * Indicate checkpoint completion to any waiting backends.
+			 */
+			BgWriterShmem->ckpt_done = BgWriterShmem->ckpt_started;
+			ckpt_active = false;
 
 			/*
 			 * Note we record the checkpoint start time not end time as
@@ -275,13 +356,10 @@ BackgroundWriterMain(void)
 			last_checkpoint_time = now;
 
 			/*
-			 * Indicate checkpoint completion to any waiting backends.
-			 */
-			BgWriterShmem->checkpoint_count++;
-
-			/*
 			 * After any checkpoint, close all smgr files.  This is so we
 			 * won't hang onto smgr references to deleted files indefinitely.
+			 * (It is safe to do this because this process does not have a
+			 * relcache, and so no dangling references could remain.)
 			 */
 			smgrcloseall();
 
@@ -301,6 +379,8 @@ BackgroundWriterMain(void)
 		 * we respond reasonably promptly when someone signals us,
 		 * break down the sleep into 1-second increments, and check for
 		 * interrupts after each nap.
+		 *
+		 * We absorb pending requests after each short sleep.
 		 */
 		udelay = ((n > 0) ? BgWriterDelay : 10000) * 1000L;
 		while (udelay > 1000000L)
@@ -308,17 +388,11 @@ BackgroundWriterMain(void)
 			if (got_SIGHUP || checkpoint_requested || shutdown_requested)
 				break;
 			pg_usleep(1000000L);
+			AbsorbFsyncRequests();
 			udelay -= 1000000L;
 		}
 		if (!(got_SIGHUP || checkpoint_requested || shutdown_requested))
 			pg_usleep(udelay);
-
-		/*
-		 * Emergency bailout if postmaster has died.  This is to avoid the
-		 * necessity for manual cleanup of all postmaster children.
-		 */
-		if (!PostmasterIsAlive(true))
-			exit(1);
 	}
 }
 
@@ -387,10 +461,11 @@ int
 BgWriterShmemSize(void)
 {
 	/*
-	 * This is not worth measuring right now, but may become so after we
-	 * add fsync signaling ...
+	 * Currently, the size of the requests[] array is arbitrarily set
+	 * equal to NBuffers.  This may prove too large or small ...
 	 */
-	return MAXALIGN(sizeof(BgWriterShmemStruct));
+	return MAXALIGN(sizeof(BgWriterShmemStruct) +
+					(NBuffers - 1) * sizeof(BgWriterRequest));
 }
 
 /*
@@ -404,7 +479,7 @@ BgWriterShmemInit(void)
 
 	BgWriterShmem = (BgWriterShmemStruct *)
 		ShmemInitStruct("Background Writer Data",
-						sizeof(BgWriterShmemStruct),
+						BgWriterShmemSize(),
 						&found);
 	if (BgWriterShmem == NULL)
 		ereport(FATAL,
@@ -414,6 +489,7 @@ BgWriterShmemInit(void)
 		return;					/* already initialized */
 
 	MemSet(BgWriterShmem, 0, sizeof(BgWriterShmemStruct));
+	BgWriterShmem->max_requests = NBuffers;
 }
 
 /*
@@ -427,8 +503,10 @@ BgWriterShmemInit(void)
 void
 RequestCheckpoint(bool waitforit)
 {
-	volatile sig_atomic_t *count_ptr = &BgWriterShmem->checkpoint_count;
-	sig_atomic_t	old_count = *count_ptr;
+	/* use volatile pointer to prevent code rearrangement */
+	volatile BgWriterShmemStruct *bgs = BgWriterShmem;
+	sig_atomic_t	old_failed = bgs->ckpt_failed;
+	sig_atomic_t	old_started = bgs->ckpt_started;
 
 	/*
 	 * Send signal to request checkpoint.  When waitforit is false,
@@ -442,15 +520,119 @@ RequestCheckpoint(bool waitforit)
 			 "could not signal for checkpoint: %m");
 
 	/*
-	 * If requested, wait for completion.  We detect completion by
-	 * observing a change in checkpoint_count in shared memory.
+	 * If requested, wait for completion.  We detect completion according
+	 * to the algorithm given above.
 	 */
 	if (waitforit)
 	{
-		while (*count_ptr == old_count)
+		while (bgs->ckpt_started == old_started)
 		{
 			CHECK_FOR_INTERRUPTS();
-			pg_usleep(1000000L);
+			pg_usleep(100000L);
 		}
+		old_started = bgs->ckpt_started;
+		/*
+		 * We are waiting for ckpt_done >= old_started, in a modulo
+		 * sense.  This is a little tricky since we don't know the
+		 * width or signedness of sig_atomic_t.  We make the lowest
+		 * common denominator assumption that it is only as wide
+		 * as "char".  This means that this algorithm will cope
+		 * correctly as long as we don't sleep for more than 127
+		 * completed checkpoints.  (If we do, we will get another
+		 * chance to exit after 128 more checkpoints...)
+		 */
+		while (((signed char) (bgs->ckpt_done - old_started)) < 0)
+		{
+			CHECK_FOR_INTERRUPTS();
+			pg_usleep(100000L);
+		}
+		if (bgs->ckpt_failed != old_failed)
+			ereport(ERROR,
+					(errmsg("checkpoint request failed"),
+					 errhint("Consult the postmaster log for details.")));
 	}
+}
+
+/*
+ * ForwardFsyncRequest
+ *		Forward a file-fsync request from a backend to the bgwriter
+ *
+ * Whenever a backend is compelled to write directly to a relation
+ * (which should be seldom, if the bgwriter is getting its job done),
+ * the backend calls this routine to pass over knowledge that the relation
+ * is dirty and must be fsync'd before next checkpoint.
+ *
+ * If we are unable to pass over the request (at present, this can happen
+ * if the shared memory queue is full), we return false.  That forces
+ * the backend to do its own fsync.  We hope that will be even more seldom.
+ *
+ * Note: we presently make no attempt to eliminate duplicate requests
+ * in the requests[] queue.  The bgwriter will have to eliminate dups
+ * internally anyway, so we may as well avoid holding the lock longer
+ * than we have to here.
+ */
+bool
+ForwardFsyncRequest(RelFileNode rnode, BlockNumber segno)
+{
+	BgWriterRequest *request;
+
+	if (!IsUnderPostmaster)
+		return false;			/* probably shouldn't even get here */
+	Assert(BgWriterShmem != NULL);
+
+	LWLockAcquire(BgWriterCommLock, LW_EXCLUSIVE);
+	if (BgWriterShmem->bgwriter_pid == 0 ||
+		BgWriterShmem->num_requests >= BgWriterShmem->max_requests)
+	{
+		LWLockRelease(BgWriterCommLock);
+		return false;
+	}
+	request = &BgWriterShmem->requests[BgWriterShmem->num_requests++];
+	request->rnode = rnode;
+	request->segno = segno;
+	LWLockRelease(BgWriterCommLock);
+	return true;
+}
+
+/*
+ * AbsorbFsyncRequests
+ *		Retrieve queued fsync requests and pass them to local smgr.
+ *
+ * This is exported because it must be called during CreateCheckpoint;
+ * we have to be sure we have accepted all pending requests *after* we
+ * establish the checkpoint redo pointer.  Since CreateCheckpoint
+ * sometimes runs in non-bgwriter processes, do nothing if not bgwriter.
+ */
+void
+AbsorbFsyncRequests(void)
+{
+	BgWriterRequest *requests = NULL;
+	BgWriterRequest *request;
+	int			n;
+
+	if (!am_bg_writer)
+		return;
+
+	/*
+	 * We try to avoid holding the lock for a long time by copying the
+	 * request array.
+	 */
+	LWLockAcquire(BgWriterCommLock, LW_EXCLUSIVE);
+
+	n = BgWriterShmem->num_requests;
+	if (n > 0)
+	{
+		requests = (BgWriterRequest *) palloc(n * sizeof(BgWriterRequest));
+		memcpy(requests, BgWriterShmem->requests, n * sizeof(BgWriterRequest));
+	}
+	BgWriterShmem->num_requests = 0;
+
+	LWLockRelease(BgWriterCommLock);
+
+	for (request = requests; n > 0; request++, n--)
+	{
+		RememberFsyncRequest(request->rnode, request->segno);
+	}
+	if (requests)
+		pfree(requests);
 }

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.19 2003/11/29 19:51:40 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.20 2004/05/31 03:47:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ TransactionIdSetStatus(TransactionId xid, XidStatus status)
 	Assert(status == TRANSACTION_STATUS_COMMITTED ||
 		   status == TRANSACTION_STATUS_ABORTED);
 
-	LWLockAcquire(ClogCtl->locks->ControlLock, LW_EXCLUSIVE);
+	LWLockAcquire(ClogCtl->ControlLock, LW_EXCLUSIVE);
 
 	byteptr = SimpleLruReadPage(ClogCtl, pageno, xid, true);
 	byteptr += byteno;
@@ -110,7 +110,7 @@ TransactionIdSetStatus(TransactionId xid, XidStatus status)
 
 	/* ...->page_status[slotno] = CLOG_PAGE_DIRTY; already done */
 
-	LWLockRelease(ClogCtl->locks->ControlLock);
+	LWLockRelease(ClogCtl->ControlLock);
 }
 
 /*
@@ -128,14 +128,14 @@ TransactionIdGetStatus(TransactionId xid)
 	char	   *byteptr;
 	XidStatus	status;
 
-	LWLockAcquire(ClogCtl->locks->ControlLock, LW_EXCLUSIVE);
+	LWLockAcquire(ClogCtl->ControlLock, LW_EXCLUSIVE);
 
 	byteptr = SimpleLruReadPage(ClogCtl, pageno, xid, false);
 	byteptr += byteno;
 
 	status = (*byteptr >> bshift) & CLOG_XACT_BITMASK;
 
-	LWLockRelease(ClogCtl->locks->ControlLock);
+	LWLockRelease(ClogCtl->ControlLock);
 
 	return status;
 }
@@ -169,16 +169,16 @@ BootStrapCLOG(void)
 {
 	int			slotno;
 
-	LWLockAcquire(ClogCtl->locks->ControlLock, LW_EXCLUSIVE);
+	LWLockAcquire(ClogCtl->ControlLock, LW_EXCLUSIVE);
 
 	/* Create and zero the first page of the commit log */
 	slotno = ZeroCLOGPage(0, false);
 
 	/* Make sure it's written out */
-	SimpleLruWritePage(ClogCtl, slotno);
+	SimpleLruWritePage(ClogCtl, slotno, NULL);
 	/* Assert(ClogCtl->page_status[slotno] == CLOG_PAGE_CLEAN); */
 
-	LWLockRelease(ClogCtl->locks->ControlLock);
+	LWLockRelease(ClogCtl->ControlLock);
 }
 
 /*
@@ -256,12 +256,12 @@ ExtendCLOG(TransactionId newestXact)
 
 	pageno = TransactionIdToPage(newestXact);
 
-	LWLockAcquire(ClogCtl->locks->ControlLock, LW_EXCLUSIVE);
+	LWLockAcquire(ClogCtl->ControlLock, LW_EXCLUSIVE);
 
 	/* Zero the page and make an XLOG entry about it */
 	ZeroCLOGPage(pageno, true);
 
-	LWLockRelease(ClogCtl->locks->ControlLock);
+	LWLockRelease(ClogCtl->ControlLock);
 }
 
 
@@ -351,13 +351,13 @@ clog_redo(XLogRecPtr lsn, XLogRecord *record)
 
 		memcpy(&pageno, XLogRecGetData(record), sizeof(int));
 
-		LWLockAcquire(ClogCtl->locks->ControlLock, LW_EXCLUSIVE);
+		LWLockAcquire(ClogCtl->ControlLock, LW_EXCLUSIVE);
 
 		slotno = ZeroCLOGPage(pageno, false);
-		SimpleLruWritePage(ClogCtl, slotno);
+		SimpleLruWritePage(ClogCtl, slotno, NULL);
 		/* Assert(ClogCtl->page_status[slotno] == SLRU_PAGE_CLEAN); */
 
-		LWLockRelease(ClogCtl->locks->ControlLock);
+		LWLockRelease(ClogCtl->ControlLock);
 	}
 }
 

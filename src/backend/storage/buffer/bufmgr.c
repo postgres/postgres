@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.166 2004/05/29 22:48:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.167 2004/05/31 03:48:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1044,6 +1044,9 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
  *		bothering to write them out first.	This is NOT rollback-able,
  *		and so should be used only with extreme caution!
  *
+ *		There is no particularly good reason why this doesn't have a
+ *		firstDelBlock parameter, except that current callers don't need it.
+ *
  *		We assume that the caller holds an exclusive lock on the relation,
  *		which should assure that no new buffers will be acquired for the rel
  *		meanwhile.
@@ -1052,14 +1055,15 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 void
 DropRelationBuffers(Relation rel)
 {
-	DropRelFileNodeBuffers(rel->rd_node, rel->rd_istemp);
+	DropRelFileNodeBuffers(rel->rd_node, rel->rd_istemp, 0);
 }
 
 /* ---------------------------------------------------------------------
  *		DropRelFileNodeBuffers
  *
  *		This is the same as DropRelationBuffers, except that the target
- *		relation is specified by RelFileNode and temp status.
+ *		relation is specified by RelFileNode and temp status, and one
+ *		may specify the first block to drop.
  *
  *		This is NOT rollback-able.	One legitimate use is to clear the
  *		buffer cache of buffers for a relation that is being deleted
@@ -1067,7 +1071,8 @@ DropRelationBuffers(Relation rel)
  * --------------------------------------------------------------------
  */
 void
-DropRelFileNodeBuffers(RelFileNode rnode, bool istemp)
+DropRelFileNodeBuffers(RelFileNode rnode, bool istemp,
+					   BlockNumber firstDelBlock)
 {
 	int			i;
 	BufferDesc *bufHdr;
@@ -1077,7 +1082,8 @@ DropRelFileNodeBuffers(RelFileNode rnode, bool istemp)
 		for (i = 0; i < NLocBuffer; i++)
 		{
 			bufHdr = &LocalBufferDescriptors[i];
-			if (RelFileNodeEquals(bufHdr->tag.rnode, rnode))
+			if (RelFileNodeEquals(bufHdr->tag.rnode, rnode) &&
+				bufHdr->tag.blockNum >= firstDelBlock)
 			{
 				bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
 				bufHdr->cntxDirty = false;
@@ -1094,7 +1100,8 @@ DropRelFileNodeBuffers(RelFileNode rnode, bool istemp)
 	{
 		bufHdr = &BufferDescriptors[i - 1];
 recheck:
-		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode))
+		if (RelFileNodeEquals(bufHdr->tag.rnode, rnode) &&
+			bufHdr->tag.blockNum >= firstDelBlock)
 		{
 			/*
 			 * If there is I/O in progress, better wait till it's done;
