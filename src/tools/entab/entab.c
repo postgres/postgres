@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../include/c.h"
+#include "../../include/c.h"
 
 #define NUL				'\0'
 
