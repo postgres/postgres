@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.17 1998/04/27 14:43:02 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.18 1998/04/30 14:25:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 It is highly recommended that the backend be started under it's own userid\n\
 to prevent possible system security compromise. This can be accomplished\n\
 by placing the following command in the PostgreSQL startup script.\n\n\
-echo \"postmaster -B 256 >/var/log/pglog 2>&1 &\" | su - postgres\n\n"
+echo \"postmaster >/var/log/pglog 2>&1 &\" | su - postgres\n\n"
 
 int
 main(int argc, char *argv[])
