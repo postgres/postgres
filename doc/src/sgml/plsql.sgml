@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.33 2001/05/22 13:52:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.34 2001/05/28 14:58:58 petere Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -994,7 +994,6 @@ END IF;
 
        <para>
         Here is an example:
-       </para>
 
 <programlisting>
 IF number = 0 THEN
