@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.78 2000/01/02 01:37:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.79 2000/01/02 02:32:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -322,7 +322,8 @@ GetEpochTime(struct tm * tm)
 	tm->tm_min = t0->tm_min;
 	tm->tm_sec = t0->tm_sec;
 
-	tm->tm_year += 1900;
+	if (tm->tm_year < 1900)
+		tm->tm_year += 1900;
 	tm->tm_mon++;
 
 	return;
@@ -2310,7 +2311,6 @@ datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 
 #ifdef USE_POSIX_TIME
 			tx = localtime(&utime);
-#endif
 			tm->tm_year = tx->tm_year + 1900;
 			tm->tm_mon = tx->tm_mon + 1;
 			tm->tm_mday = tx->tm_mday;
@@ -3288,7 +3288,6 @@ DecodeNumber(int flen, char *str, int fmask,
 		}
 
 		tm->tm_year = val;
-
 	}
 	/* already have year? then could be month */
 	else if ((fmask & DTK_M(YEAR)) && (!(fmask & DTK_M(MONTH)))
@@ -3296,7 +3295,6 @@ DecodeNumber(int flen, char *str, int fmask,
 	{
 		*tmask = DTK_M(MONTH);
 		tm->tm_mon = val;
-
 		/* no year and EuroDates enabled? then could be day */
 	}
 	else if ((EuroDates || (fmask & DTK_M(MONTH)))
@@ -3305,14 +3303,12 @@ DecodeNumber(int flen, char *str, int fmask,
 	{
 		*tmask = DTK_M(DAY);
 		tm->tm_mday = val;
-
 	}
 	else if ((!(fmask & DTK_M(MONTH)))
 			 && ((val >= 1) && (val <= 12)))
 	{
 		*tmask = DTK_M(MONTH);
 		tm->tm_mon = val;
-
 	}
 	else if ((!(fmask & DTK_M(DAY)))
 			 && ((val >= 1) && (val <= 31)))
@@ -3354,7 +3350,6 @@ DecodeNumberField(int len, char *str, int fmask,
 		tm->tm_mon = atoi(str + 4);
 		*(str + 4) = '\0';
 		tm->tm_year = atoi(str + 0);
-
 		/* yymmdd or hhmmss? */
 	}
 	else if (len == 6)
