@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.33 2004/04/05 03:02:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.34 2004/05/14 20:01:19 momjian Exp $
 -->
 
 <chapter id="maintenance">
@@ -461,7 +461,7 @@ VACUUM
    you can send a <literal>SIGHUP</literal> signal to the
    <application>syslog</> daemon whenever you want to force it to
    start writing a new log file.  If you want to automate log
-   rotation, the <application>logrotate</application> program can be
+   rotation, the <application>rotatelogs</application> program can be
    configured to work with log files from
    <application>syslog</application>.
   </para>
@@ -484,12 +484,12 @@ VACUUM
    pipe command:
 
 <programlisting>
-pg_ctl start | logrotate
+pg_ctl start | rotatelogs /var/log/pgsql_log 86400
 </programlisting>
 
    The <productname>PostgreSQL</> distribution doesn't include a
    suitable log rotation program, but there are many available on the
-   Internet. For example, the <application>logrotate</application>
+   Internet. For example, the <application>rotatelogs</application>
    tool included in the <productname>Apache</productname> distribution
    can be used with <productname>PostgreSQL</productname>.
   </para>

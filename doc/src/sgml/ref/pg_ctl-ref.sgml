@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.25 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.26 2004/05/14 20:01:19 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -87,13 +87,13 @@ PostgreSQL documentation
    server is started in the background, and standard input is attached to
    <filename>/dev/null</filename>.  The standard output and standard
    error are either appended to a log file (if the <option>-l</option>
-   option is used), or redirected to  <application>pg_ctl</application>'s 
+   option is used), or redirected to <application>pg_ctl</application>'s 
    standard output (not standard error).  If no log file is chosen, the 
    standard output of <application>pg_ctl</application> should be redirected 
-   to a file or piped to another process, for example a log rotating program,
-   otherwise <command>postmaster</command> will write its output to the controlling
-   terminal (from the background) and will not leave the shell's
-   process group.
+   to a file or piped to another process such as a log rotating program
+   like <application>rotatelogs</>; otherwise the <command>postmaster</command> 
+   will write its output to the controlling terminal (from the background) 
+   and will not leave the shell's process group.
   </para>
 
   <para>
