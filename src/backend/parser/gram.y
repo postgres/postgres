@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.25 1997/01/16 14:56:05 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.26 1997/02/13 15:40:03 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -149,7 +149,8 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <coldef>	columnDef
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause, 
-		a_expr, AexprConst, in_expr_nodes, not_in_expr_nodes,
+		a_expr, a_expr_or_null, AexprConst,
+		in_expr_nodes, not_in_expr_nodes,
 		having_clause
 %type <value>	NumConst
 %type <attr>	event_object, attr
@@ -1751,6 +1752,15 @@ Typename:  typname opt_array_bounds
  *
  *****************************************************************************/
 
+a_expr_or_null: a_expr
+		{ $$ = $1;}
+	| Pnull
+		{	
+		    A_Const *n = makeNode(A_Const);
+		    n->val.type = T_Null;
+		    $$ = (Node *)n;
+		}
+		
 a_expr:  attr opt_indirection
 		{
 		    $1->indirection = $2;
@@ -1800,7 +1810,7 @@ a_expr:  attr opt_indirection
 		    }
 		    $$ = (Node *)$2;
 		}
-	| '(' a_expr ')'
+	| '(' a_expr_or_null ')'
 		{   $$ = $2; }
 	| a_expr Op a_expr
 		{   $$ = makeA_Expr(OP, $2, $1, $3); }
@@ -1892,9 +1902,9 @@ opt_indirection:  '[' a_expr ']' opt_indirection
 		{   $$ = NIL; }
 	;
    
-expr_list: a_expr
+expr_list: a_expr_or_null
 		{ $$ = lcons($1, NIL); }
-	|  expr_list ',' a_expr
+	|  expr_list ',' a_expr_or_null
 		{ $$ = lappend($1, $3); }
 	;
 
@@ -1966,7 +1976,7 @@ res_target_list:  res_target_list ',' res_target_el
 		}
 	;
 
-res_target_el: Id opt_indirection '=' a_expr
+res_target_el: Id opt_indirection '=' a_expr_or_null
 		{
 		    $$ = makeNode(ResTarget);
 		    $$->name = $1;
@@ -2014,7 +2024,7 @@ res_target_el2: a_expr AS Id
 		    $$->indirection = NULL;
 		    $$->val = (Node *)$1;
 		}
-	| a_expr
+	| a_expr_or_null
 		{
 		    $$ = makeNode(ResTarget);
 		    $$->name = NULL;
@@ -2108,12 +2118,6 @@ AexprConst:  Iconst
 		}
 	| ParamNo
 		{   $$ = (Node *)$1;  }
-	| Pnull		
-		{	
-		    A_Const *n = makeNode(A_Const);
-		    n->val.type = T_Null;
-		    $$ = (Node *)n;
-		}
 	;
 
 ParamNo:  PARAM
