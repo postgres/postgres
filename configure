@@ -13848,6 +13848,12 @@ For details, compile and run src/bin/pg_thread_test.
    { (exit 1); exit 1; }; }
 fi
 
+# Check for *_r functions
+_CFLAGS="$CFLAGS"
+_LIBS="$LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+LIBS="$LIBS $PTHREAD_LIBS"
+
 if test "${ac_cv_header_pthread_h+set}" = set; then
   echo "$as_me:$LINENO: checking for pthread.h" >&5
 echo $ECHO_N "checking for pthread.h... $ECHO_C" >&6
@@ -13959,11 +13965,6 @@ fi
 
 
 
-# Check for *_r functions
-_CFLAGS="$CFLAGS"
-_LIBS="$LIBS"
-CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-LIBS="$LIBS $PTHREAD_LIBS"
 
 
 
