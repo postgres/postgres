@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Sep  2 00:42:59 EDT 2002
+Last updated:		Mon Sep  2 02:44:01 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -182,7 +182,7 @@ Commands
 * -Remove LIMIT #,# and force use LIMIT and OFFSET clauses in 7.3 (Bruce)
 * Allow LIMIT/OFFSET to use expressions
 * -Disallow TRUNCATE on tables that are involved in referential constraints
-* Add OR REPLACE clauses to non-FUNCTION object creation
+* -Add OR REPLACE clauses to non-FUNCTION object creation
 * CREATE TABLE AS can not determine column lengths from expressions [atttypmod]
 * Allow UPDATE to handle complex aggregates [update]
 * -Prevent create/drop scripts from allowing extra args (Bruce)
@@ -361,7 +361,7 @@ Dependency Checking
 Transactions
 ============
 
-* Allow autocommit so always in a transaction block
+* -Allow autocommit so always in a transaction block
 * Overhaul bufmgr/lockmgr/transaction manager
 * Allow savepoints / nested transactions [transactions]
 
@@ -394,7 +394,7 @@ Fsync
 
 Cache
 =====
-* Cache most recent query plan(s) (Neil) [prepare]
+* -Cache most recent query plan(s) (Neil) [prepare]
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
 * Add free-behind capability for large sequential scans (Bruce)
 * Allow binding query args over FE/BE protocol
