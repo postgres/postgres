@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.65 2003/08/04 00:43:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.66 2003/08/08 19:19:32 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1663,20 +1663,25 @@ plpgsql_add_initdatums(int **varnos)
 
 	if (varnos != NULL)
 	{
-		*varnos = (int *) malloc(sizeof(int) * n);
-
-		n = 0;
-		for (i = datums_last; i < plpgsql_nDatums; i++)
+		if (n > 0)
 		{
-			switch (plpgsql_Datums[i]->dtype)
-			{
-				case PLPGSQL_DTYPE_VAR:
-					(*varnos)[n++] = plpgsql_Datums[i]->dno;
+			*varnos = (int *) malloc(sizeof(int) * n);
 
-				default:
-					break;
+			n = 0;
+			for (i = datums_last; i < plpgsql_nDatums; i++)
+			{
+				switch (plpgsql_Datums[i]->dtype)
+				{
+					case PLPGSQL_DTYPE_VAR:
+						(*varnos)[n++] = plpgsql_Datums[i]->dno;
+
+					default:
+						break;
+				}
 			}
 		}
+		else
+			*varnos = NULL;
 	}
 
 	datums_last = plpgsql_nDatums;
