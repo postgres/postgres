@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.29 2000/04/14 23:43:44 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.30 2000/05/12 16:13:44 petere Exp $
  */
 #include "postgres.h"
 #include "mainloop.h"
@@ -297,6 +297,7 @@ MainLoop(FILE *source)
 			else
 				bslash_count = 0;
 
+		rescan:
 			/* in quote? */
 			if (in_quote)
 			{
@@ -382,7 +383,8 @@ MainLoop(FILE *source)
 					free(line);
 					line = new;
 					len = strlen(new);
-					continue;	/* reparse the just substituted */
+
+					goto rescan;	/* reparse the just substituted */
 				}
 				else
 				{

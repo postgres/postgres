@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.29 2000/05/11 18:41:00 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.30 2000/05/12 16:13:44 petere Exp $
  */
 #include "postgres.h"
 #include "help.h"
@@ -269,11 +269,11 @@ helpSQL(const char *topic)
 
 		for (i = 0; i < items_per_column; i++)
 		{
-			printf("    %-25s%-25s",
+			printf("  %-26s%-26s",
 					VALUE_OR_NULL(QL_HELP[i].cmd),
 					VALUE_OR_NULL(QL_HELP[i + items_per_column].cmd));
 			if (i + 2 * items_per_column < QL_HELP_COUNT)
-				printf("%-25s",
+				printf("%-26s",
 					VALUE_OR_NULL(QL_HELP[i + 2 * items_per_column].cmd));
 			fputc('\n', stdout);
 		}
@@ -283,10 +283,16 @@ helpSQL(const char *topic)
 	{
 		int			i;
 		bool		help_found = false;
+		size_t      len;
+
+		/* don't care about trailing spaces */
+		len = strlen(topic);
+		while (topic[len-1] == ' ')
+			len--;
 
 		for (i = 0; QL_HELP[i].cmd; i++)
 		{
-			if (strcasecmp(QL_HELP[i].cmd, topic) == 0 ||
+			if (strncasecmp(topic, QL_HELP[i].cmd, len) == 0 ||
 				strcmp(topic, "*") == 0)
 			{
 				help_found = true;
@@ -298,7 +304,7 @@ helpSQL(const char *topic)
 		}
 
 		if (!help_found)
-			printf("No help available for '%s'.\nTry \\h with no arguments to see available help.\n", topic);
+			printf("No help available for '%-.*s'.\nTry \\h with no arguments to see available help.\n", (int)len, topic);
 	}
 }
 
