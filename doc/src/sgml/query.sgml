@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.40 2004/11/15 06:32:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.41 2004/12/17 04:50:32 tgl Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -154,7 +154,7 @@ CREATE TABLE weather (
    </para>
 
    <para>
-    <productname>PostgreSQL</productname> supports the usual
+    <productname>PostgreSQL</productname> supports the standard
     <acronym>SQL</acronym> types <type>int</type>,
     <type>smallint</type>, <type>real</type>, <type>double
     precision</type>, <type>char(<replaceable>N</>)</type>,
@@ -297,8 +297,8 @@ SELECT * FROM weather;
      <footnote>
       <para>
        While <literal>SELECT *</literal> is useful for off-the-cuff
-       queries, it is considered bad style in production code for
-       maintenance reasons: adding a column to the table changes the results.
+       queries, it is widely considered bad style in production code,
+       since adding a column to the table would change the results.
       </para>
      </footnote>
     The output should be:
@@ -400,9 +400,9 @@ SELECT DISTINCT city
     the cities table, and select the pairs of rows where these values match.
     <note>
      <para>
-      This  is only a conceptual model.  The actual join may
-      be performed in a more efficient manner, but this is invisible
-      to the user.
+      This  is only a conceptual model.  The join is usually performed
+      in a more efficient manner than actually comparing each possible
+      pair of rows, but this is invisible to the user.
      </para>
     </note>
     This would be accomplished by the following query:
@@ -727,15 +727,15 @@ SELECT city, max(temp_lo)
     aggregates are computed.  Thus, the
     <literal>WHERE</literal> clause must not contain aggregate functions;
     it makes no sense to try to use an aggregate to determine which rows
-    will be inputs to the aggregates.  On the other hand,
+    will be inputs to the aggregates.  On the other hand, the
     <literal>HAVING</literal> clause always contains aggregate functions.
     (Strictly speaking, you are allowed to write a <literal>HAVING</literal>
-    clause that doesn't use aggregates, but it's wasteful: The same condition
+    clause that doesn't use aggregates, but it's wasteful. The same condition
     could be used more efficiently at the <literal>WHERE</literal> stage.)
    </para>
 
    <para>
-    Observe that we can apply the city name restriction in
+    In the previous example, we can apply the city name restriction in
     <literal>WHERE</literal>, since it needs no aggregate.  This is
     more efficient than adding the restriction to <literal>HAVING</literal>,
     because we avoid doing the grouping and aggregate calculations
@@ -788,10 +788,10 @@ SELECT * FROM weather;
    </indexterm>
 
    <para>
+    Rows can be removed from a table using the <command>DELETE</command>
+    command.
     Suppose you are no longer interested in the weather of Hayward.
-    Then you can do the following to delete those rows from the table.
-    Deletions are performed using the <command>DELETE</command>
-    command:
+    Then you can do the following to delete those rows from the table:
 <programlisting>
 DELETE FROM weather WHERE city = 'Hayward';
 </programlisting>

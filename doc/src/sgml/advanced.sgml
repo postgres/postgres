@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.46 2004/11/15 06:32:13 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.47 2004/12/17 04:50:32 tgl Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -196,7 +196,7 @@ UPDATE branches SET balance = balance + 100.00
     and won't be lost even if a crash ensues shortly thereafter.
     For example, if we are recording a cash withdrawal by Bob,
     we do not want any chance that the debit to his account will
-    disappear in a crash just as he walks out the bank door.
+    disappear in a crash just after he walks out the bank door.
     A transactional database guarantees that all the updates made by
     a transaction are logged in permanent storage (i.e., on disk) before
     the transaction is reported complete.
