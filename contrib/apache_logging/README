@@ -1,0 +1,61 @@
+HOW TO get Apache to log to PostgreSQL
+
+First, this is intended mostly as a starting point, an example of how to do it.
+
+The file 'httpconf.txt' is commented and contains two example lines to make
+this work, a custom log format, and a line that sends the log data to psql.
+I think that the comments in this file should be sufficient.
+
+The file 'apachelog.sql' is a little SQL to create the table and grant 
+permissions to it.
+
+You must:
+
+1. Already have 'nobody' (or what ever your web server runs as) as a valid 
+   PostgreSQL user.
+
+2. Create the database to hold the log, (example 'createdb www_log')
+
+3. Edit the file 'apachelog.sql' and change the name of the table to what
+   ever you used in step 2.  ALSO if need be, change the name 'nobody' in
+	the grant statement.
+
+4. As an appropriate user (postgres is ok), do 'psql www_log < apachelog.sql'.
+   This should have created the table and granted access to it.
+
+5. SAVE A COPY OF YOUR httpd.conf !!!
+
+6. Edit httpd.conf, add the two lines in the example file as appropriate, 
+   IN THE ORDER IN WHICH THEY APPEAR.  This is simple for a single server, 
+	but a little more complex for virtual hosts, but if you set up virtual 
+	hosts, then you should know were to put these lines.
+
+7. Down and restart your httpd.  I do it on Red Hat 4.1 like this:
+   /etc/rc.d/init.d/httpd.init stop
+	then
+   /etc/rc.d/init.d/httpd.init start
+   OR I understand you can send it a signal 16 like 'kill -16 <pid>' and do it.
+
+8. I should be working, query the web server about 30 or more times then look 
+   in the db and see what you have, if nothing then query the web server 
+	30 or 50 more time and then check.  If still nothing, look in the server's 
+	error log to see what is going on.  But you should have data.
+
+NOTES:
+The log data is cached some where, and so will not appear INSTANTLY in the 
+database!  I found that it took around 30 queries of the web server, then 
+many rows are written to the db at once.
+
+ALSO, I leave it up to you to create any indexes on the table that you want.
+
+The error log can (*I think*) also be sent to PostgreSQL in the same fashion.
+
+At some point in the future, I will be writing some PHP to interface to this
+and generate statistical type reports, so check my site once and a while if
+you are interested it this.
+
+Terry Mackintosh <terry@terrym.com>
+http://www.terrym.com
+
+Have fun ... and remember, this is mostly just intended as a stating point, 
+not as a finished idea.
