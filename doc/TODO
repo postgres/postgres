@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jan 12 22:32:53 EST 2000
+Last updated:		Wed Jan 12 22:36:16 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -251,7 +251,7 @@ CACHE
 
 * Cache most recent query plan(s) [prepare]
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
-* elog() flushes cache, try invalidating just entries from current xact,
+* -elog() flushes cache, try invalidating just entries from current xact,
   perhaps using invalidation cache
 
 
