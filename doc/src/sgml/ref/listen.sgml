@@ -10,20 +10,20 @@ LISTEN
 LISTEN
 </REFNAME>
 <REFPURPOSE>
-Listen for notification on a relation
+Listen for notification on a notify condition
 </REFPURPOSE>
 
 <REFSYNOPSISDIV>
 <REFSYNOPSISDIVINFO>
-<DATE>1998-09-24</DATE>
+<DATE>1998-10-07</DATE>
 </REFSYNOPSISDIVINFO>
 <SYNOPSIS>
-LISTEN <REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>
+LISTEN <REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>
 </SYNOPSIS>
 
 <REFSECT2 ID="R2-SQL-LISTEN-1">
 <REFSECT2INFO>
-<DATE>1998-09-01</DATE>
+<DATE>1998-10-07</DATE>
 </REFSECT2INFO>
 <TITLE>
 Inputs
@@ -33,11 +33,11 @@ Inputs
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-<REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>
+<REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>
 </TERM>
 <LISTITEM>
 <PARA>
-Table object used for notification.
+Name of notify condition.
 
 </VARIABLELIST>
 
@@ -62,63 +62,95 @@ Outputs
 <VARIABLELIST>
 <VARLISTENTRY>
 <TERM>
-LISTEN
+<returnvalue>LISTEN</returnvalue>
 </TERM>
 <LISTITEM>
 <PARA>
 Message returned upon successful completion of registration.
-
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+<returnvalue>NOTICE Async_Listen: We are already listening on notifyname</returnvalue>
+</TERM>
+<LISTITEM>
+<PARA>
+If this backend is already registered for that notify condition.
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</variablelist>
+</LISTITEM>
+</VARLISTENTRY>
 </VARIABLELIST>
-</VARIABLELIST>
-
 </REFSECT2>
 </REFSYNOPSISDIV>
 
 <REFSECT1 ID="R1-SQL-LISTEN-1">
 <REFSECT1INFO>
-<DATE>1998-09-24</DATE>
+<DATE>1998-10-07</DATE>
 </REFSECT1INFO>
 <TITLE>
 Description
 </TITLE>
 <PARA>
-LISTEN is used to register the current backend as a listener on the relation
-<REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>.
-When the command 
-<command>NOTIFY <REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE></command>
-is called either from within a rule or at the query level, the
-frontend applications corresponding to the listening backends
-are notified.  When the backend process exits, this registration
-is cleared.
+LISTEN registers the current <productname>Postgres</productname> backend as a
+listener on the notify condition
+<REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>.
 
 <para>
-This event notification is performed through the libpq protocol
-and frontend application interface.  The application program
-must call the routine
-<function>PQnotifies</function>
-in order to find out the name of the class to which a given
-notification corresponds.  If this code is not included in
-the application, the event notification will be queued and
-never be processed.
+Whenever the command 
+<command>NOTIFY <REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE></command>
+is invoked, either by this backend or another one connected to
+the same database, all the backends currently listening on that notify
+condition are notified, and each will in turn notify its connected
+frontend application.  See the discussion of <command>NOTIFY</command>
+for more information.
+
+<para>
+A backend can be deregistered for a given notify condition with the
+<command>UNLISTEN</command> command.  Also, a backend's listen registrations
+are automatically cleared when the backend process exits.
+
+<para>
+The method a frontend application must use to detect notify events depends on
+which <productname>Postgres</productname> application programming interface it
+uses.  With the basic libpq library, the application issues
+<command>LISTEN</command> as an ordinary SQL command, and then must
+periodically call the routine <function>PQnotifies</function> to find out
+whether any notify events have been received.  Other interfaces such as
+libpgtcl provide higher-level methods for handling notify events; indeed,
+with libpgtcl the application programmer should not even issue
+<command>LISTEN</command> or <command>UNLISTEN</command> directly.  See the
+documentation for the library you are using for more details.
+
+<para>
+The reference page for <command>NOTIFY</command> contains a more extensive
+discussion of the use of <command>LISTEN</command> and
+<command>NOTIFY</command>.
 
 <REFSECT2 ID="R2-SQL-LISTEN-3">
 <REFSECT2INFO>
-<DATE>1998-09-24</DATE>
+<DATE>1998-10-07</DATE>
 </REFSECT2INFO>
 <TITLE>
 Notes
 </TITLE>
 <para>
-Note that <REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>
-needs not to be a valid class name but can be any string valid
- as a name up to 32 characters long.
+<REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>
+can be any string valid as a name;
+it need not correspond to the name of any actual table.  If
+<REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>
+is enclosed in double-quotes, it need not even be a syntactically
+valid name, but can be any string up to 31 characters long.
 
 <para>
-A restriction in some previous releases of
- <productname>Postgres</productname> that a
-<REPLACEABLE CLASS="PARAMETER">classname</REPLACEABLE>
-which does not correspond to an actual table must be enclosed in double-quotes
-is no longer present.
+In some previous releases of
+<productname>Postgres</productname>,
+<REPLACEABLE CLASS="PARAMETER">notifyname</REPLACEABLE>
+had to be enclosed in double-quotes when it did not correspond to any existing
+table name, even if syntactically valid as a name.  That is no longer required.
 
 </REFSECT2>
 
@@ -128,6 +160,7 @@ Usage
 </TITLE>
 <PARA>
 <ProgramListing>
+-- Configure and execute a listen/notify sequence from psql
 postgres=> listen virtual;
 LISTEN
 postgres=> notify virtual;
