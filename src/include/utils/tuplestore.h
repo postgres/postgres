@@ -17,7 +17,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuplestore.h,v 1.8 2003/03/09 02:19:13 tgl Exp $
+ * $Id: tuplestore.h,v 1.9 2003/03/09 03:34:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,9 @@ extern Tuplestorestate *tuplestore_begin_heap(bool randomAccess,
 					  int maxKBytes);
 
 extern void tuplestore_puttuple(Tuplestorestate *state, void *tuple);
+
+/* tuplestore_donestoring() used to be required, but is no longer used */
+#define tuplestore_donestoring(state)	((void) 0)
 
 /* backwards scan is only allowed if randomAccess was specified 'true' */
 extern void *tuplestore_gettuple(Tuplestorestate *state, bool forward,
