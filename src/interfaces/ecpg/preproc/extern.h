@@ -1,3 +1,6 @@
+#ifndef _ECPG_PREPROC_EXTERN_H
+#define _ECPG_PREPROC_EXTERN_H
+
 #include "type.h"
 
 #include <errno.h>
@@ -89,3 +92,5 @@ extern ScanKeyword *ScanKeywordLookup(char *text);
 #define OUT_OF_MEMORY		5
 #define INDICATOR_NOT_STRUCT	6
 #define INDICATOR_NOT_SIMPLE	7
+
+#endif /* _ECPG_PREPROC_EXTERN_H */

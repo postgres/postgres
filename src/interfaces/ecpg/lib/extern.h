@@ -1,3 +1,6 @@
+#ifndef _ECPG_LIB_EXTERN_H
+#define _ECPG_LIB_EXTERN_H
+
 #include "postgres_fe.h"
 #include "libpq-fe.h"
 
@@ -87,3 +90,5 @@ PGresult  **
 
 bool ECPGstore_result(const PGresult *results, int act_field,
 				 const struct statement * stmt, struct variable * var);
+
+#endif /* _ECPG_LIB_EXTERN_H */

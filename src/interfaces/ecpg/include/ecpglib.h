@@ -3,6 +3,9 @@
  * definitions into ecpg programs
  */
 
+#ifndef _ECPGLIB_H
+#define _ECPGLIB_H
+
 #include <stdio.h>
 
 #ifndef __BEOS__
@@ -74,3 +77,5 @@ void		ECPGfree_auto_mem(void);
 }
 
 #endif
+
+#endif /* _ECPGLIB_H */

@@ -1,3 +1,6 @@
+#ifndef _ECPG_PREPROC_TYPE_H
+#define _ECPG_PREPROC_TYPE_H
+
 #include "ecpgtype.h"
 
 struct ECPGtype;
@@ -172,3 +175,5 @@ typedef struct ScanKeyword
 	char	   *name;
 	int			value;
 } ScanKeyword;
+
+#endif /* _ECPG_PREPROC_TYPE_H */

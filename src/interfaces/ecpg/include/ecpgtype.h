@@ -27,6 +27,10 @@
  * This is a typically recursive definition. A structure of typed list elements
  * would probably work fine:
  */
+
+#ifndef _ECPGTYPE_H
+#define _ECPGTYPE_H
+
 #ifdef __cplusplus
 extern		"C"
 {
@@ -76,5 +80,6 @@ enum ECPGdtype
 
 #ifdef __cplusplus
 }
-
 #endif
+
+#endif /* _ECPGTYPE_H */
