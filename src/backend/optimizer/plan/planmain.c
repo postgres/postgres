@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.2 1996/10/31 10:59:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.3 1997/04/05 06:37:37 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "nodes/plannodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/relation.h"
+#include "nodes/makefuncs.h"
 
 #include "optimizer/planmain.h"
 #include "optimizer/internal.h"
@@ -26,6 +27,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/keys.h"
 #include "optimizer/tlist.h"
+#include "optimizer/var.h"
 #include "optimizer/xfunc.h"
 #include "optimizer/cost.h"
 
@@ -39,7 +41,7 @@
 static Plan *subplanner(Query *root, List *flat_tlist, List *qual);
 static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 
-static Plan *make_groupPlan(List *tlist, bool tuplePerGroup,
+static Plan *make_groupPlan(List **tlist, bool tuplePerGroup,
 			    List *groupClause, Plan *subplan);
 
 /*    
@@ -111,20 +113,6 @@ query_planner(Query *root,
     }
 
     /*
-     * Needs to add the group attribute(s) to the target list so that they
-     * are available to either the Group node or the Agg node. (The target
-     * list may not contain the group attribute(s).)
-     */
-    if (root->groupClause) {
-	AddGroupAttrToTlist(level_tlist, root->groupClause);
-    }
-    
-    if (root->qry_aggs) {
-	aggplan = make_agg(tlist, root->qry_numAgg, root->qry_aggs);
-	tlist = level_tlist;
-    }
-
-    /*
      * A query may have a non-variable target list and a non-variable
      * qualification only under certain conditions:
      *    - the query creates all-new tuples, or
@@ -170,7 +158,7 @@ query_planner(Query *root,
     subplan = subplanner(root, level_tlist, qual);
      
     set_tlist_references(subplan);
-
+    
     /*
      * If we have a GROUP BY clause, insert a group node (with the appropriate
      * sort node.)
@@ -184,23 +172,20 @@ query_planner(Query *root,
 	 * present. Otherwise, need every tuple from the group to do the
 	 * aggregation.)
 	 */
-	tuplePerGroup = (aggplan == NULL) ? FALSE : TRUE;
+	tuplePerGroup = ( root->qry_aggs ) ? TRUE : FALSE;
 	
 	subplan =
-	    make_groupPlan(tlist, tuplePerGroup, root->groupClause, subplan);
+	    make_groupPlan(&tlist, tuplePerGroup, root->groupClause, subplan);
 
-	/* XXX fake it: this works for the Group node too! very very ugly,
-	   please change me -ay 2/95 */
-	set_agg_tlist_references((Agg*)subplan);
     }
 
     /*
      * If aggregate is present, insert the agg node 
      */
-    if (aggplan != NULL) {
+    if ( root->qry_aggs )
+    {
+	aggplan = make_agg(tlist, root->qry_numAgg, root->qry_aggs);
 	aggplan->plan.lefttree = subplan;
-	subplan = (Plan*)aggplan;
-
 	/*
 	 * set the varno/attno entries to the appropriate references to
 	 * the result tuple of the subplans. (We need to set those in the
@@ -208,8 +193,10 @@ query_planner(Query *root,
 	 * pointers, after a few dozen's of copying, they're not the same as
 	 * those in the target list.)
 	 */
-	set_agg_tlist_references((Agg*)subplan);
-	set_agg_agglist_references((Agg*)subplan);
+	set_agg_tlist_references (aggplan);
+	set_agg_agglist_references (aggplan);
+
+	subplan = (Plan*)aggplan;
 
 	tlist = aggplan->plan.targetlist;
     }
@@ -238,9 +225,17 @@ query_planner(Query *root,
      * the very last stage of query execution.  this could be bad.
      * but it is joey's responsibility to optimally push these
      * expressions down the plan tree.  -- Wei
+     *
+     * But now nothing to do if there are GroupBy and/or Aggregates:
+     * 1. make_groupPlan fixes tlist; 2. flatten_tlist_vars does nothing
+     * with aggregates fixing only other entries (i.e. - GroupBy-ed and
+     * so fixed by make_groupPlan).	- vadim 04/05/97
      */
-    subplan->targetlist = flatten_tlist_vars(tlist,
+    if ( root->groupClause == NULL && aggplan == NULL )
+    {
+    	subplan->targetlist = flatten_tlist_vars(tlist,
 					     subplan->targetlist);
+    }
 
     /*
      * Destructively modify the query plan's targetlist to add fjoin
@@ -356,58 +351,130 @@ make_result(List *tlist,
  *****************************************************************************/
 
 static Plan *
-make_groupPlan(List *tlist,
+make_groupPlan(List **tlist,
 	       bool tuplePerGroup,
 	       List *groupClause,
 	       Plan *subplan)
 {
     List *sort_tlist;
-    List *gl;
-    int keyno;
+    List *sl, *gl;
+    List *glc = listCopy (groupClause);
+    List *aggvals = NIL;		/* list of vars of aggregates */
+    int aggvcnt;
     Sort *sortplan;
     Group *grpplan;
     int numCols;
     AttrNumber *grpColIdx;
+    int keyno = 1;
+    int last_resno = 1;
 
     numCols = length(groupClause);
     grpColIdx = (AttrNumber *)palloc(sizeof(AttrNumber)*numCols);
 
-    /*
-     * first, make a sort node. Group node expects the tuples it gets
-     * from the subplan is in the order as specified by the group columns.
-     */
-    keyno = 1;
-    sort_tlist = new_unsorted_tlist(subplan->targetlist);
+    sort_tlist = new_unsorted_tlist(*tlist);	/* it's copy */
 
+    /*
+     * Make template TL for subplan, Sort & Group:
+     * 1. Take away Aggregates and re-set resno-s accordantly.
+     * 2. Make grpColIdx
+     *
+     * Note: we assume that TLEs in *tlist are ordered in accordance
+     * with their resdom->resno.
+     */
+    foreach (sl, sort_tlist)
     {
-	/* if this is a mergejoin node, varno could be OUTER/INNER */
-	List *l;
-	foreach(l, sort_tlist) {
-	    TargetEntry *tle;
-	    tle = lfirst(l);
-	    ((Var*)tle->expr)->varno = 1;
+    	Resdom *resdom = NULL;
+    	TargetEntry *te = (TargetEntry *) lfirst (sl);
+
+    	foreach (gl, glc)
+    	{
+	    GroupClause *grpcl = (GroupClause*)lfirst(gl);
+	    
+	    if ( grpcl->resdom->resno == te->resdom->resno )
+	    {
+    		
+		resdom = te->resdom;
+		resdom->reskey = keyno;
+		resdom->reskeyop = get_opcode (grpcl->grpOpoid);
+	    	resdom->resno = last_resno;		/* re-set */
+		grpColIdx[keyno-1] = last_resno++;
+		keyno++;
+	    	glc = lremove (lfirst (gl), glc);	/* TLE found for it */
+		break;
+	    }
 	}
+	if ( resdom == NULL )		/* Not GroupBy-ed entry: remove */
+	{				/* aggregate(s) from Group/Sort TL */
+	    if ( IsA (te->expr, Aggreg) )
+	    {				/* save Aggregate' Vars */
+	    	aggvals = nconc (aggvals, pull_var_clause (te->expr));
+	    	sort_tlist = lremove (lfirst (sl), sort_tlist);
+	    }
+	    else
+	    	resdom->resno = last_resno++;		/* re-set */
+	}
+    }
+
+    if ( length (glc) != 0 )
+    {
+	elog(WARN, "group attribute disappeared from target list");
     }
     
-    foreach (gl, groupClause) {
-	GroupClause *grpcl = (GroupClause*)lfirst(gl);
-	TargetEntry *tle;
+    /*
+     * Aggregates were removed from TL - we are to add Vars for them
+     * to the end of TL if there are no such Vars in TL already.
+     */
 
-	tle = match_varid(grpcl->grpAttr, sort_tlist);
-	/*
-	 * the parser should have checked to make sure the group attribute
-	 * is valid but the optimizer might have screwed up and hence we
-	 * check again.
-	 */
-	if (tle==NULL) {
-	    elog(WARN, "group attribute disappeared from target list");
+    aggvcnt = length (aggvals);
+    foreach (gl, aggvals)
+    {
+    	Var *v = (Var*)lfirst (gl);
+    	
+	if ( tlist_member (v, sort_tlist) == NULL )
+	{
+	    sort_tlist = lappend (sort_tlist,
+	    				create_tl_element (v, last_resno));
+	    last_resno++;
 	}
-	tle->resdom->reskey = keyno;
-	tle->resdom->reskeyop = get_opcode(grpcl->grpOpoid);
-
-	grpColIdx[keyno-1] = tle->resdom->resno;
-	keyno++;
+	else		/* already in TL */
+	    aggvcnt--;
     }
+    /* Now aggvcnt is number of Vars added in TL for Aggregates */
+    
+    /* Make TL for subplan: substitute Vars from subplan TL into new TL */
+    sl = flatten_tlist_vars (sort_tlist, subplan->targetlist);
+    
+    subplan->targetlist = new_unsorted_tlist (sl);	/* there */
+
+    /* 
+     * Make Sort/Group TL : 
+     * 1. make Var nodes (with varno = 1 and varnoold = -1) for all 
+     *    functions, 'couse they will be evaluated by subplan;
+     * 2. for real Vars: set varno = 1 and varattno to its resno in subplan
+     */
+    foreach (sl, sort_tlist)
+    {
+    	TargetEntry *te = (TargetEntry *) lfirst (sl);
+    	Resdom *resdom = te->resdom;
+    	Node *expr = te->expr;
+    	
+    	if ( IsA (expr, Var) )
+    	{
+#if 0	/* subplanVar->resdom->resno expected to be = te->resdom->resno */
+    	    TargetEntry *subplanVar;
+    	    
+    	    subplanVar = match_varid ((Var*)expr, subplan->targetlist);
+    	    ((Var*)expr)->varattno = subplanVar->resdom->resno;
+#endif
+    	    ((Var*)expr)->varattno = te->resdom->resno;
+    	    ((Var*)expr)->varno = 1;
+    	}
+    	else
+    	    te->expr = (Node*) makeVar (1, resdom->resno, 
+    			  		resdom->restype,
+    			  		-1, resdom->resno);
+    }
+
     sortplan = make_sort(sort_tlist,
 			 _TEMP_RELATION_ID_,
 			 subplan,
@@ -417,8 +484,41 @@ make_groupPlan(List *tlist,
     /*
      * make the Group node
      */
-    tlist = copyObject(tlist);	/* make a copy */
-    grpplan = make_group(tlist, tuplePerGroup, numCols, grpColIdx, sortplan);
+    sort_tlist = copyObject (sort_tlist);
+    grpplan = make_group(sort_tlist, tuplePerGroup, numCols, 
+    						grpColIdx, sortplan);
+
+    /* 
+     * Make TL for parent: "restore" Aggregates and
+     * resno-s of others accordantly.
+     */
+    sl = sort_tlist;
+    sort_tlist = NIL;			/* to be new parent TL */
+    foreach (gl, *tlist)
+    {
+    	TargetEntry *te = (TargetEntry *) lfirst (gl);
+
+	if ( !IsA (te->expr, Aggreg) )	/* It's "our" TLE - we're to return */
+	{				/* it from Sort/Group plans */
+    	    TargetEntry *my = (TargetEntry *) lfirst (sl);	/* get it */
+    	    
+	    sl = sl->next;		/* prepare for the next "our" */
+	    my = copyObject (my);
+	    my->resdom->resno = te->resdom->resno;	/* order of parent TL */
+	    sort_tlist = lappend (sort_tlist, my);
+	    continue;
+	}
+	/* TLE of an aggregate */
+	sort_tlist = lappend (sort_tlist, copyObject(te));
+    }
+    /* 
+     * Pure aggregates Vars were at the end of Group' TL.
+     * They shouldn't appear in parent TL, all others shouldn't
+     * disappear.
+     */
+    Assert ( aggvcnt == length (sl) );
+
+    *tlist = sort_tlist;
     
     return (Plan*)grpplan;
 }
