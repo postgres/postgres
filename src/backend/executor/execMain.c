@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.56 1998/09/25 13:38:30 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.57 1998/10/01 02:03:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,8 +337,6 @@ ExecCheckPerms(CmdType operation,
 						((aclcheck_result = CHECK(ACL_WR)) == ACLCHECK_OK);
 					opstr = "append";
 					break;
-				case CMD_NOTIFY:		/* what does this mean?? -- jw,
-										 * 1/6/94 */
 				case CMD_DELETE:
 				case CMD_UPDATE:
 					ok = ((aclcheck_result = CHECK(ACL_WR)) == ACLCHECK_OK);
@@ -351,7 +349,6 @@ ExecCheckPerms(CmdType operation,
 		}
 		else
 		{
-			/* XXX NOTIFY?? */
 			ok = ((aclcheck_result = CHECK(ACL_RD)) == ACLCHECK_OK);
 			opstr = "read";
 		}
@@ -724,26 +721,23 @@ ExecutePlan(EState *estate,
 
 	for (;;)
 	{
-		if (operation != CMD_NOTIFY)
-		{
-			/******************
-			 *	Execute the plan and obtain a tuple
-			 ******************
-			 */
-			/* at the top level, the parent of a plan (2nd arg) is itself */
-			slot = ExecProcNode(plan, plan);
+		/******************
+		 *	Execute the plan and obtain a tuple
+		 ******************
+		 */
+		/* at the top level, the parent of a plan (2nd arg) is itself */
+		slot = ExecProcNode(plan, plan);
 
-			/******************
-			 *	if the tuple is null, then we assume
-			 *	there is nothing more to process so
-			 *	we just return null...
-			 ******************
-			 */
-			if (TupIsNull(slot))
-			{
-				result = NULL;
-				break;
-			}
+		/******************
+		 *	if the tuple is null, then we assume
+		 *	there is nothing more to process so
+		 *	we just return null...
+		 ******************
+		 */
+		if (TupIsNull(slot))
+		{
+			result = NULL;
+			break;
 		}
 
 		/******************
@@ -830,24 +824,6 @@ ExecutePlan(EState *estate,
 			case CMD_UPDATE:
 				ExecReplace(slot, tupleid, estate, parseTree);
 				result = NULL;
-				break;
-
-				/*
-				 * Total hack. I'm ignoring any accessor functions for
-				 * Relation, RelationForm, NameData. Assuming that
-				 * NameData.data has offset 0.
-				 */
-			case CMD_NOTIFY:
-				{
-					RelationInfo *rInfo = estate->es_result_relation_info;
-					Relation	rDesc = rInfo->ri_RelationDesc;
-
-					Async_Notify(rDesc->rd_rel->relname.data);
-					result = NULL;
-					current_tuple_count = 0;
-					numberTuples = 1;
-					elog(DEBUG, "ExecNotify %s", &rDesc->rd_rel->relname);
-				}
 				break;
 
 			default:

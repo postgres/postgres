@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.28 1998/09/01 04:29:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.29 1998/10/01 02:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,14 +96,7 @@ query_planner(Query *root,
 	 */
 	if (tlist == NIL && qual == NULL)
 	{
-		if (command_type == CMD_DELETE ||
-
-		/*
-		 * Total hack here. I don't know how to handle statements like
-		 * notify in action bodies. Notify doesn't return anything but
-		 * scans a system table.
-		 */
-			command_type == CMD_NOTIFY)
+		if (command_type == CMD_DELETE)
 		{
 			return ((Plan *) make_seqscan(NIL,
 										  NIL,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.30 1998/09/01 04:36:41 momjian Exp $
+ * $Id: nodes.h,v 1.31 1998/10/01 02:04:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,7 +305,6 @@ typedef enum CmdType
 	CMD_UPDATE,					/* update stmt (formerly replace) */
 	CMD_INSERT,					/* insert stmt (formerly append) */
 	CMD_DELETE,
-	CMD_NOTIFY,
 	CMD_UTILITY,				/* cmds like create, destroy, copy,
 								 * vacuum, etc. */
 	CMD_NOTHING					/* dummy command for instead nothing rules
