@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.20 1999/05/25 16:07:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.21 1999/06/03 04:41:40 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <access/xact.h>
 #include <access/heapam.h>
 #include <catalog/catname.h>
+#include <storage/proc.h>
 
 static void GetNewObjectIdBlock(Oid *oid_return, int oid_block_size);
 static void VariableRelationGetNextOid(Oid *oid_return);
@@ -307,6 +308,9 @@ GetNewTransactionId(TransactionId *xid)
 	TransactionIdStore(ShmemVariableCache->nextXid, xid);
 	TransactionIdAdd(&(ShmemVariableCache->nextXid), 1);
 	(ShmemVariableCache->xid_count)--;
+
+	if (MyProc != (PROC *) NULL)
+		MyProc->xid = *xid;
 
 	SpinRelease(OidGenLockId);
 }
