@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.82 2002/06/20 20:29:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.83 2002/07/16 22:12:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,11 +124,15 @@ DefineSequence(CreateSeqStmt *seq)
 		typnam->setof = FALSE;
 		typnam->arrayBounds = NIL;
 		typnam->typmod = -1;
+
 		coldef = makeNode(ColumnDef);
 		coldef->typename = typnam;
+		coldef->is_not_null = true;
 		coldef->raw_default = NULL;
 		coldef->cooked_default = NULL;
-		coldef->is_not_null = false;
+		coldef->constraints = NIL;
+		coldef->support = NULL;
+
 		null[i - 1] = ' ';
 
 		switch (i)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.5 2002/07/12 18:43:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.6 2002/07/16 22:12:19 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -358,15 +358,18 @@ DefineDomain(CreateDomainStmt *stmt)
 	char		typtype;
 	Datum		datum;
 	bool		isnull;
+	Node	   *defaultExpr = NULL;
 	char	   *defaultValue = NULL;
 	char	   *defaultValueBin = NULL;
 	bool		typNotNull = false;
+	bool		nullDefined = false;
 	Oid			basetypelem;
 	int32		typNDims = length(stmt->typename->arrayBounds);
 	HeapTuple	typeTup;
 	List	   *schema = stmt->constraints;
 	List	   *listptr;
 	Oid			basetypeoid;
+	Oid			domainoid;
 	Form_pg_type	baseType;
 
 	/* Convert list of names to a name and namespace */
@@ -459,8 +462,6 @@ DefineDomain(CreateDomainStmt *stmt)
 	foreach(listptr, schema)
 	{
 		Constraint *colDef = lfirst(listptr);
-		bool nullDefined = false;
-		Node	   *expr;
 		ParseState *pstate;
 
 		switch (colDef->contype)
@@ -473,47 +474,45 @@ DefineDomain(CreateDomainStmt *stmt)
 			 * don't want to cook or fiddle too much.
 			 */
 			case CONSTR_DEFAULT:
+				if (defaultExpr)
+					elog(ERROR, "CREATE DOMAIN has multiple DEFAULT expressions");
 				/* Create a dummy ParseState for transformExpr */
 				pstate = make_parsestate(NULL);
 				/*
 				 * Cook the colDef->raw_expr into an expression.
 				 * Note: Name is strictly for error message
 				 */
-				expr = cookDefault(pstate, colDef->raw_expr,
-								   basetypeoid,
-								   stmt->typename->typmod,
-								   domainName);
+				defaultExpr = cookDefault(pstate, colDef->raw_expr,
+										  basetypeoid,
+										  stmt->typename->typmod,
+										  domainName);
 				/*
 				 * Expression must be stored as a nodeToString result,
 				 * but we also require a valid textual representation
 				 * (mainly to make life easier for pg_dump).
 				 */
-				defaultValue = deparse_expression(expr,
+				defaultValue = deparse_expression(defaultExpr,
 								deparse_context_for(domainName,
 													InvalidOid),
 												   false);
-				defaultValueBin = nodeToString(expr);
+				defaultValueBin = nodeToString(defaultExpr);
 				break;
 
 			/*
 			 * Find the NULL constraint.
 			 */
 			case CONSTR_NOTNULL:
-				if (nullDefined) {
+				if (nullDefined)
 					elog(ERROR, "CREATE DOMAIN has conflicting NULL / NOT NULL constraint");
-				} else {
-					typNotNull = true;
-					nullDefined = true;
-				}
+				typNotNull = true;
+				nullDefined = true;
 		  		break;
 
 			case CONSTR_NULL:
-				if (nullDefined) {
+				if (nullDefined)
 					elog(ERROR, "CREATE DOMAIN has conflicting NULL / NOT NULL constraint");
-				} else {
-					typNotNull = false;
-					nullDefined = true;
-				}
+				typNotNull = false;
+				nullDefined = true;
 		  		break;
 
 		  	case CONSTR_UNIQUE:
@@ -544,28 +543,44 @@ DefineDomain(CreateDomainStmt *stmt)
 	/*
 	 * Have TypeCreate do all the real work.
 	 */
-	TypeCreate(domainName,			/* type name */
-			   domainNamespace,		/* namespace */
-			   InvalidOid,			/* preassigned type oid (none here) */
-			   InvalidOid,			/* relation oid (n/a here) */
-			   internalLength,		/* internal size */
-			   externalLength,		/* external size */
-			   'd',					/* type-type (domain type) */
-			   delimiter,			/* array element delimiter */
-			   inputProcedure,		/* input procedure */
-			   outputProcedure,		/* output procedure */
-			   receiveProcedure,	/* receive procedure */
-			   sendProcedure,		/* send procedure */
-			   basetypelem,			/* element type ID */
-			   basetypeoid,			/* base type ID */
-			   defaultValue,		/* default type value (text) */
-			   defaultValueBin,		/* default type value (binary) */
-			   byValue,				/* passed by value */
-			   alignment,			/* required alignment */
-			   storage,				/* TOAST strategy */
-			   stmt->typename->typmod, /* typeMod value */
-			   typNDims,			/* Array dimensions for base type */
-			   typNotNull);			/* Type NOT NULL */
+	domainoid =
+		TypeCreate(domainName,			/* type name */
+				   domainNamespace,		/* namespace */
+				   InvalidOid,			/* preassigned type oid (none here) */
+				   InvalidOid,			/* relation oid (n/a here) */
+				   internalLength,		/* internal size */
+				   externalLength,		/* external size */
+				   'd',					/* type-type (domain type) */
+				   delimiter,			/* array element delimiter */
+				   inputProcedure,		/* input procedure */
+				   outputProcedure,		/* output procedure */
+				   receiveProcedure,	/* receive procedure */
+				   sendProcedure,		/* send procedure */
+				   basetypelem,			/* element type ID */
+				   basetypeoid,			/* base type ID */
+				   defaultValue,		/* default type value (text) */
+				   defaultValueBin,		/* default type value (binary) */
+				   byValue,				/* passed by value */
+				   alignment,			/* required alignment */
+				   storage,				/* TOAST strategy */
+				   stmt->typename->typmod, /* typeMod value */
+				   typNDims,			/* Array dimensions for base type */
+				   typNotNull);			/* Type NOT NULL */
+
+	/*
+	 * Add any dependencies needed for the default expression.
+	 */
+	if (defaultExpr)
+	{
+		ObjectAddress	domobject;
+
+		domobject.classId = RelOid_pg_type;
+		domobject.objectId = domainoid;
+		domobject.objectSubId = 0;
+
+		recordDependencyOnExpr(&domobject, defaultExpr, NIL,
+							   DEPENDENCY_NORMAL);
+	}
 
 	/*
 	 * Now we can clean up.

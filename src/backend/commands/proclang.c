@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.35 2002/07/12 18:43:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.36 2002/07/16 22:12:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	HeapTuple	tup;
 	TupleDesc	tupDesc;
 	int			i;
+	ObjectAddress	myself,
+					referenced;
 
 	/*
 	 * Check permission
@@ -91,7 +93,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 				 NameListToString(stmt->plvalidator));
 	}
 	else
-		valProcOid = 0;
+		valProcOid = InvalidOid;
 
 	/*
 	 * Insert the new language into pg_language
@@ -126,6 +128,28 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		CatalogOpenIndices(Num_pg_language_indices, Name_pg_language_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_language_indices, rel, tup);
 		CatalogCloseIndices(Num_pg_language_indices, idescs);
+	}
+
+	/*
+	 * Create dependencies for language
+	 */
+	myself.classId = RelationGetRelid(rel);
+	myself.objectId = tup->t_data->t_oid;
+	myself.objectSubId = 0;
+
+	/* dependency on the PL handler function */
+	referenced.classId = RelOid_pg_proc;
+	referenced.objectId = procOid;
+	referenced.objectSubId = 0;
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+	/* dependency on the validator function, if any */
+	if (OidIsValid(valProcOid))
+	{
+		referenced.classId = RelOid_pg_proc;
+		referenced.objectId = valProcOid;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
 
 	heap_close(rel, RowExclusiveLock);

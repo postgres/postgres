@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.70 2002/06/20 20:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.71 2002/07/16 22:12:18 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -19,6 +19,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
@@ -55,6 +56,8 @@ static Oid get_other_operator(List *otherOp,
 							  const char *operatorName, Oid operatorNamespace,
 							  Oid leftTypeId, Oid rightTypeId,
 							  bool isCommutator);
+
+static void makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid);
 
 
 /*
@@ -270,6 +273,9 @@ OperatorShellMake(const char *operatorName,
 		CatalogIndexInsert(idescs, Num_pg_operator_indices, pg_operator_desc, tup);
 		CatalogCloseIndices(Num_pg_operator_indices, idescs);
 	}
+
+	/* Add dependencies for the entry */
+	makeOperatorDependencies(tup, RelationGetRelid(pg_operator_desc));
 
 	heap_freetuple(tup);
 
@@ -659,6 +665,9 @@ OperatorCreate(const char *operatorName,
 		CatalogCloseIndices(Num_pg_operator_indices, idescs);
 	}
 
+	/* Add dependencies for the entry */
+	makeOperatorDependencies(tup, RelationGetRelid(pg_operator_desc));
+
 	heap_close(pg_operator_desc, RowExclusiveLock);
 
 	/*
@@ -892,4 +901,90 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	}
 
 	heap_close(pg_operator_desc, RowExclusiveLock);
+}
+
+/*
+ * Create dependencies for a new operator (either a freshly inserted
+ * complete operator, a new shell operator, or a just-updated shell).
+ *
+ * NB: the OidIsValid tests in this routine are *all* necessary, in case
+ * the given operator is a shell.
+ */
+static void
+makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid)
+{
+	Form_pg_operator	oper = (Form_pg_operator) GETSTRUCT(tuple);
+	ObjectAddress	myself,
+					referenced;
+
+	myself.classId = pg_operator_relid;
+	myself.objectId = tuple->t_data->t_oid;
+	myself.objectSubId = 0;
+
+	/* In case we are updating a shell, delete any existing entries */
+	deleteDependencyRecordsFor(myself.classId, myself.objectId);
+
+	/* Dependency on left type */
+	if (OidIsValid(oper->oprleft))
+	{
+		referenced.classId = RelOid_pg_type;
+		referenced.objectId = oper->oprleft;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
+	/* Dependency on right type */
+	if (OidIsValid(oper->oprright))
+	{
+		referenced.classId = RelOid_pg_type;
+		referenced.objectId = oper->oprright;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
+	/* Dependency on result type */
+	if (OidIsValid(oper->oprresult))
+	{
+		referenced.classId = RelOid_pg_type;
+		referenced.objectId = oper->oprresult;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
+	/*
+	 * NOTE: we do not consider the operator to depend on the associated
+	 * operators oprcom, oprnegate, oprlsortop, oprrsortop, oprltcmpop,
+	 * oprgtcmpop.  We would not want to delete this operator if those
+	 * go away, but only reset the link fields; which is not a function
+	 * that the dependency code can presently handle.  (Something could
+	 * perhaps be done with objectSubId though.)  For now, it's okay to
+	 * let those links dangle if a referenced operator is removed.
+	 */
+
+	/* Dependency on implementation function */
+	if (OidIsValid(oper->oprcode))
+	{
+		referenced.classId = RelOid_pg_proc;
+		referenced.objectId = oper->oprcode;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
+	/* Dependency on restriction selectivity function */
+	if (OidIsValid(oper->oprrest))
+	{
+		referenced.classId = RelOid_pg_proc;
+		referenced.objectId = oper->oprrest;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
+	/* Dependency on join selectivity function */
+	if (OidIsValid(oper->oprjoin))
+	{
+		referenced.classId = RelOid_pg_proc;
+		referenced.objectId = oper->oprjoin;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
 }

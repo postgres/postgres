@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.340 2002/07/14 23:38:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.341 2002/07/16 22:12:20 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1852,10 +1852,11 @@ CreateAsElement:
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
 					n->typename = NULL;
+					n->is_not_null = false;
 					n->raw_default = NULL;
 					n->cooked_default = NULL;
-					n->is_not_null = FALSE;
-					n->constraints = NULL;
+					n->constraints = NIL;
+					n->support = NULL;
 					$$ = (Node *)n;
 				}
 		;

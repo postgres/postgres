@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.140 2002/07/12 18:43:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.141 2002/07/16 22:12:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1635,6 +1635,8 @@ _equalColumnDef(ColumnDef *a, ColumnDef *b)
 	if (!equalstr(a->cooked_default, b->cooked_default))
 		return false;
 	if (!equal(a->constraints, b->constraints))
+		return false;
+	if (!equal(a->support, b->support))
 		return false;
 
 	return true;

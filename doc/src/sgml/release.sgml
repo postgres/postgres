@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.140 2002/07/12 18:43:12 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.141 2002/07/16 22:12:18 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,7 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+Sequences created by SERIAL column definitions now auto-drop with the column
 Most forms of DROP now support RESTRICT and CASCADE options
 Recursive SQL functions can be defined
 User-defined procedural languages can register a validator function to check new functions as they are created

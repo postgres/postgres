@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.22 2002/07/16 05:53:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.23 2002/07/16 22:12:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,6 +239,10 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * So, the transformation has to be postponed to this final step of
 	 * CREATE TABLE.
 	 *
+	 * Another task that's conveniently done at this step is to add
+	 * dependency links between columns and supporting relations (such
+	 * as SERIAL sequences).
+	 *
 	 * First, scan schema to find new column defaults.
 	 */
 	rawDefaults = NIL;
@@ -247,18 +251,35 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	foreach(listptr, schema)
 	{
 		ColumnDef  *colDef = lfirst(listptr);
-		RawColumnDefault *rawEnt;
 
 		attnum++;
 
-		if (colDef->raw_default == NULL)
-			continue;
-		Assert(colDef->cooked_default == NULL);
+		if (colDef->raw_default != NULL)
+		{
+			RawColumnDefault *rawEnt;
 
-		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
-		rawEnt->attnum = attnum;
-		rawEnt->raw_default = colDef->raw_default;
-		rawDefaults = lappend(rawDefaults, rawEnt);
+			Assert(colDef->cooked_default == NULL);
+
+			rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
+			rawEnt->attnum = attnum;
+			rawEnt->raw_default = colDef->raw_default;
+			rawDefaults = lappend(rawDefaults, rawEnt);
+		}
+
+		if (colDef->support != NULL)
+		{
+			/* Create dependency for supporting relation for this column */
+			ObjectAddress	colobject,
+						suppobject;
+
+			colobject.classId = RelOid_pg_class;
+			colobject.objectId = relationId;
+			colobject.objectSubId = attnum;
+			suppobject.classId = RelOid_pg_class;
+			suppobject.objectId = RangeVarGetRelid(colDef->support, false);
+			suppobject.objectSubId = 0;
+			recordDependencyOn(&suppobject, &colobject, DEPENDENCY_INTERNAL);
+		}
 	}
 
 	/*
@@ -533,6 +554,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				def->raw_default = NULL;
 				def->cooked_default = NULL;
 				def->constraints = NIL;
+				def->support = NULL;
 				inhSchema = lappend(inhSchema, def);
 				newattno[parent_attno - 1] = ++child_attno;
 			}
@@ -1524,6 +1546,8 @@ AlterTableAddColumn(Oid myrelid,
 	HeapTuple	typeTuple;
 	Form_pg_type tform;
 	int			attndims;
+	ObjectAddress	myself,
+					referenced;
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT
@@ -1696,6 +1720,17 @@ AlterTableAddColumn(Oid myrelid,
 	heap_close(pgclass, NoLock);
 
 	heap_close(rel, NoLock);	/* close rel but keep lock! */
+
+	/*
+	 * Add datatype dependency for the new column.
+	 */
+	myself.classId = RelOid_pg_class;
+	myself.objectId = myrelid;
+	myself.objectSubId = i;
+	referenced.classId = RelOid_pg_type;
+	referenced.objectId = attribute->atttypid;
+	referenced.objectSubId = 0;
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	/*
 	 * Make our catalog updates visible for subsequent steps.

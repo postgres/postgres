@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_depend.c,v 1.2 2002/07/16 05:53:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_depend.c,v 1.3 2002/07/16 22:12:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,6 +121,43 @@ recordMultipleDependencies(const ObjectAddress *depender,
 	heap_close(dependDesc, RowExclusiveLock);
 }
 
+/*
+ * deleteDependencyRecordsFor -- delete all records with given depender
+ * classId/objectId.
+ *
+ * This is used when redefining an existing object.  Links leading to the
+ * object do not change, and links leading from it will be recreated
+ * (possibly with some differences from before).
+ */
+void
+deleteDependencyRecordsFor(Oid classId, Oid objectId)
+{
+	Relation		depRel;
+	ScanKeyData		key[2];
+	SysScanDesc		scan;
+	HeapTuple		tup;
+
+	depRel = heap_openr(DependRelationName, RowExclusiveLock);
+
+	ScanKeyEntryInitialize(&key[0], 0x0,
+						   Anum_pg_depend_classid, F_OIDEQ,
+						   ObjectIdGetDatum(classId));
+	ScanKeyEntryInitialize(&key[1], 0x0,
+						   Anum_pg_depend_objid, F_OIDEQ,
+						   ObjectIdGetDatum(objectId));
+
+	scan = systable_beginscan(depRel, DependDependerIndex, true,
+							  SnapshotNow, 2, key);
+
+	while (HeapTupleIsValid(tup = systable_getnext(scan)))
+	{
+		simple_heap_delete(depRel, &tup->t_self);
+	}
+
+	systable_endscan(scan);
+
+	heap_close(depRel, RowExclusiveLock);
+}
 
 /*
  * isObjectPinned()

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.193 2002/07/12 18:43:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.194 2002/07/16 22:12:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1749,6 +1749,7 @@ _copyColumnDef(ColumnDef *from)
 	if (from->cooked_default)
 		newnode->cooked_default = pstrdup(from->cooked_default);
 	Node_Copy(from, newnode, constraints);
+	Node_Copy(from, newnode, support);
 
 	return newnode;
 }

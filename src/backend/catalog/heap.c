@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.208 2002/07/16 05:53:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.209 2002/07/16 22:12:18 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -97,37 +97,37 @@ static void RemoveStatistics(Relation rel);
 static FormData_pg_attribute a1 = {
 	0, {"ctid"}, TIDOID, 0, sizeof(ItemPointerData),
 	SelfItemPointerAttributeNumber, 0, -1, -1,
-	false, 'p', false, 'i', false, false
+	false, 'p', false, 'i', true, false
 };
 
 static FormData_pg_attribute a2 = {
 	0, {"oid"}, OIDOID, 0, sizeof(Oid),
 	ObjectIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', false, false
+	true, 'p', false, 'i', true, false
 };
 
 static FormData_pg_attribute a3 = {
 	0, {"xmin"}, XIDOID, 0, sizeof(TransactionId),
 	MinTransactionIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', false, false
+	true, 'p', false, 'i', true, false
 };
 
 static FormData_pg_attribute a4 = {
 	0, {"cmin"}, CIDOID, 0, sizeof(CommandId),
 	MinCommandIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', false, false
+	true, 'p', false, 'i', true, false
 };
 
 static FormData_pg_attribute a5 = {
 	0, {"xmax"}, XIDOID, 0, sizeof(TransactionId),
 	MaxTransactionIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', false, false
+	true, 'p', false, 'i', true, false
 };
 
 static FormData_pg_attribute a6 = {
 	0, {"cmax"}, CIDOID, 0, sizeof(CommandId),
 	MaxCommandIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', false, false
+	true, 'p', false, 'i', true, false
 };
 
 /*
@@ -139,7 +139,7 @@ static FormData_pg_attribute a6 = {
 static FormData_pg_attribute a7 = {
 	0, {"tableoid"}, OIDOID, 0, sizeof(Oid),
 	TableOidAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', false, false
+	true, 'p', false, 'i', true, false
 };
 
 static Form_pg_attribute SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
@@ -416,6 +416,8 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	bool		hasindex;
 	Relation	idescs[Num_pg_attr_indices];
 	int			natts = tupdesc->natts;
+	ObjectAddress	myself,
+					referenced;
 
 	/*
 	 * open pg_attribute
@@ -430,7 +432,8 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
 
 	/*
-	 * first we add the user attributes..
+	 * First we add the user attributes.  This is also a convenient place
+	 * to add dependencies on their datatypes.
 	 */
 	dpp = tupdesc->attrs;
 	for (i = 0; i < natts; i++)
@@ -451,11 +454,22 @@ AddNewAttributeTuples(Oid new_rel_oid,
 			CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
 
 		heap_freetuple(tup);
+
+		myself.classId = RelOid_pg_class;
+		myself.objectId = new_rel_oid;
+		myself.objectSubId = i+1;
+		referenced.classId = RelOid_pg_type;
+		referenced.objectId = (*dpp)->atttypid;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
 		dpp++;
 	}
 
 	/*
-	 * next we add the system attributes.  Skip OID if rel has no OIDs.
+	 * Next we add the system attributes.  Skip OID if rel has no OIDs.
+	 * Skip all for a view.  We don't bother with making datatype
+	 * dependencies here, since presumably all these types are pinned.
 	 */
 	if (relkind != RELKIND_VIEW)
 	{
@@ -493,7 +507,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	}
 
 	/*
-	 * close pg_attribute indices
+	 * clean up
 	 */
 	if (hasindex)
 		CatalogCloseIndices(Num_pg_attr_indices, idescs);

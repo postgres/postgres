@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.162 2002/07/12 18:43:16 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.163 2002/07/16 22:12:19 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -183,6 +183,8 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 	_outToken(str, node->cooked_default);
 	appendStringInfo(str, " :constraints ");
 	_outNode(str, node->constraints);
+	appendStringInfo(str, " :support ");
+	_outNode(str, node->support);
 }
 
 static void

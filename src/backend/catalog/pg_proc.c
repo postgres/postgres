@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.76 2002/06/20 20:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.77 2002/07/16 22:12:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
@@ -76,6 +77,9 @@ ProcedureCreate(const char *procedureName,
 	NameData	procname;
 	TupleDesc	tupDesc;
 	Oid			retval;
+	bool		is_update;
+	ObjectAddress	myself,
+					referenced;
 
 	/*
 	 * sanity checks
@@ -227,6 +231,7 @@ ProcedureCreate(const char *procedureName,
 		simple_heap_update(rel, &tup->t_self, tup);
 
 		ReleaseSysCache(oldtup);
+		is_update = true;
 	}
 	else
 	{
@@ -237,6 +242,7 @@ ProcedureCreate(const char *procedureName,
 
 		tup = heap_formtuple(tupDesc, values, nulls);
 		simple_heap_insert(rel, tup);
+		is_update = false;
 	}
 
 	/* Need to update indices for either the insert or update case */
@@ -250,6 +256,45 @@ ProcedureCreate(const char *procedureName,
 	}
 
 	retval = tup->t_data->t_oid;
+
+	/*
+	 * Create dependencies for the new function.  If we are updating an
+	 * existing function, first delete any existing pg_depend entries.
+	 */
+	if (is_update)
+		deleteDependencyRecordsFor(RelOid_pg_proc, retval);
+
+	myself.classId = RelOid_pg_proc;
+	myself.objectId = retval;
+	myself.objectSubId = 0;
+
+	/* dependency on implementation language */
+	referenced.classId = get_system_catalog_relid(LanguageRelationName);
+	referenced.objectId = languageObjectId;
+	referenced.objectSubId = 0;
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+	/* dependency on return type */
+	if (OidIsValid(returnType))
+	{
+		referenced.classId = RelOid_pg_type;
+		referenced.objectId = returnType;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
+	/* dependency on input types */
+	for (i = 0; i < parameterCount; i++)
+	{
+		if (OidIsValid(typev[i]))
+		{
+			referenced.classId = RelOid_pg_type;
+			referenced.objectId = typev[i];
+			referenced.objectSubId = 0;
+			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+		}
+	}
+
 	heap_freetuple(tup);
 
 	heap_close(rel, RowExclusiveLock);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.238 2002/07/12 18:43:17 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.239 2002/07/16 22:12:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -846,6 +846,12 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		seqstmt->options = NIL;
 
 		cxt->blist = lappend(cxt->blist, seqstmt);
+
+		/*
+		 * Mark the ColumnDef so that during execution, an appropriate
+		 * dependency will be added from the sequence to the column.
+		 */
+		column->support = makeRangeVar(snamespace, sname);
 
 		/*
 		 * Create appropriate constraints for SERIAL.  We do this in full,

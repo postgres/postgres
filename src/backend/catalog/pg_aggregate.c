@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.49 2002/06/20 20:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.50 2002/07/16 22:12:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_aggregate.h"
@@ -53,6 +54,8 @@ AggregateCreate(const char *aggName,
 	Oid			procOid;
 	TupleDesc	tupDesc;
 	int			i;
+	ObjectAddress	myself,
+					referenced;
 
 	/* sanity checks */
 	if (!aggName)
@@ -187,4 +190,29 @@ AggregateCreate(const char *aggName,
 	}
 
 	heap_close(aggdesc, RowExclusiveLock);
+
+	/*
+	 * Create dependencies for the aggregate (above and beyond those
+	 * already made by ProcedureCreate).  Note: we don't need an explicit
+	 * dependency on aggTransType since we depend on it indirectly through
+	 * transfn.
+	 */
+	myself.classId = RelOid_pg_proc;
+	myself.objectId = procOid;
+	myself.objectSubId = 0;
+
+	/* Depends on transition function */
+	referenced.classId = RelOid_pg_proc;
+	referenced.objectId = transfn;
+	referenced.objectSubId = 0;
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+	/* Depends on final function, if any */
+	if (OidIsValid(finalfn))
+	{
+		referenced.classId = RelOid_pg_proc;
+		referenced.objectId = finalfn;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
 }

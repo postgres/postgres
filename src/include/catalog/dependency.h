@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dependency.h,v 1.2 2002/07/16 05:53:34 tgl Exp $
+ * $Id: dependency.h,v 1.3 2002/07/16 22:12:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,5 +97,7 @@ extern void recordMultipleDependencies(const ObjectAddress *depender,
 									   const ObjectAddress *referenced,
 									   int nreferenced,
 									   DependencyType behavior);
+
+extern void deleteDependencyRecordsFor(Oid classId, Oid objectId);
 
 #endif   /* DEPENDENCY_H */
