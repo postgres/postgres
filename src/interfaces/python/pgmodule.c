@@ -35,8 +35,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+# PyObject_Del does not exist in older versions of Python.
+#if PY_VERSION_HEX < 0x01060000
+#define PyObject_Del(op) PyMem_Del((op))
+#endif
+
 static PyObject *PGError;
-static const char *PyPgVersion = "3.3";
+static const char *PyPgVersion = "3.4 (beta)";
 
 /* taken from fileobject.c */
 #define BUF(v) PyString_AS_STRING((PyStringObject *)(v))
@@ -343,7 +348,7 @@ pgsource_dealloc(pgsourceobject * self)
 		PQclear(self->last_result);
 
 	Py_XDECREF(self->pgcnx);
-	PyObject_DEL(self);
+	PyObject_Del(self);
 }
 
 /* closes object */
@@ -990,7 +995,7 @@ pglarge_dealloc(pglargeobject * self)
 		lo_close(self->pgcnx->cnx, self->lo_fd);
 
 	Py_XDECREF(self->pgcnx);
-	PyObject_DEL(self);
+	PyObject_Del(self);
 }
 
 /* opens large object */
@@ -1546,7 +1551,7 @@ pg_dealloc(pgobject * self)
 	if (self->cnx)
 		PQfinish(self->cnx);
 
-	PyObject_DEL(self);
+	PyObject_Del(self);
 }
 
 /* close without deleting */
@@ -1579,7 +1584,7 @@ pgquery_dealloc(pgqueryobject * self)
 	if (self->last_result)
 		PQclear(self->last_result);
 
-	PyObject_DEL(self);
+	PyObject_Del(self);
 }
 
 /* resets connection */
