@@ -74,6 +74,8 @@ bool		ECPGget_desc(int, char *, int,...);
 /* dynamic result allocation */
 void		ECPGfree_auto_mem(void);
 
+enum COMPAT_MODE { ECPG_COMPAT_PGSQL = 0, ECPG_COMPAT_INFORMIX};
+
 #ifdef __cplusplus
 }
 

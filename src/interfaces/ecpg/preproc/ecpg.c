@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.65 2003/04/04 20:42:13 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.66 2003/04/08 12:34:25 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -332,7 +332,7 @@ main(int argc, char *const argv[])
 				lex_init();
 
 				/* we need several includes */
-				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/* These four include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n#include <ecpgerrno.h>\n#include <sqlca.h>\n#line 1 \"%s\"\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL, input_filename);
+				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/* These four include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n#include <ecpgerrno.h>\n#include <sqlca.h>\n#line 1 \"%s\"\nenum COMPAT_MODE ecpg_compat_mode=%d;\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL, input_filename, compat);
 
 				/* add some compatibility headers */
 				if (compat == ECPG_COMPAT_INFORMIX)

@@ -51,17 +51,18 @@ PGTYPESdate_from_asc(char *str, char **endptr)
 	
 	bool		EuroDates = FALSE;
 
+	errno = 0;
 	if (strlen(str) >= sizeof(lowstr))
 	{
 		errno = PGTYPES_DATE_BAD_DATE;
-		return -1;
+		return 0;
 	}
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf, ptr) != 0)
 	 || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp, EuroDates) != 0))
 	{
 		errno = PGTYPES_DATE_BAD_DATE;
-		return -1;
+		return 0;
 	}
 
 	switch (dtype)

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.2 2003/04/04 20:42:13 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.3 2003/04/08 12:34:25 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -10,6 +10,8 @@
 
 static struct connection *all_connections = NULL,
 		   *actual_connection = NULL;
+
+extern enum COMPAT_MODE ecpg_compat_mode;
 
 struct connection *
 ECPGget_connection(const char *connection_name)
@@ -267,13 +269,26 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 			   *tmp,
 			   *port = NULL,
 			   *realname = NULL,
-			   *options = NULL;
+			   *options = NULL,
+			   *envname;
 
 	ECPGinit_sqlca();
 
 	if ((this = (struct connection *) ECPGalloc(sizeof(struct connection), lineno)) == NULL)
 		return false;
 
+	if (ecpg_compat_mode == ECPG_COMPAT_INFORMIX)
+	{
+		/* Informix uses an environment variable DBPATH that overrides
+		 * the connection parameters given here */
+		envname = getenv("DBPATH");
+		if (envname)
+		{
+			free(dbname);
+			dbname=strdup(envname);
+		}
+	}
+	
 	if (dbname == NULL && connection_name == NULL)
 		connection_name = "DEFAULT";
 

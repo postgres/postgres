@@ -223,7 +223,10 @@ rstrdate (char *str, Date *d)
 {
 	Date dat = PGTYPESdate_from_asc(str, NULL);
 
-	/* XXX: ERROR handling hier und in datetime.c */
+	if (errno != PGTYPES_DATE_BAD_DATE && dat == 0)
+		return -1218;
+
+	*d=dat;
 	return 0;
 }
 
