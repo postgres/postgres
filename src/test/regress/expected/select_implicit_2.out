@@ -22,10 +22,10 @@ SELECT c, count(*) FROM test_missing_target GROUP BY test_missing_target.c ORDER
     c     | count 
 ----------+-------
  AAAA     |     2
- BBBB     |     2
  bbbb     |     1
- CCCC     |     2
+ BBBB     |     2
  cccc     |     2
+ CCCC     |     2
  XXXX     |     1
 (6 rows)
 
@@ -34,8 +34,8 @@ SELECT count(*) FROM test_missing_target GROUP BY test_missing_target.c ORDER BY
  count 
 -------
      2
-     2
      1
+     2
      2
      2
      1
@@ -104,10 +104,10 @@ SELECT c, count(*) FROM test_missing_target GROUP BY 1 ORDER BY 1;
     c     | count 
 ----------+-------
  AAAA     |     2
- BBBB     |     2
  bbbb     |     1
- CCCC     |     2
+ BBBB     |     2
  cccc     |     2
+ CCCC     |     2
  XXXX     |     1
 (6 rows)
 
