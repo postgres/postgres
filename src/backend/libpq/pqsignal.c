@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/pqsignal.c,v 1.39 2005/02/14 23:02:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/pqsignal.c,v 1.40 2005/02/14 23:02:35 momjian Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other
@@ -119,11 +119,13 @@ pqinitmask(void)
 	sigdelset(&BlockSig, SIGCONT);
 	sigdelset(&AuthBlockSig, SIGCONT);
 #endif
-#ifdef SIGTERM
-	sigdelset(&AuthBlockSig, SIGTERM);
-#endif
+
+/* Signals unique to Auth */
 #ifdef SIGQUIT
 	sigdelset(&AuthBlockSig, SIGQUIT);
+#endif
+#ifdef SIGTERM
+	sigdelset(&AuthBlockSig, SIGTERM);
 #endif
 #ifdef SIGALRM
 	sigdelset(&AuthBlockSig, SIGALRM);
@@ -131,8 +133,10 @@ pqinitmask(void)
 #else
 	/* Set the signals we want. */
 	UnBlockSig = 0;
-	BlockSig = sigmask(SIGHUP) | sigmask(SIGQUIT) |
+	BlockSig = sigmask(SIGQUIT) |
 		sigmask(SIGTERM) | sigmask(SIGALRM) |
+		/* common signals between two */
+		sigmask(SIGHUP) |
 		sigmask(SIGINT) | sigmask(SIGUSR1) |
 		sigmask(SIGUSR2) | sigmask(SIGCHLD) |
 		sigmask(SIGWINCH) | sigmask(SIGFPE);
