@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.28 2000/12/29 21:31:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.29 2001/01/14 05:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
+#include "miscadmin.h"
 #include "storage/s_lock.h"
 
 
@@ -101,10 +102,16 @@ s_lock(volatile slock_t *lock, const char *file, const int line)
 	/*
 	 * If you are thinking of changing this code, be careful.  This same
 	 * loop logic is used in other places that call TAS() directly.
+	 *
+	 * While waiting for a lock, we check for cancel/die interrupts (which
+	 * is a no-op if we are inside a critical section).  The interrupt check
+	 * can be omitted in places that know they are inside a critical section.
+	 * Note that an interrupt must NOT be accepted after acquiring the lock.
 	 */
 	while (TAS(lock))
 	{
 		s_lock_sleep(spins++, 0, lock, file, line);
+		CHECK_FOR_INTERRUPTS();
 	}
 }
 

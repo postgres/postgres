@@ -12,10 +12,10 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.76 2001/01/07 04:17:28 tgl Exp $
+ * $Id: miscadmin.h,v 1.77 2001/01/14 05:08:16 tgl Exp $
  *
  * NOTES
- *	  some of the information in this file will be moved to
+ *	  some of the information in this file should be moved to
  *	  other files.
  *
  *-------------------------------------------------------------------------
@@ -23,10 +23,62 @@
 #ifndef MISCADMIN_H
 #define MISCADMIN_H
 
-#include <sys/types.h>			/* For pid_t */
-
-#include "postgres.h"
 #include "storage/ipc.h"
+
+/*****************************************************************************
+ *    System interrupt handling
+ *
+ * There are two types of interrupts that a running backend needs to accept
+ * without messing up its state: QueryCancel (SIGINT) and ProcDie (SIGTERM).
+ * In both cases, we need to be able to clean up the current transaction
+ * gracefully, so we can't respond to the interrupt instantaneously ---
+ * there's no guarantee that internal data structures would be self-consistent
+ * if the code is interrupted at an arbitrary instant.  Instead, the signal
+ * handlers set flags that are checked periodically during execution.
+ *
+ * The CHECK_FOR_INTERRUPTS() macro is called at strategically located spots
+ * where it is normally safe to accept a cancel or die interrupt.  In some
+ * cases, we invoke CHECK_FOR_INTERRUPTS() inside low-level subroutines that
+ * might sometimes be called in contexts that do *not* want to allow a cancel
+ * or die interrupt.  The CRIT_SECTION mechanism allows code to ensure that
+ * no cancel or die interrupt will be accepted, even if CHECK_FOR_INTERRUPTS
+ * gets called in a subroutine.
+ *
+ * Special mechanisms are used to let an interrupt be accepted when we are
+ * waiting for a lock or spinlock, and when we are waiting for command input
+ * (but, of course, only if the critical section counter is zero).  See the
+ * related code for details.
+ *
+ *****************************************************************************/
+
+/* in globals.c */
+/* these are marked volatile because they are set by signal handlers: */
+extern volatile bool InterruptPending;
+extern volatile bool QueryCancelPending;
+extern volatile bool ProcDiePending;
+/* these are marked volatile because they are examined by signal handlers: */
+extern volatile bool ImmediateInterruptOK;
+extern volatile uint32 CritSectionCount;
+
+/* in postgres.c */
+extern void ProcessInterrupts(void);
+
+#define CHECK_FOR_INTERRUPTS() \
+	do { \
+		if (InterruptPending) \
+			ProcessInterrupts(); \
+	} while(0)
+
+#define	START_CRIT_SECTION()  (CritSectionCount++)
+
+#define END_CRIT_SECTION() \
+	do { \
+		Assert(CritSectionCount > 0); \
+		CritSectionCount--; \
+		if (CritSectionCount == 0 && InterruptPending) \
+			ProcessInterrupts(); \
+	} while(0)
+
 
 /*****************************************************************************
  *	  globals.h --															 *
@@ -42,7 +94,6 @@ extern int	PostmasterMain(int argc, char *argv[]);
  */
 extern bool Noversion;
 extern bool Quiet;
-extern volatile bool QueryCancel;
 extern char *DataDir;
 
 extern int	MyProcPid;
@@ -56,9 +107,7 @@ extern char OutputFileName[];
  *
  * extern BackendId    MyBackendId;
  */
-extern bool MyDatabaseIdIsInitialized;
 extern Oid	MyDatabaseId;
-extern bool TransactionInitWasProcessed;
 
 extern bool IsUnderPostmaster;
 
@@ -143,7 +192,8 @@ extern void SetSessionUserIdFromUserName(const char *username);
 
 extern void SetDataDir(const char *dir);
 
-extern int	FindExec(char *full_path, const char *argv0, const char *binary_name);
+extern int	FindExec(char *full_path, const char *argv0,
+					 const char *binary_name);
 extern int	CheckPathAccess(char *path, char *name, int open_mode);
 
 #ifdef CYR_RECODE
@@ -157,17 +207,17 @@ extern char *convertstr(unsigned char *buff, int len, int dest);
 /*
  * Description:
  *		There are three processing modes in POSTGRES.  They are
- * "BootstrapProcessing or "bootstrap," InitProcessing or
+ * BootstrapProcessing or "bootstrap," InitProcessing or
  * "initialization," and NormalProcessing or "normal."
  *
  * The first two processing modes are used during special times. When the
  * system state indicates bootstrap processing, transactions are all given
- * transaction id "one" and are consequently guarenteed to commit. This mode
+ * transaction id "one" and are consequently guaranteed to commit. This mode
  * is used during the initial generation of template databases.
  *
- * Initialization mode until all normal initialization is complete.
- * Some code behaves differently when executed in this mode to enable
- * system bootstrapping.
+ * Initialization mode: used while starting a backend, until all normal
+ * initialization is complete.  Some code behaves differently when executed
+ * in this mode to enable system bootstrapping.
  *
  * If a POSTGRES binary is in normal mode, then all code may be executed
  * normally.
@@ -185,26 +235,12 @@ typedef enum ProcessingMode
  *	  pinit.h --															 *
  *			POSTGRES initialization and cleanup definitions.				 *
  *****************************************************************************/
-/*
- * Note:
- *		XXX AddExitHandler not defined yet.
- */
-
-typedef int16 ExitStatus;
-
-#define NormalExitStatus		(0)
-#define FatalExitStatus			(127)
-/* XXX are there any other meaningful exit codes? */
 
 /* in utils/init/postinit.c */
-
 extern int	lockingOff;
 
 extern void InitPostgres(const char *dbname, const char *username);
 extern void BaseInit(void);
-
-/* one of the ways to get out of here */
-#define ExitPostgres(status) proc_exec(status)
 
 /* processing mode support stuff */
 extern ProcessingMode Mode;
@@ -215,21 +251,22 @@ extern ProcessingMode Mode;
 
 #define SetProcessingMode(mode) \
 	do { \
-		AssertArg(mode == BootstrapProcessing || mode == InitProcessing || \
-				  mode == NormalProcessing); \
-		Mode = mode; \
+		AssertArg((mode) == BootstrapProcessing || \
+				  (mode) == InitProcessing || \
+				  (mode) == NormalProcessing); \
+		Mode = (mode); \
 	} while(0)
 
 #define GetProcessingMode() Mode
-
-extern void IgnoreSystemIndexes(bool mode);
-extern bool IsIgnoringSystemIndexes(void);
-extern bool IsCacheInitialized(void);
-extern void SetWaitingForLock(bool);
 
 extern bool CreateDataDirLockFile(const char *datadir, bool amPostmaster);
 extern bool CreateSocketLockFile(const char *socketfile, bool amPostmaster);
 
 extern void ValidatePgVersion(const char *path);
+
+/* these externs do not belong here... */
+extern void IgnoreSystemIndexes(bool mode);
+extern bool IsIgnoringSystemIndexes(void);
+extern bool IsCacheInitialized(void);
 
 #endif	 /* MISCADMIN_H */

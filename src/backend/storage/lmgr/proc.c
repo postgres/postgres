@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.91 2001/01/12 21:53:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.92 2001/01/14 05:08:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.91 2001/01/12 21:53:59 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.92 2001/01/14 05:08:16 tgl Exp $
  */
 #include "postgres.h"
 
@@ -78,11 +78,6 @@
 #include "storage/proc.h"
 
 
-
-void		HandleDeadLock(SIGNAL_ARGS);
-static void ProcFreeAllSemaphores(void);
-static bool GetOffWaitQueue(PROC *);
-
 int DeadlockTimeout = 1000;
 
 /* --------------------
@@ -98,9 +93,14 @@ static PROC_HDR *ProcGlobal = NULL;
 
 PROC	   *MyProc = NULL;
 
-static void ProcKill(int exitStatus, Datum pid);
+static bool waitingForLock = false;
+
+static void ProcKill(void);
 static void ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum);
 static void ProcFreeSem(IpcSemaphoreId semId, int semNum);
+static void ZeroProcSemaphore(PROC *proc);
+static void ProcFreeAllSemaphores(void);
+
 
 /*
  * InitProcGlobal -
@@ -241,27 +241,23 @@ InitProcess(void)
 	MemSet(MyProc->sLocks, 0, sizeof(MyProc->sLocks));
 	MyProc->sLocks[ProcStructLock] = 1;
 
+	/*
+	 * Set up a wait-semaphore for the proc.
+	 */
 	if (IsUnderPostmaster)
 	{
-		IpcSemaphoreId	semId;
-		int				semNum;
-		union semun		semun;
-
-		ProcGetNewSemIdAndNum(&semId, &semNum);
-
+		ProcGetNewSemIdAndNum(&MyProc->sem.semId, &MyProc->sem.semNum);
 		/*
 		 * we might be reusing a semaphore that belongs to a dead backend.
 		 * So be careful and reinitialize its value here.
 		 */
-		semun.val = 1;
-		semctl(semId, semNum, SETVAL, semun);
-
-		IpcSemaphoreLock(semId, semNum);
-		MyProc->sem.semId = semId;
-		MyProc->sem.semNum = semNum;
+		ZeroProcSemaphore(MyProc);
 	}
 	else
+	{
 		MyProc->sem.semId = -1;
+		MyProc->sem.semNum = -1;
+	}
 
 	MyProc->pid = MyProcPid;
 	MyProc->databaseId = MyDatabaseId;
@@ -282,66 +278,125 @@ InitProcess(void)
 	 * -------------------------
 	 */
 	location = MAKE_OFFSET(MyProc);
-	if ((!ShmemPIDLookup(MyProcPid, &location)) || (location != MAKE_OFFSET(MyProc)))
+	if ((!ShmemPIDLookup(MyProcPid, &location)) ||
+		(location != MAKE_OFFSET(MyProc)))
 		elog(STOP, "InitProcess: ShmemPID table broken");
 
 	MyProc->errType = NO_ERROR;
 	SHMQueueElemInit(&(MyProc->links));
 
-	on_shmem_exit(ProcKill, (Datum) MyProcPid);
+	on_shmem_exit(ProcKill, 0);
 }
 
-/* -----------------------
- * get process off any wait queue it might be on
+/*
+ * Initialize the proc's wait-semaphore to count zero.
+ */
+static void
+ZeroProcSemaphore(PROC *proc)
+{
+	union semun		semun;
+
+	semun.val = 0;
+	if (semctl(proc->sem.semId, proc->sem.semNum, SETVAL, semun) < 0)
+	{
+		fprintf(stderr, "ZeroProcSemaphore: semctl(id=%d,SETVAL) failed: %s\n",
+				proc->sem.semId, strerror(errno));
+		proc_exit(255);
+	}
+}
+
+/*
+ * Remove a proc from the wait-queue it is on
+ * (caller must know it is on one).
+ * Locktable lock must be held by caller.
  *
  * NB: this does not remove the process' holder object, nor the lock object,
  * even though their holder counts might now have gone to zero.  That will
  * happen during a subsequent LockReleaseAll call, which we expect will happen
  * during transaction cleanup.  (Removal of a proc from its wait queue by
  * this routine can only happen if we are aborting the transaction.)
- * -----------------------
  */
-static bool
-GetOffWaitQueue(PROC *proc)
+static void
+RemoveFromWaitQueue(PROC *proc)
 {
-	bool		gotoff = false;
+	LOCK   *waitLock = proc->waitLock;
+	LOCKMODE lockmode = proc->waitLockMode;
 
-	LockLockTable();
-	if (proc->links.next != INVALID_OFFSET)
+	/* Make sure proc is waiting */
+	Assert(proc->links.next != INVALID_OFFSET);
+	Assert(waitLock);
+	Assert(waitLock->waitProcs.size > 0);
+
+	/* Remove proc from lock's wait queue */
+	SHMQueueDelete(&(proc->links));
+	waitLock->waitProcs.size--;
+
+	/* Undo increments of holder counts by waiting process */
+	Assert(waitLock->nHolding > 0);
+	Assert(waitLock->nHolding > proc->waitLock->nActive);
+	waitLock->nHolding--;
+	Assert(waitLock->holders[lockmode] > 0);
+	waitLock->holders[lockmode]--;
+	/* don't forget to clear waitMask bit if appropriate */
+	if (waitLock->activeHolders[lockmode] == waitLock->holders[lockmode])
+		waitLock->waitMask &= ~(1 << lockmode);
+
+	/* Clean up the proc's own state */
+	SHMQueueElemInit(&(proc->links));
+	proc->waitLock = NULL;
+	proc->waitHolder = NULL;
+
+	/* See if any other waiters for the lock can be woken up now */
+	ProcLockWakeup(LOCK_LOCKMETHOD(*waitLock), waitLock);
+}
+
+/*
+ * Cancel any pending wait for lock, when aborting a transaction.
+ *
+ * (Normally, this would only happen if we accept a cancel/die
+ * interrupt while waiting; but an elog(ERROR) while waiting is
+ * within the realm of possibility, too.)
+ */
+void
+LockWaitCancel(void)
+{
+	/* Nothing to do if we weren't waiting for a lock */
+	if (!waitingForLock)
+		return;
+	waitingForLock = false;
+
+	/* Turn off the deadlock timer, if it's still running (see ProcSleep) */
+#ifndef __BEOS__
 	{
-		LOCK   *waitLock = proc->waitLock;
-		LOCKMODE lockmode = proc->waitLockMode;
+		struct itimerval timeval,
+						 dummy;
 
-		/* Remove proc from lock's wait queue */
-		Assert(waitLock);
-		Assert(waitLock->waitProcs.size > 0);
-		SHMQueueDelete(&(proc->links));
-		--waitLock->waitProcs.size;
-
-		/* Undo increments of holder counts by waiting process */
-		Assert(waitLock->nHolding > 0);
-		Assert(waitLock->nHolding > proc->waitLock->nActive);
-		--waitLock->nHolding;
-		Assert(waitLock->holders[lockmode] > 0);
-		--waitLock->holders[lockmode];
-		/* don't forget to clear waitMask bit if appropriate */
-		if (waitLock->activeHolders[lockmode] == waitLock->holders[lockmode])
-			waitLock->waitMask &= ~(1 << lockmode);
-
-		/* Clean up the proc's own state */
-		SHMQueueElemInit(&(proc->links));
-		proc->waitLock = NULL;
-		proc->waitHolder = NULL;
-
-		/* See if any other waiters can be woken up now */
-		ProcLockWakeup(LOCK_LOCKMETHOD(*waitLock), waitLock);
-
-		gotoff = true;
+		MemSet(&timeval, 0, sizeof(struct itimerval));
+		setitimer(ITIMER_REAL, &timeval, &dummy);
 	}
+#else
+	/* BeOS doesn't have setitimer, but has set_alarm */
+    set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM);
+#endif /* __BEOS__ */
+
+	/* Unlink myself from the wait queue, if on it (might not be anymore!) */
+	LockLockTable();
+	if (MyProc->links.next != INVALID_OFFSET)
+		RemoveFromWaitQueue(MyProc);
 	UnlockLockTable();
 
-	return gotoff;
+	/*
+	 * Reset the proc wait semaphore to zero.  This is necessary in the
+	 * scenario where someone else granted us the lock we wanted before we
+	 * were able to remove ourselves from the wait-list.  The semaphore will
+	 * have been bumped to 1 by the would-be grantor, and since we are no
+	 * longer going to wait on the sema, we have to force it back to zero.
+	 * Otherwise, our next attempt to wait for a lock will fall through
+	 * prematurely.
+	 */
+	ZeroProcSemaphore(MyProc);
 }
+
 
 /*
  * ProcReleaseLocks() -- release locks associated with current transaction
@@ -360,23 +415,23 @@ ProcReleaseLocks(bool isCommit)
 {
 	if (!MyProc)
 		return;
-	GetOffWaitQueue(MyProc);
+	/* If waiting, get off wait queue (should only be needed after error) */
+	LockWaitCancel();
+	/* Release locks */
 	LockReleaseAll(DEFAULT_LOCKMETHOD, MyProc,
 				   !isCommit, GetCurrentTransactionId());
 }
 
 /*
  * ProcRemove -
- *	  used by the postmaster to clean up the global tables. This also frees
- *	  up the semaphore used for the lmgr of the process.
+ *	  called by the postmaster to clean up the global tables after a
+ *	  backend exits.  This also frees up the proc's wait semaphore.
  */
 bool
 ProcRemove(int pid)
 {
 	SHMEM_OFFSET location;
 	PROC	   *proc;
-
-	location = INVALID_OFFSET;
 
 	location = ShmemPIDDestroy(pid);
 	if (location == INVALID_OFFSET)
@@ -398,43 +453,30 @@ ProcRemove(int pid)
 /*
  * ProcKill() -- Destroy the per-proc data structure for
  *		this process. Release any of its held spin locks.
+ *
+ * This is done inside the backend process before it exits.
+ * ProcRemove, above, will be done by the postmaster afterwards.
  */
 static void
-ProcKill(int exitStatus, Datum pid)
+ProcKill(void)
 {
-	PROC	   *proc;
+	Assert(MyProc);
 
-	if ((int) pid == MyProcPid)
-	{
-		proc = MyProc;
-		MyProc = NULL;
-	}
-	else
-	{
-		/* This path is dead code at the moment ... */
-		SHMEM_OFFSET location = INVALID_OFFSET;
+	/* Release any spinlocks I am holding */
+	ProcReleaseSpins(MyProc);
 
-		ShmemPIDLookup((int) pid, &location);
-		if (location == INVALID_OFFSET)
-			return;
-		proc = (PROC *) MAKE_PTR(location);
-	}
-
-	Assert(proc);
-
-	/* Release any spinlocks the proc is holding */
-	ProcReleaseSpins(proc);
-
-	/* Get the proc off any wait queue it might be on */
-	GetOffWaitQueue(proc);
+	/* Get off any wait queue I might be on */
+	LockWaitCancel();
 
 	/* Remove from the standard lock table */
-	LockReleaseAll(DEFAULT_LOCKMETHOD, proc, true, InvalidTransactionId);
+	LockReleaseAll(DEFAULT_LOCKMETHOD, MyProc, true, InvalidTransactionId);
 
 #ifdef USER_LOCKS
 	/* Remove from the user lock table */
-	LockReleaseAll(USER_LOCKMETHOD, proc, true, InvalidTransactionId);
+	LockReleaseAll(USER_LOCKMETHOD, MyProc, true, InvalidTransactionId);
 #endif
+
+	MyProc = NULL;
 }
 
 /*
@@ -477,68 +519,13 @@ ProcQueueInit(PROC_QUEUE *queue)
 
 
 /*
- *	Handling cancel request while waiting for lock
- *
- */
-static bool lockWaiting = false;
-
-void
-SetWaitingForLock(bool waiting)
-{
-	if (waiting == lockWaiting)
-		return;
-	lockWaiting = waiting;
-	if (lockWaiting)
-	{
-		/* The lock was already released ? */
-		if (MyProc->links.next == INVALID_OFFSET)
-		{
-			lockWaiting = false;
-			return;
-		}
-		if (QueryCancel)		/* cancel request pending */
-		{
-			if (GetOffWaitQueue(MyProc))
-			{
-				lockWaiting = false;
-				elog(ERROR, "Query cancel requested while waiting for lock");
-			}
-		}
-	}
-}
-
-void
-LockWaitCancel(void)
-{
-#ifndef __BEOS__ 	
-	struct itimerval timeval,
-				dummy;
-
-	if (!lockWaiting)
-		return;
-	lockWaiting = false;
-	/* Deadlock timer off */
-	MemSet(&timeval, 0, sizeof(struct itimerval));
-	setitimer(ITIMER_REAL, &timeval, &dummy);
-#else
-	/* BeOS doesn't have setitimer, but has set_alarm */
-	if (!lockWaiting)
-		return;
-	lockWaiting = false;
-	/* Deadlock timer off */
-    set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM);
-#endif /* __BEOS__ */
-        
-	if (GetOffWaitQueue(MyProc))
-		elog(ERROR, "Query cancel requested while waiting for lock");
-}
-
-/*
  * ProcSleep -- put a process to sleep
  *
  * P() on the semaphore should put us to sleep.  The process
- * semaphore is cleared by default, so the first time we try
- * to acquire it, we sleep.
+ * semaphore is normally zero, so when we try to acquire it, we sleep.
+ *
+ * Locktable's spinlock must be held at entry, and will be held
+ * at exit.
  *
  * Result is NO_ERROR if we acquired the lock, STATUS_ERROR if not (deadlock).
  *
@@ -629,7 +616,7 @@ ProcSleep(LOCKMETHODCTL *lockctl,
 
 ins:;
 	/* -------------------
-	 * assume that these two operations are atomic (because
+	 * Insert self into queue.  These operations are atomic (because
 	 * of the spinlock).
 	 * -------------------
 	 */
@@ -640,6 +627,18 @@ ins:;
 
 	MyProc->errType = NO_ERROR;		/* initialize result for success */
 
+	/* mark that we are waiting for a lock */
+	waitingForLock = true;
+
+	/* -------------------
+	 * Release the locktable's spin lock.
+	 *
+	 * NOTE: this may also cause us to exit critical-section state,
+	 * possibly allowing a cancel/die interrupt to be accepted.
+	 * This is OK because we have recorded the fact that we are waiting for
+	 * a lock, and so LockWaitCancel will clean up if cancel/die happens.
+	 * -------------------
+	 */
 	SpinRelease(spinlock);
 
 	/* --------------
@@ -667,8 +666,6 @@ ins:;
 		elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
 #endif
 
-	SetWaitingForLock(true);
-
 	/* --------------
 	 * If someone wakes us between SpinRelease and IpcSemaphoreLock,
 	 * IpcSemaphoreLock will not block.  The wakeup is "saved" by
@@ -676,19 +673,22 @@ ins:;
 	 * is invoked but does not detect a deadlock, IpcSemaphoreLock()
 	 * will continue to wait.  There used to be a loop here, but it
 	 * was useless code...
+	 *
+	 * We pass interruptOK = true, which eliminates a window in which
+	 * cancel/die interrupts would be held off undesirably.  This is a
+	 * promise that we don't mind losing control to a cancel/die interrupt
+	 * here.  We don't, because we have no state-change work to do after
+	 * being granted the lock (the grantor did it all).
 	 * --------------
 	 */
-	IpcSemaphoreLock(MyProc->sem.semId, MyProc->sem.semNum);
-
-	lockWaiting = false;
+	IpcSemaphoreLock(MyProc->sem.semId, MyProc->sem.semNum, true);
 
 	/* ---------------
 	 * Disable the timer, if it's still running
 	 * ---------------
 	 */
 #ifndef __BEOS__
-	timeval.it_value.tv_sec = 0;
-	timeval.it_value.tv_usec = 0;
+	MemSet(&timeval, 0, sizeof(struct itimerval));
 	if (setitimer(ITIMER_REAL, &timeval, &dummy))
 		elog(FATAL, "ProcSleep: Unable to disable timer for process wakeup");
 #else
@@ -696,9 +696,16 @@ ins:;
 		elog(FATAL, "ProcSleep: Unable to disable timer for process wakeup");
 #endif
 
+	/*
+	 * Now there is nothing for LockWaitCancel to do.
+	 */
+	waitingForLock = false;
+
 	/* ----------------
-	 * We were assumed to be in a critical section when we went
-	 * to sleep.
+	 * Re-acquire the locktable's spin lock.
+	 *
+	 * We could accept a cancel/die interrupt here.  That's OK because
+	 * the lock is now registered as being held by this process.
 	 * ----------------
 	 */
 	SpinAcquire(spinlock);
@@ -836,20 +843,24 @@ ProcAddLock(SHM_QUEUE *elem)
 
 /* --------------------
  * We only get to this routine if we got SIGALRM after DeadlockTimeout
- * while waiting for a lock to be released by some other process.  If we have
- * a real deadlock, we must also indicate that I'm no longer waiting
- * on a lock so that other processes don't try to wake me up and screw
- * up my semaphore.
+ * while waiting for a lock to be released by some other process.  Look
+ * to see if there's a deadlock; if not, just return and continue waiting.
+ * If we have a real deadlock, remove ourselves from the lock's wait queue
+ * and signal an error to ProcSleep.
  * --------------------
  */
 void
 HandleDeadLock(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
-	LOCK	   *mywaitlock;
-	bool	isWaitingForLock = lockWaiting; /* save waiting status */
 
-	SetWaitingForLock(false); /* disable query cancel during this fuction */
+	/*
+	 * Acquire locktable lock.  Note that the SIGALRM interrupt had better
+	 * not be enabled anywhere that this process itself holds the locktable
+	 * lock, else this will wait forever.  Also note that this calls
+	 * SpinAcquire which creates a critical section, so that this routine
+	 * cannot be interrupted by cancel/die interrupts.
+	 */
 	LockLockTable();
 
 	/* ---------------------
@@ -869,7 +880,6 @@ HandleDeadLock(SIGNAL_ARGS)
 	{
 		UnlockLockTable();
 		errno = save_errno;
-		SetWaitingForLock(isWaitingForLock); /* restore waiting status */
 		return;
 	}
 
@@ -883,22 +893,23 @@ HandleDeadLock(SIGNAL_ARGS)
 		/* No deadlock, so keep waiting */
 		UnlockLockTable();
 		errno = save_errno;
-		SetWaitingForLock(isWaitingForLock); /* restore waiting status */
 		return;
 	}
 
 	/* ------------------------
-	 * Get this process off the lock's wait queue
+	 * Oops.  We have a deadlock.
+	 *
+	 * Get this process out of wait state.
 	 * ------------------------
 	 */
-	mywaitlock = MyProc->waitLock;
-	Assert(mywaitlock->waitProcs.size > 0);
-	--mywaitlock->waitProcs.size;
-	SHMQueueDelete(&(MyProc->links));
-	SHMQueueElemInit(&(MyProc->links));
-	MyProc->waitLock = NULL;
-	MyProc->waitHolder = NULL;
-	isWaitingForLock = false; /* wait for lock no longer */
+	RemoveFromWaitQueue(MyProc);
+
+	/* -------------
+	 * Set MyProc->errType to STATUS_ERROR so that ProcSleep will
+	 * report an error after we return from this signal handler.
+	 * -------------
+	 */
+	MyProc->errType = STATUS_ERROR;
 
 	/* ------------------
 	 * Unlock my semaphore so that the interrupted ProcSleep() call can finish.
@@ -906,17 +917,16 @@ HandleDeadLock(SIGNAL_ARGS)
 	 */
 	IpcSemaphoreUnlock(MyProc->sem.semId, MyProc->sem.semNum);
 
-	/* -------------
-	 * Set MyProc->errType to STATUS_ERROR so that we abort after
-	 * returning from this handler.
-	 * -------------
-	 */
-	MyProc->errType = STATUS_ERROR;
-
-	/*
-	 * if this doesn't follow the IpcSemaphoreUnlock then we get lock
-	 * table corruption ("LockReplace: xid table corrupted") due to race
-	 * conditions.	i don't claim to understand this...
+	/* ------------------
+	 * We're done here.  Transaction abort caused by the error that ProcSleep
+	 * will raise will cause any other locks we hold to be released, thus
+	 * allowing other processes to wake up; we don't need to do that here.
+	 * NOTE: an exception is that releasing locks we hold doesn't consider
+	 * the possibility of waiters that were blocked behind us on the lock
+	 * we just failed to get, and might now be wakable because we're not
+	 * in front of them anymore.  However, RemoveFromWaitQueue took care of
+	 * waking up any such processes.
+	 * ------------------
 	 */
 	UnlockLockTable();
 	errno = save_errno;

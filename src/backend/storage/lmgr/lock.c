@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.76 2001/01/10 01:24:19 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.77 2001/01/14 05:08:15 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -727,6 +727,12 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		status = WaitOnLock(lockmethod, lockmode, lock, holder);
 
 		/*
+		 * NOTE: do not do any material change of state between here and
+		 * return.  All required changes in locktable state must have been
+		 * done when the lock was granted to us --- see notes in WaitOnLock.
+		 */
+
+		/*
 		 * Check the holder entry status, in case something in the ipc
 		 * communication doesn't work correctly.
 		 */
@@ -921,6 +927,8 @@ GrantLock(LOCK *lock, HOLDER *holder, LOCKMODE lockmode)
 	lock->nActive++;
 	lock->activeHolders[lockmode]++;
 	lock->mask |= BITS_ON[lockmode];
+	if (lock->activeHolders[lockmode] == lock->holders[lockmode])
+		lock->waitMask &= BITS_OFF[lockmode];
 	LOCK_PRINT("GrantLock", lock, lockmode);
 	Assert((lock->nActive > 0) && (lock->activeHolders[lockmode] > 0));
 	Assert(lock->nActive <= lock->nHolding);
@@ -960,6 +968,17 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 	strcat(new_status, " waiting");
 	set_ps_display(new_status);
 
+	/*
+	 * NOTE: Think not to put any lock state cleanup after the call to
+	 * ProcSleep, in either the normal or failure path.  The lock state
+	 * must be fully set by the lock grantor, or by HandleDeadlock if we
+	 * give up waiting for the lock.  This is necessary because of the
+	 * possibility that a cancel/die interrupt will interrupt ProcSleep
+	 * after someone else grants us the lock, but before we've noticed it.
+	 * Hence, after granting, the locktable state must fully reflect the
+	 * fact that we own the lock; we can't do additional work on return.
+	 */
+
 	if (ProcSleep(lockMethodTable->ctl,
 				  lockmode,
 				  lock,
@@ -967,25 +986,15 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 	{
 		/* -------------------
 		 * We failed as a result of a deadlock, see HandleDeadLock().
-		 * Decrement the lock nHolding and holders fields as
-		 * we are no longer waiting on this lock.  Removal of the holder and
-		 * lock objects, if no longer needed, will happen in xact cleanup.
+		 * Quit now.  Removal of the holder and lock objects, if no longer
+		 * needed, will happen in xact cleanup (see above for motivation).
 		 * -------------------
 		 */
-		lock->nHolding--;
-		lock->holders[lockmode]--;
 		LOCK_PRINT("WaitOnLock: aborting on lock", lock, lockmode);
-		Assert((lock->nHolding >= 0) && (lock->holders[lockmode] >= 0));
-		Assert(lock->nActive <= lock->nHolding);
-		if (lock->activeHolders[lockmode] == lock->holders[lockmode])
-			lock->waitMask &= BITS_OFF[lockmode];
 		SpinRelease(lockMethodTable->ctl->masterLock);
 		elog(ERROR, DeadLockMessage);
 		/* not reached */
 	}
-
-	if (lock->activeHolders[lockmode] == lock->holders[lockmode])
-		lock->waitMask &= BITS_OFF[lockmode];
 
 	set_ps_display(old_status);
 	pfree(old_status);

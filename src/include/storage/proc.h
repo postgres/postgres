@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.33 2000/12/22 00:51:54 tgl Exp $
+ * $Id: proc.h,v 1.34 2001/01/14 05:08:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +22,8 @@ extern int DeadlockTimeout;
 
 typedef struct
 {
-	int			sleeplock;
-	IpcSemaphoreId semId;
-	int			semNum;
+	IpcSemaphoreId semId;		/* SysV semaphore set ID */
+	int			semNum;			/* semaphore number within set */
 } SEMA;
 
 /*
@@ -37,12 +36,6 @@ struct proc
 	SHM_QUEUE	links;			/* proc can be waiting for one event(lock) */
 	SEMA		sem;			/* ONE semaphore to sleep on */
 	int			errType;		/* error code tells why we woke up */
-
-	int			critSects;		/* If critSects > 0, we are in sensitive
-								 * routines that cannot be recovered when
-								 * the process fails. */
-
-	int			prio;			/* priority for sleep queue */
 
 	TransactionId xid;			/* transaction currently being executed by
 								 * this proc */
@@ -72,6 +65,9 @@ struct proc
 
 extern PROC *MyProc;
 
+extern SPINLOCK ProcStructLock;
+
+
 #define PROC_INCR_SLOCK(lock) \
 do { \
 	if (MyProc) (MyProc->sLocks[(lock)])++; \
@@ -88,11 +84,6 @@ do { \
 #define NO_ERROR		0
 #define ERR_TIMEOUT		1
 #define ERR_BUFFER_IO	2
-
-#define MAX_PRIO		50
-#define MIN_PRIO		(-1)
-
-extern SPINLOCK ProcStructLock;
 
 
 /*
@@ -142,5 +133,6 @@ extern int ProcLockWakeup(LOCKMETHOD lockmethod, LOCK *lock);
 extern void ProcAddLock(SHM_QUEUE *elem);
 extern void ProcReleaseSpins(PROC *proc);
 extern void LockWaitCancel(void);
+extern void HandleDeadLock(SIGNAL_ARGS);
 
 #endif	 /* PROC_H */

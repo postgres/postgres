@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.92 2001/01/12 21:53:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.93 2001/01/14 05:08:14 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1015,6 +1015,9 @@ CommitTransaction(void)
 	if (s->state != TRANS_INPROGRESS)
 		elog(NOTICE, "CommitTransaction and not in in-progress state ");
 
+	/* Prevent cancel/die interrupt while cleaning up */
+	START_CRIT_SECTION();
+
 	/* ----------------
 	 *	Tell the trigger manager that this transaction is about to be
 	 *	committed. He'll invoke all trigger deferred until XACT before
@@ -1083,6 +1086,8 @@ CommitTransaction(void)
 	 * ----------------
 	 */
 	s->state = TRANS_DEFAULT;
+
+	END_CRIT_SECTION();
 }
 
 /* --------------------------------
@@ -1094,6 +1099,9 @@ static void
 AbortTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
+
+	/* Prevent cancel/die interrupt while cleaning up */
+	START_CRIT_SECTION();
 
 	/*
 	 * Let others to know about no transaction in progress - vadim
@@ -1113,13 +1121,21 @@ AbortTransaction(void)
 	 */
 	ProcReleaseSpins(NULL);
 	UnlockBuffers();
+	/*
+	 * Also clean up any open wait for lock, since the lock manager
+	 * will choke if we try to wait for another lock before doing this.
+	 */
+	LockWaitCancel();
 
 	/* ----------------
 	 *	check the current transaction state
 	 * ----------------
 	 */
 	if (s->state == TRANS_DISABLED)
+	{
+		END_CRIT_SECTION();
 		return;
+	}
 
 	if (s->state != TRANS_INPROGRESS)
 		elog(NOTICE, "AbortTransaction and not in in-progress state");
@@ -1169,6 +1185,7 @@ AbortTransaction(void)
 	 *	State remains TRANS_ABORT until CleanupTransaction().
 	 * ----------------
 	 */
+	END_CRIT_SECTION();
 }
 
 /* --------------------------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.128 2001/01/06 03:33:17 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.129 2001/01/14 05:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,8 +449,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp,
 	{
 		bool		need_delim = false;
 
-		if (QueryCancel)
-			CancelQuery();
+		CHECK_FOR_INTERRUPTS();
 
 		if (binary)
 		{
@@ -702,11 +701,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 
 	while (!done)
 	{
-		if (QueryCancel)
-		{
-			lineno = 0;
-			CancelQuery();
-		}
+		CHECK_FOR_INTERRUPTS();
 
 		lineno++;
 

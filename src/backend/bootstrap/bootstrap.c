@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.102 2000/12/28 13:00:12 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.103 2001/01/14 05:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -329,9 +329,10 @@ BootstrapMain(int argc, char *argv[])
 
 	if (!IsUnderPostmaster)
 	{
-		pqsignal(SIGINT, (pqsigfunc) die);
-		pqsignal(SIGHUP, (pqsigfunc) die);
-		pqsignal(SIGTERM, (pqsigfunc) die);
+		pqsignal(SIGHUP, die);
+		pqsignal(SIGINT, die);
+		pqsignal(SIGTERM, die);
+		pqsignal(SIGQUIT, die);
 	}
 
 	/*
@@ -383,8 +384,6 @@ BootstrapMain(int argc, char *argv[])
 	 *	abort processing resumes here
 	 * ----------------
 	 */
-	pqsignal(SIGHUP, handle_warn);
-
 	if (sigsetjmp(Warn_restart, 1) != 0)
 	{
 		Warnings++;

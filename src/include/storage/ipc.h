@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.44 2000/12/03 17:18:09 tgl Exp $
+ * $Id: ipc.h,v 1.45 2001/01/14 05:08:16 tgl Exp $
  *
  * Some files that would normally need to include only sys/ipc.h must
  * instead include this file because on Ultrix, sys/ipc.h is not designed
@@ -99,7 +99,7 @@ extern IpcSemaphoreId IpcSemaphoreCreate(int numSems, int permission,
 										 int semStartValue,
 										 bool removeOnExit);
 extern void IpcSemaphoreKill(IpcSemaphoreId semId);
-extern void IpcSemaphoreLock(IpcSemaphoreId semId, int sem);
+extern void IpcSemaphoreLock(IpcSemaphoreId semId, int sem, bool interruptOK);
 extern void IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem);
 extern bool IpcSemaphoreTryLock(IpcSemaphoreId semId, int sem);
 extern int	IpcSemaphoreGetValue(IpcSemaphoreId semId, int sem);

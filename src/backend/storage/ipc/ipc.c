@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.59 2001/01/07 04:30:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.60 2001/01/14 05:08:15 tgl Exp $
  *
  * NOTES
  *
@@ -131,8 +131,12 @@ proc_exit(int code)
 	 * to close up shop already.  Note that the signal handlers will not
 	 * set these flags again, now that proc_exit_inprogress is set.
 	 */
-	QueryCancel = false;
+	InterruptPending = false;
 	ProcDiePending = false;
+	QueryCancelPending = false;
+	/* And let's just make *sure* we're not interrupted ... */
+	ImmediateInterruptOK = false;
+	CritSectionCount = 1;
 
 	if (DebugLvl > 1)
 		elog(DEBUG, "proc_exit(%d)", code);
@@ -367,7 +371,7 @@ CallbackSemaphoreKill(int status, Datum semId)
 /*	 IpcSemaphoreLock(semId, sem) - locks a semaphore						*/
 /****************************************************************************/
 void
-IpcSemaphoreLock(IpcSemaphoreId semId, int sem)
+IpcSemaphoreLock(IpcSemaphoreId semId, int sem, bool interruptOK)
 {
 	int			errStatus;
 	struct sembuf sops;
@@ -380,11 +384,43 @@ IpcSemaphoreLock(IpcSemaphoreId semId, int sem)
 	 *	Note: if errStatus is -1 and errno == EINTR then it means we
 	 *		  returned from the operation prematurely because we were
 	 *		  sent a signal.  So we try and lock the semaphore again.
-	 * ----------------
+	 *
+	 *	Each time around the loop, we check for a cancel/die interrupt.
+	 *	We assume that if such an interrupt comes in while we are waiting,
+	 *	it will cause the semop() call to exit with errno == EINTR, so that
+	 *	we will be able to service the interrupt (if not in a critical
+	 *	section already).
+	 *
+	 *	Once we acquire the lock, we do NOT check for an interrupt before
+	 *	returning.  The caller needs to be able to record ownership of
+	 *	the lock before any interrupt can be accepted.
+	 *
+	 *	There is a window of a few instructions between CHECK_FOR_INTERRUPTS
+	 *	and entering the semop() call.  If a cancel/die interrupt occurs in
+	 *	that window, we would fail to notice it until after we acquire the
+	 *	lock (or get another interrupt to escape the semop()).  We can avoid
+	 *	this problem by temporarily setting ImmediateInterruptOK = true
+	 *	before we do CHECK_FOR_INTERRUPTS; then, a die() interrupt in this
+	 *	interval will execute directly.  However, there is a huge pitfall:
+	 *	there is another window of a few instructions after the semop()
+	 *	before we are able to reset ImmediateInterruptOK.  If an interrupt
+	 *	occurs then, we'll lose control, which means that the lock has been
+	 *	acquired but our caller did not get a chance to record the fact.
+	 *	Therefore, we only set ImmediateInterruptOK if the caller tells us
+	 *	it's OK to do so, ie, the caller does not need to record acquiring
+	 *	the lock.  (This is currently true for lockmanager locks, since the
+	 *	process that granted us the lock did all the necessary state updates.
+	 *	It's not true for SysV semaphores used to emulate spinlocks --- but
+	 *	our performance on such platforms is so horrible anyway that I'm
+	 *	not going to worry too much about it.)
+	 *	----------------
 	 */
 	do
 	{
+		ImmediateInterruptOK = interruptOK;
+		CHECK_FOR_INTERRUPTS();
 		errStatus = semop(semId, &sops, 1);
+		ImmediateInterruptOK = false;
 	} while (errStatus == -1 && errno == EINTR);
 
 	if (errStatus == -1)

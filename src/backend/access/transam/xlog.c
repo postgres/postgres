@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.49 2001/01/12 21:53:56 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.50 2001/01/14 05:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,6 @@
 int			XLOGbuffers = 8;
 int			XLOGfiles = 0;	/* how many files to pre-allocate */
 XLogRecPtr	MyLastRecPtr = {0, 0};
-volatile uint32 CritSectionCount = 0;
 bool		InRecovery = false;
 StartUpID	ThisStartUpID = 0;
 XLogRecPtr	RedoRecPtr;

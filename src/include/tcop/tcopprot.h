@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.36 2000/12/03 10:27:29 vadim Exp $
+ * $Id: tcopprot.h,v 1.37 2001/01/14 05:08:16 tgl Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -40,9 +40,7 @@ extern void pg_exec_query_string(char *query_string,
 
 #endif	 /* BOOTSTRAP_INCLUDE */
 
-extern void handle_warn(SIGNAL_ARGS);
 extern void die(SIGNAL_ARGS);
-extern void CancelQuery(void);
 extern int PostgresMain(int argc, char *argv[],
 			 int real_argc, char *real_argv[], const char *username);
 extern void ResetUsage(void);

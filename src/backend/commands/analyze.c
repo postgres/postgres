@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.10 2000/12/02 19:38:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.11 2001/01/14 05:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,8 +72,7 @@ analyze_rel(Oid relid, List *anal_cols2, int MESSAGE_LEVEL)
 	 * Check for user-requested abort.	Note we want this to be inside a
 	 * transaction, so xact.c doesn't issue useless NOTICE.
 	 */
-	if (QueryCancel)
-		CancelQuery();
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * Race condition -- if the pg_class tuple has gone away since the

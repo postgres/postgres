@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.75 2001/01/09 18:40:14 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.76 2001/01/14 05:08:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,8 +120,10 @@ elog(int lev, const char *fmt, ...)
 	char	   *msg_buf = msg_fixedbuf;
 	/* this buffer is only used for strange values of lev: */
 	char		prefix_buf[32];
+#ifdef HAVE_SYS_NERR
 	/* this buffer is only used if errno has a bogus value: */
 	char		errorstr_buf[32];
+#endif
 	const char *errorstr;
 	const char *prefix;
 	const char *cp;
@@ -145,17 +147,16 @@ elog(int lev, const char *fmt, ...)
 		errorstr = errorstr_buf;
 	}
 #else
+	/* assume strerror() will cope gracefully with bogus errno values */
     errorstr = strerror(errno);
 #endif
 
-	if (lev == ERROR || lev == FATAL)
-	{
-		/* this is probably redundant... */
-		if (IsInitProcessingMode())
-			lev = FATAL;
-		if (CritSectionCount > 0)
-			lev = STOP;
-	}
+	/* Convert initialization errors into fatal errors.
+	 * This is probably redundant, because Warn_restart_ready won't
+	 * be set anyway...
+	 */
+	if (lev == ERROR && IsInitProcessingMode())
+		lev = FATAL;
 
 	/* choose message prefix and indent level */
 	switch (lev)
@@ -366,8 +367,6 @@ elog(int lev, const char *fmt, ...)
 	if (Debugfile >= 0 && Use_syslog <= 1)
 		write(Debugfile, msg_buf, len);
 
-#ifndef PG_STANDALONE
-
 	if (lev > DEBUG && whereToSendOutput == Remote)
 	{
 		/* Send IPC message to the front-end program */
@@ -424,8 +423,6 @@ elog(int lev, const char *fmt, ...)
 			fputs(msg_buf, stderr);
 	}
 
-#endif	 /* !PG_STANDALONE */
-
 	/* done with the message, release space */
 	if (fmt_buf != fmt_fixedbuf)
 		free(fmt_buf);
@@ -437,6 +434,8 @@ elog(int lev, const char *fmt, ...)
 	 */
 	if (lev == ERROR || lev == FATAL)
 	{
+		/* Prevent immediate interrupt while entering error recovery */
+		ImmediateInterruptOK = false;
 
 		/*
 		 * For a FATAL error, we let proc_exit clean up and exit.
@@ -477,7 +476,6 @@ elog(int lev, const char *fmt, ...)
 
 	if (lev > FATAL)
 	{
-
 		/*
 		 * Serious crash time. Postmaster will observe nonzero process
 		 * exit status and kill the other backends too.
@@ -485,6 +483,7 @@ elog(int lev, const char *fmt, ...)
 		 * XXX: what if we are *in* the postmaster?  proc_exit() won't kill
 		 * our children...
 		 */
+		ImmediateInterruptOK = false;
 		fflush(stdout);
 		fflush(stderr);
 		proc_exit(lev);
@@ -492,8 +491,6 @@ elog(int lev, const char *fmt, ...)
 
 	/* We reach here if lev <= NOTICE.	OK to return to caller. */
 }
-
-#ifndef PG_STANDALONE
 
 int
 DebugFileOpen(void)
@@ -556,9 +553,6 @@ DebugFileOpen(void)
 	return Debugfile;
 }
 
-#endif
-
-
 
 /*
  * Return a timestamp string like
@@ -602,6 +596,10 @@ print_pid(void)
 
 #ifdef ENABLE_SYSLOG
 
+#ifndef PG_SYSLOG_LIMIT
+# define PG_SYSLOG_LIMIT 128
+#endif
+
 /*
  * Write a message line to syslog if the syslog option is set.
  *
@@ -613,10 +611,6 @@ print_pid(void)
 static void
 write_syslog(int level, const char *line)
 {
-#ifndef PG_SYSLOG_LIMIT
-# define PG_SYSLOG_LIMIT 128
-#endif
-
 	static bool	openlog_done = false;
 	static unsigned long seq = 0;
 	static int	syslog_fac = LOG_LOCAL0;

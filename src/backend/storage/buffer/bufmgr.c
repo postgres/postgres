@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.103 2001/01/12 21:53:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.104 2001/01/14 05:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,6 +92,7 @@ static Buffer ReadBufferWithBufferLock(Relation relation, BlockNumber blockNum,
 						 bool bufferLockHeld);
 static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool *foundPtr, bool bufferLockHeld);
+static int	ReleaseBufferWithBufferLock(Buffer buffer);
 static int	BufferReplace(BufferDesc *bufHdr);
 void		PrintBufferDescs(void);
 
@@ -687,10 +688,14 @@ ReleaseAndReadBuffer(Buffer buffer,
 		{
 			bufHdr = &BufferDescriptors[buffer - 1];
 			Assert(PrivateRefCount[buffer - 1] > 0);
-			PrivateRefCount[buffer - 1]--;
-			if (PrivateRefCount[buffer - 1] == 0)
+			if (PrivateRefCount[buffer - 1] > 1)
+			{
+				PrivateRefCount[buffer - 1]--;
+			}
+			else
 			{
 				SpinAcquire(BufMgrLock);
+				PrivateRefCount[buffer - 1] = 0;
 				Assert(bufHdr->refcount > 0);
 				bufHdr->refcount--;
 				if (bufHdr->refcount == 0)
@@ -1185,10 +1190,7 @@ recheck:
 				/* Assert checks that buffer will actually get freed! */
 				Assert(PrivateRefCount[i - 1] == 1 &&
 					   bufHdr->refcount == 1);
-				/* ReleaseBuffer expects we do not hold the lock at entry */
-				SpinRelease(BufMgrLock);
-				ReleaseBuffer(i);
-				SpinAcquire(BufMgrLock);
+				ReleaseBufferWithBufferLock(i);
 			}
 			/*
 			 * And mark the buffer as no longer occupied by this rel.
@@ -1270,10 +1272,7 @@ recheck:
 				/* Assert checks that buffer will actually get freed! */
 				Assert(PrivateRefCount[i - 1] == 1 &&
 					   bufHdr->refcount == 1);
-				/* ReleaseBuffer expects we do not hold the lock at entry */
-				SpinRelease(BufMgrLock);
-				ReleaseBuffer(i);
-				SpinAcquire(BufMgrLock);
+				ReleaseBufferWithBufferLock(i);
 			}
 			/*
 			 * And mark the buffer as no longer occupied by this rel.
@@ -1624,10 +1623,14 @@ ReleaseBuffer(Buffer buffer)
 	bufHdr = &BufferDescriptors[buffer - 1];
 
 	Assert(PrivateRefCount[buffer - 1] > 0);
-	PrivateRefCount[buffer - 1]--;
-	if (PrivateRefCount[buffer - 1] == 0)
+	if (PrivateRefCount[buffer - 1] > 1)
+	{
+		PrivateRefCount[buffer - 1]--;
+	}
+	else
 	{
 		SpinAcquire(BufMgrLock);
+		PrivateRefCount[buffer - 1] = 0;
 		Assert(bufHdr->refcount > 0);
 		bufHdr->refcount--;
 		if (bufHdr->refcount == 0)
@@ -1640,6 +1643,48 @@ ReleaseBuffer(Buffer buffer)
 
 	return STATUS_OK;
 }
+
+/*
+ * ReleaseBufferWithBufferLock
+ *		Same as ReleaseBuffer except we hold the lock
+ */
+static int
+ReleaseBufferWithBufferLock(Buffer buffer)
+{
+	BufferDesc *bufHdr;
+
+	if (BufferIsLocal(buffer))
+	{
+		Assert(LocalRefCount[-buffer - 1] > 0);
+		LocalRefCount[-buffer - 1]--;
+		return STATUS_OK;
+	}
+
+	if (BAD_BUFFER_ID(buffer))
+		return STATUS_ERROR;
+
+	bufHdr = &BufferDescriptors[buffer - 1];
+
+	Assert(PrivateRefCount[buffer - 1] > 0);
+	if (PrivateRefCount[buffer - 1] > 1)
+	{
+		PrivateRefCount[buffer - 1]--;
+	}
+	else
+	{
+		PrivateRefCount[buffer - 1] = 0;
+		Assert(bufHdr->refcount > 0);
+		bufHdr->refcount--;
+		if (bufHdr->refcount == 0)
+		{
+			AddBufferToFreelist(bufHdr);
+			bufHdr->flags |= BM_FREE;
+		}
+	}
+
+	return STATUS_OK;
+}
+
 
 #ifdef NOT_USED
 void
@@ -2217,9 +2262,9 @@ MarkBufferForCleanup(Buffer buffer, void (*CleanupFunc)(Buffer))
 		SpinRelease(BufMgrLock);
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	PrivateRefCount[buffer - 1]--;
 
 	SpinAcquire(BufMgrLock);
+	PrivateRefCount[buffer - 1] = 0;
 	Assert(bufHdr->refcount > 0);
 	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
 	bufHdr->CleanupFunc = CleanupFunc;

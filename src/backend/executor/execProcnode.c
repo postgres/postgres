@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.22 2000/10/26 21:35:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.23 2001/01/14 05:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,14 +248,12 @@ ExecProcNode(Plan *node, Plan *parent)
 {
 	TupleTableSlot *result;
 
+	CHECK_FOR_INTERRUPTS();
+
 	/* ----------------
 	 *	deal with NULL nodes..
 	 * ----------------
 	 */
-
-	if (QueryCancel)
-		CancelQuery();
-
 	if (node == NULL)
 		return NULL;
 

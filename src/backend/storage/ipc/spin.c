@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.28 2001/01/12 21:53:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.29 2001/01/14 05:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,10 @@
 #include <sys/sem.h>
 #endif
 
+#include "miscadmin.h"
 #include "storage/proc.h"
 #include "storage/s_lock.h"
+
 
 /* Probably should move these to an appropriate header file */
 extern SPINLOCK ShmemLock;
@@ -145,19 +147,20 @@ SpinAcquire(SPINLOCK lockid)
 
 	PRINT_SLDEBUG("SpinAcquire", lockid, slckP);
 	/*
-	 * Lock out die() until we exit the critical section protected by the
-	 * spinlock.  This ensures that die() will not interrupt manipulations
-	 * of data structures in shared memory.  We don't want die() to
-	 * interrupt this routine between S_LOCK and PROC_INCR_SLOCK, either,
-	 * so must do it before acquiring the lock, not after.
-	 */
-	START_CRIT_SECTION();
-	/*
 	 * Acquire the lock, then record that we have done so (for recovery
-	 * in case of elog(ERROR) during the critical section).
+	 * in case of elog(ERROR) during the critical section).  Note we assume
+	 * here that S_LOCK will not accept cancel/die interrupts once it has
+	 * acquired the lock.  However, interrupts should be accepted while
+	 * waiting, if CritSectionCount is zero.
 	 */
 	S_LOCK(&(slckP->shlock));
 	PROC_INCR_SLOCK(lockid);
+	/*
+	 * Lock out cancel/die interrupts until we exit the critical section
+	 * protected by the spinlock.  This ensures that interrupts will not
+	 * interfere with manipulations of data structures in shared memory.
+	 */
+	START_CRIT_SECTION();
 
     PRINT_SLDEBUG("SpinAcquire/done", lockid, slckP);
 }
@@ -317,10 +320,16 @@ SpinFreeAllSemaphores(void)
 void
 SpinAcquire(SPINLOCK lock)
 {
-	/* See the TAS() version of this routine for commentary */
-	START_CRIT_SECTION();
-	IpcSemaphoreLock(SpinLockIds[0], lock);
+	/*
+	 * See the TAS() version of this routine for primary commentary.
+	 *
+	 * NOTE we must pass interruptOK = false to IpcSemaphoreLock, to ensure
+	 * that a cancel/die interrupt cannot prevent us from recording ownership
+	 * of a lock we have just acquired.
+	 */
+	IpcSemaphoreLock(SpinLockIds[0], lock, false);
 	PROC_INCR_SLOCK(lock);
+	START_CRIT_SECTION();
 }
 
 /*
@@ -338,8 +347,8 @@ SpinRelease(SPINLOCK lock)
 
 	semval = IpcSemaphoreGetValue(SpinLockIds[0], lock);
 	Assert(semval < 1);
-    Assert(!MyProc || MyProc->sLocks[lockid] > 0);
 #endif
+    Assert(!MyProc || MyProc->sLocks[lockid] > 0);
 	PROC_DECR_SLOCK(lock);
 	IpcSemaphoreUnlock(SpinLockIds[0], lock);
 	END_CRIT_SECTION();

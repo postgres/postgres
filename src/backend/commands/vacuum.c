@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.182 2001/01/12 21:53:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.183 2001/01/14 05:08:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -378,8 +378,7 @@ vacuum_rel(Oid relid)
 	 * Check for user-requested abort.	Note we want this to be inside a
 	 * transaction, so xact.c doesn't issue useless NOTICE.
 	 */
-	if (QueryCancel)
-		CancelQuery();
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * Race condition -- if the pg_class tuple has gone away since the

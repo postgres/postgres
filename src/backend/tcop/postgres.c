@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.200 2001/01/12 21:53:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.201 2001/01/14 05:08:16 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -84,9 +84,6 @@ bool Log_connections = false;
 
 CommandDest whereToSendOutput = Debug;
 
-
-extern void HandleDeadLock(SIGNAL_ARGS);
-
 static bool	dontExecute = false;
 
 /* note: these declarations had better match tcopprot.h */
@@ -94,7 +91,6 @@ DLLIMPORT sigjmp_buf Warn_restart;
 
 bool		Warn_restart_ready = false;
 bool		InError = false;
-volatile bool ProcDiePending = false;
 
 static bool EchoQuery = false;	/* default don't echo */
 char		pg_pathname[MAXPGPATH];
@@ -732,8 +728,7 @@ pg_exec_query_string(char *query_string,	/* string to execute */
 		}
 
 		/* If we got a cancel signal in parsing or prior command, quit */
-		if (QueryCancel)
-			CancelQuery();
+		CHECK_FOR_INTERRUPTS();
 
 		/*
 		 * OK to analyze and rewrite this query.
@@ -766,8 +761,7 @@ pg_exec_query_string(char *query_string,	/* string to execute */
 			}
 
 			/* If we got a cancel signal in analysis or prior command, quit */
-			if (QueryCancel)
-				CancelQuery();
+			CHECK_FOR_INTERRUPTS();
 
 			if (querytree->commandType == CMD_UTILITY)
 			{
@@ -793,8 +787,7 @@ pg_exec_query_string(char *query_string,	/* string to execute */
 				plan = pg_plan_query(querytree);
 
 				/* if we got a cancel signal whilst planning, quit */
-				if (QueryCancel)
-					CancelQuery();
+				CHECK_FOR_INTERRUPTS();
 
 				/* Initialize snapshot state for query */
 				SetQuerySnapshot();
@@ -898,40 +891,15 @@ finish_xact_command(void)
 
 /* --------------------------------
  *		signal handler routines used in PostgresMain()
- *
- *		handle_warn() catches SIGQUIT.	It forces control back to the main
- *		loop, just as if an internal error (elog(ERROR,...)) had occurred.
- *		elog() used to actually use kill(2) to induce a SIGQUIT to get here!
- *		But that's not 100% reliable on some systems, so now it does its own
- *		siglongjmp() instead.
- *		We still provide the signal catcher so that an error quit can be
- *		forced externally.	This should be done only with great caution,
- *		however, since an asynchronous signal could leave the system in
- *		who-knows-what inconsistent state.
- *
- *		quickdie() occurs when signalled by the postmaster.
- *		Some backend has bought the farm,
- *		so we need to stop what we're doing and exit.
- *
- *		die() performs an orderly cleanup via proc_exit()
  * --------------------------------
  */
 
-void
-handle_warn(SIGNAL_ARGS)
-{
-	/* Don't joggle the elbow of proc_exit */
-	if (proc_exit_inprogress)
-		return;
-	/* Don't joggle the elbow of a critical section, either */
-	if (CritSectionCount > 0)
-	{
-		QueryCancel = true;
-		return;
-	}
-	siglongjmp(Warn_restart, 1);
-}
-
+/*
+ * quickdie() occurs when signalled SIGUSR1 by the postmaster.
+ *
+ * Some backend has bought the farm,
+ * so we need to stop what we're doing and exit.
+ */
 static void
 quickdie(SIGNAL_ARGS)
 {
@@ -943,86 +911,67 @@ quickdie(SIGNAL_ARGS)
 		 " going to terminate your database system connection and exit."
 	"\n\tPlease reconnect to the database system and repeat your query.");
 
-
 	/*
-	 * DO NOT proc_exit(0) -- we're here because shared memory may be
-	 * corrupted, so we don't want to flush any shared state to stable
-	 * storage.  Just nail the windows shut and get out of town.
+	 * DO NOT proc_exit() -- we're here because shared memory may be
+	 * corrupted, so we don't want to try to clean up our transaction.
+	 * Just nail the windows shut and get out of town.
+	 *
+	 * Note we do exit(1) not exit(0).  This is to force the postmaster
+	 * into a system reset cycle if some idiot DBA sends a manual SIGUSR1
+	 * to a random backend.  This is necessary precisely because we don't
+	 * clean up our shared memory state.
 	 */
 
 	exit(1);
 }
 
 /*
- * Abort transaction and exit
+ * Shutdown signal from postmaster: abort transaction and exit
+ * at soonest convenient time
  */
 void
 die(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
-	PG_SETMASK(&BlockSig);
-
 	/* Don't joggle the elbow of proc_exit */
-	if (proc_exit_inprogress)
+	if (! proc_exit_inprogress)
 	{
-		errno = save_errno;
-		return;
-	}
-	/* Don't joggle the elbow of a critical section, either */
-	if (CritSectionCount > 0)
-	{
+		InterruptPending = true;
 		ProcDiePending = true;
-		errno = save_errno;
-		return;
+		/*
+		 * If we're waiting for input, service the interrupt immediately
+		 */
+		if (ImmediateInterruptOK && CritSectionCount == 0)
+		{
+			DisableNotifyInterrupt();
+			ProcessInterrupts();
+		}
 	}
-	/* Otherwise force immediate proc_exit */
-	ForceProcDie();
+
+	errno = save_errno;
 }
 
 /*
- * This is split out of die() so that it can be invoked later from
- * END_CRIT_SECTION().
+ * Query-cancel signal from postmaster: abort current transaction
+ * at soonest convenient time
  */
-void
-ForceProcDie(void)
-{
-	/* Reset flag to avoid another elog() during shutdown */
-	ProcDiePending = false;
-	/* Send error message and do proc_exit() */
-	elog(FATAL, "The system is shutting down");
-}
-
-/* signal handler for query cancel signal from postmaster */
 static void
 QueryCancelHandler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
 	/* Don't joggle the elbow of proc_exit, nor an already-in-progress abort */
-	if (proc_exit_inprogress || InError)
+	if (!proc_exit_inprogress && !InError)
 	{
-		errno = save_errno;
-		return;
+		InterruptPending = true;
+		QueryCancelPending = true;
+		/*
+		 * No point in raising Cancel if we are waiting for input ...
+		 */
 	}
 
-	/* Set flag to cause CancelQuery to be called when it's safe */
-	QueryCancel = true;
-
-	/* If we happen to be waiting for a lock, get out of that */
-	LockWaitCancel();
-
-	/* Otherwise, bide our time... */
 	errno = save_errno;
-}
-
-void
-CancelQuery(void)
-{
-	/* Reset flag to avoid another elog() during error recovery */
-	QueryCancel = false;
-	/* Create an artificial error condition to get out of query */
-	elog(ERROR, "Query was cancelled.");
 }
 
 /* signal handler for floating point exception */
@@ -1034,12 +983,43 @@ FloatExceptionHandler(SIGNAL_ARGS)
 		 " or was a divide by zero");
 }
 
+/* SIGHUP: set flag to re-read config file at next convenient time */
 static void
 SigHupHandler(SIGNAL_ARGS)
 {
 	got_SIGHUP = true;
 }
 
+
+/*
+ * ProcessInterrupts: out-of-line portion of CHECK_FOR_INTERRUPTS() macro
+ *
+ * If an interrupt condition is pending, and it's safe to service it,
+ * then clear the flag and accept the interrupt.  Called only when
+ * InterruptPending is true.
+ */
+void
+ProcessInterrupts(void)
+{
+	/* Cannot accept interrupts inside critical sections */
+	if (CritSectionCount != 0)
+		return;
+	InterruptPending = false;
+	if (ProcDiePending)
+	{
+		ProcDiePending = false;
+		QueryCancelPending = false;	/* ProcDie trumps QueryCancel */
+		ImmediateInterruptOK = false; /* not idle anymore */
+		elog(FATAL, "The system is shutting down");
+	}
+	if (QueryCancelPending)
+	{
+		QueryCancelPending = false;
+		ImmediateInterruptOK = false; /* not idle anymore */
+		elog(ERROR, "Query was cancelled.");
+	}
+	/* If we get here, do nothing (probably, QueryCancelPending was reset) */
+}
 
 
 static void
@@ -1502,9 +1482,9 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	 */
 
 	pqsignal(SIGHUP, SigHupHandler);	/* set flag to read config file */
-	pqsignal(SIGINT, QueryCancelHandler);		/* cancel current query */
-	pqsignal(SIGQUIT, handle_warn);		/* handle error */
-	pqsignal(SIGTERM, die);
+	pqsignal(SIGINT, QueryCancelHandler); /* cancel current query */
+	pqsignal(SIGTERM, die);		/* cancel current query and exit */
+	pqsignal(SIGQUIT, die);		/* could reassign this sig for another use */
 	pqsignal(SIGALRM, HandleDeadLock);
 
 	/*
@@ -1517,10 +1497,15 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	pqsignal(SIGUSR1, quickdie);
 	pqsignal(SIGUSR2, Async_NotifyHandler);		/* flush also sinval cache */
 	pqsignal(SIGFPE, FloatExceptionHandler);
-	pqsignal(SIGCHLD, SIG_IGN); /* ignored, sent by LockOwners */
+	pqsignal(SIGCHLD, SIG_IGN);	/* ignored (may get this in system() calls) */
+
+	/*
+	 * Reset some signals that are accepted by postmaster but not by backend
+	 */
 	pqsignal(SIGTTIN, SIG_DFL);
 	pqsignal(SIGTTOU, SIG_DFL);
 	pqsignal(SIGCONT, SIG_DFL);
+	pqsignal(SIGWINCH, SIG_DFL);
 
 	pqinitmask();
 
@@ -1683,7 +1668,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.200 $ $Date: 2001/01/12 21:53:59 $\n");
+		puts("$Revision: 1.201 $ $Date: 2001/01/14 05:08:16 $\n");
 	}
 
 	/*
@@ -1714,6 +1699,16 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		 * consider the probability that it should be in AbortTransaction()
 		 * instead.
 		 *
+		 * Make sure we're not interrupted while cleaning up.  Also forget
+		 * any pending QueryCancel request, since we're aborting anyway.
+		 * Force CritSectionCount to a known state in case we elog'd
+		 * from inside a critical section.
+		 */
+		ImmediateInterruptOK = false;
+		QueryCancelPending = false;
+		CritSectionCount = 1;
+
+		/*
 		 * Make sure we are in a valid memory context during recovery.
 		 *
 		 * We use ErrorContext in hopes that it will have some free space
@@ -1738,6 +1733,12 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		 * successfully.  (Flag was set in elog.c before longjmp().)
 		 */
 		InError = false;
+
+		/*
+		 * Exit critical section we implicitly established above.
+		 * (This could result in accepting a cancel or die interrupt.)
+		 */
+		END_CRIT_SECTION();
 	}
 
 	Warn_restart_ready = true;	/* we can now handle elog(ERROR) */
@@ -1770,27 +1771,34 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		/* ----------------
 		 *	 (2) deal with pending asynchronous NOTIFY from other backends,
 		 *	 and enable async.c's signal handler to execute NOTIFY directly.
+		 *	 Then set up other stuff needed before blocking for input.
 		 * ----------------
 		 */
-		QueryCancel = false;	/* forget any earlier CANCEL signal */
-		SetWaitingForLock(false);
+		QueryCancelPending = false;	/* forget any earlier CANCEL signal */
 
 		EnableNotifyInterrupt();
+
+		set_ps_display("idle");
+
+		/* Allow "die" interrupt to be processed while waiting */
+		ImmediateInterruptOK = true;
+		/* and don't forget to detect one that already arrived */
+		QueryCancelPending = false;
+		CHECK_FOR_INTERRUPTS();
 
 		/* ----------------
 		 *	 (3) read a command (loop blocks here)
 		 * ----------------
 		 */
-		set_ps_display("idle");
-
 		firstchar = ReadCommand(parser_input);
 
-		QueryCancel = false;	/* forget any earlier CANCEL signal */
-
 		/* ----------------
-		 *	 (4) disable async.c's signal handler.
+		 *	 (4) disable async signal conditions again.
 		 * ----------------
 		 */
+		ImmediateInterruptOK = false;
+		QueryCancelPending = false;	/* forget any CANCEL signal */
+
 		DisableNotifyInterrupt();
 
 		/* ----------------
