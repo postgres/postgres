@@ -58,18 +58,12 @@ nextstep*) os=nextstep need_tas=no ;;
    exit;;
 esac
 
-# If this test fails then it is ELF for sure
-if echo __ELF__ | ${CC} -E - | grep -q __ELF__
-then
-	if test "X$elf" = "Xyes"
-	then
-		ELF_SYS=true
-	else
-		ELF_SYS=
-	fi
-else
-	ELF_SYS=true
-fi
+PORTNAME=${os}
+CPU=${host_cpu}
+AC_LINK_FILES(backend/port/dynloader/${os}.c, backend/port/dynloader.c)
+AC_LINK_FILES(backend/port/dynloader/${os}.h, include/dynloader.h)
+AC_LINK_FILES(include/port/${os}.h, include/os.h)
+AC_LINK_FILES(makefiles/Makefile.${os}, Makefile.port)
 
 if test "X$need_tas" = "Xyes"
 then
@@ -77,13 +71,6 @@ then
 	TAS=tas.o
 	AC_SUBST(TAS)
 fi
-
-PORTNAME=${os}
-CPU=${host_cpu}
-AC_LINK_FILES(backend/port/dynloader/${os}.c, backend/port/dynloader.c)
-AC_LINK_FILES(backend/port/dynloader/${os}.h, include/dynloader.h)
-AC_LINK_FILES(include/port/${os}.h, include/os.h)
-AC_LINK_FILES(makefiles/Makefile.${os}, Makefile.port)
 
 echo "checking echo setting..."
 if echo '\c' | grep -s c >/dev/null 2>&1
@@ -423,6 +410,22 @@ echo "- setting CPPFLAGS=$CPPFLAGS"
 
 LDFLAGS="$LDFLAGS $PGSQL_LDFLAGS"
 echo "- setting LDFLAGS=$LDFLAGS"
+
+# Assume system is ELF if it predefines __ELF__ as 1,
+# otherwise believe "elf" setting from check of host_os above.
+AC_EGREP_CPP(yes,
+[#if __ELF__
+  yes
+#endif
+],
+	ELF_SYS=true,
+[if test "X$elf" = "Xyes"
+then
+	ELF_SYS=true
+else
+	ELF_SYS=
+fi
+])
 
 AC_SUBST(ELF_SYS)
 AC_SUBST(PORTNAME)
