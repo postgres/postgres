@@ -665,9 +665,9 @@ SELECT t1.id1, t1.result, t2.expected
 -- ******************************
 -- numeric AVG used to fail on some platforms
 SELECT AVG(val) FROM num_data;
-         avg          
-----------------------
- -13430913.5922423207
+          avg           
+------------------------
+ -13430913.592242320700
 (1 row)
 
 -- Check for appropriate rounding and overflow

@@ -1,15 +1,16 @@
-/* ----------
+/*-------------------------------------------------------------------------
+ *
  * numeric.h
+ *	  Definitions for the exact numeric data type of Postgres
  *
- *	Definitions for the exact numeric data type of Postgres
+ * Original coding 1998, Jan Wieck.  Heavily revised 2003, Tom Lane.
  *
- *	1998 Jan Wieck
+ * Copyright (c) 1998-2003, PostgreSQL Global Development Group
  *
- * $Id: numeric.h,v 1.16 2002/10/02 19:21:26 tgl Exp $
+ * $Id: numeric.h,v 1.17 2003/03/21 01:58:05 tgl Exp $
  *
- * ----------
+ *-------------------------------------------------------------------------
  */
-
 #ifndef _PG_NUMERIC_H_
 #define _PG_NUMERIC_H_
 
@@ -34,12 +35,6 @@
  */
 #define NUMERIC_MIN_SIG_DIGITS		16
 
-/*
- * Standard number of extra digits carried internally while doing
- * inexact calculations.
- */
-#define NUMERIC_EXTRA_DIGITS		4
-
 
 /*
  * Sign values and macros to deal with packing/unpacking n_sign_dscale
@@ -51,30 +46,29 @@
 #define NUMERIC_DSCALE_MASK 0x3FFF
 #define NUMERIC_SIGN(n)		((n)->n_sign_dscale & NUMERIC_SIGN_MASK)
 #define NUMERIC_DSCALE(n)	((n)->n_sign_dscale & NUMERIC_DSCALE_MASK)
-#define NUMERIC_IS_NAN(n)	(NUMERIC_SIGN(n) != NUMERIC_POS &&			\
-								NUMERIC_SIGN(n) != NUMERIC_NEG)
+#define NUMERIC_IS_NAN(n)	(NUMERIC_SIGN(n) != NUMERIC_POS &&	\
+							 NUMERIC_SIGN(n) != NUMERIC_NEG)
 
 
 /*
  * The Numeric data type stored in the database
  *
  * NOTE: by convention, values in the packed form have been stripped of
- * all leading and trailing zeroes (except there will be a trailing zero
- * in the last byte, if the number of digits is odd).  In particular,
- * if the value is zero, there will be no digits at all!  The weight is
- * arbitrary in that case, but we normally set it to zero.
+ * all leading and trailing zero digits (where a "digit" is of base NBASE).
+ * In particular, if the value is zero, there will be no digits at all!
+ * The weight is arbitrary in that case, but we normally set it to zero.
  */
 typedef struct NumericData
 {
-	int32		varlen;			/* Variable size		*/
+	int32		varlen;			/* Variable size (std varlena header) */
 	int16		n_weight;		/* Weight of 1st digit	*/
-	uint16		n_rscale;		/* Result scale			*/
 	uint16		n_sign_dscale;	/* Sign + display scale */
-	unsigned char n_data[1];	/* Digit data (2 decimal digits/byte) */
+	char		n_data[1];		/* Digits (really array of NumericDigit) */
 } NumericData;
+
 typedef NumericData *Numeric;
 
-#define NUMERIC_HDRSZ	(sizeof(int32) + sizeof(uint16) * 3)
+#define NUMERIC_HDRSZ	(sizeof(int32) + sizeof(int16) + sizeof(uint16))
 
 
 /*

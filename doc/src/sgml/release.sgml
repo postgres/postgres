@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.185 2003/02/05 17:41:32 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.186 2003/03/21 01:58:04 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,7 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+Reimplementation of NUMERIC datatype for more speed
 New regular expression package, many more regexp features (most of Perl5)
 Can now do EXPLAIN ... EXECUTE to see plan used for a prepared query
 Explicit JOINs no longer constrain query plan, unless JOIN_COLLAPSE_LIMIT = 1
