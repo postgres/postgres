@@ -387,6 +387,7 @@ prog: statements;
 
 statements: /*EMPTY*/
 		| statements statement
+		;
 
 statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 		| ecpgstart stmt ';'
@@ -1150,9 +1151,11 @@ key_actions:  key_delete			{ $$ = $1; }
 
 key_delete: ON DELETE key_reference 
 			{ $$ = cat2_str(make_str("on delete"), $3); }
+		;
 
 key_update: ON UPDATE key_reference 
 			{ $$ = cat2_str(make_str("on update"), $3); }
+		;
 
 key_reference:	NO ACTION			{ $$ = make_str("no action"); }
 		| RESTRICT					{ $$ = make_str("restrict"); }
@@ -1751,6 +1754,7 @@ func_as: StringConst
 			{ $$ = $1; }
 		| StringConst ',' StringConst
 			{ $$ = cat_str(3, $1, make_str(","), $3); }
+		;
 
 func_return:  func_type
 		{
@@ -3246,6 +3250,7 @@ attrs:	  attr_name
 
 opt_empty_parentheses: '(' ')'	{ $$ = make_str("()"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
+		;
 
 
 /*****************************************************************************
@@ -3412,6 +3417,7 @@ ECPGConnect: SQL_CONNECT TO connection_target opt_connection_name opt_user
 		  /* also allow ORACLE syntax */
 		| SQL_CONNECT ora_user
 			{ $$ = cat_str(3, make_str("NULL,"), $2, make_str(",NULL")); }
+		;
 
 connection_target: database_name opt_server opt_port
 		{
@@ -3470,6 +3476,7 @@ connection_target: database_name opt_server opt_port
 			else
 				$$ = make3_str(make_str("\""), $1, make_str("\""));
 		}
+		;
 
 db_prefix: ident cvariable
 		{
@@ -3487,6 +3494,7 @@ db_prefix: ident cvariable
 
 			$$ = make3_str($1, make_str(":"), $2);
 		}
+		;
 
 server: Op server_name
 		{
@@ -3498,22 +3506,28 @@ server: Op server_name
 
 			$$ = make2_str($1, $2);
 		}
+		;
 
 opt_server: server			{ $$ = $1; }
 		| /*EMPTY*/			{ $$ = EMPTY; }
+		;
 
 server_name: ColId					{ $$ = $1; }
 		| ColId '.' server_name		{ $$ = make3_str($1, make_str("."), $3); }
 		| IP						{ $$ = make_name(); }
+		;
 
 opt_port: ':' PosIntConst	{ $$ = make2_str(make_str(":"), $2); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
+		;
 
 opt_connection_name: AS connection_target { $$ = $2; }
 		| /*EMPTY*/			{ $$ = make_str("NULL"); }
+		;
 
 opt_user: USER ora_user		{ $$ = $2; }
-		  | /*EMPTY*/		{ $$ = make_str("NULL,NULL"); }
+		| /*EMPTY*/			{ $$ = make_str("NULL,NULL"); }
+		;
 
 ora_user: user_name
 			{ $$ = cat2_str($1, make_str(", NULL")); }
@@ -3993,6 +4007,7 @@ ECPGDeclare: DECLARE STATEMENT ident
  * the exec sql disconnect statement: disconnect from the given database
  */
 ECPGDisconnect: SQL_DISCONNECT dis_name { $$ = $2; }
+		;
 
 dis_name: connection_object				{ $$ = $1; }
 		| CURRENT						{ $$ = make_str("\"CURRENT\""); }
@@ -4081,6 +4096,7 @@ opt_ecpg_into: /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
 variable: civarind | civar
+		;
 variablelist: variable | variable ',' variablelist;
 
 /*
@@ -4906,6 +4922,7 @@ civar: cvariable
 		;
 
 cvariable: CVARIABLE				{ $$ = $1; }
+		;
 
 indicator: CVARIABLE				{ check_indicator((find_variable($1))->type); $$ = $1; }
 		| SQL_INDICATOR cvariable	{ check_indicator((find_variable($2))->type); $$ = $2; }
