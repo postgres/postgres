@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.33 1999/07/20 17:14:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.34 1999/08/09 03:13:30 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -629,114 +629,5 @@ SearchSysCacheGetAttribute(int cacheId,
 	}
 
 	heap_close(relation);
-	return returnValue;
-}
-
-/*
- * TypeDefaultRetrieve
- *
- *	  Given a type OID, return the typdefault field associated with that
- *	  type.  The result is a Datum, and points to palloc'd storage for
- *	  non-pass-by-value types.
- *
- * [identical to get_typdefault, expecting a (struct varlena *) as ret val.
- *	some day, either of the functions should be removed		 -ay 10/94]
- */
-void *
-TypeDefaultRetrieve(Oid typId)
-{
-	struct varlena *typDefault;
-	int32		dataSize;
-	HeapTuple	typeTuple;
-	Form_pg_type type;
-	int32		typByVal,
-				typLen;
-	void	   *returnValue;
-
-	/*
-	 * First, see if there is a non-null typdefault field (usually there isn't)
-	 */
-	typDefault = (struct varlena *)
-		SearchSysCacheGetAttribute(TYPOID,
-								   Anum_pg_type_typdefault,
-								   ObjectIdGetDatum(typId),
-								   0, 0, 0);
-
-	if (typDefault == NULL)
-	{
-#ifdef	CACHEDEBUG
-		elog(DEBUG, "TypeDefaultRetrieve: No extractable typdefault in %s(%d)",
-			 cacheinfo[TYPOID].name, TYPOID);
-#endif	 /* defined(CACHEDEBUG) */
-		return NULL;
-	}
-
-	dataSize = VARSIZE(typDefault) - VARHDRSZ;
-
-	/*
-	 * Need the type's length and byVal fields.
-	 *
-	 * XXX silly to repeat the syscache search that SearchSysCacheGetAttribute
-	 * just did --- but at present this path isn't taken often enough to
-	 * make it worth fixing.
-	 */
-	typeTuple = SearchSysCacheTuple(TYPOID,
-									ObjectIdGetDatum(typId),
-									0, 0, 0);
-
-	if (!HeapTupleIsValid(typeTuple))
-	{
-		/* should never get here, really... */
-#ifdef	CACHEDEBUG
-		elog(DEBUG, "TypeDefaultRetrieve: Lookup in %s(%d) failed",
-			 cacheinfo[TYPOID].name, TYPOID);
-#endif	 /* defined(CACHEDEBUG) */
-		return NULL;
-	}
-
-	type = (Form_pg_type) GETSTRUCT(typeTuple);
-	typLen = type->typlen;
-	typByVal = type->typbyval;
-
-	if (typByVal)
-	{
-		int8		i8;
-		int16		i16;
-		int32		i32 = 0;
-
-		if (dataSize == typLen)
-		{
-			switch (typLen)
-			{
-				case sizeof(int8):
-					memcpy((char *) &i8, VARDATA(typDefault), sizeof(int8));
-					i32 = i8;
-					break;
-				case sizeof(int16):
-					memcpy((char *) &i16, VARDATA(typDefault), sizeof(int16));
-					i32 = i16;
-					break;
-				case sizeof(int32):
-					memcpy((char *) &i32, VARDATA(typDefault), sizeof(int32));
-					break;
-			}
-			returnValue = (void *) i32;
-		}
-		else
-			returnValue = NULL;
-	}
-	else
-	{
-		if ((typLen < 0 && dataSize < 0) || dataSize != typLen)
-			returnValue = NULL;
-		else
-		{
-			returnValue = (void *) palloc(VARSIZE(typDefault));
-			memcpy((char *) returnValue,
-				   (char *) typDefault,
-				   (int) VARSIZE(typDefault));
-		}
-	}
-
 	return returnValue;
 }

@@ -1,20 +1,18 @@
 /*-------------------------------------------------------------------------
  *
  * lsyscache.c
- *	  Routines to access information within system caches
+ *	  Convenience routines for common queries in the system catalog cache.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.31 1999/07/17 20:18:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.32 1999/08/09 03:13:30 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-
 
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
@@ -164,6 +162,77 @@ get_atttypmod(Oid relid, AttrNumber attnum)
 	}
 	else
 		return -1;
+}
+
+/*
+ * get_attdisbursion
+ *
+ *	  Retrieve the disbursion statistic for an attribute,
+ *	  or produce an estimate if no info is available.
+ *
+ * min_estimate is the minimum estimate to return if insufficient data
+ * is available to produce a reliable value.  This value may vary
+ * depending on context.  (For example, when deciding whether it is
+ * safe to use a hashjoin, we want to be more conservative than when
+ * estimating the number of tuples produced by an equijoin.)
+ */
+double
+get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
+{
+	HeapTuple	atp;
+	double		disbursion;
+	int32		ntuples;
+
+	atp = SearchSysCacheTuple(ATTNUM,
+							  ObjectIdGetDatum(relid),
+							  Int16GetDatum(attnum),
+							  0, 0);
+	if (!HeapTupleIsValid(atp))
+	{
+		/* this should not happen */
+		elog(ERROR, "get_attdisbursion: no attribute tuple %u %d",
+			 relid, attnum);
+		return min_estimate;
+	}
+
+	disbursion = ((Form_pg_attribute) GETSTRUCT(atp))->attdisbursion;
+	if (disbursion > 0.0)
+		return disbursion;		/* we have a specific estimate */
+
+	/*
+	 * Disbursion is either 0 (no data available) or -1 (disbursion
+	 * is 1/numtuples).  Either way, we need the relation size.
+	 */
+
+	atp = SearchSysCacheTuple(RELOID,
+							  ObjectIdGetDatum(relid),
+							  0, 0, 0);
+	if (!HeapTupleIsValid(atp))
+	{
+		/* this should not happen */
+		elog(ERROR, "get_attdisbursion: no relation tuple %u", relid);
+		return min_estimate;
+	}
+
+	ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
+
+	if (ntuples == 0)
+		return min_estimate;	/* no data available */
+
+	if (disbursion < 0.0)		/* VACUUM thinks there are no duplicates */
+		return 1.0 / (double) ntuples;
+
+	/*
+	 * VACUUM ANALYZE has not been run for this table.
+	 * Produce an estimate = 1/numtuples.  This may produce
+	 * unreasonably small estimates for large tables, so limit
+	 * the estimate to no less than min_estimate.
+	 */
+	disbursion = 1.0 / (double) ntuples;
+	if (disbursion < min_estimate)
+		disbursion = min_estimate;
+
+	return disbursion;
 }
 
 /*				---------- INDEX CACHE ----------						 */
@@ -504,15 +573,110 @@ get_typalign(Oid typid)
 /*
  * get_typdefault -
  *
- *		Given the type OID, return the default value of the ADT.
- *
+ *	  Given a type OID, return the typdefault field associated with that
+ *	  type, or Datum(NULL) if there is no typdefault.  (This implies
+ *	  that pass-by-value types can't have a default value that has
+ *	  a representation of zero.  Not worth fixing now.)
+ *	  The result points to palloc'd storage for non-pass-by-value types.
  */
-struct varlena *
+Datum
 get_typdefault(Oid typid)
 {
-	struct varlena *typdefault = (struct varlena *) TypeDefaultRetrieve(typid);
+	struct varlena *typDefault;
+	int32		dataSize;
+	HeapTuple	typeTuple;
+	Form_pg_type type;
+	int32		typLen;
+	bool		typByVal;
+	Datum		returnValue;
 
-	return typdefault;
+	/*
+	 * First, see if there is a non-null typdefault field (usually there isn't)
+	 */
+	typDefault = (struct varlena *)
+		SearchSysCacheGetAttribute(TYPOID,
+								   Anum_pg_type_typdefault,
+								   ObjectIdGetDatum(typid),
+								   0, 0, 0);
+
+	if (typDefault == NULL)
+		return PointerGetDatum(NULL);
+
+	dataSize = VARSIZE(typDefault) - VARHDRSZ;
+
+	/*
+	 * Need the type's length and byVal fields.
+	 *
+	 * XXX silly to repeat the syscache search that SearchSysCacheGetAttribute
+	 * just did --- but at present this path isn't taken often enough to
+	 * make it worth fixing.
+	 */
+	typeTuple = SearchSysCacheTuple(TYPOID,
+									ObjectIdGetDatum(typid),
+									0, 0, 0);
+
+	if (!HeapTupleIsValid(typeTuple))
+		elog(ERROR, "get_typdefault: failed to lookup type %u", typid);
+
+	type = (Form_pg_type) GETSTRUCT(typeTuple);
+	typLen = type->typlen;
+	typByVal = type->typbyval;
+
+	if (typByVal)
+	{
+		int8		i8;
+		int16		i16;
+		int32		i32 = 0;
+
+		if (dataSize == typLen)
+		{
+			switch (typLen)
+			{
+				case sizeof(int8):
+					memcpy((char *) &i8, VARDATA(typDefault), sizeof(int8));
+					i32 = i8;
+					break;
+				case sizeof(int16):
+					memcpy((char *) &i16, VARDATA(typDefault), sizeof(int16));
+					i32 = i16;
+					break;
+				case sizeof(int32):
+					memcpy((char *) &i32, VARDATA(typDefault), sizeof(int32));
+					break;
+			}
+			returnValue = Int32GetDatum(i32);
+		}
+		else
+			returnValue = PointerGetDatum(NULL);
+	}
+	else if (typLen < 0)
+	{
+		/* variable-size type */
+		if (dataSize < 0)
+			returnValue = PointerGetDatum(NULL);
+		else
+		{
+			returnValue = PointerGetDatum(palloc(VARSIZE(typDefault)));
+			memcpy((char *) DatumGetPointer(returnValue),
+				   (char *) typDefault,
+				   (int) VARSIZE(typDefault));
+		}
+	}
+	else
+	{
+		/* fixed-size pass-by-ref type */
+		if (dataSize != typLen)
+			returnValue = PointerGetDatum(NULL);
+		else
+		{
+			returnValue = PointerGetDatum(palloc(dataSize));
+			memcpy((char *) DatumGetPointer(returnValue),
+				   VARDATA(typDefault),
+				   (int) dataSize);
+		}
+	}
+
+	return returnValue;
 }
 
 /*
