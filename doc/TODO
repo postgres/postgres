@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Dec 27 23:57:29 EST 2001
+Last updated:		Fri Dec 28 00:02:36 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -271,10 +271,6 @@ CLIENTS
 	o Fix nested C comments
 	o Add SQLSTATE
 	o fix handling of DB attributes taht are arrays
-	o auto allocation for indicator variable arrays (int *ind_p=NULL)
-	o auto allocation for string arrays (char **foo_pp=NULL)
-	o ECPGfree_auto_mem fixed
-	o all function names with external linkage are now prefixed by ECPG
 
 REFERENTIAL INTEGRITY
 
