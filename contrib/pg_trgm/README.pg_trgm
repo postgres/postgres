@@ -1,0 +1,138 @@
+trgm - Trigram matching for PostgreSQL
+--------------------------------------
+
+Introduction
+
+	This module is sponsored by Delta-Soft Ltd., Moscow, Russia.
+
+	The pg_trgm contrib module provides functions and index classes
+	for determining the similarity of text based on trigram
+	matching.
+
+Definitions
+
+	Trigram (or Trigraph)
+
+	A trigram is a set of three consecutive characters taken
+	from a string.  A string is considered to have two spaces
+	prefixed and one space suffixed when determining the set
+	of trigrams that comprise the string.
+
+	eg. The set of trigrams in the word "cat" is "  c", " ca", 
+	"at " and "cat".
+
+Public Functions
+
+	real similarity(text, text)
+
+	Returns a number that indicates how closely matches the two
+	arguments are.  A zero result indicates that the two words
+	are completely dissimilar, and a result of one indicates that
+	the two words are identical.
+
+	real show_limit()
+
+	Returns the current similarity threshold used by the '%'
+	operator.  This in effect sets the minimum similarity between
+	two words in order that they be considered similar enough to
+	be misspellings of each other, for example.
+
+	real set_limit(real)
+
+	Sets the current similarity threshold that is used by the '%'
+	operator, and is returned by the show_limit() function.
+
+	text[] show_trgm(text)
+
+	Returns an array of all the trigrams of the supplied text
+	parameter.
+
+Public Operators
+
+	text % text (returns boolean)
+
+	The '%' operator returns TRUE if its two arguments have a similarity
+	that is greater than the similarity threshold set by set_limit(). It
+	will return FALSE if the similarity is less than the current
+	threshold.
+
+Public Index Operator Classes
+
+	gist_trgm_ops
+
+	The pg_trgm module comes with an index operator class that allows a
+	developer to create an index over a text column for the purpose
+	of very fast similarity searches.
+
+	To use this index, the '%' operator must be used and an appropriate
+	similarity threshold for the application must be set.
+
+	eg.
+
+	CREATE TABLE test_trgm (t text);
+	CREATE INDEX trgm_idx ON test_trgm USING gist (t gist_trgm_ops);
+	
+	At this point, you will have an index on the t text column that you
+	can use for similarity searching.
+
+	eg.
+
+	SELECT
+		t,
+		similarity(t, 'word') AS sml
+	FROM
+		test_trgm
+	WHERE
+		t % 'word'
+	ORDER BY
+		sml DESC, t;
+
+	This will return all values in the text column that are sufficiently
+	similar to 'word', sorted from best match to worst.  The index will
+	be used to make this a fast operation over very large data sets.
+
+Tsearch2 Integration
+
+	Trigram matching is a very useful tool when used in conjunction
+	with a text index created by the Tsearch2 contrib module. (See
+	contrib/tsearch2)
+
+	The first step is to generate an auxiliary table containing all
+	the unique words in the Tsearch2 index:
+
+	CREATE TABLE words AS 
+		SELECT word FROM stat('SELECT vector FROM documents');
+
+	Where 'documents' is the table that contains the Tsearch2 index
+	column 'vector', of type 'tsvector'.
+
+	Next, create a trigram index on the word column:
+
+	CREATE INDEX words_idx ON words USING gist(word gist_trgm_ops);
+
+	Now, a SELECT query similar to the example above can be used to
+	suggest spellings for misspelled words in user search terms. A
+	useful extra clause is to ensure that the similar words are also
+	of similar length to the misspelled word.
+
+	Note: Since the 'words' table has been generated as a separate,
+	static table, it will need to be periodically regenerated so that
+	it remains up to date with the word list in the Tsearch2 index.
+
+Authors
+
+	Oleg Bartunov <oleg@sai.msu.su>, Moscow, Moscow University, Russia
+	Teodor Sigaev <teodor@sigaev.ru>, Moscow, Delta-Soft Ltd.,Russia
+       
+Contributors
+
+	Christopher Kings-Lynne wrote this README file
+
+References
+
+	Tsearch2 Development Site
+	http://www.sai.msu.su/~megera/postgres/gist/tsearch/V2/
+	
+	GiST Development Site
+	http://www.sai.msu.su/~megera/postgres/gist/
+
