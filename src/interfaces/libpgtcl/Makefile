@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.8 1997/01/10 18:55:14 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.9 1997/01/23 16:04:25 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,6 +24,11 @@ CFLAGS+= $(INCLUDE_OPT)
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
 endif
+
+ifeq ($(CC), gcc)
+  CFLAGS+= -Wno-error
+endif
+
 
 ifeq ($(PORTNAME), linux)
   ifdef LINUX_ELF
