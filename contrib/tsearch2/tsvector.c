@@ -451,6 +451,8 @@ tsvector_in(PG_FUNCTION_ARGS)
 
 	if (len > 0)
 		len = uniqueentry(arr, len, tmpbuf, &buflen);
+	else
+		buflen=0;
 	totallen = CALCDATASIZE(len, buflen);
 	in = (tsvector *) palloc(totallen);
 	memset(in, 0, totallen);
@@ -932,3 +934,91 @@ tsearch2(PG_FUNCTION_ARGS)
 
 	return PointerGetDatum(rettuple);
 }
+
+static int
+silly_cmp_tsvector(const tsvector *a, const tsvector *b) {
+	if ( a->len < b->len ) 	
+		return -1;
+	else if ( a->len > b->len )
+		return 1;
+	else if ( a->size < b->size ) 
+		return -1;
+	else if ( a->size > b->size )
+		return 1;
+	else {
+		unsigned char *aptr=(unsigned char *)(a->data) + DATAHDRSIZE;
+		unsigned char *bptr=(unsigned char *)(b->data) + DATAHDRSIZE;
+		
+		while( aptr - ( (unsigned char *)(a->data) ) < a->len ) {
+			if ( *aptr != *bptr )
+				return ( *aptr < *bptr ) ? -1 : 1;
+			aptr++; bptr++;
+		} 
+	}
+	return 0;	
+}
+
+PG_FUNCTION_INFO_V1(tsvector_cmp);
+PG_FUNCTION_INFO_V1(tsvector_lt);
+PG_FUNCTION_INFO_V1(tsvector_le);
+PG_FUNCTION_INFO_V1(tsvector_eq);
+PG_FUNCTION_INFO_V1(tsvector_ne);
+PG_FUNCTION_INFO_V1(tsvector_ge);
+PG_FUNCTION_INFO_V1(tsvector_gt);
+Datum           tsvector_cmp(PG_FUNCTION_ARGS);
+Datum           tsvector_lt(PG_FUNCTION_ARGS);
+Datum           tsvector_le(PG_FUNCTION_ARGS);
+Datum           tsvector_eq(PG_FUNCTION_ARGS);
+Datum           tsvector_ne(PG_FUNCTION_ARGS);
+Datum           tsvector_ge(PG_FUNCTION_ARGS);
+Datum           tsvector_gt(PG_FUNCTION_ARGS);
+
+#define RUNCMP     									\
+tsvector *a        = (tsvector *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));\
+tsvector *b        = (tsvector *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));\
+int res = silly_cmp_tsvector(a,b);							\
+PG_FREE_IF_COPY(a,0);									\
+PG_FREE_IF_COPY(b,1);									\
+
+Datum
+tsvector_cmp(PG_FUNCTION_ARGS)   {
+	RUNCMP
+	PG_RETURN_INT32(res);
+}
+
+Datum
+tsvector_lt(PG_FUNCTION_ARGS) {
+	RUNCMP
+	PG_RETURN_BOOL((res < 0) ? true : false);
+}
+
+Datum
+tsvector_le(PG_FUNCTION_ARGS) {
+	RUNCMP
+	PG_RETURN_BOOL((res <= 0) ? true : false);
+}
+
+Datum
+tsvector_eq(PG_FUNCTION_ARGS) {
+	RUNCMP
+	PG_RETURN_BOOL((res == 0) ? true : false);
+}
+
+Datum
+tsvector_ge(PG_FUNCTION_ARGS) {
+	RUNCMP
+	PG_RETURN_BOOL((res >= 0) ? true : false);
+}
+ 
+Datum
+tsvector_gt(PG_FUNCTION_ARGS) {
+	RUNCMP
+	PG_RETURN_BOOL((res > 0) ? true : false);
+}               
+ 
+Datum
+tsvector_ne(PG_FUNCTION_ARGS) {   
+	RUNCMP      
+	PG_RETURN_BOOL((res != 0) ? true : false);
+}
+

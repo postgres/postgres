@@ -702,6 +702,112 @@ where
         c.oid=show_curcfg() 
 ' language 'SQL' with(isstrict);
 
+--compare functions
+CREATE FUNCTION tsvector_cmp(tsvector,tsvector)
+RETURNS int4
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE FUNCTION tsvector_lt(tsvector,tsvector)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE FUNCTION tsvector_le(tsvector,tsvector)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+        
+CREATE FUNCTION tsvector_eq(tsvector,tsvector)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE FUNCTION tsvector_ge(tsvector,tsvector)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+        
+CREATE FUNCTION tsvector_gt(tsvector,tsvector)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE FUNCTION tsvector_ne(tsvector,tsvector)
+RETURNS bool
+AS 'MODULE_PATHNAME'
+LANGUAGE 'C' WITH (isstrict,iscachable);
+
+CREATE OPERATOR < (
+        LEFTARG = tsvector,
+        RIGHTARG = tsvector,
+        PROCEDURE = tsvector_lt,
+        COMMUTATOR = '>',
+        NEGATOR = '>=',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+CREATE OPERATOR <= (
+        LEFTARG = tsvector,
+        RIGHTARG = tsvector,
+        PROCEDURE = tsvector_le,
+        COMMUTATOR = '>=',
+        NEGATOR = '>',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+CREATE OPERATOR >= (
+        LEFTARG = tsvector,
+        RIGHTARG = tsvector,
+        PROCEDURE = tsvector_ge,
+        COMMUTATOR = '<=',
+        NEGATOR = '<',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+CREATE OPERATOR > (
+        LEFTARG = tsvector,
+        RIGHTARG = tsvector,
+        PROCEDURE = tsvector_gt,
+        COMMUTATOR = '<',
+        NEGATOR = '<=',
+        RESTRICT = contsel,
+        JOIN = contjoinsel
+);
+
+CREATE OPERATOR = (
+        LEFTARG = tsvector,
+        RIGHTARG = tsvector,
+        PROCEDURE = tsvector_eq,
+        COMMUTATOR = '=',
+        NEGATOR = '<>',
+        RESTRICT = eqsel,
+        JOIN = eqjoinsel,
+        SORT1 = '<',
+        SORT2 = '<'
+);
+
+CREATE OPERATOR <> (
+        LEFTARG = tsvector,
+        RIGHTARG = tsvector,
+        PROCEDURE = tsvector_ne,
+        COMMUTATOR = '<>',
+        NEGATOR = '=',
+        RESTRICT = neqsel,
+        JOIN = neqjoinsel
+);
+
+CREATE OPERATOR CLASS tsvector_ops
+    DEFAULT FOR TYPE tsvector USING btree AS
+        OPERATOR        1       < ,
+        OPERATOR        2       <= , 
+        OPERATOR        3       = ,
+        OPERATOR        4       >= ,
+        OPERATOR        5       > ,
+        FUNCTION        1       tsvector_cmp(tsvector, tsvector);
 
 --example of ISpell dictionary
 --update pg_ts_dict set dict_initoption='DictFile="/usr/local/share/ispell/russian.dict" ,AffFile ="/usr/local/share/ispell/russian.aff", StopFile="/usr/local/share/ispell/russian.stop"' where dict_id=4;

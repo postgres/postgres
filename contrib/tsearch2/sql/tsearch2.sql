@@ -247,3 +247,9 @@ Upon a woman s face. E.  J.  Pratt  (1882 1964)
 
 --check debug
 select * from ts_debug('Tsearch module for PostgreSQL 7.3.3');
+
+--check ordering
+drop trigger tsvectorupdate on test_tsvector;
+insert into test_tsvector values (null, null);
+select a is null, a from test_tsvector order by a;
+
