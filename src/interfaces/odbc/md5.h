@@ -1,6 +1,6 @@
 /* File:			md5.h
  *
- * Description:		See "md5.c"
+ * Description:		See "md5.h"
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
@@ -14,10 +14,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef	WIN32
-#define	MD5_ODBC
-#define	FRONTEND
-#endif
 #define MD5_PASSWD_LEN	35
 
 /* From c.h */
@@ -49,6 +45,5 @@ typedef unsigned int uint32;	/* == 32 bits */
 extern bool md5_hash(const void *buff, size_t len, char *hexsum);
 extern bool EncryptMD5(const char *passwd, const char *salt,
 		   size_t salt_len, char *buf);
-
 
 #endif
