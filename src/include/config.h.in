@@ -103,6 +103,7 @@ int  gethostname(char *name, int namelen);
 #ifndef HAVE_INET_ATON
 # ifdef HAVE_ARPA_INET_H
 #  ifdef HAVE_NETINET_IN_H
+#   include <sys/types.h>
 #   include <netinet/in.h>
 #  endif
 #  include <arpa/inet.h>
