@@ -4,8 +4,9 @@
 #
 # Description:		psqlodbc Makefile for Win32.
 #
-# Configurations:	Debug, Release
+# Configurations:	Debug, Release, MultibyteDebug, MultibyteRelease
 # Build Types:		ALL, CLEAN
+# Usage:		NMAKE /f win32.mak CFG=[Release | Debug | MultibyteRelease | MultiByteDebug] [ALL | CLEAN]
 #
 # Comments:		Created by Dave Page, 2001-02-12
 #
@@ -23,14 +24,16 @@ CFG=Release
 !MESSAGE You can specify a configuration when running NMAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE 
-!MESSAGE NMAKE /f win32.mak CFG=[Release | Debug | MultibyteRelease | MultiByteDebug]
+!MESSAGE NMAKE /f win32.mak CFG=[Release | Debug | MultibyteRelease | MultiByteDebug] [ALL | CLEAN]
 !MESSAGE 
 !MESSAGE Possible choices for configuration are:
 !MESSAGE 
-!MESSAGE "Release" (based on "Win32 (x86) Dynamic-Link Library")
-!MESSAGE "Debug" (based on "Win32 (x86) Dynamic-Link Library")
+!MESSAGE "Release" (Win32 Release DLL)
+!MESSAGE "Debug" (Win32 Debug DLL)
+!MESSAGE "MultibyteRelease" (Win32 Release DLL with Multibyte support)
+!MESSAGE "MultibyteDebug" (Win32 Release DLL with Multibyte support)
 !MESSAGE 
-!ERROR An invalid configuration is specified.
+!ERROR An invalid configuration was specified.
 !ENDIF 
 
 !IF "$(OS)" == "Windows_NT"
@@ -41,11 +44,13 @@ NULL=nul
 
 !IF  "$(CFG)" == "Release" || "$(CFG)" == "MultibyteRelease"
 
+!IF "$(CFG)" == "MultibyteRelease"
+OUTDIR=.\MultibyteRelease
+INTDIR=.\MultibyteRelease
+!ELSE
 OUTDIR=.\Release
 INTDIR=.\Release
-# Begin Custom Macros
-OutDir=.\Release
-# End Custom Macros
+!ENDIF
 
 ALL : "$(OUTDIR)\psqlodbc.dll"
 
@@ -63,7 +68,7 @@ CLEAN :
 	-@erase "$(INTDIR)\info.obj"
 	-@erase "$(INTDIR)\lobj.obj"
 	-@erase "$(INTDIR)\misc.obj"
-!IF "$(CFG)" == "MultibyteRelease" || "$(CFG)" == "MultibyteDebug" 
+!IF "$(CFG)" == "MultibyteRelease"
 	-@erase "$(INTDIR)\multibyte.obj"
 !ENDIF
 	-@erase "$(INTDIR)\options.obj"
@@ -87,11 +92,12 @@ CLEAN :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-!IF "$(CFG)" == "MultibyteRelease" || "$(CFG)" == "MultibyteDebug" 
+!IF "$(CFG)" == "MultibyteRelease"
 CPP_PROJ=/nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PSQLODBC_EXPORTS" /D "MULTIBYTE" /Fp"$(INTDIR)\psqlodbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 !ELSE
 CPP_PROJ=/nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PSQLODBC_EXPORTS" /Fp"$(INTDIR)\psqlodbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
 !ENDIF
+
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
    $(CPP_PROJ) $< 
@@ -101,7 +107,6 @@ CPP_PROJ=/nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS"
    $(CPP) @<<
    $(CPP_PROJ) $< 
 <<
-
 
 .cxx{$(INTDIR)}.obj::
    $(CPP) @<<
@@ -147,7 +152,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\info.obj" \
 	"$(INTDIR)\lobj.obj" \
 	"$(INTDIR)\misc.obj" \
-!IF "$(CFG)" == "MultibyteRelease" || "$(CFG)" == "MultibyteDebug" 
+!IF "$(CFG)" == "MultibyteRelease"
 	"$(INTDIR)\multibyte.obj" \
 !ENDIF
 	"$(INTDIR)\options.obj" \
@@ -170,11 +175,13 @@ LINK32_OBJS= \
 
 !ELSEIF  "$(CFG)" == "Debug" || "$(CFG)" == "MultibyteDebug"
 
+!IF "$(CFG)" == "MultibyteDebug"
+OUTDIR=.\MultibyteDebug
+INTDIR=.\MultibyteDebug
+!ELSE
 OUTDIR=.\Debug
 INTDIR=.\Debug
-# Begin Custom Macros
-OutDir=.\Debug
-# End Custom Macros
+!ENDIF
 
 ALL : "$(OUTDIR)\psqlodbc.dll"
 
@@ -192,7 +199,7 @@ CLEAN :
 	-@erase "$(INTDIR)\info.obj"
 	-@erase "$(INTDIR)\lobj.obj"
 	-@erase "$(INTDIR)\misc.obj"
-!IF "$(CFG)" == "MultibyteRelease" || "$(CFG)" == "MultibyteDebug" 
+!IF "$(CFG)" == "MultibyteDebug" 
 	-@erase "$(INTDIR)\multibyte.obj"
 !ENDIF
 	-@erase "$(INTDIR)\options.obj"
@@ -219,11 +226,12 @@ CLEAN :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 CPP=cl.exe
-!IF "$(CFG)" == "MultibyteRelease" || "$(CFG)" == "MultibyteDebug" 
+!IF "$(CFG)" == "MultibyteDebug" 
 CPP_PROJ=/nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PSQLODBC_EXPORTS" /D "MULTIBYTE" /Fp"$(INTDIR)\psqlodbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
 !ELSE
 CPP_PROJ=/nologo /MTd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "PSQLODBC_EXPORTS" /Fp"$(INTDIR)\psqlodbc.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /GZ /c 
 !ENDIF
+
 .c{$(INTDIR)}.obj::
    $(CPP) @<<
    $(CPP_PROJ) $< 
@@ -278,7 +286,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\info.obj" \
 	"$(INTDIR)\lobj.obj" \
 	"$(INTDIR)\misc.obj" \
-!IF "$(CFG)" == "MultibyteRelease" || "$(CFG)" == "MultibyteDebug" 
+!IF "$(CFG)" == "MultibyteDebug" 
 	"$(INTDIR)\multibyte.obj" \
 !ENDIF
 	"$(INTDIR)\options.obj" \
@@ -324,7 +332,6 @@ SOURCE=connection.c
 SOURCE=convert.c
 
 "$(INTDIR)\convert.obj" : $(SOURCE) "$(INTDIR)"
-
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 
@@ -375,14 +382,17 @@ SOURCE=misc.c
 "$(INTDIR)\misc.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
+
 !IF "$(CFG)" == "MultibyteRelease" || "$(CFG)" == "MultibyteDebug" 
+
 SOURCE=multibyte.c
 
 "$(INTDIR)\multibyte.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
-
 !ENDIF
+
+
 SOURCE=options.c
 
 "$(INTDIR)\options.obj" : $(SOURCE) "$(INTDIR)"
@@ -409,29 +419,26 @@ SOURCE=psqlodbc.c
 
 SOURCE=psqlodbc.rc
 
-!IF  "$(CFG)" == "Release" || "$(CFG)" == "MultibyteRelease"
-
-
 !IF "$(CFG)" == "Release"
 "$(INTDIR)\psqlodbc.res" : $(SOURCE) "$(INTDIR)"
 	$(RSC) /l 0x809 /fo"$(INTDIR)\psqlodbc.res" /d "NDEBUG" $(SOURCE)
-!ELSEIF "$(CFG)" == "MultibyteRelease"
+!ENDIF
+
+!IF "$(CFG)" == "MultibyteRelease"
 "$(INTDIR)\psqlodbc.res" : $(SOURCE) "$(INTDIR)"
 	$(RSC) /l 0x809 /fo"$(INTDIR)\psqlodbc.res" /d "NDEBUG" /d "MULTIBYTE" $(SOURCE)
 !ENDIF
 
-
-!ELSEIF  "$(CFG)" == "Debug" || "$(CFG)" == "MultibyteDebug"
-
 !IF "$(CFG)" == "Debug"
 "$(INTDIR)\psqlodbc.res" : $(SOURCE) "$(INTDIR)"
 	$(RSC) /l 0x809 /fo"$(INTDIR)\psqlodbc.res" /d "_DEBUG" $(SOURCE)
-!ELSEIF "$(CFG)" == "MultibyteDebug"
+!ENDIF
+
+!IF "$(CFG)" == "MultibyteDebug"
 "$(INTDIR)\psqlodbc.res" : $(SOURCE) "$(INTDIR)"
 	$(RSC) /l 0x809 /fo"$(INTDIR)\psqlodbc.res" /d "_DEBUG" /d "MULTIBYTE" $(SOURCE)
 !ENDIF
 
-!ENDIF 
 
 SOURCE=qresult.c
 
