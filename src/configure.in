@@ -654,7 +654,11 @@ main() {
 AC_MSG_CHECKING(whether 'long long int' is 64 bits)
 AC_TRY_RUN([#include <stdio.h>
 typedef long long int int64;
-#define INT64_FORMAT "%lld"
+#ifdef __FreeBSD__
+# define INT64_FORMAT "%qd"
+#else
+# define INT64_FORMAT "%lld"
+#endif
 
 int64 a = 20000001;
 int64 b = 40000005;
