@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.27 2001/10/02 14:08:28 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.28 2001/10/05 17:37:07 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -182,7 +182,6 @@ create_statement(int lineno, struct connection * connection, struct statement **
 			/* if variable is NULL, the statement hasn't been prepared */
 			if (var->pointer == NULL)
 			{
-				ECPGlog("create_statement: invalid statement name\n");
 				ECPGraise(lineno, ECPG_INVALID_STMT, NULL);
 				free(var);
 				return false;
@@ -405,7 +404,6 @@ ECPGstore_result(const PGresult *results, int act_field,
 						 */
 						if (var->arrsize == 0)
 						{
-							ECPGlog("ECPGexecute line %d: variable is not an array\n");
 							ECPGraise(stmt->lineno, ECPG_NO_ARRAY, NULL);
 							return false;
 						}
@@ -942,7 +940,7 @@ ECPGexecute(struct statement * stmt)
 
 				if (ntuples < 1)
 				{
-					ECPGlog("ECPGexecute line %d: Incorrect number of matches: %d\n",
+					if (ntuples) ECPGlog("ECPGexecute line %d: Incorrect number of matches: %d\n",
 							stmt->lineno, ntuples);
 					ECPGraise(stmt->lineno, ECPG_NOT_FOUND, NULL);
 					status = false;
@@ -957,7 +955,7 @@ ECPGexecute(struct statement * stmt)
 				    		PQclear(*resultpp);
 						*resultpp=results;
 						clear_result = FALSE;
-						ECPGlog("ECPGexecute putting result into descriptor '%s'\n", (const char*)var->pointer);
+						ECPGlog("ECPGexecute putting result (%d tuples) into descriptor '%s'\n", PQntuples(results), (const char*)var->pointer);
 					}
 					var = var->next;
 				}
@@ -965,7 +963,6 @@ ECPGexecute(struct statement * stmt)
 				{
 					if (var == NULL)
 					{
-						ECPGlog("ECPGexecute line %d: Too few arguments.\n", stmt->lineno);
 						ECPGraise(stmt->lineno, ECPG_TOO_FEW_ARGUMENTS, NULL);
 						return (false);
 					}
@@ -1068,8 +1065,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 	if (con == NULL || con->connection == NULL)
 	{
 		free_statement(stmt);
-		ECPGlog("ECPGdo: not connected to %s\n", con->name);
-		ECPGraise(lineno, ECPG_NOT_CONN, NULL);
+		ECPGraise(lineno, ECPG_NOT_CONN, (con) ? con->name : "<empty>");
 		setlocale(LC_NUMERIC, oldlocale);
 		free(oldlocale);
 		return false;

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.10 2001/09/19 14:09:32 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.11 2001/10/05 17:37:07 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -89,12 +89,12 @@ ECPGraise(int line, int code, const char *str)
 
 		case ECPG_NOT_CONN:
 			snprintf(sqlca.sqlerrm.sqlerrmc, sizeof(sqlca.sqlerrm.sqlerrmc),
-					 "Not connected in line %d.", line);
+					 "Not connected to '%s' in line %d.", str, line);
 			break;
 
 		case ECPG_INVALID_STMT:
 			snprintf(sqlca.sqlerrm.sqlerrmc, sizeof(sqlca.sqlerrm.sqlerrmc),
-					 "Invalid statement name in line %d.", line);
+					 "Invalid statement name %s in line %d.", str, line);
 			break;
 
 		case ECPG_UNKNOWN_DESCRIPTOR:
@@ -151,6 +151,7 @@ ECPGraise(int line, int code, const char *str)
 	}
 
 	sqlca.sqlerrm.sqlerrml = strlen(sqlca.sqlerrm.sqlerrmc);
+	ECPGlog("raising sqlcode %d in line %d, '%s'.\n", code, line, sqlca.sqlerrm.sqlerrmc);
 
 	/* free all memory we have allocated for the user */
 	free_auto_mem();

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/memory.c,v 1.5 2001/09/19 14:09:32 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/memory.c,v 1.6 2001/10/05 17:37:07 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -14,7 +14,6 @@ ecpg_alloc(long size, int lineno)
 
 	if (!new)
 	{
-		ECPGlog("out of memory\n");
 		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, NULL);
 		return NULL;
 	}
@@ -30,7 +29,6 @@ ecpg_strdup(const char *string, int lineno)
 
 	if (!new)
 	{
-		ECPGlog("out of memory\n");
 		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, NULL);
 		return NULL;
 	}

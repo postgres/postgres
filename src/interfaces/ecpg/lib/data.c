@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/data.c,v 1.16 2001/10/01 12:02:28 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/data.c,v 1.17 2001/10/05 17:37:07 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -27,7 +27,6 @@ get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 	{
 		if (*pval != '{')
 		{
-			ECPGlog("get_data: data entry does not look like an array in line %d\n", lineno);
 			ECPGraise(lineno, ECPG_DATA_NOT_ARRAY, NULL);
 			return (false);
 		}

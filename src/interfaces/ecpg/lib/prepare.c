@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/prepare.c,v 1.7 2001/09/19 14:09:32 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/prepare.c,v 1.8 2001/10/05 17:37:07 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -125,7 +125,6 @@ ECPGdeallocate(int lineno, char *name)
 		free(this);
 		return true;
 	}
-	ECPGlog("deallocate_prepare: invalid statement name %s\n", name);
 	ECPGraise(lineno, ECPG_INVALID_STMT, name);
 	return false;
 }

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/misc.c,v 1.5 2001/09/19 14:09:32 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/misc.c,v 1.6 2001/10/05 17:37:07 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -54,8 +54,7 @@ ECPGstatus(int lineno, const char *connection_name)
 	/* are we connected? */
 	if (con->connection == NULL)
 	{
-		ECPGlog("ECPGdo: not connected to %s\n", con->name);
-		ECPGraise(lineno, ECPG_NOT_CONN, NULL);
+		ECPGraise(lineno, ECPG_NOT_CONN, con->name);
 		return false;
 	}
 

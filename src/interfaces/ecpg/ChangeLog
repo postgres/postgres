@@ -1116,5 +1116,9 @@ TUe Okt  2 16:09:26 CEST 2001
 Fri Okt  5 08:37:01 CEST 2001
 
 	- Fixed yet another typo in preproc.y.
+
+Fri Okt  5 19:33:46 CEST 2001
+
+	- Make sure every call to ECPGraise is logged.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.
