@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.240 2002/05/24 18:57:56 tgl Exp $
+ * $Id: pg_proc.h,v 1.241 2002/06/11 15:41:37 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1679,7 +1679,7 @@ DESCR("less-equal-greater");
 DATA(insert OID = 1359 (  timestamptz	   PGNSP PGUID 12 f f f t f i 2 1184 "1082 1266" 100 0 0 100  datetimetz_timestamptz - _null_ ));
 DESCR("convert date and time with time zone to timestamp with time zone");
 
-DATA(insert OID = 1364 (  time				 PGNSP PGUID 14 f f f t f i 1 1083 "702" 100 0 0 100  "select time(cast($1 as timestamp without time zone))" - _null_ ));
+DATA(insert OID = 1364 (  time			   PGNSP PGUID 14 f f f t f i 1 1083 "702" 100 0 0 100  "select time(cast($1 as timestamp without time zone))" - _null_ ));
 DESCR("convert abstime to time");
 
 DATA(insert OID = 1367 (  character_length	PGNSP PGUID 12 f f f t f i 1	23 "1042" 100 0 0 100  bpcharlen - _null_ ));
@@ -1763,6 +1763,11 @@ DATA(insert OID = 1402 (  current_schema	PGNSP PGUID 12 f f f t f s 0    19 "0" 
 DESCR("current schema name");
 DATA(insert OID = 1403 (  current_schemas	PGNSP PGUID 12 f f f t f s 0  1003 "0" 100 0 0 100	current_schemas - _null_ ));
 DESCR("current schema search list");
+
+DATA(insert OID = 1404 (  overlay			PGNSP PGUID 14 f f f t f i 4 25 "25 25 23 23" 100 0 0 100  "select substring($1, 1, ($3 - 1)) || $2 || substring($1, ($3 + $4))" - _null_ ));
+DESCR("substitute portion of string");
+DATA(insert OID = 1405 (  overlay			PGNSP PGUID 14 f f f t f i 3 25 "25 25 23" 100 0 0 100  "select substring($1, 1, ($3 - 1)) || $2 || substring($1, ($3 + char_length($2)))" - _null_ ));
+DESCR("substitute portion of string");
 
 DATA(insert OID = 1406 (  isvertical		PGNSP PGUID 12 f f f t f i 2	16 "600 600" 100 0 0 100  point_vert - _null_ ));
 DESCR("vertically aligned?");
@@ -2870,6 +2875,11 @@ DATA(insert OID = 2071 (  date_pl_interval	PGNSP PGUID 14 f f f t f i 2 1114 "10
 DESCR("add");
 DATA(insert OID = 2072 (  date_mi_interval	PGNSP PGUID 14 f f f t f i 2 1114 "1082 1186" 100 0 0 100  "select cast($1 as timestamp without time zone) - $2;" - _null_ ));
 DESCR("subtract");
+
+DATA(insert OID = 2073 (  substring			PGNSP PGUID 12 f f f t f i 2 25 "25 25" 100 0 0 100	textregexsubstr - _null_ ));
+DESCR("substitutes regular expression");
+DATA(insert OID = 2074 (  substring			PGNSP PGUID 14 f f f t f i 3 25 "25 25 25" 100 0 0 100	"select substring($1, like_escape($2, $3))" - _null_ ));
+DESCR("substitutes regular expression with escape argument");
 
 /* Aggregates (moved here from pg_aggregate for 7.3) */
 

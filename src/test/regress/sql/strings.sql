@@ -4,6 +4,7 @@
 --
 
 -- SQL92 string continuation syntax
+-- E021-03 character string literals
 SELECT 'first line'
 ' - next line'
 	' - third line'
@@ -17,6 +18,7 @@ SELECT 'first line'
 
 --
 -- test conversions between various string types
+-- E021-10 implicit casting among the character data types
 --
 
 SELECT CAST(f1 AS text) AS "text(char)" FROM CHAR_TBL;
@@ -41,8 +43,10 @@ SELECT CAST(name 'namefield' AS varchar) AS "varchar(name)";
 
 --
 -- test SQL92 string functions
+-- E### and T### are feature reference numbers from SQL99
 --
 
+-- E021-09 trim function
 SELECT TRIM(BOTH FROM '  bunch o blanks  ') = 'bunch o blanks' AS "bunch o blanks";
 
 SELECT TRIM(LEADING FROM '  bunch o blanks  ') = 'bunch o blanks  ' AS "bunch o blanks  ";
@@ -51,13 +55,38 @@ SELECT TRIM(TRAILING FROM '  bunch o blanks  ') = '  bunch o blanks' AS "  bunch
 
 SELECT TRIM(BOTH 'x' FROM 'xxxxxsome Xsxxxxx') = 'some Xs' AS "some Xs";
 
+-- E021-06 substring expression
 SELECT SUBSTRING('1234567890' FROM 3) = '34567890' AS "34567890";
 
 SELECT SUBSTRING('1234567890' FROM 4 FOR 3) = '456' AS "456";
 
+-- T581 regular expression substring
+SELECT SUBSTRING('abcdefg' FROM '(b|f).*(d)' FOR '#') AS "bcd";
+
+-- No match should return NULL
+SELECT SUBSTRING('abcdefg' FROM '(1|2|3)' FOR '#') IS NULL AS "True";
+
+-- Null inputs should return NULL
+SELECT SUBSTRING('abcdefg' FROM '(b|c)' FOR NULL) IS NULL AS "True";
+SELECT SUBSTRING(NULL FROM '(b|c)' FOR '#') IS NULL AS "True";
+SELECT SUBSTRING('abcdefg' FROM NULL FOR '#') IS NULL AS "True";
+
+-- PostgreSQL extention to allow omitting the escape character
+SELECT SUBSTRING('abcdefg' FROM '(c|d).e') AS "cde";
+
+-- E021-11 position expression
 SELECT POSITION('4' IN '1234567890') = '4' AS "4";
 
 SELECT POSITION(5 IN '1234567890') = '5' AS "5";
+
+-- T312 character overlay function
+SELECT OVERLAY('abcdef' PLACING '45' FROM 4) AS "abc45f";
+
+SELECT OVERLAY('yabadoo' PLACING 'daba' FROM 5) AS "yabadaba";
+
+SELECT OVERLAY('yabadoo' PLACING 'daba' FROM 5 FOR 0) AS "yabadabadoo";
+
+SELECT OVERLAY('babosa' PLACING 'ubb' FROM 2 FOR 4) AS "bubba";
 
 --
 -- test LIKE
@@ -65,6 +94,7 @@ SELECT POSITION(5 IN '1234567890') = '5' AS "5";
 --
 
 -- simplest examples
+-- E061-04 like predicate
 SELECT 'hawkeye' LIKE 'h%' AS "true";
 SELECT 'hawkeye' NOT LIKE 'h%' AS "false";
 
@@ -94,6 +124,7 @@ SELECT 'indio' LIKE 'ind_o' ESCAPE '$' AS "true";
 SELECT 'indio' NOT LIKE 'ind_o' ESCAPE '$' AS "false";
 
 -- escape character
+-- E061-05 like predicate with escape clause
 SELECT 'h%' LIKE 'h#%' ESCAPE '#' AS "true";
 SELECT 'h%' NOT LIKE 'h#%' ESCAPE '#' AS "false";
 
@@ -156,6 +187,7 @@ SELECT 'Hawkeye' NOT ILIKE 'h%' AS "false";
 -- test implicit type conversion
 --
 
+-- E021-07 character concatenation
 SELECT 'unknown' || ' and unknown' AS "Concat unknown types";
 
 SELECT text 'text' || ' and unknown' AS "Concat text to unknown type";
@@ -165,4 +197,3 @@ SELECT char(20) 'characters' || 'and text' AS "Concat char to unknown type";
 SELECT text 'text' || char(20) ' and characters' AS "Concat text to char";
 
 SELECT text 'text' || varchar ' and varchar' AS "Concat text to varchar";
-

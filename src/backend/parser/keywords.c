@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.112 2002/06/11 13:40:51 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.113 2002/06/11 15:41:37 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,6 +129,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"from", FROM},
 	{"full", FULL},
 	{"function", FUNCTION},
+	{"get", GET},
 	{"global", GLOBAL},
 	{"grant", GRANT},
 	{"group", GROUP_P},
@@ -211,11 +212,13 @@ static const ScanKeyword ScanKeywords[] = {
 	{"out", OUT_P},
 	{"outer", OUTER_P},
 	{"overlaps", OVERLAPS},
+	{"overlay", OVERLAY},
 	{"owner", OWNER},
 	{"partial", PARTIAL},
 	{"password", PASSWORD},
 	{"path", PATH_P},
 	{"pendant", PENDANT},
+	{"placing", PLACING},
 	{"position", POSITION},
 	{"precision", PRECISION},
 	{"primary", PRIMARY},
@@ -251,6 +254,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"setof", SETOF},
 	{"share", SHARE},
 	{"show", SHOW},
+	{"similar", SIMILAR},
 	{"smallint", SMALLINT},
 	{"some", SOME},
 	{"stable", STABLE},

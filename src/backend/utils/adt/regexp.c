@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.38 2001/11/05 17:46:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.39 2002/06/11 15:41:37 thomas Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -19,7 +19,7 @@
  *
  *		agc - incorporated Keith Bostic's Berkeley regex code into
  *		the tree for all ports. To distinguish this regex code from any that
- *		is existent on a platform, I've prepended the string "pg95_" to
+ *		is existent on a platform, I've prepended the string "pg_" to
  *		the functions regcomp, regerror, regexec and regfree.
  *		Fixed a bug that was originally a typo by me, where `i' was used
  *		instead of `oldest' when compiling regular expressions - benign
@@ -53,11 +53,13 @@ struct cached_re_str
 static int	rec = 0;			/* # of cached re's */
 static struct cached_re_str rev[MAX_CACHED_RES];		/* cached re's */
 static unsigned long lru;		/* system lru tag */
+static int pg_lastre = 0;
 
 /* attempt to compile `re' as an re, then match it against text */
 /* cflags - flag to regcomp indicates case sensitivity */
 static bool
-RE_compile_and_execute(text *text_re, char *text, int cflags)
+RE_compile_and_execute(text *text_re, char *text, int cflags,
+					   int nmatch, regmatch_t *pmatch)
 {
 	char	   *re;
 	int			oldest;
@@ -68,8 +70,7 @@ RE_compile_and_execute(text *text_re, char *text, int cflags)
 	re = DatumGetCString(DirectFunctionCall1(textout,
 											 PointerGetDatum(text_re)));
 
-	/* find a previously compiled regular expression */
-	for (i = 0; i < rec; i++)
+	if ((i = pg_lastre) < rec)
 	{
 		if (rev[i].cre_s)
 		{
@@ -78,9 +79,28 @@ RE_compile_and_execute(text *text_re, char *text, int cflags)
 			{
 				rev[i].cre_lru = ++lru;
 				pfree(re);
-				return (pg95_regexec(&rev[i].cre_re,
-									 text, 0,
-									 (regmatch_t *) NULL, 0) == 0);
+				return (pg_regexec(&rev[i].cre_re,
+								   text, nmatch,
+								   pmatch, 0) == 0);
+			}
+		}
+	}
+
+	/* find a previously compiled regular expression */
+	for (i = 0; i < rec; i++)
+	{
+		if (i == pg_lastre) continue;
+
+		if (rev[i].cre_s)
+		{
+			if (strcmp(rev[i].cre_s, re) == 0 &&
+				rev[i].cre_type == cflags)
+			{
+				rev[i].cre_lru = ++lru;
+				pfree(re);
+				return (pg_regexec(&rev[i].cre_re,
+								   text, nmatch,
+								   pmatch, 0) == 0);
 			}
 		}
 	}
@@ -107,7 +127,7 @@ RE_compile_and_execute(text *text_re, char *text, int cflags)
 			if (rev[i].cre_lru > lru)
 				lru = rev[i].cre_lru;
 		}
-		pg95_regfree(&rev[oldest].cre_re);
+		pg_regfree(&rev[oldest].cre_re);
 
 		/*
 		 * use malloc/free for the cre_s field because the storage has to
@@ -118,7 +138,7 @@ RE_compile_and_execute(text *text_re, char *text, int cflags)
 	}
 
 	/* compile the re */
-	regcomp_result = pg95_regcomp(&rev[oldest].cre_re, re, cflags);
+	regcomp_result = pg_regcomp(&rev[oldest].cre_re, re, cflags);
 	if (regcomp_result == 0)
 	{
 		/*
@@ -130,16 +150,16 @@ RE_compile_and_execute(text *text_re, char *text, int cflags)
 		rev[oldest].cre_type = cflags;
 		pfree(re);
 		/* agc - fixed an old typo here */
-		return (pg95_regexec(&rev[oldest].cre_re, text, 0,
-							 (regmatch_t *) NULL, 0) == 0);
+		return (pg_regexec(&rev[oldest].cre_re, text,
+						   nmatch, pmatch, 0) == 0);
 	}
 	else
 	{
 		char		errMsg[1000];
 
 		/* re didn't compile */
-		pg95_regerror(regcomp_result, &rev[oldest].cre_re, errMsg,
-					  sizeof(errMsg));
+		pg_regerror(regcomp_result, &rev[oldest].cre_re, errMsg,
+					sizeof(errMsg));
 		elog(ERROR, "Invalid regular expression: %s", errMsg);
 	}
 
@@ -167,7 +187,7 @@ fixedlen_regexeq(char *s, text *p, int charlen, int cflags)
 	memcpy(sterm, s, charlen);
 	sterm[charlen] = '\0';
 
-	result = RE_compile_and_execute(p, sterm, cflags);
+	result = RE_compile_and_execute(p, sterm, cflags, 0, NULL);
 
 	pfree(sterm);
 
@@ -230,7 +250,7 @@ textregexne(PG_FUNCTION_ARGS)
 
 /*
  *	routines that use the regexp stuff, but ignore the case.
- *	for this, we use the REG_ICASE flag to pg95_regcomp
+ *	for this, we use the REG_ICASE flag to pg_regcomp
  */
 
 
@@ -280,4 +300,55 @@ nameicregexne(PG_FUNCTION_ARGS)
 									 p,
 									 strlen(NameStr(*n)),
 									 REG_ICASE | REG_EXTENDED));
+}
+
+
+/* textregexsubstr()
+ * Return a substring matched by a regular expression.
+ */
+Datum
+textregexsubstr(PG_FUNCTION_ARGS)
+{
+	text	   *s = PG_GETARG_TEXT_P(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+	text	   *result;
+	char	   *sterm;
+	int			len;
+	bool		match;
+	int			nmatch = 1;
+	regmatch_t	pmatch;
+
+	/* be sure sterm is null-terminated */
+	len = VARSIZE(s) - VARHDRSZ;
+	sterm = (char *) palloc(len + 1);
+	memcpy(sterm, VARDATA(s), len);
+	sterm[len] = '\0';
+	/* We need the match info back from the pattern match
+	 * to be able to actually extract the substring.
+	 * It seems to be adequate to pass in a structure to return
+	 * only one result.
+	 */
+	match = RE_compile_and_execute(p, sterm, REG_EXTENDED, nmatch, &pmatch);
+	pfree(sterm);
+
+	/* match? then return the substring matching the pattern */
+	if (match)
+	{
+		return (DirectFunctionCall3(text_substr,
+									PointerGetDatum(s),
+									Int32GetDatum(pmatch.rm_so+1),
+									Int32GetDatum(pmatch.rm_eo-pmatch.rm_so)));
+	}
+#if 0
+	/* otherwise, return a zero-length string */
+	else
+	{
+		result = palloc(VARHDRSZ);
+		VARATT_SIZEP(result) = VARHDRSZ;
+		PG_RETURN_TEXT_P(result);
+	}
+#endif
+
+	/* not reached */
+	PG_RETURN_NULL();
 }

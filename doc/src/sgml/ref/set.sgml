@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.61 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.62 2002/06/11 15:41:30 thomas Exp $
 PostgreSQL documentation
 -->
 
@@ -28,8 +28,8 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
       <listitem>
        <para>
         Specifies that the command takes effect for the current session.
-	(This is the default if neither <option>SESSION</> nor
-	<option>LOCAL</> appears.)
+        (This is the default if neither <option>SESSION</> nor
+        <option>LOCAL</> appears.)
        </para>
       </listitem>
      </varlistentry>
@@ -39,11 +39,11 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
       <listitem>
        <para>
         Specifies that the command takes effect for only the current
-	transaction.  After <command>COMMIT</> or <command>ROLLBACK</>,
-	the session-level setting takes effect again.  Note that
-	<command>SET LOCAL</> will appear to have no effect if it's
-	executed outside a <command>BEGIN</> block, since the transaction
-	will end immediately.
+        transaction.  After <command>COMMIT</> or <command>ROLLBACK</>,
+        the session-level setting takes effect again.  Note that
+        <command>SET LOCAL</> will appear to have no effect if it's
+        executed outside a <command>BEGIN</> block, since the transaction
+        will end immediately.
        </para>
       </listitem>
      </varlistentry>
@@ -112,7 +112,6 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
    Here are additional details about a few of the parameters that can be set:
 
    <variablelist>
-
     <varlistentry>
      <term>DATESTYLE</term>
      <listitem>
@@ -126,44 +125,44 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
        The following are date/time output styles:
 
        <variablelist>
-	<varlistentry>
-	 <term>ISO</term>
-	 <listitem>
-	  <para>
-	   Use ISO 8601-style dates and times (<literal>YYYY-MM-DD
-	   HH:MM:SS</literal>). This is the default.
+        <varlistentry>
+         <term>ISO</term>
+         <listitem>
+          <para>
+           Use ISO 8601-style dates and times (<literal>YYYY-MM-DD
+            HH:MM:SS</literal>). This is the default.
           </para>
-	 </listitem>
-	</varlistentry>
+         </listitem>
+        </varlistentry>
 
         <varlistentry>
-	 <term>SQL</term>
-	 <listitem>
-	  <para>
-	   Use Oracle/Ingres-style dates and times. Note that this
-	   style has nothing to do with SQL (which mandates ISO 8601
-	   style), the naming of this option is a historical accident.
-	  </para>
-	 </listitem>
-	</varlistentry>
+         <term>SQL</term>
+         <listitem>
+          <para>
+           Use Oracle/Ingres-style dates and times. Note that this
+           style has nothing to do with SQL (which mandates ISO 8601
+           style), the naming of this option is a historical accident.
+          </para>
+         </listitem>
+        </varlistentry>
 
         <varlistentry>
-	 <term>PostgreSQL</term>
-	 <listitem>
-	  <para>
-	   Use traditional <productname>PostgreSQL</productname> format.
-	  </para>
-	 </listitem>
-	</varlistentry>
+         <term>PostgreSQL</term>
+         <listitem>
+          <para>
+           Use traditional <productname>PostgreSQL</productname> format.
+          </para>
+         </listitem>
+        </varlistentry>
 
         <varlistentry>
-	 <term>German</term>
-	 <listitem>
-	  <para>
-	   Use <literal>dd.mm.yyyy</literal> for numeric date representations.
-	  </para>
-	 </listitem>
-	</varlistentry>
+         <term>German</term>
+         <listitem>
+          <para>
+           Use <literal>dd.mm.yyyy</literal> for numeric date representations.
+          </para>
+         </listitem>
+        </varlistentry>
        </variablelist>
       </para>
 
@@ -173,24 +172,24 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
        and the preferred interpretation of ambiguous date input.
 
        <variablelist>
-	<varlistentry>
-	 <term>European</term>
-	 <listitem>
-	  <para>
-	   Use <literal>dd/mm/yyyy</literal> for numeric date representations.
-	  </para>
-	 </listitem>
-	</varlistentry>
+        <varlistentry>
+         <term>European</term>
+         <listitem>
+          <para>
+           Use <literal>dd/mm/yyyy</literal> for numeric date representations.
+          </para>
+         </listitem>
+        </varlistentry>
 
         <varlistentry>
-	 <term>NonEuropean</term>
-	 <term>US</term>
-	 <listitem>
-	  <para>
-	   Use <literal>mm/dd/yyyy</literal> for numeric date representations.
-	  </para>
-	 </listitem>
-	</varlistentry>
+         <term>NonEuropean</term>
+         <term>US</term>
+         <listitem>
+          <para>
+           Use <literal>mm/dd/yyyy</literal> for numeric date representations.
+          </para>
+         </listitem>
+        </varlistentry>
        </variablelist>
       </para>
 
@@ -214,23 +213,23 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
        in addition to the normal methods of setting it via <command>SET</> or
        a configuration-file entry:
        <simplelist>
-	<member>
-	 Setting the postmaster's <envar>PGDATESTYLE</envar> environment
-	 variable.  (This will be overridden by any of the other methods.)
-	</member>
-	<member>
-	 Running postmaster using the option <option>-o -e</option> to
-	 select the <literal>European</literal> conventions.
-	 (This overrides environment variables and configuration-file
-	 entries.)
-	</member>
-	<member>
-	 Setting the client's <envar>PGDATESTYLE</envar> environment variable.
-	 If PGDATESTYLE is set in the frontend environment of a client
-	 based on libpq, libpq will automatically set DATESTYLE to the
-	 value of PGDATESTYLE during connection start-up.  This is
-	 equivalent to a manually issued <command>SET</>.
-	</member>
+        <member>
+         Setting the postmaster's <envar>PGDATESTYLE</envar> environment
+         variable.  (This will be overridden by any of the other methods.)
+        </member>
+        <member>
+         Running postmaster using the option <option>-o -e</option> to
+         set dates to the <literal>European</literal> convention.
+         (This overrides environment variables and configuration-file
+         entries.)
+        </member>
+        <member>
+         Setting the client's <envar>PGDATESTYLE</envar> environment variable.
+         If PGDATESTYLE is set in the frontend environment of a client
+         based on libpq, libpq will automatically set DATESTYLE to the
+         value of PGDATESTYLE during connection start-up.  This is
+         equivalent to a manually issued <command>SET DATESTYLE</>.
+        </member>
        </simplelist>
       </para>
 
@@ -250,50 +249,49 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
       <term>SEED</term>
       <listitem>
        <para>
-	Sets the internal seed for the random number generator.
+       Sets the internal seed for the random number generator.
 	
-	<variablelist>
-	 <varlistentry>
-	  <term><replaceable class="parameter">value</replaceable></term>
-	  <listitem>
-	   <para>
-	    The value for the seed to be used by the
-	    <function>random</function> function. Allowed
-	    values are floating-point numbers between 0 and 1, which
-	    are then multiplied by 2<superscript>31</>-1.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
+       <variablelist>
+        <varlistentry>
+         <term><replaceable class="parameter">value</replaceable></term>
+         <listitem>
+          <para>
+           The value for the seed to be used by the
+           <function>random</function> function. Allowed
+           values are floating-point numbers between 0 and 1, which
+           are then multiplied by 2<superscript>31</>-1.
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </para>
 
-	<para>
-	 The seed can also be set by invoking the
-	 <function>setseed</function> SQL function:
+      <para>
+       The seed can also be set by invoking the
+       <function>setseed</function> SQL function:
 
-	 <programlisting>
+       <programlisting>
 SELECT setseed(<replaceable>value</replaceable>);
-	 </programlisting>
-	</para>
+       </programlisting>
+      </para>
+     </listitem>
+    </varlistentry>
 
-      </listitem>
-     </varlistentry>
+    <varlistentry>
+     <term>SERVER_ENCODING</term>
+     <listitem>
+      <para>
+       Shows the server-side multibyte encoding.  (At present, this
+       parameter can be shown but not set, because the encoding is
+       determined at initdb time.)
+      </para>
+     </listitem>
+    </varlistentry>
 
-     <varlistentry>
-      <term>SERVER_ENCODING</term>
-      <listitem>
-       <para>
-	Shows the server-side multibyte encoding.  (At present, this
-	parameter can be shown but not set, because the encoding is
-	determined at initdb time.)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>TIME ZONE</term>
-      <term>TIMEZONE</term>
-      <listitem>
+    <varlistentry>
+     <term>TIME ZONE</term>
+     <term>TIMEZONE</term>
+     <listitem>
       <para>
        Sets the default time zone for your session. Arguments can be
        an SQL time interval constant, an integer or double precision
@@ -301,92 +299,88 @@ SELECT setseed(<replaceable>value</replaceable>);
        by the host operating system.
       </para>
 
-       <para>
-	The available time zone names depend on your operating
-	system. For example, on Linux
-	<filename>/usr/share/zoneinfo</filename> contains the database
-	of time zones.
-       </para>
-       <para>
-	Here are some typical values for time zone names:
+      <para>
+       Here are some typical values for time zone settings:
 
        <variablelist>
-	 <varlistentry>
-	  <term>'PST8PDT'</term>
-	  <listitem>
-	   <para>
-	    Set the time zone for California.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 <varlistentry>
-	  <term>'Portugal'</term>
-	  <listitem>
-	   <para>
-	    Set the time zone for Portugal.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 <varlistentry>
-	  <term>'Europe/Rome'</term>
-	  <listitem>
-	   <para>
-	    Set the time zone for Italy.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
+        <varlistentry>
+         <term>'PST8PDT'</term>
+         <listitem>
+          <para>
+           Set the time zone for Berkeley, California.
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>'Portugal'</term>
+         <listitem>
+          <para>
+           Set the time zone for Portugal.
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>'Europe/Rome'</term>
+         <listitem>
+          <para>
+           Set the time zone for Italy.
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>7</term>
+         <listitem>
+          <para>
+           Set the time zone to 7 hours offset west from GMT (equivalent
+           to PDT).
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>INTERVAL '08:00' HOUR TO MINUTE</term>
+         <listitem>
+          <para>
+           Set the time zone to 8 hours offset west from GMT (equivalent
+           to PST).
+          </para>
+         </listitem>
+        </varlistentry>
+        <varlistentry>
+         <term>LOCAL</term>
+         <term>DEFAULT</term>
+         <listitem>
+          <para>
+           Set the time zone to your local time zone (the one that
+           your operating system defaults to).
+          </para>
+         </listitem>
+        </varlistentry>
+       </variablelist>
+      </para>
 
-       <para>
-	In addition to time zone names, <productname>PostgreSQL</productname>
-	accepts these other methods of specifying a time zone:
+      <para>
+       The available time zone names depend on your operating
+       system. For example, on Linux
+       <filename>/usr/share/zoneinfo</filename> contains the database
+       of time zones; the names of the files in that directory can be
+       used as parameters to this command.
+      </para>
 
-       <variablelist>
-	 <varlistentry>
-	  <term>7</term>
-	  <listitem>
-	   <para>
-	    Set the time zone to 7 hours offset west from GMT (equivalent
-	   to PDT).
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 <varlistentry>
-	  <term>INTERVAL '08:00' HOUR TO MINUTE</term>
-	  <listitem>
-	   <para>
-	    Set the time zone to 8 hours offset west from GMT (equivalent
-	   to PST).
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	 <varlistentry>
-	  <term>LOCAL</term>
-          <term>DEFAULT</term>
-	  <listitem>
-	   <para>
-	    Set the time zone to your local time zone (the one that
-	    your operating system defaults to).
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-       <para>
-	If an invalid time zone name is specified, the time zone
-	becomes GMT (on most systems anyway).
-       </para>
-       <para>
-        If the <envar>PGTZ</envar> environment variable is set in the frontend
-	environment of a client based on libpq, libpq will automatically
-	set TIMEZONE to the value of <envar>PGTZ</envar> during connection start-up.
-       </para>
-      </listitem>
-     </varlistentry>
+      <para>
+       If an invalid time zone is specified, the time zone
+       becomes GMT (on most systems anyway).
+      </para>
 
-    </variablelist>
-   </para>
+      <para>
+       If the <envar>PGTZ</envar> environment variable is set in the frontend
+       environment of a client based on libpq, libpq will automatically
+       <command>SET TIMEZONE</command> to the value of
+       <envar>PGTZ</envar> during connection start-up. 
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
 
   <para>
    Use <xref linkend="SQL-SHOW" endterm="SQL-SHOW-title"> to show the

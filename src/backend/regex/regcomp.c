@@ -174,9 +174,10 @@ static int	never = 0;			/* for use in asserts; shuts lint up */
 
 /*
  * regcomp - interface for parser and compilation
+ * returns 0 success, otherwise REG_something
  */
-int								/* 0 success, otherwise REG_something */
-pg95_regcomp(regex_t *preg, const char *pattern, int cflags)
+int
+pg_regcomp(regex_t *preg, const char *pattern, int cflags)
 {
 	struct parse pa;
 	struct re_guts *g;
@@ -224,7 +225,6 @@ pg95_regcomp(regex_t *preg, const char *pattern, int cflags)
 		(void) pg_mb2wchar((unsigned char *) pattern, wcp);
 		len = pg_wchar_strlen(wcp);
 #else
-
 		len = strlen((char *) pattern);
 #endif
 	}
@@ -305,7 +305,7 @@ pg95_regcomp(regex_t *preg, const char *pattern, int cflags)
 
 	/* win or lose, we're done */
 	if (p->error != 0)			/* lose */
-		pg95_regfree(preg);
+		pg_regfree(preg);
 	return p->error;
 }
 

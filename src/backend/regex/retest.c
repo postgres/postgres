@@ -1,7 +1,7 @@
 /*
  * a simple regexp debug program
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/Attic/retest.c,v 1.4 1999/07/17 20:17:34 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/regex/Attic/retest.c,v 1.5 2002/06/11 15:41:37 thomas Exp $
  */
 
 #include "postgres.h"
@@ -22,7 +22,7 @@ main()
 	if (p)
 		*p = '\0';
 
-	sts = pg95_regcomp(&re, buf, 1);
+	sts = pg_regcomp(&re, buf, 1);
 	printf("regcomp: parses \"%s\" and returns %d\n", buf, sts);
 	for (;;)
 	{
@@ -33,7 +33,7 @@ main()
 		if (p)
 			*p = '\0';
 
-		sts = pg95_regexec(&re, buf, 0, 0, 0);
+		sts = pg_regexec(&re, buf, 0, 0, 0);
 		printf("regexec: returns %d\n", sts);
 	}
 }

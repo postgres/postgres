@@ -117,8 +117,8 @@ static struct rerr
  */
 /* ARGSUSED */
 size_t
-pg95_regerror(int errcode, const regex_t *preg,
-			  char *errbuf, size_t errbuf_size)
+pg_regerror(int errcode, const regex_t *preg,
+			char *errbuf, size_t errbuf_size)
 {
 	struct rerr *r;
 	size_t		len;

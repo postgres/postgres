@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.320 2002/06/11 13:40:50 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.321 2002/06/11 15:41:37 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -227,10 +227,10 @@ static void doNegateFloat(Value *v);
 %type <node>	join_outer, join_qual
 %type <jtype>	join_type
 
-%type <list>	extract_list, position_list
+%type <list>	extract_list, overlay_list, position_list
 %type <list>	substr_list, trim_list
 %type <ival>	opt_interval
-%type <node>	substr_from, substr_for
+%type <node>	overlay_placing, substr_from, substr_for
 
 %type <boolean>	opt_binary, opt_using, opt_instead, opt_cursor
 %type <boolean>	opt_with_copy, index_opt_unique, opt_verbose, opt_full
@@ -336,7 +336,7 @@ static void doNegateFloat(Value *v);
 	FALSE_P, FETCH, FLOAT_P, FOR, FORCE, FOREIGN, FORWARD, FREEZE, FROM,
 	FULL, FUNCTION,
 
-	GLOBAL, GRANT, GROUP_P,
+	GET, GLOBAL, GRANT, GROUP_P,
 	HANDLER, HAVING, HOUR_P,
 
 	ILIKE, IMMEDIATE, IMMUTABLE, IMPLICIT, IN_P, INCREMENT, INDEX, INHERITS,
@@ -356,16 +356,16 @@ static void doNegateFloat(Value *v);
 	NUMERIC,
 
 	OF, OFF, OFFSET, OIDS, OLD, ON, ONLY, OPERATOR, OPTION, OR, ORDER,
-	OUT_P, OUTER_P, OVERLAPS, OWNER,
+	OUT_P, OUTER_P, OVERLAPS, OVERLAY, OWNER,
 
-	PARTIAL, PASSWORD, PATH_P, PENDANT, POSITION, PRECISION, PRIMARY,
+	PARTIAL, PASSWORD, PATH_P, PENDANT, PLACING, POSITION, PRECISION, PRIMARY,
 	PRIOR, PRIVILEGES, PROCEDURE, PROCEDURAL,
 
 	READ, REAL, REFERENCES, REINDEX, RELATIVE, RENAME, REPLACE, RESET,
 	RESTRICT, RETURNS, REVOKE, RIGHT, ROLLBACK, ROW, RULE,
 
 	SCHEMA, SCROLL, SECOND_P, SECURITY, SELECT, SEQUENCE, SERIALIZABLE,
-	SESSION, SESSION_USER, SET, SETOF, SHARE, SHOW, SMALLINT, SOME,
+	SESSION, SESSION_USER, SET, SETOF, SHARE, SHOW, SIMILAR, SMALLINT, SOME,
 	STABLE, START, STATEMENT, STATISTICS, STDIN, STDOUT, STORAGE, STRICT,
 	SUBSTRING, SYSID,
 
@@ -402,7 +402,7 @@ static void doNegateFloat(Value *v);
 %right		NOT
 %right		'='
 %nonassoc	'<' '>'
-%nonassoc	LIKE ILIKE
+%nonassoc	LIKE ILIKE SIMILAR
 %nonassoc	ESCAPE
 %nonassoc	OVERLAPS
 %nonassoc	BETWEEN
@@ -420,6 +420,7 @@ static void doNegateFloat(Value *v);
 %right		UMINUS
 %left		'[' ']'
 %left		'(' ')'
+%left		COLLATE
 %left		TYPECAST
 %left		'.'
 %%
@@ -2137,6 +2138,14 @@ DefineStmt:  CREATE AGGREGATE func_name definition
 					n->defType = TYPE_P;
 					n->defnames = $3;
 					n->definition = $4;
+					$$ = (Node *)n;
+				}
+		| CREATE CHARACTER SET opt_as any_name GET definition opt_collate
+				{
+					DefineStmt *n = makeNode(DefineStmt);
+					n->defType = CHARACTER;
+					n->defnames = $5;
+					n->definition = $7;
 					$$ = (Node *)n;
 				}
 		;
@@ -4978,9 +4987,18 @@ qual_all_Op:  all_Op
  * it's factored out just to eliminate redundant coding.
  */
 a_expr:  c_expr
-				{	$$ = $1;  }
+				{	$$ = $1; }
 		| a_expr TYPECAST Typename
 				{	$$ = makeTypeCast($1, $3); }
+		| a_expr COLLATE ColId
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = SystemFuncName($3);
+					n->args = makeList1($1);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *) n;
+				}
 		| a_expr AT TIME ZONE c_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -5088,6 +5106,30 @@ a_expr:  c_expr
 					n->agg_distinct = FALSE;
 					$$ = (Node *) makeSimpleA_Expr(OP, "!~~*", $1, (Node *) n);
 				}
+
+		| a_expr SIMILAR TO a_expr				%prec SIMILAR
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "~", $1, $4); }
+		| a_expr SIMILAR TO a_expr ESCAPE a_expr
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = SystemFuncName("like_escape");
+					n->args = makeList2($4, $6);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *) makeSimpleA_Expr(OP, "~", $1, (Node *) n);
+				}
+		| a_expr NOT SIMILAR TO a_expr			%prec SIMILAR
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "!~", $1, $5); }
+		| a_expr NOT SIMILAR TO a_expr ESCAPE a_expr
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = SystemFuncName("like_escape");
+					n->args = makeList2($5, $7);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *) makeSimpleA_Expr(OP, "!~", $1, (Node *) n);
+				}
+
 		/* NullTest clause
 		 * Define SQL92-style Null test clause.
 		 * Allow two forms described in the standard:
@@ -5568,6 +5610,20 @@ c_expr:  columnref
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
+		| OVERLAY '(' overlay_list ')'
+				{
+					/* overlay(A PLACING B FROM C FOR D) is converted to
+					 * substring(A, 1, C-1) || B || substring(A, C+1, C+D)
+					 * overlay(A PLACING B FROM C) is converted to
+					 * substring(A, 1, C-1) || B || substring(A, C+1, C+char_length(B))
+					 */
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = SystemFuncName("overlay");
+					n->args = $3;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
+				}
 		| POSITION '(' position_list ')'
 				{
 					/* position(A in B) is converted to position(B, A) */
@@ -5704,6 +5760,25 @@ extract_arg:  IDENT						{ $$ = $1; }
 		| MINUTE_P						{ $$ = "minute"; }
 		| SECOND_P						{ $$ = "second"; }
 		| SCONST						{ $$ = $1; }
+		;
+
+/* OVERLAY() arguments
+ * SQL99 defines the OVERLAY() function:
+ * o overlay(text placing text from int for int)
+ * o overlay(text placing text from int)
+ */
+overlay_list:  a_expr overlay_placing substr_from substr_for
+				{
+					$$ = makeList4($1, $2, $3, $4);
+				}
+		| a_expr overlay_placing substr_from
+				{
+					$$ = makeList3($1, $2, $3);
+				}
+		;
+
+overlay_placing:  PLACING a_expr
+				{	$$ = $2; }
 		;
 
 /* position_list uses b_expr not a_expr to avoid conflict with general IN */
@@ -6259,6 +6334,7 @@ unreserved_keyword:
 		| FORCE
 		| FORWARD
 		| FUNCTION
+		| GET
 		| GLOBAL
 		| HANDLER
 		| HOUR_P
@@ -6404,6 +6480,7 @@ col_name_keyword:
 		| NONE
 		| NULLIF
 		| NUMERIC
+		| OVERLAY
 		| POSITION
 		| REAL
 		| SETOF
@@ -6423,7 +6500,7 @@ col_name_keyword:
  *
  * Do not include POSITION, SUBSTRING, etc here since they have explicit
  * productions in a_expr to support the goofy SQL9x argument syntax.
- *  - thomas 2000-11-28
+ * - thomas 2000-11-28
  */
 func_name_keyword:
 		  AUTHORIZATION
@@ -6445,6 +6522,7 @@ func_name_keyword:
 		| OUTER_P
 		| OVERLAPS
 		| RIGHT
+		| SIMILAR
 		| VERBOSE
 		;
 

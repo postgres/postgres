@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.94 2002/05/02 18:44:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.95 2002/06/11 15:41:37 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,14 +92,14 @@ unsigned char unescape_single_char(unsigned char c);
  * We use exclusive states for quoted strings, extended comments,
  * and to eliminate parsing troubles for numeric strings.
  * Exclusive states:
- *  <xbit> bit string literal
+ *  <xb> bit string literal
  *  <xc> extended C-style comments - thomas 1997-07-12
  *  <xd> delimited identifiers (double-quoted identifiers) - thomas 1997-10-27
  *  <xh> hexadecimal numeric string - thomas 1997-11-16
  *  <xq> quoted strings - thomas 1997-07-30
  */
 
-%x xbit
+%x xb
 %x xc
 %x xd
 %x xh
@@ -107,10 +107,10 @@ unsigned char unescape_single_char(unsigned char c);
 
 /* Bit string
  */
-xbitstart		[bB]{quote}
-xbitstop		{quote}
-xbitinside		[^']*
-xbitcat			{quote}{whitespace_with_newline}{quote}
+xbstart		[bB]{quote}
+xbstop		{quote}
+xbinside		[^']*
+xbcat			{quote}{whitespace_with_newline}{quote}
 
 /* Hexadecimal number
  */
@@ -285,13 +285,13 @@ other			.
 
 <xc><<EOF>>		{ yyerror("unterminated /* comment"); }
 
-{xbitstart}		{
+{xbstart}		{
 					token_start = yytext;
-					BEGIN(xbit);
+					BEGIN(xb);
 					startlit();
 					addlitchar('b');
 				}
-<xbit>{xbitstop}	{
+<xb>{xbstop}	{
 					BEGIN(INITIAL);
 					if (literalbuf[strspn(literalbuf + 1, "01") + 1] != '\0')
 						yyerror("invalid bit string input");
@@ -299,14 +299,14 @@ other			.
 					return BITCONST;
 				}
 <xh>{xhinside}	|
-<xbit>{xbitinside}	{
+<xb>{xbinside}	{
 					addlit(yytext, yyleng);
 				}
 <xh>{xhcat}		|
-<xbit>{xbitcat}		{
+<xb>{xbcat}		{
 					/* ignore */
 				}
-<xbit><<EOF>>		{ yyerror("unterminated bit string literal"); }
+<xb><<EOF>>		{ yyerror("unterminated bit string literal"); }
 
 {xhstart}		{
 					token_start = yytext;

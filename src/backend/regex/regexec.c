@@ -149,8 +149,8 @@ do { \
  * when choosing which matcher to call.
  */
 int								/* 0 success, REG_NOMATCH failure */
-pg95_regexec(const regex_t *preg, const char *string, size_t nmatch,
-			 regmatch_t *pmatch, int eflags)
+pg_regexec(const regex_t *preg, const char *string, size_t nmatch,
+		   regmatch_t *pmatch, int eflags)
 {
 	struct re_guts *g = preg->re_g;
 

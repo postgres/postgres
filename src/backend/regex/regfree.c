@@ -49,7 +49,7 @@
  * regfree - free everything
  */
 void
-pg95_regfree(regex_t *preg)
+pg_regfree(regex_t *preg)
 {
 	struct re_guts *g;
 
