@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.7 2000/05/11 15:18:13 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.8 2000/05/11 17:32:32 momjian Exp $
 -->
 
 <sect1>
@@ -112,7 +112,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.7 2000/05/11 15:18:13 thomas 
    <listitem>
     <para>
      The
-     <ulink url="http://postgresql.org"><productname>Postgres</productname></ulink>
+     <ulink url="http://www.postgresql.org"><productname>Postgres</productname></ulink>
      web site might have some information not appearing in the distribution.
      There is a <productname>mhonarc</productname> catalog of mailing list traffic
      which is a rich resource for many topics.

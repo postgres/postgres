@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.8 2000/04/04 19:42:36 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.9 2000/05/11 17:32:33 momjian Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-MOVE [ <replaceable class="PARAMETER">selector</replaceable> ] [ <replaceable class="PARAMETER">count</replaceable> ] 
+MOVE [ <replaceable class="PARAMETER">direction</replaceable> ] [ <replaceable class="PARAMETER">count</replaceable> ] 
     { IN | FROM } <replaceable class="PARAMETER">cursor</replaceable>
   </synopsis>
  </refsynopsisdiv>
