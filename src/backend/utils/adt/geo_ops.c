@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.63 2002/07/16 03:30:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.64 2002/08/29 23:05:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,10 +269,16 @@ path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
 static char *
 path_encode(bool closed, int npts, Point *pt)
 {
-	char	   *result = palloc(npts * (P_MAXLEN + 3) + 2);
-
+	int			size = npts * (P_MAXLEN + 3) + 2;
+	char	   *result;
 	char	   *cp;
 	int			i;
+
+	/* Check for integer overflow */
+	if ((size - 2) / npts != (P_MAXLEN + 3))
+		elog(ERROR, "Too many points requested");
+
+	result = palloc(size);
 
 	cp = result;
 	switch (closed)
@@ -1230,7 +1236,7 @@ path_in(PG_FUNCTION_ARGS)
 		depth++;
 	}
 
-	size = offsetof(PATH, p[0]) +sizeof(path->p[0]) * npts;
+	size = offsetof(PATH, p[0]) + sizeof(path->p[0]) * npts;
 	path = (PATH *) palloc(size);
 
 	path->size = size;
@@ -3596,13 +3602,21 @@ path_add(PG_FUNCTION_ARGS)
 	PATH	   *p1 = PG_GETARG_PATH_P(0);
 	PATH	   *p2 = PG_GETARG_PATH_P(1);
 	PATH	   *result;
-	int			size;
+	int			size,
+				base_size;
 	int			i;
 
 	if (p1->closed || p2->closed)
 		PG_RETURN_NULL();
 
-	size = offsetof(PATH, p[0]) +sizeof(p1->p[0]) * (p1->npts + p2->npts);
+	base_size = sizeof(p1->p[0]) * (p1->npts + p2->npts);
+	size = offsetof(PATH, p[0]) + base_size;
+
+	/* Check for integer overflow */
+	if (base_size / sizeof(p1->p[0]) != (p1->npts + p2->npts) ||
+		size <= base_size)
+		elog(ERROR, "too many points requested.");
+
 	result = (PATH *) palloc(size);
 
 	result->size = size;
@@ -4413,17 +4427,24 @@ circle_poly(PG_FUNCTION_ARGS)
 	int32		npts = PG_GETARG_INT32(0);
 	CIRCLE	   *circle = PG_GETARG_CIRCLE_P(1);
 	POLYGON    *poly;
-	int			size;
+	int			base_size,
+				size;
 	int			i;
 	double		angle;
 
 	if (FPzero(circle->radius) || (npts < 2))
 		elog(ERROR, "Unable to convert circle to polygon");
 
-	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * npts);
+	base_size = sizeof(poly->p[0]) * npts;
+	size = offsetof(POLYGON, p[0]) + base_size;
+
+	/* Check for integer overflow */
+	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)
+		elog(ERROR, "too many points requested");
+
 	poly = (POLYGON *) palloc(size);
 
-	MemSet((char *) poly, 0, size);		/* zero any holes */
+	MemSet(poly, 0, size);		/* zero any holes */
 	poly->size = size;
 	poly->npts = npts;
 
