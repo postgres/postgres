@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.33 1998/06/15 19:29:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.34 1998/08/15 06:45:10 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -768,6 +768,7 @@ box_diagonal(BOX *box)
  **
  ***********************************************************************/
 
+#define LINEDEBUG
 LINE *
 line_in(char *str)
 {
@@ -801,6 +802,7 @@ char *
 line_out(LINE *line)
 {
 	char *result;
+	LSEG		lseg;
 
 	if (!PointerIsValid(line))
 		return (NULL);
@@ -2340,7 +2342,7 @@ close_pl(Point *pt, LINE *line)
  *
  * Some tricky code here, relying on boolean expressions
  *	evaluating to only zero or one to use as an array index.
- *      bug fixes by gthaker@atl.lmco.com; May 1, 98 
+ *      bug fixes by gthaker@atl.lmco.com; May 1, 1998 
  */
 Point *
 close_ps(Point *pt, LSEG *lseg)
@@ -2351,9 +2353,10 @@ close_ps(Point *pt, LSEG *lseg)
 	int			xh,
 				yh;
 
-
-/* 	fprintf(stderr,"close_sp:pt->x %f pt->y %f\nlseg(0).x %f lseg(0).y %f  lseg(1).x %f lseg(1).y %f\n", */
-/* 		pt->x, pt->y, lseg->p[0].x, lseg->p[0].y, lseg->p[1].x, lseg->p[1].y); */
+#ifdef GEODEBUG
+	printf("close_sp:pt->x %f pt->y %f\nlseg(0).x %f lseg(0).y %f  lseg(1).x %f lseg(1).y %f\n",
+		pt->x, pt->y, lseg->p[0].x, lseg->p[0].y, lseg->p[1].x, lseg->p[1].y);
+#endif
 
 	result = NULL;
 	xh = lseg->p[0].x < lseg->p[1].x;
@@ -2411,7 +2414,6 @@ close_ps(Point *pt, LSEG *lseg)
 	if (pt->y < (tmp->A*pt->x + tmp->C)) { /* we are below the lower edge */
 	  result = point_copy(&lseg->p[!yh]); /* below the lseg, take lower end pt */
 /* 	  fprintf(stderr,"below: tmp A %f  B %f   C %f    m %f\n",tmp->A,tmp->B,tmp->C, tmp->m); */
-
 	  return result;
 	}
 	tmp = line_construct_pm(&lseg->p[yh], invm); /* upper edge of the "band" */
@@ -2429,6 +2431,7 @@ close_ps(Point *pt, LSEG *lseg)
 /* 	fprintf(stderr,"result.x %f  result.y %f\n", result->x, result->y); */
 	return (result);
 }	/* close_ps() */
+
 
 /* close_lseg()
  * Closest point to l1 on l2.
