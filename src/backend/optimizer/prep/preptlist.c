@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.36 2000/04/12 17:15:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.37 2000/07/22 06:19:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,9 @@
 
 static List *expand_targetlist(List *tlist, int command_type,
 				  Index result_relation, List *range_table);
+static TargetEntry *process_matched_tle(TargetEntry *src_tle,
+										TargetEntry *prior_tle,
+										int attrno);
 
 
 /*
@@ -119,8 +122,9 @@ expand_targetlist(List *tlist, int command_type,
 	List	   *temp;
 
 	/*
-	 * Keep a map of which tlist items we have transferred to new list. +1
-	 * here keeps palloc from complaining if old_tlist_len=0.
+	 * Keep a map of which tlist items we have transferred to new list.
+	 *
+	 * +1 here just keeps palloc from complaining if old_tlist_len==0.
 	 */
 	tlistentry_used = (bool *) palloc((old_tlist_len + 1) * sizeof(bool));
 	memset(tlistentry_used, 0, (old_tlist_len + 1) * sizeof(bool));
@@ -141,6 +145,7 @@ expand_targetlist(List *tlist, int command_type,
 
 		/*
 		 * We match targetlist entries to attributes using the resname.
+		 * Junk attributes are not candidates to be matched.
 		 */
 		old_tlist_index = 0;
 		foreach(temp, tlist)
@@ -149,26 +154,11 @@ expand_targetlist(List *tlist, int command_type,
 			Resdom	   *resdom = old_tle->resdom;
 
 			if (!tlistentry_used[old_tlist_index] &&
-				strcmp(resdom->resname, attrname) == 0 &&
-				!resdom->resjunk)
+				!resdom->resjunk &&
+				strcmp(resdom->resname, attrname) == 0)
 			{
-
-				/*
-				 * We can recycle the old TLE+resdom if right resno; else
-				 * make a new one to avoid modifying the old tlist
-				 * structure. (Is preserving old tlist actually
-				 * necessary?)
-				 */
-				if (resdom->resno == attrno)
-					new_tle = old_tle;
-				else
-				{
-					resdom = (Resdom *) copyObject((Node *) resdom);
-					resdom->resno = attrno;
-					new_tle = makeTargetEntry(resdom, old_tle->expr);
-				}
+				new_tle = process_matched_tle(old_tle, new_tle, attrno);
 				tlistentry_used[old_tlist_index] = true;
-				break;
 			}
 			old_tlist_index++;
 		}
@@ -192,22 +182,15 @@ expand_targetlist(List *tlist, int command_type,
 			{
 				case CMD_INSERT:
 					{
-#ifdef	_DROP_COLUMN_HACK__
-						Datum		typedefault;
-
-#else
 						Datum		typedefault = get_typdefault(atttype);
-
-#endif	 /* _DROP_COLUMN_HACK__ */
 						int			typlen;
 						Const	   *temp_const;
 
 #ifdef	_DROP_COLUMN_HACK__
 						if (COLUMN_IS_DROPPED(att_tup))
 							typedefault = PointerGetDatum(NULL);
-						else
-							typedefault = get_typdefault(atttype);
 #endif	 /* _DROP_COLUMN_HACK__ */
+
 						if (typedefault == PointerGetDatum(NULL))
 							typlen = 0;
 						else
@@ -247,11 +230,9 @@ expand_targetlist(List *tlist, int command_type,
 						Var		   *temp_var;
 
 #ifdef	_DROP_COLUMN_HACK__
-						Node	   *temp_node = (Node *) NULL;
-
 						if (COLUMN_IS_DROPPED(att_tup))
 						{
-							temp_node = (Node *) makeConst(atttype, 0,
+							temp_var = (Var *) makeConst(atttype, 0,
 												   PointerGetDatum(NULL),
 														   true,
 														   false,
@@ -260,25 +241,20 @@ expand_targetlist(List *tlist, int command_type,
 						}
 						else
 #endif	 /* _DROP_COLUMN_HACK__ */
-							temp_var = makeVar(result_relation, attrno, atttype,
-											   atttypmod, 0);
-#ifdef	_DROP_COLUMN_HACK__
-						if (!temp_node)
-							temp_node = (Node *) temp_var;
-#endif	 /* _DROP_COLUMN_HACK__ */
+							temp_var = makeVar(result_relation,
+											   attrno,
+											   atttype,
+											   atttypmod,
+											   0);
 
 						new_tle = makeTargetEntry(makeResdom(attrno,
 															 atttype,
 															 atttypmod,
-													   pstrdup(attrname),
+															 pstrdup(attrname),
 															 0,
 															 (Oid) 0,
 															 false),
-#ifdef	_DROP_COLUMN_HACK__
-												  temp_node);
-#else
 												  (Node *) temp_var);
-#endif	 /* _DROP_COLUMN_HACK__ */
 						break;
 					}
 				default:
@@ -304,13 +280,20 @@ expand_targetlist(List *tlist, int command_type,
 
 		if (!tlistentry_used[old_tlist_index])
 		{
-			Resdom	   *resdom;
+			Resdom	   *resdom = old_tle->resdom;
 
-			resdom = (Resdom *) copyObject((Node *) old_tle->resdom);
-			resdom->resno = attrno++;
-			resdom->resjunk = true;
-			new_tlist = lappend(new_tlist,
-								makeTargetEntry(resdom, old_tle->expr));
+			if (! resdom->resjunk)
+				elog(ERROR, "Unexpected assignment to attribute \"%s\"",
+					 resdom->resname);
+			/* Get the resno right, but don't copy unnecessarily */
+			if (resdom->resno != attrno)
+			{
+				resdom = (Resdom *) copyObject((Node *) resdom);
+				resdom->resno = attrno;
+				old_tle = makeTargetEntry(resdom, old_tle->expr);
+			}
+			new_tlist = lappend(new_tlist, old_tle);
+			attrno++;
 		}
 		old_tlist_index++;
 	}
@@ -320,4 +303,73 @@ expand_targetlist(List *tlist, int command_type,
 	pfree(tlistentry_used);
 
 	return new_tlist;
+}
+
+
+/*
+ * Convert a matched TLE from the original tlist into a correct new TLE.
+ *
+ * This routine checks for multiple assignments to the same target attribute,
+ * such as "UPDATE table SET foo = 42, foo = 43".  This is OK only if they
+ * are array assignments, ie, "UPDATE table SET foo[2] = 42, foo[4] = 43".
+ * If so, we need to merge the operations into a single assignment op.
+ * Essentially, the expression we want to produce in this case is like
+ *		foo = array_set(array_set(foo, 2, 42), 4, 43)
+ */
+static TargetEntry *process_matched_tle(TargetEntry *src_tle,
+										TargetEntry *prior_tle,
+										int attrno)
+{
+	Resdom	   *resdom = src_tle->resdom;
+	Node	   *priorbottom;
+	ArrayRef   *newexpr;
+
+	if (prior_tle == NULL)
+	{
+		/*
+		 * Normal case where this is the first assignment to the attribute.
+		 *
+		 * We can recycle the old TLE+resdom if right resno; else make a
+		 * new one to avoid modifying the old tlist structure. (Is preserving
+		 * old tlist actually necessary?  Not sure, be safe.)
+		 */
+		if (resdom->resno == attrno)
+			return src_tle;
+		resdom = (Resdom *) copyObject((Node *) resdom);
+		resdom->resno = attrno;
+		return makeTargetEntry(resdom, src_tle->expr);
+	}
+
+	/*
+	 * Multiple assignments to same attribute.  Allow only if all are
+	 * array-assign operators with same bottom array object.
+	 */
+	if (src_tle->expr == NULL || !IsA(src_tle->expr, ArrayRef) ||
+		((ArrayRef *) src_tle->expr)->refassgnexpr == NULL ||
+		prior_tle->expr == NULL || !IsA(prior_tle->expr, ArrayRef) ||
+		((ArrayRef *) prior_tle->expr)->refassgnexpr == NULL ||
+		((ArrayRef *) src_tle->expr)->refelemtype !=
+		((ArrayRef *) prior_tle->expr)->refelemtype)
+		elog(ERROR, "Multiple assignments to same attribute \"%s\"",
+			 resdom->resname);
+	/*
+	 * Prior TLE could be a nest of ArrayRefs if we do this more than once.
+	 */
+	priorbottom = ((ArrayRef *) prior_tle->expr)->refexpr;
+	while (priorbottom != NULL && IsA(priorbottom, ArrayRef) &&
+		   ((ArrayRef *) priorbottom)->refassgnexpr != NULL)
+		priorbottom = ((ArrayRef *) priorbottom)->refexpr;
+	if (! equal(priorbottom, ((ArrayRef *) src_tle->expr)->refexpr))
+		elog(ERROR, "Multiple assignments to same attribute \"%s\"",
+			 resdom->resname);
+	/*
+	 * Looks OK to nest 'em.
+	 */
+	newexpr = makeNode(ArrayRef);
+	memcpy(newexpr, src_tle->expr, sizeof(ArrayRef));
+	newexpr->refexpr = prior_tle->expr;
+
+	resdom = (Resdom *) copyObject((Node *) resdom);
+	resdom->resno = attrno;
+	return makeTargetEntry(resdom, (Node *) newexpr);
 }
