@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Mar 19 20:57:13 EST 2005
+Last updated:		Tue Mar 22 19:36:14 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -479,11 +479,6 @@ Commands
 	o Add SET PATH for schemas (?)
 
 	  This is basically the same as SET search_path.
-
-	o Prevent conflicting SET options from being set
-
-	  This requires a checking function to be called after the server
-	  configuration file is read.
 
 
 * SERVER-SIDE LANGUAGES
