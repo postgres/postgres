@@ -58,8 +58,6 @@ extern int	gethostname(char *, int);
 extern int	getopt(int, char *const *, const char *);
 extern int	putenv(const char *);
 
-extern pid_t vfork(void);
-
 struct itimerval;
 extern int	setitimer(int, const struct itimerval *, struct itimerval *);
 struct timezone;

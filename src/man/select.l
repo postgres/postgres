@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/select.l,v 1.6 1998/03/30 19:05:10 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/select.l,v 1.7 1998/06/17 22:59:26 momjian Exp $
 .TH SELECT SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 select - retrieve instances from a class
@@ -123,9 +123,6 @@ create table(l),
 fetch(l),
 update(l).
 .SH BUGS
-.BR "Select into"
-does not delete duplicates.
-.PP
 If the backend crashes in the course of executing a 
 .BR "select into" ,
 the class file will remain on disk.  It can be safely removed by the

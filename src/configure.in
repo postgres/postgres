@@ -529,7 +529,7 @@ AC_PROG_GCC_TRADITIONAL
 AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS(tzset vfork memmove sigsetjmp kill sysconf fpclass)
+AC_CHECK_FUNCS(tzset memmove sigsetjmp kill sysconf fpclass)
 AC_CHECK_FUNCS(fp_class fp_class_d class)
 AC_CHECK_FUNCS(sigprocmask waitpid setsid fcvt)
 AC_CHECK_FUNC(isinf,
