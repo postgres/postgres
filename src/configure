@@ -4086,7 +4086,7 @@ EOF
 
 else
   echo "$ac_t""no" 1>&6
-ISINF='snprintf.o'
+SNPRINTF='snprintf.o'
 fi
 
 
