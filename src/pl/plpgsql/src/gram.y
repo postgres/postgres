@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.40 2002/11/10 00:35:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.41 2003/03/25 03:16:40 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -105,7 +105,8 @@ static	void check_assignable(PLpgSQL_datum *datum);
 %type <nsitem>	decl_aliasitem
 %type <str>		decl_stmts decl_stmt
 
-%type <expr>	expr_until_semi expr_until_then expr_until_loop
+%type <expr>	expr_until_semi expr_until_rightbracket
+%type <expr>	expr_until_then expr_until_loop
 %type <expr>	opt_exitcond
 
 %type <ival>	assign_var cursor_variable
@@ -822,6 +823,21 @@ assign_var		: T_VARIABLE
 						check_assignable(yylval.variable);
 						$$ = yylval.variable->dno;
 					}
+				| assign_var '[' expr_until_rightbracket
+					{
+						PLpgSQL_arrayelem	*new;
+
+						new = malloc(sizeof(PLpgSQL_arrayelem));
+						memset(new, 0, sizeof(PLpgSQL_arrayelem));
+
+						new->dtype		= PLPGSQL_DTYPE_ARRAYELEM;
+						new->subscript	= $3;
+						new->arrayparentno = $1;
+
+						plpgsql_adddatum((PLpgSQL_datum *)new);
+
+						$$ = new->dno;
+					}
 				;
 
 stmt_if			: K_IF lno expr_until_then proc_sect stmt_else K_END K_IF ';'
@@ -1491,6 +1507,10 @@ expr_until_semi :
 					{ $$ = plpgsql_read_expression(';', ";"); }
 				;
 
+expr_until_rightbracket :
+					{ $$ = plpgsql_read_expression(']', "]"); }
+				;
+
 expr_until_then :
 					{ $$ = plpgsql_read_expression(K_THEN, "THEN"); }
 				;
@@ -1577,16 +1597,16 @@ read_sql_construct(int until,
 	for (;;)
 	{
 		tok = yylex();
-		if (tok == '(')
+		if (tok == until && parenlevel == 0)
+			break;
+		if (tok == '(' || tok == '[')
 			parenlevel++;
-		else if (tok == ')')
+		else if (tok == ')' || tok == ']')
 		{
 			parenlevel--;
 			if (parenlevel < 0)
 				elog(ERROR, "mismatched parentheses");
 		}
-		else if (parenlevel == 0 && tok == until)
-			break;
 		/*
 		 * End of function definition is an error, and we don't expect to
 		 * hit a semicolon either (unless it's the until symbol, in which
@@ -1986,6 +2006,9 @@ check_assignable(PLpgSQL_datum *datum)
 			}
 			break;
 		case PLPGSQL_DTYPE_RECFIELD:
+			/* always assignable? */
+			break;
+		case PLPGSQL_DTYPE_ARRAYELEM:
 			/* always assignable? */
 			break;
 		case PLPGSQL_DTYPE_TRIGARG:

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.82 2003/03/25 00:34:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.83 2003/03/25 03:16:40 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -49,6 +49,7 @@
 #include "optimizer/clauses.h"
 #include "parser/parse_expr.h"
 #include "tcop/tcopprot.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -136,6 +137,9 @@ static void exec_eval_datum(PLpgSQL_execstate *estate,
 							Oid *typeid,
 							Datum *value,
 							bool *isnull);
+static int exec_eval_subscript(PLpgSQL_execstate * estate,
+							   PLpgSQL_expr * expr,
+							   bool *isNull);
 static Datum exec_eval_expr(PLpgSQL_execstate * estate,
 			   PLpgSQL_expr * expr,
 			   bool *isNull,
@@ -152,6 +156,9 @@ static Datum exec_cast_value(Datum value, Oid valtype,
 				Oid reqtypelem,
 				int32 reqtypmod,
 				bool *isnull);
+static Datum exec_simple_cast_value(Datum value, Oid valtype,
+									Oid reqtype, int32 reqtypmod,
+									bool *isnull);
 static void exec_init_tuple_store(PLpgSQL_execstate * estate);
 static bool compatible_tupdesc(TupleDesc td1, TupleDesc td2);
 static void exec_set_found(PLpgSQL_execstate * estate, bool state);
@@ -237,6 +244,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 
 			case PLPGSQL_DTYPE_ROW:
 			case PLPGSQL_DTYPE_RECFIELD:
+			case PLPGSQL_DTYPE_ARRAYELEM:
 				estate.datums[i] = func->datums[i];
 				break;
 
@@ -308,6 +316,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 			case PLPGSQL_DTYPE_ROW:
 			case PLPGSQL_DTYPE_REC:
 			case PLPGSQL_DTYPE_RECFIELD:
+			case PLPGSQL_DTYPE_ARRAYELEM:
 				break;
 
 			default:
@@ -507,6 +516,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 
 			case PLPGSQL_DTYPE_ROW:
 			case PLPGSQL_DTYPE_RECFIELD:
+			case PLPGSQL_DTYPE_ARRAYELEM:
 			case PLPGSQL_DTYPE_TRIGARG:
 				estate.datums[i] = func->datums[i];
 				break;
@@ -658,6 +668,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 			case PLPGSQL_DTYPE_ROW:
 			case PLPGSQL_DTYPE_REC:
 			case PLPGSQL_DTYPE_RECFIELD:
+			case PLPGSQL_DTYPE_ARRAYELEM:
 			case PLPGSQL_DTYPE_TRIGARG:
 				break;
 
@@ -822,6 +833,7 @@ exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
 				break;
 
 			case PLPGSQL_DTYPE_RECFIELD:
+			case PLPGSQL_DTYPE_ARRAYELEM:
 				break;
 
 			default:
@@ -1693,24 +1705,11 @@ exec_stmt_return_next(PLpgSQL_execstate * estate,
 								&rettype);
 
 		/* coerce type if needed */
-		if (!isNull && rettype != tupdesc->attrs[0]->atttypid)
-		{
-			Oid			targType = tupdesc->attrs[0]->atttypid;
-			Oid			typInput;
-			Oid			typElem;
-			FmgrInfo	finfo_input;
-
-			getTypeInputInfo(targType, &typInput, &typElem);
-			fmgr_info(typInput, &finfo_input);
-
-			retval = exec_cast_value(retval,
-									 rettype,
-									 targType,
-									 &finfo_input,
-									 typElem,
-									 tupdesc->attrs[0]->atttypmod,
-									 &isNull);
-		}
+		retval = exec_simple_cast_value(retval,
+										rettype,
+										tupdesc->attrs[0]->atttypid,
+										tupdesc->attrs[0]->atttypmod,
+										&isNull);
 
 		nullflag = isNull ? 'n' : ' ';
 
@@ -2709,10 +2708,21 @@ exec_assign_value(PLpgSQL_execstate * estate,
 	bool		attisnull;
 	Oid			atttype;
 	int32		atttypmod;
+	int			nsubscripts;
+	PLpgSQL_expr *subscripts[MAXDIM];
+	int			subscriptvals[MAXDIM];
+	bool		havenullsubscript,
+				oldarrayisnull;
+	Oid			arraytypeid,
+				arrayelemtypeid,
+				arrayInputFn;
+	int16		elemtyplen;
+	bool		elemtypbyval;
+	char		elemtypalign;
+	Datum		oldarrayval,
+				coerced_value;
+	ArrayType  *newarrayval;
 	HeapTuple	newtup;
-	Oid			typInput;
-	Oid			typElem;
-	FmgrInfo	finfo_input;
 
 	switch (target->dtype)
 	{
@@ -2812,24 +2822,19 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			 */
 			atttype = SPI_gettypeid(rec->tupdesc, fno + 1);
 			atttypmod = rec->tupdesc->attrs[fno]->atttypmod;
-			getTypeInputInfo(atttype, &typInput, &typElem);
-			fmgr_info(typInput, &finfo_input);
-
 			attisnull = *isNull;
-			values[fno] = exec_cast_value(value,
-										  valtype,
-										  atttype,
-										  &finfo_input,
-										  typElem,
-										  atttypmod,
-										  &attisnull);
+			values[fno] = exec_simple_cast_value(value,
+												 valtype,
+												 atttype,
+												 atttypmod,
+												 &attisnull);
 			if (attisnull)
 				nulls[fno] = 'n';
 			else
 				nulls[fno] = ' ';
 
 			/*
-			 * Avoid leaking the result of exec_cast_value, if it
+			 * Avoid leaking the result of exec_simple_cast_value, if it
 			 * performed a conversion to a pass-by-ref type.
 			 */
 			if (!attisnull && values[fno] != value && !get_typbyval(atttype))
@@ -2854,6 +2859,103 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			if (mustfree)
 				pfree(mustfree);
 
+			break;
+
+		case PLPGSQL_DTYPE_ARRAYELEM:
+
+			/*
+			 * Target is an element of an array
+			 *
+			 * To handle constructs like x[1][2] := something, we have to
+			 * be prepared to deal with a chain of arrayelem datums.
+			 * Chase back to find the base array datum, and save the
+			 * subscript expressions as we go.  (We are scanning right to
+			 * left here, but want to evaluate the subscripts left-to-right
+			 * to minimize surprises.)
+			 */
+			nsubscripts = 0;
+			do {
+				PLpgSQL_arrayelem *arrayelem = (PLpgSQL_arrayelem *) target;
+
+				if (nsubscripts >= MAXDIM)
+					elog(ERROR, "Too many subscripts");
+				subscripts[nsubscripts++] = arrayelem->subscript;
+				target = estate->datums[arrayelem->arrayparentno];
+			} while (target->dtype == PLPGSQL_DTYPE_ARRAYELEM);
+
+			/* Fetch current value of array datum */
+			exec_eval_datum(estate, target, InvalidOid,
+							&arraytypeid, &oldarrayval, &oldarrayisnull);
+
+			getTypeInputInfo(arraytypeid, &arrayInputFn, &arrayelemtypeid);
+			if (!OidIsValid(arrayelemtypeid))
+				elog(ERROR, "Subscripted item is not an array");
+
+			/* Evaluate the subscripts, switch into left-to-right order */
+			havenullsubscript = false;
+			for (i = 0; i < nsubscripts; i++)
+			{
+				bool	subisnull;
+
+				subscriptvals[i] =
+					exec_eval_subscript(estate,
+										subscripts[nsubscripts-1-i],
+										&subisnull);
+				havenullsubscript |= subisnull;
+			}
+
+			/*
+			 * Skip the assignment if we have any nulls, either in the
+			 * original array value, the subscripts, or the righthand side.
+			 * This is pretty bogus but it corresponds to the current
+			 * behavior of ExecEvalArrayRef().
+			 */
+			if (oldarrayisnull || havenullsubscript || *isNull)
+				return;
+
+			/* Coerce source value to match array element type. */
+			coerced_value = exec_simple_cast_value(value,
+												   valtype,
+												   arrayelemtypeid,
+												   -1,
+												   isNull);
+
+			/*
+			 * Build the modified array value.
+			 */
+			get_typlenbyvalalign(arrayelemtypeid,
+								 &elemtyplen,
+								 &elemtypbyval,
+								 &elemtypalign);
+
+			newarrayval = array_set((ArrayType *) DatumGetPointer(oldarrayval),
+									nsubscripts,
+									subscriptvals,
+									coerced_value,
+									get_typlen(arraytypeid),
+									elemtyplen,
+									elemtypbyval,
+									elemtypalign,
+									isNull);
+
+			/*
+			 * Assign it to the base variable.
+			 */
+			exec_assign_value(estate, target,
+							  PointerGetDatum(newarrayval),
+							  arraytypeid, isNull);
+
+			/*
+			 * Avoid leaking the result of exec_simple_cast_value, if it
+			 * performed a conversion to a pass-by-ref type.
+			 */
+			if (!*isNull && coerced_value != value && !elemtypbyval)
+				pfree(DatumGetPointer(coerced_value));
+
+			/*
+			 * Avoid leaking the modified array value, too.
+			 */
+			pfree(newarrayval);
 			break;
 
 		default:
@@ -2888,7 +2990,6 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 	PLpgSQL_recfield *recfield;
 	PLpgSQL_trigarg *trigarg;
 	int			tgargno;
-	Oid			tgargoid;
 	int			fno;
 
 	switch (datum->dtype)
@@ -2922,9 +3023,7 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 		case PLPGSQL_DTYPE_TRIGARG:
 			trigarg = (PLpgSQL_trigarg *) datum;
 			*typeid = TEXTOID;
-			tgargno = (int) exec_eval_expr(estate, trigarg->argnum,
-										   isnull, &tgargoid);
-			exec_eval_cleanup(estate);
+			tgargno = exec_eval_subscript(estate, trigarg->argnum, isnull);
 			if (*isnull || tgargno < 0 || tgargno >= estate->trig_nargs)
 			{
 				*value = (Datum) 0;
@@ -2944,6 +3043,36 @@ exec_eval_datum(PLpgSQL_execstate *estate,
 			elog(ERROR, "unknown datum dtype %d in exec_eval_datum()",
 				 datum->dtype);
 	}
+}
+
+/* ----------
+ * exec_eval_subscript		Hack to allow subscripting of result variables.
+ *
+ * The caller may already have an open eval_econtext, which we have to
+ * save and restore around the call of exec_eval_expr.
+ * ----------
+ */
+static int
+exec_eval_subscript(PLpgSQL_execstate * estate,
+					PLpgSQL_expr * expr,
+					bool *isNull)
+{
+	ExprContext *save_econtext;
+	Datum		subscriptdatum;
+	Oid			subscripttypeid;
+	int			result;
+
+	save_econtext = estate->eval_econtext;
+	estate->eval_econtext = NULL;
+	subscriptdatum = exec_eval_expr(estate, expr, isNull, &subscripttypeid);
+	subscriptdatum = exec_simple_cast_value(subscriptdatum,
+											subscripttypeid,
+											INT4OID, -1,
+											isNull);
+	result = DatumGetInt32(subscriptdatum);
+	exec_eval_cleanup(estate);
+	estate->eval_econtext = save_econtext;
+	return result;
 }
 
 /* ----------
@@ -3317,6 +3446,43 @@ exec_cast_value(Datum value, Oid valtype,
 								  Int32GetDatum(reqtypmod));
 			pfree(extval);
 			ReleaseSysCache(typetup);
+		}
+	}
+
+	return value;
+}
+
+/* ----------
+ * exec_simple_cast_value			Cast a value if required
+ *
+ * As above, but need not supply details about target type.  Note that this
+ * is slower than exec_cast_value with cached type info, and so should be
+ * avoided in heavily used code paths.
+ * ----------
+ */
+static Datum
+exec_simple_cast_value(Datum value, Oid valtype,
+					   Oid reqtype, int32 reqtypmod,
+					   bool *isnull)
+{
+	if (!*isnull)
+	{
+		if (valtype != reqtype || reqtypmod != -1)
+		{
+			Oid			typInput;
+			Oid			typElem;
+			FmgrInfo	finfo_input;
+
+			getTypeInputInfo(reqtype, &typInput, &typElem);
+			fmgr_info(typInput, &finfo_input);
+
+			value = exec_cast_value(value,
+									valtype,
+									reqtype,
+									&finfo_input,
+									typElem,
+									reqtypmod,
+									isnull);
 		}
 	}
 

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.24 2003/03/25 00:34:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.25 2003/03/25 03:16:41 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1022,6 +1022,12 @@ plpgsql_dumptree(PLpgSQL_function * func)
 				printf("RECFIELD %-16s of REC %d\n",
 					   ((PLpgSQL_recfield *) d)->fieldname,
 					   ((PLpgSQL_recfield *) d)->recparentno);
+				break;
+			case PLPGSQL_DTYPE_ARRAYELEM:
+				printf("ARRAYELEM of VAR %d subscript ", 
+					   ((PLpgSQL_arrayelem *) d)->arrayparentno);
+				dump_expr(((PLpgSQL_arrayelem *) d)->subscript);
+				printf("\n");
 				break;
 			case PLPGSQL_DTYPE_TRIGARG:
 				printf("TRIGARG ");
