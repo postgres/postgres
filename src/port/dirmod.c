@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.30 2004/10/17 23:53:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.31 2004/10/18 19:08:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,6 @@
 #ifndef TEST_VERSION
 
 #if defined(WIN32) || defined(__CYGWIN__)
-
-#include "miscadmin.h"
 
 #ifndef __CYGWIN__
 #include <winioctl.h>
