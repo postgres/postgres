@@ -463,3 +463,17 @@ Fri Feb 19 21:40:14 CET 1999
 	- Fixed bug in libecpg that caused it to start transactions only for
 	  the first connection.
 	- Set library version to 2.7.1
+
+Son Feb 21 14:10:47 CET 1999
+
+	- Fixed variable detection in libecpg.
+
+Mon Feb 22 19:47:45 CET 1999
+
+	- Added 'at <db_connection>' option to all commands it is apllicable
+	  to. Due to changing the API of some libecpg functions this
+	  requires me to increase the major version number.
+	- Synced pgc.l with scan.l.
+	- Added support for unions.
+	- Set library version to 3.0.0
+	- Set ecpg version to 3.0.0

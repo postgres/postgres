@@ -165,6 +165,7 @@ main(int argc, char *const argv[])
 					struct arguments *l1, *l2;
 
 					free(ptr->command);
+					free(ptr->connection);
 					free(ptr->name);
 					for (l1 = ptr->argsinsert; l1; l1 = l2)
 					{

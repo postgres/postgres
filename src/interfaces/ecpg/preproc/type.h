@@ -101,6 +101,7 @@ struct cursor
 {
 	char	   *name;
 	char	   *command;
+	char	   *connection;
 	struct arguments *argsinsert;
 	struct arguments *argsresult;
 	struct cursor *next;

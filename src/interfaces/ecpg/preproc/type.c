@@ -164,7 +164,8 @@ get_type(enum ECPGttype typ)
 			return ("ECPGt_char_variable");
 			break;
 		default:
-			abort();
+			sprintf(errortext, "illegal variable type %d\n", typ);
+			yyerror(errortext);
 	}
 }
 
@@ -357,7 +358,8 @@ ECPGfree_type(struct ECPGtype * typ)
 			if (IS_SIMPLE_TYPE(typ->u.element->typ))
 				free(typ->u.element);
 			else if (typ->u.element->typ == ECPGt_array)
-				abort();		/* Array of array, */
+				/* Array of array, */
+				yyerror("internal error, found multi-dimensional array\n");
 			else if (typ->u.element->typ == ECPGt_struct)
 			{
 				/* Array of structs. */
@@ -365,7 +367,10 @@ ECPGfree_type(struct ECPGtype * typ)
 				free(typ->u.members);
 			}
 			else
-				abort();
+			{
+				sprintf(errortext, "illegal variable type %d\n", typ);
+				yyerror(errortext);
+			}
 		}
 		else if (typ->typ == ECPGt_struct)
 		{
@@ -373,7 +378,10 @@ ECPGfree_type(struct ECPGtype * typ)
 			free(typ->u.members);
 		}
 		else
-			abort();
+		{
+			sprintf(errortext, "illegal variable type %d\n", typ);
+			yyerror(errortext);
+		}
 	}
 	free(typ);
 }

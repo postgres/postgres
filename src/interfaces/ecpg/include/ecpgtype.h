@@ -43,10 +43,10 @@ extern		"C"
 		ECPGt_varchar, ECPGt_varchar2,
 		ECPGt_array,
 		ECPGt_struct,
+		ECPGt_char_variable,
 		ECPGt_EOIT,				/* End of insert types. */
 		ECPGt_EORT,				/* End of result types. */
-		ECPGt_NO_INDICATOR,		/* no indicator */
-		ECPGt_char_variable
+		ECPGt_NO_INDICATOR		/* no indicator */
 	};
 
 #define IS_SIMPLE_TYPE(type) ((type) >= ECPGt_char && (type) <= ECPGt_varchar2)

@@ -18,7 +18,8 @@
  * Variables containing simple states.
  */
 int	struct_level = 0;
-static char	errortext[128];
+char	errortext[128];
+static char	*connection = NULL;
 static int      QueryIsRule = 0, ForUpdateNotAllowed = 0;
 static struct this_type actual_type[STRUCT_DEPTH];
 static char     *actual_storage[STRUCT_DEPTH];
@@ -489,7 +490,7 @@ output_statement(char * stmt, int mode)
 {
 	int i, j=strlen(stmt);
 
-	fputs("ECPGdo(__LINE__, \"", yyout);
+	fprintf(yyout, "ECPGdo(__LINE__, %s, \"", connection ? connection : "NULL");
 
 	/* do this char by char as we have to filter '\"' */
 	for (i = 0;i < j; i++)
@@ -504,6 +505,8 @@ output_statement(char * stmt, int mode)
 	fputs("ECPGt_EORT);", yyout);
 	whenever_action(mode);
 	free(stmt);
+	if (connection != NULL)
+		free(connection);
 }
 
 static struct typedefs *
@@ -612,7 +615,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 }
 
 /* special embedded SQL token */
-%token		SQL_BOOL SQL_BREAK 
+%token		SQL_AT SQL_BOOL SQL_BREAK 
 %token		SQL_CALL SQL_CONNECT SQL_CONNECTION SQL_CONTINUE
 %token		SQL_DEALLOCATE SQL_DISCONNECT SQL_ENUM 
 %token		SQL_FOUND SQL_FREE SQL_GO SQL_GOTO
@@ -625,8 +628,8 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 /* C token */
 %token		S_ANYTHING S_AUTO S_BOOL S_CHAR S_CONST S_DOUBLE S_ENUM S_EXTERN
 %token		S_FLOAT S_INT S
-%token		S_LONG S_REGISTER S_SHORT S_SIGNED S_STATIC S_STRUCT 
-%token		S_UNSIGNED S_VARCHAR
+%token		S_LONG S_REGISTER S_SHORT S_SIGNED S_STATIC S_STRUCT
+%token		S_UNION S_UNSIGNED S_VARCHAR
 
 /* I need this and don't know where it is defined inside the backend */
 %token		TYPECAST
@@ -785,8 +788,9 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	ECPGSetConnection c_line cpp_line s_enum ECPGTypedef
 %type  <str>	enum_type civariableonly ECPGCursorStmt ECPGDeallocate
 %type  <str>	ECPGFree ECPGDeclare ECPGVar sql_variable_declarations
-%type  <str>	sql_declaration sql_variable_list sql_variable
+%type  <str>	sql_declaration sql_variable_list sql_variable opt_at
 %type  <str>    struct_type s_struct declaration variable_declarations
+%type  <str>    s_struct_or_union sql_struct_or_union
 
 %type  <type_enum> simple_type varchar_type
 
@@ -803,12 +807,15 @@ prog: statements;
 statements: /* empty */
 	| statements statement
 
-statement: ecpgstart stmt SQL_SEMI
+statement: ecpgstart opt_at stmt SQL_SEMI { connection = NULL; }
+	| ecpgstart stmt SQL_SEMI
 	| ECPGDeclaration
 	| c_thing 			{ fprintf(yyout, "%s", $1); free($1); }
 	| cpp_line			{ fprintf(yyout, "%s", $1); free($1); }
 	| blockstart			{ fputs($1, yyout); free($1); }
 	| blockend			{ fputs($1, yyout); free($1); }
+
+opt_at:	SQL_AT connection_target	{ connection = $2; }
 
 stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| AlterUserStmt		{ output_statement($1, 0); }
@@ -853,7 +860,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 					}
 		| RuleStmt		{ output_statement($1, 0); }
 		| TransactionStmt	{
-						fprintf(yyout, "ECPGtrans(__LINE__, \"%s\");", $1);
+						fprintf(yyout, "ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
 						whenever_action(0);
 						free($1);
 					}
@@ -866,6 +873,9 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| VariableShowStmt	{ output_statement($1, 0); }
 		| VariableResetStmt	{ output_statement($1, 0); }
 		| ECPGConnect		{
+						if (connection)
+							yyerror("no at option for connect statement.\n");
+
 						fprintf(yyout, "no_auto_trans = %d;\n", no_auto_trans);
 						fprintf(yyout, "ECPGconnect(__LINE__, %s);", $1);
 						whenever_action(0);
@@ -876,6 +886,9 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
                                                 free($1); 
 					}
 		| ECPGDeallocate	{
+						if (connection)
+							yyerror("no at option for connect statement.\n");
+
 						fputs($1, yyout);
 						whenever_action(0);
 						free($1);
@@ -885,6 +898,9 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						free($1);
 					}
 		| ECPGDisconnect	{
+						if (connection)
+							yyerror("no at option for disconnect statement.\n");
+
 						fprintf(yyout, "ECPGdisconnect(__LINE__, \"%s\");", $1); 
 						whenever_action(0);
 						free($1);
@@ -893,7 +909,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						output_statement($1, 0);
 					}
 		| ECPGFree		{
-						fprintf(yyout, "ECPGdeallocate(__LINE__, \"%s\");", $1); 
+						fprintf(yyout, "ECPGdeallocate(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1); 
 						whenever_action(0);
 						free($1);
 					}
@@ -912,7 +928,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 							yyerror(errortext);
 						}
                   
-						fprintf(yyout, "ECPGdo(__LINE__, \"%s\",", ptr->command);
+						fprintf(yyout, "ECPGdo(__LINE__, %s, \"%s\",", ptr->connection ? ptr->connection : "NULL", ptr->command);
 						/* dump variables to C file*/
 						dump_variables(ptr->argsinsert, 0);
 						dump_variables(argsinsert, 0);
@@ -923,25 +939,40 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						free($1);
 					}
 		| ECPGPrepare		{
+						if (connection)
+							yyerror("no at option for set connection statement.\n");
+
 						fprintf(yyout, "ECPGprepare(__LINE__, %s);", $1); 
 						whenever_action(0);
 						free($1);
 					}
 		| ECPGRelease		{ /* output already done */ }
 		| ECPGSetConnection     {
+						if (connection)
+							yyerror("no at option for set connection statement.\n");
+
 						fprintf(yyout, "ECPGsetconn(__LINE__, %s);", $1);
 						whenever_action(0);
                                        		free($1);
 					}
 		| ECPGTypedef		{
+						if (connection)
+							yyerror("no at option for typedef statement.\n");
+
 						fputs($1, yyout);
                                                 free($1);
 					}
 		| ECPGVar		{
+						if (connection)
+							yyerror("no at option for var statement.\n");
+
 						fputs($1, yyout);
                                                 free($1);
 					}
 		| ECPGWhenever		{
+						if (connection)
+							yyerror("no at option for whenever statement.\n");
+
 						fputs($1, yyout);
 						output_line_number();
 						free($1);
@@ -2727,6 +2758,7 @@ CursorStmt:  DECLARE name opt_cursor CURSOR FOR SelectStmt cursor_clause
 			        	/* initial definition */
 				        this->next = cur;
 				        this->name = $2;
+					this->connection = connection;
 				        this->command =  cat2_str(cat5_str(make1_str("declare"), mm_strdup($2), $3, make1_str("cursor for"), $6), $7);
 					this->argsinsert = argsinsert;
 					this->argsresult = argsresult;
@@ -3103,6 +3135,7 @@ Generic:  generic
 
 generic:  ident					{ $$ = $1; }
 		| TYPE_P			{ $$ = make1_str("type"); }
+		| SQL_AT			{ $$ = make1_str("at"); }
 		| SQL_BOOL			{ $$ = make1_str("bool"); }
 		| SQL_BREAK			{ $$ = make1_str("break"); }
 		| SQL_CALL			{ $$ = make1_str("call"); }
@@ -4306,6 +4339,7 @@ ColId:  ident					{ $$ = $1; }
 		| VALID				{ $$ = make1_str("valid"); }
 		| VERSION			{ $$ = make1_str("version"); }
 		| ZONE				{ $$ = make1_str("zone"); }
+		| SQL_AT			{ $$ = make1_str("at"); }
 		| SQL_BOOL			{ $$ = make1_str("bool"); }
 		| SQL_BREAK			{ $$ = make1_str("break"); }
 		| SQL_CALL			{ $$ = make1_str("call"); }
@@ -4602,6 +4636,7 @@ ECPGCursorStmt:  DECLARE name opt_cursor CURSOR FOR ident cursor_clause
 			        	/* initial definition */
 				        this->next = cur;
 				        this->name = $2;
+					this->connection = connection;
 				        this->command =  cat5_str(make1_str("declare"), mm_strdup($2), $3, make1_str("cursor for ;;"), $7);
 					this->argsresult = NULL;
 
@@ -4731,13 +4766,16 @@ struct_type: s_struct '{' variable_declarations '}'
 	    $$ = cat4_str($1, make1_str("{"), $3, make1_str("}"));
 	}
 
-s_struct : S_STRUCT opt_symbol
+s_struct : s_struct_or_union opt_symbol
         {
             struct_member_list[struct_level++] = NULL;
             if (struct_level >= STRUCT_DEPTH)
                  yyerror("Too many levels in nested structure definition");
-	    $$ = cat2_str(make1_str("struct"), $2);
+	    $$ = cat2_str($1, $2);
 	}
+
+s_struct_or_union: S_STRUCT { $$ = make1_str("struct"); }
+		|  S_UNION  { $$ = make1_str("union"); }
 
 opt_symbol: /* empty */ 	{ $$ = make1_str(""); }
 	| symbol		{ $$ = $1; }
@@ -4940,7 +4978,7 @@ ECPGRelease: TransactionStmt SQL_RELEASE
 		if (strncmp($1, "begin", 5) == 0)
                         yyerror("RELEASE does not make sense when beginning a transaction");
 
-		fprintf(yyout, "ECPGtrans(__LINE__, \"%s\");", $1);
+		fprintf(yyout, "ECPGtrans(__LINE__, %s, \"%s\");", connection, $1);
 		whenever_action(0);
 		fprintf(yyout, "ECPGdisconnect(\"\");"); 
 		whenever_action(0);
@@ -5151,7 +5189,7 @@ ctype: CHAR
 		$$.type_index = -1;
 		$$.type_dimension = -1;
 	}
-	| SQL_STRUCT
+	| sql_struct_or_union
 	{
 		struct_member_list[struct_level++] = NULL;
 		if (struct_level >= STRUCT_DEPTH)
@@ -5159,7 +5197,7 @@ ctype: CHAR
 	} '{' sql_variable_declarations '}'
 	{
 		ECPGfree_struct_member(struct_member_list[struct_level--]);
-		$$.type_str = cat3_str(make1_str("struct {"), $4, make1_str("}"));
+		$$.type_str = cat4_str($1, make1_str("{"), $4, make1_str("}"));
 		$$.type_enum = ECPGt_struct;
                 $$.type_index = -1;
                 $$.type_dimension = -1;
@@ -5174,6 +5212,9 @@ ctype: CHAR
 		$$.type_index = this->type->type_index;
 		struct_member_list[struct_level] = this->struct_member_list;
 	}
+
+sql_struct_or_union: SQL_STRUCT	{ $$ = make1_str("struct"); }
+		|    UNION  { $$ = make1_str("union"); }
 
 opt_signed: SQL_SIGNED | /* empty */
 
@@ -5735,6 +5776,7 @@ c_anything:  IDENT 	{ $$ = $1; }
 	| S_SIGNED	{ $$ = make1_str("signed"); }
 	| S_STATIC	{ $$ = make1_str("static"); }
         | S_STRUCT	{ $$ = make1_str("struct"); }
+        | S_UNION	{ $$ = make1_str("union"); }
 	| S_UNSIGNED	{ $$ = make1_str("unsigned"); }
 	| S_VARCHAR	{ $$ = make1_str("varchar"); }
 	| S_ANYTHING	{ $$ = make_name(); }

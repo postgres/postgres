@@ -4,7 +4,7 @@ exec sql whenever sqlerror sqlprint;
 
 exec sql include sqlca;
 
-exec sql define AMOUNT 8;
+exec sql define AMOUNT 4;
 
 exec sql type intarray is int[AMOUNT];
 exec sql type string is char(6); 
@@ -30,21 +30,31 @@ exec sql end declare section;
                 ECPGdebug(1, dbgs);
 
 	strcpy(msg, "connect");
-	exec sql connect to mm;
+	exec sql connect to mm as main;
+
+	strcpy(msg, "connect");
+        exec sql connect to pm;
 
 	strcpy(msg, "create");
+	exec sql at main create table test(name char(6), amount int, letter char(1));
 	exec sql create table test(name char(6), amount int, letter char(1));
 
 	strcpy(msg, "commit");
+	exec sql at main commit;
 	exec sql commit;
 
+	strcpy(msg, "set connection");
+	exec sql set connection main;
+
 	strcpy(msg, "execute insert 1");
-        sprintf(command, "insert into test(name, amount, letter) values ('foobar', 1, 'f')");
+        sprintf(command, "insert into test(name, amount, letter) values ('db: mm', 1, 'f')");
+        exec sql execute immediate :command;
+        sprintf(command, "insert into test(name, amount, letter) values ('db: mm', 2, 't')");
         exec sql execute immediate :command;
 
         strcpy(msg, "execute insert 2");
-        sprintf(command, "insert into test(name, amount, letter) select name, amount+1, letter from test");
-        exec sql execute immediate :command;
+        sprintf(command, "insert into test(name, amount, letter) values ('db: pm', 1, 'f')");
+        exec sql at pm execute immediate :command;
 
         strcpy(msg, "execute insert 3");
         sprintf(command, "insert into test(name, amount, letter) select name, amount+10, letter from test");
@@ -55,27 +65,35 @@ exec sql end declare section;
         strcpy(msg, "execute insert 4");
         sprintf(command, "insert into test(name, amount, letter) select name, amount+;;, letter from test");
 	exec sql prepare I from :command;
-        exec sql execute I using :increment;
+        exec sql at pm execute I using :increment;
         
 	printf("Inserted %d tuples via prepared execute\n", sqlca.sqlerrd[2]);
 
 	strcpy(msg, "commit");
 	exec sql commit;
+	exec sql at pm commit;
 
         strcpy(msg, "select");
         exec sql select name, amount, letter into :name, :amount, :letter from test;
 
         for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
             printf("name[%d]=%6.6s\tamount[%d]=%d\tletter[%d]=%c\n", i, name[i], i, amount[i],i, letter[i][0]);
+
+        exec sql at pm select name, amount, letter into :name, :amount, :letter from test;
+
+        for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
+            printf("name[%d]=%6.6s\tamount[%d]=%d\tletter[%d]=%c\n", i, name[i], i, amount[i],i, letter[i][0]);
         
 	strcpy(msg, "drop");
 	exec sql drop table test;
+	exec sql at pm drop table test;
 
 	strcpy(msg, "commit");
 	exec sql commit;
+	exec sql at pm commit;
 
 	strcpy(msg, "disconnect"); 
-        exec sql disconnect;
+        exec sql disconnect all;
         
 	if (dbgs != NULL)
                 fclose(dbgs);

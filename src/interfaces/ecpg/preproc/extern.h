@@ -6,7 +6,7 @@
 
 extern int	braces_open,
 			no_auto_trans, struct_level;
-extern char *yytext;
+extern char *yytext, errortext[128];
 extern int	yylineno,
 			yyleng;
 extern FILE *yyin,

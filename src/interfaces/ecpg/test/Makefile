@@ -15,4 +15,4 @@ perftest.c:perftest.pgc
 	/usr/local/pgsql/bin/ecpg $?
 
 clean:
-	/bin/rm test1 test2 perftest *.c log
+	-/bin/rm test1 test2 perftest *.c log

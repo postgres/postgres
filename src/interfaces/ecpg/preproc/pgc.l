@@ -105,7 +105,6 @@ xqstart			{quote}
 xqstop			{quote}
 xqdouble		{quote}{quote}
 xqinside		[^\\']*
-xqembedded		"\\'"
 xqliteral		[\\](.|\n)
 xqcat			{quote}{space}*\n{space}*{quote}
 
@@ -244,22 +243,9 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					return SCONST;
 				}
 <xq>{xqdouble}	|
-<xq>{xqinside}	{
-					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
-						yyerror("ERROR: quoted string parse buffer exceeded");
-					memcpy(literal+llen, yytext, yyleng+1);
-					llen += yyleng;
-				}
-<xq>{xqembedded} {
-					if ((llen+yyleng-1) > (MAX_PARSE_BUFFER - 1))
-						yyerror("ERROR: quoted string parse buffer exceeded");
-					memcpy(literal+llen, yytext, yyleng+1);
-					*(literal+llen) = '\'';
-					llen += yyleng;
-				}
-
+<xq>{xqinside}  |
 <xq>{xqliteral} {
-					if ((llen+yyleng-1) > (MAX_PARSE_BUFFER - 1))
+					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
 						yyerror("ERROR: quoted string parse buffer exceeded");
 					memcpy(literal+llen, yytext, yyleng+1);
 					llen += yyleng;

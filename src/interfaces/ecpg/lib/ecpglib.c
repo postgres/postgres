@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <libpq-fe.h>
 #include <libpq/pqcomm.h>
@@ -78,6 +79,7 @@ struct statement
 {
 	int	    lineno;
 	char	   *command;
+	struct connection *connection;
 	struct variable *inlist;
 	struct variable *outlist;
 };
@@ -102,6 +104,21 @@ register_error(long code, char *fmt,...)
 	vsprintf(sqlca.sqlerrm.sqlerrmc, fmt, args);
 	va_end(args);
 	sqlca.sqlerrm.sqlerrml = strlen(sqlca.sqlerrm.sqlerrmc);
+}
+
+static struct connection *
+get_connection(const char *connection_name)
+{
+	struct connection *con = all_connections;;
+	
+	if (connection_name == NULL || strcmp(connection_name, "CURRENT") == 0)
+		return actual_connection;
+		
+	for (; con && strcmp(connection_name, con->name) != 0; con = con->next);
+	if (con)
+		return con;
+	else
+		return NULL;
 }
 
 static void
@@ -145,7 +162,6 @@ ecpg_alloc(long size, int lineno)
 
 	if (!new)
 	{
-		ECPGfinish(actual_connection);
 		ECPGlog("out of memory\n");
 		register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
 		return NULL;
@@ -162,7 +178,6 @@ ecpg_strdup(const char *string, int lineno)
 
 	if (!new)
 	{
-		ECPGfinish(actual_connection);
 		ECPGlog("out of memory\n");
 		register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
 		return NULL;
@@ -238,9 +253,26 @@ quote_strings(char *arg, int lineno)
 	return res;
 }
 
-/* create a list of variables */
+/*
+ * create a list of variables 
+ * The variables are listed with input variables preceeding outputvariables
+ * The end of each group is marked by an end marker.
+ * per variable we list:
+ * type - as defined in ecpgtype.h
+ * value - where to store the data
+ * varcharsize - length of string in case we have a stringvariable, else 0
+ * arraysize - 0 for pointer (we don't know the size of the array),
+ * 1 for simple variable, size for arrays
+ * offset - offset between ith and (i+1)th entry in an array,
+ * normally that means sizeof(type)
+ * ind_type - type of indicator variable
+ * ind_value - pointer to indicator variable
+ * ind_varcharsize - empty
+ * ind_arraysize -  arraysize of indicator array
+ * ind_offset - indicator offset
+ */
 static bool
-create_statement(int lineno, struct statement ** stmt, char *query, va_list ap)
+create_statement(int lineno, struct connection *connection, struct statement ** stmt, char *query, va_list ap)
 {
 	struct variable **list = &((*stmt)->inlist);
 	enum ECPGttype type;
@@ -249,6 +281,7 @@ create_statement(int lineno, struct statement ** stmt, char *query, va_list ap)
 		return false;
 
 	(*stmt)->command = query;
+	(*stmt)->connection = connection;
 	(*stmt)->lineno = lineno;
 
 	list = &((*stmt)->inlist);
@@ -278,7 +311,8 @@ create_statement(int lineno, struct statement ** stmt, char *query, va_list ap)
 			var->ind_arrsize = va_arg(ap, long);
 			var->ind_offset = va_arg(ap, long);
 			var->next = NULL;
-			
+
+			/* if variable is NULL, the statement hasn't been prepared */			
 			if (var->value == NULL)
 			{
 				ECPGlog("create_statement: invalid statement name\n");
@@ -564,27 +598,27 @@ ECPGexecute(struct statement * stmt)
 
 	/* Now the request is built. */
 
-	if (actual_connection->committed && !no_auto_trans)
+	if (stmt->connection->committed && !no_auto_trans)
 	{
-		if ((results = PQexec(actual_connection->connection, "begin transaction")) == NULL)
+		if ((results = PQexec(stmt->connection->connection, "begin transaction")) == NULL)
 		{
 			register_error(ECPG_TRANS, "Error starting transaction line %d.", stmt->lineno);
 			return false;
 		}
 		PQclear(results);
-		actual_connection->committed = false;
+		stmt->connection->committed = false;
 	}
 
-	ECPGlog("ECPGexecute line %d: QUERY: %s\n", stmt->lineno, copiedquery);
-	results = PQexec(actual_connection->connection, copiedquery);
+	ECPGlog("ECPGexecute line %d: QUERY: %s on connection %s\n", stmt->lineno, copiedquery, stmt->connection->name);
+	results = PQexec(stmt->connection->connection, copiedquery);
 	free(copiedquery);
 
 	if (results == NULL)
 	{
 		ECPGlog("ECPGexecute line %d: error: %s", stmt->lineno,
-				PQerrorMessage(actual_connection->connection));
+				PQerrorMessage(stmt->connection->connection));
 		register_error(ECPG_PGSQL, "Postgres error: %s line %d.",
-			PQerrorMessage(actual_connection->connection), stmt->lineno);
+			PQerrorMessage(stmt->connection->connection), stmt->lineno);
 	}
 	else
 	{
@@ -642,6 +676,7 @@ ECPGexecute(struct statement * stmt)
 						status = false;
 						break;
 					}
+					
 					for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
 					{
 						pval = PQgetvalue(results, act_tuple, act_field);
@@ -909,18 +944,18 @@ ECPGexecute(struct statement * stmt)
 			case PGRES_FATAL_ERROR:
 			case PGRES_BAD_RESPONSE:
 				ECPGlog("ECPGexecute line %d: Error: %s",
-						stmt->lineno, PQerrorMessage(actual_connection->connection));
+						stmt->lineno, PQerrorMessage(stmt->connection->connection));
 				register_error(ECPG_PGSQL, "Error: %s line %d.",
-							   PQerrorMessage(actual_connection->connection), stmt->lineno);
+							   PQerrorMessage(stmt->connection->connection), stmt->lineno);
 				status = false;
 				break;
 			case PGRES_COPY_OUT:
 				ECPGlog("ECPGexecute line %d: Got PGRES_COPY_OUT ... tossing.\n", stmt->lineno);
-				PQendcopy(actual_connection->connection);
+				PQendcopy(stmt->connection->connection);
 				break;
 			case PGRES_COPY_IN:
 				ECPGlog("ECPGexecute line %d: Got PGRES_COPY_IN ... tossing.\n", stmt->lineno);
-				PQendcopy(actual_connection->connection);
+				PQendcopy(stmt->connection->connection);
 				break;
 			default:
 				ECPGlog("ECPGexecute line %d: Got something else, postgres error.\n",
@@ -932,7 +967,7 @@ ECPGexecute(struct statement * stmt)
 	}
 
 	/* check for asynchronous returns */
-	notify = PQnotifies(actual_connection->connection);
+	notify = PQnotifies(stmt->connection->connection);
 	if (notify)
 	{
 		ECPGlog("ECPGexecute line %d: ASYNC NOTIFY of '%s' from backend pid '%d' received\n",
@@ -944,20 +979,27 @@ ECPGexecute(struct statement * stmt)
 }
 
 bool
-ECPGdo(int lineno, char *query,...)
+ECPGdo(int lineno, const char *connection_name, char *query,...)
 {
 	va_list		args;
 	struct statement *stmt;
+	struct connection *con = get_connection(connection_name);
 
+	if (con == NULL)
+	{
+		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name, lineno);
+		return (false);
+	}
+		
 	va_start(args, query);
-	if (create_statement(lineno, &stmt, query, args) == false)
+	if (create_statement(lineno, con, &stmt, query, args) == false)
 		return (false);
 	va_end(args);
 
 	/* are we connected? */
-	if (actual_connection == NULL || actual_connection->connection == NULL)
+	if (con == NULL || con->connection == NULL)
 	{
-		ECPGlog("ECPGdo: not connected\n");
+		ECPGlog("ECPGdo: not connected to %s\n", con->name);
 		register_error(ECPG_NOT_CONN, "Not connected in line %d", lineno);
 		return false;
 	}
@@ -967,16 +1009,23 @@ ECPGdo(int lineno, char *query,...)
 
 
 bool
-ECPGtrans(int lineno, const char *transaction)
+ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 {
 	PGresult   *res;
+	struct connection *con = get_connection(connection_name);
+	
+	if (con == NULL)
+	{
+		register_error(ECPG_NO_CONN, "No such connection %s in line %d", connection_name, lineno);
+		return (false);
+	}
 
-	ECPGlog("ECPGtrans line %d action = %s\n", lineno, transaction);
+	ECPGlog("ECPGtrans line %d action = %s connection = %s\n", lineno, transaction, con->name);
 
 	/* if we have no connection we just simulate the command */
-	if (actual_connection && actual_connection->connection)
+	if (con && con->connection)
 	{
-		if ((res = PQexec(actual_connection->connection, transaction)) == NULL)
+		if ((res = PQexec(con->connection, transaction)) == NULL)
 		{
 			register_error(ECPG_TRANS, "Error in transaction processing line %d.", lineno);
 			return FALSE;
@@ -987,7 +1036,7 @@ ECPGtrans(int lineno, const char *transaction)
 	{
 		struct prepared_statement *this;
 			
-		actual_connection->committed = true;
+		con->committed = true;
 
 		/* deallocate all prepared statements */
 		for (this = prep_stmts; this != NULL; this = this->next)
@@ -1005,11 +1054,8 @@ ECPGtrans(int lineno, const char *transaction)
 bool
 ECPGsetconn(int lineno, const char *connection_name)
 {
-	struct connection *con = all_connections;
+	struct connection *con = get_connection(connection_name);
 
-	ECPGlog("ECPGsetconn: setting actual connection to %s\n", connection_name);
-
-	for (; con && strcmp(connection_name, con->name) != 0; con = con->next);
 	if (con)
 	{
 		actual_connection = con;
@@ -1070,9 +1116,7 @@ ECPGdisconnect(int lineno, const char *connection_name)
 {
 	struct connection *con;
 
-	if (strcmp(connection_name, "CURRENT") == 0)
-		ECPGfinish(actual_connection);
-	else if (strcmp(connection_name, "ALL") == 0)
+	if (strcmp(connection_name, "ALL") == 0)
 	{
 		for (con = all_connections; con;)
 		{
@@ -1084,7 +1128,8 @@ ECPGdisconnect(int lineno, const char *connection_name)
 	}
 	else
 	{
-		for (con = all_connections; con && strcmp(con->name, connection_name) != 0; con = con->next);
+		con = get_connection(connection_name);
+		
 		if (con == NULL)
 		{
 			ECPGlog("disconnect: not connected to connection %s\n", connection_name);
@@ -1136,6 +1181,21 @@ sqlprint(void)
 	printf("sql error %s\n", sqlca.sqlerrm.sqlerrmc);
 }
 
+static bool
+isvarchar(unsigned char c)
+{
+	if (isalnum(c))
+		return true;
+	
+	if (c == '_' || c == '>' || c == '-' || c == '.')
+		return true;
+		
+	if (c >= 128)
+		return true;
+		
+	return(false);
+}
+
 static void
 replace_variables(char *text)
 {
@@ -1150,7 +1210,7 @@ replace_variables(char *text)
 		if (!string && *ptr == ':')
 		{
 			ptr[0] = ptr[1] = ';';
-			for (ptr += 2; *ptr && *ptr != ' '; ptr++)
+			for (ptr += 2; *ptr && isvarchar(*ptr); ptr++)
 				*ptr = ' ';
 		}
 	}
@@ -1162,7 +1222,7 @@ ECPGprepare(int lineno, char *name, char *variable)
 {
 	struct statement *stmt;
 	struct prepared_statement *this;
-
+	
 	/* check if we already have prepared this statement */
 	for (this = prep_stmts; this != NULL && strcmp(this->name, name) != 0; this = this->next);		
 	if (this)
@@ -1186,6 +1246,7 @@ ECPGprepare(int lineno, char *name, char *variable)
 
 	/* create statement */
 	stmt->lineno = lineno;
+       	stmt->connection = NULL;
         stmt->command = ecpg_strdup(variable, lineno);
         stmt->inlist = stmt->outlist = NULL;
         

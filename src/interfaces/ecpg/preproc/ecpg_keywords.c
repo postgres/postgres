@@ -20,6 +20,7 @@
  */
 static ScanKeyword ScanKeywords[] = {
 	/* name					value			*/
+	{"at", SQL_AT},
 	{"bool", SQL_BOOL},
 	{"break", SQL_BREAK},
 	{"call", SQL_CALL},

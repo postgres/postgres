@@ -11,9 +11,9 @@ DESCRIPTOR statement will be ignored.
 
 it would be nice to be able to use :var[:index] as cvariable
 
-'at DB connection' is missing for several commands (is this standard?)
+support for dynamic SQL with unknown number of variables with SQLDA structure
 
-support for unions
+allocate memory for pointers as C input variables
 
 Missing statements:
  - exec sql allocate
