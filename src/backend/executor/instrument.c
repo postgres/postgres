@@ -7,7 +7,7 @@
  * Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.9 2005/01/01 05:43:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.10 2005/03/20 22:27:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,29 +36,30 @@ InstrStartNode(Instrumentation *instr)
 	if (!instr)
 		return;
 
-	if (instr->starttime.tv_sec != 0 || instr->starttime.tv_usec != 0)
+	if (!INSTR_TIME_IS_ZERO(instr->starttime))
 		elog(DEBUG2, "InstrStartNode called twice in a row");
 	else
-		gettimeofday(&instr->starttime, NULL);
+		INSTR_TIME_SET_CURRENT(instr->starttime);
 }
 
 /* Exit from a plan node */
 void
 InstrStopNode(Instrumentation *instr, bool returnedTuple)
 {
-	struct timeval endtime;
+	instr_time endtime;
 
 	if (!instr)
 		return;
 
-	if (instr->starttime.tv_sec == 0 && instr->starttime.tv_usec == 0)
+	if (INSTR_TIME_IS_ZERO(instr->starttime))
 	{
 		elog(DEBUG2, "InstrStopNode without start");
 		return;
 	}
 
-	gettimeofday(&endtime, NULL);
+	INSTR_TIME_SET_CURRENT(endtime);
 
+#ifndef WIN32
 	instr->counter.tv_sec += endtime.tv_sec - instr->starttime.tv_sec;
 	instr->counter.tv_usec += endtime.tv_usec - instr->starttime.tv_usec;
 
@@ -73,16 +74,17 @@ InstrStopNode(Instrumentation *instr, bool returnedTuple)
 		instr->counter.tv_usec -= 1000000;
 		instr->counter.tv_sec++;
 	}
+#else /* WIN32 */
+	instr->counter.QuadPart += (endtime.QuadPart - instr->starttime.QuadPart);
+#endif
 
-	instr->starttime.tv_sec = 0;
-	instr->starttime.tv_usec = 0;
+	INSTR_TIME_SET_ZERO(instr->starttime);
 
 	/* Is this the first tuple of this cycle? */
 	if (!instr->running)
 	{
 		instr->running = true;
-		instr->firsttuple = (double) instr->counter.tv_sec +
-			(double) instr->counter.tv_usec / 1000000.0;
+		instr->firsttuple = INSTR_TIME_GET_DOUBLE(instr->counter);
 	}
 
 	if (returnedTuple)
@@ -103,8 +105,7 @@ InstrEndLoop(Instrumentation *instr)
 		return;
 
 	/* Accumulate statistics */
-	totaltime = (double) instr->counter.tv_sec +
-		(double) instr->counter.tv_usec / 1000000.0;
+	totaltime = INSTR_TIME_GET_DOUBLE(instr->counter);
 
 	instr->startup += instr->firsttuple;
 	instr->total += totaltime;
@@ -113,10 +114,8 @@ InstrEndLoop(Instrumentation *instr)
 
 	/* Reset for next cycle (if any) */
 	instr->running = false;
-	instr->starttime.tv_sec = 0;
-	instr->starttime.tv_usec = 0;
-	instr->counter.tv_sec = 0;
-	instr->counter.tv_usec = 0;
+	INSTR_TIME_SET_ZERO(instr->starttime);
+	INSTR_TIME_SET_ZERO(instr->counter);
 	instr->firsttuple = 0;
 	instr->tuplecount = 0;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.129 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.130 2005/03/20 22:27:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ typedef struct ExplainState
 
 static void ExplainOneQuery(Query *query, ExplainStmt *stmt,
 				TupOutputState *tstate);
-static double elapsed_time(struct timeval * starttime);
+static double elapsed_time(instr_time * starttime);
 static void explain_outNode(StringInfo str,
 				Plan *plan, PlanState *planstate,
 				Plan *outer_plan,
@@ -212,12 +212,12 @@ void
 ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 			   TupOutputState *tstate)
 {
-	struct timeval starttime;
+	instr_time  starttime;
 	double		totaltime = 0;
 	ExplainState *es;
 	StringInfo	str;
 
-	gettimeofday(&starttime, NULL);
+	INSTR_TIME_SET_CURRENT(starttime);
 
 	/* If analyzing, we need to cope with queued triggers */
 	if (stmt->analyze)
@@ -275,7 +275,7 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 	 * Close down the query and free resources; also run any queued
 	 * AFTER triggers.  Include time for this in the total runtime.
 	 */
-	gettimeofday(&starttime, NULL);
+	INSTR_TIME_SET_CURRENT(starttime);
 
 	ExecutorEnd(queryDesc);
 
@@ -303,14 +303,15 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 	pfree(es);
 }
 
-/* Compute elapsed time in seconds since given gettimeofday() timestamp */
+/* Compute elapsed time in seconds since given timestamp */
 static double
-elapsed_time(struct timeval * starttime)
+elapsed_time(instr_time * starttime)
 {
-	struct timeval endtime;
+	instr_time endtime;
 
-	gettimeofday(&endtime, NULL);
+	INSTR_TIME_SET_CURRENT(endtime);
 
+#ifndef WIN32
 	endtime.tv_sec -= starttime->tv_sec;
 	endtime.tv_usec -= starttime->tv_usec;
 	while (endtime.tv_usec < 0)
@@ -318,8 +319,11 @@ elapsed_time(struct timeval * starttime)
 		endtime.tv_usec += 1000000;
 		endtime.tv_sec--;
 	}
-	return (double) endtime.tv_sec +
-		(double) endtime.tv_usec / 1000000.0;
+#else  /* WIN32 */
+	endtime.QuadPart -= starttime->QuadPart;
+#endif
+
+	return INSTR_TIME_GET_DOUBLE(endtime);
 }
 
 /*

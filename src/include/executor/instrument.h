@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.8 2005/01/01 05:43:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/instrument.h,v 1.9 2005/03/20 22:27:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,12 +16,51 @@
 #include <sys/time.h>
 
 
+/*
+ * gettimeofday() does not have sufficient resolution on Windows,
+ * so we must use QueryPerformanceCounter() instead.  These macros
+ * also give some breathing room to use other high-precision-timing APIs
+ * on yet other platforms.  (The macro-ization is not complete, however;
+ * see subtraction code in instrument.c and explain.c.)
+ */
+#ifndef WIN32
+
+typedef struct timeval instr_time;
+
+#define INSTR_TIME_IS_ZERO(t)	((t).tv_sec == 0 && (t).tv_usec == 0)
+#define INSTR_TIME_SET_ZERO(t)	((t).tv_sec = 0, (t).tv_usec = 0)
+#define INSTR_TIME_SET_CURRENT(t)	gettimeofday(&(t), NULL)
+#define INSTR_TIME_GET_DOUBLE(t) \
+	(((double) (t).tv_sec) + ((double) (t).tv_usec) / 1000000.0)
+
+#else  /* WIN32 */
+
+typedef LARGE_INTEGER instr_time;
+
+#define INSTR_TIME_IS_ZERO(t)	((t).QuadPart == 0)
+#define INSTR_TIME_SET_ZERO(t)	((t).QuadPart = 0)
+#define INSTR_TIME_SET_CURRENT(t)	QueryPerformanceCounter(&(t))
+#define INSTR_TIME_GET_DOUBLE(t) \
+	(((double) (t).QuadPart) / GetTimerFrequency())
+
+static __inline__ double
+GetTimerFrequency(void)
+{
+	LARGE_INTEGER f;
+
+	QueryPerformanceFrequency(&f);
+	return (double) f.QuadPart;
+}
+
+#endif /* WIN32 */
+
+
 typedef struct Instrumentation
 {
 	/* Info about current plan cycle: */
 	bool		running;		/* TRUE if we've completed first tuple */
-	struct timeval starttime;	/* Start time of current iteration of node */
-	struct timeval counter;		/* Accumulates runtime for this node */
+	instr_time	starttime;		/* Start time of current iteration of node */
+	instr_time	counter;		/* Accumulates runtime for this node */
 	double		firsttuple;		/* Time for first tuple of this cycle */
 	double		tuplecount;		/* Tuples so far this cycle */
 	/* Accumulated statistics across all completed cycles: */
