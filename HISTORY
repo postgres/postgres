@@ -46,9 +46,9 @@ Fix VACUUM problem with moving chain of update tuples when source and
 Fix user.c CommandCounterIncrement (Tom)
 Fix for AM/PM boundary problem in to_char() (Karel Zak)
 Fix TIME aggregate handling (Tom)
-Fix to_char() to avoid coredump on NULL input.  (Tom)
+Fix to_char() to avoid coredump on NULL input (Tom)
 Buffer fix (Tom)
-Fix for inserting/copying longer multibyte strings into bpchar data
+Fix for inserting/copying longer multibyte strings into char() data
     types (Tatsuo)
 
 
