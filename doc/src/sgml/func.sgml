@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.193 2004/03/09 16:57:46 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.194 2004/03/10 20:10:26 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -7170,7 +7170,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <para>
-    The function shown in <xref
+    The functions shown in <xref
     linkend="functions-misc-comment-table"> extract comments
     previously stored with the <command>COMMENT</command> command.  A
     null value is returned if no comment could be found matching the
