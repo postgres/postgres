@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.30 2000/09/05 09:02:18 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.31 2000/09/12 19:41:40 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1069,8 +1069,7 @@ exec_stmt_getdiag(PLpgSQL_execstate * estate, PLpgSQL_stmt_getdiag * stmt)
 {
 	int		i;
 	PLpgSQL_datum 	*var;
-	HeapTuple	typeTup;
-        bool            isnull = false;
+	bool            isnull = false;
 
 	for ( i=0 ; i < stmt->nitems ; i++) 
 	{
