@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.65 1998/12/15 12:45:53 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.66 1999/01/11 03:56:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #include <commands/copy.h>
 #include "commands/trigger.h"
 #include <storage/fd.h>
+#include <libpq/libpq.h>
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
@@ -67,10 +68,105 @@ static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim);
 static void CopyAttributeOut(FILE *fp, char *string, char *delim, int is_array);
 static int	CountTuples(Relation relation);
 
-extern FILE *Pfout,
-		   *Pfin;
-
 static int	lineno;
+
+/* 
+ * Internal communications functions
+ */
+inline void CopySendData(void *databuf, int datasize, FILE *fp);
+inline void CopySendString(char *str, FILE *fp);
+inline void CopySendChar(char c, FILE *fp);
+inline void CopyGetData(void *databuf, int datasize, FILE *fp);
+inline int CopyGetChar(FILE *fp);
+inline int CopyGetEof(FILE *fp);
+inline int CopyPeekChar(FILE *fp);
+inline void CopyDonePeek(FILE *fp, int c, int pickup);
+
+/*
+ * CopySendData sends output data either to the file
+ *  specified by fp or, if fp is NULL, using the standard
+ *  backend->frontend functions
+ *
+ * CopySendString does the same for null-terminated strings
+ * CopySendChar does the same for single characters
+ */
+inline void CopySendData(void *databuf, int datasize, FILE *fp) {
+  if (!fp)
+    pq_putnchar(databuf, datasize);
+  else
+    fwrite(databuf, datasize, 1, fp);
+}
+    
+inline void CopySendString(char *str, FILE *fp) {
+  CopySendData(str,strlen(str),fp);
+}
+
+inline void CopySendChar(char c, FILE *fp) {
+  CopySendData(&c,1,fp);
+}
+
+/*
+ * CopyGetData reads output data either from the file
+ *  specified by fp or, if fp is NULL, using the standard
+ *  backend->frontend functions
+ *
+ * CopyGetChar does the same for single characters
+ * CopyGetEof checks if it's EOF on the input
+ */
+inline void CopyGetData(void *databuf, int datasize, FILE *fp) {
+  if (!fp)
+    pq_getnchar(databuf, 0, datasize); 
+  else 
+    fread(databuf, datasize, 1, fp);
+}
+
+inline int CopyGetChar(FILE *fp) {
+  if (!fp) 
+    return pq_getchar();
+  else
+    return getc(fp);
+}
+
+inline int CopyGetEof(FILE *fp) {
+  if (!fp)
+    return 0; /* Never return EOF when talking to frontend ? */
+  else
+    return feof(fp);
+}
+
+/*
+ * CopyPeekChar reads a byte in "peekable" mode.
+ * after each call to CopyPeekChar, a call to CopyDonePeek _must_
+ * follow.
+ * CopyDonePeek will either take the peeked char off the steam 
+ * (if pickup is != 0) or leave it on the stream (if pickup == 0)
+ */
+inline int CopyPeekChar(FILE *fp) {
+  if (!fp) 
+    return pq_peekchar();
+  else
+    return getc(fp);
+}
+
+inline void CopyDonePeek(FILE *fp, int c, int pickup) {
+  if (!fp) {
+    if (pickup) {
+      /* We want to pick it up - just receive again into dummy buffer */
+      char c;
+      pq_getnchar(&c, 0, 1);
+    }
+    /* If we didn't want to pick it up, just leave it where it sits */
+  }
+  else {
+    if (!pickup) {
+      /* We don't want to pick it up - so put it back in there */
+      ungetc(c,fp);
+    }
+    /* If we wanted to pick it up, it's already there */
+  }
+}
+    
+
 
 /*
  *	 DoCopy executes a the SQL COPY statement.
@@ -147,7 +243,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 				if (IsUnderPostmaster)
 				{
 					ReceiveCopyBegin();
-					fp = Pfin;
+					fp = NULL;
 				}
 				else
 					fp = stdin;
@@ -171,7 +267,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 				if (IsUnderPostmaster)
 				{
 					SendCopyBegin();
-					fp = Pfout;
+					fp = NULL;
 				}
 				else
 					fp = stdout;
@@ -199,9 +295,9 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		}
 		else if (!from && !binary)
 		{
-			fputs("\\.\n", fp);
+		        CopySendData("\\.\n",3,fp);
 			if (IsUnderPostmaster)
-				fflush(Pfout);
+			        pq_flush();
 		}
 	}
 }
@@ -269,7 +365,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 		/* XXX expensive */
 
 		ntuples = CountTuples(rel);
-		fwrite(&ntuples, sizeof(int32), 1, fp);
+		CopySendData(&ntuples, sizeof(int32), fp);
 	}
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scandesc, 0)))
@@ -277,8 +373,8 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 
 		if (oids && !binary)
 		{
-			fputs(oidout(tuple->t_data->t_oid), fp);
-			fputc(delim[0], fp);
+		        CopySendString(oidout(tuple->t_data->t_oid),fp);
+			CopySendChar(delim[0],fp);
 		}
 
 		for (i = 0; i < attr_count; i++)
@@ -294,10 +390,10 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					pfree(string);
 				}
 				else
-					fputs("\\N", fp);	/* null indicator */
+					CopySendString("\\N", fp);	/* null indicator */
 
 				if (i == attr_count - 1)
-					fputc('\n', fp);
+					CopySendChar('\n', fp);
 				else
 				{
 
@@ -305,7 +401,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					 * when copying out, only use the first char of the
 					 * delim string
 					 */
-					fputc(delim[0], fp);
+					CopySendChar(delim[0], fp);
 				}
 			}
 			else
@@ -332,24 +428,24 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 			}
 
 			length = tuple->t_len - tuple->t_data->t_hoff;
-			fwrite(&length, sizeof(int32), 1, fp);
+			CopySendData(&length, sizeof(int32), fp);
 			if (oids)
-				fwrite((char *) &tuple->t_data->t_oid, sizeof(int32), 1, fp);
+				CopySendData((char *) &tuple->t_data->t_oid, sizeof(int32), fp);
 
-			fwrite(&null_ct, sizeof(int32), 1, fp);
+			CopySendData(&null_ct, sizeof(int32), fp);
 			if (null_ct > 0)
 			{
 				for (i = 0; i < attr_count; i++)
 				{
 					if (nulls[i] == 'n')
 					{
-						fwrite(&i, sizeof(int32), 1, fp);
+						CopySendData(&i, sizeof(int32), fp);
 						nulls[i] = ' ';
 					}
 				}
 			}
-			fwrite((char *) tuple->t_data + tuple->t_data->t_hoff, 
-					length, 1, fp);
+			CopySendData((char *) tuple->t_data + tuple->t_data->t_hoff, 
+					length, fp);
 		}
 	}
 
@@ -527,7 +623,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 		in_functions = NULL;
 		elements = NULL;
 		typmod = NULL;
-		fread(&ntuples, sizeof(int32), 1, fp);
+		CopyGetData(&ntuples, sizeof(int32), fp);
 		if (ntuples != 0)
 			reading_to_eof = false;
 	}
@@ -544,10 +640,12 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 		index_nulls[i] = ' ';
 		byval[i] = (bool) IsTypeByVal(attr[i]->atttypid);
 	}
+	values = (Datum *) palloc(sizeof(Datum) * attr_count);
 
 	lineno = 0;
 	while (!done)
 	{
+	  values = (Datum *) palloc(sizeof(Datum) * attr_count);
 		if (!binary)
 		{
 #ifdef COPY_PATCH
@@ -608,29 +706,29 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 		}
 		else
 		{						/* binary */
-			fread(&len, sizeof(int32), 1, fp);
-			if (feof(fp))
+			CopyGetData(&len, sizeof(int32), fp);
+			if (CopyGetEof(fp))
 				done = 1;
 			else
 			{
 				if (oids)
 				{
-					fread(&loaded_oid, sizeof(int32), 1, fp);
+					CopyGetData(&loaded_oid, sizeof(int32), fp);
 					if (loaded_oid < BootstrapObjectIdData)
 						elog(ERROR, "COPY BINARY: Invalid Oid line: %d", lineno);
 				}
-				fread(&null_ct, sizeof(int32), 1, fp);
+				CopyGetData(&null_ct, sizeof(int32), fp);
 				if (null_ct > 0)
 				{
 					for (i = 0; i < null_ct; i++)
 					{
-						fread(&null_id, sizeof(int32), 1, fp);
+						CopyGetData(&null_id, sizeof(int32), fp);
 						nulls[null_id] = 'n';
 					}
 				}
 
 				string = (char *) palloc(len);
-				fread(string, len, 1, fp);
+				CopyGetData(string, len, fp);
 
 				ptr = string;
 
@@ -979,7 +1077,7 @@ CopyReadNewline(FILE *fp, int *newline)
 	if (!*newline)
 	{
 		elog(NOTICE, "CopyReadNewline: line %d - extra fields ignored", lineno);
-		while (!feof(fp) && (getc(fp) != '\n'));
+		while (!CopyGetEof(fp) && (CopyGetChar(fp) != '\n'));
 	}
 	*newline = 0;
 }
@@ -1028,19 +1126,19 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 #endif
 
 	*isnull = (bool) false;		/* set default */
-	if (feof(fp))
+	if (CopyGetEof(fp))
 		return NULL;
 
 	while (!done)
 	{
-		c = getc(fp);
+		c = CopyGetChar(fp);
 
-		if (feof(fp))
+		if (CopyGetEof(fp))
 			return NULL;
 		else if (c == '\\')
 		{
-			c = getc(fp);
-			if (feof(fp))
+			c = CopyGetChar(fp);
+			if (CopyGetEof(fp))
 				return NULL;
 			switch (c)
 			{
@@ -1056,25 +1154,30 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 						int			val;
 
 						val = VALUE(c);
-						c = getc(fp);
+						c = CopyPeekChar(fp);
 						if (ISOCTAL(c))
 						{
 							val = (val << 3) + VALUE(c);
-							c = getc(fp);
-							if (ISOCTAL(c))
+							CopyDonePeek(fp, c, 1); /* Pick up the character! */
+							c = CopyPeekChar(fp);
+							if (ISOCTAL(c)) {
+							        CopyDonePeek(fp,c,1); /* pick up! */
 								val = (val << 3) + VALUE(c);
+							}
 							else
 							{
-								if (feof(fp))
+							        if (CopyGetEof(fp)) {
+								        CopyDonePeek(fp,c,1); /* pick up */
 									return NULL;
-								ungetc(c, fp);
+								}
+								CopyDonePeek(fp,c,0); /* Return to stream! */
 							}
 						}
 						else
 						{
-							if (feof(fp))
+							if (CopyGetEof(fp))
 								return NULL;
-							ungetc(c, fp);
+							CopyDonePeek(fp,c,0); /* Return to stream! */
 						}
 						c = val & 0377;
 					}
@@ -1102,7 +1205,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 					*isnull = (bool) true;
 					break;
 				case '.':
-					c = getc(fp);
+					c = CopyGetChar(fp);
 					if (c != '\n')
 						elog(ERROR, "CopyReadAttribute - end of record marker corrupted. line: %d", lineno);
 					return NULL;
@@ -1125,8 +1228,8 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 		mblen--;
 		for (j = 0; j < mblen; j++)
 		{
-			c = getc(fp);
-			if (feof(fp))
+			c = CopyGetChar(fp);
+			if (CopyGetEof(fp))
 				return NULL;
 			attribute[i++] = c;
 		}
@@ -1171,29 +1274,29 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim, int is_array)
 	{
 		if (c == delim[0] || c == '\n' ||
 			(c == '\\' && !is_array))
-			fputc('\\', fp);
+			CopySendChar('\\', fp);
 		else if (c == '\\' && is_array)
 		{
 			if (*(string + 1) == '\\')
 			{
 				/* translate \\ to \\\\ */
-				fputc('\\', fp);
-				fputc('\\', fp);
-				fputc('\\', fp);
+				CopySendChar('\\', fp);
+				CopySendChar('\\', fp);
+				CopySendChar('\\', fp);
 				string++;
 			}
 			else if (*(string + 1) == '"')
 			{
 				/* translate \" to \\\" */
-				fputc('\\', fp);
-				fputc('\\', fp);
+				CopySendChar('\\', fp);
+				CopySendChar('\\', fp);
 			}
 		}
 #ifdef MULTIBYTE
 		for (i = 0; i < mblen; i++)
-			fputc(*(string + i), fp);
+			CopySendChar(*(string + i), fp);
 #else
-		fputc(*string, fp);
+		CopySendChar(*string, fp);
 #endif
 	}
 }

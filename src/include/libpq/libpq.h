@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.21 1998/09/01 04:36:29 momjian Exp $
+ * $Id: libpq.h,v 1.22 1999/01/11 03:56:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,6 +258,8 @@ extern void pq_flush(void);
 extern int	pq_getstr(char *s, int maxlen);
 extern int	PQgetline(char *s, int maxlen);
 extern int	PQputline(char *s);
+extern int      pq_getchar(void);
+extern int      pq_peekchar(void);
 extern int	pq_getnchar(char *s, int off, int maxlen);
 extern int	pq_getint(int b);
 extern void pq_putstr(char *s);

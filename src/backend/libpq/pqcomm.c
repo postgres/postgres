@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqcomm.c,v 1.59 1998/12/14 06:50:27 scrappy Exp $
+ *  $Id: pqcomm.c,v 1.60 1999/01/11 03:56:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@
  *		declarations
  * ----------------
  */
-FILE	*Pfout,
+static FILE	*Pfout,
 			*Pfin,
 			*Pfdebug;			/* debugging libpq */
 
@@ -98,7 +98,7 @@ pq_init(int fd)
 }
 
 /* -------------------------
- *	 pq_getc(File* fin)
+ *	 pq_getchar()
  *
  *	 get a character from the input file,
  *
@@ -107,20 +107,29 @@ pq_init(int fd)
  *	 used for debugging libpq
  */
 
-#if 0							/* not used anymore */
-
-static int
-pq_getc(FILE *fin)
+int
+pq_getchar(void)
 {
 	int			c;
 
-	c = getc(fin);
+	c = getc(Pfin);
 	if (Pfdebug && c != EOF)
 		putc(c, Pfdebug);
 	return c;
 }
 
-#endif
+/*
+ * --------------------------------
+ *              pq_peekchar - get 1 character from connection, but leave it in the stream
+ */
+int
+pq_peekchar(void) {
+  char c = getc(Pfin);
+  ungetc(c,Pfin);
+  return c;
+}
+  
+
 
 /* --------------------------------
  *		pq_gettty - return the name of the tty in the given buffer

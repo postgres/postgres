@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.12 1998/09/01 04:36:27 momjian Exp $
+ * $Id: libpq-be.h,v 1.13 1999/01/11 03:56:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,8 +131,6 @@ typedef struct Port
 } Port;
 
 
-extern FILE *Pfout,
-		   *Pfin;
 extern ProtocolVersion FrontendProtocol;
 
 

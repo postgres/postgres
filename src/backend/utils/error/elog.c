@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.36 1999/01/01 04:48:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.37 1999/01/11 03:56:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,11 +66,6 @@ elog(int lev, const char *fmt,...)
 	const char *cp;
 	extern int	errno,
 				sys_nerr;
-
-#ifndef PG_STANDALONE
-	extern FILE *Pfout;
-
-#endif
 
 #ifdef USE_SYSLOG
 	int			log_level;
@@ -190,7 +185,7 @@ elog(int lev, const char *fmt,...)
 
 #ifndef PG_STANDALONE
 	/* Send IPC message to the front-end program */
-	if (Pfout != NULL && lev > DEBUG)
+	if (IsUnderPostmaster && lev > DEBUG)
 	{
 		/* notices are not exactly errors, handle it differently */
 		if (lev == NOTICE)
@@ -201,7 +196,7 @@ elog(int lev, const char *fmt,...)
 		pq_putstr(line + TIMESTAMP_SIZE);		/* don't show timestamps */
 		pq_flush();
 	}
-	if (Pfout == NULL)
+	if (!IsUnderPostmaster)
 	{
 
 		/*
