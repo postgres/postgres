@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.9 1997/04/20 21:49:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.10 1997/07/29 15:54:49 thomas Exp $
  *
  * NOTES
  *   This code is actually (almost) unused.
@@ -73,6 +73,7 @@
 #define ABSTIMEMIN(t1, t2) abstimele((t1),(t2)) ? (t1) : (t2)
 #define ABSTIMEMAX(t1, t2) abstimelt((t1),(t2)) ? (t2) : (t1)
 
+#if FALSE
 static	char 	*unit_tab[] = {
 	"second", "seconds", "minute", "minutes",
 	"hour", "hours", "day", "days", "week", "weeks",
@@ -85,13 +86,18 @@ static	int	sec_tab[] = {
 	1,1, 60, 60,
 	3600, 3600, 86400, 86400, 604800,  604800,
 	2592000,  2592000,  31536000,  31536000 };
+#endif
 
 /*
  * Function prototypes -- internal to this file only
  */
 
+void reltime2tm(int32 time, struct tm *tm);
+
+#if FALSE
 static int correct_unit(char unit[], int *unptr);
 static int correct_dir(char direction[], int *signptr);
+#endif
 
 static int istinterval(char *i_string, 
 		       AbsoluteTime *i_start, 
@@ -148,8 +154,44 @@ printf( "reltimein- %d fields are type %d (DTK_DATE=%d)\n", nf, dtype, DTK_DATE)
 /*
  *	reltimeout	- converts the internal format to a reltime string
  */
-char *reltimeout(int32 timevalue)
+char *reltimeout(int32 time)
 {
+    char *result;
+    struct tm tt, *tm = &tt;
+    char buf[MAXDATELEN+1];
+
+    if (time == INVALID_RELTIME) {
+	strcpy( buf, INVALID_RELTIME_STR);
+
+    } else {
+	reltime2tm(time, tm);
+	EncodeTimeSpan( tm, 0, DateStyle, buf);
+    };
+
+    result = PALLOC(strlen(buf)+1);
+    strcpy( result, buf);
+
+    return(result);
+} /* reltimeout() */
+
+
+#define TMODULO(t,q,u) {q = (t / u); \
+			if (q != 0) t -= (q * u);}
+
+void
+reltime2tm(int32 time, struct tm *tm)
+{
+    TMODULO(time, tm->tm_year, 31536000);
+    TMODULO(time, tm->tm_mon, 2592000);
+    TMODULO(time, tm->tm_mday, 86400);
+    TMODULO(time, tm->tm_hour, 3600);
+    TMODULO(time, tm->tm_min, 60);
+    TMODULO(time, tm->tm_sec, 1);
+
+    return;
+} /* reltime2tm() */
+
+#if FALSE
     char		*timestring;
     long		quantity;
     register int	i;
@@ -179,6 +221,7 @@ char *reltimeout(int32 timevalue)
 		       (quantity * -1), unit_tab[unitnr], RELTIME_PAST);
     return(timestring);
 }
+#endif
 
 
 /*
@@ -241,6 +284,7 @@ RelativeTime
 timespan_reltime(TimeSpan *timespan)
 {
     RelativeTime time;
+    int year, month;
     double span;
 
     if (!PointerIsValid(timespan))
@@ -250,7 +294,20 @@ timespan_reltime(TimeSpan *timespan)
 	time = INVALID_RELTIME;
 
     } else {
-	span = ((((double) 30*86400)*timespan->month) + timespan->time);
+	if (timespan->month == 0) {
+	    year = 0;
+	    month = 0;
+
+	} else if (abs(timespan->month) >= 12) {
+	    year = (timespan->month / 12);
+	    month = (timespan->month % 12);
+
+	} else {
+	    year = 0;
+	    month = timespan->month;
+	};
+
+	span = (((((double) 365*year)+((double) 30*month))*86400) + timespan->time);
 
 #ifdef DATEDEBUG
 printf( "timespan_reltime- convert m%d s%f to %f [%d %d]\n",
@@ -268,6 +325,7 @@ TimeSpan *
 reltime_timespan(RelativeTime reltime)
 {
     TimeSpan *result;
+    int year, month;
 
     if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
         elog(WARN,"Memory allocation failed, can't convert reltime to timespan",NULL);
@@ -278,8 +336,11 @@ reltime_timespan(RelativeTime reltime)
 	break;
 
     default:
+	TMODULO(reltime, year, 31536000);
+	TMODULO(reltime, month, 2592000);
+
 	result->time = reltime;
-	result->month = 0;
+	result->month = ((12*year)+month);
     };
 
     return(result);
@@ -599,38 +660,46 @@ AbsoluteTime intervalend(TimeInterval i)
  *	isreltime	- returns 1, iff datestring is of type reltime
  *				  2, iff datestring is 'invalid time' identifier
  *				  0, iff datestring contains a syntax error
- *
- *	output parameter:
- *		sign = -1, iff direction is 'ago'
- *			       else sign = 1.
- *		quantity   : quantity of unit
- *		unitnr     :	0 or 1 ... sec
- *				2 or 3 ... min
- *				4 or 5 ... hour
- *				6 or 7 ... day
- *				8 or 9 ... week
- *			       10 or 11... month
- *			       12 or 13... year
- *			  
- *
- *	Relative time:
- *
- *	`@' ` ' Quantity ` ' Unit [ ` ' Direction]
- *
- *	OR  `Undefined RelTime' 	(see also INVALID_RELTIME_STR)
- *
- *	where
- *	Quantity is	`1', `2', ...
- *	Unit is		`second', `minute', `hour', `day', `week',
- *			`month' (30-days), or `year' (365-days),
- *     			or PLURAL of these units.
- *	Direction is	`ago'
- *
- *	VALID time  less or equal   `@ 68 years' 
+ *	VALID time  less or equal +/-  `@ 68 years' 
  *
  */
-int isreltime(char *timestring, int *sign, long *quantity, int *unitnr)
+int isreltime(char *str)
 {
+    struct tm tt, *tm = &tt;
+    double fsec;
+    int dtype;
+    char *field[MAXDATEFIELDS];
+    int nf, ftype[MAXDATEFIELDS];
+    char lowstr[MAXDATELEN+1];
+
+    if (!PointerIsValid(str))
+	return 0;
+
+    if (strlen(str) > MAXDATELEN)
+	return 0;
+
+    if ((ParseDateTime( str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
+      || (DecodeDateDelta( field, ftype, nf, &dtype, tm, &fsec) != 0))
+	return 0;
+
+    switch (dtype) {
+    case (DTK_DELTA):
+	return((abs(tm->tm_year) <= 68)? 1: 0);
+	break;
+
+    case (DTK_INVALID):
+	return 2;
+	break;
+
+    default:
+	return 0;
+	break;
+    };
+
+    return 0;
+} /* isreltime() */
+
+#if FALSE
     register char	*p;
     register char	c;
     int		i;
@@ -766,6 +835,7 @@ static int correct_dir(char direction[], int *signptr)
 	} else
 	    return (0);  /* invalid direction descriptor */
 }
+#endif
 
 /*
  *	istinterval	- returns 1, iff i_string is a valid interval descr.
