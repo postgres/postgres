@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.10 2003/11/29 19:51:39 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.11 2004/09/08 20:47:37 tgl Exp $ -->
 <refentry id="SQL-SET-CONSTRAINTS">
  <refmeta>
   <refentrytitle id="SQL-SET-CONSTRAINTS-title">SET CONSTRAINTS</refentrytitle>
@@ -7,7 +7,7 @@
 
  <refnamediv>
   <refname>SET CONSTRAINTS</refname>
-  <refpurpose>set the constraint mode of the current transaction</refpurpose>
+  <refpurpose>set constraint checking modes for the current transaction</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-set-constraints">
@@ -25,28 +25,40 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
 
   <para>
    <command>SET CONSTRAINTS</command> sets the behavior of constraint
-   evaluation in the current transaction. In
-   <literal>IMMEDIATE</literal> mode, constraints are checked at the
-   end of each statement. In <literal>DEFERRED</literal> mode,
-   constraints are not checked until transaction commit.
+   checking within the current transaction. <literal>IMMEDIATE</literal>
+   constraints are checked at the end of each
+   statement. <literal>DEFERRED</literal> constraints are not checked until
+   transaction commit.  Each constraint has its own
+   <literal>IMMEDIATE</literal> or <literal>DEFERRED</literal> mode.
   </para>
 
   <para>
-   When you change the mode of a constraint to be
-   <literal>IMMEDIATE</literal>, the new constraint mode takes effect
-   retroactively: any outstanding data modifications that would have
-   been checked at the end of the transaction (when using
-   <literal>DEFERRED</literal>) are instead checked during the
-   execution of the <command>SET CONSTRAINTS</command> command.
-  </para>
-
-  <para>
-   Upon creation, a constraint is always give one of three
+   Upon creation, a constraint is given one of three
    characteristics: <literal>INITIALLY DEFERRED</literal>,
    <literal>INITIALLY IMMEDIATE DEFERRABLE</literal>, or
    <literal>INITIALLY IMMEDIATE NOT DEFERRABLE</literal>. The third
    class is not affected by the <command>SET CONSTRAINTS</command>
-   command.
+   command.  The first two classes start every transaction in the
+   indicated mode, but their behavior can be changed within a transaction
+   by <command>SET CONSTRAINTS</command>.
+  </para>
+
+  <para>
+   <command>SET CONSTRAINTS</command> with a list of constraint names changes
+   the mode of just those constraints (which must all be deferrable).  If
+   there are multiple constraints matching any given name, all are affected.
+   <command>SET CONSTRAINTS ALL</command> changes the mode of all deferrable
+   constraints.
+  </para>
+
+  <para>
+   When you change the mode of a constraint from <literal>DEFERRED</literal>
+   to <literal>IMMEDIATE</literal>, the new mode takes effect
+   retroactively: any outstanding data modifications that would have
+   been checked at the end of the transaction are instead checked during the
+   execution of the <command>SET CONSTRAINTS</command> command.
+   If any such constraint is violated, the <command>SET CONSTRAINTS</command>
+   fails (and does not change the constraint mode).
   </para>
 
   <para>
@@ -80,6 +92,14 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
    standard, except for the limitation that, in
    <productname>PostgreSQL</productname>, it only applies to
    foreign-key constraints.
+  </para>
+
+  <para>
+   The SQL standard says that constraint names appearing in <command>SET
+   CONSTRAINTS</command> can be schema-qualified.  This is not yet
+   supported by <productname>PostgreSQL</productname>: the names must
+   be unqualified, and all constraints matching the command will be
+   affected no matter which schema they are in.
   </para>
  </refsect1>
 </refentry>
