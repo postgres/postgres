@@ -8,25 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.62 2003/05/08 18:16:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.63 2003/05/09 18:08:48 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
- *
- *	  - jolly 07/11/95:
- *
- *	  no longer rely on return sizes provided by the frontend.	Always
- *	  use the true lengths for the catalogs.  Assume that the frontend
- *	  has allocated enough space to handle the result value returned.
- *
- *	  trust that the user knows what he is doing with the args.  If the
- *	  sys catalog says it is a varlena, assume that the user is only sending
- *	  down VARDATA and that the argsize is the VARSIZE.  If the arg is
- *	  fixed len, assume that the argsize given by the user is correct.
- *
- *	  if the function returns by value, then only send 4 bytes value
- *	  back to the frontend.  If the return returns by reference,
- *	  send down only the data portion and set the return size appropriately.
  *
  *-------------------------------------------------------------------------
  */
@@ -35,11 +20,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "access/xact.h"
 #include "catalog/pg_proc.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "mb/pg_wchar.h"
 #include "tcop/fastpath.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
@@ -62,17 +47,16 @@ struct fp_info
 {
 	Oid			funcid;
 	FmgrInfo	flinfo;			/* function lookup info for funcid */
-	int16		arglen[FUNC_MAX_ARGS];
-	bool		argbyval[FUNC_MAX_ARGS];
-	int16		retlen;
-	bool		retbyval;
+	Oid			namespace;		/* other stuff from pg_proc */
+	Oid			rettype;
+	Oid			argtypes[FUNC_MAX_ARGS];
 };
 
 
-static void parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
-								  FunctionCallInfo fcinfo);
-static void parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
-									 FunctionCallInfo fcinfo);
+static int16 parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
+								   FunctionCallInfo fcinfo);
+static int16 parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
+									  FunctionCallInfo fcinfo);
 
 
 /* ----------------
@@ -114,7 +98,7 @@ GetOldFunctionMessage(StringInfo buf)
 			return EOF;
 		appendBinaryStringInfo(buf, (char *) &ibuf, 4);
 		argsize = ntohl(ibuf);
-		if (argsize < 0)
+		if (argsize < -1)
 		{
 			/* FATAL here since no hope of regaining message sync */
 			elog(FATAL, "HandleFunctionRequest: bogus argsize %d",
@@ -139,78 +123,68 @@ GetOldFunctionMessage(StringInfo buf)
 /* ----------------
  *		SendFunctionResult
  *
- * retlen is 0 if returning NULL, else the typlen according to the catalogs
+ * Note: although this routine doesn't check, the format had better be 1
+ * (binary) when talking to a pre-3.0 client.
  * ----------------
  */
 static void
-SendFunctionResult(Datum retval, bool retbyval, int retlen)
+SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 {
+	bool		newstyle = (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3);
 	StringInfoData buf;
 
 	pq_beginmessage(&buf, 'V');
 
-	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
+	if (isnull)
 	{
-		/* New-style message */
-		/* XXX replace this with standard binary (or text!) output */
-		if (retlen != 0)
-		{
-			if (retbyval)
-			{						/* by-value */
-				pq_sendint(&buf, retlen, 4);
-				pq_sendint(&buf, DatumGetInt32(retval), retlen);
-			}
-			else
-			{						/* by-reference ... */
-				if (retlen == -1)
-				{					/* ... varlena */
-					struct varlena *v = PG_DETOAST_DATUM(retval);
-
-					pq_sendint(&buf, VARSIZE(v) - VARHDRSZ, VARHDRSZ);
-					pq_sendbytes(&buf, VARDATA(v), VARSIZE(v) - VARHDRSZ);
-				}
-				else
-				{					/* ... fixed */
-					pq_sendint(&buf, retlen, 4);
-					pq_sendbytes(&buf, DatumGetPointer(retval), retlen);
-				}
-			}
-		}
-		else
-		{
-			/* NULL marker */
+		if (newstyle)
 			pq_sendint(&buf, -1, 4);
-		}
 	}
 	else
 	{
-		/* Old-style message */
-		if (retlen != 0)
-		{
+		if (!newstyle)
 			pq_sendbyte(&buf, 'G');
-			if (retbyval)
-			{						/* by-value */
-				pq_sendint(&buf, retlen, 4);
-				pq_sendint(&buf, DatumGetInt32(retval), retlen);
-			}
-			else
-			{						/* by-reference ... */
-				if (retlen == -1)
-				{					/* ... varlena */
-					struct varlena *v = PG_DETOAST_DATUM(retval);
 
-					pq_sendint(&buf, VARSIZE(v) - VARHDRSZ, VARHDRSZ);
-					pq_sendbytes(&buf, VARDATA(v), VARSIZE(v) - VARHDRSZ);
-				}
-				else
-				{					/* ... fixed */
-					pq_sendint(&buf, retlen, 4);
-					pq_sendbytes(&buf, DatumGetPointer(retval), retlen);
-				}
-			}
+		if (format == 0)
+		{
+			Oid			typoutput,
+						typelem;
+			bool		typisvarlena;
+			char	   *outputstr;
+
+			getTypeOutputInfo(rettype,
+							  &typoutput, &typelem, &typisvarlena);
+			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
+														 retval,
+												 ObjectIdGetDatum(typelem),
+												 Int32GetDatum(-1)));
+			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
+			pfree(outputstr);
 		}
-		pq_sendbyte(&buf, '0');
+		else if (format == 1)
+		{
+			Oid			typsend,
+						typelem;
+			bool		typisvarlena;
+			bytea	   *outputbytes;
+
+			getTypeBinaryOutputInfo(rettype,
+									&typsend, &typelem, &typisvarlena);
+			outputbytes = DatumGetByteaP(OidFunctionCall2(typsend,
+														  retval,
+												  ObjectIdGetDatum(typelem)));
+			/* We assume the result will not have been toasted */
+			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
+			pq_sendbytes(&buf, VARDATA(outputbytes),
+						 VARSIZE(outputbytes) - VARHDRSZ);
+			pfree(outputbytes);
+		}
+		else
+			elog(ERROR, "Invalid format code %d", format);
 	}
+
+	if (!newstyle)
+		pq_sendbyte(&buf, '0');
 
 	pq_endmessage(&buf);
 }
@@ -224,11 +198,8 @@ SendFunctionResult(Datum retval, bool retbyval, int retlen)
 static void
 fetch_fp_info(Oid func_id, struct fp_info * fip)
 {
-	Oid		   *argtypes;		/* an oidvector */
-	Oid			rettype;
 	HeapTuple	func_htp;
 	Form_pg_proc pp;
-	int			i;
 
 	Assert(OidIsValid(func_id));
 	Assert(fip != (struct fp_info *) NULL);
@@ -254,20 +225,10 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
 		elog(ERROR, "fetch_fp_info: cache lookup for function %u failed",
 			 func_id);
 	pp = (Form_pg_proc) GETSTRUCT(func_htp);
-	rettype = pp->prorettype;
-	argtypes = pp->proargtypes;
 
-	for (i = 0; i < pp->pronargs; ++i)
-	{
-		get_typlenbyval(argtypes[i], &fip->arglen[i], &fip->argbyval[i]);
-		/* We don't support cstring in fastpath protocol */
-		if (fip->arglen[i] == -2)
-			elog(ERROR, "CSTRING not supported in fastpath protocol");
-	}
-
-	get_typlenbyval(rettype, &fip->retlen, &fip->retbyval);
-	if (fip->retlen == -2)
-		elog(ERROR, "CSTRING not supported in fastpath protocol");
+	fip->namespace = pp->pronamespace;
+	fip->rettype = pp->prorettype;
+	memcpy(fip->argtypes, pp->proargtypes, FUNC_MAX_ARGS * sizeof(Oid));
 
 	ReleaseSysCache(func_htp);
 
@@ -308,6 +269,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 	Oid			fid;
 	AclResult	aclresult;
 	FunctionCallInfoData fcinfo;
+	int16		rformat;
 	Datum		retval;
 	struct fp_info my_fp;
 	struct fp_info *fip;
@@ -334,7 +296,7 @@ HandleFunctionRequest(StringInfo msgBuf)
 			 "queries ignored until end of transaction block");
 
 	/*
-	 * Parse the buffer contents.
+	 * Begin parsing the buffer contents.
 	 */
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) < 3)
 		(void) pq_getmsgstring(msgBuf);	/* dummy string */
@@ -348,7 +310,14 @@ HandleFunctionRequest(StringInfo msgBuf)
 	fip = &my_fp;
 	fetch_fp_info(fid, fip);
 
-	/* Check permission to call function */
+	/*
+	 * Check permission to access and call function.  Since we didn't go
+	 * through a normal name lookup, we need to check schema usage too.
+	 */
+	aclresult = pg_namespace_aclcheck(fip->namespace, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_namespace_name(fip->namespace));
+
 	aclresult = pg_proc_aclcheck(fid, GetUserId(), ACL_EXECUTE);
 	if (aclresult != ACLCHECK_OK)
 		aclcheck_error(aclresult, get_func_name(fid));
@@ -365,9 +334,9 @@ HandleFunctionRequest(StringInfo msgBuf)
 	fcinfo.flinfo = &fip->flinfo;
 
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
-		parse_fcall_arguments(msgBuf, fip, &fcinfo);
+		rformat = parse_fcall_arguments(msgBuf, fip, &fcinfo);
 	else
-		parse_fcall_arguments_20(msgBuf, fip, &fcinfo);
+		rformat = parse_fcall_arguments_20(msgBuf, fip, &fcinfo);
 
 	/* Verify we reached the end of the message where expected. */
 	pq_getmsgend(msgBuf);
@@ -375,18 +344,18 @@ HandleFunctionRequest(StringInfo msgBuf)
 	/* Okay, do it ... */
 	retval = FunctionCallInvoke(&fcinfo);
 
-	if (fcinfo.isnull)
-		SendFunctionResult(retval, fip->retbyval, 0);
-	else
-		SendFunctionResult(retval, fip->retbyval, fip->retlen);
+	SendFunctionResult(retval, fcinfo.isnull, fip->rettype, rformat);
 
 	return 0;
 }
 
 /*
  * Parse function arguments in a 3.0 protocol message
+ *
+ * Argument values are loaded into *fcinfo, and the desired result format
+ * is returned.
  */
-static void
+static int16
 parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 					  FunctionCallInfo fcinfo)
 {
@@ -394,6 +363,7 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 	int			i;
 	int			numAFormats;
 	int16	   *aformats = NULL;
+	StringInfoData abuf;
 
 	/* Get the argument format codes */
 	numAFormats = pq_getmsgint(msgBuf, 2);
@@ -412,59 +382,110 @@ parse_fcall_arguments(StringInfo msgBuf, struct fp_info *fip,
 
 	fcinfo->nargs = nargs;
 
+	if (numAFormats > 1 && numAFormats != nargs)
+		elog(ERROR, "Function Call message has %d argument formats but %d arguments",
+			 numAFormats, nargs);
+
+	initStringInfo(&abuf);
+
 	/*
 	 * Copy supplied arguments into arg vector.
 	 */
 	for (i = 0; i < nargs; ++i)
 	{
 		int			argsize;
-		char	   *p;
+		int16		aformat;
 
 		argsize = pq_getmsgint(msgBuf, 4);
-		if (fip->argbyval[i])
-		{						/* by-value */
-			if (argsize < 1 || argsize > 4)
-				elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
-					 argsize);
-			/* XXX should we demand argsize == fip->arglen[i] ? */
-			fcinfo->arg[i] = (Datum) pq_getmsgint(msgBuf, argsize);
+		if (argsize == -1)
+		{
+			fcinfo->argnull[i] = true;
+			continue;
+		}
+		if (argsize < 0)
+			elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
+				 argsize);
+
+		/* Reset abuf to empty, and insert raw data into it */
+		abuf.len = 0;
+		abuf.data[0] = '\0';
+		abuf.cursor = 0;
+
+		appendBinaryStringInfo(&abuf,
+							   pq_getmsgbytes(msgBuf, argsize),
+							   argsize);
+
+		if (numAFormats > 1)
+			aformat = aformats[i];
+		else if (numAFormats > 0)
+			aformat = aformats[0];
+		else
+			aformat = 0;		/* default = text */
+
+		if (aformat == 0)
+		{
+			Oid			typInput;
+			Oid			typElem;
+			char	   *pstring;
+
+			getTypeInputInfo(fip->argtypes[i], &typInput, &typElem);
+			/*
+			 * Since stringinfo.c keeps a trailing null in
+			 * place even for binary data, the contents of
+			 * abuf are a valid C string.  We have to do
+			 * encoding conversion before calling the typinput
+			 * routine, though.
+			 */
+			pstring = (char *)
+				pg_client_to_server((unsigned char *) abuf.data,
+									argsize);
+			fcinfo->arg[i] =
+				OidFunctionCall3(typInput,
+								 CStringGetDatum(pstring),
+								 ObjectIdGetDatum(typElem),
+								 Int32GetDatum(-1));
+			/* Free result of encoding conversion, if any */
+			if (pstring != abuf.data)
+				pfree(pstring);
+		}
+		else if (aformat == 1)
+		{
+			Oid			typReceive;
+			Oid			typElem;
+
+			/* Call the argument type's binary input converter */
+			getTypeBinaryInputInfo(fip->argtypes[i], &typReceive, &typElem);
+
+			fcinfo->arg[i] = OidFunctionCall2(typReceive,
+											  PointerGetDatum(&abuf),
+											  ObjectIdGetDatum(typElem));
+
+			/* Trouble if it didn't eat the whole buffer */
+			if (abuf.cursor != abuf.len)
+				elog(ERROR, "Improper binary format in function argument %d",
+					 i + 1);
 		}
 		else
-		{						/* by-reference ... */
-			if (fip->arglen[i] == -1)
-			{					/* ... varlena */
-				if (argsize < 0)
-					elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
-						 argsize);
-				p = palloc(argsize + VARHDRSZ);
-				VARATT_SIZEP(p) = argsize + VARHDRSZ;
-				pq_copymsgbytes(msgBuf, VARDATA(p), argsize);
-			}
-			else
-			{					/* ... fixed */
-				if (argsize != fip->arglen[i])
-					elog(ERROR, "HandleFunctionRequest: bogus argsize %d, should be %d",
-						 argsize, fip->arglen[i]);
-				p = palloc(argsize + 1);		/* +1 in case argsize is 0 */
-				pq_copymsgbytes(msgBuf, p, argsize);
-			}
-			fcinfo->arg[i] = PointerGetDatum(p);
-		}
+			elog(ERROR, "Invalid format code %d", aformat);
 	}
 
-	/* XXX for the moment, ignore result format code */
-	(void) pq_getmsgint(msgBuf, 2);
+	/* Return result format code */
+	return (int16) pq_getmsgint(msgBuf, 2);
 }
 
 /*
  * Parse function arguments in a 2.0 protocol message
+ *
+ * Argument values are loaded into *fcinfo, and the desired result format
+ * is returned.
  */
-static void
+static int16
 parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
 						 FunctionCallInfo fcinfo)
 {
 	int			nargs;
 	int			i;
+	StringInfoData abuf;
 
 	nargs = pq_getmsgint(msgBuf, 4);	/* # of arguments */
 
@@ -474,44 +495,54 @@ parse_fcall_arguments_20(StringInfo msgBuf, struct fp_info *fip,
 
 	fcinfo->nargs = nargs;
 
+	initStringInfo(&abuf);
+
 	/*
-	 * Copy supplied arguments into arg vector.  Note there is no way for
-	 * frontend to specify a NULL argument --- this protocol is misdesigned.
+	 * Copy supplied arguments into arg vector.  In protocol 2.0 these are
+	 * always assumed to be supplied in binary format.
+	 *
+	 * Note: although the original protocol 2.0 code did not have any way for
+	 * the frontend to specify a NULL argument, we now choose to interpret
+	 * length == -1 as meaning a NULL.
 	 */
 	for (i = 0; i < nargs; ++i)
 	{
 		int			argsize;
-		char	   *p;
+		Oid			typReceive;
+		Oid			typElem;
 
 		argsize = pq_getmsgint(msgBuf, 4);
-		if (fip->argbyval[i])
-		{						/* by-value */
-			if (argsize < 1 || argsize > 4)
-				elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
-					 argsize);
-			/* XXX should we demand argsize == fip->arglen[i] ? */
-			fcinfo->arg[i] = (Datum) pq_getmsgint(msgBuf, argsize);
+		if (argsize == -1)
+		{
+			fcinfo->argnull[i] = true;
+			continue;
 		}
-		else
-		{						/* by-reference ... */
-			if (fip->arglen[i] == -1)
-			{					/* ... varlena */
-				if (argsize < 0)
-					elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
-						 argsize);
-				p = palloc(argsize + VARHDRSZ);
-				VARATT_SIZEP(p) = argsize + VARHDRSZ;
-				pq_copymsgbytes(msgBuf, VARDATA(p), argsize);
-			}
-			else
-			{					/* ... fixed */
-				if (argsize != fip->arglen[i])
-					elog(ERROR, "HandleFunctionRequest: bogus argsize %d, should be %d",
-						 argsize, fip->arglen[i]);
-				p = palloc(argsize + 1);		/* +1 in case argsize is 0 */
-				pq_copymsgbytes(msgBuf, p, argsize);
-			}
-			fcinfo->arg[i] = PointerGetDatum(p);
-		}
+		if (argsize < 0)
+			elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
+				 argsize);
+
+		/* Reset abuf to empty, and insert raw data into it */
+		abuf.len = 0;
+		abuf.data[0] = '\0';
+		abuf.cursor = 0;
+
+		appendBinaryStringInfo(&abuf,
+							   pq_getmsgbytes(msgBuf, argsize),
+							   argsize);
+
+		/* Call the argument type's binary input converter */
+		getTypeBinaryInputInfo(fip->argtypes[i], &typReceive, &typElem);
+
+		fcinfo->arg[i] = OidFunctionCall2(typReceive,
+										  PointerGetDatum(&abuf),
+										  ObjectIdGetDatum(typElem));
+
+		/* Trouble if it didn't eat the whole buffer */
+		if (abuf.cursor != abuf.len)
+			elog(ERROR, "Improper binary format in function argument %d",
+				 i + 1);
 	}
+
+	/* Desired result format is always binary in protocol 2.0 */
+	return 1;
 }

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.71 2003/05/08 18:16:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.72 2003/05/09 18:08:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,14 +42,19 @@ static void printtup_destroy(DestReceiver *self);
 
 /* ----------------
  *		Private state for a printtup destination object
+ *
+ * NOTE: finfo is the lookup info for either typoutput or typsend, whichever
+ * we are using for this column.
  * ----------------
  */
 typedef struct
 {								/* Per-attribute information */
-	Oid			typoutput;		/* Oid for the attribute's type output fn */
+	Oid			typoutput;		/* Oid for the type's text output fn */
+	Oid			typsend;		/* Oid for the type's binary output fn */
 	Oid			typelem;		/* typelem value to pass to the output fn */
 	bool		typisvarlena;	/* is it varlena (ie possibly toastable)? */
-	FmgrInfo	finfo;			/* Precomputed call info for typoutput */
+	int16		format;			/* format code for this column */
+	FmgrInfo	finfo;			/* Precomputed call info for output fn */
 } PrinttupAttrInfo;
 
 typedef struct
@@ -219,9 +224,13 @@ SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist, int16 *formats)
 	pq_endmessage(&buf);
 }
 
+/*
+ * Get the lookup info that printtup() needs
+ */
 static void
 printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 {
+	int16	   *formats = myState->portal->formats;
 	int			i;
 
 	if (myState->myinfo)
@@ -232,15 +241,31 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 	if (numAttrs <= 0)
 		return;
 	myState->myinfo = (PrinttupAttrInfo *)
-		palloc(numAttrs * sizeof(PrinttupAttrInfo));
+		palloc0(numAttrs * sizeof(PrinttupAttrInfo));
 	for (i = 0; i < numAttrs; i++)
 	{
 		PrinttupAttrInfo *thisState = myState->myinfo + i;
+		int16		format = (formats ? formats[i] : 0);
 
-		if (getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
-							  &thisState->typoutput, &thisState->typelem,
-							  &thisState->typisvarlena))
+		thisState->format = format;
+		if (format == 0)
+		{
+			getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
+							  &thisState->typoutput,
+							  &thisState->typelem,
+							  &thisState->typisvarlena);
 			fmgr_info(thisState->typoutput, &thisState->finfo);
+		}
+		else if (format == 1)
+		{
+			getTypeBinaryOutputInfo(typeinfo->attrs[i]->atttypid,
+									&thisState->typsend,
+									&thisState->typelem,
+									&thisState->typisvarlena);
+			fmgr_info(thisState->typsend, &thisState->finfo);
+		}
+		else
+			elog(ERROR, "Unsupported format code %d", format);
 	}
 }
 
@@ -252,7 +277,6 @@ static void
 printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 {
 	DR_printtup *myState = (DR_printtup *) self;
-	int16	   *formats = myState->portal->formats;
 	StringInfoData buf;
 	int			natts = tuple->t_data->t_natts;
 	int			i;
@@ -274,11 +298,9 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	for (i = 0; i < natts; ++i)
 	{
 		PrinttupAttrInfo *thisState = myState->myinfo + i;
-		int16		format = (formats ? formats[i] : 0);
 		Datum		origattr,
 					attr;
 		bool		isnull;
-		char	   *outputstr;
 
 		origattr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		if (isnull)
@@ -286,46 +308,46 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 			pq_sendint(&buf, -1, 4);
 			continue;
 		}
-		if (format == 0)
-		{
-			if (OidIsValid(thisState->typoutput))
-			{
-				/*
-				 * If we have a toasted datum, forcibly detoast it here to
-				 * avoid memory leakage inside the type's output routine.
-				 */
-				if (thisState->typisvarlena)
-					attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
-				else
-					attr = origattr;
 
-				outputstr = DatumGetCString(FunctionCall3(&thisState->finfo,
-														  attr,
+		/*
+		 * If we have a toasted datum, forcibly detoast it here to
+		 * avoid memory leakage inside the type's output routine.
+		 */
+		if (thisState->typisvarlena)
+			attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
+		else
+			attr = origattr;
+
+		if (thisState->format == 0)
+		{
+			/* Text output */
+			char	   *outputstr;
+
+			outputstr = DatumGetCString(FunctionCall3(&thisState->finfo,
+													  attr,
 									ObjectIdGetDatum(thisState->typelem),
 						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
-
-				pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
-
-				/* Clean up detoasted copy, if any */
-				if (attr != origattr)
-					pfree(DatumGetPointer(attr));
-				pfree(outputstr);
-			}
-			else
-			{
-				outputstr = "<unprintable>";
-				pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
-			}
-		}
-		else if (format == 1)
-		{
-			/* XXX something similar to above */
-			elog(ERROR, "Binary transmission not implemented yet");
+			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
+			pfree(outputstr);
 		}
 		else
 		{
-			elog(ERROR, "Invalid format code %d", format);
+			/* Binary output */
+			bytea	   *outputbytes;
+
+			outputbytes = DatumGetByteaP(FunctionCall2(&thisState->finfo,
+													   attr,
+									ObjectIdGetDatum(thisState->typelem)));
+			/* We assume the result will not have been toasted */
+			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
+			pq_sendbytes(&buf, VARDATA(outputbytes),
+						 VARSIZE(outputbytes) - VARHDRSZ);
+			pfree(outputbytes);
 		}
+
+		/* Clean up detoasted copy, if any */
+		if (attr != origattr)
+			pfree(DatumGetPointer(attr));
 	}
 
 	pq_endmessage(&buf);
@@ -388,34 +410,28 @@ printtup_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 		origattr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		if (isnull)
 			continue;
-		if (OidIsValid(thisState->typoutput))
-		{
-			/*
-			 * If we have a toasted datum, forcibly detoast it here to
-			 * avoid memory leakage inside the type's output routine.
-			 */
-			if (thisState->typisvarlena)
-				attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
-			else
-				attr = origattr;
 
-			outputstr = DatumGetCString(FunctionCall3(&thisState->finfo,
-													  attr,
+		Assert(thisState->format == 0);
+
+		/*
+		 * If we have a toasted datum, forcibly detoast it here to
+		 * avoid memory leakage inside the type's output routine.
+		 */
+		if (thisState->typisvarlena)
+			attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
+		else
+			attr = origattr;
+
+		outputstr = DatumGetCString(FunctionCall3(&thisState->finfo,
+												  attr,
 									ObjectIdGetDatum(thisState->typelem),
 						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
+		pq_sendcountedtext(&buf, outputstr, strlen(outputstr), true);
+		pfree(outputstr);
 
-			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), true);
-
-			/* Clean up detoasted copy, if any */
-			if (attr != origattr)
-				pfree(DatumGetPointer(attr));
-			pfree(outputstr);
-		}
-		else
-		{
-			outputstr = "<unprintable>";
-			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), true);
-		}
+		/* Clean up detoasted copy, if any */
+		if (attr != origattr)
+			pfree(DatumGetPointer(attr));
 	}
 
 	pq_endmessage(&buf);
@@ -508,30 +524,29 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 		origattr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		if (isnull)
 			continue;
-		if (getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
-							  &typoutput, &typelem, &typisvarlena))
-		{
-			/*
-			 * If we have a toasted datum, forcibly detoast it here to
-			 * avoid memory leakage inside the type's output routine.
-			 */
-			if (typisvarlena)
-				attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
-			else
-				attr = origattr;
+		getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
+						  &typoutput, &typelem, &typisvarlena);
+		/*
+		 * If we have a toasted datum, forcibly detoast it here to
+		 * avoid memory leakage inside the type's output routine.
+		 */
+		if (typisvarlena)
+			attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
+		else
+			attr = origattr;
 
-			value = DatumGetCString(OidFunctionCall3(typoutput,
-													 attr,
-											   ObjectIdGetDatum(typelem),
+		value = DatumGetCString(OidFunctionCall3(typoutput,
+												 attr,
+												 ObjectIdGetDatum(typelem),
 						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
 
-			printatt((unsigned) i + 1, typeinfo->attrs[i], value);
+		printatt((unsigned) i + 1, typeinfo->attrs[i], value);
 
-			/* Clean up detoasted copy, if any */
-			if (attr != origattr)
-				pfree(DatumGetPointer(attr));
-			pfree(value);
-		}
+		pfree(value);
+
+		/* Clean up detoasted copy, if any */
+		if (attr != origattr)
+			pfree(DatumGetPointer(attr));
 	}
 	printf("\t----\n");
 }
@@ -542,7 +557,7 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
  * We use a different message type, i.e. 'B' instead of 'D' to
  * indicate a tuple in internal (binary) form.
  *
- * This is largely same as printtup_20, except we don't use the typout func.
+ * This is largely same as printtup_20, except we use binary formatting.
  * ----------------
  */
 static void
@@ -587,83 +602,41 @@ printtup_internal_20(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 	/*
 	 * send the attributes of this tuple
 	 */
-#ifdef IPORTAL_DEBUG
-	fprintf(stderr, "sending tuple with %d atts\n", natts);
-#endif
-
 	for (i = 0; i < natts; ++i)
 	{
 		PrinttupAttrInfo *thisState = myState->myinfo + i;
 		Datum		origattr,
 					attr;
 		bool		isnull;
-		int32		len;
+		bytea	   *outputbytes;
 
 		origattr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		if (isnull)
 			continue;
-		/* send # of bytes, and opaque data */
+
+		Assert(thisState->format == 1);
+
+		/*
+		 * If we have a toasted datum, forcibly detoast it here to
+		 * avoid memory leakage inside the type's output routine.
+		 */
 		if (thisState->typisvarlena)
-		{
-			/*
-			 * If we have a toasted datum, must detoast before sending.
-			 */
 			attr = PointerGetDatum(PG_DETOAST_DATUM(origattr));
-
-			len = VARSIZE(attr) - VARHDRSZ;
-
-			pq_sendint(&buf, len, VARHDRSZ);
-			pq_sendbytes(&buf, VARDATA(attr), len);
-
-#ifdef IPORTAL_DEBUG
-			{
-				char	   *d = VARDATA(attr);
-
-				fprintf(stderr, "length %d data %x %x %x %x\n",
-						len, *d, *(d + 1), *(d + 2), *(d + 3));
-			}
-#endif
-
-			/* Clean up detoasted copy, if any */
-			if (attr != origattr)
-				pfree(DatumGetPointer(attr));
-		}
 		else
-		{
-			/* fixed size or cstring */
 			attr = origattr;
-			len = typeinfo->attrs[i]->attlen;
-			if (len <= 0)
-			{
-				/* it's a cstring */
-				Assert(len == -2 && !typeinfo->attrs[i]->attbyval);
-				len = strlen(DatumGetCString(attr)) + 1;
-			}
-			pq_sendint(&buf, len, sizeof(int32));
-			if (typeinfo->attrs[i]->attbyval)
-			{
-				Datum		datumBuf;
 
-				/*
-				 * We need this horsing around because we don't know how
-				 * shorter data values are aligned within a Datum.
-				 */
-				store_att_byval(&datumBuf, attr, len);
-				pq_sendbytes(&buf, (char *) &datumBuf, len);
-#ifdef IPORTAL_DEBUG
-				fprintf(stderr, "byval length %d data %ld\n", len,
-						(long) attr);
-#endif
-			}
-			else
-			{
-				pq_sendbytes(&buf, DatumGetPointer(attr), len);
-#ifdef IPORTAL_DEBUG
-				fprintf(stderr, "byref length %d data %p\n", len,
-						DatumGetPointer(attr));
-#endif
-			}
-		}
+		outputbytes = DatumGetByteaP(FunctionCall2(&thisState->finfo,
+												   attr,
+									ObjectIdGetDatum(thisState->typelem)));
+		/* We assume the result will not have been toasted */
+		pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
+		pq_sendbytes(&buf, VARDATA(outputbytes),
+					 VARSIZE(outputbytes) - VARHDRSZ);
+		pfree(outputbytes);
+
+		/* Clean up detoasted copy, if any */
+		if (attr != origattr)
+			pfree(DatumGetPointer(attr));
 	}
 
 	pq_endmessage(&buf);

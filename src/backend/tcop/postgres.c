@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.341 2003/05/09 15:57:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.342 2003/05/09 18:08:48 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1342,8 +1342,21 @@ exec_bind_message(StringInfo input_message)
 					}
 					else if (pformat == 1)
 					{
-						/* XXX something similar to above */
-						elog(ERROR, "Binary BIND not implemented yet");
+						Oid			typReceive;
+						Oid			typElem;
+
+						/* Call the parameter type's binary input converter */
+						getTypeBinaryInputInfo(ptype, &typReceive, &typElem);
+
+						params[i].value =
+							OidFunctionCall2(typReceive,
+											 PointerGetDatum(&pbuf),
+											 ObjectIdGetDatum(typElem));
+
+						/* Trouble if it didn't eat the whole buffer */
+						if (pbuf.cursor != pbuf.len)
+							elog(ERROR, "Improper binary format in BIND parameter %d",
+								 i + 1);
 					}
 					else
 					{
@@ -2511,7 +2524,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.341 $ $Date: 2003/05/09 15:57:24 $\n");
+		puts("$Revision: 1.342 $ $Date: 2003/05/09 18:08:48 $\n");
 	}
 
 	/*
@@ -2770,6 +2783,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 				/* start an xact for this function invocation */
 				start_xact_command();
+
+				/* switch back to message context */
+				MemoryContextSwitchTo(MessageContext);
 
 				if (HandleFunctionRequest(input_message) == EOF)
 				{

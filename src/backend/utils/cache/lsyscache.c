@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.92 2003/04/08 23:20:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.93 2003/05/09 18:08:48 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1361,11 +1361,15 @@ getTypeInputInfo(Oid type, Oid *typInput, Oid *typElem)
 							   ObjectIdGetDatum(type),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "getTypeInputInfo: Cache lookup of type %u failed", type);
+		elog(ERROR, "Cache lookup of type %u failed", type);
 	pt = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	if (!pt->typisdefined)
-		elog(ERROR, "Type \"%s\" is only a shell", NameStr(pt->typname));
+		elog(ERROR, "Type %s is only a shell",
+			 format_type_be(type));
+	if (!OidIsValid(pt->typinput))
+		elog(ERROR, "No input function available for type %s",
+			 format_type_be(type));
 
 	*typInput = pt->typinput;
 	*typElem = pt->typelem;
@@ -1377,10 +1381,8 @@ getTypeInputInfo(Oid type, Oid *typInput, Oid *typElem)
  * getTypeOutputInfo
  *
  *		Get info needed for printing values of a type
- *
- * Returns true if data valid (a false result probably means it's a shell type)
  */
-bool
+void
 getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typElem,
 				  bool *typIsVarlena)
 {
@@ -1391,14 +1393,85 @@ getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typElem,
 							   ObjectIdGetDatum(type),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "getTypeOutputInfo: Cache lookup of type %u failed", type);
+		elog(ERROR, "Cache lookup of type %u failed", type);
 	pt = (Form_pg_type) GETSTRUCT(typeTuple);
+
+	if (!pt->typisdefined)
+		elog(ERROR, "Type %s is only a shell",
+			 format_type_be(type));
+	if (!OidIsValid(pt->typoutput))
+		elog(ERROR, "No output function available for type %s",
+			 format_type_be(type));
 
 	*typOutput = pt->typoutput;
 	*typElem = pt->typelem;
 	*typIsVarlena = (!pt->typbyval) && (pt->typlen == -1);
+
 	ReleaseSysCache(typeTuple);
-	return OidIsValid(*typOutput);
+}
+
+/*
+ * getTypeBinaryInputInfo
+ *
+ *		Get info needed for binary input of values of a type
+ */
+void
+getTypeBinaryInputInfo(Oid type, Oid *typReceive, Oid *typElem)
+{
+	HeapTuple	typeTuple;
+	Form_pg_type pt;
+
+	typeTuple = SearchSysCache(TYPEOID,
+							   ObjectIdGetDatum(type),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(typeTuple))
+		elog(ERROR, "Cache lookup of type %u failed", type);
+	pt = (Form_pg_type) GETSTRUCT(typeTuple);
+
+	if (!pt->typisdefined)
+		elog(ERROR, "Type %s is only a shell",
+			 format_type_be(type));
+	if (!OidIsValid(pt->typreceive))
+		elog(ERROR, "No binary input function available for type %s",
+			 format_type_be(type));
+
+	*typReceive = pt->typreceive;
+	*typElem = pt->typelem;
+
+	ReleaseSysCache(typeTuple);
+}
+
+/*
+ * getTypeBinaryOutputInfo
+ *
+ *		Get info needed for binary output of values of a type
+ */
+void
+getTypeBinaryOutputInfo(Oid type, Oid *typSend, Oid *typElem,
+						bool *typIsVarlena)
+{
+	HeapTuple	typeTuple;
+	Form_pg_type pt;
+
+	typeTuple = SearchSysCache(TYPEOID,
+							   ObjectIdGetDatum(type),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(typeTuple))
+		elog(ERROR, "Cache lookup of type %u failed", type);
+	pt = (Form_pg_type) GETSTRUCT(typeTuple);
+
+	if (!pt->typisdefined)
+		elog(ERROR, "Type %s is only a shell",
+			 format_type_be(type));
+	if (!OidIsValid(pt->typsend))
+		elog(ERROR, "No binary output function available for type %s",
+			 format_type_be(type));
+
+	*typSend = pt->typsend;
+	*typElem = pt->typelem;
+	*typIsVarlena = (!pt->typbyval) && (pt->typlen == -1);
+
+	ReleaseSysCache(typeTuple);
 }
 
 
