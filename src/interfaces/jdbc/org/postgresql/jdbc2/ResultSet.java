@@ -439,7 +439,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     if(s==null)
 	return null;
     
-    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzz");
+    SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     
     try {
 	return new Timestamp(df.parse(s).getTime());

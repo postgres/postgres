@@ -1,3 +1,6 @@
+Thu Jun 01 07:26:00 BST 2000 petermount@it.maidstone.gov.uk
+	- Removed timezone in getTimestamp() methods in ResultSet.
+
 Mon May 15 22:30:00 BST 2000 peter@retep.org.uk
 	- Fixed the message Makefile produces after compiling. It still said
 	  about the old Driver class, not the new package. Spotted by
