@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.51 2001/10/28 06:26:11 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.52 2002/01/10 01:11:45 tgl Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -7,9 +7,8 @@
 #include "postgres_fe.h"
 
 #include <unistd.h>
-
 #ifdef HAVE_GETOPT_H
-#include "getopt.h"
+#include <getopt.h>
 #endif
 
 extern int	optind;
@@ -108,7 +107,7 @@ main(int argc, char *const argv[])
 	add_include_path("/usr/local/include");
 	add_include_path(".");
 
-	while ((c = getopt(argc, argv, "vo:I:tD:d")) != EOF)
+	while ((c = getopt(argc, argv, "vo:I:tD:d")) != -1)
 	{
 		switch (c)
 		{

@@ -67,7 +67,7 @@ get_opts(int argc, char **argv, struct options * my_opts)
 	my_opts->remotepass = 0;
 
 	/* get opts */
-	while ((c = getopt(argc, argv, "H:p:U:P:d:t:o:xh?")) != EOF)
+	while ((c = getopt(argc, argv, "H:p:U:P:d:t:o:xh?")) != -1)
 	{
 		switch (c)
 		{

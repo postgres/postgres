@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.31 2001/11/26 23:10:36 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.32 2002/01/10 01:11:45 tgl Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -67,7 +67,6 @@
 #include <termios.h>
 #endif
 
-/* FreeBSD 4.3 seems to put getopt in unistd.h */
 #include <unistd.h>
 
 #ifdef HAVE_GETOPT_H
@@ -164,7 +163,7 @@ main(int argc, char **argv)
 	}
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "acCd:f:F:h:i:lL:NoOp:P:rRsS:t:T:uU:vWxX:", cmdopts, NULL)) != EOF)
+	while ((c = getopt_long(argc, argv, "acCd:f:F:h:i:lL:NoOp:P:rRsS:t:T:uU:vWxX:", cmdopts, NULL)) != -1)
 #else
 	while ((c = getopt(argc, argv, "acCd:f:F:h:i:lL:NoOp:P:rRsS:t:T:uU:vWxX:")) != -1)
 #endif

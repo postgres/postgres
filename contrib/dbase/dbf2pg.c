@@ -16,6 +16,9 @@
 #ifdef HAVE_ICONV_H
 #include <iconv.h>
 #endif
+#ifdef HAVE_GETOPT_H
+#include <getopt.h>
+#endif
 
 #include "libpq-fe.h"
 #include "dbf.h"
@@ -673,7 +676,7 @@ main(int argc, char **argv)
 	char	   *query;
 	dbhead	   *dbh;
 
-	while ((i = getopt(argc, argv, "DWflucvh:b:e:d:t:s:B:U:F:T:")) != EOF)
+	while ((i = getopt(argc, argv, "DWflucvh:b:e:d:t:s:B:U:F:T:")) != -1)
 	{
 		switch (i)
 		{

@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.13 2001/11/05 17:46:23 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.14 2002/01/10 01:11:45 tgl Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -641,7 +641,7 @@ main(int argc, char **argv)
 	PGconn	   *con;
 	PGresult   *res;
 
-	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:P:CS")) != EOF)
+	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:P:CS")) != -1)
 	{
 		switch (c)
 		{

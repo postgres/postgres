@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.263 2002/01/06 21:40:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.264 2002/01/10 01:11:45 tgl Exp $
  *
  * NOTES
  *
@@ -420,7 +420,7 @@ PostmasterMain(int argc, char *argv[])
 	 * with the wrong argument. Death and destruction will occur.
 	 */
 	opterr = 1;
-	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:Ss-:")) != EOF)
+	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:Ss-:")) != -1)
 	{
 		switch (opt)
 		{
@@ -458,7 +458,7 @@ PostmasterMain(int argc, char *argv[])
 	optreset = 1;				/* some systems need this too */
 #endif
 
-	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:Ss-:")) != EOF)
+	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:Ss-:")) != -1)
 	{
 		switch (opt)
 		{
