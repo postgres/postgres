@@ -736,20 +736,66 @@ SELECT '' as "54", d1 as timestamp,
 --
 -- abstime, reltime arithmetic
 --
-SELECT '' AS four, f1 AS abstime,
-  date_part('year', f1) AS year, date_part('month', f1) AS month,
-  date_part('day',f1) AS day, date_part('hour', f1) AS hour,
-  date_part('minute', f1) AS minute, date_part('second', f1) AS second
-  FROM ABSTIME_TBL
-  WHERE isfinite(f1) and f1 <> abstime 'current'
-  ORDER BY abstime;
- four |           abstime            | year | month | day | hour | minute | second 
-------+------------------------------+------+-------+-----+------+--------+--------
-      | Sat May 10 23:59:12 1947 PST | 1947 |     5 |  10 |   23 |     59 |     12
-      | epoch                        | 1969 |    12 |  31 |   16 |      0 |      0
-      | Sun Jan 14 03:14:21 1973 PST | 1973 |     1 |  14 |    3 |     14 |     21
-      | Mon May 01 00:30:30 1995 PDT | 1995 |     5 |   1 |    0 |     30 |     30
-(4 rows)
+SELECT '' AS ten, ABSTIME_TBL.f1 AS abstime, RELTIME_TBL.f1 AS reltime
+   WHERE (ABSTIME_TBL.f1 + RELTIME_TBL.f1)
+	< abstime 'Jan 14 14:00:00 1971'
+   ORDER BY abstime, reltime;
+ ten |           abstime            |    reltime    
+-----+------------------------------+---------------
+     | Sat May 10 23:59:12 1947 PST | @ 14 secs ago
+     | Sat May 10 23:59:12 1947 PST | @ 1 min
+     | Sat May 10 23:59:12 1947 PST | @ 5 hours
+     | Sat May 10 23:59:12 1947 PST | @ 10 days
+     | Sat May 10 23:59:12 1947 PST | @ 3 mons
+     | epoch                        | @ 14 secs ago
+     | epoch                        | @ 1 min
+     | epoch                        | @ 5 hours
+     | epoch                        | @ 10 days
+     | epoch                        | @ 3 mons
+(10 rows)
+
+-- these four queries should return the same answer
+-- the "infinity" and "-infinity" tuples in ABSTIME_TBL cannot be added and
+-- therefore, should not show up in the results.
+SELECT '' AS three, ABSTIME_TBL.*
+  WHERE  (ABSTIME_TBL.f1 + reltime '@ 3 year')         -- +3 years
+	< abstime 'Jan 14 14:00:00 1977';
+ three |              f1              
+-------+------------------------------
+       | Sun Jan 14 03:14:21 1973 PST
+       | epoch
+       | Sat May 10 23:59:12 1947 PST
+(3 rows)
+
+SELECT '' AS three, ABSTIME_TBL.*
+   WHERE  (ABSTIME_TBL.f1 + reltime '@ 3 year ago')    -- -3 years
+	< abstime 'Jan 14 14:00:00 1971';
+ three |              f1              
+-------+------------------------------
+       | Sun Jan 14 03:14:21 1973 PST
+       | epoch
+       | Sat May 10 23:59:12 1947 PST
+(3 rows)
+
+SELECT '' AS three, ABSTIME_TBL.*
+   WHERE  (ABSTIME_TBL.f1 - reltime '@ 3 year')        -- -(+3) years
+	< abstime 'Jan 14 14:00:00 1971';
+ three |              f1              
+-------+------------------------------
+       | Sun Jan 14 03:14:21 1973 PST
+       | epoch
+       | Sat May 10 23:59:12 1947 PST
+(3 rows)
+
+SELECT '' AS three, ABSTIME_TBL.*
+   WHERE  (ABSTIME_TBL.f1 - reltime '@ 3 year ago')    -- -(-3) years
+        < abstime 'Jan 14 14:00:00 1977';
+ three |              f1              
+-------+------------------------------
+       | Sun Jan 14 03:14:21 1973 PST
+       | epoch
+       | Sat May 10 23:59:12 1947 PST
+(3 rows)
 
 --
 -- Conversions
