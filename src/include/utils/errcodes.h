@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Id: errcodes.h,v 1.2 2003/07/27 21:49:54 tgl Exp $
+ * $Id: errcodes.h,v 1.3 2003/07/31 21:34:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,9 +110,9 @@
 #define ERRCODE_INVALID_REGULAR_EXPRESSION	MAKE_SQLSTATE('2','2', '0','1','B')
 #define ERRCODE_INVALID_TIME_ZONE_DISPLACEMENT_VALUE	MAKE_SQLSTATE('2','2', '0','0','9')
 #define ERRCODE_INVALID_USE_OF_ESCAPE_CHARACTER		MAKE_SQLSTATE('2','2', '0','0','C')
-#define ERRCODE_MOST_SPECIFIC_TYPE_MISMATCH	MAKE_SQLSTATE('2','2', '0','0','2')
+#define ERRCODE_MOST_SPECIFIC_TYPE_MISMATCH	MAKE_SQLSTATE('2','2', '0','0','G')
 #define ERRCODE_NULL_VALUE_NOT_ALLOWED		MAKE_SQLSTATE('2','2', '0','0','4')
-#define ERRCODE_NULL_VALUE_NO_INDICATOR_PARAMETER	MAKE_SQLSTATE('2','2', '0','0','G')
+#define ERRCODE_NULL_VALUE_NO_INDICATOR_PARAMETER	MAKE_SQLSTATE('2','2', '0','0','2')
 #define ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE	MAKE_SQLSTATE('2','2', '0','0','3')
 #define ERRCODE_STRING_DATA_LENGTH_MISMATCH	MAKE_SQLSTATE('2','2', '0','2','6')
 #define ERRCODE_STRING_DATA_RIGHT_TRUNCATION		MAKE_SQLSTATE('2','2', '0','0','1')
