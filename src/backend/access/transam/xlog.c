@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.177 2004/11/17 02:22:54 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.178 2004/11/17 16:26:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5270,9 +5270,9 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	if (!XLogArchivingActive())
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 (errmsg("WAL archiving is not configured"),
+				 (errmsg("WAL archiving is not active"),
 				 (errhint("archive_command must be defined before "
-						  "online backups can be safely made.")))));
+						  "online backups can be made safely.")))));
 
 	backupidstr = DatumGetCString(DirectFunctionCall1(textout,
 											 PointerGetDatum(backupid)));
