@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.85 2005/03/25 16:08:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.86 2005/03/26 00:41:31 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -133,18 +133,19 @@ typedef struct FormatNode FormatNode;
 
 typedef struct
 {
-	char	   *name;			/* keyword			*/
-	/* action for keyword		*/
-	int			len,			/* keyword length		*/
-				(*action) (int arg, char *inout, int suf, int flag, FormatNode *node, void *data),
-				id;				/* keyword id			*/
+	const char *name;			/* keyword			*/
+	int			len;			/* keyword length		*/
+	int (*action) (int arg, char *inout,	/* action for keyword */
+				   int suf, int flag,
+				   FormatNode *node, void *data);
+	int			id;				/* keyword id			*/
 	bool		isitdigit;		/* is expected output/input digit */
 } KeyWord;
 
 struct FormatNode
 {
 	int			type;			/* node type			*/
-	KeyWord    *key;			/* if node type is KEYWORD	*/
+	const KeyWord *key;			/* if node type is KEYWORD	*/
 	int			character,		/* if node type is CHAR		*/
 				suffix;			/* keyword suffix		*/
 };
@@ -648,7 +649,7 @@ typedef enum
  * KeyWords for DATE-TIME version
  * ----------
  */
-static KeyWord DCH_keywords[] = {
+static const KeyWord DCH_keywords[] = {
 /*	keyword, len, func, type, isitdigit			 is in Index */
 	{"A.D.", 4, dch_date, DCH_A_D, FALSE},		/* A */
 	{"A.M.", 4, dch_time, DCH_A_M, FALSE},
@@ -745,7 +746,7 @@ static KeyWord DCH_keywords[] = {
  * KeyWords for NUMBER version (now, isitdigit info is not needful here..)
  * ----------
  */
-static KeyWord NUM_keywords[] = {
+static const KeyWord NUM_keywords[] = {
 /*	keyword,	len, func.	type			   is in Index */
 	{",", 1, NULL, NUM_COMMA},	/* , */
 	{".", 1, NULL, NUM_DEC},	/* . */
@@ -792,7 +793,7 @@ static KeyWord NUM_keywords[] = {
  * KeyWords index for DATE-TIME version
  * ----------
  */
-static int	DCH_index[KeyWord_INDEX_SIZE] = {
+static const int	DCH_index[KeyWord_INDEX_SIZE] = {
 /*
 0	1	2	3	4	5	6	7	8	9
 */
@@ -816,7 +817,7 @@ static int	DCH_index[KeyWord_INDEX_SIZE] = {
  * KeyWords index for NUMBER version
  * ----------
  */
-static int	NUM_index[KeyWord_INDEX_SIZE] = {
+static const int	NUM_index[KeyWord_INDEX_SIZE] = {
 /*
 0	1	2	3	4	5	6	7	8	9
 */
@@ -876,15 +877,16 @@ typedef struct NUMProc
  * Functions
  * ----------
  */
-static KeyWord *index_seq_search(char *str, KeyWord *kw, int *index);
+static const KeyWord *index_seq_search(char *str, const KeyWord *kw,
+									   const int *index);
 static KeySuffix *suff_search(char *str, KeySuffix *suf, int type);
 static void NUMDesc_prepare(NUMDesc *num, FormatNode *n);
-static void parse_format(FormatNode *node, char *str, KeyWord *kw,
-			 KeySuffix *suf, int *index, int ver, NUMDesc *Num);
+static void parse_format(FormatNode *node, char *str, const KeyWord *kw,
+			 KeySuffix *suf, const int *index, int ver, NUMDesc *Num);
 static char *DCH_processor(FormatNode *node, char *inout, int flag, void *data);
 
 #ifdef DEBUG_TO_FROM_CHAR
-static void dump_index(KeyWord *k, int *index);
+static void dump_index(const KeyWord *k, const int *index);
 static void dump_node(FormatNode *node, int max);
 #endif
 
@@ -924,8 +926,8 @@ static void NUM_cache_remove(NUMCacheEntry *ent);
  * (can't be used binary search in format parsing)
  * ----------
  */
-static KeyWord *
-index_seq_search(char *str, KeyWord *kw, int *index)
+static const KeyWord *
+index_seq_search(char *str, const KeyWord *kw, const int *index)
 {
 	int			poz;
 
@@ -934,8 +936,7 @@ index_seq_search(char *str, KeyWord *kw, int *index)
 
 	if ((poz = *(index + (*str - ' '))) > -1)
 	{
-
-		KeyWord    *k = kw + poz;
+		const KeyWord *k = kw + poz;
 
 		do
 		{
@@ -1167,8 +1168,8 @@ NUMDesc_prepare(NUMDesc *num, FormatNode *n)
  * ----------
  */
 static void
-parse_format(FormatNode *node, char *str, KeyWord *kw,
-			 KeySuffix *suf, int *index, int ver, NUMDesc *Num)
+parse_format(FormatNode *node, char *str, const KeyWord *kw,
+			 KeySuffix *suf, const int *index, int ver, NUMDesc *Num)
 {
 	KeySuffix  *s;
 	FormatNode *n;
@@ -1594,7 +1595,7 @@ seq_search(char *name, char **array, int type, int max, int *len)
  * ----------
  */
 static void
-dump_index(KeyWord *k, int *index)
+dump_index(const KeyWord *k, const int *index)
 {
 	int			i,
 				count = 0,
@@ -2182,6 +2183,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			break;
 		case DCH_MONTH:
+			if (!tm->tm_mon)
+				return -1;
 			strcpy(workbuff, months_full[tm->tm_mon - 1]);
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(workbuff));
 			if (S_FM(suf))
@@ -2190,6 +2193,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				return 8;
 
 		case DCH_Month:
+			if (!tm->tm_mon)
+				return -1;
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
 			if (S_FM(suf))
 				return strlen(p_inout) - 1;
@@ -2197,6 +2202,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				return 8;
 
 		case DCH_month:
+			if (!tm->tm_mon)
+				return -1;
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
 			*inout = pg_tolower((unsigned char) *inout);
 			if (S_FM(suf))
@@ -2205,15 +2212,21 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				return 8;
 
 		case DCH_MON:
+			if (!tm->tm_mon)
+				return -1;
 			strcpy(inout, months[tm->tm_mon - 1]);
 			inout = str_toupper(inout);
 			return 2;
 
 		case DCH_Mon:
+			if (!tm->tm_mon)
+				return -1;
 			strcpy(inout, months[tm->tm_mon - 1]);
 			return 2;
 
 		case DCH_mon:
+			if (!tm->tm_mon)
+				return -1;
 			strcpy(inout, months[tm->tm_mon - 1]);
 			*inout = pg_tolower((unsigned char) *inout);
 			return 2;
@@ -2228,7 +2241,6 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return strlen(p_inout) - 1;
 				else
 					return 1;
-
 			}
 			else if (flag == FROM_CHAR)
 			{
@@ -2388,7 +2400,6 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return strlen(p_inout) - 1;
 				else
 					return 1;
-
 			}
 			else if (flag == FROM_CHAR)
 			{
@@ -2407,6 +2418,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_Q:
 			if (flag == TO_CHAR)
 			{
+				if (!tm->tm_mon)
+					return -1;
 				sprintf(inout, "%d", (tm->tm_mon - 1) / 3 + 1);
 				if (S_THth(suf))
 				{
@@ -2414,7 +2427,6 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					return 2;
 				}
 				return 0;
-
 			}
 			else if (flag == FROM_CHAR)
 			{
@@ -2613,6 +2625,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_RM:
 			if (flag == TO_CHAR)
 			{
+				if (!tm->tm_mon)
+					return -1;
 				sprintf(inout, "%*s", S_FM(suf) ? 0 : -4,
 						rm_months_upper[12 - tm->tm_mon]);
 				if (S_FM(suf))
@@ -2634,6 +2648,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 		case DCH_rm:
 			if (flag == TO_CHAR)
 			{
+				if (!tm->tm_mon)
+					return -1;
 				sprintf(inout, "%*s", S_FM(suf) ? 0 : -4,
 						rm_months_lower[12 - tm->tm_mon]);
 				if (S_FM(suf))
