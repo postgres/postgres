@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Feb 18 20:38:29 EST 2003
+   Last updated: Mon Jun 2 00:34:39 EDT 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -226,22 +226,29 @@
             less -x4
     emacs:
         M-x set-variable tab-width
+
         or
-        ; Cmd to set tab stops & indenting for working with PostgreSQL code
-             (c-add-style "pgsql"
-                      '("bsd"
-                                 (indent-tabs-mode . t)
-                                 (c-basic-offset   . 4)
-                                 (tab-width . 4)
-                                 (c-offsets-alist .
-                                            ((case-label . +))))
-                       t) ; t = set this mode on
+
+        (c-add-style "pgsql"
+                '("bsd"
+                        (indent-tabs-mode . t)
+                        (c-basic-offset   . 4)
+                        (tab-width . 4)
+                        (c-offsets-alist .
+                                ((case-label . +)))
+                )
+                nil ) ; t = set this style, nil = don't
+
+        (defun pgsql-c-mode ()
+                (c-mode)
+                (c-set-style "pgsql")
+        )
 
         and add this to your autoload list (modify file path in macro):
 
         (setq auto-mode-alist
-              (cons '("\\`/usr/local/src/pgsql/.*\\.[chyl]\\'" . pgsql-c-mode)
-            auto-mode-alist))
+                (cons '("\\`/home/andrew/pgsql/.*\\.[chyl]\\'" . pgsql-c-mode)
+                auto-mode-alist))
         or
             /*
              * Local variables:
