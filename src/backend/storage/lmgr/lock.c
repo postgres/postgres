@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.122 2003/02/19 23:41:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.123 2003/07/24 22:04:14 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -242,7 +242,7 @@ LockMethodTableInit(char *tabName,
 
 	if (numModes >= MAX_LOCKMODES)
 	{
-		elog(WARNING, "LockMethodTableInit: too many lock types %d greater than %d",
+		elog(WARNING, "too many lock types %d (limit is %d)",
 			 numModes, MAX_LOCKMODES);
 		return INVALID_LOCKMETHOD;
 	}
@@ -261,7 +261,7 @@ LockMethodTableInit(char *tabName,
 		ShmemInitStruct(shmemName, sizeof(LOCKMETHODTABLE), &found);
 
 	if (!lockMethodTable)
-		elog(FATAL, "LockMethodTableInit: couldn't initialize %s", tabName);
+		elog(FATAL, "could not initialize lock table \"%s\"", tabName);
 
 	/*
 	 * Lock the LWLock for the table (probably not necessary here)
@@ -307,7 +307,7 @@ LockMethodTableInit(char *tabName,
 											  hash_flags);
 
 	if (!lockMethodTable->lockHash)
-		elog(FATAL, "LockMethodTableInit: couldn't initialize %s", tabName);
+		elog(FATAL, "could not initialize lock table \"%s\"", tabName);
 	Assert(lockMethodTable->lockHash->hash == tag_hash);
 
 	/*
@@ -327,7 +327,7 @@ LockMethodTableInit(char *tabName,
 												hash_flags);
 
 	if (!lockMethodTable->proclockHash)
-		elog(FATAL, "LockMethodTableInit: couldn't initialize %s", tabName);
+		elog(FATAL, "could not initialize lock table \"%s\"", tabName);
 
 	/* init data structures */
 	LockMethodInit(lockMethodTable, conflictsP, numModes);
@@ -377,7 +377,7 @@ LockMethodTableRename(LOCKMETHOD lockmethod)
  * Returns: TRUE if lock was acquired, FALSE otherwise.  Note that
  *		a FALSE return is to be expected if dontWait is TRUE;
  *		but if dontWait is FALSE, only a parameter error can cause
- *		a FALSE return.  (XXX probably we should just elog on parameter
+ *		a FALSE return.  (XXX probably we should just ereport on parameter
  *		errors, instead of conflating this with failure to acquire lock?)
  *
  * Side Effects: The lock is acquired and recorded in lock tables.
@@ -459,7 +459,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	lockMethodTable = LockMethodTable[lockmethod];
 	if (!lockMethodTable)
 	{
-		elog(WARNING, "LockAcquire: bad lock table %d", lockmethod);
+		elog(WARNING, "bad lock table id: %d", lockmethod);
 		return FALSE;
 	}
 
@@ -477,8 +477,9 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	if (!lock)
 	{
 		LWLockRelease(masterLock);
-		elog(ERROR, "LockAcquire: lock table %d is out of memory",
-			 lockmethod);
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 		return FALSE;
 	}
 
@@ -524,7 +525,9 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	if (!proclock)
 	{
 		LWLockRelease(masterLock);
-		elog(ERROR, "LockAcquire: proclock table out of memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 		return FALSE;
 	}
 
@@ -569,7 +572,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 			{
 				if (i >= (int) lockmode)
 					break;		/* safe: we have a lock >= req level */
-				elog(LOG, "Deadlock risk: raising lock level"
+				elog(LOG, "deadlock risk: raising lock level"
 					 " from %s to %s on object %u/%u/%u",
 					 lock_mode_names[i], lock_mode_names[lockmode],
 				 lock->tag.relId, lock->tag.dbId, lock->tag.objId.blkno);
@@ -649,7 +652,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 												  (void *) proclock,
 												  HASH_REMOVE, NULL);
 				if (!proclock)
-					elog(WARNING, "LockAcquire: remove proclock, table corrupted");
+					elog(WARNING, "proclock table corrupted");
 			}
 			else
 				PROCLOCK_PRINT("LockAcquire: NHOLDING", proclock);
@@ -906,13 +909,10 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 		LOCK_PRINT("WaitOnLock: aborting on lock", lock, lockmode);
 		LWLockRelease(lockMethodTable->masterLock);
 		/*
-		 * Now that we aren't holding the LockMgrLock, print details about
-		 * the detected deadlock.  We didn't want to do this before because
-		 * sending elog messages to the client while holding the shared lock
-		 * is bad for concurrency.
+		 * Now that we aren't holding the LockMgrLock, we can give an error
+		 * report including details about the detected deadlock.
 		 */
 		DeadLockReport();
-		elog(ERROR, "deadlock detected");
 		/* not reached */
 	}
 
@@ -1020,12 +1020,12 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 
 	/*
 	 * let the caller print its own error message, too. Do not
-	 * elog(ERROR).
+	 * ereport(ERROR).
 	 */
 	if (!lock)
 	{
 		LWLockRelease(masterLock);
-		elog(WARNING, "LockRelease: no such lock");
+		elog(WARNING, "no such lock");
 		return FALSE;
 	}
 	LOCK_PRINT("LockRelease: found", lock, lockmode);
@@ -1048,10 +1048,10 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		LWLockRelease(masterLock);
 #ifdef USER_LOCKS
 		if (lockmethod == USER_LOCKMETHOD)
-			elog(WARNING, "LockRelease: no lock with this tag");
+			elog(WARNING, "no lock with this tag");
 		else
 #endif
-			elog(WARNING, "LockRelease: proclock table corrupted");
+			elog(WARNING, "proclock table corrupted");
 		return FALSE;
 	}
 	PROCLOCK_PRINT("LockRelease: found", proclock);
@@ -1065,7 +1065,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		PROCLOCK_PRINT("LockRelease: WRONGTYPE", proclock);
 		Assert(proclock->holding[lockmode] >= 0);
 		LWLockRelease(masterLock);
-		elog(WARNING, "LockRelease: you don't own a lock of type %s",
+		elog(WARNING, "you don't own a lock of type %s",
 			 lock_mode_names[lockmode]);
 		return FALSE;
 	}
@@ -1119,7 +1119,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		if (!lock)
 		{
 			LWLockRelease(masterLock);
-			elog(WARNING, "LockRelease: remove lock, table corrupted");
+			elog(WARNING, "lock table corrupted");
 			return FALSE;
 		}
 		wakeupNeeded = false;	/* should be false, but make sure */
@@ -1148,7 +1148,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		if (!proclock)
 		{
 			LWLockRelease(masterLock);
-			elog(WARNING, "LockRelease: remove proclock, table corrupted");
+			elog(WARNING, "proclock table corrupted");
 			return FALSE;
 		}
 	}
@@ -1197,7 +1197,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 	lockMethodTable = LockMethodTable[lockmethod];
 	if (!lockMethodTable)
 	{
-		elog(WARNING, "LockReleaseAll: bad lockmethod %d", lockmethod);
+		elog(WARNING, "bad lockmethod %d", lockmethod);
 		return FALSE;
 	}
 
@@ -1301,7 +1301,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 		if (!proclock)
 		{
 			LWLockRelease(masterLock);
-			elog(WARNING, "LockReleaseAll: proclock table corrupted");
+			elog(WARNING, "proclock table corrupted");
 			return FALSE;
 		}
 
@@ -1319,7 +1319,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 			if (!lock)
 			{
 				LWLockRelease(masterLock);
-				elog(WARNING, "LockReleaseAll: cannot remove lock from HTAB");
+				elog(WARNING, "cannot remove lock from HTAB");
 				return FALSE;
 			}
 		}
@@ -1334,7 +1334,7 @@ next_item:
 
 #ifdef LOCK_DEBUG
 	if (lockmethod == USER_LOCKMETHOD ? Trace_userlocks : Trace_locks)
-		elog(LOG, "LockReleaseAll: done");
+		elog(LOG, "LockReleaseAll done");
 #endif
 
 	return TRUE;

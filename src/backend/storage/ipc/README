@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/storage/ipc/README,v 1.2 2002/09/20 03:53:55 momjian Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/ipc/README,v 1.3 2003/07/24 22:04:09 tgl Exp $
 Mon Jul 18 11:09:22 PDT 1988  W.KLAS
 
 Cache invalidation synchronization routines:
@@ -9,23 +9,9 @@ backend can register a message which then has to be read by
 all backends. A message read by all backends is removed from the 
 queue automatically. If a message has been lost because the buffer
 was full, all backends that haven't read this message will be
-noticed that they have to reset their cache state. This is done
+told that they have to reset their cache state. This is done
 at the time when they try to read the message queue.
 
 The message queue is implemented as a shared buffer segment. Actually,
 the queue is a circle to allow fast inserting, reading (invalidate data) and
 maintaining the buffer.
-
-Access to this shared message buffer is synchronized by the lock manager.
-The lock manager treats the buffer as a regular relation and sets
-relation level locks (with mode = LockWait) to block backends while 
-another backend is writing or reading the buffer. The identifiers used
-for this special 'relation' are database id = 0 and relation id = 0.
-
-The current implementation prints regular (e)log information
-when a message has been removed from the buffer because the buffer 
-is full, and a backend has to reset its cache state. The elog level
-is NOTICE. This can be used to improve the behavior of backends
-when invalidating or resetting their cache state.
-
-

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.96 2002/09/02 02:47:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.97 2003/07/24 22:04:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ getbytealen(bytea *data)
 {
 	Assert(!VARATT_IS_EXTENDED(data));
 	if (VARSIZE(data) < VARHDRSZ)
-		elog(ERROR, "getbytealen: VARSIZE(data) < VARHDRSZ. This is internal error.");
+		elog(ERROR, "invalid VARSIZE(data)");
 	return (VARSIZE(data) - VARHDRSZ);
 }
 
@@ -71,7 +71,7 @@ inv_create(int flags)
 
 	/* Check for duplicate (shouldn't happen) */
 	if (LargeObjectExists(file_oid))
-		elog(ERROR, "inv_create: large object %u already exists. This is internal error.", file_oid);
+		elog(ERROR, "large object %u already exists", file_oid);
 
 	/*
 	 * Create the LO by writing an empty first page for it in
@@ -104,7 +104,7 @@ inv_create(int flags)
 		retval->heap_r = heap_openr(LargeObjectRelationName, AccessShareLock);
 	}
 	else
-		elog(ERROR, "inv_create: invalid flags: %d", flags);
+		elog(ERROR, "invalid flags: %d", flags);
 
 	retval->index_r = index_openr(LargeObjectLOidPNIndex);
 
@@ -123,7 +123,9 @@ inv_open(Oid lobjId, int flags)
 	LargeObjectDesc *retval;
 
 	if (!LargeObjectExists(lobjId))
-		elog(ERROR, "inv_open: large object %u not found", lobjId);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("large object %u does not exist", lobjId)));
 
 	retval = (LargeObjectDesc *) palloc(sizeof(LargeObjectDesc));
 
@@ -141,7 +143,7 @@ inv_open(Oid lobjId, int flags)
 		retval->heap_r = heap_openr(LargeObjectRelationName, AccessShareLock);
 	}
 	else
-		elog(ERROR, "inv_open: invalid flags: %d", flags);
+		elog(ERROR, "invalid flags: %d", flags);
 
 	retval->index_r = index_openr(LargeObjectLOidPNIndex);
 
@@ -241,7 +243,9 @@ inv_getsize(LargeObjectDesc *obj_desc)
 	index_endscan(sd);
 
 	if (!found)
-		elog(ERROR, "inv_getsize: large object %u not found", obj_desc->id);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("large object %u does not exist", obj_desc->id)));
 	return lastbyte;
 }
 
@@ -254,12 +258,12 @@ inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
 	{
 		case SEEK_SET:
 			if (offset < 0)
-				elog(ERROR, "inv_seek: invalid offset: %d", offset);
+				elog(ERROR, "invalid seek offset: %d", offset);
 			obj_desc->offset = offset;
 			break;
 		case SEEK_CUR:
 			if (offset < 0 && obj_desc->offset < ((uint32) (-offset)))
-				elog(ERROR, "inv_seek: invalid offset: %d", offset);
+				elog(ERROR, "invalid seek offset: %d", offset);
 			obj_desc->offset += offset;
 			break;
 		case SEEK_END:
@@ -267,12 +271,12 @@ inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
 				uint32		size = inv_getsize(obj_desc);
 
 				if (offset < 0 && size < ((uint32) (-offset)))
-					elog(ERROR, "inv_seek: invalid offset: %d", offset);
+					elog(ERROR, "invalid seek offset: %d", offset);
 				obj_desc->offset = size + offset;
 			}
 			break;
 		default:
-			elog(ERROR, "inv_seek: invalid whence: %d", whence);
+			elog(ERROR, "invalid whence: %d", whence);
 	}
 	return obj_desc->offset;
 }

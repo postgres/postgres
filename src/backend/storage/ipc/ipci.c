@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.53 2003/05/27 17:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.54 2003/07/24 22:04:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 	 */
 	InitLocks();
 	if (InitLockTable(maxBackends) == INVALID_TABLEID)
-		elog(FATAL, "Couldn't create the lock table");
+		elog(FATAL, "could not create the lock table");
 
 	/*
 	 * Set up process table

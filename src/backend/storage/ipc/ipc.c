@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.82 2003/05/27 17:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.83 2003/07/24 22:04:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,8 @@
 
 
 /*
- * This flag is set during proc_exit() to change elog()'s behavior,
- * so that an elog() from an on_proc_exit routine cannot get us out
+ * This flag is set during proc_exit() to change ereport()'s behavior,
+ * so that an ereport() from an on_proc_exit routine cannot get us out
  * of the exit procedure.  We do NOT want to go back to the idle loop...
  */
 bool		proc_exit_inprogress = false;
@@ -74,7 +74,7 @@ void
 proc_exit(int code)
 {
 	/*
-	 * Once we set this flag, we are committed to exit.  Any elog() will
+	 * Once we set this flag, we are committed to exit.  Any ereport() will
 	 * NOT send control back to the main loop, but right back here.
 	 */
 	proc_exit_inprogress = true;
@@ -101,8 +101,8 @@ proc_exit(int code)
 	 * call all the callbacks registered before calling exit().
 	 *
 	 * Note that since we decrement on_proc_exit_index each time, if a
-	 * callback calls elog(ERROR) or elog(FATAL) then it won't be invoked
-	 * again when control comes back here (nor will the
+	 * callback calls ereport(ERROR) or ereport(FATAL) then it won't be
+	 * invoked again when control comes back here (nor will the
 	 * previously-completed callbacks).  So, an infinite loop should not
 	 * be possible.
 	 */
@@ -149,7 +149,9 @@ void
 			on_proc_exit(void (*function) (), Datum arg)
 {
 	if (on_proc_exit_index >= MAX_ON_EXITS)
-		elog(FATAL, "Out of on_proc_exit slots");
+		ereport(FATAL,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg_internal("out of on_proc_exit slots")));
 
 	on_proc_exit_list[on_proc_exit_index].function = function;
 	on_proc_exit_list[on_proc_exit_index].arg = arg;
@@ -168,7 +170,9 @@ void
 			on_shmem_exit(void (*function) (), Datum arg)
 {
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
-		elog(FATAL, "Out of on_shmem_exit slots");
+		ereport(FATAL,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg_internal("out of on_shmem_exit slots")));
 
 	on_shmem_exit_list[on_shmem_exit_index].function = function;
 	on_shmem_exit_list[on_shmem_exit_index].arg = arg;

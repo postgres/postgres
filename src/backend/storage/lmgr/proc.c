@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.130 2003/05/15 16:35:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.131 2003/07/24 22:04:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,9 @@ InitProcGlobal(int maxBackends)
 
 			proc = (PGPROC *) ShmemAlloc(sizeof(PGPROC));
 			if (!proc)
-				elog(FATAL, "cannot create new proc: out of memory");
+				ereport(FATAL,
+						(errcode(ERRCODE_OUT_OF_MEMORY),
+						 errmsg("out of memory")));
 			MemSet(proc, 0, sizeof(PGPROC));
 			PGSemaphoreCreate(&proc->sem);
 			proc->links.next = ProcGlobal->freeProcs;
@@ -162,7 +164,9 @@ InitProcGlobal(int maxBackends)
 		 */
 		DummyProc = (PGPROC *) ShmemAlloc(sizeof(PGPROC));
 		if (!DummyProc)
-			elog(FATAL, "cannot create new proc: out of memory");
+			ereport(FATAL,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 		MemSet(DummyProc, 0, sizeof(PGPROC));
 		DummyProc->pid = 0;		/* marks DummyProc as not in use */
 		PGSemaphoreCreate(&DummyProc->sem);
@@ -189,10 +193,10 @@ InitProcess(void)
 	 * we are a backend, we inherit this by fork() from the postmaster).
 	 */
 	if (procglobal == NULL)
-		elog(PANIC, "InitProcess: Proc Header uninitialized");
+		elog(PANIC, "proc header uninitialized");
 
 	if (MyProc != NULL)
-		elog(ERROR, "InitProcess: you already exist");
+		elog(ERROR, "you already exist");
 
 	/*
 	 * Try to get a proc struct from the free list.  If this fails, we
@@ -216,7 +220,9 @@ InitProcess(void)
 		 * standard error message.
 		 */
 		SpinLockRelease(ProcStructLock);
-		elog(FATAL, "Sorry, too many clients already");
+		ereport(FATAL,
+				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
+				 errmsg("sorry, too many clients already")));
 	}
 
 	/*
@@ -270,17 +276,16 @@ InitDummyProcess(void)
 	 * inherit this by fork() from the postmaster).
 	 */
 	if (ProcGlobal == NULL || DummyProc == NULL)
-		elog(PANIC, "InitDummyProcess: Proc Header uninitialized");
+		elog(PANIC, "proc header uninitialized");
 
 	if (MyProc != NULL)
-		elog(ERROR, "InitDummyProcess: you already exist");
+		elog(ERROR, "you already exist");
 
 	/*
 	 * DummyProc should not presently be in use by anyone else
 	 */
 	if (DummyProc->pid != 0)
-		elog(FATAL, "InitDummyProcess: DummyProc is in use by PID %d",
-			 DummyProc->pid);
+		elog(FATAL, "DummyProc is in use by PID %d", DummyProc->pid);
 	MyProc = DummyProc;
 
 	/*
@@ -319,7 +324,7 @@ InitDummyProcess(void)
  * Returns true if we had been waiting for a lock, else false.
  *
  * (Normally, this would only happen if we accept a cancel/die
- * interrupt while waiting; but an elog(ERROR) while waiting is
+ * interrupt while waiting; but an ereport(ERROR) while waiting is
  * within the realm of possibility, too.)
  */
 bool
@@ -655,7 +660,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	 * running the rather expensive deadlock-check code in most cases.
 	 */
 	if (!enable_sig_alarm(DeadlockTimeout, false))
-		elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
+		elog(FATAL, "could not set timer for process wakeup");
 
 	/*
 	 * If someone wakes us between LWLockRelease and PGSemaphoreLock,
@@ -677,7 +682,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	 * Disable the timer, if it's still running
 	 */
 	if (!disable_sig_alarm(false))
-		elog(FATAL, "ProcSleep: Unable to disable timer for process wakeup");
+		elog(FATAL, "could not disable timer for process wakeup");
 
 	/*
 	 * Now there is nothing for LockWaitCancel to do.

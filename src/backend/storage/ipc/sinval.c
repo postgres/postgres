@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.56 2003/06/12 01:42:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.57 2003/07/24 22:04:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,9 +47,11 @@ InitBackendSharedInvalidationState(void)
 	flag = SIBackendInit(shmInvalBuffer);
 	LWLockRelease(SInvalLock);
 	if (flag < 0)				/* unexpected problem */
-		elog(FATAL, "Backend cache invalidation initialization failed");
+		elog(FATAL, "shared cache invalidation initialization failed");
 	if (flag == 0)				/* expected problem: MaxBackends exceeded */
-		elog(FATAL, "Sorry, too many clients already");
+		ereport(FATAL,
+				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
+				 errmsg("sorry, too many clients already")));
 }
 
 /*
@@ -65,7 +67,7 @@ SendSharedInvalidMessage(SharedInvalidationMessage *msg)
 	insertOK = SIInsertDataEntry(shmInvalBuffer, msg);
 	LWLockRelease(SInvalLock);
 	if (!insertOK)
-		elog(DEBUG4, "SendSharedInvalidMessage: SI buffer overflow");
+		elog(DEBUG4, "SI buffer overflow");
 }
 
 /*
@@ -108,7 +110,7 @@ ReceiveSharedInvalidMessages(
 		if (getResult < 0)
 		{
 			/* got a reset message */
-			elog(DEBUG4, "ReceiveSharedInvalidMessages: cache state reset");
+			elog(DEBUG4, "cache state reset");
 			resetFunction();
 		}
 		else
@@ -336,7 +338,9 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		snapshot->xip = (TransactionId *)
 			malloc(MaxBackends * sizeof(TransactionId));
 		if (snapshot->xip == NULL)
-			elog(ERROR, "Memory exhausted in GetSnapshotData");
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 	}
 
 	globalxmin = xmin = GetCurrentTransactionId();

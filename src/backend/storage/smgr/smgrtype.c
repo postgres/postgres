@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.19 2002/06/20 20:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.20 2003/07/24 22:04:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ smgrin(PG_FUNCTION_ARGS)
 		if (strcmp(s, StorageManager[i].smgr_name) == 0)
 			PG_RETURN_INT16(i);
 	}
-	elog(ERROR, "smgrin: unknown storage manager name '%s'", s);
+	elog(ERROR, "unrecognized storage manager name \"%s\"", s);
 	PG_RETURN_INT16(0);
 }
 
@@ -59,7 +59,7 @@ smgrout(PG_FUNCTION_ARGS)
 	char	   *s;
 
 	if (i >= NStorageManagers || i < 0)
-		elog(ERROR, "Illegal storage manager id %d", i);
+		elog(ERROR, "invalid storage manager id: %d", i);
 
 	s = pstrdup(StorageManager[i].smgr_name);
 	PG_RETURN_CSTRING(s);

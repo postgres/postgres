@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.98 2003/04/29 03:21:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.99 2003/07/24 22:04:09 tgl Exp $
  *
  * NOTES:
  *
@@ -247,7 +247,7 @@ pg_fdatasync(int fd)
  * This is exported for use by places that really want a plain kernel FD,
  * but need to be proof against running out of FDs.  Once an FD has been
  * successfully returned, it is the caller's responsibility to ensure that
- * it will not be leaked on elog()!  Most users should *not* call this
+ * it will not be leaked on ereport()!  Most users should *not* call this
  * routine directly, but instead use the VFD abstraction level, which
  * provides protection against descriptor leaks as well as management of
  * files that need to be open for more than a short period of time.
@@ -272,8 +272,9 @@ tryAgain:
 	{
 		int			save_errno = errno;
 
-		DO_DB(elog(LOG, "BasicOpenFile: not enough descs, retry, er= %d",
-				   errno));
+		ereport(LOG,
+				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+				 errmsg("out of file descriptors: %m; release and retry")));
 		errno = 0;
 		if (ReleaseLruFile())
 			goto tryAgain;
@@ -306,7 +307,7 @@ pg_nofile(void)
 #else
 			no_files = (long) max_files_per_process;
 #endif
-			elog(LOG, "pg_nofile: sysconf(_SC_OPEN_MAX) failed; using %ld",
+			elog(LOG, "sysconf(_SC_OPEN_MAX) failed; using %ld",
 				 no_files);
 		}
 #else							/* !HAVE_SYSCONF */
@@ -328,9 +329,11 @@ pg_nofile(void)
 		 * Make sure we have enough to get by after reserving some for LD.
 		 */
 		if ((no_files - RESERVE_FOR_LD) < FD_MINFREE)
-			elog(FATAL, "pg_nofile: insufficient file descriptors available to start backend.\n"
-				 "\tSystem allows %ld, we need at least %d.",
-				 no_files, RESERVE_FOR_LD + FD_MINFREE);
+			ereport(FATAL,
+					(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+					 errmsg("insufficient file descriptors available to start backend"),
+					 errdetail("System allows %ld, we need at least %d.",
+							   no_files, RESERVE_FOR_LD + FD_MINFREE)));
 
 		no_files -= RESERVE_FOR_LD;
 	}
@@ -399,7 +402,7 @@ LruDelete(File file)
 
 	/* close the file */
 	if (close(vfdP->fd))
-		elog(LOG, "LruDelete: failed to close %s: %m",
+		elog(LOG, "failed to close \"%s\": %m",
 			 vfdP->fileName);
 
 	--nfile;
@@ -515,7 +518,9 @@ AllocateVfd(void)
 		/* initialize header entry first time through */
 		VfdCache = (Vfd *) malloc(sizeof(Vfd));
 		if (VfdCache == NULL)
-			elog(FATAL, "AllocateVfd: no room for VFD array");
+			ereport(FATAL,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 		MemSet((char *) &(VfdCache[0]), 0, sizeof(Vfd));
 		VfdCache->fd = VFD_CLOSED;
 
@@ -542,12 +547,13 @@ AllocateVfd(void)
 			newCacheSize = 32;
 
 		/*
-		 * Be careful not to clobber VfdCache ptr if realloc fails; we
-		 * will need it during proc_exit cleanup!
+		 * Be careful not to clobber VfdCache ptr if realloc fails.
 		 */
 		newVfdCache = (Vfd *) realloc(VfdCache, sizeof(Vfd) * newCacheSize);
 		if (newVfdCache == NULL)
-			elog(FATAL, "AllocateVfd: no room to enlarge VFD array");
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 		VfdCache = newVfdCache;
 
 		/*
@@ -678,14 +684,21 @@ fileNameOpenFile(FileName fileName,
 				 int fileFlags,
 				 int fileMode)
 {
+	char	   *fnamecopy;
 	File		file;
 	Vfd		   *vfdP;
 
-	if (fileName == NULL)
-		elog(ERROR, "fileNameOpenFile: NULL fname");
-
 	DO_DB(elog(LOG, "fileNameOpenFile: %s %x %o",
 			   fileName, fileFlags, fileMode));
+
+	/*
+	 * We need a malloc'd copy of the file name; fail cleanly if no room.
+	 */
+	fnamecopy = strdup(fileName);
+	if (fnamecopy == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	file = AllocateVfd();
 	vfdP = &VfdCache[file];
@@ -701,6 +714,7 @@ fileNameOpenFile(FileName fileName,
 	if (vfdP->fd < 0)
 	{
 		FreeVfd(file);
+		free(fnamecopy);
 		return -1;
 	}
 	++nfile;
@@ -709,11 +723,7 @@ fileNameOpenFile(FileName fileName,
 
 	Insert(file);
 
-	vfdP->fileName = (char *) malloc(strlen(fileName) + 1);
-	if (vfdP->fileName == NULL)
-		elog(FATAL, "fileNameOpenFile: no room to save VFD filename");
-	strcpy(vfdP->fileName, fileName);
-
+	vfdP->fileName = fnamecopy;
 	/* Saved flags are adjusted to be OK for re-opening file */
 	vfdP->fileFlags = fileFlags & ~(O_CREAT | O_TRUNC | O_EXCL);
 	vfdP->fileMode = fileMode;
@@ -801,7 +811,7 @@ OpenTemporaryFile(bool interXact)
 								O_RDWR | O_CREAT | O_TRUNC | PG_BINARY,
 								0600);
 		if (file <= 0)
-			elog(ERROR, "Failed to create temporary file %s: %m",
+			elog(ERROR, "could not create temporary file \"%s\": %m",
 				 tempfilepath);
 	}
 
@@ -837,7 +847,7 @@ FileClose(File file)
 
 		/* close the file */
 		if (close(vfdP->fd))
-			elog(LOG, "FileClose: failed to close %s: %m",
+			elog(LOG, "failed to close \"%s\": %m",
 				 vfdP->fileName);
 
 		--nfile;
@@ -852,7 +862,7 @@ FileClose(File file)
 		/* reset flag so that die() interrupt won't cause problems */
 		vfdP->fdstate &= ~FD_TEMPORARY;
 		if (unlink(vfdP->fileName))
-			elog(LOG, "FileClose: failed to unlink %s: %m",
+			elog(LOG, "failed to unlink \"%s\": %m",
 				 vfdP->fileName);
 	}
 
@@ -943,7 +953,7 @@ FileSeek(File file, long offset, int whence)
 		{
 			case SEEK_SET:
 				if (offset < 0)
-					elog(ERROR, "FileSeek: invalid offset: %ld", offset);
+					elog(ERROR, "invalid seek offset: %ld", offset);
 				VfdCache[file].seekPos = offset;
 				break;
 			case SEEK_CUR:
@@ -954,7 +964,7 @@ FileSeek(File file, long offset, int whence)
 				VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
 				break;
 			default:
-				elog(ERROR, "FileSeek: invalid whence: %d", whence);
+				elog(ERROR, "invalid whence: %d", whence);
 				break;
 		}
 	}
@@ -964,7 +974,7 @@ FileSeek(File file, long offset, int whence)
 		{
 			case SEEK_SET:
 				if (offset < 0)
-					elog(ERROR, "FileSeek: invalid offset: %ld", offset);
+					elog(ERROR, "invalid seek offset: %ld", offset);
 				if (VfdCache[file].seekPos != offset)
 					VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
 				break;
@@ -976,7 +986,7 @@ FileSeek(File file, long offset, int whence)
 				VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
 				break;
 			default:
-				elog(ERROR, "FileSeek: invalid whence: %d", whence);
+				elog(ERROR, "invalid whence: %d", whence);
 				break;
 		}
 	}
@@ -1026,7 +1036,7 @@ FileTruncate(File file, long offset)
  *
  * fd.c will automatically close all files opened with AllocateFile at
  * transaction commit or abort; this prevents FD leakage if a routine
- * that calls AllocateFile is terminated prematurely by elog(ERROR).
+ * that calls AllocateFile is terminated prematurely by ereport(ERROR).
  *
  * Ideally this should be the *only* direct call of fopen() in the backend.
  */
@@ -1038,7 +1048,7 @@ AllocateFile(char *name, char *mode)
 	DO_DB(elog(LOG, "AllocateFile: Allocated %d", numAllocatedFiles));
 
 	if (numAllocatedFiles >= MAX_ALLOCATED_FILES)
-		elog(ERROR, "AllocateFile: too many private FDs demanded");
+		elog(ERROR, "too many private FDs demanded");
 
 TryAgain:
 	if ((file = fopen(name, mode)) != NULL)
@@ -1052,8 +1062,9 @@ TryAgain:
 	{
 		int			save_errno = errno;
 
-		DO_DB(elog(LOG, "AllocateFile: not enough descs, retry, er= %d",
-				   errno));
+		ereport(LOG,
+				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+				 errmsg("out of file descriptors: %m; release and retry")));
 		errno = 0;
 		if (ReleaseLruFile())
 			goto TryAgain;
@@ -1081,7 +1092,7 @@ FreeFile(FILE *file)
 		}
 	}
 	if (i < 0)
-		elog(WARNING, "FreeFile: file was not obtained from AllocateFile");
+		elog(WARNING, "file passed to FreeFile was not obtained from AllocateFile");
 
 	fclose(file);
 }
@@ -1234,7 +1245,7 @@ RemovePgTempFiles(void)
 						unlink(rm_path);
 					else
 						elog(LOG,
-							 "Unexpected file found in temporary-files directory: %s",
+							 "unexpected file found in temporary-files directory: \"%s\"",
 							 rm_path);
 				}
 				closedir(temp_dir);

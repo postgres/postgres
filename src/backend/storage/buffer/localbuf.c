@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.47 2002/12/05 22:48:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.48 2003/07/24 22:04:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,9 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 		}
 	}
 	if (bufHdr == NULL)
-		elog(ERROR, "no empty local buffer.");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_RESOURCES),
+				 errmsg("no empty local buffer available")));
 
 	/*
 	 * this buffer is not referenced but it might still be dirty. if
@@ -122,7 +124,9 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 		char	   *data = (char *) malloc(BLCKSZ);
 
 		if (data == NULL)
-			elog(ERROR, "Out of memory in LocalBufferAlloc");
+			ereport(ERROR,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of memory")));
 
 		/*
 		 * This is a bit of a hack: bufHdr->data needs to be a shmem
@@ -229,7 +233,7 @@ AtEOXact_LocalBuffers(bool isCommit)
 
 			if (isCommit)
 				elog(WARNING,
-					 "Local Buffer Leak: [%03d] (rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
+					 "local buffer leak: [%03d] (rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
 					 i,
 					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 					 buf->tag.blockNum, buf->flags,

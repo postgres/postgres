@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.94 2003/01/07 01:19:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.95 2003/07/24 22:04:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,7 +249,7 @@ mdextend(Relation reln, BlockNumber blocknum, char *buffer)
 	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
 #ifdef DIAGNOSTIC
 	if (seekpos >= BLCKSZ * RELSEG_SIZE)
-		elog(FATAL, "seekpos too big!");
+		elog(FATAL, "seekpos too big");
 #endif
 #else
 	seekpos = (long) (BLCKSZ * (blocknum));
@@ -284,7 +284,7 @@ mdextend(Relation reln, BlockNumber blocknum, char *buffer)
 #ifndef LET_OS_MANAGE_FILESIZE
 #ifdef DIAGNOSTIC
 	if (_mdnblocks(v->mdfd_vfd, BLCKSZ) > ((BlockNumber) RELSEG_SIZE))
-		elog(FATAL, "segment too big!");
+		elog(FATAL, "segment too big");
 #endif
 #endif
 
@@ -338,7 +338,7 @@ mdopen(Relation reln)
 
 #ifdef DIAGNOSTIC
 	if (_mdnblocks(fd, BLCKSZ) > ((BlockNumber) RELSEG_SIZE))
-		elog(FATAL, "segment too big on relopen!");
+		elog(FATAL, "segment too big");
 #endif
 #endif
 
@@ -421,7 +421,7 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 
 #ifdef DIAGNOSTIC
 	if (seekpos >= BLCKSZ * RELSEG_SIZE)
-		elog(FATAL, "seekpos too big!");
+		elog(FATAL, "seekpos too big");
 #endif
 #else
 	seekpos = (long) (BLCKSZ * (blocknum));
@@ -468,7 +468,7 @@ mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
 	seekpos = (long) (BLCKSZ * (blocknum % ((BlockNumber) RELSEG_SIZE)));
 #ifdef DIAGNOSTIC
 	if (seekpos >= BLCKSZ * RELSEG_SIZE)
-		elog(FATAL, "seekpos too big!");
+		elog(FATAL, "seekpos too big");
 #endif
 #else
 	seekpos = (long) (BLCKSZ * (blocknum));
@@ -507,7 +507,7 @@ mdblindwrt(RelFileNode rnode,
 	seekpos = (long) (BLCKSZ * (blkno % ((BlockNumber) RELSEG_SIZE)));
 #ifdef DIAGNOSTIC
 	if (seekpos >= BLCKSZ * RELSEG_SIZE)
-		elog(FATAL, "seekpos too big!");
+		elog(FATAL, "seekpos too big");
 #endif
 #else
 	seekpos = (long) (BLCKSZ * (blkno));
@@ -516,7 +516,7 @@ mdblindwrt(RelFileNode rnode,
 	errno = 0;
 	if (lseek(fd, seekpos, SEEK_SET) != seekpos)
 	{
-		elog(LOG, "mdblindwrt: lseek(%ld) failed: %m", seekpos);
+		elog(LOG, "lseek(%ld) failed: %m", seekpos);
 		close(fd);
 		return SM_FAIL;
 	}
@@ -530,13 +530,13 @@ mdblindwrt(RelFileNode rnode,
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
-		elog(LOG, "mdblindwrt: write() failed: %m");
+		elog(LOG, "write() failed: %m");
 		status = SM_FAIL;
 	}
 
 	if (close(fd) < 0)
 	{
-		elog(LOG, "mdblindwrt: close() failed: %m");
+		elog(LOG, "close() failed: %m");
 		status = SM_FAIL;
 	}
 
@@ -551,7 +551,7 @@ mdblindwrt(RelFileNode rnode,
  *		called, then only segments up to the last one actually touched
  *		are present in the chain...
  *
- *		Returns # of blocks, elog's on error.
+ *		Returns # of blocks, ereport's on error.
  */
 BlockNumber
 mdnblocks(Relation reln)
@@ -588,7 +588,7 @@ mdnblocks(Relation reln)
 	{
 		nblocks = _mdnblocks(v->mdfd_vfd, BLCKSZ);
 		if (nblocks > ((BlockNumber) RELSEG_SIZE))
-			elog(FATAL, "segment too big in mdnblocks!");
+			elog(FATAL, "segment too big");
 		if (nblocks < ((BlockNumber) RELSEG_SIZE))
 			return (segno * ((BlockNumber) RELSEG_SIZE)) + nblocks;
 
@@ -608,7 +608,7 @@ mdnblocks(Relation reln)
 			 */
 			v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
 			if (v->mdfd_chain == (MdfdVec *) NULL)
-				elog(ERROR, "cannot count blocks for %s -- open failed: %m",
+				elog(ERROR, "could not count blocks for \"%s\": %m",
 					 RelationGetRelationName(reln));
 		}
 
@@ -855,7 +855,7 @@ _mdfd_openseg(Relation reln, BlockNumber segno, int oflags)
 
 #ifdef DIAGNOSTIC
 	if (_mdnblocks(fd, BLCKSZ) > ((BlockNumber) RELSEG_SIZE))
-		elog(FATAL, "segment too big on openseg!");
+		elog(FATAL, "segment too big");
 #endif
 #endif
 
@@ -874,7 +874,7 @@ _mdfd_getrelnfd(Relation reln)
 	if (fd < 0)
 	{
 		if ((fd = mdopen(reln)) < 0)
-			elog(ERROR, "_mdfd_getrelnfd: cannot open relation %s: %m",
+			elog(ERROR, "could not open relation \"%s\": %m",
 				 RelationGetRelationName(reln));
 		reln->rd_fd = fd;
 	}
@@ -917,7 +917,7 @@ _mdfd_getseg(Relation reln, BlockNumber blkno)
 			v->mdfd_chain = _mdfd_openseg(reln, i, (segno == 1) ? O_CREAT : 0);
 
 			if (v->mdfd_chain == (MdfdVec *) NULL)
-				elog(ERROR, "cannot open segment %u of relation %s (target block %u): %m",
+				elog(ERROR, "could not open segment %u of relation \"%s\" (target block %u): %m",
 					 i, RelationGetRelationName(reln), blkno);
 		}
 		v = v->mdfd_chain;
@@ -970,7 +970,7 @@ _mdfd_blind_getseg(RelFileNode rnode, BlockNumber blkno)
 	/* call fd.c to allow other FDs to be closed if needed */
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, 0600);
 	if (fd < 0)
-		elog(LOG, "_mdfd_blind_getseg: couldn't open %s: %m", path);
+		elog(LOG, "could not open \"%s\": %m", path);
 
 	pfree(path);
 

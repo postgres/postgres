@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.136 2003/05/10 19:04:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.137 2003/07/24 22:04:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,13 +229,17 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 		{
 			if (zero_damaged_pages)
 			{
-				elog(WARNING, "Invalid page header in block %u of %s; zeroing out page",
-					 blockNum, RelationGetRelationName(reln));
+				ereport(WARNING,
+						(errcode(ERRCODE_DATA_CORRUPTED),
+						 errmsg("invalid page header in block %u of \"%s\"; zeroing out page",
+								blockNum, RelationGetRelationName(reln))));
 				MemSet((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
 			}
 			else
-				elog(ERROR, "Invalid page header in block %u of %s",
-					 blockNum, RelationGetRelationName(reln));
+				ereport(ERROR,
+						(errcode(ERRCODE_DATA_CORRUPTED),
+						 errmsg("invalid page header in block %u of \"%s\"",
+								blockNum, RelationGetRelationName(reln))));
 		}
 	}
 
@@ -260,7 +264,7 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 		if (!BufTableDelete(bufHdr))
 		{
 			LWLockRelease(BufMgrLock);
-			elog(FATAL, "BufRead: buffer table broken after IO error");
+			elog(FATAL, "buffer table broken after I/O error");
 		}
 		/* remember that BufferAlloc() pinned the buffer */
 		UnpinBuffer(bufHdr);
@@ -430,9 +434,12 @@ BufferAlloc(Relation reln,
 
 			if (smok == FALSE)
 			{
-				elog(WARNING, "BufferAlloc: cannot write block %u for %u/%u",
-					 buf->tag.blockNum,
-					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode);
+				ereport(WARNING,
+						(errcode(ERRCODE_IO_ERROR),
+						 errmsg("could not write block %u of %u/%u",
+								buf->tag.blockNum,
+								buf->tag.rnode.tblNode,
+								buf->tag.rnode.relNode)));
 				inProgress = FALSE;
 				buf->flags |= BM_IO_ERROR;
 				buf->flags &= ~BM_IO_IN_PROGRESS;
@@ -448,7 +455,7 @@ BufferAlloc(Relation reln,
 				 */
 				if (buf->flags & BM_JUST_DIRTIED)
 				{
-					elog(PANIC, "BufferAlloc: content of block %u (%u/%u) changed while flushing",
+					elog(PANIC, "content of block %u of %u/%u changed while flushing",
 						 buf->tag.blockNum,
 						 buf->tag.rnode.tblNode, buf->tag.rnode.relNode);
 				}
@@ -540,7 +547,7 @@ BufferAlloc(Relation reln,
 	if (!BufTableDelete(buf))
 	{
 		LWLockRelease(BufMgrLock);
-		elog(FATAL, "buffer wasn't in the buffer table");
+		elog(FATAL, "buffer wasn't in the buffer hash table");
 	}
 
 	INIT_BUFFERTAG(&(buf->tag), reln, blockNum);
@@ -548,7 +555,7 @@ BufferAlloc(Relation reln,
 	if (!BufTableInsert(buf))
 	{
 		LWLockRelease(BufMgrLock);
-		elog(FATAL, "Buffer in lookup table twice");
+		elog(FATAL, "buffer in buffer hash table twice");
 	}
 
 	/*
@@ -587,7 +594,7 @@ write_buffer(Buffer buffer, bool release)
 	}
 
 	if (BAD_BUFFER_ID(buffer))
-		elog(ERROR, "write_buffer: bad buffer %d", buffer);
+		elog(ERROR, "bad buffer id: %d", buffer);
 
 	bufHdr = &BufferDescriptors[buffer - 1];
 
@@ -809,9 +816,12 @@ BufferSync(void)
 		}
 
 		if (status == SM_FAIL)	/* disk failure ?! */
-			elog(PANIC, "BufferSync: cannot write %u for %u/%u",
-				 bufHdr->tag.blockNum,
-				 bufHdr->tag.rnode.tblNode, bufHdr->tag.rnode.relNode);
+			ereport(PANIC,
+					(errcode(ERRCODE_IO_ERROR),
+					 errmsg("could not write block %u of %u/%u",
+							bufHdr->tag.blockNum,
+							bufHdr->tag.rnode.tblNode,
+							bufHdr->tag.rnode.relNode)));
 
 		/*
 		 * Note that it's safe to change cntxDirty here because of we
@@ -932,7 +942,7 @@ ResetBufferUsage(void)
  *		AtEOXact_Buffers - clean up at end of transaction.
  *
  *		During abort, we need to release any buffer pins we're holding
- *		(this cleans up in case elog interrupted a routine that pins a
+ *		(this cleans up in case ereport interrupted a routine that pins a
  *		buffer).  During commit, we shouldn't need to do that, but check
  *		anyway to see if anyone leaked a buffer reference count.
  */
@@ -949,8 +959,8 @@ AtEOXact_Buffers(bool isCommit)
 
 			if (isCommit)
 				elog(WARNING,
-					 "Buffer Leak: [%03d] (freeNext=%d, freePrev=%d, "
-				  "rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
+					 "buffer refcount leak: [%03d] (freeNext=%d, freePrev=%d, "
+					 "rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
 					 i, buf->freeNext, buf->freePrev,
 					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 					 buf->tag.blockNum, buf->flags,
@@ -1206,8 +1216,10 @@ recheck:
 			{
 				/* the sole pin should be ours */
 				if (bufHdr->refcount != 1 || PrivateRefCount[i - 1] == 0)
-					elog(FATAL, "DropRelFileNodeBuffers: block %u is referenced (private %ld, global %d)",
+					elog(FATAL, "block %u of %u/%u is still referenced (private %ld, global %d)",
 						 bufHdr->tag.blockNum,
+						 bufHdr->tag.rnode.tblNode,
+						 bufHdr->tag.rnode.relNode,
 						 PrivateRefCount[i - 1], bufHdr->refcount);
 				/* Make sure it will be released */
 				PrivateRefCount[i - 1] = 1;
@@ -1427,7 +1439,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 					if (status == SM_FAIL)
 					{
 						error_context_stack = errcontext.previous;
-						elog(WARNING, "FlushRelationBuffers(%s (local), %u): block %u is dirty, could not flush it",
+						elog(WARNING, "FlushRelationBuffers(\"%s\" (local), %u): block %u is dirty, could not flush it",
 							 RelationGetRelationName(rel), firstDelBlock,
 							 bufHdr->tag.blockNum);
 						return (-1);
@@ -1438,7 +1450,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 				if (LocalRefCount[i] > 0)
 				{
 					error_context_stack = errcontext.previous;
-					elog(WARNING, "FlushRelationBuffers(%s (local), %u): block %u is referenced (%ld)",
+					elog(WARNING, "FlushRelationBuffers(\"%s\" (local), %u): block %u is referenced (%ld)",
 						 RelationGetRelationName(rel), firstDelBlock,
 						 bufHdr->tag.blockNum, LocalRefCount[i]);
 					return (-2);
@@ -1495,10 +1507,12 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 									   (char *) MAKE_PTR(bufHdr->data));
 
 					if (status == SM_FAIL)		/* disk failure ?! */
-						elog(PANIC, "FlushRelationBuffers: cannot write %u for %u/%u",
-							 bufHdr->tag.blockNum,
-							 bufHdr->tag.rnode.tblNode,
-							 bufHdr->tag.rnode.relNode);
+						ereport(PANIC,
+								(errcode(ERRCODE_IO_ERROR),
+								 errmsg("could not write block %u of %u/%u",
+										bufHdr->tag.blockNum,
+										bufHdr->tag.rnode.tblNode,
+										bufHdr->tag.rnode.relNode)));
 
 					BufferFlushCount++;
 
@@ -1522,7 +1536,7 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 			{
 				LWLockRelease(BufMgrLock);
 				error_context_stack = errcontext.previous;
-				elog(WARNING, "FlushRelationBuffers(%s, %u): block %u is referenced (private %ld, global %d)",
+				elog(WARNING, "FlushRelationBuffers(\"%s\", %u): block %u is referenced (private %ld, global %d)",
 					 RelationGetRelationName(rel), firstDelBlock,
 					 bufHdr->tag.blockNum,
 					 PrivateRefCount[i], bufHdr->refcount);
@@ -1825,7 +1839,7 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
 	}
 
 	if (BAD_BUFFER_ID(buffer))
-		elog(ERROR, "SetBufferCommitInfoNeedsSave: bad buffer %d", buffer);
+		elog(ERROR, "bad buffer id: %d", buffer);
 
 	bufHdr = &BufferDescriptors[buffer - 1];
 
@@ -1919,7 +1933,7 @@ LockBuffer(Buffer buffer, int mode)
 		buf->cntxDirty = true;
 	}
 	else
-		elog(ERROR, "LockBuffer: unknown lock mode %d", mode);
+		elog(ERROR, "unrecognized buffer lock mode: %d", mode);
 }
 
 /*
@@ -1950,14 +1964,16 @@ LockBufferForCleanup(Buffer buffer)
 	{
 		/* There should be exactly one pin */
 		if (LocalRefCount[-buffer - 1] != 1)
-			elog(ERROR, "LockBufferForCleanup: wrong local pin count");
+			elog(ERROR, "incorrect local pin count: %ld",
+				 LocalRefCount[-buffer - 1]);
 		/* Nobody else to wait for */
 		return;
 	}
 
 	/* There should be exactly one local pin */
 	if (PrivateRefCount[buffer - 1] != 1)
-		elog(ERROR, "LockBufferForCleanup: wrong local pin count");
+		elog(ERROR, "incorrect local pin count: %ld",
+			 PrivateRefCount[buffer - 1]);
 
 	bufHdr = &BufferDescriptors[buffer - 1];
 	buflock = &(BufferLocks[buffer - 1]);
@@ -1979,7 +1995,7 @@ LockBufferForCleanup(Buffer buffer)
 		{
 			LWLockRelease(BufMgrLock);
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			elog(ERROR, "Multiple backends attempting to wait for pincount 1");
+			elog(ERROR, "multiple backends attempting to wait for pincount 1");
 		}
 		bufHdr->wait_backend_id = MyBackendId;
 		bufHdr->flags |= BM_PIN_COUNT_WAITER;
@@ -2102,9 +2118,13 @@ AbortBufferIO(void)
 			/* Issue notice if this is not the first failure... */
 			if (buf->flags & BM_IO_ERROR)
 			{
-				elog(WARNING, "write error may be permanent: cannot write block %u for %u/%u",
-					 buf->tag.blockNum,
-					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode);
+				ereport(WARNING,
+						(errcode(ERRCODE_IO_ERROR),
+						 errmsg("could not write block %u of %u/%u",
+								buf->tag.blockNum,
+								buf->tag.rnode.tblNode,
+								buf->tag.rnode.relNode),
+						 errdetail("Multiple failures --- write error may be permanent.")));
 			}
 			buf->flags |= BM_DIRTY;
 		}

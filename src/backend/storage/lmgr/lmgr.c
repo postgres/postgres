@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.56 2003/02/19 23:41:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.57 2003/07/24 22:04:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ InitLockTable(int maxBackends)
 	LockTableId = lockmethod;
 
 	if (!(LockTableId))
-		elog(ERROR, "InitLockTable: couldn't initialize lock table");
+		elog(ERROR, "could not initialize lock table");
 
 #ifdef USER_LOCKS
 
@@ -91,7 +91,7 @@ InitLockTable(int maxBackends)
 	 */
 	LongTermTableId = LockMethodTableRename(LockTableId);
 	if (!(LongTermTableId))
-		elog(ERROR, "InitLockTable: couldn't rename long-term lock table");
+		elog(ERROR, "could not rename long-term lock table");
 #endif
 
 	return LockTableId;
@@ -132,11 +132,11 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 
 	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
 					 lockmode, false))
-		elog(ERROR, "LockRelation: LockAcquire failed");
+		elog(ERROR, "LockAcquire failed");
 
 	/*
 	 * Check to see if the relcache entry has been invalidated while we
-	 * were waiting to lock it.  If so, rebuild it, or elog() trying.
+	 * were waiting to lock it.  If so, rebuild it, or ereport() trying.
 	 * Increment the refcount to ensure that RelationFlushRelation will
 	 * rebuild it and not just delete it.
 	 */
@@ -170,7 +170,7 @@ ConditionalLockRelation(Relation relation, LOCKMODE lockmode)
 
 	/*
 	 * Check to see if the relcache entry has been invalidated while we
-	 * were waiting to lock it.  If so, rebuild it, or elog() trying.
+	 * were waiting to lock it.  If so, rebuild it, or ereport() trying.
 	 * Increment the refcount to ensure that RelationFlushRelation will
 	 * rebuild it and not just delete it.
 	 */
@@ -202,7 +202,7 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
  *
  * This routine grabs a session-level lock on the target relation.	The
  * session lock persists across transaction boundaries.  It will be removed
- * when UnlockRelationForSession() is called, or if an elog(ERROR) occurs,
+ * when UnlockRelationForSession() is called, or if an ereport(ERROR) occurs,
  * or if the backend exits.
  *
  * Note that one should also grab a transaction-level lock on the rel
@@ -221,7 +221,7 @@ LockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
 
 	if (!LockAcquire(LockTableId, &tag, InvalidTransactionId,
 					 lockmode, false))
-		elog(ERROR, "LockRelationForSession: LockAcquire failed");
+		elog(ERROR, "LockAcquire failed");
 }
 
 /*
@@ -259,7 +259,7 @@ LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 
 	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
 					 lockmode, false))
-		elog(ERROR, "LockPage: LockAcquire failed");
+		elog(ERROR, "LockAcquire failed");
 }
 
 /*
@@ -300,7 +300,7 @@ XactLockTableInsert(TransactionId xid)
 
 	if (!LockAcquire(LockTableId, &tag, xid,
 					 ExclusiveLock, false))
-		elog(ERROR, "XactLockTableInsert: LockAcquire failed");
+		elog(ERROR, "LockAcquire failed");
 }
 
 /*
@@ -323,7 +323,7 @@ XactLockTableWait(TransactionId xid)
 
 	if (!LockAcquire(LockTableId, &tag, myxid,
 					 ShareLock, false))
-		elog(ERROR, "XactLockTableWait: LockAcquire failed");
+		elog(ERROR, "LockAcquire failed");
 
 	LockRelease(LockTableId, &tag, myxid, ShareLock);
 

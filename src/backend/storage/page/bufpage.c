@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.52 2003/03/28 20:17:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.53 2003/07/24 22:04:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ PageHeaderIsValid(PageHeader page)
  *		If offsetNumber is not valid, then assign one by finding the first
  *		one that is both unused and deallocated.
  *
- *	 !!! ELOG(ERROR) IS DISALLOWED HERE !!!
+ *	 !!! EREPORT(ERROR) IS DISALLOWED HERE !!!
  *
  * ----------------
  */
@@ -132,8 +132,10 @@ PageAddItem(Page page,
 		phdr->pd_lower > phdr->pd_upper ||
 		phdr->pd_upper > phdr->pd_special ||
 		phdr->pd_special > BLCKSZ)
-		elog(PANIC, "PageAddItem: corrupted page pointers: lower = %u, upper = %u, special = %u",
-			 phdr->pd_lower, phdr->pd_upper, phdr->pd_special);
+		ereport(PANIC,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("corrupted page pointers: lower = %u, upper = %u, special = %u",
+						phdr->pd_lower, phdr->pd_upper, phdr->pd_special)));
 
 	/*
 	 * Select offsetNumber to place the new item at
@@ -152,7 +154,7 @@ PageAddItem(Page page,
 				if (((*itemId).lp_flags & LP_USED) ||
 					((*itemId).lp_len != 0))
 				{
-					elog(WARNING, "PageAddItem: tried overwrite of used ItemId");
+					elog(WARNING, "will not overwrite a used ItemId");
 					return InvalidOffsetNumber;
 				}
 			}
@@ -179,7 +181,7 @@ PageAddItem(Page page,
 
 	if (offsetNumber > limit)
 	{
-		elog(WARNING, "PageAddItem: specified offset after maxoff");
+		elog(WARNING, "specified item offset is too large");
 		return InvalidOffsetNumber;
 	}
 
@@ -328,8 +330,10 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 		pd_upper > pd_special ||
 		pd_special > BLCKSZ ||
 		pd_special != MAXALIGN(pd_special))
-		elog(ERROR, "PageRepairFragmentation: corrupted page pointers: lower = %u, upper = %u, special = %u",
-			 pd_lower, pd_upper, pd_special);
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("corrupted page pointers: lower = %u, upper = %u, special = %u",
+						pd_lower, pd_upper, pd_special)));
 
 	nline = PageGetMaxOffsetNumber(page);
 	nused = 0;
@@ -370,8 +374,10 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 				itemidptr->itemoff = (*lp).lp_off;
 				if (itemidptr->itemoff < (int) pd_upper ||
 					itemidptr->itemoff >= (int) pd_special)
-					elog(ERROR, "PageRepairFragmentation: corrupted item pointer %u",
-						 itemidptr->itemoff);
+					ereport(ERROR,
+							(errcode(ERRCODE_DATA_CORRUPTED),
+							 errmsg("corrupted item pointer: %u",
+									itemidptr->itemoff)));
 				itemidptr->alignedlen = MAXALIGN((*lp).lp_len);
 				totallen += itemidptr->alignedlen;
 				itemidptr++;
@@ -383,8 +389,10 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 		}
 
 		if (totallen > (Size) (pd_special - pd_lower))
-			elog(ERROR, "PageRepairFragmentation: corrupted item lengths, total %u, avail %u",
-				 (unsigned int) totallen, pd_special - pd_lower);
+			ereport(ERROR,
+					(errcode(ERRCODE_DATA_CORRUPTED),
+					 errmsg("corrupted item lengths: total %u, available space %u",
+							(unsigned int) totallen, pd_special - pd_lower)));
 
 		/* sort itemIdSortData array into decreasing itemoff order */
 		qsort((char *) itemidbase, nused, sizeof(struct itemIdSortData),
@@ -461,12 +469,14 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 		phdr->pd_lower > phdr->pd_upper ||
 		phdr->pd_upper > phdr->pd_special ||
 		phdr->pd_special > BLCKSZ)
-		elog(ERROR, "PageIndexTupleDelete: corrupted page pointers: lower = %u, upper = %u, special = %u",
-			 phdr->pd_lower, phdr->pd_upper, phdr->pd_special);
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("corrupted page pointers: lower = %u, upper = %u, special = %u",
+						phdr->pd_lower, phdr->pd_upper, phdr->pd_special)));
 
 	nline = PageGetMaxOffsetNumber(page);
 	if ((int) offnum <= 0 || (int) offnum > nline)
-		elog(ERROR, "PageIndexTupleDelete: bad offnum %u", offnum);
+		elog(ERROR, "invalid index offnum: %u", offnum);
 
 	/* change offset number to offset index */
 	offidx = offnum - 1;
@@ -477,8 +487,10 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 
 	if (offset < phdr->pd_upper || (offset + size) > phdr->pd_special ||
 		offset != MAXALIGN(offset) || size != MAXALIGN(size))
-		elog(ERROR, "PageIndexTupleDelete: corrupted item pointer: offset = %u size = %u",
-			 offset, (unsigned int) size);
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_CORRUPTED),
+				 errmsg("corrupted item pointer: offset = %u size = %u",
+						offset, (unsigned int) size)));
 
 	/*
 	 * First, we want to get rid of the pd_linp entry for the index tuple.

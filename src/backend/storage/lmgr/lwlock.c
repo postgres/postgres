@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.15 2003/06/11 22:37:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.16 2003/07/24 22:04:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ LWLockId
 LWLockAssign(void)
 {
 	if (LWLockCounter[0] >= LWLockCounter[1])
-		elog(FATAL, "No more LWLockIds available");
+		elog(FATAL, "no more LWLockIds available");
 	return (LWLockId) (LWLockCounter[0]++);
 }
 
@@ -278,7 +278,7 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		 * shared memory initialization.
 		 */
 		if (proc == NULL)
-			elog(FATAL, "LWLockAcquire: can't wait without a PGPROC structure");
+			elog(FATAL, "cannot wait without a PGPROC structure");
 
 		proc->lwWaiting = true;
 		proc->lwExclusive = (mode == LW_EXCLUSIVE);
@@ -424,7 +424,7 @@ LWLockRelease(LWLockId lockid)
 			break;
 	}
 	if (i < 0)
-		elog(ERROR, "LWLockRelease: lock %d is not held", (int) lockid);
+		elog(ERROR, "lock %d is not held", (int) lockid);
 	num_held_lwlocks--;
 	for (; i < num_held_lwlocks; i++)
 		held_lwlocks[i] = held_lwlocks[i + 1];
@@ -503,10 +503,10 @@ LWLockRelease(LWLockId lockid)
 /*
  * LWLockReleaseAll - release all currently-held locks
  *
- * Used to clean up after elog(ERROR).	An important difference between this
+ * Used to clean up after ereport(ERROR). An important difference between this
  * function and retail LWLockRelease calls is that InterruptHoldoffCount is
  * unchanged by this operation.  This is necessary since InterruptHoldoffCount
- * has been set to an appropriate level earlier in error recovery.	We could
+ * has been set to an appropriate level earlier in error recovery. We could
  * decrement it below zero if we allow it to drop for each released lock!
  */
 void

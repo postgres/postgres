@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.62 2003/03/04 21:51:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.63 2003/07/24 22:04:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ smgrinit(void)
 		if (smgrsw[i].smgr_init)
 		{
 			if ((*(smgrsw[i].smgr_init)) () == SM_FAIL)
-				elog(FATAL, "initialization failed on %s: %m",
+				elog(FATAL, "smgr initialization failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 													 Int16GetDatum(i))));
 		}
@@ -151,7 +151,7 @@ smgrshutdown(void)
 		if (smgrsw[i].smgr_shutdown)
 		{
 			if ((*(smgrsw[i].smgr_shutdown)) () == SM_FAIL)
-				elog(FATAL, "shutdown failed on %s: %m",
+				elog(FATAL, "smgr shutdown failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 													 Int16GetDatum(i))));
 		}
@@ -171,7 +171,10 @@ smgrcreate(int16 which, Relation reln)
 	PendingRelDelete *pending;
 
 	if ((fd = (*(smgrsw[which].smgr_create)) (reln)) < 0)
-		elog(ERROR, "cannot create %s: %m", RelationGetRelationName(reln));
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not create \"%s\": %m",
+						RelationGetRelationName(reln))));
 
 	/* Add the relation to the list of stuff to delete at abort */
 	pending = (PendingRelDelete *)
@@ -243,8 +246,11 @@ smgrextend(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 	status = (*(smgrsw[which].smgr_extend)) (reln, blocknum, buffer);
 
 	if (status == SM_FAIL)
-		elog(ERROR, "cannot extend %s: %m.\n\tCheck free disk space.",
-			 RelationGetRelationName(reln));
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not extend \"%s\": %m",
+						RelationGetRelationName(reln)),
+				 errhint("Check free disk space.")));
 
 	return status;
 }
@@ -267,7 +273,10 @@ smgropen(int16 which, Relation reln, bool failOK)
 		return -1;
 	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0)
 		if (!failOK)
-			elog(ERROR, "cannot open %s: %m", RelationGetRelationName(reln));
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not open \"%s\": %m",
+							RelationGetRelationName(reln))));
 
 	return fd;
 }
@@ -281,7 +290,10 @@ int
 smgrclose(int16 which, Relation reln)
 {
 	if ((*(smgrsw[which].smgr_close)) (reln) == SM_FAIL)
-		elog(ERROR, "cannot close %s: %m", RelationGetRelationName(reln));
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not close \"%s\": %m",
+						RelationGetRelationName(reln))));
 
 	return SM_SUCCESS;
 }
@@ -304,8 +316,10 @@ smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 	status = (*(smgrsw[which].smgr_read)) (reln, blocknum, buffer);
 
 	if (status == SM_FAIL)
-		elog(ERROR, "cannot read block %d of %s: %m",
-			 blocknum, RelationGetRelationName(reln));
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not read block %d of \"%s\": %m",
+						blocknum, RelationGetRelationName(reln))));
 
 	return status;
 }
@@ -328,8 +342,10 @@ smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 	status = (*(smgrsw[which].smgr_write)) (reln, blocknum, buffer);
 
 	if (status == SM_FAIL)
-		elog(ERROR, "cannot write block %d of %s: %m",
-			 blocknum, RelationGetRelationName(reln));
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not write block %d of \"%s\": %m",
+						blocknum, RelationGetRelationName(reln))));
 
 	return status;
 }
@@ -357,8 +373,10 @@ smgrblindwrt(int16 which,
 	status = (*(smgrsw[which].smgr_blindwrt)) (rnode, blkno, buffer);
 
 	if (status == SM_FAIL)
-		elog(ERROR, "cannot write block %d of %u/%u blind: %m",
-			 blkno, rnode.tblNode, rnode.relNode);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not write block %d of %u/%u blind: %m",
+						blkno, rnode.tblNode, rnode.relNode)));
 
 	return status;
 }
@@ -384,8 +402,10 @@ smgrnblocks(int16 which, Relation reln)
 	 * actually is InvalidBlockNumber.
 	 */
 	if (nblocks == InvalidBlockNumber)
-		elog(ERROR, "cannot count blocks for %s: %m",
-			 RelationGetRelationName(reln));
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not count blocks of \"%s\": %m",
+						RelationGetRelationName(reln))));
 
 	return nblocks;
 }
@@ -414,8 +434,10 @@ smgrtruncate(int16 which, Relation reln, BlockNumber nblocks)
 
 		newblks = (*(smgrsw[which].smgr_truncate)) (reln, nblocks);
 		if (newblks == InvalidBlockNumber)
-			elog(ERROR, "cannot truncate %s to %u blocks: %m",
-				 RelationGetRelationName(reln), nblocks);
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not truncate \"%s\" to %u blocks: %m",
+							RelationGetRelationName(reln), nblocks)));
 	}
 
 	return newblks;
@@ -456,8 +478,11 @@ smgrDoPendingDeletes(bool isCommit)
 			 * current xact.
 			 */
 			if ((*(smgrsw[pending->which].smgr_unlink)) (pending->relnode) == SM_FAIL)
-				elog(WARNING, "cannot unlink %u/%u: %m",
-					 pending->relnode.tblNode, pending->relnode.relNode);
+				ereport(WARNING,
+						(errcode_for_file_access(),
+						 errmsg("could not unlink %u/%u: %m",
+								pending->relnode.tblNode,
+								pending->relnode.relNode)));
 		}
 		pfree(pending);
 	}
@@ -539,7 +564,7 @@ bool
 smgriswo(int16 smgrno)
 {
 	if (smgrno < 0 || smgrno >= NSmgr)
-		elog(ERROR, "illegal storage manager number %d", smgrno);
+		elog(ERROR, "invalid storage manager id: %d", smgrno);
 
 	return smgrwo[smgrno];
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.27 2002/06/20 20:29:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.28 2003/07/24 22:04:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ InitBufTable(void)
 								  HASH_ELEM | HASH_FUNCTION);
 
 	if (!SharedBufHash)
-		elog(FATAL, "couldn't initialize shared buffer pool Hash Tbl");
+		elog(FATAL, "could not initialize shared buffer hash table");
 }
 
 BufferDesc *
@@ -94,12 +94,8 @@ BufTableDelete(BufferDesc *buf)
 	result = (BufferLookupEnt *)
 		hash_search(SharedBufHash, (void *) &(buf->tag), HASH_REMOVE, NULL);
 
-	if (!result)
-	{
-		/* shouldn't happen */
-		elog(ERROR, "BufTableDelete: BufferLookup table corrupted");
-		return FALSE;
-	}
+	if (!result)				/* shouldn't happen */
+		elog(ERROR, "shared buffer hash table corrupted");
 
 	/*
 	 * Clear the buffer's tag.  This doesn't matter for the hash table,
@@ -127,17 +123,12 @@ BufTableInsert(BufferDesc *buf)
 		hash_search(SharedBufHash, (void *) &(buf->tag), HASH_ENTER, &found);
 
 	if (!result)
-	{
-		elog(ERROR, "BufTableInsert: BufferLookup table out of memory");
-		return FALSE;
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of shared memory")));
 
-	/* found something else in the table ! */
-	if (found)
-	{
-		elog(ERROR, "BufTableInsert: BufferLookup table corrupted");
-		return FALSE;
-	}
+	if (found)					/* found something else in the table? */
+		elog(ERROR, "shared buffer hash table corrupted");
 
 	result->id = buf->buf_id;
 	return TRUE;

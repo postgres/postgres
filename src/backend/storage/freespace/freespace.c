@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.17 2003/03/06 00:04:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.18 2003/07/24 22:04:09 tgl Exp $
  *
  *
  * NOTES:
@@ -269,7 +269,9 @@ InitFreeSpaceMap(void)
 	/* Create table header */
 	FreeSpaceMap = (FSMHeader *) ShmemAlloc(sizeof(FSMHeader));
 	if (FreeSpaceMap == NULL)
-		elog(FATAL, "Insufficient shared memory for free space map");
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("insufficient shared memory for free space map")));
 	MemSet(FreeSpaceMap, 0, sizeof(FSMHeader));
 
 	/* Create hashtable for FSMRelations */
@@ -284,18 +286,24 @@ InitFreeSpaceMap(void)
 										  (HASH_ELEM | HASH_FUNCTION));
 
 	if (!FreeSpaceMap->relHash)
-		elog(FATAL, "Insufficient shared memory for free space map");
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("insufficient shared memory for free space map")));
 
 	/* Allocate page-storage arena */
 	nchunks = (MaxFSMPages - 1) / CHUNKPAGES + 1;
 	/* This check ensures spareChunks will be greater than zero */
 	if (nchunks <= MaxFSMRelations)
-		elog(FATAL, "max_fsm_pages must exceed max_fsm_relations * %d",
-			 CHUNKPAGES);
+		ereport(FATAL,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("max_fsm_pages must exceed max_fsm_relations * %d",
+						CHUNKPAGES)));
 
 	FreeSpaceMap->arena = (char *) ShmemAlloc(nchunks * CHUNKBYTES);
 	if (FreeSpaceMap->arena == NULL)
-		elog(FATAL, "Insufficient shared memory for free space map");
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("insufficient shared memory for free space map")));
 
 	FreeSpaceMap->totalChunks = nchunks;
 	FreeSpaceMap->usedChunks = 0;
@@ -321,7 +329,9 @@ FreeSpaceShmemSize(void)
 	nchunks = (MaxFSMPages - 1) / CHUNKPAGES + 1;
 
 	if (nchunks >= (INT_MAX / CHUNKBYTES))
-		elog(FATAL, "max_fsm_pages is too large");
+		ereport(FATAL,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("max_fsm_pages is too large")));
 
 	size += MAXALIGN(nchunks * CHUNKBYTES);
 
@@ -491,7 +501,7 @@ RecordRelationFreeSpace(RelFileNode *rel,
 
 				/* Check caller provides sorted data */
 				if (i > 0 && page <= pageSpaces[i-1].blkno)
-					elog(ERROR, "RecordRelationFreeSpace: data not in page order");
+					elog(ERROR, "free-space data is not in page order");
 				FSMPageSetPageNum(newLocation, page);
 				FSMPageSetSpace(newLocation, avail);
 				newLocation++;
@@ -578,7 +588,7 @@ RecordIndexFreeSpace(RelFileNode *rel,
 
 			/* Check caller provides sorted data */
 			if (i > 0 && page <= pages[i-1])
-				elog(ERROR, "RecordIndexFreeSpace: data not in page order");
+				elog(ERROR, "free-space data is not in page order");
 			IndexFSMPageSetPageNum(newLocation, page);
 			newLocation++;
 		}
@@ -660,7 +670,7 @@ FreeSpaceMapForgetDatabase(Oid dbid)
 /*
  * PrintFreeSpaceMapStatistics - print statistics about FSM contents
  *
- * The info is sent to elog() with the specified message level.  This is
+ * The info is sent to ereport() with the specified message level.  This is
  * intended for use during VACUUM.
  */
 void
@@ -688,11 +698,12 @@ PrintFreeSpaceMapStatistics(int elevel)
 	/* Convert stats to actual number of page slots needed */
 	needed = (sumRequests + numRels) * CHUNKPAGES;
 
-	elog(elevel, "Free space map: %d relations, %d pages stored; %.0f total pages needed."
-		 "\n\tAllocated FSM size: %d relations + %d pages = %.0f KB shared mem.",
-		 numRels, storedPages, needed,
-		 MaxFSMRelations, MaxFSMPages,
-		 (double) FreeSpaceShmemSize() / 1024.0);
+	ereport(elevel,
+			(errmsg("free space map: %d relations, %d pages stored; %.0f total pages needed",
+					numRels, storedPages, needed),
+			 errdetail("Allocated FSM size: %d relations + %d pages = %.0f KB shared mem.",
+					   MaxFSMRelations, MaxFSMPages,
+					   (double) FreeSpaceShmemSize() / 1024.0)));
 }
 
 /*
@@ -719,7 +730,7 @@ DumpFreeSpaceMap(void)
 	fp = AllocateFile(cachefilename, PG_BINARY_W);
 	if (fp == NULL)
 	{
-		elog(LOG, "Failed to write %s: %m", cachefilename);
+		elog(LOG, "could not write \"%s\": %m", cachefilename);
 		return;
 	}
 
@@ -778,7 +789,7 @@ DumpFreeSpaceMap(void)
 	return;
 
 write_failed:
-	elog(LOG, "Failed to write %s: %m", cachefilename);
+	elog(LOG, "could not write \"%s\": %m", cachefilename);
 
 	/* Clean up */
 	LWLockRelease(FreeSpaceLock);
@@ -819,7 +830,7 @@ LoadFreeSpaceMap(void)
 	if (fp == NULL)
 	{
 		if (errno != ENOENT)
-			elog(LOG, "Failed to read %s: %m", cachefilename);
+			elog(LOG, "could not read \"%s\": %m", cachefilename);
 		return;
 	}
 
@@ -832,7 +843,7 @@ LoadFreeSpaceMap(void)
 		header.version != FSM_CACHE_VERSION ||
 		header.numRels < 0)
 	{
-		elog(LOG, "Bogus file header in %s", cachefilename);
+		elog(LOG, "bogus file header in \"%s\"", cachefilename);
 		goto read_failed;
 	}
 
@@ -854,7 +865,7 @@ LoadFreeSpaceMap(void)
 			relheader.lastPageCount < 0 ||
 			relheader.storedPages < 0)
 		{
-			elog(LOG, "Bogus rel header in %s", cachefilename);
+			elog(LOG, "bogus rel header in \"%s\"", cachefilename);
 			goto read_failed;
 		}
 
@@ -871,7 +882,7 @@ LoadFreeSpaceMap(void)
 		data = (char *) palloc(len + 1); /* +1 to avoid palloc(0) */
 		if (fread(data, 1, len, fp) != len)
 		{
-			elog(LOG, "Premature EOF in %s", cachefilename);
+			elog(LOG, "premature EOF in \"%s\"", cachefilename);
 			pfree(data);
 			goto read_failed;
 		}
@@ -984,7 +995,9 @@ create_fsm_rel(RelFileNode *rel)
 										 HASH_ENTER,
 										 &found);
 	if (!fsmrel)
-		elog(ERROR, "FreeSpaceMap hashtable out of memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of shared memory")));
 
 	if (!found)
 	{
@@ -1182,7 +1195,7 @@ find_free_space(FSMRelation *fsmrel, Size spaceNeeded)
 				pageIndex;		/* current page index */
 
 	if (fsmrel->isIndex)
-		elog(ERROR, "find_free_space: called for an index relation");
+		elog(ERROR, "find_free_space called for an index relation");
 	info = (FSMPageData *)
 		(FreeSpaceMap->arena + fsmrel->firstChunk * CHUNKBYTES);
 	pageIndex = fsmrel->nextPage;
@@ -1232,7 +1245,7 @@ find_index_free_space(FSMRelation *fsmrel)
 	{
 		if (fsmrel->storedPages == 0)
 			return InvalidBlockNumber;
-		elog(ERROR, "find_index_free_space: called for a non-index relation");
+		elog(ERROR, "find_index_free_space called for a non-index relation");
 	}
 	/*
 	 * For indexes, there's no need for the nextPage state variable; we just
@@ -1260,7 +1273,7 @@ fsm_record_free_space(FSMRelation *fsmrel, BlockNumber page, Size spaceAvail)
 	int			pageIndex;
 
 	if (fsmrel->isIndex)
-		elog(ERROR, "fsm_record_free_space: called for an index relation");
+		elog(ERROR, "fsm_record_free_space called for an index relation");
 	if (lookup_fsm_page_entry(fsmrel, page, &pageIndex))
 	{
 		/* Found an existing entry for page; update it */
@@ -1420,7 +1433,7 @@ compact_fsm_storage(void)
 			int		limitChunkIndex;
 
 			if (newAllocPages < fsmrel->storedPages)
-				elog(PANIC, "compact_fsm_storage: can't juggle and compress too");
+				elog(PANIC, "can't juggle and compress too");
 			if (fsmrel->nextPhysical != NULL)
 				limitChunkIndex = fsmrel->nextPhysical->firstChunk;
 			else
@@ -1435,7 +1448,7 @@ compact_fsm_storage(void)
 				else
 					limitChunkIndex = FreeSpaceMap->totalChunks;
 				if (newChunkIndex + curChunks > limitChunkIndex)
-					elog(PANIC, "compact_fsm_storage: insufficient room");
+					elog(PANIC, "insufficient room");
 			}
 			memmove(newLocation, oldLocation, curChunks * CHUNKBYTES);
 		}
@@ -1511,7 +1524,7 @@ push_fsm_rels_after(FSMRelation *afterRel)
 		if (newChunkIndex < oldChunkIndex)
 		{
 			/* trouble... */
-			elog(PANIC, "push_fsm_rels_after: out of room");
+			elog(PANIC, "out of room");
 		}
 		else if (newChunkIndex > oldChunkIndex)
 		{
@@ -1554,7 +1567,7 @@ pack_incoming_pages(FSMPageData *newLocation, int newPages,
 		Size	avail = pageSpaces[i].avail;
 
 		if (avail >= BLCKSZ)
-			elog(ERROR, "pack_incoming_pages: bogus freespace amount");
+			elog(ERROR, "bogus freespace amount");
 		avail /= (BLCKSZ/HISTOGRAM_BINS);
 		histogram[avail]++;
 	}
@@ -1580,7 +1593,7 @@ pack_incoming_pages(FSMPageData *newLocation, int newPages,
 
 		/* Check caller provides sorted data */
 		if (i > 0 && page <= pageSpaces[i-1].blkno)
-			elog(ERROR, "RecordIndexFreeSpace: data not in page order");
+			elog(ERROR, "free-space data is not in page order");
 		/* Save this page? */
 		if (avail >= thresholdU ||
 			(avail >= thresholdL && (--binct >= 0)))
@@ -1625,7 +1638,7 @@ pack_existing_pages(FSMPageData *newLocation, int newPages,
 
 		/* Shouldn't happen, but test to protect against stack clobber */
 		if (avail >= BLCKSZ)
-			elog(ERROR, "pack_existing_pages: bogus freespace amount");
+			elog(ERROR, "bogus freespace amount");
 		avail /= (BLCKSZ/HISTOGRAM_BINS);
 		histogram[avail]++;
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.68 2003/05/06 23:34:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.69 2003/07/24 22:04:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,7 +158,9 @@ ShmemAlloc(Size size)
 	SpinLockRelease(ShmemLock);
 
 	if (!newSpace)
-		elog(WARNING, "ShmemAlloc: out of memory");
+		ereport(WARNING,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	return newSpace;
 }
@@ -204,7 +206,7 @@ InitShmemIndex(void)
 							   SHMEM_INDEX_SIZE, SHMEM_INDEX_SIZE,
 							   &info, hash_flags);
 	if (!ShmemIndex)
-		elog(FATAL, "InitShmemIndex: couldn't initialize Shmem Index");
+		elog(FATAL, "could not initialize Shmem Index");
 
 	/*
 	 * Now, create an entry in the hashtable for the index itself.
@@ -215,7 +217,9 @@ InitShmemIndex(void)
 	result = (ShmemIndexEnt *)
 		hash_search(ShmemIndex, (void *) &item, HASH_ENTER, &found);
 	if (!result)
-		elog(FATAL, "InitShmemIndex: Shmem Index out of memory");
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	Assert(ShmemBootstrap && !found);
 
@@ -333,7 +337,9 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 	if (!result)
 	{
 		LWLockRelease(ShmemIndexLock);
-		elog(ERROR, "ShmemInitStruct: Shmem Index out of memory");
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 		return NULL;
 	}
 
@@ -348,7 +354,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 		{
 			LWLockRelease(ShmemIndexLock);
 
-			elog(WARNING, "ShmemInitStruct: ShmemIndex entry size is wrong");
+			elog(WARNING, "ShmemIndex entry size is wrong");
 			/* let caller print its message too */
 			return NULL;
 		}
@@ -365,7 +371,9 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			hash_search(ShmemIndex, (void *) &item, HASH_REMOVE, NULL);
 			LWLockRelease(ShmemIndexLock);
 
-			elog(WARNING, "ShmemInitStruct: cannot allocate '%s'", name);
+			ereport(WARNING,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("could not allocate \"%s\"", name)));
 			*foundPtr = FALSE;
 			return NULL;
 		}

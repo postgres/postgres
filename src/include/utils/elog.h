@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.56 2003/07/24 17:52:49 tgl Exp $
+ * $Id: elog.h,v 1.57 2003/07/24 22:04:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,6 +237,7 @@
 #define ERRCODE_T_R_INTEGRITY_CONSTRAINT_VIOLATION	MAKE_SQLSTATE('4','0', '0','0','2')
 #define ERRCODE_T_R_SERIALIZATION_FAILURE	MAKE_SQLSTATE('4','0', '0','0','1')
 #define ERRCODE_T_R_STATEMENT_COMPLETION_UNKNOWN	MAKE_SQLSTATE('4','0', '0','0','3')
+#define ERRCODE_T_R_DEADLOCK_DETECTED		MAKE_SQLSTATE('4','0', 'P','0','1')
 
 /* Class 42 - Syntax Error or Access Rule Violation */
 #define ERRCODE_SYNTAX_ERROR_OR_ACCESS_RULE_VIOLATION		MAKE_SQLSTATE('4','2', '0','0','0')
@@ -316,7 +317,6 @@
 #define ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE	MAKE_SQLSTATE('5','5', '0','0','0')
 #define ERRCODE_OBJECT_IN_USE				MAKE_SQLSTATE('5','5', '0','0','6')
 #define ERRCODE_INDEXES_DEACTIVATED			MAKE_SQLSTATE('5','5', 'P','0','1')
-#define ERRCODE_INDEX_CORRUPTED				MAKE_SQLSTATE('5','5', 'P','0','2')
 
 /* Class 57 - Operator Intervention (class borrowed from DB2) */
 #define ERRCODE_OPERATOR_INTERVENTION		MAKE_SQLSTATE('5','7', '0','0','0')
@@ -335,6 +335,8 @@
 /* Class XX - Internal Error (PostgreSQL-specific error class) */
 /* (this is for "can't-happen" conditions and software bugs) */
 #define ERRCODE_INTERNAL_ERROR				MAKE_SQLSTATE('X','X', '0','0','0')
+#define ERRCODE_DATA_CORRUPTED				MAKE_SQLSTATE('X','X', '0','0','1')
+#define ERRCODE_INDEX_CORRUPTED				MAKE_SQLSTATE('X','X', '0','0','2')
 
 
 /* Which __func__ symbol do we have, if any? */

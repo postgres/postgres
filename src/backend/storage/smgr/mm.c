@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.32 2002/08/06 02:36:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.33 2003/07/24 22:04:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,9 @@ mmcreate(Relation reln)
 	if (entry == (MMRelHashEntry *) NULL)
 	{
 		LWLockRelease(MMCacheLock);
-		elog(FATAL, "main memory storage mgr hash table out of memory");
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 	}
 
 	if (found)
@@ -229,7 +231,7 @@ mmunlink(RelFileNode rnode)
 			if (entry == (MMHashEntry *) NULL)
 			{
 				LWLockRelease(MMCacheLock);
-				elog(FATAL, "mmunlink: cache hash table corrupted");
+				elog(FATAL, "cache hash table corrupted");
 			}
 			MMBlockTags[i].mmct_dbid = (Oid) 0;
 			MMBlockTags[i].mmct_relid = (Oid) 0;
@@ -246,7 +248,7 @@ mmunlink(RelFileNode rnode)
 	if (rentry == (MMRelHashEntry *) NULL)
 	{
 		LWLockRelease(MMCacheLock);
-		elog(FATAL, "mmunlink: rel cache hash table corrupted");
+		elog(FATAL, "rel cache hash table corrupted");
 	}
 
 	(*MMCurRelno)--;
@@ -309,7 +311,7 @@ mmextend(Relation reln, BlockNumber blocknum, char *buffer)
 	if (rentry == (MMRelHashEntry *) NULL)
 	{
 		LWLockRelease(MMCacheLock);
-		elog(FATAL, "mmextend: rel cache hash table corrupt");
+		elog(FATAL, "rel cache hash table corrupted");
 	}
 
 	tag.mmct_blkno = rentry->mmrhe_nblocks;
@@ -320,7 +322,7 @@ mmextend(Relation reln, BlockNumber blocknum, char *buffer)
 	if (entry == (MMHashEntry *) NULL || found)
 	{
 		LWLockRelease(MMCacheLock);
-		elog(FATAL, "mmextend: cache hash table corrupt");
+		elog(FATAL, "cache hash table corrupted");
 	}
 
 	entry->mmhe_bufno = i;
@@ -431,7 +433,7 @@ mmwrite(Relation reln, BlockNumber blocknum, char *buffer)
 	if (entry == (MMHashEntry *) NULL)
 	{
 		LWLockRelease(MMCacheLock);
-		elog(FATAL, "mmwrite: hash table missing requested page");
+		elog(FATAL, "cache hash table missing requested page");
 	}
 
 	offset = (entry->mmhe_bufno * BLCKSZ);
