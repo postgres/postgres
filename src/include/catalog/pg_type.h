@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.85 2000/03/14 23:06:45 thomas Exp $
+ * $Id: pg_type.h,v 1.86 2000/03/18 20:50:10 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -156,7 +156,7 @@ DESCR("boolean, 'true'/'false'");
 #define BOOLOID			16
 
 DATA(insert OID = 17 (	bytea	   PGUID -1  -1 f b t \054 0  18 byteain byteaout byteain byteaout i _null_ ));
-DESCR("variable length array of bytes");
+DESCR("variable-length string, binary values escaped");
 #define BYTEAOID		17
 
 DATA(insert OID = 18 (	char	   PGUID  1   1 t b t \054 0   0 charin charout charin charout c _null_ ));
