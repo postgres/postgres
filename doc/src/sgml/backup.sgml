@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.26 2003/03/24 14:32:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.27 2003/08/01 01:01:52 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -163,16 +163,21 @@ pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>h
     up an entire database cluster. For this reason the
     <application>pg_dumpall</> program is provided.
     <application>pg_dumpall</> backs up each database in a given
-    cluster and also makes sure that the state of global data such as
-    users and groups is preserved. The call sequence for
+    cluster, and also preserves cluster-wide data such as
+    users and groups. The call sequence for
     <application>pg_dumpall</> is simply
 <synopsis>
 pg_dumpall &gt; <replaceable>outfile</>
 </synopsis>
-    The resulting dumps can be restored with <application>psql</> as
-    described above. But in this case it is definitely necessary that
-    you have database superuser access, as that is required to restore
-    the user and group information.
+    The resulting dump can be restored with <application>psql</>:
+<synopsis>
+psql template1 &lt; <replaceable class="parameter">infile</replaceable>
+</synopsis>
+    (Actually, you can specify any existing database name to start from,
+    but if you are reloading in an empty cluster then <literal>template1</>
+    is the only available choice.)  It is always necessary to have
+    database superuser access when restoring a <application>pg_dumpall</>
+    dump, as that is required to restore the user and group information.
    </para>
   </sect2>
 
@@ -260,7 +265,7 @@ pg_dump -Fc <replaceable class="parameter">dbname</replaceable> > <replaceable c
    <para>
     <application>pg_dump</> (and by implication
     <application>pg_dumpall</>) has a few limitations which stem from
-    the difficulty to reconstruct certain information from the system
+    the difficulty of reconstructing certain information from the system
     catalogs.
    </para>
 
