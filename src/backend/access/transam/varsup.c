@@ -8,17 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.32 2000/11/08 22:09:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.33 2000/11/20 16:47:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
-#ifdef XLOG
-
-#include "xlog_varsup.c"
-
-#else
-
 #include "postgres.h"
+
+#ifdef XLOG
+#include "xlog_varsup.c"
+#else
 
 #include "access/heapam.h"
 #include "catalog/catname.h"

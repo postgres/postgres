@@ -16,23 +16,21 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.34 2000/11/08 22:09:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.35 2000/11/20 16:47:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
    
+#include "postgres.h"
+
 #ifdef XLOG
-
 #include "xlog_localbuf.c"
-
 #else
 
 #include <sys/types.h>
 #include <sys/file.h>
 #include <math.h>
 #include <signal.h>
-
-#include "postgres.h"
 
 #include "executor/execdebug.h"
 #include "storage/smgr.h"

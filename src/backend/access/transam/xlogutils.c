@@ -9,9 +9,9 @@
  *-------------------------------------------------------------------------
  */
 
-#ifdef XLOG
-
 #include "postgres.h"
+
+#ifdef XLOG
 
 #include "access/xlog.h"
 #include "access/transam.h"
