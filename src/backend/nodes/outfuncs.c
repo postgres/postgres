@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.112 2000/03/22 22:08:32 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.113 2000/03/24 02:58:25 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -536,6 +536,20 @@ static void
 _outNoname(StringInfo str, Noname *node)
 {
 	appendStringInfo(str, " NONAME ");
+	_outPlanInfo(str, (Plan *) node);
+
+	appendStringInfo(str, " :nonameid %u :keycount %d ",
+					 node->nonameid,
+					 node->keycount);
+}
+
+/*
+ *	Material is a subclass of Noname
+ */
+static void
+_outMaterial(StringInfo str, Material *node)
+{
+	appendStringInfo(str, " MATERIAL ");
 	_outPlanInfo(str, (Plan *) node);
 
 	appendStringInfo(str, " :nonameid %u :keycount %d ",
@@ -1475,6 +1489,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Noname:
 				_outNoname(str, obj);
+				break;
+			case T_Material:
+				_outMaterial(str, obj);
 				break;
 			case T_Sort:
 				_outSort(str, obj);
