@@ -618,7 +618,7 @@ case "$host_os" in
      aux*) os=aux need_tas=no ;;
    linux*) os=linux need_tas=no ;;
     bsdi*) os=bsdi need_tas=no ;;
- freebsd3*) os=freebsd need_tas=no elf=yes ;;
+ freebsd3*|freebsd4*) os=freebsd need_tas=no elf=yes ;;
  freebsd1*|freebsd2*) os=freebsd need_tas=no ;;
   netbsd*|openbsd*) os=bsd need_tas=no ;;
     dgux*) os=dgux need_tas=no ;;
@@ -740,7 +740,7 @@ fi
 
 rm -f conftest.sh
 sed 's/^\([A-Za-z_]*\):\(.*\)$/\1="\2"/' "template/$TEMPLATE" >conftest.sh
-. conftest.sh
+. ./conftest.sh
 rm -f conftest.sh
 
 
