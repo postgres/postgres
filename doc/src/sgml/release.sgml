@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.107 2001/12/27 04:46:08 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.108 2001/12/27 21:10:15 petere Exp $
 -->
 
 <appendix id="release">
@@ -148,7 +148,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.107 2001/12/27 04:46:08 mo
 
      <listitem>
       <para>
-       The date/time value <literal>current</literal> is no longer
+       The date/time value <literal>'current'</literal> is no longer
        available.  You will need to rewrite your applications.
       </para>
      </listitem>
@@ -156,7 +156,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.107 2001/12/27 04:46:08 mo
      <listitem>
       <para>
        The <literal>timestamp()</literal> function is no longer
-       available.  Use <literal>timestamp "string"</literal> instead, 
+       available.  Use <literal>timestamp 'string'</literal> instead, 
        or <literal>CAST</literal>.
       </para>
      </listitem>
@@ -355,7 +355,7 @@ Some datatype() function calls now evaluated differently
    <sect3>
     <title>Internationalization</title>
 <literallayout>
-Native language support in psql, pg_dump, libpq, and server (Peter E)
+National language support in psql, pg_dump, libpq, and server (Peter E)
 Message translations in Chinese (simplified, traditional), Czech, French, German, Hungarian, Russian, Swedish (Peter E, Serguei A. Mokhov, Karel Zak, Weiping He, Zhenbang Wei, Kovacs Zoltan)
 Make trim, ltrim, rtrim, btrim, lpad, rpad, translate multibyte aware (Tatsuo)
 Add LATIN5,6,7,8,9,10 support (Tatsuo)
@@ -483,7 +483,7 @@ Add more compatibility functions to odbc.sql (Peter E)
     <title>ECPG</title>
 <literallayout>
 EXECUTE ... INTO implemented
-multiple row descriptor support (e.g. CARDINALITY)
+Multiple row descriptor support (e.g. CARDINALITY)
 Fix for GRANT parameters (Lee Kindness)
 Fix INITIALLY DEFERRED bug
 Various bug fixes (Michael, Christof Petig)

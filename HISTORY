@@ -69,11 +69,11 @@ Migration to version 7.2
      * The function "octet_length()" now returns the uncompressed data
        length.
 
-     * The date/time value "current" is no longer available. You will need to
+     * The date/time value 'current' is no longer available. You will need to
        rewrite your applications.
 
      * The timestamp() function is no longer available.  Use timestamp
-       "string" instead, or CAST.
+       'string' instead, or CAST.
 
    The SELECT ... LIMIT #,# syntax will be removed in the next release. You
    should change your queries to use separate LIMIT and OFFSET clauses, e.g.
@@ -250,7 +250,7 @@ Changes
 
   Internationalization
 
-   Native language support in psql, pg_dump, libpq, and server (Peter E)
+   National language support in psql, pg_dump, libpq, and server (Peter E)
    Message translations in Chinese (simplified, traditional), Czech, French, German, Hungarian, Russian, Swedish (Peter E, Serguei A. Mokhov, Karel Zak, Weiping He, Zhenbang Wei, Kovacs Zoltan)
    Make trim, ltrim, rtrim, btrim, lpad, rpad, translate multibyte aware (Tatsuo)
    Add LATIN5,6,7,8,9,10 support (Tatsuo)
@@ -369,7 +369,7 @@ Changes
   ECPG
 
    EXECUTE ... INTO implemented
-   multiple row descriptor support (e.g. CARDINALITY)
+   Multiple row descriptor support (e.g. CARDINALITY)
    Fix for GRANT parameters (Lee Kindness)
    Fix INITIALLY DEFERRED bug
    Various bug fixes (Michael, Christof Petig)
@@ -2913,9 +2913,9 @@ Migration from version 1.02 to version 1.02.1
    In order to upgrade older Postgres95 version 1.01 or 1.02 databases to
    version 1.02.1, the following steps are required:
 
-    1. Start up a new 1.02.1 postmaster
+   
 
-    2. Add the new built-in functions and operators of 1.02.1 to 1.01 or 1.02
+   
        databases. This is done by running the new 1.02.1 server against your
        own 1.01 or 1.02 database and applying the queries attached at the end
        of the file. This can be done easily through "psql". If your 1.01 or
@@ -3000,16 +3000,16 @@ Migration from version 1.0 to version 1.01
    In order to Postgres95 version 1.01 with databases created with Postgres95
    version 1.0, the following steps are required:
 
-    1. Set the definition of NAMEDATALEN in "src/Makefile.global" to 16 and
+   
        OIDNAMELEN to 20.
 
-    2. Decide whether you want to use Host based authentication.
+   
 
-         a. If you do, you must create a file name pg_hba in your top-level
+        
             data directory (typically the value of your $PGDATA).
             "src/libpq/pg_hba" shows an example syntax.
 
-         b. If you do not want host-based authentication, you can comment out
+        
             the line
 
          HBA = 1
@@ -3020,19 +3020,19 @@ Migration from version 1.0 to version 1.01
             if you do not take steps A or B above, the out-of-the-box 1.01
             will not allow you to connect to 1.0 databases.
 
-    3. Compile and install 1.01, but DO NOT do the "initdb" step.
+   
 
-    4. Before doing anything else, terminate your 1.0 postmaster, and backup
+   
        your existing $PGDATA directory.
 
-    5. Set your PGDATA environment variable to your 1.0 databases, but set up
+   
        path up so that 1.01 binaries are being used.
 
-    6. Modify the file "$PGDATA/PG_VERSION" from 5.0 to 5.1
+   
 
-    7. Start up a new 1.01 postmaster
+   
 
-    8. Add the new built-in functions and operators of 1.01 to 1.0 databases.
+   
        This is done by running the new 1.01 server against your own 1.0
        database and applying the queries attached and saving in the file
        1.0_to_1.01.sql. This can be done easily through "psql". If your 1.0
