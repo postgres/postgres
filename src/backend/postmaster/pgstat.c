@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.10 2001/10/05 17:28:12 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.11 2001/10/16 22:35:27 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1754,6 +1754,7 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	beentry->databaseid = msg->m_databaseid;
 	beentry->procpid    = msg->m_procpid;
 	beentry->userid		= msg->m_userid;
+	MemSet(beentry->activity, 0, PGSTAT_ACTIVITY_SIZE);
 
 	/*
 	 * Lookup or create the database entry for this backends DB.
