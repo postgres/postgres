@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.47 2000/08/06 04:26:27 tgl Exp $
+ * $Id: executor.h,v 1.48 2000/08/21 20:55:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,6 +84,7 @@ extern Datum ExecEvalExprSwitchContext(Node *expression, ExprContext *econtext,
 									   bool *isNull, bool *isDone);
 extern bool ExecQual(List *qual, ExprContext *econtext, bool resultForNull);
 extern int	ExecTargetListLength(List *targetlist);
+extern int	ExecCleanTargetListLength(List *targetlist);
 extern TupleTableSlot *ExecProject(ProjectionInfo *projInfo, bool *isDone);
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.47 2000/08/21 17:22:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.48 2000/08/21 20:55:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,14 +20,18 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "executor/executor.h"
 #include "miscadmin.h"
-#include "optimizer/planner.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/sets.h"
 #include "utils/syscache.h"
+
+
+static void checkretval(Oid rettype, List *queryTreeList);
 
 
 /* ----------------------------------------------------------------
@@ -220,7 +224,7 @@ ProcedureCreate(char *procedureName,
 	{
 		querytree_list = pg_parse_and_rewrite(prosrc, typev, parameterCount);
 		/* typecheck return value */
-		pg_checkretval(typeObjectId, querytree_list);
+		checkretval(typeObjectId, querytree_list);
 	}
 
 	/*
@@ -333,4 +337,124 @@ ProcedureCreate(char *procedureName,
 	retval = tup->t_data->t_oid;
 	heap_freetuple(tup);
 	return retval;
+}
+
+/*
+ * checkretval() -- check return value of a list of sql parse trees.
+ *
+ * The return value of a sql function is the value returned by
+ * the final query in the function.  We do some ad-hoc define-time
+ * type checking here to be sure that the user is returning the
+ * type he claims.
+ */
+static void
+checkretval(Oid rettype, List *queryTreeList)
+{
+	Query	   *parse;
+	int			cmd;
+	List	   *tlist;
+	List	   *tlistitem;
+	int			tlistlen;
+	Type		typ;
+	Resdom	   *resnode;
+	Relation	reln;
+	Oid			relid;
+	int			relnatts;
+	int			i;
+
+	/* find the final query */
+	parse = (Query *) nth(length(queryTreeList) - 1, queryTreeList);
+
+	cmd = parse->commandType;
+	tlist = parse->targetList;
+
+	/*
+	 * The last query must be a SELECT if and only if there is a return type.
+	 */
+	if (rettype == InvalidOid)
+	{
+		if (cmd == CMD_SELECT)
+			elog(ERROR, "function declared with no return type, but final query is a SELECT");
+		return;
+	}
+
+	/* by here, the function is declared to return some type */
+	if ((typ = typeidType(rettype)) == NULL)
+		elog(ERROR, "can't find return type %u for function", rettype);
+
+	if (cmd != CMD_SELECT)
+		elog(ERROR, "function declared to return %s, but final query is not a SELECT", typeTypeName(typ));
+
+	/*
+	 * Count the non-junk entries in the result targetlist.
+	 */
+	tlistlen = ExecCleanTargetListLength(tlist);
+
+	/*
+	 * For base-type returns, the target list should have exactly one entry,
+	 * and its type should agree with what the user declared.
+	 */
+	if (typeTypeRelid(typ) == InvalidOid)
+	{
+		if (tlistlen != 1)
+			elog(ERROR, "function declared to return %s returns multiple columns in final SELECT", typeTypeName(typ));
+
+		resnode = (Resdom *) ((TargetEntry *) lfirst(tlist))->resdom;
+		if (resnode->restype != rettype)
+			elog(ERROR, "return type mismatch in function: declared to return %s, returns %s", typeTypeName(typ), typeidTypeName(resnode->restype));
+
+		return;
+	}
+
+	/*
+	 * If the target list is of length 1, and the type of the varnode in
+	 * the target list is the same as the declared return type, this is
+	 * okay.  This can happen, for example, where the body of the function
+	 * is 'SELECT (x = func2())', where func2 has the same return type
+	 * as the function that's calling it.
+	 */
+	if (tlistlen == 1)
+	{
+		resnode = (Resdom *) ((TargetEntry *) lfirst(tlist))->resdom;
+		if (resnode->restype == rettype)
+			return;
+	}
+
+	/*
+	 * By here, the procedure returns a tuple or set of tuples.  This part of
+	 * the typechecking is a hack. We look up the relation that is the
+	 * declared return type, and be sure that attributes 1 .. n in the target
+	 * list match the declared types.
+	 */
+	reln = heap_open(typeTypeRelid(typ), AccessShareLock);
+	relid = reln->rd_id;
+	relnatts = reln->rd_rel->relnatts;
+
+	if (tlistlen != relnatts)
+		elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)", typeTypeName(typ), relnatts);
+
+	/* expect attributes 1 .. n in order */
+	i = 0;
+	foreach(tlistitem, tlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(tlistitem);
+		Oid			tletype;
+
+		if (tle->resdom->resjunk)
+			continue;
+		tletype = exprType(tle->expr);
+		if (tletype != reln->rd_att->attrs[i]->atttypid)
+			elog(ERROR, "function declared to return %s returns %s instead of %s at column %d",
+				 typeTypeName(typ),
+				 typeidTypeName(tletype),
+				 typeidTypeName(reln->rd_att->attrs[i]->atttypid),
+				 i+1);
+		i++;
+	}
+
+	/* this shouldn't happen, but let's just check... */
+	if (i != relnatts)
+		elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)", typeTypeName(typ), relnatts);
+
+	heap_close(reln, AccessShareLock);
 }

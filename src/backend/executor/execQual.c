@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.77 2000/08/08 15:41:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.78 2000/08/21 20:55:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1444,22 +1444,49 @@ ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 	return result;
 }
 
+/*
+ * Number of items in a tlist (including any resjunk items!)
+ */
 int
 ExecTargetListLength(List *targetlist)
 {
-	int			len;
+	int			len = 0;
 	List	   *tl;
-	TargetEntry *curTle;
 
-	len = 0;
 	foreach(tl, targetlist)
 	{
-		curTle = lfirst(tl);
+		TargetEntry	   *curTle = (TargetEntry *) lfirst(tl);
 
 		if (curTle->resdom != NULL)
 			len++;
 		else
 			len += curTle->fjoin->fj_nNodes;
+	}
+	return len;
+}
+
+/*
+ * Number of items in a tlist, not including any resjunk items
+ */
+int
+ExecCleanTargetListLength(List *targetlist)
+{
+	int			len = 0;
+	List	   *tl;
+
+	foreach(tl, targetlist)
+	{
+		TargetEntry	   *curTle = (TargetEntry *) lfirst(tl);
+
+		if (curTle->resdom != NULL)
+		{
+			if (! curTle->resdom->resjunk)
+				len++;
+		}
+		else
+		{
+			len += curTle->fjoin->fj_nNodes;
+		}
 	}
 	return len;
 }
