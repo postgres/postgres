@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.114 1999/11/15 02:00:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.115 1999/11/20 21:39:36 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -212,11 +212,10 @@ static Node *doNegate(Node *n);
 %type <node>	columnDef, alter_clause
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause,
-				a_expr, a_expr_or_null, b_expr, AexprConst,
+				a_expr, a_expr_or_null, b_expr, com_expr, AexprConst,
 				in_expr, having_clause
 %type <list>	row_descriptor, row_list, in_expr_nodes
 %type <node>	row_expr
-%type <str>		row_op
 %type <node>	case_expr, case_arg, when_clause, case_default
 %type <list>	when_clause_list
 %type <ival>	sub_type
@@ -942,15 +941,18 @@ ColConstraint:
 				{ $$ = $1; }
 		;
 
-/* DEFAULT NULL is already the default for Postgres.
+/*
+ * DEFAULT NULL is already the default for Postgres.
  * But define it here and carry it forward into the system
  * to make it explicit.
  * - thomas 1998-09-13
+ *
  * WITH NULL and NULL are not SQL92-standard syntax elements,
  * so leave them out. Use DEFAULT NULL to explicitly indicate
  * that a column may have that value. WITH NULL leads to
  * shift/reduce conflicts with WITH TIME ZONE anyway.
  * - thomas 1999-01-08
+ *
  * DEFAULT expression must be b_expr not a_expr to prevent shift/reduce
  * conflict on NOT (since NOT might start a subsequent NOT NULL constraint,
  * or be part of a_expr NOT LIKE or similar constructs).
@@ -1466,8 +1468,7 @@ def_type:  OPERATOR							{ $$ = OPERATOR; }
 def_name:  PROCEDURE						{ $$ = "procedure"; }
 		| JOIN								{ $$ = "join"; }
 		| ColId								{ $$ = $1; }
-		| MathOp							{ $$ = $1; }
-		| Op								{ $$ = $1; }
+		| all_Op							{ $$ = $1; }
 		;
 
 definition:  '(' def_list ')'				{ $$ = $2; }
@@ -2063,20 +2064,6 @@ RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')'
 					n->args = $5;
 					$$ = (Node *)n;
 				}
-		;
-
-all_Op:  Op | MathOp;
-
-MathOp:	'+'				{ $$ = "+"; }
-		| '-'			{ $$ = "-"; }
-		| '*'			{ $$ = "*"; }
-		| '/'			{ $$ = "/"; }
-		| '%'			{ $$ = "%"; }
-		| '^'			{ $$ = "^"; }
-		| '|'			{ $$ = "|"; }
-		| '<'			{ $$ = "<"; }
-		| '>'			{ $$ = ">"; }
-		| '='			{ $$ = "="; }
 		;
 
 oper_argtypes:	name
@@ -2951,9 +2938,7 @@ sortby: a_expr OptUseOp
 				}
 		;
 
-OptUseOp:  USING Op								{ $$ = $2; }
-		| USING '<'								{ $$ = "<"; }
-		| USING '>'								{ $$ = ">"; }
+OptUseOp:  USING all_Op							{ $$ = $2; }
 		| ASC									{ $$ = "<"; }
 		| DESC									{ $$ = ">"; }
 		| /*EMPTY*/								{ $$ = "<"; /*default*/ }
@@ -3578,7 +3563,7 @@ opt_interval:  datetime							{ $$ = lcons($1, NIL); }
 
 /*****************************************************************************
  *
- *	expression grammar, still needs some cleanup
+ *	expression grammar
  *
  *****************************************************************************/
 
@@ -3595,8 +3580,6 @@ a_expr_or_null:  a_expr
 /* Expressions using row descriptors
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *  with singleton expressions.
- * Eliminated lots of code by defining row_op and sub_type clauses.
- * - thomas 1998-05-09
  */
 row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
@@ -3618,7 +3601,7 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $7;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' row_op sub_type '(' SubSelect ')'
+		| '(' row_descriptor ')' all_Op sub_type '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -3631,7 +3614,7 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $7;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' row_op '(' SubSelect ')'
+		| '(' row_descriptor ')' all_Op '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -3644,7 +3627,7 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $6;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' row_op '(' row_descriptor ')'
+		| '(' row_descriptor ')' all_Op '(' row_descriptor ')'
 				{
 					$$ = makeRowExpr($4, $2, $6);
 				}
@@ -3666,45 +3649,67 @@ row_list:  row_list ',' a_expr
 				}
 		;
 
-row_op:  Op									{ $$ = $1; }
-		| '<'								{ $$ = "<"; }
-		| '='								{ $$ = "="; }
-		| '>'								{ $$ = ">"; }
-		| '+'								{ $$ = "+"; }
-		| '-'								{ $$ = "-"; }
-		| '*'								{ $$ = "*"; }
-		| '/'								{ $$ = "/"; }
-		| '%'								{ $$ = "%"; }
-		| '^'								{ $$ = "^"; }
-		| '|'								{ $$ = "|"; }
-		;
-
 sub_type:  ANY								{ $$ = ANY_SUBLINK; }
 		| ALL								{ $$ = ALL_SUBLINK; }
 		;
 
-/* General expressions
+all_Op:  Op | MathOp;
+
+MathOp:	'+'				{ $$ = "+"; }
+		| '-'			{ $$ = "-"; }
+		| '*'			{ $$ = "*"; }
+		| '/'			{ $$ = "/"; }
+		| '%'			{ $$ = "%"; }
+		| '^'			{ $$ = "^"; }
+		| '|'			{ $$ = "|"; }
+		| '<'			{ $$ = "<"; }
+		| '>'			{ $$ = ">"; }
+		| '='			{ $$ = "="; }
+		;
+
+/*
+ * General expressions
  * This is the heart of the expression syntax.
- * Note that the BETWEEN clause looks similar to a boolean expression
- *  and so we must define b_expr which is almost the same as a_expr
- *  but without the boolean expressions.
- * All operations/expressions are allowed in a BETWEEN clause
- *  if surrounded by parens.
+ *
+ * We have two expression types: a_expr is the unrestricted kind, and
+ * b_expr is a subset that must be used in some places to avoid shift/reduce
+ * conflicts.  For example, we can't do BETWEEN as "BETWEEN a_expr AND a_expr"
+ * because that use of AND conflicts with AND as a boolean operator.  So,
+ * b_expr is used in BETWEEN and we remove boolean keywords from b_expr.
+ *
+ * Note that '(' a_expr ')' is a b_expr, so an unrestricted expression can
+ * always be used by surrounding it with parens.
+ *
+ * com_expr is all the productions that are common to a_expr and b_expr;
+ * it's factored out just to eliminate redundant coding.
  */
-a_expr:  attr
-				{	$$ = (Node *) $1;  }
-		| row_expr
+a_expr:  com_expr
 				{	$$ = $1;  }
-		| AexprConst
-				{	$$ = $1;  }
-		| ColId opt_indirection
+		| a_expr TYPECAST Typename
 				{
-					/* could be a column name or a relation_name */
-					Ident *n = makeNode(Ident);
-					n->name = $1;
-					n->indirection = $2;
-					$$ = (Node *)n;
+					$$ = (Node *)$1;
+					/* AexprConst can be either A_Const or ParamNo */
+					if (nodeTag($1) == T_A_Const) {
+						((A_Const *)$1)->typename = $3;
+					} else if (nodeTag($1) == T_ParamNo) {
+						((ParamNo *)$1)->typename = $3;
+					/* otherwise, try to transform to a function call */
+					} else {
+						FuncCall *n = makeNode(FuncCall);
+						n->funcname = $3->name;
+						n->args = lcons($1,NIL);
+						$$ = (Node *)n;
+					}
 				}
+		/*
+		 * These operators must be called out explicitly in order to make use
+		 * of yacc/bison's automatic operator-precedence handling.  All other
+		 * operator names are handled by the generic productions using "Op",
+		 * below; and all those operators will have the same precedence.
+		 *
+		 * If you add more explicitly-known operators, be sure to add them
+		 * also to b_expr and to the MathOp list above.
+		 */
 		| '-' a_expr %prec UMINUS
 				{	$$ = doNegate($2); }
 		| '%' a_expr
@@ -3750,242 +3755,26 @@ a_expr:  attr
 
 		| a_expr '=' a_expr
 				{	$$ = makeA_Expr(OP, "=", $1, $3); }
-		| a_expr TYPECAST Typename
-				{
-					$$ = (Node *)$1;
-					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($1) == T_A_Const) {
-						((A_Const *)$1)->typename = $3;
-					} else if (nodeTag($1) == T_ParamNo) {
-						((ParamNo *)$1)->typename = $3;
-					/* otherwise, try to transform to a function call */
-					} else {
-						FuncCall *n = makeNode(FuncCall);
-						n->funcname = $3->name;
-						n->args = lcons($1,NIL);
-						$$ = (Node *)n;
-					}
-				}
-		| CAST '(' a_expr AS Typename ')'
-				{
-					$$ = (Node *)$3;
-					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($3) == T_A_Const) {
-						((A_Const *)$3)->typename = $5;
-					} else if (nodeTag($3) == T_ParamNo) {
-						((ParamNo *)$3)->typename = $5;
-					/* otherwise, try to transform to a function call */
-					} else {
-						FuncCall *n = makeNode(FuncCall);
-						n->funcname = $5->name;
-						n->args = lcons($3,NIL);
-						$$ = (Node *)n;
-					}
-				}
-		| '(' a_expr_or_null ')'
-				{	$$ = $2; }
+
 		| a_expr Op a_expr
-				{	$$ = makeA_Expr(OP, $2, $1, $3);	}
-		| a_expr LIKE a_expr
-				{	$$ = makeA_Expr(OP, "~~", $1, $3); }
-		| a_expr NOT LIKE a_expr
-				{	$$ = makeA_Expr(OP, "!~~", $1, $4); }
+				{	$$ = makeA_Expr(OP, $2, $1, $3); }
 		| Op a_expr
 				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
 		| a_expr Op
 				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
-		| func_name '(' '*' ')'
-				{
-					/*
-					 * For now, we transform AGGREGATE(*) into AGGREGATE(1).
-					 *
-					 * This does the right thing for COUNT(*) (in fact,
-					 * any certainly-non-null expression would do for COUNT),
-					 * and there are no other aggregates in SQL92 that accept
-					 * '*' as parameter.
-					 *
-					 * XXX really, the '*' ought to be transformed to some
-					 * special construct that wouldn't be acceptable as the
-					 * input of a non-aggregate function, in case the given
-					 * func_name matches a plain function.  This would also
-					 * support a possible extension to let user-defined
-					 * aggregates do something special with '*' as input.
-					 */
-					FuncCall *n = makeNode(FuncCall);
-					A_Const *star = makeNode(A_Const);
-					star->val.type = T_Integer;
-					star->val.val.ival = 1;
-					n->funcname = $1;
-					n->args = lcons(star, NIL);
-					$$ = (Node *)n;
-				}
-		| func_name '(' ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
-					n->args = NIL;
-					$$ = (Node *)n;
-				}
-		| func_name '(' expr_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
-					n->args = $3;
-					$$ = (Node *)n;
-				}
-		| CURRENT_DATE
-				{
-					A_Const *n = makeNode(A_Const);
-					TypeName *t = makeNode(TypeName);
 
-					n->val.type = T_String;
-					n->val.val.str = "now";
-					n->typename = t;
+		| a_expr AND a_expr
+				{	$$ = makeA_Expr(AND, NULL, $1, $3); }
+		| a_expr OR a_expr
+				{	$$ = makeA_Expr(OR, NULL, $1, $3); }
+		| NOT a_expr
+				{	$$ = makeA_Expr(NOT, NULL, NULL, $2); }
 
-					t->name = xlateSqlType("date");
-					t->setof = FALSE;
-					t->typmod = -1;
- 
-					$$ = (Node *)n;
-				}
-		| CURRENT_TIME
-				{
-					A_Const *n = makeNode(A_Const);
-					TypeName *t = makeNode(TypeName);
+		| a_expr LIKE a_expr
+				{	$$ = makeA_Expr(OP, "~~", $1, $3); }
+		| a_expr NOT LIKE a_expr
+				{	$$ = makeA_Expr(OP, "!~~", $1, $4); }
 
-					n->val.type = T_String;
-					n->val.val.str = "now";
-					n->typename = t;
-
-					t->name = xlateSqlType("time");
-					t->setof = FALSE;
-					t->typmod = -1;
-
-					$$ = (Node *)n;
-				}
-		| CURRENT_TIME '(' Iconst ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					A_Const *s = makeNode(A_Const);
-					TypeName *t = makeNode(TypeName);
-
-					n->funcname = xlateSqlType("time");
-					n->args = lcons(s, NIL);
-
-					s->val.type = T_String;
-					s->val.val.str = "now";
-					s->typename = t;
-
-					t->name = xlateSqlType("time");
-					t->setof = FALSE;
-					t->typmod = -1;
-
-					if ($3 != 0)
-						elog(NOTICE,"CURRENT_TIME(%d) precision not implemented; zero used instead",$3);
-
-					$$ = (Node *)n;
-				}
-		| CURRENT_TIMESTAMP
-				{
-					A_Const *n = makeNode(A_Const);
-					TypeName *t = makeNode(TypeName);
-
-					n->val.type = T_String;
-					n->val.val.str = "now";
-					n->typename = t;
-
-					t->name = xlateSqlType("timestamp");
-					t->setof = FALSE;
-					t->typmod = -1;
-
-					$$ = (Node *)n;
-				}
-		| CURRENT_TIMESTAMP '(' Iconst ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					A_Const *s = makeNode(A_Const);
-					TypeName *t = makeNode(TypeName);
-
-					n->funcname = xlateSqlType("timestamp");
-					n->args = lcons(s, NIL);
-
-					s->val.type = T_String;
-					s->val.val.str = "now";
-					s->typename = t;
-
-					t->name = xlateSqlType("timestamp");
-					t->setof = FALSE;
-					t->typmod = -1;
-
-					if ($3 != 0)
-						elog(NOTICE,"CURRENT_TIMESTAMP(%d) precision not implemented; zero used instead",$3);
-
-					$$ = (Node *)n;
-				}
-		| CURRENT_USER
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "getpgusername";
-					n->args = NIL;
-					$$ = (Node *)n;
-				}
-		| USER
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "getpgusername";
-					n->args = NIL;
-					$$ = (Node *)n;
-				}
-		| EXTRACT '(' extract_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "date_part";
-					n->args = $3;
-					$$ = (Node *)n;
-				}
-		| POSITION '(' position_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "strpos";
-					n->args = $3;
-					$$ = (Node *)n;
-				}
-		| SUBSTRING '(' substr_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "substr";
-					n->args = $3;
-					$$ = (Node *)n;
-				}
-		/* various trim expressions are defined in SQL92 - thomas 1997-07-19 */
-		| TRIM '(' BOTH trim_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "btrim";
-					n->args = $4;
-					$$ = (Node *)n;
-				}
-		| TRIM '(' LEADING trim_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "ltrim";
-					n->args = $4;
-					$$ = (Node *)n;
-				}
-		| TRIM '(' TRAILING trim_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "rtrim";
-					n->args = $4;
-					$$ = (Node *)n;
-				}
-		| TRIM '(' trim_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "btrim";
-					n->args = $3;
-					$$ = (Node *)n;
-				}
 		| a_expr ISNULL
 				{	$$ = makeA_Expr(ISNULL, NULL, $1, NULL); }
 		| a_expr IS NULL_P
@@ -4105,7 +3894,7 @@ a_expr:  attr
 						$$ = n;
 					}
 				}
-		| a_expr row_op sub_type '(' SubSelect ')'
+		| a_expr all_Op sub_type '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons($1, NIL);
@@ -4115,53 +3904,36 @@ a_expr:  attr
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
-		| EXISTS '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = NIL;
-					n->oper = NIL;
-					n->useor = false;
-					n->subLinkType = EXISTS_SUBLINK;
-					n->subselect = $3;
-					$$ = (Node *)n;
-				}
-		| '(' SubSelect ')'
-				{
-					SubLink *n = makeNode(SubLink);
-					n->lefthand = NIL;
-					n->oper = NIL;
-					n->useor = false;
-					n->subLinkType = EXPR_SUBLINK;
-					n->subselect = $2;
-					$$ = (Node *)n;
-				}
-		| a_expr AND a_expr
-				{	$$ = makeA_Expr(AND, NULL, $1, $3); }
-		| a_expr OR a_expr
-				{	$$ = makeA_Expr(OR, NULL, $1, $3); }
-		| NOT a_expr
-				{	$$ = makeA_Expr(NOT, NULL, NULL, $2); }
-		| case_expr
-				{	$$ = $1; }
+		| row_expr
+				{	$$ = $1;  }
 		;
 
-/* Restricted expressions
- * b_expr is a subset of the complete expression syntax
- *  defined by a_expr. b_expr is used in BETWEEN clauses
- *  to eliminate parser ambiguities stemming from the AND keyword,
- *  and also in POSITION clauses where the IN keyword gives trouble.
+/*
+ * Restricted expressions
+ *
+ * b_expr is a subset of the complete expression syntax defined by a_expr.
+ *
+ * Presently, AND, NOT, IS, IN, and NULL are the a_expr keywords that would
+ * cause trouble in the places where b_expr is used.  For simplicity, we
+ * just eliminate all the boolean-keyword-operator productions from b_expr.
  */
-b_expr:  attr
-				{	$$ = (Node *) $1;  }
-		| AexprConst
+b_expr:  com_expr
 				{	$$ = $1;  }
-		| ColId opt_indirection
+		| b_expr TYPECAST Typename
 				{
-					/* could be a column name or a relation_name */
-					Ident *n = makeNode(Ident);
-					n->name = $1;
-					n->indirection = $2;
-					$$ = (Node *)n;
+					$$ = (Node *)$1;
+					/* AexprConst can be either A_Const or ParamNo */
+					if (nodeTag($1) == T_A_Const) {
+						((A_Const *)$1)->typename = $3;
+					} else if (nodeTag($1) == T_ParamNo) {
+						((ParamNo *)$1)->typename = $3;
+					/* otherwise, try to transform to a function call */
+					} else {
+						FuncCall *n = makeNode(FuncCall);
+						n->funcname = $3->name;
+						n->args = lcons($1,NIL);
+						$$ = (Node *)n;
+					}
 				}
 		| '-' b_expr %prec UMINUS
 				{	$$ = doNegate($2); }
@@ -4195,23 +3967,44 @@ b_expr:  attr
 				{	$$ = makeA_Expr(OP, "^", $1, $3); }
 		| b_expr '|' b_expr
 				{	$$ = makeA_Expr(OP, "|", $1, $3); }
-		| b_expr TYPECAST Typename
+		| b_expr '<' b_expr
+				{	$$ = makeA_Expr(OP, "<", $1, $3); }
+		| b_expr '>' b_expr
+				{	$$ = makeA_Expr(OP, ">", $1, $3); }
+		| b_expr '=' b_expr
+				{	$$ = makeA_Expr(OP, "=", $1, $3); }
+
+		| b_expr Op b_expr
+				{	$$ = makeA_Expr(OP, $2, $1, $3); }
+		| Op b_expr
+				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
+		| b_expr Op
+				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
+		;
+
+/*
+ * Productions that can be used in both a_expr and b_expr.
+ *
+ * Note: productions that refer recursively to a_expr or b_expr mostly
+ * cannot appear here.  However, it's OK to refer to a_exprs that occur
+ * inside parentheses, such as function arguments; that cannot introduce
+ * ambiguity to the b_expr syntax.
+ */
+com_expr:  attr
+				{	$$ = (Node *) $1;  }
+		| ColId opt_indirection
 				{
-					$$ = (Node *)$1;
-					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($1) == T_A_Const) {
-						((A_Const *)$1)->typename = $3;
-					} else if (nodeTag($1) == T_ParamNo) {
-						((ParamNo *)$1)->typename = $3;
-					/* otherwise, try to transform to a function call */
-					} else {
-						FuncCall *n = makeNode(FuncCall);
-						n->funcname = $3->name;
-						n->args = lcons($1,NIL);
-						$$ = (Node *)n;
-					}
+					/* could be a column name or a relation_name */
+					Ident *n = makeNode(Ident);
+					n->name = $1;
+					n->indirection = $2;
+					$$ = (Node *)n;
 				}
-		| CAST '(' b_expr AS Typename ')'
+		| AexprConst
+				{	$$ = $1;  }
+		| '(' a_expr_or_null ')'
+				{	$$ = $2; }
+		| CAST '(' a_expr AS Typename ')'
 				{
 					$$ = (Node *)$3;
 					/* AexprConst can be either A_Const or ParamNo */
@@ -4227,14 +4020,8 @@ b_expr:  attr
 						$$ = (Node *)n;
 					}
 				}
-		| '(' a_expr ')'
-				{	$$ = $2; }
-		| b_expr Op b_expr
-				{	$$ = makeA_Expr(OP, $2,$1,$3);	}
-		| Op b_expr
-				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
-		| b_expr Op
-				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
+		| case_expr
+				{	$$ = $1; }
 		| func_name '(' ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -4249,52 +4036,107 @@ b_expr:  attr
 					n->args = $3;
 					$$ = (Node *)n;
 				}
+		| func_name '(' '*' ')'
+				{
+					/*
+					 * For now, we transform AGGREGATE(*) into AGGREGATE(1).
+					 *
+					 * This does the right thing for COUNT(*) (in fact,
+					 * any certainly-non-null expression would do for COUNT),
+					 * and there are no other aggregates in SQL92 that accept
+					 * '*' as parameter.
+					 *
+					 * XXX really, the '*' ought to be transformed to some
+					 * special construct that wouldn't be acceptable as the
+					 * input of a non-aggregate function, in case the given
+					 * func_name matches a plain function.  This would also
+					 * support a possible extension to let user-defined
+					 * aggregates do something special with '*' as input.
+					 */
+					FuncCall *n = makeNode(FuncCall);
+					A_Const *star = makeNode(A_Const);
+
+					star->val.type = T_Integer;
+					star->val.val.ival = 1;
+					n->funcname = $1;
+					n->args = lcons(star, NIL);
+					$$ = (Node *)n;
+				}
 		| CURRENT_DATE
 				{
-					A_Const *n = makeNode(A_Const);
-					TypeName *t = makeNode(TypeName);
-
-					n->val.type = T_String;
-					n->val.val.str = "now";
-					n->typename = t;
-
-					t->name = xlateSqlType("date");
-					t->setof = FALSE;
-					t->typmod = -1;
-
-					$$ = (Node *)n;
-				}
-		| CURRENT_TIME
-				{
-					A_Const *n = makeNode(A_Const);
-					TypeName *t = makeNode(TypeName);
-
-					n->val.type = T_String;
-					n->val.val.str = "now";
-					n->typename = t;
-
-					t->name = xlateSqlType("time");
-					t->setof = FALSE;
-					t->typmod = -1;
-
-					$$ = (Node *)n;
-				}
-		| CURRENT_TIME '(' Iconst ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
+					/*
+					 * Translate as "date('now'::text)".
+					 *
+					 * We cannot use "'now'::date" because coerce_type() will
+					 * immediately reduce that to a constant representing
+					 * today's date.  We need to delay the conversion until
+					 * runtime, else the wrong things will happen when
+					 * CURRENT_DATE is used in a column default value or rule.
+					 *
+					 * This could be simplified if we had a way to generate
+					 * an expression tree representing runtime application
+					 * of type-input conversion functions...
+					 */
 					A_Const *s = makeNode(A_Const);
 					TypeName *t = makeNode(TypeName);
-
-					n->funcname = xlateSqlType("time");
-					n->args = lcons(s, NIL);
+					FuncCall *n = makeNode(FuncCall);
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
 					s->typename = t;
 
-					t->name = xlateSqlType("time");
+					t->name = xlateSqlType("text");
 					t->setof = FALSE;
 					t->typmod = -1;
+
+					n->funcname = xlateSqlType("date");
+					n->args = lcons(s, NIL);
+
+					$$ = (Node *)n;
+				}
+		| CURRENT_TIME
+				{
+					/*
+					 * Translate as "time('now'::text)".
+					 * See comments for CURRENT_DATE.
+					 */
+					A_Const *s = makeNode(A_Const);
+					TypeName *t = makeNode(TypeName);
+					FuncCall *n = makeNode(FuncCall);
+
+					s->val.type = T_String;
+					s->val.val.str = "now";
+					s->typename = t;
+
+					t->name = xlateSqlType("text");
+					t->setof = FALSE;
+					t->typmod = -1;
+
+					n->funcname = xlateSqlType("time");
+					n->args = lcons(s, NIL);
+
+					$$ = (Node *)n;
+				}
+		| CURRENT_TIME '(' Iconst ')'
+				{
+					/*
+					 * Translate as "time('now'::text)".
+					 * See comments for CURRENT_DATE.
+					 */
+					A_Const *s = makeNode(A_Const);
+					TypeName *t = makeNode(TypeName);
+					FuncCall *n = makeNode(FuncCall);
+
+					s->val.type = T_String;
+					s->val.val.str = "now";
+					s->typename = t;
+
+					t->name = xlateSqlType("text");
+					t->setof = FALSE;
+					t->typmod = -1;
+
+					n->funcname = xlateSqlType("time");
+					n->args = lcons(s, NIL);
 
 					if ($3 != 0)
 						elog(NOTICE,"CURRENT_TIME(%d) precision not implemented; zero used instead",$3);
@@ -4303,35 +4145,47 @@ b_expr:  attr
 				}
 		| CURRENT_TIMESTAMP
 				{
-					A_Const *n = makeNode(A_Const);
-					TypeName *t = makeNode(TypeName);
-
-					n->val.type = T_String;
-					n->val.val.str = "now";
-					n->typename = t;
-
-					t->name = xlateSqlType("timestamp");
-					t->setof = FALSE;
-					t->typmod = -1;
-
-					$$ = (Node *)n;
-				}
-		| CURRENT_TIMESTAMP '(' Iconst ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
+					/*
+					 * Translate as "timestamp('now'::text)".
+					 * See comments for CURRENT_DATE.
+					 */
 					A_Const *s = makeNode(A_Const);
 					TypeName *t = makeNode(TypeName);
-
-					n->funcname = xlateSqlType("timestamp");
-					n->args = lcons(s, NIL);
+					FuncCall *n = makeNode(FuncCall);
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
 					s->typename = t;
 
-					t->name = xlateSqlType("timestamp");
+					t->name = xlateSqlType("text");
 					t->setof = FALSE;
 					t->typmod = -1;
+
+					n->funcname = xlateSqlType("timestamp");
+					n->args = lcons(s, NIL);
+
+					$$ = (Node *)n;
+				}
+		| CURRENT_TIMESTAMP '(' Iconst ')'
+				{
+					/*
+					 * Translate as "timestamp('now'::text)".
+					 * See comments for CURRENT_DATE.
+					 */
+					A_Const *s = makeNode(A_Const);
+					TypeName *t = makeNode(TypeName);
+					FuncCall *n = makeNode(FuncCall);
+
+					s->val.type = T_String;
+					s->val.val.str = "now";
+					s->typename = t;
+
+					t->name = xlateSqlType("text");
+					t->setof = FALSE;
+					t->typmod = -1;
+
+					n->funcname = xlateSqlType("timestamp");
+					n->args = lcons(s, NIL);
 
 					if ($3 != 0)
 						elog(NOTICE,"CURRENT_TIMESTAMP(%d) precision not implemented; zero used instead",$3);
@@ -4350,6 +4204,13 @@ b_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "getpgusername";
 					n->args = NIL;
+					$$ = (Node *)n;
+				}
+		| EXTRACT '(' extract_list ')'
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "date_part";
+					n->args = $3;
 					$$ = (Node *)n;
 				}
 		| POSITION '(' position_list ')'
@@ -4405,7 +4266,21 @@ b_expr:  attr
 					n->subselect = $2;
 					$$ = (Node *)n;
 				}
+		| EXISTS '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = NIL;
+					n->oper = NIL;
+					n->useor = false;
+					n->subLinkType = EXISTS_SUBLINK;
+					n->subselect = $3;
+					$$ = (Node *)n;
+				}
 		;
+
+/*
+ * Supporting nonterminals for expressions.
+ */
 
 opt_indirection:  '[' a_expr ']' opt_indirection
 				{
