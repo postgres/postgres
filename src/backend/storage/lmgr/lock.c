@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.85 2001/02/23 20:12:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.86 2001/03/14 18:24:32 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -934,7 +934,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 	old_status = pstrdup(get_ps_display());
 	new_status = (char *) palloc(strlen(old_status) + 10);
 	strcpy(new_status, old_status);
-	strcat(new_status, " waiting");
+	strcat(new_status, "waiting");
 	set_ps_display(new_status);
 
 	/*
