@@ -18,19 +18,6 @@ import org.postgresql.util.*;
  *
  * <p>It is based around the file src/interfaces/libpq/fe-exec.c
  *
- *
- * <p><b>Implementation notes:</b>
- *
- * <p><b><em>Network protocol:</em></b>
- *
- * <p>The code within the backend reads integers in reverse.
- *
- * <p>There is work in progress to convert all of the protocol to
- * network order but it may not be there for v6.3
- *
- * <p>When fastpath switches, simply replace SendIntegerReverse() with
- * SendInteger()
- *
  * @see org.postgresql.FastpathFastpathArg
  * @see org.postgresql.LargeObject
  */
@@ -80,9 +67,7 @@ public class Fastpath
       // that confuses the backend. The 0 terminates the command line.
       stream.SendInteger(70,1);
       stream.SendInteger(0,1);
-      
-      //stream.SendIntegerReverse(fnid,4);
-      //stream.SendIntegerReverse(args.length,4);
+
       stream.SendInteger(fnid,4);
       stream.SendInteger(args.length,4);
       

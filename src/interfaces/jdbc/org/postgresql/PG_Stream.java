@@ -56,12 +56,6 @@ public class PG_Stream
    */
   public void SendChar(int val) throws IOException
   {
-      // Original code
-      //byte b[] = new byte[1];
-      //b[0] = (byte)val;
-      //pg_output.write(b);
-
-      // Optimised version by Sverre H. Huseby Aug 22 1999 Applied Sep 13 1999
       pg_output.write((byte)val);
   }
 
@@ -79,30 +73,6 @@ public class PG_Stream
     while (siz-- > 0)
       {
 	buf[siz] = (byte)(val & 0xff);
-	val >>= 8;
-      }
-    Send(buf);
-  }
-
-  /**
-   * Sends an integer to the back end in reverse order.
-   *
-   * This is required when the backend uses the routines in the
-   * src/backend/libpq/pqcomprim.c module.
-   *
-   * As time goes by, this should become obsolete.
-   *
-   * @param val the integer to be sent
-   * @param siz the length of the integer in bytes (size of structure)
-   * @exception IOException if an I/O error occurs
-   */
-  public void SendIntegerReverse(int val, int siz) throws IOException
-  {
-    byte[] buf = bytePoolDim1.allocByte(siz);
-    int p=0;
-    while (siz-- > 0)
-      {
-	buf[p++] = (byte)(val & 0xff);
 	val >>= 8;
       }
     Send(buf);
@@ -153,17 +123,6 @@ public class PG_Stream
 	    pg_output.write(0);
 	  }
       }
-  }
-
-  /**
-   * Sends a packet, prefixed with the packet's length
-   * @param buf buffer to send
-   * @exception SQLException if an I/O Error returns
-   */
-  public void SendPacket(byte[] buf) throws IOException
-  {
-    SendInteger(buf.length+4,4);
-    Send(buf);
   }
 
   /**
