@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.15 2002/10/01 00:39:02 davec Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.15.2.1 2002/11/11 07:30:08 barry Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -28,6 +28,11 @@ public class DatabaseMetaDataTest extends TestCase
 	{
 		con = TestUtil.openDB();
 		TestUtil.createTable( con, "testmetadata", "id int4, name text, updated timestamp" );
+		Statement stmt = con.createStatement();
+		//we add the following comments to ensure the joins to the comments
+		//are done correctly. This ensures we correctly test that case.
+		stmt.execute("comment on table testmetadata is 'this is a table comment'");
+		stmt.execute("comment on column testmetadata.id is 'this is a column comment'");
 	}
 	protected void tearDown() throws Exception
 	{
@@ -44,12 +49,14 @@ public class DatabaseMetaDataTest extends TestCase
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
 
-			ResultSet rs = dbmd.getTables( null, null, "test%", new String[] {"TABLE"});
+			ResultSet rs = dbmd.getTables( null, null, "testmetadat%", new String[] {"TABLE"});
 			assertTrue( rs.next() );
 			String tableName = rs.getString("TABLE_NAME");
 			assertTrue( tableName.equals("testmetadata") );
 			String tableType = rs.getString("TABLE_TYPE");
 			assertTrue( tableType.equals("TABLE") );
+            //There should only be one row returned 
+            assertTrue( "getTables() returned too many rows", rs.next() == false);
 			rs.close();
 
 			rs = dbmd.getColumns("", "", "test%", "%" );

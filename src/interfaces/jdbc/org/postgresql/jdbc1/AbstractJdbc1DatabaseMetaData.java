@@ -1988,7 +1988,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			" END "+
 			" AS TABLE_TYPE, d.description AS REMARKS "+
 			" FROM pg_catalog.pg_namespace n, pg_catalog.pg_class c "+
-			" LEFT JOIN pg_catalog.pg_description d ON (c.oid = d.objoid) "+
+			" LEFT JOIN pg_catalog.pg_description d ON (c.oid = d.objoid AND d.objsubid = 0) "+
 			" LEFT JOIN pg_catalog.pg_class dc ON (d.classoid=dc.oid AND dc.relname='pg_class') "+
 			" LEFT JOIN pg_catalog.pg_namespace dn ON (dn.oid=dc.relnamespace AND dn.nspname='pg_catalog') "+
 			" WHERE c.relnamespace = n.oid ";
@@ -2038,7 +2038,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			if (connection.haveMinimumServerVersion("7.1")) {
 				select = "SELECT NULL AS TABLE_CAT, NULL AS TABLE_SCHEM, c.relname AS TABLE_NAME, "+tableType+" AS TABLE_TYPE, d.description AS REMARKS "+
 					" FROM pg_class c "+
-					" LEFT JOIN pg_description d ON (c.oid=d.objoid) "+
+					" LEFT JOIN pg_description d ON (c.oid=d.objoid AND d.objsubid = 0) "+
 					" LEFT JOIN pg_class dc ON (d.classoid = dc.oid AND dc.relname='pg_class') "+
 					" WHERE true ";
 			} else {
