@@ -1,3 +1,5 @@
+# $Header: /cvsroot/pgsql/contrib/intarray/Makefile,v 1.5 2001/03/18 23:35:18 tgl Exp $
+
 subdir = contrib/intarray
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
@@ -10,7 +12,7 @@ NAME= _int
 SO_MAJOR_VERSION= 1
 SO_MINOR_VERSION= 0
 
-override CPPFLAGS += -I$(srcdir) -DPGSQL71
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -DPGSQL71
 
 OBJS= _int.o
 
@@ -21,46 +23,31 @@ include $(top_srcdir)/src/Makefile.shlib
 
 
 $(NAME).sql: $(NAME).sql.in
-	sed -e 's:MODULE_PATHNAME:$(libdir)/$(shlib):g' < $< > $@
+	sed 's,MODULE_PATHNAME,$(libdir)/$(shlib),g' $< >$@
 
 .PHONY: submake
 submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress
 
-# against installed postmaster
 installcheck: submake
 	$(top_builddir)/src/test/regress/pg_regress _int
 
-# in-tree test doesn't work yet (no way to install my shared library)
-#check: all submake
-#	$(top_builddir)/src/test/regress/pg_regress --temp-install \
-#	  --top-builddir=$(top_builddir) _int
 check:
-	@echo "'make check' is not supported."
-	@echo "Do 'make install', then 'make installcheck' instead."
+	@echo "'$(MAKE) check' is not supported."
+	@echo "Do '$(MAKE) install', then '$(MAKE) installcheck' instead."
 
 install: all installdirs install-lib
-	#$(INSTALL_DATA) $(srcdir)/README.$(NAME)  $(docdir)/contrib
+	$(INSTALL_DATA) $(srcdir)/README.intarray $(docdir)/contrib
 	$(INSTALL_DATA) $(NAME).sql $(datadir)/contrib
 
 installdirs:
 	$(mkinstalldirs) $(docdir)/contrib $(datadir)/contrib $(libdir)
 
 uninstall: uninstall-lib
-	rm -f $(docdir)/contrib/README.$(NAME) $(datadir)/contrib/$(NAME).sql
+	rm -f $(docdir)/contrib/README.intarray $(datadir)/contrib/$(NAME).sql
 
 clean distclean maintainer-clean: clean-lib
-	rm -f *.so y.tab.c y.tab.h $(OBJS) $(NAME).sql
+	rm -f $(OBJS) $(NAME).sql
 # things created by various check targets
-	rm -rf results tmp_check log
-	rm -f regression.diffs regression.out regress.out run_check.out
-ifeq ($(PORTNAME), win)
-	rm -f regress.def
-endif
-
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif
+	rm -rf results
+	rm -f regression.diffs regression.out
