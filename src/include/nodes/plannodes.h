@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.47 2001/01/24 19:43:26 momjian Exp $
+ * $Id: plannodes.h,v 1.48 2001/03/04 15:43:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,7 +420,7 @@ typedef struct Tee
 	List	   *rtentries;		/* the range table for the plan below the
 								 * Tee may be different than the parent
 								 * plans */
-}			Tee;
+} Tee;
 
 #endif
 

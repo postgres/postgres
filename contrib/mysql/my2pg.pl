@@ -35,7 +35,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $Id: my2pg.pl,v 1.2 2001/02/10 11:43:33 momjian Exp $
+# $Id: my2pg.pl,v 1.3 2001/03/04 15:43:33 momjian Exp $
 
 # TODO:
 # + Handle SETs
@@ -46,11 +46,14 @@
 
 #
 # $Log: my2pg.pl,v $
-# Revision 1.2  2001/02/10 11:43:33  momjian
-# cleanup
+# Revision 1.3  2001/03/04 15:43:33  momjian
+# Update mysql converter, new version released.
 #
-# Revision 1.1  2001/02/10 11:43:12  momjian
-# Add other mysql conversion utility for comparisons.
+# Revision 1.17  2001/03/04 13:01:50  fonin
+# Fixes to make work it right with MySQL 3.23 dumps. Tested on mysqldump 8.11. Also, AUTO_INCREMENT->SERIAL fields no more have DEFAULT and NOT NULL definitions.
+#
+# Revision 1.16  2001/02/02 08:15:34  fonin
+# Sequences should be created BEFORE creating any objects \nthat depends on it.
 #
 # Revision 1.15  2001/01/30 10:13:36  fonin
 # Re-released under BSD-like license.
@@ -59,7 +62,12 @@
 # Better -n implementation.
 #
 # Revision 1.13  2000/12/18 15:26:33  fonin
-# Added command-line options. -n forces *CHAR DEFAULT '' NOT NULL to be converted to *CHAR NULL.\nAUTO_INCREMENT fields converted not in SERIAL but in INT* NOT NULL DEFAULT nextval('seqname').\nDocumentation refreshed.\nDump enclosed in single transaction from now.
+# Added command-line options. -n forces *CHAR DEFAULT '' NOT NULL to be 
+# converted to *CHAR NULL.
+# AUTO_INCREMENT fields converted not in SERIAL but in 
+# INT* NOT NULL DEFAULT nextval('seqname').
+# Documentation refreshed.
+# Dump enclosed in single transaction from now.
 #
 # Revision 1.12  2000/12/14 20:57:15  fonin
 # Doublequotation bug fixed (in CREATE INDEX ON TABLE (field1,field2))
@@ -100,7 +108,7 @@ if($opts{n} ne '') {
 $|=1;
 
 print("------------------------------------------------------------------");
-print("\n-- My2Pg \$Revision: 1.2 $ \translated dump");
+print("\n-- My2Pg \$Revision: 1.3 $ \translated dump");
 print("\n--");
 print("\n------------------------------------------------------------------");
 
@@ -122,7 +130,7 @@ $libtypename.='/libtypes.so';
 # push header to libtypes.c
 open(LIBTYPES,">$libtypesource");
 print LIBTYPES "/******************************************************";
-print LIBTYPES "\n * My2Pg \$Revision: 1.2 $ \translated dump";
+print LIBTYPES "\n * My2Pg \$Revision: 1.3 $ \translated dump";
 print LIBTYPES "\n * User types definitions";
 print LIBTYPES "\n ******************************************************/";
 print LIBTYPES "\n\n#include <postgres.h>\n";
@@ -157,13 +165,18 @@ while (<>) {
 # Convert DATE types
     s/datetime/TIMESTAMP/;
     s/timestamp\(\d+\)/TIMESTAMP/i;
-    
+
+# small hack - convert "default" to uppercase, because below we 
+# enclose all lowercase words in double quotes
+    s/default/DEFAULT/;
+
 # Change all AUTO_INCREMENT fields to SERIAL ones with a pre-defined sequence
     if(/([\w\d]+)\sint.*auto_increment/i) {
 	$tmpseq=new_name("$table_name"."_"."$+"."_SEQ",28);
 	$seq{$table_name}=$tmpseq;
 	$primary{$table_name}=$+;
-	s/(int.*?)DEFAULT\s*?'.*?'(.*?)AUTO_INCREMENT/$1$2DEFAULT nextval\('$tmpseq'\)/i;
+	s/(int.*?) .*AUTO_INCREMENT/$1 DEFAULT nextval\('$tmpseq'\)/i;
+	#s/(int.*?)DEFAULT\s*?'.*?'(.*?)AUTO_INCREMENT/$1$2DEFAULT nextval\('$tmpseq'\)/i;
     }
 
 # Fix timestamps
@@ -540,9 +553,20 @@ CREATE OPERATOR <> (
 	    $oldtable=$table_name;
 	    $j=-1;
 	    $check='';
+
+	    if($seq{$table_name} ne '') {
+		print "\n\n--";
+		print "\n-- Sequences for table ".uc($table_name);
+		print "\n--\n";
+		print "\nCREATE SEQUENCE ".$seq{$table_name}.";\n\n";
+	    }
+
 	    print $types;
 	    $types='';
-	    $dump=~s/,\n\);/\n\);/gmi;
+	    $dump=~s/,\n\).*;/\n\);/gmi;
+# removing table options after closing bracket:
+# ) TYPE=ISAM PACK_KEYS=1;
+	    $dump=~s/\n\).*/\n\);/gmi;
 	    print $dump;
 	    $dump='';
 	}
@@ -557,18 +581,18 @@ CREATE OPERATOR <> (
 	s/(PRIMARY KEY \(.*\)).*/$1$check\n/i;
     }
     
-    if(/^\s*KEY (.+) \((.*)\).*/i) {
+    if(/^\s*KEY ([\w\d_]+)\s*\((.*)\).*/i) {
 	my $tmpfld=$2;
 	$tmpfld=~s/\s*,\s*/","/;
 	$index{$table_name}[++$j]="CREATE INDEX $1_$table_name\_index ON \"$table_name\" (\"$tmpfld\");";
     }
-    if(/^\s*UNIQUE (.+) \((.*)\).*/i) {
+    if(/^\s*UNIQUE ([\w\d_]+)\s*\((.*)\).*/i) {
 	my $tmpfld=$2;
 	$tmpfld=~s/,/","/;
 	$index{$table_name}[++$j]="CREATE UNIQUE INDEX $1_$table_name\_index ON \"$table_name\" (\"$tmpfld\");";
     }
-    s/^\s*UNIQUE (.+) (\(.*\)).*\n//i;
-    s/^\s*KEY (.+) (\(.*\)).*\n//i;
+    s/^\s*UNIQUE (.+).*(\(.*\)).*\n//i;
+    s/^\s*KEY (.+).*(\(.*\)).*\n//i;
 
     if(!s/INSERT INTO\s+?(.*?)\s+?/INSERT INTO "$1" /i) {
 # Quote lowercase identifiers in double quotes
@@ -580,8 +604,15 @@ CREATE OPERATOR <> (
     $dump.=$_;
 }
 
+if($seq{$table_name} ne '') {
+    print "\n\n--";
+    print "\n-- Sequences for table ".uc($table_name);
+    print "\n--\n";
+    print "\nCREATE SEQUENCE ".$seq{$table_name}.";\n\n";
+}
 print $types;
-$dump=~s/,\n\);/\n\);/gmi;
+$dump=~s/,\n\).*;/\n\);/gmi;
+$dump=~s/\n\).*/\n\);/gmi;
 print $dump;
 
 # Output indices for tables
@@ -594,8 +625,6 @@ while(my($table,$ind)=each(%index)) {
     }
 
 }
-print("\n\nEND;\n");
-print("\nBEGIN;\n");
 
 while(my($table,$s)=each(%seq)) {
     print "\n\n--";
@@ -604,17 +633,16 @@ while(my($table,$s)=each(%seq)) {
 
     # setting SERIAL sequence values right    
     if($primary{$table} ne '') {
-	print "\nCREATE SEQUENCE ".$seq{$table}.";";
 	print "\nSELECT SETVAL('".$seq{$table}."',(select case when max(\"".$primary{$table}."\")>0 then max(\"".$primary{$table}."\")+1 else 1 end from \"$table\"));";
     }
 }
 
-print("\n\nEND;\n");
+print("\n\nCOMMIT;\n");
 close(LIBTYPES);
 
 open(MAKE,">Makefile");
 print MAKE "#
-# My2Pg \$Revision: 1.2 $ \translated dump
+# My2Pg \$Revision: 1.3 $ \translated dump
 # Makefile
 #
 
@@ -665,7 +693,8 @@ Copyright (c) 2000 Valentine Danilchuk	<valdan\@ziet.zhitomir.ua>
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
 SYNTAX:
     my2pg [-hn]
