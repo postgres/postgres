@@ -77,11 +77,13 @@ CLEAN :
 
 
 
-config: ..\..\include\pg_config.h
+config: ..\..\include\pg_config.h pg_config_paths.h
 
 ..\..\include\pg_config.h: ..\..\include\pg_config.h.win32
 	copy ..\..\include\pg_config.h.win32 ..\..\include\pg_config.h
 
+pg_config_paths.h: win32.mak
+	echo #define SYSCONFDIR "" >pg_config_paths.h
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -93,6 +95,10 @@ CPP_PROJ=/nologo /W3 /GX $(OPT) /I "..\..\include" /D "FRONTEND" $(DEBUGDEF) /D\
 !IFDEF USE_SSL
 CPP_PROJ=$(CPP_PROJ) /D USE_SSL
 SSL_LIBS=ssleay32.lib libeay32.lib gdi32.lib
+!ENDIF
+
+!IFDEF ENABLE_THREAD_SAFETY
+CPP_PROJ=$(CPP_PROJ) /D ENABLE_THREAD_SAFETY
 !ENDIF
 
 CPP_SBRS=.
