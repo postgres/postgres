@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.57 1998/12/18 14:45:08 wieck Exp $
+ *  $Id: outfuncs.c,v 1.58 1998/12/20 07:13:36 scrappy Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -71,10 +71,11 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 {
 	appendStringInfo(str, " CREATE :relname %s :columns ", 
 		stringStringInfo(node->relname));
-
 	_outNode(str, node->tableElts);
+
 	appendStringInfo(str, " :inhRelnames ");
 	_outNode(str, node->inhRelnames);
+
 	appendStringInfo(str, " :constraints ");
 	_outNode(str, node->constraints);
 }
@@ -87,12 +88,14 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 			stringStringInfo(node->idxname),
 			stringStringInfo(node->relname),
 			stringStringInfo(node->accessMethod));
-
 	_outNode(str, node->indexParams);
+
 	appendStringInfo(str, " :withClause ");
 	_outNode(str, node->withClause);
+
 	appendStringInfo(str, " :whereClause ");
 	_outNode(str, node->whereClause);
+
 	appendStringInfo(str, " :rangetable ");
 	_outNode(str, node->rangetable);
 
@@ -112,8 +115,7 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 static void
 _outFuncCall(StringInfo str, FuncCall *node)
 {
-	appendStringInfo(str, "FUNCTION %s :args ",
-			stringStringInfo(node->funcname));
+	appendStringInfo(str, "FUNCTION %s :args ", stringStringInfo(node->funcname));
 	_outNode(str, node->args);
 }
 
@@ -153,8 +155,7 @@ _outIndexElem(StringInfo str, IndexElem *node)
 			stringStringInfo(node->name));
 	_outNode(str, node->args);
 
-	appendStringInfo(str, " :class %s :typename ", 
-			stringStringInfo(node->class));
+	appendStringInfo(str, " :class %s :typename ", stringStringInfo(node->class));
 	_outNode(str, node->typename);
 }
 
@@ -727,8 +728,7 @@ _outArray(StringInfo str, Array *node)
 			node->arrayelemlength,
 			node->arrayelembyval ? 't' : 'f');
 
-	appendStringInfo(str, " :arrayndim %d ", node->arrayndim);
-	appendStringInfo(str, " :arraylow ");
+	appendStringInfo(str, " :arrayndim %d :arraylow ", node->arrayndim);
 	for (i = 0; i < node->arrayndim; i++)
 	{
 		appendStringInfo(str, " %d ", node->arraylow.indx[i]);
@@ -1055,9 +1055,7 @@ _outOrderKey(StringInfo str, OrderKey *node)
 static void
 _outJoinKey(StringInfo str, JoinKey *node)
 {
-	appendStringInfo(str, " JOINKEY ");
-
-	appendStringInfo(str, " :outer ");
+	appendStringInfo(str, " JOINKEY :outer ");
 	_outNode(str, node->outer);
 
 	appendStringInfo(str, " :inner ");
@@ -1071,21 +1069,16 @@ _outJoinKey(StringInfo str, JoinKey *node)
 static void
 _outMergeOrder(StringInfo str, MergeOrder *node)
 {
-	char		buf[500];
+	appendStringInfo(str, 
+			" MERGEORDER :join_operator %d :left_operator %d :right_operator %d ",
+			node->join_operator,
+			node->left_operator,
+			node->right_operator);
 
-	appendStringInfo(str, " MERGEORDER ");
-
-	sprintf(buf, " :join_operator %d ", node->join_operator);
-	appendStringInfo(str, buf);
-	sprintf(buf, " :left_operator %d ", node->left_operator);
-	appendStringInfo(str, buf);
-	sprintf(buf, " :right_operator %d ", node->right_operator);
-	appendStringInfo(str, buf);
-	sprintf(buf, " :left_type %d ", node->left_type);
-	appendStringInfo(str, buf);
-	sprintf(buf, " :right_type %d ", node->right_type);
-	appendStringInfo(str, buf);
-
+	appendStringInfo(str, 
+			" :left_type %d :right_type %d ",
+			node->left_type, 
+			node->right_type);
 }
 
 /*
@@ -1094,26 +1087,19 @@ _outMergeOrder(StringInfo str, MergeOrder *node)
 static void
 _outClauseInfo(StringInfo str, ClauseInfo * node)
 {
-	char		buf[500];
-
-	appendStringInfo(str, " CINFO ");
-
-	appendStringInfo(str, " :clause ");
+	appendStringInfo(str, " CINFO :clause ");
 	_outNode(str, node->clause);
 
-	sprintf(buf, " :selectivity %f ", node->selectivity);
-	appendStringInfo(str, buf);
-	appendStringInfo(str, " :notclause ");
-	appendStringInfo(str, node->notclause ? "true" : "false");
-
-	appendStringInfo(str, " :indexids ");
+	appendStringInfo(str, 
+			" :selectivity %f :notclause %s :indexids ",
+			node->selectivity,
+			node->notclause ? "true" : "false");
 	_outNode(str, node->indexids);
 
 	appendStringInfo(str, " :mergejoinorder ");
 	_outNode(str, node->mergejoinorder);
 
-	sprintf(buf, " :hashjoinoperator %u ", node->hashjoinoperator);
-	appendStringInfo(str, buf);
+	appendStringInfo(str, " :hashjoinoperator %u ", node->hashjoinoperator);
 
 }
 
@@ -1123,15 +1109,11 @@ _outClauseInfo(StringInfo str, ClauseInfo * node)
 static void
 _outJoinMethod(StringInfo str, JoinMethod *node)
 {
-	appendStringInfo(str, " JOINMETHOD ");
-
-	appendStringInfo(str, " :jmkeys ");
+	appendStringInfo(str, " JOINMETHOD :jmkeys ");
 	_outNode(str, node->jmkeys);
 
 	appendStringInfo(str, " :clauses ");
 	_outNode(str, node->clauses);
-
-
 }
 
 /*
@@ -1140,20 +1122,11 @@ _outJoinMethod(StringInfo str, JoinMethod *node)
 static void
 _outHInfo(StringInfo str, HInfo *node)
 {
-	char		buf[500];
-
-	appendStringInfo(str, " HASHINFO ");
-
-	appendStringInfo(str, " :hashop ");
-	sprintf(buf, " %u ", node->hashop);
-	appendStringInfo(str, buf);
-
-	appendStringInfo(str, " :jmkeys ");
+	appendStringInfo(str, " HASHINFO :hashop %u :jmkeys ", node->hashop);
 	_outNode(str, node->jmethod.jmkeys);
 
 	appendStringInfo(str, " :clauses ");
 	_outNode(str, node->jmethod.clauses);
-
 }
 
 /*
@@ -1162,19 +1135,15 @@ _outHInfo(StringInfo str, HInfo *node)
 static void
 _outJoinInfo(StringInfo str, JoinInfo * node)
 {
-	appendStringInfo(str, " JINFO ");
-
-	appendStringInfo(str, " :otherrels ");
+	appendStringInfo(str, " JINFO :otherrels ");
 	_outIntList(str, node->otherrels);
 
 	appendStringInfo(str, " :jinfoclauseinfo ");
 	_outNode(str, node->jinfoclauseinfo);
 
-	appendStringInfo(str, " :mergejoinable ");
-	appendStringInfo(str, node->mergejoinable ? "true" : "false");
-	appendStringInfo(str, " :hashjoinable ");
-	appendStringInfo(str, node->hashjoinable ? "true" : "false");
-
+	appendStringInfo(str, " :mergejoinable %s :hashjoinable %s ",
+			node->mergejoinable ? "true" : "false",
+			node->hashjoinable ? "true" : "false");
 }
 
 /*
@@ -1183,12 +1152,11 @@ _outJoinInfo(StringInfo str, JoinInfo * node)
 static void
 _outDatum(StringInfo str, Datum value, Oid type)
 {
-	char		buf[500];
+	char		*s;
 	Size		length,
-				typeLength;
+					typeLength;
 	bool		byValue;
 	int			i;
-	char	   *s;
 
 	/*
 	 * find some information about the type and the "real" length of the
@@ -1201,42 +1169,34 @@ _outDatum(StringInfo str, Datum value, Oid type)
 	if (byValue)
 	{
 		s = (char *) (&value);
-		sprintf(buf, " %d [ ", length);
-		appendStringInfo(str, buf);
+		appendStringInfo(str, " %d [ ", length);
 		for (i = 0; i < sizeof(Datum); i++)
 		{
-			sprintf(buf, " %d ", (int) (s[i]));
-			appendStringInfo(str, buf);
+			appendStringInfo(str, " %d ", (int) (s[i]));
 		}
-		sprintf(buf, "] ");
-		appendStringInfo(str, buf);
+		appendStringInfo(str, "] ");
 	}
 	else
 	{							/* !byValue */
 		s = (char *) DatumGetPointer(value);
 		if (!PointerIsValid(s))
 		{
-			sprintf(buf, " 0 [ ] ");
-			appendStringInfo(str, buf);
+			appendStringInfo(str, " 0 [ ] ");
 		}
 		else
 		{
-
 			/*
 			 * length is unsigned - very bad to do < comparison to -1
 			 * without casting it to int first!! -mer 8 Jan 1991
 			 */
 			if (((int) length) <= -1)
 				length = VARSIZE(s);
-			sprintf(buf, " %d [ ", length);
-			appendStringInfo(str, buf);
+			appendStringInfo(str, " %d [ ", length);
 			for (i = 0; i < length; i++)
 			{
-				sprintf(buf, " %d ", (int) (s[i]));
-				appendStringInfo(str, buf);
+				appendStringInfo(str, " %d ", (int) (s[i]));
 			}
-			sprintf(buf, "] ");
-			appendStringInfo(str, buf);
+			appendStringInfo(str, "] ");
 		}
 	}
 }
@@ -1244,42 +1204,26 @@ _outDatum(StringInfo str, Datum value, Oid type)
 static void
 _outIter(StringInfo str, Iter *node)
 {
-	appendStringInfo(str, " ITER ");
-
-	appendStringInfo(str, " :iterexpr ");
+	appendStringInfo(str, " ITER :iterexpr ");
 	_outNode(str, node->iterexpr);
 }
 
 static void
 _outStream(StringInfo str, Stream *node)
 {
-	char		buf[500];
+	appendStringInfo(str, 
+			" STREAM :pathptr @ 0x%x :cinfo @ 0x%x :clausetype %d :upstream @ 0x%x ",
+			(int) node->pathptr,
+			(int) node->cinfo,
+			(int) node->clausetype,
+			(int) node->upstream);
 
-	appendStringInfo(str, " STREAM ");
-
-	sprintf(buf, " :pathptr @ 0x%x ", (int) (node->pathptr));
-	appendStringInfo(str, buf);
-
-	sprintf(buf, " :cinfo @ 0x%x ", (int) (node->cinfo));
-	appendStringInfo(str, buf);
-
-	sprintf(buf, " :clausetype %d ", (int) (node->clausetype));
-	appendStringInfo(str, buf);
-
-	sprintf(buf, " :upstream @ 0x%x ", (int) (node->upstream));
-	appendStringInfo(str, buf);
-
-	sprintf(buf, " :downstream @ 0x%x ", (int) (node->downstream));
-	appendStringInfo(str, buf);
-
-	sprintf(buf, " :groupup %d ", node->groupup);
-	appendStringInfo(str, buf);
-
-	sprintf(buf, " :groupcost %f ", node->groupcost);
-	appendStringInfo(str, buf);
-
-	sprintf(buf, " :groupsel %f ", node->groupsel);
-	appendStringInfo(str, buf);
+	appendStringInfo(str, 
+			" :downstream @ 0x%x :groupup %d :groupcost %f :groupsel %f ",
+			(int) node->downstream,
+			node->groupup,
+			node->groupcost,
+			node->groupsel);
 }
 
 static void
@@ -1322,8 +1266,7 @@ _outValue(StringInfo str, Value *value)
 	switch (value->type)
 	{
 		case T_String:
-			appendStringInfo(str, " \"%s\" ", 
-					stringStringInfo(value->val.str));
+			appendStringInfo(str, " \"%s\" ", stringStringInfo(value->val.str));
 			break;
 		case T_Integer:
 			appendStringInfo(str, " %ld ", value->val.ival);
@@ -1355,8 +1298,7 @@ _outAConst(StringInfo str, A_Const *node)
 static void
 _outConstraint(StringInfo str, Constraint *node)
 {
-	appendStringInfo(str," %s :type",
-		stringStringInfo(node->name));
+	appendStringInfo(str," %s :type", stringStringInfo(node->name));
 
 	switch (node->contype)
 	{
@@ -1366,13 +1308,11 @@ _outConstraint(StringInfo str, Constraint *node)
 			break;
 
 		case CONSTR_CHECK:
-			appendStringInfo(str, " CHECK %s",
-					stringStringInfo(node->def));
+			appendStringInfo(str, " CHECK %s", stringStringInfo(node->def));
 			break;
 
 		case CONSTR_DEFAULT:
-			appendStringInfo(str, " DEFAULT %s",
-					stringStringInfo(node->def));
+			appendStringInfo(str, " DEFAULT %s", stringStringInfo(node->def));
 			break;
 
 		case CONSTR_NOTNULL:
@@ -1396,8 +1336,10 @@ _outCaseExpr(StringInfo str, CaseExpr *node)
 {
 	appendStringInfo(str, "CASE ");
 	_outNode(str, node->args);
+
 	appendStringInfo(str, " :default ");
 	_outNode(str, node->defresult);
+
 	return;
 }
 
@@ -1406,8 +1348,10 @@ _outCaseWhen(StringInfo str, CaseWhen *node)
 {
 	appendStringInfo(str, " WHEN ");
 	_outNode(str, node->expr);
+
 	appendStringInfo(str, " :then ");
 	_outNode(str, node->result);
+
 	return;
 }
 
