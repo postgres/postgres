@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.68 2003/09/25 23:02:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.69 2003/09/30 00:59:51 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1466,7 +1466,7 @@ plpgsql_build_rowtype(Oid classOid)
 	/*
 	 * Open the relation to get info.
 	 */
-	rel = heap_open(classOid, AccessShareLock);
+	rel = relation_open(classOid, AccessShareLock);
 	classStruct = RelationGetForm(rel);
 	relname = RelationGetRelationName(rel);
 
@@ -1568,7 +1568,7 @@ plpgsql_build_rowtype(Oid classOid)
 		}
 	}
 
-	heap_close(rel, AccessShareLock);
+	relation_close(rel, AccessShareLock);
 
 	return row;
 }
