@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.44 2002/08/26 17:53:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.45 2002/08/26 18:45:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ typedef enum
  * ignoring wide values will not affect our estimates of histogram bin
  * boundaries very much.
  */
-#define WIDTH_THRESHOLD  256
+#define WIDTH_THRESHOLD  1024
 
 /*
  * We build one of these structs for each attribute (column) that is to be
