@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.79 2001/11/19 09:05:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.80 2001/11/21 05:58:51 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,16 +73,34 @@ static datetkn datetktbl[] = {
 /*	text, token, lexval */
 	{EARLY, RESERV, DTK_EARLY}, /* "-infinity" reserved for "early time" */
 	{"acsst", DTZ, 63},			/* Cent. Australia */
-	{"acst", TZ, 57},			/* Cent. Australia */
+	{"acst", DTZ, NEG(24)},		/* Atlantic/Porto Acre */
+	{"act", TZ, NEG(30)},		/* Atlantic/Porto Acre */
 	{DA_D, ADBC, AD},			/* "ad" for years >= 0 */
 	{"abstime", IGNORE, 0},		/* "abstime" for pre-v6.1 "Invalid
 								 * Abstime" */
 	{"adt", DTZ, NEG(18)},		/* Atlantic Daylight Time */
 	{"aesst", DTZ, 66},			/* E. Australia */
 	{"aest", TZ, 60},			/* Australia Eastern Std Time */
+	{"aft", TZ, 27},			/* Kabul */
 	{"ahst", TZ, NEG(60)},		/* Alaska-Hawaii Std Time */
+	{"akdt", DTZ, NEG(48)},		/* Alaska Daylight Time */
+	{"akst", DTZ, NEG(54)},		/* Alaska Standard Time */
 	{"allballs", RESERV, DTK_ZULU},		/* 00:00:00 */
+	{"almt", TZ, 36},			/* Almaty Time */
+	{"almst", TZ, 42},			/* Almaty Savings Time */
 	{"am", AMPM, AM},
+#if 0
+	{"amst", DTZ, 30},			/* Yerevan */
+	{"amst", DTZ, NEG(18)},		/* Porto Velho */
+amt
+anast
+anat
+aqtst
+aqtt
+arst
+art
+ashst
+#endif
 	{"apr", MONTH, 4},
 	{"april", MONTH, 4},
 	{"ast", TZ, NEG(24)},		/* Atlantic Std Time (Canada) */
@@ -91,55 +109,163 @@ static datetkn datetktbl[] = {
 	{"august", MONTH, 8},
 	{"awsst", DTZ, 54},			/* W. Australia */
 	{"awst", TZ, 48},			/* W. Australia */
+	{"awt", DTZ, NEG(18)},
+#if 0
+azost
+azot
+azst
+azt
+#endif
 	{DB_C, ADBC, BC},			/* "bc" for years < 0 */
 	{"bdst", TZ, 12},			/* British Double Summer Time */
+	{"bdt", TZ, 36},			/* Dacca */
+#if 0
+bnt
+bort
+bortst
+bost
+bot
+brst
+brt
+#endif
 	{"bst", TZ, 6},				/* British Summer Time */
 	{"bt", TZ, 18},				/* Baghdad Time */
+#if 0
+btt
+#endif
 	{"cadt", DTZ, 63},			/* Central Australian DST */
 	{"cast", TZ, 57},			/* Central Australian ST */
 	{"cat", TZ, NEG(60)},		/* Central Alaska Time */
 	{"cct", TZ, 48},			/* China Coast */
+#if 0
+	{"cct", TZ, 39},			/* Indian Cocos (Island) Time */
+#endif
 	{"cdt", DTZ, NEG(30)},		/* Central Daylight Time */
 	{"cest", DTZ, 12},			/* Central European Dayl.Time */
 	{"cet", TZ, 6},				/* Central European Time */
 	{"cetdst", DTZ, 12},		/* Central European Dayl.Time */
+#if 0
+chadt
+chast
+ckhst
+ckt
+clst
+clt
+cost
+cot
+#endif
 	{"cst", TZ, NEG(36)},		/* Central Standard Time */
+#if 0
+cvst
+cvt
+#endif
+	{"cxt", TZ, 42},			/* Indian Christmas (Island) Time */
 	{DCURRENT, RESERV, DTK_CURRENT},	/* "current" is always now */
 	{"d", UNITS, DAY},			/* "day of month" for ISO input */
+#if 0
+davt
+ddut
+#endif
 	{"dec", MONTH, 12},
 	{"december", MONTH, 12},
 	{"dnt", TZ, 6},				/* Dansk Normal Tid */
 	{"dow", RESERV, DTK_DOW},	/* day of week */
 	{"doy", RESERV, DTK_DOY},	/* day of year */
 	{"dst", DTZMOD, 6},
-	{"east", TZ, 60},			/* East Australian Std Time */
+#if 0
+	{"dusst", DTZ, 36},			/* Dushanbe Summer Time */
+	{"easst", DTZ, NEG(30)},	/* Easter Island */
+	{"east", TZ, NEG(36)},		/* Easter Island */
+#endif
+	{"east", TZ, 24},			/* Indian Antananarivo Savings Time */
+	{"eat", TZ, 18},			/* Indian Antananarivo Time */
+#if 0
+ect
+#endif
 	{"edt", DTZ, NEG(24)},		/* Eastern Daylight Time */
+#if 0
+eest
+#endif
 	{"eet", TZ, 12},			/* East. Europe, USSR Zone 1 */
 	{"eetdst", DTZ, 18},		/* Eastern Europe */
+#if 0
+egst
+egt
+ehdt
+#endif
 	{EPOCH, RESERV, DTK_EPOCH}, /* "epoch" reserved for system epoch time */
 	{"est", TZ, NEG(30)},		/* Eastern Standard Time */
 	{"feb", MONTH, 2},
 	{"february", MONTH, 2},
+#if 0
+fjst
+fjt
+fkst
+fkt
+fnst
+fnt
+#endif
 	{"fri", DOW, 5},
 	{"friday", DOW, 5},
 	{"fst", TZ, 6},				/* French Summer Time */
 	{"fwt", DTZ, 12},			/* French Winter Time  */
+#if 0
+galt
+gamt
+gest
+get
+gft
+ghst
+gilt
+#endif
 	{"gmt", TZ, 0},				/* Greenwish Mean Time */
 	{"gst", TZ, 60},			/* Guam Std Time, USSR Zone 9 */
+#if 0
+gyt
+#endif
 	{"h", UNITS, HOUR},			/* "hour" */
+#if 0
+hadt
+hast
+#endif
 	{"hdt", DTZ, NEG(54)},		/* Hawaii/Alaska */
+#if 0
+hkst
+hkt
+#endif
 	{"hmt", DTZ, 18},			/* Hellas ? ? */
+#if 0
+hovst
+hovt
+#endif
 	{"hst", TZ, NEG(60)},		/* Hawaii Std Time */
+#if 0
+hwt
+ict
+#endif
 	{"idle", TZ, 72},			/* Intl. Date Line, East */
 	{"idlw", TZ, NEG(72)},		/* Intl. Date Line, West */
+#if 0
+idt
+#endif
 	{LATE, RESERV, DTK_LATE},	/* "infinity" reserved for "late time" */
-	{INVALID, RESERV, DTK_INVALID},
-	/* "invalid" reserved for invalid time */
+	{INVALID, RESERV, DTK_INVALID},	/* "invalid" reserved for bad time */
+	{"iot", TZ, 30},			/* Indian Chagos Time */
+#if 0
+irkst
+irkt
+irt
+isst
+#endif
 	{"ist", TZ, 12},			/* Israel */
 	{"it", TZ, 21},				/* Iran Time */
 	{"j", UNITS, JULIAN},
 	{"jan", MONTH, 1},
 	{"january", MONTH, 1},
+#if 0
+javt
+jayt
+#endif
 	{"jd", UNITS, JULIAN},
 	{"jst", TZ, 54},			/* Japan Std Time,USSR Zone 8 */
 	{"jt", TZ, 45},				/* Java Time */
@@ -147,11 +273,34 @@ static datetkn datetktbl[] = {
 	{"julian", UNITS, JULIAN},
 	{"jun", MONTH, 6},
 	{"june", MONTH, 6},
+#if 0
+kdt
+kgst
+kgt
+kost
+krast
+krat
+#endif
 	{"kst", TZ, 54},			/* Korea Standard Time */
+#if 0
+lhst
+#endif
 	{"ligt", TZ, 60},			/* From Melbourne, Australia */
+#if 0
+lint
+lkt
+#endif
 	{"m", UNITS, MONTH},		/* "month" for ISO input */
+#if 0
+magst
+magt
+#endif
 	{"mar", MONTH, 3},
 	{"march", MONTH, 3},
+#if 0
+mart
+#endif
+	{"mawt", TZ, 36},			/* Mawson, Antarctica */
 	{"may", MONTH, 5},
 	{"mdt", DTZ, NEG(36)},		/* Mountain Daylight Time */
 	{"mest", DTZ, 12},			/* Middle Europe Summer Time */
@@ -159,66 +308,183 @@ static datetkn datetktbl[] = {
 	{"metdst", DTZ, 12},		/* Middle Europe Daylight Time */
 	{"mewt", TZ, 6},			/* Middle Europe Winter Time */
 	{"mez", TZ, 6},				/* Middle Europe Zone */
+	{"mht", TZ, 72},			/* Kwajalein */
 	{"mm", UNITS, MINUTE},		/* "minute" for ISO input */
+#if 0
+mmt
+#endif
 	{"mon", DOW, 1},
 	{"monday", DOW, 1},
+#if 0
+most
+mpt
+msd
+msk
+#endif
 	{"mst", TZ, NEG(42)},		/* Mountain Standard Time */
 	{"mt", TZ, 51},				/* Moluccas Time */
+	{"mut", DTZ, 24},			/* Mauritius Island Time */
+	{"mvt", DTZ, 30},			/* Maldives Island Time */
+#if 0
+myt
+ncst
+nct
+#endif
 	{"ndt", DTZ, NEG(15)},		/* Nfld. Daylight Time */
 	{"nft", TZ, NEG(21)},		/* Newfoundland Standard Time */
 	{"nor", TZ, 6},				/* Norway Standard Time */
 	{"nov", MONTH, 11},
 	{"november", MONTH, 11},
+#if 0
+novst
+novt
+#endif
 	{NOW, RESERV, DTK_NOW},		/* current transaction time */
 	{"nst", TZ, NEG(21)},		/* Nfld. Standard Time */
 	{"nt", TZ, NEG(66)},		/* Nome Time */
+#if 0
+nut
+#endif
 	{"nzdt", DTZ, 78},			/* New Zealand Daylight Time */
 	{"nzst", TZ, 72},			/* New Zealand Standard Time */
 	{"nzt", TZ, 72},			/* New Zealand Time */
 	{"oct", MONTH, 10},
 	{"october", MONTH, 10},
+#if 0
+omsst
+omst
+#endif
 	{"on", IGNORE, 0},			/* "on" (throwaway) */
 	{"pdt", DTZ, NEG(42)},		/* Pacific Daylight Time */
+#if 0
+pest
+pet
+petst
+pett
+pgt
+phot
+phst
+pht
+pkt
+#endif
 	{"pm", AMPM, PM},
+#if 0
+pmdt
+pmst
+pont
+#endif
 	{"pst", TZ, NEG(48)},		/* Pacific Standard Time */
+#if 0
+pwt
+pyst
+pyt
+#endif
+	{"ret", DTZ, 24},			/* Reunion Island Time */
 	{"s", UNITS, SECOND},		/* "seconds" for ISO input */
 	{"sadt", DTZ, 63},			/* S. Australian Dayl. Time */
+#if 0
+samst
+samt
+#endif
 	{"sast", TZ, 57},			/* South Australian Std Time */
 	{"sat", DOW, 6},
 	{"saturday", DOW, 6},
+#if 0
+sbt
+#endif
+	{"sct", DTZ, 24},			/* Mahe Island Time */
 	{"sep", MONTH, 9},
 	{"sept", MONTH, 9},
 	{"september", MONTH, 9},
 	{"set", TZ, NEG(6)},		/* Seychelles Time ?? */
+#if 0
+sgt
+#endif
 	{"sst", DTZ, 12},			/* Swedish Summer Time */
 	{"sun", DOW, 0},
 	{"sunday", DOW, 0},
 	{"swt", TZ, 6},				/* Swedish Winter Time	*/
+#if 0
+syot
+#endif
 	{"t", DTK_ISO_TIME, 0},		/* Filler for ISO time fields */
+#if 0
+taht
+#endif
+	{"tft", TZ, 30},			/* Kerguelen Time */
 	{"thu", DOW, 4},
 	{"thur", DOW, 4},
 	{"thurs", DOW, 4},
 	{"thursday", DOW, 4},
+#if 0
+tjt
+tkt
+tmt
+#endif
 	{TODAY, RESERV, DTK_TODAY}, /* midnight */
 	{TOMORROW, RESERV, DTK_TOMORROW},	/* tomorrow midnight */
+#if 0
+tost
+tot
+tpt
+trut
+#endif
 	{"tue", DOW, 2},
 	{"tues", DOW, 2},
 	{"tuesday", DOW, 2},
+#if 0
+tvt
+uct
+ulast
+ulat
+#endif
 	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
 	{"ut", TZ, 0},
 	{"utc", TZ, 0},
+#if 0
+uyst
+uyt
+uzst
+uzt
+vet
+vlast
+vlat
+vust
+vut
+#endif
 	{"wadt", DTZ, 48},			/* West Australian DST */
+#if 0
+wakt
+warst
+#endif
 	{"wast", TZ, 42},			/* West Australian Std Time */
 	{"wat", TZ, NEG(6)},		/* West Africa Time */
 	{"wdt", DTZ, 54},			/* West Australian DST */
 	{"wed", DOW, 3},
 	{"wednesday", DOW, 3},
 	{"weds", DOW, 3},
+#if 0
+west
+#endif
 	{"wet", TZ, 0},				/* Western Europe */
 	{"wetdst", DTZ, 6},			/* Western Europe */
+#if 0
+wft
+wgst
+wgt
+#endif
 	{"wst", TZ, 48},			/* West Australian Std Time */
 	{"y", UNITS, YEAR},			/* "year" for ISO input */
+#if 0
+yakst
+yakt
+yapt
+#endif
 	{"ydt", DTZ, NEG(48)},		/* Yukon Daylight Time */
+#if 0
+yekst
+yekt
+#endif
 	{YESTERDAY, RESERV, DTK_YESTERDAY}, /* yesterday midnight */
 	{"yst", TZ, NEG(54)},		/* Yukon Standard Time */
 	{"z", RESERV, DTK_ZULU},	/* 00:00:00 */
@@ -232,7 +498,9 @@ static unsigned int szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
 
 /* Used for SET australian_timezones to override North American ones */
 static datetkn australian_datetktbl[] = {
+	{"acst", TZ, 57},			/* Cent. Australia */
 	{"cst", TZ, 63},			/* Australia Central Std Time */
+	{"east", TZ, 60},			/* East Australian Std Time */
 	{"est", TZ, 60},			/* Australia Eastern Std Time */
 	{"sat", TZ, 57},
 };
@@ -798,6 +1066,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						switch (val)
 						{
 							case DTK_CURRENT:
+								elog(ERROR, "'CURRENT' is no longer supported");
+								return -1;
+								break;
+
 							case DTK_NOW:
 								tmask = (DTK_DATE_M | DTK_TIME_M | DTK_M(TZ));
 								*dtype = DTK_DATE;
@@ -1174,6 +1446,11 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					case RESERV:
 						switch (val)
 						{
+							case DTK_CURRENT:
+								elog(ERROR, "'CURRENT' is no longer supported");
+								return -1;
+								break;
+
 							case DTK_NOW:
 								tmask = DTK_TIME_M;
 								*dtype = DTK_TIME;
