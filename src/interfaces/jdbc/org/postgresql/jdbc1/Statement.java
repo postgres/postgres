@@ -109,7 +109,7 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 	public boolean execute(String sql) throws SQLException
 	{
           if (escapeProcessing)
-	      sql = escapeSql(sql);
+              sql = escapeSQL(sql);
           result = connection.ExecSQL(sql);
           return (result != null && ((org.postgresql.ResultSet)result).reallyResultSet());
 	}

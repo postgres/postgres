@@ -1963,7 +1963,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	dr.next();
 	String typname=dr.getString(1);
 	dr.close();
-	tuple[4] = Integer.toString(Field.getSQLType(typname)).getBytes();	// Data type
+        tuple[4] = Integer.toString(connection.getSQLType(typname)).getBytes();	// Data type
 	tuple[5] = typname.getBytes();	// Type name
 
 	// Column size
@@ -2596,7 +2596,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	byte[][] tuple = new byte[18][];
 	String typname=rs.getString(1);
 	tuple[0] = typname.getBytes();
-	tuple[1] = Integer.toString(Field.getSQLType(typname)).getBytes();
+        tuple[1] = Integer.toString(connection.getSQLType(typname)).getBytes();
 	tuple[2] = b9;	// for now
 	tuple[6] = bnn; // for now
 	tuple[7] = bf; // false for now - not case sensitive

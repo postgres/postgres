@@ -130,7 +130,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
    */
   public boolean isCurrency(int column) throws SQLException
   {
-    String type_name = getField(column).getTypeName();
+    String type_name = getField(column).getPGType();
     
     return type_name.equals("cash") || type_name.equals("money");
   }
@@ -189,9 +189,9 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
   public int getColumnDisplaySize(int column) throws SQLException
   {
     Field f = getField(column);
-    String type_name = f.getTypeName();
+    String type_name = f.getPGType();
     int sql_type = f.getSQLType();
-    int typmod = f.mod;
+    int typmod = f.getMod();
 
     // I looked at other JDBC implementations and couldn't find a consistent
     // interpretation of the "display size" for numeric values, so this is our's
@@ -219,7 +219,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
                                            + 1 + ( typmod        & 0xffff ); // DECIMAL(p,s) = (p digits).(s digits)
 
     // if we don't know better
-    return f.length;
+    return f.getLength();
   }
   
   /**
@@ -246,7 +246,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
   {
     Field f = getField(column);
     if(f!=null)
-      return f.name;
+      return f.getName();
     return "field"+column;
   }
   
@@ -293,7 +293,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
       case Types.NUMERIC:
 	Field f = getField(column);
 	if(f != null)
-        	return ((0xFFFF0000)&f.mod)>>16;
+                return ((0xFFFF0000)&f.getMod())>>16;
 	else
 		return 0;
       default:
@@ -330,7 +330,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
       case Types.NUMERIC:
 	Field f = getField(column);
 	if(f != null)
-		return (((0x0000FFFF)&f.mod)-4);
+                return (((0x0000FFFF)&f.getMod())-4);
 	else
 		return 0;
       default:
@@ -389,7 +389,7 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
    */
   public String getColumnTypeName(int column) throws SQLException
   {
-    return getField(column).getTypeName();
+    return getField(column).getPGType();
   }
   
   /**

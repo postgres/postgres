@@ -17,7 +17,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.7 2001/07/30 14:51:19 momjian Exp $
+ * $Id: Connection.java,v 1.8 2001/08/24 16:50:15 momjian Exp $
  *
  * A Connection represents a session with a specific database.  Within the
  * context of a Connection, SQL statements are executed and results are
@@ -136,6 +136,73 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
       // in jdbc1 stat is ignored.
 	return new org.postgresql.jdbc1.ResultSet((org.postgresql.jdbc1.Connection)conn,fields,tuples,status,updateCount,insertOID);
     }
+
+
+  /* An implementation of the abstract method in the parent class.
+   * This implemetation uses the jdbc1Types array to support the jdbc1
+   * datatypes.  Basically jdbc1 and jdbc2 are the same, except that
+   * jdbc2 adds the Array types.
+   */
+  public int getSQLType(String pgTypeName)
+  {
+    int sqlType = Types.OTHER; // default value
+    for(int i=0;i<jdbc1Types.length;i++) {
+      if(pgTypeName.equals(jdbc1Types[i])) {
+        sqlType=jdbc1Typei[i];
+        break;
+      }
+    }
+    return sqlType;
+  }
+
+  /**
+   * This table holds the org.postgresql names for the types supported.
+   * Any types that map to Types.OTHER (eg POINT) don't go into this table.
+   * They default automatically to Types.OTHER
+   *
+   * Note: This must be in the same order as below.
+   *
+   * Tip: keep these grouped together by the Types. value
+   */
+  private static final String jdbc1Types[] = {
+    "int2",
+    "int4","oid",
+    "int8",
+    "cash","money",
+    "numeric",
+    "float4",
+    "float8",
+    "bpchar","char","char2","char4","char8","char16",
+    "varchar","text","name","filename",
+    "bool",
+    "date",
+    "time",
+    "abstime","timestamp"
+  };
+
+  /**
+   * This table holds the JDBC type for each entry above.
+   *
+   * Note: This must be in the same order as above
+   *
+   * Tip: keep these grouped together by the Types. value
+   */
+  private static final int jdbc1Typei[] = {
+    Types.SMALLINT,
+    Types.INTEGER,Types.INTEGER,
+    Types.BIGINT,
+    Types.DOUBLE,Types.DOUBLE,
+    Types.NUMERIC,
+    Types.REAL,
+    Types.DOUBLE,
+    Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,
+    Types.VARCHAR,Types.VARCHAR,Types.VARCHAR,Types.VARCHAR,
+    Types.BIT,
+    Types.DATE,
+    Types.TIME,
+    Types.TIMESTAMP,Types.TIMESTAMP
+  };
+
 
 }
 

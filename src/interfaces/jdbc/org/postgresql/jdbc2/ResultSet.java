@@ -657,7 +657,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	return new Long(getLong(columnIndex));
       case Types.NUMERIC:
 	return getBigDecimal
-	    (columnIndex, (field.mod==-1)?-1:((field.mod-4) & 0xffff));
+            (columnIndex, (field.getMod()==-1)?-1:((field.getMod()-4) & 0xffff));
       case Types.REAL:
 	return new Float(getFloat(columnIndex));
       case Types.DOUBLE:
@@ -675,7 +675,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       case Types.VARBINARY:
 	return getBytes(columnIndex);   
       default:
-	return connection.getObject(field.getTypeName(), getString(columnIndex));
+        return connection.getObject(field.getPGType(), getString(columnIndex));
       }
   }
 
@@ -711,7 +711,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     int i;
 
     for (i = 0 ; i < fields.length; ++i)
-      if (fields[i].name.equalsIgnoreCase(columnName))
+      if (fields[i].getName().equalsIgnoreCase(columnName))
 	return (i+1);
     throw new PSQLException ("postgresql.res.colname",columnName);
   }

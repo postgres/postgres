@@ -17,7 +17,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.9 2001/07/30 14:51:19 momjian Exp $
+ * $Id: Connection.java,v 1.10 2001/08/24 16:50:16 momjian Exp $
  *
  * A Connection represents a session with a specific database.  Within the
  * context of a Connection, SQL statements are executed and results are
@@ -254,6 +254,77 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
       // Default to the original method
       return super.getObject(type,value);
     }
+
+  /* An implementation of the abstract method in the parent class.
+   * This implemetation uses the jdbc2Types array to support the jdbc2
+   * datatypes.  Basically jdbc1 and jdbc2 are the same, except that
+   * jdbc2 adds the Array types.
+   */
+  public int getSQLType(String pgTypeName)
+  {
+    int sqlType = Types.OTHER; // default value
+    for(int i=0;i<jdbc2Types.length;i++) {
+      if(pgTypeName.equals(jdbc2Types[i])) {
+        sqlType=jdbc2Typei[i];
+        break;
+      }
+    }
+    return sqlType;
+  }
+
+  /**
+   * This table holds the org.postgresql names for the types supported.
+   * Any types that map to Types.OTHER (eg POINT) don't go into this table.
+   * They default automatically to Types.OTHER
+   *
+   * Note: This must be in the same order as below.
+   *
+   * Tip: keep these grouped together by the Types. value
+   */
+  private static final String jdbc2Types[] = {
+    "int2",
+    "int4","oid",
+    "int8",
+    "cash","money",
+    "numeric",
+    "float4",
+    "float8",
+    "bpchar","char","char2","char4","char8","char16",
+    "varchar","text","name","filename",
+    "bool",
+    "date",
+    "time",
+    "abstime","timestamp",
+    "_bool", "_char", "_int2", "_int4", "_text", "_oid", "_varchar", "_int8",
+    "_float4", "_float8", "_abstime", "_date", "_time", "_timestamp", "_numeric"
+  };
+
+  /**
+   * This table holds the JDBC type for each entry above.
+   *
+   * Note: This must be in the same order as above
+   *
+   * Tip: keep these grouped together by the Types. value
+   */
+  private static final int jdbc2Typei[] = {
+    Types.SMALLINT,
+    Types.INTEGER,Types.INTEGER,
+    Types.BIGINT,
+    Types.DOUBLE,Types.DOUBLE,
+    Types.NUMERIC,
+    Types.REAL,
+    Types.DOUBLE,
+    Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,
+    Types.VARCHAR,Types.VARCHAR,Types.VARCHAR,Types.VARCHAR,
+    Types.BIT,
+    Types.DATE,
+    Types.TIME,
+    Types.TIMESTAMP,Types.TIMESTAMP,
+    Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY,
+    Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY, Types.ARRAY
+  };
+
+
 }
 
 // ***********************************************************************

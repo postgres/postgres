@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.Encoding;
 
 /**
- * $Id: Connection.java,v 1.25 2001/08/10 14:42:07 momjian Exp $
+ * $Id: Connection.java,v 1.26 2001/08/24 16:50:12 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -69,11 +69,10 @@ public abstract class Connection
   // New for 6.3, salt value for crypt authorisation
   private String salt;
 
-  // This is used by Field to cache oid -> names.
-  // It's here, because it's shared across this connection only.
-  // Hence it cannot be static within the Field class, because it would then
-  // be across all connections, which could be to different backends.
-  public Hashtable fieldCache = new Hashtable();
+  // These are used to cache oids, PGTypes and SQLTypes
+  private static Hashtable sqlTypeCache = new Hashtable();  // oid -> SQLType
+  private static Hashtable pgTypeCache = new Hashtable();  // oid -> PGType
+  private static Hashtable typeOidCache = new Hashtable();  //PGType -> oid
 
   // Now handle notices as warnings, so things like "show" now work
   public SQLWarning firstWarning = null;
@@ -1108,5 +1107,86 @@ public abstract class Connection
   {
       return (getDBVersionNumber().compareTo(ver) >= 0);
   }
+
+
+  /**
+   * This returns the java.sql.Types type for a PG type oid
+   *
+   * @param oid PostgreSQL type oid
+   * @return the java.sql.Types type
+   * @exception SQLException if a database access error occurs
+   */
+  public int getSQLType(int oid) throws SQLException
+  {
+    Integer sqlType = (Integer)typeOidCache.get(new Integer(oid));
+
+    // it's not in the cache, so perform a query, and add the result to the cache
+    if(sqlType==null) {
+      ResultSet result = (org.postgresql.ResultSet)ExecSQL("select typname from pg_type where oid = " + oid);
+      if (result.getColumnCount() != 1 || result.getTupleCount() != 1)
+        throw new PSQLException("postgresql.unexpected");
+      result.next();
+      String pgType = result.getString(1);
+      Integer iOid = new Integer(oid);
+      sqlType = new Integer(getSQLType(result.getString(1)));
+      sqlTypeCache.put(iOid,sqlType);
+      pgTypeCache.put(iOid,pgType);
+      result.close();
+    }
+
+    return sqlType.intValue();
+  }
+
+  /**
+   * This returns the java.sql.Types type for a PG type
+   *
+   * @param pgTypeName PostgreSQL type name
+   * @return the java.sql.Types type
+   */
+  public abstract int getSQLType(String pgTypeName);
+
+  /**
+   * This returns the oid for a given PG data type
+   * @param typeName PostgreSQL type name
+   * @return PostgreSQL oid value for a field of this type
+   */
+  public int getOID(String typeName) throws SQLException
+  {
+        int oid = -1;
+        if(typeName != null) {
+          Integer oidValue = (Integer) typeOidCache.get(typeName);
+          if(oidValue != null) {
+            oid = oidValue.intValue();
+          } else {
+            // it's not in the cache, so perform a query, and add the result to the cache
+            ResultSet result = (org.postgresql.ResultSet)ExecSQL("select oid from pg_type where typname='"
+                                + typeName + "'");
+            if (result.getColumnCount() != 1 || result.getTupleCount() != 1)
+              throw new PSQLException("postgresql.unexpected");
+            result.next();
+            oid = Integer.parseInt(result.getString(1));
+            typeOidCache.put(typeName, new Integer(oid));
+            result.close();
+          }
+        }
+        return oid;
+  }
+
+  /**
+   * We also need to get the PG type name as returned by the back end.
+   *
+   * @return the String representation of the type of this field
+   * @exception SQLException if a database access error occurs
+   */
+  public String getPGType(int oid) throws SQLException
+  {
+    String pgType = (String) pgTypeCache.get(new Integer(oid));
+    if(pgType == null) {
+      getSQLType(oid);
+      pgType = (String) pgTypeCache.get(new Integer(oid));
+    }
+    return pgType;
+  }
+
 }
    
