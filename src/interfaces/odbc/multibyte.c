@@ -71,6 +71,7 @@ unsigned char *
 check_client_encoding(unsigned char *str)
 {
 	if (strstr(str, "%27SJIS%27") || 
+	    strstr(str, "%27Shift_JIS%27") || 
 	    strstr(str, "'SJIS'") || 
 	    strstr(str, "'sjis'") ||
 	    strstr(str, "'Shift_JIS'"))
@@ -79,8 +80,9 @@ check_client_encoding(unsigned char *str)
 		return ("SJIS");
 	}
 	if (strstr(str, "%27BIG5%27") || 
+	    strstr(str, "%27Big5%27") ||
 	    strstr(str, "'BIG5'") || 
-	    strstr(str, "'big5'")
+	    strstr(str, "'big5'") ||
 	    strstr(str, "'Big5'"))
 	{
 		multibyte_client_encoding = BIG5;
