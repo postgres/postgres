@@ -270,7 +270,7 @@ Clients
 	o Add SQLSTATE
 	o fix handling of DB attributes that are arrays
 	o Use backend prepare/execute facility for ecpg where possible
-	o Make casts work in variable initializations
+	o -Make casts work in variable initializations
 	o Implement SQLDA (do we really need this?)
 	o Fix nested C comments
 	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
