@@ -36,7 +36,7 @@ PARSER
 * UNION with LIMIT fails
 * Unique index on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
-*  CREATE TABLE x AS SELECT 1 UNION SELECT 2 fails
+* CREATE TABLE x AS SELECT 1 UNION SELECT 2 fails
 * CREATE TABLE test(col char(2) DEFAULT user) fails in length restriction
 
 VIEWS
