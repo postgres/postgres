@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_index.h,v 1.12 1999/05/25 16:13:45 momjian Exp $
+ * $Id: pg_index.h,v 1.13 2000/01/10 04:36:37 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -57,9 +57,6 @@ CATALOG(pg_index)
 								 * - this index for foreign key */
 	text		indpred;		/* query plan for partial index predicate */
 } FormData_pg_index;
-
-#define INDEX_MAX_KEYS 8		/* maximum number of keys in an index
-								 * definition */
 
 /* ----------------
  *		Form_pg_index corresponds to a pointer to a tuple with

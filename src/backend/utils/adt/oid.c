@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.28 1999/07/17 20:17:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.29 2000/01/10 04:36:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,26 +30,23 @@ Oid *
 oid8in(char *oidString)
 {
 	Oid		   *result;
-	int			nums;
+	int			slot;
 
 	if (oidString == NULL)
 		return NULL;
 
-	result = (Oid *) palloc(sizeof(Oid[8]));
-	if ((nums = sscanf(oidString, "%u%u%u%u%u%u%u%u",
-					   &result[0],
-					   &result[1],
-					   &result[2],
-					   &result[3],
-					   &result[4],
-					   &result[5],
-					   &result[6],
-					   &result[7])) != 8)
+	result = (Oid *) palloc(sizeof(Oid[INDEX_MAX_KEYS]));
+
+	for (slot=0; *oidString && slot < INDEX_MAX_KEYS; slot++)
 	{
-		do
-			result[nums++] = 0;
-		while (nums < 8);
+		if (sscanf(oidString, "%u", &result[slot]) != 1)
+			break;
+		while (*oidString && *oidString != ' ')
+			oidString++;
 	}
+	while (slot < INDEX_MAX_KEYS)
+		result[slot++] = 0;
+
 	return result;
 }
 
@@ -73,9 +70,9 @@ oid8out(Oid *oidArray)
 	}
 
 	/* assumes sign, 10 digits, ' ' */
-	rp = result = (char *) palloc(8 * 12);
+	rp = result = (char *) palloc(INDEX_MAX_KEYS * 12);
 	sp = oidArray;
-	for (num = 8; num != 0; num--)
+	for (num = INDEX_MAX_KEYS; num != 0; num--)
 	{
 		ltoa(*sp++, rp);
 		while (*++rp != '\0')
@@ -121,13 +118,13 @@ oidne(Oid arg1, Oid arg2)
 bool
 oid8eq(Oid *arg1, Oid *arg2)
 {
-	return (bool) (memcmp(arg1, arg2, 8 * sizeof(Oid)) == 0);
+	return (bool) (memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(Oid)) == 0);
 }
 
 bool
 oid8ne(Oid *arg1, Oid *arg2)
 {
-	return (bool) (memcmp(arg1, arg2, 8 * sizeof(Oid)) != 0);
+	return (bool) (memcmp(arg1, arg2, INDEX_MAX_KEYS * sizeof(Oid)) != 0);
 }
 
 bool
@@ -135,7 +132,7 @@ oid8lt(Oid *arg1, Oid *arg2)
 {
 	int			i;
 
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < INDEX_MAX_KEYS; i++)
 		if (!int4eq(arg1[i], arg2[i]))
 			return int4lt(arg1[i], arg2[i]);
 	return false;
@@ -146,7 +143,7 @@ oid8le(Oid *arg1, Oid *arg2)
 {
 	int			i;
 
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < INDEX_MAX_KEYS; i++)
 		if (!int4eq(arg1[i], arg2[i]))
 			return int4le(arg1[i], arg2[i]);
 	return true;
@@ -157,7 +154,7 @@ oid8ge(Oid *arg1, Oid *arg2)
 {
 	int			i;
 
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < INDEX_MAX_KEYS; i++)
 		if (!int4eq(arg1[i], arg2[i]))
 			return int4ge(arg1[i], arg2[i]);
 	return true;
@@ -168,7 +165,7 @@ oid8gt(Oid *arg1, Oid *arg2)
 {
 	int			i;
 
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < INDEX_MAX_KEYS; i++)
 		if (!int4eq(arg1[i], arg2[i]))
 			return int4gt(arg1[i], arg2[i]);
 	return false;

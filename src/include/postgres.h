@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.31 1999/12/21 00:06:41 wieck Exp $
+ * $Id: postgres.h,v 1.32 2000/01/10 04:36:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,8 +101,10 @@ struct varlena
 typedef struct varlena bytea;
 typedef struct varlena text;
 
-typedef int2 int28[8];
-typedef Oid oid8[8];
+#define INDEX_MAX_KEYS 8		/* maximum number of keys in an index
+								 * definition */
+typedef int2 int28[INDEX_MAX_KEYS];
+typedef Oid oid8[INDEX_MAX_KEYS];
 
 
 /*
