@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.27 1999/05/10 00:45:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.28 1999/05/12 17:04:46 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,6 +316,18 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 */
 		if (query->limitOffset != NULL || query->limitCount != NULL)
 			elog(ERROR, "LIMIT clause not supported in views");
+
+		/*
+		 * DISTINCT on view is not supported
+		 */
+		if (query->uniqueFlag != NULL)
+			elog(ERROR, "DISTINCT not supported in views");
+
+		/*
+		 * ORDER BY in view is not supported
+		 */
+		if (query->sortClause != NIL)
+			elog(ERROR, "ORDER BY not supported in views");
 
 		/*
 		 * ... and finally the rule must be named _RETviewname.

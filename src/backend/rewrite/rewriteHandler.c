@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.39 1999/05/12 15:01:53 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.40 1999/05/12 17:04:47 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@ static void modifyAggrefChangeVarnodes(Node **nodePtr, int rt_index, int new_ind
 static void modifyAggrefDropQual(Node **nodePtr, Node *orignode, Expr *expr);
 static SubLink *modifyAggrefMakeSublink(Expr *origexp, Query *parsetree);
 static void modifyAggrefQual(Node **nodePtr, Query *parsetree);
+static bool checkQueryHasAggs(Node *node);
 static Query *fireRIRrules(Query *parsetree);
 
 
@@ -1269,6 +1270,126 @@ modifyAggrefQual(Node **nodePtr, Query *parsetree)
 
 
 	}
+}
+
+
+/*
+ * checkQueryHasAggs -
+ *	Queries marked hasAggs might not have them any longer after
+ *	rewriting. Check it.
+ */
+static bool
+checkQueryHasAggs(Node *node)
+{
+	if (node == NULL)
+		return FALSE;
+
+	switch(nodeTag(node)) {
+		case T_TargetEntry:
+			{
+				TargetEntry	*tle = (TargetEntry *)node;
+
+				return checkQueryHasAggs((Node *)(tle->expr));
+			}
+			break;
+
+		case T_Aggref:
+			return TRUE;
+
+		case T_Expr:
+			{
+				Expr	*exp = (Expr *)node;
+
+				return checkQueryHasAggs((Node *)(exp->args));
+			}
+			break;
+
+		case T_Iter:
+			{
+				Iter	*iter = (Iter *)node;
+
+				return checkQueryHasAggs((Node *)(iter->iterexpr));
+			}
+			break;
+
+		case T_ArrayRef:
+			{
+				ArrayRef	*ref = (ArrayRef *)node;
+
+				if (checkQueryHasAggs((Node *)(ref->refupperindexpr)))
+					return TRUE;
+				
+				if (checkQueryHasAggs((Node *)(ref->reflowerindexpr)))
+					return TRUE;
+				
+				if (checkQueryHasAggs((Node *)(ref->refexpr)))
+					return TRUE;
+				
+				if (checkQueryHasAggs((Node *)(ref->refassgnexpr)))
+					return TRUE;
+				
+				return FALSE;
+			}
+			break;
+
+		case T_Var:
+			return FALSE;
+
+		case T_Param:
+			return FALSE;
+
+		case T_Const:
+			return FALSE;
+
+		case T_List:
+			{
+				List	*l;
+
+				foreach (l, (List *)node) {
+					if (checkQueryHasAggs((Node *)lfirst(l)))
+						return TRUE;
+				}
+				return FALSE;
+			}
+			break;
+
+		case T_CaseExpr:
+			{
+				CaseExpr	*exp = (CaseExpr *)node;
+
+				if (checkQueryHasAggs((Node *)(exp->args)))
+					return TRUE;
+
+				if (checkQueryHasAggs((Node *)(exp->defresult)))
+					return TRUE;
+
+				return FALSE;
+			}
+			break;
+
+		case T_CaseWhen:
+			{
+				CaseWhen	*when = (CaseWhen *)node;
+
+				if (checkQueryHasAggs((Node *)(when->expr)))
+					return TRUE;
+
+				if (checkQueryHasAggs((Node *)(when->result)))
+					return TRUE;
+
+				return FALSE;
+			}
+			break;
+
+		default:
+			elog(NOTICE, "unknown node tag %d in checkQueryHasAggs()", nodeTag(node));
+			elog(NOTICE, "Node is: %s", nodeToString(node));
+			break;
+
+
+	}
+
+	return FALSE;
 }
 
 
@@ -2574,8 +2695,17 @@ BasicQueryRewrite(Query *parsetree)
 	 * Apply all the RIR rules on each query
 	 */
 	foreach (l, querylist) {
-		query = (Query *)lfirst(l);
-		results = lappend(results, fireRIRrules(query));
+		query = fireRIRrules((Query *)lfirst(l));
+		/*
+		 * If the query was marked having aggregates, check if
+		 * this is still true after rewriting. This check must get
+		 * expanded when someday aggregates can appear somewhere
+		 * else than in the targetlist or the having qual.
+		 */
+		if (query->hasAggs)
+			query->hasAggs = checkQueryHasAggs((Node *)(query->targetList))
+						   | checkQueryHasAggs((Node *)(query->havingQual));
+		results = lappend(results, query);
 	}
 	return results;
 }
