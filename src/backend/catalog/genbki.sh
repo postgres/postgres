@@ -10,12 +10,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.24 2001/09/08 15:24:00 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.25 2001/11/30 20:21:06 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
 #    if this is ever a problem, then the sed script at the very
-#    end can be changed into another awk script or something smarter..
+#    end can be changed into another awk script or something smarter.
 #
 #-------------------------------------------------------------------------
 
@@ -121,7 +121,7 @@ trap "rm -f $TMPFILE ${OUTPUT_PREFIX}.bki.$$ ${OUTPUT_PREFIX}.description.$$" 0 
 # Get NAMEDATALEN from postgres_ext.h
 for dir in $INCLUDE_DIRS; do
     if [ -f "$dir/postgres_ext.h" ]; then
-        NAMEDATALEN=`grep '#define[ 	]*NAMEDATALEN' $dir/postgres_ext.h | $AWK '{ print $3 }'`
+        NAMEDATALEN=`grep '^#define[ 	]*NAMEDATALEN' $dir/postgres_ext.h | $AWK '{ print $3 }'`
         break
     fi
 done
@@ -130,8 +130,8 @@ done
 # (who needs consistency?)
 for dir in $INCLUDE_DIRS; do
     if [ -f "$dir/pg_config.h" ]; then
-        INDEXMAXKEYS=`grep '#define[ 	]*INDEX_MAX_KEYS' $dir/pg_config.h | $AWK '{ print $3 }'`
-        DEFAULTATTSTATTARGET=`grep '#define[ 	]*DEFAULT_ATTSTATTARGET' $dir/pg_config.h | $AWK '{ print $3 }'`
+        INDEXMAXKEYS=`grep '^#define[ 	]*INDEX_MAX_KEYS' $dir/pg_config.h | $AWK '{ print $3 }'`
+        DEFAULTATTSTATTARGET=`grep '^#define[ 	]*DEFAULT_ATTSTATTARGET' $dir/pg_config.h | $AWK '{ print $3 }'`
         break
     fi
 done
@@ -139,7 +139,7 @@ done
 # Get FirstGenBKIObjectId from access/transam.h
 for dir in $INCLUDE_DIRS; do
     if [ -f "$dir/access/transam.h" ]; then
-        BKIOBJECTID=`grep '#define[ 	]*FirstGenBKIObjectId' $dir/access/transam.h | $AWK '{ print $3 }'`
+        BKIOBJECTID=`grep '^#define[ 	]*FirstGenBKIObjectId' $dir/access/transam.h | $AWK '{ print $3 }'`
         break
     fi
 done
@@ -372,7 +372,7 @@ inside == 1 {
 
 # ----
 #  if we are inside the catalog definition, then keep sucking up
-#  attibute names and types
+#  attribute names and types
 # ----
 	if ($2 ~ /\[.*\]/) {			# array attribute
 		idlen = index($2,"[") - 1;
@@ -400,6 +400,23 @@ echo "# PostgreSQL $major_version" >${OUTPUT_PREFIX}.bki.$$
 $CPP $BKIOPTS $TMPFILE | \
 sed -e '/^[ 	]*$/d' \
     -e 's/[ 	][ 	]*/ /g' >>${OUTPUT_PREFIX}.bki.$$ || exit
+
+#
+# Sanity check: if one of the sed/awk/etc commands fails, we'll probably
+# end up with a .bki file that is empty or just a few lines.  Cross-check
+# that the files are of reasonable size.  The numbers here are arbitrary,
+# but are much smaller than the actual expected sizes as of Postgres 7.2.
+#
+if [ `wc -c < ${OUTPUT_PREFIX}.bki.$$` -lt 100000 ]; then
+    echo "$CMDNAME: something seems to be wrong with the .bki file" >&2
+    exit 1
+fi
+if [ `wc -c < ${OUTPUT_PREFIX}.description.$$` -lt 10000 ]; then
+    echo "$CMDNAME: something seems to be wrong with the .description file" >&2
+    exit 1
+fi
+
+# Looks good, commit ...
 
 mv ${OUTPUT_PREFIX}.bki.$$ ${OUTPUT_PREFIX}.bki || exit
 mv ${OUTPUT_PREFIX}.description.$$ ${OUTPUT_PREFIX}.description || exit
