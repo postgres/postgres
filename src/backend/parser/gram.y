@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.321 2002/06/11 15:41:37 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.322 2002/06/13 14:16:43 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -6582,6 +6582,7 @@ reserved_keyword:
 		| ONLY
 		| OR
 		| ORDER
+		| PLACING
 		| PRIMARY
 		| REFERENCES
 		| SELECT
