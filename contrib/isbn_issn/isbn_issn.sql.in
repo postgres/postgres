@@ -1,7 +1,7 @@
 --
 --	PostgreSQL code for ISSNs.
 --
---	$Id: isbn_issn.sql.in,v 1.2 2000/06/19 13:53:39 momjian Exp $
+--	$Id: isbn_issn.sql.in,v 1.3 2002/06/23 21:20:38 momjian Exp $
 --
 
 
@@ -116,7 +116,7 @@ create operator <> (
 --
 --	PostgreSQL code for ISBNs.
 --
---	$Id: isbn_issn.sql.in,v 1.2 2000/06/19 13:53:39 momjian Exp $
+--	$Id: isbn_issn.sql.in,v 1.3 2002/06/23 21:20:38 momjian Exp $
 --
 --
 --	Input and output functions and the type itself:
@@ -222,6 +222,192 @@ create operator <> (
 	negator = =,
 	procedure = isbn_ne
 );
+
+
+-------------------------------------------------
+-- Create default operator class for 'isbn'    --
+-- Needed to create index or primary key       --
+-------------------------------------------------
+
+-- Register new operator class with system catalog pg_opclass
+insert into pg_opclass
+    (opcamid, opcname, opcintype, opcdefault, opckeytype)
+    values ((select oid from pg_am where amname = 'btree'),
+            'isbn_ops',
+            (select oid from pg_type where typname = 'isbn'),
+            true,
+            0);
+
+-- Verify that new operator class was added to pg_opclass
+-- select oid,* from pg_opclass where opcname = 'isbn_ops';
+
+-- Identify comparison operators for 'isbn' type
+select o.oid as opoid, o.oprname
+    into temp table isbn_ops_tmp
+    from pg_operator o, pg_type t
+    where o.oprleft  = t.oid
+    and   o.oprright = t.oid
+    and   t.typname  = 'isbn';
+
+-- Make sure all 5 needed order ops are there (<, <=, =, >=, >)
+-- Operator <> will be present but is not needed
+-- select * from isbn_ops_tmp order by opoid;
+
+-- Associate B-tree strategy 1 with <
+insert into pg_amop
+    (amopclaid, amopstrategy, amopreqcheck, amopopr)
+    select opcl.oid, 1, false, c.opoid
+    from pg_opclass opcl, isbn_ops_tmp c
+    where opcamid = (select oid from pg_am where amname = 'btree')
+    and   opcname = 'isbn_ops'
+    and c.oprname = '<';
+
+-- Associate B-tree strategy 2 with <=
+insert into pg_amop
+    (amopclaid, amopstrategy, amopreqcheck, amopopr)
+    select opcl.oid, 2, false, c.opoid
+    from pg_opclass opcl, isbn_ops_tmp c
+    where opcamid = (select oid from pg_am where amname = 'btree')
+    and   opcname = 'isbn_ops'
+    and   c.oprname = '<=';
+
+-- Associate B-tree strategy 3 with =
+insert into pg_amop
+    (amopclaid, amopstrategy, amopreqcheck, amopopr)
+    select opcl.oid, 3, false, c.opoid
+    from pg_opclass opcl, isbn_ops_tmp c
+    where opcamid = (select oid from pg_am where amname = 'btree')
+    and   opcname = 'isbn_ops'
+    and c.oprname = '=';
+
+-- Associate B-tree strategy 4 with >=
+insert into pg_amop
+    (amopclaid, amopstrategy, amopreqcheck, amopopr)
+    select opcl.oid, 4, false, c.opoid
+    from pg_opclass opcl, isbn_ops_tmp c
+    where opcamid = (select oid from pg_am where amname = 'btree')
+    and   opcname = 'isbn_ops'
+    and c.oprname = '>=';
+
+-- Associate B-tree strategy 5 with >
+insert into pg_amop
+    (amopclaid, amopstrategy, amopreqcheck, amopopr)
+    select opcl.oid, 5, false, c.opoid
+    from pg_opclass opcl, isbn_ops_tmp c
+    where opcamid = (select oid from pg_am where amname = 'btree')
+    and   opcname = 'isbn_ops'
+    and c.oprname = '>';
+
+-- Register 'isbn' comparison function
+create function isbn_cmp(isbn, isbn)
+    returns integer
+    as '$libdir/isbn_issn'
+    language c;
+
+-- Make sure that function was correctly registered
+-- select oid, proname from pg_proc where proname = 'isbn_cmp';
+
+-- Associate default btree operator class with 'isbn' comparison function
+insert into pg_amproc
+    (amopclaid, amprocnum, amproc)
+    select opcl.oid, 1, p.oid
+    from pg_opclass opcl, pg_proc p
+    where opcamid = (select oid from pg_am where amname = 'btree')
+    and   opcname = 'isbn_ops'
+    and p.proname = 'isbn_cmp';
+
+
+-------------------------------------------------
+-- Create default operator class for 'issn'    --
+-- Needed to create index or primary key       --
+-------------------------------------------------
+
+-- Register new operator class with system catalog pg_opclass
+insert into pg_opclass
+    (opcamid, opcname, opcintype, opcdefault, opckeytype)
+    values ((select oid from pg_am where amname = 'btree'),
+            'issn_ops',
+            (select oid from pg_type where typname = 'issn'),
+            true,
+            0);
+
+-- Verify that new operator class was added to pg_opclass
+-- select oid,* from pg_opclass where opcname = 'issn_ops';
+
+-- Identify comparison operators for 'issn' type
+select o.oid as opoid, o.oprname
+    into temp table issn_ops_tmp
+    from pg_operator o, pg_type t
+    where o.oprleft  = t.oid
+    and   o.oprright = t.oid
+    and   t.typname  = 'issn';
+
+-- Make sure all 5 needed order ops are there (<, <=, =, >=, >)
+-- Operator <> will be present but is not needed
+-- select * from issn_ops_tmp order by opoid;
+
+-- Associate B-tree strategy 1 with <
+insert into pg_amop
+    (amopclaid, amopstrategy, amopreqcheck, amopopr)
+    select opcl.oid, 1, false, c.opoid
+    from pg_opclass opcl, issn_ops_tmp c
+    where opcamid = (select oid from pg_am where amname = 'btree')
+    and   opcname = 'issn_ops'
+    and c.oprname = '<';
+
+-- Associate B-tree strategy 2 with <=
+insert into pg_amop
+    (amopclaid, amopstrategy, amopreqcheck, amopopr)
+    select opcl.oid, 2, false, c.opoid
+    from pg_opclass opcl, issn_ops_tmp c
+    where opcamid = (select oid from pg_am where amname = 'btree')
+    and   opcname = 'issn_ops'
+    and   c.oprname = '<=';
+
+-- Associate B-tree strategy 3 with =
+insert into pg_amop
+    (amopclaid, amopstrategy, amopreqcheck, amopopr)
+    select opcl.oid, 3, false, c.opoid
+    from pg_opclass opcl, issn_ops_tmp c
+    where opcamid = (select oid from pg_am where amname = 'btree')
+    and   opcname = 'issn_ops'
+    and c.oprname = '=';
+
+-- Associate B-tree strategy 4 with >=
+insert into pg_amop
+    (amopclaid, amopstrategy, amopreqcheck, amopopr)
+    select opcl.oid, 4, false, c.opoid
+    from pg_opclass opcl, issn_ops_tmp c
+    where opcamid = (select oid from pg_am where amname = 'btree')
+    and   opcname = 'issn_ops'
+    and c.oprname = '>=';
+
+-- Associate B-tree strategy 5 with >
+insert into pg_amop
+    (amopclaid, amopstrategy, amopreqcheck, amopopr)
+    select opcl.oid, 5, false, c.opoid
+    from pg_opclass opcl, issn_ops_tmp c
+    where opcamid = (select oid from pg_am where amname = 'btree')
+    and   opcname = 'issn_ops'
+    and c.oprname = '>';
+
+-- Register 'issn' comparison function
+create function issn_cmp(issn, issn)
+    returns integer
+    as '$libdir/issn_issn'
+    language c;
+
+-- Make sure that function was correctly registered
+-- select oid, proname from pg_proc where proname = 'issn_cmp';
+
+-- Associate default btree operator class with 'issn' comparison function
+insert into pg_amproc
+    (amopclaid, amprocnum, amproc)
+    select opcl.oid, 1, p.oid
+    from pg_opclass opcl, pg_proc p
+    where opcamid = (select oid from pg_am where amname = 'btree')
+    and   opcname = 'issn_ops'
+    and p.proname = 'issn_cmp';
 
 --
 --	eof
