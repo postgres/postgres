@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.45 2004/01/24 19:38:49 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.46 2004/01/24 20:43:26 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -224,8 +224,19 @@ print_aligned_text(const char *title, const char *const * headers,
 
 	if (col_count > 0)
 	{
-		widths = xcalloc(col_count, sizeof(*widths));
-		head_w = xcalloc(col_count, sizeof(*head_w));
+		widths = calloc(col_count, sizeof(*widths));
+		if (!widths)
+		{
+			perror("calloc");
+			exit(EXIT_FAILURE);
+		}
+
+		head_w = calloc(col_count, sizeof(*head_w));
+		if (!head_w)
+		{
+			perror("calloc");
+			exit(EXIT_FAILURE);
+		}
 	}
 	else
 	{
@@ -239,7 +250,12 @@ print_aligned_text(const char *title, const char *const * headers,
 
 	if (cell_count > 0)
 	{
-		cell_w = xcalloc(cell_count, sizeof(*cell_w));
+		cell_w = calloc(cell_count, sizeof(*cell_w));
+		if (!cell_w)
+		{
+			perror("calloc");
+			exit(EXIT_FAILURE);
+		}
 	}
 	else
 		cell_w = NULL;
@@ -411,7 +427,12 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		col_count++;
 	if (col_count > 0)
 	{
-		head_w = xcalloc(col_count, sizeof(*head_w));
+		head_w = calloc(col_count, sizeof(*head_w));
+		if (!head_w)
+		{
+			perror("calloc");
+			exit(EXIT_FAILURE);
+		}
 	}
 	else
 		head_w = NULL;
@@ -430,7 +451,12 @@ print_aligned_vertical(const char *title, const char *const * headers,
 
 	if (cell_count > 0)
 	{
-		cell_w = xcalloc(cell_count, sizeof(*cell_w));
+		cell_w = calloc(cell_count, sizeof(*cell_w));
+		if (!cell_w)
+		{
+			perror("calloc");
+			exit(EXIT_FAILURE);
+		}
 	}
 	else
 		cell_w = NULL;
@@ -449,7 +475,12 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		fprintf(fout, "%s\n", title);
 
 	/* make horizontal border */
-	divider = xmalloc(hwidth + dwidth + 10);
+	divider = malloc(hwidth + dwidth + 10);
+	if (!divider)
+	{
+		perror("malloc");
+		exit(EXIT_FAILURE);
+	}
 	divider[0] = '\0';
 	if (opt_border == 2)
 		strcat(divider, "+-");
@@ -471,8 +502,14 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		{
 			if (!opt_barebones)
 			{
-				char	   *record_str = xmalloc(32);
+				char	   *record_str = malloc(32);
 				size_t		record_str_len;
+
+				if (!record_str)
+				{
+					perror("malloc");
+					exit(EXIT_FAILURE);
+				}
 
 				if (opt_border == 0)
 					snprintf(record_str, 32, "* Record %d", record++);
@@ -484,7 +521,13 @@ print_aligned_vertical(const char *title, const char *const * headers,
 					fprintf(fout, "%.*s%s\n", opt_border, divider, record_str);
 				else
 				{
-					char	   *div_copy = xstrdup(divider);
+					char	   *div_copy = strdup(divider);
+
+					if (!div_copy)
+					{
+						perror("malloc");
+						exit(EXIT_FAILURE);
+					}
 
 					strncpy(div_copy + opt_border, record_str, record_str_len);
 					fprintf(fout, "%s\n", div_copy);
@@ -1098,14 +1141,24 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 
 	nfields = PQnfields(result);
 
-	headers = xcalloc(nfields + 1, sizeof(*headers));
+	headers = calloc(nfields + 1, sizeof(*headers));
+	if (!headers)
+	{
+		perror("calloc");
+		exit(EXIT_FAILURE);
+	}
 
 	for (i = 0; i < nfields; i++)
 		headers[i] = mbvalidate(PQfname(result, i), opt->topt.encoding);
 
 	/* set cells */
 
-	cells = xcalloc(nfields * PQntuples(result) + 1, sizeof(*cells));
+	cells = calloc(nfields * PQntuples(result) + 1, sizeof(*cells));
+	if (!cells)
+	{
+		perror("calloc");
+		exit(EXIT_FAILURE);
+	}
 
 	for (i = 0; i < nfields * PQntuples(result); i++)
 	{
@@ -1121,9 +1174,14 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 		footers = opt->footers;
 	else if (!opt->topt.expanded && opt->default_footer)
 	{
-		footers = xcalloc(2, sizeof(*footers));
+		footers = calloc(2, sizeof(*footers));
+		if (!footers)
+		{
+			perror("calloc");
+			exit(EXIT_FAILURE);
+		}
 
-		footers[0] = xmalloc(100);
+		footers[0] = malloc(100);
 		if (PQntuples(result) == 1)
 			snprintf(footers[0], 100, gettext("(1 row)"));
 		else
@@ -1134,7 +1192,12 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 
 	/* set alignment */
 
-	align = xcalloc(nfields + 1, sizeof(*align));
+	align = calloc(nfields + 1, sizeof(*align));
+	if (!align)
+	{
+		perror("calloc");
+		exit(EXIT_FAILURE);
+	}
 
 	for (i = 0; i < nfields; i++)
 	{
