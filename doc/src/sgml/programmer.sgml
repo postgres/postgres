@@ -1,9 +1,12 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.23 2000/03/30 22:22:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.24 2000/03/30 22:34:29 thomas Exp $
 
 Postgres Programmer's Guide.
 
 $Log: programmer.sgml,v $
+Revision 1.24  2000/03/30 22:34:29  thomas
+Remove PL/perl language chapter, since it shows up in the User's Guide.
+
 Revision 1.23  2000/03/30 22:22:41  thomas
 Accumulated fixups.
 Add some chapters on new topics.
@@ -74,7 +77,6 @@ Make new file current.sgml to hold release info for the current release.
 <!entity lisp       SYSTEM "lisp.sgml">
 <!entity lobj       SYSTEM "lobj.sgml">
 <!entity odbc       SYSTEM "odbc.sgml">
-<!entity plperl     SYSTEM "plperl.sgml">
 <!entity rules      SYSTEM "rules.sgml">
 <!entity spi        SYSTEM "spi.sgml">
 <!entity trigger    SYSTEM "trigger.sgml">
@@ -182,7 +184,6 @@ Your name here...
   &indexcost;
   &gist;
   &xplang;
-  &plperl;
   &dfunc;
 
 <!-- reference -->
