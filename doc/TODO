@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jun  9 21:24:52 EDT 2001
+Last updated:		Sat Jun  9 22:58:43 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -191,6 +191,7 @@ CLIENTS
 * allow psql \d to show temporary table structure
 * add XML interface capability
 * Remove <=6.3 version compatibility in ODBC?
+* Fix libpq to properly handle socket failures under native MS Win32 [libpq]
 
 REFERENTIAL INTEGRITY
 
