@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.297 2002/09/27 03:59:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.298 2002/10/06 03:56:03 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -569,7 +569,7 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 	debug_query_string = query_string->data;
 
 	/*
-	 * We use save_Log_duration so setting Log_duration to true doesn't
+	 * We use save_Log_duration so "SET Log_duration = true" doesn't
 	 * report incorrect time because gettimeofday() wasn't called.
 	 */
 	if (save_Log_duration)
@@ -1701,7 +1701,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.297 $ $Date: 2002/09/27 03:59:00 $\n");
+		puts("$Revision: 1.298 $ $Date: 2002/10/06 03:56:03 $\n");
 	}
 
 	/*
