@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.150 2003/08/17 22:19:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.151 2003/08/26 15:38:25 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -944,7 +944,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&MaxBackends,
-		DEF_MAXBACKENDS, 1, INT_MAX, NULL, NULL
+		100, 1, INT_MAX, NULL, NULL
 	},
 
 	{
@@ -962,7 +962,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&NBuffers,
-		DEF_NBUFFERS, 16, INT_MAX, NULL, NULL
+		1000, 16, INT_MAX, NULL, NULL
 	},
 
 	{

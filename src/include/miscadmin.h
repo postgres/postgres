@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.132 2003/08/04 04:03:10 tgl Exp $
+ * $Id: miscadmin.h,v 1.133 2003/08/26 15:38:25 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -191,17 +191,12 @@ extern int	VacuumMem;
  *	A few postmaster startup options are exported here so the
  *	configuration file processor can access them.
  */
-
 extern bool NetServer;
 extern bool EnableSSL;
 extern bool SilentMode;
 extern int	MaxBackends;
-
-#define DEF_MAXBACKENDS 32
 extern int	ReservedBackends;
 extern DLLIMPORT int NBuffers;
-
-#define DEF_NBUFFERS (DEF_MAXBACKENDS > 8 ? DEF_MAXBACKENDS * 2 : 16)
 extern int	PostPortNumber;
 extern int	Unix_socket_permissions;
 extern char *Unix_socket_group;

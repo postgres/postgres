@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/ipc_test.c,v 1.9 2003/08/04 02:40:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/ipc_test.c,v 1.10 2003/08/26 15:38:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,8 +50,8 @@ const bool	ExecBackend = false;
 
 bool		IsUnderPostmaster = false;
 
-int			MaxBackends = DEF_MAXBACKENDS;
-int			NBuffers = DEF_NBUFFERS;
+int			MaxBackends = 32;
+int			NBuffers = 64;
 
 #ifndef assert_enabled
 bool		assert_enabled = true;

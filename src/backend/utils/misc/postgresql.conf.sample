@@ -28,7 +28,7 @@
 # - Connection Settings -
 
 #tcpip_socket = false
-#max_connections = 32
+#max_connections = 100
 	# note: increasing max_connections costs about 500 bytes of shared
 	# memory per connection slot, in addition to costs from shared_buffers
         # and max_locks_per_transaction.
@@ -55,7 +55,7 @@
 
 # - Memory -
 
-#shared_buffers = 64		# min 16, at least max_connections*2, 8KB each
+#shared_buffers = 1000		# min 16, at least max_connections*2, 8KB each
 #sort_mem = 1024		# min 64, size in KB
 #vacuum_mem = 8192		# min 1024, size in KB
 

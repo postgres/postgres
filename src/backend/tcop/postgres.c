@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.360 2003/08/13 16:16:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.361 2003/08/26 15:38:24 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1978,7 +1978,7 @@ usage(char *progname)
 #ifdef USE_ASSERT_CHECKING
 	printf("  -A 1|0          enable/disable run-time assert checking\n");
 #endif
-	printf("  -B NBUFFERS     number of shared buffers (default %d)\n", DEF_NBUFFERS);
+	printf("  -B NBUFFERS     number of shared buffers\n");
 	printf("  -c NAME=VALUE   set run-time parameter\n");
 	printf("  -d 0-5          debugging level (0 is off)\n");
 	printf("  -D DATADIR      database directory\n");
@@ -2651,7 +2651,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.360 $ $Date: 2003/08/13 16:16:23 $\n");
+		puts("$Revision: 1.361 $ $Date: 2003/08/26 15:38:24 $\n");
 	}
 
 	/*
