@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.12 1998/07/12 21:29:31 momjian Exp $
+ * $Id: makefuncs.h,v 1.13 1998/07/20 20:48:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,7 @@
 #define MAKEFUNC_H
 
 #include <nodes/primnodes.h>
+#include <nodes/parsenodes.h>
 #include <utils/fcache.h>
 
 extern Oper *
@@ -31,6 +32,9 @@ makeVar(Index varno,
 		Index varlevelsup,
 		Index varnoold,
 		AttrNumber varoattno);
+
+extern TargetEntry *
+makeTargetEntry(Resdom *resdom, Node *expr);
 
 extern Resdom *
 makeResdom(AttrNumber resno,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.78 1998/07/20 19:53:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.79 1998/07/20 20:48:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,7 +317,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 									att[defval[ndef].adnum - 1]->atttypmod,
 									pstrdup(nameout(&(att[defval[ndef].adnum - 1]->attname))),
 									0, 0, 0),
-						(Node *) stringToNode(defval[ndef].adbin);
+						(Node *) stringToNode(defval[ndef].adbin));
 			qry->targetList = lappend(qry->targetList, te);
 		}
 	}
