@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.10 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.11 2001/09/13 19:05:29 petere Exp $
 Postgres documentation
 -->
 
@@ -95,64 +95,69 @@ ERROR:  RemoveType: type '<replaceable class="parameter">typename</replaceable>'
   <para>
    Only the owner of a type can remove it.
   </para>
+ </refsect1>
 
-  <refsect2 id="R2-SQL-DROPTYPE-3">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    DROP TYPE statement is a <productname>Postgres</productname>
-    language extension.
-   </para>
-   <para>
-    Refer to <command>CREATE TYPE</command> for
-    information on how to create types.
-   </para>
-   <para>
-    It is the user's responsibility to remove any operators,
-    functions, aggregates, access methods, subtypes, and tables
-    that use a deleted type.
-   </para>
+ <refsect1 id="SQL-DROPTYPE-notes">
+  <title>Notes</title>
 
-   <para>
-    If a built-in type is removed, the behavior of the backend
-    is unpredictable.
-   </para>
-  </refsect2>
+  <itemizedlist>
+   <listitem>
+    <para>
+     It is the user's responsibility to remove any operators,
+     functions, aggregates, access methods, subtypes, and tables that
+     use a deleted type.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     If a built-in type is removed, the behavior of the server is
+     unpredictable.
+    </para>
+   </listitem>
+  </itemizedlist>
  </refsect1>
   
- <refsect1 id="R1-SQL-DROPTYPE-2">
-  <title>
-   Usage
-  </title>
+ <refsect1 id="SQL-DROPTYPE-examples">
+  <title>Examples</title>
   <para>
-   To remove the <literal>box</literal> type:
+   To remove the <type>box</type> type:
 
-   <programlisting>
+<programlisting>
 DROP TYPE box;
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-DROPTYPE-3">
-  <title>
-   Compatibility
-  </title>
-  
-  <refsect2 id="R2-SQL-DROPTYPE-5">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    SQL3
-   </title>
-   <para>
-    <command>DROP TYPE</command> is a <acronym>SQL3</acronym> statement.
-   </para>
-  </refsect2>
+ <refsect1 id="SQL-DROPTYPE-compatibility">
+  <title>Compatibility</title>
+
+  <para>
+   A <command>DROP TYPE</command> statement exists in SQL99.  As with
+   most other <quote>drop</quote> commands, <command>DROP
+   TYPE</command> in SQL99 requires a <quote>drop behavior</quote>
+   clause to select between dropping all dependent objects or refusing
+   to drop if dependent objects exist:
+<synopsis>
+DROP TYPE <replaceable>name</replaceable> { CASCADE | RESTRICT }
+</synopsis>
+   <productname>PostgreSQL</productname> currently ignores
+   dependencies altogether.
+  </para>
+
+  <para>
+   Note that the <command>CREATE TYPE</command> command and the data
+   type extension mechanisms in <productname>PostgreSQL</productname>
+   differ from SQL99.
+  </para>
+ </refsect1>
+
+ <refsect1 id="SQL-DROPTYPE-see-also">
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createtype"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 
