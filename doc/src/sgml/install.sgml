@@ -3,8 +3,8 @@
 
 <Abstract>
 <Para>
-Complete installation instructions for <ProductName>Postgres</ProductName>
-v6.4.
+Complete installation instructions for 
+<ProductName>Postgres</ProductName> v6.4.
 </Para>
 </Abstract>
 
@@ -15,7 +15,8 @@ for up to date information, patches, etc.
 </Para>
 
 <Para>
-The installation notes below assume the following (except where noted):
+These installation instructions assume:
+
 <ItemizedList Mark="bullet" Spacing="compact">
 <ListItem>
 <Para>
@@ -29,7 +30,7 @@ Defaults are used except where noted.
 </ListItem>
 <ListItem>
 <Para>
-User postgres is the <ProductName>Postgres</ProductName> superuser.
+User <literal>postgres</literal> is the <ProductName>Postgres</ProductName> superuser.
 </Para>
 </ListItem>
 <ListItem>
@@ -74,11 +75,38 @@ http://www.postgresql.org/docs/admin/install.htm</ulink>.
  In general, most Unix-compatible
 platforms with modern libraries should be able to run <ProductName>Postgres</ProductName>.
 
+<para>
+Although the minimum required memory for running <ProductName>Postgres</ProductName>
+is as little as 8MB, there are noticable improvements in runtimes for the regression
+tests when expanding memory up to 96MB on a relatively fast dual-processor system
+running X-Windows.
+The rule is you can never have too much memory.
+
 <Para>
-You should have at least 8 MB of memory and at least 45 MB of disk space
-to hold the source, binaries, and user databases.  After installation
-you may reduce this to about 3 Mbytes plus space for user databases.
+Check that you have sufficient disk space.  You will need about
+      30 Mbytes for <filename>/usr/src/pgsql</filename>, 
+about 5 Mbytes for <filename>/usr/local/pgsql</filename>
+      (excluding your database) and 1 Mbyte for an empty database.
+      The database will temporarily grow to about 20 Mbytes during the
+      regression tests.  You will also need about 3 Mbytes for the
+      distribution tar file.
 </Para>
+
+<Para>
+      We therefore recommend that during installation and testing you
+      have well over 20 Mbytes free under <filename>/usr/local</filename> and another 25 Mbytes
+      free on the disk partition containing your database.  Once you
+      delete the source files, tar file and regression database, you
+      will need 2 Mbytes for <filename>/usr/local/pgsql</filename>, 1 Mbyte for the empty
+      database, plus about five times the space you would require to
+      store your database data in a flat file.
+</Para>
+
+<Para>
+      To check for disk space, use 
+<programlisting>
+$ df -k
+</programlisting>
 
 </Sect1>
 
@@ -123,51 +151,24 @@ Read any last minute information and platform specific porting
 <Para>
 Create the <ProductName>Postgres</ProductName> superuser account
 (<literal>postgres</literal> is commonly used) if it does not already exist.
-</Para>
+
+<para>
+The owner of the Postgres files can be any unprivileged user account.
+It <emphasis>must not</emphasis> be <literal>root</literal>, <literal>bin</literal>,
+or any other account with special access rights, as that would create a security risk.
+
 </Step>
 
 <Step Performance="required">
 <Para>
-Log in to the <ProductName>Postgres</ProductName> superuser account.
-</Para>
-
-<SubSteps>
-<Step Performance="required">
-<Para>
-Check that you have sufficient disk space.  You will need about
-      17 Mbytes for <filename>/usr/src/pgsql</filename>, 
-about 2 Mbytes for <filename>/usr/local/pgsql</filename>
-      (excluding your database) and 1 Mbyte for an empty database.
-      The database will temporarily grow to about 20 Mbytes during the
-      regression tests.  You will also need about 3 Mbytes for the
-      distribution tar file.
-</Para>
-
-<Para>
-      We therefore recommend that during installation and testing you
-      have well over 20 Mbytes free under <filename>/usr/local</filename> and another 25 Mbytes
-      free on the disk partition containing your database.  Once you
-      delete the source files, tar file and regression database, you
-      will need 2 Mbytes for <filename>/usr/local/pgsql</filename>, 1 Mbyte for the empty
-      database, plus about five times the space you would require to
-      store your database data in a flat file.
-</Para>
-
-<Para>
-      To check for disk space, use 
-<programlisting>
-$ df -k
-</programlisting>
-</Para>
-</Step>
-</SubSteps>
-
-</Step>
+Log in to the <ProductName>Postgres</ProductName> superuser account. Most of the
+remaining steps in the installation will happen in this account.
 
 <Step Performance="required">
 <Para>
 Ftp file 
-<ulink url="ftp://ftp.postgresql.org/pub/postgresql-v6.4.tar.gz"><filename>ftp://ftp.postgresql.org/pub/postgresql-v6.4.tar.gz</filename></ulink>
+<ulink url="ftp://ftp.postgresql.org/pub/postgresql-v6.4.tar.gz">
+ <filename>ftp://ftp.postgresql.org/pub/postgresql-v6.4.tar.gz</filename></ulink>
  from the Internet.  Store it in your home directory.
 </Para>
 </Step>
@@ -235,6 +236,8 @@ $ rm -rf flex-2.5.4
 
 <Step Performance="required">
 <Para>
+If you are not upgrading an existing system then skip to 
+<xref linkend="newdirs">.
 If you are upgrading an existing system then back up your database.
      For alpha- and beta-level releases, the database format is liable
      to change, often every few weeks, with no notice besides a quick comment
@@ -250,21 +253,32 @@ script from v6.0 or everything
 </tip>
 
 <para>
+To dump your fairly recent post-v6.0 database installation, type
+
+<programlisting>
+$ pg_dumpall -z > db.out
+</programlisting>
+
+<para>
 To use the latest <application>pg_dumpall</application> script on your
-existing database before upgrading <productname>Postgres</productname>, type:
+existing older database before upgrading <productname>Postgres</productname>,
+pull the most recent version of <application>pg_dumpall</application>
+from the new distribution:
+
 <ProgramListing>
 $ cd
 $ gunzip -c postgresql-v6.4.tar.gz \
     | tar xvf - src/bin/pg_dump/pg_dumpall
 $ chmod a+x src/bin/pg_dump/pg_dumpall
-$ src/bin/pg_dump/pg_dumpall > db.out
+$ src/bin/pg_dump/pg_dumpall -z > db.out
 $ rm -rf src
 </ProgramListing>
 </Para>
 
 <Para>
      If you wish to preserve object id's (oids), then use the -o
-     option when running <application>pg_dumpall</application>.  However, unless you have a
+     option when running <application>pg_dumpall</application>.  
+However, unless you have a
      special reason for doing this (such as using OIDs as keys
 in tables), don't do it.
 </Para>
@@ -356,7 +370,7 @@ $ exit
 </Para>
 </Step>
 
-<Step Performance="required">
+<Step Performance="required" id="newdirs">
 <Para>
   Make new source and install directories.  The actual paths can be
      different for your installation but you must be consistant throughout this procedure.
@@ -418,8 +432,8 @@ $ ./configure [ <replaceable>options as described below</replaceable> ]
 <para>
 If your system is not automatically recognized by configure and you have to do this, please
      send email to 
-<ulink url="mailto:scrappy@hub.org">scrappy@hub.org</ulink> showing both the output of the program
-     <application>./config.guess</application> and also what the template file should be.)
+<ulink url="mailto:scrappy@hub.org">scrappy@hub.org</ulink> with the output of the program
+     <application>./config.guess</application>. Indicate what the template file should be.
 </note>
 
 </Para>
@@ -474,8 +488,8 @@ If your system is not automatically recognized by configure and you have to do t
 </Para>
 
 <Para>
-     As an example, here is the configure script used on a Sparc
-     Solaris 2.5 system with <filename>/opt/postgres</filename> being the install base.
+As an example, here is the configure script used on a Sparc Solaris 2.5 system
+ with <filename>/opt/postgres</filename> being the installation base directory:
 
 <ProgramListing>
 $ ./configure --prefix=/opt/postgres \
@@ -500,6 +514,15 @@ $ gmake install
 <para>
 The documentation is also available in Postscript format. Look for files
 ending with <filename>.ps.gz</filename> in the same directory.
+
+<Step Performance="optional">
+<Para>
+Install the man page documentation. Type
+
+<ProgramListing>
+$ cd /usr/src/pgsql/doc
+$ gmake man
+</ProgramListing>
 
 <Step Performance="required">
 <Para>
@@ -576,8 +599,8 @@ At this point, or earlier if you wish,
 
 <Step Performance="required">
 <Para>
- 14) If necessary, tell your system how to find the new shared libraries.  You can
-     do <emphasis>one</emphasis> of the following, preferably the first:
+If necessary, tell your system how to find the new shared libraries.  You can
+do <emphasis>one</emphasis> of the following, preferably the first:
 
 <SubSteps>
 <Step Performance="optional">
@@ -626,10 +649,19 @@ pg_id: can't load library 'libpq.so'
 <Step Performance="required">
 <Para>
  If it has not already been done, then prepare account <literal>postgres</literal>
-     for using <ProductName>Postgres</ProductName>.  
+     for using <ProductName>Postgres</ProductName>.
 Any account that will use <ProductName>Postgres</ProductName> must
-     be similarily prepared.  (The following instructions are for a
-     bash shell.  Adapt accordingly for other shells.)
+     be similarly prepared. 
+
+<note>
+<para>
+There are several ways to influence the runtime environment of the <ProductName>Postgres</ProductName>
+server. Refer to the chapter on <citetitle>Administrator's Guide</citetitle> for more information.
+<para>
+The following instructions are for a
+ bash/sh shell.  Adapt accordingly for other shells.
+</note>
+
 </Para>
 
 <Para>
@@ -679,16 +711,6 @@ $ initdb
 
 <Step Performance="required">
 <Para>
-     Run the regression tests.
-     The file <filename>/usr/src/pgsql/src/test/regress/README</filename> has detailed
-     instructions for running and interpreting the regression tests.
-     A short version follows here:
-</Para>
-
-<substeps>
-
-<Step Performance="required">
-<Para>
      Run postmaster from your <ProductName>Postgres</ProductName> superuser account (typically
      account postgres).
 <emphasis>Do not run <application>postmaster</application> from the root account!</emphasis>
@@ -699,6 +721,16 @@ $ nohup postmaster > regress.log 2>&1 &
 </ProgramListing>
 </Para>
 </Step>
+
+<Step Performance="required">
+<Para>
+     Run the regression tests.
+     The file <filename>/usr/src/pgsql/src/test/regress/README</filename> has detailed
+     instructions for running and interpreting the regression tests.
+     A short version follows here:
+</Para>
+
+<substeps>
 
 <Step Performance="required">
 <Para>
