@@ -1,10 +1,10 @@
 #-------------------------------------------------------------------------
 #
 # Makefile--
-#    Makefile for nodes
+#    Makefile for backend/nodes
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/nodes/Makefile,v 1.11 2000/05/29 05:44:47 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/nodes/Makefile,v 1.12 2000/06/29 02:26:23 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,8 +12,8 @@ SRCDIR = ../..
 include $(SRCDIR)/Makefile.global
 
 OBJS = nodeFuncs.o nodes.o list.o \
-       copyfuncs.o equalfuncs.o freefuncs.o makefuncs.o outfuncs.o \
-       readfuncs.o print.o read.o
+       copyfuncs.o equalfuncs.o makefuncs.o \
+       outfuncs.o readfuncs.o print.o read.o
 
 all: SUBSYS.o
 
@@ -29,4 +29,3 @@ clean:
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-
