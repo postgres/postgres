@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.72 2002/12/05 04:04:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.73 2003/02/01 18:31:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -519,25 +519,36 @@ show_server_encoding(void)
 /*
  * SET SESSION AUTHORIZATION
  *
- * Note: when resetting session auth after an error, we can't expect to do
- * catalog lookups.  Hence, the stored form of the value is always a numeric
- * userid that can be re-used directly.
+ * When resetting session auth after an error, we can't expect to do catalog
+ * lookups.  Hence, the stored form of the value must provide a numeric userid
+ * that can be re-used directly.  We store the string in the form of
+ * NAMEDATALEN 'x's followed by the numeric userid --- this cannot conflict
+ * with any valid user name, because of the NAMEDATALEN limit on names.
  */
 const char *
 assign_session_authorization(const char *value, bool doit, bool interactive)
 {
-	AclId		usesysid;
-	char	   *endptr;
+	AclId		usesysid = 0;
 	char	   *result;
 
-	usesysid = (Oid) strtoul(value, &endptr, 10);
+	if (strspn(value, "x") == NAMEDATALEN)
+	{
+		/* might be a saved numeric userid */
+		char	   *endptr;
 
-	if (endptr != value && *endptr == '\0' && OidIsValid(usesysid))
-	{
-		/* use the numeric user ID */
+		usesysid = (AclId) strtoul(value + NAMEDATALEN, &endptr, 10);
+
+		if (endptr != value + NAMEDATALEN && *endptr == '\0')
+		{
+			/* syntactically valid, so use the numeric user ID */
+		}
+		else
+			usesysid = 0;
 	}
-	else
+
+	if (usesysid == 0)
 	{
+		/* not a saved ID, so look it up */
 		HeapTuple	userTup;
 
 		userTup = SearchSysCache(SHADOWNAME,
@@ -558,11 +569,13 @@ assign_session_authorization(const char *value, bool doit, bool interactive)
 	if (doit)
 		SetSessionAuthorization(usesysid);
 
-	result = (char *) malloc(32);
+	result = (char *) malloc(NAMEDATALEN + 32);
 	if (!result)
 		return NULL;
 
-	snprintf(result, 32, "%lu", (unsigned long) usesysid);
+	memset(result, 'x', NAMEDATALEN);
+
+	snprintf(result + NAMEDATALEN, 32, "%lu", (unsigned long) usesysid);
 
 	return result;
 }
@@ -570,5 +583,9 @@ assign_session_authorization(const char *value, bool doit, bool interactive)
 const char *
 show_session_authorization(void)
 {
+	/*
+	 * We can't use the stored string; see comments for
+	 * assign_session_authorization
+	 */
 	return GetUserNameFromId(GetSessionUserId());
 }
