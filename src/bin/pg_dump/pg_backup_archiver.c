@@ -252,6 +252,9 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 	 */
 	if (_canRestoreBlobs(AH) && AH->createdBlobXref)
 	{
+		/* NULL parameter means disable ALL user triggers */
+		_disableTriggers(AH, NULL, ropt);
+
 		te = AH->toc->next;
 		while (te != AH->toc) {
 
@@ -275,6 +278,9 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 
 			te = te->next;
 		}
+
+		/* NULL parameter means enable ALL user triggers */
+		_enableTriggers(AH, NULL, ropt);
 	}
 
 	/*
@@ -335,13 +341,16 @@ static void _disableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ro
 	 */
 	if (ropt->superuser)
 	{
-		/* If we're not allowing changes for ownership, then remember the user
-		 * so we can change it back here. Otherwise, let _reconnectAsOwner
-		 * do what it has to do.
-		 */
-		if (ropt->noOwner)
-			oldUser = strdup(ConnectedUser(AH));
-		_reconnectAsUser(AH, "-", ropt->superuser);
+		if (!_restoringToDB(AH) || !ConnectedUserIsSuperuser(AH))
+		{
+			/* If we're not allowing changes for ownership, then remember the user
+			 * so we can change it back here. Otherwise, let _reconnectAsOwner
+			 * do what it has to do.
+			 */
+			if (ropt->noOwner)
+				oldUser = strdup(ConnectedUser(AH));
+			_reconnectAsUser(AH, "-", ropt->superuser);
+		}
 	}
 
 	ahlog(AH, 1, "Disabling triggers\n");
@@ -351,7 +360,16 @@ static void _disableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ro
 	 * command when one is available.
 	 */
     ahprintf(AH, "-- Disable triggers\n");
-    ahprintf(AH, "UPDATE \"pg_class\" SET \"reltriggers\" = 0 WHERE \"relname\" !~ '^pg_';\n\n");
+
+	/*
+	 * Just update the AFFECTED table, if known.
+	 */
+
+	if (te && te->name && strlen(te->name) > 0)
+		ahprintf(AH, "UPDATE \"pg_class\" SET \"reltriggers\" = 0 WHERE \"relname\" ~* '%s';\n", 
+						te->name);
+	else
+		ahprintf(AH, "UPDATE \"pg_class\" SET \"reltriggers\" = 0 WHERE \"relname\" !~ '^pg_';\n\n");
 
 	/*
 	 * Restore the user connection from the start of this procedure
@@ -378,14 +396,17 @@ static void _enableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 	 */
 	if (ropt->superuser)
 	{
-		/* If we're not allowing changes for ownership, then remember the user
-		 * so we can change it back here. Otherwise, let _reconnectAsOwner
-		 * do what it has to do
-		 */
-		if (ropt->noOwner)
-			oldUser = strdup(ConnectedUser(AH));
+		if (!_restoringToDB(AH) || !ConnectedUserIsSuperuser(AH))
+		{
+			/* If we're not allowing changes for ownership, then remember the user
+			 * so we can change it back here. Otherwise, let _reconnectAsOwner
+			 * do what it has to do
+			 */
+			if (ropt->noOwner)
+				oldUser = strdup(ConnectedUser(AH));
 
-		_reconnectAsUser(AH, "-", ropt->superuser);
+			_reconnectAsUser(AH, "-", ropt->superuser);
+		}
 	}
 
 	ahlog(AH, 1, "Enabling triggers\n");
@@ -397,9 +418,19 @@ static void _enableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
     ahprintf(AH, "-- Enable triggers\n");
     ahprintf(AH, "BEGIN TRANSACTION;\n");
     ahprintf(AH, "CREATE TEMP TABLE \"tr\" (\"tmp_relname\" name, \"tmp_reltriggers\" smallint);\n");
-    ahprintf(AH, "INSERT INTO \"tr\" SELECT C.\"relname\", count(T.\"oid\") FROM \"pg_class\" C,"
-	    " \"pg_trigger\" T WHERE C.\"oid\" = T.\"tgrelid\" AND C.\"relname\" !~ '^pg_' "
-	    " GROUP BY 1;\n");
+
+	/*
+	 * Just update the affected table, if known.
+	 */
+	if (te && te->name && strlen(te->name) > 0)
+		ahprintf(AH, "INSERT INTO \"tr\" SELECT C.\"relname\", count(T.\"oid\") FROM \"pg_class\" C,"
+					" \"pg_trigger\" T WHERE C.\"oid\" = T.\"tgrelid\" AND C.\"relname\" ~* '%s' "
+					" GROUP BY 1;\n", te->name);
+	else
+		ahprintf(AH, "INSERT INTO \"tr\" SELECT C.\"relname\", count(T.\"oid\") FROM \"pg_class\" C,"
+					" \"pg_trigger\" T WHERE C.\"oid\" = T.\"tgrelid\" AND C.\"relname\" !~ '^pg_' "
+					" GROUP BY 1;\n");
+
     ahprintf(AH, "UPDATE \"pg_class\" SET \"reltriggers\" = TMP.\"tmp_reltriggers\" "
 	    "FROM \"tr\" TMP WHERE "
 	    "\"pg_class\".\"relname\" = TMP.\"tmp_relname\";\n");
@@ -580,7 +611,7 @@ void StartRestoreBlob(ArchiveHandle* AH, int oid)
 	if (loOid == 0)
 		die_horribly(AH, "%s: unable to create BLOB\n", progname);
 
-	ahlog(AH, 1, "Restoring BLOB oid %d as %d\n", oid, loOid);
+	ahlog(AH, 2, "Restoring BLOB oid %d as %d\n", oid, loOid);
 
 	InsertBlobXref(AH, oid, loOid);
 

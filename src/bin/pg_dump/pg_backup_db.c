@@ -593,21 +593,30 @@ void FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 		ahlog(AH, 1, " - %s.%s\n", tablename, attr);
 
 		resetPQExpBuffer(tblQry);
-		appendPQExpBuffer(tblQry, "Update \"%s\" Set \"%s\" = x.newOid From %s x "
-									"Where x.oldOid = \"%s\".\"%s\";",
 
-									tablename, attr, BLOB_XREF_TABLE, tablename, attr);
+		/*
+		 * We should use coalesce here (rather than 'exists'), but it seems to 
+		 * be broken in 7.0.2 (weird optimizer strategy)
+		 */
+		appendPQExpBuffer(tblQry, "UPDATE \"%s\" SET \"%s\" = ",tablename, attr);
+		appendPQExpBuffer(tblQry, " (SELECT x.newOid FROM \"%s\" x WHERE x.oldOid = \"%s\".\"%s\")",
+									BLOB_XREF_TABLE, tablename, attr);
+		appendPQExpBuffer(tblQry, " where exists"
+									"(select * from %s x where x.oldOid = \"%s\".\"%s\");",
+									BLOB_XREF_TABLE, tablename, attr);
 
-		ahlog(AH, 10, " - sql = %s\n", tblQry->data);
+		ahlog(AH, 10, " - sql:\n%s\n", tblQry->data);
 
 		uRes = PQexec(AH->blobConnection, tblQry->data);
 		if (!uRes)
 			die_horribly(AH, "%s: could not update attr %s of table %s. Explanation from backend '%s'\n",
-								progname, attr, tablename, PQerrorMessage(AH->connection));
+								progname, attr, tablename, PQerrorMessage(AH->blobConnection));
 
 		if ( PQresultStatus(uRes) != PGRES_COMMAND_OK )
-			die_horribly(AH, "%s: error while updating attr %s of table %s. Explanation from backend '%s'\n",
-								progname, attr, tablename, PQerrorMessage(AH->connection));
+			die_horribly(AH, "%s: error while updating attr %s of table %s (result = %d)."
+								" Explanation from backend '%s'\n",
+								progname, attr, tablename, PQresultStatus(uRes), 
+								PQerrorMessage(AH->blobConnection));
 
 		PQclear(uRes);
 	}
@@ -631,7 +640,10 @@ void CreateBlobXrefTable(ArchiveHandle* AH)
 
 	ahlog(AH, 1, "Creating table for BLOBS xrefs\n");
 
+/*
 	appendPQExpBuffer(qry, "Create Temporary Table %s(oldOid oid, newOid oid);", BLOB_XREF_TABLE);
+*/
+	appendPQExpBuffer(qry, "Create Table %s(oldOid oid, newOid oid);", BLOB_XREF_TABLE);
 
 	_executeSqlCommand(AH, AH->blobConnection, qry, "can not create BLOB xref table '" BLOB_XREF_TABLE "'");
 
