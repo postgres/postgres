@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.95 2001/06/13 18:56:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.96 2001/07/06 13:40:47 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -860,7 +860,10 @@ deepRewriteQuery(Query *parsetree)
 	 * the rule actions cannot find them.
 	 */
 	if (!instead)
-		rewritten = lappend(rewritten, parsetree);
+		if (parsetree->commandType == CMD_INSERT)
+			rewritten = lcons(parsetree, rewritten);
+		else
+			rewritten = lappend(rewritten, parsetree);
 
 	return rewritten;
 }
