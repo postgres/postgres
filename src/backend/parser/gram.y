@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.18 1996/11/28 05:46:08 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.19 1996/11/29 15:56:18 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -1935,19 +1935,6 @@ res_target_list2:
 		{   $$ = lappend($1, $3);  }
 	| res_target_el2 			
 		{   $$ = lcons($1, NIL);  }
-	| '*'
-		{
-		    ResTarget *rt = makeNode(ResTarget);
-		    Attr *att = makeNode(Attr);
-		    att->relname = "*";
-		    att->paramNo = NULL;
-		    att->attrs = NULL;
-		    att->indirection = NIL;
-		    rt->name = NULL;
-		    rt->indirection = NULL;
-		    rt->val = (Node *)att;
-		    $$ = lcons(rt, NIL);
-		}
 	;
 
 /* AS is not optional because shift/red conflict with unary ops */
@@ -1971,6 +1958,18 @@ res_target_el2: a_expr AS Id
 		    att->relname = $1;
 		    att->paramNo = NULL;
 		    att->attrs = lcons(makeString("*"), NIL);
+		    att->indirection = NIL;
+		    $$ = makeNode(ResTarget);
+		    $$->name = NULL;
+		    $$->indirection = NULL;
+		    $$->val = (Node *)att;
+		}
+	| '*'
+		{
+		    Attr *att = makeNode(Attr);
+		    att->relname = "*";
+		    att->paramNo = NULL;
+		    att->attrs = NULL;
 		    att->indirection = NIL;
 		    $$ = makeNode(ResTarget);
 		    $$->name = NULL;

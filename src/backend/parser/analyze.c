@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.16 1996/11/26 03:17:45 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.17 1996/11/29 15:56:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1127,10 +1127,14 @@ transformTargetList(ParseState *pstate, List *targetlist)
 	     * (eg. SELECT * FROM emp)
 	     */
 	    if (att->relname!=NULL && !strcmp(att->relname, "*")) {
-		if(lnext(targetlist)!=NULL)
-		    elog(WARN, "cannot expand target list *, ...");
-		p_target = expandAllTables(pstate);
+		if (tail_p_target == NIL)
+		    p_target = tail_p_target = expandAllTables(pstate);
+		else
+		    lnext(tail_p_target) = expandAllTables(pstate);
 
+		while(lnext(tail_p_target)!=NIL)
+			/* make sure we point to the last target entry */
+		    tail_p_target = lnext(tail_p_target);
 		/*
 		 * skip rest of while loop
 		 */
@@ -1147,14 +1151,13 @@ transformTargetList(ParseState *pstate, List *targetlist)
 		/* tail_p_target is the target list we're building in the while
 		 * loop. Make sure we fix it after appending more nodes.
 		 */
-		if (tail_p_target == NIL) {
+		if (tail_p_target == NIL)
 		    p_target = tail_p_target = expandAll(pstate, att->relname,
 					att->relname, &pstate->p_last_resno);
-		} else {
+		else
 		    lnext(tail_p_target) =
 			expandAll(pstate, att->relname, att->relname,
 							&pstate->p_last_resno);
-		}
 		while(lnext(tail_p_target)!=NIL)
 			/* make sure we point to the last target entry */
 		    tail_p_target = lnext(tail_p_target);
