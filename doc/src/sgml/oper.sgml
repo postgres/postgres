@@ -765,14 +765,14 @@ are several operators for this type.
     <ENTRY>'192.168.1.5'::cidr = '192.168.1.5'::cidr</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY> %gt;= </ENTRY>
+    <ENTRY> &gt;= </ENTRY>
     <ENTRY>Greater or equal</ENTRY>
     <ENTRY>'192.168.1.5'::cidr &gt;= '192.168.1.5'::cidr</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY> %gt; </ENTRY>
+    <ENTRY> &gt; </ENTRY>
     <ENTRY>Greater</ENTRY>
-    <ENTRY>'192.168.1.5'::cidr %gt; '192.168.1.4'::cidr</ENTRY>
+    <ENTRY>'192.168.1.5'::cidr &gt; '192.168.1.4'::cidr</ENTRY>
   </ROW>
   <ROW>
     <ENTRY> &lt;&gt; </ENTRY>
@@ -837,14 +837,14 @@ are several operators for this type.
     <ENTRY>'192.168.1.5'::inet = '192.168.1.5'::inet</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY> %gt;= </ENTRY>
+    <ENTRY> &gt;= </ENTRY>
     <ENTRY>Greater or equal</ENTRY>
     <ENTRY>'192.168.1.5'::inet &gt;= '192.168.1.5'::inet</ENTRY>
   </ROW>
   <ROW>
-    <ENTRY> %gt; </ENTRY>
+    <ENTRY> &gt; </ENTRY>
     <ENTRY>Greater</ENTRY>
-    <ENTRY>'192.168.1.5'::inet %gt; '192.168.1.4'::inet</ENTRY>
+    <ENTRY>'192.168.1.5'::inet &gt; '192.168.1.4'::inet</ENTRY>
   </ROW>
   <ROW>
     <ENTRY> &lt;&gt; </ENTRY>
