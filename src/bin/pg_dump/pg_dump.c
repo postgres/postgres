@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.262 2002/05/18 13:48:00 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.263 2002/05/19 10:08:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,11 +99,19 @@ static void dumpOneTable(Archive *fout, TableInfo *tbinfo,
 						 TableInfo *g_tblinfo);
 static void dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 							const bool schemaOnly, const bool dataOnly);
-static void dumpACL(Archive *fout, TableInfo *tbinfo);
+
+static void dumpTableACL(Archive *fout, TableInfo *tbinfo);
+static void dumpFuncACL(Archive *fout, FuncInfo *finfo);
+static void dumpAggACL(Archive *fout, AggInfo *finfo);
+static void dumpACL(Archive *fout, const char *type, const char *name,
+					const char *nspname, const char *usename,
+					const char *acl, const char *objoid);
+
 static void dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables);
 static void dumpRules(Archive *fout, TableInfo *tblinfo, int numTables);
 static void formatStringLiteral(PQExpBuffer buf, const char *str,
 								const formatLiteralOptions opts);
+static char *format_function_signature(FuncInfo *finfo);
 static void dumpOneFunc(Archive *fout, FuncInfo *finfo);
 static void dumpOneOpr(Archive *fout, OprInfo *oprinfo,
 					   OprInfo *g_oprinfo, int numOperators);
@@ -120,7 +128,7 @@ static char *myFormatType(const char *typname, int32 typmod);
 static const char *fmtQualifiedId(const char *schema, const char *id);
 
 static void AddAcl(char *aclbuf, const char *keyword);
-static char *GetPrivileges(Archive *AH, const char *s);
+static char *GetPrivileges(Archive *AH, const char *s, const char *type);
 
 static int	dumpBlobs(Archive *AH, char *, void *);
 static int	dumpDatabase(Archive *AH);
@@ -1758,7 +1766,9 @@ getAggregates(int *numAggs)
 	int			i_oid;
 	int			i_aggname;
 	int			i_aggnamespace;
+	int			i_aggbasetype;
 	int			i_usename;
+	int			i_aggacl;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
@@ -1769,7 +1779,9 @@ getAggregates(int *numAggs)
 	{
 		appendPQExpBuffer(query, "SELECT pg_proc.oid, proname as aggname, "
 						  "pronamespace as aggnamespace, "
-						  "(select usename from pg_user where proowner = usesysid) as usename "
+						  "proargtypes[0]::regtype as aggbasetype, "
+						  "(select usename from pg_user where proowner = usesysid) as usename, "
+						  "proacl as aggacl "
 						  "FROM pg_proc "
 						  "WHERE proisagg "
 						  "AND pronamespace != "
@@ -1779,7 +1791,10 @@ getAggregates(int *numAggs)
 	{
 		appendPQExpBuffer(query, "SELECT pg_aggregate.oid, aggname, "
 						  "0::oid as aggnamespace, "
-						  "(select usename from pg_user where aggowner = usesysid) as usename "
+						  "CASE WHEN aggbasetype = 0 THEN '-' "
+						  "ELSE format_type(aggbasetype, NULL) END as aggbasetype, "
+						  "(select usename from pg_user where aggowner = usesysid) as usename, "
+						  "cast('{=X}' as aclitem[]) as aggacl "
 						  "from pg_aggregate "
 						  "where oid > '%u'::oid",
 						  g_last_builtin_oid);
@@ -1802,7 +1817,9 @@ getAggregates(int *numAggs)
 	i_oid = PQfnumber(res, "oid");
 	i_aggname = PQfnumber(res, "aggname");
 	i_aggnamespace = PQfnumber(res, "aggnamespace");
+	i_aggbasetype = PQfnumber(res, "aggbasetype");
 	i_usename = PQfnumber(res, "usename");
+	i_aggacl = PQfnumber(res, "aggacl");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -1810,10 +1827,12 @@ getAggregates(int *numAggs)
 		agginfo[i].aggname = strdup(PQgetvalue(res, i, i_aggname));
 		agginfo[i].aggnamespace = findNamespace(PQgetvalue(res, i, i_aggnamespace),
 												agginfo[i].oid);
+		agginfo[i].aggbasetype = strdup(PQgetvalue(res, i, i_aggbasetype));
 		agginfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		if (strlen(agginfo[i].usename) == 0)
 			write_msg(NULL, "WARNING: owner of aggregate function \"%s\" appears to be invalid\n",
 					  agginfo[i].aggname);
+		agginfo[i].aggacl = strdup(PQgetvalue(res, i, i_aggacl));
 	}
 
 	PQclear(res);
@@ -1847,6 +1866,7 @@ getFuncs(int *numFuncs)
 	int			i_pronargs;
 	int			i_proargtypes;
 	int			i_prorettype;
+	int			i_proacl;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
@@ -1857,7 +1877,7 @@ getFuncs(int *numFuncs)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT pg_proc.oid, proname, prolang, "
-						  "pronargs, proargtypes, prorettype, "
+						  "pronargs, proargtypes, prorettype, proacl, "
 						  "pronamespace, "
 						  "(select usename from pg_user where proowner = usesysid) as usename "
 						  "FROM pg_proc "
@@ -1870,6 +1890,7 @@ getFuncs(int *numFuncs)
 		appendPQExpBuffer(query,
 						  "SELECT pg_proc.oid, proname, prolang, "
 						  "pronargs, proargtypes, prorettype, "
+						  "cast('{=X}' as aclitem[]) as proacl, "
 						  "0::oid as pronamespace, "
 						  "(select usename from pg_user where proowner = usesysid) as usename "
 						  "FROM pg_proc "
@@ -1902,6 +1923,7 @@ getFuncs(int *numFuncs)
 	i_pronargs = PQfnumber(res, "pronargs");
 	i_proargtypes = PQfnumber(res, "proargtypes");
 	i_prorettype = PQfnumber(res, "prorettype");
+	i_proacl = PQfnumber(res, "proacl");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -1912,6 +1934,7 @@ getFuncs(int *numFuncs)
 		finfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		finfo[i].lang = atooid(PQgetvalue(res, i, i_prolang));
 		finfo[i].prorettype = strdup(PQgetvalue(res, i, i_prorettype));
+		finfo[i].proacl = strdup(PQgetvalue(res, i, i_proacl));
 		finfo[i].nargs = atoi(PQgetvalue(res, i, i_pronargs));
 		if (finfo[i].nargs == 0)
 			finfo[i].argtypes = NULL;
@@ -3074,7 +3097,7 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
  *		  writes out to fout the queries to recreate user-defined procedural languages
  */
 void
-dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs)
+dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 {
 	PGresult   *res;
 	PQExpBuffer query = createPQExpBuffer();
@@ -3086,9 +3109,11 @@ dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs)
 	int			i_lanpltrusted;
 	int			i_lanplcallfoid;
 	int			i_lancompiler;
+	int			i_lanacl = -1;
 	char	   *lanoid;
 	char	   *lanname;
 	char	   *lancompiler;
+	char	   *lanacl;
 	const char *lanplcallfoid;
 	const char *((*deps)[]);
 	int			depIdx;
@@ -3116,6 +3141,8 @@ dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs)
 	i_lanplcallfoid = PQfnumber(res, "lanplcallfoid");
 	i_lancompiler = PQfnumber(res, "lancompiler");
 	i_oid = PQfnumber(res, "oid");
+	if (fout->remoteVersion >= 70300)
+		i_lanacl = PQfnumber(res, "lanacl");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -3123,6 +3150,10 @@ dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs)
 		lanplcallfoid = PQgetvalue(res, i, i_lanplcallfoid);
 		lanname = PQgetvalue(res, i, i_lanname);
 		lancompiler = PQgetvalue(res, i, i_lancompiler);
+		if (fout->remoteVersion >= 70300)
+			lanacl = PQgetvalue(res, i, i_lanacl);
+		else
+			lanacl = "{=U}";				
 
 		fidx = findFuncByOid(finfo, numFuncs, lanplcallfoid);
 		if (fidx < 0)
@@ -3167,6 +3198,14 @@ dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs)
 					 finfo[fidx].pronamespace->nspname, "",
 					 "PROCEDURAL LANGUAGE", deps,
 					 defqry->data, delqry->data, NULL, NULL, NULL);
+
+		if (!aclsSkip)
+		{
+			char * tmp = strdup(fmtId(lanname, force_quotes));
+			dumpACL(fout, "LANGUAGE", tmp, finfo[fidx].pronamespace->nspname,
+					NULL, lanacl, lanoid);
+			free(tmp);
+		}
 	}
 
 	PQclear(res);
@@ -3181,7 +3220,7 @@ dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs)
  *	  writes out to fout the queries to recreate all the user-defined functions
  */
 void
-dumpFuncs(Archive *fout, FuncInfo *finfo, int numFuncs)
+dumpFuncs(Archive *fout, FuncInfo finfo[], int numFuncs)
 {
 	int			i;
 
@@ -3192,8 +3231,46 @@ dumpFuncs(Archive *fout, FuncInfo *finfo, int numFuncs)
 			continue;
 
 		dumpOneFunc(fout, &finfo[i]);
+		if (!aclsSkip)
+			dumpFuncACL(fout, &finfo[i]);
 	}
 }
+
+
+static char *
+format_function_signature(FuncInfo *finfo)
+{
+	PQExpBufferData fn;
+	int			j;
+
+	initPQExpBuffer(&fn);
+	appendPQExpBuffer(&fn, "%s (", fmtId(finfo->proname, force_quotes));
+	for (j = 0; j < finfo->nargs; j++)
+	{
+		char	   *typname;
+
+		typname = getFormattedTypeName(finfo->argtypes[j], zeroAsOpaque);
+		appendPQExpBuffer(&fn, "%s%s",
+						  (j > 0) ? "," : "",
+						  typname);
+		free(typname);
+	}
+	appendPQExpBuffer(&fn, ")");
+	return fn.data;
+}
+
+
+static void
+dumpFuncACL(Archive *fout, FuncInfo *finfo)
+{
+	char *funcsig;
+
+	funcsig = format_function_signature(finfo);
+	dumpACL(fout, "FUNCTION", funcsig, finfo->pronamespace->nspname,
+			finfo->usename, finfo->proacl, finfo->oid);
+	free(funcsig);
+}
+
 
 /*
  * dumpOneFunc:
@@ -3204,12 +3281,11 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 {
 	PQExpBuffer query = createPQExpBuffer();
 	PQExpBuffer q = createPQExpBuffer();
-	PQExpBuffer fn = createPQExpBuffer();
 	PQExpBuffer delqry = createPQExpBuffer();
 	PQExpBuffer asPart = createPQExpBuffer();
 	PGresult   *res = NULL;
+	char	   *funcsig = NULL;
 	int			ntups;
-	int			j;
 	char	   *proretset;
 	char	   *prosrc;
 	char	   *probin;
@@ -3316,24 +3392,13 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 		}
 	}
 
-	appendPQExpBuffer(fn, "%s (", fmtId(finfo->proname, force_quotes));
-	for (j = 0; j < finfo->nargs; j++)
-	{
-		char	   *typname;
+	funcsig = format_function_signature(finfo);
 
-		typname = getFormattedTypeName(finfo->argtypes[j], zeroAsOpaque);
-		appendPQExpBuffer(fn, "%s%s",
-						  (j > 0) ? "," : "",
-						  typname);
-		free(typname);
-	}
-	appendPQExpBuffer(fn, ")");
-
-	appendPQExpBuffer(delqry, "DROP FUNCTION %s;\n", fn->data);
+	appendPQExpBuffer(delqry, "DROP FUNCTION %s;\n", funcsig);
 
 	rettypename = getFormattedTypeName(finfo->prorettype, zeroAsOpaque);
 
-	appendPQExpBuffer(q, "CREATE FUNCTION %s ", fn->data);
+	appendPQExpBuffer(q, "CREATE FUNCTION %s ", funcsig);
 	appendPQExpBuffer(q, "RETURNS %s%s %s LANGUAGE %s",
 					  (proretset[0] == 't') ? "SETOF " : "",
 					  rettypename,
@@ -3367,7 +3432,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 
 	appendPQExpBuffer(q, ";\n");
 
-	ArchiveEntry(fout, finfo->oid, fn->data, finfo->pronamespace->nspname,
+	ArchiveEntry(fout, finfo->oid, funcsig, finfo->pronamespace->nspname,
 				 finfo->usename, "FUNCTION", NULL,
 				 q->data, delqry->data,
 				 NULL, NULL, NULL);
@@ -3375,7 +3440,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	/*** Dump Function Comments ***/
 
 	resetPQExpBuffer(q);
-	appendPQExpBuffer(q, "FUNCTION %s", fn->data);
+	appendPQExpBuffer(q, "FUNCTION %s", funcsig);
 	dumpComment(fout, q->data,
 				finfo->pronamespace->nspname, finfo->usename,
 				finfo->oid, "pg_proc", 0, NULL);
@@ -3385,9 +3450,9 @@ done:
 
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(q);
-	destroyPQExpBuffer(fn);
 	destroyPQExpBuffer(delqry);
 	destroyPQExpBuffer(asPart);
+	free(funcsig);
 }
 
 /*
@@ -3744,7 +3809,7 @@ convertOperatorReference(const char *opr,
  *	  writes out to fout the queries to create all the user-defined aggregates
  */
 void
-dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs)
+dumpAggs(Archive *fout, AggInfo agginfo[], int numAggs)
 {
 	int			i;
 
@@ -3755,8 +3820,56 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs)
 			continue;
 
 		dumpOneAgg(fout, &agginfo[i]);
+		if (!aclsSkip)
+			dumpAggACL(fout, &agginfo[i]);
 	}
 }
+
+
+static char *
+format_aggregate_signature(AggInfo *agginfo, Archive *fout)
+{
+	PQExpBufferData buf;
+	bool anybasetype;
+
+	initPQExpBuffer(&buf);
+	appendPQExpBuffer(&buf, "%s",
+					  fmtId(agginfo->aggname, force_quotes));
+
+	anybasetype = (strcmp(agginfo->aggbasetype, "-") == 0);
+
+	/* If using regtype or format_type, name is already quoted */
+	if (fout->remoteVersion >= 70100)
+	{
+		if (anybasetype)
+			appendPQExpBuffer(&buf, "(*)");
+		else
+			appendPQExpBuffer(&buf, "(%s)", agginfo->aggbasetype);
+	}
+	else
+	{
+		if (anybasetype)
+			appendPQExpBuffer(&buf, "(*)");
+		else
+			appendPQExpBuffer(&buf, "(%s)",
+							  fmtId(agginfo->aggbasetype, force_quotes));
+	}
+
+	return buf.data;
+}
+
+
+static void
+dumpAggACL(Archive *fout, AggInfo *finfo)
+{
+	char *aggsig;
+
+	aggsig = format_aggregate_signature(finfo, fout);
+	dumpACL(fout, "FUNCTION", aggsig, finfo->aggnamespace->nspname,
+			finfo->usename, finfo->aggacl, finfo->oid);
+	free(aggsig);
+}
+
 
 /*
  * dumpOneAgg
@@ -3768,20 +3881,18 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	PQExpBuffer query = createPQExpBuffer();
 	PQExpBuffer q = createPQExpBuffer();
 	PQExpBuffer delq = createPQExpBuffer();
-	PQExpBuffer aggSig = createPQExpBuffer();
 	PQExpBuffer details = createPQExpBuffer();
+	char	   *aggSig;
 	PGresult   *res;
 	int			ntups;
 	int			i_aggtransfn;
 	int			i_aggfinalfn;
 	int			i_aggtranstype;
-	int			i_aggbasetype;
 	int			i_agginitval;
 	int			i_convertok;
 	const char *aggtransfn;
 	const char *aggfinalfn;
 	const char *aggtranstype;
-	const char *aggbasetype;
 	const char *agginitval;
 	bool		convertok;
 	bool		anybasetype;
@@ -3794,7 +3905,6 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	{
 		appendPQExpBuffer(query, "SELECT aggtransfn, "
 						  "aggfinalfn, aggtranstype::regtype, "
-						  "proargtypes[0]::regtype as aggbasetype, "
 						  "agginitval, "
 						  "'t'::boolean as convertok "
 						  "from pg_aggregate a, pg_proc p "
@@ -3806,8 +3916,6 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	{
 		appendPQExpBuffer(query, "SELECT aggtransfn, aggfinalfn, "
 						  "format_type(aggtranstype, NULL) as aggtranstype, "
-						  "CASE WHEN aggbasetype = 0 THEN '-' "
-						  "ELSE format_type(aggbasetype, NULL) END as aggbasetype, "
 						  "agginitval, 't'::boolean as convertok "
 						  "from pg_aggregate "
 						  "where oid = '%s'::oid",
@@ -3818,8 +3926,6 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 		appendPQExpBuffer(query, "SELECT aggtransfn1 as aggtransfn, "
 						  "aggfinalfn, "
 						  "(select typname from pg_type where oid = aggtranstype1) as aggtranstype, "
-						  "CASE WHEN aggbasetype = 0 THEN '-'::name "
-						  "ELSE (select typname from pg_type where oid = aggbasetype) END as aggbasetype, "
 						  "agginitval1 as agginitval, "
 						  "(aggtransfn2 = 0 and aggtranstype2 = 0 and agginitval2 is null) as convertok "
 						  "from pg_aggregate "
@@ -3848,47 +3954,25 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	i_aggtransfn = PQfnumber(res, "aggtransfn");
 	i_aggfinalfn = PQfnumber(res, "aggfinalfn");
 	i_aggtranstype = PQfnumber(res, "aggtranstype");
-	i_aggbasetype = PQfnumber(res, "aggbasetype");
 	i_agginitval = PQfnumber(res, "agginitval");
 	i_convertok = PQfnumber(res, "convertok");
 
 	aggtransfn = PQgetvalue(res, 0, i_aggtransfn);
 	aggfinalfn = PQgetvalue(res, 0, i_aggfinalfn);
 	aggtranstype = PQgetvalue(res, 0, i_aggtranstype);
-	aggbasetype = PQgetvalue(res, 0, i_aggbasetype);
 	agginitval = PQgetvalue(res, 0, i_agginitval);
 	convertok = (PQgetvalue(res, 0, i_convertok)[0] == 't');
 
-	anybasetype = (strcmp(aggbasetype, "-") == 0);
-
-	appendPQExpBuffer(aggSig, "%s",
-					  fmtId(agginfo->aggname, force_quotes));
-
-	/* If using regtype or format_type, name is already quoted */
-	if (g_fout->remoteVersion >= 70100)
-	{
-		if (anybasetype)
-			appendPQExpBuffer(aggSig, "(*)");
-		else
-			appendPQExpBuffer(aggSig, "(%s)", aggbasetype);
-	}
-	else
-	{
-		if (anybasetype)
-			appendPQExpBuffer(aggSig, "(*)");
-		else
-			appendPQExpBuffer(aggSig, "(%s)",
-							  fmtId(aggbasetype, force_quotes));
-	}
+	aggSig = format_aggregate_signature(agginfo, g_fout);
 
 	if (!convertok)
 	{
 		write_msg(NULL, "WARNING: aggregate function %s could not be dumped correctly for this database version; ignored\n",
-				  aggSig->data);
+				  aggSig);
 
 		appendPQExpBuffer(q, "-- WARNING: aggregate function %s could not be dumped correctly for this database version; ignored\n",
-						  aggSig->data);
-		ArchiveEntry(fout, agginfo->oid, aggSig->data,
+						  aggSig);
+		ArchiveEntry(fout, agginfo->oid, aggSig,
 					 agginfo->aggnamespace->nspname, agginfo->usename,
 					 "WARNING", NULL,
 					 q->data, "" /* Del */ ,
@@ -3896,11 +3980,13 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 		return;
 	}
 
+	anybasetype = (strcmp(agginfo->aggbasetype, "-") == 0);
+
 	if (g_fout->remoteVersion >= 70300)
 	{
 		/* If using 7.3's regproc or regtype, data is already quoted */
 		appendPQExpBuffer(details, "BASETYPE = %s, SFUNC = %s, STYPE = %s",
-						  anybasetype ? "'any'" : aggbasetype,
+						  anybasetype ? "'any'" : agginfo->aggbasetype,
 						  aggtransfn,
 						  aggtranstype);
 	}
@@ -3908,7 +3994,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	{
 		/* format_type quotes, regproc does not */
 		appendPQExpBuffer(details, "BASETYPE = %s, SFUNC = %s, STYPE = %s",
-						  anybasetype ? "'any'" : aggbasetype,
+						  anybasetype ? "'any'" : agginfo->aggbasetype,
 						  fmtId(aggtransfn, force_quotes),
 						  aggtranstype);
 	}
@@ -3917,7 +4003,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 		/* need quotes all around */
 		appendPQExpBuffer(details, "BASETYPE = %s, ",
 						  anybasetype ? "'any'" :
-						  fmtId(aggbasetype, force_quotes));
+						  fmtId(agginfo->aggbasetype, force_quotes));
 		appendPQExpBuffer(details, "SFUNC = %s, ",
 						  fmtId(aggtransfn, force_quotes));
 		appendPQExpBuffer(details, "STYPE = %s",
@@ -3936,13 +4022,13 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 						  aggfinalfn);
 	}
 
-	appendPQExpBuffer(delq, "DROP AGGREGATE %s;\n", aggSig->data);
+	appendPQExpBuffer(delq, "DROP AGGREGATE %s;\n", aggSig);
 
 	appendPQExpBuffer(q, "CREATE AGGREGATE %s ( %s );\n",
 					  fmtId(agginfo->aggname, force_quotes),
 					  details->data);
 
-	ArchiveEntry(fout, agginfo->oid, aggSig->data,
+	ArchiveEntry(fout, agginfo->oid, aggSig,
 				 agginfo->aggnamespace->nspname, agginfo->usename,
 				 "AGGREGATE", NULL,
 				 q->data, delq->data,
@@ -3951,7 +4037,7 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	/*** Dump Aggregate Comments ***/
 
 	resetPQExpBuffer(q);
-	appendPQExpBuffer(q, "AGGREGATE %s", aggSig->data);
+	appendPQExpBuffer(q, "AGGREGATE %s", aggSig);
 	if (g_fout->remoteVersion >= 70300)
 		dumpComment(fout, q->data,
 					agginfo->aggnamespace->nspname, agginfo->usename,
@@ -3966,8 +4052,8 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 	destroyPQExpBuffer(query);
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
-	destroyPQExpBuffer(aggSig);
 	destroyPQExpBuffer(details);
+	free(aggSig);
 }
 
 
@@ -3996,7 +4082,7 @@ AddAcl(char *aclbuf, const char *keyword)
  * appropriate.
  */
 static char *
-GetPrivileges(Archive *AH, const char *s)
+GetPrivileges(Archive *AH, const char *s, const char *type)
 {
 	char		aclbuf[100];
 	bool		all = true;
@@ -4009,22 +4095,35 @@ GetPrivileges(Archive *AH, const char *s)
 	else \
 		all = false
 
-	CONVERT_PRIV('a', "INSERT");
-	CONVERT_PRIV('r', "SELECT");
-	CONVERT_PRIV('R', "RULE");
-
-	if (AH->remoteVersion >= 70200)
+	if (strcmp(type, "TABLE")==0)
 	{
-		CONVERT_PRIV('w', "UPDATE");
-		CONVERT_PRIV('d', "DELETE");
-		CONVERT_PRIV('x', "REFERENCES");
-		CONVERT_PRIV('t', "TRIGGER");
+		CONVERT_PRIV('a', "INSERT");
+		CONVERT_PRIV('r', "SELECT");
+		CONVERT_PRIV('R', "RULE");
+
+		if (AH->remoteVersion >= 70200)
+		{
+			CONVERT_PRIV('w', "UPDATE");
+			CONVERT_PRIV('d', "DELETE");
+			CONVERT_PRIV('x', "REFERENCES");
+			CONVERT_PRIV('t', "TRIGGER");
+		}
+		else
+		{
+			/* 7.0 and 7.1 have a simpler worldview */
+			CONVERT_PRIV('w', "UPDATE,DELETE");
+		}
+	}
+	else if (strcmp(type, "FUNCTION")==0)
+	{
+		CONVERT_PRIV('X', "EXECUTE");
+	}
+	else if (strcmp(type, "LANGUAGE")==0)
+	{
+		CONVERT_PRIV('U', "USAGE");
 	}
 	else
-	{
-		/* 7.0 and 7.1 have a simpler worldview */
-		CONVERT_PRIV('w', "UPDATE,DELETE");
-	}
+		abort();
 
 #undef CONVERT_PRIV
 
@@ -4036,18 +4135,25 @@ GetPrivileges(Archive *AH, const char *s)
 
 
 /*
- * dumpACL:
- *	  Write out grant/revoke information for a table, view or sequence
+ * Write out grant/revoke information
+ *
+ * 'type' must be TABLE, FUNCTION, or LANGUAGE.  'name' is the
+ * formatted name of the object.  Must be quoted etc. already.
+ * 'nspname' is the namespace the object is in.  'usename' is the
+ * owner, NULL if there is no owner (for languages).  'acls' is the
+ * string read out of the fooacl system catalog field; it will be
+ * parsed here.  'objoid' is the OID of the object for purposes of
+ * ordering.
  */
 static void
-dumpACL(Archive *fout, TableInfo *tbinfo)
+dumpACL(Archive *fout, const char *type, const char *name,
+		const char *nspname, const char *usename,
+		const char *acls, const char *objoid)
 {
-	const char *acls = tbinfo->relacl;
 	char	   *aclbuf,
 			   *tok,
 			   *eqpos,
 			   *priv;
-	char	   *objoid;
 	PQExpBuffer sql;
 	bool		found_owner_privs = false;
 
@@ -4075,8 +4181,8 @@ dumpACL(Archive *fout, TableInfo *tbinfo)
 		eqpos = strchr(tok, '=');
 		if (!eqpos)
 		{
-			write_msg(NULL, "could not parse ACL list ('%s') for relation %s\n",
-					  acls, tbinfo->relname);
+			write_msg(NULL, "could not parse ACL list ('%s') for %s %s\n",
+					  acls, type, name);
 			exit_nicely();
 		}
 		*eqpos = '\0';			/* it's ok to clobber aclbuf */
@@ -4085,10 +4191,11 @@ dumpACL(Archive *fout, TableInfo *tbinfo)
 		 * Parse the privileges (right-hand side).	Skip if there are
 		 * none.
 		 */
-		priv = GetPrivileges(fout, eqpos + 1);
+		priv = GetPrivileges(fout, eqpos + 1, type);
+
 		if (*priv)
 		{
-			if (strcmp(tok, tbinfo->usename) == 0)
+			if (usename && strcmp(tok, usename) == 0)
 			{
 				/*
 				 * For the owner, the default privilege level is ALL.
@@ -4097,12 +4204,11 @@ dumpACL(Archive *fout, TableInfo *tbinfo)
 				if (strcmp(priv, "ALL") != 0)
 				{
 					/* NB: only one fmtId per appendPQExpBuffer! */
-					appendPQExpBuffer(sql, "REVOKE ALL ON %s FROM ",
-									  fmtId(tbinfo->relname, force_quotes));
+					appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM ",
+									  type, name);
 					appendPQExpBuffer(sql, "%s;\n", fmtId(tok, force_quotes));
-					appendPQExpBuffer(sql, "GRANT %s ON %s TO ",
-									  priv,
-									  fmtId(tbinfo->relname, force_quotes));
+					appendPQExpBuffer(sql, "GRANT %s ON %s %s TO ",
+									  priv, type, name);
 					appendPQExpBuffer(sql, "%s;\n", fmtId(tok, force_quotes));
 				}
 			}
@@ -4111,9 +4217,8 @@ dumpACL(Archive *fout, TableInfo *tbinfo)
 				/*
 				 * Otherwise can assume we are starting from no privs.
 				 */
-				appendPQExpBuffer(sql, "GRANT %s ON %s TO ",
-								  priv,
-								  fmtId(tbinfo->relname, force_quotes));
+				appendPQExpBuffer(sql, "GRANT %s ON %s %s TO ",
+								  priv, type, name);
 				if (eqpos == tok)
 				{
 					/* Empty left-hand side means "PUBLIC" */
@@ -4133,34 +4238,39 @@ dumpACL(Archive *fout, TableInfo *tbinfo)
 	/*
 	 * If we didn't find any owner privs, the owner must have revoked 'em all
 	 */
-	if (!found_owner_privs && *tbinfo->usename)
+	if (!found_owner_privs && usename)
 	{
-		appendPQExpBuffer(sql, "REVOKE ALL ON %s FROM ",
-						  fmtId(tbinfo->relname, force_quotes));
-		appendPQExpBuffer(sql, "%s;\n", fmtId(tbinfo->usename, force_quotes));
+		appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM ",
+						  type, name);
+		appendPQExpBuffer(sql, "%s;\n", fmtId(usename, force_quotes));
 	}
 
 	free(aclbuf);
 
-	if (tbinfo->viewoid != NULL)
-		objoid = tbinfo->viewoid;
-	else
-		objoid = tbinfo->oid;
-
-	ArchiveEntry(fout, objoid, tbinfo->relname,
-				 tbinfo->relnamespace->nspname,
-				 tbinfo->usename, "ACL", NULL,
-				 sql->data, "", NULL, NULL, NULL);
+	ArchiveEntry(fout, objoid, name, nspname, usename ? usename : "",
+				 "ACL", NULL, sql->data, "", NULL, NULL, NULL);
 
 	destroyPQExpBuffer(sql);
 }
+
+
+static void
+dumpTableACL(Archive *fout, TableInfo *tbinfo)
+{
+	char * tmp = strdup( fmtId(tbinfo->relname, force_quotes) );
+	dumpACL(fout, "TABLE", tmp, tbinfo->relnamespace->nspname,
+			tbinfo->usename, tbinfo->relacl,
+			tbinfo->viewoid != NULL ? tbinfo->viewoid : tbinfo->oid);
+	free(tmp);
+}
+
 
 /*
  * dumpTables:
  *	  write out to fout the declarations (not data) of all user-defined tables
  */
 void
-dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
+dumpTables(Archive *fout, TableInfo tblinfo[], int numTables,
 		   const bool aclsSkip, const bool schemaOnly, const bool dataOnly)
 {
 	int			i;
@@ -4176,7 +4286,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 		{
 			dumpOneSequence(fout, tbinfo, schemaOnly, dataOnly);
 			if (!dataOnly && !aclsSkip)
-				dumpACL(fout, tbinfo);
+				dumpTableACL(fout, tbinfo);
 		}
 	}
 
@@ -4193,7 +4303,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 			{
 				dumpOneTable(fout, tbinfo, tblinfo);
 				if (!aclsSkip)
-					dumpACL(fout, tbinfo);
+					dumpTableACL(fout, tbinfo);
 			}
 		}
 	}
