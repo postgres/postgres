@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Sreda 2 fevralya 12:44:03 EST 2005
+   Data poslednego obnovleniya: Ponedel'nik 14 fevralya 23:35:09 EST 2005
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -91,8 +91,8 @@
    4.17) Kak vypolnit' vneshnee svyazyvanie?
    4.18) Kak vypolnyat' zaprosy, ispol'zuyuschie neskol'ko baz dannyh?
    4.19) Kak mne vernut' iz funkcii neskol'ko strok tablicy?
-   4.20) Pochemu ya ne mogu nadezhno sozdavat'/udalyat' vremennye tablicy
-   v funkciyah PL/PgSQL?
+   4.20) Pochemu ya poluchayu oshibku "missing oid", kogda obraschayuts'
+   k vremennym tablicam v funkciyah PL/PgSQL?
    4.21) Kakie opcii shifrovaniya suschestvuyut?
    
                           Rasshireniya PostgreSQL
@@ -228,7 +228,7 @@
    http://www.PostgreSQL.org/docs.
    
    Suschestvuet dve knigi po PostgreSQL dostupnye po adresam
-   http://www.PostgreSQL.org/docs/awbook.html i
+   http://www.PostgreSQL.org/docs/books/awbook.html i
    http://www.commandprompt.com/ppbook/. Spisok knig po PostgreSQL,
    kotorye mozhno kupit' dostupen po adresu
    http://techdocs.postgresql.org/techdocs/bookreviews.php. Krome togo,
@@ -250,8 +250,9 @@
    
     1.10) Kak mne nauchit'sya SQL?
     
-   Kniga po PostgreSQL na http://www.PostgreSQL.org/docs/awbook.html
-   nauchit SQL. Suschestvuet drugaya kniga po PostgreSQL na
+   Kniga po PostgreSQL na
+   http://www.PostgreSQL.org/docs/books/awbook.html nauchit SQL.
+   Suschestvuet drugaya kniga po PostgreSQL na
    http://www.commandprompt.com/ppbook. Est' prekrasnyj uchebnik na
    http://www.intermedia.net/support/sql/sqltut.shtm, na
    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,
@@ -906,8 +907,8 @@ CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
    Vy mozhete legko ispol'zovat' funkcii, vozvraschayuschie spisok,
    http://techdocs.postgresql.org/guides/SetReturningFunctions.
    
-    4.20) Pochemu ya ne mogu nadezhno sozdavat'/udalyat' vremennye tablicy v
-    funkciyah PL/PgSQL?
+    4.20) Pochemu ya poluchayu oshibku "missing oid", kogda obraschayuts' k
+    vremennym tablicam v funkciyah PL/PgSQL?
     
    PL/PgSQL k`eshiruet scenarii funkcii i odin iz negativnyh `effektov
    `etogo sostoit v tom, chto esli funkciya PL/PgSQL obraschaetsya k

@@ -12,7 +12,7 @@
   <BODY bgcolor="#ffffff" text="#000000" link="#ff0000" vlink="#a00000" alink="#0000ff">
     <H1>Ответы на часто задаваемые вопросы по PostgreSQL</H1>
 
-    <P>Дата последнего обновления: Среда 2 февраля 12:44:03 EST 2005</P>
+    <P>Дата последнего обновления: Понедельник 14 февраля 23:35:09 EST 2005</P>
 
     <P>Английский вариант сопровождает: Брюс Момьян (Bruce Momjian) (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -114,8 +114,8 @@
      <A href="#4.18">4.18</A>) Как выполнять запросы, использующие несколько
      баз данных?<BR>
      <A href="#4.19">4.19</A>) Как мне вернуть из функции несколько строк таблицы?<BR>
-     <A href="#4.20">4.20</A>) Почему я не могу надежно создавать/удалять
-     временные таблицы в функциях PL/PgSQL?<BR>
+     <A href="#4.20">4.20</A>) Почему я получаю ошибку "missing oid",
+     когда обращаютсь к временным таблицам в функциях PL/PgSQL?<BR>
      <A href="#4.21">4.21</A>) Какие опции шифрования существуют?<BR>
 
     <H2 align="center">Расширения PostgreSQL</H2>
@@ -263,7 +263,7 @@
     http://www.PostgreSQL.org/docs</A>.</P>
 
     <P>Существует две книги по PostgreSQL доступные по адресам <A href=
-    "http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</A>
+    "http://www.PostgreSQL.org/docs/books/awbook.html">http://www.PostgreSQL.org/docs/books/awbook.html</A>
      и <a href="http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook/</a>.
      Список книг по PostgreSQL, которые можно купить доступен по адресу
      <a href="http://techdocs.postgresql.org/techdocs/bookreviews.php">http://techdocs.postgresql.org/techdocs/bookreviews.php</a>.
@@ -287,7 +287,7 @@
     <H4><A name="1.10">1.10</A>) Как мне научиться <SMALL>SQL</SMALL>?</H4>
 
     <P>Книга по PostgreSQL на <A href=
-    "http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</A>
+    "http://www.PostgreSQL.org/docs/books/awbook.html">http://www.PostgreSQL.org/docs/books/awbook.html</A>
     научит <SMALL>SQL</SMALL>. Существует другая книга по PostgreSQL на
     <A href="http://www.commandprompt.com/ppbook/">
     http://www.commandprompt.com/ppbook.</A>
@@ -1096,8 +1096,8 @@ CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
      <A href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
      http://techdocs.postgresql.org/guides/SetReturningFunctions</A>.</P>
 
-    <H4><A name="4.20">4.20</A>) Почему я не могу надежно создавать/удалять
-    временные таблицы в функциях PL/PgSQL?</H4>
+    <H4><A name="4.20">4.20</A>) Почему я получаю ошибку "missing oid",
+     когда обращаютсь к временным таблицам в функциях PL/PgSQL?</H4>
     <P>PL/PgSQL кэширует сценарии функции и один из негативных эффектов этого
     состоит в том, что если функция PL/PgSQL обращается к временной таблице
     и эта таблица позднее удаляется и пересоздается, а функция затем вызывается
