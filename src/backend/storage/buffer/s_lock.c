@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.36 2001/03/27 01:16:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.37 2001/08/28 15:04:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,7 @@ success:						\n\
 
 #endif	 /* __powerpc__ */
 
-#if defined(__mips__)
+#if defined(__mips__) || !defined(__sgi)
 static void
 tas_dummy()
 {
@@ -251,9 +251,9 @@ fail:							\n\
 ");
 }
 
-#endif	 /* __mips__ */
+#endif	 /* __mips__ && !__sgi */
 
-#else							/* defined(__GNUC__) */
+#else /* not __GNUC__ */
 /***************************************************************************
  * All non gcc
  */
