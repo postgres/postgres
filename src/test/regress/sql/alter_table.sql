@@ -173,11 +173,6 @@ ALTER TABLE tmp_view RENAME TO tmp_view_new;
 -- 5 values, sorted 
 SELECT unique1 FROM tenk1 WHERE unique1 < 5;
 DROP VIEW tmp_view_new;
--- renaming sequences
-CREATE SEQUENCE foo_seq;
-ALTER TABLE foo_seq RENAME TO foo_seq_new;
-SELECT * FROM foo_seq_new;
-DROP SEQUENCE foo_seq_new;
 -- toast-like relation name
 alter table stud_emp rename to pg_toast_stud_emp;
 alter table pg_toast_stud_emp rename to stud_emp;

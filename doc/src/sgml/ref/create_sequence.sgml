@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.30 2003/01/19 00:13:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.31 2003/03/20 07:02:07 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
   </refsynopsisdivinfo>
   <synopsis>
 CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
-    [ MINVALUE <replaceable class="parameter">minvalue</replaceable> ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> ]
+    [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ START [ WITH ] <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
   </synopsis>
   
@@ -63,7 +63,7 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</rep
       <listitem>
        <para>
 	The
-	<option>INCREMENT <replaceable class="parameter">increment</replaceable></option>
+	<option>INCREMENT BY <replaceable class="parameter">increment</replaceable></option>
 	clause is optional. A positive value will make an
 	ascending sequence, a negative one a descending sequence.
 	The default value is one (1).
@@ -73,12 +73,14 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</rep
 
      <varlistentry>
       <term><replaceable class="parameter">minvalue</replaceable></term>
+      <term>NO MINVALUE</term>
       <listitem>
        <para>
 	The optional clause <option>MINVALUE
 	 <replaceable class="parameter">minvalue</replaceable></option>
 	determines the minimum value
-	a sequence can generate. The defaults are 1 and -2^63-1 for
+	a sequence can generate. If this clause is not supplied or <option>NO MINVALUE</option>
+    is specified, then defaults will be used.  The defaults are 1 and -2^63-1 for
 	ascending and descending sequences, respectively.
        </para>
       </listitem>
@@ -86,13 +88,15 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</rep
 
      <varlistentry>
       <term><replaceable class="parameter">maxvalue</replaceable></term>
+      <term>NO MAXVALUE</term>
       <listitem>
        <para>
 	The optional clause <option>MAXVALUE
 	 <replaceable class="parameter">maxvalue</replaceable></option>
 	determines the maximum
-	value for the sequence. The defaults are 2^63-1 and -1 for
-	ascending and descending sequences, respectively.
+	value for the sequence. If this clause is not supplied or 
+    <option>NO MAXVALUE</option> is specified, then default values will be used.
+    The defaults are 2^63-1 and -1 for ascending and descending sequences, respectively.
        </para>
       </listitem>
      </varlistentry>
@@ -101,7 +105,7 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</rep
       <term><replaceable class="parameter">start</replaceable></term>
       <listitem>
        <para>
-	The optional <option>START
+	The optional <option>START WITH
 	 <replaceable class="parameter">start</replaceable>
 	 clause</option> enables the sequence to begin anywhere.
 	The default starting value is

@@ -1,0 +1,73 @@
+---
+--- test creation of SERIAL column
+---
+ 
+CREATE TABLE serialTest (f1 text, f2 serial);
+NOTICE:  CREATE TABLE will create implicit sequence 'serialtest_f2_seq' for SERIAL column 'serialtest.f2'
+ 
+INSERT INTO serialTest VALUES ('foo');
+INSERT INTO serialTest VALUES ('bar');
+INSERT INTO serialTest VALUES ('force', 100);
+INSERT INTO serialTest VALUES ('wrong', NULL);
+ERROR:  ExecInsert: Fail to add null value in not null attribute f2
+ 
+SELECT * FROM serialTest;
+  f1   | f2  
+-------+-----
+ foo   |   1
+ bar   |   2
+ force | 100
+(3 rows)
+
+ 
+CREATE SEQUENCE sequence_test;
+ 
+BEGIN;
+SELECT nextval('sequence_test');
+ nextval 
+---------
+       1
+(1 row)
+
+DROP SEQUENCE sequence_test;
+END;
+-- renaming sequences
+CREATE SEQUENCE foo_seq;
+ALTER TABLE foo_seq RENAME TO foo_seq_new;
+SELECT * FROM foo_seq_new;
+ sequence_name | last_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
+---------------+------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
+ foo_seq       |          1 |            1 | 9223372036854775807 |         1 |           1 |       1 | f         | f
+(1 row)
+
+DROP SEQUENCE foo_seq_new;
+--
+-- Alter sequence
+--
+CREATE SEQUENCE sequence_test2 START WITH 32;
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+      32
+(1 row)
+
+ALTER SEQUENCE sequence_test2 RESTART WITH 16
+	 INCREMENT BY 4 MAXVALUE 22 MINVALUE 5 CYCLE;
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+      16
+(1 row)
+
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+      20
+(1 row)
+
+SELECT nextval('sequence_test2');
+ nextval 
+---------
+       5
+(1 row)
+

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.93 2003/03/20 05:18:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.94 2003/03/20 07:02:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ static void init_sequence(const char *caller, RangeVar *relation,
 			  SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence read_info(const char *caller, SeqTable elm,
 		  Relation rel, Buffer *buf);
-static void init_params(CreateSeqStmt *seq, Form_pg_sequence new);
+static void init_params(char *caller, List *options, Form_pg_sequence new);
 static void do_setval(RangeVar *sequence, int64 next, bool iscalled);
 
 /*
@@ -95,8 +95,16 @@ DefineSequence(CreateSeqStmt *seq)
 	int			i;
 	NameData	name;
 
+	/* Values are NULL (or false) by default */
+	new.last_value = NULL;
+	new.increment_by = NULL;
+	new.max_value = NULL; 
+	new.min_value = NULL;
+	new.cache_value = NULL;
+	new.is_cycled = false; 
+
 	/* Check and set values */
-	init_params(seq, &new);
+	init_params("DefineSequence", seq->options, &new);
 
 	/*
 	 * Create relation (and fill *null & *value)
@@ -287,6 +295,90 @@ DefineSequence(CreateSeqStmt *seq)
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 	WriteBuffer(buf);
 	heap_close(rel, NoLock);
+}
+
+/*
+ * AlterSequence
+ *
+ * Modify the defition of a sequence relation 
+ */
+void
+AlterSequence(AlterSeqStmt *stmt)
+{
+	SeqTable	elm;
+	Relation	seqrel;
+	Buffer		buf;
+	Page		page;
+	Form_pg_sequence seq;
+	FormData_pg_sequence new;
+
+	/* open and AccessShareLock sequence */
+	init_sequence("setval", stmt->sequence, &elm, &seqrel);
+
+	/* Allow DROP to sequence owner only*/
+	if (!pg_class_ownercheck(elm->relid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, stmt->sequence->relname);
+
+	/* lock page' buffer and read tuple into new sequence structure */
+	seq = read_info("nextval", elm, seqrel, &buf);
+	page = BufferGetPage(buf);
+
+	new.increment_by = seq->increment_by;
+	new.max_value = seq->max_value; 
+	new.min_value = seq->min_value;
+	new.cache_value = seq->cache_value;
+	new.is_cycled = seq->is_cycled;
+	new.last_value = seq->last_value;
+
+	/* Check and set values */
+	init_params("AlterSequence", stmt->options, &new);
+
+	seq->increment_by = new.increment_by;
+	seq->max_value = new.max_value;
+	seq->min_value = new.min_value;
+	seq->cache_value = new.cache_value;
+	seq->is_cycled = new.is_cycled;
+	if (seq->last_value != new.last_value)
+	{
+		seq->last_value = new.last_value;
+		seq->is_called = false;
+		seq->log_cnt = 1;
+	}
+
+	START_CRIT_SECTION();
+
+	/* XLOG stuff */
+	if (!seqrel->rd_istemp)
+	{
+		xl_seq_rec	xlrec;
+		XLogRecPtr	recptr;
+		XLogRecData rdata[2];
+
+		xlrec.node = seqrel->rd_node;
+		rdata[0].buffer = InvalidBuffer;
+		rdata[0].data = (char *) &xlrec;
+		rdata[0].len = sizeof(xl_seq_rec);
+		rdata[0].next = &(rdata[1]);
+
+		rdata[1].buffer = InvalidBuffer;
+		rdata[1].data = (char *) page + ((PageHeader) page)->pd_upper;
+		rdata[1].len = ((PageHeader) page)->pd_special -
+			((PageHeader) page)->pd_upper;
+		rdata[1].next = NULL;
+
+		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG | XLOG_NO_TRAN, rdata);
+
+		PageSetLSN(page, recptr);
+		PageSetSUI(page, ThisStartUpID);
+	}
+
+	END_CRIT_SECTION();
+
+	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+
+	WriteBuffer(buf);
+
+	relation_close(seqrel, NoLock);
 }
 
 
@@ -761,7 +853,7 @@ read_info(const char *caller, SeqTable elm,
 
 
 static void
-init_params(CreateSeqStmt *seq, Form_pg_sequence new)
+init_params(char *caller, List *options, Form_pg_sequence new)
 {
 	DefElem    *last_value = NULL;
 	DefElem    *increment_by = NULL;
@@ -771,76 +863,92 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 	bool		is_cycled_set = false;
 	List	   *option;
 
-	new->is_cycled = false;
-	foreach(option, seq->options)
+	foreach(option, options)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
 		if (strcmp(defel->defname, "increment") == 0)
 		{
 			if (increment_by)
-				elog(ERROR, "DefineSequence: INCREMENT BY defined twice");
+				elog(ERROR, "%s: INCREMENT BY defined twice", caller);
+
 			increment_by = defel;
+
 		}
-		else if (strcmp(defel->defname, "start") == 0)
+		/*
+		 * start is for a new sequence
+		 * restart is for alter
+		 */
+		else if ((new->last_value == NULL && strcmp(defel->defname, "start") == 0)
+			|| (new->last_value != NULL && strcmp(defel->defname, "restart") == 0))
 		{
 			if (last_value)
-				elog(ERROR, "DefineSequence: LAST VALUE defined twice");
+				elog(ERROR, "%s: LAST VALUE defined twice", caller);
 			last_value = defel;
 		}
 		else if (strcmp(defel->defname, "maxvalue") == 0)
 		{
 			if (max_value)
-				elog(ERROR, "DefineSequence: MAX VALUE defined twice");
+				elog(ERROR, "%s: MAX VALUE defined twice", caller);
 			max_value = defel;
 		}
 		else if (strcmp(defel->defname, "minvalue") == 0)
 		{
 			if (min_value)
-				elog(ERROR, "DefineSequence: MIN VALUE defined twice");
+				elog(ERROR, "%s: MIN VALUE defined twice", caller);
 			min_value = defel;
 		}
 		else if (strcmp(defel->defname, "cache") == 0)
 		{
 			if (cache_value)
-				elog(ERROR, "DefineSequence: CACHE defined twice");
+				elog(ERROR, "%s: CACHE defined twice", caller);
 			cache_value = defel;
 		}
 		else if (strcmp(defel->defname, "cycle") == 0)
 		{
 			if (is_cycled_set)
-				elog(ERROR, "DefineSequence: CYCLE defined twice");
+				elog(ERROR, "%s: CYCLE defined twice", caller);
 			is_cycled_set = true;
 			new->is_cycled = (defel->arg != NULL);
 		}
 		else
-			elog(ERROR, "DefineSequence: option \"%s\" not recognized",
+			elog(ERROR, "%s: option \"%s\" not recognized", caller,
 				 defel->defname);
 	}
 
-	if (increment_by == (DefElem *) NULL)		/* INCREMENT BY */
+	/* INCREMENT BY */
+	if (new->increment_by == NULL && increment_by == (DefElem *) NULL)
 		new->increment_by = 1;
-	else if ((new->increment_by = defGetInt64(increment_by)) == 0)
-		elog(ERROR, "DefineSequence: can't INCREMENT by 0");
+	else if (increment_by != (DefElem *) NULL)
+	{
+		if (defGetInt64(increment_by) == 0)
+			elog(ERROR, "%s: can't INCREMENT by 0", caller);
 
-	if (max_value == (DefElem *) NULL || !max_value->arg)	/* MAXVALUE */
+		new->increment_by = defGetInt64(increment_by);
+	}
+
+	/* MAXVALUE */
+	if ((new->max_value == NULL && max_value == (DefElem *) NULL)
+		|| (max_value != (DefElem *) NULL && !max_value->arg))
 	{
 		if (new->increment_by > 0)
-			new->max_value = SEQ_MAXVALUE;		/* ascending seq */
+			new->max_value = SEQ_MAXVALUE;	/* ascending seq */
 		else
-			new->max_value = -1;	/* descending seq */
+			new->max_value = -1;			/* descending seq */
 	}
-	else
+	else if (max_value != (DefElem *) NULL)
 		new->max_value = defGetInt64(max_value);
 
-	if (min_value == (DefElem *) NULL || !min_value->arg)	/* MINVALUE */
+	/* MINVALUE */
+	if ((new->min_value == NULL && min_value == (DefElem *) NULL)
+		|| (min_value != (DefElem *) NULL && !min_value->arg))
 	{
 		if (new->increment_by > 0)
-			new->min_value = 1; /* ascending seq */
+			new->min_value = 1;				/* ascending seq */
 		else
-			new->min_value = SEQ_MINVALUE;		/* descending seq */
+			new->min_value = SEQ_MINVALUE;	/* descending seq */
 	}
-	else
+	else if (min_value != (DefElem *) NULL)
 		new->min_value = defGetInt64(min_value);
 
 	if (new->min_value >= new->max_value)
@@ -850,18 +958,19 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->min_value);
 		snprintf(bufx, sizeof(bufx), INT64_FORMAT, new->max_value);
-		elog(ERROR, "DefineSequence: MINVALUE (%s) must be less than MAXVALUE (%s)",
-			 bufm, bufx);
+		elog(ERROR, "%s: MINVALUE (%s) must be less than MAXVALUE (%s)",
+			 caller, bufm, bufx);
 	}
 
-	if (last_value == (DefElem *) NULL) /* START WITH */
+	/* START WITH */
+	if (new->last_value == NULL && last_value == (DefElem *) NULL) 
 	{
 		if (new->increment_by > 0)
 			new->last_value = new->min_value;	/* ascending seq */
 		else
 			new->last_value = new->max_value;	/* descending seq */
 	}
-	else
+	else if (last_value != (DefElem *) NULL)
 		new->last_value = defGetInt64(last_value);
 
 	if (new->last_value < new->min_value)
@@ -871,8 +980,8 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 
 		snprintf(bufs, sizeof(bufs), INT64_FORMAT, new->last_value);
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->min_value);
-		elog(ERROR, "DefineSequence: START value (%s) can't be less than MINVALUE (%s)",
-			 bufs, bufm);
+		elog(ERROR, "%s: START value (%s) can't be less than MINVALUE (%s)",
+			 caller, bufs, bufm);
 	}
 	if (new->last_value > new->max_value)
 	{
@@ -881,21 +990,21 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 
 		snprintf(bufs, sizeof(bufs), INT64_FORMAT, new->last_value);
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->max_value);
-		elog(ERROR, "DefineSequence: START value (%s) can't be greater than MAXVALUE (%s)",
-			 bufs, bufm);
+		elog(ERROR, "%s: START value (%s) can't be greater than MAXVALUE (%s)",
+			 caller, bufs, bufm);
 	}
 
-	if (cache_value == (DefElem *) NULL)		/* CACHE */
+	/* CACHE */
+	if (cache_value == (DefElem *) NULL)
 		new->cache_value = 1;
 	else if ((new->cache_value = defGetInt64(cache_value)) <= 0)
 	{
 		char		buf[100];
 
 		snprintf(buf, sizeof(buf), INT64_FORMAT, new->cache_value);
-		elog(ERROR, "DefineSequence: CACHE (%s) can't be <= 0",
-			 buf);
+		elog(ERROR, "%s: CACHE (%s) can't be <= 0",
+			 caller, buf);
 	}
-
 }
 
 

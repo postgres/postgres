@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.189 2003/03/10 03:53:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.190 2003/03/20 07:02:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1067,6 +1067,15 @@ _equalCreateSeqStmt(CreateSeqStmt *a, CreateSeqStmt *b)
 }
 
 static bool
+_equalAlterSeqStmt(AlterSeqStmt *a, AlterSeqStmt *b)
+{
+	COMPARE_NODE_FIELD(sequence);
+	COMPARE_NODE_FIELD(options);
+
+	return true;
+}
+
+static bool
 _equalVariableSetStmt(VariableSetStmt *a, VariableSetStmt *b)
 {
 	COMPARE_STRING_FIELD(name);
@@ -1863,6 +1872,9 @@ equal(void *a, void *b)
 			break;
 		case T_CreateSeqStmt:
 			retval = _equalCreateSeqStmt(a, b);
+			break;
+		case T_AlterSeqStmt:
+			retval = _equalAlterSeqStmt(a, b);
 			break;
 		case T_VariableSetStmt:
 			retval = _equalVariableSetStmt(a, b);

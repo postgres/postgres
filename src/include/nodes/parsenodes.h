@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.233 2003/03/11 19:40:23 tgl Exp $
+ * $Id: parsenodes.h,v 1.234 2003/03/20 07:02:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1043,7 +1043,7 @@ typedef struct DropGroupStmt
 } DropGroupStmt;
 
 /* ----------------------
- *		Create SEQUENCE Statement
+ *		{Create|Alter} SEQUENCE Statement
  * ----------------------
  */
 
@@ -1053,6 +1053,13 @@ typedef struct CreateSeqStmt
 	RangeVar   *sequence;		/* the sequence to create */
 	List	   *options;
 } CreateSeqStmt;
+
+typedef struct AlterSeqStmt
+{
+	NodeTag		type;
+	RangeVar   *sequence;		/* the sequence to alter */
+	List	   *options;
+} AlterSeqStmt;
 
 /* ----------------------
  *		Create {Aggregate|Operator|Type} Statement

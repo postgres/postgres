@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.406 2003/03/11 19:40:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.407 2003/03/20 07:02:08 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -129,7 +129,7 @@ static void doNegateFloat(Value *v);
 
 %type <node>	stmt schema_stmt
 		AlterDatabaseSetStmt AlterDomainStmt AlterGroupStmt
-		AlterTableStmt AlterUserStmt AlterUserSetStmt
+		AlterSeqStmt AlterTableStmt AlterUserStmt AlterUserSetStmt
 		AnalyzeStmt ClosePortalStmt ClusterStmt CommentStmt
 		ConstraintsSetStmt CopyStmt CreateAsStmt CreateCastStmt
 		CreateDomainStmt CreateGroupStmt CreateOpClassStmt CreatePLangStmt
@@ -377,7 +377,7 @@ static void doNegateFloat(Value *v);
     PROCEDURE
 
 	READ REAL RECHECK REFERENCES REINDEX RELATIVE RENAME REPLACE
-	RESET RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW ROWS
+	RESET RESTART RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW ROWS
 	RULE
 
 	SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
@@ -478,6 +478,7 @@ stmt :
 			AlterDatabaseSetStmt
 			| AlterDomainStmt
 			| AlterGroupStmt
+			| AlterSeqStmt
 			| AlterTableStmt
 			| AlterUserSetStmt
 			| AlterUserStmt
@@ -1864,6 +1865,7 @@ CreateAsElement:
  *
  *		QUERY :
  *				CREATE SEQUENCE seqname
+ *				ALTER SEQUENCE seqname
  *
  *****************************************************************************/
 
@@ -1874,6 +1876,16 @@ CreateSeqStmt:
 					$4->istemp = $2;
 					n->sequence = $4;
 					n->options = $5;
+					$$ = (Node *)n;
+				}
+		;
+
+AlterSeqStmt:
+			ALTER SEQUENCE qualified_name OptSeqList
+				{
+					AlterSeqStmt *n = makeNode(AlterSeqStmt);
+					n->sequence = $3;
+					n->options = $4;
 					$$ = (Node *)n;
 				}
 		;
@@ -1917,6 +1929,10 @@ OptSeqElem: CACHE NumericOnly
 			| START opt_with NumericOnly
 				{
 					$$ = makeDefElem("start", (Node *)$3);
+				}
+			| RESTART opt_with NumericOnly
+				{
+					$$ = makeDefElem("restart", (Node *)$3);
 				}
 		;
 
@@ -7163,6 +7179,7 @@ unreserved_keyword:
 			| RENAME
 			| REPLACE
 			| RESET
+			| RESTART
 			| RESTRICT
 			| RETURNS
 			| REVOKE

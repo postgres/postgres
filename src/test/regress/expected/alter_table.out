@@ -286,16 +286,6 @@ SELECT unique1 FROM tenk1 WHERE unique1 < 5;
 (5 rows)
 
 DROP VIEW tmp_view_new;
--- renaming sequences
-CREATE SEQUENCE foo_seq;
-ALTER TABLE foo_seq RENAME TO foo_seq_new;
-SELECT * FROM foo_seq_new;
- sequence_name | last_value | increment_by |      max_value      | min_value | cache_value | log_cnt | is_cycled | is_called 
----------------+------------+--------------+---------------------+-----------+-------------+---------+-----------+-----------
- foo_seq       |          1 |            1 | 9223372036854775807 |         1 |           1 |       1 | f         | f
-(1 row)
-
-DROP SEQUENCE foo_seq_new;
 -- toast-like relation name
 alter table stud_emp rename to pg_toast_stud_emp;
 alter table pg_toast_stud_emp rename to stud_emp;

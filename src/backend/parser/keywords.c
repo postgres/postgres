@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.135 2003/03/11 19:40:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.136 2003/03/20 07:02:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,6 +248,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"rename", RENAME},
 	{"replace", REPLACE},
 	{"reset", RESET},
+	{"restart", RESTART},
 	{"restrict", RESTRICT},
 	{"returns", RETURNS},
 	{"revoke", REVOKE},
