@@ -77,8 +77,16 @@ AC_ARG_WITH(template,
     [  --with-template=TEMPLATE
                           use operating system template file 
                               see template directory],
-    [  TEMPLATE=template/$withval ],
-    [  TEMPLATE=template/`uname -s | tr A-Z a-z` ])
+    [  TEMPLATE=$withval ],
+    [  host_no_ver=`echo "$host" | sed 's/[[0-9.]]*$//'`
+       GUESS=`grep "$host_no_ver" template/.similar | sed 's/.*=//' 2>/dev/null`
+       if test "$GUESS"
+       then
+         TEMPLATE=$GUESS
+       else
+         TEMPLATE=`uname -s | tr A-Z a-z` 
+       fi
+    ])
 AC_MSG_RESULT($TEMPLATE)
 
 if test "$TEMPLATE" = "linux-elf"; then
@@ -89,7 +97,7 @@ fi
 AC_SUBST(LINUX_ELF)
         
 export TEMPLATE
-if test ! -f "$TEMPLATE"; then
+if test ! -f "template/$TEMPLATE"; then
 	echo ""
 	echo "$TEMPLATE does not exist"
 	echo ""
@@ -100,18 +108,18 @@ if test ! -f "$TEMPLATE"; then
 	exit
 fi
 
-AROPT=`grep '^AROPT:' $TEMPLATE | awk -F: '{print $2}'`
-SHARED_LIB=`grep '^SHARED_LIB:' $TEMPLATE | awk -F: '{print $2}'`
-CFLAGS=`grep '^CFLAGS:' $TEMPLATE | awk -F: '{print $2}'`
-SRCH_INC=`grep '^SRCH_INC:' $TEMPLATE | awk -F: '{print $2}'`
-SRCH_LIB=`grep '^SRCH_LIB:' $TEMPLATE | awk -F: '{print $2}'`
-USE_LOCALE=`grep '^USE_LOCALE:' $TEMPLATE | awk -F: '{print $2}'`
-DLSUFFIX=`grep '^DLSUFFIX:' $TEMPLATE | awk -F: '{print $2}'`
-DL_LIB=`grep '^DL_LIB:' $TEMPLATE | awk -F: '{print $2}'`
-YACC=`grep '^YACC:' $TEMPLATE | awk -F: '{print $2}'`
-YFLAGS=`grep '^YFLAGS:' $TEMPLATE | awk -F: '{print $2}'`
-CC=`grep '^CC:' $TEMPLATE | awk -F: '{print $2}'`
-LIBS=`grep '^LIBS:' $TEMPLATE | awk -F: '{print $2}'`
+AROPT=`grep '^AROPT:' template/$TEMPLATE | awk -F: '{print $2}'`
+SHARED_LIB=`grep '^SHARED_LIB:' template/$TEMPLATE | awk -F: '{print $2}'`
+CFLAGS=`grep '^CFLAGS:' template/$TEMPLATE | awk -F: '{print $2}'`
+SRCH_INC=`grep '^SRCH_INC:' template/$TEMPLATE | awk -F: '{print $2}'`
+SRCH_LIB=`grep '^SRCH_LIB:' template/$TEMPLATE | awk -F: '{print $2}'`
+USE_LOCALE=`grep '^USE_LOCALE:' template/$TEMPLATE | awk -F: '{print $2}'`
+DLSUFFIX=`grep '^DLSUFFIX:' template/$TEMPLATE | awk -F: '{print $2}'`
+DL_LIB=`grep '^DL_LIB:' template/$TEMPLATE | awk -F: '{print $2}'`
+YACC=`grep '^YACC:' template/$TEMPLATE | awk -F: '{print $2}'`
+YFLAGS=`grep '^YFLAGS:' template/$TEMPLATE | awk -F: '{print $2}'`
+CC=`grep '^CC:' template/$TEMPLATE | awk -F: '{print $2}'`
+LIBS=`grep '^LIBS:' template/$TEMPLATE | awk -F: '{print $2}'`
 
 
 AC_ARG_WITH(includes,
