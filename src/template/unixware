@@ -13,9 +13,9 @@ void g(void){
 __EOF__
 
   if $CC -c -O -Kinline conftest.c >conftest.err 2>&1; then
-    CFLAGS="$CFLAGS -O -Kinline"
+    CFLAGS="-O -Kinline"
   else
-    CFLAGS="$CFLAGS -O -Kinline,no_host"
+    CFLAGS="-O -Kinline,no_host"
   fi
   rm -f conftest.*
 

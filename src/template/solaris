@@ -1,6 +1,9 @@
 if test "$GCC" != yes ; then
   CC="$CC -Xa"			# relaxed ISO C mode
-  CFLAGS="$CFLAGS -O -v"		# -v is like gcc -Wall
+  CFLAGS="-v"			# -v is like gcc -Wall
+  if test "$enable_debug" != yes; then
+    CFLAGS="$CFLAGS -O"		# any optimization breaks debug
+  fi
 fi
 
 # Pick right test-and-set (TAS) code.  We need out-of-line assembler

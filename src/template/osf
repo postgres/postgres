@@ -1,4 +1,4 @@
 if test "$GCC" != yes ; then
   CC="$CC -std"
-  CFLAGS="$CFLAGS -O -ieee"
+  CFLAGS="-O -ieee"
 fi
