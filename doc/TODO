@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Sep 10 11:21:13 EDT 2001
+Last updated:		Tue Sep 11 01:08:40 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -88,7 +88,7 @@ MULTILANGUAGE SUPPORT
 * Add NCHAR (as distinguished from ordinary varchar),
 * Allow LOCALE on a per-column basis, default to ASCII
 * Support multiple simultaneous character sets, per SQL92
-* Reject character sequences those are not valid in their charset
+* -Reject character sequences those are not valid in their charset
 * Make functions more multi-byte aware, e.g. trim()
 * -Make n of CHAR(n)/VARCHAR(n) the number of letters, not bytes (Tatsuo)
 * Allow setting database character set without multibyte enabled
