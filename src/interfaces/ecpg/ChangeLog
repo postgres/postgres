@@ -1311,3 +1311,6 @@ Thu Nov  7 10:34:07 CET 2002
 	- Set ecpg version to 2.10.0.
 	- Set library version to 3.4.0.
 
+Fri Nov 15 16:46:08 CET 2002
+
+	- Synced preproc.y with gram.y.

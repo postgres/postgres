@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.201 2002/11/07 09:48:09 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.202 2002/11/15 15:47:44 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -211,7 +211,7 @@ make_name(void)
 	
         KEY
 
-	LANCOMPILER LANGUAGE LEADING LEFT LEVEL LIKE LIMIT LISTEN
+	LANCOMPILER LANGUAGE LAST LEADING LEFT LEVEL LIKE LIMIT LISTEN
         LOAD LOCAL LOCATION LOCK_P
 
 	MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
@@ -224,10 +224,10 @@ make_name(void)
         OUT_P OUTER_P OVERLAPS OVERLAY OWNER
 
 	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION
-	PRECISION PREPARE PRIMARY PRIOR PRIVILEGES PROCEDURAL PROCEDURE
+	PRECISION PRESERVE PREPARE PRIMARY PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
 	READ REAL RECHECK REFERENCES REINDEX RELATIVE RENAME REPLACE
-	RESET RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW RULE
+	RESET RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW ROWS RULE
 
 	SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE SERIALIZABLE
         SESSION SESSION_USER SET SETOF SHARE SHOW SIMILAR SIMPLE SMALLINT SOME
@@ -239,7 +239,7 @@ make_name(void)
         UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNTIL UPDATE USAGE
         USER USING
 
-        VACUUM VALID VALUES VARCHAR VARYING VERBOSE VERSION VIEW VOLATILE
+        VACUUM VALID VALUE VALUES VARCHAR VARYING VERBOSE VERSION VIEW VOLATILE
 	WHEN WHERE WITH WITHOUT WORK WRITE
         YEAR_P
         ZONE
@@ -296,7 +296,7 @@ make_name(void)
 %type  <str>	update_target_el opt_id qualified_name database_name
 %type  <str>	access_method attr_name index_name name func_name
 %type  <str>	file_name AexprConst c_expr ConstTypename var_list
-%type  <str>	a_expr b_expr TruncateStmt CommentStmt
+%type  <str>	a_expr b_expr TruncateStmt CommentStmt OnCommitOption opt_by
 %type  <str>	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list substr_list substr_from alter_column_default
 %type  <str>	trim_list in_expr substr_for attrs TableFuncElement
@@ -1094,11 +1094,11 @@ opt_using:	USING		{ $$ = make_str("using"); }
  *****************************************************************************/
 
 CreateStmt:  CREATE OptTemp TABLE qualified_name '(' OptTableElementList ')'
-				OptInherit OptWithOids
-			{ $$ = cat_str(9, make_str("create"), $2, make_str("table"), $4, make_str("("), $6, make_str(")"), $8, $9); }
+				OptInherit OptWithOids OnCommitOption
+			{ $$ = cat_str(10, make_str("create"), $2, make_str("table"), $4, make_str("("), $6, make_str(")"), $8, $9, $10); }
 		| CREATE OptTemp TABLE qualified_name OF qualified_name 
-			'(' OptTableElementList ')' OptWithOids
-			{ $$ = cat_str(10, make_str("create"), $2, make_str("table"), $4, make_str("of"), $6, make_str("("), $8, make_str(")"), $10); }
+			'(' OptTableElementList ')' OptWithOids OnCommitOption
+			{ $$ = cat_str(11, make_str("create"), $2, make_str("table"), $4, make_str("of"), $6, make_str("("), $8, make_str(")"), $10, $11); }
 		;
 
 /*
@@ -1290,6 +1290,12 @@ OptWithOids:  WITH OIDS				{ $$ = make_str("with oids"); }
 		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
+OnCommitOption:   ON COMMIT DROP		{ $$ = make_str("on commit drop"); }
+		| ON COMMIT DELETE_P ROWS	{ $$ = make_str("on commit delete rows"); }
+		| ON COMMIT PRESERVE ROWS	{ $$ = make_str("on commit preserve rows"); }
+		| /*EMPTY*/			{ $$ = EMPTY; }
+		;
+		
 
 /*
  * Note: CREATE TABLE ... AS SELECT ... is just another spelling for
@@ -1341,16 +1347,22 @@ OptSeqElem:  CACHE NumConst
 			{ $$ = cat2_str(make_str("cache"), $2); }
 		| CYCLE
 			{ $$ = make_str("cycle"); }
-		| INCREMENT NumConst
-			{ $$ = cat2_str(make_str("increment"), $2); }
+		| NO CYCLE
+			{ $$ = make_str("no cycle"); }
+		| INCREMENT opt_by NumConst
+			{ $$ = cat_str(3, make_str("increment"), $2, $3); }
 		| MAXVALUE NumConst
 			{ $$ = cat2_str(make_str("maxvalue"), $2); }
 		| MINVALUE NumConst
 			{ $$ = cat2_str(make_str("minvalue"), $2); }
-		| START NumConst
-			{ $$ = cat2_str(make_str("start"), $2); }
+		| START opt_by NumConst
+			{ $$ = cat_str(3, make_str("start"), $2, $3); }
 		;
 
+opt_by:		BY	{ $$ = make_str("by"); }
+		| /*EMPTY*/	{ $$ = EMPTY; }
+		;
+		
 /*****************************************************************************
  *
  *		QUERIES :
@@ -1679,9 +1691,10 @@ direction:	FORWARD		{ $$ = make_str("forward"); }
 		;
 
 fetch_how_many: IntConst	{ $$ = $1; }
-		| ALL				{ $$ = make_str("all"); }
-		| NEXT				{ $$ = make_str("next"); }
-		| PRIOR				{ $$ = make_str("prior"); }
+		| ALL		{ $$ = make_str("all"); }
+		| LAST		{ $$ = make_str("last"); }
+		| NEXT		{ $$ = make_str("next"); }
+		| PRIOR		{ $$ = make_str("prior"); }
 		;
 
 from_in: IN_P				{ $$ = make_str("in"); }
@@ -2295,12 +2308,18 @@ CreateConversionStmt:
  *
  *		QUERY:
  *				cluster <index_name> on <qualified_name>
+ *                             cluster <qualified_name>
+ *                             cluster ALL
  *
  *****************************************************************************/
 
 ClusterStmt:  CLUSTER index_name ON qualified_name
 			{ $$ = cat_str(4, make_str("cluster"), $2, make_str("on"), $4); }
-		;
+	| CLUSTER qualified_name
+			{ $$ = cat2_str(make_str("cluster"), $2); }
+	| CLUSTER ALL
+			{ $$ = make_str("cluster all"); }
+	;
 
 
 /*****************************************************************************
@@ -3454,6 +3473,8 @@ c_expr: columnref
 			{ $$ = $1; }
 		| EXISTS select_with_parens
 			{ $$ = cat2_str(make_str("exists"), $2); }
+		| VALUE
+			{ $$ = make_str("value"); }
 		;
 /*
  * This used to use ecpg_expr, but since there is no shift/reduce conflict
@@ -5145,7 +5166,8 @@ unreserved_keyword:
 		| ISOLATION						{ $$ = make_str("isolation"); }
 		| KEY							{ $$ = make_str("key"); }
 		| LANGUAGE						{ $$ = make_str("language"); }
-		| LANCOMPILER					{ $$ = make_str("lancompiler"); }
+		| LANCOMPILER						{ $$ = make_str("lancompiler"); }
+		| LAST							{ $$ = make_str("last"); }
 		| LEVEL							{ $$ = make_str("level"); }
 		| LISTEN						{ $$ = make_str("listen"); }
 		| LOAD							{ $$ = make_str("load"); }
@@ -5179,6 +5201,7 @@ unreserved_keyword:
 		| PENDANT						{ $$ = make_str("pendant"); }
 		| PRECISION						{ $$ = make_str("precision"); }
 		| PREPARE						{ $$ = make_str("prepare"); }
+		| PRESERVE						{ $$ = make_str("preserver"); }
 		| PRIOR							{ $$ = make_str("prior"); }
 		| PRIVILEGES					{ $$ = make_str("privileges"); }
 		| PROCEDURAL					{ $$ = make_str("procedural"); }
@@ -5194,6 +5217,7 @@ unreserved_keyword:
 		| RETURNS						{ $$ = make_str("returns"); }
 		| REVOKE						{ $$ = make_str("revoke"); }
 		| ROLLBACK						{ $$ = make_str("rollback"); }
+		| ROWS							{ $$ = make_str("rows"); }
 		| RULE							{ $$ = make_str("rule"); }
 		| SCHEMA						{ $$ = make_str("schema"); }
 		| SCROLL						{ $$ = make_str("scroll"); }
@@ -5394,6 +5418,7 @@ reserved_keyword:
 		| UNIQUE						{ $$ = make_str("unique"); }
 		| USER							{ $$ = make_str("user"); }
 		| USING							{ $$ = make_str("using"); }
+		| VALUE							{ $$ = make_str("value"); }
 		| WHEN							{ $$ = make_str("when"); }
 		| WHERE							{ $$ = make_str("where"); }
 		;
