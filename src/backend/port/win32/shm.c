@@ -28,19 +28,20 @@ shmdt(const void *shmaddr)
 
 /* Attach to an existing area */
 void *
-shmat(int memId, void* shmaddr, int flag)
+shmat(int memId, void *shmaddr, int flag)
 {
-	/* KEW_TODO -- shmat needs to count # attached to shared mem */
-	void *lpmem = MapViewOfFileEx((HANDLE)memId,
-			  FILE_MAP_WRITE | FILE_MAP_READ,
-			  0, 0, /* (DWORD)pshmdsc->segsize */ s_segsize, shmaddr);
+	/* TODO -- shmat needs to count # attached to shared mem */
+	void	   *lpmem = MapViewOfFileEx((HANDLE) memId,
+										FILE_MAP_WRITE | FILE_MAP_READ,
+				 0, 0, /* (DWORD)pshmdsc->segsize */ s_segsize, shmaddr);
 
-	if (lpmem == NULL) {
-		lpmem = (void *)-1;
+	if (lpmem == NULL)
+	{
+		lpmem = (void *) -1;
 		errno = GetLastError();
 	}
 
-    return lpmem;
+	return lpmem;
 }
 
 /* Control a shared mem area */
@@ -50,21 +51,24 @@ shmctl(int shmid, int flag, struct shmid_ds * dummy)
 	if (flag == IPC_RMID)
 	{
 		/* Delete the area */
-		CloseHandle((HANDLE)shmid);
+		CloseHandle((HANDLE) shmid);
 		return 0;
 	}
 	if (flag == IPC_STAT)
 	{
 		/* Can only test for if exists */
-		int hmap = shmget(shmid, 0, 0);
-		if (hmap < 0) {
+		int			hmap = shmget(shmid, 0, 0);
+
+		if (hmap < 0)
+		{
 			/* Shared memory does not exist */
 			errno = EINVAL;
 			return -1;
 		}
-		else {
+		else
+		{
 			/* Shared memory does exist and must be in use */
-			shmctl(hmap, IPC_RMID, NULL);	/* Release our hold on it */
+			shmctl(hmap, IPC_RMID, NULL);		/* Release our hold on it */
 			errno = 0;
 			return 0;
 		}
@@ -78,33 +82,37 @@ shmctl(int shmid, int flag, struct shmid_ds * dummy)
 int
 shmget(int memKey, int size, int flag)
 {
-    HANDLE  hmap;
-	char szShareMem[32];
-	DWORD dwRet;
+	HANDLE		hmap;
+	char		szShareMem[32];
+	DWORD		dwRet;
 
-    s_segsize = size;
-    sprintf(szShareMem, "sharemem.%d", memKey);
+	s_segsize = size;
+	sprintf(szShareMem, "sharemem.%d", memKey);
 
-	if (flag & IPC_CREAT) {
-		hmap = CreateFileMapping((HANDLE)0xFFFFFFFF,  /* Use the swap file    */
-					 NULL,
-					 PAGE_READWRITE,      /* Memory is Read/Write */
-					 0L,                  /* Size Upper 32 Bits   */
-					 (DWORD)s_segsize,      /* Size Lower 32 bits*/
-					 szShareMem);
+	if (flag & IPC_CREAT)
+	{
+		hmap = CreateFileMapping((HANDLE) 0xFFFFFFFF,	/* Use the swap file	*/
+								 NULL,
+								 PAGE_READWRITE,		/* Memory is Read/Write */
+								 0L,	/* Size Upper 32 Bits	*/
+								 (DWORD) s_segsize,		/* Size Lower 32 bits */
+								 szShareMem);
 	}
-	else {
+	else
+	{
 		hmap = OpenFileMapping(FILE_MAP_ALL_ACCESS,
-								FALSE,
-								szShareMem);
-		if (!hmap) {
+							   FALSE,
+							   szShareMem);
+		if (!hmap)
+		{
 			errno = ENOENT;
 			return -1;
 		}
 	}
 
 	dwRet = GetLastError();
-	if (dwRet == ERROR_ALREADY_EXISTS && hmap && (flag & (IPC_CREAT | IPC_EXCL))) {
+	if (dwRet == ERROR_ALREADY_EXISTS && hmap && (flag & (IPC_CREAT | IPC_EXCL)))
+	{
 		/* Caller wanted to create the segment -- error if already exists */
 		CloseHandle(hmap);
 		errno = EEXIST;
@@ -116,5 +124,5 @@ shmget(int memKey, int size, int flag)
 		return -1;
 	}
 
-    return (int)hmap;
+	return (int) hmap;
 }
