@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.10 2000/07/21 00:24:37 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.11 2000/07/21 14:51:00 momjian Exp $
 Postgres documentation
 -->
 
@@ -471,7 +471,7 @@ $ psql -p 1234
    or set the environment variable <envar>PGPORT</envar>:
 
    <programlisting>
-$ setenv PGPORT 1234
+$ export PGPORT 1234
 $ psql
    </programlisting>
   </para>
