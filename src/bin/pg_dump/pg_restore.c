@@ -129,7 +129,21 @@ int main(int argc, char **argv)
 
 	opts = NewRestoreOptions();
 
-	progname = *argv;
+	progname = argv[0];
+
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-?")==0)
+		{
+			usage(progname);
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version")==0 || strcmp(argv[1], "-V")==0)
+		{
+			puts("pg_restore (PostgreSQL) " PG_VERSION);
+			exit(0);
+		}
+	}
 
 #ifdef HAVE_GETOPT_LONG
 	while ((c = getopt_long(argc, argv, "acCd:f:F:h:i:lNoOp:P:rRsS:t:T:uU:vx", cmdopts, NULL)) != EOF)
@@ -235,8 +249,8 @@ int main(int argc, char **argv)
 				opts->aclsSkip = 1;
 				break;
 			default:
-				usage(progname);
-				break;
+				fprintf(stderr, "Try '%s --help' for more information.\n", progname);
+				exit(1);
 		}
 	}
 
@@ -311,71 +325,75 @@ int main(int argc, char **argv)
 
 static void usage(const char *progname)
 {
+	printf("%s restores a PostgreSQL database from an archive created by pg_dump.\n\n"
+		   "Usage:\n  %s [options] [backup file]\n\n"
+		   "Options:\n",
+		   progname, progname);
 #ifdef HAVE_GETOPT_LONG
-	fprintf(stderr,
-	"usage:  %s [options] [backup file]\n"
-	    "  -a, --data-only             \t dump out only the data, no schema\n"
-		"  -d, --dbname <name>         \t specify database name\n"
-	    "  -c, --clean                 \t clean(drop) schema prior to create\n"
-		"  -C, --create                \t output commands to create the database\n"
-	    "  -f filename                 \t script output filename\n"
-	    "  -F, --format {c|f}          \t specify backup file format\n"
-		"  -h, --host <hostname>       \t server host name\n"
-	    "  -i, --index[=name]          \t dump indexes or named index\n"
-	    "  -l, --list                  \t dump summarized TOC for this file\n"
-		"  -N, --orig-order            \t dump in original dump order\n"
-	    "  -o, --oid-order             \t dump in oid order\n"
-		"  -O, --no-owner              \t don't output reconnect to database to match object owner\n"
-		"  -p, --port <port>           \t server port number\n"
-		"  -P, --function[=name]       \t dump functions or named function\n"
-	    "  -r, --rearrange             \t rearrange output to put indexes etc at end\n"
-		"  -R, --no-reconnect          \t disallow ALL reconnections to the database\n"
-	    "  -s, --schema-only           \t dump out only the schema, no data\n"
-		"  -S, --superuser <name>      \t specify the superuser username to use in disabling triggers\n"
-	    "  -t [table], --table[=table] \t dump for this table only\n"
-	    "  -T, --trigger[=name]        \t dump triggers or named trigger\n"
-		"  -u, --password              \t use password authentication\n"
-	    "  -U, --use-list filename     \t use specified TOC for ordering output from this file\n"
-	    "  -v, --verbose               \t verbose\n"
-	    "  -x, --no-acl                \t skip dumping of ACLs (grant/revoke)\n"
-	    , progname);
+	puts(
+	    "  -a, --data-only          dump out only the data, no schema\n"
+	    "  -c, --clean              clean (drop) schema prior to create\n"
+		"  -C, --create             output commands to create the database\n"
+		"  -d, --dbname=NAME        specify database name\n"
+	    "  -f, --file=FILENAME      script output file name\n"
+	    "  -F, --format {c|f}       specify backup file format\n"
+		"  -h, --host HOSTNAME      server host name\n"
+	    "  -i, --index[=NAME]       dump indexes or named index\n"
+	    "  -l, --list               dump summarized TOC for this file\n"
+		"  -N, --orig-order         dump in original dump order\n"
+	    "  -o, --oid-order          dump in oid order\n"
+		"  -O, --no-owner           do not output reconnect to database to match\n"
+		"                           object owner\n"
+		"  -p, --port PORT          server port number\n"
+		"  -P, --function[=NAME]    dump functions or named function\n"
+	    "  -r, --rearrange          rearrange output to put indexes etc. at end\n"
+		"  -R, --no-reconnect       disallow ALL reconnections to the database\n"
+	    "  -s, --schema-only        dump out only the schema, no data\n"
+		"  -S, --superuser=NAME     specify the superuser user name to use for\n"
+		"                           disabling triggers\n"
+	    "  -t [TABLE], --table[=TABLE]  dump for this table only\n"
+	    "  -T, --trigger[=NAME]     dump triggers or named trigger\n"
+		"  -u, --password           use password authentication\n"
+	    "  -U, --use-list=FILENAME  use specified table of contents for ordering\n"
+		"                           output from this file\n"
+	    "  -v, --verbose            verbose\n"
+	    "  -x, --no-acl             skip dumping of ACLs (grant/revoke)\n");
 
-#else
-	fprintf(stderr,
-	"usage:  %s [options] [backup file]\n"
-	    "  -a                          \t dump out only the data, no schema\n"
-		"  -d <name>                   \t specify database name\n"
-	    "  -c                          \t clean(drop) schema prior to create\n"
-		"  -C                          \t output commands to create the database\n"
-	    "  -f filename                 \t script output filename\n"
-	    "  -F {c|f}                    \t specify backup file format\n"
-		"  -h <hostname>               \t server host name\n"
-	    "  -i name                     \t dump indexes or named index\n"
-	    "  -l                          \t dump summarized TOC for this file\n"
-		"  -N                          \t dump in original dump order\n"
-	    "  -o                          \t dump in oid order\n"
-		"  -O                          \t don't output reconnect to database to match object owner\n"
-		"  -p <port>                   \t server port number\n"
-		"  -P name                     \t dump functions or named function\n"
-	    "  -r                          \t rearrange output to put indexes etc at end\n"
-		"  -R                          \t disallow ALL reconnections to the database\n"
-	    "  -s                          \t dump out only the schema, no data\n"
-		"  -S <name>                   \t specify the superuser username to use in disabling triggers\n"
-	    "  -t name                     \t dump for this table only\n"
-	    "  -T name                     \t dump triggers or named trigger\n"
-		"  -u                          \t use password authentication\n"
-	    "  -U filename                 \t use specified TOC for ordering output from this file\n"
-	    "  -v                          \t verbose\n"
-	    "  -x                          \t skip dumping of ACLs (grant/revoke)\n"
-	    , progname);
+#else /* not HAVE_GETOPT_LONG */
+
+	puts(
+	    "  -a                       dump out only the data, no schema\n"
+	    "  -c                       clean (drop) schema prior to create\n"
+		"  -C                       output commands to create the database\n"
+		"  -d NAME                  specify database name\n"
+	    "  -f FILENAME              script output file name\n"
+	    "  -F {c|f}                 specify backup file format\n"
+		"  -h HOSTNAME              server host name\n"
+	    "  -i NAME                  dump indexes or named index\n"
+	    "  -l                       dump summarized TOC for this file\n"
+		"  -N                       dump in original dump order\n"
+	    "  -o                       dump in oid order\n"
+		"  -O                       do not output reconnect to database to match\n"
+		"                           object owner\n"
+		"  -p PORT                  server port number\n"
+		"  -P NAME                  dump functions or named function\n"
+	    "  -r                       rearrange output to put indexes etc at end\n"
+		"  -R                       disallow ALL reconnections to the database\n"
+	    "  -s                       dump out only the schema, no data\n"
+		"  -S NAME                  specify the superuser user name to use for\n"
+		"                           disabling triggers\n"
+	    "  -t NAME                  dump for this table only\n"
+	    "  -T NAME                  dump triggers or named trigger\n"
+		"  -u                       use password authentication\n"
+	    "  -U FILENAME              use specified table of contents for ordering\n"
+		"                           output from this file\n"
+	    "  -v                       verbose\n"
+	    "  -x                       skip dumping of ACLs (grant/revoke)\n");
 #endif
-	fprintf(stderr,
-			"\nIf [backup file] is not supplied, then standard input "
-			"is used.\n");
-	fprintf(stderr, "\n");
-
-	exit(1);
+	puts("If [backup file] is not supplied, then standard input is used.\n");
+	puts("Report bugs to <pgsql-bugs@postgresql.org>.");
 }
+
 
 static char* _cleanupName(char* name)
 {

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.184 2001/01/04 01:23:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.185 2001/01/06 20:57:26 petere Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -193,24 +193,27 @@ help(const char *progname)
 #ifdef HAVE_GETOPT_LONG
 	puts(
 		"  -a, --data-only          dump out only the data, not the schema\n"
-		"  -b, --blobs				dump out blob data\n"
+		"  -b, --blobs              dump out blob data\n"
 	   	"  -c, --clean              clean (drop) schema prior to create\n"
 		"  -C, --create             output commands to create database\n"
 		"  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
 		"  -D, --attribute-inserts  dump data as INSERT commands with attribute names\n"
-		"  -f, --file               specify output file name\n"
+		"  -f, --file=FILENAME      specify output file name\n"
 		"  -F, --format {c|f|p}     output file format (custom, files, plain text)\n"
-		"  -h, --host <hostname>    server host name\n"
+		"  -h, --host=HOSTNAME      server host name\n"
 		"  -i, --ignore-version     proceed when database version != pg_dump version\n"
 		"  -n, --no-quotes          suppress most quotes around identifiers\n"
 		"  -N, --quotes             enable most quotes around identifiers\n"
 		"  -o, --oids               dump object ids (oids)\n"
-		"  -O, --no-owner           don't output \\connect commands in plain text format\n"
-		"  -p, --port <port>        server port number\n"
-		"  -R, --no-reconnect       disable ALL reconnections to the database in plain text format\n"
+		"  -O, --no-owner           do not output \\connect commands in plain text\n"
+		"                           format\n"
+		"  -p, --port=PORT          server port number\n"
+		"  -R, --no-reconnect       disable ALL reconnections to the database in\n"
+		"                           plain text format\n"
 		"  -s, --schema-only        dump out only the schema, no data\n"
-		"  -S, --superuser <name>   specify the superuser username to use in plain text format\n"
-		"  -t, --table <table>      dump for this table only\n"
+		"  -S, --superuser=NAME     specify the superuser user name to use in plain\n"
+		"                           text format\n"
+		"  -t, --table=TABLE        dump for this table only\n"
 		"  -u, --password           use password authentication\n"
 		"  -v, --verbose            verbose\n"
 		"  -x, --no-acl             do not dump ACL's (grant/revoke)\n"
@@ -224,19 +227,22 @@ help(const char *progname)
 		"  -C                       output commands to create database\n"
 		"  -d                       dump data as INSERT, rather than COPY, commands\n"
 		"  -D                       dump data as INSERT commands with attribute names\n"
-		"  -f                       specify output file name\n"
+		"  -f FILENAME              specify output file name\n"
 		"  -F {c|f|p}               output file format (custom, files, plain text)\n"
-		"  -h <hostname>            server host name\n"
+		"  -h HOSTNAME              server host name\n"
 		"  -i                       proceed when database version != pg_dump version\n"
 		"  -n                       suppress most quotes around identifiers\n"
 		"  -N                       enable most quotes around identifiers\n"
 		"  -o                       dump object ids (oids)\n"
-		"  -O                       don't output \\connect commands in plain text format\n"
-		"  -p <port>                server port number\n"
-		"  -R                       disable ALL reconnections to the database in plain text format\n"
+		"  -O                       do not output \\connect commands in plain text\n"
+		"                           format\n"
+		"  -p PORT                  server port number\n"
+		"  -R                       disable ALL reconnections to the database in\n"
+		"                           plain text format\n"
 		"  -s                       dump out only the schema, no data\n"
-		"  -S <name>                specify the superuser username to use in plain text format\n"
-		"  -t <table>               dump for this table only\n"
+		"  -S NAME                  specify the superuser user name to use in plain\n"
+		"                           text format\n"
+		"  -t TABLE                 dump for this table only\n"
 		"  -u                       use password authentication\n"
 		"  -v                       verbose\n"
 		"  -x                       do not dump ACL's (grant/revoke)\n"
@@ -253,7 +259,7 @@ version(void)
 {
 	puts("pg_dump (PostgreSQL) " PG_VERSION);
 	puts("Portions Copyright (c) 1996-2000, PostgreSQL, Inc");
-	puts("Portions Copyright (C) 1996 Regents of the University of California");
+	puts("Portions Copyright (c) 1996 Regents of the University of California");
 	puts("Read the file COPYRIGHT to see the usage and distribution terms.");
 }
 
@@ -718,10 +724,24 @@ main(int argc, char **argv)
 		outputBlobs = true;
 	}
 
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-?")==0)
+		{
+			help(progname);
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version")==0 || strcmp(argv[1], "-V")==0)
+		{
+			version();
+			exit(0);
+		}
+	}
+
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:inNoOp:sS:t:uvxzZ:V?", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:inNoOp:RsS:t:uvxzZ:V?", long_options, &optindex)) != -1)
 #else
-	while ((c = getopt(argc, argv, "abcCdDf:F:h:inNoOp:sS:t:uvxzZ:V?-")) != -1)
+	while ((c = getopt(argc, argv, "abcCdDf:F:h:inNoOp:RsS:t:uvxzZ:V?-")) != -1)
 #endif
 
 	{
@@ -852,32 +872,15 @@ main(int argc, char **argv)
 				exit(0);
 				break;
 
-			case '?':
-
-				/*
-				 * getopt returns '?' on unknown argument. That's not
-				 * quite what we want
-				 */
-				if (strcmp(argv[optind - 1], "-?") == 0 || strcmp(argv[optind - 1], "--help") == 0)
-				{
-					help(progname);
-					exit(1);
-				}
-				else
-				{
-					fputs("Try -? for help.\n", stderr);
-					exit(1);
-				}
-				break;
 #ifndef HAVE_GETOPT_LONG
 			case '-':
 				fprintf(stderr, "%s was compiled without support for long options.\n"
-				   "Use -? for help on invocation options.\n", progname);
+				   "Use --help for help on invocation options.\n", progname);
 				exit(1);
 				break;
 #endif
 			default:
-				fprintf(stderr, "%s: unknown option -%c\nTry -? for help.\n", progname, c);
+				fprintf(stderr, "Try '%s --help' for more information.\n", progname);
 				exit(1);
 		}
 	}
@@ -885,7 +888,7 @@ main(int argc, char **argv)
 	if (optind < (argc - 1)) {
 		fprintf(stderr,
 				"%s: extra parameters found on command line after '%s' (first is '%s').\n"
-			    "Please respecify command.\nUse -? for help on invocation options.\n",
+			    "Please respecify command.\nUse --help for help on invocation options.\n",
 				progname, argv[optind], argv[optind+1]);
 		exit(1);
 	}
