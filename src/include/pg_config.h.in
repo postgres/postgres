@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.5 2001/09/07 19:52:54 momjian Exp $
+ * $Id: pg_config.h.in,v 1.6 2001/09/14 10:36:52 ishii Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -42,8 +42,10 @@
 /* Set to 1 if you want to use multibyte characters (--enable-multibyte) */
 #undef MULTIBYTE
 
-/* Set to 1 if you want Unicode conversion support (--enable-uniconv) */
-#undef UNICODE_CONVERSION
+#ifdef MULTIBYTE
+/* --enable-multibyte implies UNICODE_CONVERSION */
+#define UNICODE_CONVERSION
+#endif
 
 /* Set to 1 if you want ASSERT checking (--enable-cassert) */
 #undef USE_ASSERT_CHECKING

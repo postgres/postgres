@@ -200,19 +200,6 @@ Or do not specify an argument to the option to use the default.]);;
 AC_SUBST(MULTIBYTE)
 
 #
-# Unicode conversion (--enable-unicode-conversion)
-#
-AC_MSG_CHECKING([whether to build with Unicode conversion support])
-PGAC_ARG_BOOL(enable, unicode-conversion, no,
-              [  --enable-unicode-conversion  enable unicode conversion support],
-[if test -z "$MULTIBYTE"; then
-  AC_MSG_ERROR([--enable-unicode-conversion only works with --enable-multibyte])
-fi
-AC_DEFINE([UNICODE_CONVERSION], 1,
-          [Set to 1 if you want Unicode conversion support (--enable-unicode-conversion)])])
-AC_MSG_RESULT([$enable_unicode_conversion])
-
-#
 # NLS
 #
 AC_MSG_CHECKING([whether NLS is wanted])
