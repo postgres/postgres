@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jul  6 21:31:00 EDT 2000
+Last updated:		Thu Jul  6 23:23:54 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -160,6 +160,7 @@ REFERENTIAL INTEGRITY
 * Emit a warning at foreign key creation time if no UNIQUE index
   exists on referenced primary key attributes
 * Add deferred trigger queue file (Jan)
+* Allow oid to act as a foreign key
 
 EXOTIC FEATURES
 
