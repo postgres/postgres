@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.155 2001/01/09 18:40:15 petere Exp $
+ * $Id: config.h.in,v 1.156 2001/01/19 23:43:35 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -228,7 +228,7 @@
 /*
  * Define this if your operating system supports AF_UNIX family sockets.
  */
-#if !defined(__CYGWIN__) && !defined(__QNX__) && !defined(__BEOS__)
+#if !defined(__QNX__) && !defined(__BEOS__)
 # define HAVE_UNIX_SOCKETS 1
 #endif
 

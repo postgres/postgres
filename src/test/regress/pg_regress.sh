@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.17 2001/01/13 03:25:48 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.18 2001/01/19 23:43:36 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -156,11 +156,11 @@ done
 
 
 # ----------
-# When on Windows, QNX or BeOS, don't use Unix sockets.
+# When on QNX or BeOS, don't use Unix sockets.
 # ----------
 
 case $host_platform in
-    *-*-cygwin* | *-*-qnx* | *beos*)
+    *-*-qnx* | *beos*)
         unix_sockets=no;;
     *)
         unix_sockets=yes;;

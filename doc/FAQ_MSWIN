@@ -1,19 +1,19 @@
 How do I installing PostgreSQL on Windows NT or Windows 2000?
 =============================================================
-$Date: 2000/10/18 21:14:56 $
+$Date: 2001/01/19 23:43:35 $
 
 1.  Install the Cygwin package.
 
     The Cygwin package provides a UNIX-like API on top of the Win32
     API.  It is available at <http://sources.redhat.com/cygwin/>.
-    The 1.1.x series is recommended (1.1.4 was the latest at the time
+    The 1.1.x series is recommended (1.1.7 was the latest at the time
     of this writing); using 1.0 or B20 might require extra efforts.
     For B20 you also need to download the separate crypt library at the
     same location.
 
 2.  Install the cygipc package, available at
-    <http://cygutils.netpedia.net/V1.1/cygipc/>.  Do not use versions
-    prior to 1.04, they will not work.
+    <http://www.neuro.gatech.edu/users/cwilson/cygutils/V1.1/cygipc/>.
+    Do not use versions prior to 1.04, they will not work.
 
 3.  Optional:  The "Andy Piper Tools" at <http://www.xemacs.freeserve.co.uk/>
     are a collection of pre-compiled libraries and utilities that you
@@ -29,10 +29,13 @@ $Date: 2000/10/18 21:14:56 $
 
 6.  Proceed according to the INSTALL file.  (./configure; make; etc.)
 
-NOTE:  By default, PostgreSQL clients like psql communicate using Unix
-domain sockets, which do not work on Windows.  Start the postmaster
-with -i, and when connecting to the database from a client, set the
-PGHOST environment variable to `localhost' or supply the hostname on
-the command line.
+NOTE:  There are two issues with Cygwin's current UNIX domain socket
+support:
+
+1.  psql (and other clients) will hang if postmaster is not running and
+    the socket file (e.g., /tmp/.s.PGSQL.5432) exists.
+
+2.  Cygwin's AF_UNIX sockets are really implemented as AF_INET sockets
+    so they are inherently insecure.
 
 Problem reports can be sent to <pgsql-ports@postgresql.org>.

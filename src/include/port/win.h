@@ -9,3 +9,10 @@ typedef unsigned char slock_t;
 #define HAVE_INT_TIMEZONE		/* has int _timezone */
 
 #include <cygwin/version.h>
+
+/*
+ * Check for b20.1 and disable AF_UNIX family socket support.
+ */
+#if CYGWIN_VERSION_DLL_MAJOR < 1001
+# undef HAVE_UNIX_SOCKETS
+#endif
