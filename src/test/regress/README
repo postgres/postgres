@@ -26,21 +26,11 @@ Preparation
   ./expected/*.out files.  The localization replaces macros in the source
   files with absolute pathnames and user names.
 
-  The postmaster should be invoked with the system time zone set for
-  Berkeley, California. On many systems, this can be accomplished by
-  setting the TZ environment variable before starting the postmaster
-  (for csh/bash; use set/export for some other shells):
-
-    setenv TZ PST8PDT
-    date
-    /usr/local/pgsql/bin/postmaster -s
-
-  The "date" command above should have returned the current system time
-  in the PST8PDT time zone. If the PST8PDT database is not available, then
-  your system may have returned the time in GMT. If the PST8PDT time zone
-  is not available, you can set the time zone rules explicitly:
-
-    setenv TZ PST8PDT7,M04.01.0,M10.05.03
+  It was formerly necessary to run the postmaster with system time zone
+  set to PST, but this is no longer required.  You can run the regression
+  tests under your normal postmaster configuration.  The test script will
+  set the PGTZ environment variable to ensure that timezone-dependent tests
+  produce the expected results.
 
 Directory Layout
 
@@ -78,6 +68,9 @@ Comparing expected/actual output
 
   The results are in files in the ./results directory. These results
   can be compared with results in the ./expected directory using 'diff'.
+  (The test script now does this for you, and leaves the differences
+  in ./regression.diffs.)
+
   The files might not compare exactly. The following paragraphs attempt
   to explain the differences.
 
@@ -106,22 +99,24 @@ OID differences
 
 DATE/TIME differences
 
-  On many supported platforms, you can force PostgreSQL to believe that it
-  is running in the same time zone as Berkeley, California. See details in
-  the section on how to run the regression tests.
+  Most of the date and time results are dependent on timezone environment.
+  The reference files are generated for timezone PST8PDT (Berkeley,
+  California) and there will be apparent failures if the tests are not
+  run with that timezone setting.  The regression test driver sets
+  environment variable PGTZ to PST8PDT to ensure proper results.
 
-  If you do not explicitly set your time zone environment to PST8PDT, then
-  most of the date and time results will reflect your local time zone and
-  will fail the regression testing.
+  There appear to be some systems which do not accept the recommended syntax
+  for explicitly setting the local time zone rules; you may need to use
+  a different PGTZ setting on such machines.
 
-  There appears to be some systems which do not accept the recommended syntax
-  for explicitly setting the local time zone rules. Some systems using the
-  public domain time zone package exhibit minor problems with pre-1970 PDT
-  times, representing them in PST instead.
+  Some systems using older timezone libraries fail to apply daylight-savings
+  corrections to pre-1970 dates, causing pre-1970 PDT times to be displayed
+  in PST instead.  This will result in localized differences in the test
+  results.
 
 FLOATING POINT differences
 
-  Some of the tests involve computing 64-bit (FLOAT8) number from table
+  Some of the tests involve computing 64-bit (FLOAT8) numbers from table
   columns. Differences in results involving mathematical functions of
   FLOAT8 columns have been observed. These differences occur where
   different operating systems are used on the same platform ie:
@@ -137,7 +132,7 @@ FLOATING POINT differences
 
 POLYGON differences
 
-  Several of the tests involve operations on geographic date about the
+  Several of the tests involve operations on geographic data about the
   Oakland/Berkley CA street map. The map data is expressed as polygons
   whose vertices are represented as pairs of FLOAT8 numbers (decimal
   latitude and longitude). Initially, some tables are created and
@@ -147,7 +142,7 @@ POLYGON differences
 
   When comparing the results from different platforms, differences occur
   in the 2nd or 3rd place to the right of the decimal point. The SQL
-  statements where these problems occur are the folowing:
+  statements where these problems occur are the following:
 
     QUERY: SELECT * from street;
     QUERY: SELECT * from iexit;
