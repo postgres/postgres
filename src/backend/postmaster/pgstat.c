@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.38 2003/07/22 19:00:10 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.39 2003/07/22 19:13:19 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -799,7 +799,7 @@ pgstat_ping(void)
 void
 pgstat_initstats(PgStat_Info *stats, Relation rel)
 {
-	PgStat_TableEntry *useent = NULL;
+	PgStat_TableEntry *useent;
 	Oid			rel_id = rel->rd_id;
 	int			mb;
 	int			i;
@@ -875,6 +875,7 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 		 */
 		i = pgStatTabstatMessages[mb]->m_nentries++;
 		useent = &pgStatTabstatMessages[mb]->m_entry[i];
+		MemSet(useent, 0, sizeof(PgStat_TableEntry));
 		useent->t_id = rel_id;
 		stats->tabentry = (void *) useent;
 		return;
@@ -922,6 +923,7 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	mb = pgStatTabstatUsed++;
 	pgStatTabstatMessages[mb]->m_nentries = 1;
 	useent = &pgStatTabstatMessages[mb]->m_entry[0];
+	MemSet(useent, 0, sizeof(PgStat_TableEntry));
 	useent->t_id = rel_id;
 	stats->tabentry = (void *) useent;
 }
