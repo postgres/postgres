@@ -174,7 +174,7 @@ extern void gistbuild(Relation heap,
 	  FuncIndexInfo *finfo,
 	  PredInfo *predInfo);
 extern InsertIndexResult gistinsert(Relation r, Datum *datum,
-			char *nulls,ItemPointer ht_ctid, bool is_update);
+			char *nulls,ItemPointer ht_ctid, Relation heapRel);
 extern void _gistdump(Relation r);
 extern char *text_range_out(TXTRANGE *r);
 extern char *int_range_out(INTRANGE *r);

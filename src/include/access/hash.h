@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.5 1996/11/13 20:50:31 scrappy Exp $
+ * $Id: hash.h,v 1.6 1997/01/10 09:36:32 vadim Exp $
  *
  * NOTES
  *	modeled after Margo Seltzer's hash implementation for unix. 
@@ -255,7 +255,7 @@ extern void hashbuild(Relation heap, Relation index, int natts,
 	AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
 	Datum *params, FuncIndexInfo *finfo, PredInfo *predInfo);
 extern InsertIndexResult hashinsert(Relation rel, Datum *datum, char *nulls,
-				    ItemPointer ht_ctid, bool is_update);
+				    ItemPointer ht_ctid, Relation heapRel);
 extern char *hashgettuple(IndexScanDesc scan, ScanDirection dir);
 extern char *hashbeginscan(Relation rel, bool fromEnd, uint16 keysz,
 			   ScanKey scankey);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.5 1996/11/13 20:50:28 scrappy Exp $
+ * $Id: genam.h,v 1.6 1997/01/10 09:36:29 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ extern void index_close(Relation relation);
 extern InsertIndexResult index_insert(Relation relation,
 				      Datum *datum, char *nulls,
 				      ItemPointer heap_t_ctid,
-				      bool is_update);
+				      Relation heapRel);
 extern void index_delete(Relation relation, ItemPointer indexItem);
 extern IndexScanDesc index_beginscan(Relation relation, bool scanFromEnd,
      uint16 numberOfKeys, ScanKey key);
