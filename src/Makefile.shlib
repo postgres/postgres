@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.9 1999/05/17 04:13:24 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.10 1999/05/19 18:04:51 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -130,6 +130,12 @@ ifeq ($(PORTNAME), solaris_sparc)
   shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G
   CFLAGS			+= $(CFLAGS_SL)
+endif
+
+ifeq ($(PORTNAME), alpha)
+  install-shlib-dep	:= install-shlib
+  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  LDFLAGS_SL		+= -shared -expect_unresolved '*'
 endif
 
 ifeq ($(PORTNAME), svr4)
