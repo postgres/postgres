@@ -1,9 +1,62 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.256 2004/03/02 00:38:46 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.257 2004/03/05 19:51:56 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-7-4-2">
+   <title>Release 7.4.2</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2004-03-??</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.1.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.4.2</title>
+
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those
+     running 7.4.X.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<para>As of 2004-03-02</para>
+
+<itemizedlist>
+<listitem><para>Fix problems with ALTER TABLE during concurrent access (Tom)</para></listitem>
+<listitem><para>Improve hash build reliability (Tom)</para></listitem>
+<listitem><para>Fix statistics alignment bug that could affect optimizer, initdb required (Tom)</para></listitem>
+<listitem><para>Optimizer improvements (Tom)</para></listitem>
+<listitem><para>Permission fix for view updates (Tom)</para></listitem>
+<listitem><para>Allow non-super users to update pg_settings (Tom)</para></listitem>
+<listitem><para>Fix for multibyte handling in position() (Korea PostgreSQL Users' Group)</para></listitem>
+<listitem><para>Various multibyte fixes</para></listitem>
+<listitem><para>Fix problem with hitting open file limit, especially on OS X (Tom)</para></listitem>
+<listitem><para>Have pg_dump set client encoding on restore (Tom)</para></listitem>
+<listitem><para>Allow ecpg to again use C keywords as column names (Michael)</para></listitem>
+<listitem><para>Added ecpg WHENEVER NOT_FOUND to SELECT/INSERT/UPDATE/DELETE (Michael)</para></listitem>
+<listitem><para>Fix ecpg crash for queries calling set-returning functions (Michael)</para></listitem>
+<listitem><para>Various ecpg fixes (Michael)</para></listitem>
+<listitem><para>Fixes for Borland compiler</para></listitem>
+<listitem><para>Thread build improvements (Bruce)</para></listitem>
+<listitem><para>Fix for configure --disable-shared support (Tom)</para></listitem>
+<listitem><para>Various build fixes</para></listitem>
+<listitem><para>Various jdbc fixes</para></listitem>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
 
   <sect1 id="release-7-4-1">
    <title>Release 7.4.1</title>
