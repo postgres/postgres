@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.84 2003/09/24 18:54:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.84.2.1 2003/12/30 20:05:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1019,22 +1019,28 @@ static void
 create_duphash(IndexScanState *node)
 {
 	HASHCTL		hash_ctl;
+	long		nbuckets;
 
+	node->iss_MaxHash = (SortMem * 1024L) /
+		(MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(sizeof(DupHashTabEntry)));
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 	hash_ctl.keysize = SizeOfIptrData;
 	hash_ctl.entrysize = sizeof(DupHashTabEntry);
 	hash_ctl.hash = tag_hash;
 	hash_ctl.hcxt = CurrentMemoryContext;
+	nbuckets = (long) ceil(node->ss.ps.plan->plan_rows);
+	if (nbuckets < 1)
+		nbuckets = 1;
+	if (nbuckets > node->iss_MaxHash)
+		nbuckets = node->iss_MaxHash;
 	node->iss_DupHash = hash_create("DupHashTable",
-									(long) ceil(node->ss.ps.plan->plan_rows),
+									nbuckets,
 									&hash_ctl,
 									HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 	if (node->iss_DupHash == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
-	node->iss_MaxHash = (SortMem * 1024L) /
-		(MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(sizeof(DupHashTabEntry)));
 }
 
 int
