@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jul 20 12:14:48 EDT 2001
+Last updated:		Fri Jul 20 16:51:22 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -99,12 +99,13 @@ INDEXES
   fails index can't store constant parameters
 * Add FILLFACTOR to index creation
 * -Re-enable partial indexes
+* -Prevent pg_attribute from having duplicate oids for indexes (Tom)
 * Allow inherited tables to inherit index, UNIQUE constraint, and primary
   key, foreign key  [inheritance]
 * UNIQUE INDEX on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
   [inheritance]
-* -Prevent pg_attribute from having duplicate oids for indexes (Tom)
+* Allow DELETE/UPDATE on inherited table
 * Add UNIQUE capability to non-btree indexes
 * Certain indexes will not shrink, e.g. oid indexes with many inserts
 * Have UPDATE/DELETE clean out indexes
