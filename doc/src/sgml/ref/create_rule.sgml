@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.17 2000/07/21 04:22:54 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.18 2000/07/22 02:39:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -203,7 +203,7 @@ ON UPDATE TO emp-1.salary WHERE emp-2.name = "Joe"
     report an error because the query cycled too many times:
 
     <example>
-     <title>Example of a circular rewrite rule combination.</title>
+     <title>Example of a circular rewrite rule combination:</title>
      <programlisting>
 CREATE RULE bad_rule_combination_1 AS
     ON SELECT TO emp
@@ -220,7 +220,7 @@ CREATE RULE bad_rule_combination_2 AS
      <para>
       This attempt to select from EMP will cause
       <productname>Postgres</productname> to issue an error
-      because the queries cycled too many times.
+      because the queries cycled too many times:
       <programlisting>
 SELECT * FROM emp;
       </programlisting></para>

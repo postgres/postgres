@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.7 1999/07/22 15:09:06 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.8 2000/07/22 02:39:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -204,7 +204,7 @@ SELECT <replaceable class="parameter">columnlist</replaceable> INTO TABLE <repla
    Usage
   </title>
   <para>
-   Cluster the employees relation on the basis of its salary attribute
+   Cluster the employees relation on the basis of its salary attribute:
   </para>
   <programlisting>
 CLUSTER emp_ind ON emp;

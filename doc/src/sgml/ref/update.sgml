@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.10 2000/06/09 01:44:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.11 2000/07/22 02:39:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -157,8 +157,12 @@ UPDATE <replaceable class="parameter">#</replaceable>
    Change word "Drama" with "Dramatic" on column kind:
 
 <programlisting>
-UPDATE films SET kind = 'Dramatic' WHERE kind = 'Drama';
-SELECT * FROM films WHERE kind = 'Dramatic' OR kind = 'Drama';
+UPDATE films 
+SET kind = 'Dramatic' 
+WHERE kind = 'Drama';
+SELECT * 
+FROM films 
+WHERE kind = 'Dramatic' OR kind = 'Drama';
 
  code  |     title     | did | date_prod  |   kind   | len
 -------+---------------+-----+------------+----------+-------

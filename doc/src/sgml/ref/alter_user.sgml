@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.11 2000/03/27 17:14:42 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.12 2000/07/22 02:39:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -160,7 +160,7 @@ ERROR:  ALTER USER: user "username" does not exist
 ALTER USER davide WITH PASSWORD 'hu8jmn3';
 </programlisting>
 
-   Change a user's valid until date
+   Change a user's valid until date:
 
 <programlisting>
 ALTER USER manuel VALID UNTIL 'Jan 31 2030';
@@ -168,12 +168,12 @@ ALTER USER manuel VALID UNTIL 'Jan 31 2030';
 
    Change a user's valid until date, specifying that his
    authorisation should expire at midday on 4th May 1998 using
-   the time zone which is one hour ahead of UTC
+   the time zone which is one hour ahead of UTC:
 <programlisting>
 ALTER USER chris VALID UNTIL 'May 4 12:00:00 1998 +1';
 </programlisting>
 
-   Give a user the ability to create other users and new databases.
+   Give a user the ability to create other users and new databases:
 
 <programlisting>
 ALTER USER miriam CREATEUSER CREATEDB;

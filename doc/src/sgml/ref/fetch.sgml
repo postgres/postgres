@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.10 2000/05/11 17:32:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.11 2000/07/22 02:39:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -355,7 +355,7 @@ COMMIT WORK;
 
    <para>
     <acronym>SQL92</acronym> allows absolute positioning of the cursor for
-    FETCH, and allows placing the results into explicit variables.
+    FETCH, and allows placing the results into explicit variables:
 
     <synopsis>
 FETCH ABSOLUTE <replaceable class="PARAMETER">#</replaceable>

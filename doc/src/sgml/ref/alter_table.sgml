@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.13 2000/06/09 01:43:57 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.14 2000/07/22 02:39:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -307,7 +307,7 @@ CREATE TABLE temp AS SELECT did, city FROM distributors;
 DROP TABLE distributors;
 CREATE TABLE distributors (
     did      DECIMAL(3)  DEFAULT 1,
-    name     VARCHAR(40) NOT NULL,
+    name     VARCHAR(40) NOT NULL
 );
 INSERT INTO distributors SELECT * FROM temp;
 DROP TABLE temp;

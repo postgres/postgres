@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.1 2000/01/14 22:11:32 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.2 2000/07/22 02:39:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -114,7 +114,7 @@ ALTER GROUP <replaceable class="PARAMETER">name</replaceable> DROP USER <replace
 ALTER GROUP staff ADD USER karl, john
 </programlisting>
 
-   Remove a user from a group
+   Remove a user from a group:
 
 <programlisting>
 ALTER GROUP workers DROP USER beth

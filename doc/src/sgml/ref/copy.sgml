@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.16 2000/04/18 23:44:58 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.17 2000/07/22 02:39:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -407,7 +407,7 @@ ERROR: <replaceable>reason</replaceable>
   </title>
   <para>
 The following example copies a table to standard output,
- using a vertical bar ("|") as the field
+ using a pipe (|) as the field
  delimiter:
   </para>
   <programlisting>

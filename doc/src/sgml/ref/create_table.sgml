@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.31 2000/07/14 15:27:14 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.32 2000/07/22 02:39:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -221,7 +221,7 @@ ERROR:  DEFAULT: type mismatched
   <para>
    <note>
     <para>
-     As of Postgres version 6.0, consistent array dimensions within an
+     Consistent array dimensions within an
      attribute are not enforced. This will likely change in a future
      release.
     </para>
