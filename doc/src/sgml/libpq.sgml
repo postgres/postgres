@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.51 2000/11/30 23:20:50 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.52 2000/12/21 18:47:05 momjian Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -1292,7 +1292,7 @@ some reason.
 int PQflush(PGconn *conn);
 </synopsis>
 <function>PQflush</function> needs to be called on a non-blocking connection 
-before calling <function>select</function> to determine if a responce has
+before calling <function>select</function> to determine if a response has
 arrived.  If 0 is returned it ensures that there is no data queued to the 
 backend that has not actually been sent.  Only applications that have used
 <function>PQsetnonblocking</function> have a need for this.
