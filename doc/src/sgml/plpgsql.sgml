@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.64 2005/04/05 18:05:45 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.65 2005/04/07 14:53:04 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -123,14 +123,14 @@ $$ LANGUAGE plpgsql;
 
    <para>
     Because <application>PL/pgSQL</application> saves execution plans
-        in this way, SQL commands that appear directly in a
-        <application>PL/pgSQL</application> function must refer to the
-        same tables and columns on every execution; that is, you cannot use
-        a parameter as the name of a table or column in an SQL command.  To get
-        around this restriction, you can construct dynamic commands using
-        the <application>PL/pgSQL</application> <command>EXECUTE</command>
-        statement &mdash; at the price of constructing a new execution plan on
-        every execution.
+    in this way, SQL commands that appear directly in a
+    <application>PL/pgSQL</application> function must refer to the
+    same tables and columns on every execution; that is, you cannot use
+    a parameter as the name of a table or column in an SQL command.  To get
+    around this restriction, you can construct dynamic commands using
+    the <application>PL/pgSQL</application> <command>EXECUTE</command>
+    statement &mdash; at the price of constructing a new execution plan on
+    every execution.
    </para>
 
    <note>
@@ -673,7 +673,6 @@ $$ LANGUAGE plpgsql;
 CREATE FUNCTION sales_tax(subtotal real, OUT tax real) AS $$
 BEGIN
     tax := subtotal * 0.06;
-    RETURN;
 END;
 $$ LANGUAGE plpgsql;
 </programlisting>
@@ -691,7 +690,6 @@ CREATE FUNCTION sum_n_product(x int, y int, OUT sum int, OUT prod int) AS $$
 BEGIN
     sum := x + y;
     prod := x * y;
-    RETURN;
 END;
 $$ LANGUAGE plpgsql;
 </programlisting>
@@ -742,7 +740,6 @@ CREATE FUNCTION add_three_values(v1 anyelement, v2 anyelement, v3 anyelement,
 AS $$
 BEGIN
     sum := v1 + v2 + v3;
-    RETURN;
 END;
 $$ LANGUAGE plpgsql;
 </programlisting>
@@ -1498,17 +1495,20 @@ RETURN <replaceable>expression</replaceable>;
      </para>
 
      <para>
-      The return value of a function cannot be left undefined. If
-      control reaches the end of the top-level block of the function
-      without hitting a <command>RETURN</command> statement, a run-time
-      error will occur.
+      If you declared the function to return <type>void</type>, a
+      <command>RETURN</command> statement can be used to exit the function
+      early; but do not write an expression following
+      <command>RETURN</command>.
      </para>
 
      <para>
-      If you have declared the function to
-      return <type>void</type>, a <command>RETURN</command> statement
-      must still be provided; but in this case the expression following
-      <command>RETURN</command> is optional and will be ignored if present.
+      The return value of a function cannot be left undefined. If
+      control reaches the end of the top-level block of the function
+      without hitting a <command>RETURN</command> statement, a run-time
+      error will occur.  This restriction does not apply to functions
+      with output parameters and functions returning <type>void</type>,
+      however.  In those cases a <command>RETURN</command> statement is
+      automatically executed if the top-level block finishes.
      </para>
     </sect3>
 
@@ -1538,7 +1538,8 @@ RETURN NEXT <replaceable>expression</replaceable>;
       the <application>PL/pgSQL</> function.  As successive
       <command>RETURN NEXT</command> commands are executed, the result
       set is built up.  A final <command>RETURN</command>, which should
-      have no argument, causes control to exit the function.
+      have no argument, causes control to exit the function (or you can
+      just let control reach the end of the function).
      </para>
 
      <para>
@@ -2424,7 +2425,6 @@ BEGIN
     RETURN NEXT $1;
     OPEN $2 FOR SELECT * FROM table_2;
     RETURN NEXT $2;
-    RETURN;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -2990,7 +2990,8 @@ AFTER INSERT OR UPDATE OR DELETE ON sales_fact
 
      <listitem>
       <para>
-       In <productname>PostgreSQL</> you need to use dollar quoting or escape
+       In <productname>PostgreSQL</> the function body has to be written as
+       a string literal.  Therefore you need to use dollar quoting or escape
        single quotes in the function body. See <xref
        linkend="plpgsql-quote-tips">.
       </para>
@@ -3027,8 +3028,8 @@ AFTER INSERT OR UPDATE OR DELETE ON sales_fact
     <para>
      Here is an <productname>Oracle</productname> <application>PL/SQL</> function:
 <programlisting>
-CREATE OR REPLACE FUNCTION cs_fmt_browser_version(v_name IN varchar,
-                                                  v_version IN varchar)
+CREATE OR REPLACE FUNCTION cs_fmt_browser_version(v_name varchar,
+                                                  v_version varchar)
 RETURN varchar IS
 BEGIN
     IF v_version IS NULL THEN
@@ -3042,21 +3043,10 @@ show errors;
     </para>
 
     <para>
-     Let's go through this function and see the differences to <application>PL/pgSQL</>:
+     Let's go through this function and see the differences compared to
+     <application>PL/pgSQL</>:
 
      <itemizedlist>
-      <listitem>
-       <para>
-        <productname>Oracle</productname> can have
-        <literal>IN</literal>, <literal>OUT</literal>, and
-        <literal>INOUT</literal> parameters passed to functions.
-        <literal>INOUT</literal>, for example, means that the
-        parameter will receive a value and return
-        another. <productname>PostgreSQL</> only has <literal>IN</literal>
-        parameters, and hence there is no specification of the parameter kind.
-       </para>
-      </listitem>
-
       <listitem>
        <para>
         The <literal>RETURN</literal> key word in the function
@@ -3187,7 +3177,6 @@ BEGIN
       || ' LANGUAGE plpgsql;' ;
 
     EXECUTE func_cmd;
-    RETURN;
 END;
 $func$ LANGUAGE plpgsql;
 </programlisting>
@@ -3209,8 +3198,8 @@ $func$ LANGUAGE plpgsql;
    <para>
     <xref linkend="plpgsql-porting-ex3"> shows how to port a function
     with <literal>OUT</> parameters and string manipulation.
-    <productname>PostgreSQL</> does not have an
-    <function>instr</function> function, but you can work around it
+    <productname>PostgreSQL</> does not have a built-in
+    <function>instr</function> function, but you can create one
     using a combination of other
     functions.<indexterm><primary>instr</></indexterm> In <xref
     linkend="plpgsql-porting-appendix"> there is a
@@ -3227,9 +3216,6 @@ $func$ LANGUAGE plpgsql;
     <para>
      The following <productname>Oracle</productname> PL/SQL procedure is used
      to parse a URL and return several elements (host, path, and query).
-     In <productname>PostgreSQL</>, functions can return only one value.
-     One way to work around this is to make the return value a composite
-     type (row type).
     </para>
 
     <para>
@@ -3278,45 +3264,41 @@ show errors;
     <para>
      Here is a possible translation into <application>PL/pgSQL</>:
 <programlisting>
-CREATE TYPE cs_parse_url_result AS (
-    v_host VARCHAR,
-    v_path VARCHAR,
-    v_query VARCHAR
-);
-
-CREATE OR REPLACE FUNCTION cs_parse_url(v_url VARCHAR)
-RETURNS cs_parse_url_result AS $$
+CREATE OR REPLACE FUNCTION cs_parse_url(
+    v_url IN VARCHAR,
+    v_host OUT VARCHAR,  -- This will be passed back
+    v_path OUT VARCHAR,  -- This one too
+    v_query OUT VARCHAR) -- And this one
+AS $$
 DECLARE
-    res cs_parse_url_result;
     a_pos1 INTEGER;
     a_pos2 INTEGER;
 BEGIN
-    res.v_host := NULL;
-    res.v_path := NULL;
-    res.v_query := NULL;
+    v_host := NULL;
+    v_path := NULL;
+    v_query := NULL;
     a_pos1 := instr(v_url, '//');
 
     IF a_pos1 = 0 THEN
-        RETURN res;
+        RETURN;
     END IF;
     a_pos2 := instr(v_url, '/', a_pos1 + 2);
     IF a_pos2 = 0 THEN
-        res.v_host := substr(v_url, a_pos1 + 2);
-        res.v_path := '/';
-        RETURN res;
+        v_host := substr(v_url, a_pos1 + 2);
+        v_path := '/';
+        RETURN;
     END IF;
 
-    res.v_host := substr(v_url, a_pos1 + 2, a_pos2 - a_pos1 - 2);
+    v_host := substr(v_url, a_pos1 + 2, a_pos2 - a_pos1 - 2);
     a_pos1 := instr(v_url, '?', a_pos2 + 1);
 
     IF a_pos1 = 0 THEN
-        res.v_path := substr(v_url, a_pos2);
-        RETURN res;
+        v_path := substr(v_url, a_pos2);
+        RETURN;
     END IF;
 
-    res.v_path := substr(v_url, a_pos2, a_pos1 - a_pos2);
-    res.v_query := substr(v_url, a_pos1 + 1);
-    RETURN res;
+    v_path := substr(v_url, a_pos2, a_pos1 - a_pos2);
+    v_query := substr(v_url, a_pos1 + 1);
 END;
 $$ LANGUAGE plpgsql;
 </programlisting>
@@ -3427,8 +3409,6 @@ BEGIN
         WHEN unique_violation THEN <co id="co.plpgsql-porting-exception">
             -- don't worry if it already exists
     END;
-
-    RETURN;
 END;
 $$ LANGUAGE plpgsql;
 </programlisting>

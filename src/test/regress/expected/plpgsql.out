@@ -1739,7 +1739,8 @@ SELECT * FROM test_ret_rec_dyn(5) AS (a int, b numeric, c text);
 (1 row)
 
 --
--- Test handling of OUT parameters, including polymorphic cases
+-- Test handling of OUT parameters, including polymorphic cases.
+-- Note that RETURN is optional with OUT params; we try both ways.
 --
 -- wrong way to do it:
 create function f1(in i int, out j int) returns int as $$
@@ -1769,7 +1770,6 @@ select * from f1(42);
 create or replace function f1(inout i int) as $$
 begin
   i := i+1;
-  return;
 end$$ language plpgsql;
 select f1(42);
  f1 
@@ -1805,7 +1805,6 @@ begin
   j := i;
   j := j+1;
   k := 'foo';
-  return;
 end$$ language plpgsql;
 select f1(42);
     f1    
@@ -1828,7 +1827,6 @@ begin
   j := j+1;
   k := 'foot';
   return next;
-  return;
 end$$ language plpgsql;
 select * from f1(42);
  j  |  k   
@@ -2358,6 +2356,27 @@ create function void_return_expr() returns void as $$
 begin
     return 5;
 end;$$ language plpgsql;
-ERROR:  function returning void cannot specify RETURN expression at or near "5" at character 72
+ERROR:  RETURN cannot have a parameter in function returning void at or near "5" at character 72
 LINE 3:     return 5;
                    ^
+-- VOID functions are allowed to omit RETURN
+create function void_return_expr() returns void as $$
+begin
+    perform 2+2;
+end;$$ language plpgsql;
+select void_return_expr();
+ void_return_expr 
+------------------
+ 
+(1 row)
+
+-- but ordinary functions are not
+create function missing_return_expr() returns int as $$
+begin
+    perform 2+2;
+end;$$ language plpgsql;
+select missing_return_expr();
+ERROR:  control reached end of function without RETURN
+CONTEXT:  PL/pgSQL function "missing_return_expr"
+drop function void_return_expr();
+drop function missing_return_expr();

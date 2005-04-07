@@ -1561,7 +1561,8 @@ SELECT * FROM test_ret_rec_dyn(1500) AS (a int, b int, c int);
 SELECT * FROM test_ret_rec_dyn(5) AS (a int, b numeric, c text);
 
 --
--- Test handling of OUT parameters, including polymorphic cases
+-- Test handling of OUT parameters, including polymorphic cases.
+-- Note that RETURN is optional with OUT params; we try both ways.
 --
 
 -- wrong way to do it:
@@ -1582,7 +1583,6 @@ select * from f1(42);
 create or replace function f1(inout i int) as $$
 begin
   i := i+1;
-  return;
 end$$ language plpgsql;
 
 select f1(42);
@@ -1608,7 +1608,6 @@ begin
   j := i;
   j := j+1;
   k := 'foo';
-  return;
 end$$ language plpgsql;
 
 select f1(42);
@@ -1624,7 +1623,6 @@ begin
   j := j+1;
   k := 'foot';
   return next;
-  return;
 end$$ language plpgsql;
 
 select * from f1(42);
@@ -2001,3 +1999,22 @@ create function void_return_expr() returns void as $$
 begin
     return 5;
 end;$$ language plpgsql;
+
+-- VOID functions are allowed to omit RETURN
+create function void_return_expr() returns void as $$
+begin
+    perform 2+2;
+end;$$ language plpgsql;
+
+select void_return_expr();
+
+-- but ordinary functions are not
+create function missing_return_expr() returns int as $$
+begin
+    perform 2+2;
+end;$$ language plpgsql;
+
+select missing_return_expr();
+
+drop function void_return_expr();
+drop function missing_return_expr();

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.86 2005/04/05 06:22:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.87 2005/04/07 14:53:04 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -271,8 +271,8 @@ do_compile(FunctionCallInfo fcinfo,
 	int			parse_rc;
 	Oid			rettypeid;
 	int			numargs;
-	int			num_in_args;
-	int			num_out_args;
+	int			num_in_args = 0;
+	int			num_out_args = 0;
 	Oid		   *argtypes;
 	char	  **argnames;
 	char	   *argmodes;
@@ -374,7 +374,6 @@ do_compile(FunctionCallInfo fcinfo,
 			/*
 			 * Create the variables for the procedure's parameters.
 			 */
-			num_in_args = num_out_args = 0;
 			for (i = 0; i < numargs; i++)
 			{
 				char		buf[32];
@@ -641,12 +640,48 @@ do_compile(FunctionCallInfo fcinfo,
 	parse_rc = plpgsql_yyparse();
 	if (parse_rc != 0)
 		elog(ERROR, "plpgsql parser returned %d", parse_rc);
+	function->action = plpgsql_yylval.program;
 
 	plpgsql_scanner_finish();
 	pfree(proc_source);
 
 	/*
-	 * If that was successful, complete the function's info.
+	 * If it has OUT parameters or returns VOID or returns a set, we allow
+	 * control to fall off the end without an explicit RETURN statement.
+	 * The easiest way to implement this is to add a RETURN statement to the
+	 * end of the statement list during parsing.  However, if the outer block
+	 * has an EXCEPTION clause, we need to make a new outer block, since the
+	 * added RETURN shouldn't act like it is inside the EXCEPTION clause.
+	 */
+	if (num_out_args > 0 || function->fn_rettype == VOIDOID ||
+		function->fn_retset)
+	{
+		if (function->action->exceptions != NIL)
+		{
+			PLpgSQL_stmt_block *new;
+
+			new = palloc0(sizeof(PLpgSQL_stmt_block));
+			new->cmd_type	= PLPGSQL_STMT_BLOCK;
+			new->body		= list_make1(function->action);
+
+			function->action = new;
+		}
+		if (function->action->body == NIL ||
+			((PLpgSQL_stmt *) llast(function->action->body))->cmd_type != PLPGSQL_STMT_RETURN)
+		{
+			PLpgSQL_stmt_return *new;
+
+			new = palloc0(sizeof(PLpgSQL_stmt_return));
+			new->cmd_type = PLPGSQL_STMT_RETURN;
+			new->expr = NULL;
+			new->retvarno = function->out_param_varno;
+
+			function->action->body = lappend(function->action->body, new);
+		}
+	}
+
+	/*
+	 * Complete the function's info
 	 */
 	function->fn_nargs = procStruct->pronargs;
 	for (i = 0; i < function->fn_nargs; i++)
@@ -655,7 +690,6 @@ do_compile(FunctionCallInfo fcinfo,
 	function->datums = palloc(sizeof(PLpgSQL_datum *) * plpgsql_nDatums);
 	for (i = 0; i < plpgsql_nDatums; i++)
 		function->datums[i] = plpgsql_Datums[i];
-	function->action = plpgsql_yylval.program;
 
 	/* Debug dump for completed functions */
 	if (plpgsql_DumpExecTree)

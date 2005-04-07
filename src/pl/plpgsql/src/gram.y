@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.68 2005/04/05 18:05:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.69 2005/04/07 14:53:04 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1071,7 +1071,7 @@ stmt_return		: K_RETURN lno
 						else if (plpgsql_curr_compile->fn_rettype == VOIDOID)
 						{
 							if (yylex() != ';')
-								yyerror("function returning void cannot specify RETURN expression");
+								yyerror("RETURN cannot have a parameter in function returning void");
 						}
 						else if (plpgsql_curr_compile->fn_retistuple)
 						{
