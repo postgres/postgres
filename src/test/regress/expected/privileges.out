@@ -128,7 +128,7 @@ ERROR:  permission denied for relation atest1
 UPDATE atest2 SET col2 = NULL; -- ok
 UPDATE atest2 SET col2 = NOT col2; -- fails; requires SELECT on atest2
 ERROR:  permission denied for relation atest2
-UPDATE atest2 SET col2 = true WHERE atest1.a = 5; -- ok
+UPDATE atest2 SET col2 = true FROM atest1 WHERE atest1.a = 5; -- ok
 SELECT * FROM atest1 FOR UPDATE; -- fail
 ERROR:  permission denied for relation atest1
 SELECT * FROM atest2 FOR UPDATE; -- fail

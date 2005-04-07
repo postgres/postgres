@@ -256,6 +256,7 @@ SELECT '' AS "226", d1.f1 AS timestamp1, d2.f1 AS timestamp2, d1.f1 - d2.f1 AS d
 --
 
 SELECT '' AS ten, ABSTIME_TBL.f1 AS abstime, RELTIME_TBL.f1 AS reltime
+    FROM ABSTIME_TBL, RELTIME_TBL
    WHERE (ABSTIME_TBL.f1 + RELTIME_TBL.f1) < abstime 'Jan 14 14:00:00 1971'
    ORDER BY abstime, reltime;
 
@@ -263,19 +264,19 @@ SELECT '' AS ten, ABSTIME_TBL.f1 AS abstime, RELTIME_TBL.f1 AS reltime
 -- the "infinity" and "-infinity" tuples in ABSTIME_TBL cannot be added and
 -- therefore, should not show up in the results.
 
-SELECT '' AS three, ABSTIME_TBL.*
+SELECT '' AS three, * FROM ABSTIME_TBL
   WHERE  (ABSTIME_TBL.f1 + reltime '@ 3 year')         -- +3 years
     < abstime 'Jan 14 14:00:00 1977';
 
-SELECT '' AS three, ABSTIME_TBL.*
+SELECT '' AS three, * FROM ABSTIME_TBL
    WHERE  (ABSTIME_TBL.f1 + reltime '@ 3 year ago')    -- -3 years
      < abstime 'Jan 14 14:00:00 1971';
 
-SELECT '' AS three, ABSTIME_TBL.*
+SELECT '' AS three, * FROM ABSTIME_TBL
    WHERE  (ABSTIME_TBL.f1 - reltime '@ 3 year')        -- -(+3) years
     < abstime 'Jan 14 14:00:00 1971';
 
-SELECT '' AS three, ABSTIME_TBL.*
+SELECT '' AS three, * FROM ABSTIME_TBL
    WHERE  (ABSTIME_TBL.f1 - reltime '@ 3 year ago')    -- -(-3) years
      < abstime 'Jan 14 14:00:00 1977';
 

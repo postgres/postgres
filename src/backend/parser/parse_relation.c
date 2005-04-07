@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.104 2005/04/06 16:34:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.105 2005/04/07 01:51:39 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -596,6 +596,7 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly)
 				RangeTblEntry *rte = rt_fetch(varno, pstate->p_rtable);
 
 				/* joins are always inFromCl, so no need to check */
+				Assert(rte->inFromCl);
 
 				/* use orig_pstate here to get the right sublevels_up */
 				newresult = scanRTEForColumn(orig_pstate, rte, colname);
@@ -1966,17 +1967,12 @@ attnumTypeId(Relation rd, int attid)
 /*
  * Generate a warning or error about an implicit RTE, if appropriate.
  *
- * If ADD_MISSING_FROM is not enabled, raise an error.
- *
- * Our current theory on warnings is that we should allow "SELECT foo.*"
- * but warn about a mixture of explicit and implicit RTEs.
+ * If ADD_MISSING_FROM is not enabled, raise an error. Otherwise, emit
+ * a warning.
  */
 static void
 warnAutoRange(ParseState *pstate, RangeVar *relation)
 {
-	bool		foundInFromCl = false;
-	ListCell   *temp;
-
 	if (!add_missing_from)
 	{
 		if (pstate->parentParseState != NULL)
@@ -1990,19 +1986,9 @@ warnAutoRange(ParseState *pstate, RangeVar *relation)
 					 errmsg("missing FROM-clause entry for table \"%s\"",
 							relation->relname)));
 	}
-
-	foreach(temp, pstate->p_rtable)
+	else
 	{
-		RangeTblEntry *rte = lfirst(temp);
-
-		if (rte->inFromCl)
-		{
-			foundInFromCl = true;
-			break;
-		}
-	}
-	if (foundInFromCl)
-	{
+		/* just issue a warning */
 		if (pstate->parentParseState != NULL)
 			ereport(NOTICE,
 					(errcode(ERRCODE_UNDEFINED_TABLE),

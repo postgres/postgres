@@ -32,24 +32,24 @@ INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
 
 -- test interval operators
 
-SELECT '' AS ten, INTERVAL_TBL.*;
+SELECT '' AS ten, * FROM INTERVAL_TBL;
 
-SELECT '' AS nine, INTERVAL_TBL.*
+SELECT '' AS nine, * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 <> interval '@ 10 days';
 
-SELECT '' AS three, INTERVAL_TBL.*
+SELECT '' AS three, * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 <= interval '@ 5 hours';
 
-SELECT '' AS three, INTERVAL_TBL.*
+SELECT '' AS three, * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 < interval '@ 1 day';
 
-SELECT '' AS one, INTERVAL_TBL.*
+SELECT '' AS one, * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 = interval '@ 34 years';
 
-SELECT '' AS five, INTERVAL_TBL.* 
+SELECT '' AS five, * FROM INTERVAL_TBL 
    WHERE INTERVAL_TBL.f1 >= interval '@ 1 month';
 
-SELECT '' AS nine, INTERVAL_TBL.*
+SELECT '' AS nine, * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 > interval '@ 3 seconds ago';
 
 SELECT '' AS fortyfive, r1.*, r2.*
@@ -59,7 +59,7 @@ SELECT '' AS fortyfive, r1.*, r2.*
 
 SET DATESTYLE = 'postgres';
 
-SELECT '' AS ten, INTERVAL_TBL.*;
+SELECT '' AS ten, * FROM INTERVAL_TBL;
 
 -- test avg(interval), which is somewhat fragile since people have been
 -- known to change the allowed input syntax for type interval without

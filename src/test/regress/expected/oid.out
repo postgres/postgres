@@ -32,7 +32,7 @@ INSERT INTO OID_TBL(f1) VALUES ('32958209582039852935');
 ERROR:  value "32958209582039852935" is out of range for type oid
 INSERT INTO OID_TBL(f1) VALUES ('-23582358720398502385');
 ERROR:  value "-23582358720398502385" is out of range for type oid
-SELECT '' AS six, OID_TBL.*;
+SELECT '' AS six, * FROM OID_TBL;
  six |     f1     
 -----+------------
      |       1234

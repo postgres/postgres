@@ -41,7 +41,7 @@ SELECT 'Infinity'::float8 + 100.0;
 SELECT 'Infinity'::float8 / 'Infinity'::float8;
 SELECT 'nan'::float8 / 'nan'::float8;
 
-SELECT '' AS five, FLOAT8_TBL.*;
+SELECT '' AS five, * FROM FLOAT8_TBL;
 
 SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE f.f1 <> '1004.3';
 
@@ -119,7 +119,7 @@ SELECT ||/ float8 '27' AS three;
 SELECT '' AS five, f.f1, ||/f.f1 AS cbrt_f1 FROM FLOAT8_TBL f;
 
 
-SELECT '' AS five, FLOAT8_TBL.*;
+SELECT '' AS five, * FROM FLOAT8_TBL;
 
 UPDATE FLOAT8_TBL
    SET f1 = FLOAT8_TBL.f1 * '-1'
@@ -137,7 +137,7 @@ SELECT '' AS bad, exp(f.f1) from FLOAT8_TBL f;
 
 SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
 
-SELECT '' AS five, FLOAT8_TBL.*;
+SELECT '' AS five, * FROM FLOAT8_TBL;
 
 -- test for over- and underflow 
 INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
@@ -163,5 +163,5 @@ INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e+200');
 
 INSERT INTO FLOAT8_TBL(f1) VALUES ('-1.2345678901234e-200');
 
-SELECT '' AS five, FLOAT8_TBL.*;
+SELECT '' AS five, * FROM FLOAT8_TBL;
 

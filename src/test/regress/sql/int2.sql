@@ -29,7 +29,7 @@ INSERT INTO INT2_TBL(f1) VALUES ('123 dt');
 INSERT INTO INT2_TBL(f1) VALUES ('');
 
 
-SELECT '' AS five, INT2_TBL.*;
+SELECT '' AS five, * FROM INT2_TBL;
 
 SELECT '' AS four, i.* FROM INT2_TBL i WHERE i.f1 <> int2 '0';
 

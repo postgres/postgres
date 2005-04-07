@@ -3,56 +3,56 @@
 -- grep 843938989 hash.data
 --
 
-SELECT hash_i4_heap.* 
+SELECT * FROM hash_i4_heap
    WHERE hash_i4_heap.random = 843938989;
 
 --
 -- hash index
 -- grep 66766766 hash.data
 --
-SELECT hash_i4_heap.*
+SELECT * FROM hash_i4_heap
    WHERE hash_i4_heap.random = 66766766;
 
 --
 -- hash index
 -- grep 1505703298 hash.data
 --
-SELECT hash_name_heap.*
+SELECT * FROM hash_name_heap
    WHERE hash_name_heap.random = '1505703298'::name;
 
 --
 -- hash index
 -- grep 7777777 hash.data
 --
-SELECT hash_name_heap.*
+SELECT * FROM hash_name_heap
    WHERE hash_name_heap.random = '7777777'::name;
 
 --
 -- hash index
 -- grep 1351610853 hash.data
 --
-SELECT hash_txt_heap.*
+SELECT * FROM hash_txt_heap
    WHERE hash_txt_heap.random = '1351610853'::text;
 
 --
 -- hash index
 -- grep 111111112222222233333333 hash.data
 --
-SELECT hash_txt_heap.*
+SELECT * FROM hash_txt_heap
    WHERE hash_txt_heap.random = '111111112222222233333333'::text;
 
 --
 -- hash index
 -- grep 444705537 hash.data
 --
-SELECT hash_f8_heap.*
+SELECT * FROM hash_f8_heap
    WHERE hash_f8_heap.random = '444705537'::float8;
 
 --
 -- hash index
 -- grep 88888888 hash.data
 --
-SELECT hash_f8_heap.*
+SELECT * FROM hash_f8_heap
    WHERE hash_f8_heap.random = '88888888'::float8;
 
 --

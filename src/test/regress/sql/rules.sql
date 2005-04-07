@@ -218,17 +218,19 @@ select * from rtest_v1;
 update rtest_v1 set b = 88 where b < 50;
 select * from rtest_v1;
 delete from rtest_v1;
-insert into rtest_v1 select rtest_t2.a, rtest_t3.b where rtest_t2.a = rtest_t3.a;
+insert into rtest_v1 select rtest_t2.a, rtest_t3.b
+    from rtest_t2, rtest_t3
+    where rtest_t2.a = rtest_t3.a;
 select * from rtest_v1;
 
 -- updates in a mergejoin
-update rtest_v1 set b = rtest_t2.b where a = rtest_t2.a;
+update rtest_v1 set b = rtest_t2.b from rtest_t2 where rtest_v1.a = rtest_t2.a;
 select * from rtest_v1;
 insert into rtest_v1 select * from rtest_t3;
 select * from rtest_v1;
 update rtest_t1 set a = a + 10 where b > 30;
 select * from rtest_v1;
-update rtest_v1 set a = rtest_t3.a + 20 where b = rtest_t3.b;
+update rtest_v1 set a = rtest_t3.a + 20 from rtest_t3 where rtest_v1.b = rtest_t3.b;
 select * from rtest_v1;
 
 --
@@ -285,9 +287,9 @@ insert into rtest_empmass values ('mayr', '6000.00');
 insert into rtest_emp select * from rtest_empmass;
 select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
 update rtest_empmass set salary = salary + '1000.00';
-update rtest_emp set salary = rtest_empmass.salary where ename = rtest_empmass.ename;
+update rtest_emp set salary = rtest_empmass.salary from rtest_empmass where rtest_emp.ename = rtest_empmass.ename;
 select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
-delete from rtest_emp where ename = rtest_empmass.ename;
+delete from rtest_emp using rtest_empmass where rtest_emp.ename = rtest_empmass.ename;
 select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
 
 --

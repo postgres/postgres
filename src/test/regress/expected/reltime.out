@@ -14,7 +14,7 @@ ERROR:  invalid input syntax for type reltime: "badly formatted reltime"
 INSERT INTO RELTIME_TBL (f1) VALUES ('@ 30 eons ago');
 ERROR:  invalid input syntax for type reltime: "@ 30 eons ago"
 -- test reltime operators
-SELECT '' AS six, RELTIME_TBL.*;
+SELECT '' AS six, * FROM RELTIME_TBL;
  six |      f1       
 -----+---------------
      | @ 1 min
@@ -25,7 +25,7 @@ SELECT '' AS six, RELTIME_TBL.*;
      | @ 14 secs ago
 (6 rows)
 
-SELECT '' AS five, RELTIME_TBL.*
+SELECT '' AS five, * FROM RELTIME_TBL
    WHERE RELTIME_TBL.f1 <> reltime '@ 10 days';
  five |      f1       
 ------+---------------
@@ -36,7 +36,7 @@ SELECT '' AS five, RELTIME_TBL.*
       | @ 14 secs ago
 (5 rows)
 
-SELECT '' AS three, RELTIME_TBL.*
+SELECT '' AS three, * FROM RELTIME_TBL
    WHERE RELTIME_TBL.f1 <= reltime '@ 5 hours';
  three |      f1       
 -------+---------------
@@ -45,7 +45,7 @@ SELECT '' AS three, RELTIME_TBL.*
        | @ 14 secs ago
 (3 rows)
 
-SELECT '' AS three, RELTIME_TBL.*
+SELECT '' AS three, * FROM RELTIME_TBL
    WHERE RELTIME_TBL.f1 < reltime '@ 1 day';
  three |      f1       
 -------+---------------
@@ -54,14 +54,14 @@ SELECT '' AS three, RELTIME_TBL.*
        | @ 14 secs ago
 (3 rows)
 
-SELECT '' AS one, RELTIME_TBL.*
+SELECT '' AS one, * FROM RELTIME_TBL
    WHERE RELTIME_TBL.f1 = reltime '@ 34 years';
  one |     f1     
 -----+------------
      | @ 34 years
 (1 row)
 
-SELECT '' AS two, RELTIME_TBL.* 
+SELECT '' AS two, * FROM RELTIME_TBL
    WHERE RELTIME_TBL.f1 >= reltime '@ 1 month';
  two |     f1     
 -----+------------
@@ -69,7 +69,7 @@ SELECT '' AS two, RELTIME_TBL.*
      | @ 3 mons
 (2 rows)
 
-SELECT '' AS five, RELTIME_TBL.*
+SELECT '' AS five, * FROM RELTIME_TBL
    WHERE RELTIME_TBL.f1 > reltime '@ 3 seconds ago';
  five |     f1     
 ------+------------

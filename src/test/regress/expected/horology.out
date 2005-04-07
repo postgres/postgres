@@ -2213,6 +2213,7 @@ SELECT '' AS "226", d1.f1 AS timestamp1, d2.f1 AS timestamp2, d1.f1 - d2.f1 AS d
 -- abstime, reltime arithmetic
 --
 SELECT '' AS ten, ABSTIME_TBL.f1 AS abstime, RELTIME_TBL.f1 AS reltime
+    FROM ABSTIME_TBL, RELTIME_TBL
    WHERE (ABSTIME_TBL.f1 + RELTIME_TBL.f1) < abstime 'Jan 14 14:00:00 1971'
    ORDER BY abstime, reltime;
  ten |           abstime            |    reltime    
@@ -2232,7 +2233,7 @@ SELECT '' AS ten, ABSTIME_TBL.f1 AS abstime, RELTIME_TBL.f1 AS reltime
 -- these four queries should return the same answer
 -- the "infinity" and "-infinity" tuples in ABSTIME_TBL cannot be added and
 -- therefore, should not show up in the results.
-SELECT '' AS three, ABSTIME_TBL.*
+SELECT '' AS three, * FROM ABSTIME_TBL
   WHERE  (ABSTIME_TBL.f1 + reltime '@ 3 year')         -- +3 years
     < abstime 'Jan 14 14:00:00 1977';
  three |              f1              
@@ -2242,7 +2243,7 @@ SELECT '' AS three, ABSTIME_TBL.*
        | Sat May 10 23:59:12 1947 PST
 (3 rows)
 
-SELECT '' AS three, ABSTIME_TBL.*
+SELECT '' AS three, * FROM ABSTIME_TBL
    WHERE  (ABSTIME_TBL.f1 + reltime '@ 3 year ago')    -- -3 years
      < abstime 'Jan 14 14:00:00 1971';
  three |              f1              
@@ -2252,7 +2253,7 @@ SELECT '' AS three, ABSTIME_TBL.*
        | Sat May 10 23:59:12 1947 PST
 (3 rows)
 
-SELECT '' AS three, ABSTIME_TBL.*
+SELECT '' AS three, * FROM ABSTIME_TBL
    WHERE  (ABSTIME_TBL.f1 - reltime '@ 3 year')        -- -(+3) years
     < abstime 'Jan 14 14:00:00 1971';
  three |              f1              
@@ -2262,7 +2263,7 @@ SELECT '' AS three, ABSTIME_TBL.*
        | Sat May 10 23:59:12 1947 PST
 (3 rows)
 
-SELECT '' AS three, ABSTIME_TBL.*
+SELECT '' AS three, * FROM ABSTIME_TBL
    WHERE  (ABSTIME_TBL.f1 - reltime '@ 3 year ago')    -- -(-3) years
      < abstime 'Jan 14 14:00:00 1977';
  three |              f1              

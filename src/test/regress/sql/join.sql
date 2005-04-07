@@ -349,3 +349,27 @@ DROP TABLE t3;
 
 DROP TABLE J1_TBL;
 DROP TABLE J2_TBL;
+
+-- Both DELETE and UPDATE allow the specification of additional tables
+-- to "join" against to determine which rows should be modified.
+
+CREATE TEMP TABLE t1 (a int, b int);
+CREATE TEMP TABLE t2 (a int, b int);
+CREATE TEMP TABLE t3 (x int, y int);
+
+INSERT INTO t1 VALUES (5, 10);
+INSERT INTO t1 VALUES (15, 20);
+INSERT INTO t1 VALUES (100, 100);
+INSERT INTO t1 VALUES (200, 1000);
+INSERT INTO t2 VALUES (200, 2000);
+INSERT INTO t3 VALUES (5, 20);
+INSERT INTO t3 VALUES (6, 7);
+INSERT INTO t3 VALUES (7, 8);
+INSERT INTO t3 VALUES (500, 100);
+
+DELETE FROM t3 USING t1 table1 WHERE t3.x = table1.a;
+SELECT * FROM t3;
+DELETE FROM t3 USING t1 JOIN t2 USING (a) WHERE t3.x > t1.a;
+SELECT * FROM t3;
+DELETE FROM t3 USING t3 t3_other WHERE t3.x = t3_other.x AND t3.y = t3_other.y;
+SELECT * FROM t3;

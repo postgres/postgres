@@ -27,7 +27,7 @@ INSERT INTO INT4_TBL(f1) VALUES ('123       5');
 ERROR:  invalid input syntax for integer: "123       5"
 INSERT INTO INT4_TBL(f1) VALUES ('');
 ERROR:  invalid input syntax for integer: ""
-SELECT '' AS five, INT4_TBL.*;
+SELECT '' AS five, * FROM INT4_TBL;
  five |     f1      
 ------+-------------
       |           0

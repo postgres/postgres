@@ -277,7 +277,9 @@ select * from rtest_v1;
 (3 rows)
 
 delete from rtest_v1;
-insert into rtest_v1 select rtest_t2.a, rtest_t3.b where rtest_t2.a = rtest_t3.a;
+insert into rtest_v1 select rtest_t2.a, rtest_t3.b
+    from rtest_t2, rtest_t3
+    where rtest_t2.a = rtest_t3.a;
 select * from rtest_v1;
  a | b  
 ---+----
@@ -287,7 +289,7 @@ select * from rtest_v1;
 (3 rows)
 
 -- updates in a mergejoin
-update rtest_v1 set b = rtest_t2.b where a = rtest_t2.a;
+update rtest_v1 set b = rtest_t2.b from rtest_t2 where rtest_v1.a = rtest_t2.a;
 select * from rtest_v1;
  a | b  
 ---+----
@@ -324,7 +326,7 @@ select * from rtest_v1;
  15 | 35
 (8 rows)
 
-update rtest_v1 set a = rtest_t3.a + 20 where b = rtest_t3.b;
+update rtest_v1 set a = rtest_t3.a + 20 from rtest_t3 where rtest_v1.b = rtest_t3.b;
 select * from rtest_v1;
  a  | b  
 ----+----
@@ -435,7 +437,7 @@ select ename, who = current_user as "matches user", action, newsal, oldsal from 
 (8 rows)
 
 update rtest_empmass set salary = salary + '1000.00';
-update rtest_emp set salary = rtest_empmass.salary where ename = rtest_empmass.ename;
+update rtest_emp set salary = rtest_empmass.salary from rtest_empmass where rtest_emp.ename = rtest_empmass.ename;
 select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
         ename         | matches user |   action   |   newsal   |   oldsal   
 ----------------------+--------------+------------+------------+------------
@@ -452,7 +454,7 @@ select ename, who = current_user as "matches user", action, newsal, oldsal from 
  wieck                | t            | honored    |  $7,000.00 |  $6,000.00
 (11 rows)
 
-delete from rtest_emp where ename = rtest_empmass.ename;
+delete from rtest_emp using rtest_empmass where rtest_emp.ename = rtest_empmass.ename;
 select ename, who = current_user as "matches user", action, newsal, oldsal from rtest_emplog order by ename, action, newsal;
         ename         | matches user |   action   |   newsal   |   oldsal   
 ----------------------+--------------+------------+------------+------------

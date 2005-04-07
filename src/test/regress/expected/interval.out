@@ -62,7 +62,7 @@ ERROR:  invalid input syntax for type interval: "badly formatted interval"
 INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
 ERROR:  invalid input syntax for type interval: "@ 30 eons ago"
 -- test interval operators
-SELECT '' AS ten, INTERVAL_TBL.*;
+SELECT '' AS ten, * FROM INTERVAL_TBL;
  ten |       f1        
 -----+-----------------
      | 00:01:00
@@ -77,7 +77,7 @@ SELECT '' AS ten, INTERVAL_TBL.*;
      | 5 mons 12:00:00
 (10 rows)
 
-SELECT '' AS nine, INTERVAL_TBL.*
+SELECT '' AS nine, * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 <> interval '@ 10 days';
  nine |       f1        
 ------+-----------------
@@ -92,7 +92,7 @@ SELECT '' AS nine, INTERVAL_TBL.*
       | 5 mons 12:00:00
 (9 rows)
 
-SELECT '' AS three, INTERVAL_TBL.*
+SELECT '' AS three, * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 <= interval '@ 5 hours';
  three |    f1     
 -------+-----------
@@ -101,7 +101,7 @@ SELECT '' AS three, INTERVAL_TBL.*
        | -00:00:14
 (3 rows)
 
-SELECT '' AS three, INTERVAL_TBL.*
+SELECT '' AS three, * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 < interval '@ 1 day';
  three |    f1     
 -------+-----------
@@ -110,14 +110,14 @@ SELECT '' AS three, INTERVAL_TBL.*
        | -00:00:14
 (3 rows)
 
-SELECT '' AS one, INTERVAL_TBL.*
+SELECT '' AS one, * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 = interval '@ 34 years';
  one |    f1    
 -----+----------
      | 34 years
 (1 row)
 
-SELECT '' AS five, INTERVAL_TBL.* 
+SELECT '' AS five, * FROM INTERVAL_TBL 
    WHERE INTERVAL_TBL.f1 >= interval '@ 1 month';
  five |       f1        
 ------+-----------------
@@ -128,7 +128,7 @@ SELECT '' AS five, INTERVAL_TBL.*
       | 5 mons 12:00:00
 (5 rows)
 
-SELECT '' AS nine, INTERVAL_TBL.*
+SELECT '' AS nine, * FROM INTERVAL_TBL
    WHERE INTERVAL_TBL.f1 > interval '@ 3 seconds ago';
  nine |       f1        
 ------+-----------------
@@ -197,7 +197,7 @@ SELECT '' AS fortyfive, r1.*, r2.*
 (45 rows)
 
 SET DATESTYLE = 'postgres';
-SELECT '' AS ten, INTERVAL_TBL.*;
+SELECT '' AS ten, * FROM INTERVAL_TBL;
  ten |              f1               
 -----+-------------------------------
      | @ 1 min

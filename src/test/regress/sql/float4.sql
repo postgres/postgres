@@ -42,7 +42,7 @@ SELECT 'Infinity'::float4 / 'Infinity'::float4;
 SELECT 'nan'::float4 / 'nan'::float4;
 
 
-SELECT '' AS five, FLOAT4_TBL.*;
+SELECT '' AS five, * FROM FLOAT4_TBL;
 
 SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE f.f1 <> '1004.3';
 
@@ -71,7 +71,7 @@ SELECT '' AS three, f.f1, f.f1 - '-10' AS x FROM FLOAT4_TBL f
 -- test divide by zero
 SELECT '' AS bad, f.f1 / '0.0' from FLOAT4_TBL f;
 
-SELECT '' AS five, FLOAT4_TBL.*;
+SELECT '' AS five, * FROM FLOAT4_TBL;
 
 -- test the unary float4abs operator 
 SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
@@ -80,5 +80,5 @@ UPDATE FLOAT4_TBL
    SET f1 = FLOAT4_TBL.f1 * '-1'
    WHERE FLOAT4_TBL.f1 > '0.0';
 
-SELECT '' AS five, FLOAT4_TBL.*;
+SELECT '' AS five, * FROM FLOAT4_TBL;
 

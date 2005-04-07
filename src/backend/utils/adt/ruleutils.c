@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.190 2005/04/06 16:34:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.191 2005/04/07 01:51:39 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -199,7 +199,8 @@ static void get_func_expr(FuncExpr *expr, deparse_context *context,
 static void get_agg_expr(Aggref *aggref, deparse_context *context);
 static void get_const_expr(Const *constval, deparse_context *context);
 static void get_sublink_expr(SubLink *sublink, deparse_context *context);
-static void get_from_clause(Query *query, deparse_context *context);
+static void get_from_clause(Query *query, const char *prefix,
+                            deparse_context *context);
 static void get_from_clause_item(Node *jtnode, Query *query,
 					 deparse_context *context);
 static void get_from_clause_alias(Alias *alias, int varno,
@@ -2020,7 +2021,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 	}
 
 	/* Add the FROM clause if needed */
-	get_from_clause(query, context);
+	get_from_clause(query, " FROM ", context);
 
 	/* Add the WHERE clause if given */
 	if (query->jointree->quals != NULL)
@@ -2325,7 +2326,7 @@ get_update_query_def(Query *query, deparse_context *context)
 	}
 
 	/* Add the FROM clause if needed */
-	get_from_clause(query, context);
+	get_from_clause(query, " FROM ", context);
 
 	/* Finally add a WHERE clause if given */
 	if (query->jointree->quals != NULL)
@@ -2360,6 +2361,9 @@ get_delete_query_def(Query *query, deparse_context *context)
 	appendStringInfo(buf, "DELETE FROM %s%s",
 					 only_marker(rte),
 					 generate_relation_name(rte->relid));
+
+    /* Add the USING clause if given */
+    get_from_clause(query, " USING ", context);
 
 	/* Add a WHERE clause if given */
 	if (query->jointree->quals != NULL)
@@ -3805,10 +3809,14 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 
 /* ----------
  * get_from_clause			- Parse back a FROM clause
+ *
+ * "prefix" is the keyword that denotes the start of the list of FROM
+ * elements. It is FROM when used to parse back SELECT and UPDATE, but
+ * is USING when parsing back DELETE.
  * ----------
  */
 static void
-get_from_clause(Query *query, deparse_context *context)
+get_from_clause(Query *query, const char *prefix, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	bool		first = true;
@@ -3840,7 +3848,7 @@ get_from_clause(Query *query, deparse_context *context)
 
 		if (first)
 		{
-			appendContextKeyword(context, " FROM ",
+			appendContextKeyword(context, prefix,
 								 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
 			first = false;
 		}

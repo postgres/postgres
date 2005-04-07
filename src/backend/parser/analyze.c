@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.317 2005/04/06 16:34:06 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.318 2005/04/07 01:51:38 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -478,6 +478,14 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 										 ACL_DELETE);
 
 	qry->distinctClause = NIL;
+
+	/*
+	 * The USING clause is non-standard SQL syntax, and is equivalent
+	 * in functionality to the FROM list that can be specified for
+	 * UPDATE. The USING keyword is used rather than FROM because FROM
+	 * is already a keyword in the DELETE syntax.
+	 */
+	transformFromClause(pstate, stmt->usingClause);
 
 	/* fix where clause */
 	qual = transformWhereClause(pstate, stmt->whereClause, "WHERE");

@@ -38,7 +38,7 @@ INSERT INTO POLYGON_TBL(f1) VALUES ('(0,1,2,3');
 INSERT INTO POLYGON_TBL(f1) VALUES ('asdf');
 
 
-SELECT '' AS four, POLYGON_TBL.*;
+SELECT '' AS four, * FROM POLYGON_TBL;
 
 -- overlap 
 SELECT '' AS three, p.*

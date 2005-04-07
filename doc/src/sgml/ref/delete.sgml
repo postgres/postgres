@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.22 2005/01/09 05:57:45 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.23 2005/04/07 01:51:37 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
+DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable>
+    [ USING <replaceable class="PARAMETER">usinglist</replaceable> ]
+    [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -50,9 +52,18 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ WHERE 
   </para>
 
   <para>
+   There are two ways to delete rows in a table using information
+   contained in other tables in the database: using sub-selects, or
+   specifying additional tables in the <literal>USING</literal> clause.
+   Which technique is more appropriate depends on the specific
+   circumstances.
+  </para>
+
+  <para>
    You must have the <literal>DELETE</literal> privilege on the table
    to delete from it, as well as the <literal>SELECT</literal>
-   privilege for any table whose values are read in the <replaceable
+   privilege for any table in the <literal>USING</literal> clause or
+   whose values are read in the <replaceable
    class="parameter">condition</replaceable>.
   </para>
  </refsect1>
@@ -66,6 +77,20 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ WHERE 
     <listitem>
      <para>
       The name (optionally schema-qualified) of an existing table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">usinglist</replaceable></term>
+    <listitem>
+     <para>
+      A list of table expressions, allowing columns from other tables
+      to appear in the <literal>WHERE</> condition.  This is similar
+      to the list of tables that can be specified in the <xref
+      linkend="sql-from" endterm="sql-from-title"> of a
+      <command>SELECT</command> statement; for example, an alias for
+      the table name can be specified.
      </para>
     </listitem>
    </varlistentry>
@@ -105,10 +130,11 @@ DELETE <replaceable class="parameter">count</replaceable>
 
   <para>
    <productname>PostgreSQL</productname> lets you reference columns of
-   other tables in the <literal>WHERE</> condition.  For example, to
-   delete all films produced by a given producer, one might do
+   other tables in the <literal>WHERE</> condition by specifying the
+   other tables in the <literal>USING</literal> clause.  For example,
+   to delete all films produced by a given producer, one might do
 <programlisting>
-DELETE FROM films
+DELETE FROM films USING producers
   WHERE producer_id = producers.id AND producers.name = 'foo';
 </programlisting>
    What is essentially happening here is a join between <structname>films</>
@@ -120,10 +146,13 @@ DELETE FROM films
   WHERE producer_id IN (SELECT id FROM producers WHERE name = 'foo');
 </programlisting>
    In some cases the join style is easier to write or faster to
-   execute than the sub-select style.  One objection to the join style
-   is that there is no explicit list of what tables are being used,
-   which makes the style somewhat error-prone; also it cannot handle
-   self-joins.
+   execute than the sub-select style.
+  </para>
+
+  <para>
+   If <varname>add_missing_from</varname> is enabled, any relations
+   mentioned in the <literal>WHERE</literal> condition will be
+   implicitly added to the <literal>USING</literal> clause.
   </para>
  </refsect1>
 
@@ -149,9 +178,10 @@ DELETE FROM films;
   <title>Compatibility</title>
 
   <para>
-   This command conforms to the SQL standard, except that the ability to
-   reference other tables in the <literal>WHERE</> clause is a
-   <productname>PostgreSQL</productname> extension.
+   This command conforms to the SQL standard, except that the
+   <literal>USING</> clause and the ability to reference other tables
+   in the <literal>WHERE</> clause are <productname>PostgreSQL</>
+   extensions.
   </para>
  </refsect1>
 </refentry>

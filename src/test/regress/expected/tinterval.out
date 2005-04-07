@@ -22,7 +22,7 @@ INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["" "infinity"]');
 ERROR:  invalid input syntax for type abstime: ""
 -- test tinterval operators
-SELECT '' AS five, TINTERVAL_TBL.*;
+SELECT '' AS five, * FROM TINTERVAL_TBL;
  five |                               f1                                
 ------+-----------------------------------------------------------------
       | ["-infinity" "infinity"]

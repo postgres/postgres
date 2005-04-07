@@ -2,9 +2,9 @@
 -- FLOAT4
 --
 CREATE TABLE FLOAT4_TBL (f1  float4);
-INSERT INTO FLOAT4_TBL(f1) VALUES ('0.0');
-INSERT INTO FLOAT4_TBL(f1) VALUES ('1004.30');
-INSERT INTO FLOAT4_TBL(f1) VALUES ('-34.84');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('    0.0');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('1004.30   ');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('     -34.84    ');
 INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e+20');
 INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e-20');
 -- test for over and under flow 
@@ -85,7 +85,7 @@ SELECT 'nan'::float4 / 'nan'::float4;
       NaN
 (1 row)
 
-SELECT '' AS five, FLOAT4_TBL.*;
+SELECT '' AS five, * FROM FLOAT4_TBL;
  five |      f1      
 ------+--------------
       |            0
@@ -183,7 +183,7 @@ SELECT '' AS three, f.f1, f.f1 - '-10' AS x FROM FLOAT4_TBL f
 -- test divide by zero
 SELECT '' AS bad, f.f1 / '0.0' from FLOAT4_TBL f;
 ERROR:  division by zero
-SELECT '' AS five, FLOAT4_TBL.*;
+SELECT '' AS five, * FROM FLOAT4_TBL;
  five |      f1      
 ------+--------------
       |            0
@@ -207,7 +207,7 @@ SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
 UPDATE FLOAT4_TBL
    SET f1 = FLOAT4_TBL.f1 * '-1'
    WHERE FLOAT4_TBL.f1 > '0.0';
-SELECT '' AS five, FLOAT4_TBL.*;
+SELECT '' AS five, * FROM FLOAT4_TBL;
  five |      f1       
 ------+---------------
       |             0

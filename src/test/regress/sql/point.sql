@@ -24,7 +24,7 @@ INSERT INTO POINT_TBL(f1) VALUES ('(10.0 10.0)');
 INSERT INTO POINT_TBL(f1) VALUES ('(10.0,10.0');
 
 
-SELECT '' AS six, POINT_TBL.*;
+SELECT '' AS six, * FROM POINT_TBL;
 
 -- left of 
 SELECT '' AS three, p.* FROM POINT_TBL p WHERE p.f1 << '(0.0, 0.0)';

@@ -5,20 +5,21 @@
 -- btree index
 -- awk '{if($1<10){print;}else{next;}}' onek.data | sort +0n -1
 --
-SELECT onek.* WHERE onek.unique1 < 10
+SELECT * FROM onek
+   WHERE onek.unique1 < 10
    ORDER BY onek.unique1;
 
 --
 -- awk '{if($1<20){print $1,$14;}else{next;}}' onek.data | sort +0nr -1
 --
-SELECT onek.unique1, onek.stringu1
+SELECT onek.unique1, onek.stringu1 FROM onek
    WHERE onek.unique1 < 20 
    ORDER BY unique1 using >;
 
 --
 -- awk '{if($1>980){print $1,$14;}else{next;}}' onek.data | sort +1d -2
 --
-SELECT onek.unique1, onek.stringu1
+SELECT onek.unique1, onek.stringu1 FROM onek
    WHERE onek.unique1 > 980 
    ORDER BY stringu1 using <;
 	
@@ -26,7 +27,7 @@ SELECT onek.unique1, onek.stringu1
 -- awk '{if($1>980){print $1,$16;}else{next;}}' onek.data |
 -- sort +1d -2 +0nr -1
 --
-SELECT onek.unique1, onek.string4
+SELECT onek.unique1, onek.string4 FROM onek
    WHERE onek.unique1 > 980 
    ORDER BY string4 using <, unique1 using >;
 	
@@ -34,7 +35,7 @@ SELECT onek.unique1, onek.string4
 -- awk '{if($1>980){print $1,$16;}else{next;}}' onek.data |
 -- sort +1dr -2 +0n -1
 --
-SELECT onek.unique1, onek.string4
+SELECT onek.unique1, onek.string4 FROM onek
    WHERE onek.unique1 > 980
    ORDER BY string4 using >, unique1 using <;
 	
@@ -42,7 +43,7 @@ SELECT onek.unique1, onek.string4
 -- awk '{if($1<20){print $1,$16;}else{next;}}' onek.data |
 -- sort +0nr -1 +1d -2
 --
-SELECT onek.unique1, onek.string4
+SELECT onek.unique1, onek.string4 FROM onek
    WHERE onek.unique1 < 20
    ORDER BY unique1 using >, string4 using <;
 
@@ -50,7 +51,7 @@ SELECT onek.unique1, onek.string4
 -- awk '{if($1<20){print $1,$16;}else{next;}}' onek.data |
 -- sort +0n -1 +1dr -2
 --
-SELECT onek.unique1, onek.string4
+SELECT onek.unique1, onek.string4 FROM onek
    WHERE onek.unique1 < 20 
    ORDER BY unique1 using <, string4 using >;
 
@@ -65,19 +66,19 @@ ANALYZE onek2;
 --
 -- awk '{if($1<10){print $0;}else{next;}}' onek.data | sort +0n -1
 --
-SELECT onek2.* WHERE onek2.unique1 < 10;
+SELECT onek2.* FROM onek2 WHERE onek2.unique1 < 10;
 
 --
 -- awk '{if($1<20){print $1,$14;}else{next;}}' onek.data | sort +0nr -1
 --
-SELECT onek2.unique1, onek2.stringu1
+SELECT onek2.unique1, onek2.stringu1 FROM onek2
     WHERE onek2.unique1 < 20 
     ORDER BY unique1 using >;
 
 --
 -- awk '{if($1>980){print $1,$14;}else{next;}}' onek.data | sort +1d -2
 --
-SELECT onek2.unique1, onek2.stringu1
+SELECT onek2.unique1, onek2.stringu1 FROM onek2
    WHERE onek2.unique1 > 980;
 
 

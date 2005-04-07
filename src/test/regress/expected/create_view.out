@@ -126,8 +126,8 @@ NOTICE:  view "v12_temp" will be a temporary view
 -- a view should also be temporary if it references a temporary sequence
 CREATE SEQUENCE seq1;
 CREATE TEMPORARY SEQUENCE seq1_temp;
-CREATE VIEW v9 AS SELECT seq1.is_called;
-CREATE VIEW v13_temp AS SELECT seq1_temp.is_called;
+CREATE VIEW v9 AS SELECT seq1.is_called FROM seq1;
+CREATE VIEW v13_temp AS SELECT seq1_temp.is_called FROM seq1_temp;
 NOTICE:  view "v13_temp" will be a temporary view
 SELECT relname FROM pg_class
     WHERE relname LIKE 'v_'  

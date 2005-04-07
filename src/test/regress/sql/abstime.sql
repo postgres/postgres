@@ -37,24 +37,24 @@ INSERT INTO ABSTIME_TBL (f1) VALUES ('Jun 10, 1843');
 
 -- test abstime operators
 
-SELECT '' AS eight, ABSTIME_TBL.*;
+SELECT '' AS eight, * FROM ABSTIME_TBL;
 
-SELECT '' AS six, ABSTIME_TBL.*
+SELECT '' AS six, * FROM ABSTIME_TBL
    WHERE ABSTIME_TBL.f1 < abstime 'Jun 30, 2001';
 
-SELECT '' AS six, ABSTIME_TBL.*
+SELECT '' AS six, * FROM ABSTIME_TBL
    WHERE ABSTIME_TBL.f1 > abstime '-infinity';
 
-SELECT '' AS six, ABSTIME_TBL.*
+SELECT '' AS six, * FROM ABSTIME_TBL
    WHERE abstime 'May 10, 1947 23:59:12' <> ABSTIME_TBL.f1;
 
-SELECT '' AS three, ABSTIME_TBL.*
+SELECT '' AS three, * FROM ABSTIME_TBL
    WHERE abstime 'epoch' >= ABSTIME_TBL.f1;
 
-SELECT '' AS four, ABSTIME_TBL.*
+SELECT '' AS four, * FROM ABSTIME_TBL
    WHERE ABSTIME_TBL.f1 <= abstime 'Jan 14, 1973 03:14:21';
 
-SELECT '' AS four, ABSTIME_TBL.*
+SELECT '' AS four, * FROM ABSTIME_TBL
   WHERE ABSTIME_TBL.f1 <?>
 	tinterval '["Apr 1 1950 00:00:00" "Dec 30 1999 23:00:00"]';
 

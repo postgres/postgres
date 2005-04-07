@@ -85,7 +85,7 @@ SELECT 'nan'::float4 / 'nan'::float4;
       NaN
 (1 row)
 
-SELECT '' AS five, FLOAT4_TBL.*;
+SELECT '' AS five, * FROM FLOAT4_TBL;
  five |     f1      
 ------+-------------
       |           0
@@ -183,7 +183,7 @@ SELECT '' AS three, f.f1, f.f1 - '-10' AS x FROM FLOAT4_TBL f
 -- test divide by zero
 SELECT '' AS bad, f.f1 / '0.0' from FLOAT4_TBL f;
 ERROR:  division by zero
-SELECT '' AS five, FLOAT4_TBL.*;
+SELECT '' AS five, * FROM FLOAT4_TBL;
  five |     f1      
 ------+-------------
       |           0
@@ -207,7 +207,7 @@ SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
 UPDATE FLOAT4_TBL
    SET f1 = FLOAT4_TBL.f1 * '-1'
    WHERE FLOAT4_TBL.f1 > '0.0';
-SELECT '' AS five, FLOAT4_TBL.*;
+SELECT '' AS five, * FROM FLOAT4_TBL;
  five |      f1      
 ------+--------------
       |            0

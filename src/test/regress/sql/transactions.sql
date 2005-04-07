@@ -45,7 +45,7 @@ DROP TABLE writetest; -- fail
 INSERT INTO writetest VALUES (1); -- fail
 SELECT * FROM writetest; -- ok
 DELETE FROM temptest; -- ok
-UPDATE temptest SET a = 0 WHERE a = 1 AND writetest.a = temptest.a; -- ok
+UPDATE temptest SET a = 0 FROM writetest WHERE temptest.a = 1 AND writetest.a = temptest.a; -- ok
 PREPARE test AS UPDATE writetest SET a = 0; -- ok
 EXECUTE test; -- fail
 SELECT * FROM writetest, temptest; -- ok

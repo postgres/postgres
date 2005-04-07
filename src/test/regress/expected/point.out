@@ -15,7 +15,7 @@ INSERT INTO POINT_TBL(f1) VALUES ('(10.0 10.0)');
 ERROR:  invalid input syntax for type point: "(10.0 10.0)"
 INSERT INTO POINT_TBL(f1) VALUES ('(10.0,10.0');
 ERROR:  invalid input syntax for type point: "(10.0,10.0"
-SELECT '' AS six, POINT_TBL.*;
+SELECT '' AS six, * FROM POINT_TBL;
  six |     f1     
 -----+------------
      | (0,0)
