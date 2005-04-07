@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.332 2005/04/05 04:47:19 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.333 2005/04/07 19:04:13 tgl Exp $
 -->
 
 <appendix id="release">
@@ -22,8 +22,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.332 2005/04/05 04:47:19 tgl Exp
 
     <para>
      A dump/restore is not required for those running 8.0.*.
-     This release does update the major version number of the
-     <productname>PostgreSQL</productname> libraries so it might be
+     This release updates the major version number of the
+     <productname>PostgreSQL</productname> libraries, so it might be
      necessary to re-link some user applications if they cannot
      find the properly-numbered shared library.
     </para>
@@ -33,42 +33,6 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.332 2005/04/05 04:47:19 tgl Exp
     <title>Changes</title>
 
 <itemizedlist>
-<listitem><para>Use the proper default mask length for <type>INET</> data types with class 
- <literal>D</> addresses (Tom)</para></listitem>
-<listitem><para>Allow plpgsql to assign a value to an array that is initially 
- <literal>NULL</> (Tom)</para></listitem>
-<listitem><para>Fix <command>CLUSTER</> failure after <command>ALTER TABLE 
- SET WITHOUT OIDS</> (Tom)</para></listitem>
-<listitem><para>Fix ecpg bugs in parsing of <command>CREATE</> statement 
- (Michael)</para></listitem>
-<listitem><para>Reduce memory usage of <command>ALTER TABLE ADD COLUMN</> 
- (Neil)</para></listitem>
-<listitem><para>Allow SPI to handle utility commands like <command>EXPLAIN</> 
- that return rows (Tom)</para></listitem>
-<listitem><para>Fix <command>ALTER LANGUAGE RENAME</> (Tom)</para></listitem>
-<listitem><para>Document the Win32 <literal>register</> and <literal>
- unregister</> 
- <application>pg_ctl</> options (Magnus)</para></listitem>
-<listitem><para>Several <filename>/contrib/btree_gist</> fixes (Teodor)
- </para></listitem>
-<listitem><para>New cache replacement policy <acronym>2Q</> replaces 
- <acronym>ARC</> (Tom)</para>
-<para>
- This was done to void a pending US patent on <acronym>ARC</>.  The 
- <acronym>2Q</> code might be a few percentage points slower than 
- <acronym>ARC</> for busy sites.  Another new cache replacement 
- policy will appear in 8.1.
-</para></listitem>
-<listitem><para>Change the Win32 default for config variable 
- <varname>log_destination</> to <option>eventlog</> (Magnus)</para>
-<para>
- This, by default, will send all Win32 server log output to the Win32 event
- logger rather than standard error.
-</para></listitem>
-<listitem><para>Fix crash of some <filename>/contrib/pgcrypto</> 
- functions on some platforms (Neil)</para></listitem>
-<listitem><para>Allow <command>ALTER DATABASE RENAME</> by superusers 
- who can't create databases (Tom)</para></listitem>
 <listitem><para>Increment the major version number of all interface 
  libraries (Bruce)</para>
 <para>
@@ -77,51 +41,120 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.332 2005/04/05 04:47:19 tgl Exp
  can be used on the same machine as 8.0.X applications.  This might require 
  re-linking user applications that use these libraries.
 </para></listitem>
-<listitem><para>Do not use locale-aware versions of <function>upper()</>, 
- <function>lower()</>, and <function>initcap()</> when the locale is <literal>C</>.  
- (Bruce)</para>
+<listitem><para>Add Windows-only <varname>wal_sync_method</> setting of
+ <option>fsync_writethrough</> (Magnus, Bruce)</para>
 <para>
-  This allows these functions to work on platforms that sometimes
-  generate errors with a locale of <literal>C</> and a non-<literal>SQL_ASCII</>
-  encoding.
-</para></listitem>
-<listitem><para>Enable the <varname>wal_sync_method</> variable value of
- <option>open_datasync</> on Win32, and make it the default for that 
-  platform.  (Magnus, Bruce)</para>
+ This setting causes <productname>PostgreSQL</productname> to write through
+ any disk-drive write cache when writing to WAL.
+ This behavior was formerly called <option>fsync</>, but was
+ renamed because it acts quite differently from <option>fsync</> on other
+ platforms.
+</para>
+</listitem>
+<listitem><para>Enable the <varname>wal_sync_method</> setting of
+ <option>open_datasync</> on Windows, and make it the default for that 
+  platform (Magnus, Bruce)</para>
 <para>
-  This makes Win32 behave like other supported platforms that require the 
-  administrator to make sure that data is guaranteed to be written to permanent
-  storage after a sync operation.  To turn off the write cache on Win32, 
-  from the <application>Device Manager</>, chose the drive properties, 
-  then <literal>Policies</>.
+ Because the default is no longer <option>fsync_writethrough</>,
+ data loss is possible during a power failure if the disk drive has
+ write caching enabled. To turn off the write cache on Windows, 
+ from the <application>Device Manager</>, choose the drive properties, 
+ then <literal>Policies</>.
+</para>
+</listitem>
+<listitem><para>New cache management algorithm <acronym>2Q</> replaces 
+ <acronym>ARC</> (Tom)</para>
+<para>
+ This was done to avoid a pending US patent on <acronym>ARC</>.  The 
+ <acronym>2Q</> code might be a few percentage points slower than 
+ <acronym>ARC</> for some work loads.  A better cache management algorithm
+ will appear in 8.1.
 </para></listitem>
-<listitem><para>Add Win32-only <varname>wal_sync_method</> value of <option>
- fsync_writethrough</> to write through any write cache between the 
- operating system and the drive when doing a sync.
- (Magnus, Bruce)</para></listitem>
-<listitem><para>Fix crash from a backend exiting an open transaction 
- with a <command>CREATE</> and a <command>FETCH</> (Tom)</para></listitem>
+<listitem><para>Planner adjustments to improve behavior on freshly-created
+tables (Tom)</para></listitem>
+<listitem><para>Allow plpgsql to assign to an element of an array that is
+initially <literal>NULL</> (Tom)</para>
+<para>
+ Formerly the array would remain <literal>NULL</>, but now it becomes a
+ single-element array.  The main SQL engine was changed to handle
+ <command>UPDATE</> of a null array value this way in 8.0, but the similar
+ case in plpgsql was overlooked.
+</para>
+</listitem>
+<listitem><para>Convert <literal>\r\n</> and <literal>\r</> to <literal>\n</>
+in plpython function bodies (Michael Fuhr)</para>
+<para>
+  This prevents syntax errors when plpython code is written on a Windows or
+  Mac client.
+</para>
+</listitem>
+<listitem><para>Allow SPI cursors to handle utility commands that return rows,
+such as <command>EXPLAIN</> (Tom)</para></listitem>
+<listitem><para>Fix <command>CLUSTER</> failure after <command>ALTER TABLE 
+ SET WITHOUT OIDS</> (Tom)</para></listitem>
+<listitem><para>Reduce memory usage of <command>ALTER TABLE ADD COLUMN</> 
+ (Neil)</para></listitem>
+<listitem><para>Fix <command>ALTER LANGUAGE RENAME</> (Tom)</para></listitem>
+<listitem><para>Document the Windows-only <literal>register</> and
+<literal>unregister</> options of <application>pg_ctl</> (Magnus)</para></listitem>
+<listitem><para>Ensure operations done during backend shutdown are counted by
+statistics collector</para>
+<para>
+ This is expected to resolve reports of <application>pg_autovacuum</>
+ not vacuuming the system catalogs often enough &mdash; it was not being
+ told about catalog deletions caused by temporary table removal during
+ backend exit.
+</para></listitem>
+<listitem><para>Change the Windows default for configuration parameter
+ <varname>log_destination</> to <option>eventlog</> (Magnus)</para>
+<para>
+ By default, a server running on Windows will now send log output to the
+ Windows event logger rather than standard error.
+</para></listitem>
+<listitem><para>Make Kerberos authentication work on Windows (Magnus)</para></listitem>
+<listitem><para>Allow <command>ALTER DATABASE RENAME</> by superusers 
+ who aren't flagged as having CREATEDB privilege (Tom)</para></listitem>
+<listitem><para>Modify WAL log entries for <command>CREATE</> and
+<command>DROP DATABASE</> to not specify absolute paths (Tom)</para>
+ <para>This allows point-in-time recovery on a different machine with possibly
+ different database location.  Note that <command>CREATE TABLESPACE</> still
+ poses a hazard in such situations.
+</para></listitem>
+<listitem><para>Fix crash from a backend exiting with an open transaction 
+ that created a table and opened a cursor on it (Tom)</para></listitem>
+<listitem><para>Fix <function>array_map()</> so it can call PL functions 
+ (Tom)</para></listitem>
+<listitem><para>Several <filename>contrib/tsearch2</> and
+<filename>contrib/btree_gist</> fixes (Teodor)
+ </para></listitem>
+<listitem><para>Fix crash of some <filename>contrib/pgcrypto</> 
+ functions on some platforms (Marko Kreen)</para></listitem>
+<listitem><para>Fix <filename>contrib/intagg</> for 64-bit platforms 
+ (Tom)</para></listitem>
+<listitem><para>Fix ecpg bugs in parsing of <command>CREATE</> statement 
+ (Michael)</para></listitem>
 <listitem><para>Work around gcc bug on powerpc and amd64 causing problems in 
  ecpg (Christof Petig)</para></listitem>
-<listitem><para>Modify WAL log entries for <command>CREATE</> and <command>
- DROP DATABASE</> to not specify absolute paths</para>
- <para>This allows point-in-time recovery on a different machine.  (Tom)
+<listitem><para>Do not use locale-aware versions of <function>upper()</>, 
+ <function>lower()</>, and <function>initcap()</> when the locale is
+ <literal>C</> (Bruce)</para>
+<para>
+  This allows these functions to work on platforms that generate errors
+  for non-7-bit data when the locale is <literal>C</>.
 </para></listitem>
-<listitem><para>Fix <filename>/contrib/intagg</> for 64-bit platforms 
- (Tom)</para></listitem>
-<listitem><para>Convert plpython function bodies containing <literal>\r\n</> 
- and <literal>\r</> to <literal>\n</> (Michael Fuhr)</para></listitem>
-<listitem><para>Allow Kerberos to work on Win32 (Magnus)</para></listitem>
+<listitem><para>Fix <function>quote_ident()</> to quote names that match keywords (Tom)</para></listitem>
 <listitem><para>Fix <function>to_date()</> to behave reasonably when 
  <literal>CC</> and <literal>YY</> fields are both used (Karel)</para></listitem>
 <listitem><para>Prevent <function>to_char(interval)</> from failing 
  when given a zero-month interval (Tom)</para></listitem>
-<listitem><para>Fix wrong week returned by <function>date_trunc</>('week')</para>
+<listitem><para>Fix wrong week returned by <function>date_trunc('week')</>
+(Bruce)</para>
 <para>
- This was a problem for early January dates.  <function>date_trunc('week')</>
- returned the wrong year for <literal> 2005-01-01</> and <literal>2006-01-01</> 
- (Bruce)
+ <function>date_trunc('week')</>
+ returned the wrong year for the first few days of January in some years.
 </para></listitem>
+<listitem><para>Use the correct default mask length for class <literal>D</>
+ addresses in <type>INET</> data types (Tom)</para></listitem>
 </itemizedlist>
 
   </sect2>
