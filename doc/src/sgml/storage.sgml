@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.4 2005/01/10 00:04:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.5 2005/04/07 03:31:42 neilc Exp $
 -->
 
 <chapter id="storage">
@@ -200,7 +200,7 @@ itself).  <acronym>TOAST</> does not constrain the rest of the representation.
 All the C-level functions supporting a <acronym>TOAST</>-able data type must
 be careful to handle <acronym>TOAST</>ed input values.  (This is normally done
 by invoking <function>PG_DETOAST_DATUM</> before doing anything with an input
-value; but in some cases more efficient approaches are possible.)
+value, but in some cases more efficient approaches are possible.)
 </para>
 
 <para>
