@@ -2183,3 +2183,4 @@ SELECT * FROM t3;
  x | y 
 ---+---
 (0 rows)
+
