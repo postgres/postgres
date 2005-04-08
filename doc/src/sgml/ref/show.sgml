@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.37 2005/01/04 03:58:16 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.38 2005/04/08 00:59:58 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -166,7 +166,7 @@ SHOW geqo;
 SHOW ALL;
               name              |                     setting
 --------------------------------+----------------------------------------------
- add_missing_from               | on
+ add_missing_from               | off
  archive_command                | unset
  australian_timezones           | off
     .

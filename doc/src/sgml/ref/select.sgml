@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.82 2005/03/10 23:21:20 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.83 2005/04/08 00:59:58 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -1011,42 +1011,21 @@ SELECT 2+2;
    </para>
 
    <para>
-    A less obvious use is to abbreviate a normal
-    <command>SELECT</command> from tables:
+    Note that if a <literal>FROM</literal> clause is not specified,
+    the query cannot reference any database tables. For example, the
+    following query is invalid:
 <programlisting>
 SELECT distributors.* WHERE distributors.name = 'Westward';
-
- did |   name
------+----------
- 108 | Westward
 </programlisting>
-    This works because an implicit <literal>FROM</literal> item is
-    added for each table that is referenced in other parts of the
-    <command>SELECT</command> statement but not mentioned in
-    <literal>FROM</literal>.
-   </para>
-
-   <para>
-    While this is a convenient shorthand, it's easy to misuse.  For
-    example, the command
-<programlisting>
-SELECT distributors.* FROM distributors d;
-</programlisting>
-    is probably a mistake; most likely the user meant
-<programlisting>
-SELECT d.* FROM distributors d;
-</programlisting>
-    rather than the unconstrained join
-<programlisting>
-SELECT distributors.* FROM distributors d, distributors distributors;
-</programlisting>
-    that he will actually get.  To help detect this sort of mistake,
-    <productname>PostgreSQL</productname> will warn if the
-    implicit-<literal>FROM</literal> feature is used in a
-    <command>SELECT</command> statement that also contains an explicit
-    <literal>FROM</literal> clause.  Also, it is possible to disable
-    the implicit-<literal>FROM</literal> feature by setting the
-    <xref linkend="guc-add-missing-from"> parameter to false.
+    <productname>PostgreSQL</productname> releases prior to
+    8.1 would accept queries of this form, and add an implicit entry
+    to the query's <literal>FROM</literal> clause for each table
+    referenced by the query. This is no longer the default behavior,
+    because it does not comply with the SQL standard, and is
+    considered by many to be error-prone. For compatibility with
+    applications that rely on this behavior the <xref
+    linkend="guc-add-missing-from"> configuration variable can be
+    enabled.
    </para>
   </refsect2>
 

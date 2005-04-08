@@ -313,7 +313,7 @@
 
 # - Previous Postgres Versions -
 
-#add_missing_from = true
+#add_missing_from = false
 #regex_flavor = advanced	# advanced, extended, or basic
 #sql_inheritance = true
 #default_with_oids = false

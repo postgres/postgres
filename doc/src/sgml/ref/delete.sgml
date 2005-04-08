@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.23 2005/04/07 01:51:37 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.24 2005/04/08 00:59:58 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -147,12 +147,6 @@ DELETE FROM films
 </programlisting>
    In some cases the join style is easier to write or faster to
    execute than the sub-select style.
-  </para>
-
-  <para>
-   If <varname>add_missing_from</varname> is enabled, any relations
-   mentioned in the <literal>WHERE</literal> condition will be
-   implicitly added to the <literal>USING</literal> clause.
   </para>
  </refsect1>
 

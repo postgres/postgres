@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.257 2005/03/25 16:17:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.258 2005/04/08 00:59:59 neilc Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -791,7 +791,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&add_missing_from,
-		true, NULL, NULL
+		false, NULL, NULL
 	},
 	{
 		{"check_function_bodies", PGC_USERSET, CLIENT_CONN_STATEMENT,

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.312 2005/03/29 03:01:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.313 2005/04/08 00:59:57 neilc Exp $
 -->
 
 <chapter Id="runtime">
@@ -3553,15 +3553,25 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        When <literal>true</>, tables that are referenced by a query will be
-        automatically added to the <literal>FROM</> clause if not already
-        present.  The default is <literal>true</> for compatibility with
-        previous releases of <productname>PostgreSQL</>.  However, this
-        behavior is not SQL-standard, and many people dislike it because it
-        can mask mistakes (such as referencing a table where you should have
-        referenced its alias).  Set to <literal>false</> for the SQL-standard
-        behavior of rejecting references to tables that are not listed in
-        <literal>FROM</>.
+        When <literal>true</>, tables that are referenced by a query
+        will be automatically added to the <literal>FROM</> clause if
+        not already present. This behavior does not comply with the
+        SQL standard and many people dislike it because it can mask
+        mistakes (such as referencing a table where you should have
+        referenced its alias). The default is <literal>false</>. This
+        variable can be enabled for compatibility with releases of
+        <productname>PostgreSQL</> prior to 8.1, where this behavior
+        was allowed by default.
+       </para>
+
+       <para>
+        Note that even when this variable is enabled, a warning
+        message will be emitted for each implicit <literal>FROM</>
+        entry referenced by a query. Users are encouraged to update
+        their applications to not rely on this behavior, by adding all
+        tables referenced by a query to the query's <literal>FROM</>
+        clause (or its <literal>USING</> clause in the case of
+        <command>DELETE</>).
        </para>
       </listitem>
      </varlistentry>
