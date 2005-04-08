@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.89 2005/03/31 23:20:49 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.90 2005/04/08 00:55:07 neilc Exp $
  * ----------
  */
 #include "postgres.h"
@@ -40,6 +40,7 @@
 #include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "postmaster/fork_process.h"
 #include "postmaster/postmaster.h"
 #include "storage/backendid.h"
 #include "storage/fd.h"
@@ -576,26 +577,13 @@ pgstat_start(void)
 	/*
 	 * Okay, fork off the collector.
 	 */
-
-	fflush(stdout);
-	fflush(stderr);
-
-#ifdef __BEOS__
-	/* Specific beos actions before backend startup */
-	beos_before_backend_startup();
-#endif
-
 #ifdef EXEC_BACKEND
 	switch ((pgStatPid = pgstat_forkexec(STAT_PROC_BUFFER)))
 #else
-	switch ((pgStatPid = fork()))
+	switch ((pgStatPid = fork_process()))
 #endif
 	{
 		case -1:
-#ifdef __BEOS__
-			/* Specific beos actions */
-			beos_backend_startup_failed();
-#endif
 			ereport(LOG,
 					(errmsg("could not fork statistics buffer: %m")));
 			return 0;
@@ -603,10 +591,6 @@ pgstat_start(void)
 #ifndef EXEC_BACKEND
 		case 0:
 			/* in postmaster child ... */
-#ifdef __BEOS__
-			/* Specific beos actions after backend startup */
-			beos_backend_startup();
-#endif
 			/* Close the postmaster's sockets */
 			ClosePostmasterPorts(false);
 
