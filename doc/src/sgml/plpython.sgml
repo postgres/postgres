@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.27 2005/03/31 03:54:38 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.28 2005/04/09 03:52:43 momjian Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -9,7 +9,7 @@
  <para>
   The <application>PL/Python</application> procedural language allows
   <productname>PostgreSQL</productname> functions to be written in the
-  Python language,<ulink url="http://www.python.org"></ulink>.
+  <ulink url="http://www.python.org">Python language</ulink>.
  </para>
 
  <para>

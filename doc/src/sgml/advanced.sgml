@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.48 2005/03/31 03:54:37 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.49 2005/04/09 03:52:43 momjian Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -467,9 +467,9 @@ SELECT name, altitude
    </para>
 
    <para>
-    If you feel you need more introductory material, please visit the
-    PostgreSQL web site,
-    <ulink url="http://www.postgresql.org"></ulink>, for links to more resources.
+    If you feel you need more introductory material, please visit the PostgreSQL
+    <ulink url="http://www.postgresql.org">web site</ulink>
+    for links to more resources.
    </para>
   </sect1>
  </chapter>

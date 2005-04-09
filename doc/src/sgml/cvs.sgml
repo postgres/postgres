@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.32 2005/03/31 03:54:37 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.33 2005/04/09 03:52:43 momjian Exp $
 -->
 
 <appendix id="cvs">
@@ -298,8 +298,8 @@ cvs commit
    is <productname>CVSup</productname>.
    <productname>CVSup</productname> was developed by
    John Polstra (<email>jdp@polstra.com</email>) to
-   distribute CVS repositories and other file trees for
-   the FreeBSD project, <ulink url="http://www.freebsd.org"></ulink>.
+   distribute CVS repositories and other file trees for the
+   <ulink url="http://www.freebsd.org">FreeBSD project</ulink>.
   </para>
 
   <para>
@@ -449,8 +449,9 @@ CVSROOT/loginfo*
 
    <para>
     The following is a suggested <productname>CVSup</productname> config file from
-    the <productname>PostgreSQL</> ftp site, 
-    <ulink url="ftp://ftp.postgresql.org/pub/CVSup/README.cvsup"></ulink>,
+    the <productname>PostgreSQL</>
+    <ulink url="ftp://ftp.postgresql.org/pub/CVSup/README.cvsup">
+    ftp site</ulink>
     which will fetch the current snapshot only:
 
     <programlisting>
@@ -498,9 +499,9 @@ pgsql
     <para>
      You can use pre-built binaries
      if you have a platform for which binaries
-     are posted on
-     the <productname>PostgreSQL</productname> ftp site,
-     <ulink url="ftp://ftp.postgresql.org/pub"></ulink>,
+     are posted on the <productname>PostgreSQL</productname>
+     <ulink url="ftp://ftp.postgresql.org/pub">
+     ftp site</ulink>
      or if you are running FreeBSD, for which
      <productname>CVSup</productname> is available as a port.
 
@@ -541,8 +542,9 @@ pgsql
       <step performance="optional">
        <para>
 	If you have another platform, check for and download the appropriate binary from
-	the <productname>PostgreSQL</productname> ftp site, 
-        <ulink url="ftp://ftp.postgresql.org/pub"></ulink>.
+	the <productname>PostgreSQL</productname>
+        <ulink url="ftp://ftp.postgresql.org/pub">
+        ftp site</ulink>.
        </para>
       </step>
      </substeps>
@@ -624,11 +626,11 @@ $ which cvsup
       <step>
        <para>
 	Pick up the <productname>Modula-3</productname>
-	distribution from Polytechnique Montréal,
-        <ulink url="http://m3.polymtl.ca/m3"></ulink>,
+	distribution from <ulink url="http://m3.polymtl.ca/m3">
+        Polytechnique Montréal</ulink>
 	who are actively maintaining the code base originally developed by
-	the DEC Systems Research Center, <ulink
-	url="http://www.research.digital.com/SRC/modula-3/html/home.html"></ulink>.
+	the <ulink url="http://www.research.digital.com/SRC/modula-3/html/home.html">
+        DEC Systems Research Center</ulink>.
         The <productname>PM3</productname> <productname>RPM</productname> distribution is roughly
 	30MB compressed. At the time of writing, the 1.1.10-1 release
 	installed cleanly on RH-5.2, whereas the 1.1.11-1 release is
@@ -764,8 +766,9 @@ If you are on a T1 or better, you should probably delete the
 As shown, it will get the repository (RCS) files.  If you uncomment
 the line containing "tag=." then it will instead check out the
 latest version of each file.  There's a bunch more information about
-what you can do in the CVSup Handbook, 
-<ulink url="http://www.freebsd.org/handbook/cvsup.html"></ulink>.
+what you can do in the 
+<ulink url="http://www.freebsd.org/handbook/cvsup.html">
+CVSup Handbook</ulink>.
 
 There is one other thing I want to send you, but not tonight.  I
 discovered the hard way that you need a malloc package that is

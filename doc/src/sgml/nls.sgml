@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/nls.sgml,v 1.11 2005/03/31 03:54:38 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/nls.sgml,v 1.12 2005/04/09 03:52:43 momjian Exp $
 -->
 
 <chapter id="nls">
@@ -154,15 +154,16 @@ msgstr "another translated"
     If there are already some <filename>.po</filename> files, then
     someone has already done some translation work.  The files are
     named <filename><replaceable>language</replaceable>.po</filename>,
-    where <replaceable>language</replaceable> is the ISO 639-1 two-letter language code,
-    (in lower case), <ulink url="http://lcweb.loc.gov/standards/iso639-2/englangn.html"></ulink>,
-    e.g.,
+    where <replaceable>language</replaceable> is the 
+    <ulink url="http://lcweb.loc.gov/standards/iso639-2/englangn.html">
+    ISO 639-1 two-letter language code (in lower case)</ulink>, e.g.,
     <filename>fr.po</filename> for French.  If there is really a need
     for more than one translation effort per language then the files
     may also be named
     <filename><replaceable>language</replaceable>_<replaceable>region</replaceable>.po</filename>
-    where <replaceable>region</replaceable> is the ISO 3166-1 two-letter country code (in upper case),
-    <ulink url="http://www.din.de/gremien/nas/nabd/iso3166ma/codlstp1/en_listp1.html"></ulink>,
+    where <replaceable>region</replaceable> is the
+    <ulink url="http://www.din.de/gremien/nas/nabd/iso3166ma/codlstp1/en_listp1.html">
+    ISO 3166-1 two-letter country code (in upper case)</ulink>,
     e.g.,
     <filename>pt_BR.po</filename> for Portuguese in Brazil.  If you
     find the language you wanted you can just start working on that

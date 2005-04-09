@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/biblio.sgml,v 1.22 2005/03/31 03:54:37 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/biblio.sgml,v 1.23 2005/04/09 03:52:43 momjian Exp $
 -->
 
  <bibliography id="biblio">
@@ -14,9 +14,8 @@ $PostgreSQL: pgsql/doc/src/sgml/biblio.sgml,v 1.22 2005/03/31 03:54:37 momjian E
    Some white papers and technical reports from the original
    <productname>POSTGRES</productname> development team
    are available at the University of California, Berkeley, Computer Science
-    Department web site,
-   <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/">
-    </ulink>
+   Department <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/">
+   web site</ulink>.
   </para>
 
   <bibliodiv>
@@ -242,9 +241,10 @@ ssimkovi@ag.or.at
    </biblioentry>
 
   <biblioentry id="FONG">
-   <title>The design and implementation of the
-   <productname>POSTGRES</productname> query optimizer,
-   <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/UCB-MS-zfong.pdf"></ulink></title>
+   <title>
+   <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/UCB-MS-zfong.pdf">
+   The design and implementation of the <productname>POSTGRES</productname> query optimizer
+   </ulink></title>
    <author>
     <firstname>Zelaine</firstname>
     <surname>Fong</surname>
@@ -304,7 +304,9 @@ ssimkovi@ag.or.at
 
    <biblioentry id="ROWE87">
    <biblioset relation="article">
-    <title>The <productname>POSTGRES</productname> data model, <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M87-13.pdf"></ulink></title>
+    <title><ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M87-13.pdf">
+    The <productname>POSTGRES</productname> data model
+    </ulink></title>
     <titleabbrev>Rowe and Stonebraker, 1987</titleabbrev>
     <authorgroup>
      <author>
@@ -326,7 +328,9 @@ ssimkovi@ag.or.at
 
    <biblioentry id="SESHADRI95">
    <biblioset relation="article">
-    <title>Generalized Partial Indexes, <ulink url="http://simon.cs.cornell.edu/home/praveen/papers/partindex.de95.ps.Z"></ulink>
+    <title><ulink url="http://simon.cs.cornell.edu/home/praveen/papers/partindex.de95.ps.Z">
+    Generalized Partial Indexes
+    </ulink>
     </title>
     <titleabbrev>Seshardri, 1995</titleabbrev>
     <authorgroup>
@@ -356,7 +360,9 @@ ssimkovi@ag.or.at
 
    <biblioentry id="STON86">
    <biblioset relation="article">
-    <title>The design of <productname>POSTGRES</productname>, <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M85-95.pdf"></ulink></title>
+    <title><ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M85-95.pdf">
+    The design of <productname>POSTGRES</productname>
+    </ulink></title>
     <titleabbrev>Stonebraker and Rowe, 1986</titleabbrev>
     <authorgroup>
      <author>
@@ -404,7 +410,9 @@ ssimkovi@ag.or.at
 
    <biblioentry id="STON87b">
    <biblioset relation="article">
-    <title>The design of the <productname>POSTGRES</productname> storage system, <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M87-06.pdf"></ulink></title>
+    <title><ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M87-06.pdf">
+    The design of the <productname>POSTGRES</productname> storage system
+    </ulink></title>
     <titleabbrev>Stonebraker, 1987</titleabbrev>
     <authorgroup>
      <author>
@@ -422,7 +430,9 @@ ssimkovi@ag.or.at
 
    <biblioentry id="STON89">
    <biblioset relation="article">
-    <title>A commentary on the <productname>POSTGRES</productname> rules system, <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M89-82.pdf"></ulink></title>
+    <title><ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M89-82.pdf">
+    A commentary on the <productname>POSTGRES</productname> rules system
+    </ulink></title>
     <titleabbrev>Stonebraker et al, 1989</titleabbrev>
     <authorgroup>
      <author>
@@ -447,7 +457,9 @@ ssimkovi@ag.or.at
 
    <biblioentry id="STON89b">
    <biblioset relation="article">
-    <title>The case for partial indexes, <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M89-17.pdf"></ulink></title>
+    <title><ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M89-17.pdf">
+    The case for partial indexes
+    </ulink></title>
     <titleabbrev>Stonebraker, M, 1989b</titleabbrev>
     <authorgroup>
      <author>
@@ -465,7 +477,9 @@ ssimkovi@ag.or.at
 
    <biblioentry id="STON90a">
    <biblioset relation="article">
-    <title>The implementation of <productname>POSTGRES</productname>, <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M90-34.pdf"></ulink></title>
+    <title><ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M90-34.pdf">
+    The implementation of <productname>POSTGRES</productname>
+    </ulink></title>
     <titleabbrev>Stonebraker, Rowe, Hirohama, 1990</titleabbrev>
     <authorgroup>
      <author>
@@ -493,7 +507,9 @@ ssimkovi@ag.or.at
 
    <biblioentry id="STON90b">
    <biblioset relation="article">
-    <title>On Rules, Procedures, Caching and Views in Database Systems, <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M90-36.pdf"></ulink></title>
+    <title><ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/ERL-M90-36.pdf">
+    On Rules, Procedures, Caching and Views in Database Systems
+    </ulink></title>
     <titleabbrev>Stonebraker et al, ACM, 1990</titleabbrev>
     <authorgroup>
      <author>

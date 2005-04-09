@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/history.sgml,v 1.25 2005/03/31 03:54:38 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/history.sgml,v 1.26 2005/04/09 03:52:43 momjian Exp $
 -->
 
 <sect1 id="history">
@@ -66,14 +66,14 @@ $PostgreSQL: pgsql/doc/src/sgml/history.sgml,v 1.25 2005/03/31 03:54:38 momjian 
    <productname>POSTGRES</productname> has also been used as an
    educational tool at several universities.  Finally, Illustra
    Information Technologies (later merged into 
-   <productname>Informix</productname>, <ulink
-   url="http://www.informix.com/"></ulink>,
-   which is now owned by IBM, <ulink
-   url="http://www.ibm.com/"></ulink>.)  picked up the code and
+   <ulink url="http://www.informix.com/"><productname>Informix</productname></ulink>,
+   which is now owned by <ulink
+   url="http://www.ibm.com/">IBM/ulink>) picked up the code and
    commercialized it.  In late 1992,
    <productname>POSTGRES</productname> became the primary data manager
-   for the Sequoia 2000 scientific computing project, 
-   <ulink url="http://meteora.ucsd.edu/s2k/s2k_home.html"></ulink>.
+   for the 
+   <ulink url="http://meteora.ucsd.edu/s2k/s2k_home.html">
+   Sequoia 2000 scientific computing project</ulink>.
   </para>
 
   <para>
