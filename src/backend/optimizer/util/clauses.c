@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.154.2.2 2004/01/28 00:05:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.154.2.3 2005/04/10 20:58:03 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1552,6 +1552,10 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			}
 			FastAppend(&newargs, e);
 		}
+
+		/* If all the arguments were constant null, the result is just null */
+		if (FastListValue(&newargs) == NIL)
+			return (Node *) makeNullConst(coalesceexpr->coalescetype);
 
 		newcoalesce = makeNode(CoalesceExpr);
 		newcoalesce->coalescetype = coalesceexpr->coalescetype;
