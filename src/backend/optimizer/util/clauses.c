@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.186.4.2 2005/02/02 21:49:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.186.4.3 2005/04/10 20:57:45 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1770,6 +1770,10 @@ eval_const_expressions_mutator(Node *node,
 			}
 			newargs = lappend(newargs, e);
 		}
+
+		/* If all the arguments were constant null, the result is just null */
+		if (newargs == NIL)
+			return (Node *) makeNullConst(coalesceexpr->coalescetype);
 
 		newcoalesce = makeNode(CoalesceExpr);
 		newcoalesce->coalescetype = coalesceexpr->coalescetype;
