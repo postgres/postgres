@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.183 2005/03/29 03:01:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.184 2005/04/11 19:51:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2441,14 +2441,18 @@ AfterTriggerEndQuery(EState *estate)
 
 
 /* ----------
- * AfterTriggerEndXact()
+ * AfterTriggerFireDeferred()
  *
  *	Called just before the current transaction is committed. At this
- *	time we invoke all DEFERRED triggers and tidy up.
+ *	time we invoke all pending DEFERRED triggers.
+ *
+ *	It is possible for other modules to queue additional deferred triggers
+ *	during pre-commit processing; therefore xact.c may have to call this
+ *	multiple times.
  * ----------
  */
 void
-AfterTriggerEndXact(void)
+AfterTriggerFireDeferred(void)
 {
 	AfterTriggerEventList *events;
 
@@ -2463,14 +2467,14 @@ AfterTriggerEndXact(void)
 	 * for them to use.  (Since PortalRunUtility doesn't set a snap for
 	 * COMMIT, we can't assume ActiveSnapshot is valid on entry.)
 	 */
-	if (afterTriggers->events.head != NULL)
+	events = &afterTriggers->events;
+	if (events->head != NULL)
 		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 
 	/*
 	 * Run all the remaining triggers.  Loop until they are all gone,
 	 * just in case some trigger queues more for us to do.
 	 */
-	events = &afterTriggers->events;
 	while (afterTriggerMarkEvents(events, NULL, false))
 	{
 		CommandId		firing_id = afterTriggers->firing_counter++;
@@ -2478,34 +2482,26 @@ AfterTriggerEndXact(void)
 		afterTriggerInvokeEvents(events, firing_id, NULL, true);
 	}
 
-	/*
-	 * Forget everything we know about AFTER triggers.
-	 *
-	 * Since all the info is in TopTransactionContext or children thereof, we
-	 * need do nothing special to reclaim memory.
-	 */
-	afterTriggers = NULL;
+	Assert(events->head == NULL);
 }
 
 
 /* ----------
- * AfterTriggerAbortXact()
+ * AfterTriggerEndXact()
  *
- *	The current transaction has entered the abort state.
- *	All outstanding triggers are canceled so we simply throw
+ *	The current transaction is finishing.
+ *
+ *	Any unfired triggers are canceled so we simply throw
  *	away anything we know.
+ *
+ *	Note: it is possible for this to be called repeatedly in case of
+ *	error during transaction abort; therefore, do not complain if
+ *	already closed down.
  * ----------
  */
 void
-AfterTriggerAbortXact(void)
+AfterTriggerEndXact(bool isCommit)
 {
-	/*
-	 * Ignore call if we aren't in a transaction.  (Need this to survive
-	 * repeat call in case of error during transaction abort.)
-	 */
-	if (afterTriggers == NULL)
-		return;
-
 	/*
 	 * Forget everything we know about AFTER triggers.
 	 *

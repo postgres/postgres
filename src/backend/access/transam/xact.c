@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.198 2005/03/28 01:50:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.199 2005/04/11 19:51:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1439,16 +1439,32 @@ CommitTransaction(void)
 	/*
 	 * Do pre-commit processing (most of this stuff requires database
 	 * access, and in fact could still cause an error...)
+	 *
+	 * It is possible for CommitHoldablePortals to invoke functions that
+	 * queue deferred triggers, and it's also possible that triggers create
+	 * holdable cursors.  So we have to loop until there's nothing left to
+	 * do.
 	 */
+	for (;;)
+	{
+		/*
+		 * Fire all currently pending deferred triggers.
+		 */
+		AfterTriggerFireDeferred();
 
-	/*
-	 * Tell the trigger manager that this transaction is about to be
-	 * committed. He'll invoke all trigger deferred until XACT before we
-	 * really start on committing the transaction.
-	 */
-	AfterTriggerEndXact();
+		/*
+		 * Convert any open holdable cursors into static portals.  If there
+		 * weren't any, we are done ... otherwise loop back to check if they
+		 * queued deferred triggers.  Lather, rinse, repeat.
+		 */
+		if (!CommitHoldablePortals())
+			break;
+	}
 
-	/* Close open cursors */
+	/* Now we can shut down the deferred-trigger manager */
+	AfterTriggerEndXact(true);
+
+	/* Close any open regular cursors */
 	AtCommit_Portals();
 
 	/*
@@ -1649,7 +1665,7 @@ AbortTransaction(void)
 	/*
 	 * do abort processing
 	 */
-	AfterTriggerAbortXact();
+	AfterTriggerEndXact(false);
 	AtAbort_Portals();
 	AtEOXact_LargeObject(false);	/* 'false' means it's abort */
 	AtAbort_Notify();

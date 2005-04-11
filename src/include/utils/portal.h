@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.54 2004/12/31 22:03:46 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.55 2005/04/11 19:51:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,6 +182,7 @@ typedef struct PortalData
 
 /* Prototypes for functions in utils/mmgr/portalmem.c */
 extern void EnablePortalManager(void);
+extern bool CommitHoldablePortals(void);
 extern void AtCommit_Portals(void);
 extern void AtAbort_Portals(void);
 extern void AtCleanup_Portals(void);

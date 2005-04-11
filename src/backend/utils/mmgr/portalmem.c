@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.77 2005/01/26 23:20:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.78 2005/04/11 19:51:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -416,7 +416,64 @@ DropDependentPortals(MemoryContext queryContext)
  *
  * Any holdable cursors created in this transaction need to be converted to
  * materialized form, since we are going to close down the executor and
- * release locks.  Remove all other portals created in this transaction.
+ * release locks.  Other portals are not touched yet.
+ *
+ * Returns TRUE if any holdable cursors were processed, FALSE if not.
+ */
+bool
+CommitHoldablePortals(void)
+{
+	bool result = false;
+	HASH_SEQ_STATUS status;
+	PortalHashEnt *hentry;
+
+	hash_seq_init(&status, PortalHashTable);
+
+	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
+	{
+		Portal		portal = hentry->portal;
+
+		/* Is it a holdable portal created in the current xact? */
+		if ((portal->cursorOptions & CURSOR_OPT_HOLD) &&
+			portal->createSubid != InvalidSubTransactionId &&
+			portal->status == PORTAL_READY)
+		{
+			/*
+			 * We are exiting the transaction that created a holdable
+			 * cursor.	Instead of dropping the portal, prepare it for
+			 * access by later transactions.
+			 *
+			 * Note that PersistHoldablePortal() must release all resources
+			 * used by the portal that are local to the creating
+			 * transaction.
+			 */
+			PortalCreateHoldStore(portal);
+			PersistHoldablePortal(portal);
+
+			/*
+			 * Any resources belonging to the portal will be released in
+			 * the upcoming transaction-wide cleanup; the portal will no
+			 * longer have its own resources.
+			 */
+			portal->resowner = NULL;
+
+			/*
+			 * Having successfully exported the holdable cursor, mark it
+			 * as not belonging to this transaction.
+			 */
+			portal->createSubid = InvalidSubTransactionId;
+
+			result = true;
+		}
+	}
+
+	return result;
+}
+
+/*
+ * Pre-commit processing for portals.
+ *
+ * Remove all non-holdable portals created in this transaction.
  * Portals remaining from prior transactions should be left untouched.
  *
  * XXX This assumes that portals can be deleted in a random order, ie,
@@ -451,45 +508,14 @@ AtCommit_Portals(void)
 		}
 
 		/*
-		 * Do nothing else to cursors held over from a previous
-		 * transaction.
+		 * Do nothing to cursors held over from a previous transaction
+		 * (including holdable ones just frozen by CommitHoldablePortals).
 		 */
 		if (portal->createSubid == InvalidSubTransactionId)
 			continue;
 
-		if ((portal->cursorOptions & CURSOR_OPT_HOLD) &&
-			portal->status == PORTAL_READY)
-		{
-			/*
-			 * We are exiting the transaction that created a holdable
-			 * cursor.	Instead of dropping the portal, prepare it for
-			 * access by later transactions.
-			 *
-			 * Note that PersistHoldablePortal() must release all resources
-			 * used by the portal that are local to the creating
-			 * transaction.
-			 */
-			PortalCreateHoldStore(portal);
-			PersistHoldablePortal(portal);
-
-			/*
-			 * Any resources belonging to the portal will be released in
-			 * the upcoming transaction-wide cleanup; the portal will no
-			 * longer have its own resources.
-			 */
-			portal->resowner = NULL;
-
-			/*
-			 * Having successfully exported the holdable cursor, mark it
-			 * as not belonging to this transaction.
-			 */
-			portal->createSubid = InvalidSubTransactionId;
-		}
-		else
-		{
-			/* Zap all non-holdable portals */
-			PortalDrop(portal, true);
-		}
+		/* Zap all non-holdable portals */
+		PortalDrop(portal, true);
 	}
 }
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.52 2005/03/25 21:57:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.53 2005/04/11 19:51:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,8 +157,8 @@ extern void ExecARUpdateTriggers(EState *estate,
 extern void AfterTriggerBeginXact(void);
 extern void AfterTriggerBeginQuery(void);
 extern void AfterTriggerEndQuery(EState *estate);
-extern void AfterTriggerEndXact(void);
-extern void AfterTriggerAbortXact(void);
+extern void AfterTriggerFireDeferred(void);
+extern void AfterTriggerEndXact(bool isCommit);
 extern void AfterTriggerBeginSubXact(void);
 extern void AfterTriggerEndSubXact(bool isCommit);
 
