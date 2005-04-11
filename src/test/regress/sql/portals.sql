@@ -235,3 +235,46 @@ SELECT declares_cursor('AB%');
 FETCH ALL FROM c;
 
 ROLLBACK;
+
+--
+-- Test behavior of both volatile and stable functions inside a cursor;
+-- in particular we want to see what happens during commit of a holdable
+-- cursor
+--
+
+create temp table tt1(f1 int);
+
+create function count_tt1_v() returns int8 as
+'select count(*) from tt1' language sql volatile;
+
+create function count_tt1_s() returns int8 as
+'select count(*) from tt1' language sql stable;
+
+begin;
+
+insert into tt1 values(1);
+
+declare c1 cursor for select count_tt1_v(), count_tt1_s();
+
+insert into tt1 values(2);
+
+fetch all from c1;
+
+rollback;
+
+begin;
+
+insert into tt1 values(1);
+
+declare c2 cursor with hold for select count_tt1_v(), count_tt1_s();
+
+insert into tt1 values(2);
+
+commit;
+
+delete from tt1;
+
+fetch all from c2;
+
+drop function count_tt1_v();
+drop function count_tt1_s();
