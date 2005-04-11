@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.95 2005/04/06 16:34:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.96 2005/04/11 23:06:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -915,14 +915,16 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 /*
  * SS_finalize_plan - do final sublink processing for a completed Plan.
  *
- * This recursively computes the extParam and allParam sets
- * for every Plan node in the given plan tree.
+ * This recursively computes the extParam and allParam sets for every Plan
+ * node in the given plan tree.  It also attaches any generated InitPlans
+ * to the top plan node.
  */
 void
 SS_finalize_plan(Plan *plan, List *rtable)
 {
 	Bitmapset  *outer_params = NULL;
 	Bitmapset  *valid_params = NULL;
+	Cost		initplan_cost = 0;
 	int			paramid;
 	ListCell   *l;
 
@@ -959,6 +961,33 @@ SS_finalize_plan(Plan *plan, List *rtable)
 
 	bms_free(outer_params);
 	bms_free(valid_params);
+
+	/*
+	 * Finally, attach any initPlans to the topmost plan node,
+	 * and add their extParams to the topmost node's, too.
+	 *
+	 * We also add the total_cost of each initPlan to the startup cost of
+	 * the top node.  This is a conservative overestimate, since in
+	 * fact each initPlan might be executed later than plan startup,
+	 * or even not at all.
+	 */
+	plan->initPlan = PlannerInitPlan;
+	PlannerInitPlan = NIL;		/* make sure they're not attached twice */
+
+	foreach(l, plan->initPlan)
+	{
+		SubPlan    *initplan = (SubPlan *) lfirst(l);
+
+		plan->extParam = bms_add_members(plan->extParam,
+										 initplan->plan->extParam);
+		/* allParam must include all members of extParam */
+		plan->allParam = bms_add_members(plan->allParam,
+										 plan->extParam);
+		initplan_cost += initplan->plan->total_cost;
+	}
+
+	plan->startup_cost += initplan_cost;
+	plan->total_cost += initplan_cost;
 }
 
 /*
@@ -1164,4 +1193,76 @@ finalize_primnode(Node *node, finalize_primnode_context *context)
 	}
 	return expression_tree_walker(node, finalize_primnode,
 								  (void *) context);
+}
+
+/*
+ * SS_make_initplan_from_plan - given a plan tree, make it an InitPlan
+ *
+ * The plan is expected to return a scalar value of the indicated type.
+ * We build an EXPR_SUBLINK SubPlan node and put it into the initplan
+ * list for the current query level.  A Param that represents the initplan's
+ * output is returned.
+ *
+ * We assume the plan hasn't been put through SS_finalize_plan.
+ */
+Param *
+SS_make_initplan_from_plan(Query *root, Plan *plan,
+						   Oid resulttype, int32 resulttypmod)
+{
+	List	   *saved_initplan = PlannerInitPlan;
+	SubPlan    *node;
+	Param	   *prm;
+	Bitmapset  *tmpset;
+	int			paramid;
+
+	/*
+	 * Set up for a new level of subquery.  This is just to keep
+	 * SS_finalize_plan from becoming confused.
+	 */
+	PlannerQueryLevel++;
+	PlannerInitPlan = NIL;
+
+	/*
+	 * Build extParam/allParam sets for plan nodes.
+	 */
+	SS_finalize_plan(plan, root->rtable);
+
+	/* Return to outer subquery context */
+	PlannerQueryLevel--;
+	PlannerInitPlan = saved_initplan;
+
+	/*
+	 * Create a SubPlan node and add it to the outer list of InitPlans.
+	 */
+	node = makeNode(SubPlan);
+	node->subLinkType = EXPR_SUBLINK;
+	node->plan = plan;
+	node->plan_id = PlannerPlanId++;	/* Assign unique ID to this
+										 * SubPlan */
+
+	node->rtable = root->rtable;
+
+	PlannerInitPlan = lappend(PlannerInitPlan, node);
+
+	/*
+	 * Make parParam list of params that current query level will pass to
+	 * this child plan.  (In current usage there probably aren't any.)
+	 */
+	tmpset = bms_copy(plan->extParam);
+	while ((paramid = bms_first_member(tmpset)) >= 0)
+	{
+		PlannerParamItem *pitem = list_nth(PlannerParamList, paramid);
+
+		if (pitem->abslevel == PlannerQueryLevel)
+			node->parParam = lappend_int(node->parParam, paramid);
+	}
+	bms_free(tmpset);
+
+	/*
+	 * Make a Param that will be the subplan's output.
+	 */
+	prm = generate_new_param(resulttype, resulttypmod);
+	node->setParam = list_make1_int(prm->paramid);
+
+	return prm;
 }

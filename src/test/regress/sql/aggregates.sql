@@ -180,3 +180,23 @@ SELECT
   BOOL_OR(NOT b2)  AS "f",
   BOOL_OR(NOT b3)  AS "t"
 FROM bool_test;
+
+--
+-- Test several cases that should be optimized into indexscans instead of
+-- the generic aggregate implementation.  We can't actually verify that they
+-- are done as indexscans, but we can check that the results are correct.
+--
+
+-- Basic cases
+select max(unique1) from tenk1;
+select max(unique1) from tenk1 where unique1 < 42;
+select max(unique1) from tenk1 where unique1 > 42;
+select max(unique1) from tenk1 where unique1 > 42000;
+
+-- multi-column index (uses tenk1_thous_tenthous)
+select max(tenthous) from tenk1 where thousand = 33;
+select min(tenthous) from tenk1 where thousand = 33;
+
+-- check parameter propagation into an indexscan subquery
+select f1, (select min(unique1) from tenk1 where unique1 > f1) AS gt
+from int4_tbl;

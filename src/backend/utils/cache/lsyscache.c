@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.122 2005/03/31 22:46:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.123 2005/04/11 23:06:56 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -51,6 +51,31 @@ op_in_opclass(Oid opno, Oid opclass)
 								ObjectIdGetDatum(opno),
 								ObjectIdGetDatum(opclass),
 								0, 0);
+}
+
+/*
+ * get_op_opclass_strategy
+ *
+ *		Get the operator's strategy number within the specified opclass,
+ *		or 0 if it's not a member of the opclass.
+ */
+int
+get_op_opclass_strategy(Oid opno, Oid opclass)
+{
+	HeapTuple	tp;
+	Form_pg_amop amop_tup;
+	int			result;
+
+	tp = SearchSysCache(AMOPOPID,
+						ObjectIdGetDatum(opno),
+						ObjectIdGetDatum(opclass),
+						0, 0);
+	if (!HeapTupleIsValid(tp))
+		return 0;
+	amop_tup = (Form_pg_amop) GETSTRUCT(tp);
+	result = amop_tup->amopstrategy;
+	ReleaseSysCache(tp);
+	return result;
 }
 
 /*

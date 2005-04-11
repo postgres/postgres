@@ -4,7 +4,7 @@
 #    Makefile for optimizer/plan
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/optimizer/plan/Makefile,v 1.12 2003/11/29 19:51:50 pgsql Exp $
+#    $PostgreSQL: pgsql/src/backend/optimizer/plan/Makefile,v 1.13 2005/04/11 23:06:55 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,8 @@ subdir = src/backend/optimizer/plan
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = createplan.o initsplan.o planmain.o planner.o setrefs.o subselect.o
+OBJS = createplan.o initsplan.o planagg.o planmain.o planner.o \
+	setrefs.o subselect.o
 
 all: SUBSYS.o
 

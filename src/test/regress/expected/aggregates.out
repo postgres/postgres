@@ -293,3 +293,58 @@ FROM bool_test;
  t | t | f |   | f | t
 (1 row)
 
+--
+-- Test several cases that should be optimized into indexscans instead of
+-- the generic aggregate implementation.  We can't actually verify that they
+-- are done as indexscans, but we can check that the results are correct.
+--
+-- Basic cases
+select max(unique1) from tenk1;
+ max  
+------
+ 9999
+(1 row)
+
+select max(unique1) from tenk1 where unique1 < 42;
+ max 
+-----
+  41
+(1 row)
+
+select max(unique1) from tenk1 where unique1 > 42;
+ max  
+------
+ 9999
+(1 row)
+
+select max(unique1) from tenk1 where unique1 > 42000;
+ max 
+-----
+    
+(1 row)
+
+-- multi-column index (uses tenk1_thous_tenthous)
+select max(tenthous) from tenk1 where thousand = 33;
+ max  
+------
+ 9033
+(1 row)
+
+select min(tenthous) from tenk1 where thousand = 33;
+ min 
+-----
+  33
+(1 row)
+
+-- check parameter propagation into an indexscan subquery
+select f1, (select min(unique1) from tenk1 where unique1 > f1) AS gt
+from int4_tbl;
+     f1      | gt 
+-------------+----
+           0 |  1
+      123456 |   
+     -123456 |  0
+  2147483647 |   
+ -2147483647 |  0
+(5 rows)
+

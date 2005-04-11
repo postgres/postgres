@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.172 2005/03/28 00:58:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.173 2005/04/11 23:06:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,6 @@
 	((opclass) == BOOL_BTREE_OPS_OID || (opclass) == BOOL_HASH_OPS_OID)
 
 
-static List *group_clauses_by_indexkey(IndexOptInfo *index);
 static List *group_clauses_by_indexkey_for_join(Query *root,
 								   IndexOptInfo *index,
 								   Relids outer_relids,
@@ -72,8 +71,6 @@ static bool pred_test_simple_clause(Expr *predicate, Node *clause);
 static Relids indexable_outerrelids(IndexOptInfo *index);
 static Path *make_innerjoin_index_path(Query *root, IndexOptInfo *index,
 						  List *clausegroups);
-static bool match_index_to_operand(Node *operand, int indexcol,
-					   IndexOptInfo *index);
 static bool match_boolean_index_clause(Node *clause, int indexcol,
 									   IndexOptInfo *index);
 static bool match_special_index_operator(Expr *clause, Oid opclass,
@@ -234,7 +231,7 @@ create_index_paths(Query *root, RelOptInfo *rel)
  * clauses matching column C, because the executor couldn't use them anyway.
  * Therefore, there are no empty sublists in the result.
  */
-static List *
+List *
 group_clauses_by_indexkey(IndexOptInfo *index)
 {
 	List	   *clausegroup_list = NIL;
@@ -1774,7 +1771,7 @@ make_expr_from_indexclauses(List *indexclauses)
  * indexcol: the column number of the index (counting from 0)
  * index: the index of interest
  */
-static bool
+bool
 match_index_to_operand(Node *operand,
 					   int indexcol,
 					   IndexOptInfo *index)

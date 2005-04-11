@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.183 2005/04/10 19:50:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.184 2005/04/11 23:06:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,42 +362,11 @@ subquery_planner(Query *parse, double tuple_fraction)
 
 	/*
 	 * If any subplans were generated, or if we're inside a subplan, build
-	 * initPlan list and extParam/allParam sets for plan nodes.
+	 * initPlan list and extParam/allParam sets for plan nodes, and attach
+	 * the initPlans to the top plan node.
 	 */
 	if (PlannerPlanId != saved_planid || PlannerQueryLevel > 1)
-	{
-		Cost		initplan_cost = 0;
-
-		/* Prepare extParam/allParam sets for all nodes in tree */
 		SS_finalize_plan(plan, parse->rtable);
-
-		/*
-		 * SS_finalize_plan doesn't handle initPlans, so we have to
-		 * manually attach them to the topmost plan node, and add their
-		 * extParams to the topmost node's, too.
-		 *
-		 * We also add the total_cost of each initPlan to the startup cost of
-		 * the top node.  This is a conservative overestimate, since in
-		 * fact each initPlan might be executed later than plan startup,
-		 * or even not at all.
-		 */
-		plan->initPlan = PlannerInitPlan;
-
-		foreach(l, plan->initPlan)
-		{
-			SubPlan    *initplan = (SubPlan *) lfirst(l);
-
-			plan->extParam = bms_add_members(plan->extParam,
-											 initplan->plan->extParam);
-			/* allParam must include all members of extParam */
-			plan->allParam = bms_add_members(plan->allParam,
-											 plan->extParam);
-			initplan_cost += initplan->plan->total_cost;
-		}
-
-		plan->startup_cost += initplan_cost;
-		plan->total_cost += initplan_cost;
-	}
 
 	/* Return to outer subquery context */
 	PlannerQueryLevel--;
@@ -692,6 +661,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 		double		sub_tuple_fraction;
 		Path	   *cheapest_path;
 		Path	   *sorted_path;
+		Path	   *best_path;
 		double		dNumGroups = 0;
 		long		numGroups = 0;
 		AggClauseCounts agg_counts;
@@ -959,114 +929,175 @@ grouping_planner(Query *parse, double tuple_fraction)
 		}
 
 		/*
-		 * Select the best path and create a plan to execute it.
-		 *
-		 * If we are doing hashed grouping, we will always read all the input
-		 * tuples, so use the cheapest-total path.	Otherwise, trust
-		 * query_planner's decision about which to use.
+		 * Select the best path.  If we are doing hashed grouping, we will
+		 * always read all the input tuples, so use the cheapest-total
+		 * path. Otherwise, trust query_planner's decision about which to use.
 		 */
-		if (sorted_path && !use_hashed_grouping)
+		if (use_hashed_grouping || !sorted_path)
+			best_path = cheapest_path;
+		else
+			best_path = sorted_path;
+
+		/*
+		 * Check to see if it's possible to optimize MIN/MAX aggregates.
+		 * If so, we will forget all the work we did so far to choose a
+		 * "regular" path ... but we had to do it anyway to be able to
+		 * tell which way is cheaper.
+		 */
+		result_plan = optimize_minmax_aggregates(parse,
+												 tlist,
+												 best_path);
+		if (result_plan != NULL)
 		{
-			result_plan = create_plan(parse, sorted_path);
-			current_pathkeys = sorted_path->pathkeys;
+			/*
+			 * optimize_minmax_aggregates generated the full plan, with
+			 * the right tlist, and it has no sort order.
+			 */
+			current_pathkeys = NIL;
 		}
 		else
 		{
-			result_plan = create_plan(parse, cheapest_path);
-			current_pathkeys = cheapest_path->pathkeys;
-		}
-
-		/*
-		 * create_plan() returns a plan with just a "flat" tlist of
-		 * required Vars.  Usually we need to insert the sub_tlist as the
-		 * tlist of the top plan node.	However, we can skip that if we
-		 * determined that whatever query_planner chose to return will be
-		 * good enough.
-		 */
-		if (need_tlist_eval)
-		{
 			/*
-			 * If the top-level plan node is one that cannot do expression
-			 * evaluation, we must insert a Result node to project the
-			 * desired tlist.
+			 * Normal case --- create a plan according to query_planner's
+			 * results.
 			 */
-			if (!is_projection_capable_plan(result_plan))
+			result_plan = create_plan(parse, best_path);
+			current_pathkeys = best_path->pathkeys;
+
+			/*
+			 * create_plan() returns a plan with just a "flat" tlist of
+			 * required Vars.  Usually we need to insert the sub_tlist as the
+			 * tlist of the top plan node.	However, we can skip that if we
+			 * determined that whatever query_planner chose to return will be
+			 * good enough.
+			 */
+			if (need_tlist_eval)
 			{
-				result_plan = (Plan *) make_result(sub_tlist, NULL,
-												   result_plan);
+				/*
+				 * If the top-level plan node is one that cannot do expression
+				 * evaluation, we must insert a Result node to project the
+				 * desired tlist.
+				 */
+				if (!is_projection_capable_plan(result_plan))
+				{
+					result_plan = (Plan *) make_result(sub_tlist, NULL,
+													   result_plan);
+				}
+				else
+				{
+					/*
+					 * Otherwise, just replace the subplan's flat tlist with
+					 * the desired tlist.
+					 */
+					result_plan->targetlist = sub_tlist;
+				}
+
+				/*
+				 * Also, account for the cost of evaluation of the sub_tlist.
+				 *
+				 * Up to now, we have only been dealing with "flat" tlists,
+				 * containing just Vars.  So their evaluation cost is zero
+				 * according to the model used by cost_qual_eval() (or if you
+				 * prefer, the cost is factored into cpu_tuple_cost).  Thus we
+				 * can avoid accounting for tlist cost throughout
+				 * query_planner() and subroutines.  But now we've inserted a
+				 * tlist that might contain actual operators, sub-selects, etc
+				 * --- so we'd better account for its cost.
+				 *
+				 * Below this point, any tlist eval cost for added-on nodes
+				 * should be accounted for as we create those nodes.
+				 * Presently, of the node types we can add on, only Agg and
+				 * Group project new tlists (the rest just copy their input
+				 * tuples) --- so make_agg() and make_group() are responsible
+				 * for computing the added cost.
+				 */
+				cost_qual_eval(&tlist_cost, sub_tlist);
+				result_plan->startup_cost += tlist_cost.startup;
+				result_plan->total_cost += tlist_cost.startup +
+					tlist_cost.per_tuple * result_plan->plan_rows;
 			}
 			else
 			{
 				/*
-				 * Otherwise, just replace the subplan's flat tlist with
-				 * the desired tlist.
+				 * Since we're using query_planner's tlist and not the one
+				 * make_subplanTargetList calculated, we have to refigure any
+				 * grouping-column indexes make_subplanTargetList computed.
 				 */
-				result_plan->targetlist = sub_tlist;
+				locate_grouping_columns(parse, tlist, result_plan->targetlist,
+										groupColIdx);
 			}
 
 			/*
-			 * Also, account for the cost of evaluation of the sub_tlist.
+			 * Insert AGG or GROUP node if needed, plus an explicit sort step
+			 * if necessary.
 			 *
-			 * Up to now, we have only been dealing with "flat" tlists,
-			 * containing just Vars.  So their evaluation cost is zero
-			 * according to the model used by cost_qual_eval() (or if you
-			 * prefer, the cost is factored into cpu_tuple_cost).  Thus we
-			 * can avoid accounting for tlist cost throughout
-			 * query_planner() and subroutines.  But now we've inserted a
-			 * tlist that might contain actual operators, sub-selects, etc
-			 * --- so we'd better account for its cost.
-			 *
-			 * Below this point, any tlist eval cost for added-on nodes
-			 * should be accounted for as we create those nodes.
-			 * Presently, of the node types we can add on, only Agg and
-			 * Group project new tlists (the rest just copy their input
-			 * tuples) --- so make_agg() and make_group() are responsible
-			 * for computing the added cost.
+			 * HAVING clause, if any, becomes qual of the Agg or Group node.
 			 */
-			cost_qual_eval(&tlist_cost, sub_tlist);
-			result_plan->startup_cost += tlist_cost.startup;
-			result_plan->total_cost += tlist_cost.startup +
-				tlist_cost.per_tuple * result_plan->plan_rows;
-		}
-		else
-		{
-			/*
-			 * Since we're using query_planner's tlist and not the one
-			 * make_subplanTargetList calculated, we have to refigure any
-			 * grouping-column indexes make_subplanTargetList computed.
-			 */
-			locate_grouping_columns(parse, tlist, result_plan->targetlist,
-									groupColIdx);
-		}
-
-		/*
-		 * Insert AGG or GROUP node if needed, plus an explicit sort step
-		 * if necessary.
-		 *
-		 * HAVING clause, if any, becomes qual of the Agg or Group node.
-		 */
-		if (use_hashed_grouping)
-		{
-			/* Hashed aggregate plan --- no sort needed */
-			result_plan = (Plan *) make_agg(parse,
-											tlist,
-											(List *) parse->havingQual,
-											AGG_HASHED,
-											numGroupCols,
-											groupColIdx,
-											numGroups,
-											agg_counts.numAggs,
-											result_plan);
-			/* Hashed aggregation produces randomly-ordered results */
-			current_pathkeys = NIL;
-		}
-		else if (parse->hasAggs)
-		{
-			/* Plain aggregate plan --- sort if needed */
-			AggStrategy aggstrategy;
-
-			if (parse->groupClause)
+			if (use_hashed_grouping)
 			{
+				/* Hashed aggregate plan --- no sort needed */
+				result_plan = (Plan *) make_agg(parse,
+												tlist,
+												(List *) parse->havingQual,
+												AGG_HASHED,
+												numGroupCols,
+												groupColIdx,
+												numGroups,
+												agg_counts.numAggs,
+												result_plan);
+				/* Hashed aggregation produces randomly-ordered results */
+				current_pathkeys = NIL;
+			}
+			else if (parse->hasAggs)
+			{
+				/* Plain aggregate plan --- sort if needed */
+				AggStrategy aggstrategy;
+
+				if (parse->groupClause)
+				{
+					if (!pathkeys_contained_in(group_pathkeys,
+											   current_pathkeys))
+					{
+						result_plan = (Plan *)
+							make_sort_from_groupcols(parse,
+													 parse->groupClause,
+													 groupColIdx,
+													 result_plan);
+						current_pathkeys = group_pathkeys;
+					}
+					aggstrategy = AGG_SORTED;
+
+					/*
+					 * The AGG node will not change the sort ordering of its
+					 * groups, so current_pathkeys describes the result too.
+					 */
+				}
+				else
+				{
+					aggstrategy = AGG_PLAIN;
+					/* Result will be only one row anyway; no sort order */
+					current_pathkeys = NIL;
+				}
+
+				result_plan = (Plan *) make_agg(parse,
+												tlist,
+												(List *) parse->havingQual,
+												aggstrategy,
+												numGroupCols,
+												groupColIdx,
+												numGroups,
+												agg_counts.numAggs,
+												result_plan);
+			}
+			else if (parse->groupClause)
+			{
+				/*
+				 * GROUP BY without aggregation, so insert a group node (plus
+				 * the appropriate sort node, if necessary).
+				 *
+				 * Add an explicit sort if we couldn't make the path come
+				 * out the way the GROUP node needs it.
+				 */
 				if (!pathkeys_contained_in(group_pathkeys, current_pathkeys))
 				{
 					result_plan = (Plan *)
@@ -1076,75 +1107,34 @@ grouping_planner(Query *parse, double tuple_fraction)
 												 result_plan);
 					current_pathkeys = group_pathkeys;
 				}
-				aggstrategy = AGG_SORTED;
 
+				result_plan = (Plan *) make_group(parse,
+												  tlist,
+												  (List *) parse->havingQual,
+												  numGroupCols,
+												  groupColIdx,
+												  dNumGroups,
+												  result_plan);
+				/* The Group node won't change sort ordering */
+			}
+			else if (parse->hasHavingQual)
+			{
 				/*
-				 * The AGG node will not change the sort ordering of its
-				 * groups, so current_pathkeys describes the result too.
+				 * No aggregates, and no GROUP BY, but we have a HAVING qual.
+				 * This is a degenerate case in which we are supposed to emit
+				 * either 0 or 1 row depending on whether HAVING succeeds.
+				 * Furthermore, there cannot be any variables in either HAVING
+				 * or the targetlist, so we actually do not need the FROM table
+				 * at all!  We can just throw away the plan-so-far and generate
+				 * a Result node.  This is a sufficiently unusual corner case
+				 * that it's not worth contorting the structure of this routine
+				 * to avoid having to generate the plan in the first place.
 				 */
+				result_plan = (Plan *) make_result(tlist,
+												   parse->havingQual,
+												   NULL);
 			}
-			else
-			{
-				aggstrategy = AGG_PLAIN;
-				/* Result will be only one row anyway; no sort order */
-				current_pathkeys = NIL;
-			}
-
-			result_plan = (Plan *) make_agg(parse,
-											tlist,
-											(List *) parse->havingQual,
-											aggstrategy,
-											numGroupCols,
-											groupColIdx,
-											numGroups,
-											agg_counts.numAggs,
-											result_plan);
-		}
-		else if (parse->groupClause)
-		{
-			/*
-			 * GROUP BY without aggregation, so insert a group node (plus the
-			 * appropriate sort node, if necessary).
-			 *
-			 * Add an explicit sort if we couldn't make the path come
-			 * out the way the GROUP node needs it.
-			 */
-			if (!pathkeys_contained_in(group_pathkeys, current_pathkeys))
-			{
-				result_plan = (Plan *)
-					make_sort_from_groupcols(parse,
-											 parse->groupClause,
-											 groupColIdx,
-											 result_plan);
-				current_pathkeys = group_pathkeys;
-			}
-
-			result_plan = (Plan *) make_group(parse,
-											  tlist,
-											  (List *) parse->havingQual,
-											  numGroupCols,
-											  groupColIdx,
-											  dNumGroups,
-											  result_plan);
-			/* The Group node won't change sort ordering */
-		}
-		else if (parse->hasHavingQual)
-		{
-			/*
-			 * No aggregates, and no GROUP BY, but we have a HAVING qual.
-			 * This is a degenerate case in which we are supposed to emit
-			 * either 0 or 1 row depending on whether HAVING succeeds.
-			 * Furthermore, there cannot be any variables in either HAVING
-			 * or the targetlist, so we actually do not need the FROM table
-			 * at all!  We can just throw away the plan-so-far and generate
-			 * a Result node.  This is a sufficiently unusual corner case
-			 * that it's not worth contorting the structure of this routine
-			 * to avoid having to generate the plan in the first place.
-			 */
-			result_plan = (Plan *) make_result(tlist,
-											   parse->havingQual,
-											   NULL);
-		}
+		}						/* end of non-minmax-aggregate case */
 	}							/* end of if (setOperations) */
 
 	/*

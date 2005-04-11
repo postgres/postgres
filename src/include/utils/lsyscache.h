@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.96 2005/03/31 22:46:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.97 2005/04/11 23:06:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@ typedef enum IOFuncSelector
 } IOFuncSelector;
 
 extern bool op_in_opclass(Oid opno, Oid opclass);
+extern int	get_op_opclass_strategy(Oid opno, Oid opclass);
 extern void get_op_opclass_properties(Oid opno, Oid opclass,
 						  int *strategy, Oid *subtype,
 						  bool *recheck);

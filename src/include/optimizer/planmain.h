@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.80 2005/03/10 23:21:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.81 2005/04/11 23:06:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,12 @@
  */
 extern void query_planner(Query *root, List *tlist, double tuple_fraction,
 			  Path **cheapest_path, Path **sorted_path);
+
+/*
+ * prototypes for plan/planagg.c
+ */
+extern Plan *optimize_minmax_aggregates(Query *root, List *tlist,
+										Path *best_path);
 
 /*
  * prototypes for plan/createplan.c
