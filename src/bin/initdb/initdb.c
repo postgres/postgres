@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.79 2005/03/14 18:31:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.80 2005/04/12 14:19:43 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -721,7 +721,7 @@ struct encoding_match encoding_match_list[] = {
 	{PG_JOHAB, "???"},
 #endif
 
-	{PG_UTF8, "UTF8"},
+	{PG_UTF8, "UTF-8"},
 	{PG_UTF8, "utf8"},
 
 	{PG_LATIN1, "ISO-8859-1"},
