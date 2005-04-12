@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.2 2005/04/12 04:26:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.3 2005/04/12 05:11:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,6 +185,8 @@ optimize_minmax_aggregates(Query *root, List *tlist, Path *best_path)
 	{
 		Assert(((ResultPath *) best_path)->subpath != NULL);
 		constant_quals = ((ResultPath *) best_path)->constantqual;
+		/* no need to do this more than once: */
+		constant_quals = order_qual_clauses(root, constant_quals);
 	}
 	else
 		constant_quals = NIL;
@@ -438,10 +440,10 @@ static void
 make_agg_subplan(Query *root, MinMaxAggInfo *info, List *constant_quals)
 {
 	Query	   *subquery;
-	Path	   *path;
 	Plan	   *plan;
 	TargetEntry *tle;
 	SortClause *sortcl;
+	NullTest   *ntest;
 
 	/*
 	 * Generate a suitably modified Query node.  Much of the work here is
@@ -482,18 +484,30 @@ make_agg_subplan(Query *root, MinMaxAggInfo *info, List *constant_quals)
 	 * Generate the plan for the subquery.  We already have a Path for
 	 * the basic indexscan, but we have to convert it to a Plan and
 	 * attach a LIMIT node above it.  We might need a gating Result, too,
-	 * which is most easily added at the Path stage.
+	 * to handle any non-variable qual clauses.
+	 *
+	 * Also we must add a "WHERE foo IS NOT NULL" restriction to the
+	 * indexscan, to be sure we don't return a NULL, which'd be contrary
+	 * to the standard behavior of MIN/MAX.  XXX ideally this should be
+	 * done earlier, so that the selectivity of the restriction could be
+	 * included in our cost estimates.  But that looks painful, and in
+	 * most cases the fraction of NULLs isn't high enough to change the
+	 * decision.
 	 */
-	path = (Path *) info->path;
-
-	if (constant_quals)
-		path = (Path *) create_result_path(NULL,
-										   path,
-										   copyObject(constant_quals));
-
-	plan = create_plan(subquery, path);
+	plan = create_plan(subquery, (Path *) info->path);
 
 	plan->targetlist = copyObject(subquery->targetList);
+
+	ntest = makeNode(NullTest);
+	ntest->nulltesttype = IS_NOT_NULL;
+	ntest->arg = copyObject(info->target);
+
+	plan->qual = lappend(plan->qual, ntest);
+
+	if (constant_quals)
+		plan = (Plan *) make_result(copyObject(plan->targetlist),
+									copyObject(constant_quals),
+									plan);
 
 	plan = (Plan *) make_limit(plan, 
 							   subquery->limitOffset,

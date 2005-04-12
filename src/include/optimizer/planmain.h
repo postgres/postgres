@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.81 2005/04/11 23:06:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.82 2005/04/12 05:11:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@ extern Sort *make_sort_from_sortclauses(Query *root, List *sortcls,
 						   Plan *lefttree);
 extern Sort *make_sort_from_groupcols(Query *root, List *groupcls,
 						 AttrNumber *grpColIdx, Plan *lefttree);
+extern List *order_qual_clauses(Query *root, List *clauses);
 extern Agg *make_agg(Query *root, List *tlist, List *qual,
 		 AggStrategy aggstrategy,
 		 int numGroupCols, AttrNumber *grpColIdx,
