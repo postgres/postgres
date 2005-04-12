@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.108 2004/12/31 22:01:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.109 2005/04/12 04:26:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -685,6 +685,40 @@ bpcharcmp(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(arg2, 1);
 
 	PG_RETURN_INT32(cmp);
+}
+
+Datum
+bpchar_larger(PG_FUNCTION_ARGS)
+{
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
+
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
+
+	PG_RETURN_BPCHAR_P((cmp >= 0) ? arg1 : arg2);
+}
+
+Datum
+bpchar_smaller(PG_FUNCTION_ARGS)
+{
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
+	int			len1,
+				len2;
+	int			cmp;
+
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
+
+	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
+
+	PG_RETURN_BPCHAR_P((cmp <= 0) ? arg1 : arg2);
 }
 
 

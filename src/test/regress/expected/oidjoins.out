@@ -25,20 +25,20 @@ WHERE	aggfinalfn != 0 AND
 ------+------------
 (0 rows)
 
+SELECT	ctid, aggsortop 
+FROM	pg_catalog.pg_aggregate fk 
+WHERE	aggsortop != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.aggsortop);
+ ctid | aggsortop 
+------+-----------
+(0 rows)
+
 SELECT	ctid, aggtranstype 
 FROM	pg_catalog.pg_aggregate fk 
 WHERE	aggtranstype != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.aggtranstype);
  ctid | aggtranstype 
 ------+--------------
-(0 rows)
-
-SELECT	ctid, amgettuple 
-FROM	pg_catalog.pg_am fk 
-WHERE	amgettuple != 0 AND 
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amgettuple);
- ctid | amgettuple 
-------+------------
 (0 rows)
 
 SELECT	ctid, aminsert 
@@ -55,6 +55,22 @@ WHERE	ambeginscan != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.ambeginscan);
  ctid | ambeginscan 
 ------+-------------
+(0 rows)
+
+SELECT	ctid, amgettuple 
+FROM	pg_catalog.pg_am fk 
+WHERE	amgettuple != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amgettuple);
+ ctid | amgettuple 
+------+------------
+(0 rows)
+
+SELECT	ctid, amgetmulti 
+FROM	pg_catalog.pg_am fk 
+WHERE	amgetmulti != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amgetmulti);
+ ctid | amgetmulti 
+------+------------
 (0 rows)
 
 SELECT	ctid, amrescan 

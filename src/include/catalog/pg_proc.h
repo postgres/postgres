@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.357 2005/03/31 22:46:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.358 2005/04/12 04:26:28 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1372,6 +1372,10 @@ DATA(insert OID = 1052 (  bpcharge		   PGNSP PGUID 12 f f t f i 2 16 "1042 1042"
 DESCR("greater-than-or-equal");
 DATA(insert OID = 1053 (  bpcharne		   PGNSP PGUID 12 f f t f i 2 16 "1042 1042" _null_ _null_ _null_ bpcharne - _null_ ));
 DESCR("not equal");
+DATA(insert OID = 1063 (  bpchar_larger	   PGNSP PGUID 12 f f t f i 2 1042 "1042 1042" _null_ _null_ _null_ bpchar_larger - _null_ ));
+DESCR("larger of two");
+DATA(insert OID = 1064 (  bpchar_smaller   PGNSP PGUID 12 f f t f i 2 1042 "1042 1042" _null_ _null_ _null_ bpchar_smaller - _null_ ));
+DESCR("smaller of two");
 DATA(insert OID = 1078 (  bpcharcmp		   PGNSP PGUID 12 f f t f i 2 23 "1042 1042" _null_ _null_ _null_ bpcharcmp - _null_ ));
 DESCR("less-equal-greater");
 DATA(insert OID = 1080 (  hashbpchar	   PGNSP PGUID 12 f f t f i 1 23 "1042" _null_ _null_ _null_	hashbpchar - _null_ ));
@@ -3048,6 +3052,7 @@ DATA(insert OID = 2128 (  max				PGNSP PGUID 12 t f f f i 1 1186 "1186" _null_ _
 DATA(insert OID = 2129 (  max				PGNSP PGUID 12 t f f f i 1 25 "25" _null_ _null_ _null_	aggregate_dummy - _null_ ));
 DATA(insert OID = 2130 (  max				PGNSP PGUID 12 t f f f i 1 1700 "1700" _null_ _null_ _null_	aggregate_dummy - _null_ ));
 DATA(insert OID = 2050 (  max				PGNSP PGUID 12 t f f f i 1 2277 "2277" _null_ _null_ _null_	aggregate_dummy - _null_ ));
+DATA(insert OID = 2244 (  max				PGNSP PGUID 12 t f f f i 1 1042 "1042" _null_ _null_ _null_	aggregate_dummy - _null_ ));
 
 DATA(insert OID = 2131 (  min				PGNSP PGUID 12 t f f f i 1 20 "20" _null_ _null_ _null_	aggregate_dummy - _null_ ));
 DATA(insert OID = 2132 (  min				PGNSP PGUID 12 t f f f i 1 23 "23" _null_ _null_ _null_	aggregate_dummy - _null_ ));
@@ -3066,6 +3071,7 @@ DATA(insert OID = 2144 (  min				PGNSP PGUID 12 t f f f i 1 1186 "1186" _null_ _
 DATA(insert OID = 2145 (  min				PGNSP PGUID 12 t f f f i 1 25 "25" _null_ _null_ _null_	aggregate_dummy - _null_ ));
 DATA(insert OID = 2146 (  min				PGNSP PGUID 12 t f f f i 1 1700 "1700" _null_ _null_ _null_	aggregate_dummy - _null_ ));
 DATA(insert OID = 2051 (  min				PGNSP PGUID 12 t f f f i 1 2277 "2277" _null_ _null_ _null_	aggregate_dummy - _null_ ));
+DATA(insert OID = 2245 (  min				PGNSP PGUID 12 t f f f i 1 1042 "1042" _null_ _null_ _null_	aggregate_dummy - _null_ ));
 
 DATA(insert OID = 2147 (  count				PGNSP PGUID 12 t f f f i 1 20 "2276" _null_ _null_ _null_  aggregate_dummy - _null_ ));
 

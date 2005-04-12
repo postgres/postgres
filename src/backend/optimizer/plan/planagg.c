@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.1 2005/04/11 23:06:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.2 2005/04/12 04:26:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -542,7 +542,6 @@ replace_aggs_with_params_mutator(Node *node,  List **context)
 static Oid
 fetch_agg_sort_op(Oid aggfnoid)
 {
-#ifdef NOT_YET
 	HeapTuple	aggTuple;
 	Form_pg_aggregate aggform;
 	Oid			aggsortop;
@@ -558,18 +557,4 @@ fetch_agg_sort_op(Oid aggfnoid)
 	ReleaseSysCache(aggTuple);
 
 	return aggsortop;
-#else
-	/*
-	 * XXX stub implementation for testing: hardwire a few cases.
-	 */
-	if (aggfnoid == 2132)		/* min(int4) -> int4lt */
-		return 97;
-	if (aggfnoid == 2116)		/* max(int4) -> int4gt */
-		return 521;
-	if (aggfnoid == 2145)		/* min(text) -> text_lt */
-		return 664;
-	if (aggfnoid == 2129)		/* max(text) -> text_gt */
-		return 666;
-	return InvalidOid;
-#endif
 }

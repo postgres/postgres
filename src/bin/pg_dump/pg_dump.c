@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.405 2005/04/01 18:35:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.406 2005/04/12 04:26:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6325,6 +6325,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	int			ntups;
 	int			i_aggtransfn;
 	int			i_aggfinalfn;
+	int			i_aggsortop;
 	int			i_aggtranstype;
 	int			i_agginitval;
 	int			i_anybasetype;
@@ -6332,6 +6333,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	int			i_convertok;
 	const char *aggtransfn;
 	const char *aggfinalfn;
+	const char *aggsortop;
 	const char *aggtranstype;
 	const char *agginitval;
 	bool		convertok;
@@ -6349,10 +6351,25 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	selectSourceSchema(agginfo->aggfn.dobj.namespace->dobj.name);
 
 	/* Get aggregate-specific details */
-	if (g_fout->remoteVersion >= 70300)
+	if (g_fout->remoteVersion >= 80100)
 	{
 		appendPQExpBuffer(query, "SELECT aggtransfn, "
 						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
+						  "aggsortop::pg_catalog.regoperator, "
+						  "agginitval, "
+						  "proargtypes[0] = 'pg_catalog.\"any\"'::pg_catalog.regtype as anybasetype, "
+					"proargtypes[0]::pg_catalog.regtype as fmtbasetype, "
+						  "'t'::boolean as convertok "
+				  "from pg_catalog.pg_aggregate a, pg_catalog.pg_proc p "
+						  "where a.aggfnoid = p.oid "
+						  "and p.oid = '%u'::pg_catalog.oid",
+						  agginfo->aggfn.dobj.catId.oid);
+	}
+	else if (g_fout->remoteVersion >= 70300)
+	{
+		appendPQExpBuffer(query, "SELECT aggtransfn, "
+						  "aggfinalfn, aggtranstype::pg_catalog.regtype, "
+						  "0 as aggsortop, "
 						  "agginitval, "
 						  "proargtypes[0] = 'pg_catalog.\"any\"'::pg_catalog.regtype as anybasetype, "
 					"proargtypes[0]::pg_catalog.regtype as fmtbasetype, "
@@ -6366,6 +6383,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	{
 		appendPQExpBuffer(query, "SELECT aggtransfn, aggfinalfn, "
 					  "format_type(aggtranstype, NULL) as aggtranstype, "
+						  "0 as aggsortop, "
 						  "agginitval, "
 						  "aggbasetype = 0 as anybasetype, "
 						  "CASE WHEN aggbasetype = 0 THEN '-' "
@@ -6380,6 +6398,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 		appendPQExpBuffer(query, "SELECT aggtransfn1 as aggtransfn, "
 						  "aggfinalfn, "
 						  "(select typname from pg_type where oid = aggtranstype1) as aggtranstype, "
+						  "0 as aggsortop, "
 						  "agginitval1 as agginitval, "
 						  "aggbasetype = 0 as anybasetype, "
 						  "(select typname from pg_type where oid = aggbasetype) as fmtbasetype, "
@@ -6403,6 +6422,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 
 	i_aggtransfn = PQfnumber(res, "aggtransfn");
 	i_aggfinalfn = PQfnumber(res, "aggfinalfn");
+	i_aggsortop = PQfnumber(res, "aggsortop");
 	i_aggtranstype = PQfnumber(res, "aggtranstype");
 	i_agginitval = PQfnumber(res, "agginitval");
 	i_anybasetype = PQfnumber(res, "anybasetype");
@@ -6411,6 +6431,7 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 
 	aggtransfn = PQgetvalue(res, 0, i_aggtransfn);
 	aggfinalfn = PQgetvalue(res, 0, i_aggfinalfn);
+	aggsortop = PQgetvalue(res, 0, i_aggsortop);
 	aggtranstype = PQgetvalue(res, 0, i_aggtranstype);
 	agginitval = PQgetvalue(res, 0, i_agginitval);
 	/* we save anybasetype for format_aggregate_signature */
@@ -6469,6 +6490,13 @@ dumpAgg(Archive *fout, AggInfo *agginfo)
 	{
 		appendPQExpBuffer(details, ",\n    FINALFUNC = %s",
 						  aggfinalfn);
+	}
+
+	aggsortop = convertOperatorReference(aggsortop);
+	if (aggsortop)
+	{
+		appendPQExpBuffer(details, ",\n    SORTOP = %s",
+						  aggsortop);
 	}
 
 	/*

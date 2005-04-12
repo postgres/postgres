@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.99 2005/03/29 19:44:22 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.100 2005/04/12 04:26:13 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -251,10 +251,16 @@
       <entry>Final function (zero if none)</entry>
      </row>
      <row>
+      <entry><structfield>aggsortop</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
+      <entry>Associated sort operator (zero if none)</entry>
+     </row>
+     <row>
       <entry><structfield>aggtranstype</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
-      <entry>The type of the aggregate function's internal transition (state) data</entry>
+      <entry>Data type of the aggregate function's internal transition (state) data</entry>
      </row>
      <row>
       <entry><structfield>agginitval</structfield></entry>
@@ -263,7 +269,7 @@
       <entry>
        The initial value of the transition state.  This is a text
        field containing the initial value in its external string
-       representation.  If the value is null, the transition state
+       representation.  If this field is null, the transition state
        value starts out null.
       </entry>
      </row>

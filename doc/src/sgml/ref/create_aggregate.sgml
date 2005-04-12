@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.31 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.32 2005/04/12 04:26:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -26,6 +26,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
     STYPE = <replaceable class="PARAMETER">state_data_type</replaceable>
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
     [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ]
+    [ , SORTOP = <replaceable class="PARAMETER">sort_operator</replaceable> ]
 )
 </synopsis>
  </refsynopsisdiv>
@@ -125,6 +126,29 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
    <function>avg</function> returns null when it sees there were zero
    input rows.
   </para>
+  
+  <para>
+   Aggregates that behave like <function>MIN</> or <function>MAX</> can
+   sometimes be optimized by looking into an index instead of scanning every
+   input row.  If this aggregate can be so optimized, indicate it by
+   specifying a <firstterm>sort operator</>.  The basic requirement is that
+   the aggregate must yield the first element in the sort ordering induced by
+   the operator; in other words
+<programlisting>
+SELECT agg(col) FROM tab;
+</programlisting>
+   must be equivalent to
+<programlisting>
+SELECT col FROM tab ORDER BY col USING sortop LIMIT 1;
+</programlisting>
+   Further assumptions are that the aggregate ignores null inputs, and that
+   it delivers a null result if and only if there were no non-null inputs.
+   Ordinarily, a datatype's <literal>&lt;</> operator is the proper sort
+   operator for <function>MIN</>, and <literal>&gt;</> is the proper sort
+   operator for <function>MAX</>.  Note that the optimization will never
+   actually take effect unless the specified operator is the LessThan or
+   GreaterThan strategy member of a btree index opclass.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -208,6 +232,19 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
       constant in the form accepted for the data type <replaceable
       class="PARAMETER">state_data_type</replaceable>.  If not
       specified, the state value starts out null.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">sort_operator</replaceable></term>
+    <listitem>
+     <para>
+      The associated sort operator for a <function>MIN</>- or
+      <function>MAX</>-like aggregate.
+      This is just an operator name (possibly schema-qualified).
+      The operator is assumed to have the same input datatypes as
+      the aggregate.
      </para>
     </listitem>
    </varlistentry>

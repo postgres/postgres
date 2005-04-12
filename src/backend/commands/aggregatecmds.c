@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.23 2005/03/29 00:16:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.24 2005/04/12 04:26:20 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -51,6 +51,7 @@ DefineAggregate(List *names, List *parameters)
 	AclResult	aclresult;
 	List	   *transfuncName = NIL;
 	List	   *finalfuncName = NIL;
+	List	   *sortoperatorName = NIL;
 	TypeName   *baseType = NULL;
 	TypeName   *transType = NULL;
 	char	   *initval = NULL;
@@ -81,6 +82,8 @@ DefineAggregate(List *names, List *parameters)
 			transfuncName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "finalfunc") == 0)
 			finalfuncName = defGetQualifiedName(defel);
+		else if (pg_strcasecmp(defel->defname, "sortop") == 0)
+			sortoperatorName = defGetQualifiedName(defel);
 		else if (pg_strcasecmp(defel->defname, "basetype") == 0)
 			baseType = defGetTypeName(defel);
 		else if (pg_strcasecmp(defel->defname, "stype") == 0)
@@ -143,9 +146,10 @@ DefineAggregate(List *names, List *parameters)
 	 */
 	AggregateCreate(aggName,	/* aggregate name */
 					aggNamespace,		/* namespace */
+					baseTypeId, /* type of data being aggregated */
 					transfuncName,		/* step function name */
 					finalfuncName,		/* final function name */
-					baseTypeId, /* type of data being aggregated */
+					sortoperatorName,	/* sort operator name */
 					transTypeId,	/* transition data type */
 					initval);	/* initial condition */
 }

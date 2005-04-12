@@ -561,6 +561,41 @@ WHERE a.aggfnoid = p.oid AND
     a.agginitval IS NULL AND
     NOT binary_coercible(p.proargtypes[0], a.aggtranstype);
 
+-- Cross-check aggsortop (if present) against pg_operator.
+-- We expect to find only "<" for "min" and ">" for "max".
+
+SELECT DISTINCT proname, oprname
+FROM pg_operator AS o, pg_aggregate AS a, pg_proc AS p
+WHERE a.aggfnoid = p.oid AND a.aggsortop = o.oid
+ORDER BY 1;
+
+-- Check datatypes match
+
+SELECT a.aggfnoid::oid, o.oid
+FROM pg_operator AS o, pg_aggregate AS a, pg_proc AS p
+WHERE a.aggfnoid = p.oid AND a.aggsortop = o.oid AND
+    (oprkind != 'b' OR oprresult != 'boolean'::regtype
+     OR oprleft != p.proargtypes[0] OR oprright != p.proargtypes[0]);
+
+-- Check operator is a suitable btree opclass member
+
+SELECT a.aggfnoid::oid, o.oid
+FROM pg_operator AS o, pg_aggregate AS a, pg_proc AS p
+WHERE a.aggfnoid = p.oid AND a.aggsortop = o.oid AND
+    NOT EXISTS(SELECT 1 FROM pg_amop ao, pg_opclass oc
+               WHERE amopclaid = oc.oid AND amopsubtype = 0
+                     AND amopopr = o.oid AND opcamid = 403
+                     AND opcintype = o.oprleft AND opcdefault);
+
+-- Check correspondence of btree strategies and names
+
+SELECT DISTINCT proname, oprname, amopstrategy
+FROM pg_operator AS o, pg_aggregate AS a, pg_proc AS p,
+     pg_amop as ao, pg_opclass oc
+WHERE a.aggfnoid = p.oid AND a.aggsortop = o.oid AND
+    amopclaid = oc.oid AND amopopr = o.oid AND opcamid = 403
+ORDER BY 1;
+
 -- **************** pg_opclass ****************
 
 -- Look for illegal values in pg_opclass fields

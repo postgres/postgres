@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.72 2005/03/31 22:46:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.73 2005/04/12 04:26:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "optimizer/cost.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
+#include "parser/parse_oper.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -42,9 +43,10 @@ static Oid lookup_agg_function(List *fnName, int nargs, Oid *input_types,
 void
 AggregateCreate(const char *aggName,
 				Oid aggNamespace,
+				Oid aggBaseType,
 				List *aggtransfnName,
 				List *aggfinalfnName,
-				Oid aggBaseType,
+				List *aggsortopName,
 				Oid aggTransType,
 				const char *agginitval)
 {
@@ -55,6 +57,7 @@ AggregateCreate(const char *aggName,
 	Form_pg_proc proc;
 	Oid			transfn;
 	Oid			finalfn = InvalidOid;	/* can be omitted */
+	Oid			sortop = InvalidOid;	/* can be omitted */
 	Oid			rettype;
 	Oid			finaltype;
 	Oid			fnArgs[2];		/* we only deal with 1- and 2-arg fns */
@@ -167,6 +170,12 @@ AggregateCreate(const char *aggName,
 		errdetail("An aggregate returning \"anyarray\" or \"anyelement\" "
 				  "must have one of them as its base type.")));
 
+	/* handle sortop, if supplied */
+	if (aggsortopName)
+		sortop = LookupOperName(aggsortopName,
+								aggBaseType, aggBaseType,
+								false);
+
 	/*
 	 * Everything looks okay.  Try to create the pg_proc entry for the
 	 * aggregate.  (This could fail if there's already a conflicting
@@ -207,6 +216,7 @@ AggregateCreate(const char *aggName,
 	values[Anum_pg_aggregate_aggfnoid - 1] = ObjectIdGetDatum(procOid);
 	values[Anum_pg_aggregate_aggtransfn - 1] = ObjectIdGetDatum(transfn);
 	values[Anum_pg_aggregate_aggfinalfn - 1] = ObjectIdGetDatum(finalfn);
+	values[Anum_pg_aggregate_aggsortop - 1] = ObjectIdGetDatum(sortop);
 	values[Anum_pg_aggregate_aggtranstype - 1] = ObjectIdGetDatum(aggTransType);
 	if (agginitval)
 		values[Anum_pg_aggregate_agginitval - 1] =
@@ -245,6 +255,15 @@ AggregateCreate(const char *aggName,
 	{
 		referenced.classId = RelOid_pg_proc;
 		referenced.objectId = finalfn;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
+	/* Depends on sort operator, if any */
+	if (OidIsValid(sortop))
+	{
+		referenced.classId = get_system_catalog_relid(OperatorRelationName);
+		referenced.objectId = sortop;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 	}
