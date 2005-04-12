@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.31 2005/04/09 03:52:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.32 2005/04/12 03:16:50 tgl Exp $
 Genetic Optimizer
 -->
 
@@ -287,7 +287,7 @@ Genetic Optimizer
     <listitem>
      <para>
       <ulink url="http://surf.de.uu.net/encore/www/">
-      The Hitch-Hiker's Guide to Evolutionary Computation/ulink>, (FAQ for <ulink
+      The Hitch-Hiker's Guide to Evolutionary Computation</ulink>, (FAQ for <ulink
       url="news://comp.ai.genetic"></ulink>)
      </para>
     </listitem>

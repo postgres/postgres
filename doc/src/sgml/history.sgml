@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/history.sgml,v 1.26 2005/04/09 03:52:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/history.sgml,v 1.27 2005/04/12 03:16:50 tgl Exp $
 -->
 
 <sect1 id="history">
@@ -68,7 +68,7 @@ $PostgreSQL: pgsql/doc/src/sgml/history.sgml,v 1.26 2005/04/09 03:52:43 momjian 
    Information Technologies (later merged into 
    <ulink url="http://www.informix.com/"><productname>Informix</productname></ulink>,
    which is now owned by <ulink
-   url="http://www.ibm.com/">IBM/ulink>) picked up the code and
+   url="http://www.ibm.com/">IBM</ulink>) picked up the code and
    commercialized it.  In late 1992,
    <productname>POSTGRES</productname> became the primary data manager
    for the 
