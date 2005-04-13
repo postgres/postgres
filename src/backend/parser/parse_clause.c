@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.139 2005/04/06 16:34:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.140 2005/04/13 16:50:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,8 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	/*
 	 * Now build an RTE.
 	 */
-	rte = addRangeTableEntry(pstate, relation, NULL, inh, false);
+	rte = addRangeTableEntryForRelation(pstate, pstate->p_target_relation,
+										NULL, inh, false);
 	pstate->p_target_rangetblentry = rte;
 
 	/* assume new rte is at end */

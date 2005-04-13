@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.152 2005/03/29 00:16:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.153 2005/04/13 16:50:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4732,8 +4732,8 @@ ATPrepAlterColumnType(List **wqueue,
 
 		/* Expression must be able to access vars of old table */
 		rte = addRangeTableEntryForRelation(pstate,
-											RelationGetRelid(rel),
-							makeAlias(RelationGetRelationName(rel), NIL),
+											rel,
+											NULL,
 											false,
 											true);
 		addRTEtoQuery(pstate, rte, false, true);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.281 2005/03/20 22:00:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.282 2005/04/13 16:50:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1482,7 +1482,6 @@ AddRelationRawConstraints(Relation rel,
 						  List *rawConstraints)
 {
 	List	   *cookedConstraints = NIL;
-	char	   *relname = RelationGetRelationName(rel);
 	TupleDesc	tupleDesc;
 	TupleConstr *oldconstr;
 	int			numoldchecks;
@@ -1517,8 +1516,8 @@ AddRelationRawConstraints(Relation rel,
 	 */
 	pstate = make_parsestate(NULL);
 	rte = addRangeTableEntryForRelation(pstate,
-										RelationGetRelid(rel),
-										makeAlias(relname, NIL),
+										rel,
+										NULL,
 										false,
 										true);
 	addRTEtoQuery(pstate, rte, true, true);
@@ -1576,7 +1575,7 @@ AddRelationRawConstraints(Relation rel,
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 					 errmsg("only table \"%s\" can be referenced in check constraint",
-							relname)));
+							RelationGetRelationName(rel))));
 
 		/*
 		 * No subplans or aggregates, either...

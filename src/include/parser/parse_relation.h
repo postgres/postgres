@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.48 2004/12/31 22:03:38 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.49 2005/04/13 16:50:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
 				   bool inh,
 				   bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForRelation(ParseState *pstate,
-							  Oid relid,
+							  Relation rel,
 							  Alias *alias,
 							  bool inh,
 							  bool inFromCl);

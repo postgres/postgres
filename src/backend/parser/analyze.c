@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.318 2005/04/07 01:51:38 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.319 2005/04/13 16:50:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1536,6 +1536,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 				  List **extras_before, List **extras_after)
 {
 	Query	   *qry;
+	Relation	rel;
 	RangeTblEntry *oldrte;
 	RangeTblEntry *newrte;
 
@@ -1547,11 +1548,9 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 	 * To avoid deadlock, make sure the first thing we do is grab
 	 * AccessExclusiveLock on the target relation.	This will be needed by
 	 * DefineQueryRewrite(), and we don't want to grab a lesser lock
-	 * beforehand.	We don't need to hold a refcount on the relcache
-	 * entry, however.
+	 * beforehand.
 	 */
-	heap_close(heap_openrv(stmt->relation, AccessExclusiveLock),
-			   NoLock);
+	rel = heap_openrv(stmt->relation, AccessExclusiveLock);
 
 	/*
 	 * NOTE: 'OLD' must always have a varno equal to 1 and 'NEW' equal to
@@ -1559,12 +1558,12 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 	 * rule qualification.
 	 */
 	Assert(pstate->p_rtable == NIL);
-	oldrte = addRangeTableEntry(pstate, stmt->relation,
-								makeAlias("*OLD*", NIL),
-								false, true);
-	newrte = addRangeTableEntry(pstate, stmt->relation,
-								makeAlias("*NEW*", NIL),
-								false, true);
+	oldrte = addRangeTableEntryForRelation(pstate, rel,
+										   makeAlias("*OLD*", NIL),
+										   false, true);
+	newrte = addRangeTableEntryForRelation(pstate, rel,
+										   makeAlias("*NEW*", NIL),
+										   false, true);
 	/* Must override addRangeTableEntry's default access-check flags */
 	oldrte->requiredPerms = 0;
 	newrte->requiredPerms = 0;
@@ -1659,12 +1658,12 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 			 * or they won't be accessible at all.  We decide later
 			 * whether to put them in the joinlist.
 			 */
-			oldrte = addRangeTableEntry(sub_pstate, stmt->relation,
-										makeAlias("*OLD*", NIL),
-										false, false);
-			newrte = addRangeTableEntry(sub_pstate, stmt->relation,
-										makeAlias("*NEW*", NIL),
-										false, false);
+			oldrte = addRangeTableEntryForRelation(sub_pstate, rel,
+												   makeAlias("*OLD*", NIL),
+												   false, false);
+			newrte = addRangeTableEntryForRelation(sub_pstate, rel,
+												   makeAlias("*NEW*", NIL),
+												   false, false);
 			oldrte->requiredPerms = 0;
 			newrte->requiredPerms = 0;
 			addRTEtoQuery(sub_pstate, oldrte, false, true);
@@ -1790,6 +1789,9 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 
 		stmt->actions = newactions;
 	}
+
+	/* Close relation, but keep the exclusive lock */
+	heap_close(rel, NoLock);
 
 	return qry;
 }

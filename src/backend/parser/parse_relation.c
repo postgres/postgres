@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.105 2005/04/07 01:51:39 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.106 2005/04/13 16:50:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -809,34 +809,21 @@ addRangeTableEntry(ParseState *pstate,
  * Add an entry for a relation to the pstate's range table (p_rtable).
  *
  * This is just like addRangeTableEntry() except that it makes an RTE
- * given a relation OID instead of a RangeVar reference.
- *
- * Note that an alias clause *must* be supplied.
+ * given an already-open relation instead of a RangeVar reference.
  */
 RangeTblEntry *
 addRangeTableEntryForRelation(ParseState *pstate,
-							  Oid relid,
+							  Relation rel,
 							  Alias *alias,
 							  bool inh,
 							  bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
-	char	   *refname = alias->aliasname;
-	LOCKMODE	lockmode;
-	Relation	rel;
+	char	   *refname = alias ? alias->aliasname : RelationGetRelationName(rel);
 
 	rte->rtekind = RTE_RELATION;
 	rte->alias = alias;
-
-	/*
-	 * Get the rel's relcache entry.  This access ensures that we have an
-	 * up-to-date relcache entry for the rel.  Since this is typically the
-	 * first access to a rel in a statement, be careful to get the right
-	 * access level depending on whether we're doing SELECT FOR UPDATE.
-	 */
-	lockmode = isForUpdate(pstate, refname) ? RowShareLock : AccessShareLock;
-	rel = heap_open(relid, lockmode);
-	rte->relid = relid;
+	rte->relid = RelationGetRelid(rel);
 
 	/*
 	 * Build the list of effective column names using user-supplied
@@ -844,13 +831,6 @@ addRangeTableEntryForRelation(ParseState *pstate,
 	 */
 	rte->eref = makeAlias(refname, NIL);
 	buildRelationAliases(rel->rd_att, alias, rte->eref);
-
-	/*
-	 * Drop the rel refcount, but keep the access lock till end of
-	 * transaction so that the table can't be deleted or have its schema
-	 * modified underneath us.
-	 */
-	heap_close(rel, NoLock);
 
 	/*----------
 	 * Flags:

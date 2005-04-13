@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.88 2005/04/06 16:34:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.89 2005/04/13 16:50:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -329,6 +329,7 @@ DefineViewRules(const RangeVar *view, Query *viewParse, bool replace)
 static Query *
 UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 {
+	Relation	viewRel;
 	List	   *new_rt;
 	RangeTblEntry *rt_entry1,
 			   *rt_entry2;
@@ -343,14 +344,17 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 	 */
 	viewParse = (Query *) copyObject(viewParse);
 
+	/* need to open the rel for addRangeTableEntryForRelation */
+	viewRel = relation_open(viewOid, AccessShareLock);
+
 	/*
 	 * Create the 2 new range table entries and form the new range
 	 * table... OLD first, then NEW....
 	 */
-	rt_entry1 = addRangeTableEntryForRelation(NULL, viewOid,
+	rt_entry1 = addRangeTableEntryForRelation(NULL, viewRel,
 											  makeAlias("*OLD*", NIL),
 											  false, false);
-	rt_entry2 = addRangeTableEntryForRelation(NULL, viewOid,
+	rt_entry2 = addRangeTableEntryForRelation(NULL, viewRel,
 											  makeAlias("*NEW*", NIL),
 											  false, false);
 	/* Must override addRangeTableEntry's default access-check flags */
@@ -365,6 +369,8 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 	 * Now offset all var nodes by 2, and jointree RT indexes too.
 	 */
 	OffsetVarNodes((Node *) viewParse, 2, 0);
+
+	relation_close(viewRel, AccessShareLock);
 
 	return viewParse;
 }
