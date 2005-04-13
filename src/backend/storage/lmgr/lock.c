@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.148 2005/03/11 03:52:06 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.149 2005/04/13 18:54:56 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -97,7 +97,7 @@ static const char *const lock_mode_names[] =
  * --------
  */
 
-int			Trace_lock_oidmin = BootstrapObjectIdData;
+int			Trace_lock_oidmin = FirstNormalObjectId;
 bool		Trace_locks = false;
 bool		Trace_userlocks = false;
 int			Trace_lock_table = 0;

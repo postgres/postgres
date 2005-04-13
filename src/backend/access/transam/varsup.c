@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.62 2005/02/20 21:46:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.63 2005/04/13 18:54:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -265,14 +265,36 @@ GetNewObjectId(void)
 	/*
 	 * Check for wraparound of the OID counter.  We *must* not return 0
 	 * (InvalidOid); and as long as we have to check that, it seems a good
-	 * idea to skip over everything below BootstrapObjectIdData too. (This
+	 * idea to skip over everything below FirstNormalObjectId too. (This
 	 * basically just reduces the odds of OID collision right after a wrap
 	 * occurs.)  Note we are relying on unsigned comparison here.
+	 *
+	 * During initdb, we start the OID generator at FirstBootstrapObjectId,
+	 * so we only enforce wrapping to that point when in bootstrap or
+	 * standalone mode.  The first time through this routine after normal
+	 * postmaster start, the counter will be forced up to FirstNormalObjectId.
+	 * This mechanism leaves the OIDs between FirstBootstrapObjectId and
+	 * FirstNormalObjectId available for automatic assignment during initdb,
+	 * while ensuring they will never conflict with user-assigned OIDs.
 	 */
-	if (ShmemVariableCache->nextOid < ((Oid) BootstrapObjectIdData))
+	if (ShmemVariableCache->nextOid < ((Oid) FirstNormalObjectId))
 	{
-		ShmemVariableCache->nextOid = BootstrapObjectIdData;
-		ShmemVariableCache->oidCount = 0;
+		if (IsPostmasterEnvironment)
+		{
+			/* wraparound in normal environment */
+			ShmemVariableCache->nextOid = FirstNormalObjectId;
+			ShmemVariableCache->oidCount = 0;
+		}
+		else
+		{
+			/* we may be bootstrapping, so don't enforce the full range */
+			if (ShmemVariableCache->nextOid < ((Oid) FirstBootstrapObjectId))
+			{
+				/* wraparound in standalone environment? */
+				ShmemVariableCache->nextOid = FirstBootstrapObjectId;
+				ShmemVariableCache->oidCount = 0;
+			}
+		}
 	}
 
 	/* If we run out of logged for use oids then we must log more */

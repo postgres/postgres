@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.33 2005/03/29 00:16:55 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.34 2005/04/13 18:54:56 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -121,15 +121,6 @@ for dir in $INCLUDE_DIRS; do
     fi
 done
 
-# Get FirstGenBKIObjectId from access/transam.h
-for dir in $INCLUDE_DIRS; do
-    if [ -f "$dir/access/transam.h" ]; then
-        BKIOBJECTID=`grep '^#define[ 	]*FirstGenBKIObjectId' $dir/access/transam.h | $AWK '{ print $3 }'`
-        break
-    fi
-done
-export BKIOBJECTID
-
 touch ${OUTPUT_PREFIX}.description.$$
 
 # ----------------
@@ -173,8 +164,7 @@ sed -e "s/;[ 	]*$//g" \
 #	   contents of a catalog definition.
 #	reln_open is a flag indicating when we are processing DATA lines.
 #	   (i.e. have a relation open and need to close it)
-#	nextbkioid is the next OID available for automatic assignment.
-#	oid is the most recently seen or assigned oid.
+#	oid is the most recently seen oid, or 0 if none in the last DATA line.
 # ----------------
 BEGIN {
 	inside = 0;
@@ -184,7 +174,6 @@ BEGIN {
 	nc = 0;
 	reln_open = 0;
 	comment_level = 0;
-	nextbkioid = ENVIRON["BKIOBJECTID"];
 	oid = 0;
 }
 
@@ -202,9 +191,8 @@ comment_level > 0 { next; }
 
 # ----------------
 #	DATA() statements are basically passed right through after
-#	stripping off the DATA( and the ) on the end.  However,
-#	if we see "OID = 0" then we should assign an oid from nextbkioid.
-#	Remember any explicit or assigned OID for use by DESCR().
+#	stripping off the DATA( and the ) on the end.
+#	Remember any explicit OID for use by DESCR().
 # ----------------
 /^DATA\(/ {
 	data = substr($0, 6, length($0) - 6);
@@ -213,12 +201,6 @@ comment_level > 0 { next; }
 	if (nf >= 4 && datafields[1] == "insert" && datafields[2] == "OID" && datafields[3] == "=")
 	{
 		oid = datafields[4];
-		if (oid == 0)
-		{
-			oid = nextbkioid;
-			nextbkioid++;
-			sub("OID *= *0", "OID = " oid, data);
-		}
 	}
 	print data;
 	next;

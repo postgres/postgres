@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.14 2005/03/29 19:44:22 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.15 2005/04/13 18:54:55 tgl Exp $
  -->
 
 <chapter id="bki">
@@ -167,8 +167,8 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.14 2005/03/29 19:44:22 tgl Exp $
       values and <replaceable
       class="parameter">oid_value</replaceable> for its OID.  If
       <replaceable class="parameter">oid_value</replaceable> is zero
-      (0) or the clause is omitted, then the next available OID is
-      used.
+      (0) or the clause is omitted, and the table has OIDs, then the
+      next available OID is assigned.
      </para>
 
      <para>

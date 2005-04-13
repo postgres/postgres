@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.53 2005/02/20 21:46:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.54 2005/04/13 18:54:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,23 +55,24 @@
  *		OIDs 1-9999 are reserved for manual assignment (see the files
  *		in src/include/catalog/).
  *
- *		OIDS 10000-16383 are reserved for assignment by genbki.sh.
+ *		OIDS 10000-16383 are reserved for assignment during initdb
+ *		using the OID generator.  (We start the generator at 10000.)
  *
- *		OIDs beginning at 16384 are assigned at runtime from the OID
- *		generator.	(The first few of these will be assigned during initdb,
- *		to objects created after the initial BKI script processing.)
+ *		OIDs beginning at 16384 are assigned from the OID generator
+ *		during normal multiuser operation.  (We force the generator up to
+ *		16384 as soon as we are in normal operation.)
  *
  * The choices of 10000 and 16384 are completely arbitrary, and can be moved
  * if we run low on OIDs in either category.  Changing the macros below
  * should be sufficient to do this.
  *
- * NOTE: if the OID generator wraps around, we should skip over OIDs 0-16383
+ * NOTE: if the OID generator wraps around, we skip over OIDs 0-16383
  * and resume with 16384.  This minimizes the odds of OID conflict, by not
  * reassigning OIDs that might have been assigned during initdb.
  * ----------
  */
-#define FirstGenBKIObjectId   10000
-#define BootstrapObjectIdData 16384
+#define FirstBootstrapObjectId	10000
+#define FirstNormalObjectId		16384
 
 /*
  * VariableCache is placed in shmem and used by

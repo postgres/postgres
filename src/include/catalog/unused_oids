@@ -1,20 +1,17 @@
 #!/bin/sh
+#
 # unused_oids
 #
-# $PostgreSQL: pgsql/src/include/catalog/unused_oids,v 1.5 2003/11/29 19:52:08 pgsql Exp $
+# $PostgreSQL: pgsql/src/include/catalog/unused_oids,v 1.6 2005/04/13 18:54:57 tgl Exp $
 #
-#	finds blocks of oids that have not already been claimed by 
-#	post_hackers for internal purposes.  primarily useful for
-#	finding valid oids for new internal function oids.  the numbers
-#	printed are inclusive ranges of valid (unused) oids.
+#	finds blocks of manually-assignable oids that have not already been
+#	claimed by post_hackers.  primarily useful for finding available
+#	oids for new internal functions.  the numbers printed are inclusive
+#	ranges of unused oids.
 #
 #	before using a large empty block, make sure you aren't about
 #	to take over what was intended as expansion space for something
-#	else.  also, before using a number, do a "grepsrc" to make sure 
-#	that someone isn't using a literal numeric constant somewhere..
-#
-#	non-berkeley post_hackers should probably not try to use oids 
-#	less than the highest one that comes with the distributed source.
+#	else.
 #
 #	run this script in src/include/catalog.
 #
@@ -22,9 +19,9 @@
 
 AWK="awk"
 
-# Get FirstGenBKIObjectId from access/transam.h
-BKIOBJECTID=`grep '#define[ 	]*FirstGenBKIObjectId' ../access/transam.h | $AWK '{ print $3 }'`
-export BKIOBJECTID
+# Get FirstBootstrapObjectId from access/transam.h
+FIRSTOBJECTID=`grep '#define[ 	]*FirstBootstrapObjectId' ../access/transam.h | $AWK '{ print $3 }'`
+export FIRSTOBJECTID
 
 egrep '^DATA' pg_*.h | \
 	sed -e 's/^.*OID[^=]*=[^0-9]*//' -e 's/[^0-9].*$//' | \
@@ -45,5 +42,5 @@ BEGIN {
 	last = $1;
 }
 END {
-	print last + 1, "-", ENVIRON["BKIOBJECTID"]-1;
+	print last + 1, "-", ENVIRON["FIRSTOBJECTID"]-1;
 }'

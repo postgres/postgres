@@ -2,45 +2,18 @@
 #
 # duplicate_oids
 #
-# finds oids that are duplicated in the system tables.
+# $PostgreSQL: pgsql/src/include/catalog/duplicate_oids,v 1.6 2005/04/13 18:54:57 tgl Exp $
+#
+# finds manually-assigned oids that are duplicated in the system tables.
+#
+# run this script in src/include/catalog.
 #
 
 FILES=`ls pg_*.h`
 
-#
-# The previous version did not use the -d option on uniq
-# so check here that it is supported.
-# Otherwise, use the old algorithm
-#
-
-if [ `uniq -d < /dev/null > /dev/null 2>&1` ]; then
-  echo "uniq -d is not supported on your platform."
-  echo "Please report this to pgsql-hackers@postgresql.org"
-
-egrep '^DATA' $FILES | \
-	sed -e 's/^.*OID[^=]*=[^0-9]*//' -e 's/[^0-9].*$//' | \
-	sort -n >/tmp/alloids.$$
-uniq /tmp/alloids.$$ >/tmp/uniqoids.$$
-
-diff -u /tmp/alloids.$$ /tmp/uniqoids.$$ | \
-	grep -v '/tmp/' | \
-	grep '^-' | \
-	sed -e 's/^-//' | \
-	grep -v '^0$' | \
-	uniq
-rm /tmp/alloids.$$
-rm /tmp/uniqoids.$$
-
-else
-
-#  echo "uniq -d is supported on this platform."
-#  echo "Will omit the use of temporary files."
-
 egrep '^DATA' $FILES | \
 	sed -e 's/^.*OID[^=]*=[^0-9]*//' -e 's/[^0-9].*$//' | \
 	sort -n | uniq -d | \
-	egrep -v '^[0]*$'
+	egrep -v '^0*$'
 
-fi
-
-exit
+exit 0
