@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.108 2004/12/31 21:59:07 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.108.4.1 2005/04/14 22:35:12 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -290,10 +290,15 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 
 		/*
 		 * We do not need to check every single field here: we can
-		 * disregard attrelid, attnum (it was used to place the row in the
-		 * attrs array) and everything derived from the column datatype.
-		 * Also, attcacheoff must NOT be checked since it's possibly not
-		 * set in both copies.
+		 * disregard attrelid and attnum (which were used to place the row
+		 * in the attrs array in the first place).  It might look like we
+		 * could dispense with checking attlen/attbyval/attalign, since these
+		 * are derived from atttypid; but in the case of dropped columns
+		 * we must check them (since atttypid will be zero for all dropped
+		 * columns) and in general it seems safer to check them always.
+		 *
+		 * attcacheoff must NOT be checked since it's possibly not set
+		 * in both copies.
 		 */
 		if (strcmp(NameStr(attr1->attname), NameStr(attr2->attname)) != 0)
 			return false;
@@ -301,11 +306,17 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 			return false;
 		if (attr1->attstattarget != attr2->attstattarget)
 			return false;
+		if (attr1->attlen != attr2->attlen)
+			return false;
 		if (attr1->attndims != attr2->attndims)
 			return false;
 		if (attr1->atttypmod != attr2->atttypmod)
 			return false;
+		if (attr1->attbyval != attr2->attbyval)
+			return false;
 		if (attr1->attstorage != attr2->attstorage)
+			return false;
+		if (attr1->attalign != attr2->attalign)
 			return false;
 		if (attr1->attnotnull != attr2->attnotnull)
 			return false;
