@@ -8,14 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.103 2005/04/14 01:38:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.104 2005/04/14 20:03:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_rewrite.h"
@@ -87,7 +86,7 @@ InsertRule(char *rulname,
 	/*
 	 * Ready to store new pg_rewrite tuple
 	 */
-	pg_rewrite_desc = heap_openr(RewriteRelationName, RowExclusiveLock);
+	pg_rewrite_desc = heap_open(RewriteRelationId, RowExclusiveLock);
 
 	/*
 	 * Check to see if we are replacing an existing tuple
@@ -139,8 +138,7 @@ InsertRule(char *rulname,
 
 	/* If replacing, get rid of old dependencies and make new ones */
 	if (is_update)
-		deleteDependencyRecordsFor(RelationGetRelid(pg_rewrite_desc),
-								   rewriteObjectId);
+		deleteDependencyRecordsFor(RewriteRelationId, rewriteObjectId);
 
 	/*
 	 * Install dependency on rule's relation to ensure it will go away on
@@ -570,7 +568,7 @@ RenameRewriteRule(Oid owningRel, const char *oldName,
 	Relation	pg_rewrite_desc;
 	HeapTuple	ruletup;
 
-	pg_rewrite_desc = heap_openr(RewriteRelationName, RowExclusiveLock);
+	pg_rewrite_desc = heap_open(RewriteRelationId, RowExclusiveLock);
 
 	ruletup = SearchSysCacheCopy(RULERELNAME,
 								 ObjectIdGetDatum(owningRel),

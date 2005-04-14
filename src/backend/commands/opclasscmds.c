@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.31 2005/04/14 01:38:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.32 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,13 +17,13 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
@@ -255,7 +255,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 		}
 	}
 
-	rel = heap_openr(OperatorClassRelationName, RowExclusiveLock);
+	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
 
 	/*
 	 * Make sure there is no existing opclass of this name (this is just
@@ -287,7 +287,7 @@ DefineOpClass(CreateOpClassStmt *stmt)
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(amoid));
 
-		scan = systable_beginscan(rel, OpclassAmNameNspIndex, true,
+		scan = systable_beginscan(rel, OpclassAmNameNspIndexId, true,
 								  SnapshotNow, 1, skey);
 
 		while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -345,12 +345,12 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	 * Create dependencies.  Note: we do not create a dependency link to
 	 * the AM, because we don't currently support DROP ACCESS METHOD.
 	 */
-	myself.classId = RelationGetRelid(rel);
+	myself.classId = OperatorClassRelationId;
 	myself.objectId = opclassoid;
 	myself.objectSubId = 0;
 
 	/* dependency on namespace */
-	referenced.classId = get_system_catalog_relid(NamespaceRelationName);
+	referenced.classId = NamespaceRelationId;
 	referenced.objectId = namespaceoid;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -371,11 +371,11 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	}
 
 	/* dependencies on operators */
-	referenced.classId = get_system_catalog_relid(OperatorRelationName);
 	foreach(l, operators)
 	{
 		OpClassMember *op = (OpClassMember *) lfirst(l);
 
+		referenced.classId = OperatorRelationId;
 		referenced.objectId = op->object;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -547,7 +547,7 @@ storeOperators(Oid opclassoid, List *operators)
 	ListCell   *l;
 	int			i;
 
-	rel = heap_openr(AccessMethodOperatorRelationName, RowExclusiveLock);
+	rel = heap_open(AccessMethodOperatorRelationId, RowExclusiveLock);
 
 	foreach(l, operators)
 	{
@@ -591,7 +591,7 @@ storeProcedures(Oid opclassoid, List *procedures)
 	ListCell   *l;
 	int			i;
 
-	rel = heap_openr(AccessMethodProcedureRelationName, RowExclusiveLock);
+	rel = heap_open(AccessMethodProcedureRelationId, RowExclusiveLock);
 
 	foreach(l, procedures)
 	{
@@ -701,7 +701,7 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 	/*
 	 * Do the deletion
 	 */
-	object.classId = get_system_catalog_relid(OperatorClassRelationName);
+	object.classId = OperatorClassRelationId;
 	object.objectId = opcID;
 	object.objectSubId = 0;
 
@@ -722,7 +722,7 @@ RemoveOpClassById(Oid opclassOid)
 	/*
 	 * First remove the pg_opclass entry itself.
 	 */
-	rel = heap_openr(OperatorClassRelationName, RowExclusiveLock);
+	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache(CLAOID,
 						 ObjectIdGetDatum(opclassOid),
@@ -744,9 +744,9 @@ RemoveOpClassById(Oid opclassOid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(opclassOid));
 
-	rel = heap_openr(AccessMethodOperatorRelationName, RowExclusiveLock);
+	rel = heap_open(AccessMethodOperatorRelationId, RowExclusiveLock);
 
-	scan = systable_beginscan(rel, AccessMethodStrategyIndex, true,
+	scan = systable_beginscan(rel, AccessMethodStrategyIndexId, true,
 							  SnapshotNow, 1, skey);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -763,9 +763,9 @@ RemoveOpClassById(Oid opclassOid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(opclassOid));
 
-	rel = heap_openr(AccessMethodProcedureRelationName, RowExclusiveLock);
+	rel = heap_open(AccessMethodProcedureRelationId, RowExclusiveLock);
 
-	scan = systable_beginscan(rel, AccessMethodProcedureIndex, true,
+	scan = systable_beginscan(rel, AccessMethodProcedureIndexId, true,
 							  SnapshotNow, 1, skey);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -800,7 +800,7 @@ RenameOpClass(List *name, const char *access_method, const char *newname)
 				 errmsg("access method \"%s\" does not exist",
 						access_method)));
 
-	rel = heap_openr(OperatorClassRelationName, RowExclusiveLock);
+	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
 
 	/*
 	 * Look up the opclass
@@ -900,7 +900,7 @@ AlterOpClassOwner(List *name, const char *access_method, AclId newOwnerSysId)
 				 errmsg("access method \"%s\" does not exist",
 						access_method)));
 
-	rel = heap_openr(OperatorClassRelationName, RowExclusiveLock);
+	rel = heap_open(OperatorClassRelationId, RowExclusiveLock);
 
 	/*
 	 * Look up the opclass

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.20 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.21 2005/04/14 20:03:24 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -35,7 +35,6 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -234,7 +233,7 @@ RemoveOperator(RemoveOperStmt *stmt)
 	/*
 	 * Do the deletion
 	 */
-	object.classId = get_system_catalog_relid(OperatorRelationName);
+	object.classId = OperatorRelationId;
 	object.objectId = operOid;
 	object.objectSubId = 0;
 
@@ -250,7 +249,7 @@ RemoveOperatorById(Oid operOid)
 	Relation	relation;
 	HeapTuple	tup;
 
-	relation = heap_openr(OperatorRelationName, RowExclusiveLock);
+	relation = heap_open(OperatorRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache(OPEROID,
 						 ObjectIdGetDatum(operOid),
@@ -277,7 +276,7 @@ AlterOperatorOwner(List *name, TypeName *typeName1, TypeName *typeName2,
 	Relation	rel;
 	Form_pg_operator oprForm;
 
-	rel = heap_openr(OperatorRelationName, RowExclusiveLock);
+	rel = heap_open(OperatorRelationId, RowExclusiveLock);
 
 	operOid = LookupOperNameTypeNames(name, typeName1, typeName2,
 									  false);

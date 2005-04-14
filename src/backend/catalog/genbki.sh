@@ -6,11 +6,12 @@
 #    files.  These .bki files are used to initialize the postgres template
 #    database.
 #
-# Copyright (c) 1994, Regents of the University of California
+# Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.35 2005/04/14 01:38:16 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.36 2005/04/14 20:03:23 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -230,10 +231,10 @@ comment_level > 0 { next; }
 	iname = substr(data, 1, pos-1);
 	data = substr(data, pos+1, length(data)-pos);
 	pos = index(data, ",");
-	ioid = substr(data, 1, pos-1);
+	oid = substr(data, 1, pos-1);
 	data = substr(data, pos+1, length(data)-pos);
 
-	print "declare index " iname " " ioid " " data
+	print "declare index " iname " " oid " " data
 }
 
 /^DECLARE_UNIQUE_INDEX\(/ {
@@ -250,10 +251,10 @@ comment_level > 0 { next; }
 	iname = substr(data, 1, pos-1);
 	data = substr(data, pos+1, length(data)-pos);
 	pos = index(data, ",");
-	ioid = substr(data, 1, pos-1);
+	oid = substr(data, 1, pos-1);
 	data = substr(data, pos+1, length(data)-pos);
 
-	print "declare unique index " iname " " ioid " " data
+	print "declare unique index " iname " " oid " " data
 }
 
 /^BUILD_INDICES/	{ print "build indices"; }
@@ -277,7 +278,7 @@ comment_level > 0 { next; }
 	catalogandoid = substr($1,9,pos-9);
 	pos = index(catalogandoid, ",");
 	catalog = substr(catalogandoid, 1, pos-1);
-	catalogoid = substr(catalogandoid, pos+1, length(catalogandoid)-pos);
+	oid = substr(catalogandoid, pos+1, length(catalogandoid)-pos);
 
 	if ($0 ~ /BKI_BOOTSTRAP/) {
 		bootstrap = "bootstrap ";
@@ -296,7 +297,7 @@ comment_level > 0 { next; }
 }
 
 # ----------------
-#	process the contents of the catalog definition
+#	process the columns of the catalog definition
 #
 #	attname[ x ] contains the attribute name for attribute x
 #	atttype[ x ] contains the attribute type fot attribute x
@@ -312,7 +313,7 @@ inside == 1 {
 #  if this is the last line, then output the bki catalog stuff.
 # ----
 	if ($1 ~ /}/) {
-		print "create " bootstrap shared_relation without_oids catalog " " catalogoid;
+		print "create " bootstrap shared_relation without_oids catalog " " oid;
 		print "\t(";
 
 		for (j=1; j<i-1; j++) {
@@ -335,7 +336,7 @@ inside == 1 {
 	}
 
 # ----
-#  if we are inside the catalog definition, then keep sucking up
+#  we are inside the catalog definition, so keep sucking up
 #  attribute names and types
 # ----
 	if ($2 ~ /\[.*\]/) {			# array attribute

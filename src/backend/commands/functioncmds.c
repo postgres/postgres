@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.60 2005/04/14 01:38:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.61 2005/04/14 20:03:23 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -34,10 +34,10 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_aggregate.h"
 #include "catalog/pg_cast.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
@@ -742,7 +742,7 @@ RemoveFunctionById(Oid funcOid)
 	/*
 	 * Delete the pg_proc tuple.
 	 */
-	relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
+	relation = heap_open(ProcedureRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache(PROCOID,
 						 ObjectIdGetDatum(funcOid),
@@ -763,7 +763,7 @@ RemoveFunctionById(Oid funcOid)
 	 */
 	if (isagg)
 	{
-		relation = heap_openr(AggregateRelationName, RowExclusiveLock);
+		relation = heap_open(AggregateRelationId, RowExclusiveLock);
 
 		tup = SearchSysCache(AGGFNOID,
 							 ObjectIdGetDatum(funcOid),
@@ -793,7 +793,7 @@ RenameFunction(List *name, List *argtypes, const char *newname)
 	Relation	rel;
 	AclResult	aclresult;
 
-	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
 	procOid = LookupFuncNameTypeNames(name, argtypes, false);
 
@@ -860,7 +860,7 @@ AlterFunctionOwner(List *name, List *argtypes, AclId newOwnerSysId)
 	Form_pg_proc procForm;
 	Relation	rel;
 
-	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
 	procOid = LookupFuncNameTypeNames(name, argtypes, false);
 
@@ -948,7 +948,7 @@ AlterFunction(AlterFunctionStmt *stmt)
 	DefElem *strict_item = NULL;
 	DefElem *security_def_item = NULL;
 
-	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
 	funcOid = LookupFuncNameTypeNames(stmt->func->funcname,
 									  stmt->func->funcargs,
@@ -1014,7 +1014,7 @@ SetFunctionReturnType(Oid funcOid, Oid newRetType)
 	HeapTuple	tup;
 	Form_pg_proc procForm;
 
-	pg_proc_rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+	pg_proc_rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy(PROCOID,
 							 ObjectIdGetDatum(funcOid),
@@ -1050,7 +1050,7 @@ SetFunctionArgType(Oid funcOid, int argIndex, Oid newArgType)
 	HeapTuple	tup;
 	Form_pg_proc procForm;
 
-	pg_proc_rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+	pg_proc_rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy(PROCOID,
 							 ObjectIdGetDatum(funcOid),
@@ -1266,7 +1266,7 @@ CreateCast(CreateCastStmt *stmt)
 			break;
 	}
 
-	relation = heap_openr(CastRelationName, RowExclusiveLock);
+	relation = heap_open(CastRelationId, RowExclusiveLock);
 
 	/*
 	 * Check for duplicate.  This is just to give a friendly error
@@ -1299,7 +1299,7 @@ CreateCast(CreateCastStmt *stmt)
 	CatalogUpdateIndexes(relation, tuple);
 
 	/* make dependency entries */
-	myself.classId = RelationGetRelid(relation);
+	myself.classId = CastRelationId;
 	myself.objectId = HeapTupleGetOid(tuple);
 	myself.objectSubId = 0;
 
@@ -1379,7 +1379,7 @@ DropCast(DropCastStmt *stmt)
 	/*
 	 * Do the deletion
 	 */
-	object.classId = get_system_catalog_relid(CastRelationName);
+	object.classId = CastRelationId;
 	object.objectId = HeapTupleGetOid(tuple);
 	object.objectSubId = 0;
 
@@ -1397,13 +1397,13 @@ DropCastById(Oid castOid)
 	SysScanDesc scan;
 	HeapTuple	tuple;
 
-	relation = heap_openr(CastRelationName, RowExclusiveLock);
+	relation = heap_open(CastRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&scankey,
 				ObjectIdAttributeNumber,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(castOid));
-	scan = systable_beginscan(relation, CastOidIndex, true,
+	scan = systable_beginscan(relation, CastOidIndexId, true,
 							  SnapshotNow, 1, &scankey);
 
 	tuple = systable_getnext(scan);

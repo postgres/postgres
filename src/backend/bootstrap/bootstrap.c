@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.201 2005/03/29 19:44:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.202 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,12 +26,12 @@
 #include "access/heapam.h"
 #include "access/xlog.h"
 #include "bootstrap/bootstrap.h"
-#include "catalog/catname.h"
 #include "catalog/index.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "postmaster/bgwriter.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
@@ -46,10 +46,14 @@
 #include "utils/ps_status.h"
 #include "utils/relcache.h"
 
+extern int	optind;
+extern char *optarg;
+
 
 #define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
 
 extern int	Int_yyparse(void);
+
 static void usage(void);
 static void bootstrap_signals(void);
 static hashnode *AddStr(char *str, int strlength, int mderef);
@@ -169,16 +173,11 @@ static struct typmap *Ap = NULL;
 static int	Warnings = 0;
 static char Blanks[MAXATTR];
 
-static char *relname;			/* current relation name */
-
 Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
 static Datum values[MAXATTR];	/* corresponding attribute values */
 int			numattr;			/* number of attributes for cur. rel */
 
 static MemoryContext nogc = NULL;		/* special no-gc mem context */
-
-extern int	optind;
-extern char *optarg;
 
 /*
  *	At bootstrap time, we first declare all the indices to be built, and
@@ -572,12 +571,12 @@ boot_openrel(char *relname)
 	HeapScanDesc scan;
 	HeapTuple	tup;
 
-	if (strlen(relname) >= NAMEDATALEN - 1)
+	if (strlen(relname) >= NAMEDATALEN)
 		relname[NAMEDATALEN - 1] = '\0';
 
 	if (Typ == NULL)
 	{
-		rel = heap_openr(TypeRelationName, NoLock);
+		rel = heap_open(TypeRelationId, NoLock);
 		scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 		i = 0;
 		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -605,10 +604,9 @@ boot_openrel(char *relname)
 		closerel(NULL);
 
 	elog(DEBUG4, "open relation %s, attrsize %d",
-		 relname ? relname : "(null)",
-		 (int) ATTRIBUTE_TUPLE_SIZE);
+		 relname, (int) ATTRIBUTE_TUPLE_SIZE);
 
-	boot_reldesc = heap_openr(relname, NoLock);
+	boot_reldesc = heap_openrv(makeRangeVar(NULL, relname), NoLock);
 	numattr = boot_reldesc->rd_rel->relnatts;
 	for (i = 0; i < numattr; i++)
 	{
@@ -641,7 +639,7 @@ closerel(char *name)
 		{
 			if (strcmp(RelationGetRelationName(boot_reldesc), name) != 0)
 				elog(ERROR, "close of %s when %s was expected",
-					 name, relname ? relname : "(null)");
+					 name, RelationGetRelationName(boot_reldesc));
 		}
 		else
 			elog(ERROR, "close of %s before any relation was opened",
@@ -652,7 +650,8 @@ closerel(char *name)
 		elog(ERROR, "no open relation to close");
 	else
 	{
-		elog(DEBUG4, "close relation %s", relname ? relname : "(null)");
+		elog(DEBUG4, "close relation %s",
+			 RelationGetRelationName(boot_reldesc));
 		heap_close(boot_reldesc, NoLock);
 		boot_reldesc = NULL;
 	}
@@ -676,7 +675,7 @@ DefineAttr(char *name, char *type, int attnum)
 	if (boot_reldesc != NULL)
 	{
 		elog(WARNING, "no open relations allowed with CREATE command");
-		closerel(relname);
+		closerel(NULL);
 	}
 
 	if (attrtypes[attnum] == NULL)
@@ -933,7 +932,7 @@ gettype(char *type)
 				return i;
 		}
 		elog(DEBUG4, "external type: %s", type);
-		rel = heap_openr(TypeRelationName, NoLock);
+		rel = heap_open(TypeRelationId, NoLock);
 		scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 		i = 0;
 		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)

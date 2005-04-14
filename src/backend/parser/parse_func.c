@@ -8,14 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.177 2005/03/31 22:46:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.178 2005/04/14 20:03:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_proc.h"
 #include "funcapi.h"
@@ -922,7 +921,7 @@ find_inheritors(Oid relid, Oid **supervec)
 	queue = list_make1_oid(relid);
 	visited = NIL;
 
-	inhrel = heap_openr(InheritsRelationName, AccessShareLock);
+	inhrel = heap_open(InheritsRelationId, AccessShareLock);
 
 	/*
 	 * Use queue to do a breadth-first traversal of the inheritance graph

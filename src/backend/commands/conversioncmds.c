@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.16 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.17 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "catalog/pg_conversion.h"
 #include "access/heapam.h"
 #include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
@@ -124,7 +123,7 @@ RenameConversion(List *name, const char *newname)
 	Relation	rel;
 	AclResult	aclresult;
 
-	rel = heap_openr(ConversionRelationName, RowExclusiveLock);
+	rel = heap_open(ConversionRelationId, RowExclusiveLock);
 
 	conversionOid = FindConversionByName(name);
 	if (!OidIsValid(conversionOid))
@@ -183,7 +182,7 @@ AlterConversionOwner(List *name, AclId newOwnerSysId)
 	Relation	rel;
 	Form_pg_conversion convForm;
 
-	rel = heap_openr(ConversionRelationName, RowExclusiveLock);
+	rel = heap_open(ConversionRelationId, RowExclusiveLock);
 
 	conversionOid = FindConversionByName(name);
 	if (!OidIsValid(conversionOid))

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.24 2005/04/14 01:38:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.25 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,11 +17,11 @@
 #include "access/heapam.h"
 #include "access/genam.h"
 #include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
+#include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
@@ -72,7 +72,7 @@ CreateConstraintEntry(const char *constraintName,
 	int			i;
 	ObjectAddress conobject;
 
-	conDesc = heap_openr(ConstraintRelationName, RowExclusiveLock);
+	conDesc = heap_open(ConstraintRelationId, RowExclusiveLock);
 
 	Assert(constraintName);
 	namestrcpy(&cname, constraintName);
@@ -160,7 +160,7 @@ CreateConstraintEntry(const char *constraintName,
 	/* update catalog indexes */
 	CatalogUpdateIndexes(conDesc, tup);
 
-	conobject.classId = RelationGetRelid(conDesc);
+	conobject.classId = ConstraintRelationId;
 	conobject.objectId = conOid;
 	conobject.objectSubId = 0;
 
@@ -286,7 +286,7 @@ ConstraintNameIsUsed(ConstraintCategory conCat, Oid objId,
 	ScanKeyData skey[2];
 	HeapTuple	tup;
 
-	conDesc = heap_openr(ConstraintRelationName, AccessShareLock);
+	conDesc = heap_open(ConstraintRelationId, AccessShareLock);
 
 	found = false;
 
@@ -300,7 +300,7 @@ ConstraintNameIsUsed(ConstraintCategory conCat, Oid objId,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(objNamespace));
 
-	conscan = systable_beginscan(conDesc, ConstraintNameNspIndex, true,
+	conscan = systable_beginscan(conDesc, ConstraintNameNspIndexId, true,
 								 SnapshotNow, 2, skey);
 
 	while (HeapTupleIsValid(tup = systable_getnext(conscan)))
@@ -362,7 +362,7 @@ ChooseConstraintName(const char *name1, const char *name2,
 	bool		found;
 	ListCell   *l;
 
-	conDesc = heap_openr(ConstraintRelationName, AccessShareLock);
+	conDesc = heap_open(ConstraintRelationId, AccessShareLock);
 
 	/* try the unmodified label first */
 	StrNCpy(modlabel, label, sizeof(modlabel));
@@ -394,7 +394,7 @@ ChooseConstraintName(const char *name1, const char *name2,
 						BTEqualStrategyNumber, F_OIDEQ,
 						ObjectIdGetDatum(namespace));
 
-			conscan = systable_beginscan(conDesc, ConstraintNameNspIndex, true,
+			conscan = systable_beginscan(conDesc, ConstraintNameNspIndexId, true,
 										 SnapshotNow, 2, skey);
 
 			found = (HeapTupleIsValid(systable_getnext(conscan)));
@@ -427,14 +427,14 @@ RemoveConstraintById(Oid conId)
 	HeapTuple	tup;
 	Form_pg_constraint con;
 
-	conDesc = heap_openr(ConstraintRelationName, RowExclusiveLock);
+	conDesc = heap_open(ConstraintRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&skey[0],
 				ObjectIdAttributeNumber,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(conId));
 
-	conscan = systable_beginscan(conDesc, ConstraintOidIndex, true,
+	conscan = systable_beginscan(conDesc, ConstraintOidIndexId, true,
 								 SnapshotNow, 1, skey);
 
 	tup = systable_getnext(conscan);
@@ -466,7 +466,7 @@ RemoveConstraintById(Oid conId)
 			HeapTuple	relTup;
 			Form_pg_class classForm;
 
-			pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
+			pgrel = heap_open(RelationRelationId, RowExclusiveLock);
 			relTup = SearchSysCacheCopy(RELOID,
 										ObjectIdGetDatum(con->conrelid),
 										0, 0, 0);
@@ -524,42 +524,37 @@ GetConstraintNameForTrigger(Oid triggerId)
 {
 	char	   *result;
 	Oid			constraintId = InvalidOid;
-	Oid			pg_trigger_id;
-	Oid			pg_constraint_id;
 	Relation	depRel;
 	Relation	conRel;
 	ScanKeyData key[2];
 	SysScanDesc scan;
 	HeapTuple	tup;
 
-	pg_trigger_id = get_system_catalog_relid(TriggerRelationName);
-	pg_constraint_id = get_system_catalog_relid(ConstraintRelationName);
-
 	/*
 	 * We must grovel through pg_depend to find the owning constraint.
 	 * Perhaps pg_trigger should have a column for the owning constraint ...
 	 * but right now this is not performance-critical code.
 	 */
-	depRel = heap_openr(DependRelationName, AccessShareLock);
+	depRel = heap_open(DependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(pg_trigger_id));
+				ObjectIdGetDatum(TriggerRelationId));
 	ScanKeyInit(&key[1],
 				Anum_pg_depend_objid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(triggerId));
 	/* assume we can ignore objsubid for a trigger */
 
-	scan = systable_beginscan(depRel, DependDependerIndex, true,
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
 							  SnapshotNow, 2, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
 	{
 		Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(tup);
 
-		if (foundDep->refclassid == pg_constraint_id &&
+		if (foundDep->refclassid == ConstraintRelationId &&
 			foundDep->deptype == DEPENDENCY_INTERNAL)
 		{
 			constraintId = foundDep->refobjid;
@@ -574,14 +569,14 @@ GetConstraintNameForTrigger(Oid triggerId)
 	if (!OidIsValid(constraintId))
 		return NULL;				/* no owning constraint found */
 
-	conRel = heap_openr(ConstraintRelationName, AccessShareLock);
+	conRel = heap_open(ConstraintRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				ObjectIdAttributeNumber,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(constraintId));
 
-	scan = systable_beginscan(conRel, ConstraintOidIndex, true,
+	scan = systable_beginscan(conRel, ConstraintOidIndexId, true,
 							  SnapshotNow, 1, key);
 
 	tup = systable_getnext(scan);

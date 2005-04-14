@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.135 2005/04/14 01:38:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.136 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -434,7 +433,7 @@ mark_index_clustered(Relation rel, Oid indexOid)
 	/*
 	 * Check each index of the relation and set/clear the bit as needed.
 	 */
-	pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
+	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
 	foreach(index, RelationGetIndexList(rel))
 	{
@@ -719,7 +718,7 @@ swap_relation_files(Oid r1, Oid r2)
 	CatalogIndexState indstate;
 
 	/* We need writable copies of both pg_class tuples. */
-	relRelation = heap_openr(RelationRelationName, RowExclusiveLock);
+	relRelation = heap_open(RelationRelationId, RowExclusiveLock);
 
 	reltup1 = SearchSysCacheCopy(RELOID,
 								 ObjectIdGetDatum(r1),
@@ -883,7 +882,7 @@ get_tables_to_cluster(MemoryContext cluster_context)
 	 * ever have indisclustered set, because CLUSTER will refuse to set it
 	 * when called with one of them as argument.
 	 */
-	indRelation = relation_openr(IndexRelationName, AccessShareLock);
+	indRelation = heap_open(IndexRelationId, AccessShareLock);
 	ScanKeyInit(&entry,
 				Anum_pg_index_indisclustered,
 				BTEqualStrategyNumber, F_BOOLEQ,

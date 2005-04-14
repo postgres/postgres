@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.53 2005/03/25 18:30:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/catcache.h,v 1.54 2005/04/14 20:03:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,8 @@ typedef struct catcache
 	int			id;				/* cache identifier --- see syscache.h */
 	struct catcache *cc_next;	/* link to next catcache */
 	const char *cc_relname;		/* name of relation the tuples come from */
-	const char *cc_indname;		/* name of index matching cache keys */
 	Oid			cc_reloid;		/* OID of relation the tuples come from */
+	Oid			cc_indexoid;	/* OID of index matching cache keys */
 	bool		cc_relisshared; /* is relation shared across databases? */
 	TupleDesc	cc_tupdesc;		/* tuple descriptor (copied from reldesc) */
 	int			cc_reloidattr;	/* AttrNumber of relation OID attr, or 0 */
@@ -164,7 +164,7 @@ extern DLLIMPORT MemoryContext CacheMemoryContext;
 extern void CreateCacheMemoryContext(void);
 extern void AtEOXact_CatCache(bool isCommit);
 
-extern CatCache *InitCatCache(int id, const char *relname, const char *indname,
+extern CatCache *InitCatCache(int id, Oid reloid, Oid indexoid,
 			 int reloidattr,
 			 int nkeys, const int *key);
 extern void InitCatCachePhase2(CatCache *cache);

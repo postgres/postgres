@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.69 2005/04/14 01:38:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.70 2005/04/14 20:03:24 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -33,7 +33,6 @@
 
 #include "access/heapam.h"
 #include "access/genam.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/indexing.h"
@@ -458,7 +457,7 @@ RemoveTypeById(Oid typeOid)
 	Relation	relation;
 	HeapTuple	tup;
 
-	relation = heap_openr(TypeRelationName, RowExclusiveLock);
+	relation = heap_open(TypeRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache(TYPEOID,
 						 ObjectIdGetDatum(typeOid),
@@ -1143,7 +1142,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	typename->arrayBounds = NIL;
 
 	/* Lock the domain in the type table */
-	rel = heap_openr(TypeRelationName, RowExclusiveLock);
+	rel = heap_open(TypeRelationId, RowExclusiveLock);
 
 	/* Use LookupTypeName here so that shell types can be removed. */
 	domainoid = LookupTypeName(typename);
@@ -1265,7 +1264,7 @@ AlterDomainNotNull(List *names, bool notNull)
 	typename->arrayBounds = NIL;
 
 	/* Lock the type table */
-	typrel = heap_openr(TypeRelationName, RowExclusiveLock);
+	typrel = heap_open(TypeRelationId, RowExclusiveLock);
 
 	/* Use LookupTypeName here so that shell types can be found (why?). */
 	domainoid = LookupTypeName(typename);
@@ -1377,7 +1376,7 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 	typename->arrayBounds = NIL;
 
 	/* Lock the type table */
-	rel = heap_openr(TypeRelationName, RowExclusiveLock);
+	rel = heap_open(TypeRelationId, RowExclusiveLock);
 
 	/* Use LookupTypeName here so that shell types can be removed. */
 	domainoid = LookupTypeName(typename);
@@ -1397,7 +1396,7 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 	domainOwnerCheck(tup, typename);
 
 	/* Grab an appropriate lock on the pg_constraint relation */
-	conrel = heap_openr(ConstraintRelationName, RowExclusiveLock);
+	conrel = heap_open(ConstraintRelationId, RowExclusiveLock);
 
 	/* Use the index to scan only constraints of the target relation */
 	ScanKeyInit(&key[0],
@@ -1405,7 +1404,7 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(HeapTupleGetOid(tup)));
 
-	conscan = systable_beginscan(conrel, ConstraintTypidIndex, true,
+	conscan = systable_beginscan(conrel, ConstraintTypidIndexId, true,
 								 SnapshotNow, 1, key);
 
 	typTup = (Form_pg_type) GETSTRUCT(tup);
@@ -1421,7 +1420,7 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 		{
 			ObjectAddress conobj;
 
-			conobj.classId = RelationGetRelid(conrel);
+			conobj.classId = ConstraintRelationId;
 			conobj.objectId = HeapTupleGetOid(contup);
 			conobj.objectSubId = 0;
 
@@ -1464,7 +1463,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	typename->arrayBounds = NIL;
 
 	/* Lock the type table */
-	typrel = heap_openr(TypeRelationName, RowExclusiveLock);
+	typrel = heap_open(TypeRelationId, RowExclusiveLock);
 
 	/* Use LookupTypeName here so that shell types can be found (why?). */
 	domainoid = LookupTypeName(typename);
@@ -1650,7 +1649,7 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 	 * We scan pg_depend to find those things that depend on the domain.
 	 * (We assume we can ignore refobjsubid for a domain.)
 	 */
-	depRel = relation_openr(DependRelationName, AccessShareLock);
+	depRel = heap_open(DependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_refclassid,
@@ -1661,7 +1660,7 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(domainOid));
 
-	depScan = systable_beginscan(depRel, DependReferenceIndex, true,
+	depScan = systable_beginscan(depRel, DependReferenceIndexId, true,
 								 SnapshotNow, 2, key);
 
 	while (HeapTupleIsValid(depTup = systable_getnext(depScan)))
@@ -1927,7 +1926,7 @@ GetDomainConstraints(Oid typeOid)
 	bool		notNull = false;
 	Relation	conRel;
 
-	conRel = heap_openr(ConstraintRelationName, AccessShareLock);
+	conRel = heap_open(ConstraintRelationId, AccessShareLock);
 
 	for (;;)
 	{
@@ -1961,7 +1960,7 @@ GetDomainConstraints(Oid typeOid)
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(typeOid));
 
-		scan = systable_beginscan(conRel, ConstraintTypidIndex, true,
+		scan = systable_beginscan(conRel, ConstraintTypidIndexId, true,
 								  SnapshotNow, 1, key);
 
 		while (HeapTupleIsValid(conTup = systable_getnext(scan)))
@@ -2052,7 +2051,7 @@ AlterTypeOwner(List *names, AclId newOwnerSysId)
 	typename->arrayBounds = NIL;
 
 	/* Lock the type table */
-	rel = heap_openr(TypeRelationName, RowExclusiveLock);
+	rel = heap_open(TypeRelationId, RowExclusiveLock);
 
 	/* Use LookupTypeName here so that shell types can be processed (why?) */
 	typeOid = LookupTypeName(typename);

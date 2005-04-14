@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.93 2005/03/29 00:17:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.94 2005/04/14 20:03:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
@@ -97,8 +96,8 @@ regprocin(PG_FUNCTION_ARGS)
 					BTEqualStrategyNumber, F_NAMEEQ,
 					CStringGetDatum(pro_name_or_oid));
 
-		hdesc = heap_openr(ProcedureRelationName, AccessShareLock);
-		sysscan = systable_beginscan(hdesc, ProcedureNameArgsNspIndex, true,
+		hdesc = heap_open(ProcedureRelationId, AccessShareLock);
+		sysscan = systable_beginscan(hdesc, ProcedureNameArgsNspIndexId, true,
 									 SnapshotNow, 1, skey);
 
 		while (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
@@ -447,8 +446,8 @@ regoperin(PG_FUNCTION_ARGS)
 					BTEqualStrategyNumber, F_NAMEEQ,
 					CStringGetDatum(opr_name_or_oid));
 
-		hdesc = heap_openr(OperatorRelationName, AccessShareLock);
-		sysscan = systable_beginscan(hdesc, OperatorNameNspIndex, true,
+		hdesc = heap_open(OperatorRelationId, AccessShareLock);
+		sysscan = systable_beginscan(hdesc, OperatorNameNspIndexId, true,
 									 SnapshotNow, 1, skey);
 
 		while (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
@@ -825,8 +824,8 @@ regclassin(PG_FUNCTION_ARGS)
 					BTEqualStrategyNumber, F_NAMEEQ,
 					CStringGetDatum(class_name_or_oid));
 
-		hdesc = heap_openr(RelationRelationName, AccessShareLock);
-		sysscan = systable_beginscan(hdesc, ClassNameNspIndex, true,
+		hdesc = heap_open(RelationRelationId, AccessShareLock);
+		sysscan = systable_beginscan(hdesc, ClassNameNspIndexId, true,
 									 SnapshotNow, 1, skey);
 
 		if (HeapTupleIsValid(tuple = systable_getnext(sysscan)))
@@ -991,8 +990,8 @@ regtypein(PG_FUNCTION_ARGS)
 					BTEqualStrategyNumber, F_NAMEEQ,
 					CStringGetDatum(typ_name_or_oid));
 
-		hdesc = heap_openr(TypeRelationName, AccessShareLock);
-		sysscan = systable_beginscan(hdesc, TypeNameNspIndex, true,
+		hdesc = heap_open(TypeRelationId, AccessShareLock);
+		sysscan = systable_beginscan(hdesc, TypeNameNspIndexId, true,
 									 SnapshotNow, 1, skey);
 
 		if (HeapTupleIsValid(tuple = systable_getnext(sysscan)))

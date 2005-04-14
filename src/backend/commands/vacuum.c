@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.305 2005/03/20 22:00:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.306 2005/04/14 20:03:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@
 #include "access/subtrans.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_index.h"
@@ -542,7 +541,7 @@ get_rel_oids(const RangeVar *vacrel, const char *stmttype)
 					BTEqualStrategyNumber, F_CHAREQ,
 					CharGetDatum(RELKIND_RELATION));
 
-		pgclass = heap_openr(RelationRelationName, AccessShareLock);
+		pgclass = heap_open(RelationRelationId, AccessShareLock);
 
 		scan = heap_beginscan(pgclass, SnapshotNow, 1, &key);
 
@@ -642,7 +641,7 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 	/*
 	 * update number of tuples and number of pages in pg_class
 	 */
-	rd = heap_openr(RelationRelationName, RowExclusiveLock);
+	rd = heap_open(RelationRelationId, RowExclusiveLock);
 
 	ctup = SearchSysCache(RELOID,
 						  ObjectIdGetDatum(relid),
@@ -718,7 +717,7 @@ vac_update_dbstats(Oid dbid,
 	HeapTuple	tuple;
 	Form_pg_database dbform;
 
-	relation = heap_openr(DatabaseRelationName, RowExclusiveLock);
+	relation = heap_open(DatabaseRelationId, RowExclusiveLock);
 
 	/* Must use a heap scan, since there's no syscache for pg_database */
 	ScanKeyInit(&entry[0],
@@ -792,7 +791,7 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
 	 * Note: the "already wrapped" cases should now be impossible due to the
 	 * defenses in GetNewTransactionId, but we keep them anyway.
 	 */
-	relation = heap_openr(DatabaseRelationName, AccessShareLock);
+	relation = heap_open(DatabaseRelationId, AccessShareLock);
 
 	scan = heap_beginscan(relation, SnapshotNow, 0, NULL);
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.86 2005/04/14 01:38:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.87 2005/04/14 20:03:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,68 +16,6 @@
 #define INDEXING_H
 
 #include "access/htup.h"
-
-/*
- * Names of indexes on system catalogs
- *
- * References to specific system indexes in the C code should use these
- * macros rather than hardwiring the actual index name.
- */
-#define AccessMethodOperatorIndex	"pg_amop_opr_opc_index"
-#define AccessMethodStrategyIndex	"pg_amop_opc_strat_index"
-#define AccessMethodProcedureIndex	"pg_amproc_opc_proc_index"
-#define AggregateFnoidIndex			"pg_aggregate_fnoid_index"
-#define AmNameIndex					"pg_am_name_index"
-#define AmOidIndex					"pg_am_oid_index"
-#define AttrDefaultIndex			"pg_attrdef_adrelid_adnum_index"
-#define AttrDefaultOidIndex			"pg_attrdef_oid_index"
-#define AttributeRelidNameIndex		"pg_attribute_relid_attnam_index"
-#define AttributeRelidNumIndex		"pg_attribute_relid_attnum_index"
-#define CastOidIndex				"pg_cast_oid_index"
-#define CastSourceTargetIndex		"pg_cast_source_target_index"
-#define ClassNameNspIndex			"pg_class_relname_nsp_index"
-#define ClassOidIndex				"pg_class_oid_index"
-#define ConstraintNameNspIndex		"pg_constraint_conname_nsp_index"
-#define ConstraintOidIndex			"pg_constraint_oid_index"
-#define ConstraintRelidIndex		"pg_constraint_conrelid_index"
-#define ConstraintTypidIndex		"pg_constraint_contypid_index"
-#define ConversionDefaultIndex		"pg_conversion_default_index"
-#define ConversionNameNspIndex		"pg_conversion_name_nsp_index"
-#define ConversionOidIndex			"pg_conversion_oid_index"
-#define DatabaseNameIndex			"pg_database_datname_index"
-#define DatabaseOidIndex			"pg_database_oid_index"
-#define DependDependerIndex			"pg_depend_depender_index"
-#define DependReferenceIndex		"pg_depend_reference_index"
-#define DescriptionObjIndex			"pg_description_o_c_o_index"
-#define GroupNameIndex				"pg_group_name_index"
-#define GroupSysidIndex				"pg_group_sysid_index"
-#define IndexIndrelidIndex			"pg_index_indrelid_index"
-#define IndexRelidIndex				"pg_index_indexrelid_index"
-#define InheritsRelidSeqnoIndex		"pg_inherits_relid_seqno_index"
-#define LanguageNameIndex			"pg_language_name_index"
-#define LanguageOidIndex			"pg_language_oid_index"
-#define LargeObjectLOidPNIndex		"pg_largeobject_loid_pn_index"
-#define NamespaceNameIndex			"pg_namespace_nspname_index"
-#define NamespaceOidIndex			"pg_namespace_oid_index"
-#define OpclassAmNameNspIndex		"pg_opclass_am_name_nsp_index"
-#define OpclassOidIndex				"pg_opclass_oid_index"
-#define OperatorNameNspIndex		"pg_operator_oprname_l_r_n_index"
-#define OperatorOidIndex			"pg_operator_oid_index"
-#define ProcedureNameArgsNspIndex	"pg_proc_proname_args_nsp_index"
-#define ProcedureOidIndex			"pg_proc_oid_index"
-#define RewriteOidIndex				"pg_rewrite_oid_index"
-#define RewriteRelRulenameIndex		"pg_rewrite_rel_rulename_index"
-#define ShadowNameIndex				"pg_shadow_usename_index"
-#define ShadowSysidIndex			"pg_shadow_usesysid_index"
-#define StatisticRelidAttnumIndex	"pg_statistic_relid_att_index"
-#define TablespaceNameIndex			"pg_tablespace_spcname_index"
-#define TablespaceOidIndex			"pg_tablespace_oid_index"
-#define TriggerConstrNameIndex		"pg_trigger_tgconstrname_index"
-#define TriggerConstrRelidIndex		"pg_trigger_tgconstrrelid_index"
-#define TriggerRelidNameIndex		"pg_trigger_tgrelid_tgname_index"
-#define TriggerOidIndex				"pg_trigger_oid_index"
-#define TypeNameNspIndex			"pg_type_typname_nsp_index"
-#define TypeOidIndex				"pg_type_oid_index"
 
 
 /*
@@ -113,6 +51,10 @@ extern void CatalogUpdateIndexes(Relation heapRel, HeapTuple heapTuple);
  * The keyword is DECLARE_INDEX or DECLARE_UNIQUE_INDEX.  The first two
  * arguments are the index name and OID, the rest is much like a standard
  * 'create index' SQL command.
+ *
+ * For each index, we also provide a #define for its OID.  References to
+ * the index in the C code should always use these #defines, not the actual
+ * index name (much less the numeric OID).
  */
 
 DECLARE_UNIQUE_INDEX(pg_aggregate_fnoid_index,2650, on pg_aggregate using btree(aggfnoid oid_ops));

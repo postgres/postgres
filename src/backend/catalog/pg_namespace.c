@@ -8,14 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_namespace.c,v 1.12 2004/12/31 21:59:38 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_namespace.c,v 1.13 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
 #include "utils/builtins.h"
@@ -61,7 +60,7 @@ NamespaceCreate(const char *nspName, int32 ownerSysId)
 	values[Anum_pg_namespace_nspowner - 1] = Int32GetDatum(ownerSysId);
 	nulls[Anum_pg_namespace_nspacl - 1] = 'n';
 
-	nspdesc = heap_openr(NamespaceRelationName, RowExclusiveLock);
+	nspdesc = heap_open(NamespaceRelationId, RowExclusiveLock);
 	tupDesc = nspdesc->rd_att;
 
 	tup = heap_formtuple(tupDesc, values, nulls);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.119 2005/03/25 18:30:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.120 2005/04/14 20:03:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
-#include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "miscadmin.h"
 #ifdef CATCACHE_STATS
@@ -35,7 +34,7 @@
 #include "utils/syscache.h"
 
 
- /* #define CACHEDEBUG */	/* turns DEBUG elogs on */
+/* #define CACHEDEBUG */	/* turns DEBUG elogs on */
 
 /*
  * Constants related to size of the catcache.
@@ -297,9 +296,9 @@ CatCachePrintStats(void)
 	{
 		if (cache->cc_ntup == 0 && cache->cc_searches == 0)
 			continue;			/* don't print unused caches */
-		elog(DEBUG2, "catcache %s/%s: %d tup, %ld srch, %ld+%ld=%ld hits, %ld+%ld=%ld loads, %ld invals, %ld discards, %ld lsrch, %ld lhits",
+		elog(DEBUG2, "catcache %s/%u: %d tup, %ld srch, %ld+%ld=%ld hits, %ld+%ld=%ld loads, %ld invals, %ld discards, %ld lsrch, %ld lhits",
 			 cache->cc_relname,
-			 cache->cc_indname,
+			 cache->cc_indexoid,
 			 cache->cc_ntup,
 			 cache->cc_searches,
 			 cache->cc_hits,
@@ -763,8 +762,9 @@ CatalogCacheFlushRelation(Oid relId)
 #ifdef CACHEDEBUG
 #define InitCatCache_DEBUG2 \
 do { \
-	elog(DEBUG2, "InitCatCache: rel=%s id=%d nkeys=%d size=%d", \
-		cp->cc_relname, cp->id, cp->cc_nkeys, cp->cc_nbuckets); \
+	elog(DEBUG2, "InitCatCache: rel=%u ind=%u id=%d nkeys=%d size=%d", \
+		 cp->cc_reloid, cp->cc_indexoid, cp->id, \
+		 cp->cc_nkeys, cp->cc_nbuckets); \
 } while(0)
 
 #else
@@ -773,8 +773,8 @@ do { \
 
 CatCache *
 InitCatCache(int id,
-			 const char *relname,
-			 const char *indname,
+			 Oid reloid,
+			 Oid indexoid,
 			 int reloidattr,
 			 int nkeys,
 			 const int *key)
@@ -821,9 +821,9 @@ InitCatCache(int id,
 	 * other internal fields.  But don't open the relation yet.
 	 */
 	cp->id = id;
-	cp->cc_relname = relname;
-	cp->cc_indname = indname;
-	cp->cc_reloid = InvalidOid; /* temporary */
+	cp->cc_relname = "(not known yet)";
+	cp->cc_reloid = reloid;
+	cp->cc_indexoid = indexoid;
 	cp->cc_relisshared = false; /* temporary */
 	cp->cc_tupdesc = (TupleDesc) NULL;
 	cp->cc_reloidattr = reloidattr;
@@ -861,9 +861,9 @@ InitCatCache(int id,
  * that the relcache entry can be opened at this point!
  */
 #ifdef CACHEDEBUG
-#define CatalogCacheInitializeCache_DEBUG2 \
-	elog(DEBUG2, "CatalogCacheInitializeCache: cache @%p %s", cache, \
-		 cache->cc_relname)
+#define CatalogCacheInitializeCache_DEBUG1 \
+	elog(DEBUG2, "CatalogCacheInitializeCache: cache @%p rel=%u", cache, \
+		 cache->cc_reloid)
 
 #define CatalogCacheInitializeCache_DEBUG2 \
 do { \
@@ -878,7 +878,7 @@ do { \
 } while(0)
 
 #else
-#define CatalogCacheInitializeCache_DEBUG2
+#define CatalogCacheInitializeCache_DEBUG1
 #define CatalogCacheInitializeCache_DEBUG2
 #endif
 
@@ -890,13 +890,13 @@ CatalogCacheInitializeCache(CatCache *cache)
 	TupleDesc	tupdesc;
 	int			i;
 
-	CatalogCacheInitializeCache_DEBUG2;
+	CatalogCacheInitializeCache_DEBUG1;
 
 	/*
 	 * Open the relation without locking --- we only need the tupdesc,
 	 * which we assume will never change ...
 	 */
-	relation = heap_openr(cache->cc_relname, NoLock);
+	relation = heap_open(cache->cc_reloid, NoLock);
 	Assert(RelationIsValid(relation));
 
 	/*
@@ -913,9 +913,10 @@ CatalogCacheInitializeCache(CatCache *cache)
 	tupdesc = CreateTupleDescCopyConstr(RelationGetDescr(relation));
 
 	/*
-	 * get the relation's OID and relisshared flag, too
+	 * save the relation's name and relisshared flag, too (cc_relname
+	 * is used only for debugging purposes)
 	 */
-	cache->cc_reloid = RelationGetRelid(relation);
+	cache->cc_relname = pstrdup(RelationGetRelationName(relation));
 	cache->cc_relisshared = RelationGetForm(relation)->relisshared;
 
 	/*
@@ -999,7 +1000,7 @@ InitCatCachePhase2(CatCache *cache)
 	{
 		Relation	idesc;
 
-		idesc = index_openr(cache->cc_indname);
+		idesc = index_open(cache->cc_indexoid);
 		index_close(idesc);
 	}
 }
@@ -1202,7 +1203,7 @@ SearchCatCache(CatCache *cache,
 	relation = heap_open(cache->cc_reloid, AccessShareLock);
 
 	scandesc = systable_beginscan(relation,
-								  cache->cc_indname,
+								  cache->cc_indexoid,
 								  IndexScanOK(cache, cur_skey),
 								  SnapshotNow,
 								  cache->cc_nkeys,
@@ -1230,9 +1231,17 @@ SearchCatCache(CatCache *cache,
 	 * If tuple was not found, we need to build a negative cache entry
 	 * containing a fake tuple.  The fake tuple has the correct key
 	 * columns, but nulls everywhere else.
+	 *
+	 * In bootstrap mode, we don't build negative entries, because the
+	 * cache invalidation mechanism isn't alive and can't clear them
+	 * if the tuple gets created later.  (Bootstrap doesn't do UPDATEs,
+	 * so it doesn't need cache inval for that.)
 	 */
 	if (ct == NULL)
 	{
+		if (IsBootstrapProcessingMode())
+			return NULL;
+
 		ntp = build_dummy_tuple(cache, cache->cc_nkeys, cur_skey);
 		ct = CatalogCacheCreateEntry(cache, ntp,
 									 hashValue, hashIndex,
@@ -1427,7 +1436,7 @@ SearchCatCacheList(CatCache *cache,
 	relation = heap_open(cache->cc_reloid, AccessShareLock);
 
 	scandesc = systable_beginscan(relation,
-								  cache->cc_indname,
+								  cache->cc_indexoid,
 								  true,
 								  SnapshotNow,
 								  nkeys,

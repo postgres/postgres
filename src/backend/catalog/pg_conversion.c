@@ -8,14 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.21 2005/04/14 01:38:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.22 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_conversion.h"
@@ -82,7 +81,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 	}
 
 	/* open pg_conversion */
-	rel = heap_openr(ConversionRelationName, RowExclusiveLock);
+	rel = heap_open(ConversionRelationId, RowExclusiveLock);
 	tupDesc = rel->rd_att;
 
 	/* initialize nulls and values */
@@ -111,7 +110,7 @@ ConversionCreate(const char *conname, Oid connamespace,
 	/* update the index if any */
 	CatalogUpdateIndexes(rel, tup);
 
-	myself.classId = RelationGetRelid(rel);
+	myself.classId = ConversionRelationId;
 	myself.objectId = HeapTupleGetOid(tup);
 	myself.objectSubId = 0;
 
@@ -154,7 +153,7 @@ ConversionDrop(Oid conversionOid, DropBehavior behavior)
 	/*
 	 * Do the deletion
 	 */
-	object.classId = get_system_catalog_relid(ConversionRelationName);
+	object.classId = ConversionRelationId;
 	object.objectId = conversionOid;
 	object.objectSubId = 0;
 
@@ -182,7 +181,7 @@ RemoveConversionById(Oid conversionOid)
 				ObjectIdGetDatum(conversionOid));
 
 	/* open pg_conversion */
-	rel = heap_openr(ConversionRelationName, RowExclusiveLock);
+	rel = heap_open(ConversionRelationId, RowExclusiveLock);
 	tupDesc = rel->rd_att;
 
 	scan = heap_beginscan(rel, SnapshotNow,

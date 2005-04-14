@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.43 2005/04/14 01:38:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.44 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -28,7 +27,9 @@
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_trigger.h"
@@ -65,14 +66,25 @@ typedef struct
 	List	   *rtables;		/* list of rangetables to resolve Vars */
 } find_expr_references_context;
 
-
 /*
- * Because not all system catalogs have predetermined OIDs, we build a table
- * mapping between ObjectClasses and OIDs.	This is done at most once per
- * backend run, to minimize lookup overhead.
+ * This constant table maps ObjectClasses to the corresponding catalog OIDs.
+ * See also getObjectClass().
  */
-static bool object_classes_initialized = false;
-static Oid	object_classes[MAX_OCLASS];
+static const Oid object_classes[MAX_OCLASS] = {
+	RelationRelationId,			/* OCLASS_CLASS */
+	ProcedureRelationId,		/* OCLASS_PROC */
+	TypeRelationId,				/* OCLASS_TYPE */
+	CastRelationId,				/* OCLASS_CAST */
+	ConstraintRelationId,		/* OCLASS_CONSTRAINT */
+	ConversionRelationId,		/* OCLASS_CONVERSION */
+	AttrDefaultRelationId,		/* OCLASS_DEFAULT */
+	LanguageRelationId,			/* OCLASS_LANGUAGE */
+	OperatorRelationId,			/* OCLASS_OPERATOR */
+	OperatorClassRelationId,	/* OCLASS_OPCLASS */
+	RewriteRelationId,			/* OCLASS_REWRITE */
+	TriggerRelationId,			/* OCLASS_TRIGGER */
+	NamespaceRelationId			/* OCLASS_SCHEMA */
+};
 
 
 static void findAutoDeletableObjects(const ObjectAddress *object,
@@ -103,7 +115,6 @@ static void add_exact_object_address(const ObjectAddress *object,
 static bool object_address_present(const ObjectAddress *object,
 					   ObjectAddresses *addrs);
 static void term_object_addresses(ObjectAddresses *addrs);
-static void init_object_classes(void);
 static void getRelationDescription(StringInfo buffer, Oid relid);
 
 
@@ -135,7 +146,7 @@ performDeletion(const ObjectAddress *object,
 	 * We save some cycles by opening pg_depend just once and passing the
 	 * Relation pointer down to all the recursive deletion steps.
 	 */
-	depRel = heap_openr(DependRelationName, RowExclusiveLock);
+	depRel = heap_open(DependRelationId, RowExclusiveLock);
 
 	/*
 	 * Construct a list of objects that are reachable by AUTO or INTERNAL
@@ -189,7 +200,7 @@ deleteWhatDependsOn(const ObjectAddress *object,
 	 * We save some cycles by opening pg_depend just once and passing the
 	 * Relation pointer down to all the recursive deletion steps.
 	 */
-	depRel = heap_openr(DependRelationName, RowExclusiveLock);
+	depRel = heap_open(DependRelationId, RowExclusiveLock);
 
 	/*
 	 * Construct a list of objects that are reachable by AUTO or INTERNAL
@@ -282,7 +293,7 @@ findAutoDeletableObjects(const ObjectAddress *object,
 	else
 		nkeys = 2;
 
-	scan = systable_beginscan(depRel, DependReferenceIndex, true,
+	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
 							  SnapshotNow, nkeys, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -417,7 +428,7 @@ recursiveDeletion(const ObjectAddress *object,
 	else
 		nkeys = 2;
 
-	scan = systable_beginscan(depRel, DependDependerIndex, true,
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
 							  SnapshotNow, nkeys, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -650,7 +661,7 @@ deleteDependentObjects(const ObjectAddress *object,
 	else
 		nkeys = 2;
 
-	scan = systable_beginscan(depRel, DependReferenceIndex, true,
+	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
 							  SnapshotNow, nkeys, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -1203,11 +1214,6 @@ init_object_addresses(ObjectAddresses *addrs)
 	addrs->maxrefs = 32;		/* arbitrary initial array size */
 	addrs->refs = (ObjectAddress *)
 		palloc(addrs->maxrefs * sizeof(ObjectAddress));
-
-	/* Initialize object_classes[] if not done yet */
-	/* This will be needed by add_object_address() */
-	if (!object_classes_initialized)
-		init_object_classes();
 }
 
 /*
@@ -1298,41 +1304,14 @@ term_object_addresses(ObjectAddresses *addrs)
 }
 
 /*
- * Initialize the object_classes[] table.
- *
- * Although some of these OIDs aren't compile-time constants, they surely
- * shouldn't change during a backend's run.  So, we look them up the
- * first time through and then cache them.
- */
-static void
-init_object_classes(void)
-{
-	object_classes[OCLASS_CLASS] = RelationRelationId;
-	object_classes[OCLASS_PROC] = ProcedureRelationId;
-	object_classes[OCLASS_TYPE] = TypeRelationId;
-	object_classes[OCLASS_CAST] = get_system_catalog_relid(CastRelationName);
-	object_classes[OCLASS_CONSTRAINT] = get_system_catalog_relid(ConstraintRelationName);
-	object_classes[OCLASS_CONVERSION] = get_system_catalog_relid(ConversionRelationName);
-	object_classes[OCLASS_DEFAULT] = get_system_catalog_relid(AttrDefaultRelationName);
-	object_classes[OCLASS_LANGUAGE] = get_system_catalog_relid(LanguageRelationName);
-	object_classes[OCLASS_OPERATOR] = get_system_catalog_relid(OperatorRelationName);
-	object_classes[OCLASS_OPCLASS] = get_system_catalog_relid(OperatorClassRelationName);
-	object_classes[OCLASS_REWRITE] = get_system_catalog_relid(RewriteRelationName);
-	object_classes[OCLASS_TRIGGER] = get_system_catalog_relid(TriggerRelationName);
-	object_classes[OCLASS_SCHEMA] = get_system_catalog_relid(NamespaceRelationName);
-	object_classes_initialized = true;
-}
-
-/*
  * Determine the class of a given object identified by objectAddress.
  *
- * This function is needed just because some of the system catalogs do
- * not have hardwired-at-compile-time OIDs.
+ * This function is essentially the reverse mapping for the object_classes[]
+ * table.  We implement it as a function because the OIDs aren't consecutive.
  */
 ObjectClass
 getObjectClass(const ObjectAddress *object)
 {
-	/* Easy for the bootstrapped catalogs... */
 	switch (object->classId)
 	{
 		case RelationRelationId:
@@ -1346,65 +1325,49 @@ getObjectClass(const ObjectAddress *object)
 		case TypeRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_TYPE;
+
+		case CastRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_CAST;
+
+		case ConstraintRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_CONSTRAINT;
+
+		case ConversionRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_CONVERSION;
+
+		case AttrDefaultRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_DEFAULT;
+
+		case LanguageRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_LANGUAGE;
+
+		case OperatorRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_OPERATOR;
+
+		case OperatorClassRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_OPCLASS;
+
+		case RewriteRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_REWRITE;
+
+		case TriggerRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_TRIGGER;
+
+		case NamespaceRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_SCHEMA;
 	}
 
-	/*
-	 * Handle cases where catalog's OID is not hardwired.
-	 */
-	if (!object_classes_initialized)
-		init_object_classes();
-
-	if (object->classId == object_classes[OCLASS_CAST])
-	{
-		Assert(object->objectSubId == 0);
-		return OCLASS_CAST;
-	}
-	if (object->classId == object_classes[OCLASS_CONSTRAINT])
-	{
-		Assert(object->objectSubId == 0);
-		return OCLASS_CONSTRAINT;
-	}
-	if (object->classId == object_classes[OCLASS_CONVERSION])
-	{
-		Assert(object->objectSubId == 0);
-		return OCLASS_CONVERSION;
-	}
-	if (object->classId == object_classes[OCLASS_DEFAULT])
-	{
-		Assert(object->objectSubId == 0);
-		return OCLASS_DEFAULT;
-	}
-	if (object->classId == object_classes[OCLASS_LANGUAGE])
-	{
-		Assert(object->objectSubId == 0);
-		return OCLASS_LANGUAGE;
-	}
-	if (object->classId == object_classes[OCLASS_OPERATOR])
-	{
-		Assert(object->objectSubId == 0);
-		return OCLASS_OPERATOR;
-	}
-	if (object->classId == object_classes[OCLASS_OPCLASS])
-	{
-		Assert(object->objectSubId == 0);
-		return OCLASS_OPCLASS;
-	}
-	if (object->classId == object_classes[OCLASS_REWRITE])
-	{
-		Assert(object->objectSubId == 0);
-		return OCLASS_REWRITE;
-	}
-	if (object->classId == object_classes[OCLASS_TRIGGER])
-	{
-		Assert(object->objectSubId == 0);
-		return OCLASS_TRIGGER;
-	}
-	if (object->classId == object_classes[OCLASS_SCHEMA])
-	{
-		Assert(object->objectSubId == 0);
-		return OCLASS_SCHEMA;
-	}
-
+	/* shouldn't get here */
 	elog(ERROR, "unrecognized object class: %u", object->classId);
 	return OCLASS_CLASS;		/* keep compiler quiet */
 }
@@ -1449,14 +1412,14 @@ getObjectDescription(const ObjectAddress *object)
 				HeapTuple	tup;
 				Form_pg_cast castForm;
 
-				castDesc = heap_openr(CastRelationName, AccessShareLock);
+				castDesc = heap_open(CastRelationId, AccessShareLock);
 
 				ScanKeyInit(&skey[0],
 							ObjectIdAttributeNumber,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
-				rcscan = systable_beginscan(castDesc, CastOidIndex, true,
+				rcscan = systable_beginscan(castDesc, CastOidIndexId, true,
 											SnapshotNow, 1, skey);
 
 				tup = systable_getnext(rcscan);
@@ -1484,14 +1447,14 @@ getObjectDescription(const ObjectAddress *object)
 				HeapTuple	tup;
 				Form_pg_constraint con;
 
-				conDesc = heap_openr(ConstraintRelationName, AccessShareLock);
+				conDesc = heap_open(ConstraintRelationId, AccessShareLock);
 
 				ScanKeyInit(&skey[0],
 							ObjectIdAttributeNumber,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
-				rcscan = systable_beginscan(conDesc, ConstraintOidIndex, true,
+				rcscan = systable_beginscan(conDesc, ConstraintOidIndexId, true,
 											SnapshotNow, 1, skey);
 
 				tup = systable_getnext(rcscan);
@@ -1544,14 +1507,14 @@ getObjectDescription(const ObjectAddress *object)
 				Form_pg_attrdef attrdef;
 				ObjectAddress colobject;
 
-				attrdefDesc = heap_openr(AttrDefaultRelationName, AccessShareLock);
+				attrdefDesc = heap_open(AttrDefaultRelationId, AccessShareLock);
 
 				ScanKeyInit(&skey[0],
 							ObjectIdAttributeNumber,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
-				adscan = systable_beginscan(attrdefDesc, AttrDefaultOidIndex,
+				adscan = systable_beginscan(attrdefDesc, AttrDefaultOidIndexId,
 											true, SnapshotNow, 1, skey);
 
 				tup = systable_getnext(adscan);
@@ -1643,14 +1606,14 @@ getObjectDescription(const ObjectAddress *object)
 				HeapTuple	tup;
 				Form_pg_rewrite rule;
 
-				ruleDesc = heap_openr(RewriteRelationName, AccessShareLock);
+				ruleDesc = heap_open(RewriteRelationId, AccessShareLock);
 
 				ScanKeyInit(&skey[0],
 							ObjectIdAttributeNumber,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
-				rcscan = systable_beginscan(ruleDesc, RewriteOidIndex, true,
+				rcscan = systable_beginscan(ruleDesc, RewriteOidIndexId, true,
 											SnapshotNow, 1, skey);
 
 				tup = systable_getnext(rcscan);
@@ -1678,14 +1641,14 @@ getObjectDescription(const ObjectAddress *object)
 				HeapTuple	tup;
 				Form_pg_trigger trig;
 
-				trigDesc = heap_openr(TriggerRelationName, AccessShareLock);
+				trigDesc = heap_open(TriggerRelationId, AccessShareLock);
 
 				ScanKeyInit(&skey[0],
 							ObjectIdAttributeNumber,
 							BTEqualStrategyNumber, F_OIDEQ,
 							ObjectIdGetDatum(object->objectId));
 
-				tgscan = systable_beginscan(trigDesc, TriggerOidIndex, true,
+				tgscan = systable_beginscan(trigDesc, TriggerOidIndexId, true,
 											SnapshotNow, 1, skey);
 
 				tup = systable_getnext(tgscan);

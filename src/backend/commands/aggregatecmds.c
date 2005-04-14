@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.25 2005/04/14 01:38:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.26 2005/04/14 20:03:23 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -23,7 +23,6 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -236,7 +235,7 @@ RenameAggregate(List *name, TypeName *basetype, const char *newname)
 	else
 		basetypeOid = ANYOID;
 
-	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
 	procOid = find_aggregate_func(name, basetypeOid, false);
 
@@ -315,7 +314,7 @@ AlterAggregateOwner(List *name, TypeName *basetype, AclId newOwnerSysId)
 	else
 		basetypeOid = ANYOID;
 
-	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
 	procOid = find_aggregate_func(name, basetypeOid, false);
 

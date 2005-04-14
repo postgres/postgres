@@ -36,7 +36,6 @@
 #include "funcapi.h"
 #include "access/tupdesc.h"
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_type.h"
@@ -1538,7 +1537,7 @@ get_pkey_attnames(Oid relid, int16 *numatts)
 	*numatts = 0;
 
 	/* use relid to get all related indexes */
-	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
+	indexRelation = heap_open(IndexRelationId, AccessShareLock);
 	ScanKeyInit(&entry,
 				Anum_pg_index_indrelid,
 				BTEqualStrategyNumber, F_OIDEQ,

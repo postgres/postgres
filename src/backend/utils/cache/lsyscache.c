@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.123 2005/04/11 23:06:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.124 2005/04/14 20:03:26 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -929,25 +929,6 @@ get_relname_relid(const char *relname, Oid relnamespace)
 						  PointerGetDatum(relname),
 						  ObjectIdGetDatum(relnamespace),
 						  0, 0);
-}
-
-/*
- * get_system_catalog_relid
- *		Get the OID of a system catalog identified by name.
- */
-Oid
-get_system_catalog_relid(const char *catname)
-{
-	Oid			relid;
-
-	relid = GetSysCacheOid(RELNAMENSP,
-						   PointerGetDatum(catname),
-						   ObjectIdGetDatum(PG_CATALOG_NAMESPACE),
-						   0, 0);
-	if (!OidIsValid(relid))
-		elog(ERROR, "cache lookup failed for system relation %s", catname);
-
-	return relid;
 }
 
 #ifdef NOT_USED

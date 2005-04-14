@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.5 2005/04/14 01:38:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.6 2005/04/14 20:03:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,6 @@
 #include <unistd.h>
 
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_group.h"
 #include "catalog/pg_namespace.h"
@@ -724,11 +723,11 @@ AtEOXact_UpdateFlatFiles(bool isCommit)
 	 * so get the locks we need before writing anything.
 	 */
 	if (database_file_update_subid != InvalidSubTransactionId)
-		drel = heap_openr(DatabaseRelationName, ExclusiveLock);
+		drel = heap_open(DatabaseRelationId, ExclusiveLock);
 	if (group_file_update_subid != InvalidSubTransactionId)
-		grel = heap_openr(GroupRelationName, ExclusiveLock);
+		grel = heap_open(GroupRelationId, ExclusiveLock);
 	if (user_file_update_subid != InvalidSubTransactionId)
-		urel = heap_openr(ShadowRelationName, ExclusiveLock);
+		urel = heap_open(ShadowRelationId, ExclusiveLock);
 
 	/* Okay to write the files */
 	if (database_file_update_subid != InvalidSubTransactionId)

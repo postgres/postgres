@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.120 2005/03/20 23:40:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.121 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,6 @@
 #include <netinet/in.h>
 
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/pg_listener.h"
 #include "commands/async.h"
 #include "libpq/libpq.h"
@@ -205,7 +204,7 @@ Async_Listen(char *relname, int pid)
 	if (Trace_notify)
 		elog(DEBUG1, "Async_Listen(%s,%d)", relname, pid);
 
-	lRel = heap_openr(ListenerRelationName, ExclusiveLock);
+	lRel = heap_open(ListenerRelationId, ExclusiveLock);
 
 	/* Detect whether we are already listening on this relname */
 	scan = heap_beginscan(lRel, SnapshotNow, 0, NULL);
@@ -299,7 +298,7 @@ Async_Unlisten(char *relname, int pid)
 	if (Trace_notify)
 		elog(DEBUG1, "Async_Unlisten(%s,%d)", relname, pid);
 
-	lRel = heap_openr(ListenerRelationName, ExclusiveLock);
+	lRel = heap_open(ListenerRelationId, ExclusiveLock);
 
 	scan = heap_beginscan(lRel, SnapshotNow, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -357,7 +356,7 @@ Async_UnlistenAll(void)
 	if (Trace_notify)
 		elog(DEBUG1, "Async_UnlistenAll");
 
-	lRel = heap_openr(ListenerRelationName, ExclusiveLock);
+	lRel = heap_open(ListenerRelationId, ExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
 
 	/* Find and delete all entries with my listenerPID */
@@ -466,7 +465,7 @@ AtCommit_Notify(void)
 	value[0] = value[1] = value[2] = (Datum) 0;
 	value[Anum_pg_listener_notify - 1] = Int32GetDatum(MyProcPid);
 
-	lRel = heap_openr(ListenerRelationName, ExclusiveLock);
+	lRel = heap_open(ListenerRelationId, ExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
 	scan = heap_beginscan(lRel, SnapshotNow, 0, NULL);
 
@@ -902,7 +901,7 @@ ProcessIncomingNotify(void)
 
 	StartTransactionCommand();
 
-	lRel = heap_openr(ListenerRelationName, ExclusiveLock);
+	lRel = heap_open(ListenerRelationId, ExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
 
 	/* Scan only entries with my listenerPID */

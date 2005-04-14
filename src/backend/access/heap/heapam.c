@@ -8,17 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.186 2005/03/28 01:50:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.187 2005/04/14 20:03:22 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
  *		relation_open	- open any relation by relation OID
  *		relation_openrv - open any relation specified by a RangeVar
- *		relation_openr	- open a system relation by name
  *		relation_close	- close any relation
  *		heap_open		- open a heap relation by relation OID
  *		heap_openrv		- open a heap relation specified by a RangeVar
- *		heap_openr		- open a system heap relation by name
  *		heap_close		- (now just a macro for relation_close)
  *		heap_beginscan	- begin relation scan
  *		heap_rescan		- restart a relation scan
@@ -503,15 +501,6 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 	Oid			relOid;
 
 	/*
-	 * In bootstrap mode, don't do any namespace processing.
-	 */
-	if (IsBootstrapProcessingMode())
-	{
-		Assert(relation->schemaname == NULL);
-		return relation_openr(relation->relname, lockmode);
-	}
-
-	/*
 	 * Check for shared-cache-inval messages before trying to open the
 	 * relation.  This is needed to cover the case where the name
 	 * identifies a rel that has been dropped and recreated since the
@@ -531,37 +520,6 @@ relation_openrv(const RangeVar *relation, LOCKMODE lockmode)
 
 	/* Let relation_open do the rest */
 	return relation_open(relOid, lockmode);
-}
-
-/* ----------------
- *		relation_openr - open a system relation specified by name.
- *
- *		As above, but the relation is specified by an unqualified name;
- *		it is assumed to live in the system catalog namespace.
- * ----------------
- */
-Relation
-relation_openr(const char *sysRelationName, LOCKMODE lockmode)
-{
-	Relation	r;
-
-	Assert(lockmode >= NoLock && lockmode < MAX_LOCKMODES);
-
-	/*
-	 * We assume we should not need to worry about the rel's OID changing,
-	 * hence no need for AcceptInvalidationMessages here.
-	 */
-
-	/* The relcache does all the real work... */
-	r = RelationSysNameGetRelation(sysRelationName);
-
-	if (!RelationIsValid(r))
-		elog(ERROR, "could not open relation \"%s\"", sysRelationName);
-
-	if (lockmode != NoLock)
-		LockRelation(r, lockmode);
-
-	return r;
 }
 
 /* ----------------
@@ -635,41 +593,6 @@ heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
 	Relation	r;
 
 	r = relation_openrv(relation, lockmode);
-
-	if (r->rd_rel->relkind == RELKIND_INDEX)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is an index",
-						RelationGetRelationName(r))));
-	else if (r->rd_rel->relkind == RELKIND_SPECIAL)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is a special relation",
-						RelationGetRelationName(r))));
-	else if (r->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is a composite type",
-						RelationGetRelationName(r))));
-
-	pgstat_initstats(&r->pgstat_info, r);
-
-	return r;
-}
-
-/* ----------------
- *		heap_openr - open a system heap relation specified by name.
- *
- *		As above, but the relation is specified by an unqualified name;
- *		it is assumed to live in the system catalog namespace.
- * ----------------
- */
-Relation
-heap_openr(const char *sysRelationName, LOCKMODE lockmode)
-{
-	Relation	r;
-
-	r = relation_openr(sysRelationName, lockmode);
 
 	if (r->rd_rel->relkind == RELKIND_INDEX)
 		ereport(ERROR,

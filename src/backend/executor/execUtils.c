@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.120 2005/04/06 16:34:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.121 2005/04/14 20:03:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,6 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/index.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_index.h"

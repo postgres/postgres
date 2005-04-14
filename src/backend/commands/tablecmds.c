@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.154 2005/04/14 01:38:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.155 2005/04/14 20:03:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "access/genam.h"
 #include "access/tuptoaster.h"
 #include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -1133,7 +1132,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	 * and then entered into pg_ipl.  Since that catalog doesn't exist
 	 * anymore, there's no need to look for indirect ancestors.)
 	 */
-	relation = heap_openr(InheritsRelationName, RowExclusiveLock);
+	relation = heap_open(InheritsRelationId, RowExclusiveLock);
 	desc = RelationGetDescr(relation);
 
 	seqNumber = 1;
@@ -1224,7 +1223,7 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 	 * If the tuple already has the right relhassubclass setting, we don't
 	 * need to update it, but we still need to issue an SI inval message.
 	 */
-	relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
+	relationRelation = heap_open(RelationRelationId, RowExclusiveLock);
 	tuple = SearchSysCacheCopy(RELOID,
 							   ObjectIdGetDatum(relationId),
 							   0, 0, 0);
@@ -1347,7 +1346,7 @@ renameatt(Oid myrelid,
 							oldattname)));
 	}
 
-	attrelation = heap_openr(AttributeRelationName, RowExclusiveLock);
+	attrelation = heap_open(AttributeRelationId, RowExclusiveLock);
 
 	atttup = SearchSysCacheCopyAttName(myrelid, oldattname);
 	if (!HeapTupleIsValid(atttup))
@@ -1514,7 +1513,7 @@ renamerel(Oid myrelid, const char *newrelname)
 	 * Find relation's pg_class tuple, and make sure newrelname isn't in
 	 * use.
 	 */
-	relrelation = heap_openr(RelationRelationName, RowExclusiveLock);
+	relrelation = heap_open(RelationRelationId, RowExclusiveLock);
 
 	reltup = SearchSysCacheCopy(RELOID,
 								PointerGetDatum(myrelid),
@@ -1626,14 +1625,14 @@ update_ri_trigger_args(Oid relid,
 	char		nulls[Natts_pg_trigger];
 	char		replaces[Natts_pg_trigger];
 
-	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
+	tgrel = heap_open(TriggerRelationId, RowExclusiveLock);
 	if (fk_scan)
 	{
 		ScanKeyInit(&skey[0],
 					Anum_pg_trigger_tgconstrrelid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(relid));
-		trigscan = systable_beginscan(tgrel, TriggerConstrRelidIndex,
+		trigscan = systable_beginscan(tgrel, TriggerConstrRelidIndexId,
 									  true, SnapshotNow,
 									  1, skey);
 	}
@@ -1643,7 +1642,7 @@ update_ri_trigger_args(Oid relid,
 					Anum_pg_trigger_tgrelid,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(relid));
-		trigscan = systable_beginscan(tgrel, TriggerRelidNameIndex,
+		trigscan = systable_beginscan(tgrel, TriggerRelidNameIndexId,
 									  true, SnapshotNow,
 									  1, skey);
 	}
@@ -2772,7 +2771,7 @@ find_composite_type_dependencies(Oid typeOid, const char *origTblName)
 	 * We scan pg_depend to find those things that depend on the rowtype.
 	 * (We assume we can ignore refobjsubid for a rowtype.)
 	 */
-	depRel = relation_openr(DependRelationName, AccessShareLock);
+	depRel = heap_open(DependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_refclassid,
@@ -2783,7 +2782,7 @@ find_composite_type_dependencies(Oid typeOid, const char *origTblName)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(typeOid));
 
-	depScan = systable_beginscan(depRel, DependReferenceIndex, true,
+	depScan = systable_beginscan(depRel, DependReferenceIndexId, true,
 								 SnapshotNow, 2, key);
 
 	while (HeapTupleIsValid(depTup = systable_getnext(depScan)))
@@ -2894,7 +2893,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	Form_pg_type tform;
 	Expr	   *defval;
 
-	attrdesc = heap_openr(AttributeRelationName, RowExclusiveLock);
+	attrdesc = heap_open(AttributeRelationId, RowExclusiveLock);
 
 	/*
 	 * Are we adding the column to a recursion child?  If so, check
@@ -2935,7 +2934,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 		}
 	}
 
-	pgclass = heap_openr(RelationRelationName, RowExclusiveLock);
+	pgclass = heap_open(RelationRelationId, RowExclusiveLock);
 
 	reltup = SearchSysCacheCopy(RELOID,
 								ObjectIdGetDatum(myrelid),
@@ -3155,7 +3154,7 @@ ATExecDropNotNull(Relation rel, const char *colName)
 	/*
 	 * lookup the attribute
 	 */
-	attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
+	attr_rel = heap_open(AttributeRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCacheCopyAttName(RelationGetRelid(rel), colName);
 
@@ -3248,7 +3247,7 @@ ATExecSetNotNull(AlteredTableInfo *tab, Relation rel,
 	/*
 	 * lookup the attribute
 	 */
-	attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
+	attr_rel = heap_open(AttributeRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCacheCopyAttName(RelationGetRelid(rel), colName);
 
@@ -3396,7 +3395,7 @@ ATExecSetStatistics(Relation rel, const char *colName, Node *newValue)
 						newtarget)));
 	}
 
-	attrelation = heap_openr(AttributeRelationName, RowExclusiveLock);
+	attrelation = heap_open(AttributeRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCacheCopyAttName(RelationGetRelid(rel), colName);
 
@@ -3457,7 +3456,7 @@ ATExecSetStorage(Relation rel, const char *colName, Node *newValue)
 		newstorage = 0;			/* keep compiler quiet */
 	}
 
-	attrelation = heap_openr(AttributeRelationName, RowExclusiveLock);
+	attrelation = heap_open(AttributeRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCacheCopyAttName(RelationGetRelid(rel), colName);
 
@@ -3564,7 +3563,7 @@ ATExecDropColumn(Relation rel, const char *colName,
 		Relation	attr_rel;
 		ListCell   *child;
 
-		attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
+		attr_rel = heap_open(AttributeRelationId, RowExclusiveLock);
 		foreach(child, children)
 		{
 			Oid			childrelid = lfirst_oid(child);
@@ -3652,7 +3651,7 @@ ATExecDropColumn(Relation rel, const char *colName,
 		Relation	class_rel;
 		Form_pg_class tuple_class;
 
-		class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+		class_rel = heap_open(RelationRelationId, RowExclusiveLock);
 
 		tuple = SearchSysCacheCopy(RELOID,
 								 ObjectIdGetDatum(RelationGetRelid(rel)),
@@ -4404,10 +4403,10 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	/*
 	 * Preset objectAddress fields
 	 */
-	constrobj.classId = get_system_catalog_relid(ConstraintRelationName);
+	constrobj.classId = ConstraintRelationId;
 	constrobj.objectId = constrOid;
 	constrobj.objectSubId = 0;
-	trigobj.classId = get_system_catalog_relid(TriggerRelationName);
+	trigobj.classId = TriggerRelationId;
 	trigobj.objectSubId = 0;
 
 	/* Make changes-so-far visible */
@@ -4820,7 +4819,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	SysScanDesc scan;
 	HeapTuple	depTup;
 
-	attrelation = heap_openr(AttributeRelationName, RowExclusiveLock);
+	attrelation = heap_open(AttributeRelationId, RowExclusiveLock);
 
 	/* Look up the target column */
 	heapTup = SearchSysCacheCopyAttName(RelationGetRelid(rel), colName);
@@ -4891,7 +4890,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	 * index that implements a constraint will not show a direct
 	 * dependency on the column.
 	 */
-	depRel = heap_openr(DependRelationName, RowExclusiveLock);
+	depRel = heap_open(DependRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_refclassid,
@@ -4906,7 +4905,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum((int32) attnum));
 
-	scan = systable_beginscan(depRel, DependReferenceIndex, true,
+	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
 							  SnapshotNow, 3, key);
 
 	while (HeapTupleIsValid(depTup = systable_getnext(scan)))
@@ -5030,7 +5029,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum((int32) attnum));
 
-	scan = systable_beginscan(depRel, DependDependerIndex, true,
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
 							  SnapshotNow, 3, key);
 
 	while (HeapTupleIsValid(depTup = systable_getnext(scan)))
@@ -5136,18 +5135,17 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab)
 	 * It should be okay to use DROP_RESTRICT here, since nothing else
 	 * should be depending on these objects.
 	 */
-	if (tab->changedConstraintOids)
-		obj.classId = get_system_catalog_relid(ConstraintRelationName);
 	foreach(l, tab->changedConstraintOids)
 	{
+		obj.classId = ConstraintRelationId;
 		obj.objectId = lfirst_oid(l);
 		obj.objectSubId = 0;
 		performDeletion(&obj, DROP_RESTRICT);
 	}
 
-	obj.classId = RelationRelationId;
 	foreach(l, tab->changedIndexOids)
 	{
+		obj.classId = RelationRelationId;
 		obj.objectId = lfirst_oid(l);
 		obj.objectSubId = 0;
 		performDeletion(&obj, DROP_RESTRICT);
@@ -5266,7 +5264,7 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 	target_rel = relation_open(relationOid, AccessExclusiveLock);
 
 	/* Get its pg_class tuple, too */
-	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+	class_rel = heap_open(RelationRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(relationOid),
@@ -5396,7 +5394,7 @@ change_owner_recurse_to_sequences(Oid relationOid, int32 newOwnerSysId)
 	 * SERIAL sequences are those having an internal dependency on one
 	 * of the table's columns (we don't care *which* column, exactly).
 	 */
-	depRel = heap_openr(DependRelationName, AccessShareLock);
+	depRel = heap_open(DependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 			Anum_pg_depend_refclassid,
@@ -5408,7 +5406,7 @@ change_owner_recurse_to_sequences(Oid relationOid, int32 newOwnerSysId)
 			ObjectIdGetDatum(relationOid));
 	/* we leave refobjsubid unspecified */
 
-	scan = systable_beginscan(depRel, DependReferenceIndex, true,
+	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
 							  SnapshotNow, 2, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -5587,7 +5585,7 @@ ATExecSetTableSpace(Oid tableOid, Oid newTableSpace)
 	reltoastidxid = rel->rd_rel->reltoastidxid;
 
 	/* Get a modifiable copy of the relation's pg_class row */
-	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
+	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCacheCopy(RELOID,
 							   ObjectIdGetDatum(tableOid),
@@ -5909,7 +5907,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	/*
 	 * Store the toast table's OID in the parent relation's pg_class row
 	 */
-	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
+	class_rel = heap_open(RelationRelationId, RowExclusiveLock);
 
 	reltup = SearchSysCacheCopy(RELOID,
 								ObjectIdGetDatum(relOid),

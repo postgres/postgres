@@ -8,16 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.127 2005/04/14 01:38:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.128 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_language.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/functions.h"
@@ -226,7 +227,7 @@ ProcedureCreate(const char *procedureName,
 	/* start out with empty permissions */
 	nulls[Anum_pg_proc_proacl - 1] = 'n';
 
-	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
+	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 	tupDesc = RelationGetDescr(rel);
 
 	/* Check for pre-existing definition */
@@ -336,13 +337,13 @@ ProcedureCreate(const char *procedureName,
 	myself.objectSubId = 0;
 
 	/* dependency on namespace */
-	referenced.classId = get_system_catalog_relid(NamespaceRelationName);
+	referenced.classId = NamespaceRelationId;
 	referenced.objectId = procNamespace;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	/* dependency on implementation language */
-	referenced.classId = get_system_catalog_relid(LanguageRelationName);
+	referenced.classId = LanguageRelationId;
 	referenced.objectId = languageObjectId;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);

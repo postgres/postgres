@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.192 2005/04/14 01:38:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.193 2005/04/14 20:03:26 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -41,7 +41,6 @@
 #include <fcntl.h>
 
 #include "access/genam.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -469,14 +468,14 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 	/*
 	 * Fetch the pg_trigger tuple by the Oid of the trigger
 	 */
-	tgrel = heap_openr(TriggerRelationName, AccessShareLock);
+	tgrel = heap_open(TriggerRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey[0],
 				ObjectIdAttributeNumber,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(trigid));
 
-	tgscan = systable_beginscan(tgrel, TriggerOidIndex, true,
+	tgscan = systable_beginscan(tgrel, TriggerOidIndexId, true,
 								SnapshotNow, 1, skey);
 
 	ht_trig = systable_getnext(tgscan);
@@ -867,14 +866,14 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 	 * Fetch the pg_constraint row.  There's no syscache for pg_constraint
 	 * so we must do it the hard way.
 	 */
-	conDesc = heap_openr(ConstraintRelationName, AccessShareLock);
+	conDesc = heap_open(ConstraintRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey[0],
 				ObjectIdAttributeNumber,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(constraintId));
 
-	conscan = systable_beginscan(conDesc, ConstraintOidIndex, true,
+	conscan = systable_beginscan(conDesc, ConstraintOidIndexId, true,
 								 SnapshotNow, 1, skey);
 
 	tup = systable_getnext(conscan);
@@ -1269,7 +1268,7 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 						column, tablerv->relname)));
 
 	/* Search the dependency table for the dependent sequence */
-	depRel = heap_openr(DependRelationName, AccessShareLock);
+	depRel = heap_open(DependRelationId, AccessShareLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_refclassid,
@@ -1284,7 +1283,7 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum(attnum));
 
-	scan = systable_beginscan(depRel, DependReferenceIndex, true,
+	scan = systable_beginscan(depRel, DependReferenceIndexId, true,
 							  SnapshotNow, 3, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))

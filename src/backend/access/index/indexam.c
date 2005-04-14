@@ -8,12 +8,11 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.79 2005/03/27 23:52:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.80 2005/04/14 20:03:23 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
  *		index_openrv	- open an index relation specified by a RangeVar
- *		index_openr		- open a system index relation by name
  *		index_close		- close an index relation
  *		index_beginscan - start a scan of an index with amgettuple
  *		index_beginscan_multi - start a scan of an index with amgetmulti
@@ -160,31 +159,6 @@ index_openrv(const RangeVar *relation)
 	Relation	r;
 
 	r = relation_openrv(relation, NoLock);
-
-	if (r->rd_rel->relkind != RELKIND_INDEX)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not an index",
-						RelationGetRelationName(r))));
-
-	pgstat_initstats(&r->pgstat_info, r);
-
-	return r;
-}
-
-/* ----------------
- *		index_openr - open a system index relation specified by name.
- *
- *		As above, but the relation is specified by an unqualified name;
- *		it is assumed to live in the system catalog namespace.
- * ----------------
- */
-Relation
-index_openr(const char *sysRelationName)
-{
-	Relation	r;
-
-	r = relation_openr(sysRelationName, NoLock);
 
 	if (r->rd_rel->relkind != RELKIND_INDEX)
 		ereport(ERROR,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.90 2005/04/14 01:38:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.91 2005/04/14 20:03:23 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -18,10 +18,10 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -58,7 +58,7 @@ static Oid get_other_operator(List *otherOp,
 				   Oid leftTypeId, Oid rightTypeId,
 				   bool isCommutator);
 
-static void makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid);
+static void makeOperatorDependencies(HeapTuple tuple);
 
 
 /*
@@ -254,7 +254,7 @@ OperatorShellMake(const char *operatorName,
 	/*
 	 * open pg_operator
 	 */
-	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
+	pg_operator_desc = heap_open(OperatorRelationId, RowExclusiveLock);
 	tupDesc = pg_operator_desc->rd_att;
 
 	/*
@@ -270,7 +270,7 @@ OperatorShellMake(const char *operatorName,
 	CatalogUpdateIndexes(pg_operator_desc, tup);
 
 	/* Add dependencies for the entry */
-	makeOperatorDependencies(tup, RelationGetRelid(pg_operator_desc));
+	makeOperatorDependencies(tup);
 
 	heap_freetuple(tup);
 
@@ -620,7 +620,7 @@ OperatorCreate(const char *operatorName,
 	values[i++] = ObjectIdGetDatum(restOid);	/* oprrest */
 	values[i++] = ObjectIdGetDatum(joinOid);	/* oprjoin */
 
-	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
+	pg_operator_desc = heap_open(OperatorRelationId, RowExclusiveLock);
 
 	/*
 	 * If we are adding to an operator shell, update; else insert
@@ -654,7 +654,7 @@ OperatorCreate(const char *operatorName,
 	CatalogUpdateIndexes(pg_operator_desc, tup);
 
 	/* Add dependencies for the entry */
-	makeOperatorDependencies(tup, RelationGetRelid(pg_operator_desc));
+	makeOperatorDependencies(tup);
 
 	heap_close(pg_operator_desc, RowExclusiveLock);
 
@@ -773,7 +773,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	 */
 	CommandCounterIncrement();
 
-	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
+	pg_operator_desc = heap_open(OperatorRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy(OPEROID,
 							 ObjectIdGetDatum(commId),
@@ -877,13 +877,13 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
  * the given operator is a shell.
  */
 static void
-makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid)
+makeOperatorDependencies(HeapTuple tuple)
 {
 	Form_pg_operator oper = (Form_pg_operator) GETSTRUCT(tuple);
 	ObjectAddress myself,
 				referenced;
 
-	myself.classId = pg_operator_relid;
+	myself.classId = OperatorRelationId;
 	myself.objectId = HeapTupleGetOid(tuple);
 	myself.objectSubId = 0;
 
@@ -893,7 +893,7 @@ makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid)
 	/* Dependency on namespace */
 	if (OidIsValid(oper->oprnamespace))
 	{
-		referenced.classId = get_system_catalog_relid(NamespaceRelationName);
+		referenced.classId = NamespaceRelationId;
 		referenced.objectId = oper->oprnamespace;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);

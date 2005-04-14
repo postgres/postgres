@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.144 2005/03/19 23:27:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.145 2005/04/14 20:03:26 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -22,7 +22,6 @@
 
 #include "catalog/catalog.h"
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
@@ -134,7 +133,7 @@ ReverifyMyDatabase(const char *name)
 	 * Because we grab RowShareLock here, we can be sure that dropdb()
 	 * is not running in parallel with us (any more).
 	 */
-	pgdbrel = heap_openr(DatabaseRelationName, RowShareLock);
+	pgdbrel = heap_open(DatabaseRelationId, RowShareLock);
 
 	ScanKeyInit(&key,
 				Anum_pg_database_datname,
@@ -537,7 +536,7 @@ ThereIsAtLeastOneUser(void)
 	HeapScanDesc scan;
 	bool		result;
 
-	pg_shadow_rel = heap_openr(ShadowRelationName, AccessExclusiveLock);
+	pg_shadow_rel = heap_open(ShadowRelationId, AccessExclusiveLock);
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
 	scan = heap_beginscan(pg_shadow_rel, SnapshotNow, 0, NULL);

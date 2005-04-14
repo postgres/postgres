@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.59 2005/04/14 01:38:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/proclang.c,v 1.60 2005/04/14 20:03:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 #include <ctype.h>
 
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -132,7 +131,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	values[i++] = ObjectIdGetDatum(valProcOid); /* lanvalidator */
 	nulls[i] = 'n';				/* lanacl */
 
-	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
+	rel = heap_open(LanguageRelationId, RowExclusiveLock);
 
 	tupDesc = rel->rd_att;
 	tup = heap_formtuple(tupDesc, values, nulls);
@@ -144,7 +143,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	/*
 	 * Create dependencies for language
 	 */
-	myself.classId = RelationGetRelid(rel);
+	myself.classId = LanguageRelationId;
 	myself.objectId = HeapTupleGetOid(tup);
 	myself.objectSubId = 0;
 
@@ -200,7 +199,7 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("language \"%s\" does not exist", languageName)));
 
-	object.classId = get_system_catalog_relid(LanguageRelationName);
+	object.classId = LanguageRelationId;
 	object.objectId = HeapTupleGetOid(langTup);
 	object.objectSubId = 0;
 
@@ -221,7 +220,7 @@ DropProceduralLanguageById(Oid langOid)
 	Relation	rel;
 	HeapTuple	langTup;
 
-	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
+	rel = heap_open(LanguageRelationId, RowExclusiveLock);
 
 	langTup = SearchSysCache(LANGOID,
 							 ObjectIdGetDatum(langOid),
@@ -245,7 +244,7 @@ RenameLanguage(const char *oldname, const char *newname)
 	HeapTuple	tup;
 	Relation	rel;
 
-	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
+	rel = heap_open(LanguageRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy(LANGNAME,
 							 CStringGetDatum(oldname),

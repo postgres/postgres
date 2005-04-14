@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.58 2005/03/07 04:15:34 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.59 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 
 #include "access/transam.h"
 #include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_tablespace.h"
 #include "miscadmin.h"

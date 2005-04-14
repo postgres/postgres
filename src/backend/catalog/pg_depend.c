@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.12 2004/12/31 21:59:38 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_depend.c,v 1.13 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/dependency.h"
 #include "catalog/pg_depend.h"
@@ -69,7 +68,7 @@ recordMultipleDependencies(const ObjectAddress *depender,
 	if (IsBootstrapProcessingMode())
 		return;
 
-	dependDesc = heap_openr(DependRelationName, RowExclusiveLock);
+	dependDesc = heap_open(DependRelationId, RowExclusiveLock);
 
 	/* Don't open indexes unless we need to make an update */
 	indstate = NULL;
@@ -136,7 +135,7 @@ deleteDependencyRecordsFor(Oid classId, Oid objectId)
 	SysScanDesc scan;
 	HeapTuple	tup;
 
-	depRel = heap_openr(DependRelationName, RowExclusiveLock);
+	depRel = heap_open(DependRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
@@ -147,7 +146,7 @@ deleteDependencyRecordsFor(Oid classId, Oid objectId)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(objectId));
 
-	scan = systable_beginscan(depRel, DependDependerIndex, true,
+	scan = systable_beginscan(depRel, DependDependerIndexId, true,
 							  SnapshotNow, 2, key);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
@@ -190,7 +189,7 @@ isObjectPinned(const ObjectAddress *object, Relation rel)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(object->objectId));
 
-	scan = systable_beginscan(rel, DependReferenceIndex, true,
+	scan = systable_beginscan(rel, DependReferenceIndexId, true,
 							  SnapshotNow, 2, key);
 
 	/*

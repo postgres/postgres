@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.90 2005/04/08 00:55:07 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.91 2005/04/14 20:03:25 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -33,7 +33,6 @@
 
 #include "access/heapam.h"
 #include "access/xact.h"
-#include "catalog/catname.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
 #include "libpq/libpq.h"
@@ -865,7 +864,7 @@ pgstat_vacuum_tabstat(void)
 	dbidused = 0;
 	dbidlist = (Oid *) palloc(sizeof(Oid) * dbidalloc);
 
-	dbrel = heap_openr(DatabaseRelationName, AccessShareLock);
+	dbrel = heap_open(DatabaseRelationId, AccessShareLock);
 	dbscan = heap_beginscan(dbrel, SnapshotNow, 0, NULL);
 	while ((dbtup = heap_getnext(dbscan, ForwardScanDirection)) != NULL)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.110 2005/01/27 23:36:06 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.111 2005/04/14 20:03:23 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -19,7 +19,6 @@
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_conversion.h"
@@ -270,7 +269,7 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 		char		replaces[Natts_pg_class];
 
 		/* open pg_class */
-		relation = heap_openr(RelationRelationName, RowExclusiveLock);
+		relation = heap_open(RelationRelationId, RowExclusiveLock);
 		relOid = RangeVarGetRelid(relvar, false);
 		tuple = SearchSysCache(RELOID,
 							   ObjectIdGetDatum(relOid),
@@ -438,7 +437,7 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 		char		nulls[Natts_pg_database];
 		char		replaces[Natts_pg_database];
 
-		relation = heap_openr(DatabaseRelationName, RowExclusiveLock);
+		relation = heap_open(DatabaseRelationId, RowExclusiveLock);
 		ScanKeyInit(&entry[0],
 					Anum_pg_database_datname,
 					BTEqualStrategyNumber, F_NAMEEQ,
@@ -597,7 +596,7 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 
 		oid = LookupFuncNameTypeNames(func->funcname, func->funcargs, false);
 
-		relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
+		relation = heap_open(ProcedureRelationId, RowExclusiveLock);
 		tuple = SearchSysCache(PROCOID,
 							   ObjectIdGetDatum(oid),
 							   0, 0, 0);
@@ -748,7 +747,7 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 		char		nulls[Natts_pg_language];
 		char		replaces[Natts_pg_language];
 
-		relation = heap_openr(LanguageRelationName, RowExclusiveLock);
+		relation = heap_open(LanguageRelationId, RowExclusiveLock);
 		tuple = SearchSysCache(LANGNAME,
 							   PointerGetDatum(langname),
 							   0, 0, 0);
@@ -911,7 +910,7 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 		char		nulls[Natts_pg_namespace];
 		char		replaces[Natts_pg_namespace];
 
-		relation = heap_openr(NamespaceRelationName, RowExclusiveLock);
+		relation = heap_open(NamespaceRelationId, RowExclusiveLock);
 		tuple = SearchSysCache(NAMESPACENAME,
 							   CStringGetDatum(nspname),
 							   0, 0, 0);
@@ -1067,7 +1066,7 @@ ExecuteGrantStmt_Tablespace(GrantStmt *stmt)
 		char		nulls[Natts_pg_tablespace];
 		char		replaces[Natts_pg_tablespace];
 
-		relation = heap_openr(TableSpaceRelationName, RowExclusiveLock);
+		relation = heap_open(TableSpaceRelationId, RowExclusiveLock);
 		ScanKeyInit(&entry[0],
 					Anum_pg_tablespace_spcname,
 					BTEqualStrategyNumber, F_NAMEEQ,
@@ -1455,7 +1454,7 @@ pg_database_aclmask(Oid db_oid, AclId userid,
 	 *
 	 * There's no syscache for pg_database, so must look the hard way
 	 */
-	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
+	pg_database = heap_open(DatabaseRelationId, AccessShareLock);
 	ScanKeyInit(&entry[0],
 				ObjectIdAttributeNumber,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -1726,7 +1725,7 @@ pg_tablespace_aclmask(Oid spc_oid, AclId userid,
 	 *
 	 * There's no syscache for pg_tablespace, so must look the hard way
 	 */
-	pg_tablespace = heap_openr(TableSpaceRelationName, AccessShareLock);
+	pg_tablespace = heap_open(TableSpaceRelationId, AccessShareLock);
 	ScanKeyInit(&entry[0],
 				ObjectIdAttributeNumber,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -2002,7 +2001,7 @@ pg_tablespace_ownercheck(Oid spc_oid, AclId userid)
 		return true;
 
 	/* There's no syscache for pg_tablespace, so must look the hard way */
-	pg_tablespace = heap_openr(TableSpaceRelationName, AccessShareLock);
+	pg_tablespace = heap_open(TableSpaceRelationId, AccessShareLock);
 	ScanKeyInit(&entry[0],
 				ObjectIdAttributeNumber,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -2070,7 +2069,7 @@ pg_database_ownercheck(Oid db_oid, AclId userid)
 		return true;
 
 	/* There's no syscache for pg_database, so must look the hard way */
-	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
+	pg_database = heap_open(DatabaseRelationId, AccessShareLock);
 	ScanKeyInit(&entry[0],
 				ObjectIdAttributeNumber,
 				BTEqualStrategyNumber, F_OIDEQ,

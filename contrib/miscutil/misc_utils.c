@@ -19,7 +19,6 @@
 #include "access/relscan.h"
 #include "access/skey.h"
 #include "access/tupdesc.h"
-#include "catalog/catname.h"
 #include "catalog/pg_listener.h"
 #include "commands/async.h"
 #include "fmgr.h"
@@ -75,7 +74,7 @@ active_listeners(text *relname)
 	int			ourpid = getpid();
 	char		listen_name[NAMEDATALEN];
 
-	lRel = heap_openr(ListenerRelationName, AccessShareLock);
+	lRel = heap_open(ListenerRelationId, AccessShareLock);
 	tdesc = RelationGetDescr(lRel);
 
 	if (relname && (VARSIZE(relname) > VARHDRSZ))

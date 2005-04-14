@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.251 2005/04/14 01:38:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.252 2005/04/14 20:03:23 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -27,7 +27,6 @@
 #include "access/heapam.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -245,7 +244,7 @@ UpdateRelationRelation(Relation indexRelation)
 	Relation	pg_class;
 	HeapTuple	tuple;
 
-	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
+	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
 	/* XXX Natts_pg_class_fixed is a hack - see pg_class.h */
 	tuple = heap_addheader(Natts_pg_class_fixed,
@@ -301,7 +300,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	/*
 	 * open the attribute relation and its indexes
 	 */
-	pg_attribute = heap_openr(AttributeRelationName, RowExclusiveLock);
+	pg_attribute = heap_open(AttributeRelationId, RowExclusiveLock);
 
 	indstate = CatalogOpenIndexes(pg_attribute);
 
@@ -400,7 +399,7 @@ UpdateIndexRelation(Oid indexoid,
 	/*
 	 * open the system catalog index relation
 	 */
-	pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
+	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
 
 	/*
 	 * Build a pg_index tuple
@@ -649,7 +648,7 @@ index_create(Oid heapRelationId,
 										   NULL,
 										   NULL);
 
-			referenced.classId = get_system_catalog_relid(ConstraintRelationName);
+			referenced.classId = ConstraintRelationId;
 			referenced.objectId = conOid;
 			referenced.objectSubId = 0;
 
@@ -672,9 +671,9 @@ index_create(Oid heapRelationId,
 		}
 
 		/* Store dependency on operator classes */
-		referenced.classId = get_system_catalog_relid(OperatorClassRelationName);
 		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 		{
+			referenced.classId = OperatorClassRelationId;
 			referenced.objectId = classObjectId[i];
 			referenced.objectSubId = 0;
 
@@ -797,7 +796,7 @@ index_drop(Oid indexId)
 	/*
 	 * fix INDEX relation, and check for expressional index
 	 */
-	indexRelation = heap_openr(IndexRelationName, RowExclusiveLock);
+	indexRelation = heap_open(IndexRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCache(INDEXRELID,
 						   ObjectIdGetDatum(indexId),
@@ -997,7 +996,7 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 	 * use heap_update, so cheat and overwrite the tuple in-place.	In
 	 * normal processing, make a copy to scribble on.
 	 */
-	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
+	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
 	if (!IsBootstrapProcessingMode())
 	{
@@ -1110,7 +1109,7 @@ setNewRelfilenode(Relation relation)
 	 * Find the pg_class tuple for the given relation.	This is not used
 	 * during bootstrap, so okay to use heap_update always.
 	 */
-	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
+	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
 	tuple = SearchSysCacheCopy(RELOID,
 							ObjectIdGetDatum(RelationGetRelid(relation)),
@@ -1202,10 +1201,10 @@ UpdateStats(Oid relid, double reltuples)
 	 * case the stats updates will not be WAL-logged and so could be lost
 	 * in a crash.	This seems OK considering VACUUM does the same thing.
 	 */
-	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
+	pg_class = heap_open(RelationRelationId, RowExclusiveLock);
 
 	in_place_upd = IsBootstrapProcessingMode() ||
-		ReindexIsProcessingHeap(RelationGetRelid(pg_class));
+		ReindexIsProcessingHeap(RelationRelationId);
 
 	if (!in_place_upd)
 	{

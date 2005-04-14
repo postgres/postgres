@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.23 2005/02/23 23:27:54 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_largeobject.c,v 1.24 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_largeobject.h"
 #include "miscadmin.h"
@@ -40,7 +39,7 @@ LargeObjectCreate(Oid loid)
 	char		nulls[Natts_pg_largeobject];
 	int			i;
 
-	pg_largeobject = heap_openr(LargeObjectRelationName, RowExclusiveLock);
+	pg_largeobject = heap_open(LargeObjectRelationId, RowExclusiveLock);
 
 	/*
 	 * Form new tuple
@@ -86,9 +85,9 @@ LargeObjectDrop(Oid loid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(loid));
 
-	pg_largeobject = heap_openr(LargeObjectRelationName, RowExclusiveLock);
+	pg_largeobject = heap_open(LargeObjectRelationId, RowExclusiveLock);
 
-	sd = systable_beginscan(pg_largeobject, LargeObjectLOidPNIndex, true,
+	sd = systable_beginscan(pg_largeobject, LargeObjectLOidPNIndexId, true,
 							SnapshotNow, 1, skey);
 
 	while ((tuple = systable_getnext(sd)) != NULL)
@@ -123,9 +122,9 @@ LargeObjectExists(Oid loid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(loid));
 
-	pg_largeobject = heap_openr(LargeObjectRelationName, AccessShareLock);
+	pg_largeobject = heap_open(LargeObjectRelationId, AccessShareLock);
 
-	sd = systable_beginscan(pg_largeobject, LargeObjectLOidPNIndex, true,
+	sd = systable_beginscan(pg_largeobject, LargeObjectLOidPNIndexId, true,
 							SnapshotNow, 1, skey);
 
 	if (systable_getnext(sd) != NULL)

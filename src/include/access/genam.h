@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.49 2005/03/27 23:53:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.50 2005/04/14 20:03:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,6 @@ typedef SysScanDescData *SysScanDesc;
  */
 extern Relation index_open(Oid relationId);
 extern Relation index_openrv(const RangeVar *relation);
-extern Relation index_openr(const char *sysRelationName);
 extern void index_close(Relation relation);
 extern bool index_insert(Relation indexRelation,
 			 Datum *values, bool *isnull,
@@ -119,7 +118,7 @@ extern void IndexScanEnd(IndexScanDesc scan);
  * heap-or-index access to system catalogs (in genam.c)
  */
 extern SysScanDesc systable_beginscan(Relation heapRelation,
-				   const char *indexRelname,
+				   Oid indexId,
 				   bool indexOK,
 				   Snapshot snapshot,
 				   int nkeys, ScanKey key);

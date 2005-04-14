@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.219 2005/04/14 01:38:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.220 2005/04/14 20:03:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
  *		RelationCacheInitialize			- initialize relcache
  *		RelationCacheInitializePhase2	- finish initializing relcache
  *		RelationIdGetRelation			- get a reldesc by relation id
- *		RelationSysNameGetRelation		- get a reldesc by system rel name
  *		RelationIdCacheGetRelation		- get a cached reldesc by relid
  *		RelationClose					- close an open relation
  *
@@ -34,7 +33,6 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_amop.h"
@@ -85,14 +83,16 @@ static FormData_pg_attribute Desc_pg_index[Natts_pg_index] = {Schema_pg_index};
 /*
  *		Hash tables that index the relation cache
  *
- *		Relations are looked up two ways, by OID and by name,
- *		thus there are two hash tables for referencing them.
- *
- *		The OID index covers all relcache entries.	The name index
- *		covers *only* system relations (only those in PG_CATALOG_NAMESPACE).
+ *		We used to index the cache by both name and OID, but now there
+ *		is only an index by OID.
  */
+typedef struct relidcacheent
+{
+	Oid			reloid;
+	Relation	reldesc;
+} RelIdCacheEnt;
+
 static HTAB *RelationIdCache;
-static HTAB *RelationSysNameCache;
 
 /*
  * This flag is false until we have prepared the critical relcache entries
@@ -125,33 +125,6 @@ static List *initFileRelationIds = NIL;
  */
 static bool need_eosubxact_work = false;
 
-/*
- *		RelationBuildDescInfo exists so code can be shared
- *		between RelationIdGetRelation() and RelationSysNameGetRelation()
- */
-typedef struct RelationBuildDescInfo
-{
-	int			infotype;		/* lookup by id or by name */
-#define INFO_RELID 1
-#define INFO_RELNAME 2
-	union
-	{
-		Oid			info_id;	/* relation object id */
-		char	   *info_name;	/* system relation name */
-	}			i;
-} RelationBuildDescInfo;
-
-typedef struct relidcacheent
-{
-	Oid			reloid;
-	Relation	reldesc;
-} RelIdCacheEnt;
-
-typedef struct relnamecacheent
-{
-	NameData	relname;
-	Relation	reldesc;
-} RelNameCacheEnt;
 
 /*
  *		macros to manipulate the lookup hashtables
@@ -169,39 +142,13 @@ do { \
 				 errmsg("out of memory"))); \
 	/* used to give notice if found -- now just keep quiet */ \
 	idhentry->reldesc = RELATION; \
-	if (IsSystemNamespace(RelationGetNamespace(RELATION))) \
-	{ \
-		char *relname = RelationGetRelationName(RELATION); \
-		RelNameCacheEnt *namehentry; \
-		namehentry = (RelNameCacheEnt*)hash_search(RelationSysNameCache, \
-												   relname, \
-												   HASH_ENTER, \
-												   &found); \
-		if (namehentry == NULL) \
-			ereport(ERROR, \
-					(errcode(ERRCODE_OUT_OF_MEMORY), \
-					 errmsg("out of memory"))); \
-		/* used to give notice if found -- now just keep quiet */ \
-		namehentry->reldesc = RELATION; \
-	} \
 } while(0)
 
 #define RelationIdCacheLookup(ID, RELATION) \
 do { \
 	RelIdCacheEnt *hentry; \
 	hentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
-										 (void *)&(ID), HASH_FIND,NULL); \
-	if (hentry) \
-		RELATION = hentry->reldesc; \
-	else \
-		RELATION = NULL; \
-} while(0)
-
-#define RelationSysNameCacheLookup(NAME, RELATION) \
-do { \
-	RelNameCacheEnt *hentry; \
-	hentry = (RelNameCacheEnt*)hash_search(RelationSysNameCache, \
-										   (void *) (NAME), HASH_FIND,NULL); \
+										 (void *) &(ID), HASH_FIND,NULL); \
 	if (hentry) \
 		RELATION = hentry->reldesc; \
 	else \
@@ -212,20 +159,10 @@ do { \
 do { \
 	RelIdCacheEnt *idhentry; \
 	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
-										   (void *)&(RELATION->rd_id), \
+										   (void *) &(RELATION->rd_id), \
 										   HASH_REMOVE, NULL); \
 	if (idhentry == NULL) \
 		elog(WARNING, "trying to delete a rd_id reldesc that does not exist"); \
-	if (IsSystemNamespace(RelationGetNamespace(RELATION))) \
-	{ \
-		char *relname = RelationGetRelationName(RELATION); \
-		RelNameCacheEnt *namehentry; \
-		namehentry = (RelNameCacheEnt*)hash_search(RelationSysNameCache, \
-												   relname, \
-												   HASH_REMOVE, NULL); \
-		if (namehentry == NULL) \
-			elog(WARNING, "trying to delete a relname reldesc that does not exist"); \
-	} \
 } while(0)
 
 
@@ -253,19 +190,16 @@ static void RelationClearRelation(Relation relation, bool rebuild);
 
 static void RelationReloadClassinfo(Relation relation);
 static void RelationFlushRelation(Relation relation);
-static Relation RelationSysNameCacheGetRelation(const char *relationName);
 static bool load_relcache_init_file(void);
 static void write_relcache_init_file(void);
 
 static void formrdesc(const char *relationName, Oid relationReltype,
 					  bool hasoids, int natts, FormData_pg_attribute *att);
 
-static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo, bool indexOK);
+static HeapTuple ScanPgRelation(Oid targetRelId, bool indexOK);
 static Relation AllocateRelationDesc(Relation relation, Form_pg_class relp);
-static void RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
-					   Relation relation);
-static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo,
-				  Relation oldrelation);
+static void RelationBuildTupleDesc(Relation relation);
+static Relation RelationBuildDesc(Oid targetRelId, Relation oldrelation);
 static void RelationInitPhysicalAddr(Relation relation);
 static TupleDesc GetPgIndexDescriptor(void);
 static void AttrDefaultFetch(Relation relation);
@@ -286,54 +220,26 @@ static OpClassCacheEnt *LookupOpclassInfo(Oid operatorClassOid,
  *		ScanPgRelation
  *
  *		this is used by RelationBuildDesc to find a pg_class
- *		tuple matching either a relation name or a relation id
- *		as specified in buildinfo.
+ *		tuple matching targetRelId.
  *
  *		NB: the returned tuple has been copied into palloc'd storage
  *		and must eventually be freed with heap_freetuple.
  */
 static HeapTuple
-ScanPgRelation(RelationBuildDescInfo buildinfo, bool indexOK)
+ScanPgRelation(Oid targetRelId, bool indexOK)
 {
 	HeapTuple	pg_class_tuple;
 	Relation	pg_class_desc;
-	const char *indexRelname;
 	SysScanDesc pg_class_scan;
-	ScanKeyData key[2];
-	int			nkeys;
+	ScanKeyData key[1];
 
 	/*
 	 * form a scan key
 	 */
-	switch (buildinfo.infotype)
-	{
-		case INFO_RELID:
-			ScanKeyInit(&key[0],
-						ObjectIdAttributeNumber,
-						BTEqualStrategyNumber, F_OIDEQ,
-						ObjectIdGetDatum(buildinfo.i.info_id));
-			nkeys = 1;
-			indexRelname = ClassOidIndex;
-			break;
-
-		case INFO_RELNAME:
-			ScanKeyInit(&key[0],
-						Anum_pg_class_relname,
-						BTEqualStrategyNumber, F_NAMEEQ,
-						NameGetDatum(buildinfo.i.info_name));
-			ScanKeyInit(&key[1],
-						Anum_pg_class_relnamespace,
-						BTEqualStrategyNumber, F_OIDEQ,
-						ObjectIdGetDatum(PG_CATALOG_NAMESPACE));
-			nkeys = 2;
-			indexRelname = ClassNameNspIndex;
-			break;
-
-		default:
-			elog(ERROR, "unrecognized buildinfo type: %d",
-				 buildinfo.infotype);
-			return NULL;		/* keep compiler quiet */
-	}
+	ScanKeyInit(&key[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(targetRelId));
 
 	/*
 	 * Open pg_class and fetch a tuple.  Force heap scan if we haven't yet
@@ -341,11 +247,11 @@ ScanPgRelation(RelationBuildDescInfo buildinfo, bool indexOK)
 	 * startup without a pg_internal.init file).  The caller can also
 	 * force a heap scan by setting indexOK == false.
 	 */
-	pg_class_desc = heap_openr(RelationRelationName, AccessShareLock);
-	pg_class_scan = systable_beginscan(pg_class_desc, indexRelname,
+	pg_class_desc = heap_open(RelationRelationId, AccessShareLock);
+	pg_class_scan = systable_beginscan(pg_class_desc, ClassOidIndexId,
 									   indexOK && criticalRelcachesBuilt,
 									   SnapshotNow,
-									   nkeys, key);
+									   1, key);
 
 	pg_class_tuple = systable_getnext(pg_class_scan);
 
@@ -429,8 +335,7 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
  *		the pg_attribute, pg_attrdef & pg_constraint system catalogs.
  */
 static void
-RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
-					   Relation relation)
+RelationBuildTupleDesc(Relation relation)
 {
 	HeapTuple	pg_attribute_tuple;
 	Relation	pg_attribute_desc;
@@ -469,9 +374,9 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 	 * yet built the critical relcache entries (this includes initdb and
 	 * startup without a pg_internal.init file).
 	 */
-	pg_attribute_desc = heap_openr(AttributeRelationName, AccessShareLock);
+	pg_attribute_desc = heap_open(AttributeRelationId, AccessShareLock);
 	pg_attribute_scan = systable_beginscan(pg_attribute_desc,
-										   AttributeRelidNumIndex,
+										   AttributeRelidNumIndexId,
 										   criticalRelcachesBuilt,
 										   SnapshotNow,
 										   2, skey);
@@ -648,15 +553,15 @@ RelationBuildRuleLock(Relation relation)
 	/*
 	 * open pg_rewrite and begin a scan
 	 *
-	 * Note: since we scan the rules using RewriteRelRulenameIndex, we will
-	 * be reading the rules in name order, except possibly during
+	 * Note: since we scan the rules using RewriteRelRulenameIndexId,
+	 * we will be reading the rules in name order, except possibly during
 	 * emergency-recovery operations (ie, IsIgnoringSystemIndexes). This
 	 * in turn ensures that rules will be fired in name order.
 	 */
-	rewrite_desc = heap_openr(RewriteRelationName, AccessShareLock);
+	rewrite_desc = heap_open(RewriteRelationId, AccessShareLock);
 	rewrite_tupdesc = RelationGetDescr(rewrite_desc);
 	rewrite_scan = systable_beginscan(rewrite_desc,
-									  RewriteRelRulenameIndex,
+									  RewriteRelRulenameIndexId,
 									  true, SnapshotNow,
 									  1, &key);
 
@@ -788,8 +693,7 @@ equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
  * --------------------------------
  */
 static Relation
-RelationBuildDesc(RelationBuildDescInfo buildinfo,
-				  Relation oldrelation)
+RelationBuildDesc(Oid targetRelId, Relation oldrelation)
 {
 	Relation	relation;
 	Oid			relid;
@@ -800,7 +704,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	/*
 	 * find the tuple in pg_class corresponding to the given relation id
 	 */
-	pg_class_tuple = ScanPgRelation(buildinfo, true);
+	pg_class_tuple = ScanPgRelation(targetRelId, true);
 
 	/*
 	 * if no such tuple exists, return NULL
@@ -844,7 +748,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	/*
 	 * initialize the tuple descriptor (relation->rd_att).
 	 */
-	RelationBuildTupleDesc(buildinfo, relation);
+	RelationBuildTupleDesc(relation);
 
 	/*
 	 * Fetch rules and triggers that affect this relation
@@ -1191,9 +1095,8 @@ LookupOpclassInfo(Oid operatorClassOid,
 					Anum_pg_amop_amopsubtype,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(InvalidOid));
-		rel = heap_openr(AccessMethodOperatorRelationName,
-						 AccessShareLock);
-		scan = systable_beginscan(rel, AccessMethodStrategyIndex, indexOK,
+		rel = heap_open(AccessMethodOperatorRelationId, AccessShareLock);
+		scan = systable_beginscan(rel, AccessMethodStrategyIndexId, indexOK,
 								  SnapshotNow, 2, skey);
 
 		while (HeapTupleIsValid(htup = systable_getnext(scan)))
@@ -1226,9 +1129,8 @@ LookupOpclassInfo(Oid operatorClassOid,
 					Anum_pg_amproc_amprocsubtype,
 					BTEqualStrategyNumber, F_OIDEQ,
 					ObjectIdGetDatum(InvalidOid));
-		rel = heap_openr(AccessMethodProcedureRelationName,
-						 AccessShareLock);
-		scan = systable_beginscan(rel, AccessMethodProcedureIndex, indexOK,
+		rel = heap_open(AccessMethodProcedureRelationId, AccessShareLock);
+		scan = systable_beginscan(rel, AccessMethodProcedureIndexId, indexOK,
 								  SnapshotNow, 2, skey);
 
 		while (HeapTupleIsValid(htup = systable_getnext(scan)))
@@ -1441,35 +1343,6 @@ RelationIdCacheGetRelation(Oid relationId)
 }
 
 /*
- *		RelationSysNameCacheGetRelation
- *
- *		As above, but lookup by name; only works for system catalogs.
- */
-static Relation
-RelationSysNameCacheGetRelation(const char *relationName)
-{
-	Relation	rd;
-	NameData	name;
-
-	/*
-	 * make sure that the name key used for hash lookup is properly
-	 * null-padded
-	 */
-	namestrcpy(&name, relationName);
-	RelationSysNameCacheLookup(NameStr(name), rd);
-
-	if (RelationIsValid(rd))
-	{
-		RelationIncrementReferenceCount(rd);
-		/* revalidate nailed index if necessary */
-		if (!rd->rd_isvalid)
-			RelationReloadClassinfo(rd);
-	}
-
-	return rd;
-}
-
-/*
  *		RelationIdGetRelation
  *
  *		Lookup a reldesc by OID; make one if not already in cache.
@@ -1482,7 +1355,6 @@ Relation
 RelationIdGetRelation(Oid relationId)
 {
 	Relation	rd;
-	RelationBuildDescInfo buildinfo;
 
 	/*
 	 * first try and get a reldesc from the cache
@@ -1495,41 +1367,7 @@ RelationIdGetRelation(Oid relationId)
 	 * no reldesc in the cache, so have RelationBuildDesc() build one and
 	 * add it.
 	 */
-	buildinfo.infotype = INFO_RELID;
-	buildinfo.i.info_id = relationId;
-
-	rd = RelationBuildDesc(buildinfo, NULL);
-	if (RelationIsValid(rd))
-		RelationIncrementReferenceCount(rd);
-	return rd;
-}
-
-/*
- *		RelationSysNameGetRelation
- *
- *		As above, but lookup by name; only works for system catalogs.
- */
-Relation
-RelationSysNameGetRelation(const char *relationName)
-{
-	Relation	rd;
-	RelationBuildDescInfo buildinfo;
-
-	/*
-	 * first try and get a reldesc from the cache
-	 */
-	rd = RelationSysNameCacheGetRelation(relationName);
-	if (RelationIsValid(rd))
-		return rd;
-
-	/*
-	 * no reldesc in the cache, so have RelationBuildDesc() build one and
-	 * add it.
-	 */
-	buildinfo.infotype = INFO_RELNAME;
-	buildinfo.i.info_name = (char *) relationName;
-
-	rd = RelationBuildDesc(buildinfo, NULL);
+	rd = RelationBuildDesc(relationId, NULL);
 	if (RelationIsValid(rd))
 		RelationIncrementReferenceCount(rd);
 	return rd;
@@ -1612,7 +1450,6 @@ RelationClose(Relation relation)
 static void
 RelationReloadClassinfo(Relation relation)
 {
-	RelationBuildDescInfo buildinfo;
 	bool		indexOK;
 	HeapTuple	pg_class_tuple;
 	Form_pg_class relp;
@@ -1620,19 +1457,17 @@ RelationReloadClassinfo(Relation relation)
 	/* Should be called only for invalidated nailed indexes */
 	Assert(relation->rd_isnailed && !relation->rd_isvalid &&
 		   relation->rd_rel->relkind == RELKIND_INDEX);
-	/* Read the pg_class row */
-	buildinfo.infotype = INFO_RELID;
-	buildinfo.i.info_id = relation->rd_id;
-
 	/*
+	 * Read the pg_class row
+	 *
 	 * Don't try to use an indexscan of pg_class_oid_index to reload the
 	 * info for pg_class_oid_index ...
 	 */
-	indexOK = strcmp(RelationGetRelationName(relation), ClassOidIndex) != 0;
-	pg_class_tuple = ScanPgRelation(buildinfo, indexOK);
+	indexOK = (RelationGetRelid(relation) != ClassOidIndexId);
+	pg_class_tuple = ScanPgRelation(RelationGetRelid(relation), indexOK);
 	if (!HeapTupleIsValid(pg_class_tuple))
 		elog(ERROR, "could not find tuple for system relation %u",
-			 relation->rd_id);
+			 RelationGetRelid(relation));
 	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
 	memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
 	/* Now we can recalculate physical address */
@@ -1750,17 +1585,14 @@ RelationClearRelation(Relation relation, bool rebuild)
 		 * is good because whatever ref counts the entry may have do not
 		 * necessarily belong to that resource owner.
 		 */
+		Oid			save_relid = RelationGetRelid(relation);
 		int			old_refcnt = relation->rd_refcnt;
 		SubTransactionId old_createSubid = relation->rd_createSubid;
 		TupleDesc	old_att = relation->rd_att;
 		RuleLock   *old_rules = relation->rd_rules;
 		MemoryContext old_rulescxt = relation->rd_rulescxt;
-		RelationBuildDescInfo buildinfo;
 
-		buildinfo.infotype = INFO_RELID;
-		buildinfo.i.info_id = RelationGetRelid(relation);
-
-		if (RelationBuildDesc(buildinfo, relation) != relation)
+		if (RelationBuildDesc(save_relid, relation) != relation)
 		{
 			/* Should only get here if relation was deleted */
 			flush_rowtype_cache(old_reltype);
@@ -1768,8 +1600,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 			if (old_rulescxt)
 				MemoryContextDelete(old_rulescxt);
 			pfree(relation);
-			elog(ERROR, "relation %u deleted while still in use",
-				 buildinfo.i.info_id);
+			elog(ERROR, "relation %u deleted while still in use", save_relid);
 		}
 		relation->rd_refcnt = old_refcnt;
 		relation->rd_createSubid = old_createSubid;
@@ -1952,8 +1783,7 @@ RelationCacheInvalidate(void)
 			if (relation->rd_isnailed &&
 				relation->rd_rel->relkind == RELKIND_INDEX)
 			{
-				if (strcmp(RelationGetRelationName(relation),
-						   ClassOidIndex) == 0)
+				if (RelationGetRelid(relation) == ClassOidIndexId)
 					rebuildFirstList = lcons(relation, rebuildFirstList);
 				else
 					rebuildFirstList = lappend(rebuildFirstList, relation);
@@ -2319,11 +2149,6 @@ RelationCacheInitialize(void)
 	 * create hashtables that index the relcache
 	 */
 	MemSet(&ctl, 0, sizeof(ctl));
-	ctl.keysize = sizeof(NameData);
-	ctl.entrysize = sizeof(RelNameCacheEnt);
-	RelationSysNameCache = hash_create("Relcache by name", INITRELCACHESIZE,
-									   &ctl, HASH_ELEM);
-
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(RelIdCacheEnt);
 	ctl.hash = tag_hash;
@@ -2338,13 +2163,13 @@ RelationCacheInitialize(void)
 	if (IsBootstrapProcessingMode() ||
 		!load_relcache_init_file())
 	{
-		formrdesc(RelationRelationName, PG_CLASS_RELTYPE_OID,
+		formrdesc("pg_class", PG_CLASS_RELTYPE_OID,
 				  true, Natts_pg_class, Desc_pg_class);
-		formrdesc(AttributeRelationName, PG_ATTRIBUTE_RELTYPE_OID,
+		formrdesc("pg_attribute", PG_ATTRIBUTE_RELTYPE_OID,
 				  false, Natts_pg_attribute, Desc_pg_attribute);
-		formrdesc(ProcedureRelationName, PG_PROC_RELTYPE_OID,
+		formrdesc("pg_proc", PG_PROC_RELTYPE_OID,
 				  true, Natts_pg_proc, Desc_pg_proc);
-		formrdesc(TypeRelationName, PG_TYPE_RELTYPE_OID,
+		formrdesc("pg_type", PG_TYPE_RELTYPE_OID,
 				  true, Natts_pg_type, Desc_pg_type);
 
 #define NUM_CRITICAL_RELS	4	/* fix if you change list above */
@@ -2393,27 +2218,23 @@ RelationCacheInitializePhase2(void)
 	 */
 	if (!criticalRelcachesBuilt)
 	{
-		RelationBuildDescInfo buildinfo;
 		Relation	ird;
 
-#define LOAD_CRIT_INDEX(indname) \
+#define LOAD_CRIT_INDEX(indexoid) \
 		do { \
-			buildinfo.infotype = INFO_RELNAME; \
-			buildinfo.i.info_name = (indname); \
-			ird = RelationBuildDesc(buildinfo, NULL); \
+			ird = RelationBuildDesc((indexoid), NULL); \
 			ird->rd_isnailed = true; \
 			ird->rd_refcnt = 1; \
 		} while (0)
 
-		LOAD_CRIT_INDEX(ClassNameNspIndex);
-		LOAD_CRIT_INDEX(ClassOidIndex);
-		LOAD_CRIT_INDEX(AttributeRelidNumIndex);
-		LOAD_CRIT_INDEX(IndexRelidIndex);
-		LOAD_CRIT_INDEX(AccessMethodStrategyIndex);
-		LOAD_CRIT_INDEX(AccessMethodProcedureIndex);
-		LOAD_CRIT_INDEX(OperatorOidIndex);
+		LOAD_CRIT_INDEX(ClassOidIndexId);
+		LOAD_CRIT_INDEX(AttributeRelidNumIndexId);
+		LOAD_CRIT_INDEX(IndexRelidIndexId);
+		LOAD_CRIT_INDEX(AccessMethodStrategyIndexId);
+		LOAD_CRIT_INDEX(AccessMethodProcedureIndexId);
+		LOAD_CRIT_INDEX(OperatorOidIndexId);
 
-#define NUM_CRITICAL_INDEXES	7		/* fix if you change list above */
+#define NUM_CRITICAL_INDEXES	6		/* fix if you change list above */
 
 		criticalRelcachesBuilt = true;
 	}
@@ -2510,7 +2331,7 @@ RelationCacheInitializePhase3(void)
  * fields of pg_index before we have the standard catalog caches available.
  * We use predefined data that's set up in just the same way as the
  * bootstrapped reldescs used by formrdesc().  The resulting tupdesc is
- * not 100% kosher: it does not have the correct relation OID in attrelid,
+ * not 100% kosher: it does not have the correct rowtype OID in tdtypeid,
  * nor does it have a TupleConstr field.  But it's good enough for the
  * purpose of extracting fields.
  */
@@ -2569,8 +2390,8 @@ AttrDefaultFetch(Relation relation)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	adrel = heap_openr(AttrDefaultRelationName, AccessShareLock);
-	adscan = systable_beginscan(adrel, AttrDefaultIndex, true,
+	adrel = heap_open(AttrDefaultRelationId, AccessShareLock);
+	adscan = systable_beginscan(adrel, AttrDefaultIndexId, true,
 								SnapshotNow, 1, &skey);
 	found = 0;
 
@@ -2634,8 +2455,8 @@ CheckConstraintFetch(Relation relation)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	conrel = heap_openr(ConstraintRelationName, AccessShareLock);
-	conscan = systable_beginscan(conrel, ConstraintRelidIndex, true,
+	conrel = heap_open(ConstraintRelationId, AccessShareLock);
+	conscan = systable_beginscan(conrel, ConstraintRelidIndexId, true,
 								 SnapshotNow, 1, skey);
 
 	while (HeapTupleIsValid(htup = systable_getnext(conscan)))
@@ -2725,8 +2546,8 @@ RelationGetIndexList(Relation relation)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	indrel = heap_openr(IndexRelationName, AccessShareLock);
-	indscan = systable_beginscan(indrel, IndexIndrelidIndex, true,
+	indrel = heap_open(IndexRelationId, AccessShareLock);
+	indscan = systable_beginscan(indrel, IndexIndrelidIndexId, true,
 								 SnapshotNow, 1, &skey);
 
 	while (HeapTupleIsValid(htup = systable_getnext(indscan)))

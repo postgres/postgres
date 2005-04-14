@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.138 2005/03/18 03:48:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.139 2005/04/14 20:03:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@
 #include <utime.h>
 #endif
 
-#include "catalog/catname.h"
 #include "catalog/pg_shadow.h"
 #include "libpq/libpq-be.h"
 #include "miscadmin.h"

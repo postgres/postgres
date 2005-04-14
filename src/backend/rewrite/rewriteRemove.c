@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.61 2004/12/31 22:00:46 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteRemove.c,v 1.62 2005/04/14 20:03:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_rewrite.h"
@@ -72,7 +71,7 @@ RemoveRewriteRule(Oid owningRel, const char *ruleName, DropBehavior behavior)
 	/*
 	 * Do the deletion
 	 */
-	object.classId = get_system_catalog_relid(RewriteRelationName);
+	object.classId = RewriteRelationId;
 	object.objectId = HeapTupleGetOid(tuple);
 	object.objectSubId = 0;
 
@@ -99,7 +98,7 @@ RemoveRewriteRuleById(Oid ruleOid)
 	/*
 	 * Open the pg_rewrite relation.
 	 */
-	RewriteRelation = heap_openr(RewriteRelationName, RowExclusiveLock);
+	RewriteRelation = heap_open(RewriteRelationId, RowExclusiveLock);
 
 	/*
 	 * Find the tuple for the target rule.
@@ -109,7 +108,7 @@ RemoveRewriteRuleById(Oid ruleOid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(ruleOid));
 
-	rcscan = systable_beginscan(RewriteRelation, RewriteOidIndex, true,
+	rcscan = systable_beginscan(RewriteRelation, RewriteOidIndexId, true,
 								SnapshotNow, 1, skey);
 
 	tuple = systable_getnext(rcscan);

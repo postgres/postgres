@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.28 2005/01/27 23:23:55 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.29 2005/04/14 20:03:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -189,7 +188,7 @@ RemoveSchema(List *names, DropBehavior behavior)
 	 * Do the deletion.  Objects contained in the schema are removed by
 	 * means of their dependency links to the schema.
 	 */
-	object.classId = get_system_catalog_relid(NamespaceRelationName);
+	object.classId = NamespaceRelationId;
 	object.objectId = namespaceId;
 	object.objectSubId = 0;
 
@@ -206,7 +205,7 @@ RemoveSchemaById(Oid schemaOid)
 	Relation	relation;
 	HeapTuple	tup;
 
-	relation = heap_openr(NamespaceRelationName, RowExclusiveLock);
+	relation = heap_open(NamespaceRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache(NAMESPACEOID,
 						 ObjectIdGetDatum(schemaOid),
@@ -232,7 +231,7 @@ RenameSchema(const char *oldname, const char *newname)
 	Relation	rel;
 	AclResult	aclresult;
 
-	rel = heap_openr(NamespaceRelationName, RowExclusiveLock);
+	rel = heap_open(NamespaceRelationId, RowExclusiveLock);
 
 	tup = SearchSysCacheCopy(NAMESPACENAME,
 							 CStringGetDatum(oldname),
@@ -287,7 +286,7 @@ AlterSchemaOwner(const char *name, AclId newOwnerSysId)
 	Relation	rel;
 	Form_pg_namespace nspForm;
 
-	rel = heap_openr(NamespaceRelationName, RowExclusiveLock);
+	rel = heap_open(NamespaceRelationId, RowExclusiveLock);
 
 	tup = SearchSysCache(NAMESPACENAME,
 						 CStringGetDatum(name),

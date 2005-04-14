@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.84 2005/03/21 01:24:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.85 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include "access/heapam.h"
 #include "access/tuptoaster.h"
 #include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -187,8 +186,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	/*
 	 * We can ANALYZE any table except pg_statistic. See update_attstats
 	 */
-	if (IsSystemNamespace(RelationGetNamespace(onerel)) &&
-	 strcmp(RelationGetRelationName(onerel), StatisticRelationName) == 0)
+	if (RelationGetRelid(onerel) == StatisticRelationId)
 	{
 		relation_close(onerel, AccessShareLock);
 		return;
@@ -1091,7 +1089,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 	if (natts <= 0)
 		return;					/* nothing to do */
 
-	sd = heap_openr(StatisticRelationName, RowExclusiveLock);
+	sd = heap_open(StatisticRelationId, RowExclusiveLock);
 
 	for (attno = 0; attno < natts; attno++)
 	{

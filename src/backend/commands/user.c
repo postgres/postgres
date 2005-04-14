@@ -6,14 +6,13 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.150 2005/04/14 01:38:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.151 2005/04/14 20:03:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_group.h"
@@ -180,7 +179,7 @@ CreateUser(CreateUserStmt *stmt)
 	 * to be sure of what the next usesysid should be, and we need to
 	 * protect our eventual update of the flat password file.
 	 */
-	pg_shadow_rel = heap_openr(ShadowRelationName, ExclusiveLock);
+	pg_shadow_rel = heap_open(ShadowRelationId, ExclusiveLock);
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
 	scan = heap_beginscan(pg_shadow_rel, SnapshotNow, 0, NULL);
@@ -401,7 +400,7 @@ AlterUser(AlterUserStmt *stmt)
 	 * secure exclusive lock to protect our update of the flat password
 	 * file.
 	 */
-	pg_shadow_rel = heap_openr(ShadowRelationName, ExclusiveLock);
+	pg_shadow_rel = heap_open(ShadowRelationId, ExclusiveLock);
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
 	tuple = SearchSysCache(SHADOWNAME,
@@ -516,7 +515,7 @@ AlterUserSet(AlterUserSetStmt *stmt)
 	 * RowExclusiveLock is sufficient, because we don't need to update the
 	 * flat password file.
 	 */
-	rel = heap_openr(ShadowRelationName, RowExclusiveLock);
+	rel = heap_open(ShadowRelationId, RowExclusiveLock);
 	oldtuple = SearchSysCache(SHADOWNAME,
 							  PointerGetDatum(stmt->user),
 							  0, 0, 0);
@@ -594,7 +593,7 @@ DropUser(DropUserStmt *stmt)
 	 * deleted.  Note we secure exclusive lock, because we need to protect
 	 * our update of the flat password file.
 	 */
-	pg_shadow_rel = heap_openr(ShadowRelationName, ExclusiveLock);
+	pg_shadow_rel = heap_open(ShadowRelationId, ExclusiveLock);
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
 	foreach(item, stmt->users)
@@ -635,7 +634,7 @@ DropUser(DropUserStmt *stmt)
 		 * don't read the manual, it doesn't seem to be the behaviour one
 		 * would expect either.) -- petere 2000/01/14)
 		 */
-		pg_rel = heap_openr(DatabaseRelationName, AccessShareLock);
+		pg_rel = heap_open(DatabaseRelationId, AccessShareLock);
 		pg_dsc = RelationGetDescr(pg_rel);
 
 		ScanKeyInit(&scankey,
@@ -677,7 +676,7 @@ DropUser(DropUserStmt *stmt)
 		 *
 		 * try calling alter group drop user for every group
 		 */
-		pg_rel = heap_openr(GroupRelationName, ExclusiveLock);
+		pg_rel = heap_open(GroupRelationId, ExclusiveLock);
 		pg_dsc = RelationGetDescr(pg_rel);
 		scan = heap_beginscan(pg_rel, SnapshotNow, 0, NULL);
 		while ((tmp_tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -734,7 +733,7 @@ RenameUser(const char *oldname, const char *newname)
 	int			i;
 
 	/* ExclusiveLock because we need to update the password file */
-	rel = heap_openr(ShadowRelationName, ExclusiveLock);
+	rel = heap_open(ShadowRelationId, ExclusiveLock);
 	dsc = RelationGetDescr(rel);
 
 	oldtuple = SearchSysCache(SHADOWNAME,
@@ -819,13 +818,17 @@ CheckPgUserAclNotNull(void)
 		elog(ERROR, "cache lookup failed for relation %u", ShadowRelationId);
 
 	if (heap_attisnull(htup, Anum_pg_class_relacl))
+	{
+		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(htup);
+
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		errmsg("before using passwords you must revoke privileges on %s",
-			   ShadowRelationName),
+				 errmsg("before using passwords you must revoke privileges on %s",
+						NameStr(classForm->relname)),
 				 errdetail("This restriction is to prevent unprivileged users from reading the passwords."),
 				 errhint("Try REVOKE ALL ON \"%s\" FROM PUBLIC.",
-						 ShadowRelationName)));
+						 NameStr(classForm->relname))));
+	}
 
 	ReleaseSysCache(htup);
 }
@@ -914,7 +917,7 @@ CreateGroup(CreateGroupStmt *stmt)
 	 * to be sure of what the next grosysid should be, and we need to
 	 * protect our eventual update of the flat group file.
 	 */
-	pg_group_rel = heap_openr(GroupRelationName, ExclusiveLock);
+	pg_group_rel = heap_open(GroupRelationId, ExclusiveLock);
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
 
 	scan = heap_beginscan(pg_group_rel, SnapshotNow, 0, NULL);
@@ -1032,7 +1035,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	/*
 	 * Secure exclusive lock to protect our update of the flat group file.
 	 */
-	pg_group_rel = heap_openr(GroupRelationName, ExclusiveLock);
+	pg_group_rel = heap_open(GroupRelationId, ExclusiveLock);
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
 
 	/*
@@ -1271,7 +1274,7 @@ DropGroup(DropGroupStmt *stmt)
 	/*
 	 * Secure exclusive lock to protect our update of the flat group file.
 	 */
-	pg_group_rel = heap_openr(GroupRelationName, ExclusiveLock);
+	pg_group_rel = heap_open(GroupRelationId, ExclusiveLock);
 
 	/* Find and delete the group. */
 
@@ -1308,7 +1311,7 @@ RenameGroup(const char *oldname, const char *newname)
 	Relation	rel;
 
 	/* ExclusiveLock because we need to update the flat group file */
-	rel = heap_openr(GroupRelationName, ExclusiveLock);
+	rel = heap_open(GroupRelationId, ExclusiveLock);
 
 	tup = SearchSysCacheCopy(GRONAME,
 							 CStringGetDatum(oldname),

@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.82 2005/04/14 01:38:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.83 2005/04/14 20:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,13 +16,17 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_cast.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_conversion.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_description.h"
+#include "catalog/pg_language.h"
 #include "catalog/pg_largeobject.h"
+#include "catalog/pg_namespace.h"
+#include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
@@ -192,9 +196,9 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 				BTEqualStrategyNumber, F_INT4EQ,
 				Int32GetDatum(subid));
 
-	description = heap_openr(DescriptionRelationName, RowExclusiveLock);
+	description = heap_open(DescriptionRelationId, RowExclusiveLock);
 
-	sd = systable_beginscan(description, DescriptionObjIndex, true,
+	sd = systable_beginscan(description, DescriptionObjIndexId, true,
 							SnapshotNow, 3, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
@@ -274,9 +278,9 @@ DeleteComments(Oid oid, Oid classoid, int32 subid)
 	else
 		nkeys = 2;
 
-	description = heap_openr(DescriptionRelationName, RowExclusiveLock);
+	description = heap_open(DescriptionRelationId, RowExclusiveLock);
 
-	sd = systable_beginscan(description, DescriptionObjIndex, true,
+	sd = systable_beginscan(description, DescriptionObjIndexId, true,
 							SnapshotNow, nkeys, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
@@ -353,8 +357,8 @@ CommentRelation(int objtype, List *relname, char *comment)
 	}
 
 	/* Create the comment using the relation's oid */
-
-	CreateComments(RelationGetRelid(relation), RelationRelationId, 0, comment);
+	CreateComments(RelationGetRelid(relation), RelationRelationId,
+				   0, comment);
 
 	/* Done, but hold lock until commit */
 	relation_close(relation, NoLock);
@@ -407,7 +411,6 @@ CommentAttribute(List *qualname, char *comment)
 						attrname, RelationGetRelationName(relation))));
 
 	/* Create the comment using the relation's oid */
-
 	CreateComments(RelationGetRelid(relation), RelationRelationId,
 				   (int32) attnum, comment);
 
@@ -476,7 +479,7 @@ CommentDatabase(List *qualname, char *comment)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   database);
 
-	/* Create the comment with the pg_database oid */
+	/* Call CreateComments() to create/drop the comments */
 	CreateComments(oid, DatabaseRelationId, 0, comment);
 }
 
@@ -493,7 +496,6 @@ static void
 CommentNamespace(List *qualname, char *comment)
 {
 	Oid			oid;
-	Oid			classoid;
 	char	   *namespace;
 
 	if (list_length(qualname) != 1)
@@ -515,11 +517,8 @@ CommentNamespace(List *qualname, char *comment)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_NAMESPACE,
 					   namespace);
 
-	/* pg_namespace doesn't have a hard-coded OID, so must look it up */
-	classoid = get_system_catalog_relid(NamespaceRelationName);
-
 	/* Call CreateComments() to create/drop the comments */
-	CreateComments(oid, classoid, 0, comment);
+	CreateComments(oid, NamespaceRelationId, 0, comment);
 }
 
 /*
@@ -547,7 +546,6 @@ CommentRule(List *qualname, char *comment)
 	HeapTuple	tuple;
 	Oid			reloid;
 	Oid			ruleoid;
-	Oid			classoid;
 	AclResult	aclcheck;
 
 	/* Separate relname and trig name */
@@ -567,7 +565,7 @@ CommentRule(List *qualname, char *comment)
 					BTEqualStrategyNumber, F_NAMEEQ,
 					PointerGetDatum(rulename));
 
-		RewriteRelation = heap_openr(RewriteRelationName, AccessShareLock);
+		RewriteRelation = heap_open(RewriteRelationId, AccessShareLock);
 		scanDesc = heap_beginscan(RewriteRelation, SnapshotNow,
 								  1, &scanKeyData);
 
@@ -631,11 +629,8 @@ CommentRule(List *qualname, char *comment)
 		aclcheck_error(aclcheck, ACL_KIND_CLASS,
 					   get_rel_name(reloid));
 
-	/* pg_rewrite doesn't have a hard-coded OID, so must look it up */
-	classoid = get_system_catalog_relid(RewriteRelationName);
-
 	/* Call CreateComments() to create/drop the comments */
-	CreateComments(ruleoid, classoid, 0, comment);
+	CreateComments(ruleoid, RewriteRelationId, 0, comment);
 
 	heap_close(relation, NoLock);
 }
@@ -671,7 +666,6 @@ CommentType(List *typename, char *comment)
 					   TypeNameToString(tname));
 
 	/* Call CreateComments() to create/drop the comments */
-
 	CreateComments(oid, TypeRelationId, 0, comment);
 }
 
@@ -707,7 +701,6 @@ CommentAggregate(List *aggregate, List *arguments, char *comment)
 					   NameListToString(aggregate));
 
 	/* Call CreateComments() to create/drop the comments */
-
 	CreateComments(oid, ProcedureRelationId, 0, comment);
 }
 
@@ -736,7 +729,6 @@ CommentProc(List *function, List *arguments, char *comment)
 					   NameListToString(function));
 
 	/* Call CreateComments() to create/drop the comments */
-
 	CreateComments(oid, ProcedureRelationId, 0, comment);
 }
 
@@ -756,7 +748,6 @@ CommentOperator(List *opername, List *arguments, char *comment)
 	TypeName   *typenode1 = (TypeName *) linitial(arguments);
 	TypeName   *typenode2 = (TypeName *) lsecond(arguments);
 	Oid			oid;
-	Oid			classoid;
 
 	/* Look up the operator */
 	oid = LookupOperNameTypeNames(opername, typenode1, typenode2, false);
@@ -766,11 +757,8 @@ CommentOperator(List *opername, List *arguments, char *comment)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPER,
 					   NameListToString(opername));
 
-	/* pg_operator doesn't have a hard-coded OID, so must look it up */
-	classoid = get_system_catalog_relid(OperatorRelationName);
-
 	/* Call CreateComments() to create/drop the comments */
-	CreateComments(oid, classoid, 0, comment);
+	CreateComments(oid, OperatorRelationId, 0, comment);
 }
 
 /*
@@ -817,7 +805,7 @@ CommentTrigger(List *qualname, char *comment)
 	 * Fetch the trigger tuple from pg_trigger.  There can be only one
 	 * because of the unique index.
 	 */
-	pg_trigger = heap_openr(TriggerRelationName, AccessShareLock);
+	pg_trigger = heap_open(TriggerRelationId, AccessShareLock);
 	ScanKeyInit(&entry[0],
 				Anum_pg_trigger_tgrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -826,7 +814,7 @@ CommentTrigger(List *qualname, char *comment)
 				Anum_pg_trigger_tgname,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(trigname));
-	scan = systable_beginscan(pg_trigger, TriggerRelidNameIndex, true,
+	scan = systable_beginscan(pg_trigger, TriggerRelidNameIndexId, true,
 							  SnapshotNow, 2, entry);
 	triggertuple = systable_getnext(scan);
 
@@ -842,9 +830,8 @@ CommentTrigger(List *qualname, char *comment)
 
 	systable_endscan(scan);
 
-	/* Create the comment with the pg_trigger oid */
-
-	CreateComments(oid, RelationGetRelid(pg_trigger), 0, comment);
+	/* Call CreateComments() to create/drop the comments */
+	CreateComments(oid, TriggerRelationId, 0, comment);
 
 	/* Done, but hold lock on relation */
 
@@ -896,14 +883,14 @@ CommentConstraint(List *qualname, char *comment)
 	 * than one match, because constraints are not required to have unique
 	 * names; if so, error out.
 	 */
-	pg_constraint = heap_openr(ConstraintRelationName, AccessShareLock);
+	pg_constraint = heap_open(ConstraintRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey[0],
 				Anum_pg_constraint_conrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	scan = systable_beginscan(pg_constraint, ConstraintRelidIndex, true,
+	scan = systable_beginscan(pg_constraint, ConstraintRelidIndexId, true,
 							  SnapshotNow, 1, skey);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
@@ -930,8 +917,8 @@ CommentConstraint(List *qualname, char *comment)
 			  errmsg("constraint \"%s\" for table \"%s\" does not exist",
 					 conName, RelationGetRelationName(relation))));
 
-	/* Create the comment with the pg_constraint oid */
-	CreateComments(conOid, RelationGetRelid(pg_constraint), 0, comment);
+	/* Call CreateComments() to create/drop the comments */
+	CreateComments(conOid, ConstraintRelationId, 0, comment);
 
 	/* Done, but hold lock on relation */
 	heap_close(pg_constraint, AccessShareLock);
@@ -951,7 +938,6 @@ static void
 CommentConversion(List *qualname, char *comment)
 {
 	Oid			conversionOid;
-	Oid			classoid;
 
 	conversionOid = FindConversionByName(qualname);
 	if (!OidIsValid(conversionOid))
@@ -965,11 +951,8 @@ CommentConversion(List *qualname, char *comment)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CONVERSION,
 					   NameListToString(qualname));
 
-	/* pg_conversion doesn't have a hard-coded OID, so must look it up */
-	classoid = get_system_catalog_relid(ConversionRelationName);
-
 	/* Call CreateComments() to create/drop the comments */
-	CreateComments(conversionOid, classoid, 0, comment);
+	CreateComments(conversionOid, ConversionRelationId, 0, comment);
 }
 
 /*
@@ -985,7 +968,6 @@ static void
 CommentLanguage(List *qualname, char *comment)
 {
 	Oid			oid;
-	Oid			classoid;
 	char	   *language;
 
 	if (list_length(qualname) != 1)
@@ -1008,11 +990,8 @@ CommentLanguage(List *qualname, char *comment)
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 		 errmsg("must be superuser to comment on procedural language")));
 
-	/* pg_language doesn't have a hard-coded OID, so must look it up */
-	classoid = get_system_catalog_relid(LanguageRelationName);
-
 	/* Call CreateComments() to create/drop the comments */
-	CreateComments(oid, classoid, 0, comment);
+	CreateComments(oid, LanguageRelationId, 0, comment);
 }
 
 /*
@@ -1032,7 +1011,6 @@ CommentOpClass(List *qualname, List *arguments, char *comment)
 	char	   *opcname;
 	Oid			amID;
 	Oid			opcID;
-	Oid			classoid;
 	HeapTuple	tuple;
 
 	Assert(list_length(arguments) == 1);
@@ -1098,11 +1076,8 @@ CommentOpClass(List *qualname, List *arguments, char *comment)
 
 	ReleaseSysCache(tuple);
 
-	/* pg_opclass doesn't have a hard-coded OID, so must look it up */
-	classoid = get_system_catalog_relid(OperatorClassRelationName);
-
 	/* Call CreateComments() to create/drop the comments */
-	CreateComments(opcID, classoid, 0, comment);
+	CreateComments(opcID, OperatorClassRelationId, 0, comment);
 }
 
 /*
@@ -1118,7 +1093,6 @@ static void
 CommentLargeObject(List *qualname, char *comment)
 {
 	Oid			loid;
-	Oid			classoid;
 	Node	   *node;
 
 	Assert(list_length(qualname) == 1);
@@ -1152,11 +1126,8 @@ CommentLargeObject(List *qualname, char *comment)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("large object %u does not exist", loid)));
 
-	/* pg_largeobject doesn't have a hard-coded OID, so must look it up */
-	classoid = get_system_catalog_relid(LargeObjectRelationName);
-
 	/* Call CreateComments() to create/drop the comments */
-	CreateComments(loid, classoid, 0, comment);
+	CreateComments(loid, LargeObjectRelationId, 0, comment);
 }
 
 /*
@@ -1178,7 +1149,6 @@ CommentCast(List *qualname, List *arguments, char *comment)
 	Oid			targettypeid;
 	HeapTuple	tuple;
 	Oid			castOid;
-	Oid			classoid;
 
 	Assert(list_length(qualname) == 1);
 	sourcetype = (TypeName *) linitial(qualname);
@@ -1226,9 +1196,6 @@ CommentCast(List *qualname, List *arguments, char *comment)
 
 	ReleaseSysCache(tuple);
 
-	/* pg_cast doesn't have a hard-coded OID, so must look it up */
-	classoid = get_system_catalog_relid(CastRelationName);
-
 	/* Call CreateComments() to create/drop the comments */
-	CreateComments(castOid, classoid, 0, comment);
+	CreateComments(castOid, CastRelationId, 0, comment);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.185 2005/04/14 01:38:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.186 2005/04/14 20:03:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "access/heapam.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
@@ -252,12 +251,12 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	 * NOTE that this is cool only because we have AccessExclusiveLock on the
 	 * relation, so the trigger set won't be changing underneath us.
 	 */
-	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
+	tgrel = heap_open(TriggerRelationId, RowExclusiveLock);
 	ScanKeyInit(&key,
 				Anum_pg_trigger_tgrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(rel)));
-	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, true,
 								SnapshotNow, 1, &key);
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
@@ -374,7 +373,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 
 	CatalogUpdateIndexes(tgrel, tuple);
 
-	myself.classId = RelationGetRelid(tgrel);
+	myself.classId = TriggerRelationId;
 	myself.objectId = trigoid;
 	myself.objectSubId = 0;
 
@@ -389,7 +388,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	 * backends (and this one too!) are sent SI message to make them
 	 * rebuild relcache entries.
 	 */
-	pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
+	pgrel = heap_open(RelationRelationId, RowExclusiveLock);
 	tuple = SearchSysCacheCopy(RELOID,
 							   ObjectIdGetDatum(RelationGetRelid(rel)),
 							   0, 0, 0);
@@ -463,7 +462,7 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
 	/*
 	 * Find the trigger, verify permissions, set up object address
 	 */
-	tgrel = heap_openr(TriggerRelationName, AccessShareLock);
+	tgrel = heap_open(TriggerRelationId, AccessShareLock);
 
 	ScanKeyInit(&skey[0],
 				Anum_pg_trigger_tgrelid,
@@ -475,7 +474,7 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
 				BTEqualStrategyNumber, F_NAMEEQ,
 				CStringGetDatum(trigname));
 
-	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, true,
 								SnapshotNow, 2, skey);
 
 	tup = systable_getnext(tgscan);
@@ -490,7 +489,7 @@ DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   get_rel_name(relid));
 
-	object.classId = RelationGetRelid(tgrel);
+	object.classId = TriggerRelationId;
 	object.objectId = HeapTupleGetOid(tup);
 	object.objectSubId = 0;
 
@@ -519,7 +518,7 @@ RemoveTriggerById(Oid trigOid)
 	HeapTuple	tuple;
 	Form_pg_class classForm;
 
-	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
+	tgrel = heap_open(TriggerRelationId, RowExclusiveLock);
 
 	/*
 	 * Find the trigger to delete.
@@ -529,7 +528,7 @@ RemoveTriggerById(Oid trigOid)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(trigOid));
 
-	tgscan = systable_beginscan(tgrel, TriggerOidIndex, true,
+	tgscan = systable_beginscan(tgrel, TriggerOidIndexId, true,
 								SnapshotNow, 1, skey);
 
 	tup = systable_getnext(tgscan);
@@ -572,7 +571,7 @@ RemoveTriggerById(Oid trigOid)
 	 * so no one else is creating/deleting triggers on this rel at the
 	 * same time.
 	 */
-	pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
+	pgrel = heap_open(RelationRelationId, RowExclusiveLock);
 	tuple = SearchSysCacheCopy(RELOID,
 							   ObjectIdGetDatum(relid),
 							   0, 0, 0);
@@ -636,7 +635,7 @@ renametrig(Oid relid,
 	 * NOTE that this is cool only because we have AccessExclusiveLock on the
 	 * relation, so the trigger set won't be changing underneath us.
 	 */
-	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
+	tgrel = heap_open(TriggerRelationId, RowExclusiveLock);
 
 	/*
 	 * First pass -- look for name conflict
@@ -649,7 +648,7 @@ renametrig(Oid relid,
 				Anum_pg_trigger_tgname,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				PointerGetDatum(newname));
-	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, true,
 								SnapshotNow, 2, key);
 	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 		ereport(ERROR,
@@ -669,7 +668,7 @@ renametrig(Oid relid,
 				Anum_pg_trigger_tgname,
 				BTEqualStrategyNumber, F_NAMEEQ,
 				PointerGetDatum(oldname));
-	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, true,
 								SnapshotNow, 2, key);
 	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
@@ -739,7 +738,7 @@ RelationBuildTriggers(Relation relation)
 	triggers = (Trigger *) palloc(ntrigs * sizeof(Trigger));
 
 	/*
-	 * Note: since we scan the triggers using TriggerRelidNameIndex, we
+	 * Note: since we scan the triggers using TriggerRelidNameIndexId, we
 	 * will be reading the triggers in name order, except possibly during
 	 * emergency-recovery operations (ie, IsIgnoringSystemIndexes). This
 	 * in turn ensures that triggers will be fired in name order.
@@ -749,8 +748,8 @@ RelationBuildTriggers(Relation relation)
 				BTEqualStrategyNumber, F_OIDEQ,
 				ObjectIdGetDatum(RelationGetRelid(relation)));
 
-	tgrel = heap_openr(TriggerRelationName, AccessShareLock);
-	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
+	tgrel = heap_open(TriggerRelationId, AccessShareLock);
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, true,
 								SnapshotNow, 1, &skey);
 
 	while (HeapTupleIsValid(htup = systable_getnext(tgscan)))
@@ -2802,7 +2801,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 		 * First lookup all trigger Oid's for the constraint names.
 		 * ----------
 		 */
-		tgrel = heap_openr(TriggerRelationName, AccessShareLock);
+		tgrel = heap_open(TriggerRelationId, AccessShareLock);
 
 		foreach(l, stmt->constraints)
 		{
@@ -2828,7 +2827,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 						BTEqualStrategyNumber, F_NAMEEQ,
 						PointerGetDatum(cname));
 
-			tgscan = systable_beginscan(tgrel, TriggerConstrNameIndex, true,
+			tgscan = systable_beginscan(tgrel, TriggerConstrNameIndexId, true,
 										SnapshotNow, 1, &skey);
 
 			/*

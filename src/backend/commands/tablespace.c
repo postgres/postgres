@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.16 2005/01/27 23:23:55 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.17 2005/04/14 20:03:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,6 @@
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_tablespace.h"
@@ -125,7 +124,7 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 			Relation	rel;
 
 			if (!isRedo)
-				rel = heap_openr(TableSpaceRelationName, ExclusiveLock);
+				rel = heap_open(TableSpaceRelationId, ExclusiveLock);
 			else
 				rel = NULL;
 
@@ -291,7 +290,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	 * is to lock the proposed tablename against other would-be creators.
 	 * The insertion will roll back if we find problems below.
 	 */
-	rel = heap_openr(TableSpaceRelationName, RowExclusiveLock);
+	rel = heap_open(TableSpaceRelationId, RowExclusiveLock);
 
 	MemSet(nulls, ' ', Natts_pg_tablespace);
 
@@ -407,7 +406,7 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	 * is trying to do DROP TABLESPACE or TablespaceCreateDbspace
 	 * concurrently.
 	 */
-	rel = heap_openr(TableSpaceRelationName, ExclusiveLock);
+	rel = heap_open(TableSpaceRelationId, ExclusiveLock);
 
 	/*
 	 * Find the target tuple
@@ -736,7 +735,7 @@ RenameTableSpace(const char *oldname, const char *newname)
 	Form_pg_tablespace newform;
 
 	/* Search pg_tablespace */
-	rel = heap_openr(TableSpaceRelationName, RowExclusiveLock);
+	rel = heap_open(TableSpaceRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_spcname,
@@ -803,7 +802,7 @@ AlterTableSpaceOwner(const char *name, AclId newOwnerSysId)
 	HeapTuple	tup;
 
 	/* Search pg_tablespace */
-	rel = heap_openr(TableSpaceRelationName, RowExclusiveLock);
+	rel = heap_open(TableSpaceRelationId, RowExclusiveLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_spcname,
@@ -952,7 +951,7 @@ get_tablespace_oid(const char *tablespacename)
 	ScanKeyData entry[1];
 
 	/* Search pg_tablespace */
-	rel = heap_openr(TableSpaceRelationName, AccessShareLock);
+	rel = heap_open(TableSpaceRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],
 				Anum_pg_tablespace_spcname,
@@ -987,7 +986,7 @@ get_tablespace_name(Oid spc_oid)
 	ScanKeyData entry[1];
 
 	/* Search pg_tablespace */
-	rel = heap_openr(TableSpaceRelationName, AccessShareLock);
+	rel = heap_open(TableSpaceRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],
 				ObjectIdAttributeNumber,
