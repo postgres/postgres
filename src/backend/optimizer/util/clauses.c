@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.154.2.3 2005/04/10 20:58:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.154.2.4 2005/04/14 21:44:35 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1665,6 +1665,13 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
 	 * Can't simplify if it returns a set.
 	 */
 	if (funcform->proretset)
+		return NULL;
+
+	/*
+	 * Can't simplify if it returns RECORD, since it will be needing an
+	 * expected tupdesc which we can't supply here.
+	 */
+	if (funcform->prorettype == RECORDOID)
 		return NULL;
 
 	/*
