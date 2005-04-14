@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.109 2002/09/11 14:48:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.109.2.1 2005/04/14 21:44:46 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1619,6 +1619,13 @@ simplify_op_or_func(Expr *expr, List *args)
 		funcid = func->funcid;
 		result_typeid = func->funcresulttype;
 	}
+
+	/*
+	 * Can't simplify if it returns RECORD, since we can't pass an expected
+	 * tupledesc.
+	 */
+	if (result_typeid == RECORDOID)
+		return NULL;
 
 	/*
 	 * we could use func_volatile() here, but we need several fields out
