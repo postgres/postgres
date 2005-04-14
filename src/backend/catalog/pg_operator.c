@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.89 2005/03/29 03:01:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_operator.c,v 1.90 2005/04/14 01:38:16 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -23,6 +23,7 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
@@ -901,7 +902,7 @@ makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid)
 	/* Dependency on left type */
 	if (OidIsValid(oper->oprleft))
 	{
-		referenced.classId = RelOid_pg_type;
+		referenced.classId = TypeRelationId;
 		referenced.objectId = oper->oprleft;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -910,7 +911,7 @@ makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid)
 	/* Dependency on right type */
 	if (OidIsValid(oper->oprright))
 	{
-		referenced.classId = RelOid_pg_type;
+		referenced.classId = TypeRelationId;
 		referenced.objectId = oper->oprright;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -919,7 +920,7 @@ makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid)
 	/* Dependency on result type */
 	if (OidIsValid(oper->oprresult))
 	{
-		referenced.classId = RelOid_pg_type;
+		referenced.classId = TypeRelationId;
 		referenced.objectId = oper->oprresult;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -938,7 +939,7 @@ makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid)
 	/* Dependency on implementation function */
 	if (OidIsValid(oper->oprcode))
 	{
-		referenced.classId = RelOid_pg_proc;
+		referenced.classId = ProcedureRelationId;
 		referenced.objectId = oper->oprcode;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -947,7 +948,7 @@ makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid)
 	/* Dependency on restriction selectivity function */
 	if (OidIsValid(oper->oprrest))
 	{
-		referenced.classId = RelOid_pg_proc;
+		referenced.classId = ProcedureRelationId;
 		referenced.objectId = oper->oprrest;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -956,7 +957,7 @@ makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid)
 	/* Dependency on join selectivity function */
 	if (OidIsValid(oper->oprjoin))
 	{
-		referenced.classId = RelOid_pg_proc;
+		referenced.classId = ProcedureRelationId;
 		referenced.objectId = oper->oprjoin;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);

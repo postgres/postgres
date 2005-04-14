@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.24 2005/04/12 04:26:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.25 2005/04/14 01:38:16 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -206,7 +206,7 @@ RemoveAggregate(RemoveAggrStmt *stmt)
 	/*
 	 * Do the deletion
 	 */
-	object.classId = RelOid_pg_proc;
+	object.classId = ProcedureRelationId;
 	object.objectId = procOid;
 	object.objectSubId = 0;
 

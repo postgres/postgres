@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.115 2005/03/29 19:44:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.116 2005/04/14 01:38:20 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -26,7 +26,7 @@
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
- *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
+ *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
@@ -39,7 +39,9 @@
  *		system attributes in catalog/heap.c also.
  * ----------------
  */
-CATALOG(pg_attribute) BOOTSTRAP BKI_WITHOUT_OIDS
+#define AttributeRelationId  1249
+
+CATALOG(pg_attribute,1249) BKI_BOOTSTRAP BKI_WITHOUT_OIDS
 {
 	Oid			attrelid;		/* OID of relation containing this
 								 * attribute */
@@ -246,7 +248,6 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 { 1247, {"typdefaultbin"}, 25, -1, -1, 22, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
 { 1247, {"typdefault"},    25, -1, -1, 23, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }
 
-
 DATA(insert ( 1247 typname			19 -1 NAMEDATALEN	1 0 -1 -1 f p i t f f t 0));
 DATA(insert ( 1247 typnamespace		26 -1 4   2 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1247 typowner			23 -1 4   3 0 -1 -1 t p i t f f t 0));
@@ -277,29 +278,6 @@ DATA(insert ( 1247 cmin				29 0  4  -4 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1247 xmax				28 0  4  -5 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1247 cmax				29 0  4  -6 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1247 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
-
-/* ----------------
- *		pg_database
- * ----------------
- */
-DATA(insert ( 1262 datname			19 -1 NAMEDATALEN	1 0 -1 -1 f p i t f f t 0));
-DATA(insert ( 1262 datdba			23 -1 4   2 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1262 encoding			23 -1 4   3 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1262 datistemplate	16 -1 1   4 0 -1 -1 t p c t f f t 0));
-DATA(insert ( 1262 datallowconn		16 -1 1   5 0 -1 -1 t p c t f f t 0));
-DATA(insert ( 1262 datlastsysoid	26 -1 4   6 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1262 datvacuumxid		28 -1 4   7 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1262 datfrozenxid		28 -1 4   8 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1262 dattablespace	26 -1 4   9 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1262 datconfig	  1009 -1 -1 10 1 -1 -1 f x i f f f t 0));
-DATA(insert ( 1262 datacl		  1034 -1 -1 11 1 -1 -1 f x i f f f t 0));
-DATA(insert ( 1262 ctid				27 0  6  -1 0 -1 -1 f p s t f f t 0));
-DATA(insert ( 1262 oid				26 0  4  -2 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1262 xmin				28 0  4  -3 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1262 cmin				29 0  4  -4 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1262 xmax				28 0  4  -5 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1262 cmax				29 0  4  -6 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 
 /* ----------------
  *		pg_proc
@@ -350,41 +328,6 @@ DATA(insert ( 1255 cmin				29 0  4  -4 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1255 xmax				28 0  4  -5 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1255 cmax				29 0  4  -6 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1255 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
-
-/* ----------------
- *		pg_shadow
- * ----------------
- */
-DATA(insert ( 1260 usename			19	-1 NAMEDATALEN	1 0 -1 -1 f p i t f f t 0));
-DATA(insert ( 1260 usesysid			23	-1	4	2 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1260 usecreatedb		16	-1	1	3 0 -1 -1 t p c t f f t 0));
-DATA(insert ( 1260 usesuper			16	-1	1	4 0 -1 -1 t p c t f f t 0));
-DATA(insert ( 1260 usecatupd		16	-1	1	5 0 -1 -1 t p c t f f t 0));
-DATA(insert ( 1260 passwd			25	-1 -1	6 0 -1 -1 f x i f f f t 0));
-DATA(insert ( 1260 valuntil		   702	-1	4	7 0 -1 -1 t p i f f f t 0));
-DATA(insert ( 1260 useconfig	  1009	-1 -1	8 1 -1 -1 f x i f f f t 0));
-DATA(insert ( 1260 ctid				27 0  6  -1 0 -1 -1 f p s t f f t 0));
-/* no OIDs in pg_shadow */
-DATA(insert ( 1260 xmin				28 0  4  -3 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1260 cmin				29 0  4  -4 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1260 xmax				28 0  4  -5 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1260 cmax				29 0  4  -6 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1260 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
-
-/* ----------------
- *		pg_group
- * ----------------
- */
-DATA(insert ( 1261 groname			19 -1 NAMEDATALEN  1 0 -1 -1 f p i t f f t 0));
-DATA(insert ( 1261 grosysid			23 -1  4   2 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1261 grolist		  1007 -1 -1   3 1 -1 -1 f x i f f f t 0));
-DATA(insert ( 1261 ctid				27 0  6  -1 0 -1 -1 f p s t f f t 0));
-/* no OIDs in pg_group */
-DATA(insert ( 1261 xmin				28 0  4  -3 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1261 cmin				29 0  4  -4 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1261 xmax				28 0  4  -5 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1261 cmax				29 0  4  -6 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1261 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 
 /* ----------------
  *		pg_attribute
@@ -497,23 +440,6 @@ DATA(insert ( 1259 cmin				29 0  4  -4 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1259 xmax				28 0  4  -5 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1259 cmax				29 0  4  -6 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1259 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
-
-/* ----------------
- *		pg_tablespace
- * ----------------
- */
-
-DATA(insert ( 1213 spcname			19 -1 NAMEDATALEN 1 0 -1 -1 f p i t f f t 0));
-DATA(insert ( 1213 spcowner			23 -1 4  2 0  -1 -1 t p i t f f t 0));
-DATA(insert ( 1213 spclocation		25 -1 -1 3 0  -1 -1 f x i t f f t 0));
-DATA(insert ( 1213 spcacl		  1034 -1 -1 4 1  -1 -1 f x i f f f t 0));
-DATA(insert ( 1213 ctid				27 0  6  -1 0 -1 -1 f p s t f f t 0));
-DATA(insert ( 1213 oid				26 0  4  -2 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1213 xmin				28 0  4  -3 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1213 cmin				29 0  4  -4 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1213 xmax				28 0  4  -5 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1213 cmax				29 0  4  -6 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1213 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 
 /* ----------------
  *		pg_index

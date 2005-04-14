@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.234 2005/03/14 00:19:36 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.235 2005/04/14 01:38:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -724,6 +724,7 @@ ProcessUtility(Node *parsetree,
 
 				DefineIndex(stmt->relation,		/* relation */
 							stmt->idxname,		/* index name */
+							InvalidOid,			/* no predefined OID */
 							stmt->accessMethod, /* am name */
 							stmt->tableSpace,
 							stmt->indexParams,	/* parameters */

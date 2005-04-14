@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.42 2005/02/22 04:35:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.43 2005/04/14 01:38:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,10 @@
 #include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_trigger.h"
+#include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "commands/defrem.h"
 #include "commands/proclang.h"
@@ -907,7 +909,7 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 		{
 			ObjectAddress *thisobj = context.addrs.refs + oldref;
 
-			if (thisobj->classId == RelOid_pg_class &&
+			if (thisobj->classId == RelationRelationId &&
 				thisobj->objectId == relId)
 			{
 				/* Move this ref into self_addrs */
@@ -1305,9 +1307,9 @@ term_object_addresses(ObjectAddresses *addrs)
 static void
 init_object_classes(void)
 {
-	object_classes[OCLASS_CLASS] = RelOid_pg_class;
-	object_classes[OCLASS_PROC] = RelOid_pg_proc;
-	object_classes[OCLASS_TYPE] = RelOid_pg_type;
+	object_classes[OCLASS_CLASS] = RelationRelationId;
+	object_classes[OCLASS_PROC] = ProcedureRelationId;
+	object_classes[OCLASS_TYPE] = TypeRelationId;
 	object_classes[OCLASS_CAST] = get_system_catalog_relid(CastRelationName);
 	object_classes[OCLASS_CONSTRAINT] = get_system_catalog_relid(ConstraintRelationName);
 	object_classes[OCLASS_CONVERSION] = get_system_catalog_relid(ConversionRelationName);
@@ -1333,15 +1335,15 @@ getObjectClass(const ObjectAddress *object)
 	/* Easy for the bootstrapped catalogs... */
 	switch (object->classId)
 	{
-		case RelOid_pg_class:
+		case RelationRelationId:
 			/* caller must check objectSubId */
 			return OCLASS_CLASS;
 
-		case RelOid_pg_proc:
+		case ProcedureRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_PROC;
 
-		case RelOid_pg_type:
+		case TypeRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_TYPE;
 	}
@@ -1560,7 +1562,7 @@ getObjectDescription(const ObjectAddress *object)
 
 				attrdef = (Form_pg_attrdef) GETSTRUCT(tup);
 
-				colobject.classId = RelOid_pg_class;
+				colobject.classId = RelationRelationId;
 				colobject.objectId = attrdef->adrelid;
 				colobject.objectSubId = attrdef->adnum;
 

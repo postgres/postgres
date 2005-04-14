@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.130 2004/12/31 22:03:24 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.131 2005/04/14 01:38:20 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -26,7 +26,7 @@
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
- *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
+ *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
@@ -36,7 +36,9 @@
  *		typedef struct FormData_pg_operator
  * ----------------
  */
-CATALOG(pg_operator)
+#define OperatorRelationId  2617
+
+CATALOG(pg_operator,2617)
 {
 	NameData	oprname;		/* name of operator */
 	Oid			oprnamespace;	/* OID of namespace containing this oper */

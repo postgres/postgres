@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.191 2005/04/07 01:51:39 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.192 2005/04/14 01:38:19 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1274,7 +1274,7 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_refclassid,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(RelOid_pg_class));
+				ObjectIdGetDatum(RelationRelationId));
 	ScanKeyInit(&key[1],
 				Anum_pg_depend_refobjid,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -1295,7 +1295,7 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 		 * We assume any internal dependency of a relation on a column
 		 * must be what we are looking for.
 		 */
-		if (deprec->classid == RelOid_pg_class &&
+		if (deprec->classid == RelationRelationId &&
 			deprec->objsubid == 0 &&
 			deprec->deptype == DEPENDENCY_INTERNAL)
 		{

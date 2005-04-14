@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.126 2005/03/31 22:46:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.127 2005/04/14 01:38:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -329,9 +329,9 @@ ProcedureCreate(const char *procedureName,
 	 * existing function, first delete any existing pg_depend entries.
 	 */
 	if (is_update)
-		deleteDependencyRecordsFor(RelOid_pg_proc, retval);
+		deleteDependencyRecordsFor(ProcedureRelationId, retval);
 
-	myself.classId = RelOid_pg_proc;
+	myself.classId = ProcedureRelationId;
 	myself.objectId = retval;
 	myself.objectSubId = 0;
 
@@ -348,7 +348,7 @@ ProcedureCreate(const char *procedureName,
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	/* dependency on return type */
-	referenced.classId = RelOid_pg_type;
+	referenced.classId = TypeRelationId;
 	referenced.objectId = returnType;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -356,7 +356,7 @@ ProcedureCreate(const char *procedureName,
 	/* dependency on parameter types */
 	for (i = 0; i < allParamCount; i++)
 	{
-		referenced.classId = RelOid_pg_type;
+		referenced.classId = TypeRelationId;
 		referenced.objectId = allParams[i];
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);

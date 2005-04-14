@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.68 2005/03/29 03:01:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.69 2005/04/14 01:38:17 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -441,7 +441,7 @@ RemoveType(List *names, DropBehavior behavior)
 	/*
 	 * Do the deletion
 	 */
-	object.classId = RelOid_pg_type;
+	object.classId = TypeRelationId;
 	object.objectId = typeoid;
 	object.objectSubId = 0;
 
@@ -836,7 +836,7 @@ RemoveDomain(List *names, DropBehavior behavior)
 	/*
 	 * Do the deletion
 	 */
-	object.classId = RelOid_pg_type;
+	object.classId = TypeRelationId;
 	object.objectId = typeoid;
 	object.objectSubId = 0;
 
@@ -1655,7 +1655,7 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_refclassid,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(RelOid_pg_type));
+				ObjectIdGetDatum(TypeRelationId));
 	ScanKeyInit(&key[1],
 				Anum_pg_depend_refobjid,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -1674,7 +1674,7 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 
 		/* Ignore dependees that aren't user columns of relations */
 		/* (we assume system columns are never of domain types) */
-		if (pg_depend->classid != RelOid_pg_class ||
+		if (pg_depend->classid != RelationRelationId ||
 			pg_depend->objsubid <= 0)
 			continue;
 

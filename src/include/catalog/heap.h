@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.73 2005/01/27 03:18:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.74 2005/04/14 01:38:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ typedef struct CookedConstraint
 extern Relation heap_create(const char *relname,
 			Oid relnamespace,
 			Oid reltablespace,
+			Oid relid,
 			TupleDesc tupDesc,
 			char relkind,
 			bool shared_relation,
@@ -46,6 +47,7 @@ extern Relation heap_create(const char *relname,
 extern Oid heap_create_with_catalog(const char *relname,
 						 Oid relnamespace,
 						 Oid reltablespace,
+						 Oid relid,
 						 TupleDesc tupdesc,
 						 char relkind,
 						 bool shared_relation,

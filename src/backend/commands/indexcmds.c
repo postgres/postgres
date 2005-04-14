@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.128 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.129 2005/04/14 01:38:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,8 @@ static bool relationHasPrimaryKey(Relation rel);
  * 'heapRelation': the relation the index will apply to.
  * 'indexRelationName': the name for the new index, or NULL to indicate
  *		that a nonconflicting default name should be picked.
+ * 'indexRelationId': normally InvalidOid, but during bootstrap can be
+ *		nonzero to specify a preselected OID for the index.
  * 'accessMethodName': name of the AM to use.
  * 'tableSpaceName': name of the tablespace to create the index in.
  *		NULL specifies using the appropriate default.
@@ -86,6 +88,7 @@ static bool relationHasPrimaryKey(Relation rel);
 void
 DefineIndex(RangeVar *heapRelation,
 			char *indexRelationName,
+			Oid indexRelationId,
 			char *accessMethodName,
 			char *tableSpaceName,
 			List *attributeList,
@@ -379,7 +382,7 @@ DefineIndex(RangeVar *heapRelation,
 						primary ? "PRIMARY KEY" : "UNIQUE",
 					  indexRelationName, RelationGetRelationName(rel))));
 
-	index_create(relationId, indexRelationName,
+	index_create(relationId, indexRelationName, indexRelationId,
 				 indexInfo, accessMethodId, tablespaceId, classObjectId,
 				 primary, isconstraint,
 				 allowSystemTableMods, skip_build);
@@ -887,7 +890,7 @@ RemoveIndex(RangeVar *relation, DropBehavior behavior)
 				 errmsg("\"%s\" is not an index",
 						relation->relname)));
 
-	object.classId = RelOid_pg_class;
+	object.classId = RelationRelationId;
 	object.objectId = indOid;
 	object.objectSubId = 0;
 
@@ -1027,7 +1030,7 @@ ReindexDatabase(const char *dbname, bool force /* currently unused */ ,
 	 * reindexing itself will try to update pg_class.
 	 */
 	old = MemoryContextSwitchTo(private_context);
-	relids = lappend_oid(relids, RelOid_pg_class);
+	relids = lappend_oid(relids, RelationRelationId);
 	MemoryContextSwitchTo(old);
 
 	/*
@@ -1057,7 +1060,7 @@ ReindexDatabase(const char *dbname, bool force /* currently unused */ ,
 				continue;
 		}
 
-		if (HeapTupleGetOid(tuple) == RelOid_pg_class)
+		if (HeapTupleGetOid(tuple) == RelationRelationId)
 			continue;			/* got it already */
 
 		old = MemoryContextSwitchTo(private_context);

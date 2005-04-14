@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/catname.h,v 1.34 2004/12/31 22:03:24 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/catname.h,v 1.35 2005/04/14 01:38:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,6 @@
 #define  StatisticRelationName "pg_statistic"
 #define  TableSpaceRelationName "pg_tablespace"
 #define  TypeRelationName "pg_type"
-#define  VersionRelationName "pg_version"
 #define  AttrDefaultRelationName "pg_attrdef"
 #define  TriggerRelationName "pg_trigger"
 

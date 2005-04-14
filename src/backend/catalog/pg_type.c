@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.98 2005/01/27 23:23:51 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.99 2005/04/14 01:38:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "catalog/catname.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
@@ -378,10 +379,9 @@ GenerateTypeDependencies(Oid typeNamespace,
 				referenced;
 
 	if (rebuild)
-		deleteDependencyRecordsFor(RelOid_pg_type,
-								   typeObjectId);
+		deleteDependencyRecordsFor(TypeRelationId, typeObjectId);
 
-	myself.classId = RelOid_pg_type;
+	myself.classId = TypeRelationId;
 	myself.objectId = typeObjectId;
 	myself.objectSubId = 0;
 
@@ -398,7 +398,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 	/* Normal dependencies on the I/O functions */
 	if (OidIsValid(inputProcedure))
 	{
-		referenced.classId = RelOid_pg_proc;
+		referenced.classId = ProcedureRelationId;
 		referenced.objectId = inputProcedure;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -406,7 +406,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 
 	if (OidIsValid(outputProcedure))
 	{
-		referenced.classId = RelOid_pg_proc;
+		referenced.classId = ProcedureRelationId;
 		referenced.objectId = outputProcedure;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -414,7 +414,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 
 	if (OidIsValid(receiveProcedure))
 	{
-		referenced.classId = RelOid_pg_proc;
+		referenced.classId = ProcedureRelationId;
 		referenced.objectId = receiveProcedure;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -422,7 +422,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 
 	if (OidIsValid(sendProcedure))
 	{
-		referenced.classId = RelOid_pg_proc;
+		referenced.classId = ProcedureRelationId;
 		referenced.objectId = sendProcedure;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -430,7 +430,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 
 	if (OidIsValid(analyzeProcedure))
 	{
-		referenced.classId = RelOid_pg_proc;
+		referenced.classId = ProcedureRelationId;
 		referenced.objectId = analyzeProcedure;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -448,7 +448,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 	 */
 	if (OidIsValid(relationOid))
 	{
-		referenced.classId = RelOid_pg_class;
+		referenced.classId = RelationRelationId;
 		referenced.objectId = relationOid;
 		referenced.objectSubId = 0;
 
@@ -467,7 +467,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 	 */
 	if (OidIsValid(elementType))
 	{
-		referenced.classId = RelOid_pg_type;
+		referenced.classId = TypeRelationId;
 		referenced.objectId = elementType;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
@@ -476,7 +476,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 	/* Normal dependency from a domain to its base type. */
 	if (OidIsValid(baseType))
 	{
-		referenced.classId = RelOid_pg_type;
+		referenced.classId = TypeRelationId;
 		referenced.objectId = baseType;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);

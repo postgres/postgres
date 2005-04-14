@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_tablespace.h,v 1.5 2004/12/31 22:03:26 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_tablespace.h,v 1.6 2005/04/14 01:38:21 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -21,7 +21,7 @@
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
- *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
+ *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
@@ -31,7 +31,9 @@
  *		typedef struct FormData_pg_tablespace
  * ----------------
  */
-CATALOG(pg_tablespace) BOOTSTRAP BKI_SHARED_RELATION
+#define TableSpaceRelationId  1213
+
+CATALOG(pg_tablespace,1213) BKI_SHARED_RELATION
 {
 	NameData	spcname;		/* tablespace name */
 	int4		spcowner;		/* sysid of owner */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.282 2005/04/13 16:50:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.283 2005/04/14 01:38:16 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -190,23 +190,24 @@ SystemAttributeByName(const char *attname, bool relhasoids)
 /* ----------------------------------------------------------------
  *		heap_create		- Create an uncataloged heap relation
  *
+ *		relid is normally InvalidOid to specify that this routine should
+ *		generate an OID for the relation.  During bootstrap, it can be
+ *		nonzero to specify a preselected OID.
+ *
  *		rel->rd_rel is initialized by RelationBuildLocalRelation,
  *		and is mostly zeroes at return.
- *
- *		Remove the system relation specific code to elsewhere eventually.
  * ----------------------------------------------------------------
  */
 Relation
 heap_create(const char *relname,
 			Oid relnamespace,
 			Oid reltablespace,
+			Oid relid,
 			TupleDesc tupDesc,
 			char relkind,
 			bool shared_relation,
 			bool allow_system_table_mods)
 {
-	Oid			relid;
-	bool		nailme = false;
 	bool		create_storage;
 	Relation	rel;
 
@@ -223,45 +224,9 @@ heap_create(const char *relname,
 				 errdetail("System catalog modifications are currently disallowed.")));
 
 	/*
-	 * Real ugly stuff to assign the proper relid in the relation
-	 * descriptor follows.	Note that only "bootstrapped" relations whose
-	 * OIDs are hard-coded in pg_class.h should be listed here.  We also
-	 * have to recognize those rels that must be nailed in cache.
+	 * Allocate an OID for the relation, unless we were told what to use.
 	 */
-	if (IsSystemNamespace(relnamespace))
-	{
-		if (strcmp(TypeRelationName, relname) == 0)
-		{
-			nailme = true;
-			relid = RelOid_pg_type;
-		}
-		else if (strcmp(AttributeRelationName, relname) == 0)
-		{
-			nailme = true;
-			relid = RelOid_pg_attribute;
-		}
-		else if (strcmp(ProcedureRelationName, relname) == 0)
-		{
-			nailme = true;
-			relid = RelOid_pg_proc;
-		}
-		else if (strcmp(RelationRelationName, relname) == 0)
-		{
-			nailme = true;
-			relid = RelOid_pg_class;
-		}
-		else if (strcmp(ShadowRelationName, relname) == 0)
-			relid = RelOid_pg_shadow;
-		else if (strcmp(GroupRelationName, relname) == 0)
-			relid = RelOid_pg_group;
-		else if (strcmp(DatabaseRelationName, relname) == 0)
-			relid = RelOid_pg_database;
-		else if (strcmp(TableSpaceRelationName, relname) == 0)
-			relid = RelOid_pg_tablespace;
-		else
-			relid = newoid();
-	}
-	else
+	if (!OidIsValid(relid))
 		relid = newoid();
 
 	/*
@@ -312,8 +277,7 @@ heap_create(const char *relname,
 									 tupDesc,
 									 relid,
 									 reltablespace,
-									 shared_relation,
-									 nailme);
+									 shared_relation);
 
 	/*
 	 * have the storage manager create the relation's disk file, if
@@ -516,10 +480,10 @@ AddNewAttributeTuples(Oid new_rel_oid,
 
 		heap_freetuple(tup);
 
-		myself.classId = RelOid_pg_class;
+		myself.classId = RelationRelationId;
 		myself.objectId = new_rel_oid;
 		myself.objectSubId = i + 1;
-		referenced.classId = RelOid_pg_type;
+		referenced.classId = TypeRelationId;
 		referenced.objectId = (*dpp)->atttypid;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -706,6 +670,7 @@ Oid
 heap_create_with_catalog(const char *relname,
 						 Oid relnamespace,
 						 Oid reltablespace,
+						 Oid relid,
 						 TupleDesc tupdesc,
 						 char relkind,
 						 bool shared_relation,
@@ -739,6 +704,7 @@ heap_create_with_catalog(const char *relname,
 	new_rel_desc = heap_create(relname,
 							   relnamespace,
 							   reltablespace,
+							   relid,
 							   tupdesc,
 							   relkind,
 							   shared_relation,
@@ -795,7 +761,7 @@ heap_create_with_catalog(const char *relname,
 		ObjectAddress myself,
 					referenced;
 
-		myself.classId = RelOid_pg_class;
+		myself.classId = RelationRelationId;
 		myself.objectId = new_rel_oid;
 		myself.objectSubId = 0;
 		referenced.classId = get_system_catalog_relid(NamespaceRelationName);
@@ -1316,7 +1282,7 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin)
 	 * Make a dependency so that the pg_attrdef entry goes away if the
 	 * column (or whole table) is deleted.
 	 */
-	colobject.classId = RelOid_pg_class;
+	colobject.classId = RelationRelationId;
 	colobject.objectId = RelationGetRelid(rel);
 	colobject.objectSubId = attnum;
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.358 2005/04/12 04:26:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.359 2005/04/14 01:38:20 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -25,7 +25,7 @@
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
- *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
+ *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
@@ -35,7 +35,9 @@
  *		typedef struct FormData_pg_proc
  * ----------------
  */
-CATALOG(pg_proc) BOOTSTRAP
+#define ProcedureRelationId  1255
+
+CATALOG(pg_proc,1255) BKI_BOOTSTRAP
 {
 	NameData	proname;		/* procedure name */
 	Oid			pronamespace;	/* OID of namespace containing this proc */

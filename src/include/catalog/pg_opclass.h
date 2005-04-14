@@ -27,7 +27,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.63 2005/03/26 23:29:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.64 2005/04/14 01:38:20 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -40,7 +40,7 @@
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
- *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
+ *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
@@ -50,8 +50,9 @@
  *		typedef struct FormData_pg_opclass
  * ----------------
  */
+#define OperatorClassRelationId  2616
 
-CATALOG(pg_opclass)
+CATALOG(pg_opclass,2616)
 {
 	Oid			opcamid;		/* index access method opclass is for */
 	NameData	opcname;		/* name of this opclass */

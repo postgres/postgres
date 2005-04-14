@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.32 2005/03/27 23:53:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.33 2005/04/14 01:38:20 tgl Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -24,7 +24,7 @@
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
- *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
+ *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
@@ -34,7 +34,9 @@
  *		typedef struct FormData_pg_am
  * ----------------
  */
-CATALOG(pg_am)
+#define AccessMethodRelationId  2601
+
+CATALOG(pg_am,2601)
 {
 	NameData	amname;			/* access method name */
 	int2		amstrategies;	/* total NUMBER of strategies (operators)

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.75 2004/12/31 21:59:34 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.76 2005/04/14 01:38:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,8 @@
 #include "tcop/dest.h"
 #include "utils/nabstime.h"
 #include "utils/rel.h"
+
+#define atooid(x)	((Oid) strtoul((x), NULL, 10))
 
 
 static void
@@ -91,11 +93,10 @@ int num_columns_read = 0;
 %type <ival>  boot_const boot_ident
 %type <ival>  optbootstrap optsharedrelation optwithoutoids
 %type <ival>  boot_tuple boot_tuplelist
-%type <oidval> optoideq
+%type <oidval> oidspec optoideq
 
 %token <ival> CONST_P ID
 %token OPEN XCLOSE XCREATE INSERT_TUPLE
-%token STRING XDEFINE
 %token XDECLARE INDEX ON USING XBUILD INDICES UNIQUE
 %token COMMA EQUALS LPAREN RPAREN
 %token OBJ_ID XBOOTSTRAP XSHARED_RELATION XWITHOUT_OIDS NULLVAL
@@ -151,14 +152,15 @@ Boot_CloseStmt:
 		;
 
 Boot_CreateStmt:
-		  XCREATE optbootstrap optsharedrelation optwithoutoids boot_ident LPAREN
+		  XCREATE optbootstrap optsharedrelation optwithoutoids boot_ident oidspec LPAREN
 				{
 					do_start();
 					numattr = 0;
-					elog(DEBUG4, "creating%s%s relation %s",
+					elog(DEBUG4, "creating%s%s relation %s %u",
 						 $2 ? " bootstrap" : "",
 						 $3 ? " shared" : "",
-						 LexIDStr($5));
+						 LexIDStr($5),
+						 $6);
 				}
 		  boot_typelist
 				{
@@ -183,6 +185,7 @@ Boot_CreateStmt:
 						boot_reldesc = heap_create(LexIDStr($5),
 												   PG_CATALOG_NAMESPACE,
 												   $3 ? GLOBALTABLESPACE_OID : 0,
+												   $6,
 												   tupdesc,
 												   RELKIND_RELATION,
 												   $3,
@@ -196,6 +199,7 @@ Boot_CreateStmt:
 						id = heap_create_with_catalog(LexIDStr($5),
 													  PG_CATALOG_NAMESPACE,
 													  $3 ? GLOBALTABLESPACE_OID : 0,
+													  $6,
 													  tupdesc,
 													  RELKIND_RELATION,
 													  $3,
@@ -235,15 +239,16 @@ Boot_InsertStmt:
 		;
 
 Boot_DeclareIndexStmt:
-		  XDECLARE INDEX boot_ident ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
+		  XDECLARE INDEX boot_ident oidspec ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
 				{
 					do_start();
 
-					DefineIndex(makeRangeVar(NULL, LexIDStr($5)),
+					DefineIndex(makeRangeVar(NULL, LexIDStr($6)),
 								LexIDStr($3),
-								LexIDStr($7),
+								$4,
+								LexIDStr($8),
 								NULL,
-								$9,
+								$10,
 								NULL, NIL,
 								false, false, false,
 								false, false, true, false);
@@ -252,15 +257,16 @@ Boot_DeclareIndexStmt:
 		;
 
 Boot_DeclareUniqueIndexStmt:
-		  XDECLARE UNIQUE INDEX boot_ident ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
+		  XDECLARE UNIQUE INDEX boot_ident oidspec ON boot_ident USING boot_ident LPAREN boot_index_params RPAREN
 				{
 					do_start();
 
-					DefineIndex(makeRangeVar(NULL, LexIDStr($6)),
+					DefineIndex(makeRangeVar(NULL, LexIDStr($7)),
 								LexIDStr($4),
-								LexIDStr($8),
+								$5,
+								LexIDStr($9),
 								NULL,
-								$10,
+								$11,
 								NULL, NIL,
 								true, false, false,
 								false, false, true, false);
@@ -323,9 +329,13 @@ boot_type_thing:
 				}
 		;
 
+oidspec:
+			boot_ident							{ $$ = atooid(LexIDStr($1)); }
+		;
+
 optoideq:
-			OBJ_ID EQUALS boot_ident { $$ = atol(LexIDStr($3));	}
-		|						{ $$ = (Oid) 0;	}
+			OBJ_ID EQUALS oidspec				{ $$ = $3; }
+		|										{ $$ = (Oid) 0; }
 		;
 
 boot_tuplelist:

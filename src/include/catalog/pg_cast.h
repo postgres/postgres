@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.20 2005/04/13 16:15:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.21 2005/04/14 01:38:20 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -21,7 +21,9 @@
 #ifndef PG_CAST_H
 #define PG_CAST_H
 
-CATALOG(pg_cast)
+#define CastRelationId  2605
+
+CATALOG(pg_cast,2605)
 {
 	Oid			castsource;		/* source datatype for cast */
 	Oid			casttarget;		/* destination datatype for cast */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.250 2005/03/29 00:16:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.251 2005/04/14 01:38:16 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -443,12 +443,17 @@ UpdateIndexRelation(Oid indexoid,
 /* ----------------------------------------------------------------
  *		index_create
  *
+ *		indexRelationId is normally InvalidOid to let this routine
+ *		generate an OID for the index.  During bootstrap it may be
+ *		nonzero to specify a preselected OID.
+ *
  * Returns OID of the created index.
  * ----------------------------------------------------------------
  */
 Oid
 index_create(Oid heapRelationId,
 			 const char *indexRelationName,
+			 Oid indexRelationId,
 			 IndexInfo *indexInfo,
 			 Oid accessMethodObjectId,
 			 Oid tableSpaceId,
@@ -526,6 +531,7 @@ index_create(Oid heapRelationId,
 	indexRelation = heap_create(indexRelationName,
 								namespaceId,
 								tableSpaceId,
+								indexRelationId,
 								indexTupDesc,
 								RELKIND_INDEX,
 								shared_relation,
@@ -600,7 +606,7 @@ index_create(Oid heapRelationId,
 		ObjectAddress myself,
 					referenced;
 
-		myself.classId = RelOid_pg_class;
+		myself.classId = RelationRelationId;
 		myself.objectId = indexoid;
 		myself.objectSubId = 0;
 
@@ -656,7 +662,7 @@ index_create(Oid heapRelationId,
 			{
 				if (indexInfo->ii_KeyAttrNumbers[i] != 0)
 				{
-					referenced.classId = RelOid_pg_class;
+					referenced.classId = RelationRelationId;
 					referenced.objectId = heapRelationId;
 					referenced.objectSubId = indexInfo->ii_KeyAttrNumbers[i];
 
@@ -1693,7 +1699,7 @@ reindex_relation(Oid relid, bool toast_too)
 	 * be created with an entry for its own pg_class row because we do
 	 * setNewRelfilenode() before we do index_build().
 	 */
-	is_pg_class = (RelationGetRelid(rel) == RelOid_pg_class);
+	is_pg_class = (RelationGetRelid(rel) == RelationRelationId);
 	doneIndexes = NIL;
 
 	/* Reindex all the indexes. */

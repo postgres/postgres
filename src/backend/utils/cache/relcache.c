@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.218 2005/03/29 00:17:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.219 2005/04/14 01:38:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2150,16 +2150,34 @@ RelationBuildLocalRelation(const char *relname,
 						   TupleDesc tupDesc,
 						   Oid relid,
 						   Oid reltablespace,
-						   bool shared_relation,
-						   bool nailit)
+						   bool shared_relation)
 {
 	Relation	rel;
 	MemoryContext oldcxt;
 	int			natts = tupDesc->natts;
 	int			i;
 	bool		has_not_null;
+	bool		nailit;
 
 	AssertArg(natts >= 0);
+
+	/*
+	 * check for creation of a rel that must be nailed in cache.
+	 *
+	 * XXX this list had better match RelationCacheInitialize's list.
+	 */
+	switch (relid)
+	{
+		case RelationRelationId:
+		case AttributeRelationId:
+		case ProcedureRelationId:
+		case TypeRelationId:
+			nailit = true;
+			break;
+		default:
+			nailit = false;
+			break;
+	}
 
 	/*
 	 * switch to the cache context to create the relcache entry.
@@ -2179,6 +2197,9 @@ RelationBuildLocalRelation(const char *relname,
 	/* make sure relation is marked as having no open file yet */
 	rel->rd_smgr = NULL;
 
+	/* mark it nailed if appropriate */
+	rel->rd_isnailed = nailit;
+
 	rel->rd_refcnt = nailit ? 1 : 0;
 
 	/* it's being created in this transaction */
@@ -2189,14 +2210,6 @@ RelationBuildLocalRelation(const char *relname,
 
 	/* is it a temporary relation? */
 	rel->rd_istemp = isTempNamespace(relnamespace);
-
-	/*
-	 * nail the reldesc if this is a bootstrap create reln and we may need
-	 * it in the cache later on in the bootstrap process so we don't ever
-	 * want it kicked out.	e.g. pg_attribute!!!
-	 */
-	if (nailit)
-		rel->rd_isnailed = true;
 
 	/*
 	 * create a new tuple descriptor from the one passed in.  We do this

@@ -2,7 +2,7 @@
 #
 # unused_oids
 #
-# $PostgreSQL: pgsql/src/include/catalog/unused_oids,v 1.6 2005/04/13 18:54:57 tgl Exp $
+# $PostgreSQL: pgsql/src/include/catalog/unused_oids,v 1.7 2005/04/14 01:38:21 tgl Exp $
 #
 #	finds blocks of manually-assignable oids that have not already been
 #	claimed by post_hackers.  primarily useful for finding available
@@ -23,11 +23,19 @@ AWK="awk"
 FIRSTOBJECTID=`grep '#define[ 	]*FirstBootstrapObjectId' ../access/transam.h | $AWK '{ print $3 }'`
 export FIRSTOBJECTID
 
-egrep '^DATA' pg_*.h | \
-	sed -e 's/^.*OID[^=]*=[^0-9]*//' -e 's/[^0-9].*$//' | \
-	sort -n | \
-	uniq | \
-	$AWK '
+# this part (down to the uniq step) should match the unused_oids script
+# note: we exclude BKI_BOOTSTRAP relations since they are expected to have
+# matching DATA lines in pg_class.h
+
+cat pg_*.h indexing.h | \
+egrep -v -e '^CATALOG\(.*BKI_BOOTSTRAP' | \
+sed -n	-e 's/^DATA(insert *OID *= *\([0-9][0-9]*\).*$/\1/p' \
+	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
+	-e 's/^DECLARE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
+	-e 's/^DECLARE_UNIQUE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' | \
+sort -n | \
+uniq | \
+$AWK '
 BEGIN {
 	last = 0;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.153 2005/04/13 16:50:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.154 2005/04/14 01:38:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -424,6 +424,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	relationId = heap_create_with_catalog(relname,
 										  namespaceId,
 										  tablespaceId,
+										  InvalidOid,
 										  descriptor,
 										  relkind,
 										  false,
@@ -517,7 +518,7 @@ RemoveRelation(const RangeVar *relation, DropBehavior behavior)
 
 	relOid = RangeVarGetRelid(relation, false);
 
-	object.classId = RelOid_pg_class;
+	object.classId = RelationRelationId;
 	object.objectId = relOid;
 	object.objectSubId = 0;
 
@@ -1163,10 +1164,10 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		/*
 		 * Store a dependency too
 		 */
-		parentobject.classId = RelOid_pg_class;
+		parentobject.classId = RelationRelationId;
 		parentobject.objectId = parentOid;
 		parentobject.objectSubId = 0;
-		childobject.classId = RelOid_pg_class;
+		childobject.classId = RelationRelationId;
 		childobject.objectId = relationId;
 		childobject.objectSubId = 0;
 
@@ -2293,7 +2294,7 @@ ATRewriteTables(List **wqueue)
 			CommandCounterIncrement();
 
 			/* Destroy new heap with old filenode */
-			object.classId = RelOid_pg_class;
+			object.classId = RelationRelationId;
 			object.objectId = OIDNewHeap;
 			object.objectSubId = 0;
 
@@ -2776,7 +2777,7 @@ find_composite_type_dependencies(Oid typeOid, const char *origTblName)
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_refclassid,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(RelOid_pg_type));
+				ObjectIdGetDatum(TypeRelationId));
 	ScanKeyInit(&key[1],
 				Anum_pg_depend_refobjid,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -2793,7 +2794,7 @@ find_composite_type_dependencies(Oid typeOid, const char *origTblName)
 
 		/* Ignore dependees that aren't user columns of relations */
 		/* (we assume system columns are never of rowtypes) */
-		if (pg_depend->classid != RelOid_pg_class ||
+		if (pg_depend->classid != RelationRelationId ||
 			pg_depend->objsubid <= 0)
 			continue;
 
@@ -3112,10 +3113,10 @@ add_column_datatype_dependency(Oid relid, int32 attnum, Oid typid)
 	ObjectAddress myself,
 				referenced;
 
-	myself.classId = RelOid_pg_class;
+	myself.classId = RelationRelationId;
 	myself.objectId = relid;
 	myself.objectSubId = attnum;
-	referenced.classId = RelOid_pg_type;
+	referenced.classId = TypeRelationId;
 	referenced.objectId = typid;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
@@ -3130,10 +3131,10 @@ add_column_support_dependency(Oid relid, int32 attnum, RangeVar *support)
 	ObjectAddress colobject,
 				suppobject;
 
-	colobject.classId = RelOid_pg_class;
+	colobject.classId = RelationRelationId;
 	colobject.objectId = relid;
 	colobject.objectSubId = attnum;
-	suppobject.classId = RelOid_pg_class;
+	suppobject.classId = RelationRelationId;
 	suppobject.objectId = RangeVarGetRelid(support, false);
 	suppobject.objectSubId = 0;
 	recordDependencyOn(&suppobject, &colobject, DEPENDENCY_INTERNAL);
@@ -3637,7 +3638,7 @@ ATExecDropColumn(Relation rel, const char *colName,
 	/*
 	 * Perform the actual column deletion
 	 */
-	object.classId = RelOid_pg_class;
+	object.classId = RelationRelationId;
 	object.objectId = RelationGetRelid(rel);
 	object.objectSubId = attnum;
 
@@ -3697,6 +3698,7 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 
 	DefineIndex(stmt->relation, /* relation */
 				stmt->idxname,	/* index name */
+				InvalidOid,		/* no predefined OID */
 				stmt->accessMethod,		/* am name */
 				stmt->tableSpace,
 				stmt->indexParams,		/* parameters */
@@ -4894,7 +4896,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_refclassid,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(RelOid_pg_class));
+				ObjectIdGetDatum(RelationRelationId));
 	ScanKeyInit(&key[1],
 				Anum_pg_depend_refobjid,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -5018,7 +5020,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	ScanKeyInit(&key[0],
 				Anum_pg_depend_classid,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(RelOid_pg_class));
+				ObjectIdGetDatum(RelationRelationId));
 	ScanKeyInit(&key[1],
 				Anum_pg_depend_objid,
 				BTEqualStrategyNumber, F_OIDEQ,
@@ -5038,7 +5040,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 		if (foundDep->deptype != DEPENDENCY_NORMAL)
 			elog(ERROR, "found unexpected dependency type '%c'",
 				 foundDep->deptype);
-		if (foundDep->refclassid != RelOid_pg_type ||
+		if (foundDep->refclassid != TypeRelationId ||
 			foundDep->refobjid != attTup->atttypid)
 			elog(ERROR, "found unexpected dependency for column");
 
@@ -5143,7 +5145,7 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab)
 		performDeletion(&obj, DROP_RESTRICT);
 	}
 
-	obj.classId = RelOid_pg_class;
+	obj.classId = RelationRelationId;
 	foreach(l, tab->changedIndexOids)
 	{
 		obj.objectId = lfirst_oid(l);
@@ -5399,7 +5401,7 @@ change_owner_recurse_to_sequences(Oid relationOid, int32 newOwnerSysId)
 	ScanKeyInit(&key[0],
 			Anum_pg_depend_refclassid,
 			BTEqualStrategyNumber, F_OIDEQ,
-			ObjectIdGetDatum(RelOid_pg_class));
+			ObjectIdGetDatum(RelationRelationId));
 	ScanKeyInit(&key[1],
 			Anum_pg_depend_refobjid,
 			BTEqualStrategyNumber, F_OIDEQ,
@@ -5416,7 +5418,7 @@ change_owner_recurse_to_sequences(Oid relationOid, int32 newOwnerSysId)
 
 		/* skip dependencies other than internal dependencies on columns */
 		if (depForm->refobjsubid == 0 ||
-			depForm->classid != RelOid_pg_class ||
+			depForm->classid != RelationRelationId ||
 			depForm->objsubid != 0 ||
 			depForm->deptype != DEPENDENCY_INTERNAL)
 			continue;
@@ -5853,6 +5855,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	toast_relid = heap_create_with_catalog(toast_relname,
 										   PG_TOAST_NAMESPACE,
 										   rel->rd_rel->reltablespace,
+										   InvalidOid,
 										   tupdesc,
 										   RELKIND_TOASTVALUE,
 										   shared_relation,
@@ -5889,7 +5892,8 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	classObjectId[0] = OID_BTREE_OPS_OID;
 	classObjectId[1] = INT4_BTREE_OPS_OID;
 
-	toast_idxid = index_create(toast_relid, toast_idxname, indexInfo,
+	toast_idxid = index_create(toast_relid, toast_idxname, InvalidOid,
+							   indexInfo,
 							   BTREE_AM_OID,
 							   rel->rd_rel->reltablespace,
 							   classObjectId,
@@ -5928,10 +5932,10 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	 * Register dependency from the toast table to the master, so that the
 	 * toast table will be deleted if the master is.
 	 */
-	baseobject.classId = RelOid_pg_class;
+	baseobject.classId = RelationRelationId;
 	baseobject.objectId = relOid;
 	baseobject.objectSubId = 0;
-	toastobject.classId = RelOid_pg_class;
+	toastobject.classId = RelationRelationId;
 	toastobject.objectId = toast_relid;
 	toastobject.objectSubId = 0;
 
@@ -6091,7 +6095,7 @@ PreCommit_on_commit_actions(void)
 				{
 					ObjectAddress object;
 
-					object.classId = RelOid_pg_class;
+					object.classId = RelationRelationId;
 					object.objectId = oc->relid;
 					object.objectSubId = 0;
 					performDeletion(&object, DROP_CASCADE);

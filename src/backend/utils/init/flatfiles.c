@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.4 2005/02/26 18:43:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.5 2005/04/14 01:38:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -643,7 +643,7 @@ BuildFlatFiles(bool database_only)
 	/* hard-wired path to pg_database */
 	rnode.spcNode = GLOBALTABLESPACE_OID;
 	rnode.dbNode = 0;
-	rnode.relNode = RelOid_pg_database;
+	rnode.relNode = DatabaseRelationId;
 
 	/* No locking is needed because no one else is alive yet */
 	rel = XLogOpenRelation(true, 0, rnode);
@@ -654,7 +654,7 @@ BuildFlatFiles(bool database_only)
 		/* hard-wired path to pg_group */
 		rnode.spcNode = GLOBALTABLESPACE_OID;
 		rnode.dbNode = 0;
-		rnode.relNode = RelOid_pg_group;
+		rnode.relNode = GroupRelationId;
 
 		rel = XLogOpenRelation(true, 0, rnode);
 		write_group_file(rel);
@@ -662,7 +662,7 @@ BuildFlatFiles(bool database_only)
 		/* hard-wired path to pg_shadow */
 		rnode.spcNode = GLOBALTABLESPACE_OID;
 		rnode.dbNode = 0;
-		rnode.relNode = RelOid_pg_shadow;
+		rnode.relNode = ShadowRelationId;
 
 		rel = XLogOpenRelation(true, 0, rnode);
 		write_user_file(rel);
@@ -816,13 +816,13 @@ flatfile_update_trigger(PG_FUNCTION_ARGS)
 
 	switch (RelationGetRelid(trigdata->tg_relation))
 	{
-		case RelOid_pg_database:
+		case DatabaseRelationId:
 			database_file_update_needed();
 			break;
-		case RelOid_pg_group:
+		case GroupRelationId:
 			group_file_update_needed();
 			break;
-		case RelOid_pg_shadow:
+		case ShadowRelationId:
 			user_file_update_needed();
 			break;
 		default:

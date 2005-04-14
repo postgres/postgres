@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.34 2005/04/13 18:54:56 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.35 2005/04/14 01:38:16 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -192,7 +192,7 @@ comment_level > 0 { next; }
 # ----------------
 #	DATA() statements are basically passed right through after
 #	stripping off the DATA( and the ) on the end.
-#	Remember any explicit OID for use by DESCR().
+#	Remember the OID for use by DESCR().
 # ----------------
 /^DATA\(/ {
 	data = substr($0, 6, length($0) - 6);
@@ -221,13 +221,19 @@ comment_level > 0 { next; }
 #  end any prior catalog data insertions before starting a define index
 # ----
 	if (reln_open == 1) {
-#		print "show";
 		print "close " catalog;
 		reln_open = 0;
 	}
 
 	data = substr($0, 15, length($0) - 15);
-	print "declare index " data
+	pos = index(data, ",");
+	iname = substr(data, 1, pos-1);
+	data = substr(data, pos+1, length(data)-pos);
+	pos = index(data, ",");
+	ioid = substr(data, 1, pos-1);
+	data = substr(data, pos+1, length(data)-pos);
+
+	print "declare index " iname " " ioid " " data
 }
 
 /^DECLARE_UNIQUE_INDEX\(/ {
@@ -235,13 +241,19 @@ comment_level > 0 { next; }
 #  end any prior catalog data insertions before starting a define unique index
 # ----
 	if (reln_open == 1) {
-#		print "show";
 		print "close " catalog;
 		reln_open = 0;
 	}
 
 	data = substr($0, 22, length($0) - 22);
-	print "declare unique index " data
+	pos = index(data, ",");
+	iname = substr(data, 1, pos-1);
+	data = substr(data, pos+1, length(data)-pos);
+	pos = index(data, ",");
+	ioid = substr(data, 1, pos-1);
+	data = substr(data, pos+1, length(data)-pos);
+
+	print "declare unique index " iname " " ioid " " data
 }
 
 /^BUILD_INDICES/	{ print "build indices"; }
@@ -254,7 +266,6 @@ comment_level > 0 { next; }
 #  end any prior catalog data insertions before starting a new one..
 # ----
 	if (reln_open == 1) {
-#		print "show";
 		print "close " catalog;
 		reln_open = 0;
 	}
@@ -263,9 +274,12 @@ comment_level > 0 { next; }
 #  get the name and properties of the new catalog
 # ----
 	pos = index($1,")");
-	catalog = substr($1,9,pos-9); 
+	catalogandoid = substr($1,9,pos-9);
+	pos = index(catalogandoid, ",");
+	catalog = substr(catalogandoid, 1, pos-1);
+	catalogoid = substr(catalogandoid, pos+1, length(catalogandoid)-pos);
 
-	if ($0 ~ /BOOTSTRAP/) {
+	if ($0 ~ /BKI_BOOTSTRAP/) {
 		bootstrap = "bootstrap ";
 	}
 	if ($0 ~ /BKI_SHARED_RELATION/) {
@@ -298,7 +312,7 @@ inside == 1 {
 #  if this is the last line, then output the bki catalog stuff.
 # ----
 	if ($1 ~ /}/) {
-		print "create " bootstrap shared_relation without_oids catalog;
+		print "create " bootstrap shared_relation without_oids catalog " " catalogoid;
 		print "\t(";
 
 		for (j=1; j<i-1; j++) {
@@ -338,7 +352,6 @@ inside == 1 {
 
 END {
 	if (reln_open == 1) {
-#		print "show";
 		print "close " catalog;
 		reln_open = 0;
 	}

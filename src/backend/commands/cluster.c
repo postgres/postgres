@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.134 2005/03/29 00:16:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.135 2005/04/14 01:38:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -527,7 +527,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	CommandCounterIncrement();
 
 	/* Destroy new heap with old filenode */
-	object.classId = RelOid_pg_class;
+	object.classId = RelationRelationId;
 	object.objectId = OIDNewHeap;
 	object.objectSubId = 0;
 
@@ -570,6 +570,7 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 	OIDNewHeap = heap_create_with_catalog(NewName,
 										  RelationGetNamespace(OldHeap),
 										  NewTableSpace,
+										  InvalidOid,
 										  tupdesc,
 										  OldHeap->rd_rel->relkind,
 										  OldHeap->rd_rel->relisshared,
@@ -799,7 +800,7 @@ swap_relation_files(Oid r1, Oid r2)
 		/* Delete old dependencies */
 		if (relform1->reltoastrelid)
 		{
-			count = deleteDependencyRecordsFor(RelOid_pg_class,
+			count = deleteDependencyRecordsFor(RelationRelationId,
 											   relform1->reltoastrelid);
 			if (count != 1)
 				elog(ERROR, "expected one dependency record for TOAST table, found %ld",
@@ -807,7 +808,7 @@ swap_relation_files(Oid r1, Oid r2)
 		}
 		if (relform2->reltoastrelid)
 		{
-			count = deleteDependencyRecordsFor(RelOid_pg_class,
+			count = deleteDependencyRecordsFor(RelationRelationId,
 											   relform2->reltoastrelid);
 			if (count != 1)
 				elog(ERROR, "expected one dependency record for TOAST table, found %ld",
@@ -815,9 +816,9 @@ swap_relation_files(Oid r1, Oid r2)
 		}
 
 		/* Register new dependencies */
-		baseobject.classId = RelOid_pg_class;
+		baseobject.classId = RelationRelationId;
 		baseobject.objectSubId = 0;
-		toastobject.classId = RelOid_pg_class;
+		toastobject.classId = RelationRelationId;
 		toastobject.objectSubId = 0;
 
 		if (relform1->reltoastrelid)

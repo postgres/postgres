@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.184 2005/04/11 19:51:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.185 2005/04/14 01:38:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -422,20 +422,20 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	 * dependency on the constraint will indirectly depend on the
 	 * relations.
 	 */
-	referenced.classId = RelOid_pg_proc;
+	referenced.classId = ProcedureRelationId;
 	referenced.objectId = funcoid;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	if (!forConstraint)
 	{
-		referenced.classId = RelOid_pg_class;
+		referenced.classId = RelationRelationId;
 		referenced.objectId = RelationGetRelid(rel);
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 		if (constrrelid != InvalidOid)
 		{
-			referenced.classId = RelOid_pg_class;
+			referenced.classId = RelationRelationId;
 			referenced.objectId = constrrelid;
 			referenced.objectSubId = 0;
 			recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);

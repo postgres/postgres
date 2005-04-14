@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.102 2005/04/06 16:34:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.103 2005/04/14 01:38:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,11 +148,11 @@ InsertRule(char *rulname,
 	 * implicit --- this prevents deleting a view's SELECT rule.  Other
 	 * kinds of rules can be AUTO.
 	 */
-	myself.classId = RelationGetRelid(pg_rewrite_desc);
+	myself.classId = RewriteRelationId;
 	myself.objectId = rewriteObjectId;
 	myself.objectSubId = 0;
 
-	referenced.classId = RelOid_pg_class;
+	referenced.classId = RelationRelationId;
 	referenced.objectId = eventrel_oid;
 	referenced.objectSubId = 0;
 

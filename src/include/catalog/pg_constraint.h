@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.15 2005/03/25 21:57:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.16 2005/04/14 01:38:20 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -21,7 +21,7 @@
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
- *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
+ *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
@@ -31,7 +31,9 @@
  *		typedef struct FormData_pg_constraint
  * ----------------
  */
-CATALOG(pg_constraint)
+#define ConstraintRelationId  2606
+
+CATALOG(pg_constraint,2606)
 {
 	/*
 	 * conname + connamespace is deliberately not unique; we allow, for

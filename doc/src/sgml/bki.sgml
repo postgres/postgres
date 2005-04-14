@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.15 2005/04/13 18:54:55 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.16 2005/04/14 01:38:15 tgl Exp $
  -->
 
 <chapter id="bki">
@@ -58,7 +58,7 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.15 2005/04/13 18:54:55 tgl Exp $
   </para>
 
   <para>
-   Lines starting with a <literal>#</literal> are ignored.
+   Lines starting with <literal>#</literal> are ignored.
   </para>
 
  </sect1>
@@ -69,11 +69,12 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.15 2005/04/13 18:54:55 tgl Exp $
   <variablelist>
    <varlistentry>
     <term>
-     create 
-     <optional>bootstrap</optional>
-     <optional>shared_relation</optional>
-     <optional>without_oids</optional>
+     <literal>create</> 
+     <optional><literal>bootstrap</></optional>
+     <optional><literal>shared_relation</></optional>
+     <optional><literal>without_oids</></optional>
      <replaceable class="parameter">tablename</replaceable>
+     <replaceable class="parameter">tableoid</replaceable>
      (<replaceable class="parameter">name1</replaceable> =
      <replaceable class="parameter">type1</replaceable> <optional>,
      <replaceable class="parameter">name2</replaceable> = <replaceable
@@ -83,8 +84,9 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.15 2005/04/13 18:54:55 tgl Exp $
     <listitem>
      <para>
       Create a table named <replaceable
-      class="parameter">tablename</replaceable> with the columns given
-      in parentheses.
+      class="parameter">tablename</replaceable>, and having the OID
+      <replaceable class="parameter">tableoid</replaceable>,
+      with the columns given in parentheses.
      </para>
 
      <para>
@@ -101,7 +103,9 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.15 2005/04/13 18:54:55 tgl Exp $
       <type>_aclitem</type> (array).  Although it is possible to create
       tables containing columns of other types, this cannot be done until
       after <structname>pg_type</> has been created and filled with
-      appropriate entries.
+      appropriate entries.  (That effectively means that only these
+      column types can be used in bootstrapped tables, but non-bootstrap
+      catalogs can contain any built-in type.)
      </para>
 
      <para>
@@ -125,38 +129,34 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.15 2005/04/13 18:54:55 tgl Exp $
 
    <varlistentry>
     <term>
-     open <replaceable class="parameter">tablename</replaceable>
+     <literal>open</> <replaceable class="parameter">tablename</replaceable>
     </term>
 
     <listitem>
      <para>
-      Open the table called
+      Open the table named
       <replaceable class="parameter">tablename</replaceable>
-      for further manipulation.
+      for insertion of data.  Any currently open table is closed.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
     <term>
-     close <optional><replaceable class="parameter">tablename</replaceable></optional>
+     <literal>close</> <optional><replaceable class="parameter">tablename</replaceable></optional>
     </term>
 
     <listitem>
      <para>
-      Close the open table called <replaceable
-      class="parameter">tablename</replaceable>.  It is an error if
-      <replaceable class="parameter">tablename</replaceable> is not
-      already opened.  If no <replaceable
-      class="parameter">tablename</replaceable> is given, then the
-      currently open table is closed.
+      Close the open table.  The name of the table can be given as a
+      cross-check, but this is not required.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
     <term>
-     insert <optional>OID = <replaceable class="parameter">oid_value</replaceable></optional> (<replaceable class="parameter">value1</replaceable> <replaceable class="parameter">value2</replaceable> ...)
+     <literal>insert</> <optional><literal>OID =</> <replaceable class="parameter">oid_value</replaceable></optional> <literal>(</> <replaceable class="parameter">value1</replaceable> <replaceable class="parameter">value2</replaceable> ... <literal>)</>
     </term>
 
     <listitem>
@@ -181,19 +181,23 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.15 2005/04/13 18:54:55 tgl Exp $
 
    <varlistentry>
     <term>
-     declare <optional>unique</optional> index <replaceable
-     class="parameter">indexname</replaceable> on <replaceable
-     class="parameter">tablename</replaceable> using <replaceable
-     class="parameter">amname</replaceable> (<replaceable
-     class="parameter">opclass1</replaceable> <replaceable
-     class="parameter">name1</replaceable> <optional>, ...</optional>)
+     <literal>declare</> <optional><literal>unique</></optional>
+     <literal>index</> <replaceable class="parameter">indexname</replaceable>
+     <replaceable class="parameter">indexoid</replaceable>
+     <literal>on</> <replaceable class="parameter">tablename</replaceable>
+     <literal>using</> <replaceable class="parameter">amname</replaceable>
+     <literal>(</> <replaceable class="parameter">opclass1</replaceable>
+     <replaceable class="parameter">name1</replaceable>
+     <optional>, ...</optional> <literal>)</>
     </term>
 
     <listitem>
      <para>
       Create an index named <replaceable
-      class="parameter">indexname</replaceable> on the table named
-      <replaceable class="parameter">tablename</replaceable> using the
+      class="parameter">indexname</replaceable>, having OID
+      <replaceable class="parameter">indexoid</replaceable>,
+      on the table named
+      <replaceable class="parameter">tablename</replaceable>, using the
       <replaceable class="parameter">amname</replaceable> access
       method.  The fields to index are called <replaceable
       class="parameter">name1</replaceable>, <replaceable
@@ -208,7 +212,7 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.15 2005/04/13 18:54:55 tgl Exp $
    </varlistentry>
 
    <varlistentry>
-    <term>build indices</term>
+    <term><literal>build indices</></term>
 
     <listitem>
      <para>
@@ -220,17 +224,97 @@ $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.15 2005/04/13 18:54:55 tgl Exp $
 
  </sect1>
 
+ <sect1 id="bki-structure">
+  <title>Structure of the Bootstrap <acronym>BKI</acronym> File</title>
+
+  <para>
+   The <literal>open</> command cannot be used until the tables it uses
+   exist and have entries for the table that is to be opened.
+   (These minimum tables are <structname>pg_class</>,
+   <structname>pg_attribute</>, <structname>pg_proc</>, and
+   <structname>pg_type</>.)   To allow those tables themselves to be filled,
+   <literal>create</> with the <literal>bootstrap</> option implicitly opens
+   the created table for data insertion.
+  </para>
+
+  <para>
+   Thus, the structure of the <filename>postgres.bki</filename> file has to
+   be:
+   <orderedlist>
+    <listitem>
+     <para>
+      <literal>create bootstrap</> one of the critical tables
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>insert</> data describing at least the critical tables
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>close</>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Repeat for the other critical tables.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>create</> (without <literal>bootstrap</>) a noncritical table
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>open</>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>insert</> desired data
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>close</>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Repeat for the other noncritical tables.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Define indexes.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>build indices</>
+     </para>
+    </listitem>
+   </orderedlist>
+  </para>
+
+  <para>
+   There are doubtless other, undocumented ordering dependencies.
+  </para>
+ </sect1>
+
  <sect1 id="bki-example">
   <title>Example</title>
 
   <para>
    The following sequence of commands will create the
-   table <literal>test_table</literal> with two columns
+   table <literal>test_table</literal> with OID 420, having two columns
    <literal>cola</literal> and <literal>colb</literal> of type
    <type>int4</type> and <type>text</type>, respectively, and insert
    two rows into the table.
 <programlisting>
-create test_table (cola = int4, colb = text)
+create test_table 420 (cola = int4, colb = text)
 open test_table
 insert OID=421 ( 1 "value1" )
 insert OID=422 ( 2 _null_ )

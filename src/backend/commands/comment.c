@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.81 2005/01/27 23:23:54 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.82 2005/04/14 01:38:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,9 +20,11 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_constraint.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_description.h"
 #include "catalog/pg_largeobject.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
@@ -352,7 +354,7 @@ CommentRelation(int objtype, List *relname, char *comment)
 
 	/* Create the comment using the relation's oid */
 
-	CreateComments(RelationGetRelid(relation), RelOid_pg_class, 0, comment);
+	CreateComments(RelationGetRelid(relation), RelationRelationId, 0, comment);
 
 	/* Done, but hold lock until commit */
 	relation_close(relation, NoLock);
@@ -406,7 +408,7 @@ CommentAttribute(List *qualname, char *comment)
 
 	/* Create the comment using the relation's oid */
 
-	CreateComments(RelationGetRelid(relation), RelOid_pg_class,
+	CreateComments(RelationGetRelid(relation), RelationRelationId,
 				   (int32) attnum, comment);
 
 	/* Done, but hold lock until commit */
@@ -475,7 +477,7 @@ CommentDatabase(List *qualname, char *comment)
 					   database);
 
 	/* Create the comment with the pg_database oid */
-	CreateComments(oid, RelOid_pg_database, 0, comment);
+	CreateComments(oid, DatabaseRelationId, 0, comment);
 }
 
 /*
@@ -670,7 +672,7 @@ CommentType(List *typename, char *comment)
 
 	/* Call CreateComments() to create/drop the comments */
 
-	CreateComments(oid, RelOid_pg_type, 0, comment);
+	CreateComments(oid, TypeRelationId, 0, comment);
 }
 
 /*
@@ -706,7 +708,7 @@ CommentAggregate(List *aggregate, List *arguments, char *comment)
 
 	/* Call CreateComments() to create/drop the comments */
 
-	CreateComments(oid, RelOid_pg_proc, 0, comment);
+	CreateComments(oid, ProcedureRelationId, 0, comment);
 }
 
 /*
@@ -735,7 +737,7 @@ CommentProc(List *function, List *arguments, char *comment)
 
 	/* Call CreateComments() to create/drop the comments */
 
-	CreateComments(oid, RelOid_pg_proc, 0, comment);
+	CreateComments(oid, ProcedureRelationId, 0, comment);
 }
 
 /*

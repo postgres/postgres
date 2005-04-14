@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.23 2005/03/25 21:57:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_constraint.c,v 1.24 2005/04/14 01:38:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,7 @@ CreateConstraintEntry(const char *constraintName,
 		 */
 		ObjectAddress relobject;
 
-		relobject.classId = RelOid_pg_class;
+		relobject.classId = RelationRelationId;
 		relobject.objectId = relId;
 		if (constraintNKeys > 0)
 		{
@@ -200,7 +200,7 @@ CreateConstraintEntry(const char *constraintName,
 		 */
 		ObjectAddress domobject;
 
-		domobject.classId = RelOid_pg_type;
+		domobject.classId = TypeRelationId;
 		domobject.objectId = domainId;
 		domobject.objectSubId = 0;
 
@@ -215,7 +215,7 @@ CreateConstraintEntry(const char *constraintName,
 		 */
 		ObjectAddress relobject;
 
-		relobject.classId = RelOid_pg_class;
+		relobject.classId = RelationRelationId;
 		relobject.objectId = foreignRelId;
 		if (foreignNKeys > 0)
 		{
@@ -242,7 +242,7 @@ CreateConstraintEntry(const char *constraintName,
 		 */
 		ObjectAddress relobject;
 
-		relobject.classId = RelOid_pg_class;
+		relobject.classId = RelationRelationId;
 		relobject.objectId = indexRelId;
 		relobject.objectSubId = 0;
 

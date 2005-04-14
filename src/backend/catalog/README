@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/catalog/README,v 1.8 2003/11/29 19:51:42 pgsql Exp $
+$PostgreSQL: pgsql/src/backend/catalog/README,v 1.9 2005/04/14 01:38:15 tgl Exp $
 
 This directory contains .c files that manipulate the system catalogs;
 src/include/catalog contains the .h files that define the structure
@@ -6,7 +6,7 @@ of the system catalogs.
 
 When the compile-time scripts (such as Gen_fmgrtab.sh and genbki.sh)
 execute, they grep the DATA statements out of the .h files and munge
-these in order to generate the .bki files.  The .bki files are then
+these in order to generate the postgres.bki file.  The .bki file is then
 used as input to initdb (which is just a wrapper around postgres
 running single-user in bootstrapping mode) in order to generate the
 initial (template) system catalog relation files.
@@ -30,8 +30,8 @@ contains back-pointers into pg_type (pg_proc.proargtypes).  For such
 cases, the OID assigned to a tuple may be explicitly set by use of the
 "OID = n" clause of the .bki insert statement.  If no such pointers are
 required to a given tuple, then the OID = n clause may be omitted
-(then the system generates a random OID in the usual way, or leaves it
-0 in a catalog that has no OIDs).  In practice we usually preassign OIDs
+(then the system generates an OID in the usual way, or leaves it 0 in a
+catalog that has no OIDs).  In practice we usually preassign OIDs
 for all or none of the pre-loaded tuples in a given catalog, even if only
 some of them are actually cross-referenced.
 
@@ -39,42 +39,36 @@ some of them are actually cross-referenced.
 be known directly in the C code.  In such cases, put a #define in the
 catalog's .h file, and use the #define symbol in the C code.  Writing
 the actual numeric value of any OID in C code is considered very bad form.
-(Direct references to pg_proc OIDs are common enough that there's a special
+Direct references to pg_proc OIDs are common enough that there's a special
 mechanism to create the necessary #define's automatically: see
-backend/utils/Gen_fmgrtab.sh.  For all the other system catalogs, you have
-to manually create any #define's you need.)
+backend/utils/Gen_fmgrtab.sh.  We also have standard conventions for setting
+up #define's for the pg_class OIDs of system catalogs and indexes.  For all
+the other system catalogs, you have to manually create any #define's you
+need.
 
-- If you need to find a valid OID for a tuple that will be referred to by
-others, use the unused_oids script.  It generates inclusive ranges of
+- If you need to find a valid OID for a new predefined tuple,
+use the unused_oids script.  It generates inclusive ranges of
 *unused* OIDs (e.g., the line "45-900" means OIDs 45 through 900 have
 not been allocated yet).  Currently, OIDs 1-9999 are reserved for manual
 assignment; the unused_oids script simply looks through the include/catalog
-headers to see which ones do not appear in "OID =" clauses.
+headers to see which ones do not appear in "OID =" clauses in DATA lines.
+(As of Postgres 8.1, it also looks at CATALOG and DECLARE_INDEX lines.)
+You can also use the duplicate_oids script to check for mistakes.
 
-- OIDs 10000-16383 are reserved for assignment by the genbki.sh script:
-it will insert these OIDs if it sees a clause "OID = 0" in a DATA
-statement.  You would typically use this feature if you don't care exactly
-which OID is assigned to a catalog row (because it has no cross-references
-you need to hardwire) but you want to give it a DESCR entry.  The DESCR macro
-will not work for rows that don't have any OID at genbki.sh time.
-
-- The OID counter starts at 16384 at bootstrap.  If a catalog row is in a
-table that requires OIDs, but no OID was preassigned by hand or by genbki.sh,
-then it will receive an OID of 16384 or above.
+- The OID counter starts at 10000 at bootstrap.  If a catalog row is in a
+table that requires OIDs, but no OID was preassigned by an "OID =" clause,
+then it will receive an OID of 10000 or above.
 
 - To create a "BOOTSTRAP" table you have to do a lot of extra work: these
 tables are not created through a normal CREATE TABLE operation, but spring
 into existence when first written to during initdb.  Therefore, you must
 manually create appropriate entries for them in the pre-loaded contents of
-pg_class, pg_attribute, and pg_type.  You'll also need to add code to function
-heap_create() in heap.c to force the correct OID to be assigned when the table
-is first referenced.  (It's near the top of the function with the comment
-beginning in "Real ugly stuff".)  Avoid making new catalogs be bootstrap
+pg_class, pg_attribute, and pg_type.  Avoid making new catalogs be bootstrap
 catalogs if at all possible; generally, only tables that must be written to
 in order to create a table should be bootstrapped.
 
 - Certain BOOTSTRAP tables must be at the start of the Makefile
-POSTGRES_BKI_SRCS variable, as these will not be created through the standard
+POSTGRES_BKI_SRCS variable, as these cannot be created through the standard
 heap_create_with_catalog process, because it needs these tables to exist
 already.  The list of files this currently includes is:
 	pg_proc.h pg_type.h pg_attribute.h pg_class.h
@@ -96,7 +90,10 @@ piece of code will likely perform "typetup->typdelim" (or, worse,
 "typetyp->typelem", which follows typdelim).  This will result in
 random errors or even segmentation violations.  Hence, do NOT insert
 catalog tuples that contain NULL attributes except in their
-variable-length portions!
+variable-length portions!  (The bootstrapping code is fairly good about
+marking NOT NULL each of the columns that can legally be referenced via
+C struct declarations ... but those markings won't be enforced against
+DATA commands, so you must get it right in a DATA line.)
 
 - Modification of the catalogs must be performed with the proper
 updating of catalog indexes!  That is, most catalogs have indexes

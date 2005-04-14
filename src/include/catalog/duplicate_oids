@@ -2,18 +2,23 @@
 #
 # duplicate_oids
 #
-# $PostgreSQL: pgsql/src/include/catalog/duplicate_oids,v 1.6 2005/04/13 18:54:57 tgl Exp $
+# $PostgreSQL: pgsql/src/include/catalog/duplicate_oids,v 1.7 2005/04/14 01:38:20 tgl Exp $
 #
 # finds manually-assigned oids that are duplicated in the system tables.
 #
 # run this script in src/include/catalog.
 #
 
-FILES=`ls pg_*.h`
+# note: we exclude BKI_BOOTSTRAP relations since they are expected to have
+# matching DATA lines in pg_class.h
 
-egrep '^DATA' $FILES | \
-	sed -e 's/^.*OID[^=]*=[^0-9]*//' -e 's/[^0-9].*$//' | \
-	sort -n | uniq -d | \
-	egrep -v '^0*$'
+cat pg_*.h indexing.h | \
+egrep -v -e '^CATALOG\(.*BKI_BOOTSTRAP' | \
+sed -n	-e 's/^DATA(insert *OID *= *\([0-9][0-9]*\).*$/\1/p' \
+	-e 's/^CATALOG([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
+	-e 's/^DECLARE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' \
+	-e 's/^DECLARE_UNIQUE_INDEX([^,]*, *\([0-9][0-9]*\).*$/\1/p' | \
+sort -n | \
+uniq -d
 
 exit 0

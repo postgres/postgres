@@ -3,20 +3,18 @@
  * pg_shadow.h
  *	  definition of the system "shadow" relation (pg_shadow)
  *	  along with the relation's initial contents.
- *		  pg_user is now a public accessible view on pg_shadow.
+ *
+ *	  pg_user is now a publicly accessible view on pg_shadow.
  *
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_shadow.h,v 1.27 2004/12/31 22:03:26 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_shadow.h,v 1.28 2005/04/14 01:38:21 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
  *	  information from the DATA() statements.
- *
- *		  WHENEVER the definition for pg_shadow changes, the
- *		  view creation of pg_user must be changed in initdb.sh!
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +27,9 @@
  *		typedef struct FormData_pg_shadow
  * ----------------
  */
-CATALOG(pg_shadow) BOOTSTRAP BKI_SHARED_RELATION BKI_WITHOUT_OIDS
+#define ShadowRelationId  1260
+
+CATALOG(pg_shadow,1260) BKI_SHARED_RELATION BKI_WITHOUT_OIDS
 {
 	NameData	usename;
 	int4		usesysid;
@@ -54,7 +54,7 @@ typedef FormData_pg_shadow *Form_pg_shadow;
  *		compiler constants for pg_shadow
  * ----------------
  */
-#define Natts_pg_shadow				8
+#define Natts_pg_shadow					8
 #define Anum_pg_shadow_usename			1
 #define Anum_pg_shadow_usesysid			2
 #define Anum_pg_shadow_usecreatedb		3

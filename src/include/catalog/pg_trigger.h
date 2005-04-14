@@ -17,7 +17,7 @@
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
- *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
+ *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
@@ -27,7 +27,9 @@
  *		typedef struct FormData_pg_trigger
  * ----------------
  */
-CATALOG(pg_trigger)
+#define TriggerRelationId  2620
+
+CATALOG(pg_trigger,2620)
 {
 	Oid			tgrelid;		/* triggered relation */
 	NameData	tgname;			/* trigger' name */

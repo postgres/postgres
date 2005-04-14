@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.50 2005/04/12 04:26:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.51 2005/04/14 01:38:20 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -23,7 +23,7 @@
 
 /* ----------------
  *		postgres.h contains the system type definitions and the
- *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
+ *		CATALOG(), BKI_BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
@@ -41,7 +41,9 @@
  *	agginitval			initial value for transition state (can be NULL)
  * ----------------------------------------------------------------
  */
-CATALOG(pg_aggregate) BKI_WITHOUT_OIDS
+#define AggregateRelationId  2600
+
+CATALOG(pg_aggregate,2600) BKI_WITHOUT_OIDS
 {
 	regproc		aggfnoid;
 	regproc		aggtransfn;
