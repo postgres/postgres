@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.220 2005/04/14 20:03:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.221 2005/04/14 20:32:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1032,7 +1032,7 @@ LookupOpclassInfo(Oid operatorClassOid,
 		MemSet(&ctl, 0, sizeof(ctl));
 		ctl.keysize = sizeof(Oid);
 		ctl.entrysize = sizeof(OpClassCacheEnt);
-		ctl.hash = tag_hash;
+		ctl.hash = oid_hash;
 		OpClassCache = hash_create("Operator class cache", 64,
 								   &ctl, HASH_ELEM | HASH_FUNCTION);
 	}
@@ -2151,7 +2151,7 @@ RelationCacheInitialize(void)
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(RelIdCacheEnt);
-	ctl.hash = tag_hash;
+	ctl.hash = oid_hash;
 	RelationIdCache = hash_create("Relcache by OID", INITRELCACHESIZE,
 								  &ctl, HASH_ELEM | HASH_FUNCTION);
 

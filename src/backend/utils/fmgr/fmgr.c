@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.93 2005/03/31 22:46:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.94 2005/04/14 20:32:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -509,7 +509,7 @@ record_C_func(HeapTuple procedureTuple,
 		MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 		hash_ctl.keysize = sizeof(Oid);
 		hash_ctl.entrysize = sizeof(CFuncHashTabEntry);
-		hash_ctl.hash = tag_hash;
+		hash_ctl.hash = oid_hash;
 		CFuncHash = hash_create("CFuncHash",
 								100,
 								&hash_ctl,

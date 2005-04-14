@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/hashfn.c,v 1.22 2004/12/31 22:01:37 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/hashfn.c,v 1.23 2005/04/14 20:32:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,4 +39,17 @@ tag_hash(const void *key, Size keysize)
 {
 	return DatumGetUInt32(hash_any((const unsigned char *) key,
 								   (int) keysize));
+}
+
+/*
+ * oid_hash: hash function for keys that are OIDs
+ *
+ * (tag_hash works for this case too, but is slower)
+ */
+uint32
+oid_hash(const void *key, Size keysize)
+{
+	Assert(keysize == sizeof(Oid));
+	/* We don't actually bother to do anything to the OID value ... */
+	return (uint32) *((const Oid *) key);
 }
