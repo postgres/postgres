@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.32 2005/03/31 22:46:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.33 2005/04/14 22:09:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,6 +210,13 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 		/* crummy error message, but parser should have caught this */
 		elog(ERROR, "function in FROM has unsupported return type");
 	}
+
+	/*
+	 * For RECORD results, make sure a typmod has been assigned.  (The
+	 * function should do this for itself, but let's cover things in case
+	 * it doesn't.)
+	 */
+	BlessTupleDesc(tupdesc);
 
 	scanstate->tupdesc = tupdesc;
 	ExecSetSlotDescriptor(scanstate->ss.ss_ScanTupleSlot,
