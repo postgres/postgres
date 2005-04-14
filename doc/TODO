@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Apr 10 19:21:33 EDT 2005
+Last updated:		Thu Apr 14 19:12:47 EDT 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -267,7 +267,7 @@ Indexes
 
 * Add UNIQUE capability to non-btree indexes
 * Add rtree index support for line, lseg, path, point
-* Use indexes for MIN() and MAX()
+* -Use indexes for MIN() and MAX()
 
   MIN/MAX queries can already be rewritten as SELECT col FROM tab ORDER
   BY col {DESC} LIMIT 1. Completing this item involves doing this
