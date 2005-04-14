@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.24 2004/12/30 09:36:37 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.25 2005/04/14 10:08:57 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -17,9 +17,8 @@ static pthread_mutex_t connections_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_key_t actual_connection_key;
 static pthread_once_t actual_connection_key_once = PTHREAD_ONCE_INIT;
 
-#else
-static struct connection *actual_connection = NULL;
 #endif
+static struct connection *actual_connection = NULL;
 static struct connection *all_connections = NULL;
 
 #ifdef ENABLE_THREAD_SAFETY
@@ -39,6 +38,16 @@ ecpg_get_connection_nr(const char *connection_name)
 	{
 #ifdef ENABLE_THREAD_SAFETY
 		ret = pthread_getspecific(actual_connection_key);
+		/* if no connection in TSD for this thread, get the global default connection
+		 * and hope the user knows what they're doing (i.e. using their own mutex to
+		 * protect that connection from concurrent accesses */
+		if(NULL == ret)
+		{
+			ECPGlog("no TSD connection, going for global\n");
+			ret = actual_connection;
+		}
+		else
+			ECPGlog("got the TSD connection\n");
 #else
 		ret = actual_connection;
 #endif
@@ -67,6 +76,16 @@ ECPGget_connection(const char *connection_name)
 	{
 #ifdef ENABLE_THREAD_SAFETY
 		ret = pthread_getspecific(actual_connection_key);
+		/* if no connection in TSD for this thread, get the global default connection
+         * and hope the user knows what they're doing (i.e. using their own mutex to
+         * protect that connection from concurrent accesses */
+        if(NULL == ret)
+		{
+			ECPGlog("no TSD connection here either, using global\n");
+            ret = actual_connection;
+		}
+		else
+			ECPGlog("got TSD connection\n");
 #else
 		ret = actual_connection;
 #endif
@@ -117,10 +136,9 @@ ecpg_finish(struct connection * act)
 #ifdef ENABLE_THREAD_SAFETY
 		if (pthread_getspecific(actual_connection_key) == act)
 			pthread_setspecific(actual_connection_key, all_connections);
-#else
+#endif
 		if (actual_connection == act)
 			actual_connection = all_connections;
-#endif
 
 		ECPGlog("ecpg_finish: Connection %s closed.\n", act->name);
 
@@ -416,9 +434,8 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 #ifdef ENABLE_THREAD_SAFETY
 	pthread_once(&actual_connection_key_once, ecpg_actual_connection_init);
 	pthread_setspecific(actual_connection_key, all_connections);
-#else
-	actual_connection = all_connections;
 #endif
+	actual_connection = all_connections;
 
 	ECPGlog("ECPGconnect: opening database %s on %s port %s %s%s%s%s\n",
 			realname ? realname : "<DEFAULT>",

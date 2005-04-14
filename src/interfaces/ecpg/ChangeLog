@@ -1918,6 +1918,11 @@ Fri Mar 18 10:54:47 CET 2005
 	  
 	- Added patch by Christof Petig <christof@petig-baender.de> to work
 	  around gcc bug on powerpc and amd64.
+
+Thu Apr 14 11:59:47 CEST 2005
+
+	- Added patch by Philip Yarra <philip.yarra@internode.on.net> for a
+	  bug in thread support.
 	- Set ecpg library version to 5.1.
 	- Set ecpg version to 4.1.1.
 
