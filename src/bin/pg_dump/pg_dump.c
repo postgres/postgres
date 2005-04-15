@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.400.4.2 2005/01/26 21:24:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.400.4.3 2005/04/15 16:40:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,6 @@
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
-#include <time.h>
 
 #ifndef HAVE_STRDUP
 #include "strdup.h"
@@ -165,7 +164,6 @@ static char *myFormatType(const char *typname, int32 typmod);
 static const char *fmtQualifiedId(const char *schema, const char *id);
 static int	dumpBlobs(Archive *AH, void *arg);
 static void dumpDatabase(Archive *AH);
-static void dumpTimestamp(Archive *AH, char *msg);
 static void dumpEncoding(Archive *AH);
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti);
@@ -602,9 +600,6 @@ main(int argc, char **argv)
 	 * safe order.
 	 */
 
-	if (g_fout->verbose)
-		dumpTimestamp(g_fout, "Started on");
-
 	/* First the special encoding entry. */
 	dumpEncoding(g_fout);
 
@@ -620,9 +615,6 @@ main(int argc, char **argv)
 	for (i = 0; i < numObjs; i++)
 		dumpDumpableObject(g_fout, dobjs[i]);
 
-	if (g_fout->verbose)
-		dumpTimestamp(g_fout, "Completed on");
-
 	/*
 	 * And finally we can do the actual output.
 	 */
@@ -637,6 +629,7 @@ main(int argc, char **argv)
 		ropt->noOwner = outputNoOwner;
 		ropt->disable_triggers = disable_triggers;
 		ropt->use_setsessauth = use_setsessauth;
+		ropt->dataOnly = dataOnly;
 
 		if (compressLevel == -1)
 			ropt->compression = 0;
@@ -1296,35 +1289,6 @@ dumpDatabase(Archive *AH)
 	destroyPQExpBuffer(dbQry);
 	destroyPQExpBuffer(delQry);
 	destroyPQExpBuffer(creaQry);
-}
-
-
-/*
- * dumpTimestamp
- */
-static void
-dumpTimestamp(Archive *AH, char *msg)
-{
-	char		buf[256];
-	time_t		now = time(NULL);
-
-	if (strftime(buf, 256, "%Y-%m-%d %H:%M:%S %Z", localtime(&now)) != 0)
-	{
-		PQExpBuffer qry = createPQExpBuffer();
-
-		appendPQExpBuffer(qry, "-- ");
-		appendPQExpBuffer(qry, msg);
-		appendPQExpBuffer(qry, " ");
-		appendPQExpBuffer(qry, buf);
-		appendPQExpBuffer(qry, "\n");
-
-		ArchiveEntry(AH, nilCatalogId, createDumpId(),
-					 "DUMP TIMESTAMP", NULL, NULL, "",
-					 false, "DUMP TIMESTAMP", qry->data, "", NULL,
-					 NULL, 0,
-					 NULL, NULL);
-		destroyPQExpBuffer(qry);
-	}
 }
 
 
