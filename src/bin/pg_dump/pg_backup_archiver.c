@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.106 2005/03/18 17:32:55 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.107 2005/04/15 16:40:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,8 @@ static void _die_horribly(ArchiveHandle *AH, const char *modulename, const char 
 static int	_canRestoreBlobs(ArchiveHandle *AH);
 static int	_restoringToDB(ArchiveHandle *AH);
 
+static void dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim);
+
 
 /*
  *	Wrapper functions.
@@ -129,7 +131,7 @@ void
 RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-	TocEntry   *te = AH->toc->next;
+	TocEntry   *te;
 	teReqs		reqs;
 	OutputContext sav;
 	bool		defnDumped;
@@ -210,6 +212,9 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 	ahprintf(AH, "--\n-- PostgreSQL database dump\n--\n\n");
 
+	if (AH->public.verbose)
+		dumpTimestamp(AH, "Started on", AH->createDate);
+
 	/*
 	 * Establish important parameter values right away.
 	 */
@@ -222,11 +227,10 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	 */
 	if (ropt->dropSchema)
 	{
-		te = AH->toc->prev;
-		AH->currentTE = te;
-
-		while (te != AH->toc)
+		for (te = AH->toc->prev; te != AH->toc; te = te->prev)
 		{
+			AH->currentTE = te;
+
 			reqs = _tocEntryRequired(te, ropt, false /* needn't drop ACLs */);
 			if (((reqs & REQ_SCHEMA) != 0) && te->dropStmt)
 			{
@@ -238,15 +242,13 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				/* Drop it */
 				ahprintf(AH, "%s", te->dropStmt);
 			}
-			te = te->prev;
 		}
 	}
 
 	/*
 	 * Now process each non-ACL TOC entry
 	 */
-	te = AH->toc->next;
-	while (te != AH->toc)
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
 		AH->currentTE = te;
 
@@ -376,14 +378,12 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				_printTocEntry(AH, te, ropt, false, false);
 			}
 		}
-		te = te->next;
 	}							/* end loop over TOC entries */
 
 	/*
 	 * Scan TOC again to output ownership commands and ACLs
 	 */
-	te = AH->toc->next;
-	while (te != AH->toc)
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
 		AH->currentTE = te;
 
@@ -396,9 +396,10 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				  te->desc, te->tag);
 			_printTocEntry(AH, te, ropt, false, true);
 		}
-
-		te = te->next;
 	}
+
+	if (AH->public.verbose)
+		dumpTimestamp(AH, "Completed on", time(NULL));
 
 	ahprintf(AH, "--\n-- PostgreSQL database dump complete\n--\n\n");
 
@@ -1275,7 +1276,8 @@ warn_or_die_horribly(ArchiveHandle *AH,
 	}
 	if (AH->currentTE != NULL && AH->currentTE != AH->lastErrorTE)
 	{
-		write_msg(modulename, "Error from TOC entry %d; %u %u %s %s %s\n", AH->currentTE->dumpId,
+		write_msg(modulename, "Error from TOC entry %d; %u %u %s %s %s\n",
+				  AH->currentTE->dumpId,
 		 AH->currentTE->catalogId.tableoid, AH->currentTE->catalogId.oid,
 		  AH->currentTE->desc, AH->currentTE->tag, AH->currentTE->owner);
 	}
@@ -2765,4 +2767,17 @@ checkSeek(FILE *fp)
 #endif
 	else
 		return true;
+}
+
+
+/*
+ * dumpTimestamp
+ */
+static void
+dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim)
+{
+	char		buf[256];
+
+	if (strftime(buf, 256, "%Y-%m-%d %H:%M:%S %Z", localtime(&tim)) != 0)
+		ahprintf(AH, "-- %s %s\n\n", msg, buf);
 }
