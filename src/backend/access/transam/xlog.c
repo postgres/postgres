@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.184 2005/04/13 18:54:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.185 2005/04/15 18:48:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -444,8 +444,8 @@ static bool AdvanceXLInsertBuffer(void);
 static void XLogWrite(XLogwrtRqst WriteRqst);
 static int XLogFileInit(uint32 log, uint32 seg,
 			 bool *use_existent, bool use_lock);
-static bool InstallXLogFileSegment(uint32 log, uint32 seg, char *tmppath,
-					   bool find_free, int max_advance,
+static bool InstallXLogFileSegment(uint32 *log, uint32 *seg, char *tmppath,
+					   bool find_free, int *max_advance,
 					   bool use_lock);
 static int	XLogFileOpen(uint32 log, uint32 seg);
 static int	XLogFileRead(uint32 log, uint32 seg, int emode);
@@ -1509,6 +1509,9 @@ XLogFileInit(uint32 log, uint32 seg,
 	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
 	char		zbuffer[BLCKSZ];
+	uint32		installed_log;
+	uint32		installed_seg;
+	int			max_advance;
 	int			fd;
 	int			nbytes;
 
@@ -1601,8 +1604,11 @@ XLogFileInit(uint32 log, uint32 seg,
 	 * else has created the file while we were filling ours: if so, use
 	 * ours to pre-create a future log segment.
 	 */
-	if (!InstallXLogFileSegment(log, seg, tmppath,
-								*use_existent, XLOGfileslop,
+	installed_log = log;
+	installed_seg = seg;
+	max_advance = XLOGfileslop;
+	if (!InstallXLogFileSegment(&installed_log, &installed_seg, tmppath,
+								*use_existent, &max_advance,
 								use_lock))
 	{
 		/* No need for any more future segments... */
@@ -1722,7 +1728,7 @@ XLogFileCopy(uint32 log, uint32 seg,
 	/*
 	 * Now move the segment into place with its final name.
 	 */
-	if (!InstallXLogFileSegment(log, seg, tmppath, false, 0, false))
+	if (!InstallXLogFileSegment(&log, &seg, tmppath, false, NULL, false))
 		elog(PANIC, "InstallXLogFileSegment should not have failed");
 }
 
@@ -1732,7 +1738,9 @@ XLogFileCopy(uint32 log, uint32 seg,
  * This is used both to install a newly-created segment (which has a temp
  * filename while it's being created) and to recycle an old segment.
  *
- * log, seg: identify segment to install as (or first possible target).
+ * *log, *seg: identify segment to install as (or first possible target).
+ * When find_free is TRUE, these are modified on return to indicate the
+ * actual installation location or last segment searched.
  *
  * tmppath: initial name of file to install.  It will be renamed into place.
  *
@@ -1740,9 +1748,10 @@ XLogFileCopy(uint32 log, uint32 seg,
  * number at or after the passed numbers.  If FALSE, install the new segment
  * exactly where specified, deleting any existing segment file there.
  *
- * max_advance: maximum number of log/seg slots to advance past the starting
- * point.  Fail if no free slot is found in this range.  (Irrelevant if
- * find_free is FALSE.)
+ * *max_advance: maximum number of log/seg slots to advance past the starting
+ * point.  Fail if no free slot is found in this range.  On return, reduced
+ * by the number of slots skipped over.  (Irrelevant, and may be NULL,
+ * when find_free is FALSE.)
  *
  * use_lock: if TRUE, acquire ControlFileLock while moving file into
  * place.  This should be TRUE except during bootstrap log creation.  The
@@ -1752,14 +1761,14 @@ XLogFileCopy(uint32 log, uint32 seg,
  * exceeding max_advance limit.  (Any other kind of failure causes ereport().)
  */
 static bool
-InstallXLogFileSegment(uint32 log, uint32 seg, char *tmppath,
-					   bool find_free, int max_advance,
+InstallXLogFileSegment(uint32 *log, uint32 *seg, char *tmppath,
+					   bool find_free, int *max_advance,
 					   bool use_lock)
 {
 	char		path[MAXPGPATH];
 	struct stat stat_buf;
 
-	XLogFilePath(path, ThisTimeLineID, log, seg);
+	XLogFilePath(path, ThisTimeLineID, *log, *seg);
 
 	/*
 	 * We want to be sure that only one process does this at a time.
@@ -1777,15 +1786,16 @@ InstallXLogFileSegment(uint32 log, uint32 seg, char *tmppath,
 		/* Find a free slot to put it in */
 		while (stat(path, &stat_buf) == 0)
 		{
-			if (--max_advance < 0)
+			if (*max_advance <= 0)
 			{
 				/* Failed to find a free slot within specified range */
 				if (use_lock)
 					LWLockRelease(ControlFileLock);
 				return false;
 			}
-			NextLogSeg(log, seg);
-			XLogFilePath(path, ThisTimeLineID, log, seg);
+			NextLogSeg(*log, *seg);
+			(*max_advance)--;
+			XLogFilePath(path, ThisTimeLineID, *log, *seg);
 		}
 	}
 
@@ -1799,14 +1809,14 @@ InstallXLogFileSegment(uint32 log, uint32 seg, char *tmppath,
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not link file \"%s\" to \"%s\" (initialization of log file %u, segment %u): %m",
-						tmppath, path, log, seg)));
+						tmppath, path, *log, *seg)));
 	unlink(tmppath);
 #else
 	if (rename(tmppath, path) < 0)
 		ereport(PANIC,
 				(errcode_for_file_access(),
 				 errmsg("could not rename file \"%s\" to \"%s\" (initialization of log file %u, segment %u): %m",
-						tmppath, path, log, seg)));
+						tmppath, path, *log, *seg)));
 #endif
 
 	if (use_lock)
@@ -2129,6 +2139,7 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 {
 	uint32		endlogId;
 	uint32		endlogSeg;
+	int			max_advance;
 	DIR		   *xldir;
 	struct dirent *xlde;
 	char		lastoff[MAXFNAMELEN];
@@ -2137,7 +2148,12 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 	*nsegsremoved = 0;
 	*nsegsrecycled = 0;
 
+	/*
+	 * Initialize info about where to try to recycle to.  We allow recycling
+	 * segments up to XLOGfileslop segments beyond the current XLOG location.
+	 */
 	XLByteToPrevSeg(endptr, endlogId, endlogSeg);
+	max_advance = XLOGfileslop;
 
 	xldir = AllocateDir(XLogDir);
 	if (xldir == NULL)
@@ -2179,12 +2195,10 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 
 				/*
 				 * Before deleting the file, see if it can be recycled as
-				 * a future log segment.  We allow recycling segments up
-				 * to XLOGfileslop segments beyond the current XLOG
-				 * location.
+				 * a future log segment.
 				 */
-				if (InstallXLogFileSegment(endlogId, endlogSeg, path,
-										   true, XLOGfileslop,
+				if (InstallXLogFileSegment(&endlogId, &endlogSeg, path,
+										   true, &max_advance,
 										   true))
 				{
 					ereport(DEBUG2,
