@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.156 2004/12/31 22:01:05 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.157 2005/04/15 04:18:10 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,6 @@ static PROC_HDR *ProcGlobal = NULL;
 static PGPROC *DummyProcs = NULL;
 
 static bool waitingForLock = false;
-static bool waitingForSignal = false;
 
 /* Mark these volatile because they can be changed by signal handler */
 static volatile bool statement_timeout_active = false;
@@ -962,9 +961,7 @@ CheckDeadLock(void)
 void
 ProcWaitForSignal(void)
 {
-	waitingForSignal = true;
 	PGSemaphoreLock(&MyProc->sem, true);
-	waitingForSignal = false;
 }
 
 /*
@@ -978,7 +975,6 @@ void
 ProcCancelWaitForSignal(void)
 {
 	PGSemaphoreReset(&MyProc->sem);
-	waitingForSignal = false;
 }
 
 /*
