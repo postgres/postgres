@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.180.4.1 2005/03/24 04:36:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.180.4.2 2005/04/15 22:49:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5166,7 +5166,7 @@ assign_xlog_sync_method(const char *method, bool doit, GucSource source)
 #ifndef FSYNC_IS_WRITE_THROUGH
 	if (pg_strcasecmp(method, "fsync") == 0)
 #else
-	/* Win32 fsync() == _commit(0, which writes through a write cache */
+	/* Win32 fsync() == _commit(), which writes through a write cache */
 	if (pg_strcasecmp(method, "fsync_writethrough") == 0)
 #endif
 	{
