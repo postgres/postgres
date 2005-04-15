@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.185 2005/04/15 18:48:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.186 2005/04/15 22:19:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1152,6 +1152,9 @@ XLogWrite(XLogwrtRqst WriteRqst)
 	bool		ispartialpage;
 	bool		use_existent;
 
+	/* We should always be inside a critical section here */
+	Assert(CritSectionCount > 0);
+
 	/*
 	 * Update local LogwrtResult (caller probably did this already,
 	 * but...)
@@ -1501,6 +1504,11 @@ XLogFlush(XLogRecPtr record)
  * caller must *not* hold the lock at call.
  *
  * Returns FD of opened file.
+ *
+ * Note: errors here are ERROR not PANIC because we might or might not be
+ * inside a critical section (eg, during checkpoint there is no reason to
+ * take down the system on failure).  They will promote to PANIC if we are
+ * in a critical section.
  */
 static int
 XLogFileInit(uint32 log, uint32 seg,
@@ -1528,7 +1536,7 @@ XLogFileInit(uint32 log, uint32 seg,
 		if (fd < 0)
 		{
 			if (errno != ENOENT)
-				ereport(PANIC,
+				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
 								path, log, seg)));
@@ -1551,7 +1559,7 @@ XLogFileInit(uint32 log, uint32 seg,
 	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not create file \"%s\": %m", tmppath)));
 
@@ -1580,19 +1588,19 @@ XLogFileInit(uint32 log, uint32 seg,
 			/* if write didn't set errno, assume problem is no disk space */
 			errno = save_errno ? save_errno : ENOSPC;
 
-			ereport(PANIC,
+			ereport(ERROR,
 					(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m", tmppath)));
 		}
 	}
 
 	if (pg_fsync(fd) != 0)
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", tmppath)));
 
 	if (close(fd))
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", tmppath)));
 
@@ -1622,7 +1630,7 @@ XLogFileInit(uint32 log, uint32 seg,
 	fd = BasicOpenFile(path, O_RDWR | PG_BINARY | XLOG_SYNC_BIT,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 		errmsg("could not open file \"%s\" (log file %u, segment %u): %m",
 			   path, log, seg)));
@@ -1659,7 +1667,7 @@ XLogFileCopy(uint32 log, uint32 seg,
 	XLogFilePath(path, srcTLI, srclog, srcseg);
 	srcfd = BasicOpenFile(path, O_RDONLY | PG_BINARY, 0);
 	if (srcfd < 0)
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open file \"%s\": %m", path)));
 
@@ -1674,7 +1682,7 @@ XLogFileCopy(uint32 log, uint32 seg,
 	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not create file \"%s\": %m", tmppath)));
 
@@ -1687,11 +1695,11 @@ XLogFileCopy(uint32 log, uint32 seg,
 		if ((int) read(srcfd, buffer, sizeof(buffer)) != (int) sizeof(buffer))
 		{
 			if (errno != 0)
-				ereport(PANIC,
+				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not read file \"%s\": %m", path)));
 			else
-				ereport(PANIC,
+				ereport(ERROR,
 					 (errmsg("not enough data in file \"%s\"", path)));
 		}
 		errno = 0;
@@ -1707,19 +1715,19 @@ XLogFileCopy(uint32 log, uint32 seg,
 			/* if write didn't set errno, assume problem is no disk space */
 			errno = save_errno ? save_errno : ENOSPC;
 
-			ereport(PANIC,
+			ereport(ERROR,
 					(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m", tmppath)));
 		}
 	}
 
 	if (pg_fsync(fd) != 0)
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", tmppath)));
 
 	if (close(fd))
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", tmppath)));
 
@@ -1729,7 +1737,7 @@ XLogFileCopy(uint32 log, uint32 seg,
 	 * Now move the segment into place with its final name.
 	 */
 	if (!InstallXLogFileSegment(&log, &seg, tmppath, false, NULL, false))
-		elog(PANIC, "InstallXLogFileSegment should not have failed");
+		elog(ERROR, "InstallXLogFileSegment should not have failed");
 }
 
 /*
@@ -1806,14 +1814,14 @@ InstallXLogFileSegment(uint32 *log, uint32 *seg, char *tmppath,
 	 */
 #if HAVE_WORKING_LINK
 	if (link(tmppath, path) < 0)
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not link file \"%s\" to \"%s\" (initialization of log file %u, segment %u): %m",
 						tmppath, path, *log, *seg)));
 	unlink(tmppath);
 #else
 	if (rename(tmppath, path) < 0)
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not rename file \"%s\" to \"%s\" (initialization of log file %u, segment %u): %m",
 						tmppath, path, *log, *seg)));
@@ -2205,6 +2213,12 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 						  (errmsg("recycled transaction log file \"%s\"",
 								  xlde->d_name)));
 					(*nsegsrecycled)++;
+					/* Needn't recheck that slot on future iterations */
+					if (max_advance > 0)
+					{
+						NextLogSeg(endlogId, endlogSeg);
+						max_advance--;
+					}
 				}
 				else
 				{
@@ -2957,7 +2971,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	fd = BasicOpenFile(tmppath, O_RDWR | O_CREAT | O_EXCL,
 					   S_IRUSR | S_IWUSR);
 	if (fd < 0)
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not create file \"%s\": %m", tmppath)));
 
@@ -2976,7 +2990,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	if (srcfd < 0)
 	{
 		if (errno != ENOENT)
-			ereport(FATAL,
+			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not open file \"%s\": %m", path)));
 		/* Not there, so assume parent has no parents */
@@ -2988,7 +3002,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 			errno = 0;
 			nbytes = (int) read(srcfd, buffer, sizeof(buffer));
 			if (nbytes < 0 || errno != 0)
-				ereport(PANIC,
+				ereport(ERROR,
 						(errcode_for_file_access(),
 						 errmsg("could not read file \"%s\": %m", path)));
 			if (nbytes == 0)
@@ -3010,7 +3024,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 				 */
 				errno = save_errno ? save_errno : ENOSPC;
 
-				ereport(PANIC,
+				ereport(ERROR,
 						(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m", tmppath)));
 			}
@@ -3048,18 +3062,18 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 		/* if write didn't set errno, assume problem is no disk space */
 		errno = save_errno ? save_errno : ENOSPC;
 
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write to file \"%s\": %m", tmppath)));
 	}
 
 	if (pg_fsync(fd) != 0)
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not fsync file \"%s\": %m", tmppath)));
 
 	if (close(fd))
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not close file \"%s\": %m", tmppath)));
 
@@ -3076,14 +3090,14 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 	 */
 #if HAVE_WORKING_LINK
 	if (link(tmppath, path) < 0)
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not link file \"%s\" to \"%s\": %m",
 						tmppath, path)));
 	unlink(tmppath);
 #else
 	if (rename(tmppath, path) < 0)
-		ereport(PANIC,
+		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not rename file \"%s\" to \"%s\": %m",
 						tmppath, path)));
