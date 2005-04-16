@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.71 2005/03/17 00:22:24 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.72 2005/04/16 16:50:01 tgl Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -145,9 +145,9 @@ initdb --locale=sv_SE
     linkend="runtime-config-client-format"> for details).  The defaults that are
     chosen by <command>initdb</command> are actually only written into
     the configuration file <filename>postgresql.conf</filename> to
-    serve as defaults when the server is started.  If you delete the
+    serve as defaults when the server is started.  If you delete these
     assignments from <filename>postgresql.conf</filename> then the
-    server will inherit the settings from the execution environment.
+    server will inherit the settings from its execution environment.
    </para>
 
    <para>
@@ -192,12 +192,12 @@ initdb --locale=sv_SE
    <title>Behavior</>
 
    <para>
-    Locale support influences the following features:
+    The locale settings influence the following SQL features:
 
     <itemizedlist>
      <listitem>
       <para>
-       Sort order in queries using <literal>ORDER BY</>
+       Sort order in queries using <literal>ORDER BY</> on textual data
        <indexterm><primary>ORDER BY</><secondary>and locales</></indexterm>
       </para>
      </listitem>
@@ -211,7 +211,17 @@ initdb --locale=sv_SE
 
      <listitem>
       <para>
+       The <function>upper</>,  <function>lower</>,  and <function>initcap</>
+       functions
+       <indexterm><primary>upper</><secondary>and locales</></indexterm>
+       <indexterm><primary>lower</><secondary>and locales</></indexterm>
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        The <function>to_char</> family of functions
+       <indexterm><primary>to_char</><secondary>and locales</></indexterm>
       </para>
      </listitem>
     </itemizedlist>
@@ -294,7 +304,7 @@ initdb --locale=sv_SE
    allows you to store text in a variety of character sets, including
    single-byte character sets such as the ISO 8859 series and
    multiple-byte character sets such as <acronym>EUC</> (Extended Unix
-   Code), UTF8, and Mule internal code.  All character sets can be
+   Code), UTF-8, and Mule internal code.  All character sets can be
    used transparently throughout the server.  (If you use extension
    functions from other sources, it depends on whether they wrote
    their code correctly.)  The default character set is selected while
@@ -603,7 +613,8 @@ initdb -E EUC_JP
      can use <option>--encoding</option> instead of
      <option>-E</option> if you prefer to type longer option strings.
      If no <option>-E</> or <option>--encoding</option> option is
-     given, <literal>SQL_ASCII</> is used.
+     given, <command>initdb</> attempts to determine the appropriate
+     encoding to use based on the specified or default locale.
     </para>
 
     <para>
