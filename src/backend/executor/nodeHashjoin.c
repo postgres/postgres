@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.70 2005/03/31 02:02:52 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.71 2005/04/16 20:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,13 +123,13 @@ ExecHashJoin(HashJoinState *node)
 		 * execute the Hash node, to build the hash table
 		 */
 		hashNode->hashtable = hashtable;
-		(void) ExecProcNode((PlanState *) hashNode);
+		(void) MultiExecProcNode((PlanState *) hashNode);
 
 		/*
 		 * If the inner relation is completely empty, and we're not doing
 		 * an outer join, we can quit without scanning the outer relation.
 		 */
-		if (!hashtable->hashNonEmpty && node->js.jointype != JOIN_LEFT)
+		if (hashtable->totalTuples == 0 && node->js.jointype != JOIN_LEFT)
 		{
 			ExecHashTableDestroy(hashtable);
 			node->hj_HashTable = NULL;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.131 2005/03/25 21:57:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.132 2005/04/16 20:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ typedef struct ExplainState
 
 static void ExplainOneQuery(Query *query, ExplainStmt *stmt,
 				TupOutputState *tstate);
-static double elapsed_time(instr_time * starttime);
+static double elapsed_time(instr_time *starttime);
 static void explain_outNode(StringInfo str,
 				Plan *plan, PlanState *planstate,
 				Plan *outer_plan,
@@ -296,7 +296,7 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 		{
 			int		nt;
 
-			if (!rInfo->ri_TrigDesc)
+			if (!rInfo->ri_TrigDesc || !rInfo->ri_TrigInstrument)
 				continue;
 			for (nt = 0; nt < rInfo->ri_TrigDesc->numtriggers; nt++)
 			{
@@ -366,7 +366,7 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 
 /* Compute elapsed time in seconds since given timestamp */
 static double
-elapsed_time(instr_time * starttime)
+elapsed_time(instr_time *starttime)
 {
 	instr_time endtime;
 
@@ -663,7 +663,8 @@ explain_outNode(StringInfo str,
 		 * We have to forcibly clean up the instrumentation state because
 		 * we haven't done ExecutorEnd yet.  This is pretty grotty ...
 		 */
-		InstrEndLoop(planstate->instrument);
+		if (planstate->instrument)
+			InstrEndLoop(planstate->instrument);
 
 		if (planstate->instrument && planstate->instrument->nloops > 0)
 		{

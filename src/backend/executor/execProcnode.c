@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.48 2005/04/06 20:13:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.49 2005/04/16 20:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,6 +374,50 @@ ExecProcNode(PlanState *node)
 
 	return result;
 }
+
+
+/* ----------------------------------------------------------------
+ *		MultiExecProcNode
+ *
+ *		Execute a node that doesn't return individual tuples
+ *		(it might return a hashtable, bitmap, etc).  Caller should
+ *		check it got back the expected kind of Node.
+ *
+ * This has essentially the same responsibilities as ExecProcNode,
+ * but it does not do InstrStartNode/InstrStopNode (mainly because
+ * it can't tell how many returned tuples to count).  Each per-node
+ * function must provide its own instrumentation support.
+ * ----------------------------------------------------------------
+ */
+Node *
+MultiExecProcNode(PlanState *node)
+{
+	Node *result;
+
+	CHECK_FOR_INTERRUPTS();
+
+	if (node->chgParam != NULL) /* something changed */
+		ExecReScan(node, NULL); /* let ReScan handle this */
+
+	switch (nodeTag(node))
+	{
+		/*
+		 * Only node types that actually support multiexec will be listed
+		 */
+
+		case T_HashState:
+			result = MultiExecHash((HashState *) node);
+			break;
+
+		default:
+			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(node));
+			result = NULL;
+			break;
+	}
+
+	return result;
+}
+
 
 /*
  * ExecCountSlotsNode - count up the number of tuple table slots needed

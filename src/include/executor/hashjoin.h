@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.35 2005/03/06 22:15:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.36 2005/04/16 20:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ typedef struct HashJoinTableData
 
 	bool		growEnabled;	/* flag to shut off nbatch increases */
 
-	bool		hashNonEmpty;	/* did inner plan produce any rows? */
+	double		totalTuples;	/* # tuples obtained from inner plan */
 
 	/*
 	 * These arrays are allocated for the life of the hash join, but

@@ -8,13 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.92 2005/03/31 02:02:52 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.93 2005/04/16 20:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
- *		ExecHash		- generate an in-memory hash table of the relation
+ *		MultiExecHash	- generate an in-memory hash table of the relation
  *		ExecInitHash	- initialize node and subnodes
  *		ExecEndHash		- shutdown node and subnodes
  */
@@ -22,6 +22,7 @@
 
 #include "executor/execdebug.h"
 #include "executor/hashjoin.h"
+#include "executor/instrument.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "miscadmin.h"
@@ -36,12 +37,25 @@ static void ExecHashIncreaseNumBatches(HashJoinTable hashtable);
 /* ----------------------------------------------------------------
  *		ExecHash
  *
- *		build hash table for hashjoin, doing partitioning if more
- *		than one batch is required.
+ *		stub for pro forma compliance
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
 ExecHash(HashState *node)
+{
+	elog(ERROR, "Hash node does not support ExecProcNode call convention");
+	return NULL;
+}
+
+/* ----------------------------------------------------------------
+ *		MultiExecHash
+ *
+ *		build hash table for hashjoin, doing partitioning if more
+ *		than one batch is required.
+ * ----------------------------------------------------------------
+ */
+Node *
+MultiExecHash(HashState *node)
 {
 	PlanState  *outerNode;
 	List	   *hashkeys;
@@ -49,6 +63,10 @@ ExecHash(HashState *node)
 	TupleTableSlot *slot;
 	ExprContext *econtext;
 	uint32		hashvalue;
+
+	/* must provide our own instrumentation support */
+	if (node->ps.instrument)
+		InstrStartNode(node->ps.instrument);
 
 	/*
 	 * get state info from node
@@ -70,14 +88,24 @@ ExecHash(HashState *node)
 		slot = ExecProcNode(outerNode);
 		if (TupIsNull(slot))
 			break;
-		hashtable->hashNonEmpty = true;
+		hashtable->totalTuples += 1;
 		/* We have to compute the hash value */
 		econtext->ecxt_innertuple = slot;
 		hashvalue = ExecHashGetHashValue(hashtable, econtext, hashkeys);
 		ExecHashTableInsert(hashtable, ExecFetchSlotTuple(slot), hashvalue);
 	}
 
-	/* We needn't return a tuple slot or anything else */
+	/* must provide our own instrumentation support */
+	if (node->ps.instrument)
+		InstrStopNodeMulti(node->ps.instrument, hashtable->totalTuples);
+
+	/*
+	 * We do not return the hash table directly because it's not a subtype
+	 * of Node, and so would violate the MultiExecProcNode API.  Instead,
+	 * our parent Hashjoin node is expected to know how to fish it out
+	 * of our node state.  Ugly but not really worth cleaning up, since
+	 * Hashjoin knows quite a bit more about Hash besides that.
+	 */
 	return NULL;
 }
 
@@ -220,7 +248,7 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	hashtable->nbatch_original = nbatch;
 	hashtable->nbatch_outstart = nbatch;
 	hashtable->growEnabled = true;
-	hashtable->hashNonEmpty = false;
+	hashtable->totalTuples = 0;
 	hashtable->innerBatchFile = NULL;
 	hashtable->outerBatchFile = NULL;
 	hashtable->spaceUsed = 0;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.117 2005/03/16 21:38:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.118 2005/04/16 20:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,6 +105,7 @@ extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
  */
 extern PlanState *ExecInitNode(Plan *node, EState *estate);
 extern TupleTableSlot *ExecProcNode(PlanState *node);
+extern Node *MultiExecProcNode(PlanState *node);
 extern int	ExecCountSlotsNode(Plan *node);
 extern void ExecEndNode(PlanState *node);
 

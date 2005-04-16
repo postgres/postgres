@@ -7,7 +7,7 @@
  * Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.11 2005/03/25 21:57:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.12 2005/04/16 20:07:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,13 +33,10 @@ InstrAlloc(int n)
 void
 InstrStartNode(Instrumentation *instr)
 {
-	if (!instr)
-		return;
-
-	if (!INSTR_TIME_IS_ZERO(instr->starttime))
-		elog(DEBUG2, "InstrStartNode called twice in a row");
-	else
+	if (INSTR_TIME_IS_ZERO(instr->starttime))
 		INSTR_TIME_SET_CURRENT(instr->starttime);
+	else
+		elog(DEBUG2, "InstrStartNode called twice in a row");
 }
 
 /* Exit from a plan node */
@@ -48,12 +45,13 @@ InstrStopNode(Instrumentation *instr, bool returnedTuple)
 {
 	instr_time endtime;
 
-	if (!instr)
-		return;
+	/* count the returned tuples */
+	if (returnedTuple)
+		instr->tuplecount += 1;
 
 	if (INSTR_TIME_IS_ZERO(instr->starttime))
 	{
-		elog(DEBUG2, "InstrStopNode without start");
+		elog(DEBUG2, "InstrStopNode called without start");
 		return;
 	}
 
@@ -86,9 +84,17 @@ InstrStopNode(Instrumentation *instr, bool returnedTuple)
 		instr->running = true;
 		instr->firsttuple = INSTR_TIME_GET_DOUBLE(instr->counter);
 	}
+}
 
-	if (returnedTuple)
-		instr->tuplecount += 1;
+/* As above, but count multiple tuples returned at once */
+void
+InstrStopNodeMulti(Instrumentation *instr, double nTuples)
+{
+	/* count the returned tuples */
+	instr->tuplecount += nTuples;
+
+	/* delegate the rest */
+	InstrStopNode(instr, false);
 }
 
 /* Finish a run cycle for a plan node */
@@ -97,14 +103,14 @@ InstrEndLoop(Instrumentation *instr)
 {
 	double		totaltime;
 
-	if (!instr)
-		return;
-
 	/* Skip if nothing has happened, or already shut down */
 	if (!instr->running)
 		return;
 
-	/* Accumulate statistics */
+	if (!INSTR_TIME_IS_ZERO(instr->starttime))
+		elog(DEBUG2, "InstrEndLoop called on running node");
+
+	/* Accumulate per-cycle statistics into totals */
 	totaltime = INSTR_TIME_GET_DOUBLE(instr->counter);
 
 	instr->startup += instr->firsttuple;
