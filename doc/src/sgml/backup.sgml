@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.60 2005/03/23 19:38:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.61 2005/04/17 03:05:19 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -733,8 +733,8 @@ SELECT pg_stop_backup();
     the backup history file will be named something like
     <literal>0000000100001234000055CD.007C9330.backup</>.  (The second part of
     this file name stands for an exact position within the WAL file, and can
-    ordinarily be ignored.)  Once you have safely archived the backup dump
-    file, you can delete all archived WAL segments with names numerically
+    ordinarily be ignored.)  Once you have safely archived this WAL
+    segment file, you can delete all archived WAL segments with names numerically
     preceding this one.  The backup history file is just a small text file.
     It contains the label string you gave to <function>pg_start_backup</>, as
     well as the starting and ending times of the backup.  If you used the
