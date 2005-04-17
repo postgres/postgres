@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.165 2005/04/06 16:34:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.166 2005/04/17 22:24:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,11 +304,16 @@ typedef enum NodeTag
 	T_FunctionParameter,
 
 	/*
-	 * TAGS FOR FUNCTION-CALL CONTEXT AND RESULTINFO NODES (see fmgr.h)
+	 * TAGS FOR RANDOM OTHER STUFF
+	 *
+	 * These are objects that aren't part of parse/plan/execute node tree
+	 * structures, but we give them NodeTags anyway for identification
+	 * purposes (usually because they are involved in APIs where we want
+	 * to pass multiple object types through the same pointer).
 	 */
 	T_TriggerData = 900,		/* in commands/trigger.h */
-	T_ReturnSetInfo				/* in nodes/execnodes.h */
-
+	T_ReturnSetInfo,			/* in nodes/execnodes.h */
+	T_TIDBitmap					/* in nodes/tidbitmap.h */
 } NodeTag;
 
 /*
