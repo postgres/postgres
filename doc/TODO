@@ -1,8 +1,8 @@
 
-TODO list for PostgreSQL
-========================
+PostgreSQL TODO List
+====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Apr 18 08:57:57 EDT 2005
+Last updated:		Mon Apr 18 10:42:34 EDT 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -188,8 +188,7 @@ Data Types
 * Prevent INET cast to CIDR from droping netmask, SELECT '1.1.1.1'::inet::cidr
 * Add 'tid != tid ' operator for use in corruption recovery
 * Add ISo INTERVAL handling
-	o Add support for day-time syntax, INTERVAL '1 2:03:04'
-	  DAY TO SECOND
+	o Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO SECOND
 	o Add support for year-month syntax, INTERVAL '50-6' YEAR TO MONTH
 	o For syntax that isn't uniquely ISO or PG syntax, like '1:30' or
 	  '1', treat as ISO if there is a range specification clause,
@@ -692,6 +691,7 @@ Fsync
 
 Cache
 =====
+
 * Allow free-behind capability for large sequential scans, perhaps using
   posix_fadvise()
 
@@ -741,6 +741,7 @@ Cache
 * Allow sequential scans to take advantage of other concurrent
   sequentiqal scans, also called "Synchronised Scanning"
 
+
 Vacuum
 ======
 
@@ -767,6 +768,7 @@ Vacuum
 	o Scan the buffer cache to find free space or use background writer
 	o Use free-space map information to guide refilling
 	o Do VACUUM FULL if table is nearly empty?
+
 
 Locking
 =======
@@ -849,6 +851,7 @@ Write-Ahead Log
 
 * Eliminate WAL logging for CREATE TABLE AS when not doing WAL archiving
 
+
 Optimizer / Executor
 ====================
 
@@ -874,6 +877,7 @@ Optimizer / Executor
   This would be beneficial when there are few distinct values.
 
 * ANALYZE should record a pg_statistic entry for an all-NULL column
+
 
 Miscellaneous
 =============
