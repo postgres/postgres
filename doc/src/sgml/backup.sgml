@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.61 2005/04/17 03:05:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.62 2005/04/18 01:29:00 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -724,23 +724,32 @@ SELECT pg_stop_backup();
 
    <para>
     To make use of this backup, you will need to keep around all the WAL
-    segment files generated at or after the starting time of the backup.
+    segment files generated during and after the file system backup.
     To aid you in doing this, the <function>pg_stop_backup</> function
-    creates a <firstterm>backup history file</> that is immediately stored
-    into the WAL archive area.  This file is named after the first WAL
-    segment file that you need to have to make use of the backup.  For
-    example, if the starting WAL file is <literal>0000000100001234000055CD</>
-    the backup history file will be named something like
-    <literal>0000000100001234000055CD.007C9330.backup</>.  (The second part of
-    this file name stands for an exact position within the WAL file, and can
-    ordinarily be ignored.)  Once you have safely archived this WAL
-    segment file, you can delete all archived WAL segments with names numerically
-    preceding this one.  The backup history file is just a small text file.
-    It contains the label string you gave to <function>pg_start_backup</>, as
-    well as the starting and ending times of the backup.  If you used the
-    label to identify where the associated dump file is kept, then the
-    archived history file is enough to tell you which dump file to restore,
-    should you need to do so.
+    creates a <firstterm>backup history file</> that is immediately
+    stored into the WAL archive area. This file is named after the first
+    WAL segment file that you need to have to make use of the backup.
+    For example, if the starting WAL file is
+    <literal>0000000100001234000055CD</> the backup history file will be
+    named something like
+    <literal>0000000100001234000055CD.007C9330.backup</>. (The second
+    number in the file name stands for an exact position within the WAL
+    file, and can ordinarily be ignored.) Once you have safely archived
+    the WAL segment files used during the file system backup (as
+    specified in the backup history file), you can delete all archived
+    WAL segments with names numerically less. Keep in mind that only
+    completed WAL segment files are archived, so there will be delay
+    between running <function>pg_stop_backup</> and the archiving of
+    all WAL segment files needed to make the file system backup
+    consistent.
+   </para>
+   <para>
+    The backup history file is just a small text file. It contains the
+    label string you gave to <function>pg_start_backup</>, as well as
+    the starting and ending times of the backup. If you used the label
+    to identify where the associated dump file is kept, then the
+    archived history file is enough to tell you which dump file to
+    restore, should you need to do so.
    </para>
 
    <para>
