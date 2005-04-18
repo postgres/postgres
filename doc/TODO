@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Apr 17 23:17:13 EDT 2005
+Last updated:		Mon Apr 18 08:51:13 EDT 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -113,6 +113,10 @@ Administration
 
 * Force archiving of partially-full WAL files when pg_stop_backup() is
   called or the server is stopped
+
+  Doing this will allow administrators to know more easily when the
+  archive contins all the files needed for point-in-time recovery.
+
 * Create dump tool for write-ahead logs for use in determining
   transaction id for point-in-time recovery
 * Set proper permissions on non-system schemas during db creation
@@ -455,7 +459,7 @@ Commands
 
 * COPY
 	o Allow COPY to report error lines and continue
-	
+
 	  This requires the use of a savepoint before each COPY line is
 	  processed, with ROLLBACK on COPY failure.
 
@@ -468,7 +472,7 @@ Commands
 
 * CURSOR
 	o Allow UPDATE/DELETE WHERE CURRENT OF cursor
-	
+
 	  This requires using the row ctid to map cursor rows back to the
 	  original heap row. This become more complicated if WITH HOLD cursors
 	  are to be supported because WITH HOLD cursors have a copy of the row
@@ -487,7 +491,7 @@ Commands
 	o Allow INSERT/UPDATE of the system-generated oid value for a row
 	o Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
 	o Allow INSERT/UPDATE ... RETURNING new.col or old.col
-	
+
 	  This is useful for returning the auto-generated key for an INSERT.
 	  One complication is how to handle rules that run as part of
 	  the insert.
@@ -661,7 +665,7 @@ Exotic Features
   to clients
 * Allow queries across databases or servers with transaction
   semantics
-	
+
   Right now contrib/dblink can be used to issue such queries except it
   does not have locking or transaction semantics. Two-phase commit is
   needed to enable transaction semantics.
