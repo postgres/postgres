@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.58 2005/02/22 04:39:38 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.59 2005/04/18 23:47:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@ PQExpBuffer pgdumpopts;
 bool		output_clean = false;
 bool		skip_acls = false;
 bool		verbose = false;
+static bool ignoreVersion = false;
 int			server_version;
 
 /* flags for -X long options */
@@ -193,11 +194,13 @@ main(int argc, char *argv[])
 
 				break;
 
-
-
 			case 'i':
+				ignoreVersion = true;
+				appendPQExpBuffer(pgdumpopts, " -i");
+				break;
+
 			case 'o':
-				appendPQExpBuffer(pgdumpopts, " -%c", c);
+				appendPQExpBuffer(pgdumpopts, " -o");
 				break;
 
 			case 'O':
@@ -935,6 +938,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	char	   *password = NULL;
 	bool		need_pass = false;
 	const char *remoteversion_str;
+	int			my_version;
 
 	if (require_password)
 		password = simple_prompt("Password: ", 100, false);
@@ -990,6 +994,29 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		fprintf(stderr, _("%s: could not parse server version \"%s\"\n"),
 				progname, remoteversion_str);
 		exit(1);
+	}
+
+	my_version = parse_version(PG_VERSION);
+	if (my_version < 0)
+	{
+		fprintf(stderr, _("%s: could not parse version \"%s\"\n"),
+				progname, PG_VERSION);
+		exit(1);
+	}
+
+	if (my_version != server_version
+		&& (server_version < 70000	/* we can handle back to 7.0 */
+			|| server_version > my_version))
+	{
+		fprintf(stderr, _("server version: %s; %s version: %s\n"),
+				remoteversion_str, progname, PG_VERSION);
+		if (ignoreVersion)
+			fprintf(stderr, _("proceeding despite version mismatch\n"));
+		else
+		{
+			fprintf(stderr, _("aborting because of version mismatch  (Use the -i option to proceed anyway.)\n"));
+			exit(1);
+		}
 	}
 
 	return conn;
