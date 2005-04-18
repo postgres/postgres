@@ -2837,3 +2837,69 @@ So, is this worth doing? Would a robust implementation likely be accepted for
 ---------------------------(end of broadcast)---------------------------
 TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
 
+On Sun, 2005-04-10 at 21:12 -0400, Bruce Momjian wrote:
+> Jim C. Nasby wrote:
+> > Maybe better for -hackers, but here it goes anyway...
+> > 
+> > Has anyone looked at compressing WAL's before writing to disk? On a
+> > system generating a lot of WAL it seems there might be some gains to be
+> > had WAL data could be compressed before going to disk, since today's
+> > machines are generally more I/O bound than CPU bound. And unlike the
+> > base tables, you generally don't need to read the WAL, so you don't
+> > really need to worry about not being able to quickly scan through the
+> > data without decompressing it.
+> 
+> I have never heard anyone talk about it, but it seems useful.  I think
+> compressing the page images written on first page modification since
+> checkpoint would be a big win.
+
+Well it was discussed 2-3 years ago as part of the PITR preamble. You
+may be surprised to read that over...
+
+A summary of thoughts to date on this are:
+
+xlog.c XLogInsert places backup blocks into the wal buffers before
+insertion, so is the right place to do this. It would be possible to do
+this before any LWlocks are taken, so would not not necessarily impair
+scalability.
+
+Currently XLogInsert is a severe CPU bottleneck around the CRC
+calculation, as identified recently by Tom. Digging further, the code
+used seems to cause processor stalls on Intel CPUs, possibly responsible
+for much of the CPU time. Discussions to move to a 32-bit CRC would also
+be effected by this because of the byte-by-byte nature of the algorithm,
+whatever the length of the generating polynomial. PostgreSQL's CRC
+algorithm is the fastest BSD code available. Until improvement is made
+there, I would not investigate compression further. Some input from
+hardware tuning specialists is required...
+
+The current LZW compression code uses a 4096 byte lookback size, so that
+would need to be modified to extend across a whole block. An
+alternative, suggested originally by Tom and rediscovered by me because
+I just don't read everybody's fine words in history, is to simply take
+out the freespace in the middle of every heap block that consists of
+zeros.
+
+Any solution in this area must take into account the variability of the
+size of freespace in database blocks. Some databases have mostly full
+blocks, others vary. There would also be considerable variation in
+compressability of blocks, especially since some blocks (e.g. TOAST) are
+likely to already be compressed. There'd need to be some testing done to
+see exactly the point where the costs of compression produce realisable
+benefits.
+
+So any solution must be able to cope with both compressed blocks and
+non-compressed blocks. My current thinking is that this could be
+achieved by using the spare fourth bit of the BkpBlocks portion of the
+XLog structure, so that either all included BkpBlocks are compressed or
+none of them are, and hope that allows benefit to shine through. Not
+thought about heap/index issues.
+
+It is possible that an XLogWriter process could be used to assist in the
+CRC and compression calculations also, an a similar process used to
+assist decompression for recovery, in time.
+
+I regret I do not currently have time to pursue further.
+
+Best Regards, Simon Riggs
+
