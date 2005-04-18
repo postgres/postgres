@@ -716,7 +716,7 @@ Cache
   to index tuples to indicate if a tuple is currently visible to
   all transactions when the first valid heap lookup happens.  This 
   bit would have to be cleared when a heap tuple is expired.
-  
+
 * Consider automatic caching of queries at various levels:
 	o Parsed query tree
 	o Query execute plan
