@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.62 2005/04/18 01:29:00 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.63 2005/04/18 13:11:04 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -688,7 +688,13 @@ SELECT pg_start_backup('label');
 <programlisting>
 SELECT pg_stop_backup();
 </programlisting>
-     If this returns successfully, you're done.
+     This should return successfully.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Once the WAL segment files used during the backup are archived as part
+     of normal database activity, you are done.
     </para>
    </listitem>
   </orderedlist>
