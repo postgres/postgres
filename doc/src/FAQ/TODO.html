@@ -2,13 +2,13 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 <head>
-<title>PostgreSQL TODO list</title>
+<title>PostgreSQL TODO List</title>
 <meta name="generator" content="HTML::TextToHTML v2.25"/>
 </head>
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
-<h1><a name="section_1">TODO list for PostgreSQL</a></h1>
+<h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon Apr 18 08:57:57 EDT 2005
+Last updated:           Mon Apr 18 10:42:34 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at the PostgreSQL web<br/>
 site, <a href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</a>.
@@ -177,8 +177,7 @@ first.
   </li><li>Add 'tid != tid ' operator for use in corruption recovery
   </li><li>Add ISo INTERVAL handling
   <ul>
-    <li>Add support for day-time syntax, INTERVAL '1 2:03:04'
-<strong>DAY TO SECOND</strong>
+    <li>Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO SECOND
     </li><li>Add support for year-month syntax, INTERVAL '50-6' YEAR TO MONTH
     </li><li>For syntax that isn't uniquely ISO or PG syntax, like '1:30' or
           '1', treat as ISO if there is a range specification clause,
@@ -633,6 +632,7 @@ first.
   </li><li>Add an option to sync() before fsync()'ing checkpoint files
 </li></ul>
 <h1><a name="section_13">Cache</a></h1>
+
 <ul>
   <li>Allow free-behind capability for large sequential scans, perhaps using
   posix_fadvise()
