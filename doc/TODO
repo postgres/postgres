@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Apr 14 19:12:47 EDT 2005
+Last updated:		Sun Apr 17 23:00:43 EDT 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -111,6 +111,8 @@ Administration
   recent transactions aren't available for recovery in case of a disk
   failure.
 
+* Force archiving of partially-full WAL files when pg_stop_backup() is
+  called or the server is stopped
 * Create dump tool for write-ahead logs for use in determining
   transaction id for point-in-time recovery
 * Set proper permissions on non-system schemas during db creation
