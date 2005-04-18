@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Apr 18 10:42:34 EDT 2005
+Last updated:		Mon Apr 18 11:03:14 EDT 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -109,10 +109,10 @@ Administration
 
   Currently only full WAL files are archived. This means that the most
   recent transactions aren't available for recovery in case of a disk
-  failure.
+  failure.  This could be triggered by a user command or a timer.
 
-* Force archiving of partially-full WAL files when pg_stop_backup() is
-  called or the server is stopped
+* Automatically force archiving of partially-filled WAL files when 
+  pg_stop_backup() is called or the server is stopped
 
   Doing this will allow administrators to know more easily when the
   archive contins all the files needed for point-in-time recovery.
