@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon Apr 18 10:42:34 EDT 2005
+Last updated:           Mon Apr 18 11:03:14 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at the PostgreSQL web<br/>
 site, <a href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</a>.
@@ -103,10 +103,10 @@ first.
   logs
 <p>  Currently only full WAL files are archived. This means that the most
   recent transactions aren't available for recovery in case of a disk
-  failure.
+  failure.  This could be triggered by a user command or a timer.
 </p>
-  </li><li>Force archiving of partially-full WAL files when pg_stop_backup() is
-  called or the server is stopped
+  </li><li>Automatically force archiving of partially-filled WAL files when 
+  pg_stop_backup() is called or the server is stopped
 <p>  Doing this will allow administrators to know more easily when the
   archive contins all the files needed for point-in-time recovery.
 </p>
