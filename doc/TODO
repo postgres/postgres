@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Apr 18 11:03:14 EDT 2005
+Last updated:		Mon Apr 18 14:29:53 EDT 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -850,6 +850,7 @@ Write-Ahead Log
   database) in favor of this capability.
 
 * Eliminate WAL logging for CREATE TABLE AS when not doing WAL archiving
+* Compress WAL entries [wal]
 
 
 Optimizer / Executor
