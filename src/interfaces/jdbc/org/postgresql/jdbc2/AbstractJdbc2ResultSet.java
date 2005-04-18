@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.25.2.9 2004/09/13 07:14:26 jurka Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.25.2.10 2005/04/18 18:25:11 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,8 +176,10 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		// index is 1-based, but internally we use 0-based indices
 		int internalIndex;
 
-		if (index == 0)
-			throw new SQLException("Cannot move to index of 0");
+		if (index == 0) {
+			beforeFirst();
+			return false;
+		}
 
 		final int rows_size = rows.size();
 
