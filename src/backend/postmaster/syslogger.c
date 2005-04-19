@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.14 2005/03/12 01:54:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.15 2005/04/19 03:13:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -833,7 +833,7 @@ logfile_getname(pg_time_t timestamp)
 	if (strchr(Log_filename, '%'))
 	{
 		/* treat it as a strftime pattern */
-		tm = pg_localtime(&timestamp);
+		tm = pg_localtime(&timestamp, global_timezone);
 		pg_strftime(filename + len, MAXPGPATH - len, Log_filename, tm);
 	}
 	else 
@@ -868,7 +868,7 @@ set_next_rotation_time(void)
 	 */
 	rotinterval = Log_RotationAge * 60; /* convert to seconds */
 	now = time(NULL);
-	tm = pg_localtime(&now);
+	tm = pg_localtime(&now, global_timezone);
 	now += tm->tm_gmtoff;
 	now -= now % rotinterval;
 	now += rotinterval;

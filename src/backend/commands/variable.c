@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.105 2004/12/31 21:59:42 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.106 2005/04/19 03:13:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,13 +315,13 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			 * UNKNOWN as the canonical spelling.
 			 *
 			 * During GUC initialization, since the timezone library isn't
-			 * set up yet, pg_get_current_timezone will return NULL and we
+			 * set up yet, pg_get_timezone_name will return NULL and we
 			 * will leave the setting as UNKNOWN.  If this isn't
 			 * overridden from the config file then
 			 * pg_timezone_initialize() will eventually select a default
 			 * value from the environment.
 			 */
-			const char *curzone = pg_get_current_timezone();
+			const char *curzone = pg_get_timezone_name(global_timezone);
 
 			if (curzone)
 				value = curzone;
@@ -329,90 +329,36 @@ assign_timezone(const char *value, bool doit, GucSource source)
 		else
 		{
 			/*
-			 * Otherwise assume it is a timezone name.
-			 *
-			 * We have to actually apply the change before we can have any
-			 * hope of checking it.  So, save the old value in case we
-			 * have to back out.  We have to copy since
-			 * pg_get_current_timezone returns a pointer to its static
-			 * state.
-			 *
-			 * This would all get a lot simpler if the TZ library had a
-			 * better API that would let us look up and test a timezone
-			 * name without making it the default.
+			 * Otherwise assume it is a timezone name, and try to load it.
 			 */
-			const char *cur_tz;
-			char	   *save_tz;
-			bool		known,
-						acceptable;
+			pg_tz *new_tz;
 
-			cur_tz = pg_get_current_timezone();
-			if (cur_tz)
-				save_tz = pstrdup(cur_tz);
-			else
-				save_tz = NULL;
+			new_tz = pg_tzset(value);
 
-			known = pg_tzset(value);
-			acceptable = known ? tz_acceptable() : false;
-
-			if (doit && known && acceptable)
+			if (!new_tz)
 			{
-				/* Keep the changed TZ */
-				HasCTZSet = false;
+				ereport((source >= PGC_S_INTERACTIVE) ? ERROR : LOG,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("unrecognized time zone name: \"%s\"",
+								value)));
+				return NULL;
 			}
-			else
+
+			if (!tz_acceptable(new_tz))
 			{
-				/*
-				 * Revert to prior TZ setting; note we haven't changed
-				 * HasCTZSet in this path, so if we were previously using
-				 * a fixed offset, we still are.
-				 */
-				if (save_tz)
-					pg_tzset(save_tz);
-				else
-				{
-					/*
-					 * TZ library wasn't initialized yet.  Annoyingly, we
-					 * will come here during startup because guc-file.l
-					 * checks the value with doit = false before actually
-					 * applying. The best approach seems to be as follows:
-					 *
-					 * 1. known && acceptable: leave the setting in place,
-					 * since we'll apply it soon anyway.  This is mainly
-					 * so that any log messages printed during this
-					 * interval are timestamped with the user's requested
-					 * timezone.
-					 *
-					 * 2. known && !acceptable: revert to GMT for lack of any
-					 * better idea.  (select_default_timezone() may get
-					 * called later to undo this.)
-					 *
-					 * 3. !known: no need to do anything since TZ library did
-					 * not change its state.
-					 *
-					 * Again, this should all go away sometime soon.
-					 */
-					if (known && !acceptable)
-						pg_tzset("GMT");
-				}
-				/* Complain if it was bad */
-				if (!known)
-				{
-					ereport((source >= PGC_S_INTERACTIVE) ? ERROR : LOG,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("unrecognized time zone name: \"%s\"",
-									value)));
-					return NULL;
-				}
-				if (!acceptable)
-				{
-					ereport((source >= PGC_S_INTERACTIVE) ? ERROR : LOG,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					errmsg("time zone \"%s\" appears to use leap seconds",
-						   value),
-							 errdetail("PostgreSQL does not support leap seconds.")));
-					return NULL;
-				}
+				ereport((source >= PGC_S_INTERACTIVE) ? ERROR : LOG,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("time zone \"%s\" appears to use leap seconds",
+								value),
+						 errdetail("PostgreSQL does not support leap seconds.")));
+				return NULL;
+			}
+
+			if (doit)
+			{
+				/* Save the changed TZ */
+				global_timezone = new_tz;
+				HasCTZSet = false;
 			}
 		}
 	}
@@ -459,7 +405,7 @@ show_timezone(void)
 										  IntervalPGetDatum(&interval)));
 	}
 	else
-		tzn = pg_get_current_timezone();
+		tzn = pg_get_timezone_name(global_timezone);
 
 	if (tzn != NULL)
 		return tzn;

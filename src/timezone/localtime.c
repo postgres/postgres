@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.9 2004/11/01 21:34:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.10 2005/04/19 03:13:59 momjian Exp $
  */
 
 /*
@@ -16,8 +16,8 @@
 
 #include <fcntl.h>
 
-#include "pgtz.h"
 #include "private.h"
+#include "pgtz.h"
 #include "tzfile.h"
 
 
@@ -58,37 +58,6 @@ static const char gmt[] = "GMT";
  */
 #define TZDEFRULESTRING ",M4.1.0,M10.5.0"
 
-struct ttinfo
-{								/* time type information */
-	long		tt_gmtoff;		/* UTC offset in seconds */
-	int			tt_isdst;		/* used to set tm_isdst */
-	int			tt_abbrind;		/* abbreviation list index */
-	int			tt_ttisstd;		/* TRUE if transition is std time */
-	int			tt_ttisgmt;		/* TRUE if transition is UTC */
-};
-
-struct lsinfo
-{								/* leap second information */
-	pg_time_t	ls_trans;		/* transition time */
-	long		ls_corr;		/* correction to apply */
-};
-
-#define BIGGEST(a, b)	(((a) > (b)) ? (a) : (b))
-
-struct state
-{
-	int			leapcnt;
-	int			timecnt;
-	int			typecnt;
-	int			charcnt;
-	pg_time_t	ats[TZ_MAX_TIMES];
-	unsigned char types[TZ_MAX_TIMES];
-	struct ttinfo ttis[TZ_MAX_TYPES];
-	char		chars[BIGGEST(BIGGEST(TZ_MAX_CHARS + 1, sizeof gmt),
-										  (2 * (TZ_STRLEN_MAX + 1)))];
-	struct lsinfo lsis[TZ_MAX_LEAPS];
-};
-
 struct rule
 {
 	int			r_type;			/* type of rule--see below */
@@ -115,22 +84,19 @@ static const char *getoffset(const char *strp, long *offsetp);
 static const char *getrule(const char *strp, struct rule * rulep);
 static void gmtload(struct state * sp);
 static void gmtsub(const pg_time_t *timep, long offset, struct pg_tm * tmp);
-static void localsub(const pg_time_t *timep, long offset, struct pg_tm * tmp);
+static void localsub(const pg_time_t *timep, long offset, struct pg_tm * tmp, const pg_tz *tz);
 static void timesub(const pg_time_t *timep, long offset,
 		const struct state * sp, struct pg_tm * tmp);
 static pg_time_t transtime(pg_time_t janfirst, int year,
-		  const struct rule * rulep, long offset);
-static int	tzload(const char *name, struct state * sp);
-static int	tzparse(const char *name, struct state * sp, int lastditch);
+						   const struct rule * rulep, long offset);
+int	tzparse(const char *name, struct state * sp, int lastditch);
 
-static struct state lclmem;
+/* GMT timezone */
 static struct state gmtmem;
 
-#define lclptr		(&lclmem)
 #define gmtptr		(&gmtmem)
 
-static char lcl_TZname[TZ_STRLEN_MAX + 1];
-static int	lcl_is_set = 0;
+
 static int	gmt_is_set = 0;
 
 /*
@@ -156,7 +122,7 @@ detzcode(const char *codep)
 	return result;
 }
 
-static int
+int
 tzload(register const char *name, register struct state * sp)
 {
 	register const char *p;
@@ -589,7 +555,7 @@ transtime(const pg_time_t janfirst, const int year,
  * appropriate.
  */
 
-static int
+int
 tzparse(const char *name, register struct state * sp, const int lastditch)
 {
 	const char *stdname;
@@ -839,30 +805,6 @@ gmtload(struct state * sp)
 }
 
 
-bool
-pg_tzset(const char *name)
-{
-	if (lcl_is_set && strcmp(lcl_TZname, name) == 0)
-		return true;			/* no change */
-
-	if (strlen(name) >= sizeof(lcl_TZname))
-		return false;			/* not gonna fit */
-
-	if (tzload(name, lclptr) != 0)
-	{
-		if (name[0] == ':' || tzparse(name, lclptr, FALSE) != 0)
-		{
-			/* Unknown timezone. Fail our call instead of loading GMT! */
-			return false;
-		}
-	}
-
-	strcpy(lcl_TZname, name);
-	lcl_is_set = true;
-
-	return true;
-}
-
 /*
  * The easy way to behave "as if no library function calls" localtime
  * is to not call it--so we drop its guts into "localsub", which can be
@@ -872,14 +814,14 @@ pg_tzset(const char *name)
  * The unused offset argument is for the benefit of mktime variants.
  */
 static void
-localsub(const pg_time_t *timep, const long offset, struct pg_tm * tmp)
+localsub(const pg_time_t *timep, const long offset, struct pg_tm * tmp, const pg_tz *tz)
 {
-	register struct state *sp;
+ 	register const struct state *sp;
 	register const struct ttinfo *ttisp;
 	register int i;
 	const pg_time_t t = *timep;
 
-	sp = lclptr;
+	sp = &tz->state;
 	if (sp->timecnt == 0 || t < sp->ats[0])
 	{
 		i = 0;
@@ -906,9 +848,9 @@ localsub(const pg_time_t *timep, const long offset, struct pg_tm * tmp)
 
 
 struct pg_tm *
-pg_localtime(const pg_time_t *timep)
+pg_localtime(const pg_time_t *timep, const pg_tz *tz)
 {
-	localsub(timep, 0L, &tm);
+	localsub(timep, 0L, &tm, tz);
 	return &tm;
 }
 
@@ -1084,15 +1026,16 @@ pg_next_dst_boundary(const pg_time_t *timep,
 					 int *before_isdst,
 					 pg_time_t *boundary,
 					 long int *after_gmtoff,
-					 int *after_isdst)
+					 int *after_isdst,
+	                 const pg_tz *tz)
 {
-	register struct state *sp;
+	register const struct state *sp;
 	register const struct ttinfo *ttisp;
 	int i;
 	int j;
 	const pg_time_t t = *timep;
 
-	sp = lclptr;
+	sp = &tz->state;
 	if (sp->timecnt == 0)
 	{
 		/* non-DST zone, use lowest-numbered standard type */
@@ -1158,9 +1101,9 @@ pg_next_dst_boundary(const pg_time_t *timep,
  * Return the name of the current timezone
  */
 const char *
-pg_get_current_timezone(void)
+pg_get_timezone_name(pg_tz *tz)
 {
-	if (lcl_is_set)
-		return lcl_TZname;
+	if (tz)
+		return tz->TZname;
 	return NULL;
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.29 2004/12/31 22:03:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.30 2005/04/19 03:13:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,12 +26,18 @@
 #include "utils/datetime.h"
 #include "utils/elog.h"
 #include "utils/guc.h"
+#include "utils/hsearch.h"
+
+/* Current global timezone */
+pg_tz *global_timezone = NULL;
 
 
 static char tzdir[MAXPGPATH];
 static int	done_tzdir = 0;
 
 static const char *identify_system_timezone(void);
+static const char *select_default_timezone(void);
+static bool set_global_timezone(const char *tzname);
 
 
 /*
@@ -156,12 +162,14 @@ score_timezone(const char *tzname, struct tztry * tt)
 	struct tm  *systm;
 	struct pg_tm *pgtm;
 	char		cbuf[TZ_STRLEN_MAX + 1];
+	pg_tz       *tz;
 
-	if (!pg_tzset(tzname))
+	tz = pg_tzset(tzname);
+	if (!tz)
 		return -1;				/* can't handle the TZ name at all */
 
 	/* Reject if leap seconds involved */
-	if (!tz_acceptable())
+	if (!tz_acceptable(tz))
 	{
 		elog(DEBUG4, "Reject TZ \"%s\": uses leap seconds", tzname);
 		return -1;
@@ -171,7 +179,7 @@ score_timezone(const char *tzname, struct tztry * tt)
 	for (i = 0; i < tt->n_test_times; i++)
 	{
 		pgtt = (pg_time_t) (tt->test_times[i]);
-		pgtm = pg_localtime(&pgtt);
+		pgtm = pg_localtime(&pgtt, tz);
 		if (!pgtm)
 			return -1;			/* probably shouldn't happen */
 		systm = localtime(&(tt->test_times[i]));
@@ -957,6 +965,82 @@ identify_system_timezone(void)
 #endif   /* WIN32 */
 
 
+
+/*
+ * We keep loaded timezones in a hashtable so we don't have to
+ * load and parse the TZ definition file every time it is selected.
+ */
+static HTAB *timezone_cache = NULL;
+static bool
+init_timezone_hashtable(void)
+{
+	HASHCTL		hash_ctl;
+
+	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
+
+	hash_ctl.keysize = TZ_STRLEN_MAX;
+	hash_ctl.entrysize = sizeof(pg_tz);
+
+	timezone_cache = hash_create("Timezones",
+								 31,
+								 &hash_ctl,
+								 HASH_ELEM);
+	if (!timezone_cache)
+		return false;
+
+	return true;
+}
+
+/*
+ * Load a timezone from file or from cache.
+ * Does not verify that the timezone is acceptable!
+ */
+struct pg_tz *
+pg_tzset(const char *name)
+{
+	pg_tz *tzp;
+	pg_tz tz;
+	
+	if (strlen(name) >= TZ_STRLEN_MAX)
+		return NULL;			/* not going to fit */
+
+	if (!timezone_cache)
+		if (!init_timezone_hashtable())
+			return NULL;
+
+	tzp = (pg_tz *)hash_search(timezone_cache,
+							  name,
+							  HASH_FIND,
+							  NULL);
+	if (tzp)
+		/* Timezone found in cache, nothing more to do */
+		return tzp;
+
+	if (tzload(name, &tz.state) != 0)
+	{
+		if (name[0] == ':' || tzparse(name, &tz.state, FALSE) != 0)
+			/* Unknown timezone. Fail our call instead of loading GMT! */
+			return NULL;
+	}
+
+	strcpy(tz.TZname, name);
+
+	/* Save timezone in the cache */
+	tzp = hash_search(timezone_cache,
+					  name,
+					  HASH_ENTER,
+					  NULL);
+	
+	if (!tzp)
+		return NULL;
+	
+	strcpy(tzp->TZname, tz.TZname);
+	memcpy(&tzp->state, &tz.state, sizeof(tz.state));
+
+	return tzp;
+}
+
+
 /*
  * Check whether timezone is acceptable.
  *
@@ -968,7 +1052,7 @@ identify_system_timezone(void)
  * it can restore the old value of TZ if we don't like the new one.
  */
 bool
-tz_acceptable(void)
+tz_acceptable(pg_tz *tz)
 {
 	struct pg_tm *tt;
 	pg_time_t	time2000;
@@ -979,10 +1063,33 @@ tz_acceptable(void)
 	 * any other result has to be due to leap seconds.
 	 */
 	time2000 = (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400;
-	tt = pg_localtime(&time2000);
+	tt = pg_localtime(&time2000, tz);
 	if (!tt || tt->tm_sec != 0)
 		return false;
 
+	return true;
+}
+
+
+/*
+ * Set the global timezone. Verify that it's acceptable first.
+ */
+static bool
+set_global_timezone(const char *tzname)
+{
+	pg_tz *tznew;
+
+	if (!tzname || !tzname[0])
+		return false;
+	
+	tznew = pg_tzset(tzname);
+	if (!tznew)
+		return false;
+
+	if (!tz_acceptable(tznew))
+		return false;
+
+	global_timezone = tznew;
 	return true;
 }
 
@@ -995,20 +1102,20 @@ tz_acceptable(void)
  * from the behavior of the system timezone library.  When all else fails,
  * fall back to GMT.
  */
-const char *
+static const char *
 select_default_timezone(void)
 {
 	const char *def_tz;
 
 	def_tz = getenv("TZ");
-	if (def_tz && pg_tzset(def_tz) && tz_acceptable())
+	if (set_global_timezone(def_tz))
 		return def_tz;
 
 	def_tz = identify_system_timezone();
-	if (def_tz && pg_tzset(def_tz) && tz_acceptable())
+	if (set_global_timezone(def_tz))
 		return def_tz;
 
-	if (pg_tzset("GMT") && tz_acceptable())
+	if (set_global_timezone("GMT"))
 		return "GMT";
 
 	ereport(FATAL,

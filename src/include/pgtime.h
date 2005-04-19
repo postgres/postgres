@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/include/pgtime.h,v 1.6 2004/12/31 22:03:19 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/include/pgtime.h,v 1.7 2005/04/19 03:13:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,21 +37,24 @@ struct pg_tm
 	const char *tm_zone;
 };
 
-extern struct pg_tm *pg_localtime(const pg_time_t *timep);
+typedef struct pg_tz pg_tz;
+
+extern struct pg_tm *pg_localtime(const pg_time_t *timep, const pg_tz *tz);
 extern struct pg_tm *pg_gmtime(const pg_time_t *timep);
 extern int	pg_next_dst_boundary(const pg_time_t *timep,
 								 long int *before_gmtoff,
 								 int *before_isdst,
 								 pg_time_t *boundary,
 								 long int *after_gmtoff,
-								 int *after_isdst);
+								 int *after_isdst,
+	                             const pg_tz *tz);
 extern size_t pg_strftime(char *s, size_t max, const char *format,
 			const struct pg_tm * tm);
 
 extern void pg_timezone_initialize(void);
-extern bool pg_tzset(const char *tzname);
-extern bool tz_acceptable(void);
-extern const char *select_default_timezone(void);
-extern const char *pg_get_current_timezone(void);
+extern pg_tz *pg_tzset(const char *tzname);
+extern bool tz_acceptable(pg_tz *tz);
+extern const char *pg_get_timezone_name(pg_tz *tz);
 
+extern pg_tz *global_timezone;
 #endif   /* _PGTIME_H */
