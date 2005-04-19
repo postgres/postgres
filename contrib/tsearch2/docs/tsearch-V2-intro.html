@@ -188,6 +188,7 @@ pg_ts_dict, pg_ts_parser, pg_ts_cfg, pg_ts_cfgmap are added.</p>
          public | pg_ts_parser | table | kopciuch
         (4 rows)
 </pre>
+<p>You may need to grant permissions to use on pg_ts_dict, pg_ts_parser, pg_ts_cfg, pg_ts_cfgmap tables to let non-superuser works with tsearch2. GRANT SELECT should be enough for search-only access. </p>
 <h3>TYPES AND FUNCTIONS PROVIDED BY TSEARCH2</h3>
 <p>The first thing we can do is try out some of the types that are
 provided for us. Lets look at the tsvector type provided for
