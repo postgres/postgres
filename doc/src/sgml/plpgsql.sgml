@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.65 2005/04/07 14:53:04 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.66 2005/04/19 03:37:20 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2103,6 +2103,40 @@ END;
       don't use <literal>EXCEPTION</> without need.
      </para>
     </tip>
+    <example id="plpgsql-upsert-example">
+    <para>
+    This example uses an <literal>EXCEPTION</> to <command>UPDATE</> or
+    <command>INSERT</>, as appropriate.
+
+<programlisting>
+CREATE TABLE db (a INT PRIMARY KEY, b TEXT);
+
+CREATE FUNCTION merge_db (key INT, data TEXT) RETURNS VOID AS
+$$
+BEGIN
+    LOOP
+        UPDATE db SET b = data WHERE a = key;
+        IF found THEN
+            RETURN;
+        END IF;
+
+        BEGIN
+            INSERT INTO db(a,b) VALUES (key, data);
+            RETURN;
+        EXCEPTION WHEN unique_violation THEN
+            -- do nothing
+        END;
+    END LOOP;
+END;
+$$
+LANGUAGE plpgsql;
+
+SELECT merge_db (1, 'david');
+SELECT merge_db (1, 'dennis');
+</programlisting>
+
+    </para>
+    </example>
   </sect2>
   </sect1>
 
