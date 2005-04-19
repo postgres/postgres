@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.54.4.4 2005/04/18 01:29:08 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.54.4.5 2005/04/19 01:40:02 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -688,7 +688,13 @@ SELECT pg_start_backup('label');
 <programlisting>
 SELECT pg_stop_backup();
 </programlisting>
-     If this returns successfully, you're done.
+     This should return successfully.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Once the WAL segment files used during the backup are archived as part
+     of normal database activity, you are done.
     </para>
    </listitem>
   </orderedlist>
@@ -735,13 +741,15 @@ SELECT pg_stop_backup();
     <literal>0000000100001234000055CD.007C9330.backup</>. (The second
     number in the file name stands for an exact position within the WAL
     file, and can ordinarily be ignored.) Once you have safely archived
-    the WAL segment files used during the file system backup (as
-    specified in the backup history file), you can delete all archived
-    WAL segments with names numerically less. Keep in mind that only
-    completed WAL segment files are archived, so there will be delay
-    between running <function>pg_stop_backup</> and the archiving of
-    all WAL segment files needed to make the file system backup
-    consistent.
+    the file system backup and the WAL segment files used during the
+    backup (as specified in the backup history file), all archived WAL
+    segments with names numerically less are no longer needed to recover
+    the file system backup and may be deleted. However, you should
+    consider keeping several backup sets to be absolutely certain that
+    you are can recover your data. Keep in mind that only completed WAL
+    segment files are archived, so there will be delay between running
+    <function>pg_stop_backup</> and the archiving of all WAL segment
+    files needed to make the file system backup consistent.
    </para>
    <para>
     The backup history file is just a small text file. It contains the
