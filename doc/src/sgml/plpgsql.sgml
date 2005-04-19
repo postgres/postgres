@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.66 2005/04/19 03:37:20 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.67 2005/04/19 03:55:43 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2104,6 +2104,7 @@ END;
      </para>
     </tip>
     <example id="plpgsql-upsert-example">
+    <title>Exceptions with UPDATE/INSERT</title>
     <para>
     This example uses an <literal>EXCEPTION</> to <command>UPDATE</> or
     <command>INSERT</>, as appropriate.
