@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.179 2005/04/12 05:11:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.180 2005/04/19 22:35:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,12 @@ static SeqScan *create_seqscan_plan(Query *root, Path *best_path,
 					List *tlist, List *scan_clauses);
 static IndexScan *create_indexscan_plan(Query *root, IndexPath *best_path,
 					  List *tlist, List *scan_clauses);
+static BitmapHeapScan *create_bitmap_scan_plan(Query *root,
+											   BitmapHeapPath *best_path,
+											   List *tlist, List *scan_clauses);
+static Plan *create_bitmap_subplan(Query *root, Node *bitmapqual);
+static List *create_bitmap_qual(Node *bitmapqual);
+static List *create_bitmap_indxqual(Node *bitmapqual);
 static TidScan *create_tidscan_plan(Query *root, TidPath *best_path,
 					List *tlist, List *scan_clauses);
 static SubqueryScan *create_subqueryscan_plan(Query *root, Path *best_path,
@@ -80,10 +86,22 @@ static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   List *indxid, List *indxqual, List *indxqualorig,
 			   List *indxstrategy, List *indxsubtype, List *indxlossy,
 			   ScanDirection indexscandir);
+static BitmapIndexScan *make_bitmap_indexscan(Index scanrelid, Oid indxid,
+											  List *indxqual,
+											  List *indxqualorig,
+											  List *indxstrategy,
+											  List *indxsubtype);
+static BitmapHeapScan *make_bitmap_heapscan(List *qptlist,
+											List *qpqual,
+											Plan *lefttree,
+											List *bitmapqualorig,
+											Index scanrelid);
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tideval);
 static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
 				  Index scanrelid);
+static BitmapAnd *make_bitmap_and(List *bitmapplans);
+static BitmapOr *make_bitmap_or(List *bitmapplans);
 static NestLoop *make_nestloop(List *tlist,
 			  List *joinclauses, List *otherclauses,
 			  Plan *lefttree, Plan *righttree,
@@ -127,8 +145,9 @@ create_plan(Query *root, Path *best_path)
 
 	switch (best_path->pathtype)
 	{
-		case T_IndexScan:
 		case T_SeqScan:
+		case T_IndexScan:
+		case T_BitmapHeapScan:
 		case T_TidScan:
 		case T_SubqueryScan:
 		case T_FunctionScan:
@@ -218,6 +237,13 @@ create_scan_plan(Query *root, Path *best_path)
 												  (IndexPath *) best_path,
 												  tlist,
 												  scan_clauses);
+			break;
+
+		case T_BitmapHeapScan:
+			plan = (Scan *) create_bitmap_scan_plan(root,
+													(BitmapHeapPath *) best_path,
+													tlist,
+													scan_clauses);
 			break;
 
 		case T_TidScan:
@@ -328,8 +354,9 @@ disuse_physical_tlist(Plan *plan, Path *path)
 	/* Only need to undo it for path types handled by create_scan_plan() */
 	switch (path->pathtype)
 	{
-		case T_IndexScan:
 		case T_SeqScan:
+		case T_IndexScan:
+		case T_BitmapHeapScan:
 		case T_TidScan:
 		case T_SubqueryScan:
 		case T_FunctionScan:
@@ -671,7 +698,7 @@ create_seqscan_plan(Query *root, Path *best_path,
 
 /*
  * create_indexscan_plan
- *	  Returns a indexscan plan for the base relation scanned by 'best_path'
+ *	  Returns an indexscan plan for the base relation scanned by 'best_path'
  *	  with restriction clauses 'scan_clauses' and targetlist 'tlist'.
  *
  * The indexquals list of the path contains a sublist of implicitly-ANDed
@@ -705,6 +732,37 @@ create_indexscan_plan(Query *root,
 	Assert(baserelid > 0);
 	Assert(best_path->path.parent->rtekind == RTE_RELATION);
 
+	/* Build list of index OIDs */
+	indexids = NIL;
+	foreach(l, best_path->indexinfo)
+	{
+		IndexOptInfo *index = (IndexOptInfo *) lfirst(l);
+
+		indexids = lappend_oid(indexids, index->indexoid);
+	}
+
+	/*
+	 * Build "stripped" indexquals structure (no RestrictInfos) to pass to
+	 * executor as indxqualorig
+	 */
+	stripped_indxquals = NIL;
+	foreach(l, indxquals)
+	{
+		List	   *andlist = (List *) lfirst(l);
+
+		stripped_indxquals = lappend(stripped_indxquals,
+									 get_actual_clauses(andlist));
+	}
+
+	/*
+	 * The executor needs a copy with the indexkey on the left of each
+	 * clause and with index attr numbers substituted for table ones. This
+	 * pass also gets strategy info and looks for "lossy" operators.
+	 */
+	fix_indxqual_references(indxquals, best_path,
+							&fixed_indxquals,
+							&indxstrategy, &indxsubtype, &indxlossy);
+
 	/*
 	 * If this is a innerjoin scan, the indexclauses will contain join
 	 * clauses that are not present in scan_clauses (since the passed-in
@@ -728,31 +786,6 @@ create_indexscan_plan(Query *root,
 
 	/* Reduce RestrictInfo list to bare expressions */
 	scan_clauses = get_actual_clauses(scan_clauses);
-
-	/* Sort clauses into best execution order */
-	scan_clauses = order_qual_clauses(root, scan_clauses);
-
-	/* Build list of index OIDs */
-	indexids = NIL;
-	foreach(l, best_path->indexinfo)
-	{
-		IndexOptInfo *index = (IndexOptInfo *) lfirst(l);
-
-		indexids = lappend_oid(indexids, index->indexoid);
-	}
-
-	/*
-	 * Build "stripped" indexquals structure (no RestrictInfos) to pass to
-	 * executor as indxqualorig
-	 */
-	stripped_indxquals = NIL;
-	foreach(l, indxquals)
-	{
-		List	   *andlist = (List *) lfirst(l);
-
-		stripped_indxquals = lappend(stripped_indxquals,
-									 get_actual_clauses(andlist));
-	}
 
 	/*
 	 * The qpqual list must contain all restrictions not automatically
@@ -784,14 +817,8 @@ create_indexscan_plan(Query *root,
 		qpqual = list_difference(scan_clauses, linitial(stripped_indxquals));
 	}
 
-	/*
-	 * The executor needs a copy with the indexkey on the left of each
-	 * clause and with index attr numbers substituted for table ones. This
-	 * pass also gets strategy info and looks for "lossy" operators.
-	 */
-	fix_indxqual_references(indxquals, best_path,
-							&fixed_indxquals,
-							&indxstrategy, &indxsubtype, &indxlossy);
+	/* Sort clauses into best execution order */
+	qpqual = order_qual_clauses(root, qpqual);
 
 	/* Finally ready to build the plan node */
 	scan_plan = make_indexscan(tlist,
@@ -810,6 +837,339 @@ create_indexscan_plan(Query *root,
 	scan_plan->scan.plan.plan_rows = best_path->rows;
 
 	return scan_plan;
+}
+
+/*
+ * create_bitmap_scan_plan
+ *	  Returns a bitmap scan plan for the base relation scanned by 'best_path'
+ *	  with restriction clauses 'scan_clauses' and targetlist 'tlist'.
+ */
+static BitmapHeapScan *
+create_bitmap_scan_plan(Query *root,
+						BitmapHeapPath *best_path,
+						List *tlist,
+						List *scan_clauses)
+{
+	Index		baserelid = best_path->path.parent->relid;
+	Plan	   *bitmapqualplan;
+	List	   *bitmapqualorig;
+	List	   *indexquals;
+	List	   *qpqual;
+	BitmapHeapScan *scan_plan;
+
+	/* it should be a base rel... */
+	Assert(baserelid > 0);
+	Assert(best_path->path.parent->rtekind == RTE_RELATION);
+
+	/* Process the bitmapqual tree into a Plan tree */
+	bitmapqualplan = create_bitmap_subplan(root, best_path->bitmapqual);
+
+	/* Process the bitmapqual tree into an expression tree, too */
+	bitmapqualorig = create_bitmap_qual(best_path->bitmapqual);
+
+	/* Also extract the true index conditions */
+	indexquals = create_bitmap_indxqual(best_path->bitmapqual);
+
+	/*
+	 * If this is a innerjoin scan, the indexclauses will contain join
+	 * clauses that are not present in scan_clauses (since the passed-in
+	 * value is just the rel's baserestrictinfo list).  We must add these
+	 * clauses to scan_clauses to ensure they get checked.	In most cases
+	 * we will remove the join clauses again below, but if a join clause
+	 * contains a special operator, we need to make sure it gets into the
+	 * scan_clauses.
+	 */
+	if (best_path->isjoininner)
+	{
+		/*
+		 * Pointer comparison should be enough to determine RestrictInfo
+		 * matches.
+		 */
+		scan_clauses = list_union_ptr(scan_clauses, bitmapqualorig);
+	}
+
+	/* Reduce RestrictInfo list to bare expressions */
+	scan_clauses = get_actual_clauses(scan_clauses);
+
+	/*
+	 * The qpqual list must contain all restrictions not automatically
+	 * handled by the index.  All the predicates in the indexquals will be
+	 * checked (either by the index itself, or by nodeBitmapHeapscan.c),
+	 * but if there are any "special" or lossy operators involved then they
+	 * must be added to qpqual.  The upshot is that qpquals must contain
+	 * scan_clauses minus whatever appears in indexquals.
+	 *
+	 * NOTE: when there are OR clauses in indexquals, the simple equality
+	 * check used by list_difference will only detect matches in case of
+	 * chance equality of the OR subclause ordering.  This is probably all
+	 * right for now because that order will match what's in scan_clauses
+	 * ... but perhaps we need more smarts here.
+	 */
+	qpqual = list_difference(scan_clauses, indexquals);
+
+	/* Sort clauses into best execution order */
+	qpqual = order_qual_clauses(root, qpqual);
+
+	/* Finally ready to build the plan node */
+	scan_plan = make_bitmap_heapscan(tlist,
+									 qpqual,
+									 bitmapqualplan,
+									 bitmapqualorig,
+									 baserelid);
+
+	copy_path_costsize(&scan_plan->scan.plan, &best_path->path);
+	/* use the indexscan-specific rows estimate, not the parent rel's */
+	scan_plan->scan.plan.plan_rows = best_path->rows;
+
+	return scan_plan;
+}
+
+/*
+ * Given a bitmapqual tree, generate the Plan tree that implements it
+ */
+static Plan *
+create_bitmap_subplan(Query *root, Node *bitmapqual)
+{
+	Plan	   *plan;
+	Plan	   *subplan;
+
+	if (bitmapqual == NULL)
+		return NULL;			/* probably can't happen */
+	if (IsA(bitmapqual, List))
+	{
+		/* this case is to handle the List arguments of AND/OR */
+		List	   *newlist = NIL;
+		ListCell   *l;
+
+		foreach(l, (List *) bitmapqual)
+		{
+			subplan = create_bitmap_subplan(root, lfirst(l));
+			newlist = lappend(newlist, subplan);
+		}
+		plan = (Plan *) newlist;
+	}
+	else if (and_clause(bitmapqual))
+	{
+		subplan = create_bitmap_subplan(root,
+									(Node *) ((BoolExpr *) bitmapqual)->args);
+		plan = (Plan *) make_bitmap_and((List *) subplan);
+	}
+	else if (or_clause(bitmapqual))
+	{
+		subplan = create_bitmap_subplan(root,
+									(Node *) ((BoolExpr *) bitmapqual)->args);
+		plan = (Plan *) make_bitmap_or((List *) subplan);
+	}
+	else if (IsA(bitmapqual, IndexPath))
+	{
+		IndexPath *ipath = (IndexPath *) bitmapqual;
+		IndexScan *iscan;
+		BitmapIndexScan *bscan;
+
+		/* Use the regular indexscan plan build machinery... */
+		iscan = create_indexscan_plan(root, ipath, NIL, NIL);
+		Assert(list_length(iscan->indxid) == 1);
+		/* then convert to a bitmap indexscan */
+		bscan = make_bitmap_indexscan(iscan->scan.scanrelid,
+									  linitial_oid(iscan->indxid),
+									  linitial(iscan->indxqual),
+									  linitial(iscan->indxqualorig),
+									  linitial(iscan->indxstrategy),
+									  linitial(iscan->indxsubtype));
+		/* XXX this cost is wrong: */
+		copy_path_costsize(&bscan->scan.plan, &ipath->path);
+		/* use the indexscan-specific rows estimate, not the parent rel's */
+		bscan->scan.plan.plan_rows = ipath->rows;
+		plan = (Plan *) bscan;
+	}
+	else
+	{
+		elog(ERROR, "unrecognized node type: %d", nodeTag(bitmapqual));
+		plan = NULL;			/* keep compiler quiet */
+	}
+
+	return plan;
+}
+
+/*
+ * Given a bitmapqual tree, generate the equivalent ordinary expression tree
+ * (which we need for the bitmapqualorig field of the BitmapHeapScan plan).
+ * The result is expressed as an implicit-AND list.
+ */
+static List *
+create_bitmap_qual(Node *bitmapqual)
+{
+	List	   *result;
+	List	   *sublist;
+
+	if (and_clause(bitmapqual))
+	{
+		ListCell   *l;
+
+		result = NIL;
+		foreach(l, ((BoolExpr *) bitmapqual)->args)
+		{
+			sublist = create_bitmap_qual(lfirst(l));
+			result = list_concat(result, sublist);
+		}
+	}
+	else if (or_clause(bitmapqual))
+	{
+		List	   *newlist = NIL;
+		ListCell   *l;
+
+		foreach(l, ((BoolExpr *) bitmapqual)->args)
+		{
+			sublist = create_bitmap_qual(lfirst(l));
+			if (sublist == NIL)
+			{
+				/* constant TRUE input yields constant TRUE OR result */
+				return NIL;
+			}
+			newlist = lappend(newlist, make_ands_explicit(sublist));
+		}
+		result = list_make1(make_orclause(newlist));
+	}
+	else if (IsA(bitmapqual, IndexPath))
+	{
+		IndexPath *ipath = (IndexPath *) bitmapqual;
+
+		Assert(list_length(ipath->indexclauses) == 1);
+		result = get_actual_clauses(linitial(ipath->indexclauses));
+	}
+	else
+	{
+		elog(ERROR, "unrecognized node type: %d", nodeTag(bitmapqual));
+		result = NIL;			/* keep compiler quiet */
+	}
+
+	return result;
+}
+
+/*
+ * Same as above, except extract the indxqual conditions (which are different
+ * if there are special index operators or lossy operators involved).
+ *
+ * The result essentially represents the conditions the indexscan guarantees
+ * to enforce, which may be weaker than the original qual expressions.
+ */
+static List *
+create_bitmap_indxqual(Node *bitmapqual)
+{
+	List	   *result;
+	List	   *sublist;
+	ListCell   *l;
+
+	if (and_clause(bitmapqual))
+	{
+		result = NIL;
+		foreach(l, ((BoolExpr *) bitmapqual)->args)
+		{
+			sublist = create_bitmap_indxqual(lfirst(l));
+			result = list_concat(result, sublist);
+		}
+	}
+	else if (or_clause(bitmapqual))
+	{
+		List	   *newlist = NIL;
+
+		foreach(l, ((BoolExpr *) bitmapqual)->args)
+		{
+			sublist = create_bitmap_indxqual(lfirst(l));
+			if (sublist == NIL)
+			{
+				/* constant TRUE input yields constant TRUE OR result */
+				return NIL;
+			}
+			newlist = lappend(newlist, make_ands_explicit(sublist));
+		}
+		result = list_make1(make_orclause(newlist));
+	}
+	else if (IsA(bitmapqual, IndexPath))
+	{
+		IndexPath *ipath = (IndexPath *) bitmapqual;
+		IndexOptInfo *index;
+
+		Assert(list_length(ipath->indexinfo) == 1);
+		index = linitial(ipath->indexinfo);
+
+		/*
+		 * We have to remove "lossy" index operators from the result, since
+		 * the index isn't guaranteeing they are enforced.  (This will lead
+		 * to the operators being rechecked as qpquals of the BitmapHeapScan
+		 * node.)
+		 *
+		 * XXX look at restructuring to share code better with
+		 * fix_indxqual_references()
+		 */
+		result = NIL;
+		Assert(list_length(ipath->indexquals) == 1);
+		foreach(l, (List *) linitial(ipath->indexquals))
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+			OpExpr	   *clause;
+			Oid			opno;
+			Node	   *indexkey;
+			Oid			opclass;
+			int			stratno;
+			Oid			stratsubtype;
+			bool		recheck;
+
+			Assert(IsA(rinfo, RestrictInfo));
+			clause = (OpExpr *) rinfo->clause;
+			if (!IsA(clause, OpExpr) || list_length(clause->args) != 2)
+				elog(ERROR, "indexqual clause is not binary opclause");
+			opno = clause->opno;
+
+			/*
+			 * Check to see if the indexkey is on the right; if so, commute
+			 * the operator.  The indexkey should be the side that refers to
+			 * (only) the base relation.
+			 */
+			if (!bms_equal(rinfo->left_relids, index->rel->relids))
+			{
+				opno = get_commutator(opno);
+				if (!OidIsValid(opno))
+					elog(ERROR, "could not find commutator for operator %u",
+						 clause->opno);
+				indexkey = lsecond(clause->args);
+			}
+			else
+				indexkey = linitial(clause->args);
+
+			/*
+			 * Identify the index attribute and get the index opclass.
+			 * We use fix_indxqual_operand() which does a little more
+			 * than we really need, but it will do.
+			 */
+			(void) fix_indxqual_operand(indexkey,
+										index,
+										&opclass);
+
+			/*
+			 * Look up the (possibly commuted) operator in the operator class
+			 * to get its strategy numbers and the recheck indicator.  This
+			 * also double-checks that we found an operator matching the
+			 * index.
+			 */
+			get_op_opclass_properties(opno, opclass,
+									  &stratno, &stratsubtype, &recheck);
+
+			/*
+			 * Finally, we can include the clause in the result if it's
+			 * not a lossy operator.
+			 */
+			if (!recheck)
+				result = lappend(result, clause);
+		}
+	}
+	else
+	{
+		elog(ERROR, "unrecognized node type: %d", nodeTag(bitmapqual));
+		result = NIL;			/* keep compiler quiet */
+	}
+
+	return result;
 }
 
 /*
@@ -1550,6 +1910,53 @@ make_indexscan(List *qptlist,
 	return node;
 }
 
+static BitmapIndexScan *
+make_bitmap_indexscan(Index scanrelid,
+					  Oid indxid,
+					  List *indxqual,
+					  List *indxqualorig,
+					  List *indxstrategy,
+					  List *indxsubtype)
+{
+	BitmapIndexScan *node = makeNode(BitmapIndexScan);
+	Plan	   *plan = &node->scan.plan;
+
+	/* cost should be inserted by caller */
+	plan->targetlist = NIL;		/* not used */
+	plan->qual = NIL;			/* not used */
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+	node->scan.scanrelid = scanrelid;
+	node->indxid = indxid;
+	node->indxqual = indxqual;
+	node->indxqualorig = indxqualorig;
+	node->indxstrategy = indxstrategy;
+	node->indxsubtype = indxsubtype;
+
+	return node;
+}
+
+static BitmapHeapScan *
+make_bitmap_heapscan(List *qptlist,
+					 List *qpqual,
+					 Plan *lefttree,
+					 List *bitmapqualorig,
+					 Index scanrelid)
+{
+	BitmapHeapScan *node = makeNode(BitmapHeapScan);
+	Plan	   *plan = &node->scan.plan;
+
+	/* cost should be inserted by caller */
+	plan->targetlist = qptlist;
+	plan->qual = qpqual;
+	plan->lefttree = lefttree;
+	plan->righttree = NULL;
+	node->scan.scanrelid = scanrelid;
+	node->bitmapqualorig = bitmapqualorig;
+
+	return node;
+}
+
 static TidScan *
 make_tidscan(List *qptlist,
 			 List *qpqual,
@@ -1649,6 +2056,82 @@ make_append(List *appendplans, bool isTarget, List *tlist)
 	plan->righttree = NULL;
 	node->appendplans = appendplans;
 	node->isTarget = isTarget;
+
+	return node;
+}
+
+static BitmapAnd *
+make_bitmap_and(List *bitmapplans)
+{
+	BitmapAnd  *node = makeNode(BitmapAnd);
+	Plan	   *plan = &node->plan;
+	ListCell   *subnode;
+
+	/*
+	 * Compute cost as sum of subplan costs, plus 10x cpu_operator_cost
+	 * (a pretty arbitrary amount, agreed) for each tbm_intersect needed.
+	 */
+	plan->startup_cost = 0;
+	plan->total_cost = 0;
+	plan->plan_rows = 0;
+	plan->plan_width = 0;		/* meaningless */
+	foreach(subnode, bitmapplans)
+	{
+		Plan	   *subplan = (Plan *) lfirst(subnode);
+
+		if (subnode == list_head(bitmapplans))	/* first node? */
+		{
+			plan->startup_cost = subplan->startup_cost;
+			plan->plan_rows = subplan->plan_rows;
+		}
+		else
+			plan->plan_rows = Min(plan->plan_rows, subplan->plan_rows);
+		plan->total_cost += subplan->total_cost;
+	}
+
+	plan->targetlist = NIL;
+	plan->qual = NIL;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+	node->bitmapplans = bitmapplans;
+
+	return node;
+}
+
+static BitmapOr *
+make_bitmap_or(List *bitmapplans)
+{
+	BitmapOr   *node = makeNode(BitmapOr);
+	Plan	   *plan = &node->plan;
+	ListCell   *subnode;
+
+	/*
+	 * Compute cost as sum of subplan costs, plus 10x cpu_operator_cost
+	 * (a pretty arbitrary amount, agreed) for each tbm_union needed.
+	 * We assume that tbm_union can be optimized away for BitmapIndexScan
+	 * subplans.
+	 */
+	plan->startup_cost = 0;
+	plan->total_cost = 0;
+	plan->plan_rows = 0;
+	plan->plan_width = 0;		/* meaningless */
+	foreach(subnode, bitmapplans)
+	{
+		Plan	   *subplan = (Plan *) lfirst(subnode);
+
+		if (subnode == list_head(bitmapplans))	/* first node? */
+			plan->startup_cost = subplan->startup_cost;
+		else if (!IsA(subplan, BitmapIndexScan))
+			plan->total_cost += cpu_operator_cost * 10;
+		plan->total_cost += subplan->total_cost;
+		plan->plan_rows += subplan->plan_rows; /* ignore overlap */
+	}
+
+	plan->targetlist = NIL;
+	plan->qual = NIL;
+	plan->lefttree = NULL;
+	plan->righttree = NULL;
+	node->bitmapplans = bitmapplans;
 
 	return node;
 }

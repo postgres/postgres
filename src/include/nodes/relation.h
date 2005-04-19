@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.104 2005/03/27 06:29:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.105 2005/04/19 22:35:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -342,6 +342,9 @@ typedef struct Path
  * tuples matched during any scan.	(The executor is smart enough not to return
  * the same tuple more than once, even if it is matched in multiple scans.)
  *
+ * XXX bitmap index scans will probably obviate the need for plain OR
+ * indexscans, allowing a lot of this to be simplified.
+ *
  * 'indexinfo' is a list of IndexOptInfo nodes, one per scan to be performed.
  *
  * 'indexclauses' is a list of index qualifications, also one per scan.
@@ -388,6 +391,30 @@ typedef struct IndexPath
 	ScanDirection indexscandir;
 	double		rows;			/* estimated number of result tuples */
 } IndexPath;
+
+/*
+ * BitmapHeapPath represents one or more indexscans that generate TID bitmaps
+ * instead of directly accessing the heap, followed by AND/OR combinations
+ * to produce a single bitmap, followed by a heap scan that uses the bitmap.
+ * Note that the output is always considered unordered, since it will come
+ * out in physical heap order no matter what the underlying indexes did.
+ *
+ * The individual indexscans are represented by IndexPath nodes, and any
+ * logic on top of them is represented by regular AND and OR expressions.
+ * Notice that we can use the same IndexPath node both to represent an
+ * ordered index scan, and as the child of a BitmapHeapPath that represents
+ * scanning the same index in an unordered way.
+ *
+ * BitmapHeapPaths can be nestloop inner indexscans.  The isjoininner and
+ * rows fields serve the same purpose as for plain IndexPaths.
+ */
+typedef struct BitmapHeapPath
+{
+	Path		path;
+	Node	   *bitmapqual;		/* the IndexPath/AND/OR tree */
+	bool		isjoininner;	/* T if it's a nestloop inner scan */
+	double		rows;			/* estimated number of result tuples */
+} BitmapHeapPath;
 
 /*
  * TidPath represents a scan by TID

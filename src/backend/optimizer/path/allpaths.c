@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.125 2005/04/06 16:34:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.126 2005/04/19 22:35:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -897,6 +897,9 @@ print_path(Query *root, Path *path, int indent)
 			break;
 		case T_IndexPath:
 			ptype = "IdxScan";
+			break;
+		case T_BitmapHeapPath:
+			ptype = "BitmapHeapScan";
 			break;
 		case T_TidPath:
 			ptype = "TidScan";

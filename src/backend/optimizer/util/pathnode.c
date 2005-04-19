@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.115 2005/04/06 16:34:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.116 2005/04/19 22:35:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,6 +467,39 @@ create_index_path(Query *root,
 	pathnode->rows = index->rel->rows;
 
 	cost_index(&pathnode->path, root, index, indexquals, false);
+
+	return pathnode;
+}
+
+/*
+ * create_bitmap_heap_path
+ *	  Creates a path node for a bitmap scan.
+ *
+ * 'bitmapqual' is an AND/OR tree of IndexPath nodes.
+ */
+BitmapHeapPath *
+create_bitmap_heap_path(Query *root,
+						RelOptInfo *rel,
+						Node *bitmapqual)
+{
+	BitmapHeapPath *pathnode = makeNode(BitmapHeapPath);
+
+	pathnode->path.pathtype = T_BitmapHeapScan;
+	pathnode->path.parent = rel;
+	pathnode->path.pathkeys = NIL;			/* always unordered */
+
+	pathnode->bitmapqual = bitmapqual;
+
+	/* It's not an innerjoin path. */
+	pathnode->isjoininner = false;
+
+	/*
+	 * The number of rows is the same as the parent rel's estimate, since
+	 * this isn't a join inner indexscan.
+	 */
+	pathnode->rows = rel->rows;
+
+	cost_bitmap_scan(&pathnode->path, root, rel, bitmapqual, false);
 
 	return pathnode;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.132 2005/04/16 20:07:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.133 2005/04/19 22:35:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,6 +423,12 @@ explain_outNode(StringInfo str,
 		case T_Append:
 			pname = "Append";
 			break;
+		case T_BitmapAnd:
+			pname = "BitmapAnd";
+			break;
+		case T_BitmapOr:
+			pname = "BitmapOr";
+			break;
 		case T_NestLoop:
 			switch (((NestLoop *) plan)->join.jointype)
 			{
@@ -497,6 +503,12 @@ explain_outNode(StringInfo str,
 			break;
 		case T_IndexScan:
 			pname = "Index Scan";
+			break;
+		case T_BitmapIndexScan:
+			pname = "Bitmap Index Scan";
+			break;
+		case T_BitmapHeapScan:
+			pname = "Bitmap Heap Scan";
 			break;
 		case T_TidScan:
 			pname = "Tid Scan";
@@ -586,6 +598,7 @@ explain_outNode(StringInfo str,
 			}
 			/* FALL THRU */
 		case T_SeqScan:
+		case T_BitmapHeapScan:
 		case T_TidScan:
 			if (((Scan *) plan)->scanrelid > 0)
 			{
@@ -605,6 +618,10 @@ explain_outNode(StringInfo str,
 					appendStringInfo(str, " %s",
 								 quote_identifier(rte->eref->aliasname));
 			}
+			break;
+		case T_BitmapIndexScan:
+			appendStringInfo(str, " on %s",
+							 quote_identifier(get_rel_name(((BitmapIndexScan *) plan)->indxid)));
 			break;
 		case T_SubqueryScan:
 			if (((Scan *) plan)->scanrelid > 0)
@@ -696,6 +713,21 @@ explain_outNode(StringInfo str,
 						   outer_plan,
 						   str, indent, es);
 			break;
+		case T_BitmapIndexScan:
+			show_scan_qual(((BitmapIndexScan *) plan)->indxqualorig, false,
+						   "Index Cond",
+						   ((Scan *) plan)->scanrelid,
+						   outer_plan,
+						   str, indent, es);
+			break;
+		case T_BitmapHeapScan:
+			/* XXX do we want to show this in production? */
+			show_scan_qual(((BitmapHeapScan *) plan)->bitmapqualorig, false,
+						   "Recheck Cond",
+						   ((Scan *) plan)->scanrelid,
+						   outer_plan,
+						   str, indent, es);
+			/* FALL THRU */
 		case T_SeqScan:
 		case T_TidScan:
 		case T_SubqueryScan:
@@ -851,6 +883,54 @@ explain_outNode(StringInfo str,
 
 			explain_outNode(str, subnode,
 							appendstate->appendplans[j],
+							NULL,
+							indent + 3, es);
+			j++;
+		}
+	}
+
+	if (IsA(plan, BitmapAnd))
+	{
+		BitmapAnd	   *bitmapandplan = (BitmapAnd *) plan;
+		BitmapAndState *bitmapandstate = (BitmapAndState *) planstate;
+		ListCell   *lst;
+		int			j;
+
+		j = 0;
+		foreach(lst, bitmapandplan->bitmapplans)
+		{
+			Plan	   *subnode = (Plan *) lfirst(lst);
+
+			for (i = 0; i < indent; i++)
+				appendStringInfo(str, "  ");
+			appendStringInfo(str, "  ->  ");
+
+			explain_outNode(str, subnode,
+							bitmapandstate->bitmapplans[j],
+							NULL,
+							indent + 3, es);
+			j++;
+		}
+	}
+
+	if (IsA(plan, BitmapOr))
+	{
+		BitmapOr	   *bitmaporplan = (BitmapOr *) plan;
+		BitmapOrState *bitmaporstate = (BitmapOrState *) planstate;
+		ListCell   *lst;
+		int			j;
+
+		j = 0;
+		foreach(lst, bitmaporplan->bitmapplans)
+		{
+			Plan	   *subnode = (Plan *) lfirst(lst);
+
+			for (i = 0; i < indent; i++)
+				appendStringInfo(str, "  ");
+			appendStringInfo(str, "  ->  ");
+
+			explain_outNode(str, subnode,
+							bitmaporstate->bitmapplans[j],
 							NULL,
 							indent + 3, es);
 			j++;

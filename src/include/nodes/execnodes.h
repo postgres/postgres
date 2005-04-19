@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.125 2005/03/25 21:58:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.126 2005/04/19 22:35:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "nodes/bitmapset.h"
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
+#include "nodes/tidbitmap.h"
 #include "utils/hsearch.h"
 #include "utils/tuplestore.h"
 
@@ -803,6 +804,28 @@ typedef struct AppendState
 	int			as_lastplan;
 } AppendState;
 
+/* ----------------
+ *	 BitmapAndState information
+ * ----------------
+ */
+typedef struct BitmapAndState
+{
+	PlanState	ps;				/* its first field is NodeTag */
+	PlanState **bitmapplans;	/* array of PlanStates for my inputs */
+	int			nplans;			/* number of input plans */
+} BitmapAndState;
+
+/* ----------------
+ *	 BitmapOrState information
+ * ----------------
+ */
+typedef struct BitmapOrState
+{
+	PlanState	ps;				/* its first field is NodeTag */
+	PlanState **bitmapplans;	/* array of PlanStates for my inputs */
+	int			nplans;			/* number of input plans */
+} BitmapOrState;
+
 /* ----------------------------------------------------------------
  *				 Scan State Information
  * ----------------------------------------------------------------
@@ -874,6 +897,53 @@ typedef struct IndexScanState
 	HTAB	   *iss_DupHash;
 	long		iss_MaxHash;
 } IndexScanState;
+
+/* ----------------
+ *	 BitmapIndexScanState information
+ *
+ *		ScanKeys		   Skey structures to scan index rel
+ *		NumScanKeys		   number of Skey structs
+ *		RuntimeKeyInfo	   array of exprstates for Skeys
+ *						   that will be evaluated at runtime
+ *		RuntimeContext	   expr context for evaling runtime Skeys
+ *		RuntimeKeysReady   true if runtime Skeys have been computed
+ *		RelationDesc	   relation descriptor
+ *		ScanDesc		   scan descriptor
+ * ----------------
+ */
+typedef struct BitmapIndexScanState
+{
+	ScanState	ss;				/* its first field is NodeTag */
+	ScanKey		biss_ScanKeys;
+	int			biss_NumScanKeys;
+	ExprState **biss_RuntimeKeyInfo;
+	ExprContext *biss_RuntimeContext;
+	bool		biss_RuntimeKeysReady;
+	Relation	biss_RelationDesc;
+	IndexScanDesc biss_ScanDesc;
+} BitmapIndexScanState;
+
+/* ----------------
+ *	 BitmapHeapScanState information
+ *
+ *		bitmapqualorig	   execution state for bitmapqualorig expressions
+ *		tbm				   bitmap obtained from child index scan(s)
+ *		tbmres			   current-page data
+ *		curslot			   current tbmres index or tuple offset on page
+ *		minslot			   lowest tbmres index or tuple offset to try
+ *		maxslot			   highest tbmres index or tuple offset to try
+ * ----------------
+ */
+typedef struct BitmapHeapScanState
+{
+	ScanState	ss;				/* its first field is NodeTag */
+	List	   *bitmapqualorig;
+	TIDBitmap  *tbm;
+	TBMIterateResult *tbmres;
+	int			curslot;
+	int			minslot;
+	int			maxslot;
+} BitmapHeapScanState;
 
 /* ----------------
  *	 TidScanState information

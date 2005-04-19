@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.77 2004/12/31 22:03:34 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.78 2005/04/19 22:35:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,6 +134,34 @@ typedef struct Append
 	bool		isTarget;
 } Append;
 
+/* ----------------
+ *	 BitmapAnd node -
+ *		Generate the intersection of the results of sub-plans.
+ *
+ * The subplans must be of types that yield tuple bitmaps.  The targetlist
+ * and qual fields of the plan are unused and are always NIL.
+ * ----------------
+ */
+typedef struct BitmapAnd
+{
+	Plan		plan;
+	List	   *bitmapplans;
+} BitmapAnd;
+
+/* ----------------
+ *	 BitmapOr node -
+ *		Generate the union of the results of sub-plans.
+ *
+ * The subplans must be of types that yield tuple bitmaps.  The targetlist
+ * and qual fields of the plan are unused and are always NIL.
+ * ----------------
+ */
+typedef struct BitmapOr
+{
+	Plan		plan;
+	List	   *bitmapplans;
+} BitmapOr;
+
 /*
  * ==========
  * Scan nodes
@@ -156,6 +184,8 @@ typedef Scan SeqScan;
  *
  * Note: this can actually represent N indexscans, all on the same table
  * but potentially using different indexes, put together with OR semantics.
+ * (XXX that extension should probably go away, because bitmapindexscan will
+ * largely eliminate the need for it.)
  * ----------------
  */
 typedef struct IndexScan
@@ -171,7 +201,46 @@ typedef struct IndexScan
 } IndexScan;
 
 /* ----------------
- *				tid scan node
+ *		bitmap index scan node
+ *
+ * BitmapIndexScan delivers a bitmap of potential tuple locations;
+ * it does not access the heap itself.  The bitmap is used by an
+ * ancestor BitmapHeapScan node, possibly after passing through
+ * intermediate BitmapAnd and/or BitmapOr nodes to combine it with
+ * the results of other BitmapIndexScans.
+ *
+ * In a BitmapIndexScan plan node, the targetlist and qual fields are
+ * not used and are always NIL.  The indxqualorig field is useless at
+ * run time too, but is saved for the benefit of EXPLAIN.
+ * ----------------
+ */
+typedef struct BitmapIndexScan
+{
+	Scan		scan;
+	Oid			indxid;			/* OID of index to scan */
+	List	   *indxqual;		/* list of index quals */
+	List	   *indxqualorig;	/* list of original forms of index quals */
+	List	   *indxstrategy;	/* list of strategy numbers */
+	List	   *indxsubtype;	/* list of strategy subtypes */
+} BitmapIndexScan;
+
+/* ----------------
+ *		bitmap sequential scan node
+ *
+ * This needs a copy of the qual conditions being used by the input index
+ * scans because there are various cases where we need to recheck the quals;
+ * for example, when the bitmap is lossy about the specific rows on a page
+ * that meet the index condition.
+ * ----------------
+ */
+typedef struct BitmapHeapScan
+{
+	Scan		scan;
+	List	   *bitmapqualorig;	/* index quals, in standard expr form */
+} BitmapHeapScan;
+
+/* ----------------
+ *		tid scan node
  * ----------------
  */
 typedef struct TidScan

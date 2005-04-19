@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.106 2005/04/06 16:34:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.107 2005/04/19 22:35:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,6 +106,21 @@ set_plan_references(Plan *plan, List *rtable)
 								(Node *) ((IndexScan *) plan)->indxqual);
 			fix_expr_references(plan,
 							(Node *) ((IndexScan *) plan)->indxqualorig);
+			break;
+		case T_BitmapIndexScan:
+			/* no need to fix targetlist and qual */
+			Assert(plan->targetlist == NIL);
+			Assert(plan->qual == NIL);
+			fix_expr_references(plan,
+								(Node *) ((BitmapIndexScan *) plan)->indxqual);
+			fix_expr_references(plan,
+							(Node *) ((BitmapIndexScan *) plan)->indxqualorig);
+			break;
+		case T_BitmapHeapScan:
+			fix_expr_references(plan, (Node *) plan->targetlist);
+			fix_expr_references(plan, (Node *) plan->qual);
+			fix_expr_references(plan,
+						(Node *) ((BitmapHeapScan *) plan)->bitmapqualorig);
 			break;
 		case T_TidScan:
 			fix_expr_references(plan, (Node *) plan->targetlist);
@@ -223,6 +238,16 @@ set_plan_references(Plan *plan, List *rtable)
 			 * recurse into child plans.
 			 */
 			foreach(l, ((Append *) plan)->appendplans)
+				set_plan_references((Plan *) lfirst(l), rtable);
+			break;
+		case T_BitmapAnd:
+			/* BitmapAnd works like Append */
+			foreach(l, ((BitmapAnd *) plan)->bitmapplans)
+				set_plan_references((Plan *) lfirst(l), rtable);
+			break;
+		case T_BitmapOr:
+			/* BitmapOr works like Append */
+			foreach(l, ((BitmapOr *) plan)->bitmapplans)
 				set_plan_references((Plan *) lfirst(l), rtable);
 			break;
 		default:

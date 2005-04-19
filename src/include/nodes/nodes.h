@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.166 2005/04/17 22:24:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.167 2005/04/19 22:35:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,13 @@ typedef enum NodeTag
 	T_Plan = 100,
 	T_Result,
 	T_Append,
+	T_BitmapAnd,
+	T_BitmapOr,
 	T_Scan,
 	T_SeqScan,
 	T_IndexScan,
+	T_BitmapIndexScan,
+	T_BitmapHeapScan,
 	T_TidScan,
 	T_SubqueryScan,
 	T_FunctionScan,
@@ -71,9 +75,13 @@ typedef enum NodeTag
 	T_PlanState = 200,
 	T_ResultState,
 	T_AppendState,
+	T_BitmapAndState,
+	T_BitmapOrState,
 	T_ScanState,
 	T_SeqScanState,
 	T_IndexScanState,
+	T_BitmapIndexScanState,
+	T_BitmapHeapScanState,
 	T_TidScanState,
 	T_SubqueryScanState,
 	T_FunctionScanState,
@@ -161,6 +169,7 @@ typedef enum NodeTag
 	T_IndexOptInfo,
 	T_Path,
 	T_IndexPath,
+	T_BitmapHeapPath,
 	T_NestPath,
 	T_MergePath,
 	T_HashPath,

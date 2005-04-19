@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.246 2005/04/06 16:34:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.247 2005/04/19 22:35:14 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -309,6 +309,26 @@ _outAppend(StringInfo str, Append *node)
 }
 
 static void
+_outBitmapAnd(StringInfo str, BitmapAnd *node)
+{
+	WRITE_NODE_TYPE("BITMAPAND");
+
+	_outPlanInfo(str, (Plan *) node);
+
+	WRITE_NODE_FIELD(bitmapplans);
+}
+
+static void
+_outBitmapOr(StringInfo str, BitmapOr *node)
+{
+	WRITE_NODE_TYPE("BITMAPOR");
+
+	_outPlanInfo(str, (Plan *) node);
+
+	WRITE_NODE_FIELD(bitmapplans);
+}
+
+static void
 _outScan(StringInfo str, Scan *node)
 {
 	WRITE_NODE_TYPE("SCAN");
@@ -338,6 +358,30 @@ _outIndexScan(StringInfo str, IndexScan *node)
 	WRITE_NODE_FIELD(indxsubtype);
 	WRITE_NODE_FIELD(indxlossy);
 	WRITE_ENUM_FIELD(indxorderdir, ScanDirection);
+}
+
+static void
+_outBitmapIndexScan(StringInfo str, BitmapIndexScan *node)
+{
+	WRITE_NODE_TYPE("BITMAPINDEXSCAN");
+
+	_outScanInfo(str, (Scan *) node);
+
+	WRITE_OID_FIELD(indxid);
+	WRITE_NODE_FIELD(indxqual);
+	WRITE_NODE_FIELD(indxqualorig);
+	WRITE_NODE_FIELD(indxstrategy);
+	WRITE_NODE_FIELD(indxsubtype);
+}
+
+static void
+_outBitmapHeapScan(StringInfo str, BitmapHeapScan *node)
+{
+	WRITE_NODE_TYPE("BITMAPHEAPSCAN");
+
+	_outScanInfo(str, (Scan *) node);
+
+	WRITE_NODE_FIELD(bitmapqualorig);
 }
 
 static void
@@ -968,9 +1012,6 @@ _outPath(StringInfo str, Path *node)
 	_outPathInfo(str, (Path *) node);
 }
 
-/*
- *	IndexPath is a subclass of Path.
- */
 static void
 _outIndexPath(StringInfo str, IndexPath *node)
 {
@@ -983,6 +1024,18 @@ _outIndexPath(StringInfo str, IndexPath *node)
 	WRITE_NODE_FIELD(indexquals);
 	WRITE_BOOL_FIELD(isjoininner);
 	WRITE_ENUM_FIELD(indexscandir, ScanDirection);
+	WRITE_FLOAT_FIELD(rows, "%.0f");
+}
+
+static void
+_outBitmapHeapPath(StringInfo str, BitmapHeapPath *node)
+{
+	WRITE_NODE_TYPE("BITMAPHEAPPATH");
+
+	_outPathInfo(str, (Path *) node);
+
+	WRITE_NODE_FIELD(bitmapqual);
+	WRITE_BOOL_FIELD(isjoininner);
 	WRITE_FLOAT_FIELD(rows, "%.0f");
 }
 
@@ -1620,6 +1673,12 @@ _outNode(StringInfo str, void *obj)
 			case T_Append:
 				_outAppend(str, obj);
 				break;
+			case T_BitmapAnd:
+				_outBitmapAnd(str, obj);
+				break;
+			case T_BitmapOr:
+				_outBitmapOr(str, obj);
+				break;
 			case T_Scan:
 				_outScan(str, obj);
 				break;
@@ -1628,6 +1687,12 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_IndexScan:
 				_outIndexScan(str, obj);
+				break;
+			case T_BitmapIndexScan:
+				_outBitmapIndexScan(str, obj);
+				break;
+			case T_BitmapHeapScan:
+				_outBitmapHeapScan(str, obj);
 				break;
 			case T_TidScan:
 				_outTidScan(str, obj);
@@ -1782,6 +1847,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_IndexPath:
 				_outIndexPath(str, obj);
+				break;
+			case T_BitmapHeapPath:
+				_outBitmapHeapPath(str, obj);
 				break;
 			case T_TidPath:
 				_outTidPath(str, obj);

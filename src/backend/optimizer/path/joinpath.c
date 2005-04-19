@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.92 2005/01/23 02:21:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.93 2005/04/19 22:35:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -391,6 +391,7 @@ match_unsorted_outer(Query *root,
 		 * waste of time.)
 		 */
 		if (!(IsA(inner_cheapest_total, IndexPath) ||
+			  IsA(inner_cheapest_total, BitmapHeapPath) ||
 			  IsA(inner_cheapest_total, TidPath)))
 			matpath = (Path *)
 				create_material_path(innerrel, inner_cheapest_total);

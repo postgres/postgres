@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.301 2005/04/07 01:51:38 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.302 2005/04/19 22:35:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,6 +148,48 @@ _copyAppend(Append *from)
 	return newnode;
 }
 
+/*
+ * _copyBitmapAnd
+ */
+static BitmapAnd *
+_copyBitmapAnd(BitmapAnd *from)
+{
+	BitmapAnd	   *newnode = makeNode(BitmapAnd);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyPlanFields((Plan *) from, (Plan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_NODE_FIELD(bitmapplans);
+
+	return newnode;
+}
+
+/*
+ * _copyBitmapOr
+ */
+static BitmapOr *
+_copyBitmapOr(BitmapOr *from)
+{
+	BitmapOr	   *newnode = makeNode(BitmapOr);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyPlanFields((Plan *) from, (Plan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_NODE_FIELD(bitmapplans);
+
+	return newnode;
+}
+
 
 /*
  * CopyScanFields
@@ -218,6 +260,52 @@ _copyIndexScan(IndexScan *from)
 	COPY_NODE_FIELD(indxsubtype);
 	COPY_NODE_FIELD(indxlossy);
 	COPY_SCALAR_FIELD(indxorderdir);
+
+	return newnode;
+}
+
+/*
+ * _copyBitmapIndexScan
+ */
+static BitmapIndexScan *
+_copyBitmapIndexScan(BitmapIndexScan *from)
+{
+	BitmapIndexScan  *newnode = makeNode(BitmapIndexScan);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyScanFields((Scan *) from, (Scan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_SCALAR_FIELD(indxid);
+	COPY_NODE_FIELD(indxqual);
+	COPY_NODE_FIELD(indxqualorig);
+	COPY_NODE_FIELD(indxstrategy);
+	COPY_NODE_FIELD(indxsubtype);
+
+	return newnode;
+}
+
+/*
+ * _copyBitmapHeapScan
+ */
+static BitmapHeapScan *
+_copyBitmapHeapScan(BitmapHeapScan *from)
+{
+	BitmapHeapScan  *newnode = makeNode(BitmapHeapScan);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyScanFields((Scan *) from, (Scan *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_NODE_FIELD(bitmapqualorig);
 
 	return newnode;
 }
@@ -2598,6 +2686,12 @@ copyObject(void *from)
 		case T_Append:
 			retval = _copyAppend(from);
 			break;
+		case T_BitmapAnd:
+			retval = _copyBitmapAnd(from);
+			break;
+		case T_BitmapOr:
+			retval = _copyBitmapOr(from);
+			break;
 		case T_Scan:
 			retval = _copyScan(from);
 			break;
@@ -2606,6 +2700,12 @@ copyObject(void *from)
 			break;
 		case T_IndexScan:
 			retval = _copyIndexScan(from);
+			break;
+		case T_BitmapIndexScan:
+			retval = _copyBitmapIndexScan(from);
+			break;
+		case T_BitmapHeapScan:
+			retval = _copyBitmapHeapScan(from);
 			break;
 		case T_TidScan:
 			retval = _copyTidScan(from);
