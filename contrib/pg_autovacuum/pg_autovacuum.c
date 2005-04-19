@@ -4,7 +4,7 @@
  * Revisions by Christopher B. Browne, Liberty RMS
  * Win32 Service code added by Dave Page
  *
- * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.30 2005/04/03 00:01:51 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.31 2005/04/19 03:35:15 momjian Exp $
  */
 
 #include "postgres_fe.h"
@@ -1103,6 +1103,7 @@ get_cmd_args(int argc, char *argv[])
 	args->analyze_base_threshold = -1;
 	args->analyze_scaling_factor = -1;
 	args->debug = AUTOVACUUM_DEBUG;
+	args->update_interval = UPDATE_INTERVAL;
 #ifndef WIN32
 	args->daemonize = 0;
 #else
@@ -1156,6 +1157,9 @@ get_cmd_args(int argc, char *argv[])
 				break;
 			case 'A':
 				args->analyze_scaling_factor = atof(optarg);
+				break;
+			case 'i':
+				args->update_interval = atoi(optarg);
 				break;
 			case 'c':
 				args->av_vacuum_cost_delay = atoi(optarg);
@@ -1340,6 +1344,8 @@ print_cmd_args(void)
 	sprintf(logbuffer, "  args->analyze_base_threshold=%d", args->analyze_base_threshold);
 	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->analyze_scaling_factor=%f", args->analyze_scaling_factor);
+	log_entry(logbuffer, LVL_INFO);
+	sprintf(logbuffer, "  args->update_interval=%i", args->update_interval);
 	log_entry(logbuffer, LVL_INFO);
 
 	if (args->av_vacuum_cost_delay != -1)
@@ -1646,8 +1652,8 @@ VacuumLoop(int argc, char **argv)
 			}
 		}
 
-		if (loops % UPDATE_INTERVAL == 0)		/* Update the list if it's
-												 * time */
+		if (loops % args->update_interval == 0)		/* Update the list if it's
+													 * time */
 			update_db_list(db_list);	/* Add and remove databases from
 										 * the list */
 
@@ -1661,8 +1667,8 @@ VacuumLoop(int argc, char **argv)
 
 			if (dbs->conn != NULL)
 			{
-				if (loops % UPDATE_INTERVAL == 0)		/* Update the list if
-														 * it's time */
+				if (loops % args->update_interval == 0)		/* Update the list if
+															 * it's time */
 					update_table_list(dbs);		/* Add and remove tables
 												 * from the list */
 

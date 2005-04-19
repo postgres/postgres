@@ -123,6 +123,10 @@ pg_autovacuum has the following optional arguments:
 -V vacuum scaling factor: see "Vacuum and Analyze" below.
 -a analyze base threshold: see "Vacuum and Analyze" below.
 -A analyze scaling factor: see "Vacuum and Analyze" below.
+-i update interval: how often (in terms of iterations of the primary loop
+   over the database list) to update the database list. The default is 2,
+   which means the list will be updated before every other pass through
+   the database list.
 -L log file: Name of file to which output is submitted, otherwise STDERR
 -U username: Username pg_autovacuum will use to connect with, if not
    specified the current username is used.
@@ -157,6 +161,7 @@ the time of writing they are:
 -A 1   (half of -V if not specified)
 -s 300 (5 minutes)
 -S 2
+-i 2
 
 The following arguments are used on Windows only:
 
