@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.53 2004/12/31 22:03:05 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.53.4.1 2005/04/20 23:10:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,7 +237,7 @@ static pgpid_t
 get_pgpid(void)
 {
 	FILE	   *pidf;
-	pgpid_t		pid;
+	long		pid;
 
 	pidf = fopen(pid_file, "r");
 	if (pidf == NULL)
@@ -247,14 +247,19 @@ get_pgpid(void)
 			return 0;
 		else
 		{
-			write_stderr(_("%s: could not open PID file \"%s\": %s"),
+			write_stderr(_("%s: could not open PID file \"%s\": %s\n"),
 						 progname, pid_file, strerror(errno));
 			exit(1);
 		}
 	}
-	fscanf(pidf, "%ld", &pid);
+	if (fscanf(pidf, "%ld", &pid) != 1)
+	{
+		write_stderr(_("%s: invalid data in PID file \"%s\"\n"),
+					 progname, pid_file);
+		exit(1);
+	}
 	fclose(pidf);
-	return pid;
+	return (pgpid_t) pid;
 }
 
 
@@ -763,34 +768,67 @@ do_reload(void)
  *	utility routines
  */
 
+static bool
+postmaster_is_alive(pid_t pid)
+{
+	/*
+	 * Test to see if the process is still there.  Note that we do not
+	 * consider an EPERM failure to mean that the process is still there;
+	 * EPERM must mean that the given PID belongs to some other userid,
+	 * and considering the permissions on $PGDATA, that means it's not
+	 * the postmaster we are after.
+	 *
+	 * Don't believe that our own PID or parent shell's PID is the postmaster,
+	 * either.  (Windows hasn't got getppid(), though.)
+	 */
+	if (pid == getpid())
+		return false;
+#ifndef WIN32
+	if (pid == getppid())
+		return false;
+#endif
+	if (kill(pid, 0) == 0)
+		return true;
+	return false;
+}
+
 static void
 do_status(void)
 {
 	pgpid_t		pid;
 
 	pid = get_pgpid();
-	if (pid == 0)				/* no pid file */
+	if (pid != 0)				/* 0 means no pid file */
 	{
-		printf(_("%s: neither postmaster nor postgres running\n"), progname);
-		exit(1);
-	}
-	else if (pid < 0)			/* standalone backend */
-	{
-		pid = -pid;
-		printf(_("%s: a standalone backend \"postgres\" is running (PID: %ld)\n"), progname, pid);
-	}
-	else
-	/* postmaster */
-	{
-		char	  **optlines;
+		if (pid < 0)			/* standalone backend */
+		{
+			pid = -pid;
+			if (postmaster_is_alive((pid_t) pid))
+			{
+				printf(_("%s: a standalone backend \"postgres\" is running (PID: %ld)\n"),
+					   progname, pid);
+				return;
+			}
+		}
+		else					/* postmaster */
+		{
+			if (postmaster_is_alive((pid_t) pid))
+			{
+				char	  **optlines;
 
-		printf(_("%s: postmaster is running (PID: %ld)\n"), progname, pid);
+				printf(_("%s: postmaster is running (PID: %ld)\n"),
+					   progname, pid);
 
-		optlines = readfile(postopts_file);
-		if (optlines != NULL)
-			for (; *optlines != NULL; optlines++)
-				fputs(*optlines, stdout);
+				optlines = readfile(postopts_file);
+				if (optlines != NULL)
+					for (; *optlines != NULL; optlines++)
+						fputs(*optlines, stdout);
+				return;
+			}
+		}
 	}
+	printf(_("%s: neither postmaster nor postgres running\n"), progname);
+	exit(1);
 }
 
 
