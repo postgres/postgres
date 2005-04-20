@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.147 2003/08/04 02:40:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.147.4.1 2005/04/20 21:48:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,11 +172,16 @@ create_index_paths(Query *root, RelOptInfo *rel)
 		 * 3. Compute pathkeys describing index's ordering, if any, then
 		 * see how many of them are actually useful for this query.
 		 */
-		index_pathkeys = build_index_pathkeys(root, rel, index,
-											  ForwardScanDirection);
-		index_is_ordered = (index_pathkeys != NIL);
-		useful_pathkeys = truncate_useless_pathkeys(root, rel,
-													index_pathkeys);
+		index_is_ordered = OidIsValid(index->ordering[0]);
+		if (index_is_ordered)
+		{
+			index_pathkeys = build_index_pathkeys(root, rel, index,
+												  ForwardScanDirection);
+			useful_pathkeys = truncate_useless_pathkeys(root, rel,
+														index_pathkeys);
+		}
+		else
+			useful_pathkeys = NIL;
 
 		/*
 		 * 4. Generate an indexscan path if there are relevant restriction
@@ -186,10 +191,15 @@ create_index_paths(Query *root, RelOptInfo *rel)
 		 * If there is a predicate, consider it anyway since the index
 		 * predicate has already been found to match the query.  The
 		 * selectivity of the predicate might alone make the index useful.
+		 *
+		 * Note: not all index AMs support scans with no restriction clauses.
+		 * We assume here that the AM does so if and only if it supports
+		 * ordered scans.  (It would probably be better if there were a
+		 * specific flag for this in pg_am, but there's not.)
 		 */
 		if (restrictclauses != NIL ||
 			useful_pathkeys != NIL ||
-			index->indpred != NIL)
+			(index->indpred != NIL && index_is_ordered))
 			add_path(rel, (Path *)
 					 create_index_path(root, rel, index,
 									   restrictclauses,
