@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Apr 18 14:29:53 EDT 2005
+Last updated:		Tue Apr 19 21:17:33 EDT 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -80,6 +80,7 @@ Administration
   It could start with a random tablespace from a supplied list and cycle
   through the list.
 
+* All ability to monitor the use of temporary sort files
 * Allow WAL replay of CREATE TABLESPACE to work when the directory
   structure on the recovery computer is different from the original
 * Add "include file" functionality in postgresql.conf
