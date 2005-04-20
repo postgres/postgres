@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.96.2.7 2005/01/11 18:34:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.96.2.8 2005/04/20 17:15:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3593,17 +3593,25 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 			/* fractional seconds? */
 			if (fsec != 0)
 			{
-#ifdef HAVE_INT64_TIMESTAMP
-				if (is_before || ((!is_nonzero) && (tm->tm_sec < 0)))
-					tm->tm_sec = -tm->tm_sec;
-				sprintf(cp, "%s%d.%02d secs", (is_nonzero ? " " : ""),
-						tm->tm_sec, (((int) fsec) / 10000));
-				cp += strlen(cp);
-				if (!is_nonzero)
-					is_before = (fsec < 0);
-#else
 				fsec_t		sec;
 
+#ifdef HAVE_INT64_TIMESTAMP
+				sec = fsec;
+				if (is_before || ((!is_nonzero) && (tm->tm_sec < 0)))
+				{
+					tm->tm_sec = -tm->tm_sec;
+					sec = -sec;
+					is_before = TRUE;
+				}
+				else if ((!is_nonzero) && (tm->tm_sec == 0) && (fsec < 0))
+				{
+					sec = -sec;
+					is_before = TRUE;
+				}
+				sprintf(cp, "%s%d.%02d secs", (is_nonzero ? " " : ""),
+						tm->tm_sec, (((int) sec) / 10000));
+				cp += strlen(cp);
+#else
 				fsec += tm->tm_sec;
 				sec = fsec;
 				if (is_before || ((!is_nonzero) && (fsec < 0)))
@@ -3615,9 +3623,8 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 					is_before = (fsec < 0);
 #endif
 				is_nonzero = TRUE;
-
-				/* otherwise, integer seconds only? */
 			}
+			/* otherwise, integer seconds only? */
 			else if (tm->tm_sec != 0)
 			{
 				int			sec = tm->tm_sec;
