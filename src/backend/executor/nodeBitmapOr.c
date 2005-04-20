@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapOr.c,v 1.1 2005/04/19 22:35:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapOr.c,v 1.2 2005/04/20 15:48:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "executor/execdebug.h"
 #include "executor/instrument.h"
 #include "executor/nodeBitmapOr.h"
+#include "miscadmin.h"
 
 
 /* ----------------------------------------------------------------
@@ -46,6 +47,7 @@ ExecInitBitmapOr(BitmapOr *node, EState *estate)
 	PlanState **bitmapplanstates;
 	int			nplans;
 	int			i;
+	ListCell   *l;
 	Plan	   *initNode;
 
 	CXT1_printf("ExecInitBitmapOr: context is %d\n", CurrentMemoryContext);
@@ -78,10 +80,12 @@ ExecInitBitmapOr(BitmapOr *node, EState *estate)
 	 * call ExecInitNode on each of the plans to be executed and save the
 	 * results into the array "bitmapplanstates".
 	 */
-	for (i = 0; i < nplans; i++)
+	i = 0;
+	foreach(l, node->bitmapplans)
 	{
-		initNode = (Plan *) list_nth(node->bitmapplans, i);
+		initNode = (Plan *) lfirst(l);
 		bitmapplanstates[i] = ExecInitNode(initNode, estate);
+		i++;
 	}
 
 	return bitmaporstate;
@@ -128,17 +132,41 @@ MultiExecBitmapOr(BitmapOrState *node)
 		PlanState  *subnode = bitmapplans[i];
 		TIDBitmap  *subresult;
 
-		subresult = (TIDBitmap *) MultiExecProcNode(subnode);
+		/*
+		 * We can special-case BitmapIndexScan children to avoid an
+		 * explicit tbm_union step for each child: just pass down the
+		 * current result bitmap and let the child OR directly into it.
+		 */
+		if (IsA(subnode, BitmapIndexScanState))
+		{
+			if (result == NULL)				/* first subplan */
+			{
+				/* XXX should we use less than work_mem for this? */
+				result = tbm_create(work_mem * 1024L);
+			}
 
-		if (!subresult || !IsA(subresult, TIDBitmap))
-			elog(ERROR, "unrecognized result from subplan");
+			((BitmapIndexScanState *) subnode)->biss_result = result;
 
-		if (result == NULL)
-			result = subresult;			/* first subplan */
+			subresult = (TIDBitmap *) MultiExecProcNode(subnode);
+
+			if (subresult != result)
+				elog(ERROR, "unrecognized result from subplan");
+		}
 		else
 		{
-			tbm_union(result, subresult);
-			tbm_free(subresult);
+			/* standard implementation */
+			subresult = (TIDBitmap *) MultiExecProcNode(subnode);
+
+			if (!subresult || !IsA(subresult, TIDBitmap))
+				elog(ERROR, "unrecognized result from subplan");
+
+			if (result == NULL)
+				result = subresult;			/* first subplan */
+			else
+			{
+				tbm_union(result, subresult);
+				tbm_free(subresult);
+			}
 		}
 	}
 

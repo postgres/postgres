@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapAnd.c,v 1.1 2005/04/19 22:35:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapAnd.c,v 1.2 2005/04/20 15:48:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@ ExecInitBitmapAnd(BitmapAnd *node, EState *estate)
 	PlanState **bitmapplanstates;
 	int			nplans;
 	int			i;
+	ListCell   *l;
 	Plan	   *initNode;
 
 	CXT1_printf("ExecInitBitmapAnd: context is %d\n", CurrentMemoryContext);
@@ -78,10 +79,12 @@ ExecInitBitmapAnd(BitmapAnd *node, EState *estate)
 	 * call ExecInitNode on each of the plans to be executed and save the
 	 * results into the array "bitmapplanstates".
 	 */
-	for (i = 0; i < nplans; i++)
+	i = 0;
+	foreach(l, node->bitmapplans)
 	{
-		initNode = (Plan *) list_nth(node->bitmapplans, i);
+		initNode = (Plan *) lfirst(l);
 		bitmapplanstates[i] = ExecInitNode(initNode, estate);
+		i++;
 	}
 
 	return bitmapandstate;

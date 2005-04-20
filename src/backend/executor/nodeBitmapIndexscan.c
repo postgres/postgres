@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.1 2005/04/19 22:35:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.2 2005/04/20 15:48:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,9 +63,21 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 	scandesc = node->biss_ScanDesc;
 
 	/*
-	 * Prepare result bitmap
+	 * Prepare the result bitmap.  Normally we just create a new one to pass
+	 * back; however, our parent node is allowed to store a pre-made one
+	 * into node->biss_result, in which case we just OR our tuple IDs into
+	 * the existing bitmap.  (This saves needing explicit UNION steps.)
 	 */
-	tbm = tbm_create(work_mem * 1024L);
+	if (node->biss_result)
+	{
+		tbm = node->biss_result;
+		node->biss_result = NULL;		/* reset for next time */
+	}
+	else
+	{
+		/* XXX should we use less than work_mem for this? */
+		tbm = tbm_create(work_mem * 1024L);
+	}
 
 	/*
 	 * Get TIDs from index and insert into bitmap
@@ -270,6 +282,9 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 	indexstate = makeNode(BitmapIndexScanState);
 	indexstate->ss.ps.plan = (Plan *) node;
 	indexstate->ss.ps.state = estate;
+
+	/* normally we don't make the result bitmap till runtime */
+	indexstate->biss_result = NULL;
 
 	/*
 	 * Miscellaneous initialization
