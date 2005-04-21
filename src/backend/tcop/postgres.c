@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.442 2005/02/22 04:37:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.443 2005/04/21 19:18:13 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2370,6 +2370,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 						break;
 					case 'i':	/* indexscan */
 						tmp = "enable_indexscan";
+						break;
+					case 'b':	/* bitmapscan */
+						tmp = "enable_bitmapscan";
 						break;
 					case 't':	/* tidscan */
 						tmp = "enable_tidscan";

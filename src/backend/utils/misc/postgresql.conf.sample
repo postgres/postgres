@@ -137,6 +137,7 @@
 
 # - Planner Method Configuration -
 
+#enable_bitmapscan = true
 #enable_hashagg = true
 #enable_hashjoin = true
 #enable_indexscan = true

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.181 2005/04/21 02:28:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.182 2005/04/21 19:18:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,9 +51,9 @@ static IndexScan *create_indexscan_plan(Query *root, IndexPath *best_path,
 static BitmapHeapScan *create_bitmap_scan_plan(Query *root,
 											   BitmapHeapPath *best_path,
 											   List *tlist, List *scan_clauses);
-static Plan *create_bitmap_subplan(Query *root, Node *bitmapqual);
-static List *create_bitmap_qual(Node *bitmapqual);
-static List *create_bitmap_indxqual(Node *bitmapqual);
+static Plan *create_bitmap_subplan(Query *root, Path *bitmapqual);
+static List *create_bitmap_qual(Path *bitmapqual);
+static List *create_bitmap_indxqual(Path *bitmapqual);
 static TidScan *create_tidscan_plan(Query *root, TidPath *best_path,
 					List *tlist, List *scan_clauses);
 static SubqueryScan *create_subqueryscan_plan(Query *root, Path *best_path,
@@ -928,37 +928,41 @@ create_bitmap_scan_plan(Query *root,
  * Given a bitmapqual tree, generate the Plan tree that implements it
  */
 static Plan *
-create_bitmap_subplan(Query *root, Node *bitmapqual)
+create_bitmap_subplan(Query *root, Path *bitmapqual)
 {
 	Plan	   *plan;
-	Plan	   *subplan;
 
-	if (bitmapqual == NULL)
-		return NULL;			/* probably can't happen */
-	if (IsA(bitmapqual, List))
+	if (IsA(bitmapqual, BitmapAndPath))
 	{
-		/* this case is to handle the List arguments of AND/OR */
+		BitmapAndPath *apath = (BitmapAndPath *) bitmapqual;
 		List	   *newlist = NIL;
 		ListCell   *l;
 
-		foreach(l, (List *) bitmapqual)
+		foreach(l, apath->bitmapquals)
 		{
-			subplan = create_bitmap_subplan(root, lfirst(l));
+			Plan   *subplan = create_bitmap_subplan(root, lfirst(l));
+
 			newlist = lappend(newlist, subplan);
 		}
-		plan = (Plan *) newlist;
+		plan = (Plan *) make_bitmap_and(newlist);
+		copy_path_costsize(plan, bitmapqual);
+		plan->plan_width = 0;	/* meaningless */
 	}
-	else if (and_clause(bitmapqual))
+	else if (IsA(bitmapqual, BitmapOrPath))
 	{
-		subplan = create_bitmap_subplan(root,
-									(Node *) ((BoolExpr *) bitmapqual)->args);
-		plan = (Plan *) make_bitmap_and((List *) subplan);
-	}
-	else if (or_clause(bitmapqual))
-	{
-		subplan = create_bitmap_subplan(root,
-									(Node *) ((BoolExpr *) bitmapqual)->args);
-		plan = (Plan *) make_bitmap_or((List *) subplan);
+		BitmapOrPath *opath = (BitmapOrPath *) bitmapqual;
+		List	   *newlist = NIL;
+		ListCell   *l;
+
+		foreach(l, opath->bitmapquals)
+		{
+			Plan   *subplan = create_bitmap_subplan(root, lfirst(l));
+
+			newlist = lappend(newlist, subplan);
+		}
+		plan = (Plan *) make_bitmap_or(newlist);
+		copy_path_costsize(plan, bitmapqual);
+		plan->plan_width = 0;	/* meaningless */
 	}
 	else if (IsA(bitmapqual, IndexPath))
 	{
@@ -976,7 +980,6 @@ create_bitmap_subplan(Query *root, Node *bitmapqual)
 									  linitial(iscan->indxqualorig),
 									  linitial(iscan->indxstrategy),
 									  linitial(iscan->indxsubtype));
-		/* this must agree with cost_bitmap_qual in costsize.c */
 		bscan->scan.plan.startup_cost = 0.0;
 		bscan->scan.plan.total_cost = ipath->indextotalcost;
 		bscan->scan.plan.plan_rows =
@@ -999,28 +1002,30 @@ create_bitmap_subplan(Query *root, Node *bitmapqual)
  * The result is expressed as an implicit-AND list.
  */
 static List *
-create_bitmap_qual(Node *bitmapqual)
+create_bitmap_qual(Path *bitmapqual)
 {
 	List	   *result;
 	List	   *sublist;
 
-	if (and_clause(bitmapqual))
+	if (IsA(bitmapqual, BitmapAndPath))
 	{
+		BitmapAndPath *apath = (BitmapAndPath *) bitmapqual;
 		ListCell   *l;
 
 		result = NIL;
-		foreach(l, ((BoolExpr *) bitmapqual)->args)
+		foreach(l, apath->bitmapquals)
 		{
 			sublist = create_bitmap_qual(lfirst(l));
 			result = list_concat(result, sublist);
 		}
 	}
-	else if (or_clause(bitmapqual))
+	else if (IsA(bitmapqual, BitmapOrPath))
 	{
+		BitmapOrPath *opath = (BitmapOrPath *) bitmapqual;
 		List	   *newlist = NIL;
 		ListCell   *l;
 
-		foreach(l, ((BoolExpr *) bitmapqual)->args)
+		foreach(l, opath->bitmapquals)
 		{
 			sublist = create_bitmap_qual(lfirst(l));
 			if (sublist == NIL)
@@ -1056,26 +1061,29 @@ create_bitmap_qual(Node *bitmapqual)
  * to enforce, which may be weaker than the original qual expressions.
  */
 static List *
-create_bitmap_indxqual(Node *bitmapqual)
+create_bitmap_indxqual(Path *bitmapqual)
 {
 	List	   *result;
 	List	   *sublist;
 	ListCell   *l;
 
-	if (and_clause(bitmapqual))
+	if (IsA(bitmapqual, BitmapAndPath))
 	{
+		BitmapAndPath *apath = (BitmapAndPath *) bitmapqual;
+
 		result = NIL;
-		foreach(l, ((BoolExpr *) bitmapqual)->args)
+		foreach(l, apath->bitmapquals)
 		{
 			sublist = create_bitmap_indxqual(lfirst(l));
 			result = list_concat(result, sublist);
 		}
 	}
-	else if (or_clause(bitmapqual))
+	else if (IsA(bitmapqual, BitmapOrPath))
 	{
+		BitmapOrPath *opath = (BitmapOrPath *) bitmapqual;
 		List	   *newlist = NIL;
 
-		foreach(l, ((BoolExpr *) bitmapqual)->args)
+		foreach(l, opath->bitmapquals)
 		{
 			sublist = create_bitmap_indxqual(lfirst(l));
 			if (sublist == NIL)
@@ -2067,34 +2075,8 @@ make_bitmap_and(List *bitmapplans)
 {
 	BitmapAnd  *node = makeNode(BitmapAnd);
 	Plan	   *plan = &node->plan;
-	ListCell   *subnode;
 
-	/*
-	 * Compute cost as sum of subplan costs, plus 100x cpu_operator_cost
-	 * (a pretty arbitrary amount, agreed) for each tbm_intersect needed.
-	 * This must agree with cost_bitmap_qual in costsize.c.
-	 */
-	plan->startup_cost = 0;
-	plan->total_cost = 0;
-	plan->plan_rows = 0;
-	plan->plan_width = 0;		/* meaningless */
-	foreach(subnode, bitmapplans)
-	{
-		Plan	   *subplan = (Plan *) lfirst(subnode);
-
-		if (subnode == list_head(bitmapplans))	/* first node? */
-		{
-			plan->startup_cost = subplan->startup_cost;
-			plan->plan_rows = subplan->plan_rows;
-		}
-		else
-		{
-			plan->total_cost += cpu_operator_cost * 100.0;
-			plan->plan_rows = Min(plan->plan_rows, subplan->plan_rows);
-		}
-		plan->total_cost += subplan->total_cost;
-	}
-
+	/* cost should be inserted by caller */
 	plan->targetlist = NIL;
 	plan->qual = NIL;
 	plan->lefttree = NULL;
@@ -2109,32 +2091,8 @@ make_bitmap_or(List *bitmapplans)
 {
 	BitmapOr   *node = makeNode(BitmapOr);
 	Plan	   *plan = &node->plan;
-	ListCell   *subnode;
 
-	/*
-	 * Compute cost as sum of subplan costs, plus 100x cpu_operator_cost
-	 * (a pretty arbitrary amount, agreed) for each tbm_union needed.
-	 * We assume that tbm_union can be optimized away for BitmapIndexScan
-	 * subplans.
-	 *
-	 * This must agree with cost_bitmap_qual in costsize.c.
-	 */
-	plan->startup_cost = 0;
-	plan->total_cost = 0;
-	plan->plan_rows = 0;
-	plan->plan_width = 0;		/* meaningless */
-	foreach(subnode, bitmapplans)
-	{
-		Plan	   *subplan = (Plan *) lfirst(subnode);
-
-		if (subnode == list_head(bitmapplans))	/* first node? */
-			plan->startup_cost = subplan->startup_cost;
-		else if (!IsA(subplan, BitmapIndexScan))
-			plan->total_cost += cpu_operator_cost * 100.0;
-		plan->total_cost += subplan->total_cost;
-		plan->plan_rows += subplan->plan_rows; /* ignore overlap */
-	}
-
+	/* cost should be inserted by caller */
 	plan->targetlist = NIL;
 	plan->qual = NIL;
 	plan->lefttree = NULL;

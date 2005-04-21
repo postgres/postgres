@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.65 2005/04/21 02:28:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.66 2005/04/21 19:18:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@ extern double cpu_operator_cost;
 extern Cost disable_cost;
 extern bool enable_seqscan;
 extern bool enable_indexscan;
+extern bool enable_bitmapscan;
 extern bool enable_tidscan;
 extern bool enable_sort;
 extern bool enable_hashagg;
@@ -53,8 +54,10 @@ extern double clamp_row_est(double nrows);
 extern void cost_seqscan(Path *path, Query *root, RelOptInfo *baserel);
 extern void cost_index(IndexPath *path, Query *root, IndexOptInfo *index,
 		   List *indexQuals, bool is_injoin);
-extern void cost_bitmap_scan(Path *path, Query *root, RelOptInfo *baserel,
-							 Node *bitmapqual, bool is_injoin);
+extern void cost_bitmap_heap_scan(Path *path, Query *root, RelOptInfo *baserel,
+								  Path *bitmapqual, bool is_injoin);
+extern void cost_bitmap_and_node(BitmapAndPath *path, Query *root);
+extern void cost_bitmap_or_node(BitmapOrPath *path, Query *root);
 extern void cost_tidscan(Path *path, Query *root,
 			 RelOptInfo *baserel, List *tideval);
 extern void cost_subqueryscan(Path *path, RelOptInfo *baserel);

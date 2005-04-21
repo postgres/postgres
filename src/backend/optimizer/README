@@ -255,6 +255,7 @@ RelOptInfo      - a relation or joined relations
  Path           - every way to generate a RelOptInfo(sequential,index,joins)
   SeqScan       - a plain Path node with pathtype = T_SeqScan
   IndexPath     - index scans
+  BitmapHeapPath - top of a bitmapped index scan
   TidPath       - scan by CTID
   AppendPath    - append multiple subpaths together
   ResultPath    - a Result plan node (used for variable-free tlist or qual)

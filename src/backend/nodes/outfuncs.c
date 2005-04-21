@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.248 2005/04/21 02:28:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.249 2005/04/21 19:18:12 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1042,6 +1042,28 @@ _outBitmapHeapPath(StringInfo str, BitmapHeapPath *node)
 }
 
 static void
+_outBitmapAndPath(StringInfo str, BitmapAndPath *node)
+{
+	WRITE_NODE_TYPE("BITMAPANDPATH");
+
+	_outPathInfo(str, (Path *) node);
+
+	WRITE_NODE_FIELD(bitmapquals);
+	WRITE_FLOAT_FIELD(bitmapselectivity, "%.4f");
+}
+
+static void
+_outBitmapOrPath(StringInfo str, BitmapOrPath *node)
+{
+	WRITE_NODE_TYPE("BITMAPORPATH");
+
+	_outPathInfo(str, (Path *) node);
+
+	WRITE_NODE_FIELD(bitmapquals);
+	WRITE_FLOAT_FIELD(bitmapselectivity, "%.4f");
+}
+
+static void
 _outTidPath(StringInfo str, TidPath *node)
 {
 	WRITE_NODE_TYPE("TIDPATH");
@@ -1852,6 +1874,12 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_BitmapHeapPath:
 				_outBitmapHeapPath(str, obj);
+				break;
+			case T_BitmapAndPath:
+				_outBitmapAndPath(str, obj);
+				break;
+			case T_BitmapOrPath:
+				_outBitmapOrPath(str, obj);
 				break;
 			case T_TidPath:
 				_outTidPath(str, obj);

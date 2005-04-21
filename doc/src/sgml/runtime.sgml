@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.313 2005/04/08 00:59:57 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.314 2005/04/21 19:18:12 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -1768,6 +1768,22 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       </para>
 
      <variablelist>
+     <varlistentry id="guc-enable-bitmapscan" xreflabel="enable_bitmapscan">
+      <term><varname>enable_bitmapscan</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary>bitmap scan</primary>
+      </indexterm>
+      <indexterm>
+       <primary><varname>enable_bitmapscan</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of bitmap-scan plan
+        types. The default is on.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-enable-hashagg" xreflabel="enable_hashagg">
       <term><varname>enable_hashagg</varname> (<type>boolean</type>)</term>
       <indexterm>
@@ -4094,7 +4110,7 @@ plruby.bar = true        # generates error, unknown class name
 
        <row>
         <entry>
-          <option>-fi</option>, <option>-fh</option>,
+          <option>-fb</option>, <option>-fh</option>, <option>-fi</option>,
           <option>-fm</option>, <option>-fn</option>,
           <option>-fs</option>, <option>-ft</option><footnote
           id="fn.runtime-config-short">
@@ -4111,8 +4127,9 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
           </footnote>
          </entry>
          <entry>
-          <literal>enable_indexscan = off</>,
+          <literal>enable_bitmapscan = off</>,
           <literal>enable_hashjoin = off</>,
+          <literal>enable_indexscan = off</>,
           <literal>enable_mergejoin = off</>,
           <literal>enable_nestloop = off</>,
           <literal>enable_seqscan = off</>,

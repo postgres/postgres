@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.143 2005/04/21 02:28:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.144 2005/04/21 19:18:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,6 +94,7 @@ Cost		disable_cost = 100000000.0;
 
 bool		enable_seqscan = true;
 bool		enable_indexscan = true;
+bool		enable_bitmapscan = true;
 bool		enable_tidscan = true;
 bool		enable_sort = true;
 bool		enable_hashagg = true;
@@ -103,7 +104,7 @@ bool		enable_hashjoin = true;
 
 
 static bool cost_qual_eval_walker(Node *node, QualCost *total);
-static Selectivity cost_bitmap_qual(Node *bitmapqual, Cost *totalCost);
+static void cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec);
 static Selectivity approx_selectivity(Query *root, List *quals,
 				   JoinType jointype);
 static Selectivity join_in_selectivity(JoinPath *path, Query *root);
@@ -292,7 +293,7 @@ cost_index(IndexPath *path, Query *root,
 					 PointerGetDatum(&indexCorrelation));
 
 	/*
-	 * Save amcostestimate's results for possible use by cost_bitmap_scan.
+	 * Save amcostestimate's results for possible use in bitmap scan planning.
 	 * We don't bother to save indexStartupCost or indexCorrelation, because
 	 * a bitmap scan doesn't care about either.
 	 */
@@ -414,19 +415,19 @@ cost_index(IndexPath *path, Query *root,
 }
 
 /*
- * cost_bitmap_scan
+ * cost_bitmap_heap_scan
  *	  Determines and returns the cost of scanning a relation using a bitmap
  *	  index-then-heap plan.
  *
  * 'root' is the query root
  * 'baserel' is the relation to be scanned
- * 'bitmapqual' is an AND/OR tree of IndexPaths for the component scans
+ * 'bitmapqual' is a tree of IndexPaths, BitmapAndPaths, and BitmapOrPaths
  * 'is_injoin' is T if we are considering using the scan as the inside
  *		of a nestloop join (hence, some of the quals are join clauses)
  */
 void
-cost_bitmap_scan(Path *path, Query *root, RelOptInfo *baserel,
-				 Node *bitmapqual, bool is_injoin)
+cost_bitmap_heap_scan(Path *path, Query *root, RelOptInfo *baserel,
+					  Path *bitmapqual, bool is_injoin)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -443,15 +444,14 @@ cost_bitmap_scan(Path *path, Query *root, RelOptInfo *baserel,
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
 
-	if (!enable_indexscan)		/* XXX use a separate enable flag? */
+	if (!enable_bitmapscan)
 		startup_cost += disable_cost;
 
 	/*
-	 * Estimate total cost of obtaining the bitmap, as well as its total
+	 * Fetch total cost of obtaining the bitmap, as well as its total
 	 * selectivity.
 	 */
-	indexTotalCost = 0;
-	indexSelectivity = cost_bitmap_qual(bitmapqual, &indexTotalCost);
+	cost_bitmap_tree_node(bitmapqual, &indexTotalCost, &indexSelectivity);
 
 	startup_cost += indexTotalCost;
 
@@ -497,82 +497,120 @@ cost_bitmap_scan(Path *path, Query *root, RelOptInfo *baserel,
 }
 
 /*
- * cost_bitmap_qual
- *		Recursively examine the AND/OR/IndexPath tree for a bitmap scan
- *
- * Total execution costs are added to *totalCost (so caller must be sure
- * to initialize that to zero).  Estimated total selectivity of the bitmap
- * is returned as the function result.
+ * cost_bitmap_tree_node
+ *		Extract cost and selectivity from a bitmap tree node (index/and/or)
  */
-static Selectivity
-cost_bitmap_qual(Node *bitmapqual, Cost *totalCost)
+static void
+cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec)
 {
-	Selectivity	result;
-	Selectivity	subresult;
-	ListCell   *l;
-
-	if (and_clause(bitmapqual))
+	if (IsA(path, IndexPath))
 	{
-		/*
-		 * We estimate AND selectivity on the assumption that the inputs
-		 * are independent.  This is probably often wrong, but we don't
-		 * have the info to do better.
-		 *
-		 * The runtime cost of the BitmapAnd itself is estimated at 100x
-		 * cpu_operator_cost for each tbm_intersect needed.  Probably too
-		 * small, definitely too simplistic?
-		 *
-		 * This must agree with make_bitmap_and in createplan.c.
-		 */
-		result = 1.0;
-		foreach(l, ((BoolExpr *) bitmapqual)->args)
-		{
-			subresult = cost_bitmap_qual((Node *) lfirst(l), totalCost);
-			result *= subresult;
-			if (l != list_head(((BoolExpr *) bitmapqual)->args))
-				*totalCost += 100.0 * cpu_operator_cost;
-		}
+		*cost = ((IndexPath *) path)->indextotalcost;
+		*selec = ((IndexPath *) path)->indexselectivity;
 	}
-	else if (or_clause(bitmapqual))
+	else if (IsA(path, BitmapAndPath))
 	{
-		/*
-		 * We estimate OR selectivity on the assumption that the inputs
-		 * are non-overlapping, since that's often the case in "x IN (list)"
-		 * type situations.  Of course, we clamp to 1.0 at the end.
-		 *
-		 * The runtime cost of the BitmapOr itself is estimated at 100x
-		 * cpu_operator_cost for each tbm_union needed.  Probably too
-		 * small, definitely too simplistic?  We are aware that the tbm_unions
-		 * are optimized out when the inputs are BitmapIndexScans.
-		 *
-		 * This must agree with make_bitmap_or in createplan.c.
-		 */
-		result = 0.0;
-		foreach(l, ((BoolExpr *) bitmapqual)->args)
-		{
-			subresult = cost_bitmap_qual((Node *) lfirst(l), totalCost);
-			result += subresult;
-			if (l != list_head(((BoolExpr *) bitmapqual)->args) &&
-				!IsA((Node *) lfirst(l), IndexPath))
-				*totalCost += 100.0 * cpu_operator_cost;
-		}
-		result = Min(result, 1.0);
+		*cost = path->total_cost;
+		*selec = ((BitmapAndPath *) path)->bitmapselectivity;
 	}
-	else if (IsA(bitmapqual, IndexPath))
+	else if (IsA(path, BitmapOrPath))
 	{
-		IndexPath *ipath = (IndexPath *) bitmapqual;
-
-		/* this must agree with create_bitmap_subplan in createplan.c */
-		*totalCost += ipath->indextotalcost;
-		result = ipath->indexselectivity;
+		*cost = path->total_cost;
+		*selec = ((BitmapOrPath *) path)->bitmapselectivity;
 	}
 	else
-	{
-		elog(ERROR, "unrecognized node type: %d", nodeTag(bitmapqual));
-		result = 0.0;				/* keep compiler quiet */
-	}
+		elog(ERROR, "unrecognized node type: %d", nodeTag(path));
+}
 
-	return result;
+/*
+ * cost_bitmap_and_node
+ *		Estimate the cost of a BitmapAnd node
+ *
+ * Note that this considers only the costs of index scanning and bitmap
+ * creation, not the eventual heap access.  In that sense the object isn't
+ * truly a Path, but it has enough path-like properties (costs in particular)
+ * to warrant treating it as one.
+ */
+void
+cost_bitmap_and_node(BitmapAndPath *path, Query *root)
+{
+	Cost		totalCost;
+	Selectivity	selec;
+	ListCell   *l;
+
+	/*
+	 * We estimate AND selectivity on the assumption that the inputs
+	 * are independent.  This is probably often wrong, but we don't
+	 * have the info to do better.
+	 *
+	 * The runtime cost of the BitmapAnd itself is estimated at 100x
+	 * cpu_operator_cost for each tbm_intersect needed.  Probably too
+	 * small, definitely too simplistic?
+	 */
+	totalCost = 0.0;
+	selec = 1.0;
+	foreach(l, path->bitmapquals)
+	{
+		Path   *subpath = (Path *) lfirst(l);
+		Cost	subCost;
+		Selectivity subselec;
+
+		cost_bitmap_tree_node(subpath, &subCost, &subselec);
+
+		selec *= subselec;
+
+		totalCost += subCost;
+		if (l != list_head(path->bitmapquals))
+			totalCost += 100.0 * cpu_operator_cost;
+	}
+	path->bitmapselectivity = selec;
+	path->path.startup_cost = totalCost;
+	path->path.total_cost = totalCost;
+}
+
+/*
+ * cost_bitmap_or_node
+ *		Estimate the cost of a BitmapOr node
+ *
+ * See comments for cost_bitmap_and_node.
+ */
+void
+cost_bitmap_or_node(BitmapOrPath *path, Query *root)
+{
+	Cost		totalCost;
+	Selectivity	selec;
+	ListCell   *l;
+
+	/*
+	 * We estimate OR selectivity on the assumption that the inputs
+	 * are non-overlapping, since that's often the case in "x IN (list)"
+	 * type situations.  Of course, we clamp to 1.0 at the end.
+	 *
+	 * The runtime cost of the BitmapOr itself is estimated at 100x
+	 * cpu_operator_cost for each tbm_union needed.  Probably too
+	 * small, definitely too simplistic?  We are aware that the tbm_unions
+	 * are optimized out when the inputs are BitmapIndexScans.
+	 */
+	totalCost = 0.0;
+	selec = 0.0;
+	foreach(l, path->bitmapquals)
+	{
+		Path   *subpath = (Path *) lfirst(l);
+		Cost	subCost;
+		Selectivity subselec;
+
+		cost_bitmap_tree_node(subpath, &subCost, &subselec);
+
+		selec += subselec;
+
+		totalCost += subCost;
+		if (l != list_head(path->bitmapquals) &&
+			!IsA(subpath, IndexPath))
+			totalCost += 100.0 * cpu_operator_cost;
+	}
+	path->bitmapselectivity = Min(selec, 1.0);
+	path->path.startup_cost = totalCost;
+	path->path.total_cost = totalCost;
 }
 
 /*

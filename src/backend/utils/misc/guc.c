@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.259 2005/04/13 18:54:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.260 2005/04/21 19:18:13 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -367,6 +367,14 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&enable_indexscan,
+		true, NULL, NULL
+	},
+	{
+		{"enable_bitmapscan", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enables the planner's use of bitmap-scan plans."),
+			NULL
+		},
+		&enable_bitmapscan,
 		true, NULL, NULL
 	},
 	{

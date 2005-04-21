@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.124 2005/04/07 01:51:39 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.125 2005/04/21 19:18:13 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -533,6 +533,7 @@ psql_completion(char *text, int start, int end)
 		"default_with_oids",
 		"dynamic_library_path",
 		"effective_cache_size",
+		"enable_bitmapscan",
 		"enable_hashagg",
 		"enable_hashjoin",
 		"enable_indexscan",

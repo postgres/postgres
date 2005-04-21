@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.117 2005/04/21 02:28:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.118 2005/04/21 19:18:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,12 +475,12 @@ create_index_path(Query *root,
  * create_bitmap_heap_path
  *	  Creates a path node for a bitmap scan.
  *
- * 'bitmapqual' is an AND/OR tree of IndexPath nodes.
+ * 'bitmapqual' is a tree of IndexPath, BitmapAndPath, and BitmapOrPath nodes.
  */
 BitmapHeapPath *
 create_bitmap_heap_path(Query *root,
 						RelOptInfo *rel,
-						Node *bitmapqual)
+						Path *bitmapqual)
 {
 	BitmapHeapPath *pathnode = makeNode(BitmapHeapPath);
 
@@ -499,7 +499,53 @@ create_bitmap_heap_path(Query *root,
 	 */
 	pathnode->rows = rel->rows;
 
-	cost_bitmap_scan(&pathnode->path, root, rel, bitmapqual, false);
+	cost_bitmap_heap_scan(&pathnode->path, root, rel, bitmapqual, false);
+
+	return pathnode;
+}
+
+/*
+ * create_bitmap_and_path
+ *	  Creates a path node representing a BitmapAnd.
+ */
+BitmapAndPath *
+create_bitmap_and_path(Query *root,
+					   RelOptInfo *rel,
+					   List *bitmapquals)
+{
+	BitmapAndPath *pathnode = makeNode(BitmapAndPath);
+
+	pathnode->path.pathtype = T_BitmapAnd;
+	pathnode->path.parent = rel;
+	pathnode->path.pathkeys = NIL;			/* always unordered */
+
+	pathnode->bitmapquals = bitmapquals;
+
+	/* this sets bitmapselectivity as well as the regular cost fields: */
+	cost_bitmap_and_node(pathnode, root);
+
+	return pathnode;
+}
+
+/*
+ * create_bitmap_or_path
+ *	  Creates a path node representing a BitmapOr.
+ */
+BitmapOrPath *
+create_bitmap_or_path(Query *root,
+					  RelOptInfo *rel,
+					  List *bitmapquals)
+{
+	BitmapOrPath *pathnode = makeNode(BitmapOrPath);
+
+	pathnode->path.pathtype = T_BitmapOr;
+	pathnode->path.parent = rel;
+	pathnode->path.pathkeys = NIL;			/* always unordered */
+
+	pathnode->bitmapquals = bitmapquals;
+
+	/* this sets bitmapselectivity as well as the regular cost fields: */
+	cost_bitmap_or_node(pathnode, root);
 
 	return pathnode;
 }
