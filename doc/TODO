@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Apr 19 22:48:12 EDT 2005
+Last updated:		Thu Apr 21 00:09:27 EDT 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -331,8 +331,6 @@ Indexes
   one column or expression indexes, perhaps using per-index statistics
 * Add fillfactor to control reserved free space during index creation
 * Allow the creation of indexes with mixed ascending/descending specifiers
-* Add tool to query pg_stat_* tables and report indexes that aren't needed
-  or tables that might need indexes
 
 
 Commands
