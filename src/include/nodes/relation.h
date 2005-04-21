@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.105 2005/04/19 22:35:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.106 2005/04/21 02:28:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,6 +374,10 @@ typedef struct Path
  * NoMovementScanDirection for an indexscan, but the planner wants to
  * distinguish ordered from unordered indexes for building pathkeys.)
  *
+ * 'indextotalcost' and 'indexselectivity' are saved in the IndexPath so that
+ * we need not recompute them when considering using the same index in a
+ * bitmap index/heap scan (see BitmapHeapPath).
+ *
  * 'rows' is the estimated result tuple count for the indexscan.  This
  * is the same as path.parent->rows for a simple indexscan, but it is
  * different for a nestloop inner scan, because the additional indexquals
@@ -389,6 +393,8 @@ typedef struct IndexPath
 	List	   *indexquals;
 	bool		isjoininner;
 	ScanDirection indexscandir;
+	Cost		indextotalcost;
+	Selectivity indexselectivity;
 	double		rows;			/* estimated number of result tuples */
 } IndexPath;
 
@@ -401,9 +407,12 @@ typedef struct IndexPath
  *
  * The individual indexscans are represented by IndexPath nodes, and any
  * logic on top of them is represented by regular AND and OR expressions.
- * Notice that we can use the same IndexPath node both to represent an
- * ordered index scan, and as the child of a BitmapHeapPath that represents
- * scanning the same index in an unordered way.
+ * Notice that we can use the same IndexPath node both to represent a regular
+ * IndexScan plan, and as the child of a BitmapHeapPath that represents
+ * scanning the same index using a BitmapIndexScan.  The startup_cost and
+ * total_cost figures of an IndexPath always represent the costs to use it
+ * as a regular IndexScan.  The costs of a BitmapIndexScan can be computed
+ * using the IndexPath's indextotalcost and indexselectivity.
  *
  * BitmapHeapPaths can be nestloop inner indexscans.  The isjoininner and
  * rows fields serve the same purpose as for plain IndexPaths.

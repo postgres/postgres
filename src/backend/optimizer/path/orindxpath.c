@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.67 2005/03/27 06:29:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.68 2005/04/21 02:28:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -353,7 +353,7 @@ best_or_subclause_index(Query *root,
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
 		List	   *indexclauses;
 		List	   *indexquals;
-		Path		subclause_path;
+		IndexPath	subclause_path;
 
 		/*
 		 * Ignore partial indexes that do not match the query.  If predOK
@@ -402,13 +402,13 @@ best_or_subclause_index(Query *root,
 
 		cost_index(&subclause_path, root, index, indexquals, false);
 
-		if (!found || subclause_path.total_cost < *retTotalCost)
+		if (!found || subclause_path.path.total_cost < *retTotalCost)
 		{
 			*retIndexInfo = index;
 			*retIndexClauses = flatten_clausegroups_list(indexclauses);
 			*retIndexQuals = indexquals;
-			*retStartupCost = subclause_path.startup_cost;
-			*retTotalCost = subclause_path.total_cost;
+			*retStartupCost = subclause_path.path.startup_cost;
+			*retTotalCost = subclause_path.path.total_cost;
 			found = true;
 		}
 	}

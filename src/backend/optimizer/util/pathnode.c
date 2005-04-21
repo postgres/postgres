@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.116 2005/04/19 22:35:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.117 2005/04/21 02:28:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -466,7 +466,7 @@ create_index_path(Query *root,
 	 */
 	pathnode->rows = index->rel->rows;
 
-	cost_index(&pathnode->path, root, index, indexquals, false);
+	cost_index(pathnode, root, index, indexquals, false);
 
 	return pathnode;
 }

@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.142 2005/04/19 22:35:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.143 2005/04/21 02:28:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,6 +103,7 @@ bool		enable_hashjoin = true;
 
 
 static bool cost_qual_eval_walker(Node *node, QualCost *total);
+static Selectivity cost_bitmap_qual(Node *bitmapqual, Cost *totalCost);
 static Selectivity approx_selectivity(Query *root, List *quals,
 				   JoinType jointype);
 static Selectivity join_in_selectivity(JoinPath *path, Query *root);
@@ -126,7 +127,7 @@ clamp_row_est(double nrows)
 	if (nrows < 1.0)
 		nrows = 1.0;
 	else
-		nrows = ceil(nrows);
+		nrows = rint(nrows);
 
 	return nrows;
 }
@@ -232,6 +233,10 @@ cost_nonsequential_access(double relpages)
  * 'is_injoin' is T if we are considering using the index scan as the inside
  *		of a nestloop join (hence, some of the indexQuals are join clauses)
  *
+ * cost_index() takes an IndexPath not just a Path, because it sets a few
+ * additional fields of the IndexPath besides startup_cost and total_cost.
+ * These fields are needed if the IndexPath is used in a BitmapIndexScan.
+ *
  * NOTE: 'indexQuals' must contain only clauses usable as index restrictions.
  * Any additional quals evaluated as qpquals may reduce the number of returned
  * tuples, but they won't reduce the number of tuples we have to fetch from
@@ -241,7 +246,7 @@ cost_nonsequential_access(double relpages)
  * it was a list of bare clause expressions.
  */
 void
-cost_index(Path *path, Query *root,
+cost_index(IndexPath *path, Query *root,
 		   IndexOptInfo *index,
 		   List *indexQuals,
 		   bool is_injoin)
@@ -285,6 +290,14 @@ cost_index(Path *path, Query *root,
 					 PointerGetDatum(&indexTotalCost),
 					 PointerGetDatum(&indexSelectivity),
 					 PointerGetDatum(&indexCorrelation));
+
+	/*
+	 * Save amcostestimate's results for possible use by cost_bitmap_scan.
+	 * We don't bother to save indexStartupCost or indexCorrelation, because
+	 * a bitmap scan doesn't care about either.
+	 */
+	path->indextotalcost = indexTotalCost;
+	path->indexselectivity = indexSelectivity;
 
 	/* all costs for touching index itself included here */
 	startup_cost += indexStartupCost;
@@ -396,8 +409,8 @@ cost_index(Path *path, Query *root,
 
 	run_cost += cpu_per_tuple * tuples_fetched;
 
-	path->startup_cost = startup_cost;
-	path->total_cost = startup_cost + run_cost;
+	path->path.startup_cost = startup_cost;
+	path->path.total_cost = startup_cost + run_cost;
 }
 
 /*
@@ -417,17 +430,149 @@ cost_bitmap_scan(Path *path, Query *root, RelOptInfo *baserel,
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
+	Cost		indexTotalCost;
+	Selectivity indexSelectivity;
+	Cost		cpu_per_tuple;
+	Cost		cost_per_page;
+	double		tuples_fetched;
+	double		pages_fetched;
+	double		T;
 
 	/* Should only be applied to base relations */
 	Assert(IsA(baserel, RelOptInfo));
 	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
 
-	/* XXX lots to do here */
-	run_cost += 10;
+	if (!enable_indexscan)		/* XXX use a separate enable flag? */
+		startup_cost += disable_cost;
+
+	/*
+	 * Estimate total cost of obtaining the bitmap, as well as its total
+	 * selectivity.
+	 */
+	indexTotalCost = 0;
+	indexSelectivity = cost_bitmap_qual(bitmapqual, &indexTotalCost);
+
+	startup_cost += indexTotalCost;
+
+	/*
+	 * The number of heap pages that need to be fetched is the same as the
+	 * Mackert and Lohman formula for the case T <= b (ie, no re-reads
+	 * needed).
+	 */
+	tuples_fetched = clamp_row_est(indexSelectivity * baserel->tuples);
+
+	T = (baserel->pages > 1) ? (double) baserel->pages : 1.0;
+	pages_fetched = (2.0 * T * tuples_fetched) / (2.0 * T + tuples_fetched);
+	if (pages_fetched > T)
+		pages_fetched = T;
+
+	/*
+	 * For small numbers of pages we should charge random_page_cost apiece,
+	 * while if nearly all the table's pages are being read, it's more
+	 * appropriate to charge 1.0 apiece.  The effect is nonlinear, too.
+	 * For lack of a better idea, interpolate like this to determine the
+	 * cost per page.
+	 */
+	cost_per_page = random_page_cost -
+		(random_page_cost - 1.0) * sqrt(pages_fetched / T);
+
+	run_cost += pages_fetched * cost_per_page;
+
+	/*
+	 * Estimate CPU costs per tuple.
+	 *
+	 * Often the indexquals don't need to be rechecked at each tuple ...
+	 * but not always, especially not if there are enough tuples involved
+	 * that the bitmaps become lossy.  For the moment, just assume they
+	 * will be rechecked always.
+	 */
+	startup_cost += baserel->baserestrictcost.startup;
+	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
+
+	run_cost += cpu_per_tuple * tuples_fetched;
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
+}
+
+/*
+ * cost_bitmap_qual
+ *		Recursively examine the AND/OR/IndexPath tree for a bitmap scan
+ *
+ * Total execution costs are added to *totalCost (so caller must be sure
+ * to initialize that to zero).  Estimated total selectivity of the bitmap
+ * is returned as the function result.
+ */
+static Selectivity
+cost_bitmap_qual(Node *bitmapqual, Cost *totalCost)
+{
+	Selectivity	result;
+	Selectivity	subresult;
+	ListCell   *l;
+
+	if (and_clause(bitmapqual))
+	{
+		/*
+		 * We estimate AND selectivity on the assumption that the inputs
+		 * are independent.  This is probably often wrong, but we don't
+		 * have the info to do better.
+		 *
+		 * The runtime cost of the BitmapAnd itself is estimated at 100x
+		 * cpu_operator_cost for each tbm_intersect needed.  Probably too
+		 * small, definitely too simplistic?
+		 *
+		 * This must agree with make_bitmap_and in createplan.c.
+		 */
+		result = 1.0;
+		foreach(l, ((BoolExpr *) bitmapqual)->args)
+		{
+			subresult = cost_bitmap_qual((Node *) lfirst(l), totalCost);
+			result *= subresult;
+			if (l != list_head(((BoolExpr *) bitmapqual)->args))
+				*totalCost += 100.0 * cpu_operator_cost;
+		}
+	}
+	else if (or_clause(bitmapqual))
+	{
+		/*
+		 * We estimate OR selectivity on the assumption that the inputs
+		 * are non-overlapping, since that's often the case in "x IN (list)"
+		 * type situations.  Of course, we clamp to 1.0 at the end.
+		 *
+		 * The runtime cost of the BitmapOr itself is estimated at 100x
+		 * cpu_operator_cost for each tbm_union needed.  Probably too
+		 * small, definitely too simplistic?  We are aware that the tbm_unions
+		 * are optimized out when the inputs are BitmapIndexScans.
+		 *
+		 * This must agree with make_bitmap_or in createplan.c.
+		 */
+		result = 0.0;
+		foreach(l, ((BoolExpr *) bitmapqual)->args)
+		{
+			subresult = cost_bitmap_qual((Node *) lfirst(l), totalCost);
+			result += subresult;
+			if (l != list_head(((BoolExpr *) bitmapqual)->args) &&
+				!IsA((Node *) lfirst(l), IndexPath))
+				*totalCost += 100.0 * cpu_operator_cost;
+		}
+		result = Min(result, 1.0);
+	}
+	else if (IsA(bitmapqual, IndexPath))
+	{
+		IndexPath *ipath = (IndexPath *) bitmapqual;
+
+		/* this must agree with create_bitmap_subplan in createplan.c */
+		*totalCost += ipath->indextotalcost;
+		result = ipath->indexselectivity;
+	}
+	else
+	{
+		elog(ERROR, "unrecognized node type: %d", nodeTag(bitmapqual));
+		result = 0.0;				/* keep compiler quiet */
+	}
+
+	return result;
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.247 2005/04/19 22:35:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.248 2005/04/21 02:28:01 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1024,6 +1024,8 @@ _outIndexPath(StringInfo str, IndexPath *node)
 	WRITE_NODE_FIELD(indexquals);
 	WRITE_BOOL_FIELD(isjoininner);
 	WRITE_ENUM_FIELD(indexscandir, ScanDirection);
+	WRITE_FLOAT_FIELD(indextotalcost, "%.2f");
+	WRITE_FLOAT_FIELD(indexselectivity, "%.4f");
 	WRITE_FLOAT_FIELD(rows, "%.0f");
 }
 

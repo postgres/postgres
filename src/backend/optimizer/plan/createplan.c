@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.180 2005/04/19 22:35:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.181 2005/04/21 02:28:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -976,10 +976,12 @@ create_bitmap_subplan(Query *root, Node *bitmapqual)
 									  linitial(iscan->indxqualorig),
 									  linitial(iscan->indxstrategy),
 									  linitial(iscan->indxsubtype));
-		/* XXX this cost is wrong: */
-		copy_path_costsize(&bscan->scan.plan, &ipath->path);
-		/* use the indexscan-specific rows estimate, not the parent rel's */
-		bscan->scan.plan.plan_rows = ipath->rows;
+		/* this must agree with cost_bitmap_qual in costsize.c */
+		bscan->scan.plan.startup_cost = 0.0;
+		bscan->scan.plan.total_cost = ipath->indextotalcost;
+		bscan->scan.plan.plan_rows =
+			clamp_row_est(ipath->indexselectivity * ipath->path.parent->tuples);
+		bscan->scan.plan.plan_width = 0; /* meaningless */
 		plan = (Plan *) bscan;
 	}
 	else
@@ -2068,8 +2070,9 @@ make_bitmap_and(List *bitmapplans)
 	ListCell   *subnode;
 
 	/*
-	 * Compute cost as sum of subplan costs, plus 10x cpu_operator_cost
+	 * Compute cost as sum of subplan costs, plus 100x cpu_operator_cost
 	 * (a pretty arbitrary amount, agreed) for each tbm_intersect needed.
+	 * This must agree with cost_bitmap_qual in costsize.c.
 	 */
 	plan->startup_cost = 0;
 	plan->total_cost = 0;
@@ -2085,7 +2088,10 @@ make_bitmap_and(List *bitmapplans)
 			plan->plan_rows = subplan->plan_rows;
 		}
 		else
+		{
+			plan->total_cost += cpu_operator_cost * 100.0;
 			plan->plan_rows = Min(plan->plan_rows, subplan->plan_rows);
+		}
 		plan->total_cost += subplan->total_cost;
 	}
 
@@ -2106,10 +2112,12 @@ make_bitmap_or(List *bitmapplans)
 	ListCell   *subnode;
 
 	/*
-	 * Compute cost as sum of subplan costs, plus 10x cpu_operator_cost
+	 * Compute cost as sum of subplan costs, plus 100x cpu_operator_cost
 	 * (a pretty arbitrary amount, agreed) for each tbm_union needed.
 	 * We assume that tbm_union can be optimized away for BitmapIndexScan
 	 * subplans.
+	 *
+	 * This must agree with cost_bitmap_qual in costsize.c.
 	 */
 	plan->startup_cost = 0;
 	plan->total_cost = 0;
@@ -2122,7 +2130,7 @@ make_bitmap_or(List *bitmapplans)
 		if (subnode == list_head(bitmapplans))	/* first node? */
 			plan->startup_cost = subplan->startup_cost;
 		else if (!IsA(subplan, BitmapIndexScan))
-			plan->total_cost += cpu_operator_cost * 10;
+			plan->total_cost += cpu_operator_cost * 100.0;
 		plan->total_cost += subplan->total_cost;
 		plan->plan_rows += subplan->plan_rows; /* ignore overlap */
 	}
