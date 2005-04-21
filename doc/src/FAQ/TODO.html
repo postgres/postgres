@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Thu Apr 21 00:09:27 EDT 2005
+Last updated:           Thu Apr 21 11:20:13 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at the PostgreSQL web<br/>
 site, <a href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</a>.
@@ -277,14 +277,13 @@ first.
   before accessing the heap rows.
 </p>
   </li><li>Allow non-bitmap indexes to be combined by creating bitmaps in memory
-<p>  Bitmap indexes index single columns that can be combined with other bitmap
-  indexes to dynamically create a composite index to match a specific query.
-  Each index is a bitmap, and the bitmaps are bitwise AND'ed or OR'ed to be
-  combined.  They can index by tid or can be lossy requiring a scan of the
-  heap page to find matching rows, or perhaps use a mixed solution where
-  tids are recorded for pages with only a few matches and per-page bitmaps
-  are used for more dense pages.  Another idea is to use a 32-bit bitmap
-  for every page and set a bit based on the item number mod(32).
+<p>  This feature allows separate indexes to be ANDed or ORed together.  This
+  is particularly useful for data warehousing applications that need to
+  query the database in an many permutations.  This feature scans an index
+  and creates an in-memory bitmap, and allows that bitmap to be combined
+  with other bitmap created in a similar way.  The bitmap can either index
+  all TIDs, or be lossy, meaning it records just page numbers and each
+  page tuple has to be checked for validity in a separate pass.
 </p>
   </li><li>Allow the creation of on-disk bitmap indexes which can be quickly
   combined with other bitmap indexes
