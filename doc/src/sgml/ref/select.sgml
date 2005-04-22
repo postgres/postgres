@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.84 2005/04/22 04:20:44 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.85 2005/04/22 15:32:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -835,7 +835,7 @@ FOR UPDATE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] 
     clauses to return fewer rows than specified by <literal>LIMIT</literal>.
     This is because <literal>LIMIT</> selects a number of rows,
     but might then block requesting a <literal>FOR UPDATE</literal> lock.
-    Once the <literal>SELECT</> unblocks, the query qualifiation might not
+    Once the <literal>SELECT</> unblocks, the query qualification might not
     be met and the row not be returned by <literal>SELECT</>.
    </para>
   </refsect2>
