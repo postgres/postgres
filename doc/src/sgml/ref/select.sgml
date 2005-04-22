@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.80.4.1 2005/01/22 23:23:53 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.80.4.2 2005/04/22 15:53:27 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -816,6 +816,16 @@ FOR UPDATE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] 
     <literal>FOR UPDATE</literal> cannot be used in contexts where
     returned rows can't be clearly identified with individual table
     rows; for example it can't be used with aggregation.
+   </para>
+
+   <para>
+    It is possible for a <command>SELECT</> command using both 
+    <literal>LIMIT</literal> and  <literal>FOR UPDATE</literal> 
+    clauses to return fewer rows than specified by <literal>LIMIT</literal>.
+    This is because <literal>LIMIT</> selects a number of rows,
+    but might then block requesting a <literal>FOR UPDATE</literal> lock.
+    Once the <literal>SELECT</> unblocks, the query qualification might not
+    be met and the row not be returned by <literal>SELECT</>.
    </para>
 
    <para>
