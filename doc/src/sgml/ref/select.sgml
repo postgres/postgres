@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.83 2005/04/08 00:59:58 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.84 2005/04/22 04:20:44 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -830,11 +830,13 @@ FOR UPDATE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] 
    </para>
 
    <para>
-    <literal>FOR UPDATE</literal> may appear before
-    <literal>LIMIT</literal> for compatibility with
-    <productname>PostgreSQL</productname> versions before 7.3.  It
-    effectively executes after <literal>LIMIT</literal>, however, and
-    so that is the recommended place to write it.
+    It is possible for a <command>SELECT</> command using both 
+    <literal>LIMIT</literal> and  <literal>FOR UPDATE</literal> 
+    clauses to return fewer rows than specified by <literal>LIMIT</literal>.
+    This is because <literal>LIMIT</> selects a number of rows,
+    but might then block requesting a <literal>FOR UPDATE</literal> lock.
+    Once the <literal>SELECT</> unblocks, the query qualifiation might not
+    be met and the row not be returned by <literal>SELECT</>.
    </para>
   </refsect2>
  </refsect1>
