@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.182 2005/04/21 19:18:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.183 2005/04/22 21:58:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -870,6 +870,9 @@ create_bitmap_scan_plan(Query *root,
 	/* Also extract the true index conditions */
 	indexquals = create_bitmap_indxqual(best_path->bitmapqual);
 
+	/* Reduce RestrictInfo list to bare expressions */
+	scan_clauses = get_actual_clauses(scan_clauses);
+
 	/*
 	 * If this is a innerjoin scan, the indexclauses will contain join
 	 * clauses that are not present in scan_clauses (since the passed-in
@@ -881,15 +884,8 @@ create_bitmap_scan_plan(Query *root,
 	 */
 	if (best_path->isjoininner)
 	{
-		/*
-		 * Pointer comparison should be enough to determine RestrictInfo
-		 * matches.
-		 */
-		scan_clauses = list_union_ptr(scan_clauses, bitmapqualorig);
+		scan_clauses = list_union(scan_clauses, bitmapqualorig);
 	}
-
-	/* Reduce RestrictInfo list to bare expressions */
-	scan_clauses = get_actual_clauses(scan_clauses);
 
 	/*
 	 * The qpqual list must contain all restrictions not automatically
@@ -1322,7 +1318,38 @@ create_nestloop_plan(Query *root,
 				select_nonredundant_join_clauses(root,
 												 joinrestrictclauses,
 												 linitial(indexclauses),
-												 best_path->jointype);
+												 IS_OUTER_JOIN(best_path->jointype));
+		}
+	}
+	else if (IsA(best_path->innerjoinpath, BitmapHeapPath))
+	{
+		/*
+		 * Same deal for bitmapped index scans.
+		 */
+		BitmapHeapPath *innerpath = (BitmapHeapPath *) best_path->innerjoinpath;
+
+		if (innerpath->isjoininner)
+		{
+			List	   *bitmapquals;
+			List	   *bitmapclauses;
+			ListCell   *l;
+
+			bitmapquals = create_bitmap_qual(innerpath->bitmapqual);
+
+			/* must convert qual list to restrictinfos ... painful ... */
+			bitmapclauses = NIL;
+			foreach(l, bitmapquals)
+			{
+				bitmapclauses = lappend(bitmapclauses,
+										make_restrictinfo((Expr *) lfirst(l),
+														  true, true));
+			}
+
+			joinrestrictclauses =
+				select_nonredundant_join_clauses(root,
+												 joinrestrictclauses,
+												 bitmapclauses,
+												 IS_OUTER_JOIN(best_path->jointype));
 		}
 	}
 

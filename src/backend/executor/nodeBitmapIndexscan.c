@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.2 2005/04/20 15:48:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.3 2005/04/22 21:58:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -492,7 +492,8 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 		indexstate->biss_RuntimeKeyInfo = NULL;
 		indexstate->biss_RuntimeContext = NULL;
 		/* Get rid of the speculatively-allocated flag array, too */
-		pfree(runtimeKeyInfo);
+		if (runtimeKeyInfo)
+			pfree(runtimeKeyInfo);
 	}
 
 	/*

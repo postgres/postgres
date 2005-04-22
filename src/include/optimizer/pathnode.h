@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.59 2005/04/21 19:18:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.60 2005/04/22 21:58:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,12 +30,14 @@ extern void add_path(RelOptInfo *parent_rel, Path *new_path);
 extern Path *create_seqscan_path(Query *root, RelOptInfo *rel);
 extern IndexPath *create_index_path(Query *root,
 				  IndexOptInfo *index,
-				  List *restriction_clauses,
+				  List *clause_groups,
 				  List *pathkeys,
-				  ScanDirection indexscandir);
+				  ScanDirection indexscandir,
+				  bool isjoininner);
 extern BitmapHeapPath *create_bitmap_heap_path(Query *root,
 											   RelOptInfo *rel,
-											   Path *bitmapqual);
+											   Path *bitmapqual,
+											   bool isjoininner);
 extern BitmapAndPath *create_bitmap_and_path(Query *root,
 											 RelOptInfo *rel,
 											 List *bitmapquals);

@@ -131,8 +131,10 @@ ALTER INDEX tmp_onek_unique1 RENAME TO onek_unique1;
 -- renaming views
 CREATE VIEW tmp_view (unique1) AS SELECT unique1 FROM tenk1;
 ALTER TABLE tmp_view RENAME TO tmp_view_new;
--- analyze to ensure we get an indexscan here
+-- hack to ensure we get an indexscan here
 ANALYZE tenk1;
+set enable_seqscan to off;
+set enable_bitmapscan to off;
 -- 5 values, sorted 
 SELECT unique1 FROM tenk1 WHERE unique1 < 5;
  unique1 
@@ -144,6 +146,8 @@ SELECT unique1 FROM tenk1 WHERE unique1 < 5;
        4
 (5 rows)
 
+reset enable_seqscan;
+reset enable_bitmapscan;
 DROP VIEW tmp_view_new;
 -- toast-like relation name
 alter table stud_emp rename to pg_toast_stud_emp;

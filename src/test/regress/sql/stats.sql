@@ -8,6 +8,9 @@
 -- conditio sine qua non
 SHOW stats_start_collector;  -- must be on
 
+-- XXX stopgap until we figure out how bitmap scans should be counted
+SET enable_bitmapscan = off;
+
 -- save counters
 CREATE TEMP TABLE prevstats AS
 SELECT t.seq_scan, t.seq_tup_read, t.idx_scan, t.idx_tup_fetch,

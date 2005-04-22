@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.107 2005/04/21 19:18:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.108 2005/04/22 21:58:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,10 +274,6 @@ typedef struct IndexOptInfo
 
 	bool		predOK;			/* true if predicate matches query */
 	bool		unique;			/* true if a unique index */
-
-	/* cached info about inner indexscan paths for index */
-	Relids		outer_relids;	/* other relids in usable join clauses */
-	List	   *inner_paths;	/* List of InnerIndexscanInfo nodes */
 } IndexOptInfo;
 
 
@@ -764,16 +760,13 @@ typedef struct JoinInfo
  * thus varies depending on which outer relation we consider; so we have
  * to recompute the best such path for every join.	To avoid lots of
  * redundant computation, we cache the results of such searches.  For
- * each index we compute the set of possible otherrelids (all relids
- * appearing in joinquals that could become indexquals for this index).
+ * each relation we compute the set of possible otherrelids (all relids
+ * appearing in joinquals that could become indexquals for this table).
  * Two outer relations whose relids have the same intersection with this
  * set will have the same set of available joinclauses and thus the same
- * best inner indexscan for that index.  Similarly, for each base relation,
- * we form the union of the per-index otherrelids sets.  Two outer relations
- * with the same intersection with that set will have the same best overall
- * inner indexscan for the base relation.  We use lists of InnerIndexscanInfo
- * nodes to cache the results of these searches at both the index and
- * relation level.
+ * best inner indexscan for the inner relation.  By taking the intersection
+ * before scanning the cache, we avoid recomputing when considering
+ * join rels that differ only by the inclusion of irrelevant other rels.
  *
  * The search key also includes a bool showing whether the join being
  * considered is an outer join.  Since we constrain the join order for

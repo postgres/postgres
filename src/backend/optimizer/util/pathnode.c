@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.118 2005/04/21 19:18:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.119 2005/04/22 21:58:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,6 +260,9 @@ set_cheapest(RelOptInfo *parent_rel)
  *	  but just recycling discarded Path nodes is a very useful savings in
  *	  a large join tree.  We can recycle the List nodes of pathlist, too.
  *
+ *	  BUT: we do not pfree IndexPath objects, since they may be referenced as
+ *	  children of BitmapHeapPaths as well as being paths in their own right.
+ *
  * 'parent_rel' is the relation entry to which the path corresponds.
  * 'new_path' is a potential path for parent_rel.
  *
@@ -349,8 +352,12 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		{
 			parent_rel->pathlist = list_delete_cell(parent_rel->pathlist,
 													p1, p1_prev);
-			/* Delete the data pointed-to by the deleted cell */
-			pfree(old_path);
+			/*
+			 * Delete the data pointed-to by the deleted cell, if possible
+			 */
+			if (!IsA(old_path, IndexPath))
+				pfree(old_path);
+			/* Advance list pointer */
 			if (p1_prev)
 				p1 = lnext(p1_prev);
 			else
@@ -361,6 +368,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 			/* new belongs after this old path if it has cost >= old's */
 			if (costcmp >= 0)
 				insert_after = p1;
+			/* Advance list pointers */
 			p1_prev = p1;
 			p1 = lnext(p1);
 		}
@@ -385,7 +393,8 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	else
 	{
 		/* Reject and recycle the new path */
-		pfree(new_path);
+		if (!IsA(new_path, IndexPath))
+			pfree(new_path);
 	}
 }
 
@@ -418,55 +427,102 @@ create_seqscan_path(Query *root, RelOptInfo *rel)
  *	  Creates a path node for an index scan.
  *
  * 'index' is a usable index.
- * 'restriction_clauses' is a list of lists of RestrictInfo nodes
+ * 'clause_groups' is a list of lists of RestrictInfo nodes
  *			to be used as index qual conditions in the scan.
  * 'pathkeys' describes the ordering of the path.
  * 'indexscandir' is ForwardScanDirection or BackwardScanDirection
  *			for an ordered index, or NoMovementScanDirection for
  *			an unordered index.
+ * 'isjoininner' is TRUE if this is a join inner indexscan path.
+ *			(pathkeys and indexscandir are ignored if so.)
  *
  * Returns the new path node.
  */
 IndexPath *
 create_index_path(Query *root,
 				  IndexOptInfo *index,
-				  List *restriction_clauses,
+				  List *clause_groups,
 				  List *pathkeys,
-				  ScanDirection indexscandir)
+				  ScanDirection indexscandir,
+				  bool isjoininner)
 {
 	IndexPath  *pathnode = makeNode(IndexPath);
-	List	   *indexquals;
+	RelOptInfo *rel = index->rel;
+	List	   *indexquals,
+			   *allclauses;
+
+	/*
+	 * For a join inner scan, there's no point in marking the path with any
+	 * pathkeys, since it will only ever be used as the inner path of a
+	 * nestloop, and so its ordering does not matter.  For the same reason
+	 * we don't really care what order it's scanned in.  (We could expect
+	 * the caller to supply the correct values, but it's easier to force
+	 * it here.)
+	 */
+	if (isjoininner)
+	{
+		pathkeys = NIL;
+		indexscandir = NoMovementScanDirection;
+	}
 
 	pathnode->path.pathtype = T_IndexScan;
-	pathnode->path.parent = index->rel;
+	pathnode->path.parent = rel;
 	pathnode->path.pathkeys = pathkeys;
 
 	/* Convert clauses to indexquals the executor can handle */
-	indexquals = expand_indexqual_conditions(index, restriction_clauses);
+	indexquals = expand_indexqual_conditions(index, clause_groups);
 
 	/* Flatten the clause-groups list to produce indexclauses list */
-	restriction_clauses = flatten_clausegroups_list(restriction_clauses);
+	allclauses = flatten_clausegroups_list(clause_groups);
 
 	/*
 	 * We are making a pathnode for a single-scan indexscan; therefore,
 	 * indexinfo etc should be single-element lists.
 	 */
 	pathnode->indexinfo = list_make1(index);
-	pathnode->indexclauses = list_make1(restriction_clauses);
+	pathnode->indexclauses = list_make1(allclauses);
 	pathnode->indexquals = list_make1(indexquals);
 
-	/* It's not an innerjoin path. */
-	pathnode->isjoininner = false;
-
+	pathnode->isjoininner = isjoininner;
 	pathnode->indexscandir = indexscandir;
 
-	/*
-	 * The number of rows is the same as the parent rel's estimate, since
-	 * this isn't a join inner indexscan.
-	 */
-	pathnode->rows = index->rel->rows;
+	if (isjoininner)
+	{
+		/*
+		 * We must compute the estimated number of output rows for the
+		 * indexscan.  This is less than rel->rows because of the additional
+		 * selectivity of the join clauses.  Since clause_groups may
+		 * contain both restriction and join clauses, we have to do a set
+		 * union to get the full set of clauses that must be considered to
+		 * compute the correct selectivity.  (Without the union operation,
+		 * we might have some restriction clauses appearing twice, which'd
+		 * mislead clauselist_selectivity into double-counting their
+		 * selectivity.  However, since RestrictInfo nodes aren't copied when
+		 * linking them into different lists, it should be sufficient to use
+		 * pointer comparison to remove duplicates.)
+		 *
+		 * Always assume the join type is JOIN_INNER; even if some of the join
+		 * clauses come from other contexts, that's not our problem.
+		 */
+		allclauses = list_union_ptr(rel->baserestrictinfo, allclauses);
+		pathnode->rows = rel->tuples *
+			clauselist_selectivity(root,
+								   allclauses,
+								   rel->relid,		/* do not use 0! */
+								   JOIN_INNER);
+		/* Like costsize.c, force estimate to be at least one row */
+		pathnode->rows = clamp_row_est(pathnode->rows);
+	}
+	else
+	{
+		/*
+		 * The number of rows is the same as the parent rel's estimate,
+		 * since this isn't a join inner indexscan.
+		 */
+		pathnode->rows = rel->rows;
+	}
 
-	cost_index(pathnode, root, index, indexquals, false);
+	cost_index(pathnode, root, index, indexquals, isjoininner);
 
 	return pathnode;
 }
@@ -480,7 +536,8 @@ create_index_path(Query *root,
 BitmapHeapPath *
 create_bitmap_heap_path(Query *root,
 						RelOptInfo *rel,
-						Path *bitmapqual)
+						Path *bitmapqual,
+						bool isjoininner)
 {
 	BitmapHeapPath *pathnode = makeNode(BitmapHeapPath);
 
@@ -489,15 +546,36 @@ create_bitmap_heap_path(Query *root,
 	pathnode->path.pathkeys = NIL;			/* always unordered */
 
 	pathnode->bitmapqual = bitmapqual;
+	pathnode->isjoininner = isjoininner;
 
-	/* It's not an innerjoin path. */
-	pathnode->isjoininner = false;
+	if (isjoininner)
+	{
+		/*
+		 * We must compute the estimated number of output rows for the
+		 * indexscan.  This is less than rel->rows because of the additional
+		 * selectivity of the join clauses.  We make use of the selectivity
+		 * estimated for the bitmap to do this; this isn't really quite
+		 * right since there may be restriction conditions not included
+		 * in the bitmap ...
+		 */
+		Cost		indexTotalCost;
+		Selectivity indexSelectivity;
 
-	/*
-	 * The number of rows is the same as the parent rel's estimate, since
-	 * this isn't a join inner indexscan.
-	 */
-	pathnode->rows = rel->rows;
+		cost_bitmap_tree_node(bitmapqual, &indexTotalCost, &indexSelectivity);
+		pathnode->rows = rel->tuples * indexSelectivity;
+		if (pathnode->rows > rel->rows)
+			pathnode->rows = rel->rows;
+		/* Like costsize.c, force estimate to be at least one row */
+		pathnode->rows = clamp_row_est(pathnode->rows);
+	}
+	else
+	{
+		/*
+		 * The number of rows is the same as the parent rel's estimate,
+		 * since this isn't a join inner indexscan.
+		 */
+		pathnode->rows = rel->rows;
+	}
 
 	cost_bitmap_heap_scan(&pathnode->path, root, rel, bitmapqual, false);
 

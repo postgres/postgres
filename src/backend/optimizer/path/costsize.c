@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.144 2005/04/21 19:18:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.145 2005/04/22 21:58:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,6 @@ bool		enable_hashjoin = true;
 
 
 static bool cost_qual_eval_walker(Node *node, QualCost *total);
-static void cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec);
 static Selectivity approx_selectivity(Query *root, List *quals,
 				   JoinType jointype);
 static Selectivity join_in_selectivity(JoinPath *path, Query *root);
@@ -474,8 +473,11 @@ cost_bitmap_heap_scan(Path *path, Query *root, RelOptInfo *baserel,
 	 * For lack of a better idea, interpolate like this to determine the
 	 * cost per page.
 	 */
-	cost_per_page = random_page_cost -
-		(random_page_cost - 1.0) * sqrt(pages_fetched / T);
+	if (pages_fetched >= 2.0)
+		cost_per_page = random_page_cost -
+			(random_page_cost - 1.0) * sqrt(pages_fetched / T);
+	else
+		cost_per_page = random_page_cost;
 
 	run_cost += pages_fetched * cost_per_page;
 
@@ -500,7 +502,7 @@ cost_bitmap_heap_scan(Path *path, Query *root, RelOptInfo *baserel,
  * cost_bitmap_tree_node
  *		Extract cost and selectivity from a bitmap tree node (index/and/or)
  */
-static void
+void
 cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec)
 {
 	if (IsA(path, IndexPath))

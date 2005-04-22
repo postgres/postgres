@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.32 2005/03/28 00:58:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.33 2005/04/22 21:58:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ static Expr *make_sub_restrictinfos(Expr *clause,
 static RestrictInfo *join_clause_is_redundant(Query *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
-						 JoinType jointype);
+						 bool isouterjoin);
 
 
 /*
@@ -49,27 +49,19 @@ static RestrictInfo *join_clause_is_redundant(Query *root,
 RestrictInfo *
 make_restrictinfo(Expr *clause, bool is_pushed_down, bool valid_everywhere)
 {
-	Expr	   *orclause;
-
 	/*
 	 * If it's an OR clause, build a modified copy with RestrictInfos
 	 * inserted above each subclause of the top-level AND/OR structure.
 	 */
 	if (or_clause((Node *) clause))
-	{
-		orclause = make_sub_restrictinfos(clause,
-										  is_pushed_down,
-										  valid_everywhere);
-	}
-	else
-	{
-		/* Shouldn't be an AND clause, else AND/OR flattening messed up */
-		Assert(!and_clause((Node *) clause));
+		return (RestrictInfo *) make_sub_restrictinfos(clause,
+													   is_pushed_down,
+													   valid_everywhere);
 
-		orclause = NULL;
-	}
+	/* Shouldn't be an AND clause, else AND/OR flattening messed up */
+	Assert(!and_clause((Node *) clause));
 
-	return make_restrictinfo_internal(clause, orclause,
+	return make_restrictinfo_internal(clause, NULL,
 									  is_pushed_down, valid_everywhere);
 }
 
@@ -198,6 +190,12 @@ make_restrictinfo_internal(Expr *clause, Expr *orclause,
 
 /*
  * Recursively insert sub-RestrictInfo nodes into a boolean expression.
+ *
+ * We put RestrictInfos above simple (non-AND/OR) clauses and above
+ * sub-OR clauses, but not above sub-AND clauses, because there's no need.
+ * This may seem odd but it is closely related to the fact that we use
+ * implicit-AND lists at top level of RestrictInfo lists.  Only ORs and
+ * simple clauses are valid RestrictInfos.
  */
 static Expr *
 make_sub_restrictinfos(Expr *clause, bool is_pushed_down,
@@ -213,7 +211,10 @@ make_sub_restrictinfos(Expr *clause, bool is_pushed_down,
 							 make_sub_restrictinfos(lfirst(temp),
 													is_pushed_down,
 													valid_everywhere));
-		return make_orclause(orlist);
+		return (Expr *) make_restrictinfo_internal(clause,
+												   make_orclause(orlist),
+												   is_pushed_down,
+												   valid_everywhere);
 	}
 	else if (and_clause((Node *) clause))
 	{
@@ -314,7 +315,7 @@ get_actual_join_clauses(List *restrictinfo_list,
  */
 List *
 remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
-							  JoinType jointype)
+							  bool isouterjoin)
 {
 	List	   *result = NIL;
 	ListCell   *item;
@@ -341,7 +342,7 @@ remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
 		RestrictInfo *prevrinfo;
 
 		/* is it redundant with any prior clause? */
-		prevrinfo = join_clause_is_redundant(root, rinfo, result, jointype);
+		prevrinfo = join_clause_is_redundant(root, rinfo, result, isouterjoin);
 		if (prevrinfo == NULL)
 		{
 			/* no, so add it to result list */
@@ -377,7 +378,7 @@ List *
 select_nonredundant_join_clauses(Query *root,
 								 List *restrictinfo_list,
 								 List *reference_list,
-								 JoinType jointype)
+								 bool isouterjoin)
 {
 	List	   *result = NIL;
 	ListCell   *item;
@@ -387,7 +388,7 @@ select_nonredundant_join_clauses(Query *root,
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
 
 		/* drop it if redundant with any reference clause */
-		if (join_clause_is_redundant(root, rinfo, reference_list, jointype) != NULL)
+		if (join_clause_is_redundant(root, rinfo, reference_list, isouterjoin) != NULL)
 			continue;
 
 		/* otherwise, add it to result list */
@@ -429,7 +430,7 @@ static RestrictInfo *
 join_clause_is_redundant(Query *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
-						 JoinType jointype)
+						 bool isouterjoin)
 {
 	ListCell   *refitem;
 
@@ -463,7 +464,7 @@ join_clause_is_redundant(Query *root,
 				if (rinfo->left_pathkey == refrinfo->left_pathkey &&
 					rinfo->right_pathkey == refrinfo->right_pathkey &&
 					(rinfo->is_pushed_down == refrinfo->is_pushed_down ||
-					 !IS_OUTER_JOIN(jointype)))
+					 !isouterjoin))
 				{
 					/* Yup, it's redundant */
 					return refrinfo;

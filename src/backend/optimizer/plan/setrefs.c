@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.107 2005/04/19 22:35:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.108 2005/04/22 21:58:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,10 @@ typedef struct
 static void fix_expr_references(Plan *plan, Node *node);
 static bool fix_expr_references_walker(Node *node, void *context);
 static void set_join_references(Join *join, List *rtable);
+static void set_inner_join_references(Plan *inner_plan,
+									  List *rtable,
+									  List *outer_tlist,
+									  bool tlists_have_non_vars);
 static void set_uppernode_references(Plan *plan, Index subvarno);
 static bool targetlist_has_non_vars(List *tlist);
 static List *join_references(List *clauses,
@@ -325,7 +329,7 @@ fix_expr_references_walker(Node *node, void *context)
  *
  * In the case of a nestloop with inner indexscan, we will also need to
  * apply the same transformation to any outer vars appearing in the
- * quals of the child indexscan.
+ * quals of the child indexscan.  set_inner_join_references does that.
  *
  *	'join' is a join plan node
  *	'rtable' is the associated range table
@@ -365,62 +369,11 @@ set_join_references(Join *join, List *rtable)
 	/* Now do join-type-specific stuff */
 	if (IsA(join, NestLoop))
 	{
-		if (IsA(inner_plan, IndexScan))
-		{
-			/*
-			 * An index is being used to reduce the number of tuples
-			 * scanned in the inner relation.  If there are join clauses
-			 * being used with the index, we must update their outer-rel
-			 * var nodes to refer to the outer side of the join.
-			 */
-			IndexScan  *innerscan = (IndexScan *) inner_plan;
-			List	   *indxqualorig = innerscan->indxqualorig;
-
-			/* No work needed if indxqual refers only to its own rel... */
-			if (NumRelids((Node *) indxqualorig) > 1)
-			{
-				Index		innerrel = innerscan->scan.scanrelid;
-
-				/* only refs to outer vars get changed in the inner qual */
-				innerscan->indxqualorig = join_references(indxqualorig,
-														  rtable,
-														  outer_tlist,
-														  NIL,
-														  innerrel,
-												   tlists_have_non_vars);
-				innerscan->indxqual = join_references(innerscan->indxqual,
-													  rtable,
-													  outer_tlist,
-													  NIL,
-													  innerrel,
-												   tlists_have_non_vars);
-
-				/*
-				 * We must fix the inner qpqual too, if it has join
-				 * clauses (this could happen if special operators are
-				 * involved: some indxquals may get rechecked as qpquals).
-				 */
-				if (NumRelids((Node *) inner_plan->qual) > 1)
-					inner_plan->qual = join_references(inner_plan->qual,
-													   rtable,
-													   outer_tlist,
-													   NIL,
-													   innerrel,
-												   tlists_have_non_vars);
-			}
-		}
-		else if (IsA(inner_plan, TidScan))
-		{
-			TidScan    *innerscan = (TidScan *) inner_plan;
-			Index		innerrel = innerscan->scan.scanrelid;
-
-			innerscan->tideval = join_references(innerscan->tideval,
-												 rtable,
-												 outer_tlist,
-												 NIL,
-												 innerrel,
-												 tlists_have_non_vars);
-		}
+		/* This processing is split out to handle possible recursion */
+		set_inner_join_references(inner_plan,
+								  rtable,
+								  outer_tlist,
+								  tlists_have_non_vars);
 	}
 	else if (IsA(join, MergeJoin))
 	{
@@ -443,6 +396,178 @@ set_join_references(Join *join, List *rtable)
 										  inner_tlist,
 										  (Index) 0,
 										  tlists_have_non_vars);
+	}
+}
+
+/*
+ * set_inner_join_references
+ *		Handle join references appearing in an inner indexscan's quals
+ *
+ * To handle bitmap-scan plan trees, we have to be able to recurse down
+ * to the bottom BitmapIndexScan nodes, so this is split out as a separate
+ * function.
+ */
+static void
+set_inner_join_references(Plan *inner_plan,
+						  List *rtable,
+						  List *outer_tlist,
+						  bool tlists_have_non_vars)
+{
+	if (IsA(inner_plan, IndexScan))
+	{
+		/*
+		 * An index is being used to reduce the number of tuples
+		 * scanned in the inner relation.  If there are join clauses
+		 * being used with the index, we must update their outer-rel
+		 * var nodes to refer to the outer side of the join.
+		 */
+		IndexScan  *innerscan = (IndexScan *) inner_plan;
+		List	   *indxqualorig = innerscan->indxqualorig;
+
+		/* No work needed if indxqual refers only to its own rel... */
+		if (NumRelids((Node *) indxqualorig) > 1)
+		{
+			Index		innerrel = innerscan->scan.scanrelid;
+
+			/* only refs to outer vars get changed in the inner qual */
+			innerscan->indxqualorig = join_references(indxqualorig,
+													  rtable,
+													  outer_tlist,
+													  NIL,
+													  innerrel,
+													  tlists_have_non_vars);
+			innerscan->indxqual = join_references(innerscan->indxqual,
+												  rtable,
+												  outer_tlist,
+												  NIL,
+												  innerrel,
+												  tlists_have_non_vars);
+
+			/*
+			 * We must fix the inner qpqual too, if it has join
+			 * clauses (this could happen if special operators are
+			 * involved: some indxquals may get rechecked as qpquals).
+			 */
+			if (NumRelids((Node *) inner_plan->qual) > 1)
+				inner_plan->qual = join_references(inner_plan->qual,
+												   rtable,
+												   outer_tlist,
+												   NIL,
+												   innerrel,
+												   tlists_have_non_vars);
+		}
+	}
+	else if (IsA(inner_plan, BitmapIndexScan))
+	{
+		/*
+		 * Same, but index is being used within a bitmap plan.
+		 */
+		BitmapIndexScan *innerscan = (BitmapIndexScan *) inner_plan;
+		List	   *indxqualorig = innerscan->indxqualorig;
+
+		/* No work needed if indxqual refers only to its own rel... */
+		if (NumRelids((Node *) indxqualorig) > 1)
+		{
+			Index		innerrel = innerscan->scan.scanrelid;
+
+			/* only refs to outer vars get changed in the inner qual */
+			innerscan->indxqualorig = join_references(indxqualorig,
+													  rtable,
+													  outer_tlist,
+													  NIL,
+													  innerrel,
+													  tlists_have_non_vars);
+			innerscan->indxqual = join_references(innerscan->indxqual,
+												  rtable,
+												  outer_tlist,
+												  NIL,
+												  innerrel,
+												  tlists_have_non_vars);
+			/* no need to fix inner qpqual */
+			Assert(inner_plan->qual == NIL);
+		}
+	}
+	else if (IsA(inner_plan, BitmapHeapScan))
+	{
+		/*
+		 * The inner side is a bitmap scan plan.  Fix the top node,
+		 * and recurse to get the lower nodes.
+		 */
+		BitmapHeapScan *innerscan = (BitmapHeapScan *) inner_plan;
+		List	   *bitmapqualorig = innerscan->bitmapqualorig;
+
+		/* No work needed if bitmapqual refers only to its own rel... */
+		if (NumRelids((Node *) bitmapqualorig) > 1)
+		{
+			Index		innerrel = innerscan->scan.scanrelid;
+
+			/* only refs to outer vars get changed in the inner qual */
+			innerscan->bitmapqualorig = join_references(bitmapqualorig,
+													  rtable,
+													  outer_tlist,
+													  NIL,
+													  innerrel,
+													  tlists_have_non_vars);
+
+			/*
+			 * We must fix the inner qpqual too, if it has join
+			 * clauses (this could happen if special operators are
+			 * involved: some indxquals may get rechecked as qpquals).
+			 */
+			if (NumRelids((Node *) inner_plan->qual) > 1)
+				inner_plan->qual = join_references(inner_plan->qual,
+												   rtable,
+												   outer_tlist,
+												   NIL,
+												   innerrel,
+												   tlists_have_non_vars);
+
+			/* Now recurse */
+			set_inner_join_references(inner_plan->lefttree,
+									  rtable,
+									  outer_tlist,
+									  tlists_have_non_vars);
+		}
+	}
+	else if (IsA(inner_plan, BitmapAnd))
+	{
+		/* All we need do here is recurse */
+		BitmapAnd *innerscan = (BitmapAnd *) inner_plan;
+		ListCell *l;
+
+		foreach(l, innerscan->bitmapplans)
+		{
+			set_inner_join_references((Plan *) lfirst(l),
+									  rtable,
+									  outer_tlist,
+									  tlists_have_non_vars);
+		}
+	}
+	else if (IsA(inner_plan, BitmapOr))
+	{
+		/* All we need do here is recurse */
+		BitmapOr *innerscan = (BitmapOr *) inner_plan;
+		ListCell *l;
+
+		foreach(l, innerscan->bitmapplans)
+		{
+			set_inner_join_references((Plan *) lfirst(l),
+									  rtable,
+									  outer_tlist,
+									  tlists_have_non_vars);
+		}
+	}
+	else if (IsA(inner_plan, TidScan))
+	{
+		TidScan    *innerscan = (TidScan *) inner_plan;
+		Index		innerrel = innerscan->scan.scanrelid;
+
+		innerscan->tideval = join_references(innerscan->tideval,
+											 rtable,
+											 outer_tlist,
+											 NIL,
+											 innerrel,
+											 tlists_have_non_vars);
 	}
 }
 

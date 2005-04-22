@@ -367,6 +367,7 @@ insert into arr_tbl values ('{2,3,4}');
 insert into arr_tbl values ('{1,5,3}');
 insert into arr_tbl values ('{1,2,10}');
 set enable_seqscan to off;
+set enable_bitmapscan to off;
 select * from arr_tbl where f1 > '{1,2,3}' and f1 <= '{1,5,3}';
     f1    
 ----------
@@ -376,6 +377,8 @@ select * from arr_tbl where f1 > '{1,2,3}' and f1 <= '{1,5,3}';
 
 -- note: if above select doesn't produce the expected tuple order,
 -- then you didn't get an indexscan plan, and something is busted.
+reset enable_seqscan;
+reset enable_bitmapscan;
 -- test [not] (like|ilike) (any|all) (...)
 select 'foo' like any (array['%a', '%o']); -- t
  ?column? 
