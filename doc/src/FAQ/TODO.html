@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Fri Apr 22 09:38:10 EDT 2005
+Last updated:           Fri Apr 22 11:40:08 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -653,12 +653,12 @@ first.
   to obtain tuple visibility information.
 </p>
   </li><li>Allow data to be pulled directly from indexes
-<p>  Currently indexes do not have enough tuple tuple visibility
-  information to allow data to be pulled from the index without
-  also accessing the heap.  One way to allow this is to set a bit
-  to index tuples to indicate if a tuple is currently visible to
-  all transactions when the first valid heap lookup happens.  This 
-  bit would have to be cleared when a heap tuple is expired.
+<p>  Currently indexes do not have enough tuple visibility information 
+  to allow data to be pulled from the index without also accessing 
+  the heap.  One way to allow this is to set a bit to index tuples 
+  to indicate if a tuple is currently visible to all transactions 
+  when the first valid heap lookup happens.  This bit would have to 
+  be cleared when a heap tuple is expired.
 </p>
   </li><li>Consider automatic caching of queries at various levels:
   <ul>

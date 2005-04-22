@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Apr 22 09:38:10 EDT 2005
+Last updated:		Fri Apr 22 11:40:08 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -714,12 +714,12 @@ Cache
 
 * Allow data to be pulled directly from indexes
 
-  Currently indexes do not have enough tuple tuple visibility
-  information to allow data to be pulled from the index without
-  also accessing the heap.  One way to allow this is to set a bit
-  to index tuples to indicate if a tuple is currently visible to
-  all transactions when the first valid heap lookup happens.  This 
-  bit would have to be cleared when a heap tuple is expired.
+  Currently indexes do not have enough tuple visibility information 
+  to allow data to be pulled from the index without also accessing 
+  the heap.  One way to allow this is to set a bit to index tuples 
+  to indicate if a tuple is currently visible to all transactions 
+  when the first valid heap lookup happens.  This bit would have to 
+  be cleared when a heap tuple is expired.
 
 * Consider automatic caching of queries at various levels:
 	o Parsed query tree
