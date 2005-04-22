@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.25.2.10 2005/04/18 18:25:11 jurka Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.25.2.11 2005/04/22 14:36:48 jurka Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -699,7 +699,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 			throw new PSQLException( "postgresql.updateable.notupdateable" );
 		}
 
-		if (current_row < 0) {
+		if (current_row < 0 || current_row >= rows.size()) {
 			this_row = null;
 			rowBuffer = null;
 		} else {
