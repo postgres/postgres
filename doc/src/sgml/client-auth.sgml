@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.75 2005/04/21 22:19:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.76 2005/04/22 04:18:58 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -575,9 +575,8 @@ local   db1,db2,@demodbs  all                         md5
     The password-based authentication methods are <literal>md5</>,
     <literal>crypt</>, and <literal>password</>. These methods operate
     similarly except for the way that the password is sent across the
-    connection.  However, only <literal>md5</> allows encrypted
-    passwords to be stored in <structname>pg_shadow</structname>;
-    the other two require unencrypted passwords to be stored there.
+    connection.  However, <literal>crypt</> does not allow encrypted
+    passwords to be stored in <structname>pg_shadow</structname>.
    </para>
 
    <para>
