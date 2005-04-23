@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.64.2.3 2002/09/30 20:57:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.64.2.4 2005/04/23 22:54:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1553,7 +1553,7 @@ timetz_part(PG_FUNCTION_ARGS)
 		}
 	}
 	else if ((type == RESERV) && (val == DTK_EPOCH))
-		result = time->time - time->zone;
+		result = time->time + time->zone;
 	else
 	{
 		elog(ERROR, "TIMETZ units '%s' not recognized",
