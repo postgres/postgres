@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.195 2005/04/14 21:44:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.196 2005/04/23 04:42:53 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -73,8 +73,10 @@ static bool set_coercionform_dontcare_walker(Node *node, void *context);
 static Node *eval_const_expressions_mutator(Node *node,
 							   eval_const_expressions_context *context);
 static List *simplify_or_arguments(List *args,
+					  eval_const_expressions_context *context,
 					  bool *haveNull, bool *forceTrue);
 static List *simplify_and_arguments(List *args,
+					   eval_const_expressions_context *context,
 					   bool *haveNull, bool *forceFalse);
 static Expr *simplify_boolean_equality(List *args);
 static Expr *simplify_function(Oid funcid, Oid result_type, List *args,
@@ -1466,16 +1468,6 @@ eval_const_expressions_mutator(Node *node,
 	if (IsA(node, BoolExpr))
 	{
 		BoolExpr   *expr = (BoolExpr *) node;
-		List	   *args;
-
-		/*
-		 * Reduce constants in the BoolExpr's arguments.  We know args is
-		 * either NIL or a List node, so we can call
-		 * expression_tree_mutator directly rather than recursing to self.
-		 */
-		args = (List *) expression_tree_mutator((Node *) expr->args,
-										  eval_const_expressions_mutator,
-												(void *) context);
 
 		switch (expr->boolop)
 		{
@@ -1485,7 +1477,7 @@ eval_const_expressions_mutator(Node *node,
 					bool		haveNull = false;
 					bool		forceTrue = false;
 
-					newargs = simplify_or_arguments(args,
+					newargs = simplify_or_arguments(expr->args, context,
 												  &haveNull, &forceTrue);
 					if (forceTrue)
 						return makeBoolConst(true, false);
@@ -1506,7 +1498,7 @@ eval_const_expressions_mutator(Node *node,
 					bool		haveNull = false;
 					bool		forceFalse = false;
 
-					newargs = simplify_and_arguments(args,
+					newargs = simplify_and_arguments(expr->args, context,
 												 &haveNull, &forceFalse);
 					if (forceFalse)
 						return makeBoolConst(false, false);
@@ -1522,25 +1514,31 @@ eval_const_expressions_mutator(Node *node,
 					return (Node *) make_andclause(newargs);
 				}
 			case NOT_EXPR:
-				Assert(list_length(args) == 1);
-				if (IsA(linitial(args), Const))
 				{
-					Const	   *const_input = (Const *) linitial(args);
+					Node	   *arg;
 
-					/* NOT NULL => NULL */
-					if (const_input->constisnull)
-						return makeBoolConst(false, true);
-					/* otherwise pretty easy */
-					return makeBoolConst(!DatumGetBool(const_input->constvalue),
-										 false);
+					Assert(list_length(expr->args) == 1);
+					arg = eval_const_expressions_mutator(linitial(expr->args),
+														 context);
+					if (IsA(arg, Const))
+					{
+						Const	   *const_input = (Const *) arg;
+
+						/* NOT NULL => NULL */
+						if (const_input->constisnull)
+							return makeBoolConst(false, true);
+						/* otherwise pretty easy */
+						return makeBoolConst(!DatumGetBool(const_input->constvalue),
+											 false);
+					}
+					else if (not_clause(arg))
+					{
+						/* Cancel NOT/NOT */
+						return (Node *) get_notclausearg((Expr *) arg);
+					}
+					/* Else we still need a NOT node */
+					return (Node *) make_notclause((Expr *) arg);
 				}
-				else if (not_clause((Node *) linitial(args)))
-				{
-					/* Cancel NOT/NOT */
-					return (Node *) get_notclausearg((Expr *) linitial(args));
-				}
-				/* Else we still need a NOT node */
-				return (Node *) make_notclause((Expr *) linitial(args));
 			default:
 				elog(ERROR, "unrecognized boolop: %d",
 					 (int) expr->boolop);
@@ -1869,33 +1867,87 @@ eval_const_expressions_mutator(Node *node,
 }
 
 /*
- * Subroutine for eval_const_expressions: scan the arguments of an OR clause
+ * Subroutine for eval_const_expressions: process arguments of an OR clause
  *
- * OR arguments are handled as follows:
+ * This includes flattening of nested ORs as well as recursion to
+ * eval_const_expressions to simplify the OR arguments.
+ *
+ * After simplification, OR arguments are handled as follows:
  *		non constant: keep
  *		FALSE: drop (does not affect result)
  *		TRUE: force result to TRUE
  *		NULL: keep only one
  * We must keep one NULL input because ExecEvalOr returns NULL when no input
- * is TRUE and at least one is NULL.
- *
- * This is split out as a subroutine so that we can recurse to fold sub-ORs
- * into the upper OR clause, thereby ensuring that nested ORs are flattened.
+ * is TRUE and at least one is NULL.  We don't actually include the NULL
+ * here, that's supposed to be done by the caller.
  *
  * The output arguments *haveNull and *forceTrue must be initialized FALSE
  * by the caller.  They will be set TRUE if a null constant or true constant,
  * respectively, is detected anywhere in the argument list.
  */
 static List *
-simplify_or_arguments(List *args, bool *haveNull, bool *forceTrue)
+simplify_or_arguments(List *args,
+					  eval_const_expressions_context *context,
+					  bool *haveNull, bool *forceTrue)
 {
 	List	   *newargs = NIL;
-	ListCell   *larg;
+	List	   *unprocessed_args;
 
-	foreach(larg, args)
+	/*
+	 * Since the parser considers OR to be a binary operator, long OR lists
+	 * become deeply nested expressions.  We must flatten these into long
+	 * argument lists of a single OR operator.  To avoid blowing out the stack
+	 * with recursion of eval_const_expressions, we resort to some tenseness
+	 * here: we keep a list of not-yet-processed inputs, and handle flattening
+	 * of nested ORs by prepending to the to-do list instead of recursing.
+	 */
+	unprocessed_args = list_copy(args);
+	while (unprocessed_args)
 	{
-		Node	   *arg = (Node *) lfirst(larg);
+		Node	   *arg = (Node *) linitial(unprocessed_args);
 
+		unprocessed_args = list_delete_first(unprocessed_args);
+
+		/* flatten nested ORs as per above comment */
+		if (or_clause(arg))
+		{
+			List *subargs = list_copy(((BoolExpr *) arg)->args);
+
+			/* overly tense code to avoid leaking unused list header */
+			if (!unprocessed_args)
+				unprocessed_args = subargs;
+			else
+			{
+				List *oldhdr = unprocessed_args;
+
+				unprocessed_args = list_concat(subargs, unprocessed_args);
+				pfree(oldhdr);
+			}
+			continue;
+		}
+
+		/* If it's not an OR, simplify it */
+		arg = eval_const_expressions_mutator(arg, context);
+
+		/*
+		 * It is unlikely but not impossible for simplification of a
+		 * non-OR clause to produce an OR.  Recheck, but don't be
+		 * too tense about it since it's not a mainstream case.
+		 * In particular we don't worry about const-simplifying
+		 * the input twice.
+		 */
+		if (or_clause(arg))
+		{
+			List *subargs = list_copy(((BoolExpr *) arg)->args);
+
+			unprocessed_args = list_concat(subargs, unprocessed_args);
+			continue;
+		}
+
+		/*
+		 * OK, we have a const-simplified non-OR argument.  Process it
+		 * per comments above.
+		 */
 		if (IsA(arg, Const))
 		{
 			Const	   *const_input = (Const *) arg;
@@ -1914,48 +1966,91 @@ simplify_or_arguments(List *args, bool *haveNull, bool *forceTrue)
 				return NIL;
 			}
 			/* otherwise, we can drop the constant-false input */
+			continue;
 		}
-		else if (or_clause(arg))
-		{
-			newargs = list_concat(newargs,
-						  simplify_or_arguments(((BoolExpr *) arg)->args,
-												haveNull, forceTrue));
-		}
-		else
-			newargs = lappend(newargs, arg);
+
+		/* else emit the simplified arg into the result list */
+		newargs = lappend(newargs, arg);
 	}
 
 	return newargs;
 }
 
 /*
- * Subroutine for eval_const_expressions: scan the arguments of an AND clause
+ * Subroutine for eval_const_expressions: process arguments of an AND clause
  *
- * AND arguments are handled as follows:
+ * This includes flattening of nested ANDs as well as recursion to
+ * eval_const_expressions to simplify the AND arguments.
+ *
+ * After simplification, AND arguments are handled as follows:
  *		non constant: keep
  *		TRUE: drop (does not affect result)
  *		FALSE: force result to FALSE
  *		NULL: keep only one
  * We must keep one NULL input because ExecEvalAnd returns NULL when no input
- * is FALSE and at least one is NULL.
- *
- * This is split out as a subroutine so that we can recurse to fold sub-ANDs
- * into the upper AND clause, thereby ensuring that nested ANDs are flattened.
+ * is FALSE and at least one is NULL.  We don't actually include the NULL
+ * here, that's supposed to be done by the caller.
  *
  * The output arguments *haveNull and *forceFalse must be initialized FALSE
  * by the caller.  They will be set TRUE if a null constant or false constant,
  * respectively, is detected anywhere in the argument list.
  */
 static List *
-simplify_and_arguments(List *args, bool *haveNull, bool *forceFalse)
+simplify_and_arguments(List *args,
+					   eval_const_expressions_context *context,
+					   bool *haveNull, bool *forceFalse)
 {
 	List	   *newargs = NIL;
-	ListCell   *larg;
+	List	   *unprocessed_args;
 
-	foreach(larg, args)
+	/* See comments in simplify_or_arguments */
+	unprocessed_args = list_copy(args);
+	while (unprocessed_args)
 	{
-		Node	   *arg = (Node *) lfirst(larg);
+		Node	   *arg = (Node *) linitial(unprocessed_args);
 
+		unprocessed_args = list_delete_first(unprocessed_args);
+
+		/* flatten nested ANDs as per above comment */
+		if (and_clause(arg))
+		{
+			List *subargs = list_copy(((BoolExpr *) arg)->args);
+
+			/* overly tense code to avoid leaking unused list header */
+			if (!unprocessed_args)
+				unprocessed_args = subargs;
+			else
+			{
+				List *oldhdr = unprocessed_args;
+
+				unprocessed_args = list_concat(subargs, unprocessed_args);
+				pfree(oldhdr);
+			}
+			continue;
+		}
+
+		/* If it's not an AND, simplify it */
+		arg = eval_const_expressions_mutator(arg, context);
+
+		/*
+		 * It is unlikely but not impossible for simplification of a
+		 * non-AND clause to produce an AND.  Recheck, but don't be
+		 * too tense about it since it's not a mainstream case.
+		 * In particular we don't worry about const-simplifying
+		 * the input twice.
+		 */
+		if (and_clause(arg))
+		{
+			List *subargs = list_copy(((BoolExpr *) arg)->args);
+
+			unprocessed_args = list_concat(subargs, unprocessed_args);
+			continue;
+		}
+
+		/*
+		 * OK, we have a const-simplified non-AND argument.  Process it
+		 * per comments above.
+		 */
 		if (IsA(arg, Const))
 		{
 			Const	   *const_input = (Const *) arg;
@@ -1974,15 +2069,11 @@ simplify_and_arguments(List *args, bool *haveNull, bool *forceFalse)
 				return NIL;
 			}
 			/* otherwise, we can drop the constant-true input */
+			continue;
 		}
-		else if (and_clause(arg))
-		{
-			newargs = list_concat(newargs,
-						 simplify_and_arguments(((BoolExpr *) arg)->args,
-												haveNull, forceFalse));
-		}
-		else
-			newargs = lappend(newargs, arg);
+
+		/* else emit the simplified arg into the result list */
+		newargs = lappend(newargs, arg);
 	}
 
 	return newargs;
