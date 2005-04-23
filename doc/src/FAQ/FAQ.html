@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sat Apr 23 14:59:01 EDT 2005</P>
+    <P>Last updated: Sat Apr 23 16:49:43 EDT 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -99,36 +99,24 @@
     reused on transaction abort? Why are there gaps in the numbering of
     my sequence/SERIAL column?<BR>
      <A href="#4.12">4.12</A>) What is an <SMALL>OID</SMALL>? What is a
-    <SMALL>TID</SMALL>?<BR>
-     <A href="#4.12">4.13</A>) Why do I get the error <I>"ERROR: Memory
+    <SMALL>CTID</SMALL>?<BR>
+     <A href="#4.13">4.13</A>) Why do I get the error <I>"ERROR: Memory
     exhausted in AllocSetAlloc()"</I>?<BR>
      <A href="#4.14">4.14</A>) How do I tell what PostgreSQL version I
     am running?<BR>
-     <A href="#4.15">4.15</A>) Why does my large-object operations get
-    <I>"invalid large obj descriptor"</I>?<BR>
-     <A href="#4.16">4.16</A>) How do I create a column that will
+     <A href="#4.15">4.15</A>) How do I create a column that will
     default to the current time?<BR>
-     <A href="#4.17">4.17</A>) How do I perform an outer join?<BR>
-     <A href="#4.18">4.18</A>) How do I perform queries using multiple
+     <A href="#4.16">4.16</A>) How do I perform an outer join?<BR>
+     <A href="#4.17">4.17</A>) How do I perform queries using multiple
     databases?<BR>
-     <A href="#4.19">4.19</A>) How do I return multiple rows or columns
+     <A href="#4.18">4.18</A>) How do I return multiple rows or columns
     from a function?<BR>
-     <A href="#4.20">4.20</A>) Why do I get "relation with OID #####
+     <A href="#4.19">4.19</A>) Why do I get "relation with OID #####
     does not exist" errors when accessing temporary tables in PL/PgSQL
     functions?<BR>
-     <A href="#4.21">4.21</A>) What encryption options are available?<BR>
+     <A href="#4.20">4.20</A>) What encryption options are available?<BR>
      
 
-    <H2 align="center">Extending PostgreSQL</H2>
-    <A href="#5.1">5.1</A>) I wrote a user-defined function. When I run
-    it in <I>psql</I>, why does it dump core?<BR>
-     <A href="#5.2">5.2</A>) How can I contribute some nifty new types
-    and functions to PostgreSQL?<BR>
-     <A href="#5.3">5.3</A>) How do I write a C function to return a
-    tuple?<BR>
-     <A href="#5.4">5.4</A>) I have changed a source file. Why does the
-    recompile not see the change?<BR>
-     
     <HR>
 
     <H2 align="center">General Questions</H2>
@@ -683,7 +671,7 @@ table?</TD><TD>unlimited</TD></TR>
 
     <P>If you believe the optimizer is incorrect in choosing a
     sequential scan, use <CODE>SET enable_seqscan TO 'off'</CODE> and
-    run tests to see if an index scan is indeed faster.</P>
+    run query again to see if an index scan is indeed faster.</P>
 
     <P>When using wild-card operators such as <SMALL>LIKE</SMALL> or
     <I>~</I>, indexes can only be used in certain circumstances:</P>
@@ -733,7 +721,6 @@ table?</TD><TD>unlimited</TD></TR>
     FROM tab
     WHERE lower(col) = 'abc';
 </PRE>
-
     This will not use an standard index. However, if you create a
     expresssion index, it will be used: 
 <PRE>
@@ -745,7 +732,7 @@ table?</TD><TD>unlimited</TD></TR>
     NULL</SMALL> or not?</H3>
 
     <P>You test the column with <SMALL>IS NULL</SMALL> and <SMALL>IS
-    NOT NULL</SMALL>.</P>
+    NOT NULL</SMALL>, like this:</P>
 
 <PRE>
    SELECT *
@@ -754,7 +741,7 @@ table?</TD><TD>unlimited</TD></TR>
 </PRE>
 
    <P>To sort by the <SMALL>NULL</SMALL> status, use the <SMALL>IS NULL</SMALL>
-   and <SMALL>IS NOT NULL</SMALL> modifiers in your <SMALL>WHERE</SMALL> clause.
+   and <SMALL>IS NOT NULL</SMALL> modifiers in your <SMALL>ORDER BY</SMALL> clause.
    Things that are <I>true</I> will sort higher than things that are <I>false</I>,
    so the following will put NULL entries at the top of the resulting list:</P>
 
@@ -787,9 +774,8 @@ length</TD></TR>
     <P>The first four types above are "varlena" types (i.e., the first
     four bytes on disk are the length, followed by the data). Thus the
     actual space used is slightly greater than the declared size.
-    However, these data types are also subject to compression or being
-    stored out-of-line by <SMALL>TOAST</SMALL>, so the space on disk
-    might also be less than expected.</P>
+    However, long values are also subject to compression, so the space
+    on disk might also be less than expected.</P>
 
     <SMALL>VARCHAR(n)</SMALL> is best when storing variable-length
     strings and it limits how long a string can be. <SMALL>TEXT</SMALL>
@@ -805,8 +791,7 @@ length</TD></TR>
     serial/auto-incrementing field?</H3>
 
     <P>PostgreSQL supports a <SMALL>SERIAL</SMALL> data type. It
-    auto-creates a sequence.  For example,
-    this:</P>
+    auto-creates a sequence.  For example, this:</P>
 <PRE>
     CREATE TABLE person ( 
         id   SERIAL, 
@@ -815,11 +800,12 @@ length</TD></TR>
 </PRE>
 
     is automatically translated into this: 
+
 <PRE>
     CREATE SEQUENCE person_id_seq;
     CREATE TABLE person ( 
         id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
-        name TEXT 
+        name TEXT
     );
 </PRE>
 
@@ -839,17 +825,17 @@ length</TD></TR>
     execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");
 </PRE>
 
-    You would then also have the new value stored in
-    <CODE>new_id</CODE> for use in other queries (e.g., as a foreign
-    key to the <CODE>person</CODE> table). Note that the name of the
-    automatically created <SMALL>SEQUENCE</SMALL> object will be named
-    &lt;<I>table</I>&gt;_&lt;<I>serialcolumn</I>&gt;_<I>seq</I>, where
-    <I>table</I> and <I>serialcolumn</I> are the names of your table
-    and your <SMALL>SERIAL</SMALL> column, respectively.
+    You would then also have the new value stored in <CODE>new_id</CODE>
+    for use in other queries (e.g., as a foreign key to the <CODE>person
+    </CODE> table). Note that the name of the automatically created
+    <SMALL>SEQUENCE</SMALL> object will be named &lt;<I>table</I>&gt;_&lt;<I>
+    serialcolumn</I>&gt;_<I>seq</I>, where <I>table</I> and <I>serialcolumn</I>
+    are the names of your table and your <SMALL>SERIAL</SMALL> column,
+    respectively.
 
-    <P>Alternatively, you could retrieve the assigned
-    <SMALL>SERIAL</SMALL> value with the <I>currval()</I> function
-    <I>after</I> it was inserted by default, e.g.,</P>
+    <P>Alternatively, you could retrieve the assigned <SMALL>SERIAL</SMALL>
+    value with the <I>currval()</I> function <I>after</I> it was inserted by
+    default, e.g.,</P>
 <PRE>
     execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
     new_id = execute("SELECT currval('person_id_seq')");
@@ -871,7 +857,7 @@ length</TD></TR>
     transactions.</P>
 
     <H3><A name="4.12">4.12</A>) What is an <SMALL>OID</SMALL>? What is
-    a <SMALL>TID</SMALL>?</H3>
+    a <SMALL>CTID</SMALL>?</H3>
 
     <P>Every row that is created in PostgreSQL gets a unique
     <SMALL>OID</SMALL> unless created <SMALL>WITHOUT OIDS</SMALL>.
@@ -888,8 +874,8 @@ length</TD></TR>
     <SMALL>SERIAL8</SMALL> is available for storing eight-byte sequence
     values.</P>
 
-    <P>T<SMALL>ID</SMALL>s are used to identify specific physical rows
-    with block and offset values. T<SMALL>ID</SMALL>s change after rows
+    <P>C<SMALL>TID</SMALL>s are used to identify specific physical rows
+    with block and offset values. C<SMALL>TID</SMALL>s change after rows
     are modified or reloaded. They are used by index entries to point
     to physical rows.</P>
 
@@ -917,23 +903,7 @@ length</TD></TR>
 
     <P>From <I>psql</I>, type <CODE>SELECT version();</CODE></P>
 
-    <H3><A name="4.15">4.15</A>) Why does my large-object operations
-    get <I>"invalid large obj descriptor"</I>?</H3>
-
-    <P>You need to put <CODE>BEGIN WORK</CODE> and <CODE>COMMIT</CODE>
-    around any use of a large object handle, that is, surrounding
-    <CODE>lo_open</CODE> ... <CODE>lo_close.</CODE></P>
-
-    <P>Currently PostgreSQL enforces the rule by closing large object
-    handles at transaction commit. So the first attempt to do anything
-    with the handle will draw <I>invalid large obj descriptor</I>. So
-    code that used to work (at least most of the time) will now
-    generate that error message if you fail to use a transaction.</P>
-
-    <P>If you are using a client interface like <SMALL>ODBC</SMALL> you
-    may need to set <CODE>auto-commit off.</CODE></P>
-
-    <H3><A name="4.16">4.16</A>) How do I create a column that will
+    <H3><A name="4.15">4.15</A>) How do I create a column that will
     default to the current time?</H3>
 
     <P>Use <I>CURRENT_TIMESTAMP</I>:</P>
@@ -941,7 +911,7 @@ length</TD></TR>
     CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
 </PRE>
 
-    <H3><A name="4.17">4.17</A>) How do I perform an outer join?</H3>
+    <H3><A name="4.16">4.16</A>) How do I perform an outer join?</H3>
 
     <P>PostgreSQL supports outer joins using the SQL standard syntax.
     Here are two examples:</P>
@@ -964,7 +934,7 @@ length</TD></TR>
     <SMALL>RIGHT</SMALL>, and <SMALL>FULL</SMALL> joins. Ordinary joins
     are called <SMALL>INNER</SMALL> joins.</P>
 
-    <H3><A name="4.18">4.18</A>) How do I perform queries using
+    <H3><A name="4.17">4.17</A>) How do I perform queries using
     multiple databases?</H3>
 
     <P>There is no way to query a database other than the current one.
@@ -976,14 +946,14 @@ length</TD></TR>
     connections to different databases and merge the results on the
     client side.</P>
 
-    <H3><A name="4.19">4.19</A>) How do I return multiple rows or
+    <H3><A name="4.18">4.18</A>) How do I return multiple rows or
     columns from a function?</H3>
 
     <P>It is easy using set-returning functions, 
     <a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
     http://techdocs.postgresql.org/guides/SetReturningFunctions</a></P>.
 
-    <H3><A name="4.20">4.20</A>) Why do I get "relation with OID #####
+    <H3><A name="4.19">4.19</A>) Why do I get "relation with OID #####
     does not exist" errors when accessing temporary tables in PL/PgSQL
     functions?</H3>
 
@@ -995,7 +965,7 @@ length</TD></TR>
     <SMALL>EXECUTE</SMALL> for temporary table access in PL/PgSQL. This
     will cause the query to be reparsed every time.</P>
 
-    <H3><A name="4.21">4.21</A>) What encryption options are available?
+    <H3><A name="4.20">4.20</A>) What encryption options are available?
     </H3>
     <UL>
     <LI><I>contrib/pgcrypto</I> contains many encryption functions for
@@ -1009,42 +979,8 @@ length</TD></TR>
     native SSL connections.)</LI>
     <LI>Database user passwords are automatically encrypted when stored in
     the system tables.</LI>
-    <LI>The server can run using an encrypted file system.</LI>
+    <LI>The server can also run using an encrypted file system.</LI>
     </UL>
 
-    <HR>
-
-    <H2 align="center">Extending PostgreSQL</H2>
-
-    <H3><A name="5.1">5.1</A>) I wrote a user-defined function. When I
-    run it in <I>psql</I>, why does it dump core?</H3>
-
-    <P>The problem could be a number of things. Try testing your
-    user-defined function in a stand-alone test program first.</P>
-
-    <H3><A name="5.2">5.2</A>) How can I contribute some nifty new
-    types and functions to PostgreSQL?</H3>
-
-    <P>Send your extensions to the <I>pgsql-hackers</I> mailing list,
-    and they will eventually end up in the <I>contrib/</I>
-    subdirectory.</P>
-
-    <H3><A name="5.3">5.3</A>) How do I write a C function to return a
-    tuple?</H3>
-
-    <P>In versions of PostgreSQL beginning with 7.3, table-returning
-    functions are fully supported in C, PL/PgSQL, and SQL. See the
-    Programmer's Guide for more information. An example of a
-    table-returning function defined in C can be found in
-    <I>contrib/tablefunc</I>.</P>
-
-    <H3><A name="5.4">5.4</A>) I have changed a source file. Why does
-    the recompile not see the change?</H3>
-
-    <P>The <I>Makefiles</I> do not have the proper dependencies for
-    include files. You have to do a <I>make clean</I> and then another
-    <I>make</I>. If you are using <SMALL>GCC</SMALL> you can use the
-    <I>--enable-depend</I> option of <I>configure</I> to have the
-    compiler compute the dependencies automatically.</P>
   </BODY>
 </HTML>

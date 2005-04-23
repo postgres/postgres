@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Apr 23 14:59:01 EDT 2005
+   Last updated: Sat Apr 23 16:49:43 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -67,29 +67,17 @@
    4.11.3) Doesn't currval() lead to a race condition with other users?
    4.11.4) Why aren't my sequence numbers reused on transaction abort?
    Why are there gaps in the numbering of my sequence/SERIAL column?
-   4.12) What is an OID? What is a TID?
+   4.12) What is an OID? What is a CTID?
    4.13) Why do I get the error "ERROR: Memory exhausted in
    AllocSetAlloc()"?
    4.14) How do I tell what PostgreSQL version I am running?
-   4.15) Why does my large-object operations get "invalid large obj
-   descriptor"?
-   4.16) How do I create a column that will default to the current time?
-   4.17) How do I perform an outer join?
-   4.18) How do I perform queries using multiple databases?
-   4.19) How do I return multiple rows or columns from a function?
-   4.20) Why do I get "relation with OID ##### does not exist" errors
+   4.15) How do I create a column that will default to the current time?
+   4.16) How do I perform an outer join?
+   4.17) How do I perform queries using multiple databases?
+   4.18) How do I return multiple rows or columns from a function?
+   4.19) Why do I get "relation with OID ##### does not exist" errors
    when accessing temporary tables in PL/PgSQL functions?
-   4.21) What encryption options are available?
-   
-                            Extending PostgreSQL
-                                      
-   5.1) I wrote a user-defined function. When I run it in psql, why does
-   it dump core?
-   5.2) How can I contribute some nifty new types and functions to
-   PostgreSQL?
-   5.3) How do I write a C function to return a tuple?
-   5.4) I have changed a source file. Why does the recompile not see the
-   change?
+   4.20) What encryption options are available?
      _________________________________________________________________
    
                              General Questions
@@ -529,8 +517,8 @@
     LIMIT 1;
 
    If you believe the optimizer is incorrect in choosing a sequential
-   scan, use SET enable_seqscan TO 'off' and run tests to see if an index
-   scan is indeed faster.
+   scan, use SET enable_seqscan TO 'off' and run query again to see if an
+   index scan is indeed faster.
    
    When using wild-card operators such as LIKE or ~, indexes can only be
    used in certain circumstances:
@@ -576,13 +564,13 @@
   4.9) In a query, how do I detect if a field is NULL? How can I sort on
   whether a field is NULL or not?
   
-   You test the column with IS NULL and IS NOT NULL.
+   You test the column with IS NULL and IS NOT NULL, like this:
    SELECT *
    FROM tab
    WHERE col IS NULL;
 
    To sort by the NULL status, use the IS NULL and IS NOT NULL modifiers
-   in your WHERE clause. Things that are true will sort higher than
+   in your ORDER BY clause. Things that are true will sort higher than
    things that are false, so the following will put NULL entries at the
    top of the resulting list:
    SELECT *
@@ -603,9 +591,9 @@
    
    The first four types above are "varlena" types (i.e., the first four
    bytes on disk are the length, followed by the data). Thus the actual
-   space used is slightly greater than the declared size. However, these
-   data types are also subject to compression or being stored out-of-line
-   by TOAST, so the space on disk might also be less than expected.
+   space used is slightly greater than the declared size. However, long
+   values are also subject to compression, so the space on disk might
+   also be less than expected.
    VARCHAR(n) is best when storing variable-length strings and it limits
    how long a string can be. TEXT is for strings of unlimited length,
    with a maximum of one gigabyte.
@@ -647,8 +635,8 @@
    You would then also have the new value stored in new_id for use in
    other queries (e.g., as a foreign key to the person table). Note that
    the name of the automatically created SEQUENCE object will be named
-   <table>_<serialcolumn>_seq, where table and serialcolumn are the names
-   of your table and your SERIAL column, respectively.
+   <table>_< serialcolumn>_seq, where table and serialcolumn are the
+   names of your table and your SERIAL column, respectively.
    
    Alternatively, you could retrieve the assigned SERIAL value with the
    currval() function after it was inserted by default, e.g.,
@@ -667,7 +655,7 @@
    transactions as needed and are not locked until the transaction
    completes. This causes gaps in numbering from aborted transactions.
    
-  4.12) What is an OID? What is a TID?
+  4.12) What is an OID? What is a CTID?
   
    Every row that is created in PostgreSQL gets a unique OID unless
    created WITHOUT OIDS. OIDs are autotomatically assigned unique 4-byte
@@ -680,9 +668,9 @@
    single table. and are therefore less likely to overflow. SERIAL8 is
    available for storing eight-byte sequence values.
    
-   TIDs are used to identify specific physical rows with block and offset
-   values. TIDs change after rows are modified or reloaded. They are used
-   by index entries to point to physical rows.
+   CTIDs are used to identify specific physical rows with block and
+   offset values. CTIDs change after rows are modified or reloaded. They
+   are used by index entries to point to physical rows.
    
   4.13) Why do I get the error "ERROR: Memory exhausted in AllocSetAlloc()"?
   
@@ -703,26 +691,12 @@
   
    From psql, type SELECT version();
    
-  4.15) Why does my large-object operations get "invalid large obj descriptor"?
-  
-   You need to put BEGIN WORK and COMMIT around any use of a large object
-   handle, that is, surrounding lo_open ... lo_close.
-   
-   Currently PostgreSQL enforces the rule by closing large object handles
-   at transaction commit. So the first attempt to do anything with the
-   handle will draw invalid large obj descriptor. So code that used to
-   work (at least most of the time) will now generate that error message
-   if you fail to use a transaction.
-   
-   If you are using a client interface like ODBC you may need to set
-   auto-commit off.
-   
-  4.16) How do I create a column that will default to the current time?
+  4.15) How do I create a column that will default to the current time?
   
    Use CURRENT_TIMESTAMP:
     CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
 
-  4.17) How do I perform an outer join?
+  4.16) How do I perform an outer join?
   
    PostgreSQL supports outer joins using the SQL standard syntax. Here
    are two examples:
@@ -740,7 +714,7 @@
    is assumed in LEFT, RIGHT, and FULL joins. Ordinary joins are called
    INNER joins.
    
-  4.18) How do I perform queries using multiple databases?
+  4.17) How do I perform queries using multiple databases?
   
    There is no way to query a database other than the current one.
    Because PostgreSQL loads database-specific system catalogs, it is
@@ -750,13 +724,13 @@
    course, a client can also make simultaneous connections to different
    databases and merge the results on the client side.
    
-  4.19) How do I return multiple rows or columns from a function?
+  4.18) How do I return multiple rows or columns from a function?
   
    It is easy using set-returning functions,
    http://techdocs.postgresql.org/guides/SetReturningFunctions
    .
    
-  4.20) Why do I get "relation with OID ##### does not exist" errors when
+  4.19) Why do I get "relation with OID ##### does not exist" errors when
   accessing temporary tables in PL/PgSQL functions?
   
    PL/PgSQL caches function scripts, and an unfortunate side effect is
@@ -767,7 +741,7 @@
    table access in PL/PgSQL. This will cause the query to be reparsed
    every time.
    
-  4.21) What encryption options are available?
+  4.20) What encryption options are available?
   
      * contrib/pgcrypto contains many encryption functions for use in SQL
        queries.
@@ -779,33 +753,4 @@
        or ssh, rather than PostgreSQL's native SSL connections.)
      * Database user passwords are automatically encrypted when stored in
        the system tables.
-     * The server can run using an encrypted file system.
-     _________________________________________________________________
-   
-                            Extending PostgreSQL
-                                      
-  5.1) I wrote a user-defined function. When I run it in psql, why does it dump
-  core?
-  
-   The problem could be a number of things. Try testing your user-defined
-   function in a stand-alone test program first.
-   
-  5.2) How can I contribute some nifty new types and functions to PostgreSQL?
-  
-   Send your extensions to the pgsql-hackers mailing list, and they will
-   eventually end up in the contrib/ subdirectory.
-   
-  5.3) How do I write a C function to return a tuple?
-  
-   In versions of PostgreSQL beginning with 7.3, table-returning
-   functions are fully supported in C, PL/PgSQL, and SQL. See the
-   Programmer's Guide for more information. An example of a
-   table-returning function defined in C can be found in
-   contrib/tablefunc.
-   
-  5.4) I have changed a source file. Why does the recompile not see the change?
-  
-   The Makefiles do not have the proper dependencies for include files.
-   You have to do a make clean and then another make. If you are using
-   GCC you can use the --enable-depend option of configure to have the
-   compiler compute the dependencies automatically.
+     * The server can also run using an encrypted file system.
