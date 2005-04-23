@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Apr 23 11:22:46 EDT 2005
+   Last updated: Sat Apr 23 14:56:41 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -148,11 +148,11 @@
    PostgreSQL. The platforms that had received explicit testing at the
    time of release are listed in the installation instructions.
    
-   Starting with version 8.0, PostgreSQL now runs natively on Microsoft
-   Windows NT-based operating systems like Win2000, WinXP, and Win2003. A
-   prepackaged installer is available at
-   http://pgfoundry.org/projects/pginstaller. MSDOS-based versions of
-   Windows (Win95, Win98, WinMe) can run PostgreSQL using Cygwin.
+   PostgreSQL also runs natively on Microsoft Windows NT-based operating
+   systems like Win2000, WinXP, and Win2003. A prepackaged installer is
+   available at http://pgfoundry.org/projects/pginstaller. MSDOS-based
+   versions of Windows (Win95, Win98, WinMe) can run PostgreSQL using
+   Cygwin.
    
    There is also a Novell Netware 6 port at http://forge.novell.com, and
    an OS/2 (eComStation) version at
@@ -161,9 +161,8 @@
    
     1.4) Where can I get PostgreSQL?
     
-   The primary anonymous ftp site for PostgreSQL is
-   ftp://ftp.PostgreSQL.org/pub/. For mirror sites, see our main web
-   site.
+   Via web browser, use http://www.postgresql.org/ftp/, and via ftp, use
+   ftp://ftp.PostgreSQL.org/pub/.
    
     1.5) Where can I get support?
     
@@ -174,10 +173,9 @@
    
    The major IRC channel is #postgresql on Freenode (irc.freenode.net).
    To connect you can use the Unix program irc -c '#postgresql' "$USER"
-   irc.freenode.net or use any of the other popular IRC clients. A
-   Spanish one also exists on the same network, (#postgresql-es), and a
-   French one, (#postgresqlfr). There is also a PostgreSQL channel on
-   EFNet.
+   irc.freenode.net or use any other IRC clients. A Spanish one also
+   exists on the same network, (#postgresql-es), and a French one,
+   (#postgresqlfr). There is also a PostgreSQL channel on EFNet.
    
    A list of commercial support companies is available at
    http://techdocs.postgresql.org/companies.php.
@@ -194,7 +192,8 @@
     
    The latest release of PostgreSQL is version 8.0.2.
    
-   We plan to have major releases every ten to twelve months.
+   We plan to have a major release every year, with minor releases every
+   few months.
    
     1.8) What documentation is available?
     
@@ -223,33 +222,19 @@
    
     1.10) How can I learn SQL?
     
-   The PostgreSQL book at
-   http://www.postgresql.org/docs/books/awbook.html teaches SQL. There is
-   another PostgreSQL book at http://www.commandprompt.com/ppbook. There
-   is a nice tutorial at
+   First, consider the PostgreSQL-specific books mentioned above. Another
+   one is "Teach Yourself SQL in 21 Days, Second Edition" at
+   http://members.tripod.com/er4ebus/sql/index.htm
+   Many of our users like The Practical SQL Handbook, Bowman, Judith S.,
+   et al., Addison-Wesley. Others like The Complete Reference SQL, Groff
+   et al., McGraw-Hill. There is also a nice tutorial at
    http://www.intermedia.net/support/sql/sqltut.shtm, at
    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,
    and at http://sqlcourse.com.
    
-   Another one is "Teach Yourself SQL in 21 Days, Second Edition" at
-   http://members.tripod.com/er4ebus/sql/index.htm
-   
-   Many of our users like The Practical SQL Handbook, Bowman, Judith S.,
-   et al., Addison-Wesley. Others like The Complete Reference SQL, Groff
-   et al., McGraw-Hill.
-   
     1.11) How do I join the development team?
     
-   First, download the latest source and read the PostgreSQL Developers
-   FAQ and documentation on our web site, or in the distribution. Second,
-   subscribe to the pgsql-hackers and pgsql-patches mailing lists. Third,
-   submit high quality patches to pgsql-patches.
-   
-   There are about a dozen people who have commit privileges to the
-   PostgreSQL CVS archive. They each have submitted so many high-quality
-   patches that it was impossible for the existing committers to keep up,
-   and we had confidence that patches they committed were of high
-   quality.
+   See the Developer's FAQ.
    
     1.12) How does PostgreSQL compare to other DBMSs?
     
@@ -267,13 +252,8 @@
    Performance
           PostgreSQL's performance is comparable to other commercial and
           open source databases. It is faster for some things, slower for
-          others. In comparison to MySQL or leaner database systems, we
-          are faster for multiple users, complex queries, and a
-          read/write query load. MySQL is faster for simple SELECT
-          queries done by a few users. Of course, MySQL does not have
-          most of the features mentioned in the Features section above.
-          We are built for reliability and features, and we continue to
-          improve performance in every release.
+          others. Our performance is usually +/-10% compared to other
+          databases.
           
    Reliability
           We realize that a DBMS must be reliable, or it is worthless. We
@@ -326,15 +306,7 @@
    
     2.3) Does PostgreSQL have a graphical user interface?
     
-   Yes, there are several graphical interfaces to PostgreSQL available.
-   These include pgAdmin III (http://www.pgadmin.org, PgAccess
-   http://www.pgaccess.org), RHDB Admin (http://sources.redhat.com/rhdb/
-   ), TORA ( http://www.globecom.net/tora/, partly commercial), and
-   Rekall ( http://www.rekallrevealed.org/). There is also PhpPgAdmin (
-   http://phppgadmin.sourceforge.net/ ), a web-based interface to
-   PostgreSQL.
-   
-   See http://techdocs.postgresql.org/guides/GUITools for a more detailed
+   Yes, see http://techdocs.postgresql.org/guides/GUITools for a detailed
    list.
      _________________________________________________________________
    
@@ -390,43 +362,6 @@
    printing of query and process statistics which can be very useful for
    debugging and performance measurements.
    
-   The following detailed debug instructions are to be used to provide
-   more detailed information for server developers debugging a problem.
-   
-   It is also possible to debug the server if it isn't operating
-   properly. First, by running configure with the --enable-cassert
-   option, many assert()s monitor the progress of the backend and halt
-   the program when something unexpected occurs.
-   
-   The postmaster has a -d option that allows even more detailed
-   information to be reported. The -d option takes a number that
-   specifies the debug level. Be warned that high debug level values
-   generate large log files.
-   
-   If postmaster is not running, you can actually run the postgres
-   backend from the command line, and type your SQL statement directly.
-   This is recommended only for debugging purposes. Note that a newline
-   terminates the query, not a semicolon. If you have compiled with
-   debugging symbols, you can use a debugger to see what is happening.
-   Because the backend was not started from postmaster, it is not running
-   in an identical environment and locking/backend interaction problems
-   may not be duplicated.
-   
-   If postmaster is running, start psql in one window, then find the PID
-   of the postgres process used by psql using SELECT pg_backend_pid().
-   Use a debugger to attach to the postgres PID. You can set breakpoints
-   in the debugger and issue queries from psql. If you are debugging
-   postgres startup, you can set PGOPTIONS="-W n", then start psql. This
-   will cause startup to delay for n seconds so you can attach to the
-   process with the debugger, set any breakpoints, and continue through
-   the startup sequence.
-   
-   You can also compile with profiling to see what functions are taking
-   execution time. The backend profile files will be deposited in the
-   pgsql/data/base/dbname directory. The client profile file will be put
-   in the client's current directory. Linux requires a compile with
-   -DLINUX_PROFILE for proper profiling.
-   
     3.5) Why do I get "Sorry, too many clients" when trying to connect?
     
    You have reached the default limit is 100 database sessions. You need
@@ -438,7 +373,7 @@
     PostgreSQL releases?
     
    The PostgreSQL team makes only small changes between minor releases,
-   so upgrading from 7.4 to 7.4.1 does not require a dump and restore.
+   so upgrading from 7.4.0 to 7.4.1 does not require a dump and restore.
    However, major releases (e.g. from 7.3 to 7.4) often change the
    internal format of system tables and data files. These changes are
    often complex, so we don't maintain backward compatibility for data
@@ -567,11 +502,11 @@
    
     4.6) Why are my queries slow? Why don't they use my indexes?
     
-   Indexes are not automatically used by every query. Indexes are only
-   used if the table is larger than a minimum size, and the query selects
-   only a small percentage of the rows in the table. This is because the
-   random disk access caused by an index scan can be slower than a
-   straight read through the table, or sequential scan.
+   Indexes are not used by every query. Indexes are used only if the
+   table is larger than a minimum size, and the query selects only a
+   small percentage of the rows in the table. This is because the random
+   disk access caused by an index scan can be slower than a straight read
+   through the table, or sequential scan.
    
    To determine if an index should be used, PostgreSQL must have
    statistics about the table. These statistics are collected using
