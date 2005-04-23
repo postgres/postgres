@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Apr 23 17:38:41 EDT 2005
+Last updated:		Sat Apr 23 17:39:23 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -803,7 +803,8 @@ Startup Time
   This would prevent the overhead associated with process creation. Most
   operating systems have trivial process creation time compared to
   database startup overhead, but a few operating systems (WIn32,
-  Solaris) might benefit from threading.
+  Solaris) might benefit from threading.  Also explore the idea of
+  a single session using multiple threads to execute a query faster.
 
 * Add connection pooling
 
