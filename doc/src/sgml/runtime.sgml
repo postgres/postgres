@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.314 2005/04/21 19:18:12 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.315 2005/04/23 03:27:40 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -1151,6 +1151,10 @@ SET ENABLE_SEQSCAN TO OFF;
         be tracked in the shared free-space map.  Six bytes of shared memory
         are consumed for each page slot.  This setting must be more than
         16 * <varname>max_fsm_relations</varname>.  The default is 20000.
+        The last few lines of a database-wide <command>VACUUM VERBOSE</> 
+        can help in determining if the the default setting is suitable.  
+        A <literal>NOTICE</> message is also printed during such an operation
+        if the current setting is too low.
         This option can only be set at server start.
        </para>
       </listitem>
@@ -1167,6 +1171,10 @@ SET ENABLE_SEQSCAN TO OFF;
         free space will be tracked in the shared free-space map.  Roughly
         fifty bytes of shared memory are consumed for each slot.
         The default is 1000.
+        The last few lines of a database-wide <command>VACUUM VERBOSE</>
+        can help in determining if the the default setting is suitable.  
+        A <literal>NOTICE</> message is also printed during such an operation
+        if the current setting is too low.
         This option can only be set at server start.
        </para>
       </listitem>
