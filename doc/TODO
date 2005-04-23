@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Apr 23 17:44:43 EDT 2005
+Last updated:		Sat Apr 23 17:45:11 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -903,7 +903,6 @@ Miscellaneous
 * Add a script to ask system configuration questions and tune postgresql.conf
 * Use a phantom command counter for nested subtransactions to reduce
   per-tuple overhead
-* Research the use of larger page sizes
 
 
 Source Code
