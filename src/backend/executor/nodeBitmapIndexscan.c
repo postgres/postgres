@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.3 2005/04/22 21:58:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.4 2005/04/23 21:32:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,11 +220,13 @@ ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 	relation = node->ss.ss_currentRelation;
 
 	/*
-	 * Free the exprcontext(s)
+	 * Free the exprcontext(s) ... now dead code, see ExecFreeExprContext
 	 */
+#ifdef NOT_USED
 	ExecFreeExprContext(&node->ss.ps);
 	if (node->biss_RuntimeContext)
 		FreeExprContext(node->biss_RuntimeContext);
+#endif
 
 	/*
 	 * close the index relation

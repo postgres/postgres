@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.121 2005/04/14 20:03:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.122 2005/04/23 21:32:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -620,27 +620,26 @@ ExecAssignProjectionInfo(PlanState *planstate)
 /* ----------------
  *		ExecFreeExprContext
  *
- * A plan node's ExprContext should be freed explicitly during ExecEndNode
- * because there may be shutdown callbacks to call.  (Other resources made
- * by the above routines, such as projection info, don't need to be freed
+ * A plan node's ExprContext should be freed explicitly during executor
+ * shutdown because there may be shutdown callbacks to call.  (Other resources
+ * made by the above routines, such as projection info, don't need to be freed
  * explicitly because they're just memory in the per-query memory context.)
+ *
+ * However ... there is no particular need to do it during ExecEndNode,
+ * because FreeExecutorState will free any remaining ExprContexts within
+ * the EState.  Letting FreeExecutorState do it allows the ExprContexts to
+ * be freed in reverse order of creation, rather than order of creation as
+ * will happen if we delete them here, which saves O(N^2) work in the list
+ * cleanup inside FreeExprContext.
  * ----------------
  */
 void
 ExecFreeExprContext(PlanState *planstate)
 {
-	ExprContext *econtext;
-
 	/*
-	 * get expression context.	if NULL then this node has none so we just
-	 * return.
+	 * Per above discussion, don't actually delete the ExprContext.
+	 * We do unlink it from the plan node, though.
 	 */
-	econtext = planstate->ps_ExprContext;
-	if (econtext == NULL)
-		return;
-
-	FreeExprContext(econtext);
-
 	planstate->ps_ExprContext = NULL;
 }
 

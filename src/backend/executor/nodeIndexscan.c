@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.100 2005/03/16 21:38:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.101 2005/04/23 21:32:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -534,11 +534,13 @@ ExecEndIndexScan(IndexScanState *node)
 	relation = node->ss.ss_currentRelation;
 
 	/*
-	 * Free the exprcontext(s)
+	 * Free the exprcontext(s) ... now dead code, see ExecFreeExprContext
 	 */
+#ifdef NOT_USED
 	ExecFreeExprContext(&node->ss.ps);
 	if (node->iss_RuntimeContext)
 		FreeExprContext(node->iss_RuntimeContext);
+#endif
 
 	/*
 	 * clear out tuple table slots
