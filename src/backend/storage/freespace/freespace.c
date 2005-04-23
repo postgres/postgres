@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.39 2005/03/14 20:15:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.40 2005/04/23 15:20:39 momjian Exp $
  *
  *
  * NOTES:
@@ -699,6 +699,7 @@ PrintFreeSpaceMapStatistics(int elevel)
 		 fsmrel != NULL;
 		 fsmrel = fsmrel->nextPhysical)
 		storedPages += fsmrel->storedPages;
+
 	/* Copy other stats before dropping lock */
 	numRels = FreeSpaceMap->numRels;
 	sumRequests = FreeSpaceMap->sumRequests;
@@ -708,11 +709,20 @@ PrintFreeSpaceMapStatistics(int elevel)
 	needed = (sumRequests + numRels) * CHUNKPAGES;
 
 	ereport(elevel,
-			(errmsg("free space map: %d relations, %d pages stored; %.0f total pages used",
-					numRels, storedPages, needed),
-			 errdetail("FSM size: %d relations + %d pages = %.0f kB shared memory.",
-					   MaxFSMRelations, MaxFSMPages,
-					   (double) FreeSpaceShmemSize() / 1024.0)));
+			(errmsg("free space map contains information about:")));
+
+	ereport(elevel,
+			(errmsg("%d relations, limit %d relations",
+					numRels, MaxFSMRelations)));
+
+	ereport(elevel,
+			(errmsg("%d pages with free space, %.0f pages (with overhead)",
+					storedPages, Min(needed, MaxFSMPages))));
+
+	ereport(elevel,
+			(errmsg("%.0f pages required to track all freespace, limit %d pages (%.0f kB)",
+					needed, MaxFSMPages,
+				   (double) FreeSpaceShmemSize() / 1024.0)));
 
 	CheckFreeSpaceMapStatistics(NOTICE, numRels, needed);
 	/* Print to server logs too because is deals with a config variable. */
