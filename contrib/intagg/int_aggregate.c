@@ -220,6 +220,9 @@ int_enum(PG_FUNCTION_ARGS)
 			pc->p = p;
 			pc->flags = 0;
 		}
+		/* Now that we have a detoasted array, verify dimensions */
+		if (pc->p->a.ndim != 1)
+			elog(ERROR, "int_enum only accepts 1-D arrays");
 		pc->num = 0;
 		fcinfo->context = (Node *) pc;
 		MemoryContextSwitchTo(oldcontext);
