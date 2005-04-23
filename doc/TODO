@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Apr 23 17:25:48 EDT 2005
+Last updated:		Sat Apr 23 17:38:41 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -785,7 +785,7 @@ Locking
   while on non-SMP machines, the backend should sleep so the process
   holding the lock can complete and release it.
 
-* Improve SMP performance on i386 machines
+* -Improve SMP performance on i386 machines
 
   i386-based SMP machines can generate excessive context switching
   caused by lock failure in high concurrency situations. This may be
