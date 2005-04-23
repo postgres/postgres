@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.88 2005/04/06 16:34:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.89 2005/04/23 17:45:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -402,7 +402,7 @@ printtup_20(TupleTableSlot *slot, DestReceiver *self)
 	k = 1 << 7;
 	for (i = 0; i < natts; ++i)
 	{
-		if (slot->tts_isnull[i])
+		if (!slot->tts_isnull[i])
 			j |= k;				/* set bit if not null */
 		k >>= 1;
 		if (k == 0)				/* end of byte? */
@@ -610,7 +610,7 @@ printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
 	k = 1 << 7;
 	for (i = 0; i < natts; ++i)
 	{
-		if (slot->tts_isnull[i])
+		if (!slot->tts_isnull[i])
 			j |= k;				/* set bit if not null */
 		k >>= 1;
 		if (k == 0)				/* end of byte? */
