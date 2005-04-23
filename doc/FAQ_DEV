@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Apr 23 14:57:40 EDT 2005
+   Last updated: Sat Apr 23 16:52:14 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -172,6 +172,11 @@ General Questions
    
    There have been a number of discussions about other testing frameworks
    and some developers are exploring these ideas.
+   
+   Keep in mind the Makefiles do not have the proper dependencies for
+   include files. You have to do a make clean and then another make. If
+   you are using GCC you can use the --enable-depend option of configure
+   to have the compiler compute the dependencies automatically.
    
   1.9) What tools are available for developers?
   
