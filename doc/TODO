@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Apr 22 11:40:08 EDT 2005
+Last updated:		Sat Apr 23 15:13:35 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -298,7 +298,7 @@ Indexes
   order. Another method would be to sort heap ctids matching the index
   before accessing the heap rows.
 
-* Allow non-bitmap indexes to be combined by creating bitmaps in memory
+* -Allow non-bitmap indexes to be combined by creating bitmaps in memory
 
   This feature allows separate indexes to be ANDed or ORed together.  This
   is particularly useful for data warehousing applications that need to

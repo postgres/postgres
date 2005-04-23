@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Fri Apr 22 11:40:08 EDT 2005
+Last updated:           Sat Apr 23 15:13:35 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -276,7 +276,7 @@ first.
   order. Another method would be to sort heap ctids matching the index
   before accessing the heap rows.
 </p>
-  </li><li>Allow non-bitmap indexes to be combined by creating bitmaps in memory
+  </li><li>-Allow non-bitmap indexes to be combined by creating bitmaps in memory
 <p>  This feature allows separate indexes to be ANDed or ORed together.  This
   is particularly useful for data warehousing applications that need to
   query the database in an many permutations.  This feature scans an index
