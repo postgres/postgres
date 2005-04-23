@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.93.2.1 2004/06/13 17:17:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.93.2.2 2005/04/23 22:53:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1557,12 +1557,20 @@ timetz_scale(PG_FUNCTION_ARGS)
 static int
 timetz_cmp_internal(TimeTzADT *time1, TimeTzADT *time2)
 {
+	/* Primary sort is by true (GMT-equivalent) time */
+#ifdef HAVE_INT64_TIMESTAMP
+	int64		t1,
+				t2;
+
+	t1 = time1->time + (time1->zone * INT64CONST(1000000));
+	t2 = time2->time + (time2->zone * INT64CONST(1000000));
+#else
 	double		t1,
 				t2;
 
-	/* Primary sort is by true (GMT-equivalent) time */
 	t1 = time1->time + time1->zone;
 	t2 = time2->time + time2->zone;
+#endif
 
 	if (t1 > t2)
 		return 1;
@@ -2143,9 +2151,9 @@ timetz_part(PG_FUNCTION_ARGS)
 	else if ((type == RESERV) && (val == DTK_EPOCH))
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-		result = ((time->time / 1000000e0) - time->zone);
+		result = ((time->time / 1000000e0) + time->zone);
 #else
-		result = (time->time - time->zone);
+		result = (time->time + time->zone);
 #endif
 	}
 	else
