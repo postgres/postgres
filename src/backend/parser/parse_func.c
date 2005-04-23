@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.178 2005/04/14 20:03:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.179 2005/04/23 22:09:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,10 +34,6 @@
 
 static Node *ParseComplexProjection(ParseState *pstate, char *funcname,
 					   Node *first_arg);
-static Oid **argtype_inherit(int nargs, Oid *argtypes);
-
-static int	find_inheritors(Oid relid, Oid **supervec);
-static Oid **gen_cross_product(InhPaths *arginh, int nargs);
 static void unknown_attribute(ParseState *pstate, Node *relref, char *attname);
 
 
@@ -754,63 +750,34 @@ func_get_detail(List *funcname,
 		 */
 		if (raw_candidates != NULL)
 		{
-			Oid		  **input_typeid_vector = NULL;
-			Oid		   *current_input_typeids;
+			FuncCandidateList current_candidates;
+			int			ncandidates;
+
+			ncandidates = func_match_argtypes(nargs,
+											  argtypes,
+											  raw_candidates,
+											  &current_candidates);
+
+			/* one match only? then run with it... */
+			if (ncandidates == 1)
+				best_candidate = current_candidates;
 
 			/*
-			 * First we will search with the given argtypes, then with
-			 * variants based on replacing complex types with their
-			 * inheritance ancestors.  Stop as soon as any match is found.
+			 * multiple candidates? then better decide or throw an error...
 			 */
-			current_input_typeids = argtypes;
-
-			do
+			else if (ncandidates > 1)
 			{
-				FuncCandidateList current_candidates;
-				int			ncandidates;
-
-				ncandidates = func_match_argtypes(nargs,
-												  current_input_typeids,
-												  raw_candidates,
-												  &current_candidates);
-
-				/* one match only? then run with it... */
-				if (ncandidates == 1)
-				{
-					best_candidate = current_candidates;
-					break;
-				}
+				best_candidate = func_select_candidate(nargs,
+													   argtypes,
+													   current_candidates);
 
 				/*
-				 * multiple candidates? then better decide or throw an
-				 * error...
+				 * If we were able to choose a best candidate, we're
+				 * done.  Otherwise, ambiguous function call.
 				 */
-				if (ncandidates > 1)
-				{
-					best_candidate = func_select_candidate(nargs,
-												   current_input_typeids,
-													 current_candidates);
-
-					/*
-					 * If we were able to choose a best candidate, we're
-					 * done.  Otherwise, ambiguous function call.
-					 */
-					if (best_candidate)
-						break;
+				if (!best_candidate)
 					return FUNCDETAIL_MULTIPLE;
-				}
-
-				/*
-				 * No match here, so try the next inherited type vector.
-				 * First time through, we need to compute the list of
-				 * vectors.
-				 */
-				if (input_typeid_vector == NULL)
-					input_typeid_vector = argtype_inherit(nargs, argtypes);
-
-				current_input_typeids = *input_typeid_vector++;
 			}
-			while (current_input_typeids != NULL);
 		}
 	}
 
@@ -840,80 +807,26 @@ func_get_detail(List *funcname,
 	return FUNCDETAIL_NOTFOUND;
 }
 
+
 /*
- *	argtype_inherit() -- Construct an argtype vector reflecting the
- *						 inheritance properties of the supplied argv.
- *
- *		This function is used to handle resolution of function calls when
- *		there is no match to the given argument types, but there might be
- *		matches based on considering complex types as members of their
- *		superclass types (parent classes).
- *
- *		It takes an array of input type ids.  For each type id in the array
- *		that's a complex type (a class), it walks up the inheritance tree,
- *		finding all superclasses of that type. A vector of new Oid type
- *		arrays is returned to the caller, listing possible alternative
- *		interpretations of the input typeids as members of their superclasses
- *		rather than the actually given argument types.	The vector is
- *		terminated by a NULL pointer.
- *
- *		The order of this vector is as follows:  all superclasses of the
- *		rightmost complex class are explored first.  The exploration
- *		continues from right to left.  This policy means that we favor
- *		keeping the leftmost argument type as low in the inheritance tree
- *		as possible.  This is intentional; it is exactly what we need to
- *		do for method dispatch.
- *
- *		The vector does not include the case where no complex classes have
- *		been promoted, since that was already tried before this routine
- *		got called.
+ * Given two type OIDs, determine whether the first is a complex type
+ * (class type) that inherits from the second.
  */
-static Oid **
-argtype_inherit(int nargs, Oid *argtypes)
+bool
+typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 {
-	Oid		  **result;
+	bool		result = false;
 	Oid			relid;
-	int			i;
-	InhPaths   *arginh;
-
-	/* Set up the vector of superclass information */
-	arginh = (InhPaths *) palloc(nargs * sizeof(InhPaths));
-
-	for (i = 0; i < nargs; i++)
-	{
-		arginh[i].self = argtypes[i];
-		if ((relid = typeidTypeRelid(argtypes[i])) != InvalidOid)
-			arginh[i].nsupers = find_inheritors(relid, &(arginh[i].supervec));
-		else
-		{
-			arginh[i].nsupers = 0;
-			arginh[i].supervec = NULL;
-		}
-	}
-
-	/* Compute an ordered cross-product of the classes involved */
-	result = gen_cross_product(arginh, nargs);
-
-	pfree(arginh);
-
-	return result;
-}
-
-/*
- * Look up the parent superclass(es) of the given relation.
- *
- * *supervec is set to an array of the type OIDs (not the relation OIDs)
- * of the parents, with nearest ancestors listed first.  It's set to NULL
- * if there are no parents.  The return value is the number of parents.
- */
-static int
-find_inheritors(Oid relid, Oid **supervec)
-{
 	Relation	inhrel;
-	int			nvisited;
 	List	   *visited,
 			   *queue;
 	ListCell   *queue_item;
+
+	if (!ISCOMPLEX(subclassTypeId) || !ISCOMPLEX(superclassTypeId))
+		return false;
+	relid = typeidTypeRelid(subclassTypeId);
+	if (relid == InvalidOid)
+		return false;
 
 	/*
 	 * Begin the search at the relation itself, so add relid to the queue.
@@ -960,149 +873,30 @@ find_inheritors(Oid relid, Oid **supervec)
 		while ((inhtup = heap_getnext(inhscan, ForwardScanDirection)) != NULL)
 		{
 			Form_pg_inherits inh = (Form_pg_inherits) GETSTRUCT(inhtup);
+			Oid		inhparent = inh->inhparent;
 
-			queue = lappend_oid(queue, inh->inhparent);
+			/* If this is the target superclass, we're done */
+			if (get_rel_type_id(inhparent) == superclassTypeId)
+			{
+				result = true;
+				break;
+			}
+
+			/* Else add to queue */
+			queue = lappend_oid(queue, inhparent);
 		}
 
 		heap_endscan(inhscan);
+
+		if (result)
+			break;
 	}
 
 	heap_close(inhrel, AccessShareLock);
 
-	nvisited = list_length(visited);
-	if (nvisited > 0)
-	{
-		Oid		   *relidvec;
-		ListCell   *l;
-
-		relidvec = (Oid *) palloc(nvisited * sizeof(*relidvec));
-		*supervec = relidvec;
-
-		foreach(l, visited)
-		{
-			/* return the type id, rather than the relation id */
-			*relidvec++ = get_rel_type_id(lfirst_oid(l));
-		}
-	}
-	else
-		*supervec = NULL;
-
 	list_free(visited);
 	list_free(queue);
 
-	return nvisited;
-}
-
-/*
- * Generate the ordered list of substitute argtype vectors to try.
- *
- * See comments for argtype_inherit.
- */
-static Oid **
-gen_cross_product(InhPaths *arginh, int nargs)
-{
-	int			nanswers;
-	Oid		  **result;
-	Oid		   *oneres;
-	int			i,
-				j;
-	int		   *cur;
-
-	/*
-	 * At each position we want to try the original datatype, plus each
-	 * supertype.  So the number of possible combinations is this:
-	 */
-	nanswers = 1;
-	for (i = 0; i < nargs; i++)
-		nanswers *= (arginh[i].nsupers + 1);
-
-	/*
-	 * We also need an extra slot for the terminating NULL in the result
-	 * array, but that cancels out with the fact that we don't want to
-	 * generate the zero-changes case.	So we need exactly nanswers slots.
-	 */
-	result = (Oid **) palloc(sizeof(Oid *) * nanswers);
-	j = 0;
-
-	/*
-	 * Compute the cross product from right to left.  When cur[i] == 0,
-	 * generate the original input type at position i.	When cur[i] == k
-	 * for k > 0, generate its k'th supertype.
-	 */
-	cur = (int *) palloc0(nargs * sizeof(int));
-
-	for (;;)
-	{
-		/*
-		 * Find a column we can increment.	All the columns after it get
-		 * reset to zero.  (Essentially, we're adding one to the multi-
-		 * digit number represented by cur[].)
-		 */
-		for (i = nargs - 1; i >= 0 && cur[i] >= arginh[i].nsupers; i--)
-			cur[i] = 0;
-
-		/* if none, we're done */
-		if (i < 0)
-			break;
-
-		/* increment this column */
-		cur[i] += 1;
-
-		/* Generate the proper output type-OID vector */
-		oneres = (Oid *) palloc(nargs * sizeof(Oid));
-
-		for (i = 0; i < nargs; i++)
-		{
-			if (cur[i] == 0)
-				oneres[i] = arginh[i].self;
-			else
-				oneres[i] = arginh[i].supervec[cur[i] - 1];
-		}
-
-		result[j++] = oneres;
-	}
-
-	/* terminate result vector with NULL pointer */
-	result[j++] = NULL;
-
-	Assert(j == nanswers);
-
-	pfree(cur);
-
-	return result;
-}
-
-
-/*
- * Given two type OIDs, determine whether the first is a complex type
- * (class type) that inherits from the second.
- */
-bool
-typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
-{
-	Oid			relid;
-	Oid		   *supervec;
-	int			nsupers,
-				i;
-	bool		result;
-
-	if (!ISCOMPLEX(subclassTypeId) || !ISCOMPLEX(superclassTypeId))
-		return false;
-	relid = typeidTypeRelid(subclassTypeId);
-	if (relid == InvalidOid)
-		return false;
-	nsupers = find_inheritors(relid, &supervec);
-	result = false;
-	for (i = 0; i < nsupers; i++)
-	{
-		if (supervec[i] == superclassTypeId)
-		{
-			result = true;
-			break;
-		}
-	}
-	if (supervec)
-		pfree(supervec);
 	return result;
 }
 
