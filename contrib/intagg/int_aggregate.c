@@ -243,7 +243,8 @@ int_enum(PG_FUNCTION_ARGS)
 			pc->flags = 0;
 		}
 		/* Now that we have a detoasted array, verify dimensions */
-		if (pc->p->a.ndim != 1)
+		/* We'll treat a zero-D array as empty, below */
+		if (pc->p->a.ndim > 1)
 			elog(ERROR, "int_enum only accepts 1-D arrays");
 		pc->num = 0;
 		fcinfo->context = (Node *) pc;
@@ -252,7 +253,7 @@ int_enum(PG_FUNCTION_ARGS)
 	else	/* use an existing one */
 		pc = (CTX *) fcinfo->context;
 	/* Are we done yet? */
-	if (pc->num >= pc->p->items)
+	if (pc->p->a.ndim < 1 || pc->num >= pc->p->items)
 	{
 		/* We are done */
 		if (pc->flags & TOASTED)
