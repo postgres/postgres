@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.183 2005/04/22 21:58:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.184 2005/04/23 01:29:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -941,7 +941,10 @@ create_bitmap_subplan(Query *root, Path *bitmapqual)
 			newlist = lappend(newlist, subplan);
 		}
 		plan = (Plan *) make_bitmap_and(newlist);
-		copy_path_costsize(plan, bitmapqual);
+		plan->startup_cost = apath->path.startup_cost;
+		plan->total_cost = apath->path.total_cost;
+		plan->plan_rows =
+			clamp_row_est(apath->bitmapselectivity * apath->path.parent->tuples);
 		plan->plan_width = 0;	/* meaningless */
 	}
 	else if (IsA(bitmapqual, BitmapOrPath))
@@ -957,31 +960,32 @@ create_bitmap_subplan(Query *root, Path *bitmapqual)
 			newlist = lappend(newlist, subplan);
 		}
 		plan = (Plan *) make_bitmap_or(newlist);
-		copy_path_costsize(plan, bitmapqual);
+		plan->startup_cost = opath->path.startup_cost;
+		plan->total_cost = opath->path.total_cost;
+		plan->plan_rows =
+			clamp_row_est(opath->bitmapselectivity * opath->path.parent->tuples);
 		plan->plan_width = 0;	/* meaningless */
 	}
 	else if (IsA(bitmapqual, IndexPath))
 	{
 		IndexPath *ipath = (IndexPath *) bitmapqual;
 		IndexScan *iscan;
-		BitmapIndexScan *bscan;
 
 		/* Use the regular indexscan plan build machinery... */
 		iscan = create_indexscan_plan(root, ipath, NIL, NIL);
 		Assert(list_length(iscan->indxid) == 1);
 		/* then convert to a bitmap indexscan */
-		bscan = make_bitmap_indexscan(iscan->scan.scanrelid,
-									  linitial_oid(iscan->indxid),
-									  linitial(iscan->indxqual),
-									  linitial(iscan->indxqualorig),
-									  linitial(iscan->indxstrategy),
-									  linitial(iscan->indxsubtype));
-		bscan->scan.plan.startup_cost = 0.0;
-		bscan->scan.plan.total_cost = ipath->indextotalcost;
-		bscan->scan.plan.plan_rows =
+		plan = (Plan *) make_bitmap_indexscan(iscan->scan.scanrelid,
+											  linitial_oid(iscan->indxid),
+											  linitial(iscan->indxqual),
+											  linitial(iscan->indxqualorig),
+											  linitial(iscan->indxstrategy),
+											  linitial(iscan->indxsubtype));
+		plan->startup_cost = 0.0;
+		plan->total_cost = ipath->indextotalcost;
+		plan->plan_rows =
 			clamp_row_est(ipath->indexselectivity * ipath->path.parent->tuples);
-		bscan->scan.plan.plan_width = 0; /* meaningless */
-		plan = (Plan *) bscan;
+		plan->plan_width = 0;	/* meaningless */
 	}
 	else
 	{
