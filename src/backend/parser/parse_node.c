@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.87 2004/12/31 22:00:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.88 2005/04/23 18:35:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,9 +276,9 @@ transformArraySubscripts(ParseState *pstate,
  *	Explicit "NULL" constants are also typed as UNKNOWN.
  *
  *	For integers and floats we produce int4, int8, or numeric depending
- *	on the value of the number.  XXX This should include int2 as well,
- *	but additional cleanup is needed before we can do that; else cases
- *	like "WHERE int4var = 42" will fail to be indexable.
+ *	on the value of the number.  XXX We should produce int2 as well,
+ *	but additional cleanup is needed before we can do that; there are
+ *	too many examples that fail if we try.
  */
 Const *
 make_const(Value *value)
@@ -304,11 +304,28 @@ make_const(Value *value)
 			/* could be an oversize integer as well as a float ... */
 			if (scanint8(strVal(value), true, &val64))
 			{
-				val = Int64GetDatum(val64);
+				/*
+				 * It might actually fit in int32. Probably only INT_MIN can
+				 * occur, but we'll code the test generally just to be sure.
+				 */
+				int32	val32 = (int32) val64;
 
-				typeid = INT8OID;
-				typelen = sizeof(int64);
-				typebyval = false;		/* XXX might change someday */
+				if (val64 == (int64) val32)
+				{
+					val = Int32GetDatum(val32);
+
+					typeid = INT4OID;
+					typelen = sizeof(int32);
+					typebyval = true;
+				}
+				else
+				{
+					val = Int64GetDatum(val64);
+
+					typeid = INT8OID;
+					typelen = sizeof(int64);
+					typebyval = false;		/* XXX might change someday */
+				}
 			}
 			else
 			{
