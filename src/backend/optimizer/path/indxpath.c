@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.176 2005/04/22 21:58:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.177 2005/04/23 01:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,8 @@ static List *generate_bitmap_or_paths(Query *root, RelOptInfo *rel,
 									  bool isjoininner,
 									  Relids outer_relids);
 static Path *choose_bitmap_and(Query *root, RelOptInfo *rel, List *paths);
+static int	bitmap_path_comparator(const void *a, const void *b);
+static Cost bitmap_and_cost_est(Query *root, RelOptInfo *rel, List *paths);
 static bool match_clause_to_indexcol(IndexOptInfo *index,
 						 int indexcol, Oid opclass,
 						 RestrictInfo *rinfo,
@@ -476,13 +478,138 @@ generate_bitmap_or_paths(Query *root, RelOptInfo *rel,
 static Path *
 choose_bitmap_and(Query *root, RelOptInfo *rel, List *paths)
 {
-	Assert(paths != NIL);		/* else caller error */
-	if (list_length(paths) == 1)
-		return (Path *) linitial(paths); /* easy case */
+	int			npaths = list_length(paths);
+	Path	  **patharray;
+	Cost		costsofar;
+	List	   *qualsofar;
+	ListCell   *lastcell;
+	int			i;
+	ListCell   *l;
+
+	Assert(npaths > 0);							/* else caller error */
+	if (npaths == 1)
+		return (Path *) linitial(paths);		/* easy case */
+
 	/*
-	 * XXX temporary stopgap: always use all available paths
+	 * In theory we should consider every nonempty subset of the given paths.
+	 * In practice that seems like overkill, given the crude nature of the
+	 * estimates, not to mention the possible effects of higher-level AND and
+	 * OR clauses.  As a compromise, we sort the paths by selectivity.
+	 * We always take the first, and sequentially add on paths that result
+	 * in a lower estimated cost.
+	 *
+	 * We also make some effort to detect directly redundant input paths,
+	 * as can happen if there are multiple possibly usable indexes.  For
+	 * this we look only at plain IndexPath inputs, not at sub-OR clauses.
+	 * And we consider an index redundant if all its index conditions were
+	 * already used by earlier indexes.  (We could use pred_test() to have
+	 * a more intelligent, but much more expensive, check --- but in most
+	 * cases simple equality should suffice, since after all the index
+	 * conditions are all coming from the same query clauses.)
 	 */
+
+	/* Convert list to array so we can apply qsort */
+	patharray = (Path **) palloc(npaths * sizeof(Path *));
+	i = 0;
+	foreach(l, paths)
+	{
+		patharray[i++] = (Path *) lfirst(l);
+	}
+	qsort(patharray, npaths, sizeof(Path *), bitmap_path_comparator);
+
+	paths = list_make1(patharray[0]);
+	costsofar = bitmap_and_cost_est(root, rel, paths);
+	if (IsA(patharray[0], IndexPath))
+	{
+		Assert(list_length(((IndexPath *) patharray[0])->indexclauses) == 1);
+		qualsofar = (List *) linitial(((IndexPath *) patharray[0])->indexclauses);
+		qualsofar = list_copy(qualsofar);
+	}
+	else
+		qualsofar = NIL;
+	lastcell = list_head(paths);		/* for quick deletions */
+
+	for (i = 1; i < npaths; i++)
+	{
+		Path   *newpath = patharray[i];
+		List   *newqual = NIL;
+		Cost	newcost;
+
+		if (IsA(newpath, IndexPath))
+		{
+			Assert(list_length(((IndexPath *) newpath)->indexclauses) == 1);
+			newqual = (List *) linitial(((IndexPath *) newpath)->indexclauses);
+			if (list_difference(newqual, qualsofar) == NIL)
+				continue;		/* redundant */
+		}
+
+		paths = lappend(paths, newpath);
+		newcost = bitmap_and_cost_est(root, rel, paths);
+		if (newcost < costsofar)
+		{
+			costsofar = newcost;
+			if (newqual)
+				qualsofar = list_concat(qualsofar, list_copy(newqual));
+			lastcell = lnext(lastcell);
+		}
+		else
+		{
+			paths = list_delete_cell(paths, lnext(lastcell), lastcell);
+		}
+		Assert(lnext(lastcell) == NULL);
+	}
+
+	if (list_length(paths) == 1)
+		return (Path *) linitial(paths);		/* no need for AND */
 	return (Path *) create_bitmap_and_path(root, rel, paths);
+}
+
+/* qsort comparator to sort in increasing selectivity order */
+static int
+bitmap_path_comparator(const void *a, const void *b)
+{
+	Path	   *pa = *(Path * const *) a;
+	Path	   *pb = *(Path * const *) b;
+	Cost		acost;
+	Cost		bcost;
+	Selectivity	aselec;
+	Selectivity	bselec;
+
+	cost_bitmap_tree_node(pa, &acost, &aselec);
+	cost_bitmap_tree_node(pb, &bcost, &bselec);
+
+	if (aselec < bselec)
+		return -1;
+	if (aselec > bselec)
+		return 1;
+	/* if identical selectivity, sort by cost */
+	if (acost < bcost)
+		return -1;
+	if (acost > bcost)
+		return 1;
+	return 0;
+}
+
+/*
+ * Estimate the cost of actually executing a BitmapAnd with the given
+ * inputs.
+ */
+static Cost
+bitmap_and_cost_est(Query *root, RelOptInfo *rel, List *paths)
+{
+	BitmapAndPath apath;
+	Path		bpath;
+
+	/* Set up a dummy BitmapAndPath */
+	apath.path.type = T_BitmapAndPath;
+	apath.path.parent = rel;
+	apath.bitmapquals = paths;
+	cost_bitmap_and_node(&apath, root);
+
+	/* Now we can do cost_bitmap_heap_scan */
+	cost_bitmap_heap_scan(&bpath, root, rel, (Path *) &apath, false);
+
+	return bpath.total_cost;
 }
 
 
