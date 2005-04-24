@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Apr 24 07:48:48 EDT 2005
+   Last updated: Sun Apr 24 07:57:14 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -214,10 +214,12 @@
   
    First, consider the PostgreSQL-specific books mentioned above. Another
    one is "Teach Yourself SQL in 21 Days, Second Edition" at
-   http://members.tripod.com/er4ebus/sql/index.htm
-   Many of our users like The Practical SQL Handbook, Bowman, Judith S.,
-   et al., Addison-Wesley. Others like The Complete Reference SQL, Groff
-   et al., McGraw-Hill. There is also a nice tutorial at
+   http://members.tripod.com/er4ebus/sql/index.htm. Many of our users
+   like The Practical SQL Handbook, Bowman, Judith S., et al.,
+   Addison-Wesley. Others like The Complete Reference SQL, Groff et al.,
+   McGraw-Hill.
+   
+   There is also a nice tutorial at
    http://www.intermedia.net/support/sql/sqltut.shtm, at
    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,
    and at http://sqlcourse.com.
