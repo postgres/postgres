@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.5 2005/04/24 17:32:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.6 2005/04/24 18:16:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,8 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 {
 #define MAX_TIDS	1024
 	TIDBitmap  *tbm;
+	Oid			indxid;
+	Relation	indexRelation;
 	IndexScanDesc scandesc;
 	ItemPointerData tids[MAX_TIDS];
 	int32		ntids;
@@ -58,9 +60,22 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 		ExecReScan((PlanState *) node, NULL);
 
 	/*
-	 * extract necessary information from index scan node
+	 * We do not open or lock the base relation here.  We assume that an
+	 * ancestor BitmapHeapScan node is holding AccessShareLock on the
+	 * heap relation throughout the execution of the plan tree.
 	 */
-	scandesc = node->biss_ScanDesc;
+
+	/*
+	 * open the index relation and initialize relation and scan
+	 * descriptors.  Note we acquire no locks here; the index machinery
+	 * does its own locks and unlocks.
+	 */
+	indxid = ((BitmapIndexScan *) node->ss.ps.plan)->indxid;
+	indexRelation = index_open(indxid);
+	scandesc = index_beginscan_multi(indexRelation,
+									 node->ss.ps.state->es_snapshot,
+									 node->biss_NumScanKeys,
+									 node->biss_ScanKeys);
 
 	/*
 	 * Prepare the result bitmap.  Normally we just create a new one to pass
@@ -98,6 +113,12 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 		CHECK_FOR_INTERRUPTS();
 	}
 
+	/*
+	 * close the index relation
+	 */
+	index_endscan(scandesc);
+	index_close(indexRelation);
+
 	/* must provide our own instrumentation support */
 	if (node->ss.ps.instrument)
 		InstrStopNodeMulti(node->ss.ps.instrument, nTuples);
@@ -109,11 +130,7 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
  *		ExecBitmapIndexReScan(node)
  *
  *		Recalculates the value of the scan keys whose value depends on
- *		information known at runtime and rescans the indexed relation.
- *		Updating the scan key was formerly done separately in
- *		ExecUpdateIndexScanKeys. Integrating it into ReScan makes
- *		rescans of indices and relations/general streams more uniform.
- *
+ *		information known at runtime.
  * ----------------------------------------------------------------
  */
 void
@@ -121,12 +138,10 @@ ExecBitmapIndexReScan(BitmapIndexScanState *node, ExprContext *exprCtxt)
 {
 	ExprContext *econtext;
 	ExprState **runtimeKeyInfo;
-	Index		scanrelid;
 
 	econtext = node->biss_RuntimeContext;		/* context for runtime
 												 * keys */
 	runtimeKeyInfo = node->biss_RuntimeKeyInfo;
-	scanrelid = ((BitmapIndexScan *) node->ss.ps.plan)->scan.scanrelid;
 
 	if (econtext)
 	{
@@ -194,8 +209,6 @@ ExecBitmapIndexReScan(BitmapIndexScanState *node, ExprContext *exprCtxt)
 
 		node->biss_RuntimeKeysReady = true;
 	}
-
-	index_rescan(node->biss_ScanDesc, node->biss_ScanKeys);
 }
 
 /* ----------------------------------------------------------------
@@ -205,13 +218,6 @@ ExecBitmapIndexReScan(BitmapIndexScanState *node, ExprContext *exprCtxt)
 void
 ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 {
-	Relation	relation;
-
-	/*
-	 * extract information from the node
-	 */
-	relation = node->ss.ss_currentRelation;
-
 	/*
 	 * Free the exprcontext ... now dead code, see ExecFreeExprContext
 	 */
@@ -219,44 +225,12 @@ ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 	if (node->biss_RuntimeContext)
 		FreeExprContext(node->biss_RuntimeContext);
 #endif
-
-	/*
-	 * close the index relation
-	 */
-	if (node->biss_ScanDesc != NULL)
-		index_endscan(node->biss_ScanDesc);
-
-	if (node->biss_RelationDesc != NULL)
-		index_close(node->biss_RelationDesc);
-
-	/*
-	 * close the heap relation.
-	 *
-	 * Currently, we do not release the AccessShareLock acquired by
-	 * ExecInitBitmapIndexScan.  This lock should be held till end of
-	 * transaction. (There is a faction that considers this too much
-	 * locking, however.)
-	 */
-	heap_close(relation, NoLock);
 }
 
 /* ----------------------------------------------------------------
  *		ExecInitBitmapIndexScan
  *
- *		Initializes the index scan's state information, creates
- *		scan keys, and opens the base and index relations.
- *
- *		Note: index scans have 2 sets of state information because
- *			  we have to keep track of the base relation and the
- *			  index relations.
- *
- * old comments
- *		Creates the run-time state information for the node and
- *		sets the relation id to contain relevant descriptors.
- *
- *		Parameters:
- *		  node: BitmapIndexNode node produced by the planner.
- *		  estate: the execution state initialized in InitPlan.
+ *		Initializes the index scan's state information.
  * ----------------------------------------------------------------
  */
 BitmapIndexScanState *
@@ -265,10 +239,6 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 	BitmapIndexScanState *indexstate;
 	ExprState **runtimeKeyInfo;
 	bool		have_runtime_keys;
-	RangeTblEntry *rtentry;
-	Index		relid;
-	Oid			reloid;
-	Relation	currentRelation;
 
 	/*
 	 * create state structure
@@ -306,8 +276,6 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 	indexstate->biss_RuntimeKeyInfo = NULL;
 	indexstate->biss_RuntimeContext = NULL;
 	indexstate->biss_RuntimeKeysReady = false;
-	indexstate->biss_RelationDesc = NULL;
-	indexstate->biss_ScanDesc = NULL;
 
 	CXT1_printf("ExecInitBitmapIndexScan: context is %d\n", CurrentMemoryContext);
 
@@ -459,7 +427,6 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 		runtimeKeyInfo = run_keys;
 	}
 
-
 	/*
 	 * If all of our keys have the form (var op const), then we have no
 	 * runtime keys so we store NULL in the runtime key info. Otherwise
@@ -489,30 +456,9 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 			pfree(runtimeKeyInfo);
 	}
 
-	/*
-	 * open the base relation and acquire AccessShareLock on it.
-	 */
-	relid = node->scan.scanrelid;
-	rtentry = rt_fetch(relid, estate->es_range_table);
-	reloid = rtentry->relid;
-
-	currentRelation = heap_open(reloid, AccessShareLock);
-
-	indexstate->ss.ss_currentRelation = currentRelation;
-	indexstate->ss.ss_currentScanDesc = NULL;	/* no heap scan here */
-
-	/*
-	 * open the index relation and initialize relation and scan
-	 * descriptors.  Note we acquire no locks here; the index machinery
-	 * does its own locks and unlocks.	(We rely on having AccessShareLock
-	 * on the parent table to ensure the index won't go away!)
-	 */
-	indexstate->biss_RelationDesc = index_open(node->indxid);
-	indexstate->biss_ScanDesc =
-		index_beginscan_multi(indexstate->biss_RelationDesc,
-							  estate->es_snapshot,
-							  indexstate->biss_NumScanKeys,
-							  indexstate->biss_ScanKeys);
+	/* We don't keep the table or index open across calls */
+	indexstate->ss.ss_currentRelation = NULL;
+	indexstate->ss.ss_currentScanDesc = NULL;
 
 	/*
 	 * all done.
