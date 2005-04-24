@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.4 2005/04/23 21:32:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.5 2005/04/24 17:32:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,17 +132,10 @@ ExecBitmapIndexReScan(BitmapIndexScanState *node, ExprContext *exprCtxt)
 	{
 		/*
 		 * If we are being passed an outer tuple, save it for runtime key
-		 * calc.  We also need to link it into the "regular" per-tuple
-		 * econtext.
+		 * calc.
 		 */
 		if (exprCtxt != NULL)
-		{
-			ExprContext *stdecontext;
-
 			econtext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
-			stdecontext = node->ss.ps.ps_ExprContext;
-			stdecontext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
-		}
 
 		/*
 		 * Reset the runtime-key context so we don't leak memory as each
@@ -220,10 +213,9 @@ ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 	relation = node->ss.ss_currentRelation;
 
 	/*
-	 * Free the exprcontext(s) ... now dead code, see ExecFreeExprContext
+	 * Free the exprcontext ... now dead code, see ExecFreeExprContext
 	 */
 #ifdef NOT_USED
-	ExecFreeExprContext(&node->ss.ps);
 	if (node->biss_RuntimeContext)
 		FreeExprContext(node->biss_RuntimeContext);
 #endif
@@ -291,9 +283,9 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 	/*
 	 * Miscellaneous initialization
 	 *
-	 * create expression context for node
+	 * We do not need a standard exprcontext for this node, though we may
+	 * decide below to create a runtime-key exprcontext
 	 */
-	ExecAssignExprContext(estate, &indexstate->ss.ps);
 
 	/*
 	 * initialize child expressions
@@ -471,14 +463,13 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 	/*
 	 * If all of our keys have the form (var op const), then we have no
 	 * runtime keys so we store NULL in the runtime key info. Otherwise
-	 * runtime key info contains an array of pointers (one for each index)
-	 * to arrays of flags (one for each key) which indicate that the qual
-	 * needs to be evaluated at runtime. -cim 10/24/89
+	 * runtime key info contains an array of pointers to runtime key
+	 * expressions.
 	 *
-	 * If we do have runtime keys, we need an ExprContext to evaluate them;
-	 * the node's standard context won't do because we want to reset that
-	 * context for every tuple.  So, build another context just like the
-	 * other one... -tgl 7/11/00
+	 * If we do have runtime keys, we need an ExprContext to evaluate them.
+	 * We could just create a "standard" plan node exprcontext, but to
+	 * keep the code looking similar to nodeIndexscan.c, it seems better
+	 * to stick with the approach of using a separate ExprContext.
 	 */
 	if (have_runtime_keys)
 	{
