@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Apr 23 16:49:43 EDT 2005
+   Last updated: Sun Apr 24 07:22:26 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -191,8 +191,9 @@
    
    There are two PostgreSQL books available online at
    http://www.postgresql.org/docs/books/awbook.html and
-   http://www.commandprompt.com/ppbook/. There is a list of PostgreSQL
-   books available for purchase at
+   http://www.commandprompt.com/ppbook/. There are a number of PostgreSQL
+   books available for purchase. One of the most popular ones is by Korry
+   Douglas. A list of book reviews can be found at
    http://techdocs.PostgreSQL.org/techdocs/bookreviews.php. There is also
    a collection of PostgreSQL technical articles at
    http://techdocs.PostgreSQL.org/.
