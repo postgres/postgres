@@ -8,15 +8,13 @@
  *		Result nodes are used in queries where no relations are scanned.
  *		Examples of such queries are:
  *
- *				retrieve (x = 1)
- *		and
- *				append emp (name = "mike", salary = 15000)
+ *				select 1 * 2
  *
  *		Result nodes are also used to optimise queries with constant
  *		qualifications (ie, quals that do not depend on the scanned data),
  *		such as:
  *
- *				retrieve (emp.all) where 2 > 1
+ *				select * from emp where 2 > 1
  *
  *		In this case, the plan generated is
  *
@@ -24,9 +22,10 @@
  *						/
  *				   SeqScan (emp.all)
  *
- *		At runtime, the Result node evaluates the constant qual once.
- *		If it's false, we can return an empty result set without running
- *		the controlled plan at all.  If it's true, we run the controlled
+ *		At runtime, the Result node evaluates the constant qual once,
+ *		which is shown by EXPLAIN as a One-Time Filter.  If it's
+ *		false, we can return an empty result set without running the
+ *		controlled plan at all.  If it's true, we run the controlled
  *		plan normally and pass back the results.
  *
  *
@@ -34,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.29 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.30 2005/04/24 11:46:21 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
