@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Apr 23 17:45:11 EDT 2005
+Last updated:		Sun Apr 24 08:39:04 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -759,8 +759,8 @@ Vacuum
 * -Add a warning when the free space map is too small
 * Maintain a map of recently-expired rows
 
-  This allows vacuum to reclaim free space without requiring
-  a sequential scan
+  This allows vacuum to target specific pages for possible free space 
+  without requiring a sequential scan.
 
 * Auto-vacuum
 	o Move into the backend code

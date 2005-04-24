@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat Apr 23 17:45:11 EDT 2005
+Last updated:           Sun Apr 24 08:39:04 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -693,8 +693,8 @@ first.
 </p>
   </li><li>-Add a warning when the free space map is too small
   </li><li>Maintain a map of recently-expired rows
-<p>  This allows vacuum to reclaim free space without requiring
-  a sequential scan
+<p>  This allows vacuum to target specific pages for possible free space 
+  without requiring a sequential scan.
 </p>
   </li><li>Auto-vacuum
   <ul>
