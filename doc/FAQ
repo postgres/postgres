@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Apr 24 07:27:43 EDT 2005
+   Last updated: Sun Apr 24 07:48:48 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -78,6 +78,7 @@
    4.19) Why do I get "relation with OID ##### does not exist" errors
    when accessing temporary tables in PL/PgSQL functions?
    4.20) What encryption options are available?
+   4.21) What replication solutions are available?
      _________________________________________________________________
    
                              General Questions
@@ -755,3 +756,15 @@
      * Database user passwords are automatically encrypted when stored in
        the system tables.
      * The server can also run using an encrypted file system.
+       
+  4.21) What replication solutions are available?
+  
+   Though "replication" is a single term, there are two major replication
+   technologies. Multi-master replication allows read/write queries to be
+   sent to multiple replicated computers. This capability has a serious
+   performance impact. Pgcluster is the most popular such solution
+   available for PostgreSQL. Master-slave replication allows a single
+   master to receive read/write queries, with slaves able to accept only
+   read/SELECT queries. The most popular master-slave PostgreSQL
+   replication solution is Slony. There are also commercial and
+   hardware-based replication solutions available.
