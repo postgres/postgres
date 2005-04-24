@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.43 2005/04/23 21:16:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.44 2005/04/24 03:51:49 momjian Exp $
  *
  *
  * NOTES:
@@ -709,14 +709,13 @@ PrintFreeSpaceMapStatistics(int elevel)
 	needed = (sumRequests + numRels) * CHUNKPAGES;
 
 	ereport(elevel,
-			(errmsg("free space map contains information about:\n"
-					"%d relations, limit %d relations\n"
-					"%d pages with free space, %.0f total pages used (including overhead)\n"
-					"%.0f pages required to track all freespace, limit %d pages\n"
-					"%.0f kB memory used",
-					numRels, MaxFSMRelations,
-					storedPages, Min(needed, MaxFSMPages),
-					needed, MaxFSMPages,
+			(errmsg("free space map contains %d pages in %d relations",
+					storedPages, numRels),
+			 errdetail("A total of %.0f page slots are in use (including overhead).\n"
+					"%.0f page slots are required to track all free space.\n"
+					"Current limits are:  %d page slots, %d relations, using %.0f KB.",
+					Min(needed, MaxFSMPages),
+					needed, MaxFSMPages, MaxFSMRelations,
 				    (double) FreeSpaceShmemSize() / 1024.0)));
 
 	CheckFreeSpaceMapStatistics(NOTICE, numRels, needed);
