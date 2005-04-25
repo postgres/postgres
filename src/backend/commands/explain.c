@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.134 2005/04/22 21:58:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.135 2005/04/25 01:30:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ static void explain_outNode(StringInfo str,
 				Plan *plan, PlanState *planstate,
 				Plan *outer_plan,
 				int indent, ExplainState *es);
-static void show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
+static void show_scan_qual(List *qual, const char *qlabel,
 			   int scanrelid, Plan *outer_plan,
 			   StringInfo str, int indent, ExplainState *es);
 static void show_upper_qual(List *qual, const char *qlabel,
@@ -62,7 +62,6 @@ static void show_upper_qual(List *qual, const char *qlabel,
 static void show_sort_keys(List *tlist, int nkeys, AttrNumber *keycols,
 			   const char *qlabel,
 			   StringInfo str, int indent, ExplainState *es);
-static Node *make_ors_ands_explicit(List *orclauses);
 
 /*
  * ExplainQuery -
@@ -405,7 +404,6 @@ explain_outNode(StringInfo str,
 				Plan *outer_plan,
 				int indent, ExplainState *es)
 {
-	ListCell   *l;
 	char	   *pname;
 	int			i;
 
@@ -583,19 +581,10 @@ explain_outNode(StringInfo str,
 	switch (nodeTag(plan))
 	{
 		case T_IndexScan:
-			if (ScanDirectionIsBackward(((IndexScan *) plan)->indxorderdir))
+			if (ScanDirectionIsBackward(((IndexScan *) plan)->indexorderdir))
 				appendStringInfoString(str, " Backward");
-			appendStringInfoString(str, " using ");
-			i = 0;
-			foreach(l, ((IndexScan *) plan)->indxid)
-			{
-				char	   *indname;
-
-				indname = get_rel_name(lfirst_oid(l));
-				appendStringInfo(str, "%s%s",
-								 (++i > 1) ? ", " : "",
-								 quote_identifier(indname));
-			}
+			appendStringInfo(str, " using %s",
+							 quote_identifier(get_rel_name(((IndexScan *) plan)->indexid)));
 			/* FALL THRU */
 		case T_SeqScan:
 		case T_BitmapHeapScan:
@@ -621,7 +610,7 @@ explain_outNode(StringInfo str,
 			break;
 		case T_BitmapIndexScan:
 			appendStringInfo(str, " on %s",
-							 quote_identifier(get_rel_name(((BitmapIndexScan *) plan)->indxid)));
+							 quote_identifier(get_rel_name(((BitmapIndexScan *) plan)->indexid)));
 			break;
 		case T_SubqueryScan:
 			if (((Scan *) plan)->scanrelid > 0)
@@ -702,19 +691,19 @@ explain_outNode(StringInfo str,
 	switch (nodeTag(plan))
 	{
 		case T_IndexScan:
-			show_scan_qual(((IndexScan *) plan)->indxqualorig, true,
+			show_scan_qual(((IndexScan *) plan)->indexqualorig,
 						   "Index Cond",
 						   ((Scan *) plan)->scanrelid,
 						   outer_plan,
 						   str, indent, es);
-			show_scan_qual(plan->qual, false,
+			show_scan_qual(plan->qual,
 						   "Filter",
 						   ((Scan *) plan)->scanrelid,
 						   outer_plan,
 						   str, indent, es);
 			break;
 		case T_BitmapIndexScan:
-			show_scan_qual(((BitmapIndexScan *) plan)->indxqualorig, false,
+			show_scan_qual(((BitmapIndexScan *) plan)->indexqualorig,
 						   "Index Cond",
 						   ((Scan *) plan)->scanrelid,
 						   outer_plan,
@@ -722,7 +711,7 @@ explain_outNode(StringInfo str,
 			break;
 		case T_BitmapHeapScan:
 			/* XXX do we want to show this in production? */
-			show_scan_qual(((BitmapHeapScan *) plan)->bitmapqualorig, false,
+			show_scan_qual(((BitmapHeapScan *) plan)->bitmapqualorig,
 						   "Recheck Cond",
 						   ((Scan *) plan)->scanrelid,
 						   outer_plan,
@@ -732,7 +721,7 @@ explain_outNode(StringInfo str,
 		case T_TidScan:
 		case T_SubqueryScan:
 		case T_FunctionScan:
-			show_scan_qual(plan->qual, false,
+			show_scan_qual(plan->qual,
 						   "Filter",
 						   ((Scan *) plan)->scanrelid,
 						   outer_plan,
@@ -997,7 +986,7 @@ explain_outNode(StringInfo str,
  * Show a qualifier expression for a scan plan node
  */
 static void
-show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
+show_scan_qual(List *qual, const char *qlabel,
 			   int scanrelid, Plan *outer_plan,
 			   StringInfo str, int indent, ExplainState *es)
 {
@@ -1012,14 +1001,9 @@ show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
 	/* No work if empty qual */
 	if (qual == NIL)
 		return;
-	if (is_or_qual && list_length(qual) == 1 && linitial(qual) == NIL)
-		return;
 
-	/* Fix qual --- indexqual requires different processing */
-	if (is_or_qual)
-		node = make_ors_ands_explicit(qual);
-	else
-		node = (Node *) make_ands_explicit(qual);
+	/* Convert AND list to explicit AND */
+	node = (Node *) make_ands_explicit(qual);
 
 	/* Generate deparse context */
 	Assert(scanrelid > 0 && scanrelid <= list_length(es->rtable));
@@ -1176,27 +1160,4 @@ show_sort_keys(List *tlist, int nkeys, AttrNumber *keycols,
 	}
 
 	appendStringInfo(str, "\n");
-}
-
-/*
- * Indexscan qual lists have an implicit OR-of-ANDs structure.	Make it
- * explicit so deparsing works properly.
- */
-static Node *
-make_ors_ands_explicit(List *orclauses)
-{
-	if (orclauses == NIL)
-		return NULL;			/* probably can't happen */
-	else if (list_length(orclauses) == 1)
-		return (Node *) make_ands_explicit(linitial(orclauses));
-	else
-	{
-		List	   *args = NIL;
-		ListCell   *orptr;
-
-		foreach(orptr, orclauses)
-			args = lappend(args, make_ands_explicit(lfirst(orptr)));
-
-		return (Node *) make_orclause(args);
-	}
 }

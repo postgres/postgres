@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.108 2005/04/22 21:58:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.109 2005/04/25 01:30:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,18 +107,18 @@ set_plan_references(Plan *plan, List *rtable)
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
 			fix_expr_references(plan,
-								(Node *) ((IndexScan *) plan)->indxqual);
+								(Node *) ((IndexScan *) plan)->indexqual);
 			fix_expr_references(plan,
-							(Node *) ((IndexScan *) plan)->indxqualorig);
+							(Node *) ((IndexScan *) plan)->indexqualorig);
 			break;
 		case T_BitmapIndexScan:
 			/* no need to fix targetlist and qual */
 			Assert(plan->targetlist == NIL);
 			Assert(plan->qual == NIL);
 			fix_expr_references(plan,
-								(Node *) ((BitmapIndexScan *) plan)->indxqual);
+							(Node *) ((BitmapIndexScan *) plan)->indexqual);
 			fix_expr_references(plan,
-							(Node *) ((BitmapIndexScan *) plan)->indxqualorig);
+						(Node *) ((BitmapIndexScan *) plan)->indexqualorig);
 			break;
 		case T_BitmapHeapScan:
 			fix_expr_references(plan, (Node *) plan->targetlist);
@@ -422,31 +422,31 @@ set_inner_join_references(Plan *inner_plan,
 		 * var nodes to refer to the outer side of the join.
 		 */
 		IndexScan  *innerscan = (IndexScan *) inner_plan;
-		List	   *indxqualorig = innerscan->indxqualorig;
+		List	   *indexqualorig = innerscan->indexqualorig;
 
-		/* No work needed if indxqual refers only to its own rel... */
-		if (NumRelids((Node *) indxqualorig) > 1)
+		/* No work needed if indexqual refers only to its own rel... */
+		if (NumRelids((Node *) indexqualorig) > 1)
 		{
 			Index		innerrel = innerscan->scan.scanrelid;
 
 			/* only refs to outer vars get changed in the inner qual */
-			innerscan->indxqualorig = join_references(indxqualorig,
-													  rtable,
-													  outer_tlist,
-													  NIL,
-													  innerrel,
-													  tlists_have_non_vars);
-			innerscan->indxqual = join_references(innerscan->indxqual,
-												  rtable,
-												  outer_tlist,
-												  NIL,
-												  innerrel,
-												  tlists_have_non_vars);
+			innerscan->indexqualorig = join_references(indexqualorig,
+													   rtable,
+													   outer_tlist,
+													   NIL,
+													   innerrel,
+													   tlists_have_non_vars);
+			innerscan->indexqual = join_references(innerscan->indexqual,
+												   rtable,
+												   outer_tlist,
+												   NIL,
+												   innerrel,
+												   tlists_have_non_vars);
 
 			/*
 			 * We must fix the inner qpqual too, if it has join
 			 * clauses (this could happen if special operators are
-			 * involved: some indxquals may get rechecked as qpquals).
+			 * involved: some indexquals may get rechecked as qpquals).
 			 */
 			if (NumRelids((Node *) inner_plan->qual) > 1)
 				inner_plan->qual = join_references(inner_plan->qual,
@@ -463,26 +463,26 @@ set_inner_join_references(Plan *inner_plan,
 		 * Same, but index is being used within a bitmap plan.
 		 */
 		BitmapIndexScan *innerscan = (BitmapIndexScan *) inner_plan;
-		List	   *indxqualorig = innerscan->indxqualorig;
+		List	   *indexqualorig = innerscan->indexqualorig;
 
-		/* No work needed if indxqual refers only to its own rel... */
-		if (NumRelids((Node *) indxqualorig) > 1)
+		/* No work needed if indexqual refers only to its own rel... */
+		if (NumRelids((Node *) indexqualorig) > 1)
 		{
 			Index		innerrel = innerscan->scan.scanrelid;
 
 			/* only refs to outer vars get changed in the inner qual */
-			innerscan->indxqualorig = join_references(indxqualorig,
-													  rtable,
-													  outer_tlist,
-													  NIL,
-													  innerrel,
-													  tlists_have_non_vars);
-			innerscan->indxqual = join_references(innerscan->indxqual,
-												  rtable,
-												  outer_tlist,
-												  NIL,
-												  innerrel,
-												  tlists_have_non_vars);
+			innerscan->indexqualorig = join_references(indexqualorig,
+													   rtable,
+													   outer_tlist,
+													   NIL,
+													   innerrel,
+													   tlists_have_non_vars);
+			innerscan->indexqual = join_references(innerscan->indexqual,
+												   rtable,
+												   outer_tlist,
+												   NIL,
+												   innerrel,
+												   tlists_have_non_vars);
 			/* no need to fix inner qpqual */
 			Assert(inner_plan->qual == NIL);
 		}
@@ -512,7 +512,7 @@ set_inner_join_references(Plan *inner_plan,
 			/*
 			 * We must fix the inner qpqual too, if it has join
 			 * clauses (this could happen if special operators are
-			 * involved: some indxquals may get rechecked as qpquals).
+			 * involved: some indexquals may get rechecked as qpquals).
 			 */
 			if (NumRelids((Node *) inner_plan->qual) > 1)
 				inner_plan->qual = join_references(inner_plan->qual,

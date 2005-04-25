@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.177 2005/04/23 01:57:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.178 2005/04/25 01:30:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,10 +58,6 @@ static List *find_usable_indexes(Query *root, RelOptInfo *rel,
 								 List *clauses, List *outer_clauses,
 								 bool istoplevel, bool isjoininner,
 								 Relids outer_relids);
-static List *generate_bitmap_or_paths(Query *root, RelOptInfo *rel,
-									  List *clauses, List *outer_clauses,
-									  bool isjoininner,
-									  Relids outer_relids);
 static Path *choose_bitmap_and(Query *root, RelOptInfo *rel, List *paths);
 static int	bitmap_path_comparator(const void *a, const void *b);
 static Cost bitmap_and_cost_est(Query *root, RelOptInfo *rel, List *paths);
@@ -365,7 +361,7 @@ find_usable_indexes(Query *root, RelOptInfo *rel,
  * for the purpose of generating indexquals, but are not to be searched for
  * ORs.  (See find_usable_indexes() for motivation.)
  */
-static List *
+List *
 generate_bitmap_or_paths(Query *root, RelOptInfo *rel,
 						 List *clauses, List *outer_clauses,
 						 bool isjoininner,
@@ -520,11 +516,7 @@ choose_bitmap_and(Query *root, RelOptInfo *rel, List *paths)
 	paths = list_make1(patharray[0]);
 	costsofar = bitmap_and_cost_est(root, rel, paths);
 	if (IsA(patharray[0], IndexPath))
-	{
-		Assert(list_length(((IndexPath *) patharray[0])->indexclauses) == 1);
-		qualsofar = (List *) linitial(((IndexPath *) patharray[0])->indexclauses);
-		qualsofar = list_copy(qualsofar);
-	}
+		qualsofar = list_copy(((IndexPath *) patharray[0])->indexclauses);
 	else
 		qualsofar = NIL;
 	lastcell = list_head(paths);		/* for quick deletions */
@@ -537,8 +529,7 @@ choose_bitmap_and(Query *root, RelOptInfo *rel, List *paths)
 
 		if (IsA(newpath, IndexPath))
 		{
-			Assert(list_length(((IndexPath *) newpath)->indexclauses) == 1);
-			newqual = (List *) linitial(((IndexPath *) newpath)->indexclauses);
+			newqual = ((IndexPath *) newpath)->indexclauses;
 			if (list_difference(newqual, qualsofar) == NIL)
 				continue;		/* redundant */
 		}
@@ -708,108 +699,6 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 	} while (!DoneMatchingIndexKeys(classes));
 
 	if (!found_clause)
-		return NIL;
-
-	return clausegroup_list;
-}
-
-
-/*
- * group_clauses_by_indexkey_for_or
- *	  Generate a list of sublists of clauses that can be used with an index
- *	  to find rows matching an OR subclause.
- *
- * This is essentially just like group_clauses_by_indexkey() except that
- * we can use the given clause (or any AND subclauses of it) as well as
- * top-level restriction clauses of the relation.  Furthermore, we demand
- * that at least one such use be made, otherwise we fail and return NIL.
- * (Any path we made without such a use would be redundant with non-OR
- * indexscans.)
- *
- * XXX When we generate an indexqual list that uses both the OR subclause
- * and top-level restriction clauses, we end up with a slightly inefficient
- * plan because create_indexscan_plan is not very bright about figuring out
- * which restriction clauses are implied by the generated indexqual condition.
- * Currently we'll end up rechecking both the OR clause and the top-level
- * restriction clause as qpquals.  FIXME someday.
- */
-List *
-group_clauses_by_indexkey_for_or(IndexOptInfo *index, Expr *orsubclause)
-{
-	List	   *clausegroup_list = NIL;
-	bool		matched = false;
-	int			indexcol = 0;
-	Oid		   *classes = index->classlist;
-
-	do
-	{
-		Oid			curClass = classes[0];
-		List	   *clausegroup = NIL;
-		ListCell   *item;
-
-		/* Try to match the OR subclause to the index key */
-		if (IsA(orsubclause, RestrictInfo))
-		{
-			if (match_clause_to_indexcol(index, indexcol, curClass,
-										 (RestrictInfo *) orsubclause,
-										 NULL))
-			{
-				clausegroup = lappend(clausegroup, orsubclause);
-				matched = true;
-			}
-		}
-		else if (and_clause((Node *) orsubclause))
-		{
-			foreach(item, ((BoolExpr *) orsubclause)->args)
-			{
-				RestrictInfo *subsubclause = (RestrictInfo *) lfirst(item);
-
-				if (IsA(subsubclause, RestrictInfo) &&
-					match_clause_to_indexcol(index, indexcol, curClass,
-											 subsubclause,
-											 NULL))
-				{
-					clausegroup = lappend(clausegroup, subsubclause);
-					matched = true;
-				}
-			}
-		}
-
-		/*
-		 * If we found no clauses for this indexkey in the OR subclause
-		 * itself, try looking in the rel's top-level restriction list.
-		 *
-		 * XXX should we always search the top-level list?	Slower but could
-		 * sometimes yield a better plan.
-		 */
-		if (clausegroup == NIL)
-		{
-			foreach(item, index->rel->baserestrictinfo)
-			{
-				RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
-
-				if (match_clause_to_indexcol(index, indexcol, curClass,
-											 rinfo,
-											 NULL))
-					clausegroup = lappend(clausegroup, rinfo);
-			}
-		}
-
-		/*
-		 * If still no clauses match this key, we're done; we don't want
-		 * to look at keys to its right.
-		 */
-		if (clausegroup == NIL)
-			break;
-
-		clausegroup_list = lappend(clausegroup_list, clausegroup);
-
-		indexcol++;
-		classes++;
-	} while (!DoneMatchingIndexKeys(classes));
-
-	/* if OR clause was not used then forget it, per comments above */
-	if (!matched)
 		return NIL;
 
 	return clausegroup_list;
@@ -2017,7 +1906,7 @@ find_clauses_for_join(Query *root, RelOptInfo *rel,
  *	  of RestrictInfos.
  *
  * This is used to flatten out the result of group_clauses_by_indexkey()
- * or one of its sibling routines, to produce an indexclauses list.
+ * to produce an indexclauses list.
  */
 List *
 flatten_clausegroups_list(List *clausegroups)
@@ -2028,39 +1917,6 @@ flatten_clausegroups_list(List *clausegroups)
 	foreach(l, clausegroups)
 		allclauses = list_concat(allclauses, list_copy((List *) lfirst(l)));
 	return allclauses;
-}
-
-/*
- * make_expr_from_indexclauses()
- *	  Given an indexclauses structure, produce an ordinary boolean expression.
- *
- * This consists of stripping out the RestrictInfo nodes and inserting
- * explicit AND and OR nodes as needed.  There's not much to it, but
- * the functionality is needed in a few places, so centralize the logic.
- */
-Expr *
-make_expr_from_indexclauses(List *indexclauses)
-{
-	List	   *orclauses = NIL;
-	ListCell   *orlist;
-
-	/* There's no such thing as an indexpath with zero scans */
-	Assert(indexclauses != NIL);
-
-	foreach(orlist, indexclauses)
-	{
-		List	   *andlist = (List *) lfirst(orlist);
-
-		/* Strip RestrictInfos */
-		andlist = get_actual_clauses(andlist);
-		/* Insert AND node if needed, and add to orclauses list */
-		orclauses = lappend(orclauses, make_ands_explicit(andlist));
-	}
-
-	if (list_length(orclauses) > 1)
-		return make_orclause(orclauses);
-	else
-		return (Expr *) linitial(orclauses);
 }
 
 
@@ -2403,7 +2259,7 @@ match_special_index_operator(Expr *clause, Oid opclass,
  *
  * The input list is ordered by index key, and so the output list is too.
  * (The latter is not depended on by any part of the planner, so far as I can
- * tell; but some parts of the executor do assume that the indxqual list
+ * tell; but some parts of the executor do assume that the indexqual list
  * ultimately delivered to the executor is so ordered.	One such place is
  * _bt_preprocess_keys() in the btree support.	Perhaps that ought to be fixed
  * someday --- tgl 7/00)

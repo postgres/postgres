@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.127 2005/04/21 19:18:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.128 2005/04/25 01:30:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,12 +174,11 @@ set_plain_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
 	/* Consider sequential scan */
 	add_path(rel, create_seqscan_path(root, rel));
 
+	/* Consider index scans */
+	create_index_paths(root, rel);
+
 	/* Consider TID scans */
 	create_tidscan_paths(root, rel);
-
-	/* Consider index paths for both simple and OR index clauses */
-	create_index_paths(root, rel);
-	create_or_index_paths(root, rel);
 
 	/* Now find the cheapest of the paths for this rel */
 	set_cheapest(rel);

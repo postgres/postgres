@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.97 2005/04/19 22:35:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.98 2005/04/25 01:30:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1028,21 +1028,21 @@ finalize_plan(Plan *plan, List *rtable,
 			break;
 
 		case T_IndexScan:
-			finalize_primnode((Node *) ((IndexScan *) plan)->indxqual,
+			finalize_primnode((Node *) ((IndexScan *) plan)->indexqual,
 							  &context);
 
 			/*
-			 * we need not look at indxqualorig, since it will have the
-			 * same param references as indxqual.
+			 * we need not look at indexqualorig, since it will have the
+			 * same param references as indexqual.
 			 */
 			break;
 
 		case T_BitmapIndexScan:
-			finalize_primnode((Node *) ((BitmapIndexScan *) plan)->indxqual,
+			finalize_primnode((Node *) ((BitmapIndexScan *) plan)->indexqual,
 							  &context);
 			/*
-			 * we need not look at indxqualorig, since it will have the
-			 * same param references as indxqual.
+			 * we need not look at indexqualorig, since it will have the
+			 * same param references as indexqual.
 			 */
 			break;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.33 2005/04/22 21:58:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.34 2005/04/25 01:30:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,54 +66,9 @@ make_restrictinfo(Expr *clause, bool is_pushed_down, bool valid_everywhere)
 }
 
 /*
- * make_restrictinfo_from_indexclauses
- *
- * Given an indexclauses structure, convert to ordinary expression format
- * and build RestrictInfo node(s).
- *
- * The result is a List since we might need to return multiple RestrictInfos.
- *
- * This could be done as make_restrictinfo(make_expr_from_indexclauses()),
- * but if we did it that way then we would strip the original RestrictInfo
- * nodes from the index clauses and be forced to build new ones.  It's better
- * to have a specialized routine that allows sharing of RestrictInfos.
- */
-List *
-make_restrictinfo_from_indexclauses(List *indexclauses,
-									bool is_pushed_down,
-									bool valid_everywhere)
-{
-	List	   *withris = NIL;
-	List	   *withoutris = NIL;
-	ListCell   *orlist;
-
-	/* Empty list probably can't happen, but here's what to do */
-	if (indexclauses == NIL)
-		return NIL;
-	/* If single indexscan, just return the ANDed clauses */
-	if (list_length(indexclauses) == 1)
-		return (List *) linitial(indexclauses);
-	/* Else we need an OR RestrictInfo structure */
-	foreach(orlist, indexclauses)
-	{
-		List	   *andlist = (List *) lfirst(orlist);
-
-		/* Create AND subclause with RestrictInfos */
-		withris = lappend(withris, make_ands_explicit(andlist));
-		/* And one without */
-		andlist = get_actual_clauses(andlist);
-		withoutris = lappend(withoutris, make_ands_explicit(andlist));
-	}
-	return list_make1(make_restrictinfo_internal(make_orclause(withoutris),
-												 make_orclause(withris),
-												 is_pushed_down,
-												 valid_everywhere));
-}
-
-/*
  * make_restrictinfo_internal
  *
- * Common code for the above two entry points.
+ * Common code for the main entry point and the recursive cases.
  */
 static RestrictInfo *
 make_restrictinfo_internal(Expr *clause, Expr *orclause,

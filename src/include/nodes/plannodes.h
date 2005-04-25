@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.78 2005/04/19 22:35:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.79 2005/04/25 01:30:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,22 +182,35 @@ typedef Scan SeqScan;
 /* ----------------
  *		index scan node
  *
- * Note: this can actually represent N indexscans, all on the same table
- * but potentially using different indexes, put together with OR semantics.
- * (XXX that extension should probably go away, because bitmapindexscan will
- * largely eliminate the need for it.)
+ * indexqualorig is an implicitly-ANDed list of index qual expressions, each
+ * in the same form it appeared in the query WHERE condition.  Each should
+ * be of the form (indexkey OP comparisonval) or (comparisonval OP indexkey).
+ * The indexkey is a Var or expression referencing column(s) of the index's
+ * base table.  The comparisonval might be any expression, but it won't use
+ * any columns of the base table.
+ *
+ * indexqual has the same form, but the expressions have been commuted if
+ * necessary to put the indexkeys on the left, and the indexkeys are replaced
+ * by Var nodes identifying the index columns (varattno is the index column
+ * position, not the base table's column, even though varno is for the base
+ * table).  This is a bit hokey ... would be cleaner to use a special-purpose
+ * node type that could not be mistaken for a regular Var.  But it will do
+ * for now.
+ *
+ * indexstrategy and indexsubtype are lists corresponding one-to-one with
+ * indexqual; they give information about the indexable operators that appear
+ * at the top of each indexqual.
  * ----------------
  */
 typedef struct IndexScan
 {
 	Scan		scan;
-	List	   *indxid;			/* list of index OIDs (1 per scan) */
-	List	   *indxqual;		/* list of sublists of index quals */
-	List	   *indxqualorig;	/* the same in original form */
-	List	   *indxstrategy;	/* list of sublists of strategy numbers */
-	List	   *indxsubtype;	/* list of sublists of strategy subtypes */
-	List	   *indxlossy;		/* list of sublists of lossy flags (ints) */
-	ScanDirection indxorderdir; /* forward or backward or don't care */
+	Oid			indexid;			/* OID of index to scan */
+	List	   *indexqual;			/* list of index quals (OpExprs) */
+	List	   *indexqualorig;		/* the same in original form */
+	List	   *indexstrategy;		/* integer list of strategy numbers */
+	List	   *indexsubtype;		/* OID list of strategy subtypes */
+	ScanDirection indexorderdir;	/* forward or backward or don't care */
 } IndexScan;
 
 /* ----------------
@@ -209,19 +222,22 @@ typedef struct IndexScan
  * intermediate BitmapAnd and/or BitmapOr nodes to combine it with
  * the results of other BitmapIndexScans.
  *
+ * The fields have the same meanings as for IndexScan, except we don't
+ * store a direction flag because direction is uninteresting.
+ *
  * In a BitmapIndexScan plan node, the targetlist and qual fields are
- * not used and are always NIL.  The indxqualorig field is useless at
+ * not used and are always NIL.  The indexqualorig field is unused at
  * run time too, but is saved for the benefit of EXPLAIN.
  * ----------------
  */
 typedef struct BitmapIndexScan
 {
 	Scan		scan;
-	Oid			indxid;			/* OID of index to scan */
-	List	   *indxqual;		/* list of index quals */
-	List	   *indxqualorig;	/* list of original forms of index quals */
-	List	   *indxstrategy;	/* list of strategy numbers */
-	List	   *indxsubtype;	/* list of strategy subtypes */
+	Oid			indexid;			/* OID of index to scan */
+	List	   *indexqual;			/* list of index quals (OpExprs) */
+	List	   *indexqualorig;		/* the same in original form */
+	List	   *indexstrategy;		/* integer list of strategy numbers */
+	List	   *indexsubtype;		/* OID list of strategy subtypes */
 } BitmapIndexScan;
 
 /* ----------------

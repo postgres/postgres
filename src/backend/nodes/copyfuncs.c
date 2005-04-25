@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.302 2005/04/19 22:35:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.303 2005/04/25 01:30:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,13 +253,12 @@ _copyIndexScan(IndexScan *from)
 	/*
 	 * copy remainder of node
 	 */
-	COPY_NODE_FIELD(indxid);
-	COPY_NODE_FIELD(indxqual);
-	COPY_NODE_FIELD(indxqualorig);
-	COPY_NODE_FIELD(indxstrategy);
-	COPY_NODE_FIELD(indxsubtype);
-	COPY_NODE_FIELD(indxlossy);
-	COPY_SCALAR_FIELD(indxorderdir);
+	COPY_SCALAR_FIELD(indexid);
+	COPY_NODE_FIELD(indexqual);
+	COPY_NODE_FIELD(indexqualorig);
+	COPY_NODE_FIELD(indexstrategy);
+	COPY_NODE_FIELD(indexsubtype);
+	COPY_SCALAR_FIELD(indexorderdir);
 
 	return newnode;
 }
@@ -280,11 +279,11 @@ _copyBitmapIndexScan(BitmapIndexScan *from)
 	/*
 	 * copy remainder of node
 	 */
-	COPY_SCALAR_FIELD(indxid);
-	COPY_NODE_FIELD(indxqual);
-	COPY_NODE_FIELD(indxqualorig);
-	COPY_NODE_FIELD(indxstrategy);
-	COPY_NODE_FIELD(indxsubtype);
+	COPY_SCALAR_FIELD(indexid);
+	COPY_NODE_FIELD(indexqual);
+	COPY_NODE_FIELD(indexqualorig);
+	COPY_NODE_FIELD(indexstrategy);
+	COPY_NODE_FIELD(indexsubtype);
 
 	return newnode;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.249 2005/04/21 19:18:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.250 2005/04/25 01:30:13 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -351,13 +351,12 @@ _outIndexScan(StringInfo str, IndexScan *node)
 
 	_outScanInfo(str, (Scan *) node);
 
-	WRITE_NODE_FIELD(indxid);
-	WRITE_NODE_FIELD(indxqual);
-	WRITE_NODE_FIELD(indxqualorig);
-	WRITE_NODE_FIELD(indxstrategy);
-	WRITE_NODE_FIELD(indxsubtype);
-	WRITE_NODE_FIELD(indxlossy);
-	WRITE_ENUM_FIELD(indxorderdir, ScanDirection);
+	WRITE_OID_FIELD(indexid);
+	WRITE_NODE_FIELD(indexqual);
+	WRITE_NODE_FIELD(indexqualorig);
+	WRITE_NODE_FIELD(indexstrategy);
+	WRITE_NODE_FIELD(indexsubtype);
+	WRITE_ENUM_FIELD(indexorderdir, ScanDirection);
 }
 
 static void
@@ -367,11 +366,11 @@ _outBitmapIndexScan(StringInfo str, BitmapIndexScan *node)
 
 	_outScanInfo(str, (Scan *) node);
 
-	WRITE_OID_FIELD(indxid);
-	WRITE_NODE_FIELD(indxqual);
-	WRITE_NODE_FIELD(indxqualorig);
-	WRITE_NODE_FIELD(indxstrategy);
-	WRITE_NODE_FIELD(indxsubtype);
+	WRITE_OID_FIELD(indexid);
+	WRITE_NODE_FIELD(indexqual);
+	WRITE_NODE_FIELD(indexqualorig);
+	WRITE_NODE_FIELD(indexstrategy);
+	WRITE_NODE_FIELD(indexsubtype);
 }
 
 static void

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.128 2005/04/24 18:16:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.129 2005/04/25 01:30:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -862,40 +862,28 @@ typedef ScanState SeqScanState;
 /* ----------------
  *	 IndexScanState information
  *
- *		indxqualorig	   execution state for indxqualorig expressions
- *		NumIndices		   number of indices in this scan
- *		IndexPtr		   current index in use
- *		MarkIndexPtr	   IndexPtr for marked scan point
- *		ScanKeys		   Skey structures to scan index rels
- *		NumScanKeys		   array of no of keys in each Skey struct
- *		RuntimeKeyInfo	   array of array of exprstates for Skeys
+ *		indexqualorig	   execution state for indexqualorig expressions
+ *		ScanKeys		   Skey structures to scan index rel
+ *		NumScanKeys		   number of Skey structs
+ *		RuntimeKeyInfo	   array of exprstates for Skeys
  *						   that will be evaluated at runtime
  *		RuntimeContext	   expr context for evaling runtime Skeys
  *		RuntimeKeysReady   true if runtime Skeys have been computed
- *		RelationDescs	   ptr to array of relation descriptors
- *		ScanDescs		   ptr to array of scan descriptors
- *		LossyQuals		   ptr to array of qual lists for lossy operators
- *		DupHash			   hashtable for recognizing dups in multiple scan
- *		MaxHash			   max # entries we will allow in hashtable
+ *		RelationDesc	   index relation descriptor
+ *		ScanDesc		   index scan descriptor
  * ----------------
  */
 typedef struct IndexScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
-	List	   *indxqualorig;
-	int			iss_NumIndices;
-	int			iss_IndexPtr;
-	int			iss_MarkIndexPtr;
-	ScanKey    *iss_ScanKeys;
-	int		   *iss_NumScanKeys;
-	ExprState ***iss_RuntimeKeyInfo;
+	List	   *indexqualorig;
+	ScanKey		iss_ScanKeys;
+	int			iss_NumScanKeys;
+	ExprState **iss_RuntimeKeyInfo;
 	ExprContext *iss_RuntimeContext;
 	bool		iss_RuntimeKeysReady;
-	RelationPtr iss_RelationDescs;
-	IndexScanDescPtr iss_ScanDescs;
-	List	  **iss_LossyQuals;
-	HTAB	   *iss_DupHash;
-	long		iss_MaxHash;
+	Relation	iss_RelationDesc;
+	IndexScanDesc iss_ScanDesc;
 } IndexScanState;
 
 /* ----------------

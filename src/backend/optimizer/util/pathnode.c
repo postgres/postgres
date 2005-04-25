@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.119 2005/04/22 21:58:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.120 2005/04/25 01:30:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,13 +475,10 @@ create_index_path(Query *root,
 	/* Flatten the clause-groups list to produce indexclauses list */
 	allclauses = flatten_clausegroups_list(clause_groups);
 
-	/*
-	 * We are making a pathnode for a single-scan indexscan; therefore,
-	 * indexinfo etc should be single-element lists.
-	 */
-	pathnode->indexinfo = list_make1(index);
-	pathnode->indexclauses = list_make1(allclauses);
-	pathnode->indexquals = list_make1(indexquals);
+	/* Fill in the pathnode */
+	pathnode->indexinfo = index;
+	pathnode->indexclauses = allclauses;
+	pathnode->indexquals = indexquals;
 
 	pathnode->isjoininner = isjoininner;
 	pathnode->indexscandir = indexscandir;

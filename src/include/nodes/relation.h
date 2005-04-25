@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.108 2005/04/22 21:58:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.109 2005/04/25 01:30:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,32 +332,19 @@ typedef struct Path
 } Path;
 
 /*----------
- * IndexPath represents an index scan.	Although an indexscan can only read
- * a single relation, it can scan it more than once, potentially using a
- * different index during each scan.  The result is the union (OR) of all the
- * tuples matched during any scan.	(The executor is smart enough not to return
- * the same tuple more than once, even if it is matched in multiple scans.)
+ * IndexPath represents an index scan over a single index.
  *
- * XXX bitmap index scans will probably obviate the need for plain OR
- * indexscans, allowing a lot of this to be simplified.
+ * 'indexinfo' is the index to be scanned.
  *
- * 'indexinfo' is a list of IndexOptInfo nodes, one per scan to be performed.
- *
- * 'indexclauses' is a list of index qualifications, also one per scan.
- * Each entry in 'indexclauses' is a sublist of qualification clauses to be
- * used for that scan, with implicit AND semantics across the sublist items.
- * NOTE that the semantics of the top-level list in 'indexclauses' is OR
- * combination, while the sublists are implicitly AND combinations!
+ * 'indexclauses' is a list of index qualification clauses, with implicit
+ * AND semantics across the list.  Each clause is a RestrictInfo node from
+ * the query's WHERE or JOIN conditions.
  *
  * 'indexquals' has the same structure as 'indexclauses', but it contains
- * the actual indexqual conditions that can be used with the index(es).
+ * the actual indexqual conditions that can be used with the index.
  * In simple cases this is identical to 'indexclauses', but when special
  * indexable operators appear in 'indexclauses', they are replaced by the
  * derived indexscannable conditions in 'indexquals'.
- *
- * Both 'indexclauses' and 'indexquals' are lists of sublists of RestrictInfo
- * nodes.  (Before 8.0, we kept bare operator expressions in these lists, but
- * storing RestrictInfos is more efficient since selectivities can be cached.)
  *
  * 'isjoininner' is TRUE if the path is a nestloop inner scan (that is,
  * some of the index conditions are join rather than restriction clauses).
@@ -372,7 +359,8 @@ typedef struct Path
  *
  * 'indextotalcost' and 'indexselectivity' are saved in the IndexPath so that
  * we need not recompute them when considering using the same index in a
- * bitmap index/heap scan (see BitmapHeapPath).
+ * bitmap index/heap scan (see BitmapHeapPath).  The costs of the IndexPath
+ * itself represent the costs of an IndexScan plan type.
  *
  * 'rows' is the estimated result tuple count for the indexscan.  This
  * is the same as path.parent->rows for a simple indexscan, but it is
@@ -384,7 +372,7 @@ typedef struct Path
 typedef struct IndexPath
 {
 	Path		path;
-	List	   *indexinfo;
+	IndexOptInfo *indexinfo;
 	List	   *indexclauses;
 	List	   *indexquals;
 	bool		isjoininner;
@@ -402,13 +390,13 @@ typedef struct IndexPath
  * out in physical heap order no matter what the underlying indexes did.
  *
  * The individual indexscans are represented by IndexPath nodes, and any
- * logic on top of them is represented by BitmapAndPath and BitmapOrPath.
- * Notice that we can use the same IndexPath node both to represent a regular
- * IndexScan plan, and as the child of a BitmapHeapPath that represents
- * scanning the same index using a BitmapIndexScan.  The startup_cost and
- * total_cost figures of an IndexPath always represent the costs to use it
- * as a regular IndexScan.  The costs of a BitmapIndexScan can be computed
- * using the IndexPath's indextotalcost and indexselectivity.
+ * logic on top of them is represented by a tree of BitmapAndPath and
+ * BitmapOrPath nodes.  Notice that we can use the same IndexPath node both
+ * to represent a regular IndexScan plan, and as the child of a BitmapHeapPath
+ * that represents scanning the same index using a BitmapIndexScan.  The
+ * startup_cost and total_cost figures of an IndexPath always represent the
+ * costs to use it as a regular IndexScan.  The costs of a BitmapIndexScan
+ * can be computed using the IndexPath's indextotalcost and indexselectivity.
  *
  * BitmapHeapPaths can be nestloop inner indexscans.  The isjoininner and
  * rows fields serve the same purpose as for plain IndexPaths.
