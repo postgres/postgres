@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.131 2005/04/06 16:34:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.132 2005/04/25 21:03:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "commands/dbcommands.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "nodes/bitmapset.h"
 #include "nodes/makefuncs.h"
@@ -43,6 +44,8 @@ static Node *transformAssignmentIndirection(ParseState *pstate,
 static List *ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref);
 static List *ExpandAllTables(ParseState *pstate);
 static List *ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind);
+static TupleDesc expandRecordVariable(ParseState *pstate, Var *var,
+									  int levelsup);
 static int	FigureColnameInternal(Node *node, char **name);
 
 
@@ -822,8 +825,23 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind)
 	/* And transform that */
 	expr = transformExpr(pstate, (Node *) ind);
 
-	/* Verify it's a composite type, and get the tupdesc */
-	tupleDesc = lookup_rowtype_tupdesc(exprType(expr), exprTypmod(expr));
+	/*
+	 * Verify it's a composite type, and get the tupdesc.  We use
+	 * get_expr_result_type() because that can handle references to
+	 * functions returning anonymous record types.  If that fails,
+	 * use lookup_rowtype_tupdesc(), which will almost certainly fail
+	 * as well, but it will give an appropriate error message.
+	 *
+	 * If it's a Var of type RECORD, we have to work even harder: we have
+	 * to find what the Var refers to, and pass that to get_expr_result_type.
+	 * That task is handled by expandRecordVariable().
+	 */
+	if (IsA(expr, Var) &&
+		((Var *) expr)->vartype == RECORDOID)
+		tupleDesc = expandRecordVariable(pstate, (Var *) expr, 0);
+	else if (get_expr_result_type(expr, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
+		tupleDesc = lookup_rowtype_tupdesc(exprType(expr), exprTypmod(expr));
+	Assert(tupleDesc);
 
 	/* Generate a list of references to the individual fields */
 	numAttrs = tupleDesc->natts;
@@ -873,6 +891,136 @@ ExpandIndirectionStar(ParseState *pstate, A_Indirection *ind)
 
 	return te_list;
 }
+
+/*
+ * expandRecordVariable
+ *		Get the tuple descriptor for a Var of type RECORD, if possible.
+ *
+ * Since no actual table or view column is allowed to have type RECORD, such
+ * a Var must refer to a JOIN or FUNCTION RTE or to a subquery output.  We
+ * drill down to find the ultimate defining expression and attempt to infer
+ * the tupdesc from it.  We ereport if we can't determine the tupdesc.
+ *
+ * levelsup is an extra offset to interpret the Var's varlevelsup correctly.
+ */
+static TupleDesc
+expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
+{
+	TupleDesc	tupleDesc;
+	int			netlevelsup;
+	RangeTblEntry *rte;
+	AttrNumber	attnum;
+	Node	   *expr;
+
+	/* Check my caller didn't mess up */
+	Assert(IsA(var, Var));
+	Assert(var->vartype == RECORDOID);
+
+	netlevelsup = var->varlevelsup + levelsup;
+	rte = GetRTEByRangeTablePosn(pstate, var->varno, netlevelsup);
+	attnum = var->varattno;
+
+	expr = (Node *) var;		/* default if we can't drill down */
+
+	switch (rte->rtekind)
+	{
+		case RTE_RELATION:
+		case RTE_SPECIAL:
+			/*
+			 * This case should not occur: a whole-row Var should have the
+			 * table's named rowtype, and a column of a table shouldn't have
+			 * type RECORD either.  Fall through and fail (most likely)
+			 * at the bottom.
+			 */
+			break;
+		case RTE_SUBQUERY:
+			{
+				/* Subselect-in-FROM: examine sub-select's output expr */
+				TargetEntry *ste = get_tle_by_resno(rte->subquery->targetList,
+													attnum);
+
+				if (ste == NULL || ste->resjunk)
+					elog(ERROR, "subquery %s does not have attribute %d",
+						 rte->eref->aliasname, attnum);
+				expr = (Node *) ste->expr;
+				if (IsA(expr, Var))
+				{
+					/*
+					 * Recurse into the sub-select to see what its Var refers
+					 * to.  We have to build an additional level of ParseState
+					 * to keep in step with varlevelsup in the subselect.
+					 */
+					ParseState	mypstate;
+
+					MemSet(&mypstate, 0, sizeof(mypstate));
+					mypstate.parentParseState = pstate;
+					mypstate.p_rtable = rte->subquery->rtable;
+					/* don't bother filling the rest of the fake pstate */
+
+					return expandRecordVariable(&mypstate, (Var *) expr, 0);
+				}
+				/* else fall through to inspect the expression */
+			}
+			break;
+		case RTE_JOIN:
+			/* Join RTE */
+			if (attnum == InvalidAttrNumber)
+			{
+				/* Whole-row reference to join, so expand the fields */
+				List	   *names,
+						   *vars;
+				ListCell   *lname,
+						   *lvar;
+				int			i;
+
+				expandRTE(GetLevelNRangeTable(pstate, netlevelsup),
+						  var->varno, 0, false, &names, &vars);
+
+				tupleDesc = CreateTemplateTupleDesc(list_length(vars), false);
+				i = 1;
+				forboth(lname, names, lvar, vars)
+				{
+					char	   *label = strVal(lfirst(lname));
+					Node	   *varnode = (Node *) lfirst(lvar);
+
+					TupleDescInitEntry(tupleDesc, i,
+									   label,
+									   exprType(varnode),
+									   exprTypmod(varnode),
+									   0);
+					i++;
+				}
+				Assert(lname == NULL && lvar == NULL);	/* lists same len? */
+				return tupleDesc;
+			}
+			/* Else recursively inspect the alias variable */
+			Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
+			expr = (Node *) list_nth(rte->joinaliasvars, attnum - 1);
+			if (IsA(expr, Var))
+				return expandRecordVariable(pstate, (Var *) expr, netlevelsup);
+			/* else fall through to inspect the expression */
+			break;
+		case RTE_FUNCTION:
+			expr = rte->funcexpr;
+			/* The func expr probably can't be a Var, but check */
+			if (IsA(expr, Var))
+				return expandRecordVariable(pstate, (Var *) expr, netlevelsup);
+			/* else fall through to inspect the expression */
+			break;
+	}
+
+	/*
+	 * We now have an expression we can't expand any more, so see if
+	 * get_expr_result_type() can do anything with it.  If not, pass
+	 * to lookup_rowtype_tupdesc() which will probably fail, but will
+	 * give an appropriate error message while failing.
+	 */
+	if (get_expr_result_type(expr, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
+		tupleDesc = lookup_rowtype_tupdesc(exprType(expr), exprTypmod(expr));
+
+	return tupleDesc;
+}
+
 
 /*
  * FigureColname -
