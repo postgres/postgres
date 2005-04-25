@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.20 2005/04/05 06:22:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.21 2005/04/25 20:59:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,6 +229,12 @@ get_expr_result_type(Node *expr,
 										  NULL,
 										  resultTypeId,
 										  resultTupleDesc);
+	else if (expr && IsA(expr, OpExpr))
+		result = internal_get_result_type(get_opcode(((OpExpr *) expr)->opno),
+										  expr,
+										  NULL,
+										  resultTypeId,
+										  resultTupleDesc);
 	else
 	{
 		/* handle as a generic expression; no chance to resolve RECORD */
@@ -247,7 +253,7 @@ get_expr_result_type(Node *expr,
 }
 
 /*
- * get_expr_result_type
+ * get_func_result_type
  *		As above, but work from a function's OID only
  *
  * This will not be able to resolve pure-RECORD results nor polymorphism.
