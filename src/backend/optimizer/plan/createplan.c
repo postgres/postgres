@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.186 2005/04/25 02:14:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.187 2005/04/25 03:58:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -720,6 +720,7 @@ create_indexscan_plan(Query *root,
 	List	   *nonlossy_indexquals;
 	List	   *indexstrategy;
 	List	   *indexsubtype;
+	ListCell   *l;
 	IndexScan  *scan_plan;
 
 	/* it should be a base rel... */
@@ -768,13 +769,31 @@ create_indexscan_plan(Query *root,
 	 * checked (either by the index itself, or by nodeIndexscan.c), but if
 	 * there are any "special" operators involved then they must be included
 	 * in qpqual.  Also, any lossy index operators must be rechecked in
-	 * the qpqual.  The upshot is that qpquals must contain scan_clauses
+	 * the qpqual.  The upshot is that qpqual must contain scan_clauses
 	 * minus whatever appears in nonlossy_indexquals.
+	 *
+	 * In normal cases simple pointer equality checks will be enough to
+	 * spot duplicate RestrictInfos, so we try that first.  In some situations
+	 * (particularly with OR'd index conditions) we may have scan_clauses
+	 * that are not equal to, but are logically implied by, the index quals;
+	 * so we also try a pred_test() check to see if we can discard quals
+	 * that way.
+	 *
+	 * While at it, we strip off the RestrictInfos to produce a list of
+	 * plain expressions.
 	 */
-	qpqual = list_difference_ptr(scan_clauses, nonlossy_indexquals);
+	qpqual = NIL;
+	foreach(l, scan_clauses)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
-	/* Reduce RestrictInfo list to bare expressions */
-	qpqual = get_actual_clauses(qpqual);
+		Assert(IsA(rinfo, RestrictInfo));
+		if (list_member_ptr(nonlossy_indexquals, rinfo))
+			continue;
+		if (pred_test(list_make1(rinfo->clause), nonlossy_indexquals))
+			continue;
+		qpqual = lappend(qpqual, rinfo->clause);
+	}
 
 	/* Sort clauses into best execution order */
 	qpqual = order_qual_clauses(root, qpqual);
@@ -813,6 +832,7 @@ create_bitmap_scan_plan(Query *root,
 	List	   *bitmapqualorig;
 	List	   *indexquals;
 	List	   *qpqual;
+	ListCell   *l;
 	BitmapHeapScan *scan_plan;
 
 	/* it should be a base rel... */
@@ -848,13 +868,23 @@ create_bitmap_scan_plan(Query *root,
 	 * must be added to qpqual.  The upshot is that qpquals must contain
 	 * scan_clauses minus whatever appears in indexquals.
 	 *
-	 * NOTE: when there are OR clauses in indexquals, the simple equality
-	 * check used by list_difference will only detect matches in case of
-	 * chance equality of the OR subclause ordering.  This is probably all
-	 * right for now because that order will match what's in scan_clauses
-	 * ... but perhaps we need more smarts here.
+	 * In normal cases simple equal() checks will be enough to spot duplicate
+	 * clauses, so we try that first.  In some situations (particularly with
+	 * OR'd index conditions) we may have scan_clauses that are not equal to,
+	 * but are logically implied by, the index quals; so we also try a
+	 * pred_test() check to see if we can discard quals that way.
 	 */
-	qpqual = list_difference(scan_clauses, indexquals);
+	qpqual = NIL;
+	foreach(l, scan_clauses)
+	{
+		Node   *clause = (Node *) lfirst(l);
+
+		if (list_member(indexquals, clause))
+			continue;
+		if (pred_test(list_make1(clause), indexquals))
+			continue;
+		qpqual = lappend(qpqual, clause);
+	}
 
 	/* Sort clauses into best execution order */
 	qpqual = order_qual_clauses(root, qpqual);
