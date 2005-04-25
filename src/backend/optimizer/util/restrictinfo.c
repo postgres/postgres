@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.34 2005/04/25 01:30:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.35 2005/04/25 02:14:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,9 +66,94 @@ make_restrictinfo(Expr *clause, bool is_pushed_down, bool valid_everywhere)
 }
 
 /*
+ * make_restrictinfo_from_bitmapqual
+ *
+ * Given the bitmapqual Path structure for a bitmap indexscan, generate
+ * RestrictInfo node(s) equivalent to the condition represented by the
+ * indexclauses of the Path structure.
+ *
+ * The result is a List since we might need to return multiple RestrictInfos.
+ *
+ * To do this through the normal make_restrictinfo() API, callers would have
+ * to strip off the RestrictInfo nodes present in the indexclauses lists, and
+ * then make_restrictinfo() would have to build new ones.  It's better to have
+ * a specialized routine to allow sharing of RestrictInfos.
+ */
+List *
+make_restrictinfo_from_bitmapqual(Path *bitmapqual,
+								  bool is_pushed_down,
+								  bool valid_everywhere)
+{
+	List	   *result;
+
+	if (IsA(bitmapqual, BitmapAndPath))
+	{
+		BitmapAndPath *apath = (BitmapAndPath *) bitmapqual;
+		ListCell   *l;
+
+		result = NIL;
+		foreach(l, apath->bitmapquals)
+		{
+			List	   *sublist;
+
+			sublist = make_restrictinfo_from_bitmapqual((Path *) lfirst(l),
+														is_pushed_down,
+														valid_everywhere);
+			result = list_concat(result, sublist);
+		}
+	}
+	else if (IsA(bitmapqual, BitmapOrPath))
+	{
+		BitmapOrPath *opath = (BitmapOrPath *) bitmapqual;
+		List	   *withris = NIL;
+		List	   *withoutris = NIL;
+		ListCell   *l;
+
+		foreach(l, opath->bitmapquals)
+		{
+			List	   *sublist;
+
+			sublist = make_restrictinfo_from_bitmapqual((Path *) lfirst(l),
+														is_pushed_down,
+														valid_everywhere);
+			if (sublist == NIL)
+			{
+				/* constant TRUE input yields constant TRUE OR result */
+				/* (though this probably cannot happen) */
+				return NIL;
+			}
+			/* Create AND subclause with RestrictInfos */
+			withris = lappend(withris, make_ands_explicit(sublist));
+			/* And one without */
+			sublist = get_actual_clauses(sublist);
+			withoutris = lappend(withoutris, make_ands_explicit(sublist));
+		}
+		/* Here's the magic part not available to outside callers */
+		result =
+			list_make1(make_restrictinfo_internal(make_orclause(withoutris),
+												  make_orclause(withris),
+												  is_pushed_down,
+												  valid_everywhere));
+	}
+	else if (IsA(bitmapqual, IndexPath))
+	{
+		IndexPath *ipath = (IndexPath *) bitmapqual;
+
+		result = list_copy(ipath->indexclauses);
+	}
+	else
+	{
+		elog(ERROR, "unrecognized node type: %d", nodeTag(bitmapqual));
+		result = NIL;			/* keep compiler quiet */
+	}
+
+	return result;
+}
+
+/*
  * make_restrictinfo_internal
  *
- * Common code for the main entry point and the recursive cases.
+ * Common code for the main entry points and the recursive cases.
  */
 static RestrictInfo *
 make_restrictinfo_internal(Expr *clause, Expr *orclause,

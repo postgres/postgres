@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.185 2005/04/25 01:30:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.186 2005/04/25 02:14:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,6 @@ static BitmapHeapScan *create_bitmap_scan_plan(Query *root,
 											   List *tlist, List *scan_clauses);
 static Plan *create_bitmap_subplan(Query *root, Path *bitmapqual,
 								   List **qual, List **indexqual);
-static List *create_bitmap_qual(Path *bitmapqual);
 static TidScan *create_tidscan_plan(Query *root, TidPath *best_path,
 					List *tlist, List *scan_clauses);
 static SubqueryScan *create_subqueryscan_plan(Query *root, Path *best_path,
@@ -982,86 +981,6 @@ create_bitmap_subplan(Query *root, Path *bitmapqual,
 }
 
 /*
- * Given a bitmapqual tree, generate the equivalent ordinary expression tree
- * (which we need for the bitmapqualorig field of the BitmapHeapScan plan).
- * The result is expressed as an implicit-AND list.
- */
-static List *
-create_bitmap_qual(Path *bitmapqual)
-{
-	List	   *result;
-	List	   *sublist;
-
-	if (IsA(bitmapqual, BitmapAndPath))
-	{
-		BitmapAndPath *apath = (BitmapAndPath *) bitmapqual;
-		ListCell   *l;
-
-		result = NIL;
-		foreach(l, apath->bitmapquals)
-		{
-			sublist = create_bitmap_qual(lfirst(l));
-			result = list_concat(result, sublist);
-		}
-	}
-	else if (IsA(bitmapqual, BitmapOrPath))
-	{
-		BitmapOrPath *opath = (BitmapOrPath *) bitmapqual;
-		List	   *newlist = NIL;
-		ListCell   *l;
-
-		foreach(l, opath->bitmapquals)
-		{
-			sublist = create_bitmap_qual(lfirst(l));
-			if (sublist == NIL)
-			{
-				/* constant TRUE input yields constant TRUE OR result */
-				return NIL;
-			}
-			newlist = lappend(newlist, make_ands_explicit(sublist));
-		}
-		result = list_make1(make_orclause(newlist));
-	}
-	else if (IsA(bitmapqual, IndexPath))
-	{
-		IndexPath *ipath = (IndexPath *) bitmapqual;
-
-		result = get_actual_clauses(ipath->indexclauses);
-	}
-	else
-	{
-		elog(ERROR, "unrecognized node type: %d", nodeTag(bitmapqual));
-		result = NIL;			/* keep compiler quiet */
-	}
-
-	return result;
-}
-
-/*
- * Given a bitmapqual tree, generate the equivalent RestrictInfo list.
- */
-List *
-create_bitmap_restriction(Path *bitmapqual)
-{
-	List	   *bitmapquals;
-	List	   *bitmapclauses;
-	ListCell   *l;
-
-	bitmapquals = create_bitmap_qual(bitmapqual);
-
-	/* must convert qual list to restrictinfos ... painful ... */
-	bitmapclauses = NIL;
-	foreach(l, bitmapquals)
-	{
-		bitmapclauses = lappend(bitmapclauses,
-								make_restrictinfo((Expr *) lfirst(l),
-												  true, true));
-	}
-
-	return bitmapclauses;
-}
-
-/*
  * create_tidscan_plan
  *	 Returns a tidscan plan for the base relation scanned by 'best_path'
  *	 with restriction clauses 'scan_clauses' and targetlist 'tlist'.
@@ -1210,7 +1129,9 @@ create_nestloop_plan(Query *root,
 		{
 			List	   *bitmapclauses;
 
-			bitmapclauses = create_bitmap_restriction(innerpath->bitmapqual);
+			bitmapclauses =
+				make_restrictinfo_from_bitmapqual(innerpath->bitmapqual,
+												  true, true);
 			joinrestrictclauses =
 				select_nonredundant_join_clauses(root,
 												 joinrestrictclauses,

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.83 2005/04/25 01:30:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.84 2005/04/25 02:14:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,6 @@ extern Plan *optimize_minmax_aggregates(Query *root, List *tlist,
  * prototypes for plan/createplan.c
  */
 extern Plan *create_plan(Query *root, Path *best_path);
-extern List *create_bitmap_restriction(Path *bitmapqual);
 extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
 				  Index scanrelid, Plan *subplan);
 extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
