@@ -123,14 +123,17 @@ gbt_timetz_compress(PG_FUNCTION_ARGS)
 	{
 		timeKEY    *r = (timeKEY *) palloc(sizeof(timeKEY));
 		TimeTzADT  *tz = DatumGetTimeTzADTP(entry->key);
-		void *qqq = DatumGetPointer( TimeADTGetDatum(tz->time + tz->zone) );  
+		TimeADT		tmp;
 
 		retval = palloc(sizeof(GISTENTRY));
 
 		/* We are using the time + zone only to compress */
-		memcpy( &(r->lower), qqq, sizeof(TimeADT) );
-		memcpy( &(r->upper), qqq, sizeof(TimeADT) );
-		pfree(qqq);
+#ifdef HAVE_INT64_TIMESTAMP
+		tmp = tz->time + (tz->zone * INT64CONST(1000000));
+#else
+		tmp = (tz->time + tz->zone);
+#endif
+		r->lower = r->upper = tmp;
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
 					  entry->offset, sizeof(timeKEY), FALSE);
@@ -163,17 +166,23 @@ gbt_timetz_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	TimeTzADT  *query = PG_GETARG_TIMETZADT_P(1);
-	void*		qqq = DatumGetPointer( TimeADTGetDatum(query->time + query->zone) );
-	timeKEY    *kkk = (timeKEY *) DatumGetPointer(entry->key);
-	GBT_NUMKEY_R key;
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+
+	timeKEY    *kkk = (timeKEY *) DatumGetPointer(entry->key);
+	TimeADT		qqq;
+	GBT_NUMKEY_R key;
 	bool res;
+
+#ifdef HAVE_INT64_TIMESTAMP
+	qqq = query->time + (query->zone * INT64CONST(1000000));
+#else
+	qqq = (query->time + query->zone);
+#endif
 
 	key.lower = (GBT_NUMKEY *) & kkk->lower;
 	key.upper = (GBT_NUMKEY *) & kkk->upper;
 
-	res = gbt_num_consistent(&key, qqq, &strategy, GIST_LEAF(entry), &tinfo);
-	pfree(qqq);
+	res = gbt_num_consistent(&key, (void *) &qqq, &strategy, GIST_LEAF(entry), &tinfo);
 
 	PG_RETURN_BOOL( res );
 }
