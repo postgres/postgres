@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Apr 24 21:42:27 EDT 2005
+Last updated:		Mon Apr 25 09:03:30 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -862,6 +862,13 @@ Optimizer / Executor
 ====================
 
 * Add missing optimizer selectivities for date, r-tree, etc
+* Allow ORDER BY ... LIMIT 1 to select high/low value without sort or
+  index using a sequential scan for highest/lowest values
+
+  Right now, if no index exists, ORDER BY ... LIMIT 1 requires we sort 
+  all values to return the high/low value.  Instead The idea is to do a 
+  sequential scan to find the high/low value, thus avoiding the sort.
+
 * Precompile SQL functions to avoid overhead
 * Create utility to compute accurate random_page_cost value
 * Improve ability to display optimizer analysis using OPTIMIZER_DEBUG

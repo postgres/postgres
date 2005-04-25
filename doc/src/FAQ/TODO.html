@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sun Apr 24 21:42:27 EDT 2005
+Last updated:           Mon Apr 25 09:03:30 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -787,6 +787,12 @@ first.
 
 <ul>
   <li>Add missing optimizer selectivities for date, r-tree, etc
+  </li><li>Allow ORDER BY ... LIMIT 1 to select high/low value without sort or
+  index using a sequential scan for highest/lowest values
+<p>  Right now, if no index exists, ORDER BY ... LIMIT 1 requires we sort 
+  all values to return the high/low value.  Instead The idea is to do a 
+  sequential scan to find the high/low value, thus avoiding the sort.
+</p>
   </li><li>Precompile SQL functions to avoid overhead
   </li><li>Create utility to compute accurate random_page_cost value
   </li><li>Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
