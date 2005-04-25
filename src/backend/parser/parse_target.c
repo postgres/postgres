@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.132 2005/04/25 21:03:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.133 2005/04/25 22:02:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,8 +204,9 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 			tle->resorigcol = attnum;
 			break;
 		case RTE_SUBQUERY:
+			/* Subselect-in-FROM: copy up from the subselect */
+			if (attnum != InvalidAttrNumber)
 			{
-				/* Subselect-in-FROM: copy up from the subselect */
 				TargetEntry *ste = get_tle_by_resno(rte->subquery->targetList,
 													attnum);
 
@@ -217,8 +218,9 @@ markTargetListOrigin(ParseState *pstate, TargetEntry *tle,
 			}
 			break;
 		case RTE_JOIN:
+			/* Join RTE --- recursively inspect the alias variable */
+			if (attnum != InvalidAttrNumber)
 			{
-				/* Join RTE --- recursively inspect the alias variable */
 				Var		   *aliasvar;
 
 				Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
@@ -920,6 +922,37 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 	rte = GetRTEByRangeTablePosn(pstate, var->varno, netlevelsup);
 	attnum = var->varattno;
 
+	if (attnum == InvalidAttrNumber)
+	{
+		/* Whole-row reference to an RTE, so expand the known fields */
+		List	   *names,
+				   *vars;
+		ListCell   *lname,
+				   *lvar;
+		int			i;
+
+		expandRTE(GetLevelNRangeTable(pstate, netlevelsup),
+				  var->varno, 0, false, &names, &vars);
+
+		tupleDesc = CreateTemplateTupleDesc(list_length(vars), false);
+		i = 1;
+		forboth(lname, names, lvar, vars)
+		{
+			char	   *label = strVal(lfirst(lname));
+			Node	   *varnode = (Node *) lfirst(lvar);
+
+			TupleDescInitEntry(tupleDesc, i,
+							   label,
+							   exprType(varnode),
+							   exprTypmod(varnode),
+							   0);
+			i++;
+		}
+		Assert(lname == NULL && lvar == NULL);	/* lists same length? */
+
+		return tupleDesc;
+	}
+
 	expr = (Node *) var;		/* default if we can't drill down */
 
 	switch (rte->rtekind)
@@ -927,10 +960,9 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 		case RTE_RELATION:
 		case RTE_SPECIAL:
 			/*
-			 * This case should not occur: a whole-row Var should have the
-			 * table's named rowtype, and a column of a table shouldn't have
-			 * type RECORD either.  Fall through and fail (most likely)
-			 * at the bottom.
+			 * This case should not occur: a column of a table shouldn't have
+			 * type RECORD.  Fall through and fail (most likely) at the
+			 * bottom.
 			 */
 			break;
 		case RTE_SUBQUERY:
@@ -963,37 +995,7 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 			}
 			break;
 		case RTE_JOIN:
-			/* Join RTE */
-			if (attnum == InvalidAttrNumber)
-			{
-				/* Whole-row reference to join, so expand the fields */
-				List	   *names,
-						   *vars;
-				ListCell   *lname,
-						   *lvar;
-				int			i;
-
-				expandRTE(GetLevelNRangeTable(pstate, netlevelsup),
-						  var->varno, 0, false, &names, &vars);
-
-				tupleDesc = CreateTemplateTupleDesc(list_length(vars), false);
-				i = 1;
-				forboth(lname, names, lvar, vars)
-				{
-					char	   *label = strVal(lfirst(lname));
-					Node	   *varnode = (Node *) lfirst(lvar);
-
-					TupleDescInitEntry(tupleDesc, i,
-									   label,
-									   exprType(varnode),
-									   exprTypmod(varnode),
-									   0);
-					i++;
-				}
-				Assert(lname == NULL && lvar == NULL);	/* lists same len? */
-				return tupleDesc;
-			}
-			/* Else recursively inspect the alias variable */
+			/* Join RTE --- recursively inspect the alias variable */
 			Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
 			expr = (Node *) list_nth(rte->joinaliasvars, attnum - 1);
 			if (IsA(expr, Var))
@@ -1001,11 +1003,10 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 			/* else fall through to inspect the expression */
 			break;
 		case RTE_FUNCTION:
-			expr = rte->funcexpr;
-			/* The func expr probably can't be a Var, but check */
-			if (IsA(expr, Var))
-				return expandRecordVariable(pstate, (Var *) expr, netlevelsup);
-			/* else fall through to inspect the expression */
+			/*
+			 * We couldn't get here unless a function is declared with one
+			 * of its result columns as RECORD, which is not allowed.
+			 */
 			break;
 	}
 
