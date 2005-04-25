@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Apr 24 08:39:04 EDT 2005
+Last updated:		Sun Apr 24 21:42:27 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -740,6 +740,10 @@ Cache
 * Allow sequential scans to take advantage of other concurrent
   sequentiqal scans, also called "Synchronised Scanning"
 
+  One possible implementation is to start sequential scans from the lowest
+  numbered buffer in the shared cache, and when reaching the end wrap
+  around to the beginning, rather than always starting sequential scans
+  at the start of the table.
 
 Vacuum
 ======
