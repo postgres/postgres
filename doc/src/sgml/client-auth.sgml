@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.76 2005/04/22 04:18:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.77 2005/04/26 03:01:09 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -883,8 +883,10 @@ omicron       bryanh            guest1
     default PAM service name is <literal>postgresql</literal>. You can
     optionally supply your own service name after the <literal>pam</>
     key word in the file <filename>pg_hba.conf</filename>.
-    For more information about PAM, please read the
-    <ulink url="http://www.kernel.org/pub/linux/libs/pam/">
+    PAM is used only to validate username/password pairs.
+    The user must already exist in the database before PAM
+    can be used for authentication.  For more information about 
+    PAM, please read the <ulink url="http://www.kernel.org/pub/linux/libs/pam/">
     <productname>Linux-PAM</> Page</ulink>
     and the <ulink url="http://www.sun.com/software/solaris/pam/">
     <systemitem class="osname">Solaris</> PAM Page</ulink>.
