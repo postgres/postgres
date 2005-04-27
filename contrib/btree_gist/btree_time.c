@@ -29,13 +29,25 @@ Datum		gbt_timetz_consistent(PG_FUNCTION_ARGS);
 Datum		gbt_time_penalty(PG_FUNCTION_ARGS);
 Datum		gbt_time_same(PG_FUNCTION_ARGS);
 
-#define P_TimeADTGetDatum(x)	PointerGetDatum( &(x) )
+/* workaround for bug in utils/date.h about Datum and TimeADT conversation */
+static float8 timeadt1, timeadt2;
+
+static float8*
+makeTimeADTPointer( float8* t, TimeADT s ) {
+	*t = s;
+	return t;
+}
+
+#define VoidGetDatum1(x)	PointerGetDatum(  makeTimeADTPointer(&timeadt1, *(TimeADT*)(x)) )
+#define VoidGetDatum2(x)	PointerGetDatum(  makeTimeADTPointer(&timeadt2, *(TimeADT*)(x)) )
+#define P_TimeADTGetDatum1(x)	PointerGetDatum(  makeTimeADTPointer(&timeadt1, (x)) )
+#define P_TimeADTGetDatum2(x)	PointerGetDatum(  makeTimeADTPointer(&timeadt2, (x)) )
 
 static bool
 gbt_timegt(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_gt, PointerGetDatum(a), PointerGetDatum(b))
+						DirectFunctionCall2(time_gt, VoidGetDatum1(a), VoidGetDatum2(b))
 		);
 }
 
@@ -43,7 +55,7 @@ static bool
 gbt_timege(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_ge, PointerGetDatum(a), PointerGetDatum(b))
+						DirectFunctionCall2(time_ge, VoidGetDatum1(a), VoidGetDatum2(b))
 		);
 }
 
@@ -51,7 +63,7 @@ static bool
 gbt_timeeq(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_eq, PointerGetDatum(a), PointerGetDatum(b))
+						DirectFunctionCall2(time_eq, VoidGetDatum1(a), VoidGetDatum2(b))
 		);
 }
 
@@ -59,7 +71,7 @@ static bool
 gbt_timele(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_le, PointerGetDatum(a), PointerGetDatum(b))
+						DirectFunctionCall2(time_le, VoidGetDatum1(a), VoidGetDatum2(b))
 		);
 }
 
@@ -67,7 +79,7 @@ static bool
 gbt_timelt(const void *a, const void *b)
 {
 	return DatumGetBool(
-						DirectFunctionCall2(time_lt, PointerGetDatum(a), PointerGetDatum(b))
+						DirectFunctionCall2(time_lt, VoidGetDatum1(a), VoidGetDatum2(b))
 		);
 }
 
@@ -216,8 +228,8 @@ gbt_time_penalty(PG_FUNCTION_ARGS)
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(
 												 time_mi_time,
-										P_TimeADTGetDatum(newentry->upper),
-									 P_TimeADTGetDatum(origentry->upper)));
+										P_TimeADTGetDatum1(newentry->upper),
+									 P_TimeADTGetDatum2(origentry->upper)));
 
 	/* see interval_larger */
 	res = Max(intr->time + intr->month * (30 * 86400), 0);
@@ -225,8 +237,8 @@ gbt_time_penalty(PG_FUNCTION_ARGS)
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(
 												 time_mi_time,
-									   P_TimeADTGetDatum(origentry->lower),
-									  P_TimeADTGetDatum(newentry->lower)));
+									   P_TimeADTGetDatum1(origentry->lower),
+									  P_TimeADTGetDatum2(newentry->lower)));
 
 	/* see interval_larger */
 	res += Max(intr->time + intr->month * (30 * 86400), 0);
@@ -238,8 +250,8 @@ gbt_time_penalty(PG_FUNCTION_ARGS)
 	{
 		intr = DatumGetIntervalP(DirectFunctionCall2(
 													 time_mi_time,
-									   P_TimeADTGetDatum(origentry->upper),
-									 P_TimeADTGetDatum(origentry->lower)));
+									   P_TimeADTGetDatum1(origentry->upper),
+									 P_TimeADTGetDatum2(origentry->lower)));
 		*result += FLT_MIN;
 		*result += (float) (res / ((double) (res + intr->time + intr->month * (30 * 86400))));
 		*result *= (FLT_MAX / (((GISTENTRY *) PG_GETARG_POINTER(0))->rel->rd_att->natts + 1));
