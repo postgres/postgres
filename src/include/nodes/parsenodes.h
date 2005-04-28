@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.277 2005/04/07 01:51:40 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.278 2005/04/28 21:47:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
 #define N_ACL_RIGHTS	11		/* 1 plus the last 1<<x */
 #define ACL_ALL_RIGHTS	(-1)	/* all-privileges marker in GRANT list */
 #define ACL_NO_RIGHTS	0
-/* Currently, SELECT ... FOR UPDATE requires UPDATE privileges */
+/* Currently, SELECT ... FOR UPDATE/FOR SHARE requires UPDATE privileges */
 #define ACL_SELECT_FOR_UPDATE	ACL_UPDATE
 
 
@@ -91,7 +91,10 @@ typedef struct Query
 								 * clauses) */
 
 	List	   *rowMarks;		/* integer list of RT indexes of relations
-								 * that are selected FOR UPDATE */
+								 * that are selected FOR UPDATE/SHARE */
+
+	bool		forUpdate;		/* true if rowMarks are FOR UPDATE,
+								 * false if they are FOR SHARE */
 
 	List	   *targetList;		/* target list (of TargetEntry) */
 
@@ -688,7 +691,8 @@ typedef struct SelectStmt
 	List	   *sortClause;		/* sort clause (a list of SortBy's) */
 	Node	   *limitOffset;	/* # of result tuples to skip */
 	Node	   *limitCount;		/* # of result tuples to return */
-	List	   *forUpdate;		/* FOR UPDATE clause */
+	List	   *lockedRels;		/* FOR UPDATE or FOR SHARE relations */
+	bool		forUpdate;		/* true = FOR UPDATE, false = FOR SHARE */
 
 	/*
 	 * These fields are used only in upper-level SelectStmts.

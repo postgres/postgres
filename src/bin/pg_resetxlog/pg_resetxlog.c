@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.31 2005/04/13 18:54:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.32 2005/04/28 21:47:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #include <getopt.h>
 #endif
 
+#include "access/multixact.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
 #include "catalog/catversion.h"
@@ -75,6 +76,7 @@ main(int argc, char *argv[])
 	bool		noupdate = false;
 	TransactionId set_xid = 0;
 	Oid			set_oid = 0;
+	MultiXactId	set_mxid = 0;
 	uint32		minXlogTli = 0,
 				minXlogId = 0,
 				minXlogSeg = 0;
@@ -104,7 +106,7 @@ main(int argc, char *argv[])
 	}
 
 
-	while ((c = getopt(argc, argv, "fl:no:x:")) != -1)
+	while ((c = getopt(argc, argv, "fl:m:no:x:")) != -1)
 	{
 		switch (c)
 		{
@@ -142,6 +144,21 @@ main(int argc, char *argv[])
 				if (set_oid == 0)
 				{
 					fprintf(stderr, _("%s: OID (-o) must not be 0\n"), progname);
+					exit(1);
+				}
+				break;
+
+			case 'm':
+				set_mxid = strtoul(optarg, &endptr, 0);
+				if (endptr == optarg || *endptr != '\0')
+				{
+					fprintf(stderr, _("%s: invalid argument for option -m\n"), progname);
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+					exit(1);
+				}
+				if (set_mxid == 0)
+				{
+					fprintf(stderr, _("%s: multi transaction ID (-m) must not be 0\n"), progname);
 					exit(1);
 				}
 				break;
@@ -244,6 +261,9 @@ main(int argc, char *argv[])
 
 	if (set_oid != 0)
 		ControlFile.checkPointCopy.nextOid = set_oid;
+
+	if (set_mxid != 0)
+		ControlFile.checkPointCopy.nextMulti = set_mxid;
 
 	if (minXlogTli > ControlFile.checkPointCopy.ThisTimeLineID)
 		ControlFile.checkPointCopy.ThisTimeLineID = minXlogTli;
@@ -405,6 +425,7 @@ GuessControlValues(void)
 	ControlFile.checkPointCopy.ThisTimeLineID = 1;
 	ControlFile.checkPointCopy.nextXid = (TransactionId) 514;	/* XXX */
 	ControlFile.checkPointCopy.nextOid = FirstBootstrapObjectId;
+	ControlFile.checkPointCopy.nextMulti = FirstMultiXactId;
 	ControlFile.checkPointCopy.time = time(NULL);
 
 	ControlFile.state = DB_SHUTDOWNED;
@@ -478,6 +499,7 @@ PrintControlValues(bool guessed)
 	printf(_("Latest checkpoint's TimeLineID:       %u\n"), ControlFile.checkPointCopy.ThisTimeLineID);
 	printf(_("Latest checkpoint's NextXID:          %u\n"), ControlFile.checkPointCopy.nextXid);
 	printf(_("Latest checkpoint's NextOID:          %u\n"), ControlFile.checkPointCopy.nextOid);
+	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"), ControlFile.checkPointCopy.nextMulti);
 	printf(_("Database block size:                  %u\n"), ControlFile.blcksz);
 	printf(_("Blocks per segment of large relation: %u\n"), ControlFile.relseg_size);
 	printf(_("Maximum length of identifiers:        %u\n"), ControlFile.nameDataLen);
@@ -753,6 +775,7 @@ usage(void)
 	printf(_("  -n              no update, just show extracted control values (for testing)\n"));
 	printf(_("  -o OID          set next OID\n"));
 	printf(_("  -x XID          set next transaction ID\n"));
+	printf(_("  -m multiXID     set next multi transaction ID\n"));
 	printf(_("  --help          show this help, then exit\n"));
 	printf(_("  --version       output version information, then exit\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));

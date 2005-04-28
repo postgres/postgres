@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.27 2005/04/08 14:18:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.28 2005/04/28 21:47:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,6 +113,12 @@ NumLWLocks(void)
 
 	/* subtrans.c needs one per SubTrans buffer */
 	numLocks += NUM_SLRU_BUFFERS;
+
+	/*
+	 * multixact.c needs one per MultiXact buffer, but there are
+	 * two SLRU areas for MultiXact
+	 */
+	numLocks += 2 * NUM_SLRU_BUFFERS;
 
 	/* Perhaps create a few more for use by user-defined modules? */
 

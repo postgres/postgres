@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.128 2005/04/25 01:30:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.129 2005/04/28 21:47:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,13 +214,13 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 	ListCell   *il;
 
 	/*
-	 * XXX for now, can't handle inherited expansion of FOR UPDATE; can we
-	 * do better?
+	 * XXX for now, can't handle inherited expansion of FOR UPDATE/SHARE;
+	 * can we do better?
 	 */
 	if (list_member_int(root->rowMarks, parentRTindex))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELECT FOR UPDATE is not supported for inheritance queries")));
+				 errmsg("SELECT FOR UPDATE/SHARE is not supported for inheritance queries")));
 
 	/*
 	 * Initialize to compute size estimates for whole inheritance tree

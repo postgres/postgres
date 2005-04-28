@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.188 2005/04/23 18:49:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.189 2005/04/28 21:47:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include <sys/time.h>
 
 #include "access/clog.h"
+#include "access/multixact.h"
 #include "access/subtrans.h"
 #include "access/xact.h"
 #include "access/xlog.h"
@@ -3534,11 +3535,13 @@ BootStrapXLOG(void)
 	checkPoint.ThisTimeLineID = ThisTimeLineID;
 	checkPoint.nextXid = FirstNormalTransactionId;
 	checkPoint.nextOid = FirstBootstrapObjectId;
+	checkPoint.nextMulti = FirstMultiXactId;
 	checkPoint.time = time(NULL);
 
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
+	MultiXactSetNextMXact(checkPoint.nextMulti);
 
 	/* Set up the XLOG page header */
 	page->xlp_magic = XLOG_PAGE_MAGIC;
@@ -3613,6 +3616,7 @@ BootStrapXLOG(void)
 	/* Bootstrap the commit log, too */
 	BootStrapCLOG();
 	BootStrapSUBTRANS();
+	BootStrapMultiXact();
 }
 
 static char *
@@ -4187,8 +4191,8 @@ StartupXLOG(void)
 					checkPoint.undo.xlogid, checkPoint.undo.xrecoff,
 					wasShutdown ? "TRUE" : "FALSE")));
 	ereport(LOG,
-			(errmsg("next transaction ID: %u; next OID: %u",
-					checkPoint.nextXid, checkPoint.nextOid)));
+			(errmsg("next transaction ID: %u; next OID: %u; next MultiXactId: %u",
+					checkPoint.nextXid, checkPoint.nextOid, checkPoint.nextMulti)));
 	if (!TransactionIdIsNormal(checkPoint.nextXid))
 		ereport(PANIC,
 				(errmsg("invalid next transaction ID")));
@@ -4196,6 +4200,7 @@ StartupXLOG(void)
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
+	MultiXactSetNextMXact(checkPoint.nextMulti);
 
 	/*
 	 * We must replay WAL entries using the same TimeLineID they were
@@ -4546,9 +4551,10 @@ StartupXLOG(void)
 	ControlFile->time = time(NULL);
 	UpdateControlFile();
 
-	/* Start up the commit log, too */
+	/* Start up the commit log and related stuff, too */
 	StartupCLOG();
 	StartupSUBTRANS();
+	StartupMultiXact();
 
 	ereport(LOG,
 			(errmsg("database system is ready")));
@@ -4737,6 +4743,7 @@ ShutdownXLOG(int code, Datum arg)
 	CreateCheckPoint(true, true);
 	ShutdownCLOG();
 	ShutdownSUBTRANS();
+	ShutdownMultiXact();
 	CritSectionCount--;
 
 	ereport(LOG,
@@ -4919,6 +4926,8 @@ CreateCheckPoint(bool shutdown, bool force)
 		checkPoint.nextOid += ShmemVariableCache->oidCount;
 	LWLockRelease(OidGenLock);
 
+	checkPoint.nextMulti = MultiXactGetCheckptMulti(shutdown);
+
 	/*
 	 * Having constructed the checkpoint record, ensure all shmem disk
 	 * buffers and commit-log buffers are flushed to disk.
@@ -4938,6 +4947,7 @@ CreateCheckPoint(bool shutdown, bool force)
 
 	CheckPointCLOG();
 	CheckPointSUBTRANS();
+	CheckPointMultiXact();
 	FlushBufferPool();
 
 	START_CRIT_SECTION();
@@ -5054,6 +5064,33 @@ XLogPutNextOid(Oid nextOid)
 	rdata.len = sizeof(Oid);
 	rdata.next = NULL;
 	(void) XLogInsert(RM_XLOG_ID, XLOG_NEXTOID, &rdata);
+	/*
+	 * We need not flush the NEXTOID record immediately, because any of the
+	 * just-allocated OIDs could only reach disk as part of a tuple insert
+	 * or update that would have its own XLOG record that must follow the
+	 * NEXTOID record.  Therefore, the standard buffer LSN interlock applied
+	 * to those records will ensure no such OID reaches disk before the
+	 * NEXTOID record does.
+	 */
+}
+
+/*
+ * Write a NEXT_MULTIXACT log record
+ */
+void
+XLogPutNextMultiXactId(MultiXactId nextMulti)
+{
+	XLogRecData rdata;
+
+	rdata.buffer = InvalidBuffer;
+	rdata.data = (char *) (&nextMulti);
+	rdata.len = sizeof(MultiXactId);
+	rdata.next = NULL;
+	(void) XLogInsert(RM_XLOG_ID, XLOG_NEXTMULTI, &rdata);
+	/*
+	 * We do not flush here either; this assumes that heap_lock_tuple() will
+	 * always generate a WAL record.  See notes therein.
+	 */
 }
 
 /*
@@ -5075,6 +5112,14 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 			ShmemVariableCache->oidCount = 0;
 		}
 	}
+	else if (info == XLOG_NEXTMULTI)
+	{
+		MultiXactId	nextMulti;
+
+		memcpy(&nextMulti, XLogRecGetData(record), sizeof(MultiXactId));
+
+		MultiXactAdvanceNextMXact(nextMulti);
+	}
 	else if (info == XLOG_CHECKPOINT_SHUTDOWN)
 	{
 		CheckPoint	checkPoint;
@@ -5084,6 +5129,7 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		ShmemVariableCache->nextXid = checkPoint.nextXid;
 		ShmemVariableCache->nextOid = checkPoint.nextOid;
 		ShmemVariableCache->oidCount = 0;
+		MultiXactSetNextMXact(checkPoint.nextMulti);
 
 		/*
 		 * TLI may change in a shutdown checkpoint, but it shouldn't
@@ -5115,6 +5161,7 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 			ShmemVariableCache->nextOid = checkPoint.nextOid;
 			ShmemVariableCache->oidCount = 0;
 		}
+		MultiXactAdvanceNextMXact(checkPoint.nextMulti);
 		/* TLI should not change in an on-line checkpoint */
 		if (checkPoint.ThisTimeLineID != ThisTimeLineID)
 			ereport(PANIC,
@@ -5139,11 +5186,12 @@ xlog_desc(char *buf, uint8 xl_info, char *rec)
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
 		sprintf(buf + strlen(buf), "checkpoint: redo %X/%X; undo %X/%X; "
-				"tli %u; xid %u; oid %u; %s",
+				"tli %u; xid %u; oid %u; multi %u; %s",
 				checkpoint->redo.xlogid, checkpoint->redo.xrecoff,
 				checkpoint->undo.xlogid, checkpoint->undo.xrecoff,
 				checkpoint->ThisTimeLineID, checkpoint->nextXid,
 				checkpoint->nextOid,
+				checkpoint->nextMulti,
 			 (info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
 	}
 	else if (info == XLOG_NEXTOID)
@@ -5152,6 +5200,13 @@ xlog_desc(char *buf, uint8 xl_info, char *rec)
 
 		memcpy(&nextOid, rec, sizeof(Oid));
 		sprintf(buf + strlen(buf), "nextOid: %u", nextOid);
+	}
+	else if (info == XLOG_NEXTMULTI)
+	{
+		MultiXactId	multi;
+
+		memcpy(&multi, rec, sizeof(MultiXactId));
+		sprintf(buf + strlen(buf), "nextMultiXact: %u", multi);
 	}
 	else
 		strcat(buf, "UNKNOWN");

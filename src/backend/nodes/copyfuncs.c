@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.303 2005/04/25 01:30:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.304 2005/04/28 21:47:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1605,6 +1605,7 @@ _copyQuery(Query *from)
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(jointree);
 	COPY_NODE_FIELD(rowMarks);
+	COPY_SCALAR_FIELD(forUpdate);
 	COPY_NODE_FIELD(targetList);
 	COPY_NODE_FIELD(groupClause);
 	COPY_NODE_FIELD(havingQual);
@@ -1685,7 +1686,8 @@ _copySelectStmt(SelectStmt *from)
 	COPY_NODE_FIELD(sortClause);
 	COPY_NODE_FIELD(limitOffset);
 	COPY_NODE_FIELD(limitCount);
-	COPY_NODE_FIELD(forUpdate);
+	COPY_NODE_FIELD(lockedRels);
+	COPY_SCALAR_FIELD(forUpdate);
 	COPY_SCALAR_FIELD(op);
 	COPY_SCALAR_FIELD(all);
 	COPY_NODE_FIELD(larg);

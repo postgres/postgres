@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.5 2005/04/07 03:31:42 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.6 2005/04/28 21:47:09 tgl Exp $
 -->
 
 <chapter id="storage">
@@ -72,6 +72,12 @@ Item
 <row>
  <entry><filename>pg_clog</></entry>
  <entry>Subdirectory containing transaction commit status data</entry>
+</row>
+
+<row>
+ <entry><filename>pg_multixact</></entry>
+ <entry>Subdirectory containing multi-transaction status data
+  (used for shared row locks)</entry> 
 </row>
 
 <row>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.42 2004/12/31 22:03:38 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.43 2005/04/28 21:47:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ typedef struct ParseState
 	Oid		   *p_paramtypes;	/* OIDs of types for $n parameter symbols */
 	int			p_numparams;	/* allocated size of p_paramtypes[] */
 	int			p_next_resno;	/* next targetlist resno to assign */
-	List	   *p_forUpdate;	/* FOR UPDATE clause, if any (see gram.y) */
+	List	   *p_lockedRels;	/* FOR UPDATE/SHARE, if any (see gram.y) */
 	Node	   *p_value_substitute;		/* what to replace VALUE with, if
 										 * any */
 	bool		p_variableparams;

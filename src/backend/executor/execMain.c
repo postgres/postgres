@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.246 2005/04/14 01:38:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.247 2005/04/28 21:47:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -560,9 +560,10 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	}
 
 	/*
-	 * Have to lock relations selected for update
+	 * Have to lock relations selected FOR UPDATE/FOR SHARE
 	 */
 	estate->es_rowMark = NIL;
+	estate->es_forUpdate = parseTree->forUpdate;
 	if (parseTree->rowMarks != NIL)
 	{
 		ListCell   *l;
@@ -986,7 +987,7 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 		heap_close(estate->es_into_relation_descriptor, NoLock);
 
 	/*
-	 * close any relations selected FOR UPDATE, again keeping locks
+	 * close any relations selected FOR UPDATE/FOR SHARE, again keeping locks
 	 */
 	foreach(l, estate->es_rowMark)
 	{
@@ -1126,6 +1127,9 @@ lnext:	;
 										 * ctid!! */
 				tupleid = &tuple_ctid;
 			}
+			/*
+			 * Process any FOR UPDATE or FOR SHARE locking requested.
+			 */
 			else if (estate->es_rowMark != NIL)
 			{
 				ListCell   *l;
@@ -1137,6 +1141,7 @@ lnext:	;
 					Buffer		buffer;
 					HeapTupleData tuple;
 					TupleTableSlot *newSlot;
+					LockTupleMode	lockmode;
 					HTSU_Result		test;
 
 					if (!ExecGetJunkAttribute(junkfilter,
@@ -1151,9 +1156,15 @@ lnext:	;
 					if (isNull)
 						elog(ERROR, "\"%s\" is NULL", erm->resname);
 
+					if (estate->es_forUpdate)
+						lockmode = LockTupleExclusive;
+					else
+						lockmode = LockTupleShared;
+
 					tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
-					test = heap_mark4update(erm->relation, &tuple, &buffer,
-											estate->es_snapshot->curcid);
+					test = heap_lock_tuple(erm->relation, &tuple, &buffer,
+										  estate->es_snapshot->curcid,
+										  lockmode);
 					ReleaseBuffer(buffer);
 					switch (test)
 					{
@@ -1189,7 +1200,7 @@ lnext:	;
 							goto lnext;
 
 						default:
-							elog(ERROR, "unrecognized heap_mark4update status: %u",
+							elog(ERROR, "unrecognized heap_lock_tuple status: %u",
 								 test);
 							return (NULL);
 					}
@@ -1574,8 +1585,8 @@ ExecUpdate(TupleTableSlot *slot,
 	 * If we generate a new candidate tuple after EvalPlanQual testing, we
 	 * must loop back here and recheck constraints.  (We don't need to
 	 * redo triggers, however.	If there are any BEFORE triggers then
-	 * trigger.c will have done mark4update to lock the correct tuple, so
-	 * there's no need to do them again.)
+	 * trigger.c will have done heap_lock_tuple to lock the correct tuple,
+	 * so there's no need to do them again.)
 	 */
 lreplace:;
 	if (resultRelationDesc->rd_att->constr)
@@ -2088,6 +2099,7 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 		epqstate->es_param_exec_vals = (ParamExecData *)
 			palloc0(estate->es_topPlan->nParamExec * sizeof(ParamExecData));
 	epqstate->es_rowMark = estate->es_rowMark;
+	epqstate->es_forUpdate = estate->es_forUpdate;
 	epqstate->es_instrument = estate->es_instrument;
 	epqstate->es_select_into = estate->es_select_into;
 	epqstate->es_into_oids = estate->es_into_oids;

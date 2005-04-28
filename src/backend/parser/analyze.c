@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.320 2005/04/14 20:03:24 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.321 2005/04/28 21:47:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,7 @@ static void transformFKConstraints(ParseState *pstate,
 					   bool isAddConstraint);
 static void applyColumnNames(List *dst, List *src);
 static List *getSetColTypes(ParseState *pstate, Node *node);
-static void transformForUpdate(Query *qry, List *forUpdate);
+static void transformLocking(Query *qry, List *lockedRels, bool forUpdate);
 static void transformConstraintAttrs(List *constraintList);
 static void transformColumnType(ParseState *pstate, ColumnDef *column);
 static void release_pstate_resources(ParseState *pstate);
@@ -1810,8 +1810,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->commandType = CMD_SELECT;
 
-	/* make FOR UPDATE clause available to addRangeTableEntry */
-	pstate->p_forUpdate = stmt->forUpdate;
+	/* make FOR UPDATE/FOR SHARE list available to addRangeTableEntry */
+	pstate->p_lockedRels = stmt->lockedRels;
 
 	/* process the FROM clause */
 	transformFromClause(pstate, stmt->fromClause);
@@ -1870,8 +1870,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
 
-	if (stmt->forUpdate != NIL)
-		transformForUpdate(qry, stmt->forUpdate);
+	if (stmt->lockedRels != NIL)
+		transformLocking(qry, stmt->lockedRels, stmt->forUpdate);
 
 	return qry;
 }
@@ -1899,7 +1899,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	List	   *sortClause;
 	Node	   *limitOffset;
 	Node	   *limitCount;
-	List	   *forUpdate;
+	List	   *lockedRels;
+	bool		forUpdate;
 	Node	   *node;
 	ListCell   *left_tlist,
 			   *dtlist;
@@ -1937,18 +1938,19 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	sortClause = stmt->sortClause;
 	limitOffset = stmt->limitOffset;
 	limitCount = stmt->limitCount;
+	lockedRels = stmt->lockedRels;
 	forUpdate = stmt->forUpdate;
 
 	stmt->sortClause = NIL;
 	stmt->limitOffset = NULL;
 	stmt->limitCount = NULL;
-	stmt->forUpdate = NIL;
+	stmt->lockedRels = NIL;
 
-	/* We don't support forUpdate with set ops at the moment. */
-	if (forUpdate)
+	/* We don't support FOR UPDATE/SHARE with set ops at the moment. */
+	if (lockedRels)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT")));
+				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with UNION/INTERSECT/EXCEPT")));
 
 	/*
 	 * Recursively transform the components of the tree.
@@ -2083,8 +2085,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
 
-	if (forUpdate != NIL)
-		transformForUpdate(qry, forUpdate);
+	if (lockedRels != NIL)
+		transformLocking(qry, lockedRels, forUpdate);
 
 	return qry;
 }
@@ -2107,11 +2109,11 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("INTO is only allowed on first SELECT of UNION/INTERSECT/EXCEPT")));
-	/* We don't support forUpdate with set ops at the moment. */
-	if (stmt->forUpdate)
+	/* We don't support FOR UPDATE/SHARE with set ops at the moment. */
+	if (stmt->lockedRels)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT")));
+				 errmsg("SELECT FOR UPDATE/SHARE is not allowed with UNION/INTERSECT/EXCEPT")));
 
 	/*
 	 * If an internal node of a set-op tree has ORDER BY, UPDATE, or LIMIT
@@ -2128,7 +2130,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 	{
 		Assert(stmt->larg != NULL && stmt->rarg != NULL);
 		if (stmt->sortClause || stmt->limitOffset || stmt->limitCount ||
-			stmt->forUpdate)
+			stmt->lockedRels)
 			isLeaf = true;
 		else
 			isLeaf = false;
@@ -2711,47 +2713,67 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 
 /* exported so planner can check again after rewriting, query pullup, etc */
 void
-CheckSelectForUpdate(Query *qry)
+CheckSelectLocking(Query *qry, bool forUpdate)
 {
+	const char *operation;
+
+	if (forUpdate)
+		operation = "SELECT FOR UPDATE";
+	else
+		operation = "SELECT FOR SHARE";
+
 	if (qry->setOperations)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELECT FOR UPDATE is not allowed with UNION/INTERSECT/EXCEPT")));
+				 /* translator: %s is a SQL command, like SELECT FOR UPDATE */
+				 errmsg("%s is not allowed with UNION/INTERSECT/EXCEPT", operation)));
 	if (qry->distinctClause != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		errmsg("SELECT FOR UPDATE is not allowed with DISTINCT clause")));
+				 /* translator: %s is a SQL command, like SELECT FOR UPDATE */
+				 errmsg("%s is not allowed with DISTINCT clause", operation)));
 	if (qry->groupClause != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		errmsg("SELECT FOR UPDATE is not allowed with GROUP BY clause")));
+				 /* translator: %s is a SQL command, like SELECT FOR UPDATE */
+				 errmsg("%s is not allowed with GROUP BY clause", operation)));
 	if (qry->havingQual != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		errmsg("SELECT FOR UPDATE is not allowed with HAVING clause")));
+				 /* translator: %s is a SQL command, like SELECT FOR UPDATE */
+				 errmsg("%s is not allowed with HAVING clause", operation)));
 	if (qry->hasAggs)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("SELECT FOR UPDATE is not allowed with aggregate functions")));
+				 /* translator: %s is a SQL command, like SELECT FOR UPDATE */
+				 errmsg("%s is not allowed with aggregate functions", operation)));
 }
 
 /*
- * Convert FOR UPDATE name list into rowMarks list of integer relids
+ * Convert FOR UPDATE/SHARE name list into rowMarks list of integer relids
  *
- * NB: if you need to change this, see also markQueryForUpdate()
+ * NB: if you need to change this, see also markQueryForLocking()
  * in rewriteHandler.c.
  */
 static void
-transformForUpdate(Query *qry, List *forUpdate)
+transformLocking(Query *qry, List *lockedRels, bool forUpdate)
 {
-	List	   *rowMarks = qry->rowMarks;
+	List	   *rowMarks;
 	ListCell   *l;
 	ListCell   *rt;
 	Index		i;
 
-	CheckSelectForUpdate(qry);
+	if (qry->rowMarks && forUpdate != qry->forUpdate)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot use both FOR UPDATE and FOR SHARE in one query")));
+	qry->forUpdate = forUpdate;
 
-	if (linitial(forUpdate) == NULL)
+	CheckSelectLocking(qry, forUpdate);
+	
+	rowMarks = qry->rowMarks;
+
+	if (linitial(lockedRels) == NULL)
 	{
 		/* all regular tables used in query */
 		i = 0;
@@ -2770,10 +2792,11 @@ transformForUpdate(Query *qry, List *forUpdate)
 				case RTE_SUBQUERY:
 
 					/*
-					 * FOR UPDATE of subquery is propagated to subquery's
-					 * rels
+					 * FOR UPDATE/SHARE of subquery is propagated to all
+					 * of subquery's rels
 					 */
-					transformForUpdate(rte->subquery, list_make1(NULL));
+					transformLocking(rte->subquery, list_make1(NULL),
+									 forUpdate);
 					break;
 				default:
 					/* ignore JOIN, SPECIAL, FUNCTION RTEs */
@@ -2784,7 +2807,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 	else
 	{
 		/* just the named tables */
-		foreach(l, forUpdate)
+		foreach(l, lockedRels)
 		{
 			char	   *relname = strVal(lfirst(l));
 
@@ -2806,25 +2829,26 @@ transformForUpdate(Query *qry, List *forUpdate)
 						case RTE_SUBQUERY:
 
 							/*
-							 * FOR UPDATE of subquery is propagated to
-							 * subquery's rels
+							 * FOR UPDATE/SHARE of subquery is propagated to
+							 * all of subquery's rels
 							 */
-							transformForUpdate(rte->subquery, list_make1(NULL));
+							transformLocking(rte->subquery, list_make1(NULL),
+											 forUpdate);
 							break;
 						case RTE_JOIN:
 							ereport(ERROR,
 								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								  errmsg("SELECT FOR UPDATE cannot be applied to a join")));
+								  errmsg("SELECT FOR UPDATE/SHARE cannot be applied to a join")));
 							break;
 						case RTE_SPECIAL:
 							ereport(ERROR,
 								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								  errmsg("SELECT FOR UPDATE cannot be applied to NEW or OLD")));
+								  errmsg("SELECT FOR UPDATE/SHARE cannot be applied to NEW or OLD")));
 							break;
 						case RTE_FUNCTION:
 							ereport(ERROR,
 								 (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								  errmsg("SELECT FOR UPDATE cannot be applied to a function")));
+								  errmsg("SELECT FOR UPDATE/SHARE cannot be applied to a function")));
 							break;
 						default:
 							elog(ERROR, "unrecognized RTE type: %d",
@@ -2837,7 +2861,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 			if (rt == NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_TABLE),
-						 errmsg("relation \"%s\" in FOR UPDATE clause not found in FROM clause",
+						 errmsg("relation \"%s\" in FOR UPDATE/SHARE clause not found in FROM clause",
 								relname)));
 		}
 	}

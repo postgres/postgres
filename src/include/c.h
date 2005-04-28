@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.181 2005/03/29 00:17:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.182 2005/04/28 21:47:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,7 +365,8 @@ typedef float float4;
 typedef double float8;
 
 /*
- * Oid, RegProcedure, TransactionId, SubTransactionId, CommandId, AclId
+ * Oid, RegProcedure, TransactionId, SubTransactionId, MultiXactId,
+ * CommandId, AclId
  */
 
 /* typedef Oid is in postgres_ext.h */
@@ -383,6 +384,9 @@ typedef uint32 SubTransactionId;
 
 #define InvalidSubTransactionId		((SubTransactionId) 0)
 #define TopSubTransactionId			((SubTransactionId) 1)
+
+/* MultiXactId must be equivalent to TransactionId, to fit in t_xmax */
+typedef TransactionId MultiXactId;
 
 typedef uint32 CommandId;
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.199 2005/04/11 19:51:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.200 2005/04/28 21:47:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "access/multixact.h"
 #include "access/subtrans.h"
 #include "access/xact.h"
 #include "catalog/heap.h"
@@ -1565,6 +1566,8 @@ CommitTransaction(void)
 	 */
 	smgrDoPendingDeletes(true);
 
+	AtEOXact_MultiXact();
+
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_LOCKS,
 						 true, true);
@@ -1710,6 +1713,7 @@ AbortTransaction(void)
 	AtEOXact_Buffers(false);
 	AtEOXact_Inval(false);
 	smgrDoPendingDeletes(false);
+	AtEOXact_MultiXact();
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_LOCKS,
 						 false, true);
@@ -3622,9 +3626,9 @@ static void
 ShowTransactionState(const char *str)
 {
 	/* skip work if message will definitely not be printed */
-	if (log_min_messages <= DEBUG2 || client_min_messages <= DEBUG2)
+	if (log_min_messages <= DEBUG3 || client_min_messages <= DEBUG3)
 	{
-		elog(DEBUG2, "%s", str);
+		elog(DEBUG3, "%s", str);
 		ShowTransactionStateRec(CurrentTransactionState);
 	}
 }
@@ -3640,7 +3644,7 @@ ShowTransactionStateRec(TransactionState s)
 		ShowTransactionStateRec(s->parent);
 
 	/* use ereport to suppress computation if msg will not be printed */
-	ereport(DEBUG2,
+	ereport(DEBUG3,
 			(errmsg_internal("name: %s; blockState: %13s; state: %7s, xid/subid/cid: %u/%u/%u, nestlvl: %d, children: %s",
 						   PointerIsValid(s->name) ? s->name : "unnamed",
 							 BlockStateAsString(s->blockState),

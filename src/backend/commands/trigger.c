@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.186 2005/04/14 20:03:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.187 2005/04/28 21:47:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1592,12 +1592,12 @@ GetTupleForTrigger(EState *estate, ResultRelInfo *relinfo,
 		HTSU_Result	test;
 
 		/*
-		 * mark tuple for update
+		 * lock tuple for update
 		 */
 		*newSlot = NULL;
 		tuple.t_self = *tid;
 ltrmark:;
-		test = heap_mark4update(relation, &tuple, &buffer, cid);
+		test = heap_lock_tuple(relation, &tuple, &buffer, cid, LockTupleExclusive);
 		switch (test)
 		{
 			case HeapTupleSelfUpdated:
@@ -1636,8 +1636,7 @@ ltrmark:;
 
 			default:
 				ReleaseBuffer(buffer);
-				elog(ERROR, "unrecognized heap_mark4update status: %u",
-					 test);
+				elog(ERROR, "invalid heap_lock_tuple status: %d", test);
 				return NULL;	/* keep compiler quiet */
 		}
 	}

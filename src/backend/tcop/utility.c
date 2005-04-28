@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.235 2005/04/14 01:38:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.236 2005/04/28 21:47:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,7 +238,7 @@ QueryIsReadOnly(Query *parsetree)
 			if (parsetree->into != NULL)
 				return false;					/* SELECT INTO */
 			else if (parsetree->rowMarks != NIL)
-				return false;					/* SELECT FOR UPDATE */
+				return false;					/* SELECT FOR UPDATE/SHARE */
 			else
 				return true;
 		case CMD_UPDATE:
@@ -1663,7 +1663,12 @@ CreateQueryTag(Query *parsetree)
 			if (parsetree->into != NULL)
 				tag = "SELECT INTO";
 			else if (parsetree->rowMarks != NIL)
-				tag = "SELECT FOR UPDATE";
+			{
+				if (parsetree->forUpdate)
+					tag = "SELECT FOR UPDATE";
+				else
+					tag = "SELECT FOR SHARE";
+			}
 			else
 				tag = "SELECT";
 			break;

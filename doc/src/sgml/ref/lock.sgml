@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.46 2005/01/22 23:22:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.47 2005/04/28 21:47:10 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -177,8 +177,8 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
    <command>LOCK TABLE</> is concerned, differing only in the rules
    about which modes conflict with which. For information on how to
    acquire an actual row-level lock, see <xref linkend="locking-rows">
-   and the <xref linkend="sql-for-update"
-   endterm="sql-for-update-title"> in the <command>SELECT</command>
+   and the <xref linkend="sql-for-update-share"
+   endterm="sql-for-update-share-title"> in the <command>SELECT</command>
    reference documentation.
   </para>
  </refsect1>

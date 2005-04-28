@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.106 2005/04/13 16:50:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.107 2005/04/28 21:47:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ static Node *scanNameSpaceForRelid(ParseState *pstate, Node *nsnode,
 					  Oid relid);
 static void scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
 						 RangeTblEntry *rte1, const char *aliasname1);
-static bool isForUpdate(ParseState *pstate, char *refname);
+static bool isLockedRel(ParseState *pstate, char *refname);
 static void expandRelation(Oid relid, Alias *eref,
 			   int rtindex, int sublevels_up,
 			   bool include_dropped,
@@ -759,9 +759,9 @@ addRangeTableEntry(ParseState *pstate,
 	 * Get the rel's OID.  This access also ensures that we have an
 	 * up-to-date relcache entry for the rel.  Since this is typically the
 	 * first access to a rel in a statement, be careful to get the right
-	 * access level depending on whether we're doing SELECT FOR UPDATE.
+	 * access level depending on whether we're doing SELECT FOR UPDATE/SHARE.
 	 */
-	lockmode = isForUpdate(pstate, refname) ? RowShareLock : AccessShareLock;
+	lockmode = isLockedRel(pstate, refname) ? RowShareLock : AccessShareLock;
 	rel = heap_openrv(relation, lockmode);
 	rte->relid = RelationGetRelid(rel);
 
@@ -1121,17 +1121,17 @@ addRangeTableEntryForJoin(ParseState *pstate,
 }
 
 /*
- * Has the specified refname been selected FOR UPDATE?
+ * Has the specified refname been selected FOR UPDATE/FOR SHARE?
  */
 static bool
-isForUpdate(ParseState *pstate, char *refname)
+isLockedRel(ParseState *pstate, char *refname)
 {
 	/* Outer loop to check parent query levels as well as this one */
 	while (pstate != NULL)
 	{
-		if (pstate->p_forUpdate != NIL)
+		if (pstate->p_lockedRels != NIL)
 		{
-			if (linitial(pstate->p_forUpdate) == NULL)
+			if (linitial(pstate->p_lockedRels) == NULL)
 			{
 				/* all tables used in query */
 				return true;
@@ -1141,7 +1141,7 @@ isForUpdate(ParseState *pstate, char *refname)
 				/* just the named tables */
 				ListCell   *l;
 
-				foreach(l, pstate->p_forUpdate)
+				foreach(l, pstate->p_lockedRels)
 				{
 					char	   *rname = strVal(lfirst(l));
 

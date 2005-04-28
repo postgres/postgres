@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.74 2005/04/06 16:34:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.75 2005/04/28 21:47:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ preprocess_targetlist(Query *parse, List *tlist)
 	}
 
 	/*
-	 * Add TID targets for rels selected FOR UPDATE.  The executor
+	 * Add TID targets for rels selected FOR UPDATE/SHARE.  The executor
 	 * uses the TID to know which rows to lock, much as for UPDATE or
 	 * DELETE.
 	 */
@@ -111,22 +111,22 @@ preprocess_targetlist(Query *parse, List *tlist)
 		ListCell   *l;
 
 		/*
-		 * We've got trouble if the FOR UPDATE appears inside
+		 * We've got trouble if the FOR UPDATE/SHARE appears inside
 		 * grouping, since grouping renders a reference to individual
 		 * tuple CTIDs invalid.  This is also checked at parse time,
 		 * but that's insufficient because of rule substitution, query
 		 * pullup, etc.
 		 */
-		CheckSelectForUpdate(parse);
+		CheckSelectLocking(parse, parse->forUpdate);
 
 		/*
-		 * Currently the executor only supports FOR UPDATE at top
+		 * Currently the executor only supports FOR UPDATE/SHARE at top
 		 * level
 		 */
 		if (PlannerQueryLevel > 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("SELECT FOR UPDATE is not allowed in subqueries")));
+					 errmsg("SELECT FOR UPDATE/SHARE is not allowed in subqueries")));
 
 		foreach(l, parse->rowMarks)
 		{

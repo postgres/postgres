@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.76 2004/12/31 22:01:22 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.77 2005/04/28 21:47:15 tgl Exp $
  *
  * ----------
  */
@@ -206,7 +206,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 * tuple.
 	 *
 	 * pk_rel is opened in RowShareLock mode since that's what our eventual
-	 * SELECT FOR UPDATE will get on it.
+	 * SELECT FOR SHARE will get on it.
 	 */
 	pk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	fk_rel = trigdata->tg_relation;
@@ -267,7 +267,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 			 * ----------
 			 */
 			quoteRelationName(pkrelname, pk_rel);
-			snprintf(querystr, sizeof(querystr), "SELECT 1 FROM ONLY %s x FOR UPDATE OF x",
+			snprintf(querystr, sizeof(querystr), "SELECT 1 FROM ONLY %s x FOR SHARE OF x",
 					 pkrelname);
 
 			/* Prepare and save the plan */
@@ -428,7 +428,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 			queryoids[i] = SPI_gettypeid(fk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_FK_IDX]);
 		}
-		strcat(querystr, " FOR UPDATE OF x");
+		strcat(querystr, " FOR SHARE OF x");
 
 		/* Prepare and save the plan */
 		qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
@@ -590,7 +590,7 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 			queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
 		}
-		strcat(querystr, " FOR UPDATE OF x");
+		strcat(querystr, " FOR SHARE OF x");
 
 		/* Prepare and save the plan */
 		qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
@@ -655,7 +655,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	 * tuple.
 	 *
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
-	 * SELECT FOR UPDATE will get on it.
+	 * SELECT FOR SHARE will get on it.
 	 */
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
@@ -748,7 +748,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
 				}
-				strcat(querystr, " FOR UPDATE OF x");
+				strcat(querystr, " FOR SHARE OF x");
 
 				/* Prepare and save the plan */
 				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
@@ -834,7 +834,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	 * and old tuple.
 	 *
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
-	 * SELECT FOR UPDATE will get on it.
+	 * SELECT FOR SHARE will get on it.
 	 */
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
@@ -939,7 +939,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
 				}
-				strcat(querystr, " FOR UPDATE OF x");
+				strcat(querystr, " FOR SHARE OF x");
 
 				/* Prepare and save the plan */
 				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
@@ -1373,7 +1373,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	 * tuple.
 	 *
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
-	 * SELECT FOR UPDATE will get on it.
+	 * SELECT FOR SHARE will get on it.
 	 */
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
@@ -1453,7 +1453,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
 				}
-				strcat(querystr, " FOR UPDATE OF x");
+				strcat(querystr, " FOR SHARE OF x");
 
 				/* Prepare and save the plan */
 				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
@@ -1543,7 +1543,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	 * and old tuple.
 	 *
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
-	 * SELECT FOR UPDATE will get on it.
+	 * SELECT FOR SHARE will get on it.
 	 */
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
@@ -1634,7 +1634,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
 				}
-				strcat(querystr, " FOR UPDATE OF x");
+				strcat(querystr, " FOR SHARE OF x");
 
 				/* Prepare and save the plan */
 				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,

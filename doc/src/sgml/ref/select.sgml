@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.85 2005/04/22 15:32:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.86 2005/04/28 21:47:10 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,7 +30,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
     [ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [, ...] ]
     [ LIMIT { <replaceable class="parameter">count</replaceable> | ALL } ]
     [ OFFSET <replaceable class="parameter">start</replaceable> ]
-    [ FOR UPDATE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] ]
+    [ FOR { UPDATE | SHARE } [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] ]
 
 where <replaceable class="parameter">from_item</replaceable> can be one of:
 
@@ -142,10 +142,11 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
 
     <listitem>
      <para>
-      The <literal>FOR UPDATE</literal> clause causes the
-      <command>SELECT</command> statement to lock the selected rows
-      against concurrent updates.  (See <xref linkend="sql-for-update"
-      endterm="sql-for-update-title"> below.)
+      If the <literal>FOR UPDATE</literal> or <literal>FOR SHARE</literal>
+      clause is specified, the
+      <command>SELECT</command> statement locks the selected rows
+      against concurrent updates.  (See <xref linkend="sql-for-update-share"
+      endterm="sql-for-update-share-title"> below.)
      </para>
     </listitem>
    </orderedlist>
@@ -153,7 +154,8 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
    
   <para>
    You must have <literal>SELECT</literal> privilege on a table to
-   read its values.  The use of <literal>FOR UPDATE</literal> requires
+   read its values.  The use of <literal>FOR UPDATE</literal> or
+   <literal>FOR SHARE</literal> requires
    <literal>UPDATE</literal> privilege as well.
   </para>
  </refsect1>
@@ -503,7 +505,8 @@ HAVING <replaceable class="parameter">condition</replaceable>
 </synopsis>
     <replaceable class="parameter">select_statement</replaceable> is
     any <command>SELECT</command> statement without an <literal>ORDER
-    BY</>, <literal>LIMIT</>, or <literal>FOR UPDATE</literal> clause.
+    BY</>, <literal>LIMIT</>, <literal>FOR UPDATE</literal>, or
+    <literal>FOR SHARE</literal> clause. 
     (<literal>ORDER BY</> and <literal>LIMIT</> can be attached to a
     subexpression if it is enclosed in parentheses.  Without
     parentheses, these clauses will be taken to apply to the result of
@@ -537,8 +540,9 @@ HAVING <replaceable class="parameter">condition</replaceable>
    </para>
     
    <para>
-    Currently, <literal>FOR UPDATE</> may not be specified either for
-    a <literal>UNION</> result or for any input of a <literal>UNION</>.
+    Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> may not be
+    specified either for a <literal>UNION</> result or for any input of a
+    <literal>UNION</>.
    </para>
   </refsect2>
 
@@ -552,7 +556,8 @@ HAVING <replaceable class="parameter">condition</replaceable>
 </synopsis>
     <replaceable class="parameter">select_statement</replaceable> is
     any <command>SELECT</command> statement without an <literal>ORDER
-    BY</>, <literal>LIMIT</>, or <literal>FOR UPDATE</literal> clause.
+    BY</>, <literal>LIMIT</>, <literal>FOR UPDATE</literal>, or
+    <literal>FOR SHARE</literal> clause.
    </para>
 
    <para>
@@ -581,8 +586,9 @@ HAVING <replaceable class="parameter">condition</replaceable>
    </para>
     
    <para>
-    Currently, <literal>FOR UPDATE</> may not be specified either for
-    an <literal>INTERSECT</> result or for any input of an <literal>INTERSECT</>.
+    Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> may not be
+    specified either for an <literal>INTERSECT</> result or for any input of
+    an <literal>INTERSECT</>.
    </para>
   </refsect2>
 
@@ -596,7 +602,8 @@ HAVING <replaceable class="parameter">condition</replaceable>
 </synopsis>
     <replaceable class="parameter">select_statement</replaceable> is
     any <command>SELECT</command> statement without an <literal>ORDER
-    BY</>, <literal>LIMIT</>, or <literal>FOR UPDATE</literal> clause.
+    BY</>, <literal>LIMIT</>, <literal>FOR UPDATE</literal>, or
+    <literal>FOR SHARE</literal> clause.
    </para>
 
    <para>
@@ -621,8 +628,9 @@ HAVING <replaceable class="parameter">condition</replaceable>
    </para>
     
    <para>
-    Currently, <literal>FOR UPDATE</> may not be specified either for
-    an <literal>EXCEPT</> result or for any input of an <literal>EXCEPT</>.
+    Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> may not be
+    specified either for an <literal>EXCEPT</> result or for any input of
+    an <literal>EXCEPT</>.
    </para>
   </refsect2>
 
@@ -789,13 +797,20 @@ OFFSET <replaceable class="parameter">start</replaceable>
    </para>
   </refsect2>
 
-  <refsect2 id="SQL-FOR-UPDATE">
-   <title id="sql-for-update-title"><literal>FOR UPDATE</literal> Clause</title>
+  <refsect2 id="SQL-FOR-UPDATE-SHARE">
+   <title id="sql-for-update-share-title"><literal>FOR UPDATE</literal>/<literal>FOR SHARE</literal> Clause</title>
 
    <para>
     The <literal>FOR UPDATE</literal> clause has this form:
 <synopsis>
 FOR UPDATE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ]
+</synopsis>
+   </para>
+
+   <para>
+    The closely related <literal>FOR SHARE</literal> clause has this form:
+<synopsis>
+FOR SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ]
 </synopsis>
    </para>
 
@@ -817,26 +832,44 @@ FOR UPDATE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] 
    </para>
 
    <para>
-    If specific tables are named in <literal>FOR UPDATE</literal>,
+    <literal>FOR SHARE</literal> behaves similarly, except that it
+    acquires a shared rather than exclusive lock on each retrieved
+    row.  A shared lock blocks other transactions from performing
+    <command>UPDATE</command>, <command>DELETE</command>, or <command>SELECT
+    FOR UPDATE</command> on these rows, but it does not prevent them
+    from performing <command>SELECT FOR SHARE</command>.
+   </para>
+
+   <para>
+    It is currently not allowed for a single <command>SELECT</command>
+    statement to include both <literal>FOR UPDATE</literal> and
+    <literal>FOR SHARE</literal>.
+   </para>
+
+   <para>
+    If specific tables are named in <literal>FOR UPDATE</literal>
+    or <literal>FOR SHARE</literal>,
     then only rows coming from those tables are locked; any other
     tables used in the <command>SELECT</command> are simply read as
     usual.
    </para>
 
    <para>
-    <literal>FOR UPDATE</literal> cannot be used in contexts where
-    returned rows can't be clearly identified with individual table
-    rows; for example it can't be used with aggregation.
+    <literal>FOR UPDATE</literal> and <literal>FOR SHARE</literal> cannot be
+    used in contexts where returned rows can't be clearly identified with
+    individual table rows; for example they can't be used with aggregation.
    </para>
 
    <para>
     It is possible for a <command>SELECT</> command using both 
-    <literal>LIMIT</literal> and  <literal>FOR UPDATE</literal> 
+    <literal>LIMIT</literal> and  <literal>FOR UPDATE/SHARE</literal> 
     clauses to return fewer rows than specified by <literal>LIMIT</literal>.
-    This is because <literal>LIMIT</> selects a number of rows,
-    but might then block requesting a <literal>FOR UPDATE</literal> lock.
-    Once the <literal>SELECT</> unblocks, the query qualification might not
-    be met and the row not be returned by <literal>SELECT</>.
+    This is because <literal>LIMIT</> is applied first.  The command
+    selects the specified number of rows,
+    but might then block trying to obtain lock on one or more of them.
+    Once the <literal>SELECT</> unblocks, the row might have been deleted
+    or updated so that it does not meet the query <literal>WHERE</> condition
+    anymore, in which case it will not be returned.
    </para>
   </refsect2>
  </refsect1>

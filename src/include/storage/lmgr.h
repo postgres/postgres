@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.45 2004/12/31 22:03:42 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.46 2005/04/28 21:47:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 #define NoLock					0
 
 #define AccessShareLock			1		/* SELECT */
-#define RowShareLock			2		/* SELECT FOR UPDATE */
+#define RowShareLock			2		/* SELECT FOR UPDATE/FOR SHARE */
 #define RowExclusiveLock		3		/* INSERT, UPDATE, DELETE */
 #define ShareUpdateExclusiveLock 4		/* VACUUM (non-FULL) */
 #define ShareLock				5		/* CREATE INDEX */

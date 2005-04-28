@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.81 2005/04/12 19:29:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.82 2005/04/28 21:47:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -527,7 +527,7 @@ mkdir_p(char *path, mode_t omode)
 		{
 			/*
 			 * POSIX 1003.2: For each dir operand that does not name an
-			 * existing directory, effects equivalent to those cased by
+			 * existing directory, effects equivalent to those caused by
 			 * the following command shall occcur:
 			 *
 			 * mkdir -p -m $(umask -S),u+wx $(dirname dir) && mkdir [-m mode]
@@ -2124,6 +2124,8 @@ main(int argc, char *argv[])
 		"pg_xlog/archive_status",
 		"pg_clog",
 		"pg_subtrans",
+		"pg_multixact/members",
+		"pg_multixact/offsets",
 		"base",
 		"base/1",
 		"pg_tblspc"

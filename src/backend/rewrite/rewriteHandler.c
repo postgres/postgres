@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.150 2005/04/06 16:34:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.151 2005/04/28 21:47:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 					TargetEntry *prior_tle,
 					const char *attrName);
 static Node *get_assignment_input(Node *node);
-static void markQueryForUpdate(Query *qry, bool skipOldNew);
+static void markQueryForLocking(Query *qry, bool forUpdate, bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
 static Query *fireRIRrules(Query *parsetree, List *activeRIRs);
@@ -745,39 +745,45 @@ ApplyRetrieveRule(Query *parsetree,
 	rte->checkAsUser = 0;
 
 	/*
-	 * FOR UPDATE of view?
+	 * FOR UPDATE/SHARE of view?
 	 */
 	if (list_member_int(parsetree->rowMarks, rt_index))
 	{
 		/*
 		 * Remove the view from the list of rels that will actually be
-		 * marked FOR UPDATE by the executor.  It will still be access-
+		 * marked FOR UPDATE/SHARE by the executor.  It will still be access-
 		 * checked for write access, though.
 		 */
 		parsetree->rowMarks = list_delete_int(parsetree->rowMarks, rt_index);
 
 		/*
-		 * Set up the view's referenced tables as if FOR UPDATE.
+		 * Set up the view's referenced tables as if FOR UPDATE/SHARE.
 		 */
-		markQueryForUpdate(rule_action, true);
+		markQueryForLocking(rule_action, parsetree->forUpdate, true);
 	}
 
 	return parsetree;
 }
 
 /*
- * Recursively mark all relations used by a view as FOR UPDATE.
+ * Recursively mark all relations used by a view as FOR UPDATE/SHARE.
  *
  * This may generate an invalid query, eg if some sub-query uses an
  * aggregate.  We leave it to the planner to detect that.
  *
- * NB: this must agree with the parser's transformForUpdate() routine.
+ * NB: this must agree with the parser's transformLocking() routine.
  */
 static void
-markQueryForUpdate(Query *qry, bool skipOldNew)
+markQueryForLocking(Query *qry, bool forUpdate, bool skipOldNew)
 {
 	Index		rti = 0;
 	ListCell   *l;
+
+	if (qry->rowMarks && forUpdate != qry->forUpdate)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot use both FOR UPDATE and FOR SHARE in one query")));
+	qry->forUpdate = forUpdate;
 
 	foreach(l, qry->rtable)
 	{
@@ -798,8 +804,8 @@ markQueryForUpdate(Query *qry, bool skipOldNew)
 		}
 		else if (rte->rtekind == RTE_SUBQUERY)
 		{
-			/* FOR UPDATE of subquery is propagated to subquery's rels */
-			markQueryForUpdate(rte->subquery, false);
+			/* FOR UPDATE/SHARE of subquery is propagated to subquery's rels */
+			markQueryForLocking(rte->subquery, forUpdate, false);
 		}
 	}
 }
@@ -911,7 +917,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 		 * If the relation is the query's result relation, then
 		 * RewriteQuery() already got the right lock on it, so we need no
 		 * additional lock. Otherwise, check to see if the relation is
-		 * accessed FOR UPDATE or not.
+		 * accessed FOR UPDATE/SHARE or not.
 		 */
 		if (rt_index == parsetree->resultRelation)
 			lockmode = NoLock;

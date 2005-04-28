@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.240 2005/04/07 01:51:38 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.241 2005/04/28 21:47:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -642,6 +642,7 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_NODE_FIELD(rtable);
 	COMPARE_NODE_FIELD(jointree);
 	COMPARE_NODE_FIELD(rowMarks);
+	COMPARE_SCALAR_FIELD(forUpdate);
 	COMPARE_NODE_FIELD(targetList);
 	COMPARE_NODE_FIELD(groupClause);
 	COMPARE_NODE_FIELD(havingQual);
@@ -706,7 +707,8 @@ _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 	COMPARE_NODE_FIELD(sortClause);
 	COMPARE_NODE_FIELD(limitOffset);
 	COMPARE_NODE_FIELD(limitCount);
-	COMPARE_NODE_FIELD(forUpdate);
+	COMPARE_NODE_FIELD(lockedRels);
+	COMPARE_SCALAR_FIELD(forUpdate);
 	COMPARE_SCALAR_FIELD(op);
 	COMPARE_SCALAR_FIELD(all);
 	COMPARE_NODE_FIELD(larg);

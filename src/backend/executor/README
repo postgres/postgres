@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/executor/README,v 1.4 2003/11/29 19:51:48 pgsql Exp $
+$PostgreSQL: pgsql/src/backend/executor/README,v 1.5 2005/04/28 21:47:12 tgl Exp $
 
 The Postgres Executor
 ---------------------
@@ -154,8 +154,8 @@ committed by the concurrent transaction (after waiting for it to commit,
 if need be) and re-evaluate the query qualifications to see if it would
 still meet the quals.  If so, we regenerate the updated tuple (if we are
 doing an UPDATE) from the modified tuple, and finally update/delete the
-modified tuple.  SELECT FOR UPDATE behaves similarly, except that its action
-is just to mark the modified tuple for update by the current transaction.
+modified tuple.  SELECT FOR UPDATE/SHARE behaves similarly, except that its
+action is just to lock the modified tuple.
 
 To implement this checking, we actually re-run the entire query from scratch
 for each modified tuple, but with the scan node that sourced the original
@@ -184,14 +184,14 @@ that while we are executing a recheck query for one modified tuple, we will
 hit another modified tuple in another relation.  In this case we "stack up"
 recheck queries: a sub-recheck query is spawned in which both the first and
 second modified tuples will be returned as the only components of their
-relations.  (In event of success, all these modified tuples will be marked
-for update.)  Again, this isn't necessarily quite the right thing ... but in
-simple cases it works.  Potentially, recheck queries could get nested to the
-depth of the number of FOR UPDATE relations in the query.
+relations.  (In event of success, all these modified tuples will be locked.)
+Again, this isn't necessarily quite the right thing ... but in simple cases
+it works.  Potentially, recheck queries could get nested to the depth of the
+number of FOR UPDATE/SHARE relations in the query.
 
 It should be noted also that UPDATE/DELETE expect at most one tuple to
 result from the modified query, whereas in the FOR UPDATE case it's possible
 for multiple tuples to result (since we could be dealing with a join in
 which multiple tuples join to the modified tuple).  We want FOR UPDATE to
-mark all relevant tuples, so we pass all tuples output by all the stacked
-recheck queries back to the executor toplevel for marking.
+lock all relevant tuples, so we pass all tuples output by all the stacked
+recheck queries back to the executor toplevel for locking.

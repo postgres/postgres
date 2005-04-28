@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.74 2004/12/31 22:00:56 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.75 2005/04/28 21:47:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/clog.h"
+#include "access/multixact.h"
 #include "access/subtrans.h"
 #include "access/xlog.h"
 #include "miscadmin.h"
@@ -75,6 +76,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 		size += XLOGShmemSize();
 		size += CLOGShmemSize();
 		size += SUBTRANSShmemSize();
+		size += MultiXactShmemSize();
 		size += LWLockShmemSize();
 		size += SInvalShmemSize(maxBackends);
 		size += FreeSpaceShmemSize();
@@ -140,6 +142,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 	XLOGShmemInit();
 	CLOGShmemInit();
 	SUBTRANSShmemInit();
+	MultiXactShmemInit();
 	InitBufferPool();
 
 	/*

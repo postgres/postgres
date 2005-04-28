@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.49 2005/03/24 00:03:18 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.50 2005/04/28 21:47:09 tgl Exp $
 -->
 
  <chapter id="mvcc">
@@ -253,11 +253,12 @@ $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.49 2005/03/24 00:03:18 neilc Exp $
    </para>
 
    <para>
-    <command>UPDATE</command>, <command>DELETE</command>, and <command>SELECT
-    FOR UPDATE</command> commands behave the same as <command>SELECT</command>
+    <command>UPDATE</command>, <command>DELETE</command>, <command>SELECT
+    FOR UPDATE</command>, and <command>SELECT FOR SHARE</command> commands
+    behave the same as <command>SELECT</command>
     in terms of searching for target rows: they will only find target rows
     that were committed as of the command start time.  However, such a target
-    row may have already been updated (or deleted or marked for update) by
+    row may have already been updated (or deleted or locked) by
     another concurrent transaction by the time it is found.  In this case, the
     would-be updater will wait for the first updating transaction to commit or
     roll back (if it is still in progress).  If the first updater rolls back,
@@ -268,7 +269,10 @@ $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.49 2005/03/24 00:03:18 neilc Exp $
     the row.  The search condition of the command (the <literal>WHERE</> clause) is
     re-evaluated to see if the updated version of the row still matches the
     search condition.  If so, the second updater proceeds with its operation,
-    starting from the updated version of the row.
+    starting from the updated version of the row.  (In the case of
+    <command>SELECT FOR UPDATE</command> and <command>SELECT FOR
+    SHARE</command>, that means it is the updated version of the row that is
+    locked and returned to the client.)
    </para>
 
    <para>
@@ -346,25 +350,26 @@ COMMIT;
    </para>
 
    <para>
-    <command>UPDATE</command>, <command>DELETE</command>, and <command>SELECT
-    FOR UPDATE</command> commands behave the same as <command>SELECT</command>
+    <command>UPDATE</command>, <command>DELETE</command>, <command>SELECT
+    FOR UPDATE</command>, and <command>SELECT FOR SHARE</command> commands
+    behave the same as <command>SELECT</command>
     in terms of searching for target rows: they will only find target rows
     that were committed as of the transaction start time.  However, such a
     target
-    row may have already been updated (or deleted or marked for update) by
+    row may have already been updated (or deleted or locked) by
     another concurrent transaction by the time it is found.  In this case, the
     serializable transaction will wait for the first updating transaction to commit or
     roll back (if it is still in progress).  If the first updater rolls back,
     then its effects are negated and the serializable transaction can proceed
     with updating the originally found row.  But if the first updater commits
-    (and actually updated or deleted the row, not just selected it for update)
+    (and actually updated or deleted the row, not just locked it)
     then the serializable transaction will be rolled back with the message
 
 <screen>
 ERROR:  could not serialize access due to concurrent update
 </screen>
 
-    because a serializable transaction cannot modify rows changed by
+    because a serializable transaction cannot modify or lock rows changed by
     other transactions after the serializable transaction began.
    </para>
 
@@ -571,10 +576,12 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
 	</para>
 
 	<para>
-	 The <command>SELECT FOR UPDATE</command> command acquires a
+	 The <command>SELECT FOR UPDATE</command> and
+	 <command>SELECT FOR SHARE</command> commands acquire a
 	 lock of this mode on the target table(s) (in addition to
 	 <literal>ACCESS SHARE</literal> locks on any other tables
-	 that are referenced but not selected <option>FOR UPDATE</option>).
+	 that are referenced but not selected
+	 <option>FOR UPDATE/FOR SHARE</option>).
 	</para>
        </listitem>
       </varlistentry>
@@ -714,7 +721,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
      <tip>
       <para>
        Only an <literal>ACCESS EXCLUSIVE</literal> lock blocks a
-       <command>SELECT</command> (without <option>FOR UPDATE</option>)
+       <command>SELECT</command> (without <option>FOR UPDATE/SHARE</option>)
        statement.
       </para>
      </tip>
@@ -725,17 +732,29 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
     <title>Row-Level Locks</title>
 
     <para>
-     In addition to table-level locks, there are row-level locks.
-     A row-level lock on a specific row is automatically acquired when the
-     row is updated (or deleted or marked for update).  The lock is held
-     until the transaction commits or rolls back.
-     Row-level locks do not affect data
-     querying; they block <emphasis>writers to the same row</emphasis>
-     only.  To acquire a row-level lock on a row without actually
+     In addition to table-level locks, there are row-level locks, which
+     can be exclusive or shared locks.  An exclusive row-level lock on a
+     specific row is automatically acquired when the row is updated or
+     deleted.  The lock is held until the transaction commits or rolls
+     back.  Row-level locks do not affect data querying; they block
+     <emphasis>writers to the same row</emphasis> only.
+    </para>
+
+    <para>
+     To acquire an exclusive row-level lock on a row without actually
      modifying the row, select the row with <command>SELECT FOR
-     UPDATE</command>.  Note that once a particular row-level lock is
-     acquired, the transaction may update the row multiple times without
+     UPDATE</command>.  Note that once the row-level lock is acquired,
+     the transaction may update the row multiple times without
      fear of conflicts.
+    </para>
+
+    <para>
+     To acquire a shared row-level lock on a row, select the row with
+     <command>SELECT FOR SHARE</command>.  A shared lock does not prevent
+     other transactions from acquiring the same shared lock.  However,
+     no transaction is allowed to update, delete, or exclusively lock a
+     row on which any other transaction holds a shared lock.  Any attempt
+     to do so will block until the shared locks have been released.
     </para>
 
     <para>
@@ -743,7 +762,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
      information about modified rows in memory, so it has no limit to
      the number of rows locked at one time.  However, locking a row
      may cause a disk write; thus, for example, <command>SELECT FOR
-     UPDATE</command> will modify selected rows to mark them and so
+     UPDATE</command> will modify selected rows to mark them locked, and so
      will result in disk writes.
     </para>
 
@@ -873,9 +892,10 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
 
    <para>
     To ensure the current validity of a row and protect it against
-    concurrent updates one must use <command>SELECT FOR
-    UPDATE</command> or an appropriate <command>LOCK TABLE</command>
-    statement.  (<command>SELECT FOR UPDATE</command> locks just the
+    concurrent updates one must use <command>SELECT FOR UPDATE</command>,
+    <command>SELECT FOR SHARE</command>, or an appropriate <command>LOCK
+    TABLE</command> statement.  (<command>SELECT FOR UPDATE</command>
+    or <command>SELECT FOR SHARE</command> locks just the
     returned rows against concurrent updates, while <command>LOCK
     TABLE</command> locks the whole table.)  This should be taken into
     account when porting applications to

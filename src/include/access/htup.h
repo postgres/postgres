@@ -1,4 +1,4 @@
- /*-------------------------------------------------------------------------
+/*-------------------------------------------------------------------------
  *
  * htup.h
  *	  POSTGRES heap tuple definitions.
@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.73 2005/03/28 01:50:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.74 2005/04/28 21:47:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,11 +93,11 @@ typedef struct HeapTupleFields
 {
 	TransactionId t_xmin;		/* inserting xact ID */
 	CommandId	t_cmin;			/* inserting command ID */
-	TransactionId t_xmax;		/* deleting xact ID */
+	TransactionId t_xmax;		/* deleting or locking xact ID */
 
 	union
 	{
-		CommandId	t_cmax;		/* deleting command ID */
+		CommandId	t_cmax;		/* deleting or locking command ID */
 		TransactionId t_xvac;	/* VACUUM FULL xact ID */
 	}			t_field4;
 } HeapTupleFields;
@@ -152,12 +152,16 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 										 * attribute(s) */
 #define HEAP_HASEXTENDED		0x000C	/* the two above combined */
 #define HEAP_HASOID				0x0010	/* has an object-id field */
-/* 0x0020, 0x0040 and 0x0080 are unused */
+/* 0x0020 is presently unused */
+#define HEAP_XMAX_EXCL_LOCK		0x0040  /* xmax is exclusive locker */
+#define HEAP_XMAX_SHARED_LOCK	0x0080  /* xmax is shared locker */
+/* if either LOCK bit is set, xmax hasn't deleted the tuple, only locked it */
+#define HEAP_IS_LOCKED	(HEAP_XMAX_EXCL_LOCK | HEAP_XMAX_SHARED_LOCK)
 #define HEAP_XMIN_COMMITTED		0x0100	/* t_xmin committed */
 #define HEAP_XMIN_INVALID		0x0200	/* t_xmin invalid/aborted */
 #define HEAP_XMAX_COMMITTED		0x0400	/* t_xmax committed */
 #define HEAP_XMAX_INVALID		0x0800	/* t_xmax invalid/aborted */
-#define HEAP_MARKED_FOR_UPDATE	0x1000	/* marked for UPDATE */
+#define HEAP_XMAX_IS_MULTI		0x1000	/* t_xmax is a MultiXactId */
 #define HEAP_UPDATED			0x2000	/* this is UPDATEd version of row */
 #define HEAP_MOVED_OFF			0x4000	/* moved to another place by
 										 * VACUUM FULL */
@@ -406,7 +410,8 @@ typedef HeapTupleData *HeapTuple;
 #define XLOG_HEAP_MOVE		0x30
 #define XLOG_HEAP_CLEAN		0x40
 #define XLOG_HEAP_NEWPAGE	0x50
-/* opcodes 0x60, 0x70 still free */
+#define XLOG_HEAP_LOCK		0x60
+/* opcode 0x70 still free */
 #define XLOG_HEAP_OPMASK	0x70
 /*
  * When we insert 1st item on new page in INSERT/UPDATE
@@ -495,5 +500,14 @@ typedef struct xl_heap_newpage
 } xl_heap_newpage;
 
 #define SizeOfHeapNewpage	(offsetof(xl_heap_newpage, blkno) + sizeof(BlockNumber))
+
+/* This is what we need to know about lock */
+typedef struct xl_heap_lock
+{
+	xl_heaptid	target;			/* locked tuple id */
+	bool		shared_lock;	/* shared or exclusive row lock? */
+} xl_heap_lock;
+
+#define SizeOfHeapLock	(offsetof(xl_heap_lock, shared_lock) + sizeof(bool))
 
 #endif   /* HTUP_H */

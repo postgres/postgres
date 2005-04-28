@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.488 2005/04/23 17:22:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.489 2005/04/28 21:47:14 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -87,7 +87,7 @@ static List *check_func_name(List *names);
 static List *extractArgTypes(List *parameters);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
-								List *sortClause, List *forUpdate,
+								List *sortClause, List *lockingClause,
 								Node *limitOffset, Node *limitCount);
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
 static Node *doNegate(Node *n);
@@ -242,7 +242,8 @@ static void doNegateFloat(Value *v);
 %type <oncommit> OnCommitOption
 %type <withoids> OptWithOids WithOidsAs
 
-%type <list>	for_update_clause opt_for_update_clause update_list
+%type <list>	for_locking_clause opt_for_locking_clause
+				update_list
 %type <boolean>	opt_all
 
 %type <node>	join_outer join_qual
@@ -4886,9 +4887,9 @@ select_with_parens:
 		;
 
 /*
- *	FOR UPDATE may be before or after LIMIT/OFFSET.
+ *	FOR UPDATE/SHARE may be before or after LIMIT/OFFSET.
  *	In <=7.2.X, LIMIT/OFFSET had to be after FOR UPDATE
- *	We now support both orderings, but prefer LIMIT/OFFSET before FOR UPDATE
+ *	We now support both orderings, but prefer LIMIT/OFFSET before FOR UPDATE/SHARE
  *	2002-08-28 bjm
  */
 select_no_parens:
@@ -4899,13 +4900,13 @@ select_no_parens:
 										NULL, NULL);
 					$$ = $1;
 				}
-			| select_clause opt_sort_clause for_update_clause opt_select_limit
+			| select_clause opt_sort_clause for_locking_clause opt_select_limit
 				{
 					insertSelectOptions((SelectStmt *) $1, $2, $3,
 										list_nth($4, 0), list_nth($4, 1));
 					$$ = $1;
 				}
-			| select_clause opt_sort_clause select_limit opt_for_update_clause
+			| select_clause opt_sort_clause select_limit opt_for_locking_clause
 				{
 					insertSelectOptions((SelectStmt *) $1, $2, $4,
 										list_nth($3, 0), list_nth($3, 1));
@@ -5146,13 +5147,14 @@ having_clause:
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-for_update_clause:
-			FOR UPDATE update_list					{ $$ = $3; }
+for_locking_clause:
+			FOR UPDATE update_list					{ $$ = lcons(makeString("for_update"), $3); }
+			| FOR SHARE update_list					{ $$ = lcons(makeString("for_share"), $3); }
 			| FOR READ ONLY							{ $$ = NULL; }
 		;
 
-opt_for_update_clause:
-			for_update_clause						{ $$ = $1; }
+opt_for_locking_clause:
+			for_locking_clause						{ $$ = $1; }
 			| /* EMPTY */							{ $$ = NULL; }
 		;
 
@@ -8379,7 +8381,7 @@ findLeftmostSelect(SelectStmt *node)
  */
 static void
 insertSelectOptions(SelectStmt *stmt,
-					List *sortClause, List *forUpdate,
+					List *sortClause, List *lockingClause,
 					Node *limitOffset, Node *limitCount)
 {
 	/*
@@ -8394,13 +8396,27 @@ insertSelectOptions(SelectStmt *stmt,
 					 errmsg("multiple ORDER BY clauses not allowed")));
 		stmt->sortClause = sortClause;
 	}
-	if (forUpdate)
+	if (lockingClause)
 	{
-		if (stmt->forUpdate)
+		Value	   *type;
+
+		if (stmt->lockedRels)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("multiple FOR UPDATE clauses not allowed")));
-		stmt->forUpdate = forUpdate;
+					 errmsg("multiple FOR UPDATE/FOR SHARE clauses not allowed")));
+
+		Assert(list_length(lockingClause) > 1);
+		/* 1st is Value node containing "for_update" or "for_share" */
+		type = (Value *) linitial(lockingClause);
+		Assert(IsA(type, String));
+		if (strcmp(strVal(type), "for_update") == 0)
+			stmt->forUpdate = true;
+		else if (strcmp(strVal(type), "for_share") == 0)
+			stmt->forUpdate = false;
+		else
+			elog(ERROR, "invalid first node in locking clause");
+
+		stmt->lockedRels = list_delete_first(lockingClause);
 	}
 	if (limitOffset)
 	{
