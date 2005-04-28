@@ -2903,3 +2903,104 @@ I regret I do not currently have time to pursue further.
 
 Best Regards, Simon Riggs
 
+From pgsql-hackers-owner+M65147=pgman=candle.pha.pa.us@postgresql.org Fri Mar 11 12:35:29 2005
+Return-path: <pgsql-hackers-owner+M65147=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id j2BIZSk26269
+	for <pgman@candle.pha.pa.us>; Fri, 11 Mar 2005 13:35:29 -0500 (EST)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 7C7DD545B4
+	for <pgman@candle.pha.pa.us>; Fri, 11 Mar 2005 18:35:25 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 31351-02 for <pgman@candle.pha.pa.us>;
+	Fri, 11 Mar 2005 18:35:25 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id D316E545A2
+	for <pgman@candle.pha.pa.us>; Fri, 11 Mar 2005 18:35:24 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id E70B65640C
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 11 Mar 2005 18:33:21 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 29957-07
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 11 Mar 2005 18:33:19 +0000 (GMT)
+Received: from hal.kabsi.at (bottom.kabsi.at [195.202.128.74])
+	by svr1.postgresql.org (Postfix) with ESMTP id 9D9EE545EE
+	for <pgsql-hackers@postgresql.org>; Fri, 11 Mar 2005 18:33:17 +0000 (GMT)
+Received: from [192.168.0.5] (h062040243020.plc.cm.kabsi.at [62.40.243.20])
+	by hal.kabsi.at (8.11.1/) with ESMTP id j2BIX7a0000748810;
+	Fri, 11 Mar 2005 19:33:07 +0100 (CET)
+Message-ID: <4231E416.4030900@cybertec.at>
+Date: Fri, 11 Mar 2005 19:31:50 +0100
+From: =?ISO-8859-1?Q?Hans-J=FCrgen_Sch=F6nig?= <postgres@cybertec.at>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.7.3) Gecko/20040922
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: Simon Riggs <simon@2ndquadrant.com>
+cc: Tom Lane <tgl@sss.pgh.pa.us>,
+   Mark Cave-Ayland <m.cave-ayland@webbased.co.uk>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Cost of XLogInsert CRC calculations
+References: <9EB50F1A91413F4FA63019487FCD251D113169@WEBBASEDDC.webbasedltd.local>	 <23031.1110206390@sss.pgh.pa.us> <1110239639.6117.197.camel@localhost.localdomain>
+In-Reply-To: <1110239639.6117.197.camel@localhost.localdomain>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+
+> One of the things I was thinking about was whether we could use up those
+> cycles more effectively. If we were to include a compression routine
+> before we calculated the CRC that would 
+> - reduce the size of the blocks to be written, hence reduce size of xlog
+> - reduce the following CRC calculation
+> 
+> I was thinking about using a simple run-length encoding to massively
+> shrink half-empty blocks with lots of zero padding, but we've already
+> got code to LZW the data down also.
+> 
+> Best Regards, Simon Riggs
+> 
+> 
+> ---------------------------(end of broadcast)---------------------------
+> TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+
+Simon,
+
+I think having a compression routine in there could make real sense.
+We have done some major I/O testing involving compression for a large 
+customer some time ago. We have seen that compressing / decompressing on 
+the fly is in MOST cases much faster than uncompressed I/O (try a simple 
+"cat file | ..." vs." zcat file.gz | ...") - the zcat version will be 
+faster on all platforms we have tried (Linux, AIX, Sun on some SAN 
+system, etc. ...).
+Also, when building up a large database within one transaction the xlog 
+will eat a lot of storage - this can be quite annoying when you have to 
+deal with a lot of data).
+Are there any technical reasons which would prevent somebody from 
+implementing compression?
+
+	Best regards,
+
+		Hans
+
+-- 
+Cybertec Geschwinde u Schoenig
+Schoengrabern 134, A-2020 Hollabrunn, Austria
+Tel: +43/660/816 40 77
+www.cybertec.at, www.postgresql.at
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faq
+
