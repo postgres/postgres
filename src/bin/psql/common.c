@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.96 2005/02/22 04:40:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.97 2005/04/28 13:09:59 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -941,11 +941,13 @@ PrintQueryResults(PGresult *results)
 bool
 SendQuery(const char *query)
 {
-	PGresult   *results;
-	TimevalStruct before,
-				after;
-	bool		OK;
-
+	PGresult 	*results;
+	TimevalStruct before, after;
+	bool OK, on_error_rollback_savepoint = false;
+	PGTransactionStatusType transaction_status;
+	static bool		on_error_rollback_warning = false;
+	const char *rollback_str;
+	
 	if (!pset.db)
 	{
 		psql_error("You are currently not connected to a database.\n");
@@ -973,7 +975,9 @@ SendQuery(const char *query)
 
 	SetCancelConn();
 
-	if (PQtransactionStatus(pset.db) == PQTRANS_IDLE &&
+	transaction_status = PQtransactionStatus(pset.db);
+
+	if (transaction_status == PQTRANS_IDLE &&
 		!GetVariableBool(pset.vars, "AUTOCOMMIT") &&
 		!command_no_begin(query))
 	{
@@ -986,6 +990,33 @@ SendQuery(const char *query)
 			return false;
 		}
 		PQclear(results);
+	}
+	else if (transaction_status == PQTRANS_INTRANS &&
+			 (rollback_str = GetVariable(pset.vars, "ON_ERROR_ROLLBACK")) != NULL &&
+			 /* !off and !interactive is 'on' */
+			 pg_strcasecmp(rollback_str, "off") != 0 &&
+			 (pset.cur_cmd_interactive ||
+			  pg_strcasecmp(rollback_str, "interactive") != 0))
+	{
+		if (on_error_rollback_warning == false && pset.sversion < 80000)
+		{
+			fprintf(stderr, _("The server version (%d) does not support savepoints for ON_ERROR_ROLLBACK.\n"),
+				pset.sversion);
+			on_error_rollback_warning = true;
+		}
+		else
+		{
+			results = PQexec(pset.db, "SAVEPOINT pg_psql_temporary_savepoint");
+			if (PQresultStatus(results) != PGRES_COMMAND_OK)
+			{
+				psql_error("%s", PQerrorMessage(pset.db));
+				PQclear(results);
+				ResetCancelConn();
+				return false;
+			}
+			PQclear(results);
+			on_error_rollback_savepoint = true;
+		}
 	}
 
 	if (pset.timing)
@@ -1004,6 +1035,41 @@ SendQuery(const char *query)
 		OK = PrintQueryResults(results);
 
 	PQclear(results);
+
+	/* If we made a temporary savepoint, possibly release/rollback */
+	if (on_error_rollback_savepoint)
+	{
+		transaction_status = PQtransactionStatus(pset.db);
+
+		/* We always rollback on an error */
+		if (transaction_status == PQTRANS_INERROR)
+			results = PQexec(pset.db, "ROLLBACK TO pg_psql_temporary_savepoint");
+		/* If they are no longer in a transaction, then do nothing */
+		else if (transaction_status != PQTRANS_INTRANS)
+			results = NULL;
+		else
+		{
+			/* 
+			 *	Do nothing if they are messing with savepoints themselves:
+			 *	If the user did RELEASE or ROLLBACK, our savepoint is gone.
+			 *	If they issued a SAVEPOINT, releasing ours would remove theirs.
+			 */
+			if (strcmp(PQcmdStatus(results), "SAVEPOINT") == 0 ||
+				strcmp(PQcmdStatus(results), "RELEASE") == 0 ||
+				strcmp(PQcmdStatus(results), "ROLLBACK") ==0)
+				results = NULL;
+			else
+				results = PQexec(pset.db, "RELEASE pg_psql_temporary_savepoint");
+		}
+		if (PQresultStatus(results) != PGRES_COMMAND_OK)
+		{
+			psql_error("%s", PQerrorMessage(pset.db));
+			PQclear(results);
+			ResetCancelConn();
+			return false;
+		}
+		PQclear(results);
+	}
 
 	/* Possible microtiming output */
 	if (OK && pset.timing)

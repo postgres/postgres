@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.134 2005/03/14 06:19:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.135 2005/04/28 13:09:59 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -2045,6 +2045,28 @@ bar
         command. This variable is only guaranteed to be valid until
         after the result of the next <acronym>SQL</acronym> command has
         been displayed.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+      <indexterm>
+       <primary>rollback</primary>
+       <secondary>psql</secondary>
+      </indexterm>
+        <term><varname>ON_ERROR_ROLLBACK</varname></term>
+        <listitem>
+        <para>
+        When <literal>on</>, if a statement in a transaction block
+        generates an error, the error is ignored and the transaction
+        continues. When <literal>interactive</>, such errors are only
+        ignored in interactive sessions, and not when reading script
+        files. When <literal>off</> (the default), a statement in a
+        transaction block that generates an error aborts the entire
+        transaction. The on_error_rollback-on mode works by issuing an
+        implicit <command>SAVEPONT</> for you, just before each command
+        that is in a transaction block, and rolls back to the savepoint
+        on error.
         </para>
         </listitem>
       </varlistentry>
