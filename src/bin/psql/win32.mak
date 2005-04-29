@@ -26,6 +26,14 @@ INTDIR=.\Release
 
 REFDOCDIR= ../../../doc/src/sgml/ref
 
+CPP_PROJ=/nologo $(OPT) /W3 /GX /D "WIN32" $(DEBUGDEF) /D "_CONSOLE" /D\
+ "_MBCS" /Fp"$(INTDIR)\psql.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c \
+ /I ..\..\include /I ..\..\interfaces\libpq /I ..\..\include\port\win32 \
+ /D "HAVE_STRDUP" /D "FRONTEND"
+
+CPP_OBJS=$(INTDIR)/
+CPP_SBRS=.
+
 ALL : sql_help.h psqlscan.c "..\..\port\pg_config_paths.h" "$(OUTDIR)\psql.exe"
 
 CLEAN :
@@ -55,28 +63,6 @@ CLEAN :
 	-@erase "$(OUTDIR)\psql.exe"
 	-@erase "$(INTDIR)\..\..\port\pg_config_paths.h"
 
-"..\..\port\pg_config_paths.h": win32.mak
-	echo #define PGBINDIR "" >$@
-	echo #define PGSHAREDIR "" >>$@
-	echo #define SYSCONFDIR "" >>$@
-	echo #define INCLUDEDIR "" >>$@
-	echo #define PKGINCLUDEDIR "" >>$@
-	echo #define INCLUDEDIRSERVER "" >>$@
-	echo #define LIBDIR "" >>$@
-	echo #define PKGLIBDIR "" >>$@
-	echo #define LOCALEDIR "" >>$@
-
-"$(OUTDIR)" :
-    if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
-
-CPP_PROJ=/nologo $(OPT) /W3 /GX /D "WIN32" $(DEBUGDEF) /D "_CONSOLE" /D\
- "_MBCS" /Fp"$(INTDIR)\psql.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c \
- /I ..\..\include /I ..\..\interfaces\libpq /I ..\..\include\port\win32 \
- /D "HAVE_STRDUP" /D "FRONTEND"
-
-CPP_OBJS=$(INTDIR)/
-CPP_SBRS=.
-
 LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  advapi32.lib shfolder.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib\
@@ -104,12 +90,27 @@ LINK32_OBJS= \
 	"$(INTDIR)\getopt_long.obj" \
 	"$(INTDIR)\path.obj" \
 	"$(INTDIR)\pgstrcasecmp.obj" \
-	"$(INTDIR)\sprompt.obj" \
+	"$(INTDIR)\sprompt.obj"
+
 !IFDEF DEBUG
-	"..\..\interfaces\libpq\Debug\libpqddll.lib"
+LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Debug\libpqddll.lib"
 !ELSE
-	"..\..\interfaces\libpq\Release\libpqdll.lib"
+LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Release\libpqdll.lib"
 !ENDIF
+
+"..\..\port\pg_config_paths.h": win32.mak
+	echo \#define PGBINDIR "" >$@
+	echo \#define PGSHAREDIR "" >>$@
+	echo \#define SYSCONFDIR "" >>$@
+	echo \#define INCLUDEDIR "" >>$@
+	echo \#define PKGINCLUDEDIR "" >>$@
+	echo \#define INCLUDEDIRSERVER "" >>$@
+	echo \#define LIBDIR "" >>$@
+	echo \#define PKGLIBDIR "" >>$@
+	echo \#define LOCALEDIR "" >>$@
+
+"$(OUTDIR)" :
+    if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
 "$(OUTDIR)\psql.exe" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS)
     $(LINK32) @<<
@@ -121,17 +122,17 @@ LINK32_OBJS= \
     $(CPP_PROJ) ..\..\port\exec.c
 <<
 
-"$(OUTDIR)\getopt.obj" : "$(OUTDIR)" ..\..\port\getopt.c
+"$(INTDIR)\getopt.obj" : "$(INTDIR)" ..\..\port\getopt.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\getopt.c
 <<
 
-"$(OUTDIR)\getopt_long.obj" : "$(OUTDIR)" ..\..\port\getopt_long.c
+"$(INTDIR)\getopt_long.obj" : "$(INTDIR)" ..\..\port\getopt_long.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\getopt_long.c
 <<
 
-"$(OUTDIR)\path.obj" : "$(OUTDIR)" ..\..\port\path.c
+"$(INTDIR)\path.obj" : "$(INTDIR)" ..\..\port\path.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\path.c
 <<
@@ -141,23 +142,20 @@ LINK32_OBJS= \
     $(CPP_PROJ) ..\..\port\pgstrcasecmp.c
 <<
 
-"$(OUTDIR)\sprompt.obj" : "$(OUTDIR)" ..\..\port\sprompt.c
+"$(INTDIR)\sprompt.obj" : "$(INTDIR)" ..\..\port\sprompt.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\sprompt.c
 <<
+
+"sql_help.h" : create_help.pl
+        $(PERL) create_help.pl $(REFDOCDIR) $@
+	
+psqlscan.c : psqlscan.l
+	$(FLEX) -Cfe -opsqlscan.c psqlscan.l
 
 .c{$(CPP_OBJS)}.obj::
    $(CPP) @<<
    $(CPP_PROJ) $< 
 <<
 
-.cpp{$(CPP_OBJS)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
 
-sql_help.h : create_help.pl
-        $(PERL) create_help.pl $(REFDOCDIR) $@
-	
-psqlscan.c: psqlscan.l
-	$(FLEX) -Cfe -opsqlscan.c psqlscan.l

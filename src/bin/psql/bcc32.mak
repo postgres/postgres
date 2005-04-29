@@ -1,6 +1,17 @@
 # Makefile for Borland C++ 5.5
+
 # Borland C++ base install directory goes here
-# BCB=d:\Borland\Bcc55
+# BCB=c:\Borland\Bcc55
+
+!IF "$(BCB)" == ""
+!MESSAGE You must edit bcc32.mak and define BCB at the top
+!ERROR missing BCB
+!ENDIF
+
+!IF "$(__NMAKE__)" == ""
+!MESSAGE You must use the -N compatibility flag, e.g. make -N -f bcc32.make
+!ERROR missing -N
+!ENDIF
 
 !MESSAGE Building PSQL.EXE ...
 !MESSAGE
@@ -19,7 +30,7 @@ CFG=Release
 !MESSAGE You can specify a configuration when running MAKE
 !MESSAGE by defining the macro CFG on the command line. For example:
 !MESSAGE
-!MESSAGE make  -DCFG=[Release | Debug] /f bcc32.mak
+!MESSAGE make -N -DCFG=[Release | Debug] -f bcc32.mak
 !MESSAGE
 !MESSAGE Possible choices for configuration are:
 !MESSAGE
@@ -49,10 +60,29 @@ INTDIR=.\Release
 !endif
 REFDOCDIR=../../../doc/src/sgml/ref
 
+CPP_PROJ = -I$(BCB)\include;..\..\include;..\..\interfaces\libpq;..\..\include\port\win32 \
+           -c -D$(USERDEFINES) -DFRONTEND -n"$(INTDIR)" -tWM -tWC -q -5 -a8 -pc -X -w-use \
+	   -w-par -w-pia -w-csu -w-aus -w-ccc
+
+!IFDEF DEBUG
+CPP_PROJ  	= $(CPP_PROJ) -Od -r- -k -v -y -vi- -D_DEBUG
+LIBPG_DIR 	= Debug
+!ELSE
+CPP_PROJ	= $(CPP_PROJ) -O -Oi -OS -DNDEBUG
+LIBPG_DIR 	= Release
+!ENDIF
+
+!IFDEF DLL_LIBS
+CPP_PROJ	= $(CPP_PROJ) -D_RTLDLL
+LIBRARIES	= cw32mti.lib ..\..\interfaces\libpq\$(LIBPG_DIR)\blibpqdll.lib
+!ELSE
+CPP_PROJ	= $(CPP_PROJ) -DBCC32_STATIC
+LIBRARIES	= cw32mt.lib ..\..\interfaces\libpq\$(LIBPG_DIR)\blibpq.lib
+!ENDIF
+
 .path.obj = $(INTDIR)
 
-.c.obj:
-	$(CPP) -o"$(INTDIR)\$&" $(CPP_PROJ) $<
+USERDEFINES = WIN32;_CONSOLE;_MBCS;HAVE_STRDUP
 
 ALL : sql_help.h psqlscan.c "..\..\port\pg_config_paths.h" "$(OUTDIR)\psql.exe"
 
@@ -86,68 +116,51 @@ CLEAN :
 	-@erase "$(OUTDIR)\psql.exe"
 	-@erase "$(INTDIR)\..\..\port\pg_config_paths.h"
 
+LINK32=ilink32.exe
+LINK32_FLAGS=-L$(BCB)\lib;.\$(LIBPG_DIR) -x -v
+LINK32_OBJS= \
+	"$(INTDIR)\command.obj" \
+	"$(INTDIR)\common.obj" \
+	"$(INTDIR)\copy.obj" \
+	"$(INTDIR)\describe.obj" \
+	"$(INTDIR)\help.obj" \
+	"$(INTDIR)\input.obj" \
+	"$(INTDIR)\large_obj.obj" \
+	"$(INTDIR)\mainloop.obj" \
+	"$(INTDIR)\mbprint.obj" \
+	"$(INTDIR)\print.obj" \
+	"$(INTDIR)\prompt.obj" \
+	"$(INTDIR)\psqlscan.obj" \
+	"$(INTDIR)\startup.obj" \
+	"$(INTDIR)\stringutils.obj" \
+	"$(INTDIR)\tab-complete.obj" \
+	"$(INTDIR)\variables.obj" \
+	"$(INTDIR)\exec.obj" \
+	"$(INTDIR)\getopt.obj" \
+	"$(INTDIR)\getopt_long.obj" \
+	"$(INTDIR)\path.obj" \
+	"$(INTDIR)\pgstrcasecmp.obj" \
+	"$(INTDIR)\sprompt.obj"
+
+!IFDEF DEBUG
+LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Debug\blibpqddll.lib"
+!ELSE
+LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Release\blibpqdll.lib"
+!ENDIF
+
 "..\..\port\pg_config_paths.h": win32.mak
-	echo #define PGBINDIR "" >$@
-	echo #define PGSHAREDIR "" >>$@
-	echo #define SYSCONFDIR "" >>$@
-	echo #define INCLUDEDIR "" >>$@
-	echo #define PKGINCLUDEDIR "" >>$@
-	echo #define INCLUDEDIRSERVER "" >>$@
-	echo #define LIBDIR "" >>$@
-	echo #define PKGLIBDIR "" >>$@
-	echo #define LOCALEDIR "" >>$@
+	echo \#define PGBINDIR "" >$@
+	echo \#define PGSHAREDIR "" >>$@
+	echo \#define SYSCONFDIR "" >>$@
+	echo \#define INCLUDEDIR "" >>$@
+	echo \#define PKGINCLUDEDIR "" >>$@
+	echo \#define INCLUDEDIRSERVER "" >>$@
+	echo \#define LIBDIR "" >>$@
+	echo \#define PKGLIBDIR "" >>$@
+	echo \#define LOCALEDIR "" >>$@
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
-
-USERDEFINES = WIN32;_CONSOLE;_MBCS;HAVE_STRDUP
-
-# ---------------------------------------------------------------------------
-CPP_PROJ = -I$(BCB)\include;..\..\include;..\..\interfaces\libpq;..\..\include\port\win32 \
-           -c -D$(USERDEFINES) -DFRONTEND -tWM -tWC -q -5 -a8 -pc -X -w-use -w-par -w-pia \
-	   -w-csu -w-aus -w-ccc
-
-!IFDEF DEBUG
-CPP_PROJ  	= $(CPP_PROJ) -Od -r- -k -v -y -vi- -D_DEBUG
-LIBPG_DIR 	= Debug
-!ELSE
-CPP_PROJ	= $(CPP_PROJ) -O -Oi -OS -DNDEBUG
-LIBPG_DIR 	= Release
-!ENDIF
-
-!IFDEF DLL_LIBS
-CPP_PROJ	= $(CPP_PROJ) -D_RTLDLL
-LIBRARIES	= cw32mti.lib ..\..\interfaces\libpq\$(LIBPG_DIR)\blibpqdll.lib
-!ELSE
-CPP_PROJ	= $(CPP_PROJ) -DBCC32_STATIC
-LIBRARIES	= cw32mt.lib ..\..\interfaces\libpq\$(LIBPG_DIR)\blibpq.lib
-!ENDIF
-
-LINK32=ilink32.exe
-LINK32_FLAGS=-L$(BCB)\lib;.\$(LIBPG_DIR) -x -v 
-LINK32_OBJS= \
-	command.obj \
-	common.obj \
-	copy.obj \
-	describe.obj \
-	help.obj \
-	input.obj \
-	large_obj.obj \
-	mainloop.obj \
-	mbprint.obj
-	print.obj \
-	prompt.obj \
-	startup.obj \
-	stringutils.obj \
-	tab-complete.obj \
-	variables.obj \
-	exec.obj \
-	getopt.obj \
-	getopt_long.obj \
-	path.obj \
-	pgstrcasecmp.obj \
-	sprompt.obj \
-	
 
 "$(OUTDIR)\psql.exe" : "$(OUTDIR)" $(LINK32_OBJS)
 	$(LINK32) @&&!
@@ -157,15 +170,42 @@ LINK32_OBJS= \
 	import32.lib $(LIBRARIES),,
 !
 
-exec.obj : "$(OUTDIR)" ..\..\port\exec.c
-getopt.obj : "$(OUTDIR)" ..\..\port\getopt.c
-getopt_long.obj : "$(OUTDIR)" ..\..\port\getopt_long.c
-path.obj : "$(OUTDIR)" ..\..\port\path.c
-pgstrcasecmp.obj : "$(OUTDIR)" ..\..\port\pgstrcasecmp.c
-sprompt.obj : "$(OUTDIR)" ..\..\port\sprompt.c
+"$(INTDIR)\exec.obj" : ..\..\port\exec.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\exec.c
+<<
+
+"$(INTDIR)\getopt.obj" : "$(INTDIR)" ..\..\port\getopt.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\getopt.c
+<<
+
+"$(INTDIR)\getopt_long.obj" : "$(INTDIR)" ..\..\port\getopt_long.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\getopt_long.c
+<<
+
+"$(INTDIR)\path.obj" : "$(INTDIR)" ..\..\port\path.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\path.c
+<<
+
+"$(INTDIR)\pgstrcasecmp.obj" : ..\..\port\pgstrcasecmp.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\pgstrcasecmp.c
+<<
+
+"$(INTDIR)\sprompt.obj" : "$(INTDIR)" ..\..\port\sprompt.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\sprompt.c
+<<
 
 "sql_help.h": create_help.pl 
        $(PERL) create_help.pl $(REFDOCDIR) $@
 
 psqlscan.c : psqlscan.l
 	$(FLEX) -Cfe -opsqlscan.c psqlscan.l
+
+.c.obj:
+	$(CPP) -o"$(INTDIR)\$&" $(CPP_PROJ) $<
+

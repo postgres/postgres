@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.166 2004/12/31 22:03:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.167 2005/04/29 13:42:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2294,7 +2294,7 @@ PQisnonblocking(const PGconn *conn)
 int
 PQflush(PGconn *conn)
 {
-	return (pqFlush(conn));
+	return pqFlush(conn);
 }
 
 

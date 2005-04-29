@@ -3,10 +3,14 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.142 2005/03/16 21:27:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.143 2005/04/29 13:42:20 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
+
+#ifdef WIN32_CLIENT_ONLY	/* needed for BCC */
+#undef mkdir
+#endif
 
 #include <errno.h>
 #include <ctype.h>
