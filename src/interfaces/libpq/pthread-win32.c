@@ -5,14 +5,14 @@
 *
 * Copyright (c) 2004-2005, PostgreSQL Global Development Group
 * IDENTIFICATION
-*	$PostgreSQL: pgsql/src/interfaces/libpq/pthread-win32.c,v 1.4 2005/01/01 20:44:31 tgl Exp $
+*	$PostgreSQL: pgsql/src/interfaces/libpq/pthread-win32.c,v 1.4.4.1 2005/04/29 13:42:24 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
 
 
 #include <windows.h>
-#include <pthread.h>
+#include "pthread.h"
 
 HANDLE
 pthread_self()
