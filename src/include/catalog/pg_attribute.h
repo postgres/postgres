@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.116 2005/04/14 01:38:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.117 2005/04/29 22:28:24 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -460,15 +460,5 @@ DATA(insert ( 1259 tableoid			26 0  4  -7 0 -1 -1 t p i t f f t 0));
 { 0, {"indclass"},			30, -1, -1, 8, 1, -1, -1, false, 'p', 'i', true, false, false, true, 0 }, \
 { 0, {"indexprs"},			25, -1, -1, 9, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
 { 0, {"indpred"},			25, -1, -1, 10, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }
-
-/* ----------------
- *		pg_xactlock - this is not a real relation, but is a placeholder
- *				  to allow a relation OID to be used for transaction
- *				  waits.  We need a pg_xactlock entry in pg_class only to
- *				  ensure that that OID can never be allocated to a real
- *				  table; and this entry is just to link to that one.
- * ----------------
- */
-DATA(insert ( 376 xactlockfoo		26 0  4   1 0 -1 -1 t p i t f f t 0));
 
 #endif   /* PG_ATTRIBUTE_H */

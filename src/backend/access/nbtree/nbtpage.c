@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.82 2005/03/22 06:17:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.83 2005/04/29 22:28:24 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -487,7 +487,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 		needLock = !RELATION_IS_LOCAL(rel);
 
 		if (needLock)
-			LockPage(rel, 0, ExclusiveLock);
+			LockRelationForExtension(rel, ExclusiveLock);
 
 		buf = ReadBuffer(rel, P_NEW);
 
@@ -496,7 +496,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 		 * to extend the relation some more.
 		 */
 		if (needLock)
-			UnlockPage(rel, 0, ExclusiveLock);
+			UnlockRelationForExtension(rel, ExclusiveLock);
 
 		/* Acquire appropriate buffer lock on new page */
 		LockBuffer(buf, access);

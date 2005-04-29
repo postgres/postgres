@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.15 2004/08/27 17:07:41 tgl Exp $
+$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.16 2005/04/29 22:28:24 tgl Exp $
 
 
 LOCKING OVERVIEW
@@ -74,30 +74,14 @@ The lock manager's LOCK objects contain:
 
 tag -
     The key fields that are used for hashing locks in the shared memory
-    lock hash table.  This is declared as a separate struct to ensure that
-    we always zero out the correct number of bytes.  It is critical that
-    any alignment-padding bytes the compiler might insert in the struct
-    be zeroed out, else the hash computation will be random.
-
-    tag.relId -
-	Uniquely identifies the relation that the lock corresponds to.
-    
-    tag.dbId -
-	Uniquely identifies the database in which the relation lives.  If
-	this is a shared system relation (e.g. pg_database) the dbId must
-	be set to 0.
-
-    tag.objId -
-	Uniquely identifies the block/page within the relation and the
-	tuple within the block.  If we are setting a table level lock
-	both the blockId and tupleId (in an item pointer this is called
-	the position) are set to invalid, if it is a page level lock the
-	blockId is valid, while the tupleId is still invalid.  Finally if
-	this is a tuple level lock (we currently never do this) then both
-	the blockId and tupleId are set to valid specifications.  This is
-	how we get the appearance of a multi-level lock table while using
-	only a single table (see Gray's paper on 2 phase locking if
-	you are puzzled about how multi-level lock tables work).
+    lock hash table.  The contents of the tag essentially define an
+    individual lockable object.  See include/storage/lock.h for details
+    about the supported types of lockable objects.  This is declared as
+    a separate struct to ensure that we always zero out the correct number
+    of bytes.  It is critical that any alignment-padding bytes the compiler
+    might insert in the struct be zeroed out, else the hash computation
+    will be random.  (Currently, we are careful to define struct LOCKTAG
+    so that there are no padding bytes.)
 
 grantMask -
     This bitmask indicates what types of locks are currently held on the

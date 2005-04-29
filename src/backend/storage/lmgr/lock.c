@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.149 2005/04/13 18:54:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.150 2005/04/29 22:28:24 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -108,10 +108,11 @@ inline static bool
 LOCK_DEBUG_ENABLED(const LOCK *lock)
 {
 	return
-		(((LOCK_LOCKMETHOD(*lock) == DEFAULT_LOCKMETHOD && Trace_locks)
-	   || (LOCK_LOCKMETHOD(*lock) == USER_LOCKMETHOD && Trace_userlocks))
-		 && (lock->tag.relId >= (Oid) Trace_lock_oidmin))
-		|| (Trace_lock_table && (lock->tag.relId == Trace_lock_table));
+		(((Trace_locks && LOCK_LOCKMETHOD(*lock) == DEFAULT_LOCKMETHOD)
+		  || (Trace_userlocks && LOCK_LOCKMETHOD(*lock) == USER_LOCKMETHOD))
+		 && ((Oid) lock->tag.locktag_field2 >= (Oid) Trace_lock_oidmin))
+		|| (Trace_lock_table
+			&& (lock->tag.locktag_field2 == Trace_lock_table));
 }
 
 
@@ -120,12 +121,14 @@ LOCK_PRINT(const char *where, const LOCK *lock, LOCKMODE type)
 {
 	if (LOCK_DEBUG_ENABLED(lock))
 		elog(LOG,
-			 "%s: lock(%lx) tbl(%d) rel(%u) db(%u) obj(%u) grantMask(%x) "
+			 "%s: lock(%lx) id(%u,%u,%u,%u,%u,%u) grantMask(%x) "
 			 "req(%d,%d,%d,%d,%d,%d,%d)=%d "
 			 "grant(%d,%d,%d,%d,%d,%d,%d)=%d wait(%d) type(%s)",
 			 where, MAKE_OFFSET(lock),
-			 lock->tag.lockmethodid, lock->tag.relId, lock->tag.dbId,
-			 lock->tag.objId.blkno, lock->grantMask,
+			 lock->tag.locktag_field1, lock->tag.locktag_field2,
+			 lock->tag.locktag_field3, lock->tag.locktag_field4,
+			 lock->tag.locktag_type, lock->tag.locktag_lockmethodid,
+			 lock->grantMask,
 			 lock->requested[1], lock->requested[2], lock->requested[3],
 			 lock->requested[4], lock->requested[5], lock->requested[6],
 			 lock->requested[7], lock->nRequested,
@@ -139,14 +142,9 @@ LOCK_PRINT(const char *where, const LOCK *lock, LOCKMODE type)
 inline static void
 PROCLOCK_PRINT(const char *where, const PROCLOCK *proclockP)
 {
-	if (
-		(((PROCLOCK_LOCKMETHOD(*proclockP) == DEFAULT_LOCKMETHOD && Trace_locks)
-		  || (PROCLOCK_LOCKMETHOD(*proclockP) == USER_LOCKMETHOD && Trace_userlocks))
-		 && (((LOCK *) MAKE_PTR(proclockP->tag.lock))->tag.relId >= (Oid) Trace_lock_oidmin))
-		|| (Trace_lock_table && (((LOCK *) MAKE_PTR(proclockP->tag.lock))->tag.relId == Trace_lock_table))
-		)
+	if (LOCK_DEBUG_ENABLED((LOCK *) MAKE_PTR(proclockP->tag.lock)))
 		elog(LOG,
-		"%s: proclock(%lx) lock(%lx) tbl(%d) proc(%lx) xid(%u) hold(%x)",
+		"%s: proclock(%lx) lock(%lx) method(%u) proc(%lx) xid(%u) hold(%x)",
 			 where, MAKE_OFFSET(proclockP), proclockP->tag.lock,
 			 PROCLOCK_LOCKMETHOD(*(proclockP)),
 			 proclockP->tag.proc, proclockP->tag.xid,
@@ -346,13 +344,9 @@ LockMethodTableInit(const char *tabName,
  * LockMethodTableRename -- allocate another lockmethod ID to the same
  *		lock table.
  *
- * NOTES: Both the lock module and the lock chain (lchain.c)
- *		module use table id's to distinguish between different
- *		kinds of locks.  Short term and long term locks look
- *		the same to the lock table, but are handled differently
- *		by the lock chain manager.	This function allows the
- *		client to use different lockmethods when acquiring/releasing
- *		short term and long term locks, yet store them all in one hashtable.
+ * NOTES: This function makes it possible to have different lockmethodids,
+ *		and hence different locking semantics, while still storing all
+ *		the data in one shared-memory hashtable.
  */
 
 LOCKMETHODID
@@ -404,33 +398,16 @@ LockMethodTableRename(LOCKMETHODID lockmethodid)
  *		the lock.  While the lock is active other clients can still
  *		read and write the tuple but they can be aware that it has
  *		been locked at the application level by someone.
- *		User locks use lock tags made of an uint16 and an uint32, for
- *		example 0 and a tuple oid, or any other arbitrary pair of
- *		numbers following a convention established by the application.
- *		In this sense tags don't refer to tuples or database entities.
+ *
  *		User locks and normal locks are completely orthogonal and
- *		they don't interfere with each other, so it is possible
- *		to acquire a normal lock on an user-locked tuple or user-lock
- *		a tuple for which a normal write lock already exists.
+ *		they don't interfere with each other.
+ *
  *		User locks are always non blocking, therefore they are never
  *		acquired if already held by another process.  They must be
  *		released explicitly by the application but they are released
  *		automatically when a backend terminates.
  *		They are indicated by a lockmethod 2 which is an alias for the
- *		normal lock table, and are distinguished from normal locks
- *		by the following differences:
- *
- *										normal lock		user lock
- *
- *		lockmethodid					1				2
- *		tag.dbId						database oid	database oid
- *		tag.relId						rel oid or 0	0
- *		tag.objId						block id		lock id2
- *										or xact id
- *		tag.offnum						0				lock id1
- *		proclock.xid					xid or 0		0
- *		persistence						transaction		user or backend
- *										or backend
+ *		normal lock table.
  *
  *		The lockmode parameter can have the same values for normal locks
  *		although probably only WRITE_LOCK can have some practical use.
@@ -456,13 +433,14 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	int			i;
 
 #ifdef LOCK_DEBUG
-	if (lockmethodid == USER_LOCKMETHOD && Trace_userlocks)
-		elog(LOG, "LockAcquire: user lock [%u] %s",
-			 locktag->objId.blkno, lock_mode_names[lockmode]);
+	if (Trace_userlocks && lockmethodid == USER_LOCKMETHOD)
+		elog(LOG, "LockAcquire: user lock [%u,%u] %s",
+			 locktag->locktag_field1, locktag->locktag_field2,
+			 lock_mode_names[lockmode]);
 #endif
 
-	/* ???????? This must be changed when short term locks will be used */
-	locktag->lockmethodid = lockmethodid;
+	/* ugly */
+	locktag->locktag_lockmethodid = lockmethodid;
 
 	Assert(lockmethodid < NumLockMethods);
 	lockMethodTable = LockMethods[lockmethodid];
@@ -1231,12 +1209,14 @@ LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	bool		wakeupNeeded;
 
 #ifdef LOCK_DEBUG
-	if (lockmethodid == USER_LOCKMETHOD && Trace_userlocks)
-		elog(LOG, "LockRelease: user lock tag [%u] %d", locktag->objId.blkno, lockmode);
+	if (Trace_userlocks && lockmethodid == USER_LOCKMETHOD)
+		elog(LOG, "LockRelease: user lock [%u,%u] %s",
+			 locktag->locktag_field1, locktag->locktag_field2,
+			 lock_mode_names[lockmode]);
 #endif
 
-	/* ???????? This must be changed when short term locks will be used */
-	locktag->lockmethodid = lockmethodid;
+	/* ugly */
+	locktag->locktag_lockmethodid = lockmethodid;
 
 	Assert(lockmethodid < NumLockMethods);
 	lockMethodTable = LockMethods[lockmethodid];

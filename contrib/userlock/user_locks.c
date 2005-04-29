@@ -18,16 +18,20 @@
 #include "user_locks.h"
 
 
+#define SET_LOCKTAG_USERLOCK(locktag,id1,id2) \
+	((locktag).locktag_field1 = (id1), \
+	 (locktag).locktag_field2 = (id2), \
+	 (locktag).locktag_field3 = MyDatabaseId, \
+	 (locktag).locktag_field4 = 0, \
+	 (locktag).locktag_type = LOCKTAG_USERLOCK)
+
+
 int
 user_lock(uint32 id1, uint32 id2, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	memset(&tag, 0, sizeof(LOCKTAG));
-	tag.dbId = MyDatabaseId;
-	tag.relId = 0;
-	tag.objId.blkno = (BlockNumber) id2;
-	tag.offnum = (OffsetNumber) (id1 & 0xffff);
+	SET_LOCKTAG_USERLOCK(tag, id1, id2);
 
 	return LockAcquire(USER_LOCKMETHOD, &tag, InvalidTransactionId,
 					   lockmode, true);
@@ -38,11 +42,7 @@ user_unlock(uint32 id1, uint32 id2, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	memset(&tag, 0, sizeof(LOCKTAG));
-	tag.dbId = MyDatabaseId;
-	tag.relId = 0;
-	tag.objId.blkno = (BlockNumber) id2;
-	tag.offnum = (OffsetNumber) (id1 & 0xffff);
+	SET_LOCKTAG_USERLOCK(tag, id1, id2);
 
 	return LockRelease(USER_LOCKMETHOD, &tag, InvalidTransactionId, lockmode);
 }
@@ -77,13 +77,3 @@ user_unlock_all(void)
 {
 	return LockReleaseAll(USER_LOCKMETHOD, true);
 }
-
-/* end of file */
-
-/*
- * Local Variables:
- *	tab-width: 4
- *	c-indent-level: 4
- *	c-basic-offset: 4
- * End:
- */

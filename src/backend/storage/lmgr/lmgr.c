@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.71 2004/12/31 22:01:05 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.72 2005/04/29 22:28:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,10 @@
 #include "utils/inval.h"
 
 
-static LOCKMASK LockConflicts[] = {
+/*
+ * This conflict table defines the semantics of the various lock modes.
+ */
+static const LOCKMASK LockConflicts[] = {
 	0,
 
 	/* AccessShareLock */
@@ -69,6 +72,7 @@ static LOCKMASK LockConflicts[] = {
 
 static LOCKMETHODID LockTableId = INVALID_LOCKMETHOD;
 
+
 /*
  * Create the lock table described by LockConflicts
  */
@@ -96,11 +100,11 @@ InitLockTable(int maxBackends)
 #ifdef USER_LOCKS
 
 	/*
-	 * Allocate another tableId for long-term locks
+	 * Allocate another tableId for user locks (same shared hashtable though)
 	 */
 	LongTermTableId = LockMethodTableRename(LockTableId);
 	if (!LockMethodIsValid(LongTermTableId))
-		elog(ERROR, "could not rename long-term lock table");
+		elog(ERROR, "could not rename user lock table");
 	Assert(LongTermTableId == USER_LOCKMETHOD);
 #endif
 }
@@ -133,10 +137,9 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = relation->rd_lockInfo.lockRelId.relId;
-	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
-	tag.objId.blkno = InvalidBlockNumber;
+	SET_LOCKTAG_RELATION(tag,
+						 relation->rd_lockInfo.lockRelId.dbId,
+						 relation->rd_lockInfo.lockRelId.relId);
 
 	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
 					 lockmode, false))
@@ -167,10 +170,9 @@ ConditionalLockRelation(Relation relation, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = relation->rd_lockInfo.lockRelId.relId;
-	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
-	tag.objId.blkno = InvalidBlockNumber;
+	SET_LOCKTAG_RELATION(tag,
+						 relation->rd_lockInfo.lockRelId.dbId,
+						 relation->rd_lockInfo.lockRelId.relId);
 
 	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
 					 lockmode, true))
@@ -197,10 +199,9 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = relation->rd_lockInfo.lockRelId.relId;
-	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
-	tag.objId.blkno = InvalidBlockNumber;
+	SET_LOCKTAG_RELATION(tag,
+						 relation->rd_lockInfo.lockRelId.dbId,
+						 relation->rd_lockInfo.lockRelId.relId);
 
 	LockRelease(LockTableId, &tag, GetTopTransactionId(), lockmode);
 }
@@ -222,10 +223,7 @@ LockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = relid->relId;
-	tag.dbId = relid->dbId;
-	tag.objId.blkno = InvalidBlockNumber;
+	SET_LOCKTAG_RELATION(tag, relid->dbId, relid->relId);
 
 	if (!LockAcquire(LockTableId, &tag, InvalidTransactionId,
 					 lockmode, false))
@@ -240,30 +238,65 @@ UnlockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = relid->relId;
-	tag.dbId = relid->dbId;
-	tag.objId.blkno = InvalidBlockNumber;
+	SET_LOCKTAG_RELATION(tag, relid->dbId, relid->relId);
 
 	LockRelease(LockTableId, &tag, InvalidTransactionId, lockmode);
+}
+
+/*
+ *		LockRelationForExtension
+ *
+ * This lock tag is used to interlock addition of pages to relations.
+ * We need such locking because bufmgr/smgr definition of P_NEW is not
+ * race-condition-proof.
+ *
+ * We assume the caller is already holding some type of regular lock on
+ * the relation, so no AcceptInvalidationMessages call is needed here.
+ */
+void
+LockRelationForExtension(Relation relation, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_RELATION_EXTEND(tag,
+								relation->rd_lockInfo.lockRelId.dbId,
+								relation->rd_lockInfo.lockRelId.relId);
+
+	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
+					 lockmode, false))
+		elog(ERROR, "LockAcquire failed");
+}
+
+/*
+ *		UnlockRelationForExtension
+ */
+void
+UnlockRelationForExtension(Relation relation, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_RELATION_EXTEND(tag,
+								relation->rd_lockInfo.lockRelId.dbId,
+								relation->rd_lockInfo.lockRelId.relId);
+
+	LockRelease(LockTableId, &tag, GetTopTransactionId(), lockmode);
 }
 
 /*
  *		LockPage
  *
  * Obtain a page-level lock.  This is currently used by some index access
- * methods to lock index pages.  For heap relations, it is used only with
- * blkno == 0 to signify locking the relation for extension.
+ * methods to lock individual index pages.
  */
 void
 LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = relation->rd_lockInfo.lockRelId.relId;
-	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
-	tag.objId.blkno = blkno;
+	SET_LOCKTAG_PAGE(tag,
+					 relation->rd_lockInfo.lockRelId.dbId,
+					 relation->rd_lockInfo.lockRelId.relId,
+					 blkno);
 
 	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
 					 lockmode, false))
@@ -281,10 +314,10 @@ ConditionalLockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = relation->rd_lockInfo.lockRelId.relId;
-	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
-	tag.objId.blkno = blkno;
+	SET_LOCKTAG_PAGE(tag,
+					 relation->rd_lockInfo.lockRelId.dbId,
+					 relation->rd_lockInfo.lockRelId.relId,
+					 blkno);
 
 	return LockAcquire(LockTableId, &tag, GetTopTransactionId(),
 					   lockmode, true);
@@ -298,10 +331,10 @@ UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
-	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = relation->rd_lockInfo.lockRelId.relId;
-	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
-	tag.objId.blkno = blkno;
+	SET_LOCKTAG_PAGE(tag,
+					 relation->rd_lockInfo.lockRelId.dbId,
+					 relation->rd_lockInfo.lockRelId.relId,
+					 blkno);
 
 	LockRelease(LockTableId, &tag, GetTopTransactionId(), lockmode);
 }
@@ -318,10 +351,7 @@ XactLockTableInsert(TransactionId xid)
 {
 	LOCKTAG		tag;
 
-	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = XactLockTableId;
-	tag.dbId = InvalidOid;		/* xids are globally unique */
-	tag.objId.xid = xid;
+	SET_LOCKTAG_TRANSACTION(tag, xid);
 
 	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
 					 ExclusiveLock, false))
@@ -341,10 +371,7 @@ XactLockTableDelete(TransactionId xid)
 {
 	LOCKTAG		tag;
 
-	MemSet(&tag, 0, sizeof(tag));
-	tag.relId = XactLockTableId;
-	tag.dbId = InvalidOid;		/* xids are globally unique */
-	tag.objId.xid = xid;
+	SET_LOCKTAG_TRANSACTION(tag, xid);
 
 	LockRelease(LockTableId, &tag, GetTopTransactionId(), ExclusiveLock);
 }
@@ -372,10 +399,7 @@ XactLockTableWait(TransactionId xid)
 		Assert(TransactionIdIsValid(xid));
 		Assert(!TransactionIdEquals(xid, myxid));
 
-		MemSet(&tag, 0, sizeof(tag));
-		tag.relId = XactLockTableId;
-		tag.dbId = InvalidOid;
-		tag.objId.xid = xid;
+		SET_LOCKTAG_TRANSACTION(tag, xid);
 
 		if (!LockAcquire(LockTableId, &tag, myxid, ShareLock, false))
 			elog(ERROR, "LockAcquire failed");

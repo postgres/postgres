@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.16 2005/01/01 05:43:07 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.17 2005/04/29 22:28:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,20 +155,24 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, ' ', sizeof(nulls));
 
-		if (lock->tag.relId == XactLockTableId && lock->tag.dbId == 0)
+		switch (lock->tag.locktag_type)
 		{
-			/* Lock is for transaction ID */
-			nulls[0] = 'n';
-			nulls[1] = 'n';
-			values[2] = TransactionIdGetDatum(lock->tag.objId.xid);
-		}
-		else
-		{
-			/* Lock is for a relation */
-			values[0] = ObjectIdGetDatum(lock->tag.relId);
-			values[1] = ObjectIdGetDatum(lock->tag.dbId);
-			nulls[2] = 'n';
-
+			case LOCKTAG_RELATION:
+			case LOCKTAG_RELATION_EXTEND:
+			case LOCKTAG_PAGE:
+			case LOCKTAG_TUPLE:
+				values[0] = ObjectIdGetDatum(lock->tag.locktag_field2);
+				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
+				nulls[2] = 'n';
+				break;
+			case LOCKTAG_TRANSACTION:
+				nulls[0] = 'n';
+				nulls[1] = 'n';
+				values[2] = TransactionIdGetDatum(lock->tag.locktag_field1);
+				break;
+			default:
+				/* XXX Ignore all other lock types for now */
+				continue;
 		}
 
 		values[3] = Int32GetDatum(proc->pid);

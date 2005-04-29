@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.33 2005/02/22 04:36:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.34 2005/04/29 22:28:24 tgl Exp $
  *
  *	Interface:
  *
@@ -837,15 +837,81 @@ PrintLockQueue(LOCK *lock, const char *info)
 #endif
 
 /*
+ * Append a description of a lockable object to buf.
+ *
+ * XXX probably this should be exported from lmgr.c or some such place.
+ */
+static void
+DescribeLockTag(StringInfo buf, const LOCKTAG *lock)
+{
+	switch (lock->locktag_type)
+	{
+		case LOCKTAG_RELATION:
+			appendStringInfo(buf,
+							 _("relation %u of database %u"),
+							 lock->locktag_field2,
+							 lock->locktag_field1);
+			break;
+		case LOCKTAG_RELATION_EXTEND:
+			appendStringInfo(buf,
+							 _("extension of relation %u of database %u"),
+							 lock->locktag_field2,
+							 lock->locktag_field1);
+			break;
+		case LOCKTAG_PAGE:
+			appendStringInfo(buf,
+							 _("page %u of relation %u of database %u"),
+							 lock->locktag_field3,
+							 lock->locktag_field2,
+							 lock->locktag_field1);
+			break;
+		case LOCKTAG_TUPLE:
+			appendStringInfo(buf,
+							 _("tuple (%u,%u) of relation %u of database %u"),
+							 lock->locktag_field3,
+							 lock->locktag_field4,
+							 lock->locktag_field2,
+							 lock->locktag_field1);
+			break;
+		case LOCKTAG_TRANSACTION:
+			appendStringInfo(buf,
+							 _("transaction %u"),
+							 lock->locktag_field1);
+			break;
+		case LOCKTAG_OBJECT:
+			appendStringInfo(buf,
+							 _("object %u of class %u of database %u"),
+							 lock->locktag_field3,
+							 lock->locktag_field2,
+							 lock->locktag_field1);
+			break;
+		case LOCKTAG_USERLOCK:
+			appendStringInfo(buf,
+							 _("user lock [%u,%u]"),
+							 lock->locktag_field1,
+							 lock->locktag_field2);
+			break;
+		default:
+			appendStringInfo(buf,
+							 _("unknown locktag type %d"),
+							 lock->locktag_type);
+			break;
+	}
+}
+
+/*
  * Report a detected deadlock, with available details.
  */
 void
 DeadLockReport(void)
 {
 	StringInfoData buf;
+	StringInfoData buf2;
 	int			i;
 
 	initStringInfo(&buf);
+	initStringInfo(&buf2);
+
 	for (i = 0; i < nDeadlockDetails; i++)
 	{
 		DEADLOCK_INFO *info = &deadlockDetails[i];
@@ -860,27 +926,18 @@ DeadLockReport(void)
 		if (i > 0)
 			appendStringInfoChar(&buf, '\n');
 
-		if (info->locktag.relId == XactLockTableId && info->locktag.dbId == 0)
-		{
-			/* Lock is for transaction ID */
-			appendStringInfo(&buf,
-							 _("Process %d waits for %s on transaction %u; blocked by process %d."),
-							 info->pid,
-							 GetLockmodeName(info->lockmode),
-							 info->locktag.objId.xid,
-							 nextpid);
-		}
-		else
-		{
-			/* Lock is for a relation */
-			appendStringInfo(&buf,
-							 _("Process %d waits for %s on relation %u of database %u; blocked by process %d."),
-							 info->pid,
-							 GetLockmodeName(info->lockmode),
-							 info->locktag.relId,
-							 info->locktag.dbId,
-							 nextpid);
-		}
+		/* reset buf2 to hold next object description */
+		buf2.len = 0;
+		buf2.data[0] = '\0';
+
+		DescribeLockTag(&buf2, &info->locktag);
+
+		appendStringInfo(&buf,
+						 _("Process %d waits for %s on %s; blocked by process %d."),
+						 info->pid,
+						 GetLockmodeName(info->lockmode),
+						 buf2.data,
+						 nextpid);
 	}
 	ereport(ERROR,
 			(errcode(ERRCODE_T_R_DEADLOCK_DETECTED),

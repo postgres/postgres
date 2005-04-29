@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.84 2004/12/31 22:03:42 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.85 2005/04/29 22:28:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,8 @@ typedef int LOCKMODE;
 /*
  * There is normally only one lock method, the default one.
  * If user locks are enabled, an additional lock method is present.
- * Lock methods are identified by LOCKMETHODID.
+ * Lock methods are identified by LOCKMETHODID.  (Despite the declaration as
+ * uint16, we are constrained to 256 lockmethods by the layout of LOCKTAG.)
  */
 typedef uint16 LOCKMETHODID;
 
@@ -103,26 +104,99 @@ typedef LockMethodData *LockMethod;
 /*
  * LOCKTAG is the key information needed to look up a LOCK item in the
  * lock hashtable.	A LOCKTAG value uniquely identifies a lockable object.
+ *
+ * The LockTagType enum defines the different kinds of objects we can lock.
+ * We can handle up to 256 different LockTagTypes.
+ */
+typedef enum LockTagType
+{
+	LOCKTAG_RELATION,			/* whole relation */
+	/* ID info for a relation is DB OID + REL OID; DB OID = 0 if shared */
+	LOCKTAG_RELATION_EXTEND,	/* the right to extend a relation */
+	/* same ID info as RELATION */
+	LOCKTAG_PAGE,				/* one page of a relation */
+	/* ID info for a page is RELATION info + BlockNumber */
+	LOCKTAG_TUPLE,				/* one physical tuple */
+	/* ID info for a tuple is PAGE info + OffsetNumber */
+	LOCKTAG_TRANSACTION,		/* transaction (for waiting for xact done) */
+	/* ID info for a transaction is its TransactionId */
+	LOCKTAG_OBJECT,				/* non-relation database object */
+	/* ID info for an object is DB OID + CLASS OID + OBJECT OID + SUBID */
+	/*
+	 * Note: object ID has same representation as in pg_depend and
+	 * pg_description, but notice that we are constraining SUBID to 16 bits.
+	 * Also, we use DB OID = 0 for shared objects such as tablespaces.
+	 */
+	LOCKTAG_USERLOCK			/* reserved for contrib/userlock */
+	/* ID info for a userlock is defined by user_locks.c */
+} LockTagType;
+
+/*
+ * The LOCKTAG struct is defined with malice aforethought to fit into 16
+ * bytes with no padding.  Note that this would need adjustment if we were
+ * to widen Oid, BlockNumber, or TransactionId to more than 32 bits.
+ *
+ * We include lockmethodid in the locktag so that a single hash table in
+ * shared memory can store locks of different lockmethods.  For largely
+ * historical reasons, it's passed to the lock.c routines as a separate
+ * argument and then stored into the locktag.
  */
 typedef struct LOCKTAG
 {
-	Oid			relId;
-	Oid			dbId;
-	union
-	{
-		BlockNumber blkno;
-		TransactionId xid;
-	}			objId;
-
-	/*
-	 * offnum should be part of objId union above, but doing that would
-	 * increase sizeof(LOCKTAG) due to padding.  Currently used by
-	 * userlocks only.
-	 */
-	OffsetNumber offnum;
-
-	LOCKMETHODID lockmethodid;	/* needed by userlocks */
+	uint32		locktag_field1;		/* a 32-bit ID field */
+	uint32		locktag_field2;		/* a 32-bit ID field */
+	uint32		locktag_field3;		/* a 32-bit ID field */
+	uint16		locktag_field4;		/* a 16-bit ID field */
+	uint8		locktag_type;		/* see enum LockTagType */
+	uint8		locktag_lockmethodid;	/* lockmethod indicator */
 } LOCKTAG;
+
+/*
+ * These macros define how we map logical IDs of lockable objects into
+ * the physical fields of LOCKTAG.  Use these to set up LOCKTAG values,
+ * rather than accessing the fields directly.  Note multiple eval of target!
+ */
+#define SET_LOCKTAG_RELATION(locktag,dboid,reloid) \
+	((locktag).locktag_field1 = (dboid), \
+	 (locktag).locktag_field2 = (reloid), \
+	 (locktag).locktag_field3 = 0, \
+	 (locktag).locktag_field4 = 0, \
+	 (locktag).locktag_type = LOCKTAG_RELATION)
+
+#define SET_LOCKTAG_RELATION_EXTEND(locktag,dboid,reloid) \
+	((locktag).locktag_field1 = (dboid), \
+	 (locktag).locktag_field2 = (reloid), \
+	 (locktag).locktag_field3 = 0, \
+	 (locktag).locktag_field4 = 0, \
+	 (locktag).locktag_type = LOCKTAG_RELATION_EXTEND)
+
+#define SET_LOCKTAG_PAGE(locktag,dboid,reloid,blocknum) \
+	((locktag).locktag_field1 = (dboid), \
+	 (locktag).locktag_field2 = (reloid), \
+	 (locktag).locktag_field3 = (blocknum), \
+	 (locktag).locktag_field4 = 0, \
+	 (locktag).locktag_type = LOCKTAG_PAGE)
+
+#define SET_LOCKTAG_TUPLE(locktag,dboid,reloid,blocknum,offnum) \
+	((locktag).locktag_field1 = (dboid), \
+	 (locktag).locktag_field2 = (reloid), \
+	 (locktag).locktag_field3 = (blocknum), \
+	 (locktag).locktag_field4 = (offnum), \
+	 (locktag).locktag_type = LOCKTAG_TUPLE)
+
+#define SET_LOCKTAG_TRANSACTION(locktag,xid) \
+	((locktag).locktag_field1 = (xid), \
+	 (locktag).locktag_field2 = 0, \
+	 (locktag).locktag_field3 = 0, \
+	 (locktag).locktag_field4 = 0, \
+	 (locktag).locktag_type = LOCKTAG_TRANSACTION)
+
+#define SET_LOCKTAG_OBJECT(locktag,dboid,classoid,objoid,objsubid) \
+	((locktag).locktag_field1 = (dboid), \
+	 (locktag).locktag_field2 = (classoid), \
+	 (locktag).locktag_field3 = (objoid), \
+	 (locktag).locktag_field4 = (objsubid), \
+	 (locktag).locktag_type = LOCKTAG_OBJECT)
 
 
 /*
@@ -157,7 +231,7 @@ typedef struct LOCK
 	int			nGranted;		/* total of granted[] array */
 } LOCK;
 
-#define LOCK_LOCKMETHOD(lock) ((lock).tag.lockmethodid)
+#define LOCK_LOCKMETHOD(lock) ((LOCKMETHODID) (lock).tag.locktag_lockmethodid)
 
 
 /*
@@ -211,7 +285,7 @@ typedef struct PROCLOCK
 } PROCLOCK;
 
 #define PROCLOCK_LOCKMETHOD(proclock) \
-		(((LOCK *) MAKE_PTR((proclock).tag.lock))->tag.lockmethodid)
+	LOCK_LOCKMETHOD(*((LOCK *) MAKE_PTR((proclock).tag.lock)))
 
 /*
  * Each backend also maintains a local hash table with information about each
@@ -253,7 +327,7 @@ typedef struct LOCALLOCK
 	LOCALLOCKOWNER *lockOwners; /* dynamically resizable array */
 } LOCALLOCK;
 
-#define LOCALLOCK_LOCKMETHOD(llock) ((llock).tag.lock.lockmethodid)
+#define LOCALLOCK_LOCKMETHOD(llock) ((llock).tag.lock.locktag_lockmethodid)
 
 
 /*
