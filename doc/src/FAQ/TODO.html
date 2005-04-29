@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon Apr 25 11:35:24 EDT 2005
+Last updated:           Fri Apr 29 01:02:49 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -557,13 +557,7 @@ first.
   memory.  This could exhaust memory for very large trigger queues.
   This item involves dumping large queues into files.
 </p>
-  </li><li>Implement dirty reads or shared row locks and use them in RI triggers
-<p>  Adding shared locks requires recording the table/rows numbers in a
-  shared area, and this could potentially be a large amount of data.
-  One idea is to store the table/row numbers in a separate table and set
-  a bit on the row indicating looking in this new table is required to
-  find any shared row locks.
-</p>
+  </li><li>-Implement shared row locks and use them in RI triggers
   </li><li>Enforce referential integrity for system tables
   </li><li>Change foreign key constraint for array -&gt; element to mean element
   in array (?)
