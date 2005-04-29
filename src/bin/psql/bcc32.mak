@@ -1,4 +1,5 @@
 # Makefile for Borland C++ 5.5
+
 # Borland C++ base install directory goes here
 # BCB=d:\Borland\Bcc55
 
@@ -147,22 +148,50 @@ LINK32_OBJS= \
 	path.obj \
 	pgstrcasecmp.obj \
 	sprompt.obj \
-	
+!IFDEF DEBUG
+	"..\..\interfaces\libpq\Debug\libpqddll.lib"
+!ELSE
+	"..\..\interfaces\libpq\Release\libpqdll.lib"
+!ENDIF
+
 
 "$(OUTDIR)\psql.exe" : "$(OUTDIR)" $(LINK32_OBJS)
 	$(LINK32) @&&!
 	$(LINK32_FLAGS) +
 	c0x32.obj $(LINK32_OBJS), +
 	$@,, +
-	import32.lib $(LIBRARIES),,
+	import32.lib $(LIBRARIES)
 !
 
-exec.obj : "$(OUTDIR)" ..\..\port\exec.c
-getopt.obj : "$(OUTDIR)" ..\..\port\getopt.c
-getopt_long.obj : "$(OUTDIR)" ..\..\port\getopt_long.c
-path.obj : "$(OUTDIR)" ..\..\port\path.c
-pgstrcasecmp.obj : "$(OUTDIR)" ..\..\port\pgstrcasecmp.c
-sprompt.obj : "$(OUTDIR)" ..\..\port\sprompt.c
+"$(INTDIR)\exec.obj" : ..\..\port\exec.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\exec.c
+<<
+
+"$(OUTDIR)\getopt.obj" : "$(OUTDIR)" ..\..\port\getopt.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\getopt.c
+<<
+
+"$(OUTDIR)\getopt_long.obj" : "$(OUTDIR)" ..\..\port\getopt_long.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\getopt_long.c
+<<
+
+"$(OUTDIR)\path.obj" : "$(OUTDIR)" ..\..\port\path.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\path.c
+<<
+
+"$(INTDIR)\pgstrcasecmp.obj" : ..\..\port\pgstrcasecmp.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\pgstrcasecmp.c
+<<
+
+"$(OUTDIR)\sprompt.obj" : "$(OUTDIR)" ..\..\port\sprompt.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\sprompt.c
+<<
 
 "sql_help.h": create_help.pl 
        $(PERL) create_help.pl $(REFDOCDIR) $@

@@ -146,18 +146,15 @@ LINK32_OBJS= \
     $(CPP_PROJ) ..\..\port\sprompt.c
 <<
 
-.c{$(CPP_OBJS)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
-.cpp{$(CPP_OBJS)}.obj::
-   $(CPP) @<<
-   $(CPP_PROJ) $< 
-<<
-
 sql_help.h : create_help.pl
         $(PERL) create_help.pl $(REFDOCDIR) $@
 	
 psqlscan.c: psqlscan.l
 	$(FLEX) -Cfe -opsqlscan.c psqlscan.l
+
+.c{$(CPP_OBJS)}.obj::
+   $(CPP) @<<
+   $(CPP_PROJ) $< 
+<<
+
+
