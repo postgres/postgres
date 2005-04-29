@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.126.4.3 2005/03/25 00:35:19 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.126.4.4 2005/04/29 14:07:34 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -146,6 +146,7 @@ uninstall: uninstall-lib
 
 clean distclean: clean-lib
 	rm -f $(OBJS) crypt.c getaddrinfo.c inet_aton.c noblock.c pgstrcasecmp.c snprintf.c strerror.c open.c thread.c md5.c ip.c encnames.c wchar.c pthread.h
+	rm -f pg_config_paths.h	# Might be left over from a Win32 client-only build
 
 maintainer-clean: distclean
 	rm -f $(srcdir)/libpqdll.def $(srcdir)/libpqddll.def $(srcdir)/blibpqdll.def $(srcdir)/libpq.rc
