@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.114 2005/04/29 13:42:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.115 2005/04/29 14:30:11 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -19,7 +19,7 @@
 #include "getopt_long.h"
 
 #ifndef HAVE_INT_OPTRESET
-extern int optreset;
+int optreset;
 #endif
 
 #include <locale.h>
