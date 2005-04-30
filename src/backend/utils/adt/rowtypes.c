@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.9 2005/04/18 17:11:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.10 2005/04/30 20:04:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,7 +268,7 @@ Datum
 record_out(PG_FUNCTION_ARGS)
 {
 	HeapTupleHeader rec = PG_GETARG_HEAPTUPLEHEADER(0);
-	Oid			tupType = PG_GETARG_OID(1);
+	Oid			tupType;
 	int32		tupTypmod;
 	TupleDesc	tupdesc;
 	HeapTupleData tuple;
@@ -280,18 +280,9 @@ record_out(PG_FUNCTION_ARGS)
 	char	   *nulls;
 	StringInfoData buf;
 
-	/*
-	 * Use the passed type unless it's RECORD; in that case, we'd better
-	 * get the type info out of the datum itself.  Note that for RECORD,
-	 * what we'll probably actually get is RECORD's typelem, ie, zero.
-	 */
-	if (tupType == InvalidOid || tupType == RECORDOID)
-	{
-		tupType = HeapTupleHeaderGetTypeId(rec);
-		tupTypmod = HeapTupleHeaderGetTypMod(rec);
-	}
-	else
-		tupTypmod = -1;
+	/* Extract type info from the tuple itself */
+	tupType = HeapTupleHeaderGetTypeId(rec);
+	tupTypmod = HeapTupleHeaderGetTypMod(rec);
 	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 	ncolumns = tupdesc->natts;
 
@@ -613,7 +604,7 @@ Datum
 record_send(PG_FUNCTION_ARGS)
 {
 	HeapTupleHeader rec = PG_GETARG_HEAPTUPLEHEADER(0);
-	Oid			tupType = PG_GETARG_OID(1);
+	Oid			tupType;
 	int32		tupTypmod;
 	TupleDesc	tupdesc;
 	HeapTupleData tuple;
@@ -625,18 +616,9 @@ record_send(PG_FUNCTION_ARGS)
 	char	   *nulls;
 	StringInfoData buf;
 
-	/*
-	 * Use the passed type unless it's RECORD; in that case, we'd better
-	 * get the type info out of the datum itself.  Note that for RECORD,
-	 * what we'll probably actually get is RECORD's typelem, ie, zero.
-	 */
-	if (tupType == InvalidOid || tupType == RECORDOID)
-	{
-		tupType = HeapTupleHeaderGetTypeId(rec);
-		tupTypmod = HeapTupleHeaderGetTypMod(rec);
-	}
-	else
-		tupTypmod = -1;
+	/* Extract type info from the tuple itself */
+	tupType = HeapTupleHeaderGetTypeId(rec);
+	tupTypmod = HeapTupleHeaderGetTypMod(rec);
 	tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
 	ncolumns = tupdesc->natts;
 
