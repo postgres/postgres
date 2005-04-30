@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.43 2002/10/18 22:05:36 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.43.2.1 2005/04/30 08:01:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,7 +327,7 @@ main(int argc, char **argv)
 				break;
 
 			default:
-				write_msg("unrecognized archive format '%s'; please specify 't' or 'c'\n",
+				write_msg(NULL, "unrecognized archive format '%s'; please specify 't' or 'c'\n",
 						  opts->formatName);
 				exit(1);
 		}
