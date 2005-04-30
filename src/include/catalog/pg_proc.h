@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.359 2005/04/14 01:38:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.360 2005/04/30 20:31:38 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3221,7 +3221,7 @@ DESCR("current user privilege on tablespace by tablespace oid");
 
 DATA(insert OID = 2290 (  record_in			PGNSP PGUID 12 f f t f v 2 2249 "2275 26" _null_ _null_ _null_	record_in - _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2291 (  record_out		PGNSP PGUID 12 f f t f v 2 2275 "2249 26" _null_ _null_ _null_	record_out - _null_ ));
+DATA(insert OID = 2291 (  record_out		PGNSP PGUID 12 f f t f v 1 2275 "2249" _null_ _null_ _null_	record_out - _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2292 (  cstring_in		PGNSP PGUID 12 f f t f i 1 2275 "2275" _null_ _null_ _null_	cstring_in - _null_ ));
 DESCR("I/O");
@@ -3364,7 +3364,7 @@ DATA(insert OID = 2401 (  array_send		   PGNSP PGUID 12 f f t f s 1 17 "2277" _n
 DESCR("I/O");
 DATA(insert OID = 2402 (  record_recv		   PGNSP PGUID 12 f f t f v 2 2249 "2281 26" _null_ _null_ _null_  record_recv - _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2403 (  record_send		   PGNSP PGUID 12 f f t f v 2 17 "2249 26" _null_ _null_ _null_  record_send - _null_ ));
+DATA(insert OID = 2403 (  record_send		   PGNSP PGUID 12 f f t f v 1 17 "2249" _null_ _null_ _null_  record_send - _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2404 (  int2recv			   PGNSP PGUID 12 f f t f i 1 21 "2281" _null_ _null_ _null_	int2recv - _null_ ));
 DESCR("I/O");
