@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.79.2.3 2004/07/19 21:02:42 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.79.2.4 2005/04/30 08:36:18 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,7 +331,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						 * mode with libpq.
 						 */
 						if (te->copyStmt && strlen(te->copyStmt) > 0)
-							ahprintf(AH, te->copyStmt);
+							ahprintf(AH, "%s", te->copyStmt);
 
 						(*AH->PrintTocDataPtr) (AH, te, ropt);
 
@@ -2117,7 +2117,7 @@ _reconnectToDB(ArchiveHandle *AH, const char *dbname, const char *user)
 		appendPQExpBuffer(qry, " %s\n\n",
 						  fmtId(user));
 
-		ahprintf(AH, qry->data);
+		ahprintf(AH, "%s", qry->data);
 
 		destroyPQExpBuffer(qry);
 	}

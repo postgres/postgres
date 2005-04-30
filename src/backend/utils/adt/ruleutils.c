@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.157.2.3 2004/12/13 00:33:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.157.2.4 2005/04/30 08:36:17 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -741,7 +741,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 		AttrNumber	attnum = idxrec->indkey[keyno];
 
 		if (!colno)
-			appendStringInfo(&buf, sep);
+			appendStringInfoString(&buf, sep);
 		sep = ", ";
 
 		if (attnum != 0)
@@ -1814,7 +1814,7 @@ get_select_query_def(Query *query, deparse_context *context,
 			Oid			sortcoltype;
 			TypeCacheEntry *typentry;
 
-			appendStringInfo(buf, sep);
+			appendStringInfoString(buf, sep);
 			sortexpr = get_rule_sortgroupclause(srt, query->targetList,
 												force_colno, context);
 			sortcoltype = exprType(sortexpr);
@@ -1883,7 +1883,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 			{
 				SortClause *srt = (SortClause *) lfirst(l);
 
-				appendStringInfo(buf, sep);
+				appendStringInfoString(buf, sep);
 				get_rule_sortgroupclause(srt, query->targetList,
 										 false, context);
 				sep = ", ";
@@ -1905,7 +1905,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 		if (tle->resdom->resjunk)
 			continue;			/* ignore junk entries */
 
-		appendStringInfo(buf, sep);
+		appendStringInfoString(buf, sep);
 		sep = ", ";
 		colno++;
 
@@ -1969,7 +1969,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 		{
 			GroupClause *grp = (GroupClause *) lfirst(l);
 
-			appendStringInfo(buf, sep);
+			appendStringInfoString(buf, sep);
 			get_rule_sortgroupclause(grp, query->targetList,
 									 false, context);
 			sep = ", ";
@@ -2153,7 +2153,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 		if (tle->resdom->resjunk)
 			continue;			/* ignore junk entries */
 
-		appendStringInfo(buf, sep);
+		appendStringInfoString(buf, sep);
 		sep = ", ";
 		appendStringInfo(buf, "%s",
 						 quote_identifier(get_relid_attribute_name(rte->relid,
@@ -2174,7 +2174,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 			if (tle->resdom->resjunk)
 				continue;		/* ignore junk entries */
 
-			appendStringInfo(buf, sep);
+			appendStringInfoString(buf, sep);
 			sep = ", ";
 			get_rule_expr((Node *) tle->expr, context, false);
 		}
@@ -2221,7 +2221,7 @@ get_update_query_def(Query *query, deparse_context *context)
 		if (tle->resdom->resjunk)
 			continue;			/* ignore junk entries */
 
-		appendStringInfo(buf, sep);
+		appendStringInfoString(buf, sep);
 		sep = ", ";
 
 		/*
@@ -3085,7 +3085,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				{
 					Node	   *e = (Node *) lfirst(element);
 
-					appendStringInfo(buf, sep);
+					appendStringInfoString(buf, sep);
 					get_rule_expr(e, context, true);
 					sep = ", ";
 				}
@@ -3105,7 +3105,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				{
 					Node	   *e = (Node *) lfirst(arg);
 
-					appendStringInfo(buf, sep);
+					appendStringInfoString(buf, sep);
 					get_rule_expr(e, context, true);
 					sep = ", ";
 				}
@@ -3378,7 +3378,7 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	sep = "";
 	foreach(l, expr->args)
 	{
-		appendStringInfo(buf, sep);
+		appendStringInfoString(buf, sep);
 		sep = ", ";
 		get_rule_expr((Node *) lfirst(l), context, true);
 	}
@@ -3612,7 +3612,7 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 		sep = "";
 		foreach(l, sublink->lefthand)
 		{
-			appendStringInfo(buf, sep);
+			appendStringInfoString(buf, sep);
 			sep = ", ";
 			get_rule_expr((Node *) lfirst(l), context, true);
 		}
