@@ -4,7 +4,7 @@
 #        and a Win32 dynamic library libpq.dll with import library libpqdll.lib
 
 # Borland C++ base install directory goes here
-BCB=c:\Borland\Bcc55
+# BCB=c:\Borland\Bcc55
 
 !IF "$(BCB)" == ""
 !MESSAGE You must edit bcc32.mak and define BCB at the top
