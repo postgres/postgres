@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305.2.10 2004/03/02 21:15:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.305.2.11 2005/04/30 08:42:17 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1035,7 +1035,7 @@ dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 				{
 					if (field > 0)
 						appendPQExpBuffer(q, ", ");
-					appendPQExpBuffer(q, fmtId(PQfname(res, field)));
+					appendPQExpBufferStr(q, fmtId(PQfname(res, field)));
 				}
 				appendPQExpBuffer(q, ") ");
 				archprintf(fout, "%s", q->data);
@@ -6292,12 +6292,12 @@ dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
 			if (tgisconstraint)
 			{
 				appendPQExpBuffer(query, "CREATE CONSTRAINT TRIGGER ");
-				appendPQExpBuffer(query, fmtId(PQgetvalue(res, j, i_tgconstrname)));
+				appendPQExpBufferStr(query, fmtId(PQgetvalue(res, j, i_tgconstrname)));
 			}
 			else
 			{
 				appendPQExpBuffer(query, "CREATE TRIGGER ");
-				appendPQExpBuffer(query, fmtId(tgname));
+				appendPQExpBufferStr(query, fmtId(tgname));
 			}
 			appendPQExpBuffer(query, "\n    ");
 			/* Trigger type */
