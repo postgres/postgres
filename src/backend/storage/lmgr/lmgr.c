@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.72 2005/04/29 22:28:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.73 2005/04/30 19:03:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,6 +340,46 @@ UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 }
 
 /*
+ *		LockTuple
+ *
+ * Obtain a tuple-level lock.  This is used in a less-than-intuitive fashion
+ * because we can't afford to keep a separate lock in shared memory for every
+ * tuple.  See heap_lock_tuple before using this!
+ */
+void
+LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_TUPLE(tag,
+					  relation->rd_lockInfo.lockRelId.dbId,
+					  relation->rd_lockInfo.lockRelId.relId,
+					  ItemPointerGetBlockNumber(tid),
+					  ItemPointerGetOffsetNumber(tid));
+
+	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
+					 lockmode, false))
+		elog(ERROR, "LockAcquire failed");
+}
+
+/*
+ *		UnlockTuple
+ */
+void
+UnlockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_TUPLE(tag,
+					  relation->rd_lockInfo.lockRelId.dbId,
+					  relation->rd_lockInfo.lockRelId.relId,
+					  ItemPointerGetBlockNumber(tid),
+					  ItemPointerGetOffsetNumber(tid));
+
+	LockRelease(LockTableId, &tag, GetTopTransactionId(), lockmode);
+}
+
+/*
  *		XactLockTableInsert
  *
  * Insert a lock showing that the given transaction ID is running ---
@@ -416,4 +456,88 @@ XactLockTableWait(TransactionId xid)
 	 */
 	if (!TransactionIdDidCommit(xid) && !TransactionIdDidAbort(xid))
 		TransactionIdAbort(xid);
+}
+
+
+/*
+ *		LockDatabaseObject
+ *
+ * Obtain a lock on a general object of the current database.  Don't use
+ * this for shared objects (such as tablespaces).  It's usually unwise to
+ * apply it to entire relations, also, since a lock taken this way will
+ * NOT conflict with LockRelation.
+ */
+void
+LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
+				   LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_OBJECT(tag,
+					   MyDatabaseId,
+					   classid,
+					   objid,
+					   objsubid);
+
+	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
+					 lockmode, false))
+		elog(ERROR, "LockAcquire failed");
+}
+
+/*
+ *		UnlockDatabaseObject
+ */
+void
+UnlockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
+					 LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_OBJECT(tag,
+					   MyDatabaseId,
+					   classid,
+					   objid,
+					   objsubid);
+
+	LockRelease(LockTableId, &tag, GetTopTransactionId(), lockmode);
+}
+
+/*
+ *		LockSharedObject
+ *
+ * Obtain a lock on a shared-across-databases object.
+ */
+void
+LockSharedObject(Oid classid, Oid objid, uint16 objsubid,
+				 LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_OBJECT(tag,
+					   InvalidOid,
+					   classid,
+					   objid,
+					   objsubid);
+
+	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
+					 lockmode, false))
+		elog(ERROR, "LockAcquire failed");
+}
+
+/*
+ *		UnlockSharedObject
+ */
+void
+UnlockSharedObject(Oid classid, Oid objid, uint16 objsubid,
+				   LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	SET_LOCKTAG_OBJECT(tag,
+					   InvalidOid,
+					   classid,
+					   objid,
+					   objsubid);
+
+	LockRelease(LockTableId, &tag, GetTopTransactionId(), lockmode);
 }

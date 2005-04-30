@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.47 2005/04/29 22:28:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.48 2005/04/30 19:03:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "storage/lock.h"
 #include "utils/rel.h"
+
 
 /* These are the valid values of type LOCKMODE: */
 
@@ -60,9 +61,25 @@ extern void LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
 extern bool ConditionalLockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
 extern void UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
 
+/* Lock a tuple (see heap_lock_tuple before assuming you understand this) */
+extern void LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode);
+extern void UnlockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode);
+
 /* Lock an XID (used to wait for a transaction to finish) */
 extern void XactLockTableInsert(TransactionId xid);
 extern void XactLockTableDelete(TransactionId xid);
 extern void XactLockTableWait(TransactionId xid);
+
+/* Lock a general object (other than a relation) of the current database */
+extern void LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
+							   LOCKMODE lockmode);
+extern void UnlockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
+								 LOCKMODE lockmode);
+
+/* Lock a shared-across-databases object (other than a relation) */
+extern void LockSharedObject(Oid classid, Oid objid, uint16 objsubid,
+							 LOCKMODE lockmode);
+extern void UnlockSharedObject(Oid classid, Oid objid, uint16 objsubid,
+							   LOCKMODE lockmode);
 
 #endif   /* LMGR_H */
