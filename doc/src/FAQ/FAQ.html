@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sun Apr 24 08:01:19 EDT 2005</P>
+    <P>Last updated: Fri Apr 29 23:51:45 EDT 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -987,16 +987,22 @@ length</TD></TR>
 
     <H3><A name="4.21">4.21</A>) What replication solutions are available?
     </H3>
-    <P>Though "replication" is a single term, there are two major replication
-    technologies.  Multi-master replication allows read/write queries to be
-    sent to multiple replicated computers.  Using this capability has a
-    serious performance impact.  <A href="http://pgfoundry.org/projects/pgcluster/">
-    Pgcluster</A> is the most popular such solution available for PostgreSQL. 
-    Master-slave replication allows a single master to receive read/write
-    queries, with slaves able to accept only read/<SMALL>SELECT</SMALL> queries.
-    The most popular master-slave PostgreSQL replication solution is
-    <A href="http://gborg.postgresql.org/project/slony1/projdisplay.php">
-    Slony</A>.  There are also commercial and hardware-based replication
-    solutions available.</P>
+    <P>Though "replication" is a single term, there are several technologies
+    for doing replication, with advantages and disadvantages for each.</P>
+
+    <P>Master/slave replication allows a single master to receive read/write
+    queries, while slaves can only accept read/<SMALL>SELECT</SMALL> queries.
+    The most popular freely available master-slave PostgreSQL replication
+    solution is <A href="http://gborg.postgresql.org/project/slony1/projdisplay.php">
+    Slony-I</A>.</P>
+
+    <P>Multi-master replication allows read/write queries to be sent to
+    multiple replicated computers.  This capability also has a severe
+    impact on performance due to the need to synchronize changes between
+    servers.  <A href="http://pgfoundry.org/projects/pgcluster/">Pgcluster</a>
+    is the most popular such solution freely available for PostgreSQL.</P>
+
+    <P>There are also commercial and hardware-based replication solutions
+    available supporting a variety of replication models.</P>
   </BODY>
 </HTML>

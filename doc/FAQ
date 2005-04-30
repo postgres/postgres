@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Apr 24 08:01:19 EDT 2005
+   Last updated: Fri Apr 29 23:51:45 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -761,12 +761,19 @@
        
   4.21) What replication solutions are available?
   
-   Though "replication" is a single term, there are two major replication
-   technologies. Multi-master replication allows read/write queries to be
-   sent to multiple replicated computers. Using this capability has a
-   serious performance impact. Pgcluster is the most popular such
-   solution available for PostgreSQL. Master-slave replication allows a
-   single master to receive read/write queries, with slaves able to
-   accept only read/SELECT queries. The most popular master-slave
-   PostgreSQL replication solution is Slony. There are also commercial
-   and hardware-based replication solutions available.
+   Though "replication" is a single term, there are several technologies
+   for doing replication, with advantages and disadvantages for each.
+   
+   Master/slave replication allows a single master to receive read/write
+   queries, while slaves can only accept read/SELECT queries. The most
+   popular freely available master-slave PostgreSQL replication solution
+   is Slony-I.
+   
+   Multi-master replication allows read/write queries to be sent to
+   multiple replicated computers. This capability also has a severe
+   impact on performance due to the need to synchronize changes between
+   servers. Pgcluster is the most popular such solution freely available
+   for PostgreSQL.
+   
+   There are also commercial and hardware-based replication solutions
+   available supporting a variety of replication models.
