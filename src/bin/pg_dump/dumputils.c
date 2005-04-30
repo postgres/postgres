@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.16 2004/12/31 22:03:08 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.17 2005/04/30 08:08:51 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,7 +160,7 @@ appendStringLiteralDQ(PQExpBuffer buf, const char *str, const char *dqprefix)
 	/* start with $ + dqprefix if not NULL */
 	appendPQExpBufferChar(delimBuf, '$');
 	if (dqprefix)
-		appendPQExpBuffer(delimBuf, dqprefix);
+		appendPQExpBufferStr(delimBuf, dqprefix);
 
 	/*
 	 * Make sure we choose a delimiter which (without the trailing $) is

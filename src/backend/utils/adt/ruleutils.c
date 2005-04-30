@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.193 2005/04/14 20:03:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.194 2005/04/30 08:08:50 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -733,7 +733,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 		AttrNumber	attnum = idxrec->indkey.values[keyno];
 
 		if (!colno)
-			appendStringInfo(&buf, sep);
+			appendStringInfoString(&buf, sep);
 		sep = ", ";
 
 		if (attnum != 0)
@@ -1885,7 +1885,7 @@ get_select_query_def(Query *query, deparse_context *context,
 			Oid			sortcoltype;
 			TypeCacheEntry *typentry;
 
-			appendStringInfo(buf, sep);
+			appendStringInfoString(buf, sep);
 			sortexpr = get_rule_sortgroupclause(srt, query->targetList,
 												force_colno, context);
 			sortcoltype = exprType(sortexpr);
@@ -1954,7 +1954,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 			{
 				SortClause *srt = (SortClause *) lfirst(l);
 
-				appendStringInfo(buf, sep);
+				appendStringInfoString(buf, sep);
 				get_rule_sortgroupclause(srt, query->targetList,
 										 false, context);
 				sep = ", ";
@@ -1976,7 +1976,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 		if (tle->resjunk)
 			continue;			/* ignore junk entries */
 
-		appendStringInfo(buf, sep);
+		appendStringInfoString(buf, sep);
 		sep = ", ";
 		colno++;
 
@@ -2040,7 +2040,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 		{
 			GroupClause *grp = (GroupClause *) lfirst(l);
 
-			appendStringInfo(buf, sep);
+			appendStringInfoString(buf, sep);
 			get_rule_sortgroupclause(grp, query->targetList,
 									 false, context);
 			sep = ", ";
@@ -2229,7 +2229,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 		if (tle->resjunk)
 			continue;			/* ignore junk entries */
 
-		appendStringInfo(buf, sep);
+		appendStringInfoString(buf, sep);
 		sep = ", ";
 
 		/*
@@ -2301,7 +2301,7 @@ get_update_query_def(Query *query, deparse_context *context)
 		if (tle->resjunk)
 			continue;			/* ignore junk entries */
 
-		appendStringInfo(buf, sep);
+		appendStringInfoString(buf, sep);
 		sep = ", ";
 
 		/*
@@ -3268,7 +3268,7 @@ get_rule_expr(Node *node, deparse_context *context,
 					if (tupdesc == NULL ||
 						!tupdesc->attrs[i]->attisdropped)
 					{
-						appendStringInfo(buf, sep);
+						appendStringInfoString(buf, sep);
 						get_rule_expr(e, context, true);
 						sep = ", ";
 					}
@@ -3280,7 +3280,7 @@ get_rule_expr(Node *node, deparse_context *context,
 					{
 						if (!tupdesc->attrs[i]->attisdropped)
 						{
-							appendStringInfo(buf, sep);
+							appendStringInfoString(buf, sep);
 							appendStringInfo(buf, "NULL");
 							sep = ", ";
 						}
@@ -3415,7 +3415,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				sep = "";
 				foreach(l, (List *) node)
 				{
-					appendStringInfo(buf, sep);
+					appendStringInfoString(buf, sep);
 					get_rule_expr((Node *) lfirst(l), context, showimplicit);
 					sep = ", ";
 				}

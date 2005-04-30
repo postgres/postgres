@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.82 2005/04/28 21:47:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.83 2005/04/30 08:08:51 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2609,7 +2609,7 @@ main(int argc, char *argv[])
 	make_template0();
 
 	if (authwarning != NULL)
-		fprintf(stderr, authwarning);
+		fprintf(stderr, "%s", authwarning);
 
 	/* Get directory specification used to start this executable */
 	strcpy(bin_dir, argv[0]);
