@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.400.4.3 2005/04/15 16:40:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.400.4.4 2005/04/30 08:19:44 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -975,7 +975,7 @@ dumpTableData_insert(Archive *fout, void *dcontext)
 				{
 					if (field > 0)
 						appendPQExpBuffer(q, ", ");
-					appendPQExpBuffer(q, fmtId(PQfname(res, field)));
+					appendPQExpBufferStr(q, fmtId(PQfname(res, field)));
 				}
 				appendPQExpBuffer(q, ") ");
 				archputs(q->data, fout);
@@ -7439,12 +7439,12 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 	if (tginfo->tgisconstraint)
 	{
 		appendPQExpBuffer(query, "CREATE CONSTRAINT TRIGGER ");
-		appendPQExpBuffer(query, fmtId(tginfo->tgconstrname));
+		appendPQExpBufferStr(query, fmtId(tginfo->tgconstrname));
 	}
 	else
 	{
 		appendPQExpBuffer(query, "CREATE TRIGGER ");
-		appendPQExpBuffer(query, fmtId(tginfo->dobj.name));
+		appendPQExpBufferStr(query, fmtId(tginfo->dobj.name));
 	}
 	appendPQExpBuffer(query, "\n    ");
 
