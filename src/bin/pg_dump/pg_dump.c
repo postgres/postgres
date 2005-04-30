@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.241.2.3 2004/03/20 18:12:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.241.2.4 2005/04/30 09:08:14 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,7 +436,7 @@ dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 				{
 					if (field > 0)
 						appendPQExpBuffer(q, ",");
-					appendPQExpBuffer(q, fmtId(PQfname(res, field), force_quotes));
+					appendPQExpBufferStr(q, fmtId(PQfname(res, field), force_quotes));
 				}
 				appendPQExpBuffer(q, ") ");
 				archprintf(fout, "%s", q->data);
@@ -2599,12 +2599,12 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs, const char *tablename)
 				if (tgisconstraint)
 				{
 					appendPQExpBuffer(query, "CREATE CONSTRAINT TRIGGER ");
-					appendPQExpBuffer(query, fmtId(PQgetvalue(res2, i2, i_tgconstrname), force_quotes));
+					appendPQExpBufferStr(query, fmtId(PQgetvalue(res2, i2, i_tgconstrname), force_quotes));
 				}
 				else
 				{
 					appendPQExpBuffer(query, "CREATE TRIGGER ");
-					appendPQExpBuffer(query, fmtId(tgname, force_quotes));
+					appendPQExpBufferStr(query, fmtId(tgname, force_quotes));
 				}
 				appendPQExpBufferChar(query, ' ');
 				/* Trigger type */
@@ -4483,7 +4483,7 @@ dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 		}
 
 		resetPQExpBuffer(id1);
-		appendPQExpBuffer(id1, fmtId(indinfo[i].indexrelname, force_quotes));
+		appendPQExpBufferStr(id1, fmtId(indinfo[i].indexrelname, force_quotes));
 
 		resetPQExpBuffer(q);
 		appendPQExpBuffer(q, "%s;\n", indinfo[i].indexdef);
