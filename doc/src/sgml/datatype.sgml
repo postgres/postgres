@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.156 2005/03/13 09:36:30 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.157 2005/05/01 15:54:46 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -505,7 +505,9 @@ NUMERIC
      trailing zeroes.  Thus, the declared precision and scale of a column
      are maximums, not fixed allocations.  (In this sense the <type>numeric</>
      type is more akin to <type>varchar(<replaceable>n</>)</type>
-     than to <type>char(<replaceable>n</>)</type>.)
+     than to <type>char(<replaceable>n</>)</type>.)  The actual storage
+     requirement is two bytes for each group of four decimal digits,
+     plus eight bytes overhead.
     </para>
 
     <para>
