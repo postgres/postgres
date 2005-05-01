@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.71 2005/04/01 19:34:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.72 2005/05/01 18:56:19 tgl Exp $
  *
  **********************************************************************/
 
@@ -83,7 +83,6 @@ typedef struct plperl_proc_desc
 	Oid			result_typioparam;
 	int			nargs;
 	FmgrInfo	arg_out_func[FUNC_MAX_ARGS];
-	Oid			arg_typioparam[FUNC_MAX_ARGS];
 	bool		arg_is_rowtype[FUNC_MAX_ARGS];
 	SV		   *reference;
 } plperl_proc_desc;
@@ -707,10 +706,8 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 		{
 			char	   *tmp;
 
-			tmp = DatumGetCString(FunctionCall3(&(desc->arg_out_func[i]),
-												fcinfo->arg[i],
-									ObjectIdGetDatum(desc->arg_typioparam[i]),
-												Int32GetDatum(-1)));
+			tmp = DatumGetCString(FunctionCall1(&(desc->arg_out_func[i]),
+												fcinfo->arg[i]));
 			XPUSHs(sv_2mortal(newSVpv(tmp, 0)));
 			pfree(tmp);
 		}
@@ -1322,7 +1319,6 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 					prodesc->arg_is_rowtype[i] = false;
 					perm_fmgr_info(typeStruct->typoutput,
 								   &(prodesc->arg_out_func[i]));
-					prodesc->arg_typioparam[i] = getTypeIOParam(typeTup);
 				}
 
 				ReleaseSysCache(typeTup);
@@ -1386,7 +1382,6 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 		char	   *attname;
 		char	   *outputstr;
 		Oid			typoutput;
-		Oid			typioparam;
 		bool		typisvarlena;
 		int			namelen;
 
@@ -1406,12 +1401,10 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 		/* XXX should have a way to cache these lookups */
 
 		getTypeOutputInfo(tupdesc->attrs[i]->atttypid,
-						  &typoutput, &typioparam, &typisvarlena);
+						  &typoutput, &typisvarlena);
 
-		outputstr = DatumGetCString(OidFunctionCall3(typoutput,
-													 attr,
-											ObjectIdGetDatum(typioparam),
-						   Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
+		outputstr = DatumGetCString(OidFunctionCall1(typoutput,
+													 attr));
 
 		hv_store(hv, attname, namelen, newSVpv(outputstr, 0), 0);
 	}

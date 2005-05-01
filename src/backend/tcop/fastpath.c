@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.79 2005/03/29 03:01:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/fastpath.c,v 1.80 2005/05/01 18:56:18 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -149,31 +149,25 @@ SendFunctionResult(Datum retval, bool isnull, Oid rettype, int16 format)
 
 		if (format == 0)
 		{
-			Oid			typoutput,
-						typioparam;
+			Oid			typoutput;
 			bool		typisvarlena;
 			char	   *outputstr;
 
-			getTypeOutputInfo(rettype, &typoutput, &typioparam, &typisvarlena);
-			outputstr = DatumGetCString(OidFunctionCall3(typoutput,
-														 retval,
-											ObjectIdGetDatum(typioparam),
-													 Int32GetDatum(-1)));
+			getTypeOutputInfo(rettype, &typoutput, &typisvarlena);
+			outputstr = DatumGetCString(OidFunctionCall1(typoutput,
+														 retval));
 			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 			pfree(outputstr);
 		}
 		else if (format == 1)
 		{
-			Oid			typsend,
-						typioparam;
+			Oid			typsend;
 			bool		typisvarlena;
 			bytea	   *outputbytes;
 
-			getTypeBinaryOutputInfo(rettype,
-									&typsend, &typioparam, &typisvarlena);
-			outputbytes = DatumGetByteaP(OidFunctionCall2(typsend,
-														  retval,
-										  ObjectIdGetDatum(typioparam)));
+			getTypeBinaryOutputInfo(rettype, &typsend, &typisvarlena);
+			outputbytes = DatumGetByteaP(OidFunctionCall1(typsend,
+														  retval));
 			/* We assume the result will not have been toasted */
 			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 			pq_sendbytes(&buf, VARDATA(outputbytes),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.10 2005/04/30 20:04:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.11 2005/05/01 18:56:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,17 +362,14 @@ record_out(PG_FUNCTION_ARGS)
 
 			getTypeOutputInfo(column_type,
 							  &column_info->typiofunc,
-							  &column_info->typioparam,
 							  &typIsVarlena);
 			fmgr_info_cxt(column_info->typiofunc, &column_info->proc,
 						  fcinfo->flinfo->fn_mcxt);
 			column_info->column_type = column_type;
 		}
 
-		value = DatumGetCString(FunctionCall3(&column_info->proc,
-											  values[i],
-							   ObjectIdGetDatum(column_info->typioparam),
-						   Int32GetDatum(tupdesc->attrs[i]->atttypmod)));
+		value = DatumGetCString(FunctionCall1(&column_info->proc,
+											  values[i]));
 
 		/* Detect whether we need double quotes for this value */
 		nq = (value[0] == '\0');	/* force quotes for empty string */
@@ -702,16 +699,14 @@ record_send(PG_FUNCTION_ARGS)
 
 			getTypeBinaryOutputInfo(column_type,
 									&column_info->typiofunc,
-									&column_info->typioparam,
 									&typIsVarlena);
 			fmgr_info_cxt(column_info->typiofunc, &column_info->proc,
 						  fcinfo->flinfo->fn_mcxt);
 			column_info->column_type = column_type;
 		}
 
-		outputbytes = DatumGetByteaP(FunctionCall2(&column_info->proc,
-												   values[i],
-							 ObjectIdGetDatum(column_info->typioparam)));
+		outputbytes = DatumGetByteaP(FunctionCall1(&column_info->proc,
+												   values[i]));
 
 		/* We assume the result will not have been toasted */
 		pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.240 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.241 2005/05/01 18:56:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1178,8 +1178,6 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	Form_pg_attribute *attr;
 	FmgrInfo   *out_functions;
 	bool	   *force_quote;
-	Oid		   *typioparams;
-	bool	   *isvarlena;
 	char	   *string;
 	ListCell   *cur;
 	MemoryContext oldcontext;
@@ -1194,22 +1192,21 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	 * Get info about the columns we need to process.
 	 */
 	out_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
-	typioparams = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
-	isvarlena = (bool *) palloc(num_phys_attrs * sizeof(bool));
 	force_quote = (bool *) palloc(num_phys_attrs * sizeof(bool));
 	foreach(cur, attnumlist)
 	{
 		int			attnum = lfirst_int(cur);
 		Oid			out_func_oid;
+		bool		isvarlena;
 
 		if (binary)
 			getTypeBinaryOutputInfo(attr[attnum - 1]->atttypid,
-								 &out_func_oid, &typioparams[attnum - 1],
-									&isvarlena[attnum - 1]);
+									&out_func_oid,
+									&isvarlena);
 		else
 			getTypeOutputInfo(attr[attnum - 1]->atttypid,
-							  &out_func_oid, &typioparams[attnum - 1],
-							  &isvarlena[attnum - 1]);
+							  &out_func_oid,
+							  &isvarlena);
 		fmgr_info(out_func_oid, &out_functions[attnum - 1]);
 
 		if (list_member_int(force_quote_atts, attnum))
@@ -1321,10 +1318,8 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 			{
 				if (!binary)
 				{
-					string = DatumGetCString(FunctionCall3(&out_functions[attnum - 1],
-														   value,
-							   ObjectIdGetDatum(typioparams[attnum - 1]),
-							Int32GetDatum(attr[attnum - 1]->atttypmod)));
+					string = DatumGetCString(FunctionCall1(&out_functions[attnum - 1],
+														   value));
 					if (csv_mode)
 					{
 						CopyAttributeOutCSV(string, delim, quote, escape,
@@ -1339,9 +1334,8 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 				{
 					bytea	   *outputbytes;
 
-					outputbytes = DatumGetByteaP(FunctionCall2(&out_functions[attnum - 1],
-															   value,
-							 ObjectIdGetDatum(typioparams[attnum - 1])));
+					outputbytes = DatumGetByteaP(FunctionCall1(&out_functions[attnum - 1],
+															   value));
 					/* We assume the result will not have been toasted */
 					CopySendInt32(VARSIZE(outputbytes) - VARHDRSZ);
 					CopySendData(VARDATA(outputbytes),
@@ -1366,8 +1360,6 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	MemoryContextDelete(mycontext);
 
 	pfree(out_functions);
-	pfree(typioparams);
-	pfree(isvarlena);
 	pfree(force_quote);
 }
 

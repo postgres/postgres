@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.70 2005/04/14 20:03:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.71 2005/05/01 18:56:18 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -920,12 +920,11 @@ findTypeInputFunction(List *procname, Oid typeOid)
 static Oid
 findTypeOutputFunction(List *procname, Oid typeOid)
 {
-	Oid			argList[2];
+	Oid			argList[1];
 	Oid			procOid;
 
 	/*
-	 * Output functions can take a single argument of the type, or two
-	 * arguments (data value, element OID).
+	 * Output functions can take a single argument of the type.
 	 *
 	 * For backwards compatibility we allow OPAQUE in place of the actual
 	 * type name; if we see this, we issue a warning and fix up the
@@ -937,23 +936,10 @@ findTypeOutputFunction(List *procname, Oid typeOid)
 	if (OidIsValid(procOid))
 		return procOid;
 
-	argList[1] = OIDOID;
-
-	procOid = LookupFuncName(procname, 2, argList, true);
-	if (OidIsValid(procOid))
-		return procOid;
-
 	/* No luck, try it with OPAQUE */
 	argList[0] = OPAQUEOID;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
-
-	if (!OidIsValid(procOid))
-	{
-		argList[1] = OIDOID;
-
-		procOid = LookupFuncName(procname, 2, argList, true);
-	}
 
 	if (OidIsValid(procOid))
 	{
@@ -1016,22 +1002,15 @@ findTypeReceiveFunction(List *procname, Oid typeOid)
 static Oid
 findTypeSendFunction(List *procname, Oid typeOid)
 {
-	Oid			argList[2];
+	Oid			argList[1];
 	Oid			procOid;
 
 	/*
-	 * Send functions can take a single argument of the type, or two
-	 * arguments (data value, element OID).
+	 * Send functions can take a single argument of the type.
 	 */
 	argList[0] = typeOid;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
-	if (OidIsValid(procOid))
-		return procOid;
-
-	argList[1] = OIDOID;
-
-	procOid = LookupFuncName(procname, 2, argList, true);
 	if (OidIsValid(procOid))
 		return procOid;
 

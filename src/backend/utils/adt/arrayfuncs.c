@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.119 2005/03/29 03:01:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.120 2005/05/01 18:56:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -885,7 +885,6 @@ array_out(PG_FUNCTION_ARGS)
 	bool		typbyval;
 	char		typalign;
 	char		typdelim;
-	Oid			typioparam;
 	char	   *p,
 			   *tmp,
 			   *retval,
@@ -944,7 +943,6 @@ array_out(PG_FUNCTION_ARGS)
 	typbyval = my_extra->typbyval;
 	typalign = my_extra->typalign;
 	typdelim = my_extra->typdelim;
-	typioparam = my_extra->typioparam;
 
 	ndim = ARR_NDIM(v);
 	dims = ARR_DIMS(v);
@@ -986,10 +984,8 @@ array_out(PG_FUNCTION_ARGS)
 		bool		needquote;
 
 		itemvalue = fetch_att(p, typbyval, typlen);
-		values[i] = DatumGetCString(FunctionCall3(&my_extra->proc,
-												  itemvalue,
-											ObjectIdGetDatum(typioparam),
-												  Int32GetDatum(-1)));
+		values[i] = DatumGetCString(FunctionCall1(&my_extra->proc,
+												  itemvalue));
 		p = att_addlength(p, typlen, PointerGetDatum(p));
 		p = (char *) att_align(p, typalign);
 
@@ -1344,7 +1340,6 @@ array_send(PG_FUNCTION_ARGS)
 	int			typlen;
 	bool		typbyval;
 	char		typalign;
-	Oid			typioparam;
 	char	   *p;
 	int			nitems,
 				i;
@@ -1389,7 +1384,6 @@ array_send(PG_FUNCTION_ARGS)
 	typlen = my_extra->typlen;
 	typbyval = my_extra->typbyval;
 	typalign = my_extra->typalign;
-	typioparam = my_extra->typioparam;
 
 	ndim = ARR_NDIM(v);
 	dim = ARR_DIMS(v);
@@ -1416,9 +1410,8 @@ array_send(PG_FUNCTION_ARGS)
 
 		itemvalue = fetch_att(p, typbyval, typlen);
 
-		outputbytes = DatumGetByteaP(FunctionCall2(&my_extra->proc,
-												   itemvalue,
-										  ObjectIdGetDatum(typioparam)));
+		outputbytes = DatumGetByteaP(FunctionCall1(&my_extra->proc,
+												   itemvalue));
 		/* We assume the result will not have been toasted */
 		pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 		pq_sendbytes(&buf, VARDATA(outputbytes),

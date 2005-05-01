@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.202 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.203 2005/05/01 18:56:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -850,10 +850,8 @@ InsertOneValue(char *value, int i)
 								 CStringGetDatum(value),
 								 ObjectIdGetDatum(typioparam),
 								 Int32GetDatum(-1));
-	prt = DatumGetCString(OidFunctionCall3(typoutput,
-										   values[i],
-										   ObjectIdGetDatum(typioparam),
-										   Int32GetDatum(-1)));
+	prt = DatumGetCString(OidFunctionCall1(typoutput,
+										   values[i]));
 	elog(DEBUG4, "inserted -> %s", prt);
 	pfree(prt);
 }

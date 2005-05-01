@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.260 2005/04/21 19:18:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.261 2005/05/01 18:56:19 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -3992,10 +3992,8 @@ flatten_set_variable_args(const char *name, List *args)
 								   Int32GetDatum(arg->typename->typmod));
 
 					intervalout =
-						DatumGetCString(DirectFunctionCall3(interval_out,
-															interval,
-											ObjectIdGetDatum(InvalidOid),
-													 Int32GetDatum(-1)));
+						DatumGetCString(DirectFunctionCall1(interval_out,
+															interval));
 					appendStringInfo(&buf, "INTERVAL '%s'", intervalout);
 				}
 				else

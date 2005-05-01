@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.135 2005/04/07 14:53:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.136 2005/05/01 18:56:19 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3881,15 +3881,11 @@ static char *
 convert_value_to_string(Datum value, Oid valtype)
 {
 	Oid			typoutput;
-	Oid			typioparam;
 	bool		typIsVarlena;
 
-	getTypeOutputInfo(valtype, &typoutput, &typioparam, &typIsVarlena);
+	getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
 
-	return DatumGetCString(OidFunctionCall3(typoutput,
-											value,
-											ObjectIdGetDatum(typioparam),
-											Int32GetDatum(-1)));
+	return DatumGetCString(OidFunctionCall1(typoutput, value));
 }
 
 /* ----------

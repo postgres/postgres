@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.89 2005/04/23 17:45:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.90 2005/05/01 18:56:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,6 @@ typedef struct
 {								/* Per-attribute information */
 	Oid			typoutput;		/* Oid for the type's text output fn */
 	Oid			typsend;		/* Oid for the type's binary output fn */
-	Oid			typioparam;		/* param to pass to the output fn */
 	bool		typisvarlena;	/* is it varlena (ie possibly toastable)? */
 	int16		format;			/* format code for this column */
 	FmgrInfo	finfo;			/* Precomputed call info for output fn */
@@ -263,7 +262,6 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 		{
 			getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
 							  &thisState->typoutput,
-							  &thisState->typioparam,
 							  &thisState->typisvarlena);
 			fmgr_info(thisState->typoutput, &thisState->finfo);
 		}
@@ -271,7 +269,6 @@ printtup_prepare_info(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 		{
 			getTypeBinaryOutputInfo(typeinfo->attrs[i]->atttypid,
 									&thisState->typsend,
-									&thisState->typioparam,
 									&thisState->typisvarlena);
 			fmgr_info(thisState->typsend, &thisState->finfo);
 		}
@@ -338,10 +335,8 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 			/* Text output */
 			char	   *outputstr;
 
-			outputstr = DatumGetCString(FunctionCall3(&thisState->finfo,
-													  attr,
-								 ObjectIdGetDatum(thisState->typioparam),
-						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
+			outputstr = DatumGetCString(FunctionCall1(&thisState->finfo,
+													  attr));
 			pq_sendcountedtext(&buf, outputstr, strlen(outputstr), false);
 			pfree(outputstr);
 		}
@@ -350,9 +345,8 @@ printtup(TupleTableSlot *slot, DestReceiver *self)
 			/* Binary output */
 			bytea	   *outputbytes;
 
-			outputbytes = DatumGetByteaP(FunctionCall2(&thisState->finfo,
-													   attr,
-							   ObjectIdGetDatum(thisState->typioparam)));
+			outputbytes = DatumGetByteaP(FunctionCall1(&thisState->finfo,
+													   attr));
 			/* We assume the result will not have been toasted */
 			pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 			pq_sendbytes(&buf, VARDATA(outputbytes),
@@ -439,10 +433,8 @@ printtup_20(TupleTableSlot *slot, DestReceiver *self)
 		else
 			attr = origattr;
 
-		outputstr = DatumGetCString(FunctionCall3(&thisState->finfo,
-												  attr,
-								 ObjectIdGetDatum(thisState->typioparam),
-						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
+		outputstr = DatumGetCString(FunctionCall1(&thisState->finfo,
+												  attr));
 		pq_sendcountedtext(&buf, outputstr, strlen(outputstr), true);
 		pfree(outputstr);
 
@@ -534,8 +526,7 @@ debugtup(TupleTableSlot *slot, DestReceiver *self)
 				attr;
 	char	   *value;
 	bool		isnull;
-	Oid			typoutput,
-				typioparam;
+	Oid			typoutput;
 	bool		typisvarlena;
 
 	for (i = 0; i < natts; ++i)
@@ -544,7 +535,7 @@ debugtup(TupleTableSlot *slot, DestReceiver *self)
 		if (isnull)
 			continue;
 		getTypeOutputInfo(typeinfo->attrs[i]->atttypid,
-						  &typoutput, &typioparam, &typisvarlena);
+						  &typoutput, &typisvarlena);
 
 		/*
 		 * If we have a toasted datum, forcibly detoast it here to avoid
@@ -555,10 +546,8 @@ debugtup(TupleTableSlot *slot, DestReceiver *self)
 		else
 			attr = origattr;
 
-		value = DatumGetCString(OidFunctionCall3(typoutput,
-												 attr,
-											ObjectIdGetDatum(typioparam),
-						  Int32GetDatum(typeinfo->attrs[i]->atttypmod)));
+		value = DatumGetCString(OidFunctionCall1(typoutput,
+												 attr));
 
 		printatt((unsigned) i + 1, typeinfo->attrs[i], value);
 
@@ -647,9 +636,8 @@ printtup_internal_20(TupleTableSlot *slot, DestReceiver *self)
 		else
 			attr = origattr;
 
-		outputbytes = DatumGetByteaP(FunctionCall2(&thisState->finfo,
-												   attr,
-							   ObjectIdGetDatum(thisState->typioparam)));
+		outputbytes = DatumGetByteaP(FunctionCall1(&thisState->finfo,
+												   attr));
 		/* We assume the result will not have been toasted */
 		pq_sendint(&buf, VARSIZE(outputbytes) - VARHDRSZ, 4);
 		pq_sendbytes(&buf, VARDATA(outputbytes),

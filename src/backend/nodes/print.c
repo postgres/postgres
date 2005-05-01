@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.75 2005/04/19 22:35:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.76 2005/05/01 18:56:18 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -345,7 +345,6 @@ print_expr(Node *expr, List *rtable)
 	{
 		Const	   *c = (Const *) expr;
 		Oid			typoutput;
-		Oid			typioparam;
 		bool		typIsVarlena;
 		char	   *outputstr;
 
@@ -356,12 +355,10 @@ print_expr(Node *expr, List *rtable)
 		}
 
 		getTypeOutputInfo(c->consttype,
-						  &typoutput, &typioparam, &typIsVarlena);
+						  &typoutput, &typIsVarlena);
 
-		outputstr = DatumGetCString(OidFunctionCall3(typoutput,
-													 c->constvalue,
-											ObjectIdGetDatum(typioparam),
-													 Int32GetDatum(-1)));
+		outputstr = DatumGetCString(OidFunctionCall1(typoutput,
+													 c->constvalue));
 		printf("%s", outputstr);
 		pfree(outputstr);
 	}

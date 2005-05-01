@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.124 2005/04/14 20:03:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.125 2005/05/01 18:56:19 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1214,6 +1214,10 @@ get_typlenbyvalalign(Oid typid, int16 *typlen, bool *typbyval,
  * to typelem elsewhere in the code are wrong, if they are associated with
  * I/O calls and not with actual subscripting operations!  (But see
  * bootstrap.c, which can't conveniently use this routine.)
+ *
+ * As of PostgreSQL 8.1, output functions receive only the value itself
+ * and not any auxiliary parameters, so the name of this routine is now
+ * a bit of a misnomer ... it should be getTypeInputParam.
  */
 Oid
 getTypeIOParam(HeapTuple typeTuple)
@@ -1698,8 +1702,7 @@ getTypeInputInfo(Oid type, Oid *typInput, Oid *typIOParam)
  *		Get info needed for printing values of a type
  */
 void
-getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typIOParam,
-				  bool *typIsVarlena)
+getTypeOutputInfo(Oid type, Oid *typOutput, bool *typIsVarlena)
 {
 	HeapTuple	typeTuple;
 	Form_pg_type pt;
@@ -1723,7 +1726,6 @@ getTypeOutputInfo(Oid type, Oid *typOutput, Oid *typIOParam,
 						format_type_be(type))));
 
 	*typOutput = pt->typoutput;
-	*typIOParam = getTypeIOParam(typeTuple);
 	*typIsVarlena = (!pt->typbyval) && (pt->typlen == -1);
 
 	ReleaseSysCache(typeTuple);
@@ -1770,8 +1772,7 @@ getTypeBinaryInputInfo(Oid type, Oid *typReceive, Oid *typIOParam)
  *		Get info needed for binary output of values of a type
  */
 void
-getTypeBinaryOutputInfo(Oid type, Oid *typSend, Oid *typIOParam,
-						bool *typIsVarlena)
+getTypeBinaryOutputInfo(Oid type, Oid *typSend, bool *typIsVarlena)
 {
 	HeapTuple	typeTuple;
 	Form_pg_type pt;
@@ -1795,7 +1796,6 @@ getTypeBinaryOutputInfo(Oid type, Oid *typSend, Oid *typIOParam,
 						format_type_be(type))));
 
 	*typSend = pt->typsend;
-	*typIOParam = getTypeIOParam(typeTuple);
 	*typIsVarlena = (!pt->typbyval) && (pt->typlen == -1);
 
 	ReleaseSysCache(typeTuple);
