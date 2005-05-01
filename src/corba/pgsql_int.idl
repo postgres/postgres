@@ -1,7 +1,0 @@
-// Internal interfaces
-
-#include "pgsql.idl"
-
-module PostgreSQL {
-	interface QueryResult : CosQueryCollection::Collection, Expirable {};
-};
