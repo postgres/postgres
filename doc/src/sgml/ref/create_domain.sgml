@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.20 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.21 2005/05/01 15:57:59 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -167,8 +167,8 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
 <programlisting>
 CREATE DOMAIN us_postal_code AS TEXT
 CHECK(
-   VALUE ~ '^\d{5}$'
-OR VALUE ~ '^\d{5}-\d{4}$'
+   VALUE ~ '^\\d{5}$'
+OR VALUE ~ '^\\d{5}-\\d{4}$'
 );
 
 CREATE TABLE us_snail_addy (
