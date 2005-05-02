@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.40 2004/12/31 22:01:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.41 2005/05/02 18:26:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "funcapi.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_tablespace.h"
+#include "catalog/catalog.h"
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
@@ -144,11 +145,6 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 
 		fctx = palloc(sizeof(ts_db_fctx));
 
-		/*
-		 * size = path length + tablespace dirname length + 2 dir sep
-		 * chars + oid + terminator
-		 */
-		fctx->location = (char *) palloc(strlen(DataDir) + 11 + 10 + 1);
 		if (tablespaceOid == GLOBALTABLESPACE_OID)
 		{
 			fctx->dirdesc = NULL;
@@ -157,12 +153,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		}
 		else
 		{
-			if (tablespaceOid == DEFAULTTABLESPACE_OID)
-				sprintf(fctx->location, "%s/base", DataDir);
-			else
-				sprintf(fctx->location, "%s/pg_tblspc/%u", DataDir,
-						tablespaceOid);
-
+			fctx->location = GetTablespacePath(tablespaceOid);
 			fctx->dirdesc = AllocateDir(fctx->location);
 
 			if (!fctx->dirdesc)

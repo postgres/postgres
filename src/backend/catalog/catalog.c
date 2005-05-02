@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.59 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.60 2005/05/02 18:26:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,6 +106,39 @@ GetDatabasePath(Oid dbNode, Oid spcNode)
 	return path;
 }
 
+/*
+ * GetTablespacePath	- construct path to a tablespace symbolic link
+ *
+ * Result is a palloc'd string.
+ *
+ * XXX this must agree with relpath and GetDatabasePath!
+ */
+char *
+GetTablespacePath(Oid spcNode)
+{
+	int			pathlen;
+	char	   *path;
+
+	Assert(spcNode != GLOBALTABLESPACE_OID);
+
+	if (spcNode == DEFAULTTABLESPACE_OID)
+	{
+		/* The default tablespace is {datadir}/base */
+		pathlen = strlen(DataDir) + 5 + 1;
+		path = (char *) palloc(pathlen);
+		snprintf(path, pathlen, "%s/base",
+				 DataDir);
+	}
+	else
+	{
+		/* All other tablespaces have symlinks in pg_tblspc */
+		pathlen = strlen(DataDir) + 11 + OIDCHARS + 1;
+		path = (char *) palloc(pathlen);
+		snprintf(path, pathlen, "%s/pg_tblspc/%u",
+				 DataDir, spcNode);
+	}
+	return path;
+}
 
 /*
  * IsSystemRelation

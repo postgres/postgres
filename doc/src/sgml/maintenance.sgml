@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.41 2005/02/20 02:21:26 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.42 2005/05/02 18:26:52 momjian Exp $
 -->
 
 <chapter id="maintenance">
@@ -474,6 +474,23 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
   </para>
  </sect1>
 
+ <sect1 id="check-files-after-crash">
+  <title>Check files after crash</title>
+
+  <indexterm zone="check-files-after-crash">
+   <primary>stale file</primary>
+  </indexterm>
+
+  <para>
+   <productname>PostgreSQL</productname> recovers automatically after crash
+   using the write-ahead log (see <xref linkend="wal">) and no manual 
+   operations are normally needed. However, if there was a transaction running 
+   when the crash occured that created or dropped a relation, the 
+   transaction might have left a stale file in the data directory. If this 
+   happens, you will get a notice in the log file stating which files can be 
+   deleted.
+  </para>
+ </sect1>
 
  <sect1 id="logfile-maintenance">
   <title>Log File Maintenance</title>

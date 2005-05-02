@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.189 2005/04/28 21:47:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.190 2005/05/02 18:26:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/relcache.h"
+#include "utils/flatfiles.h"
 
 
 /*
@@ -4525,6 +4526,8 @@ StartupXLOG(void)
 
 		CreateCheckPoint(true, true);
 
+		CheckStaleRelFiles();
+
 		/*
 		 * Close down recovery environment
 		 */
@@ -4535,6 +4538,12 @@ StartupXLOG(void)
 		 * old backup_label, if present.
 		 */
 		remove_backup_label();
+	}
+	else
+	{
+		XLogInitRelationCache();
+		CheckStaleRelFiles();
+		XLogCloseRelationCache();
 	}
 
 	/*
