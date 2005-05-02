@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.14 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.15 2005/05/02 01:52:50 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -93,8 +93,10 @@ DROP DOMAIN box;
 
   <simplelist type="inline">
    <member><xref linkend="sql-createdomain" endterm="sql-createdomain-title"></member>
+   <member><xref linkend="sql-alterdomain" endterm="sql-alterdomain-title"></member>
   </simplelist>
  </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file
