@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Apr 29 23:53:16 EDT 2005
+   Last updated: Mon May 2 16:11:15 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -26,6 +26,7 @@
    1.10) How can I learn SQL?
    1.11) How do I join the development team?
    1.12) How does PostgreSQL compare to other DBMSs?
+   1.13) Who controls PostgreSQL?
    
                            User Client Questions
                                       
@@ -269,6 +270,17 @@
           We are free for all use, both commercial and non-commercial.
           You can add our code to your product with no limitations,
           except those outlined in our BSD-style license stated above.
+          
+  1.13) Who controls PostgreSQL?
+  
+   If you are looking for a PostgreSQL gatekeeper, central committee, or
+   controlling company, give up, because none exists. We do have a core
+   committee and CVS committers, but these groups are more for
+   administrative purposes then control. The project is directed by the
+   open community of developers and users of PostgreSQL. Everyone is
+   welcome to subscribe and take part in the discussions. (See the
+   Developer's FAQ for information on how to get involved in PostgreSQL
+   development.)
      _________________________________________________________________
    
                            User Client Questions
