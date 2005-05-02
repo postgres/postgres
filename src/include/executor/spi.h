@@ -2,7 +2,7 @@
  *
  * spi.h
  *
- * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.51 2005/03/29 02:53:53 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.52 2005/05/02 00:37:06 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,17 +82,17 @@ extern int	SPI_finish(void);
 extern void SPI_push(void);
 extern void SPI_pop(void);
 extern void SPI_restore_connection(void);
-extern int	SPI_execute(const char *src, bool read_only, int tcount);
+extern int	SPI_execute(const char *src, bool read_only, long tcount);
 extern int	SPI_execute_plan(void *plan, Datum *Values, const char *Nulls,
-							 bool read_only, int tcount);
-extern int	SPI_exec(const char *src, int tcount);
+							 bool read_only, long tcount);
+extern int	SPI_exec(const char *src, long tcount);
 extern int	SPI_execp(void *plan, Datum *Values, const char *Nulls,
-					  int tcount);
+					  long tcount);
 extern int	SPI_execute_snapshot(void *plan,
 								 Datum *Values, const char *Nulls,
 								 Snapshot snapshot,
 								 Snapshot crosscheck_snapshot,
-								 bool read_only, int tcount);
+								 bool read_only, long tcount);
 extern void *SPI_prepare(const char *src, int nargs, Oid *argtypes);
 extern void *SPI_saveplan(void *plan);
 extern int	SPI_freeplan(void *plan);
@@ -123,8 +123,8 @@ extern void SPI_freetuptable(SPITupleTable *tuptable);
 extern Portal SPI_cursor_open(const char *name, void *plan,
 				Datum *Values, const char *Nulls, bool read_only);
 extern Portal SPI_cursor_find(const char *name);
-extern void SPI_cursor_fetch(Portal portal, bool forward, int count);
-extern void SPI_cursor_move(Portal portal, bool forward, int count);
+extern void SPI_cursor_fetch(Portal portal, bool forward, long count);
+extern void SPI_cursor_move(Portal portal, bool forward, long count);
 extern void SPI_cursor_close(Portal portal);
 
 extern void AtEOXact_SPI(bool isCommit);

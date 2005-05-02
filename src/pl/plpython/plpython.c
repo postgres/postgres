@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.60 2005/03/29 00:17:24 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.61 2005/05/02 00:37:07 neilc Exp $
  *
  *********************************************************************
  */
@@ -1546,8 +1546,8 @@ static int	PLy_result_ass_slice(PyObject *, int, int, PyObject *);
 
 static PyObject *PLy_spi_prepare(PyObject *, PyObject *);
 static PyObject *PLy_spi_execute(PyObject *, PyObject *);
-static PyObject *PLy_spi_execute_query(char *query, int limit);
-static PyObject *PLy_spi_execute_plan(PyObject *, PyObject *, int);
+static PyObject *PLy_spi_execute_query(char *query, long limit);
+static PyObject *PLy_spi_execute_plan(PyObject *, PyObject *, long);
 static PyObject *PLy_spi_execute_fetch_result(SPITupleTable *, int, int);
 
 
@@ -1965,7 +1965,7 @@ PLy_spi_execute(PyObject * self, PyObject * args)
 	char	   *query;
 	PyObject   *plan;
 	PyObject   *list = NULL;
-	int			limit = 0;
+	long		limit = 0;
 
 	/* Can't execute more if we have an unhandled error */
 	if (PLy_error_in_progress)
@@ -1974,12 +1974,12 @@ PLy_spi_execute(PyObject * self, PyObject * args)
 		return NULL;
 	}
 
-	if (PyArg_ParseTuple(args, "s|i", &query, &limit))
+	if (PyArg_ParseTuple(args, "s|l", &query, &limit))
 		return PLy_spi_execute_query(query, limit);
 
 	PyErr_Clear();
 
-	if ((PyArg_ParseTuple(args, "O|Oi", &plan, &list, &limit)) &&
+	if ((PyArg_ParseTuple(args, "O|Ol", &plan, &list, &limit)) &&
 		(is_PLyPlanObject(plan)))
 		return PLy_spi_execute_plan(plan, list, limit);
 
@@ -1988,7 +1988,7 @@ PLy_spi_execute(PyObject * self, PyObject * args)
 }
 
 static PyObject *
-PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
+PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 {
 	volatile int nargs;
 	int			i,
@@ -2123,7 +2123,7 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 }
 
 static PyObject *
-PLy_spi_execute_query(char *query, int limit)
+PLy_spi_execute_query(char *query, long limit)
 {
 	int			rv;
 	MemoryContext oldcontext;

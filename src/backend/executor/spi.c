@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.138 2005/05/01 18:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.139 2005/05/02 00:37:06 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,13 +39,13 @@ static void _SPI_prepare_plan(const char *src, _SPI_plan *plan);
 static int _SPI_execute_plan(_SPI_plan *plan,
 							 Datum *Values, const char *Nulls,
 							 Snapshot snapshot, Snapshot crosscheck_snapshot,
-							 bool read_only, int tcount);
+							 bool read_only, long tcount);
 
-static int _SPI_pquery(QueryDesc *queryDesc, int tcount);
+static int _SPI_pquery(QueryDesc *queryDesc, long tcount);
 
 static void _SPI_error_callback(void *arg);
 
-static void _SPI_cursor_operation(Portal portal, bool forward, int count,
+static void _SPI_cursor_operation(Portal portal, bool forward, long count,
 					  DestReceiver *dest);
 
 static _SPI_plan *_SPI_copy_plan(_SPI_plan *plan, int location);
@@ -278,9 +278,9 @@ SPI_restore_connection(void)
 	_SPI_curid = _SPI_connected - 1;
 }
 
-/* Parse, plan, and execute a querystring */
+/* Parse, plan, and execute a query string */
 int
-SPI_execute(const char *src, bool read_only, int tcount)
+SPI_execute(const char *src, bool read_only, long tcount)
 {
 	_SPI_plan	plan;
 	int			res;
@@ -309,7 +309,7 @@ SPI_execute(const char *src, bool read_only, int tcount)
 
 /* Obsolete version of SPI_execute */
 int
-SPI_exec(const char *src, int tcount)
+SPI_exec(const char *src, long tcount)
 {
 	return SPI_execute(src, false, tcount);
 }
@@ -317,7 +317,7 @@ SPI_exec(const char *src, int tcount)
 /* Execute a previously prepared plan */
 int
 SPI_execute_plan(void *plan, Datum *Values, const char *Nulls,
-				 bool read_only, int tcount)
+				 bool read_only, long tcount)
 {
 	int			res;
 
@@ -342,7 +342,7 @@ SPI_execute_plan(void *plan, Datum *Values, const char *Nulls,
 
 /* Obsolete version of SPI_execute_plan */
 int
-SPI_execp(void *plan, Datum *Values, const char *Nulls, int tcount)
+SPI_execp(void *plan, Datum *Values, const char *Nulls, long tcount)
 {
 	return SPI_execute_plan(plan, Values, Nulls, false, tcount);
 }
@@ -360,7 +360,7 @@ int
 SPI_execute_snapshot(void *plan,
 					 Datum *Values, const char *Nulls,
 					 Snapshot snapshot, Snapshot crosscheck_snapshot,
-					 bool read_only, int tcount)
+					 bool read_only, long tcount)
 {
 	int			res;
 
@@ -979,7 +979,7 @@ SPI_cursor_find(const char *name)
  *	Fetch rows in a cursor
  */
 void
-SPI_cursor_fetch(Portal portal, bool forward, int count)
+SPI_cursor_fetch(Portal portal, bool forward, long count)
 {
 	_SPI_cursor_operation(portal, forward, count,
 						  CreateDestReceiver(SPI, NULL));
@@ -993,7 +993,7 @@ SPI_cursor_fetch(Portal portal, bool forward, int count)
  *	Move in a cursor
  */
 void
-SPI_cursor_move(Portal portal, bool forward, int count)
+SPI_cursor_move(Portal portal, bool forward, long count)
 {
 	_SPI_cursor_operation(portal, forward, count, None_Receiver);
 }
@@ -1309,7 +1309,7 @@ _SPI_prepare_plan(const char *src, _SPI_plan *plan)
 static int
 _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				  Snapshot snapshot, Snapshot crosscheck_snapshot,
-				  bool read_only, int tcount)
+				  bool read_only, long tcount)
 {
 	volatile int res = 0;
 	Snapshot	saveActiveSnapshot;
@@ -1493,7 +1493,7 @@ fail:
 }
 
 static int
-_SPI_pquery(QueryDesc *queryDesc, int tcount)
+_SPI_pquery(QueryDesc *queryDesc, long tcount)
 {
 	int			operation = queryDesc->operation;
 	int			res;
@@ -1531,7 +1531,7 @@ _SPI_pquery(QueryDesc *queryDesc, int tcount)
 
 	ExecutorStart(queryDesc, false);
 
-	ExecutorRun(queryDesc, ForwardScanDirection, (long) tcount);
+	ExecutorRun(queryDesc, ForwardScanDirection, tcount);
 
 	_SPI_current->processed = queryDesc->estate->es_processed;
 	save_lastoid = queryDesc->estate->es_lastoid;
@@ -1599,7 +1599,7 @@ _SPI_error_callback(void *arg)
  *	Do a FETCH or MOVE in a cursor
  */
 static void
-_SPI_cursor_operation(Portal portal, bool forward, int count,
+_SPI_cursor_operation(Portal portal, bool forward, long count,
 					  DestReceiver *dest)
 {
 	long		nfetched;
@@ -1621,7 +1621,7 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 	/* Run the cursor */
 	nfetched = PortalRunFetch(portal,
 							  forward ? FETCH_FORWARD : FETCH_BACKWARD,
-							  (long) count,
+							  count,
 							  dest);
 
 	/*

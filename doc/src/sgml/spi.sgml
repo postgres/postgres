@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.40 2005/03/29 02:53:53 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.41 2005/05/02 00:37:06 neilc Exp $
 -->
 
 <chapter id="spi">
@@ -292,7 +292,7 @@ void SPI_pop(void)
 
  <refsynopsisdiv>
 <synopsis>
-int SPI_execute(const char * <parameter>command</parameter>, bool <parameter>read_only</parameter>, int <parameter>count</parameter>)
+int SPI_execute(const char * <parameter>command</parameter>, bool <parameter>read_only</parameter>, long <parameter>count</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -423,7 +423,7 @@ typedef struct
    </varlistentry>
 
    <varlistentry>
-    <term><literal>int <parameter>count</parameter></literal></term>
+    <term><literal>long <parameter>count</parameter></literal></term>
     <listitem>
      <para>
       maximum number of rows to process or return
@@ -598,7 +598,7 @@ typedef struct
 
  <refsynopsisdiv>
 <synopsis>
-int SPI_exec(const char * <parameter>command</parameter>, int <parameter>count</parameter>)
+int SPI_exec(const char * <parameter>command</parameter>, long <parameter>count</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -627,7 +627,7 @@ int SPI_exec(const char * <parameter>command</parameter>, int <parameter>count</
    </varlistentry>
 
    <varlistentry>
-    <term><literal>int <parameter>count</parameter></literal></term>
+    <term><literal>long <parameter>count</parameter></literal></term>
     <listitem>
      <para>
       maximum number of rows to process or return
@@ -963,7 +963,7 @@ bool SPI_is_cursor_plan(void * <parameter>plan</parameter>)
  <refsynopsisdiv>
 <synopsis>
 int SPI_execute_plan(void * <parameter>plan</parameter>, Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>,
-                     bool <parameter>read_only</parameter>, int <parameter>count</parameter>)
+                     bool <parameter>read_only</parameter>, long <parameter>count</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -1030,7 +1030,7 @@ int SPI_execute_plan(void * <parameter>plan</parameter>, Datum * <parameter>valu
    </varlistentry>
 
    <varlistentry>
-    <term><literal>int <parameter>count</parameter></literal></term>
+    <term><literal>long <parameter>count</parameter></literal></term>
     <listitem>
      <para>
       maximum number of rows to process or return
@@ -1104,7 +1104,7 @@ int SPI_execute_plan(void * <parameter>plan</parameter>, Datum * <parameter>valu
 
  <refsynopsisdiv>
 <synopsis>
-int SPI_execp(void * <parameter>plan</parameter>, Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>, int <parameter>count</parameter>)
+int SPI_execp(void * <parameter>plan</parameter>, Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>, long <parameter>count</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -1162,7 +1162,7 @@ int SPI_execp(void * <parameter>plan</parameter>, Datum * <parameter>values</par
    </varlistentry>
 
    <varlistentry>
-    <term><literal>int <parameter>count</parameter></literal></term>
+    <term><literal>long <parameter>count</parameter></literal></term>
     <listitem>
      <para>
       maximum number of rows to process or return
@@ -1375,7 +1375,7 @@ Portal SPI_cursor_find(const char * <parameter>name</parameter>)
 
  <refsynopsisdiv>
 <synopsis>
-void SPI_cursor_fetch(Portal <parameter>portal</parameter>, bool <parameter>forward</parameter>, int <parameter>count</parameter>)
+void SPI_cursor_fetch(Portal <parameter>portal</parameter>, bool <parameter>forward</parameter>, long <parameter>count</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -1411,7 +1411,7 @@ void SPI_cursor_fetch(Portal <parameter>portal</parameter>, bool <parameter>forw
    </varlistentry>
 
    <varlistentry>
-    <term><literal>int <parameter>count</parameter></literal></term>
+    <term><literal>long <parameter>count</parameter></literal></term>
     <listitem>
      <para>
       maximum number of rows to fetch
@@ -1448,7 +1448,7 @@ void SPI_cursor_fetch(Portal <parameter>portal</parameter>, bool <parameter>forw
 
  <refsynopsisdiv>
 <synopsis>
-void SPI_cursor_move(Portal <parameter>portal</parameter>, bool <parameter>forward</parameter>, int <parameter>count</parameter>)
+void SPI_cursor_move(Portal <parameter>portal</parameter>, bool <parameter>forward</parameter>, long <parameter>count</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -1485,7 +1485,7 @@ void SPI_cursor_move(Portal <parameter>portal</parameter>, bool <parameter>forwa
    </varlistentry>
 
    <varlistentry>
-    <term><literal>int <parameter>count</parameter></literal></term>
+    <term><literal>long <parameter>count</parameter></literal></term>
     <listitem>
      <para>
       maximum number of rows to move
