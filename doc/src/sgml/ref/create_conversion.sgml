@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.5 2002/11/02 02:33:03 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.5.2.1 2005/05/03 19:18:48 tgl Exp $ -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>
@@ -8,7 +8,7 @@
 
  <refnamediv>
   <refname>CREATE CONVERSION</refname>
-  <refpurpose>define a user-defined conversion</refpurpose>
+  <refpurpose>define a user-defined encoding conversion</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -102,7 +102,7 @@ CREATE [DEFAULT] CONVERSION <replaceable>conversion_name</replaceable>
 	INTEGER,	-- source encoding id
 	INTEGER,	-- destination encoding id
 	CSTRING,	-- source string (null terminated C string)
-	CSTRING,	-- destination string (null terminated C string)
+	INTERNAL,	-- destination (fill with a null terminated C string)
 	INTEGER		-- source string length
 	) returns VOID;
        </programlisting>
