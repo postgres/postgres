@@ -809,7 +809,7 @@ msgstr "  \\dl             listar objetos grandes, lo mismo que \\lo_list\n"
 #, c-format
 msgid "  \\dp [PATTERN]  list table, view, and sequence access privileges\n"
 msgstr ""
-"\\dp [PATRÓN]    listar privilegios de acceso a tablas, vistas y secuencias\n"
+"  \\dp [PATRÓN]    listar privilegios de acceso a tablas, vistas y secuencias\n"
 
 #: help.c:228
 #, c-format
