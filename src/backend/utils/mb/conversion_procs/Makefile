@@ -4,7 +4,7 @@
 #    Makefile for utils/mb/conversion_procs
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.9.2.1 2004/01/21 19:25:11 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.9.2.2 2005/05/03 19:18:31 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -157,7 +157,7 @@ ifeq ($(enable_shared), yes)
 		func=$$1; shift; \
 		obj=$$1; shift; \
 		echo "-- $$se --> $$de"; \
-		echo "CREATE OR REPLACE FUNCTION $$func (INTEGER, INTEGER, CSTRING, CSTRING, INTEGER) RETURNS VOID AS '$$"libdir"/$$obj', '$$func' LANGUAGE 'c' STRICT;"; \
+		echo "CREATE OR REPLACE FUNCTION $$func (INTEGER, INTEGER, CSTRING, INTERNAL, INTEGER) RETURNS VOID AS '$$"libdir"/$$obj', '$$func' LANGUAGE 'c' STRICT;"; \
 		echo "DROP CONVERSION pg_catalog.$$name;"; \
 		echo "CREATE DEFAULT CONVERSION pg_catalog.$$name FOR '$$se' TO '$$de' FROM $$func;"; \
 	done > $@
