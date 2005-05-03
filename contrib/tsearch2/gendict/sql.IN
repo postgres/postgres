@@ -1,7 +1,7 @@
 SET search_path = public;
 BEGIN;
 
-HASINIT create function dinit_CFG_MODNAME(text)
+HASINIT create function dinit_CFG_MODNAME(internal)
 HASINIT         returns internal
 HASINIT         as 'MODULE_PATHNAME'
 HASINIT         language 'C';

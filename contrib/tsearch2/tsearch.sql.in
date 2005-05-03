@@ -44,7 +44,7 @@ CREATE FUNCTION set_curdict(text)
 	with (isstrict);
 
 --built-in dictionaries
-CREATE FUNCTION dex_init(text)
+CREATE FUNCTION dex_init(internal)
 	returns internal
 	as 'MODULE_PATHNAME' 
 	language 'C';
@@ -57,13 +57,13 @@ CREATE FUNCTION dex_lexize(internal,internal,int4)
 
 insert into pg_ts_dict select 
 	'simple', 
-	'dex_init(text)',
+	'dex_init(internal)',
 	null,
 	'dex_lexize(internal,internal,int4)',
 	'Simple example of dictionary.'
 ;
 	 
-CREATE FUNCTION snb_en_init(text)
+CREATE FUNCTION snb_en_init(internal)
 	returns internal
 	as 'MODULE_PATHNAME' 
 	language 'C';
@@ -76,26 +76,26 @@ CREATE FUNCTION snb_lexize(internal,internal,int4)
 
 insert into pg_ts_dict select 
 	'en_stem', 
-	'snb_en_init(text)',
+	'snb_en_init(internal)',
 	'contrib/english.stop',
 	'snb_lexize(internal,internal,int4)',
 	'English Stemmer. Snowball.'
 ;
 
-CREATE FUNCTION snb_ru_init(text)
+CREATE FUNCTION snb_ru_init(internal)
 	returns internal
 	as 'MODULE_PATHNAME' 
 	language 'C';
 
 insert into pg_ts_dict select 
 	'ru_stem', 
-	'snb_ru_init(text)',
+	'snb_ru_init(internal)',
 	'contrib/russian.stop',
 	'snb_lexize(internal,internal,int4)',
 	'Russian Stemmer. Snowball.'
 ;
 	 
-CREATE FUNCTION spell_init(text)
+CREATE FUNCTION spell_init(internal)
 	returns internal
 	as 'MODULE_PATHNAME' 
 	language 'C';
@@ -108,13 +108,13 @@ CREATE FUNCTION spell_lexize(internal,internal,int4)
 
 insert into pg_ts_dict select 
 	'ispell_template', 
-	'spell_init(text)',
+	'spell_init(internal)',
 	null,
 	'spell_lexize(internal,internal,int4)',
 	'ISpell interface. Must have .dict and .aff files'
 ;
 
-CREATE FUNCTION syn_init(text)
+CREATE FUNCTION syn_init(internal)
 	returns internal
 	as 'MODULE_PATHNAME' 
 	language 'C';
@@ -127,7 +127,7 @@ CREATE FUNCTION syn_lexize(internal,internal,int4)
 
 insert into pg_ts_dict select 
 	'synonym', 
-	'syn_init(text)',
+	'syn_init(internal)',
 	null,
 	'syn_lexize(internal,internal,int4)',
 	'Example of synonym dictionary'
