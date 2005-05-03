@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.109 2003/10/03 19:26:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.109.2.1 2005/05/03 16:51:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,8 @@ ProcedureCreate(const char *procedureName,
 				const Oid *parameterTypes)
 {
 	int			i;
+	bool		genericParam = false;
+	bool		internalParam = false;
 	Relation	rel;
 	HeapTuple	tup;
 	HeapTuple	oldtup;
@@ -94,28 +96,35 @@ ProcedureCreate(const char *procedureName,
 
 	/*
 	 * Do not allow return type ANYARRAY or ANYELEMENT unless at least one
-	 * argument is also ANYARRAY or ANYELEMENT
+	 * input argument is ANYARRAY or ANYELEMENT.  Also, do not allow
+	 * return type INTERNAL unless at least one input argument is INTERNAL.
 	 */
-	if (returnType == ANYARRAYOID || returnType == ANYELEMENTOID)
+	for (i = 0; i < parameterCount; i++)
 	{
-		bool		genericParam = false;
-
-		for (i = 0; i < parameterCount; i++)
+		switch (parameterTypes[i])
 		{
-			if (parameterTypes[i] == ANYARRAYOID ||
-				parameterTypes[i] == ANYELEMENTOID)
-			{
+			case ANYARRAYOID:
+			case ANYELEMENTOID:
 				genericParam = true;
 				break;
-			}
+			case INTERNALOID:
+				internalParam = true;
+				break;
 		}
-
-		if (!genericParam)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("cannot determine result data type"),
-					 errdetail("A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type.")));
 	}
+
+	if ((returnType == ANYARRAYOID || returnType == ANYELEMENTOID)
+		&& !genericParam)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("cannot determine result data type"),
+				 errdetail("A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type.")));
+
+	if (returnType == INTERNALOID && !internalParam)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("unsafe use of INTERNAL pseudo-type"),
+				 errdetail("A function returning \"internal\" must have at least one \"internal\" argument.")));
 
 	/* Make sure we have a zero-padded param type array */
 	MemSet(typev, 0, FUNC_MAX_ARGS * sizeof(Oid));

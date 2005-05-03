@@ -44,7 +44,7 @@ CREATE FUNCTION set_curdict(text)
 	with (isstrict);
 
 --built-in dictionaries
-CREATE FUNCTION dex_init(text)
+CREATE FUNCTION dex_init(internal)
 	returns internal
 	as 'MODULE_PATHNAME' 
 	language 'C';
@@ -63,7 +63,7 @@ insert into pg_ts_dict select
 	'Simple example of dictionary.'
 ;
 	 
-CREATE FUNCTION snb_en_init(text)
+CREATE FUNCTION snb_en_init(internal)
 	returns internal
 	as 'MODULE_PATHNAME' 
 	language 'C';
@@ -82,7 +82,7 @@ insert into pg_ts_dict select
 	'English Stemmer. Snowball.'
 ;
 
-CREATE FUNCTION snb_ru_init(text)
+CREATE FUNCTION snb_ru_init(internal)
 	returns internal
 	as 'MODULE_PATHNAME' 
 	language 'C';
@@ -95,7 +95,7 @@ insert into pg_ts_dict select
 	'Russian Stemmer. Snowball.'
 ;
 	 
-CREATE FUNCTION spell_init(text)
+CREATE FUNCTION spell_init(internal)
 	returns internal
 	as 'MODULE_PATHNAME' 
 	language 'C';
@@ -114,7 +114,7 @@ insert into pg_ts_dict select
 	'ISpell interface. Must have .dict and .aff files'
 ;
 
-CREATE FUNCTION syn_init(text)
+CREATE FUNCTION syn_init(internal)
 	returns internal
 	as 'MODULE_PATHNAME' 
 	language 'C';
