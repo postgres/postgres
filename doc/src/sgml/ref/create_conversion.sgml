@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.15 2005/03/07 04:30:51 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.16 2005/05/03 19:17:59 tgl Exp $ -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>
@@ -8,7 +8,7 @@
 
  <refnamediv>
   <refname>CREATE CONVERSION</refname>
-  <refpurpose>define a new conversion</refpurpose>
+  <refpurpose>define a new encoding conversion</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-createconversion">
@@ -26,10 +26,12 @@ CREATE [DEFAULT] CONVERSION <replaceable>name</replaceable>
   <title>Description</title>
 
   <para>
-   <command>CREATE CONVERSION</command> defines a new encoding
-   conversion.  Conversion names may be used in the <function>convert</function> function
+   <command>CREATE CONVERSION</command> defines a new conversion between
+   character set encodings.  Conversion names may be used in the
+   <function>convert</function> function
    to specify a particular encoding conversion.  Also, conversions that
-   are marked <literal>DEFAULT</> can be used for automatic encoding conversion between
+   are marked <literal>DEFAULT</> can be used for automatic encoding
+   conversion between
    client and server. For this purpose, two conversions, from encoding A to
    B <emphasis>and</emphasis> from encoding B to A, must be defined.
  </para>
@@ -109,7 +111,7 @@ conv_proc(
     integer,  -- source encoding ID
     integer,  -- destination encoding ID
     cstring,  -- source string (null terminated C string)
-    cstring,  -- destination string (null terminated C string)
+    internal, -- destination (fill with a null terminated C string)
     integer   -- source string length
 ) RETURNS void;
 </programlisting>
