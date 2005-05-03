@@ -90,7 +90,7 @@ gen_salt(type::text)::text
 gen_salt(type::text, rounds::int4)::text
 
 	same as above, but lets user specify iteration count
-	for algorithm.  Number is algotithm specific:
+	for algorithm.  Number is algorithm specific:
 
 	type	default	min	max
 	---------------------------------
@@ -149,13 +149,13 @@ decrypt_iv(data::bytea, key::bytea, iv::bytea, type::text)::bytea
 ALGORITHMS
 ==========
 
-The standard functionality at the moment consist of
+The standard functionality at the moment consists of
 
 Hashes: md5, sha1
 Ciphers: bf, aes
 Modes: cbc, ecb
 
-TODO: write stardard names for optional ciphers too.
+TODO: write standard names for optional ciphers too.
 
 LIBRARIES
 =========
@@ -168,8 +168,8 @@ LIBRARIES
 
 * other:
 
-[ This only list of stuff libraries claim to support.  So
-  pgcrypto may work with all of them.  But ATM tested aree only the
+[ This only lists stuff that the libraries claim to support.  So
+  pgcrypto may work with all of them.  But ATM tested are only the
   standard ciphers.  On others pgcrypto and library may mess something
   up. You have been warned.  ]
 
