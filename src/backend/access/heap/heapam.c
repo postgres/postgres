@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.189 2005/04/30 19:03:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.190 2005/05/03 19:42:40 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2137,7 +2137,7 @@ l3:
 				 * If the XMAX is already a MultiXactId, then we need to
 				 * expand it to include our own TransactionId.
 				 */
-				xid = MultiXactIdExpand(xmax, true, xid);
+				xid = MultiXactIdExpand((MultiXactId) xmax, xid);
 				new_infomask |= HEAP_XMAX_IS_MULTI;
 			}
 			else if (TransactionIdIsInProgress(xmax))
@@ -2165,7 +2165,7 @@ l3:
 					 * create a new MultiXactId that includes both the old
 					 * locker and our own TransactionId.
 					 */
-					xid = MultiXactIdExpand(xmax, false, xid);
+					xid = MultiXactIdCreate(xmax, xid);
 					new_infomask |= HEAP_XMAX_IS_MULTI;
 				}
 			}

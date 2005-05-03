@@ -31,7 +31,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.1 2005/04/28 21:47:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.2 2005/05/03 19:42:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,19 +218,45 @@ static void TruncateMultiXact(void);
 
 
 /*
+ * MultiXactIdCreate
+ *		Construct a MultiXactId representing two TransactionIds.
+ *
+ * The two XIDs must be different.
+ *
+ * NB - we don't worry about our local MultiXactId cache here, because that
+ * is handled by the lower-level routines.
+ */
+MultiXactId
+MultiXactIdCreate(TransactionId xid1, TransactionId xid2)
+{
+	MultiXactId		newMulti;
+	TransactionId	xids[2];
+
+	AssertArg(TransactionIdIsValid(xid1));
+	AssertArg(TransactionIdIsValid(xid2));
+
+	Assert(!TransactionIdEquals(xid1, xid2));
+
+	/*
+	 * Note: unlike MultiXactIdExpand, we don't bother to check that both
+	 * XIDs are still running.  In typical usage, xid2 will be our own XID
+	 * and the caller just did a check on xid1, so it'd be wasted effort.
+	 */
+
+	xids[0] = xid1;
+	xids[1] = xid2;
+
+	newMulti = CreateMultiXactId(2, xids);
+
+	debug_elog5(DEBUG2, "Create: returning %u for %u, %u",
+				newMulti, xid1, xid2);
+
+	return newMulti;
+}
+
+/*
  * MultiXactIdExpand
- *		Add a TransactionId to a possibly-already-existing MultiXactId.
- *
- * We abuse the notation for the first argument: if "isMulti" is true, then
- * it's really a MultiXactId; else it's a TransactionId.  We are already
- * storing MultiXactId in HeapTupleHeader's xmax so assuming the datatypes
- * are equivalent is necessary anyway.
- *
- * If isMulti is true, then get the members of the passed MultiXactId, add
- * the passed TransactionId, and create a new MultiXactId.  If isMulti is
- * false, then take the two TransactionIds and create a new MultiXactId with
- * them.  The caller must ensure that the multi and xid are different
- * in the latter case.
+ *		Add a TransactionId to a pre-existing MultiXactId.
  *
  * If the TransactionId is already a member of the passed MultiXactId,
  * just return it as-is.
@@ -243,7 +269,7 @@ static void TruncateMultiXact(void);
  * is handled by the lower-level routines.
  */
 MultiXactId
-MultiXactIdExpand(MultiXactId multi, bool isMulti, TransactionId xid)
+MultiXactIdExpand(MultiXactId multi, TransactionId xid)
 {
 	MultiXactId		newMulti;
 	TransactionId  *members;
@@ -255,29 +281,8 @@ MultiXactIdExpand(MultiXactId multi, bool isMulti, TransactionId xid)
 	AssertArg(MultiXactIdIsValid(multi));
 	AssertArg(TransactionIdIsValid(xid));
 
-	debug_elog5(DEBUG2, "Expand: received %s %u, xid %u",
-				isMulti ? "MultiXactId" : "TransactionId",
+	debug_elog4(DEBUG2, "Expand: received multi %u, xid %u",
 				multi, xid);
-
-	if (!isMulti)
-	{
-		/*
-		 * The first argument is a TransactionId, not a MultiXactId.
-		 */
-		TransactionId	xids[2];
-
-		Assert(!TransactionIdEquals(multi, xid));
-
-		xids[0] = multi;
-		xids[1] = xid;
-
-		newMulti = CreateMultiXactId(2, xids);
-
-		debug_elog5(DEBUG2, "Expand: returning %u two-elem %u/%u",
-					newMulti, multi, xid);
-
-		return newMulti;
-	}
 
 	nmembers = GetMultiXactIdMembers(multi, &members);
 
