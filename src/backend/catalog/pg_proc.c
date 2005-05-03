@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.128 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.129 2005/05/03 16:51:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,6 +81,9 @@ ProcedureCreate(const char *procedureName,
 	int			allParamCount;
 	Oid		   *allParams;
 	bool		genericInParam = false;
+	bool		genericOutParam = false;
+	bool		internalInParam = false;
+	bool		internalOutParam = false;
 	Relation	rel;
 	HeapTuple	tup;
 	HeapTuple	oldtup;
@@ -133,42 +136,58 @@ ProcedureCreate(const char *procedureName,
 
 	/*
 	 * Do not allow return type ANYARRAY or ANYELEMENT unless at least one
-	 * input argument is also ANYARRAY or ANYELEMENT
+	 * input argument is ANYARRAY or ANYELEMENT.  Also, do not allow
+	 * return type INTERNAL unless at least one input argument is INTERNAL.
 	 */
 	for (i = 0; i < parameterCount; i++)
 	{
-		if (parameterTypes->values[i] == ANYARRAYOID ||
-			parameterTypes->values[i] == ANYELEMENTOID)
+		switch (parameterTypes->values[i])
 		{
-			genericInParam = true;
-			break;
+			case ANYARRAYOID:
+			case ANYELEMENTOID:
+				genericInParam = true;
+				break;
+			case INTERNALOID:
+				internalInParam = true;
+				break;
 		}
 	}
 
-	if (!genericInParam)
+	if (allParameterTypes != PointerGetDatum(NULL))
 	{
-		bool	genericOutParam = false;
-
-		if (allParameterTypes != PointerGetDatum(NULL))
+		for (i = 0; i < allParamCount; i++)
 		{
-			for (i = 0; i < allParamCount; i++)
+			/*
+			 * We don't bother to distinguish input and output params here,
+			 * so if there is, say, just an input INTERNAL param then we will
+			 * still set internalOutParam.  This is OK since we don't really
+			 * care.
+			 */
+			switch (allParams[i])
 			{
-				if (allParams[i] == ANYARRAYOID ||
-					allParams[i] == ANYELEMENTOID)
-				{
+				case ANYARRAYOID:
+				case ANYELEMENTOID:
 					genericOutParam = true;
 					break;
-				}
+				case INTERNALOID:
+					internalOutParam = true;
+					break;
 			}
 		}
-
-		if (returnType == ANYARRAYOID || returnType == ANYELEMENTOID ||
-			genericOutParam)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					 errmsg("cannot determine result data type"),
-					 errdetail("A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type.")));
 	}
+
+	if ((returnType == ANYARRAYOID || returnType == ANYELEMENTOID ||
+		 genericOutParam) && !genericInParam)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("cannot determine result data type"),
+				 errdetail("A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type.")));
+
+	if ((returnType == INTERNALOID || internalOutParam) && !internalInParam)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("unsafe use of INTERNAL pseudo-type"),
+				 errdetail("A function returning \"internal\" must have at least one \"internal\" argument.")));
 
 	/*
 	 * don't allow functions of complex types that have the same name as
