@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.16 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.16.4.1 2005/05/03 19:18:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ CreateConversionCommand(CreateConversionStmt *stmt)
 	const char *from_encoding_name = stmt->for_encoding_name;
 	const char *to_encoding_name = stmt->to_encoding_name;
 	List	   *func_name = stmt->func_name;
-	static Oid	funcargs[] = {INT4OID, INT4OID, CSTRINGOID, CSTRINGOID, INT4OID};
+	static Oid	funcargs[] = {INT4OID, INT4OID, CSTRINGOID, INTERNALOID, INT4OID};
 
 	/* Convert list of names to a name and namespace */
 	namespaceId = QualifiedNameGetCreationNamespace(stmt->conversion_name,
