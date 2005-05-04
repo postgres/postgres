@@ -1,9 +1,116 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.333 2005/04/07 19:04:13 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.334 2005/05/04 21:19:33 tgl Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-8-0-3">
+   <title>Release 8.0.3</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-05-05</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.0.2, including several
+    security-related issues.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.3</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.X.  However,
+     it is one possible way of handling two significant security problems
+     that have been found in the initial contents of 8.0.X system
+     catalogs.  A dump/initdb/reload sequence using 8.0.3's initdb will
+     automatically correct these problems.
+    </para>
+
+    <para>
+     The larger security problem is that the built-in character set encoding
+     conversion functions can be invoked from SQL commands by unprivileged
+     users, but the functions were not designed for such use and are not
+     secure against malicious choices of arguments.  The fix involves changing
+     the declared parameter list of these functions so that they can no longer
+     be invoked from SQL commands.  (This does not affect their normal use
+     by the encoding conversion machinery.)
+    </para>
+
+    <para>
+     The lesser problem is that the <filename>contrib/tsearch2</> module
+     creates several functions that are misdeclared to return
+     <type>internal</> when they do not accept <type>internal</> arguments.
+     This breaks type safety for all functions using <type>internal</>
+     arguments.
+    </para>
+
+    <para>
+     It is strongly recommended that all installations repair these errors,
+     either by initdb or by following the manual repair procedure given
+     below.  The errors at least allow unprivileged database users to crash
+     their server process, and may allow unprivileged users to gain the
+     privileges of a database superuser.
+    </para>
+
+    <para>
+     If you wish not to do an initdb, perform the same manual repair
+     procedures shown in the <link linkend="release-7-4-8">7.4.8 release
+     notes</link>.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Change encoding function signature to prevent
+misuse</para></listitem>
+<listitem><para>Change <filename>contrib/tsearch2</> to avoid unsafe use of
+<type>INTERNAL</> function results</para></listitem>
+<listitem><para>Guard against incorrect second parameter to
+<function>record_out</></para></listitem>
+<listitem><para>Fix comparisons of <type>TIME WITH TIME ZONE</> values</para>
+<para>
+The comparison code was wrong in the case where the
+<literal>--enable-integer-datetimes</> configuration switch had been used.
+NOTE: if you have an index on a <type>TIME WITH TIME ZONE</> column,
+it will need to be <command>REINDEX</>ed after installing this update, because
+the fix corrects the sort order of column values.
+</para></listitem>
+<listitem><para>Fix <function>EXTRACT(EPOCH)</> for
+<type>TIME WITH TIME ZONE</> values</para></listitem>
+<listitem><para>Fix mis-display of negative fractional seconds in
+<type>INTERVAL</> values</para>
+<para>
+This error only occurred when the
+<literal>--enable-integer-datetimes</> configuration switch had been used.
+</para></listitem>
+<listitem><para>Fix pg_dump to dump trigger names containing <literal>%</>
+correctly (Neil)</para></listitem>
+<listitem><para>Still more 64-bit fixes for
+<filename>contrib/intagg</></para></listitem>
+<listitem><para>Prevent incorrect optimization of functions returning
+<type>RECORD</></para></listitem>
+<listitem><para>Prevent crash on <literal>COALESCE(NULL,NULL)</></para></listitem>
+<listitem><para>Fix Borland makefile for libpq</para></listitem>
+<listitem><para>Fix <filename>contrib/btree_gist</> for <type>timetz</> type
+(Teodor)</para></listitem>
+<listitem><para>Make <command>pg_ctl</> check the PID found in
+<filename>postmaster.pid</> to see if it is still a live
+process</para></listitem>
+<listitem><para>Fix <command>pg_dump</>/<command>pg_restore</> problems caused
+by addition of dump timestamps</para></listitem>
+<listitem><para>Fix interaction between materializing holdable cursors and
+firing deferred triggers during transaction commit</para></listitem>
+<listitem><para>Fix memory leak in SQL functions returning pass-by-reference
+data types</para></listitem>
+</itemizedlist>
+
+   </sect2>
+  </sect1>
 
   <sect1 id="release-8-0-2">
    <title>Release 8.0.2</title>
@@ -2572,6 +2679,177 @@ typedefs (Michael)</para></listitem>
   </sect2>
  </sect1>
 
+  <sect1 id="release-7-4-8">
+   <title>Release 7.4.8</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-05-05</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.7, including several
+    security-related issues.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.8</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.  However,
+     it is one possible way of handling two significant security problems
+     that have been found in the initial contents of 7.4.X system
+     catalogs.  A dump/initdb/reload sequence using 7.4.8's initdb will
+     automatically correct these problems.
+    </para>
+
+    <para>
+     The larger security problem is that the built-in character set encoding
+     conversion functions can be invoked from SQL commands by unprivileged
+     users, but the functions were not designed for such use and are not
+     secure against malicious choices of arguments.  The fix involves changing
+     the declared parameter list of these functions so that they can no longer
+     be invoked from SQL commands.  (This does not affect their normal use
+     by the encoding conversion machinery.)
+    </para>
+
+    <para>
+     The lesser problem is that the <filename>contrib/tsearch2</> module
+     creates several functions that are misdeclared to return
+     <type>internal</> when they do not accept <type>internal</> arguments.
+     This breaks type safety for all functions using <type>internal</>
+     arguments.
+    </para>
+
+    <para>
+     It is strongly recommended that all installations repair these errors,
+     either by initdb or by following the manual repair procedures given
+     below.  The errors at least allow unprivileged database users to crash
+     their server process, and may allow unprivileged users to gain the
+     privileges of a database superuser.
+    </para>
+
+    <para>
+     If you wish not to do an initdb, perform the following procedures instead.
+     As the database superuser, do:
+
+<programlisting>
+BEGIN;
+UPDATE pg_proc SET proargtypes[3] = 'internal'::regtype
+WHERE pronamespace = 11 AND pronargs = 5
+      AND proargtypes[2] = 'cstring'::regtype;
+-- The command should report having updated 90 rows;
+-- if not, rollback and investigate instead of committing!
+COMMIT;
+</programlisting>
+
+     Next, if you have installed <filename>contrib/tsearch2</>, do
+
+<programlisting>
+BEGIN;
+UPDATE pg_proc SET proargtypes[0] = 'internal'::regtype
+WHERE oid IN (
+    'dex_init(text)'::regprocedure,
+    'snb_en_init(text)'::regprocedure,
+    'snb_ru_init(text)'::regprocedure,
+    'spell_init(text)'::regprocedure,
+    'syn_init(text)'::regprocedure
+);
+-- The command should report having updated 5 rows;
+-- if not, rollback and investigate instead of committing!
+COMMIT;
+</programlisting>
+
+     If this command fails with a message like <quote>function
+     "dex_init(text)" does not exist</>, then either <filename>tsearch2</>
+     is not installed in this database, or you already did the update.
+    </para>
+
+    <para>
+     The above procedures must be carried out in <emphasis>each</> database
+     of an installation, including <literal>template1</>, and ideally
+     including <literal>template0</> as well.  If you do not fix the
+     template databases then any subsequently created databases will contain
+     the same errors.  <literal>template1</> can be fixed in the same way
+     as any other database, but fixing <literal>template0</> requires
+     additional steps.  First, from any database issue
+<programlisting>
+UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';
+</programlisting>
+      Next connect to <literal>template0</> and perform the above repair
+      procedures.  Finally, do
+<programlisting>
+-- re-freeze template0:
+VACUUM FREEZE;
+-- and protect it against future alterations:
+UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
+</programlisting>
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Change encoding function signature to prevent
+misuse</para></listitem>
+<listitem><para>Change <filename>contrib/tsearch2</> to avoid unsafe use of
+<type>INTERNAL</> function results</para></listitem>
+<listitem><para>Fix comparisons of <type>TIME WITH TIME ZONE</> values</para>
+<para>
+The comparison code was wrong in the case where the
+<literal>--enable-integer-datetimes</> configuration switch had been used.
+NOTE: if you have an index on a <type>TIME WITH TIME ZONE</> column,
+it will need to be <command>REINDEX</>ed after installing this update, because
+the fix corrects the sort order of column values.
+</para></listitem>
+<listitem><para>Fix <function>EXTRACT(EPOCH)</> for
+<type>TIME WITH TIME ZONE</> values</para></listitem>
+<listitem><para>Fix mis-display of negative fractional seconds in
+<type>INTERVAL</> values</para>
+<para>
+This error only occurred when the
+<literal>--enable-integer-datetimes</> configuration switch had been used.
+</para></listitem>
+<listitem><para>Ensure operations done during backend shutdown are counted by
+statistics collector</para>
+<para>
+ This is expected to resolve reports of <application>pg_autovacuum</>
+ not vacuuming the system catalogs often enough &mdash; it was not being
+ told about catalog deletions caused by temporary table removal during
+ backend exit.
+</para></listitem>
+<listitem><para>Additional buffer overrun checks in plpgsql
+(Neil)</para></listitem>
+<listitem><para>Fix pg_dump to dump trigger names containing <literal>%</>
+correctly (Neil)</para></listitem>
+<listitem><para>Fix <filename>contrib/pgcrypto</> for newer OpenSSL builds
+(Marko Kreen)</para></listitem>
+<listitem><para>Still more 64-bit fixes for
+<filename>contrib/intagg</></para></listitem>
+<listitem><para>Prevent incorrect optimization of functions returning
+<type>RECORD</></para></listitem>
+<listitem><para>Prevent <function>to_char(interval)</> from dumping core for
+month-related formats</para></listitem>
+<listitem><para>Prevent crash on <literal>COALESCE(NULL,NULL)</></para></listitem>
+<listitem><para>Fix <function>array_map</> to call PL functions correctly</para></listitem>
+<listitem><para>Fix permission checking in <command>ALTER DATABASE RENAME</></para></listitem>
+<listitem><para>Fix <command>ALTER LANGUAGE RENAME</></para></listitem>
+<listitem><para>Make <function>RemoveFromWaitQueue</> clean up after itself</para>
+<para>
+This fixes a lock management error that would only be visible if a transaction
+was kicked out of a wait for a lock (typically by query cancel) and then the
+holder of the lock released it within a very narrow window.
+</para></listitem>
+<listitem><para>Fix problem with untyped parameter appearing in
+<command>INSERT ... SELECT</></para></listitem>
+<listitem><para>Fix <command>CLUSTER</> failure after
+<command>ALTER TABLE SET WITHOUT OIDS</></para></listitem>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
+
   <sect1 id="release-7-4-7">
    <title>Release 7.4.7</title>
 
@@ -4950,6 +5228,121 @@ DROP SCHEMA information_schema CASCADE;
     <listitem><para>Remove array module because features now included by default (Joe)</para></listitem>
    </itemizedlist>
   </sect3>
+  </sect2>
+ </sect1>
+
+  <sect1 id="release-7-3-10">
+   <title>Release 7.3.10</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-05-05</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.9, including several
+    security-related issues.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.10</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     it is one possible way of handling a significant security problem
+     that has been found in the initial contents of 7.3.X system
+     catalogs.  A dump/initdb/reload sequence using 7.3.10's initdb will
+     automatically correct this problem.
+    </para>
+
+    <para>
+     The security problem is that the built-in character set encoding
+     conversion functions can be invoked from SQL commands by unprivileged
+     users, but the functions were not designed for such use and are not
+     secure against malicious choices of arguments.  The fix involves changing
+     the declared parameter list of these functions so that they can no longer
+     be invoked from SQL commands.  (This does not affect their normal use
+     by the encoding conversion machinery.)
+     It is strongly recommended that all installations repair this error,
+     either by initdb or by following the manual repair procedure given
+     below.  The error at least allows unprivileged database users to crash
+     their server process, and may allow unprivileged users to gain the
+     privileges of a database superuser.
+    </para>
+
+    <para>
+     If you wish not to do an initdb, perform the following procedure instead.
+     As the database superuser, do:
+
+<programlisting>
+BEGIN;
+UPDATE pg_proc SET proargtypes[3] = 'internal'::regtype
+WHERE pronamespace = 11 AND pronargs = 5
+      AND proargtypes[2] = 'cstring'::regtype;
+-- The command should report having updated 90 rows;
+-- if not, rollback and investigate instead of committing!
+COMMIT;
+</programlisting>
+    </para>
+
+    <para>
+     The above procedure must be carried out in <emphasis>each</> database
+     of an installation, including <literal>template1</>, and ideally
+     including <literal>template0</> as well.  If you do not fix the
+     template databases then any subsequently created databases will contain
+     the same error.  <literal>template1</> can be fixed in the same way
+     as any other database, but fixing <literal>template0</> requires
+     additional steps.  First, from any database issue
+<programlisting>
+UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';
+</programlisting>
+      Next connect to <literal>template0</> and perform the above repair
+      procedure.  Finally, do
+<programlisting>
+-- re-freeze template0:
+VACUUM FREEZE;
+-- and protect it against future alterations:
+UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
+</programlisting>
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Change encoding function signature to prevent
+misuse</para></listitem>
+<listitem><para>Fix comparisons of <type>TIME WITH TIME ZONE</> values</para>
+<para>
+The comparison code was wrong in the case where the
+<literal>--enable-integer-datetimes</> configuration switch had been used.
+NOTE: if you have an index on a <type>TIME WITH TIME ZONE</> column,
+it will need to be <command>REINDEX</>ed after installing this update, because
+the fix corrects the sort order of column values.
+</para></listitem>
+<listitem><para>Fix <function>EXTRACT(EPOCH)</> for
+<type>TIME WITH TIME ZONE</> values</para></listitem>
+<listitem><para>Fix mis-display of negative fractional seconds in
+<type>INTERVAL</> values</para>
+<para>
+This error only occurred when the
+<literal>--enable-integer-datetimes</> configuration switch had been used.
+</para></listitem>
+<listitem><para>Additional buffer overrun checks in plpgsql
+(Neil)</para></listitem>
+<listitem><para>Fix pg_dump to dump trigger names containing <literal>%</>
+correctly (Neil)</para></listitem>
+<listitem><para>Prevent <function>to_char(interval)</> from dumping core for
+month-related formats</para></listitem>
+<listitem><para>Fix <filename>contrib/pgcrypto</> for newer OpenSSL builds
+(Marko Kreen)</para></listitem>
+<listitem><para>Still more 64-bit fixes for
+<filename>contrib/intagg</></para></listitem>
+<listitem><para>Prevent incorrect optimization of functions returning
+<type>RECORD</></para></listitem>
+</itemizedlist>
+
   </sect2>
  </sect1>
 
