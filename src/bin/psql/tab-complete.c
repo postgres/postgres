@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.125 2005/04/21 19:18:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.126 2005/05/04 14:25:24 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1029,7 +1029,7 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev2_wd, "TO") == 0))
 		{
 			static const char *const list_COPY[] =
-			{"BINARY", "OIDS", "DELIMETER", "NULL", "CSV", NULL};
+			{"BINARY", "OIDS", "DELIMITER", "NULL", "CSV", NULL};
 
 			COMPLETE_WITH_LIST(list_COPY);
 		}
