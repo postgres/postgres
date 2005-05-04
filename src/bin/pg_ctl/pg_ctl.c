@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.53.4.1 2005/04/20 23:10:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.53.4.2 2005/05/04 22:35:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,6 +117,7 @@ static pgpid_t get_pgpid(void);
 static char **readfile(const char *path);
 static int	start_postmaster(void);
 static bool test_postmaster_connection(void);
+static bool postmaster_is_alive(pid_t pid);
 
 static char def_postopts_file[MAXPGPATH];
 static char postopts_file[MAXPGPATH];
@@ -680,7 +681,8 @@ do_restart(void)
 
 	if (pid == 0)				/* no pid file */
 	{
-		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
+		write_stderr(_("%s: PID file \"%s\" does not exist\n"),
+					 progname, pid_file);
 		write_stderr(_("Is postmaster running?\n"));
 		write_stderr(_("starting postmaster anyway\n"));
 		do_start();
@@ -689,45 +691,58 @@ do_restart(void)
 	else if (pid < 0)			/* standalone backend, not postmaster */
 	{
 		pid = -pid;
-		write_stderr(_("%s: cannot restart postmaster; "
-					   "postgres is running (PID: %ld)\n"),
-					 progname, pid);
-		write_stderr(_("Please terminate postgres and try again.\n"));
-		exit(1);
+		if (postmaster_is_alive((pid_t) pid))
+		{
+			write_stderr(_("%s: cannot restart postmaster; "
+						   "postgres is running (PID: %ld)\n"),
+						 progname, pid);
+			write_stderr(_("Please terminate postgres and try again.\n"));
+			exit(1);
+		}
 	}
 
-	if (kill((pid_t) pid, sig) != 0)
+	if (postmaster_is_alive((pid_t) pid))
 	{
-		write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"), progname, pid,
-					 strerror(errno));
-		exit(1);
-	}
+		if (kill((pid_t) pid, sig) != 0)
+		{
+			write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"), progname, pid,
+						 strerror(errno));
+			exit(1);
+		}
 
-	print_msg(_("waiting for postmaster to shut down..."));
+		print_msg(_("waiting for postmaster to shut down..."));
 
 	/* always wait for restart */
 
-	for (cnt = 0; cnt < wait_seconds; cnt++)
-	{
-		if ((pid = get_pgpid()) != 0)
+		for (cnt = 0; cnt < wait_seconds; cnt++)
 		{
-			print_msg(".");
-			pg_usleep(1000000); /* 1 sec */
+			if ((pid = get_pgpid()) != 0)
+			{
+				print_msg(".");
+				pg_usleep(1000000); /* 1 sec */
+			}
+			else
+				break;
 		}
-		else
-			break;
-	}
 
-	if (pid != 0)				/* pid file still exists */
+		if (pid != 0)				/* pid file still exists */
+		{
+			print_msg(_(" failed\n"));
+
+			write_stderr(_("%s: postmaster does not shut down\n"), progname);
+			exit(1);
+		}
+
+		print_msg(_(" done\n"));
+		printf(_("postmaster stopped\n"));
+	}
+	else
 	{
-		print_msg(_(" failed\n"));
-
-		write_stderr(_("%s: postmaster does not shut down\n"), progname);
-		exit(1);
+		write_stderr(_("%s: old postmaster process (PID: %ld) seems to be gone\n"),
+					 progname, pid);
+		write_stderr(_("starting postmaster anyway\n"));
 	}
 
-	print_msg(_(" done\n"));
-	printf(_("postmaster stopped\n"));
 	do_start();
 }
 
@@ -838,8 +853,8 @@ do_kill(pgpid_t pid)
 {
 	if (kill((pid_t) pid, sig) != 0)
 	{
-		write_stderr(_("%s: could not send signal %d (PID: %ld): %s\n"), progname, sig, pid,
-					 strerror(errno));
+		write_stderr(_("%s: could not send signal %d (PID: %ld): %s\n"),
+					 progname, sig, pid, strerror(errno));
 		exit(1);
 	}
 }
