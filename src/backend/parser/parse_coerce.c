@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.127 2005/03/29 00:17:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.128 2005/05/05 00:19:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,6 +318,13 @@ coerce_type(ParseState *pstate, Node *node,
 		return coerce_record_to_complex(pstate, node, targetTypeId,
 										ccontext, cformat);
 	}
+	if (targetTypeId == RECORDOID &&
+		ISCOMPLEX(inputTypeId))
+	{
+		/* Coerce a specific complex type to RECORD */
+		/* NB: we do NOT want a RelabelType here */
+		return node;
+	}
 	if (typeInheritsFrom(inputTypeId, targetTypeId))
 	{
 		/*
@@ -403,6 +410,13 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 		 */
 		if (inputTypeId == RECORDOID &&
 			ISCOMPLEX(targetTypeId))
+			continue;
+
+		/*
+		 * If input is a composite type and target is RECORD, accept
+		 */
+		if (targetTypeId == RECORDOID &&
+			ISCOMPLEX(inputTypeId))
 			continue;
 
 		/*
