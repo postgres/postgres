@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.334 2005/05/04 21:19:33 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.335 2005/05/05 17:59:40 tgl Exp $
 -->
 
 <appendix id="release">
@@ -6502,6 +6502,46 @@ operations on bytea columns (Joe)</para></listitem>
 <listitem><para>Improve /contrib/fulltextindex (Christopher)</para></listitem>
 </itemizedlist>
    </sect3>
+
+  </sect2>
+ </sect1>
+
+  <sect1 id="release-7-2-8">
+   <title>Release 7.2.8</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2005-05-05</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.2.7, including one
+    security-related issue.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.2.8</title>
+
+    <para>
+     A dump/restore is not required for those running 7.2.X.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Fix <function>EXTRACT(EPOCH)</> for
+<type>TIME WITH TIME ZONE</> values</para></listitem>
+<listitem><para>Additional buffer overrun checks in plpgsql
+(Neil)</para></listitem>
+<listitem><para>Fix pg_dump to dump index names and trigger names containing
+<literal>%</> correctly (Neil)</para></listitem>
+<listitem><para>Prevent <function>to_char(interval)</> from dumping core for
+month-related formats</para></listitem>
+<listitem><para>Fix <filename>contrib/pgcrypto</> for newer OpenSSL builds
+(Marko Kreen)</para></listitem>
+</itemizedlist>
 
   </sect2>
  </sect1>
