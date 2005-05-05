@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  *	checkfiles.c
- *	  support to clean up stale relation files on crash recovery
+ *	  check for stale relation files during crash recovery
  *
  *	If a backend crashes while in a transaction that has created or
  *	deleted a relfilenode, a stale file can be left over in the data
@@ -14,23 +14,23 @@
  *	files, and use the 'dirty' flag to determine if we should run this on
  *	a clean startup.
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/checkfiles.c,v 1.1 2005/05/02 18:26:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/checkfiles.c,v 1.2 2005/05/05 22:18:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "storage/fd.h"
-
-#include "utils/flatfiles.h"
-#include "miscadmin.h"
-#include "catalog/pg_tablespace.h"
-#include "catalog/catalog.h"
-#include "access/skey.h"
-#include "utils/fmgroids.h"
-#include "access/relscan.h"
 #include "access/heapam.h"
+#include "access/relscan.h"
+#include "access/skey.h"
+#include "catalog/catalog.h"
+#include "catalog/pg_tablespace.h"
+#include "miscadmin.h"
+#include "storage/fd.h"
+#include "utils/flatfiles.h"
+#include "utils/fmgroids.h"
 #include "utils/resowner.h"
+
 
 static void CheckStaleRelFilesFrom(Oid tablespaceoid, Oid dboid);
 static void CheckStaleRelFilesFromTablespace(Oid tablespaceoid);
@@ -52,11 +52,6 @@ AllocateDirChecked(char *path)
 /*
  * Scan through all tablespaces for relations left over
  * by aborted transactions.
- *
- * For example, if a transaction issues
- * BEGIN; CREATE TABLE foobar ();
- * and then the backend crashes, the file is left in the
- * tablespace until CheckStaleRelFiles deletes it.
  */
 void
 CheckStaleRelFiles(void)
@@ -125,31 +120,18 @@ CheckStaleRelFilesFrom(Oid tablespaceoid, Oid dboid)
 	struct dirent *de;
 	HASHCTL		hashctl;
 	HTAB	   *relfilenodeHash;
-	MemoryContext mcxt;
 	RelFileNode rnode;
 	char	   *path;
-
-	/*
-	 * We create a private memory context so that we can easily deallocate the
-	 * hash table and its contents
-	 */
-	mcxt = AllocSetContextCreate(TopMemoryContext, "CheckStaleRelFiles",
-								 ALLOCSET_DEFAULT_MINSIZE,
-								 ALLOCSET_DEFAULT_INITSIZE,
-								 ALLOCSET_DEFAULT_MAXSIZE);
-
-	hashctl.hash = tag_hash;
 
 	/*
 	 * The entry contents is not used for anything, we just check if an oid is
 	 * in the hash table or not.
 	 */
 	hashctl.keysize = sizeof(Oid);
-	hashctl.entrysize = 1;
-	hashctl.hcxt = mcxt;
+	hashctl.entrysize = sizeof(Oid);
+	hashctl.hash = tag_hash;
 	relfilenodeHash = hash_create("relfilenodeHash", 100, &hashctl,
-								  HASH_FUNCTION
-								  | HASH_ELEM | HASH_CONTEXT);
+								  HASH_FUNCTION | HASH_ELEM);
 
 	/* Read all relfilenodes from pg_class into the hash table */
 	{
@@ -209,10 +191,9 @@ CheckStaleRelFilesFrom(Oid tablespaceoid, Oid dboid)
 				rnode.relNode = relfilenode;
 
 				filepath = relpath(rnode);
-
 				ereport(LOG,
 						(errcode_for_file_access(),
-						 errmsg("The table or index file \"%s\" is stale and can be safely removed",
+						 errmsg("table or index file \"%s\" is stale and can safely be removed",
 								filepath)));
 				pfree(filepath);
 			}
@@ -221,5 +202,4 @@ CheckStaleRelFilesFrom(Oid tablespaceoid, Oid dboid)
 	FreeDir(dirdesc);
 	pfree(path);
 	hash_destroy(relfilenodeHash);
-	MemoryContextDelete(mcxt);
 }
