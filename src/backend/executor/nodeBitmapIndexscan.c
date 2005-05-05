@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.7 2005/04/25 01:30:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapIndexscan.c,v 1.8 2005/05/05 03:37:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,8 +38,6 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 {
 #define MAX_TIDS	1024
 	TIDBitmap  *tbm;
-	Oid			indexid;
-	Relation	indexRelation;
 	IndexScanDesc scandesc;
 	ItemPointerData tids[MAX_TIDS];
 	int32		ntids;
@@ -50,29 +48,16 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 		InstrStartNode(node->ss.ps.instrument);
 
 	/*
+	 * extract necessary information from index scan node
+	 */
+	scandesc = node->biss_ScanDesc;
+
+	/*
 	 * If we have runtime keys and they've not already been set up, do it
 	 * now.
 	 */
 	if (node->biss_RuntimeKeyInfo && !node->biss_RuntimeKeysReady)
 		ExecReScan((PlanState *) node, NULL);
-
-	/*
-	 * We do not open or lock the base relation here.  We assume that an
-	 * ancestor BitmapHeapScan node is holding AccessShareLock on the
-	 * heap relation throughout the execution of the plan tree.
-	 */
-
-	/*
-	 * open the index relation and initialize relation and scan
-	 * descriptors.  Note we acquire no locks here; the index machinery
-	 * does its own locks and unlocks.
-	 */
-	indexid = ((BitmapIndexScan *) node->ss.ps.plan)->indexid;
-	indexRelation = index_open(indexid);
-	scandesc = index_beginscan_multi(indexRelation,
-									 node->ss.ps.state->es_snapshot,
-									 node->biss_NumScanKeys,
-									 node->biss_ScanKeys);
 
 	/*
 	 * Prepare the result bitmap.  Normally we just create a new one to pass
@@ -110,12 +95,6 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
 		CHECK_FOR_INTERRUPTS();
 	}
 
-	/*
-	 * close the index relation
-	 */
-	index_endscan(scandesc);
-	index_close(indexRelation);
-
 	/* must provide our own instrumentation support */
 	if (node->ss.ps.instrument)
 		InstrStopNodeMulti(node->ss.ps.instrument, nTuples);
@@ -127,7 +106,7 @@ MultiExecBitmapIndexScan(BitmapIndexScanState *node)
  *		ExecBitmapIndexReScan(node)
  *
  *		Recalculates the value of the scan keys whose value depends on
- *		information known at runtime.
+ *		information known at runtime and rescans the indexed relation.
  * ----------------------------------------------------------------
  */
 void
@@ -169,6 +148,9 @@ ExecBitmapIndexReScan(BitmapIndexScanState *node, ExprContext *exprCtxt)
 								 node->biss_NumScanKeys);
 		node->biss_RuntimeKeysReady = true;
 	}
+
+	/* reset index scan */
+	index_rescan(node->biss_ScanDesc, node->biss_ScanKeys);
 }
 
 /* ----------------------------------------------------------------
@@ -178,6 +160,15 @@ ExecBitmapIndexReScan(BitmapIndexScanState *node, ExprContext *exprCtxt)
 void
 ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 {
+	Relation	indexRelationDesc;
+	IndexScanDesc indexScanDesc;
+
+	/*
+	 * extract information from the node
+	 */
+	indexRelationDesc = node->biss_RelationDesc;
+	indexScanDesc = node->biss_ScanDesc;
+
 	/*
 	 * Free the exprcontext ... now dead code, see ExecFreeExprContext
 	 */
@@ -185,6 +176,12 @@ ExecEndBitmapIndexScan(BitmapIndexScanState *node)
 	if (node->biss_RuntimeContext)
 		FreeExprContext(node->biss_RuntimeContext);
 #endif
+
+	/*
+	 * close the index relation
+	 */
+	index_endscan(indexScanDesc);
+	index_close(indexRelationDesc);
 }
 
 /* ----------------------------------------------------------------
@@ -272,9 +269,26 @@ ExecInitBitmapIndexScan(BitmapIndexScan *node, EState *estate)
 		indexstate->biss_RuntimeContext = NULL;
 	}
 
-	/* We don't keep the table or index open across calls */
+	/*
+	 * We do not open or lock the base relation here.  We assume that an
+	 * ancestor BitmapHeapScan node is holding AccessShareLock on the
+	 * heap relation throughout the execution of the plan tree.
+	 */
+
 	indexstate->ss.ss_currentRelation = NULL;
 	indexstate->ss.ss_currentScanDesc = NULL;
+
+	/*
+	 * open the index relation and initialize relation and scan
+	 * descriptors.  Note we acquire no locks here; the index machinery
+	 * does its own locks and unlocks.
+	 */
+	indexstate->biss_RelationDesc = index_open(node->indexid);
+	indexstate->biss_ScanDesc =
+		index_beginscan_multi(indexstate->biss_RelationDesc,
+							  estate->es_snapshot,
+							  numScanKeys,
+							  scanKeys);
 
 	/*
 	 * all done.
