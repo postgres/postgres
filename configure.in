@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.407 2005/03/25 00:34:19 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.408 2005/05/05 11:50:18 neilc Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -539,9 +539,6 @@ AC_SUBST(ELF_SYS)
 CPPFLAGS="$CPPFLAGS $INCLUDES"
 LDFLAGS="$LDFLAGS $LIBDIRS"
 
-AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
-AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
-
 AC_ARG_VAR(LDFLAGS_SL)
 
 AC_PROG_AWK
@@ -550,6 +547,7 @@ AC_PROG_LN_S
 PGAC_PROG_LD
 AC_SUBST(LD)
 AC_SUBST(with_gnu_ld)
+
 case $host_os in sysv5*)
   AC_CACHE_CHECK([whether ld -R works], [pgac_cv_prog_ld_R],
   [
@@ -560,10 +558,34 @@ case $host_os in sysv5*)
   ld_R_works=$pgac_cv_prog_ld_R
   AC_SUBST(ld_R_works)
 esac
+
+# To simplify the build system, we specify the maximal set of
+# libraries to link against when building any executable. The linker
+# on some platforms optionally allows unused link arguments to be
+# elided from the resulting executable, so enable that capability if
+# it exists.
+# XXX: currently we only support GNU ld; do any other linkers support
+# an equivalent feature?
+if test "$with_gnu_ld"; then
+  AC_CACHE_CHECK([whether ld --as-needed works], [pgac_cv_prog_ld_as_needed],
+  [
+    pgac_save_LDFLAGS=$LDFLAGS; LDFLAGS="$LDFLAGS -Wl,--as-needed"
+    AC_TRY_LINK([], [],
+                [pgac_cv_prog_ld_as_needed=yes],
+                [pgac_cv_prog_ld_as_needed=no])
+   if test x"$pgac_cv_prog_ld_as_needed" = x"no"; then
+     LDFLAGS=$pgac_save_LDFLAGS
+   fi
+  ])
+fi
+
 AC_PROG_RANLIB
 AC_CHECK_PROGS(LORDER, lorder)
 AC_PATH_PROG(TAR, tar)
 PGAC_CHECK_STRIP
+
+AC_MSG_NOTICE([using CPPFLAGS=$CPPFLAGS])
+AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
 
 AC_CHECK_PROGS(YACC, ['bison -y'])
 
