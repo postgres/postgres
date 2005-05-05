@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.127 2003/09/25 06:58:05 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.127.2.1 2005/05/05 19:53:49 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -119,9 +119,11 @@ ReverifyMyDatabase(const char *name)
 
 	/*
 	 * Also check that the database is currently allowing connections.
+	 * (We do not enforce this in standalone mode, however, so that there is
+	 * a way to recover from "UPDATE pg_database SET datallowconn = false;")
 	 */
 	dbform = (Form_pg_database) GETSTRUCT(tup);
-	if (!dbform->datallowconn)
+	if (IsUnderPostmaster && !dbform->datallowconn)
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 		 errmsg("database \"%s\" is not currently accepting connections",
