@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.263.2.1 2003/12/19 23:32:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.263.2.2 2005/05/05 16:37:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2004,6 +2004,10 @@ static void
 freePGconn(PGconn *conn)
 {
 	pgParameterStatus *pstatus;
+
+#ifdef WIN32
+	WSACleanup();
+#endif
 
 	if (!conn)
 		return;
