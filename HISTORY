@@ -1,6 +1,30 @@
 
                                Release Notes
 
+                               Release 7.2.8
+
+     Release date: 2005-05-05
+
+   This release contains a variety of fixes from 7.2.7, including one
+   security-related issue.
+     _________________________________________________________________
+
+                         Migration to version 7.2.8
+
+   A dump/restore is not required for those running 7.2.X.
+     _________________________________________________________________
+
+                                  Changes
+
+     * Fix EXTRACT(EPOCH) for TIME WITH TIME ZONE values
+     * Additional buffer overrun checks in plpgsql (Neil)
+     * Fix pg_dump to dump index names and trigger names containing %
+       correctly (Neil)
+     * Prevent to_char(interval) from dumping core for month-related
+       formats
+     * Fix "contrib/pgcrypto" for newer OpenSSL builds (Marko Kreen)
+     _________________________________________________________________
+
                                Release 7.2.7
 
      Release date: 2005-01-31
