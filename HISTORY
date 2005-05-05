@@ -1,6 +1,83 @@
 
                                Release Notes
 
+                               Release 7.3.10
+
+     Release date: 2005-05-05
+
+   This release contains a variety of fixes from 7.3.9, including several
+   security-related issues.
+     _________________________________________________________________
+
+                        Migration to version 7.3.10
+
+   A dump/restore is not required for those running 7.3.X. However, it is
+   one possible way of handling a significant security problem that has
+   been found in the initial contents of 7.3.X system catalogs. A
+   dump/initdb/reload sequence using 7.3.10's initdb will automatically
+   correct this problem.
+
+   The security problem is that the built-in character set encoding
+   conversion functions can be invoked from SQL commands by unprivileged
+   users, but the functions were not designed for such use and are not
+   secure against malicious choices of arguments. The fix involves
+   changing the declared parameter list of these functions so that they
+   can no longer be invoked from SQL commands. (This does not affect
+   their normal use by the encoding conversion machinery.) It is strongly
+   recommended that all installations repair this error, either by initdb
+   or by following the manual repair procedure given below. The error at
+   least allows unprivileged database users to crash their server
+   process, and may allow unprivileged users to gain the privileges of a
+   database superuser.
+
+   If you wish not to do an initdb, perform the following procedure
+   instead. As the database superuser, do:
+BEGIN;
+UPDATE pg_proc SET proargtypes[3] = 'internal'::regtype
+WHERE pronamespace = 11 AND pronargs = 5
+      AND proargtypes[2] = 'cstring'::regtype;
+-- The command should report having updated 90 rows;
+-- if not, rollback and investigate instead of committing!
+COMMIT;
+
+   The above procedure must be carried out in *each* database of an
+   installation, including template1, and ideally including template0 as
+   well. If you do not fix the template databases then any subsequently
+   created databases will contain the same error. template1 can be fixed
+   in the same way as any other database, but fixing template0 requires
+   additional steps. First, from any database issue
+UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';
+
+   Next connect to template0 and perform the above repair procedure.
+   Finally, do
+-- re-freeze template0:
+VACUUM FREEZE;
+-- and protect it against future alterations:
+UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
+     _________________________________________________________________
+
+                                  Changes
+
+     * Change encoding function signature to prevent misuse
+     * Fix comparisons of TIME WITH TIME ZONE values
+       The comparison code was wrong in the case where the
+       --enable-integer-datetimes configuration switch had been used.
+       NOTE: if you have an index on a TIME WITH TIME ZONE column, it
+       will need to be "REINDEX"ed after installing this update, because
+       the fix corrects the sort order of column values.
+     * Fix EXTRACT(EPOCH) for TIME WITH TIME ZONE values
+     * Fix mis-display of negative fractional seconds in INTERVAL values
+       This error only occurred when the --enable-integer-datetimes
+       configuration switch had been used.
+     * Additional buffer overrun checks in plpgsql (Neil)
+     * Fix pg_dump to dump trigger names containing % correctly (Neil)
+     * Prevent to_char(interval) from dumping core for month-related
+       formats
+     * Fix "contrib/pgcrypto" for newer OpenSSL builds (Marko Kreen)
+     * Still more 64-bit fixes for "contrib/intagg"
+     * Prevent incorrect optimization of functions returning RECORD
+     _________________________________________________________________
+
                                Release 7.3.9
 
      Release date: 2005-01-31
@@ -969,6 +1046,30 @@ Contrib
      * Move /contrib/pg_controldata, pg_resetxlog into main tree (Bruce)
      * Fixes to /contrib/cube (Bruno Wolff)
      * Improve /contrib/fulltextindex (Christopher)
+     _________________________________________________________________
+
+                               Release 7.2.8
+
+     Release date: 2005-05-05
+
+   This release contains a variety of fixes from 7.2.7, including one
+   security-related issue.
+     _________________________________________________________________
+
+                         Migration to version 7.2.8
+
+   A dump/restore is not required for those running 7.2.X.
+     _________________________________________________________________
+
+                                  Changes
+
+     * Fix EXTRACT(EPOCH) for TIME WITH TIME ZONE values
+     * Additional buffer overrun checks in plpgsql (Neil)
+     * Fix pg_dump to dump index names and trigger names containing %
+       correctly (Neil)
+     * Prevent to_char(interval) from dumping core for month-related
+       formats
+     * Fix "contrib/pgcrypto" for newer OpenSSL builds (Marko Kreen)
      _________________________________________________________________
 
                                Release 7.2.7
