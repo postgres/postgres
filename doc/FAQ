@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon May 2 16:11:15 EDT 2005
+   Last updated: Wed May 4 21:23:41 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -276,7 +276,7 @@
    If you are looking for a PostgreSQL gatekeeper, central committee, or
    controlling company, give up, because none exists. We do have a core
    committee and CVS committers, but these groups are more for
-   administrative purposes then control. The project is directed by the
+   administrative purposes than control. The project is directed by the
    open community of developers and users of PostgreSQL. Everyone is
    welcome to subscribe and take part in the discussions. (See the
    Developer's FAQ for information on how to get involved in PostgreSQL
