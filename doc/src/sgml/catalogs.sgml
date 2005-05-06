@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.100 2005/04/12 04:26:13 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.101 2005/05/06 14:28:53 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -2208,9 +2208,10 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       This is a trusted language.  If this is an internal
-       language (<structfield>lanispl</structfield> is false) then
-       this column is meaningless.
+       True if this is a trusted language, which means that it is believed
+       not to grant access to anything outside the normal SQL execution
+       environment.  Only superusers may create functions in untrusted
+       languages.
       </entry>
      </row>
 
