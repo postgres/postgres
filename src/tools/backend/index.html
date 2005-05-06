@@ -12,10 +12,11 @@ vlink="#A00000" alink="#0000FF">
 
 <h2>by Bruce Momjian</h2>
 
-<p><img src="flow.gif" usemap="#flowmap" alt="flowchart" />
+<center>
+<h3>Click on an item to see more detail or look at the full
+<a href="backend_dirs.html">index.</a></h3>
 
-<center><h3>Click on an item to see more detail or look at the full
-<a href="backend_dirs.html">index.</a></h3></center>
+<p><img src="flow.gif" usemap="#flowmap" alt="flowchart" />
 
 <map name="flowmap" id="flowmap">
 <area coords="125,35,245,65" href="backend_dirs.html#main" alt="main" />
@@ -36,6 +37,7 @@ vlink="#A00000" alink="#0000FF">
 <area coords="325,635,450,665" href="backend_dirs.html#nodes" alt="nodes" />
 <area coords="75,705,200,730" href="backend_dirs.html#bootstrap" alt="bootstrap" />
 </map>
+</center>
 
 <br />
 
@@ -52,9 +54,9 @@ href="../../include/nodes/parsenodes.h">SelectStmt.</a></p>
 
 <p>The statement is then identified as complex (<i>SELECT / INSERT /
 UPDATE / DELETE</i>) or a simple, e.g <i> CREATE USER, ANALYZE, </i>,
-etc.  Utility commands are processed by statement-specific functions in <a
-href="../../backend/commands">backend/commands.</a> Complex statements
-require more handling.</p>
+etc.  Simple utility commands are processed by statement-specific
+functions in <a href="../../backend/commands">backend/commands.</a>
+Complex statements require more handling.</p>
 
 <p>The parser takes a complex query, and creates a <a
 href="../../include/nodes/parsenodes.h">Query</a> structure that
@@ -98,7 +100,7 @@ optimal index usage.</p>
 
 <p>The Plan is then passed to the <a
 href="../../backend/executor">executor</a> for execution, and the
-result returned to the client. The Plan actually as set of nodes,
+result returned to the client. The Plan is actually as set of nodes,
 arranged in a tree structure with a top-level node, and various
 sub-nodes as children.</p>
 
