@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.63 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.64 2005/05/06 03:38:05 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -497,12 +497,7 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
      CSV mode will both recognize and produce CSV files with quoted
      values containing embedded carriage returns and line feeds. Thus
      the files are not strictly one line per table row like text-mode
-     files. However, <productname>PostgreSQL</productname> will reject
-     <command>COPY</command> input if any fields contain embedded line
-     end character sequences that do not match the line ending
-     convention used in the CSV file itself. It is generally safer to
-     import data containing embedded line end characters using the
-     text or binary formats rather than CSV.
+     files.
     </para>
    </note>
 
