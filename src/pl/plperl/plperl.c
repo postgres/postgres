@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.72 2005/05/01 18:56:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.73 2005/05/06 17:24:55 tgl Exp $
  *
  **********************************************************************/
 
@@ -51,6 +51,7 @@
 #include "executor/spi.h"
 #include "funcapi.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/typcache.h"
 
 /* perl stuff */

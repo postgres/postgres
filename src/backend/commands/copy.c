@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.242 2005/05/06 02:56:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.243 2005/05/06 17:24:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,9 @@
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-#include "utils/relcache.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
+#include "utils/relcache.h"
 #include "utils/syscache.h"
 
 

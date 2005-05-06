@@ -7,14 +7,13 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/tupmacs.h,v 1.27 2004/12/31 22:03:21 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/access/tupmacs.h,v 1.28 2005/05/06 17:24:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TUPMACS_H
 #define TUPMACS_H
 
-#include "utils/memutils.h"
 
 /*
  * check to see if the ATT'th bit of an array of 8-bit bytes is set.

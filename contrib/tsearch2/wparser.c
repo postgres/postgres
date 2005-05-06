@@ -2,17 +2,16 @@
  * interface functions to parser
  * Teodor Sigaev <teodor@sigaev.ru>
  */
-#include <errno.h>
-#include <stdlib.h>
-#include <string.h>
+#include "postgres.h"
+
 #include <ctype.h>
 
-#include "postgres.h"
-#include "fmgr.h"
-#include "utils/array.h"
 #include "catalog/pg_type.h"
 #include "executor/spi.h"
+#include "fmgr.h"
 #include "funcapi.h"
+#include "utils/array.h"
+#include "utils/memutils.h"
 
 #include "wparser.h"
 #include "ts_cfg.h"

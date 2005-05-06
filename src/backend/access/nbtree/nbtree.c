@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.127 2005/03/27 23:53:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.128 2005/05/06 17:24:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "miscadmin.h"
 #include "storage/freespace.h"
 #include "storage/smgr.h"
+#include "utils/memutils.h"
 
 
 /* Working state for btbuild and its callback */
