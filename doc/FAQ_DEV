@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Apr 23 16:52:14 EDT 2005
+   Last updated: Fri May 6 13:47:54 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -23,7 +23,7 @@ General Questions
    1.10) What books are good for developers?
    1.11) What is configure all about?
    1.12) How do I add a new port?
-   1.13) Why don't you use threads/raw devices/async-I/O, <insert your
+   1.13) Why don't you use threads, raw devices, async-I/O, <insert your
    favorite wizz-bang feature here>?
    1.14) How are RPM's packaged?
    1.15) How are CVS branches handled?
@@ -349,8 +349,8 @@ General Questions
    src/makefiles directory for port-specific Makefile handling. There is
    a backend/port directory if you need special files for your OS.
    
-  1.13) Why don't you use threads/raw devices/async-I/O, <insert your favorite
-  wizz-bang feature here>?
+  1.13) Why don't you use threads, raw devices, async-I/O, <insert your
+  favorite wizz-bang feature here>?
   
    There is always a temptation to use the newest operating system
    features as soon as they arrive. We resist that temptation.
