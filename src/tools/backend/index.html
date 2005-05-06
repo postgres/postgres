@@ -1,162 +1,167 @@
-<HTML>
-<HEAD>
-<TITLE>How PostgreSQL Processes a Query</TITLE>
-</HEAD>
-<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#FF0000" VLINK="#A00000" ALINK="#0000FF">
-<H1>
-How PostgreSQL Processes a Query
-</H1>
-<H2>
-by Bruce Momjian
-</H2>
-<P>
-<IMG src="flow.gif" usemap="#flowmap" alt="flowchart">
-<MAP name="flowmap" id="flowmap">
-<AREA coords="125,35,245,65" HREF="backend_dirs.html#main" alt="main"></AREA>
-<AREA coords="125,100,245,125" HREF="backend_dirs.html#postmaster" alt="postmaster"></AREA>
-<AREA coords="325,65,450,95" HREF="backend_dirs.html#libpq" alt="libpq"></AREA>
-<AREA coords="125,160,245,190" HREF="backend_dirs.html#tcop" alt="tcop"></AREA>
-<AREA coords="325,160,450,190" HREF="backend_dirs.html#tcop" alt="tcop"></AREA>
-<AREA coords="125,240,245,265" HREF="backend_dirs.html#parser" alt="parser"></AREA>
-<AREA coords="125,300,250,330" HREF="backend_dirs.html#tcop" alt="tcop"></AREA>
-<AREA coords="125,360,250,390" HREF="backend_dirs.html#optimizer" alt="optimizer"></AREA>
-<AREA coords="125,425,245,455" HREF="backend_dirs.html#optimizer_plan" alt="plan"></AREA>
-<AREA coords="125,490,245,515" HREF="backend_dirs.html#executor" alt="executor"></AREA>
-<AREA coords="325,300,450,330" HREF="backend_dirs.html#commands" alt="commands"></AREA>
-<AREA coords="75,575,195,605" HREF="backend_dirs.html#utils" alt="utils"></AREA>
-<AREA coords="235,575,360,605" HREF="backend_dirs.html#catalog" alt="catalog"></AREA>
-<AREA coords="405,575,525,605" HREF="backend_dirs.html#storage" alt="storage"></AREA>
-<AREA coords="155,635,275,665" HREF="backend_dirs.html#access" alt="access"></AREA>
-<AREA coords="325,635,450,665" HREF="backend_dirs.html#nodes" alt="nodes"></AREA>
-<AREA coords="75,705,200,730" HREF="backend_dirs.html#bootstrap" alt="bootstrap"></AREA>
-</MAP>
-<EM>
-Click on an item to see more detail or look at the full
-<A HREF="backend_dirs.html">index.</A>
-</EM>
-<BR>
-<BR>
-</P>
-<P>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta name="generator"
+content="HTML Tidy for BSD/OS (vers 1st July 2002), see www.w3.org" />
+<title>How PostgreSQL Processes a Query</title>
+</head>
+<body bgcolor="#FFFFFF" text="#000000" link="#FF0000"
+vlink="#A00000" alink="#0000FF">
+<h1>How PostgreSQL Processes a Query</h1>
 
-A query comes to the backend via data packets arriving through TCP/IP or
-Unix Domain sockets.   It is loaded into a string, and passed to the
-<A HREF="../../backend/parser">parser,</A> where the lexical scanner,
-<A HREF="../../backend/parser/scan.l">scan.l,</A> breaks the query up
-into tokens(words).  The parser uses <A
-HREF="../../backend/parser/gram.y">gram.y</A> and the tokens to identify
-the query type, and load the proper query-specific structure, like <A
-HREF="../../include/nodes/parsenodes.h">CreateStmt</A> or <A
-HREF="../../include/nodes/parsenodes.h">SelectStmt.</A></P><P>
+<h2>by Bruce Momjian</h2>
 
+<p><img src="flow.gif" usemap="#flowmap" alt="flowchart" />
 
-The query is then identified as a <I>Utility</I> query or a more complex
-query.  A <I>Utility</I> query is processed by a query-specific function
-in <A HREF="../../backend/commands"> commands.</A> A complex query, like
-<I>SELECT, UPDATE,</I> and <I>DELETE</I> requires much more handling.</P><P>
+<em>Click on an item to see more detail or look at the full
+<a href="backend_dirs.html">index.</a></em>
 
+<map name="flowmap" id="flowmap">
+<area coords="125,35,245,65" href="backend_dirs.html#main" alt="main" />
+<area coords="125,100,245,125" href="backend_dirs.html#postmaster" alt="postmaster" />
+<area coords="325,65,450,95" href="backend_dirs.html#libpq" alt="libpq" />
+<area coords="125,160,245,190" href="backend_dirs.html#tcop" alt="tcop" />
+<area coords="325,160,450,190" href="backend_dirs.html#tcop" alt="tcop" />
+<area coords="125,240,245,265" href="backend_dirs.html#parser" alt="parser" />
+<area coords="125,300,250,330" href="backend_dirs.html#tcop" alt="tcop" />
+<area coords="125,360,250,390" href="backend_dirs.html#optimizer" alt="optimizer" />
+<area coords="125,425,245,455" href="backend_dirs.html#optimizer_plan" alt="plan" />
+<area coords="125,490,245,515" href="backend_dirs.html#executor" alt="executor" />
+<area coords="325,300,450,330" href="backend_dirs.html#commands" alt="commands" />
+<area coords="75,575,195,605" href="backend_dirs.html#utils" alt="utils" />
+<area coords="235,575,360,605" href="backend_dirs.html#catalog" alt="catalog" />
+<area coords="405,575,525,605" href="backend_dirs.html#storage" alt="storage" />
+<area coords="155,635,275,665" href="backend_dirs.html#access" alt="access" />
+<area coords="325,635,450,665" href="backend_dirs.html#nodes" alt="nodes" />
+<area coords="75,705,200,730" href="backend_dirs.html#bootstrap" alt="bootstrap" />
+</map>
 
-The parser takes a complex query, and creates a
-<A HREF="../../include/nodes/parsenodes.h">Query</A> structure that
-contains all the elements used by complex queries.  Query.qual holds the
-<I>WHERE</I> clause qualification, which is filled in by <A
-HREF="../../backend/parser/parse_clause.c">transformWhereClause().</A>
-Each table referenced in the query is represented by a <A
-HREF="../../include/nodes/parsenodes.h"> RangeTableEntry,</A> and they
-are linked together to form the <I>range table</I> of the query, which
-is generated by <A HREF="../../backend/parser/parse_clause.c">
-transformFromClause().</A>  Query.rtable holds the query's range table.</P><P>
+<br />
 
+<p>A query comes to the backend via data packets arriving through
+TCP/IP or Unix Domain sockets. It is loaded into a string, and
+passed to the <a href="../../backend/parser">parser,</a> where the
+lexical scanner, <a href="../../backend/parser/scan.l">scan.l,</a>
+breaks the query up into tokens(words). The parser uses <a
+href="../../backend/parser/gram.y">gram.y</a> and the tokens to
+identify the query type, and load the proper query-specific
+structure, like <a
+href="../../include/nodes/parsenodes.h">CreateStmt</a> or <a
+href="../../include/nodes/parsenodes.h">SelectStmt.</a></p>
 
-Certain queries, like <I>SELECT,</I> return columns of data.  Other
-queries, like <I>INSERT</I> and <I>UPDATE,</I> specify the columns
-modified by the query.  These column references are converted to <A
-HREF="../../include/nodes/primnodes.h">TargetEntry</A> entries, which are
-linked together to make up the <I>target list</I> of
-the query. The target list is stored in Query.targetList, which is
-generated by <A
-HREF="../../backend/parser/parse_target.c">transformTargetList().</A></P><P>
+<p>The statement is then identified as complex (<i>SELECT / INSERT /
+UPDATE / DELETE</i>) or a simple, e.g <i> CREATE USER, ANALYZE, </i>,
+etc.  Utility commands are processed by statement-specific functions in <a
+href="../../backend/commands">backend/commands.</a> Complex statements
+require more handling.</p>
 
+<p>The parser takes a complex query, and creates a <a
+href="../../include/nodes/parsenodes.h">Query</a> structure that
+contains all the elements used by complex queries. Query.qual holds
+the <i>WHERE</i> clause qualification, which is filled in by <a
+href="../../backend/parser/parse_clause.c">transformWhereClause().</a>
+Each table referenced in the query is represented by a <a
+href="../../include/nodes/parsenodes.h">RangeTableEntry,</a> and
+they are linked together to form the <i>range table</i> of the
+query, which is generated by <a
+href="../../backend/parser/parse_clause.c">transformFromClause().</a>
+Query.rtable holds the query's range table.</p>
 
-Other query elements, like aggregates(<I>SUM()</I>), <I>GROUP BY,</I>
-and <I>ORDER BY</I> are also stored in their own Query fields.</P><P>
+<p>Certain queries, like <i>SELECT,</i> return columns of data.
+Other queries, like <i>INSERT</i> and <i>UPDATE,</i> specify the
+columns modified by the query. These column references are
+converted to <a
+href="../../include/nodes/primnodes.h">TargetEntry</a> entries,
+which are linked together to make up the <i>target list</i> of the
+query. The target list is stored in Query.targetList, which is
+generated by <a
+href="../../backend/parser/parse_target.c">transformTargetList().</a></p>
 
+<p>Other query elements, like aggregates(<i>SUM()</i>), <i>GROUP
+BY,</i> and <i>ORDER BY</i> are also stored in their own Query
+fields.</p>
 
-The next step is for the Query to be modified by any <I>VIEWS</I> or
-<I>RULES</I> that may apply to the query.  This is performed by the <A
-HREF="../../backend/rewrite">rewrite</A> system.</P><P>
+<p>The next step is for the Query to be modified by any
+<i>VIEWS</i> or <i>RULES</i> that may apply to the query. This is
+performed by the <a href="../../backend/rewrite">rewrite</a>
+system.</p>
 
+<p>The <a href="../../backend/optimizer">optimizer</a> takes the
+Query structure and generates an optimal <a
+href="../../include/nodes/plannodes.h">Plan,</a> which contains the
+operations to be performed to execute the query. The <a
+href="../../backend/optimizer/path">path</a> module determines the
+best table join order and join type of each table in the
+RangeTable, using Query.qual(<i>WHERE</i> clause) to consider
+optimal index usage.</p>
 
-The <A HREF="../../backend/optimizer">optimizer</A> takes the Query
-structure and generates an optimal <A
-HREF="../../include/nodes/plannodes.h">Plan,</A> which contains the
-operations to be performed to execute the query.  The <A
-HREF="../../backend/optimizer/path">path</A> module determines the best
-table join order and join type of each table in the RangeTable, using
-Query.qual(<I>WHERE</I> clause) to consider optimal index usage.</P><P>
+<p>The Plan is then passed to the <a
+href="../../backend/executor">executor</a> for execution, and the
+result returned to the client. The Plan actually as set of nodes,
+arranged in a tree structure with a top-level node, and various
+sub-nodes as children.</p>
 
+<p>There are many other modules that support this basic
+functionality. They can be accessed by clicking on the
+flowchart.</p>
 
-The Plan is then passed to the <A
-HREF="../../backend/executor">executor</A> for execution, and the result
-returned to the client.  The Plan actually as set of nodes, arranged in
-a tree structure with a top-level node, and various sub-nodes as
-children.</P><P>
+<hr />
+<p>Another area of interest is the shared memory area, which
+contains data accessable to all backends. It has recently used
+data/index blocks, locks, backend process information, and lookup
+tables for these structures:</p>
 
-There are many other modules that support this basic functionality. They
-can be accessed by clicking on the flowchart.</P>
+<ul>
+<li>ShmemIndex - lookup shared memory addresses using structure
+names</li>
 
+<li><a href="../../include/storage/buf_internals.h">Buffer
+Descriptor</a> - control header for buffer cache block</li>
 
-<HR><P>
+<li><a href="../../include/storage/buf_internals.h">Buffer
+Block</a> - data/index buffer cache block</li>
 
+<li>Shared Buffer Lookup Table - lookup of buffer cache block
+addresses using table name and block number( <a
+href="../../include/storage/buf_internals.h">BufferTag</a>)</li>
 
-Another area of interest is the shared memory area, which contains data
-accessable to all backends.  It has recently used data/index blocks,
-locks, backend process information, and lookup tables for these
-structures:
-</P>
+<li>MultiLevelLockTable (ctl) - control structure for each locking
+method. Currently, only multi-level locking is used(<a
+href="../../include/storage/lock.h">LOCKMETHODCTL</a>).</li>
 
-<UL> 
-<LI>ShmemIndex - lookup shared memory addresses using structure names</LI>
-<LI><A HREF="../../include/storage/buf_internals.h">Buffer
-Descriptor</A> - control header for buffer cache block</LI>
-<LI><A HREF="../../include/storage/buf_internals.h">Buffer Block</A> -
-data/index buffer cache block</LI>
-<LI>Shared Buffer Lookup Table - lookup of buffer cache block addresses
-using table name and block number(<A
-HREF="../../include/storage/buf_internals.h"> BufferTag</A>)</LI>
-<LI>MultiLevelLockTable (ctl) - control structure for each locking
-method.  Currently, only multi-level locking is used(<A
-HREF="../../include/storage/lock.h">LOCKMETHODCTL</A>).</LI>
-<LI>MultiLevelLockTable (lock hash) - the <A
-HREF="../../include/storage/lock.h">LOCK</A> structure, looked up using
-relation, database object ids(<A
-HREF="../../include/storage/lock.h">LOCKTAG)</A>.  The lock table
-structure contains the lock modes(read/write or shared/exclusive) and
-circular linked list of backends (<A
-HREF="../../include/storage/proc.h">PROC</A> structure pointers) waiting
-on the lock.</LI>
-<LI>MultiLevelLockTable (xid hash) - lookup of LOCK structure address
-using transaction id, LOCK address.  It is used to quickly check if the
-current transaction already has any locks on a table, rather than having
-to search through all the held locks.  It also stores the modes
-(read/write) of the locks held by the current transaction.  The returned
-<A HREF="../../include/storage/lock.h">XIDLookupEnt</A> structure also
-contains a pointer to the backend's PROC.lockQueue.</LI>
-<LI><A HREF="../../include/storage/proc.h">Proc Header</A> - information
-about each backend, including locks held/waiting, indexed by process id</LI>
-</UL>
+<li>MultiLevelLockTable (lock hash) - the <a
+href="../../include/storage/lock.h">LOCK</a> structure, looked up
+using relation, database object ids(<a
+href="../../include/storage/lock.h">LOCKTAG)</a>. The lock table
+structure contains the lock modes(read/write or shared/exclusive)
+and circular linked list of backends (<a
+href="../../include/storage/proc.h">PROC</a> structure pointers)
+waiting on the lock.</li>
 
-<P>Each data structure is created by calling <A
-HREF="../../backend/storage/ipc/shmem.c">ShmemInitStruct(),</A> and the
-lookups are created by <A
-HREF="../../backend/storage/ipc/shmem.c">ShmemInitHash().</A></P>
+<li>MultiLevelLockTable (xid hash) - lookup of LOCK structure
+address using transaction id, LOCK address. It is used to quickly
+check if the current transaction already has any locks on a table,
+rather than having to search through all the held locks. It also
+stores the modes (read/write) of the locks held by the current
+transaction. The returned <a
+href="../../include/storage/lock.h">XIDLookupEnt</a> structure also
+contains a pointer to the backend's PROC.lockQueue.</li>
 
+<li><a href="../../include/storage/proc.h">Proc Header</a> -
+information about each backend, including locks held/waiting,
+indexed by process id</li>
+</ul>
 
-<HR>
-<SMALL>
-Maintainer:	Bruce Momjian (<A
-HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
-Last updated:		Mon Aug 10 10:48:06 EDT 1998
-</SMALL>
-</BODY>
-</HTML>
+<p>Each data structure is created by calling <a
+href="../../backend/storage/ipc/shmem.c">ShmemInitStruct(),</a> and
+the lookups are created by <a
+href="../../backend/storage/ipc/shmem.c">ShmemInitHash().</a></p>
+
+<hr />
+<small>Maintainer: Bruce Momjian (<a
+href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br />
+
+Last updated: Fri May  6 14:22:27 EDT 2005</small>
+</body>
+</html>
