@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.241 2005/05/01 18:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.242 2005/05/06 02:56:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -818,17 +818,13 @@ DoCopy(const CopyStmt *stmt)
 			escape = quote;
 	}
 
-	/*
-	 * Only single-character delimiter strings are supported.
-	 */
+	/* Only single-character delimiter strings are supported. */
 	if (strlen(delim) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("COPY delimiter must be a single character")));
 
-	/*
-	 * Check quote
-	 */
+	/* Check quote */
 	if (!csv_mode && quote != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -839,9 +835,7 @@ DoCopy(const CopyStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("COPY quote must be a single character")));
 
-	/*
-	 * Check escape
-	 */
+	/* Check escape */
 	if (!csv_mode && escape != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -852,9 +846,7 @@ DoCopy(const CopyStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("COPY escape must be a single character")));
 
-	/*
-	 * Check force_quote
-	 */
+	/* Check force_quote */
 	if (!csv_mode && force_quote != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -864,9 +856,7 @@ DoCopy(const CopyStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			   errmsg("COPY force quote only available using COPY TO")));
 
-	/*
-	 * Check force_notnull
-	 */
+	/* Check force_notnull */
 	if (!csv_mode && force_notnull != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -876,25 +866,19 @@ DoCopy(const CopyStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 		  errmsg("COPY force not null only available using COPY FROM")));
 
-	/*
-	 * Don't allow the delimiter to appear in the null string.
-	 */
+	/* Don't allow the delimiter to appear in the null string. */
 	if (strchr(null_print, delim[0]) != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("COPY delimiter must not appear in the NULL specification")));
 
-	/*
-	 * Don't allow the csv quote char to appear in the null string.
-	 */
+	/* Don't allow the csv quote char to appear in the null string. */
 	if (csv_mode && strchr(null_print, quote[0]) != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("CSV quote character must not appear in the NULL specification")));
 
-	/*
-	 * Open and lock the relation, using the appropriate lock type.
-	 */
+	/* Open and lock the relation, using the appropriate lock type. */
 	rel = heap_openrv(relation, (is_from ? RowExclusiveLock : AccessShareLock));
 
 	/* check read-only transaction */
@@ -916,23 +900,17 @@ DoCopy(const CopyStmt *stmt)
 				 errhint("Anyone can COPY to stdout or from stdin. "
 					   "psql's \\copy command also works for anyone.")));
 
-	/*
-	 * Don't allow COPY w/ OIDs to or from a table without them
-	 */
+	/* Don't allow COPY w/ OIDs to or from a table without them */
 	if (oids && !rel->rd_rel->relhasoids)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
 				 errmsg("table \"%s\" does not have OIDs",
 						RelationGetRelationName(rel))));
 
-	/*
-	 * Generate or convert list of attributes to process
-	 */
+	/* Generate or convert list of attributes to process */
 	attnumlist = CopyGetAttnums(rel, attnamelist);
 
-	/*
-	 * Check that FORCE QUOTE references valid COPY columns
-	 */
+	/* Check that FORCE QUOTE references valid COPY columns */
 	if (force_quote)
 	{
 		TupleDesc	tupDesc = RelationGetDescr(rel);
@@ -953,9 +931,7 @@ DoCopy(const CopyStmt *stmt)
 		}
 	}
 
-	/*
-	 * Check that FORCE NOT NULL references valid COPY columns
-	 */
+	/* Check that FORCE NOT NULL references valid COPY columns */
 	if (force_notnull)
 	{
 		ListCell   *cur;
@@ -976,9 +952,7 @@ DoCopy(const CopyStmt *stmt)
 		}
 	}
 
-	/*
-	 * Set up variables to avoid per-attribute overhead.
-	 */
+	/* Set up variables to avoid per-attribute overhead. */
 	initStringInfo(&attribute_buf);
 	initStringInfo(&line_buf);
 	line_buf_converted = false;
@@ -1188,9 +1162,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	num_phys_attrs = tupDesc->natts;
 	attr_count = list_length(attnumlist);
 
-	/*
-	 * Get info about the columns we need to process.
-	 */
+	/* Get info about the columns we need to process. */
 	out_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
 	force_quote = (bool *) palloc(num_phys_attrs * sizeof(bool));
 	foreach(cur, attnumlist)
@@ -1596,9 +1568,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		}
 	}
 
-	/*
-	 * Prepare to catch AFTER triggers.
-	 */
+	/* Prepare to catch AFTER triggers. */
 	AfterTriggerBeginQuery();
 
 	/*
@@ -1743,9 +1713,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				}
 			}
 
-			/*
-			 * Loop to read the user attributes on the line.
-			 */
+			/* Loop to read the user attributes on the line. */
 			foreach(cur, attnumlist)
 			{
 				int			attnum = lfirst_int(cur);
@@ -1869,9 +1837,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				nulls[defmap[i]] = ' ';
 		}
 
-		/*
-		 * Next apply any domain constraints
-		 */
+		/* Next apply any domain constraints */
 		if (hasConstraints)
 		{
 			ParamExecData *prmdata = &econtext->ecxt_param_exec_vals[0];
@@ -1898,17 +1864,13 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			}
 		}
 
-		/*
-		 * And now we can form the input tuple.
-		 */
+		/* And now we can form the input tuple. */
 		tuple = heap_formtuple(tupDesc, values, nulls);
 
 		if (oids && file_has_oids)
 			HeapTupleSetOid(tuple, loaded_oid);
 
-		/*
-		 * Triggers and stuff need to be invoked in query context.
-		 */
+		/* Triggers and stuff need to be invoked in query context. */
 		MemoryContextSwitchTo(oldcontext);
 
 		skip_tuple = false;
@@ -1935,15 +1897,11 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			/* Place tuple in tuple slot */
 			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 
-			/*
-			 * Check the constraints of the tuple
-			 */
+			/* Check the constraints of the tuple */
 			if (rel->rd_att->constr)
 				ExecConstraints(resultRelInfo, slot, estate);
 
-			/*
-			 * OK, store the tuple and create index entries for it
-			 */
+			/* OK, store the tuple and create index entries for it */
 			simple_heap_insert(rel, tuple);
 
 			if (resultRelInfo->ri_NumIndices > 0)
@@ -1954,21 +1912,15 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		}
 	}
 
-	/*
-	 * Done, clean up
-	 */
+	/* Done, clean up */
 	error_context_stack = errcontext.previous;
 
 	MemoryContextSwitchTo(oldcontext);
 
-	/*
-	 * Execute AFTER STATEMENT insertion triggers
-	 */
+	/* Execute AFTER STATEMENT insertion triggers */
 	ExecASInsertTriggers(estate, resultRelInfo);
 
-	/*
-	 * Handle queued AFTER triggers
-	 */
+	/* Handle queued AFTER triggers */
 	AfterTriggerEndQuery(estate);
 
 	pfree(values);
@@ -2255,9 +2207,7 @@ CopyReadLine(char * quote, char * escape)
 		}
 	}							/* end of outer loop */
 
-	/*
-	 * Done reading the line.  Convert it to server encoding.
-	 */
+	/* Done reading the line.  Convert it to server encoding. */
 	if (change_encoding)
 	{
 		cvt = (char *) pg_client_to_server((unsigned char *) line_buf.data,
@@ -2457,18 +2407,14 @@ CopyReadAttributeCSV(const char *delim, const char *null_print, char *quote,
 			break;
 		c = line_buf.data[line_buf.cursor++];
 
-		/*
-		 * unquoted field delimiter
-		 */
+		/* unquoted field delimiter  */
 		if (!in_quote && c == delimc)
 		{
 			*result = NORMAL_ATTR;
 			break;
 		}
 
-		/*
-		 * start of quoted field (or part of field)
-		 */
+		/* start of quoted field (or part of field) */
 		if (!in_quote && c == quotec)
 		{
 			saw_quote = true;
@@ -2476,9 +2422,7 @@ CopyReadAttributeCSV(const char *delim, const char *null_print, char *quote,
 			continue;
 		}
 
-		/*
-		 * escape within a quoted field
-		 */
+		/* escape within a quoted field */
 		if (in_quote && c == escapec)
 		{
 			/*
