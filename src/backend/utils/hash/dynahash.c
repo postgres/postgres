@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.58 2004/12/31 22:01:37 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.59 2005/05/06 00:19:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,9 +72,8 @@ static void hash_corrupted(HTAB *hashp);
 
 
 /*
- * memory allocation routines
+ * memory allocation support
  */
-static MemoryContext DynaHashCxt = NULL;
 static MemoryContext CurrentDynaHashCxt = NULL;
 
 static void *
@@ -83,10 +82,6 @@ DynaHashAlloc(Size size)
 	Assert(MemoryContextIsValid(CurrentDynaHashCxt));
 	return MemoryContextAlloc(CurrentDynaHashCxt, size);
 }
-
-#define MEM_ALLOC		DynaHashAlloc
-#undef	MEM_FREE				/* already in windows header files */
-#define MEM_FREE		pfree
 
 
 #if HASH_STATISTICS
@@ -98,31 +93,60 @@ static long hash_accesses,
 
 /************************** CREATE ROUTINES **********************/
 
+/*
+ * hash_create -- create a new dynamic hash table
+ *
+ *	tabname: a name for the table (for debugging purposes)
+ *	nelem: maximum number of elements expected
+ *	*info: additional table parameters, as indicated by flags
+ *	flags: bitmask indicating which parameters to take from *info
+ *
+ * Note: for a shared-memory hashtable, nelem needs to be a pretty good
+ * estimate, since we can't expand the table on the fly.  But an unshared
+ * hashtable can be expanded on-the-fly, so it's better for nelem to be
+ * on the small side and let the table grow if it's exceeded.  An overly
+ * large nelem will penalize hash_seq_search speed without buying much.
+ */
 HTAB *
 hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 {
 	HTAB	   *hashp;
 	HASHHDR    *hctl;
 
-	/* First time through, create a memory context for hash tables */
-	if (!DynaHashCxt)
-		DynaHashCxt = AllocSetContextCreate(TopMemoryContext,
-											"DynaHash",
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
-
-	/* Select allocation context for this hash table */
-	if (flags & HASH_CONTEXT)
-		CurrentDynaHashCxt = info->hcxt;
+	/*
+	 * For shared hash tables, we have a local hash header (HTAB struct)
+	 * that we allocate in TopMemoryContext; all else is in shared memory.
+	 *
+	 * For non-shared hash tables, everything including the hash header
+	 * is in a memory context created specially for the hash table ---
+	 * this makes hash_destroy very simple.  The memory context is made
+	 * a child of either a context specified by the caller, or
+	 * TopMemoryContext if nothing is specified.
+	 */
+	if (flags & HASH_SHARED_MEM)
+	{
+		/* Set up to allocate the hash header */
+		CurrentDynaHashCxt = TopMemoryContext;
+	}
 	else
-		CurrentDynaHashCxt = DynaHashCxt;
+	{
+		/* Create the hash table's private memory context */
+		if (flags & HASH_CONTEXT)
+			CurrentDynaHashCxt = info->hcxt;
+		else
+			CurrentDynaHashCxt = TopMemoryContext;
+		CurrentDynaHashCxt = AllocSetContextCreate(CurrentDynaHashCxt,
+												   tabname,
+												   ALLOCSET_DEFAULT_MINSIZE,
+												   ALLOCSET_DEFAULT_INITSIZE,
+												   ALLOCSET_DEFAULT_MAXSIZE);
+	}
 
-	/* Initialize the hash header */
-	hashp = (HTAB *) MEM_ALLOC(sizeof(HTAB));
+	/* Initialize the hash header, plus a copy of the table name */
+	hashp = (HTAB *) DynaHashAlloc(sizeof(HTAB) + strlen(tabname) + 1);
 	MemSet(hashp, 0, sizeof(HTAB));
 
-	hashp->tabname = (char *) MEM_ALLOC(strlen(tabname) + 1);
+	hashp->tabname = (char *) (hashp + 1);
 	strcpy(hashp->tabname, tabname);
 
 	if (flags & HASH_FUNCTION)
@@ -143,6 +167,11 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	else
 		hashp->match = memcmp;
 
+	if (flags & HASH_ALLOC)
+		hashp->alloc = info->alloc;
+	else
+		hashp->alloc = DynaHashAlloc;
+
 	if (flags & HASH_SHARED_MEM)
 	{
 		/*
@@ -151,7 +180,6 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 		 */
 		hashp->hctl = info->hctl;
 		hashp->dir = info->dir;
-		hashp->alloc = info->alloc;
 		hashp->hcxt = NULL;
 		hashp->isshared = true;
 
@@ -164,7 +192,6 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 		/* setup hash table defaults */
 		hashp->hctl = NULL;
 		hashp->dir = NULL;
-		hashp->alloc = MEM_ALLOC;
 		hashp->hcxt = CurrentDynaHashCxt;
 		hashp->isshared = false;
 	}
@@ -210,21 +237,9 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 	 */
 	if (flags & HASH_ELEM)
 	{
+		Assert(info->entrysize >= info->keysize);
 		hctl->keysize = info->keysize;
 		hctl->entrysize = info->entrysize;
-	}
-
-	if (flags & HASH_ALLOC)
-		hashp->alloc = info->alloc;
-	else
-	{
-		/* remaining hash table structures live in child of given context */
-		hashp->hcxt = AllocSetContextCreate(CurrentDynaHashCxt,
-											tabname,
-											ALLOCSET_DEFAULT_MINSIZE,
-											ALLOCSET_DEFAULT_INITSIZE,
-											ALLOCSET_DEFAULT_MAXSIZE);
-		CurrentDynaHashCxt = hashp->hcxt;
 	}
 
 	/* Build the hash directory structure */
@@ -431,26 +446,16 @@ hash_destroy(HTAB *hashp)
 	if (hashp != NULL)
 	{
 		/* allocation method must be one we know how to free, too */
-		Assert(hashp->alloc == MEM_ALLOC);
+		Assert(hashp->alloc == DynaHashAlloc);
 		/* so this hashtable must have it's own context */
 		Assert(hashp->hcxt != NULL);
 
 		hash_stats("destroy", hashp);
 
 		/*
-		 * Free buckets, dir etc. by destroying the hash table's memory
-		 * context.
+		 * Free everything by destroying the hash table's memory context.
 		 */
 		MemoryContextDelete(hashp->hcxt);
-
-		/*
-		 * Free the HTAB and control structure, which are allocated in the
-		 * parent context (DynaHashCxt or the context given by the caller
-		 * of hash_create()).
-		 */
-		MEM_FREE(hashp->hctl);
-		MEM_FREE(hashp->tabname);
-		MEM_FREE(hashp);
 	}
 }
 
@@ -702,55 +707,74 @@ hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp)
 void *
 hash_seq_search(HASH_SEQ_STATUS *status)
 {
-	HTAB	   *hashp = status->hashp;
-	HASHHDR    *hctl = hashp->hctl;
+	HTAB	   *hashp;
+	HASHHDR    *hctl;
+	uint32		max_bucket;
+	long		ssize;
+	long		segment_num;
+	long		segment_ndx;
+	HASHSEGMENT segp;
+	uint32		curBucket;
+	HASHELEMENT *curElem;
 
-	while (status->curBucket <= hctl->max_bucket)
+	if ((curElem = status->curEntry) != NULL)
 	{
-		long		segment_num;
-		long		segment_ndx;
-		HASHSEGMENT segp;
-
-		if (status->curEntry != NULL)
-		{
-			/* Continuing scan of curBucket... */
-			HASHELEMENT *curElem;
-
-			curElem = status->curEntry;
-			status->curEntry = curElem->link;
-			if (status->curEntry == NULL)		/* end of this bucket */
-				++status->curBucket;
-			return (void *) ELEMENTKEY(curElem);
-		}
-
-		/*
-		 * initialize the search within this bucket.
-		 */
-		segment_num = status->curBucket >> hctl->sshift;
-		segment_ndx = MOD(status->curBucket, hctl->ssize);
-
-		/*
-		 * first find the right segment in the table directory.
-		 */
-		segp = hashp->dir[segment_num];
-		if (segp == NULL)
-			hash_corrupted(hashp);
-
-		/*
-		 * now find the right index into the segment for the first item in
-		 * this bucket's chain.  if the bucket is not empty (its entry in
-		 * the dir is valid), we know this must correspond to a valid
-		 * element and not a freed element because it came out of the
-		 * directory of valid stuff.  if there are elements in the bucket
-		 * chains that point to the freelist we're in big trouble.
-		 */
-		status->curEntry = segp[segment_ndx];
-
-		if (status->curEntry == NULL)	/* empty bucket */
+		/* Continuing scan of curBucket... */
+		status->curEntry = curElem->link;
+		if (status->curEntry == NULL)		/* end of this bucket */
 			++status->curBucket;
+		return (void *) ELEMENTKEY(curElem);
 	}
 
-	return NULL;				/* out of buckets */
+	/*
+	 * Search for next nonempty bucket starting at curBucket.
+	 */
+	curBucket = status->curBucket;
+	hashp = status->hashp;
+	hctl = hashp->hctl;
+	ssize = hctl->ssize;
+	max_bucket = hctl->max_bucket;
+
+	if (curBucket > max_bucket)
+		return NULL;						/* search is done */
+
+	/*
+	 * first find the right segment in the table directory.
+	 */
+	segment_num = curBucket >> hctl->sshift;
+	segment_ndx = MOD(curBucket, ssize);
+
+	segp = hashp->dir[segment_num];
+
+	/*
+	 * Pick up the first item in this bucket's chain.  If chain is
+	 * not empty we can go back around the outer loop to search it.
+	 * Otherwise we have to advance to find the next nonempty bucket.
+	 * We try to optimize that case since searching a near-empty
+	 * hashtable has to iterate this loop a lot.
+	 */
+	while ((curElem = segp[segment_ndx]) == NULL)
+	{
+		/* empty bucket, advance to next */
+		if (++curBucket > max_bucket)
+		{
+			status->curBucket = curBucket;
+			return NULL;					/* search is done */
+		}
+		if (++segment_ndx >= ssize)
+		{
+			segment_num++;
+			segment_ndx = 0;
+			segp = hashp->dir[segment_num];
+		}
+	}
+
+	/* Begin scan of curBucket... */
+	status->curEntry = curElem->link;
+	if (status->curEntry == NULL)		/* end of this bucket */
+		++curBucket;
+	status->curBucket = curBucket;
+	return (void *) ELEMENTKEY(curElem);
 }
 
 
@@ -880,9 +904,13 @@ dir_realloc(HTAB *hashp)
 	{
 		memcpy(p, old_p, old_dirsize);
 		MemSet(((char *) p) + old_dirsize, 0, new_dirsize - old_dirsize);
-		MEM_FREE((char *) old_p);
 		hashp->dir = p;
 		hashp->hctl->dsize = new_dsize;
+
+		/* XXX assume the allocator is palloc, so we know how to free */
+		Assert(hashp->alloc == DynaHashAlloc);
+		pfree(old_p);
+
 		return true;
 	}
 
