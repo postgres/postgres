@@ -73,7 +73,8 @@ converted into <i>Lists</i> of <i>Nodes</i> to be handled by the
 optimizer and executor.</p>
 
 <h2><a id="rewrite" name="rewrite"></a> <a
-href="../../backend/rewrite">rewrite</a> - rule and views support</h2>
+href="../../backend/rewrite">rewrite</a> - rule and views
+support</h2>
 
 <h2><a id="optimizer" name="optimizer"></a> <a
 href="../../backend/optimizer">optimizer</a> - creates path and
@@ -160,28 +161,28 @@ systems</h2>
 
 <p>These allow uniform resource access by the backend.<br />
 <br />
-<a id="storage_buffer" name="storage_buffer"></a> <a
+ <a id="storage_buffer" name="storage_buffer"></a> <a
 href="../../backend/storage/buffer">storage/buffer</a> - shared
 buffer pool manager<br />
-<a id="storage_file" name="storage_file"></a> <a
+ <a id="storage_file" name="storage_file"></a> <a
 href="../../backend/storage/file">storage/file</a> - file
 manager<br />
-<a id="storage_file" name="storage_freespace"></a> <a
+ <a id="storage_freespace" name="storage_freespace"></a> <a
 href="../../backend/storage/freespace">storage/freespace</a> - free
 space map<br />
-<a id="storage_ipc" name="storage_ipc"></a> <a
+ <a id="storage_ipc" name="storage_ipc"></a> <a
 href="../../backend/storage/ipc">storage/ipc</a> - semaphores and
 shared memory<br />
-<a id="storage_large_object" name="storage_large_object"></a> <a
+ <a id="storage_large_object" name="storage_large_object"></a> <a
 href="../../backend/storage/large_object">storage/large_object</a>
 - large objects<br />
-<a id="storage_lmgr" name="storage_lmgr"></a> <a
+ <a id="storage_lmgr" name="storage_lmgr"></a> <a
 href="../../backend/storage/lmgr">storage/lmgr</a> - lock
 manager<br />
-<a id="storage_page" name="storage_page"></a> <a
+ <a id="storage_page" name="storage_page"></a> <a
 href="../../backend/storage/page">storage/page</a> - page
 manager<br />
-<a id="storage_smgr" name="storage_smgr"></a> <a
+ <a id="storage_smgr" name="storage_smgr"></a> <a
 href="../../backend/storage/smgr">storage/smgr</a> - storage/disk
 manager<br />
 <br />
@@ -194,27 +195,27 @@ methods</h2>
 <p>These control the way data is accessed in heap, indexes, and
 transactions.<br />
 <br />
-<a id="access_common" name="access_common"></a> <a
+ <a id="access_common" name="access_common"></a> <a
 href="../../backend/access/common">access/common</a> - common
 access routines<br />
-<a id="access_gist" name="access_gist"></a> <a
+ <a id="access_gist" name="access_gist"></a> <a
 href="../../backend/access/gist">access/gist</a> - easy-to-define
 access method system<br />
-<a id="access_hash" name="access_hash"></a> <a
+ <a id="access_hash" name="access_hash"></a> <a
 href="../../backend/access/hash">access/hash</a> - hash<br />
-<a id="access_heap" name="access_heap"></a> <a
+ <a id="access_heap" name="access_heap"></a> <a
 href="../../backend/access/heap">access/heap</a> - heap is use to
 store data rows<br />
-<a id="access_index" name="access_index"></a> <a
+ <a id="access_index" name="access_index"></a> <a
 href="../../backend/access/index">access/index</a> - used by all
 index types<br />
-<a id="access_nbtree" name="access_nbtree"></a> <a
+ <a id="access_nbtree" name="access_nbtree"></a> <a
 href="../../backend/access/nbtree">access/nbtree</a> - Lehman and
 Yao's btree management algorithm<br />
-<a id="access_rtree" name="access_rtree"></a> <a
+ <a id="access_rtree" name="access_rtree"></a> <a
 href="../../backend/access/rtree">access/rtree</a> - used for
 indexing of 2-dimensional data<br />
-<a id="access_transam" name="access_transam"></a> <a
+ <a id="access_transam" name="access_transam"></a> <a
 href="../../backend/access/transam">access/transam</a> -
 transaction manager (BEGIN/ABORT/COMMIT)<br />
 <br />
@@ -230,7 +231,7 @@ called nodes. <i>Nodes</i> are generic containers that have a
 usually placed in <i>Lists.</i> A <i>List</i> is container with an
 <i>elem</i> element, and a <i>next</i> field that points to the
 next <i>List.</i> These <i>List</i> structures are chained together
-in a forward linked list. In this way, a chain of <i>List</i>s can
+in a forward linked list. In this way, a chain of <i>List</i> s can
 contain an unlimited number of <i>Node</i> elements, and each
 <i>Node</i> can contain any data type. These are used extensively
 in the parser, optimizer, and executor to store requests and
@@ -283,9 +284,9 @@ maintained by the backend.</p>
 href="../../backend/utils/init">utils/init</a> - various
 initialization stuff</h3>
 
-<h3><a id="utils_misc" name="utils_mb"></a> <a
-href="../../backend/utils/mb">utils/mb</a> - single and
-multibyte encoding</h3>
+<h3><a id="utils_mb" name="utils_mb"></a> <a
+href="../../backend/utils/mb">utils/mb</a> - single and multibyte
+encoding</h3>
 
 <h3><a id="utils_misc" name="utils_misc"></a> <a
 href="../../backend/utils/misc">utils/misc</a> - miscellaneous
@@ -300,7 +301,7 @@ context. Contexts can be statement-specific, transaction-specific,
 or persistent/global. By doing this, the backend can easily free
 memory once a statement or transaction completes.</p>
 
-<h3><a id="utils_mmgr" name="utils_resowner"></a> <a
+<h3><a id="utils_resowner" name="utils_resowner"></a> <a
 href="../../backend/utils/resowner">utils/resowner</a> - resource
 owner tracking</h3>
 
@@ -337,15 +338,16 @@ library</h2>
 <p>This is used for regular expression handling in the backend,
 i.e. '~'.</p>
 
-<h2><a id="rewrite" name="port"></a> <a
+<h2><a id="port" name="port"></a> <a
 href="../../backend/port">port</a> - compatibility routines</h2>
 
 <br />
+ 
 <hr />
-<small>Maintainer: Bruce Momjian (<a
-href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br />
-
-Last updated: Fri May 6 14:22:27 EDT 2005</small>
+<small>Maintainer: Bruce Momjian ( <a
+href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>
+)<br />
+ Last updated: Fri May 6 14:22:27 EDT 2005</small>
 </body>
 </html>
 
