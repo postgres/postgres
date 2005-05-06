@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.489 2005/04/28 21:47:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.490 2005/05/06 03:42:17 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -331,7 +331,8 @@ static void doNegateFloat(Value *v);
 /*
  * If you make any token changes, update the keyword table in
  * parser/keywords.c and add new keywords to the appropriate one of
- * the reserved-or-not-so-reserved keyword lists, below.
+ * the reserved-or-not-so-reserved keyword lists, below; search
+ * this file for "Name classification hierarchy".
  */
 
 /* ordinary key words in alphabetical order */
