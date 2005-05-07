@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.83 2005/04/29 22:28:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.84 2005/05/07 21:32:23 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -491,18 +491,21 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 
 		buf = ReadBuffer(rel, P_NEW);
 
+		/* Acquire buffer lock on new page */
+		LockBuffer(buf, BT_WRITE);
+
 		/*
-		 * Release the file-extension lock; it's now OK for someone else
-		 * to extend the relation some more.
+		 * Release the file-extension lock; it's now OK for someone else to
+		 * extend the relation some more.  Note that we cannot release this
+		 * lock before we have buffer lock on the new page, or we risk a
+		 * race condition against btvacuumcleanup --- see comments therein.
 		 */
 		if (needLock)
 			UnlockRelationForExtension(rel, ExclusiveLock);
 
-		/* Acquire appropriate buffer lock on new page */
-		LockBuffer(buf, access);
-
 		/* Initialize the new page before returning it */
 		page = BufferGetPage(buf);
+		Assert(PageIsNew((PageHeader) page));
 		_bt_pageinit(page, BufferGetPageSize(buf));
 	}
 

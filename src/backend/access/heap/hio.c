@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.55 2005/04/29 22:28:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.56 2005/05/07 21:32:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,13 +242,6 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	buffer = ReadBuffer(relation, P_NEW);
 
 	/*
-	 * Release the file-extension lock; it's now OK for someone else to
-	 * extend the relation some more.
-	 */
-	if (needLock)
-		UnlockRelationForExtension(relation, ExclusiveLock);
-
-	/*
 	 * We can be certain that locking the otherBuffer first is OK, since
 	 * it must have a lower page number.
 	 */
@@ -256,9 +249,22 @@ RelationGetBufferForTuple(Relation relation, Size len,
 		LockBuffer(otherBuffer, BUFFER_LOCK_EXCLUSIVE);
 
 	/*
-	 * We need to initialize the empty new page.
+	 * Now acquire lock on the new page.
 	 */
 	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+
+	/*
+	 * Release the file-extension lock; it's now OK for someone else to
+	 * extend the relation some more.  Note that we cannot release this
+	 * lock before we have buffer lock on the new page, or we risk a
+	 * race condition against vacuumlazy.c --- see comments therein.
+	 */
+	if (needLock)
+		UnlockRelationForExtension(relation, ExclusiveLock);
+
+	/*
+	 * We need to initialize the empty new page.
+	 */
 	pageHeader = (Page) BufferGetPage(buffer);
 	Assert(PageIsNew((PageHeader) pageHeader));
 	PageInit(pageHeader, BufferGetPageSize(buffer), 0);
