@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.106 2003/09/29 23:40:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.106.2.1 2005/05/07 21:33:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -707,10 +707,34 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	BlockNumber pages_deleted = 0;
 	MemoryContext mycontext;
 	MemoryContext oldcontext;
+	bool		needLock;
 
 	Assert(stats != NULL);
 
+	/*
+	 * First find out the number of pages in the index.  We must acquire
+	 * the relation-extension lock while doing this to avoid a race
+	 * condition: if someone else is extending the relation, there is
+	 * a window where bufmgr/smgr have created a new all-zero page but
+	 * it hasn't yet been write-locked by _bt_getbuf().  If we manage to
+	 * scan such a page here, we'll improperly assume it can be recycled.
+	 * Taking the lock synchronizes things enough to prevent a problem:
+	 * either num_pages won't include the new page, or _bt_getbuf already
+	 * has write lock on the buffer and it will be fully initialized before
+	 * we can examine it.  (See also vacuumlazy.c, which has the same issue.)
+	 *
+	 * We can skip locking for new or temp relations,
+	 * however, since no one else could be accessing them.
+	 */
+	needLock = !(rel->rd_isnew || rel->rd_istemp);
+
+	if (needLock)
+		LockPage(rel, 0, ExclusiveLock);
+
 	num_pages = RelationGetNumberOfBlocks(rel);
+
+	if (needLock)
+		UnlockPage(rel, 0, ExclusiveLock);
 
 	/* No point in remembering more than MaxFSMPages pages */
 	maxFreePages = MaxFSMPages;
