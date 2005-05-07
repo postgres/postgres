@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon May  2 14:27:06 EDT 2005
+Last updated:           Sat May  7 00:24:29 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -176,7 +176,27 @@ first.
   zero the bits
   </li><li>Prevent INET cast to CIDR from droping netmask, SELECT '<a href="telnet://1.1.1.1">1.1.1.1</a>'::inet::cidr
   </li><li>Add 'tid != tid ' operator for use in corruption recovery
-  </li><li>Add ISO INTERVAL handling
+  </li><li>Prevent to_char() on interval from returning meaningless values
+<p>  For example, to_char('1 month', 'mon') is meaningless.  Basically,
+  most date-related parameters to to_char() are meaningless for
+  intervals because interval is not anchored to a date.
+</p>
+  </li><li>Allow to_char() on interval values to accumulate the highest unit
+  requested
+  <ul>
+    <li>to_char(INTERVAL '1 hour 5 minutes', 'MI') =&gt; 65
+    </li><li>to_char(INTERVAL '43 hours 20 minutes', 'MI' ) =&gt; 2600 
+    </li><li>to_char(INTERVAL '43 hours 20 minutes', 'WK:DD:HR:MI') =&gt; 0:1:19:20
+    </li><li>to_char(INTERVAL '3 years 5 months','MM') =&gt; 41
+  </li></ul>
+</li></ul>
+<p>  Some special format flag would be required to request such<br/>
+  accumulation.  Such functionality could also be added to EXTRACT. <br/>
+  Prevent accumulation that crosses the month/day boundary because of<br/>
+  the uneven number of days in a month.
+</p>
+<ul>
+  <li>Add ISO INTERVAL handling
   <ul>
     <li>Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO SECOND
     </li><li>Add support for year-month syntax, INTERVAL '50-6' YEAR TO MONTH
