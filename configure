@@ -3622,6 +3622,11 @@ rm -f conftest*
 CPPFLAGS="$CPPFLAGS $INCLUDES"
 LDFLAGS="$LDFLAGS $LIBDIRS"
 
+{ echo "$as_me:$LINENO: using CPPFLAGS=$CPPFLAGS" >&5
+echo "$as_me: using CPPFLAGS=$CPPFLAGS" >&6;}
+{ echo "$as_me:$LINENO: using LDFLAGS=$LDFLAGS" >&5
+echo "$as_me: using LDFLAGS=$LDFLAGS" >&6;}
+
 
 
 for ac_prog in gawk mawk nawk awk
@@ -3851,7 +3856,6 @@ with_gnu_ld=$ac_cv_prog_gnu_ld
 
 
 
-
 case $host_os in sysv5*)
   echo "$as_me:$LINENO: checking whether ld -R works" >&5
 echo $ECHO_N "checking whether ld -R works... $ECHO_C" >&6
@@ -3905,68 +3909,6 @@ echo "${ECHO_T}$pgac_cv_prog_ld_R" >&6
   ld_R_works=$pgac_cv_prog_ld_R
 
 esac
-
-# To simplify the build system, we specify the maximal set of
-# libraries to link against when building any executable. The linker
-# on some platforms optionally allows unused link arguments to be
-# elided from the resulting executable, so enable that capability if
-# it exists.
-# XXX: currently we only support GNU ld; do any other linkers support
-# an equivalent feature?
-if test "$with_gnu_ld"; then
-  echo "$as_me:$LINENO: checking whether ld --as-needed works" >&5
-echo $ECHO_N "checking whether ld --as-needed works... $ECHO_C" >&6
-if test "${pgac_cv_prog_ld_as_needed+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-
-    pgac_save_LDFLAGS=$LDFLAGS; LDFLAGS="$LDFLAGS -Wl,--as-needed"
-    cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-#include "confdefs.h"
-
-#ifdef F77_DUMMY_MAIN
-#  ifdef __cplusplus
-     extern "C"
-#  endif
-   int F77_DUMMY_MAIN() { return 1; }
-#endif
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  pgac_cv_prog_ld_as_needed=yes
-else
-  echo "$as_me: failed program was:" >&5
-cat conftest.$ac_ext >&5
-pgac_cv_prog_ld_as_needed=no
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-   if test x"$pgac_cv_prog_ld_as_needed" = x"no"; then
-     LDFLAGS=$pgac_save_LDFLAGS
-   fi
-
-fi
-echo "$as_me:$LINENO: result: $pgac_cv_prog_ld_as_needed" >&5
-echo "${ECHO_T}$pgac_cv_prog_ld_as_needed" >&6
-fi
-
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
 set dummy ${ac_tool_prefix}ranlib; ac_word=$2
@@ -4224,11 +4166,6 @@ echo "${ECHO_T}no" >&6
 
 
 
-
-{ echo "$as_me:$LINENO: using CPPFLAGS=$CPPFLAGS" >&5
-echo "$as_me: using CPPFLAGS=$CPPFLAGS" >&6;}
-{ echo "$as_me:$LINENO: using LDFLAGS=$LDFLAGS" >&5
-echo "$as_me: using LDFLAGS=$LDFLAGS" >&6;}
 
 for ac_prog in 'bison -y'
 do
