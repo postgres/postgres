@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.50.4.1 2005/03/25 22:51:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.50.4.2 2005/05/07 21:32:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,8 +280,30 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 		if (PageIsNew(page))
 		{
-			/* Not sure we still need to handle this case, but... */
+			/*
+			 * An all-zeroes page could be left over if a backend extends
+			 * the relation but crashes before initializing the page.
+			 * Reclaim such pages for use.
+			 *
+			 * We have to be careful here because we could be looking at
+			 * a page that someone has just added to the relation and not
+			 * yet been able to initialize (see RelationGetBufferForTuple).
+			 * To interlock against that, release the buffer read lock
+			 * (which we must do anyway) and grab the relation extension
+			 * lock before re-locking in exclusive mode.  If the page is
+			 * still uninitialized by then, it must be left over from a
+			 * crashed backend, and we can initialize it.
+			 *
+			 * We don't really need the relation lock when this is a new
+			 * or temp relation, but it's probably not worth the code space
+			 * to check that, since this surely isn't a critical path.
+			 *
+			 * Note: the comparable code in vacuum.c need not do all this
+			 * because it's got exclusive lock on the whole relation.
+			 */
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
+			LockPage(onerel, 0, ExclusiveLock);
+			UnlockPage(onerel, 0, ExclusiveLock);
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 			if (PageIsNew(page))
 			{
