@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat May  7 00:38:02 EDT 2005
+Last updated:		Sat May  7 11:45:16 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -250,7 +250,10 @@ Multi-Language Support
 * Add NCHAR (as distinguished from ordinary varchar),
 * Allow locale to be set at database creation
 
-  Currently locale can only be set during initdb.
+  Currently locale can only be set during initdb.  No global tables have
+  locale-aware columns.  However, the database template used during
+  database creation might have locale-aware indexes.  The indexes would
+  need to be reindexed to match the new locale.
 
 * Allow encoding on a per-column basis
 

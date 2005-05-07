@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat May  7 00:38:02 EDT 2005
+Last updated:           Sat May  7 11:45:16 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -238,7 +238,10 @@ first.
 <ul>
   <li>Add NCHAR (as distinguished from ordinary varchar),
   </li><li>Allow locale to be set at database creation
-<p>  Currently locale can only be set during initdb.
+<p>  Currently locale can only be set during initdb.  No global tables have
+  locale-aware columns.  However, the database template used during
+  database creation might have locale-aware indexes.  The indexes would
+  need to be reindexed to match the new locale.
 </p>
   </li><li>Allow encoding on a per-column basis
 <p>  Right now only one encoding is allowed per database.
