@@ -31,7 +31,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.2 2005/05/03 19:42:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.3 2005/05/07 18:14:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -310,9 +310,9 @@ MultiXactIdExpand(MultiXactId multi, TransactionId xid)
 	{
 		if (TransactionIdEquals(members[i], xid))
 		{
-			pfree(members);
 			debug_elog4(DEBUG2, "Expand: %u is already a member of %u",
 						xid, multi);
+			pfree(members);
 			return multi;
 		}
 	}
@@ -376,8 +376,8 @@ MultiXactIdIsRunning(MultiXactId multi)
 	{
 		if (TransactionIdEquals(members[i], myXid))
 		{
-			pfree(members);
 			debug_elog3(DEBUG2, "IsRunning: I (%d) am running!", i);
+			pfree(members);
 			return true;
 		}
 	}
@@ -391,14 +391,15 @@ MultiXactIdIsRunning(MultiXactId multi)
 	{
 		if (TransactionIdIsInProgress(members[i]))
 		{
-			pfree(members);
 			debug_elog4(DEBUG2, "IsRunning: member %d (%u) is running",
-					i, members[i]);
+						i, members[i]);
+			pfree(members);
 			return true;
 		}
 	}
 
 	pfree(members);
+
 	debug_elog3(DEBUG2, "IsRunning: %u is not running", multi);
 
 	return false;
@@ -646,6 +647,7 @@ CreateMultiXactId(int nxids, TransactionId *xids)
 
 	/* Store the new MultiXactId in the local cache, too */
 	mXactCachePut(multi, nxids, xids);
+
 	debug_elog2(DEBUG2, "Create: all done");
 
 	return multi;
