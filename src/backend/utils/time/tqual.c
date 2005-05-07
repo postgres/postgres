@@ -11,12 +11,26 @@
  * containing the tuple.  (VACUUM FULL assumes it's sufficient to have
  * exclusive lock on the containing relation, instead.)
  *
+ * NOTE: must check TransactionIdIsInProgress (which looks in PGPROC array)
+ * before TransactionIdDidCommit/TransactionIdDidAbort (which look in
+ * pg_clog).  Otherwise we have a race condition: we might decide that a
+ * just-committed transaction crashed, because none of the tests succeed.
+ * xact.c is careful to record commit/abort in pg_clog before it unsets
+ * MyProc->xid in PGPROC array.  That fixes that problem, but it also
+ * means there is a window where TransactionIdIsInProgress and
+ * TransactionIdDidCommit will both return true.  If we check only
+ * TransactionIdDidCommit, we could consider a tuple committed when a
+ * later GetSnapshotData call will still think the originating transaction
+ * is in progress, which leads to application-level inconsistency.  The
+ * upshot is that we gotta check TransactionIdIsInProgress first in all
+ * code paths.
+ *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.61 2002/10/08 17:17:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.61.2.1 2005/05/07 21:23:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,14 +126,16 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 
 			return false;
 		}
-		else if (!TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsInProgress(HeapTupleHeaderGetXmin(tuple)))
+			return false;
+		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
+			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+		else
 		{
-			if (TransactionIdDidAbort(HeapTupleHeaderGetXmin(tuple)))
-				tuple->t_infomask |= HEAP_XMIN_INVALID; /* aborted */
+			/* it must have aborted or crashed */
+			tuple->t_infomask |= HEAP_XMIN_INVALID;
 			return false;
 		}
-		else
-			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 	}
 
 	/* by here, the inserting transaction has committed */
@@ -141,10 +157,13 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
 		return false;
 	}
 
+	if (TransactionIdIsInProgress(HeapTupleHeaderGetXmax(tuple)))
+		return true;
+
 	if (!TransactionIdDidCommit(HeapTupleHeaderGetXmax(tuple)))
 	{
-		if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
-			tuple->t_infomask |= HEAP_XMAX_INVALID;		/* aborted */
+		/* it must have aborted or crashed */
+		tuple->t_infomask |= HEAP_XMAX_INVALID;
 		return true;
 	}
 
@@ -254,14 +273,16 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 			else
 				return false;	/* deleted before scan started */
 		}
-		else if (!TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsInProgress(HeapTupleHeaderGetXmin(tuple)))
+			return false;
+		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
+			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+		else
 		{
-			if (TransactionIdDidAbort(HeapTupleHeaderGetXmin(tuple)))
-				tuple->t_infomask |= HEAP_XMIN_INVALID; /* aborted */
+			/* it must have aborted or crashed */
+			tuple->t_infomask |= HEAP_XMIN_INVALID;
 			return false;
 		}
-		else
-			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 	}
 
 	/* by here, the inserting transaction has committed */
@@ -286,10 +307,13 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 			return false;		/* deleted before scan started */
 	}
 
+	if (TransactionIdIsInProgress(HeapTupleHeaderGetXmax(tuple)))
+		return true;
+
 	if (!TransactionIdDidCommit(HeapTupleHeaderGetXmax(tuple)))
 	{
-		if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
-			tuple->t_infomask |= HEAP_XMAX_INVALID;		/* aborted */
+		/* it must have aborted or crashed */
+		tuple->t_infomask |= HEAP_XMAX_INVALID;
 		return true;
 	}
 
@@ -427,14 +451,16 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
 				return HeapTupleInvisible;		/* updated before scan
 												 * started */
 		}
-		else if (!TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsInProgress(HeapTupleHeaderGetXmin(tuple)))
+			return HeapTupleInvisible;
+		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
+			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+		else
 		{
-			if (TransactionIdDidAbort(HeapTupleHeaderGetXmin(tuple)))
-				tuple->t_infomask |= HEAP_XMIN_INVALID; /* aborted */
+			/* it must have aborted or crashed */
+			tuple->t_infomask |= HEAP_XMIN_INVALID;
 			return HeapTupleInvisible;
 		}
-		else
-			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 	}
 
 	/* by here, the inserting transaction has committed */
@@ -460,15 +486,14 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
 			return HeapTupleInvisible;	/* updated before scan started */
 	}
 
+	if (TransactionIdIsInProgress(HeapTupleHeaderGetXmax(tuple)))
+		return HeapTupleBeingUpdated;
+
 	if (!TransactionIdDidCommit(HeapTupleHeaderGetXmax(tuple)))
 	{
-		if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
-		{
-			tuple->t_infomask |= HEAP_XMAX_INVALID;		/* aborted */
-			return HeapTupleMayBeUpdated;
-		}
-		/* running xact */
-		return HeapTupleBeingUpdated;	/* in updation by other */
+		/* it must have aborted or crashed */
+		tuple->t_infomask |= HEAP_XMAX_INVALID;
+		return HeapTupleMayBeUpdated;
 	}
 
 	/* xmax transaction committed */
@@ -549,19 +574,20 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 
 			return false;
 		}
-		else if (!TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsInProgress(HeapTupleHeaderGetXmin(tuple)))
 		{
-			if (TransactionIdDidAbort(HeapTupleHeaderGetXmin(tuple)))
-			{
-				tuple->t_infomask |= HEAP_XMIN_INVALID;
-				return false;
-			}
 			SnapshotDirty->xmin = HeapTupleHeaderGetXmin(tuple);
 			/* XXX shouldn't we fall through to look at xmax? */
 			return true;		/* in insertion by other */
 		}
-		else
+		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
 			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+		else
+		{
+			/* it must have aborted or crashed */
+			tuple->t_infomask |= HEAP_XMIN_INVALID;
+			return false;
+		}
 	}
 
 	/* by here, the inserting transaction has committed */
@@ -584,16 +610,17 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 		return false;
 	}
 
+	if (TransactionIdIsInProgress(HeapTupleHeaderGetXmax(tuple)))
+	{
+		SnapshotDirty->xmax = HeapTupleHeaderGetXmax(tuple);
+		return true;
+	}
+
 	if (!TransactionIdDidCommit(HeapTupleHeaderGetXmax(tuple)))
 	{
-		if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
-		{
-			tuple->t_infomask |= HEAP_XMAX_INVALID;		/* aborted */
-			return true;
-		}
-		/* running xact */
-		SnapshotDirty->xmax = HeapTupleHeaderGetXmax(tuple);
-		return true;			/* in updation by other */
+		/* it must have aborted or crashed */
+		tuple->t_infomask |= HEAP_XMAX_INVALID;
+		return true;
 	}
 
 	/* xmax transaction committed */
@@ -686,14 +713,16 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 			else
 				return false;	/* deleted before scan started */
 		}
-		else if (!TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
+		else if (TransactionIdIsInProgress(HeapTupleHeaderGetXmin(tuple)))
+			return false;
+		else if (TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
+			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+		else
 		{
-			if (TransactionIdDidAbort(HeapTupleHeaderGetXmin(tuple)))
-				tuple->t_infomask |= HEAP_XMIN_INVALID;
+			/* it must have aborted or crashed */
+			tuple->t_infomask |= HEAP_XMIN_INVALID;
 			return false;
 		}
-		else
-			tuple->t_infomask |= HEAP_XMIN_COMMITTED;
 	}
 
 	/*
@@ -733,10 +762,13 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 				return false;	/* deleted before scan started */
 		}
 
+		if (TransactionIdIsInProgress(HeapTupleHeaderGetXmax(tuple)))
+			return true;
+
 		if (!TransactionIdDidCommit(HeapTupleHeaderGetXmax(tuple)))
 		{
-			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
-				tuple->t_infomask |= HEAP_XMAX_INVALID; /* aborted */
+			/* it must have aborted or crashed */
+			tuple->t_infomask |= HEAP_XMAX_INVALID;
 			return true;
 		}
 
@@ -785,13 +817,6 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 	 *
 	 * If the inserting transaction aborted, then the tuple was never visible
 	 * to any other transaction, so we can delete it immediately.
-	 *
-	 * NOTE: must check TransactionIdIsInProgress (which looks in PROC array)
-	 * before TransactionIdDidCommit/TransactionIdDidAbort (which look in
-	 * pg_clog).  Otherwise we have a race condition where we might decide
-	 * that a just-committed transaction crashed, because none of the
-	 * tests succeed.  xact.c is careful to record commit/abort in pg_clog
-	 * before it unsets MyProc->xid in PROC array.
 	 */
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
