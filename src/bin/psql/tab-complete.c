@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.126 2005/05/04 14:25:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.127 2005/05/07 02:22:49 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1040,7 +1040,7 @@ psql_completion(char *text, int start, int end)
 			  pg_strcasecmp(prev3_wd, "TO") == 0))
 		{
 			static const char *const list_CSV[] =
-			{"QUOTE", "ESCAPE", "FORCE QUOTE", NULL};
+			{"HEADER", "QUOTE", "ESCAPE", "FORCE QUOTE", NULL};
 
 			COMPLETE_WITH_LIST(list_CSV);
 		}

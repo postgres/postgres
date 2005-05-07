@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.64 2005/05/06 03:38:05 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.65 2005/05/07 02:22:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -24,11 +24,12 @@ PostgreSQL documentation
 COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
     FROM { '<replaceable class="parameter">filename</replaceable>' | STDIN }
     [ [ WITH ] 
-          [ BINARY ] 
+          [ BINARY ]
           [ OIDS ]
           [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
           [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ]
-          [ CSV [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ] 
+          [ CSV [ HEADER ]
+                [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ] 
                 [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
                 [ FORCE NOT NULL <replaceable class="parameter">column</replaceable> [, ...] ]
 
@@ -36,10 +37,12 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     TO { '<replaceable class="parameter">filename</replaceable>' | STDOUT }
     [ [ WITH ] 
           [ BINARY ]
+          [ HEADER ]
           [ OIDS ]
           [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
           [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ]
-          [ CSV [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ] 
+          [ CSV [ HEADER ]
+                [ QUOTE [ AS ] '<replaceable class="parameter">quote</replaceable>' ] 
                 [ ESCAPE [ AS ] '<replaceable class="parameter">escape</replaceable>' ]
                 [ FORCE QUOTE <replaceable class="parameter">column</replaceable> [, ...] ]
 </synopsis>
@@ -187,6 +190,17 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     <listitem>
      <para>
       Selects Comma Separated Value (<literal>CSV</>) mode.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>HEADER</literal></term>
+    <listitem>
+     <para>
+      Specifies the file contains a header line with the names of each
+      column in the file.  On output, the first line contains the column 
+      names from the table, and on input, the first line is ignored.
      </para>
     </listitem>
    </varlistentry>

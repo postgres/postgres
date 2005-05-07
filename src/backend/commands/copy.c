@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.243 2005/05/06 17:24:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.244 2005/05/07 02:22:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,13 +131,13 @@ static bool line_buf_converted;
 /* non-export function prototypes */
 static void DoCopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 		 char *delim, char *null_print, bool csv_mode, char *quote,
-		 char *escape, List *force_quote_atts, bool fe_copy);
+		 char *escape, List *force_quote_atts, bool header_line, bool fe_copy);
 static void CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
  char *delim, char *null_print, bool csv_mode, char *quote, char *escape,
-	   List *force_quote_atts);
+	   List *force_quote_atts, bool header_line);
 static void CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
  char *delim, char *null_print, bool csv_mode, char *quote, char *escape,
-		 List *force_notnull_atts);
+		 List *force_notnull_atts, bool header_line);
 static bool CopyReadLine(char * quote, char * escape);
 static char *CopyReadAttribute(const char *delim, const char *null_print,
 				  CopyReadResult *result, bool *isnull);
@@ -695,6 +695,7 @@ DoCopy(const CopyStmt *stmt)
 	bool		binary = false;
 	bool		oids = false;
 	bool		csv_mode = false;
+	bool        header_line = false;
 	char	   *delim = NULL;
 	char	   *quote = NULL;
 	char	   *escape = NULL;
@@ -751,6 +752,14 @@ DoCopy(const CopyStmt *stmt)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("conflicting or redundant options")));
 			csv_mode = intVal(defel->arg);
+		}
+		else if (strcmp(defel->defname, "header") == 0)
+		{
+			if (header_line)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("conflicting or redundant options")));
+			header_line = intVal(defel->arg);
 		}
 		else if (strcmp(defel->defname, "quote") == 0)
 		{
@@ -824,6 +833,12 @@ DoCopy(const CopyStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("COPY delimiter must be a single character")));
+
+  	/* Check header */
+	if (!csv_mode && header_line)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("COPY HEADER available only in CSV mode")));
 
 	/* Check quote */
 	if (!csv_mode && quote != NULL)
@@ -1015,7 +1030,7 @@ DoCopy(const CopyStmt *stmt)
 			}
 		}
 		CopyFrom(rel, attnumlist, binary, oids, delim, null_print, csv_mode,
-				 quote, escape, force_notnull_atts);
+				 quote, escape, force_notnull_atts, header_line);
 	}
 	else
 	{							/* copy from database to file */
@@ -1079,7 +1094,7 @@ DoCopy(const CopyStmt *stmt)
 		}
 
 		DoCopyTo(rel, attnumlist, binary, oids, delim, null_print, csv_mode,
-				 quote, escape, force_quote_atts, fe_copy);
+				 quote, escape, force_quote_atts, header_line, fe_copy);
 	}
 
 	if (!pipe)
@@ -1111,7 +1126,7 @@ DoCopy(const CopyStmt *stmt)
 static void
 DoCopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 		 char *delim, char *null_print, bool csv_mode, char *quote,
-		 char *escape, List *force_quote_atts, bool fe_copy)
+		 char *escape, List *force_quote_atts, bool header_line, bool fe_copy)
 {
 	PG_TRY();
 	{
@@ -1119,7 +1134,7 @@ DoCopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 			SendCopyBegin(binary, list_length(attnumlist));
 
 		CopyTo(rel, attnumlist, binary, oids, delim, null_print, csv_mode,
-			   quote, escape, force_quote_atts);
+			   quote, escape, force_quote_atts, header_line);
 
 		if (fe_copy)
 			SendCopyEnd(binary);
@@ -1143,7 +1158,7 @@ DoCopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 static void
 CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	   char *delim, char *null_print, bool csv_mode, char *quote,
-	   char *escape, List *force_quote_atts)
+	   char *escape, List *force_quote_atts, bool header_line)
 {
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
@@ -1226,6 +1241,30 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 			null_print = (char *)
 				pg_server_to_client((unsigned char *) null_print,
 									strlen(null_print));
+
+		/* if a header has been requested send the line */
+		if (header_line)
+		{
+			bool hdr_delim = false;
+			char *colname;
+			
+			foreach(cur, attnumlist)
+			{
+				int			attnum = lfirst_int(cur);
+
+				if (hdr_delim)
+					CopySendChar(delim[0]);
+				hdr_delim = true;
+
+				colname = NameStr(attr[attnum - 1]->attname);
+
+				CopyAttributeOutCSV(colname, delim, quote, escape,
+									strcmp(colname, null_print) == 0);
+			}
+
+			CopySendEndOfRow(binary);
+
+		}
 	}
 
 	scandesc = heap_beginscan(rel, ActiveSnapshot, 0, NULL);
@@ -1427,7 +1466,7 @@ limit_printout_length(StringInfo buf)
 static void
 CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		 char *delim, char *null_print, bool csv_mode, char *quote,
-		 char *escape, List *force_notnull_atts)
+		 char *escape, List *force_notnull_atts, bool header_line)
 {
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
@@ -1652,6 +1691,13 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	errcontext.arg = NULL;
 	errcontext.previous = error_context_stack;
 	error_context_stack = &errcontext;
+
+	/* on input just throw the header line away */
+	if (header_line)
+	{
+		copy_lineno++;
+		done = CopyReadLine(quote, escape) ;
+	}
 
 	while (!done)
 	{

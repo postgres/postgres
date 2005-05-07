@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.56 2005/02/22 04:40:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.57 2005/05/07 02:22:49 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -66,6 +66,7 @@ struct copy_options
 	bool		binary;
 	bool		oids;
 	bool		csv_mode;
+	bool        header;
 	char	   *delim;
 	char	   *null;
 	char	   *quote;
@@ -289,6 +290,8 @@ parse_slash_copy(const char *args)
 				result->oids = true;
 			else if (pg_strcasecmp(token, "csv") == 0)
 				result->csv_mode = true;
+			else if (pg_strcasecmp(token, "header") == 0)
+				result->header = true;
 			else if (pg_strcasecmp(token, "delimiter") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
@@ -480,6 +483,9 @@ do_copy(const char *args)
 
 	if (options->csv_mode)
 		appendPQExpBuffer(&query, " CSV");
+
+	if (options->header)
+		appendPQExpBuffer(&query, " HEADER");
 
 	if (options->quote)
 	{

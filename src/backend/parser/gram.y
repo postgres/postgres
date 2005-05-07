@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.490 2005/05/06 03:42:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.491 2005/05/07 02:22:46 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -362,7 +362,7 @@ static void doNegateFloat(Value *v);
 
 	GLOBAL GRANT GROUP_P
 
-	HANDLER HAVING HOLD HOUR_P
+	HANDLER HAVING HEADER HOLD HOUR_P
 
 	ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCLUDING INCREMENT
 	INDEX INHERITS INITIALLY INNER_P INOUT INPUT_P
@@ -1443,6 +1443,10 @@ copy_opt_item:
 			| CSV
 				{
 					$$ = makeDefElem("csv", (Node *)makeInteger(TRUE));
+				}
+			| HEADER
+				{
+					$$ = makeDefElem("header", (Node *)makeInteger(TRUE));
 				}
 			| QUOTE opt_as Sconst
 				{
@@ -7787,6 +7791,7 @@ unreserved_keyword:
 			| FUNCTION
 			| GLOBAL
 			| HANDLER
+			| HEADER
 			| HOLD
 			| HOUR_P
 			| IMMEDIATE
