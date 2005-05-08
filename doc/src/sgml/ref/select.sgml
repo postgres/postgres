@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.86 2005/04/28 21:47:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.87 2005/05/08 03:08:05 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -47,7 +47,7 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
   <title>Description</title>
 
   <para>
-   <command>SELECT</command> retrieves rows from one or more tables.
+   <command>SELECT</command> retrieves rows from zero or more tables.
    The general processing of <command>SELECT</command> is as follows:
 
    <orderedlist>

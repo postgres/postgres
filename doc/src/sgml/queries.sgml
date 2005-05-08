@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.33 2005/01/22 22:56:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.34 2005/05/08 03:08:05 momjian Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -34,7 +34,7 @@ SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression
   </para>
 
   <para>
-   The simplest kind of query has the form
+   A simple kind of query has the form
 <programlisting>
 SELECT * FROM table1;
 </programlisting>
