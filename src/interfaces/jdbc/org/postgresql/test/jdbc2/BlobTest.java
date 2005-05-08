@@ -8,7 +8,7 @@ import java.sql.*;
 import org.postgresql.largeobject.*;
 
 /*
- * $Id: BlobTest.java,v 1.9 2003/08/15 18:45:11 barry Exp $
+ * $Id: BlobTest.java,v 1.9.2.1 2005/05/08 23:16:58 jurka Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -21,7 +21,6 @@ public class BlobTest extends TestCase
 
 	private static final int LOOP = 0; // LargeObject API using loop
 	private static final int NATIVE_STREAM = 1; // LargeObject API using OutputStream
-	private static final int JDBC_STREAM = 2; // JDBC API using OutputStream
 
 	public BlobTest(String name)
 	{
@@ -90,6 +89,26 @@ public class BlobTest extends TestCase
 		}
 	}
 
+	public void testGetBytesOffset() throws Exception
+	{
+		con.setAutoCommit(false);
+		assertTrue(uploadFile("build.xml", NATIVE_STREAM) > 0);
+
+		Statement stmt = con.createStatement();
+		ResultSet rs = stmt.executeQuery("SELECT lo FROM testblob");
+		assertTrue(rs.next());
+
+		Blob lob = rs.getBlob(1);
+		byte data[] = lob.getBytes(2,4);
+		assertEquals(data.length, 4);
+		assertEquals(data[0], '?');
+		assertEquals(data[1], 'x');
+		assertEquals(data[2], 'm');
+		assertEquals(data[3], 'l');
+
+		con.setAutoCommit(false);
+	}
+
 	/*
 	 * Helper - uploads a file into a blob using old style methods. We use this
 	 * because it always works, and we can use it as a base to test the new
@@ -129,13 +148,6 @@ public class BlobTest extends TestCase
 					s = fis.read();
 				}
 				os.close();
-				break;
-
-			case JDBC_STREAM:
-				File f = new File(file);
-				PreparedStatement ps = con.prepareStatement(TestUtil.insertSQL("testblob", "?"));
-				ps.setBinaryStream(1, fis, (int) f.length());
-				ps.execute();
 				break;
 
 			default:

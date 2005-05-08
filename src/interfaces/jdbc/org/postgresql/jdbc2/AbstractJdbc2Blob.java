@@ -6,6 +6,8 @@ import org.postgresql.largeobject.LargeObjectManager;
 import java.io.InputStream;
 import java.sql.Blob;
 import java.sql.SQLException;
+import org.postgresql.util.PSQLState;
+import org.postgresql.util.PSQLException;
 
 public abstract class AbstractJdbc2Blob
 {
@@ -31,7 +33,10 @@ public abstract class AbstractJdbc2Blob
 
 	public byte[] getBytes(long pos, int length) throws SQLException
 	{
-		lo.seek((int)pos, LargeObject.SEEK_SET);
+		if (pos < 1) {
+			throw new PSQLException("postgresql.blob.badpos", PSQLState.INVALID_PARAMETER_VALUE);
+		}
+		lo.seek((int)(pos-1), LargeObject.SEEK_SET);
 		return lo.read(length);
 	}
 
@@ -48,7 +53,7 @@ public abstract class AbstractJdbc2Blob
 	 */
 	public long position(Blob pattern, long start) throws SQLException
 	{
-		return position(pattern.getBytes(0, (int)pattern.length()), start);
+		return position(pattern.getBytes(1, (int)pattern.length()), start);
 	}
 
 }
