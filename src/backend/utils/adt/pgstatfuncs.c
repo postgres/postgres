@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.20 2004/12/31 22:01:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.21 2005/05/09 11:31:33 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,9 @@
 #include "nodes/execnodes.h"
 #include "pgstat.h"
 #include "utils/hsearch.h"
+#include "utils/inet.h"
+#include "utils/builtins.h"
+#include "libpq/ip.h"
 
 /* bogus ... these externs should be in a header file */
 extern Datum pg_stat_get_numscans(PG_FUNCTION_ARGS);
@@ -41,6 +44,9 @@ extern Datum pg_stat_get_backend_dbid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_userid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_activity(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_backend_start(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_backend_client_port(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_db_numbackends(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_xact_commit(PG_FUNCTION_ARGS);
@@ -355,6 +361,117 @@ pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 	result = AbsoluteTimeUsecToTimestampTz(sec, usec);
 
 	PG_RETURN_TIMESTAMPTZ(result);
+}
+
+Datum
+pg_stat_get_backend_start(PG_FUNCTION_ARGS)
+{
+	PgStat_StatBeEntry *beentry;
+	int32       beid;
+	AbsoluteTime sec;
+	int         usec;
+	TimestampTz result;
+
+	beid = PG_GETARG_INT32(0);
+
+	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
+		PG_RETURN_NULL();
+
+	if (!superuser() && beentry->userid != GetUserId())
+		PG_RETURN_NULL();
+
+	sec = beentry->start_sec;
+	usec = beentry->start_usec;
+
+	if (sec == 0 && usec == 0)
+		PG_RETURN_NULL();
+
+	result = AbsoluteTimeUsecToTimestampTz(sec, usec);
+
+	PG_RETURN_TIMESTAMPTZ(result);
+}
+
+
+Datum
+pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
+{
+	PgStat_StatBeEntry *beentry;
+	int32       beid;
+	char		remote_host[NI_MAXHOST];
+	int			ret;
+
+	beid = PG_GETARG_INT32(0);
+
+	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
+		PG_RETURN_NULL();
+
+	if (!superuser() && beentry->userid != GetUserId())
+		PG_RETURN_NULL();
+
+	switch (beentry->clientaddr.addr.ss_family)
+	{
+		case AF_INET:
+#ifdef HAVE_IPV6
+		case AF_INET6:
+#endif
+			break;
+		default:
+			PG_RETURN_NULL();
+	}
+
+	remote_host[0] = '\0';
+
+	ret = getnameinfo_all(&beentry->clientaddr.addr, beentry->clientaddr.salen,
+						  remote_host, sizeof(remote_host),
+						  NULL, 0,
+						  NI_NUMERICHOST | NI_NUMERICSERV);
+	if (ret)
+		PG_RETURN_NULL();
+
+	PG_RETURN_INET_P(DirectFunctionCall1(inet_in,
+										 CStringGetDatum(remote_host)));
+}
+
+Datum
+pg_stat_get_backend_client_port(PG_FUNCTION_ARGS)
+{
+	PgStat_StatBeEntry *beentry;
+	int32       beid;
+	char		remote_port[NI_MAXSERV];
+	int			ret;
+
+	beid = PG_GETARG_INT32(0);
+
+	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
+		PG_RETURN_NULL();
+
+	if (!superuser() && beentry->userid != GetUserId())
+		PG_RETURN_NULL();
+
+	switch (beentry->clientaddr.addr.ss_family)
+	{
+		case AF_INET:
+#ifdef HAVE_IPV6
+		case AF_INET6:
+#endif
+			break;
+		case AF_UNIX:
+			PG_RETURN_INT32(-1);
+		default:
+			PG_RETURN_NULL();
+	}
+
+	remote_port[0] = '\0';
+
+	ret = getnameinfo_all(&beentry->clientaddr.addr,
+						  beentry->clientaddr.salen,
+						  NULL, 0,
+						  remote_port, sizeof(remote_port),
+						  NI_NUMERICHOST | NI_NUMERICSERV);
+	if (ret)
+		PG_RETURN_NULL();
+
+	PG_RETURN_DATUM(DirectFunctionCall1(int4in, CStringGetDatum(remote_port)));
 }
 
 

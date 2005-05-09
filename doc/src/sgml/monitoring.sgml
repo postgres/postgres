@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.27 2004/12/28 19:08:58 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.28 2005/05/09 11:31:32 neilc Exp $
 -->
 
 <chapter id="monitoring">
@@ -221,15 +221,16 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <row>
       <entry><structname>pg_stat_activity</></entry>
       <entry>One row per server process, showing process
-      <acronym>ID</>, database, user, current query, and the time at
-      which the current query began execution. The columns that report
-      data on the current query are only available if the parameter
-      <varname>stats_command_string</varname> has been turned on.
-      Furthermore, these columns read as null unless the user examining
-      the view is a superuser or the same as the user owning the process
-      being reported on.  (Note that because of the 
-      collector's reporting delay, current query will only be up-to-date for 
-      long-running queries.)</entry>
+      <acronym>ID</>, database, user, current query, the time at which
+      the current query began execution, the time at which the backend
+      was started and the client address and port number.  The columns
+      that report data on the current query are only available if the
+      parameter <varname>stats_command_string</varname> has been
+      turned on.  Furthermore, these columns read as null unless the
+      user examining the view is a superuser or the same as the user
+      owning the process being reported on.  (Note that because of the
+      collector's reporting delay, the current query will only be
+      up-to-date for long-running queries.)</entry>
      </row>
 
      <row>
@@ -509,7 +510,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>set of integer</type></entry>
       <entry>
        Set of currently active backend process IDs (from 1 to the
-       number of active backend processes).  See usage example in the text.
+       number of active backend processes).  See usage example in the text
       </entry>
      </row>
 
@@ -565,6 +566,38 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
        current user is not a superuser nor the same user as that of
        the session being queried, or
        <varname>stats_command_string</varname> is not on)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_backend_start</function>(<type>integer</type>)</literal></entry>
+      <entry><type>timestamp with time zone</type></entry>
+      <entry>
+       The time at which the given backend process was started, or
+       null if the current user is not a superuser nor the same user
+       as that of the session being queried
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_backend_client_addr</function>(<type>integer</type>)</literal></entry>
+      <entry><type>inet</type></entry>
+      <entry>
+       The IP address of the client connected to the given
+       backend. Null if the connection is over a Unix domain
+       socket. Also null if the current user is not a superuser nor
+       the same user as that of the session being queried
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_backend_client_port</function>(<type>integer</type>)</literal></entry>
+      <entry><type>integer</type></entry>
+      <entry>
+       The IP port number of the client connected to the given
+       backend.  -1 if the connection is over a Unix domain
+       socket. Null if the current user is not a superuser nor the
+       same user as that of the session being queried
       </entry>
      </row>
 

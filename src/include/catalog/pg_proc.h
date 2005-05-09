@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.360 2005/04/30 20:31:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.361 2005/05/09 11:31:34 neilc Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2822,6 +2822,12 @@ DATA(insert OID = 1940 (  pg_stat_get_backend_activity	PGNSP PGUID 12 f f t f s 
 DESCR("Statistics: Current query of backend");
 DATA(insert OID = 2094 (  pg_stat_get_backend_activity_start PGNSP PGUID 12 f f t f s 1 1184 "23" _null_ _null_ _null_  pg_stat_get_backend_activity_start - _null_));
 DESCR("Statistics: Start time for current query of backend");
+DATA(insert OID = 1391 ( pg_stat_get_backend_start PGNSP PGUID 12 f f t f s 1 1184 "23" _null_ _null_ _null_ pg_stat_get_backend_start - _null_));
+DESCR("Statistics: Start time for current backend session");
+DATA(insert OID = 1392 ( pg_stat_get_backend_client_addr PGNSP PGUID 12 f f t f s 1 869 "23" _null_ _null_ _null_ pg_stat_get_backend_client_addr - _null_));
+DESCR("Statistics: Address of client connected to backend");
+DATA(insert OID = 1393 ( pg_stat_get_backend_client_port PGNSP PGUID 12 f f t f s 1 23 "23" _null_ _null_ _null_ pg_stat_get_backend_client_port - _null_));
+DESCR("Statistics: Port number of client connected to backend");
 DATA(insert OID = 1941 (  pg_stat_get_db_numbackends	PGNSP PGUID 12 f f t f s 1 23 "26" _null_ _null_ _null_	pg_stat_get_db_numbackends - _null_ ));
 DESCR("Statistics: Number of backends in database");
 DATA(insert OID = 1942 (  pg_stat_get_db_xact_commit	PGNSP PGUID 12 f f t f s 1 20 "26" _null_ _null_ _null_	pg_stat_get_db_xact_commit - _null_ ));

@@ -5,16 +5,16 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.27 2005/01/01 05:43:08 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.28 2005/05/09 11:31:33 neilc Exp $
  * ----------
  */
 #ifndef PGSTAT_H
 #define PGSTAT_H
 
+#include "libpq/pqcomm.h"
 #include "utils/hsearch.h"
 #include "utils/nabstime.h"
 #include "utils/rel.h"
-
 
 /* ----------
  * The types of backend/postmaster -> collector messages
@@ -54,6 +54,7 @@ typedef struct PgStat_MsgHdr
 	int			m_procpid;
 	Oid			m_databaseid;
 	AclId		m_userid;
+	SockAddr	m_clientaddr;
 } PgStat_MsgHdr;
 
 /* ----------
@@ -231,8 +232,11 @@ typedef struct PgStat_StatBeEntry
 	Oid			databaseid;
 	Oid			userid;
 	int			procpid;
+	AbsoluteTime start_sec;
+	int         start_usec;
 	AbsoluteTime activity_start_sec;
 	int			activity_start_usec;
+	SockAddr    clientaddr;
 	char		activity[PGSTAT_ACTIVITY_SIZE];
 } PgStat_StatBeEntry;
 

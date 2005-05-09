@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.11 2005/01/01 20:44:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.12 2005/05/09 11:31:32 neilc Exp $
  */
 
 CREATE VIEW pg_user AS 
@@ -237,7 +237,10 @@ CREATE VIEW pg_stat_activity AS
             pg_stat_get_backend_userid(S.backendid) AS usesysid, 
             U.usename AS usename, 
             pg_stat_get_backend_activity(S.backendid) AS current_query, 
-            pg_stat_get_backend_activity_start(S.backendid) AS query_start 
+            pg_stat_get_backend_activity_start(S.backendid) AS query_start,
+            pg_stat_get_backend_start(S.backendid) AS backend_start,
+            pg_stat_get_backend_client_addr(S.backendid) AS client_addr,
+            pg_stat_get_backend_client_port(S.backendid) AS client_port
     FROM pg_database D, 
             (SELECT pg_stat_get_backend_idset() AS backendid) AS S, 
             pg_shadow U 
