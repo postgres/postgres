@@ -13,7 +13,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Sun Mar 13 22:07:18 EST 2005</P>
+    <P>Last updated: Fri May  6 13:47:54 EDT 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -44,8 +44,8 @@
      <A href="#1.10">1.10</A>) What books are good for developers?<BR>
      <A href="#1.11">1.11</A>) What is configure all about?<BR>
      <A href="#1.12">1.12</A>) How do I add a new port?<BR>
-     <A href="#1.13">1.13</A>) Why don't you use threads/raw
-    devices/async-I/O, &lt;insert your favorite wizz-bang feature
+     <A href="#1.13">1.13</A>) Why don't you use threads, raw
+    devices, async-I/O, &lt;insert your favorite wizz-bang feature
     here&gt;?<BR>
      <A href="#1.14">1.14</A>) How are RPM's packaged?<BR>
      <A href="#1.15">1.15</A>) How are CVS branches handled?<BR>
@@ -71,6 +71,8 @@
     <I>pfree</I>() to allocate memory?<BR>
      <A href="#2.6">2.6</A>) What is ereport()?<BR>
      <A href="#2.7">2.7</A>) What is CommandCounterIncrement()?<BR>
+     <A href="#2.8">2.8</A>) What debugging features are available?<BR>
+
      <BR>
      
     <HR>
@@ -229,6 +231,12 @@
 
     <P>There have been a number of discussions about other testing
     frameworks and some developers are exploring these ideas.</P>
+
+    <P>Keep in mind the <I>Makefiles</I> do not have the proper
+    dependencies for include files. You have to do a <I>make clean</I>
+    and then another <I>make</I>. If you are using <SMALL>GCC</SMALL>
+    you can use the <I>--enable-depend</I> option of <I>configure</I>
+    to have the compiler compute the dependencies automatically.</P>
 
     <H3><A name="1.9">1.9</A>) What tools are available for
     developers?</H3>
@@ -422,8 +430,8 @@
     handling. There is a <I>backend/port</I> directory if you need
     special files for your OS.</P>
 
-    <H3><A name="1.13">1.13</A>) Why don't you use threads/raw
-    devices/async-I/O, &lt;insert your favorite wizz-bang feature
+    <H3><A name="1.13">1.13</A>) Why don't you use threads, raw
+    devices, async-I/O, &lt;insert your favorite wizz-bang feature
     here&gt;?</H3>
 
     <P>There is always a temptation to use the newest operating system
@@ -941,6 +949,45 @@
     modified by previous pieces. <I>CommandCounterIncrement()</I>
     increments the Command Counter, creating a new part of the
     transaction.</P>
+
+    <H3><A name="2.8">2.8</A>) What debugging features are
+    available?</H3>
+
+    <P>First, try running <I>configure</I> with the --enable-cassert
+    option, many <I>assert()</I>s monitor the progress of the backend
+    and halt the program when something unexpected occurs.</P>
+
+    <P>The <I>postmaster</I> has a <I>-d</I> option that allows even more
+    detailed information to be reported. The <I>-d</I> option takes a
+    number that specifies the debug level. Be warned that high debug
+    level values generate large log files.</P>
+
+    <P>If the <I>postmaster</I> is not running, you can actually run the
+    <I>postgres</I> backend from the command line, and type your
+    <SMALL>SQL</SMALL> statement directly. This is recommended
+    <B>only</B> for debugging purposes. If you have compiled with debugging
+    symbols, you can use a debugger to see what is happening. Because
+    the backend was not started from <I>postmaster</I>, it is not
+    running in an identical environment and locking/backend interaction
+    problems may not be duplicated.</P>
+
+    <P>If the <I>postmaster</I> is running, start <I>psql</I> in one
+    window, then find the <SMALL>PID</SMALL> of the <I>postgres</I>
+    process used by <I>psql</I> using <CODE>SELECT pg_backend_pid()</CODE>.
+    Use a debugger to attach to the <I>postgres</I> <SMALL>PID</SMALL>.
+    You can set breakpoints in the debugger and issue queries from
+
+    <I>psql</I>. If you are debugging <I>postgres</I> startup, you can
+    set PGOPTIONS="-W n", then start <I>psql</I>. This will cause startup
+    to delay for <I>n</I> seconds so you can attach to the process with
+    the debugger, set any breakpoints, and continue through the startup
+    sequence.</P>
+
+    <P>You can also compile with profiling to see what functions are
+    taking execution time. The backend profile files will be deposited
+    in the <I>pgsql/data/base/dbname</I> directory. The client profile
+    file will be put in the client's current directory. Linux requires
+    a compile with <I>-DLINUX_PROFILE</I> for proper profiling.</P>
   </BODY>
 </HTML>
 

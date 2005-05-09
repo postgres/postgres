@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Mar 15 17:38:18 EST 2005
+   Last updated: Mon May 9 13:15:04 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -26,6 +26,7 @@
    1.10) How can I learn SQL?
    1.11) How do I join the development team?
    1.12) How does PostgreSQL compare to other DBMSs?
+   1.13) Who controls PostgreSQL?
    
                            User Client Questions
                                       
@@ -67,35 +68,23 @@
    4.11.3) Doesn't currval() lead to a race condition with other users?
    4.11.4) Why aren't my sequence numbers reused on transaction abort?
    Why are there gaps in the numbering of my sequence/SERIAL column?
-   4.12) What is an OID? What is a TID?
+   4.12) What is an OID? What is a CTID?
    4.13) Why do I get the error "ERROR: Memory exhausted in
    AllocSetAlloc()"?
    4.14) How do I tell what PostgreSQL version I am running?
-   4.15) Why does my large-object operations get "invalid large obj
-   descriptor"?
-   4.16) How do I create a column that will default to the current time?
-   4.17) How do I perform an outer join?
-   4.18) How do I perform queries using multiple databases?
-   4.19) How do I return multiple rows or columns from a function?
-   4.20) Why do I get "relation with OID ##### does not exist" errors
+   4.15) How do I create a column that will default to the current time?
+   4.16) How do I perform an outer join?
+   4.17) How do I perform queries using multiple databases?
+   4.18) How do I return multiple rows or columns from a function?
+   4.19) Why do I get "relation with OID ##### does not exist" errors
    when accessing temporary tables in PL/PgSQL functions?
-   4.21) What encryption options are available?
-   
-                            Extending PostgreSQL
-                                      
-   5.1) I wrote a user-defined function. When I run it in psql, why does
-   it dump core?
-   5.2) How can I contribute some nifty new types and functions to
-   PostgreSQL?
-   5.3) How do I write a C function to return a tuple?
-   5.4) I have changed a source file. Why does the recompile not see the
-   change?
+   4.20) What replication solutions are available?
      _________________________________________________________________
    
                              General Questions
                                       
-    1.1) What is PostgreSQL? How is it pronounced?
-    
+  1.1) What is PostgreSQL? How is it pronounced?
+  
    PostgreSQL is pronounced Post-Gres-Q-L, also called just Postgres.
    
    PostgreSQL is an object-relational database system that has the
@@ -109,8 +98,8 @@
    company. To get involved, see the developer's FAQ at
    http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html
    
-    1.2) What is the copyright of PostgreSQL?
-    
+  1.2) What is the copyright of PostgreSQL?
+  
    PostgreSQL is distributed under the classic BSD license. It has no
    restrictions on how the source code can be used. We like it and have
    no intention of changing it.
@@ -142,31 +131,30 @@
    CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT,
    UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
    
-    1.3) What platforms does PostgreSQL support?
-    
+  1.3) What platforms does PostgreSQL support?
+  
    In general, any modern Unix-compatible platform should be able to run
    PostgreSQL. The platforms that had received explicit testing at the
    time of release are listed in the installation instructions.
    
-   Starting with version 8.0, PostgreSQL now runs natively on Microsoft
-   Windows NT-based operating systems like Win2000, WinXP, and Win2003. A
-   prepackaged installer is available at
-   http://pgfoundry.org/projects/pginstaller. MSDOS-based versions of
-   Windows (Win95, Win98, WinMe) can run PostgreSQL using Cygwin.
+   PostgreSQL also runs natively on Microsoft Windows NT-based operating
+   systems like Win2000, WinXP, and Win2003. A prepackaged installer is
+   available at http://pgfoundry.org/projects/pginstaller. MSDOS-based
+   versions of Windows (Win95, Win98, WinMe) can run PostgreSQL using
+   Cygwin.
    
    There is also a Novell Netware 6 port at http://forge.novell.com, and
    an OS/2 (eComStation) version at
    http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgre
    SQL&stype=all&sort=type&dir=%2F.
    
-    1.4) Where can I get PostgreSQL?
-    
-   The primary anonymous ftp site for PostgreSQL is
-   ftp://ftp.PostgreSQL.org/pub/. For mirror sites, see our main web
-   site.
+  1.4) Where can I get PostgreSQL?
+  
+   Via web browser, use http://www.postgresql.org/ftp/, and via ftp, use
+   ftp://ftp.PostgreSQL.org/pub/.
    
-    1.5) Where can I get support?
-    
+  1.5) Where can I get support?
+  
    The PostgreSQL community provides assistance to many of its users via
    email. The main web site to subscribe to the email lists is
    http://www.postgresql.org/community/lists/. The general or bugs lists
@@ -174,38 +162,39 @@
    
    The major IRC channel is #postgresql on Freenode (irc.freenode.net).
    To connect you can use the Unix program irc -c '#postgresql' "$USER"
-   irc.freenode.net or use any of the other popular IRC clients. A
-   Spanish one also exists on the same network, (#postgresql-es), and a
-   French one, (#postgresqlfr). There is also a PostgreSQL channel on
-   EFNet.
+   irc.freenode.net or use any other IRC clients. A Spanish one also
+   exists on the same network, (#postgresql-es), and a French one,
+   (#postgresqlfr). There is also a PostgreSQL channel on EFNet.
    
    A list of commercial support companies is available at
    http://techdocs.postgresql.org/companies.php.
    
-    1.6) How do I submit a bug report?
-    
+  1.6) How do I submit a bug report?
+  
    Visit the PostgreSQL bug form at
    http://www.postgresql.org/support/submitbug.
    
    Also check out our ftp site ftp://ftp.PostgreSQL.org/pub/ to see if
    there is a more recent PostgreSQL version.
    
-    1.7) What is the latest release?
-    
-   The latest release of PostgreSQL is version 8.0.1.
+  1.7) What is the latest release?
+  
+   The latest release of PostgreSQL is version 8.0.2.
    
-   We plan to have major releases every ten to twelve months.
+   We plan to have a major release every year, with minor releases every
+   few months.
    
-    1.8) What documentation is available?
-    
+  1.8) What documentation is available?
+  
    PostgreSQL includes extensive documentation, including a large manual,
    manual pages, and some test examples. See the /doc directory. You can
    also browse the manuals online at http://www.PostgreSQL.org/docs.
    
    There are two PostgreSQL books available online at
    http://www.postgresql.org/docs/books/awbook.html and
-   http://www.commandprompt.com/ppbook/. There is a list of PostgreSQL
-   books available for purchase at
+   http://www.commandprompt.com/ppbook/. There are a number of PostgreSQL
+   books available for purchase. One of the most popular ones is by Korry
+   Douglas. A list of book reviews can be found at
    http://techdocs.PostgreSQL.org/techdocs/bookreviews.php. There is also
    a collection of PostgreSQL technical articles at
    http://techdocs.PostgreSQL.org/.
@@ -216,43 +205,31 @@
    
    Our web site contains even more documentation.
    
-    1.9) How do I find out about known bugs or missing features?
-    
+  1.9) How do I find out about known bugs or missing features?
+  
    PostgreSQL supports an extended subset of SQL-92. See our TODO list
    for known bugs, missing features, and future plans.
    
-    1.10) How can I learn SQL?
-    
-   The PostgreSQL book at
-   http://www.postgresql.org/docs/books/awbook.html teaches SQL. There is
-   another PostgreSQL book at http://www.commandprompt.com/ppbook. There
-   is a nice tutorial at
+  1.10) How can I learn SQL?
+  
+   First, consider the PostgreSQL-specific books mentioned above. Another
+   one is "Teach Yourself SQL in 21 Days, Second Edition" at
+   http://members.tripod.com/er4ebus/sql/index.htm. Many of our users
+   like The Practical SQL Handbook, Bowman, Judith S., et al.,
+   Addison-Wesley. Others like The Complete Reference SQL, Groff et al.,
+   McGraw-Hill.
+   
+   There is also a nice tutorial at
    http://www.intermedia.net/support/sql/sqltut.shtm, at
    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,
    and at http://sqlcourse.com.
    
-   Another one is "Teach Yourself SQL in 21 Days, Second Edition" at
-   http://members.tripod.com/er4ebus/sql/index.htm
+  1.11) How do I join the development team?
+  
+   See the Developer's FAQ.
    
-   Many of our users like The Practical SQL Handbook, Bowman, Judith S.,
-   et al., Addison-Wesley. Others like The Complete Reference SQL, Groff
-   et al., McGraw-Hill.
-   
-    1.11) How do I join the development team?
-    
-   First, download the latest source and read the PostgreSQL Developers
-   FAQ and documentation on our web site, or in the distribution. Second,
-   subscribe to the pgsql-hackers and pgsql-patches mailing lists. Third,
-   submit high quality patches to pgsql-patches.
-   
-   There are about a dozen people who have commit privileges to the
-   PostgreSQL CVS archive. They each have submitted so many high-quality
-   patches that it was impossible for the existing committers to keep up,
-   and we had confidence that patches they committed were of high
-   quality.
-   
-    1.12) How does PostgreSQL compare to other DBMSs?
-    
+  1.12) How does PostgreSQL compare to other DBMSs?
+  
    There are several ways of measuring software: features, performance,
    reliability, support, and price.
    
@@ -267,13 +244,8 @@
    Performance
           PostgreSQL's performance is comparable to other commercial and
           open source databases. It is faster for some things, slower for
-          others. In comparison to MySQL or leaner database systems, we
-          are faster for multiple users, complex queries, and a
-          read/write query load. MySQL is faster for simple SELECT
-          queries done by a few users. Of course, MySQL does not have
-          most of the features mentioned in the Features section above.
-          We are built for reliability and features, and we continue to
-          improve performance in every release.
+          others. Our performance is usually +/-10% compared to other
+          databases.
           
    Reliability
           We realize that a DBMS must be reliable, or it is worthless. We
@@ -297,12 +269,23 @@
           We are free for all use, both commercial and non-commercial.
           You can add our code to your product with no limitations,
           except those outlined in our BSD-style license stated above.
+          
+  1.13) Who controls PostgreSQL?
+  
+   If you are looking for a PostgreSQL gatekeeper, central committee, or
+   controlling company, give up --- there isn't one. We do have a core
+   committee and CVS committers, but these groups are more for
+   administrative purposes than control. The project is directed by the
+   community of developers and users, which anyone can join. All you need
+   to do is subscribe to the mailing lists and participate in the
+   discussions. (See the Developer's FAQ for information on how to get
+   involved in PostgreSQL development.)
      _________________________________________________________________
    
                            User Client Questions
                                       
-    2.1) What interfaces are available for PostgreSQL?
-    
+  2.1) What interfaces are available for PostgreSQL?
+  
    The PostgreSQL install includes only the C and embedded C interfaces.
    All other interfaces are independent projects that are downloaded
    separately; being separate allows them to have their own release
@@ -313,8 +296,8 @@
    others are available at http://gborg.postgresql.org in the
    Drivers/Interfaces section and via Internet search.
    
-    2.2) What tools are available for using PostgreSQL with Web pages?
-    
+  2.2) What tools are available for using PostgreSQL with Web pages?
+  
    A nice introduction to Database-backed Web pages can be seen at:
    http://www.webreview.com
    
@@ -324,36 +307,28 @@
    For complex cases, many use the Perl and DBD::Pg with CGI.pm or
    mod_perl.
    
-    2.3) Does PostgreSQL have a graphical user interface?
-    
-   Yes, there are several graphical interfaces to PostgreSQL available.
-   These include pgAdmin III (http://www.pgadmin.org, PgAccess
-   http://www.pgaccess.org), RHDB Admin (http://sources.redhat.com/rhdb/
-   ), TORA ( http://www.globecom.net/tora/, partly commercial), and
-   Rekall ( http://www.rekallrevealed.org/). There is also PhpPgAdmin (
-   http://phppgadmin.sourceforge.net/ ), a web-based interface to
-   PostgreSQL.
-   
-   See http://techdocs.postgresql.org/guides/GUITools for a more detailed
+  2.3) Does PostgreSQL have a graphical user interface?
+  
+   Yes, see http://techdocs.postgresql.org/guides/GUITools for a detailed
    list.
      _________________________________________________________________
    
                           Administrative Questions
                                       
-    3.1) How do I install PostgreSQL somewhere other than /usr/local/pgsql?
-    
+  3.1) How do I install PostgreSQL somewhere other than /usr/local/pgsql?
+  
    Specify the --prefix option when running configure.
    
-    3.2) How do I control connections from other hosts?
-    
+  3.2) How do I control connections from other hosts?
+  
    By default, PostgreSQL only allows connections from the local machine
    using Unix domain sockets or TCP/IP connections. Other machines will
    not be able to connect unless you modify listen_addresses in the
    postgresql.conf file, enable host-based authentication by modifying
    the $PGDATA/pg_hba.conf file, and restart the server.
    
-    3.3) How do I tune the database engine for better performance?
-    
+  3.3) How do I tune the database engine for better performance?
+  
    There are three major areas for potential performance improvement:
    
    Query Changes
@@ -384,69 +359,32 @@
           http://candle.pha.pa.us/main/writings/pgsql/hw_performance/inde
           x.html and http://www.powerpostgresql.com/PerfList/.
           
-    3.4) What debugging features are available?
-    
+  3.4) What debugging features are available?
+  
    There are many log_* server configuration variables that enable
    printing of query and process statistics which can be very useful for
    debugging and performance measurements.
    
-   The following detailed debug instructions are to be used to provide
-   more detailed information for server developers debugging a problem.
-   
-   It is also possible to debug the server if it isn't operating
-   properly. First, by running configure with the --enable-cassert
-   option, many assert()s monitor the progress of the backend and halt
-   the program when something unexpected occurs.
-   
-   The postmaster has a -d option that allows even more detailed
-   information to be reported. The -d option takes a number that
-   specifies the debug level. Be warned that high debug level values
-   generate large log files.
-   
-   If postmaster is not running, you can actually run the postgres
-   backend from the command line, and type your SQL statement directly.
-   This is recommended only for debugging purposes. Note that a newline
-   terminates the query, not a semicolon. If you have compiled with
-   debugging symbols, you can use a debugger to see what is happening.
-   Because the backend was not started from postmaster, it is not running
-   in an identical environment and locking/backend interaction problems
-   may not be duplicated.
-   
-   If postmaster is running, start psql in one window, then find the PID
-   of the postgres process used by psql using SELECT pg_backend_pid().
-   Use a debugger to attach to the postgres PID. You can set breakpoints
-   in the debugger and issue queries from psql. If you are debugging
-   postgres startup, you can set PGOPTIONS="-W n", then start psql. This
-   will cause startup to delay for n seconds so you can attach to the
-   process with the debugger, set any breakpoints, and continue through
-   the startup sequence.
-   
-   You can also compile with profiling to see what functions are taking
-   execution time. The backend profile files will be deposited in the
-   pgsql/data/base/dbname directory. The client profile file will be put
-   in the client's current directory. Linux requires a compile with
-   -DLINUX_PROFILE for proper profiling.
-   
-    3.5) Why do I get "Sorry, too many clients" when trying to connect?
-    
+  3.5) Why do I get "Sorry, too many clients" when trying to connect?
+  
    You have reached the default limit is 100 database sessions. You need
    to increase the postmaster's limit on how many concurrent backend
    processes it can start by changing the max_connections value in
    postgresql.conf and restarting the postmaster.
    
-    3.6) Why do I need to do a dump and restore to upgrade between major
-    PostgreSQL releases?
-    
+  3.6) Why do I need to do a dump and restore to upgrade between major
+  PostgreSQL releases?
+  
    The PostgreSQL team makes only small changes between minor releases,
-   so upgrading from 7.4 to 7.4.1 does not require a dump and restore.
+   so upgrading from 7.4.0 to 7.4.1 does not require a dump and restore.
    However, major releases (e.g. from 7.3 to 7.4) often change the
    internal format of system tables and data files. These changes are
    often complex, so we don't maintain backward compatibility for data
    files. A dump outputs data in a generic format that can then be loaded
    in using the new internal format.
    
-    3.7) What computer hardware should I use?
-    
+  3.7) What computer hardware should I use?
+  
    Because PC hardware is mostly compatible, people tend to believe that
    all PC hardware is of equal quality. It is not. ECC RAM, SCSI, and
    quality motherboards are more reliable and have better performance
@@ -458,8 +396,8 @@
    
                            Operational Questions
                                       
-    4.1) How do I SELECT only the first few rows of a query? A random row?
-    
+  4.1) How do I SELECT only the first few rows of a query? A random row?
+  
    To retrieve only a few rows, if you know at the number of rows needed
    at the time of the SELECT use LIMIT . If an index matches the ORDER BY
    it is possible the entire query does not have to be executed. If you
@@ -471,9 +409,9 @@
     ORDER BY random()
     LIMIT 1;
 
-    4.2) How do I find out what tables, indexes, databases, and users are
-    defined? How do I see the queries used by psql to display them?
-    
+  4.2) How do I find out what tables, indexes, databases, and users are
+  defined? How do I see the queries used by psql to display them?
+  
    Use the \dt command to see tables in psql. For a complete list of
    commands inside psql you can use \?. Alternatively you can read the
    source code for psql in file pgsql/src/bin/psql/describe.c, it
@@ -492,8 +430,8 @@
    many of the SELECTs needed to get information from the database system
    tables.
    
-    4.3) How do you change a column's data type?
-    
+  4.3) How do you change a column's data type?
+  
    Changing the data type of a column can be done easily in 8.0 and later
    with ALTER TABLE ALTER COLUMN TYPE.
    
@@ -507,8 +445,8 @@
    You might then want to do VACUUM FULL tab to reclaim the disk space
    used by the expired rows.
    
-    4.4) What is the maximum size for a row, a table, and a database?
-    
+  4.4) What is the maximum size for a row, a table, and a database?
+  
    These are the limits:
    
    Maximum size for a database? unlimited (32 TB databases exist)
@@ -531,9 +469,9 @@
    The maximum table size and maximum number of columns can be quadrupled
    by increasing the default block size to 32k.
    
-    4.5) How much database disk space is required to store data from a typical
-    text file?
-    
+  4.5) How much database disk space is required to store data from a typical
+  text file?
+  
    A PostgreSQL database may require up to five times the disk space to
    store data from a text file.
    
@@ -565,13 +503,13 @@
    
    NULLs are stored as bitmaps, so they use very little space.
    
-    4.6) Why are my queries slow? Why don't they use my indexes?
-    
-   Indexes are not automatically used by every query. Indexes are only
-   used if the table is larger than a minimum size, and the query selects
-   only a small percentage of the rows in the table. This is because the
-   random disk access caused by an index scan can be slower than a
-   straight read through the table, or sequential scan.
+  4.6) Why are my queries slow? Why don't they use my indexes?
+  
+   Indexes are not used by every query. Indexes are used only if the
+   table is larger than a minimum size, and the query selects only a
+   small percentage of the rows in the table. This is because the random
+   disk access caused by an index scan can be slower than a straight read
+   through the table, or sequential scan.
    
    To determine if an index should be used, PostgreSQL must have
    statistics about the table. These statistics are collected using
@@ -594,8 +532,8 @@
     LIMIT 1;
 
    If you believe the optimizer is incorrect in choosing a sequential
-   scan, use SET enable_seqscan TO 'off' and run tests to see if an index
-   scan is indeed faster.
+   scan, use SET enable_seqscan TO 'off' and run query again to see if an
+   index scan is indeed faster.
    
    When using wild-card operators such as LIKE or ~, indexes can only be
    used in certain circumstances:
@@ -617,14 +555,14 @@
    types exactly match the index's column types. This was particularly
    true of int2, int8, and numeric column indexes.
    
-    4.7) How do I see how the query optimizer is evaluating my query?
-    
+  4.7) How do I see how the query optimizer is evaluating my query?
+  
    See the EXPLAIN manual page.
    
-    4.8) How do I perform regular expression searches and case-insensitive
-    regular expression searches? How do I use an index for case-insensitive
-    searches?
-    
+  4.8) How do I perform regular expression searches and case-insensitive
+  regular expression searches? How do I use an index for case-insensitive
+  searches?
+  
    The ~ operator does regular expression matching, and ~* does
    case-insensitive regular expression matching. The case-insensitive
    variant of LIKE is called ILIKE.
@@ -638,24 +576,24 @@
    expresssion index, it will be used:
     CREATE INDEX tabindex ON tab (lower(col));
 
-    4.9) In a query, how do I detect if a field is NULL? How can I sort on
-    whether a field is NULL or not?
-    
-   You test the column with IS NULL and IS NOT NULL.
+  4.9) In a query, how do I detect if a field is NULL? How can I sort on
+  whether a field is NULL or not?
+  
+   You test the column with IS NULL and IS NOT NULL, like this:
    SELECT *
    FROM tab
    WHERE col IS NULL;
 
    To sort by the NULL status, use the IS NULL and IS NOT NULL modifiers
-   in your WHERE clause. Things that are true will sort higher than
+   in your ORDER BY clause. Things that are true will sort higher than
    things that are false, so the following will put NULL entries at the
    top of the resulting list:
    SELECT *
    FROM tab
    ORDER BY (col IS NOT NULL)
 
-    4.10) What is the difference between the various character types?
-    
+  4.10) What is the difference between the various character types?
+  
         Type    Internal Name                    Notes
      VARCHAR(n) varchar       size specifies maximum length, no padding
      CHAR(n)    bpchar        blank padded to the specified fixed length
@@ -668,9 +606,9 @@
    
    The first four types above are "varlena" types (i.e., the first four
    bytes on disk are the length, followed by the data). Thus the actual
-   space used is slightly greater than the declared size. However, these
-   data types are also subject to compression or being stored out-of-line
-   by TOAST, so the space on disk might also be less than expected.
+   space used is slightly greater than the declared size. However, long
+   values are also subject to compression, so the space on disk might
+   also be less than expected.
    VARCHAR(n) is best when storing variable-length strings and it limits
    how long a string can be. TEXT is for strings of unlimited length,
    with a maximum of one gigabyte.
@@ -681,8 +619,8 @@
    particularly values that include NULL bytes. All the types described
    here have similar performance characteristics.
    
-    4.11.1) How do I create a serial/auto-incrementing field?
-    
+  4.11.1) How do I create a serial/auto-incrementing field?
+  
    PostgreSQL supports a SERIAL data type. It auto-creates a sequence.
    For example, this:
     CREATE TABLE person (
@@ -700,8 +638,8 @@
    See the create_sequence manual page for more information about
    sequences.
    
-    4.11.2) How do I get the value of a SERIAL insert?
-    
+  4.11.2) How do I get the value of a SERIAL insert?
+  
    One approach is to retrieve the next SERIAL value from the sequence
    object with the nextval() function before inserting and then insert it
    explicitly. Using the example table in 4.11.1, an example in a
@@ -712,28 +650,28 @@
    You would then also have the new value stored in new_id for use in
    other queries (e.g., as a foreign key to the person table). Note that
    the name of the automatically created SEQUENCE object will be named
-   <table>_<serialcolumn>_seq, where table and serialcolumn are the names
-   of your table and your SERIAL column, respectively.
+   <table>_< serialcolumn>_seq, where table and serialcolumn are the
+   names of your table and your SERIAL column, respectively.
    
    Alternatively, you could retrieve the assigned SERIAL value with the
    currval() function after it was inserted by default, e.g.,
     execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
     new_id = execute("SELECT currval('person_id_seq')");
 
-    4.11.3) Doesn't currval() lead to a race condition with other users?
-    
+  4.11.3) Doesn't currval() lead to a race condition with other users?
+  
    No. currval() returns the current value assigned by your session, not
    by all sessions.
    
-    4.11.4) Why aren't my sequence numbers reused on transaction abort? Why are
-    there gaps in the numbering of my sequence/SERIAL column?
-    
+  4.11.4) Why aren't my sequence numbers reused on transaction abort? Why are
+  there gaps in the numbering of my sequence/SERIAL column?
+  
    To improve concurrency, sequence values are given out to running
    transactions as needed and are not locked until the transaction
    completes. This causes gaps in numbering from aborted transactions.
    
-    4.12) What is an OID? What is a TID?
-    
+  4.12) What is an OID? What is a CTID?
+  
    Every row that is created in PostgreSQL gets a unique OID unless
    created WITHOUT OIDS. OIDs are autotomatically assigned unique 4-byte
    integers that are unique across the entire installation. However, they
@@ -745,12 +683,12 @@
    single table. and are therefore less likely to overflow. SERIAL8 is
    available for storing eight-byte sequence values.
    
-   TIDs are used to identify specific physical rows with block and offset
-   values. TIDs change after rows are modified or reloaded. They are used
-   by index entries to point to physical rows.
+   CTIDs are used to identify specific physical rows with block and
+   offset values. CTIDs change after rows are modified or reloaded. They
+   are used by index entries to point to physical rows.
    
-    4.13) Why do I get the error "ERROR: Memory exhausted in AllocSetAlloc()"?
-    
+  4.13) Why do I get the error "ERROR: Memory exhausted in AllocSetAlloc()"?
+  
    You probably have run out of virtual memory on your system, or your
    kernel has a low limit for certain resources. Try this before starting
    postmaster:
@@ -764,32 +702,17 @@
    problem with the SQL client because the backend is returning too much
    data, try it before starting the client.
    
-    4.14) How do I tell what PostgreSQL version I am running?
-    
+  4.14) How do I tell what PostgreSQL version I am running?
+  
    From psql, type SELECT version();
    
-    4.15) Why does my large-object operations get "invalid large obj
-    descriptor"?
-    
-   You need to put BEGIN WORK and COMMIT around any use of a large object
-   handle, that is, surrounding lo_open ... lo_close.
-   
-   Currently PostgreSQL enforces the rule by closing large object handles
-   at transaction commit. So the first attempt to do anything with the
-   handle will draw invalid large obj descriptor. So code that used to
-   work (at least most of the time) will now generate that error message
-   if you fail to use a transaction.
-   
-   If you are using a client interface like ODBC you may need to set
-   auto-commit off.
-   
-    4.16) How do I create a column that will default to the current time?
-    
+  4.15) How do I create a column that will default to the current time?
+  
    Use CURRENT_TIMESTAMP:
     CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
 
-    4.17) How do I perform an outer join?
-    
+  4.16) How do I perform an outer join?
+  
    PostgreSQL supports outer joins using the SQL standard syntax. Here
    are two examples:
     SELECT *
@@ -806,8 +729,8 @@
    is assumed in LEFT, RIGHT, and FULL joins. Ordinary joins are called
    INNER joins.
    
-    4.18) How do I perform queries using multiple databases?
-    
+  4.17) How do I perform queries using multiple databases?
+  
    There is no way to query a database other than the current one.
    Because PostgreSQL loads database-specific system catalogs, it is
    uncertain how a cross-database query should even behave.
@@ -816,15 +739,15 @@
    course, a client can also make simultaneous connections to different
    databases and merge the results on the client side.
    
-    4.19) How do I return multiple rows or columns from a function?
-    
+  4.18) How do I return multiple rows or columns from a function?
+  
    It is easy using set-returning functions,
    http://techdocs.postgresql.org/guides/SetReturningFunctions
    .
    
-    4.20) Why do I get "relation with OID ##### does not exist" errors when
-    accessing temporary tables in PL/PgSQL functions?
-    
+  4.19) Why do I get "relation with OID ##### does not exist" errors when
+  accessing temporary tables in PL/PgSQL functions?
+  
    PL/PgSQL caches function scripts, and an unfortunate side effect is
    that if a PL/PgSQL function accesses a temporary table, and that table
    is later dropped and recreated, and the function called again, the
@@ -833,46 +756,21 @@
    table access in PL/PgSQL. This will cause the query to be reparsed
    every time.
    
-    4.21) What encryption options are available?
-    
-     * contrib/pgcrypto contains many encryption functions for use in SQL
-       queries.
-     * To encrypt transmission from the client to the server, the server
-       must have the ssl option set to true in postgresql.conf, and an
-       applicable host or hostssl record must exist in pg_hba.conf, and
-       the client sslmode must not be disable. (Note that it is also
-       possible to use a third-party encrypted transport, such as stunnel
-       or ssh, rather than PostgreSQL's native SSL connections.)
-     * Database user passwords are automatically encrypted when stored in
-       the system tables.
-     * The server can run using an encrypted file system.
-     _________________________________________________________________
+  4.20) What replication solutions are available?
+  
+   Though "replication" is a single term, there are several technologies
+   for doing replication, with advantages and disadvantages for each.
    
-                            Extending PostgreSQL
-                                      
-    5.1) I wrote a user-defined function. When I run it in psql, why does it
-    dump core?
-    
-   The problem could be a number of things. Try testing your user-defined
-   function in a stand-alone test program first.
+   Master/slave replication allows a single master to receive read/write
+   queries, while slaves can only accept read/SELECT queries. The most
+   popular freely available master-slave PostgreSQL replication solution
+   is Slony-I.
    
-    5.2) How can I contribute some nifty new types and functions to PostgreSQL?
-    
-   Send your extensions to the pgsql-hackers mailing list, and they will
-   eventually end up in the contrib/ subdirectory.
+   Multi-master replication allows read/write queries to be sent to
+   multiple replicated computers. This capability also has a severe
+   impact on performance due to the need to synchronize changes between
+   servers. Pgcluster is the most popular such solution freely available
+   for PostgreSQL.
    
-    5.3) How do I write a C function to return a tuple?
-    
-   In versions of PostgreSQL beginning with 7.3, table-returning
-   functions are fully supported in C, PL/PgSQL, and SQL. See the
-   Programmer's Guide for more information. An example of a
-   table-returning function defined in C can be found in
-   contrib/tablefunc.
-   
-    5.4) I have changed a source file. Why does the recompile not see the
-    change?
-    
-   The Makefiles do not have the proper dependencies for include files.
-   You have to do a make clean and then another make. If you are using
-   GCC you can use the --enable-depend option of configure to have the
-   compiler compute the dependencies automatically.
+   There are also commercial and hardware-based replication solutions
+   available supporting a variety of replication models.

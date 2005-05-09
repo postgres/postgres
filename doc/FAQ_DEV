@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Mar 13 22:07:18 EST 2005
+   Last updated: Fri May 6 13:47:54 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -23,7 +23,7 @@ General Questions
    1.10) What books are good for developers?
    1.11) What is configure all about?
    1.12) How do I add a new port?
-   1.13) Why don't you use threads/raw devices/async-I/O, <insert your
+   1.13) Why don't you use threads, raw devices, async-I/O, <insert your
    favorite wizz-bang feature here>?
    1.14) How are RPM's packaged?
    1.15) How are CVS branches handled?
@@ -42,6 +42,7 @@ Technical Questions
    2.5) Why do we use palloc() and pfree() to allocate memory?
    2.6) What is ereport()?
    2.7) What is CommandCounterIncrement()?
+   2.8) What debugging features are available?
      _________________________________________________________________
    
 General Questions
@@ -171,6 +172,11 @@ General Questions
    
    There have been a number of discussions about other testing frameworks
    and some developers are exploring these ideas.
+   
+   Keep in mind the Makefiles do not have the proper dependencies for
+   include files. You have to do a make clean and then another make. If
+   you are using GCC you can use the --enable-depend option of configure
+   to have the compiler compute the dependencies automatically.
    
   1.9) What tools are available for developers?
   
@@ -343,8 +349,8 @@ General Questions
    src/makefiles directory for port-specific Makefile handling. There is
    a backend/port directory if you need special files for your OS.
    
-  1.13) Why don't you use threads/raw devices/async-I/O, <insert your favorite
-  wizz-bang feature here>?
+  1.13) Why don't you use threads, raw devices, async-I/O, <insert your
+  favorite wizz-bang feature here>?
   
    There is always a temptation to use the newest operating system
    features as soon as they arrive. We resist that temptation.
@@ -762,3 +768,37 @@ typedef struct nameData
    to be broken into pieces so each piece can see rows modified by
    previous pieces. CommandCounterIncrement() increments the Command
    Counter, creating a new part of the transaction.
+   
+  2.8) What debugging features are available?
+  
+   First, try running configure with the --enable-cassert option, many
+   assert()s monitor the progress of the backend and halt the program
+   when something unexpected occurs.
+   
+   The postmaster has a -d option that allows even more detailed
+   information to be reported. The -d option takes a number that
+   specifies the debug level. Be warned that high debug level values
+   generate large log files.
+   
+   If the postmaster is not running, you can actually run the postgres
+   backend from the command line, and type your SQL statement directly.
+   This is recommended only for debugging purposes. If you have compiled
+   with debugging symbols, you can use a debugger to see what is
+   happening. Because the backend was not started from postmaster, it is
+   not running in an identical environment and locking/backend
+   interaction problems may not be duplicated.
+   
+   If the postmaster is running, start psql in one window, then find the
+   PID of the postgres process used by psql using SELECT
+   pg_backend_pid(). Use a debugger to attach to the postgres PID. You
+   can set breakpoints in the debugger and issue queries from psql. If
+   you are debugging postgres startup, you can set PGOPTIONS="-W n", then
+   start psql. This will cause startup to delay for n seconds so you can
+   attach to the process with the debugger, set any breakpoints, and
+   continue through the startup sequence.
+   
+   You can also compile with profiling to see what functions are taking
+   execution time. The backend profile files will be deposited in the
+   pgsql/data/base/dbname directory. The client profile file will be put
+   in the client's current directory. Linux requires a compile with
+   -DLINUX_PROFILE for proper profiling.
