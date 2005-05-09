@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.251 2005/04/28 21:47:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.252 2005/05/09 15:09:19 ishii Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1255,7 +1255,6 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 {
 	WRITE_NODE_TYPE("SELECT");
 
-	WRITE_NODE_FIELD(whereClause);
 	WRITE_NODE_FIELD(distinctClause);
 	WRITE_NODE_FIELD(into);
 	WRITE_NODE_FIELD(intoColNames);
