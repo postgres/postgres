@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.177 2005/05/06 17:24:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.178 2005/05/09 14:28:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -948,7 +948,7 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 				 * returns set, save the current argument values to re-use
 				 * on the next call.
 				 */
-				if (fcache->func.fn_retset)
+				if (fcache->func.fn_retset && *isDone == ExprMultipleResult)
 				{
 					memcpy(&fcache->setArgs, &fcinfo, sizeof(fcinfo));
 					fcache->setHasSetArg = hasSetArg;
@@ -967,7 +967,8 @@ ExecMakeFunctionResult(FuncExprState *fcache,
 				 * Make sure we say we are returning a set, even if the
 				 * function itself doesn't return sets.
 				 */
-				*isDone = ExprMultipleResult;
+				if (hasSetArg)
+					*isDone = ExprMultipleResult;
 				break;
 			}
 
