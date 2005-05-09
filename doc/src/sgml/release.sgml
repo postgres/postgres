@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.30 2005/05/05 20:08:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.31 2005/05/09 00:10:22 tgl Exp $
 -->
 
 <appendix id="release">
@@ -10,7 +10,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.30 2005/05/05 20:08:
 
    <note>
    <title>Release date</title>
-   <simpara>2005-05-05</simpara>
+   <simpara>2005-05-09</simpara>
    </note>
 
    <para>
@@ -121,6 +121,17 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
 misuse</para></listitem>
 <listitem><para>Change <filename>contrib/tsearch2</> to avoid unsafe use of
 <type>INTERNAL</> function results</para></listitem>
+<listitem><para>Repair ancient race condition that allowed a transaction to be
+seen as committed for some purposes (eg SELECT FOR UPDATE) slightly sooner
+than for other purposes</para>
+<para>This is an extremely serious bug since it could lead to apparent
+data inconsistencies being briefly visible to applications.</para></listitem>
+<listitem><para>Repair race condition between relation extension and
+VACUUM</para>
+<para>This could theoretically have caused loss of a page's worth of
+freshly-inserted data, although the scenario seems of very low probability.
+There are no known cases of it having caused more than an Assert failure.
+</para></listitem>
 <listitem><para>Fix comparisons of <type>TIME WITH TIME ZONE</> values</para>
 <para>
 The comparison code was wrong in the case where the
@@ -2562,7 +2573,7 @@ DROP SCHEMA information_schema CASCADE;
 
    <note>
    <title>Release date</title>
-   <simpara>2005-05-05</simpara>
+   <simpara>2005-05-09</simpara>
    </note>
 
    <para>
@@ -2639,6 +2650,17 @@ UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
 <itemizedlist>
 <listitem><para>Change encoding function signature to prevent
 misuse</para></listitem>
+<listitem><para>Repair ancient race condition that allowed a transaction to be
+seen as committed for some purposes (eg SELECT FOR UPDATE) slightly sooner
+than for other purposes</para>
+<para>This is an extremely serious bug since it could lead to apparent
+data inconsistencies being briefly visible to applications.</para></listitem>
+<listitem><para>Repair race condition between relation extension and
+VACUUM</para>
+<para>This could theoretically have caused loss of a page's worth of
+freshly-inserted data, although the scenario seems of very low probability.
+There are no known cases of it having caused more than an Assert failure.
+</para></listitem>
 <listitem><para>Fix comparisons of <type>TIME WITH TIME ZONE</> values</para>
 <para>
 The comparison code was wrong in the case where the
@@ -3838,7 +3860,7 @@ operations on bytea columns (Joe)</para></listitem>
 
    <note>
    <title>Release date</title>
-   <simpara>2005-05-05</simpara>
+   <simpara>2005-05-09</simpara>
    </note>
 
    <para>
@@ -3858,6 +3880,17 @@ operations on bytea columns (Joe)</para></listitem>
     <title>Changes</title>
 
 <itemizedlist>
+<listitem><para>Repair ancient race condition that allowed a transaction to be
+seen as committed for some purposes (eg SELECT FOR UPDATE) slightly sooner
+than for other purposes</para>
+<para>This is an extremely serious bug since it could lead to apparent
+data inconsistencies being briefly visible to applications.</para></listitem>
+<listitem><para>Repair race condition between relation extension and
+VACUUM</para>
+<para>This could theoretically have caused loss of a page's worth of
+freshly-inserted data, although the scenario seems of very low probability.
+There are no known cases of it having caused more than an Assert failure.
+</para></listitem>
 <listitem><para>Fix <function>EXTRACT(EPOCH)</> for
 <type>TIME WITH TIME ZONE</> values</para></listitem>
 <listitem><para>Additional buffer overrun checks in plpgsql
