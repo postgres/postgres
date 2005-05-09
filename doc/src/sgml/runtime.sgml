@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.301.4.5 2005/05/09 17:14:47 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.301.4.6 2005/05/09 17:26:55 momjian Exp $
 -->
 
 <chapter id="runtime">
@@ -4827,10 +4827,10 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    </important>
  </sect1>
 
- <sect1 id="encryption-approaches">
-  <title>Use of Encryption in <productname>PostgreSQL</productname></title>
+ <sect1 id="encryption-options">
+  <title>Encryption Options</title>
 
-  <indexterm zone="encryption-approaches">
+  <indexterm zone="encryption-options">
    <primary>encryption</primary>
   </indexterm>
 
