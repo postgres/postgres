@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.301.4.4 2005/03/24 04:36:55 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.301.4.5 2005/05/09 17:14:47 momjian Exp $
 -->
 
 <chapter id="runtime">
@@ -4825,6 +4825,161 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
      well.
     </para>
    </important>
+ </sect1>
+
+ <sect1 id="encryption-approaches">
+  <title>Use of Encryption in <productname>PostgreSQL</productname></title>
+
+  <indexterm zone="encryption-approaches">
+   <primary>encryption</primary>
+  </indexterm>
+
+  <para>
+   <productname>PostgreSQL</productname> offers encryption at several
+   levels, and provides flexibility in protecting data from disclosure
+   due to database server theft, unscrupulous administrators, and
+   insecure networks. Encryption might also be required by government
+   regulation, for example, for medical records or financial
+   transactions.
+  </para>
+   
+  <variablelist>
+
+  <varlistentry>
+   <term>Password Storage Encryption</term>
+   <listitem>
+
+    <para>
+     By default, database user passwords are stored as MD5 hashes, so
+     the administrator can not determine the actual password assigned
+     to the user. If MD5 encryption is used for client authentication,
+     the unencrypted password is never even temporarily present on the
+     server because the client MD5 encrypts it before being sent across
+     the network. MD5 is a one-way encryption --- there is no
+     decryption algorithm.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>Encryption For Specific Columns</term>
+
+   <listitem>
+    <para>
+     The <filename>/contrib</> function library
+     <function>pgcrypto</function> allows certain fields to be stored
+     encrypted. This is useful if only some of the data is sensitive.
+     The client supplies the decryption key and the data is decrypted
+     on the server and then sent to the client.
+    </para>
+     
+    <para>
+     The decrypted data and the decryption key are present on the
+     server for a brief time while it is being decrypted and
+     communicated between the client and server. This presents a brief
+     moment where the data and keys can be intercepted by someone with
+     complete access to the database server, such as the system
+     administrator.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>Data Partition Encryption</term>
+
+   <listitem>
+    <para>
+     On Linux, encryption can be layered on top of a filesystem mount
+     using a <quote>loopback device</quote>. This allows an entire
+     filesystem partition be encrypted on disk, and decrypted by the
+     operating system. On FreeBSD, the equivalent facility is called
+     GEOM Based Disk Encryption, or <acronym>gbde</acronym>.
+    </para>
+
+    <para>
+     This mechanism prevents unecrypted data from being read from the
+     drives if the drives or the entire computer is stolen. This
+     mechanism does nothing to protect against attacks while the
+     filesystem is mounted, because when mounted, the operating system
+     provides a unencrypted view of the data. However, to mount the
+     filesystem, you need some way for the encryption key to be passed
+     to the operating system, and sometimes the key is stored somewhere
+     on the host that mounts the disk.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>Encrypting Passwords Across A Network</term>
+
+   <listitem>
+     <para>
+      The <literal>MD5</> authentication method double-encrypts the
+      password on the client before sending it to the server. It first
+      MD5 encrypts it based on the user name, and then encrypts it
+      based on a random salt sent by the server when the database
+      connection was made. It is this double-encrypted value that is
+      sent over the network to the server. Double-encryption not only
+      prevents the password from being discovered, it also prevents
+      another connection from replaying the same double-encryption
+      value in a later connection.
+     </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>Encrypting Data Across A Network</term>
+
+    <listitem>
+     <para>
+      SSL connections encrypt all data sent across the network: the
+      password, the queries, and the data returned. The
+      <filename>pg_hba.conf</> file allows administrators to specify
+      which hosts can use non-encrypted connections (<literal>host</>)
+      and which require SSL-encrypted connections
+      (<literal>hostssl</>). Also, clients can specify that they
+      connect to servers only via SSL. <application>Stunnel</> or
+      <application>SSH</> can also be used to encrypt transmissions.
+     </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>SSL Host Authentication</term>
+
+   <listitem>
+    <para> 
+     It is possible for both the client and server to provide SSL keys
+     or certificates to each other. It takes some extra configuration
+     on each side, but this provides stronger verification of identity
+     than the mere use of passwords. It prevent a computer from
+     pretending to be the server just long enough to read the password
+     send by the client. It also helps prevent 'man in the middle"
+     attacks where a computer between the client and server pretends to
+     be the server and reads and passes all data between the client and
+     server.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>Client-Side Encryption</term>
+
+   <listitem>
+    <para>
+     If the system administrator can not be trusted, it is necessary
+     for the client to encrypt the data; this way, unencrypted data
+     never appears on the database server. Data is encrypted on the
+     client before being sent to the server, and database results have
+     to be decrypted on the client before being used. Peter Wayner's
+     book, <citation>Translucent Databases</citation>, discusses how to
+     do this in considerable detail.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  </variablelist>
+
  </sect1>
 
  <sect1 id="ssl-tcp">
