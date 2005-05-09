@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed May 4 21:42:01 EDT 2005
+   Last updated: Mon May 9 13:15:04 EDT 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -78,8 +78,7 @@
    4.18) How do I return multiple rows or columns from a function?
    4.19) Why do I get "relation with OID ##### does not exist" errors
    when accessing temporary tables in PL/PgSQL functions?
-   4.20) What encryption options are available?
-   4.21) What replication solutions are available?
+   4.20) What replication solutions are available?
      _________________________________________________________________
    
                              General Questions
@@ -757,21 +756,7 @@
    table access in PL/PgSQL. This will cause the query to be reparsed
    every time.
    
-  4.20) What encryption options are available?
-  
-     * contrib/pgcrypto contains many encryption functions for use in SQL
-       queries.
-     * To encrypt transmission from the client to the server, the server
-       must have the ssl option set to true in postgresql.conf, and an
-       applicable host or hostssl record must exist in pg_hba.conf, and
-       the client sslmode must not be disable. (Note that it is also
-       possible to use a third-party encrypted transport, such as stunnel
-       or ssh, rather than PostgreSQL's native SSL connections.)
-     * Database user passwords are automatically encrypted when stored in
-       the system tables.
-     * The server can also run using an encrypted file system.
-       
-  4.21) What replication solutions are available?
+  4.20) What replication solutions are available?
   
    Though "replication" is a single term, there are several technologies
    for doing replication, with advantages and disadvantages for each.

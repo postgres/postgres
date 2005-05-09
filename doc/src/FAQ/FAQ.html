@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Wed May  4 21:42:01 EDT 2005</P>
+    <P>Last updated: Mon May  9 13:15:04 EDT 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -115,8 +115,7 @@
      <A href="#4.19">4.19</A>) Why do I get "relation with OID #####
     does not exist" errors when accessing temporary tables in PL/PgSQL
     functions?<BR>
-     <A href="#4.20">4.20</A>) What encryption options are available?<BR>
-     <A href="#4.21">4.21</A>) What replication solutions are available?<BR>
+     <A href="#4.20">4.20</A>) What replication solutions are available?<BR>
      
 
     <HR>
@@ -980,24 +979,7 @@ length</TD></TR>
     <SMALL>EXECUTE</SMALL> for temporary table access in PL/PgSQL. This
     will cause the query to be reparsed every time.</P>
 
-    <H3><A name="4.20">4.20</A>) What encryption options are available?
-    </H3>
-    <UL>
-    <LI><I>contrib/pgcrypto</I> contains many encryption functions for
-    use in <SMALL>SQL</SMALL> queries.</LI>
-    <LI>To encrypt transmission from the client to the server, the server
-    must have the <I>ssl</I> option set to <I>true</I> in <I>postgresql.conf,
-    </I> and an applicable <I>host</I> or <I>hostssl</I> record must exist in
-    <I>pg_hba.conf</I>, and the client <I>sslmode</I> must not be
-    <I>disable.</I> (Note that it is also possible to use a third-party
-    encrypted transport, such as stunnel or ssh, rather than PostgreSQL's
-    native SSL connections.)</LI>
-    <LI>Database user passwords are automatically encrypted when stored in
-    the system tables.</LI>
-    <LI>The server can also run using an encrypted file system.</LI>
-    </UL>
-
-    <H3><A name="4.21">4.21</A>) What replication solutions are available?
+    <H3><A name="4.20">4.20</A>) What replication solutions are available?
     </H3>
 
     <P>Though "replication" is a single term, there are several technologies
