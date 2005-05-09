@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.316 2005/05/08 03:29:06 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.317 2005/05/09 17:13:04 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -4954,6 +4954,161 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    </important>
  </sect1>
 
+ <sect1 id="encryption-approaches">
+  <title>Use of Encryption in <productname>PostgreSQL</productname></title>
+
+  <indexterm zone="encryption-approaches">
+   <primary>encryption</primary>
+  </indexterm>
+
+  <para>
+   <productname>PostgreSQL</productname> offers encryption at several
+   levels, and provides flexibility in protecting data from disclosure
+   due to database server theft, unscrupulous administrators, and
+   insecure networks. Encryption might also be required by government
+   regulation, for example, for medical records or financial
+   transactions.
+  </para>
+   
+  <variablelist>
+
+  <varlistentry>
+   <term>Password Storage Encryption</term>
+   <listitem>
+
+    <para>
+     By default, database user passwords are stored as MD5 hashes, so
+     the administrator can not determine the actual password assigned
+     to the user. If MD5 encryption is used for client authentication,
+     the unencrypted password is never even temporarily present on the
+     server because the client MD5 encrypts it before being sent across
+     the network. MD5 is a one-way encryption --- there is no
+     decryption algorithm.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>Encryption For Specific Columns</term>
+
+   <listitem>
+    <para>
+     The <filename>/contrib</> function library
+     <function>pgcrypto</function> allows certain fields to be stored
+     encrypted. This is useful if only some of the data is sensitive.
+     The client supplies the decryption key and the data is decrypted
+     on the server and then sent to the client.
+    </para>
+     
+    <para>
+     The decrypted data and the decryption key are present on the
+     server for a brief time while it is being decrypted and
+     communicated between the client and server. This presents a brief
+     moment where the data and keys can be intercepted by someone with
+     complete access to the database server, such as the system
+     administrator.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>Data Partition Encryption</term>
+
+   <listitem>
+    <para>
+     On Linux, encryption can be layered on top of a filesystem mount
+     using a <quote>loopback device</quote>. This allows an entire
+     filesystem partition be encrypted on disk, and decrypted by the
+     operating system. On FreeBSD, the equivalent facility is called
+     GEOM Based Disk Encryption, or <acronym>gbde</acronym>.
+    </para>
+
+    <para>
+     This mechanism prevents unecrypted data from being read from the
+     drives if the drives or the entire computer is stolen. This
+     mechanism does nothing to protect against attacks while the
+     filesystem is mounted, because when mounted, the operating system
+     provides a unencrypted view of the data. However, to mount the
+     filesystem, you need some way for the encryption key to be passed
+     to the operating system, and sometimes the key is stored somewhere
+     on the host that mounts the disk.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>Encrypting Passwords Across A Network</term>
+
+   <listitem>
+     <para>
+      The <literal>MD5</> authentication method double-encrypts the
+      password on the client before sending it to the server. It first
+      MD5 encrypts it based on the user name, and then encrypts it
+      based on a random salt sent by the server when the database
+      connection was made. It is this double-encrypted value that is
+      sent over the network to the server. Double-encryption not only
+      prevents the password from being discovered, it also prevents
+      another connection from replaying the same double-encryption
+      value in a later connection.
+     </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>Encrypting Data Across A Network</term>
+
+    <listitem>
+     <para>
+      SSL connections encrypt all data sent across the network: the
+      password, the queries, and the data returned. The
+      <filename>pg_hba.conf</> file allows administrators to specify
+      which hosts can use non-encrypted connections (<literal>host</>)
+      and which require SSL-encrypted connections
+      (<literal>hostssl</>). Also, clients can specify that they
+      connect to servers only via SSL. <application>Stunnel</> or
+      <application>SSH</> can also be used to encrypt transmissions.
+     </para>
+    </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>SSL Host Authentication</term>
+
+   <listitem>
+    <para> 
+     It is possible for both the client and server to provide SSL keys
+     or certificates to each other. It takes some extra configuration
+     on each side, but this provides stronger verification of identity
+     than the mere use of passwords. It prevent a computer from
+     pretending to be the server just long enough to read the password
+     send by the client. It also helps prevent 'man in the middle"
+     attacks where a computer between the client and server pretends to
+     be the server and reads and passes all data between the client and
+     server.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  <varlistentry>
+   <term>Client-Side Encryption</term>
+
+   <listitem>
+    <para>
+     If the system administrator can not be trusted, it is necessary
+     for the client to encrypt the data; this way, unencrypted data
+     never appears on the database server. Data is encrypted on the
+     client before being sent to the server, and database results have
+     to be decrypted on the client before being used. Peter Wayner's
+     book, <citation>Translucent Databases</citation>, discusses how to
+     do this in considerable detail.
+    </para>
+   </listitem>
+  </varlistentry>
+
+  </variablelist>
+
+ </sect1>
+
  <sect1 id="ssl-tcp">
   <title>Secure TCP/IP Connections with SSL</title>
 
@@ -5108,132 +5263,6 @@ psql -h localhost -p 3333 template1
   </tip>
 
  </sect1>
-
- <sect1 id="encryption-approaches">
-   <title>Use of Encryption in <productname>PostgreSQL</productname></title>
-   <indexterm zone="encryption-approaches">
-    <primary>encryption</primary>
-   </indexterm>
-
-   <para> There is increasing interest in having verifiable mechanisms
-    to maintain the privacy of data in databases.  In the United
-    States, legislation called <acronym>HIPAA</acronym> (Health
-    Insurance Portability and Accountability Act) requires that
-    personal health information is handled securely.  The European
-    Union has similarly been developing directives as to how personal
-    data is to be managed there.</para>
-   
-   <para> Questions frequently come up as to what functionality
-    <productname>PostgreSQL</productname> offers with regard to
-    supporting the use of data encryption.  It uses and provides use of
-    encryption tools in several ways that may be useful to provide
-    protection against certain classes of attacks.</para>
-   
-   <itemizedlist>
-
-    <listitem><para> Passwords stored in MD5 form </para>
-
-     <para> Passwords are normally not stored in
-      <quote>plaintext</quote> form in the database; they are hashed
-      using the built-in MD5 function, and <emphasis>that</emphasis> is
-      what is stored in the database.  </para>
-     
-<programlisting>
-sample=# alter user foo password 'some dumb value';
-ALTER USER
-sample=# select usename, passwd from pg_shadow where usename = 'foo';
- usename |               passwd                
----------+-------------------------------------
- foo     | md5740daa4aaa084d85eb97648084a43bbb
-(1 row)
-</programlisting>
-
-</listitem>
-
-    <listitem><para> Connections protected using SSL</para>
-
-      <para> There are various options to control how mandatory it is
-      to use SSL to protect data connections.  At the most
-      <quote>paranoid</quote> end of the spectrum, you can configure
-      <filename>pg_hba.conf</filename> to have the database reject
-      connections that do <emphasis>not</emphasis> come in via
-      SSL.</para>
-
-      <para> The use of SSL, alone, is useful for protecting
-      communications against interception.  It may not be necessary
-      for connections that take place across a carefully controlled
-      network; if connections are coming in from less controlled
-      sources, its use is highly recommended.</para></listitem>
-
-    <listitem><para> Connections authenticated using SSL</para>
-
-     <para> It is possible for both the client and server to provide
-      to one another SSL keys or certificates.  It takes some extra
-      configuration on each side where these are used, but this likely
-      provides stronger verification of identity than the mere use of a
-      text password. </para></listitem>
-
-    <listitem><para> Using OS level encryption for entire database
-      partitions</para>
-
-     <para> On Linux, encryption can be layered on top of a filesystem
-      mount using what is called a <quote>loopback device;</quote> this
-      permits having a whole filesystem partition be encrypted on disk,
-      decrypted by the operating system.  On FreeBSD, the equivalent
-      facility is called GEOM Based Disk Encryption, or
-      <acronym>gbde</acronym>.</para>
-
-     <para> This mechanism may be expected to be useful for protecting
-      against the threat that someone might pull disk drives out and
-      try to install them somewhere else to draw data off of them.
-     </para>
-
-     <para> In contrast, this mechanism does nothing to protect
-      against attacks when the filesystem is mounted, because when
-      mounted, the OS provides a <quote>view</quote> of the filesystem
-      accessible in plain text form.  Furthermore, you need some way
-      for the encryption key to be passed to the operating system in
-      order to mount the filesystems, which encourages having the key
-      accessible somewhere on the host that mounts the disk.
-     </para></listitem>
-
-    <listitem><para> Using the contrib function library
-      <function>pgcrypto</function> so the database engine manages
-      encryption of certain fields.</para>
-
-     <para>If much of the data can be in plain text form, and only a
-      subset is particularly sensitive, this mechanism supports
-      treating them differently.  The encrypted data is only ever
-      presented in <quote>unencrypted</quote> form while it is being
-      communicated between client and server, and the use of an SSL
-      layer of <quote>superencryption</quote> alleviates that
-      problem.</para>
-     
-     <para> Unfortunately, in this approach, the encryption keys need
-      to be present on the server, even if only for a moment, which
-      presents the possibility of them being intercepted by someone
-      with access to the database server.  As a result, this mechanism
-      is not suitable for storage of data that is too sensitive for
-      system administrators to have access to it. </para></listitem>
-
-    <listitem><para> Using cryptographic tools on the client </para>
-
-     <para> If it is not safe to trust the system administrators at
-      least somewhat, you may find it necessary to encrypt data at the
-      client level such that unencrypted data never appears on the
-      database server.  This sort of <quote>paranoia</quote> is quite
-      appropriate for applications where it would be damaging for data
-      to be seen by inappropriate readers that might generally be
-      considered trustworthy, as can be the case with
-      medical and legal records.</para>
-
-     <para> Peter Wayner's book, <citation>Translucent
-       Databases</citation>, discusses how to do this in considerable
-      detail.</para></listitem>
-
-   </itemizedlist>
-
-  </sect1>
 
 </chapter>
 
