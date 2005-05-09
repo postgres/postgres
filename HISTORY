@@ -3,7 +3,7 @@
 
                                Release 7.2.8
 
-     Release date: 2005-05-05
+     Release date: 2005-05-09
 
    This release contains a variety of fixes from 7.2.7, including one
    security-related issue.
@@ -16,6 +16,16 @@
 
                                   Changes
 
+     * Repair ancient race condition that allowed a transaction to be
+       seen as committed for some purposes (eg SELECT FOR UPDATE)
+       slightly sooner than for other purposes
+       This is an extremely serious bug since it could lead to apparent
+       data inconsistencies being briefly visible to applications.
+     * Repair race condition between relation extension and VACUUM
+       This could theoretically have caused loss of a page's worth of
+       freshly-inserted data, although the scenario seems of very low
+       probability. There are no known cases of it having caused more
+       than an Assert failure.
      * Fix EXTRACT(EPOCH) for TIME WITH TIME ZONE values
      * Additional buffer overrun checks in plpgsql (Neil)
      * Fix pg_dump to dump index names and trigger names containing %
