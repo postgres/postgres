@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.47 2004/12/31 21:59:13 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.48 2005/05/10 05:15:07 neilc Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -388,7 +388,7 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	 * Check to see if split is still needed; someone else might have
 	 * already done one while we waited for the lock.
 	 *
-	 * Make sure this stays in sync with_hash_doinsert()
+	 * Make sure this stays in sync with _hash_doinsert()
 	 */
 	if (metap->hashm_ntuples <=
 		(double) metap->hashm_ffactor * (metap->hashm_maxbucket + 1))
