@@ -86,4 +86,18 @@ copy copytest2 from '@abs_builddir@/results/copytest.csv' csv quote '\'' escape 
 select * from copytest except select * from copytest2;
 
 
+-- test header line feature
+
+create temp table copytest3 (
+	c1 int, 
+	"col with , comma" text, 
+	"col with "" quote"  int);
+
+copy copytest3 from stdin csv header;
+this is just a line full of junk that would error out if parsed
+1,a,1
+2,b,2
+\.
+
+copy copytest3 to stdout csv header;
 
