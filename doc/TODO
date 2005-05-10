@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon May  9 23:21:56 EDT 2005
+Last updated:		Tue May 10 18:26:46 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -52,7 +52,7 @@ Administration
 
 * Allow GRANT/REVOKE permissions to be inherited by objects based on
   schema permissions
-* -Check for unreferenced table files created by transactions that were
+* Check for unreferenced table files created by transactions that were
   in-progress when the server terminated abruptly
 * Allow reporting of which objects are in which tablespaces
 
