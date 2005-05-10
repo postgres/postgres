@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.137 2005/05/06 17:24:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.138 2005/05/10 13:16:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,7 +292,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	OldHeap = heap_open(rvtc->tableOid, AccessExclusiveLock);
 
 	/* Check index is valid to cluster on */
-	check_index_is_clusterable(OldHeap, rvtc->indexOid);
+	check_index_is_clusterable(OldHeap, rvtc->indexOid, recheck);
 
 	/* rebuild_relation does all the dirty work */
 	rebuild_relation(OldHeap, rvtc->indexOid);
@@ -309,7 +309,7 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
  * definition can't change under us.
  */
 void
-check_index_is_clusterable(Relation OldHeap, Oid indexOid)
+check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 {
 	Relation	OldIndex;
 
@@ -336,7 +336,9 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid)
 	if (!heap_attisnull(OldIndex->rd_indextuple, Anum_pg_index_indpred))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot cluster on partial index")));
+				 errmsg("cannot cluster on partial index \"%s\"",
+						RelationGetRelationName(OldIndex))));
+	
 	if (!OldIndex->rd_am->amindexnulls)
 	{
 		AttrNumber	colno;
@@ -354,21 +356,25 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid)
 			if (!OldHeap->rd_att->attrs[colno - 1]->attnotnull)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot cluster when index access method does not handle null values"),
-						 errhint("You may be able to work around this by marking column \"%s\" NOT NULL.",
-				  NameStr(OldHeap->rd_att->attrs[colno - 1]->attname))));
+						 errmsg("cannot cluster on index \"%s\" because access method\n"
+								"does not handle null values",
+							  RelationGetRelationName(OldIndex)),
+						 errhint("You may be able to work around this by marking column \"%s\" NOT NULL%s",
+							NameStr(OldHeap->rd_att->attrs[colno - 1]->attname),
+							recheck ? ",\nor use ALTER TABLE ... SET WITHOUT CLUSTER to remove the cluster\n"
+									"specification from the table." : ".")));
 		}
 		else if (colno < 0)
 		{
 			/* system column --- okay, always non-null */
 		}
 		else
-		{
 			/* index expression, lose... */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot cluster on expressional index when index access method does not handle null values")));
-		}
+					 errmsg("cannot cluster on expressional index \"%s\" because its index access\n"
+							"method does not handle null values",
+						RelationGetRelationName(OldIndex))));
 	}
 
 	/*
