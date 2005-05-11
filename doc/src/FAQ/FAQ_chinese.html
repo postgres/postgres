@@ -1,0 +1,1095 @@
+
+  PostgreSQL 常见问题（FAQ）
+
+最近更新：2003 年 01 月 06 日 星期一 22:27:35 CST
+
+目前维护人员：Bruce Momjian (pgman@candle.pha.pa.us
+<mailto:pgman@candle.pha.pa.us>)
+中文版维护人员：何伟平 （laser@pgsqldb.com ）
+
+本文档的最新版本可以在http:
+//www.postgresql.org/files/documentation/faqs/FAQ.html 查看。
+
+操作系统平台相关的问题在http://www.postgresql.org/docs/faq/里回答。
+
+------------------------------------------------------------------------
+
+
+    常见问题
+
+1.1 <#1.1>) PostgreSQL 是什么？该怎么发音？
+1.2 <#1.2>) PostgreSQL 的版权是什么?
+1.3 <#1.3>) PostgreSQL 运行在什么 Unix 平台上？
+1.4 <#1.4>) 可用的非 Unix 平台有那些？
+1.5 <#1.5>) 我从哪里能得到 PostgreSQL？
+1.6 <#1.6>) 我从哪里能得到对 PostgreSQL 的支持？
+1.7 <#1.7>) PostgreSQL 最新的版本是什么？
+1.8 <#1.8>) 有哪些可用的 PostgreSQL 的文档？
+1.9 <#1.9>) 我如何了解已知的 BUG 或缺失的特性？
+1.10 <#1.10>) 我应该怎样学习 SQL ？
+1.11 <#1.11>) PostgreSQL 是 Y2K 兼容的吗？
+1.12 <#1.12>) 我应该怎样加入开发队伍？
+1.13 <#1.13>) 我应该怎样提交一个 BUG 报告？
+1.14 <#1.14>) PostgreSQL 和其他 DBMS 比起来如何？
+1.15 <#1.15>) 我应该怎样赞助 PostgreSQL ？
+
+
+    用户客户端问题
+
+2.1 <#2.1>) 有 PostgreSQL 的 ODBC 驱动程序么？
+2.2 <#2.2>) 有什么工具可以把 PostgreSQL 用于 Web 页面？
+2.3 <#2.3>) PostgreSQL 拥有图形用户界面吗？
+2.4 <#2.4>) 我们可以用什么语言和 PostgreSQL 打交道？
+
+
+    系统管理问题
+
+3.1 <#3.1>) 我怎样能把 PostgreSQL 装在 /usr/local/pgsql 以外的地方？
+3.2 <#3.2>) 当我运行 postmaster 时，出现/ Bad System Call/（系统调用错）
+或 Core Dumped 错误。为什么？
+3.3 <#3.3>) 当我试图运行 postmaster 时，出现 /IpcMemoryCreate/ 错误。为
+什么？
+3.4 <#3.4>) 当我试图运行 postmaster 时，出现 /IpcSemaphoreCreate/ 错误。
+为什么？
+3.5 <#3.5>) 我如何控制来自其他主机的连接？
+3.6 <#3.6>) 我怎样调整数据库引擎以获得更好的性能？
+3.7 <#3.7>) PostgreSQL 里可以获得什么样的调试特性？
+3.8 <#3.8>) 为什么在试图连接登录时收到“Sorry, too many clients” 消息？
+3.9 <#3.9>) pgsql_tmp 目录里都有些什么？
+3.10 <#3.10>) 为什么要在升级 PostgreSQL 发布版本时做 dump 和 restore ？
+
+
+    操作问题
+
+4.1 <#4.1>) 二进制游标和普通游标之间的区别是什么？
+4.2 <#4.2>) 如何只选择一个查询结果的头几行？
+4.3 <#4.3>) 我如何获取一个数据库中表的列表，或者是其他我能在 /psql /里看
+到的东西？
+4.4 <#4.4>) 怎样从表里面删除一列？
+4.5 <#4.5>) 一行，一个表，一个库的最大尺寸是多少？
+4.6 <#4.6>) 存储一个典型的文本文件里的数据需要多少磁盘空间？
+4.7 <#4.7>) 如何查看表、索引、数据库以及用户的定义？
+4.8 <#4.8>) 我的查询很慢或者没有利用索引。为什么？
+4.9 <#4.9>) 我如何才能看到查询优化器是怎样处理我的查询的？
+4.10 <#4.10>) R-tree 索引是什么？
+4.11 <#4.11>) 什么是基因查询优化（Genetic Query Optimization）？
+4.12 <#4.12>) 我怎样做正则表达式搜索和大小写无关的正则表达式查找？怎样利
+用索引进行大小写无关查找？
+4.13 <#4.13>) 在一个查询里，我怎样检测一个字段是否为 NULL？
+4.14 <#4.14>) 各种字符类型之间有什么不同？
+4.15.1 <#4.15.1>) 我怎样创建一个序列号/自动递增的字段？
+4.15.2 <#4.15.2>) 我如何获得一个插入的序列号的值？
+4.15.3 <#4.15.3>) 使用 currval() 和 nextval() 会导致和其他用户的紊乱情况
+（race condition）吗？
+4.15.4 <#4.15.4>) 为什么不在事务异常中止后重用序列号呢？为什么在序列号字
+段的取值中存在间断呢？
+4.16 <#4.16>) 什么是 OID？什么是 TID ？
+4.17 <#4.17>) PostgreSQL 使用的一些术语的含义是什么？
+4.18 <#4.18>) 为什么我收到错误“/ERROR: Memory exhausted in
+AllocSetAlloc()/”？
+4.19 <#4.19>) 我如何才能知道所运行的 PostgreSQL 的版本？
+4.20 <#4.20>) 为什么我的大对象操作导致错误“/invalid large obj
+descriptor”（非法的大对象描述符）/？
+4.21 <#4.21>) 我如何创建一个缺省值是当前时间的字段？
+4.22 <#4.22>) 为什么使用 IN 的子查询这么慢？
+4.23 <#4.23>) 如何进行 outer join （外连接）？
+4.24 <#4.24>) 如何使用涉及多个数据库的查询？
+
+4.25 <#4.25>) 如何让函数返回多行或多列？
+
+4.26 <#4.26>) 为什么在 PL/PgSQL 函数中不能可靠地创建或删除临时表？
+
+4.27 <#4.27>) 有哪些数据复制选项？
+4.28 <#4.28>) 有哪些数据加密选项？
+
+
+    扩展 PostgreSQL
+
+5.1 <#5.1>) 我写了一个用户定义函数。当我在/ psql/ 里运行时，为什么会导致
+core dump？
+5.2 <#5.2>) 我如何能给 PostgreSQL 贡献一些挺不错的新类型和函数？
+5.3 <#5.3>) 我怎样写一个返回一条记录的 C 函数？
+5.4 <#5.4>) 我修改了一个源文件，为什么重新编译后没有看到改变？
+------------------------------------------------------------------------
+
+
+    常见问题
+
+
+        1.1) PostgreSQL 是什么？该怎么发音？
+
+PostgreSQL 读作 /Post-Gres-Q-L// 。/
+
+PostgreSQL 是下一代 DBMS 的研究原型 POSTGRES 数据库管理系统的增强版。
+PostgreSQL 在保持 POSTGRES 的强大的数据模型和丰富的数据类型的基础上，用
+一个扩展了的 SQL 子集取代了原先的 PostQuel 查询语言。PostgreSQL 是自由的
+并且所有源代码都可以获得。
+
+PostgreSQL 的开发由参加 PostgreSQL 开发邮件列表的一个开发人员小组进行。
+目前的协调人是 Marc G. Fournier （scrappy@postgreSQL.org
+<mailto:scrappy@postgreSQL.org> ）。（关于如何加入参见1.6节）。这个队伍
+现在负责 PostgreSQL 的所有开发。
+
+PostgreSQL 1.01 的作者是 Andrew Yu 和 Jolly Chen。还有许多其他人为移植，
+测试，调试和增强代码做了大量贡献。PostgreSQL 的最初起源 Postgres，是在加
+州大学伯克利分校的 Michael Stonebraker 教授的指导下，由许多研究生，本科
+生和编程职员完成的。
+
+这个软件最初在伯克利的名字是 Postgres。在 1995 年，当增加了 SQL 功能后，
+它的名字改成 Postgres95。在 1996年末，才改名为 PostgreSQL。
+
+
+        1.2) PostgreSQL 的版权是什么?
+
+PostgreSQL 受下面的版权约束。
+
+PostgreSQL 数据库管理系统
+
+（PostgreSQL Data Base Management System）
+
+部分版权（c）1996-2002，PostgreSQL 全球开发小组
+部分版权（c）1994-6 加州大学董事
+
+（Portions copyright (c) 1996-2002, PostgreSQL Global Development Group
+ Portions Copyright (c) 1994-6 Regents of the University of California）
+
+允许为任何目的使用，拷贝，修改和分发这个软件和它的文档而不收取任何费用，
+并且无须签署因此而产生的证明，前提是上面的版权声明和本段以及下面两段文字
+出现在所有拷贝中。
+
+（Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose, without fee, and without a written
+agreement is hereby granted, provided that the above copyright notice
+and this paragraph and the following two paragraphs appear in all copies.）
+
+在任何情况下，加州大学都不承担因使用此软件及其文档而导致的对任何当事人的
+直接的，间接的，特殊的，附加的或者相伴而生的损坏，包括利益损失的责任，即
+使加州大学已经建议了这些损失的可能性时也是如此。
+
+（IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY
+FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
+INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE.）
+
+加州大学明确放弃任何保证，包括但不局限于某一特定用途的商业和利益的隐含保
+证。这里提供的这份软件是基于“当作是”的基础的，因而加州大学没有责任提供维
+护，支持，更新，增强或者修改的服务。
+
+（THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS
+ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS
+TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.）
+
+上面就是 BSD 版权声明，一个经典的开源版权声明。它对源代码的使用未作任何
+限制。我们喜欢它并且不打算改变它。
+
+
+        1.3) PostgreSQL 运行在什么 Unix 平台上？
+
+一般说来，一个现代的 UNIX 兼容的平台都能运行 PostgreSQL 。在安装指南里列
+出了发布时经过明确测试的平台。
+
+
+        1.4) 可用的非 Unix 平台有哪些？
+
+客户端
+
+把 libpq C 库，psql，其他接口和客户端应用程序编译成可以在 MS Windows 平
+台上运行是可能的。这种情况下，客户端在 MS Windows 上运行，并且通过
+TCP/IP 与一个运行在我们支持的 Unix 平台上的服务器进行通讯。发布版本中包
+含一个文件 win32.mak 用于生成 Win32 libpq 库和 psql 。PostgreSQL 也可以
+和 ODBC 客户端通讯。
+
+服务器
+
+数据库服务器现在可以通过 Cygwin ，Cygnus 的 Unix/NT 移植库在 Windows NT
+和 Win2k 上运行。参阅发布版本里的 See /pgsql/doc/FAQ_MSWIN/ 文件或
+http://www.PostgreSQL.org/docs/faq-mswin.html 。
+
+移植到 MS Win NT/2000/XP 的本机版的工作正在进行。
+
+
+        1.5) 我从哪里能得到 PostgreSQL？
+
+PostgreSQL 的主匿名FTP站点是 ftp://ftp.PostgreSQL.org/pub，镜像站点可以
+参考我们网站的主页。
+
+
+        1.6) 我从哪里能得到对 PostgreSQL 的支持？
+
+主要的邮件列表是：pgsql-general@postgreSQL.org
+<mailto:pgsql-general@postgreSQL.org>。可以在那里讨论有关 PostgreSQL 的
+问题。要加入列表，发一封邮件内容（不是主题行）为
+
+        subscribe
+        end
+
+的邮件到 pgsql-general-request@postgreSQL.org
+<mailto:pgsql-general-request@postgreSQL.org> 。
+
+还可以获取摘要列表。要加入这个列表，发邮件到：pgsql-general-digest-
+request@postgreSQL.org
+<mailto:pgsql-general-digest-request@postgreSQL.org>，其内容为：
+
+        subscribe
+        end
+
+每当主列表达到大约 30k 的消息内容时，摘要就发送给这个列表的成员。
+
+还可以参加臭虫邮件列表。要加入这个列表，发送一个邮件到
+bugs-request@postgreSQL.org <mailto:bugs-request@postgreSQL.org>，内容为：
+
+        subscribe
+        end
+
+还可以参加开发人员邮件列表。要加入这个列表，发送一个邮件到
+hackers-request@postgreSQL.org <mailto:hackers-request@postgreSQL.org>，
+内容为：
+
+        subscribe
+        end
+
+其他的关于 PostgreSQL 邮件列表和其他信息可以在 PostgreSQL 的 WWW 主页找到：
+
+    http://postgresql.org/
+
+在 EFNet 里还有一个 IRC 频道，频道 #PostgreSQL。我用 unix 命令irc -c
+'#PostgreSQL' "$USER" irc.phoenix.net
+
+商业支持公司的列表在
+http://www.PostgreSQL.org/users-lounge/commercial-support.html 。
+
+
+        1.7) PostgreSQL 最新的版本是什么？
+
+PostgreSQL 最新的版本是版本 7.2.3。（译注：现在应该是 7.3.1 了。）
+
+我们计划每四个月发布一个主要版本。
+
+
+        1.8) 有哪些可用的 PostgreSQL 的文档？
+
+在发布包里有一些手册，手册页和一些小的测试例子。参见 /doc 目录。（译注：
+应为 $PGHOME/doc）。你还可以在线浏览 PostgreSQL 的手册，在
+http://www.PostgreSQL.org/users-lounge/docs/ 。
+
+有两本关于 PostgreSQL 的书在线提供，在
+http://www.PostgreSQL.org/docs/awbook.html
+<http://www.PostgreSQL.org/docs/awbook.html> 和
+http://www.commandprompt.com/ppbook/
+<http://www.commandprompt.com/ppbook/> 。在
+http://www.ca.PostgreSQL.org/books/
+<http://www.ca.PostgreSQL.org/books/> 上有关于 PostgreSQL 的可购书籍的列
+表。在 http://techdocs.PostgreSQL.org/ <http://techdocs.PostgreSQL.org/>
+上收集了有关 PostgreSQL 的技术文章。
+
+/psql/ 有一些不错的 \d 命令，显示关于类型，操作符，函数，聚集等的信息。
+
+我们的 web 站点包含更多的文档．
+
+
+        1.9) 我如何了解已知的 BUG 和缺失的特性？
+
+PostgreSQL 支持一个扩展了的 SQL-92 的子集。参阅我们的 TODO
+<http://www.postgresql.org/docs/todo.html>
+<http://www.postgresql.org/docs/todo.html>列表，获取一个已知臭虫，缺失特
+性和未来计划。
+
+
+        1.10) 我应该怎样学习 SQL？
+
+在 http://www.postgresql.org/docs/awbook.html 的关于 PostgreSQL 的书教授
+SQL。（译注：我下载到本地了。）在 http://www.commandprompt.com/ppbook
+<http://www.commandprompt.com/ppbook/> 有另外一本关于 PostgreSQL 的书。
+在http://www.intermedia.net/support/sql/sqltut.shtm，http:
+//ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM 
+<http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM>
+和 http://sqlcourse.com <http://sqlcourse.com/> 有一个不错的入门教程。
+
+另一个是 "Teach Yourself SQL in 21 Days, Second Edition"（21天学会SQL，
+第二版），在 http://members.tripod.com/er4ebus/sql/index.htm
+<http://members.tripod.com/er4ebus/sql/index.htm>
+
+我们的许多用户喜欢 /The Practical SQL Handbook, Bowman, Judith S., et
+al., Addison-Wesley 。 / 其他的有/ The Complete Reference SQL, Groff et
+al., McGraw-Hill 。/
+
+
+        1.11) PostgreSQL 是 Y2K 兼容的吗？
+
+是，我们很容易控制 2000 AD 之后和 2000 BC 之前的日期。
+
+
+        1.12) 我应该怎样加入开发队伍？
+
+首先，下载最新的源代码并阅读我们 web 站点或发布包中的 PostgreSQL 开发者
+文档。其次，加入 pgsql-hackers 和 pgsql-patches 邮件列表。第三，向
+pgsql-patches 提交高质量的补丁程序。
+
+现在大概有十几个人有 PostgreSQL CVS 归档 COMMIT 的权限。他们都已经提交了
+非常多高质量的补丁了，以至于现有的提交人很难跟上节奏，并且我们相信他们提
+交的补丁都是高质量的。
+
+
+        1.13) 我应该怎样提交一个BUG报告？
+
+请访问 http://www.PostgreSQL.org/bugs/bugs.php 的 PostgreSQL BugTool 页
+面, 那里给出了如何提交一个BUG报告的指南。
+
+同样也要看看我们的 ftp 站点 ftp://ftp.postgreSQL.org/pub
+<ftp://ftp.postgresql.org/pub>，看有没有更新的 PostgreSQL 版本或补丁。
+
+
+        1.14) PostgreSQL 和其他 DBMS 比起来如何？
+
+评价软件有好几种方法：特性，性能，可靠性，支持和价格。
+
+*特性*
+    PostgreSQL 拥有大型商用 DBMS 里大多数特性，例如：事务，子查询，触发
+    器，视图，外键参考完整性和复杂的锁等。我们还有一些它们没有的特性，如
+    用户定义类型，继承，规则和多版本并行控制以减少锁的争用等。
+      
+*性能*
+    PostgreSQL 和其他商用和开源的数据库具有类似的性能。对某些处理它比较
+    快，对其他一些处理它比较慢。与 MySQL 或更轻便的数据库系统比较，我们
+    在 insert/update 时慢，因为我们有事务处理。当然 MySQL 不具有我们在上
+    面的/特性 /段里给出的任何特性。我们的主要方向是可靠性和特性，尽管我
+    们在每次发布时不断地改进性能。有一个很有趣的网页比较了 PostgreSQL 和
+    MySQL http://openacs.org/why-not-mysql.html。
+*可靠性*
+    我们知道 DBMS 必须是可靠的，否则它就一点用都没有。我们努力做到发布经
+    过认真测试的，稳定的臭虫最少的代码。每个版本至少有一个月的 beta 测
+    试，并且我们的发布历史显示我们可以提供稳定的，牢固的，可用于生产使用
+    的版本。我们相信在这方面我们与其他的数据库软件是相当的。
+      
+*支持*
+    我们的邮件列表提供一个非常大的开发人员和用户的组以帮助解决所碰到的任
+    何问题。我们不能保证肯定能解决问题，相比之下，商用 DBMS 也并不是总能
+    够提供解决方法。直接与开发人员，用户群，手册和源程序接触令
+    PostgreSQL 的支持比其他 DBMS 还要好。还有一些商业性的预包装的支持，
+    可以给提供给那些需要的人。（参阅支持 FAQ 条款 1.6 小节。）
+      
+*价格*
+    我们对任何用途都免费，包括商用和非商用目的。你可以不加限制地向你的产
+    品里加入我们的代码，除了那些我们在上面的版权声明里声明的 BSD 风格的
+    版权外。 
+
+
+        1.15) 我应该怎样赞助 PostgreSQL ？
+
+自从1996年开始，PostgreSQL 已经有了一个优秀的组织。这些应该归功于 Marc
+Fournier，是他创建了并在这些年一直管理这个组织。
+
+对于一个开源项目来说，质量基础设施是非常重要的。它能防止出现严重延迟项目
+前进的混乱。
+
+显然，这个组织的运转成本不菲。维持其前进有各种月度的、一次性的开支。如果
+你或者你的公司能进行捐赠以支持这项事业，请访问
+http://store.pgsql.com/shopping/ <http://store.pgsql.com/shopping/> 进行
+捐赠。
+
+虽然该网页提及了 PostgreSQL 公司，这些捐赠将仅用于支持 PostgreSQL 项目，
+并不会用于资助没个特定的公司。如果你愿意，也可以邮寄支票到联系地址。
+
+------------------------------------------------------------------------
+
+
+    用户客户端问题
+
+
+        2.1) 有 PostgreSQL 的 ODBC 驱动么？
+
+有两个 ODBC 驱动可以获得，PsqlODBC 和 OpenLink ODBC.
+
+可以在http://gborg.postgresql.org/project/psqlodbc/projdisplay.php 下载
+PsqlODBC 。
+
+OpenLink ODBC 可以从 http://www.openlinksw.com/ 获得。它与他们的标准
+ODBC 客户端软件兼容，因而你可以在任何他们支持的客户端平台（Win, Mac,
+Unix, VMS）上使用 PostgreSQL ODBC。
+
+他们可能将这个产品销售给那些需要商业支持的用户，但是总是有一个 freeware
+（自由软件）的版本可以得到。请询问 postgres95@openlink.co.uk
+<mailto:postgres95@openlink.co.uk>。
+
+
+        2.2) 有什么工具可以把 PostgreSQL 用于 Web 页面？
+
+一个介绍以数据库为后台的挺不错的 站点是：http://www.webreview.com 。
+
+对于 Web 集成，PHP 是一个极好的接口。它在：http://www.php.net/ 。
+
+对于复杂的任务，很多人采用 Perl 接口和 CGI.pm 或 mod_perl 。
+
+
+        2.3) PostgreSQL 拥有图形用户界面吗？
+
+是的。有几个适用于 PostgreSQL 的图形接口。包括PgAccess（http:
+//www.pgaccess.com)，PgAdmin II （http://www.pgadmin.org，仅适用于
+Win32）， RHDB Admin (http://sources.redhat.com/rhdb/） 以及 Rekall
+（http://www.thekompany.com/products/rekall/， 专有的/proprietary)。还有
+PHPPgAdmin （http://phppgadmin.sourceforge.net/）
+<http://phppgadmin.sourceforge.net/> ，一个基于 web 的 PostgreSQL 访问接
+口。
+
+我们有一个不错的图形用户界面，称为 PgAccess ，它也可以用作报表生成器。网
+页是 http://www.pgaccess.org/。
+
+
+        2.4) 我们可以用什么语言和 PostgreSQL 打交道？
+
+大多数流行的编程语言都有访问 PostgreSQL 的接口。请检查编程语言的扩展模块
+列表。
+
+PostgreSQL 发布包中包含了以下接口：
+
+    * C (libpq)
+    * Embedded C (ecpg)
+    * Java (jdbc)
+    * Python (PyGreSQL)
+    * TCL (libpgtcl)
+
+其他的接口在 http://gborg.postgresql.org 上的 /Drivers/Interfaces/ 小节。
+
+------------------------------------------------------------------------
+
+
+    系统管理问题
+
+
+        3.1) 我怎样能把 PostgreSQL 装在 /usr/local/pgsql 以外的地方？
+
+在运行 configure 时加上 --prefix 选项。
+
+
+        3.2) 当我运行 postmaster 时，出现/ Bad System Call/（系统调用
+        错）或 Core Dumped 错误。为什么？
+
+这可能是很多方面的问题，请先检查操作系统核心是否支持 System V 扩展。
+PostgreSQL 需要内核支持共享内存和信号灯。
+
+
+        3.3) 当我试图运行 postmaster 时，出现 /IpcMemoryCreate/ 错误。为
+        什么？
+
+你要么是没有在内核里正确配置共享内存，要么是你需要扩大你的内核的可用共享
+内存。需要的共享内存具体的数量取决于你的体系结构和你配置你的 postmaster
+运行时使用的缓冲区和后端进程数目。对大多数系统，使用缺省缓冲区和进程数目
+时，你最少需要~1MB。有关共享内存和信号灯的详细信息请参考 PostgreSQL
+Administrator's Guide
+<http://www.postgresql.org/idocs/index.php?kernel-resources.html> 。
+
+
+        3.4) 当我试图运行 postmaster 时，出现 /IpcSemaphoreCreate/ 错
+        误。为什么？
+
+如果错误信息是 /IpcSemaphoreCreate: semget failed (No space left on
+device)/，那么原因是你的内核没有配置足够的信号灯资源。Postgres 的每个潜
+在的后台进程都需要一个信号灯。一个临时的解决方法是以比较少的后台进程数
+（参数）启动 postmaster。使用开关 /-N/ 带一个少于缺省值 32 的参数运行
+postmaster。更长久的解决方法是加大你的内核的 SEMMNS 和 SEMMNI 参数。
+
+在数据库访问量很大时，信号灯不可用可能导致系统崩溃。
+
+如果错误信息是其他的什么东西，你可能就根本没有在内核里面配置信号灯支持。
+有关共享内存和信号灯的详细信息请参考 PostgreSQL Administrator's Guide
+<http://www.postgresql.org/idocs/index.php?kernel-resources.html> 。
+
+
+        3.5) 我如何控制来自其他主机的连接？
+
+缺省时，PostgreSQL 只允许通过 unix 域套接字来自本机的连接。除非你使用
+/-i/ 开关启动 /postmaster/，*并且*通过对应的编辑 /$PGDATA/pg_hba.conf/
+文件打开了主机为基础（ host-based ）的认证，否则其他机器是不能与你的机器
+连接的。这样将允许 TCP/IP 连接。
+
+
+        3.6) 我怎样调整数据库引擎以获得更好的性能？
+
+当然，索引可以加速查询。EXPLAIN 命令允许你观察 PostgreSQL 如何解释你的查
+询，以及使用了哪些索引。
+
+如果你正处理一堆 INSERT，考虑使用 COPY 命令以大批量的方式进行。这样做比
+单独的一个个 INSERT 快得多。其次，没有处于 BEGIN WORK/COMMIT 事务块之间
+的语句被认为属于同一个事务。试着在一个事务块里面处理更多的语句。这样可以
+减少事务带来的额外开销。同样，在做大量的数据改变时考虑删除和重建索引。
+
+还有几个调节的选项可以使用。你可以通过带 /-o -F/ 选项启动 postmaster 来
+禁止 fsync()。这样将避免每次事务后调用 /fsync() / 把数据刷新到磁盘上。
+
+你还可以使用 postmaster -B 选项增加后端进程使用的共享内存缓冲的数目。如
+果你把这个参数设置得太大，postmaster 可能无法启动，因为你已经超过了你的
+内核在共享内存空间上的限制。每个缓冲区是 8K 并且缺省 64 个缓冲区。
+
+你还可以使用后台进程的 -S 选项来增加每个后台进程用于临时排序用的最大内存
+数量。-S 值是以K字节计的，缺省是 512 （也就是说，512K）。
+
+你还可以使用 CLUSTER 命令来把表里的数据按照某个索引进行聚集存放。参阅
+CLUSTER 的手册页获取更多细节。
+
+
+        3.7) PostgreSQL 里可以获得什么样的调试特性？
+
+PostgreSQL 有几个特性用于报告状态信息，这些信息可能对调试用途很有帮助。
+
+首先，通过附带 --enable-cassert 选项运行 configure，有很多 /assert()/ 监
+控后台进程和在发生某些未曾预料的现象时停止程序运行。
+
+postmaster 和 postgres 都有一些可用的选项。首先，当你启动 postmaster
+时，确保你把标准输出和标准错误输出定向到了一个日志文件里去了，象：
+
+        cd /usr/local/pgsql
+        ./bin/postmaster >server.log 2>&1 &
+
+这样将在 PostgreSQL 顶级目录下输出一个 server.log 文件。这个文件包含服务
+器碰到的问题和错误的有用信息。postmaster 有一个 -d 选项，该选项允许我们
+获得更多的细节汇报。-d 选项接受一个数字标明调试级别。需要警告的是高的调
+试级别可能会生成巨大的日志文件。
+
+如果 postmaster 没有运行，你可以直接在命令行上启动 postgres 后台进程，然
+后直接键入 SQL 语句。我们*只* 推荐在调试的时候这么干。请注意这时用换行苻
+而不是分号表示语句结尾。如果你带着调试符号编译，你可以使用一个调试器观看
+发生了什么事情。因为后台进程没有由 postmaster 启动的，它不是和实际的运行
+环境一致，而且锁定/后台交互问题可能不能重现。
+
+如果 postmaster 已经运行，可在一个窗口中启动 /psql/，然后找出 /psql/ 对
+应的 /postgres/ 进程的 PID。使用一个调试器附着在这个 /postgres /PID 上。
+你可以在调试器里设置断点并且从 /psql/ 里执行查询。如果你在调试
+/postgres/ 的启动，你可以设置 PGOPTIONS="-W n"，然后启动 /psql/。这样将
+导致启动延迟 /n/ 秒，这样你就可以附加一个调试器并且跟踪启动顺序的过程。
+
+postgres 程序有 -s，-A，和 -t 选项可能在调试和性能测量的时候非常有用。
+
+你还可以带 profiling 支持编译后台，以便观察哪些函数占用的执行时间较多。
+profile 文件将放在 pgsql/data/base/dbname 目录下。客户端 profile 文件将
+放在客户端当前目录下。在 Linux 下支持 profiling 要在编译时加上/-
+DLINUX_PROFILE / 。
+
+
+        3.8) 为什么在试图连接登录时收到“Sorry, too many clients”消息？
+
+你需要增大 postmaster 启动时支持的并发后台进程数。
+
+缺省限制是 32 进程。你可以通过带着适当的 /-N/ 值开关启动 postmaster 增加
+这个数目。或者修改 /postgresql.conf/ 文件。
+
+要注意如果你把 /-N/ 设置为大于 32，你必须同样增大 /-B/，超过它缺省的
+64；-B 必须最少是 -N 的两倍，而且为了更好的性能可能要比那个数字要大。对
+于大数目的后端进程，你可能还会发现你还需要增加许多 Unix 内核配置参数值。
+要检查的东西包括共享内存块的最大尺寸，SHMMAX，信号灯的最大数目，SEMMNS
+和 SEMMNI，最大的进程数，NPROC，单用户最大进程数，MAXUPRC，以及打开文件
+的最大数目，NFILE 和 NINODE 。Postgres 对允许的后台进程数有限制的原因是
+为了确保你的系统不会用光资源。
+
+在 Postgres 早于 6.5 的版本，最大后台进程数缺省是 64，并且对它的修改首先
+需要修改 /include/storage/sinvaladt.h/ 里的 MaxBackendId 常量，然后重新
+BUILD。
+
+
+        3.9) pgsql_tmp 目录里都有些什么？
+
+该目录下保存了查询执行器生成的临时文件。例如，如果需要为满足 ORDER BY 条
+件做排序，并且排序需要比后台的 -S 参数给出的更多的空间，那么就会创建一个
+临时文件保存多出来的数据。
+
+临时文件应该自动删除，不过如果在排序过程中后台崩溃了就可能留下来。停止并
+重起 postmaster 将会删除这些文件。
+
+
+        3.10) 为什么要在升级 PostgreSQL 发布版本时做 dump 和 restore ？
+
+PostgreSQL 开发组对每次小的升级仅做了较少的修改,因此从 7.2 升级到 7.2.1
+不需要 dump 和 restore。但是主要的升级（例如从 7.2 到 7.3）通常会修改系
+统表和数据表的内部格式。这些变化一般比较复杂，因此我们不维数据文件的向后
+兼容。dump 将数据按照通用的格式输出，随后可以被重新加载并使用新的内部格式。
+
+磁盘文件格式没有变化的升级，可以用 /pg_upgrade/ 脚本，而不需要做 dump 和
+restor。发布说明script 会指明 /pg_upgrade/ 对该次升级是否可用。
+
+------------------------------------------------------------------------
+
+
+    操作问题
+
+
+        4.1) 二进制游标和普通游标之间的区别是什么？
+
+参阅 DECLARE 手册页获取信息。
+
+
+        4.2)如何只 SELECT 一个查询结果的头几行？
+
+参阅 FETCH 手册页，或者使用 SELECT ... LIMIT....
+
+即使你只需要开头的几行，也会涉及到整个查询。试着使用带有 ORDER BY 的查
+询。如果有一个索引与 ORDER BY 匹配，PostgreSQL 可能就只处理要求的头几条
+记录，否则将对整个查询进行处理直到生成需要的行。
+
+
+        4.3) 我如何获取一个表的列表，或者是其他我能在 /psql/ 里看到的东西？
+
+你可以阅读 /psql/ 的源代码文件/pgsql/src/bin/psql/describe.c/ 。它包括为
+生成 psql 的反斜杠命令的输出的 SQL 命令。你还可以带 /-E/ 选项启动
+/psql/，这样它将打印出执行你给出的命令所用的查询。
+
+
+        4.4) 怎样从表里面删除一列？
+
+7.3 里增加了 ALTER TABLE DROP COLUMN，以支持此项功能。在以前的版本中，可
+以这样做：
+
+    BEGIN;
+    LOCK TABLE old_table;
+    SELECT ...  -- select all columns but the one you want to remove
+    INTO TABLE new_table
+    FROM old_table;
+    DROP TABLE old_table;
+    ALTER TABLE new_table RENAME TO old_table;
+    COMMIT;
+
+
+        4.5) 一行，一个表，一个库的最大尺寸是多少？
+
+下面是一些限制：
+
+    一个数据库最大尺寸？   无限制（存在 1TB 的数据库）
+    一个表的最大尺寸？    16TB
+    一行的最大尺寸？      1.6TB
+     一个字段的最大尺寸?   1GB
+    一个表里最大行数？     无限制
+    一个表里最大列数？     跟列类型有关,250-1600
+    一个表里的最大索引数量？无限制
+
+当然，实际上没有真正的无限制，还是要受可用磁盘空间、可用内存/交换区的制约。
+
+表的最大尺寸 16 TB 不需要操作系统对大文件的支持。大表用多个 1 GB 的文件
+存储，因此文件系统尺寸的限制是不重要的。
+
+如果缺省的块大小增长到 32K ，最大的表尺寸和最大列数可以增加。
+
+
+        4.6)存储一个典型的平面文件里的数据需要多少磁盘空间？
+
+一个 Postgres 数据库最多可能需要相当于在一个平面文件里存储相同数据的5倍
+的磁盘空间。
+
+例如，假设有一个 100,000 行的文件，每行有一个整数和一个文本描述。假设文
+本串的平均长度位20字节。平面文件占用 2.8 MB。存放这些数据的 PostgreSQL
+数据库文件大约是 6.4 MB:
+
+     36 字节: 每行的头（估计值）
+     24 字节: 一个int字段和一个文本型字段
+   +  4 字节: 页面内指向元组的指针
+   ----------------------------------------
+     64 字节每行
+
+   PostgreSQL 数据页的大小是 8192 字节 (8 KB)，则：
+
+   8192 字节每页
+   -------------------   =  128 行/数据页（向下取整）
+     64 字节每行
+
+   100000 数据行
+   --------------------  =  782 数据页（向上取整）
+      128 行每页
+
+   782 数据页 * 8192 字节/页  =  6,406,144 字节（6.4 MB）
+
+索引不需要这么多的额外消耗，但也确实包括被索引的数据，因此它们也可能很大。
+
+空值存放在位图中，因此占用很少的空间。
+
+
+        4.7) 如何查看表、索引、数据库以及用户的定义？
+
+/ psql/ 有许多反斜杠命令用于显示这些信息。用 \? 看看都有哪些。以 pg_ 打
+头的系统表也描述了这些信息。 psql -l 可以列出所有的数据库。
+
+也可以试试文件 /pgsql/src/tutorial/syscat.source/。它演示了许多从数据库
+系统表里获取信息需要的 SELECT。
+
+
+        4.8) 我的查询很慢或者没有利用索引。为什么？
+
+并非每个查询都会自动使用索引。只有在表的大小超过一个最小值，并且查询只选
+择表中较小比例的行时采用使用索引。这是因为索引扫描引起的随即磁盘存取可能
+比直接地读取表（顺序扫描）更慢。为了判断是否使用索引，PostgreSQL 必须获
+得有关表的统计值。这些统计值可以使用 VACUUM ANALYZE，或 ANALYZE 获得。使
+用统计值，优化器知道表中有多少行，就能够更好地判断是否利用索引。统计值对
+确定优化的连接顺序和连接方法也很有用。在表的内容发生变化时，应定期进行统
+计值的获取。
+
+索引通常不用于 ORDER BY 或执行连接。对一个大表的一次顺序扫描，再做一个显
+式的排序通常比索引扫描要快。
+
+但是，在 LIMIT 和 ORDER BY 结合使用时经常会使用索引，因为只会返回表的一
+小部分。实际上，虽然 MAX() 和 MIN() 并不使用索引，通过对 ORDER BY 和
+LLIMIT 使用索引取得最大值和最小值也是可以的：
+
+    SELECT col
+    FROM tab
+    ORDER BY col [ DESC ]
+    LIMIT 1;
+
+当使用通配符操作，例如 LIKE 或 ~ 时，索引只能在特定的情况下使用：  
+
+    * 字符串的开始部分必须是普通字符串，也就是说：
+          o LIKE 模式不能以 % 打头。
+          o ~ （正则表达式）模式必须以 ^ 打头。
+    * 字符串不能以匹配多个字符的模式类打头，例如 [a-e]。
+    * 大小写无关的查找，如 ILIKE 和 ~* 等不使用索引。但可以用 4.12 节描
+      述的函数索引。
+    * 在做 initdb 时必须采用缺省的本地设置 C locale。
+
+
+        4.9) 我如何才能看到查询优化器是怎样处理我的查询的？
+
+参考 EXPLAIN 手册页。
+
+
+        4.10) R-tree 索引是什么？
+
+R-tree 索引用于索引空间数据。一个哈希索引无法处理范围搜索。而 B-tree 索
+引只能处理一维的范围搜索。R-tree 索引可以处理多维数据。例如，如果可以在
+一个类型为 point 的字段上建立一个 R-tree 索引，那么系统能更高效地回答类
+似 “选择在一个长方形范围内的所有点”。
+
+描述最初的 R-Tree 设计的正式论文是：
+
+Guttman, A. "R-Trees: A Dynamic Index Structure for Spatial Searching."
+Proc of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.
+
+你还可以在 Stonebraker 的“Readings in Database Systems”里找到这篇文章。
+
+系统内置的 R-Tree 可以处理多边形和方形。理论上说，R-tree 可以扩展为处理
+更多维数。不过在实践上，扩展 R-trees 需要一定的工作量，而我们目前没有如
+何做的文档。
+
+
+        4.11) 什么是基因查询优化（Genetic Query Optimization）？
+
+GEQO 模块采用基因算法（Genetic Algorithm，GA）加快多表连接的查询优化。它
+允许通过非穷举搜索处理大的连接查询。
+
+
+        4.12) 我怎样做正则表达式搜索和大小写无关的正则表达式搜索？怎样利
+        用索引进行大小写无关搜索？
+
+操作符 ~ 处理正则表达式匹配，而 ~* 处理大小写无关的正则表达式匹配。大写
+些无关的 LIKE 变种成为 ILIKE。
+
+大小写无关的等式比较通常写做：
+
+    SELECT *
+    FROM tab
+    WHERE lower(col) = 'abc';
+
+这样将不会使用标准的索引。但是可以创建一个可被利用的函数索引:
+
+    CREATE INDEX tabindex ON tab (lower(col));
+
+
+        4.13) 在一个查询里，我怎样检测一个字段是否为 NULL？
+
+用 IS NULL 和 IS NOT NULL 测试这个字段。 
+
+
+        4.14) 各种字符类型之间有什么不同？
+
+  类型            内部名称    说明
+  --------------------------------------------------
+  "char"        char         1个字符 character
+  CHAR(#)      bpchar       定长字符串，实际数据不足定义长度时，以空格补齐
+  VARCHAR(#)  varchar     指定了最大长度，变长字符串，不足定义长度的部分
+不补齐
+  TEXT           text         串长度仅受行的最大长度限制
+  BYTEA          bytea       变长字节序列（变长的二进制数据）
+
+在系统表和在一些错误信息里你将看到内部名称。 
+
+上面最后四种类型是"varlena"（变长）类型（也就是说，开头的四个字节是长
+度，后面才是数据）。于是实际占用的空间比声明的大小要多一些。然而这些类型
+都可以被压缩存储，也可以用 TOAST 脱机存储，因此磁盘空间也可能比预想的要少。
+
+CHAR(n) 最适合于存储长度基本差不多的字符串。VARCHAR(n) 在存储限制了最大
+长度的变长字符串是最好的。TEXT 适用于存储不限制长度的字符串，最大可达
+1G。BYTEA 用于存储二进制数据，尤其是包含 NULL 字节（二进制的0）的值。这
+些类型具有类型的性能。
+
+
+        4.15.1) 我怎样创建一个序列号/自动递增的字段？
+
+PostgreSQL 支持 SERIAL 数据类型。它在字段上自动创建一个序列和索引。例如，
+    CREATE TABLE person ( 
+        id SERIAL, 
+        name TEXT 
+        );
+
+会自动转换为： 
+    
+    CREATE SEQUENCE person_id_seq;
+    CREATE TABLE person ( 
+        id INT4 NOT NULL DEFAULT nextval('person_id_seq'),
+        name TEXT 
+        );
+    CREATE UNIQUE INDEX person_id_key ON person ( id );
+
+参考 create_sequence 手册页获取关于序列的更多信息。你还可以用每行的 oid
+字段作为一个唯一值。不过，如果你需要倾倒和重载数据库，你需要使用 pg_dump
+的 -o 选项或者 COPY WITH OIDS 选项以保留 OID。 
+
+
+        4.15.2) 我如何获得一个插入的序列号的值？
+
+一种方法是在插入之前先用函数 nextval() 从序列对象里检索出下一个 SERIAL
+值，然后再显式插入。使用 4.15.1 <#4.15.1> 里的例表，可用伪码这样描述： 
+
+    new_id = execute("SELECT nextval('person_id_seq')");
+    execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise
+Pascal')");
+
+这样还能在其他查询中使用存放在 new_id 里的新值（例如，作为 person 表的外
+键）。注意自动创建的 SEQUENCE 对象的名称将会是
+<table>_<serialcolumn>_seq，这里 table 和 serialcolumn 分别是你的表的名
+称和你的 SERIAL 字段的名称。 
+
+类似的，在 SERIAL 对象缺省插入后你可以用函数 currval() 检索刚赋值的
+SERIAL 值，例如， 
+
+    execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
+    new_id = execute("SELECT currval('person_id_seq')");
+
+最后，你可以使用从 INSERT 语句返回的 OID <4.16> 查找缺省值，尽管这可能是
+最缺乏移植性的方法。在 Perl 里，使用带有 Edmund Mergl 的 DBD::Pg 模块的
+DBI，oid 值可以通过 $sth->execute() 后的 $sth->{pg_oid_status} 获得。 
+
+
+        4.15.3) 使用 currval() 和 nextval() 会导致一个与其他用户之间的紊
+        乱情况吗？
+
+不会。currval() 返回后台进程而不是所有用户赋予的当前值。
+
+
+        4.15.4) 为什么不在事务异常中止后重用序列号呢？为什么在序列号字段
+        的取值中存在间断呢？
+
+为了提高并发性，序列号在需要的时候赋予正在运行的事务，并且只在事务结束之
+前不封锁。这就会导致夭折事务后的序列号出现间隔。
+
+
+
+        4.16) 什么是 OID？什么是 TID？
+
+OID 是 PostgreSQL 中行的唯一标识。PostgreSQL 里创建的每一行都获得一个唯
+一的 OID。所有在 initdb 过程中创建的 OID 都小于 16384 （参见
+include/access/transam.h）。所有用户创建的 OID 都大于或等于这个值。缺省
+时，所有这些 OID 不仅在一个表或一个数据库里面唯一，而且在整个 PostgreSQL
+安装里也是唯一的。 
+
+PostgreSQL 在它的内部系统表里使用 OID 在表之间建立联系。这些 OID 可以用
+于标识特定的用户行以及用在连接里。建议使用字段类型 OID 存储 OID 值。可以
+在 OID 字段上创建一个索引以快速访问。 
+
+OID 从一个被所有数据库使用的中心区域里赋值给所有新行。如果你想把 OID 改
+成别的值，或者想做一份表的带原始 OID 的拷贝，你可以做到： 
+
+    CREATE TABLE new(old_oid oid, mycol int);
+    SELECT old_oid, mycol INTO new FROM old;
+    COPY new TO '/tmp/pgtable';
+    DELETE FROM new;
+    COPY new WITH OIDS FROM '/tmp/pgtable';
+
+OID 用4字节的整数保存，在超过40亿时将溢出。没有人报告出现过溢出，而我们
+打算在有人报告之前消除这个限制。
+
+TID 用于标识带着数据块（地址）和（块内）偏移的特定的物理行。TID 在行被更
+改或重载后发生改变。索引入口使用它们指向物理行。
+
+
+        4.17) PostgreSQL 使用的一些术语的含义是什么？
+
+一些源代码和一些旧一点的文档使用一些有更常用用法的术语。下面是其中一部分： 
+    table, relation, class 
+    row, record, tuple 
+    column, field, attribute 
+    retrieve, select 
+    replace, update 
+    append, insert 
+    OID, serial value 
+    portal, cursor 
+    range variable, table name, table alias 
+
+有一个通用数据库术语的列表：http://hea-
+www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html
+。  
+
+
+        4.18) 为什么我收到错误“/ERROR: Memory exhausted in
+        AllocSetAlloc()/”？
+
+这很可能是系统的虚拟内存用光了，或者内核对某些资源有较低的限制值。在启动
+postmaster 之前试试下面的命令： 
+
+    ulimit -d 262144
+    limit datasize 256m
+
+取决于你用的 shell，上面命令只有一条能成功，但是它将把你的进程数据段限制
+设得比较高，因而也许能让查询完成。这条命令应用于当前进程，以及所有在这条
+命令运行后创建的子进程。如果你是在运行SQL客户端时因为后台返回了太多的数
+据而出现问题，请在运行客户端之前执行上述命令。
+
+
+        4.19) 我如何才能知道所运行的 PostgreSQL 的版本？
+
+从 psql 里，键入 SELECT version()；
+
+
+        4.20) 为什么我的大对象操作导致错误“/invalid large obj
+        descriptor”（非法的大对象描述符）/？
+
+你需要在使用任何大对象句柄的前后放上 BEGIN WORK 和 COMMIT，也就是说，包
+围 lo_open ... lo_close。 
+
+目前 PostgreSQL 强制实施这条规则：在事务提交时关闭大对象句柄，这样，（没
+有采用事务时），首次对大对象句柄做任何事情的企图都会导致一个 invalid
+large obj descriptor。所以，如果你没有使用一个事务，以前能工作的代码（至
+少是大多数时间）将会生成这么一个错误信息。 
+
+如果你使用客户端接口，如 ODBC，你可能需要 set auto-commit off。
+
+
+        4.21) 我如何创建一个缺省值是当前时间的字段？
+
+使用 CURRENT_TIMESTAMP：
+
+    CREATE TABLE test(x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP);
+
+
+        4.22) 为什么使用 IN 的子查询这么慢？
+
+目前，我们通过为外查询的每一行顺序扫描子查询的结果来连接子查询和外查询。
+如果子查询返回少数几行，而外查询返回很多行，IN 执行得很快。为了加快其他
+IN 查询的执行，可以用 EXISTS 替换 IN： 
+
+    SELECT *
+    FROM tab
+    WHERE col IN (SELECT subcol FROM subtab);
+
+改为： 
+
+    SELECT *
+    FROM tab
+    WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
+
+后者要想执行得更快，subcol 应该是一个索引列。我们希望在未来的发布版本中
+修补这个限制。
+
+
+        4.23) 我怎样进行 outer join （外连接）？
+
+PostgreSQL 采用标准的 SQL 语法支持外连接。这里是两个例子：
+
+    SELECT *
+    FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);
+
+或 
+    SELECT *
+    FROM t1 LEFT OUTER JOIN t2 USING (col);
+
+这两个等价的查询在 t1.col 和 t2.col 上做连接，并且返饣?t1 中所有未连接的
+行（那些在 t2 中没有匹配的行）。右[外]连接(RIGHT OUTER JOIN)将返回 t2 中
+未连接的行。完全外连接（FULL OUTER JOIN）将返回 t1 和 t2 中未连接的行。
+关键字 OUTER 在左[外]连接、右[外]连接和完全[外]连接中是可选的，普通连接
+被成为内连接（INNER JOIN）。
+
+在此前的版本中，外连接可以用 UNION 和 NOT IN 来模拟。例如，下面的例子在
+表 tab1 和 tab2 之间做外连接：
+
+    SELECT tab1.col1, tab2.col2
+    FROM tab1, tab2
+    WHERE tab1.col1 = tab2.col1
+
+    UNION ALL
+
+    SELECT tab1.col1, NULL
+    FROM tab1
+    WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
+    ORDER BY col1
+
+
+        4.24) 如何使用涉及多个数据库的查询？
+
+没有办法查询当前数据库之外的数据库。因为 PostgreSQL 加载数据库相关的系统
+目录（系统表），跨数据库的查询如何执行也未明确。
+
+contrib/dblink 允许采用函数调用实现跨库查询。当然可以同时连接到不同的数
+据库并在客户端合并结果。
+
+
+        4.25) 如何让函数返回多行或多列？
+
+可以在 PL/pgSQL 函数中使用 refcursors 返回结果集。参看
+http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html
+<http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html>,
+23.7.3.3节。
+
+
+        4.26) 为什么在 PL/PgSQL 函数中不能可靠地创建或删除临时表？
+
+PL/PgSQL 缓存函数的内容，由此带来的一个不好的副作用是若一个 PL/PgSQL 函
+数访问了一个临时表，然后该表被删除并重建了，则再次调用该函数将失败，因为
+缓存的函数内容仍然指向旧的临时表。解决的方法是在 PL/PgSQL 中用 EXECUTE
+对临时表进行访问。这样会保证查询在执行前总是重新分析。
+
+
+        4.27) 有哪些数据复制选项？
+
+有几种主/从方式的复制选项。这些选项只允许主数据库进行更新，从数据库只能
+进行读。网页 http://gborg.PostgreSQL.org/genpage?replication_research 
+的最后列出了这些选项。在
+http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php
+<http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php> 正在
+进行一个多主本复制的解决方案。
+
+
+        4.28) 有哪些数据加密选项？
+
+contrib/pgcrypto 包含了很多在 SQL 查询中使用的加密函数。加密客户端到服务
+器端传输数据的唯一方法是在 pg_hba.conf 中采用 hostss 。 
+
+7.3 版本中自动对数据库用户密码进行加密。在以前的版本中，必须在
+postgresql.conf 中打开 PASSWORD_ENCRYPTION 选项。服务器可以运行在加密的
+文件系统上（以达到加密的目的）。
+
+--------------------------------------------------------------------------------
+
+
+    扩展 PostgreSQL
+
+
+        5.1) 我写了一个用户定义函数。当我在 psql 里运行时，为什么会导致
+        core dump？
+
+产生这个问题的原因很多。请先在一个单独的测试程序中测试你的自定义函数。
+
+
+        5.2) 我如何能给 PostgreSQL 贡献一些挺不错的新类型和函数？
+
+将你的扩展发送到 pgsql-hackers 邮件列表，它们最终会被放到 contrib/ 子目录。
+
+
+        5.3) 我怎样写一个返回一条元组的 C 函数？
+
+在 PostgreSQL 7.3 以后的版本中，C, PL/PgSQL 和 SQL 完全支持返回值为表的
+函数。更多信息请参考 程序员指南（the Programmer's Guide）。在
+contrib/tablefunc 中有一个例子是用 C 写的返回值为表的函数。
+
+
+        5.4) 我修改了一个源文件，为什么重新编译后没有看到改变？
+
+Makefiles 中没有包含头文件的正确依赖。您必须先做make clean， 再做一次
+make 。如果您使用的是 GCC ，则可以采用选项 --enable-depend 让编译器自动
+生成头文件的依赖关系。
+
