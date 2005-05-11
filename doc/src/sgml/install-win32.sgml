@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.23 2004/12/27 20:13:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.24 2005/05/11 15:10:20 momjian Exp $
 -->
 
 <chapter id="install-win32">
@@ -47,7 +47,7 @@ $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.23 2004/12/27 20:13:47 tg
   C++</productname>, change into the <filename>src</filename> directory
   and type the command
 <screen>
-<userinput>make -DCFG=Release /f bcc32.mak</userinput>
+<userinput>make -N -DCFG=Release /f bcc32.mak</userinput>
 </screen>
  </para>
 
