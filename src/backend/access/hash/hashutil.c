@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.41 2004/12/31 21:59:13 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashutil.c,v 1.42 2005/05/11 01:26:01 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ _hash_formitem(IndexTuple itup)
 		(sizeof(HashItemData) - sizeof(IndexTupleData));
 
 	hitem = (HashItem) palloc(nbytes_hitem);
-	memcpy((char *) &(hitem->hash_itup), (char *) itup, tuplen);
+	memcpy(&(hitem->hash_itup), itup, tuplen);
 
 	return hitem;
 }

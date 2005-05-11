@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.98 2005/04/14 20:03:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/syscache.c,v 1.99 2005/05/11 01:26:02 neilc Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -455,7 +455,7 @@ InitCatalogCache(void)
 
 	Assert(!CacheInitialized);
 
-	MemSet((char *) SysCache, 0, sizeof(SysCache));
+	MemSet(SysCache, 0, sizeof(SysCache));
 
 	for (cacheId = 0; cacheId < SysCacheSize; cacheId++)
 	{

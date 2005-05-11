@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.79 2004/12/31 22:01:31 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.80 2005/05/11 01:26:02 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ load_external_function(char *filename, char *funcname,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
 
-		MemSet((char *) file_scanner, 0, sizeof(DynamicFileList));
+		MemSet(file_scanner, 0, sizeof(DynamicFileList));
 		strcpy(file_scanner->filename, fullname);
 		file_scanner->device = stat_buf.st_dev;
 #ifndef WIN32

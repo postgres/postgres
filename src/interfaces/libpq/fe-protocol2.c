@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.16 2004/12/31 22:03:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.17 2005/05/11 01:26:02 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -592,7 +592,7 @@ getRowDescriptions(PGconn *conn)
 	{
 		result->attDescs = (PGresAttDesc *)
 			pqResultAlloc(result, nfields * sizeof(PGresAttDesc), TRUE);
-		MemSet((char *) result->attDescs, 0, nfields * sizeof(PGresAttDesc));
+		MemSet(result->attDescs, 0, nfields * sizeof(PGresAttDesc));
 	}
 
 	/* get type info */
@@ -667,7 +667,7 @@ getAnotherTuple(PGconn *conn, bool binary)
 			pqResultAlloc(result, nfields * sizeof(PGresAttValue), TRUE);
 		if (conn->curTuple == NULL)
 			goto outOfMemory;
-		MemSet((char *) conn->curTuple, 0, nfields * sizeof(PGresAttValue));
+		MemSet(conn->curTuple, 0, nfields * sizeof(PGresAttValue));
 
 		/*
 		 * If it's binary, fix the column format indicators.  We assume
@@ -1409,7 +1409,7 @@ pqBuildStartupPacket2(PGconn *conn, int *packetlen,
 	if (!startpacket)
 		return NULL;
 
-	MemSet((char *) startpacket, 0, sizeof(StartupPacket));
+	MemSet(startpacket, 0, sizeof(StartupPacket));
 
 	startpacket->protoVersion = htonl(conn->pversion);
 

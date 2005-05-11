@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.150 2005/04/29 22:28:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.151 2005/05/11 01:26:02 neilc Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -551,8 +551,8 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 		ProcQueueInit(&(lock->waitProcs));
 		lock->nRequested = 0;
 		lock->nGranted = 0;
-		MemSet((char *) lock->requested, 0, sizeof(int) * MAX_LOCKMODES);
-		MemSet((char *) lock->granted, 0, sizeof(int) * MAX_LOCKMODES);
+		MemSet(lock->requested, 0, sizeof(int) * MAX_LOCKMODES);
+		MemSet(lock->granted, 0, sizeof(int) * MAX_LOCKMODES);
 		LOCK_PRINT("LockAcquire: new", lock, lockmode);
 	}
 	else

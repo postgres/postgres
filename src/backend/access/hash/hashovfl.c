@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.45 2004/12/31 21:59:13 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.46 2005/05/11 01:26:01 neilc Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -509,7 +509,7 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno)
 
 	/* set all of the bits to 1 */
 	freep = HashPageGetBitmap(pg);
-	MemSet((char *) freep, 0xFF, BMPGSZ_BYTE(metap));
+	MemSet(freep, 0xFF, BMPGSZ_BYTE(metap));
 
 	/* write out the new bitmap page (releasing write lock and pin) */
 	_hash_wrtbuf(rel, buf);

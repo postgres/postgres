@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.48 2005/05/10 05:15:07 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.49 2005/05/11 01:26:01 neilc Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -295,8 +295,8 @@ _hash_metapinit(Relation rel)
 	metap->hashm_maxbucket = metap->hashm_lowmask = 1;	/* nbuckets - 1 */
 	metap->hashm_highmask = 3;	/* (nbuckets << 1) - 1 */
 
-	MemSet((char *) metap->hashm_spares, 0, sizeof(metap->hashm_spares));
-	MemSet((char *) metap->hashm_mapp, 0, sizeof(metap->hashm_mapp));
+	MemSet(metap->hashm_spares, 0, sizeof(metap->hashm_spares));
+	MemSet(metap->hashm_mapp, 0, sizeof(metap->hashm_mapp));
 
 	metap->hashm_spares[1] = 1; /* the first bitmap page is only spare */
 	metap->hashm_ovflpoint = 1;
