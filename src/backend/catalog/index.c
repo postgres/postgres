@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.254 2005/05/06 17:24:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.255 2005/05/11 06:24:54 neilc Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -62,6 +62,7 @@ static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					Oid *classOids,
 					bool primary);
 static Oid	IndexGetRelation(Oid indexId);
+static void UpdateStats(Oid relid, double reltuples);
 
 
 /*
@@ -1149,6 +1150,36 @@ setNewRelfilenode(Relation relation)
 }
 
 
+/*
+ * This is invoked by the various index AMs once they have finished
+ * constructing an index. Constructing an index involves counting the
+ * number of tuples in both the relation and the index, so we take
+ * advantage of the opportunity to update pg_class to ensure that the
+ * planner takes advantage of the index we just created.  But, only
+ * update statistics during normal index definitions, not for indices
+ * on system catalogs created during bootstrap processing.  We must
+ * close the relations before updating statistics to guarantee that
+ * the relcache entries are flushed when we increment the command
+ * counter in UpdateStats(). But we do not release any locks on the
+ * relations; those will be held until end of transaction.
+ */
+void
+IndexCloseAndUpdateStats(Relation heap, double heapTuples,
+						 Relation index, double indexTuples)
+{
+	Oid		hrelid = RelationGetRelid(heap);
+	Oid		irelid = RelationGetRelid(index);
+
+	if (!IsNormalProcessingMode())
+		return;
+
+	heap_close(heap, NoLock);
+	index_close(index);
+	UpdateStats(hrelid, heapTuples);
+	UpdateStats(irelid, indexTuples);
+}
+
+
 /* ----------------
  *		UpdateStats
  *
@@ -1157,7 +1188,7 @@ setNewRelfilenode(Relation relation)
  * in the context of VACUUM, only CREATE INDEX.
  * ----------------
  */
-void
+static void
 UpdateStats(Oid relid, double reltuples)
 {
 	Relation	whichRel;

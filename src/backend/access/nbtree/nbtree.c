@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.129 2005/05/07 21:32:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.130 2005/05/11 06:24:53 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,27 +148,8 @@ btbuild(PG_FUNCTION_ARGS)
 	}
 #endif   /* BTREE_BUILD_STATS */
 
-	/*
-	 * Since we just counted the tuples in the heap, we update its stats
-	 * in pg_class to guarantee that the planner takes advantage of the
-	 * index we just created.  But, only update statistics during normal
-	 * index definitions, not for indices on system catalogs created
-	 * during bootstrap processing.  We must close the relations before
-	 * updating statistics to guarantee that the relcache entries are
-	 * flushed when we increment the command counter in UpdateStats(). But
-	 * we do not release any locks on the relations; those will be held
-	 * until end of transaction.
-	 */
-	if (IsNormalProcessingMode())
-	{
-		Oid			hrelid = RelationGetRelid(heap);
-		Oid			irelid = RelationGetRelid(index);
-
-		heap_close(heap, NoLock);
-		index_close(index);
-		UpdateStats(hrelid, reltuples);
-		UpdateStats(irelid, buildstate.indtuples);
-	}
+	/* since we just counted the # of tuples, may as well update stats */
+	IndexCloseAndUpdateStats(heap, reltuples, index, buildstate.indtuples);
 
 	PG_RETURN_VOID();
 }
