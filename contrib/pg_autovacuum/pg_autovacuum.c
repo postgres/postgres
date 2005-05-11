@@ -4,7 +4,7 @@
  * Revisions by Christopher B. Browne, Liberty RMS
  * Win32 Service code added by Dave Page
  *
- * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.33 2005/05/11 17:57:56 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.34 2005/05/11 18:07:14 momjian Exp $
  */
 
 #include "postgres_fe.h"
@@ -1056,9 +1056,9 @@ perform_maintenance_command(db_info * dbi, tbl_info * tbl, int operation)
 	 */
 	if ((tbl->relisshared > 0 && strcmp("template1", dbi->dbname) != 0) ||
 		(operation == ANALYZE_ONLY))
-		snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
+		snprintf(buf, sizeof(buf), "ANALYZE %s.%s", dbi->dbname, tbl->table_name);
 	else if (operation == VACUUM_ANALYZE)
-		snprintf(buf, sizeof(buf), "VACUUM ANALYZE %s", tbl->table_name);
+		snprintf(buf, sizeof(buf), "VACUUM ANALYZE %s.%s", dbi->dbname, tbl->table_name);
 	else
 		return;
 
