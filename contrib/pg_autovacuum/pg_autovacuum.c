@@ -4,7 +4,7 @@
  * Revisions by Christopher B. Browne, Liberty RMS
  * Win32 Service code added by Dave Page
  *
- * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.32 2005/05/11 14:53:43 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.33 2005/05/11 17:57:56 momjian Exp $
  */
 
 #include "postgres_fe.h"
@@ -1749,7 +1749,16 @@ VacuumLoop(int argc, char **argv)
 			fflush(LOGOUTPUT);
 		}
 
-		pg_usleep(sleep_secs * 1000000L);	/* Larger Pause between outer loops */
+		/* Larger Pause between outer loops */
+		/*
+		 *	pg_usleep() is wrong here because its maximum is ~2000 seconds,
+		 *	and we don't need signal interruptability on Win32 here.
+		 */
+#ifndef WIN32
+		sleep(sleep_secs);			/* Unix sleep is seconds */
+#else
+		sleep(sleep_secs * 1000);	/* Win32 sleep() is milliseconds */
+#endif
 
 		gettimeofday(&then, 0); /* Reset time counter */
 
