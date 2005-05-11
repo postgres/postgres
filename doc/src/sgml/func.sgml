@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.245 2005/04/13 00:20:10 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.246 2005/05/11 13:36:14 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -32,7 +32,9 @@ PostgreSQL documentation
    <acronym>SQL</acronym> standard. Some of the extended functionality
    is present in other <acronym>SQL</acronym> database management
    systems, and in many cases this functionality is compatible and
-   consistent between the various implementations.
+   consistent between the various implementations.  This chapter is also
+   not exhaustive;  additional functions appear in relivant sections of 
+   the manual.
   </para>
 
 
