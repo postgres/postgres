@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.23.4.1 2005/05/11 15:10:56 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.23.4.2 2005/05/11 16:02:59 momjian Exp $
 -->
 
 <chapter id="install-win32">
@@ -118,6 +118,19 @@ $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.23.4.1 2005/05/11 15:10:5
   C++, just right-click on the project and choose to add it.)
  </para>
 
+ <para>
+  Free development tools from <productname>Microsoft</productname>
+  can be downloaded from
+  <ulink url="http://msdn.microsoft.com/visualc/vctoolkit2003/"></>.
+  You will also need <filename>MSVCRT.lib</> from the platform SDK from
+  <ulink url="http://www.microsoft.com/msdownload/platformsdk/sdkupdate/"></>.
+  You can also download the <application>.NET</> framework from
+  <ulink url="http://msdn.microsoft.com/netframework/downloads/updates/default.aspx"></>.
+  Once installed, the toolkit binaries must be in your path, and you might
+  need to add a <literal>/lib:&lt;libpath&gt;</> to point to <filename>MSVCRT.lib</>.
+  Free <productname>Borland C++</productname> compiler tools can be downloaded from
+  <ulink url="http://www.borland.com/products/downloads/download_cbuilder.html#"></>,
+  and require similar setup.
 </chapter>
 
 <!-- Keep this comment at the end of the file
