@@ -85,7 +85,7 @@ General Questions
   
    Outstanding features are detailed in the TODO list. This is located in
    doc/TODO in the source distribution or at
-   http://developer.postgresql.org/todo.php.
+   http://www.postgresql.org/docs/faqs.TODO.html.
    
    You can learn more about these features by consulting the archives,
    the SQL standards and the recommend texts (see 1.10).
