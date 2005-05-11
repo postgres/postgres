@@ -313,9 +313,9 @@
     1.9) Wie erfahre ich von bekannten Bugs oder fehlenden Features?
     
    PostgreSQL unterstützt eine erweiterte Teilmenge von SQL-92. Siehe
-   unsere TODO-Liste unter http://developer.postgresql.org/todo.php für
-   eine Auflistung der bekannten Bugs, fehlenden Features und zukünftigen
-   Pläne.
+   unsere TODO-Liste unter http://www.postgresql.org/docs/faqs.TODO.html
+   für eine Auflistung der bekannten Bugs, fehlenden Features und
+   zukünftigen Pläne.
    
     1.10) Wie kann ich SQL lernen?
     
