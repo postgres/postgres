@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.28 2005/05/09 11:31:33 neilc Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.29 2005/05/11 01:41:41 neilc Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -52,9 +52,6 @@ typedef struct PgStat_MsgHdr
 	int			m_size;
 	int			m_backendid;
 	int			m_procpid;
-	Oid			m_databaseid;
-	AclId		m_userid;
-	SockAddr	m_clientaddr;
 } PgStat_MsgHdr;
 
 /* ----------
@@ -102,7 +99,10 @@ typedef struct PgStat_MsgDummy
  */
 typedef struct PgStat_MsgBestart
 {
-	PgStat_MsgHdr m_hdr;
+	PgStat_MsgHdr	m_hdr;
+	Oid				m_databaseid;
+	AclId			m_userid;
+	SockAddr		m_clientaddr;
 } PgStat_MsgBestart;
 
 /* ----------
@@ -138,6 +138,7 @@ typedef struct PgStat_MsgActivity
 typedef struct PgStat_MsgTabstat
 {
 	PgStat_MsgHdr m_hdr;
+	int			m_databaseid;
 	int			m_nentries;
 	int			m_xact_commit;
 	int			m_xact_rollback;
@@ -155,6 +156,7 @@ typedef struct PgStat_MsgTabstat
 typedef struct PgStat_MsgTabpurge
 {
 	PgStat_MsgHdr m_hdr;
+	Oid			m_databaseid;
 	int			m_nentries;
 	Oid			m_tableid[PGSTAT_NUM_TABPURGE];
 } PgStat_MsgTabpurge;
@@ -180,6 +182,7 @@ typedef struct PgStat_MsgDropdb
 typedef struct PgStat_MsgResetcounter
 {
 	PgStat_MsgHdr m_hdr;
+	Oid			m_databaseid;
 } PgStat_MsgResetcounter;
 
 
@@ -214,7 +217,6 @@ typedef struct PgStat_StatDBEntry
 	Oid			databaseid;
 	HTAB	   *tables;
 	int			n_backends;
-	PgStat_Counter n_connects;
 	PgStat_Counter n_xact_commit;
 	PgStat_Counter n_xact_rollback;
 	PgStat_Counter n_blocks_fetched;
@@ -229,15 +231,24 @@ typedef struct PgStat_StatDBEntry
  */
 typedef struct PgStat_StatBeEntry
 {
-	Oid			databaseid;
-	Oid			userid;
+	/* An entry is non-empty iff procpid > 0 */
 	int			procpid;
 	AbsoluteTime start_sec;
 	int         start_usec;
 	AbsoluteTime activity_start_sec;
 	int			activity_start_usec;
-	SockAddr    clientaddr;
 	char		activity[PGSTAT_ACTIVITY_SIZE];
+
+	/*
+	 * The following fields are initialized by the BESTART message. If
+	 * we have received messages from a backend before we have
+	 * received its BESTART, these fields will be uninitialized:
+	 * userid and databaseid will be InvalidOid, and clientaddr will
+	 * be undefined.
+	 */
+	Oid			userid;
+	Oid			databaseid;
+	SockAddr    clientaddr;
 } PgStat_StatBeEntry;
 
 

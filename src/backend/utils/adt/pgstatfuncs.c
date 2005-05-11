@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.21 2005/05/09 11:31:33 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.22 2005/05/11 01:41:41 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,6 +283,10 @@ pg_stat_get_backend_dbid(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
+	/* Not initialized yet? */
+	if (!OidIsValid(beentry->databaseid))
+		PG_RETURN_NULL();
+
 	PG_RETURN_OID(beentry->databaseid);
 }
 
@@ -296,6 +300,10 @@ pg_stat_get_backend_userid(PG_FUNCTION_ARGS)
 	beid = PG_GETARG_INT32(0);
 
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
+		PG_RETURN_NULL();
+
+	/* Not initialized yet? */
+	if (!OidIsValid(beentry->userid))
 		PG_RETURN_NULL();
 
 	PG_RETURN_INT32(beentry->userid);
@@ -405,6 +413,10 @@ pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
+	/* Not initialized yet? */
+	if (!OidIsValid(beentry->userid))
+		PG_RETURN_NULL();
+
 	if (!superuser() && beentry->userid != GetUserId())
 		PG_RETURN_NULL();
 
@@ -420,7 +432,6 @@ pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 	}
 
 	remote_host[0] = '\0';
-
 	ret = getnameinfo_all(&beentry->clientaddr.addr, beentry->clientaddr.salen,
 						  remote_host, sizeof(remote_host),
 						  NULL, 0,
@@ -445,6 +456,10 @@ pg_stat_get_backend_client_port(PG_FUNCTION_ARGS)
 	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
+	/* Not initialized yet? */
+	if (!OidIsValid(beentry->userid))
+		PG_RETURN_NULL();
+
 	if (!superuser() && beentry->userid != GetUserId())
 		PG_RETURN_NULL();
 
@@ -462,7 +477,6 @@ pg_stat_get_backend_client_port(PG_FUNCTION_ARGS)
 	}
 
 	remote_port[0] = '\0';
-
 	ret = getnameinfo_all(&beentry->clientaddr.addr,
 						  beentry->clientaddr.salen,
 						  NULL, 0,

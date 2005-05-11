@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.93 2005/05/09 11:31:33 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.94 2005/05/11 01:41:40 neilc Exp $
  * ----------
  */
 #include "postgres.h"
@@ -162,6 +162,7 @@ static void pgstat_exit(SIGNAL_ARGS);
 static void pgstat_die(SIGNAL_ARGS);
 static void pgstat_beshutdown_hook(int code, Datum arg);
 
+static PgStat_StatDBEntry *pgstat_get_db_entry(int databaseid);
 static int	pgstat_add_backend(PgStat_MsgHdr *msg);
 static void pgstat_sub_backend(int procpid);
 static void pgstat_drop_database(Oid databaseid);
@@ -653,6 +654,9 @@ pgstat_bestart(void)
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_BESTART);
+	msg.m_databaseid = MyDatabaseId;
+	msg.m_userid = GetSessionUserId();
+	memcpy(&msg.m_clientaddr, &MyProcPort->raddr, sizeof(msg.m_clientaddr));
 	pgstat_send(&msg, sizeof(msg));
 
 	/*
@@ -748,6 +752,7 @@ pgstat_report_tabstat(void)
 		pgStatXactRollback = 0;
 
 		pgstat_setheader(&tsmsg->m_hdr, PGSTAT_MTYPE_TABSTAT);
+		tsmsg->m_databaseid = MyDatabaseId;
 		pgstat_send(tsmsg, len);
 	}
 
@@ -825,7 +830,7 @@ pgstat_vacuum_tabstat(void)
 		}
 
 		/*
-		 * Add this tables Oid to the message
+		 * Add this table's Oid to the message
 		 */
 		msg.m_tableid[msg.m_nentries++] = tabentry->tableid;
 		nobjects++;
@@ -854,6 +859,7 @@ pgstat_vacuum_tabstat(void)
 			+msg.m_nentries * sizeof(Oid);
 
 		pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_TABPURGE);
+		msg.m_databaseid = MyDatabaseId;
 		pgstat_send(&msg, len);
 	}
 
@@ -933,9 +939,8 @@ pgstat_drop_database(Oid databaseid)
 	if (pgStatSock < 0)
 		return;
 
-	msg.m_databaseid = databaseid;
-
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_DROPDB);
+	msg.m_databaseid = databaseid;
 	pgstat_send(&msg, sizeof(msg));
 }
 
@@ -960,6 +965,7 @@ pgstat_reset_counters(void)
 			  errmsg("must be superuser to reset statistics counters")));
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_RESETCOUNTER);
+	msg.m_databaseid = MyDatabaseId;
 	pgstat_send(&msg, sizeof(msg));
 }
 
@@ -1176,8 +1182,6 @@ pgstat_count_xact_rollback(void)
 PgStat_StatDBEntry *
 pgstat_fetch_stat_dbentry(Oid dbid)
 {
-	PgStat_StatDBEntry *dbentry;
-
 	/*
 	 * If not done for this transaction, read the statistics collector
 	 * stats file into some hash tables.
@@ -1185,15 +1189,11 @@ pgstat_fetch_stat_dbentry(Oid dbid)
 	backend_read_statsfile();
 
 	/*
-	 * Lookup the requested database
+	 * Lookup the requested database; return NULL if not found
 	 */
-	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
-												 (void *) &dbid,
-												 HASH_FIND, NULL);
-	if (dbentry == NULL)
-		return NULL;
-
-	return dbentry;
+	return (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
+											  (void *) &dbid,
+											  HASH_FIND, NULL);
 }
 
 
@@ -1298,9 +1298,6 @@ pgstat_setheader(PgStat_MsgHdr *hdr, int mtype)
 	hdr->m_type = mtype;
 	hdr->m_backendid = MyBackendId;
 	hdr->m_procpid = MyProcPid;
-	hdr->m_databaseid = MyDatabaseId;
-	hdr->m_userid = GetSessionUserId();
-	memcpy(&hdr->m_clientaddr, &MyProcPort->raddr, sizeof(hdr->m_clientaddr));
 }
 
 
@@ -1976,10 +1973,8 @@ pgstat_die(SIGNAL_ARGS)
 static int
 pgstat_add_backend(PgStat_MsgHdr *msg)
 {
-	PgStat_StatDBEntry *dbentry;
 	PgStat_StatBeEntry *beentry;
 	PgStat_StatBeDead *deadbe;
-	bool		found;
 
 	/*
 	 * Check that the backend ID is valid
@@ -1995,19 +1990,19 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	 * Get the slot for this backendid.
 	 */
 	beentry = &pgStatBeTable[msg->m_backendid - 1];
-	if (beentry->databaseid != InvalidOid)
-	{
-		/*
-		 * If the slot contains the PID of this backend, everything is
-		 * fine and we got nothing to do.
-		 */
-		if (beentry->procpid == msg->m_procpid)
-			return 0;
-	}
+
+	/*
+	 * If the slot contains the PID of this backend, everything is
+	 * fine and we have nothing to do. Note that all the slots are
+	 * zero'd out when the collector is started. We assume that a slot
+	 * is "empty" iff procpid == 0.
+	 */
+	if (beentry->procpid > 0 && beentry->procpid == msg->m_procpid)
+		return 0;
 
 	/*
 	 * Lookup if this backend is known to be dead. This can be caused due
-	 * to messages arriving in the wrong order - i.e. Postmaster's BETERM
+	 * to messages arriving in the wrong order - e.g. postmaster's BETERM
 	 * message might have arrived before we received all the backends
 	 * stats messages, or even a new backend with the same backendid was
 	 * faster in sending his BESTART.
@@ -2024,64 +2019,77 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	 * Backend isn't known to be dead. If it's slot is currently used, we
 	 * have to kick out the old backend.
 	 */
-	if (beentry->databaseid != InvalidOid)
+	if (beentry->procpid > 0)
 		pgstat_sub_backend(beentry->procpid);
 
-	/*
-	 * Put this new backend into the slot.
-	 */
-	beentry->databaseid = msg->m_databaseid;
+	/* Must be able to distinguish between empty and non-empty slots */
+	Assert(msg->m_procpid > 0);
+
+	/* Put this new backend into the slot */
 	beentry->procpid = msg->m_procpid;
-	beentry->userid = msg->m_userid;
 	beentry->start_sec = 
 		GetCurrentAbsoluteTimeUsec(&beentry->start_usec);
 	beentry->activity_start_sec = 0;
 	beentry->activity_start_usec = 0;
-	memcpy(&beentry->clientaddr, &msg->m_clientaddr, sizeof(beentry->clientaddr));
-	MemSet(beentry->activity, 0, PGSTAT_ACTIVITY_SIZE);
+	beentry->activity[0] = '\0';
 
 	/*
-	 * Lookup or create the database entry for this backend's DB.
+	 * We can't initialize the rest of the data in this slot until we
+	 * see the BESTART message. Therefore, we set the database and
+	 * user to sentinel values, to indicate "undefined". There is no
+	 * easy way to do this for the client address, so make sure to
+	 * check that the database or user are defined before accessing
+	 * the client address.
 	 */
-	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
-										   (void *) &(msg->m_databaseid),
-												 HASH_ENTER, &found);
-	if (dbentry == NULL)
+	beentry->userid = InvalidOid;
+	beentry->databaseid = InvalidOid;
+
+	return 0;
+}
+
+/*
+ * Lookup the hash table entry for the specified database. If no hash
+ * table entry exists, initialize it.
+ */
+static PgStat_StatDBEntry *
+pgstat_get_db_entry(int databaseid)
+{
+	PgStat_StatDBEntry *result;
+	bool found;
+
+	/* Lookup or create the hash table entry for this database */
+	result = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
+												&databaseid,
+												HASH_ENTER, &found);
+	if (result == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-			 errmsg("out of memory in statistics collector --- abort")));
+				 errmsg("out of memory in statistics collector --- abort")));
 
-	/*
-	 * If not found, initialize the new one.
-	 */
+	/* If not found, initialize the new one. */
 	if (!found)
 	{
 		HASHCTL		hash_ctl;
 
-		dbentry->tables = NULL;
-		dbentry->n_xact_commit = 0;
-		dbentry->n_xact_rollback = 0;
-		dbentry->n_blocks_fetched = 0;
-		dbentry->n_blocks_hit = 0;
-		dbentry->n_connects = 0;
-		dbentry->destroy = 0;
+		result->tables = NULL;
+		result->n_xact_commit = 0;
+		result->n_xact_rollback = 0;
+		result->n_blocks_fetched = 0;
+		result->n_blocks_hit = 0;
+		result->destroy = 0;
 
 		memset(&hash_ctl, 0, sizeof(hash_ctl));
 		hash_ctl.keysize = sizeof(Oid);
 		hash_ctl.entrysize = sizeof(PgStat_StatTabEntry);
 		hash_ctl.hash = oid_hash;
-		dbentry->tables = hash_create("Per-database table",
+		result->tables = hash_create("Per-database table",
 									  PGSTAT_TAB_HASH_SIZE,
 									  &hash_ctl,
 									  HASH_ELEM | HASH_FUNCTION);
 	}
 
-	/* Count the number of connects to the database */
-	dbentry->n_connects++;
-
-	return 0;
+	return result;
 }
-
 
 /* ----------
  * pgstat_sub_backend() -
@@ -2102,8 +2110,7 @@ pgstat_sub_backend(int procpid)
 	 */
 	for (i = 0; i < MaxBackends; i++)
 	{
-		if (pgStatBeTable[i].databaseid != InvalidOid &&
-			pgStatBeTable[i].procpid == procpid)
+		if (pgStatBeTable[i].procpid == procpid)
 		{
 			/*
 			 * That's him. Add an entry to the known to be dead backends.
@@ -2133,7 +2140,7 @@ pgstat_sub_backend(int procpid)
 			/*
 			 * Declare the backend slot empty.
 			 */
-			pgStatBeTable[i].databaseid = InvalidOid;
+			pgStatBeTable[i].procpid = 0;
 			return;
 		}
 	}
@@ -2263,7 +2270,7 @@ pgstat_write_statsfile(void)
 
 	for (i = 0; i < MaxBackends; i++)
 	{
-		if (pgStatBeTable[i].databaseid != InvalidOid)
+		if (pgStatBeTable[i].procpid > 0)
 		{
 			fputc('B', fpout);
 			fwrite(&pgStatBeTable[i], sizeof(PgStat_StatBeEntry), 1, fpout);
@@ -2624,7 +2631,20 @@ backend_read_statsfile(void)
 static void
 pgstat_recv_bestart(PgStat_MsgBestart *msg, int len)
 {
-	pgstat_add_backend(&msg->m_hdr);
+	PgStat_StatBeEntry *entry;
+
+	/*
+	 * If the backend is known dead, we ignore the message -- we don't
+	 * want to update the backend entry's state since this BESTART
+	 * message refers to an old, dead backend
+	 */
+	if (pgstat_add_backend(&msg->m_hdr) != 0)
+		return;
+
+	entry = &(pgStatBeTable[msg->m_hdr.m_backendid - 1]);
+	entry->userid = msg->m_userid;
+	memcpy(&entry->clientaddr, &msg->m_clientaddr, sizeof(entry->clientaddr));
+	entry->databaseid = msg->m_databaseid;
 }
 
 
@@ -2690,14 +2710,7 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 	if (pgstat_add_backend(&msg->m_hdr) < 0)
 		return;
 
-	/*
-	 * Lookup the database in the hashtable.
-	 */
-	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
-									 (void *) &(msg->m_hdr.m_databaseid),
-												 HASH_FIND, NULL);
-	if (!dbentry)
-		return;
+	dbentry = pgstat_get_db_entry(msg->m_databaseid);
 
 	/*
 	 * If the database is marked for destroy, this is a delayed UDP packet
@@ -2782,14 +2795,7 @@ pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len)
 	if (pgstat_add_backend(&msg->m_hdr) < 0)
 		return;
 
-	/*
-	 * Lookup the database in the hashtable.
-	 */
-	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
-									 (void *) &(msg->m_hdr.m_databaseid),
-												 HASH_FIND, NULL);
-	if (!dbentry)
-		return;
+	dbentry = pgstat_get_db_entry(msg->m_databaseid);
 
 	/*
 	 * If the database is marked for destroy, this is a delayed UDP packet
@@ -2832,11 +2838,7 @@ pgstat_recv_dropdb(PgStat_MsgDropdb *msg, int len)
 	/*
 	 * Lookup the database in the hashtable.
 	 */
-	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
-										   (void *) &(msg->m_databaseid),
-												 HASH_FIND, NULL);
-	if (!dbentry)
-		return;
+	dbentry = pgstat_get_db_entry(msg->m_databaseid);
 
 	/*
 	 * Mark the database for destruction.
@@ -2846,9 +2848,9 @@ pgstat_recv_dropdb(PgStat_MsgDropdb *msg, int len)
 
 
 /* ----------
- * pgstat_recv_dropdb() -
+ * pgstat_recv_resetcounter() -
  *
- *	Arrange for dead database removal
+ *	Reset the statistics for the specified database.
  * ----------
  */
 static void
@@ -2866,15 +2868,11 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 	/*
 	 * Lookup the database in the hashtable.
 	 */
-	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
-									 (void *) &(msg->m_hdr.m_databaseid),
-												 HASH_FIND, NULL);
-	if (!dbentry)
-		return;
+	dbentry = pgstat_get_db_entry(msg->m_databaseid);
 
 	/*
-	 * We simply throw away all the databases table entries by recreating
-	 * a new hash table for them.
+	 * We simply throw away all the database's table entries by
+	 * recreating a new hash table for them.
 	 */
 	if (dbentry->tables != NULL)
 		hash_destroy(dbentry->tables);
@@ -2884,7 +2882,6 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 	dbentry->n_xact_rollback = 0;
 	dbentry->n_blocks_fetched = 0;
 	dbentry->n_blocks_hit = 0;
-	dbentry->n_connects = 0;
 	dbentry->destroy = 0;
 
 	memset(&hash_ctl, 0, sizeof(hash_ctl));
