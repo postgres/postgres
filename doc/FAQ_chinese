@@ -1,0 +1,610 @@
+
+   PostgreSQL ³£¼ûÎÊÌâ£¨FAQ£© ×î½ü¸üÐÂ£º2003 Äê 01 ÔÂ 06 ÈÕ ÐÇÆÚÒ»
+   22:27:35 CST Ä¿Ç°Î¬»¤ÈËÔ±£ºBruce Momjian (pgman@candle.pha.pa.us )
+   ÖÐÎÄ°æÎ¬»¤ÈËÔ±£ººÎÎ°Æ½ £¨laser@pgsqldb.com £©
+   ±¾ÎÄµµµÄ×îÐÂ°æ±¾¿ÉÒÔÔÚhttp:
+   //www.postgresql.org/files/documentation/faqs/FAQ.html ²é¿´¡£
+   ²Ù×÷ÏµÍ³Æ½Ì¨Ïà¹ØµÄÎÊÌâÔÚhttp://www.postgresql.org/docs/faq/Àï»Ø´ð¡£
+   ----------------------------------------------------------------------
+   -- ³£¼ûÎÊÌâ 1.1 <#1.1>) PostgreSQL ÊÇÊ²Ã´£¿¸ÃÔõÃ´·¢Òô£¿ 1.2 <#1.2>)
+   PostgreSQL µÄ°æÈ¨ÊÇÊ²Ã´? 1.3 <#1.3>) PostgreSQL ÔËÐÐÔÚÊ²Ã´ Unix
+   Æ½Ì¨ÉÏ£¿ 1.4 <#1.4>) ¿ÉÓÃµÄ·Ç Unix Æ½Ì¨ÓÐÄÇÐ©£¿ 1.5 <#1.5>)
+   ÎÒ´ÓÄÄÀïÄÜµÃµ½ PostgreSQL£¿ 1.6 <#1.6>) ÎÒ´ÓÄÄÀïÄÜµÃµ½¶Ô PostgreSQL
+   µÄÖ§³Ö£¿ 1.7 <#1.7>) PostgreSQL ×îÐÂµÄ°æ±¾ÊÇÊ²Ã´£¿ 1.8 <#1.8>)
+   ÓÐÄÄÐ©¿ÉÓÃµÄ PostgreSQL µÄÎÄµµ£¿ 1.9 <#1.9>) ÎÒÈçºÎÁË½âÒÑÖªµÄ BUG
+   »òÈ±Ê§µÄÌØÐÔ£¿ 1.10 <#1.10>) ÎÒÓ¦¸ÃÔõÑùÑ§Ï° SQL £¿ 1.11 <#1.11>)
+   PostgreSQL ÊÇ Y2K ¼æÈÝµÄÂð£¿ 1.12 <#1.12>) ÎÒÓ¦¸ÃÔõÑù¼ÓÈë¿ª·¢¶ÓÎé£¿
+   1.13 <#1.13>) ÎÒÓ¦¸ÃÔõÑùÌá½»Ò»¸ö BUG ±¨¸æ£¿ 1.14 <#1.14>) PostgreSQL
+   ºÍÆäËû DBMS ±ÈÆðÀ´ÈçºÎ£¿ 1.15 <#1.15>) ÎÒÓ¦¸ÃÔõÑùÔÞÖú PostgreSQL £¿
+   ÓÃ»§¿Í»§¶ËÎÊÌâ 2.1 <#2.1>) ÓÐ PostgreSQL µÄ ODBC Çý¶¯³ÌÐòÃ´£¿ 2.2
+   <#2.2>) ÓÐÊ²Ã´¹¤¾ß¿ÉÒÔ°Ñ PostgreSQL ÓÃÓÚ Web Ò³Ãæ£¿ 2.3 <#2.3>)
+   PostgreSQL ÓµÓÐÍ¼ÐÎÓÃ»§½çÃæÂð£¿ 2.4 <#2.4>) ÎÒÃÇ¿ÉÒÔÓÃÊ²Ã´ÓïÑÔºÍ
+   PostgreSQL ´ò½»µÀ£¿ ÏµÍ³¹ÜÀíÎÊÌâ 3.1 <#3.1>) ÎÒÔõÑùÄÜ°Ñ PostgreSQL
+   ×°ÔÚ /usr/local/pgsql ÒÔÍâµÄµØ·½£¿ 3.2 <#3.2>) µ±ÎÒÔËÐÐ postmaster
+   Ê±£¬³öÏÖ/ Bad System Call/£¨ÏµÍ³µ÷ÓÃ´í£© »ò Core Dumped ´íÎó¡£ÎªÊ²Ã´£¿
+   3.3 <#3.3>) µ±ÎÒÊÔÍ¼ÔËÐÐ postmaster Ê±£¬³öÏÖ /IpcMemoryCreate/
+   ´íÎó¡£Îª Ê²Ã´£¿ 3.4 <#3.4>) µ±ÎÒÊÔÍ¼ÔËÐÐ postmaster Ê±£¬³öÏÖ
+   /IpcSemaphoreCreate/ ´íÎó¡£ ÎªÊ²Ã´£¿ 3.5 <#3.5>)
+   ÎÒÈçºÎ¿ØÖÆÀ´×ÔÆäËûÖ÷»úµÄÁ¬½Ó£¿ 3.6 <#3.6>)
+   ÎÒÔõÑùµ÷ÕûÊý¾Ý¿âÒýÇæÒÔ»ñµÃ¸üºÃµÄÐÔÄÜ£¿ 3.7 <#3.7>) PostgreSQL
+   Àï¿ÉÒÔ»ñµÃÊ²Ã´ÑùµÄµ÷ÊÔÌØÐÔ£¿ 3.8 <#3.8>)
+   ÎªÊ²Ã´ÔÚÊÔÍ¼Á¬½ÓµÇÂ¼Ê±ÊÕµ½¡°Sorry, too many clients¡± ÏûÏ¢£¿ 3.9
+   <#3.9>) pgsql_tmp Ä¿Â¼Àï¶¼ÓÐÐ©Ê²Ã´£¿ 3.10 <#3.10>) ÎªÊ²Ã´ÒªÔÚÉý¼¶
+   PostgreSQL ·¢²¼°æ±¾Ê±×ö dump ºÍ restore £¿ ²Ù×÷ÎÊÌâ 4.1 <#4.1>)
+   ¶þ½øÖÆÓÎ±êºÍÆÕÍ¨ÓÎ±êÖ®¼äµÄÇø±ðÊÇÊ²Ã´£¿ 4.2 <#4.2>)
+   ÈçºÎÖ»Ñ¡ÔñÒ»¸ö²éÑ¯½á¹ûµÄÍ·¼¸ÐÐ£¿ 4.3 <#4.3>)
+   ÎÒÈçºÎ»ñÈ¡Ò»¸öÊý¾Ý¿âÖÐ±íµÄÁÐ±í£¬»òÕßÊÇÆäËûÎÒÄÜÔÚ /psql /Àï¿´
+   µ½µÄ¶«Î÷£¿ 4.4 <#4.4>) ÔõÑù´Ó±íÀïÃæÉ¾³ýÒ»ÁÐ£¿ 4.5 <#4.5>)
+   Ò»ÐÐ£¬Ò»¸ö±í£¬Ò»¸ö¿âµÄ×î´ó³ß´çÊÇ¶àÉÙ£¿ 4.6 <#4.6>)
+   ´æ´¢Ò»¸öµäÐÍµÄÎÄ±¾ÎÄ¼þÀïµÄÊý¾ÝÐèÒª¶àÉÙ´ÅÅÌ¿Õ¼ä£¿ 4.7 <#4.7>)
+   ÈçºÎ²é¿´±í¡¢Ë÷Òý¡¢Êý¾Ý¿âÒÔ¼°ÓÃ»§µÄ¶¨Òå£¿ 4.8 <#4.8>)
+   ÎÒµÄ²éÑ¯ºÜÂý»òÕßÃ»ÓÐÀûÓÃË÷Òý¡£ÎªÊ²Ã´£¿ 4.9 <#4.9>)
+   ÎÒÈçºÎ²ÅÄÜ¿´µ½²éÑ¯ÓÅ»¯Æ÷ÊÇÔõÑù´¦ÀíÎÒµÄ²éÑ¯µÄ£¿ 4.10 <#4.10>) R-tree
+   Ë÷ÒýÊÇÊ²Ã´£¿ 4.11 <#4.11>) Ê²Ã´ÊÇ»ùÒò²éÑ¯ÓÅ»¯£¨Genetic Query
+   Optimization£©£¿ 4.12 <#4.12>)
+   ÎÒÔõÑù×öÕýÔò±í´ïÊ½ËÑË÷ºÍ´óÐ¡Ð´ÎÞ¹ØµÄÕýÔò±í´ïÊ½²éÕÒ£¿ÔõÑùÀû
+   ÓÃË÷Òý½øÐÐ´óÐ¡Ð´ÎÞ¹Ø²éÕÒ£¿ 4.13 <#4.13>)
+   ÔÚÒ»¸ö²éÑ¯Àï£¬ÎÒÔõÑù¼ì²âÒ»¸ö×Ö¶ÎÊÇ·ñÎª NULL£¿ 4.14 <#4.14>)
+   ¸÷ÖÖ×Ö·ûÀàÐÍÖ®¼äÓÐÊ²Ã´²»Í¬£¿ 4.15.1 <#4.15.1>)
+   ÎÒÔõÑù´´½¨Ò»¸öÐòÁÐºÅ/×Ô¶¯µÝÔöµÄ×Ö¶Î£¿ 4.15.2 <#4.15.2>)
+   ÎÒÈçºÎ»ñµÃÒ»¸ö²åÈëµÄÐòÁÐºÅµÄÖµ£¿ 4.15.3 <#4.15.3>) Ê¹ÓÃ currval() ºÍ
+   nextval() »áµ¼ÖÂºÍÆäËûÓÃ»§µÄÎÉÂÒÇé¿ö £¨race condition£©Âð£¿ 4.15.4
+   <#4.15.4>) ÎªÊ²Ã´²»ÔÚÊÂÎñÒì³£ÖÐÖ¹ºóÖØÓÃÐòÁÐºÅÄØ£¿ÎªÊ²Ã´ÔÚÐòÁÐºÅ×Ö
+   ¶ÎµÄÈ¡ÖµÖÐ´æÔÚ¼ä¶ÏÄØ£¿ 4.16 <#4.16>) Ê²Ã´ÊÇ OID£¿Ê²Ã´ÊÇ TID £¿ 4.17
+   <#4.17>) PostgreSQL Ê¹ÓÃµÄÒ»Ð©ÊõÓïµÄº¬ÒåÊÇÊ²Ã´£¿ 4.18 <#4.18>)
+   ÎªÊ²Ã´ÎÒÊÕµ½´íÎó¡°/ERROR: Memory exhausted in AllocSetAlloc()/¡±£¿
+   4.19 <#4.19>) ÎÒÈçºÎ²ÅÄÜÖªµÀËùÔËÐÐµÄ PostgreSQL µÄ°æ±¾£¿ 4.20 <#4.20>)
+   ÎªÊ²Ã´ÎÒµÄ´ó¶ÔÏó²Ù×÷µ¼ÖÂ´íÎó¡°/invalid large obj
+   descriptor¡±£¨·Ç·¨µÄ´ó¶ÔÏóÃèÊö·û£©/£¿ 4.21 <#4.21>)
+   ÎÒÈçºÎ´´½¨Ò»¸öÈ±Ê¡ÖµÊÇµ±Ç°Ê±¼äµÄ×Ö¶Î£¿ 4.22 <#4.22>) ÎªÊ²Ã´Ê¹ÓÃ IN
+   µÄ×Ó²éÑ¯ÕâÃ´Âý£¿ 4.23 <#4.23>) ÈçºÎ½øÐÐ outer join £¨ÍâÁ¬½Ó£©£¿ 4.24
+   <#4.24>) ÈçºÎÊ¹ÓÃÉæ¼°¶à¸öÊý¾Ý¿âµÄ²éÑ¯£¿ 4.25 <#4.25>)
+   ÈçºÎÈÃº¯Êý·µ»Ø¶àÐÐ»ò¶àÁÐ£¿ 4.26 <#4.26>) ÎªÊ²Ã´ÔÚ PL/PgSQL
+   º¯ÊýÖÐ²»ÄÜ¿É¿¿µØ´´½¨»òÉ¾³ýÁÙÊ±±í£¿ 4.27 <#4.27>) ÓÐÄÄÐ©Êý¾Ý¸´ÖÆÑ¡Ïî£¿
+   4.28 <#4.28>) ÓÐÄÄÐ©Êý¾Ý¼ÓÃÜÑ¡Ïî£¿ À©Õ¹ PostgreSQL 5.1 <#5.1>)
+   ÎÒÐ´ÁËÒ»¸öÓÃ»§¶¨Òåº¯Êý¡£µ±ÎÒÔÚ/ psql/ ÀïÔËÐÐÊ±£¬ÎªÊ²Ã´»áµ¼ÖÂ core
+   dump£¿ 5.2 <#5.2>) ÎÒÈçºÎÄÜ¸ø PostgreSQL
+   ¹±Ï×Ò»Ð©Í¦²»´íµÄÐÂÀàÐÍºÍº¯Êý£¿ 5.3 <#5.3>) ÎÒÔõÑùÐ´Ò»¸ö·µ»ØÒ»Ìõ¼ÇÂ¼µÄ
+   C º¯Êý£¿ 5.4 <#5.4>)
+   ÎÒÐÞ¸ÄÁËÒ»¸öÔ´ÎÄ¼þ£¬ÎªÊ²Ã´ÖØÐÂ±àÒëºóÃ»ÓÐ¿´µ½¸Ä±ä£¿
+   ----------------------------------------------------------------------
+   -- ³£¼ûÎÊÌâ 1.1) PostgreSQL ÊÇÊ²Ã´£¿¸ÃÔõÃ´·¢Òô£¿ PostgreSQL ¶Á×÷
+   /Post-Gres-Q-L// ¡£/ PostgreSQL ÊÇÏÂÒ»´ú DBMS µÄÑÐ¾¿ÔÐÍ POSTGRES
+   Êý¾Ý¿â¹ÜÀíÏµÍ³µÄÔöÇ¿°æ¡£ PostgreSQL ÔÚ±£³Ö POSTGRES
+   µÄÇ¿´óµÄÊý¾ÝÄ£ÐÍºÍ·á¸»µÄÊý¾ÝÀàÐÍµÄ»ù´¡ÉÏ£¬ÓÃ Ò»¸öÀ©Õ¹ÁËµÄ SQL
+   ×Ó¼¯È¡´úÁËÔÏÈµÄ PostQuel ²éÑ¯ÓïÑÔ¡£PostgreSQL ÊÇ×ÔÓÉµÄ
+   ²¢ÇÒËùÓÐÔ´´úÂë¶¼¿ÉÒÔ»ñµÃ¡£ PostgreSQL µÄ¿ª·¢ÓÉ²Î¼Ó PostgreSQL
+   ¿ª·¢ÓÊ¼þÁÐ±íµÄÒ»¸ö¿ª·¢ÈËÔ±Ð¡×é½øÐÐ¡£ Ä¿Ç°µÄÐµ÷ÈËÊÇ Marc G. Fournier
+   £¨scrappy@postgreSQL.org £©¡££¨¹ØÓÚÈçºÎ¼ÓÈë²Î¼û1.6½Ú£©¡£Õâ¸ö¶ÓÎé
+   ÏÖÔÚ¸ºÔð PostgreSQL µÄËùÓÐ¿ª·¢¡£ PostgreSQL 1.01 µÄ×÷ÕßÊÇ Andrew Yu ºÍ
+   Jolly Chen¡£»¹ÓÐÐí¶àÆäËûÈËÎªÒÆÖ²£¬
+   ²âÊÔ£¬µ÷ÊÔºÍÔöÇ¿´úÂë×öÁË´óÁ¿¹±Ï×¡£PostgreSQL µÄ×î³õÆðÔ´
+   Postgres£¬ÊÇÔÚ¼Ó ÖÝ´óÑ§²®¿ËÀû·ÖÐ£µÄ Michael Stonebraker
+   ½ÌÊÚµÄÖ¸µ¼ÏÂ£¬ÓÉÐí¶àÑÐ¾¿Éú£¬±¾¿Æ ÉúºÍ±à³ÌÖ°Ô±Íê³ÉµÄ¡£
+   Õâ¸öÈí¼þ×î³õÔÚ²®¿ËÀûµÄÃû×ÖÊÇ Postgres¡£ÔÚ 1995 Äê£¬µ±Ôö¼ÓÁË SQL
+   ¹¦ÄÜºó£¬ ËüµÄÃû×Ö¸Ä³É Postgres95¡£ÔÚ 1996ÄêÄ©£¬²Å¸ÄÃûÎª PostgreSQL¡£
+   1.2) PostgreSQL µÄ°æÈ¨ÊÇÊ²Ã´? PostgreSQL ÊÜÏÂÃæµÄ°æÈ¨Ô¼Êø¡£ PostgreSQL
+   Êý¾Ý¿â¹ÜÀíÏµÍ³ £¨PostgreSQL Data Base Management System£©
+   ²¿·Ö°æÈ¨£¨c£©1996-2002£¬PostgreSQL È«Çò¿ª·¢Ð¡×é ²¿·Ö°æÈ¨£¨c£©1994-6
+   ¼ÓÖÝ´óÑ§¶ÊÂ £¨Portions copyright (c) 1996-2002, PostgreSQL Global
+   Development Group Portions Copyright (c) 1994-6 Regents of the
+   University of California£©
+   ÔÊÐíÎªÈÎºÎÄ¿µÄÊ¹ÓÃ£¬¿½±´£¬ÐÞ¸ÄºÍ·Ö·¢Õâ¸öÈí¼þºÍËüµÄÎÄµµ¶ø²»ÊÕÈ¡ÈÎºÎ·ÑÓÃ
+   £¬
+   ²¢ÇÒÎÞÐëÇ©ÊðÒò´Ë¶ø²úÉúµÄÖ¤Ã÷£¬Ç°ÌáÊÇÉÏÃæµÄ°æÈ¨ÉùÃ÷ºÍ±¾¶ÎÒÔ¼°ÏÂÃæÁ½¶ÎÎÄ
+   ×Ö ³öÏÖÔÚËùÓÐ¿½±´ÖÐ¡£ £¨Permission to use, copy, modify, and
+   distribute this software and its documentation for any purpose,
+   without fee, and without a written agreement is hereby granted,
+   provided that the above copyright notice and this paragraph and the
+   following two paragraphs appear in all copies.£©
+   ÔÚÈÎºÎÇé¿öÏÂ£¬¼ÓÖÝ´óÑ§¶¼²»³Ðµ£ÒòÊ¹ÓÃ´ËÈí¼þ¼°ÆäÎÄµµ¶øµ¼ÖÂµÄ¶ÔÈÎºÎµ±ÊÂÈË
+   µÄ
+   Ö±½ÓµÄ£¬¼ä½ÓµÄ£¬ÌØÊâµÄ£¬¸½¼ÓµÄ»òÕßÏà°é¶øÉúµÄËð»µ£¬°üÀ¨ÀûÒæËðÊ§µÄÔðÈÎ£¬
+   ¼´ Ê¹¼ÓÖÝ´óÑ§ÒÑ¾½¨ÒéÁËÕâÐ©ËðÊ§µÄ¿ÉÄÜÐÔÊ±Ò²ÊÇÈç´Ë¡£ £¨IN NO EVENT SHALL
+   THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR DIRECT,
+   INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING
+   LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+   DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED
+   OF THE POSSIBILITY OF SUCH DAMAGE.£©
+   ¼ÓÖÝ´óÑ§Ã÷È··ÅÆúÈÎºÎ±£Ö¤£¬°üÀ¨µ«²»¾ÖÏÞÓÚÄ³Ò»ÌØ¶¨ÓÃÍ¾µÄÉÌÒµºÍÀûÒæµÄÒþº¬
+   ±£
+   Ö¤¡£ÕâÀïÌá¹©µÄÕâ·ÝÈí¼þÊÇ»ùÓÚ¡°µ±×÷ÊÇ¡±µÄ»ù´¡µÄ£¬Òò¶ø¼ÓÖÝ´óÑ§Ã»ÓÐÔðÈÎÌá
+   ¹©Î¬ »¤£¬Ö§³Ö£¬¸üÐÂ£¬ÔöÇ¿»òÕßÐÞ¸ÄµÄ·þÎñ¡£ £¨THE UNIVERSITY OF
+   CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT
+   LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+   A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS"
+   BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE
+   MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.£©
+   ÉÏÃæ¾ÍÊÇ BSD °æÈ¨ÉùÃ÷£¬Ò»¸ö¾µäµÄ¿ªÔ´°æÈ¨ÉùÃ÷¡£Ëü¶ÔÔ´´úÂëµÄÊ¹ÓÃÎ´×÷ÈÎºÎ
+   ÏÞÖÆ¡£ÎÒÃÇÏ²»¶Ëü²¢ÇÒ²»´òËã¸Ä±äËü¡£ 1.3) PostgreSQL ÔËÐÐÔÚÊ²Ã´ Unix
+   Æ½Ì¨ÉÏ£¿ Ò»°ãËµÀ´£¬Ò»¸öÏÖ´úµÄ UNIX ¼æÈÝµÄÆ½Ì¨¶¼ÄÜÔËÐÐ PostgreSQL
+   ¡£ÔÚ°²×°Ö¸ÄÏÀïÁÐ ³öÁË·¢²¼Ê±¾¹ýÃ÷È·²âÊÔµÄÆ½Ì¨¡£ 1.4) ¿ÉÓÃµÄ·Ç Unix
+   Æ½Ì¨ÓÐÄÄÐ©£¿ ¿Í»§¶Ë °Ñ libpq C
+   ¿â£¬psql£¬ÆäËû½Ó¿ÚºÍ¿Í»§¶ËÓ¦ÓÃ³ÌÐò±àÒë³É¿ÉÒÔÔÚ MS Windows Æ½
+   Ì¨ÉÏÔËÐÐÊÇ¿ÉÄÜµÄ¡£ÕâÖÖÇé¿öÏÂ£¬¿Í»§¶ËÔÚ MS Windows ÉÏÔËÐÐ£¬²¢ÇÒÍ¨¹ý
+   TCP/IP ÓëÒ»¸öÔËÐÐÔÚÎÒÃÇÖ§³ÖµÄ Unix
+   Æ½Ì¨ÉÏµÄ·þÎñÆ÷½øÐÐÍ¨Ñ¶¡£·¢²¼°æ±¾ÖÐ°ü º¬Ò»¸öÎÄ¼þ win32.mak ÓÃÓÚÉú³É
+   Win32 libpq ¿âºÍ psql ¡£PostgreSQL Ò²¿ÉÒÔ ºÍ ODBC ¿Í»§¶ËÍ¨Ñ¶¡£ ·þÎñÆ÷
+   Êý¾Ý¿â·þÎñÆ÷ÏÖÔÚ¿ÉÒÔÍ¨¹ý Cygwin £¬Cygnus µÄ Unix/NT ÒÆÖ²¿âÔÚ Windows
+   NT ºÍ Win2k ÉÏÔËÐÐ¡£²ÎÔÄ·¢²¼°æ±¾ÀïµÄ See /pgsql/doc/FAQ_MSWIN/ ÎÄ¼þ»ò
+   http://www.PostgreSQL.org/docs/faq-mswin.html ¡£ ÒÆÖ²µ½ MS Win
+   NT/2000/XP µÄ±¾»ú°æµÄ¹¤×÷ÕýÔÚ½øÐÐ¡£ 1.5) ÎÒ´ÓÄÄÀïÄÜµÃµ½ PostgreSQL£¿
+   PostgreSQL µÄÖ÷ÄäÃûFTPÕ¾µãÊÇ
+   ftp://ftp.PostgreSQL.org/pub£¬¾µÏñÕ¾µã¿ÉÒÔ ²Î¿¼ÎÒÃÇÍøÕ¾µÄÖ÷Ò³¡£ 1.6)
+   ÎÒ´ÓÄÄÀïÄÜµÃµ½¶Ô PostgreSQL µÄÖ§³Ö£¿
+   Ö÷ÒªµÄÓÊ¼þÁÐ±íÊÇ£ºpgsql-general@postgreSQL.org ¡£¿ÉÒÔÔÚÄÇÀïÌÖÂÛÓÐ¹Ø
+   PostgreSQL µÄ ÎÊÌâ¡£Òª¼ÓÈëÁÐ±í£¬·¢Ò»·âÓÊ¼þÄÚÈÝ£¨²»ÊÇÖ÷ÌâÐÐ£©Îª
+   subscribe end µÄÓÊ¼þµ½ pgsql-general-request@postgreSQL.org ¡£
+   »¹¿ÉÒÔ»ñÈ¡ÕªÒªÁÐ±í¡£Òª¼ÓÈëÕâ¸öÁÐ±í£¬·¢ÓÊ¼þµ½£ºpgsql-general-digest-
+   request@postgreSQL.org £¬ÆäÄÚÈÝÎª£º subscribe end Ã¿µ±Ö÷ÁÐ±í´ïµ½´óÔ¼
+   30k µÄÏûÏ¢ÄÚÈÝÊ±£¬ÕªÒª¾Í·¢ËÍ¸øÕâ¸öÁÐ±íµÄ³ÉÔ±¡£
+   »¹¿ÉÒÔ²Î¼Ó³ô³æÓÊ¼þÁÐ±í¡£Òª¼ÓÈëÕâ¸öÁÐ±í£¬·¢ËÍÒ»¸öÓÊ¼þµ½
+   bugs-request@postgreSQL.org £¬ÄÚÈÝÎª£º subscribe end
+   »¹¿ÉÒÔ²Î¼Ó¿ª·¢ÈËÔ±ÓÊ¼þÁÐ±í¡£Òª¼ÓÈëÕâ¸öÁÐ±í£¬·¢ËÍÒ»¸öÓÊ¼þµ½
+   hackers-request@postgreSQL.org £¬ ÄÚÈÝÎª£º subscribe end ÆäËûµÄ¹ØÓÚ
+   PostgreSQL ÓÊ¼þÁÐ±íºÍÆäËûÐÅÏ¢¿ÉÒÔÔÚ PostgreSQL µÄ WWW Ö÷Ò³ÕÒµ½£º
+   http://postgresql.org/ ÔÚ EFNet Àï»¹ÓÐÒ»¸ö IRC ÆµµÀ£¬ÆµµÀ
+   #PostgreSQL¡£ÎÒÓÃ unix ÃüÁîirc -c '#PostgreSQL' "$USER"
+   irc.phoenix.net ÉÌÒµÖ§³Ö¹«Ë¾µÄÁÐ±íÔÚ
+   http://www.PostgreSQL.org/users-lounge/commercial-support.html ¡£ 1.7)
+   PostgreSQL ×îÐÂµÄ°æ±¾ÊÇÊ²Ã´£¿ PostgreSQL ×îÐÂµÄ°æ±¾ÊÇ°æ±¾
+   7.2.3¡££¨Òë×¢£ºÏÖÔÚÓ¦¸ÃÊÇ 7.3.1 ÁË¡££©
+   ÎÒÃÇ¼Æ»®Ã¿ËÄ¸öÔÂ·¢²¼Ò»¸öÖ÷Òª°æ±¾¡£ 1.8) ÓÐÄÄÐ©¿ÉÓÃµÄ PostgreSQL
+   µÄÎÄµµ£¿ ÔÚ·¢²¼°üÀïÓÐÒ»Ð©ÊÖ²á£¬ÊÖ²áÒ³ºÍÒ»Ð©Ð¡µÄ²âÊÔÀý×Ó¡£²Î¼û /doc
+   Ä¿Â¼¡££¨Òë×¢£º Ó¦Îª $PGHOME/doc£©¡£Äã»¹¿ÉÒÔÔÚÏßä¯ÀÀ PostgreSQL
+   µÄÊÖ²á£¬ÔÚ http://www.PostgreSQL.org/users-lounge/docs/ ¡£ ÓÐÁ½±¾¹ØÓÚ
+   PostgreSQL µÄÊéÔÚÏßÌá¹©£¬ÔÚ http://www.PostgreSQL.org/docs/awbook.html
+   www.PostgreSQL.org/docs/awbook.html> ºÍ
+   http://www.commandprompt.com/ppbook/ www.commandprompt.com/ppbook/>
+   ¡£ÔÚ http://www.ca.PostgreSQL.org/books/ www.ca.PostgreSQL.org/books/>
+   ÉÏÓÐ¹ØÓÚ PostgreSQL µÄ¿É¹ºÊé¼®µÄÁÐ ±í¡£ÔÚ
+   http://techdocs.PostgreSQL.org/ techdocs.PostgreSQL.org/> ÉÏÊÕ¼¯ÁËÓÐ¹Ø
+   PostgreSQL µÄ¼¼ÊõÎÄÕÂ¡£ /psql/ ÓÐÒ»Ð©²»´íµÄ \d
+   ÃüÁî£¬ÏÔÊ¾¹ØÓÚÀàÐÍ£¬²Ù×÷·û£¬º¯Êý£¬¾Û¼¯µÈµÄÐÅÏ¢¡£ ÎÒÃÇµÄ web
+   Õ¾µã°üº¬¸ü¶àµÄÎÄµµ£® 1.9) ÎÒÈçºÎÁË½âÒÑÖªµÄ BUG ºÍÈ±Ê§µÄÌØÐÔ£¿
+   PostgreSQL Ö§³ÖÒ»¸öÀ©Õ¹ÁËµÄ SQL-92 µÄ×Ó¼¯¡£²ÎÔÄÎÒÃÇµÄ TODO
+   www.postgresql.org/docs/todo.html>
+   www.postgresql.org/docs/todo.html>ÁÐ±í£¬»ñÈ¡Ò»¸öÒÑÖª³ô³æ£¬È±Ê§ÌØ
+   ÐÔºÍÎ´À´¼Æ»®¡£ 1.10) ÎÒÓ¦¸ÃÔõÑùÑ§Ï° SQL£¿ ÔÚ
+   http://www.postgresql.org/docs/awbook.html µÄ¹ØÓÚ PostgreSQL µÄÊé½ÌÊÚ
+   SQL¡££¨Òë×¢£ºÎÒÏÂÔØµ½±¾µØÁË¡££©ÔÚ http://www.commandprompt.com/ppbook
+   www.commandprompt.com/ppbook/> ÓÐÁíÍâÒ»±¾¹ØÓÚ PostgreSQL µÄÊé¡£
+   ÔÚhttp://www.intermedia.net/support/sql/sqltut.shtm£¬http:
+   //ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM
+   ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM> ºÍ
+   http://sqlcourse.com sqlcourse.com/> ÓÐÒ»¸ö²»´íµÄÈëÃÅ½Ì³Ì¡£ ÁíÒ»¸öÊÇ
+   "Teach Yourself SQL in 21 Days, Second Edition"£¨21ÌìÑ§»áSQL£¬
+   µÚ¶þ°æ£©£¬ÔÚ http://members.tripod.com/er4ebus/sql/index.htm
+   members.tripod.com/er4ebus/sql/index.htm> ÎÒÃÇµÄÐí¶àÓÃ»§Ï²»¶ /The
+   Practical SQL Handbook, Bowman, Judith S., et al., Addison-Wesley ¡£ /
+   ÆäËûµÄÓÐ/ The Complete Reference SQL, Groff et al., McGraw-Hill ¡£/
+   1.11) PostgreSQL ÊÇ Y2K ¼æÈÝµÄÂð£¿ ÊÇ£¬ÎÒÃÇºÜÈÝÒ×¿ØÖÆ 2000 AD Ö®ºóºÍ
+   2000 BC Ö®Ç°µÄÈÕÆÚ¡£ 1.12) ÎÒÓ¦¸ÃÔõÑù¼ÓÈë¿ª·¢¶ÓÎé£¿
+   Ê×ÏÈ£¬ÏÂÔØ×îÐÂµÄÔ´´úÂë²¢ÔÄ¶ÁÎÒÃÇ web Õ¾µã»ò·¢²¼°üÖÐµÄ PostgreSQL
+   ¿ª·¢Õß ÎÄµµ¡£Æä´Î£¬¼ÓÈë pgsql-hackers ºÍ pgsql-patches
+   ÓÊ¼þÁÐ±í¡£µÚÈý£¬Ïò pgsql-patches Ìá½»¸ßÖÊÁ¿µÄ²¹¶¡³ÌÐò¡£
+   ÏÖÔÚ´ó¸ÅÓÐÊ®¼¸¸öÈËÓÐ PostgreSQL CVS ¹éµµ COMMIT µÄÈ¨ÏÞ¡£ËûÃÇ¶¼ÒÑ¾­
+   Ìá½»ÁË
+   ·Ç³£¶à¸ßÖÊÁ¿µÄ²¹¶¡ÁË£¬ÒÔÖÁÓÚÏÖÓÐµÄÌá½»ÈËºÜÄÑ¸úÉÏ½Ú×à£¬²¢ÇÒÎÒÃÇÏàÐÅËûÃÇ
+   Ìá ½»µÄ²¹¶¡¶¼ÊÇ¸ßÖÊÁ¿µÄ¡£ 1.13) ÎÒÓ¦¸ÃÔõÑùÌá½»Ò»¸öBUG±¨¸æ£¿ Çë·ÃÎÊ
+   http://www.PostgreSQL.org/bugs/bugs.php µÄ PostgreSQL BugTool Ò³ Ãæ,
+   ÄÇÀï¸ø³öÁËÈçºÎÌá½»Ò»¸öBUG±¨¸æµÄÖ¸ÄÏ¡£ Í¬ÑùÒ²Òª¿´¿´ÎÒÃÇµÄ ftp Õ¾µã
+   ftp://ftp.postgreSQL.org/pub ftp.postgresql.org/pub>£¬¿´ÓÐÃ»ÓÐ¸üÐÂµÄ
+   PostgreSQL °æ±¾»ò²¹¶¡¡£ 1.14) PostgreSQL ºÍÆäËû DBMS ±ÈÆðÀ´ÈçºÎ£¿
+   ÆÀ¼ÛÈí¼þÓÐºÃ¼¸ÖÖ·½·¨£ºÌØÐÔ£¬ÐÔÄÜ£¬¿É¿¿ÐÔ£¬Ö§³ÖºÍ¼Û¸ñ¡£ *ÌØÐÔ*
+   PostgreSQL ÓµÓÐ´óÐÍÉÌÓÃ DBMS Àï´ó¶àÊýÌØÐÔ£¬ÀýÈç£ºÊÂÎñ£¬×Ó²éÑ¯£¬´¥·¢
+   Æ÷£¬ÊÓÍ¼£¬Íâ¼ü²Î¿¼ÍêÕûÐÔºÍ¸´ÔÓµÄËøµÈ¡£ÎÒÃÇ»¹ÓÐÒ»Ð©ËüÃÇÃ»ÓÐµÄÌØÐÔ£¬Èç
+   ÓÃ»§¶¨ÒåÀàÐÍ£¬¼Ì³Ð£¬¹æÔòºÍ¶à°æ±¾²¢ÐÐ¿ØÖÆÒÔ¼õÉÙËøµÄÕùÓÃµÈ¡£ *ÐÔÄÜ*
+   PostgreSQL ºÍÆäËûÉÌÓÃºÍ¿ªÔ´µÄÊý¾Ý¿â¾ßÓÐÀàËÆµÄÐÔÄÜ¡£¶ÔÄ³Ð©´¦ÀíËü±È½Ï
+   ¿ì£¬¶ÔÆäËûÒ»Ð©´¦ÀíËü±È½ÏÂý¡£Óë MySQL »ò¸üÇá±ãµÄÊý¾Ý¿âÏµÍ³±È½Ï£¬ÎÒÃÇ ÔÚ
+   insert/update Ê±Âý£¬ÒòÎªÎÒÃÇÓÐÊÂÎñ´¦Àí¡£µ±È» MySQL ²»¾ßÓÐÎÒÃÇÔÚÉÏ
+   ÃæµÄ/ÌØÐÔ /¶ÎÀï¸ø³öµÄÈÎºÎÌØÐÔ¡£ÎÒÃÇµÄÖ÷Òª·½ÏòÊÇ¿É¿¿ÐÔºÍÌØÐÔ£¬¾¡¹ÜÎÒ
+   ÃÇÔÚÃ¿´Î·¢²¼Ê±²»¶ÏµØ¸Ä½øÐÔÄÜ¡£ÓÐÒ»¸öºÜÓÐÈ¤µÄÍøÒ³±È½ÏÁË PostgreSQL ºÍ
+   MySQL http://openacs.org/why-not-mysql.html¡£ *¿É¿¿ÐÔ* ÎÒÃÇÖªµÀ DBMS
+   ±ØÐëÊÇ¿É¿¿µÄ£¬·ñÔòËü¾ÍÒ»µãÓÃ¶¼Ã»ÓÐ¡£ÎÒÃÇÅ¬Á¦×öµ½·¢²¼¾­
+   ¹ýÈÏÕæ²âÊÔµÄ£¬ÎÈ¶¨µÄ³ô³æ×îÉÙµÄ´úÂë¡£Ã¿¸ö°æ±¾ÖÁÉÙÓÐÒ»¸öÔÂµÄ beta ²â
+   ÊÔ£¬²¢ÇÒÎÒÃÇµÄ·¢²¼ÀúÊ·ÏÔÊ¾ÎÒÃÇ¿ÉÒÔÌá¹©ÎÈ¶¨µÄ£¬ÀÎ¹ÌµÄ£¬¿ÉÓÃÓÚÉú²úÊ¹ÓÃ
+   µÄ°æ±¾¡£ÎÒÃÇÏàÐÅÔÚÕâ·½ÃæÎÒÃÇÓëÆäËûµÄÊý¾Ý¿âÈí¼þÊÇÏàµ±µÄ¡£ *Ö§³Ö*
+   ÎÒÃÇµÄÓÊ¼þÁÐ±íÌá¹©Ò»¸ö·Ç³£´óµÄ¿ª·¢ÈËÔ±ºÍÓÃ»§µÄ×éÒÔ°ïÖú½â¾öËùÅöµ½µÄÈÎ
+   ºÎÎÊÌâ¡£ÎÒÃÇ²»ÄÜ±£Ö¤¿Ï¶¨ÄÜ½â¾öÎÊÌâ£¬Ïà±ÈÖ®ÏÂ£¬ÉÌÓÃ DBMS Ò²²¢²»ÊÇ×ÜÄÜ
+   ¹»Ìá¹©½â¾ö·½·¨¡£Ö±½ÓÓë¿ª·¢ÈËÔ±£¬ÓÃ»§Èº£¬ÊÖ²áºÍÔ´³ÌÐò½Ó´¥Áî PostgreSQL
+   µÄÖ§³Ö±ÈÆäËû DBMS »¹ÒªºÃ¡£»¹ÓÐÒ»Ð©ÉÌÒµÐÔµÄÔ¤°ü×°µÄÖ§³Ö£¬
+   ¿ÉÒÔ¸øÌá¹©¸øÄÇÐ©ÐèÒªµÄÈË¡££¨²ÎÔÄÖ§³Ö FAQ Ìõ¿î 1.6 Ð¡½Ú¡££© *¼Û¸ñ*
+   ÎÒÃÇ¶ÔÈÎºÎÓÃÍ¾¶¼Ãâ·Ñ£¬°üÀ¨ÉÌÓÃºÍ·ÇÉÌÓÃÄ¿µÄ¡£Äã¿ÉÒÔ²»¼ÓÏÞÖÆµØÏòÄãµÄ²ú
+   Æ·Àï¼ÓÈëÎÒÃÇµÄ´úÂë£¬³ýÁËÄÇÐ©ÎÒÃÇÔÚÉÏÃæµÄ°æÈ¨ÉùÃ÷ÀïÉùÃ÷µÄ BSD ·ç¸ñµÄ
+   °æÈ¨Íâ¡£ 1.15) ÎÒÓ¦¸ÃÔõÑùÔÞÖú PostgreSQL £¿ ×Ô´Ó1996Äê¿ªÊ¼£¬PostgreSQL
+   ÒÑ¾ÓÐÁËÒ»¸öÓÅÐãµÄ×éÖ¯¡£ÕâÐ©Ó¦¸Ã¹é¹¦ÓÚ Marc
+   Fournier£¬ÊÇËû´´½¨ÁË²¢ÔÚÕâÐ©ÄêÒ»Ö±¹ÜÀíÕâ¸ö×éÖ¯¡£
+   ¶ÔÓÚÒ»¸ö¿ªÔ´ÏîÄ¿À´Ëµ£¬ÖÊÁ¿»ù´¡ÉèÊ©ÊÇ·Ç³£ÖØÒªµÄ¡£ËüÄÜ·ÀÖ¹³öÏÖÑÏÖØÑÓ³ÙÏî
+   Ä¿ Ç°½øµÄ»ìÂÒ¡£
+   ÏÔÈ»£¬Õâ¸ö×éÖ¯µÄÔË×ª³É±¾²»·Æ¡£Î¬³ÖÆäÇ°½øÓÐ¸÷ÖÖÔÂ¶ÈµÄ¡¢Ò»´ÎÐÔµÄ¿ªÖ§¡£Èç
+   ¹û Äã»òÕßÄãµÄ¹«Ë¾ÄÜ½øÐÐ¾èÔùÒÔÖ§³ÖÕâÏîÊÂÒµ£¬Çë·ÃÎÊ
+   http://store.pgsql.com/shopping/ store.pgsql.com/shopping/> ½øÐÐ
+   ¾èÔù¡£ ËäÈ»¸ÃÍøÒ³Ìá¼°ÁË PostgreSQL ¹«Ë¾£¬ÕâÐ©¾èÔù½«½öÓÃÓÚÖ§³Ö
+   PostgreSQL ÏîÄ¿£¬
+   ²¢²»»áÓÃÓÚ×ÊÖúÃ»¸öÌØ¶¨µÄ¹«Ë¾¡£Èç¹ûÄãÔ¸Òâ£¬Ò²¿ÉÒÔÓÊ¼ÄÖ§Æ±µ½ÁªÏµµØÖ·¡£
+   ----------------------------------------------------------------------
+   -- ÓÃ»§¿Í»§¶ËÎÊÌâ 2.1) ÓÐ PostgreSQL µÄ ODBC Çý¶¯Ã´£¿ ÓÐÁ½¸ö ODBC
+   Çý¶¯¿ÉÒÔ»ñµÃ£¬PsqlODBC ºÍ OpenLink ODBC.
+   ¿ÉÒÔÔÚhttp://gborg.postgresql.org/project/psqlodbc/projdisplay.php
+   ÏÂÔØ PsqlODBC ¡£ OpenLink ODBC ¿ÉÒÔ´Ó http://www.openlinksw.com/
+   »ñµÃ¡£ËüÓëËûÃÇµÄ±ê×¼ ODBC
+   ¿Í»§¶ËÈí¼þ¼æÈÝ£¬Òò¶øÄã¿ÉÒÔÔÚÈÎºÎËûÃÇÖ§³ÖµÄ¿Í»§¶ËÆ½Ì¨£¨Win, Mac, Unix,
+   VMS£©ÉÏÊ¹ÓÃ PostgreSQL ODBC¡£
+   ËûÃÇ¿ÉÄÜ½«Õâ¸ö²úÆ·ÏúÊÛ¸øÄÇÐ©ÐèÒªÉÌÒµÖ§³ÖµÄÓÃ»§£¬µ«ÊÇ×ÜÊÇÓÐÒ»¸ö
+   freeware £¨×ÔÓÉÈí¼þ£©µÄ°æ±¾¿ÉÒÔµÃµ½¡£ÇëÑ¯ÎÊ postgres95@openlink.co.uk
+   ¡£ 2.2) ÓÐÊ²Ã´¹¤¾ß¿ÉÒÔ°Ñ PostgreSQL ÓÃÓÚ Web Ò³Ãæ£¿
+   Ò»¸ö½éÉÜÒÔÊý¾Ý¿âÎªºóÌ¨µÄÍ¦²»´íµÄ Õ¾µãÊÇ£ºhttp://www.webreview.com ¡£
+   ¶ÔÓÚ Web ¼¯³É£¬PHP ÊÇÒ»¸ö¼«ºÃµÄ½Ó¿Ú¡£ËüÔÚ£ºhttp://www.php.net/ ¡£
+   ¶ÔÓÚ¸´ÔÓµÄÈÎÎñ£¬ºÜ¶àÈË²ÉÓÃ Perl ½Ó¿ÚºÍ CGI.pm »ò mod_perl ¡£ 2.3)
+   PostgreSQL ÓµÓÐÍ¼ÐÎÓÃ»§½çÃæÂð£¿ ÊÇµÄ¡£ÓÐ¼¸¸öÊÊÓÃÓÚ PostgreSQL
+   µÄÍ¼ÐÎ½Ó¿Ú¡£°üÀ¨PgAccess£¨http: //www.pgaccess.com)£¬PgAdmin II
+   £¨http://www.pgadmin.org£¬½öÊÊÓÃÓÚ Win32£©£¬ RHDB Admin
+   (http://sources.redhat.com/rhdb/£© ÒÔ¼° Rekall
+   £¨http://www.thekompany.com/products/rekall/£¬
+   ×¨ÓÐµÄ/proprietary)¡£»¹ÓÐ PHPPgAdmin
+   £¨http://phppgadmin.sourceforge.net/£© phppgadmin.sourceforge.net/>
+   £¬Ò»¸ö»ùÓÚ web µÄ PostgreSQL ·ÃÎÊ½Ó ¿Ú¡£
+   ÎÒÃÇÓÐÒ»¸ö²»´íµÄÍ¼ÐÎÓÃ»§½çÃæ£¬³ÆÎª PgAccess
+   £¬ËüÒ²¿ÉÒÔÓÃ×÷±¨±íÉú³ÉÆ÷¡£Íø Ò³ÊÇ http://www.pgaccess.org/¡£ 2.4)
+   ÎÒÃÇ¿ÉÒÔÓÃÊ²Ã´ÓïÑÔºÍ PostgreSQL ´ò½»µÀ£¿ ´ó¶àÊýÁ÷ÐÐµÄ±à³ÌÓïÑÔ¶¼ÓÐ·ÃÎÊ
+   PostgreSQL µÄ½Ó¿Ú¡£Çë¼ì²é±à³ÌÓïÑÔµÄÀ©Õ¹Ä£¿é ÁÐ±í¡£ PostgreSQL
+   ·¢²¼°üÖÐ°üº¬ÁËÒÔÏÂ½Ó¿Ú£º * C (libpq) * Embedded C (ecpg) * Java (jdbc)
+   * Python (PyGreSQL) * TCL (libpgtcl) ÆäËûµÄ½Ó¿ÚÔÚ
+   http://gborg.postgresql.org ÉÏµÄ /Drivers/Interfaces/ Ð¡½Ú¡£
+   ----------------------------------------------------------------------
+   -- ÏµÍ³¹ÜÀíÎÊÌâ 3.1) ÎÒÔõÑùÄÜ°Ñ PostgreSQL ×°ÔÚ /usr/local/pgsql
+   ÒÔÍâµÄµØ·½£¿ ÔÚÔËÐÐ configure Ê±¼ÓÉÏ --prefix Ñ¡Ïî¡£ 3.2) µ±ÎÒÔËÐÐ
+   postmaster Ê±£¬³öÏÖ/ Bad System Call/£¨ÏµÍ³µ÷ÓÃ ´í£©»ò Core Dumped
+   ´íÎó¡£ÎªÊ²Ã´£¿ Õâ¿ÉÄÜÊÇºÜ¶à·½ÃæµÄÎÊÌâ£¬ÇëÏÈ¼ì²é²Ù×÷ÏµÍ³ºËÐÄÊÇ·ñÖ§³Ö
+   System V À©Õ¹¡£ PostgreSQL ÐèÒªÄÚºËÖ§³Ö¹²ÏíÄÚ´æºÍÐÅºÅµÆ¡£ 3.3)
+   µ±ÎÒÊÔÍ¼ÔËÐÐ postmaster Ê±£¬³öÏÖ /IpcMemoryCreate/ ´íÎó¡£Îª Ê²Ã´£¿
+   ÄãÒªÃ´ÊÇÃ»ÓÐÔÚÄÚºËÀïÕýÈ·ÅäÖÃ¹²ÏíÄÚ´æ£¬ÒªÃ´ÊÇÄãÐèÒªÀ©´óÄãµÄÄÚºËµÄ¿ÉÓÃ¹²
+   Ïí ÄÚ´æ¡£ÐèÒªµÄ¹²ÏíÄÚ´æ¾ßÌåµÄÊýÁ¿È¡¾öÓÚÄãµÄÌåÏµ½á¹¹ºÍÄãÅäÖÃÄãµÄ
+   postmaster
+   ÔËÐÐÊ±Ê¹ÓÃµÄ»º³åÇøºÍºó¶Ë½ø³ÌÊýÄ¿¡£¶Ô´ó¶àÊýÏµÍ³£¬Ê¹ÓÃÈ±Ê¡»º³åÇøºÍ½ø³ÌÊý
+   Ä¿ Ê±£¬Äã×îÉÙÐèÒª~1MB¡£ÓÐ¹Ø¹²ÏíÄÚ´æºÍÐÅºÅµÆµÄÏêÏ¸ÐÅÏ¢Çë²Î¿¼ PostgreSQL
+   Administrator's Guide
+   www.postgresql.org/idocs/index.php?kernel-resources.html> ¡£ 3.4)
+   µ±ÎÒÊÔÍ¼ÔËÐÐ postmaster Ê±£¬³öÏÖ /IpcSemaphoreCreate/ ´í Îó¡£ÎªÊ²Ã´£¿
+   Èç¹û´íÎóÐÅÏ¢ÊÇ /IpcSemaphoreCreate: semget failed (No space left on
+   device)/£¬ÄÇÃ´ÔÒòÊÇÄãµÄÄÚºËÃ»ÓÐÅäÖÃ×ã¹»µÄÐÅºÅµÆ×ÊÔ´¡£Postgres µÄÃ¿¸öÇ±
+   ÔÚµÄºóÌ¨½ø³Ì¶¼ÐèÒªÒ»¸öÐÅºÅµÆ¡£Ò»¸öÁÙÊ±µÄ½â¾ö·½·¨ÊÇÒÔ±È½ÏÉÙµÄºóÌ¨½ø³ÌÊý
+   £¨²ÎÊý£©Æô¶¯ postmaster¡£Ê¹ÓÃ¿ª¹Ø /-N/ ´øÒ»¸öÉÙÓÚÈ±Ê¡Öµ 32 µÄ²ÎÊýÔËÐÐ
+   postmaster¡£¸ü³¤¾ÃµÄ½â¾ö·½·¨ÊÇ¼Ó´óÄãµÄÄÚºËµÄ SEMMNS ºÍ SEMMNI ²ÎÊý¡£
+   ÔÚÊý¾Ý¿â·ÃÎÊÁ¿ºÜ´óÊ±£¬ÐÅºÅµÆ²»¿ÉÓÃ¿ÉÄÜµ¼ÖÂÏµÍ³±ÀÀ£¡£
+   Èç¹û´íÎóÐÅÏ¢ÊÇÆäËûµÄÊ²Ã´¶«Î÷£¬Äã¿ÉÄÜ¾Í¸ù±¾Ã»ÓÐÔÚÄÚºËÀïÃæÅäÖÃÐÅºÅµÆÖ§³Ö
+   ¡£ ÓÐ¹Ø¹²ÏíÄÚ´æºÍÐÅºÅµÆµÄÏêÏ¸ÐÅÏ¢Çë²Î¿¼ PostgreSQL Administrator's
+   Guide www.postgresql.org/idocs/index.php?kernel-resources.html> ¡£
+   3.5) ÎÒÈçºÎ¿ØÖÆÀ´×ÔÆäËûÖ÷»úµÄÁ¬½Ó£¿ È±Ê¡Ê±£¬PostgreSQL Ö»ÔÊÐíÍ¨¹ý unix
+   ÓòÌ×½Ó×ÖÀ´×Ô±¾»úµÄÁ¬½Ó¡£³ý·ÇÄãÊ¹ÓÃ /-i/ ¿ª¹ØÆô¶¯
+   /postmaster/£¬*²¢ÇÒ*Í¨¹ý¶ÔÓ¦µÄ±à¼ /$PGDATA/pg_hba.conf/
+   ÎÄ¼þ´ò¿ªÁËÖ÷»úÎª»ù´¡£¨ host-based
+   £©µÄÈÏÖ¤£¬·ñÔòÆäËû»úÆ÷ÊÇ²»ÄÜÓëÄãµÄ»úÆ÷ Á¬½ÓµÄ¡£ÕâÑù½«ÔÊÐí TCP/IP
+   Á¬½Ó¡£ 3.6) ÎÒÔõÑùµ÷ÕûÊý¾Ý¿âÒýÇæÒÔ»ñµÃ¸üºÃµÄÐÔÄÜ£¿
+   µ±È»£¬Ë÷Òý¿ÉÒÔ¼ÓËÙ²éÑ¯¡£EXPLAIN ÃüÁîÔÊÐíÄã¹Û²ì PostgreSQL
+   ÈçºÎ½âÊÍÄãµÄ²é Ñ¯£¬ÒÔ¼°Ê¹ÓÃÁËÄÄÐ©Ë÷Òý¡£ Èç¹ûÄãÕý´¦ÀíÒ»¶Ñ
+   INSERT£¬¿¼ÂÇÊ¹ÓÃ COPY ÃüÁîÒÔ´óÅúÁ¿µÄ·½Ê½½øÐÐ¡£ÕâÑù×ö±È µ¥¶ÀµÄÒ»¸ö¸ö
+   INSERT ¿ìµÃ¶à¡£Æä´Î£¬Ã»ÓÐ´¦ÓÚ BEGIN WORK/COMMIT ÊÂÎñ¿éÖ®¼ä
+   µÄÓï¾ä±»ÈÏÎªÊôÓÚÍ¬Ò»¸öÊÂÎñ¡£ÊÔ×ÅÔÚÒ»¸öÊÂÎñ¿éÀïÃæ´¦Àí¸ü¶àµÄÓï¾ä¡£ÕâÑù¿É
+   ÒÔ
+   ¼õÉÙÊÂÎñ´øÀ´µÄ¶îÍâ¿ªÏú¡£Í¬Ñù£¬ÔÚ×ö´óÁ¿µÄÊý¾Ý¸Ä±äÊ±¿¼ÂÇÉ¾³ýºÍÖØ½¨Ë÷Òý¡£
+   »¹ÓÐ¼¸¸öµ÷½ÚµÄÑ¡Ïî¿ÉÒÔÊ¹ÓÃ¡£Äã¿ÉÒÔÍ¨¹ý´ø /-o -F/ Ñ¡ÏîÆô¶¯ postmaster
+   À´ ½ûÖ¹ fsync()¡£ÕâÑù½«±ÜÃâÃ¿´ÎÊÂÎñºóµ÷ÓÃ /fsync() /
+   °ÑÊý¾ÝË¢ÐÂµ½´ÅÅÌÉÏ¡£ Äã»¹¿ÉÒÔÊ¹ÓÃ postmaster -B
+   Ñ¡ÏîÔö¼Óºó¶Ë½ø³ÌÊ¹ÓÃµÄ¹²ÏíÄÚ´æ»º³åµÄÊýÄ¿¡£Èç
+   ¹ûÄã°ÑÕâ¸ö²ÎÊýÉèÖÃµÃÌ«´ó£¬postmaster ¿ÉÄÜÎÞ·¨Æô¶¯£¬ÒòÎªÄãÒÑ¾³¬¹ýÁËÄãµÄ
+   ÄÚºËÔÚ¹²ÏíÄÚ´æ¿Õ¼äÉÏµÄÏÞÖÆ¡£Ã¿¸ö»º³åÇøÊÇ 8K ²¢ÇÒÈ±Ê¡ 64 ¸ö»º³åÇø¡£
+   Äã»¹¿ÉÒÔÊ¹ÓÃºóÌ¨½ø³ÌµÄ -S
+   Ñ¡ÏîÀ´Ôö¼ÓÃ¿¸öºóÌ¨½ø³ÌÓÃÓÚÁÙÊ±ÅÅÐòÓÃµÄ×î´óÄÚ´æ ÊýÁ¿¡£-S
+   ÖµÊÇÒÔK×Ö½Ú¼ÆµÄ£¬È±Ê¡ÊÇ 512 £¨Ò²¾ÍÊÇËµ£¬512K£©¡£ Äã»¹¿ÉÒÔÊ¹ÓÃ CLUSTER
+   ÃüÁîÀ´°Ñ±íÀïµÄÊý¾Ý°´ÕÕÄ³¸öË÷Òý½øÐÐ¾Û¼¯´æ·Å¡£²ÎÔÄ CLUSTER
+   µÄÊÖ²áÒ³»ñÈ¡¸ü¶àÏ¸½Ú¡£ 3.7) PostgreSQL Àï¿ÉÒÔ»ñµÃÊ²Ã´ÑùµÄµ÷ÊÔÌØÐÔ£¿
+   PostgreSQL
+   ÓÐ¼¸¸öÌØÐÔÓÃÓÚ±¨¸æ×´Ì¬ÐÅÏ¢£¬ÕâÐ©ÐÅÏ¢¿ÉÄÜ¶Ôµ÷ÊÔÓÃÍ¾ºÜÓÐ°ïÖú¡£
+   Ê×ÏÈ£¬Í¨¹ý¸½´ø --enable-cassert Ñ¡ÏîÔËÐÐ configure£¬ÓÐºÜ¶à /assert()/
+   ¼à ¿ØºóÌ¨½ø³ÌºÍÔÚ·¢ÉúÄ³Ð©Î´ÔøÔ¤ÁÏµÄÏÖÏóÊ±Í£Ö¹³ÌÐòÔËÐÐ¡£ postmaster ºÍ
+   postgres ¶¼ÓÐÒ»Ð©¿ÉÓÃµÄÑ¡Ïî¡£Ê×ÏÈ£¬µ±ÄãÆô¶¯ postmaster
+   Ê±£¬È·±£Äã°Ñ±ê×¼Êä³öºÍ±ê×¼´íÎóÊä³ö¶¨Ïòµ½ÁËÒ»¸öÈÕÖ¾ÎÄ¼þÀïÈ¥ÁË£¬Ïó£º cd
+   /usr/local/pgsql ./bin/postmaster >server.log 2>&1 & ÕâÑù½«ÔÚ
+   PostgreSQL ¶¥¼¶Ä¿Â¼ÏÂÊä³öÒ»¸ö server.log ÎÄ¼þ¡£Õâ¸öÎÄ¼þ°üº¬·þÎñ
+   Æ÷Åöµ½µÄÎÊÌâºÍ´íÎóµÄÓÐÓÃÐÅÏ¢¡£postmaster ÓÐÒ»¸ö -d
+   Ñ¡Ïî£¬¸ÃÑ¡ÏîÔÊÐíÎÒÃÇ »ñµÃ¸ü¶àµÄÏ¸½Ú»ã±¨¡£-d
+   Ñ¡Ïî½ÓÊÜÒ»¸öÊý×Ö±êÃ÷µ÷ÊÔ¼¶±ð¡£ÐèÒª¾¯¸æµÄÊÇ¸ßµÄµ÷
+   ÊÔ¼¶±ð¿ÉÄÜ»áÉú³É¾Þ´óµÄÈÕÖ¾ÎÄ¼þ¡£ Èç¹û postmaster
+   Ã»ÓÐÔËÐÐ£¬Äã¿ÉÒÔÖ±½ÓÔÚÃüÁîÐÐÉÏÆô¶¯ postgres ºóÌ¨½ø³Ì£¬È» ºóÖ±½Ó¼üÈë
+   SQL Óï¾ä¡£ÎÒÃÇ*Ö»* ÍÆ¼öÔÚµ÷ÊÔµÄÊ±ºòÕâÃ´¸É¡£Çë×¢ÒâÕâÊ±ÓÃ»»ÐÐÜÞ
+   ¶ø²»ÊÇ·ÖºÅ±íÊ¾Óï¾ä½áÎ²¡£Èç¹ûÄã´ø×Åµ÷ÊÔ·ûºÅ±àÒë£¬Äã¿ÉÒÔÊ¹ÓÃÒ»¸öµ÷ÊÔÆ÷¹Û
+   ¿´ ·¢ÉúÁËÊ²Ã´ÊÂÇé¡£ÒòÎªºóÌ¨½ø³ÌÃ»ÓÐÓÉ postmaster
+   Æô¶¯µÄ£¬Ëü²»ÊÇºÍÊµ¼ÊµÄÔËÐÐ
+   »·¾³Ò»ÖÂ£¬¶øÇÒËø¶¨/ºóÌ¨½»»¥ÎÊÌâ¿ÉÄÜ²»ÄÜÖØÏÖ¡£ Èç¹û postmaster ÒÑ¾­
+   ÔËÐÐ£¬¿ÉÔÚÒ»¸ö´°¿ÚÖÐÆô¶¯ /psql/£¬È»ºóÕÒ³ö /psql/ ¶Ô Ó¦µÄ /postgres/
+   ½ø³ÌµÄ PID¡£Ê¹ÓÃÒ»¸öµ÷ÊÔÆ÷¸½×ÅÔÚÕâ¸ö /postgres /PID ÉÏ¡£
+   Äã¿ÉÒÔÔÚµ÷ÊÔÆ÷ÀïÉèÖÃ¶Ïµã²¢ÇÒ´Ó /psql/ ÀïÖ´ÐÐ²éÑ¯¡£Èç¹ûÄãÔÚµ÷ÊÔ
+   /postgres/ µÄÆô¶¯£¬Äã¿ÉÒÔÉèÖÃ PGOPTIONS="-W n"£¬È»ºóÆô¶¯
+   /psql/¡£ÕâÑù½« µ¼ÖÂÆô¶¯ÑÓ³Ù /n/
+   Ãë£¬ÕâÑùÄã¾Í¿ÉÒÔ¸½¼ÓÒ»¸öµ÷ÊÔÆ÷²¢ÇÒ¸ú×ÙÆô¶¯Ë³ÐòµÄ¹ý³Ì¡£ postgres ³ÌÐòÓÐ
+   -s£¬-A£¬ºÍ -t Ñ¡Ïî¿ÉÄÜÔÚµ÷ÊÔºÍÐÔÄÜ²âÁ¿µÄÊ±ºò·Ç³£ÓÐÓÃ¡£ Äã»¹¿ÉÒÔ´ø
+   profiling Ö§³Ö±àÒëºóÌ¨£¬ÒÔ±ã¹Û²ìÄÄÐ©º¯ÊýÕ¼ÓÃµÄÖ´ÐÐÊ±¼ä½Ï¶à¡£ profile
+   ÎÄ¼þ½«·ÅÔÚ pgsql/data/base/dbname Ä¿Â¼ÏÂ¡£¿Í»§¶Ë profile ÎÄ¼þ½«
+   ·ÅÔÚ¿Í»§¶Ëµ±Ç°Ä¿Â¼ÏÂ¡£ÔÚ Linux ÏÂÖ§³Ö profiling ÒªÔÚ±àÒëÊ±¼ÓÉÏ/-
+   DLINUX_PROFILE / ¡£ 3.8) ÎªÊ²Ã´ÔÚÊÔÍ¼Á¬½ÓµÇÂ¼Ê±ÊÕµ½¡°Sorry, too many
+   clients¡±ÏûÏ¢£¿ ÄãÐèÒªÔö´ó postmaster Æô¶¯Ê±Ö§³ÖµÄ²¢·¢ºóÌ¨½ø³ÌÊý¡£
+   È±Ê¡ÏÞÖÆÊÇ 32 ½ø³Ì¡£Äã¿ÉÒÔÍ¨¹ý´ø×ÅÊÊµ±µÄ /-N/ Öµ¿ª¹ØÆô¶¯ postmaster
+   Ôö¼Ó Õâ¸öÊýÄ¿¡£»òÕßÐÞ¸Ä /postgresql.conf/ ÎÄ¼þ¡£ Òª×¢ÒâÈç¹ûÄã°Ñ /-N/
+   ÉèÖÃÎª´óÓÚ 32£¬Äã±ØÐëÍ¬ÑùÔö´ó /-B/£¬³¬¹ýËüÈ±Ê¡µÄ 64£»-B ±ØÐë×îÉÙÊÇ -N
+   µÄÁ½±¶£¬¶øÇÒÎªÁË¸üºÃµÄÐÔÄÜ¿ÉÄÜÒª±ÈÄÇ¸öÊý×ÖÒª´ó¡£¶Ô
+   ÓÚ´óÊýÄ¿µÄºó¶Ë½ø³Ì£¬Äã¿ÉÄÜ»¹»á·¢ÏÖÄã»¹ÐèÒªÔö¼ÓÐí¶à Unix
+   ÄÚºËÅäÖÃ²ÎÊýÖµ¡£
+   Òª¼ì²éµÄ¶«Î÷°üÀ¨¹²ÏíÄÚ´æ¿éµÄ×î´ó³ß´ç£¬SHMMAX£¬ÐÅºÅµÆµÄ×î´óÊýÄ¿£¬SEMMNS
+   ºÍ
+   SEMMNI£¬×î´óµÄ½ø³ÌÊý£¬NPROC£¬µ¥ÓÃ»§×î´ó½ø³ÌÊý£¬MAXUPRC£¬ÒÔ¼°´ò¿ªÎÄ¼þ
+   µÄ×î´óÊýÄ¿£¬NFILE ºÍ NINODE ¡£Postgres ¶ÔÔÊÐíµÄºóÌ¨½ø³ÌÊýÓÐÏÞÖÆµÄÔÒòÊÇ
+   ÎªÁËÈ·±£ÄãµÄÏµÍ³²»»áÓÃ¹â×ÊÔ´¡£ ÔÚ Postgres ÔçÓÚ 6.5
+   µÄ°æ±¾£¬×î´óºóÌ¨½ø³ÌÊýÈ±Ê¡ÊÇ 64£¬²¢ÇÒ¶ÔËüµÄÐÞ¸ÄÊ×ÏÈ ÐèÒªÐÞ¸Ä
+   /include/storage/sinvaladt.h/ ÀïµÄ MaxBackendId ³£Á¿£¬È»ºóÖØÐÂ BUILD¡£
+   3.9) pgsql_tmp Ä¿Â¼Àï¶¼ÓÐÐ©Ê²Ã´£¿
+   ¸ÃÄ¿Â¼ÏÂ±£´æÁË²éÑ¯Ö´ÐÐÆ÷Éú³ÉµÄÁÙÊ±ÎÄ¼þ¡£ÀýÈç£¬Èç¹ûÐèÒªÎªÂú×ã ORDER BY
+   Ìõ ¼þ×öÅÅÐò£¬²¢ÇÒÅÅÐòÐèÒª±ÈºóÌ¨µÄ -S
+   ²ÎÊý¸ø³öµÄ¸ü¶àµÄ¿Õ¼ä£¬ÄÇÃ´¾Í»á´´½¨Ò»¸ö ÁÙÊ±ÎÄ¼þ±£´æ¶à³öÀ´µÄÊý¾Ý¡£
+   ÁÙÊ±ÎÄ¼þÓ¦¸Ã×Ô¶¯É¾³ý£¬²»¹ýÈç¹ûÔÚÅÅÐò¹ý³ÌÖÐºóÌ¨±ÀÀ£ÁË¾Í¿ÉÄÜÁôÏÂÀ´¡£Í£Ö¹
+   ²¢ ÖØÆð postmaster ½«»áÉ¾³ýÕâÐ©ÎÄ¼þ¡£ 3.10) ÎªÊ²Ã´ÒªÔÚÉý¼¶ PostgreSQL
+   ·¢²¼°æ±¾Ê±×ö dump ºÍ restore £¿ PostgreSQL
+   ¿ª·¢×é¶ÔÃ¿´ÎÐ¡µÄÉý¼¶½ö×öÁË½ÏÉÙµÄÐÞ¸Ä,Òò´Ë´Ó 7.2 Éý¼¶µ½ 7.2.1 ²»ÐèÒª
+   dump ºÍ restore¡£µ«ÊÇÖ÷ÒªµÄÉý¼¶£¨ÀýÈç´Ó 7.2 µ½ 7.3£©Í¨³£»áÐÞ¸ÄÏµ
+   Í³±íºÍÊý¾Ý±íµÄÄÚ²¿¸ñÊ½¡£ÕâÐ©±ä»¯Ò»°ã±È½Ï¸´ÔÓ£¬Òò´ËÎÒÃÇ²»Î¬Êý¾ÝÎÄ¼þµÄÏò
+   ºó ¼æÈÝ¡£dump
+   ½«Êý¾Ý°´ÕÕÍ¨ÓÃµÄ¸ñÊ½Êä³ö£¬Ëæºó¿ÉÒÔ±»ÖØÐÂ¼ÓÔØ²¢Ê¹ÓÃÐÂµÄÄÚ²¿¸ñÊ½¡£
+   ´ÅÅÌÎÄ¼þ¸ñÊ½Ã»ÓÐ±ä»¯µÄÉý¼¶£¬¿ÉÒÔÓÃ /pg_upgrade/ ½Å±¾£¬¶ø²»ÐèÒª×ö dump
+   ºÍ restor¡£·¢²¼ËµÃ÷script »áÖ¸Ã÷ /pg_upgrade/ ¶Ô¸Ã´ÎÉý¼¶ÊÇ·ñ¿ÉÓÃ¡£
+   ----------------------------------------------------------------------
+   -- ²Ù×÷ÎÊÌâ 4.1) ¶þ½øÖÆÓÎ±êºÍÆÕÍ¨ÓÎ±êÖ®¼äµÄÇø±ðÊÇÊ²Ã´£¿ ²ÎÔÄ DECLARE
+   ÊÖ²áÒ³»ñÈ¡ÐÅÏ¢¡£ 4.2)ÈçºÎÖ» SELECT Ò»¸ö²éÑ¯½á¹ûµÄÍ·¼¸ÐÐ£¿ ²ÎÔÄ FETCH
+   ÊÖ²áÒ³£¬»òÕßÊ¹ÓÃ SELECT ... LIMIT....
+   ¼´Ê¹ÄãÖ»ÐèÒª¿ªÍ·µÄ¼¸ÐÐ£¬Ò²»áÉæ¼°µ½Õû¸ö²éÑ¯¡£ÊÔ×ÅÊ¹ÓÃ´øÓÐ ORDER BY µÄ²é
+   Ñ¯¡£Èç¹ûÓÐÒ»¸öË÷ÒýÓë ORDER BY Æ¥Åä£¬PostgreSQL
+   ¿ÉÄÜ¾ÍÖ»´¦ÀíÒªÇóµÄÍ·¼¸Ìõ
+   ¼ÇÂ¼£¬·ñÔò½«¶ÔÕû¸ö²éÑ¯½øÐÐ´¦ÀíÖ±µ½Éú³ÉÐèÒªµÄÐÐ¡£ 4.3)
+   ÎÒÈçºÎ»ñÈ¡Ò»¸ö±íµÄÁÐ±í£¬»òÕßÊÇÆäËûÎÒÄÜÔÚ /psql/ Àï¿´µ½µÄ¶«Î÷£¿
+   Äã¿ÉÒÔÔÄ¶Á /psql/ µÄÔ´´úÂëÎÄ¼þ/pgsql/src/bin/psql/describe.c/
+   ¡£Ëü°üÀ¨Îª Éú³É psql µÄ·´Ð±¸ÜÃüÁîµÄÊä³öµÄ SQL ÃüÁî¡£Äã»¹¿ÉÒÔ´ø /-E/
+   Ñ¡ÏîÆô¶¯ /psql/£¬ÕâÑùËü½«´òÓ¡³öÖ´ÐÐÄã¸ø³öµÄÃüÁîËùÓÃµÄ²éÑ¯¡£ 4.4)
+   ÔõÑù´Ó±íÀïÃæÉ¾³ýÒ»ÁÐ£¿ 7.3 ÀïÔö¼ÓÁË ALTER TABLE DROP
+   COLUMN£¬ÒÔÖ§³Ö´ËÏî¹¦ÄÜ¡£ÔÚÒÔÇ°µÄ°æ±¾ÖÐ£¬¿É ÒÔÕâÑù×ö£º BEGIN; LOCK
+   TABLE old_table; SELECT ... -- select all columns but the one you want
+   to remove INTO TABLE new_table FROM old_table; DROP TABLE old_table;
+   ALTER TABLE new_table RENAME TO old_table; COMMIT; 4.5)
+   Ò»ÐÐ£¬Ò»¸ö±í£¬Ò»¸ö¿âµÄ×î´ó³ß´çÊÇ¶àÉÙ£¿ ÏÂÃæÊÇÒ»Ð©ÏÞÖÆ£º
+   Ò»¸öÊý¾Ý¿â×î´ó³ß´ç£¿ ÎÞÏÞÖÆ£¨´æÔÚ 1TB µÄÊý¾Ý¿â£© Ò»¸ö±íµÄ×î´ó³ß´ç£¿
+   16TB Ò»ÐÐµÄ×î´ó³ß´ç£¿ 1.6TB Ò»¸ö×Ö¶ÎµÄ×î´ó³ß´ç? 1GB Ò»¸ö±íÀï×î´óÐÐÊý£¿
+   ÎÞÏÞÖÆ Ò»¸ö±íÀï×î´óÁÐÊý£¿ ¸úÁÐÀàÐÍÓÐ¹Ø,250-1600
+   Ò»¸ö±íÀïµÄ×î´óË÷ÒýÊýÁ¿£¿ÎÞÏÞÖÆ
+   µ±È»£¬Êµ¼ÊÉÏÃ»ÓÐÕæÕýµÄÎÞÏÞÖÆ£¬»¹ÊÇÒªÊÜ¿ÉÓÃ´ÅÅÌ¿Õ¼ä¡¢¿ÉÓÃÄÚ´æ/½»»»ÇøµÄÖ
+   ÆÔ¼¡£ ±íµÄ×î´ó³ß´ç 16 TB ²»ÐèÒª²Ù×÷ÏµÍ³¶Ô´óÎÄ¼þµÄÖ§³Ö¡£´ó±íÓÃ¶à¸ö 1 GB
+   µÄÎÄ¼þ ´æ´¢£¬Òò´ËÎÄ¼þÏµÍ³³ß´çµÄÏÞÖÆÊÇ²»ÖØÒªµÄ¡£ Èç¹ûÈ±Ê¡µÄ¿é´óÐ¡Ôö³¤µ½
+   32K £¬×î´óµÄ±í³ß´çºÍ×î´óÁÐÊý¿ÉÒÔÔö¼Ó¡£
+   4.6)´æ´¢Ò»¸öµäÐÍµÄÆ½ÃæÎÄ¼þÀïµÄÊý¾ÝÐèÒª¶àÉÙ´ÅÅÌ¿Õ¼ä£¿ Ò»¸ö Postgres
+   Êý¾Ý¿â×î¶à¿ÉÄÜÐèÒªÏàµ±ÓÚÔÚÒ»¸öÆ½ÃæÎÄ¼þÀï´æ´¢ÏàÍ¬Êý¾ÝµÄ5±¶ µÄ´ÅÅÌ¿Õ¼ä¡£
+   ÀýÈç£¬¼ÙÉèÓÐÒ»¸ö 100,000
+   ÐÐµÄÎÄ¼þ£¬Ã¿ÐÐÓÐÒ»¸öÕûÊýºÍÒ»¸öÎÄ±¾ÃèÊö¡£¼ÙÉèÎÄ
+   ±¾´®µÄÆ½¾ù³¤¶ÈÎ»20×Ö½Ú¡£Æ½ÃæÎÄ¼þÕ¼ÓÃ 2.8 MB¡£´æ·ÅÕâÐ©Êý¾ÝµÄ PostgreSQL
+   Êý¾Ý¿âÎÄ¼þ´óÔ¼ÊÇ 6.4 MB: 36 ×Ö½Ú: Ã¿ÐÐµÄÍ·£¨¹À¼ÆÖµ£© 24 ×Ö½Ú:
+   Ò»¸öint×Ö¶ÎºÍÒ»¸öÎÄ±¾ÐÍ×Ö¶Î + 4 ×Ö½Ú: Ò³ÃæÄÚÖ¸ÏòÔª×éµÄÖ¸Õë
+   ---------------------------------------- 64 ×Ö½ÚÃ¿ÐÐ PostgreSQL
+   Êý¾ÝÒ³µÄ´óÐ¡ÊÇ 8192 ×Ö½Ú (8 KB)£¬Ôò£º 8192 ×Ö½ÚÃ¿Ò³
+   ------------------- = 128 ÐÐ/Êý¾ÝÒ³£¨ÏòÏÂÈ¡Õû£© 64 ×Ö½ÚÃ¿ÐÐ 100000
+   Êý¾ÝÐÐ -------------------- = 782 Êý¾ÝÒ³£¨ÏòÉÏÈ¡Õû£© 128 ÐÐÃ¿Ò³ 782
+   Êý¾ÝÒ³ * 8192 ×Ö½Ú/Ò³ = 6,406,144 ×Ö½Ú£¨6.4 MB£©
+   Ë÷Òý²»ÐèÒªÕâÃ´¶àµÄ¶îÍâÏûºÄ£¬µ«Ò²È·Êµ°üÀ¨±»Ë÷ÒýµÄÊý¾Ý£¬Òò´ËËüÃÇÒ²¿ÉÄÜºÜ
+   ´ó¡£ ¿ÕÖµ´æ·ÅÔÚÎ»Í¼ÖÐ£¬Òò´ËÕ¼ÓÃºÜÉÙµÄ¿Õ¼ä¡£ 4.7)
+   ÈçºÎ²é¿´±í¡¢Ë÷Òý¡¢Êý¾Ý¿âÒÔ¼°ÓÃ»§µÄ¶¨Òå£¿ / psql/
+   ÓÐÐí¶à·´Ð±¸ÜÃüÁîÓÃÓÚÏÔÊ¾ÕâÐ©ÐÅÏ¢¡£ÓÃ \? ¿´¿´¶¼ÓÐÄÄÐ©¡£ÒÔ pg_ ´ò
+   Í·µÄÏµÍ³±íÒ²ÃèÊöÁËÕâÐ©ÐÅÏ¢¡£ psql -l ¿ÉÒÔÁÐ³öËùÓÐµÄÊý¾Ý¿â¡£
+   Ò²¿ÉÒÔÊÔÊÔÎÄ¼þ
+   /pgsql/src/tutorial/syscat.source/¡£ËüÑÝÊ¾ÁËÐí¶à´ÓÊý¾Ý¿â
+   ÏµÍ³±íÀï»ñÈ¡ÐÅÏ¢ÐèÒªµÄ SELECT¡£ 4.8)
+   ÎÒµÄ²éÑ¯ºÜÂý»òÕßÃ»ÓÐÀûÓÃË÷Òý¡£ÎªÊ²Ã´£¿
+   ²¢·ÇÃ¿¸ö²éÑ¯¶¼»á×Ô¶¯Ê¹ÓÃË÷Òý¡£Ö»ÓÐÔÚ±íµÄ´óÐ¡³¬¹ýÒ»¸ö×îÐ¡Öµ£¬²¢ÇÒ²éÑ¯Ö»
+   Ñ¡
+   Ôñ±íÖÐ½ÏÐ¡±ÈÀýµÄÐÐÊ±²ÉÓÃÊ¹ÓÃË÷Òý¡£ÕâÊÇÒòÎªË÷ÒýÉ¨ÃèÒýÆðµÄËæ¼´´ÅÅÌ´æÈ¡¿É
+   ÄÜ ±ÈÖ±½ÓµØ¶ÁÈ¡±í£¨Ë³ÐòÉ¨Ãè£©¸üÂý¡£ÎªÁËÅÐ¶ÏÊÇ·ñÊ¹ÓÃË÷Òý£¬PostgreSQL
+   ±ØÐë»ñ µÃÓÐ¹Ø±íµÄÍ³¼ÆÖµ¡£ÕâÐ©Í³¼ÆÖµ¿ÉÒÔÊ¹ÓÃ VACUUM ANALYZE£¬»ò ANALYZE
+   »ñµÃ¡£Ê¹
+   ÓÃÍ³¼ÆÖµ£¬ÓÅ»¯Æ÷ÖªµÀ±íÖÐÓÐ¶àÉÙÐÐ£¬¾ÍÄÜ¹»¸üºÃµØÅÐ¶ÏÊÇ·ñÀûÓÃË÷Òý¡£Í³¼ÆÖµ
+   ¶Ô
+   È·¶¨ÓÅ»¯µÄÁ¬½ÓË³ÐòºÍÁ¬½Ó·½·¨Ò²ºÜÓÐÓÃ¡£ÔÚ±íµÄÄÚÈÝ·¢Éú±ä»¯Ê±£¬Ó¦¶¨ÆÚ½øÐÐ
+   Í³ ¼ÆÖµµÄ»ñÈ¡¡£ Ë÷ÒýÍ¨³£²»ÓÃÓÚ ORDER BY
+   »òÖ´ÐÐÁ¬½Ó¡£¶ÔÒ»¸ö´ó±íµÄÒ»´ÎË³ÐòÉ¨Ãè£¬ÔÙ×öÒ»¸öÏÔ
+   Ê½µÄÅÅÐòÍ¨³£±ÈË÷ÒýÉ¨ÃèÒª¿ì¡£ µ«ÊÇ£¬ÔÚ LIMIT ºÍ ORDER BY ½áºÏÊ¹ÓÃÊ±¾­
+   ³£»áÊ¹ÓÃË÷Òý£¬ÒòÎªÖ»»á·µ»Ø±íµÄÒ» Ð¡²¿·Ö¡£Êµ¼ÊÉÏ£¬ËäÈ» MAX() ºÍ MIN()
+   ²¢²»Ê¹ÓÃË÷Òý£¬Í¨¹ý¶Ô ORDER BY ºÍ LLIMIT
+   Ê¹ÓÃË÷ÒýÈ¡µÃ×î´óÖµºÍ×îÐ¡ÖµÒ²ÊÇ¿ÉÒÔµÄ£º SELECT col FROM tab ORDER BY
+   col [ DESC ] LIMIT 1; µ±Ê¹ÓÃÍ¨Åä·û²Ù×÷£¬ÀýÈç LIKE »ò ~
+   Ê±£¬Ë÷ÒýÖ»ÄÜÔÚÌØ¶¨µÄÇé¿öÏÂÊ¹ÓÃ£º *
+   ×Ö·û´®µÄ¿ªÊ¼²¿·Ö±ØÐëÊÇÆÕÍ¨×Ö·û´®£¬Ò²¾ÍÊÇËµ£º o LIKE Ä£Ê½²»ÄÜÒÔ %
+   ´òÍ·¡£ o ~ £¨ÕýÔò±í´ïÊ½£©Ä£Ê½±ØÐëÒÔ ^ ´òÍ·¡£ *
+   ×Ö·û´®²»ÄÜÒÔÆ¥Åä¶à¸ö×Ö·ûµÄÄ£Ê½Àà´òÍ·£¬ÀýÈç [a-e]¡£ *
+   ´óÐ¡Ð´ÎÞ¹ØµÄ²éÕÒ£¬Èç ILIKE ºÍ ~* µÈ²»Ê¹ÓÃË÷Òý¡£µ«¿ÉÒÔÓÃ 4.12 ½ÚÃè
+   ÊöµÄº¯ÊýË÷Òý¡£ * ÔÚ×ö initdb Ê±±ØÐë²ÉÓÃÈ±Ê¡µÄ±¾µØÉèÖÃ C locale¡£ 4.9)
+   ÎÒÈçºÎ²ÅÄÜ¿´µ½²éÑ¯ÓÅ»¯Æ÷ÊÇÔõÑù´¦ÀíÎÒµÄ²éÑ¯µÄ£¿ ²Î¿¼ EXPLAIN ÊÖ²áÒ³¡£
+   4.10) R-tree Ë÷ÒýÊÇÊ²Ã´£¿ R-tree
+   Ë÷ÒýÓÃÓÚË÷Òý¿Õ¼äÊý¾Ý¡£Ò»¸ö¹þÏ£Ë÷ÒýÎÞ·¨´¦Àí·¶Î§ËÑË÷¡£¶ø B-tree Ë÷
+   ÒýÖ»ÄÜ´¦ÀíÒ»Î¬µÄ·¶Î§ËÑË÷¡£R-tree
+   Ë÷Òý¿ÉÒÔ´¦Àí¶àÎ¬Êý¾Ý¡£ÀýÈç£¬Èç¹û¿ÉÒÔÔÚ Ò»¸öÀàÐÍÎª point
+   µÄ×Ö¶ÎÉÏ½¨Á¢Ò»¸ö R-tree Ë÷Òý£¬ÄÇÃ´ÏµÍ³ÄÜ¸ü¸ßÐ§µØ»Ø´ðÀà ËÆ
+   ¡°Ñ¡ÔñÔÚÒ»¸ö³¤·½ÐÎ·¶Î§ÄÚµÄËùÓÐµã¡±¡£ ÃèÊö×î³õµÄ R-Tree
+   Éè¼ÆµÄÕýÊ½ÂÛÎÄÊÇ£º Guttman, A. "R-Trees: A Dynamic Index Structure for
+   Spatial Searching." Proc of the 1984 ACM SIGMOD Int'l Conf on Mgmt of
+   Data, 45-57. Äã»¹¿ÉÒÔÔÚ Stonebraker µÄ¡°Readings in Database
+   Systems¡±ÀïÕÒµ½ÕâÆªÎÄÕÂ¡£ ÏµÍ³ÄÚÖÃµÄ R-Tree
+   ¿ÉÒÔ´¦Àí¶à±ßÐÎºÍ·½ÐÎ¡£ÀíÂÛÉÏËµ£¬R-tree ¿ÉÒÔÀ©Õ¹Îª´¦Àí
+   ¸ü¶àÎ¬Êý¡£²»¹ýÔÚÊµ¼ùÉÏ£¬À©Õ¹ R-trees
+   ÐèÒªÒ»¶¨µÄ¹¤×÷Á¿£¬¶øÎÒÃÇÄ¿Ç°Ã»ÓÐÈç ºÎ×öµÄÎÄµµ¡£ 4.11)
+   Ê²Ã´ÊÇ»ùÒò²éÑ¯ÓÅ»¯£¨Genetic Query Optimization£©£¿ GEQO
+   Ä£¿é²ÉÓÃ»ùÒòËã·¨£¨Genetic Algorithm£¬GA£©¼Ó¿ì¶à±íÁ¬½ÓµÄ²éÑ¯ÓÅ»¯¡£Ëü
+   ÔÊÐíÍ¨¹ý·ÇÇî¾ÙËÑË÷´¦Àí´óµÄÁ¬½Ó²éÑ¯¡£ 4.12)
+   ÎÒÔõÑù×öÕýÔò±í´ïÊ½ËÑË÷ºÍ´óÐ¡Ð´ÎÞ¹ØµÄÕýÔò±í´ïÊ½ËÑË÷£¿ÔõÑùÀû
+   ÓÃË÷Òý½øÐÐ´óÐ¡Ð´ÎÞ¹ØËÑË÷£¿ ²Ù×÷·û ~ ´¦ÀíÕýÔò±í´ïÊ½Æ¥Åä£¬¶ø ~*
+   ´¦Àí´óÐ¡Ð´ÎÞ¹ØµÄÕýÔò±í´ïÊ½Æ¥Åä¡£´óÐ´ Ð©ÎÞ¹ØµÄ LIKE ±äÖÖ³ÉÎª ILIKE¡£
+   ´óÐ¡Ð´ÎÞ¹ØµÄµÈÊ½±È½ÏÍ¨³£Ð´×ö£º SELECT * FROM tab WHERE lower(col) =
+   'abc'; ÕâÑù½«²»»áÊ¹ÓÃ±ê×¼µÄË÷Òý¡£µ«ÊÇ¿ÉÒÔ´´½¨Ò»¸ö¿É±»ÀûÓÃµÄº¯ÊýË÷Òý:
+   CREATE INDEX tabindex ON tab (lower(col)); 4.13)
+   ÔÚÒ»¸ö²éÑ¯Àï£¬ÎÒÔõÑù¼ì²âÒ»¸ö×Ö¶ÎÊÇ·ñÎª NULL£¿ ÓÃ IS NULL ºÍ IS NOT
+   NULL ²âÊÔÕâ¸ö×Ö¶Î¡£ 4.14) ¸÷ÖÖ×Ö·ûÀàÐÍÖ®¼äÓÐÊ²Ã´²»Í¬£¿ ÀàÐÍ ÄÚ²¿Ãû³Æ
+   ËµÃ÷ -------------------------------------------------- "char" char
+   1¸ö×Ö·û character CHAR(#) bpchar
+   ¶¨³¤×Ö·û´®£¬Êµ¼ÊÊý¾Ý²»×ã¶¨Òå³¤¶ÈÊ±£¬ÒÔ¿Õ¸ñ²¹Æë VARCHAR(#) varchar
+   Ö¸¶¨ÁË×î´ó³¤¶È£¬±ä³¤×Ö·û´®£¬²»×ã¶¨Òå³¤¶ÈµÄ²¿·Ö ²»²¹Æë TEXT text
+   ´®³¤¶È½öÊÜÐÐµÄ×î´ó³¤¶ÈÏÞÖÆ BYTEA bytea
+   ±ä³¤×Ö½ÚÐòÁÐ£¨±ä³¤µÄ¶þ½øÖÆÊý¾Ý£©
+   ÔÚÏµÍ³±íºÍÔÚÒ»Ð©´íÎóÐÅÏ¢ÀïÄã½«¿´µ½ÄÚ²¿Ãû³Æ¡£
+   ÉÏÃæ×îºóËÄÖÖÀàÐÍÊÇ"varlena"£¨±ä³¤£©ÀàÐÍ£¨Ò²¾ÍÊÇËµ£¬¿ªÍ·µÄËÄ¸ö×Ö½ÚÊÇ³¤
+   ¶È£¬ºóÃæ²ÅÊÇÊý¾Ý£©¡£ÓÚÊÇÊµ¼ÊÕ¼ÓÃµÄ¿Õ¼ä±ÈÉùÃ÷µÄ´óÐ¡Òª¶àÒ»Ð©¡£È»¶øÕâÐ©Àà
+   ÐÍ ¶¼¿ÉÒÔ±»Ñ¹Ëõ´æ´¢£¬Ò²¿ÉÒÔÓÃ TOAST
+   ÍÑ»ú´æ´¢£¬Òò´Ë´ÅÅÌ¿Õ¼äÒ²¿ÉÄÜ±ÈÔ¤ÏëµÄÒªÉÙ¡£ CHAR(n)
+   ×îÊÊºÏÓÚ´æ´¢³¤¶È»ù±¾²î²»¶àµÄ×Ö·û´®¡£VARCHAR(n) ÔÚ´æ´¢ÏÞÖÆÁË×î´ó
+   ³¤¶ÈµÄ±ä³¤×Ö·û´®ÊÇ×îºÃµÄ¡£TEXT ÊÊÓÃÓÚ´æ´¢²»ÏÞÖÆ³¤¶ÈµÄ×Ö·û´®£¬×î´ó¿É´ï
+   1G¡£BYTEA ÓÃÓÚ´æ´¢¶þ½øÖÆÊý¾Ý£¬ÓÈÆäÊÇ°üº¬ NULL
+   ×Ö½Ú£¨¶þ½øÖÆµÄ0£©µÄÖµ¡£Õâ Ð©ÀàÐÍ¾ßÓÐÀàÐÍµÄÐÔÄÜ¡£ 4.15.1)
+   ÎÒÔõÑù´´½¨Ò»¸öÐòÁÐºÅ/×Ô¶¯µÝÔöµÄ×Ö¶Î£¿ PostgreSQL Ö§³Ö SERIAL
+   Êý¾ÝÀàÐÍ¡£ËüÔÚ×Ö¶ÎÉÏ×Ô¶¯´´½¨Ò»¸öÐòÁÐºÍË÷Òý¡£ÀýÈç£¬ CREATE TABLE person
+   ( id SERIAL, name TEXT ); »á×Ô¶¯×ª»»Îª£º CREATE SEQUENCE
+   person_id_seq; CREATE TABLE person ( id INT4 NOT NULL DEFAULT
+   nextval('person_id_seq'), name TEXT ); CREATE UNIQUE INDEX
+   person_id_key ON person ( id ); ²Î¿¼ create_sequence
+   ÊÖ²áÒ³»ñÈ¡¹ØÓÚÐòÁÐµÄ¸ü¶àÐÅÏ¢¡£Äã»¹¿ÉÒÔÓÃÃ¿ÐÐµÄ oid
+   ×Ö¶Î×÷ÎªÒ»¸öÎ¨Ò»Öµ¡£²»¹ý£¬Èç¹ûÄãÐèÒªÇãµ¹ºÍÖØÔØÊý¾Ý¿â£¬ÄãÐèÒªÊ¹ÓÃ
+   pg_dump µÄ -o Ñ¡Ïî»òÕß COPY WITH OIDS Ñ¡ÏîÒÔ±£Áô OID¡£ 4.15.2)
+   ÎÒÈçºÎ»ñµÃÒ»¸ö²åÈëµÄÐòÁÐºÅµÄÖµ£¿ Ò»ÖÖ·½·¨ÊÇÔÚ²åÈëÖ®Ç°ÏÈÓÃº¯Êý
+   nextval() ´ÓÐòÁÐ¶ÔÏóÀï¼ìË÷³öÏÂÒ»¸ö SERIAL Öµ£¬È»ºóÔÙÏÔÊ½²åÈë¡£Ê¹ÓÃ
+   4.15.1 <#4.15.1> ÀïµÄÀý±í£¬¿ÉÓÃÎ±ÂëÕâÑùÃèÊö£º new_id = execute("SELECT
+   nextval('person_id_seq')"); execute("INSERT INTO person (id, name)
+   VALUES (new_id, 'Blaise Pascal')"); ÕâÑù»¹ÄÜÔÚÆäËû²éÑ¯ÖÐÊ¹ÓÃ´æ·ÅÔÚ
+   new_id ÀïµÄÐÂÖµ£¨ÀýÈç£¬×÷Îª person ±íµÄÍâ ¼ü£©¡£×¢Òâ×Ô¶¯´´½¨µÄ
+   SEQUENCE ¶ÔÏóµÄÃû³Æ½«»áÊÇ
+   
+   __seq£¬ÕâÀï table ºÍ serialcolumn ·Ö±ðÊÇÄãµÄ±íµÄÃû ³ÆºÍÄãµÄ SERIAL
+   ×Ö¶ÎµÄÃû³Æ¡£ ÀàËÆµÄ£¬ÔÚ SERIAL ¶ÔÏóÈ±Ê¡²åÈëºóÄã¿ÉÒÔÓÃº¯Êý currval()
+   ¼ìË÷¸Õ¸³ÖµµÄ SERIAL Öµ£¬ÀýÈç£¬ execute("INSERT INTO person (name)
+   VALUES ('Blaise Pascal')"); new_id = execute("SELECT
+   currval('person_id_seq')"); ×îºó£¬Äã¿ÉÒÔÊ¹ÓÃ´Ó INSERT Óï¾ä·µ»ØµÄ OID
+   <4.16> ²éÕÒÈ±Ê¡Öµ£¬¾¡¹ÜÕâ¿ÉÄÜÊÇ ×îÈ±·¦ÒÆÖ²ÐÔµÄ·½·¨¡£ÔÚ Perl
+   Àï£¬Ê¹ÓÃ´øÓÐ Edmund Mergl µÄ DBD::Pg Ä£¿éµÄ DBI£¬oid Öµ¿ÉÒÔÍ¨¹ý
+   $sth->execute() ºóµÄ $sth->{pg_oid_status} »ñµÃ¡£ 4.15.3) Ê¹ÓÃ
+   currval() ºÍ nextval() »áµ¼ÖÂÒ»¸öÓëÆäËûÓÃ»§Ö®¼äµÄÎÉ ÂÒÇé¿öÂð£¿
+   ²»»á¡£currval() ·µ»ØºóÌ¨½ø³Ì¶ø²»ÊÇËùÓÐÓÃ»§¸³ÓèµÄµ±Ç°Öµ¡£ 4.15.4)
+   ÎªÊ²Ã´²»ÔÚÊÂÎñÒì³£ÖÐÖ¹ºóÖØÓÃÐòÁÐºÅÄØ£¿ÎªÊ²Ã´ÔÚÐòÁÐºÅ×Ö¶Î
+   µÄÈ¡ÖµÖÐ´æÔÚ¼ä¶ÏÄØ£¿
+   ÎªÁËÌá¸ß²¢·¢ÐÔ£¬ÐòÁÐºÅÔÚÐèÒªµÄÊ±ºò¸³ÓèÕýÔÚÔËÐÐµÄÊÂÎñ£¬²¢ÇÒÖ»ÔÚÊÂÎñ½áÊø
+   Ö® Ç°²»·âËø¡£Õâ¾Í»áµ¼ÖÂØ²ÕÛÊÂÎñºóµÄÐòÁÐºÅ³öÏÖ¼ä¸ô¡£ 4.16) Ê²Ã´ÊÇ
+   OID£¿Ê²Ã´ÊÇ TID£¿ OID ÊÇ PostgreSQL ÖÐÐÐµÄÎ¨Ò»±êÊ¶¡£PostgreSQL
+   Àï´´½¨µÄÃ¿Ò»ÐÐ¶¼»ñµÃÒ»¸öÎ¨ Ò»µÄ OID¡£ËùÓÐÔÚ initdb ¹ý³ÌÖÐ´´½¨µÄ OID
+   ¶¼Ð¡ÓÚ 16384 £¨²Î¼û include/access/transam.h£©¡£ËùÓÐÓÃ»§´´½¨µÄ OID
+   ¶¼´óÓÚ»òµÈÓÚÕâ¸öÖµ¡£È±Ê¡ Ê±£¬ËùÓÐÕâÐ© OID
+   ²»½öÔÚÒ»¸ö±í»òÒ»¸öÊý¾Ý¿âÀïÃæÎ¨Ò»£¬¶øÇÒÔÚÕû¸ö PostgreSQL
+   °²×°ÀïÒ²ÊÇÎ¨Ò»µÄ¡£ PostgreSQL ÔÚËüµÄÄÚ²¿ÏµÍ³±íÀïÊ¹ÓÃ OID
+   ÔÚ±íÖ®¼ä½¨Á¢ÁªÏµ¡£ÕâÐ© OID ¿ÉÒÔÓÃ
+   ÓÚ±êÊ¶ÌØ¶¨µÄÓÃ»§ÐÐÒÔ¼°ÓÃÔÚÁ¬½ÓÀï¡£½¨ÒéÊ¹ÓÃ×Ö¶ÎÀàÐÍ OID ´æ´¢ OID
+   Öµ¡£¿ÉÒÔ ÔÚ OID ×Ö¶ÎÉÏ´´½¨Ò»¸öË÷ÒýÒÔ¿ìËÙ·ÃÎÊ¡£ OID
+   ´ÓÒ»¸ö±»ËùÓÐÊý¾Ý¿âÊ¹ÓÃµÄÖÐÐÄÇøÓòÀï¸³Öµ¸øËùÓÐÐÂÐÐ¡£Èç¹ûÄãÏë°Ñ OID ¸Ä
+   ³É±ðµÄÖµ£¬»òÕßÏë×öÒ»·Ý±íµÄ´øÔÊ¼ OID µÄ¿½±´£¬Äã¿ÉÒÔ×öµ½£º CREATE TABLE
+   new(old_oid oid, mycol int); SELECT old_oid, mycol INTO new FROM old;
+   COPY new TO '/tmp/pgtable'; DELETE FROM new; COPY new WITH OIDS FROM
+   '/tmp/pgtable'; OID
+   ÓÃ4×Ö½ÚµÄÕûÊý±£´æ£¬ÔÚ³¬¹ý40ÒÚÊ±½«Òç³ö¡£Ã»ÓÐÈË±¨¸æ³öÏÖ¹ýÒç³ö£¬¶øÎÒÃÇ
+   ´òËãÔÚÓÐÈË±¨¸æÖ®Ç°Ïû³ýÕâ¸öÏÞÖÆ¡£ TID
+   ÓÃÓÚ±êÊ¶´ø×ÅÊý¾Ý¿é£¨µØÖ·£©ºÍ£¨¿éÄÚ£©Æ«ÒÆµÄÌØ¶¨µÄÎïÀíÐÐ¡£TID ÔÚÐÐ±»¸ü
+   ¸Ä»òÖØÔØºó·¢Éú¸Ä±ä¡£Ë÷ÒýÈë¿ÚÊ¹ÓÃËüÃÇÖ¸ÏòÎïÀíÐÐ¡£ 4.17) PostgreSQL
+   Ê¹ÓÃµÄÒ»Ð©ÊõÓïµÄº¬ÒåÊÇÊ²Ã´£¿
+   Ò»Ð©Ô´´úÂëºÍÒ»Ð©¾ÉÒ»µãµÄÎÄµµÊ¹ÓÃÒ»Ð©ÓÐ¸ü³£ÓÃÓÃ·¨µÄÊõÓï¡£ÏÂÃæÊÇÆäÖÐÒ»²¿
+   ·Ö£º table, relation, class row, record, tuple column, field,
+   attribute retrieve, select replace, update append, insert OID, serial
+   value portal, cursor range variable, table name, table alias
+   ÓÐÒ»¸öÍ¨ÓÃÊý¾Ý¿âÊõÓïµÄÁÐ±í£ºhttp://hea-
+   www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.h
+   tml ¡£ 4.18) ÎªÊ²Ã´ÎÒÊÕµ½´íÎó¡°/ERROR: Memory exhausted in
+   AllocSetAlloc()/¡±£¿
+   ÕâºÜ¿ÉÄÜÊÇÏµÍ³µÄÐéÄâÄÚ´æÓÃ¹âÁË£¬»òÕßÄÚºË¶ÔÄ³Ð©×ÊÔ´ÓÐ½ÏµÍµÄÏÞÖÆÖµ¡£ÔÚÆô
+   ¶¯ postmaster Ö®Ç°ÊÔÊÔÏÂÃæµÄÃüÁî£º ulimit -d 262144 limit datasize
+   256m È¡¾öÓÚÄãÓÃµÄ
+   shell£¬ÉÏÃæÃüÁîÖ»ÓÐÒ»ÌõÄÜ³É¹¦£¬µ«ÊÇËü½«°ÑÄãµÄ½ø³ÌÊý¾Ý¶ÎÏÞÖÆ
+   ÉèµÃ±È½Ï¸ß£¬Òò¶øÒ²ÐíÄÜÈÃ²éÑ¯Íê³É¡£ÕâÌõÃüÁîÓ¦ÓÃÓÚµ±Ç°½ø³Ì£¬ÒÔ¼°ËùÓÐÔÚÕâ
+   Ìõ
+   ÃüÁîÔËÐÐºó´´½¨µÄ×Ó½ø³Ì¡£Èç¹ûÄãÊÇÔÚÔËÐÐSQL¿Í»§¶ËÊ±ÒòÎªºóÌ¨·µ»ØÁËÌ«¶àµÄÊ
+   ý ¾Ý¶ø³öÏÖÎÊÌâ£¬ÇëÔÚÔËÐÐ¿Í»§¶ËÖ®Ç°Ö´ÐÐÉÏÊöÃüÁî¡£ 4.19)
+   ÎÒÈçºÎ²ÅÄÜÖªµÀËùÔËÐÐµÄ PostgreSQL µÄ°æ±¾£¿ ´Ó psql Àï£¬¼üÈë SELECT
+   version()£» 4.20) ÎªÊ²Ã´ÎÒµÄ´ó¶ÔÏó²Ù×÷µ¼ÖÂ´íÎó¡°/invalid large obj
+   descriptor¡±£¨·Ç·¨µÄ´ó¶ÔÏóÃèÊö·û£©/£¿
+   ÄãÐèÒªÔÚÊ¹ÓÃÈÎºÎ´ó¶ÔÏó¾ä±úµÄÇ°ºó·ÅÉÏ BEGIN WORK ºÍ
+   COMMIT£¬Ò²¾ÍÊÇËµ£¬°ü Î§ lo_open ... lo_close¡£ Ä¿Ç° PostgreSQL
+   Ç¿ÖÆÊµÊ©ÕâÌõ¹æÔò£ºÔÚÊÂÎñÌá½»Ê±¹Ø±Õ´ó¶ÔÏó¾ä±ú£¬ÕâÑù£¬£¨Ã»
+   ÓÐ²ÉÓÃÊÂÎñÊ±£©£¬Ê×´Î¶Ô´ó¶ÔÏó¾ä±ú×öÈÎºÎÊÂÇéµÄÆóÍ¼¶¼»áµ¼ÖÂÒ»¸ö invalid
+   large obj
+   descriptor¡£ËùÒÔ£¬Èç¹ûÄãÃ»ÓÐÊ¹ÓÃÒ»¸öÊÂÎñ£¬ÒÔÇ°ÄÜ¹¤×÷µÄ´úÂë£¨ÖÁ
+   ÉÙÊÇ´ó¶àÊýÊ±¼ä£©½«»áÉú³ÉÕâÃ´Ò»¸ö´íÎóÐÅÏ¢¡£ Èç¹ûÄãÊ¹ÓÃ¿Í»§¶Ë½Ó¿Ú£¬Èç
+   ODBC£¬Äã¿ÉÄÜÐèÒª set auto-commit off¡£ 4.21)
+   ÎÒÈçºÎ´´½¨Ò»¸öÈ±Ê¡ÖµÊÇµ±Ç°Ê±¼äµÄ×Ö¶Î£¿ Ê¹ÓÃ CURRENT_TIMESTAMP£º CREATE
+   TABLE test(x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP); 4.22)
+   ÎªÊ²Ã´Ê¹ÓÃ IN µÄ×Ó²éÑ¯ÕâÃ´Âý£¿
+   Ä¿Ç°£¬ÎÒÃÇÍ¨¹ýÎªÍâ²éÑ¯µÄÃ¿Ò»ÐÐË³ÐòÉ¨Ãè×Ó²éÑ¯µÄ½á¹ûÀ´Á¬½Ó×Ó²éÑ¯ºÍÍâ²éÑ¯
+   ¡£ Èç¹û×Ó²éÑ¯·µ»ØÉÙÊý¼¸ÐÐ£¬¶øÍâ²éÑ¯·µ»ØºÜ¶àÐÐ£¬IN
+   Ö´ÐÐµÃºÜ¿ì¡£ÎªÁË¼Ó¿ìÆäËû IN ²éÑ¯µÄÖ´ÐÐ£¬¿ÉÒÔÓÃ EXISTS Ìæ»» IN£º SELECT
+   * FROM tab WHERE col IN (SELECT subcol FROM subtab); ¸ÄÎª£º SELECT *
+   FROM tab WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
+   ºóÕßÒªÏëÖ´ÐÐµÃ¸ü¿ì£¬subcol
+   Ó¦¸ÃÊÇÒ»¸öË÷ÒýÁÐ¡£ÎÒÃÇÏ£ÍûÔÚÎ´À´µÄ·¢²¼°æ±¾ÖÐ ÐÞ²¹Õâ¸öÏÞÖÆ¡£ 4.23)
+   ÎÒÔõÑù½øÐÐ outer join £¨ÍâÁ¬½Ó£©£¿ PostgreSQL ²ÉÓÃ±ê×¼µÄ SQL
+   Óï·¨Ö§³ÖÍâÁ¬½Ó¡£ÕâÀïÊÇÁ½¸öÀý×Ó£º SELECT * FROM t1 LEFT OUTER JOIN t2
+   ON (t1.col = t2.col); »ò SELECT * FROM t1 LEFT OUTER JOIN t2 USING
+   (col); ÕâÁ½¸öµÈ¼ÛµÄ²éÑ¯ÔÚ t1.col ºÍ t2.col ÉÏ×öÁ¬½Ó£¬²¢ÇÒ·µâ»?t1
+   ÖÐËùÓÐÎ´Á¬½ÓµÄ ÐÐ£¨ÄÇÐ©ÔÚ t2 ÖÐÃ»ÓÐÆ¥ÅäµÄÐÐ£©¡£ÓÒ[Íâ]Á¬½Ó(RIGHT OUTER
+   JOIN)½«·µ»Ø t2 ÖÐ Î´Á¬½ÓµÄÐÐ¡£ÍêÈ«ÍâÁ¬½Ó£¨FULL OUTER JOIN£©½«·µ»Ø t1
+   ºÍ t2 ÖÐÎ´Á¬½ÓµÄÐÐ¡£ ¹Ø¼ü×Ö OUTER
+   ÔÚ×ó[Íâ]Á¬½Ó¡¢ÓÒ[Íâ]Á¬½ÓºÍÍêÈ«[Íâ]Á¬½ÓÖÐÊÇ¿ÉÑ¡µÄ£¬ÆÕÍ¨Á¬½Ó
+   ±»³ÉÎªÄÚÁ¬½Ó£¨INNER JOIN£©¡£ ÔÚ´ËÇ°µÄ°æ±¾ÖÐ£¬ÍâÁ¬½Ó¿ÉÒÔÓÃ UNION ºÍ NOT
+   IN À´Ä£Äâ¡£ÀýÈç£¬ÏÂÃæµÄÀý×ÓÔÚ ±í tab1 ºÍ tab2 Ö®¼ä×öÍâÁ¬½Ó£º SELECT
+   tab1.col1, tab2.col2 FROM tab1, tab2 WHERE tab1.col1 = tab2.col1 UNION
+   ALL SELECT tab1.col1, NULL FROM tab1 WHERE tab1.col1 NOT IN (SELECT
+   tab2.col1 FROM tab2) ORDER BY col1 4.24)
+   ÈçºÎÊ¹ÓÃÉæ¼°¶à¸öÊý¾Ý¿âµÄ²éÑ¯£¿
+   Ã»ÓÐ°ì·¨²éÑ¯µ±Ç°Êý¾Ý¿âÖ®ÍâµÄÊý¾Ý¿â¡£ÒòÎª PostgreSQL
+   ¼ÓÔØÊý¾Ý¿âÏà¹ØµÄÏµÍ³ Ä¿Â¼£¨ÏµÍ³±í£©£¬¿çÊý¾Ý¿âµÄ²éÑ¯ÈçºÎÖ´ÐÐÒ²Î´Ã÷È·¡£
+   contrib/dblink
+   ÔÊÐí²ÉÓÃº¯Êýµ÷ÓÃÊµÏÖ¿ç¿â²éÑ¯¡£µ±È»¿ÉÒÔÍ¬Ê±Á¬½Óµ½²»Í¬µÄÊý
+   ¾Ý¿â²¢ÔÚ¿Í»§¶ËºÏ²¢½á¹û¡£ 4.25) ÈçºÎÈÃº¯Êý·µ»Ø¶àÐÐ»ò¶àÁÐ£¿ ¿ÉÒÔÔÚ
+   PL/pgSQL º¯ÊýÖÐÊ¹ÓÃ refcursors ·µ»Ø½á¹û¼¯¡£²Î¿´
+   http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html
+   www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html>, 23.7.3.3½Ú¡£
+   4.26) ÎªÊ²Ã´ÔÚ PL/PgSQL º¯ÊýÖÐ²»ÄÜ¿É¿¿µØ´´½¨»òÉ¾³ýÁÙÊ±±í£¿ PL/PgSQL
+   »º´æº¯ÊýµÄÄÚÈÝ£¬ÓÉ´Ë´øÀ´µÄÒ»¸ö²»ºÃµÄ¸±×÷ÓÃÊÇÈôÒ»¸ö PL/PgSQL º¯
+   Êý·ÃÎÊÁËÒ»¸öÁÙÊ±±í£¬È»ºó¸Ã±í±»É¾³ý²¢ÖØ½¨ÁË£¬ÔòÔÙ´Îµ÷ÓÃ¸Ãº¯Êý½«Ê§°Ü£¬Òò
+   Îª »º´æµÄº¯ÊýÄÚÈÝÈÔÈ»Ö¸Ïò¾ÉµÄÁÙÊ±±í¡£½â¾öµÄ·½·¨ÊÇÔÚ PL/PgSQL ÖÐÓÃ
+   EXECUTE ¶ÔÁÙÊ±±í½øÐÐ·ÃÎÊ¡£ÕâÑù»á±£Ö¤²éÑ¯ÔÚÖ´ÐÐÇ°×ÜÊÇÖØÐÂ·ÖÎö¡£ 4.27)
+   ÓÐÄÄÐ©Êý¾Ý¸´ÖÆÑ¡Ïî£¿
+   ÓÐ¼¸ÖÖÖ÷/´Ó·½Ê½µÄ¸´ÖÆÑ¡Ïî¡£ÕâÐ©Ñ¡ÏîÖ»ÔÊÐíÖ÷Êý¾Ý¿â½øÐÐ¸üÐÂ£¬´ÓÊý¾Ý¿âÖ»Ä
+   Ü ½øÐÐ¶Á¡£ÍøÒ³
+   http://gborg.PostgreSQL.org/genpage?replication_research
+   µÄ×îºóÁÐ³öÁËÕâÐ©Ñ¡Ïî¡£ÔÚ
+   http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php
+   gborg.PostgreSQL.org/project/pgreplication/projdisplay.php> ÕýÔÚ
+   ½øÐÐÒ»¸ö¶àÖ÷±¾¸´ÖÆµÄ½â¾ö·½°¸¡£ 4.28) ÓÐÄÄÐ©Êý¾Ý¼ÓÃÜÑ¡Ïî£¿
+   contrib/pgcrypto °üº¬ÁËºÜ¶àÔÚ SQL
+   ²éÑ¯ÖÐÊ¹ÓÃµÄ¼ÓÃÜº¯Êý¡£¼ÓÃÜ¿Í»§¶Ëµ½·þÎñ Æ÷¶Ë´«ÊäÊý¾ÝµÄÎ¨Ò»·½·¨ÊÇÔÚ
+   pg_hba.conf ÖÐ²ÉÓÃ hostss ¡£ 7.3
+   °æ±¾ÖÐ×Ô¶¯¶ÔÊý¾Ý¿âÓÃ»§ÃÜÂë½øÐÐ¼ÓÃÜ¡£ÔÚÒÔÇ°µÄ°æ±¾ÖÐ£¬±ØÐëÔÚ
+   postgresql.conf ÖÐ´ò¿ª PASSWORD_ENCRYPTION
+   Ñ¡Ïî¡£·þÎñÆ÷¿ÉÒÔÔËÐÐÔÚ¼ÓÃÜµÄ ÎÄ¼þÏµÍ³ÉÏ£¨ÒÔ´ïµ½¼ÓÃÜµÄÄ¿µÄ£©¡£
+   ----------------------------------------------------------------------
+   ---------- À©Õ¹ PostgreSQL 5.1) ÎÒÐ´ÁËÒ»¸öÓÃ»§¶¨Òåº¯Êý¡£µ±ÎÒÔÚ psql
+   ÀïÔËÐÐÊ±£¬ÎªÊ²Ã´»áµ¼ÖÂ core dump£¿ ²úÉúÕâ¸öÎÊÌâµÄÔ­
+   ÒòºÜ¶à¡£ÇëÏÈÔÚÒ»¸öµ¥¶ÀµÄ²âÊÔ³ÌÐòÖÐ²âÊÔÄãµÄ×Ô¶¨Òåº¯Êý¡£ 5.2) ÎÒÈçºÎÄÜ¸ø
+   PostgreSQL ¹±Ï×Ò»Ð©Í¦²»´íµÄÐÂÀàÐÍºÍº¯Êý£¿ ½«ÄãµÄÀ©Õ¹·¢ËÍµ½
+   pgsql-hackers ÓÊ¼þÁÐ±í£¬ËüÃÇ×îÖÕ»á±»·Åµ½ contrib/ ×ÓÄ¿Â¼¡£ 5.3)
+   ÎÒÔõÑùÐ´Ò»¸ö·µ»ØÒ»ÌõÔª×éµÄ C º¯Êý£¿ ÔÚ PostgreSQL 7.3 ÒÔºóµÄ°æ±¾ÖÐ£¬C,
+   PL/PgSQL ºÍ SQL ÍêÈ«Ö§³Ö·µ»ØÖµÎª±íµÄ º¯Êý¡£¸ü¶àÐÅÏ¢Çë²Î¿¼
+   ³ÌÐòÔ±Ö¸ÄÏ£¨the Programmer's Guide£©¡£ÔÚ contrib/tablefunc
+   ÖÐÓÐÒ»¸öÀý×ÓÊÇÓÃ C Ð´µÄ·µ»ØÖµÎª±íµÄº¯Êý¡£ 5.4)
+   ÎÒÐÞ¸ÄÁËÒ»¸öÔ´ÎÄ¼þ£¬ÎªÊ²Ã´ÖØÐÂ±àÒëºóÃ»ÓÐ¿´µ½¸Ä±ä£¿ Makefiles
+   ÖÐÃ»ÓÐ°üº¬Í·ÎÄ¼þµÄÕýÈ·ÒÀÀµ¡£Äú±ØÐëÏÈ×ömake clean£¬ ÔÙ×öÒ»´Î make
+   ¡£Èç¹ûÄúÊ¹ÓÃµÄÊÇ GCC £¬Ôò¿ÉÒÔ²ÉÓÃÑ¡Ïî --enable-depend ÈÃ±àÒëÆ÷×Ô¶¯
+   Éú³ÉÍ·ÎÄ¼þµÄÒÀÀµ¹ØÏµ¡£
