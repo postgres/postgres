@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.48 2004/11/17 18:05:06 tgl Exp $
+#    $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.49 2005/05/11 21:52:03 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -130,17 +130,17 @@ all-spi:
 check: all
 	-rm -rf ./testtablespace
 	mkdir ./testtablespace
-	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) $(MAXCONNOPT)
+	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT)
 
 installcheck: all
 	-rm -rf ./testtablespace
 	mkdir ./testtablespace
-	$(SHELL) ./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE)
+	$(SHELL) ./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql 
 
 installcheck-parallel: all
 	-rm -rf ./testtablespace
 	mkdir ./testtablespace
-	$(SHELL) ./pg_regress --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) $(MAXCONNOPT)
+	$(SHELL) ./pg_regress --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT)
 
 
 # old interfaces follow...
@@ -150,10 +150,10 @@ runtest: installcheck
 runtest-parallel: installcheck-parallel
 
 bigtest:
-	$(SHELL) ./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE) numeric_big
+	$(SHELL) ./pg_regress --schedule=$(srcdir)/serial_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql numeric_big
 
 bigcheck:
-	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) $(MAXCONNOPT) numeric_big
+	$(SHELL) ./pg_regress --temp-install --top-builddir=$(top_builddir) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) numeric_big
 
 
 ##

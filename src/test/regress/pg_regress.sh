@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.53 2005/01/15 04:15:51 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.54 2005/05/11 21:52:03 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -13,6 +13,8 @@ Usage: $me [options...] [extra tests...]
 Options:
   --debug                   turn on debug mode in programs that are run
   --inputdir=DIR            take input files from DIR (default \`.')
+  --load-language=lang      load the named language before running the
+                            tests; can appear multiple times
   --max-connections=N       maximum number of concurrent connections
                             (default is 0 meaning unlimited)
   --multibyte=ENCODING      use ENCODING as the multibyte encoding, and
@@ -103,6 +105,7 @@ unset multibyte
 dbname=regression
 hostname=localhost
 maxconnections=0
+load_langs=""
 
 : ${GMAKE='@GMAKE@'}
 
@@ -125,6 +128,11 @@ do
                 shift;;
         --inputdir=*)
                 inputdir=`expr "x$1" : "x--inputdir=\(.*\)"`
+                shift;;
+        --load-language=*)
+                lang=`expr "x$1" : "x--load-language=\(.*\)"`
+                load_langs="$load_langs $lang"
+                unset lang
                 shift;;
         --multibyte=*)
                 multibyte=`expr "x$1" : "x--multibyte=\(.*\)"`
@@ -560,16 +568,20 @@ fi
 
 
 # ----------
-# Install the PL/pgSQL language in it
+# Install any requested PL languages
 # ----------
 
 if [ "$enable_shared" = yes ]; then
-        message "installing PL/pgSQL"
-        "$bindir/createlang" -L "$pkglibdir" $psql_options plpgsql $dbname
-        if [ $? -ne 0 ] && [ $? -ne 2 ]; then
-            echo "$me: createlang failed"
-            (exit 2); exit
+    for lang in xyzzy $load_langs ; do    
+        if [ "$lang" != "xyzzy" ]; then
+            message "installing $lang"
+            "$bindir/createlang" -L "$pkglibdir" $psql_options $lang $dbname
+            if [ $? -ne 0 ] && [ $? -ne 2 ]; then
+                echo "$me: createlang $lang failed"
+                (exit 2); exit
+            fi
         fi
+    done
 fi
 
 
