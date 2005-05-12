@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.178 2005/05/09 14:28:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.179 2005/05/12 20:41:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1060,17 +1060,11 @@ ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 	foreach(arg, fcache->args)
 	{
 		ExprState  *argstate = (ExprState *) lfirst(arg);
-		ExprDoneCond thisArgIsDone;
 
 		fcinfo.arg[i] = ExecEvalExpr(argstate,
 									 econtext,
 									 &fcinfo.argnull[i],
-									 &thisArgIsDone);
-
-		if (thisArgIsDone != ExprSingleResult)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("set-valued function called in context that cannot accept a set")));
+									 NULL);
 		i++;
 	}
 
