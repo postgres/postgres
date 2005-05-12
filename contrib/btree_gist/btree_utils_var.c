@@ -27,8 +27,7 @@ gbt_var_decompress(PG_FUNCTION_ARGS)
 }
 
 /* Returns a better readable representaion of variable key ( sets pointer ) */
-
-extern		GBT_VARKEY_R
+GBT_VARKEY_R
 gbt_var_key_readable(const GBT_VARKEY * k)
 {
 
@@ -43,7 +42,7 @@ gbt_var_key_readable(const GBT_VARKEY * k)
 }
 
 
-extern GBT_VARKEY *
+GBT_VARKEY *
 gbt_var_key_copy(const GBT_VARKEY_R * u, bool force_node)
 {
 
@@ -208,7 +207,7 @@ gbt_var_node_truncate(const GBT_VARKEY * node, int32 length, const gbtree_vinfo 
 
 
 
-extern void
+void
 gbt_var_bin_union(Datum *u, GBT_VARKEY * e, const gbtree_vinfo * tinfo)
 {
 
@@ -265,7 +264,7 @@ gbt_var_bin_union(Datum *u, GBT_VARKEY * e, const gbtree_vinfo * tinfo)
 
 
 
-extern GISTENTRY *
+GISTENTRY *
 gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo * tinfo)
 {
 
@@ -296,7 +295,7 @@ gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo * tinfo)
 
 
 
-extern GBT_VARKEY *
+GBT_VARKEY *
 gbt_var_union(const GistEntryVector *entryvec, int32 *size, const gbtree_vinfo * tinfo)
 {
 
@@ -337,7 +336,7 @@ gbt_var_union(const GistEntryVector *entryvec, int32 *size, const gbtree_vinfo *
 }
 
 
-extern bool
+bool
 gbt_var_same(bool *result, const Datum d1, const Datum d2, const gbtree_vinfo * tinfo)
 {
 
@@ -362,7 +361,7 @@ gbt_var_same(bool *result, const Datum d1, const Datum d2, const gbtree_vinfo * 
 
 
 
-extern float *
+float *
 gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n, const gbtree_vinfo * tinfo)
 {
 
@@ -458,7 +457,7 @@ gbt_vsrt_cmp(const void *a, const void *b)
 	return (*gbt_vsrt_cmp_tinfo->f_cmp) (ar.lower, br.lower);
 }
 
-extern GIST_SPLITVEC *
+GIST_SPLITVEC *
 gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtree_vinfo * tinfo)
 {
 	OffsetNumber i,
@@ -563,7 +562,7 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtre
 /*
  * The GiST consistent method
  */
-extern bool
+bool
 gbt_var_consistent(
 				   GBT_VARKEY_R * key,
 				   const void *query,

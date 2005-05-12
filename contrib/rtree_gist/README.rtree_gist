@@ -56,7 +56,7 @@ BENCHMARKS:
 
   cd ./bench
   1. createdb TEST
-  2. psql TEST < ../box.sql
+  2. psql TEST < ../rtree_gist.sql
   3. ./create_test.pl | psql TEST 
      -- change $NUM - number of rows in test dataset
   4. ./bench.pl - perl script to benchmark queries. 

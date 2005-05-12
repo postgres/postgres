@@ -124,7 +124,7 @@ gbt_text_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
-	void	   *qtst = (void *) DatumGetPointer(PG_GETARG_DATUM(1));
+	void	   *qtst = (void *) PG_GETARG_POINTER(1);
 	void	   *query = (void *) DatumGetTextP(PG_GETARG_DATUM(1));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		retval = FALSE;
@@ -144,7 +144,7 @@ gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
-	void	   *qtst = (void *) DatumGetPointer(PG_GETARG_DATUM(1));
+	void	   *qtst = (void *) PG_GETARG_POINTER(1);
 	void	   *query = (void *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
 	void	   *trim = (void *) DatumGetPointer(DirectFunctionCall1(rtrim1, PointerGetDatum(query)));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
@@ -197,9 +197,9 @@ gbt_text_same(PG_FUNCTION_ARGS)
 Datum
 gbt_text_penalty(PG_FUNCTION_ARGS)
 {
-	float	   *result = (float *) PG_GETARG_POINTER(2);
 	GISTENTRY  *o = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GISTENTRY  *n = (GISTENTRY *) PG_GETARG_POINTER(1);
+	float	   *result = (float *) PG_GETARG_POINTER(2);
 
 	PG_RETURN_POINTER(gbt_var_penalty(result, o, n, &tinfo));
 }

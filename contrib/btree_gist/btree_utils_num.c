@@ -2,7 +2,7 @@
 #include "btree_utils_num.h"
 #include "utils/date.h"
 
-extern GISTENTRY *
+GISTENTRY *
 gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry, const gbtree_ninfo * tinfo)
 {
 
@@ -61,7 +61,7 @@ gbt_num_compress(GISTENTRY *retval, GISTENTRY *entry, const gbtree_ninfo * tinfo
 ** The GiST union method for numerical values
 */
 
-extern void *
+void *
 gbt_num_union(GBT_NUMKEY * out, const GistEntryVector *entryvec, const gbtree_ninfo * tinfo)
 {
 	int			i,
@@ -99,7 +99,7 @@ gbt_num_union(GBT_NUMKEY * out, const GistEntryVector *entryvec, const gbtree_ni
 ** The GiST same method for numerical values
 */
 
-extern bool
+bool
 gbt_num_same(const GBT_NUMKEY * a, const GBT_NUMKEY * b, const gbtree_ninfo * tinfo)
 {
 
@@ -121,7 +121,7 @@ gbt_num_same(const GBT_NUMKEY * a, const GBT_NUMKEY * b, const gbtree_ninfo * ti
 }
 
 
-extern void
+void
 gbt_num_bin_union(Datum *u, GBT_NUMKEY * e, const gbtree_ninfo * tinfo)
 {
 
@@ -155,7 +155,7 @@ gbt_num_bin_union(Datum *u, GBT_NUMKEY * e, const gbtree_ninfo * tinfo)
 ** The GiST consistent method
 */
 
-extern bool
+bool
 gbt_num_consistent(
 				   const GBT_NUMKEY_R * key,
 				   const void *query,
