@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.51 2004/11/15 06:32:13 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.51.4.1 2005/05/13 16:48:22 tgl Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -419,7 +419,7 @@ perl -pi -e 's/iso-(.*).gml/ISO\1/g' docbook.cat
      <filename>/usr/local/share/sgml/catalog</filename> can also be
      made:
 <programlisting>
-CATALOG "docbook-dsssl-1.<replaceable>xx</>/catalog
+CATALOG "docbook-dsssl-1.<replaceable>xx</>/catalog"
 </programlisting>
      Because stylesheets change rather often, and it's sometimes
      beneficial to try out alternative versions,
