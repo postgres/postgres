@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.236 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.236.4.1 2005/05/13 06:35:25 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2395,6 +2395,7 @@ CopyReadAttributeCSV(const char *delim, const char *null_print, char *quote,
 			if (done && line_buf.len == 0)
 				break;
 			start_cursor = line_buf.cursor;
+			continue;
 		}
 
 		end_cursor = line_buf.cursor;
