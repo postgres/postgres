@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.71 2005/05/06 17:24:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.72 2005/05/13 21:20:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,208 +19,506 @@
  *		ExecEndMergeJoin		cleans up the node.
  *
  * NOTES
+ *
+ *		Merge-join is done by joining the inner and outer tuples satisfying
+ *		join clauses of the form ((= outerKey innerKey) ...).
+ *		The join clause list is provided by the query planner and may contain
+ *		more than one (= outerKey innerKey) clause (for composite sort key).
+ *
+ *		However, the query executor needs to know whether an outer
+ *		tuple is "greater/smaller" than an inner tuple so that it can
+ *		"synchronize" the two relations. For example, consider the following
+ *		relations:
+ *
+ *				outer: (0 ^1 1 2 5 5 5 6 6 7)	current tuple: 1
+ *				inner: (1 ^3 5 5 5 5 6)			current tuple: 3
+ *
+ *		To continue the merge-join, the executor needs to scan both inner
+ *		and outer relations till the matching tuples 5. It needs to know
+ *		that currently inner tuple 3 is "greater" than outer tuple 1 and
+ *		therefore it should scan the outer relation first to find a
+ *		matching tuple and so on.
+ *
+ *		Therefore, when initializing the merge-join node, we look up the
+ *		associated sort operators.  We assume the planner has seen to it
+ *		that the inputs are correctly sorted by these operators.  Rather
+ *		than directly executing the merge join clauses, we evaluate the
+ *		left and right key expressions separately and then compare the
+ *		columns one at a time (see MJCompare).
+ *
+ *
+ *		Consider the above relations and suppose that the executor has
+ *		just joined the first outer "5" with the last inner "5". The
+ *		next step is of course to join the second outer "5" with all
+ *		the inner "5's". This requires repositioning the inner "cursor"
+ *		to point at the first inner "5". This is done by "marking" the
+ *		first inner 5 so we can restore the "cursor" to it before joining
+ *		with the second outer 5. The access method interface provides
+ *		routines to mark and restore to a tuple.
+ *
+ *
  *		Essential operation of the merge join algorithm is as follows:
  *
- *		Join {												   -
+ *		Join {
  *			get initial outer and inner tuples				INITIALIZE
- *			Skip Inner										SKIPINNER
- *			mark inner position								JOINMARK
- *			do forever {									   -
- *				while (outer == inner) {					JOINTEST
- *					join tuples								JOINTUPLES
- *					advance inner position					NEXTINNER
- *				}											   -
- *				advance outer position						NEXTOUTER
- *				if (outer == mark) {						TESTOUTER
- *					restore inner position to mark			TESTOUTER
- *					continue								   -
- *				} else {									   -
- *					Skip Outer								SKIPOUTER
- *					mark inner position						JOINMARK
- *				}											   -
- *			}												   -
- *		}													   -
- *
- *		Skip Outer {										SKIPOUTER_BEGIN
- *			if (inner == outer) Join Tuples					JOINTUPLES
- *			while (outer < inner)							SKIPOUTER_TEST
- *				advance outer								SKIPOUTER_ADVANCE
- *			if (outer > inner)								SKIPOUTER_TEST
- *				Skip Inner									SKIPINNER
- *		}													   -
- *
- *		Skip Inner {										SKIPINNER_BEGIN
- *			if (inner == outer) Join Tuples					JOINTUPLES
- *			while (outer > inner)							SKIPINNER_TEST
- *				advance inner								SKIPINNER_ADVANCE
- *			if (outer < inner)								SKIPINNER_TEST
- *				Skip Outer									SKIPOUTER
- *		}													   -
+ *			do forever {
+ *				while (outer != inner) {					SKIP_TEST
+ *					if (outer < inner)
+ *						advance outer						SKIPOUTER_ADVANCE
+ *					else
+ *						advance inner						SKIPINNER_ADVANCE
+ *				}
+ *				mark inner position							SKIP_TEST
+ *				do forever {
+ *					while (outer == inner) {
+ *						join tuples							JOINTUPLES
+ *						advance inner position				NEXTINNER
+ *					}
+ *					advance outer position					NEXTOUTER
+ *					if (outer == mark)						TESTOUTER
+ *						restore inner position to mark		TESTOUTER
+ *					else
+ *						break	// return to top of outer loop
+ *				}
+ *			}
+ *		}
  *
  *		The merge join operation is coded in the fashion
  *		of a state machine.  At each state, we do something and then
  *		proceed to another state.  This state is stored in the node's
  *		execution state information and is preserved across calls to
  *		ExecMergeJoin. -cim 10/31/89
- *
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/nbtree.h"
 #include "access/printtup.h"
+#include "catalog/pg_amop.h"
 #include "catalog/pg_operator.h"
 #include "executor/execdebug.h"
 #include "executor/execdefs.h"
 #include "executor/nodeMergejoin.h"
+#include "miscadmin.h"
+#include "utils/acl.h"
+#include "utils/catcache.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
 
-static bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext);
+/*
+ * Comparison strategies supported by MJCompare
+ *
+ * XXX eventually should extend these to support descending-order sorts.
+ * There are some tricky issues however about being sure we are on the same
+ * page as the underlying sort or index as to which end NULLs sort to.
+ */
+typedef enum
+{
+	MERGEFUNC_LT,				/* raw "<" operator */
+	MERGEFUNC_CMP				/* -1 / 0 / 1 three-way comparator */
+} MergeFunctionKind;
+
+/* Runtime data for each mergejoin clause */
+typedef struct MergeJoinClauseData
+{
+	/* Executable expression trees */
+	ExprState	   *lexpr;		/* left-hand (outer) input expression */
+	ExprState	   *rexpr;		/* right-hand (inner) input expression */
+	/*
+	 * If we have a current left or right input tuple, the values of the
+	 * expressions are loaded into these fields:
+	 */
+	Datum			ldatum;		/* current left-hand value */
+	Datum			rdatum;		/* current right-hand value */
+	bool			lisnull;	/* and their isnull flags */
+	bool			risnull;
+	/*
+	 * Remember whether mergejoin operator is strict (usually it will be).
+	 * NOTE: if it's not strict, we still assume it cannot return true for
+	 * one null and one non-null input.
+	 */
+	bool			mergestrict;
+	/*
+	 * The comparison strategy in use, and the lookup info to let us call
+	 * the needed comparison routines.  eqfinfo is the "=" operator itself.
+	 * cmpfinfo is either the btree comparator or the "<" operator.
+	 */
+	MergeFunctionKind cmpstrategy;
+	FmgrInfo		eqfinfo;
+	FmgrInfo		cmpfinfo;
+} MergeJoinClauseData;
+
 
 #define MarkInnerTuple(innerTupleSlot, mergestate) \
-( \
-	ExecCopySlot((mergestate)->mj_MarkedTupleSlot, \
-				 (innerTupleSlot)) \
-)
+	ExecCopySlot((mergestate)->mj_MarkedTupleSlot, (innerTupleSlot))
 
 
-/* ----------------------------------------------------------------
- *		MJFormSkipQuals
+/*
+ * MJExamineQuals
  *
- *		This takes the mergeclause which is a qualification of the
- *		form ((= expr expr) (= expr expr) ...) and forms new lists
- *		of the forms ((< expr expr) (< expr expr) ...) and
- *		((> expr expr) (> expr expr) ...).	These lists will be used
- *		by ExecMergeJoin() to determine if we should skip tuples.
- *		(We expect there to be suitable operators because the "=" operators
- *		were marked mergejoinable; however, there might be a different
- *		one needed in each qual clause.)
- * ----------------------------------------------------------------
+ * This deconstructs the list of mergejoinable expressions, which is given
+ * to us by the planner in the form of a list of "leftexpr = rightexpr"
+ * expression trees in the order matching the sort columns of the inputs.
+ * We build an array of MergeJoinClause structs containing the information
+ * we will need at runtime.  Each struct essentially tells us how to compare
+ * the two expressions from the original clause.
+ *
+ * The best, most efficient way to compare two expressions is to use a btree
+ * comparison support routine, since that requires only one function call
+ * per comparison.  Hence we try to find a btree opclass that matches the
+ * mergejoinable operator.  If we cannot find one, we'll have to call both
+ * the "=" and (often) the "<" operator for each comparison.
  */
-static void
-MJFormSkipQuals(List *qualList, List **ltQuals, List **gtQuals,
-				PlanState *parent)
+static MergeJoinClause
+MJExamineQuals(List *qualList, PlanState *parent)
 {
-	List	   *ltexprs,
-			   *gtexprs;
-	ListCell   *ltcdr,
-			   *gtcdr;
+	MergeJoinClause clauses;
+	int			nClauses = list_length(qualList);
+	int			iClause;
+	ListCell   *l;
 
-	/*
-	 * Make modifiable copies of the qualList.
-	 */
-	ltexprs = (List *) copyObject((Node *) qualList);
-	gtexprs = (List *) copyObject((Node *) qualList);
+	clauses = (MergeJoinClause) palloc0(nClauses * sizeof(MergeJoinClauseData));
 
-	/*
-	 * Scan both lists in parallel, so that we can update the operators
-	 * with the minimum number of syscache searches.
-	 */
-	forboth(ltcdr, ltexprs, gtcdr, gtexprs)
+	iClause = 0;
+	foreach(l, qualList)
 	{
-		OpExpr	   *ltop = (OpExpr *) lfirst(ltcdr);
-		OpExpr	   *gtop = (OpExpr *) lfirst(gtcdr);
+		OpExpr	   *qual = (OpExpr *) lfirst(l);
+		MergeJoinClause clause = &clauses[iClause];
+		Oid			ltop;
+		Oid			gtop;
+		RegProcedure ltproc;
+		RegProcedure gtproc;
+		AclResult	aclresult;
+		CatCList   *catlist;
+		int			i;
 
-		/*
-		 * The two ops should be identical, so use either one for lookup.
-		 */
-		if (!IsA(ltop, OpExpr))
+		if (!IsA(qual, OpExpr))
 			elog(ERROR, "mergejoin clause is not an OpExpr");
 
 		/*
-		 * Lookup the operators, and replace the data in the copied
-		 * operator nodes.
+		 * Prepare the input expressions for execution.
 		 */
-		op_mergejoin_crossops(ltop->opno,
-							  &ltop->opno,
-							  &gtop->opno,
-							  &ltop->opfuncid,
-							  &gtop->opfuncid);
-	}
-
-	/*
-	 * Prepare both lists for execution.
-	 */
-	*ltQuals = (List *) ExecInitExpr((Expr *) ltexprs, parent);
-	*gtQuals = (List *) ExecInitExpr((Expr *) gtexprs, parent);
-}
-
-/* ----------------------------------------------------------------
- *		MergeCompare
- *
- *		Compare the keys according to 'compareQual' which is of the
- *		form: { (key1a > key2a) (key1b > key2b) ... }.
- *
- *		(actually, it could also be of the form (key1a < key2a)...)
- *
- *		This is different from calling ExecQual because ExecQual returns
- *		true only if ALL the comparison clauses are satisfied.
- *		However, there is an order of significance among the keys with
- *		the first keys being most significant. Therefore, the clauses
- *		are evaluated in order and the 'compareQual' is satisfied
- *		if (key1i > key2i) is true and (key1j = key2j) for 0 < j < i.
- *		We use the original mergeclause items to detect equality.
- * ----------------------------------------------------------------
- */
-static bool
-MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
-{
-	bool		result;
-	MemoryContext oldContext;
-	ListCell   *clause;
-	ListCell   *eqclause;
-
-	/*
-	 * Do expression eval in short-lived context.
-	 */
-	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
-
-	/*
-	 * for each pair of clauses, test them until our compare conditions
-	 * are satisfied. if we reach the end of the list, none of our key
-	 * greater-than conditions were satisfied so we return false.
-	 */
-	result = false;				/* assume 'false' result */
-
-	/*
-	 * We can't run out of one list before the other
-	 */
-	Assert(list_length(compareQual) == list_length(eqQual));
-
-	forboth(clause, compareQual, eqclause, eqQual)
-	{
-		ExprState  *clauseexpr = (ExprState *) lfirst(clause);
-		ExprState  *eqclauseexpr = (ExprState *) lfirst(eqclause);
-		Datum		const_value;
-		bool		isNull;
+		clause->lexpr = ExecInitExpr((Expr *) linitial(qual->args), parent);
+		clause->rexpr = ExecInitExpr((Expr *) lsecond(qual->args), parent);
 
 		/*
-		 * first test if our compare clause is satisfied. if so then
-		 * return true.
-		 *
-		 * A NULL result is considered false.
+		 * Check permission to call the mergejoinable operator.
+		 * For predictability, we check this even if we end up not using it.
 		 */
-		const_value = ExecEvalExpr(clauseexpr, econtext, &isNull, NULL);
+		aclresult = pg_proc_aclcheck(qual->opfuncid, GetUserId(), ACL_EXECUTE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_PROC,
+						   get_func_name(qual->opfuncid));
 
-		if (DatumGetBool(const_value) && !isNull)
+		/* Set up the fmgr lookup information */
+		fmgr_info(qual->opfuncid, &(clause->eqfinfo));
+
+		/* And remember strictness */
+		clause->mergestrict = clause->eqfinfo.fn_strict;
+
+		/*
+		 * Lookup the comparison operators that go with the mergejoinable
+		 * top-level operator.  (This will elog if the operator isn't
+		 * mergejoinable, which would be the planner's mistake.)
+		 */
+		op_mergejoin_crossops(qual->opno,
+							  &ltop,
+							  &gtop,
+							  &ltproc,
+							  &gtproc);
+
+		clause->cmpstrategy = MERGEFUNC_LT;
+
+		/*
+		 * Look for a btree opclass including all three operators.
+		 * This is much like SelectSortFunction except we insist on
+		 * matching all the operators provided, and it can be a cross-type
+		 * opclass.
+		 *
+		 * XXX for now, insist on forward sort so that NULLs can be counted
+		 * on to be high.
+		 */
+		catlist = SearchSysCacheList(AMOPOPID, 1,
+									 ObjectIdGetDatum(qual->opno),
+									 0, 0, 0);
+
+		for (i = 0; i < catlist->n_members; i++)
 		{
-			result = true;
+			HeapTuple	tuple = &catlist->members[i]->tuple;
+			Form_pg_amop aform = (Form_pg_amop) GETSTRUCT(tuple);
+			Oid			opcid = aform->amopclaid;
+
+			if (aform->amopstrategy != BTEqualStrategyNumber)
+				continue;
+			if (!opclass_is_btree(opcid))
+				continue;
+			if (get_op_opclass_strategy(ltop, opcid) == BTLessStrategyNumber &&
+				get_op_opclass_strategy(gtop, opcid) == BTGreaterStrategyNumber)
+			{
+				clause->cmpstrategy = MERGEFUNC_CMP;
+				ltproc = get_opclass_proc(opcid, aform->amopsubtype,
+										  BTORDER_PROC);
+				Assert(RegProcedureIsValid(ltproc));
+				break;				/* done looking */
+			}
+		}
+
+		ReleaseSysCacheList(catlist);
+
+		/* Check permission to call "<" operator or cmp function */
+		aclresult = pg_proc_aclcheck(ltproc, GetUserId(), ACL_EXECUTE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_PROC,
+						   get_func_name(ltproc));
+
+		/* Set up the fmgr lookup information */
+		fmgr_info(ltproc, &(clause->cmpfinfo));
+
+		iClause++;
+	}
+
+	return clauses;
+}
+
+/*
+ * MJEvalOuterValues
+ *
+ * Compute the values of the mergejoined expressions for the current
+ * outer tuple.  We also detect whether it's impossible for the current
+ * outer tuple to match anything --- this is true if it yields a NULL
+ * input for any strict mergejoin operator.
+ *
+ * We evaluate the values in OuterEContext, which can be reset each
+ * time we move to a new tuple.
+ */
+static bool
+MJEvalOuterValues(MergeJoinState *mergestate)
+{
+	ExprContext *econtext = mergestate->mj_OuterEContext;
+	bool		canmatch = true;
+	int			i;
+	MemoryContext oldContext;
+
+	ResetExprContext(econtext);
+
+	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+
+	econtext->ecxt_outertuple = mergestate->mj_OuterTupleSlot;
+
+	for (i = 0; i < mergestate->mj_NumClauses; i++)
+	{
+		MergeJoinClause clause = &mergestate->mj_Clauses[i];
+
+		clause->ldatum = ExecEvalExpr(clause->lexpr, econtext,
+									  &clause->lisnull, NULL);
+		if (clause->lisnull && clause->mergestrict)
+			canmatch = false;
+	}
+
+	MemoryContextSwitchTo(oldContext);
+
+	return canmatch;
+}
+
+/*
+ * MJEvalInnerValues
+ *
+ * Same as above, but for the inner tuple.  Here, we have to be prepared
+ * to load data from either the true current inner, or the marked inner,
+ * so caller must tell us which slot to load from.
+ */
+static bool
+MJEvalInnerValues(MergeJoinState *mergestate, TupleTableSlot *innerslot)
+{
+	ExprContext *econtext = mergestate->mj_InnerEContext;
+	bool		canmatch = true;
+	int			i;
+	MemoryContext oldContext;
+
+	ResetExprContext(econtext);
+
+	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+
+	econtext->ecxt_innertuple = innerslot;
+
+	for (i = 0; i < mergestate->mj_NumClauses; i++)
+	{
+		MergeJoinClause clause = &mergestate->mj_Clauses[i];
+
+		clause->rdatum = ExecEvalExpr(clause->rexpr, econtext,
+									  &clause->risnull, NULL);
+		if (clause->risnull && clause->mergestrict)
+			canmatch = false;
+	}
+
+	MemoryContextSwitchTo(oldContext);
+
+	return canmatch;
+}
+
+/*
+ * MJCompare
+ *
+ * Compare the mergejoinable values of the current two input tuples
+ * and return 0 if they are equal (ie, the mergejoin equalities all
+ * succeed), +1 if outer > inner, -1 if outer < inner.
+ *
+ * MJEvalOuterValues and MJEvalInnerValues must already have been called
+ * for the current outer and inner tuples, respectively.
+ */
+static int
+MJCompare(MergeJoinState *mergestate)
+{
+	int			result = 0;
+	bool		nulleqnull = false;
+	ExprContext *econtext = mergestate->js.ps.ps_ExprContext;
+	int			i;
+	MemoryContext oldContext;
+	FunctionCallInfoData fcinfo;
+
+	/*
+	 * Call the comparison functions in short-lived context, in case they
+	 * leak memory.
+	 */
+	ResetExprContext(econtext);
+
+	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+
+	for (i = 0; i < mergestate->mj_NumClauses; i++)
+	{
+		MergeJoinClause clause = &mergestate->mj_Clauses[i];
+		Datum		fresult;
+
+		/*
+		 * Deal with null inputs.  We treat NULL as sorting after non-NULL.
+		 *
+		 * If both inputs are NULL, and the comparison function isn't
+		 * strict, then we call it and check for a true result (this allows
+		 * operators that behave like IS NOT DISTINCT to be mergejoinable).
+		 * If the function is strict or returns false, we temporarily
+		 * pretend NULL == NULL and contine checking remaining columns.
+		 */
+		if (clause->lisnull)
+		{
+			if (clause->risnull)
+			{
+				if (!clause->eqfinfo.fn_strict)
+				{
+					InitFunctionCallInfoData(fcinfo, &(clause->eqfinfo), 2,
+											 NULL, NULL);
+					fcinfo.arg[0] = clause->ldatum;
+					fcinfo.arg[1] = clause->rdatum;
+					fcinfo.argnull[0] = true;
+					fcinfo.argnull[1] = true;
+					fresult = FunctionCallInvoke(&fcinfo);
+					if (!fcinfo.isnull && DatumGetBool(fresult))
+					{
+						/* treat nulls as really equal */
+						continue;
+					}
+				}
+				nulleqnull = true;
+				continue;
+			}
+			/* NULL > non-NULL */
+			result = 1;
+			break;
+		}
+		if (clause->risnull)
+		{
+			/* non-NULL < NULL */
+			result = -1;
 			break;
 		}
 
-		/*-----------
-		 * ok, the compare clause failed so we test if the keys are
-		 * equal... if key1 != key2, we return false. otherwise
-		 * key1 = key2 so we move on to the next pair of keys.
-		 *-----------
-		 */
-		const_value = ExecEvalExpr(eqclauseexpr, econtext, &isNull, NULL);
-
-		if (!DatumGetBool(const_value) || isNull)
-			break;				/* return false */
+		if (clause->cmpstrategy == MERGEFUNC_LT)
+		{
+			InitFunctionCallInfoData(fcinfo, &(clause->eqfinfo), 2,
+									 NULL, NULL);
+			fcinfo.arg[0] = clause->ldatum;
+			fcinfo.arg[1] = clause->rdatum;
+			fcinfo.argnull[0] = false;
+			fcinfo.argnull[1] = false;
+			fresult = FunctionCallInvoke(&fcinfo);
+			if (fcinfo.isnull)
+			{
+				nulleqnull = true;
+				continue;
+			}
+			else if (DatumGetBool(fresult))
+			{
+				/* equal */
+				continue;
+			}
+			InitFunctionCallInfoData(fcinfo, &(clause->cmpfinfo), 2,
+									 NULL, NULL);
+			fcinfo.arg[0] = clause->ldatum;
+			fcinfo.arg[1] = clause->rdatum;
+			fcinfo.argnull[0] = false;
+			fcinfo.argnull[1] = false;
+			fresult = FunctionCallInvoke(&fcinfo);
+			if (fcinfo.isnull)
+			{
+				nulleqnull = true;
+				continue;
+			}
+			else if (DatumGetBool(fresult))
+			{
+				/* less than */
+				result = -1;
+				break;
+			}
+			else
+			{
+				/* greater than */
+				result = 1;
+				break;
+			}
+		}
+		else					/* must be MERGEFUNC_CMP */
+		{
+			InitFunctionCallInfoData(fcinfo, &(clause->cmpfinfo), 2,
+									 NULL, NULL);
+			fcinfo.arg[0] = clause->ldatum;
+			fcinfo.arg[1] = clause->rdatum;
+			fcinfo.argnull[0] = false;
+			fcinfo.argnull[1] = false;
+			fresult = FunctionCallInvoke(&fcinfo);
+			if (fcinfo.isnull)
+			{
+				nulleqnull = true;
+				continue;
+			}
+			else if (DatumGetInt32(fresult) == 0)
+			{
+				/* equal */
+				continue;
+			}
+			else if (DatumGetInt32(fresult) < 0)
+			{
+				/* less than */
+				result = -1;
+				break;
+			}
+			else
+			{
+				/* greater than */
+				result = 1;
+				break;
+			}
+		}
 	}
+
+	/*
+	 * If we had any null comparison results or NULL-vs-NULL inputs,
+	 * we do not want to report that the tuples are equal.  Instead,
+	 * if result is still 0, change it to +1.  This will result in
+	 * advancing the inner side of the join.
+	 */
+	if (nulleqnull && result == 0)
+		result = 1;
 
 	MemoryContextSwitchTo(oldContext);
 
@@ -287,68 +585,16 @@ ExecMergeTupleDump(MergeJoinState *mergestate)
 
 /* ----------------------------------------------------------------
  *		ExecMergeJoin
- *
- * old comments
- *		Details of the merge-join routines:
- *
- *		(1) ">" and "<" operators
- *
- *		Merge-join is done by joining the inner and outer tuples satisfying
- *		the join clauses of the form ((= outerKey innerKey) ...).
- *		The join clauses is provided by the query planner and may contain
- *		more than one (= outerKey innerKey) clauses (for composite key).
- *
- *		However, the query executor needs to know whether an outer
- *		tuple is "greater/smaller" than an inner tuple so that it can
- *		"synchronize" the two relations. For e.g., consider the following
- *		relations:
- *
- *				outer: (0 ^1 1 2 5 5 5 6 6 7)	current tuple: 1
- *				inner: (1 ^3 5 5 5 5 6)			current tuple: 3
- *
- *		To continue the merge-join, the executor needs to scan both inner
- *		and outer relations till the matching tuples 5. It needs to know
- *		that currently inner tuple 3 is "greater" than outer tuple 1 and
- *		therefore it should scan the outer relation first to find a
- *		matching tuple and so on.
- *
- *		Therefore, when initializing the merge-join node, the executor
- *		creates the "greater/smaller" clause by substituting the "="
- *		operator in the join clauses with the corresponding ">" operator.
- *		The opposite "smaller/greater" clause is formed by substituting "<".
- *
- *		Note: prior to v6.5, the relational clauses were formed using the
- *		sort op used to sort the inner relation, which of course would fail
- *		if the outer and inner keys were of different data types.
- *		In the current code, we instead assume that operators named "<" and ">"
- *		will do the right thing.  This should be true since the mergejoin "="
- *		operator's pg_operator entry will have told the planner to sort by
- *		"<" for each of the left and right sides.
- *
- *		(2) repositioning inner "cursor"
- *
- *		Consider the above relations and suppose that the executor has
- *		just joined the first outer "5" with the last inner "5". The
- *		next step is of course to join the second outer "5" with all
- *		the inner "5's". This requires repositioning the inner "cursor"
- *		to point at the first inner "5". This is done by "marking" the
- *		first inner 5 and restore the "cursor" to it before joining
- *		with the second outer 5. The access method interface provides
- *		routines to mark and restore to a tuple.
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
 ExecMergeJoin(MergeJoinState *node)
 {
 	EState	   *estate;
-	ScanDirection direction;
-	List	   *innerSkipQual;
-	List	   *outerSkipQual;
-	List	   *mergeclauses;
 	List	   *joinqual;
 	List	   *otherqual;
 	bool		qualResult;
-	bool		compareResult;
+	int			compareResult;
 	PlanState  *innerPlan;
 	TupleTableSlot *innerTupleSlot;
 	PlanState  *outerPlan;
@@ -361,11 +607,9 @@ ExecMergeJoin(MergeJoinState *node)
 	 * get information from node
 	 */
 	estate = node->js.ps.state;
-	direction = estate->es_direction;
 	innerPlan = innerPlanState(node);
 	outerPlan = outerPlanState(node);
 	econtext = node->js.ps.ps_ExprContext;
-	mergeclauses = node->mergeclauses;
 	joinqual = node->js.joinqual;
 	otherqual = node->js.ps.qual;
 
@@ -394,17 +638,6 @@ ExecMergeJoin(MergeJoinState *node)
 			doFillOuter = false;	/* keep compiler quiet */
 			doFillInner = false;
 			break;
-	}
-
-	if (ScanDirectionIsForward(direction))
-	{
-		outerSkipQual = node->mj_OuterSkipQual;
-		innerSkipQual = node->mj_InnerSkipQual;
-	}
-	else
-	{
-		outerSkipQual = node->mj_InnerSkipQual;
-		innerSkipQual = node->mj_OuterSkipQual;
 	}
 
 	/*
@@ -436,31 +669,28 @@ ExecMergeJoin(MergeJoinState *node)
 	 */
 	for (;;)
 	{
-		/*
-		 * get the current state of the join and do things accordingly.
-		 * Note: The join states are highlighted with 32-* comments for
-		 * improved readability.
-		 */
 		MJ_dump(node);
 
+		/*
+		 * get the current state of the join and do things accordingly.
+		 */
 		switch (node->mj_JoinState)
 		{
 				/*
-				 * EXEC_MJ_INITIALIZE means that this is the first time
+				 * EXEC_MJ_INITIALIZE_OUTER means that this is the first time
 				 * ExecMergeJoin() has been called and so we have to fetch
-				 * the first tuple for both outer and inner subplans. If
-				 * we fail to get a tuple here, then that subplan is
-				 * empty, and we either end the join or go to one of the
-				 * fill-remaining-tuples states.
+				 * the first matchable tuple for both outer and inner subplans.
+				 * We do the outer side in INITIALIZE_OUTER state, then
+				 * advance to INITIALIZE_INNER state for the inner subplan.
 				 */
-			case EXEC_MJ_INITIALIZE:
-				MJ_printf("ExecMergeJoin: EXEC_MJ_INITIALIZE\n");
+			case EXEC_MJ_INITIALIZE_OUTER:
+				MJ_printf("ExecMergeJoin: EXEC_MJ_INITIALIZE_OUTER\n");
 
 				outerTupleSlot = ExecProcNode(outerPlan);
 				node->mj_OuterTupleSlot = outerTupleSlot;
 				if (TupIsNull(outerTupleSlot))
 				{
-					MJ_printf("ExecMergeJoin: outer subplan is empty\n");
+					MJ_printf("ExecMergeJoin: nothing in outer subplan\n");
 					if (doFillInner)
 					{
 						/*
@@ -476,18 +706,34 @@ ExecMergeJoin(MergeJoinState *node)
 					return NULL;
 				}
 
+				/* Compute join values and check for unmatchability */
+				if (!MJEvalOuterValues(node) && !doFillOuter)
+				{
+					/* Stay in same state to fetch next outer tuple */
+					node->mj_JoinState = EXEC_MJ_INITIALIZE_OUTER;
+				}
+				else
+				{
+					/* OK to go get the first inner tuple */
+					node->mj_JoinState = EXEC_MJ_INITIALIZE_INNER;
+				}
+				break;
+
+			case EXEC_MJ_INITIALIZE_INNER:
+				MJ_printf("ExecMergeJoin: EXEC_MJ_INITIALIZE_INNER\n");
+
 				innerTupleSlot = ExecProcNode(innerPlan);
 				node->mj_InnerTupleSlot = innerTupleSlot;
 				if (TupIsNull(innerTupleSlot))
 				{
-					MJ_printf("ExecMergeJoin: inner subplan is empty\n");
+					MJ_printf("ExecMergeJoin: nothing in inner subplan\n");
 					if (doFillOuter)
 					{
 						/*
 						 * Need to emit left-join tuples for all outer
 						 * tuples, including the one we just fetched.  We
 						 * set MatchedOuter = false to force the ENDINNER
-						 * state to emit this tuple before advancing
+						 * state to emit first tuple before advancing
 						 * outer.
 						 */
 						node->mj_JoinState = EXEC_MJ_ENDINNER;
@@ -498,65 +744,35 @@ ExecMergeJoin(MergeJoinState *node)
 					return NULL;
 				}
 
-				/*
-				 * OK, we have the initial tuples.	Begin by skipping
-				 * unmatched inner tuples.
-				 */
-				node->mj_JoinState = EXEC_MJ_SKIPINNER_BEGIN;
-				break;
-
-				/*
-				 * EXEC_MJ_JOINMARK means we have just found a new outer
-				 * tuple and a possible matching inner tuple. This is the
-				 * case after the INITIALIZE, SKIPOUTER or SKIPINNER
-				 * states.
-				 */
-			case EXEC_MJ_JOINMARK:
-				MJ_printf("ExecMergeJoin: EXEC_MJ_JOINMARK\n");
-
-				ExecMarkPos(innerPlan);
-
-				MarkInnerTuple(node->mj_InnerTupleSlot, node);
-
-				node->mj_JoinState = EXEC_MJ_JOINTEST;
-				break;
-
-				/*
-				 * EXEC_MJ_JOINTEST means we have two tuples which might
-				 * satisfy the merge clause, so we test them.
-				 *
-				 * If they do satisfy, then we join them and move on to the
-				 * next inner tuple (EXEC_MJ_JOINTUPLES).
-				 *
-				 * If they do not satisfy then advance to next outer tuple.
-				 */
-			case EXEC_MJ_JOINTEST:
-				MJ_printf("ExecMergeJoin: EXEC_MJ_JOINTEST\n");
-
-				ResetExprContext(econtext);
-
-				outerTupleSlot = node->mj_OuterTupleSlot;
-				econtext->ecxt_outertuple = outerTupleSlot;
-				innerTupleSlot = node->mj_InnerTupleSlot;
-				econtext->ecxt_innertuple = innerTupleSlot;
-
-				qualResult = ExecQual(mergeclauses, econtext, false);
-				MJ_DEBUG_QUAL(mergeclauses, qualResult);
-
-				if (qualResult)
-					node->mj_JoinState = EXEC_MJ_JOINTUPLES;
+				/* Compute join values and check for unmatchability */
+				if (!MJEvalInnerValues(node, innerTupleSlot) && !doFillInner)
+				{
+					/* Stay in same state to fetch next inner tuple */
+					node->mj_JoinState = EXEC_MJ_INITIALIZE_INNER;
+				}
 				else
-					node->mj_JoinState = EXEC_MJ_NEXTOUTER;
+				{
+					/*
+					 * OK, we have the initial tuples.	Begin by skipping
+					 * non-matching tuples.
+					 */
+					node->mj_JoinState = EXEC_MJ_SKIP_TEST;
+				}
 				break;
 
 				/*
 				 * EXEC_MJ_JOINTUPLES means we have two tuples which
 				 * satisfied the merge clause so we join them and then
-				 * proceed to get the next inner tuple (EXEC_NEXT_INNER).
+				 * proceed to get the next inner tuple (EXEC_MJ_NEXTINNER).
 				 */
 			case EXEC_MJ_JOINTUPLES:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_JOINTUPLES\n");
 
+				/*
+				 * Set the next state machine state.  The right things will
+				 * happen whether we return this join tuple or just fall
+				 * through to continue the state machine execution.
+				 */
 				node->mj_JoinState = EXEC_MJ_NEXTINNER;
 
 				/*
@@ -568,11 +784,16 @@ ExecMergeJoin(MergeJoinState *node)
 				 * (which must pass before we actually return the tuple).
 				 *
 				 * We don't bother with a ResetExprContext here, on the
-				 * assumption that we just did one before checking the
-				 * merge qual.	One per tuple should be sufficient.  Also,
-				 * the econtext's tuple pointers were set up before
-				 * checking the merge qual, so we needn't do it again.
+				 * assumption that we just did one while checking the
+				 * merge qual.	One per tuple should be sufficient.  We
+				 * do have to set up the econtext links to the tuples
+				 * for ExecQual to use.
 				 */
+				outerTupleSlot = node->mj_OuterTupleSlot;
+				econtext->ecxt_outertuple = outerTupleSlot;
+				innerTupleSlot = node->mj_InnerTupleSlot;
+				econtext->ecxt_innertuple = innerTupleSlot;
+
 				if (node->js.jointype == JOIN_IN &&
 					node->mj_MatchedOuter)
 					qualResult = false;
@@ -669,7 +890,12 @@ ExecMergeJoin(MergeJoinState *node)
 				}
 
 				/*
-				 * now we get the next inner tuple, if any
+				 * now we get the next inner tuple, if any.  If there's
+				 * none, advance to next outer tuple (which may be able
+				 * to join to previously marked tuples).
+				 *
+				 * If we find one but it cannot join to anything, stay
+				 * in NEXTINNER state to fetch the next one.
 				 */
 				innerTupleSlot = ExecProcNode(innerPlan);
 				node->mj_InnerTupleSlot = innerTupleSlot;
@@ -677,9 +903,32 @@ ExecMergeJoin(MergeJoinState *node)
 				node->mj_MatchedInner = false;
 
 				if (TupIsNull(innerTupleSlot))
+				{
 					node->mj_JoinState = EXEC_MJ_NEXTOUTER;
+					break;
+				}
+
+				if (!MJEvalInnerValues(node, innerTupleSlot))
+					break;		/* stay in NEXTINNER state */
+
+				/*
+				 * Test the new inner tuple to see if it matches outer.
+				 *
+				 * If they do match, then we join them and move on to the
+				 * next inner tuple (EXEC_MJ_JOINTUPLES).
+				 *
+				 * If they do not match then advance to next outer tuple.
+				 */
+				compareResult = MJCompare(node);
+				MJ_DEBUG_COMPARE(compareResult);
+
+				if (compareResult == 0)
+					node->mj_JoinState = EXEC_MJ_JOINTUPLES;
 				else
-					node->mj_JoinState = EXEC_MJ_JOINTEST;
+				{
+					Assert(compareResult < 0);
+					node->mj_JoinState = EXEC_MJ_NEXTOUTER;
+				}
 				break;
 
 				/*-------------------------------------------
@@ -692,7 +941,8 @@ ExecMergeJoin(MergeJoinState *node)
 				 *				  7		7
 				 *
 				 * we know we just bumped into the
-				 * first inner tuple > current outer tuple
+				 * first inner tuple > current outer tuple (or possibly
+				 * the end of the inner stream)
 				 * so get a new outer tuple and then
 				 * proceed to test it against the marked tuple
 				 * (EXEC_MJ_TESTOUTER)
@@ -773,7 +1023,17 @@ ExecMergeJoin(MergeJoinState *node)
 					return NULL;
 				}
 
-				node->mj_JoinState = EXEC_MJ_TESTOUTER;
+				/* Compute join values and check for unmatchability */
+				if (!MJEvalOuterValues(node))
+				{
+					/* Stay in same state to fetch next outer tuple */
+					node->mj_JoinState = EXEC_MJ_NEXTOUTER;
+				}
+				else
+				{
+					/* Go test the tuple */
+					node->mj_JoinState = EXEC_MJ_TESTOUTER;
+				}
 				break;
 
 				/*--------------------------------------------------------
@@ -781,7 +1041,7 @@ ExecMergeJoin(MergeJoinState *node)
 				 * tuple satisfy the merge clause then we know we have
 				 * duplicates in the outer scan so we have to restore the
 				 * inner scan to the marked tuple and proceed to join the
-				 * new outer tuples with the inner tuples (EXEC_MJ_JOINTEST)
+				 * new outer tuples with the inner tuples.
 				 *
 				 * This is the case when
 				 *						  outer inner
@@ -791,11 +1051,13 @@ ExecMergeJoin(MergeJoinState *node)
 				 *							6	  8  - inner tuple
 				 *							7	 12
 				 *
-				 *				new outer tuple = marked tuple
+				 *				new outer tuple == marked tuple
 				 *
-				 *		If the outer tuple fails the test, then we know we have
-				 *		to proceed to skip outer tuples until outer >= inner
-				 *		(EXEC_MJ_SKIPOUTER).
+				 * If the outer tuple fails the test, then we are done
+				 * with the marked tuples, and we have to look for a
+				 * match to the current inner tuple.  So we will
+				 * proceed to skip outer tuples until outer >= inner
+				 * (EXEC_MJ_SKIP_TEST).
 				 *
 				 *		This is the case when
 				 *
@@ -805,8 +1067,7 @@ ExecMergeJoin(MergeJoinState *node)
 				 *		 new outer tuple -	6	  8  - inner tuple
 				 *							7	 12
 				 *
-				 *
-				 *		 new outer tuple > marked tuple
+				 *				new outer tuple > marked tuple
 				 *
 				 *---------------------------------------------------------
 				 */
@@ -814,27 +1075,21 @@ ExecMergeJoin(MergeJoinState *node)
 				MJ_printf("ExecMergeJoin: EXEC_MJ_TESTOUTER\n");
 
 				/*
-				 * here we compare the outer tuple with the marked inner
+				 * here we must compare the outer tuple with the marked inner
 				 * tuple
 				 */
-				ResetExprContext(econtext);
-
-				outerTupleSlot = node->mj_OuterTupleSlot;
-				econtext->ecxt_outertuple = outerTupleSlot;
 				innerTupleSlot = node->mj_MarkedTupleSlot;
-				econtext->ecxt_innertuple = innerTupleSlot;
+				(void) MJEvalInnerValues(node, innerTupleSlot);
 
-				qualResult = ExecQual(mergeclauses, econtext, false);
-				MJ_DEBUG_QUAL(mergeclauses, qualResult);
+				compareResult = MJCompare(node);
+				MJ_DEBUG_COMPARE(compareResult);
 
-				if (qualResult)
+				if (compareResult == 0)
 				{
 					/*
 					 * the merge clause matched so now we restore the
-					 * inner scan position to the first mark, and loop
-					 * back to JOINTEST.  Actually, since we know the
-					 * mergeclause matches, we can skip JOINTEST and go
-					 * straight to JOINTUPLES.
+					 * inner scan position to the first mark, and go join
+					 * that tuple (and any following ones) to the new outer.
 					 *
 					 * NOTE: we do not need to worry about the MatchedInner
 					 * state for the rescanned inner tuples.  We know all
@@ -846,25 +1101,36 @@ ExecMergeJoin(MergeJoinState *node)
 					 * the extra joinquals.
 					 */
 					ExecRestrPos(innerPlan);
+
+					/*
+					 * ExecRestrPos really should give us back a new Slot,
+					 * but since it doesn't, use the marked slot.
+					 */
+					node->mj_InnerTupleSlot = innerTupleSlot;
+					/* we need not do MJEvalInnerValues again */
+
 					node->mj_JoinState = EXEC_MJ_JOINTUPLES;
 				}
 				else
 				{
 					/* ----------------
-					 *	if the inner tuple was nil and the new outer
-					 *	tuple didn't match the marked outer tuple then
-					 *	we have the case:
+					 *	if the new outer tuple didn't match the marked inner
+					 *	tuple then we have a case like:
 					 *
 					 *			 outer inner
 					 *			   4	 4	- marked tuple
 					 * new outer - 5	 4
-					 *			   6	nil - inner tuple
+					 *			   6	 5	- inner tuple
 					 *			   7
 					 *
 					 *	which means that all subsequent outer tuples will be
-					 *	larger than our marked inner tuples.  So we're done.
+					 *	larger than our marked inner tuples.  So we need not
+					 *	revisit any of the marked tuples but can proceed to
+					 *	look for a match to the current inner.  If there's
+					 *	no more inners, we are done.
 					 * ----------------
 					 */
+					Assert(compareResult > 0);
 					innerTupleSlot = node->mj_InnerTupleSlot;
 					if (TupIsNull(innerTupleSlot))
 					{
@@ -881,14 +1147,17 @@ ExecMergeJoin(MergeJoinState *node)
 						return NULL;
 					}
 
+					/* reload comparison data for current inner */
+					(void) MJEvalInnerValues(node, innerTupleSlot);
+
 					/* continue on to skip outer tuples */
-					node->mj_JoinState = EXEC_MJ_SKIPOUTER_BEGIN;
+					node->mj_JoinState = EXEC_MJ_SKIP_TEST;
 				}
 				break;
 
 				/*----------------------------------------------------------
-				 * EXEC_MJ_SKIPOUTER means skip over tuples in the outer plan
-				 * until we find an outer tuple >= current inner tuple.
+				 * EXEC_MJ_SKIP means compare tuples and if they do not
+				 * match, skip whichever is lesser.
 				 *
 				 * For example:
 				 *
@@ -902,83 +1171,42 @@ ExecMergeJoin(MergeJoinState *node)
 				 * we have to advance the outer scan
 				 * until we find the outer 8.
 				 *
-				 * To avoid redundant tests, we divide this into three
-				 * sub-states: BEGIN, TEST, ADVANCE.
+				 * On the other hand:
+				 *
+				 *				outer inner
+				 *				  5		5
+				 *				  5		5
+				 * outer tuple - 12		8  - inner tuple
+				 *				 14    10
+				 *				 17    12
+				 *
+				 * we have to advance the inner scan
+				 * until we find the inner 12.
 				 *----------------------------------------------------------
 				 */
-			case EXEC_MJ_SKIPOUTER_BEGIN:
-				MJ_printf("ExecMergeJoin: EXEC_MJ_SKIPOUTER_BEGIN\n");
+			case EXEC_MJ_SKIP_TEST:
+				MJ_printf("ExecMergeJoin: EXEC_MJ_SKIP_TEST\n");
 
 				/*
 				 * before we advance, make sure the current tuples do not
 				 * satisfy the mergeclauses.  If they do, then we update
-				 * the marked tuple and go join them.
+				 * the marked tuple position and go join them.
 				 */
-				ResetExprContext(econtext);
+				compareResult = MJCompare(node);
+				MJ_DEBUG_COMPARE(compareResult);
 
-				outerTupleSlot = node->mj_OuterTupleSlot;
-				econtext->ecxt_outertuple = outerTupleSlot;
-				innerTupleSlot = node->mj_InnerTupleSlot;
-				econtext->ecxt_innertuple = innerTupleSlot;
-
-				qualResult = ExecQual(mergeclauses, econtext, false);
-				MJ_DEBUG_QUAL(mergeclauses, qualResult);
-
-				if (qualResult)
+				if (compareResult == 0)
 				{
 					ExecMarkPos(innerPlan);
 
-					MarkInnerTuple(innerTupleSlot, node);
+					MarkInnerTuple(node->mj_InnerTupleSlot, node);
 
 					node->mj_JoinState = EXEC_MJ_JOINTUPLES;
-					break;
 				}
-
-				node->mj_JoinState = EXEC_MJ_SKIPOUTER_TEST;
-				break;
-
-			case EXEC_MJ_SKIPOUTER_TEST:
-				MJ_printf("ExecMergeJoin: EXEC_MJ_SKIPOUTER_TEST\n");
-
-				/*
-				 * ok, now test the skip qualification
-				 */
-				outerTupleSlot = node->mj_OuterTupleSlot;
-				econtext->ecxt_outertuple = outerTupleSlot;
-				innerTupleSlot = node->mj_InnerTupleSlot;
-				econtext->ecxt_innertuple = innerTupleSlot;
-
-				compareResult = MergeCompare(mergeclauses,
-											 outerSkipQual,
-											 econtext);
-
-				MJ_DEBUG_MERGE_COMPARE(outerSkipQual, compareResult);
-
-				/*
-				 * compareResult is true as long as we should continue
-				 * skipping outer tuples.
-				 */
-				if (compareResult)
-				{
+				else if (compareResult < 0)
 					node->mj_JoinState = EXEC_MJ_SKIPOUTER_ADVANCE;
-					break;
-				}
-
-				/*
-				 * now check the inner skip qual to see if we should now
-				 * skip inner tuples... if we fail the inner skip qual,
-				 * then we know we have a new pair of matching tuples.
-				 */
-				compareResult = MergeCompare(mergeclauses,
-											 innerSkipQual,
-											 econtext);
-
-				MJ_DEBUG_MERGE_COMPARE(innerSkipQual, compareResult);
-
-				if (compareResult)
-					node->mj_JoinState = EXEC_MJ_SKIPINNER_BEGIN;
-				else
-					node->mj_JoinState = EXEC_MJ_JOINMARK;
+				else			/* compareResult > 0 */
+					node->mj_JoinState = EXEC_MJ_SKIPINNER_ADVANCE;
 				break;
 
 				/*
@@ -1057,105 +1285,16 @@ ExecMergeJoin(MergeJoinState *node)
 					return NULL;
 				}
 
-				/*
-				 * otherwise test the new tuple against the skip qual.
-				 */
-				node->mj_JoinState = EXEC_MJ_SKIPOUTER_TEST;
-				break;
-
-				/*-----------------------------------------------------------
-				 * EXEC_MJ_SKIPINNER means skip over tuples in the inner plan
-				 * until we find an inner tuple >= current outer tuple.
-				 *
-				 * For example:
-				 *
-				 *				outer inner
-				 *				  5		5
-				 *				  5		5
-				 * outer tuple - 12		8  - inner tuple
-				 *				 14    10
-				 *				 17    12
-				 *
-				 * we have to advance the inner scan
-				 * until we find the inner 12.
-				 *
-				 * To avoid redundant tests, we divide this into three
-				 * sub-states: BEGIN, TEST, ADVANCE.
-				 *-------------------------------------------------------
-				 */
-			case EXEC_MJ_SKIPINNER_BEGIN:
-				MJ_printf("ExecMergeJoin: EXEC_MJ_SKIPINNER_BEGIN\n");
-
-				/*
-				 * before we advance, make sure the current tuples do not
-				 * satisfy the mergeclauses.  If they do, then we update
-				 * the marked tuple and go join them.
-				 */
-				ResetExprContext(econtext);
-
-				outerTupleSlot = node->mj_OuterTupleSlot;
-				econtext->ecxt_outertuple = outerTupleSlot;
-				innerTupleSlot = node->mj_InnerTupleSlot;
-				econtext->ecxt_innertuple = innerTupleSlot;
-
-				qualResult = ExecQual(mergeclauses, econtext, false);
-				MJ_DEBUG_QUAL(mergeclauses, qualResult);
-
-				if (qualResult)
+				/* Compute join values and check for unmatchability */
+				if (!MJEvalOuterValues(node))
 				{
-					ExecMarkPos(innerPlan);
-
-					MarkInnerTuple(innerTupleSlot, node);
-
-					node->mj_JoinState = EXEC_MJ_JOINTUPLES;
+					/* Stay in same state to fetch next outer tuple */
+					node->mj_JoinState = EXEC_MJ_SKIPOUTER_ADVANCE;
 					break;
 				}
 
-				node->mj_JoinState = EXEC_MJ_SKIPINNER_TEST;
-				break;
-
-			case EXEC_MJ_SKIPINNER_TEST:
-				MJ_printf("ExecMergeJoin: EXEC_MJ_SKIPINNER_TEST\n");
-
-				/*
-				 * ok, now test the skip qualification
-				 */
-				outerTupleSlot = node->mj_OuterTupleSlot;
-				econtext->ecxt_outertuple = outerTupleSlot;
-				innerTupleSlot = node->mj_InnerTupleSlot;
-				econtext->ecxt_innertuple = innerTupleSlot;
-
-				compareResult = MergeCompare(mergeclauses,
-											 innerSkipQual,
-											 econtext);
-
-				MJ_DEBUG_MERGE_COMPARE(innerSkipQual, compareResult);
-
-				/*
-				 * compareResult is true as long as we should continue
-				 * skipping inner tuples.
-				 */
-				if (compareResult)
-				{
-					node->mj_JoinState = EXEC_MJ_SKIPINNER_ADVANCE;
-					break;
-				}
-
-				/*
-				 * now check the outer skip qual to see if we should now
-				 * skip outer tuples... if we fail the outer skip qual,
-				 * then we know we have a new pair of matching tuples.
-				 */
-				compareResult = MergeCompare(mergeclauses,
-											 outerSkipQual,
-											 econtext);
-
-				MJ_DEBUG_MERGE_COMPARE(outerSkipQual, compareResult);
-
-				if (compareResult)
-					node->mj_JoinState = EXEC_MJ_SKIPOUTER_BEGIN;
-				else
-					node->mj_JoinState = EXEC_MJ_JOINMARK;
+				/* Test the new tuple against the current inner */
+				node->mj_JoinState = EXEC_MJ_SKIP_TEST;
 				break;
 
 				/*
@@ -1234,16 +1373,22 @@ ExecMergeJoin(MergeJoinState *node)
 					return NULL;
 				}
 
-				/*
-				 * otherwise test the new tuple against the skip qual.
-				 */
-				node->mj_JoinState = EXEC_MJ_SKIPINNER_TEST;
+				/* Compute join values and check for unmatchability */
+				if (!MJEvalInnerValues(node, innerTupleSlot))
+				{
+					/* Stay in same state to fetch next inner tuple */
+					node->mj_JoinState = EXEC_MJ_SKIPINNER_ADVANCE;
+					break;
+				}
+
+				/* Test the new tuple against the current outer */
+				node->mj_JoinState = EXEC_MJ_SKIP_TEST;
 				break;
 
 				/*
 				 * EXEC_MJ_ENDOUTER means we have run out of outer tuples,
 				 * but are doing a right/full join and therefore must
-				 * null- fill any remaing unmatched inner tuples.
+				 * null-fill any remaing unmatched inner tuples.
 				 */
 			case EXEC_MJ_ENDOUTER:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_ENDOUTER\n");
@@ -1411,6 +1556,15 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 	ExecAssignExprContext(estate, &mergestate->js.ps);
 
 	/*
+	 * we need two additional econtexts in which we can compute the
+	 * join expressions from the left and right input tuples.  The
+	 * node's regular econtext won't do because it gets reset too
+	 * often.
+	 */
+	mergestate->mj_OuterEContext = CreateExprContext(estate);
+	mergestate->mj_InnerEContext = CreateExprContext(estate);
+
+	/*
 	 * initialize child expressions
 	 */
 	mergestate->js.ps.targetlist = (List *)
@@ -1423,9 +1577,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 	mergestate->js.joinqual = (List *)
 		ExecInitExpr((Expr *) node->join.joinqual,
 					 (PlanState *) mergestate);
-	mergestate->mergeclauses = (List *)
-		ExecInitExpr((Expr *) node->mergeclauses,
-					 (PlanState *) mergestate);
+	/* mergeclauses are handled below */
 
 	/*
 	 * initialize child nodes
@@ -1498,23 +1650,16 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 	ExecAssignProjectionInfo(&mergestate->js.ps);
 
 	/*
-	 * form merge skip qualifications
+	 * preprocess the merge clauses
 	 */
-	MJFormSkipQuals(node->mergeclauses,
-					&mergestate->mj_OuterSkipQual,
-					&mergestate->mj_InnerSkipQual,
-					(PlanState *) mergestate);
-
-	MJ_printf("\nExecInitMergeJoin: OuterSkipQual is ");
-	MJ_nodeDisplay(mergestate->mj_OuterSkipQual);
-	MJ_printf("\nExecInitMergeJoin: InnerSkipQual is ");
-	MJ_nodeDisplay(mergestate->mj_InnerSkipQual);
-	MJ_printf("\n");
+	mergestate->mj_NumClauses = list_length(node->mergeclauses);
+	mergestate->mj_Clauses = MJExamineQuals(node->mergeclauses,
+											(PlanState *) mergestate);
 
 	/*
 	 * initialize join state
 	 */
-	mergestate->mj_JoinState = EXEC_MJ_INITIALIZE;
+	mergestate->mj_JoinState = EXEC_MJ_INITIALIZE_OUTER;
 	mergestate->js.ps.ps_TupFromTlist = false;
 	mergestate->mj_MatchedOuter = false;
 	mergestate->mj_MatchedInner = false;
@@ -1577,7 +1722,7 @@ ExecReScanMergeJoin(MergeJoinState *node, ExprContext *exprCtxt)
 {
 	ExecClearTuple(node->mj_MarkedTupleSlot);
 
-	node->mj_JoinState = EXEC_MJ_INITIALIZE;
+	node->mj_JoinState = EXEC_MJ_INITIALIZE_OUTER;
 	node->js.ps.ps_TupFromTlist = false;
 	node->mj_MatchedOuter = false;
 	node->mj_MatchedInner = false;

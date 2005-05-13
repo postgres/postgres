@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.131 2005/05/05 03:37:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.132 2005/05/13 21:20:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1028,24 +1028,28 @@ typedef struct NestLoopState
 /* ----------------
  *	 MergeJoinState information
  *
- *		OuterSkipQual	   outerKey1 < innerKey1 ...
- *		InnerSkipQual	   outerKey1 > innerKey1 ...
- *		JoinState		   current "state" of join. see executor.h
+ *		NumClauses		   number of mergejoinable join clauses
+ *		Clauses			   info for each mergejoinable clause
+ *		JoinState		   current "state" of join.  see execdefs.h
  *		MatchedOuter	   true if found a join match for current outer tuple
  *		MatchedInner	   true if found a join match for current inner tuple
- *		OuterTupleSlot	   pointer to slot in tuple table for cur outer tuple
- *		InnerTupleSlot	   pointer to slot in tuple table for cur inner tuple
- *		MarkedTupleSlot    pointer to slot in tuple table for marked tuple
+ *		OuterTupleSlot	   slot in tuple table for cur outer tuple
+ *		InnerTupleSlot	   slot in tuple table for cur inner tuple
+ *		MarkedTupleSlot    slot in tuple table for marked tuple
  *		NullOuterTupleSlot prepared null tuple for right outer joins
  *		NullInnerTupleSlot prepared null tuple for left outer joins
+ *		OuterEContext	   workspace for computing outer tuple's join values
+ *		InnerEContext	   workspace for computing inner tuple's join values
  * ----------------
  */
+/* private in nodeMergejoin.c: */
+typedef struct MergeJoinClauseData *MergeJoinClause;
+
 typedef struct MergeJoinState
 {
 	JoinState	js;				/* its first field is NodeTag */
-	List	   *mergeclauses;	/* list of ExprState nodes */
-	List	   *mj_OuterSkipQual;		/* list of ExprState nodes */
-	List	   *mj_InnerSkipQual;		/* list of ExprState nodes */
+	int			mj_NumClauses;
+	MergeJoinClause mj_Clauses;	/* array of length mj_NumClauses */
 	int			mj_JoinState;
 	bool		mj_MatchedOuter;
 	bool		mj_MatchedInner;
@@ -1054,6 +1058,8 @@ typedef struct MergeJoinState
 	TupleTableSlot *mj_MarkedTupleSlot;
 	TupleTableSlot *mj_NullOuterTupleSlot;
 	TupleTableSlot *mj_NullInnerTupleSlot;
+	ExprContext *mj_OuterEContext;
+	ExprContext *mj_InnerEContext;
 } MergeJoinState;
 
 /* ----------------
