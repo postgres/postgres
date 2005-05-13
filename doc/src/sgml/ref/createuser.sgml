@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.39 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.39.4.1 2005/05/13 16:31:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -68,8 +68,10 @@ PostgreSQL documentation
       <term><replaceable class="parameter">username</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the <productname>PostgreSQL</productname> user to be created. 
-	This name must be unique among all <productname>PostgreSQL</productname> users.
+        Specifies the name of the <productname>PostgreSQL</productname> user
+        to be created.
+        This name must be unique among all users of this
+        <productname>PostgreSQL</productname> installation.
        </para>
       </listitem>
      </varlistentry>  
@@ -290,7 +292,7 @@ PostgreSQL documentation
     server:
 <screen>
 <prompt>$ </prompt><userinput>createuser joe</userinput>
-<computeroutput>Is the new user allowed to create databases? (y/n) </computeroutput><userinput>n</userinput>
+<computeroutput>Shall the new user be allowed to create databases? (y/n) </computeroutput><userinput>n</userinput>
 <computeroutput>Shall the new user be allowed to create more new users? (y/n) </computeroutput><userinput>n</userinput>
 <computeroutput>CREATE USER</computeroutput>
 </screen>
@@ -301,10 +303,27 @@ PostgreSQL documentation
     server on host <literal>eden</>, port 5000, avoiding the prompts and
     taking a look at the underlying command:
 <screen>
-<prompt>$ </prompt><userinput>createuser -p 5000 -h eden -D -A -e joe</userinput>
-<computeroutput>CREATE USER "joe" NOCREATEDB NOCREATEUSER</computeroutput>
+<prompt>$ </prompt><userinput>createuser -h eden -p 5000 -D -A -e joe</userinput>
+<computeroutput>CREATE USER joe NOCREATEDB NOCREATEUSER;</computeroutput>
 <computeroutput>CREATE USER</computeroutput>
 </screen>
+   </para>
+
+   <para>
+    To create the user <literal>joe</literal> as a superuser,
+    and assign a password immediately:
+<screen>
+<prompt>$ </prompt><userinput>createuser -P -d -a -e joe</userinput>
+<computeroutput>Enter password for new user: </computeroutput><userinput>xyzzy</userinput>
+<computeroutput>Enter it again: </computeroutput><userinput>xyzzy</userinput>
+<computeroutput>CREATE USER joe PASSWORD 'xyzzy' CREATEDB CREATEUSER;</computeroutput>
+<computeroutput>CREATE USER</computeroutput>
+</screen>
+    In the above example, the new password isn't actually echoed when typed,
+    but we show what was typed for clarity.  However the password
+    <emphasis>will</> appear in the echoed command, as illustrated &mdash;
+    so you don't want to use <literal>-e</> when assigning a password, if
+    anyone else can see your screen.
    </para>
  </refsect1>
 
