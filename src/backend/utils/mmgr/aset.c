@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.59 2004/12/31 22:02:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.60 2005/05/14 20:29:13 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -395,12 +395,17 @@ AllocSetReset(MemoryContext context)
 	AllocSetCheck(context);
 #endif
 
+	/* Nothing to do if context has never contained any data */
+	if (block == NULL)
+		return;
+
 	/* Clear chunk freelists */
-	MemSet(set->freelist, 0, sizeof(set->freelist));
+	MemSetAligned(set->freelist, 0, sizeof(set->freelist));
+
 	/* New blocks list is either empty or just the keeper block */
 	set->blocks = set->keeper;
 
-	while (block != NULL)
+	do
 	{
 		AllocBlock	next = block->next;
 
@@ -427,6 +432,7 @@ AllocSetReset(MemoryContext context)
 		}
 		block = next;
 	}
+	while (block != NULL);
 }
 
 /*
@@ -451,7 +457,7 @@ AllocSetDelete(MemoryContext context)
 #endif
 
 	/* Make it look empty, just in case... */
-	MemSet(set->freelist, 0, sizeof(set->freelist));
+	MemSetAligned(set->freelist, 0, sizeof(set->freelist));
 	set->blocks = NULL;
 	set->keeper = NULL;
 
