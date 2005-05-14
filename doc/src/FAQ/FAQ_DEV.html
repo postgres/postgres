@@ -13,7 +13,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Fri May  6 13:47:54 EDT 2005</P>
+    <P>Last updated: Sat May 14 12:26:01 EDT 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -34,8 +34,8 @@
      <A href="#1.3">1.3</A>) What areas need work?<BR>
      <A href="#1.4">1.4</A>) What do I do after choosing an item to
     work on?<BR>
-     <A href="#1.5">1.5</A>) Where can I learn more about the code?<BR>
-     <A href="#1.6">1.6</A>) I've developed a patch, what next?<BR>
+     <A href="#1.5">1.5</A>) I've developed a patch, what next?<BR>
+     <A href="#1.6">1.6</A>) Where can I learn more about the code?<BR>
      <A href="#1.7">1.7</A>) How do I download/update the current
     source tree?<BR>
      <A href="#1.8">1.8</A>) How do I test my changes?<BR>
@@ -139,9 +139,13 @@
 
     <P>Send an email to pgsql-hackers with a proposal for what you want
     to do (assuming your contribution is not trivial). Working in
-    isolation is not advisable: others may be working on the same TODO
-    item; you may have misunderstood the TODO item; your approach may
-    benefit from the review of others.</P>
+    isolation is not advisable because others might be working on the same
+    TODO item, or you might have misunderstood the TODO item. In the
+    email, discuss both the internal implementation method you plan to
+    use, and any user-visible changes (new syntax, etc). For complex
+    patches, it is important to get community feeback on your proposal
+    before starting work. Failure to do so might mean your patch is
+    rejected.</P>
 
     <P>A web site is maintained for patches that are ready to be applied,
     <a href="http://momjian.postgresql.org/cgi-bin/pgpatches">
@@ -150,30 +154,33 @@
     <a href="http://momjian.postgresql.org/cgi-bin/pgpatches2">
     http://momjian.postgresql.org/cgi-bin/pgpatches2</a>.</P>
     
-    <H3><A name="1.5">1.5</A>) Where can I learn more about the
+    <H3><A name="1.5">1.5</A>) I've developed a patch, what next?</H3>
+
+    <P>Generate the patch in contextual diff format. If you are
+    unfamiliar with this, you might find the script
+    <I>src/tools/makediff/difforig</I> useful.</P>
+
+    <P>Ensure that your patch is generated against the most recent
+    version of the code. If it is a patch adding new functionality, the
+    most recent version is CVS HEAD; if it is a bug fix, this will be
+    the most recently version of the branch which suffers from the bug
+    (for more on branches in PostgreSQL, see <A href=
+    "#1.15">1.15</A>).</P>
+
+    <P>Finally, submit the patch to pgsql-patches@postgresql.org. It
+    will be reviewed by other contributors to the project and will be
+    either accepted or sent back for further work. Also, please try to
+    include documentation changes as part of the patch. If you can't do
+    that, let us know and we will manually update the documentation when
+    the patch is applied.</P>
+
+    <H3><A name="1.6">1.6</A>) Where can I learn more about the
     code?</H3>
 
     <P>Other than documentation in the source tree itself, you can find
     some papers/presentations discussing the code at <A href=
     "http://www.postgresql.org/developer">
     http://www.postgresql.org/developer</A>.</P>
-
-    <H3><A name="1.6">1.6</A>) I've developed a patch, what next?</H3>
-
-    <P>Generate the patch in contextual diff format. If you are
-    unfamiliar with this, you may find the script
-    <I>src/tools/makediff/difforig</I> useful.</P>
-
-    <P>Ensure that your patch is generated against the most recent
-    version of the code. If it is a patch adding new functionality, the
-    most recent version is cvs HEAD; if it is a bug fix, this will be
-    the most recently version of the branch which suffers from the bug
-    (for more on branches in PostgreSQL, see <A href=
-    "#1.15">1.15</A>).</P>
-
-    <P>Finally, submit the patch to pgsql-patches@postgresql.org. It
-    will be reviewed by other contributors to the project and may be
-    either accepted or sent back for further work.</P>
 
     <H3><A name="1.7">1.7</A>) How do I download/update the current
     source tree?</H3>
@@ -183,7 +190,7 @@
     <A href=
     "ftp://ftp.postgresql.org">ftp://ftp.postgresql.org</A>.</P>
 
-    <P>Regular developers may want to take advantage of anonymous
+    <P>Regular developers might want to take advantage of anonymous
     access to our source code management system. The source tree is
     currently hosted in CVS. For details of how to obtain the source
     from CVS see <A href=
@@ -214,7 +221,7 @@
     investigate.</P>
 
     <P>If you've deliberately changed existing behavior, this change
-    may cause a regression test failure but not any actual regression.
+    might cause a regression test failure but not any actual regression.
     If so, you should also patch the regression test suite.</P>
 
     <P><B>Other run time testing</B></P>
@@ -769,7 +776,7 @@
     delete tuples by passing the tuple's <I>t_self</I> to
     <I>heap_destroy().</I> You use <I>t_self</I> for
     <I>heap_update()</I> too. Remember, tuples can be either system
-    cache copies, which may go away after you call
+    cache copies, which might go away after you call
     <I>ReleaseSysCache()</I>, or read directly from disk buffers, which
     go away when you <I>heap_getnext()</I>, <I>heap_endscan</I>, or
     <I>ReleaseBuffer()</I>, in the <I>heap_fetch()</I> case. Or it may
@@ -904,7 +911,7 @@
     to create, copy, read, and output those structures (in particular,
     the files <I>copyfuncs.c</I> and <I>equalfuncs.c</I>. Make sure you
     add support for your new field to these files. Find any other
-    places the structure may need code for your new field. <I>mkid</I>
+    places the structure might need code for your new field. <I>mkid</I>
     is helpful with this (see <A href="#1.9">1.9</A>).</P>
 
     <H3><A name="2.5">2.5</A>) Why do we use <I>palloc</I>() and
@@ -969,7 +976,7 @@
     symbols, you can use a debugger to see what is happening. Because
     the backend was not started from <I>postmaster</I>, it is not
     running in an identical environment and locking/backend interaction
-    problems may not be duplicated.</P>
+    problems might not be duplicated.</P>
 
     <P>If the <I>postmaster</I> is running, start <I>psql</I> in one
     window, then find the <SMALL>PID</SMALL> of the <I>postgres</I>
