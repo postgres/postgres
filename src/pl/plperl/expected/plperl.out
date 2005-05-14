@@ -1,4 +1,11 @@
+--
+-- checkpoint so that if we have a crash in the tests, replay of the
+-- just-completed CREATE DATABASE won't discard the core dump file
+--
 checkpoint;
+--
+-- Test result value processing
+--
 CREATE OR REPLACE FUNCTION perl_int(int) RETURNS INTEGER AS $$
 return undef;
 $$ LANGUAGE plperl;
@@ -277,6 +284,9 @@ SELECT (perl_out_params_set()).f3;
  PL/Perl
 (3 rows)
 
+--
+-- Check behavior with erroneous return values
+--
 CREATE TYPE footype AS (x INTEGER, y INTEGER);
 CREATE OR REPLACE FUNCTION foo_good() RETURNS SETOF footype AS $$
 return [
@@ -334,6 +344,9 @@ return [
 $$ LANGUAGE plperl;
 SELECT * FROM foo_set_bad();
 ERROR:  Perl hash contains nonexistent column "z"
+--
+-- Check passing a tuple argument
+--
 CREATE OR REPLACE FUNCTION perl_get_field(footype, text) RETURNS integer AS $$
     return $_[0]->{$_[1]};
 $$ LANGUAGE plperl;

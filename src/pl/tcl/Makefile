@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $PostgreSQL: pgsql/src/pl/tcl/Makefile,v 1.44 2004/12/16 20:41:01 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/tcl/Makefile,v 1.45 2005/05/14 17:55:22 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -40,6 +40,8 @@ SO_MAJOR_VERSION = 2
 SO_MINOR_VERSION = 0
 OBJS = pltcl.o
 
+REGRESS = pltcl_setup pltcl_queries
+
 include $(top_srcdir)/src/Makefile.shlib
 
 ifeq ($(TCL_SHARED_BUILD), 1)
@@ -65,6 +67,13 @@ uninstall:
 	rm -f $(DESTDIR)$(pkglibdir)/$(NAME)$(DLSUFFIX)
 	$(MAKE) -C modules $@
 
+installcheck: submake
+	$(SHELL) $(top_builddir)/src/test/regress/pg_regress --load-language=pltcl $(REGRESS)
+
+.PHONY: submake
+submake:
+	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress
+
 else # TCL_SHARED_BUILD = 0
 
 # Provide dummy targets for the case where we can't build the shared library.
@@ -77,4 +86,6 @@ endif # TCL_SHARED_BUILD = 0
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS)
+	rm -rf results
+	rm -f regression.diffs regression.out
 	$(MAKE) -C modules $@

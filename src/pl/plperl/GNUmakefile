@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.18 2004/11/19 19:22:58 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.19 2005/05/14 17:55:20 tgl Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -36,6 +36,8 @@ OBJS = plperl.o spi_internal.o SPI.o
 
 SHLIB_LINK = $(perl_embed_ldflags) $(BE_DLLLIBS)
 
+REGRESS = plperl
+
 include $(top_srcdir)/src/Makefile.shlib
 
 
@@ -59,8 +61,17 @@ installdirs:
 uninstall:
 	rm -f $(DESTDIR)$(pkglibdir)/plperl$(DLSUFFIX)
 
+installcheck: submake
+	$(SHELL) $(top_builddir)/src/test/regress/pg_regress --load-language=plperl $(REGRESS)
+
+.PHONY: submake
+submake:
+	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress
+
 clean distclean maintainer-clean: clean-lib
 	rm -f SPI.c $(OBJS)
+	rm -rf results
+	rm -f regression.diffs regression.out
 
 else # can't build
 

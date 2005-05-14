@@ -1,3 +1,5 @@
+-- suppress CONTEXT so that function OIDs aren't in output
+\set VERBOSITY terse
 insert into T_pkey1 values (1, 'key1-1', 'test key');
 insert into T_pkey1 values (1, 'key1-2', 'test key');
 insert into T_pkey1 values (1, 'key1-3', 'test key');
@@ -21,6 +23,7 @@ select * from T_pkey1;
     2 | key2-3               | test key                                
 (6 rows)
 
+-- key2 in T_pkey2 should have upper case only
 select * from T_pkey2;
  key1 |         key2         |                   txt                    
 ------+----------------------+------------------------------------------
@@ -33,16 +36,19 @@ select * from T_pkey2;
 (6 rows)
 
 insert into T_pkey1 values (1, 'KEY1-3', 'should work');
+-- Due to the upper case translation in trigger this must fail
 insert into T_pkey2 values (1, 'KEY1-3', 'should fail');
 ERROR:  duplicate key '1', 'KEY1-3' for T_pkey2
 insert into T_dta1 values ('trec 1', 1, 'key1-1');
 insert into T_dta1 values ('trec 2', 1, 'key1-2');
 insert into T_dta1 values ('trec 3', 1, 'key1-3');
+-- Must fail due to unknown key in T_pkey1
 insert into T_dta1 values ('trec 4', 1, 'key1-4');
 ERROR:  key for t_dta1 not in t_pkey1
 insert into T_dta2 values ('trec 1', 1, 'KEY1-1');
 insert into T_dta2 values ('trec 2', 1, 'KEY1-2');
 insert into T_dta2 values ('trec 3', 1, 'KEY1-3');
+-- Must fail due to unknown key in T_pkey2
 insert into T_dta2 values ('trec 4', 1, 'KEY1-4');
 ERROR:  key for t_dta2 not in t_pkey2
 select * from T_dta1;
@@ -132,6 +138,7 @@ select tcl_sum(key1) from T_pkey2;
        6
 (1 row)
 
+-- The following should return NULL instead of 0
 select tcl_avg(key1) from T_pkey1 where key1 = 99;
  tcl_avg 
 ---------

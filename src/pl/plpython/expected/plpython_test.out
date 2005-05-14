@@ -1,9 +1,15 @@
+-- first some tests of basic functionality
+--
+-- better succeed
+--
 select stupid();
  stupid 
 --------
  zarkon
 (1 row)
 
+-- check static and global data
+--
 SELECT static_test();
  static_test 
 -------------
@@ -28,6 +34,8 @@ SELECT global_test_two();
  SD: set by global_test_two, GD: set by global_test_one
 (1 row)
 
+-- import python modules
+--
 SELECT import_fail();
 NOTICE:  ('import socket failed -- No module named foosocket',)
     import_fail     
@@ -41,18 +49,24 @@ SELECT import_succeed();
  succeeded, as expected
 (1 row)
 
+-- test import and simple argument handling
+--
 SELECT import_test_one('sha hash of this string');
              import_test_one              
 ------------------------------------------
  a04e23cb9b1a09cd1051a04a7c571aae0f90346c
 (1 row)
 
+-- test import and tuple argument handling
+--
 select import_test_two(users) from users where fname = 'willem';
                           import_test_two                          
 -------------------------------------------------------------------
  sha hash of willemdoe is 3cde6b574953b0ca937b4d76ebc40d534d910759
 (1 row)
 
+-- test multiple arguments
+--
 select argument_test_one(users, fname, lname) from users where lname = 'doe' order by 1;
                            argument_test_one                           
 -----------------------------------------------------------------------
@@ -61,6 +75,8 @@ select argument_test_one(users, fname, lname) from users where lname = 'doe' ord
  willem doe => {fname: willem, lname: doe, userid: 3, username: w_doe}
 (3 rows)
 
+-- spi and nested calls
+--
 select nested_call_one('pass this along');
                          nested_call_one                         
 -----------------------------------------------------------------
@@ -85,6 +101,8 @@ select spi_prepared_plan_test_nested('smith');
  there are 1 smiths
 (1 row)
 
+-- quick peek at the table
+--
 SELECT * FROM users;
  fname  | lname | username | userid 
 --------+-------+----------+--------
@@ -94,7 +112,11 @@ SELECT * FROM users;
  rick   | smith | slash    |      4
 (4 rows)
 
+-- should fail
+--
 UPDATE users SET fname = 'william' WHERE fname = 'willem';
+-- should modify william to willem and create username
+--
 INSERT INTO users (fname, lname) VALUES ('william', 'smith');
 INSERT INTO users (fname, lname, username) VALUES ('charles', 'darwin', 'beagle');
 SELECT * FROM users;
@@ -137,6 +159,11 @@ SELECT join_sequences(sequences) FROM sequences
 ----------------
 (0 rows)
 
+-- error in trigger
+--
+--
+-- Check Universal Newline Support
+--
 SELECT newline_lf();
  newline_lf 
 ------------
