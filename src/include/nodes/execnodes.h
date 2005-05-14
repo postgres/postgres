@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.132 2005/05/13 21:20:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.133 2005/05/14 21:29:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1031,6 +1031,8 @@ typedef struct NestLoopState
  *		NumClauses		   number of mergejoinable join clauses
  *		Clauses			   info for each mergejoinable clause
  *		JoinState		   current "state" of join.  see execdefs.h
+ *		FillOuter		   true if should emit unjoined outer tuples anyway
+ *		FillInner		   true if should emit unjoined inner tuples anyway
  *		MatchedOuter	   true if found a join match for current outer tuple
  *		MatchedInner	   true if found a join match for current inner tuple
  *		OuterTupleSlot	   slot in tuple table for cur outer tuple
@@ -1051,6 +1053,8 @@ typedef struct MergeJoinState
 	int			mj_NumClauses;
 	MergeJoinClause mj_Clauses;	/* array of length mj_NumClauses */
 	int			mj_JoinState;
+	bool		mj_FillOuter;
+	bool		mj_FillInner;
 	bool		mj_MatchedOuter;
 	bool		mj_MatchedInner;
 	TupleTableSlot *mj_OuterTupleSlot;
