@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.318 2005/05/09 17:26:22 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.319 2005/05/15 00:26:18 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -873,17 +873,17 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
      
-     <varlistentry id="guc-rendezvous-name" xreflabel="rendezvous_name">
-      <term><varname>rendezvous_name</varname> (<type>string</type>)</term>
+     <varlistentry id="guc-bonjour-name" xreflabel="bonjour_name">
+      <term><varname>bonjour_name</varname> (<type>string</type>)</term>
       <indexterm>
-       <primary><varname>rendezvous_name</> configuration parameter</primary>
+       <primary><varname>bonjour_name</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
-        Specifies the <productname>Rendezvous</productname> broadcast
+        Specifies the <productname>Bonjour</productname> broadcast
         name.  By default, the computer name is used, specified as an
         empty string ''.  This option is ignored if the server was not
-        compiled with <productname>Rendezvous</productname> support.  This
+        compiled with <productname>Bonjour</productname> support.  This
         option can only be set at server start.
        </para>
       </listitem>

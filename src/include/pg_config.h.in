@@ -645,8 +645,8 @@
 /* Define to 1 to build with PAM support. (--with-pam) */
 #undef USE_PAM
 
-/* Define to 1 to build with Rendezvous support. (--with-rendezvous) */
-#undef USE_RENDEZVOUS
+/* Define to 1 to build with Bonjour support. (--with-bonjour) */
+#undef USE_BONJOUR
 
 /* Use replacement snprintf() functions. */
 #undef USE_SNPRINTF

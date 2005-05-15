@@ -56,7 +56,7 @@
 #unix_socket_directory = ''
 #unix_socket_group = ''
 #unix_socket_permissions = 0777	# octal
-#rendezvous_name = ''		# defaults to the computer name
+#bonjour_name = ''		# defaults to the computer name
 
 # - Security & Authentication -
 

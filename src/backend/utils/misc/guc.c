@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.261 2005/05/01 18:56:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.262 2005/05/15 00:26:19 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1573,11 +1573,11 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"rendezvous_name", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
-			gettext_noop("Sets the Rendezvous broadcast service name."),
+		{"bonjour_name", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
+			gettext_noop("Sets the Bonjour broadcast service name."),
 			NULL
 		},
-		&rendezvous_name,
+		&bonjour_name,
 		"", NULL, NULL
 	},
 

@@ -871,7 +871,7 @@ Optional Packages:
   --with-krb5             build with Kerberos 5 support
   --with-krb-srvnam=NAME  name of the service principal in Kerberos [postgres]
   --with-pam              build with PAM support
-  --with-rendezvous       build with Rendezvous support
+  --with-bonjour          build with Bonjour support
   --with-openssl          build with OpenSSL support
   --without-readline      do not use Readline
   --without-zlib          do not use Zlib
@@ -3431,22 +3431,22 @@ echo "${ECHO_T}$with_pam" >&6
 
 
 #
-# Rendezvous
+# Bonjour
 #
-echo "$as_me:$LINENO: checking whether to build with Rendezvous support" >&5
-echo $ECHO_N "checking whether to build with Rendezvous support... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking whether to build with Bonjour support" >&5
+echo $ECHO_N "checking whether to build with Bonjour support... $ECHO_C" >&6
 
 
 
-# Check whether --with-rendezvous or --without-rendezvous was given.
-if test "${with_rendezvous+set}" = set; then
-  withval="$with_rendezvous"
+# Check whether --with-bonjour or --without-bonjour was given.
+if test "${with_bonjour+set}" = set; then
+  withval="$with_bonjour"
 
   case $withval in
     yes)
 
 cat >>confdefs.h <<\_ACEOF
-#define USE_RENDEZVOUS 1
+#define USE_BONJOUR 1
 _ACEOF
 
       ;;
@@ -3454,19 +3454,19 @@ _ACEOF
       :
       ;;
     *)
-      { { echo "$as_me:$LINENO: error: no argument expected for --with-rendezvous option" >&5
-echo "$as_me: error: no argument expected for --with-rendezvous option" >&2;}
+      { { echo "$as_me:$LINENO: error: no argument expected for --with-bonjour option" >&5
+echo "$as_me: error: no argument expected for --with-bonjour option" >&2;}
    { (exit 1); exit 1; }; }
       ;;
   esac
 
 else
-  with_rendezvous=no
+  with_bonjour=no
 
 fi;
 
-echo "$as_me:$LINENO: result: $with_rendezvous" >&5
-echo "${ECHO_T}$with_rendezvous" >&6
+echo "$as_me:$LINENO: result: $with_bonjour" >&5
+echo "${ECHO_T}$with_bonjour" >&6
 
 
 
@@ -9674,7 +9674,7 @@ done
 
 fi
 
-if test "$with_rendezvous" = yes ; then
+if test "$with_bonjour" = yes ; then
   if test "${ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h+set}" = set; then
   echo "$as_me:$LINENO: checking for DNSServiceDiscovery/DNSServiceDiscovery.h" >&5
 echo $ECHO_N "checking for DNSServiceDiscovery/DNSServiceDiscovery.h... $ECHO_C" >&6
@@ -9779,8 +9779,8 @@ fi
 if test $ac_cv_header_DNSServiceDiscovery_DNSServiceDiscovery_h = yes; then
   :
 else
-  { { echo "$as_me:$LINENO: error: header file <DNSServiceDiscovery/DNSServiceDiscovery.h> is required for Rendezvous" >&5
-echo "$as_me: error: header file <DNSServiceDiscovery/DNSServiceDiscovery.h> is required for Rendezvous" >&2;}
+  { { echo "$as_me:$LINENO: error: header file <DNSServiceDiscovery/DNSServiceDiscovery.h> is required for Bonjour" >&5
+echo "$as_me: error: header file <DNSServiceDiscovery/DNSServiceDiscovery.h> is required for Bonjour" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -19710,7 +19710,7 @@ s,@with_krb4@,$with_krb4,;t t
 s,@with_krb5@,$with_krb5,;t t
 s,@krb_srvtab@,$krb_srvtab,;t t
 s,@with_pam@,$with_pam,;t t
-s,@with_rendezvous@,$with_rendezvous,;t t
+s,@with_bonjour@,$with_bonjour,;t t
 s,@with_openssl@,$with_openssl,;t t
 s,@ELF_SYS@,$ELF_SYS,;t t
 s,@LDFLAGS_SL@,$LDFLAGS_SL,;t t
