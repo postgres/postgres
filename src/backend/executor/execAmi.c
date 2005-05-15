@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.83 2005/04/19 22:35:11 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.84 2005/05/15 21:19:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,6 +248,14 @@ ExecMarkPos(PlanState *node)
  * ExecRestrPos
  *
  * restores the scan position previously saved with ExecMarkPos()
+ *
+ * NOTE: the semantics of this are that the first ExecProcNode following
+ * the restore operation will yield the same tuple as the first one following
+ * the mark operation.  It is unspecified what happens to the plan node's
+ * result TupleTableSlot.  (In most cases the result slot is unchanged by
+ * a restore, but the node may choose to clear it or to load it with the
+ * restored-to tuple.)  Hence the caller should discard any previously
+ * returned TupleTableSlot after doing a restore.
  */
 void
 ExecRestrPos(PlanState *node)
@@ -290,6 +298,11 @@ ExecRestrPos(PlanState *node)
  * XXX Ideally, all plan node types would support mark/restore, and this
  * wouldn't be needed.  For now, this had better match the routines above.
  * But note the test is on Plan nodetype, not PlanState nodetype.
+ *
+ * (However, since the only present use of mark/restore is in mergejoin,
+ * there is no need to support mark/restore in any plan type that is not
+ * capable of generating ordered output.  So the seqscan, tidscan, and
+ * functionscan support is actually useless code at present.)
  */
 bool
 ExecSupportsMarkRestore(NodeTag plantype)

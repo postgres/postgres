@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.73 2005/05/14 21:29:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.74 2005/05/15 21:19:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1134,8 +1134,10 @@ ExecMergeJoin(MergeJoinState *node)
 					ExecRestrPos(innerPlan);
 
 					/*
-					 * ExecRestrPos really should give us back a new Slot,
-					 * but since it doesn't, use the marked slot.
+					 * ExecRestrPos probably should give us back a new Slot,
+					 * but since it doesn't, use the marked slot.  (The
+					 * previously returned mj_InnerTupleSlot cannot be
+					 * assumed to hold the required tuple.)
 					 */
 					node->mj_InnerTupleSlot = innerTupleSlot;
 					/* we need not do MJEvalInnerValues again */

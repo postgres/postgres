@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.80 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.81 2005/05/15 21:19:54 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -411,6 +411,10 @@ index_markpos(IndexScanDesc scan)
 
 /* ----------------
  *		index_restrpos	- restore a scan position
+ *
+ * NOTE: this only restores the internal scan state of the index AM.
+ * The current result tuple (scan->xs_ctup) doesn't change.  See comments
+ * for ExecRestrPos().
  * ----------------
  */
 void
