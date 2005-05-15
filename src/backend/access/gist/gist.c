@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.114 2005/05/11 06:24:50 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.115 2005/05/15 04:08:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,9 @@
 
 #undef GIST_PAGEADDITEM
 
-#define ATTSIZE( datum, TupDesc, i, isnull ) \
+#define ATTSIZE(datum, TupDesc, i, isnull) \
 	( \
-		( isnull ) ? 0 : \
+		(isnull) ? 0 : \
 			att_addlength(0, (TupDesc)->attrs[(i)-1]->attlen, (datum)) \
 	)
 
@@ -45,12 +45,12 @@
  * and gistadjsubkey only
  */
 #define FILLITEM(evp, isnullkey, okey, okeyb, rkey, rkeyb)	 do { \
-		if ( isnullkey ) {										  \
-				gistentryinit((evp), rkey, r, NULL,				  \
-						(OffsetNumber) 0, rkeyb, FALSE);		  \
+		if (isnullkey) {										  \
+			gistentryinit((evp), rkey, r, NULL,					  \
+						  (OffsetNumber) 0, rkeyb, FALSE);		  \
 		} else {												  \
-				gistentryinit((evp), okey, r, NULL,				  \
-						(OffsetNumber) 0, okeyb, FALSE);		  \
+			gistentryinit((evp), okey, r, NULL,					  \
+						  (OffsetNumber) 0, okeyb, FALSE);		  \
 		}														  \
 } while(0)
 
@@ -87,8 +87,7 @@ static OffsetNumber gistwritebuffer(Relation r,
 				IndexTuple *itup,
 				int len,
 				OffsetNumber off);
-static int gistnospace(Page page,
-			IndexTuple *itvec, int len);
+static bool gistnospace(Page page, IndexTuple *itvec, int len);
 static IndexTuple *gistreadbuffer(Buffer buffer, int *len);
 static IndexTuple *gistjoinvector(
 			   IndexTuple *itvec, int *len,
@@ -107,14 +106,13 @@ static void gistadjsubkey(Relation r,
 			  GIST_SPLITVEC *v,
 			  GISTSTATE *giststate);
 static IndexTuple gistFormTuple(GISTSTATE *giststate,
-			Relation r, Datum attdata[], int datumsize[], bool isnull[]);
+			Relation r, Datum *attdata, int *datumsize, bool *isnull);
 static IndexTuple *gistSplit(Relation r,
 		  Buffer buffer,
 		  IndexTuple *itup,
 		  int *len,
 		  GISTSTATE *giststate);
-static void gistnewroot(Relation r,
-			IndexTuple *itup, int len);
+static void gistnewroot(Relation r, IndexTuple *itup, int len);
 static void GISTInitBuffer(Buffer b, uint32 f);
 static OffsetNumber gistchoose(Relation r, Page p,
 		   IndexTuple it,
@@ -131,8 +129,8 @@ static void gistcentryinit(GISTSTATE *giststate, int nkey,
 			   OffsetNumber o, int b, bool l, bool isNull);
 static void gistDeCompressAtt(GISTSTATE *giststate, Relation r,
 				  IndexTuple tuple, Page p, OffsetNumber o,
-				  GISTENTRY attdata[], bool decompvec[], bool isnull[]);
-static void gistFreeAtt(Relation r, GISTENTRY attdata[], bool decompvec[]);
+				  GISTENTRY *attdata, bool *decompvec, bool *isnull);
+static void gistFreeAtt(Relation r, GISTENTRY *attdata, bool *decompvec);
 static void gistpenalty(GISTSTATE *giststate, int attno,
 			GISTENTRY *key1, bool isNull1,
 			GISTENTRY *key2, bool isNull2,
@@ -503,7 +501,7 @@ gistlayerinsert(Relation r, BlockNumber blkno,
 	}
 	else
 	{
-		/* enogth space */
+		/* enough space */
 		OffsetNumber off,
 					l;
 
@@ -577,7 +575,7 @@ gistwritebuffer(Relation r, Page page, IndexTuple *itup,
 /*
  * Check space for itup vector on page
  */
-static int
+static bool
 gistnospace(Page page, IndexTuple *itvec, int len)
 {
 	unsigned int size = 0;
@@ -934,7 +932,7 @@ gistunionsubkey(Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITV
 }
 
 /*
- * find group in vector with equial value
+ * find group in vector with equal value
  */
 static int
 gistfindgroup(GISTSTATE *giststate, GISTENTRY *valvec, GIST_SPLITVEC *spl)
@@ -949,7 +947,6 @@ gistfindgroup(GISTSTATE *giststate, GISTENTRY *valvec, GIST_SPLITVEC *spl)
 	 * first key is always not null (see gistinsert), so we may not check
 	 * for nulls
 	 */
-
 	for (i = 0; i < spl->spl_nleft; i++)
 	{
 		if (spl->spl_idgrp[spl->spl_left[i]])
@@ -1007,8 +1004,7 @@ gistadjsubkey(Relation r,
 			  IndexTuple *itup, /* contains compressed entry */
 			  int *len,
 			  GIST_SPLITVEC *v,
-			  GISTSTATE *giststate
-)
+			  GISTSTATE *giststate)
 {
 	int			curlen;
 	OffsetNumber *curwpos;
@@ -1400,8 +1396,8 @@ GISTInitBuffer(Buffer b, uint32 f)
 
 
 /*
-** find entry with lowest penalty
-*/
+ * find entry with lowest penalty
+ */
 static OffsetNumber
 gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 		   GISTSTATE *giststate)
@@ -1643,12 +1639,12 @@ freeGISTstate(GISTSTATE *giststate)
 
 #ifdef GIST_PAGEADDITEM
 /*
-** Given an IndexTuple to be inserted on a page, this routine replaces
-** the key with another key, which may involve generating a new IndexTuple
-** if the sizes don't match or if the null status changes.
-**
-** XXX this only works for a single-column index tuple!
-*/
+ * Given an IndexTuple to be inserted on a page, this routine replaces
+ * the key with another key, which may involve generating a new IndexTuple
+ * if the sizes don't match or if the null status changes.
+ *
+ * XXX this only works for a single-column index tuple!
+ */
 static IndexTuple
 gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t)
 {
@@ -1690,8 +1686,8 @@ gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t)
 #endif
 
 /*
-** initialize a GiST entry with a decompressed version of key
-*/
+ * initialize a GiST entry with a decompressed version of key
+ */
 void
 gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 			   Datum k, Relation r, Page pg, OffsetNumber o,
@@ -1719,8 +1715,8 @@ gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 
 
 /*
-** initialize a GiST entry with a compressed version of key
-*/
+ * initialize a GiST entry with a compressed version of key
+ */
 static void
 gistcentryinit(GISTSTATE *giststate, int nkey,
 			   GISTENTRY *e, Datum k, Relation r,
@@ -1790,7 +1786,7 @@ gistFormTuple(GISTSTATE *giststate, Relation r,
 
 static void
 gistDeCompressAtt(GISTSTATE *giststate, Relation r, IndexTuple tuple, Page p,
-	OffsetNumber o, GISTENTRY attdata[], bool decompvec[], bool isnull[])
+	OffsetNumber o, GISTENTRY *attdata, bool *decompvec, bool *isnull)
 {
 	int			i;
 	Datum		datum;
@@ -1814,7 +1810,7 @@ gistDeCompressAtt(GISTSTATE *giststate, Relation r, IndexTuple tuple, Page p,
 }
 
 static void
-gistFreeAtt(Relation r, GISTENTRY attdata[], bool decompvec[])
+gistFreeAtt(Relation r, GISTENTRY *attdata, bool *decompvec)
 {
 	int			i;
 
