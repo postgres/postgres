@@ -1,531 +1,441 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <!-- saved from url=(0063)file://I:\Wlzhang\MyDoc\postgresql\FAQcn.files\postgres-faq.htm -->
-<!-- saved from url=(0046)http://laser.zhengmai.com.cn/postgres-faq.html --><HTML><HEAD><TITLE>PostgreSQL 
-			FAQ-ch</TITLE>
-		<META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=gb2312">
-		<META content="Microsoft FrontPage 4.0" name="GENERATOR">
-	</HEAD>
-	<BODY aLink="#0000ff" bgColor="#ffffff" link="#ff0000" text="#000000" vLink="#a00000">
-		<H1>PostgreSQL ³£¼ûÎÊÌâ£¨FAQ£©</H1>          
-		×î½ü¸üÐÂ£º2003 Äê 01 ÔÂ 06 ÈÕ ÐÇÆÚÒ» 22:27:35 CST
-		<P>Ä¿Ç°Î¬»¤ÈËÔ±£ºBruce Momjian (<A href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)          
-			<BR>
-			ÖÐÎÄ°æÎ¬»¤ÈËÔ±£ººÎÎ°Æ½ £¨laser@pgsqldb.com          
-		£©<P>±¾ÎÄµµµÄ×îÐÂ°æ±¾¿ÉÒÔÔÚ<a href="http://www.postgresql.org/files/documentation/faqs/FAQ.html">http://www.postgresql.org/files/documentation/faqs/FAQ.html</a>          
-		²é¿´¡£<P>²Ù×÷ÏµÍ³Æ½Ì¨Ïà¹ØµÄÎÊÌâÔÚ<a href="http://www.postgresql.org/docs/faq/">http://www.postgresql.org/docs/faq/</a>Àï»Ø´ð¡£<br>          
-			<HR>
-			<CENTER>
-				<H2>³£¼ûÎÊÌâ</H2>
-			</CENTER>
-        <a href="#1.1">1.1</a>)           
-			PostgreSQL ÊÇÊ²Ã´£¿¸ÃÔõÃ´·¢Òô£¿          
-			<BR>
-        <a href="#1.2">1.2</a>)           
-			PostgreSQL µÄ°æÈ¨ÊÇÊ²Ã´?          
-			<BR>
-			<A href="#1.3">1.3</A>)           
-			PostgreSQL ÔËÐÐÔÚÊ²Ã´ Unix Æ½Ì¨ÉÏ£¿          
-			<BR>
-			<A href="#1.4">1.4</A>) ¿ÉÓÃµÄ·Ç Unix           
-			Æ½Ì¨ÓÐÄÇÐ©£¿
-			<BR>
-			<A href="#1.5">1.5</A>) ÎÒ´ÓÄÄÀïÄÜµÃµ½           
-			PostgreSQL£¿
-			<BR>
-			<A href="#1.6">1.6</A>) ÎÒ´ÓÄÄÀïÄÜµÃµ½¶Ô           
-			PostgreSQL µÄÖ§³Ö£¿          
-			<BR>
-			<A href="#1.7">1.7</A>)           
-			PostgreSQL ×îÐÂµÄ°æ±¾ÊÇÊ²Ã´£¿          
-			<BR>
-			<A href="#1.8">1.8</A>) ÓÐÄÄÐ©¿ÉÓÃµÄ           
-			PostgreSQL µÄÎÄµµ£¿          
-			<BR>
-			<A href="#1.9">1.9</A>) ÎÒÈçºÎÁË½âÒÑÖªµÄ BUG        
-        »òÈ±Ê§µÄÌØÐÔ£¿
-			<BR>
-			<A href="#1.10">1.10</A>) ÎÒÓ¦¸ÃÔõÑùÑ§Ï°           
-			SQL £¿          
-			<BR>
-			<A href="#1.11">1.11</A>)           
-			PostgreSQL ÊÇ Y2K ¼æÈÝµÄÂð£¿          
-			<BR>
-			<A href="#1.12">1.12</A>)           
-			ÎÒÓ¦¸ÃÔõÑù¼ÓÈë¿ª·¢¶ÓÎé£¿
-			<BR>
-			<A href="#1.13">1.13</A>)           
-			ÎÒÓ¦¸ÃÔõÑùÌá½»Ò»¸ö BUG ±¨¸æ£¿          
-			<BR>
-			<A href="#1.14">1.14</A>)           
-			PostgreSQL ºÍÆäËû DBMS ±ÈÆðÀ´ÈçºÎ£¿<br>          
-        <a href="#1.15">1.15</a>) ÎÒÓ¦¸ÃÔõÑùÔÞÖú           
-			PostgreSQL £¿          
-			<CENTER>
-				<H2>ÓÃ»§¿Í»§¶ËÎÊÌâ</H2>
-			</CENTER>
-			<A href="#2.1">2.1</A>) ÓÐ           
-			PostgreSQL µÄ ODBC Çý¶¯³ÌÐòÃ´£¿          
-			<BR>
-			<A href="#2.2">2.2</A>) ÓÐÊ²Ã´¹¤¾ß¿ÉÒÔ°Ñ           
-			PostgreSQL ÓÃÓÚ Web Ò³Ãæ£¿          
-			<BR>
-			<A href="#2.3">2.3</A>)           
-			PostgreSQL ÓµÓÐÍ¼ÐÎÓÃ»§½çÃæÂð£¿          
-			<BR>
-			<A href="#2.4">2.4</A>)           
-			ÎÒÃÇ¿ÉÒÔÓÃÊ²Ã´ÓïÑÔºÍ PostgreSQL ´ò½»µÀ£¿          
-			<CENTER>
-				<H2>ÏµÍ³¹ÜÀíÎÊÌâ</H2>
-			</CENTER>
-        <a href="#3.1">3.1</a>) ÎÒÔõÑùÄÜ°Ñ           
-			PostgreSQL ×°ÔÚ /usr/local/pgsql ÒÔÍâµÄµØ·½£¿          
-			<BR>
-        <a href="#3.2">3.2</a>) µ±ÎÒÔËÐÐ           
-			postmaster Ê±£¬³öÏÖ<I> Bad System Call</I>£¨ÏµÍ³µ÷ÓÃ´í£©»ò Core Dumped ´íÎó¡£ÎªÊ²Ã´£¿          
-			<BR>
-        <a href="#3.3">3.3</a>) µ±ÎÒÊÔÍ¼ÔËÐÐ           
-			postmaster Ê±£¬³öÏÖ <I>IpcMemoryCreate</I> ´íÎó¡£ÎªÊ²Ã´£¿          
-			<BR>
-        <a href="#3.4">3.4</a>) µ±ÎÒÊÔÍ¼ÔËÐÐ           
-			postmaster Ê±£¬³öÏÖ <I>IpcSemaphoreCreate</I> ´íÎó¡£ÎªÊ²Ã´£¿          
-			<BR>
-        <a href="#3.5">3.5</a>)           
-			ÎÒÈçºÎ¿ØÖÆÀ´×ÔÆäËûÖ÷»úµÄÁ¬½Ó£¿
-			<BR>
-        <a href="#3.6">3.6</a>)           
-			ÎÒÔõÑùµ÷ÕûÊý¾Ý¿âÒýÇæÒÔ»ñµÃ¸üºÃµÄÐÔÄÜ£¿
-			<BR>
-        <a href="#3.7">3.7</a>)           
-			PostgreSQL Àï¿ÉÒÔ»ñµÃÊ²Ã´ÑùµÄµ÷ÊÔÌØÐÔ£¿          
-			<BR>
-        <a href="#3.8">3.8</a>)           
-			ÎªÊ²Ã´ÔÚÊÔÍ¼Á¬½ÓµÇÂ¼Ê±ÊÕµ½¡°Sorry, too many clients¡± ÏûÏ¢£¿<br>          
-        <a href="#3.9">3.9</a>)           
-			pgsql_tmp Ä¿Â¼Àï¶¼ÓÐÐ©Ê²Ã´£¿<br>          
-        <a href="#3.10">3.10</a>) ÎªÊ²Ã´ÒªÔÚÉý¼¶           
-			PostgreSQL ·¢²¼°æ±¾Ê±×ö dump ºÍ restore £¿          
-			<CENTER>
-				<H2>²Ù×÷ÎÊÌâ</H2>
-			</CENTER>
-        <a href="#4.1">4.1</a>)           
-			¶þ½øÖÆÓÎ±êºÍÆÕÍ¨ÓÎ±êÖ®¼äµÄÇø±ðÊÇÊ²Ã´£¿
-			<BR>
-        <a href="#4.2">4.2</a>)           
-			ÈçºÎÖ»Ñ¡ÔñÒ»¸ö²éÑ¯½á¹ûµÄÍ·¼¸ÐÐ£¿
-			<BR>
-        <a href="#4.3">4.3</a>)           
-			ÎÒÈçºÎ»ñÈ¡Ò»¸öÊý¾Ý¿âÖÐ±íµÄÁÐ±í£¬»òÕßÊÇÆäËûÎÒÄÜÔÚ <I>psql </I>Àï¿´µ½µÄ¶«Î÷£¿          
-			<BR>
-        <a href="#4.4">4.4</a>)           
-			ÔõÑù´Ó±íÀïÃæÉ¾³ýÒ»ÁÐ£¿
-			<BR>
-        <a href="#4.5">4.5</a>)           
-			Ò»ÐÐ£¬Ò»¸ö±í£¬Ò»¸ö¿âµÄ×î´ó³ß´çÊÇ¶àÉÙ£¿
-			<BR>
-        <a href="#4.6">4.6</a>)           
-			´æ´¢Ò»¸öµäÐÍµÄÎÄ±¾ÎÄ¼þÀïµÄÊý¾ÝÐèÒª¶àÉÙ´ÅÅÌ¿Õ¼ä£¿
-			<BR>
-        <a href="#4.7">4.7</a>)           
-			ÈçºÎ²é¿´±í¡¢Ë÷Òý¡¢Êý¾Ý¿âÒÔ¼°ÓÃ»§µÄ¶¨Òå£¿
-			<BR>
-        <a href="#4.8">4.8</a>)           
-			ÎÒµÄ²éÑ¯ºÜÂý»òÕßÃ»ÓÐÀûÓÃË÷Òý¡£ÎªÊ²Ã´£¿
-			<BR>
-        <a href="#4.9">4.9</a>)           
-			ÎÒÈçºÎ²ÅÄÜ¿´µ½²éÑ¯ÓÅ»¯Æ÷ÊÇÔõÑù´¦ÀíÎÒµÄ²éÑ¯µÄ£¿
-			<BR>
-        <a href="#4.10">4.10</a>) R-tree           
-			Ë÷ÒýÊÇÊ²Ã´£¿
-			<BR>
-        <a href="#4.11">4.11</a>)           
-			Ê²Ã´ÊÇ»ùÒò²éÑ¯ÓÅ»¯£¨Genetic Query Optimization£©£¿          
-			<BR>
-        <a href="#4.12">4.12</a>)           
-			ÎÒÔõÑù×öÕýÔò±í´ïÊ½ËÑË÷ºÍ´óÐ¡Ð´ÎÞ¹ØµÄÕýÔò±í´ïÊ½²éÕÒ£¿ÔõÑùÀûÓÃË÷Òý½øÐÐ´óÐ¡Ð´ÎÞ¹Ø²éÕÒ£¿
-			<BR>
-        <a href="#4.13">4.13</a>)           
-			ÔÚÒ»¸ö²éÑ¯Àï£¬ÎÒÔõÑù¼ì²âÒ»¸ö×Ö¶ÎÊÇ·ñÎª NULL£¿          
-			<BR>
-        <a href="#4.14">4.14</a>)           
-			¸÷ÖÖ×Ö·ûÀàÐÍÖ®¼äÓÐÊ²Ã´²»Í¬£¿
-			<BR>
-        <a href="#4.15.1">4.15.1</a>)           
-			ÎÒÔõÑù´´½¨Ò»¸öÐòÁÐºÅ/×Ô¶¯µÝÔöµÄ×Ö¶Î£¿
-			<BR>
-        <a href="#4.15.2">4.15.2</a>)           
-			ÎÒÈçºÎ»ñµÃÒ»¸ö²åÈëµÄÐòÁÐºÅµÄÖµ£¿
-			<BR>
-        <a href="#4.15.3">4.15.3</a>) Ê¹ÓÃ           
-			currval() ºÍ nextval() »áµ¼ÖÂºÍÆäËûÓÃ»§µÄÎÉÂÒÇé¿ö£¨race condition£©Âð£¿<br>          
-        <a href="#4.15.4">4.15.4</a>)           
-			ÎªÊ²Ã´²»ÔÚÊÂÎñÒì³£ÖÐÖ¹ºóÖØÓÃÐòÁÐºÅÄØ£¿ÎªÊ²Ã´ÔÚÐòÁÐºÅ×Ö¶ÎµÄÈ¡ÖµÖÐ´æÔÚ¼ä¶ÏÄØ£¿
-			<BR>
-        <a href="#4.16">4.16</a>) Ê²Ã´ÊÇ           
-			OID£¿Ê²Ã´ÊÇ TID £¿          
-			<BR>
-        <a href="#4.17">4.17</a>)           
-			PostgreSQL Ê¹ÓÃµÄÒ»Ð©ÊõÓïµÄº¬ÒåÊÇÊ²Ã´£¿          
-			<BR>
-        <a href="#4.18">4.18</a>)           
-			ÎªÊ²Ã´ÎÒÊÕµ½´íÎó¡°<i>ERROR: Memory exhausted in AllocSetAlloc()</i>¡±£¿<br>
-        <a href="#4.19">4.19</a>)           
-			ÎÒÈçºÎ²ÅÄÜÖªµÀËùÔËÐÐµÄ PostgreSQL µÄ°æ±¾£¿          
-			<BR>
-        <a href="#4.20">4.20</a>)           
-			ÎªÊ²Ã´ÎÒµÄ´ó¶ÔÏó²Ù×÷µ¼ÖÂ´íÎó¡°<I>invalid large obj descriptor¡±£¨·Ç·¨µÄ´ó¶ÔÏóÃèÊö·û£©</I>£¿ 
-			<BR>
-        <a href="#4.21">4.21</a>)           
-			ÎÒÈçºÎ´´½¨Ò»¸öÈ±Ê¡ÖµÊÇµ±Ç°Ê±¼äµÄ×Ö¶Î£¿
-			<BR>
-        <a href="#4.22">4.22</a>) ÎªÊ²Ã´Ê¹ÓÃ <TT>IN</TT>          
-			µÄ×Ó²éÑ¯ÕâÃ´Âý£¿          
-			<BR>
-        <a href="#4.23">4.23</a>) ÈçºÎ½øÐÐ           
-			outer join £¨ÍâÁ¬½Ó£©£¿<br>          
-        <a href="#4.24">4.24</a>)           
-			ÈçºÎÊ¹ÓÃÉæ¼°¶à¸öÊý¾Ý¿âµÄ²éÑ¯£¿<br>
-			<CENTER>
-			</CENTER>
-        <a href="#4.25">4.25</a>)           
-			ÈçºÎÈÃº¯Êý·µ»Ø¶àÐÐ»ò¶àÁÐ£¿<br>
-			<CENTER>
-			</CENTER>
-        <a href="#4.26">4.26</a>) ÎªÊ²Ã´ÔÚ           
-			PL/PgSQL º¯ÊýÖÐ²»ÄÜ¿É¿¿µØ´´½¨»òÉ¾³ýÁÙÊ±±í£¿<br>          
-			<CENTER>
-			</CENTER>
-        <a href="#4.27">4.27</a>)           
-			ÓÐÄÄÐ©Êý¾Ý¸´ÖÆÑ¡Ïî£¿<br>
-        <a href="#4.28">4.28</a>)           
-			ÓÐÄÄÐ©Êý¾Ý¼ÓÃÜÑ¡Ïî£¿
-			<CENTER>
-				<H2>À©Õ¹ PostgreSQL</H2>          
-			</CENTER>
-			<A href="#5.1">5.1</A>)           
-			ÎÒÐ´ÁËÒ»¸öÓÃ»§¶¨Òåº¯Êý¡£µ±ÎÒÔÚ<I> psql</I> ÀïÔËÐÐÊ±£¬ÎªÊ²Ã´»áµ¼ÖÂ core dump£¿          
-			<BR>
-        <a href="#5.2">5.2</a>) ÎÒÈçºÎÄÜ¸ø           
-			PostgreSQL ¹±Ï×Ò»Ð©Í¦²»´íµÄÐÂÀàÐÍºÍº¯Êý£¿          
-			<BR>
-        <a href="#5.3">5.3</a>)           
-			ÎÒÔõÑùÐ´Ò»¸ö·µ»ØÒ»Ìõ¼ÇÂ¼µÄ C º¯Êý£¿          
-			<BR>
-        <a href="#5.4">5.4</a>)           
-			ÎÒÐÞ¸ÄÁËÒ»¸öÔ´ÎÄ¼þ£¬ÎªÊ²Ã´ÖØÐÂ±àÒëºóÃ»ÓÐ¿´µ½¸Ä±ä£¿
-			<BR>
-			<HR>
-			<CENTER>
-				<H2>³£¼ûÎÊÌâ</H2>
-			</CENTER>
-			<H4><A name="1.1"></A>1.1) PostgreSQL ÊÇÊ²Ã´£¿¸ÃÔõÃ´·¢Òô£¿</H4>          
-			PostgreSQL ¶Á×÷ <I>Post-Gres-Q-L</I><i> ¡£</i>          
-		<p>PostgreSQL ÊÇÏÂÒ»´ú DBMS µÄÑÐ¾¿Ô­ÐÍ POSTGRES Êý¾Ý¿â¹ÜÀíÏµÍ³µÄÔöÇ¿°æ¡£PostgreSQL ÔÚ±£³Ö POSTGRES           
-			µÄÇ¿´óµÄÊý¾ÝÄ£ÐÍºÍ·á¸»µÄÊý¾ÝÀàÐÍµÄ»ù´¡ÉÏ£¬ÓÃÒ»¸öÀ©Õ¹ÁËµÄ SQL ×Ó¼¯È¡´úÁËÔ­ÏÈµÄ PostQuel ²éÑ¯ÓïÑÔ¡£PostgreSQL           
-			ÊÇ×ÔÓÉµÄ²¢ÇÒËùÓÐÔ´´úÂë¶¼¿ÉÒÔ»ñµÃ¡£</p>
-		<P>PostgreSQL µÄ¿ª·¢ÓÉ²Î¼Ó PostgreSQL ¿ª·¢ÓÊ¼þÁÐ±íµÄÒ»¸ö¿ª·¢ÈËÔ±Ð¡×é½øÐÐ¡£Ä¿Ç°µÄÐ­µ÷ÈËÊÇ Marc G. Fournier £¨<A href="mailto:scrappy@postgreSQL.org">scrappy@postgreSQL.org</A>          
-		£©¡££¨¹ØÓÚÈçºÎ¼ÓÈë²Î¼û1.6½Ú£©¡£Õâ¸ö¶ÓÎéÏÖÔÚ¸ºÔð PostgreSQL µÄËùÓÐ¿ª·¢¡£          
-		<P>
-		PostgreSQL 1.01 µÄ×÷ÕßÊÇ Andrew Yu ºÍ Jolly           
-		Chen¡£»¹ÓÐÐí¶àÆäËûÈËÎªÒÆÖ²£¬²âÊÔ£¬µ÷ÊÔºÍÔöÇ¿´úÂë×öÁË´óÁ¿¹±Ï×¡£PostgreSQL µÄ×î³õÆðÔ´ Postgres£¬ÊÇÔÚ¼ÓÖÝ´óÑ§²®¿ËÀû·ÖÐ£µÄ Michael           
-		Stonebraker ½ÌÊÚµÄÖ¸µ¼ÏÂ£¬ÓÉÐí¶àÑÐ¾¿Éú£¬±¾¿ÆÉúºÍ±à³ÌÖ°Ô±Íê³ÉµÄ¡£          
-		<P>Õâ¸öÈí¼þ×î³õÔÚ²®¿ËÀûµÄÃû×ÖÊÇ Postgres¡£ÔÚ 1995 Äê£¬µ±Ôö¼ÓÁË SQL ¹¦ÄÜºó£¬ËüµÄÃû×Ö¸Ä³É Postgres95¡£ÔÚ 1996ÄêÄ©£¬²Å¸ÄÃûÎª           
-			PostgreSQL¡£
-			<H4><A name="1.2"></A>1.2) PostgreSQL µÄ°æÈ¨ÊÇÊ²Ã´?</H4>          
-		PostgreSQL ÊÜÏÂÃæµÄ°æÈ¨Ô¼Êø¡£          
-		<P>
-		PostgreSQL Êý¾Ý¿â¹ÜÀíÏµÍ³          
-		<P>
-		£¨PostgreSQL Data Base Management System£©<P>²¿·Ö°æÈ¨£¨c£©1996-2002£¬PostgreSQL È«Çò¿ª·¢Ð¡×é<br>          
-		²¿·Ö°æÈ¨£¨c£©1994-6 ¼ÓÖÝ´óÑ§¶­ÊÂ          
-		<P>£¨Portions copyright (c) 1996-2002, PostgreSQL Global Development Group<br>          
-		&nbsp;Portions Copyright (c) 1994-6 Regents of the University of California£©          
-		<P>
-		ÔÊÐíÎªÈÎºÎÄ¿µÄÊ¹ÓÃ£¬¿½±´£¬ÐÞ¸ÄºÍ·Ö·¢Õâ¸öÈí¼þºÍËüµÄÎÄµµ¶ø²»ÊÕÈ¡ÈÎºÎ·ÑÓÃ£¬²¢ÇÒÎÞÐëÇ©ÊðÒò´Ë¶ø²úÉúµÄÖ¤Ã÷£¬Ç°ÌáÊÇÉÏÃæµÄ°æÈ¨ÉùÃ÷ºÍ±¾¶ÎÒÔ¼°ÏÂÃæÁ½¶ÎÎÄ×Ö³öÏÖÔÚËùÓÐ¿½±´ÖÐ¡£
-		<P>
-		£¨Permission to use, copy, modify, and distribute this software and its           
-		documentation for any purpose, without fee, and without a written agreement is           
-		hereby granted, provided that the above copyright notice and this paragraph and           
-		the following two paragraphs appear in all copies.£©          
-		<P>
-		ÔÚÈÎºÎÇé¿öÏÂ£¬¼ÓÖÝ´óÑ§¶¼²»³Ðµ£ÒòÊ¹ÓÃ´ËÈí¼þ¼°ÆäÎÄµµ¶øµ¼ÖÂµÄ¶ÔÈÎºÎµ±ÊÂÈËµÄÖ±½ÓµÄ£¬¼ä½ÓµÄ£¬ÌØÊâµÄ£¬¸½¼ÓµÄ»òÕßÏà°é¶øÉúµÄËð»µ£¬°üÀ¨ÀûÒæËðÊ§µÄÔðÈÎ£¬¼´Ê¹¼ÓÖÝ´óÑ§ÒÑ¾­½¨ÒéÁËÕâÐ©ËðÊ§µÄ¿ÉÄÜÐÔÊ±Ò²ÊÇÈç´Ë¡£
-		<P>
-		£¨IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR           
-		DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST           
-		PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF           
-		THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH           
-		DAMAGE.£©
-		<P>
-		¼ÓÖÝ´óÑ§Ã÷È··ÅÆúÈÎºÎ±£Ö¤£¬°üÀ¨µ«²»¾ÖÏÞÓÚÄ³Ò»ÌØ¶¨ÓÃÍ¾µÄÉÌÒµºÍÀûÒæµÄÒþº¬±£Ö¤¡£ÕâÀïÌá¹©µÄÕâ·ÝÈí¼þÊÇ»ùÓÚ¡°µ±×÷ÊÇ¡±µÄ»ù´¡µÄ£¬Òò¶ø¼ÓÖÝ´óÑ§Ã»ÓÐÔðÈÎÌá¹©Î¬»¤£¬Ö§³Ö£¬¸üÐÂ£¬ÔöÇ¿»òÕßÐÞ¸ÄµÄ·þÎñ¡£<P>£¨THE           
-			UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT           
-			NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A           
-			PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND           
-			THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE,           
-			SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.£©<br>          
-			<br>
-			ÉÏÃæ¾ÍÊÇ BSD °æÈ¨ÉùÃ÷£¬Ò»¸ö¾­µäµÄ¿ªÔ´°æÈ¨ÉùÃ÷¡£Ëü¶ÔÔ´´úÂëµÄÊ¹ÓÃÎ´×÷ÈÎºÎÏÞÖÆ¡£ÎÒÃÇÏ²»¶Ëü²¢ÇÒ²»´òËã¸Ä±äËü¡£          
-			<H4><A name="1.3"></A>1.3) PostgreSQL ÔËÐÐÔÚÊ²Ã´ Unix Æ½Ì¨ÉÏ£¿</H4>          
-		<p>Ò»°ãËµÀ´£¬Ò»¸öÏÖ´úµÄ UNIX ¼æÈÝµÄÆ½Ì¨¶¼ÄÜÔËÐÐ PostgreSQL ¡£ÔÚ°²×°Ö¸ÄÏÀïÁÐ³öÁË·¢²¼Ê±¾­¹ýÃ÷È·²âÊÔµÄÆ½Ì¨¡£</p>          
-		<UL>
-		</UL>
-		<H4><A name="1.4"></A>1.4) ¿ÉÓÃµÄ·Ç Unix Æ½Ì¨ÓÐÄÄÐ©£¿</H4>         
-		¿Í»§¶Ë
-		<p>°Ñ libpq C ¿â£¬psql£¬ÆäËû½Ó¿ÚºÍ¿Í»§¶ËÓ¦ÓÃ³ÌÐò±àÒë³É¿ÉÒÔÔÚ MS Windows Æ½Ì¨ÉÏÔËÐÐÊÇ¿ÉÄÜµÄ¡£ÕâÖÖÇé¿öÏÂ£¬¿Í»§¶ËÔÚ MS Windows           
-			ÉÏÔËÐÐ£¬²¢ÇÒÍ¨¹ý TCP/IP ÓëÒ»¸öÔËÐÐÔÚÎÒÃÇÖ§³ÖµÄ Unix Æ½Ì¨ÉÏµÄ·þÎñÆ÷½øÐÐÍ¨Ñ¶¡£·¢²¼°æ±¾ÖÐ°üº¬Ò»¸öÎÄ¼þ win32.mak ÓÃÓÚÉú³É Win32           
-			libpq ¿âºÍ psql ¡£PostgreSQL Ò²¿ÉÒÔºÍ ODBC ¿Í»§¶ËÍ¨Ñ¶¡£</p>          
-		<p>·þÎñÆ÷</p>
-		<P>Êý¾Ý¿â·þÎñÆ÷ÏÖÔÚ¿ÉÒÔÍ¨¹ý Cygwin £¬Cygnus µÄ Unix/NT ÒÆÖ²¿âÔÚ Windows NT ºÍ Win2k ÉÏÔËÐÐ¡£²ÎÔÄ·¢²¼°æ±¾ÀïµÄ See <i>pgsql/doc/FAQ_MSWIN</i>          
-			ÎÄ¼þ»ò <a href="http://www.PostgreSQL.org/docs/faq-mswin.html">http://www.PostgreSQL.org/docs/faq-mswin.html</a>          
-		¡£          
-		<P>ÒÆÖ²µ½ MS Win NT/2000/XP µÄ±¾»ú°æµÄ¹¤×÷ÕýÔÚ½øÐÐ¡£          
-			<H4><A name="1.5"></A>1.5) ÎÒ´ÓÄÄÀïÄÜµÃµ½ PostgreSQL£¿</H4>          
-		<P>PostgreSQL µÄÖ÷ÄäÃûFTPÕ¾µãÊÇ <a href="ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</a>£¬¾µÏñÕ¾µã¿ÉÒÔ²Î¿¼ÎÒÃÇÍøÕ¾µÄÖ÷Ò³¡£          
-			<H4><A name="1.6"></A>1.6) ÎÒ´ÓÄÄÀïÄÜµÃµ½¶Ô PostgreSQL µÄÖ§³Ö£¿</H4>          
-		<P>Ö÷ÒªµÄÓÊ¼þÁÐ±íÊÇ£º<A href="mailto:pgsql-general@postgreSQL.org">pgsql-general@postgreSQL.org</A>¡£¿ÉÒÔÔÚÄÇÀïÌÖÂÛÓÐ¹Ø           
-			PostgreSQL µÄÎÊÌâ¡£Òª¼ÓÈëÁÐ±í£¬·¢Ò»·âÓÊ¼þÄÚÈÝ£¨²»ÊÇÖ÷ÌâÐÐ£©Îª          
-			<PRE>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; subscribe
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; end</PRE>
-			µÄÓÊ¼þµ½ <A href="mailto:pgsql-general-request@postgreSQL.org">pgsql-general-request@postgreSQL.org</A>          
-		¡£          
-		<P>»¹¿ÉÒÔ»ñÈ¡ÕªÒªÁÐ±í¡£Òª¼ÓÈëÕâ¸öÁÐ±í£¬·¢ÓÊ¼þµ½£º<A href="mailto:pgsql-general-digest-request@postgreSQL.org">pgsql-general-digest-request@postgreSQL.org</A>£¬ÆäÄÚÈÝÎª£º
-			<PRE>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; subscribe
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; end</PRE>
-		Ã¿µ±Ö÷ÁÐ±í´ïµ½´óÔ¼ 30k µÄÏûÏ¢ÄÚÈÝÊ±£¬ÕªÒª¾Í·¢ËÍ¸øÕâ¸öÁÐ±íµÄ³ÉÔ±¡£          
-		<P>»¹¿ÉÒÔ²Î¼Ó³ô³æÓÊ¼þÁÐ±í¡£Òª¼ÓÈëÕâ¸öÁÐ±í£¬·¢ËÍÒ»¸öÓÊ¼þµ½ <A href="mailto:bugs-request@postgreSQL.org">bugs-request@postgreSQL.org</A>£¬ÄÚÈÝÎª£º          
-			<PRE>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; subscribe
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; end</PRE>
-			»¹¿ÉÒÔ²Î¼Ó¿ª·¢ÈËÔ±ÓÊ¼þÁÐ±í¡£Òª¼ÓÈëÕâ¸öÁÐ±í£¬·¢ËÍÒ»¸öÓÊ¼þµ½ <A href="mailto:hackers-request@postgreSQL.org">hackers-request@postgreSQL.org</A>£¬ÄÚÈÝÎª£º          
-			<PRE>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; subscribe
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; end</PRE>
-			ÆäËûµÄ¹ØÓÚ PostgreSQL ÓÊ¼þÁÐ±íºÍÆäËûÐÅÏ¢¿ÉÒÔÔÚ PostgreSQL µÄ WWW Ö÷Ò³ÕÒµ½£º <BLOCKQUOTE><A href="http://postgresql.org/">http://postgresql.org/</A></BLOCKQUOTE>          
-			ÔÚ EFNet Àï»¹ÓÐÒ»¸ö IRC ÆµµÀ£¬ÆµµÀ #PostgreSQL¡£ÎÒÓÃ unix ÃüÁî<TT>irc -c '#PostgreSQL' "$USER"           
-				irc.phoenix.net</TT>
-		<P>ÉÌÒµÖ§³Ö¹«Ë¾µÄÁÐ±íÔÚ <a href="http://www.PostgreSQL.org/users-lounge/commercial-support.html">http://www.PostgreSQL.org/users-lounge/commercial-support.html</a>          
-			¡£          
-			<H4><A name="1.7"></A>1.7) PostgreSQL ×îÐÂµÄ°æ±¾ÊÇÊ²Ã´£¿</H4>          
-		PostgreSQL ×îÐÂµÄ°æ±¾ÊÇ°æ±¾ 7.2.3¡££¨Òë×¢£ºÏÖÔÚÓ¦¸ÃÊÇ 7.3.1 ÁË¡££©          
-		<P>ÎÒÃÇ¼Æ»®Ã¿ËÄ¸öÔÂ·¢²¼Ò»¸öÖ÷Òª°æ±¾¡£
-			<H4><A name="1.8"></A>1.8) ÓÐÄÄÐ©¿ÉÓÃµÄ PostgreSQL µÄÎÄµµ£¿</H4>          
-			ÔÚ·¢²¼°üÀïÓÐÒ»Ð©ÊÖ²á£¬ÊÖ²áÒ³ºÍÒ»Ð©Ð¡µÄ²âÊÔÀý×Ó¡£²Î¼û /doc Ä¿Â¼¡££¨Òë×¢£ºÓ¦Îª $PGHOME/doc£©¡£Äã»¹¿ÉÒÔÔÚÏßä¯ÀÀ PostgreSQL           
-			µÄÊÖ²á£¬ÔÚ <a href="http://www.PostgreSQL.org/users-lounge/docs/">http://www.PostgreSQL.org/users-lounge/docs/</a>          
-		¡£<P>ÓÐÁ½±¾¹ØÓÚ&nbsp;PostgreSQL µÄÊéÔÚÏßÌá¹©£¬ÔÚ <a href="http://www.PostgreSQL.org/docs/awbook.html">          
-				http://www.PostgreSQL.org/docs/awbook.html</a> ºÍ <a href="http://www.commandprompt.com/ppbook/">          
-				http://www.commandprompt.com/ppbook/</a> ¡£ÔÚ <a href="http://www.ca.PostgreSQL.org/books/">          
-				http://www.ca.PostgreSQL.org/books/</a> ÉÏÓÐ¹ØÓÚ PostgreSQL µÄ¿É¹ºÊé¼®µÄÁÐ±í¡£ÔÚ <a href="http://techdocs.PostgreSQL.org/">          
-				http://techdocs.PostgreSQL.org/</a>
-		ÉÏÊÕ¼¯ÁËÓÐ¹Ø PostgreSQL µÄ¼¼ÊõÎÄÕÂ¡£          
-		<P><I>psql</I>
-		ÓÐÒ»Ð©²»´íµÄ \d ÃüÁî£¬ÏÔÊ¾¹ØÓÚÀàÐÍ£¬²Ù×÷·û£¬º¯Êý£¬¾Û¼¯µÈµÄÐÅÏ¢¡£          
-		<P>ÎÒÃÇµÄ web Õ¾µã°üº¬¸ü¶àµÄÎÄµµ£®<H4><A name="1.9"></A>1.9)        
-        ÎÒÈçºÎÁË½âÒÑÖªµÄ BUG ºÍÈ±Ê§µÄÌØÐÔ£¿</H4>         
-			PostgreSQL Ö§³ÖÒ»¸öÀ©Õ¹ÁËµÄ SQL-92 µÄ×Ó¼¯¡£²ÎÔÄÎÒÃÇµÄ <A href="http://www.postgresql.org/docs/todo.html">          
-				TODO</A> <A href="http://www.postgresql.org/docs/todo.html"></A>ÁÐ±í£¬»ñÈ¡Ò»¸öÒÑÖª³ô³æ£¬È±Ê§ÌØÐÔºÍÎ´À´¼Æ»®¡£          
-			<H4><A name="1.10"></A>1.10) ÎÒÓ¦¸ÃÔõÑùÑ§Ï° SQL£¿</H4>          
-			ÔÚ <A href="http://www.postgresql.org/docs/awbook.html">http://www.postgresql.org/docs/awbook.html</A>          
-			µÄ¹ØÓÚ PostgreSQL µÄÊé½ÌÊÚ SQL¡££¨Òë×¢£ºÎÒÏÂÔØµ½±¾µØÁË¡££©ÔÚ <a href="http://www.commandprompt.com/ppbook/">          
-				http://www.commandprompt.com/ppbook</a> ÓÐÁíÍâÒ»±¾¹ØÓÚ PostgreSQL µÄÊé¡£ÔÚ<a href="http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm</a>£¬<a href="http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM">http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM&nbsp;</a>          
-			ºÍ <a href="http://sqlcourse.com/">http://sqlcourse.com</a>          
-		ÓÐÒ»¸ö²»´íµÄÈëÃÅ½Ì³Ì¡£          
-		<P>ÁíÒ»¸öÊÇ "Teach Yourself SQL in 21 Days, Second Edition"£¨21ÌìÑ§»áSQL£¬µÚ¶þ°æ£©£¬ÔÚ <A href="http://members.tripod.com/er4ebus/sql/index.htm">          
-				http://members.tripod.com/er4ebus/sql/index.htm</A>
-		<P>ÎÒÃÇµÄÐí¶àÓÃ»§Ï²»¶ <I>The Practical SQL Handbook, Bowman, Judith S., et al., Addison-Wesley ¡£ </I>          
-			ÆäËûµÄÓÐ<I> The Complete Reference SQL, Groff et al., McGraw-Hill ¡£</I>          
-			<H4><A name="1.11"></A>1.11) PostgreSQL ÊÇ Y2K ¼æÈÝµÄÂð£¿</H4>          
-			ÊÇ£¬ÎÒÃÇºÜÈÝÒ×¿ØÖÆ 2000 AD Ö®ºóºÍ 2000 BC Ö®Ç°µÄÈÕÆÚ¡£          
-			<H4><A name="1.12"></A>1.12) ÎÒÓ¦¸ÃÔõÑù¼ÓÈë¿ª·¢¶ÓÎé£¿</H4>          
-		Ê×ÏÈ£¬ÏÂÔØ×îÐÂµÄÔ´´úÂë²¢ÔÄ¶ÁÎÒÃÇ web Õ¾µã»ò·¢²¼°üÖÐµÄ PostgreSQL ¿ª·¢ÕßÎÄµµ¡£Æä´Î£¬¼ÓÈë pgsql-hackers ºÍ           
-		pgsql-patches ÓÊ¼þÁÐ±í¡£µÚÈý£¬Ïò pgsql-patches Ìá½»¸ßÖÊÁ¿µÄ²¹¶¡³ÌÐò¡£          
-		<P>ÏÖÔÚ´ó¸ÅÓÐÊ®¼¸¸öÈËÓÐ PostgreSQL CVS ¹éµµ <FONT size="-1">COMMIT</FONT> µÄÈ¨ÏÞ¡£ËûÃÇ¶¼ÒÑ¾­Ìá½»ÁË·Ç³£¶à¸ßÖÊÁ¿µÄ²¹¶¡ÁË£¬ÒÔÖÁÓÚÏÖÓÐµÄÌá½»ÈËºÜÄÑ¸úÉÏ½Ú×à£¬²¢ÇÒÎÒÃÇÏàÐÅËûÃÇÌá½»µÄ²¹¶¡¶¼ÊÇ¸ßÖÊÁ¿µÄ¡£<H4><A name="1.13"></A>1.13)           
-				ÎÒÓ¦¸ÃÔõÑùÌá½»Ò»¸öBUG±¨¸æ£¿</H4>
-			Çë·ÃÎÊ <a href="http://www.PostgreSQL.org/bugs/bugs.php">http://www.PostgreSQL.org/bugs/bugs.php</a>          
-		µÄ PostgreSQL BugTool Ò³Ãæ, ÄÇÀï¸ø³öÁËÈçºÎÌá½»Ò»¸öBUG±¨¸æµÄÖ¸ÄÏ¡£          
-		<P>Í¬ÑùÒ²Òª¿´¿´ÎÒÃÇµÄ ftp Õ¾µã <A href="ftp://ftp.postgresql.org/pub">ftp://ftp.postgreSQL.org/pub</A>£¬¿´ÓÐÃ»ÓÐ¸üÐÂµÄ           
-			PostgreSQL °æ±¾»ò²¹¶¡¡£          
-			<H4><A name="1.14"></A>1.14) PostgreSQL ºÍÆäËû DBMS ±ÈÆðÀ´ÈçºÎ£¿</H4>          
-			ÆÀ¼ÛÈí¼þÓÐºÃ¼¸ÖÖ·½·¨£ºÌØÐÔ£¬ÐÔÄÜ£¬¿É¿¿ÐÔ£¬Ö§³ÖºÍ¼Û¸ñ¡£
-			<DL>
-				<DT><B>ÌØÐÔ</B>
-					<DD>
-						PostgreSQL ÓµÓÐ´óÐÍÉÌÓÃ DBMS           
-						Àï´ó¶àÊýÌØÐÔ£¬ÀýÈç£ºÊÂÎñ£¬×Ó²éÑ¯£¬´¥·¢Æ÷£¬ÊÓÍ¼£¬Íâ¼ü²Î¿¼ÍêÕûÐÔºÍ¸´ÔÓµÄËøµÈ¡£ÎÒÃÇ»¹ÓÐÒ»Ð©ËüÃÇÃ»ÓÐµÄÌØÐÔ£¬ÈçÓÃ»§¶¨ÒåÀàÐÍ£¬¼Ì³Ð£¬¹æÔòºÍ¶à°æ±¾²¢ÐÐ¿ØÖÆÒÔ¼õÉÙËøµÄÕùÓÃµÈ¡£
-						<BR>
-						&nbsp; <DT><B>ÐÔÄÜ</B>
-							<DD>
-								PostgreSQL ºÍÆäËûÉÌÓÃºÍ¿ªÔ´µÄÊý¾Ý¿â¾ßÓÐÀàËÆµÄÐÔÄÜ¡£¶ÔÄ³Ð©´¦ÀíËü±È½Ï¿ì£¬¶ÔÆäËûÒ»Ð©´¦ÀíËü±È½ÏÂý¡£Óë MySQL »ò¸üÇá±ãµÄÊý¾Ý¿âÏµÍ³±È½Ï£¬ÎÒÃÇÔÚ           
-								insert/update Ê±Âý£¬ÒòÎªÎÒÃÇÓÐÊÂÎñ´¦Àí¡£µ±È» MySQL ²»¾ßÓÐÎÒÃÇÔÚÉÏÃæµÄ<I>ÌØÐÔ </I>¶ÎÀï¸ø³öµÄÈÎºÎÌØÐÔ¡£ÎÒÃÇµÄÖ÷Òª·½ÏòÊÇ¿É¿¿ÐÔºÍÌØÐÔ£¬¾¡¹ÜÎÒÃÇÔÚÃ¿´Î·¢²¼Ê±²»¶ÏµØ¸Ä½øÐÔÄÜ¡£ÓÐÒ»¸öºÜÓÐÈ¤µÄÍøÒ³±È½ÏÁË           
-								PostgreSQL ºÍ MySQL <A href="http://openacs.org/why-not-mysql.html">http://openacs.org/why-not-mysql.html</A>¡£<br>        
-								<DT><B>¿É¿¿ÐÔ</B>
-									<DD>
-										ÎÒÃÇÖªµÀ DBMS ±ØÐëÊÇ¿É¿¿µÄ£¬·ñÔòËü¾ÍÒ»µãÓÃ¶¼Ã»ÓÐ¡£ÎÒÃÇÅ¬Á¦×öµ½·¢²¼¾­¹ýÈÏÕæ²âÊÔµÄ£¬ÎÈ¶¨µÄ³ô³æ×îÉÙµÄ´úÂë¡£Ã¿¸ö°æ±¾ÖÁÉÙÓÐÒ»¸öÔÂµÄ beta           
-										²âÊÔ£¬²¢ÇÒÎÒÃÇµÄ·¢²¼ÀúÊ·ÏÔÊ¾ÎÒÃÇ¿ÉÒÔÌá¹©ÎÈ¶¨µÄ£¬ÀÎ¹ÌµÄ£¬¿ÉÓÃÓÚÉú²úÊ¹ÓÃµÄ°æ±¾¡£ÎÒÃÇÏàÐÅÔÚÕâ·½ÃæÎÒÃÇÓëÆäËûµÄÊý¾Ý¿âÈí¼þÊÇÏàµ±µÄ¡£
-										<BR>
-										&nbsp; <DT><B>Ö§³Ö</B>
-											<DD>
-												ÎÒÃÇµÄÓÊ¼þÁÐ±íÌá¹©Ò»¸ö·Ç³£´óµÄ¿ª·¢ÈËÔ±ºÍÓÃ»§µÄ×éÒÔ°ïÖú½â¾öËùÅöµ½µÄÈÎºÎÎÊÌâ¡£ÎÒÃÇ²»ÄÜ±£Ö¤¿Ï¶¨ÄÜ½â¾öÎÊÌâ£¬Ïà±ÈÖ®ÏÂ£¬ÉÌÓÃ DBMS           
-												Ò²²¢²»ÊÇ×ÜÄÜ¹»Ìá¹©½â¾ö·½·¨¡£Ö±½ÓÓë¿ª·¢ÈËÔ±£¬ÓÃ»§Èº£¬ÊÖ²áºÍÔ´³ÌÐò½Ó´¥Áî PostgreSQL µÄÖ§³Ö±ÈÆäËû DBMS           
-												»¹ÒªºÃ¡£»¹ÓÐÒ»Ð©ÉÌÒµÐÔµÄÔ¤°ü×°µÄÖ§³Ö£¬¿ÉÒÔ¸øÌá¹©¸øÄÇÐ©ÐèÒªµÄÈË¡££¨²ÎÔÄÖ§³Ö FAQ Ìõ¿î 1.6 Ð¡½Ú¡££©          
-												<BR>
-												&nbsp; <DT><B>¼Û¸ñ</B>
-													<DD>
-														ÎÒÃÇ¶ÔÈÎºÎÓÃÍ¾¶¼Ãâ·Ñ£¬°üÀ¨ÉÌÓÃºÍ·ÇÉÌÓÃÄ¿µÄ¡£Äã¿ÉÒÔ²»¼ÓÏÞÖÆµØÏòÄãµÄ²úÆ·Àï¼ÓÈëÎÒÃÇµÄ´úÂë£¬³ýÁËÄÇÐ©ÎÒÃÇÔÚÉÏÃæµÄ°æÈ¨ÉùÃ÷ÀïÉùÃ÷µÄ BSD ·ç¸ñµÄ°æÈ¨Íâ¡£        
-			</DL>
-        <h4><a name="1.15"></a>1.15) ÎÒÓ¦¸ÃÔõÑùÔÞÖú PostgreSQL £¿</h4>        
-														<p>×Ô´Ó1996Äê¿ªÊ¼£¬PostgreSQL        
-                                                        ÒÑ¾­ÓÐÁËÒ»¸öÓÅÐãµÄ×éÖ¯¡£ÕâÐ©Ó¦¸Ã¹é¹¦ÓÚ Marc           
-															Fournier£¬ÊÇËû´´½¨ÁË²¢ÔÚÕâÐ©ÄêÒ»Ö±¹ÜÀíÕâ¸ö×éÖ¯¡£</p>
-														<p>¶ÔÓÚÒ»¸ö¿ªÔ´ÏîÄ¿À´Ëµ£¬ÖÊÁ¿»ù´¡ÉèÊ©ÊÇ·Ç³£ÖØÒªµÄ¡£ËüÄÜ·ÀÖ¹³öÏÖÑÏÖØÑÓ³ÙÏîÄ¿Ç°½øµÄ»ìÂÒ¡£</p>
-														<p>ÏÔÈ»£¬Õâ¸ö×éÖ¯µÄÔË×ª³É±¾²»·Æ¡£Î¬³ÖÆäÇ°½øÓÐ¸÷ÖÖÔÂ¶ÈµÄ¡¢Ò»´ÎÐÔµÄ¿ªÖ§¡£Èç¹ûÄã»òÕßÄãµÄ¹«Ë¾ÄÜ½øÐÐ¾èÔùÒÔÖ§³ÖÕâÏîÊÂÒµ£¬Çë·ÃÎÊ <a href="http://store.pgsql.com/shopping/">          
-																http://store.pgsql.com/shopping/</a> ½øÐÐ¾èÔù¡£</p>          
-														<p>ËäÈ»¸ÃÍøÒ³Ìá¼°ÁË PostgreSQL ¹«Ë¾£¬ÕâÐ©¾èÔù½«½öÓÃÓÚÖ§³Ö PostgreSQL           
-															ÏîÄ¿£¬²¢²»»áÓÃÓÚ×ÊÖúÃ»¸öÌØ¶¨µÄ¹«Ë¾¡£Èç¹ûÄãÔ¸Òâ£¬Ò²¿ÉÒÔÓÊ¼ÄÖ§Æ±µ½ÁªÏµµØÖ·¡£</p>
-			<HR>
-			<CENTER>
-				<H2>ÓÃ»§¿Í»§¶ËÎÊÌâ</H2>
-			</CENTER>
-			<H4><A name="2.1"></A>2.1) ÓÐ PostgreSQL µÄ ODBC Çý¶¯Ã´£¿</H4>          
-		ÓÐÁ½¸ö ODBC Çý¶¯¿ÉÒÔ»ñµÃ£¬PsqlODBC ºÍ OpenLink ODBC.<P>¿ÉÒÔÔÚ<a href="http://gborg.postgresql.org/project/psqlodbc/projdisplay.php">http://gborg.postgresql.org/project/psqlodbc/projdisplay.php</a>          
-		ÏÂÔØ PsqlODBC ¡£          
-		<P>OpenLink ODBC ¿ÉÒÔ´Ó <A href="http://www.openlinksw.com/">http://www.openlinksw.com/</A>          
-		»ñµÃ¡£ËüÓëËûÃÇµÄ±ê×¼ ODBC ¿Í»§¶ËÈí¼þ¼æÈÝ£¬Òò¶øÄã¿ÉÒÔÔÚÈÎºÎËûÃÇÖ§³ÖµÄ¿Í»§¶ËÆ½Ì¨£¨Win, Mac, Unix, VMS£©ÉÏÊ¹ÓÃ PostgreSQL           
-		ODBC¡£
-		<P>ËûÃÇ¿ÉÄÜ½«Õâ¸ö²úÆ·ÏúÊÛ¸øÄÇÐ©ÐèÒªÉÌÒµÖ§³ÖµÄÓÃ»§£¬µ«ÊÇ×ÜÊÇÓÐÒ»¸ö freeware £¨×ÔÓÉÈí¼þ£©µÄ°æ±¾¿ÉÒÔµÃµ½¡£ÇëÑ¯ÎÊ <A href="mailto:postgres95@openlink.co.uk">          
-				postgres95@openlink.co.uk</A>¡£
-			<H4><A name="2.2"></A>2.2) ÓÐÊ²Ã´¹¤¾ß¿ÉÒÔ°Ñ PostgreSQL ÓÃÓÚ Web Ò³Ãæ£¿</H4>          
-			Ò»¸ö½éÉÜÒÔÊý¾Ý¿âÎªºóÌ¨µÄÍ¦²»´íµÄ Õ¾µãÊÇ£º<a href="http://www.webreview.com">http://www.webreview.com</a>          
-		¡£          
-		<P>¶ÔÓÚ Web ¼¯³É£¬PHP ÊÇÒ»¸ö¼«ºÃµÄ½Ó¿Ú¡£ËüÔÚ£º<A href="http://www.php.net/">http://www.php.net/</A>          
-		¡£          
-		<P>¶ÔÓÚ¸´ÔÓµÄÈÎÎñ£¬ºÜ¶àÈË²ÉÓÃ Perl ½Ó¿ÚºÍ CGI.pm »ò mod_perl ¡£          
-			<H4><A name="2.3"></A>2.3) PostgreSQL ÓµÓÐÍ¼ÐÎÓÃ»§½çÃæÂð£¿</H4>         
-			ÊÇµÄ¡£ÓÐ¼¸¸öÊÊÓÃÓÚ PostgreSQL µÄÍ¼ÐÎ½Ó¿Ú¡£°üÀ¨PgAccess£¨<a href="http://www.pgaccess.com">http://www.pgaccess.com</a>)£¬PgAdmin           
-			II £¨<a href="http://www.pgadmin.org">http://www.pgadmin.org</a>£¬½öÊÊÓÃÓÚWin32£©£¬           
-			RHDB Admin (<a href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/</a>£©           
-			ÒÔ¼° Rekall £¨<a href="http://www.thekompany.com/products/rekall/">http://www.thekompany.com/products/rekall/</a>£¬           
-			×¨ÓÐµÄ/proprietary)¡£»¹ÓÐPHPPgAdmin £¨<a href="http://phppgadmin.sourceforge.net/">http://phppgadmin.sourceforge.net/£©</a>          
-		£¬Ò»¸ö»ùÓÚ web µÄ PostgreSQL ·ÃÎÊ½Ó¿Ú¡£          
-		<p>ÎÒÃÇÓÐÒ»¸ö²»´íµÄÍ¼ÐÎÓÃ»§½çÃæ£¬³ÆÎª PgAccess £¬ËüÒ²¿ÉÒÔÓÃ×÷±¨±íÉú³ÉÆ÷¡£ÍøÒ³ÊÇ <a href="http://www.pgaccess.org/">http://www.pgaccess.org/</a>¡£</p>          
-		<H4><A name="2.4"></A>2.4) ÎÒÃÇ¿ÉÒÔÓÃÊ²Ã´ÓïÑÔºÍ PostgreSQL ´ò½»µÀ£¿</H4>          
-		<p>´ó¶àÊýÁ÷ÐÐµÄ±à³ÌÓïÑÔ¶¼ÓÐ·ÃÎÊ PostgreSQL µÄ½Ó¿Ú¡£Çë¼ì²é±à³ÌÓïÑÔµÄÀ©Õ¹Ä£¿éÁÐ±í¡£</p>          
-		<p>PostgreSQL ·¢²¼°üÖÐ°üº¬ÁËÒÔÏÂ½Ó¿Ú£º</p>          
-		<ul>
-			<li>
-			C (libpq)          
-			<li>
-			Embedded C (ecpg)
-			<li>
-			Java (jdbc)
-			<li>
-			Python (PyGreSQL)
-			<li>
-				TCL (libpgtcl)</li>
-		</ul>
-		<p>ÆäËûµÄ½Ó¿ÚÔÚ <a href="http://gborg.postgresql.org">http://gborg.postgresql.org</a> ÉÏµÄ <i>Drivers/Interfaces</i>          
-			Ð¡½Ú¡£</p>          
-		<HR>
-		<CENTER>
-			<H2>ÏµÍ³¹ÜÀíÎÊÌâ</H2>
-		</CENTER>
-		<H4><A name="3.1"></A>3.1) ÎÒÔõÑùÄÜ°Ñ PostgreSQL ×°ÔÚ /usr/local/pgsql ÒÔÍâµÄµØ·½£¿</H4>          
-		<p>ÔÚÔËÐÐ configure Ê±¼ÓÉÏ --prefix Ñ¡Ïî¡£</p>          
-		<H4><A name="3.2"></A>3.2) µ±ÎÒÔËÐÐ postmaster Ê±£¬³öÏÖ<I> Bad System Call</I>£¨ÏµÍ³µ÷ÓÃ´í£©»ò Core           
-			Dumped ´íÎó¡£ÎªÊ²Ã´£¿</H4>          
-		<p>Õâ¿ÉÄÜÊÇºÜ¶à·½ÃæµÄÎÊÌâ£¬ÇëÏÈ¼ì²é²Ù×÷ÏµÍ³ºËÐÄÊÇ·ñÖ§³Ö System V À©Õ¹¡£PostgreSQL ÐèÒªÄÚºËÖ§³Ö¹²ÏíÄÚ´æºÍÐÅºÅµÆ¡£</p>          
-		<H4><A name="3.3"></A>3.3) µ±ÎÒÊÔÍ¼ÔËÐÐ postmaster Ê±£¬³öÏÖ <I>IpcMemoryCreate</I> ´íÎó¡£ÎªÊ²Ã´£¿</H4>          
-		ÄãÒªÃ´ÊÇÃ»ÓÐÔÚÄÚºËÀïÕýÈ·ÅäÖÃ¹²ÏíÄÚ´æ£¬ÒªÃ´ÊÇÄãÐèÒªÀ©´óÄãµÄÄÚºËµÄ¿ÉÓÃ¹²ÏíÄÚ´æ¡£ÐèÒªµÄ¹²ÏíÄÚ´æ¾ßÌåµÄÊýÁ¿È¡¾öÓÚÄãµÄÌåÏµ½á¹¹ºÍÄãÅäÖÃÄãµÄ postmaster           
-		ÔËÐÐÊ±Ê¹ÓÃµÄ»º³åÇøºÍºó¶Ë½ø³ÌÊýÄ¿¡£¶Ô´ó¶àÊýÏµÍ³£¬Ê¹ÓÃÈ±Ê¡»º³åÇøºÍ½ø³ÌÊýÄ¿Ê±£¬Äã×îÉÙÐèÒª~1MB¡£ÓÐ¹Ø¹²ÏíÄÚ´æºÍÐÅºÅµÆµÄÏêÏ¸ÐÅÏ¢Çë²Î¿¼ <a href="http://www.postgresql.org/idocs/index.php?kernel-resources.html">          
-			PostgreSQL Administrator's Guide</a> ¡£          
-		<H4><A name="3.4"></A>3.4) µ±ÎÒÊÔÍ¼ÔËÐÐ postmaster Ê±£¬³öÏÖ <I>IpcSemaphoreCreate</I> ´íÎó¡£ÎªÊ²Ã´£¿</H4>          
-		<p>Èç¹û´íÎóÐÅÏ¢ÊÇ <I>IpcSemaphoreCreate: semget failed (No space left on device)</I>£¬ÄÇÃ´Ô­ÒòÊÇÄãµÄÄÚºËÃ»ÓÐÅäÖÃ×ã¹»µÄÐÅºÅµÆ×ÊÔ´¡£Postgres           
-			µÄÃ¿¸öÇ±ÔÚµÄºóÌ¨½ø³Ì¶¼ÐèÒªÒ»¸öÐÅºÅµÆ¡£Ò»¸öÁÙÊ±µÄ½â¾ö·½·¨ÊÇÒÔ±È½ÏÉÙµÄºóÌ¨½ø³ÌÊý£¨²ÎÊý£©Æô¶¯ postmaster¡£Ê¹ÓÃ¿ª¹Ø <I>-N</I> ´øÒ»¸öÉÙÓÚÈ±Ê¡Öµ           
-			32 µÄ²ÎÊýÔËÐÐ postmaster¡£¸ü³¤¾ÃµÄ½â¾ö·½·¨ÊÇ¼Ó´óÄãµÄÄÚºËµÄ <FONT size="-1">SEMMNS</FONT> ºÍ <FONT size="-1">          
-				SEMMNI</FONT> ²ÎÊý¡£</p>          
-		<p>ÔÚÊý¾Ý¿â·ÃÎÊÁ¿ºÜ´óÊ±£¬ÐÅºÅµÆ²»¿ÉÓÃ¿ÉÄÜµ¼ÖÂÏµÍ³±ÀÀ£¡£</p>
-		<P>Èç¹û´íÎóÐÅÏ¢ÊÇÆäËûµÄÊ²Ã´¶«Î÷£¬Äã¿ÉÄÜ¾Í¸ù±¾Ã»ÓÐÔÚÄÚºËÀïÃæÅäÖÃÐÅºÅµÆÖ§³Ö¡£ÓÐ¹Ø¹²ÏíÄÚ´æºÍÐÅºÅµÆµÄÏêÏ¸ÐÅÏ¢Çë²Î¿¼ <a href="http://www.postgresql.org/idocs/index.php?kernel-resources.html">          
-				PostgreSQL Administrator's Guide</a> ¡£<H4><A name="3.5"></A>3.5)           
-				ÎÒÈçºÎ¿ØÖÆÀ´×ÔÆäËûÖ÷»úµÄÁ¬½Ó£¿</H4>
-		<p>È±Ê¡Ê±£¬PostgreSQL Ö»ÔÊÐíÍ¨¹ý unix ÓòÌ×½Ó×ÖÀ´×Ô±¾»úµÄÁ¬½Ó¡£³ý·ÇÄãÊ¹ÓÃ <I>-i</I> ¿ª¹ØÆô¶¯ <I>postmaster</I>£¬<B>²¢ÇÒ</B>Í¨¹ý¶ÔÓ¦µÄ±à¼­          
-			<I>$PGDATA/pg_hba.conf</I> ÎÄ¼þ´ò¿ªÁËÖ÷»úÎª»ù´¡£¨ host-based £©µÄÈÏÖ¤£¬·ñÔòÆäËû»úÆ÷ÊÇ²»ÄÜÓëÄãµÄ»úÆ÷Á¬½ÓµÄ¡£ÕâÑù½«ÔÊÐí           
-			TCP/IP Á¬½Ó¡£</p>          
-		<H4><A name="3.6"></A>3.6) ÎÒÔõÑùµ÷ÕûÊý¾Ý¿âÒýÇæÒÔ»ñµÃ¸üºÃµÄÐÔÄÜ£¿</H4>          
-		<p>µ±È»£¬Ë÷Òý¿ÉÒÔ¼ÓËÙ²éÑ¯¡£<FONT size="-1">EXPLAIN</FONT> ÃüÁîÔÊÐíÄã¹Û²ì PostgreSQL           
-			ÈçºÎ½âÊÍÄãµÄ²éÑ¯£¬ÒÔ¼°Ê¹ÓÃÁËÄÄÐ©Ë÷Òý¡£</p>
-		<P>Èç¹ûÄãÕý´¦ÀíÒ»¶Ñ <FONT size="-1">INSERT</FONT>£¬¿¼ÂÇÊ¹ÓÃ <FONT size="-1">COPY</FONT> ÃüÁîÒÔ´óÅúÁ¿µÄ·½Ê½½øÐÐ¡£ÕâÑù×ö±Èµ¥¶ÀµÄÒ»¸ö¸ö          
-			<FONT size="-1">INSERT </FONT>¿ìµÃ¶à¡£Æä´Î£¬Ã»ÓÐ´¦ÓÚ <FONT size="-1">BEGIN WORK/COMMIT</FONT>          
-		ÊÂÎñ¿éÖ®¼äµÄÓï¾ä±»ÈÏÎªÊôÓÚÍ¬Ò»¸öÊÂÎñ¡£ÊÔ×ÅÔÚÒ»¸öÊÂÎñ¿éÀïÃæ´¦Àí¸ü¶àµÄÓï¾ä¡£ÕâÑù¿ÉÒÔ¼õÉÙÊÂÎñ´øÀ´µÄ¶îÍâ¿ªÏú¡£Í¬Ñù£¬ÔÚ×ö´óÁ¿µÄÊý¾Ý¸Ä±äÊ±¿¼ÂÇÉ¾³ýºÍÖØ½¨Ë÷Òý¡£          
-		<P>»¹ÓÐ¼¸¸öµ÷½ÚµÄÑ¡Ïî¿ÉÒÔÊ¹ÓÃ¡£Äã¿ÉÒÔÍ¨¹ý´ø <I>-o -F</I> Ñ¡ÏîÆô¶¯ postmaster À´½ûÖ¹ fsync()¡£ÕâÑù½«±ÜÃâÃ¿´ÎÊÂÎñºóµ÷ÓÃ <I>fsync()          
-			</I>
-		°ÑÊý¾ÝË¢ÐÂµ½´ÅÅÌÉÏ¡£
-		<P>
-		Äã»¹¿ÉÒÔÊ¹ÓÃ postmaster -B Ñ¡ÏîÔö¼Óºó¶Ë½ø³ÌÊ¹ÓÃµÄ¹²ÏíÄÚ´æ»º³åµÄÊýÄ¿¡£Èç¹ûÄã°ÑÕâ¸ö²ÎÊýÉèÖÃµÃÌ«´ó£¬postmaster           
-		¿ÉÄÜÎÞ·¨Æô¶¯£¬ÒòÎªÄãÒÑ¾­³¬¹ýÁËÄãµÄÄÚºËÔÚ¹²ÏíÄÚ´æ¿Õ¼äÉÏµÄÏÞÖÆ¡£Ã¿¸ö»º³åÇøÊÇ 8K ²¢ÇÒÈ±Ê¡ 64 ¸ö»º³åÇø¡£<P>          
-		Äã»¹¿ÉÒÔÊ¹ÓÃºóÌ¨½ø³ÌµÄ -S Ñ¡ÏîÀ´Ôö¼ÓÃ¿¸öºóÌ¨½ø³ÌÓÃÓÚÁÙÊ±ÅÅÐòÓÃµÄ×î´óÄÚ´æÊýÁ¿¡£-S ÖµÊÇÒÔK×Ö½Ú¼ÆµÄ£¬È±Ê¡ÊÇ 512 £¨Ò²¾ÍÊÇËµ£¬512K£©¡£<P>Äã»¹¿ÉÒÔÊ¹ÓÃ <FONT size="-1">          
-				CLUSTER</FONT> ÃüÁîÀ´°Ñ±íÀïµÄÊý¾Ý°´ÕÕÄ³¸öË÷Òý½øÐÐ¾Û¼¯´æ·Å¡£²ÎÔÄ CLUSTER µÄÊÖ²áÒ³»ñÈ¡¸ü¶àÏ¸½Ú¡£          
-			<H4><a name="3.7"></a>3.7) PostgreSQL Àï¿ÉÒÔ»ñµÃÊ²Ã´ÑùµÄµ÷ÊÔÌØÐÔ£¿</H4>          
-		<p>PostgreSQL ÓÐ¼¸¸öÌØÐÔÓÃÓÚ±¨¸æ×´Ì¬ÐÅÏ¢£¬ÕâÐ©ÐÅÏ¢¿ÉÄÜ¶Ôµ÷ÊÔÓÃÍ¾ºÜÓÐ°ïÖú¡£</p>          
-		<P>Ê×ÏÈ£¬Í¨¹ý¸½´ø --enable-cassert Ñ¡ÏîÔËÐÐ configure£¬ÓÐºÜ¶à <I>assert()</I>          
-		¼à¿ØºóÌ¨½ø³ÌºÍÔÚ·¢ÉúÄ³Ð©Î´ÔøÔ¤ÁÏµÄÏÖÏóÊ±Í£Ö¹³ÌÐòÔËÐÐ¡£          
-		<P>postmaster ºÍ postgres ¶¼ÓÐÒ»Ð©¿ÉÓÃµÄÑ¡Ïî¡£Ê×ÏÈ£¬µ±ÄãÆô¶¯ postmaster           
-			Ê±£¬È·±£Äã°Ñ±ê×¼Êä³öºÍ±ê×¼´íÎóÊä³ö¶¨Ïòµ½ÁËÒ»¸öÈÕÖ¾ÎÄ¼þÀïÈ¥ÁË£¬Ïó£º
-			<PRE>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; cd /usr/local/pgsql
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ./bin/postmaster &gt;server.log 2&gt;&amp;1 &amp;</PRE>
-		ÕâÑù½«ÔÚ PostgreSQL ¶¥¼¶Ä¿Â¼ÏÂÊä³öÒ»¸ö server.log ÎÄ¼þ¡£Õâ¸öÎÄ¼þ°üº¬·þÎñÆ÷Åöµ½µÄÎÊÌâºÍ´íÎóµÄÓÐÓÃÐÅÏ¢¡£postmaster ÓÐÒ»¸ö           
-		-d Ñ¡Ïî£¬¸ÃÑ¡ÏîÔÊÐíÎÒÃÇ»ñµÃ¸ü¶àµÄÏ¸½Ú»ã±¨¡£-d Ñ¡Ïî½ÓÊÜÒ»¸öÊý×Ö±êÃ÷µ÷ÊÔ¼¶±ð¡£ÐèÒª¾¯¸æµÄÊÇ¸ßµÄµ÷ÊÔ¼¶±ð¿ÉÄÜ»áÉú³É¾Þ´óµÄÈÕÖ¾ÎÄ¼þ¡£<P>Èç¹û postmaster           
-			Ã»ÓÐÔËÐÐ£¬Äã¿ÉÒÔÖ±½ÓÔÚÃüÁîÐÐÉÏÆô¶¯ postgres ºóÌ¨½ø³Ì£¬È»ºóÖ±½Ó¼üÈë SQL Óï¾ä¡£ÎÒÃÇ<B>Ö»</B>          
-		ÍÆ¼öÔÚµ÷ÊÔµÄÊ±ºòÕâÃ´¸É¡£Çë×¢ÒâÕâÊ±ÓÃ»»ÐÐÜÞ¶ø²»ÊÇ·ÖºÅ±íÊ¾Óï¾ä½áÎ²¡£Èç¹ûÄã´ø×Åµ÷ÊÔ·ûºÅ±àÒë£¬Äã¿ÉÒÔÊ¹ÓÃÒ»¸öµ÷ÊÔÆ÷¹Û¿´·¢ÉúÁËÊ²Ã´ÊÂÇé¡£ÒòÎªºóÌ¨½ø³ÌÃ»ÓÐÓÉ           
-		postmaster Æô¶¯µÄ£¬Ëü²»ÊÇºÍÊµ¼ÊµÄÔËÐÐ»·¾³Ò»ÖÂ£¬¶øÇÒËø¶¨/ºóÌ¨½»»¥ÎÊÌâ¿ÉÄÜ²»ÄÜÖØÏÖ¡£          
-		<P>Èç¹û postmaster ÒÑ¾­ÔËÐÐ£¬¿ÉÔÚÒ»¸ö´°¿ÚÖÐÆô¶¯ <I>psql</I>£¬È»ºóÕÒ³ö <I>psql</I> ¶ÔÓ¦µÄ <I>postgres</I> ½ø³ÌµÄ          
-			<FONT size="-1">PID</FONT>¡£Ê¹ÓÃÒ»¸öµ÷ÊÔÆ÷¸½×ÅÔÚÕâ¸ö <I>postgres </I><FONT size="-1">PID</FONT>          
-			ÉÏ¡£Äã¿ÉÒÔÔÚµ÷ÊÔÆ÷ÀïÉèÖÃ¶Ïµã²¢ÇÒ´Ó <I>psql</I> ÀïÖ´ÐÐ²éÑ¯¡£Èç¹ûÄãÔÚµ÷ÊÔ <I>postgres</I> µÄÆô¶¯£¬Äã¿ÉÒÔÉèÖÃ           
-			PGOPTIONS="-W n"£¬È»ºóÆô¶¯ <I>psql</I>¡£ÕâÑù½«µ¼ÖÂÆô¶¯ÑÓ³Ù <I>n</I>          
-		Ãë£¬ÕâÑùÄã¾Í¿ÉÒÔ¸½¼ÓÒ»¸öµ÷ÊÔÆ÷²¢ÇÒ¸ú×ÙÆô¶¯Ë³ÐòµÄ¹ý³Ì¡£          
-		<P>
-		postgres ³ÌÐòÓÐ -s£¬-A£¬ºÍ -t Ñ¡Ïî¿ÉÄÜÔÚµ÷ÊÔºÍÐÔÄÜ²âÁ¿µÄÊ±ºò·Ç³£ÓÐÓÃ¡£          
-		<P>Äã»¹¿ÉÒÔ´ø profiling Ö§³Ö±àÒëºóÌ¨£¬ÒÔ±ã¹Û²ìÄÄÐ©º¯ÊýÕ¼ÓÃµÄÖ´ÐÐÊ±¼ä½Ï¶à¡£profile ÎÄ¼þ½«·ÅÔÚ pgsql/data/base/dbname           
-			Ä¿Â¼ÏÂ¡£¿Í»§¶Ë profile ÎÄ¼þ½«·ÅÔÚ¿Í»§¶Ëµ±Ç°Ä¿Â¼ÏÂ¡£ÔÚ Linux ÏÂÖ§³Ö profiling ÒªÔÚ±àÒëÊ±¼ÓÉÏ<i>-DLINUX_PROFILE </i>          
-			¡£<H4><a name="3.8"></a>3.8)        
-        ÎªÊ²Ã´ÔÚÊÔÍ¼Á¬½ÓµÇÂ¼Ê±ÊÕµ½¡°Sorry, too many clients¡±ÏûÏ¢£¿</H4>         
-		<p>ÄãÐèÒªÔö´ó postmaster Æô¶¯Ê±Ö§³ÖµÄ²¢·¢ºóÌ¨½ø³ÌÊý¡£</p>          
-		<P>È±Ê¡ÏÞÖÆÊÇ 32 ½ø³Ì¡£Äã¿ÉÒÔÍ¨¹ý´ø×ÅÊÊµ±µÄ <I>-N</I> Öµ¿ª¹ØÆô¶¯ postmaster Ôö¼ÓÕâ¸öÊýÄ¿¡£»òÕßÐÞ¸Ä <i>postgresql.conf</i>          
-		ÎÄ¼þ¡£          
-		<P>Òª×¢ÒâÈç¹ûÄã°Ñ <I>-N</I> ÉèÖÃÎª´óÓÚ 32£¬Äã±ØÐëÍ¬ÑùÔö´ó <I>-B</I>£¬³¬¹ýËüÈ±Ê¡µÄ 64£»-B ±ØÐë×îÉÙÊÇ -N           
-			µÄÁ½±¶£¬¶øÇÒÎªÁË¸üºÃµÄÐÔÄÜ¿ÉÄÜÒª±ÈÄÇ¸öÊý×ÖÒª´ó¡£¶ÔÓÚ´óÊýÄ¿µÄºó¶Ë½ø³Ì£¬Äã¿ÉÄÜ»¹»á·¢ÏÖÄã»¹ÐèÒªÔö¼ÓÐí¶à Unix           
-			ÄÚºËÅäÖÃ²ÎÊýÖµ¡£Òª¼ì²éµÄ¶«Î÷°üÀ¨¹²ÏíÄÚ´æ¿éµÄ×î´ó³ß´ç£¬<FONT size="-1">SHMMAX</FONT>£¬ÐÅºÅµÆµÄ×î´óÊýÄ¿£¬<FONT size="-1">SEMMNS</FONT>
-			ºÍ <FONT size="-1">SEMMNI</FONT>£¬×î´óµÄ½ø³ÌÊý£¬<FONT size="-1">NPROC</FONT>£¬µ¥ÓÃ»§×î´ó½ø³ÌÊý£¬<FONT size="-1">MAXUPRC</FONT>£¬ÒÔ¼°´ò¿ªÎÄ¼þµÄ×î´óÊýÄ¿£¬<FONT size="-1">NFILE</FONT>          
-			ºÍ <FONT size="-1">NINODE</FONT>          
-		¡£Postgres ¶ÔÔÊÐíµÄºóÌ¨½ø³ÌÊýÓÐÏÞÖÆµÄÔ­ÒòÊÇÎªÁËÈ·±£ÄãµÄÏµÍ³²»»áÓÃ¹â×ÊÔ´¡£<P>ÔÚ Postgres ÔçÓÚ 6.5 µÄ°æ±¾£¬×î´óºóÌ¨½ø³ÌÊýÈ±Ê¡ÊÇ           
-			64£¬²¢ÇÒ¶ÔËüµÄÐÞ¸ÄÊ×ÏÈÐèÒªÐÞ¸Ä <I>include/storage/sinvaladt.h</I> ÀïµÄ MaxBackendId ³£Á¿£¬È»ºóÖØÐÂ           
-			BUILD¡£
-			<H4><a name="3.9"></a>3.9) pgsql_tmp Ä¿Â¼Àï¶¼ÓÐÐ©Ê²Ã´£¿</H4>          
-		<p>¸ÃÄ¿Â¼ÏÂ±£´æÁË²éÑ¯Ö´ÐÐÆ÷Éú³ÉµÄÁÙÊ±ÎÄ¼þ¡£ÀýÈç£¬Èç¹ûÐèÒªÎªÂú×ã <FONT size="-1">ORDER BY</FONT> Ìõ¼þ×öÅÅÐò£¬²¢ÇÒÅÅÐòÐèÒª±ÈºóÌ¨µÄ           
-			-S ²ÎÊý¸ø³öµÄ¸ü¶àµÄ¿Õ¼ä£¬ÄÇÃ´¾Í»á´´½¨Ò»¸öÁÙÊ±ÎÄ¼þ±£´æ¶à³öÀ´µÄÊý¾Ý¡£</p>          
-		<P>ÁÙÊ±ÎÄ¼þÓ¦¸Ã×Ô¶¯É¾³ý£¬²»¹ýÈç¹ûÔÚÅÅÐò¹ý³ÌÖÐºóÌ¨±ÀÀ£ÁË¾Í¿ÉÄÜÁôÏÂÀ´¡£Í£Ö¹²¢ÖØÆð postmaster ½«»áÉ¾³ýÕâÐ©ÎÄ¼þ¡£          
-			<BR>
-			<h4><a name="3.10"></a>3.10) ÎªÊ²Ã´ÒªÔÚÉý¼¶ PostgreSQL ·¢²¼°æ±¾Ê±×ö dump ºÍ restore £¿</h4>          
-		<p>
-			PostgreSQL ¿ª·¢×é¶ÔÃ¿´ÎÐ¡µÄÉý¼¶½ö×öÁË½ÏÉÙµÄÐÞ¸Ä,Òò´Ë´Ó 7.2 Éý¼¶µ½ 7.2.1 ²»ÐèÒª dump ºÍ restore¡£µ«ÊÇÖ÷ÒªµÄÉý¼¶£¨ÀýÈç´Ó           
-			7.2 µ½ 7.3£©Í¨³£»áÐÞ¸ÄÏµÍ³±íºÍÊý¾Ý±íµÄÄÚ²¿¸ñÊ½¡£ÕâÐ©±ä»¯Ò»°ã±È½Ï¸´ÔÓ£¬Òò´ËÎÒÃÇ²»Î¬Êý¾ÝÎÄ¼þµÄÏòºó¼æÈÝ¡£dump           
-			½«Êý¾Ý°´ÕÕÍ¨ÓÃµÄ¸ñÊ½Êä³ö£¬Ëæºó¿ÉÒÔ±»ÖØÐÂ¼ÓÔØ²¢Ê¹ÓÃÐÂµÄÄÚ²¿¸ñÊ½¡£</p>
-		<p>
-			´ÅÅÌÎÄ¼þ¸ñÊ½Ã»ÓÐ±ä»¯µÄÉý¼¶£¬¿ÉÒÔÓÃ <i>pg_upgrade</i> ½Å±¾£¬¶ø²»ÐèÒª×ö dump ºÍ restor¡£·¢²¼ËµÃ÷script »áÖ¸Ã÷ <i>pg_upgrade</i>          
-			¶Ô¸Ã´ÎÉý¼¶ÊÇ·ñ¿ÉÓÃ¡£</p>          
-		<P>
-			<HR>
-			<CENTER>
-				<H2>²Ù×÷ÎÊÌâ</H2>
-			</CENTER>
-			<H4><A name="4.1"></A>4.1)        
-            ¶þ½øÖÆÓÎ±êºÍÆÕÍ¨ÓÎ±êÖ®¼äµÄÇø±ðÊÇÊ²Ã´£¿</H4>  
-			²ÎÔÄ <FONT size="-1">DECLARE</FONT> ÊÖ²áÒ³»ñÈ¡ÐÅÏ¢¡£          
-			<H4><a name="4.2"></a>4.2)ÈçºÎÖ» <FONT size="-1">SELECT</FONT> Ò»¸ö²éÑ¯½á¹ûµÄÍ·¼¸ÐÐ£¿</H4>          
-			²ÎÔÄ <FONT size="-1">FETCH</FONT>          
-		ÊÖ²áÒ³£¬»òÕßÊ¹ÓÃ SELECT ... LIMIT....          
-		<P>¼´Ê¹ÄãÖ»ÐèÒª¿ªÍ·µÄ¼¸ÐÐ£¬Ò²»áÉæ¼°µ½Õû¸ö²éÑ¯¡£ÊÔ×ÅÊ¹ÓÃ´øÓÐ <FONT size="-1">ORDER BY</FONT> µÄ²éÑ¯¡£Èç¹ûÓÐÒ»¸öË÷ÒýÓë <FONT size="-1">          
-				ORDER BY</FONT> Æ¥Åä£¬PostgreSQL ¿ÉÄÜ¾ÍÖ»´¦ÀíÒªÇóµÄÍ·¼¸Ìõ¼ÇÂ¼£¬·ñÔò½«¶ÔÕû¸ö²éÑ¯½øÐÐ´¦ÀíÖ±µ½Éú³ÉÐèÒªµÄÐÐ¡£          
-			<H4><a name="4.3"></a>4.3) ÎÒÈçºÎ»ñÈ¡Ò»¸ö±íµÄÁÐ±í£¬»òÕßÊÇÆäËûÎÒÄÜÔÚ <I>psql</I> Àï¿´µ½µÄ¶«Î÷£¿</H4>          
-			Äã¿ÉÒÔÔÄ¶Á <I>psql</I> µÄÔ´´úÂëÎÄ¼þ<I>pgsql/src/bin/psql/describe.c</I> ¡£Ëü°üÀ¨ÎªÉú³É psql           
-			µÄ·´Ð±¸ÜÃüÁîµÄÊä³öµÄ SQL ÃüÁî¡£Äã»¹¿ÉÒÔ´ø <I>-E</I> Ñ¡ÏîÆô¶¯ <I>psql</I>£¬ÕâÑùËü½«´òÓ¡³öÖ´ÐÐÄã¸ø³öµÄÃüÁîËùÓÃµÄ²éÑ¯¡£          
-			<H4><a name="4.4"></a>4.4) ÔõÑù´Ó±íÀïÃæÉ¾³ýÒ»ÁÐ£¿</H4>          
-		<P>7.3 ÀïÔö¼ÓÁË <FONT size="-1">ALTER TABLE DROP COLUMN</FONT>£¬ÒÔÖ§³Ö´ËÏî¹¦ÄÜ¡£ÔÚÒÔÇ°µÄ°æ±¾ÖÐ£¬¿ÉÒÔÕâÑù×ö£º</P>          
-        <PRE>    BEGIN;
+<!-- saved from url=(0046)http://laser.zhengmai.com.cn/postgres-faq.html -->
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta name="generator" content="HTML Tidy for BSD/OS (vers 1st July 2002), see www.w3.org" />
+
+    <title>PostgreSQL FAQ-ch</title>
+    <meta http-equiv="Content-Type" content="text/html; CHARSET=gb2312" />
+    <meta content="Microsoft FrontPage 4.0" name="GENERATOR" />
+  </head>
+
+  <body alink="#0000ff" bgcolor="#ffffff" link="#ff0000" text="#000000" vlink="#A00000">
+    <h1>PostgreSQL ³£¼ûÎÊÌâ£¨FAQ£©</h1>
+    ×î½ü¸üÐÂ£º2003 Äê 01 ÔÂ 06 ÈÕ ÐÇÆÚÒ» 22:27:35 CST 
+
+    <p>Ä¿Ç°Î¬»¤ÈËÔ±£ºBruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br />
+     ÖÐÎÄ°æÎ¬»¤ÈËÔ±£ººÎÎ°Æ½ £¨laser@pgsqldb.com £©</p>
+
+    <p>±¾ÎÄµµµÄ×îÐÂ°æ±¾¿ÉÒÔÔÚ<a href="http://www.postgresql.org/files/documentation/faqs/FAQ.html">http://www.postgresql.org/files/documentation/faqs/FAQ.html</a> ²é¿´¡£</p>
+
+    <p>²Ù×÷ÏµÍ³Æ½Ì¨Ïà¹ØµÄÎÊÌâÔÚ<a href="http://www.postgresql.org/docs/faq/">http://www.postgresql.org/docs/faq/</a>Àï»Ø´ð¡£<br />
+    </p>
+    <hr />
+
+    <center>
+      <h2>³£¼ûÎÊÌâ</h2>
+    </center>
+    <a href="#1.1">1.1</a>) PostgreSQL ÊÇÊ²Ã´£¿¸ÃÔõÃ´·¢Òô£¿ <br />
+     <a href="#1.2">1.2</a>) PostgreSQL µÄ°æÈ¨ÊÇÊ²Ã´? <br />
+     <a href="#1.3">1.3</a>) PostgreSQL ÔËÐÐÔÚÊ²Ã´ Unix Æ½Ì¨ÉÏ£¿ <br />
+     <a href="#1.4">1.4</a>) ¿ÉÓÃµÄ·Ç Unix Æ½Ì¨ÓÐÄÇÐ©£¿ <br />
+     <a href="#1.5">1.5</a>) ÎÒ´ÓÄÄÀïÄÜµÃµ½ PostgreSQL£¿ <br />
+     <a href="#1.6">1.6</a>) ÎÒ´ÓÄÄÀïÄÜµÃµ½¶Ô PostgreSQL µÄÖ§³Ö£¿ <br />
+     <a href="#1.7">1.7</a>) PostgreSQL ×îÐÂµÄ°æ±¾ÊÇÊ²Ã´£¿ <br />
+     <a href="#1.8">1.8</a>) ÓÐÄÄÐ©¿ÉÓÃµÄ PostgreSQL µÄÎÄµµ£¿ <br />
+     <a href="#1.9">1.9</a>) ÎÒÈçºÎÁË½âÒÑÖªµÄ BUG »òÈ±Ê§µÄÌØÐÔ£¿ <br />
+     <a href="#1.10">1.10</a>) ÎÒÓ¦¸ÃÔõÑùÑ§Ï° SQL £¿ <br />
+     <a href="#1.11">1.11</a>) PostgreSQL ÊÇ Y2K ¼æÈÝµÄÂð£¿ <br />
+     <a href="#1.12">1.12</a>) ÎÒÓ¦¸ÃÔõÑù¼ÓÈë¿ª·¢¶ÓÎé£¿ <br />
+     <a href="#1.13">1.13</a>) ÎÒÓ¦¸ÃÔõÑùÌá½»Ò»¸ö BUG ±¨¸æ£¿ <br />
+     <a href="#1.14">1.14</a>) PostgreSQL ºÍÆäËû DBMS ±ÈÆðÀ´ÈçºÎ£¿<br />
+     <a href="#1.15">1.15</a>) ÎÒÓ¦¸ÃÔõÑùÔÞÖú PostgreSQL £¿ 
+
+    <center>
+      <h2>ÓÃ»§¿Í»§¶ËÎÊÌâ</h2>
+    </center>
+    <a href="#2.1">2.1</a>) ÓÐ PostgreSQL µÄ ODBC Çý¶¯³ÌÐòÃ´£¿ <br />
+     <a href="#2.2">2.2</a>) ÓÐÊ²Ã´¹¤¾ß¿ÉÒÔ°Ñ PostgreSQL ÓÃÓÚ Web Ò³Ãæ£¿ <br />
+     <a href="#2.3">2.3</a>) PostgreSQL ÓµÓÐÍ¼ÐÎÓÃ»§½çÃæÂð£¿ <br />
+     <a href="#2.4">2.4</a>) ÎÒÃÇ¿ÉÒÔÓÃÊ²Ã´ÓïÑÔºÍ PostgreSQL ´ò½»µÀ£¿ 
+
+    <center>
+      <h2>ÏµÍ³¹ÜÀíÎÊÌâ</h2>
+    </center>
+    <a href="#3.1">3.1</a>) ÎÒÔõÑùÄÜ°Ñ PostgreSQL ×°ÔÚ /usr/local/pgsql ÒÔÍâµÄµØ·½£¿ <br />
+     <a href="#3.2">3.2</a>) µ±ÎÒÔËÐÐ postmaster Ê±£¬³öÏÖ <i>Bad System Call</i>£¨ÏµÍ³µ÷ÓÃ´í£©»ò Core Dumped ´íÎó¡£ÎªÊ²Ã´£¿ <br />
+     <a href="#3.3">3.3</a>) µ±ÎÒÊÔÍ¼ÔËÐÐ postmaster Ê±£¬³öÏÖ <i>IpcMemoryCreate</i> ´íÎó¡£ÎªÊ²Ã´£¿ <br />
+     <a href="#3.4">3.4</a>) µ±ÎÒÊÔÍ¼ÔËÐÐ postmaster Ê±£¬³öÏÖ <i>IpcSemaphoreCreate</i> ´íÎó¡£ÎªÊ²Ã´£¿ <br />
+     <a href="#3.5">3.5</a>) ÎÒÈçºÎ¿ØÖÆÀ´×ÔÆäËûÖ÷»úµÄÁ¬½Ó£¿ <br />
+     <a href="#3.6">3.6</a>) ÎÒÔõÑùµ÷ÕûÊý¾Ý¿âÒýÇæÒÔ»ñµÃ¸üºÃµÄÐÔÄÜ£¿ <br />
+     <a href="#3.7">3.7</a>) PostgreSQL Àï¿ÉÒÔ»ñµÃÊ²Ã´ÑùµÄµ÷ÊÔÌØÐÔ£¿ <br />
+     <a href="#3.8">3.8</a>) ÎªÊ²Ã´ÔÚÊÔÍ¼Á¬½ÓµÇÂ¼Ê±ÊÕµ½¡°Sorry, too many clients¡± ÏûÏ¢£¿<br />
+     <a href="#3.9">3.9</a>) pgsql_tmp Ä¿Â¼Àï¶¼ÓÐÐ©Ê²Ã´£¿<br />
+     <a href="#3.10">3.10</a>) ÎªÊ²Ã´ÒªÔÚÉý¼¶ PostgreSQL ·¢²¼°æ±¾Ê±×ö dump ºÍ restore £¿ 
+
+    <center>
+      <h2>²Ù×÷ÎÊÌâ</h2>
+    </center>
+    <a href="#4.1">4.1</a>) ¶þ½øÖÆÓÎ±êºÍÆÕÍ¨ÓÎ±êÖ®¼äµÄÇø±ðÊÇÊ²Ã´£¿ <br />
+     <a href="#4.2">4.2</a>) ÈçºÎÖ»Ñ¡ÔñÒ»¸ö²éÑ¯½á¹ûµÄÍ·¼¸ÐÐ£¿ <br />
+     <a href="#4.3">4.3</a>) ÎÒÈçºÎ»ñÈ¡Ò»¸öÊý¾Ý¿âÖÐ±íµÄÁÐ±í£¬»òÕßÊÇÆäËûÎÒÄÜÔÚ <i>psql</i> Àï¿´µ½µÄ¶«Î÷£¿ <br />
+     <a href="#4.4">4.4</a>) ÔõÑù´Ó±íÀïÃæÉ¾³ýÒ»ÁÐ£¿ <br />
+     <a href="#4.5">4.5</a>) Ò»ÐÐ£¬Ò»¸ö±í£¬Ò»¸ö¿âµÄ×î´ó³ß´çÊÇ¶àÉÙ£¿ <br />
+     <a href="#4.6">4.6</a>) ´æ´¢Ò»¸öµäÐÍµÄÎÄ±¾ÎÄ¼þÀïµÄÊý¾ÝÐèÒª¶àÉÙ´ÅÅÌ¿Õ¼ä£¿ <br />
+     <a href="#4.7">4.7</a>) ÈçºÎ²é¿´±í¡¢Ë÷Òý¡¢Êý¾Ý¿âÒÔ¼°ÓÃ»§µÄ¶¨Òå£¿ <br />
+     <a href="#4.8">4.8</a>) ÎÒµÄ²éÑ¯ºÜÂý»òÕßÃ»ÓÐÀûÓÃË÷Òý¡£ÎªÊ²Ã´£¿ <br />
+     <a href="#4.9">4.9</a>) ÎÒÈçºÎ²ÅÄÜ¿´µ½²éÑ¯ÓÅ»¯Æ÷ÊÇÔõÑù´¦ÀíÎÒµÄ²éÑ¯µÄ£¿ <br />
+     <a href="#4.10">4.10</a>) R-tree Ë÷ÒýÊÇÊ²Ã´£¿ <br />
+     <a href="#4.11">4.11</a>) Ê²Ã´ÊÇ»ùÒò²éÑ¯ÓÅ»¯£¨Genetic Query Optimization£©£¿ <br />
+     <a href="#4.12">4.12</a>) ÎÒÔõÑù×öÕýÔò±í´ïÊ½ËÑË÷ºÍ´óÐ¡Ð´ÎÞ¹ØµÄÕýÔò±í´ïÊ½²éÕÒ£¿ÔõÑùÀûÓÃË÷Òý½øÐÐ´óÐ¡Ð´ÎÞ¹Ø²éÕÒ£¿ <br />
+     <a href="#4.13">4.13</a>) ÔÚÒ»¸ö²éÑ¯Àï£¬ÎÒÔõÑù¼ì²âÒ»¸ö×Ö¶ÎÊÇ·ñÎª NULL£¿ <br />
+     <a href="#4.14">4.14</a>) ¸÷ÖÖ×Ö·ûÀàÐÍÖ®¼äÓÐÊ²Ã´²»Í¬£¿ <br />
+     <a href="#4.15.1">4.15.1</a>) ÎÒÔõÑù´´½¨Ò»¸öÐòÁÐºÅ/×Ô¶¯µÝÔöµÄ×Ö¶Î£¿ <br />
+     <a href="#4.15.2">4.15.2</a>) ÎÒÈçºÎ»ñµÃÒ»¸ö²åÈëµÄÐòÁÐºÅµÄÖµ£¿ <br />
+     <a href="#4.15.3">4.15.3</a>) Ê¹ÓÃ currval() ºÍ nextval() »áµ¼ÖÂºÍÆäËûÓÃ»§µÄÎÉÂÒÇé¿ö£¨race condition£©Âð£¿<br />
+     <a href="#4.15.4">4.15.4</a>) ÎªÊ²Ã´²»ÔÚÊÂÎñÒì³£ÖÐÖ¹ºóÖØÓÃÐòÁÐºÅÄØ£¿ÎªÊ²Ã´ÔÚÐòÁÐºÅ×Ö¶ÎµÄÈ¡ÖµÖÐ´æÔÚ¼ä¶ÏÄØ£¿ <br />
+     <a href="#4.16">4.16</a>) Ê²Ã´ÊÇ OID£¿Ê²Ã´ÊÇ TID £¿ <br />
+     <a href="#4.17">4.17</a>) PostgreSQL Ê¹ÓÃµÄÒ»Ð©ÊõÓïµÄº¬ÒåÊÇÊ²Ã´£¿ <br />
+     <a href="#4.18">4.18</a>) ÎªÊ²Ã´ÎÒÊÕµ½´íÎó¡°<i>ERROR: Memory exhausted in AllocSetAlloc()</i>¡±£¿<br />
+     <a href="#4.19">4.19</a>) ÎÒÈçºÎ²ÅÄÜÖªµÀËùÔËÐÐµÄ PostgreSQL µÄ°æ±¾£¿ <br />
+     <a href="#4.20">4.20</a>) ÎªÊ²Ã´ÎÒµÄ´ó¶ÔÏó²Ù×÷µ¼ÖÂ´íÎó¡°<i>invalid large obj descriptor¡±£¨·Ç·¨µÄ´ó¶ÔÏóÃèÊö·û£©</i>£¿ <br />
+     <a href="#4.21">4.21</a>) ÎÒÈçºÎ´´½¨Ò»¸öÈ±Ê¡ÖµÊÇµ±Ç°Ê±¼äµÄ×Ö¶Î£¿ <br />
+     <a href="#4.22">4.22</a>) ÎªÊ²Ã´Ê¹ÓÃ <tt>IN</tt> µÄ×Ó²éÑ¯ÕâÃ´Âý£¿ <br />
+     <a href="#4.23">4.23</a>) ÈçºÎ½øÐÐ outer join £¨ÍâÁ¬½Ó£©£¿<br />
+     <a href="#4.24">4.24</a>) ÈçºÎÊ¹ÓÃÉæ¼°¶à¸öÊý¾Ý¿âµÄ²éÑ¯£¿<br />
+     <a href="#4.25">4.25</a>) ÈçºÎÈÃº¯Êý·µ»Ø¶àÐÐ»ò¶àÁÐ£¿<br />
+     <a href="#4.26">4.26</a>) ÎªÊ²Ã´ÔÚ PL/PgSQL º¯ÊýÖÐ²»ÄÜ¿É¿¿µØ´´½¨»òÉ¾³ýÁÙÊ±±í£¿<br />
+     <a href="#4.27">4.27</a>) ÓÐÄÄÐ©Êý¾Ý¸´ÖÆÑ¡Ïî£¿<br />
+     <a href="#4.28">4.28</a>) ÓÐÄÄÐ©Êý¾Ý¼ÓÃÜÑ¡Ïî£¿ 
+
+    <center>
+      <h2>À©Õ¹ PostgreSQL</h2>
+    </center>
+    <a href="#5.1">5.1</a>) ÎÒÐ´ÁËÒ»¸öÓÃ»§¶¨Òåº¯Êý¡£µ±ÎÒÔÚ <i>psql</i> ÀïÔËÐÐÊ±£¬ÎªÊ²Ã´»áµ¼ÖÂ core dump£¿ <br />
+     <a href="#5.2">5.2</a>) ÎÒÈçºÎÄÜ¸ø PostgreSQL ¹±Ï×Ò»Ð©Í¦²»´íµÄÐÂÀàÐÍºÍº¯Êý£¿ <br />
+     <a href="#5.3">5.3</a>) ÎÒÔõÑùÐ´Ò»¸ö·µ»ØÒ»Ìõ¼ÇÂ¼µÄ C º¯Êý£¿ <br />
+     <a href="#5.4">5.4</a>) ÎÒÐÞ¸ÄÁËÒ»¸öÔ´ÎÄ¼þ£¬ÎªÊ²Ã´ÖØÐÂ±àÒëºóÃ»ÓÐ¿´µ½¸Ä±ä£¿ <br />
+     
+    <hr />
+
+    <center>
+      <h2>³£¼ûÎÊÌâ</h2>
+    </center>
+
+    <h4><a id="1.1" name="1.1"></a>1.1) PostgreSQL ÊÇÊ²Ã´£¿¸ÃÔõÃ´·¢Òô£¿</h4>
+    PostgreSQL ¶Á×÷ <i>Post-Gres-Q-L</i> <i>¡£</i> 
+
+    <p>PostgreSQL ÊÇÏÂÒ»´ú DBMS µÄÑÐ¾¿Ô­ÐÍ POSTGRES Êý¾Ý¿â¹ÜÀíÏµÍ³µÄÔöÇ¿°æ¡£PostgreSQL ÔÚ±£³Ö POSTGRES µÄÇ¿´óµÄÊý¾ÝÄ£ÐÍºÍ·á¸»µÄÊý¾ÝÀàÐÍµÄ»ù´¡ÉÏ£¬ÓÃÒ»¸öÀ©Õ¹ÁËµÄ SQL ×Ó¼¯È¡´úÁËÔ­ÏÈµÄ PostQuel ²éÑ¯ÓïÑÔ¡£PostgreSQL ÊÇ×ÔÓÉµÄ²¢ÇÒËùÓÐÔ´´úÂë¶¼¿ÉÒÔ»ñµÃ¡£</p>
+
+    <p>PostgreSQL µÄ¿ª·¢ÓÉ²Î¼Ó PostgreSQL ¿ª·¢ÓÊ¼þÁÐ±íµÄÒ»¸ö¿ª·¢ÈËÔ±Ð¡×é½øÐÐ¡£Ä¿Ç°µÄÐ­µ÷ÈËÊÇ Marc G. Fournier £¨<a href="mailto:scrappy@postgreSQL.org">scrappy@postgreSQL.org</a> £©¡££¨¹ØÓÚÈçºÎ¼ÓÈë²Î¼û1.6½Ú£©¡£Õâ¸ö¶ÓÎéÏÖÔÚ¸ºÔð PostgreSQL µÄËùÓÐ¿ª·¢¡£</p>
+
+    <p>PostgreSQL 1.01 µÄ×÷ÕßÊÇ Andrew Yu ºÍ Jolly Chen¡£»¹ÓÐÐí¶àÆäËûÈËÎªÒÆÖ²£¬²âÊÔ£¬µ÷ÊÔºÍÔöÇ¿´úÂë×öÁË´óÁ¿¹±Ï×¡£PostgreSQL µÄ×î³õÆðÔ´ Postgres£¬ÊÇÔÚ¼ÓÖÝ´óÑ§²®¿ËÀû·ÖÐ£µÄ Michael Stonebraker ½ÌÊÚµÄÖ¸µ¼ÏÂ£¬ÓÉÐí¶àÑÐ¾¿Éú£¬±¾¿ÆÉúºÍ±à³ÌÖ°Ô±Íê³ÉµÄ¡£</p>
+
+    <p>Õâ¸öÈí¼þ×î³õÔÚ²®¿ËÀûµÄÃû×ÖÊÇ Postgres¡£ÔÚ 1995 Äê£¬µ±Ôö¼ÓÁË SQL ¹¦ÄÜºó£¬ËüµÄÃû×Ö¸Ä³É Postgres95¡£ÔÚ 1996ÄêÄ©£¬²Å¸ÄÃûÎª PostgreSQL¡£</p>
+
+    <h4><a id="1.2" name="1.2"></a>1.2) PostgreSQL µÄ°æÈ¨ÊÇÊ²Ã´?</h4>
+    PostgreSQL ÊÜÏÂÃæµÄ°æÈ¨Ô¼Êø¡£ 
+
+    <p>PostgreSQL Êý¾Ý¿â¹ÜÀíÏµÍ³</p>
+
+    <p>£¨PostgreSQL Data Base Management System£©</p>
+
+    <p>²¿·Ö°æÈ¨£¨c£©1996-2002£¬PostgreSQL È«Çò¿ª·¢Ð¡×é<br />
+     ²¿·Ö°æÈ¨£¨c£©1994-6 ¼ÓÖÝ´óÑ§¶­ÊÂ</p>
+
+    <p>£¨Portions copyright (c) 1996-2002, PostgreSQL Global Development Group<br />
+      Portions Copyright (c) 1994-6 Regents of the University of California£©</p>
+
+    <p>ÔÊÐíÎªÈÎºÎÄ¿µÄÊ¹ÓÃ£¬¿½±´£¬ÐÞ¸ÄºÍ·Ö·¢Õâ¸öÈí¼þºÍËüµÄÎÄµµ¶ø²»ÊÕÈ¡ÈÎºÎ·ÑÓÃ£¬²¢ÇÒÎÞÐëÇ©ÊðÒò´Ë¶ø²úÉúµÄÖ¤Ã÷£¬Ç°ÌáÊÇÉÏÃæµÄ°æÈ¨ÉùÃ÷ºÍ±¾¶ÎÒÔ¼°ÏÂÃæÁ½¶ÎÎÄ×Ö³öÏÖÔÚËùÓÐ¿½±´ÖÐ¡£</p>
+
+    <p>£¨Permission to use, copy, modify, and distribute this software and its documentation for any purpose, without fee, and without a written agreement is hereby granted, provided that the above copyright notice and this paragraph and the following two paragraphs appear in all copies.£©</p>
+
+    <p>ÔÚÈÎºÎÇé¿öÏÂ£¬¼ÓÖÝ´óÑ§¶¼²»³Ðµ£ÒòÊ¹ÓÃ´ËÈí¼þ¼°ÆäÎÄµµ¶øµ¼ÖÂµÄ¶ÔÈÎºÎµ±ÊÂÈËµÄÖ±½ÓµÄ£¬¼ä½ÓµÄ£¬ÌØÊâµÄ£¬¸½¼ÓµÄ»òÕßÏà°é¶øÉúµÄËð»µ£¬°üÀ¨ÀûÒæËðÊ§µÄÔðÈÎ£¬¼´Ê¹¼ÓÖÝ´óÑ§ÒÑ¾­½¨ÒéÁËÕâÐ©ËðÊ§µÄ¿ÉÄÜÐÔÊ±Ò²ÊÇÈç´Ë¡£</p>
+
+    <p>£¨IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.£©</p>
+
+    <p>¼ÓÖÝ´óÑ§Ã÷È··ÅÆúÈÎºÎ±£Ö¤£¬°üÀ¨µ«²»¾ÖÏÞÓÚÄ³Ò»ÌØ¶¨ÓÃÍ¾µÄÉÌÒµºÍÀûÒæµÄÒþº¬±£Ö¤¡£ÕâÀïÌá¹©µÄÕâ·ÝÈí¼þÊÇ»ùÓÚ¡°µ±×÷ÊÇ¡±µÄ»ù´¡µÄ£¬Òò¶ø¼ÓÖÝ´óÑ§Ã»ÓÐÔðÈÎÌá¹©Î¬»¤£¬Ö§³Ö£¬¸üÐÂ£¬ÔöÇ¿»òÕßÐÞ¸ÄµÄ·þÎñ¡£</p>
+
+    <p>£¨THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.£©<br />
+    <br />
+     ÉÏÃæ¾ÍÊÇ BSD °æÈ¨ÉùÃ÷£¬Ò»¸ö¾­µäµÄ¿ªÔ´°æÈ¨ÉùÃ÷¡£Ëü¶ÔÔ´´úÂëµÄÊ¹ÓÃÎ´×÷ÈÎºÎÏÞÖÆ¡£ÎÒÃÇÏ²»¶Ëü²¢ÇÒ²»´òËã¸Ä±äËü¡£</p>
+
+    <h4><a id="1.3" name="1.3"></a>1.3) PostgreSQL ÔËÐÐÔÚÊ²Ã´ Unix Æ½Ì¨ÉÏ£¿</h4>
+
+    <p>Ò»°ãËµÀ´£¬Ò»¸öÏÖ´úµÄ UNIX ¼æÈÝµÄÆ½Ì¨¶¼ÄÜÔËÐÐ PostgreSQL ¡£ÔÚ°²×°Ö¸ÄÏÀïÁÐ³öÁË·¢²¼Ê±¾­¹ýÃ÷È·²âÊÔµÄÆ½Ì¨¡£</p>
+
+    <h4><a id="1.4" name="1.4"></a>1.4) ¿ÉÓÃµÄ·Ç Unix Æ½Ì¨ÓÐÄÄÐ©£¿</h4>
+    ¿Í»§¶Ë 
+
+    <p>°Ñ libpq C ¿â£¬psql£¬ÆäËû½Ó¿ÚºÍ¿Í»§¶ËÓ¦ÓÃ³ÌÐò±àÒë³É¿ÉÒÔÔÚ MS Windows Æ½Ì¨ÉÏÔËÐÐÊÇ¿ÉÄÜµÄ¡£ÕâÖÖÇé¿öÏÂ£¬¿Í»§¶ËÔÚ MS Windows ÉÏÔËÐÐ£¬²¢ÇÒÍ¨¹ý TCP/IP ÓëÒ»¸öÔËÐÐÔÚÎÒÃÇÖ§³ÖµÄ Unix Æ½Ì¨ÉÏµÄ·þÎñÆ÷½øÐÐÍ¨Ñ¶¡£·¢²¼°æ±¾ÖÐ°üº¬Ò»¸öÎÄ¼þ win32.mak ÓÃÓÚÉú³É Win32 libpq ¿âºÍ psql ¡£PostgreSQL Ò²¿ÉÒÔºÍ ODBC ¿Í»§¶ËÍ¨Ñ¶¡£</p>
+
+    <p>·þÎñÆ÷</p>
+
+    <p>Êý¾Ý¿â·þÎñÆ÷ÏÖÔÚ¿ÉÒÔÍ¨¹ý Cygwin £¬Cygnus µÄ Unix/NT ÒÆÖ²¿âÔÚ Windows NT ºÍ Win2k ÉÏÔËÐÐ¡£²ÎÔÄ·¢²¼°æ±¾ÀïµÄ See <i>pgsql/doc/FAQ_MSWIN</i> ÎÄ¼þ»ò <a href="http://www.PostgreSQL.org/docs/faq-mswin.html">http://www.PostgreSQL.org/docs/faq-mswin.html</a> ¡£</p>
+
+    <p>ÒÆÖ²µ½ MS Win NT/2000/XP µÄ±¾»ú°æµÄ¹¤×÷ÕýÔÚ½øÐÐ¡£</p>
+
+    <h4><a id="1.5" name="1.5"></a>1.5) ÎÒ´ÓÄÄÀïÄÜµÃµ½ PostgreSQL£¿</h4>
+
+    <p>PostgreSQL µÄÖ÷ÄäÃûFTPÕ¾µãÊÇ <a href="ftp://ftp.PostgreSQL.org/pub">ftp://ftp.PostgreSQL.org/pub</a>£¬¾µÏñÕ¾µã¿ÉÒÔ²Î¿¼ÎÒÃÇÍøÕ¾µÄÖ÷Ò³¡£</p>
+
+    <h4><a id="1.6" name="1.6"></a>1.6) ÎÒ´ÓÄÄÀïÄÜµÃµ½¶Ô PostgreSQL µÄÖ§³Ö£¿</h4>
+
+    <p>Ö÷ÒªµÄÓÊ¼þÁÐ±íÊÇ£º<a href="mailto:pgsql-general@postgreSQL.org">pgsql-general@postgreSQL.org</a>¡£¿ÉÒÔÔÚÄÇÀïÌÖÂÛÓÐ¹Ø PostgreSQL µÄÎÊÌâ¡£Òª¼ÓÈëÁÐ±í£¬·¢Ò»·âÓÊ¼þÄÚÈÝ£¨²»ÊÇÖ÷ÌâÐÐ£©Îª</p>
+<pre>
+        subscribe
+        end
+</pre>
+    µÄÓÊ¼þµ½ <a href="mailto:pgsql-general-request@postgreSQL.org">pgsql-general-request@postgreSQL.org</a> ¡£ 
+
+    <p>»¹¿ÉÒÔ»ñÈ¡ÕªÒªÁÐ±í¡£Òª¼ÓÈëÕâ¸öÁÐ±í£¬·¢ÓÊ¼þµ½£º<a href="mailto:pgsql-general-digest-request@postgreSQL.org">pgsql-general-digest-request@postgreSQL.org</a>£¬ÆäÄÚÈÝÎª£º</p>
+<pre>
+        subscribe
+        end
+</pre>
+    Ã¿µ±Ö÷ÁÐ±í´ïµ½´óÔ¼ 30k µÄÏûÏ¢ÄÚÈÝÊ±£¬ÕªÒª¾Í·¢ËÍ¸øÕâ¸öÁÐ±íµÄ³ÉÔ±¡£ 
+
+    <p>»¹¿ÉÒÔ²Î¼Ó³ô³æÓÊ¼þÁÐ±í¡£Òª¼ÓÈëÕâ¸öÁÐ±í£¬·¢ËÍÒ»¸öÓÊ¼þµ½ <a href="mailto:bugs-request@postgreSQL.org">bugs-request@postgreSQL.org</a>£¬ÄÚÈÝÎª£º</p>
+<pre>
+        subscribe
+        end
+</pre>
+    »¹¿ÉÒÔ²Î¼Ó¿ª·¢ÈËÔ±ÓÊ¼þÁÐ±í¡£Òª¼ÓÈëÕâ¸öÁÐ±í£¬·¢ËÍÒ»¸öÓÊ¼þµ½ <a href="mailto:hackers-request@postgreSQL.org">hackers-request@postgreSQL.org</a>£¬ÄÚÈÝÎª£º 
+<pre>
+        subscribe
+        end
+</pre>
+    ÆäËûµÄ¹ØÓÚ PostgreSQL ÓÊ¼þÁÐ±íºÍÆäËûÐÅÏ¢¿ÉÒÔÔÚ PostgreSQL µÄ WWW Ö÷Ò³ÕÒµ½£º 
+
+    <blockquote>
+      <a href="http://postgresql.org/">http://postgresql.org/</a>
+    </blockquote>
+    ÔÚ EFNet Àï»¹ÓÐÒ»¸ö IRC ÆµµÀ£¬ÆµµÀ #PostgreSQL¡£ÎÒÓÃ unix ÃüÁî<tt>irc -c '#PostgreSQL' "$USER" irc.phoenix.net</tt> 
+
+    <p>ÉÌÒµÖ§³Ö¹«Ë¾µÄÁÐ±íÔÚ <a href="http://www.PostgreSQL.org/users-lounge/commercial-support.html">http://www.PostgreSQL.org/users-lounge/commercial-support.html</a> ¡£</p>
+
+    <h4><a id="1.7" name="1.7"></a>1.7) PostgreSQL ×îÐÂµÄ°æ±¾ÊÇÊ²Ã´£¿</h4>
+    PostgreSQL ×îÐÂµÄ°æ±¾ÊÇ°æ±¾ 7.2.3¡££¨Òë×¢£ºÏÖÔÚÓ¦¸ÃÊÇ 7.3.1 ÁË¡££© 
+
+    <p>ÎÒÃÇ¼Æ»®Ã¿ËÄ¸öÔÂ·¢²¼Ò»¸öÖ÷Òª°æ±¾¡£</p>
+
+    <h4><a id="1.8" name="1.8"></a>1.8) ÓÐÄÄÐ©¿ÉÓÃµÄ PostgreSQL µÄÎÄµµ£¿</h4>
+    ÔÚ·¢²¼°üÀïÓÐÒ»Ð©ÊÖ²á£¬ÊÖ²áÒ³ºÍÒ»Ð©Ð¡µÄ²âÊÔÀý×Ó¡£²Î¼û /doc Ä¿Â¼¡££¨Òë×¢£ºÓ¦Îª $PGHOME/doc£©¡£Äã»¹¿ÉÒÔÔÚÏßä¯ÀÀ PostgreSQL µÄÊÖ²á£¬ÔÚ <a href="http://www.PostgreSQL.org/users-lounge/docs/">http://www.PostgreSQL.org/users-lounge/docs/</a> ¡£
+
+    <p>ÓÐÁ½±¾¹ØÓÚ PostgreSQL µÄÊéÔÚÏßÌá¹©£¬ÔÚ <a href="http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</a> ºÍ <a href="http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook/</a> ¡£ÔÚ <a href="http://www.ca.PostgreSQL.org/books/">http://www.ca.PostgreSQL.org/books/</a> ÉÏÓÐ¹ØÓÚ PostgreSQL µÄ¿É¹ºÊé¼®µÄÁÐ±í¡£ÔÚ <a href="http://techdocs.PostgreSQL.org/">http://techdocs.PostgreSQL.org/</a> ÉÏÊÕ¼¯ÁËÓÐ¹Ø PostgreSQL µÄ¼¼ÊõÎÄÕÂ¡£</p>
+
+    <p><i>psql</i> ÓÐÒ»Ð©²»´íµÄ \d ÃüÁî£¬ÏÔÊ¾¹ØÓÚÀàÐÍ£¬²Ù×÷·û£¬º¯Êý£¬¾Û¼¯µÈµÄÐÅÏ¢¡£</p>
+
+    <p>ÎÒÃÇµÄ web Õ¾µã°üº¬¸ü¶àµÄÎÄµµ£®</p>
+
+    <h4><a id="1.9" name="1.9"></a>1.9) ÎÒÈçºÎÁË½âÒÑÖªµÄ BUG ºÍÈ±Ê§µÄÌØÐÔ£¿</h4>
+    PostgreSQL Ö§³ÖÒ»¸öÀ©Õ¹ÁËµÄ SQL-92 µÄ×Ó¼¯¡£²ÎÔÄÎÒÃÇµÄ <a href="http://www.postgresql.org/docs/todo.html">TODO</a> <a href="http://www.postgresql.org/docs/todo.html"></a>ÁÐ±í£¬»ñÈ¡Ò»¸öÒÑÖª³ô³æ£¬È±Ê§ÌØÐÔºÍÎ´À´¼Æ»®¡£ 
+
+    <h4><a id="1.10" name="1.10"></a>1.10) ÎÒÓ¦¸ÃÔõÑùÑ§Ï° SQL£¿</h4>
+    ÔÚ <a href="http://www.postgresql.org/docs/awbook.html">http://www.postgresql.org/docs/awbook.html</a> µÄ¹ØÓÚ PostgreSQL µÄÊé½ÌÊÚ SQL¡££¨Òë×¢£ºÎÒÏÂÔØµ½±¾µØÁË¡££©ÔÚ <a href="http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook</a> ÓÐÁíÍâÒ»±¾¹ØÓÚ PostgreSQL µÄÊé¡£ÔÚ<a href="http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm</a>£¬<a href="http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM">http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM </a> ºÍ <a href="http://sqlcourse.com/">http://sqlcourse.com</a> ÓÐÒ»¸ö²»´íµÄÈëÃÅ½Ì³Ì¡£ 
+
+    <p>ÁíÒ»¸öÊÇ "Teach Yourself SQL in 21 Days, Second Edition"£¨21ÌìÑ§»áSQL£¬µÚ¶þ°æ£©£¬ÔÚ <a href="http://members.tripod.com/er4ebus/sql/index.htm">http://members.tripod.com/er4ebus/sql/index.htm</a></p>
+
+    <p>ÎÒÃÇµÄÐí¶àÓÃ»§Ï²»¶ <i>The Practical SQL Handbook, Bowman, Judith S., et al., Addison-Wesley ¡£</i> ÆäËûµÄÓÐ <i>The Complete Reference SQL, Groff et al., McGraw-Hill ¡£</i></p>
+
+    <h4><a id="1.11" name="1.11"></a>1.11) PostgreSQL ÊÇ Y2K ¼æÈÝµÄÂð£¿</h4>
+    ÊÇ£¬ÎÒÃÇºÜÈÝÒ×¿ØÖÆ 2000 AD Ö®ºóºÍ 2000 BC Ö®Ç°µÄÈÕÆÚ¡£ 
+
+    <h4><a id="1.12" name="1.12"></a>1.12) ÎÒÓ¦¸ÃÔõÑù¼ÓÈë¿ª·¢¶ÓÎé£¿</h4>
+    Ê×ÏÈ£¬ÏÂÔØ×îÐÂµÄÔ´´úÂë²¢ÔÄ¶ÁÎÒÃÇ web Õ¾µã»ò·¢²¼°üÖÐµÄ PostgreSQL ¿ª·¢ÕßÎÄµµ¡£Æä´Î£¬¼ÓÈë pgsql-hackers ºÍ pgsql-patches ÓÊ¼þÁÐ±í¡£µÚÈý£¬Ïò pgsql-patches Ìá½»¸ßÖÊÁ¿µÄ²¹¶¡³ÌÐò¡£ 
+
+    <p>ÏÖÔÚ´ó¸ÅÓÐÊ®¼¸¸öÈËÓÐ PostgreSQL CVS ¹éµµ <font size="-1">COMMIT</font> µÄÈ¨ÏÞ¡£ËûÃÇ¶¼ÒÑ¾­Ìá½»ÁË·Ç³£¶à¸ßÖÊÁ¿µÄ²¹¶¡ÁË£¬ÒÔÖÁÓÚÏÖÓÐµÄÌá½»ÈËºÜÄÑ¸úÉÏ½Ú×à£¬²¢ÇÒÎÒÃÇÏàÐÅËûÃÇÌá½»µÄ²¹¶¡¶¼ÊÇ¸ßÖÊÁ¿µÄ¡£</p>
+
+    <h4><a id="1.13" name="1.13"></a>1.13) ÎÒÓ¦¸ÃÔõÑùÌá½»Ò»¸öBUG±¨¸æ£¿</h4>
+    Çë·ÃÎÊ <a href="http://www.PostgreSQL.org/bugs/bugs.php">http://www.PostgreSQL.org/bugs/bugs.php</a> µÄ PostgreSQL BugTool Ò³Ãæ, ÄÇÀï¸ø³öÁËÈçºÎÌá½»Ò»¸öBUG±¨¸æµÄÖ¸ÄÏ¡£ 
+
+    <p>Í¬ÑùÒ²Òª¿´¿´ÎÒÃÇµÄ ftp Õ¾µã <a href="ftp://ftp.postgresql.org/pub">ftp://ftp.postgreSQL.org/pub</a>£¬¿´ÓÐÃ»ÓÐ¸üÐÂµÄ PostgreSQL °æ±¾»ò²¹¶¡¡£</p>
+
+    <h4><a id="1.14" name="1.14"></a>1.14) PostgreSQL ºÍÆäËû DBMS ±ÈÆðÀ´ÈçºÎ£¿</h4>
+    ÆÀ¼ÛÈí¼þÓÐºÃ¼¸ÖÖ·½·¨£ºÌØÐÔ£¬ÐÔÄÜ£¬¿É¿¿ÐÔ£¬Ö§³ÖºÍ¼Û¸ñ¡£ 
+
+    <dl>
+      <dt><b>ÌØÐÔ</b></dt>
+
+      <dd>PostgreSQL ÓµÓÐ´óÐÍÉÌÓÃ DBMS Àï´ó¶àÊýÌØÐÔ£¬ÀýÈç£ºÊÂÎñ£¬×Ó²éÑ¯£¬´¥·¢Æ÷£¬ÊÓÍ¼£¬Íâ¼ü²Î¿¼ÍêÕûÐÔºÍ¸´ÔÓµÄËøµÈ¡£ÎÒÃÇ»¹ÓÐÒ»Ð©ËüÃÇÃ»ÓÐµÄÌØÐÔ£¬ÈçÓÃ»§¶¨ÒåÀàÐÍ£¬¼Ì³Ð£¬¹æÔòºÍ¶à°æ±¾²¢ÐÐ¿ØÖÆÒÔ¼õÉÙËøµÄÕùÓÃµÈ¡£<br />
+        </dd>
+
+      <dt><b>ÐÔÄÜ</b></dt>
+
+      <dd>PostgreSQL ºÍÆäËûÉÌÓÃºÍ¿ªÔ´µÄÊý¾Ý¿â¾ßÓÐÀàËÆµÄÐÔÄÜ¡£¶ÔÄ³Ð©´¦ÀíËü±È½Ï¿ì£¬¶ÔÆäËûÒ»Ð©´¦ÀíËü±È½ÏÂý¡£Óë MySQL »ò¸üÇá±ãµÄÊý¾Ý¿âÏµÍ³±È½Ï£¬ÎÒÃÇÔÚ insert/update Ê±Âý£¬ÒòÎªÎÒÃÇÓÐÊÂÎñ´¦Àí¡£µ±È» MySQL ²»¾ßÓÐÎÒÃÇÔÚÉÏÃæµÄ<i>ÌØÐÔ</i> ¶ÎÀï¸ø³öµÄÈÎºÎÌØÐÔ¡£ÎÒÃÇµÄÖ÷Òª·½ÏòÊÇ¿É¿¿ÐÔºÍÌØÐÔ£¬¾¡¹ÜÎÒÃÇÔÚÃ¿´Î·¢²¼Ê±²»¶ÏµØ¸Ä½øÐÔÄÜ¡£ÓÐÒ»¸öºÜÓÐÈ¤µÄÍøÒ³±È½ÏÁË PostgreSQL ºÍ MySQL <a href="http://openacs.org/why-not-mysql.html">http://openacs.org/why-not-mysql.html</a>¡£<br />
+      </dd>
+
+      <dt><b>¿É¿¿ÐÔ</b></dt>
+
+      <dd>ÎÒÃÇÖªµÀ DBMS ±ØÐëÊÇ¿É¿¿µÄ£¬·ñÔòËü¾ÍÒ»µãÓÃ¶¼Ã»ÓÐ¡£ÎÒÃÇÅ¬Á¦×öµ½·¢²¼¾­¹ýÈÏÕæ²âÊÔµÄ£¬ÎÈ¶¨µÄ³ô³æ×îÉÙµÄ´úÂë¡£Ã¿¸ö°æ±¾ÖÁÉÙÓÐÒ»¸öÔÂµÄ beta ²âÊÔ£¬²¢ÇÒÎÒÃÇµÄ·¢²¼ÀúÊ·ÏÔÊ¾ÎÒÃÇ¿ÉÒÔÌá¹©ÎÈ¶¨µÄ£¬ÀÎ¹ÌµÄ£¬¿ÉÓÃÓÚÉú²úÊ¹ÓÃµÄ°æ±¾¡£ÎÒÃÇÏàÐÅÔÚÕâ·½ÃæÎÒÃÇÓëÆäËûµÄÊý¾Ý¿âÈí¼þÊÇÏàµ±µÄ¡£<br />
+        </dd>
+
+      <dt><b>Ö§³Ö</b></dt>
+
+      <dd>ÎÒÃÇµÄÓÊ¼þÁÐ±íÌá¹©Ò»¸ö·Ç³£´óµÄ¿ª·¢ÈËÔ±ºÍÓÃ»§µÄ×éÒÔ°ïÖú½â¾öËùÅöµ½µÄÈÎºÎÎÊÌâ¡£ÎÒÃÇ²»ÄÜ±£Ö¤¿Ï¶¨ÄÜ½â¾öÎÊÌâ£¬Ïà±ÈÖ®ÏÂ£¬ÉÌÓÃ DBMS Ò²²¢²»ÊÇ×ÜÄÜ¹»Ìá¹©½â¾ö·½·¨¡£Ö±½ÓÓë¿ª·¢ÈËÔ±£¬ÓÃ»§Èº£¬ÊÖ²áºÍÔ´³ÌÐò½Ó´¥Áî PostgreSQL µÄÖ§³Ö±ÈÆäËû DBMS »¹ÒªºÃ¡£»¹ÓÐÒ»Ð©ÉÌÒµÐÔµÄÔ¤°ü×°µÄÖ§³Ö£¬¿ÉÒÔ¸øÌá¹©¸øÄÇÐ©ÐèÒªµÄÈË¡££¨²ÎÔÄÖ§³Ö FAQ Ìõ¿î 1.6 Ð¡½Ú¡££©<br />
+        </dd>
+
+      <dt><b>¼Û¸ñ</b></dt>
+
+      <dd>ÎÒÃÇ¶ÔÈÎºÎÓÃÍ¾¶¼Ãâ·Ñ£¬°üÀ¨ÉÌÓÃºÍ·ÇÉÌÓÃÄ¿µÄ¡£Äã¿ÉÒÔ²»¼ÓÏÞÖÆµØÏòÄãµÄ²úÆ·Àï¼ÓÈëÎÒÃÇµÄ´úÂë£¬³ýÁËÄÇÐ©ÎÒÃÇÔÚÉÏÃæµÄ°æÈ¨ÉùÃ÷ÀïÉùÃ÷µÄ BSD ·ç¸ñµÄ°æÈ¨Íâ¡£</dd>
+    </dl>
+
+    <h4><a id="1.15" name="1.15"></a>1.15) ÎÒÓ¦¸ÃÔõÑùÔÞÖú PostgreSQL £¿</h4>
+
+    <p>×Ô´Ó1996Äê¿ªÊ¼£¬PostgreSQL ÒÑ¾­ÓÐÁËÒ»¸öÓÅÐãµÄ×éÖ¯¡£ÕâÐ©Ó¦¸Ã¹é¹¦ÓÚ Marc Fournier£¬ÊÇËû´´½¨ÁË²¢ÔÚÕâÐ©ÄêÒ»Ö±¹ÜÀíÕâ¸ö×éÖ¯¡£</p>
+
+    <p>¶ÔÓÚÒ»¸ö¿ªÔ´ÏîÄ¿À´Ëµ£¬ÖÊÁ¿»ù´¡ÉèÊ©ÊÇ·Ç³£ÖØÒªµÄ¡£ËüÄÜ·ÀÖ¹³öÏÖÑÏÖØÑÓ³ÙÏîÄ¿Ç°½øµÄ»ìÂÒ¡£</p>
+
+    <p>ÏÔÈ»£¬Õâ¸ö×éÖ¯µÄÔË×ª³É±¾²»·Æ¡£Î¬³ÖÆäÇ°½øÓÐ¸÷ÖÖÔÂ¶ÈµÄ¡¢Ò»´ÎÐÔµÄ¿ªÖ§¡£Èç¹ûÄã»òÕßÄãµÄ¹«Ë¾ÄÜ½øÐÐ¾èÔùÒÔÖ§³ÖÕâÏîÊÂÒµ£¬Çë·ÃÎÊ <a href="http://store.pgsql.com/shopping/">http://store.pgsql.com/shopping/</a> ½øÐÐ¾èÔù¡£</p>
+
+    <p>ËäÈ»¸ÃÍøÒ³Ìá¼°ÁË PostgreSQL ¹«Ë¾£¬ÕâÐ©¾èÔù½«½öÓÃÓÚÖ§³Ö PostgreSQL ÏîÄ¿£¬²¢²»»áÓÃÓÚ×ÊÖúÃ»¸öÌØ¶¨µÄ¹«Ë¾¡£Èç¹ûÄãÔ¸Òâ£¬Ò²¿ÉÒÔÓÊ¼ÄÖ§Æ±µ½ÁªÏµµØÖ·¡£</p>
+    <hr />
+
+    <center>
+      <h2>ÓÃ»§¿Í»§¶ËÎÊÌâ</h2>
+    </center>
+
+    <h4><a id="2.1" name="2.1"></a>2.1) ÓÐ PostgreSQL µÄ ODBC Çý¶¯Ã´£¿</h4>
+    ÓÐÁ½¸ö ODBC Çý¶¯¿ÉÒÔ»ñµÃ£¬PsqlODBC ºÍ OpenLink ODBC.
+
+    <p>¿ÉÒÔÔÚ<a href="http://gborg.postgresql.org/project/psqlodbc/projdisplay.php">http://gborg.postgresql.org/project/psqlodbc/projdisplay.php</a> ÏÂÔØ PsqlODBC ¡£</p>
+
+    <p>OpenLink ODBC ¿ÉÒÔ´Ó <a href="http://www.openlinksw.com/">http://www.openlinksw.com/</a> »ñµÃ¡£ËüÓëËûÃÇµÄ±ê×¼ ODBC ¿Í»§¶ËÈí¼þ¼æÈÝ£¬Òò¶øÄã¿ÉÒÔÔÚÈÎºÎËûÃÇÖ§³ÖµÄ¿Í»§¶ËÆ½Ì¨£¨Win, Mac, Unix, VMS£©ÉÏÊ¹ÓÃ PostgreSQL ODBC¡£</p>
+
+    <p>ËûÃÇ¿ÉÄÜ½«Õâ¸ö²úÆ·ÏúÊÛ¸øÄÇÐ©ÐèÒªÉÌÒµÖ§³ÖµÄÓÃ»§£¬µ«ÊÇ×ÜÊÇÓÐÒ»¸ö freeware £¨×ÔÓÉÈí¼þ£©µÄ°æ±¾¿ÉÒÔµÃµ½¡£ÇëÑ¯ÎÊ <a href="mailto:postgres95@openlink.co.uk">postgres95@openlink.co.uk</a>¡£</p>
+
+    <h4><a id="2.2" name="2.2"></a>2.2) ÓÐÊ²Ã´¹¤¾ß¿ÉÒÔ°Ñ PostgreSQL ÓÃÓÚ Web Ò³Ãæ£¿</h4>
+    Ò»¸ö½éÉÜÒÔÊý¾Ý¿âÎªºóÌ¨µÄÍ¦²»´íµÄ Õ¾µãÊÇ£º<a href="http://www.webreview.com">http://www.webreview.com</a> ¡£ 
+
+    <p>¶ÔÓÚ Web ¼¯³É£¬PHP ÊÇÒ»¸ö¼«ºÃµÄ½Ó¿Ú¡£ËüÔÚ£º<a href="http://www.php.net/">http://www.php.net/</a> ¡£</p>
+
+    <p>¶ÔÓÚ¸´ÔÓµÄÈÎÎñ£¬ºÜ¶àÈË²ÉÓÃ Perl ½Ó¿ÚºÍ CGI.pm »ò mod_perl ¡£</p>
+
+    <h4><a id="2.3" name="2.3"></a>2.3) PostgreSQL ÓµÓÐÍ¼ÐÎÓÃ»§½çÃæÂð£¿</h4>
+    ÊÇµÄ¡£ÓÐ¼¸¸öÊÊÓÃÓÚ PostgreSQL µÄÍ¼ÐÎ½Ó¿Ú¡£°üÀ¨PgAccess£¨<a href="http://www.pgaccess.com">http://www.pgaccess.com</a>)£¬PgAdmin II £¨<a href="http://www.pgadmin.org">http://www.pgadmin.org</a>£¬½öÊÊÓÃÓÚWin32£©£¬ RHDB Admin (<a href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/</a>£© ÒÔ¼° Rekall £¨<a href="http://www.thekompany.com/products/rekall/">http://www.thekompany.com/products/rekall/</a>£¬ ×¨ÓÐµÄ/proprietary)¡£»¹ÓÐPHPPgAdmin £¨<a href="http://phppgadmin.sourceforge.net/">http://phppgadmin.sourceforge.net/£©</a> £¬Ò»¸ö»ùÓÚ web µÄ PostgreSQL ·ÃÎÊ½Ó¿Ú¡£ 
+
+    <p>ÎÒÃÇÓÐÒ»¸ö²»´íµÄÍ¼ÐÎÓÃ»§½çÃæ£¬³ÆÎª PgAccess £¬ËüÒ²¿ÉÒÔÓÃ×÷±¨±íÉú³ÉÆ÷¡£ÍøÒ³ÊÇ <a href="http://www.pgaccess.org/">http://www.pgaccess.org/</a>¡£</p>
+
+    <h4><a id="2.4" name="2.4"></a>2.4) ÎÒÃÇ¿ÉÒÔÓÃÊ²Ã´ÓïÑÔºÍ PostgreSQL ´ò½»µÀ£¿</h4>
+
+    <p>´ó¶àÊýÁ÷ÐÐµÄ±à³ÌÓïÑÔ¶¼ÓÐ·ÃÎÊ PostgreSQL µÄ½Ó¿Ú¡£Çë¼ì²é±à³ÌÓïÑÔµÄÀ©Õ¹Ä£¿éÁÐ±í¡£</p>
+
+    <p>PostgreSQL ·¢²¼°üÖÐ°üº¬ÁËÒÔÏÂ½Ó¿Ú£º</p>
+
+    <ul>
+      <li>C (libpq)</li>
+
+      <li>Embedded C (ecpg)</li>
+
+      <li>Java (jdbc)</li>
+
+      <li>Python (PyGreSQL)</li>
+
+      <li>TCL (libpgtcl)</li>
+    </ul>
+
+    <p>ÆäËûµÄ½Ó¿ÚÔÚ <a href="http://gborg.postgresql.org">http://gborg.postgresql.org</a> ÉÏµÄ <i>Drivers/Interfaces</i> Ð¡½Ú¡£</p>
+    <hr />
+
+    <center>
+      <h2>ÏµÍ³¹ÜÀíÎÊÌâ</h2>
+    </center>
+
+    <h4><a id="3.1" name="3.1"></a>3.1) ÎÒÔõÑùÄÜ°Ñ PostgreSQL ×°ÔÚ /usr/local/pgsql ÒÔÍâµÄµØ·½£¿</h4>
+
+    <p>ÔÚÔËÐÐ configure Ê±¼ÓÉÏ --prefix Ñ¡Ïî¡£</p>
+
+    <h4><a id="3.2" name="3.2"></a>3.2) µ±ÎÒÔËÐÐ postmaster Ê±£¬³öÏÖ <i>Bad System Call</i>£¨ÏµÍ³µ÷ÓÃ´í£©»ò Core Dumped ´íÎó¡£ÎªÊ²Ã´£¿</h4>
+
+    <p>Õâ¿ÉÄÜÊÇºÜ¶à·½ÃæµÄÎÊÌâ£¬ÇëÏÈ¼ì²é²Ù×÷ÏµÍ³ºËÐÄÊÇ·ñÖ§³Ö System V À©Õ¹¡£PostgreSQL ÐèÒªÄÚºËÖ§³Ö¹²ÏíÄÚ´æºÍÐÅºÅµÆ¡£</p>
+
+    <h4><a id="3.3" name="3.3"></a>3.3) µ±ÎÒÊÔÍ¼ÔËÐÐ postmaster Ê±£¬³öÏÖ <i>IpcMemoryCreate</i> ´íÎó¡£ÎªÊ²Ã´£¿</h4>
+    ÄãÒªÃ´ÊÇÃ»ÓÐÔÚÄÚºËÀïÕýÈ·ÅäÖÃ¹²ÏíÄÚ´æ£¬ÒªÃ´ÊÇÄãÐèÒªÀ©´óÄãµÄÄÚºËµÄ¿ÉÓÃ¹²ÏíÄÚ´æ¡£ÐèÒªµÄ¹²ÏíÄÚ´æ¾ßÌåµÄÊýÁ¿È¡¾öÓÚÄãµÄÌåÏµ½á¹¹ºÍÄãÅäÖÃÄãµÄ postmaster ÔËÐÐÊ±Ê¹ÓÃµÄ»º³åÇøºÍºó¶Ë½ø³ÌÊýÄ¿¡£¶Ô´ó¶àÊýÏµÍ³£¬Ê¹ÓÃÈ±Ê¡»º³åÇøºÍ½ø³ÌÊýÄ¿Ê±£¬Äã×îÉÙÐèÒª~1MB¡£ÓÐ¹Ø¹²ÏíÄÚ´æºÍÐÅºÅµÆµÄÏêÏ¸ÐÅÏ¢Çë²Î¿¼ <a href="http://www.postgresql.org/idocs/index.php?kernel-resources.html">PostgreSQL Administrator's Guide</a> ¡£ 
+
+    <h4><a id="3.4" name="3.4"></a>3.4) µ±ÎÒÊÔÍ¼ÔËÐÐ postmaster Ê±£¬³öÏÖ <i>IpcSemaphoreCreate</i> ´íÎó¡£ÎªÊ²Ã´£¿</h4>
+
+    <p>Èç¹û´íÎóÐÅÏ¢ÊÇ <i>IpcSemaphoreCreate: semget failed (No space left on device)</i>£¬ÄÇÃ´Ô­ÒòÊÇÄãµÄÄÚºËÃ»ÓÐÅäÖÃ×ã¹»µÄÐÅºÅµÆ×ÊÔ´¡£Postgres µÄÃ¿¸öÇ±ÔÚµÄºóÌ¨½ø³Ì¶¼ÐèÒªÒ»¸öÐÅºÅµÆ¡£Ò»¸öÁÙÊ±µÄ½â¾ö·½·¨ÊÇÒÔ±È½ÏÉÙµÄºóÌ¨½ø³ÌÊý£¨²ÎÊý£©Æô¶¯ postmaster¡£Ê¹ÓÃ¿ª¹Ø <i>-N</i> ´øÒ»¸öÉÙÓÚÈ±Ê¡Öµ 32 µÄ²ÎÊýÔËÐÐ postmaster¡£¸ü³¤¾ÃµÄ½â¾ö·½·¨ÊÇ¼Ó´óÄãµÄÄÚºËµÄ <font size="-1">SEMMNS</font> ºÍ <font size="-1">SEMMNI</font> ²ÎÊý¡£</p>
+
+    <p>ÔÚÊý¾Ý¿â·ÃÎÊÁ¿ºÜ´óÊ±£¬ÐÅºÅµÆ²»¿ÉÓÃ¿ÉÄÜµ¼ÖÂÏµÍ³±ÀÀ£¡£</p>
+
+    <p>Èç¹û´íÎóÐÅÏ¢ÊÇÆäËûµÄÊ²Ã´¶«Î÷£¬Äã¿ÉÄÜ¾Í¸ù±¾Ã»ÓÐÔÚÄÚºËÀïÃæÅäÖÃÐÅºÅµÆÖ§³Ö¡£ÓÐ¹Ø¹²ÏíÄÚ´æºÍÐÅºÅµÆµÄÏêÏ¸ÐÅÏ¢Çë²Î¿¼ <a href="http://www.postgresql.org/idocs/index.php?kernel-resources.html">PostgreSQL Administrator's Guide</a> ¡£</p>
+
+    <h4><a id="3.5" name="3.5"></a>3.5) ÎÒÈçºÎ¿ØÖÆÀ´×ÔÆäËûÖ÷»úµÄÁ¬½Ó£¿</h4>
+
+    <p>È±Ê¡Ê±£¬PostgreSQL Ö»ÔÊÐíÍ¨¹ý unix ÓòÌ×½Ó×ÖÀ´×Ô±¾»úµÄÁ¬½Ó¡£³ý·ÇÄãÊ¹ÓÃ <i>-i</i> ¿ª¹ØÆô¶¯ <i>postmaster</i>£¬<b>²¢ÇÒ</b>Í¨¹ý¶ÔÓ¦µÄ±à¼­ <i>$PGDATA/pg_hba.conf</i> ÎÄ¼þ´ò¿ªÁËÖ÷»úÎª»ù´¡£¨ host-based £©µÄÈÏÖ¤£¬·ñÔòÆäËû»úÆ÷ÊÇ²»ÄÜÓëÄãµÄ»úÆ÷Á¬½ÓµÄ¡£ÕâÑù½«ÔÊÐí TCP/IP Á¬½Ó¡£</p>
+
+    <h4><a id="3.6" name="3.6"></a>3.6) ÎÒÔõÑùµ÷ÕûÊý¾Ý¿âÒýÇæÒÔ»ñµÃ¸üºÃµÄÐÔÄÜ£¿</h4>
+
+    <p>µ±È»£¬Ë÷Òý¿ÉÒÔ¼ÓËÙ²éÑ¯¡£<font size="-1">EXPLAIN</font> ÃüÁîÔÊÐíÄã¹Û²ì PostgreSQL ÈçºÎ½âÊÍÄãµÄ²éÑ¯£¬ÒÔ¼°Ê¹ÓÃÁËÄÄÐ©Ë÷Òý¡£</p>
+
+    <p>Èç¹ûÄãÕý´¦ÀíÒ»¶Ñ <font size="-1">INSERT</font>£¬¿¼ÂÇÊ¹ÓÃ <font size="-1">COPY</font> ÃüÁîÒÔ´óÅúÁ¿µÄ·½Ê½½øÐÐ¡£ÕâÑù×ö±Èµ¥¶ÀµÄÒ»¸ö¸ö <font size="-1">INSERT</font> ¿ìµÃ¶à¡£Æä´Î£¬Ã»ÓÐ´¦ÓÚ <font size="-1">BEGIN WORK/COMMIT</font> ÊÂÎñ¿éÖ®¼äµÄÓï¾ä±»ÈÏÎªÊôÓÚÍ¬Ò»¸öÊÂÎñ¡£ÊÔ×ÅÔÚÒ»¸öÊÂÎñ¿éÀïÃæ´¦Àí¸ü¶àµÄÓï¾ä¡£ÕâÑù¿ÉÒÔ¼õÉÙÊÂÎñ´øÀ´µÄ¶îÍâ¿ªÏú¡£Í¬Ñù£¬ÔÚ×ö´óÁ¿µÄÊý¾Ý¸Ä±äÊ±¿¼ÂÇÉ¾³ýºÍÖØ½¨Ë÷Òý¡£</p>
+
+    <p>»¹ÓÐ¼¸¸öµ÷½ÚµÄÑ¡Ïî¿ÉÒÔÊ¹ÓÃ¡£Äã¿ÉÒÔÍ¨¹ý´ø <i>-o -F</i> Ñ¡ÏîÆô¶¯ postmaster À´½ûÖ¹ fsync()¡£ÕâÑù½«±ÜÃâÃ¿´ÎÊÂÎñºóµ÷ÓÃ <i>fsync()</i> °ÑÊý¾ÝË¢ÐÂµ½´ÅÅÌÉÏ¡£</p>
+
+    <p>Äã»¹¿ÉÒÔÊ¹ÓÃ postmaster -B Ñ¡ÏîÔö¼Óºó¶Ë½ø³ÌÊ¹ÓÃµÄ¹²ÏíÄÚ´æ»º³åµÄÊýÄ¿¡£Èç¹ûÄã°ÑÕâ¸ö²ÎÊýÉèÖÃµÃÌ«´ó£¬postmaster ¿ÉÄÜÎÞ·¨Æô¶¯£¬ÒòÎªÄãÒÑ¾­³¬¹ýÁËÄãµÄÄÚºËÔÚ¹²ÏíÄÚ´æ¿Õ¼äÉÏµÄÏÞÖÆ¡£Ã¿¸ö»º³åÇøÊÇ 8K ²¢ÇÒÈ±Ê¡ 64 ¸ö»º³åÇø¡£</p>
+
+    <p>Äã»¹¿ÉÒÔÊ¹ÓÃºóÌ¨½ø³ÌµÄ -S Ñ¡ÏîÀ´Ôö¼ÓÃ¿¸öºóÌ¨½ø³ÌÓÃÓÚÁÙÊ±ÅÅÐòÓÃµÄ×î´óÄÚ´æÊýÁ¿¡£-S ÖµÊÇÒÔK×Ö½Ú¼ÆµÄ£¬È±Ê¡ÊÇ 512 £¨Ò²¾ÍÊÇËµ£¬512K£©¡£</p>
+
+    <p>Äã»¹¿ÉÒÔÊ¹ÓÃ <font size="-1">CLUSTER</font> ÃüÁîÀ´°Ñ±íÀïµÄÊý¾Ý°´ÕÕÄ³¸öË÷Òý½øÐÐ¾Û¼¯´æ·Å¡£²ÎÔÄ CLUSTER µÄÊÖ²áÒ³»ñÈ¡¸ü¶àÏ¸½Ú¡£</p>
+
+    <h4><a id="3.7" name="3.7"></a>3.7) PostgreSQL Àï¿ÉÒÔ»ñµÃÊ²Ã´ÑùµÄµ÷ÊÔÌØÐÔ£¿</h4>
+
+    <p>PostgreSQL ÓÐ¼¸¸öÌØÐÔÓÃÓÚ±¨¸æ×´Ì¬ÐÅÏ¢£¬ÕâÐ©ÐÅÏ¢¿ÉÄÜ¶Ôµ÷ÊÔÓÃÍ¾ºÜÓÐ°ïÖú¡£</p>
+
+    <p>Ê×ÏÈ£¬Í¨¹ý¸½´ø --enable-cassert Ñ¡ÏîÔËÐÐ configure£¬ÓÐºÜ¶à <i>assert()</i> ¼à¿ØºóÌ¨½ø³ÌºÍÔÚ·¢ÉúÄ³Ð©Î´ÔøÔ¤ÁÏµÄÏÖÏóÊ±Í£Ö¹³ÌÐòÔËÐÐ¡£</p>
+
+    <p>postmaster ºÍ postgres ¶¼ÓÐÒ»Ð©¿ÉÓÃµÄÑ¡Ïî¡£Ê×ÏÈ£¬µ±ÄãÆô¶¯ postmaster Ê±£¬È·±£Äã°Ñ±ê×¼Êä³öºÍ±ê×¼´íÎóÊä³ö¶¨Ïòµ½ÁËÒ»¸öÈÕÖ¾ÎÄ¼þÀïÈ¥ÁË£¬Ïó£º</p>
+<pre>
+        cd /usr/local/pgsql
+        ./bin/postmaster &gt;server.log 2&gt;&amp;1 &amp;
+</pre>
+    ÕâÑù½«ÔÚ PostgreSQL ¶¥¼¶Ä¿Â¼ÏÂÊä³öÒ»¸ö server.log ÎÄ¼þ¡£Õâ¸öÎÄ¼þ°üº¬·þÎñÆ÷Åöµ½µÄÎÊÌâºÍ´íÎóµÄÓÐÓÃÐÅÏ¢¡£postmaster ÓÐÒ»¸ö -d Ñ¡Ïî£¬¸ÃÑ¡ÏîÔÊÐíÎÒÃÇ»ñµÃ¸ü¶àµÄÏ¸½Ú»ã±¨¡£-d Ñ¡Ïî½ÓÊÜÒ»¸öÊý×Ö±êÃ÷µ÷ÊÔ¼¶±ð¡£ÐèÒª¾¯¸æµÄÊÇ¸ßµÄµ÷ÊÔ¼¶±ð¿ÉÄÜ»áÉú³É¾Þ´óµÄÈÕÖ¾ÎÄ¼þ¡£
+
+    <p>Èç¹û postmaster Ã»ÓÐÔËÐÐ£¬Äã¿ÉÒÔÖ±½ÓÔÚÃüÁîÐÐÉÏÆô¶¯ postgres ºóÌ¨½ø³Ì£¬È»ºóÖ±½Ó¼üÈë SQL Óï¾ä¡£ÎÒÃÇ<b>Ö»</b> ÍÆ¼öÔÚµ÷ÊÔµÄÊ±ºòÕâÃ´¸É¡£Çë×¢ÒâÕâÊ±ÓÃ»»ÐÐÜÞ¶ø²»ÊÇ·ÖºÅ±íÊ¾Óï¾ä½áÎ²¡£Èç¹ûÄã´ø×Åµ÷ÊÔ·ûºÅ±àÒë£¬Äã¿ÉÒÔÊ¹ÓÃÒ»¸öµ÷ÊÔÆ÷¹Û¿´·¢ÉúÁËÊ²Ã´ÊÂÇé¡£ÒòÎªºóÌ¨½ø³ÌÃ»ÓÐÓÉ postmaster Æô¶¯µÄ£¬Ëü²»ÊÇºÍÊµ¼ÊµÄÔËÐÐ»·¾³Ò»ÖÂ£¬¶øÇÒËø¶¨/ºóÌ¨½»»¥ÎÊÌâ¿ÉÄÜ²»ÄÜÖØÏÖ¡£</p>
+
+    <p>Èç¹û postmaster ÒÑ¾­ÔËÐÐ£¬¿ÉÔÚÒ»¸ö´°¿ÚÖÐÆô¶¯ <i>psql</i>£¬È»ºóÕÒ³ö <i>psql</i> ¶ÔÓ¦µÄ <i>postgres</i> ½ø³ÌµÄ <font size="-1">PID</font>¡£Ê¹ÓÃÒ»¸öµ÷ÊÔÆ÷¸½×ÅÔÚÕâ¸ö <i>postgres</i> <font size="-1">PID</font> ÉÏ¡£Äã¿ÉÒÔÔÚµ÷ÊÔÆ÷ÀïÉèÖÃ¶Ïµã²¢ÇÒ´Ó <i>psql</i> ÀïÖ´ÐÐ²éÑ¯¡£Èç¹ûÄãÔÚµ÷ÊÔ <i>postgres</i> µÄÆô¶¯£¬Äã¿ÉÒÔÉèÖÃ PGOPTIONS="-W n"£¬È»ºóÆô¶¯ <i>psql</i>¡£ÕâÑù½«µ¼ÖÂÆô¶¯ÑÓ³Ù <i>n</i> Ãë£¬ÕâÑùÄã¾Í¿ÉÒÔ¸½¼ÓÒ»¸öµ÷ÊÔÆ÷²¢ÇÒ¸ú×ÙÆô¶¯Ë³ÐòµÄ¹ý³Ì¡£</p>
+
+    <p>postgres ³ÌÐòÓÐ -s£¬-A£¬ºÍ -t Ñ¡Ïî¿ÉÄÜÔÚµ÷ÊÔºÍÐÔÄÜ²âÁ¿µÄÊ±ºò·Ç³£ÓÐÓÃ¡£</p>
+
+    <p>Äã»¹¿ÉÒÔ´ø profiling Ö§³Ö±àÒëºóÌ¨£¬ÒÔ±ã¹Û²ìÄÄÐ©º¯ÊýÕ¼ÓÃµÄÖ´ÐÐÊ±¼ä½Ï¶à¡£profile ÎÄ¼þ½«·ÅÔÚ pgsql/data/base/dbname Ä¿Â¼ÏÂ¡£¿Í»§¶Ë profile ÎÄ¼þ½«·ÅÔÚ¿Í»§¶Ëµ±Ç°Ä¿Â¼ÏÂ¡£ÔÚ Linux ÏÂÖ§³Ö profiling ÒªÔÚ±àÒëÊ±¼ÓÉÏ<i>-DLINUX_PROFILE</i> ¡£</p>
+
+    <h4><a id="3.8" name="3.8"></a>3.8) ÎªÊ²Ã´ÔÚÊÔÍ¼Á¬½ÓµÇÂ¼Ê±ÊÕµ½¡°Sorry, too many clients¡±ÏûÏ¢£¿</h4>
+
+    <p>ÄãÐèÒªÔö´ó postmaster Æô¶¯Ê±Ö§³ÖµÄ²¢·¢ºóÌ¨½ø³ÌÊý¡£</p>
+
+    <p>È±Ê¡ÏÞÖÆÊÇ 32 ½ø³Ì¡£Äã¿ÉÒÔÍ¨¹ý´ø×ÅÊÊµ±µÄ <i>-N</i> Öµ¿ª¹ØÆô¶¯ postmaster Ôö¼ÓÕâ¸öÊýÄ¿¡£»òÕßÐÞ¸Ä <i>postgresql.conf</i> ÎÄ¼þ¡£</p>
+
+    <p>Òª×¢ÒâÈç¹ûÄã°Ñ <i>-N</i> ÉèÖÃÎª´óÓÚ 32£¬Äã±ØÐëÍ¬ÑùÔö´ó <i>-B</i>£¬³¬¹ýËüÈ±Ê¡µÄ 64£»-B ±ØÐë×îÉÙÊÇ -N µÄÁ½±¶£¬¶øÇÒÎªÁË¸üºÃµÄÐÔÄÜ¿ÉÄÜÒª±ÈÄÇ¸öÊý×ÖÒª´ó¡£¶ÔÓÚ´óÊýÄ¿µÄºó¶Ë½ø³Ì£¬Äã¿ÉÄÜ»¹»á·¢ÏÖÄã»¹ÐèÒªÔö¼ÓÐí¶à Unix ÄÚºËÅäÖÃ²ÎÊýÖµ¡£Òª¼ì²éµÄ¶«Î÷°üÀ¨¹²ÏíÄÚ´æ¿éµÄ×î´ó³ß´ç£¬<font size="-1">SHMMAX</font>£¬ÐÅºÅµÆµÄ×î´óÊýÄ¿£¬<font size="-1">SEMMNS</font> ºÍ <font size="-1">SEMMNI</font>£¬×î´óµÄ½ø³ÌÊý£¬<font size="-1">NPROC</font>£¬µ¥ÓÃ»§×î´ó½ø³ÌÊý£¬<font size="-1">MAXUPRC</font>£¬ÒÔ¼°´ò¿ªÎÄ¼þµÄ×î´óÊýÄ¿£¬<font size="-1">NFILE</font> ºÍ <font size="-1">NINODE</font> ¡£Postgres ¶ÔÔÊÐíµÄºóÌ¨½ø³ÌÊýÓÐÏÞÖÆµÄÔ­ÒòÊÇÎªÁËÈ·±£ÄãµÄÏµÍ³²»»áÓÃ¹â×ÊÔ´¡£</p>
+
+    <p>ÔÚ Postgres ÔçÓÚ 6.5 µÄ°æ±¾£¬×î´óºóÌ¨½ø³ÌÊýÈ±Ê¡ÊÇ 64£¬²¢ÇÒ¶ÔËüµÄÐÞ¸ÄÊ×ÏÈÐèÒªÐÞ¸Ä <i>include/storage/sinvaladt.h</i> ÀïµÄ MaxBackendId ³£Á¿£¬È»ºóÖØÐÂ BUILD¡£</p>
+
+    <h4><a id="3.9" name="3.9"></a>3.9) pgsql_tmp Ä¿Â¼Àï¶¼ÓÐÐ©Ê²Ã´£¿</h4>
+
+    <p>¸ÃÄ¿Â¼ÏÂ±£´æÁË²éÑ¯Ö´ÐÐÆ÷Éú³ÉµÄÁÙÊ±ÎÄ¼þ¡£ÀýÈç£¬Èç¹ûÐèÒªÎªÂú×ã <font size="-1">ORDER BY</font> Ìõ¼þ×öÅÅÐò£¬²¢ÇÒÅÅÐòÐèÒª±ÈºóÌ¨µÄ -S ²ÎÊý¸ø³öµÄ¸ü¶àµÄ¿Õ¼ä£¬ÄÇÃ´¾Í»á´´½¨Ò»¸öÁÙÊ±ÎÄ¼þ±£´æ¶à³öÀ´µÄÊý¾Ý¡£</p>
+
+    <p>ÁÙÊ±ÎÄ¼þÓ¦¸Ã×Ô¶¯É¾³ý£¬²»¹ýÈç¹ûÔÚÅÅÐò¹ý³ÌÖÐºóÌ¨±ÀÀ£ÁË¾Í¿ÉÄÜÁôÏÂÀ´¡£Í£Ö¹²¢ÖØÆð postmaster ½«»áÉ¾³ýÕâÐ©ÎÄ¼þ¡£<br />
+    </p>
+
+    <h4><a id="3.10" name="3.10"></a>3.10) ÎªÊ²Ã´ÒªÔÚÉý¼¶ PostgreSQL ·¢²¼°æ±¾Ê±×ö dump ºÍ restore £¿</h4>
+
+    <p>PostgreSQL ¿ª·¢×é¶ÔÃ¿´ÎÐ¡µÄÉý¼¶½ö×öÁË½ÏÉÙµÄÐÞ¸Ä,Òò´Ë´Ó 7.2 Éý¼¶µ½ 7.2.1 ²»ÐèÒª dump ºÍ restore¡£µ«ÊÇÖ÷ÒªµÄÉý¼¶£¨ÀýÈç´Ó 7.2 µ½ 7.3£©Í¨³£»áÐÞ¸ÄÏµÍ³±íºÍÊý¾Ý±íµÄÄÚ²¿¸ñÊ½¡£ÕâÐ©±ä»¯Ò»°ã±È½Ï¸´ÔÓ£¬Òò´ËÎÒÃÇ²»Î¬Êý¾ÝÎÄ¼þµÄÏòºó¼æÈÝ¡£dump ½«Êý¾Ý°´ÕÕÍ¨ÓÃµÄ¸ñÊ½Êä³ö£¬Ëæºó¿ÉÒÔ±»ÖØÐÂ¼ÓÔØ²¢Ê¹ÓÃÐÂµÄÄÚ²¿¸ñÊ½¡£</p>
+
+    <p>´ÅÅÌÎÄ¼þ¸ñÊ½Ã»ÓÐ±ä»¯µÄÉý¼¶£¬¿ÉÒÔÓÃ <i>pg_upgrade</i> ½Å±¾£¬¶ø²»ÐèÒª×ö dump ºÍ restor¡£·¢²¼ËµÃ÷script »áÖ¸Ã÷ <i>pg_upgrade</i> ¶Ô¸Ã´ÎÉý¼¶ÊÇ·ñ¿ÉÓÃ¡£</p>
+    <hr />
+
+    <center>
+      <h2>²Ù×÷ÎÊÌâ</h2>
+    </center>
+
+    <h4><a id="4.1" name="4.1"></a>4.1) ¶þ½øÖÆÓÎ±êºÍÆÕÍ¨ÓÎ±êÖ®¼äµÄÇø±ðÊÇÊ²Ã´£¿</h4>
+    ²ÎÔÄ <font size="-1">DECLARE</font> ÊÖ²áÒ³»ñÈ¡ÐÅÏ¢¡£ 
+
+    <h4><a id="4.2" name="4.2"></a>4.2)ÈçºÎÖ» <font size="-1">SELECT</font> Ò»¸ö²éÑ¯½á¹ûµÄÍ·¼¸ÐÐ£¿</h4>
+    ²ÎÔÄ <font size="-1">FETCH</font> ÊÖ²áÒ³£¬»òÕßÊ¹ÓÃ SELECT ... LIMIT.... 
+
+    <p>¼´Ê¹ÄãÖ»ÐèÒª¿ªÍ·µÄ¼¸ÐÐ£¬Ò²»áÉæ¼°µ½Õû¸ö²éÑ¯¡£ÊÔ×ÅÊ¹ÓÃ´øÓÐ <font size="-1">ORDER BY</font> µÄ²éÑ¯¡£Èç¹ûÓÐÒ»¸öË÷ÒýÓë <font size="-1">ORDER BY</font> Æ¥Åä£¬PostgreSQL ¿ÉÄÜ¾ÍÖ»´¦ÀíÒªÇóµÄÍ·¼¸Ìõ¼ÇÂ¼£¬·ñÔò½«¶ÔÕû¸ö²éÑ¯½øÐÐ´¦ÀíÖ±µ½Éú³ÉÐèÒªµÄÐÐ¡£</p>
+
+    <h4><a id="4.3" name="4.3"></a>4.3) ÎÒÈçºÎ»ñÈ¡Ò»¸ö±íµÄÁÐ±í£¬»òÕßÊÇÆäËûÎÒÄÜÔÚ <i>psql</i> Àï¿´µ½µÄ¶«Î÷£¿</h4>
+    Äã¿ÉÒÔÔÄ¶Á <i>psql</i> µÄÔ´´úÂëÎÄ¼þ<i>pgsql/src/bin/psql/describe.c</i> ¡£Ëü°üÀ¨ÎªÉú³É psql µÄ·´Ð±¸ÜÃüÁîµÄÊä³öµÄ SQL ÃüÁî¡£Äã»¹¿ÉÒÔ´ø <i>-E</i> Ñ¡ÏîÆô¶¯ <i>psql</i>£¬ÕâÑùËü½«´òÓ¡³öÖ´ÐÐÄã¸ø³öµÄÃüÁîËùÓÃµÄ²éÑ¯¡£ 
+
+    <h4><a id="4.4" name="4.4"></a>4.4) ÔõÑù´Ó±íÀïÃæÉ¾³ýÒ»ÁÐ£¿</h4>
+
+    <p>7.3 ÀïÔö¼ÓÁË <font size="-1">ALTER TABLE DROP COLUMN</font>£¬ÒÔÖ§³Ö´ËÏî¹¦ÄÜ¡£ÔÚÒÔÇ°µÄ°æ±¾ÖÐ£¬¿ÉÒÔÕâÑù×ö£º</p>
+<pre>
+    BEGIN;
     LOCK TABLE old_table;
     SELECT ...  -- select all columns but the one you want to remove
     INTO TABLE new_table
@@ -533,24 +443,31 @@
     DROP TABLE old_table;
     ALTER TABLE new_table RENAME TO old_table;
     COMMIT;
-</PRE>
-		<H4><a name="4.5"></a>4.5) Ò»ÐÐ£¬Ò»¸ö±í£¬Ò»¸ö¿âµÄ×î´ó³ß´çÊÇ¶àÉÙ£¿</H4>          
-		ÏÂÃæÊÇÒ»Ð©ÏÞÖÆ£º<PRE>    Ò»¸öÊý¾Ý¿â×î´ó³ß´ç£¿&nbsp;&nbsp;&nbsp;ÎÞÏÞÖÆ£¨´æÔÚ 1TB µÄÊý¾Ý¿â£©
-    Ò»¸ö±íµÄ×î´ó³ß´ç£¿&nbsp;&nbsp;&nbsp; 16TB
-    Ò»ÐÐµÄ×î´ó³ß´ç£¿&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.6TB
+</pre>
+
+    <h4><a id="4.5" name="4.5"></a>4.5) Ò»ÐÐ£¬Ò»¸ö±í£¬Ò»¸ö¿âµÄ×î´ó³ß´çÊÇ¶àÉÙ£¿</h4>
+    ÏÂÃæÊÇÒ»Ð©ÏÞÖÆ£º
+<pre>
+    Ò»¸öÊý¾Ý¿â×î´ó³ß´ç£¿   ÎÞÏÞÖÆ£¨´æÔÚ 1TB µÄÊý¾Ý¿â£©
+    Ò»¸ö±íµÄ×î´ó³ß´ç£¿    16TB
+    Ò»ÐÐµÄ×î´ó³ß´ç£¿      1.6TB
      Ò»¸ö×Ö¶ÎµÄ×î´ó³ß´ç?   1GB
-    Ò»¸ö±íÀï×î´óÐÐÊý£¿&nbsp;&nbsp;&nbsp;&nbsp; ÎÞÏÞÖÆ
-    Ò»¸ö±íÀï×î´óÁÐÊý£¿&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;¸úÁÐÀàÐÍÓÐ¹Ø,250-1600
-    Ò»¸ö±íÀïµÄ×î´óË÷ÒýÊýÁ¿£¿ÎÞÏÞÖÆ</PRE>
-		µ±È»£¬Êµ¼ÊÉÏÃ»ÓÐÕæÕýµÄÎÞÏÞÖÆ£¬»¹ÊÇÒªÊÜ¿ÉÓÃ´ÅÅÌ¿Õ¼ä¡¢¿ÉÓÃÄÚ´æ/½»»»ÇøµÄÖÆÔ¼¡£
-		<P>
-		±íµÄ×î´ó³ß´ç 16 TB ²»ÐèÒª²Ù×÷ÏµÍ³¶Ô´óÎÄ¼þµÄÖ§³Ö¡£´ó±íÓÃ¶à¸ö 1        
-        GB µÄÎÄ¼þ´æ´¢£¬Òò´ËÎÄ¼þÏµÍ³³ß´çµÄÏÞÖÆÊÇ²»ÖØÒªµÄ¡£          
-		<P>Èç¹ûÈ±Ê¡µÄ¿é´óÐ¡Ôö³¤µ½ 32K £¬×î´óµÄ±í³ß´çºÍ×î´óÁÐÊý¿ÉÒÔÔö¼Ó¡£</P>          
-		<H4><a name="4.6"></a>4.6)´æ´¢Ò»¸öµäÐÍµÄÆ½ÃæÎÄ¼þÀïµÄÊý¾ÝÐèÒª¶àÉÙ´ÅÅÌ¿Õ¼ä£¿</H4>
-		Ò»¸ö Postgres Êý¾Ý¿â×î¶à¿ÉÄÜÐèÒªÏàµ±ÓÚÔÚÒ»¸öÆ½ÃæÎÄ¼þÀï´æ´¢ÏàÍ¬Êý¾ÝµÄ5±¶µÄ´ÅÅÌ¿Õ¼ä¡£          
-		<P>ÀýÈç£¬¼ÙÉèÓÐÒ»¸ö 100,000 ÐÐµÄÎÄ¼þ£¬Ã¿ÐÐÓÐÒ»¸öÕûÊýºÍÒ»¸öÎÄ±¾ÃèÊö¡£¼ÙÉèÎÄ±¾´®µÄÆ½¾ù³¤¶ÈÎ»20×Ö½Ú¡£Æ½ÃæÎÄ¼þÕ¼ÓÃ&nbsp;2.8 MB¡£´æ·ÅÕâÐ©Êý¾ÝµÄ           
-			PostgreSQL Êý¾Ý¿âÎÄ¼þ´óÔ¼ÊÇ 6.4 MB:<PRE>     36 ×Ö½Ú: Ã¿ÐÐµÄÍ·£¨¹À¼ÆÖµ£©
+    Ò»¸ö±íÀï×î´óÐÐÊý£¿     ÎÞÏÞÖÆ
+    Ò»¸ö±íÀï×î´óÁÐÊý£¿     ¸úÁÐÀàÐÍÓÐ¹Ø,250-1600
+    Ò»¸ö±íÀïµÄ×î´óË÷ÒýÊýÁ¿£¿ÎÞÏÞÖÆ
+</pre>
+    µ±È»£¬Êµ¼ÊÉÏÃ»ÓÐÕæÕýµÄÎÞÏÞÖÆ£¬»¹ÊÇÒªÊÜ¿ÉÓÃ´ÅÅÌ¿Õ¼ä¡¢¿ÉÓÃÄÚ´æ/½»»»ÇøµÄÖÆÔ¼¡£ 
+
+    <p>±íµÄ×î´ó³ß´ç 16 TB ²»ÐèÒª²Ù×÷ÏµÍ³¶Ô´óÎÄ¼þµÄÖ§³Ö¡£´ó±íÓÃ¶à¸ö 1 GB µÄÎÄ¼þ´æ´¢£¬Òò´ËÎÄ¼þÏµÍ³³ß´çµÄÏÞÖÆÊÇ²»ÖØÒªµÄ¡£</p>
+
+    <p>Èç¹ûÈ±Ê¡µÄ¿é´óÐ¡Ôö³¤µ½ 32K £¬×î´óµÄ±í³ß´çºÍ×î´óÁÐÊý¿ÉÒÔÔö¼Ó¡£</p>
+
+    <h4><a id="4.6" name="4.6"></a>4.6)´æ´¢Ò»¸öµäÐÍµÄÆ½ÃæÎÄ¼þÀïµÄÊý¾ÝÐèÒª¶àÉÙ´ÅÅÌ¿Õ¼ä£¿</h4>
+    Ò»¸ö Postgres Êý¾Ý¿â×î¶à¿ÉÄÜÐèÒªÏàµ±ÓÚÔÚÒ»¸öÆ½ÃæÎÄ¼þÀï´æ´¢ÏàÍ¬Êý¾ÝµÄ5±¶µÄ´ÅÅÌ¿Õ¼ä¡£ 
+
+    <p>ÀýÈç£¬¼ÙÉèÓÐÒ»¸ö 100,000 ÐÐµÄÎÄ¼þ£¬Ã¿ÐÐÓÐÒ»¸öÕûÊýºÍÒ»¸öÎÄ±¾ÃèÊö¡£¼ÙÉèÎÄ±¾´®µÄÆ½¾ù³¤¶ÈÎ»20×Ö½Ú¡£Æ½ÃæÎÄ¼þÕ¼ÓÃ 2.8 MB¡£´æ·ÅÕâÐ©Êý¾ÝµÄ PostgreSQL Êý¾Ý¿âÎÄ¼þ´óÔ¼ÊÇ 6.4 MB:</p>
+<pre>
+     36 ×Ö½Ú: Ã¿ÐÐµÄÍ·£¨¹À¼ÆÖµ£©
      24 ×Ö½Ú: Ò»¸öint×Ö¶ÎºÍÒ»¸öÎÄ±¾ÐÍ×Ö¶Î
    +  4 ×Ö½Ú: Ò³ÃæÄÚÖ¸ÏòÔª×éµÄÖ¸Õë
    ----------------------------------------
@@ -567,277 +484,293 @@
       128 ÐÐÃ¿Ò³
 
    782 Êý¾ÝÒ³ * 8192 ×Ö½Ú/Ò³  =  6,406,144 ×Ö½Ú£¨6.4 MB£©
-</PRE>          
-		<P>Ë÷Òý²»ÐèÒªÕâÃ´¶àµÄ¶îÍâÏûºÄ£¬µ«Ò²È·Êµ°üÀ¨±»Ë÷ÒýµÄÊý¾Ý£¬Òò´ËËüÃÇÒ²¿ÉÄÜºÜ´ó¡£</P>
-		<P>¿ÕÖµ´æ·ÅÔÚÎ»Í¼ÖÐ£¬Òò´ËÕ¼ÓÃºÜÉÙµÄ¿Õ¼ä¡£</P>
-		<H4><a name="4.7"></a>4.7)        
-        ÈçºÎ²é¿´±í¡¢Ë÷Òý¡¢Êý¾Ý¿âÒÔ¼°ÓÃ»§µÄ¶¨Òå£¿</H4>  
-		<I>&nbsp;psql</I> ÓÐÐí¶à·´Ð±¸ÜÃüÁîÓÃÓÚÏÔÊ¾ÕâÐ©ÐÅÏ¢¡£ÓÃ \? ¿´¿´¶¼ÓÐÄÄÐ©¡£ÒÔ pg_ ´òÍ·µÄÏµÍ³±íÒ²ÃèÊöÁËÕâÐ©ÐÅÏ¢¡£ psql -l           
-		¿ÉÒÔÁÐ³öËùÓÐµÄÊý¾Ý¿â¡£
-		<P>Ò²¿ÉÒÔÊÔÊÔÎÄ¼þ <I>pgsql/src/tutorial/syscat.source</I>¡£ËüÑÝÊ¾ÁËÐí¶à´ÓÊý¾Ý¿âÏµÍ³±íÀï»ñÈ¡ÐÅÏ¢ÐèÒªµÄ <FONT size="-1">          
-				SELECT</FONT>¡£
-			<H4><a name="4.8"></a>4.8) ÎÒµÄ²éÑ¯ºÜÂý»òÕßÃ»ÓÐÀûÓÃË÷Òý¡£ÎªÊ²Ã´£¿</H4>          
-		<P>
-		²¢·ÇÃ¿¸ö²éÑ¯¶¼»á×Ô¶¯Ê¹ÓÃË÷Òý¡£Ö»ÓÐÔÚ±íµÄ´óÐ¡³¬¹ýÒ»¸ö×îÐ¡Öµ£¬²¢ÇÒ²éÑ¯Ö»Ñ¡Ôñ±íÖÐ½ÏÐ¡±ÈÀýµÄÐÐÊ±²ÉÓÃÊ¹ÓÃË÷Òý¡£ÕâÊÇÒòÎªË÷ÒýÉ¨ÃèÒýÆðµÄËæ¼´´ÅÅÌ´æÈ¡¿ÉÄÜ±ÈÖ±½ÓµØ¶ÁÈ¡±í£¨Ë³ÐòÉ¨Ãè£©¸üÂý¡£ÎªÁËÅÐ¶ÏÊÇ·ñÊ¹ÓÃË÷Òý£¬PostgreSQL           
-		±ØÐë»ñµÃÓÐ¹Ø±íµÄÍ³¼ÆÖµ¡£ÕâÐ©Í³¼ÆÖµ¿ÉÒÔÊ¹ÓÃ VACUUM ANALYZE£¬»ò ANALYZE           
-		»ñµÃ¡£Ê¹ÓÃÍ³¼ÆÖµ£¬ÓÅ»¯Æ÷ÖªµÀ±íÖÐÓÐ¶àÉÙÐÐ£¬¾ÍÄÜ¹»¸üºÃµØÅÐ¶ÏÊÇ·ñÀûÓÃË÷Òý¡£Í³¼ÆÖµ¶ÔÈ·¶¨ÓÅ»¯µÄÁ¬½ÓË³ÐòºÍÁ¬½Ó·½·¨Ò²ºÜÓÐÓÃ¡£ÔÚ±íµÄÄÚÈÝ·¢Éú±ä»¯Ê±£¬Ó¦¶¨ÆÚ½øÐÐÍ³¼ÆÖµµÄ»ñÈ¡¡£
-		<P>
-		Ë÷ÒýÍ¨³£²»ÓÃÓÚ ORDER BY »òÖ´ÐÐÁ¬½Ó¡£¶ÔÒ»¸ö´ó±íµÄÒ»´ÎË³ÐòÉ¨Ãè£¬ÔÙ×öÒ»¸öÏÔÊ½µÄÅÅÐòÍ¨³£±ÈË÷ÒýÉ¨ÃèÒª¿ì¡£          
-		<P>µ«ÊÇ£¬ÔÚ LIMIT ºÍ ORDER BY ½áºÏÊ¹ÓÃÊ±¾­³£»áÊ¹ÓÃË÷Òý£¬ÒòÎªÖ»»á·µ»Ø±íµÄÒ»Ð¡²¿·Ö¡£Êµ¼ÊÉÏ£¬ËäÈ» MAX() ºÍ MIN() ²¢²»Ê¹ÓÃË÷Òý£¬Í¨¹ý¶Ô           
-			ORDER BY ºÍ LLIMIT Ê¹ÓÃË÷ÒýÈ¡µÃ×î´óÖµºÍ×îÐ¡ÖµÒ²ÊÇ¿ÉÒÔµÄ£º<BR>          
-			<BR>
-        &nbsp;&nbsp;&nbsp; SELECT col<BR>          
-        &nbsp;&nbsp;&nbsp; FROM tab<BR>          
-        &nbsp;&nbsp;&nbsp; ORDER BY col [ DESC ]<BR>          
-        &nbsp;&nbsp;&nbsp; LIMIT 1;          
-		<P>µ±Ê¹ÓÃÍ¨Åä·û²Ù×÷£¬ÀýÈç LIKE »ò ~ Ê±£¬Ë÷ÒýÖ»ÄÜÔÚÌØ¶¨µÄÇé¿öÏÂÊ¹ÓÃ£º&nbsp;&nbsp;<ul><li> ×Ö·û´®µÄ¿ªÊ¼²¿·Ö±ØÐëÊÇÆÕÍ¨×Ö·û´®£¬Ò²¾ÍÊÇËµ£º</li>   
-          <ul><li>LIKE Ä£Ê½²»ÄÜÒÔ % ´òÍ·¡£</li><li>~ £¨ÕýÔò±í´ïÊ½£©Ä£Ê½±ØÐëÒÔ ^ ´òÍ·¡£</li></ul>   
-          <li>×Ö·û´®²»ÄÜÒÔÆ¥Åä¶à¸ö×Ö·ûµÄÄ£Ê½Àà´òÍ·£¬ÀýÈç [a-e]¡£</li><li>´óÐ¡Ð´ÎÞ¹ØµÄ²éÕÒ£¬Èç ILIKE ºÍ ~* µÈ²»Ê¹ÓÃË÷Òý¡£µ«¿ÉÒÔÓÃ 4.12 ½ÚÃèÊöµÄº¯ÊýË÷Òý¡£</li><li>ÔÚ×ö initdb Ê±±ØÐë²ÉÓÃÈ±Ê¡µÄ±¾µØÉèÖÃ C locale¡£</li></ul>          
-			<H4><a name="4.9"></a>4.9)        
-            ÎÒÈçºÎ²ÅÄÜ¿´µ½²éÑ¯ÓÅ»¯Æ÷ÊÇÔõÑù´¦ÀíÎÒµÄ²éÑ¯µÄ£¿</H4>  
-			²Î¿¼ <FONT size="-1">EXPLAIN</FONT> ÊÖ²áÒ³¡£          
-			<H4><a name="4.10"></a>4.10) R-tree Ë÷ÒýÊÇÊ²Ã´£¿</H4>          
-		<P>R-tree Ë÷ÒýÓÃÓÚË÷Òý¿Õ¼äÊý¾Ý¡£Ò»¸ö¹þÏ£Ë÷ÒýÎÞ·¨´¦Àí·¶Î§ËÑË÷¡£¶ø B-tree Ë÷ÒýÖ»ÄÜ´¦ÀíÒ»Î¬µÄ·¶Î§ËÑË÷¡£R-tree           
-			Ë÷Òý¿ÉÒÔ´¦Àí¶àÎ¬Êý¾Ý¡£ÀýÈç£¬Èç¹û¿ÉÒÔÔÚÒ»¸öÀàÐÍÎª point µÄ×Ö¶ÎÉÏ½¨Á¢Ò»¸ö R-tree Ë÷Òý£¬ÄÇÃ´ÏµÍ³ÄÜ¸ü¸ßÐ§µØ»Ø´ðÀàËÆ           
-			¡°Ñ¡ÔñÔÚÒ»¸ö³¤·½ÐÎ·¶Î§ÄÚµÄËùÓÐµã¡±¡£<BR>
-			<BR>
-			ÃèÊö×î³õµÄ R-Tree Éè¼ÆµÄÕýÊ½ÂÛÎÄÊÇ£º<BR>          
-			<BR>
-			Guttman, A. "R-Trees: A Dynamic Index Structure for Spatial Searching." Proc of           
-			the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.          
-			<BR>
-			<BR>
-			Äã»¹¿ÉÒÔÔÚ Stonebraker µÄ¡°Readings in Database Systems¡±ÀïÕÒµ½ÕâÆªÎÄÕÂ¡£<BR>          
-			<BR>
-			ÏµÍ³ÄÚÖÃµÄ R-Tree ¿ÉÒÔ´¦Àí¶à±ßÐÎºÍ·½ÐÎ¡£ÀíÂÛÉÏËµ£¬R-tree ¿ÉÒÔÀ©Õ¹Îª´¦Àí¸ü¶àÎ¬Êý¡£²»¹ýÔÚÊµ¼ùÉÏ£¬À©Õ¹ R-trees           
-			ÐèÒªÒ»¶¨µÄ¹¤×÷Á¿£¬¶øÎÒÃÇÄ¿Ç°Ã»ÓÐÈçºÎ×öµÄÎÄµµ¡£<H4><a name="4.11"></a>4.11)        
-        Ê²Ã´ÊÇ»ùÒò²éÑ¯ÓÅ»¯£¨Genetic Query Optimization£©£¿</H4>         
-		<P>GEQO Ä£¿é²ÉÓÃ»ùÒòËã·¨£¨Genetic Algorithm£¬GA£©¼Ó¿ì¶à±íÁ¬½ÓµÄ²éÑ¯ÓÅ»¯¡£ËüÔÊÐíÍ¨¹ý·ÇÇî¾ÙËÑË÷´¦Àí´óµÄÁ¬½Ó²éÑ¯¡£          
-			<H4><a name="4.12"></a>4.12)        
-            ÎÒÔõÑù×öÕýÔò±í´ïÊ½ËÑË÷ºÍ´óÐ¡Ð´ÎÞ¹ØµÄÕýÔò±í´ïÊ½ËÑË÷£¿ÔõÑùÀûÓÃË÷Òý½øÐÐ´óÐ¡Ð´ÎÞ¹ØËÑË÷£¿</H4> 
-        <p>²Ù×÷·û ~ ´¦ÀíÕýÔò±í´ïÊ½Æ¥Åä£¬¶ø ~* ´¦Àí´óÐ¡Ð´ÎÞ¹ØµÄÕýÔò±í´ïÊ½Æ¥Åä¡£´óÐ´Ð©ÎÞ¹ØµÄ LIKE ±äÖÖ³ÉÎª ILIKE¡£<br>          
-        <br>
-        ´óÐ¡Ð´ÎÞ¹ØµÄµÈÊ½±È½ÏÍ¨³£Ð´×ö£º<br>
-        <br>
-        &nbsp;&nbsp;&nbsp; SELECT *<br>          
-        &nbsp;&nbsp;&nbsp; FROM tab<br>          
-        &nbsp;&nbsp;&nbsp; WHERE lower(col) = 'abc';<br>          
-        <br>
-        ÕâÑù½«²»»áÊ¹ÓÃ±ê×¼µÄË÷Òý¡£µ«ÊÇ¿ÉÒÔ´´½¨Ò»¸ö¿É±»ÀûÓÃµÄº¯ÊýË÷Òý:<br>
-        <br>
-        &nbsp;&nbsp;&nbsp; CREATE INDEX tabindex ON tab (lower(col));</p>         
-        <h4><a name="4.13"></a>4.13) ÔÚÒ»¸ö²éÑ¯Àï£¬ÎÒÔõÑù¼ì²âÒ»¸ö×Ö¶ÎÊÇ·ñÎª NULL£¿</h4>          
-        <p>ÓÃ IS NULL ºÍ IS NOT NULL ²âÊÔÕâ¸ö×Ö¶Î¡£&nbsp;<br>         
-        </p>
-        <h4><a name="4.14"></a>4.14) ¸÷ÖÖ×Ö·ûÀàÐÍÖ®¼äÓÐÊ²Ã´²»Í¬£¿</h4>          
-        <p>&nbsp; ÀàÐÍ&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;        
-        ÄÚ²¿Ãû³Æ&nbsp;&nbsp;&nbsp;          
-        ËµÃ÷<br>
-        &nbsp; --------------------------------------------------<br>        
-        &nbsp; "char"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; char&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;        
-        1¸ö×Ö·û character<br>          
-        &nbsp; CHAR(#)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bpchar&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;        
-        ¶¨³¤×Ö·û´®£¬Êµ¼ÊÊý¾Ý²»×ã¶¨Òå³¤¶ÈÊ±£¬ÒÔ¿Õ¸ñ²¹Æë<br>
-        &nbsp; VARCHAR(#)&nbsp; varchar&nbsp;&nbsp;&nbsp;&nbsp; Ö¸¶¨ÁË×î´ó³¤¶È£¬±ä³¤×Ö·û´®£¬²»×ã¶¨Òå³¤¶ÈµÄ²¿·Ö²»²¹Æë<br>         
-        &nbsp; TEXT&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; text&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;        
-        ´®³¤¶È½öÊÜÐÐµÄ×î´ó³¤¶ÈÏÞÖÆ<br>
-        &nbsp; BYTEA&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; bytea&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;          
-        ±ä³¤×Ö½ÚÐòÁÐ£¨±ä³¤µÄ¶þ½øÖÆÊý¾Ý£©<br>
-        <br>
-        ÔÚÏµÍ³±íºÍÔÚÒ»Ð©´íÎóÐÅÏ¢ÀïÄã½«¿´µ½ÄÚ²¿Ãû³Æ¡£&nbsp;<br>
-        <br>
-        ÉÏÃæ×îºóËÄÖÖÀàÐÍÊÇ"varlena"£¨±ä³¤£©ÀàÐÍ£¨Ò²¾ÍÊÇËµ£¬¿ªÍ·µÄËÄ¸ö×Ö½ÚÊÇ³¤¶È£¬ºóÃæ²ÅÊÇÊý¾Ý£©¡£ÓÚÊÇÊµ¼ÊÕ¼ÓÃµÄ¿Õ¼ä±ÈÉùÃ÷µÄ´óÐ¡Òª¶àÒ»Ð©¡£È»¶øÕâÐ©ÀàÐÍ¶¼¿ÉÒÔ±»Ñ¹Ëõ´æ´¢£¬Ò²¿ÉÒÔÓÃ TOAST ÍÑ»ú´æ´¢£¬Òò´Ë´ÅÅÌ¿Õ¼äÒ²¿ÉÄÜ±ÈÔ¤ÏëµÄÒªÉÙ¡£<br>          
-        <br>
-        CHAR(n) ×îÊÊºÏÓÚ´æ´¢³¤¶È»ù±¾²î²»¶àµÄ×Ö·û´®¡£VARCHAR(n) ÔÚ´æ´¢ÏÞÖÆÁË×î´ó³¤¶ÈµÄ±ä³¤×Ö·û´®ÊÇ×îºÃµÄ¡£TEXT ÊÊÓÃÓÚ´æ´¢²»ÏÞÖÆ³¤¶ÈµÄ×Ö·û´®£¬×î´ó¿É´ï 1G¡£BYTEA ÓÃÓÚ´æ´¢¶þ½øÖÆÊý¾Ý£¬ÓÈÆäÊÇ°üº¬ NULL ×Ö½Ú£¨¶þ½øÖÆµÄ0£©µÄÖµ¡£ÕâÐ©ÀàÐÍ¾ßÓÐÀàÐÍµÄÐÔÄÜ¡£</p>          
-        <h4><a name="4.15.1"></a>4.15.1) ÎÒÔõÑù´´½¨Ò»¸öÐòÁÐºÅ/×Ô¶¯µÝÔöµÄ×Ö¶Î£¿</h4>          
-        <p>PostgreSQL Ö§³Ö SERIAL Êý¾ÝÀàÐÍ¡£ËüÔÚ×Ö¶ÎÉÏ×Ô¶¯´´½¨Ò»¸öÐòÁÐºÍË÷Òý¡£ÀýÈç£¬<br>          
-        &nbsp;&nbsp;&nbsp; CREATE TABLE person (&nbsp;<br>         
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; id   SERIAL,&nbsp;<br>         
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; name TEXT&nbsp;<br>         
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; );<br>        
-        <br>
-   »á×Ô¶¯×ª»»Îª£º&nbsp;<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;<br>
-        &nbsp;&nbsp;&nbsp; CREATE SEQUENCE person_id_seq;<br>          
-        &nbsp;&nbsp;&nbsp; CREATE TABLE person (&nbsp;<br>         
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),<br>          
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; name TEXT&nbsp;<br>         
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; );<br>        
-        &nbsp;&nbsp;&nbsp; CREATE UNIQUE INDEX person_id_key ON person ( id );<br>          
-        <br>
-        ²Î¿¼ create_sequence ÊÖ²áÒ³»ñÈ¡¹ØÓÚÐòÁÐµÄ¸ü¶àÐÅÏ¢¡£Äã»¹¿ÉÒÔÓÃÃ¿ÐÐµÄ oid ×Ö¶Î×÷ÎªÒ»¸öÎ¨Ò»Öµ¡£²»¹ý£¬Èç¹ûÄãÐèÒªÇãµ¹ºÍÖØÔØÊý¾Ý¿â£¬ÄãÐèÒªÊ¹ÓÃ pg_dump µÄ -o Ñ¡Ïî»òÕß COPY WITH OIDS Ñ¡ÏîÒÔ±£Áô OID¡£&nbsp;</p>         
-        <h4><a name="4.15.2"></a>4.15.2)           
-			ÎÒÈçºÎ»ñµÃÒ»¸ö²åÈëµÄÐòÁÐºÅµÄÖµ£¿</h4>
-        <p>Ò»ÖÖ·½·¨ÊÇÔÚ²åÈëÖ®Ç°ÏÈÓÃº¯Êý nextval() ´ÓÐòÁÐ¶ÔÏóÀï¼ìË÷³öÏÂÒ»¸ö SERIAL Öµ£¬È»ºóÔÙÏÔÊ½²åÈë¡£Ê¹ÓÃ 
-        <a href="#4.15.1"> 4.15.1</a> ÀïµÄÀý±í£¬¿ÉÓÃÎ±ÂëÕâÑùÃèÊö£º&nbsp;<br>         
-        <br>
-        &nbsp;&nbsp;&nbsp; new_id = execute("SELECT nextval('person_id_seq')");<br>          
-        &nbsp;&nbsp;&nbsp; execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");<br>          
-        <br>
-        ÕâÑù»¹ÄÜÔÚÆäËû²éÑ¯ÖÐÊ¹ÓÃ´æ·ÅÔÚ new_id ÀïµÄÐÂÖµ£¨ÀýÈç£¬×÷Îª person ±íµÄÍâ¼ü£©¡£×¢Òâ×Ô¶¯´´½¨µÄ SEQUENCE ¶ÔÏóµÄÃû³Æ½«»áÊÇ &lt;table>_&lt;serialcolumn>_seq£¬ÕâÀï table ºÍ serialcolumn ·Ö±ðÊÇÄãµÄ±íµÄÃû³ÆºÍÄãµÄ SERIAL ×Ö¶ÎµÄÃû³Æ¡£&nbsp;<br>         
-        <br>
-        ÀàËÆµÄ£¬ÔÚ SERIAL ¶ÔÏóÈ±Ê¡²åÈëºóÄã¿ÉÒÔÓÃº¯Êý currval() ¼ìË÷¸Õ¸³ÖµµÄ SERIAL Öµ£¬ÀýÈç£¬&nbsp;<br>         
-        <br>
-        &nbsp;&nbsp;&nbsp; execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");<br>          
-        &nbsp;&nbsp;&nbsp; new_id = execute("SELECT currval('person_id_seq')");<br>          
-        <br>
-        ×îºó£¬Äã¿ÉÒÔÊ¹ÓÃ´Ó INSERT Óï¾ä·µ»ØµÄ <a href="4.16">OID</a> 
-        ²éÕÒÈ±Ê¡Öµ£¬¾¡¹ÜÕâ¿ÉÄÜÊÇ×îÈ±·¦ÒÆÖ²ÐÔµÄ·½·¨¡£ÔÚ Perl Àï£¬Ê¹ÓÃ´øÓÐ Edmund Mergl µÄ DBD::Pg Ä£¿éµÄ DBI£¬oid Öµ¿ÉÒÔÍ¨¹ý $sth->execute() ºóµÄ $sth->{pg_oid_status} »ñµÃ¡£&nbsp;</p>         
-        <h4><a name="4.15.3"></a>4.15.3) Ê¹ÓÃ currval() ºÍ nextval() »áµ¼ÖÂÒ»¸öÓëÆäËûÓÃ»§Ö®¼äµÄÎÉÂÒÇé¿öÂð£¿</h4>          
-        <p>²»»á¡£currval() ·µ»ØºóÌ¨½ø³Ì¶ø²»ÊÇËùÓÐÓÃ»§¸³ÓèµÄµ±Ç°Öµ¡£<br>          
-        </p>
-        <h4><a name="4.15.4"></a>4.15.4)           
-			ÎªÊ²Ã´²»ÔÚÊÂÎñÒì³£ÖÐÖ¹ºóÖØÓÃÐòÁÐºÅÄØ£¿ÎªÊ²Ã´ÔÚÐòÁÐºÅ×Ö¶ÎµÄÈ¡ÖµÖÐ´æÔÚ¼ä¶ÏÄØ£¿</h4>
-        <p>ÎªÁËÌá¸ß²¢·¢ÐÔ£¬ÐòÁÐºÅÔÚÐèÒªµÄÊ±ºò¸³ÓèÕýÔÚÔËÐÐµÄÊÂÎñ£¬²¢ÇÒÖ»ÔÚÊÂÎñ½áÊøÖ®Ç°²»·âËø¡£Õâ¾Í»áµ¼ÖÂØ²ÕÛÊÂÎñºóµÄÐòÁÐºÅ³öÏÖ¼ä¸ô¡£</p>
-        <h4><br>
-        <a name="4.16"></a>4.16) Ê²Ã´ÊÇ OID£¿Ê²Ã´ÊÇ TID£¿</h4>          
-        <p>OID ÊÇ PostgreSQL ÖÐÐÐµÄÎ¨Ò»±êÊ¶¡£PostgreSQL Àï´´½¨µÄÃ¿Ò»ÐÐ¶¼»ñµÃÒ»¸öÎ¨Ò»µÄ OID¡£ËùÓÐÔÚ initdb ¹ý³ÌÖÐ´´½¨µÄ OID ¶¼Ð¡ÓÚ 16384 £¨²Î¼û include/access/transam.h£©¡£ËùÓÐÓÃ»§´´½¨µÄ OID ¶¼´óÓÚ»òµÈÓÚÕâ¸öÖµ¡£È±Ê¡Ê±£¬ËùÓÐÕâÐ© OID ²»½öÔÚÒ»¸ö±í»òÒ»¸öÊý¾Ý¿âÀïÃæÎ¨Ò»£¬¶øÇÒÔÚÕû¸ö PostgreSQL °²×°ÀïÒ²ÊÇÎ¨Ò»µÄ¡£&nbsp;<br>         
-        <br>
-        PostgreSQL ÔÚËüµÄÄÚ²¿ÏµÍ³±íÀïÊ¹ÓÃ OID ÔÚ±íÖ®¼ä½¨Á¢ÁªÏµ¡£ÕâÐ© OID ¿ÉÒÔÓÃÓÚ±êÊ¶ÌØ¶¨µÄÓÃ»§ÐÐÒÔ¼°ÓÃÔÚÁ¬½ÓÀï¡£½¨ÒéÊ¹ÓÃ×Ö¶ÎÀàÐÍ OID ´æ´¢ OID Öµ¡£¿ÉÒÔÔÚ OID ×Ö¶ÎÉÏ´´½¨Ò»¸öË÷ÒýÒÔ¿ìËÙ·ÃÎÊ¡£&nbsp;<br>         
-        <br>
-        OID ´ÓÒ»¸ö±»ËùÓÐÊý¾Ý¿âÊ¹ÓÃµÄÖÐÐÄÇøÓòÀï¸³Öµ¸øËùÓÐÐÂÐÐ¡£Èç¹ûÄãÏë°Ñ OID ¸Ä³É±ðµÄÖµ£¬»òÕßÏë×öÒ»·Ý±íµÄ´øÔ­Ê¼ OID µÄ¿½±´£¬Äã¿ÉÒÔ×öµ½£º&nbsp;<br>         
-        <br>
-        &nbsp;&nbsp;&nbsp; CREATE TABLE new(old_oid oid, mycol int);<br>          
-        &nbsp;&nbsp;&nbsp; SELECT old_oid, mycol INTO new FROM old;<br>          
-        &nbsp;&nbsp;&nbsp; COPY new TO '/tmp/pgtable';<br>          
-        &nbsp;&nbsp;&nbsp; DELETE FROM new;<br>          
-        &nbsp;&nbsp;&nbsp; COPY new WITH OIDS FROM '/tmp/pgtable';<br>          
-        <br>
-        OID ÓÃ4×Ö½ÚµÄÕûÊý±£´æ£¬ÔÚ³¬¹ý40ÒÚÊ±½«Òç³ö¡£Ã»ÓÐÈË±¨¸æ³öÏÖ¹ýÒç³ö£¬¶øÎÒÃÇ´òËãÔÚÓÐÈË±¨¸æÖ®Ç°Ïû³ýÕâ¸öÏÞÖÆ¡£<br>          
-        <br>
-        TID ÓÃÓÚ±êÊ¶´ø×ÅÊý¾Ý¿é£¨µØÖ·£©ºÍ£¨¿éÄÚ£©Æ«ÒÆµÄÌØ¶¨µÄÎïÀíÐÐ¡£TID ÔÚÐÐ±»¸ü¸Ä»òÖØÔØºó·¢Éú¸Ä±ä¡£Ë÷ÒýÈë¿ÚÊ¹ÓÃËüÃÇÖ¸ÏòÎïÀíÐÐ¡£</p>          
-        <h4><a name="4.17"></a>4.17) PostgreSQL Ê¹ÓÃµÄÒ»Ð©ÊõÓïµÄº¬ÒåÊÇÊ²Ã´£¿</h4>          
-        <p>Ò»Ð©Ô´´úÂëºÍÒ»Ð©¾ÉÒ»µãµÄÎÄµµÊ¹ÓÃÒ»Ð©ÓÐ¸ü³£ÓÃÓÃ·¨µÄÊõÓï¡£ÏÂÃæÊÇÆäÖÐÒ»²¿·Ö£º&nbsp;<br>
-        &nbsp;&nbsp;&nbsp; table, relation, class&nbsp;<br>         
-        &nbsp;&nbsp;&nbsp; row, record, tuple&nbsp;<br>         
-        &nbsp;&nbsp;&nbsp; column, field, attribute&nbsp;<br>         
-        &nbsp;&nbsp;&nbsp; retrieve, select&nbsp;<br>         
-        &nbsp;&nbsp;&nbsp; replace, update&nbsp;<br>         
-        &nbsp;&nbsp;&nbsp; append, insert&nbsp;<br>         
-        &nbsp;&nbsp;&nbsp; OID, serial value&nbsp;<br>         
-        &nbsp;&nbsp;&nbsp; portal, cursor&nbsp;<br>         
-        &nbsp;&nbsp;&nbsp; range variable, table name, table alias&nbsp;<br>         
-        <br>
-        ÓÐÒ»¸öÍ¨ÓÃÊý¾Ý¿âÊõÓïµÄÁÐ±í£º<a href="http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html">http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html</a> 
-        ¡£&nbsp;&nbsp;</p>
-        <h4><a name="4.18"></a>4.18)           
-			ÎªÊ²Ã´ÎÒÊÕµ½´íÎó¡°<i>ERROR: Memory exhausted in AllocSetAlloc()</i>¡±£¿</h4>
-        <p>ÕâºÜ¿ÉÄÜÊÇÏµÍ³µÄÐéÄâÄÚ´æÓÃ¹âÁË£¬»òÕßÄÚºË¶ÔÄ³Ð©×ÊÔ´ÓÐ½ÏµÍµÄÏÞÖÆÖµ¡£ÔÚÆô¶¯ postmaster Ö®Ç°ÊÔÊÔÏÂÃæµÄÃüÁî£º&nbsp;<br>         
-        <br>
-        &nbsp;&nbsp;&nbsp; ulimit -d 262144<br>          
-        &nbsp;&nbsp;&nbsp; limit datasize 256m<br>          
-        <br>
-        È¡¾öÓÚÄãÓÃµÄ shell£¬ÉÏÃæÃüÁîÖ»ÓÐÒ»ÌõÄÜ³É¹¦£¬µ«ÊÇËü½«°ÑÄãµÄ½ø³ÌÊý¾Ý¶ÎÏÞÖÆÉèµÃ±È½Ï¸ß£¬Òò¶øÒ²ÐíÄÜÈÃ²éÑ¯Íê³É¡£ÕâÌõÃüÁîÓ¦ÓÃÓÚµ±Ç°½ø³Ì£¬ÒÔ¼°ËùÓÐÔÚÕâÌõÃüÁîÔËÐÐºó´´½¨µÄ×Ó½ø³Ì¡£Èç¹ûÄãÊÇÔÚÔËÐÐSQL¿Í»§¶ËÊ±ÒòÎªºóÌ¨·µ»ØÁËÌ«¶àµÄÊý¾Ý¶ø³öÏÖÎÊÌâ£¬ÇëÔÚÔËÐÐ¿Í»§¶ËÖ®Ç°Ö´ÐÐÉÏÊöÃüÁî¡£</p>          
-        <h4><a name="4.19"></a>4.19)           
-			ÎÒÈçºÎ²ÅÄÜÖªµÀËùÔËÐÐµÄ PostgreSQL µÄ°æ±¾£¿</h4>          
-        <p>´Ó psql Àï£¬¼üÈë SELECT version()£»<br>          
-        </p>
-        <h4><a name="4.20"></a>4.20)           
-			ÎªÊ²Ã´ÎÒµÄ´ó¶ÔÏó²Ù×÷µ¼ÖÂ´íÎó¡°<I>invalid large obj descriptor¡±£¨·Ç·¨µÄ´ó¶ÔÏóÃèÊö·û£©</I>£¿</h4>          
-        <p>ÄãÐèÒªÔÚÊ¹ÓÃÈÎºÎ´ó¶ÔÏó¾ä±úµÄÇ°ºó·ÅÉÏ BEGIN WORK ºÍ COMMIT£¬Ò²¾ÍÊÇËµ£¬°üÎ§ lo_open ... lo_close¡£&nbsp;<br>         
-        <br>
-        Ä¿Ç° PostgreSQL Ç¿ÖÆÊµÊ©ÕâÌõ¹æÔò£ºÔÚÊÂÎñÌá½»Ê±¹Ø±Õ´ó¶ÔÏó¾ä±ú£¬ÕâÑù£¬£¨Ã»ÓÐ²ÉÓÃÊÂÎñÊ±£©£¬Ê×´Î¶Ô´ó¶ÔÏó¾ä±ú×öÈÎºÎÊÂÇéµÄÆóÍ¼¶¼»áµ¼ÖÂÒ»¸ö invalid large obj descriptor¡£ËùÒÔ£¬Èç¹ûÄãÃ»ÓÐÊ¹ÓÃÒ»¸öÊÂÎñ£¬ÒÔÇ°ÄÜ¹¤×÷µÄ´úÂë£¨ÖÁÉÙÊÇ´ó¶àÊýÊ±¼ä£©½«»áÉú³ÉÕâÃ´Ò»¸ö´íÎóÐÅÏ¢¡£&nbsp;<br>         
-        <br>
-        Èç¹ûÄãÊ¹ÓÃ¿Í»§¶Ë½Ó¿Ú£¬Èç ODBC£¬Äã¿ÉÄÜÐèÒª set auto-commit off¡£</p>          
-        <h4><a name="4.21"></a>4.21) ÎÒÈçºÎ´´½¨Ò»¸öÈ±Ê¡ÖµÊÇµ±Ç°Ê±¼äµÄ×Ö¶Î£¿</h4>          
-        <p>Ê¹ÓÃ CURRENT_TIMESTAMP£º<br>          
-        <br>
-        &nbsp;&nbsp;&nbsp; CREATE TABLE test(x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP);</p>          
-        <h4><a name="4.22"></a>4.22) ÎªÊ²Ã´Ê¹ÓÃ IN µÄ×Ó²éÑ¯ÕâÃ´Âý£¿</h4>          
-        <p>Ä¿Ç°£¬ÎÒÃÇÍ¨¹ýÎªÍâ²éÑ¯µÄÃ¿Ò»ÐÐË³ÐòÉ¨Ãè×Ó²éÑ¯µÄ½á¹ûÀ´Á¬½Ó×Ó²éÑ¯ºÍÍâ²éÑ¯¡£Èç¹û×Ó²éÑ¯·µ»ØÉÙÊý¼¸ÐÐ£¬¶øÍâ²éÑ¯·µ»ØºÜ¶àÐÐ£¬IN Ö´ÐÐµÃºÜ¿ì¡£ÎªÁË¼Ó¿ìÆäËû IN ²éÑ¯µÄÖ´ÐÐ£¬¿ÉÒÔÓÃ EXISTS Ìæ»» IN£º&nbsp;<br>         
-        <br>
-        &nbsp;&nbsp;&nbsp; SELECT *<br>          
-        &nbsp;&nbsp;&nbsp; FROM tab<br>          
-        &nbsp;&nbsp;&nbsp; WHERE col IN (SELECT subcol FROM subtab);<br>          
-        <br>
-        ¸ÄÎª£º&nbsp;<br>
-        <br>
-        &nbsp;&nbsp;&nbsp; SELECT *<br>          
-        &nbsp;&nbsp;&nbsp; FROM tab<br>          
-        &nbsp;&nbsp;&nbsp; WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);<br>          
-        <br>
-        ºóÕßÒªÏëÖ´ÐÐµÃ¸ü¿ì£¬subcol Ó¦¸ÃÊÇÒ»¸öË÷ÒýÁÐ¡£ÎÒÃÇÏ£ÍûÔÚÎ´À´µÄ·¢²¼°æ±¾ÖÐÐÞ²¹Õâ¸öÏÞÖÆ¡£</p>          
-        <h4><a name="4.23"></a>4.23) ÎÒÔõÑù½øÐÐ outer join £¨ÍâÁ¬½Ó£©£¿</h4>          
-        <p>PostgreSQL ²ÉÓÃ±ê×¼µÄ SQL Óï·¨Ö§³ÖÍâÁ¬½Ó¡£ÕâÀïÊÇÁ½¸öÀý×Ó£º<br>          
-        <br>
-        &nbsp;&nbsp;&nbsp; SELECT *<br>          
-        &nbsp;&nbsp;&nbsp; FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);<br>          
-        <br>
-        »ò&nbsp;<br>
-        &nbsp;&nbsp;&nbsp; SELECT *<br>          
-        &nbsp;&nbsp;&nbsp; FROM t1 LEFT OUTER JOIN t2 USING (col);<br>          
-        <br>
-        ÕâÁ½¸öµÈ¼ÛµÄ²éÑ¯ÔÚ t1.col ºÍ t2.col ÉÏ×öÁ¬½Ó£¬²¢ÇÒ·µâ»?t1 ÖÐËùÓÐÎ´Á¬½ÓµÄÐÐ£¨ÄÇÐ©ÔÚ t2 ÖÐÃ»ÓÐÆ¥ÅäµÄÐÐ£©¡£ÓÒ[Íâ]Á¬½Ó(RIGHT OUTER JOIN)½«·µ»Ø t2 ÖÐÎ´Á¬½ÓµÄÐÐ¡£ÍêÈ«ÍâÁ¬½Ó£¨FULL OUTER JOIN£©½«·µ»Ø t1 ºÍ t2 ÖÐÎ´Á¬½ÓµÄÐÐ¡£¹Ø¼ü×Ö OUTER ÔÚ×ó[Íâ]Á¬½Ó¡¢ÓÒ[Íâ]Á¬½ÓºÍÍêÈ«[Íâ]Á¬½ÓÖÐÊÇ¿ÉÑ¡µÄ£¬ÆÕÍ¨Á¬½Ó±»³ÉÎªÄÚÁ¬½Ó£¨INNER JOIN£©¡£<br>          
-        <br>
-        ÔÚ´ËÇ°µÄ°æ±¾ÖÐ£¬ÍâÁ¬½Ó¿ÉÒÔÓÃ UNION ºÍ NOT IN À´Ä£Äâ¡£ÀýÈç£¬ÏÂÃæµÄÀý×ÓÔÚ±í tab1 ºÍ tab2 Ö®¼ä×öÍâÁ¬½Ó£º<br>          
-        <br>
-        &nbsp;&nbsp;&nbsp; SELECT tab1.col1, tab2.col2<br>          
-        &nbsp;&nbsp;&nbsp; FROM tab1, tab2<br>          
-        &nbsp;&nbsp;&nbsp; WHERE tab1.col1 = tab2.col1<br>          
-        <br>
-        &nbsp;&nbsp;&nbsp; UNION ALL<br>          
-        <br>
-        &nbsp;&nbsp;&nbsp; SELECT tab1.col1, NULL<br>          
-        &nbsp;&nbsp;&nbsp; FROM tab1<br>          
-        &nbsp;&nbsp;&nbsp; WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)<br>          
-        &nbsp;&nbsp;&nbsp; ORDER BY col1</p>          
-        <h4><a name="4.24"></a>4.24)           
-			ÈçºÎÊ¹ÓÃÉæ¼°¶à¸öÊý¾Ý¿âµÄ²éÑ¯£¿</h4>
-        <p>Ã»ÓÐ°ì·¨²éÑ¯µ±Ç°Êý¾Ý¿âÖ®ÍâµÄÊý¾Ý¿â¡£ÒòÎª PostgreSQL ¼ÓÔØÊý¾Ý¿âÏà¹ØµÄÏµÍ³Ä¿Â¼£¨ÏµÍ³±í£©£¬¿çÊý¾Ý¿âµÄ²éÑ¯ÈçºÎÖ´ÐÐÒ²Î´Ã÷È·¡£<br>          
-        <br>
-        contrib/dblink ÔÊÐí²ÉÓÃº¯Êýµ÷ÓÃÊµÏÖ¿ç¿â²éÑ¯¡£µ±È»¿ÉÒÔÍ¬Ê±Á¬½Óµ½²»Í¬µÄÊý¾Ý¿â²¢ÔÚ¿Í»§¶ËºÏ²¢½á¹û¡£</p>          
-        <h4><a name="4.25"></a>4.25)           
-			ÈçºÎÈÃº¯Êý·µ»Ø¶àÐÐ»ò¶àÁÐ£¿</h4>
-        <p>¿ÉÒÔÔÚ PL/pgSQL º¯ÊýÖÐÊ¹ÓÃ refcursors ·µ»Ø½á¹û¼¯¡£²Î¿´          
-        <a href="http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html"> http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html</a>, 23.7.3.3½Ú¡£<br>          
-        </p>
-        <h4><a name="4.26"></a>4.26) ÎªÊ²Ã´ÔÚ           
-			PL/PgSQL º¯ÊýÖÐ²»ÄÜ¿É¿¿µØ´´½¨»òÉ¾³ýÁÙÊ±±í£¿</h4>          
-        <p>PL/PgSQL          
-        »º´æº¯ÊýµÄÄÚÈÝ£¬ÓÉ´Ë´øÀ´µÄÒ»¸ö²»ºÃµÄ¸±×÷ÓÃÊÇÈôÒ»¸ö PL/PgSQL          
-        º¯Êý·ÃÎÊÁËÒ»¸öÁÙÊ±±í£¬È»ºó¸Ã±í±»É¾³ý²¢ÖØ½¨ÁË£¬ÔòÔÙ´Îµ÷ÓÃ¸Ãº¯Êý½«Ê§°Ü£¬ÒòÎª»º´æµÄº¯ÊýÄÚÈÝÈÔÈ»Ö¸Ïò¾ÉµÄÁÙÊ±±í¡£½â¾öµÄ·½·¨ÊÇÔÚ          
-        PL/PgSQL ÖÐÓÃ EXECUTE          
-        ¶ÔÁÙÊ±±í½øÐÐ·ÃÎÊ¡£ÕâÑù»á±£Ö¤²éÑ¯ÔÚÖ´ÐÐÇ°×ÜÊÇÖØÐÂ·ÖÎö¡£</p>
-        <h4><a name="4.27"></a>4.27)           
-			ÓÐÄÄÐ©Êý¾Ý¸´ÖÆÑ¡Ïî£¿</h4>
-        <p>ÓÐ¼¸ÖÖÖ÷/´Ó·½Ê½µÄ¸´ÖÆÑ¡Ïî¡£ÕâÐ©Ñ¡ÏîÖ»ÔÊÐíÖ÷Êý¾Ý¿â½øÐÐ¸üÐÂ£¬´ÓÊý¾Ý¿âÖ»ÄÜ½øÐÐ¶Á¡£ÍøÒ³          
-        <a href="http://gborg.PostgreSQL.org/genpage?replication_research">http://gborg.PostgreSQL.org/genpage?replication_research</a>&nbsp;          
-        µÄ×îºóÁÐ³öÁËÕâÐ©Ñ¡Ïî¡£ÔÚ <a href="http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php"> http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a>          
-        ÕýÔÚ½øÐÐÒ»¸ö¶àÖ÷±¾¸´ÖÆµÄ½â¾ö·½°¸¡£</p>         
-        <h4><a name="4.28"></a>4.28)           
-			ÓÐÄÄÐ©Êý¾Ý¼ÓÃÜÑ¡Ïî£¿
-			<CENTER>
-			</CENTER>
-        </h4>
-        <p>contrib/pgcrypto °üº¬ÁËºÜ¶àÔÚ SQL          
-        ²éÑ¯ÖÐÊ¹ÓÃµÄ¼ÓÃÜº¯Êý¡£¼ÓÃÜ¿Í»§¶Ëµ½·þÎñÆ÷¶Ë´«ÊäÊý¾ÝµÄÎ¨Ò»·½·¨ÊÇÔÚ pg_hba.conf          
-        ÖÐ²ÉÓÃ hostss ¡£&nbsp;<br>         
-        <br>
-        7.3          
-        °æ±¾ÖÐ×Ô¶¯¶ÔÊý¾Ý¿âÓÃ»§ÃÜÂë½øÐÐ¼ÓÃÜ¡£ÔÚÒÔÇ°µÄ°æ±¾ÖÐ£¬±ØÐëÔÚ          
-        postgresql.conf ÖÐ´ò¿ª PASSWORD_ENCRYPTION          
-        Ñ¡Ïî¡£·þÎñÆ÷¿ÉÒÔÔËÐÐÔÚ¼ÓÃÜµÄÎÄ¼þÏµÍ³ÉÏ£¨ÒÔ´ïµ½¼ÓÃÜµÄÄ¿µÄ£©¡£<br>
-        <br>
-        --------------------------------------------------------------------------------</p>
-        <h2 align="center">À©Õ¹ PostgreSQL</h2>          
-        <h4><a name="5.1"></a>5.1)           
-			ÎÒÐ´ÁËÒ»¸öÓÃ»§¶¨Òåº¯Êý¡£µ±ÎÒÔÚ psql ÀïÔËÐÐÊ±£¬ÎªÊ²Ã´»áµ¼ÖÂ core dump£¿</h4>          
-        <p>²úÉúÕâ¸öÎÊÌâµÄÔ­ÒòºÜ¶à¡£ÇëÏÈÔÚÒ»¸öµ¥¶ÀµÄ²âÊÔ³ÌÐòÖÐ²âÊÔÄãµÄ×Ô¶¨Òåº¯Êý¡£</p>
-        <h4><a name="5.2"></a>5.2) ÎÒÈçºÎÄÜ¸ø           
-			PostgreSQL ¹±Ï×Ò»Ð©Í¦²»´íµÄÐÂÀàÐÍºÍº¯Êý£¿</h4>          
-        <p>½«ÄãµÄÀ©Õ¹·¢ËÍµ½ pgsql-hackers          
-        ÓÊ¼þÁÐ±í£¬ËüÃÇ×îÖÕ»á±»·Åµ½ contrib/ ×ÓÄ¿Â¼¡£<br>         
-        </p>
-        <h4><a name="5.3"></a>5.3) ÎÒÔõÑùÐ´Ò»¸ö·µ»ØÒ»ÌõÔª×éµÄ C º¯Êý£¿</h4>          
-        <p>ÔÚ PostgreSQL 7.3 ÒÔºóµÄ°æ±¾ÖÐ£¬C, PL/PgSQL ºÍ SQL          
-        ÍêÈ«Ö§³Ö·µ»ØÖµÎª±íµÄº¯Êý¡£¸ü¶àÐÅÏ¢Çë²Î¿¼          
-        ³ÌÐòÔ±Ö¸ÄÏ£¨the Programmer's Guide£©¡£ÔÚ contrib/tablefunc          
-        ÖÐÓÐÒ»¸öÀý×ÓÊÇÓÃ C Ð´µÄ·µ»ØÖµÎª±íµÄº¯Êý¡£</p>         
-        <h4><a name="5.4"></a>5.4)           
-			ÎÒÐÞ¸ÄÁËÒ»¸öÔ´ÎÄ¼þ£¬ÎªÊ²Ã´ÖØÐÂ±àÒëºóÃ»ÓÐ¿´µ½¸Ä±ä£¿</h4>
-        <p> Makefiles ÖÐÃ»ÓÐ°üº¬Í·ÎÄ¼þµÄÕýÈ·ÒÀÀµ¡£Äú±ØÐëÏÈ×ömake 
-        clean£¬ ÔÙ×öÒ»´Î make ¡£Èç¹ûÄúÊ¹ÓÃµÄÊÇ GCC 
-        £¬Ôò¿ÉÒÔ²ÉÓÃÑ¡Ïî --enable-depend 
-        ÈÃ±àÒëÆ÷×Ô¶¯Éú³ÉÍ·ÎÄ¼þµÄÒÀÀµ¹ØÏµ¡£</p>
-	</BODY>
-</HTML>
+</pre>
+
+    <p>Ë÷Òý²»ÐèÒªÕâÃ´¶àµÄ¶îÍâÏûºÄ£¬µ«Ò²È·Êµ°üÀ¨±»Ë÷ÒýµÄÊý¾Ý£¬Òò´ËËüÃÇÒ²¿ÉÄÜºÜ´ó¡£</p>
+
+    <p>¿ÕÖµ´æ·ÅÔÚÎ»Í¼ÖÐ£¬Òò´ËÕ¼ÓÃºÜÉÙµÄ¿Õ¼ä¡£</p>
+
+    <h4><a id="4.7" name="4.7"></a>4.7) ÈçºÎ²é¿´±í¡¢Ë÷Òý¡¢Êý¾Ý¿âÒÔ¼°ÓÃ»§µÄ¶¨Òå£¿</h4>
+    <i> psql</i> ÓÐÐí¶à·´Ð±¸ÜÃüÁîÓÃÓÚÏÔÊ¾ÕâÐ©ÐÅÏ¢¡£ÓÃ \? ¿´¿´¶¼ÓÐÄÄÐ©¡£ÒÔ pg_ ´òÍ·µÄÏµÍ³±íÒ²ÃèÊöÁËÕâÐ©ÐÅÏ¢¡£ psql -l ¿ÉÒÔÁÐ³öËùÓÐµÄÊý¾Ý¿â¡£ 
+
+    <p>Ò²¿ÉÒÔÊÔÊÔÎÄ¼þ <i>pgsql/src/tutorial/syscat.source</i>¡£ËüÑÝÊ¾ÁËÐí¶à´ÓÊý¾Ý¿âÏµÍ³±íÀï»ñÈ¡ÐÅÏ¢ÐèÒªµÄ <font size="-1">SELECT</font>¡£</p>
+
+    <h4><a id="4.8" name="4.8"></a>4.8) ÎÒµÄ²éÑ¯ºÜÂý»òÕßÃ»ÓÐÀûÓÃË÷Òý¡£ÎªÊ²Ã´£¿</h4>
+
+    <p>²¢·ÇÃ¿¸ö²éÑ¯¶¼»á×Ô¶¯Ê¹ÓÃË÷Òý¡£Ö»ÓÐÔÚ±íµÄ´óÐ¡³¬¹ýÒ»¸ö×îÐ¡Öµ£¬²¢ÇÒ²éÑ¯Ö»Ñ¡Ôñ±íÖÐ½ÏÐ¡±ÈÀýµÄÐÐÊ±²ÉÓÃÊ¹ÓÃË÷Òý¡£ÕâÊÇÒòÎªË÷ÒýÉ¨ÃèÒýÆðµÄËæ¼´´ÅÅÌ´æÈ¡¿ÉÄÜ±ÈÖ±½ÓµØ¶ÁÈ¡±í£¨Ë³ÐòÉ¨Ãè£©¸üÂý¡£ÎªÁËÅÐ¶ÏÊÇ·ñÊ¹ÓÃË÷Òý£¬PostgreSQL ±ØÐë»ñµÃÓÐ¹Ø±íµÄÍ³¼ÆÖµ¡£ÕâÐ©Í³¼ÆÖµ¿ÉÒÔÊ¹ÓÃ VACUUM ANALYZE£¬»ò ANALYZE »ñµÃ¡£Ê¹ÓÃÍ³¼ÆÖµ£¬ÓÅ»¯Æ÷ÖªµÀ±íÖÐÓÐ¶àÉÙÐÐ£¬¾ÍÄÜ¹»¸üºÃµØÅÐ¶ÏÊÇ·ñÀûÓÃË÷Òý¡£Í³¼ÆÖµ¶ÔÈ·¶¨ÓÅ»¯µÄÁ¬½ÓË³ÐòºÍÁ¬½Ó·½·¨Ò²ºÜÓÐÓÃ¡£ÔÚ±íµÄÄÚÈÝ·¢Éú±ä»¯Ê±£¬Ó¦¶¨ÆÚ½øÐÐÍ³¼ÆÖµµÄ»ñÈ¡¡£</p>
+
+    <p>Ë÷ÒýÍ¨³£²»ÓÃÓÚ ORDER BY »òÖ´ÐÐÁ¬½Ó¡£¶ÔÒ»¸ö´ó±íµÄÒ»´ÎË³ÐòÉ¨Ãè£¬ÔÙ×öÒ»¸öÏÔÊ½µÄÅÅÐòÍ¨³£±ÈË÷ÒýÉ¨ÃèÒª¿ì¡£</p>
+
+    <p>µ«ÊÇ£¬ÔÚ LIMIT ºÍ ORDER BY ½áºÏÊ¹ÓÃÊ±¾­³£»áÊ¹ÓÃË÷Òý£¬ÒòÎªÖ»»á·µ»Ø±íµÄÒ»Ð¡²¿·Ö¡£Êµ¼ÊÉÏ£¬ËäÈ» MAX() ºÍ MIN() ²¢²»Ê¹ÓÃË÷Òý£¬Í¨¹ý¶Ô ORDER BY ºÍ LLIMIT Ê¹ÓÃË÷ÒýÈ¡µÃ×î´óÖµºÍ×îÐ¡ÖµÒ²ÊÇ¿ÉÒÔµÄ£º<br />
+    <br />
+         SELECT col<br />
+         FROM tab<br />
+         ORDER BY col [ DESC ]<br />
+         LIMIT 1;</p>
+
+    <p>µ±Ê¹ÓÃÍ¨Åä·û²Ù×÷£¬ÀýÈç LIKE »ò ~ Ê±£¬Ë÷ÒýÖ»ÄÜÔÚÌØ¶¨µÄÇé¿öÏÂÊ¹ÓÃ£º  </p>
+
+    <ul>
+      <li>×Ö·û´®µÄ¿ªÊ¼²¿·Ö±ØÐëÊÇÆÕÍ¨×Ö·û´®£¬Ò²¾ÍÊÇËµ£º</li>
+
+      <li>LIKE Ä£Ê½²»ÄÜÒÔ % ´òÍ·¡£</li>
+
+      <li>~ £¨ÕýÔò±í´ïÊ½£©Ä£Ê½±ØÐëÒÔ ^ ´òÍ·¡£</li>
+
+      <li>×Ö·û´®²»ÄÜÒÔÆ¥Åä¶à¸ö×Ö·ûµÄÄ£Ê½Àà´òÍ·£¬ÀýÈç [a-e]¡£</li>
+
+      <li>´óÐ¡Ð´ÎÞ¹ØµÄ²éÕÒ£¬Èç ILIKE ºÍ ~* µÈ²»Ê¹ÓÃË÷Òý¡£µ«¿ÉÒÔÓÃ 4.12 ½ÚÃèÊöµÄº¯ÊýË÷Òý¡£</li>
+
+      <li>ÔÚ×ö initdb Ê±±ØÐë²ÉÓÃÈ±Ê¡µÄ±¾µØÉèÖÃ C locale¡£</li>
+    </ul>
+
+    <h4><a id="4.9" name="4.9"></a>4.9) ÎÒÈçºÎ²ÅÄÜ¿´µ½²éÑ¯ÓÅ»¯Æ÷ÊÇÔõÑù´¦ÀíÎÒµÄ²éÑ¯µÄ£¿</h4>
+    ²Î¿¼ <font size="-1">EXPLAIN</font> ÊÖ²áÒ³¡£ 
+
+    <h4><a id="4.10" name="4.10"></a>4.10) R-tree Ë÷ÒýÊÇÊ²Ã´£¿</h4>
+
+    <p>R-tree Ë÷ÒýÓÃÓÚË÷Òý¿Õ¼äÊý¾Ý¡£Ò»¸ö¹þÏ£Ë÷ÒýÎÞ·¨´¦Àí·¶Î§ËÑË÷¡£¶ø B-tree Ë÷ÒýÖ»ÄÜ´¦ÀíÒ»Î¬µÄ·¶Î§ËÑË÷¡£R-tree Ë÷Òý¿ÉÒÔ´¦Àí¶àÎ¬Êý¾Ý¡£ÀýÈç£¬Èç¹û¿ÉÒÔÔÚÒ»¸öÀàÐÍÎª point µÄ×Ö¶ÎÉÏ½¨Á¢Ò»¸ö R-tree Ë÷Òý£¬ÄÇÃ´ÏµÍ³ÄÜ¸ü¸ßÐ§µØ»Ø´ðÀàËÆ ¡°Ñ¡ÔñÔÚÒ»¸ö³¤·½ÐÎ·¶Î§ÄÚµÄËùÓÐµã¡±¡£<br />
+    <br />
+     ÃèÊö×î³õµÄ R-Tree Éè¼ÆµÄÕýÊ½ÂÛÎÄÊÇ£º<br />
+    <br />
+     Guttman, A. "R-Trees: A Dynamic Index Structure for Spatial Searching." Proc of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.<br />
+    <br />
+     Äã»¹¿ÉÒÔÔÚ Stonebraker µÄ¡°Readings in Database Systems¡±ÀïÕÒµ½ÕâÆªÎÄÕÂ¡£<br />
+    <br />
+     ÏµÍ³ÄÚÖÃµÄ R-Tree ¿ÉÒÔ´¦Àí¶à±ßÐÎºÍ·½ÐÎ¡£ÀíÂÛÉÏËµ£¬R-tree ¿ÉÒÔÀ©Õ¹Îª´¦Àí¸ü¶àÎ¬Êý¡£²»¹ýÔÚÊµ¼ùÉÏ£¬À©Õ¹ R-trees ÐèÒªÒ»¶¨µÄ¹¤×÷Á¿£¬¶øÎÒÃÇÄ¿Ç°Ã»ÓÐÈçºÎ×öµÄÎÄµµ¡£</p>
+
+    <h4><a id="4.11" name="4.11"></a>4.11) Ê²Ã´ÊÇ»ùÒò²éÑ¯ÓÅ»¯£¨Genetic Query Optimization£©£¿</h4>
+
+    <p>GEQO Ä£¿é²ÉÓÃ»ùÒòËã·¨£¨Genetic Algorithm£¬GA£©¼Ó¿ì¶à±íÁ¬½ÓµÄ²éÑ¯ÓÅ»¯¡£ËüÔÊÐíÍ¨¹ý·ÇÇî¾ÙËÑË÷´¦Àí´óµÄÁ¬½Ó²éÑ¯¡£</p>
+
+    <h4><a id="4.12" name="4.12"></a>4.12) ÎÒÔõÑù×öÕýÔò±í´ïÊ½ËÑË÷ºÍ´óÐ¡Ð´ÎÞ¹ØµÄÕýÔò±í´ïÊ½ËÑË÷£¿ÔõÑùÀûÓÃË÷Òý½øÐÐ´óÐ¡Ð´ÎÞ¹ØËÑË÷£¿</h4>
+
+    <p>²Ù×÷·û ~ ´¦ÀíÕýÔò±í´ïÊ½Æ¥Åä£¬¶ø ~* ´¦Àí´óÐ¡Ð´ÎÞ¹ØµÄÕýÔò±í´ïÊ½Æ¥Åä¡£´óÐ´Ð©ÎÞ¹ØµÄ LIKE ±äÖÖ³ÉÎª ILIKE¡£<br />
+    <br />
+     ´óÐ¡Ð´ÎÞ¹ØµÄµÈÊ½±È½ÏÍ¨³£Ð´×ö£º<br />
+    <br />
+         SELECT *<br />
+         FROM tab<br />
+         WHERE lower(col) = 'abc';<br />
+    <br />
+     ÕâÑù½«²»»áÊ¹ÓÃ±ê×¼µÄË÷Òý¡£µ«ÊÇ¿ÉÒÔ´´½¨Ò»¸ö¿É±»ÀûÓÃµÄº¯ÊýË÷Òý:<br />
+    <br />
+         CREATE INDEX tabindex ON tab (lower(col));</p>
+
+    <h4><a id="4.13" name="4.13"></a>4.13) ÔÚÒ»¸ö²éÑ¯Àï£¬ÎÒÔõÑù¼ì²âÒ»¸ö×Ö¶ÎÊÇ·ñÎª NULL£¿</h4>
+
+    <p>ÓÃ IS NULL ºÍ IS NOT NULL ²âÊÔÕâ¸ö×Ö¶Î¡£ <br />
+    </p>
+
+    <h4><a id="4.14" name="4.14"></a>4.14) ¸÷ÖÖ×Ö·ûÀàÐÍÖ®¼äÓÐÊ²Ã´²»Í¬£¿</h4>
+
+    <p>  ÀàÐÍ            ÄÚ²¿Ãû³Æ    ËµÃ÷<br />
+       --------------------------------------------------<br />
+       "char"        char         1¸ö×Ö·û character<br />
+       CHAR(#)      bpchar       ¶¨³¤×Ö·û´®£¬Êµ¼ÊÊý¾Ý²»×ã¶¨Òå³¤¶ÈÊ±£¬ÒÔ¿Õ¸ñ²¹Æë<br />
+       VARCHAR(#)  varchar     Ö¸¶¨ÁË×î´ó³¤¶È£¬±ä³¤×Ö·û´®£¬²»×ã¶¨Òå³¤¶ÈµÄ²¿·Ö²»²¹Æë<br />
+       TEXT           text         ´®³¤¶È½öÊÜÐÐµÄ×î´ó³¤¶ÈÏÞÖÆ<br />
+       BYTEA          bytea       ±ä³¤×Ö½ÚÐòÁÐ£¨±ä³¤µÄ¶þ½øÖÆÊý¾Ý£©<br />
+    <br />
+     ÔÚÏµÍ³±íºÍÔÚÒ»Ð©´íÎóÐÅÏ¢ÀïÄã½«¿´µ½ÄÚ²¿Ãû³Æ¡£ <br />
+    <br />
+     ÉÏÃæ×îºóËÄÖÖÀàÐÍÊÇ"varlena"£¨±ä³¤£©ÀàÐÍ£¨Ò²¾ÍÊÇËµ£¬¿ªÍ·µÄËÄ¸ö×Ö½ÚÊÇ³¤¶È£¬ºóÃæ²ÅÊÇÊý¾Ý£©¡£ÓÚÊÇÊµ¼ÊÕ¼ÓÃµÄ¿Õ¼ä±ÈÉùÃ÷µÄ´óÐ¡Òª¶àÒ»Ð©¡£È»¶øÕâÐ©ÀàÐÍ¶¼¿ÉÒÔ±»Ñ¹Ëõ´æ´¢£¬Ò²¿ÉÒÔÓÃ TOAST ÍÑ»ú´æ´¢£¬Òò´Ë´ÅÅÌ¿Õ¼äÒ²¿ÉÄÜ±ÈÔ¤ÏëµÄÒªÉÙ¡£<br />
+    <br />
+     CHAR(n) ×îÊÊºÏÓÚ´æ´¢³¤¶È»ù±¾²î²»¶àµÄ×Ö·û´®¡£VARCHAR(n) ÔÚ´æ´¢ÏÞÖÆÁË×î´ó³¤¶ÈµÄ±ä³¤×Ö·û´®ÊÇ×îºÃµÄ¡£TEXT ÊÊÓÃÓÚ´æ´¢²»ÏÞÖÆ³¤¶ÈµÄ×Ö·û´®£¬×î´ó¿É´ï 1G¡£BYTEA ÓÃÓÚ´æ´¢¶þ½øÖÆÊý¾Ý£¬ÓÈÆäÊÇ°üº¬ NULL ×Ö½Ú£¨¶þ½øÖÆµÄ0£©µÄÖµ¡£ÕâÐ©ÀàÐÍ¾ßÓÐÀàÐÍµÄÐÔÄÜ¡£</p>
+
+    <h4><a id="4.15.1" name="4.15.1"></a>4.15.1) ÎÒÔõÑù´´½¨Ò»¸öÐòÁÐºÅ/×Ô¶¯µÝÔöµÄ×Ö¶Î£¿</h4>
+
+    <p>PostgreSQL Ö§³Ö SERIAL Êý¾ÝÀàÐÍ¡£ËüÔÚ×Ö¶ÎÉÏ×Ô¶¯´´½¨Ò»¸öÐòÁÐºÍË÷Òý¡£ÀýÈç£¬<br />
+         CREATE TABLE person ( <br />
+             id SERIAL, <br />
+             name TEXT <br />
+             );<br />
+    <br />
+     »á×Ô¶¯×ª»»Îª£º <br />
+         <br />
+         CREATE SEQUENCE person_id_seq;<br />
+         CREATE TABLE person ( <br />
+             id INT4 NOT NULL DEFAULT nextval('person_id_seq'),<br />
+             name TEXT <br />
+             );<br />
+         CREATE UNIQUE INDEX person_id_key ON person ( id );<br />
+    <br />
+     ²Î¿¼ create_sequence ÊÖ²áÒ³»ñÈ¡¹ØÓÚÐòÁÐµÄ¸ü¶àÐÅÏ¢¡£Äã»¹¿ÉÒÔÓÃÃ¿ÐÐµÄ oid ×Ö¶Î×÷ÎªÒ»¸öÎ¨Ò»Öµ¡£²»¹ý£¬Èç¹ûÄãÐèÒªÇãµ¹ºÍÖØÔØÊý¾Ý¿â£¬ÄãÐèÒªÊ¹ÓÃ pg_dump µÄ -o Ñ¡Ïî»òÕß COPY WITH OIDS Ñ¡ÏîÒÔ±£Áô OID¡£ </p>
+
+    <h4><a id="4.15.2" name="4.15.2"></a>4.15.2) ÎÒÈçºÎ»ñµÃÒ»¸ö²åÈëµÄÐòÁÐºÅµÄÖµ£¿</h4>
+
+    <p>Ò»ÖÖ·½·¨ÊÇÔÚ²åÈëÖ®Ç°ÏÈÓÃº¯Êý nextval() ´ÓÐòÁÐ¶ÔÏóÀï¼ìË÷³öÏÂÒ»¸ö SERIAL Öµ£¬È»ºóÔÙÏÔÊ½²åÈë¡£Ê¹ÓÃ <a href="#4.15.1">4.15.1</a> ÀïµÄÀý±í£¬¿ÉÓÃÎ±ÂëÕâÑùÃèÊö£º <br />
+    <br />
+         new_id = execute("SELECT nextval('person_id_seq')");<br />
+         execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise Pascal')");<br />
+    <br />
+     ÕâÑù»¹ÄÜÔÚÆäËû²éÑ¯ÖÐÊ¹ÓÃ´æ·ÅÔÚ new_id ÀïµÄÐÂÖµ£¨ÀýÈç£¬×÷Îª person ±íµÄÍâ¼ü£©¡£×¢Òâ×Ô¶¯´´½¨µÄ SEQUENCE ¶ÔÏóµÄÃû³Æ½«»áÊÇ &lt;table&gt;_&lt;serialcolumn&gt;_seq£¬ÕâÀï table ºÍ serialcolumn ·Ö±ðÊÇÄãµÄ±íµÄÃû³ÆºÍÄãµÄ SERIAL ×Ö¶ÎµÄÃû³Æ¡£ <br />
+    <br />
+     ÀàËÆµÄ£¬ÔÚ SERIAL ¶ÔÏóÈ±Ê¡²åÈëºóÄã¿ÉÒÔÓÃº¯Êý currval() ¼ìË÷¸Õ¸³ÖµµÄ SERIAL Öµ£¬ÀýÈç£¬ <br />
+    <br />
+         execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");<br />
+         new_id = execute("SELECT currval('person_id_seq')");<br />
+    <br />
+     ×îºó£¬Äã¿ÉÒÔÊ¹ÓÃ´Ó INSERT Óï¾ä·µ»ØµÄ <a href="4.16">OID</a> ²éÕÒÈ±Ê¡Öµ£¬¾¡¹ÜÕâ¿ÉÄÜÊÇ×îÈ±·¦ÒÆÖ²ÐÔµÄ·½·¨¡£ÔÚ Perl Àï£¬Ê¹ÓÃ´øÓÐ Edmund Mergl µÄ DBD::Pg Ä£¿éµÄ DBI£¬oid Öµ¿ÉÒÔÍ¨¹ý $sth-&gt;execute() ºóµÄ $sth-&gt;{pg_oid_status} »ñµÃ¡£ </p>
+
+    <h4><a id="4.15.3" name="4.15.3"></a>4.15.3) Ê¹ÓÃ currval() ºÍ nextval() »áµ¼ÖÂÒ»¸öÓëÆäËûÓÃ»§Ö®¼äµÄÎÉÂÒÇé¿öÂð£¿</h4>
+
+    <p>²»»á¡£currval() ·µ»ØºóÌ¨½ø³Ì¶ø²»ÊÇËùÓÐÓÃ»§¸³ÓèµÄµ±Ç°Öµ¡£<br />
+    </p>
+
+    <h4><a id="4.15.4" name="4.15.4"></a>4.15.4) ÎªÊ²Ã´²»ÔÚÊÂÎñÒì³£ÖÐÖ¹ºóÖØÓÃÐòÁÐºÅÄØ£¿ÎªÊ²Ã´ÔÚÐòÁÐºÅ×Ö¶ÎµÄÈ¡ÖµÖÐ´æÔÚ¼ä¶ÏÄØ£¿</h4>
+
+    <p>ÎªÁËÌá¸ß²¢·¢ÐÔ£¬ÐòÁÐºÅÔÚÐèÒªµÄÊ±ºò¸³ÓèÕýÔÚÔËÐÐµÄÊÂÎñ£¬²¢ÇÒÖ»ÔÚÊÂÎñ½áÊøÖ®Ç°²»·âËø¡£Õâ¾Í»áµ¼ÖÂØ²ÕÛÊÂÎñºóµÄÐòÁÐºÅ³öÏÖ¼ä¸ô¡£</p>
+
+    <h4><br />
+     <a id="4.16" name="4.16"></a>4.16) Ê²Ã´ÊÇ OID£¿Ê²Ã´ÊÇ TID£¿</h4>
+
+    <p>OID ÊÇ PostgreSQL ÖÐÐÐµÄÎ¨Ò»±êÊ¶¡£PostgreSQL Àï´´½¨µÄÃ¿Ò»ÐÐ¶¼»ñµÃÒ»¸öÎ¨Ò»µÄ OID¡£ËùÓÐÔÚ initdb ¹ý³ÌÖÐ´´½¨µÄ OID ¶¼Ð¡ÓÚ 16384 £¨²Î¼û include/access/transam.h£©¡£ËùÓÐÓÃ»§´´½¨µÄ OID ¶¼´óÓÚ»òµÈÓÚÕâ¸öÖµ¡£È±Ê¡Ê±£¬ËùÓÐÕâÐ© OID ²»½öÔÚÒ»¸ö±í»òÒ»¸öÊý¾Ý¿âÀïÃæÎ¨Ò»£¬¶øÇÒÔÚÕû¸ö PostgreSQL °²×°ÀïÒ²ÊÇÎ¨Ò»µÄ¡£ <br />
+    <br />
+     PostgreSQL ÔÚËüµÄÄÚ²¿ÏµÍ³±íÀïÊ¹ÓÃ OID ÔÚ±íÖ®¼ä½¨Á¢ÁªÏµ¡£ÕâÐ© OID ¿ÉÒÔÓÃÓÚ±êÊ¶ÌØ¶¨µÄÓÃ»§ÐÐÒÔ¼°ÓÃÔÚÁ¬½ÓÀï¡£½¨ÒéÊ¹ÓÃ×Ö¶ÎÀàÐÍ OID ´æ´¢ OID Öµ¡£¿ÉÒÔÔÚ OID ×Ö¶ÎÉÏ´´½¨Ò»¸öË÷ÒýÒÔ¿ìËÙ·ÃÎÊ¡£ <br />
+    <br />
+     OID ´ÓÒ»¸ö±»ËùÓÐÊý¾Ý¿âÊ¹ÓÃµÄÖÐÐÄÇøÓòÀï¸³Öµ¸øËùÓÐÐÂÐÐ¡£Èç¹ûÄãÏë°Ñ OID ¸Ä³É±ðµÄÖµ£¬»òÕßÏë×öÒ»·Ý±íµÄ´øÔ­Ê¼ OID µÄ¿½±´£¬Äã¿ÉÒÔ×öµ½£º <br />
+    <br />
+         CREATE TABLE new(old_oid oid, mycol int);<br />
+         SELECT old_oid, mycol INTO new FROM old;<br />
+         COPY new TO '/tmp/pgtable';<br />
+         DELETE FROM new;<br />
+         COPY new WITH OIDS FROM '/tmp/pgtable';<br />
+    <br />
+     OID ÓÃ4×Ö½ÚµÄÕûÊý±£´æ£¬ÔÚ³¬¹ý40ÒÚÊ±½«Òç³ö¡£Ã»ÓÐÈË±¨¸æ³öÏÖ¹ýÒç³ö£¬¶øÎÒÃÇ´òËãÔÚÓÐÈË±¨¸æÖ®Ç°Ïû³ýÕâ¸öÏÞÖÆ¡£<br />
+    <br />
+     TID ÓÃÓÚ±êÊ¶´ø×ÅÊý¾Ý¿é£¨µØÖ·£©ºÍ£¨¿éÄÚ£©Æ«ÒÆµÄÌØ¶¨µÄÎïÀíÐÐ¡£TID ÔÚÐÐ±»¸ü¸Ä»òÖØÔØºó·¢Éú¸Ä±ä¡£Ë÷ÒýÈë¿ÚÊ¹ÓÃËüÃÇÖ¸ÏòÎïÀíÐÐ¡£</p>
+
+    <h4><a id="4.17" name="4.17"></a>4.17) PostgreSQL Ê¹ÓÃµÄÒ»Ð©ÊõÓïµÄº¬ÒåÊÇÊ²Ã´£¿</h4>
+
+    <p>Ò»Ð©Ô´´úÂëºÍÒ»Ð©¾ÉÒ»µãµÄÎÄµµÊ¹ÓÃÒ»Ð©ÓÐ¸ü³£ÓÃÓÃ·¨µÄÊõÓï¡£ÏÂÃæÊÇÆäÖÐÒ»²¿·Ö£º <br />
+         table, relation, class <br />
+         row, record, tuple <br />
+         column, field, attribute <br />
+         retrieve, select <br />
+         replace, update <br />
+         append, insert <br />
+         OID, serial value <br />
+         portal, cursor <br />
+         range variable, table name, table alias <br />
+    <br />
+     ÓÐÒ»¸öÍ¨ÓÃÊý¾Ý¿âÊõÓïµÄÁÐ±í£º<a href="http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html">http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/glossary/glossary.html</a> ¡£  </p>
+
+    <h4><a id="4.18" name="4.18"></a>4.18) ÎªÊ²Ã´ÎÒÊÕµ½´íÎó¡°<i>ERROR: Memory exhausted in AllocSetAlloc()</i>¡±£¿</h4>
+
+    <p>ÕâºÜ¿ÉÄÜÊÇÏµÍ³µÄÐéÄâÄÚ´æÓÃ¹âÁË£¬»òÕßÄÚºË¶ÔÄ³Ð©×ÊÔ´ÓÐ½ÏµÍµÄÏÞÖÆÖµ¡£ÔÚÆô¶¯ postmaster Ö®Ç°ÊÔÊÔÏÂÃæµÄÃüÁî£º <br />
+    <br />
+         ulimit -d 262144<br />
+         limit datasize 256m<br />
+    <br />
+     È¡¾öÓÚÄãÓÃµÄ shell£¬ÉÏÃæÃüÁîÖ»ÓÐÒ»ÌõÄÜ³É¹¦£¬µ«ÊÇËü½«°ÑÄãµÄ½ø³ÌÊý¾Ý¶ÎÏÞÖÆÉèµÃ±È½Ï¸ß£¬Òò¶øÒ²ÐíÄÜÈÃ²éÑ¯Íê³É¡£ÕâÌõÃüÁîÓ¦ÓÃÓÚµ±Ç°½ø³Ì£¬ÒÔ¼°ËùÓÐÔÚÕâÌõÃüÁîÔËÐÐºó´´½¨µÄ×Ó½ø³Ì¡£Èç¹ûÄãÊÇÔÚÔËÐÐSQL¿Í»§¶ËÊ±ÒòÎªºóÌ¨·µ»ØÁËÌ«¶àµÄÊý¾Ý¶ø³öÏÖÎÊÌâ£¬ÇëÔÚÔËÐÐ¿Í»§¶ËÖ®Ç°Ö´ÐÐÉÏÊöÃüÁî¡£</p>
+
+    <h4><a id="4.19" name="4.19"></a>4.19) ÎÒÈçºÎ²ÅÄÜÖªµÀËùÔËÐÐµÄ PostgreSQL µÄ°æ±¾£¿</h4>
+
+    <p>´Ó psql Àï£¬¼üÈë SELECT version()£»<br />
+    </p>
+
+    <h4><a id="4.20" name="4.20"></a>4.20) ÎªÊ²Ã´ÎÒµÄ´ó¶ÔÏó²Ù×÷µ¼ÖÂ´íÎó¡°<i>invalid large obj descriptor¡±£¨·Ç·¨µÄ´ó¶ÔÏóÃèÊö·û£©</i>£¿</h4>
+
+    <p>ÄãÐèÒªÔÚÊ¹ÓÃÈÎºÎ´ó¶ÔÏó¾ä±úµÄÇ°ºó·ÅÉÏ BEGIN WORK ºÍ COMMIT£¬Ò²¾ÍÊÇËµ£¬°üÎ§ lo_open ... lo_close¡£ <br />
+    <br />
+     Ä¿Ç° PostgreSQL Ç¿ÖÆÊµÊ©ÕâÌõ¹æÔò£ºÔÚÊÂÎñÌá½»Ê±¹Ø±Õ´ó¶ÔÏó¾ä±ú£¬ÕâÑù£¬£¨Ã»ÓÐ²ÉÓÃÊÂÎñÊ±£©£¬Ê×´Î¶Ô´ó¶ÔÏó¾ä±ú×öÈÎºÎÊÂÇéµÄÆóÍ¼¶¼»áµ¼ÖÂÒ»¸ö invalid large obj descriptor¡£ËùÒÔ£¬Èç¹ûÄãÃ»ÓÐÊ¹ÓÃÒ»¸öÊÂÎñ£¬ÒÔÇ°ÄÜ¹¤×÷µÄ´úÂë£¨ÖÁÉÙÊÇ´ó¶àÊýÊ±¼ä£©½«»áÉú³ÉÕâÃ´Ò»¸ö´íÎóÐÅÏ¢¡£ <br />
+    <br />
+     Èç¹ûÄãÊ¹ÓÃ¿Í»§¶Ë½Ó¿Ú£¬Èç ODBC£¬Äã¿ÉÄÜÐèÒª set auto-commit off¡£</p>
+
+    <h4><a id="4.21" name="4.21"></a>4.21) ÎÒÈçºÎ´´½¨Ò»¸öÈ±Ê¡ÖµÊÇµ±Ç°Ê±¼äµÄ×Ö¶Î£¿</h4>
+
+    <p>Ê¹ÓÃ CURRENT_TIMESTAMP£º<br />
+    <br />
+         CREATE TABLE test(x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP);</p>
+
+    <h4><a id="4.22" name="4.22"></a>4.22) ÎªÊ²Ã´Ê¹ÓÃ IN µÄ×Ó²éÑ¯ÕâÃ´Âý£¿</h4>
+
+    <p>Ä¿Ç°£¬ÎÒÃÇÍ¨¹ýÎªÍâ²éÑ¯µÄÃ¿Ò»ÐÐË³ÐòÉ¨Ãè×Ó²éÑ¯µÄ½á¹ûÀ´Á¬½Ó×Ó²éÑ¯ºÍÍâ²éÑ¯¡£Èç¹û×Ó²éÑ¯·µ»ØÉÙÊý¼¸ÐÐ£¬¶øÍâ²éÑ¯·µ»ØºÜ¶àÐÐ£¬IN Ö´ÐÐµÃºÜ¿ì¡£ÎªÁË¼Ó¿ìÆäËû IN ²éÑ¯µÄÖ´ÐÐ£¬¿ÉÒÔÓÃ EXISTS Ìæ»» IN£º <br />
+    <br />
+         SELECT *<br />
+         FROM tab<br />
+         WHERE col IN (SELECT subcol FROM subtab);<br />
+    <br />
+     ¸ÄÎª£º <br />
+    <br />
+         SELECT *<br />
+         FROM tab<br />
+         WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);<br />
+    <br />
+     ºóÕßÒªÏëÖ´ÐÐµÃ¸ü¿ì£¬subcol Ó¦¸ÃÊÇÒ»¸öË÷ÒýÁÐ¡£ÎÒÃÇÏ£ÍûÔÚÎ´À´µÄ·¢²¼°æ±¾ÖÐÐÞ²¹Õâ¸öÏÞÖÆ¡£</p>
+
+    <h4><a id="4.23" name="4.23"></a>4.23) ÎÒÔõÑù½øÐÐ outer join £¨ÍâÁ¬½Ó£©£¿</h4>
+
+    <p>PostgreSQL ²ÉÓÃ±ê×¼µÄ SQL Óï·¨Ö§³ÖÍâÁ¬½Ó¡£ÕâÀïÊÇÁ½¸öÀý×Ó£º<br />
+    <br />
+         SELECT *<br />
+         FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);<br />
+    <br />
+     »ò <br />
+         SELECT *<br />
+         FROM t1 LEFT OUTER JOIN t2 USING (col);<br />
+    <br />
+     ÕâÁ½¸öµÈ¼ÛµÄ²éÑ¯ÔÚ t1.col ºÍ t2.col ÉÏ×öÁ¬½Ó£¬²¢ÇÒ·µâ»?t1 ÖÐËùÓÐÎ´Á¬½ÓµÄÐÐ£¨ÄÇÐ©ÔÚ t2 ÖÐÃ»ÓÐÆ¥ÅäµÄÐÐ£©¡£ÓÒ[Íâ]Á¬½Ó(RIGHT OUTER JOIN)½«·µ»Ø t2 ÖÐÎ´Á¬½ÓµÄÐÐ¡£ÍêÈ«ÍâÁ¬½Ó£¨FULL OUTER JOIN£©½«·µ»Ø t1 ºÍ t2 ÖÐÎ´Á¬½ÓµÄÐÐ¡£¹Ø¼ü×Ö OUTER ÔÚ×ó[Íâ]Á¬½Ó¡¢ÓÒ[Íâ]Á¬½ÓºÍÍêÈ«[Íâ]Á¬½ÓÖÐÊÇ¿ÉÑ¡µÄ£¬ÆÕÍ¨Á¬½Ó±»³ÉÎªÄÚÁ¬½Ó£¨INNER JOIN£©¡£<br />
+    <br />
+     ÔÚ´ËÇ°µÄ°æ±¾ÖÐ£¬ÍâÁ¬½Ó¿ÉÒÔÓÃ UNION ºÍ NOT IN À´Ä£Äâ¡£ÀýÈç£¬ÏÂÃæµÄÀý×ÓÔÚ±í tab1 ºÍ tab2 Ö®¼ä×öÍâÁ¬½Ó£º<br />
+    <br />
+         SELECT tab1.col1, tab2.col2<br />
+         FROM tab1, tab2<br />
+         WHERE tab1.col1 = tab2.col1<br />
+    <br />
+         UNION ALL<br />
+    <br />
+         SELECT tab1.col1, NULL<br />
+         FROM tab1<br />
+         WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)<br />
+         ORDER BY col1</p>
+
+    <h4><a id="4.24" name="4.24"></a>4.24) ÈçºÎÊ¹ÓÃÉæ¼°¶à¸öÊý¾Ý¿âµÄ²éÑ¯£¿</h4>
+
+    <p>Ã»ÓÐ°ì·¨²éÑ¯µ±Ç°Êý¾Ý¿âÖ®ÍâµÄÊý¾Ý¿â¡£ÒòÎª PostgreSQL ¼ÓÔØÊý¾Ý¿âÏà¹ØµÄÏµÍ³Ä¿Â¼£¨ÏµÍ³±í£©£¬¿çÊý¾Ý¿âµÄ²éÑ¯ÈçºÎÖ´ÐÐÒ²Î´Ã÷È·¡£<br />
+    <br />
+     contrib/dblink ÔÊÐí²ÉÓÃº¯Êýµ÷ÓÃÊµÏÖ¿ç¿â²éÑ¯¡£µ±È»¿ÉÒÔÍ¬Ê±Á¬½Óµ½²»Í¬µÄÊý¾Ý¿â²¢ÔÚ¿Í»§¶ËºÏ²¢½á¹û¡£</p>
+
+    <h4><a id="4.25" name="4.25"></a>4.25) ÈçºÎÈÃº¯Êý·µ»Ø¶àÐÐ»ò¶àÁÐ£¿</h4>
+
+    <p>¿ÉÒÔÔÚ PL/pgSQL º¯ÊýÖÐÊ¹ÓÃ refcursors ·µ»Ø½á¹û¼¯¡£²Î¿´ <a href="http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html">http://www.PostgreSQL.org/idocs/index.php?plpgsql-cursors.html</a>, 23.7.3.3½Ú¡£<br />
+    </p>
+
+    <h4><a id="4.26" name="4.26"></a>4.26) ÎªÊ²Ã´ÔÚ PL/PgSQL º¯ÊýÖÐ²»ÄÜ¿É¿¿µØ´´½¨»òÉ¾³ýÁÙÊ±±í£¿</h4>
+
+    <p>PL/PgSQL »º´æº¯ÊýµÄÄÚÈÝ£¬ÓÉ´Ë´øÀ´µÄÒ»¸ö²»ºÃµÄ¸±×÷ÓÃÊÇÈôÒ»¸ö PL/PgSQL º¯Êý·ÃÎÊÁËÒ»¸öÁÙÊ±±í£¬È»ºó¸Ã±í±»É¾³ý²¢ÖØ½¨ÁË£¬ÔòÔÙ´Îµ÷ÓÃ¸Ãº¯Êý½«Ê§°Ü£¬ÒòÎª»º´æµÄº¯ÊýÄÚÈÝÈÔÈ»Ö¸Ïò¾ÉµÄÁÙÊ±±í¡£½â¾öµÄ·½·¨ÊÇÔÚ PL/PgSQL ÖÐÓÃ EXECUTE ¶ÔÁÙÊ±±í½øÐÐ·ÃÎÊ¡£ÕâÑù»á±£Ö¤²éÑ¯ÔÚÖ´ÐÐÇ°×ÜÊÇÖØÐÂ·ÖÎö¡£</p>
+
+    <h4><a id="4.27" name="4.27"></a>4.27) ÓÐÄÄÐ©Êý¾Ý¸´ÖÆÑ¡Ïî£¿</h4>
+
+    <p>ÓÐ¼¸ÖÖÖ÷/´Ó·½Ê½µÄ¸´ÖÆÑ¡Ïî¡£ÕâÐ©Ñ¡ÏîÖ»ÔÊÐíÖ÷Êý¾Ý¿â½øÐÐ¸üÐÂ£¬´ÓÊý¾Ý¿âÖ»ÄÜ½øÐÐ¶Á¡£ÍøÒ³ <a href="http://gborg.PostgreSQL.org/genpage?replication_research">http://gborg.PostgreSQL.org/genpage?replication_research</a>  µÄ×îºóÁÐ³öÁËÕâÐ©Ñ¡Ïî¡£ÔÚ <a href="http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php">http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</a> ÕýÔÚ½øÐÐÒ»¸ö¶àÖ÷±¾¸´ÖÆµÄ½â¾ö·½°¸¡£</p>
+
+    <h4><a id="4.28" name="4.28"></a>4.28) ÓÐÄÄÐ©Êý¾Ý¼ÓÃÜÑ¡Ïî£¿</h4>
+
+    <p>contrib/pgcrypto °üº¬ÁËºÜ¶àÔÚ SQL ²éÑ¯ÖÐÊ¹ÓÃµÄ¼ÓÃÜº¯Êý¡£¼ÓÃÜ¿Í»§¶Ëµ½·þÎñÆ÷¶Ë´«ÊäÊý¾ÝµÄÎ¨Ò»·½·¨ÊÇÔÚ pg_hba.conf ÖÐ²ÉÓÃ hostss ¡£ <br />
+    <br />
+     7.3 °æ±¾ÖÐ×Ô¶¯¶ÔÊý¾Ý¿âÓÃ»§ÃÜÂë½øÐÐ¼ÓÃÜ¡£ÔÚÒÔÇ°µÄ°æ±¾ÖÐ£¬±ØÐëÔÚ postgresql.conf ÖÐ´ò¿ª PASSWORD_ENCRYPTION Ñ¡Ïî¡£·þÎñÆ÷¿ÉÒÔÔËÐÐÔÚ¼ÓÃÜµÄÎÄ¼þÏµÍ³ÉÏ£¨ÒÔ´ïµ½¼ÓÃÜµÄÄ¿µÄ£©¡£<br />
+    <br />
+     --------------------------------------------------------------------------------</p>
+
+    <h2 align="center">À©Õ¹ PostgreSQL</h2>
+
+    <h4><a id="5.1" name="5.1"></a>5.1) ÎÒÐ´ÁËÒ»¸öÓÃ»§¶¨Òåº¯Êý¡£µ±ÎÒÔÚ psql ÀïÔËÐÐÊ±£¬ÎªÊ²Ã´»áµ¼ÖÂ core dump£¿</h4>
+
+    <p>²úÉúÕâ¸öÎÊÌâµÄÔ­ÒòºÜ¶à¡£ÇëÏÈÔÚÒ»¸öµ¥¶ÀµÄ²âÊÔ³ÌÐòÖÐ²âÊÔÄãµÄ×Ô¶¨Òåº¯Êý¡£</p>
+
+    <h4><a id="5.2" name="5.2"></a>5.2) ÎÒÈçºÎÄÜ¸ø PostgreSQL ¹±Ï×Ò»Ð©Í¦²»´íµÄÐÂÀàÐÍºÍº¯Êý£¿</h4>
+
+    <p>½«ÄãµÄÀ©Õ¹·¢ËÍµ½ pgsql-hackers ÓÊ¼þÁÐ±í£¬ËüÃÇ×îÖÕ»á±»·Åµ½ contrib/ ×ÓÄ¿Â¼¡£<br />
+    </p>
+
+    <h4><a id="5.3" name="5.3"></a>5.3) ÎÒÔõÑùÐ´Ò»¸ö·µ»ØÒ»ÌõÔª×éµÄ C º¯Êý£¿</h4>
+
+    <p>ÔÚ PostgreSQL 7.3 ÒÔºóµÄ°æ±¾ÖÐ£¬C, PL/PgSQL ºÍ SQL ÍêÈ«Ö§³Ö·µ»ØÖµÎª±íµÄº¯Êý¡£¸ü¶àÐÅÏ¢Çë²Î¿¼ ³ÌÐòÔ±Ö¸ÄÏ£¨the Programmer's Guide£©¡£ÔÚ contrib/tablefunc ÖÐÓÐÒ»¸öÀý×ÓÊÇÓÃ C Ð´µÄ·µ»ØÖµÎª±íµÄº¯Êý¡£</p>
+
+    <h4><a id="5.4" name="5.4"></a>5.4) ÎÒÐÞ¸ÄÁËÒ»¸öÔ´ÎÄ¼þ£¬ÎªÊ²Ã´ÖØÐÂ±àÒëºóÃ»ÓÐ¿´µ½¸Ä±ä£¿</h4>
+
+    <p>Makefiles ÖÐÃ»ÓÐ°üº¬Í·ÎÄ¼þµÄÕýÈ·ÒÀÀµ¡£Äú±ØÐëÏÈ×ömake clean£¬ ÔÙ×öÒ»´Î make ¡£Èç¹ûÄúÊ¹ÓÃµÄÊÇ GCC £¬Ôò¿ÉÒÔ²ÉÓÃÑ¡Ïî --enable-depend ÈÃ±àÒëÆ÷×Ô¶¯Éú³ÉÍ·ÎÄ¼þµÄÒÀÀµ¹ØÏµ¡£</p>
+  </body>
+</html>
+
