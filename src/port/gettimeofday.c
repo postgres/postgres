@@ -1,5 +1,8 @@
 /*
- * $PostgreSQL: pgsql/src/port/gettimeofday.c,v 1.5 2004/06/24 18:53:48 tgl Exp $
+ * gettimeofday.c
+ *	  Win32 gettimeofday() replacement
+ *
+ * $PostgreSQL: pgsql/src/port/gettimeofday.c,v 1.6 2005/05/16 05:52:13 neilc Exp $
  *
  * Copyright (c) 2003 SRA, Inc.
  * Copyright (c) 2003 SKC, Inc.
