@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.59 2005/05/06 00:19:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.60 2005/05/16 00:19:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -747,11 +747,10 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 	segp = hashp->dir[segment_num];
 
 	/*
-	 * Pick up the first item in this bucket's chain.  If chain is
-	 * not empty we can go back around the outer loop to search it.
-	 * Otherwise we have to advance to find the next nonempty bucket.
-	 * We try to optimize that case since searching a near-empty
-	 * hashtable has to iterate this loop a lot.
+	 * Pick up the first item in this bucket's chain.  If chain is not empty
+	 * we can begin searching it.  Otherwise we have to advance to find the
+	 * next nonempty bucket.  We try to optimize that case since searching a
+	 * near-empty hashtable has to iterate this loop a lot.
 	 */
 	while ((curElem = segp[segment_ndx]) == NULL)
 	{
