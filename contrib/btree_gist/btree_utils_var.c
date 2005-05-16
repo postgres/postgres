@@ -444,7 +444,7 @@ gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n, const gbtree
 
 
 /*
- * Fortunately, this sort comparsion routine needn't be reentrant...
+ * Fortunately, this sort comparison routine needn't be reentrant...
  */
 static const gbtree_vinfo *gbt_vsrt_cmp_tinfo;
 
