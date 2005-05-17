@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.54 2005/05/11 21:52:03 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.55 2005/05/17 18:26:23 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -11,6 +11,7 @@ PostgreSQL regression test driver
 Usage: $me [options...] [extra tests...]
 
 Options:
+  --dbname=DB               use database DB (default \`regression')
   --debug                   turn on debug mode in programs that are run
   --inputdir=DIR            take input files from DIR (default \`.')
   --load-language=lang      load the named language before running the
@@ -123,6 +124,9 @@ do
         --version)
                 echo "pg_regress (PostgreSQL @VERSION@)"
                 exit 0;;
+        --dbname=*)
+                dbname=`expr "x$1" : "x--dbname=\(.*\)"`
+                shift;;
         --debug)
                 debug=yes
                 shift;;

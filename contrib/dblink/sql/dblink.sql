@@ -65,7 +65,7 @@ SELECT dblink_build_sql_delete('"MySchema"."Foo"','1 2',2,'{"0", "a"}');
 
 -- regular old dblink
 SELECT *
-FROM dblink('dbname=regression','SELECT * FROM foo') AS t(a int, b text, c text[])
+FROM dblink('dbname=contrib_regression','SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
 
 -- should generate "connection not available" error
@@ -74,7 +74,7 @@ FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
 
 -- create a persistent connection
-SELECT dblink_connect('dbname=regression');
+SELECT dblink_connect('dbname=contrib_regression');
 
 -- use the persistent connection
 SELECT *
@@ -138,10 +138,10 @@ WHERE t.a > 7;
 
 -- put more data into our slave table, first using arbitrary connection syntax
 -- but truncate the actual return value so we can use diff to check for success
-SELECT substr(dblink_exec('dbname=regression','INSERT INTO foo VALUES(10,''k'',''{"a10","b10","c10"}'')'),1,6);
+SELECT substr(dblink_exec('dbname=contrib_regression','INSERT INTO foo VALUES(10,''k'',''{"a10","b10","c10"}'')'),1,6);
 
 -- create a persistent connection
-SELECT dblink_connect('dbname=regression');
+SELECT dblink_connect('dbname=contrib_regression');
 
 -- put more data into our slave table, using persistent connection syntax
 -- but truncate the actual return value so we can use diff to check for success
@@ -193,7 +193,7 @@ FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
 
 -- create a named persistent connection
-SELECT dblink_connect('myconn','dbname=regression');
+SELECT dblink_connect('myconn','dbname=contrib_regression');
 
 -- use the named persistent connection
 SELECT *
@@ -210,10 +210,10 @@ SELECT dblink_exec('myconn','ABORT');
 
 -- create a second named persistent connection
 -- should error with "duplicate connection name"
-SELECT dblink_connect('myconn','dbname=regression');
+SELECT dblink_connect('myconn','dbname=contrib_regression');
 
 -- create a second named persistent connection with a new name
-SELECT dblink_connect('myconn2','dbname=regression');
+SELECT dblink_connect('myconn2','dbname=contrib_regression');
 
 -- use the second named persistent connection
 SELECT *
@@ -263,7 +263,7 @@ FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
 
 -- create a named persistent connection
-SELECT dblink_connect('myconn','dbname=regression');
+SELECT dblink_connect('myconn','dbname=contrib_regression');
 
 -- put more data into our slave table, using named persistent connection syntax
 -- but truncate the actual return value so we can use diff to check for success

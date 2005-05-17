@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $PostgreSQL: pgsql/src/pl/tcl/Makefile,v 1.45 2005/05/14 17:55:22 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/tcl/Makefile,v 1.46 2005/05/17 18:26:23 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -40,6 +40,7 @@ SO_MAJOR_VERSION = 2
 SO_MINOR_VERSION = 0
 OBJS = pltcl.o
 
+REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=pltcl
 REGRESS = pltcl_setup pltcl_queries
 
 include $(top_srcdir)/src/Makefile.shlib
@@ -68,7 +69,7 @@ uninstall:
 	$(MAKE) -C modules $@
 
 installcheck: submake
-	$(SHELL) $(top_builddir)/src/test/regress/pg_regress --load-language=pltcl $(REGRESS)
+	$(SHELL) $(top_builddir)/src/test/regress/pg_regress $(REGRESS_OPTS) $(REGRESS)
 
 .PHONY: submake
 submake:

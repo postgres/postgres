@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.19 2005/05/14 17:55:21 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.20 2005/05/17 18:26:23 tgl Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -58,6 +58,7 @@ endif
 
 SHLIB_LINK = $(BE_DLLLIBS) $(python_libspec) $(python_additional_libs)
 
+REGRESS_OPTS = --dbname=$(PL_TESTDB) --load-language=plpythonu
 REGRESS = plpython_schema plpython_populate plpython_function plpython_test plpython_error plpython_drop
 
 include $(top_srcdir)/src/Makefile.shlib
@@ -81,7 +82,7 @@ uninstall:
 	rm -f $(DESTDIR)$(pkglibdir)/plpython$(DLSUFFIX)
 
 installcheck: submake
-	$(SHELL) $(top_builddir)/src/test/regress/pg_regress --load-language=plpythonu $(REGRESS)
+	$(SHELL) $(top_builddir)/src/test/regress/pg_regress $(REGRESS_OPTS) $(REGRESS)
 
 .PHONY: submake
 submake:

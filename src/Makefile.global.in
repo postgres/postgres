@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.213 2005/03/25 23:22:53 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.214 2005/05/17 18:26:22 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -227,6 +227,9 @@ XGETTEXT = @XGETTEXT@
 
 GZIP	= gzip
 BZIP2	= bzip2
+
+PL_TESTDB = pl_regression
+CONTRIB_TESTDB = contrib_regression
 
 # Installation.
 

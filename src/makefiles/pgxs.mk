@@ -1,6 +1,6 @@
 # PGXS: PostgreSQL extensions makefile
 
-# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.3 2004/10/10 16:13:03 tgl Exp $ 
+# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.4 2005/05/17 18:26:22 tgl Exp $ 
 
 # This file contains generic rules to build many kinds of simple
 # extension modules.  You only need to set a few variables and include
@@ -224,12 +224,12 @@ submake:
 
 # against installed postmaster
 installcheck: submake
-	$(top_builddir)/src/test/regress/pg_regress $(REGRESS)
+	$(SHELL) $(top_builddir)/src/test/regress/pg_regress $(REGRESS_OPTS) $(REGRESS)
 
 # in-tree test doesn't work yet (no way to install my shared library)
 #check: all submake
-#	$(top_builddir)/src/test/regress/pg_regress --temp-install \
-#	  --top-builddir=$(top_builddir) $(REGRESS)
+#	$(SHELL) $(top_builddir)/src/test/regress/pg_regress --temp-install \
+#	  --top-builddir=$(top_builddir) $(REGRESS_OPTS) $(REGRESS)
 check:
 	@echo "'make check' is not supported."
 	@echo "Do 'make install', then 'make installcheck' instead."
