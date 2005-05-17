@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.101 2005/05/06 14:28:53 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.102 2005/05/17 21:46:09 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -4040,15 +4040,18 @@
    lockable object may
    appear many times, if multiple transactions are holding or waiting
    for locks on it.  However, an object that currently has no locks on it
-   will not appear at all.  A lockable object is either a relation (e.g., a
-   table) or a transaction ID.
+   will not appear at all.
   </para>
 
   <para>
-   Note that this view includes only table-level
-   locks, not row-level ones.  If a transaction is waiting for a
-   row-level lock, it will appear in the view as waiting for the
-   transaction ID of the current holder of that row lock.
+   There are several distinct types of lockable objects:
+   whole relations (e.g., tables), individual pages of relations,
+   individual tuples of relations,
+   transaction IDs,
+   and general database objects (identified by class OID and object OID,
+   in the same way as in <structname>pg_description</structname> or
+   <structname>pg_depend</structname>).  Also, the right to extend a
+   relation is represented as a separate lockable object.
   </para>
 
   <table>
@@ -4065,12 +4068,18 @@
     </thead>
     <tbody>
      <row>
-      <entry><structfield>relation</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry><structfield>locktype</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
       <entry>
-       OID of the locked relation, or NULL if the lockable object
-       is a transaction ID
+       type of the lockable object:
+       <literal>relation</>,
+       <literal>extend</>,
+       <literal>page</>,
+       <literal>tuple</>,
+       <literal>transaction</>,
+       <literal>object</>, or
+       <literal>userlock</>
       </entry>
      </row>
      <row>
@@ -4078,9 +4087,35 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-database"><structname>pg_database</structname></link>.oid</literal></entry>
       <entry>
-       OID of the database in which the locked relation exists, or
-       zero if the locked relation is a globally-shared table, or
-       NULL if the lockable object is a transaction ID
+       OID of the database in which the object exists, or
+       zero if the object is a globally-shared object, or
+       NULL if the object is a transaction ID
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>relation</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>
+       OID of the relation, or NULL if the object is not
+       a relation or part of a relation
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>page</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>
+       page number within the relation, or NULL if the object
+       is not a tuple or relation page
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>tuple</structfield></entry>
+      <entry><type>smallint</type></entry>
+      <entry></entry>
+      <entry>
+       tuple number within the page, or NULL if the object is not a tuple
       </entry>
      </row>
      <row>
@@ -4088,14 +4123,43 @@
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
-       ID of a transaction, or NULL if the lockable object is a relation
+       ID of a transaction, or NULL if the object is not a transaction ID
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>classid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
+      <entry>
+       OID of the system catalog containing the object, or NULL if the
+       object is not a general database object
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>objid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry>any OID column</entry>
+      <entry>
+       OID of the object within its system catalog, or NULL if the
+       object is not a general database object
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>objsubid</structfield></entry>
+      <entry><type>smallint</type></entry>
+      <entry></entry>
+      <entry>
+       For a table column, this is the column number (the
+       <structfield>classid</> and <structfield>objid</> refer to the
+       table itself).  For all other object types, this column is
+       zero.  NULL if the object is not a general database object
       </entry>
      </row>
      <row>
       <entry><structfield>pid</structfield></entry>
       <entry><type>integer</type></entry>
       <entry></entry>
-      <entry>process ID of a server process holding or awaiting this
+      <entry>process ID of the server process holding or awaiting this
       lock</entry>
      </row>
      <row>
@@ -4131,6 +4195,21 @@
    for another transaction, it does so by attempting to acquire share lock on
    the other transaction ID. That will succeed only when the other transaction
    terminates and releases its locks. 
+  </para>
+
+  <para>
+   Although tuples are a lockable type of object,
+   information about row-level locks is stored on disk, not in memory,
+   and therefore row-level locks normally do not appear in this view.
+   If a transaction is waiting for a
+   row-level lock, it will usually appear in the view as waiting for the
+   transaction ID of the current holder of that row lock.
+  </para>
+
+  <para>
+   If user-defined locks are in use, they are displayed using the columns
+   for general database objects.  However, the actual meaning of the lock
+   fields in such cases is up to the user.
   </para>
 
   <para>

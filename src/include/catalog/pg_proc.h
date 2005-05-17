@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.361 2005/05/09 11:31:34 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.362 2005/05/17 21:46:10 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2999,7 +2999,7 @@ DATA(insert OID = 2078 (  set_config		PGNSP PGUID 12 f f f f v 3 25 "25 25 16" _
 DESCR("SET X as a function");
 DATA(insert OID = 2084 (  pg_show_all_settings	PGNSP PGUID 12 f f t t s 0 2249 "" _null_ _null_ _null_ show_all_settings - _null_ ));
 DESCR("SHOW ALL as a function");
-DATA(insert OID = 1371 (  pg_lock_status   PGNSP PGUID 12 f f f t v 0 2249 "" _null_ _null_ _null_ pg_lock_status - _null_ ));
+DATA(insert OID = 1371 (  pg_lock_status   PGNSP PGUID 12 f f t t v 0 2249 "" _null_ _null_ _null_ pg_lock_status - _null_ ));
 DESCR("view system lock information");
 
 DATA(insert OID = 2079 (  pg_table_is_visible		PGNSP PGUID 12 f f t f s 1 16 "26" _null_ _null_ _null_	pg_table_is_visible - _null_ ));

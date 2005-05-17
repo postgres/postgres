@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.17 2005/04/29 22:28:24 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.18 2005/05/17 21:46:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,17 @@
 #include "storage/proc.h"
 #include "utils/builtins.h"
 
+
+/* This must match enum LockTagType! */
+static const char * const LockTagTypeNames[] = {
+	"relation",
+	"extend",
+	"page",
+	"tuple",
+	"transaction",
+	"object",
+	"userlock"
+};
 
 /* Working status for pg_lock_status */
 typedef struct
@@ -53,18 +64,30 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		/* build tupdesc for result tuples */
 		/* this had better match pg_locks view in system_views.sql */
-		tupdesc = CreateTemplateTupleDesc(6, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "relation",
-						   OIDOID, -1, 0);
+		tupdesc = CreateTemplateTupleDesc(12, false);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "locktype",
+						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database",
 						   OIDOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "transaction",
-						   XIDOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "pid",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "relation",
+						   OIDOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "page",
 						   INT4OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "mode",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "tuple",
+						   INT2OID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "transaction",
+						   XIDOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "classid",
+						   OIDOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 8, "objid",
+						   OIDOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 9, "objsubid",
+						   INT2OID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "pid",
+						   INT4OID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 11, "mode",
 						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "granted",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 12, "granted",
 						   BOOLOID, -1, 0);
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
@@ -93,8 +116,10 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		PGPROC	   *proc;
 		bool		granted;
 		LOCKMODE	mode = 0;
-		Datum		values[6];
-		char		nulls[6];
+		const char *locktypename;
+		char		tnbuf[32];
+		Datum		values[12];
+		char		nulls[12];
 		HeapTuple	tuple;
 		Datum		result;
 
@@ -155,30 +180,79 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		MemSet(values, 0, sizeof(values));
 		MemSet(nulls, ' ', sizeof(nulls));
 
+		if (lock->tag.locktag_type <= LOCKTAG_USERLOCK)
+			locktypename = LockTagTypeNames[lock->tag.locktag_type];
+		else
+		{
+			snprintf(tnbuf, sizeof(tnbuf), "unknown %d",
+					 (int) lock->tag.locktag_type);
+			locktypename = tnbuf;
+		}
+		values[0] = DirectFunctionCall1(textin,
+										 CStringGetDatum(locktypename));
+
+
 		switch (lock->tag.locktag_type)
 		{
 			case LOCKTAG_RELATION:
 			case LOCKTAG_RELATION_EXTEND:
-			case LOCKTAG_PAGE:
-			case LOCKTAG_TUPLE:
-				values[0] = ObjectIdGetDatum(lock->tag.locktag_field2);
 				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
-				nulls[2] = 'n';
+				values[2] = ObjectIdGetDatum(lock->tag.locktag_field2);
+				nulls[3] = 'n';
+				nulls[4] = 'n';
+				nulls[5] = 'n';
+				nulls[6] = 'n';
+				nulls[7] = 'n';
+				nulls[8] = 'n';
+				break;
+			case LOCKTAG_PAGE:
+				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
+				values[2] = ObjectIdGetDatum(lock->tag.locktag_field2);
+				values[3] = UInt32GetDatum(lock->tag.locktag_field3);
+				nulls[4] = 'n';
+				nulls[5] = 'n';
+				nulls[6] = 'n';
+				nulls[7] = 'n';
+				nulls[8] = 'n';
+				break;
+			case LOCKTAG_TUPLE:
+				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
+				values[2] = ObjectIdGetDatum(lock->tag.locktag_field2);
+				values[3] = UInt32GetDatum(lock->tag.locktag_field3);
+				values[4] = UInt16GetDatum(lock->tag.locktag_field4);
+				nulls[5] = 'n';
+				nulls[6] = 'n';
+				nulls[7] = 'n';
+				nulls[8] = 'n';
 				break;
 			case LOCKTAG_TRANSACTION:
-				nulls[0] = 'n';
+				values[5] = TransactionIdGetDatum(lock->tag.locktag_field1);
 				nulls[1] = 'n';
-				values[2] = TransactionIdGetDatum(lock->tag.locktag_field1);
+				nulls[2] = 'n';
+				nulls[3] = 'n';
+				nulls[4] = 'n';
+				nulls[6] = 'n';
+				nulls[7] = 'n';
+				nulls[8] = 'n';
 				break;
-			default:
-				/* XXX Ignore all other lock types for now */
-				continue;
+			case LOCKTAG_OBJECT:
+			case LOCKTAG_USERLOCK:
+			default:			/* treat unknown locktags like OBJECT */
+				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
+				values[6] = ObjectIdGetDatum(lock->tag.locktag_field2);
+				values[7] = ObjectIdGetDatum(lock->tag.locktag_field3);
+				values[8] = Int16GetDatum(lock->tag.locktag_field4);
+				nulls[2] = 'n';
+				nulls[3] = 'n';
+				nulls[4] = 'n';
+				nulls[5] = 'n';
+				break;
 		}
 
-		values[3] = Int32GetDatum(proc->pid);
-		values[4] = DirectFunctionCall1(textin,
-								 CStringGetDatum(GetLockmodeName(mode)));
-		values[5] = BoolGetDatum(granted);
+		values[9] = Int32GetDatum(proc->pid);
+		values[10] = DirectFunctionCall1(textin,
+										 CStringGetDatum(GetLockmodeName(mode)));
+		values[11] = BoolGetDatum(granted);
 
 		tuple = heap_formtuple(funcctx->tuple_desc, values, nulls);
 		result = HeapTupleGetDatum(tuple);

@@ -19,9 +19,9 @@
 
 
 #define SET_LOCKTAG_USERLOCK(locktag,id1,id2) \
-	((locktag).locktag_field1 = (id1), \
-	 (locktag).locktag_field2 = (id2), \
-	 (locktag).locktag_field3 = MyDatabaseId, \
+	((locktag).locktag_field1 = MyDatabaseId, \
+	 (locktag).locktag_field2 = (id1), \
+	 (locktag).locktag_field3 = (id2), \
 	 (locktag).locktag_field4 = 0, \
 	 (locktag).locktag_type = LOCKTAG_USERLOCK)
 

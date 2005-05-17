@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.12 2005/05/09 11:31:32 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.13 2005/05/17 21:46:09 tgl Exp $
  */
 
 CREATE VIEW pg_user AS 
@@ -261,8 +261,10 @@ CREATE VIEW pg_stat_database AS
 
 CREATE VIEW pg_locks AS 
     SELECT * 
-    FROM pg_lock_status() AS L(relation oid, database oid, 
-        transaction xid, pid int4, mode text, granted boolean);
+    FROM pg_lock_status() AS L
+    (locktype text, database oid, relation oid, page int4, tuple int2,
+     transaction xid, classid oid, objid oid, objsubid int2,
+     pid int4, mode text, granted boolean);
 
 CREATE VIEW pg_settings AS 
     SELECT * 
