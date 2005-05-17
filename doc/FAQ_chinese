@@ -141,7 +141,7 @@
    
    £¨Portions copyright (c) 1996-2002, PostgreSQL Global Development
    Group
-    Portions Copyright (c) 1994-6 Regents of the University of
+   Portions Copyright (c) 1994-6 Regents of the University of
    California£©
    
    ÔÊĞíÎªÈÎºÎÄ¿µÄÊ¹ÓÃ£¬¿½±´£¬ĞŞ¸ÄºÍ·Ö·¢Õâ¸öÈí¼şºÍËüµÄÎÄµµ¶ø²»ÊÕÈ¡ÈÎºÎ·ÑÓÃ
@@ -277,7 +277,7 @@
    µÄÊé½ÌÊÚ SQL¡££¨Òë×¢£ºÎÒÏÂÔØµ½±¾µØÁË¡££©ÔÚ
    http://www.commandprompt.com/ppbook ÓĞÁíÍâÒ»±¾¹ØÓÚ PostgreSQL
    µÄÊé¡£ÔÚhttp://www.intermedia.net/support/sql/sqltut.shtm£¬http://ourw
-   orld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM  ºÍ
+   orld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM ºÍ
    http://sqlcourse.com ÓĞÒ»¸ö²»´íµÄÈëÃÅ½Ì³Ì¡£
    
    ÁíÒ»¸öÊÇ "Teach Yourself SQL in 21 Days, Second
@@ -320,7 +320,6 @@
           Í¸´ÔÓµÄËøµÈ¡£ÎÒÃÇ»¹ÓĞÒ»Ğ©ËüÃÇÃ»ÓĞµÄÌØĞÔ£¬ÈçÓÃ»§¶¨ÒåÀàĞÍ£¬¼Ì³Ğ£¬
           ¹æÔòºÍ¶à°æ±¾²¢ĞĞ¿ØÖÆÒÔ¼õÉÙËøµÄÕùÓÃµÈ¡£
           
-          
    ĞÔÄÜ
           PostgreSQL
           ºÍÆäËûÉÌÓÃºÍ¿ªÔ´µÄÊı¾İ¿â¾ßÓĞÀàËÆµÄĞÔÄÜ¡£¶ÔÄ³Ğ©´¦ÀíËü±È½Ï¿ì£¬¶ÔÆ
@@ -338,7 +337,6 @@
           ²âÊÔ£¬²¢ÇÒÎÒÃÇµÄ·¢²¼ÀúÊ·ÏÔÊ¾ÎÒÃÇ¿ÉÒÔÌá¹©ÎÈ¶¨µÄ£¬ÀÎ¹ÌµÄ£¬¿ÉÓÃÓÚÉ
           ú²úÊ¹ÓÃµÄ°æ±¾¡£ÎÒÃÇÏàĞÅÔÚÕâ·½ÃæÎÒÃÇÓëÆäËûµÄÊı¾İ¿âÈí¼şÊÇÏàµ±µÄ¡£
           
-          
    Ö§³Ö
           ÎÒÃÇµÄÓÊ¼şÁĞ±íÌá¹©Ò»¸ö·Ç³£´óµÄ¿ª·¢ÈËÔ±ºÍÓÃ»§µÄ×éÒÔ°ïÖú½â¾öËùÅöµ
           ½µÄÈÎºÎÎÊÌâ¡£ÎÒÃÇ²»ÄÜ±£Ö¤¿Ï¶¨ÄÜ½â¾öÎÊÌâ£¬Ïà±ÈÖ®ÏÂ£¬ÉÌÓÃ DBMS
@@ -346,7 +344,6 @@
           ò½Ó´¥Áî PostgreSQL µÄÖ§³Ö±ÈÆäËû DBMS
           »¹ÒªºÃ¡£»¹ÓĞÒ»Ğ©ÉÌÒµĞÔµÄÔ¤°ü×°µÄÖ§³Ö£¬¿ÉÒÔ¸øÌá¹©¸øÄÇĞ©ĞèÒªµÄÈË¡
           ££¨²ÎÔÄÖ§³Ö FAQ Ìõ¿î 1.6 Ğ¡½Ú¡££©
-          
           
    ¼Û¸ñ
           ÎÒÃÇ¶ÔÈÎºÎÓÃÍ¾¶¼Ãâ·Ñ£¬°üÀ¨ÉÌÓÃºÍ·ÇÉÌÓÃÄ¿µÄ¡£Äã¿ÉÒÔ²»¼ÓÏŞÖÆµØÏòÄ
@@ -667,7 +664,7 @@
    
     4.7) ÈçºÎ²é¿´±í¡¢Ë÷Òı¡¢Êı¾İ¿âÒÔ¼°ÓÃ»§µÄ¶¨Òå£¿
     
-    psql ÓĞĞí¶à·´Ğ±¸ÜÃüÁîÓÃÓÚÏÔÊ¾ÕâĞ©ĞÅÏ¢¡£ÓÃ \? ¿´¿´¶¼ÓĞÄÄĞ©¡£ÒÔ pg_
+   psql ÓĞĞí¶à·´Ğ±¸ÜÃüÁîÓÃÓÚÏÔÊ¾ÕâĞ©ĞÅÏ¢¡£ÓÃ \? ¿´¿´¶¼ÓĞÄÄĞ©¡£ÒÔ pg_
    ´òÍ·µÄÏµÍ³±íÒ²ÃèÊöÁËÕâĞ©ĞÅÏ¢¡£ psql -l ¿ÉÒÔÁĞ³öËùÓĞµÄÊı¾İ¿â¡£
    
    Ò²¿ÉÒÔÊÔÊÔÎÄ¼ş
@@ -692,10 +689,10 @@
    ³£»áÊ¹ÓÃË÷Òı£¬ÒòÎªÖ»»á·µ»Ø±íµÄÒ»Ğ¡²¿·Ö¡£Êµ¼ÊÉÏ£¬ËäÈ» MAX() ºÍ MIN()
    ²¢²»Ê¹ÓÃË÷Òı£¬Í¨¹ı¶Ô ORDER BY ºÍ LLIMIT
    Ê¹ÓÃË÷ÒıÈ¡µÃ×î´óÖµºÍ×îĞ¡ÖµÒ²ÊÇ¿ÉÒÔµÄ£º
-       SELECT col
-       FROM tab
-       ORDER BY col [ DESC ]
-       LIMIT 1;
+   SELECT col
+   FROM tab
+   ORDER BY col [ DESC ]
+   LIMIT 1;
    
    µ±Ê¹ÓÃÍ¨Åä·û²Ù×÷£¬ÀıÈç LIKE »ò ~ Ê±£¬Ë÷ÒıÖ»ÄÜÔÚÌØ¶¨µÄÇé¿öÏÂÊ¹ÓÃ£º
      * ×Ö·û´®µÄ¿ªÊ¼²¿·Ö±ØĞëÊÇÆÕÍ¨×Ö·û´®£¬Ò²¾ÍÊÇËµ£º
@@ -740,11 +737,11 @@
    ²Ù×÷·û ~ ´¦ÀíÕıÔò±í´ïÊ½Æ¥Åä£¬¶ø ~*
    ´¦Àí´óĞ¡Ğ´ÎŞ¹ØµÄÕıÔò±í´ïÊ½Æ¥Åä¡£´óĞ´Ğ©ÎŞ¹ØµÄ LIKE ±äÖÖ³ÉÎª ILIKE¡£
    ´óĞ¡Ğ´ÎŞ¹ØµÄµÈÊ½±È½ÏÍ¨³£Ğ´×ö£º
-       SELECT *
-       FROM tab
-       WHERE lower(col) = 'abc';
+   SELECT *
+   FROM tab
+   WHERE lower(col) = 'abc';
    ÕâÑù½«²»»áÊ¹ÓÃ±ê×¼µÄË÷Òı¡£µ«ÊÇ¿ÉÒÔ´´½¨Ò»¸ö¿É±»ÀûÓÃµÄº¯ÊıË÷Òı:
-       CREATE INDEX tabindex ON tab (lower(col));
+   CREATE INDEX tabindex ON tab (lower(col));
    
     4.13) ÔÚÒ»¸ö²éÑ¯Àï£¬ÎÒÔõÑù¼ì²âÒ»¸ö×Ö¶ÎÊÇ·ñÎª NULL£¿
     
@@ -752,15 +749,14 @@
    
     4.14) ¸÷ÖÖ×Ö·ûÀàĞÍÖ®¼äÓĞÊ²Ã´²»Í¬£¿
     
-     ÀàĞÍ            ÄÚ²¿Ãû³Æ    ËµÃ÷
-     --------------------------------------------------
-     "char"        char         1¸ö×Ö·û character
-     CHAR(#)      bpchar
-   ¶¨³¤×Ö·û´®£¬Êµ¼ÊÊı¾İ²»×ã¶¨Òå³¤¶ÈÊ±£¬ÒÔ¿Õ¸ñ²¹Æë
-     VARCHAR(#)  varchar
+   ÀàĞÍ ÄÚ²¿Ãû³Æ ËµÃ÷
+   --------------------------------------------------
+   "char" char 1¸ö×Ö·û character
+   CHAR(#) bpchar ¶¨³¤×Ö·û´®£¬Êµ¼ÊÊı¾İ²»×ã¶¨Òå³¤¶ÈÊ±£¬ÒÔ¿Õ¸ñ²¹Æë
+   VARCHAR(#) varchar
    Ö¸¶¨ÁË×î´ó³¤¶È£¬±ä³¤×Ö·û´®£¬²»×ã¶¨Òå³¤¶ÈµÄ²¿·Ö²»²¹Æë
-     TEXT           text         ´®³¤¶È½öÊÜĞĞµÄ×î´ó³¤¶ÈÏŞÖÆ
-     BYTEA          bytea       ±ä³¤×Ö½ÚĞòÁĞ£¨±ä³¤µÄ¶ş½øÖÆÊı¾İ£©
+   TEXT text ´®³¤¶È½öÊÜĞĞµÄ×î´ó³¤¶ÈÏŞÖÆ
+   BYTEA bytea ±ä³¤×Ö½ÚĞòÁĞ£¨±ä³¤µÄ¶ş½øÖÆÊı¾İ£©
    ÔÚÏµÍ³±íºÍÔÚÒ»Ğ©´íÎóĞÅÏ¢ÀïÄã½«¿´µ½ÄÚ²¿Ãû³Æ¡£
    ÉÏÃæ×îºóËÄÖÖÀàĞÍÊÇ"varlena"£¨±ä³¤£©ÀàĞÍ£¨Ò²¾ÍÊÇËµ£¬¿ªÍ·µÄËÄ¸ö×Ö½ÚÊÇ³¤¶
    È£¬ºóÃæ²ÅÊÇÊı¾İ£©¡£ÓÚÊÇÊµ¼ÊÕ¼ÓÃµÄ¿Õ¼ä±ÈÉùÃ÷µÄ´óĞ¡Òª¶àÒ»Ğ©¡£È»¶øÕâĞ©ÀàĞ
@@ -776,18 +772,17 @@
     
    PostgreSQL Ö§³Ö SERIAL
    Êı¾İÀàĞÍ¡£ËüÔÚ×Ö¶ÎÉÏ×Ô¶¯´´½¨Ò»¸öĞòÁĞºÍË÷Òı¡£ÀıÈç£¬
-       CREATE TABLE person (
-           id SERIAL,
-           name TEXT
-           );
+   CREATE TABLE person (
+   id SERIAL,
+   name TEXT
+   );
    »á×Ô¶¯×ª»»Îª£º
-   
-       CREATE SEQUENCE person_id_seq;
-       CREATE TABLE person (
-           id INT4 NOT NULL DEFAULT nextval('person_id_seq'),
-           name TEXT
-           );
-       CREATE UNIQUE INDEX person_id_key ON person ( id );
+   CREATE SEQUENCE person_id_seq;
+   CREATE TABLE person (
+   id INT4 NOT NULL DEFAULT nextval('person_id_seq'),
+   name TEXT
+   );
+   CREATE UNIQUE INDEX person_id_key ON person ( id );
    ²Î¿¼ create_sequence ÊÖ²áÒ³»ñÈ¡¹ØÓÚĞòÁĞµÄ¸ü¶àĞÅÏ¢¡£Äã»¹¿ÉÒÔÓÃÃ¿ĞĞµÄ
    oid ×Ö¶Î×÷ÎªÒ»¸öÎ¨Ò»Öµ¡£²»¹ı£¬Èç¹ûÄãĞèÒªÇãµ¹ºÍÖØÔØÊı¾İ¿â£¬ÄãĞèÒªÊ¹ÓÃ
    pg_dump µÄ -o Ñ¡Ïî»òÕß COPY WITH OIDS Ñ¡ÏîÒÔ±£Áô OID¡£
@@ -796,8 +791,8 @@
     
    Ò»ÖÖ·½·¨ÊÇÔÚ²åÈëÖ®Ç°ÏÈÓÃº¯Êı nextval() ´ÓĞòÁĞ¶ÔÏóÀï¼ìË÷³öÏÂÒ»¸ö SERIAL
    Öµ£¬È»ºóÔÙÏÔÊ½²åÈë¡£Ê¹ÓÃ 4.15.1 ÀïµÄÀı±í£¬¿ÉÓÃÎ±ÂëÕâÑùÃèÊö£º
-       new_id = execute("SELECT nextval('person_id_seq')");
-       execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise
+   new_id = execute("SELECT nextval('person_id_seq')");
+   execute("INSERT INTO person (id, name) VALUES (new_id, 'Blaise
    Pascal')");
    ÕâÑù»¹ÄÜÔÚÆäËû²éÑ¯ÖĞÊ¹ÓÃ´æ·ÅÔÚ new_id ÀïµÄĞÂÖµ£¨ÀıÈç£¬×÷Îª person
    ±íµÄÍâ¼ü£©¡£×¢Òâ×Ô¶¯´´½¨µÄ SEQUENCE ¶ÔÏóµÄÃû³Æ½«»áÊÇ
@@ -805,8 +800,8 @@
    ·Ö±ğÊÇÄãµÄ±íµÄÃû³ÆºÍÄãµÄ SERIAL ×Ö¶ÎµÄÃû³Æ¡£
    ÀàËÆµÄ£¬ÔÚ SERIAL ¶ÔÏóÈ±Ê¡²åÈëºóÄã¿ÉÒÔÓÃº¯Êı currval() ¼ìË÷¸Õ¸³ÖµµÄ
    SERIAL Öµ£¬ÀıÈç£¬
-       execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
-       new_id = execute("SELECT currval('person_id_seq')");
+   execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
+   new_id = execute("SELECT currval('person_id_seq')");
    ×îºó£¬Äã¿ÉÒÔÊ¹ÓÃ´Ó INSERT Óï¾ä·µ»ØµÄ OID
    ²éÕÒÈ±Ê¡Öµ£¬¾¡¹ÜÕâ¿ÉÄÜÊÇ×îÈ±·¦ÒÆÖ²ĞÔµÄ·½·¨¡£ÔÚ Perl Àï£¬Ê¹ÓÃ´øÓĞ
    Edmund Mergl µÄ DBD::Pg Ä£¿éµÄ DBI£¬oid Öµ¿ÉÒÔÍ¨¹ı $sth->execute()
@@ -836,11 +831,11 @@
    Öµ¡£¿ÉÒÔÔÚ OID ×Ö¶ÎÉÏ´´½¨Ò»¸öË÷ÒıÒÔ¿ìËÙ·ÃÎÊ¡£
    OID ´ÓÒ»¸ö±»ËùÓĞÊı¾İ¿âÊ¹ÓÃµÄÖĞĞÄÇøÓòÀï¸³Öµ¸øËùÓĞĞÂĞĞ¡£Èç¹ûÄãÏë°Ñ OID
    ¸Ä³É±ğµÄÖµ£¬»òÕßÏë×öÒ»·İ±íµÄ´øÔÊ¼ OID µÄ¿½±´£¬Äã¿ÉÒÔ×öµ½£º
-       CREATE TABLE new(old_oid oid, mycol int);
-       SELECT old_oid, mycol INTO new FROM old;
-       COPY new TO '/tmp/pgtable';
-       DELETE FROM new;
-       COPY new WITH OIDS FROM '/tmp/pgtable';
+   CREATE TABLE new(old_oid oid, mycol int);
+   SELECT old_oid, mycol INTO new FROM old;
+   COPY new TO '/tmp/pgtable';
+   DELETE FROM new;
+   COPY new WITH OIDS FROM '/tmp/pgtable';
    OID
    ÓÃ4×Ö½ÚµÄÕûÊı±£´æ£¬ÔÚ³¬¹ı40ÒÚÊ±½«Òç³ö¡£Ã»ÓĞÈË±¨¸æ³öÏÖ¹ıÒç³ö£¬¶øÎÒÃÇ´òË
    ãÔÚÓĞÈË±¨¸æÖ®Ç°Ïû³ıÕâ¸öÏŞÖÆ¡£
@@ -851,15 +846,15 @@
     
    Ò»Ğ©Ô´´úÂëºÍÒ»Ğ©¾ÉÒ»µãµÄÎÄµµÊ¹ÓÃÒ»Ğ©ÓĞ¸ü³£ÓÃÓÃ·¨µÄÊõÓï¡£ÏÂÃæÊÇÆäÖĞÒ»²¿
    ·Ö£º
-       table, relation, class
-       row, record, tuple
-       column, field, attribute
-       retrieve, select
-       replace, update
-       append, insert
-       OID, serial value
-       portal, cursor
-       range variable, table name, table alias
+   table, relation, class
+   row, record, tuple
+   column, field, attribute
+   retrieve, select
+   replace, update
+   append, insert
+   OID, serial value
+   portal, cursor
+   range variable, table name, table alias
    ÓĞÒ»¸öÍ¨ÓÃÊı¾İ¿âÊõÓïµÄÁĞ±í£ºhttp://hea-www.harvard.edu/MST/simul/softw
    are/docs/pkgs/pgsql/glossary/glossary.html ¡£
    
@@ -867,8 +862,8 @@
     
    ÕâºÜ¿ÉÄÜÊÇÏµÍ³µÄĞéÄâÄÚ´æÓÃ¹âÁË£¬»òÕßÄÚºË¶ÔÄ³Ğ©×ÊÔ´ÓĞ½ÏµÍµÄÏŞÖÆÖµ¡£ÔÚÆô
    ¶¯ postmaster Ö®Ç°ÊÔÊÔÏÂÃæµÄÃüÁî£º
-       ulimit -d 262144
-       limit datasize 256m
+   ulimit -d 262144
+   limit datasize 256m
    È¡¾öÓÚÄãÓÃµÄ
    shell£¬ÉÏÃæÃüÁîÖ»ÓĞÒ»ÌõÄÜ³É¹¦£¬µ«ÊÇËü½«°ÑÄãµÄ½ø³ÌÊı¾İ¶ÎÏŞÖÆÉèµÃ±È½Ï¸ß£
    ¬Òò¶øÒ²ĞíÄÜÈÃ²éÑ¯Íê³É¡£ÕâÌõÃüÁîÓ¦ÓÃÓÚµ±Ç°½ø³Ì£¬ÒÔ¼°ËùÓĞÔÚÕâÌõÃüÁîÔËĞĞº
@@ -894,32 +889,31 @@
     4.21) ÎÒÈçºÎ´´½¨Ò»¸öÈ±Ê¡ÖµÊÇµ±Ç°Ê±¼äµÄ×Ö¶Î£¿
     
    Ê¹ÓÃ CURRENT_TIMESTAMP£º
-       CREATE TABLE test(x int, modtime timestamp DEFAULT
-   CURRENT_TIMESTAMP);
+   CREATE TABLE test(x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP);
    
     4.22) ÎªÊ²Ã´Ê¹ÓÃ IN µÄ×Ó²éÑ¯ÕâÃ´Âı£¿
     
    Ä¿Ç°£¬ÎÒÃÇÍ¨¹ıÎªÍâ²éÑ¯µÄÃ¿Ò»ĞĞË³ĞòÉ¨Ãè×Ó²éÑ¯µÄ½á¹ûÀ´Á¬½Ó×Ó²éÑ¯ºÍÍâ²éÑ¯
    ¡£Èç¹û×Ó²éÑ¯·µ»ØÉÙÊı¼¸ĞĞ£¬¶øÍâ²éÑ¯·µ»ØºÜ¶àĞĞ£¬IN
    Ö´ĞĞµÃºÜ¿ì¡£ÎªÁË¼Ó¿ìÆäËû IN ²éÑ¯µÄÖ´ĞĞ£¬¿ÉÒÔÓÃ EXISTS Ìæ»» IN£º
-       SELECT *
-       FROM tab
-       WHERE col IN (SELECT subcol FROM subtab);
+   SELECT *
+   FROM tab
+   WHERE col IN (SELECT subcol FROM subtab);
    ¸ÄÎª£º
-       SELECT *
-       FROM tab
-       WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
+   SELECT *
+   FROM tab
+   WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col);
    ºóÕßÒªÏëÖ´ĞĞµÃ¸ü¿ì£¬subcol
    Ó¦¸ÃÊÇÒ»¸öË÷ÒıÁĞ¡£ÎÒÃÇÏ£ÍûÔÚÎ´À´µÄ·¢²¼°æ±¾ÖĞĞŞ²¹Õâ¸öÏŞÖÆ¡£
    
     4.23) ÎÒÔõÑù½øĞĞ outer join £¨ÍâÁ¬½Ó£©£¿
     
    PostgreSQL ²ÉÓÃ±ê×¼µÄ SQL Óï·¨Ö§³ÖÍâÁ¬½Ó¡£ÕâÀïÊÇÁ½¸öÀı×Ó£º
-       SELECT *
-       FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);
+   SELECT *
+   FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);
    »ò
-       SELECT *
-       FROM t1 LEFT OUTER JOIN t2 USING (col);
+   SELECT *
+   FROM t1 LEFT OUTER JOIN t2 USING (col);
    ÕâÁ½¸öµÈ¼ÛµÄ²éÑ¯ÔÚ t1.col ºÍ t2.col ÉÏ×öÁ¬½Ó£¬²¢ÇÒ·µâ»?t1
    ÖĞËùÓĞÎ´Á¬½ÓµÄĞĞ£¨ÄÇĞ©ÔÚ t2 ÖĞÃ»ÓĞÆ¥ÅäµÄĞĞ£©¡£ÓÒ[Íâ]Á¬½Ó(RIGHT OUTER
    JOIN)½«·µ»Ø t2 ÖĞÎ´Á¬½ÓµÄĞĞ¡£ÍêÈ«ÍâÁ¬½Ó£¨FULL OUTER JOIN£©½«·µ»Ø t1 ºÍ
@@ -928,14 +922,14 @@
    £¨INNER JOIN£©¡£
    ÔÚ´ËÇ°µÄ°æ±¾ÖĞ£¬ÍâÁ¬½Ó¿ÉÒÔÓÃ UNION ºÍ NOT IN
    À´Ä£Äâ¡£ÀıÈç£¬ÏÂÃæµÄÀı×ÓÔÚ±í tab1 ºÍ tab2 Ö®¼ä×öÍâÁ¬½Ó£º
-       SELECT tab1.col1, tab2.col2
-       FROM tab1, tab2
-       WHERE tab1.col1 = tab2.col1
-       UNION ALL
-       SELECT tab1.col1, NULL
-       FROM tab1
-       WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
-       ORDER BY col1
+   SELECT tab1.col1, tab2.col2
+   FROM tab1, tab2
+   WHERE tab1.col1 = tab2.col1
+   UNION ALL
+   SELECT tab1.col1, NULL
+   FROM tab1
+   WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
+   ORDER BY col1
    
     4.24) ÈçºÎÊ¹ÓÃÉæ¼°¶à¸öÊı¾İ¿âµÄ²éÑ¯£¿
     
@@ -961,8 +955,7 @@
     4.27) ÓĞÄÄĞ©Êı¾İ¸´ÖÆÑ¡Ïî£¿
     
    ÓĞ¼¸ÖÖÖ÷/´Ó·½Ê½µÄ¸´ÖÆÑ¡Ïî¡£ÕâĞ©Ñ¡ÏîÖ»ÔÊĞíÖ÷Êı¾İ¿â½øĞĞ¸üĞÂ£¬´ÓÊı¾İ¿âÖ»Ä
-   Ü½øĞĞ¶Á¡£ÍøÒ³
-   http://gborg.PostgreSQL.org/genpage?replication_research
+   Ü½øĞĞ¶Á¡£ÍøÒ³ http://gborg.PostgreSQL.org/genpage?replication_research
    µÄ×îºóÁĞ³öÁËÕâĞ©Ñ¡Ïî¡£ÔÚ
    http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php
    ÕıÔÚ½øĞĞÒ»¸ö¶àÖ÷±¾¸´ÖÆµÄ½â¾ö·½°¸¡£
