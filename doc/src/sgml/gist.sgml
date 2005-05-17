@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.17 2005/04/09 03:52:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.18 2005/05/17 00:59:30 neilc Exp $
 -->
 
 <chapter id="GiST">
@@ -202,7 +202,7 @@ $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.17 2005/04/09 03:52:43 momjian Exp
  <para>
   The lack of write-ahead logging is just a small matter of programming,
   but since it isn't done yet, a crash could render a <acronym>GiST</acronym>
-  index inconsistent, forcing a REINDEX.
+  index inconsistent, forcing a <command>REINDEX</command>.
  </para>
 
 </sect1>

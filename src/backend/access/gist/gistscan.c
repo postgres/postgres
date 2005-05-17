@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.56 2004/12/31 21:59:10 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.57 2005/05/17 00:59:30 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,28 +17,29 @@
 #include "access/genam.h"
 #include "access/gist.h"
 #include "access/gistscan.h"
+#include "utils/memutils.h"
 #include "utils/resowner.h"
 
-
 /* routines defined and used here */
-static void gistregscan(IndexScanDesc s);
-static void gistdropscan(IndexScanDesc s);
-static void gistadjone(IndexScanDesc s, int op, BlockNumber blkno,
+static void gistregscan(IndexScanDesc scan);
+static void gistdropscan(IndexScanDesc scan);
+static void gistadjone(IndexScanDesc scan, int op, BlockNumber blkno,
 		   OffsetNumber offnum);
 static void adjuststack(GISTSTACK *stk, BlockNumber blkno);
-static void adjustiptr(IndexScanDesc s, ItemPointer iptr,
+static void adjustiptr(IndexScanDesc scan, ItemPointer iptr,
 		   int op, BlockNumber blkno, OffsetNumber offnum);
+static void gistfreestack(GISTSTACK *s);
 
 /*
- *	Whenever we start a GiST scan in a backend, we register it in private
- *	space.	Then if the GiST index gets updated, we check all registered
- *	scans and adjust them if the tuple they point at got moved by the
- *	update.  We only need to do this in private space, because when we update
- *	an GiST we have a write lock on the tree, so no other process can have
- *	any locks at all on it.  A single transaction can have write and read
- *	locks on the same object, so that's why we need to handle this case.
+ * Whenever we start a GiST scan in a backend, we register it in
+ * private space. Then if the GiST index gets updated, we check all
+ * registered scans and adjust them if the tuple they point at got
+ * moved by the update.  We only need to do this in private space,
+ * because when we update an GiST we have a write lock on the tree, so
+ * no other process can have any locks at all on it.  A single
+ * transaction can have write and read locks on the same object, so
+ * that's why we need to handle this case.
  */
-
 typedef struct GISTScanListData
 {
 	IndexScanDesc gsl_scan;
@@ -57,65 +58,77 @@ gistbeginscan(PG_FUNCTION_ARGS)
 	Relation	r = (Relation) PG_GETARG_POINTER(0);
 	int			nkeys = PG_GETARG_INT32(1);
 	ScanKey		key = (ScanKey) PG_GETARG_POINTER(2);
-	IndexScanDesc s;
+	IndexScanDesc scan;
 
-	s = RelationGetIndexScan(r, nkeys, key);
+	scan = RelationGetIndexScan(r, nkeys, key);
+	gistregscan(scan);
 
-	gistregscan(s);
-
-	PG_RETURN_POINTER(s);
+	PG_RETURN_POINTER(scan);
 }
 
 Datum
 gistrescan(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanKey		key = (ScanKey) PG_GETARG_POINTER(1);
-	GISTScanOpaque p;
+	GISTScanOpaque so;
 	int			i;
 
 	/*
 	 * Clear all the pointers.
 	 */
-	ItemPointerSetInvalid(&s->currentItemData);
-	ItemPointerSetInvalid(&s->currentMarkData);
+	ItemPointerSetInvalid(&scan->currentItemData);
+	ItemPointerSetInvalid(&scan->currentMarkData);
 
-	p = (GISTScanOpaque) s->opaque;
-	if (p != NULL)
+	so = (GISTScanOpaque) scan->opaque;
+	if (so != NULL)
 	{
 		/* rescan an existing indexscan --- reset state */
-		gistfreestack(p->s_stack);
-		gistfreestack(p->s_markstk);
-		p->s_stack = p->s_markstk = NULL;
-		p->s_flags = 0x0;
+		gistfreestack(so->stack);
+		gistfreestack(so->markstk);
+		so->stack = so->markstk = NULL;
+		so->flags = 0x0;
+		/* drop pins on buffers -- no locks held */
+		if (BufferIsValid(so->curbuf))
+		{
+			ReleaseBuffer(so->curbuf);
+			so->curbuf = InvalidBuffer;
+		}
+		if (BufferIsValid(so->markbuf))
+		{
+			ReleaseBuffer(so->markbuf);
+			so->markbuf = InvalidBuffer;
+		}
 	}
 	else
 	{
 		/* initialize opaque data */
-		p = (GISTScanOpaque) palloc(sizeof(GISTScanOpaqueData));
-		p->s_stack = p->s_markstk = NULL;
-		p->s_flags = 0x0;
-		s->opaque = p;
-		p->giststate = (GISTSTATE *) palloc(sizeof(GISTSTATE));
-		initGISTstate(p->giststate, s->indexRelation);
+		so = (GISTScanOpaque) palloc(sizeof(GISTScanOpaqueData));
+		so->stack = so->markstk = NULL;
+		so->flags = 0x0;
+		so->tempCxt = createTempGistContext();
+		so->curbuf = so->markbuf = InvalidBuffer;
+		so->giststate = (GISTSTATE *) palloc(sizeof(GISTSTATE));
+		initGISTstate(so->giststate, scan->indexRelation);
+
+		scan->opaque = so;
 	}
 
 	/* Update scan key, if a new one is given */
-	if (key && s->numberOfKeys > 0)
+	if (key && scan->numberOfKeys > 0)
 	{
-		memmove(s->keyData,
-				key,
-				s->numberOfKeys * sizeof(ScanKeyData));
+		memmove(scan->keyData, key,
+				scan->numberOfKeys * sizeof(ScanKeyData));
 
 		/*
-		 * Modify the scan key so that the Consistent function is called
-		 * for all comparisons.  The original operator is passed to the
-		 * Consistent function in the form of its strategy number, which
-		 * is available from the sk_strategy field, and its subtype from
-		 * the sk_subtype field.
+		 * Modify the scan key so that all the Consistent method is
+		 * called for all comparisons. The original operator is passed
+		 * to the Consistent function in the form of its strategy
+		 * number, which is available from the sk_strategy field, and
+		 * its subtype from the sk_subtype field.
 		 */
-		for (i = 0; i < s->numberOfKeys; i++)
-			s->keyData[i].sk_func = p->giststate->consistentFn[s->keyData[i].sk_attno - 1];
+		for (i = 0; i < scan->numberOfKeys; i++)
+			scan->keyData[i].sk_func = so->giststate->consistentFn[scan->keyData[i].sk_attno - 1];
 	}
 
 	PG_RETURN_VOID();
@@ -124,35 +137,47 @@ gistrescan(PG_FUNCTION_ARGS)
 Datum
 gistmarkpos(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
-	GISTScanOpaque p;
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	GISTScanOpaque so;
 	GISTSTACK  *o,
 			   *n,
 			   *tmp;
 
-	s->currentMarkData = s->currentItemData;
-	p = (GISTScanOpaque) s->opaque;
-	if (p->s_flags & GS_CURBEFORE)
-		p->s_flags |= GS_MRKBEFORE;
+	scan->currentMarkData = scan->currentItemData;
+	so = (GISTScanOpaque) scan->opaque;
+	if (so->flags & GS_CURBEFORE)
+		so->flags |= GS_MRKBEFORE;
 	else
-		p->s_flags &= ~GS_MRKBEFORE;
+		so->flags &= ~GS_MRKBEFORE;
 
 	o = NULL;
-	n = p->s_stack;
+	n = so->stack;
 
 	/* copy the parent stack from the current item data */
 	while (n != NULL)
 	{
 		tmp = (GISTSTACK *) palloc(sizeof(GISTSTACK));
-		tmp->gs_child = n->gs_child;
-		tmp->gs_blk = n->gs_blk;
-		tmp->gs_parent = o;
+		tmp->offset = n->offset;
+		tmp->block = n->block;
+		tmp->parent = o;
 		o = tmp;
-		n = n->gs_parent;
+		n = n->parent;
 	}
 
-	gistfreestack(p->s_markstk);
-	p->s_markstk = o;
+	gistfreestack(so->markstk);
+	so->markstk = o;
+
+	/* Update markbuf: make sure to bump ref count on curbuf */
+	if (BufferIsValid(so->markbuf))
+	{
+		ReleaseBuffer(so->markbuf);
+		so->markbuf = InvalidBuffer;
+	}
+	if (BufferIsValid(so->curbuf))
+	{
+		IncrBufferRefCount(so->curbuf);
+		so->markbuf = so->curbuf;
+	}
 
 	PG_RETURN_VOID();
 }
@@ -160,35 +185,47 @@ gistmarkpos(PG_FUNCTION_ARGS)
 Datum
 gistrestrpos(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
-	GISTScanOpaque p;
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	GISTScanOpaque so;
 	GISTSTACK  *o,
 			   *n,
 			   *tmp;
 
-	s->currentItemData = s->currentMarkData;
-	p = (GISTScanOpaque) s->opaque;
-	if (p->s_flags & GS_MRKBEFORE)
-		p->s_flags |= GS_CURBEFORE;
+	scan->currentItemData = scan->currentMarkData;
+	so = (GISTScanOpaque) scan->opaque;
+	if (so->flags & GS_MRKBEFORE)
+		so->flags |= GS_CURBEFORE;
 	else
-		p->s_flags &= ~GS_CURBEFORE;
+		so->flags &= ~GS_CURBEFORE;
 
 	o = NULL;
-	n = p->s_markstk;
+	n = so->markstk;
 
 	/* copy the parent stack from the current item data */
 	while (n != NULL)
 	{
 		tmp = (GISTSTACK *) palloc(sizeof(GISTSTACK));
-		tmp->gs_child = n->gs_child;
-		tmp->gs_blk = n->gs_blk;
-		tmp->gs_parent = o;
+		tmp->offset = n->offset;
+		tmp->block = n->block;
+		tmp->parent = o;
 		o = tmp;
-		n = n->gs_parent;
+		n = n->parent;
 	}
 
-	gistfreestack(p->s_stack);
-	p->s_stack = o;
+	gistfreestack(so->stack);
+	so->stack = o;
+
+	/* Update curbuf: be sure to bump ref count on markbuf */
+	if (BufferIsValid(so->curbuf))
+	{
+		ReleaseBuffer(so->curbuf);
+		so->curbuf = InvalidBuffer;
+	}
+	if (BufferIsValid(so->markbuf))
+	{
+		IncrBufferRefCount(so->markbuf);
+		so->curbuf = so->markbuf;
+	}
 
 	PG_RETURN_VOID();
 }
@@ -196,52 +233,57 @@ gistrestrpos(PG_FUNCTION_ARGS)
 Datum
 gistendscan(PG_FUNCTION_ARGS)
 {
-	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
-	GISTScanOpaque p;
+	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
+	GISTScanOpaque so;
 
-	p = (GISTScanOpaque) s->opaque;
+	so = (GISTScanOpaque) scan->opaque;
 
-	if (p != NULL)
+	if (so != NULL)
 	{
-		gistfreestack(p->s_stack);
-		gistfreestack(p->s_markstk);
-		if (p->giststate != NULL)
-			freeGISTstate(p->giststate);
-		pfree(s->opaque);
+		gistfreestack(so->stack);
+		gistfreestack(so->markstk);
+		if (so->giststate != NULL)
+			freeGISTstate(so->giststate);
+		/* drop pins on buffers -- we aren't holding any locks */
+		if (BufferIsValid(so->curbuf))
+			ReleaseBuffer(so->curbuf);
+		if (BufferIsValid(so->markbuf))
+			ReleaseBuffer(so->markbuf);
+		MemoryContextDelete(so->tempCxt);
+		pfree(scan->opaque);
 	}
 
-	gistdropscan(s);
-	/* XXX don't unset read lock -- two-phase locking */
+	gistdropscan(scan);
 
 	PG_RETURN_VOID();
 }
 
 static void
-gistregscan(IndexScanDesc s)
+gistregscan(IndexScanDesc scan)
 {
 	GISTScanList l;
 
 	l = (GISTScanList) palloc(sizeof(GISTScanListData));
-	l->gsl_scan = s;
+	l->gsl_scan = scan;
 	l->gsl_owner = CurrentResourceOwner;
 	l->gsl_next = GISTScans;
 	GISTScans = l;
 }
 
 static void
-gistdropscan(IndexScanDesc s)
+gistdropscan(IndexScanDesc scan)
 {
 	GISTScanList l;
 	GISTScanList prev;
 
 	prev = NULL;
 
-	for (l = GISTScans; l != NULL && l->gsl_scan != s; l = l->gsl_next)
+	for (l = GISTScans; l != NULL && l->gsl_scan != scan; l = l->gsl_next)
 		prev = l;
 
 	if (l == NULL)
 		elog(ERROR, "GiST scan list corrupted -- could not find 0x%p",
-			 (void *) s);
+			 (void *) scan);
 
 	if (prev == NULL)
 		GISTScans = l->gsl_next;
@@ -313,22 +355,22 @@ gistadjscans(Relation rel, int op, BlockNumber blkno, OffsetNumber offnum)
  *		update.  If so, we make the change here.
  */
 static void
-gistadjone(IndexScanDesc s,
+gistadjone(IndexScanDesc scan,
 		   int op,
 		   BlockNumber blkno,
 		   OffsetNumber offnum)
 {
 	GISTScanOpaque so;
 
-	adjustiptr(s, &(s->currentItemData), op, blkno, offnum);
-	adjustiptr(s, &(s->currentMarkData), op, blkno, offnum);
+	adjustiptr(scan, &(scan->currentItemData), op, blkno, offnum);
+	adjustiptr(scan, &(scan->currentMarkData), op, blkno, offnum);
 
-	so = (GISTScanOpaque) s->opaque;
+	so = (GISTScanOpaque) scan->opaque;
 
 	if (op == GISTOP_SPLIT)
 	{
-		adjuststack(so->s_stack, blkno);
-		adjuststack(so->s_markstk, blkno);
+		adjuststack(so->stack, blkno);
+		adjuststack(so->markstk, blkno);
 	}
 }
 
@@ -340,7 +382,7 @@ gistadjone(IndexScanDesc s,
  *		the same page.
  */
 static void
-adjustiptr(IndexScanDesc s,
+adjustiptr(IndexScanDesc scan,
 		   ItemPointer iptr,
 		   int op,
 		   BlockNumber blkno,
@@ -354,7 +396,7 @@ adjustiptr(IndexScanDesc s,
 		if (ItemPointerGetBlockNumber(iptr) == blkno)
 		{
 			curoff = ItemPointerGetOffsetNumber(iptr);
-			so = (GISTScanOpaque) s->opaque;
+			so = (GISTScanOpaque) scan->opaque;
 
 			switch (op)
 			{
@@ -362,7 +404,6 @@ adjustiptr(IndexScanDesc s,
 					/* back up one if we need to */
 					if (curoff >= offnum)
 					{
-
 						if (curoff > FirstOffsetNumber)
 						{
 							/* just adjust the item pointer */
@@ -375,10 +416,10 @@ adjustiptr(IndexScanDesc s,
 							 * tuple
 							 */
 							ItemPointerSet(iptr, blkno, FirstOffsetNumber);
-							if (iptr == &(s->currentItemData))
-								so->s_flags |= GS_CURBEFORE;
+							if (iptr == &(scan->currentItemData))
+								so->flags |= GS_CURBEFORE;
 							else
-								so->s_flags |= GS_MRKBEFORE;
+								so->flags |= GS_MRKBEFORE;
 						}
 					}
 					break;
@@ -386,10 +427,10 @@ adjustiptr(IndexScanDesc s,
 				case GISTOP_SPLIT:
 					/* back to start of page on split */
 					ItemPointerSet(iptr, blkno, FirstOffsetNumber);
-					if (iptr == &(s->currentItemData))
-						so->s_flags &= ~GS_CURBEFORE;
+					if (iptr == &(scan->currentItemData))
+						so->flags &= ~GS_CURBEFORE;
 					else
-						so->s_flags &= ~GS_MRKBEFORE;
+						so->flags &= ~GS_MRKBEFORE;
 					break;
 
 				default:
@@ -417,9 +458,20 @@ adjuststack(GISTSTACK *stk, BlockNumber blkno)
 {
 	while (stk != NULL)
 	{
-		if (stk->gs_blk == blkno)
-			stk->gs_child = FirstOffsetNumber;
+		if (stk->block == blkno)
+			stk->offset = FirstOffsetNumber;
 
-		stk = stk->gs_parent;
+		stk = stk->parent;
+	}
+}
+
+static void
+gistfreestack(GISTSTACK *s)
+{
+	while (s != NULL)
+	{
+		GISTSTACK *p = s->parent;
+		pfree(s);
+		s = p;
 	}
 }

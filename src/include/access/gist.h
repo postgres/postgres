@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist.h,v 1.44 2005/03/27 23:53:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist.h,v 1.45 2005/05/17 00:59:30 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,13 +54,21 @@ typedef GISTPageOpaqueData *GISTPageOpaque;
 #define GIST_LEAF(entry) (((GISTPageOpaque) PageGetSpecialPointer((entry)->page))->flags & F_LEAF)
 
 /*
- *	When we descend a tree, we keep a stack of parent pointers.
+ *	When we descend a tree, we keep a stack of parent pointers. This
+ *	allows us to follow a chain of internal node points until we reach
+ *	a leaf node, and then back up the stack to re-examine the internal
+ *	nodes.
+ *
+ * 'parent' is the previous stack entry -- i.e. the node we arrived
+ * from. 'block' is the node's block number. 'offset' is the offset in
+ * the node's page that we stopped at (i.e. we followed the child
+ * pointer located at the specified offset).
  */
 typedef struct GISTSTACK
 {
-	struct GISTSTACK *gs_parent;
-	OffsetNumber gs_child;
-	BlockNumber gs_blk;
+	struct GISTSTACK *parent;
+	OffsetNumber offset;
+	BlockNumber block;
 } GISTSTACK;
 
 typedef struct GISTSTATE
@@ -84,10 +92,13 @@ typedef struct GISTSTATE
  */
 typedef struct GISTScanOpaqueData
 {
-	struct GISTSTACK *s_stack;
-	struct GISTSTACK *s_markstk;
-	uint16		s_flags;
-	struct GISTSTATE *giststate;
+	GISTSTACK			*stack;
+	GISTSTACK			*markstk;
+	uint16				 flags;
+	GISTSTATE			*giststate;
+	MemoryContext		 tempCxt;
+	Buffer				 curbuf;
+	Buffer				 markbuf;
 } GISTScanOpaqueData;
 
 typedef GISTScanOpaqueData *GISTScanOpaque;
@@ -101,8 +112,8 @@ typedef GISTScanOpaqueData *GISTScanOpaque;
 #define GS_CURBEFORE	((uint16) (1 << 0))
 #define GS_MRKBEFORE	((uint16) (1 << 1))
 
-/* root page of a gist */
-#define GISTP_ROOT				0
+/* root page of a gist index */
+#define GIST_ROOT_BLKNO				0
 
 /*
  *	When we update a relation on which we're doing a scan, we need to
@@ -183,7 +194,6 @@ extern Datum gistbuild(PG_FUNCTION_ARGS);
 extern Datum gistinsert(PG_FUNCTION_ARGS);
 extern Datum gistbulkdelete(PG_FUNCTION_ARGS);
 extern void _gistdump(Relation r);
-extern void gistfreestack(GISTSTACK *s);
 extern void initGISTstate(GISTSTATE *giststate, Relation index);
 extern void freeGISTstate(GISTSTATE *giststate);
 extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
@@ -193,6 +203,7 @@ extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 extern void gist_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void gist_undo(XLogRecPtr lsn, XLogRecord *record);
 extern void gist_desc(char *buf, uint8 xl_info, char *rec);
+extern MemoryContext createTempGistContext(void);
 
 /* gistget.c */
 extern Datum gistgettuple(PG_FUNCTION_ARGS);
