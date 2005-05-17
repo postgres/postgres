@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon May 16 19:35:37 EDT 2005
+Last updated:           Mon May 16 20:24:15 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -82,7 +82,7 @@ first.
   </li><li>Allow WAL replay of CREATE TABLESPACE to work when the directory
   structure on the recovery computer is different from the original
   </li><li>Add "include file" functionality in postgresql.conf
-  </li><li>*-Add session start time and last statement time to pg_stat_activity*
+  </li><li>-<em>Add session start time and last statement time to pg_stat_activity</em>
   </li><li>Allow server logs to be remotely read using SQL commands
   </li><li>Allow pg_hba.conf settings to be controlled via SQL
 <p>  This would require a new global table that is dumped to flat file for
@@ -122,7 +122,7 @@ first.
 <p>  This is useful for checking PITR recovery.
 </p>
   </li><li>Allow the PITR process to be debugged and data examined
-  </li><li>*-Add the client IP address and port to pg_stat_activity*
+  </li><li>-<em>Add the client IP address and port to pg_stat_activity</em>
   </li><li>Improve replication solutions
   <ul>
     <li>Load balancing
@@ -185,20 +185,18 @@ first.
 </p>
   </li><li>Allow to_char() on interval values to accumulate the highest unit
   requested
+<p>  Some special format flag would be required to request such
+  accumulation.  Such functionality could also be added to EXTRACT. 
+  Prevent accumulation that crosses the month/day boundary because of
+  the uneven number of days in a month.
+</p>
   <ul>
     <li>to_char(INTERVAL '1 hour 5 minutes', 'MI') =&gt; 65
     </li><li>to_char(INTERVAL '43 hours 20 minutes', 'MI' ) =&gt; 2600 
     </li><li>to_char(INTERVAL '43 hours 20 minutes', 'WK:DD:HR:MI') =&gt; 0:1:19:20
     </li><li>to_char(INTERVAL '3 years 5 months','MM') =&gt; 41
   </li></ul>
-</li></ul>
-<p>  Some special format flag would be required to request such<br/>
-  accumulation.  Such functionality could also be added to EXTRACT. <br/>
-  Prevent accumulation that crosses the month/day boundary because of<br/>
-  the uneven number of days in a month.
-</p>
-<ul>
-  <li>Add ISO INTERVAL handling
+  </li><li>Add ISO INTERVAL handling
   <ul>
     <li>Add support for day-time syntax, INTERVAL '1 2:03:04' DAY TO SECOND
     </li><li>Add support for year-month syntax, INTERVAL '50-6' YEAR TO MONTH
@@ -279,7 +277,7 @@ first.
 </p>
   </li><li>Add UNIQUE capability to non-btree indexes
   </li><li>Add rtree index support for line, lseg, path, point
-  </li><li>*-Use indexes for MIN() and MAX()*
+  </li><li>-<em>Use indexes for MIN() and MAX()</em>
 <p>  MIN/MAX queries can already be rewritten as SELECT col FROM tab ORDER
   BY col {DESC} LIMIT 1. Completing this item involves doing this
   transformation automatically.
@@ -300,7 +298,7 @@ first.
   order. Another method would be to sort heap ctids matching the index
   before accessing the heap rows.
 </p>
-  </li><li>*-Allow non-bitmap indexes to be combined by creating bitmaps in memory*
+  </li><li>-<em>Allow non-bitmap indexes to be combined by creating bitmaps in memory</em>
 <p>  This feature allows separate indexes to be ANDed or ORed together.  This
   is particularly useful for data warehousing applications that need to
   query the database in an many permutations.  This feature scans an index
@@ -345,7 +343,7 @@ first.
   </li><li>Allow an alias to be provided for the target table in UPDATE/DELETE
 <p>  This is not SQL-spec but many DBMSs allow it.
 </p>
-  </li><li>*-Allow additional tables to be specified in DELETE for joins*
+  </li><li>-<em>Allow additional tables to be specified in DELETE for joins</em>
 <p>  UPDATE already allows this (UPDATE...FROM) but we need similar
   functionality in DELETE.  It's been agreed that the keyword should
   be USING, to avoid anything as confusing as DELETE FROM a FROM b.
@@ -449,8 +447,8 @@ first.
 </p>
     </li><li>Allow COPY to understand \x as a hex byte
     </li><li>Have COPY return the number of rows loaded/unloaded (?)
-    </li><li>-Allow COPY to optionally include column headings in the first line
-    </li><li>-Allow COPY FROM ... CSV to interpret newlines and carriage
+    </li><li>-<em>Allow COPY to optionally include column headings in the first line</em>
+    </li><li>-<em>Allow COPY FROM ... CSV to interpret newlines and carriage</em>
           returns in data
   </li></ul>
   </li><li>CURSOR
@@ -491,7 +489,7 @@ first.
     <li>Allow PL/PgSQL's RAISE function to take expressions (?)
 <p>          Currently only constants are supported.
 </p>
-    </li><li>-Change PL/PgSQL to use palloc() instead of malloc()
+    </li><li>-<em>Change PL/PgSQL to use palloc() instead of malloc()</em>
     </li><li>Handle references to temporary tables that are created, destroyed,
           then recreated during a session, and EXECUTE is not used
 <p>          This requires the cached PL/PgSQL byte code to be invalidated when
@@ -582,7 +580,7 @@ first.
   memory.  This could exhaust memory for very large trigger queues.
   This item involves dumping large queues into files.
 </p>
-  </li><li>*-Implement shared row locks and use them in RI triggers*
+  </li><li>-<em>Implement shared row locks and use them in RI triggers</em>
   </li><li>Enforce referential integrity for system tables
   </li><li>Change foreign key constraint for array -&gt; element to mean element
   in array (?)
@@ -661,7 +659,7 @@ first.
 </p>
   </li><li>Consider use of open/fcntl(O_DIRECT) to minimize OS caching,
   especially for WAL writes
-  </li><li>*-Cache last known per-tuple offsets to speed long tuple access*
+  </li><li>-<em>Cache last known per-tuple offsets to speed long tuple access</em>
   </li><li>Speed up COUNT(*)
 <p>  We could use a fixed row count and a +/- count to follow MVCC
   visibility rules, or a single cached value could be used and
@@ -684,7 +682,7 @@ first.
     </li><li>Query execute plan
     </li><li>Query results
   </li></ul>
-  </li><li>*-Allow the size of the buffer cache used by temporary objects to be*
+  </li><li>-<em>Allow the size of the buffer cache used by temporary objects to be</em>
   specified as a GUC variable
 <p>  Larger local buffer cache sizes requires more efficient handling of
   local cache lookups.
@@ -715,7 +713,7 @@ first.
   write lock. However, the read lock promotion to write lock could lead
   to deadlock situations.
 </p>
-  </li><li>*-Add a warning when the free space map is too small*
+  </li><li>-<em>Add a warning when the free space map is too small</em>
   </li><li>Maintain a map of recently-expired rows
 <p>  This allows vacuum to target specific pages for possible free space 
   without requiring a sequential scan.
@@ -742,7 +740,7 @@ first.
   while on non-SMP machines, the backend should sleep so the process
   holding the lock can complete and release it.
 </p>
-  </li><li>*-Improve SMP performance on i386 machines*
+  </li><li>-<em>Improve SMP performance on i386 machines</em>
 <p>  i386-based SMP machines can generate excessive context switching
   caused by lock failure in high concurrency situations. This may be
   caused by CPU cache line invalidation inefficiencies.
@@ -874,7 +872,7 @@ first.
   </li><li>Allow cross-compiling by generating the zic database on the target system
   </li><li>Improve NLS maintenace of libpgport messages linked onto applications
   </li><li>Allow ecpg to work with MSVC and BCC
-  </li><li>*-Make src/port/snprintf.c thread-safe*
+  </li><li>-<em>Make src/port/snprintf.c thread-safe</em>
   </li><li>Add xpath_array() to /contrib/xml2 to return results as an array
   </li><li>Allow building in directories containing spaces
 <p>  This is probably not possible because 'gmake' and other compiler tools
