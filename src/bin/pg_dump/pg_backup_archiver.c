@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.62.2.6 2005/04/30 08:42:17 neilc Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.62.2.7 2005/05/17 17:31:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -959,7 +959,7 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 	if (!fh)
 		die_horribly(AH, modulename, "could not open TOC file\n");
 
-	while (fgets(buf, 1024, fh) != NULL)
+	while (fgets(buf, sizeof(buf), fh) != NULL)
 	{
 		/* Find a comment */
 		cmnt = strchr(buf, ';');
@@ -987,10 +987,13 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 		if (!te)
 			die_horribly(AH, modulename, "could not find entry for id %d\n", id);
 
-		ropt->idWanted[id - 1] = 1;
+		if (!ropt->idWanted[id - 1])
+		{
+			ropt->idWanted[id - 1] = 1;
 
-		_moveAfter(AH, tePrev, te);
-		tePrev = te;
+			_moveAfter(AH, tePrev, te);
+			tePrev = te;
+		}
 	}
 
 	if (fclose(fh) != 0)
