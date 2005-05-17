@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.108 2005/04/30 08:08:51 neilc Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.109 2005/05/17 17:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -891,24 +891,21 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 	if (!fh)
 		die_horribly(AH, modulename, "could not open TOC file\n");
 
-	while (fgets(buf, 1024, fh) != NULL)
+	while (fgets(buf, sizeof(buf), fh) != NULL)
 	{
-		/* Find a comment */
+		/* Truncate line at comment, if any */
 		cmnt = strchr(buf, ';');
-		if (cmnt == buf)
-			continue;
-
-		/* End string at comment */
 		if (cmnt != NULL)
 			cmnt[0] = '\0';
 
-		/* Skip if all spaces */
-		if (strspn(buf, " \t") == strlen(buf))
+		/* Ignore if all blank */
+		if (strspn(buf, " \t\r") == strlen(buf))
 			continue;
 
-		/* Get an ID */
+		/* Get an ID, check it's valid and not already seen */
 		id = strtol(buf, &endptr, 10);
-		if (endptr == buf || id <= 0 || id > AH->maxDumpId)
+		if (endptr == buf || id <= 0 || id > AH->maxDumpId ||
+			ropt->idWanted[id - 1])
 		{
 			write_msg(modulename, "WARNING: line ignored: %s\n", buf);
 			continue;
