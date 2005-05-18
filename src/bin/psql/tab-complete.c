@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.127 2005/05/07 02:22:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.128 2005/05/18 04:47:40 neilc Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -368,6 +368,12 @@ static const SchemaQuery Query_for_list_of_views = {
 "   FROM pg_catalog.pg_user "\
 "  WHERE substring(pg_catalog.quote_ident(usename),1,%d)='%s'"
 
+#define Query_for_list_of_grant_users \
+" SELECT pg_catalog.quote_ident(usename) "\
+"   FROM pg_catalog.pg_user "\
+"  WHERE substring(pg_catalog.quote_ident(usename),1,%d)='%s'"\
+" UNION SELECT 'PUBLIC' UNION SELECT 'GROUP'"
+
 /* the silly-looking length condition is just to eat up the current word */
 #define Query_for_table_owning_index \
 "SELECT pg_catalog.quote_ident(c1.relname) "\
@@ -494,7 +500,7 @@ psql_completion(char *text, int start, int end)
 
 	static const char *const sql_commands[] = {
 		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CHECKPOINT", "CLOSE", "CLUSTER", "COMMENT",
-		"COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE", "DELETE", "DROP", "END", "EXECUTE",
+		"COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE", "DELETE FROM", "DROP", "END", "EXECUTE",
 		"EXPLAIN", "FETCH", "GRANT", "INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY",
 		"PREPARE", "REINDEX", "RELEASE", "RESET", "REVOKE", "ROLLBACK", "SAVEPOINT",
 		"SELECT", "SET", "SHOW", "START", "TRUNCATE", "UNLISTEN", "UPDATE", "VACUUM", NULL
@@ -920,14 +926,6 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "USER") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_users);
 
-/* ANALYZE */
-	/* If the previous word is ANALYZE, produce list of tables. */
-	else if (pg_strcasecmp(prev_wd, "ANALYZE") == 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
-	/* If we have ANALYZE <table>, complete with semicolon. */
-	else if (pg_strcasecmp(prev2_wd, "ANALYZE") == 0)
-		COMPLETE_WITH_CONST(";");
-
 /* BEGIN, END, COMMIT, ABORT */
 	else if (pg_strcasecmp(prev_wd, "BEGIN") == 0 ||
 			 pg_strcasecmp(prev_wd, "END") == 0 ||
@@ -1149,8 +1147,23 @@ psql_completion(char *text, int start, int end)
 			 pg_strcasecmp(prev_wd, "AS") == 0)
 		COMPLETE_WITH_CONST("SELECT");
 
-/* DELETE */
+/* DECLARE */
+	else if (pg_strcasecmp(prev2_wd, "DECLARE") == 0)
+	{
+			static const char *const list_DECLARE[] =
+			{"BINARY", "INSENSITIVE", "SCROLL", "NO SCROLL", "CURSOR", NULL};
+			COMPLETE_WITH_LIST(list_DECLARE);
+	}
 
+	else if (pg_strcasecmp(prev_wd, "CURSOR") == 0)
+	{
+			static const char *const list_DECLARECURSOR[] =
+			{"WITH HOLD", "WITHOUT HOLD", "FOR", NULL};
+			COMPLETE_WITH_LIST(list_DECLARECURSOR);
+	}
+
+
+/* DELETE */
 	/*
 	 * Complete DELETE with FROM (only if the word before that is not "ON"
 	 * (cf. rules) or "BEFORE" or "AFTER" (cf. triggers) or GRANT)
@@ -1176,16 +1189,60 @@ psql_completion(char *text, int start, int end)
 	}
 	/* XXX: implement tab completion for DELETE ... USING */
 
-/* EXPLAIN */
+/* DROP (when not the previous word) */
+	/* DROP AGGREGATE */
+	else if (pg_strcasecmp(prev3_wd, "DROP") == 0 &&
+			 pg_strcasecmp(prev2_wd, "AGGREGATE") == 0)
+		COMPLETE_WITH_CONST("(");
 
+	/* DROP object with CASCADE / RESTRICT */
+	else if ((pg_strcasecmp(prev3_wd, "DROP") == 0 &&
+			  (pg_strcasecmp(prev2_wd, "CONVERSION") == 0 ||
+			   pg_strcasecmp(prev2_wd, "DOMAIN") == 0 ||
+			   pg_strcasecmp(prev2_wd, "FUNCTION") == 0 ||
+			   pg_strcasecmp(prev2_wd, "INDEX") == 0 ||
+			   pg_strcasecmp(prev2_wd, "LANGUAGE") == 0 ||
+			   pg_strcasecmp(prev2_wd, "SCHEMA") == 0 ||
+			   pg_strcasecmp(prev2_wd, "SEQUENCE") == 0 ||
+			   pg_strcasecmp(prev2_wd, "TABLE") == 0 ||
+			   pg_strcasecmp(prev2_wd, "TYPE") == 0 ||
+			   pg_strcasecmp(prev2_wd, "VIEW") == 0)) ||
+			 (pg_strcasecmp(prev4_wd, "DROP") == 0 &&
+			  pg_strcasecmp(prev3_wd, "AGGREGATE") == 0 &&
+			  prev_wd[strlen(prev_wd) - 1] == ')'))
+	{
+			static const char *const list_DROPCR[] =
+			{"CASCADE", "RESTRICT", NULL};
+			COMPLETE_WITH_LIST(list_DROPCR);
+	}
+
+/* EXPLAIN */
 	/*
-	 * Complete EXPLAIN [VERBOSE] (which you'd have to type yourself) with
-	 * the list of SQL commands
+	 * Complete EXPLAIN [ANALYZE] [VERBOSE] with list of EXPLAIN-able commands
 	 */
-	else if (pg_strcasecmp(prev_wd, "EXPLAIN") == 0 ||
-			 (pg_strcasecmp(prev2_wd, "EXPLAIN") == 0 &&
-			  pg_strcasecmp(prev_wd, "VERBOSE") == 0))
-		COMPLETE_WITH_LIST(sql_commands);
+	else if (pg_strcasecmp(prev_wd, "EXPLAIN") == 0)
+	{
+			static const char *const list_EXPLAIN[] =
+			{"SELECT","INSERT","DELETE","UPDATE","DECLARE","ANALYZE","VERBOSE",NULL};
+			COMPLETE_WITH_LIST(list_EXPLAIN);
+	}
+	else if (pg_strcasecmp(prev2_wd, "EXPLAIN") == 0 &&
+					 pg_strcasecmp(prev_wd, "ANALYZE") == 0)
+	{
+			static const char *const list_EXPLAIN[] =
+			{"SELECT","INSERT","DELETE","UPDATE","DECLARE","VERBOSE",NULL};
+			COMPLETE_WITH_LIST(list_EXPLAIN);
+	}
+	else if (pg_strcasecmp(prev_wd, "VERBOSE") == 0 &&
+			 pg_strcasecmp(prev3_wd, "VACUUM") != 0 &&
+			 pg_strcasecmp(prev4_wd, "VACUUM") != 0 &&
+			 (pg_strcasecmp(prev2_wd, "ANALYZE") == 0 ||
+			  pg_strcasecmp(prev2_wd, "EXPLAIN") == 0))
+	{
+			static const char *const list_EXPLAIN[] =
+			{"SELECT","INSERT","DELETE","UPDATE","DECLARE",NULL};
+			COMPLETE_WITH_LIST(list_EXPLAIN);
+	}
 
 /* FETCH && MOVE */
 	/* Complete FETCH with one of FORWARD, BACKWARD, RELATIVE */
@@ -1273,15 +1330,24 @@ psql_completion(char *text, int start, int end)
 			COMPLETE_WITH_QUERY(Query_for_list_of_schemas);
 		else if (pg_strcasecmp(prev_wd, "TABLESPACE") == 0)
 			COMPLETE_WITH_QUERY(Query_for_list_of_tablespaces);
-		else
+		else if (pg_strcasecmp(prev4_wd, "GRANT") == 0)
 			COMPLETE_WITH_CONST("TO");
+		else
+			COMPLETE_WITH_CONST("FROM");
 	}
 
-	/*
-	 * TODO: to complete with user name we need prev5_wd -- wait for a
-	 * more general solution there same for GRANT <sth> ON { DATABASE |
-	 * FUNCTION | LANGUAGE | SCHEMA | TABLESPACE } xxx TO
-	 */
+	/* Complete "GRANT/REVOKE * ON * TO/FROM" with username, GROUP, or PUBLIC */
+	else if (pg_strcasecmp(prev3_wd, "ON") == 0 &&
+			 ((pg_strcasecmp(prev5_wd, "GRANT") == 0 &&
+			   pg_strcasecmp(prev_wd, "TO") == 0) ||
+			  (pg_strcasecmp(prev5_wd, "REVOKE") == 0 &&
+			   pg_strcasecmp(prev_wd, "FROM") == 0)))
+		COMPLETE_WITH_QUERY(Query_for_list_of_grant_users);
+
+/* GROUP BY */
+	else if (pg_strcasecmp(prev3_wd, "FROM") == 0 &&
+			 pg_strcasecmp(prev_wd, "GROUP") == 0)
+		COMPLETE_WITH_CONST("BY");
 
 /* INSERT */
 	/* Complete INSERT with "INTO" */
@@ -1360,10 +1426,32 @@ psql_completion(char *text, int start, int end)
 /* NOTIFY */
 	else if (pg_strcasecmp(prev_wd, "NOTIFY") == 0)
 		COMPLETE_WITH_QUERY("SELECT pg_catalog.quote_ident(relname) FROM pg_catalog.pg_listener WHERE substring(pg_catalog.quote_ident(relname),1,%d)='%s'");
+
 /* OWNER TO  - complete with available users*/
 	else if (pg_strcasecmp(prev2_wd, "OWNER") == 0 &&
 			 pg_strcasecmp(prev_wd, "TO") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_users);
+
+/* ORDER BY */
+	else if (pg_strcasecmp(prev3_wd, "FROM") == 0 &&
+			 pg_strcasecmp(prev_wd, "ORDER") == 0)
+		COMPLETE_WITH_CONST("BY");
+	else if (pg_strcasecmp(prev4_wd, "FROM") == 0 &&
+			 pg_strcasecmp(prev2_wd, "ORDER") == 0 &&
+			 pg_strcasecmp(prev_wd, "BY") == 0)
+		COMPLETE_WITH_ATTR(prev3_wd);
+
+/* PREPARE xx AS */
+	else if (pg_strcasecmp(prev_wd, "AS") == 0 &&
+			 pg_strcasecmp(prev3_wd, "PREPARE") == 0)
+	{
+		static const char *const list_PREPARE[] =
+		{"SELECT", "UPDATE", "INSERT", "DELETE", NULL};
+
+		COMPLETE_WITH_LIST(list_PREPARE);
+	}
+
+
 /* REINDEX */
 	else if (pg_strcasecmp(prev_wd, "REINDEX") == 0)
 	{
@@ -1407,7 +1495,7 @@ psql_completion(char *text, int start, int end)
 				 && pg_strcasecmp(prev_wd, "TRANSACTION") == 0))
 	{
 		static const char *const my_list[] =
-		{"ISOLATION", "READ", NULL};
+		{"ISOLATION LEVEL", "READ", NULL};
 
 		COMPLETE_WITH_LIST(my_list);
 	}
@@ -1501,8 +1589,8 @@ psql_completion(char *text, int start, int end)
 		{
 			static const char *const my_list[] =
 			{"ISO", "SQL", "Postgres", "German",
-				"YMD", "DMY", "MDY",
-				"US", "European", "NonEuropean",
+			 "YMD", "DMY", "MDY",
+			 "US", "European", "NonEuropean",
 			"DEFAULT", NULL};
 
 			COMPLETE_WITH_LIST(my_list);
@@ -1551,16 +1639,56 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev_wd, "SET") == 0)
 		COMPLETE_WITH_ATTR(prev2_wd);
 
-/* VACUUM */
+/* UPDATE xx SET yy = */
+	else if (pg_strcasecmp(prev2_wd, "SET") == 0 &&
+					 pg_strcasecmp(prev4_wd, "UPDATE") == 0)
+		COMPLETE_WITH_CONST("=");
+
+/*
+ * VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ table ]
+ * VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]
+ */
 	else if (pg_strcasecmp(prev_wd, "VACUUM") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
 								   " UNION SELECT 'FULL'"
+								   " UNION SELECT 'FREEZE'"
 								   " UNION SELECT 'ANALYZE'"
 								   " UNION SELECT 'VERBOSE'");
 	else if (pg_strcasecmp(prev2_wd, "VACUUM") == 0 &&
 			 (pg_strcasecmp(prev_wd, "FULL") == 0 ||
-			  pg_strcasecmp(prev_wd, "ANALYZE") == 0 ||
-			  pg_strcasecmp(prev_wd, "VERBOSE") == 0))
+			  pg_strcasecmp(prev_wd, "FREEZE") == 0))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+								   " UNION SELECT 'ANALYZE'"
+								   " UNION SELECT 'VERBOSE'");
+	else if (pg_strcasecmp(prev3_wd, "VACUUM") == 0 &&
+			 pg_strcasecmp(prev_wd, "ANALYZE") == 0 &&
+			 (pg_strcasecmp(prev2_wd, "FULL") == 0 ||
+			  pg_strcasecmp(prev2_wd, "FREEZE") == 0))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+								   " UNION SELECT 'VERBOSE'");
+	else if (pg_strcasecmp(prev3_wd, "VACUUM") == 0 &&
+			 pg_strcasecmp(prev_wd, "VERBOSE") == 0 &&
+			 (pg_strcasecmp(prev2_wd, "FULL") == 0 ||
+			  pg_strcasecmp(prev2_wd, "FREEZE") == 0))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+								   " UNION SELECT 'ANALYZE'");
+	else if (pg_strcasecmp(prev2_wd, "VACUUM") == 0 &&
+			 pg_strcasecmp(prev_wd, "VERBOSE") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+								   " UNION SELECT 'ANALYZE'");
+	else if (pg_strcasecmp(prev2_wd, "VACUUM") == 0 &&
+			 pg_strcasecmp(prev_wd, "ANALYZE") == 0)
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables,
+								   " UNION SELECT 'VERBOSE'");
+	else if ((pg_strcasecmp(prev_wd, "ANALYZE") == 0 &&
+			  pg_strcasecmp(prev2_wd, "VERBOSE") == 0) ||
+			 (pg_strcasecmp(prev_wd, "VERBOSE") == 0 &&
+			  pg_strcasecmp(prev2_wd, "ANALYZE") == 0))
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+
+/* ANALZYE */
+	/* If the previous word is ANALYZE, produce list of tables */
+	else if (pg_strcasecmp(prev_wd, "ANALYZE") == 0)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
 
 /* WHERE */
