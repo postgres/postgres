@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.128 2005/05/18 04:47:40 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.129 2005/05/18 05:01:10 neilc Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1802,6 +1802,7 @@ psql_completion(char *text, int start, int end)
 	free(prev2_wd);
 	free(prev3_wd);
 	free(prev4_wd);
+	free(prev5_wd);
 
 	/* Return our Grand List O' Matches */
 	return matches;
@@ -2168,9 +2169,11 @@ exec_query(const char *query)
 
 
 
-/* Return the word (space delimited) before point. Set skip > 0 to skip that
-   many words; e.g. skip=1 finds the word before the previous one.
-*/
+/*
+ * Return the word (space delimited) before point. Set skip > 0 to
+ * skip that many words; e.g. skip=1 finds the word before the
+ * previous one. Return value is NULL or a malloc'ed string.
+ */
 static char *
 previous_word(int point, int skip)
 {
