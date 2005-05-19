@@ -75,5 +75,7 @@ user_write_unlock_oid(Oid oid)
 int
 user_unlock_all(void)
 {
-	return LockReleaseAll(USER_LOCKMETHOD, true);
+	LockReleaseAll(USER_LOCKMETHOD, true);
+
+	return true;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.151 2005/05/11 01:26:02 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.152 2005/05/19 23:30:18 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -166,6 +166,8 @@ static void LockCountMyLocks(SHMEM_OFFSET lockOffset, PGPROC *proc,
 				 int *myHolding);
 static bool UnGrantLock(LOCK *lock, LOCKMODE lockmode,
 						PROCLOCK *proclock, LockMethod lockMethodTable);
+static void CleanUpLock(LOCKMETHODID lockmethodid, LOCK *lock,
+						PROCLOCK *proclock, bool wakeupNeeded);
 
 
 /*
@@ -589,13 +591,12 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 			 * anyone to release the lock object later.
 			 */
 			Assert(SHMQueueEmpty(&(lock->procLocks)));
-			lock = (LOCK *) hash_search(LockMethodLockHash[lockmethodid],
-										(void *) &(lock->tag),
-										HASH_REMOVE, NULL);
+			if (!hash_search(LockMethodLockHash[lockmethodid],
+							 (void *) &(lock->tag),
+							 HASH_REMOVE, NULL))
+				elog(PANIC, "lock table corrupted");
 		}
 		LWLockRelease(masterLock);
-		if (!lock)				/* hash remove failed? */
-			elog(WARNING, "lock table corrupted");
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory"),
@@ -708,11 +709,10 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 			{
 				SHMQueueDelete(&proclock->lockLink);
 				SHMQueueDelete(&proclock->procLink);
-				proclock = (PROCLOCK *) hash_search(LockMethodProcLockHash[lockmethodid],
-											   (void *) &(proclock->tag),
-													HASH_REMOVE, NULL);
-				if (!proclock)
-					elog(WARNING, "proclock table corrupted");
+				if (!hash_search(LockMethodProcLockHash[lockmethodid],
+								 (void *) &(proclock->tag),
+								 HASH_REMOVE, NULL))
+					elog(PANIC, "proclock table corrupted");
 			}
 			else
 				PROCLOCK_PRINT("LockAcquire: NOWAIT", proclock);
@@ -784,10 +784,9 @@ RemoveLocalLock(LOCALLOCK *locallock)
 
 	pfree(locallock->lockOwners);
 	locallock->lockOwners = NULL;
-	locallock = (LOCALLOCK *) hash_search(LockMethodLocalHash[lockmethodid],
-										  (void *) &(locallock->tag),
-										  HASH_REMOVE, NULL);
-	if (!locallock)
+	if (!hash_search(LockMethodLocalHash[lockmethodid],
+					 (void *) &(locallock->tag),
+					 HASH_REMOVE, NULL))
 		elog(WARNING, "locallock table corrupted");
 }
 
@@ -994,6 +993,55 @@ UnGrantLock(LOCK *lock, LOCKMODE lockmode,
 }
 
 /*
+ * CleanUpLock -- clean up after releasing a lock.  We garbage-collect the
+ * proclock and lock objects if possible, and call ProcLockWakeup if there
+ * are remaining requests and the caller says it's OK.  (Normally, this
+ * should be called after UnGrantLock, and wakeupNeeded is the result from
+ * UnGrantLock.)
+ *
+ * The locktable's masterLock must be held at entry, and will be
+ * held at exit.
+ */
+static void
+CleanUpLock(LOCKMETHODID lockmethodid, LOCK *lock, PROCLOCK *proclock,
+			bool wakeupNeeded)
+{
+	/*
+	 * If this was my last hold on this lock, delete my entry in the
+	 * proclock table.
+	 */
+	if (proclock->holdMask == 0)
+	{
+		PROCLOCK_PRINT("CleanUpLock: deleting", proclock);
+		SHMQueueDelete(&proclock->lockLink);
+		SHMQueueDelete(&proclock->procLink);
+		if (!hash_search(LockMethodProcLockHash[lockmethodid],
+						 (void *) &(proclock->tag),
+						 HASH_REMOVE, NULL))
+			elog(PANIC, "proclock table corrupted");
+	}
+
+	if (lock->nRequested == 0)
+	{
+		/*
+		 * The caller just released the last lock, so garbage-collect the
+		 * lock object.
+		 */
+		LOCK_PRINT("CleanUpLock: deleting", lock, 0);
+		Assert(SHMQueueEmpty(&(lock->procLocks)));
+		if (!hash_search(LockMethodLockHash[lockmethodid],
+						 (void *) &(lock->tag),
+						 HASH_REMOVE, NULL))
+			elog(PANIC, "lock table corrupted");
+	}
+	else if (wakeupNeeded)
+	{
+		/* There are waiters on this lock, so wake them up. */
+		ProcLockWakeup(LockMethods[lockmethodid], lock);  
+	}
+}
+
+/*
  * GrantLockLocal -- update the locallock data structures to show
  *		the lock request has been granted.
  *
@@ -1160,30 +1208,12 @@ RemoveFromWaitQueue(PGPROC *proc)
 
 	/*
 	 * Delete the proclock immediately if it represents no already-held locks.
-	 * This must happen now because if the owner of the lock decides to release
-	 * it, and the requested/granted counts then go to zero, LockRelease
-	 * expects there to be no remaining proclocks.
+	 * (This must happen now because if the owner of the lock decides to
+	 * release it, and the requested/granted counts then go to zero,
+	 * LockRelease expects there to be no remaining proclocks.)
+	 * Then see if any other waiters for the lock can be woken up now.
 	 */
-	if (proclock->holdMask == 0)
-	{
-		PROCLOCK_PRINT("RemoveFromWaitQueue: deleting proclock", proclock);
-		SHMQueueDelete(&proclock->lockLink);
-		SHMQueueDelete(&proclock->procLink);
-		proclock = (PROCLOCK *) hash_search(LockMethodProcLockHash[lockmethodid],
-											(void *) &(proclock->tag),
-											HASH_REMOVE, NULL);
-		if (!proclock)
-			elog(WARNING, "proclock table corrupted");
-	}
-
-	/*
-	 * There should still be some requests for the lock ... else what were
-	 * we waiting for?  Therefore no need to delete the lock object.
-	 */
-	Assert(waitLock->nRequested > 0);
-
-	/* See if any other waiters for the lock can be woken up now */
-	ProcLockWakeup(LockMethods[lockmethodid], waitLock);
+	CleanUpLock(lockmethodid, waitLock, proclock, true);
 }
 
 /*
@@ -1221,10 +1251,7 @@ LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	Assert(lockmethodid < NumLockMethods);
 	lockMethodTable = LockMethods[lockmethodid];
 	if (!lockMethodTable)
-	{
-		elog(WARNING, "lockMethodTable is null in LockRelease");
-		return FALSE;
-	}
+		elog(ERROR, "bad lock method: %d", lockmethodid);
 
 	/*
 	 * Find the LOCALLOCK entry for this lock and lockmode
@@ -1328,56 +1355,12 @@ LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 		return FALSE;
 	}
 
+	/*
+	 * Do the releasing.  CleanUpLock will waken any now-wakable waiters.
+	 */
 	wakeupNeeded = UnGrantLock(lock, lockmode, proclock, lockMethodTable);
 
-	/*
-	 * If this was my last hold on this lock, delete my entry in the
-	 * proclock table.
-	 */
-	if (proclock->holdMask == 0)
-	{
-		PROCLOCK_PRINT("LockRelease: deleting proclock", proclock);
-		SHMQueueDelete(&proclock->lockLink);
-		SHMQueueDelete(&proclock->procLink);
-		proclock = (PROCLOCK *) hash_search(LockMethodProcLockHash[lockmethodid],
-											(void *) &(proclock->tag),
-											HASH_REMOVE, NULL);
-		if (!proclock)
-		{
-			LWLockRelease(masterLock);
-			elog(WARNING, "proclock table corrupted");
-			RemoveLocalLock(locallock);
-			return FALSE;
-		}
-	}
-
-	if (lock->nRequested == 0)
-	{
-		/*
-		 * We've just released the last lock, so garbage-collect the lock
-		 * object.
-		 */
-		LOCK_PRINT("LockRelease: deleting lock", lock, lockmode);
-		Assert(SHMQueueEmpty(&(lock->procLocks)));
-		lock = (LOCK *) hash_search(LockMethodLockHash[lockmethodid],
-									(void *) &(lock->tag),
-									HASH_REMOVE, NULL);
-		if (!lock)
-		{
-			LWLockRelease(masterLock);
-			elog(WARNING, "lock table corrupted");
-			RemoveLocalLock(locallock);
-			return FALSE;
-		}
-	}
-	else
-	{
-		/*
-		 * Wake up waiters if needed.
-		 */
-		if (wakeupNeeded)
-			ProcLockWakeup(lockMethodTable, lock);
-	}
+	CleanUpLock(lockmethodid, lock, proclock, wakeupNeeded);
 
 	LWLockRelease(masterLock);
 
@@ -1397,7 +1380,7 @@ LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
  * allxids == false: release all locks with Xid != 0
  * (zero is the Xid used for "session" locks).
  */
-bool
+void
 LockReleaseAll(LOCKMETHODID lockmethodid, bool allxids)
 {
 	HASH_SEQ_STATUS status;
@@ -1418,10 +1401,7 @@ LockReleaseAll(LOCKMETHODID lockmethodid, bool allxids)
 	Assert(lockmethodid < NumLockMethods);
 	lockMethodTable = LockMethods[lockmethodid];
 	if (!lockMethodTable)
-	{
-		elog(WARNING, "bad lock method: %d", lockmethodid);
-		return FALSE;
-	}
+		elog(ERROR, "bad lock method: %d", lockmethodid);
 
 	numLockModes = lockMethodTable->numLockModes;
 	masterLock = lockMethodTable->masterLock;
@@ -1516,48 +1496,10 @@ LockReleaseAll(LOCKMETHODID lockmethodid, bool allxids)
 		Assert(lock->nGranted <= lock->nRequested);
 		LOCK_PRINT("LockReleaseAll: updated", lock, 0);
 
-		PROCLOCK_PRINT("LockReleaseAll: deleting", proclock);
+		Assert(proclock->holdMask == 0);
 
-		/*
-		 * Remove the proclock entry from the linked lists
-		 */
-		SHMQueueDelete(&proclock->lockLink);
-		SHMQueueDelete(&proclock->procLink);
-
-		/*
-		 * remove the proclock entry from the hashtable
-		 */
-		proclock = (PROCLOCK *) hash_search(LockMethodProcLockHash[lockmethodid],
-											(void *) &(proclock->tag),
-											HASH_REMOVE,
-											NULL);
-		if (!proclock)
-		{
-			LWLockRelease(masterLock);
-			elog(WARNING, "proclock table corrupted");
-			return FALSE;
-		}
-
-		if (lock->nRequested == 0)
-		{
-			/*
-			 * We've just released the last lock, so garbage-collect the
-			 * lock object.
-			 */
-			LOCK_PRINT("LockReleaseAll: deleting", lock, 0);
-			Assert(SHMQueueEmpty(&(lock->procLocks)));
-			lock = (LOCK *) hash_search(LockMethodLockHash[lockmethodid],
-										(void *) &(lock->tag),
-										HASH_REMOVE, NULL);
-			if (!lock)
-			{
-				LWLockRelease(masterLock);
-				elog(WARNING, "lock table corrupted");
-				return FALSE;
-			}
-		}
-		else if (wakeupNeeded)
-			ProcLockWakeup(lockMethodTable, lock);
+		/* CleanUpLock will wake up waiters if needed. */
+		CleanUpLock(lockmethodid, lock, proclock, wakeupNeeded);
 
 next_item:
 		proclock = nextHolder;
@@ -1569,8 +1511,6 @@ next_item:
 	if (lockmethodid == USER_LOCKMETHOD ? Trace_userlocks : Trace_locks)
 		elog(LOG, "LockReleaseAll done");
 #endif
-
-	return TRUE;
 }
 
 /*
