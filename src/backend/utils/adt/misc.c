@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.42 2005/05/10 22:27:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.43 2005/05/19 21:35:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
-#include "storage/sinval.h"
+#include "storage/procarray.h"
 #include "storage/fd.h"
 #include "utils/builtins.h"
 #include "funcapi.h"

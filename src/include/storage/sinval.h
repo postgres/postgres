@@ -7,14 +7,13 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.40 2005/01/10 21:57:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.41 2005/05/19 21:35:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SINVAL_H
 #define SINVAL_H
 
-#include "storage/backendid.h"
 #include "storage/itemptr.h"
 #include "storage/relfilenode.h"
 
@@ -87,23 +86,11 @@ typedef union
 extern int	SInvalShmemSize(int maxBackends);
 extern void CreateSharedInvalidationState(int maxBackends);
 extern void InitBackendSharedInvalidationState(void);
+
 extern void SendSharedInvalidMessage(SharedInvalidationMessage *msg);
 extern void ReceiveSharedInvalidMessages(
 				  void (*invalFunction) (SharedInvalidationMessage *msg),
 							 void (*resetFunction) (void));
-
-extern bool DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself);
-extern bool TransactionIdIsInProgress(TransactionId xid);
-extern bool IsBackendPid(int pid);
-extern TransactionId GetOldestXmin(bool allDbs);
-extern int	CountActiveBackends(void);
-extern int	CountEmptyBackendSlots(void);
-
-/* Use "struct PGPROC", not PGPROC, to avoid including proc.h here */
-extern struct PGPROC *BackendIdGetProc(BackendId procId);
-
-extern void XidCacheRemoveRunningXids(TransactionId xid,
-						  int nxids, TransactionId *xids);
 
 /* signal handler for catchup events (SIGUSR1) */
 extern void CatchupInterruptHandler(SIGNAL_ARGS);

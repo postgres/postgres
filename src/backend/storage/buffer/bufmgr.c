@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.188 2005/03/20 22:00:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.189 2005/05/19 21:35:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -825,11 +825,11 @@ UnpinBuffer(BufferDesc *buf, bool fixOwner, bool trashOK)
 			buf->refcount == 1)
 		{
 			/* we just released the last pin other than the waiter's */
-			BackendId	wait_backend_id = buf->wait_backend_id;
+			int		wait_backend_pid = buf->wait_backend_pid;
 
 			buf->flags &= ~BM_PIN_COUNT_WAITER;
 			UnlockBufHdr_NoHoldoff(buf);
-			ProcSendSignal(wait_backend_id);
+			ProcSendSignal(wait_backend_pid);
 		}
 		else
 			UnlockBufHdr_NoHoldoff(buf);
@@ -1678,7 +1678,7 @@ UnlockBuffers(void)
 		 * signal.
 		 */
 		if ((buf->flags & BM_PIN_COUNT_WAITER) != 0 &&
-			buf->wait_backend_id == MyBackendId)
+			buf->wait_backend_pid == MyProcPid)
 			buf->flags &= ~BM_PIN_COUNT_WAITER;
 
 		UnlockBufHdr_NoHoldoff(buf);
@@ -1820,7 +1820,7 @@ LockBufferForCleanup(Buffer buffer)
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			elog(ERROR, "multiple backends attempting to wait for pincount 1");
 		}
-		bufHdr->wait_backend_id = MyBackendId;
+		bufHdr->wait_backend_pid = MyProcPid;
 		bufHdr->flags |= BM_PIN_COUNT_WAITER;
 		PinCountWaitBuf = bufHdr;
 		UnlockBufHdr_NoHoldoff(bufHdr);

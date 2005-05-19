@@ -31,7 +31,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.3 2005/05/07 18:14:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.4 2005/05/19 21:35:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@
 #include "utils/memutils.h"
 #include "storage/backendid.h"
 #include "storage/lmgr.h"
-#include "storage/sinval.h"
+#include "storage/procarray.h"
 
 
 /*
@@ -383,8 +383,8 @@ MultiXactIdIsRunning(MultiXactId multi)
 	}
 
 	/*
-	 * This could be made better by having a special entry point in sinval.c,
-	 * walking the PGPROC array only once for the whole array.  But in most
+	 * This could be made faster by having another entry point in procarray.c,
+	 * walking the PGPROC array only once for all the members.  But in most
 	 * cases nmembers should be small enough that it doesn't much matter.
 	 */
 	for (i = 0; i < nmembers; i++)

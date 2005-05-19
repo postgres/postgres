@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.191 2005/05/10 22:27:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.192 2005/05/19 21:35:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@
 #include "storage/lwlock.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
-#include "storage/sinval.h"
+#include "storage/procarray.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
@@ -776,7 +776,7 @@ begin:;
 	if (MyLastRecPtr.xrecoff == 0 && !no_tran)
 	{
 		/*
-		 * We do not acquire SInvalLock here because of possible deadlock.
+		 * We do not acquire ProcArrayLock here because of possible deadlock.
 		 * Anyone who wants to inspect other procs' logRec must acquire
 		 * WALInsertLock, instead.	A better solution would be a per-PROC
 		 * spinlock, but no time for that before 7.2 --- tgl 12/19/01.
@@ -4887,11 +4887,11 @@ CreateCheckPoint(bool shutdown, bool force)
 	 * commits after REDO point).
 	 *
 	 * XXX temporarily ifdef'd out to avoid three-way deadlock condition:
-	 * GetUndoRecPtr needs to grab SInvalLock to ensure that it is looking
-	 * at a stable set of proc records, but grabbing SInvalLock while
+	 * GetUndoRecPtr needs to grab ProcArrayLock to ensure that it is looking
+	 * at a stable set of proc records, but grabbing ProcArrayLock while
 	 * holding WALInsertLock is no good.  GetNewTransactionId may cause a
 	 * WAL record to be written while holding XidGenLock, and
-	 * GetSnapshotData needs to get XidGenLock while holding SInvalLock,
+	 * GetSnapshotData needs to get XidGenLock while holding ProcArrayLock,
 	 * so there's a risk of deadlock. Need to find a better solution.  See
 	 * pgsql-hackers discussion of 17-Dec-01.
 	 *

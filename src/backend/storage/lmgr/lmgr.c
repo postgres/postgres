@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.73 2005/04/30 19:03:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.74 2005/05/19 21:35:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
-#include "storage/sinval.h"
+#include "storage/procarray.h"
 #include "utils/inval.h"
 
 

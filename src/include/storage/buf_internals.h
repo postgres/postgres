@@ -8,14 +8,13 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.77 2005/03/04 20:21:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.78 2005/05/19 21:35:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef BUFMGR_INTERNALS_H
 #define BUFMGR_INTERNALS_H
 
-#include "storage/backendid.h"
 #include "storage/buf.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
@@ -94,7 +93,7 @@ typedef struct buftag
  *	BufferDesc -- shared descriptor/state data for a single shared buffer.
  *
  * Note: buf_hdr_lock must be held to examine or change the tag, flags,
- * usage_count, refcount, or wait_backend_id fields.  buf_id field never
+ * usage_count, refcount, or wait_backend_pid fields.  buf_id field never
  * changes after initialization, so does not need locking.  freeNext is
  * protected by the BufFreelistLock not buf_hdr_lock.  The LWLocks can take
  * care of themselves.  The buf_hdr_lock is *not* used to control access to
@@ -108,8 +107,8 @@ typedef struct buftag
  *
  * We can't physically remove items from a disk page if another backend has
  * the buffer pinned.  Hence, a backend may need to wait for all other pins
- * to go away.  This is signaled by storing its own backend ID into
- * wait_backend_id and setting flag bit BM_PIN_COUNT_WAITER.  At present,
+ * to go away.  This is signaled by storing its own PID into
+ * wait_backend_pid and setting flag bit BM_PIN_COUNT_WAITER.  At present,
  * there can be only one such waiter per buffer.
  *
  * We use this same struct for local buffer headers, but the lock fields
@@ -121,7 +120,7 @@ typedef struct sbufdesc
 	BufFlags	flags;			/* see bit definitions above */
 	uint16		usage_count;	/* usage counter for clock sweep code */
 	unsigned	refcount;		/* # of backends holding pins on buffer */
-	BackendId	wait_backend_id;	/* backend ID of pin-count waiter */
+	int			wait_backend_pid; /* backend PID of pin-count waiter */
 
 	slock_t		buf_hdr_lock;	/* protects the above fields */
 

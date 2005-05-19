@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.255 2005/05/11 06:24:54 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.256 2005/05/19 21:35:45 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -38,7 +38,7 @@
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_expr.h"
-#include "storage/sinval.h"
+#include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"

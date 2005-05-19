@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.63 2005/04/13 18:54:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.64 2005/05/19 21:35:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,7 @@ GetNewTransactionId(bool isSubXact)
 	 * nextXid are already present in PGPROC.  Else we have a race
 	 * condition.
 	 *
-	 * XXX by storing xid into MyProc without acquiring SInvalLock, we are
+	 * XXX by storing xid into MyProc without acquiring ProcArrayLock, we are
 	 * relying on fetch/store of an xid to be atomic, else other backends
 	 * might see a partially-set xid here.	But holding both locks at once
 	 * would be a nasty concurrency hit (and in fact could cause a
@@ -120,8 +120,7 @@ GetNewTransactionId(bool isSubXact)
 	 *
 	 * A solution to the atomic-store problem would be to give each PGPROC
 	 * its own spinlock used only for fetching/storing that PGPROC's xid
-	 * and related fields.	(SInvalLock would then mean primarily that
-	 * PGPROCs couldn't be added/removed while holding the lock.)
+	 * and related fields.
 	 *
 	 * If there's no room to fit a subtransaction XID into PGPROC, set the
 	 * cache-overflowed flag instead.  This forces readers to look in

@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.53 2005/05/07 21:32:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.54 2005/05/19 21:35:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,6 @@
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "storage/freespace.h"
-#include "storage/sinval.h"
 #include "storage/smgr.h"
 #include "utils/lsyscache.h"
 

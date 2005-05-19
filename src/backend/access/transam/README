@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.2 2004/09/16 16:58:26 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.3 2005/05/19 21:35:45 tgl Exp $
 
 The Transaction System
 ----------------------
@@ -246,7 +246,7 @@ but since we allow arbitrary nesting of subtransactions, we can't fit all Xids
 in shared memory, so we have to store them on disk.  Note, however, that for
 each transaction we keep a "cache" of Xids that are known to be part of the
 transaction tree, so we can skip looking at pg_subtrans unless we know the
-cache has been overflowed.  See storage/ipc/sinval.c for the gory details.
+cache has been overflowed.  See storage/ipc/procarray.c for the gory details.
 
 slru.c is the supporting mechanism for both pg_clog and pg_subtrans.  It
 implements the LRU policy for in-memory buffer pages.  The high-level routines

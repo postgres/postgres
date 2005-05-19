@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.200 2005/04/28 21:47:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.201 2005/05/19 21:35:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "storage/proc.h"
-#include "storage/sinval.h"
+#include "storage/procarray.h"
 #include "storage/smgr.h"
 #include "utils/flatfiles.h"
 #include "utils/guc.h"
@@ -1503,16 +1503,18 @@ CommitTransaction(void)
 	 * this must be done _before_ releasing locks we hold and _after_
 	 * RecordTransactionCommit.
 	 *
-	 * LWLockAcquire(SInvalLock) is required: UPDATE with xid 0 is blocked by
-	 * xid 1' UPDATE, xid 1 is doing commit while xid 2 gets snapshot - if
-	 * xid 2' GetSnapshotData sees xid 1 as running then it must see xid 0
-	 * as running as well or it will see two tuple versions - one deleted
-	 * by xid 1 and one inserted by xid 0.	See notes in GetSnapshotData.
+	 * LWLockAcquire(ProcArrayLock) is required; consider this example:
+	 *		UPDATE with xid 0 is blocked by xid 1's UPDATE.
+	 *		xid 1 is doing commit while xid 2 gets snapshot.
+	 * If xid 2's GetSnapshotData sees xid 1 as running then it must see
+	 * xid 0 as running as well, or it will be able to see two tuple versions
+	 * - one deleted by xid 1 and one inserted by xid 0.  See notes in
+	 * GetSnapshotData.
 	 */
 	if (MyProc != NULL)
 	{
-		/* Lock SInvalLock because that's what GetSnapshotData uses. */
-		LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
+		/* Lock ProcArrayLock because that's what GetSnapshotData uses. */
+		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 		MyProc->xid = InvalidTransactionId;
 		MyProc->xmin = InvalidTransactionId;
 
@@ -1520,7 +1522,7 @@ CommitTransaction(void)
 		MyProc->subxids.nxids = 0;
 		MyProc->subxids.overflowed = false;
 
-		LWLockRelease(SInvalLock);
+		LWLockRelease(ProcArrayLock);
 	}
 
 	/*
@@ -1688,8 +1690,8 @@ AbortTransaction(void)
 	 */
 	if (MyProc != NULL)
 	{
-		/* Lock SInvalLock because that's what GetSnapshotData uses. */
-		LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
+		/* Lock ProcArrayLock because that's what GetSnapshotData uses. */
+		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 		MyProc->xid = InvalidTransactionId;
 		MyProc->xmin = InvalidTransactionId;
 
@@ -1697,7 +1699,7 @@ AbortTransaction(void)
 		MyProc->subxids.nxids = 0;
 		MyProc->subxids.overflowed = false;
 
-		LWLockRelease(SInvalLock);
+		LWLockRelease(ProcArrayLock);
 	}
 
 	/*

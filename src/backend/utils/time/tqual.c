@@ -32,7 +32,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.88 2005/05/07 21:22:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.89 2005/05/19 21:35:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 
 #include "access/multixact.h"
 #include "access/subtrans.h"
-#include "storage/sinval.h"
+#include "storage/procarray.h"
 #include "utils/tqual.h"
 
 /*

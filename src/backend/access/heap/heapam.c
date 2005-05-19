@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.190 2005/05/03 19:42:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.191 2005/05/19 21:35:44 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -47,7 +47,7 @@
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "miscadmin.h"
-#include "storage/sinval.h"
+#include "storage/procarray.h"
 #include "utils/inval.h"
 #include "utils/relcache.h"
 #include "pgstat.h"

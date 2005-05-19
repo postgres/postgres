@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.157 2005/04/15 04:18:10 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.158 2005/05/19 21:35:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@
 #include "storage/bufmgr.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
-#include "storage/sinval.h"
+#include "storage/procarray.h"
 #include "storage/spin.h"
 
 
@@ -116,8 +116,7 @@ ProcGlobalSemas(int maxBackends)
 
 /*
  * InitProcGlobal -
- *	  initializes the global process table. We put it here so that
- *	  the postmaster can do this initialization.
+ *	  Initialize the global process table during postmaster startup.
  *
  *	  We also create all the per-process semaphores we will need to support
  *	  the requested number of backends.  We used to allocate semaphores
@@ -262,6 +261,11 @@ InitProcess(void)
 	MyProc->waitLock = NULL;
 	MyProc->waitProcLock = NULL;
 	SHMQueueInit(&(MyProc->procLocks));
+
+	/*
+	 * Add our PGPROC to the PGPROC array in shared memory.
+	 */
+	ProcArrayAddMyself();
 
 	/*
 	 * Arrange to clean up at backend exit.
@@ -472,6 +476,9 @@ ProcKill(int code, Datum arg)
 	/* Remove from the user lock table */
 	LockReleaseAll(USER_LOCKMETHOD, true);
 #endif
+
+	/* Remove our PGPROC from the PGPROC array in shared memory */
+	ProcArrayRemoveMyself();
 
 	SpinLockAcquire(ProcStructLock);
 
@@ -978,12 +985,12 @@ ProcCancelWaitForSignal(void)
 }
 
 /*
- * ProcSendSignal - send a signal to a backend identified by BackendId
+ * ProcSendSignal - send a signal to a backend identified by PID
  */
 void
-ProcSendSignal(BackendId procId)
+ProcSendSignal(int pid)
 {
-	PGPROC	   *proc = BackendIdGetProc(procId);
+	PGPROC	   *proc = BackendPidGetProc(pid);
 
 	if (proc != NULL)
 		PGSemaphoreUnlock(&proc->sem);

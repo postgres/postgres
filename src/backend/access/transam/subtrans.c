@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.7 2004/12/31 21:59:29 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.8 2005/05/19 21:35:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,6 @@
 
 #include "access/slru.h"
 #include "access/subtrans.h"
-#include "storage/sinval.h"
 #include "utils/tqual.h"
 
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.56 2005/03/20 23:40:34 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.57 2005/05/19 21:35:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ extern Snapshot CopySnapshot(Snapshot snapshot);
 extern void FreeSnapshot(Snapshot snapshot);
 extern void FreeXactSnapshot(void);
 
-/* in sinval.c; declared here to avoid including tqual.h in sinval.h: */
+/* in procarray.c; declared here to avoid including tqual.h in procarray.h: */
 extern Snapshot GetSnapshotData(Snapshot snapshot, bool serializable);
 
 #endif   /* TQUAL_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.58 2004/12/31 22:00:56 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.59 2005/05/19 21:35:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,9 +17,11 @@
 #include "miscadmin.h"
 #include "storage/backendid.h"
 #include "storage/ipc.h"
+#include "storage/lwlock.h"
 #include "storage/pmsignal.h"
-#include "storage/proc.h"
+#include "storage/shmem.h"
 #include "storage/sinvaladt.h"
+
 
 SISeg	   *shmInvalBuffer;
 
@@ -72,7 +74,6 @@ SIBufferInit(int maxBackends)
 	{
 		segP->procState[i].nextMsgNum = -1;		/* inactive */
 		segP->procState[i].resetState = false;
-		segP->procState[i].procStruct = INVALID_OFFSET;
 	}
 }
 
@@ -133,7 +134,6 @@ SIBackendInit(SISeg *segP)
 	/* mark myself active, with all extant messages already read */
 	stateP->nextMsgNum = segP->maxMsgNum;
 	stateP->resetState = false;
-	stateP->procStruct = MAKE_OFFSET(MyProc);
 
 	/* register exit routine to mark my entry inactive at exit */
 	on_shmem_exit(CleanupInvalidationState, PointerGetDatum(segP));
@@ -163,7 +163,6 @@ CleanupInvalidationState(int status, Datum arg)
 	/* Mark myself inactive */
 	segP->procState[MyBackendId - 1].nextMsgNum = -1;
 	segP->procState[MyBackendId - 1].resetState = false;
-	segP->procState[MyBackendId - 1].procStruct = INVALID_OFFSET;
 
 	/* Recompute index of last active backend */
 	for (i = segP->lastBackend; i > 0; i--)
