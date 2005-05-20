@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.362 2005/05/17 21:46:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.363 2005/05/20 01:29:55 neilc Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3268,6 +3268,8 @@ DESCR("I/O");
 
 /* cryptographic */
 DATA(insert OID =  2311 (  md5	   PGNSP PGUID 12 f f t f i 1 25 "25" _null_ _null_ _null_  md5_text - _null_ ));
+DESCR("calculates md5 hash");
+DATA(insert OID =  2321 (  md5	   PGNSP PGUID 12 f f t f i 1 25 "17" _null_ _null_ _null_  md5_bytea - _null_ ));
 DESCR("calculates md5 hash");
 
 /* crosstype operations for date vs. timestamp and timestamptz */

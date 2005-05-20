@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.120 2005/05/01 18:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.121 2005/05/20 01:29:55 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2308,14 +2308,11 @@ md5_text(PG_FUNCTION_ARGS)
 {
 	text	   *in_text = PG_GETARG_TEXT_P(0);
 	size_t		len;
-	char	   *hexsum;
+	char	    hexsum[MD5_HASH_LEN + 1];
 	text	   *result_text;
 
 	/* Calculate the length of the buffer using varlena metadata */
 	len = VARSIZE(in_text) - VARHDRSZ;
-
-	/* leave room for the terminating '\0' */
-	hexsum = (char *) palloc(MD5_HASH_LEN + 1);
 
 	/* get the hash result */
 	if (md5_hash(VARDATA(in_text), len, hexsum) == false)
@@ -2324,6 +2321,28 @@ md5_text(PG_FUNCTION_ARGS)
 				 errmsg("out of memory")));
 
 	/* convert to text and return it */
+	result_text = PG_STR_GET_TEXT(hexsum);
+	PG_RETURN_TEXT_P(result_text);
+}
+
+/*
+ * Create an md5 hash of a bytea field and return it as a hex string:
+ * 16-byte md5 digest is represented in 32 hex characters.
+ */
+Datum
+md5_bytea(PG_FUNCTION_ARGS)
+{
+	bytea	   *in = PG_GETARG_BYTEA_P(0);
+	size_t		len;
+	char		hexsum[MD5_HASH_LEN + 1];
+	text	   *result_text;
+
+	len = VARSIZE(in) - VARHDRSZ;
+	if (md5_hash(VARDATA(in), len, hexsum) == false)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+
 	result_text = PG_STR_GET_TEXT(hexsum);
 	PG_RETURN_TEXT_P(result_text);
 }

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.247 2005/05/11 13:58:50 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.248 2005/05/20 01:29:55 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -2326,6 +2326,17 @@ PostgreSQL documentation
       </entry>
       <entry><literal>length('jo\\000se'::bytea)</literal></entry>
       <entry><literal>5</literal></entry>
+     </row>
+
+     <row>
+      <entry><literal><function>md5</function>(<parameter>string</parameter>)</literal></entry>
+      <entry><type>text</type></entry>
+      <entry>
+       Calculates the MD5 hash of <parameter>string</parameter>,
+       returning the result in hexadecimal.
+      </entry>
+      <entry><literal>md5('Th\\000omas'::bytea)</literal></entry>
+      <entry><literal>8ab2d3c9689aaf18 b4958c334c82d8b1</literal></entry>
      </row>
 
      <row>
