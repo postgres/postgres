@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.115 2004/12/31 22:00:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.116 2005/05/20 14:53:26 momjian Exp $
  *
  * NOTES:
  *
@@ -232,13 +232,47 @@ static void RemovePgTempFilesInDir(const char *tmpdirname);
 
 
 /*
- * pg_fsync --- same as fsync except does nothing if enableFsync is off
+ * pg_fsync --- do fsync with or without writethrough
  */
 int
 pg_fsync(int fd)
 {
+#ifndef HAVE_FSYNC_WRITETHROUGH_ONLY
+	if (sync_method != SYNC_METHOD_FSYNC_WRITETHROUGH)
+		return pg_fsync_no_writethrough(fd);
+	else
+#endif
+		return pg_fsync_writethrough(fd);
+}
+
+
+/*
+ * pg_fsync_no_writethrough --- same as fsync except does nothing if
+ *	enableFsync is off
+ */
+int
+pg_fsync_no_writethrough(int fd)
+{
 	if (enableFsync)
 		return fsync(fd);
+	else
+		return 0;
+}
+
+/*
+ * pg_fsync_writethrough
+ */
+int
+pg_fsync_writethrough(int fd)
+{
+	if (enableFsync)
+#ifdef WIN32
+		return _commit(fd);
+#elif defined(__darwin__)
+		return (fcntl(fd, F_FULLFSYNC, 0) == -1) ? -1 : 0;
+#else
+		return -1;
+#endif
 	else
 		return 0;
 }

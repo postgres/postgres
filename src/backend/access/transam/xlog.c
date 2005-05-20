@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.192 2005/05/19 21:35:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.193 2005/05/20 14:53:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,11 +51,6 @@
  * default method.	We assume that fsync() is always available, and that
  * configure determined whether fdatasync() is.
  */
-#define SYNC_METHOD_FSYNC		0
-#define SYNC_METHOD_FDATASYNC	1
-#define SYNC_METHOD_OPEN		2		/* used for both O_SYNC and
-										 * O_DSYNC */
-
 #if defined(O_SYNC)
 #define OPEN_SYNC_FLAG	   O_SYNC
 #else
@@ -79,20 +74,18 @@
 #define DEFAULT_SYNC_METHOD_STR    "open_datasync"
 #define DEFAULT_SYNC_METHOD		   SYNC_METHOD_OPEN
 #define DEFAULT_SYNC_FLAGBIT	   OPEN_DATASYNC_FLAG
-#else
-#if defined(HAVE_FDATASYNC)
+#elif defined(HAVE_FDATASYNC)
 #define DEFAULT_SYNC_METHOD_STR   "fdatasync"
 #define DEFAULT_SYNC_METHOD		  SYNC_METHOD_FDATASYNC
 #define DEFAULT_SYNC_FLAGBIT	  0
-#else
-#ifndef FSYNC_IS_WRITE_THROUGH
+#elif !defined(HAVE_FSYNC_WRITETHROUGH_ONLY)
 #define DEFAULT_SYNC_METHOD_STR   "fsync"
-#else
-#define DEFAULT_SYNC_METHOD_STR   "fsync_writethrough"
-#endif
 #define DEFAULT_SYNC_METHOD		  SYNC_METHOD_FSYNC
 #define DEFAULT_SYNC_FLAGBIT	  0
-#endif
+#else
+#define DEFAULT_SYNC_METHOD_STR   "fsync_writethrough"
+#define DEFAULT_SYNC_METHOD		  SYNC_METHOD_FSYNC_WRITETHROUGH
+#define DEFAULT_SYNC_FLAGBIT	  0
 #endif
 
 
@@ -122,7 +115,7 @@ bool		XLOG_DEBUG = false;
 
 
 /* these are derived from XLOG_sync_method by assign_xlog_sync_method */
-static int	sync_method = DEFAULT_SYNC_METHOD;
+int	sync_method = DEFAULT_SYNC_METHOD;
 static int	open_sync_bit = DEFAULT_SYNC_FLAGBIT;
 
 #define XLOG_SYNC_BIT  (enableFsync ? open_sync_bit : 0)
@@ -5249,16 +5242,18 @@ assign_xlog_sync_method(const char *method, bool doit, GucSource source)
 	int			new_sync_method;
 	int			new_sync_bit;
 
-#ifndef FSYNC_IS_WRITE_THROUGH
 	if (pg_strcasecmp(method, "fsync") == 0)
-#else
-	/* Win32 fsync() == _commit(), which writes through a write cache */
-	if (pg_strcasecmp(method, "fsync_writethrough") == 0)
-#endif
 	{
 		new_sync_method = SYNC_METHOD_FSYNC;
 		new_sync_bit = 0;
 	}
+#ifdef HAVE_FSYNC_WRITETHROUGH
+	else if (pg_strcasecmp(method, "fsync_writethrough") == 0)
+	{
+		new_sync_method = SYNC_METHOD_FSYNC_WRITETHROUGH;
+		new_sync_bit = 0;
+	}
+#endif
 #ifdef HAVE_FDATASYNC
 	else if (pg_strcasecmp(method, "fdatasync") == 0)
 	{
@@ -5328,12 +5323,21 @@ issue_xlog_fsync(void)
 	switch (sync_method)
 	{
 		case SYNC_METHOD_FSYNC:
-			if (pg_fsync(openLogFile) != 0)
+			if (pg_fsync_no_writethrough(openLogFile) != 0)
 				ereport(PANIC,
 						(errcode_for_file_access(),
 					errmsg("could not fsync log file %u, segment %u: %m",
 						   openLogId, openLogSeg)));
 			break;
+#ifdef HAVE_FSYNC_WRITETHROUGH
+		case SYNC_METHOD_FSYNC_WRITETHROUGH:
+			if (pg_fsync_writethrough(openLogFile) != 0)
+				ereport(PANIC,
+						(errcode_for_file_access(),
+					errmsg("could not fsync write-through log file %u, segment %u: %m",
+						   openLogId, openLogSeg)));
+			break;
+#endif
 #ifdef HAVE_FDATASYNC
 		case SYNC_METHOD_FDATASYNC:
 			if (pg_fdatasync(openLogFile) != 0)

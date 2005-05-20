@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.60 2005/04/28 21:47:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.61 2005/05/20 14:53:26 momjian Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -74,6 +74,13 @@ typedef struct XLogRecord
  * Rmgr may "or" XLOG_NO_TRAN into info passed to XLogInsert to indicate this.
  */
 #define XLOG_NO_TRAN			XLR_INFO_MASK
+
+/* Sync methods */
+#define SYNC_METHOD_FSYNC		0
+#define SYNC_METHOD_FDATASYNC	1
+#define SYNC_METHOD_OPEN		2			/* for O_SYNC and O_DSYNC */
+#define SYNC_METHOD_FSYNC_WRITETHROUGH	3
+extern int	sync_method;
 
 /*
  * List of these structs is used to pass data to XLogInsert().

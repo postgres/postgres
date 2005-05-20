@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.44 2005/03/24 04:36:19 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.45 2005/05/20 14:53:26 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -16,8 +16,8 @@
 #define mkdir(a,b)	mkdir(a)
 
 
-#define fsync(a)	_commit(a)
-#define FSYNC_IS_WRITE_THROUGH
+#define HAVE_FSYNC_WRITETHROUGH
+#define HAVE_FSYNC_WRITETHROUGH_ONLY
 #define ftruncate(a,b)	chsize(a,b)
 
 #define USES_WINSOCK

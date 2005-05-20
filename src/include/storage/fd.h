@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.50 2004/12/31 22:03:42 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.51 2005/05/20 14:53:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,6 +89,8 @@ extern void AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
 							  SubTransactionId parentSubid);
 extern void RemovePgTempFiles(void);
 extern int	pg_fsync(int fd);
+extern int	pg_fsync_no_writethrough(int fd);
+extern int	pg_fsync_writethrough(int fd);
 extern int	pg_fdatasync(int fd);
 
 /* Filename components for OpenTemporaryFile */
