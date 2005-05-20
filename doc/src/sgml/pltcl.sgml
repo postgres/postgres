@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.37 2005/04/09 03:52:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.38 2005/05/20 01:52:25 neilc Exp $
 -->
 
  <chapter id="pltcl">
@@ -75,7 +75,9 @@ $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.37 2005/04/09 03:52:43 momjian Ex
     <title>PL/Tcl Functions and Arguments</title>
 
     <para>
-     To create a function in the <application>PL/Tcl</> language, use the standard syntax:
+     To create a function in the <application>PL/Tcl</> language, use
+     the standard <xref linkend="sql-createfunction"
+     endterm="sql-createfunction-title"> syntax:
 
 <programlisting>
 CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS $$

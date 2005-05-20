@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.39 2005/04/09 03:52:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.40 2005/05/20 01:52:24 neilc Exp $
 -->
 
  <chapter id="plperl">
@@ -44,7 +44,9 @@ $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.39 2005/04/09 03:52:43 momjian E
   <title>PL/Perl Functions and Arguments</title>
 
   <para>
-   To create a function in the PL/Perl language, use the standard syntax:
+   To create a function in the PL/Perl language, use the standard
+   <xref linkend="sql-createfunction" endterm="sql-createfunction-title">
+   syntax:
 <programlisting>
 CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS $$
     # PL/Perl function body
