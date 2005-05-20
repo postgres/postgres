@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue May 17 00:17:58 EDT 2005
+Last updated:		Fri May 20 15:18:24 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -686,10 +686,6 @@ Exotic Features
   needed to enable transaction semantics.
 
 * Add two-phase commit
-
-  This will involve adding a way to respond to commit failure by either
-  taking the server into offline/readonly mode or notifying the
-  administrator
 
 
 PERFORMANCE
