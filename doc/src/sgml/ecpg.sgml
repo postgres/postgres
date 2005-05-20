@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.63 2005/01/22 22:56:35 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.64 2005/05/20 12:36:48 neilc Exp $
 -->
 
 <chapter id="ecpg">
@@ -446,7 +446,7 @@ char  foo[16], bar[16];
    </para>
 
    <para>
-    The declarations are also echoed to the output file as a normal C
+    The declarations are also echoed to the output file as normal C
     variables, so there's no need to declare them again.  Variables
     that are not intended to be used in SQL commands can be declared
     normally outside these special sections.
