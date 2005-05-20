@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.41 2005/01/29 23:45:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.42 2005/05/20 01:37:08 neilc Exp $ -->
 
 <chapter id="rules">
 <title>The Rule System</title>
@@ -902,9 +902,9 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     Keep the syntax
 
 <programlisting>
-CREATE RULE <replaceable>rule_name</> AS ON <replaceable>event</>
-    TO <replaceable>object</> [WHERE <replaceable>rule_qualification</>]
-    DO [ALSO|INSTEAD] [<replaceable>action</> | (<replaceable>actions</>) | NOTHING];
+CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable class="parameter">event</replaceable>
+    TO <replaceable class="parameter">table</replaceable> [ WHERE <replaceable class="parameter">condition</replaceable> ]
+    DO [ ALSO | INSTEAD ] { NOTHING | <replaceable class="parameter">command</replaceable> | ( <replaceable class="parameter">command</replaceable> ; <replaceable class="parameter">command</replaceable> ... ) }
 </programlisting>
 
     in mind.
