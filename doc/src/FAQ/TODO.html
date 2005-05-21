@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Fri May 20 23:13:08 EDT 2005
+Last updated:           Sat May 21 17:31:53 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -177,7 +177,7 @@ first.
   </li><li>Prevent INET cast to CIDR if the unmasked bits are not zero, or
   zero the bits
   </li><li>Prevent INET cast to CIDR from droping netmask, SELECT '<a href="telnet://1.1.1.1">1.1.1.1</a>'::inet::cidr
-  </li><li>Allow INET + INT4/INT8 to increment the host part of the address, or
+  </li><li>Allow INET + INT4 to increment the host part of the address, or
   throw an error on overflow
   </li><li>Add 'tid != tid ' operator for use in corruption recovery
   </li><li>Prevent to_char() on interval from returning meaningless values
