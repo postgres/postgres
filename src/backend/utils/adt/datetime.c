@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.139 2005/04/20 17:14:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.140 2005/05/21 03:38:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1551,7 +1551,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			return DTERR_FIELD_OVERFLOW;
 
 		/* timezone not specified? then find local timezone if possible */
-		if ((tzp != NULL) && (!(fmask & DTK_M(TZ))))
+		if (tzp != NULL && !(fmask & DTK_M(TZ)))
 		{
 			/*
 			 * daylight savings time modifier but no standard timezone?
@@ -2205,7 +2205,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		return DTERR_BAD_FORMAT;
 
 	/* timezone not specified? then find local timezone if possible */
-	if ((tzp != NULL) && (!(fmask & DTK_M(TZ))))
+	if (tzp != NULL && !(fmask & DTK_M(TZ)))
 	{
 		struct pg_tm tt,
 				   *tmp = &tt;
@@ -3533,7 +3533,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			 * have alpha time zone info available. tm_isdst != -1
 			 * indicates that we have a valid time zone translation.
 			 */
-			if ((tzp != NULL) && (tm->tm_isdst >= 0))
+			if (tzp != NULL && tm->tm_isdst >= 0)
 			{
 				hour = -(*tzp / 3600);
 				min = ((abs(*tzp) / 60) % 60);
@@ -3579,7 +3579,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			else
 				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
 
-			if ((tzp != NULL) && (tm->tm_isdst >= 0))
+			if (tzp != NULL && tm->tm_isdst >= 0)
 			{
 				if (*tzn != NULL)
 					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
@@ -3627,7 +3627,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			else
 				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
 
-			if ((tzp != NULL) && (tm->tm_isdst >= 0))
+			if (tzp != NULL && tm->tm_isdst >= 0)
 			{
 				if (*tzn != NULL)
 					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
@@ -3686,7 +3686,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			sprintf((str + strlen(str)), " %04d",
 				 ((tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1)));
 
-			if ((tzp != NULL) && (tm->tm_isdst >= 0))
+			if (tzp != NULL && tm->tm_isdst >= 0)
 			{
 				if (*tzn != NULL)
 					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
@@ -3787,7 +3787,7 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 #ifdef HAVE_INT64_TIMESTAMP
 					sprintf(cp, ":%02d", abs(tm->tm_sec));
 					cp += strlen(cp);
-					sprintf(cp, ".%06d", ((fsec >= 0) ? fsec : -(fsec)));
+					sprintf(cp, ".%06d", Abs(fsec));
 #else
 					fsec += tm->tm_sec;
 					sprintf(cp, ":%013.10f", fabs(fsec));
