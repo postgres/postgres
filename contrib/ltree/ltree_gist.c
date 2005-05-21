@@ -77,9 +77,6 @@ ltree_compress(PG_FUNCTION_ARGS)
 		key->flag = LTG_ONENODE;
 		memcpy((void *) LTG_NODE(key), (void *) val, val->len);
 
-		if (PointerGetDatum(val) != entry->key)
-			pfree(val);
-
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
@@ -432,7 +429,6 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 	else
 		memcpy((void *) LTG_RNODE(ru), (void *) ru_r, ru_r->len);
 
-	pfree(array);
 	v->spl_ldatum = PointerGetDatum(lu);
 	v->spl_rdatum = PointerGetDatum(ru);
 

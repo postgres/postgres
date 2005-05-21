@@ -229,8 +229,6 @@ g_cube_union(GistEntryVector *entryvec, int *sizep)
 		out = g_cube_binary_union(tmp, (NDBOX *)
 								DatumGetPointer(entryvec->vector[i].key),
 								  sizep);
-		if (i > 1)
-			pfree(tmp);
 		tmp = out;
 	}
 
@@ -269,7 +267,6 @@ g_cube_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result)
 	rt_cube_size(ud, &tmp1);
 	rt_cube_size((NDBOX *) DatumGetPointer(origentry->key), &tmp2);
 	*result = (float) (tmp1 - tmp2);
-	pfree(ud);
 
 	/*
 	 * fprintf(stderr, "penalty\n"); fprintf(stderr, "\t%g\n", *result);
@@ -338,11 +335,6 @@ g_cube_picksplit(GistEntryVector *entryvec,
 			inter_d = cube_inter(datum_alpha, datum_beta);
 			rt_cube_size(inter_d, &size_inter);
 			size_waste = size_union - size_inter;
-
-			pfree(union_d);
-
-			if (inter_d != (NDBOX *) NULL)
-				pfree(inter_d);
 
 			/*
 			 * are these a more promising split than what we've already
@@ -415,8 +407,6 @@ g_cube_picksplit(GistEntryVector *entryvec,
 		/* pick which page to add it to */
 		if (size_alpha - size_l < size_beta - size_r)
 		{
-			pfree(datum_l);
-			pfree(union_dr);
 			datum_l = union_dl;
 			size_l = size_alpha;
 			*left++ = i;
@@ -424,8 +414,6 @@ g_cube_picksplit(GistEntryVector *entryvec,
 		}
 		else
 		{
-			pfree(datum_r);
-			pfree(union_dl);
 			datum_r = union_dr;
 			size_r = size_alpha;
 			*right++ = i;

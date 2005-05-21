@@ -238,8 +238,6 @@ gseg_union(GistEntryVector *entryvec, int *sizep)
 		out = gseg_binary_union(tmp, (SEG *)
 								DatumGetPointer(entryvec->vector[i].key),
 								sizep);
-		if (i > 1)
-			pfree(tmp);
 		tmp = out;
 	}
 
@@ -278,7 +276,6 @@ gseg_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result)
 	rt_seg_size(ud, &tmp1);
 	rt_seg_size((SEG *) DatumGetPointer(origentry->key), &tmp2);
 	*result = tmp1 - tmp2;
-	pfree(ud);
 
 #ifdef GIST_DEBUG
 	fprintf(stderr, "penalty\n");
@@ -351,16 +348,10 @@ gseg_picksplit(GistEntryVector *entryvec,
 			rt_seg_size(inter_d, &size_inter);
 			size_waste = size_union - size_inter;
 
-			pfree(union_d);
-
-			if (inter_d != (SEG *) NULL)
-				pfree(inter_d);
-
 			/*
 			 * are these a more promising split that what we've already
 			 * seen?
 			 */
-
 			if (size_waste > waste || firsttime)
 			{
 				waste = size_waste;
@@ -427,8 +418,6 @@ gseg_picksplit(GistEntryVector *entryvec,
 		/* pick which page to add it to */
 		if (size_alpha - size_l < size_beta - size_r)
 		{
-			pfree(datum_l);
-			pfree(union_dr);
 			datum_l = union_dl;
 			size_l = size_alpha;
 			*left++ = i;
@@ -436,8 +425,6 @@ gseg_picksplit(GistEntryVector *entryvec,
 		}
 		else
 		{
-			pfree(datum_r);
-			pfree(union_dl);
 			datum_r = union_dr;
 			size_r = size_alpha;
 			*right++ = i;

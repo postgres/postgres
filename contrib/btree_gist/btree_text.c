@@ -108,8 +108,6 @@ gbt_bpchar_compress(PG_FUNCTION_ARGS)
 					  entry->rel, entry->page,
 					  entry->offset, VARSIZE(DatumGetPointer(d)), TRUE);
 		retval = gbt_var_compress(&trim, &tinfo);
-
-		pfree(DatumGetPointer(d));
 	}
 	else
 		retval = entry;
@@ -124,16 +122,12 @@ gbt_text_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
-	void	   *qtst = (void *) PG_GETARG_POINTER(1);
 	void	   *query = (void *) DatumGetTextP(PG_GETARG_DATUM(1));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		retval = FALSE;
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
 
 	retval = gbt_var_consistent(&r, query, &strategy, GIST_LEAF(entry), &tinfo);
-
-	if (qtst != query)
-		pfree(query);
 
 	PG_RETURN_BOOL(retval);
 }
@@ -144,23 +138,15 @@ gbt_bpchar_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
-	void	   *qtst = (void *) PG_GETARG_POINTER(1);
 	void	   *query = (void *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
 	void	   *trim = (void *) DatumGetPointer(DirectFunctionCall1(rtrim1, PointerGetDatum(query)));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-	bool		retval = FALSE;
+	bool		retval;
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
 
 	retval = gbt_var_consistent(&r, trim, &strategy, GIST_LEAF(entry), &tinfo);
-
-	pfree(trim);
-
-	if (qtst != query)
-		pfree(query);
 	PG_RETURN_BOOL(retval);
 }
-
-
 
 
 Datum

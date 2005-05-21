@@ -222,7 +222,6 @@ gbt_time_penalty(PG_FUNCTION_ARGS)
 
 	/* see interval_larger */
 	res = Max(intr->time + intr->month * (30 * 86400), 0);
-	pfree(intr);
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(
 												 time_mi_time,
@@ -231,7 +230,6 @@ gbt_time_penalty(PG_FUNCTION_ARGS)
 
 	/* see interval_larger */
 	res += Max(intr->time + intr->month * (30 * 86400), 0);
-	pfree(intr);
 
 	*result = 0.0;
 
@@ -244,7 +242,6 @@ gbt_time_penalty(PG_FUNCTION_ARGS)
 		*result += FLT_MIN;
 		*result += (float) (res / ((double) (res + intr->time + intr->month * (30 * 86400))));
 		*result *= (FLT_MAX / (((GISTENTRY *) PG_GETARG_POINTER(0))->rel->rd_att->natts + 1));
-		pfree(intr);
 	}
 
 	PG_RETURN_POINTER(result);

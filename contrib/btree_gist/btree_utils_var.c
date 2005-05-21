@@ -9,21 +9,21 @@ Datum           gbt_var_decompress(PG_FUNCTION_ARGS);
 Datum
 gbt_var_decompress(PG_FUNCTION_ARGS)
 {
-        GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
-        GBT_VARKEY   *key = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	GBT_VARKEY   *key = (GBT_VARKEY *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
 
-        if (key != (GBT_VARKEY *) DatumGetPointer(entry->key))
-        {
-                GISTENTRY  *retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
+	if (key != (GBT_VARKEY *) DatumGetPointer(entry->key))
+	{
+		GISTENTRY  *retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 
-                gistentryinit(*retval, PointerGetDatum(key),
-                                          entry->rel, entry->page,
-                                          entry->offset, VARSIZE(key), FALSE);
+		gistentryinit(*retval, PointerGetDatum(key),
+					  entry->rel, entry->page,
+					  entry->offset, VARSIZE(key), FALSE);
 
-                PG_RETURN_POINTER(retval);
-        }
+		PG_RETURN_POINTER(retval);
+	}
 
-        PG_RETURN_POINTER(entry);
+	PG_RETURN_POINTER(entry);
 }
 
 /* Returns a better readable representaion of variable key ( sets pointer ) */
@@ -216,7 +216,6 @@ gbt_var_bin_union(Datum *u, GBT_VARKEY * e, const gbtree_vinfo * tinfo)
 	GBT_VARKEY_R nr;
 	GBT_VARKEY_R eo = gbt_var_key_readable(e);
 
-
 	if (eo.lower == eo.upper)	/* leaf */
 	{
 		tmp = gbt_var_leaf2node(e, tinfo);
@@ -235,20 +234,16 @@ gbt_var_bin_union(Datum *u, GBT_VARKEY * e, const gbtree_vinfo * tinfo)
 			nr.upper = ro.upper;
 			nk = gbt_var_key_copy(&nr, TRUE);
 		}
+
 		if ((*tinfo->f_cmp) ((bytea *) ro.upper, (bytea *) eo.upper) < 0)
 		{
 			nr.upper = eo.upper;
 			nr.lower = ro.lower;
 			nk = gbt_var_key_copy(&nr, TRUE);
 		}
+
 		if (nk)
-		{
-			pfree(DatumGetPointer(*u));
 			*u = PointerGetDatum(nk);
-		}
-
-
-
 	}
 	else
 	{
@@ -256,10 +251,6 @@ gbt_var_bin_union(Datum *u, GBT_VARKEY * e, const gbtree_vinfo * tinfo)
 		nr.upper = eo.upper;
 		*u = PointerGetDatum(gbt_var_key_copy(&nr, TRUE));
 	}
-
-	if (tmp && tmp != e)
-		pfree(tmp);
-
 }
 
 
@@ -273,15 +264,12 @@ gbt_var_compress(GISTENTRY *entry, const gbtree_vinfo * tinfo)
 	if (entry->leafkey)
 	{
 		GBT_VARKEY *r = NULL;
-		bytea	   *tstd = (bytea *) DatumGetPointer(entry->key);		/* toasted	 */
-		bytea	   *leaf = (bytea *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));		/* untoasted */
+		bytea	   *leaf = (bytea *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
 		GBT_VARKEY_R u;
 
 		u.lower = u.upper = leaf;
 		r = gbt_var_key_copy(&u, FALSE);
 
-		if (tstd != leaf)
-			pfree(leaf);
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
 					  entry->rel, entry->page,
@@ -319,7 +307,6 @@ gbt_var_union(const GistEntryVector *entryvec, int32 *size, const gbtree_vinfo *
 
 
 	/* Truncate (=compress) key */
-
 	if (tinfo->trnc)
 	{
 		int32		plen;
@@ -328,7 +315,6 @@ gbt_var_union(const GistEntryVector *entryvec, int32 *size, const gbtree_vinfo *
 		plen = gbt_var_node_cp_len((GBT_VARKEY *) DatumGetPointer(out), tinfo);
 		trc = gbt_var_node_truncate((GBT_VARKEY *) DatumGetPointer(out), plen + 1, tinfo);
 
-		pfree(DatumGetPointer(out));
 		out = PointerGetDatum(trc);
 	}
 
@@ -428,16 +414,11 @@ gbt_var_penalty(float *res, const GISTENTRY *o, const GISTENTRY *n, const gbtree
 			}
 			dres /= 256.0;
 		}
-		pfree(DatumGetPointer(d));
 
 		*res += FLT_MIN;
 		*res += (float) (dres / ((double) (ol + 1)));
 		*res *= (FLT_MAX / (o->rel->rd_att->natts + 1));
-
 	}
-
-	if (tmp && tmp != newe)
-		pfree(tmp);
 
 	return res;
 }
@@ -524,18 +505,9 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtre
 		}
 	}
 
-	/* Free strxfrm'ed leafs */
-	for (i = 0; i < svcntr; i++)
-		pfree(sv[i]);
-
-	if (sv)
-		pfree(sv);
-
 	/* Truncate (=compress) key */
-
 	if (tinfo->trnc)
 	{
-
 		int32		ll = gbt_var_node_cp_len((GBT_VARKEY *) DatumGetPointer(v->spl_ldatum), tinfo);
 		int32		lr = gbt_var_node_cp_len((GBT_VARKEY *) DatumGetPointer(v->spl_rdatum), tinfo);
 		GBT_VARKEY *dl;
@@ -546,14 +518,9 @@ gbt_var_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v, const gbtre
 
 		dl = gbt_var_node_truncate((GBT_VARKEY *) DatumGetPointer(v->spl_ldatum), ll, tinfo);
 		dr = gbt_var_node_truncate((GBT_VARKEY *) DatumGetPointer(v->spl_rdatum), ll, tinfo);
-		pfree(DatumGetPointer(v->spl_ldatum));
-		pfree(DatumGetPointer(v->spl_rdatum));
 		v->spl_ldatum = PointerGetDatum(dl);
 		v->spl_rdatum = PointerGetDatum(dr);
-
 	}
-
-	pfree(arr);
 
 	return v;
 }

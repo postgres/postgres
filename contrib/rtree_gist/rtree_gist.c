@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/contrib/rtree_gist/rtree_gist.c,v 1.10 2004/08/29 05:06:37 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/rtree_gist/rtree_gist.c,v 1.11 2005/05/21 12:08:05 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,9 +152,6 @@ gbox_penalty(PG_FUNCTION_ARGS)
 
 	ud = DirectFunctionCall2(rt_box_union, origentry->key, newentry->key);
 	tmp1 = size_box(ud);
-	if (DatumGetPointer(ud) != NULL)
-		pfree(DatumGetPointer(ud));
-
 	*result = tmp1 - size_box(origentry->key);
 	PG_RETURN_POINTER(result);
 }
@@ -342,7 +339,6 @@ gbox_picksplit(PG_FUNCTION_ARGS)
 			else
 				ADDLIST(listT, unionT, posT, arr[i - 1].pos);
 		}
-		pfree(arr);
 	}
 
 	/* which split more optimal? */
@@ -372,11 +368,6 @@ gbox_picksplit(PG_FUNCTION_ARGS)
 
 	if (direction == 'x')
 	{
-		pfree(unionB);
-		pfree(listB);
-		pfree(unionT);
-		pfree(listT);
-
 		v->spl_left = listL;
 		v->spl_right = listR;
 		v->spl_nleft = posL;
@@ -386,11 +377,6 @@ gbox_picksplit(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		pfree(unionR);
-		pfree(listR);
-		pfree(unionL);
-		pfree(listL);
-
 		v->spl_left = listB;
 		v->spl_right = listT;
 		v->spl_nleft = posB;
@@ -497,9 +483,6 @@ gpoly_compress(PG_FUNCTION_ARGS)
 			in = (POLYGON *) PG_DETOAST_DATUM(entry->key);
 			r = (BOX *) palloc(sizeof(BOX));
 			memcpy((void *) r, (void *) &(in->boundbox), sizeof(BOX));
-			if (in != (POLYGON *) DatumGetPointer(entry->key))
-				pfree(in);
-
 			gistentryinit(*retval, PointerGetDatum(r),
 						  entry->rel, entry->page,
 						  entry->offset, sizeof(BOX), FALSE);

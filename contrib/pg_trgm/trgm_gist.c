@@ -91,13 +91,9 @@ gtrgm_compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{							/* trgm */
 		TRGM	   *res;
-		text	   *toastedval = (text *) DatumGetPointer(entry->key);
 		text	   *val = (text *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
 
 		res = generate_trgm(VARDATA(val), VARSIZE(val) - VARHDRSZ);
-		if (val != toastedval)
-			pfree(val);
-
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(res),
 					  entry->rel, entry->page,
@@ -174,9 +170,6 @@ gtrgm_consistent(PG_FUNCTION_ARGS)
 		res = (len == 0) ? false : ((((((float4) count) / ((float4) len))) >= trgm_limit) ? true : false);
 #endif
 	}
-
-	PG_FREE_IF_COPY(query, 1);
-	pfree(qtrg);
 
 	PG_RETURN_BOOL(res);
 }
@@ -603,8 +596,6 @@ gtrgm_picksplit(PG_FUNCTION_ARGS)
 	}
 
 	*right = *left = FirstOffsetNumber;
-	pfree(costvector);
-	pfree(cache);
 	v->spl_ldatum = PointerGetDatum(datum_l);
 	v->spl_rdatum = PointerGetDatum(datum_r);
 

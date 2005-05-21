@@ -123,7 +123,6 @@ gtxtidx_compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{							/* txtidx */
 		GISTTYPE   *res;
-		txtidx	   *toastedval = (txtidx *) DatumGetPointer(entry->key);
 		txtidx	   *val = (txtidx *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
 		int4		len;
 		int4	   *arr;
@@ -154,8 +153,6 @@ gtxtidx_compress(PG_FUNCTION_ARGS)
 			res = (GISTTYPE *) repalloc((void *) res, len);
 			res->len = len;
 		}
-		if (val != toastedval)
-			pfree(val);
 
 		/* make signature, if array is too long */
 		if (res->len > TOAST_INDEX_TARGET)
@@ -167,7 +164,6 @@ gtxtidx_compress(PG_FUNCTION_ARGS)
 			ressign->len = len;
 			ressign->flag = SIGNKEY;
 			makesign(GETSIGN(ressign), res);
-			pfree(res);
 			res = ressign;
 		}
 
@@ -780,8 +776,6 @@ gtxtidx_picksplit(PG_FUNCTION_ARGS)
 	}
 
 	*right = *left = FirstOffsetNumber;
-	pfree(costvector);
-	pfree(cache);
 	v->spl_ldatum = PointerGetDatum(datum_l);
 	v->spl_rdatum = PointerGetDatum(datum_r);
 

@@ -127,7 +127,6 @@ gbt_bit_consistent(PG_FUNCTION_ARGS)
 {
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
-	void	   *qtst = (void *) PG_GETARG_POINTER(1);
 	void	   *query = (void *) DatumGetByteaP(PG_GETARG_DATUM(1));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		retval = FALSE;
@@ -140,11 +139,7 @@ gbt_bit_consistent(PG_FUNCTION_ARGS)
 		bytea	   *q = gbt_bit_xfrm((bytea *) query);
 
 		retval = gbt_var_consistent(&r, (void *) q, &strategy, FALSE, &tinfo);
-		pfree(q);
 	}
-
-	if (qtst != query)
-		pfree(query);
 	PG_RETURN_BOOL(retval);
 }
 

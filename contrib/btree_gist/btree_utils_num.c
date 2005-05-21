@@ -246,7 +246,5 @@ gbt_num_picksplit(const GistEntryVector *entryvec, GIST_SPLITVEC *v,
 		}
 	}
 
-	pfree(arr);
-
 	return v;
 }

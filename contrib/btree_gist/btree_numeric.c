@@ -98,16 +98,12 @@ gbt_numeric_consistent(PG_FUNCTION_ARGS)
 
 	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GBT_VARKEY *key = (GBT_VARKEY *) DatumGetPointer(entry->key);
-	void	   *qtst = (void *) PG_GETARG_POINTER(1);
 	void	   *query = (void *) DatumGetNumeric(PG_GETARG_DATUM(1));
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
-	bool		retval = FALSE;
+	bool		retval;
 	GBT_VARKEY_R r = gbt_var_key_readable(key);
 
 	retval = gbt_var_consistent(&r, query, &strategy, GIST_LEAF(entry), &tinfo);
-
-	if (qtst != query)
-		pfree(query);
 	PG_RETURN_BOOL(retval);
 }
 
@@ -164,8 +160,6 @@ gbt_numeric_penalty(PG_FUNCTION_ARGS)
 											 PointerGetDatum(uk.lower)
 											 ));
 
-	pfree(DatumGetPointer(uni));
-
 	os = DatumGetNumeric(DirectFunctionCall2(
 											 numeric_sub,
 											 PointerGetDatum(ok.upper),
@@ -178,27 +172,21 @@ gbt_numeric_penalty(PG_FUNCTION_ARGS)
 											 NumericGetDatum(os)
 											 ));
 
-	pfree(os);
-
 	if (NUMERIC_IS_NAN(us))
 	{
-
 		if (NUMERIC_IS_NAN(os))
 			*result = 0.0;
 		else
 			*result = 1.0;
-
 	}
 	else
 	{
-
 		Numeric		nul = DatumGetNumeric(DirectFunctionCall1(int4_numeric, Int32GetDatum(0)));
 
 		*result = 0.0;
 
 		if (DirectFunctionCall2(numeric_gt, NumericGetDatum(ds), NumericGetDatum(nul)))
 		{
-
 			*result += FLT_MIN;
 			os = DatumGetNumeric(DirectFunctionCall2(
 													 numeric_div,
@@ -206,18 +194,11 @@ gbt_numeric_penalty(PG_FUNCTION_ARGS)
 													 NumericGetDatum(us)
 													 ));
 			*result += (float4) DatumGetFloat8(DirectFunctionCall1(numeric_float8_no_overflow, NumericGetDatum(os)));
-			pfree(os);
-
 		}
-
-		pfree(nul);
 	}
 
 	if (*result > 0)
 		*result *= (FLT_MAX / (((GISTENTRY *) PG_GETARG_POINTER(0))->rel->rd_att->natts + 1));
-
-	pfree(us);
-	pfree(ds);
 
 	PG_RETURN_POINTER(result);
 }

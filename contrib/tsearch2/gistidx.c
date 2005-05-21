@@ -142,7 +142,6 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{							/* tsvector */
 		GISTTYPE   *res;
-		tsvector   *toastedval = (tsvector *) DatumGetPointer(entry->key);
 		tsvector   *val = (tsvector *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
 		int4		len;
 		int4	   *arr;
@@ -173,8 +172,6 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 			res = (GISTTYPE *) repalloc((void *) res, len);
 			res->len = len;
 		}
-		if (val != toastedval)
-			pfree(val);
 
 		/* make signature, if array is too long */
 		if (res->len > TOAST_INDEX_TARGET)
@@ -186,7 +183,6 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 			ressign->len = len;
 			ressign->flag = SIGNKEY;
 			makesign(GETSIGN(ressign), res);
-			pfree(res);
 			res = ressign;
 		}
 
@@ -734,8 +730,6 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 	}
 
 	*right = *left = FirstOffsetNumber;
-	pfree(costvector);
-	pfree(cache);
 	v->spl_ldatum = PointerGetDatum(datum_l);
 	v->spl_rdatum = PointerGetDatum(datum_r);
 

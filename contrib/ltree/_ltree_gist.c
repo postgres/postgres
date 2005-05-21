@@ -90,9 +90,6 @@ _ltree_compress(PG_FUNCTION_ARGS)
 			item = NEXTVAL(item);
 		}
 
-		if (PointerGetDatum(val) != entry->key)
-			pfree(val);
-
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(key),
 					  entry->rel, entry->page,
@@ -424,7 +421,6 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 	}
 
 	*right = *left = FirstOffsetNumber;
-	pfree(costvector);
 
 	v->spl_ldatum = PointerGetDatum(datum_l);
 	v->spl_rdatum = PointerGetDatum(datum_r);
