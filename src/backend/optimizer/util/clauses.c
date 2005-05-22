@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.196 2005/04/23 04:42:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.197 2005/05/22 22:30:20 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3026,8 +3026,6 @@ query_tree_walker(Query *query,
 				  void *context,
 				  int flags)
 {
-	ListCell   *rt;
-
 	Assert(query != NULL && IsA(query, Query));
 
 	if (walker((Node *) query->targetList, context))
@@ -3044,7 +3042,25 @@ query_tree_walker(Query *query,
 		return true;
 	if (walker(query->in_info_list, context))
 		return true;
-	foreach(rt, query->rtable)
+	if (range_table_walker(query->rtable, walker, context, flags))
+		return true;
+	return false;
+}
+
+/*
+ * range_table_walker is just the part of query_tree_walker that scans
+ * a query's rangetable.  This is split out since it can be useful on
+ * its own.
+ */
+bool
+range_table_walker(List *rtable,
+				   bool (*walker) (),
+				   void *context,
+				   int flags)
+{
+	ListCell   *rt;
+
+	foreach(rt, rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
 
@@ -3532,9 +3548,6 @@ query_tree_mutator(Query *query,
 				   void *context,
 				   int flags)
 {
-	List	   *newrt;
-	ListCell   *rt;
-
 	Assert(query != NULL && IsA(query, Query));
 
 	if (!(flags & QTW_DONT_COPY_QUERY))
@@ -3552,8 +3565,26 @@ query_tree_mutator(Query *query,
 	MUTATE(query->limitOffset, query->limitOffset, Node *);
 	MUTATE(query->limitCount, query->limitCount, Node *);
 	MUTATE(query->in_info_list, query->in_info_list, List *);
-	newrt = NIL;
-	foreach(rt, query->rtable)
+	query->rtable = range_table_mutator(query->rtable,
+										mutator, context, flags);
+	return query;
+}
+
+/*
+ * range_table_mutator is just the part of query_tree_mutator that processes
+ * a query's rangetable.  This is split out since it can be useful on
+ * its own.
+ */
+List *
+range_table_mutator(List *rtable,
+					Node *(*mutator) (),
+					void *context,
+					int flags)
+{
+	List	   *newrt = NIL;
+	ListCell   *rt;
+
+	foreach(rt, rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
 		RangeTblEntry *newrte;
@@ -3592,8 +3623,7 @@ query_tree_mutator(Query *query,
 		}
 		newrt = lappend(newrt, newrte);
 	}
-	query->rtable = newrt;
-	return query;
+	return newrt;
 }
 
 /*

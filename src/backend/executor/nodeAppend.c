@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.63 2005/04/24 11:46:20 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAppend.c,v 1.64 2005/05/22 22:30:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,67 +251,52 @@ ExecCountSlotsAppend(Append *node)
 /* ----------------------------------------------------------------
  *	   ExecAppend
  *
- *		Handles the iteration over the multiple scans.
+ *		Handles iteration over multiple subplans.
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
 ExecAppend(AppendState *node)
 {
-	EState	   *estate;
-	int			whichplan;
-	PlanState  *subnode;
-	TupleTableSlot *result;
-	TupleTableSlot *result_slot;
-	ScanDirection direction;
-
-	/*
-	 * get information from the node
-	 */
-	estate = node->ps.state;
-	direction = estate->es_direction;
-	whichplan = node->as_whichplan;
-	result_slot = node->ps.ps_ResultTupleSlot;
-
-	/*
-	 * figure out which subplan we are currently processing
-	 */
-	subnode = node->appendplans[whichplan];
-
-	/*
-	 * get a tuple from the subplan
-	 */
-	result = ExecProcNode(subnode);
-
-	if (!TupIsNull(result))
+	for (;;)
 	{
+		PlanState  *subnode;
+		TupleTableSlot *result;
+
 		/*
-		 * if the subplan gave us something then return it as-is.  We do
-		 * NOT make use of the result slot that was set up in ExecInitAppend,
-		 * first because there's no reason to and second because it may have
-		 * the wrong tuple descriptor in inherited-UPDATE cases.
+		 * figure out which subplan we are currently processing
 		 */
-		return result;
-	}
-	else
-	{
+		subnode = node->appendplans[node->as_whichplan];
+
 		/*
-		 * .. go on to the "next" subplan in the appropriate direction and
-		 * try processing again (recursively)
+		 * get a tuple from the subplan
 		 */
-		if (ScanDirectionIsForward(direction))
+		result = ExecProcNode(subnode);
+
+		if (!TupIsNull(result))
+		{
+			/*
+			 * If the subplan gave us something then return it as-is.
+			 * We do NOT make use of the result slot that was set up in
+			 * ExecInitAppend, first because there's no reason to and
+			 * second because it may have the wrong tuple descriptor in
+			 * inherited-UPDATE cases.
+			 */
+			return result;
+		}
+
+		/*
+		 * Go on to the "next" subplan in the appropriate direction.
+		 * If no more subplans, return the empty slot set up for us
+		 * by ExecInitAppend.
+		 */
+		if (ScanDirectionIsForward(node->ps.state->es_direction))
 			node->as_whichplan++;
 		else
 			node->as_whichplan--;
+		if (!exec_append_initialize_next(node))
+			return ExecClearTuple(node->ps.ps_ResultTupleSlot);
 
-		/*
-		 * return something from next node or an empty slot if all of our
-		 * subplans have been exhausted.  The empty slot is the one set up
-		 * by ExecInitAppend.
-		 */
-		if (exec_append_initialize_next(node))
-			return ExecAppend(node);
-		else
-			return ExecClearTuple(result_slot);
+		/* Else loop back and try to get a tuple from the new subplan */
 	}
 }
 

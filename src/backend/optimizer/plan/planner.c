@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.185 2005/04/28 21:47:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.186 2005/05/22 22:30:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,11 +144,11 @@ planner(Query *parse, bool isCursor, int cursorOptions,
 			result_plan = materialize_finished_plan(result_plan);
 	}
 
+	/* final cleanup of the plan */
+	result_plan = set_plan_references(result_plan, parse->rtable);
+
 	/* executor wants to know total number of Params used overall */
 	result_plan->nParamExec = list_length(PlannerParamList);
-
-	/* final cleanup of the plan */
-	set_plan_references(result_plan, parse->rtable);
 
 	/* restore state for outer planner, if any */
 	PlannerQueryLevel = save_PlannerQueryLevel;

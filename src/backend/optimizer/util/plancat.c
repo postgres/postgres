@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.106 2005/04/22 21:58:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.107 2005/05/22 22:30:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "optimizer/plancat.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
+#include "parser/parse_expr.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -353,49 +354,82 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
  * relation, but that data is not readily available to ExecTypeFromTL.
  * For now, we don't apply the physical-tlist optimization when there are
  * dropped cols.
+ *
+ * We also support building a "physical" tlist for subqueries, since the
+ * same optimization can occur in SubqueryScan nodes.
  */
 List *
 build_physical_tlist(Query *root, RelOptInfo *rel)
 {
+	List	   *tlist = NIL;
 	Index		varno = rel->relid;
 	RangeTblEntry *rte = rt_fetch(varno, root->rtable);
 	Relation	relation;
-	List	   *tlist = NIL;
+	Query	   *subquery;
+	Var		   *var;
+	ListCell   *l;
 	int			attrno,
 				numattrs;
 
-	Assert(rte->rtekind == RTE_RELATION);
-
-	relation = heap_open(rte->relid, AccessShareLock);
-
-	numattrs = RelationGetNumberOfAttributes(relation);
-
-	for (attrno = 1; attrno <= numattrs; attrno++)
+	switch (rte->rtekind)
 	{
-		Form_pg_attribute att_tup = relation->rd_att->attrs[attrno - 1];
-		Var	   *var;
+		case RTE_RELATION:
+			relation = heap_open(rte->relid, AccessShareLock);
 
-		if (att_tup->attisdropped)
-		{
-			/* found a dropped col, so punt */
-			tlist = NIL;
+			numattrs = RelationGetNumberOfAttributes(relation);
+			for (attrno = 1; attrno <= numattrs; attrno++)
+			{
+				Form_pg_attribute att_tup = relation->rd_att->attrs[attrno - 1];
+
+				if (att_tup->attisdropped)
+				{
+					/* found a dropped col, so punt */
+					tlist = NIL;
+					break;
+				}
+
+				var = makeVar(varno,
+							  attrno,
+							  att_tup->atttypid,
+							  att_tup->atttypmod,
+							  0);
+
+				tlist = lappend(tlist,
+								makeTargetEntry((Expr *) var,
+												attrno,
+												NULL,
+												false));
+			}
+
+			heap_close(relation, AccessShareLock);
 			break;
-		}
 
-		var = makeVar(varno,
-					  attrno,
-					  att_tup->atttypid,
-					  att_tup->atttypmod,
-					  0);
+		case RTE_SUBQUERY:
+			subquery = rte->subquery;
+			foreach(l, subquery->targetList)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(l);
 
-		tlist = lappend(tlist,
-						makeTargetEntry((Expr *) var,
-										attrno,
-										NULL,
-										false));
+				var = makeVar(varno,
+							  tle->resno,
+							  exprType((Node *) tle->expr),
+							  exprTypmod((Node *) tle->expr),
+							  0);
+
+				tlist = lappend(tlist,
+								makeTargetEntry((Expr *) var,
+												tle->resno,
+												NULL,
+												tle->resjunk));
+			}
+			break;
+
+		default:
+			/* caller error */
+			elog(ERROR, "unsupported RTE kind %d in build_physical_tlist",
+				 (int) rte->rtekind);
+			break;
 	}
-
-	heap_close(relation, AccessShareLock);
 
 	return tlist;
 }

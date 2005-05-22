@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.25 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.26 2005/05/22 22:30:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,10 @@ SubqueryNext(SubqueryScanState *node)
 
 	MemoryContextSwitchTo(oldcontext);
 
+	/*
+	 * We just overwrite our ScanTupleSlot with the subplan's result slot,
+	 * rather than expending the cycles for ExecCopySlot().
+	 */
 	node->ss.ss_ScanTupleSlot = slot;
 
 	return slot;
@@ -144,12 +148,13 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate)
 		ExecInitExpr((Expr *) node->scan.plan.qual,
 					 (PlanState *) subquerystate);
 
-#define SUBQUERYSCAN_NSLOTS 1
+#define SUBQUERYSCAN_NSLOTS 2
 
 	/*
 	 * tuple table initialization
 	 */
 	ExecInitResultTupleSlot(estate, &subquerystate->ss.ps);
+	ExecInitScanTupleSlot(estate, &subquerystate->ss);
 
 	/*
 	 * initialize subquery
@@ -158,6 +163,11 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate)
 	 */
 	rte = rt_fetch(node->scan.scanrelid, estate->es_range_table);
 	Assert(rte->rtekind == RTE_SUBQUERY);
+
+	/*
+	 * Do access checking on the rangetable entries in the subquery.
+	 */
+	ExecCheckRTPerms(rte->subquery->rtable);
 
 	/*
 	 * The subquery needs its own EState because it has its own
@@ -187,14 +197,20 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate)
 
 	MemoryContextSwitchTo(oldcontext);
 
-	subquerystate->ss.ss_ScanTupleSlot = NULL;
 	subquerystate->ss.ps.ps_TupFromTlist = false;
+
+	/*
+	 * Initialize scan tuple type (needed by ExecAssignScanProjectionInfo)
+	 */
+	ExecAssignScanType(&subquerystate->ss,
+					   ExecGetResultType(subquerystate->subplan),
+					   false);
 
 	/*
 	 * Initialize result tuple type and projection info.
 	 */
 	ExecAssignResultTypeFromTL(&subquerystate->ss.ps);
-	ExecAssignProjectionInfo(&subquerystate->ss.ps);
+	ExecAssignScanProjectionInfo(&subquerystate->ss);
 
 	return subquerystate;
 }
@@ -230,6 +246,7 @@ ExecEndSubqueryScan(SubqueryScanState *node)
 	 * clean out the upper tuple table
 	 */
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+	node->ss.ss_ScanTupleSlot = NULL;		/* not ours to clear */
 
 	/*
 	 * close down subquery

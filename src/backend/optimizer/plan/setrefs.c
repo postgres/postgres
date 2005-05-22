@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.109 2005/04/25 01:30:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.110 2005/05/22 22:30:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,11 @@ typedef struct
 	bool		tlist_has_non_vars;
 } replace_vars_with_subplan_refs_context;
 
+static Plan *set_subqueryscan_references(SubqueryScan *plan, List *rtable);
+static bool trivial_subqueryscan(SubqueryScan *plan);
+static void adjust_plan_varnos(Plan *plan, int rtoffset);
+static void adjust_expr_varnos(Node *node, int rtoffset);
+static bool adjust_expr_varnos_walker(Node *node, int *context);
 static void fix_expr_references(Plan *plan, Node *node);
 static bool fix_expr_references_walker(Node *node, void *context);
 static void set_join_references(Join *join, List *rtable);
@@ -76,23 +81,42 @@ static void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 
 /*
  * set_plan_references
- *	  This is the final processing pass of the planner/optimizer.  The plan
- *	  tree is complete; we just have to adjust some representational details
- *	  for the convenience of the executor.	We update Vars in upper plan nodes
- *	  to refer to the outputs of their subplans, and we compute regproc OIDs
- *	  for operators (ie, we look up the function that implements each op).
  *
- *	  set_plan_references recursively traverses the whole plan tree.
+ * This is the final processing pass of the planner/optimizer.  The plan
+ * tree is complete; we just have to adjust some representational details
+ * for the convenience of the executor.  We update Vars in upper plan nodes
+ * to refer to the outputs of their subplans, and we compute regproc OIDs
+ * for operators (ie, we look up the function that implements each op).
  *
- * Returns nothing of interest, but modifies internal fields of nodes.
+ * We also perform one final optimization step, which is to delete
+ * SubqueryScan plan nodes that aren't doing anything useful (ie, have
+ * no qual and a no-op targetlist).  The reason for doing this last is that
+ * it can't readily be done before set_plan_references, because it would
+ * break set_uppernode_references: the Vars in the subquery's top tlist
+ * won't match up with the Vars in the outer plan tree.  The SubqueryScan
+ * serves a necessary function as a buffer between outer query and subquery
+ * variable numbering ... but the executor doesn't care about that, only the
+ * planner.
+ *
+ * set_plan_references recursively traverses the whole plan tree.
+ *
+ * The return value is normally the same Plan node passed in, but can be
+ * different when the passed-in Plan is a SubqueryScan we decide isn't needed.
+ *
+ * Note: to delete a SubqueryScan, we have to renumber Vars in its child nodes
+ * and append the modified subquery rangetable to the outer rangetable.
+ * Therefore "rtable" is an in/out argument and really should be declared
+ * "List **".  But in the interest of notational simplicity we don't do that.
+ * (Since rtable can't be NIL if there's a SubqueryScan, the list header
+ * address won't change when we append a subquery rangetable.)
  */
-void
+Plan *
 set_plan_references(Plan *plan, List *rtable)
 {
 	ListCell   *l;
 
 	if (plan == NULL)
-		return;
+		return NULL;
 
 	/*
 	 * Plan-type-specific fixes
@@ -133,25 +157,8 @@ set_plan_references(Plan *plan, List *rtable)
 								(Node *) ((TidScan *) plan)->tideval);
 			break;
 		case T_SubqueryScan:
-			{
-				RangeTblEntry *rte;
-
-				/*
-				 * We do not do set_uppernode_references() here, because a
-				 * SubqueryScan will always have been created with correct
-				 * references to its subplan's outputs to begin with.
-				 */
-				fix_expr_references(plan, (Node *) plan->targetlist);
-				fix_expr_references(plan, (Node *) plan->qual);
-
-				/* Recurse into subplan too */
-				rte = rt_fetch(((SubqueryScan *) plan)->scan.scanrelid,
-							   rtable);
-				Assert(rte->rtekind == RTE_SUBQUERY);
-				set_plan_references(((SubqueryScan *) plan)->subplan,
-									rte->subquery->rtable);
-			}
-			break;
+			/* Needs special treatment, see comments below */
+			return set_subqueryscan_references((SubqueryScan *) plan, rtable);
 		case T_FunctionScan:
 			{
 				RangeTblEntry *rte;
@@ -194,14 +201,18 @@ set_plan_references(Plan *plan, List *rtable)
 
 			/*
 			 * These plan types don't actually bother to evaluate their
-			 * targetlists or quals (because they just return their
-			 * unmodified input tuples).  The optimizer is lazy about
-			 * creating really valid targetlists for them.	Best to just
-			 * leave the targetlist alone.	In particular, we do not want
-			 * to process subplans for them, since we will likely end up
-			 * reprocessing subplans that also appear in lower levels of
-			 * the plan tree!
+			 * targetlists (because they just return their unmodified
+			 * input tuples).  The optimizer is lazy about creating really
+			 * valid targetlists for them --- it tends to just put in a
+			 * pointer to the child plan node's tlist.  Hence, we leave
+			 * the tlist alone.  In particular, we do not want to process
+			 * subplans in the tlist, since we will likely end up reprocessing
+			 * subplans that also appear in lower levels of the plan tree!
+			 *
+			 * Since these plan types don't check quals either, we should
+			 * not find any qual expression attached to them.
 			 */
+			Assert(plan->qual == NIL);
 			break;
 		case T_Limit:
 
@@ -210,6 +221,7 @@ set_plan_references(Plan *plan, List *rtable)
 			 * or quals.  It does have live expressions for limit/offset,
 			 * however.
 			 */
+			Assert(plan->qual == NIL);
 			fix_expr_references(plan, ((Limit *) plan)->limitOffset);
 			fix_expr_references(plan, ((Limit *) plan)->limitCount);
 			break;
@@ -237,22 +249,27 @@ set_plan_references(Plan *plan, List *rtable)
 
 			/*
 			 * Append, like Sort et al, doesn't actually evaluate its
-			 * targetlist or quals, and we haven't bothered to give it its
-			 * own tlist copy. So, don't fix targetlist/qual. But do
+			 * targetlist or check quals, and we haven't bothered to give it
+			 * its own tlist copy. So, don't fix targetlist/qual. But do
 			 * recurse into child plans.
 			 */
+			Assert(plan->qual == NIL);
 			foreach(l, ((Append *) plan)->appendplans)
-				set_plan_references((Plan *) lfirst(l), rtable);
+				lfirst(l) = set_plan_references((Plan *) lfirst(l), rtable);
 			break;
 		case T_BitmapAnd:
-			/* BitmapAnd works like Append */
+			/* BitmapAnd works like Append, but has no tlist */
+			Assert(plan->targetlist == NIL);
+			Assert(plan->qual == NIL);
 			foreach(l, ((BitmapAnd *) plan)->bitmapplans)
-				set_plan_references((Plan *) lfirst(l), rtable);
+				lfirst(l) = set_plan_references((Plan *) lfirst(l), rtable);
 			break;
 		case T_BitmapOr:
-			/* BitmapOr works like Append */
+			/* BitmapOr works like Append, but has no tlist */
+			Assert(plan->targetlist == NIL);
+			Assert(plan->qual == NIL);
 			foreach(l, ((BitmapOr *) plan)->bitmapplans)
-				set_plan_references((Plan *) lfirst(l), rtable);
+				lfirst(l) = set_plan_references((Plan *) lfirst(l), rtable);
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",
@@ -270,16 +287,349 @@ set_plan_references(Plan *plan, List *rtable)
 	 * children.  Fortunately, that consideration doesn't apply to SubPlan
 	 * nodes; else we'd need two passes over the expression trees.
 	 */
-	set_plan_references(plan->lefttree, rtable);
-	set_plan_references(plan->righttree, rtable);
+	plan->lefttree = set_plan_references(plan->lefttree, rtable);
+	plan->righttree = set_plan_references(plan->righttree, rtable);
 
 	foreach(l, plan->initPlan)
 	{
 		SubPlan    *sp = (SubPlan *) lfirst(l);
 
 		Assert(IsA(sp, SubPlan));
-		set_plan_references(sp->plan, sp->rtable);
+		sp->plan = set_plan_references(sp->plan, sp->rtable);
 	}
+
+	return plan;
+}
+
+/*
+ * set_subqueryscan_references
+ *		Do set_plan_references processing on a SubqueryScan
+ *
+ * We try to strip out the SubqueryScan entirely; if we can't, we have
+ * to do the normal processing on it.
+ */
+static Plan *
+set_subqueryscan_references(SubqueryScan *plan, List *rtable)
+{
+	Plan	   *result;
+	RangeTblEntry *rte;
+	ListCell   *l;
+
+	/* First, recursively process the subplan */
+	rte = rt_fetch(plan->scan.scanrelid, rtable);
+	Assert(rte->rtekind == RTE_SUBQUERY);
+	plan->subplan = set_plan_references(plan->subplan,
+										rte->subquery->rtable);
+
+	/*
+	 * We have to process any initplans too; set_plan_references can't do
+	 * it for us because of the possibility of double-processing.
+	 */
+	foreach(l, plan->scan.plan.initPlan)
+	{
+		SubPlan    *sp = (SubPlan *) lfirst(l);
+
+		Assert(IsA(sp, SubPlan));
+		sp->plan = set_plan_references(sp->plan, sp->rtable);
+	}
+
+	if (trivial_subqueryscan(plan))
+	{
+		/*
+		 * We can omit the SubqueryScan node and just pull up the subplan.
+		 * We have to merge its rtable into the outer rtable, which means
+		 * adjusting varnos throughout the subtree.
+		 */
+		int		rtoffset = list_length(rtable);
+		List   *sub_rtable;
+
+		sub_rtable = copyObject(rte->subquery->rtable);
+		range_table_walker(sub_rtable,
+						   adjust_expr_varnos_walker,
+						   (void *) &rtoffset,
+						   QTW_IGNORE_RT_SUBQUERIES);
+		rtable = list_concat(rtable, sub_rtable);
+
+		result = plan->subplan;
+
+		adjust_plan_varnos(result, rtoffset);
+
+		result->initPlan = list_concat(plan->scan.plan.initPlan,
+									   result->initPlan);
+	}
+	else
+	{
+		/*
+		 * Keep the SubqueryScan node.  We have to do the processing that
+		 * set_plan_references would otherwise have done on it.  Notice
+		 * we do not do set_uppernode_references() here, because a
+		 * SubqueryScan will always have been created with correct
+		 * references to its subplan's outputs to begin with.
+		 */
+		result = (Plan *) plan;
+
+		fix_expr_references(result, (Node *) result->targetlist);
+		fix_expr_references(result, (Node *) result->qual);
+	}
+
+	return result;
+}
+
+/*
+ * trivial_subqueryscan
+ *		Detect whether a SubqueryScan can be deleted from the plan tree.
+ *
+ * We can delete it if it has no qual to check and the targetlist just
+ * regurgitates the output of the child plan.
+ */
+static bool
+trivial_subqueryscan(SubqueryScan *plan)
+{
+	int			attrno;
+	ListCell   *lp,
+			   *lc;
+
+	if (plan->scan.plan.qual != NIL)
+		return false;
+
+	attrno = 1;
+	forboth(lp, plan->scan.plan.targetlist, lc, plan->subplan->targetlist)
+	{
+		TargetEntry *ptle = (TargetEntry *) lfirst(lp);
+		TargetEntry *ctle = (TargetEntry *) lfirst(lc);
+		Var		   *var = (Var *) ptle->expr;
+
+		if (ptle->resjunk != ctle->resjunk)
+			return false;		/* tlist doesn't match junk status */
+		if (!var || !IsA(var, Var))
+			return false;		/* tlist item not a Var */
+		Assert(var->varno == plan->scan.scanrelid);
+		Assert(var->varlevelsup == 0);
+		if (var->varattno != attrno)
+			return false;		/* out of order */
+		attrno++;
+	}
+
+	if (lp)
+		return false;			/* parent tlist longer than child */
+
+	/* extra child items are OK only if all are resjunk */
+	for_each_cell(lc, lc)
+	{
+		TargetEntry *ctle = (TargetEntry *) lfirst(lc);
+
+		if (!ctle->resjunk)
+			return false;
+	}
+
+	return true;
+}
+
+/*
+ * adjust_plan_varnos
+ *		Offset varnos and other rangetable indexes in a plan tree by rtoffset.
+ */
+static void
+adjust_plan_varnos(Plan *plan, int rtoffset)
+{
+	ListCell   *l;
+
+	if (plan == NULL)
+		return;
+
+	/*
+	 * Plan-type-specific fixes
+	 */
+	switch (nodeTag(plan))
+	{
+		case T_SeqScan:
+			((SeqScan *) plan)->scanrelid += rtoffset;
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			adjust_expr_varnos((Node *) plan->qual, rtoffset);
+			break;
+		case T_IndexScan:
+			((IndexScan *) plan)->scan.scanrelid += rtoffset;
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			adjust_expr_varnos((Node *) plan->qual, rtoffset);
+			adjust_expr_varnos((Node *) ((IndexScan *) plan)->indexqual,
+							   rtoffset);
+			adjust_expr_varnos((Node *) ((IndexScan *) plan)->indexqualorig,
+							   rtoffset);
+			break;
+		case T_BitmapIndexScan:
+			((BitmapIndexScan *) plan)->scan.scanrelid += rtoffset;
+			/* no need to fix targetlist and qual */
+			Assert(plan->targetlist == NIL);
+			Assert(plan->qual == NIL);
+			adjust_expr_varnos((Node *) ((BitmapIndexScan *) plan)->indexqual,
+							   rtoffset);
+			adjust_expr_varnos((Node *) ((BitmapIndexScan *) plan)->indexqualorig,
+							   rtoffset);
+			break;
+		case T_BitmapHeapScan:
+			((BitmapHeapScan *) plan)->scan.scanrelid += rtoffset;
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			adjust_expr_varnos((Node *) plan->qual, rtoffset);
+			adjust_expr_varnos((Node *) ((BitmapHeapScan *) plan)->bitmapqualorig,
+							   rtoffset);
+			break;
+		case T_TidScan:
+			((TidScan *) plan)->scan.scanrelid += rtoffset;
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			adjust_expr_varnos((Node *) plan->qual, rtoffset);
+			adjust_expr_varnos((Node *) ((TidScan *) plan)->tideval,
+							   rtoffset);
+			break;
+		case T_SubqueryScan:
+			((SubqueryScan *) plan)->scan.scanrelid += rtoffset;
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			adjust_expr_varnos((Node *) plan->qual, rtoffset);
+			/* we should not recurse into the subquery! */
+			break;
+		case T_FunctionScan:
+			((FunctionScan *) plan)->scan.scanrelid += rtoffset;
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			adjust_expr_varnos((Node *) plan->qual, rtoffset);
+			/* rte was already fixed by set_subqueryscan_references */
+			break;
+		case T_NestLoop:
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			adjust_expr_varnos((Node *) plan->qual, rtoffset);
+			adjust_expr_varnos((Node *) ((Join *) plan)->joinqual, rtoffset);
+			break;
+		case T_MergeJoin:
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			adjust_expr_varnos((Node *) plan->qual, rtoffset);
+			adjust_expr_varnos((Node *) ((Join *) plan)->joinqual, rtoffset);
+			adjust_expr_varnos((Node *) ((MergeJoin *) plan)->mergeclauses,
+							   rtoffset);
+			break;
+		case T_HashJoin:
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			adjust_expr_varnos((Node *) plan->qual, rtoffset);
+			adjust_expr_varnos((Node *) ((Join *) plan)->joinqual, rtoffset);
+			adjust_expr_varnos((Node *) ((HashJoin *) plan)->hashclauses,
+							   rtoffset);
+			break;
+		case T_Hash:
+		case T_Material:
+		case T_Sort:
+		case T_Unique:
+		case T_SetOp:
+
+			/*
+			 * Even though the targetlist won't be used by the executor,
+			 * we fix it up for possible use by EXPLAIN (not to mention
+			 * ease of debugging --- wrong varnos are very confusing).
+			 * We have to make a copy because the tlist is very likely
+			 * shared with lower plan levels.
+			 */
+			plan->targetlist = copyObject(plan->targetlist);
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			Assert(plan->qual == NIL);
+			break;
+		case T_Limit:
+
+			/*
+			 * Like the plan types above, Limit doesn't evaluate its tlist
+			 * or quals.  It does have live expressions for limit/offset,
+			 * however.
+			 */
+			plan->targetlist = copyObject(plan->targetlist);
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			Assert(plan->qual == NIL);
+			adjust_expr_varnos(((Limit *) plan)->limitOffset, rtoffset);
+			adjust_expr_varnos(((Limit *) plan)->limitCount, rtoffset);
+			break;
+		case T_Agg:
+		case T_Group:
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			adjust_expr_varnos((Node *) plan->qual, rtoffset);
+			break;
+		case T_Result:
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			adjust_expr_varnos((Node *) plan->qual, rtoffset);
+			adjust_expr_varnos(((Result *) plan)->resconstantqual, rtoffset);
+			break;
+		case T_Append:
+
+			/*
+			 * Append, like Sort et al, doesn't actually evaluate its
+			 * targetlist or check quals, and we haven't bothered to give it
+			 * its own tlist copy. So, copy tlist before fixing.  Then
+			 * recurse into child plans.
+			 */
+			plan->targetlist = copyObject(plan->targetlist);
+			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
+			Assert(plan->qual == NIL);
+			foreach(l, ((Append *) plan)->appendplans)
+				adjust_plan_varnos((Plan *) lfirst(l), rtoffset);
+			break;
+		case T_BitmapAnd:
+			/* BitmapAnd works like Append, but has no tlist */
+			Assert(plan->targetlist == NIL);
+			Assert(plan->qual == NIL);
+			foreach(l, ((BitmapAnd *) plan)->bitmapplans)
+				adjust_plan_varnos((Plan *) lfirst(l), rtoffset);
+			break;
+		case T_BitmapOr:
+			/* BitmapOr works like Append, but has no tlist */
+			Assert(plan->targetlist == NIL);
+			Assert(plan->qual == NIL);
+			foreach(l, ((BitmapOr *) plan)->bitmapplans)
+				adjust_plan_varnos((Plan *) lfirst(l), rtoffset);
+			break;
+		default:
+			elog(ERROR, "unrecognized node type: %d",
+				 (int) nodeTag(plan));
+			break;
+	}
+
+	/*
+	 * Now recurse into child plans.
+	 *
+	 * We don't need to (and in fact mustn't) recurse into subqueries,
+	 * so no need to examine initPlan list.
+	 */
+	adjust_plan_varnos(plan->lefttree, rtoffset);
+	adjust_plan_varnos(plan->righttree, rtoffset);
+}
+
+/*
+ * adjust_expr_varnos
+ *		Offset varnos of Vars in an expression by rtoffset.
+ *
+ * This is different from the rewriter's OffsetVarNodes in that it has to
+ * work on an already-planned expression tree; in particular, we should not
+ * disturb INNER and OUTER references.  On the other hand, we don't have to
+ * recurse into subqueries nor deal with outer-level Vars, so it's pretty
+ * simple.
+ */
+static void
+adjust_expr_varnos(Node *node, int rtoffset)
+{
+	/* This tree walk requires no special setup, so away we go... */
+	adjust_expr_varnos_walker(node, &rtoffset);
+}
+
+static bool
+adjust_expr_varnos_walker(Node *node, int *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		Assert(var->varlevelsup == 0);
+		if (var->varno > 0 && var->varno != INNER && var->varno != OUTER)
+			var->varno += *context;
+		if (var->varnoold > 0)
+			var->varnoold += *context;
+		return false;
+	}
+	return expression_tree_walker(node, adjust_expr_varnos_walker,
+								  (void *) context);
 }
 
 /*
@@ -315,7 +665,7 @@ fix_expr_references_walker(Node *node, void *context)
 	{
 		SubPlan    *sp = (SubPlan *) node;
 
-		set_plan_references(sp->plan, sp->rtable);
+		sp->plan = set_plan_references(sp->plan, sp->rtable);
 	}
 	return expression_tree_walker(node, fix_expr_references_walker, context);
 }

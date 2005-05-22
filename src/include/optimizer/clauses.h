@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.78 2005/01/28 19:34:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.79 2005/05/22 22:30:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,9 +87,14 @@ extern Node *expression_tree_mutator(Node *node, Node *(*mutator) (),
 #define QTW_DONT_COPY_QUERY			0x04		/* do not copy top Query */
 
 extern bool query_tree_walker(Query *query, bool (*walker) (),
-										  void *context, int flags);
+							  void *context, int flags);
 extern Query *query_tree_mutator(Query *query, Node *(*mutator) (),
-											 void *context, int flags);
+								 void *context, int flags);
+
+extern bool range_table_walker(List *rtable, bool (*walker) (),
+							   void *context, int flags);
+extern List *range_table_mutator(List *rtable, Node *(*mutator) (),
+								 void *context, int flags);
 
 extern bool query_or_expression_tree_walker(Node *node, bool (*walker) (),
 											   void *context, int flags);

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.35 2005/03/16 21:38:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.36 2005/05/22 22:30:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,6 @@ TupleTableSlot *
 ExecScan(ScanState *node,
 		 ExecScanAccessMtd accessMtd)	/* function returning a tuple */
 {
-	EState	   *estate;
 	ExprContext *econtext;
 	List	   *qual;
 	ProjectionInfo *projInfo;
@@ -58,10 +57,15 @@ ExecScan(ScanState *node,
 	/*
 	 * Fetch data from node
 	 */
-	estate = node->ps.state;
-	econtext = node->ps.ps_ExprContext;
 	qual = node->ps.qual;
 	projInfo = node->ps.ps_ProjInfo;
+
+	/*
+	 * If we have neither a qual to check nor a projection to do,
+	 * just skip all the overhead and return the raw scan tuple.
+	 */
+	if (!qual && !projInfo)
+		return (*accessMtd) (node);
 
 	/*
 	 * Check to see if we're still projecting out tuples from a previous
@@ -83,6 +87,7 @@ ExecScan(ScanState *node,
 	 * storage allocated in the previous tuple cycle.  Note this can't
 	 * happen until we're done projecting out tuples from a scan tuple.
 	 */
+	econtext = node->ps.ps_ExprContext;
 	ResetExprContext(econtext);
 
 	/*
