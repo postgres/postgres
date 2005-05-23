@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.107 2005/05/22 22:30:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.108 2005/05/23 03:01:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,25 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 	bool		hasindex;
 	List	   *indexinfos = NIL;
 
-	relation = heap_open(relationObjectId, AccessShareLock);
+	/*
+	 * Normally, we can assume the rewriter already acquired at least
+	 * AccessShareLock on each relation used in the query.  However this
+	 * will not be the case for relations added to the query because they
+	 * are inheritance children of some relation mentioned explicitly.
+	 * For them, this is the first access during the parse/rewrite/plan
+	 * pipeline, and so we need to obtain and keep a suitable lock.
+	 *
+	 * XXX really, a suitable lock is RowShareLock if the relation is
+	 * an UPDATE/DELETE target, and AccessShareLock otherwise.  However
+	 * we cannot easily tell here which to get, so for the moment just
+	 * get AccessShareLock always.  The executor will get the right lock
+	 * when it runs, which means there is a very small chance of deadlock
+	 * trying to upgrade our lock.
+	 */
+	if (rel->reloptkind == RELOPT_BASEREL)
+		relation = heap_open(relationObjectId, NoLock);
+	else
+		relation = heap_open(relationObjectId, AccessShareLock);
 
 	rel->min_attr = FirstLowInvalidHeapAttributeNumber + 1;
 	rel->max_attr = RelationGetNumberOfAttributes(relation);
@@ -205,8 +223,8 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 
 	rel->indexlist = indexinfos;
 
-	/* XXX keep the lock here? */
-	heap_close(relation, AccessShareLock);
+	/* close rel, but keep lock if any */
+	heap_close(relation, NoLock);
 }
 
 /*
@@ -374,7 +392,8 @@ build_physical_tlist(Query *root, RelOptInfo *rel)
 	switch (rte->rtekind)
 	{
 		case RTE_RELATION:
-			relation = heap_open(rte->relid, AccessShareLock);
+			/* Assume we already have adequate lock */
+			relation = heap_open(rte->relid, NoLock);
 
 			numattrs = RelationGetNumberOfAttributes(relation);
 			for (attrno = 1; attrno <= numattrs; attrno++)
@@ -401,7 +420,7 @@ build_physical_tlist(Query *root, RelOptInfo *rel)
 												false));
 			}
 
-			heap_close(relation, AccessShareLock);
+			heap_close(relation, NoLock);
 			break;
 
 		case RTE_SUBQUERY:

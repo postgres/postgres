@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.65 2005/04/22 21:58:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.66 2005/05/23 03:01:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,8 @@
 #include "parser/parsetree.h"
 
 
-static RelOptInfo *make_base_rel(Query *root, int relid);
+static RelOptInfo *make_reloptinfo(Query *root, int relid,
+								   RelOptKind reloptkind);
 static void build_joinrel_tlist(Query *root, RelOptInfo *joinrel);
 static List *build_joinrel_restrictlist(Query *root,
 						   RelOptInfo *joinrel,
@@ -67,7 +68,7 @@ build_base_rel(Query *root, int relid)
 	}
 
 	/* No existing RelOptInfo for this base rel, so make a new one */
-	rel = make_base_rel(root, relid);
+	rel = make_reloptinfo(root, relid, RELOPT_BASEREL);
 
 	/* and add it to the list */
 	root->base_rel_list = lcons(rel, root->base_rel_list);
@@ -102,11 +103,8 @@ build_other_rel(Query *root, int relid)
 	}
 
 	/* No existing RelOptInfo for this other rel, so make a new one */
-	rel = make_base_rel(root, relid);
-
 	/* presently, must be an inheritance child rel */
-	Assert(rel->reloptkind == RELOPT_BASEREL);
-	rel->reloptkind = RELOPT_OTHER_CHILD_REL;
+	rel = make_reloptinfo(root, relid, RELOPT_OTHER_CHILD_REL);
 
 	/* and add it to the list */
 	root->other_rel_list = lcons(rel, root->other_rel_list);
@@ -115,18 +113,18 @@ build_other_rel(Query *root, int relid)
 }
 
 /*
- * make_base_rel
- *	  Construct a base-relation RelOptInfo for the specified rangetable index.
+ * make_reloptinfo
+ *	  Construct a RelOptInfo for the specified rangetable index.
  *
  * Common code for build_base_rel and build_other_rel.
  */
 static RelOptInfo *
-make_base_rel(Query *root, int relid)
+make_reloptinfo(Query *root, int relid, RelOptKind reloptkind)
 {
 	RelOptInfo *rel = makeNode(RelOptInfo);
 	RangeTblEntry *rte = rt_fetch(relid, root->rtable);
 
-	rel->reloptkind = RELOPT_BASEREL;
+	rel->reloptkind = reloptkind;
 	rel->relids = bms_make_singleton(relid);
 	rel->rows = 0;
 	rel->width = 0;

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.75 2005/04/28 21:47:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.76 2005/05/23 03:01:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,9 +189,11 @@ expand_targetlist(List *tlist, int command_type,
 	 * attributes.
 	 *
 	 * Scan the tuple description in the relation's relcache entry to make
-	 * sure we have all the user attributes in the right order.
+	 * sure we have all the user attributes in the right order.  We assume
+	 * that the rewriter already acquired at least AccessShareLock on the
+	 * relation, so we need no lock here.
 	 */
-	rel = heap_open(getrelid(result_relation, range_table), AccessShareLock);
+	rel = heap_open(getrelid(result_relation, range_table), NoLock);
 
 	numattrs = RelationGetNumberOfAttributes(rel);
 
@@ -326,7 +328,7 @@ expand_targetlist(List *tlist, int command_type,
 		tlist_item = lnext(tlist_item);
 	}
 
-	heap_close(rel, AccessShareLock);
+	heap_close(rel, NoLock);
 
 	return new_tlist;
 }
