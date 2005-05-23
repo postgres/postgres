@@ -69,9 +69,9 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp *result)
 	dDate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
 	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
 #ifdef HAVE_INT64_TIMESTAMP
-	*result = (dDate * INT64CONST(86400000000)) + time;
+	*result = (dDate * USECS_PER_DAY) + time;
 	/* check for major overflow */
-	if ((*result - time) / INT64CONST(86400000000) != dDate)
+	if ((*result - time) / USECS_PER_DAY != dDate)
 		return -1;
 	/* check for just-barely overflow (okay except time-of-day wraps) */
 	if ((*result < 0) ? (dDate >= 0) : (dDate < 0))
@@ -163,11 +163,11 @@ timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 
 	time = dt;
 #ifdef HAVE_INT64_TIMESTAMP
-	TMODULO(time, dDate, INT64CONST(86400000000));
+	TMODULO(time, dDate, USECS_PER_DAY);
 
 	if (time < INT64CONST(0))
 	{
-		time += INT64CONST(86400000000);
+		time += USECS_PER_DAY;
 		dDate -= 1;
 	}
 #else

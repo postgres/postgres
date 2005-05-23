@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.141 2005/05/23 17:13:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.142 2005/05/23 18:56:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1210,7 +1210,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 								tmask |= DTK_TIME_M;
 #ifdef HAVE_INT64_TIMESTAMP
-								dt2time(time * INT64CONST(86400000000),
+								dt2time(time * USECS_PER_DAY,
 										&tm->tm_hour, &tm->tm_min,
 										&tm->tm_sec, fsec);
 #else
@@ -1969,7 +1969,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 								tmask |= DTK_TIME_M;
 #ifdef HAVE_INT64_TIMESTAMP
-								dt2time(time * INT64CONST(86400000000),
+								dt2time(time * USECS_PER_DAY,
 										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
 								dt2time(time * 86400,
@@ -2193,7 +2193,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 #ifdef HAVE_INT64_TIMESTAMP
 	if (tm->tm_hour < 0 || tm->tm_hour > 23 || tm->tm_min < 0 ||
 		tm->tm_min > 59 || tm->tm_sec < 0 || tm->tm_sec > 60 ||
-		*fsec < INT64CONST(0) || *fsec >= INT64CONST(1000000))
+		*fsec < INT64CONST(0) || *fsec >= USECS_PER_SEC)
 		return DTERR_FIELD_OVERFLOW;
 #else
 	if (tm->tm_hour < 0 || tm->tm_hour > 23 || tm->tm_min < 0 ||
@@ -2447,7 +2447,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct pg_tm * tm, fsec_t *fsec)
 #ifdef HAVE_INT64_TIMESTAMP
 	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > 59 ||
 		tm->tm_sec < 0 || tm->tm_sec > 60 || *fsec < INT64CONST(0) ||
-		*fsec >= INT64CONST(1000000))
+		*fsec >= USECS_PER_SEC)
 		return DTERR_FIELD_OVERFLOW;
 #else
 	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > 59 ||
@@ -3222,8 +3222,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 		int			sec;
 
 #ifdef HAVE_INT64_TIMESTAMP
-		sec = (*fsec / INT64CONST(1000000));
-		*fsec -= (sec * INT64CONST(1000000));
+		sec = (*fsec / USECS_PER_SEC);
+		*fsec -= (sec * USECS_PER_SEC);
 #else
 		TMODULO(*fsec, sec, 1e0);
 #endif

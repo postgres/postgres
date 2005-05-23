@@ -700,8 +700,8 @@ interval2tm(interval span, struct tm * tm, fsec_t *fsec)
 	time = span.time;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	tm->tm_mday = (time / INT64CONST(86400000000));
-	time -= (tm->tm_mday * INT64CONST(86400000000));
+	tm->tm_mday = (time / USECS_PER_DAY);
+	time -= (tm->tm_mday * USECS_PER_DAY);
 	tm->tm_hour = (time / INT64CONST(3600000000));
 	time -= (tm->tm_hour * INT64CONST(3600000000));
 	tm->tm_min = (time / INT64CONST(60000000));

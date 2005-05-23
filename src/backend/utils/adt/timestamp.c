@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.120 2005/05/23 17:13:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.121 2005/05/23 18:56:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -695,8 +695,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			interval->time = ((int) (interval->time / INT64CONST(86400000000))) *
-								INT64CONST(86400000000);
+			interval->time = ((int) (interval->time / USECS_PER_DAY)) *
+								USECS_PER_DAY;
 
 #else
 			interval->time = ((int) (interval->time / 86400)) * 86400;
@@ -714,13 +714,13 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			day = interval->time / INT64CONST(86400000000);
-			interval->time -= day * INT64CONST(86400000000);
-			interval->time = (interval->time / INT64CONST(3600000000)) *
-								INT64CONST(3600000000);
+			day = interval->time / USECS_PER_DAY;
+			interval->time -= day * USECS_PER_DAY;
+			interval->time = (interval->time / USECS_PER_HOUR) *
+								USECS_PER_HOUR;
 
 #else
-			TMODULO(interval->time, day, 86400.0);
+			TMODULO(interval->time, day, (double)SECS_PER_DAY);
 			interval->time = ((int) (interval->time / 3600)) * 3600.0;
 #endif
 		}
@@ -736,10 +736,10 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			hour = interval->time / INT64CONST(3600000000);
-			interval->time -= hour * INT64CONST(3600000000);
-			interval->time = (interval->time / INT64CONST(60000000)) *
-								INT64CONST(60000000);
+			hour = interval->time / USECS_PER_HOUR;
+			interval->time -= hour * USECS_PER_HOUR;
+			interval->time = (interval->time / USECS_PER_MINUTE) *
+								USECS_PER_MINUTE;
 
 #else
 			TMODULO(interval->time, hour, 3600.0);
@@ -758,8 +758,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			minute = interval->time / INT64CONST(60000000);
-			interval->time -= minute * INT64CONST(60000000);
+			minute = interval->time / USECS_PER_MINUTE;
+			interval->time -= minute * USECS_PER_MINUTE;
 
 #else
 			TMODULO(interval->time, minute, 60.0);
@@ -773,8 +773,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			interval->time = (interval->time / INT64CONST(3600000000)) *
-								INT64CONST(3600000000);
+			interval->time = (interval->time / USECS_PER_HOUR) *
+								USECS_PER_HOUR;
 
 #else
 			interval->time = ((int) (interval->time / 3600)) * 3600;
@@ -788,8 +788,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			interval->time = (interval->time / INT64CONST(60000000)) *
-								INT64CONST(60000000);
+			interval->time = (interval->time / USECS_PER_MINUTE) *
+								USECS_PER_MINUTE;
 
 #else
 			interval->time = ((int) (interval->time / 60)) * 60;
@@ -816,13 +816,13 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			day = (interval->time / INT64CONST(86400000000));
-			interval->time -= day * INT64CONST(86400000000);
-			interval->time = (interval->time / INT64CONST(60000000)) *
-								INT64CONST(60000000);
+			day = (interval->time / USECS_PER_DAY);
+			interval->time -= day * USECS_PER_DAY;
+			interval->time = (interval->time / USECS_PER_MINUTE) *
+								USECS_PER_MINUTE;
 
 #else
-			TMODULO(interval->time, day, 86400.0);
+			TMODULO(interval->time, day, (double)SECS_PER_DAY);
 			interval->time = ((int) (interval->time / 60)) * 60;
 #endif
 		}
@@ -841,11 +841,11 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			day = interval->time / INT64CONST(86400000000);
-			interval->time -= day * INT64CONST(86400000000);
+			day = interval->time / USECS_PER_DAY;
+			interval->time -= day * USECS_PER_DAY;
 
 #else
-			TMODULO(interval->time, day, 86400.0);
+			TMODULO(interval->time, day, (double)SECS_PER_DAY);
 #endif
 		}
 		/* MINUTE TO SECOND */
@@ -862,8 +862,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			hour = interval->time / INT64CONST(3600000000);
-			interval->time -= hour * INT64CONST(3600000000);
+			hour = interval->time / USECS_PER_HOUR;
+			interval->time -= hour * USECS_PER_HOUR;
 #else
 			TMODULO(interval->time, hour, 3600.0);
 #endif
@@ -958,12 +958,12 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 	time = jd;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	*hour = time / INT64CONST(3600000000);
-	time -= (*hour) * INT64CONST(3600000000);
-	*min = time / INT64CONST(60000000);
-	time -= (*min) * INT64CONST(60000000);
-	*sec = time / INT64CONST(1000000);
-	*fsec = time - (*sec * INT64CONST(1000000));
+	*hour = time / USECS_PER_HOUR;
+	time -= (*hour) * USECS_PER_HOUR;
+	*min = time / USECS_PER_MINUTE;
+	time -= (*min) * USECS_PER_MINUTE;
+	*sec = time / USECS_PER_SEC;
+	*fsec = time - (*sec * USECS_PER_SEC);
 #else
 	*hour = time / 3600;
 	time -= (*hour) * 3600;
@@ -1001,7 +1001,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn
 	if (HasCTZSet && (tzp != NULL))
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-		dt -= CTimeZone * INT64CONST(1000000);
+		dt -= CTimeZone * USECS_PER_SEC;
 #else
 		dt -= CTimeZone;
 #endif
@@ -1009,15 +1009,15 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn
 
 	time = dt;
 #ifdef HAVE_INT64_TIMESTAMP
-	TMODULO(time, date, INT64CONST(86400000000));
+	TMODULO(time, date, USECS_PER_DAY);
 
 	if (time < INT64CONST(0))
 	{
-		time += INT64CONST(86400000000);
+		time += USECS_PER_DAY;
 		date -= 1;
 	}
 #else
-	TMODULO(time, date, 86400e0);
+	TMODULO(time, date, (double)SECS_PER_DAY);
 
 	if (time < 0)
 	{
@@ -1073,7 +1073,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn
 	 * pg_time_t, so it should behave sanely on machines without int64.
 	 */
 #ifdef HAVE_INT64_TIMESTAMP
-	dt = (dt - *fsec) / INT64CONST(1000000) +
+	dt = (dt - *fsec) / USECS_PER_SEC +
 		(POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400;
 #else
 	dt = rint(dt - *fsec +
@@ -1142,9 +1142,9 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 
 	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
 #ifdef HAVE_INT64_TIMESTAMP
-	*result = date * INT64CONST(86400000000) + time;
+	*result = date * USECS_PER_DAY + time;
 	/* check for major overflow */
-	if ((*result - time) / INT64CONST(86400000000) != date)
+	if ((*result - time) / USECS_PER_DAY != date)
 		return -1;
 	/* check for just-barely overflow (okay except time-of-day wraps) */
 	if ((*result < 0 && date >= 0) ||
@@ -1188,16 +1188,16 @@ interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 	time = span.time;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	tm->tm_mday = (time / INT64CONST(86400000000));
-	time -= (tm->tm_mday * INT64CONST(86400000000));
-	tm->tm_hour = (time / INT64CONST(3600000000));
-	time -= (tm->tm_hour * INT64CONST(3600000000));
-	tm->tm_min = (time / INT64CONST(60000000));
-	time -= (tm->tm_min * INT64CONST(60000000));
-	tm->tm_sec = (time / INT64CONST(1000000));
-	*fsec = (time - (tm->tm_sec * INT64CONST(1000000)));
+	tm->tm_mday = (time / USECS_PER_DAY);
+	time -= (tm->tm_mday * USECS_PER_DAY);
+	tm->tm_hour = (time / USECS_PER_HOUR);
+	time -= (tm->tm_hour * USECS_PER_HOUR);
+	tm->tm_min = (time / USECS_PER_MINUTE);
+	time -= (tm->tm_min * USECS_PER_MINUTE);
+	tm->tm_sec = (time / USECS_PER_SEC);
+	*fsec = (time - (tm->tm_sec * USECS_PER_SEC));
 #else
-	TMODULO(time, tm->tm_mday, 86400e0);
+	TMODULO(time, tm->tm_mday, (double)SECS_PER_DAY);
 	TMODULO(time, tm->tm_hour, 3600e0);
 	TMODULO(time, tm->tm_min, 60e0);
 	TMODULO(time, tm->tm_sec, 1e0);
@@ -1215,7 +1215,7 @@ tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span)
 	span->time = ((((((((tm->tm_mday * INT64CONST(24))
 						+ tm->tm_hour) * INT64CONST(60))
 					  + tm->tm_min) * INT64CONST(60))
-					+ tm->tm_sec) * INT64CONST(1000000)) + fsec);
+					+ tm->tm_sec) * USECS_PER_SEC) + fsec);
 #else
 	span->time = ((((((tm->tm_mday * 24.0)
 					  + tm->tm_hour) * 60.0)
@@ -1231,7 +1231,7 @@ tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span)
 static int64
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
-	return ((((((hour * 60) + min) * 60) + sec) * INT64CONST(1000000)) + fsec);
+	return ((((((hour * 60) + min) * 60) + sec) * USECS_PER_SEC) + fsec);
 }	/* time2t() */
 
 #else
@@ -1246,7 +1246,7 @@ static Timestamp
 dt2local(Timestamp dt, int tz)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	dt -= (tz * INT64CONST(1000000));
+	dt -= (tz * USECS_PER_SEC);
 #else
 	dt -= tz;
 	dt = JROUND(dt);
@@ -1616,9 +1616,9 @@ interval_cmp_internal(Interval *interval1, Interval *interval2)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	if (interval1->month != 0)
-		span1 += interval1->month * INT64CONST(30) * INT64CONST(86400000000);
+		span1 += interval1->month * INT64CONST(30) * USECS_PER_DAY;
 	if (interval2->month != 0)
-		span2 += interval2->month * INT64CONST(30) * INT64CONST(86400000000);
+		span2 += interval2->month * INT64CONST(30) * USECS_PER_DAY;
 #else
 	if (interval1->month != 0)
 		span1 += interval1->month * (30.0 * 86400);
@@ -2161,7 +2161,7 @@ interval_mul(PG_FUNCTION_ARGS)
 	result->month = months;
 	result->time = (span1->time * factor);
 	result->time += (months - result->month) * INT64CONST(30) *
-					INT64CONST(86400000000);
+					USECS_PER_DAY;
 #else
 	result->month = rint(months);
 	result->time = JROUND(span1->time * factor);
@@ -2205,7 +2205,7 @@ interval_div(PG_FUNCTION_ARGS)
 	result->time = (span->time / factor);
 	/* evaluate fractional months as 30 days */
 	result->time += ((span->month - (result->month * factor)) *
-					INT64CONST(30) * INT64CONST(86400000000)) / factor;
+					INT64CONST(30) * USECS_PER_DAY) / factor;
 #else
 	months = span->month / factor;
 	result->month = rint(months);
@@ -3375,10 +3375,10 @@ timestamp_part(PG_FUNCTION_ARGS)
 				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 #ifdef HAVE_INT64_TIMESTAMP
 				result += ((((tm->tm_hour * 60) + tm->tm_min) * 60) +
-							tm->tm_sec + (fsec / 1000000e0)) / 86400e0;
+							tm->tm_sec + (fsec / 1000000e0)) / (double)SECS_PER_DAY;
 #else
 				result += ((((tm->tm_hour * 60) + tm->tm_min) * 60) +
-							tm->tm_sec + fsec) / 86400e0;
+							tm->tm_sec + fsec) / (double)SECS_PER_DAY;
 #endif
 				break;
 
@@ -3603,10 +3603,10 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 #ifdef HAVE_INT64_TIMESTAMP
 				result += ((((tm->tm_hour * 60) + tm->tm_min) * 60) +
-							tm->tm_sec + (fsec / 1000000e0)) / 86400e0;
+							tm->tm_sec + (fsec / 1000000e0)) / (double)SECS_PER_DAY;
 #else
 				result += ((((tm->tm_hour * 60) + tm->tm_min) * 60) +
-							tm->tm_sec + fsec) / 86400e0;
+							tm->tm_sec + fsec) / (double)SECS_PER_DAY;
 #endif
 				break;
 
@@ -3872,7 +3872,7 @@ timestamp_izone(PG_FUNCTION_ARGS)
 											  PointerGetDatum(zone))))));
 
 #ifdef HAVE_INT64_TIMESTAMP
-	tz = zone->time / INT64CONST(1000000);
+	tz = zone->time / USECS_PER_SEC;
 #else
 	tz = zone->time;
 #endif
@@ -4021,7 +4021,7 @@ timestamptz_izone(PG_FUNCTION_ARGS)
 											  PointerGetDatum(zone))))));
 
 #ifdef HAVE_INT64_TIMESTAMP
-	tz = -(zone->time / INT64CONST(1000000));
+	tz = -(zone->time / USECS_PER_SEC);
 #else
 	tz = -(zone->time);
 #endif
