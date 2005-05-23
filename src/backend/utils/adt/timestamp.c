@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.121 2005/05/23 18:56:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.122 2005/05/23 21:54:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -699,7 +699,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 								USECS_PER_DAY;
 
 #else
-			interval->time = ((int) (interval->time / 86400)) * 86400;
+			interval->time = ((int) (interval->time / SECS_PER_DAY)) * SECS_PER_DAY;
 #endif
 		}
 		else if (range == INTERVAL_MASK(HOUR))
@@ -1021,7 +1021,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn
 
 	if (time < 0)
 	{
-		time += 86400;
+		time += SECS_PER_DAY;
 		date -=1;
 	}
 #endif
@@ -1074,10 +1074,10 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn
 	 */
 #ifdef HAVE_INT64_TIMESTAMP
 	dt = (dt - *fsec) / USECS_PER_SEC +
-		(POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400;
+		(POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY;
 #else
 	dt = rint(dt - *fsec +
-			  (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400);
+			  (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY);
 #endif
 	utime = (pg_time_t) dt;
 	if ((Timestamp) utime == dt)
@@ -1151,7 +1151,7 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 		(*result >= 0 && date < 0))
 		return -1;
 #else
-	*result = date * 86400 + time;
+	*result = date * SECS_PER_DAY + time;
 #endif
 	if (tzp != NULL)
 		*result = dt2local(*result, -(*tzp));
@@ -1621,9 +1621,9 @@ interval_cmp_internal(Interval *interval1, Interval *interval2)
 		span2 += interval2->month * INT64CONST(30) * USECS_PER_DAY;
 #else
 	if (interval1->month != 0)
-		span1 += interval1->month * (30.0 * 86400);
+		span1 += interval1->month * (30.0 * SECS_PER_DAY);
 	if (interval2->month != 0)
-		span2 += interval2->month * (30.0 * 86400);
+		span2 += interval2->month * (30.0 * SECS_PER_DAY);
 #endif
 
 	return ((span1 < span2) ? -1 : (span1 > span2) ? 1 : 0);
@@ -2166,7 +2166,7 @@ interval_mul(PG_FUNCTION_ARGS)
 	result->month = rint(months);
 	result->time = JROUND(span1->time * factor);
 	/* evaluate fractional months as 30 days */
-	result->time += JROUND((months - result->month) * 30 * 86400);
+	result->time += JROUND((months - result->month) * 30 * SECS_PER_DAY);
 #endif
 
 	PG_RETURN_INTERVAL_P(result);
@@ -2211,7 +2211,7 @@ interval_div(PG_FUNCTION_ARGS)
 	result->month = rint(months);
 	result->time = JROUND(span->time / factor);
 	/* evaluate fractional months as 30 days */
-	result->time += JROUND((months - result->month) * 30 * 86400);
+	result->time += JROUND((months - result->month) * 30 * SECS_PER_DAY);
 #endif
 
 	PG_RETURN_INTERVAL_P(result);
@@ -3788,8 +3788,8 @@ interval_part(PG_FUNCTION_ARGS)
 #endif
 		if (interval->month != 0)
 		{
-			result += (365.25 * 86400) * (interval->month / 12);
-			result += (30.0 * 86400) * (interval->month % 12);
+			result += (365.25 * SECS_PER_DAY) * (interval->month / 12);
+			result += (30.0 * SECS_PER_DAY) * (interval->month % 12);
 		}
 	}
 	else

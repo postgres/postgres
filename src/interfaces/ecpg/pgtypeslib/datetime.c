@@ -22,10 +22,10 @@ PGTYPESdate_from_timestamp(timestamp dt)
 
 #ifdef HAVE_INT64_TIMESTAMP
 		/* Microseconds to days */
-			dDate = (dt / INT64CONST(86400000000));
+			dDate = (dt / USECS_PER_DAY);
 #else
 		/* Seconds to days */
-			dDate = (dt / 86400.0);
+			dDate = (dt / (double)SECS_PER_DAY);
 #endif
 
 	return dDate;

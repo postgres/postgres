@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.142 2005/05/23 18:56:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.143 2005/05/23 21:54:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1214,7 +1214,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 										&tm->tm_hour, &tm->tm_min,
 										&tm->tm_sec, fsec);
 #else
-								dt2time(time * 86400, &tm->tm_hour,
+								dt2time(time * SECS_PER_DAY, &tm->tm_hour,
 										&tm->tm_min, &tm->tm_sec, fsec);
 #endif
 							}
@@ -1611,8 +1611,8 @@ DetermineLocalTimeZone(struct pg_tm * tm)
 		goto overflow;
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - UNIX_EPOCH_JDATE;
 
-	day = ((pg_time_t) date) *86400;
-	if (day / 86400 != date)
+	day = ((pg_time_t) date) *SECS_PER_DAY;
+	if (day / SECS_PER_DAY != date)
 		goto overflow;
 	sec = tm->tm_sec + (tm->tm_min + tm->tm_hour * 60) * 60;
 	mytime = day + sec;
@@ -1972,7 +1972,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 								dt2time(time * USECS_PER_DAY,
 										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
-								dt2time(time * 86400,
+								dt2time(time * SECS_PER_DAY,
 										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #endif
 							}
@@ -3099,7 +3099,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 						{
 							int			sec;
 
-							fval *= 86400;
+							fval *= SECS_PER_DAY;
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -3117,7 +3117,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 						{
 							int			sec;
 
-							fval *= (7 * 86400);
+							fval *= (7 * SECS_PER_DAY);
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -3135,7 +3135,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 						{
 							int			sec;
 
-							fval *= (30 * 86400);
+							fval *= (30 * SECS_PER_DAY);
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP

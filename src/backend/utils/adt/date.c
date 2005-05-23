@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.106 2005/05/23 18:56:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.107 2005/05/23 21:54:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1339,8 +1339,8 @@ timestamp_time(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT64_TIMESTAMP
 
 	/*
-	 * Could also do this with time = (timestamp / 86400000000 *
-	 * 86400000000) - timestamp;
+	 * Could also do this with time = (timestamp / USECS_PER_DAY *
+	 * USECS_PER_DAY) - timestamp;
 	 */
 	result = ((((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec)
 			   * USECS_PER_SEC) + fsec);
@@ -1376,8 +1376,8 @@ timestamptz_time(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT64_TIMESTAMP
 
 	/*
-	 * Could also do this with time = (timestamp / 86400000000 *
-	 * 86400000000) - timestamp;
+	 * Could also do this with time = (timestamp / USECS_PER_DAY *
+	 * USECS_PER_DAY) - timestamp;
 	 */
 	result = ((((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec)
 			   * USECS_PER_SEC) + fsec);
@@ -1498,7 +1498,7 @@ time_pl_interval(PG_FUNCTION_ARGS)
 	result = (time + span->time);
 	TMODULO(result, time1, (double)SECS_PER_DAY);
 	if (result < 0)
-		result += 86400;
+		result += SECS_PER_DAY;
 #endif
 
 	PG_RETURN_TIMEADT(result);
@@ -1525,7 +1525,7 @@ time_mi_interval(PG_FUNCTION_ARGS)
 	result = (time - span->time);
 	TMODULO(result, time1, (double)SECS_PER_DAY);
 	if (result < 0)
-		result += 86400;
+		result += SECS_PER_DAY;
 #endif
 
 	PG_RETURN_TIMEADT(result);
@@ -2033,7 +2033,7 @@ timetz_pl_interval(PG_FUNCTION_ARGS)
 	result->time = (time->time + span->time);
 	TMODULO(result->time, time1.time, (double)SECS_PER_DAY);
 	if (result->time < 0)
-		result->time += 86400;
+		result->time += SECS_PER_DAY;
 #endif
 
 	result->zone = time->zone;
@@ -2066,7 +2066,7 @@ timetz_mi_interval(PG_FUNCTION_ARGS)
 	result->time = (time->time - span->time);
 	TMODULO(result->time, time1.time, (double)SECS_PER_DAY);
 	if (result->time < 0)
-		result->time += 86400;
+		result->time += SECS_PER_DAY;
 #endif
 
 	result->zone = time->zone;
@@ -2504,9 +2504,9 @@ timetz_zone(PG_FUNCTION_ARGS)
 #else
 		result->time = time->time + (time->zone - tz);
 		while (result->time < 0)
-			result->time += 86400;
-		while (result->time >= 86400)
-			result->time -= 86400;
+			result->time += SECS_PER_DAY;
+		while (result->time >= SECS_PER_DAY)
+			result->time -= SECS_PER_DAY;
 #endif
 
 		result->zone = tz;
@@ -2558,9 +2558,9 @@ timetz_izone(PG_FUNCTION_ARGS)
 #else
 	result->time = time->time + (time->zone - tz);
 	while (result->time < 0)
-		result->time += 86400;
-	while (result->time >= 86400)
-		result->time -= 86400;
+		result->time += SECS_PER_DAY;
+	while (result->time >= SECS_PER_DAY)
+		result->time -= SECS_PER_DAY;
 #endif
 
 	result->zone = tz;

@@ -88,7 +88,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
 	if ((tm->tm_hour < 0)
 		|| (tm->tm_min < 0) || (tm->tm_min > 59)
 		|| (tm->tm_sec < 0) || (tm->tm_sec > 59)
-		|| (*fsec >= INT64CONST(1000000)))
+		|| (*fsec >= USECS_PER_SEC))
 		return -1;
 #else
 	if ((tm->tm_hour < 0)
@@ -296,7 +296,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 						{
 							int			sec;
 
-							fval *= 86400;
+							fval *= SECS_PER_DAY;
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -314,7 +314,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 						{
 							int			sec;
 
-							fval *= (7 * 86400);
+							fval *= (7 * SECS_PER_DAY);
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -332,7 +332,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 						{
 							int			sec;
 
-							fval *= (30 * 86400);
+							fval *= (30 * SECS_PER_DAY);
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -419,8 +419,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 		int			sec;
 
 #ifdef HAVE_INT64_TIMESTAMP
-		sec = (*fsec / INT64CONST(1000000));
-		*fsec -= (sec * INT64CONST(1000000));
+		sec = (*fsec / USECS_PER_SEC);
+		*fsec -= (sec * USECS_PER_SEC);
 #else
 		TMODULO(*fsec, sec, 1e0);
 #endif
@@ -702,14 +702,14 @@ interval2tm(interval span, struct tm * tm, fsec_t *fsec)
 #ifdef HAVE_INT64_TIMESTAMP
 	tm->tm_mday = (time / USECS_PER_DAY);
 	time -= (tm->tm_mday * USECS_PER_DAY);
-	tm->tm_hour = (time / INT64CONST(3600000000));
-	time -= (tm->tm_hour * INT64CONST(3600000000));
-	tm->tm_min = (time / INT64CONST(60000000));
-	time -= (tm->tm_min * INT64CONST(60000000));
-	tm->tm_sec = (time / INT64CONST(1000000));
-	*fsec = (time - (tm->tm_sec * INT64CONST(1000000)));
+	tm->tm_hour = (time / USECS_PER_HOUR);
+	time -= (tm->tm_hour * USECS_PER_HOUR);
+	tm->tm_min = (time / USECS_PER_MINUTE);
+	time -= (tm->tm_min * USECS_PER_MINUTE);
+	tm->tm_sec = (time / USECS_PER_SEC);
+	*fsec = (time - (tm->tm_sec * USECS_PER_SEC));
 #else
-	TMODULO(time, tm->tm_mday, 86400e0);
+	TMODULO(time, tm->tm_mday, (double)SECS_PER_DAY);
 	TMODULO(time, tm->tm_hour, 3600e0);
 	TMODULO(time, tm->tm_min, 60e0);
 	TMODULO(time, tm->tm_sec, 1e0);
@@ -727,7 +727,7 @@ tm2interval(struct tm * tm, fsec_t fsec, interval *span)
 	span->time = ((((((((tm->tm_mday * INT64CONST(24))
 						+ tm->tm_hour) * INT64CONST(60))
 					  + tm->tm_min) * INT64CONST(60))
-					+ tm->tm_sec) * INT64CONST(1000000)) + fsec);
+					+ tm->tm_sec) * USECS_PER_SEC) + fsec);
 #else
 	span->time = ((((((tm->tm_mday * 24.0)
 					  + tm->tm_hour) * 60.0)

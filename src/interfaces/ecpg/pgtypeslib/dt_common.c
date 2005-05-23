@@ -1246,12 +1246,12 @@ dt2time(double jd, int *hour, int *min, int *sec, fsec_t *fsec)
 
 	time = jd;
 #ifdef HAVE_INT64_TIMESTAMP
-	*hour = (time / INT64CONST(3600000000));
-	time -= ((*hour) * INT64CONST(3600000000));
-	*min = (time / INT64CONST(60000000));
-	time -= ((*min) * INT64CONST(60000000));
-	*sec = (time / INT64CONST(1000000));
-	*fsec = (time - (*sec * INT64CONST(1000000)));
+	*hour = (time / USECS_PER_HOUR);
+	time -= ((*hour) * USECS_PER_HOUR);
+	*min = (time / USECS_PER_MINUTE);
+	time -= ((*min) * USECS_PER_MINUTE);
+	*sec = (time / USECS_PER_SEC);
+	*fsec = (time - (*sec * USECS_PER_SEC));
 #else
 	*hour = (time / 3600);
 	time -= ((*hour) * 3600);
@@ -1675,7 +1675,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
 	if ((tm->tm_hour < 0)
 		|| (tm->tm_min < 0) || (tm->tm_min > 59)
 		|| (tm->tm_sec < 0) || (tm->tm_sec > 59)
-		|| (*fsec >= INT64CONST(1000000)))
+		|| (*fsec >= USECS_PER_SEC))
 		return -1;
 #else
 	if ((tm->tm_hour < 0)
@@ -2257,7 +2257,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 #ifdef HAVE_INT64_TIMESTAMP
 								dt2time((time * USECS_PER_DAY), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
-								dt2time((time * 86400), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+								dt2time((time * SECS_PER_DAY), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #endif
 							}
 							break;

@@ -216,6 +216,14 @@ do { \
 } while(0)
 #endif
 
+#define SECS_PER_DAY	86400
+#ifdef HAVE_INT64_TIMESTAMP
+#define USECS_PER_DAY	INT64CONST(86400000000)
+#define USECS_PER_HOUR	INT64CONST(3600000000)
+#define USECS_PER_MINUTE INT64CONST(60000000)
+#define USECS_PER_SEC	INT64CONST(1000000)
+#endif
+
 /*
  * Date/time validation
  * Include check for leap year.

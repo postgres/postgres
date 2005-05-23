@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.129 2005/05/23 18:56:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.130 2005/05/23 21:54:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,10 +129,10 @@ AbsoluteTimeUsecToTimestampTz(AbsoluteTime sec, int usec)
 	TimestampTz result;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result = ((sec - ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400))
+	result = ((sec - ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY))
 			  * USECS_PER_SEC) + usec;
 #else
-	result = sec - ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400)
+	result = sec - ((POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY)
 		+ (usec / 1000000.0);
 #endif
 
@@ -730,7 +730,7 @@ reltimein(PG_FUNCTION_ARGS)
 	{
 		case DTK_DELTA:
 			result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec);
-			result += ((tm->tm_year * 36525 * 864) + (((tm->tm_mon * 30) + tm->tm_mday) * 86400));
+			result += ((tm->tm_year * 36525 * 864) + (((tm->tm_mon * 30) + tm->tm_mday) * SECS_PER_DAY));
 			break;
 
 		default:
@@ -795,7 +795,7 @@ reltime2tm(RelativeTime time, struct pg_tm * tm)
 
 	FMODULO(dtime, tm->tm_year, 31557600);
 	FMODULO(dtime, tm->tm_mon, 2592000);
-	FMODULO(dtime, tm->tm_mday, 86400);
+	FMODULO(dtime, tm->tm_mday, SECS_PER_DAY);
 	FMODULO(dtime, tm->tm_hour, 3600);
 	FMODULO(dtime, tm->tm_min, 60);
 	FMODULO(dtime, tm->tm_sec, 1);
@@ -947,10 +947,10 @@ interval_reltime(PG_FUNCTION_ARGS)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	span = ((((INT64CONST(365250000) * year) + (INT64CONST(30000000) * month))
-			 * INT64CONST(86400)) + interval->time);
+			 * INT64CONST(SECS_PER_DAY)) + interval->time);
 	span /= USECS_PER_SEC;
 #else
-	span = (((((double) 365.25 * year) + ((double) 30 * month)) * 86400) + interval->time);
+	span = (((((double) 365.25 * year) + ((double) 30 * month)) * SECS_PER_DAY) + interval->time);
 #endif
 
 	if ((span < INT_MIN) || (span > INT_MAX))
@@ -986,13 +986,13 @@ reltime_interval(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT64_TIMESTAMP
 			year = (reltime / (36525 * 864));
 			reltime -= (year * (36525 * 864));
-			month = (reltime / (30 * 86400));
-			reltime -= (month * (30 * 86400));
+			month = (reltime / (30 * SECS_PER_DAY));
+			reltime -= (month * (30 * SECS_PER_DAY));
 
 			result->time = (reltime * USECS_PER_SEC);
 #else
 			TMODULO(reltime, year, (36525 * 864));
-			TMODULO(reltime, month, (30 * 86400));
+			TMODULO(reltime, month, (30 * SECS_PER_DAY));
 
 			result->time = reltime;
 #endif

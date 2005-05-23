@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.30 2005/04/19 03:13:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.31 2005/05/23 21:54:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1062,7 +1062,7 @@ tz_acceptable(pg_tz *tz)
 	 * be GMT midnight, 2000-01-01.  Insist that the tm_sec value be zero;
 	 * any other result has to be due to leap seconds.
 	 */
-	time2000 = (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400;
+	time2000 = (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * SECS_PER_DAY;
 	tt = pg_localtime(&time2000, tz);
 	if (!tt || tt->tm_sec != 0)
 		return false;

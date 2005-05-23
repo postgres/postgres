@@ -20,7 +20,7 @@ int PGTYPEStimestamp_defmt_scan(char **, char *, timestamp *, int *, int *, int 
 static int64
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
-	return ((((((hour * 60) + min) * 60) + sec) * INT64CONST(1000000)) + fsec);
+	return ((((((hour * 60) + min) * 60) + sec) * USECS_PER_SEC) + fsec);
 }	/* time2t() */
 
 #else
@@ -35,7 +35,7 @@ static timestamp
 dt2local(timestamp dt, int tz)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	dt -= (tz * INT64CONST(1000000));
+	dt -= (tz * USECS_PER_SEC);
 #else
 	dt -= tz;
 	dt = JROUND(dt);
@@ -77,7 +77,7 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp *result)
 	if ((*result < 0) ? (dDate >= 0) : (dDate < 0))
 		return -1;
 #else
-	*result = ((dDate * 86400) + time);
+	*result = ((dDate * SECS_PER_DAY) + time);
 #endif
 	if (tzp != NULL)
 		*result = dt2local(*result, -(*tzp));
@@ -110,14 +110,14 @@ dt2time(timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 	time = jd;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	*hour = (time / INT64CONST(3600000000));
-	time -= ((*hour) * INT64CONST(3600000000));
-	*min = (time / INT64CONST(60000000));
-	time -= ((*min) * INT64CONST(60000000));
-	*sec = (time / INT64CONST(1000000));
-	*fsec = (time - (*sec * INT64CONST(1000000)));
-	*sec = (time / INT64CONST(1000000));
-	*fsec = (time - (*sec * INT64CONST(1000000)));
+	*hour = (time / USECS_PER_HOUR);
+	time -= ((*hour) * USECS_PER_HOUR);
+	*min = (time / USECS_PER_MINUTE);
+	time -= ((*min) * USECS_PER_MINUTE);
+	*sec = (time / USECS_PER_SEC);
+	*fsec = (time - (*sec * USECS_PER_SEC));
+	*sec = (time / USECS_PER_SEC);
+	*fsec = (time - (*sec * USECS_PER_SEC));
 #else
 	*hour = (time / 3600);
 	time -= ((*hour) * 3600);
@@ -171,11 +171,11 @@ timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 		dDate -= 1;
 	}
 #else
-	TMODULO(time, dDate, 86400e0);
+	TMODULO(time, dDate, (double)SECS_PER_DAY);
 
 	if (time < 0)
 	{
-		time += 86400;
+		time += SECS_PER_DAY;
 		dDate -= 1;
 	}
 #endif
@@ -199,10 +199,10 @@ timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 		if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		{
 #ifdef HAVE_INT64_TIMESTAMP
-			utime = ((dt / INT64CONST(1000000))
-				   + ((date0 - date2j(1970, 1, 1)) * INT64CONST(86400)));
+			utime = ((dt / USECS_PER_SEC)
+				   + ((date0 - date2j(1970, 1, 1)) * INT64CONST(SECS_PER_DAY)));
 #else
-			utime = (dt + ((date0 - date2j(1970, 1, 1)) * 86400));
+			utime = (dt + ((date0 - date2j(1970, 1, 1)) * SECS_PER_DAY));
 #endif
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
