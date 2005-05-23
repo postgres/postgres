@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.248 2005/05/20 01:29:55 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.249 2005/05/23 01:29:54 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -1026,7 +1026,7 @@ PostgreSQL documentation
        <entry>
         Remove the longest string containing only the
         <parameter>characters</parameter> (a space by default) from the
-        start/end/both ends of the <parameter>string</parameter>.
+        start/end/both ends of the <parameter>string</parameter>
        </entry>
        <entry><literal>trim(both 'x' from 'xTomxx')</literal></entry>
        <entry><literal>Tom</literal></entry>
@@ -1078,7 +1078,7 @@ PostgreSQL documentation
        <entry>
         Remove the longest string consisting only of characters
         in <parameter>characters</parameter> (a space by default)
-        from the start and end of <parameter>string</parameter>.
+        from the start and end of <parameter>string</parameter>
        </entry>
        <entry><literal>btrim('xyxtrimyyx', 'xy')</literal></entry>
        <entry><literal>trim</literal></entry>
@@ -1155,7 +1155,7 @@ PostgreSQL documentation
        <entry><literal><function>length</function>(<parameter>string</parameter> <type>text</type>)</literal></entry>
        <entry><type>integer</type></entry>
        <entry>
-        Number of characters in <parameter>string</parameter>.
+        Number of characters in <parameter>string</parameter>
         <indexterm>
          <primary>character string</primary>
          <secondary>length</secondary>
@@ -1197,7 +1197,7 @@ PostgreSQL documentation
        <entry>
         Remove the longest string containing only characters from
         <parameter>characters</parameter> (a space by default) from the start of
-        <parameter>string</parameter>.
+        <parameter>string</parameter>
        </entry>
        <entry><literal>ltrim('zzzytrim', 'xyz')</literal></entry>
        <entry><literal>trim</literal></entry>
@@ -1208,7 +1208,7 @@ PostgreSQL documentation
        <entry><type>text</type></entry>
        <entry>
         Calculates the MD5 hash of <parameter>string</parameter>,
-        returning the result in hexadecimal.
+        returning the result in hexadecimal
        </entry>
        <entry><literal>md5('abc')</literal></entry>
        <entry><literal>900150983cd24fb0 d6963f7d28e17f72</literal></entry>
@@ -1265,7 +1265,7 @@ PostgreSQL documentation
        <parameter>to</parameter> <type>text</type>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>Replace all occurrences in <parameter>string</parameter> of substring
-        <parameter>from</parameter> with substring <parameter>to</parameter>.
+        <parameter>from</parameter> with substring <parameter>to</parameter>
        </entry>
        <entry><literal>replace( 'abcdefabcdef', 'cd', 'XX')</literal></entry>
        <entry><literal>abXXefabXXef</literal></entry>
@@ -1297,7 +1297,7 @@ PostgreSQL documentation
        <entry>
         Remove the longest string containing only characters from
         <parameter>characters</parameter> (a space by default) from the end of
-        <parameter>string</parameter>.
+        <parameter>string</parameter>
        </entry>
        <entry><literal>rtrim('trimxxxx', 'x')</literal></entry>
        <entry><literal>trim</literal></entry>
@@ -1382,7 +1382,7 @@ PostgreSQL documentation
         Any character in <parameter>string</parameter> that matches a
         character in the <parameter>from</parameter> set is replaced by
         the corresponding character in the <parameter>to</parameter>
-        set.
+        set
        </entry>
        <entry><literal>translate('12345', '14', 'ax')</literal></entry>
        <entry><literal>a23x5</literal></entry>
@@ -2221,7 +2221,7 @@ PostgreSQL documentation
        <entry><function>get_byte</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
        <entry><type>integer</type></entry>
        <entry>
-        Extract byte from string.
+        Extract byte from string
         <indexterm>
          <primary>get_byte</primary>
         </indexterm>
@@ -2235,7 +2235,7 @@ PostgreSQL documentation
        <parameter>offset</parameter>, <parameter>newvalue</>)</entry>
        <entry><type>bytea</type></entry>
        <entry>
-        Set byte in string.
+        Set byte in string
         <indexterm>
          <primary>set_byte</primary>
         </indexterm>
@@ -2248,7 +2248,7 @@ PostgreSQL documentation
        <entry><function>get_bit</function>(<parameter>string</parameter>, <parameter>offset</parameter>)</entry>
        <entry><type>integer</type></entry>
        <entry>
-        Extract bit from string.
+        Extract bit from string
         <indexterm>
          <primary>get_bit</primary>
         </indexterm>
@@ -2262,7 +2262,7 @@ PostgreSQL documentation
        <parameter>offset</parameter>, <parameter>newvalue</>)</entry>
        <entry><type>bytea</type></entry>
        <entry>
-        Set bit in string.
+        Set bit in string
         <indexterm>
          <primary>set_bit</primary>
         </indexterm>
@@ -2303,7 +2303,7 @@ PostgreSQL documentation
        <entry>
         Remove the longest string consisting only of bytes
         in <parameter>bytes</parameter> from the start and end of
-        <parameter>string</parameter>.
+        <parameter>string</parameter>
       </entry>
       <entry><literal>btrim('\\000trim\\000'::bytea, '\\000'::bytea)</literal></entry>
       <entry><literal>trim</literal></entry>
@@ -2333,7 +2333,7 @@ PostgreSQL documentation
       <entry><type>text</type></entry>
       <entry>
        Calculates the MD5 hash of <parameter>string</parameter>,
-       returning the result in hexadecimal.
+       returning the result in hexadecimal
       </entry>
       <entry><literal>md5('Th\\000omas'::bytea)</literal></entry>
       <entry><literal>8ab2d3c9689aaf18 b4958c334c82d8b1</literal></entry>
@@ -2365,7 +2365,7 @@ PostgreSQL documentation
       </entry>
       <entry><literal>encode('123\\000456'::bytea, 'escape')</literal></entry>
       <entry><literal>123\000456</literal></entry>
-     </row>       
+     </row>
 
     </tbody>
    </tgroup>
@@ -6632,7 +6632,7 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</> wi
    If a sequence object has been created with default parameters,
    <function>nextval</function> calls on it will return successive values
    beginning with 1.  Other behaviors can be obtained by using
-   special parameters in the <xref linkend="SQL-CREATESEQUENCE"> command;
+   special parameters in the <xref linkend="sql-createsequence" endterm="sql-createsequence-title"> command;
    see its command reference page for more information.
   </para>
 
@@ -7992,7 +7992,7 @@ AND
       <entry><type>setof int</type> or <type>setof bigint</type> (same as argument type)</entry>
       <entry>
        Generate a series of values, from <parameter>start</parameter> to <parameter>stop</parameter>
-       with a step size of one.
+       with a step size of one
       </entry>
      </row>
 
@@ -8002,7 +8002,7 @@ AND
       <entry><type>setof int</type> or <type>setof bigint</type> (same as argument type)</entry>
       <entry>
        Generate a series of values, from <parameter>start</parameter> to <parameter>stop</parameter>
-       with a step size of <parameter>step</parameter>.
+       with a step size of <parameter>step</parameter>
       </entry>
      </row>
 
