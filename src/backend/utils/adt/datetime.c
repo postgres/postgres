@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.140 2005/05/21 03:38:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.141 2005/05/23 17:13:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -684,7 +684,7 @@ TrimTrailingZeros(char *str)
 
 #if 0
 	/* chop off trailing one to cope with interval rounding */
-	if (strcmp((str + len - 4), "0001") == 0)
+	if (strcmp(str + len - 4, "0001") == 0)
 	{
 		len -= 4;
 		*(str + len) = '\0';
@@ -692,8 +692,7 @@ TrimTrailingZeros(char *str)
 #endif
 
 	/* chop off trailing zeros... but leave at least 2 fractional digits */
-	while ((*(str + len - 1) == '0')
-		   && (*(str + len - 3) != '.'))
+	while (*(str + len - 1) == '0' && *(str + len - 3) != '.')
 	{
 		len--;
 		*(str + len) = '\0';
@@ -769,7 +768,7 @@ ParseDateTime(const char *timestr, char *lowstr,
 					*lp++ = *cp++;
 			}
 			/* date field? allow embedded text month */
-			else if ((*cp == '-') || (*cp == '/') || (*cp == '.'))
+			else if (*cp == '-' || *cp == '/' || *cp == '.')
 			{
 				/* save delimiting character to use later */
 				char		delim = *cp;
@@ -790,14 +789,14 @@ ParseDateTime(const char *timestr, char *lowstr,
 					{
 						ftype[nf] = DTK_DATE;
 						*lp++ = *cp++;
-						while (isdigit((unsigned char) *cp) || (*cp == delim))
+						while (isdigit((unsigned char) *cp) || *cp == delim)
 							*lp++ = *cp++;
 					}
 				}
 				else
 				{
 					ftype[nf] = DTK_DATE;
-					while (isalnum((unsigned char) *cp) || (*cp == delim))
+					while (isalnum((unsigned char) *cp) || *cp == delim)
 						*lp++ = pg_tolower((unsigned char) *cp++);
 				}
 			}
@@ -834,18 +833,18 @@ ParseDateTime(const char *timestr, char *lowstr,
 			 * Full date string with leading text month? Could also be a
 			 * POSIX time zone...
 			 */
-			if ((*cp == '-') || (*cp == '/') || (*cp == '.'))
+			if (*cp == '-' || *cp == '/' || *cp == '.')
 			{
 				char		delim = *cp;
 
 				ftype[nf] = DTK_DATE;
 				*lp++ = *cp++;
-				while (isdigit((unsigned char) *cp) || (*cp == delim))
+				while (isdigit((unsigned char) *cp) || *cp == delim)
 					*lp++ = *cp++;
 			}
 		}
 		/* sign? then special or numeric timezone */
-		else if ((*cp == '+') || (*cp == '-'))
+		else if (*cp == '+' || *cp == '-')
 		{
 			*lp++ = *cp++;
 			/* soak up leading whitespace */
@@ -857,7 +856,7 @@ ParseDateTime(const char *timestr, char *lowstr,
 				ftype[nf] = DTK_TZ;
 				*lp++ = *cp++;
 				while (isdigit((unsigned char) *cp) ||
-					   (*cp == ':') || (*cp == '.'))
+					   *cp == ':' || *cp == '.')
 					*lp++ = *cp++;
 			}
 			/* special? */
@@ -982,8 +981,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				 * a run-together time with trailing time zone (e.g. hhmmss-zz).
 				 * - thomas 2001-12-25
 				 ***/
-				else if (((fmask & DTK_DATE_M) == DTK_DATE_M)
-						 || (ptype != 0))
+				else if ((fmask & DTK_DATE_M) == DTK_DATE_M || ptype != 0)
 				{
 					/* No time zone accepted? Then quit... */
 					if (tzp == NULL)
@@ -1083,9 +1081,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					 * second field of a POSIX time: EST+3 (equivalent to
 					 * PST)
 					 */
-					if ((i > 0) && ((fmask & DTK_M(TZ)) != 0)
-						&& (ftype[i - 1] == DTK_TZ)
-						&& (isalpha((unsigned char) *field[i - 1])))
+					if (i > 0 && (fmask & DTK_M(TZ)) != 0 &&
+						ftype[i - 1] == DTK_TZ &&
+						isalpha((unsigned char) *field[i - 1]))
 					{
 						*tzp -= tz;
 						tmask = 0;
@@ -1142,8 +1140,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							 * already have a month and hour? then assume
 							 * minutes
 							 */
-							if (((fmask & DTK_M(MONTH)) != 0)
-								&& ((fmask & DTK_M(HOUR)) != 0))
+							if ((fmask & DTK_M(MONTH)) != 0 &&
+								(fmask & DTK_M(HOUR)) != 0)
 							{
 								tm->tm_min = val;
 								tmask = DTK_M(MINUTE);
@@ -1212,11 +1210,12 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 								tmask |= DTK_TIME_M;
 #ifdef HAVE_INT64_TIMESTAMP
-								dt2time((time * INT64CONST(86400000000)),
-										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+								dt2time(time * INT64CONST(86400000000),
+										&tm->tm_hour, &tm->tm_min,
+										&tm->tm_sec, fsec);
 #else
-								dt2time((time * 86400),
-										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+								dt2time(time * 86400, &tm->tm_hour,
+										&tm->tm_min, &tm->tm_sec, fsec);
 #endif
 							}
 							break;
@@ -1252,14 +1251,14 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					cp = strchr(field[i], '.');
 
 					/* Embedded decimal and no date yet? */
-					if ((cp != NULL) && !(fmask & DTK_DATE_M))
+					if (cp != NULL && !(fmask & DTK_DATE_M))
 					{
 						dterr = DecodeDate(field[i], fmask, &tmask, tm);
 						if (dterr)
 							return dterr;
 					}
 					/* embedded decimal and several digits before? */
-					else if ((cp != NULL) && ((flen - strlen(cp)) > 2))
+					else if (cp != NULL && flen - strlen(cp) > 2)
 					{
 						/*
 						 * Interpret as a concatenated date or time Set
@@ -1325,8 +1324,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								tmask = DTK_DATE_M;
 								*dtype = DTK_DATE;
 								GetCurrentDateTime(tm);
-								j2date((date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - 1),
-								&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+								j2date(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - 1,
+										&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 								tm->tm_hour = 0;
 								tm->tm_min = 0;
 								tm->tm_sec = 0;
@@ -1345,8 +1344,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 								tmask = DTK_DATE_M;
 								*dtype = DTK_DATE;
 								GetCurrentDateTime(tm);
-								j2date((date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1),
-								&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+								j2date(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1,
+										&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 								tm->tm_hour = 0;
 								tm->tm_min = 0;
 								tm->tm_sec = 0;
@@ -1374,9 +1373,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						 * already have a (numeric) month? then see if we
 						 * can substitute...
 						 */
-						if ((fmask & DTK_M(MONTH)) && (!haveTextMonth)
-							&& (!(fmask & DTK_M(DAY)))
-							&& ((tm->tm_mon >= 1) && (tm->tm_mon <= 31)))
+						if ((fmask & DTK_M(MONTH)) && !haveTextMonth &&
+							!(fmask & DTK_M(DAY)) && tm->tm_mon >= 1 &&
+							tm->tm_mon <= 31)
 						{
 							tm->tm_mday = tm->tm_mon;
 							tmask = DTK_M(DAY);
@@ -1459,10 +1458,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						 *	DTK_TIME should be hh:mm:ss.fff
 						 *	DTK_DATE should be hhmmss-zz
 						 ***/
-						if ((i >= (nf - 1))
-							|| ((ftype[i + 1] != DTK_NUMBER)
-								&& (ftype[i + 1] != DTK_TIME)
-								&& (ftype[i + 1] != DTK_DATE)))
+						if (i >= nf - 1 ||
+							(ftype[i + 1] != DTK_NUMBER &&
+							 ftype[i + 1] != DTK_TIME &&
+							 ftype[i + 1] != DTK_DATE))
 							return DTERR_BAD_FORMAT;
 
 						ptype = val;
@@ -1525,11 +1524,11 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			return DTERR_MD_FIELD_OVERFLOW;
 	}
 
-	if ((mer != HR24) && (tm->tm_hour > 12))
+	if (mer != HR24 && tm->tm_hour > 12)
 		return DTERR_FIELD_OVERFLOW;
-	if ((mer == AM) && (tm->tm_hour == 12))
+	if (mer == AM && tm->tm_hour == 12)
 		tm->tm_hour = 0;
-	else if ((mer == PM) && (tm->tm_hour != 12))
+	else if (mer == PM && tm->tm_hour != 12)
 		tm->tm_hour += 12;
 
 	/* do additional checking for full date specs... */
@@ -1650,12 +1649,16 @@ DetermineLocalTimeZone(struct pg_tm * tm)
 	 * Form the candidate pg_time_t values with local-time adjustment
 	 */
 	beforetime = mytime - before_gmtoff;
-	if ((before_gmtoff > 0) ? (mytime < 0 && beforetime > 0) :
-		(mytime > 0 && beforetime < 0))
+	if ((before_gmtoff > 0 &&
+		 mytime < 0 && beforetime > 0) ||
+		(before_gmtoff <= 0 &&
+		 mytime > 0 && beforetime < 0))
 		goto overflow;
 	aftertime = mytime - after_gmtoff;
-	if ((after_gmtoff > 0) ? (mytime < 0 && aftertime > 0) :
-		(mytime > 0 && aftertime < 0))
+	if ((after_gmtoff > 0 &&
+		 mytime < 0 && aftertime > 0) ||
+		(after_gmtoff <= 0 &&
+		 mytime > 0 && aftertime < 0))
 		goto overflow;
 
 	/*
@@ -1741,9 +1744,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					return DTERR_BAD_FORMAT;
 
 				/* Under limited circumstances, we will accept a date... */
-				if ((i == 0) && (nf >= 2)
-					&& ((ftype[nf - 1] == DTK_DATE)
-						|| (ftype[1] == DTK_TIME)))
+				if (i == 0 && nf >= 2 &&
+					(ftype[nf - 1] == DTK_DATE || ftype[1] == DTK_TIME))
 				{
 					dterr = DecodeDate(field[i], fmask, &tmask, tm);
 					if (dterr)
@@ -1826,8 +1828,9 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					 * second field of a POSIX time: EST+3 (equivalent to
 					 * PST)
 					 */
-					if ((i > 0) && ((fmask & DTK_M(TZ)) != 0)
-						&& (ftype[i - 1] == DTK_TZ) && (isalpha((unsigned char) *field[i - 1])))
+					if (i > 0 && (fmask & DTK_M(TZ)) != 0 &&
+						ftype[i - 1] == DTK_TZ &&
+						isalpha((unsigned char) *field[i - 1]))
 					{
 						*tzp -= tz;
 						tmask = 0;
@@ -1897,8 +1900,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							 * already have a month and hour? then assume
 							 * minutes
 							 */
-							if (((fmask & DTK_M(MONTH)) != 0)
-								&& ((fmask & DTK_M(HOUR)) != 0))
+							if ((fmask & DTK_M(MONTH)) != 0 &&
+								(fmask & DTK_M(HOUR)) != 0)
 							{
 								tm->tm_min = val;
 								tmask = DTK_M(MINUTE);
@@ -1966,10 +1969,10 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 								tmask |= DTK_TIME_M;
 #ifdef HAVE_INT64_TIMESTAMP
-								dt2time((time * INT64CONST(86400000000)),
+								dt2time(time * INT64CONST(86400000000),
 										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
-								dt2time((time * 86400),
+								dt2time(time * 86400,
 										&tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #endif
 							}
@@ -2012,14 +2015,14 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						 * Under limited circumstances, we will accept a
 						 * date...
 						 */
-						if ((i == 0) && ((nf >= 2) && (ftype[nf - 1] == DTK_DATE)))
+						if (i == 0 && nf >= 2 && ftype[nf - 1] == DTK_DATE)
 						{
 							dterr = DecodeDate(field[i], fmask, &tmask, tm);
 							if (dterr)
 								return dterr;
 						}
 						/* embedded decimal and several digits before? */
-						else if ((flen - strlen(cp)) > 2)
+						else if (flen - strlen(cp) > 2)
 						{
 							/*
 							 * Interpret as a concatenated date or time
@@ -2157,10 +2160,10 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						 *	DTK_TIME should be hh:mm:ss.fff
 						 *	DTK_DATE should be hhmmss-zz
 						 ***/
-						if ((i >= (nf - 1))
-							|| ((ftype[i + 1] != DTK_NUMBER)
-								&& (ftype[i + 1] != DTK_TIME)
-								&& (ftype[i + 1] != DTK_DATE)))
+						if (i >= nf - 1 ||
+							(ftype[i + 1] != DTK_NUMBER &&
+							 ftype[i + 1] != DTK_TIME &&
+							 ftype[i + 1] != DTK_DATE))
 							return DTERR_BAD_FORMAT;
 
 						ptype = val;
@@ -2180,24 +2183,22 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		fmask |= tmask;
 	}
 
-	if ((mer != HR24) && (tm->tm_hour > 12))
+	if (mer != HR24 && tm->tm_hour > 12)
 		return DTERR_FIELD_OVERFLOW;
-	if ((mer == AM) && (tm->tm_hour == 12))
+	if (mer == AM && tm->tm_hour == 12)
 		tm->tm_hour = 0;
-	else if ((mer == PM) && (tm->tm_hour != 12))
+	else if (mer == PM && tm->tm_hour != 12)
 		tm->tm_hour += 12;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	if ((tm->tm_hour < 0) || (tm->tm_hour > 23)
-		|| (tm->tm_min < 0) || (tm->tm_min > 59)
-		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
-		|| (*fsec < INT64CONST(0)) || (*fsec >= INT64CONST(1000000)))
+	if (tm->tm_hour < 0 || tm->tm_hour > 23 || tm->tm_min < 0 ||
+		tm->tm_min > 59 || tm->tm_sec < 0 || tm->tm_sec > 60 ||
+		*fsec < INT64CONST(0) || *fsec >= INT64CONST(1000000))
 		return DTERR_FIELD_OVERFLOW;
 #else
-	if ((tm->tm_hour < 0) || (tm->tm_hour > 23)
-		|| (tm->tm_min < 0) || (tm->tm_min > 59)
-		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
-		|| (*fsec < 0) || (*fsec >= 1))
+	if (tm->tm_hour < 0 || tm->tm_hour > 23 || tm->tm_min < 0 ||
+		tm->tm_min > 59 || tm->tm_sec < 0 || tm->tm_sec > 60 ||
+		*fsec < 0 || *fsec >= 1)
 		return DTERR_FIELD_OVERFLOW;
 #endif
 
@@ -2258,7 +2259,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
 	char	   *field[MAXDATEFIELDS];
 
 	/* parse this string... */
-	while ((*str != '\0') && (nf < MAXDATEFIELDS))
+	while (*str != '\0' && nf < MAXDATEFIELDS)
 	{
 		/* skip field separators */
 		while (!isalnum((unsigned char) *str))
@@ -2444,16 +2445,13 @@ DecodeTime(char *str, int fmask, int *tmask, struct pg_tm * tm, fsec_t *fsec)
 
 	/* do a sanity check */
 #ifdef HAVE_INT64_TIMESTAMP
-	if ((tm->tm_hour < 0)
-		|| (tm->tm_min < 0) || (tm->tm_min > 59)
-		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
-		|| (*fsec < INT64CONST(0)) || (*fsec >= INT64CONST(1000000)))
+	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > 59 ||
+		tm->tm_sec < 0 || tm->tm_sec > 60 || *fsec < INT64CONST(0) ||
+		*fsec >= INT64CONST(1000000))
 		return DTERR_FIELD_OVERFLOW;
 #else
-	if ((tm->tm_hour < 0)
-		|| (tm->tm_min < 0) || (tm->tm_min > 59)
-		|| (tm->tm_sec < 0) || (tm->tm_sec > 60)
-		|| (*fsec < 0) || (*fsec >= 1))
+	if (tm->tm_hour < 0 || tm->tm_min < 0 || tm->tm_min > 59 ||
+		tm->tm_sec < 0 || tm->tm_sec > 60 || *fsec < 0 || *fsec >= 1)
 		return DTERR_FIELD_OVERFLOW;
 #endif
 
@@ -2487,7 +2485,7 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 		 * More than two digits before decimal point? Then could be a date
 		 * or a run-together time: 2001.360 20011225 040506.789
 		 */
-		if ((cp - str) > 2)
+		if (cp - str > 2)
 		{
 			dterr = DecodeNumberField(flen, str,
 									  (fmask | DTK_DATE_M),
@@ -2511,9 +2509,8 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
 		return DTERR_BAD_FORMAT;
 
 	/* Special case for day of year */
-	if ((flen == 3) &&
-		((fmask & DTK_DATE_M) == DTK_M(YEAR)) &&
-		((val >= 1) && (val <= 366)))
+	if (flen == 3 && (fmask & DTK_DATE_M) == DTK_M(YEAR) && val >= 1 &&
+		val <= 366)
 	{
 		*tmask = (DTK_M(DOY) | DTK_M(MONTH) | DTK_M(DAY));
 		tm->tm_yday = val;
@@ -2764,13 +2761,13 @@ DecodeTimezone(char *str, int *tzp)
 	if (*str != '+' && *str != '-')
 		return DTERR_BAD_FORMAT;
 
-	hr = strtol((str + 1), &cp, 10);
+	hr = strtol(str + 1, &cp, 10);
 
 	/* explicit delimiter? */
 	if (*cp == ':')
-		min = strtol((cp + 1), &cp, 10);
+		min = strtol(cp + 1, &cp, 10);
 	/* otherwise, might have run things together... */
-	else if ((*cp == '\0') && (strlen(str) > 3))
+	else if (*cp == '\0' && strlen(str) > 3)
 	{
 		min = hr % 100;
 		hr = hr / 100;
@@ -2778,9 +2775,9 @@ DecodeTimezone(char *str, int *tzp)
 	else
 		min = 0;
 
-	if ((hr < 0) || (hr > 13))
+	if (hr < 0 || hr > 13)
 		return DTERR_TZDISP_OVERFLOW;
-	if ((min < 0) || (min >= 60))
+	if (min < 0 || min >= 60)
 		return DTERR_TZDISP_OVERFLOW;
 
 	tz = (hr * 60 + min) * 60;
@@ -2866,8 +2863,8 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 	int			type;
 	datetkn    *tp;
 
-	if ((datecache[field] != NULL)
-		&& (strncmp(lowtoken, datecache[field]->token, TOKMAXLEN) == 0))
+	if (datecache[field] != NULL &&
+		strncmp(lowtoken, datecache[field]->token, TOKMAXLEN) == 0)
 		tp = datecache[field];
 	else
 	{
@@ -2957,7 +2954,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 				 * Timezone is a token with a leading sign character and
 				 * otherwise the same as a non-signed time field
 				 */
-				Assert((*field[i] == '-') || (*field[i] == '+'));
+				Assert(*field[i] == '-' || *field[i] == '+');
 
 				/*
 				 * A single signed number ends up here, but will be
@@ -2965,10 +2962,10 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 				 * through to DTK_NUMBER, which *can* tolerate this.
 				 */
 				cp = field[i] + 1;
-				while ((*cp != '\0') && (*cp != ':') && (*cp != '.'))
+				while (*cp != '\0' && *cp != ':' && *cp != '.')
 					cp++;
-				if ((*cp == ':') &&
-				(DecodeTime(field[i] + 1, fmask, &tmask, tm, fsec) == 0))
+				if (*cp == ':' &&
+					DecodeTime(field[i] + 1, fmask, &tmask, tm, fsec) == 0)
 				{
 					if (*field[i] == '-')
 					{
@@ -3111,7 +3108,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 							*fsec += (fval - sec);
 #endif
 						}
-						tmask = ((fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY));
+						tmask = (fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY);
 						break;
 
 					case DTK_WEEK:
@@ -3129,7 +3126,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 							*fsec += (fval - sec);
 #endif
 						}
-						tmask = ((fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY));
+						tmask = (fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY);
 						break;
 
 					case DTK_MONTH:
@@ -3154,28 +3151,28 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 						tm->tm_year += val;
 						if (fval != 0)
 							tm->tm_mon += (fval * 12);
-						tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
+						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
 					case DTK_DECADE:
 						tm->tm_year += val * 10;
 						if (fval != 0)
 							tm->tm_mon += (fval * 120);
-						tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
+						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
 					case DTK_CENTURY:
 						tm->tm_year += val * 100;
 						if (fval != 0)
 							tm->tm_mon += (fval * 1200);
-						tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
+						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
 					case DTK_MILLENNIUM:
 						tm->tm_year += val * 1000;
 						if (fval != 0)
 							tm->tm_mon += (fval * 12000);
-						tmask = ((fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR));
+						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
 					default:
@@ -3262,8 +3259,8 @@ DecodeUnits(int field, char *lowtoken, int *val)
 	int			type;
 	datetkn    *tp;
 
-	if ((deltacache[field] != NULL)
-		&& (strncmp(lowtoken, deltacache[field]->token, TOKMAXLEN) == 0))
+	if (deltacache[field] != NULL &&
+		strncmp(lowtoken, deltacache[field]->token, TOKMAXLEN) == 0)
 		tp = deltacache[field];
 	else
 		tp = datebsearch(lowtoken, deltatktbl, szdeltatktbl);
@@ -3276,7 +3273,7 @@ DecodeUnits(int field, char *lowtoken, int *val)
 	else
 	{
 		type = tp->type;
-		if ((type == TZ) || (type == DTZ))
+		if (type == TZ || type == DTZ)
 			*val = FROMVAL(tp);
 		else
 			*val = tp->value;
@@ -3372,7 +3369,7 @@ datebsearch(char *key, datetkn *base, unsigned int nel)
 int
 EncodeDateOnly(struct pg_tm * tm, int style, char *str)
 {
-	if ((tm->tm_mon < 1) || (tm->tm_mon > 12))
+	if (tm->tm_mon < 1 || tm->tm_mon > 12)
 		return -1;
 
 	switch (style)
@@ -3394,18 +3391,18 @@ EncodeDateOnly(struct pg_tm * tm, int style, char *str)
 			else
 				sprintf(str, "%02d/%02d", tm->tm_mon, tm->tm_mday);
 			if (tm->tm_year > 0)
-				sprintf((str + 5), "/%04d", tm->tm_year);
+				sprintf(str + 5, "/%04d", tm->tm_year);
 			else
-				sprintf((str + 5), "/%04d %s", -(tm->tm_year - 1), "BC");
+				sprintf(str + 5, "/%04d %s", -(tm->tm_year - 1), "BC");
 			break;
 
 		case USE_GERMAN_DATES:
 			/* German-style date format */
 			sprintf(str, "%02d.%02d", tm->tm_mday, tm->tm_mon);
 			if (tm->tm_year > 0)
-				sprintf((str + 5), ".%04d", tm->tm_year);
+				sprintf(str + 5, ".%04d", tm->tm_year);
 			else
-				sprintf((str + 5), ".%04d %s", -(tm->tm_year - 1), "BC");
+				sprintf(str + 5, ".%04d %s", -(tm->tm_year - 1), "BC");
 			break;
 
 		case USE_POSTGRES_DATES:
@@ -3416,9 +3413,9 @@ EncodeDateOnly(struct pg_tm * tm, int style, char *str)
 			else
 				sprintf(str, "%02d-%02d", tm->tm_mon, tm->tm_mday);
 			if (tm->tm_year > 0)
-				sprintf((str + 5), "-%04d", tm->tm_year);
+				sprintf(str + 5, "-%04d", tm->tm_year);
 			else
-				sprintf((str + 5), "-%04d %s", -(tm->tm_year - 1), "BC");
+				sprintf(str + 5, "-%04d %s", -(tm->tm_year - 1), "BC");
 			break;
 	}
 
@@ -3432,7 +3429,7 @@ EncodeDateOnly(struct pg_tm * tm, int style, char *str)
 int
 EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 {
-	if ((tm->tm_hour < 0) || (tm->tm_hour > 24))
+	if (tm->tm_hour < 0 || tm->tm_hour > 24)
 		return -1;
 
 	sprintf(str, "%02d:%02d", tm->tm_hour, tm->tm_min);
@@ -3445,17 +3442,17 @@ EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 	if (fsec != 0)
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-		sprintf((str + strlen(str)), ":%02d.%06d", tm->tm_sec, fsec);
+		sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
 #else
-		sprintf((str + strlen(str)), ":%013.10f", tm->tm_sec + fsec);
+		sprintf(str + strlen(str), ":%013.10f", tm->tm_sec + fsec);
 #endif
 		/* chop off trailing pairs of zeros... */
-		while ((strcmp((str + strlen(str) - 2), "00") == 0)
-			   && (*(str + strlen(str) - 3) != '.'))
+		while (strcmp((str + strlen(str) - 2), "00") == 0 &&
+			*(str + strlen(str) - 3) != '.')
 			*(str + strlen(str) - 2) = '\0';
 	}
 	else
-		sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
+		sprintf(str + strlen(str), ":%02d", tm->tm_sec);
 
 	if (tzp != NULL)
 	{
@@ -3463,8 +3460,8 @@ EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 					min;
 
 		hour = -(*tzp / 3600);
-		min = ((abs(*tzp) / 60) % 60);
-		sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+		min = (abs(*tzp) / 60) % 60;
+		sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 	}
 
 	return TRUE;
@@ -3491,9 +3488,9 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 
 	/*
 	 * Why are we checking only the month field? Change this to an
-	 * assert... if ((tm->tm_mon < 1) || (tm->tm_mon > 12)) return -1;
+	 * assert... if (tm->tm_mon < 1 || tm->tm_mon > 12) return -1;
 	 */
-	Assert((tm->tm_mon >= 1) && (tm->tm_mon <= 12));
+	Assert(tm->tm_mon >= 1 && tm->tm_mon <= 12);
 
 	switch (style)
 	{
@@ -3501,7 +3498,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			/* Compatible with ISO-8601 date formats */
 
 			sprintf(str, "%04d-%02d-%02d %02d:%02d",
-				  ((tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1)),
+					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1),
 					tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
 
 			/*
@@ -3514,18 +3511,18 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
-				sprintf((str + strlen(str)), ":%02d.%06d", tm->tm_sec, fsec);
+				sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
 				TrimTrailingZeros(str);
 			}
 #else
-			if ((fsec != 0) && (tm->tm_year > 0))
+			if (fsec != 0 && tm->tm_year > 0)
 			{
-				sprintf((str + strlen(str)), ":%09.6f", tm->tm_sec + fsec);
+				sprintf(str + strlen(str), ":%09.6f", tm->tm_sec + fsec);
 				TrimTrailingZeros(str);
 			}
 #endif
 			else
-				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
+				sprintf(str + strlen(str), ":%02d", tm->tm_sec);
 
 			/*
 			 * tzp == NULL indicates that we don't want *any* time zone
@@ -3536,12 +3533,12 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			if (tzp != NULL && tm->tm_isdst >= 0)
 			{
 				hour = -(*tzp / 3600);
-				min = ((abs(*tzp) / 60) % 60);
-				sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+				min = (abs(*tzp) / 60) % 60;
+				sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 			}
 
 			if (tm->tm_year <= 0)
-				sprintf((str + strlen(str)), " BC");
+				sprintf(str + strlen(str), " BC");
 			break;
 
 		case USE_SQL_DATES:
@@ -3552,8 +3549,8 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			else
 				sprintf(str, "%02d/%02d", tm->tm_mon, tm->tm_mday);
 
-			sprintf((str + 5), "/%04d %02d:%02d",
-				  ((tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1)),
+			sprintf(str + 5, "/%04d %02d:%02d",
+					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1),
 					tm->tm_hour, tm->tm_min);
 
 			/*
@@ -3566,33 +3563,33 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
-				sprintf((str + strlen(str)), ":%02d.%06d", tm->tm_sec, fsec);
+				sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
 				TrimTrailingZeros(str);
 			}
 #else
-			if ((fsec != 0) && (tm->tm_year > 0))
+			if (fsec != 0 && tm->tm_year > 0)
 			{
-				sprintf((str + strlen(str)), ":%09.6f", tm->tm_sec + fsec);
+				sprintf(str + strlen(str), ":%09.6f", tm->tm_sec + fsec);
 				TrimTrailingZeros(str);
 			}
 #endif
 			else
-				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
+				sprintf(str + strlen(str), ":%02d", tm->tm_sec);
 
 			if (tzp != NULL && tm->tm_isdst >= 0)
 			{
 				if (*tzn != NULL)
-					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
+					sprintf(str + strlen(str), " %.*s", MAXTZLEN, *tzn);
 				else
 				{
 					hour = -(*tzp / 3600);
-					min = ((abs(*tzp) / 60) % 60);
-					sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+					min = (abs(*tzp) / 60) % 60;
+					sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 				}
 			}
 
 			if (tm->tm_year <= 0)
-				sprintf((str + strlen(str)), " BC");
+				sprintf(str + strlen(str), " BC");
 			break;
 
 		case USE_GERMAN_DATES:
@@ -3600,8 +3597,8 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 
 			sprintf(str, "%02d.%02d", tm->tm_mday, tm->tm_mon);
 
-			sprintf((str + 5), ".%04d %02d:%02d",
-				  ((tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1)),
+			sprintf(str + 5, ".%04d %02d:%02d",
+					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1),
 					tm->tm_hour, tm->tm_min);
 
 			/*
@@ -3614,33 +3611,33 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
-				sprintf((str + strlen(str)), ":%02d.%06d", tm->tm_sec, fsec);
+				sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
 				TrimTrailingZeros(str);
 			}
 #else
-			if ((fsec != 0) && (tm->tm_year > 0))
+			if (fsec != 0 && tm->tm_year > 0)
 			{
-				sprintf((str + strlen(str)), ":%09.6f", tm->tm_sec + fsec);
+				sprintf(str + strlen(str), ":%09.6f", tm->tm_sec + fsec);
 				TrimTrailingZeros(str);
 			}
 #endif
 			else
-				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
+				sprintf(str + strlen(str), ":%02d", tm->tm_sec);
 
 			if (tzp != NULL && tm->tm_isdst >= 0)
 			{
 				if (*tzn != NULL)
-					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
+					sprintf(str + strlen(str), " %.*s", MAXTZLEN, *tzn);
 				else
 				{
 					hour = -(*tzp / 3600);
-					min = ((abs(*tzp) / 60) % 60);
-					sprintf((str + strlen(str)), ((min != 0) ? "%+03d:%02d" : "%+03d"), hour, min);
+					min = (abs(*tzp) / 60) % 60;
+					sprintf(str + strlen(str), (min != 0) ? "%+03d:%02d" : "%+03d", hour, min);
 				}
 			}
 
 			if (tm->tm_year <= 0)
-				sprintf((str + strlen(str)), " BC");
+				sprintf(str + strlen(str), " BC");
 			break;
 
 		case USE_POSTGRES_DATES:
@@ -3651,14 +3648,14 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			tm->tm_wday = j2day(day);
 
 			strncpy(str, days[tm->tm_wday], 3);
-			strcpy((str + 3), " ");
-
+			strcpy(str + 3, " ");
+			
 			if (DateOrder == DATEORDER_DMY)
-				sprintf((str + 4), "%02d %3s", tm->tm_mday, months[tm->tm_mon - 1]);
+				sprintf(str + 4, "%02d %3s", tm->tm_mday, months[tm->tm_mon - 1]);
 			else
-				sprintf((str + 4), "%3s %02d", months[tm->tm_mon - 1], tm->tm_mday);
+				sprintf(str + 4, "%3s %02d", months[tm->tm_mon - 1], tm->tm_mday);
 
-			sprintf((str + 10), " %02d:%02d", tm->tm_hour, tm->tm_min);
+			sprintf(str + 10, " %02d:%02d", tm->tm_hour, tm->tm_min);
 
 			/*
 			 * Print fractional seconds if any.  The field widths here
@@ -3670,26 +3667,26 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
 			{
-				sprintf((str + strlen(str)), ":%02d.%06d", tm->tm_sec, fsec);
+				sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
 				TrimTrailingZeros(str);
 			}
 #else
-			if ((fsec != 0) && (tm->tm_year > 0))
+			if (fsec != 0 && tm->tm_year > 0)
 			{
-				sprintf((str + strlen(str)), ":%09.6f", tm->tm_sec + fsec);
+				sprintf(str + strlen(str), ":%09.6f", tm->tm_sec + fsec);
 				TrimTrailingZeros(str);
 			}
 #endif
 			else
-				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
+				sprintf(str + strlen(str), ":%02d", tm->tm_sec);
 
-			sprintf((str + strlen(str)), " %04d",
-				 ((tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1)));
+			sprintf(str + strlen(str), " %04d",
+				 (tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1));
 
 			if (tzp != NULL && tm->tm_isdst >= 0)
 			{
 				if (*tzn != NULL)
-					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
+					sprintf(str + strlen(str), " %.*s", MAXTZLEN, *tzn);
 				else
 				{
 					/*
@@ -3700,13 +3697,13 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 					 * 2001-10-19
 					 */
 					hour = -(*tzp / 3600);
-					min = ((abs(*tzp) / 60) % 60);
-					sprintf((str + strlen(str)), ((min != 0) ? " %+03d:%02d" : " %+03d"), hour, min);
+					min = (abs(*tzp) / 60) % 60;
+					sprintf(str + strlen(str), (min != 0) ? " %+03d:%02d" : " %+03d", hour, min);
 				}
 			}
 
 			if (tm->tm_year <= 0)
-				sprintf((str + strlen(str)), " BC");
+				sprintf(str + strlen(str), " BC");
 			break;
 	}
 
@@ -3742,7 +3739,7 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 			if (tm->tm_year != 0)
 			{
 				sprintf(cp, "%d year%s",
-						tm->tm_year, ((tm->tm_year != 1) ? "s" : ""));
+						tm->tm_year, (tm->tm_year != 1) ? "s" : "");
 				cp += strlen(cp);
 				is_before = (tm->tm_year < 0);
 				is_nonzero = TRUE;
@@ -3750,9 +3747,9 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 
 			if (tm->tm_mon != 0)
 			{
-				sprintf(cp, "%s%s%d mon%s", (is_nonzero ? " " : ""),
-						((is_before && (tm->tm_mon > 0)) ? "+" : ""),
-						tm->tm_mon, ((tm->tm_mon != 1) ? "s" : ""));
+				sprintf(cp, "%s%s%d mon%s", is_nonzero ? " " : "",
+						(is_before && tm->tm_mon > 0) ? "+" : "",
+						tm->tm_mon, (tm->tm_mon != 1) ? "s" : "");
 				cp += strlen(cp);
 				is_before = (tm->tm_mon < 0);
 				is_nonzero = TRUE;
@@ -3760,21 +3757,21 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 
 			if (tm->tm_mday != 0)
 			{
-				sprintf(cp, "%s%s%d day%s", (is_nonzero ? " " : ""),
-						((is_before && (tm->tm_mday > 0)) ? "+" : ""),
-						tm->tm_mday, ((tm->tm_mday != 1) ? "s" : ""));
+				sprintf(cp, "%s%s%d day%s", is_nonzero ? " " : "",
+						(is_before && tm->tm_mday > 0) ? "+" : "",
+						tm->tm_mday, (tm->tm_mday != 1) ? "s" : "");
 				cp += strlen(cp);
 				is_before = (tm->tm_mday < 0);
 				is_nonzero = TRUE;
 			}
 
-			if ((!is_nonzero) || (tm->tm_hour != 0) || (tm->tm_min != 0)
-				|| (tm->tm_sec != 0) || (fsec != 0))
+			if (!is_nonzero || tm->tm_hour != 0 || tm->tm_min != 0 ||
+				tm->tm_sec != 0 || fsec != 0)
 			{
-				int			minus = ((tm->tm_hour < 0) || (tm->tm_min < 0)
-									 || (tm->tm_sec < 0) || (fsec < 0));
+				int			minus = (tm->tm_hour < 0 || tm->tm_min < 0 ||
+									 tm->tm_sec < 0 || fsec < 0);
 
-				sprintf(cp, "%s%s%02d:%02d", (is_nonzero ? " " : ""),
+				sprintf(cp, "%s%s%02d:%02d", is_nonzero ? " " : "",
 						(minus ? "-" : (is_before ? "+" : "")),
 						abs(tm->tm_hour), abs(tm->tm_min));
 				cp += strlen(cp);
@@ -3816,7 +3813,7 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 					year = -year;
 
 				sprintf(cp, "%d year%s", year,
-						((year != 1) ? "s" : ""));
+						(year != 1) ? "s" : "");
 				cp += strlen(cp);
 				is_before = (tm->tm_year < 0);
 				is_nonzero = TRUE;
@@ -3826,11 +3823,11 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 			{
 				int			mon = tm->tm_mon;
 
-				if (is_before || ((!is_nonzero) && (tm->tm_mon < 0)))
+				if (is_before || (!is_nonzero && tm->tm_mon < 0))
 					mon = -mon;
 
-				sprintf(cp, "%s%d mon%s", (is_nonzero ? " " : ""), mon,
-						((mon != 1) ? "s" : ""));
+				sprintf(cp, "%s%d mon%s", is_nonzero ? " " : "", mon,
+						(mon != 1) ? "s" : "");
 				cp += strlen(cp);
 				if (!is_nonzero)
 					is_before = (tm->tm_mon < 0);
@@ -3841,11 +3838,11 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 			{
 				int			day = tm->tm_mday;
 
-				if (is_before || ((!is_nonzero) && (tm->tm_mday < 0)))
+				if (is_before || (!is_nonzero && tm->tm_mday < 0))
 					day = -day;
 
-				sprintf(cp, "%s%d day%s", (is_nonzero ? " " : ""), day,
-						((day != 1) ? "s" : ""));
+				sprintf(cp, "%s%d day%s", is_nonzero ? " " : "", day,
+						(day != 1) ? "s" : "");
 				cp += strlen(cp);
 				if (!is_nonzero)
 					is_before = (tm->tm_mday < 0);
@@ -3855,11 +3852,11 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 			{
 				int			hour = tm->tm_hour;
 
-				if (is_before || ((!is_nonzero) && (tm->tm_hour < 0)))
+				if (is_before || (!is_nonzero && tm->tm_hour < 0))
 					hour = -hour;
 
-				sprintf(cp, "%s%d hour%s", (is_nonzero ? " " : ""), hour,
-						((hour != 1) ? "s" : ""));
+				sprintf(cp, "%s%d hour%s", is_nonzero ? " " : "", hour,
+						(hour != 1) ? "s" : "");
 				cp += strlen(cp);
 				if (!is_nonzero)
 					is_before = (tm->tm_hour < 0);
@@ -3870,11 +3867,11 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 			{
 				int			min = tm->tm_min;
 
-				if (is_before || ((!is_nonzero) && (tm->tm_min < 0)))
+				if (is_before || (!is_nonzero && tm->tm_min < 0))
 					min = -min;
 
-				sprintf(cp, "%s%d min%s", (is_nonzero ? " " : ""), min,
-						((min != 1) ? "s" : ""));
+				sprintf(cp, "%s%d min%s", is_nonzero ? " " : "", min,
+						(min != 1) ? "s" : "");
 				cp += strlen(cp);
 				if (!is_nonzero)
 					is_before = (tm->tm_min < 0);
@@ -3888,27 +3885,27 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 
 #ifdef HAVE_INT64_TIMESTAMP
 				sec = fsec;
-				if (is_before || ((!is_nonzero) && (tm->tm_sec < 0)))
+				if (is_before || (!is_nonzero && tm->tm_sec < 0))
 				{
 					tm->tm_sec = -tm->tm_sec;
 					sec = -sec;
 					is_before = TRUE;
 				}
-				else if ((!is_nonzero) && (tm->tm_sec == 0) && (fsec < 0))
+				else if (!is_nonzero && tm->tm_sec == 0 && fsec < 0)
 				{
 					sec = -sec;
 					is_before = TRUE;
 				}
-				sprintf(cp, "%s%d.%02d secs", (is_nonzero ? " " : ""),
-						tm->tm_sec, (((int) sec) / 10000));
+				sprintf(cp, "%s%d.%02d secs", is_nonzero ? " " : "",
+						tm->tm_sec, ((int) sec) / 10000);
 				cp += strlen(cp);
 #else
 				fsec += tm->tm_sec;
 				sec = fsec;
-				if (is_before || ((!is_nonzero) && (fsec < 0)))
+				if (is_before || (!is_nonzero && fsec < 0))
 					sec = -sec;
 
-				sprintf(cp, "%s%.2f secs", (is_nonzero ? " " : ""), sec);
+				sprintf(cp, "%s%.2f secs", is_nonzero ? " " : "", sec);
 				cp += strlen(cp);
 				if (!is_nonzero)
 					is_before = (fsec < 0);
@@ -3920,11 +3917,11 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 			{
 				int			sec = tm->tm_sec;
 
-				if (is_before || ((!is_nonzero) && (tm->tm_sec < 0)))
+				if (is_before || (!is_nonzero && tm->tm_sec < 0))
 					sec = -sec;
 
-				sprintf(cp, "%s%d sec%s", (is_nonzero ? " " : ""), sec,
-						((sec != 1) ? "s" : ""));
+				sprintf(cp, "%s%d sec%s", is_nonzero ? " " : "", sec,
+						(sec != 1) ? "s" : "");
 				cp += strlen(cp);
 				if (!is_nonzero)
 					is_before = (tm->tm_sec < 0);

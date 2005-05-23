@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.119 2005/04/19 03:13:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.120 2005/05/23 17:13:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,7 +264,7 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 	if (!TIMESTAMP_NOT_FINITE(*time)
 		&& (typmod != -1) && (typmod != MAX_TIMESTAMP_PRECISION))
 	{
-		if ((typmod < 0) || (typmod > MAX_TIMESTAMP_PRECISION))
+		if (typmod < 0 || typmod > MAX_TIMESTAMP_PRECISION)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 			  errmsg("timestamp(%d) precision must be between %d and %d",
@@ -578,12 +578,12 @@ interval_recv(PG_FUNCTION_ARGS)
 	interval = (Interval *) palloc(sizeof(Interval));
 
 #ifdef HAVE_INT64_TIMESTAMP
-	interval  ->time = pq_getmsgint64(buf);
+	interval->time = pq_getmsgint64(buf);
 
 #else
-	interval  ->time = pq_getmsgfloat8(buf);
+	interval->time = pq_getmsgfloat8(buf);
 #endif
-	interval  ->month = pq_getmsgint(buf, sizeof(interval->month));
+	interval->month = pq_getmsgint(buf, sizeof(interval->month));
 
 	PG_RETURN_INTERVAL_P(interval);
 }
@@ -678,28 +678,28 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		}
 		else if (range == INTERVAL_MASK(YEAR))
 		{
-			interval  ->month = ((interval->month / 12) *12);
-			interval  ->time = 0;
+			interval->month = (interval->month / 12) * 12;
+			interval->time = 0;
 		}
 		else if (range == INTERVAL_MASK(MONTH))
 		{
-			interval  ->month %= 12;
-			interval  ->time = 0;
+			interval->month %= 12;
+			interval->time = 0;
 		}
 		/* YEAR TO MONTH */
 		else if (range == (INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH)))
-			interval  ->time = 0;
+			interval->time = 0;
 
 		else if (range == INTERVAL_MASK(DAY))
 		{
-			interval  ->month = 0;
+			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			interval  ->time = (((int) (interval->time / INT64CONST(86400000000)))
-								* INT64CONST(86400000000));
+			interval->time = ((int) (interval->time / INT64CONST(86400000000))) *
+								INT64CONST(86400000000);
 
 #else
-			interval  ->time = (((int) (interval->time / 86400)) * 86400);
+			interval->time = ((int) (interval->time / 86400)) * 86400;
 #endif
 		}
 		else if (range == INTERVAL_MASK(HOUR))
@@ -711,17 +711,17 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			double		day;
 #endif
 
-			interval  ->month = 0;
+			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			day = (interval->time / INT64CONST(86400000000));
-			interval  ->time -= (day * INT64CONST(86400000000));
-			interval  ->time = ((interval->time / INT64CONST(3600000000))
-								*INT64CONST(3600000000));
+			day = interval->time / INT64CONST(86400000000);
+			interval->time -= day * INT64CONST(86400000000);
+			interval->time = (interval->time / INT64CONST(3600000000)) *
+								INT64CONST(3600000000);
 
 #else
 			TMODULO(interval->time, day, 86400.0);
-			interval  ->time = (((int) (interval->time / 3600)) * 3600.0);
+			interval->time = ((int) (interval->time / 3600)) * 3600.0;
 #endif
 		}
 		else if (range == INTERVAL_MASK(MINUTE))
@@ -733,17 +733,17 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			double		hour;
 #endif
 
-			interval  ->month = 0;
+			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			hour = (interval->time / INT64CONST(3600000000));
-			interval  ->time -= (hour * INT64CONST(3600000000));
-			interval  ->time = ((interval->time / INT64CONST(60000000))
-								*INT64CONST(60000000));
+			hour = interval->time / INT64CONST(3600000000);
+			interval->time -= hour * INT64CONST(3600000000);
+			interval->time = (interval->time / INT64CONST(60000000)) *
+								INT64CONST(60000000);
 
 #else
 			TMODULO(interval->time, hour, 3600.0);
-			interval  ->time = (((int) (interval->time / 60)) * 60);
+			interval->time = ((int) (interval->time / 60)) * 60;
 #endif
 		}
 		else if (range == INTERVAL_MASK(SECOND))
@@ -755,11 +755,11 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			double		minute;
 #endif
 
-			interval  ->month = 0;
+			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			minute = (interval->time / INT64CONST(60000000));
-			interval  ->time -= (minute * INT64CONST(60000000));
+			minute = interval->time / INT64CONST(60000000);
+			interval->time -= minute * INT64CONST(60000000);
 
 #else
 			TMODULO(interval->time, minute, 60.0);
@@ -770,14 +770,14 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		else if (range == (INTERVAL_MASK(DAY) |
 						   INTERVAL_MASK(HOUR)))
 		{
-			interval  ->month = 0;
+			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			interval  ->time = ((interval->time / INT64CONST(3600000000))
-								*INT64CONST(3600000000));
+			interval->time = (interval->time / INT64CONST(3600000000)) *
+								INT64CONST(3600000000);
 
 #else
-			interval  ->time = (((int) (interval->time / 3600)) * 3600);
+			interval->time = ((int) (interval->time / 3600)) * 3600;
 #endif
 		}
 		/* DAY TO MINUTE */
@@ -785,14 +785,14 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 						   INTERVAL_MASK(HOUR) |
 						   INTERVAL_MASK(MINUTE)))
 		{
-			interval  ->month = 0;
+			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			interval  ->time = ((interval->time / INT64CONST(60000000))
-								*INT64CONST(60000000));
+			interval->time = (interval->time / INT64CONST(60000000)) *
+								INT64CONST(60000000);
 
 #else
-			interval  ->time = (((int) (interval->time / 60)) * 60);
+			interval->time = ((int) (interval->time / 60)) * 60;
 #endif
 		}
 		/* DAY TO SECOND */
@@ -800,7 +800,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 						   INTERVAL_MASK(HOUR) |
 						   INTERVAL_MASK(MINUTE) |
 						   INTERVAL_MASK(SECOND)))
-			interval  ->month = 0;
+			interval->month = 0;
 
 		/* HOUR TO MINUTE */
 		else if (range == (INTERVAL_MASK(HOUR) |
@@ -813,17 +813,17 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			double		day;
 #endif
 
-			interval  ->month = 0;
+			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
 			day = (interval->time / INT64CONST(86400000000));
-			interval  ->time -= (day * INT64CONST(86400000000));
-			interval  ->time = ((interval->time / INT64CONST(60000000))
-								*INT64CONST(60000000));
+			interval->time -= day * INT64CONST(86400000000);
+			interval->time = (interval->time / INT64CONST(60000000)) *
+								INT64CONST(60000000);
 
 #else
 			TMODULO(interval->time, day, 86400.0);
-			interval  ->time = (((int) (interval->time / 60)) * 60);
+			interval->time = ((int) (interval->time / 60)) * 60;
 #endif
 		}
 		/* HOUR TO SECOND */
@@ -838,11 +838,11 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			double		day;
 #endif
 
-			interval  ->month = 0;
+			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			day = (interval->time / INT64CONST(86400000000));
-			interval  ->time -= (day * INT64CONST(86400000000));
+			day = interval->time / INT64CONST(86400000000);
+			interval->time -= day * INT64CONST(86400000000);
 
 #else
 			TMODULO(interval->time, day, 86400.0);
@@ -859,12 +859,11 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			double		hour;
 #endif
 
-			interval  ->month = 0;
+			interval->month = 0;
 
 #ifdef HAVE_INT64_TIMESTAMP
-			hour = (interval->time / INT64CONST(3600000000));
-			interval  ->time -= (hour * INT64CONST(3600000000));
-
+			hour = interval->time / INT64CONST(3600000000);
+			interval->time -= hour * INT64CONST(3600000000);
 #else
 			TMODULO(interval->time, hour, 3600.0);
 #endif
@@ -875,7 +874,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		/* Need to adjust precision? If not, don't even try! */
 		if (precision != INTERVAL_FULL_PRECISION)
 		{
-			if ((precision < 0) || (precision > MAX_INTERVAL_PRECISION))
+			if (precision < 0 || precision > MAX_INTERVAL_PRECISION)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				errmsg("interval(%d) precision must be between %d and %d",
@@ -892,17 +891,22 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 #ifdef HAVE_INT64_TIMESTAMP
 			if (interval->time >= INT64CONST(0))
 			{
-				interval  ->time = (((interval->time + IntervalOffsets[precision]) /IntervalScales[precision])
-									* IntervalScales[precision]);
+				interval->time = (((interval->time +
+									IntervalOffsets[precision]) /
+									IntervalScales[precision]) *
+									IntervalScales[precision];
 			}
 			else
 			{
-				interval  ->time = -(((-interval->time + IntervalOffsets[precision]) /IntervalScales[precision])
-									 * IntervalScales[precision]);
+				interval->time = -(((-interval->time +
+									IntervalOffsets[precision]) /
+									IntervalScales[precision]) *
+									IntervalScales[precision]);
 			}
 #else
-			interval  ->time = (rint(((double) interval->time) *IntervalScales[precision])
-								/ IntervalScales[precision]);
+			interval->time = rint(((double) interval->time) *
+									IntervalScales[precision]) /
+									IntervalScales[precision];
 #endif
 		}
 	}
@@ -954,17 +958,17 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 	time = jd;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	*hour = (time / INT64CONST(3600000000));
-	time -= ((*hour) * INT64CONST(3600000000));
-	*min = (time / INT64CONST(60000000));
-	time -= ((*min) * INT64CONST(60000000));
-	*sec = (time / INT64CONST(1000000));
-	*fsec = (time - (*sec * INT64CONST(1000000)));
+	*hour = time / INT64CONST(3600000000);
+	time -= (*hour) * INT64CONST(3600000000);
+	*min = time / INT64CONST(60000000);
+	time -= (*min) * INT64CONST(60000000);
+	*sec = time / INT64CONST(1000000);
+	*fsec = time - (*sec * INT64CONST(1000000));
 #else
-	*hour = (time / 3600);
-	time -= ((*hour) * 3600);
-	*min = (time / 60);
-	time -= ((*min) * 60);
+	*hour = time / 3600;
+	time -= (*hour) * 3600;
+	*min = time / 60;
+	time -= (*min) * 60;
 	*sec = time;
 	*fsec = JROUND(time - *sec);
 #endif
@@ -1010,7 +1014,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn
 	if (time < INT64CONST(0))
 	{
 		time += INT64CONST(86400000000);
-		date	  -=1;
+		date -= 1;
 	}
 #else
 	TMODULO(time, date, 86400e0);
@@ -1018,7 +1022,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn
 	if (time < 0)
 	{
 		time += 86400;
-		date	  -=1;
+		date -=1;
 	}
 #endif
 
@@ -1138,15 +1142,16 @@ tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 
 	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
 #ifdef HAVE_INT64_TIMESTAMP
-	*result = (date *INT64CONST(86400000000)) +time;
+	*result = date * INT64CONST(86400000000) + time;
 	/* check for major overflow */
 	if ((*result - time) / INT64CONST(86400000000) != date)
 		return -1;
 	/* check for just-barely overflow (okay except time-of-day wraps) */
-	if ((*result < 0) ? (date >=0) : (date <0))
+	if ((*result < 0 && date >= 0) ||
+		(*result >= 0 && date < 0))
 		return -1;
 #else
-	*result = ((date *86400) +time);
+	*result = date * 86400 + time;
 #endif
 	if (tzp != NULL)
 		*result = dt2local(*result, -(*tzp));
@@ -1205,7 +1210,7 @@ interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 int
 tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span)
 {
-	span->month = ((tm->tm_year * 12) + tm->tm_mon);
+	span->month = tm->tm_year * 12 + tm->tm_mon;
 #ifdef HAVE_INT64_TIMESTAMP
 	span->time = ((((((((tm->tm_mday * INT64CONST(24))
 						+ tm->tm_hour) * INT64CONST(60))
@@ -1611,14 +1616,14 @@ interval_cmp_internal(Interval *interval1, Interval *interval2)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	if (interval1->month != 0)
-		span1 += ((interval1->month * INT64CONST(30) * INT64CONST(86400000000)));
+		span1 += interval1->month * INT64CONST(30) * INT64CONST(86400000000);
 	if (interval2->month != 0)
-		span2 += ((interval2->month * INT64CONST(30) * INT64CONST(86400000000)));
+		span2 += interval2->month * INT64CONST(30) * INT64CONST(86400000000);
 #else
 	if (interval1->month != 0)
-		span1 += (interval1->month * (30.0 * 86400));
+		span1 += interval1->month * (30.0 * 86400);
 	if (interval2->month != 0)
-		span2 += (interval2->month * (30.0 * 86400));
+		span2 += interval2->month * (30.0 * 86400);
 #endif
 
 	return ((span1 < span2) ? -1 : (span1 > span2) ? 1 : 0);
@@ -2155,8 +2160,8 @@ interval_mul(PG_FUNCTION_ARGS)
 #ifdef HAVE_INT64_TIMESTAMP
 	result->month = months;
 	result->time = (span1->time * factor);
-	result->time += ((months - result->month) * INT64CONST(30)
-					 * INT64CONST(86400000000));
+	result->time += (months - result->month) * INT64CONST(30) *
+					INT64CONST(86400000000);
 #else
 	result->month = rint(months);
 	result->time = JROUND(span1->time * factor);
@@ -2199,10 +2204,10 @@ interval_div(PG_FUNCTION_ARGS)
 	result->month = (span->month / factor);
 	result->time = (span->time / factor);
 	/* evaluate fractional months as 30 days */
-	result->time += (((span->month - (result->month * factor))
-				   * INT64CONST(30) * INT64CONST(86400000000)) / factor);
+	result->time += ((span->month - (result->month * factor)) *
+					INT64CONST(30) * INT64CONST(86400000000)) / factor;
 #else
-	months = (span->month / factor);
+	months = span->month / factor;
 	result->month = rint(months);
 	result->time = JROUND(span->time / factor);
 	/* evaluate fractional months as 30 days */
@@ -2328,8 +2333,8 @@ timestamp_age(PG_FUNCTION_ARGS)
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	if ((timestamp2tm(dt1, NULL, tm1, &fsec1, NULL) == 0)
-		&& (timestamp2tm(dt2, NULL, tm2, &fsec2, NULL) == 0))
+	if (timestamp2tm(dt1, NULL, tm1, &fsec1, NULL) == 0 &&
+		timestamp2tm(dt2, NULL, tm2, &fsec2, NULL) == 0)
 	{
 		fsec = (fsec1 - fsec2);
 		tm->tm_sec = (tm1->tm_sec - tm2->tm_sec);
@@ -2442,8 +2447,8 @@ timestamptz_age(PG_FUNCTION_ARGS)
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	if ((timestamp2tm(dt1, &tz1, tm1, &fsec1, &tzn) == 0)
-		&& (timestamp2tm(dt2, &tz2, tm2, &fsec2, &tzn) == 0))
+	if (timestamp2tm(dt1, &tz1, tm1, &fsec1, &tzn) == 0 &&
+		timestamp2tm(dt2, &tz2, tm2, &fsec2, &tzn) == 0)
 	{
 		fsec = (fsec1 - fsec2);
 		tm->tm_sec = (tm1->tm_sec - tm2->tm_sec);
@@ -2810,7 +2815,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 
 			case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				fsec = ((fsec / 1000) * 1000);
+				fsec = (fsec / 1000) * 1000;
 #else
 				fsec = rint(fsec * 1000) / 1000;
 #endif
@@ -3150,7 +3155,7 @@ date2isoweek(int year, int mon, int mday)
 	 * We need the first week containing a Thursday, otherwise this day
 	 * falls into the previous year for purposes of counting weeks
 	 */
-	if (dayn < (day4 - day0))
+	if (dayn < day4 - day0)
 	{
 		day4 = date2j(year - 1, 1, 4);
 
@@ -3158,7 +3163,7 @@ date2isoweek(int year, int mon, int mday)
 		day0 = j2day(day4 - 1);
 	}
 
-	result = (((dayn - (day4 - day0)) / 7) + 1);
+	result = (dayn - (day4 - day0)) / 7 + 1;
 
 	/*
 	 * Sometimes the last few days in a year will fall into the first week
@@ -3171,8 +3176,8 @@ date2isoweek(int year, int mon, int mday)
 		/* day0 == offset to first day of week (Monday) */
 		day0 = j2day(day4 - 1);
 
-		if (dayn >= (day4 - day0))
-			result = (((dayn - (day4 - day0)) / 7) + 1);
+		if (dayn >= day4 - day0)
+			result = (dayn - (day4 - day0)) / 7 + 1;
 	}
 
 	return (int) result;
@@ -3204,7 +3209,7 @@ date2isoyear(int year, int mon, int mday)
 	 * We need the first week containing a Thursday, otherwise this day
 	 * falls into the previous year for purposes of counting weeks
 	 */
-	if (dayn < (day4 - day0))
+	if (dayn < day4 - day0)
 	{
 		day4 = date2j(year - 1, 1, 4);
 
@@ -3214,7 +3219,7 @@ date2isoyear(int year, int mon, int mday)
 		year--;
 	}
 
-	result = (((dayn - (day4 - day0)) / 7) + 1);
+	result = (dayn - (day4 - day0)) / 7 + 1;
 
 	/*
 	 * Sometimes the last few days in a year will fall into the first week
@@ -3227,7 +3232,7 @@ date2isoyear(int year, int mon, int mday)
 		/* day0 == offset to first day of week (Monday) */
 		day0 = j2day(day4 - 1);
 
-		if (dayn >= (day4 - day0))
+		if (dayn >= day4 - day0)
 			year++;
 	}
 
@@ -3276,7 +3281,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 		{
 			case DTK_MICROSEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = ((tm->tm_sec * 1000000e0) + fsec);
+				result = tm->tm_sec * 1000000e0 + fsec;
 #else
 				result = (tm->tm_sec + fsec) * 1000000;
 #endif
@@ -3284,7 +3289,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 
 			case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = ((tm->tm_sec * 1000e0) + (fsec / 1000e0));
+				result = tm->tm_sec * 1000e0 + fsec / 1000e0;
 #else
 				result = (tm->tm_sec + fsec) * 1000;
 #endif
@@ -3292,9 +3297,9 @@ timestamp_part(PG_FUNCTION_ARGS)
 
 			case DTK_SECOND:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = (tm->tm_sec + (fsec / 1000000e0));
+				result = tm->tm_sec + fsec / 1000000e0;
 #else
-				result = (tm->tm_sec + fsec);
+				result = tm->tm_sec + fsec;
 #endif
 				break;
 
@@ -3315,7 +3320,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_QUARTER:
-				result = ((tm->tm_mon - 1) / 3) + 1;
+				result = (tm->tm_mon - 1) / 3 + 1;
 				break;
 
 			case DTK_WEEK:
@@ -3345,10 +3350,11 @@ timestamp_part(PG_FUNCTION_ARGS)
 
 			case DTK_CENTURY:
 
-				/*
-				 * centuries AD, c>0: year in [ (c-1)*100+1 :	  c*100 ]
-				 * centuries BC, c<0: year in [		c*100	: (c+1)*100-1
-				 * ] there is no number 0 century.
+				/* ----
+				 * centuries AD, c>0: year in [ (c-1)* 100 + 1 : c*100 ]
+				 * centuries BC, c<0: year in [ c*100 : (c+1) * 100 - 1]
+				 * there is no number 0 century.
+				 * ----
 				 */
 				if (tm->tm_year > 0)
 					result = ((tm->tm_year + 99) / 100);
@@ -3368,11 +3374,11 @@ timestamp_part(PG_FUNCTION_ARGS)
 			case DTK_JULIAN:
 				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 #ifdef HAVE_INT64_TIMESTAMP
-				result += (((((tm->tm_hour * 60) + tm->tm_min) * 60)
-							+ tm->tm_sec + (fsec / 1000000e0)) / 86400e0);
+				result += ((((tm->tm_hour * 60) + tm->tm_min) * 60) +
+							tm->tm_sec + (fsec / 1000000e0)) / 86400e0;
 #else
-				result += (((((tm->tm_hour * 60) + tm->tm_min) * 60)
-							+ tm->tm_sec + fsec) / 86400e0);
+				result += ((((tm->tm_hour * 60) + tm->tm_min) * 60) +
+							tm->tm_sec + fsec) / 86400e0;
 #endif
 				break;
 
@@ -3515,7 +3521,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 			case DTK_MICROSEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = ((tm->tm_sec * 1000000e0) + fsec);
+				result = tm->tm_sec * 1000000e0 + fsec;
 #else
 				result = (tm->tm_sec + fsec) * 1000000;
 #endif
@@ -3523,7 +3529,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 			case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = ((tm->tm_sec * 1000e0) + (fsec / 1000e0));
+				result = tm->tm_sec * 1000e0 + fsec / 1000e0;
 #else
 				result = (tm->tm_sec + fsec) * 1000;
 #endif
@@ -3531,9 +3537,9 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 			case DTK_SECOND:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = (tm->tm_sec + (fsec / 1000000e0));
+				result = tm->tm_sec + fsec / 1000000e0;
 #else
-				result = (tm->tm_sec + fsec);
+				result = tm->tm_sec + fsec;
 #endif
 				break;
 
@@ -3554,7 +3560,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_QUARTER:
-				result = ((tm->tm_mon - 1) / 3) + 1;
+				result = (tm->tm_mon - 1) / 3 + 1;
 				break;
 
 			case DTK_WEEK:
@@ -3580,7 +3586,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 			case DTK_CENTURY:
 				/* see comments in timestamp_part */
 				if (tm->tm_year > 0)
-					result = ((tm->tm_year + 99) / 100);
+					result = (tm->tm_year + 99) / 100;
 				else
 					result = -((99 - (tm->tm_year - 1)) / 100);
 				break;
@@ -3588,7 +3594,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 			case DTK_MILLENNIUM:
 				/* see comments in timestamp_part */
 				if (tm->tm_year > 0)
-					result = ((tm->tm_year + 999) / 1000);
+					result = (tm->tm_year + 999) / 1000;
 				else
 					result = -((999 - (tm->tm_year - 1)) / 1000);
 				break;
@@ -3596,11 +3602,11 @@ timestamptz_part(PG_FUNCTION_ARGS)
 			case DTK_JULIAN:
 				result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
 #ifdef HAVE_INT64_TIMESTAMP
-				result += (((((tm->tm_hour * 60) + tm->tm_min) * 60)
-							+ tm->tm_sec + (fsec / 1000000e0)) / 86400e0);
+				result += ((((tm->tm_hour * 60) + tm->tm_min) * 60) +
+							tm->tm_sec + (fsec / 1000000e0)) / 86400e0;
 #else
-				result += (((((tm->tm_hour * 60) + tm->tm_min) * 60)
-							+ tm->tm_sec + fsec) / 86400e0);
+				result += ((((tm->tm_hour * 60) + tm->tm_min) * 60) +
+							tm->tm_sec + fsec) / 86400e0;
 #endif
 				break;
 
@@ -3619,9 +3625,9 @@ timestamptz_part(PG_FUNCTION_ARGS)
 		{
 			case DTK_EPOCH:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = ((timestamp -SetEpochTimestamp()) /1000000e0);
+				result = (timestamp - SetEpochTimestamp()) /1000000e0;
 #else
-				result = timestamp -SetEpochTimestamp();
+				result = timestamp - SetEpochTimestamp();
 #endif
 				break;
 
@@ -3696,7 +3702,7 @@ interval_part(PG_FUNCTION_ARGS)
 			{
 				case DTK_MICROSEC:
 #ifdef HAVE_INT64_TIMESTAMP
-					result = ((tm->tm_sec * 1000000e0) + fsec);
+					result = tm->tm_sec * 1000000e0 + fsec;
 #else
 					result = (tm->tm_sec + fsec) * 1000000;
 #endif
@@ -3704,7 +3710,7 @@ interval_part(PG_FUNCTION_ARGS)
 
 				case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-					result = ((tm->tm_sec * 1000e0) + (fsec / 1000e0));
+					result = tm->tm_sec * 1000e0 + fsec / 1000e0;
 #else
 					result = (tm->tm_sec + fsec) * 1000;
 #endif
@@ -3712,9 +3718,9 @@ interval_part(PG_FUNCTION_ARGS)
 
 				case DTK_SECOND:
 #ifdef HAVE_INT64_TIMESTAMP
-					result = (tm->tm_sec + (fsec / 1000000e0));
+					result = tm->tm_sec + fsec / 1000000e0;
 #else
-					result = (tm->tm_sec + fsec);
+					result = tm->tm_sec + fsec;
 #endif
 					break;
 
@@ -3773,17 +3779,17 @@ interval_part(PG_FUNCTION_ARGS)
 			result = 0;
 		}
 	}
-	else if ((type == RESERV) && (val == DTK_EPOCH))
+	else if (type == RESERV && val == DTK_EPOCH)
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-		result = (interval->time / 1000000e0);
+		result = interval->time / 1000000e0;
 #else
 		result = interval->time;
 #endif
 		if (interval->month != 0)
 		{
-			result += ((365.25 * 86400) * (interval->month / 12));
-			result += ((30.0 * 86400) * (interval->month % 12));
+			result += (365.25 * 86400) * (interval->month / 12);
+			result += (30.0 * 86400) * (interval->month % 12);
 		}
 	}
 	else
@@ -3825,7 +3831,7 @@ timestamp_zone(PG_FUNCTION_ARGS)
 
 	type = DecodeSpecial(0, lowzone, &val);
 
-	if ((type == TZ) || (type == DTZ))
+	if (type == TZ || type == DTZ)
 	{
 		tz = -(val * 60);
 
@@ -3866,9 +3872,9 @@ timestamp_izone(PG_FUNCTION_ARGS)
 											  PointerGetDatum(zone))))));
 
 #ifdef HAVE_INT64_TIMESTAMP
-	tz = (zone->time / INT64CONST(1000000));
+	tz = zone->time / INT64CONST(1000000);
 #else
-	tz = (zone->time);
+	tz = zone->time;
 #endif
 
 	result = dt2local(timestamp, tz);
@@ -3974,7 +3980,7 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 
 	type = DecodeSpecial(0, lowzone, &val);
 
-	if ((type == TZ) || (type == DTZ))
+	if (type == TZ || type == DTZ)
 	{
 		tz = val * 60;
 
