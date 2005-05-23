@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.249 2005/05/23 01:29:54 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.250 2005/05/23 01:50:01 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -7317,55 +7317,16 @@ SELECT b1 = ANY((SELECT b2 FROM t2 ...)) FROM t1 ...;
   <note>
    <para>
     Users accustomed to working with other SQL database management
-    systems may be surprised by the performance characteristics of
-    certain aggregate functions in
-    <productname>PostgreSQL</productname> when the aggregate is
-    applied to the entire table (in other words, no
-    <literal>WHERE</literal> clause is specified). In particular, a
-    query like
+    systems may be surprised by the performance of the
+    <function>count</function> aggregate when it is applied to the
+    entire table. A query like:
 <programlisting>
-SELECT min(col) FROM sometable;
+SELECT count(*) FROM sometable;
 </programlisting>
     will be executed by <productname>PostgreSQL</productname> using a
-    sequential scan of the entire table. Other database systems may
-    optimize queries of this form to use an index on the column, if
-    one is available. Similarly, the aggregate functions
-    <function>max()</function> and <function>count()</function> always
-    require a sequential scan if applied to the entire table in
-    <productname>PostgreSQL</productname>.
-   </para>
-
-   <para>
-    <productname>PostgreSQL</productname> cannot easily implement this
-    optimization because it also allows for user-defined aggregate
-    queries. Since <function>min()</function>,
-    <function>max()</function>, and <function>count()</function> are
-    defined using a generic API for aggregate functions, there is no
-    provision for special-casing the execution of these functions
-    under certain circumstances.
-   </para>
-
-   <para>
-    Fortunately, there is a simple workaround for
-    <function>min()</function> and <function>max()</function>. The
-    query shown below is equivalent to the query above, except that it
-    can take advantage of a B-tree index if there is one present on
-    the column in question.
-<programlisting>
-SELECT col FROM sometable ORDER BY col ASC LIMIT 1;
-</programlisting>
-    A similar query (obtained by substituting <literal>DESC</literal>
-    for <literal>ASC</literal> in the query above) can be used in the
-    place of <function>max()</function>.
-   </para>
-
-   <para>
-    Unfortunately, there is no similarly trivial workaround that can
-    be used to improve the performance of <function>count()</function>
-    when applied to the entire table.
+    sequential scan of the entire table.
    </para>
   </note>
-
  </sect1>
 
 
