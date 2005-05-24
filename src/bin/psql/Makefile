@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/psql/Makefile,v 1.53 2005/03/25 18:17:13 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/psql/Makefile,v 1.54 2005/05/24 16:45:23 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ include $(top_builddir)/src/Makefile.global
 
 REFDOCDIR= $(top_srcdir)/doc/src/sgml/ref
 
-override CPPFLAGS := -DFRONTEND -I$(libpq_srcdir) $(CPPFLAGS)
+override CPPFLAGS := -DFRONTEND -I$(srcdir) -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS=	command.o common.o help.o input.o stringutils.o mainloop.o copy.o \
 	startup.o prompt.o variables.o large_obj.o print.o describe.o \
