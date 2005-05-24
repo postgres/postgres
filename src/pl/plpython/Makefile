@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.20 2005/05/17 18:26:23 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plpython/Makefile,v 1.21 2005/05/24 17:07:41 tgl Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -65,6 +65,27 @@ include $(top_srcdir)/src/Makefile.shlib
 
 
 all: all-lib
+
+# When doing a VPATH build, copy over the .sql and .out files so that the
+# test script can find them.  See comments in src/test/regress/GNUmakefile.
+ifdef VPATH
+
+ifneq ($(PORTNAME),win32)
+abs_srcdir := $(shell cd $(srcdir) && pwd)
+abs_builddir := $(shell pwd)
+else
+abs_srcdir := $(shell cd $(srcdir) && pwd -W)
+abs_builddir := $(shell pwd -W)
+endif
+
+test_files_src := $(wildcard $(srcdir)/sql/*.sql) $(wildcard $(srcdir)/expected/*.out)
+test_files_build := $(patsubst $(srcdir)/%, $(abs_builddir)/%, $(test_files_src))
+
+all: $(test_files_build)
+$(test_files_build): $(abs_builddir)/%: $(srcdir)/%
+	ln -s $< $@
+
+endif
 
 install: all installdirs
 ifeq ($(enable_shared), yes)
