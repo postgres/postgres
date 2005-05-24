@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.23 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.24 2005/05/24 07:16:27 neilc Exp $
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  * various details abducted from various places
@@ -130,7 +130,7 @@ static void pgwin32_update_ident(char *ident)
  * environment strings may be moved, so this should be called before any code
  * that might try to hang onto a getenv() result.)
  */
-char	  **
+char **
 save_ps_display_args(int argc, char **argv)
 {
 	save_argc = argc;
