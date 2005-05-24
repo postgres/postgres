@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.179 2005/01/12 17:32:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.179.4.1 2005/05/24 23:02:54 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "commands/dbcommands.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
@@ -33,7 +34,6 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-
 
 bool		Transform_null_equals = false;
 
@@ -1491,7 +1491,13 @@ exprTypmod(Node *expr)
 				{
 					case BPCHAROID:
 						if (!con->constisnull)
-							return VARSIZE(DatumGetPointer(con->constvalue));
+						{
+							int32 len = VARSIZE(DatumGetPointer(con->constvalue));
+
+							if (pg_database_encoding_max_length() > 1)
+								len = pg_mbstrlen_with_len(VARDATA(DatumGetPointer(con->constvalue)), len);
+							return len;
+						}
 						break;
 					default:
 						break;
