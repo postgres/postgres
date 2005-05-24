@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.35 2004/11/09 06:09:31 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.36 2005/05/24 00:26:40 neilc Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -622,7 +622,7 @@ init(void)
 	for (i = 0; i < (sizeof(DDLAFTERs) / sizeof(char *)); i++)
 	{
 		res = PQexec(con, DDLAFTERs[i]);
-		if (strncmp(DDLs[i], "drop", 4) && PQresultStatus(res) != PGRES_COMMAND_OK)
+		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
 			fprintf(stderr, "%s", PQerrorMessage(con));
 			exit(1);
