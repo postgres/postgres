@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.91.4.1 2005/01/23 02:22:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.91.4.2 2005/05/24 18:02:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,15 +498,10 @@ match_unsorted_outer(Query *root,
 		 * nestloop path, but since mergejoin is our only join type that
 		 * supports FULL JOIN, it's necessary to generate a clauseless
 		 * mergejoin path instead.
-		 *
-		 * Unfortunately this can't easily be extended to handle the case
-		 * where there are joinclauses but none of them use mergejoinable
-		 * operators; nodeMergejoin.c can only do a full join correctly if
-		 * all the joinclauses are mergeclauses.
 		 */
 		if (mergeclauses == NIL)
 		{
-			if (jointype == JOIN_FULL && restrictlist == NIL)
+			if (jointype == JOIN_FULL)
 				 /* okay to try for mergejoin */ ;
 			else
 				continue;
