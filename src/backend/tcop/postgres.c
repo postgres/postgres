@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.443 2005/04/21 19:18:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.444 2005/05/24 04:18:04 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -82,9 +82,6 @@ bool		Log_disconnections = false;
 
 LogStmtLevel log_statement = LOGSTMT_NONE;
 
-/* flag indicating if the statement satisfies log_statement */
-bool		statement_logged;
-
 /* GUC variable for maximum stack depth (measured in kilobytes) */
 int			max_stack_depth = 2048;
 
@@ -152,6 +149,8 @@ static int	UseNewLine = 0;		/* Use EOF as query delimiters */
 static int	InteractiveBackend(StringInfo inBuf);
 static int	SocketBackend(StringInfo inBuf);
 static int	ReadCommand(StringInfo inBuf);
+static bool log_after_parse(List *raw_parsetree_list,
+				const char *query_string, char **prepare_string);
 static void start_xact_command(void);
 static void finish_xact_command(void);
 static void SigHupHandler(SIGNAL_ARGS);
@@ -465,73 +464,93 @@ List *
 pg_parse_query(const char *query_string)
 {
 	List	   *raw_parsetree_list;
-	ListCell   *parsetree_item;
-
-	statement_logged = false;
-	if (log_statement == LOGSTMT_ALL)
-	{
-		ereport(LOG,
-				(errmsg("statement: %s", query_string)));
-		statement_logged = true;
-	}
 
 	if (log_parser_stats)
 		ResetUsage();
 
 	raw_parsetree_list = raw_parser(query_string);
 
-	/* do log_statement tests for mod and ddl */
-	if (log_statement == LOGSTMT_MOD ||
-		log_statement == LOGSTMT_DDL)
-	{
-		foreach(parsetree_item, raw_parsetree_list)
-		{
-			Node	   *parsetree = (Node *) lfirst(parsetree_item);
-			const char *commandTag;
-
-			if (IsA(parsetree, ExplainStmt) &&
-				((ExplainStmt *) parsetree)->analyze)
-				parsetree = (Node *) (((ExplainStmt *) parsetree)->query);
-
-			if (IsA(parsetree, PrepareStmt))
-				parsetree = (Node *) (((PrepareStmt *) parsetree)->query);
-
-			if (IsA(parsetree, SelectStmt))
-				continue;		/* optimization for frequent command */
-
-			if (log_statement == LOGSTMT_MOD &&
-				(IsA(parsetree, InsertStmt) ||
-				 IsA(parsetree, UpdateStmt) ||
-				 IsA(parsetree, DeleteStmt) ||
-				 IsA(parsetree, TruncateStmt) ||
-				 (IsA(parsetree, CopyStmt) &&
-				  ((CopyStmt *) parsetree)->is_from)))	/* COPY FROM */
-			{
-				ereport(LOG,
-						(errmsg("statement: %s", query_string)));
-				statement_logged = true;
-				break;
-			}
-			commandTag = CreateCommandTag(parsetree);
-			if (strncmp(commandTag, "CREATE ", strlen("CREATE ")) == 0 ||
-				strncmp(commandTag, "ALTER ", strlen("ALTER ")) == 0 ||
-				strncmp(commandTag, "DROP ", strlen("DROP ")) == 0 ||
-				IsA(parsetree, GrantStmt) ||	/* GRANT or REVOKE */
-				IsA(parsetree, CommentStmt))
-			{
-				ereport(LOG,
-						(errmsg("statement: %s", query_string)));
-				statement_logged = true;
-				break;
-			}
-		}
-	}
-
 	if (log_parser_stats)
 		ShowUsage("PARSER STATISTICS");
 
 	return raw_parsetree_list;
 }
+
+static bool
+log_after_parse(List *raw_parsetree_list, const char *query_string,
+				   char **prepare_string)
+{
+	ListCell   *parsetree_item;
+	bool		log_this_statement = (log_statement == LOGSTMT_ALL);
+
+	*prepare_string = NULL;
+
+	/*	Check if we need to log the statement, and get prepare_string. */
+	foreach(parsetree_item, raw_parsetree_list)
+	{
+		Node	   *parsetree = (Node *) lfirst(parsetree_item);
+		const char *commandTag;
+
+		if (IsA(parsetree, ExplainStmt) &&
+			((ExplainStmt *) parsetree)->analyze)
+			parsetree = (Node *) (((ExplainStmt *) parsetree)->query);
+
+		if (IsA(parsetree, PrepareStmt))
+			parsetree = (Node *) (((PrepareStmt *) parsetree)->query);
+
+		if (IsA(parsetree, SelectStmt))
+			continue;		/* optimization for frequent command */
+
+		if (log_statement == LOGSTMT_MOD &&
+			(IsA(parsetree, InsertStmt) ||
+			 IsA(parsetree, UpdateStmt) ||
+			 IsA(parsetree, DeleteStmt) ||
+			 IsA(parsetree, TruncateStmt) ||
+			 (IsA(parsetree, CopyStmt) &&
+			  ((CopyStmt *) parsetree)->is_from)))	/* COPY FROM */
+			log_this_statement = true;
+
+		commandTag = CreateCommandTag(parsetree);
+		if ((log_statement == LOGSTMT_MOD ||
+			 log_statement == LOGSTMT_DDL) &&
+			(strncmp(commandTag, "CREATE ", strlen("CREATE ")) == 0 ||
+			 strncmp(commandTag, "ALTER ", strlen("ALTER ")) == 0 ||
+			 strncmp(commandTag, "DROP ", strlen("DROP ")) == 0 ||
+			 IsA(parsetree, GrantStmt) ||	/* GRANT or REVOKE */
+			 IsA(parsetree, CommentStmt)))
+			log_this_statement = true;
+
+		/*
+		 *	For the first EXECUTE we find, record the client statement
+		 *	used by the PREPARE.
+		 */
+		if (IsA(parsetree, ExecuteStmt))
+		{
+			ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
+			PreparedStatement *entry;
+
+			if ((entry = FetchPreparedStatement(stmt->name, false)) != NULL &&
+				entry->query_string)
+			{
+				*prepare_string = palloc(strlen(entry->query_string) +
+							  strlen("  [client PREPARE:  %s]") - 1);
+				sprintf(*prepare_string, "  [client PREPARE:  %s]",
+							  entry->query_string);
+			}
+		}
+	}
+	
+	if (log_this_statement)
+	{
+		ereport(LOG,
+				(errmsg("statement: %s%s", query_string,
+						*prepare_string ? *prepare_string : "")));
+		return true;
+	}
+	else
+		return false;
+}
+
 
 /*
  * Given a raw parsetree (gram.y output), and optionally information about
@@ -735,12 +754,13 @@ exec_simple_query(const char *query_string)
 	MemoryContext oldcontext;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
-	struct timeval start_t,
-				stop_t;
+	struct timeval start_t, stop_t;
 	bool		save_log_duration = log_duration;
 	int			save_log_min_duration_statement = log_min_duration_statement;
 	bool		save_log_statement_stats = log_statement_stats;
-
+	char		*prepare_string = NULL;
+	bool		was_logged = false;
+	
 	/*
 	 * Report query to various monitoring facilities.
 	 */
@@ -795,6 +815,10 @@ exec_simple_query(const char *query_string)
 	 * if we are in aborted transaction state!)
 	 */
 	parsetree_list = pg_parse_query(query_string);
+
+	if (log_statement != LOGSTMT_NONE || save_log_min_duration_statement != -1)
+		was_logged = log_after_parse(parsetree_list, query_string,
+										&prepare_string);
 
 	/*
 	 * Switch back to transaction context to enter the loop.
@@ -1011,10 +1035,11 @@ exec_simple_query(const char *query_string)
 			stop_t.tv_sec--;
 			stop_t.tv_usec += 1000000;
 		}
-		usecs = (long) (stop_t.tv_sec - start_t.tv_sec) * 1000000 + (long) (stop_t.tv_usec - start_t.tv_usec);
+		usecs = (long) (stop_t.tv_sec - start_t.tv_sec) * 1000000 +
+				(long) (stop_t.tv_usec - start_t.tv_usec);
 
 		/* Only print duration if we previously printed the statement. */
-		if (statement_logged && save_log_duration)
+		if (was_logged && save_log_duration)
 			ereport(LOG,
 					(errmsg("duration: %ld.%03ld ms",
 						(long) ((stop_t.tv_sec - start_t.tv_sec) * 1000 +
@@ -1029,15 +1054,19 @@ exec_simple_query(const char *query_string)
 			(save_log_min_duration_statement > 0 &&
 			 usecs >= save_log_min_duration_statement * 1000))
 			ereport(LOG,
-					(errmsg("duration: %ld.%03ld ms  statement: %s",
+					(errmsg("duration: %ld.%03ld ms  statement: %s%s",
 						(long) ((stop_t.tv_sec - start_t.tv_sec) * 1000 +
 							  (stop_t.tv_usec - start_t.tv_usec) / 1000),
 						(long) (stop_t.tv_usec - start_t.tv_usec) % 1000,
-							query_string)));
+							query_string,
+							prepare_string ? prepare_string : "")));
 	}
 
 	if (save_log_statement_stats)
 		ShowUsage("QUERY STATISTICS");
+
+	if (prepare_string != NULL)
+		pfree(prepare_string);
 
 	debug_query_string = NULL;
 }
@@ -1073,6 +1102,10 @@ exec_parse_message(const char *query_string,	/* string to execute */
 
 	if (save_log_statement_stats)
 		ResetUsage();
+
+	if (log_statement == LOGSTMT_ALL)
+		ereport(LOG,
+				(errmsg("statement: PREPARE %s AS %s", stmt_name, query_string)));
 
 	/*
 	 * Start up a transaction command so we can run parse analysis etc.
@@ -1371,6 +1404,10 @@ exec_bind_message(StringInfo input_message)
 	else
 		portal = CreatePortal(portal_name, false, false);
 
+	if (log_statement == LOGSTMT_ALL)
+		ereport(LOG,
+				(errmsg("statement: <BIND> %s", portal_name)));
+
 	/*
 	 * Fetch parameters, if any, and store in the portal's memory context.
 	 *
@@ -1579,6 +1616,10 @@ exec_execute_message(const char *portal_name, long max_rows)
 	bool		is_trans_exit = false;
 	bool		completed;
 	char		completionTag[COMPLETION_TAG_BUFSIZE];
+	struct timeval start_t,	stop_t;
+	bool		save_log_duration = log_duration;
+	int			save_log_min_duration_statement = log_min_duration_statement;
+	bool		save_log_statement_stats = log_statement_stats;
 
 	/* Adjust destination to tell printtup.c what to do */
 	dest = whereToSendOutput;
@@ -1614,6 +1655,24 @@ exec_execute_message(const char *portal_name, long max_rows)
 	}
 
 	set_ps_display(portal->commandTag);
+
+	/*
+	 * We use save_log_* so "SET log_duration = true"  and "SET
+	 * log_min_duration_statement = true" don't report incorrect time
+	 * because gettimeofday() wasn't called. Similarly,
+	 * log_statement_stats has to be captured once.
+	 */
+	if (save_log_duration || save_log_min_duration_statement != -1)
+		gettimeofday(&start_t, NULL);
+
+	if (save_log_statement_stats)
+		ResetUsage();
+
+	if (log_statement == LOGSTMT_ALL)
+		/* We have the portal, so output the source query. */
+		ereport(LOG,
+				(errmsg("statement: EXECUTE %s  [PREPARE:  %s]", portal_name,
+						portal->sourceText ? portal->sourceText : "")));
 
 	BeginCommand(portal->commandTag, dest);
 
@@ -1708,6 +1767,50 @@ exec_execute_message(const char *portal_name, long max_rows)
 		if (whereToSendOutput == Remote)
 			pq_putemptymessage('s');
 	}
+
+	/*
+	 * Combine processing here as we need to calculate the query duration
+	 * in both instances.
+	 */
+	if (save_log_duration || save_log_min_duration_statement != -1)
+	{
+		long		usecs;
+
+		gettimeofday(&stop_t, NULL);
+		if (stop_t.tv_usec < start_t.tv_usec)
+		{
+			stop_t.tv_sec--;
+			stop_t.tv_usec += 1000000;
+		}
+		usecs = (long) (stop_t.tv_sec - start_t.tv_sec) * 1000000 +
+				(long) (stop_t.tv_usec - start_t.tv_usec);
+
+		/* Only print duration if we previously printed the statement. */
+		if (log_statement == LOGSTMT_ALL && save_log_duration)
+			ereport(LOG,
+					(errmsg("duration: %ld.%03ld ms",
+						(long) ((stop_t.tv_sec - start_t.tv_sec) * 1000 +
+							  (stop_t.tv_usec - start_t.tv_usec) / 1000),
+					 (long) (stop_t.tv_usec - start_t.tv_usec) % 1000)));
+
+		/*
+		 * Output a duration_statement to the log if the query has
+		 * exceeded the min duration, or if we are to print all durations.
+		 */
+		if (save_log_min_duration_statement == 0 ||
+			(save_log_min_duration_statement > 0 &&
+			 usecs >= save_log_min_duration_statement * 1000))
+			ereport(LOG,
+					(errmsg("duration: %ld.%03ld ms  statement: EXECUTE %s  [PREPARE:  %s]",
+						(long) ((stop_t.tv_sec - start_t.tv_sec) * 1000 +
+							  (stop_t.tv_usec - start_t.tv_usec) / 1000),
+						(long) (stop_t.tv_usec - start_t.tv_usec) % 1000,
+							portal_name,
+							portal->sourceText ? portal->sourceText : "")));
+	}
+
+	if (save_log_statement_stats)
+		ShowUsage("QUERY STATISTICS");
 
 	debug_query_string = NULL;
 }

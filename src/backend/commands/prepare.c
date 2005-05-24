@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.36 2005/01/01 05:43:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.37 2005/05/24 04:18:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,9 +104,12 @@ PrepareQuery(PrepareStmt *stmt)
 	/* Generate plans for queries.	Snapshot is already set. */
 	plan_list = pg_plan_queries(query_list, NULL, false);
 
-	/* Save the results. */
+	/*
+	 *	Save the results.  We don't have the query string for this PREPARE,
+	 *	but we do have the string we got from the client, so use that.
+	 */
 	StorePreparedStatement(stmt->name,
-						   NULL,	/* text form not available */
+						   debug_query_string,
 						   commandTag,
 						   query_list,
 						   plan_list,
