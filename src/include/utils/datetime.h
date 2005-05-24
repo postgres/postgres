@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.52 2004/12/31 22:03:45 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.53 2005/05/24 04:03:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,8 +203,8 @@ typedef struct
  */
 #define FMODULO(t,q,u) \
 do { \
-	q = ((t < 0) ? ceil(t / u) : floor(t / u)); \
-	if (q != 0) t -= rint(q * u); \
+	(q) = (((t) < 0) ? ceil((t) / (u)) : floor((t) / (u))); \
+	if ((q) != 0) (t) -= rint((q) * (u)); \
 } while(0)
 
 /* TMODULO()
@@ -215,14 +215,14 @@ do { \
 #ifdef HAVE_INT64_TIMESTAMP
 #define TMODULO(t,q,u) \
 do { \
-	q = (t / u); \
-	if (q != 0) t -= (q * u); \
+	(q) = ((t) / (u)); \
+	if ((q) != 0) (t) -= ((q) * (u)); \
 } while(0)
 #else
 #define TMODULO(t,q,u) \
 do { \
-	q = ((t < 0) ? ceil(t / u) : floor(t / u)); \
-	if (q != 0) t -= rint(q * u); \
+	(q) = (((t) < 0) ? ceil((t) / (u)) : floor((t) / (u))); \
+	if ((q) != 0) (t) -= rint((q) * (u)); \
 } while(0)
 #endif
 
