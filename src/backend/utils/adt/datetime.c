@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.143 2005/05/23 21:54:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.144 2005/05/24 02:09:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3020,7 +3020,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 						return DTERR_BAD_FORMAT;
 
 					if (*field[i] == '-')
-						fval = -(fval);
+						fval = -fval;
 				}
 				else if (*cp == '\0')
 					fval = 0;
@@ -3033,24 +3033,24 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 				{
 					case DTK_MICROSEC:
 #ifdef HAVE_INT64_TIMESTAMP
-						*fsec += (val + fval);
+						*fsec += val + fval;
 #else
-						*fsec += ((val + fval) * 1e-6);
+						*fsec += (val + fval) * 1e-6;
 #endif
 						break;
 
 					case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-						*fsec += ((val + fval) * 1000);
+						*fsec += (val + fval) * 1000;
 #else
-						*fsec += ((val + fval) * 1e-3);
+						*fsec += (val + fval) * 1e-3;
 #endif
 						break;
 
 					case DTK_SECOND:
 						tm->tm_sec += val;
 #ifdef HAVE_INT64_TIMESTAMP
-						*fsec += (fval * 1000000);
+						*fsec += fval * 1000000;
 #else
 						*fsec += fval;
 #endif
@@ -3067,9 +3067,9 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
-							*fsec += ((fval - sec) * 1000000);
+							*fsec += (fval - sec) * 1000000;
 #else
-							*fsec += (fval - sec);
+							*fsec += fval - sec;
 #endif
 						}
 						tmask = DTK_M(MINUTE);
@@ -3085,9 +3085,9 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
-							*fsec += ((fval - sec) * 1000000);
+							*fsec += (fval - sec) * 1000000;
 #else
-							*fsec += (fval - sec);
+							*fsec += fval - sec;
 #endif
 						}
 						tmask = DTK_M(HOUR);
@@ -3103,9 +3103,9 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
-							*fsec += ((fval - sec) * 1000000);
+							*fsec += (fval - sec) * 1000000;
 #else
-							*fsec += (fval - sec);
+							*fsec += fval - sec;
 #endif
 						}
 						tmask = (fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY);
@@ -3117,13 +3117,13 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 						{
 							int			sec;
 
-							fval *= (7 * SECS_PER_DAY);
+							fval *= 7 * SECS_PER_DAY;
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
-							*fsec += ((fval - sec) * 1000000);
+							*fsec += (fval - sec) * 1000000;
 #else
-							*fsec += (fval - sec);
+							*fsec += fval - sec;
 #endif
 						}
 						tmask = (fmask & DTK_M(DAY)) ? 0 : DTK_M(DAY);
@@ -3135,13 +3135,13 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 						{
 							int			sec;
 
-							fval *= (30 * SECS_PER_DAY);
+							fval *= 30 * SECS_PER_DAY;
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
-							*fsec += ((fval - sec) * 1000000);
+							*fsec += (fval - sec) * 1000000;
 #else
-							*fsec += (fval - sec);
+							*fsec += fval - sec;
 #endif
 						}
 						tmask = DTK_M(MONTH);
@@ -3150,28 +3150,28 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 					case DTK_YEAR:
 						tm->tm_year += val;
 						if (fval != 0)
-							tm->tm_mon += (fval * 12);
+							tm->tm_mon += fval * 12;
 						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
 					case DTK_DECADE:
 						tm->tm_year += val * 10;
 						if (fval != 0)
-							tm->tm_mon += (fval * 120);
+							tm->tm_mon += fval * 120;
 						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
 					case DTK_CENTURY:
 						tm->tm_year += val * 100;
 						if (fval != 0)
-							tm->tm_mon += (fval * 1200);
+							tm->tm_mon += fval * 1200;
 						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
 					case DTK_MILLENNIUM:
 						tm->tm_year += val * 1000;
 						if (fval != 0)
-							tm->tm_mon += (fval * 12000);
+							tm->tm_mon += fval * 12000;
 						tmask = (fmask & DTK_M(YEAR)) ? 0 : DTK_M(YEAR);
 						break;
 
@@ -3233,12 +3233,12 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 	if (is_before)
 	{
 		*fsec = -(*fsec);
-		tm->tm_sec = -(tm->tm_sec);
-		tm->tm_min = -(tm->tm_min);
-		tm->tm_hour = -(tm->tm_hour);
-		tm->tm_mday = -(tm->tm_mday);
-		tm->tm_mon = -(tm->tm_mon);
-		tm->tm_year = -(tm->tm_year);
+		tm->tm_sec = -tm->tm_sec;
+		tm->tm_min = -tm->tm_min;
+		tm->tm_hour = -tm->tm_hour;
+		tm->tm_mday = -tm->tm_mday;
+		tm->tm_mon = -tm->tm_mon;
+		tm->tm_year = -tm->tm_year;
 	}
 
 	/* ensure that at least one time field has been found */

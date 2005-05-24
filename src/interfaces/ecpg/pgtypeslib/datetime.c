@@ -57,8 +57,8 @@ PGTYPESdate_from_asc(char *str, char **endptr)
 		return INT_MIN;
 	}
 
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf, ptr) != 0)
-		|| (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp, EuroDates) != 0))
+	if (ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf, ptr) != 0 ||
+		DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp, EuroDates) != 0)
 	{
 		errno = PGTYPES_DATE_BAD_DATE;
 		return INT_MIN;
@@ -92,7 +92,7 @@ PGTYPESdate_to_asc(date dDate)
 	int			DateStyle = 1;
 	bool		EuroDates = FALSE;
 
-	j2date((dDate + date2j(2000, 1, 1)), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
+	j2date(dDate + date2j(2000, 1, 1), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 	EncodeDateOnly(tm, DateStyle, buf, EuroDates);
 	return pgtypes_strdup(buf);
 }
@@ -200,7 +200,7 @@ PGTYPESdate_fmt_asc(date dDate, char *fmtstring, char *outbuf)
 	strcpy(outbuf, fmtstring);
 
 	/* get the date */
-	j2date((dDate + date2j(2000, 1, 1)), &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
+	j2date(dDate + date2j(2000, 1, 1), &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
 	dow = PGTYPESdate_dayofweek(dDate);
 
 	for (i = 0; mapping[i].format != NULL; i++)

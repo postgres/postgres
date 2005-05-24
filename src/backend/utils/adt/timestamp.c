@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.122 2005/05/23 21:54:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.123 2005/05/24 02:09:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,8 +280,8 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 #ifdef HAVE_INT64_TIMESTAMP
 		if (*time >= INT64CONST(0))
 		{
-			*time = (((*time + TimestampOffsets[typmod]) / TimestampScales[typmod])
-					 * TimestampScales[typmod]);
+			*time = ((*time + TimestampOffsets[typmod]) / TimestampScales[typmod]) *
+					TimestampScales[typmod];
 		}
 		else
 		{
@@ -289,8 +289,7 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 					  * TimestampScales[typmod]);
 		}
 #else
-		*time = (rint(((double) *time) * TimestampScales[typmod])
-				 / TimestampScales[typmod]);
+		*time = rint((double)*time * TimestampScales[typmod]) / TimestampScales[typmod];
 #endif
 	}
 }
@@ -891,7 +890,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 #ifdef HAVE_INT64_TIMESTAMP
 			if (interval->time >= INT64CONST(0))
 			{
-				interval->time = (((interval->time +
+				interval->time = ((interval->time +
 									IntervalOffsets[precision]) /
 									IntervalScales[precision]) *
 									IntervalScales[precision];
@@ -1212,15 +1211,15 @@ tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span)
 {
 	span->month = tm->tm_year * 12 + tm->tm_mon;
 #ifdef HAVE_INT64_TIMESTAMP
-	span->time = ((((((((tm->tm_mday * INT64CONST(24))
-						+ tm->tm_hour) * INT64CONST(60))
-					  + tm->tm_min) * INT64CONST(60))
-					+ tm->tm_sec) * USECS_PER_SEC) + fsec);
+	span->time = (((((((tm->tm_mday * INT64CONST(24)) +
+						tm->tm_hour) * INT64CONST(60)) +
+						tm->tm_min) * INT64CONST(60)) +
+						tm->tm_sec) * USECS_PER_SEC) + fsec;
 #else
-	span->time = ((((((tm->tm_mday * 24.0)
-					  + tm->tm_hour) * 60.0)
-					+ tm->tm_min) * 60.0)
-				  + tm->tm_sec);
+	span->time = (((((tm->tm_mday * 24.0) +
+						tm->tm_hour) * 60.0) +
+						tm->tm_min) * 60.0) +
+						tm->tm_sec;
 	span->time = JROUND(span->time + fsec);
 #endif
 
@@ -1231,14 +1230,14 @@ tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span)
 static int64
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
-	return ((((((hour * 60) + min) * 60) + sec) * USECS_PER_SEC) + fsec);
+	return (((((hour * 60) + min) * 60) + sec) * USECS_PER_SEC) + fsec;
 }	/* time2t() */
 
 #else
 static double
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
-	return ((((hour * 60) + min) * 60) + sec + fsec);
+	return (((hour * 60) + min) * 60) + sec + fsec;
 }	/* time2t() */
 #endif
 
@@ -1324,7 +1323,7 @@ int
 timestamp_cmp_internal(Timestamp dt1, Timestamp dt2)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	return ((dt1 < dt2) ? -1 : ((dt1 > dt2) ? 1 : 0));
+	return (dt1 < dt2) ? -1 : ((dt1 > dt2) ? 1 : 0);
 #else
 
 	/*
@@ -1935,13 +1934,13 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 			tm->tm_mon += span->month;
 			if (tm->tm_mon > 12)
 			{
-				tm->tm_year += ((tm->tm_mon - 1) / 12);
-				tm->tm_mon = (((tm->tm_mon - 1) % 12) + 1);
+				tm->tm_year += (tm->tm_mon - 1) / 12;
+				tm->tm_mon = ((tm->tm_mon - 1) % 12) + 1;
 			}
 			else if (tm->tm_mon < 1)
 			{
-				tm->tm_year += ((tm->tm_mon / 12) - 1);
-				tm->tm_mon = ((tm->tm_mon % 12) + 12);
+				tm->tm_year += tm->tm_mon / 12 - 1;
+				tm->tm_mon = tm->tm_mon % 12 + 12;
 			}
 
 			/* adjust for end of month boundary problems... */
@@ -2014,13 +2013,13 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 			tm->tm_mon += span->month;
 			if (tm->tm_mon > 12)
 			{
-				tm->tm_year += ((tm->tm_mon - 1) / 12);
-				tm->tm_mon = (((tm->tm_mon - 1) % 12) + 1);
+				tm->tm_year += (tm->tm_mon - 1) / 12;
+				tm->tm_mon = ((tm->tm_mon - 1) % 12) + 1;
 			}
 			else if (tm->tm_mon < 1)
 			{
-				tm->tm_year += ((tm->tm_mon / 12) - 1);
-				tm->tm_mon = ((tm->tm_mon % 12) + 12);
+				tm->tm_year += tm->tm_mon / 12 - 1;
+				tm->tm_mon = tm->tm_mon % 12 + 12;
 			}
 
 			/* adjust for end of month boundary problems... */
@@ -2337,12 +2336,12 @@ timestamp_age(PG_FUNCTION_ARGS)
 		timestamp2tm(dt2, NULL, tm2, &fsec2, NULL) == 0)
 	{
 		fsec = (fsec1 - fsec2);
-		tm->tm_sec = (tm1->tm_sec - tm2->tm_sec);
-		tm->tm_min = (tm1->tm_min - tm2->tm_min);
-		tm->tm_hour = (tm1->tm_hour - tm2->tm_hour);
-		tm->tm_mday = (tm1->tm_mday - tm2->tm_mday);
-		tm->tm_mon = (tm1->tm_mon - tm2->tm_mon);
-		tm->tm_year = (tm1->tm_year - tm2->tm_year);
+		tm->tm_sec = tm1->tm_sec - tm2->tm_sec;
+		tm->tm_min = tm1->tm_min - tm2->tm_min;
+		tm->tm_hour = tm1->tm_hour - tm2->tm_hour;
+		tm->tm_mday = tm1->tm_mday - tm2->tm_mday;
+		tm->tm_mon = tm1->tm_mon - tm2->tm_mon;
+		tm->tm_year = tm1->tm_year - tm2->tm_year;
 
 		/* flip sign if necessary... */
 		if (dt1 < dt2)
@@ -2450,13 +2449,13 @@ timestamptz_age(PG_FUNCTION_ARGS)
 	if (timestamp2tm(dt1, &tz1, tm1, &fsec1, &tzn) == 0 &&
 		timestamp2tm(dt2, &tz2, tm2, &fsec2, &tzn) == 0)
 	{
-		fsec = (fsec1 - fsec2);
-		tm->tm_sec = (tm1->tm_sec - tm2->tm_sec);
-		tm->tm_min = (tm1->tm_min - tm2->tm_min);
-		tm->tm_hour = (tm1->tm_hour - tm2->tm_hour);
-		tm->tm_mday = (tm1->tm_mday - tm2->tm_mday);
-		tm->tm_mon = (tm1->tm_mon - tm2->tm_mon);
-		tm->tm_year = (tm1->tm_year - tm2->tm_year);
+		fsec = fsec1 - fsec2;
+		tm->tm_sec = tm1->tm_sec - tm2->tm_sec;
+		tm->tm_min = tm1->tm_min - tm2->tm_min;
+		tm->tm_hour = tm1->tm_hour - tm2->tm_hour;
+		tm->tm_mday = tm1->tm_mday - tm2->tm_mday;
+		tm->tm_mon = tm1->tm_mon - tm2->tm_mon;
+		tm->tm_year = tm1->tm_year - tm2->tm_year;
 
 		/* flip sign if necessary... */
 		if (dt1 < dt2)
@@ -3048,7 +3047,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 				case DTK_YEAR:
 					tm->tm_mon = 0;
 				case DTK_QUARTER:
-					tm->tm_mon = (3 * (tm->tm_mon / 3));
+					tm->tm_mon = 3 * (tm->tm_mon / 3);
 				case DTK_MONTH:
 					tm->tm_mday = 0;
 				case DTK_DAY:
@@ -3357,7 +3356,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 				 * ----
 				 */
 				if (tm->tm_year > 0)
-					result = ((tm->tm_year + 99) / 100);
+					result = (tm->tm_year + 99) / 100;
 				else
 					/* caution: C division may have negative remainder */
 					result = -((99 - (tm->tm_year - 1)) / 100);
@@ -3419,7 +3418,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 							errmsg("timestamp out of range")));
 
 #ifdef HAVE_INT64_TIMESTAMP
-					result = ((timestamptz - SetEpochTimestamp()) / 1000000e0);
+					result = (timestamptz - SetEpochTimestamp()) / 1000000e0;
 #else
 					result = timestamptz - SetEpochTimestamp();
 #endif

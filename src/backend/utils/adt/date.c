@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.107 2005/05/23 21:54:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.108 2005/05/24 02:09:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -921,10 +921,10 @@ static int
 tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	*result = ((((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec)
-				* USECS_PER_SEC) + fsec);
+	*result = ((((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec)
+				* USECS_PER_SEC) + fsec;
 #else
-	*result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
+	*result = ((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec + fsec;
 #endif
 	return 0;
 }
@@ -938,12 +938,12 @@ static int
 time2tm(TimeADT time, struct pg_tm * tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	tm->tm_hour = (time / USECS_PER_HOUR);
-	time -= (tm->tm_hour * USECS_PER_HOUR);
-	tm->tm_min = (time / USECS_PER_MINUTE);
-	time -= (tm->tm_min * USECS_PER_MINUTE);
-	tm->tm_sec = (time / USECS_PER_SEC);
-	time -= (tm->tm_sec * USECS_PER_SEC);
+	tm->tm_hour = time / USECS_PER_HOUR;
+	time -= tm->tm_hour * USECS_PER_HOUR;
+	tm->tm_min = time / USECS_PER_MINUTE;
+	time -= tm->tm_min * USECS_PER_MINUTE;
+	tm->tm_sec = time / USECS_PER_SEC;
+	time -= tm->tm_sec * USECS_PER_SEC;
 	*fsec = time;
 #else
 	double		trem;
@@ -1077,7 +1077,7 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 	};
 #endif
 
-	if ((typmod >= 0) && (typmod <= MAX_TIME_PRECISION))
+	if (typmod >= 0 && typmod <= MAX_TIME_PRECISION)
 	{
 		/*
 		 * Note: this round-to-nearest code is not completely consistent
@@ -1089,17 +1089,17 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 #ifdef HAVE_INT64_TIMESTAMP
 		if (*time >= INT64CONST(0))
 		{
-			*time = (((*time + TimeOffsets[typmod]) / TimeScales[typmod])
-					 * TimeScales[typmod]);
+			*time = ((*time + TimeOffsets[typmod]) / TimeScales[typmod]) *
+					TimeScales[typmod];
 		}
 		else
 		{
-			*time = -((((-*time) + TimeOffsets[typmod]) / TimeScales[typmod])
-					  * TimeScales[typmod]);
+			*time = -((((-*time) + TimeOffsets[typmod]) / TimeScales[typmod]) *
+					TimeScales[typmod]);
 		}
 #else
-		*time = (rint(((double) *time) * TimeScales[typmod])
-				 / TimeScales[typmod]);
+		*time = rint((double)*time * TimeScales[typmod])
+				 / TimeScales[typmod];
 #endif
 	}
 }
@@ -1342,10 +1342,10 @@ timestamp_time(PG_FUNCTION_ARGS)
 	 * Could also do this with time = (timestamp / USECS_PER_DAY *
 	 * USECS_PER_DAY) - timestamp;
 	 */
-	result = ((((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec)
-			   * USECS_PER_SEC) + fsec);
+	result = ((((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec) *
+				USECS_PER_SEC) + fsec;
 #else
-	result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
+	result = ((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec + fsec;
 #endif
 
 	PG_RETURN_TIMEADT(result);
@@ -1379,10 +1379,10 @@ timestamptz_time(PG_FUNCTION_ARGS)
 	 * Could also do this with time = (timestamp / USECS_PER_DAY *
 	 * USECS_PER_DAY) - timestamp;
 	 */
-	result = ((((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec)
-			   * USECS_PER_SEC) + fsec);
+	result = ((((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec) *
+				USECS_PER_SEC) + fsec;
 #else
-	result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
+	result = ((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec + fsec;
 #endif
 
 	PG_RETURN_TIMEADT(result);
@@ -1624,26 +1624,25 @@ time_part(PG_FUNCTION_ARGS)
 		{
 			case DTK_MICROSEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = ((tm->tm_sec * USECS_PER_SEC) + fsec);
+				result = tm->tm_sec * USECS_PER_SEC + fsec;
 #else
-				result = ((tm->tm_sec + fsec) * 1000000);
+				result = (tm->tm_sec + fsec) * 1000000;
 #endif
 				break;
 
 			case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = ((tm->tm_sec * INT64CONST(1000))
-						  + (fsec / INT64CONST(1000)));
+				result = tm->tm_sec * INT64CONST(1000) + fsec / INT64CONST(1000);
 #else
-				result = ((tm->tm_sec + fsec) * 1000);
+				result = (tm->tm_sec + fsec) * 1000;
 #endif
 				break;
 
 			case DTK_SECOND:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = (tm->tm_sec + (fsec / USECS_PER_SEC));
+				result = tm->tm_sec + fsec / USECS_PER_SEC;
 #else
-				result = (tm->tm_sec + fsec);
+				result = tm->tm_sec + fsec;
 #endif
 				break;
 
@@ -1675,7 +1674,7 @@ time_part(PG_FUNCTION_ARGS)
 				result = 0;
 		}
 	}
-	else if ((type == RESERV) && (val == DTK_EPOCH))
+	else if (type == RESERV && val == DTK_EPOCH)
 	{
 #ifdef HAVE_INT64_TIMESTAMP
 		result = (time / 1000000e0);
@@ -1708,10 +1707,10 @@ static int
 tm2timetz(struct pg_tm * tm, fsec_t fsec, int tz, TimeTzADT *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time = ((((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec)
-					 * USECS_PER_SEC) + fsec);
+	result->time = ((((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec) *
+					USECS_PER_SEC) + fsec;
 #else
-	result->time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
+	result->time = ((tm->tm_hour * 60 + tm->tm_min) * 60) + tm->tm_sec + fsec;
 #endif
 	result->zone = tz;
 
@@ -1823,12 +1822,12 @@ timetz2tm(TimeTzADT *time, struct pg_tm * tm, fsec_t *fsec, int *tzp)
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		trem = time->time;
 
-	tm->tm_hour = (trem / USECS_PER_HOUR);
-	trem -= (tm->tm_hour * USECS_PER_HOUR);
-	tm->tm_min = (trem / USECS_PER_MINUTE);
-	trem -= (tm->tm_min * USECS_PER_MINUTE);
-	tm->tm_sec = (trem / USECS_PER_SEC);
-	*fsec = (trem - (tm->tm_sec * USECS_PER_SEC));
+	tm->tm_hour = trem / USECS_PER_HOUR;
+	trem -= tm->tm_hour * USECS_PER_HOUR;
+	tm->tm_min = trem / USECS_PER_MINUTE;
+	trem -= tm->tm_min * USECS_PER_MINUTE;
+	tm->tm_sec = trem / USECS_PER_SEC;
+	*fsec = trem - tm->tm_sec * USECS_PER_SEC;
 #else
 	double		trem = time->time;
 
@@ -2281,10 +2280,9 @@ datetimetz_timestamptz(PG_FUNCTION_ARGS)
 	TimestampTz result;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result = (((date *USECS_PER_DAY) +time->time)
-			  + (time->zone * USECS_PER_SEC));
+	result = (date * USECS_PER_DAY + time->time) + time->zone * USECS_PER_SEC;
 #else
-	result = (((date *(double)SECS_PER_DAY) +time->time) + time->zone);
+	result = date * (double)SECS_PER_DAY + time->time + time->zone;
 #endif
 
 	PG_RETURN_TIMESTAMP(result);
@@ -2400,26 +2398,25 @@ timetz_part(PG_FUNCTION_ARGS)
 
 			case DTK_MICROSEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = ((tm->tm_sec * USECS_PER_SEC) + fsec);
+				result = tm->tm_sec * USECS_PER_SEC + fsec;
 #else
-				result = ((tm->tm_sec + fsec) * 1000000);
+				result = (tm->tm_sec + fsec) * 1000000;
 #endif
 				break;
 
 			case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = ((tm->tm_sec * INT64CONST(1000))
-						  + (fsec / INT64CONST(1000)));
+				result = tm->tm_sec * INT64CONST(1000) + fsec / INT64CONST(1000);
 #else
-				result = ((tm->tm_sec + fsec) * 1000);
+				result = (tm->tm_sec + fsec) * 1000;
 #endif
 				break;
 
 			case DTK_SECOND:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = (tm->tm_sec + (fsec / USECS_PER_SEC));
+				result = tm->tm_sec + fsec / USECS_PER_SEC;
 #else
-				result = (tm->tm_sec + fsec);
+				result = tm->tm_sec + fsec;
 #endif
 				break;
 
@@ -2448,12 +2445,12 @@ timetz_part(PG_FUNCTION_ARGS)
 				result = 0;
 		}
 	}
-	else if ((type == RESERV) && (val == DTK_EPOCH))
+	else if (type == RESERV && val == DTK_EPOCH)
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-		result = ((time->time / 1000000e0) + time->zone);
+		result = time->time / 1000000e0 + time->zone;
 #else
-		result = (time->time + time->zone);
+		result = time->time + time->zone;
 #endif
 	}
 	else
@@ -2492,11 +2489,11 @@ timetz_zone(PG_FUNCTION_ARGS)
 
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 
-	if ((type == TZ) || (type == DTZ))
+	if (type == TZ || type == DTZ)
 	{
 		tz = val * 60;
 #ifdef HAVE_INT64_TIMESTAMP
-		result->time = time->time + ((time->zone - tz) * USECS_PER_SEC);
+		result->time = time->time + (time->zone - tz) * USECS_PER_SEC;
 		while (result->time < INT64CONST(0))
 			result->time += USECS_PER_DAY;
 		while (result->time >= USECS_PER_DAY)
@@ -2550,7 +2547,7 @@ timetz_izone(PG_FUNCTION_ARGS)
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result->time = time->time + ((time->zone - tz) * USECS_PER_SEC);
+	result->time = time->time + (time->zone - tz) * USECS_PER_SEC;
 	while (result->time < INT64CONST(0))
 		result->time += USECS_PER_DAY;
 	while (result->time >= USECS_PER_DAY)

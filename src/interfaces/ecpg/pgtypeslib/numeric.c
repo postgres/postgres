@@ -218,7 +218,7 @@ set_var_from_str(char *str, char **ptr, numeric *dest)
 		char	   *endptr;
 
 		(*ptr)++;
-		exponent = strtol((*ptr), &endptr, 10);
+		exponent = strtol(*ptr, &endptr, 10);
 		if (endptr == (*ptr))
 		{
 			errno = PGTYPES_NUM_BAD_NUMERIC;
@@ -1351,7 +1351,7 @@ PGTYPESnumeric_from_long(signed long int long_val, numeric *var)
 	{
 		size++;
 		reach_limit *= 10;
-	} while ((reach_limit - 1) < abs_long_val && reach_limit <= LONG_MAX / 10);
+	} while (reach_limit - 1 < abs_long_val && reach_limit <= LONG_MAX / 10);
 
 	if (reach_limit > LONG_MAX / 10)
 	{

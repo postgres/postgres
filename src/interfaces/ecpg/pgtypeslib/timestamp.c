@@ -20,14 +20,14 @@ int PGTYPEStimestamp_defmt_scan(char **, char *, timestamp *, int *, int *, int 
 static int64
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
-	return ((((((hour * 60) + min) * 60) + sec) * USECS_PER_SEC) + fsec);
+	return (((((hour * 60) + min) * 60) + sec) * USECS_PER_SEC) + fsec;
 }	/* time2t() */
 
 #else
 static double
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
-	return ((((hour * 60) + min) * 60) + sec + fsec);
+	return (((hour * 60) + min) * 60) + sec + fsec;
 }	/* time2t() */
 #endif
 
@@ -74,10 +74,11 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp *result)
 	if ((*result - time) / USECS_PER_DAY != dDate)
 		return -1;
 	/* check for just-barely overflow (okay except time-of-day wraps) */
-	if ((*result < 0) ? (dDate >= 0) : (dDate < 0))
+	if ((*result < 0 && dDate >= 0) ||
+		(*result >= 0 && dDate < 0))
 		return -1;
 #else
-	*result = ((dDate * SECS_PER_DAY) + time);
+	*result = dDate * SECS_PER_DAY + time;
 #endif
 	if (tzp != NULL)
 		*result = dt2local(*result, -(*tzp));
@@ -110,19 +111,19 @@ dt2time(timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 	time = jd;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	*hour = (time / USECS_PER_HOUR);
-	time -= ((*hour) * USECS_PER_HOUR);
-	*min = (time / USECS_PER_MINUTE);
-	time -= ((*min) * USECS_PER_MINUTE);
-	*sec = (time / USECS_PER_SEC);
-	*fsec = (time - (*sec * USECS_PER_SEC));
-	*sec = (time / USECS_PER_SEC);
-	*fsec = (time - (*sec * USECS_PER_SEC));
+	*hour = time / USECS_PER_HOUR;
+	time -= (*hour) * USECS_PER_HOUR;
+	*min = time / USECS_PER_MINUTE;
+	time -= (*min) * USECS_PER_MINUTE;
+	*sec = time / USECS_PER_SEC;
+	*fsec = time - *sec * USECS_PER_SEC;
+	*sec = time / USECS_PER_SEC;
+	*fsec = time - *sec * USECS_PER_SEC;
 #else
-	*hour = (time / 3600);
-	time -= ((*hour) * 3600);
-	*min = (time / 60);
-	time -= ((*min) * 60);
+	*hour = time / 3600;
+	time -= (*hour) * 3600;
+	*min = time / 60;
+	time -= (*min) * 60;
 	*sec = time;
 	*fsec = JROUND(time - *sec);
 #endif
@@ -199,10 +200,10 @@ timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 		if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		{
 #ifdef HAVE_INT64_TIMESTAMP
-			utime = ((dt / USECS_PER_SEC)
-				   + ((date0 - date2j(1970, 1, 1)) * INT64CONST(SECS_PER_DAY)));
+			utime = dt / USECS_PER_SEC +
+				((date0 - date2j(1970, 1, 1)) * INT64CONST(86400));
 #else
-			utime = (dt + ((date0 - date2j(1970, 1, 1)) * SECS_PER_DAY));
+			utime = dt + (date0 - date2j(1970, 1, 1)) * SECS_PER_DAY;
 #endif
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
@@ -222,7 +223,7 @@ timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 			if (tzn != NULL)
 				*tzn = (char *) tm->tm_zone;
 #elif defined(HAVE_INT_TIMEZONE)
-			*tzp = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
+			*tzp = (tm->tm_isdst > 0) ? TIMEZONE_GLOBAL - 3600 : TIMEZONE_GLOBAL;
 			if (tzn != NULL)
 				*tzn = TZNAME_GLOBAL[(tm->tm_isdst > 0)];
 #endif
@@ -301,8 +302,8 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 		return (noresult);
 	}
 
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf, ptr) != 0)
-	|| (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz, 0) != 0))
+	if (ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf, ptr) != 0 ||
+		DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz, 0) != 0)
 	{
 		errno = PGTYPES_TS_BAD_TIMESTAMP;
 		return (noresult);
@@ -571,7 +572,7 @@ dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 					break;
 				case 's':
 #ifdef HAVE_INT64_TIMESTAMP
-					replace_val.int64_val = ((*ts - SetEpochTimestamp()) / 1000000e0);
+					replace_val.int64_val = (*ts - SetEpochTimestamp()) / 1000000e0;
 					replace_type = PGTYPES_TYPE_INT64;
 #else
 					replace_val.double_val = *ts - SetEpochTimestamp();
@@ -879,13 +880,13 @@ PGTYPEStimestamp_add_interval(timestamp *tin, interval *span, timestamp *tout)
             tm->tm_mon += span->month;
             if (tm->tm_mon > 12)
             {
-                tm->tm_year += ((tm->tm_mon - 1) / 12);
-                tm->tm_mon = (((tm->tm_mon - 1) % 12) + 1);
+                tm->tm_year += (tm->tm_mon - 1) / 12;
+                tm->tm_mon = (tm->tm_mon - 1) % 12 + 1;
             }
             else if (tm->tm_mon < 1)
             {
-                tm->tm_year += ((tm->tm_mon / 12) - 1);
-                tm->tm_mon = ((tm->tm_mon % 12) + 12);
+                tm->tm_year += tm->tm_mon / 12 - 1;
+                tm->tm_mon = tm->tm_mon % 12 + 12;
             }
                                                                                                                
                                                                                                                
