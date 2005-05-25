@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.320 2005/05/20 14:53:25 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.321 2005/05/25 02:56:15 neilc Exp $
 -->
 
 <chapter Id="runtime">
@@ -4965,9 +4965,8 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    <productname>PostgreSQL</productname> offers encryption at several
    levels, and provides flexibility in protecting data from disclosure
    due to database server theft, unscrupulous administrators, and
-   insecure networks. Encryption might also be required by government
-   regulation, for example, for medical records or financial
-   transactions.
+   insecure networks. Encryption might also be required to secure
+   sensitive data such as medical records or financial transactions.
   </para>
    
   <variablelist>
@@ -4978,12 +4977,11 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 
     <para>
      By default, database user passwords are stored as MD5 hashes, so
-     the administrator can not determine the actual password assigned
+     the administrator cannot determine the actual password assigned
      to the user. If MD5 encryption is used for client authentication,
      the unencrypted password is never even temporarily present on the
-     server because the client MD5 encrypts it before being sent across
-     the network. MD5 is a one-way encryption --- there is no
-     decryption algorithm.
+     server because the client MD5 encrypts it before being sent
+     across the network.
     </para>
    </listitem>
   </varlistentry>
@@ -5025,13 +5023,13 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 
     <para>
      This mechanism prevents unecrypted data from being read from the
-     drives if the drives or the entire computer is stolen. This
-     mechanism does nothing to protect against attacks while the
-     filesystem is mounted, because when mounted, the operating system
-     provides a unencrypted view of the data. However, to mount the
-     filesystem, you need some way for the encryption key to be passed
-     to the operating system, and sometimes the key is stored somewhere
-     on the host that mounts the disk.
+     drives if the drives or the entire computer is stolen. This does
+     not protect against attacks while the filesystem is mounted,
+     because when mounted, the operating system provides an unencrypted
+     view of the data. However, to mount the filesystem, you need some
+     way for the encryption key to be passed to the operating system,
+     and sometimes the key is stored somewhere on the host that mounts
+     the disk.
     </para>
    </listitem>
   </varlistentry>
@@ -5048,8 +5046,8 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
       connection was made. It is this double-encrypted value that is
       sent over the network to the server. Double-encryption not only
       prevents the password from being discovered, it also prevents
-      another connection from replaying the same double-encryption
-      value in a later connection.
+      another connection from using the same encrypted password to
+      connect to the database server at a later time.
      </para>
     </listitem>
   </varlistentry>
@@ -5079,9 +5077,9 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
      It is possible for both the client and server to provide SSL keys
      or certificates to each other. It takes some extra configuration
      on each side, but this provides stronger verification of identity
-     than the mere use of passwords. It prevent a computer from
+     than the mere use of passwords. It prevents a computer from
      pretending to be the server just long enough to read the password
-     send by the client. It also helps prevent 'man in the middle"
+     send by the client. It also helps prevent "man in the middle"
      attacks where a computer between the client and server pretends to
      be the server and reads and passes all data between the client and
      server.
@@ -5094,13 +5092,11 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
 
    <listitem>
     <para>
-     If the system administrator can not be trusted, it is necessary
+     If the system administrator cannot be trusted, it is necessary
      for the client to encrypt the data; this way, unencrypted data
      never appears on the database server. Data is encrypted on the
      client before being sent to the server, and database results have
-     to be decrypted on the client before being used. Peter Wayner's
-     book, <citation>Translucent Databases</citation>, discusses how to
-     do this in considerable detail.
+     to be decrypted on the client before being used.
     </para>
    </listitem>
   </varlistentry>
