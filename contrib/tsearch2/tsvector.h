@@ -37,7 +37,7 @@ typedef struct
 typedef uint16 WordEntryPos;
 
 #define  WEP_GETWEIGHT(x)	( (x) >> 14 )
-#define  WEP_GETPOS(x)	( (x) & 0x3fff )
+#define  WEP_GETPOS(x)		( (x) & 0x3fff )
 
 #define  WEP_SETWEIGHT(x,v)  (x) = ( (v) << 14 ) | ( (x) & 0x3fff ) 
 #define  WEP_SETPOS(x,v)	(x) = ( (x) & 0xc000 ) | ( (v) & 0x3fff ) 
@@ -54,11 +54,11 @@ typedef struct
 	char		data[1];
 }	tsvector;
 
-#define DATAHDRSIZE (sizeof(int4)*2)
-#define CALCDATASIZE(x, lenstr) ( x * sizeof(WordEntry) + DATAHDRSIZE + lenstr )
-#define ARRPTR(x)	( (WordEntry*) ( (char*)x + DATAHDRSIZE ) )
-#define STRPTR(x)	( (char*)x + DATAHDRSIZE + ( sizeof(WordEntry) * ((tsvector*)x)->size ) )
-#define STRSIZE(x)	( ((tsvector*)x)->len - DATAHDRSIZE - ( sizeof(WordEntry) * ((tsvector*)x)->size ) )
+#define DATAHDRSIZE (sizeof(int4) * 2)
+#define CALCDATASIZE(x, lenstr) ( (x) * sizeof(WordEntry) + DATAHDRSIZE + (lenstr) )
+#define ARRPTR(x)	( (WordEntry*) ( (char*)(x) + DATAHDRSIZE ) )
+#define STRPTR(x)	( (char*)(x) + DATAHDRSIZE + ( sizeof(WordEntry) * ((tsvector*)(x))->size ) )
+#define STRSIZE(x)	( ((tsvector*)(x))->len - DATAHDRSIZE - ( sizeof(WordEntry) * ((tsvector*)(x))->size ) )
 #define _POSDATAPTR(x,e)	(STRPTR(x)+((WordEntry*)(e))->pos+SHORTALIGN(((WordEntry*)(e))->len))
 #define POSDATALEN(x,e) ( ( ((WordEntry*)(e))->haspos ) ? (*(uint16*)_POSDATAPTR(x,e)) : 0 )
 #define POSDATAPTR(x,e) ( (WordEntryPos*)( _POSDATAPTR(x,e)+sizeof(uint16) ) )

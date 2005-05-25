@@ -466,7 +466,7 @@ typedef struct
 	int4		buflen;
 }	INFIX;
 
-#define RESIZEBUF(inf,addsize) while( ( inf->cur - inf->buf ) + addsize + 1 >= inf->buflen ) { \
+#define RESIZEBUF(inf,addsize) while( ( (inf)->cur - (inf)->buf ) + (addsize) + 1 >= (inf)->buflen ) { \
 	int4 len = inf->cur - inf->buf; \
 	inf->buflen *= 2; \
 	inf->buf = (char*) repalloc( (void*)inf->buf, inf->buflen ); \

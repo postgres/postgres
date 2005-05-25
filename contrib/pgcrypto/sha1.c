@@ -1,4 +1,4 @@
-/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha1.c,v 1.14 2004/08/29 16:43:05 tgl Exp $ */
+/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha1.c,v 1.15 2005/05/25 21:40:39 momjian Exp $ */
 /*	   $KAME: sha1.c,v 1.3 2000/02/22 14:01:18 itojun Exp $    */
 
 /*
@@ -59,7 +59,7 @@ static uint32 _K[] = {0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6};
 #define F2(b, c, d) (((b) & (c)) | ((b) & (d)) | ((c) & (d)))
 #define F3(b, c, d) (((b) ^ (c)) ^ (d))
 
-#define S(n, x)		(((x) << (n)) | ((x) >> (32 - n)))
+#define S(n, x)		(((x) << (n)) | ((x) >> (32 - (n))))
 
 #define H(n)	(ctxt->h.b32[(n)])
 #define COUNT	(ctxt->count)

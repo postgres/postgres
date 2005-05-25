@@ -193,8 +193,8 @@ typedef struct
  */
 #define FMODULO(t,q,u) \
 do { \
-	q = ((t < 0) ? ceil(t / u): floor(t / u)); \
-	if (q != 0) t -= rint(q * u); \
+	(q) = (((t) < 0) ? ceil((t) / (u)): floor((t) / (u))); \
+	if ((q) != 0) (t) -= rint((q) * (u)); \
 } while(0)
 
 /* TMODULO()
@@ -205,14 +205,14 @@ do { \
 #ifdef HAVE_INT64_TIMESTAMP
 #define TMODULO(t,q,u) \
 do { \
-	q = (t / u); \
-	if (q != 0) t -= (q * u); \
+	(q) = ((t) / (u)); \
+	if ((q) != 0) (t) -= ((q) * (u)); \
 } while(0)
 #else
 #define TMODULO(t,q,u) \
 do { \
-	q = ((t < 0) ? ceil(t / u): floor(t / u)); \
-	if (q != 0) t -= rint(q * u); \
+	(q) = (((t) < 0) ? ceil((t) / (u)): floor((t) / (u))); \
+	if ((q) != 0) (t) -= rint((q) * (u)); \
 } while(0)
 #endif
 
@@ -277,8 +277,8 @@ do { \
 #endif
 #endif   /* HAVE_INT64_TIMESTAMP */
 
-#define TIMESTAMP_NOBEGIN(j)	do {j = DT_NOBEGIN;} while (0)
-#define TIMESTAMP_NOEND(j)			do {j = DT_NOEND;} while (0)
+#define TIMESTAMP_NOBEGIN(j)	do {(j) = DT_NOBEGIN;} while (0)
+#define TIMESTAMP_NOEND(j)			do {(j) = DT_NOEND;} while (0)
 #define TIMESTAMP_IS_NOBEGIN(j) ((j) == DT_NOBEGIN)
 #define TIMESTAMP_IS_NOEND(j)	((j) == DT_NOEND)
 #define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_NOBEGIN(j) || TIMESTAMP_IS_NOEND(j))

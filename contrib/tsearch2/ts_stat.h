@@ -24,10 +24,10 @@ typedef struct
 	char		data[1];
 }	tsstat;
 
-#define STATHDRSIZE (sizeof(int4)*4)
-#define CALCSTATSIZE(x, lenstr) ( x * sizeof(StatEntry) + STATHDRSIZE + lenstr )
-#define STATPTR(x)	( (StatEntry*) ( (char*)x + STATHDRSIZE ) )
-#define STATSTRPTR(x)	( (char*)x + STATHDRSIZE + ( sizeof(StatEntry) * ((tsvector*)x)->size ) )
-#define STATSTRSIZE(x)	( ((tsvector*)x)->len - STATHDRSIZE - ( sizeof(StatEntry) * ((tsvector*)x)->size ) )
+#define STATHDRSIZE (sizeof(int4) * 4)
+#define CALCSTATSIZE(x, lenstr) ( (x) * sizeof(StatEntry) + STATHDRSIZE + (lenstr) )
+#define STATPTR(x)	( (StatEntry*) ( (char*)(x) + STATHDRSIZE ) )
+#define STATSTRPTR(x)	( (char*)(x) + STATHDRSIZE + ( sizeof(StatEntry) * ((tsvector*)(x))->size ) )
+#define STATSTRSIZE(x)	( ((tsvector*)(x))->len - STATHDRSIZE - ( sizeof(StatEntry) * ((tsvector*)(x))->size ) )
 
 #endif

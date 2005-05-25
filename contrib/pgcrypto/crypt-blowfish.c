@@ -452,41 +452,41 @@ BF_swap(BF_word * x, int count)
 #if BF_SCALE
 /* Architectures which can shift addresses left by 2 bits with no extra cost */
 #define BF_ROUND(L, R, N) \
-	tmp1 = L & 0xFF; \
-	tmp2 = L >> 8; \
+	tmp1 = (L) & 0xFF; \
+	tmp2 = (L) >> 8; \
 	tmp2 &= 0xFF; \
-	tmp3 = L >> 16; \
+	tmp3 = (L) >> 16; \
 	tmp3 &= 0xFF; \
-	tmp4 = L >> 24; \
+	tmp4 = (L) >> 24; \
 	tmp1 = data.ctx.S[3][tmp1]; \
 	tmp2 = data.ctx.S[2][tmp2]; \
 	tmp3 = data.ctx.S[1][tmp3]; \
 	tmp3 += data.ctx.S[0][tmp4]; \
 	tmp3 ^= tmp2; \
-	R ^= data.ctx.P[N + 1]; \
+	(R) ^= data.ctx.P[(N) + 1]; \
 	tmp3 += tmp1; \
-	R ^= tmp3;
+	(R) ^= tmp3;
 #else
 /* Architectures with no complicated addressing modes supported */
 #define BF_INDEX(S, i) \
-	(*((BF_word *)(((unsigned char *)S) + (i))))
+	(*((BF_word *)(((unsigned char *)(S)) + (i))))
 #define BF_ROUND(L, R, N) \
-	tmp1 = L & 0xFF; \
+	tmp1 = (L) & 0xFF; \
 	tmp1 <<= 2; \
-	tmp2 = L >> 6; \
+	tmp2 = (L) >> 6; \
 	tmp2 &= 0x3FC; \
-	tmp3 = L >> 14; \
+	tmp3 = (L) >> 14; \
 	tmp3 &= 0x3FC; \
-	tmp4 = L >> 22; \
+	tmp4 = (L) >> 22; \
 	tmp4 &= 0x3FC; \
 	tmp1 = BF_INDEX(data.ctx.S[3], tmp1); \
 	tmp2 = BF_INDEX(data.ctx.S[2], tmp2); \
 	tmp3 = BF_INDEX(data.ctx.S[1], tmp3); \
 	tmp3 += BF_INDEX(data.ctx.S[0], tmp4); \
 	tmp3 ^= tmp2; \
-	R ^= data.ctx.P[N + 1]; \
+	(R) ^= data.ctx.P[(N) + 1]; \
 	tmp3 += tmp1; \
-	R ^= tmp3;
+	(R) ^= tmp3;
 #endif
 
 /*

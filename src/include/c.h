@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.183 2005/05/11 01:26:02 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.184 2005/05/25 21:40:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -535,7 +535,7 @@ typedef NameData *Name;
  * endof
  *		Address of the element one past the last in an array.
  */
-#define endof(array)	(&array[lengthof(array)])
+#define endof(array)	(&(array)[lengthof(array)])
 
 /* ----------------
  * Alignment macros: align a length or address appropriately for a given type.
@@ -549,7 +549,7 @@ typedef NameData *Name;
  */
 
 #define TYPEALIGN(ALIGNVAL,LEN)  \
-	(((long) (LEN) + (ALIGNVAL-1)) & ~((long) (ALIGNVAL-1)))
+	(((long) (LEN) + ((ALIGNVAL) - 1)) & ~((long) ((ALIGNVAL) - 1)))
 
 #define SHORTALIGN(LEN)			TYPEALIGN(ALIGNOF_SHORT, (LEN))
 #define INTALIGN(LEN)			TYPEALIGN(ALIGNOF_INT, (LEN))

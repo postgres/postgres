@@ -27,7 +27,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/include/regex/regguts.h,v 1.3 2003/11/29 22:41:10 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/regex/regguts.h,v 1.4 2005/05/25 21:40:42 momjian Exp $
  */
 
 
@@ -63,7 +63,7 @@
 
 /* function-pointer declarator */
 #ifndef FUNCPTR
-#define FUNCPTR(name, args) (*name) args
+#define FUNCPTR(name, args) (*(name)) args
 #endif
 
 /* memory allocation */

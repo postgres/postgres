@@ -680,12 +680,12 @@ typedef struct
 }	INFIX;
 
 #define RESIZEBUF(inf,addsize) \
-while( ( inf->cur - inf->buf ) + addsize + 1 >= inf->buflen ) \
+while( ( (inf)->cur - (inf)->buf ) + (addsize) + 1 >= (inf)->buflen ) \
 { \
-	int4 len = inf->cur - inf->buf; \
-	inf->buflen *= 2; \
-	inf->buf = (char*) repalloc( (void*)inf->buf, inf->buflen ); \
-	inf->cur = inf->buf + len; \
+	int4 len = (inf)->cur - (inf)->buf; \
+	(inf)->buflen *= 2; \
+	(inf)->buf = (char*) repalloc( (void*)(inf)->buf, (inf)->buflen ); \
+	(inf)->cur = (inf)->buf + len; \
 }
 
 /*

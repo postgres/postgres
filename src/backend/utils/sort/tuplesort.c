@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.48 2005/05/06 17:24:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.49 2005/05/25 21:40:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1564,7 +1564,7 @@ tuplesort_restorepos(Tuplesortstate *state)
  */
 
 #define HEAPCOMPARE(tup1,index1,tup2,index2) \
-	(checkIndex && (index1 != index2) ? index1 - index2 : \
+	(checkIndex && (index1 != index2) ? (index1) - (index2) : \
 	 COMPARETUP(state, tup1, tup2))
 
 /*

@@ -740,7 +740,7 @@ int			num_iter;
 		{
 
 #define SPTAB(t, i) \
-		(*(int32_t *)((unsigned char *)t + i*(sizeof(int32_t)/4)))
+		(*(int32_t *)((unsigned char *)(t) + (i)*(sizeof(int32_t)/4)))
 #if defined(gould)
 			/* use this if B.b[i] is evaluated just once ... */
 #define DOXOR(x,y,i)	x^=SPTAB(SPE[0][i],B.b[i]); y^=SPTAB(SPE[1][i],B.b[i]);
@@ -755,9 +755,9 @@ int			num_iter;
 #endif
 
 #define CRUNCH(p0, p1, q0, q1)	\
-			k = (q0 ^ q1) & SALT;	\
-			B.b32.i0 = k ^ q0 ^ kp->b32.i0;		\
-			B.b32.i1 = k ^ q1 ^ kp->b32.i1;		\
+			k = ((q0) ^ (q1)) & SALT;				\
+			B.b32.i0 = k ^ (q0) ^ kp->b32.i0;		\
+			B.b32.i1 = k ^ (q1) ^ kp->b32.i1;		\
 			kp = (C_block *)((char *)kp+ks_inc);	\
 							\
 			DOXOR(p0, p1, 0);		\

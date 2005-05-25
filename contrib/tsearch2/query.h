@@ -33,10 +33,10 @@ typedef struct
 	char		data[1];
 }	QUERYTYPE;
 
-#define HDRSIZEQT	( 2*sizeof(int4) )
-#define COMPUTESIZE(size,lenofoperand)	( HDRSIZEQT + size * sizeof(ITEM) + lenofoperand )
+#define HDRSIZEQT	( 2 * sizeof(int4) )
+#define COMPUTESIZE(size,lenofoperand)	( HDRSIZEQT + (size) * sizeof(ITEM) + (lenofoperand) )
 #define GETQUERY(x)  (ITEM*)( (char*)(x)+HDRSIZEQT )
-#define GETOPERAND(x)	( (char*)GETQUERY(x) + ((QUERYTYPE*)x)->size * sizeof(ITEM) )
+#define GETOPERAND(x)	( (char*)GETQUERY(x) + ((QUERYTYPE*)(x))->size * sizeof(ITEM) )
 
 #define ISOPERATOR(x) ( (x)=='!' || (x)=='&' || (x)=='|' || (x)=='(' || (x)==')' )
 

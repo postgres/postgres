@@ -20,7 +20,7 @@
  * Oroginal code  by Spencer Garrett <srg@quick.com>
  */
 
-#define _CRC32_(crc, ch)	 (crc = (crc >> 8) ^ crc32tab[(crc ^ (ch)) & 0xff])
+#define _CRC32_(crc, ch)	 ((crc) = ((crc) >> 8) ^ crc32tab[((crc) ^ (ch)) & 0xff])
 
 /* generated using the AUTODIN II polynomial
  *	x^32 + x^26 + x^23 + x^22 + x^16 +

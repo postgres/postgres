@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.h -
  *
- * $PostgreSQL: pgsql/src/include/utils/pg_lzcompress.h,v 1.10 2003/11/29 19:52:08 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/pg_lzcompress.h,v 1.11 2005/05/25 21:40:42 momjian Exp $
  *
  *	Definitions for the builtin LZ compressor
  * ----------
@@ -46,7 +46,7 @@ typedef struct PGLZ_Header
  *		in the entry.
  * ----------
  */
-#define PGLZ_RAW_SIZE(_lzdata)			(_lzdata->rawsize)
+#define PGLZ_RAW_SIZE(_lzdata)			((_lzdata)->rawsize)
 
 /* ----------
  * PGLZ_IS_COMPRESSED -
@@ -55,8 +55,8 @@ typedef struct PGLZ_Header
  *		uncompressed data.
  * ----------
  */
-#define PGLZ_IS_COMPRESSED(_lzdata)		(_lzdata->varsize !=				\
-										 _lzdata->rawsize +					\
+#define PGLZ_IS_COMPRESSED(_lzdata)		((_lzdata)->varsize !=				\
+e										 (_lzdata)->rawsize +			e	\
 														sizeof(PGLZ_Header))
 
 /* ----------
@@ -180,7 +180,7 @@ extern PGLZ_Strategy *PGLZ_strategy_never;
  *		Initialize a decomp state from a compressed input.
  * ----------
  */
-#define pglz_decomp_init(_ds,_lz) do {											\
+#define pglz_decomp_init(_ds,_lz) do {										\
 		(_ds)->cp_in		= ((unsigned char *)(_lz))						\
 											+ sizeof(PGLZ_Header);			\
 		(_ds)->cp_end		= (_ds)->cp_in + (_lz)->varsize					\

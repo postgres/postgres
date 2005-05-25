@@ -3,7 +3,7 @@
  *	  Add do ... while() macro fix
  *	  Remove __inline, _DIAGASSERTs, __P
  *
- *	$PostgreSQL: pgsql/src/port/qsort.c,v 1.5 2004/10/05 00:12:49 neilc Exp $
+ *	$PostgreSQL: pgsql/src/port/qsort.c,v 1.6 2005/05/25 21:40:43 momjian Exp $
  */
 
 /*	$NetBSD: qsort.c,v 1.13 2003/08/07 16:43:42 agc Exp $	*/
@@ -63,8 +63,8 @@ do {		\
 		} while (--i > 0);				\
 } while (0)
 
-#define SWAPINIT(a, es) swaptype = ((char *)a - (char *)0) % sizeof(long) || \
-	es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
+#define SWAPINIT(a, es) swaptype = ((char *)(a) - (char *)0) % sizeof(long) || \
+	(es) % sizeof(long) ? 2 : (es) == sizeof(long)? 0 : 1;
 
 static void
 swapfunc(a, b, n, swaptype)

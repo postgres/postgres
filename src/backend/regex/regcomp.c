@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.42 2004/11/24 22:56:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regcomp.c,v 1.43 2005/05/25 21:40:40 momjian Exp $
  *
  */
 
@@ -232,7 +232,7 @@ struct vars
 	struct cvec *cv;			/* interface cvec */
 	struct cvec *cv2;			/* utility cvec */
 	struct cvec *mcces;			/* collating-element information */
-#define  ISCELEADER(v,c) (v->mcces != NULL && haschr(v->mcces, (c)))
+#define  ISCELEADER(v,c) ((v)->mcces != NULL && haschr((v)->mcces, (c)))
 	struct state *mccepbegin;	/* in nfa, start of MCCE prototypes */
 	struct state *mccepend;		/* in nfa, end of MCCE prototypes */
 	struct subre *lacons;		/* lookahead-constraint vector */

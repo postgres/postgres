@@ -12,8 +12,8 @@
 #define BITBYTE 8
 #define SIGLENINT  63			/* >121 => key will toast, so it will not
 								 * work !!! */
-#define SIGLEN	( sizeof(int4)*SIGLENINT )
-#define SIGLENBIT (SIGLEN*BITBYTE)
+#define SIGLEN	( sizeof(int4) * SIGLENINT )
+#define SIGLENBIT (SIGLEN * BITBYTE)
 
 typedef char BITVEC[SIGLEN];
 typedef char *BITVECP;
@@ -28,7 +28,7 @@ typedef char *BITVECP;
 				}
 
 #define GETBYTE(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITBYTE ) ) )
-#define GETBITBYTE(x,i) ( ((char)(x)) >> i & 0x01 )
+#define GETBITBYTE(x,i) ( ((char)(x)) >> (i) & 0x01 )
 #define CLRBIT(x,i)   GETBYTE(x,i) &= ~( 0x01 << ( (i) % BITBYTE ) )
 #define SETBIT(x,i)   GETBYTE(x,i) |=  ( 0x01 << ( (i) % BITBYTE ) )
 #define GETBIT(x,i) ( (GETBYTE(x,i) >> ( (i) % BITBYTE )) & 0x01 )
@@ -51,15 +51,15 @@ typedef struct
 #define SIGNKEY		0x02
 #define ALLISTRUE	0x04
 
-#define ISARRKEY(x) ( ((GISTTYPE*)x)->flag & ARRKEY )
-#define ISSIGNKEY(x)	( ((GISTTYPE*)x)->flag & SIGNKEY )
-#define ISALLTRUE(x)	( ((GISTTYPE*)x)->flag & ALLISTRUE )
+#define ISARRKEY(x) ( ((GISTTYPE*)(x))->flag & ARRKEY )
+#define ISSIGNKEY(x)	( ((GISTTYPE*)(x))->flag & SIGNKEY )
+#define ISALLTRUE(x)	( ((GISTTYPE*)(x))->flag & ALLISTRUE )
 
-#define GTHDRSIZE	( sizeof(int4)*2  )
+#define GTHDRSIZE	( sizeof(int4) * 2  )
 #define CALCGTSIZE(flag, len) ( GTHDRSIZE + ( ( (flag) & ARRKEY ) ? ((len)*sizeof(int4)) : (((flag) & ALLISTRUE) ? 0 : SIGLEN) ) )
 
-#define GETSIGN(x)	( (BITVECP)( (char*)x+GTHDRSIZE ) )
-#define GETARR(x)	( (int4*)( (char*)x+GTHDRSIZE ) )
-#define ARRNELEM(x) ( ( ((GISTTYPE*)x)->len - GTHDRSIZE )/sizeof(int4) )
+#define GETSIGN(x)	( (BITVECP)( (char*)(x)+GTHDRSIZE ) )
+#define GETARR(x)	( (int4*)( (char*)(x)+GTHDRSIZE ) )
+#define ARRNELEM(x) ( ( ((GISTTYPE*)(x))->len - GTHDRSIZE )/sizeof(int4) )
 
 #endif

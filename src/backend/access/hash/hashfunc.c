@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.43 2005/03/29 00:16:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.44 2005/05/25 21:40:40 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -192,15 +192,15 @@ hashvarlena(PG_FUNCTION_ARGS)
  */
 #define mix(a,b,c) \
 { \
-  a -= b; a -= c; a ^= (c>>13); \
-  b -= c; b -= a; b ^= (a<<8); \
-  c -= a; c -= b; c ^= (b>>13); \
-  a -= b; a -= c; a ^= (c>>12);  \
-  b -= c; b -= a; b ^= (a<<16); \
-  c -= a; c -= b; c ^= (b>>5); \
-  a -= b; a -= c; a ^= (c>>3);	\
-  b -= c; b -= a; b ^= (a<<10); \
-  c -= a; c -= b; c ^= (b>>15); \
+  a -= b; a -= c; a ^= ((c)>>13); \
+  b -= c; b -= a; b ^= ((a)<<8); \
+  c -= a; c -= b; c ^= ((b)>>13); \
+  a -= b; a -= c; a ^= ((c)>>12);  \
+  b -= c; b -= a; b ^= ((a)<<16); \
+  c -= a; c -= b; c ^= ((b)>>5); \
+  a -= b; a -= c; a ^= ((c)>>3);	\
+  b -= c; b -= a; b ^= ((a)<<10); \
+  c -= a; c -= b; c ^= ((b)>>15); \
 }
 
 /*

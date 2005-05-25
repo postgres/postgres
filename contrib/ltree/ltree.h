@@ -109,7 +109,7 @@ typedef struct
 }	ltxtquery;
 
 #define HDRSIZEQT		MAXALIGN( 2*sizeof(int4) )
-#define COMPUTESIZE(size,lenofoperand)	( HDRSIZEQT + size * sizeof(ITEM) + lenofoperand )
+#define COMPUTESIZE(size,lenofoperand)	( HDRSIZEQT + (size) * sizeof(ITEM) + (lenofoperand) )
 #define GETQUERY(x)  (ITEM*)( (char*)(x)+HDRSIZEQT )
 #define GETOPERAND(x)	( (char*)GETQUERY(x) + ((ltxtquery*)x)->size * sizeof(ITEM) )
 

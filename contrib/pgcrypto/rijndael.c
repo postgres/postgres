@@ -57,11 +57,11 @@ static void gen_tabs(void);
 
 /* Invert byte order in a 32 bit variable							*/
 
-#define bswap(x)	((rotl(x, 8) & 0x00ff00ff) | (rotr(x, 8) & 0xff00ff00))
+#define bswap(x)	((rotl((x), 8) & 0x00ff00ff) | (rotr((x), 8) & 0xff00ff00))
 
 /* Extract byte from a 32 bit quantity (little endian notation)		*/
 
-#define byte(x,n)	((u1byte)((x) >> (8 * n)))
+#define byte(x,n)	((u1byte)((x) >> (8 * (n))))
 
 #if BYTE_ORDER != LITTLE_ENDIAN
 #define BYTE_SWAP
@@ -100,19 +100,19 @@ static u4byte il_tab[4][256];
 static u4byte tab_gen = 0;
 #endif   /* !PRE_CALC_TABLES */
 
-#define ff_mult(a,b)	(a && b ? pow_tab[(log_tab[a] + log_tab[b]) % 255] : 0)
+#define ff_mult(a,b)	((a) && (b) ? pow_tab[(log_tab[a] + log_tab[b]) % 255] : 0)
 
-#define f_rn(bo, bi, n, k)							\
-	bo[n] =  ft_tab[0][byte(bi[n],0)] ^				\
-			 ft_tab[1][byte(bi[(n + 1) & 3],1)] ^	\
-			 ft_tab[2][byte(bi[(n + 2) & 3],2)] ^	\
-			 ft_tab[3][byte(bi[(n + 3) & 3],3)] ^ *(k + n)
+#define f_rn(bo, bi, n, k)								\
+	(bo)[n] =  ft_tab[0][byte((bi)[n],0)] ^				\
+			 ft_tab[1][byte((bi)[((n) + 1) & 3],1)] ^	\
+			 ft_tab[2][byte((bi)[((n) + 2) & 3],2)] ^	\
+			 ft_tab[3][byte((bi)[((n) + 3) & 3],3)] ^ *((k) + (n))
 
 #define i_rn(bo, bi, n, k)							\
-	bo[n] =  it_tab[0][byte(bi[n],0)] ^				\
-			 it_tab[1][byte(bi[(n + 3) & 3],1)] ^	\
-			 it_tab[2][byte(bi[(n + 2) & 3],2)] ^	\
-			 it_tab[3][byte(bi[(n + 1) & 3],3)] ^ *(k + n)
+	(bo)[n] =  it_tab[0][byte((bi)[n],0)] ^				\
+			 it_tab[1][byte((bi)[((n) + 3) & 3],1)] ^	\
+			 it_tab[2][byte((bi)[((n) + 2) & 3],2)] ^	\
+			 it_tab[3][byte((bi)[((n) + 1) & 3],3)] ^ *((k) + (n))
 
 #ifdef LARGE_TABLES
 
@@ -122,17 +122,17 @@ static u4byte tab_gen = 0;
 	  fl_tab[2][byte(x, 2)] ^	 \
 	  fl_tab[3][byte(x, 3)] )
 
-#define f_rl(bo, bi, n, k)							\
-	bo[n] =  fl_tab[0][byte(bi[n],0)] ^				\
-			 fl_tab[1][byte(bi[(n + 1) & 3],1)] ^	\
-			 fl_tab[2][byte(bi[(n + 2) & 3],2)] ^	\
-			 fl_tab[3][byte(bi[(n + 3) & 3],3)] ^ *(k + n)
+#define f_rl(bo, bi, n, k)								\
+	(bo)[n] =  fl_tab[0][byte((bi)[n],0)] ^				\
+			 fl_tab[1][byte((bi)[((n) + 1) & 3],1)] ^	\
+			 fl_tab[2][byte((bi)[((n) + 2) & 3],2)] ^	\
+			 fl_tab[3][byte((bi)[((n) + 3) & 3],3)] ^ *((k) + (n))
 
-#define i_rl(bo, bi, n, k)							\
-	bo[n] =  il_tab[0][byte(bi[n],0)] ^				\
-			 il_tab[1][byte(bi[(n + 3) & 3],1)] ^	\
-			 il_tab[2][byte(bi[(n + 2) & 3],2)] ^	\
-			 il_tab[3][byte(bi[(n + 1) & 3],3)] ^ *(k + n)
+#define i_rl(bo, bi, n, k)								\
+	(bo)[n] =  il_tab[0][byte((bi)[n],0)] ^				\
+			 il_tab[1][byte((bi)[((n) + 3) & 3],1)] ^	\
+			 il_tab[2][byte((bi)[((n) + 2) & 3],2)] ^	\
+			 il_tab[3][byte((bi)[((n) + 1) & 3],3)] ^ *((k) + (n))
 
 #else
 
@@ -142,17 +142,17 @@ static u4byte tab_gen = 0;
 	((u4byte)sbx_tab[byte(x, 2)] << 16) ^	 \
 	((u4byte)sbx_tab[byte(x, 3)] << 24)
 
-#define f_rl(bo, bi, n, k)										\
-	bo[n] = (u4byte)sbx_tab[byte(bi[n],0)] ^					\
-		rotl(((u4byte)sbx_tab[byte(bi[(n + 1) & 3],1)]),  8) ^	\
-		rotl(((u4byte)sbx_tab[byte(bi[(n + 2) & 3],2)]), 16) ^	\
-		rotl(((u4byte)sbx_tab[byte(bi[(n + 3) & 3],3)]), 24) ^ *(k + n)
+#define f_rl(bo, bi, n, k)											\
+	(bo)[n] = (u4byte)sbx_tab[byte((bi)[n],0)] ^					\
+		rotl(((u4byte)sbx_tab[byte((bi)[((n) + 1) & 3],1)]),  8) ^	\
+		rotl(((u4byte)sbx_tab[byte((bi)[((n) + 2) & 3],2)]), 16) ^	\
+		rotl(((u4byte)sbx_tab[byte((bi)[((n) + 3) & 3],3)]), 24) ^ *((k) + (n))
 
-#define i_rl(bo, bi, n, k)										\
-	bo[n] = (u4byte)isb_tab[byte(bi[n],0)] ^					\
-		rotl(((u4byte)isb_tab[byte(bi[(n + 3) & 3],1)]),  8) ^	\
-		rotl(((u4byte)isb_tab[byte(bi[(n + 2) & 3],2)]), 16) ^	\
-		rotl(((u4byte)isb_tab[byte(bi[(n + 1) & 3],3)]), 24) ^ *(k + n)
+#define i_rl(bo, bi, n, k)											\
+	(bo)[n] = (u4byte)isb_tab[byte((bi)[n],0)] ^					\
+		rotl(((u4byte)isb_tab[byte((bi)[((n) + 3) & 3],1)]),  8) ^	\
+		rotl(((u4byte)isb_tab[byte((bi)[((n) + 2) & 3],2)]), 16) ^	\
+		rotl(((u4byte)isb_tab[byte((bi)[((n) + 1) & 3],3)]), 24) ^ *((k) + (n))
 #endif
 
 static void
@@ -282,25 +282,25 @@ do {   t = ls_box(rotr(t,  8)) ^ rco_tab[i];		   \
 
 #define loop6(i)									\
 do {   t = ls_box(rotr(t,  8)) ^ rco_tab[i];		   \
-	t ^= e_key[6 * i];	   e_key[6 * i + 6] = t;	\
-	t ^= e_key[6 * i + 1]; e_key[6 * i + 7] = t;	\
-	t ^= e_key[6 * i + 2]; e_key[6 * i + 8] = t;	\
-	t ^= e_key[6 * i + 3]; e_key[6 * i + 9] = t;	\
-	t ^= e_key[6 * i + 4]; e_key[6 * i + 10] = t;	\
-	t ^= e_key[6 * i + 5]; e_key[6 * i + 11] = t;	\
+	t ^= e_key[6 * (i)];	   e_key[6 * (i) + 6] = t;	\
+	t ^= e_key[6 * (i) + 1]; e_key[6 * (i) + 7] = t;	\
+	t ^= e_key[6 * (i) + 2]; e_key[6 * (i) + 8] = t;	\
+	t ^= e_key[6 * (i) + 3]; e_key[6 * (i) + 9] = t;	\
+	t ^= e_key[6 * (i) + 4]; e_key[6 * (i) + 10] = t;	\
+	t ^= e_key[6 * (i) + 5]; e_key[6 * (i) + 11] = t;	\
 } while (0)
 
 #define loop8(i)									\
 do {   t = ls_box(rotr(t,  8)) ^ rco_tab[i];		   \
-	t ^= e_key[8 * i];	   e_key[8 * i + 8] = t;	\
-	t ^= e_key[8 * i + 1]; e_key[8 * i + 9] = t;	\
-	t ^= e_key[8 * i + 2]; e_key[8 * i + 10] = t;	\
-	t ^= e_key[8 * i + 3]; e_key[8 * i + 11] = t;	\
-	t  = e_key[8 * i + 4] ^ ls_box(t);				\
-	e_key[8 * i + 12] = t;							\
-	t ^= e_key[8 * i + 5]; e_key[8 * i + 13] = t;	\
-	t ^= e_key[8 * i + 6]; e_key[8 * i + 14] = t;	\
-	t ^= e_key[8 * i + 7]; e_key[8 * i + 15] = t;	\
+	t ^= e_key[8 * (i)];	 e_key[8 * (i) + 8] = t;	\
+	t ^= e_key[8 * (i) + 1]; e_key[8 * (i) + 9] = t;	\
+	t ^= e_key[8 * (i) + 2]; e_key[8 * (i) + 10] = t;	\
+	t ^= e_key[8 * (i) + 3]; e_key[8 * (i) + 11] = t;	\
+	t  = e_key[8 * (i) + 4] ^ ls_box(t);				\
+	e_key[8 * (i) + 12] = t;							\
+	t ^= e_key[8 * (i) + 5]; e_key[8 * (i) + 13] = t;	\
+	t ^= e_key[8 * (i) + 6]; e_key[8 * (i) + 14] = t;	\
+	t ^= e_key[8 * (i) + 7]; e_key[8 * (i) + 15] = t;	\
 } while (0)
 
 rijndael_ctx *
