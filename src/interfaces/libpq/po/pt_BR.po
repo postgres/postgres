@@ -1,13 +1,13 @@
 # "libpq" translation to Brazilian Portuguese Language.
 # Cesar Suga <sartre@linuxbr.com>, 2002.
 # Roberto Mello <rmello@fslc.usu.edu>, 2002.
-# Euler Taveira de Oliveira <eulerto@yahoo.com.br>, 2003, 2004.
+# Euler Taveira de Oliveira <eulerto@yahoo.com.br>, 2003, 2004, 2005.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-15 12:04-0200\n"
+"POT-Creation-Date: 2005-05-08 21:42-0300\n"
 "PO-Revision-Date: 2004-10-27 18:36-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <eulerto@yahoo.com.br>\n"
 "Language-Team: Brazilian Portuguese <desenvolvimento-postgresql@listas."
@@ -21,57 +21,49 @@ msgstr ""
 msgid "Kerberos 4 error: %s\n"
 msgstr "Erro do Kerberos 4: %s\n"
 
-#: fe-auth.c:397
+#: fe-auth.c:402
 #, c-format
 msgid "could not set socket to blocking mode: %s\n"
 msgstr "não pôde configurar o soquete para modo bloqueado: %s\n"
 
-#: fe-auth.c:414 fe-auth.c:418
+#: fe-auth.c:419 fe-auth.c:423
 #, c-format
 msgid "Kerberos 5 authentication rejected: %*s\n"
 msgstr "Autenticação Kerberos 5 rejeitada: %*s\n"
 
-#: fe-auth.c:444
+#: fe-auth.c:449
 #, c-format
 msgid "could not restore non-blocking mode on socket: %s\n"
 msgstr "não pôde restaurar modo não-bloqueado no soquete: %s\n"
 
-#: fe-auth.c:511
+#: fe-auth.c:516
 msgid "SCM_CRED authentication method not supported\n"
 msgstr "método de autenticação SCM_CRED não é suportado\n"
 
-#: fe-auth.c:533 fe-connect.c:1427 fe-connect.c:2638 fe-connect.c:2647
+#: fe-auth.c:538 fe-connect.c:1427 fe-connect.c:2647 fe-connect.c:2656
 #: fe-lobj.c:556 fe-protocol2.c:1007 fe-protocol3.c:958
 msgid "out of memory\n"
 msgstr "sem memória\n"
 
-#: fe-auth.c:603
-msgid "Kerberos 4 authentication failed\n"
-msgstr "Autenticação Kerberos 4 falhou\n"
-
-#: fe-auth.c:611
+#: fe-auth.c:615
 msgid "Kerberos 4 authentication not supported\n"
 msgstr "Autenticação Kerberos 4 não é suportada\n"
 
-#: fe-auth.c:622
-msgid "Kerberos 5 authentication failed\n"
-msgstr "Autenticação Kerberos 5 falhou\n"
-
-#: fe-auth.c:630
+#: fe-auth.c:633
 msgid "Kerberos 5 authentication not supported\n"
 msgstr "Autenticação Kerberos 5 não é suportada\n"
 
-#: fe-auth.c:658
+#: fe-auth.c:661
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "método de autenticação %u não é suportado\n"
 
-#: fe-auth.c:695
+#: fe-auth.c:698
 #, c-format
 msgid "invalid authentication service name \"%s\", ignored\n"
 msgstr "nome do serviço de autenticação \"%s\" é inválido, ignorado\n"
 
-#: fe-auth.c:768
+#: fe-auth.c:771
 #, c-format
 msgid "fe_getauthname: invalid authentication system: %d\n"
 msgstr "fe_getauthname: sistema de autenticação inválido: %d\n"
@@ -86,6 +78,16 @@ msgstr "valor do modo ssl desconhecido: \"%s\"\n"
 msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
 msgstr ""
 "valor do modo ssl é \"%s\" inválido quando suporte a SSL não foi compilado\n"
+
+#: fe-connect.c:743
+msgid "connectDBStart() -- socket name can only be specified with non-TCP\n"
+msgstr ""
+"connectDBStart() -- nome do soquete só pode ser especificado com acesso não-"
+"TCP\n"
+
+#: fe-connect.c:772
+msgid "connectDBStart() -- non-TCP access only possible on localhost\n"
+msgstr "connectDBStart() -- acesso não-TCP só é possível com localhost\n"
 
 #: fe-connect.c:812
 #, c-format
@@ -160,7 +162,7 @@ msgstr "não pôde obter do soquete o endereço do cliente: %s\n"
 #: fe-connect.c:1405
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
-msgstr "não pôde mandar pacote de negociação SSL: %s\n"
+msgstr "não pôde enviar pacote de negociação SSL: %s\n"
 
 #: fe-connect.c:1440
 #, c-format
@@ -171,6 +173,10 @@ msgstr "não pôde enviar pacote de inicialização: %s\n"
 msgid "server does not support SSL, but SSL was required\n"
 msgstr "servidor não suporta SSL, mas SSL foi requerido\n"
 
+#: fe-connect.c:1517
+msgid "Postmaster reports error, attempting fallback to pre-7.0.\n"
+msgstr "Postmaster relatou erro, tentando com versões anteriores a 7.0.\n"
+
 #: fe-connect.c:1538
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
@@ -179,7 +185,7 @@ msgstr "a negociação SSL recebeu uma resposta inválida: %c\n"
 #: fe-connect.c:1595 fe-connect.c:1627
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
-msgstr "pedido de autenticação esperado do servidor, mas foi recebido %c\n"
+msgstr "pedido de autenticação do servidor era esperado, mas foi recebido %c\n"
 
 #: fe-connect.c:1863
 msgid "unexpected message from server during startup\n"
@@ -192,27 +198,42 @@ msgstr ""
 "estado de conexão %c é inválido, provavelmente indicativo de corrupção de "
 "memória\n"
 
-#: fe-connect.c:2686
+#: fe-connect.c:2514
+#, c-format
+msgid "ERROR: Service file '%s' not found\n"
+msgstr "ERRO: arquivo de serviço '%s' não foi encontrado\n"
+
+#: fe-connect.c:2527
+#, c-format
+msgid "ERROR: line %d too long in service file '%s'\n"
+msgstr "ERRO: linha %d é muito longa em arquivo de serviço '%s'\n"
+
+#: fe-connect.c:2578 fe-connect.c:2605
+#, c-format
+msgid "ERROR: syntax error in service file '%s', line %d\n"
+msgstr "ERRO: erro de sintaxe em arquivo de serviço '%s', linha %d\n"
+
+#: fe-connect.c:2695
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "faltando \"=\" depois de \"%s\" na informação sobre a conexão\n"
 
-#: fe-connect.c:2735
+#: fe-connect.c:2744
 msgid "unterminated quoted string in connection info string\n"
 msgstr ""
 "cadeia de caracteres entre aspas não foi terminada na informação sobre a "
 "conexão\n"
 
-#: fe-connect.c:2769
+#: fe-connect.c:2778
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "opção de conexão \"%s\" inválida\n"
 
-#: fe-connect.c:2991
+#: fe-connect.c:3000
 msgid "connection pointer is NULL\n"
 msgstr "ponteiro da conexão é NULO\n"
 
-#: fe-connect.c:3230
+#: fe-connect.c:3239
 #, c-format
 msgid ""
 "WARNING: Password file %s has world or group read access; permission should "
@@ -352,15 +373,65 @@ msgstr "não pode determinar OID da função loread\n"
 msgid "cannot determine OID of function lowrite\n"
 msgstr "não pode determinar OID da função lowrite\n"
 
+#: fe-misc.c:88
+#, c-format
+msgid "From backend> %c\n"
+msgstr "Do servidor> %c\n"
+
+#: fe-misc.c:104
+#, c-format
+msgid "To backend> %c\n"
+msgstr "Para servidor> %c\n"
+
+#: fe-misc.c:140
+#, c-format
+msgid "From backend> \"%s\"\n"
+msgstr "Do servidor> \"%s\"\n"
+
+#: fe-misc.c:157
+#, c-format
+msgid "To backend> '%s'\n"
+msgstr "Para servidor> '%s'\n"
+
+#: fe-misc.c:178
+#, c-format
+msgid "From backend (%lu)> %.*s\n"
+msgstr "Do servidor (%lu)> %.*s\n"
+
+#: fe-misc.c:194
+#, c-format
+msgid "To backend> %.*s\n"
+msgstr "Para servidor> %.*s\n"
+
 #: fe-misc.c:228
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
 msgstr "inteiro de tamanho %lu não é suportado por pqGetInt"
 
+#: fe-misc.c:234
+#, c-format
+msgid "From backend (#%lu)> %d\n"
+msgstr "Do servidor (#%lu)> %d\n"
+
 #: fe-misc.c:264
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "inteiro de tamanho %lu não é suportado por pqPutInt"
+
+#: fe-misc.c:270
+#, c-format
+msgid "To backend (%lu#)> %d\n"
+msgstr "Para servidor (%lu#)> %d\n"
+
+#: fe-misc.c:458
+#, c-format
+msgid "To backend> Msg %c\n"
+msgstr "Para servidor> Mensagem %c\n"
+
+#: fe-misc.c:496
+#, c-format
+msgid "To backend> Msg complete, length %u\n"
+msgstr "Para servidor> Mensagem completa, tamanho %u\n"
 
 #: fe-misc.c:544 fe-misc.c:748
 msgid "connection not open\n"
@@ -634,7 +705,7 @@ msgstr "não pôde criar contexto SSL: %s\n"
 #: fe-secure.c:986
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
-msgstr "não pôde ler arquivo de certificado raiz \"%s\": %s\n"
+msgstr "não pôde ler arquivo contendo certificado raiz \"%s\": %s\n"
 
 #: fe-secure.c:1099
 #, c-format
@@ -645,3 +716,9 @@ msgstr "certificado não pôde ser validado: %s\n"
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "certificado não pôde ser obtido: %s\n"
+
+#~ msgid "Kerberos 4 authentication failed\n"
+#~ msgstr "Autenticação Kerberos 4 falhou\n"
+
+#~ msgid "Kerberos 5 authentication failed\n"
+#~ msgstr "Autenticação Kerberos 5 falhou\n"
