@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.129 2005/05/18 05:01:10 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.130 2005/05/25 22:12:05 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -827,7 +827,8 @@ psql_completion(char *text, int start, int end)
 
 	/* ALTER TABLE xxx RENAME yyy */
 	else if (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
-			 pg_strcasecmp(prev2_wd, "RENAME") == 0)
+			 pg_strcasecmp(prev2_wd, "RENAME") == 0 &&
+			 pg_strcasecmp(prev_wd, "TO") != 0)
 		COMPLETE_WITH_CONST("TO");
 
 	/* If we have TABLE <sth> DROP, provide COLUMN or CONSTRAINT */
