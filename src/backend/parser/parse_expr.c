@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.129.2.2 2005/05/24 23:52:02 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.129.2.3 2005/05/25 02:03:52 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -981,11 +981,12 @@ exprTypmod(Node *expr)
 					case BPCHAROID:
 						if (!con->constisnull)
 						{
-							int32 len = VARSIZE(DatumGetPointer(con->constvalue));
+							int32 len = VARSIZE(DatumGetPointer(con->constvalue)) - VARHDRSZ;
 
 							if (pg_database_encoding_max_length() > 1)
 								len = pg_mbstrlen_with_len(VARDATA(DatumGetPointer(con->constvalue)), len);
-							return len;
+
+							return len + VARHDRSZ;
 						}
 						break;
 					default:
