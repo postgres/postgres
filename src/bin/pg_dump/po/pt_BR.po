@@ -5,7 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2004-06-09 11:26-0300\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2005-05-08 21:18-0300\n"
 "PO-Revision-Date: 2004-06-09 11:38-0300\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
 "Language-Team: Brazilian Portuguese <pgsqlbr-dev@lists.querencialivre.rs.gov."
@@ -127,6 +128,7 @@ msgstr ""
 "\n"
 
 #: pg_dump.c:615 pg_restore.c:368 pg_dumpall.c:235
+#, c-format
 msgid "Usage:\n"
 msgstr "Uso:\n"
 
@@ -136,6 +138,7 @@ msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPÇÃO]... [NOMEBD]\n"
 
 #: pg_dump.c:618 pg_restore.c:371
+#, c-format
 msgid ""
 "\n"
 "General options:\n"
@@ -144,10 +147,12 @@ msgstr ""
 "Opções gerais:\n"
 
 #: pg_dump.c:619 pg_restore.c:373
+#, c-format
 msgid "  -f, --file=FILENAME      output file name\n"
 msgstr "  -f, --file=ARQUIVO       nome do arquivo de saída\n"
 
 #: pg_dump.c:620
+#, c-format
 msgid ""
 "  -F, --format=c|t|p       output file format (custom, tar, plain text)\n"
 msgstr ""
@@ -155,6 +160,7 @@ msgstr ""
 "texto)\n"
 
 #: pg_dump.c:621
+#, c-format
 msgid ""
 "  -i, --ignore-version     proceed even when server version mismatches\n"
 "                           pg_dump version\n"
@@ -164,23 +170,28 @@ msgstr ""
 "                           da versão do pg_dump\n"
 
 #: pg_dump.c:623 pg_restore.c:377 pg_dumpall.c:248
+#, c-format
 msgid "  -v, --verbose            verbose mode\n"
 msgstr "  -v, --verbose            modo de detalhe\n"
 
 #: pg_dump.c:624
+#, c-format
 msgid "  -Z, --compress=0-9       compression level for compressed formats\n"
 msgstr ""
 "  -Z, --compress=0-9       nível de compressão para formatos comprimidos\n"
 
 #: pg_dump.c:625 pg_restore.c:378 pg_dumpall.c:250
+#, c-format
 msgid "  --help                   show this help, then exit\n"
 msgstr "  --help                   mostra essa ajuda, e sai\n"
 
 #: pg_dump.c:626 pg_restore.c:379 pg_dumpall.c:251
+#, c-format
 msgid "  --version                output version information, then exit\n"
 msgstr "  --version                mostra informação sobre a versão e sai\n"
 
 #: pg_dump.c:628 pg_restore.c:381
+#, c-format
 msgid ""
 "\n"
 "Options controlling the output content:\n"
@@ -189,26 +200,31 @@ msgstr ""
 "Opções que controlam a saída do conteúdo:\n"
 
 #: pg_dump.c:629 pg_dumpall.c:239
+#, c-format
 msgid "  -a, --data-only          dump only the data, not the schema\n"
 msgstr ""
 "  -a, --data-only          copia somente os dados, não o esquema (schema)\n"
 
 #: pg_dump.c:630
+#, c-format
 msgid "  -b, --blobs              include large objects in dump\n"
 msgstr "  -b, --blobs              inclui objetos grandes na saída\n"
 
 #: pg_dump.c:631 pg_restore.c:383
+#, c-format
 msgid "  -c, --clean              clean (drop) schema prior to create\n"
 msgstr ""
 "  -c, --clean              limpa (drop) o esquema (schema) antes de criá-lo\n"
 
 #: pg_dump.c:632
+#, c-format
 msgid ""
 "  -C, --create             include commands to create database in dump\n"
 msgstr ""
 "  -C, --create             inclui comandos para criação dos bancos de dados\n"
 
 #: pg_dump.c:633 pg_dumpall.c:241
+#, c-format
 msgid ""
 "  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
 msgstr ""
@@ -216,6 +232,7 @@ msgstr ""
 "de comandos COPY\n"
 
 #: pg_dump.c:634 pg_dumpall.c:242
+#, c-format
 msgid ""
 "  -D, --column-inserts     dump data as INSERT commands with column names\n"
 msgstr ""
@@ -223,14 +240,17 @@ msgstr ""
 "das colunas\n"
 
 #: pg_dump.c:635
+#, c-format
 msgid "  -n, --schema=SCHEMA      dump the named schema only\n"
 msgstr "  -n, --schema=ESQUEMA     copia somente o esquema (schema)\n"
 
 #: pg_dump.c:636 pg_dumpall.c:247
+#, c-format
 msgid "  -o, --oids               include OIDs in dump\n"
 msgstr "  -o, --oids               inclui OIDs na saída\n"
 
 #: pg_dump.c:637
+#, c-format
 msgid ""
 "  -O, --no-owner           do not output commands to set object ownership\n"
 "                           in plain text format\n"
@@ -240,11 +260,13 @@ msgstr ""
 "                           formato texto\n"
 
 #: pg_dump.c:639 pg_dumpall.c:246
+#, c-format
 msgid "  -s, --schema-only        dump only the schema, no data\n"
 msgstr ""
 "  -s, --schema-only        copia somente o esquema (schema), e não os dados\n"
 
 #: pg_dump.c:640
+#, c-format
 msgid ""
 "  -S, --superuser=NAME     specify the superuser user name to use in\n"
 "                           plain text format\n"
@@ -253,14 +275,17 @@ msgstr ""
 "                           formato texto\n"
 
 #: pg_dump.c:642
+#, c-format
 msgid "  -t, --table=TABLE        dump the named table only\n"
 msgstr "  -t, --table=TABELA       copia somente a tabela especificada\n"
 
 #: pg_dump.c:643 pg_dumpall.c:249
+#, c-format
 msgid "  -x, --no-privileges      do not dump privileges (grant/revoke)\n"
 msgstr "  -x, --no-privileges      não copia os privilégios (grant/revoke)\n"
 
 #: pg_dump.c:644 pg_restore.c:400
+#, c-format
 msgid ""
 "  -X disable-triggers, --disable-triggers\n"
 "                           disable triggers during data-only restore\n"
@@ -270,6 +295,7 @@ msgstr ""
 "restauração de dados\n"
 
 #: pg_dump.c:647 pg_restore.c:403 pg_dumpall.c:253
+#, c-format
 msgid ""
 "\n"
 "Connection options:\n"
@@ -278,23 +304,27 @@ msgstr ""
 "Opções de conexão: \n"
 
 #: pg_dump.c:648 pg_restore.c:404 pg_dumpall.c:254
+#, c-format
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
 msgstr ""
 "  -h, --host=MÁQUINA       máquina do servidor de banco de dados ou "
 "diretório do conector (socket)\n"
 
 #: pg_dump.c:649 pg_restore.c:405 pg_dumpall.c:255
+#, c-format
 msgid "  -p, --port=PORT          database server port number\n"
 msgstr ""
 "  -p, --port=PORTA         número da porta do servidor de banco de dados\n"
 
 #: pg_dump.c:650 pg_restore.c:406 pg_dumpall.c:256
+#, c-format
 msgid "  -U, --username=NAME      connect as specified database user\n"
 msgstr ""
 "  -U, --username=NOME      conecta como usuário do banco de dados "
 "especificado\n"
 
 #: pg_dump.c:651 pg_restore.c:407 pg_dumpall.c:257
+#, c-format
 msgid ""
 "  -W, --password           force password prompt (should happen "
 "automatically)\n"
@@ -302,6 +332,7 @@ msgstr ""
 "  -W, --password           pergunta senha (pode ocorrer automaticamente)\n"
 
 #: pg_dump.c:653
+#, c-format
 msgid ""
 "\n"
 "If no database name is supplied, then the PGDATABASE environment\n"
@@ -314,6 +345,7 @@ msgstr ""
 "\n"
 
 #: pg_dump.c:655 pg_restore.c:410 pg_dumpall.c:260
+#, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Reporte erros a <pgsql-bugs@postgresql.org>.\n"
 
@@ -1247,7 +1279,7 @@ msgstr "não pode ajustar usuário da sessão para \"%s\": %s"
 msgid "could not set search_path to \"%s\": %s"
 msgstr "não pode ajustar search_path para \"%s\": %s"
 
-#: pg_backup_archiver.c:2283
+#: pg_backup_archiver.c:2294
 msgid ""
 "WARNING: requested compression not available in this installation -- archive "
 "will be uncompressed\n"
@@ -1255,21 +1287,21 @@ msgstr ""
 "AVISO: compressão requerida não está disponível nessa instalação -- arquivo "
 "será descomprimido\n"
 
-#: pg_backup_archiver.c:2316
+#: pg_backup_archiver.c:2327
 msgid "did not find magic string in file header\n"
 msgstr "não encontrou sequência de caracteres mágica no cabeçalho do arquivo\n"
 
-#: pg_backup_archiver.c:2330
+#: pg_backup_archiver.c:2341
 #, c-format
 msgid "unsupported version (%d.%d) in file header\n"
 msgstr "versão não suportada (%d.%d) no cabeçalho do arquivo\n"
 
-#: pg_backup_archiver.c:2335
+#: pg_backup_archiver.c:2346
 #, c-format
 msgid "sanity check on integer size (%lu) failed\n"
 msgstr "checagem de sanidade no tamanho do inteiro (%lu) falhou\n"
 
-#: pg_backup_archiver.c:2339
+#: pg_backup_archiver.c:2350
 msgid ""
 "WARNING: archive was made on a machine with larger integers, some operations "
 "may fail\n"
@@ -1277,12 +1309,12 @@ msgstr ""
 "AVISO: arquivo foi feito em uma máquina com inteiros grandes, algumas "
 "operações podem falhar\n"
 
-#: pg_backup_archiver.c:2349
+#: pg_backup_archiver.c:2360
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)\n"
 msgstr "formato esperado (%d) difere do formato encontrado no arquivo (%d)\n"
 
-#: pg_backup_archiver.c:2365
+#: pg_backup_archiver.c:2376
 msgid ""
 "WARNING: archive is compressed, but this installation does not support "
 "compression -- no data will be available\n"
@@ -1290,7 +1322,7 @@ msgstr ""
 "AVISO: arquivo está comprimido, mas essa instalação não suporta compressão "
 "-- nenhum dado está disponível\n"
 
-#: pg_backup_archiver.c:2383
+#: pg_backup_archiver.c:2394
 msgid "WARNING: invalid creation date in header\n"
 msgstr "AVISO: data de criação inválida no cabeçalho\n"
 
@@ -1780,6 +1812,12 @@ msgstr "não pôde escrever cabeçalho do tar\n"
 msgid "%s: cannot specify both -d and -f output\n"
 msgstr "%s: não pode especificar ambas opções -d e -f\n"
 
+#: pg_restore.c:327
+#, c-format
+msgid "unrecognized archive format '%s'; please specify 't' or 'c'\n"
+msgstr ""
+"formato de arquivo '%s' desconhecido; por favor especifique 't' ou 'c'\n"
+
 #: pg_restore.c:367
 #, c-format
 msgid ""
@@ -1796,14 +1834,17 @@ msgid "  %s [OPTION]... [FILE]\n"
 msgstr "  %s [OPÇÃO]... [ARQUIVO]\n"
 
 #: pg_restore.c:372
+#, c-format
 msgid "  -d, --dbname=NAME        output database name\n"
 msgstr "  -d, --dbname=NOME        nome do banco de dados\n"
 
 #: pg_restore.c:374
+#, c-format
 msgid "  -F, --format=c|t         specify backup file format\n"
 msgstr "  -F, --format=c|t         especifica formato do arquivo de backup\n"
 
 #: pg_restore.c:375
+#, c-format
 msgid ""
 "  -i, --ignore-version     proceed even when server version mismatches\n"
 msgstr ""
@@ -1811,23 +1852,28 @@ msgstr ""
 "combinar\n"
 
 #: pg_restore.c:376
+#, c-format
 msgid "  -l, --list               print summarized TOC of the archive\n"
 msgstr "  -l, --list               mostra TOC resumido do arquivo\n"
 
 #: pg_restore.c:382
+#, c-format
 msgid "  -a, --data-only          restore only the data, no schema\n"
 msgstr "  -a, --data-only          recupera somente os dados, não o esquema\n"
 
 #: pg_restore.c:384
+#, c-format
 msgid "  -C, --create             issue commands to create the database\n"
 msgstr ""
 "  -C, --create             executa comandos para criar o banco de dados\n"
 
 #: pg_restore.c:385
+#, c-format
 msgid "  -I, --index=NAME         restore named index\n"
 msgstr "  -I, --index=NOME         recupera o índice especificado\n"
 
 #: pg_restore.c:386
+#, c-format
 msgid ""
 "  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 "                           output from this file\n"
@@ -1837,14 +1883,17 @@ msgstr ""
 "                           saída para esse arquivo\n"
 
 #: pg_restore.c:388
+#, c-format
 msgid "  -N, --orig-order         restore in original dump order\n"
 msgstr "  -N, --orig-order         recupera a ordem original da saída\n"
 
 #: pg_restore.c:389
+#, c-format
 msgid "  -o, --oid-order          restore in OID order\n"
 msgstr "  -o, --oid-order          recupera na ordem dos OIDs\n"
 
 #: pg_restore.c:390
+#, c-format
 msgid ""
 "  -O, --no-owner           do not output commands to set object ownership\n"
 msgstr ""
@@ -1852,6 +1901,7 @@ msgstr ""
 "objeto\n"
 
 #: pg_restore.c:391
+#, c-format
 msgid ""
 "  -P, --function=NAME(args)\n"
 "                           restore named function\n"
@@ -1860,17 +1910,20 @@ msgstr ""
 "                           recupera função especificada\n"
 
 #: pg_restore.c:393
+#, c-format
 msgid ""
 "  -r, --rearrange          rearrange output to put indexes etc. at end\n"
 msgstr ""
 "  -r, --rearrange          rearranja saída para colocar índices etc. no fim\n"
 
 #: pg_restore.c:394
+#, c-format
 msgid "  -s, --schema-only        restore only the schema, no data\n"
 msgstr ""
 "  -s, --schema-only        recupera somente o esquema, e não os dados\n"
 
 #: pg_restore.c:395
+#, c-format
 msgid ""
 "  -S, --superuser=NAME     specify the superuser user name to use for\n"
 "                           disabling triggers\n"
@@ -1879,14 +1932,17 @@ msgstr ""
 "                           desabilitar os gatilhos\n"
 
 #: pg_restore.c:397
+#, c-format
 msgid "  -t, --table=NAME         restore named table\n"
 msgstr "  -t, --table=NOME         recupera a tabela especificada\n"
 
 #: pg_restore.c:398
+#, c-format
 msgid "  -T, --trigger=NAME       restore named trigger\n"
 msgstr "  -T, --trigger=NOME       recupera o gatilho especificado\n"
 
 #: pg_restore.c:399
+#, c-format
 msgid ""
 "  -x, --no-privileges      skip restoration of access privileges (grant/"
 "revoke)\n"
@@ -1895,6 +1951,7 @@ msgstr ""
 "(grant/revoke)\n"
 
 #: pg_restore.c:409
+#, c-format
 msgid ""
 "\n"
 "If no input file name is supplied, then standard input is used.\n"
@@ -1919,6 +1976,7 @@ msgid "  %s [OPTION]...\n"
 msgstr "  %s [OPÇÃO]...\n"
 
 #: pg_dumpall.c:238
+#, c-format
 msgid ""
 "\n"
 "Options:\n"
@@ -1927,17 +1985,20 @@ msgstr ""
 "Opções:\n"
 
 #: pg_dumpall.c:240
+#, c-format
 msgid "  -c, --clean              clean (drop) databases prior to create\n"
 msgstr ""
 "  -c, --clean             apaga bancos de dados anteriormente criados\n"
 
 #: pg_dumpall.c:243
+#, c-format
 msgid "  -g, --globals-only       dump only global objects, no databases\n"
 msgstr ""
 "  -g, --globals-only      copia somente objetos globais, e não bancos de "
 "dados\n"
 
 #: pg_dumpall.c:244
+#, c-format
 msgid ""
 "  -i, --ignore-version     proceed even when server version mismatches\n"
 "                           pg_dumpall version\n"
@@ -1947,6 +2008,7 @@ msgstr ""
 "                          com a versão do pg_dumpall\n"
 
 #: pg_dumpall.c:259
+#, c-format
 msgid ""
 "\n"
 "The SQL script will be written to the standard output.\n"
