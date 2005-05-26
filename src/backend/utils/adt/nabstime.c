@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.127 2004/12/31 22:01:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.127.4.1 2005/05/26 02:10:02 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -306,15 +306,13 @@ abstimein(PG_FUNCTION_ARGS)
 			   *tm = &date;
 	int			dterr;
 	char	   *field[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + 1];
+	char		workbuf[MAXDATELEN + 1];
 	int			dtype;
 	int			nf,
 				ftype[MAXDATEFIELDS];
 
-	if (strlen(str) >= sizeof(lowstr))
-		dterr = DTERR_BAD_FORMAT;
-	else
-		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+						  field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
 	if (dterr != 0)
@@ -711,12 +709,10 @@ reltimein(PG_FUNCTION_ARGS)
 	char	   *field[MAXDATEFIELDS];
 	int			nf,
 				ftype[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + 1];
+	char		workbuf[MAXDATELEN + 1];
 
-	if (strlen(str) >= sizeof(lowstr))
-		dterr = DTERR_BAD_FORMAT;
-	else
-		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+						  field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
 		dterr = DecodeInterval(field, ftype, nf, &dtype, tm, &fsec);
 	if (dterr != 0)

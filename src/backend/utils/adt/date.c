@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.104.4.1 2005/04/23 22:53:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.104.4.2 2005/05/26 02:10:02 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,12 +65,10 @@ date_in(PG_FUNCTION_ARGS)
 	int			dterr;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + 1];
+	char		workbuf[MAXDATELEN + 1];
 
-	if (strlen(str) >= sizeof(lowstr))
-		dterr = DTERR_BAD_FORMAT;
-	else
-		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+						  field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp);
 	if (dterr != 0)
@@ -894,15 +892,13 @@ time_in(PG_FUNCTION_ARGS)
 	int			tz;
 	int			nf;
 	int			dterr;
-	char		lowstr[MAXDATELEN + 1];
+	char		workbuf[MAXDATELEN + 1];
 	char	   *field[MAXDATEFIELDS];
 	int			dtype;
 	int			ftype[MAXDATEFIELDS];
 
-	if (strlen(str) >= sizeof(lowstr))
-		dterr = DTERR_BAD_FORMAT;
-	else
-		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+						  field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
 		dterr = DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz);
 	if (dterr != 0)
@@ -1734,15 +1730,13 @@ timetz_in(PG_FUNCTION_ARGS)
 	int			tz;
 	int			nf;
 	int			dterr;
-	char		lowstr[MAXDATELEN + 1];
+	char		workbuf[MAXDATELEN + 1];
 	char	   *field[MAXDATEFIELDS];
 	int			dtype;
 	int			ftype[MAXDATEFIELDS];
 
-	if (strlen(str) >= sizeof(lowstr))
-		dterr = DTERR_BAD_FORMAT;
-	else
-		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+						  field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
 		dterr = DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz);
 	if (dterr != 0)

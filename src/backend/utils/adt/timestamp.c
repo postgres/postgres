@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.117.4.1 2005/04/01 14:25:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.117.4.2 2005/05/26 02:10:02 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,12 +77,10 @@ timestamp_in(PG_FUNCTION_ARGS)
 	int			dterr;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
+	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
 
-	if (strlen(str) >= sizeof(lowstr))
-		dterr = DTERR_BAD_FORMAT;
-	else
-		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+						  field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
 	if (dterr != 0)
@@ -318,12 +316,10 @@ timestamptz_in(PG_FUNCTION_ARGS)
 	int			dterr;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
+	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
 
-	if (strlen(str) >= sizeof(lowstr))
-		dterr = DTERR_BAD_FORMAT;
-	else
-		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
+						  field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
 		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
 	if (dterr != 0)
@@ -494,7 +490,7 @@ interval_in(PG_FUNCTION_ARGS)
 	int			dterr;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
+	char		workbuf[256];
 
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
@@ -504,10 +500,8 @@ interval_in(PG_FUNCTION_ARGS)
 	tm->tm_sec = 0;
 	fsec = 0;
 
-	if (strlen(str) >= sizeof(lowstr))
-		dterr = DTERR_BAD_FORMAT;
-	else
-		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	dterr = ParseDateTime(str, workbuf, sizeof(workbuf), field,
+						  ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
 		dterr = DecodeInterval(field, ftype, nf, &dtype, tm, &fsec);
 	if (dterr != 0)

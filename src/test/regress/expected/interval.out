@@ -221,3 +221,10 @@ select avg(f1) from interval_tbl;
  @ 4 years 1 mon 10 days 4 hours 18 mins 23 secs
 (1 row)
 
+-- test long interval input
+select '4 millenniums 5 centuries 4 decades 1 year 4 months 4 days 17 minutes 31 seconds'::interval;
+                  interval                  
+--------------------------------------------
+ @ 4541 years 4 mons 4 days 17 mins 31 secs
+(1 row)
+

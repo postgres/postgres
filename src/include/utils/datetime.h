@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.52 2004/12/31 22:03:45 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.52.4.1 2005/05/26 02:10:03 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,7 +276,7 @@ extern void GetCurrentTimeUsec(struct pg_tm * tm, fsec_t *fsec, int *tzp);
 extern void j2date(int jd, int *year, int *month, int *day);
 extern int	date2j(int year, int month, int day);
 
-extern int ParseDateTime(const char *timestr, char *lowstr,
+extern int ParseDateTime(const char *timestr, char *workbuf, size_t buflen,
 			  char **field, int *ftype,
 			  int maxfields, int *numfields);
 extern int DecodeDateTime(char **field, int *ftype,
