@@ -2018,24 +2018,3 @@ select missing_return_expr();
 
 drop function void_return_expr();
 drop function missing_return_expr();
-
--- test SQLSTATE and SQLERRM
-create function trap_exceptions() returns void as $_$
-begin
-   begin
-     raise exception 'first exception';
-   exception when others then
-     raise notice '% %', SQLSTATE, SQLERRM;
-   end;
-   raise notice '% %', SQLSTATE, SQLERRM;
-   begin
-     raise exception 'last exception';
-   exception when others then
-     raise notice '% %', SQLSTATE, SQLERRM;
-   end;
-   return;
-end; $_$ language plpgsql;
-
-select trap_exceptions();
-
-drop function trap_exceptions();

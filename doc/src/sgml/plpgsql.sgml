@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.68 2005/05/26 00:16:31 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.69 2005/05/26 04:08:31 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2007,13 +2007,12 @@ END LOOP;
     </indexterm>
 
     <para>
-     Any error occurring in <application>PL/pgSQL</> sets variables
-     <varname>SQLSTATE</> and <varname>SQLERRM</>, and, by default,
-     aborts execution of the function, and indeed of the surrounding
-     transaction as well. You can trap errors and recover from them by
-     using a <command>BEGIN</> block with an <literal>EXCEPTION</>
-     clause. The syntax is an extension of the normal syntax for a
-     <command>BEGIN</> block:
+     By default, any error occurring in a <application>PL/pgSQL</>
+     function aborts execution of the function, and indeed of the
+     surrounding transaction as well.  You can trap errors and recover
+     from them by using a <command>BEGIN</> block with an
+     <literal>EXCEPTION</> clause.  The syntax is an extension of the
+     normal syntax for a <command>BEGIN</> block:
 
 <synopsis>
 <optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
