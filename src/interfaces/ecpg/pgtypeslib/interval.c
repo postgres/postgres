@@ -511,7 +511,7 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 					sprintf(cp, ".%06d", (fsec >= 0) ? fsec : -(fsec));
 #else
 					fsec += tm->tm_sec;
-					sprintf(cp, ":%012.9f", fabs(fsec));
+					sprintf(cp, ":%013.10f", fabs(fsec));
 #endif
 					TrimTrailingZeros(cp);
 					cp += strlen(cp);
