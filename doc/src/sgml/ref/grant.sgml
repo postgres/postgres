@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.46 2005/04/28 21:47:09 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.47 2005/05/26 20:05:03 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,7 +30,7 @@ GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
-    ON FUNCTION <replaceable>funcname</replaceable> ([<replaceable>type</replaceable>, ...]) [, ...]
+    ON FUNCTION <replaceable>funcname</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }

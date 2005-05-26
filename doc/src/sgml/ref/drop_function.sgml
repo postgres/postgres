@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.29 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.30 2005/05/26 20:05:03 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">type</replaceable> [, ...] ] ) [ CASCADE | RESTRICT ]
+DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
+    [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -50,10 +51,41 @@ DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">type</replaceable></term>
+    <term><replaceable class="parameter">argmode</replaceable></term>
+
     <listitem>
      <para>
-      The data type of an argument of the function.
+      The mode of an argument: either <literal>IN</>, <literal>OUT</>,
+      or <literal>INOUT</>.  If omitted, the default is <literal>IN</>.
+      Note that <command>DROP FUNCTION</command> does not actually pay
+      any attention to <literal>OUT</> arguments, since only the input
+      arguments are needed to determine the function's identity.
+      So it is sufficient to list the <literal>IN</> and <literal>INOUT</>
+      arguments.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argname</replaceable></term>
+
+    <listitem>
+     <para>
+      The name of an argument.
+      Note that <command>DROP FUNCTION</command> does not actually pay
+      any attention to argument names, since only the argument data
+      types are needed to determine the function's identity.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argtype</replaceable></term>
+
+    <listitem>
+     <para>
+      The data type(s) of the function's arguments (optionally 
+      schema-qualified), if any.
      </para>
     </listitem>
    </varlistentry>

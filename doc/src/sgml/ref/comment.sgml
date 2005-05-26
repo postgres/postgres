@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.27 2005/03/07 04:30:51 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.28 2005/05/26 20:05:03 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,7 +30,7 @@ COMMENT ON
   CONVERSION <replaceable class="PARAMETER">object_name</replaceable> |
   DATABASE <replaceable class="PARAMETER">object_name</replaceable> |
   DOMAIN <replaceable class="PARAMETER">object_name</replaceable> |
-  FUNCTION <replaceable class="PARAMETER">func_name</replaceable> (<replaceable class="PARAMETER">arg1_type</replaceable>, <replaceable class="PARAMETER">arg2_type</replaceable>, ...) |
+  FUNCTION <replaceable class="PARAMETER">func_name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] ) |
   INDEX <replaceable class="PARAMETER">object_name</replaceable> |
   LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> |
   OPERATOR <replaceable class="PARAMETER">op</replaceable> (<replaceable class="PARAMETER">leftoperand_type</replaceable>, <replaceable class="PARAMETER">rightoperand_type</replaceable>) |
@@ -103,6 +103,64 @@ COMMENT ON
      </para>
     </listitem>
    </varlistentry>
+   
+   <varlistentry>
+     <term><replaceable>sourcetype</replaceable></term>
+     <listitem>
+      <para>
+       The name of the source data type of the cast.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>targettype</replaceable></term>
+     <listitem>
+      <para>
+       The name of the target data type of the cast.
+      </para>
+     </listitem>
+    </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argmode</replaceable></term>
+
+    <listitem>
+     <para>
+      The mode of a function argument: either <literal>IN</>, <literal>OUT</>,
+      or <literal>INOUT</>.  If omitted, the default is <literal>IN</>.
+      Note that <command>COMMENT ON FUNCTION</command> does not actually pay
+      any attention to <literal>OUT</> arguments, since only the input
+      arguments are needed to determine the function's identity.
+      So it is sufficient to list the <literal>IN</> and <literal>INOUT</>
+      arguments.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argname</replaceable></term>
+
+    <listitem>
+     <para>
+      The name of a function argument.
+      Note that <command>COMMENT ON FUNCTION</command> does not actually pay
+      any attention to argument names, since only the argument data
+      types are needed to determine the function's identity.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">argtype</replaceable></term>
+
+    <listitem>
+     <para>
+      The data type(s) of the function's arguments (optionally 
+      schema-qualified), if any.
+     </para>
+    </listitem>
+   </varlistentry>
 
    <varlistentry>
     <term><replaceable class="parameter">large_object_oid</replaceable></term>
@@ -119,24 +177,6 @@ COMMENT ON
      <listitem>
       <para>
        This is a noise word.
-      </para>
-     </listitem>
-    </varlistentry>
-   
-   <varlistentry>
-     <term><replaceable>sourcetype</replaceable></term>
-     <listitem>
-      <para>
-       The name of the source data type of the cast.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><replaceable>targettype</replaceable></term>
-     <listitem>
-      <para>
-       The name of the target data type of the cast.
       </para>
      </listitem>
     </varlistentry>
