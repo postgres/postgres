@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.138 2005/05/06 17:24:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.139 2005/05/26 00:16:31 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -180,6 +180,7 @@ static Datum exec_simple_cast_value(Datum value, Oid valtype,
 static void exec_init_tuple_store(PLpgSQL_execstate *estate);
 static bool compatible_tupdesc(TupleDesc td1, TupleDesc td2);
 static void exec_set_found(PLpgSQL_execstate *estate, bool state);
+static char *unpack_sql_state(int ssval);
 
 
 /* ----------
@@ -747,6 +748,20 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 	int			i;
 	int			n;
 
+
+  	/* setup SQLSTATE and SQLERRM */
+  	PLpgSQL_var *var;
+  
+  	var = (PLpgSQL_var *) (estate->datums[block->sqlstate_varno]);
+  	var->isnull = false;
+  	var->freeval = true;
+  	var->value = DirectFunctionCall1(textin, CStringGetDatum("00000"));
+  
+  	var = (PLpgSQL_var *) (estate->datums[block->sqlerrm_varno]);
+   	var->isnull = false;
+  	var->freeval = true;
+  	var->value = DirectFunctionCall1(textin, CStringGetDatum("Sucessful completion"));
+
 	/*
 	 * First initialize all variables declared in this block
 	 */
@@ -855,6 +870,16 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 			RollbackAndReleaseCurrentSubTransaction();
 			MemoryContextSwitchTo(oldcontext);
 			CurrentResourceOwner = oldowner;
+ 
+			/* set SQLSTATE and SQLERRM variables */
+		    
+			var = (PLpgSQL_var *) (estate->datums[block->sqlstate_varno]);
+			pfree((void *) (var->value));
+			var->value = DirectFunctionCall1(textin, CStringGetDatum(unpack_sql_state(edata->sqlerrcode)));
+  
+			var = (PLpgSQL_var *) (estate->datums[block->sqlerrm_varno]);
+			pfree((void *) (var->value));
+			var->value = DirectFunctionCall1(textin, CStringGetDatum(edata->message));
 
 			/*
 			 * If AtEOSubXact_SPI() popped any SPI context of the subxact,
@@ -918,6 +943,26 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 
 	return PLPGSQL_RC_OK;
 }
+
+/* 
+ * unpack MAKE_SQLSTATE code 
+ * This code is copied from backend/utils/error/elog.c.
+ */
+static char *
+unpack_sql_state(int ssval)
+{
+	static 	char		tbuf[12];
+	int			i;
+
+	for (i = 0; i < 5; i++)
+	{
+		tbuf[i] = PGUNSIXBIT(ssval);
+ 		ssval >>= 6;
+ 	}
+ 	tbuf[i] = '\0';
+	return tbuf;
+}
+
 
 
 /* ----------

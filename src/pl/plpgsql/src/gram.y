@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.69 2005/04/07 14:53:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.70 2005/05/26 00:16:31 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -80,6 +80,11 @@ static	void			 plpgsql_sql_error_callback(void *arg);
 			int  n_initvars;
 			int  *initvarnos;
 		}						declhdr;
+		struct 
+		{
+			int sqlstate_varno;
+			int sqlerrm_varno;
+		}						fict_vars;
 		List					*list;
 		PLpgSQL_type			*dtype;
 		PLpgSQL_datum			*scalar;	/* a VAR, RECFIELD, or TRIGARG */
@@ -96,6 +101,7 @@ static	void			 plpgsql_sql_error_callback(void *arg);
 		PLpgSQL_diag_item		*diagitem;
 }
 
+%type <fict_vars> fict_vars_sect
 %type <declhdr> decl_sect
 %type <varname> decl_varname
 %type <str>		decl_renname
@@ -244,19 +250,22 @@ opt_semi		:
 				| ';'
 				;
 
-pl_block		: decl_sect K_BEGIN lno proc_sect exception_sect K_END
+pl_block		: decl_sect fict_vars_sect K_BEGIN lno proc_sect exception_sect K_END
 					{
 						PLpgSQL_stmt_block *new;
 
 						new = palloc0(sizeof(PLpgSQL_stmt_block));
 
 						new->cmd_type	= PLPGSQL_STMT_BLOCK;
-						new->lineno		= $3;
+						new->lineno		= $4;
 						new->label		= $1.label;
 						new->n_initvars = $1.n_initvars;
 						new->initvarnos = $1.initvarnos;
-						new->body		= $4;
-						new->exceptions	= $5;
+						new->body		= $5;
+						new->exceptions	= $6;
+
+						new->sqlstate_varno = $2.sqlstate_varno;
+						new->sqlerrm_varno = $2.sqlerrm_varno;
 
 						plpgsql_ns_pop();
 
@@ -264,6 +273,19 @@ pl_block		: decl_sect K_BEGIN lno proc_sect exception_sect K_END
 					}
 				;
 
+fict_vars_sect	:
+					{
+						PLpgSQL_variable	*var;
+
+						plpgsql_ns_setlocal(false);
+						var = plpgsql_build_variable("sqlstate", 0,
+										 plpgsql_build_datatype(TEXTOID, -1), true);  
+						$$.sqlstate_varno = var->dno;
+						var = plpgsql_build_variable("sqlerrm", 0,
+										 plpgsql_build_datatype(TEXTOID, -1), true);  
+						$$.sqlerrm_varno = var->dno;
+						plpgsql_add_initdatums(NULL);
+					};
 
 decl_sect		: opt_label
 					{
