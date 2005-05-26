@@ -508,7 +508,7 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 #ifdef HAVE_INT64_TIMESTAMP
 					sprintf(cp, ":%02d", abs(tm->tm_sec));
 					cp += strlen(cp);
-					sprintf(cp, ".%06d", (fsec >= 0) ? fsec : -(fsec));
+					sprintf(cp, ".%06d", Abs(fsec));
 #else
 					fsec += tm->tm_sec;
 					sprintf(cp, ":%013.10f", fabs(fsec));
