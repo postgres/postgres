@@ -2018,8 +2018,9 @@ select missing_return_expr();
 
 drop function void_return_expr();
 drop function missing_return_expr();
+
 -- test SQLSTATE and SQLERRM
-create or replace function trap_exceptions() returns void as $_$
+create function trap_exceptions() returns void as $_$
 begin
    begin
      raise exception 'first exception';

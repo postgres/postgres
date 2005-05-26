@@ -2381,7 +2381,7 @@ CONTEXT:  PL/pgSQL function "missing_return_expr"
 drop function void_return_expr();
 drop function missing_return_expr();
 -- test SQLSTATE and SQLERRM
-create or replace function trap_exceptions() returns void as $_$
+create function trap_exceptions() returns void as $_$
 begin
    begin
      raise exception 'first exception';
@@ -2398,7 +2398,7 @@ begin
 end; $_$ language plpgsql;
 select trap_exceptions();
 NOTICE:  P0001 first exception
-NOTICE:  00000 Sucessful completion
+NOTICE:  00000 Successful completion
 NOTICE:  P0001 last exception
  trap_exceptions 
 -----------------

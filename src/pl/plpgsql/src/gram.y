@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.70 2005/05/26 00:16:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.71 2005/05/26 03:18:53 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -285,7 +285,8 @@ fict_vars_sect	:
 										 plpgsql_build_datatype(TEXTOID, -1), true);  
 						$$.sqlerrm_varno = var->dno;
 						plpgsql_add_initdatums(NULL);
-					};
+					}
+				;
 
 decl_sect		: opt_label
 					{
