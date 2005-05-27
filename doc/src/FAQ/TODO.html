@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat May 21 17:31:53 EDT 2005
+Last updated:           Fri May 27 18:01:15 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -632,6 +632,13 @@ first.
   needed to enable transaction semantics.
 </p>
   </li><li>Add two-phase commit
+  </li><li>Add the features of packages
+  <ul>
+    <li>Make private objects accessable only to objects in the same schema
+    </li><li>Allow current_schema.objname to access current schema objects
+    </li><li>Add session variables
+    </li><li>Allow nested schemas
+  </li></ul>
 </li></ul>
 <h2><a name="section_11_1">PERFORMANCE</a></h2>
 

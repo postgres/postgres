@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat May 21 17:31:53 EDT 2005
+Last updated:		Fri May 27 18:01:15 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -688,6 +688,11 @@ Exotic Features
   needed to enable transaction semantics.
 
 * Add two-phase commit
+* Add the features of packages
+	o  Make private objects accessable only to objects in the same schema
+	o  Allow current_schema.objname to access current schema objects
+	o  Add session variables
+	o  Allow nested schemas
 
 
 PERFORMANCE
