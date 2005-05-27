@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.256 2005/05/20 01:29:55 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.257 2005/05/27 00:57:49 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -562,7 +562,7 @@ extern Datum text_substr_no_len(PG_FUNCTION_ARGS);
 extern Datum name_text(PG_FUNCTION_ARGS);
 extern Datum text_name(PG_FUNCTION_ARGS);
 extern int	varstr_cmp(char *arg1, int len1, char *arg2, int len2);
-extern List *textToQualifiedNameList(text *textval, const char *caller);
+extern List *textToQualifiedNameList(text *textval);
 extern bool SplitIdentifierString(char *rawstring, char separator,
 					  List **namelist);
 extern Datum replace_text(PG_FUNCTION_ARGS);

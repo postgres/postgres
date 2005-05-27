@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.119 2004/12/31 21:59:41 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.120 2005/05/27 00:57:49 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,8 +387,7 @@ nextval(PG_FUNCTION_ARGS)
 				rescnt = 0;
 	bool		logit = false;
 
-	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin,
-															 "nextval"));
+	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin));
 
 	/* open and AccessShareLock sequence */
 	init_sequence(sequence, &elm, &seqrel);
@@ -579,8 +578,7 @@ currval(PG_FUNCTION_ARGS)
 	Relation	seqrel;
 	int64		result;
 
-	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin,
-															 "currval"));
+	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin));
 
 	/* open and AccessShareLock sequence */
 	init_sequence(sequence, &elm, &seqrel);
@@ -715,8 +713,7 @@ setval(PG_FUNCTION_ARGS)
 	int64		next = PG_GETARG_INT64(1);
 	RangeVar   *sequence;
 
-	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin,
-															  "setval"));
+	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin));
 
 	do_setval(sequence, next, true);
 
@@ -735,8 +732,7 @@ setval_and_iscalled(PG_FUNCTION_ARGS)
 	bool		iscalled = PG_GETARG_BOOL(2);
 	RangeVar   *sequence;
 
-	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin,
-															  "setval"));
+	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin));
 
 	do_setval(sequence, next, iscalled);
 

@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/dbsize/dbsize.c,v 1.16 2005/01/01 05:43:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/dbsize/dbsize.c,v 1.17 2005/05/27 00:57:48 neilc Exp $
  *
  */
 
@@ -290,8 +290,7 @@ relation_size(PG_FUNCTION_ARGS)
 	Oid			relnodeOid;
 	Oid         tblspcOid;
 
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
-													   "relation_size"));
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	relation = relation_openrv(relrv, AccessShareLock);
 
 	tblspcOid  = relation->rd_rel->reltablespace;

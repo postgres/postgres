@@ -1971,7 +1971,7 @@ get_relid_from_relname(text *relname_text)
 	Relation	rel;
 	Oid			relid;
 
-	relvar = makeRangeVarFromNameList(textToQualifiedNameList(relname_text, "get_relid_from_relname"));
+	relvar = makeRangeVarFromNameList(textToQualifiedNameList(relname_text));
 	rel = heap_openrv(relvar, AccessShareLock);
 	relid = RelationGetRelid(rel);
 	relation_close(rel, AccessShareLock);

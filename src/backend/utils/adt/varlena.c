@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.121 2005/05/20 01:29:55 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.122 2005/05/27 00:57:49 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1618,7 +1618,7 @@ name_text(PG_FUNCTION_ARGS)
  * truncate names if they're too long.
  */
 List *
-textToQualifiedNameList(text *textval, const char *caller)
+textToQualifiedNameList(text *textval)
 {
 	char	   *rawname;
 	List	   *result = NIL;

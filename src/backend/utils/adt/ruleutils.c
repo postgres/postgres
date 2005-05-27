@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.195 2005/05/01 18:56:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.196 2005/05/27 00:57:49 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -349,8 +349,7 @@ pg_get_viewdef_name(PG_FUNCTION_ARGS)
 	RangeVar   *viewrel;
 	Oid			viewoid;
 
-	viewrel = makeRangeVarFromNameList(textToQualifiedNameList(viewname,
-														 "get_viewdef"));
+	viewrel = makeRangeVarFromNameList(textToQualifiedNameList(viewname));
 	viewoid = RangeVarGetRelid(viewrel, false);
 
 	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, 0)));
@@ -368,8 +367,7 @@ pg_get_viewdef_name_ext(PG_FUNCTION_ARGS)
 	Oid			viewoid;
 
 	prettyFlags = pretty ? PRETTYFLAG_PAREN | PRETTYFLAG_INDENT : 0;
-	viewrel = makeRangeVarFromNameList(textToQualifiedNameList(viewname,
-														 "get_viewdef"));
+	viewrel = makeRangeVarFromNameList(textToQualifiedNameList(viewname));
 	viewoid = RangeVarGetRelid(viewrel, false);
 
 	PG_RETURN_TEXT_P(string_to_text(pg_get_viewdef_worker(viewoid, prettyFlags)));
@@ -1252,8 +1250,7 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 	HeapTuple	tup;
 
 	/* Get the OID of the table */
-	tablerv = makeRangeVarFromNameList(textToQualifiedNameList(tablename,
-											  "pg_get_serial_sequence"));
+	tablerv = makeRangeVarFromNameList(textToQualifiedNameList(tablename));
 	tableOid = RangeVarGetRelid(tablerv, false);
 
 	/* Get the number of the column */

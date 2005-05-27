@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/not_in.c,v 1.42 2004/12/31 22:01:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/not_in.c,v 1.43 2005/05/27 00:57:49 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ int4notin(PG_FUNCTION_ARGS)
 
 	/* Parse the argument */
 
-	names = textToQualifiedNameList(relation_and_attr, "int4notin");
+	names = textToQualifiedNameList(relation_and_attr);
 	nnames = list_length(names);
 	if (nnames < 2)
 		ereport(ERROR,
