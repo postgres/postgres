@@ -205,62 +205,62 @@ SET DateStyle = 'ISO';
 -- As of 7.4, allow time without time zone having a time zone specified
 SELECT time without time zone '040506.789+08';
      time      
----------------
- 04:05:06.7890
+--------------
+ 04:05:06.789
 (1 row)
 
 SELECT time without time zone '040506.789-08';
      time      
----------------
- 04:05:06.7890
+--------------
+ 04:05:06.789
 (1 row)
 
 SELECT time without time zone 'T040506.789+08';
      time      
----------------
- 04:05:06.7890
+--------------
+ 04:05:06.789
 (1 row)
 
 SELECT time without time zone 'T040506.789-08';
      time      
----------------
- 04:05:06.7890
+--------------
+ 04:05:06.789
 (1 row)
 
 SELECT time with time zone '040506.789+08';
       timetz      
-------------------
- 04:05:06.7890+08
+-----------------
+ 04:05:06.789+08
 (1 row)
 
 SELECT time with time zone '040506.789-08';
       timetz      
-------------------
- 04:05:06.7890-08
+-----------------
+ 04:05:06.789-08
 (1 row)
 
 SELECT time with time zone 'T040506.789+08';
       timetz      
-------------------
- 04:05:06.7890+08
+-----------------
+ 04:05:06.789+08
 (1 row)
 
 SELECT time with time zone 'T040506.789-08';
       timetz      
-------------------
- 04:05:06.7890-08
+-----------------
+ 04:05:06.789-08
 (1 row)
 
 SELECT time with time zone 'T040506.789 +08';
       timetz      
-------------------
- 04:05:06.7890+08
+-----------------
+ 04:05:06.789+08
 (1 row)
 
 SELECT time with time zone 'T040506.789 -08';
       timetz      
-------------------
- 04:05:06.7890-08
+-----------------
+ 04:05:06.789-08
 (1 row)
 
 SET DateStyle = 'Postgres, MDY';

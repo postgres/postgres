@@ -11,8 +11,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
-#include "../../include/c.h"
+#if defined(WIN32) || defined(__CYGWIN__)
+#define PG_BINARY_R "rb"
+#else
+#define PG_BINARY_R "r"
+#endif
 
 #define NUL				'\0'
 
@@ -29,9 +34,7 @@ extern char *optarg;
 extern int	optind;
 
 int
-main(argc, argv)
-int			argc;
-char	  **argv;
+main(int argc, char **argv)
 {
 	int			tab_size = 8,
 				min_spaces = 2,

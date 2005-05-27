@@ -19,15 +19,13 @@
 
 /*VARARGS*/
 void
-halt(const char *path, ...)
+halt(const char *format, ...)
 {
 	va_list		arg_ptr;
-	char	   *format,
-			   *pstr;
+	const char  *pstr;
 	void		(*sig_func) ();
 
-	va_start(arg_ptr, path);
-	format = va_arg(arg_ptr, char *);
+	va_start(arg_ptr, format);
 	if (strncmp(format, "PERROR", 6) != 0)
 		vfprintf(stderr, format, arg_ptr);
 	else
