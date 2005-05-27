@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.262 2005/05/15 00:26:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.263 2005/05/27 18:33:30 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2500,19 +2500,19 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 */
 	if (ConfigFileName)
 		fname = make_absolute_path(ConfigFileName);
-	else if (!configdir)
+	else if (configdir)
+	{
+		fname = guc_malloc(FATAL,
+						   strlen(configdir) + strlen(CONFIG_FILENAME) + 2);
+		sprintf(fname, "%s/%s", configdir, CONFIG_FILENAME);
+	}
+	else
 	{
 		write_stderr("%s does not know where to find the server configuration file.\n"
 					 "You must specify the --config-file or -D invocation "
 					 "option or set the PGDATA environment variable.\n",
 					 progname);
 		return false;
-	}
-	else
-	{
-		fname = guc_malloc(FATAL,
-						   strlen(configdir) + strlen(CONFIG_FILENAME) + 2);
-		sprintf(fname, "%s/%s", configdir, CONFIG_FILENAME);
 	}
 
 	/*
@@ -2568,7 +2568,13 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 */
 	if (HbaFileName)
 		fname = make_absolute_path(HbaFileName);
-	else if (!configdir)
+	else if (configdir)
+	{
+		fname = guc_malloc(FATAL,
+						   strlen(configdir) + strlen(HBA_FILENAME) + 2);
+		sprintf(fname, "%s/%s", configdir, HBA_FILENAME);
+	}
+	else
 	{
 		write_stderr("%s does not know where to find the \"hba\" configuration file.\n"
 					 "This can be specified as \"hba_file\" in \"%s\", "
@@ -2576,12 +2582,6 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 					 "PGDATA environment variable.\n",
 					 progname, ConfigFileName);
 		return false;
-	}
-	else
-	{
-		fname = guc_malloc(FATAL,
-						   strlen(configdir) + strlen(HBA_FILENAME) + 2);
-		sprintf(fname, "%s/%s", configdir, HBA_FILENAME);
 	}
 	SetConfigOption("hba_file", fname, PGC_POSTMASTER, PGC_S_OVERRIDE);
 	free(fname);
@@ -2591,7 +2591,13 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	 */
 	if (IdentFileName)
 		fname = make_absolute_path(IdentFileName);
-	else if (!configdir)
+	else if (configdir)
+	{
+		fname = guc_malloc(FATAL,
+						   strlen(configdir) + strlen(IDENT_FILENAME) + 2);
+		sprintf(fname, "%s/%s", configdir, IDENT_FILENAME);
+	}
+	else
 	{
 		write_stderr("%s does not know where to find the \"ident\" configuration file.\n"
 					 "This can be specified as \"ident_file\" in \"%s\", "
@@ -2599,12 +2605,6 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 					 "PGDATA environment variable.\n",
 					 progname, ConfigFileName);
 		return false;
-	}
-	else
-	{
-		fname = guc_malloc(FATAL,
-						   strlen(configdir) + strlen(IDENT_FILENAME) + 2);
-		sprintf(fname, "%s/%s", configdir, IDENT_FILENAME);
 	}
 	SetConfigOption("ident_file", fname, PGC_POSTMASTER, PGC_S_OVERRIDE);
 	free(fname);
