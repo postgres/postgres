@@ -63,30 +63,7 @@ char	   *Escape_db(char *);
 char	   *convert_charset(char *string);
 #endif
 void		usage(void);
-unsigned int isinteger(char *);
 
-
-
-unsigned int
-isinteger(char *buff)
-{
-	char	   *i = buff;
-
-	while (*i != '\0')
-	{
-		if (i == buff)
-			if ((*i == '-') ||
-				(*i == '+'))
-			{
-				i++;
-				continue;
-			}
-		if (!isdigit((unsigned char) *i))
-			return 0;
-		i++;
-	}
-	return 1;
-}
 
 static inline void
 strtoupper(char *string)
@@ -471,8 +448,15 @@ do_inserts(PGconn *conn, char *table, dbhead * dbh)
 				/* handle the date first - liuk */
 				if (fields[h].db_type == 'D')
 				{
-					if ((strlen(foo) == 8) && isinteger(foo))
+					if (strlen(foo) == 0)
 					{
+						/* assume empty string means a NULL */
+						strcat(query, "\\N");
+					}
+					else if (strlen(foo) == 8 &&
+							 strspn(foo, "0123456789") == 8)
+					{
+						/* transform YYYYMMDD to Postgres style */
 						snprintf(pgdate, 11, "%c%c%c%c-%c%c-%c%c",
 								 foo[0], foo[1], foo[2], foo[3],
 								 foo[4], foo[5], foo[6], foo[7]);
@@ -480,26 +464,19 @@ do_inserts(PGconn *conn, char *table, dbhead * dbh)
 					}
 					else
 					{
-						/*
-						 * empty field must be inserted as NULL value in
-						 * this way
-						 */
-						strcat(query, "\\N");
+						/* try to insert it as-is */
+						strcat(query, foo);
 					}
 				}
-				else if ((fields[h].db_type == 'N') &&
-						 (fields[h].db_dec == 0))
+				else if (fields[h].db_type == 'N')
 				{
-					if (isinteger(foo))
-						strcat(query, foo);
-					else
+					if (strlen(foo) == 0)
 					{
+						/* assume empty string means a NULL */
 						strcat(query, "\\N");
-						if (verbose)
-							fprintf(stderr, "Illegal numeric value found "
-									"in record %d, field \"%s\"\n",
-									i, fields[h].db_name);
 					}
+					else
+						strcat(query, foo);
 				}
 				else
 				{
