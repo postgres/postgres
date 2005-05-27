@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.148 2005/05/27 15:15:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.149 2005/05/27 15:16:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3461,9 +3461,12 @@ EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 #ifdef HAVE_INT64_TIMESTAMP
 		sprintf(str + strlen(str), ":%02d.%06d", tm->tm_sec, fsec);
 #else
-		sprintf(str + strlen(str), ":%012.9f", tm->tm_sec + fsec);
+		sprintf(str + strlen(str), ":%013.10f", tm->tm_sec + fsec);
 #endif
-		TrimTrailingZeros(str);
+		/* chop off trailing pairs of zeros... */
+		while (strcmp((str + strlen(str) - 2), "00") == 0 &&
+			*(str + strlen(str) - 3) != '.')
+			*(str + strlen(str) - 2) = '\0';
 	}
 	else
 		sprintf(str + strlen(str), ":%02d", tm->tm_sec);
@@ -3801,7 +3804,7 @@ EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 					sprintf(cp, ".%06d", Abs(fsec));
 #else
 					fsec += tm->tm_sec;
-					sprintf(cp, ":%012.9f", fabs(fsec));
+					sprintf(cp, ":%013.10f", fabs(fsec));
 #endif
 					TrimTrailingZeros(cp);
 					cp += strlen(cp);
