@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.81 2005/05/15 21:19:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.82 2005/05/27 23:31:20 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -27,6 +27,7 @@
  *		index_vacuum_cleanup	- post-deletion cleanup of an index
  *		index_cost_estimator	- fetch amcostestimate procedure OID
  *		index_getprocid - get a support procedure OID
+ *		index_getprocinfo - get a support procedure's lookup info
  *
  * NOTES
  *		This file contains the index_ routines which used
@@ -87,20 +88,28 @@
 )
 
 #define GET_REL_PROCEDURE(pname) \
-( \
-	procedure = indexRelation->rd_am->pname, \
-	(!RegProcedureIsValid(procedure)) ? \
-		elog(ERROR, "invalid %s regproc", CppAsString(pname)) \
-	: (void)NULL \
-)
+do { \
+	procedure = &indexRelation->rd_aminfo->pname; \
+	if (!OidIsValid(procedure->fn_oid)) \
+	{ \
+		RegProcedure	procOid = indexRelation->rd_am->pname; \
+		if (!RegProcedureIsValid(procOid)) \
+			elog(ERROR, "invalid %s regproc", CppAsString(pname)); \
+		fmgr_info_cxt(procOid, procedure, indexRelation->rd_indexcxt); \
+	} \
+} while(0)
 
 #define GET_SCAN_PROCEDURE(pname) \
-( \
-	procedure = scan->indexRelation->rd_am->pname, \
-	(!RegProcedureIsValid(procedure)) ? \
-		elog(ERROR, "invalid %s regproc", CppAsString(pname)) \
-	: (void)NULL \
-)
+do { \
+	procedure = &scan->indexRelation->rd_aminfo->pname; \
+	if (!OidIsValid(procedure->fn_oid)) \
+	{ \
+		RegProcedure	procOid = scan->indexRelation->rd_am->pname; \
+		if (!RegProcedureIsValid(procOid)) \
+			elog(ERROR, "invalid %s regproc", CppAsString(pname)); \
+		fmgr_info_cxt(procOid, procedure, scan->indexRelation->rd_indexcxt); \
+	} \
+} while(0)
 
 static IndexScanDesc index_beginscan_internal(Relation indexRelation,
 											  int nkeys, ScanKey key);
@@ -196,7 +205,7 @@ index_insert(Relation indexRelation,
 			 Relation heapRelation,
 			 bool check_uniqueness)
 {
-	RegProcedure procedure;
+	FmgrInfo   *procedure;
 
 	RELATION_CHECKS;
 	GET_REL_PROCEDURE(aminsert);
@@ -204,13 +213,13 @@ index_insert(Relation indexRelation,
 	/*
 	 * have the am's insert proc do all the work.
 	 */
-	return DatumGetBool(OidFunctionCall6(procedure,
-										 PointerGetDatum(indexRelation),
-										 PointerGetDatum(values),
-										 PointerGetDatum(isnull),
-										 PointerGetDatum(heap_t_ctid),
-										 PointerGetDatum(heapRelation),
-										 BoolGetDatum(check_uniqueness)));
+	return DatumGetBool(FunctionCall6(procedure,
+									  PointerGetDatum(indexRelation),
+									  PointerGetDatum(values),
+									  PointerGetDatum(isnull),
+									  PointerGetDatum(heap_t_ctid),
+									  PointerGetDatum(heapRelation),
+									  BoolGetDatum(check_uniqueness)));
 }
 
 /*
@@ -229,7 +238,6 @@ index_beginscan(Relation heapRelation,
 				int nkeys, ScanKey key)
 {
 	IndexScanDesc scan;
-	RegProcedure procedure;
 
 	scan = index_beginscan_internal(indexRelation, nkeys, key);
 
@@ -237,16 +245,9 @@ index_beginscan(Relation heapRelation,
 	 * Save additional parameters into the scandesc.  Everything else was
 	 * set up by RelationGetIndexScan.
 	 */
+	scan->is_multiscan = false;
 	scan->heapRelation = heapRelation;
 	scan->xs_snapshot = snapshot;
-
-	/*
-	 * We want to look up the amgettuple procedure just once per scan, not
-	 * once per index_getnext call.  So do it here and save the fmgr info
-	 * result in the scan descriptor.
-	 */
-	GET_SCAN_PROCEDURE(amgettuple);
-	fmgr_info(procedure, &scan->fn_getnext);
 
 	return scan;
 }
@@ -263,7 +264,6 @@ index_beginscan_multi(Relation indexRelation,
 					  int nkeys, ScanKey key)
 {
 	IndexScanDesc scan;
-	RegProcedure procedure;
 
 	scan = index_beginscan_internal(indexRelation, nkeys, key);
 
@@ -271,15 +271,8 @@ index_beginscan_multi(Relation indexRelation,
 	 * Save additional parameters into the scandesc.  Everything else was
 	 * set up by RelationGetIndexScan.
 	 */
+	scan->is_multiscan = true;
 	scan->xs_snapshot = snapshot;
-
-	/*
-	 * We want to look up the amgetmulti procedure just once per scan, not
-	 * once per index_getmulti call.  So do it here and save the fmgr info
-	 * result in the scan descriptor.
-	 */
-	GET_SCAN_PROCEDURE(amgetmulti);
-	fmgr_info(procedure, &scan->fn_getmulti);
 
 	return scan;
 }
@@ -292,7 +285,7 @@ index_beginscan_internal(Relation indexRelation,
 						 int nkeys, ScanKey key)
 {
 	IndexScanDesc scan;
-	RegProcedure procedure;
+	FmgrInfo   *procedure;
 
 	RELATION_CHECKS;
 	GET_REL_PROCEDURE(ambeginscan);
@@ -312,10 +305,10 @@ index_beginscan_internal(Relation indexRelation,
 	 * Tell the AM to open a scan.
 	 */
 	scan = (IndexScanDesc)
-		DatumGetPointer(OidFunctionCall3(procedure,
-										 PointerGetDatum(indexRelation),
-										 Int32GetDatum(nkeys),
-										 PointerGetDatum(key)));
+		DatumGetPointer(FunctionCall3(procedure,
+									  PointerGetDatum(indexRelation),
+									  Int32GetDatum(nkeys),
+									  PointerGetDatum(key)));
 
 	return scan;
 }
@@ -335,7 +328,7 @@ index_beginscan_internal(Relation indexRelation,
 void
 index_rescan(IndexScanDesc scan, ScanKey key)
 {
-	RegProcedure procedure;
+	FmgrInfo   *procedure;
 
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(amrescan);
@@ -353,9 +346,9 @@ index_rescan(IndexScanDesc scan, ScanKey key)
 	scan->unique_tuple_pos = 0;
 	scan->unique_tuple_mark = 0;
 
-	OidFunctionCall2(procedure,
-					 PointerGetDatum(scan),
-					 PointerGetDatum(key));
+	FunctionCall2(procedure,
+				  PointerGetDatum(scan),
+				  PointerGetDatum(key));
 
 	pgstat_reset_index_scan(&scan->xs_pgstat_info);
 }
@@ -367,7 +360,7 @@ index_rescan(IndexScanDesc scan, ScanKey key)
 void
 index_endscan(IndexScanDesc scan)
 {
-	RegProcedure procedure;
+	FmgrInfo   *procedure;
 
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(amendscan);
@@ -380,7 +373,7 @@ index_endscan(IndexScanDesc scan)
 	}
 
 	/* End the AM's scan */
-	OidFunctionCall1(procedure, PointerGetDatum(scan));
+	FunctionCall1(procedure, PointerGetDatum(scan));
 
 	/* Release index lock and refcount acquired by index_beginscan */
 
@@ -399,14 +392,14 @@ index_endscan(IndexScanDesc scan)
 void
 index_markpos(IndexScanDesc scan)
 {
-	RegProcedure procedure;
+	FmgrInfo   *procedure;
 
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(ammarkpos);
 
 	scan->unique_tuple_mark = scan->unique_tuple_pos;
 
-	OidFunctionCall1(procedure, PointerGetDatum(scan));
+	FunctionCall1(procedure, PointerGetDatum(scan));
 }
 
 /* ----------------
@@ -420,7 +413,7 @@ index_markpos(IndexScanDesc scan)
 void
 index_restrpos(IndexScanDesc scan)
 {
-	RegProcedure procedure;
+	FmgrInfo   *procedure;
 
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(amrestrpos);
@@ -434,7 +427,7 @@ index_restrpos(IndexScanDesc scan)
 	 */
 	scan->unique_tuple_pos = scan->unique_tuple_mark;
 
-	OidFunctionCall1(procedure, PointerGetDatum(scan));
+	FunctionCall1(procedure, PointerGetDatum(scan));
 }
 
 /* ----------------
@@ -451,8 +444,10 @@ HeapTuple
 index_getnext(IndexScanDesc scan, ScanDirection direction)
 {
 	HeapTuple	heapTuple = &scan->xs_ctup;
+	FmgrInfo   *procedure;
 
 	SCAN_CHECKS;
+	GET_SCAN_PROCEDURE(amgettuple);
 
 	/*
 	 * If we already got a tuple and it must be unique, there's no need to
@@ -525,9 +520,9 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 
 		/*
 		 * The AM's gettuple proc finds the next tuple matching the scan
-		 * keys.  index_beginscan already set up fn_getnext.
+		 * keys.
 		 */
-		found = DatumGetBool(FunctionCall2(&scan->fn_getnext,
+		found = DatumGetBool(FunctionCall2(procedure,
 										   PointerGetDatum(scan),
 										   Int32GetDatum(direction)));
 
@@ -605,18 +600,19 @@ bool
 index_getnext_indexitem(IndexScanDesc scan,
 						ScanDirection direction)
 {
+	FmgrInfo   *procedure;
 	bool		found;
 
 	SCAN_CHECKS;
+	GET_SCAN_PROCEDURE(amgettuple);
 
 	/* just make sure this is false... */
 	scan->kill_prior_tuple = false;
 
 	/*
-	 * have the am's gettuple proc do all the work. index_beginscan
-	 * already set up fn_getnext.
+	 * have the am's gettuple proc do all the work.
 	 */
-	found = DatumGetBool(FunctionCall2(&scan->fn_getnext,
+	found = DatumGetBool(FunctionCall2(procedure,
 									   PointerGetDatum(scan),
 									   Int32GetDatum(direction)));
 
@@ -641,18 +637,19 @@ index_getmulti(IndexScanDesc scan,
 			   ItemPointer tids, int32 max_tids,
 			   int32 *returned_tids)
 {
+	FmgrInfo   *procedure;
 	bool		found;
 
 	SCAN_CHECKS;
+	GET_SCAN_PROCEDURE(amgetmulti);
 
 	/* just make sure this is false... */
 	scan->kill_prior_tuple = false;
 
 	/*
-	 * have the am's getmulti proc do all the work. index_beginscan_multi
-	 * already set up fn_getmulti.
+	 * have the am's getmulti proc do all the work.
 	 */
-	found = DatumGetBool(FunctionCall4(&scan->fn_getmulti,
+	found = DatumGetBool(FunctionCall4(procedure,
 									   PointerGetDatum(scan),
 									   PointerGetDatum(tids),
 									   Int32GetDatum(max_tids),
@@ -675,17 +672,17 @@ index_bulk_delete(Relation indexRelation,
 				  IndexBulkDeleteCallback callback,
 				  void *callback_state)
 {
-	RegProcedure procedure;
+	FmgrInfo   *procedure;
 	IndexBulkDeleteResult *result;
 
 	RELATION_CHECKS;
 	GET_REL_PROCEDURE(ambulkdelete);
 
 	result = (IndexBulkDeleteResult *)
-		DatumGetPointer(OidFunctionCall3(procedure,
-										 PointerGetDatum(indexRelation),
-									 PointerGetDatum((Pointer) callback),
-									   PointerGetDatum(callback_state)));
+		DatumGetPointer(FunctionCall3(procedure,
+									  PointerGetDatum(indexRelation),
+									  PointerGetDatum((Pointer) callback),
+									  PointerGetDatum(callback_state)));
 
 	return result;
 }
@@ -701,7 +698,7 @@ index_vacuum_cleanup(Relation indexRelation,
 					 IndexVacuumCleanupInfo *info,
 					 IndexBulkDeleteResult *stats)
 {
-	RegProcedure procedure;
+	FmgrInfo   *procedure;
 	IndexBulkDeleteResult *result;
 
 	RELATION_CHECKS;
@@ -713,9 +710,9 @@ index_vacuum_cleanup(Relation indexRelation,
 	GET_REL_PROCEDURE(amvacuumcleanup);
 
 	result = (IndexBulkDeleteResult *)
-		DatumGetPointer(OidFunctionCall3(procedure,
-										 PointerGetDatum(indexRelation),
-										 PointerGetDatum((Pointer) info),
+		DatumGetPointer(FunctionCall3(procedure,
+									  PointerGetDatum(indexRelation),
+									  PointerGetDatum((Pointer) info),
 									  PointerGetDatum((Pointer) stats)));
 
 	return result;
@@ -734,12 +731,12 @@ index_vacuum_cleanup(Relation indexRelation,
 RegProcedure
 index_cost_estimator(Relation indexRelation)
 {
-	RegProcedure procedure;
+	FmgrInfo   *procedure;
 
 	RELATION_CHECKS;
 	GET_REL_PROCEDURE(amcostestimate);
 
-	return procedure;
+	return procedure->fn_oid;
 }
 
 /* ----------------
@@ -785,9 +782,13 @@ index_getprocid(Relation irel,
  *
  *		This routine allows index AMs to keep fmgr lookup info for
  *		support procs in the relcache.
+ *
+ * Note: the return value points into cached data that will be lost during
+ * any relcache rebuild!  Therefore, either use the callinfo right away,
+ * or save it only after having acquired some type of lock on the index rel.
  * ----------------
  */
-struct FmgrInfo *
+FmgrInfo *
 index_getprocinfo(Relation irel,
 				  AttrNumber attnum,
 				  uint16 procnum)

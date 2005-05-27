@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.50 2005/04/14 20:03:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.51 2005/05/27 23:31:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ extern IndexBulkDeleteResult *index_vacuum_cleanup(Relation indexRelation,
 extern RegProcedure index_cost_estimator(Relation indexRelation);
 extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
 				uint16 procnum);
-extern struct FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,
+extern FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,
 				  uint16 procnum);
 
 /*

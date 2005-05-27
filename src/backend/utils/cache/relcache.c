@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.223 2005/05/11 01:26:02 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.224 2005/05/27 23:31:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -904,6 +904,9 @@ RelationInitIndexAccessInfo(Relation relation)
 	/*
 	 * Allocate arrays to hold data
 	 */
+	relation->rd_aminfo = (RelationAmInfo *)
+		MemoryContextAllocZero(indexcxt, sizeof(RelationAmInfo));
+
 	if (amstrategies > 0)
 		operator = (Oid *)
 			MemoryContextAllocZero(indexcxt,
@@ -931,8 +934,8 @@ RelationInitIndexAccessInfo(Relation relation)
 	relation->rd_supportinfo = supportinfo;
 
 	/*
-	 * Fill the operator and support procedure OID arrays. (supportinfo is
-	 * left as zeroes, and is filled on-the-fly when used)
+	 * Fill the operator and support procedure OID arrays.  (aminfo and
+	 * supportinfo are left as zeroes, and are filled on-the-fly when used)
 	 */
 	IndexSupportInitialize(relation->rd_indclass,
 						   operator, support,
@@ -3015,7 +3018,9 @@ load_relcache_init_file(void)
 
 			rel->rd_support = support;
 
-			/* add a zeroed support-fmgr-info vector */
+			/* set up zeroed fmgr-info vectors */
+			rel->rd_aminfo = (RelationAmInfo *)
+				MemoryContextAllocZero(indexcxt, sizeof(RelationAmInfo));
 			nsupport = relform->relnatts * am->amsupport;
 			rel->rd_supportinfo = (FmgrInfo *)
 				MemoryContextAllocZero(indexcxt, nsupport * sizeof(FmgrInfo));
@@ -3031,6 +3036,7 @@ load_relcache_init_file(void)
 			Assert(rel->rd_indclass == NULL);
 			Assert(rel->rd_am == NULL);
 			Assert(rel->rd_indexcxt == NULL);
+			Assert(rel->rd_aminfo == NULL);
 			Assert(rel->rd_operator == NULL);
 			Assert(rel->rd_support == NULL);
 			Assert(rel->rd_supportinfo == NULL);

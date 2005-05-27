@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.38 2005/03/27 23:53:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.39 2005/05/27 23:31:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,9 +40,8 @@ typedef HeapScanDescData *HeapScanDesc;
 
 /*
  * We use the same IndexScanDescData structure for both amgettuple-based
- * and amgetmulti-based index scans.  Which one is being used can be told
- * by looking at fn_getnext and fn_getmulti, only one of which will be
- * initialized.  Some fields are only relevant in amgettuple-based scans.
+ * and amgetmulti-based index scans.  Some fields are only relevant in
+ * amgettuple-based scans.
  */
 typedef struct IndexScanDescData
 {
@@ -52,6 +51,7 @@ typedef struct IndexScanDescData
 	Snapshot	xs_snapshot;	/* snapshot to see */
 	int			numberOfKeys;	/* number of scan keys */
 	ScanKey		keyData;		/* array of scan key descriptors */
+	bool		is_multiscan;	/* TRUE = using amgetmulti */
 
 	/* signaling to index AM about killing index tuples */
 	bool		kill_prior_tuple;		/* last-returned tuple is dead */
@@ -74,9 +74,6 @@ typedef struct IndexScanDescData
 	HeapTupleData xs_ctup;		/* current heap tuple, if any */
 	Buffer		xs_cbuf;		/* current heap buffer in scan, if any */
 	/* NB: if xs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
-
-	FmgrInfo	fn_getnext;		/* cached lookup info for AM's getnext fn */
-	FmgrInfo	fn_getmulti;	/* cached lookup info for AM's getmulti fn */
 
 	/*
 	 * If keys_are_unique and got_tuple are both true, we stop calling the

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.83 2005/03/29 00:17:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.84 2005/05/27 23:31:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
 #include "catalog/pg_index.h"
+#include "fmgr.h"
 #include "rewrite/prs2lock.h"
 #include "storage/block.h"
 #include "storage/relfilenode.h"
@@ -100,6 +101,27 @@ typedef struct PgStat_Info
 
 
 /*
+ * Cached lookup information for the index access method functions defined
+ * by the pg_am row associated with an index relation.
+ */
+typedef struct RelationAmInfo
+{
+	FmgrInfo	aminsert;
+	FmgrInfo	ambeginscan;
+	FmgrInfo	amgettuple;
+	FmgrInfo	amgetmulti;
+	FmgrInfo	amrescan;
+	FmgrInfo	amendscan;
+	FmgrInfo	ammarkpos;
+	FmgrInfo	amrestrpos;
+	FmgrInfo	ambuild;
+	FmgrInfo	ambulkdelete;
+	FmgrInfo	amvacuumcleanup;
+	FmgrInfo	amcostestimate;
+} RelationAmInfo;
+
+
+/*
  * Here are the contents of a relation cache entry.
  */
 
@@ -150,11 +172,10 @@ typedef struct RelationData
 	 * that restriction.
 	 */
 	MemoryContext rd_indexcxt;	/* private memory cxt for this stuff */
+	RelationAmInfo *rd_aminfo;	/* lookup info for funcs found in pg_am */
 	Oid		   *rd_operator;	/* OIDs of index operators */
 	RegProcedure *rd_support;	/* OIDs of support procedures */
-	struct FmgrInfo *rd_supportinfo;	/* lookup info for support
-										 * procedures */
-	/* "struct FmgrInfo" avoids need to include fmgr.h here */
+	FmgrInfo   *rd_supportinfo;	/* lookup info for support procedures */
 	List	   *rd_indexprs;	/* index expression trees, if any */
 	List	   *rd_indpred;		/* index predicate tree, if any */
 
