@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri May 27 18:07:21 EDT 2005
+Last updated:		Sat May 28 00:12:10 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -559,12 +559,6 @@ Commands
 
 Clients
 =======
-
-* Add XML output to pg_dump and COPY
-
-  We already allow XML to be stored in the database, and XPath queries
-  can be used on that data using /contrib/xml2. It also supports XSLT
-  transformations.
 
 * Add a libpq function to support Parse/DescribeStatement capability
 * Prevent libpq's PQfnumber() from lowercasing the column name (?)
