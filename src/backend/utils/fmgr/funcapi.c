@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.21 2005/04/25 20:59:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.22 2005/05/28 05:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,6 +235,36 @@ get_expr_result_type(Node *expr,
 										  NULL,
 										  resultTypeId,
 										  resultTupleDesc);
+	else if (expr && IsA(expr, Const) &&
+			 ((Const *) expr)->consttype == RECORDOID &&
+			 !((Const *) expr)->constisnull)
+	{
+		/*
+		 * Pull embedded type info from a RECORD constant.  We have to be
+		 * prepared to handle this case in the wake of constant-folding of
+		 * record-returning functions.
+		 */
+		HeapTupleHeader td;
+		int32	typmod;
+
+		td = DatumGetHeapTupleHeader(((Const *) expr)->constvalue);
+		Assert(HeapTupleHeaderGetTypeId(td) == RECORDOID);
+		typmod = HeapTupleHeaderGetTypMod(td);
+		if (resultTypeId)
+			*resultTypeId = RECORDOID;
+		if (typmod >= 0)
+		{
+			if (resultTupleDesc)
+				*resultTupleDesc = lookup_rowtype_tupdesc(RECORDOID, typmod);
+			result = TYPEFUNC_COMPOSITE;
+		}
+		else
+		{
+			if (resultTupleDesc)
+				*resultTupleDesc = NULL;
+			result = TYPEFUNC_RECORD;
+		}
+	}
 	else
 	{
 		/* handle as a generic expression; no chance to resolve RECORD */
