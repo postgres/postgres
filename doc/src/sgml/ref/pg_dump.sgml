@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.76 2005/01/17 04:30:37 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.77 2005/05/29 03:32:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -697,6 +697,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    <member><xref linkend="app-pg-dumpall"></member>
    <member><xref linkend="app-pgrestore"></member>
    <member><xref linkend="app-psql"></member>
+   <member>Environment Variables (<xref linkend="libpq-envars">)</member>
   </simplelist>
  </refsect1>
 

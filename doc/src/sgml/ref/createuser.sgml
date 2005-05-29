@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.40 2005/05/13 16:31:43 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.41 2005/05/29 03:32:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -334,6 +334,7 @@ PostgreSQL documentation
   <simplelist type="inline">
    <member><xref linkend="app-dropuser"></member>
    <member><xref linkend="sql-createuser" endterm="sql-createuser-title"></member>
+   <member>Environment Variables (<xref linkend="libpq-envars">)</member>
   </simplelist>
  </refsect1>
 

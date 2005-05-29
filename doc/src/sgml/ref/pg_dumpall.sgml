@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.48 2005/01/06 18:29:08 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.49 2005/05/29 03:32:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -415,7 +415,8 @@ PostgreSQL documentation
 
   <para>
     <xref linkend="app-pgdump">.  Check there for details on possible
-    error conditions.
+    error conditions.  Also see suppored environment variables
+    (<xref linkend="libpq-envars">).
   </para>
  </refsect1>   
 

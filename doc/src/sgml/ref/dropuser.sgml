@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.31 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.32 2005/05/29 03:32:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -224,6 +224,7 @@ DROP USER</computeroutput>
   <simplelist type="inline">
    <member><xref linkend="app-createuser"></member>
    <member><xref linkend="sql-dropuser" endterm="sql-dropuser-title"></member>
+   <member>Environment Variables (<xref linkend="libpq-envars">)</member>
   </simplelist>
  </refsect1>
 

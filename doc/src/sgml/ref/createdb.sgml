@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.40 2004/06/18 21:47:23 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.41 2005/05/29 03:32:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -294,6 +294,7 @@ PostgreSQL documentation
   <simplelist type="inline">
    <member><xref linkend="app-dropdb"></member>
    <member><xref linkend="sql-createdatabase" endterm="sql-createdatabase-title"></member>
+   <member>Environment Variables (<xref linkend="libpq-envars">)</member>
   </simplelist>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.135 2005/04/28 13:09:59 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.136 2005/05/29 03:32:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -2757,6 +2757,14 @@ second | four
 </programlisting>
   </para>
 
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member>Environment Variables (<xref linkend="libpq-envars">)</member>
+  </simplelist>
  </refsect1>
 
 </refentry>

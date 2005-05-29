@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.50 2005/01/23 00:30:31 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.51 2005/05/29 03:32:18 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -616,6 +616,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    <member><xref linkend="app-pgdump"></member>
    <member><xref linkend="app-pg-dumpall"></member>
    <member><xref linkend="app-psql"></member>
+   <member>Environment Variables (<xref linkend="libpq-envars">)</member>
   </simplelist>
  </refsect1>
 </refentry>
