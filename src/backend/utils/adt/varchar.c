@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.109 2005/04/12 04:26:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.110 2005/05/29 20:15:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,8 @@
  * length also. (eg. in INSERTs, we have the tupleDescriptor which contains
  * the length of the attributes and hence the exact length of the char() or
  * varchar(). We pass this to bpcharin() or varcharin().) In the case where
- * we cannot determine the length, we pass in -1 instead and the input string
- * must be null-terminated.
+ * we cannot determine the length, we pass in -1 instead and the input
+ * converter does not enforce any length check.
  *
  * We actually implement this as a varlena so that we don't have to pass in
  * the length for the comparison functions. (The difference between these
@@ -72,63 +72,62 @@ bpcharin(PG_FUNCTION_ARGS)
 	char	   *r;
 	size_t		len,
 				maxlen;
-	int			i;
-	int			charlen;		/* number of charcters in the input string */
 
 	/* verify encoding */
 	len = strlen(s);
 	pg_verifymbstr(s, len, false);
 
-	charlen = pg_mbstrlen(s);
-
 	/* If typmod is -1 (or invalid), use the actual string length */
 	if (atttypmod < (int32) VARHDRSZ)
-		maxlen = charlen;
-	else
-		maxlen = atttypmod - VARHDRSZ;
-
-	if (charlen > maxlen)
-	{
-		/* Verify that extra characters are spaces, and clip them off */
-		size_t		mbmaxlen = pg_mbcharcliplen(s, len, maxlen);
-
-		/*
-		 * at this point, len is the actual BYTE length of the input
-		 * string, maxlen is the max number of CHARACTERS allowed for this
-		 * bpchar type.
-		 */
-		if (strspn(s + mbmaxlen, " ") == len - mbmaxlen)
-			len = mbmaxlen;
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-					 errmsg("value too long for type character(%d)",
-							(int) maxlen)));
-
-		/*
-		 * XXX: at this point, maxlen is the necessary byte length, not
-		 * the number of CHARACTERS!
-		 */
 		maxlen = len;
-	}
 	else
 	{
-		/*
-		 * XXX: at this point, maxlen is the necessary byte length, not
-		 * the number of CHARACTERS!
-		 */
-		maxlen = len + (maxlen - charlen);
+		size_t		charlen;		/* number of CHARACTERS in the input */
+
+		maxlen = atttypmod - VARHDRSZ;
+		charlen = pg_mbstrlen(s);
+		if (charlen > maxlen)
+		{
+			/* Verify that extra characters are spaces, and clip them off */
+			size_t		mbmaxlen = pg_mbcharcliplen(s, len, maxlen);
+
+			/*
+			 * at this point, len is the actual BYTE length of the input
+			 * string, maxlen is the max number of CHARACTERS allowed for this
+			 * bpchar type.
+			 */
+			if (strspn(s + mbmaxlen, " ") == len - mbmaxlen)
+				len = mbmaxlen;
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+						 errmsg("value too long for type character(%d)",
+								(int) maxlen)));
+
+			/*
+			 * Now we set maxlen to the necessary byte length, not
+			 * the number of CHARACTERS!
+			 */
+			maxlen = len;
+		}
+		else
+		{
+			/*
+			 * Now we set maxlen to the necessary byte length, not
+			 * the number of CHARACTERS!
+			 */
+			maxlen = len + (maxlen - charlen);
+		}
 	}
 
 	result = palloc(maxlen + VARHDRSZ);
 	VARATT_SIZEP(result) = maxlen + VARHDRSZ;
 	r = VARDATA(result);
-	for (i = 0; i < len; i++)
-		*r++ = *s++;
+	memcpy(r, s, len);
 
 	/* blank pad the string if necessary */
-	for (; i < maxlen; i++)
-		*r++ = ' ';
+	if (maxlen > len)
+		memset(r + len, ' ', maxlen - len);
 
 	PG_RETURN_BPCHAR_P(result);
 }
@@ -200,12 +199,16 @@ bpchar(PG_FUNCTION_ARGS)
 	int			charlen;		/* number of charcters in the input string
 								 * + VARHDRSZ */
 
+	/* No work if typmod is invalid */
+	if (maxlen < (int32) VARHDRSZ)
+		PG_RETURN_BPCHAR_P(source);
+
 	len = VARSIZE(source);
 
 	charlen = pg_mbstrlen_with_len(VARDATA(source), len - VARHDRSZ) + VARHDRSZ;
 
-	/* No work if typmod is invalid or supplied data matches it already */
-	if (maxlen < (int32) VARHDRSZ || charlen == maxlen)
+	/* No work if supplied data matches typmod already */
+	if (charlen == maxlen)
 		PG_RETURN_BPCHAR_P(source);
 
 	if (charlen > maxlen)
@@ -249,12 +252,11 @@ bpchar(PG_FUNCTION_ARGS)
 	VARATT_SIZEP(result) = maxlen;
 	r = VARDATA(result);
 
-	for (i = 0; i < len - VARHDRSZ; i++)
-		*r++ = *s++;
+	memcpy(r, s, len - VARHDRSZ);
 
 	/* blank pad the string if necessary */
-	for (; i < maxlen - VARHDRSZ; i++)
-		*r++ = ' ';
+	if (maxlen > len)
+		memset(r + len - VARHDRSZ, ' ', maxlen - len);
 
 	PG_RETURN_BPCHAR_P(result);
 }
