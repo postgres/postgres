@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_type.h,v 1.29 2004/12/31 22:03:38 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_type.h,v 1.30 2005/05/29 18:24:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@ extern char *TypeNameToString(const TypeName *typename);
 extern Oid	typenameTypeId(const TypeName *typename);
 extern Type typenameType(const TypeName *typename);
 
-extern bool typeidIsValid(Oid id);
 extern Type typeidType(Oid id);
 
 extern Oid	typeTypeId(Type tp);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.128 2005/05/05 00:19:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.129 2005/05/29 18:24:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,12 +370,6 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 		/* no problem if same type */
 		if (inputTypeId == targetTypeId)
 			continue;
-
-		/* don't choke on references to no-longer-existing types */
-		if (!typeidIsValid(inputTypeId))
-			return false;
-		if (!typeidIsValid(targetTypeId))
-			return false;
 
 		/* accept if target is ANY */
 		if (targetTypeId == ANYOID)

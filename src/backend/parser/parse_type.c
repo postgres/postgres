@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.74 2005/04/28 21:47:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.75 2005/05/29 18:24:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,15 +237,6 @@ typenameType(const TypeName *typename)
 				 errmsg("type \"%s\" is only a shell",
 						TypeNameToString(typename))));
 	return (Type) tup;
-}
-
-/* check to see if a type id is valid, returns true if it is */
-bool
-typeidIsValid(Oid id)
-{
-	return SearchSysCacheExists(TYPEOID,
-								ObjectIdGetDatum(id),
-								0, 0, 0);
 }
 
 /* return a Type structure, given a type id */
