@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.111 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.112 2005/05/29 23:38:05 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1310,6 +1310,29 @@ aclcheck_error(AclResult aclerr, AclObjectKind objectkind,
 }
 
 
+/* Check if given userid has usecatupd privilege according to pg_shadow */
+static bool
+has_usecatupd(AclId userid)
+{
+	bool		usecatupd;
+	HeapTuple	tuple;
+
+	tuple = SearchSysCache(SHADOWSYSID,
+						   ObjectIdGetDatum(userid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("user with ID %u does not exist", userid)));
+
+	usecatupd = ((Form_pg_shadow) GETSTRUCT(tuple))->usecatupd;
+
+	ReleaseSysCache(tuple);
+
+	return usecatupd;
+}
+
+
 /*
  * Exported routine for examining a user's privileges for a table
  *
@@ -1325,8 +1348,6 @@ pg_class_aclmask(Oid table_oid, AclId userid,
 				 AclMode mask, AclMaskHow how)
 {
 	AclMode		result;
-	bool		usesuper,
-				usecatupd;
 	HeapTuple	tuple;
 	Form_pg_class classForm;
 	Datum		aclDatum;
@@ -1335,24 +1356,7 @@ pg_class_aclmask(Oid table_oid, AclId userid,
 	AclId		ownerId;
 
 	/*
-	 * Validate userid, find out if he is superuser, also get usecatupd
-	 */
-	tuple = SearchSysCache(SHADOWSYSID,
-						   ObjectIdGetDatum(userid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("user with ID %u does not exist", userid)));
-
-	usecatupd = ((Form_pg_shadow) GETSTRUCT(tuple))->usecatupd;
-
-	ReleaseSysCache(tuple);
-
-	usesuper = superuser_arg(userid);
-
-	/*
-	 * Now get the relation's tuple from pg_class
+	 * Must get the relation's tuple from pg_class
 	 */
 	tuple = SearchSysCache(RELOID,
 						   ObjectIdGetDatum(table_oid),
@@ -1377,7 +1381,7 @@ pg_class_aclmask(Oid table_oid, AclId userid,
 	if ((mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE)) &&
 		IsSystemClass(classForm) &&
 		classForm->relkind != RELKIND_VIEW &&
-		!usecatupd &&
+		!has_usecatupd(userid) &&
 		!allowSystemTableMods)
 	{
 #ifdef ACLDEBUG
@@ -1389,7 +1393,7 @@ pg_class_aclmask(Oid table_oid, AclId userid,
 	/*
 	 * Otherwise, superusers bypass all permission-checking.
 	 */
-	if (usesuper)
+	if (superuser_arg(userid))
 	{
 #ifdef ACLDEBUG
 		elog(DEBUG2, "%u is superuser, home free", userid);
