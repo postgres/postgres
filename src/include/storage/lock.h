@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.86 2005/05/19 23:30:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.87 2005/05/29 22:45:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -348,6 +348,15 @@ typedef struct
 } LockData;
 
 
+/* Result codes for LockAcquire() */
+typedef enum
+{
+	LOCKACQUIRE_NOT_AVAIL,		/* lock not available, and dontWait=true */
+	LOCKACQUIRE_OK,				/* lock successfully acquired */
+	LOCKACQUIRE_ALREADY_HELD	/* incremented count for lock already held */
+} LockAcquireResult;
+
+
 /*
  * function prototypes
  */
@@ -357,7 +366,7 @@ extern LOCKMETHODID LockMethodTableInit(const char *tabName,
 					const LOCKMASK *conflictsP,
 					int numModes, int maxBackends);
 extern LOCKMETHODID LockMethodTableRename(LOCKMETHODID lockmethodid);
-extern bool LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
+extern LockAcquireResult LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 			TransactionId xid, LOCKMODE lockmode, bool dontWait);
 extern bool LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 			TransactionId xid, LOCKMODE lockmode);

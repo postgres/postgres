@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.153 2005/05/29 04:23:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.154 2005/05/29 22:45:02 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -160,8 +160,8 @@ PROCLOCK_PRINT(const char *where, const PROCLOCK *proclockP)
 
 static void RemoveLocalLock(LOCALLOCK *locallock);
 static void GrantLockLocal(LOCALLOCK *locallock, ResourceOwner owner);
-static int WaitOnLock(LOCKMETHODID lockmethodid, LOCALLOCK *locallock,
-		   ResourceOwner owner);
+static void WaitOnLock(LOCKMETHODID lockmethodid, LOCALLOCK *locallock,
+					   ResourceOwner owner);
 static void LockCountMyLocks(SHMEM_OFFSET lockOffset, PGPROC *proc,
 				 int *myHolding);
 static bool UnGrantLock(LOCK *lock, LOCKMODE lockmode,
@@ -377,11 +377,14 @@ LockMethodTableRename(LOCKMETHODID lockmethodid)
  * LockAcquire -- Check for lock conflicts, sleep if conflict found,
  *		set lock if/when no conflicts.
  *
- * Returns: TRUE if lock was acquired, FALSE otherwise.  Note that
- *		a FALSE return is to be expected if dontWait is TRUE;
- *		but if dontWait is FALSE, only a parameter error can cause
- *		a FALSE return.  (XXX probably we should just ereport on parameter
- *		errors, instead of conflating this with failure to acquire lock?)
+ * Returns one of:
+ *		LOCKACQUIRE_NOT_AVAIL		lock not available, and dontWait=true
+ *		LOCKACQUIRE_OK				lock successfully acquired
+ *		LOCKACQUIRE_ALREADY_HELD	incremented count for lock already held
+ *
+ * In the normal case where dontWait=false and the caller doesn't need to
+ * distinguish a freshly acquired lock from one already taken earlier in
+ * this same transaction, there is no need to examine the return value.
  *
  * Side Effects: The lock is acquired and recorded in lock tables.
  *
@@ -416,8 +419,7 @@ LockMethodTableRename(LOCKMETHODID lockmethodid)
  *
  *														DZ - 22 Nov 1997
  */
-
-bool
+LockAcquireResult
 LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 			TransactionId xid, LOCKMODE lockmode, bool dontWait)
 {
@@ -447,10 +449,7 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	Assert(lockmethodid < NumLockMethods);
 	lockMethodTable = LockMethods[lockmethodid];
 	if (!lockMethodTable)
-	{
-		elog(WARNING, "bad lock table id: %d", lockmethodid);
-		return FALSE;
-	}
+		elog(ERROR, "unrecognized lock method: %d", lockmethodid);
 
 	/* Session locks and user locks are not transactional */
 	if (xid != InvalidTransactionId &&
@@ -507,7 +506,7 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	if (locallock->nLocks > 0)
 	{
 		GrantLockLocal(locallock, owner);
-		return TRUE;
+		return LOCKACQUIRE_ALREADY_HELD;
 	}
 
 	/*
@@ -669,7 +668,7 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 		GrantLockLocal(locallock, owner);
 		PROCLOCK_PRINT("LockAcquire: my other XID owning", proclock);
 		LWLockRelease(masterLock);
-		return TRUE;
+		return LOCKACQUIRE_ALREADY_HELD;
 	}
 
 	/*
@@ -696,8 +695,8 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 
 		/*
 		 * We can't acquire the lock immediately.  If caller specified no
-		 * blocking, remove useless table entries and return FALSE without
-		 * waiting.
+		 * blocking, remove useless table entries and return NOT_AVAIL
+		 * without waiting.
 		 */
 		if (dontWait)
 		{
@@ -720,7 +719,7 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 			LWLockRelease(masterLock);
 			if (locallock->nLocks == 0)
 				RemoveLocalLock(locallock);
-			return FALSE;
+			return LOCKACQUIRE_NOT_AVAIL;
 		}
 
 		/*
@@ -740,7 +739,7 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 		/*
 		 * Sleep till someone wakes me up.
 		 */
-		status = WaitOnLock(lockmethodid, locallock, owner);
+		WaitOnLock(lockmethodid, locallock, owner);
 
 		/*
 		 * NOTE: do not do any material change of state between here and
@@ -759,7 +758,7 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 			LOCK_PRINT("LockAcquire: INCONSISTENT", lock, lockmode);
 			/* Should we retry ? */
 			LWLockRelease(masterLock);
-			return FALSE;
+			elog(ERROR, "LockAcquire failed");
 		}
 		PROCLOCK_PRINT("LockAcquire: granted", proclock);
 		LOCK_PRINT("LockAcquire: granted", lock, lockmode);
@@ -767,7 +766,7 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 
 	LWLockRelease(masterLock);
 
-	return status == STATUS_OK;
+	return LOCKACQUIRE_OK;
 }
 
 /*
@@ -1091,7 +1090,7 @@ GrantAwaitedLock(void)
  *
  * The locktable's masterLock must be held at entry.
  */
-static int
+static void
 WaitOnLock(LOCKMETHODID lockmethodid, LOCALLOCK *locallock,
 		   ResourceOwner owner)
 {
@@ -1159,7 +1158,6 @@ WaitOnLock(LOCKMETHODID lockmethodid, LOCALLOCK *locallock,
 
 	LOCK_PRINT("WaitOnLock: wakeup on lock",
 			   locallock->lock, locallock->tag.mode);
-	return STATUS_OK;
 }
 
 /*
@@ -1247,7 +1245,7 @@ LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	Assert(lockmethodid < NumLockMethods);
 	lockMethodTable = LockMethods[lockmethodid];
 	if (!lockMethodTable)
-		elog(ERROR, "bad lock method: %d", lockmethodid);
+		elog(ERROR, "unrecognized lock method: %d", lockmethodid);
 
 	/*
 	 * Find the LOCALLOCK entry for this lock and lockmode
@@ -1397,7 +1395,7 @@ LockReleaseAll(LOCKMETHODID lockmethodid, bool allxids)
 	Assert(lockmethodid < NumLockMethods);
 	lockMethodTable = LockMethods[lockmethodid];
 	if (!lockMethodTable)
-		elog(ERROR, "bad lock method: %d", lockmethodid);
+		elog(ERROR, "unrecognized lock method: %d", lockmethodid);
 
 	numLockModes = lockMethodTable->numLockModes;
 	masterLock = lockMethodTable->masterLock;

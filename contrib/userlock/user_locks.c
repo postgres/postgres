@@ -33,8 +33,8 @@ user_lock(uint32 id1, uint32 id2, LOCKMODE lockmode)
 
 	SET_LOCKTAG_USERLOCK(tag, id1, id2);
 
-	return LockAcquire(USER_LOCKMETHOD, &tag, InvalidTransactionId,
-					   lockmode, true);
+	return (LockAcquire(USER_LOCKMETHOD, &tag, InvalidTransactionId,
+						lockmode, true) != LOCKACQUIRE_NOT_AVAIL);
 }
 
 int

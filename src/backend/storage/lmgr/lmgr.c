@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.74 2005/05/19 21:35:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.75 2005/05/29 22:45:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,24 +136,28 @@ void
 LockRelation(Relation relation, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
+	LockAcquireResult res;
 
 	SET_LOCKTAG_RELATION(tag,
 						 relation->rd_lockInfo.lockRelId.dbId,
 						 relation->rd_lockInfo.lockRelId.relId);
 
-	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					 lockmode, false))
-		elog(ERROR, "LockAcquire failed");
+	res = LockAcquire(LockTableId, &tag, GetTopTransactionId(),
+					  lockmode, false);
 
 	/*
 	 * Check to see if the relcache entry has been invalidated while we
 	 * were waiting to lock it.  If so, rebuild it, or ereport() trying.
 	 * Increment the refcount to ensure that RelationFlushRelation will
-	 * rebuild it and not just delete it.
+	 * rebuild it and not just delete it.  We can skip this if the lock
+	 * was already held, however.
 	 */
-	RelationIncrementReferenceCount(relation);
-	AcceptInvalidationMessages();
-	RelationDecrementReferenceCount(relation);
+	if (res != LOCKACQUIRE_ALREADY_HELD)
+	{
+		RelationIncrementReferenceCount(relation);
+		AcceptInvalidationMessages();
+		RelationDecrementReferenceCount(relation);
+	}
 }
 
 /*
@@ -169,24 +173,31 @@ bool
 ConditionalLockRelation(Relation relation, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
+	LockAcquireResult res;
 
 	SET_LOCKTAG_RELATION(tag,
 						 relation->rd_lockInfo.lockRelId.dbId,
 						 relation->rd_lockInfo.lockRelId.relId);
 
-	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					 lockmode, true))
+	res = LockAcquire(LockTableId, &tag, GetTopTransactionId(),
+					  lockmode, true);
+
+	if (res == LOCKACQUIRE_NOT_AVAIL)
 		return false;
 
 	/*
 	 * Check to see if the relcache entry has been invalidated while we
 	 * were waiting to lock it.  If so, rebuild it, or ereport() trying.
 	 * Increment the refcount to ensure that RelationFlushRelation will
-	 * rebuild it and not just delete it.
+	 * rebuild it and not just delete it.  We can skip this if the lock
+	 * was already held, however.
 	 */
-	RelationIncrementReferenceCount(relation);
-	AcceptInvalidationMessages();
-	RelationDecrementReferenceCount(relation);
+	if (res != LOCKACQUIRE_ALREADY_HELD)
+	{
+		RelationIncrementReferenceCount(relation);
+		AcceptInvalidationMessages();
+		RelationDecrementReferenceCount(relation);
+	}
 
 	return true;
 }
@@ -225,9 +236,8 @@ LockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
 
 	SET_LOCKTAG_RELATION(tag, relid->dbId, relid->relId);
 
-	if (!LockAcquire(LockTableId, &tag, InvalidTransactionId,
-					 lockmode, false))
-		elog(ERROR, "LockAcquire failed");
+	(void) LockAcquire(LockTableId, &tag, InvalidTransactionId,
+					   lockmode, false);
 }
 
 /*
@@ -262,9 +272,8 @@ LockRelationForExtension(Relation relation, LOCKMODE lockmode)
 								relation->rd_lockInfo.lockRelId.dbId,
 								relation->rd_lockInfo.lockRelId.relId);
 
-	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					 lockmode, false))
-		elog(ERROR, "LockAcquire failed");
+	(void) LockAcquire(LockTableId, &tag, GetTopTransactionId(),
+					   lockmode, false);
 }
 
 /*
@@ -298,9 +307,8 @@ LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 					 relation->rd_lockInfo.lockRelId.relId,
 					 blkno);
 
-	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					 lockmode, false))
-		elog(ERROR, "LockAcquire failed");
+	(void) LockAcquire(LockTableId, &tag, GetTopTransactionId(),
+					   lockmode, false);
 }
 
 /*
@@ -319,8 +327,8 @@ ConditionalLockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 					 relation->rd_lockInfo.lockRelId.relId,
 					 blkno);
 
-	return LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					   lockmode, true);
+	return (LockAcquire(LockTableId, &tag, GetTopTransactionId(),
+						lockmode, true) != LOCKACQUIRE_NOT_AVAIL);
 }
 
 /*
@@ -357,9 +365,8 @@ LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 					  ItemPointerGetBlockNumber(tid),
 					  ItemPointerGetOffsetNumber(tid));
 
-	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					 lockmode, false))
-		elog(ERROR, "LockAcquire failed");
+	(void) LockAcquire(LockTableId, &tag, GetTopTransactionId(),
+					   lockmode, false);
 }
 
 /*
@@ -393,9 +400,8 @@ XactLockTableInsert(TransactionId xid)
 
 	SET_LOCKTAG_TRANSACTION(tag, xid);
 
-	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					 ExclusiveLock, false))
-		elog(ERROR, "LockAcquire failed");
+	(void) LockAcquire(LockTableId, &tag, GetTopTransactionId(),
+					   ExclusiveLock, false);
 }
 
 /*
@@ -441,8 +447,9 @@ XactLockTableWait(TransactionId xid)
 
 		SET_LOCKTAG_TRANSACTION(tag, xid);
 
-		if (!LockAcquire(LockTableId, &tag, myxid, ShareLock, false))
-			elog(ERROR, "LockAcquire failed");
+		(void) LockAcquire(LockTableId, &tag, myxid,
+						   ShareLock, false);
+
 		LockRelease(LockTableId, &tag, myxid, ShareLock);
 
 		if (!TransactionIdIsInProgress(xid))
@@ -479,9 +486,8 @@ LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
 					   objid,
 					   objsubid);
 
-	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					 lockmode, false))
-		elog(ERROR, "LockAcquire failed");
+	(void) LockAcquire(LockTableId, &tag, GetTopTransactionId(),
+					   lockmode, false);
 }
 
 /*
@@ -519,9 +525,8 @@ LockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 					   objid,
 					   objsubid);
 
-	if (!LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					 lockmode, false))
-		elog(ERROR, "LockAcquire failed");
+	(void) LockAcquire(LockTableId, &tag, GetTopTransactionId(),
+					   lockmode, false);
 }
 
 /*
