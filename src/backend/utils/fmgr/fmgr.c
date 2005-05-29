@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.94 2005/04/14 20:32:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.95 2005/05/29 04:23:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -521,10 +521,6 @@ record_C_func(HeapTuple procedureTuple,
 					&fn_oid,
 					HASH_ENTER,
 					&found);
-	if (entry == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
 	/* OID is already filled in */
 	entry->fn_xmin = HeapTupleHeaderGetXmin(procedureTuple->t_data);
 	entry->fn_cmin = HeapTupleHeaderGetCmin(procedureTuple->t_data);

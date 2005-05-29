@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.77 2005/04/28 21:47:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.78 2005/05/29 04:23:05 tgl Exp $
  *
  * ----------
  */
@@ -3466,10 +3466,6 @@ ri_HashPreparedPlan(RI_QueryKey *key, void *plan)
 	entry = (RI_QueryHashEntry *) hash_search(ri_query_cache,
 											  (void *) key,
 											  HASH_ENTER, &found);
-	if (entry == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
 	entry->plan = plan;
 }
 

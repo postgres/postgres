@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.152 2005/05/19 23:30:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.153 2005/05/29 04:23:04 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -470,10 +470,6 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	locallock = (LOCALLOCK *) hash_search(LockMethodLocalHash[lockmethodid],
 										  (void *) &localtag,
 										  HASH_ENTER, &found);
-	if (!locallock)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
 
 	/*
 	 * if it's a new locallock object, initialize it
@@ -531,7 +527,7 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	 */
 	lock = (LOCK *) hash_search(LockMethodLockHash[lockmethodid],
 								(void *) locktag,
-								HASH_ENTER, &found);
+								HASH_ENTER_NULL, &found);
 	if (!lock)
 	{
 		LWLockRelease(masterLock);
@@ -578,7 +574,7 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	 */
 	proclock = (PROCLOCK *) hash_search(LockMethodProcLockHash[lockmethodid],
 										(void *) &proclocktag,
-										HASH_ENTER, &found);
+										HASH_ENTER_NULL, &found);
 	if (!proclock)
 	{
 		/* Ooops, not enough shmem for the proclock */

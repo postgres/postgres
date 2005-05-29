@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.86 2005/03/20 22:00:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.87 2005/05/29 04:23:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,10 +207,6 @@ smgropen(RelFileNode rnode)
 	reln = (SMgrRelation) hash_search(SMgrRelationHash,
 									  (void *) &rnode,
 									  HASH_ENTER, &found);
-	if (reln == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
 
 	/* Initialize it if not present before */
 	if (!found)

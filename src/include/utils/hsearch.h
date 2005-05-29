@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.35 2005/04/14 20:32:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.36 2005/05/29 04:23:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,8 +153,7 @@ typedef enum
 	HASH_FIND,
 	HASH_ENTER,
 	HASH_REMOVE,
-	HASH_FIND_SAVE,
-	HASH_REMOVE_SAVED
+	HASH_ENTER_NULL
 } HASHACTION;
 
 /* hash_seq status (should be considered an opaque type by callers) */

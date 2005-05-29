@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.60 2005/05/16 00:19:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.61 2005/05/29 04:23:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,22 +498,22 @@ calc_bucket(HASHHDR *hctl, uint32 hash_val)
  * action is one of:
  *		HASH_FIND: look up key in table
  *		HASH_ENTER: look up key in table, creating entry if not present
+ *		HASH_ENTER_NULL: same, but return NULL if out of memory
  *		HASH_REMOVE: look up key in table, remove entry if present
- *		HASH_FIND_SAVE: look up key in table, also save in static var
- *		HASH_REMOVE_SAVED: remove entry saved by HASH_FIND_SAVE
  *
  * Return value is a pointer to the element found/entered/removed if any,
- * or NULL if no match was found.  (NB: in the case of the REMOVE actions,
+ * or NULL if no match was found.  (NB: in the case of the REMOVE action,
  * the result is a dangling pointer that shouldn't be dereferenced!)
- * A NULL result for HASH_ENTER implies we ran out of memory.
+ *
+ * HASH_ENTER will normally ereport a generic "out of memory" error if
+ * it is unable to create a new entry.  The HASH_ENTER_NULL operation is
+ * the same except it will return NULL if out of memory.  Note that
+ * HASH_ENTER_NULL cannot be used with the default palloc-based allocator,
+ * since palloc internally ereports on out-of-memory.
  *
  * If foundPtr isn't NULL, then *foundPtr is set TRUE if we found an
  * existing entry in the table, FALSE otherwise.  This is needed in the
  * HASH_ENTER case, but is redundant with the return value otherwise.
- *
- * The HASH_FIND_SAVE/HASH_REMOVE_SAVED interface is a hack to save one
- * table lookup in a find/process/remove scenario.	Note that no other
- * addition or removal in the table can safely happen in between.
  *----------
  */
 void *
@@ -523,19 +523,15 @@ hash_search(HTAB *hashp,
 			bool *foundPtr)
 {
 	HASHHDR    *hctl = hashp->hctl;
-	uint32		hashvalue = 0;
+	Size		keysize = hctl->keysize;
+	uint32		hashvalue;
 	uint32		bucket;
 	long		segment_num;
 	long		segment_ndx;
 	HASHSEGMENT segp;
 	HASHBUCKET	currBucket;
 	HASHBUCKET *prevBucketPtr;
-
-	static struct State
-	{
-		HASHBUCKET	currBucket;
-		HASHBUCKET *prevBucketPtr;
-	}			saveState;
+	HashCompareFunc match;
 
 #if HASH_STATISTICS
 	hash_accesses++;
@@ -543,54 +539,38 @@ hash_search(HTAB *hashp,
 #endif
 
 	/*
-	 * Do the initial lookup (or recall result of prior lookup)
+	 * Do the initial lookup
 	 */
-	if (action == HASH_REMOVE_SAVED)
+	hashvalue = hashp->hash(keyPtr, keysize);
+	bucket = calc_bucket(hctl, hashvalue);
+
+	segment_num = bucket >> hctl->sshift;
+	segment_ndx = MOD(bucket, hctl->ssize);
+
+	segp = hashp->dir[segment_num];
+
+	if (segp == NULL)
+		hash_corrupted(hashp);
+
+	prevBucketPtr = &segp[segment_ndx];
+	currBucket = *prevBucketPtr;
+
+	/*
+	 * Follow collision chain looking for matching key
+	 */
+	match = hashp->match;		/* save one fetch in inner loop */
+
+	while (currBucket != NULL)
 	{
-		currBucket = saveState.currBucket;
-		prevBucketPtr = saveState.prevBucketPtr;
-
-		/*
-		 * Try to catch subsequent errors
-		 */
-		Assert(currBucket);
-		saveState.currBucket = NULL;
-	}
-	else
-	{
-		HashCompareFunc match;
-		Size		keysize = hctl->keysize;
-
-		hashvalue = hashp->hash(keyPtr, keysize);
-		bucket = calc_bucket(hctl, hashvalue);
-
-		segment_num = bucket >> hctl->sshift;
-		segment_ndx = MOD(bucket, hctl->ssize);
-
-		segp = hashp->dir[segment_num];
-
-		if (segp == NULL)
-			hash_corrupted(hashp);
-
-		prevBucketPtr = &segp[segment_ndx];
+		if (currBucket->hashvalue == hashvalue &&
+			match(ELEMENTKEY(currBucket), keyPtr, keysize) == 0)
+			break;
+		prevBucketPtr = &(currBucket->link);
 		currBucket = *prevBucketPtr;
-
-		/*
-		 * Follow collision chain looking for matching key
-		 */
-		match = hashp->match;	/* save one fetch in inner loop */
-		while (currBucket != NULL)
-		{
-			if (currBucket->hashvalue == hashvalue &&
-				match(ELEMENTKEY(currBucket), keyPtr, keysize) == 0)
-				break;
-			prevBucketPtr = &(currBucket->link);
-			currBucket = *prevBucketPtr;
 #if HASH_STATISTICS
-			hash_collisions++;
-			hctl->collisions++;
+		hash_collisions++;
+		hctl->collisions++;
 #endif
-		}
 	}
 
 	if (foundPtr)
@@ -606,17 +586,7 @@ hash_search(HTAB *hashp,
 				return (void *) ELEMENTKEY(currBucket);
 			return NULL;
 
-		case HASH_FIND_SAVE:
-			if (currBucket != NULL)
-			{
-				saveState.currBucket = currBucket;
-				saveState.prevBucketPtr = prevBucketPtr;
-				return (void *) ELEMENTKEY(currBucket);
-			}
-			return NULL;
-
 		case HASH_REMOVE:
-		case HASH_REMOVE_SAVED:
 			if (currBucket != NULL)
 			{
 				Assert(hctl->nentries > 0);
@@ -638,6 +608,11 @@ hash_search(HTAB *hashp,
 			}
 			return NULL;
 
+		case HASH_ENTER_NULL:
+			/* ENTER_NULL does not work with palloc-based allocator */
+			Assert(hashp->alloc != DynaHashAlloc);
+			/* FALL THRU */
+
 		case HASH_ENTER:
 			/* Return existing element if found, else create one */
 			if (currBucket != NULL)
@@ -649,7 +624,20 @@ hash_search(HTAB *hashp,
 			{
 				/* no free elements.  allocate another chunk of buckets */
 				if (!element_alloc(hashp, HASHELEMENT_ALLOC_INCR))
-					return NULL;	/* out of memory */
+				{
+					/* out of memory */
+					if (action == HASH_ENTER_NULL)
+						return NULL;
+					/* report a generic message */
+					if (hashp->isshared)
+						ereport(ERROR,
+								(errcode(ERRCODE_OUT_OF_MEMORY),
+								 errmsg("out of shared memory")));
+					else
+						ereport(ERROR,
+								(errcode(ERRCODE_OUT_OF_MEMORY),
+								 errmsg("out of memory")));
+				}
 				currBucket = hctl->freeList;
 				Assert(currBucket != NULL);
 			}

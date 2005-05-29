@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.40 2005/03/04 20:21:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.41 2005/05/29 04:23:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,11 +109,6 @@ BufTableInsert(BufferTag *tagPtr, int buf_id)
 
 	result = (BufferLookupEnt *)
 		hash_search(SharedBufHash, (void *) tagPtr, HASH_ENTER, &found);
-
-	if (!result)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of shared memory")));
 
 	if (found)					/* found something already in the table */
 		return result->id;

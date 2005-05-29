@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.44 2005/04/24 03:51:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.45 2005/05/29 04:23:04 tgl Exp $
  *
  *
  * NOTES:
@@ -1036,10 +1036,6 @@ create_fsm_rel(RelFileNode *rel)
 										 (void *) rel,
 										 HASH_ENTER,
 										 &found);
-	if (!fsmrel)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of shared memory")));
 
 	if (!found)
 	{

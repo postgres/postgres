@@ -2061,11 +2061,6 @@ createNewConnection(const char *name, remoteConn * con)
 	hentry = (remoteConnHashEnt *) hash_search(remoteConnHash, key,
 											   HASH_ENTER, &found);
 
-	if (!hentry)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-
 	if (found)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.31 2005/05/23 21:54:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.32 2005/05/29 04:23:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -971,6 +971,7 @@ identify_system_timezone(void)
  * load and parse the TZ definition file every time it is selected.
  */
 static HTAB *timezone_cache = NULL;
+
 static bool
 init_timezone_hashtable(void)
 {
@@ -1013,14 +1014,18 @@ pg_tzset(const char *name)
 							  HASH_FIND,
 							  NULL);
 	if (tzp)
+	{
 		/* Timezone found in cache, nothing more to do */
 		return tzp;
+	}
 
 	if (tzload(name, &tz.state) != 0)
 	{
 		if (name[0] == ':' || tzparse(name, &tz.state, FALSE) != 0)
+		{
 			/* Unknown timezone. Fail our call instead of loading GMT! */
 			return NULL;
+		}
 	}
 
 	strcpy(tz.TZname, name);
@@ -1030,9 +1035,6 @@ pg_tzset(const char *name)
 					  name,
 					  HASH_ENTER,
 					  NULL);
-	
-	if (!tzp)
-		return NULL;
 	
 	strcpy(tzp->TZname, tz.TZname);
 	memcpy(&tzp->state, &tz.state, sizeof(tz.state));

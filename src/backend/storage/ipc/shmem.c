@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.83 2005/04/04 04:34:41 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.84 2005/05/29 04:23:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,10 +235,6 @@ InitShmemIndex(void)
 
 		result = (ShmemIndexEnt *)
 			hash_search(ShmemIndex, (void *) &item, HASH_ENTER, &found);
-		if (!result)
-			ereport(FATAL,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of shared memory")));
 
 		Assert(!found);
 
@@ -367,7 +363,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 
 	/* look it up in the shmem index */
 	result = (ShmemIndexEnt *)
-		hash_search(ShmemIndex, (void *) &item, HASH_ENTER, foundPtr);
+		hash_search(ShmemIndex, (void *) &item, HASH_ENTER_NULL, foundPtr);
 
 	if (!result)
 	{
@@ -375,7 +371,6 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory")));
-		return NULL;
 	}
 
 	if (*foundPtr)

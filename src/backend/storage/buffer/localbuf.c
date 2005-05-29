@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.66 2005/03/19 23:27:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.67 2005/05/29 04:23:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,10 +192,6 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 
 	hresult = (LocalBufferLookupEnt *)
 		hash_search(LocalBufHash, (void *) &newTag, HASH_ENTER, &found);
-	if (!hresult)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
 	if (found)				/* shouldn't happen */
 		elog(ERROR, "local buffer hash table corrupted");
 	hresult->id = b;

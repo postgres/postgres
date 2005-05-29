@@ -23,7 +23,7 @@
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.3 2005/05/17 00:43:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.4 2005/05/29 04:23:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,10 +220,6 @@ tbm_create_pagetable(TIDBitmap *tbm)
 		page = (PagetableEntry *) hash_search(tbm->pagetable,
 											  (void *) &tbm->entry1.blockno,
 											  HASH_ENTER, &found);
-		if (page == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
 		Assert(!found);
 		memcpy(page, &tbm->entry1, sizeof(PagetableEntry));
 	}
@@ -726,10 +722,6 @@ tbm_get_pageentry(TIDBitmap *tbm, BlockNumber pageno)
 		page = (PagetableEntry *) hash_search(tbm->pagetable,
 											  (void *) &pageno,
 											  HASH_ENTER, &found);
-		if (page == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
 	}
 
 	/* Initialize it if not present before */
@@ -820,10 +812,6 @@ tbm_mark_page_lossy(TIDBitmap *tbm, BlockNumber pageno)
 	page = (PagetableEntry *) hash_search(tbm->pagetable,
 										  (void *) &chunk_pageno,
 										  HASH_ENTER, &found);
-	if (page == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
 
 	/* Initialize it if not present before */
 	if (!found)

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.89 2005/05/06 17:24:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.90 2005/05/29 04:23:06 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2157,10 +2157,6 @@ plpgsql_HashTableInsert(PLpgSQL_function *function,
 											 (void *) func_key,
 											 HASH_ENTER,
 											 &found);
-	if (hentry == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
 	if (found)
 		elog(WARNING, "trying to insert a function that already exists");
 

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.79 2005/05/11 18:05:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.80 2005/05/29 04:23:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,10 +72,6 @@ do { \
 	StrNCpy(key, NAME, MAX_PORTALNAME_LEN); \
 	hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
 										 key, HASH_ENTER, &found); \
-	if (hentry == NULL) \
-		ereport(ERROR, \
-				(errcode(ERRCODE_OUT_OF_MEMORY), \
-				 errmsg("out of memory"))); \
 	if (found) \
 		elog(ERROR, "duplicate portal name"); \
 	hentry->portal = PORTAL; \
