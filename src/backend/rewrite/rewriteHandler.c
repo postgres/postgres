@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.151 2005/04/28 21:47:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.152 2005/05/29 18:34:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -699,7 +699,6 @@ ApplyRetrieveRule(Query *parsetree,
 				  int rt_index,
 				  bool relation_level,
 				  Relation relation,
-				  bool relIsUsed,
 				  List *activeRIRs)
 {
 	Query	   *rule_action;
@@ -870,7 +869,6 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 		RuleLock   *rules;
 		RewriteRule *rule;
 		LOCKMODE	lockmode;
-		bool		relIsUsed;
 		int			i;
 
 		++rt_index;
@@ -901,9 +899,8 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 		 * part of the join set (a source table), or is referenced by any
 		 * Var nodes, or is the result table.
 		 */
-		relIsUsed = rangeTableEntry_used((Node *) parsetree, rt_index, 0);
-
-		if (!relIsUsed && rt_index != parsetree->resultRelation)
+		if (rt_index != parsetree->resultRelation &&
+			!rangeTableEntry_used((Node *) parsetree, rt_index, 0))
 			continue;
 
 		/*
@@ -978,7 +975,6 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 											  rt_index,
 											  rule->attrno == -1,
 											  rel,
-											  relIsUsed,
 											  activeRIRs);
 			}
 
