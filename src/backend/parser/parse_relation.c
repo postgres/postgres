@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.79 2002/09/04 20:31:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.79.2.1 2005/05/29 17:11:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1372,7 +1372,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 							varnode = makeVar(rtindex,
 											  attnum,
 											  atttypid,
-											  -1,
+											  colDef->typename->typmod,
 											  sublevels_up);
 
 							*colvars = lappend(*colvars, varnode);
@@ -1631,7 +1631,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					ColumnDef  *colDef = nth(attnum - 1, coldeflist);
 
 					*vartype = typenameTypeId(colDef->typename);
-					*vartypmod = -1;
+					*vartypmod = colDef->typename->typmod;
 				}
 				else
 					elog(ERROR, "Unknown kind of return type specified for function");
