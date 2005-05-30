@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.186 2005/05/22 22:30:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.187 2005/05/30 01:04:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -386,6 +386,14 @@ static Node *
 preprocess_expression(Query *parse, Node *expr, int kind)
 {
 	/*
+	 * Fall out quickly if expression is empty.  This occurs often enough
+	 * to be worth checking.  Note that null->null is the correct conversion
+	 * for implicit-AND result format, too.
+	 */
+	if (expr == NULL)
+		return NULL;
+
+	/*
 	 * If the query has any join RTEs, replace join alias variables with
 	 * base-relation variables. We must do this before sublink processing,
 	 * else sublinks expanded out from join aliases wouldn't get
@@ -401,8 +409,19 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 	 * form.  All processing of a qual expression after this point must be
 	 * careful to maintain AND/OR flatness --- that is, do not generate a tree
 	 * with AND directly under AND, nor OR directly under OR.
+	 *
+	 * Because this is a relatively expensive process, we skip it when the
+	 * query is trivial, such as "SELECT 2+2;" or "INSERT ... VALUES()".
+	 * The expression will only be evaluated once anyway, so no point in
+	 * pre-simplifying; we can't execute it any faster than the executor can,
+	 * and we will waste cycles copying the tree.  Notice however that we
+	 * still must do it for quals (to get AND/OR flatness); and if we are
+	 * in a subquery we should not assume it will be done only once.
 	 */
-	expr = eval_const_expressions(expr);
+	if (parse->jointree->fromlist != NIL ||
+		kind == EXPRKIND_QUAL ||
+		PlannerQueryLevel > 1)
+		expr = eval_const_expressions(expr);
 
 	/*
 	 * If it's a qual or havingQual, canonicalize it.
