@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.108 2005/05/23 03:01:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.109 2005/05/30 18:55:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
 #include "parser/parse_expr.h"
+#include "parser/parse_relation.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -373,8 +374,9 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
  * For now, we don't apply the physical-tlist optimization when there are
  * dropped cols.
  *
- * We also support building a "physical" tlist for subqueries, since the
- * same optimization can occur in SubqueryScan nodes.
+ * We also support building a "physical" tlist for subqueries and functions,
+ * since the same optimization can occur in SubqueryScan and FunctionScan
+ * nodes.
  */
 List *
 build_physical_tlist(Query *root, RelOptInfo *rel)
@@ -388,6 +390,7 @@ build_physical_tlist(Query *root, RelOptInfo *rel)
 	ListCell   *l;
 	int			attrno,
 				numattrs;
+	List	   *colvars;
 
 	switch (rte->rtekind)
 	{
@@ -429,6 +432,10 @@ build_physical_tlist(Query *root, RelOptInfo *rel)
 			{
 				TargetEntry *tle = (TargetEntry *) lfirst(l);
 
+				/*
+				 * A resjunk column of the subquery can be reflected as
+				 * resjunk in the physical tlist; we need not punt.
+				 */
 				var = makeVar(varno,
 							  tle->resno,
 							  exprType((Node *) tle->expr),
@@ -440,6 +447,30 @@ build_physical_tlist(Query *root, RelOptInfo *rel)
 												tle->resno,
 												NULL,
 												tle->resjunk));
+			}
+			break;
+
+		case RTE_FUNCTION:
+			expandRTE(root->rtable, varno, 0, true /* include dropped */,
+					  NULL, &colvars);
+			foreach(l, colvars)
+			{
+				var = (Var *) lfirst(l);
+				/*
+				 * A non-Var in expandRTE's output means a dropped column;
+				 * must punt.
+				 */
+				if (!IsA(var, Var))
+				{
+					tlist = NIL;
+					break;
+				}
+
+				tlist = lappend(tlist,
+								makeTargetEntry((Expr *) var,
+												var->varattno,
+												NULL,
+												false));
 			}
 			break;
 
