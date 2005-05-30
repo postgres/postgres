@@ -454,14 +454,10 @@ dblink_fetch(PG_FUNCTION_ARGS)
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		Oid			functypeid;
-		char		functyptype;
-		Oid			funcid = fcinfo->flinfo->fn_oid;
 		PGconn	   *conn = NULL;
 		StringInfo	str = makeStringInfo();
 		char	   *curname = NULL;
 		int			howmany = 0;
-		ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 		bool		fail = true;	/* default to backward compatible */
 
 		if (PG_NARGS() == 4)
@@ -554,27 +550,27 @@ dblink_fetch(PG_FUNCTION_ARGS)
 			SRF_RETURN_DONE(funcctx);
 		}
 
-		/* check typtype to see if we have a predetermined return type */
-		functypeid = get_func_rettype(funcid);
-		functyptype = get_typtype(functypeid);
-
-		if (functyptype == 'c')
-			tupdesc = TypeGetTupleDesc(functypeid, NIL);
-		else if (functypeid == RECORDOID)
+		/* get a tuple descriptor for our result type */
+		switch (get_call_result_type(fcinfo, NULL, &tupdesc))
 		{
-			if (!rsinfo || !IsA(rsinfo, ReturnSetInfo) ||
-				rsinfo->expectedDesc == NULL)
+			case TYPEFUNC_COMPOSITE:
+				/* success */
+				break;
+			case TYPEFUNC_RECORD:
+				/* failed to determine actual type of RECORD */
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("function returning record called in context "
-						   "that cannot accept type record")));
-
-			/* get the requested return tuple description */
-			tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+						 errmsg("function returning record called in context "
+								"that cannot accept type record")));
+				break;
+			default:
+				/* result type isn't composite */
+				elog(ERROR, "return type must be a row type");
+				break;
 		}
-		else
-			/* shouldn't happen */
-			elog(ERROR, "return type must be a row type");
+
+		/* make sure we have a persistent copy of the tupdesc */
+		tupdesc = CreateTupleDescCopy(tupdesc);
 
 		/* store needed metadata for subsequent calls */
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
@@ -651,15 +647,11 @@ dblink_record(PG_FUNCTION_ARGS)
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		Oid			functypeid;
-		char		functyptype;
-		Oid			funcid = fcinfo->flinfo->fn_oid;
 		PGconn	   *conn = NULL;
 		char	   *connstr = NULL;
 		char	   *sql = NULL;
 		char	   *conname = NULL;
 		remoteConn *rcon = NULL;
-		ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 		bool		fail = true;	/* default to backward compatible */
 
 		/* create a function context for cross-call persistence */
@@ -756,29 +748,29 @@ dblink_record(PG_FUNCTION_ARGS)
 			SRF_RETURN_DONE(funcctx);
 		}
 
-		/* check typtype to see if we have a predetermined return type */
-		functypeid = get_func_rettype(funcid);
-		functyptype = get_typtype(functypeid);
-
 		if (!is_sql_cmd)
 		{
-			if (functyptype == 'c')
-				tupdesc = TypeGetTupleDesc(functypeid, NIL);
-			else if (functypeid == RECORDOID)
+			/* get a tuple descriptor for our result type */
+			switch (get_call_result_type(fcinfo, NULL, &tupdesc))
 			{
-				if (!rsinfo || !IsA(rsinfo, ReturnSetInfo) ||
-					rsinfo->expectedDesc == NULL)
+				case TYPEFUNC_COMPOSITE:
+					/* success */
+					break;
+				case TYPEFUNC_RECORD:
+					/* failed to determine actual type of RECORD */
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					errmsg("function returning record called in context "
-						   "that cannot accept type record")));
-
-				/* get the requested return tuple description */
-				tupdesc = CreateTupleDescCopy(rsinfo->expectedDesc);
+							 errmsg("function returning record called in context "
+									"that cannot accept type record")));
+					break;
+				default:
+					/* result type isn't composite */
+					elog(ERROR, "return type must be a row type");
+					break;
 			}
-			else
-				/* shouldn't happen */
-				elog(ERROR, "return type must be a row type");
+
+			/* make sure we have a persistent copy of the tupdesc */
+			tupdesc = CreateTupleDescCopy(tupdesc);
 		}
 
 		/* store needed metadata for subsequent calls */

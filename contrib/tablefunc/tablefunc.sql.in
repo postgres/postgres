@@ -6,6 +6,13 @@ RETURNS setof float8
 AS 'MODULE_PATHNAME','normal_rand'
 LANGUAGE 'C' VOLATILE STRICT;
 
+-- the generic crosstab function:
+CREATE OR REPLACE FUNCTION crosstab(text)
+RETURNS setof record
+AS 'MODULE_PATHNAME','crosstab'
+LANGUAGE 'C' STABLE STRICT;
+
+-- examples of building custom type-specific crosstab functions:
 CREATE TYPE tablefunc_crosstab_2 AS
 (
 	row_name TEXT,
@@ -45,6 +52,7 @@ RETURNS setof tablefunc_crosstab_4
 AS 'MODULE_PATHNAME','crosstab'
 LANGUAGE 'C' STABLE STRICT;
 
+-- obsolete:
 CREATE OR REPLACE FUNCTION crosstab(text,int)
 RETURNS setof record
 AS 'MODULE_PATHNAME','crosstab'

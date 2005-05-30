@@ -330,7 +330,8 @@ typedef struct
 }	StatStorage;
 
 static void
-ts_setup_firstcall(FuncCallContext *funcctx, tsstat * stat)
+ts_setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx,
+				   tsstat * stat)
 {
 	TupleDesc	tupdesc;
 	MemoryContext oldcontext;
@@ -342,7 +343,9 @@ ts_setup_firstcall(FuncCallContext *funcctx, tsstat * stat)
 	st->stat = palloc(stat->len);
 	memcpy(st->stat, stat, stat->len);
 	funcctx->user_fctx = (void *) st;
-	tupdesc = RelationNameGetTupleDesc("statinfo");
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+	tupdesc = CreateTupleDescCopy(tupdesc);
 	funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -399,7 +402,7 @@ ts_accum_finish(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		funcctx = SRF_FIRSTCALL_INIT();
-		ts_setup_firstcall(funcctx, (tsstat *) PG_GETARG_POINTER(0));
+		ts_setup_firstcall(fcinfo, funcctx, (tsstat *) PG_GETARG_POINTER(0));
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
@@ -544,7 +547,7 @@ ts_stat(PG_FUNCTION_ARGS)
 		PG_FREE_IF_COPY(txt, 0);
 		if (PG_NARGS() > 1)
 			PG_FREE_IF_COPY(ws, 1);
-		ts_setup_firstcall(funcctx, stat);
+		ts_setup_firstcall(fcinfo, funcctx, stat);
 		SPI_finish();
 	}
 

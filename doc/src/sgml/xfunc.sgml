@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.102 2005/03/31 22:46:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.103 2005/05/30 23:09:07 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -2324,21 +2324,68 @@ CREATE FUNCTION c_overpaid(emp, integer) RETURNS boolean
     </para>
 
     <para>
-     Several helper functions are available for setting up the initial
-     <structname>TupleDesc</>.  If you want to use a named composite type,
-     you can fetch the information from the system catalogs.  Use
+     Several helper functions are available for setting up the needed
+     <structname>TupleDesc</>.  The recommended way to do this in most
+     functions returning composite values is to call
+<programlisting>
+TypeFuncClass get_call_result_type(FunctionCallInfo fcinfo,
+                                   Oid *resultTypeId,
+                                   TupleDesc *resultTupleDesc)
+</programlisting>
+     passing the same <literal>fcinfo</> struct passed to the calling function
+     itself.  (This of course requires that you use the version-1
+     calling conventions.)  <varname>resultTypeId</> can be specified
+     as <literal>NULL</> or as the address of a local variable to receive the
+     function's result type OID.  <varname>resultTupleDesc</> should be the
+     address of a local <structname>TupleDesc</> variable.  Check that the
+     result is <literal>TYPEFUNC_COMPOSITE</>; if so,
+     <varname>resultTupleDesc</> has been filled with the needed
+     <structname>TupleDesc</>.  (If it is not, you can report an error along
+     the lines of <quote>function returning record called in context that
+     cannot accept type record</quote>.)
+    </para>
+
+    <tip>
+     <para>
+      <function>get_call_result_type</> can resolve the actual type of a
+      polymorphic function result; so it is useful in functions that return
+      scalar polymorphic results, not only functions that return composites.
+      The <varname>resultTypeId</> output is primarily useful for functions
+      returning polymorphic scalars.
+     </para>
+    </tip>
+
+    <note>
+     <para>
+      <function>get_call_result_type</> has a sibling
+      <function>get_expr_result_type</>, which can be used to resolve the
+      expected output type for a function call represented by an expression
+      tree.  This can be used when trying to determine the result type from
+      outside the function itself.  There is also
+      <function>get_func_result_type</>, which can be used when only the
+      function's OID is available.  However these functions are not able
+      to deal with functions declared to return <structname>record</>, and
+      <function>get_func_result_type</> cannot resolve polymorphic types,
+      so you should preferentially use <function>get_call_result_type</>.
+     </para>
+    </note>
+
+    <para>
+     Older, now-deprecated functions for obtaining
+     <structname>TupleDesc</>s are
 <programlisting>
 TupleDesc RelationNameGetTupleDesc(const char *relname)
 </programlisting>
-     to get a <structname>TupleDesc</> for a named relation, or
+     to get a <structname>TupleDesc</> for the row type of a named relation,
+     and
 <programlisting>
 TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases)
 </programlisting>
      to get a <structname>TupleDesc</> based on a type OID. This can
      be used to get a <structname>TupleDesc</> for a base or
-     composite type.  When writing a function that returns
-     <structname>record</>, the expected <structname>TupleDesc</> 
-     must be passed in by the caller.
+     composite type.  It will not work for a function that returns
+     <structname>record</>, however, and it cannot resolve polymorphic
+     types.
     </para>
 
     <para>
@@ -2587,12 +2634,13 @@ my_set_returning_function(PG_FUNCTION_ARGS)
     </para>
 
     <para>
-     A complete example of a simple <acronym>SRF</> returning a composite type looks like:
+     A complete example of a simple <acronym>SRF</> returning a composite type
+     looks like:
 <programlisting>
-PG_FUNCTION_INFO_V1(testpassbyval);
+PG_FUNCTION_INFO_V1(retcomposite);
 
 Datum
-testpassbyval(PG_FUNCTION_ARGS)
+retcomposite(PG_FUNCTION_ARGS)
 {
     FuncCallContext     *funcctx;
     int                  call_cntr;
@@ -2614,8 +2662,12 @@ testpassbyval(PG_FUNCTION_ARGS)
         /* total number of tuples to be returned */
         funcctx-&gt;max_calls = PG_GETARG_UINT32(0);
 
-        /* Build a tuple description for a __testpassbyval tuple */
-        tupdesc = RelationNameGetTupleDesc("__testpassbyval");
+        /* Build a tuple descriptor for our result type */
+        if (get_call_result_type(fcinfo, NULL, &amp;tupdesc) != TYPEFUNC_COMPOSITE)
+            ereport(ERROR,
+                    (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                     errmsg("function returning record called in context "
+                            "that cannot accept type record")));
 
         /*
          * generate attribute metadata needed later to produce tuples from raw
@@ -2675,14 +2727,25 @@ testpassbyval(PG_FUNCTION_ARGS)
 }
 </programlisting>
 
-     The SQL code to declare this function is:
+     One way to declare this function in SQL is:
 <programlisting>
-CREATE TYPE __testpassbyval AS (f1 integer, f2 integer, f3 integer);
+CREATE TYPE __retcomposite AS (f1 integer, f2 integer, f3 integer);
 
-CREATE OR REPLACE FUNCTION testpassbyval(integer, integer) RETURNS SETOF __testpassbyval
-    AS '<replaceable>filename</>', 'testpassbyval'
+CREATE OR REPLACE FUNCTION retcomposite(integer, integer)
+    RETURNS SETOF __retcomposite
+    AS '<replaceable>filename</>', 'retcomposite'
     LANGUAGE C IMMUTABLE STRICT;
 </programlisting>
+     A different way is to use OUT parameters:
+<programlisting>
+CREATE OR REPLACE FUNCTION retcomposite(IN integer, IN integer,
+    OUT f1 integer, OUT f2 integer, OUT f3 integer)
+    RETURNS SETOF record
+    AS '<replaceable>filename</>', 'retcomposite'
+    LANGUAGE C IMMUTABLE STRICT;
+</programlisting>
+     Notice that in this method the output type of the function is formally
+     an anonymous <structname>record</> type.
     </para>
 
     <para>
@@ -2711,7 +2774,8 @@ CREATE OR REPLACE FUNCTION testpassbyval(integer, integer) RETURNS SETOF __testp
      information is not available.
      The structure <literal>flinfo</> is normally accessed as
      <literal>fcinfo-&gt;flinfo</>. The parameter <literal>argnum</>
-     is zero based.
+     is zero based.  <function>get_call_result_type</> can also be used
+     as an alternative to <function>get_fn_expr_rettype</>.
     </para>
 
     <para>

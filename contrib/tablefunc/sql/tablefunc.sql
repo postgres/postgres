@@ -34,9 +34,19 @@ SELECT * FROM crosstab2('SELECT rowid, attribute, val FROM ct where rowclass = '
 SELECT * FROM crosstab3('SELECT rowid, attribute, val FROM ct where rowclass = ''group2'' ORDER BY 1,2;');
 SELECT * FROM crosstab4('SELECT rowid, attribute, val FROM ct where rowclass = ''group2'' ORDER BY 1,2;');
 
-SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;', 2) AS c(rowid text, att1 text, att2 text);
-SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;', 3) AS c(rowid text, att1 text, att2 text, att3 text);
-SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;', 4) AS c(rowid text, att1 text, att2 text, att3 text, att4 text);
+SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;') AS c(rowid text, att1 text, att2 text);
+SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;') AS c(rowid text, att1 text, att2 text, att3 text);
+SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;') AS c(rowid text, att1 text, att2 text, att3 text, att4 text);
+
+-- check it works with OUT parameters, too
+
+CREATE FUNCTION crosstab_out(text,
+	OUT rowid text, OUT att1 text, OUT att2 text, OUT att3 text)
+RETURNS setof record
+AS '$libdir/tablefunc','crosstab'
+LANGUAGE 'C' STABLE STRICT;
+
+SELECT * FROM crosstab_out('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;');
 
 --
 -- hash based crosstab
@@ -99,6 +109,35 @@ SELECT * FROM crosstab(
   'SELECT rowid, rowdt, attribute, val FROM cth WHERE false ORDER BY 1',
   'SELECT DISTINCT attribute FROM cth WHERE false ORDER BY 1')
 AS c(rowid text, rowdt timestamp, temperature text, test_result text, test_startdate text, volts text);
+
+-- check it works with a named result rowtype
+
+create type my_crosstab_result as (
+  rowid text, rowdt timestamp,
+  temperature int4, test_result text, test_startdate timestamp, volts float8);
+
+CREATE FUNCTION crosstab_named(text, text)
+RETURNS setof my_crosstab_result
+AS '$libdir/tablefunc','crosstab_hash'
+LANGUAGE 'C' STABLE STRICT;
+
+SELECT * FROM crosstab_named(
+  'SELECT rowid, rowdt, attribute, val FROM cth ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth ORDER BY 1');
+
+-- check it works with OUT parameters
+
+CREATE FUNCTION crosstab_out(text, text,
+  OUT rowid text, OUT rowdt timestamp,
+  OUT temperature int4, OUT test_result text,
+  OUT test_startdate timestamp, OUT volts float8)
+RETURNS setof record
+AS '$libdir/tablefunc','crosstab_hash'
+LANGUAGE 'C' STABLE STRICT;
+
+SELECT * FROM crosstab_out(
+  'SELECT rowid, rowdt, attribute, val FROM cth ORDER BY 1',
+  'SELECT DISTINCT attribute FROM cth ORDER BY 1');
 
 --
 -- connectby

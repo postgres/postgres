@@ -51,8 +51,6 @@ static void validateConnectbyTupleDesc(TupleDesc tupdesc, bool show_branch, bool
 static bool compatCrosstabTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 static bool compatConnectbyTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2);
 static void get_normal_pair(float8 *x1, float8 *x2);
-static TupleDesc make_crosstab_tupledesc(TupleDesc spi_tupdesc,
-						int num_categories);
 static Tuplestorestate *connectby(char *relname,
 		  char *key_fld,
 		  char *parent_key_fld,
@@ -332,12 +330,14 @@ get_normal_pair(float8 *x1, float8 *x2)
  * NOTES:
  * 1. SQL result must be ordered by 1,2.
  * 2. The number of values columns depends on the tuple description
- *	  of the function's declared return type.
- * 2. Missing values (i.e. not enough adjacent rows of same rowid to
+ *	  of the function's declared return type.  The return type's columns
+ *    must match the datatypes of the SQL query's result.  The datatype
+ *    of the category column can be anything, however.
+ * 3. Missing values (i.e. not enough adjacent rows of same rowid to
  *	  fill the number of result values columns) are filled in with nulls.
- * 3. Extra values (i.e. too many adjacent rows of same rowid to fill
+ * 4. Extra values (i.e. too many adjacent rows of same rowid to fill
  *	  the number of result values columns) are skipped.
- * 4. Rows with all nulls in the values columns are skipped.
+ * 5. Rows with all nulls in the values columns are skipped.
  */
 PG_FUNCTION_INFO_V1(crosstab);
 Datum
@@ -360,10 +360,7 @@ crosstab(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		char	   *sql = GET_STR(PG_GETARG_TEXT_P(0));
-		Oid			funcid = fcinfo->flinfo->fn_oid;
-		Oid			functypeid;
-		char		functyptype;
-		TupleDesc	tupdesc = NULL;
+		TupleDesc	tupdesc;
 		int			ret;
 		int			proc;
 
@@ -391,20 +388,23 @@ crosstab(PG_FUNCTION_ARGS)
 			spi_tuptable = SPI_tuptable;
 			spi_tupdesc = spi_tuptable->tupdesc;
 
-			/*
+			/*----------
 			 * The provided SQL query must always return three columns.
 			 *
-			 * 1. rowname	the label or identifier for each row in the final
-			 * result 2. category  the label or identifier for each column
-			 * in the final result 3. values	the value for each column
-			 * in the final result
+			 * 1. rowname
+			 *	the label or identifier for each row in the final result
+			 * 2. category
+			 *  the label or identifier for each column in the final result
+			 * 3. values
+			 *	the value for each column in the final result
+			 *----------
 			 */
 			if (spi_tupdesc->natts != 3)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("invalid source data SQL statement"),
-						 errdetail("The provided SQL must return 3 " \
-							 " columns; rowid, category, and values.")));
+						 errdetail("The provided SQL must return 3 "
+							 "columns: rowid, category, and values.")));
 		}
 		else
 		{
@@ -416,39 +416,31 @@ crosstab(PG_FUNCTION_ARGS)
 		/* SPI switches context on us, so reset it */
 		MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		/* get the typeid that represents our return type */
-		functypeid = get_func_rettype(funcid);
-
-		/* check typtype to see if we have a predetermined return type */
-		functyptype = get_typtype(functypeid);
-
-		if (functyptype == 'c')
+		/* get a tuple descriptor for our result type */
+		switch (get_call_result_type(fcinfo, NULL, &tupdesc))
 		{
-			/* Build a tuple description for a named composite type */
-			tupdesc = TypeGetTupleDesc(functypeid, NIL);
-		}
-		else if (functypeid == RECORDOID)
-		{
-			if (fcinfo->nargs != 2)
+			case TYPEFUNC_COMPOSITE:
+				/* success */
+				break;
+			case TYPEFUNC_RECORD:
+				/* failed to determine actual type of RECORD */
 				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("wrong number of arguments")));
-			else
-			{
-				int			num_categories = PG_GETARG_INT32(1);
-
-				tupdesc = make_crosstab_tupledesc(spi_tupdesc, num_categories);
-			}
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("function returning record called in context "
+								"that cannot accept type record")));
+				break;
+			default:
+				/* result type isn't composite */
+				elog(ERROR, "return type must be a row type");
+				break;
 		}
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("return type must be a row type")));
+
+		/* make sure we have a persistent copy of the tupdesc */
+		tupdesc = CreateTupleDescCopy(tupdesc);
 
 		/*
-		 * Check that return tupdesc is compatible with the one we got
-		 * from ret_relname, at least based on number and type of
-		 * attributes
+		 * Check that return tupdesc is compatible with the data we got
+		 * from SPI, at least based on number and type of attributes
 		 */
 		if (!compatCrosstabTupleDescs(tupdesc, spi_tupdesc))
 			ereport(ERROR,
@@ -679,8 +671,8 @@ crosstab(PG_FUNCTION_ARGS)
  * 1. SQL result must be ordered by 1.
  * 2. The number of values columns depends on the tuple description
  *	  of the function's declared return type.
- * 2. Missing values (i.e. missing category) are filled in with nulls.
- * 3. Extra values (i.e. not in category results) are skipped.
+ * 3. Missing values (i.e. missing category) are filled in with nulls.
+ * 4. Extra values (i.e. not in category results) are skipped.
  */
 PG_FUNCTION_INFO_V1(crosstab_hash);
 Datum
@@ -1626,52 +1618,6 @@ compatCrosstabTupleDescs(TupleDesc ret_tupdesc, TupleDesc sql_tupdesc)
 
 	/* OK, the two tupdescs are compatible for our purposes */
 	return true;
-}
-
-static TupleDesc
-make_crosstab_tupledesc(TupleDesc spi_tupdesc, int num_categories)
-{
-	Form_pg_attribute sql_attr;
-	Oid			sql_atttypid;
-	TupleDesc	tupdesc;
-	int			natts;
-	AttrNumber	attnum;
-	char		attname[NAMEDATALEN];
-	int			i;
-
-	/*
-	 * We need to build a tuple description with one column for the
-	 * rowname, and num_categories columns for the values. Each must be of
-	 * the same type as the corresponding spi result input column.
-	 */
-	natts = num_categories + 1;
-	tupdesc = CreateTemplateTupleDesc(natts, false);
-
-	/* first the rowname column */
-	attnum = 1;
-
-	sql_attr = spi_tupdesc->attrs[0];
-	sql_atttypid = sql_attr->atttypid;
-
-	strcpy(attname, "rowname");
-
-	TupleDescInitEntry(tupdesc, attnum, attname, sql_atttypid,
-					   -1, 0);
-
-	/* now the category values columns */
-	sql_attr = spi_tupdesc->attrs[2];
-	sql_atttypid = sql_attr->atttypid;
-
-	for (i = 0; i < num_categories; i++)
-	{
-		attnum++;
-
-		sprintf(attname, "category_%d", i + 1);
-		TupleDescInitEntry(tupdesc, attnum, attname, sql_atttypid,
-						   -1, 0);
-	}
-
-	return tupdesc;
 }
 
 /*

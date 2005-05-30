@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.17 2005/04/05 06:22:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/funcapi.h,v 1.18 2005/05/30 23:09:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,11 +181,6 @@ extern TupleDesc build_function_result_tupdesc_t(HeapTuple procTuple);
  *	Support to ease writing functions returning composite types
  *
  * External declarations:
- * TupleDesc RelationNameGetTupleDesc(const char *relname) - Use to get a
- *		TupleDesc based on a specified relation.
- * TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases) - Use to get a
- *		TupleDesc based on a type OID. This can be used to get
- *		a TupleDesc for a base (scalar) or composite (relation) type.
  * TupleDesc BlessTupleDesc(TupleDesc tupdesc) - "Bless" a completed tuple
  *		descriptor so that it can be used to return properly labeled tuples.
  *		You need to call this if you are going to use heap_formtuple directly.
@@ -203,6 +198,10 @@ extern TupleDesc build_function_result_tupdesc_t(HeapTuple procTuple);
  * HeapTupleGetDatum(HeapTuple tuple) - convert a HeapTuple to a Datum.
  *
  * Obsolete routines and macros:
+ * TupleDesc RelationNameGetTupleDesc(const char *relname) - Use to get a
+ *		TupleDesc based on a named relation.
+ * TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases) - Use to get a
+ *		TupleDesc based on a type OID.
  * TupleTableSlot *TupleDescGetSlot(TupleDesc tupdesc) - Builds a
  *		TupleTableSlot, which is not needed anymore.
  * TupleGetDatum(TupleTableSlot *slot, HeapTuple tuple) - get a Datum

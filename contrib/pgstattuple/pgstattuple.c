@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.18 2005/05/27 00:57:49 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.19 2005/05/30 23:09:06 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -38,7 +38,8 @@ PG_FUNCTION_INFO_V1(pgstattuplebyid);
 extern Datum pgstattuple(PG_FUNCTION_ARGS);
 extern Datum pgstattuplebyid(PG_FUNCTION_ARGS);
 
-static Datum pgstattuple_real(Relation rel);
+static Datum pgstattuple_real(Relation rel, FunctionCallInfo fcinfo);
+
 
 /* ----------
  * pgstattuple:
@@ -50,7 +51,6 @@ static Datum pgstattuple_real(Relation rel);
  * ----------
  */
 
-#define DUMMY_TUPLE "public.pgstattuple_type"
 #define NCOLUMNS 9
 #define NCHARS 32
 
@@ -66,7 +66,7 @@ pgstattuple(PG_FUNCTION_ARGS)
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = heap_openrv(relrv, AccessShareLock);
 
-	result = pgstattuple_real(rel);
+	result = pgstattuple_real(rel, fcinfo);
 
 	PG_RETURN_DATUM(result);
 }
@@ -81,7 +81,7 @@ pgstattuplebyid(PG_FUNCTION_ARGS)
 	/* open relation */
 	rel = heap_open(relid, AccessShareLock);
 
-	result = pgstattuple_real(rel);
+	result = pgstattuple_real(rel, fcinfo);
 
 	PG_RETURN_DATUM(result);
 }
@@ -92,7 +92,7 @@ pgstattuplebyid(PG_FUNCTION_ARGS)
  * The real work occurs here
  */
 static Datum
-pgstattuple_real(Relation rel)
+pgstattuple_real(Relation rel, FunctionCallInfo fcinfo)
 {
 	HeapScanDesc scan;
 	HeapTuple	tuple;
@@ -115,10 +115,12 @@ pgstattuple_real(Relation rel)
 	int			i;
 	Datum		result;
 
-	/*
-	 * Build a tuple description for a pgstattupe_type tuple
-	 */
-	tupdesc = RelationNameGetTupleDesc(DUMMY_TUPLE);
+	/* Build a tuple descriptor for our result type */
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+
+	/* make sure we have a persistent copy of the tupdesc */
+	tupdesc = CreateTupleDescCopy(tupdesc);
 
 	/*
 	 * Generate attribute metadata needed later to produce tuples from raw

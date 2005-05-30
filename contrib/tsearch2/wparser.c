@@ -182,7 +182,7 @@ typedef struct
 }	TypeStorage;
 
 static void
-setup_firstcall(FuncCallContext *funcctx, Oid prsid)
+setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx, Oid prsid)
 {
 	TupleDesc	tupdesc;
 	MemoryContext oldcontext;
@@ -197,7 +197,9 @@ setup_firstcall(FuncCallContext *funcctx, Oid prsid)
 				OidFunctionCall1(prs->lextype, PointerGetDatum(prs->prs))
 		);
 	funcctx->user_fctx = (void *) st;
-	tupdesc = RelationNameGetTupleDesc("tokentype");
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+	tupdesc = CreateTupleDescCopy(tupdesc);
 	funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -250,7 +252,7 @@ token_type(PG_FUNCTION_ARGS)
 	if (SRF_IS_FIRSTCALL())
 	{
 		funcctx = SRF_FIRSTCALL_INIT();
-		setup_firstcall(funcctx, PG_GETARG_OID(0));
+		setup_firstcall(fcinfo, funcctx, PG_GETARG_OID(0));
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
@@ -274,7 +276,7 @@ token_type_byname(PG_FUNCTION_ARGS)
 		text	   *name = PG_GETARG_TEXT_P(0);
 
 		funcctx = SRF_FIRSTCALL_INIT();
-		setup_firstcall(funcctx, name2id_prs(name));
+		setup_firstcall(fcinfo, funcctx, name2id_prs(name));
 		PG_FREE_IF_COPY(name, 0);
 	}
 
@@ -299,7 +301,7 @@ token_type_current(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		if (current_parser_id == InvalidOid)
 			current_parser_id = name2id_prs(char2text("default"));
-		setup_firstcall(funcctx, current_parser_id);
+		setup_firstcall(fcinfo, funcctx, current_parser_id);
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
@@ -352,7 +354,8 @@ typedef struct
 
 
 static void
-prs_setup_firstcall(FuncCallContext *funcctx, int prsid, text *txt)
+prs_setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx,
+					int prsid, text *txt)
 {
 	TupleDesc	tupdesc;
 	MemoryContext oldcontext;
@@ -405,7 +408,9 @@ prs_setup_firstcall(FuncCallContext *funcctx, int prsid, text *txt)
 	st->cur = 0;
 
 	funcctx->user_fctx = (void *) st;
-	tupdesc = RelationNameGetTupleDesc("tokenout");
+	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+		elog(ERROR, "return type must be a row type");
+	tupdesc = CreateTupleDescCopy(tupdesc);
 	funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -458,7 +463,7 @@ parse(PG_FUNCTION_ARGS)
 		text	   *txt = PG_GETARG_TEXT_P(1);
 
 		funcctx = SRF_FIRSTCALL_INIT();
-		prs_setup_firstcall(funcctx, PG_GETARG_OID(0), txt);
+		prs_setup_firstcall(fcinfo, funcctx, PG_GETARG_OID(0), txt);
 		PG_FREE_IF_COPY(txt, 1);
 	}
 
@@ -484,7 +489,7 @@ parse_byname(PG_FUNCTION_ARGS)
 		text	   *txt = PG_GETARG_TEXT_P(1);
 
 		funcctx = SRF_FIRSTCALL_INIT();
-		prs_setup_firstcall(funcctx, name2id_prs(name), txt);
+		prs_setup_firstcall(fcinfo, funcctx, name2id_prs(name), txt);
 		PG_FREE_IF_COPY(name, 0);
 		PG_FREE_IF_COPY(txt, 1);
 	}
@@ -513,7 +518,7 @@ parse_current(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		if (current_parser_id == InvalidOid)
 			current_parser_id = name2id_prs(char2text("default"));
-		prs_setup_firstcall(funcctx, current_parser_id, txt);
+		prs_setup_firstcall(fcinfo, funcctx, current_parser_id, txt);
 		PG_FREE_IF_COPY(txt, 0);
 	}
 

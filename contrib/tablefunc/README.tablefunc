@@ -57,10 +57,15 @@ Installation:
         but you can create additional crosstab functions per the instructions
         in the documentation below.
 
-    crosstab(text sql, N int)
+    crosstab(text sql)
       - returns a set of row_name plus N category value columns
       - requires anonymous composite type syntax in the FROM clause. See
         the instructions in the documentation below.
+
+    crosstab(text sql, N int)
+      - obsolete version of crosstab()
+      - the argument N is now ignored, since the number of value columns
+        is always determined by the calling query
 
     connectby(text relname, text keyid_fld, text parent_keyid_fld
                 [, text orderby_fld], text start_with, int max_depth
@@ -133,7 +138,7 @@ Inputs
 
     A SQL statement which produces the source set of data. The SQL statement
     must return one row_name column, one category column, and one value
-    column.
+    column.  row_name and value must be of type text.
 
     e.g. provided sql must produce a set something like:
 
@@ -152,15 +157,15 @@ Outputs
 
   Returns setof tablefunc_crosstab_N, which is defined by:
 
-    CREATE VIEW tablefunc_crosstab_N AS
-      SELECT
-        ''::TEXT AS row_name,
-        ''::TEXT AS category_1,
-        ''::TEXT AS category_2,
+    CREATE TYPE tablefunc_crosstab_N AS (
+        row_name TEXT,
+        category_1 TEXT,
+        category_2 TEXT,
             .
             .
             .
-        ''::TEXT AS category_N;
+        category_N TEXT
+    );
 
      for the default installed functions, where N is 2, 3, or 4.
 
@@ -188,31 +193,9 @@ Notes
 
   6. The installed defaults are for illustration purposes. You
      can create your own return types and functions based on the
-     crosstab() function of the installed library.
+     crosstab() function of the installed library.  See below for
+     details.
 
-     The return type must have a first column that matches the data
-     type of the sql set used as its source. The subsequent category
-     columns must have the same data type as the value column of the
-     sql result set.
-
-     Create a VIEW to define your return type, similar to the VIEWS
-     in the provided installation script. Then define a unique function
-     name accepting one text parameter and returning setof your_view_name.
-     For example, if your source data produces row_names that are TEXT,
-     and values that are FLOAT8, and you want 5 category columns:
-
-      CREATE VIEW my_crosstab_float8_5_cols AS
-        SELECT
-          ''::TEXT AS row_name,
-          0::FLOAT8 AS category_1,
-          0::FLOAT8 AS category_2,
-          0::FLOAT8 AS category_3,
-          0::FLOAT8 AS category_4,
-          0::FLOAT8 AS category_5;
-
-      CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(text)
-        RETURNS setof my_crosstab_float8_5_cols
-        AS '$libdir/tablefunc','crosstab' LANGUAGE 'c' STABLE STRICT;
 
 Example usage
 
@@ -241,10 +224,11 @@ select * from crosstab3(
 ==================================================================
 Name
 
-crosstab(text, int) - returns a set of row_name
-                      plus N category value columns
+crosstab(text) - returns a set of row_names plus category value columns
 
 Synopsis
+
+crosstab(text sql)
 
 crosstab(text sql, int N)
 
@@ -271,15 +255,16 @@ Inputs
 
   N
 
-    number of category value columns
+    Obsolete argument; ignored if supplied (formerly this had to match
+    the number of category columns determined by the calling query)
 
 Outputs
 
-  Returns setof record, which must defined with a column definition
+  Returns setof record, which must be defined with a column definition
   in the FROM clause of the SELECT statement, e.g.:
 
     SELECT *
-    FROM crosstab(sql, 2) AS ct(row_name text, category_1 text, category_2 text);
+    FROM crosstab(sql) AS ct(row_name text, category_1 text, category_2 text);
 
     the example crosstab function produces a set something like:
                       <== values  columns ==>
@@ -292,9 +277,12 @@ Notes
 
   1. The sql result must be ordered by 1,2.
 
-  2. The number of values columns is determined at run-time. The 
-     column definition provided in the FROM clause must provide for
-     N + 1 columns of the proper data types.
+  2. The number of values columns is determined by the column definition
+     provided in the FROM clause.  The FROM clause must define one
+     row_name column (of the same datatype as the first result column
+     of the sql query) followed by N category columns (of the same
+     datatype as the third result column of the sql query).  You can
+     set up as many category columns as you wish.
 
   3. Missing values (i.e. not enough adjacent rows of same row_name to
      fill the number of result values columns) are filled in with nulls.
@@ -303,6 +291,44 @@ Notes
      the number of result values columns) are skipped.
 
   5. Rows with all nulls in the values columns are skipped.
+
+  6. You can avoid always having to write out a FROM clause that defines the
+     output columns by setting up a custom crosstab function that has
+     the desired output row type wired into its definition.
+
+     There are two ways you can set up a custom crosstab function:
+
+     A. Create a composite type to define your return type, similar to the
+     examples in the installation script. Then define a unique function
+     name accepting one text parameter and returning setof your_type_name.
+     For example, if your source data produces row_names that are TEXT,
+     and values that are FLOAT8, and you want 5 category columns:
+
+      CREATE TYPE my_crosstab_float8_5_cols AS (
+          row_name TEXT,
+          category_1 FLOAT8,
+          category_2 FLOAT8,
+          category_3 FLOAT8,
+          category_4 FLOAT8,
+          category_5 FLOAT8
+      );
+
+      CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(text)
+        RETURNS setof my_crosstab_float8_5_cols
+        AS '$libdir/tablefunc','crosstab' LANGUAGE 'c' STABLE STRICT;
+
+      B. Use OUT parameters to define the return type implicitly.
+      The same example could also be done this way:
+
+      CREATE OR REPLACE FUNCTION crosstab_float8_5_cols(IN text,
+          OUT row_name TEXT,
+          OUT category_1 FLOAT8,
+          OUT category_2 FLOAT8,
+          OUT category_3 FLOAT8,
+          OUT category_4 FLOAT8,
+          OUT category_5 FLOAT8)
+        RETURNS setof record
+        AS '$libdir/tablefunc','crosstab' LANGUAGE 'c' STABLE STRICT;
 
 
 Example usage
@@ -417,6 +443,10 @@ Notes
      result) are skipped.
 
   5. Rows with a null row_name column are skipped.
+
+  6. You can create predefined functions to avoid having to write out
+     the result column names/types in each query.  See the examples
+     for crosstab(text).
 
 
 Example usage
