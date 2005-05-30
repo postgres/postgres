@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.157 2005/05/10 13:16:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.158 2005/05/30 06:52:38 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4380,6 +4380,69 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 	pfree(trig.tgargs);
 }
 
+static void
+CreateFKCheckTrigger(RangeVar *myRel, FkConstraint *fkconstraint,
+					 ObjectAddress *constrobj, ObjectAddress *trigobj,
+					 bool on_insert)
+{
+	CreateTrigStmt *fk_trigger;
+	ListCell   *fk_attr;
+	ListCell   *pk_attr;
+
+	fk_trigger = makeNode(CreateTrigStmt);
+	fk_trigger->trigname = fkconstraint->constr_name;
+	fk_trigger->relation = myRel;
+	fk_trigger->before = false;
+	fk_trigger->row = true;
+
+	/* Either ON INSERT or ON UPDATE */
+	if (on_insert)
+	{
+		fk_trigger->funcname = SystemFuncName("RI_FKey_check_ins");
+		fk_trigger->actions[0] = 'i';
+	}
+	else
+	{
+		fk_trigger->funcname = SystemFuncName("RI_FKey_check_upd");
+		fk_trigger->actions[0] = 'u';
+	}
+	fk_trigger->actions[1] = '\0';
+
+	fk_trigger->isconstraint = true;
+	fk_trigger->deferrable = fkconstraint->deferrable;
+	fk_trigger->initdeferred = fkconstraint->initdeferred;
+	fk_trigger->constrrel = fkconstraint->pktable;
+
+	fk_trigger->args = NIL;
+	fk_trigger->args = lappend(fk_trigger->args,
+							   makeString(fkconstraint->constr_name));
+	fk_trigger->args = lappend(fk_trigger->args,
+							   makeString(myRel->relname));
+	fk_trigger->args = lappend(fk_trigger->args,
+							 makeString(fkconstraint->pktable->relname));
+	fk_trigger->args = lappend(fk_trigger->args,
+			makeString(fkMatchTypeToString(fkconstraint->fk_matchtype)));
+	if (list_length(fkconstraint->fk_attrs) != list_length(fkconstraint->pk_attrs))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FOREIGN_KEY),
+				 errmsg("number of referencing and referenced columns for foreign key disagree")));
+
+	forboth(fk_attr, fkconstraint->fk_attrs,
+			pk_attr, fkconstraint->pk_attrs)
+	{
+		fk_trigger->args = lappend(fk_trigger->args, lfirst(fk_attr));
+		fk_trigger->args = lappend(fk_trigger->args, lfirst(pk_attr));
+	}
+
+	trigobj->objectId = CreateTrigger(fk_trigger, true);
+
+	/* Register dependency from trigger to constraint */
+	recordDependencyOn(trigobj, constrobj, DEPENDENCY_INTERNAL);
+
+	/* Make changes-so-far visible */
+	CommandCounterIncrement();
+}
+
 /*
  * Create the triggers that implement an FK constraint.
  */
@@ -4415,51 +4478,10 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 
 	/*
 	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the
-	 * CHECK action.
+	 * CHECK action for both INSERTs and UPDATEs on the referencing table.
 	 */
-	fk_trigger = makeNode(CreateTrigStmt);
-	fk_trigger->trigname = fkconstraint->constr_name;
-	fk_trigger->relation = myRel;
-	fk_trigger->funcname = SystemFuncName("RI_FKey_check_ins");
-	fk_trigger->before = false;
-	fk_trigger->row = true;
-	fk_trigger->actions[0] = 'i';
-	fk_trigger->actions[1] = 'u';
-	fk_trigger->actions[2] = '\0';
-
-	fk_trigger->isconstraint = true;
-	fk_trigger->deferrable = fkconstraint->deferrable;
-	fk_trigger->initdeferred = fkconstraint->initdeferred;
-	fk_trigger->constrrel = fkconstraint->pktable;
-
-	fk_trigger->args = NIL;
-	fk_trigger->args = lappend(fk_trigger->args,
-							   makeString(fkconstraint->constr_name));
-	fk_trigger->args = lappend(fk_trigger->args,
-							   makeString(myRel->relname));
-	fk_trigger->args = lappend(fk_trigger->args,
-							 makeString(fkconstraint->pktable->relname));
-	fk_trigger->args = lappend(fk_trigger->args,
-			makeString(fkMatchTypeToString(fkconstraint->fk_matchtype)));
-	if (list_length(fkconstraint->fk_attrs) != list_length(fkconstraint->pk_attrs))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FOREIGN_KEY),
-				 errmsg("number of referencing and referenced columns for foreign key disagree")));
-
-	forboth(fk_attr, fkconstraint->fk_attrs,
-			pk_attr, fkconstraint->pk_attrs)
-	{
-		fk_trigger->args = lappend(fk_trigger->args, lfirst(fk_attr));
-		fk_trigger->args = lappend(fk_trigger->args, lfirst(pk_attr));
-	}
-
-	trigobj.objectId = CreateTrigger(fk_trigger, true);
-
-	/* Register dependency from trigger to constraint */
-	recordDependencyOn(&trigobj, &constrobj, DEPENDENCY_INTERNAL);
-
-	/* Make changes-so-far visible */
-	CommandCounterIncrement();
+	CreateFKCheckTrigger(myRel, fkconstraint, &constrobj, &trigobj, true);
+	CreateFKCheckTrigger(myRel, fkconstraint, &constrobj, &trigobj, false);
 
 	/*
 	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the ON
