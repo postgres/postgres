@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon May 30 17:08:29 EDT 2005
+Last updated:           Mon May 30 17:12:22 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -277,8 +277,6 @@ first.
 <p>  The main difficulty with this item is the problem of creating an index
   that can span more than one table.
 </p>
-  </li><li>Prevent child tables from altering constraints like CHECK that were
-  inherited from the parent table
   </li><li>Add UNIQUE capability to non-btree indexes
   </li><li>Add rtree index support for line, lseg, path, point
   </li><li>-<em>Use indexes for MIN() and MAX()</em>
@@ -430,6 +428,8 @@ first.
 <p>          Currently non-global system tables must be in the default database
           schema. Global system tables can never be moved.
 </p>
+    </li><li>Prevent child tables from altering constraints like CHECK that were
+          inherited from the parent table
   </li></ul>
   </li><li>CLUSTER
   <ul>

@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon May 30 17:08:29 EDT 2005
+Last updated:		Mon May 30 17:12:22 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -296,8 +296,6 @@ Indexes
   The main difficulty with this item is the problem of creating an index
   that can span more than one table.
 
-* Prevent child tables from altering constraints like CHECK that were
-  inherited from the parent table
 * Add UNIQUE capability to non-btree indexes
 * Add rtree index support for line, lseg, path, point
 * -Use indexes for MIN() and MAX()
@@ -468,6 +466,9 @@ Commands
 
 	  Currently non-global system tables must be in the default database
 	  schema. Global system tables can never be moved.
+
+	o Prevent child tables from altering constraints like CHECK that were
+	  inherited from the parent table
 
 
 * CLUSTER
