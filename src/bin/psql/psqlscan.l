@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.11 2005/05/30 14:50:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.12 2005/05/30 16:48:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -849,7 +849,7 @@ other			.
 "\\r"			{ appendPQExpBufferChar(output_buf, '\r'); }
 "\\f"			{ appendPQExpBufferChar(output_buf, '\f'); }
 
-"\\"[0-7]{1,3}	{
+{xqoctesc}		{
 					/* octal case */
 					appendPQExpBufferChar(output_buf,
 										  (char) strtol(yytext + 1, NULL, 8));
