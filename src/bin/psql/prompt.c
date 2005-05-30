@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.38 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.39 2005/05/30 18:28:11 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -175,11 +175,9 @@ get_prompt(promptStatus_t status)
 				case '5':
 				case '6':
 				case '7':
-				case '8':
-				case '9':
-					*buf = parse_char((char **) &p);
+					*buf = (char) strtol(p, (char **)&p, 8);
+					--p;
 					break;
-
 				case 'R':
 					switch (status)
 					{
