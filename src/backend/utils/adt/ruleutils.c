@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.196 2005/05/27 00:57:49 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.197 2005/05/30 01:57:27 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1918,6 +1918,28 @@ get_select_query_def(Query *query, deparse_context *context,
 			appendStringInfo(buf, "ALL");
 		else
 			get_rule_expr(query->limitCount, context, false);
+	}
+
+	/* Add the FOR UPDATE/SHARE clause if present */
+	if (query->rowMarks != NIL)
+	{
+		if (query->forUpdate)
+			appendContextKeyword(context, " FOR UPDATE OF ",
+								 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
+		else
+			appendContextKeyword(context, " FOR SHARE OF ",
+								 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
+		sep = "";
+		foreach(l, query->rowMarks)
+		{
+			int			rtindex = lfirst_int(l);
+			RangeTblEntry *rte = rt_fetch(rtindex, query->rtable);
+
+			appendStringInfo(buf, "%s%s",
+							 sep,
+							 quote_identifier(rte->eref->aliasname));
+			sep = ", ";
+		}
 	}
 }
 
