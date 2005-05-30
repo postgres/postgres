@@ -705,6 +705,8 @@ INSERT INTO fktable VALUES (100, 200);
 -- error here on commit
 COMMIT;
 
+DROP TABLE pktable, fktable CASCADE;
+
 -- test notice about expensive referential integrity checks,
 -- where the index cannot be used because of type incompatibilities.
 
@@ -774,3 +776,35 @@ FOREIGN KEY (x1,x2,x3) REFERENCES pktable(id2,id3,id1);
 
 ALTER TABLE fktable ADD CONSTRAINT fk_241_132
 FOREIGN KEY (x2,x4,x1) REFERENCES pktable(id1,id3,id2);
+
+DROP TABLE pktable, fktable CASCADE;
+
+-- test a tricky case: we can elide firing the FK check trigger during
+-- an UPDATE if the UPDATE did not change the foreign key
+-- field. However, we can't do this if our transaction was the one that
+-- created the updated row and the trigger is deferred, since our UPDATE
+-- will have invalidated the original newly-inserted tuple, and therefore
+-- cause the on-INSERT RI trigger not to be fired.
+
+CREATE TEMP TABLE pktable (
+    id int primary key,
+    other int
+);
+
+CREATE TEMP TABLE fktable (
+    id int primary key,
+    fk int references pktable deferrable initially deferred
+);
+
+INSERT INTO pktable VALUES (5, 10);
+
+BEGIN;
+
+-- doesn't match PK, but no error yet
+INSERT INTO fktable VALUES (0, 20);
+
+-- don't change FK
+UPDATE fktable SET id = id + 1;
+
+-- should catch error from initial INSERT
+COMMIT;

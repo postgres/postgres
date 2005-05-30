@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.78 2005/05/29 04:23:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.79 2005/05/30 07:20:58 neilc Exp $
  *
  * ----------
  */
@@ -38,10 +38,11 @@
 #include "optimizer/planmain.h"
 #include "parser/parse_oper.h"
 #include "rewrite/rewriteHandler.h"
+#include "utils/acl.h"
+#include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
-#include "utils/acl.h"
-#include "utils/guc.h"
 #include "miscadmin.h"
 
 
@@ -373,22 +374,6 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 			 * kinds of MATCH.
 			 */
 			break;
-	}
-
-	/*
-	 * No need to check anything if old and new references are the same on
-	 * UPDATE.
-	 */
-	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
-	{
-		if (HeapTupleHeaderGetXmin(old_row->t_data) !=
-			GetCurrentTransactionId() &&
-			ri_KeysEqual(fk_rel, old_row, new_row, &qkey,
-						 RI_KEYPAIR_FK_IDX))
-		{
-			heap_close(pk_rel, RowShareLock);
-			return PointerGetDatum(NULL);
-		}
 	}
 
 	if (SPI_connect() != SPI_OK_CONNECT)
@@ -2005,8 +1990,8 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 					 * corresponding to changed columns in pk_rel's key
 					 */
 					if (match_type == RI_MATCH_TYPE_FULL ||
-					  !ri_OneKeyEqual(pk_rel, i, old_row, new_row, &qkey,
-									  RI_KEYPAIR_PK_IDX))
+						!ri_OneKeyEqual(pk_rel, i, old_row, new_row, &qkey,
+										RI_KEYPAIR_PK_IDX))
 					{
 						snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = NULL",
 								 querysep, attname);
@@ -2016,7 +2001,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 							 qualsep, attname, i + 1);
 					qualsep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
-									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
+												 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
 				}
 				strcat(querystr, qualstr);
 
@@ -2451,30 +2436,27 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 
 
 /* ----------
- * RI_FKey_keyequal_upd -
+ * RI_FKey_keyequal_upd_pk -
  *
- *	Check if we have a key change on update.
- *
- *	This is not a real trigger procedure. It is used by the AFTER
- *	trigger queue manager to detect "triggered data change violation".
+ *	Check if we have a key change on an update to a PK relation. This is
+ *	used by the AFTER trigger queue manager to detect "triggered data
+ *	change violation".
  * ----------
  */
 bool
-RI_FKey_keyequal_upd(TriggerData *trigdata)
+RI_FKey_keyequal_upd_pk(Trigger *trigger, Relation pk_rel,
+						HeapTuple old_row, HeapTuple new_row)
 {
 	int			tgnargs;
 	char	  **tgargs;
 	Relation	fk_rel;
-	Relation	pk_rel;
-	HeapTuple	new_row;
-	HeapTuple	old_row;
 	RI_QueryKey qkey;
 
 	/*
 	 * Check for the correct # of call arguments
 	 */
-	tgnargs = trigdata->tg_trigger->tgnargs;
-	tgargs = trigdata->tg_trigger->tgargs;
+	tgnargs = trigger->tgnargs;
+	tgargs = trigger->tgargs;
 	if (tgnargs < 4 ||
 		tgnargs > RI_MAX_ARGUMENTS ||
 		(tgnargs % 2) != 0)
@@ -2489,48 +2471,32 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
 	if (tgnargs == 4)
 		return true;
 
-	/*
-	 * Get the relation descriptors of the FK and PK tables and the new
-	 * and old tuple.
-	 *
-	 * Use minimal locking for fk_rel here.
-	 */
-	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
+	if (!OidIsValid(trigger->tgconstrrelid))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-		errmsg("no target table given for trigger \"%s\" on table \"%s\"",
-			   trigdata->tg_trigger->tgname,
-			   RelationGetRelationName(trigdata->tg_relation)),
-				 errhint("Remove this referential integrity trigger and its mates, then do ALTER TABLE ADD CONSTRAINT.")));
+				 errmsg("no target table given for trigger \"%s\" on table \"%s\"",
+						trigger->tgname,
+						RelationGetRelationName(pk_rel)),
+				 errhint("Remove this referential integrity trigger and its mates, "
+						 "then do ALTER TABLE ADD CONSTRAINT.")));
 
-	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, AccessShareLock);
-	pk_rel = trigdata->tg_relation;
-	new_row = trigdata->tg_newtuple;
-	old_row = trigdata->tg_trigtuple;
+	fk_rel = heap_open(trigger->tgconstrrelid, AccessShareLock);
 
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
-			/*
-			 * MATCH <UNSPECIFIED>
-			 */
 		case RI_MATCH_TYPE_UNSPECIFIED:
 		case RI_MATCH_TYPE_FULL:
-			ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid,
+			ri_BuildQueryKeyFull(&qkey, trigger->tgoid,
 								 RI_PLAN_KEYEQUAL_UPD,
 								 fk_rel, pk_rel,
 								 tgnargs, tgargs);
-
 			heap_close(fk_rel, AccessShareLock);
 
-			/*
-			 * Return if key's are equal
-			 */
+			/* Return if key's are equal */
 			return ri_KeysEqual(pk_rel, old_row, new_row, &qkey,
 								RI_KEYPAIR_PK_IDX);
 
-			/*
-			 * Handle MATCH PARTIAL set null delete.
-			 */
+		/* Handle MATCH PARTIAL set null delete. */
 		case RI_MATCH_TYPE_PARTIAL:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -2538,13 +2504,84 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
 			break;
 	}
 
-	/*
-	 * Never reached
-	 */
+	/* Never reached */
 	elog(ERROR, "invalid match_type");
 	return false;
 }
 
+/* ----------
+ * RI_FKey_keyequal_upd_fk -
+ *
+ *	Check if we have a key change on an update to an FK relation. This is
+ *	used by the AFTER trigger queue manager to detect "triggered data
+ *	change violation".
+ * ----------
+ */
+bool
+RI_FKey_keyequal_upd_fk(Trigger *trigger, Relation fk_rel,
+						HeapTuple old_row, HeapTuple new_row)
+{
+	int			tgnargs;
+	char	  **tgargs;
+	Relation	pk_rel;
+	RI_QueryKey qkey;
+
+	/*
+	 * Check for the correct # of call arguments
+	 */
+	tgnargs = trigger->tgnargs;
+	tgargs = trigger->tgargs;
+	if (tgnargs < 4 ||
+		tgnargs > RI_MAX_ARGUMENTS ||
+		(tgnargs % 2) != 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+				 errmsg("function \"%s\" called with wrong number of trigger arguments",
+						"RI_FKey_keyequal_upd")));
+
+	/*
+	 * Nothing to do if no column names to compare given
+	 */
+	if (tgnargs == 4)
+		return true;
+
+	if (!OidIsValid(trigger->tgconstrrelid))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("no target table given for trigger \"%s\" on table \"%s\"",
+						trigger->tgname,
+						RelationGetRelationName(fk_rel)),
+				 errhint("Remove this referential integrity trigger and its mates, "
+						 "then do ALTER TABLE ADD CONSTRAINT.")));
+
+	pk_rel = heap_open(trigger->tgconstrrelid, AccessShareLock);
+
+	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
+	{
+		case RI_MATCH_TYPE_UNSPECIFIED:
+		case RI_MATCH_TYPE_FULL:
+			ri_BuildQueryKeyFull(&qkey, trigger->tgoid,
+								 RI_PLAN_KEYEQUAL_UPD,
+								 fk_rel, pk_rel,
+								 tgnargs, tgargs);
+			heap_close(pk_rel, AccessShareLock);
+
+			/* Return if key's are equal */
+			return ri_KeysEqual(fk_rel, old_row, new_row, &qkey,
+								RI_KEYPAIR_FK_IDX);
+
+		/* Handle MATCH PARTIAL set null delete. */
+		case RI_MATCH_TYPE_PARTIAL:
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("MATCH PARTIAL not yet implemented")));
+			break;
+	}
+
+	/* Never reached */
+	elog(ERROR, "invalid match_type");
+	return false;
+}
 
 /* ----------
  * RI_Initial_Check -
@@ -2871,7 +2908,7 @@ ri_BuildQueryKeyFull(RI_QueryKey *key, Oid constr_id, int32 constr_queryno,
 	/*
 	 * Initialize the key and fill in type, oid's and number of keypairs
 	 */
-	memset((void *) key, 0, sizeof(RI_QueryKey));
+	memset(key, 0, sizeof(RI_QueryKey));
 	key->constr_type = RI_MATCH_TYPE_FULL;
 	key->constr_id = constr_id;
 	key->constr_queryno = constr_queryno;
@@ -3489,7 +3526,7 @@ ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 	for (i = 0; i < key->nkeypairs; i++)
 	{
 		/*
-		 * Get one attributes oldvalue. If it is NULL - they're not equal.
+		 * Get one attribute's oldvalue. If it is NULL - they're not equal.
 		 */
 		oldvalue = SPI_getbinval(oldtup, rel->rd_att,
 								 key->keypair[i][pairidx], &isnull);
@@ -3497,7 +3534,7 @@ ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 			return false;
 
 		/*
-		 * Get one attributes oldvalue. If it is NULL - they're not equal.
+		 * Get one attribute's oldvalue. If it is NULL - they're not equal.
 		 */
 		newvalue = SPI_getbinval(newtup, rel->rd_att,
 								 key->keypair[i][pairidx], &isnull);
@@ -3505,7 +3542,7 @@ ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 			return false;
 
 		/*
-		 * Get the attributes type OID and call the '=' operator to
+		 * Get the attribute's type OID and call the '=' operator to
 		 * compare the values.
 		 */
 		typeid = SPI_gettypeid(rel->rd_att, key->keypair[i][pairidx]);
@@ -3643,4 +3680,33 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 	 */
 	return DatumGetBool(FunctionCall2(&(typentry->eq_opr_finfo),
 									  oldvalue, newvalue));
+}
+
+/*
+ * Given a trigger function OID, determine whether it is an RI trigger,
+ * and if so whether it is attached to PK or FK relation.
+ */
+int
+RI_FKey_trigger_type(Oid tgfoid)
+{
+	switch (tgfoid)
+	{
+		case F_RI_FKEY_CASCADE_DEL:
+		case F_RI_FKEY_CASCADE_UPD:
+		case F_RI_FKEY_RESTRICT_DEL:
+		case F_RI_FKEY_RESTRICT_UPD:
+		case F_RI_FKEY_SETNULL_DEL:
+		case F_RI_FKEY_SETNULL_UPD:
+		case F_RI_FKEY_SETDEFAULT_DEL:
+		case F_RI_FKEY_SETDEFAULT_UPD:
+		case F_RI_FKEY_NOACTION_DEL:
+		case F_RI_FKEY_NOACTION_UPD:
+			return RI_TRIGGER_PK;
+
+		case F_RI_FKEY_CHECK_INS:
+		case F_RI_FKEY_CHECK_UPD:
+			return RI_TRIGGER_FK;
+	}
+
+	return RI_TRIGGER_NONE;
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.53 2005/04/11 19:51:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.54 2005/05/30 07:20:58 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,9 +168,18 @@ extern void AfterTriggerSetState(ConstraintsSetStmt *stmt);
 /*
  * in utils/adt/ri_triggers.c
  */
-extern bool RI_FKey_keyequal_upd(TriggerData *trigdata);
+extern bool RI_FKey_keyequal_upd_pk(Trigger *trigger, Relation pk_rel,
+									HeapTuple old_row, HeapTuple new_row);
+extern bool RI_FKey_keyequal_upd_fk(Trigger *trigger, Relation fk_rel,
+									HeapTuple old_row, HeapTuple new_row);
 extern bool RI_Initial_Check(FkConstraint *fkconstraint,
 				 Relation rel,
 				 Relation pkrel);
+
+#define RI_TRIGGER_PK	1		/* is a trigger on the PK relation */
+#define RI_TRIGGER_FK	2		/* is a trigger on the FK relation */
+#define RI_TRIGGER_NONE 0		/* is not an RI trigger function */
+
+extern int RI_FKey_trigger_type(Oid tgfoid);
 
 #endif   /* TRIGGER_H */

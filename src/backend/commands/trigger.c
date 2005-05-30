@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.188 2005/05/06 17:24:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.189 2005/05/30 07:20:58 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2994,54 +2994,47 @@ AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 			continue;
 
 		/*
-		 * If it is an RI UPDATE trigger, and the referenced keys have
-		 * not changed, short-circuit queuing of the event; there's no
-		 * need to fire the trigger.
+		 * If this is an UPDATE of a PK table or FK table that does
+		 * not change the PK or FK respectively, we can skip queuing
+		 * the event: there is no need to fire the trigger.
 		 */
 		if ((event & TRIGGER_EVENT_OPMASK) == TRIGGER_EVENT_UPDATE)
 		{
-			bool		is_ri_trigger;
-
-			switch (trigger->tgfoid)
+			switch (RI_FKey_trigger_type(trigger->tgfoid))
 			{
-				case F_RI_FKEY_NOACTION_UPD:
-				case F_RI_FKEY_CASCADE_UPD:
-				case F_RI_FKEY_RESTRICT_UPD:
-				case F_RI_FKEY_SETNULL_UPD:
-				case F_RI_FKEY_SETDEFAULT_UPD:
-					is_ri_trigger = true;
+				case RI_TRIGGER_PK:
+					/* Update on PK table */
+					if (RI_FKey_keyequal_upd_pk(trigger, rel, oldtup, newtup))
+					{
+						/* key unchanged, so skip queuing this event */
+						continue;
+					}
 					break;
 
-				default:
-					is_ri_trigger = false;
+				case RI_TRIGGER_FK:
+					/*
+					 * Update on FK table
+					 *
+					 * There is one exception when updating FK tables:
+					 * if the updated row was inserted by our own
+					 * transaction and the FK is deferred, we still
+					 * need to fire the trigger. This is because our
+					 * UPDATE will invalidate the INSERT so the
+					 * end-of-transaction INSERT RI trigger will not
+					 * do anything, so we have to do the check for the
+					 * UPDATE anyway.
+					 */
+					if (HeapTupleHeaderGetXmin(oldtup->t_data) !=
+						GetCurrentTransactionId() &&
+						RI_FKey_keyequal_upd_fk(trigger, rel, oldtup, newtup))
+					{
+						continue;
+					}
 					break;
-			}
 
-			if (is_ri_trigger)
-			{
-				TriggerData LocTriggerData;
-
-				LocTriggerData.type = T_TriggerData;
-				LocTriggerData.tg_event =
-					TRIGGER_EVENT_UPDATE | TRIGGER_EVENT_ROW;
-				LocTriggerData.tg_relation = rel;
-				LocTriggerData.tg_trigtuple = oldtup;
-				LocTriggerData.tg_newtuple = newtup;
-				LocTriggerData.tg_trigger = trigger;
-				/*
-				 * We do not currently know which buffers the passed tuples
-				 * are in, but it does not matter because RI_FKey_keyequal_upd
-				 * does not care.  We could expand the API of this function
-				 * if it becomes necessary to set these fields accurately.
-				 */
-				LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
-				LocTriggerData.tg_newtuplebuf = InvalidBuffer;
-
-				if (RI_FKey_keyequal_upd(&LocTriggerData))
-				{
-					/* key unchanged, so skip queuing this event */
-					continue;
-				}
+				case RI_TRIGGER_NONE:
+					/* Not an FK trigger */
+					break;
 			}
 		}
 

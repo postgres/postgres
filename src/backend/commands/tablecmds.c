@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.158 2005/05/30 06:52:38 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.159 2005/05/30 07:20:58 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,12 +156,6 @@ typedef struct NewColumnValue
 } NewColumnValue;
 
 
-/* Used by attribute and relation renaming routines: */
-#define RI_TRIGGER_PK	1		/* is a trigger on the PK relation */
-#define RI_TRIGGER_FK	2		/* is a trigger on the FK relation */
-#define RI_TRIGGER_NONE 0		/* is not an RI trigger function */
-
-
 static List *MergeAttributes(List *schema, List *supers, bool istemp,
 				List **supOids, List **supconstr, int *supOidCount);
 static bool change_varattnos_of_a_node(Node *node, const AttrNumber *newattno);
@@ -246,7 +240,6 @@ static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
 					char *tablespacename);
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace);
 static void copy_relation_data(Relation rel, SMgrRelation dst);
-static int	ri_trigger_type(Oid tgfoid);
 static void update_ri_trigger_args(Oid relid,
 					   const char *oldname,
 					   const char *newname,
@@ -1571,39 +1564,6 @@ renamerel(Oid myrelid, const char *newrelname)
 	relation_close(targetrelation, NoLock);
 }
 
-
-/*
- * Given a trigger function OID, determine whether it is an RI trigger,
- * and if so whether it is attached to PK or FK relation.
- *
- * XXX this probably doesn't belong here; should be exported by
- * ri_triggers.c
- */
-static int
-ri_trigger_type(Oid tgfoid)
-{
-	switch (tgfoid)
-	{
-		case F_RI_FKEY_CASCADE_DEL:
-		case F_RI_FKEY_CASCADE_UPD:
-		case F_RI_FKEY_RESTRICT_DEL:
-		case F_RI_FKEY_RESTRICT_UPD:
-		case F_RI_FKEY_SETNULL_DEL:
-		case F_RI_FKEY_SETNULL_UPD:
-		case F_RI_FKEY_SETDEFAULT_DEL:
-		case F_RI_FKEY_SETDEFAULT_UPD:
-		case F_RI_FKEY_NOACTION_DEL:
-		case F_RI_FKEY_NOACTION_UPD:
-			return RI_TRIGGER_PK;
-
-		case F_RI_FKEY_CHECK_INS:
-		case F_RI_FKEY_CHECK_UPD:
-			return RI_TRIGGER_FK;
-	}
-
-	return RI_TRIGGER_NONE;
-}
-
 /*
  * Scan pg_trigger for RI triggers that are on the specified relation
  * (if fk_scan is false) or have it as the tgconstrrel (if fk_scan
@@ -1663,7 +1623,7 @@ update_ri_trigger_args(Oid relid,
 		const char *arga[RI_MAX_ARGUMENTS];
 		const char *argp;
 
-		tg_type = ri_trigger_type(pg_trigger->tgfoid);
+		tg_type = RI_FKey_trigger_type(pg_trigger->tgfoid);
 		if (tg_type == RI_TRIGGER_NONE)
 		{
 			/* Not an RI trigger, forget it */
