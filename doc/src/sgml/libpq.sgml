@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.180 2005/02/26 18:39:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.181 2005/05/30 19:32:44 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -2229,7 +2229,7 @@ unsigned char *PQescapeBytea(const unsigned char *from,
 
 <para>
    Certain byte values <emphasis>must</emphasis> be escaped (but all
-   byte values <emphasis>may</emphasis> be escaped) when used as part
+   byte values <emphasis>can</emphasis> be escaped) when used as part
    of a <type>bytea</type> literal in an <acronym>SQL</acronym>
    statement. In general, to escape a byte, it is converted into the
    three digit octal number equal to the octet value, and preceded by
