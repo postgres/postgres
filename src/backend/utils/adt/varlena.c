@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.122 2005/05/27 00:57:49 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.123 2005/05/30 01:20:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -330,18 +330,10 @@ textsend(PG_FUNCTION_ARGS)
 Datum
 unknownin(PG_FUNCTION_ARGS)
 {
-	char	   *inputStr = PG_GETARG_CSTRING(0);
-	unknown    *result;
-	int			len;
+	char	   *str = PG_GETARG_CSTRING(0);
 
-	len = strlen(inputStr) + VARHDRSZ;
-
-	result = (unknown *) palloc(len);
-	VARATT_SIZEP(result) = len;
-
-	memcpy(VARDATA(result), inputStr, len - VARHDRSZ);
-
-	PG_RETURN_UNKNOWN_P(result);
+	/* representation is same as cstring */
+	PG_RETURN_CSTRING(pstrdup(str));
 }
 
 /*
@@ -350,16 +342,10 @@ unknownin(PG_FUNCTION_ARGS)
 Datum
 unknownout(PG_FUNCTION_ARGS)
 {
-	unknown    *t = PG_GETARG_UNKNOWN_P(0);
-	int			len;
-	char	   *result;
+	/* representation is same as cstring */
+	char	   *str = PG_GETARG_CSTRING(0);
 
-	len = VARSIZE(t) - VARHDRSZ;
-	result = (char *) palloc(len + 1);
-	memcpy(result, VARDATA(t), len);
-	result[len] = '\0';
-
-	PG_RETURN_CSTRING(result);
+	PG_RETURN_CSTRING(pstrdup(str));
 }
 
 /*
@@ -369,28 +355,27 @@ Datum
 unknownrecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
-	unknown    *result;
+	char	   *str;
 	int			nbytes;
 
-	nbytes = buf->len - buf->cursor;
-	result = (unknown *) palloc(nbytes + VARHDRSZ);
-	VARATT_SIZEP(result) = nbytes + VARHDRSZ;
-	pq_copymsgbytes(buf, VARDATA(result), nbytes);
-	PG_RETURN_UNKNOWN_P(result);
+	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	/* representation is same as cstring */
+	PG_RETURN_CSTRING(str);
 }
 
 /*
  *		unknownsend			- converts unknown to binary format
- *
- * This is a special case: just copy the input, since it's
- * effectively the same format as bytea
  */
 Datum
 unknownsend(PG_FUNCTION_ARGS)
 {
-	unknown    *vlena = PG_GETARG_UNKNOWN_P_COPY(0);
+	/* representation is same as cstring */
+	char	   *str = PG_GETARG_CSTRING(0);
+	StringInfoData buf;
 
-	PG_RETURN_UNKNOWN_P(vlena);
+	pq_begintypsend(&buf);
+	pq_sendtext(&buf, str, strlen(str));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 

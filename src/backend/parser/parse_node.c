@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.88 2005/04/23 18:35:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.89 2005/05/30 01:20:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,8 +271,8 @@ transformArraySubscripts(ParseState *pstate,
  *	have to guess what type is wanted.
  *
  *	For string literals we produce a constant of type UNKNOWN ---- whose
- *	representation is the same as text, but it indicates to later type
- *	resolution that we're not sure that it should be considered text.
+ *	representation is the same as cstring, but it indicates to later type
+ *	resolution that we're not sure yet what type it should be considered.
  *	Explicit "NULL" constants are also typed as UNKNOWN.
  *
  *	For integers and floats we produce int4, int8, or numeric depending
@@ -341,11 +341,14 @@ make_const(Value *value)
 			break;
 
 		case T_String:
-			val = DirectFunctionCall1(unknownin,
-									  CStringGetDatum(strVal(value)));
+			/*
+			 * We assume here that UNKNOWN's internal representation is the
+			 * same as CSTRING
+			 */
+			val = CStringGetDatum(strVal(value));
 
 			typeid = UNKNOWNOID;	/* will be coerced later */
-			typelen = -1;		/* variable len */
+			typelen = -2;			/* cstring-style varwidth type */
 			typebyval = false;
 			break;
 
@@ -362,7 +365,7 @@ make_const(Value *value)
 		case T_Null:
 			/* return a null const */
 			con = makeConst(UNKNOWNOID,
-							-1,
+							-2,
 							(Datum) 0,
 							true,
 							false);
