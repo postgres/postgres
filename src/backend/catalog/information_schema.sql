@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.27 2005/03/29 00:16:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.28 2005/05/31 03:36:24 tgl Exp $
  */
 
 /*
@@ -30,22 +30,14 @@ SET search_path TO information_schema, public;
  * A few supporting functions first ...
  */
 
-/* Expand an oidvector or smallint[] into a set with integers 1..N */
-CREATE TYPE _pg_expandoidvector_type AS (o oid, n int);
-
-CREATE FUNCTION _pg_expandoidvector(oidvector)
-    RETURNS SETOF _pg_expandoidvector_type
+/* Expand any 1-D array into a set with integers 1..N */
+CREATE FUNCTION _pg_expandarray(IN anyarray, OUT x anyelement, OUT n int)
+    RETURNS SETOF RECORD
     LANGUAGE sql STRICT IMMUTABLE
-    AS 'select $1[s], s+1
-        from generate_series(0,array_upper($1,1),1) as g(s)';
-
-CREATE TYPE _pg_expandsmallint_type AS (i smallint, n int);
-
-CREATE FUNCTION _pg_expandsmallint(smallint[])
-    RETURNS SETOF _pg_expandsmallint_type
-    LANGUAGE sql STRICT IMMUTABLE
-    AS 'select $1[s], s
-        from generate_series(1,array_upper($1,1),1) as g(s)';
+    AS 'select $1[s], s - pg_catalog.array_lower($1,1) + 1
+        from pg_catalog.generate_series(pg_catalog.array_lower($1,1),
+                                        pg_catalog.array_upper($1,1),
+                                        1) as g(s)';
 
 CREATE FUNCTION _pg_keyissubset(smallint[], smallint[]) RETURNS boolean
     LANGUAGE sql
@@ -727,7 +719,7 @@ CREATE VIEW key_column_usage AS
     FROM pg_attribute a,
          (SELECT r.oid, nc.nspname AS nc_nspname, c.conname,
                  nr.nspname AS nr_nspname, r.relname,
-                _pg_expandsmallint(c.conkey) AS x
+                _pg_expandarray(c.conkey) AS x
           FROM pg_namespace nr, pg_class r, pg_namespace nc,
                pg_constraint c, pg_user u
           WHERE nr.oid = r.relnamespace
@@ -738,7 +730,7 @@ CREATE VIEW key_column_usage AS
                 AND r.relowner = u.usesysid
                 AND u.usename = current_user) AS ss
     WHERE ss.oid = a.attrelid
-          AND a.attnum = (ss.x).i
+          AND a.attnum = (ss.x).x
           AND NOT a.attisdropped;
 
 GRANT SELECT ON key_column_usage TO PUBLIC;
@@ -754,7 +746,12 @@ CREATE VIEW parameters AS
            CAST(n_nspname AS sql_identifier) AS specific_schema,
            CAST(proname || '_' || CAST(p_oid AS text) AS sql_identifier) AS specific_name,
            CAST((ss.x).n AS cardinal_number) AS ordinal_position,
-           CAST('IN' AS character_data) AS parameter_mode,
+           CAST(
+             CASE WHEN proargmodes IS NULL THEN 'IN'
+                WHEN proargmodes[(ss.x).n] = 'i' THEN 'IN'
+                WHEN proargmodes[(ss.x).n] = 'o' THEN 'OUT'
+                WHEN proargmodes[(ss.x).n] = 'b' THEN 'INOUT'
+             END AS character_data) AS parameter_mode,
            CAST('NO' AS character_data) AS is_result,
            CAST('NO' AS character_data) AS as_locator,
            CAST(NULLIF(proargnames[(ss.x).n], '') AS sql_identifier) AS parameter_name,
@@ -788,13 +785,14 @@ CREATE VIEW parameters AS
 
     FROM pg_type t, pg_namespace nt,
          (SELECT n.nspname AS n_nspname, p.proname, p.oid AS p_oid,
-                 p.proargnames, _pg_expandoidvector(p.proargtypes) AS x
+                 p.proargnames, p.proargmodes,
+                 _pg_expandarray(coalesce(p.proallargtypes, p.proargtypes::oid[])) AS x
           FROM pg_namespace n, pg_proc p, pg_user u
           WHERE n.oid = p.pronamespace
                 AND p.proowner = u.usesysid
                 AND (u.usename = current_user OR
                      has_function_privilege(p.oid, 'EXECUTE'))) AS ss
-    WHERE t.oid = (ss.x).o AND t.typnamespace = nt.oid;
+    WHERE t.oid = (ss.x).x AND t.typnamespace = nt.oid;
 
 GRANT SELECT ON parameters TO PUBLIC;
 
@@ -1718,9 +1716,9 @@ CREATE VIEW element_types AS
 
            /* parameters */
            SELECT pronamespace, CAST(proname || '_' || CAST(oid AS text) AS sql_identifier),
-                  'ROUTINE'::text, (ss.x).n, (ss.x).o
+                  'ROUTINE'::text, (ss.x).n, (ss.x).x
            FROM (SELECT p.pronamespace, p.proname, p.oid,
-                        _pg_expandoidvector(p.proargtypes) AS x
+                        _pg_expandarray(coalesce(p.proallargtypes, p.proargtypes::oid[])) AS x
                  FROM pg_proc p) AS ss
 
            UNION ALL
