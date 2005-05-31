@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.14 2005/05/02 01:52:50 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_domain.sgml,v 1.15 2005/05/31 14:48:47 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -199,7 +199,7 @@ ALTER DOMAIN zipcode DROP CONSTRAINT zipchk;
   </para>
  </refsect1>
 
- <refsect1>
+ <refsect1 id="SQL-ALTERDOMAIN-compatibility">
   <title>Compatibility</title>
     
   <para>
