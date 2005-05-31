@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.197 2005/05/30 01:57:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.198 2005/05/31 03:03:59 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -55,6 +55,7 @@
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_trigger.h"
 #include "executor/spi.h"
+#include "funcapi.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -2421,6 +2422,43 @@ get_utility_query_def(Query *query, deparse_context *context)
 
 
 /*
+ * Get the RTE referenced by a (possibly nonlocal) Var.
+ *
+ * In some cases (currently only when recursing into an unnamed join)
+ * the Var's varlevelsup has to be interpreted with respect to a context
+ * above the current one; levelsup indicates the offset.
+ */
+static RangeTblEntry *
+get_rte_for_var(Var *var, int levelsup, deparse_context *context)
+{
+	RangeTblEntry *rte;
+	int			netlevelsup;
+	deparse_namespace *dpns;
+
+	/* Find appropriate nesting depth */
+	netlevelsup = var->varlevelsup + levelsup;
+	if (netlevelsup >= list_length(context->namespaces))
+		elog(ERROR, "bogus varlevelsup: %d offset %d",
+			 var->varlevelsup, levelsup);
+	dpns = (deparse_namespace *) list_nth(context->namespaces,
+										  netlevelsup);
+
+	/* Find the relevant RTE */
+	if (var->varno >= 1 && var->varno <= list_length(dpns->rtable))
+		rte = rt_fetch(var->varno, dpns->rtable);
+	else if (var->varno == dpns->outer_varno)
+		rte = dpns->outer_rte;
+	else if (var->varno == dpns->inner_varno)
+		rte = dpns->inner_rte;
+	else
+		rte = NULL;
+	if (rte == NULL)
+		elog(ERROR, "bogus varno: %d", var->varno);
+	return rte;
+}
+
+
+/*
  * Get the schemaname, refname and attname for a (possibly nonlocal) Var.
  *
  * In some cases (currently only when recursing into an unnamed join)
@@ -2442,29 +2480,10 @@ static void
 get_names_for_var(Var *var, int levelsup, deparse_context *context,
 				  char **schemaname, char **refname, char **attname)
 {
-	int			netlevelsup;
-	deparse_namespace *dpns;
 	RangeTblEntry *rte;
 
-	/* Find appropriate nesting depth */
-	netlevelsup = var->varlevelsup + levelsup;
-	if (netlevelsup >= list_length(context->namespaces))
-		elog(ERROR, "bogus varlevelsup: %d offset %d",
-			 var->varlevelsup, levelsup);
-	dpns = (deparse_namespace *) list_nth(context->namespaces,
-										  netlevelsup);
-
-	/* Find the relevant RTE */
-	if (var->varno >= 1 && var->varno <= list_length(dpns->rtable))
-		rte = rt_fetch(var->varno, dpns->rtable);
-	else if (var->varno == dpns->outer_varno)
-		rte = dpns->outer_rte;
-	else if (var->varno == dpns->inner_varno)
-		rte = dpns->inner_rte;
-	else
-		rte = NULL;
-	if (rte == NULL)
-		elog(ERROR, "bogus varno: %d", var->varno);
+	/* Find appropriate RTE */
+	rte = get_rte_for_var(var, levelsup, context);
 
 	/* Emit results */
 	*schemaname = NULL;			/* default assumptions */
@@ -2505,7 +2524,8 @@ get_names_for_var(Var *var, int levelsup, deparse_context *context,
 											var->varattno-1);
 				if (IsA(aliasvar, Var))
 				{
-					get_names_for_var(aliasvar, netlevelsup, context,
+					get_names_for_var(aliasvar,
+									  var->varlevelsup + levelsup, context,
 									  schemaname, refname, attname);
 					return;
 				}
@@ -2520,6 +2540,127 @@ get_names_for_var(Var *var, int levelsup, deparse_context *context,
 	else
 		*attname = get_rte_attribute_name(rte, var->varattno);
 }
+
+
+/*
+ * Get the name of a field of a Var of type RECORD.
+ *
+ * Since no actual table or view column is allowed to have type RECORD, such
+ * a Var must refer to a JOIN or FUNCTION RTE or to a subquery output.  We
+ * drill down to find the ultimate defining expression and attempt to infer
+ * the field name from it.  We ereport if we can't determine the name.
+ *
+ * levelsup is an extra offset to interpret the Var's varlevelsup correctly.
+ *
+ * Note: this has essentially the same logic as the parser's
+ * expandRecordVariable() function, but we are dealing with a different
+ * representation of the input context, and we only need one field name not
+ * a TupleDesc.
+ */
+static const char *
+get_name_for_var_field(Var *var, int fieldno,
+					   int levelsup, deparse_context *context)
+{
+	RangeTblEntry *rte;
+	AttrNumber	attnum;
+	TupleDesc	tupleDesc;
+	Node	   *expr;
+
+	/* Check my caller didn't mess up */
+	Assert(IsA(var, Var));
+	Assert(var->vartype == RECORDOID);
+
+	/* Find appropriate RTE */
+	rte = get_rte_for_var(var, levelsup, context);
+
+	attnum = var->varattno;
+
+	if (attnum == InvalidAttrNumber)
+	{
+		/* Var is whole-row reference to RTE, so select the right field */
+		return get_rte_attribute_name(rte, fieldno);
+	}
+
+	expr = (Node *) var;		/* default if we can't drill down */
+
+	switch (rte->rtekind)
+	{
+		case RTE_RELATION:
+		case RTE_SPECIAL:
+			/*
+			 * This case should not occur: a column of a table shouldn't have
+			 * type RECORD.  Fall through and fail (most likely) at the
+			 * bottom.
+			 */
+			break;
+		case RTE_SUBQUERY:
+			{
+				/* Subselect-in-FROM: examine sub-select's output expr */
+				TargetEntry *ste = get_tle_by_resno(rte->subquery->targetList,
+													attnum);
+
+				if (ste == NULL || ste->resjunk)
+					elog(ERROR, "subquery %s does not have attribute %d",
+						 rte->eref->aliasname, attnum);
+				expr = (Node *) ste->expr;
+				if (IsA(expr, Var))
+				{
+					/*
+					 * Recurse into the sub-select to see what its Var refers
+					 * to.  We have to build an additional level of namespace
+					 * to keep in step with varlevelsup in the subselect.
+					 */
+					deparse_namespace mydpns;
+					const char *result;
+
+					mydpns.rtable = rte->subquery->rtable;
+					mydpns.outer_varno = mydpns.inner_varno = 0;
+					mydpns.outer_rte = mydpns.inner_rte = NULL;
+
+					context->namespaces = lcons(&mydpns, context->namespaces);
+
+					result = get_name_for_var_field((Var *) expr, fieldno,
+													0, context);
+
+					context->namespaces = list_delete_first(context->namespaces);
+
+					return result;
+				}
+				/* else fall through to inspect the expression */
+			}
+			break;
+		case RTE_JOIN:
+			/* Join RTE --- recursively inspect the alias variable */
+			Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
+			expr = (Node *) list_nth(rte->joinaliasvars, attnum - 1);
+			if (IsA(expr, Var))
+				return get_name_for_var_field((Var *) expr, fieldno,
+											  var->varlevelsup + levelsup,
+											  context);
+			/* else fall through to inspect the expression */
+			break;
+		case RTE_FUNCTION:
+			/*
+			 * We couldn't get here unless a function is declared with one
+			 * of its result columns as RECORD, which is not allowed.
+			 */
+			break;
+	}
+
+	/*
+	 * We now have an expression we can't expand any more, so see if
+	 * get_expr_result_type() can do anything with it.  If not, pass
+	 * to lookup_rowtype_tupdesc() which will probably fail, but will
+	 * give an appropriate error message while failing.
+	 */
+	if (get_expr_result_type(expr, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
+		tupleDesc = lookup_rowtype_tupdesc(exprType(expr), exprTypmod(expr));
+
+	/* Got the tupdesc, so we can extract the field name */
+	Assert(fieldno >= 1 && fieldno <= tupleDesc->natts);
+	return NameStr(tupleDesc->attrs[fieldno - 1]->attname);
+}
+
 
 /*
  * find_rte_by_refname		- look up an RTE by refname in a deparse context
@@ -3109,18 +3250,10 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_FieldSelect:
 			{
 				FieldSelect *fselect = (FieldSelect *) node;
-				Oid			argType = exprType((Node *) fselect->arg);
-				Oid			typrelid;
-				char	   *fieldname;
+				Node	   *arg = (Node *) fselect->arg;
+				int			fno = fselect->fieldnum;
+				const char *fieldname;
 				bool		need_parens;
-
-				/* lookup arg type and get the field name */
-				typrelid = get_typ_typrelid(argType);
-				if (!OidIsValid(typrelid))
-					elog(ERROR, "argument type %s of FieldSelect is not a tuple type",
-						 format_type_be(argType));
-				fieldname = get_relid_attribute_name(typrelid,
-													 fselect->fieldnum);
 
 				/*
 				 * Parenthesize the argument unless it's an ArrayRef or
@@ -3129,13 +3262,36 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * is not the issue here, having the right number of names
 				 * is.
 				 */
-				need_parens = !IsA(fselect->arg, ArrayRef) &&
-					!IsA(fselect->arg, FieldSelect);
+				need_parens = !IsA(arg, ArrayRef) && !IsA(arg, FieldSelect);
 				if (need_parens)
 					appendStringInfoChar(buf, '(');
-				get_rule_expr((Node *) fselect->arg, context, true);
+				get_rule_expr(arg, context, true);
 				if (need_parens)
 					appendStringInfoChar(buf, ')');
+
+				/*
+				 * If it's a Var of type RECORD, we have to find what the Var
+				 * refers to; otherwise we can use get_expr_result_type.
+				 * If that fails, we try lookup_rowtype_tupdesc, which will
+				 * probably fail too, but will ereport an acceptable message.
+				 */
+				if (IsA(arg, Var) &&
+					((Var *) arg)->vartype == RECORDOID)
+					fieldname = get_name_for_var_field((Var *) arg, fno,
+													   0, context);
+				else
+				{
+					TupleDesc	tupdesc;
+
+					if (get_expr_result_type(arg, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+						tupdesc = lookup_rowtype_tupdesc(exprType(arg),
+														 exprTypmod(arg));
+					Assert(tupdesc);
+					/* Got the tupdesc, so we can extract the field name */
+					Assert(fno >= 1 && fno <= tupdesc->natts);
+					fieldname = NameStr(tupdesc->attrs[fno - 1]->attname);
+				}
+
 				appendStringInfo(buf, ".%s", quote_identifier(fieldname));
 			}
 			break;
