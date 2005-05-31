@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.179 2005/04/23 22:09:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.180 2005/05/31 01:03:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_relation.h"
+#include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -957,6 +958,9 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg)
 	 * function. A bonus is that we avoid generating an unnecessary
 	 * FieldSelect; our result can omit the whole-row Var and just be a
 	 * Var for the selected field.
+	 *
+	 * This case could be handled by expandRecordVariable, but it's
+	 * more efficient to do it this way when possible.
 	 */
 	if (IsA(first_arg, Var) &&
 		((Var *) first_arg)->varattno == InvalidAttrNumber)
@@ -971,12 +975,18 @@ ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg)
 	}
 
 	/*
-	 * Else do it the hard way.  Note that if the arg is of RECORD type,
-	 * and isn't resolvable as a function with OUT params, we will never
-	 * be able to recognize a column name here.
+	 * Else do it the hard way with get_expr_result_type().
+	 *
+	 * If it's a Var of type RECORD, we have to work even harder: we have
+	 * to find what the Var refers to, and pass that to get_expr_result_type.
+	 * That task is handled by expandRecordVariable().
 	 */
-	if (get_expr_result_type(first_arg, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+	if (IsA(first_arg, Var) &&
+		((Var *) first_arg)->vartype == RECORDOID)
+		tupdesc = expandRecordVariable(pstate, (Var *) first_arg, 0);
+	else if (get_expr_result_type(first_arg, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		return NULL;			/* unresolvable RECORD type */
+	Assert(tupdesc);
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
