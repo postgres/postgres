@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.193 2005/05/20 14:53:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.194 2005/05/31 19:10:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -417,8 +417,8 @@ static char *readRecordBuf = NULL;
 static uint32 readRecordBufSize = 0;
 
 /* State information for XLOG reading */
-static XLogRecPtr ReadRecPtr;
-static XLogRecPtr EndRecPtr;
+static XLogRecPtr ReadRecPtr;				/* start of last record read */
+static XLogRecPtr EndRecPtr;				/* end+1 of last record read */
 static XLogRecord *nextRecord = NULL;
 static TimeLineID lastPageTLI = 0;
 
@@ -2524,6 +2524,37 @@ got_record:;
 				(errmsg("invalid resource manager ID %u at %X/%X",
 					 record->xl_rmid, RecPtr->xlogid, RecPtr->xrecoff)));
 		goto next_record_is_invalid;
+	}
+	if (randAccess)
+	{
+		/*
+		 * We can't exactly verify the prev-link, but surely it should be
+		 * less than the record's own address.
+		 */
+		if (!XLByteLT(record->xl_prev, *RecPtr))
+		{
+			ereport(emode,
+					(errmsg("record with incorrect prev-link %X/%X at %X/%X",
+							record->xl_prev.xlogid, record->xl_prev.xrecoff,
+							RecPtr->xlogid, RecPtr->xrecoff)));
+			goto next_record_is_invalid;
+		}
+	}
+	else
+	{
+		/*
+		 * Record's prev-link should exactly match our previous location.
+		 * This check guards against torn WAL pages where a stale but
+		 * valid-looking WAL record starts on a sector boundary.
+		 */
+		if (!XLByteEQ(record->xl_prev, ReadRecPtr))
+		{
+			ereport(emode,
+					(errmsg("record with incorrect prev-link %X/%X at %X/%X",
+							record->xl_prev.xlogid, record->xl_prev.xrecoff,
+							RecPtr->xlogid, RecPtr->xrecoff)));
+			goto next_record_is_invalid;
+		}
 	}
 
 	/*
