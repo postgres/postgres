@@ -11,7 +11,7 @@ LANGUAGE 'C';
 CREATE VIEW pg_buffercache AS
 	SELECT P.* FROM pg_buffercache_pages() AS P
  	(bufferid integer, relfilenode oid, reltablespace oid, reldatabase oid, 
- 	 relblocknumber numeric(10), isdirty bool);
+ 	 relblocknumber int8, isdirty bool);
  
 -- Don't want these to be available at public.
 REVOKE ALL ON FUNCTION pg_buffercache_pages() FROM PUBLIC;

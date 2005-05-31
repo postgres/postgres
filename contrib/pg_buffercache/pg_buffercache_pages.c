@@ -3,7 +3,7 @@
  * pg_buffercache_pages.c
  *    display some contents of the buffer cache
  *
- *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.3 2005/04/01 08:41:19 neilc Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.4 2005/05/31 00:07:47 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -92,8 +92,8 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 									OIDOID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 4, "reldatabase",
 									OIDOID, -1, 0);
-		TupleDescInitEntry(tupledesc, (AttrNumber) 5, "relblockbumber",
-									NUMERICOID, -1, 0);
+		TupleDescInitEntry(tupledesc, (AttrNumber) 5, "relblocknumber",
+									INT8OID, -1, 0);
 		TupleDescInitEntry(tupledesc, (AttrNumber) 6, "isdirty",
 									BOOLOID, -1, 0);
 

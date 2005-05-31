@@ -34,7 +34,7 @@ Notes
 
        Column     |  references          | Description
   ----------------+----------------------+------------------------------------
-   bufferid       |                      | Id, 1->shared_buffers.
+   bufferid       |                      | Id, 1..shared_buffers.
    relfilenode    | pg_class.relfilenode | Refilenode of the relation.
    reltablespace  | pg_tablespace.oid    | Tablespace oid of the relation.
    reldatabase    | pg_database.oid      | Database for the relation.
@@ -66,13 +66,13 @@ Sample output
    relfilenode    | oid     |
    reltablespace  | oid     |
    reldatabase    | oid     |
-   relblocknumber | numeric |
+   relblocknumber | bigint  |
    isdirty        | boolean |
   View definition:
    SELECT p.bufferid, p.relfilenode, p.reltablespace, p.reldatabase, 
           p.relblocknumber, p.isdirty
      FROM pg_buffercache_pages() p(bufferid integer, relfilenode oid, 
-     reltablespace oid, reldatabase oid, relblocknumber numeric(10,0), 
+     reltablespace oid, reldatabase oid, relblocknumber bigint, 
      isdirty boolean);
 
   regression=# SELECT c.relname, count(*) AS buffers
