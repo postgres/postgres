@@ -288,6 +288,7 @@ calc_rank(float *w, tsvector * t, QUERYTYPE * q, int4 method)
 {
 	ITEM	   *item = GETQUERY(q);
 	float		res = 0.0;
+	int 	   len;
 
 	if (!t->size || !q->size)
 		return 0.0;
@@ -303,10 +304,11 @@ calc_rank(float *w, tsvector * t, QUERYTYPE * q, int4 method)
 		case 0:
 			break;
 		case 1:
-			res /= log((float) cnt_length(t));
+			res /= log( (float)(cnt_length(t)+1) ) / log(2.0);
 			break;
 		case 2:
-			res /= (float) cnt_length(t);
+			len = cnt_length(t);
+			if ( len > 0 )  res /= (float)len; 
 			break;
 		default:
 			/* internal error */
@@ -609,10 +611,11 @@ rank_cd(PG_FUNCTION_ARGS)
 		case 0:
 			break;
 		case 1:
-			res /= log((float) cnt_length(txt));
+			res /= log( (float)(cnt_length(txt)+1) );
 			break;
 		case 2:
-			res /= (float) cnt_length(txt);
+			len = cnt_length(txt);
+			if ( len > 0 )  res /= (float)len; 
 			break;
 		default:
 			/* internal error */
