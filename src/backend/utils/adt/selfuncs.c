@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.169.4.4 2005/04/01 20:32:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.169.4.5 2005/06/01 17:05:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,7 @@ static void examine_variable(Query *root, Node *node, int varRelid,
 static double get_variable_numdistinct(VariableStatData *vardata);
 static bool get_variable_maximum(Query *root, VariableStatData *vardata,
 					 Oid sortop, Datum *max);
-static Selectivity prefix_selectivity(Query *root, VariableStatData *vardata,
+static Selectivity prefix_selectivity(Query *root, Node *variable,
 				   Oid opclass, Const *prefix);
 static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
 static Datum string_to_datum(const char *str, Oid datatype);
@@ -813,6 +813,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	int			varRelid = PG_GETARG_INT32(3);
 	VariableStatData vardata;
+	Node	   *variable;
 	Node	   *other;
 	bool		varonleft;
 	Datum		constval;
@@ -837,6 +838,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		ReleaseVariableStats(vardata);
 		return DEFAULT_MATCH_SEL;
 	}
+	variable = (Node *) linitial(args);
 
 	/*
 	 * If the constant is NULL, assume operator is strict and return zero,
@@ -940,7 +942,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 
 		if (eqopr == InvalidOid)
 			elog(ERROR, "no = operator for opclass %u", opclass);
-		eqargs = list_make2(vardata.var, prefix);
+		eqargs = list_make2(variable, prefix);
 		result = DatumGetFloat8(DirectFunctionCall4(eqsel,
 													PointerGetDatum(root),
 												 ObjectIdGetDatum(eqopr),
@@ -959,7 +961,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		Selectivity selec;
 
 		if (pstatus == Pattern_Prefix_Partial)
-			prefixsel = prefix_selectivity(root, &vardata, opclass, prefix);
+			prefixsel = prefix_selectivity(root, variable, opclass, prefix);
 		else
 			prefixsel = 1.0;
 		restsel = pattern_selectivity(rest, ptype);
@@ -3695,7 +3697,7 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
  * more useful to use the upper-bound code than not.
  */
 static Selectivity
-prefix_selectivity(Query *root, VariableStatData *vardata,
+prefix_selectivity(Query *root, Node *variable,
 				   Oid opclass, Const *prefixcon)
 {
 	Selectivity prefixsel;
@@ -3707,7 +3709,7 @@ prefix_selectivity(Query *root, VariableStatData *vardata,
 								BTGreaterEqualStrategyNumber);
 	if (cmpopr == InvalidOid)
 		elog(ERROR, "no >= operator for opclass %u", opclass);
-	cmpargs = list_make2(vardata->var, prefixcon);
+	cmpargs = list_make2(variable, prefixcon);
 	/* Assume scalargtsel is appropriate for all supported types */
 	prefixsel = DatumGetFloat8(DirectFunctionCall4(scalargtsel,
 												   PointerGetDatum(root),
@@ -3729,7 +3731,7 @@ prefix_selectivity(Query *root, VariableStatData *vardata,
 									BTLessStrategyNumber);
 		if (cmpopr == InvalidOid)
 			elog(ERROR, "no < operator for opclass %u", opclass);
-		cmpargs = list_make2(vardata->var, greaterstrcon);
+		cmpargs = list_make2(variable, greaterstrcon);
 		/* Assume scalarltsel is appropriate for all supported types */
 		topsel = DatumGetFloat8(DirectFunctionCall4(scalarltsel,
 													PointerGetDatum(root),
@@ -3744,7 +3746,7 @@ prefix_selectivity(Query *root, VariableStatData *vardata,
 		prefixsel = topsel + prefixsel - 1.0;
 
 		/* Adjust for double-exclusion of NULLs */
-		prefixsel += nulltestsel(root, IS_NULL, vardata->var, 0);
+		prefixsel += nulltestsel(root, IS_NULL, variable, 0);
 
 		/*
 		 * A zero or slightly negative prefixsel should be converted into
