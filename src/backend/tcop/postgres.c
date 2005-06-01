@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.444 2005/05/24 04:18:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.445 2005/06/01 23:27:03 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -498,7 +498,8 @@ log_after_parse(List *raw_parsetree_list, const char *query_string,
 		if (IsA(parsetree, PrepareStmt))
 			parsetree = (Node *) (((PrepareStmt *) parsetree)->query);
 
-		if (IsA(parsetree, SelectStmt))
+		if (IsA(parsetree, SelectStmt) &&
+			((SelectStmt *) parsetree)->into == NULL)
 			continue;		/* optimization for frequent command */
 
 		if (log_statement == LOGSTMT_MOD &&
@@ -514,6 +515,7 @@ log_after_parse(List *raw_parsetree_list, const char *query_string,
 		if ((log_statement == LOGSTMT_MOD ||
 			 log_statement == LOGSTMT_DDL) &&
 			(strncmp(commandTag, "CREATE ", strlen("CREATE ")) == 0 ||
+			 IsA(parsetree, SelectStmt) || /* SELECT INTO, CREATE AS */
 			 strncmp(commandTag, "ALTER ", strlen("ALTER ")) == 0 ||
 			 strncmp(commandTag, "DROP ", strlen("DROP ")) == 0 ||
 			 IsA(parsetree, GrantStmt) ||	/* GRANT or REVOKE */
