@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.84 2005/05/07 21:32:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.85 2005/06/02 05:55:28 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -113,6 +113,13 @@ _bt_initmetapage(Page page, BlockNumber rootbknum, uint32 level)
 
 	metaopaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	metaopaque->btpo_flags = BTP_META;
+
+	/*
+	 * Set pd_lower just past the end of the metadata.  This is not
+	 * essential but it makes the page look compressible to xlog.c.
+	 */
+	((PageHeader) page)->pd_lower =
+		((char *) metad + sizeof(BTMetaPageData)) - (char *) page;
 }
 
 /*

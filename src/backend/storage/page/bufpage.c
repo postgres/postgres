@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.63 2005/03/22 06:17:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.64 2005/06/02 05:55:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -357,7 +357,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 			lp = PageGetItemId(page, i + 1);
 			lp->lp_len = 0;		/* indicate unused & deallocated */
 		}
-		((PageHeader) page)->pd_upper = pd_special;
+		((PageHeader) page)->pd_upper = pd_upper = pd_special;
 	}
 	else
 	{							/* nused != 0 */
@@ -411,10 +411,16 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 			lp->lp_off = upper;
 		}
 
-		((PageHeader) page)->pd_upper = upper;
+		((PageHeader) page)->pd_upper = pd_upper = upper;
 
 		pfree(itemidbase);
 	}
+
+	/*
+	 * Zero out the now-free space.  This is not essential, but it allows
+	 * xlog.c to compress WAL data better.
+	 */
+	MemSet((char *) page + pd_lower, 0, pd_upper - pd_lower);
 
 	return (nline - nused);
 }
@@ -524,6 +530,13 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 	/* adjust free space boundary pointers */
 	phdr->pd_upper += size;
 	phdr->pd_lower -= sizeof(ItemIdData);
+
+	/*
+	 * Zero out the just-freed space.  This is not essential, but it allows
+	 * xlog.c to compress WAL data better.
+	 */
+	MemSet((char *) page + phdr->pd_lower, 0, sizeof(ItemIdData));
+	MemSet(addr, 0, size);
 
 	/*
 	 * Finally, we need to adjust the linp entries that remain.
@@ -672,8 +685,14 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 		lp->lp_off = upper;
 	}
 
-	phdr->pd_lower = SizeOfPageHeaderData + nused * sizeof(ItemIdData);
-	phdr->pd_upper = upper;
+	phdr->pd_lower = pd_lower = SizeOfPageHeaderData + nused * sizeof(ItemIdData);
+	phdr->pd_upper = pd_upper = upper;
+
+	/*
+	 * Zero out the now-free space.  This is not essential, but it allows
+	 * xlog.c to compress WAL data better.
+	 */
+	MemSet((char *) page + pd_lower, 0, pd_upper - pd_lower);
 
 	pfree(itemidbase);
 }

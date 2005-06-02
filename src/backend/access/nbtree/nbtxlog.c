@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.20 2005/03/22 06:17:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.21 2005/06/02 05:55:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,6 +134,13 @@ _bt_restore_meta(Relation reln, XLogRecPtr lsn,
 
 	pageop = (BTPageOpaque) PageGetSpecialPointer(metapg);
 	pageop->btpo_flags = BTP_META;
+
+	/*
+	 * Set pd_lower just past the end of the metadata.  This is not
+	 * essential but it makes the page look compressible to xlog.c.
+	 */
+	((PageHeader) metapg)->pd_lower =
+		((char *) md + sizeof(BTMetaPageData)) - (char *) metapg;
 
 	PageSetLSN(metapg, lsn);
 	PageSetTLI(metapg, ThisTimeLineID);

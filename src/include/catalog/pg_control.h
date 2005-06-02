@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.21 2005/04/28 21:47:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.22 2005/06/02 05:55:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	81
+#define PG_CONTROL_VERSION	810
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -73,12 +73,17 @@ typedef enum DBState
 
 typedef struct ControlFileData
 {
-	crc64		crc;			/* CRC for remainder of struct */
+	/*
+	 * Unique system identifier --- to ensure we match up xlog files with
+	 * the installation that produced them.
+	 */
+	uint64		system_identifier;
 
 	/*
-	 * Version identifier information.	Keep these fields at the front,
+	 * Version identifier information.	Keep these fields at the same offset,
 	 * especially pg_control_version; they won't be real useful if they
-	 * move around.
+	 * move around.  (For historical reasons they must be 8 bytes into
+	 * the file rather than immediately at the front.)
 	 *
 	 * pg_control_version identifies the format of pg_control itself.
 	 * catalog_version_no identifies the format of the system catalogs.
@@ -89,12 +94,6 @@ typedef struct ControlFileData
 	 */
 	uint32		pg_control_version;		/* PG_CONTROL_VERSION */
 	uint32		catalog_version_no;		/* see catversion.h */
-
-	/*
-	 * Unique system identifier --- to ensure we match up xlog files with
-	 * the installation that produced them.
-	 */
-	uint64		system_identifier;
 
 	/*
 	 * System status data
@@ -127,6 +126,9 @@ typedef struct ControlFileData
 	uint32		localeBuflen;
 	char		lc_collate[LOCALE_NAME_BUFLEN];
 	char		lc_ctype[LOCALE_NAME_BUFLEN];
+
+	/* CRC of all above ... MUST BE LAST! */
+	pg_crc32	crc;
 } ControlFileData;
 
 #endif   /* PG_CONTROL_H */

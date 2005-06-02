@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.6 2004/12/31 22:03:21 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog_internal.h,v 1.7 2005/06/02 05:55:29 tgl Exp $
  */
 #ifndef XLOG_INTERNAL_H
 #define XLOG_INTERNAL_H
@@ -25,15 +25,25 @@
 /*
  * Header info for a backup block appended to an XLOG record.
  *
- * Note that the backup block has its own CRC, and is not covered by
- * the CRC of the XLOG record proper.  Also note that we don't attempt
- * to align either the BkpBlock struct or the block's data.
+ * As a trivial form of data compression, the XLOG code is aware that
+ * PG data pages usually contain an unused "hole" in the middle, which
+ * contains only zero bytes.  If hole_length > 0 then we have removed
+ * such a "hole" from the stored data (and it's not counted in the
+ * XLOG record's CRC, either).  Hence, the amount of block data actually
+ * present following the BkpBlock struct is BLCKSZ - hole_length bytes.
+ *
+ * Note that we don't attempt to align either the BkpBlock struct or the
+ * block's data.  So, the struct must be copied to aligned local storage
+ * before use.
  */
 typedef struct BkpBlock
 {
-	crc64		crc;
-	RelFileNode node;
-	BlockNumber block;
+	RelFileNode node;			/* relation containing block */
+	BlockNumber block;			/* block number */
+	uint16		hole_offset;	/* number of bytes before "hole" */
+	uint16		hole_length;	/* number of bytes in "hole" */
+
+	/* ACTUAL BLOCK DATA FOLLOWS AT END OF STRUCT */
 } BkpBlock;
 
 /*
@@ -42,8 +52,9 @@ typedef struct BkpBlock
  * XLogRecord header will never be split across pages; if there's less than
  * SizeOfXLogRecord space left at the end of a page, we just waste it.)
  *
- * Note that xl_rem_len includes backup-block data, unlike xl_len in the
- * initial header.
+ * Note that xl_rem_len includes backup-block data; that is, it tracks
+ * xl_tot_len not xl_len in the initial header.  Also note that the
+ * continuation data isn't necessarily aligned.
  */
 typedef struct XLogContRecord
 {
@@ -53,12 +64,12 @@ typedef struct XLogContRecord
 
 } XLogContRecord;
 
-#define SizeOfXLogContRecord	MAXALIGN(sizeof(XLogContRecord))
+#define SizeOfXLogContRecord	sizeof(XLogContRecord)
 
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0xD05C	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD05D	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {

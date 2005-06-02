@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.32 2005/04/28 21:47:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.33 2005/06/02 05:55:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,7 +327,7 @@ ReadControlFile(void)
 	int			fd;
 	int			len;
 	char	   *buffer;
-	crc64		crc;
+	pg_crc32	crc;
 
 	if ((fd = open(ControlFilePath, O_RDONLY)) < 0)
 	{
@@ -362,13 +362,13 @@ ReadControlFile(void)
 		((ControlFileData *) buffer)->pg_control_version == PG_CONTROL_VERSION)
 	{
 		/* Check the CRC. */
-		INIT_CRC64(crc);
-		COMP_CRC64(crc,
-				   buffer + sizeof(crc64),
-				   sizeof(ControlFileData) - sizeof(crc64));
-		FIN_CRC64(crc);
+		INIT_CRC32(crc);
+		COMP_CRC32(crc,
+				   buffer,
+				   offsetof(ControlFileData, crc));
+		FIN_CRC32(crc);
 
-		if (EQ_CRC64(crc, ((ControlFileData *) buffer)->crc))
+		if (EQ_CRC32(crc, ((ControlFileData *) buffer)->crc))
 		{
 			/* Valid data... */
 			memcpy(&ControlFile, buffer, sizeof(ControlFile));
@@ -553,11 +553,11 @@ RewriteControlFile(void)
 	ControlFile.prevCheckPoint.xrecoff = 0;
 
 	/* Contents are protected with a CRC */
-	INIT_CRC64(ControlFile.crc);
-	COMP_CRC64(ControlFile.crc,
-			   (char *) &ControlFile + sizeof(crc64),
-			   sizeof(ControlFileData) - sizeof(crc64));
-	FIN_CRC64(ControlFile.crc);
+	INIT_CRC32(ControlFile.crc);
+	COMP_CRC32(ControlFile.crc,
+			   (char *) &ControlFile,
+			   offsetof(ControlFileData, crc));
+	FIN_CRC32(ControlFile.crc);
 
 	/*
 	 * We write out BLCKSZ bytes into pg_control, zero-padding the excess
@@ -673,7 +673,7 @@ WriteEmptyXLOG(void)
 	XLogPageHeader page;
 	XLogLongPageHeader longpage;
 	XLogRecord *record;
-	crc64		crc;
+	pg_crc32	crc;
 	char		path[MAXPGPATH];
 	int			fd;
 	int			nbytes;
@@ -700,17 +700,18 @@ WriteEmptyXLOG(void)
 	record->xl_prev.xlogid = 0;
 	record->xl_prev.xrecoff = 0;
 	record->xl_xid = InvalidTransactionId;
+	record->xl_tot_len = SizeOfXLogRecord + sizeof(CheckPoint);
 	record->xl_len = sizeof(CheckPoint);
 	record->xl_info = XLOG_CHECKPOINT_SHUTDOWN;
 	record->xl_rmid = RM_XLOG_ID;
 	memcpy(XLogRecGetData(record), &ControlFile.checkPointCopy,
 		   sizeof(CheckPoint));
 
-	INIT_CRC64(crc);
-	COMP_CRC64(crc, &ControlFile.checkPointCopy, sizeof(CheckPoint));
-	COMP_CRC64(crc, (char *) record + sizeof(crc64),
-			   SizeOfXLogRecord - sizeof(crc64));
-	FIN_CRC64(crc);
+	INIT_CRC32(crc);
+	COMP_CRC32(crc, &ControlFile.checkPointCopy, sizeof(CheckPoint));
+	COMP_CRC32(crc, (char *) record + sizeof(pg_crc32),
+			   SizeOfXLogRecord - sizeof(pg_crc32));
+	FIN_CRC32(crc);
 	record->xl_crc = crc;
 
 	/* Write the first page */
