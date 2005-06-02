@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.375.2.2 2004/09/26 00:26:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.375.2.3 2005/06/02 21:04:08 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -107,6 +107,13 @@ static volatile bool got_SIGHUP = false;
  * For extended query protocol this has to be remembered across messages.
  */
 static bool xact_started = false;
+
+/*
+ * Flag to indicate that we are doing the outer loop's read-from-client,
+ * as opposed to any random read from client that might happen within
+ * commands like COPY FROM STDIN.
+ */
+static bool DoingCommandRead = false;
 
 /*
  * Flags to implement skip-till-Sync-after-error behavior for messages of
@@ -398,6 +405,50 @@ ReadCommand(StringInfo inBuf)
 	else
 		result = InteractiveBackend(inBuf);
 	return result;
+}
+
+/*
+ * prepare_for_client_read -- set up to possibly block on client input
+ *
+ * This must be called immediately before any low-level read from the
+ * client connection.  It is necessary to do it at a sufficiently low level
+ * that there won't be any other operations except the read kernel call
+ * itself between this call and the subsequent client_read_ended() call.
+ * In particular there mustn't be use of malloc() or other potentially
+ * non-reentrant libc functions.  This restriction makes it safe for us
+ * to allow interrupt service routines to execute nontrivial code while
+ * we are waiting for input.
+ */
+void
+prepare_for_client_read(void)
+{
+	if (DoingCommandRead)
+	{
+		/* Enable immediate processing of asynchronous signals */
+		EnableNotifyInterrupt();
+
+		/* Allow "die" interrupt to be processed while waiting */
+		ImmediateInterruptOK = true;
+
+		/* And don't forget to detect one that already arrived */
+		QueryCancelPending = false;
+		CHECK_FOR_INTERRUPTS();
+	}
+}
+
+/*
+ * client_read_ended -- get out of the client-input state
+ */
+void
+client_read_ended(void)
+{
+	if (DoingCommandRead)
+	{
+		ImmediateInterruptOK = false;
+		QueryCancelPending = false;		/* forget any CANCEL signal */
+
+		DisableNotifyInterrupt();
+	}
 }
 
 
@@ -2659,7 +2710,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.375.2.2 $ $Date: 2004/09/26 00:26:53 $\n");
+		puts("$Revision: 1.375.2.3 $ $Date: 2005/06/02 21:04:08 $\n");
 	}
 
 	/*
@@ -2706,6 +2757,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		CritSectionCount = 0;	/* should be unnecessary, but... */
 		disable_sig_alarm(true);
 		QueryCancelPending = false;		/* again in case timeout occurred */
+		DoingCommandRead = false;
 		DisableNotifyInterrupt();
 		debug_query_string = NULL;
 
@@ -2814,20 +2866,13 @@ PostgresMain(int argc, char *argv[], const char *username)
 		}
 
 		/*
-		 * (2) deal with pending asynchronous NOTIFY from other backends,
-		 * and enable async.c's signal handler to execute NOTIFY directly.
-		 * Then set up other stuff needed before blocking for input.
+		 * (2) Allow asynchronous signals to be executed immediately
+		 * if they come in while we are waiting for client input.
+		 * (This must be conditional since we don't want, say, reads on
+		 * behalf of COPY FROM STDIN doing the same thing.)
 		 */
-		QueryCancelPending = false;		/* forget any earlier CANCEL
-										 * signal */
-
-		EnableNotifyInterrupt();
-
-		/* Allow "die" interrupt to be processed while waiting */
-		ImmediateInterruptOK = true;
-		/* and don't forget to detect one that already arrived */
-		QueryCancelPending = false;
-		CHECK_FOR_INTERRUPTS();
+		QueryCancelPending = false;		/* forget any earlier CANCEL signal */
+		DoingCommandRead = true;
 
 		/*
 		 * (3) read a command (loop blocks here)
@@ -2837,10 +2882,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		/*
 		 * (4) disable async signal conditions again.
 		 */
-		ImmediateInterruptOK = false;
-		QueryCancelPending = false;		/* forget any CANCEL signal */
-
-		DisableNotifyInterrupt();
+		DoingCommandRead = false;
 
 		/*
 		 * (5) check for any other interesting events that happened while
