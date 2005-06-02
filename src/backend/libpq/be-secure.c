@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.15.2.12 2003/08/04 17:58:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.15.2.13 2005/06/02 21:04:29 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -85,6 +85,8 @@
 #include "libpq/libpq.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "tcop/tcopprot.h"
+
 
 #ifdef WIN32
 #include "win32.h"
@@ -308,7 +310,13 @@ secure_read(Port *port, void *ptr, size_t len)
 	}
 	else
 #endif
+	{
+		prepare_for_client_read();
+
 		n = recv(port->sock, ptr, len, 0);
+
+		client_read_ended();
+	}
 
 	return n;
 }
@@ -390,6 +398,73 @@ secure_write(Port *port, void *ptr, size_t len)
 /*						  SSL specific code						*/
 /* ------------------------------------------------------------ */
 #ifdef USE_SSL
+
+/*
+ * Private substitute BIO: this wraps the SSL library's standard socket BIO
+ * so that we can enable and disable interrupts just while calling recv().
+ * We cannot have interrupts occurring while the bulk of openssl runs,
+ * because it uses malloc() and possibly other non-reentrant libc facilities.
+ *
+ * As of openssl 0.9.7, we can use the reasonably clean method of interposing
+ * a wrapper around the standard socket BIO's sock_read() method.  This relies
+ * on the fact that sock_read() doesn't call anything non-reentrant, in fact
+ * not much of anything at all except recv().  If this ever changes we'd
+ * probably need to duplicate the code of sock_read() in order to push the
+ * interrupt enable/disable down yet another level.
+ */
+
+static bool my_bio_initialized = false;
+static BIO_METHOD my_bio_methods;
+static int (*std_sock_read) (BIO *h, char *buf, int size);
+
+static int
+my_sock_read(BIO *h, char *buf, int size)
+{
+	int		res;
+
+	prepare_for_client_read();
+
+	res = std_sock_read(h, buf, size);
+
+	client_read_ended();
+
+	return res;
+}
+
+static BIO_METHOD *
+my_BIO_s_socket(void)
+{
+	if (!my_bio_initialized)
+	{
+		memcpy(&my_bio_methods, BIO_s_socket(), sizeof(BIO_METHOD));
+		std_sock_read = my_bio_methods.bread;
+		my_bio_methods.bread = my_sock_read;
+		my_bio_initialized = true;
+	}
+	return &my_bio_methods;
+}
+
+/* This should exactly match openssl's SSL_set_fd except for using my BIO */
+static int
+my_SSL_set_fd(SSL *s, int fd)
+{
+	int ret=0;
+	BIO *bio=NULL;
+
+	bio=BIO_new(my_BIO_s_socket());
+
+	if (bio == NULL)
+	{
+		SSLerr(SSL_F_SSL_SET_FD,ERR_R_BUF_LIB);
+		goto err;
+	}
+	BIO_set_fd(bio,fd,BIO_NOCLOSE);
+	SSL_set_bio(s,bio,bio);
+	ret=1;
+err:
+	return(ret);
+}
+
 /*
  *	Load precomputed DH parameters.
  *
@@ -701,7 +776,7 @@ static int
 open_server_SSL(Port *port)
 {
 	if (!(port->ssl = SSL_new(SSL_context)) ||
-		!SSL_set_fd(port->ssl, port->sock) ||
+		!my_SSL_set_fd(port->ssl, port->sock) ||
 		SSL_accept(port->ssl) <= 0)
 	{
 		elog(COMMERROR, "failed to initialize SSL connection: %s", SSLerrmessage());
