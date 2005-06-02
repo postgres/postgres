@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.13 2005/06/02 01:23:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.14 2005/06/02 17:45:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,7 +250,7 @@ xnstart			[nN]{quote}
 xqstart			{quote}
 xqdouble		{quote}{quote}
 xqinside		[^\\']+
-xqescape		[\\][^0-7x]
+xqescape		[\\][^0-7]
 xqoctesc		[\\][0-7]{1,3}
 xqhexesc		[\\]x[0-9A-Fa-f]{1,2}
 
