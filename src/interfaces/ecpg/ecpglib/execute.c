@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.38.4.1 2005/03/18 10:01:14 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.38.4.2 2005/06/02 12:37:25 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -66,10 +66,11 @@ quote_postgres(char *arg, int lineno)
 	res[ri++] = '\'';
 	res[ri] = '\0';
 
+	ECPGfree(arg);
 	return res;
 }
 
-#if defined(__GNUC__) && (defined (__powerpc__) || defined(__AMD64__))
+#if defined(__GNUC__) && (defined (__powerpc__) || defined(__AMD64__) || defined(__x86_64__))
 #define APREF ap
 #else
 #define APREF *ap
@@ -177,7 +178,7 @@ create_statement(int lineno, int compat, int force_indicator, struct connection 
 			if (!(var = (struct variable *) ECPGalloc(sizeof(struct variable), lineno)))
 				return false;
 
-#if defined(__GNUC__) && (defined (__powerpc__) || defined(__AMD64__))
+#if defined(__GNUC__) && (defined (__powerpc__) || defined(__AMD64__) || defined(__x86_64__))
 			ECPGget_variable(ap, type, var, true);
 #else
 			ECPGget_variable(&ap, type, var, true);
@@ -819,8 +820,6 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					if (!mallocedval)
 						return false;
 
-					ECPGfree(newcopy);
-
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
 				}
@@ -854,8 +853,6 @@ ECPGstore_input(const int lineno, const bool force_indicator, const struct varia
 					mallocedval = quote_postgres(newcopy, lineno);
 					if (!mallocedval)
 						return false;
-
-					ECPGfree(newcopy);
 
 					*tobeinserted_p = mallocedval;
 					*malloced_p = true;
