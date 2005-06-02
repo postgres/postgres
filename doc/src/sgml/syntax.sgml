@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.99 2004/12/23 05:37:40 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.100 2005/06/02 01:23:08 momjian Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -254,17 +254,18 @@ UPDATE "my_table" SET "a" = 5;
 
     <para>
      Another <productname>PostgreSQL</productname> extension is that
-     C-style backslash escapes are available:
-     <literal>\b</literal> is a backspace, <literal>\f</literal> is a
-     form feed, <literal>\n</literal> is a newline,
-     <literal>\r</literal> is a carriage return, <literal>\t</literal>
-     is a tab, and <literal>\<replaceable>xxx</replaceable></literal>,
-     where <replaceable>xxx</replaceable> is an octal number, is a
-     byte with the corresponding code.  (It is your responsibility
-     that the byte sequences you create are valid characters in the
-     server character set encoding.)  Any other character following a
-     backslash is taken literally.  Thus, to include a backslash in a
-     string constant, write two backslashes.
+     C-style backslash escapes are available: <literal>\b</literal> is a
+     backspace, <literal>\f</literal> is a form feed,
+     <literal>\n</literal> is a newline, <literal>\r</literal> is a
+     carriage return, <literal>\t</literal> is a tab. Also supported is
+     <literal>\<replaceable>digits</replaceable></literal>, where
+     <replaceable>ddd</replaceable> represents an octal byte value, and
+     <literal>\x<replaceable>hexdigits</replaceable></literal>, where
+     <replaceable>hexdigits</replaceable> represents a hexadecimal byte value.
+     (It is your responsibility that the byte sequences you create are
+     valid characters in the server character set encoding.) Any other
+     character following a backslash is taken literally. Thus, to
+     include a backslash in a string constant, write two backslashes.
     </para>
 
     <para>
