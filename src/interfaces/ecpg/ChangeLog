@@ -1923,6 +1923,12 @@ Thu Apr 14 11:59:47 CEST 2005
 
 	- Added patch by Philip Yarra <philip.yarra@internode.on.net> for a
 	  bug in thread support.
+
+Thu Jun  2 14:22:32 CEST 2005
+
+	- Fixed memory leak in ecpglib by adding some missing free() commands.
+	- Added patch by Gavin Scott <gavin@planetacetech.com> for Intel 64bit
+	  hardware.
 	- Set ecpg library version to 5.1.
 	- Set ecpg version to 4.1.1.
 
