@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.244 2005/05/07 02:22:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.245 2005/06/02 01:21:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2274,6 +2274,18 @@ CopyReadLine(char * quote, char * escape)
 	return result;
 }
 
+/*
+ *	Return decimal value for a hexadecimal digit
+ */
+static
+int GetDecimalFromHex(char hex)
+{
+	if (isdigit(hex))
+		return hex - '0';
+	else
+		return tolower(hex) - 'a' + 10;
+}
+
 /*----------
  * Read the value of a single attribute, performing de-escaping as needed.
  *
@@ -2335,6 +2347,7 @@ CopyReadAttribute(const char *delim, const char *null_print,
 				case '5':
 				case '6':
 				case '7':
+					/* handle \013 */
 					{
 						int			val;
 
@@ -2358,6 +2371,30 @@ CopyReadAttribute(const char *delim, const char *null_print,
 							}
 						}
 						c = val & 0377;
+					}
+					break;
+				case 'x':
+					/* Handle \x3F */
+					if (line_buf.cursor < line_buf.len)
+					{
+						char hexchar = line_buf.data[line_buf.cursor];
+
+						if (isxdigit(hexchar))
+						{
+							int val = GetDecimalFromHex(hexchar);
+
+							line_buf.cursor++;
+							if (line_buf.cursor < line_buf.len)
+							{
+								hexchar = line_buf.data[line_buf.cursor];
+								if (isxdigit(hexchar))
+								{
+									line_buf.cursor++;
+									val = (val << 4) + GetDecimalFromHex(hexchar);
+								}
+							}
+							c = val & 0xff;
+						}
 					}
 					break;
 				case 'b':

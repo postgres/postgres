@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.65 2005/05/07 02:22:45 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.66 2005/06/02 01:21:21 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -424,13 +424,18 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
        <entry>Backslash followed by one to three octal digits specifies
        the character with that numeric code</entry>
       </row>
+      <row>
+       <entry><literal>\x</><replaceable>digits</></entry>
+       <entry>Backslash <literal>x</> followed by one or two hex digits specifies
+       the character with that numeric code</entry>
+      </row>
      </tbody>
     </tgroup>
    </informaltable>
 
-    Presently, <command>COPY TO</command> will never emit an octal-digits
-    backslash sequence, but it does use the other sequences listed above
-    for those control characters.
+    Presently, <command>COPY TO</command> will never emit an octal or 
+    hex-digits backslash sequence, but it does use the other sequences
+    listed above for those control characters.
    </para>
 
    <para>
