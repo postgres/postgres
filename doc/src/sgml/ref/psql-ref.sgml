@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.137 2005/05/30 15:24:23 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.138 2005/06/02 01:23:48 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -589,8 +589,9 @@ testdb=&gt;
     single quote. To include a single quote into such an argument,
     precede it by a backslash. Anything contained in single quotes is
     furthermore subject to C-like substitutions for
-    <literal>\n</literal> (new line), <literal>\t</literal> (tab), and
-    <literal>\</literal><replaceable>digits</replaceable> (octal).
+    <literal>\n</literal> (new line), <literal>\t</literal> (tab),
+    <literal>\</literal><replaceable>digits</replaceable> (octal),
+    <literal>\x</literal><replaceable>digits</replaceable> (hexadecimal).
     </para>
 
     <para>

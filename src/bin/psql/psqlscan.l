@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.12 2005/05/30 16:48:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.13 2005/06/02 01:23:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,8 +250,9 @@ xnstart			[nN]{quote}
 xqstart			{quote}
 xqdouble		{quote}{quote}
 xqinside		[^\\']+
-xqescape		[\\][^0-7]
+xqescape		[\\][^0-7x]
 xqoctesc		[\\][0-7]{1,3}
+xqhexesc		[\\]x[0-9A-Fa-f]{1,2}
 
 /* $foo$ style quotes ("dollar quoting")
  * The quoted string starts with $foo$ where "foo" is an optional string
@@ -465,6 +466,9 @@ other			.
 					ECHO;
 				}
 <xq>{xqoctesc}  {
+					ECHO;
+				}
+<xq>{xqhexesc}  {
 					ECHO;
 				}
 <xq>{quotecontinue} {
@@ -853,6 +857,12 @@ other			.
 					/* octal case */
 					appendPQExpBufferChar(output_buf,
 										  (char) strtol(yytext + 1, NULL, 8));
+				}
+
+{xqhexesc}		{
+					/* hex case */
+					appendPQExpBufferChar(output_buf,
+										  (char) strtol(yytext + 2, NULL, 16));
 				}
 
 "\\".			{ emit(yytext + 1, 1); }
