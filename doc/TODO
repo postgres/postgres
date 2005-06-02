@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon May 30 17:12:22 EDT 2005
+Last updated:		Wed Jun  1 21:27:57 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -494,7 +494,7 @@ Commands
 	  This requires the use of a savepoint before each COPY line is
 	  processed, with ROLLBACK on COPY failure.
 
-	o Allow COPY to understand \x as a hex byte
+	o -Allow COPY to understand \x as a hex byte
 	o Have COPY return the number of rows loaded/unloaded (?)
 	o -Allow COPY to optionally include column headings in the first line
 	o -Allow COPY FROM ... CSV to interpret newlines and carriage
