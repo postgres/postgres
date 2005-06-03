@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.120 2005/04/25 01:30:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.121 2005/06/03 19:00:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,6 +276,12 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	ListCell   *insert_after = NULL;	/* where to insert new item */
 	ListCell   *p1_prev = NULL;
 	ListCell   *p1;
+
+	/*
+	 * This is a convenient place to check for query cancel --- no part
+	 * of the planner goes very long without calling add_path().
+	 */
+	CHECK_FOR_INTERRUPTS();
 
 	/*
 	 * Loop to check proposed new path against old paths.  Note it is
