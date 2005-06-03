@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.41 2005/04/28 21:47:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.42 2005/06/03 23:05:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,6 +76,7 @@ PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
 	 * query, so we are not expecting rule rewriting to do anything
 	 * strange.
 	 */
+	AcquireRewriteLocks(query);
 	rewritten = QueryRewrite(query);
 	if (list_length(rewritten) != 1 || !IsA(linitial(rewritten), Query))
 		elog(ERROR, "unexpected rewrite result");

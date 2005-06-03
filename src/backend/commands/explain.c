@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.135 2005/04/25 01:30:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.136 2005/06/03 23:05:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,6 +100,12 @@ ExplainQuery(ExplainStmt *stmt, DestReceiver *dest)
 	}
 	else
 	{
+		/*
+		 * Must acquire locks in case we didn't come fresh from the parser.
+		 * XXX this also scribbles on query, another reason for copyObject
+		 */
+		AcquireRewriteLocks(query);
+
 		/* Rewrite through rule system */
 		rewritten = QueryRewrite(query);
 
@@ -166,6 +172,8 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 			cursorOptions = dcstmt->options;
 			/* Still need to rewrite cursor command */
 			Assert(query->commandType == CMD_SELECT);
+			/* get locks (we assume ExplainQuery already copied tree) */
+			AcquireRewriteLocks(query);
 			rewritten = QueryRewrite(query);
 			if (list_length(rewritten) != 1)
 				elog(ERROR, "unexpected rewrite result");

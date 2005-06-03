@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.38 2005/05/29 04:23:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.39 2005/06/03 23:05:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,7 @@ PrepareQuery(PrepareStmt *stmt)
 	query = copyObject(stmt->query);
 
 	/* Rewrite the query. The result could be 0, 1, or many queries. */
+	AcquireRewriteLocks(query);
 	query_list = QueryRewrite(query);
 
 	/* Generate plans for queries.	Snapshot is already set. */

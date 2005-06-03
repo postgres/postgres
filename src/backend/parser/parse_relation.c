@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.108 2005/05/29 17:10:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.109 2005/06/03 23:05:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1202,8 +1202,7 @@ addImplicitRTE(ParseState *pstate, RangeVar *relation)
  * results.  If include_dropped is TRUE then empty strings and NULL constants
  * (not Vars!) are returned for dropped columns.
  *
- * The target RTE is the rtindex'th entry of rtable.  (The whole rangetable
- * must be passed since we need it to determine dropped-ness for JOIN columns.)
+ * The target RTE is the rtindex'th entry of rtable.
  * sublevels_up is the varlevelsup value to use in the created Vars.
  *
  * The output lists go into *colnames and *colvars.
@@ -1358,6 +1357,8 @@ expandRTE(List *rtable, int rtindex, int sublevels_up,
 				varattno = 0;
 				forboth(colname, rte->eref->colnames, aliasvar, rte->joinaliasvars)
 				{
+					Node	   *avar = (Node *) lfirst(aliasvar);
+
 					varattno++;
 
 					/*
@@ -1365,26 +1366,19 @@ expandRTE(List *rtable, int rtindex, int sublevels_up,
 					 * deleted columns in the join; but we have to check
 					 * since this routine is also used by the rewriter,
 					 * and joins found in stored rules might have join
-					 * columns for since-deleted columns.
+					 * columns for since-deleted columns.  This will be
+					 * signaled by a NULL Const in the alias-vars list.
 					 */
-					if (get_rte_attribute_is_dropped(rtable, rtindex,
-													 varattno))
+					if (IsA(avar, Const))
 					{
 						if (include_dropped)
 						{
 							if (colnames)
 								*colnames = lappend(*colnames,
-												makeString(pstrdup("")));
+													makeString(pstrdup("")));
 							if (colvars)
-							{
-								/*
-								 * can't use atttypid here, but it doesn't
-								 * really matter what type the Const
-								 * claims to be.
-								 */
 								*colvars = lappend(*colvars,
-												 makeNullConst(INT4OID));
-							}
+												   copyObject(avar));
 						}
 						continue;
 					}
@@ -1399,7 +1393,6 @@ expandRTE(List *rtable, int rtindex, int sublevels_up,
 
 					if (colvars)
 					{
-						Node	   *avar = (Node *) lfirst(aliasvar);
 						Var		   *varnode;
 
 						varnode = makeVar(rtindex, varattno,
@@ -1711,9 +1704,8 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
  *		Check whether attempted attribute ref is to a dropped column
  */
 bool
-get_rte_attribute_is_dropped(List *rtable, int rtindex, AttrNumber attnum)
+get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 {
-	RangeTblEntry *rte = rt_fetch(rtindex, rtable);
 	bool		result;
 
 	switch (rte->rtekind)
@@ -1750,8 +1742,8 @@ get_rte_attribute_is_dropped(List *rtable, int rtindex, AttrNumber attnum)
 				 * constructed, but one in a stored rule might contain
 				 * columns that were dropped from the underlying tables,
 				 * if said columns are nowhere explicitly referenced in
-				 * the rule.  So we have to recursively look at the
-				 * referenced column.
+				 * the rule.  This will be signaled to us by a NULL Const
+				 * in the joinaliasvars list.
 				 */
 				Var		   *aliasvar;
 
@@ -1760,18 +1752,7 @@ get_rte_attribute_is_dropped(List *rtable, int rtindex, AttrNumber attnum)
 					elog(ERROR, "invalid varattno %d", attnum);
 				aliasvar = (Var *) list_nth(rte->joinaliasvars, attnum - 1);
 
-				/*
-				 * If the list item isn't a simple Var, then it must
-				 * represent a merged column, ie a USING column, and so it
-				 * couldn't possibly be dropped (since it's referenced in
-				 * the join clause).
-				 */
-				if (!IsA(aliasvar, Var))
-					result = false;
-				else
-					result = get_rte_attribute_is_dropped(rtable,
-														  aliasvar->varno,
-													 aliasvar->varattno);
+				result = IsA(aliasvar, Const);
 			}
 			break;
 		case RTE_FUNCTION:

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.152 2005/05/29 18:34:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.153 2005/06/03 23:05:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@ typedef struct rewrite_event
 	CmdType		event;			/* type of rule being fired */
 } rewrite_event;
 
+static bool acquireLocksOnSubLinks(Node *node, void *context);
 static Query *rewriteRuleAction(Query *parsetree,
 				  Query *rule_action,
 				  Node *rule_qual,
@@ -55,6 +56,181 @@ static void markQueryForLocking(Query *qry, bool forUpdate, bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
 static Query *fireRIRrules(Query *parsetree, List *activeRIRs);
+
+
+/*
+ * AcquireRewriteLocks -
+ *	  Acquire suitable locks on all the relations mentioned in the Query.
+ *	  These locks will ensure that the relation schemas don't change under us
+ *	  while we are rewriting and planning the query.
+ *
+ * A secondary purpose of this routine is to fix up JOIN RTE references to
+ * dropped columns (see details below).  Because the RTEs are modified in
+ * place, it is generally appropriate for the caller of this routine to have
+ * first done a copyObject() to make a writable copy of the querytree in the
+ * current memory context.
+ *
+ * This processing can, and for efficiency's sake should, be skipped when the
+ * querytree has just been built by the parser: parse analysis already got
+ * all the same locks we'd get here, and the parser will have omitted dropped
+ * columns from JOINs to begin with.  But we must do this whenever we are
+ * dealing with a querytree produced earlier than the current command.
+ *
+ * About JOINs and dropped columns: although the parser never includes an
+ * already-dropped column in a JOIN RTE's alias var list, it is possible for
+ * such a list in a stored rule to include references to dropped columns.
+ * (If the column is not explicitly referenced anywhere else in the query,
+ * the dependency mechanism won't consider it used by the rule and so won't
+ * prevent the column drop.)  To support get_rte_attribute_is_dropped(),
+ * we replace join alias vars that reference dropped columns with NULL Const
+ * nodes.
+ *
+ * (In PostgreSQL 8.0, we did not do this processing but instead had
+ * get_rte_attribute_is_dropped() recurse to detect dropped columns in joins.
+ * That approach had horrible performance unfortunately; in particular
+ * construction of a nested join was O(N^2) in the nesting depth.)
+ */
+void
+AcquireRewriteLocks(Query *parsetree)
+{
+	ListCell   *l;
+	int			rt_index;
+
+	/*
+	 * First, process RTEs of the current query level.
+	 */
+	rt_index = 0;
+	foreach(l, parsetree->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+		Relation	rel;
+		LOCKMODE	lockmode;
+		List	   *newaliasvars;
+		ListCell   *ll;
+
+		++rt_index;
+		switch (rte->rtekind)
+		{
+			case RTE_RELATION:
+				/*
+				 * Grab the appropriate lock type for the relation, and
+				 * do not release it until end of transaction. This protects
+				 * the rewriter and planner against schema changes mid-query.
+				 *
+				 * If the relation is the query's result relation, then we
+				 * need RowExclusiveLock.  Otherwise, check to see if the
+				 * relation is accessed FOR UPDATE/SHARE or not.  We can't
+				 * just grab AccessShareLock because then the executor
+				 * would be trying to upgrade the lock, leading to possible
+				 * deadlocks.
+				 */
+				if (rt_index == parsetree->resultRelation)
+					lockmode = RowExclusiveLock;
+				else if (list_member_int(parsetree->rowMarks, rt_index))
+					lockmode = RowShareLock;
+				else
+					lockmode = AccessShareLock;
+
+				rel = heap_open(rte->relid, lockmode);
+				heap_close(rel, NoLock);
+				break;
+
+			case RTE_JOIN:
+				/*
+				 * Scan the join's alias var list to see if any columns
+				 * have been dropped, and if so replace those Vars with
+				 * NULL Consts.
+				 */
+				newaliasvars = NIL;
+				foreach(ll, rte->joinaliasvars)
+				{
+					Var		   *aliasvar = (Var *) lfirst(ll);
+
+					/*
+					 * If the list item isn't a simple Var, then it must
+					 * represent a merged column, ie a USING column, and so it
+					 * couldn't possibly be dropped, since it's referenced in
+					 * the join clause.  (Conceivably it could also be a
+					 * NULL constant already?  But that's OK too.)
+					 */
+					if (IsA(aliasvar, Var))
+					{
+						/*
+						 * The elements of an alias list have to refer to
+						 * earlier RTEs of the same rtable, because that's
+						 * the order the planner builds things in.  So we
+						 * already processed the referenced RTE, and so it's
+						 * safe to use get_rte_attribute_is_dropped on it.
+						 * (This might not hold after rewriting or planning,
+						 * but it's OK to assume here.)
+						 */
+						Assert(aliasvar->varlevelsup == 0);
+						if (aliasvar->varno >= rt_index)
+							elog(ERROR, "unexpected varno %d in JOIN RTE %d",
+								 aliasvar->varno, rt_index);
+						if (get_rte_attribute_is_dropped(
+							rt_fetch(aliasvar->varno, parsetree->rtable),
+							aliasvar->varattno))
+						{
+							/*
+							 * can't use vartype here, since that might be a
+							 * now-dropped type OID, but it doesn't really
+							 * matter what type the Const claims to be.
+							 */
+							aliasvar = (Var *) makeNullConst(INT4OID);
+						}
+					}
+					newaliasvars = lappend(newaliasvars, aliasvar);
+				}
+				rte->joinaliasvars = newaliasvars;
+				break;
+
+			case RTE_SUBQUERY:
+				/*
+				 * The subquery RTE itself is all right, but we have to
+				 * recurse to process the represented subquery.
+				 */
+				AcquireRewriteLocks(rte->subquery);
+				break;
+
+			default:
+				/* ignore other types of RTEs */
+				break;
+		}
+	}
+
+	/*
+	 * Recurse into sublink subqueries, too.  But we already did the ones
+	 * in the rtable.
+	 */
+	if (parsetree->hasSubLinks)
+		query_tree_walker(parsetree, acquireLocksOnSubLinks, NULL,
+						  QTW_IGNORE_RT_SUBQUERIES);
+}
+
+/*
+ * Walker to find sublink subqueries for AcquireRewriteLocks
+ */
+static bool
+acquireLocksOnSubLinks(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, SubLink))
+	{
+		SubLink    *sub = (SubLink *) node;
+
+		/* Do what we came for */
+		AcquireRewriteLocks((Query *) sub->subselect);
+		/* Fall through to process lefthand args of SubLink */
+	}
+
+	/*
+	 * Do NOT recurse into Query nodes, because AcquireRewriteLocks already
+	 * processed subselects of subselects for us.
+	 */
+	return expression_tree_walker(node, acquireLocksOnSubLinks, context);
+}
 
 
 /*
@@ -81,6 +257,12 @@ rewriteRuleAction(Query *parsetree,
 	 */
 	rule_action = (Query *) copyObject(rule_action);
 	rule_qual = (Node *) copyObject(rule_qual);
+
+	/*
+	 * Acquire necessary locks and fix any deleted JOIN RTE entries.
+	 */
+	AcquireRewriteLocks(rule_action);
+	(void) acquireLocksOnSubLinks(rule_qual, NULL);
 
 	current_varno = rt_index;
 	rt_length = list_length(parsetree->rtable);
@@ -693,6 +875,9 @@ matchLocks(CmdType event,
 }
 
 
+/*
+ * ApplyRetrieveRule - expand an ON SELECT rule
+ */
 static Query *
 ApplyRetrieveRule(Query *parsetree,
 				  RewriteRule *rule,
@@ -713,11 +898,16 @@ ApplyRetrieveRule(Query *parsetree,
 		elog(ERROR, "cannot handle per-attribute ON SELECT rule");
 
 	/*
-	 * Make a modifiable copy of the view query, and recursively expand
-	 * any view references inside it.
+	 * Make a modifiable copy of the view query, and acquire needed locks
+	 * on the relations it mentions.
 	 */
 	rule_action = copyObject(linitial(rule->actions));
 
+	AcquireRewriteLocks(rule_action);
+
+	/*
+	 * Recursively expand any view references inside the view.
+	 */
 	rule_action = fireRIRrules(rule_action, activeRIRs);
 
 	/*
@@ -868,7 +1058,6 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 		List	   *locks;
 		RuleLock   *rules;
 		RewriteRule *rule;
-		LOCKMODE	lockmode;
 		int			i;
 
 		++rt_index;
@@ -904,26 +1093,10 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 			continue;
 
 		/*
-		 * This may well be the first access to the relation during the
-		 * current statement (it will be, if this Query was extracted from
-		 * a rule or somehow got here other than via the parser).
-		 * Therefore, grab the appropriate lock type for the relation, and
-		 * do not release it until end of transaction.	This protects the
-		 * rewriter and planner against schema changes mid-query.
-		 *
-		 * If the relation is the query's result relation, then
-		 * RewriteQuery() already got the right lock on it, so we need no
-		 * additional lock. Otherwise, check to see if the relation is
-		 * accessed FOR UPDATE/SHARE or not.
+		 * We can use NoLock here since either the parser or
+		 * AcquireRewriteLocks should have locked the rel already.
 		 */
-		if (rt_index == parsetree->resultRelation)
-			lockmode = NoLock;
-		else if (list_member_int(parsetree->rowMarks, rt_index))
-			lockmode = RowShareLock;
-		else
-			lockmode = AccessShareLock;
-
-		rel = heap_open(rte->relid, lockmode);
+		rel = heap_open(rte->relid, NoLock);
 
 		/*
 		 * Collect the RIR rules that we must apply
@@ -1015,8 +1188,16 @@ CopyAndAddInvertedQual(Query *parsetree,
 					   int rt_index,
 					   CmdType event)
 {
-	Query	   *new_tree = (Query *) copyObject(parsetree);
+	/* Don't scribble on the passed qual (it's in the relcache!) */
 	Node	   *new_qual = (Node *) copyObject(rule_qual);
+
+	/*
+	 * In case there are subqueries in the qual, acquire necessary locks and
+	 * fix any deleted JOIN RTE entries.  (This is somewhat redundant with
+	 * rewriteRuleAction, but not entirely ... consider restructuring so
+	 * that we only need to process the qual this way once.)
+	 */
+	(void) acquireLocksOnSubLinks(new_qual, NULL);
 
 	/* Fix references to OLD */
 	ChangeVarNodes(new_qual, PRS2_OLD_VARNO, rt_index, 0);
@@ -1030,9 +1211,9 @@ CopyAndAddInvertedQual(Query *parsetree,
 							  event,
 							  rt_index);
 	/* And attach the fixed qual */
-	AddInvertedQual(new_tree, new_qual);
+	AddInvertedQual(parsetree, new_qual);
 
-	return new_tree;
+	return parsetree;
 }
 
 
@@ -1112,7 +1293,7 @@ fireRules(Query *parsetree,
 			if (!*instead_flag)
 			{
 				if (*qual_product == NULL)
-					*qual_product = parsetree;
+					*qual_product = copyObject(parsetree);
 				*qual_product = CopyAndAddInvertedQual(*qual_product,
 													   event_qual,
 													   rt_index,
@@ -1177,15 +1358,10 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 		Assert(rt_entry->rtekind == RTE_RELATION);
 
 		/*
-		 * This may well be the first access to the result relation during
-		 * the current statement (it will be, if this Query was extracted
-		 * from a rule or somehow got here other than via the parser).
-		 * Therefore, grab the appropriate lock type for a result
-		 * relation, and do not release it until end of transaction.  This
-		 * protects the rewriter and planner against schema changes
-		 * mid-query.
+		 * We can use NoLock here since either the parser or
+		 * AcquireRewriteLocks should have locked the rel already.
 		 */
-		rt_entry_relation = heap_open(rt_entry->relid, RowExclusiveLock);
+		rt_entry_relation = heap_open(rt_entry->relid, NoLock);
 
 		/*
 		 * If it's an INSERT or UPDATE, rewrite the targetlist into
@@ -1251,7 +1427,7 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 			}
 		}
 
-		heap_close(rt_entry_relation, NoLock);	/* keep lock! */
+		heap_close(rt_entry_relation, NoLock);
 	}
 
 	/*
@@ -1295,8 +1471,8 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
  *	  Rewrite one query via query rewrite system, possibly returning 0
  *	  or many queries.
  *
- * NOTE: The code in QueryRewrite was formerly in pg_parse_and_plan(), and was
- * moved here so that it would be invoked during EXPLAIN.
+ * NOTE: the parsetree must either have come straight from the parser,
+ * or have been scanned by AcquireRewriteLocks to acquire suitable locks.
  */
 List *
 QueryRewrite(Query *parsetree)

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.198 2005/05/31 03:03:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.199 2005/06/03 23:05:29 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -67,6 +67,7 @@
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
 #include "parser/parsetree.h"
+#include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSupport.h"
 #include "utils/array.h"
@@ -1661,6 +1662,9 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		 */
 		query = getInsertSelectQuery(query, NULL);
 
+		/* Must acquire locks right away; see notes in get_query_def() */
+		AcquireRewriteLocks(query);
+
 		context.buf = buf;
 		context.namespaces = list_make1(&dpns);
 		context.varprefix = (list_length(query->rtable) != 1);
@@ -1794,6 +1798,14 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 {
 	deparse_context context;
 	deparse_namespace dpns;
+
+	/*
+	 * Before we begin to examine the query, acquire locks on referenced
+	 * relations, and fix up deleted columns in JOIN RTEs.  This ensures
+	 * consistent results.  Note we assume it's OK to scribble on the
+	 * passed querytree!
+	 */
+	AcquireRewriteLocks(query);
 
 	context.buf = buf;
 	context.namespaces = lcons(&dpns, list_copy(parentnamespace));
@@ -4245,6 +4257,7 @@ get_from_clause_alias(Alias *alias, int varno,
 					  Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
+	RangeTblEntry *rte = rt_fetch(varno, query->rtable);
 	ListCell   *col;
 	AttrNumber	attnum;
 	bool		first = true;
@@ -4256,7 +4269,7 @@ get_from_clause_alias(Alias *alias, int varno,
 	foreach(col, alias->colnames)
 	{
 		attnum++;
-		if (get_rte_attribute_is_dropped(query->rtable, varno, attnum))
+		if (get_rte_attribute_is_dropped(rte, attnum))
 			continue;
 		if (first)
 		{

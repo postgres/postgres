@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.63 2004/12/31 22:00:23 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.64 2005/06/03 23:05:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -524,9 +524,7 @@ flatten_join_alias_vars_mutator(Node *node,
 				newvar = (Node *) lfirst(l);
 				attnum++;
 				/* Ignore dropped columns */
-				if (get_rte_attribute_is_dropped(context->root->rtable,
-												 var->varno,
-												 attnum))
+				if (IsA(newvar, Const))
 					continue;
 
 				/*

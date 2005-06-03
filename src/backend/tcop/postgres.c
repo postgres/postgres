@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.446 2005/06/02 21:03:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.447 2005/06/03 23:05:29 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -158,6 +158,7 @@ static int	SocketBackend(StringInfo inBuf);
 static int	ReadCommand(StringInfo inBuf);
 static bool log_after_parse(List *raw_parsetree_list,
 				const char *query_string, char **prepare_string);
+static List *pg_rewrite_queries(List *querytree_list);
 static void start_xact_command(void);
 static void finish_xact_command(void);
 static void SigHupHandler(SIGNAL_ARGS);
@@ -642,8 +643,11 @@ pg_analyze_and_rewrite(Node *parsetree, Oid *paramTypes, int numParams)
 
 /*
  * Perform rewriting of a list of queries produced by parse analysis.
+ *
+ * Note: queries must just have come from the parser, because we do not do
+ * AcquireRewriteLocks() on them.
  */
-List *
+static List *
 pg_rewrite_queries(List *querytree_list)
 {
 	List	   *new_list = NIL;

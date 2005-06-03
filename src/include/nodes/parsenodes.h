@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.278 2005/04/28 21:47:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.279 2005/06/03 23:05:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -465,7 +465,10 @@ typedef struct DefElem
  *	  those columns are known to be dropped at parse time.	Again, however,
  *	  a stored rule might contain entries for columns dropped since the rule
  *	  was created.	(This is only possible for columns not actually referenced
- *	  in the rule.)
+ *	  in the rule.)  When loading a stored rule, we replace the joinaliasvars
+ *	  items for any such columns with NULL Consts.  (We can't simply delete
+ *	  them from the joinaliasvars list, because that would affect the attnums
+ *	  of Vars referencing the rest of the list.)
  *
  *	  inh is TRUE for relation references that should be expanded to include
  *	  inheritance children, if the rel has any.  This *must* be FALSE for
@@ -535,7 +538,10 @@ typedef struct RangeTblEntry
 	 * to the columns of the join result.  An alias Var referencing column
 	 * K of the join result can be replaced by the K'th element of
 	 * joinaliasvars --- but to simplify the task of reverse-listing
-	 * aliases correctly, we do not do that until planning time.
+	 * aliases correctly, we do not do that until planning time.  In a Query
+	 * loaded from a stored rule, it is also possible for joinaliasvars
+	 * items to be NULL Consts, denoting columns dropped since the rule was
+	 * made.
 	 */
 	JoinType	jointype;		/* type of join */
 	List	   *joinaliasvars;	/* list of alias-var expansions */
