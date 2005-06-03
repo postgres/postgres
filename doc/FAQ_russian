@@ -1,12 +1,12 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Ponedel'nik 14 fevralya 23:35:09 EST 2005
+   Data poslednego obnovleniya: Ponedel'nik 30 maya 09:11:03 EDT 2005
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
    
-   Perevel na russkij: Viktor Vislobokov (corochoone@perm.ru)
+   Pereviol na russkij: Viktor Vislobokov (corochoone@perm.ru)
    
    Samuyu svezhuyu anglijskuyu versiyu dokumenta mozhno najti na
    http://www.PostgreSQL.org/files/documentation/faqs/FAQ.html.
@@ -30,6 +30,7 @@
    1.10) Kak nauchit'sya SQL?
    1.11) Kak prisoedinitsya k komande razrabotchikov?
    1.12) Kak sravnivat' PostgreSQL s drugimi SUBD?
+   1.13) Kto upravlyaet PostgreSQL?
    
                  Voprosy pol'zovatelej po klientskoj chasti
                                       
@@ -70,8 +71,8 @@
    4.8) Kak mne vypolnit' poisk regulyarnogo vyrazheniya i poisk
    nezavisimyj ot registra bukv poisk regulyarnogo vyrazheniya? Kak mne
    ispol'zovat' indeks dlya poiska nezavisimogo ot registra bukv?
-   4.9) Kak ya mogu opredelit', chto znachenie polya ravno NULL v
-   kakom-libo zaprose?
+   4.9) Kak mne opredelit', chto znachenie polya ravno NULL v kakom-libo
+   zaprose? Mogu ya otsortirovat' polya NULL ili net?
    4.10) Kakovy otlichiya mezhdu raznymi simvol'nymi tipami?
    4.11.1) Kak mne sozdat' pole serial/s-avto-uvelicheniem?
    4.11.2) Kak mne poluchit' znachenie pri vstavke SERIAL?
@@ -80,36 +81,25 @@
    4.11.4) Pochemu chisla iz moej posledovatel'nosti ne ispol'zuyutsya
    snova pri otmene tranzakcii? Pochemu sozdayutsya razryvy pri numeracii
    v kolonke, gde ya ispol'zuyu posledovatel'nost'/SERIAL?
-   4.12) CHto takoe OID? CHto takoe TID?
+   4.12) CHto takoe OID? CHto takoe CTID?
    4.13) Pochemu ya poluchayu oshibku "ERROR: Memory exhausted in
    AllocSetAlloc()"?
    4.14) Kak mne uznat', kakaya versiya PostgreSQL zapuschena?
-   4.15) Pochemu pri rabote s moim bol'shim ob"ektom ya poluchayu oshibku
-   "invalid large obj descriptor"?
-   4.16) Kak mne sozdat' kolonku kotoraya po umolchaniyu budet soderzhat'
+   4.15) Kak mne sozdat' kolonku kotoraya po umolchaniyu budet soderzhat'
    tekuschee vremya?
-   4.17) Kak vypolnit' vneshnee svyazyvanie?
-   4.18) Kak vypolnyat' zaprosy, ispol'zuyuschie neskol'ko baz dannyh?
-   4.19) Kak mne vernut' iz funkcii neskol'ko strok tablicy?
-   4.20) Pochemu ya poluchayu oshibku "missing oid", kogda obraschayuts'
-   k vremennym tablicam v funkciyah PL/PgSQL?
-   4.21) Kakie opcii shifrovaniya suschestvuyut?
-   
-                          Rasshireniya PostgreSQL
-                                      
-   5.1) YA napisal funkciyu opredelyaemuyu pol'zovatelem. Kogda ya
-   zapuskayu ee v psql, pochemu ya poluchayu core dump?
-   5.2) Kak ya mogu vnesti nekotorye klassnye novye tipy i funkcii v
-   PostgreSQL?
-   5.3) Kak mne napisat' C funkciyu, vozvraschayuschuyu stroku tablicy?
-   5.4) YA izmenil ishodnyj fajl. Pochemu posle perekompilyacii ya ne
-   vizhu izmenenij?
+   4.16) Kak vypolnit' vneshnee svyazyvanie?
+   4.17) Kak vypolnyat' zaprosy, ispol'zuyuschie neskol'ko baz dannyh?
+   4.18) Kak mne vernut' iz funkcii neskol'ko strok tablicy?
+   4.19) Pochemu ya poluchayu oshibku "relation with OID #### ne
+   suschestvuet", kogda obraschayuts' k vremennym tablicam v funkciyah
+   PL/PgSQL?
+   4.20) Kakie est' resheniya dlya replikacii?
      _________________________________________________________________
    
                               Obschie voprosy
                                       
-    1.1) CHto takoe PostgreSQL? Kak proiznositsya `eto nazvanie?
-    
+  1.1) CHto takoe PostgreSQL? Kak proiznositsya `eto nazvanie?
+  
    PostgreSQL proiznositsya Post-Gres-Q-L (Post-Gres-K'yu-`El), takzhe
    chasto govoryat prosto Postgres.
    
@@ -125,8 +115,8 @@
    Podrobnosti smotrite v FAQ dlya razrabotchikov,
    http://www.PostgreSQL.org/files/documentation/faqs/FAQ_DEV.html
    
-    1.2) Kakovy avtorskie prava na PostgreSQL?
-    
+  1.2) Kakovy avtorskie prava na PostgreSQL?
+  
    PostgreSQL rasprostranyaetsya po klassicheskoj licenzii BSD. `Eta
    licenziya ne soderzhit ogranichenij na to, kak budet ispol'zovat'sya
    ishodnyj kod. Nam nravitsya `eta licenziya i u nas net namerenij eio
@@ -137,7 +127,8 @@
    Sistema Upravleniya Bazami Dannyh PostgreSQL
    
    Portions copyright (c) 1996-2005, PostgreSQL Global Development Group
-   Portions Copyright (c) 1994-6 Regents of the University of California
+   Portions Copyright (c) 1994-1996 Regents of the University of
+   California
    
    Predostavlyayutsya prava na ispol'zovanie, kopirovanie, izmenenie i
    rasprostranenie dannogo programmnogo obespecheniya i ego dokumentacii
@@ -161,16 +152,16 @@
    PREDOSTAVLYAT' SOPROVOZHDENIE, PODDERZHKU, OBNOVLENIYA, RASSHIRENIYA
    ILI IZMENENIYA.
    
-    1.3) Na kakih platformah rabotaet PostgreSQL?
-    
+  1.3) Na kakih platformah rabotaet PostgreSQL?
+  
    Obychno, PostgreSQL mozhet rabotat' na lyuboj sovremennoj platforme
    sovmestimoj s Unix. V instrukcii po ustanovke, vy najdete spisok teh
    platform, na kotoryh byli provedeny testovye zapuski PostgreSQL k
    momentu vyhoda dannoj versii.
    
-   Nachinaya s versii 8.0, PostgreSQL bez vsyakih uhischrenij rabotaet na
-   operacionnyh sistemah Microsoft Windows, osnovannyh na NT, takih kak
-   Win2000, WinXP i Win2003. Paket installyatora dostupen po adresu
+   PostgreSQL takzhe rabotaet na operacionnyh sistemah Microsoft Windows,
+   osnovannyh na NT, takih kak Win2000, WinXP i Win2003. Paket
+   installyatora dostupen po adresu
    http://pgfoundry.org/projects/pginstaller. Versii Windows, osnovannye
    na MS-DOS (Win95, Win98, WinMe) mogut zapuskat' PostgreSQL s
    pomosch'yu Cygwin.
@@ -180,14 +171,13 @@
    http://hobbes.nmsu.edu/cgi-bin/h-search?sh=1&button=Search&key=postgre
    SQL&stype=all&sort=type&dir=%2F.
    
-    1.4) Gde mozhno vzyat' PostgreSQL?
-    
-   Naprimer, vospol'zovavshis' anonimnym dostupom na ftp sajt PostgreSQL
-   ftp://ftp.PostgreSQL.org/pub. Spisok zerkal vy najdete na nashem
-   osnovnom sajte.
+  1.4) Gde mozhno vzyat' PostgreSQL?
+  
+   CHerez brauzer, ispol'zuya http://www.postgresql.org/ftp/ i cherez
+   ftp, ispol'zuya ftp://ftp.PostgreSQL.org/pub/.
    
-    1.5) Gde poluchit' podderzhku?
-    
+  1.5) Gde poluchit' podderzhku?
+  
    Soobschestvo PostgreSQL predostavlyaet pomosch' mnozhestvu
    pol'zovatelej cherez E-mail. Osnovnoj web-sajt dlya podpiski na spiski
    rassylki po E-mail `eto: http://www.postgresql.org/community/lists/.
@@ -205,22 +195,23 @@
    Spisok kommercheskoj podderzhki kompanij dostupen na
    http://techdocs.postgresql.org/companies.php.
    
-    1.6) Kak mne soobschit' ob oshibke?
-    
+  1.6) Kak mne soobschit' ob oshibke?
+  
    Posetite stranichku so special'noj formoj otchiota ob oshibke v
    PostgreSQL po adresu: http://www.postgresql.org/support/submitbug.
    
    Takzhe prover'te nalichie bolee svezhej versii PostgreSQL na nashem
-   FTP sajte ftp://ftp.PostgreSQL.org/pub.
+   FTP sajte ftp://ftp.PostgreSQL.org/pub/.
    
-    1.7) Kakaya poslednyaya versiya?
-    
-   Poslednij vypusk PostgreSQL - `eto versiya 8.0.1
+  1.7) Kakaya poslednyaya versiya?
+  
+   Poslednij vypusk PostgreSQL - `eto versiya 8.0.2
    
-   My planiruem vypuskat' novye versii kazhdye 10-12 mesyacev.
+   My planiruem vypuskat' novye starshie versii kazhdyj god, a mladshie
+   versii kazhdye neskol'ko mesyacev.
    
-    1.8) Kakaya dokumentaciya imeetsya v nalichii?
-    
+  1.8) Kakaya dokumentaciya imeetsya v nalichii?
+  
    PostgreSQL soderzhit mnogo dokumentacii, vklyuchaya bol'shoe
    rukovodstvo, stranicy `elektronnogo rukovodstva man i nekotorye
    malen'kie testovye primery. Smotrite v katalog /doc. Vy takzhe mozhete
@@ -229,8 +220,10 @@
    
    Suschestvuet dve knigi po PostgreSQL dostupnye po adresam
    http://www.PostgreSQL.org/docs/books/awbook.html i
-   http://www.commandprompt.com/ppbook/. Spisok knig po PostgreSQL,
-   kotorye mozhno kupit' dostupen po adresu
+   http://www.commandprompt.com/ppbook/. Est' neskol'ko knig po
+   PostgreSQL, kotorye mozhno kupit'. Odnu iz naibolee populyarnyh
+   napisal Korri Duglas (Korry Douglas). Spisok obzorov po `etim knigam
+   dostupen po adresu
    http://techdocs.postgresql.org/techdocs/bookreviews.php. Krome togo,
    po adresu http://techdocs.PostgreSQL.org/ vy mozhete najti kollekciyu
    tehnicheskih statej posvyaschennyh PostgreSQL.
@@ -241,48 +234,33 @@
    
    Nash sajt soderzhit esche bol'she informacii.
    
-    1.9) Kak najti informaciyu ob izvestnyh oshibkah ili otsutstvuyuschih
-    vozmozhnostyah?
-    
+  1.9) Kak najti informaciyu ob izvestnyh oshibkah ili otsutstvuyuschih
+  vozmozhnostyah?
+  
    PostgreSQL podderzhivaet rasshirennyj podklass SQL-92. Smotrite nash
    spisok TODO na predmet izvestnyh oshibok, otsutstvuyuschih
    vozmozhnostej i buduschih planov.
    
-    1.10) Kak mne nauchit'sya SQL?
-    
-   Kniga po PostgreSQL na
-   http://www.PostgreSQL.org/docs/books/awbook.html nauchit SQL.
-   Suschestvuet drugaya kniga po PostgreSQL na
-   http://www.commandprompt.com/ppbook. Est' prekrasnyj uchebnik na
+  1.10) Kak mne nauchit'sya SQL?
+  
+   Vo-pervyh, voz'mite odnu iz knig po PostgreSQL, o kotoryh govorilos'
+   vyshe. Esche odin uchebnik - `eto kniga "Teach Yourself SQL in 21
+   Days, Second Edition" (Osvoj samostoyatel'no SQL za 21 den', Vtoraya
+   redakciya) na http://members.tripod.com/er4ebus/sql/index.htm. Mnogim
+   iz nashih pol'zovatelej nravitsya kniga The Practical SQL Handbook,
+   Bowman, Judith S., et al., Addison-Wesley. Drugim nravitsya The
+   Complete Reference SQL, Groff et al., McGraw-Hill.
+   Est' prekrasnyj uchebnik na
    http://www.intermedia.net/support/sql/sqltut.shtm, na
    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM,
    i na http://sqlcourse.com.
    
-   Esche odin uchebnik - `eto kniga "Teach Yourself SQL in 21 Days,
-   Second Edition" (Osvoj samostoyatel'no SQL za 21 den', Vtoraya
-   redakciya) na http://members.tripod.com/er4ebus/sql/index.htm
+  1.11) Kak prisoedinitsya k komande razrabotchikov?
+  
+   Smotrite FAQ dlya razrabotchikov.
    
-   Mnogim iz nashih pol'zovatelej nravitsya kniga The Practical SQL
-   Handbook, Bowman, Judith S., et al., Addison-Wesley. Drugim nravitsya
-   The Complete Reference SQL, Groff et al., McGraw-Hill.
-   
-    1.11) Kak prisoedinitsya k komande razrabotchikov?
-    
-   Dlya nachala, skachajte poslednyuyu versiyu ishodnyh tekstov i
-   prochtite FAQ i dokumentaciyu dlya razrabotchikov PostgreSQL na nashem
-   sajte ili v distributive. Zatem, podpishites' na spiski rassylki
-   pgsql-hackers i pgsql-patches. Dalee, otpravlyajte ispravleniya
-   (patches) vysokogo kachestva v spisok pgsql-patches.
-   
-   Suschestvuet ogranichennyj spisok lyudej, kotoryj imeyut privelegiyu
-   vnosit' izmeneniya v CVS arhiv PostgreSQL. Kazhdyj iz `etih lyudej v
-   svoe vremya otpravil tak mnogo vysokokachestvennyh ispravlenij, chto
-   ih bylo nevozmozhno ostavit' bez vnimaniya i oni byli udostoeny
-   previlegii vnosit' izmeneniya, i my uvereny, chto te ispravleniya,
-   kotorye oni vnesut budut vysokogo kachestva.
-   
-    1.12) Kak sravnivat' PostgreSQL s drugimi SUBD?
-    
+  1.12) Kak sravnivat' PostgreSQL s drugimi SUBD?
+  
    Suschestvuet neskol'ko metodov sravneniya programmnogo obespecheniya:
    vozmozhnosti, proizvoditel'nost', nadezhnost', podderzhka i cena.
    
@@ -298,15 +276,8 @@
    Proizvoditel'nost'
           Proizvoditel'nost' PostgreSQL shodna s drugimi kommercheskimi
           SUBD i s SUBD s otkrytym ishodnym kodom. V kakih-to veschah my
-          bystree, v kakih-to medlennee. V sravnenii s MySQL ili linejnoj
-          SUBD, my bystree, kogda pol'zovatelej mnogo, a takzhe na
-          slozhnyh zaprosah i pri chtenii/zapisi zagruzki zaprosa. MySQL
-          bystree dlya prostyh SELECT zaprosov, vypolnyaemyh nebol'shim
-          kolichestvom pol'zovatelej. I razumeetsya, MySQL ne imeet
-          kakih-libo vozmozhnostej iz perechislenyh vyshe, v sekcii
-          Vozmozhnosti. My delaem upor na nadezhnost' i rasshirennye
-          vozmozhnosti, no my takzhe prodolzhaem uvelichivat'
-          proizvoditel'nost' s kazhdym vypuskom.
+          bystree, v kakih-to medlennee. Nasha proizvoditel'nosti obychno
+          +/-10% po sravneniyu s drugimi SUBD.
           
    Nadezhnost'
           My ponimali, chto nasha SUBD dolzhna byt' nadezhnoj ili ona
@@ -339,10 +310,23 @@
           opisyvayutsya v nashej licenzii stilya BSD, kotoraya privedena
           vyshe.
           
+  1.13) Kto upravlyaet PostgreSQL?
+  
+   Esli vy ischite kakogo-to osobennogo cheloveka, central'nyj komitet
+   ili upravlyayuschuyu kompaniyu, to naprasno --- ih net. U nas est'
+   yadro komiteta i razrabotchikov, rabotayuschih s CVS, no `eti gruppy
+   sluzhat bol'she dlya administrativnyh celej, chem dlya upravleniya.
+   Proekt napryamuyu funkcioniruet s pomosch'yu soobschestva
+   razrabotchikov i pol'zovatelej, k kotoromu mozhet prisoedinitsya
+   kazhdyj. Vsio chto nuzhno -- `eto podpisat'sya na spiski rassylki i
+   uchastvovat' v diskussiyah. (Podrobnosti o tom kak vklyuchit'sya v
+   razrabotku PostgreSQL smotrite v FAQ dlya razrabotchikov.)
+     _________________________________________________________________
+   
                  Voprosy pol'zovatelej po klientskoj chasti
                                       
-    2.1) Kakie interfejsy est' dlya PostgreSQL?
-    
+  2.1) Kakie interfejsy est' dlya PostgreSQL?
+  
    Ustanovka PostgreSQL vklyuchaet tol'ko C i vstroennyj (embedded) C
    interfejsy. Vse drugie interfejsy yavlyayutsya nezavisimymi proektami
    i zagruzhayutsya otdel'no; samostoyatel'nost' proektov pozvolyaet im
@@ -354,46 +338,40 @@
    Python i mnogih drugih, dostupny na http://gborg.postgresql.org v
    sekcii Drivers/Interfaces, a takzhe cherez poisk v Internet.
    
-    2.2) Kakie instrumenty suschestvuyut dlya ispol'zovaniya PostgreSQL cherez
-    Web?
-    
+  2.2) Kakie instrumenty suschestvuyut dlya ispol'zovaniya PostgreSQL cherez
+  Web?
+  
    Prekrasnoe vvedenie vo vzaimodejstvie baz dannyh i Web mozhno najti
    na: http://www.webreview.com
    
    Dlya integracii s Web, PHP http://www.php.net yavlyaetsya neplohim
    interfejsom.
    
-   V slozhnyh sluchayah, mnogie pol'zuyutsya Perl i CGI.pm ili mod_perl.
+   V slozhnyh sluchayah, mnogie pol'zuyutsya Perl i DBD::Pg s CGI.pm ili
+   mod_perl.
    
-    2.3) Est' li u PostgreSQL graficheskij interfejs pol'zovatelya?
-    
-   Da, suschestvuet neskol'ko graficheskih interfejsov dlya PostgreSQL.
-   Oni vklyuchayut PgAdmin III (http://www.pgadmin.org), PgAccess
-   (http://www.pgaccess.org), RHDB Admin
-   (http://sources.redhat.com/rhdb/), TORA (http://www.globecom.net/tora/
-   chastichno kommercheskoe PO) i Rekall (
-   http://www.rekallrevealed.org/). Takzhe est' PhpPgAdmin (
-   http://phppgadmin.sourceforge.net/) - interfejs k PostgreSQL,
-   osnovannyj na Web.
+  2.3) Est' li u PostgreSQL graficheskij interfejs pol'zovatelya?
+  
+   Da, podrobnosti smotrite v
+   http://techdocs.postgresql.org/guides/GUITools.
      _________________________________________________________________
    
                          Voprosy administrirovaniya
                                       
-    3.1) Kak mne ustanovit' PostgreSQL v mesto otlichnoe ot /usr/local/pgsql?
-    
+  3.1) Kak mne ustanovit' PostgreSQL v mesto otlichnoe ot /usr/local/pgsql?
+  
    Zadajte opciyu --prefix kogda zapuskaete configure.
    
-    3.2) Kak mne upravlyat' soedineniyami s drugih komp'yuterov?
-    
+  3.2) Kak mne upravlyat' soedineniyami s drugih komp'yuterov?
+  
    Po umolchaniyu, PostgreSQL razreshaet tol'ko soedineniya na lokal'noj
    mashine cherez sokety domena Unix ili TCP/IP soedineniya. Dlya togo,
    chtoby drugie mashiny smogli podklyuchit'sya k baze vy dolzhny
    izmenit' listen_addresses v postgresql.conf, razreshit'
    host-avtorizaciya v fajle $PGDATA/pg_hba.conf i perestartovat' server.
    
-    3.3) Kakie nastrojki mne nuzhno sdelat' dlya uluchsheniya
-    proizvoditel'nosti?
-    
+  3.3) Kakie nastrojki mne nuzhno sdelat' dlya uluchsheniya proizvoditel'nosti?
+  
    Suschestvuet tri glavnyh oblasti, kotorye potencial'no mogut
    uvelichit' proizvoditel'nost':
    
@@ -430,64 +408,27 @@
           http://candle.pha.pa.us/main/writings/pgsql/hw_performance/inde
           x.html i http://www.powerpostgresql.com/PerfList/.
           
-    3.4) Kakie vozmozhnosti dlya otladki est' v nalichii?
-    
+  3.4) Kakie vozmozhnosti dlya otladki est' v nalichii?
+  
    Est' mnozhestvo ustanovok v nastrojkah servera, nachinayuschihsya na
    log_*, pozvolyayuschih protokolirovat' zaprosy i statistiku raboty
    processa, kotoraya ochen' polezna dlya otladki i izmereniya
    proizvoditel'nosti.
    
-   Dlya predostavleniya bolee detal'noj informacii razrabotchikam servera
-   pri otladke kakoj-libo problemy dolzhny pol'zovat'sya sleduyuschie
-   instrukcii.
-   
-   Takim zhe obrazom mozhno proizvodit' i otladku severa, esli on
-   rabotaet nepravil'no. Vo-pervyh, pri zapuske configure s opciej
-   --enable-cassert, mnogie vyzovy assert() pozvolyayut otslezhivat'
-   rabotu backend processa i ostanovku programmy pri vozniknovenii
-   kakih-libo neozhidannostej.
-   
-   Esli postmaster ne zapuschen, vy mozhete zapustit' postgres backend iz
-   komandnoj stroki i vvesti vash operator SQL napryamuyu. `Eto
-   rekomenduetsya tol'ko dlya celej otladki. Zametim, chto v `etom
-   rezhime, zapros zavershaetsya simvolom novoj stroki, a ne tochkoj s
-   zapyatoj. Esli vy proizvodili kompilyaciyu s otladochnymi simvolami,
-   vy mozhete ispol'zovat' lyuboj otladchik, chtoby posmotret', chto
-   sluchilos'. Poskol'ku backend zapuskaetsya ne iz postmaster, on ne
-   zapuskaetsya v identichnom okruzhenii i znachit problemy iteracij
-   blokirovok/backend ne mogut byt' vosproizvedeny.
-   
-   Esli postmaster zapuschen, zapustite psql v odnom okne, zatem najdite
-   PID processa postgres, ispol'zuemyj psql, ispol'zuya SELECT
-   pg_backend_pid(). Ispol'zujte otladchik dlya podklyucheniya k postgres
-   PID. Vy mozhete ustanovit' tochki preryvaniya v otladchike i zapustit'
-   zapros iz psql. Esli vy proizvodite otladku zapuska postgres, vy
-   mozhete ustanovit' PGOPTIONS="-W n", i zatem zapustit' psql. `Eta
-   opciya privodit k zaderzhke processa zapuska na n sekund, v techenie
-   kotoryh vy mozhete podklyuchit' k processu otladchik, ustanovit'
-   lyubye tochki preryvaniya i prodolzhit' zapusk.
-   
-   Vy takzhe mozhete skompilirovat' PostgreSQL s profilirovaniem dlya
-   togo, chtoby uvidet' kakie funkcii skol'ko vremeni vypolnyayutsya.
-   Fajly profilirovaniya backend'a nahodyatsya v kataloge
-   pgsql/data/base/dbname. Fajl profilirovaniya klienta budet pomeschen v
-   tekuschij katalog klienta. V Linux dlya vypolneniya profilirovaniya
-   trebuetsya kompilyacii s -DLINUX_PROFILE.
-   
-    3.5) Pochemu ya poluchayu soobschenie "Sorry, too many clients" kogda
-    pytayus' podklyuchit'sya k baze?
-    
+  3.5) Pochemu ya poluchayu soobschenie "Sorry, too many clients" kogda
+  pytayus' podklyuchit'sya k baze?
+  
    Vy dostigli ustanovlennogo po umolchaniyu ogranicheniya na 100 sessij
    podklyucheniya k baze dannyh. Vam neobhodimo uvelichit' dlya
    postmaster limit na kolichestvo konkurentnyh backend processov,
    izmeniv znachenie max_connections v fajle postgresql.conf i
    perestartovat' postmaster.
    
-    3.6) Pochemu neobhodimo delat' dump i restore pri obnovlenii vypuskov
-    PostgreSQL?
-    
+  3.6) Pochemu neobhodimo delat' dump i restore pri obnovlenii vypuskov
+  PostgreSQL?
+  
    Razrabotchiki PostgreSQL delayut tol'ko nebol'shie izmeneniya mezhdu
-   podvypuskami. Takim obrazom obnovlenie s versii 7.4 do 7.4.1 ne
+   podvypuskami. Takim obrazom obnovlenie s versii 7.4.0 do 7.4.1 ne
    trebuet vypolneniya dump i restore. Odnako pri vyhode ocherednogo
    vypuska (t.e. pri obnovlenii naprimer, s 7.3 na 7.4) chasto menyaetsya
    vnutrennij format sistemnyh tablic i fajlov dannyh. `Eti izmeneniya
@@ -501,8 +442,8 @@
    bez ispol'zovaniya dump/restore. Kommentarii k vypusku govorit kogda
    mozhno ispol'zovat' pg_upgrade dlya `etogo vypuska.
    
-    3.7) Kakoe komp'yuternoe "zhelezo" ya dolzhen ispol'zovat'?
-    
+  3.7) Kakoe komp'yuternoe "zhelezo" ya dolzhen ispol'zovat'?
+  
    Poskol'ku "zhelezo" personal'nyh komp'yuterov yavlyaetsya naibolee
    sovmestimym, lyudi sklonny verit', chto takoe "zhelezo" imeet
    odinakovoe kachestvo. `Eto ne tak. Pamyat' ECC, SCSI i kachestvennye
@@ -516,15 +457,15 @@
    
                            Voprosy `ekspluatacii
                                       
-    4.1) Kak vypolnit' SELECT tol'ko dlya neskol'kih pervyh strochek zaprosa?
-    Proizvol'noj stroki?
-    
+  4.1) Kak vypolnit' SELECT tol'ko dlya neskol'kih pervyh strochek zaprosa?
+  Proizvol'noj stroki?
+  
    Dlya polucheniya tol'ko neskol'kih strok, esli vy znaete ih
-   kolichestvo na moment vypolneniya SELECT ispol'zujte LIMIT. Esli est'
-   kakoj-libo indeks, kotoryj sovpadaet s ORDER BY, to vozmozhno, chto
-   ves' zapros vypolnen i ne budet. Esli vy ne znaete kolichestva
-   neobhodimyh strok na moment vypolneniya SELECT, ispol'zujte kursor i
-   FETCH.
+   kolichestvo na moment vypolneniya SELECT ispol'zujte LIMIT.
+   Esli est' kakoj-libo indeks, kotoryj sovpadaet s ORDER BY, to
+   vozmozhno, chto ves' zapros vypolnen i ne budet. Esli vy ne znaete
+   kolichestva neobhodimyh strok na moment vypolneniya SELECT,
+   ispol'zujte kursor i FETCH.
    
    To SELECT a random row, use:
     SELECT col
@@ -532,10 +473,10 @@
     ORDER BY random()
     LIMIT 1;
 
-    4.2) Kak mne najti kakie tablicy, indeksy, bazy dannyh i pol'zovateli
-    suschestvuyut? Kak mne uvidet' zaprosy, kotorye ispol'zuet psql dlya
-    polucheniya `etoj informacii?
-    
+  4.2) Kak mne najti kakie tablicy, indeksy, bazy dannyh i pol'zovateli
+  suschestvuyut? Kak mne uvidet' zaprosy, kotorye ispol'zuet psql dlya
+  polucheniya `etoj informacii?
+  
    CHtoby prosmatrivat' tablicy v psql, ispol'zujte komandu \dt. Polnyj
    spisok komand v psql vy mozhete poluchit', ispol'zuya \?. Krome togo,
    vy mozhete posmotret' ishodnyj kod psql v fajle
@@ -555,8 +496,8 @@
    mnogie iz operatorov SELECT neobhodimyh dlya polucheniya informacii iz
    sistemnyh tablic bazy dannyh.
    
-    4.3) Kak izmenit' tip dannyh kolonki?
-    
+  4.3) Kak izmenit' tip dannyh kolonki?
+  
    V 8.0 i bolee pozdnih versiyah, izmenenie tipa kolonki vypolnyaetsya
    ochen' legko cherez ALTER TABLE ALTER COLUMN TYPE.
    
@@ -567,9 +508,8 @@
     ALTER TABLE tab DROP COLUMN old_col;
     COMMIT;
 
-    4.4) Kakovy maksimal'nye razmery dlya strok v tablice, tablic i bazy
-    dannyh?
-    
+  4.4) Kakovy maksimal'nye razmery dlya strok v tablice, tablic i bazy dannyh?
+  
    Suschestvuyut sleduyuschie ogranicheniya:
    
    Maksimal'nyj razmer bazy? neogranichen (suschestvuyut bazy na 32 TB)
@@ -595,9 +535,9 @@
    byt' uvelicheny v chetyre raza, esli razmer bloka po umolchaniyu budet
    uvelichen do 32k.
    
-    4.5) Kak mnogo diskovogo prostranstva v baze dannyh nuzhno dlya sohraneniya
-    dannyh iz obychnogo tekstovogo fajla?
-    
+  4.5) Kak mnogo diskovogo prostranstva v baze dannyh nuzhno dlya sohraneniya
+  dannyh iz obychnogo tekstovogo fajla?
+  
    SUBD PostgreSQL mozhet potrebovat'sya diskovogo prostranstva do 5 raz
    bol'she dlya sohraneniya dannyh iz prostogo tekstovogo fajla.
    
@@ -630,15 +570,15 @@
    Znacheniya NULL hranyatsya kak bitovye karty i po`etomu oni zanimayut
    ochen' malo mesta.
    
-    4.6) Pochemu moi zaprosy rabotayut medleno? Pochemu oni ne ispol'zuyut moi
-    indeksy?
-    
-   Indeksy ne ispol'zuyutsya dlya kazhdogo zaprosa avtomaticheski. Oni
-   ispol'zuyutsya tol'ko esli tablica bol'she minimal'nogo razmera i
-   zapros vybiraet tol'ko malen'kij procent strok v tablice. Tak
-   ustroeno, potomu chto dostup k disku s primeneniem randomizacii pri
-   skanirovanii indeksov mozhet byt' medlennee, chem prostoe chtenie
-   tablicy ili ee posledovatel'noe skanirovanie.
+  4.6) Pochemu moi zaprosy rabotayut medleno? Pochemu oni ne ispol'zuyut moi
+  indeksy?
+  
+   Indeksy ne ispol'zuyutsya dlya kazhdogo zaprosa. Oni ispol'zuyutsya
+   tol'ko esli tablica bol'she minimal'nogo razmera i zapros vybiraet
+   tol'ko malen'kij procent strok v tablice. Tak ustroeno, potomu chto
+   dostup k disku s primeneniem randomizacii pri skanirovanii indeksov
+   mozhet byt' medlennee, chem prostoe chtenie tablicy ili ee
+   posledovatel'noe skanirovanie.
    
    CHtoby opredelit' neobhodimost' ispol'zovaniya indeksa dlya kakoj-libo
    tablicy, PostgreSQL dolzhen imet' statistiku po `etoj tablice. `Eta
@@ -665,8 +605,8 @@
 
    Esli vam kazhetsya, chto optimizator nekorrektno vybiraet
    posledovatel'nyj perebor, ispol'zujte SET enable_seqscan TO 'off' i
-   zapustite testy, chtoby uvidet', ne stalo-li skanirovanie indeksov
-   bystree.
+   zapustite zapros snova, chtoby uvidet', dejstvitel'no li skanirovanie
+   indeksov bystree.
    
    Kogda ispol'zuyutsya operacii s shablonami, naprimer LIKE ili ~,
    indeksy mogut byt' ispol'zovany v sleduyuschih sluchayah:
@@ -689,14 +629,14 @@
    esli tipy dannyh tochno ne sovpadali s indeksnymi tipami kolonok. `Eto
    osobenno kasalos' int2, int8 i numeric indeksov kolonok.
    
-    4.7) Kak posmotret' na to, kak optimizator vypolnyaet moj zapros?
-    
+  4.7) Kak posmotret' na to, kak optimizator vypolnyaet moj zapros?
+  
    Smotrite stranicu rukovodstva posvyaschennuyu EXPLAIN.
    
-    4.8) Kak mne vypolnit' poisk regulyarnogo vyrazheniya i poisk nezavisimyj
-    ot registra bukv poisk regulyarnogo vyrazheniya? Kak mne ispol'zovat'
-    indeks dlya poiska nezavisimogo ot registra bukv?
-    
+  4.8) Kak mne vypolnit' poisk regulyarnogo vyrazheniya i poisk nezavisimyj ot
+  registra bukv poisk regulyarnogo vyrazheniya? Kak mne ispol'zovat' indeks
+  dlya poiska nezavisimogo ot registra bukv?
+  
    Operator ~ proizvodit poisk regulyarnogo vyrazheniya, a operator ~*
    proizvodit nezavisimyj ot registra bukv poisk regulyarnogo
    vyrazheniya. Nezavisimyj ot registra variant LIKE nazyvaetsya ILIKE.
@@ -710,13 +650,24 @@
    esli vy sozdadite indeks vyrazheniya, on budet ispol'zovan:
     CREATE INDEX tabindex ON tab (lower(col));
 
-    4.9) Kak ya mogu opredelit', chto znachenie polya ravno NULL v kakom-libo
-    zaprose?
-    
-   Vy prosto sravnivaete znachenie s IS NULL i IS NOT NULL.
-   
-    4.10) Kakovy otlichiya mezhdu raznymi simvol'nymi tipami?
-    
+  4.9) Kak mne opredelit', chto znachenie polya ravno NULL v kakom-libo
+  zaprose? Mogu ya otsortirovat' polya NULL ili net?
+  
+   Vy prosto sravnivaete znachenie s IS NULL i IS NOT NULL, kak zdes':
+   SELECT *
+   FROM tab
+   WHERE col IS NULL;
+
+   CHtoby otsortirovat' dannye po znacheniyu ispol'zujte modifikatory IS
+   NULL i IS NOT NULL v vyrazhenii ORDER BY. Kogda oni budut generirovat'
+   znacheniya istina, to pri sortirovke oni budut vyshe, chem znacheniya
+   lozh', tak chto zapisi s NULL budut v otsortirovannom spiske sverhu:
+   SELECT *
+   FROM tab
+   ORDER BY (col IS NOT NULL);
+
+  4.10) Kakovy otlichiya mezhdu raznymi simvol'nymi tipami?
+  
    Tip Vnutrennee imya Zamechaniya
    VARCHAR(n) varchar razmer zadaet maksimal'nuyu dlinu, net zapolneniya
    CHAR(n) bpchar zapolnyaetsya pustotoj do fiksirovannoj dliny
@@ -731,10 +682,9 @@
    Pervye chetyre tipa yavlyayutsya "varlena" tipami (t.e., pervye
    chetyre bajta na diske yavlyayutsya dlinnoj, za kotoroj sleduyut
    dannye). Takim obrazom, fakticheski ispol'zuemoe prostranstvo bol'she,
-   chem oboznachennyj razmer. Odnako, `eti tipy dannyh takzhe poddayutsya
-   szhatiyu ili mogut byt' sohraneny ne v strokom vide cherez TOAST, tak
-   chto zanimaemoe diskovoe prostranstvo mozhet takzhe byt' i men'she,
-   chem ozhidalos'.
+   chem oboznachennyj razmer. Odnako, dlinnye znacheniya takzhe
+   szhimayutsya, tak chto zanimaemoe diskovoe prostranstvo mozhet takzhe
+   byt' i men'she, chem ozhidalos'.
    VARCHAR(n) - `eto luchshee reshenie, kogda nuzhno hranit' stroki
    peremennoj dliny, ne prevyshayuschie opredelennogo razmera. TEXT -
    `eto luchshee reshenie dlya strok neogranichennoj dliny, s maksimal'no
@@ -747,8 +697,8 @@
    znacheniya kotoryh mogut vklyuchat' NULL bajty. Vse tipy opisannye
    zdes', imeyut shodnye harakteristiki proizvoditel'nosti.
    
-    4.11.1) Kak mne sozdat' pole serial/s-avto-uvelicheniem?
-    
+  4.11.1) Kak mne sozdat' pole serial/s-avto-uvelicheniem?
+  
    PostgreSQL podderzhivaet tip dannyh SERIAL. On avtomaticheski sozdaet
    posledovatel'nost'. Naprimer:
     CREATE TABLE person (
@@ -766,8 +716,8 @@
    Smotrite podrobnosti o posledovatel'nostyah na stranice rukovodstva
    posvyaschennoj create_sequence.
    
-    4.11.2) Kak mne poluchit' znachenie pri vstavke SERIAL?
-    
+  4.11.2) Kak mne poluchit' znachenie pri vstavke SERIAL?
+  
    Odin iz sposobov sostoit v poluchenii sleduyuschego znacheniya SERIAL
    iz ob"ekta sequence s pomosch'yu funkcii nextval() pered vstavkoj i
    zatem vstavlyat' `eto znachenie yavno. Ispol'zujte tablicu-primer v
@@ -788,23 +738,23 @@
     execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
     new_id = execute("SELECT currval('person_id_seq')");
 
-    4.11.3) Ne mozhet li poluchit'sya tak, chto ispol'zovanie currval() i
-    nextval() privedet k zaciklirovaniyu s drugimi pol'zovatelyami?
-    
+  4.11.3) Ne mozhet li poluchit'sya tak, chto ispol'zovanie currval() i
+  nextval() privedet k zaciklirovaniyu s drugimi pol'zovatelyami?
+  
    Net. currval() vozvraschaet tekuschee znachenie, naznachennoe vashej
    sessiej, a ne drugimi sessiyami.
    
-    4.11.4) Pochemu chisla iz moej posledovatel'nosti ne ispol'zuyutsya snova
-    pri otmene tranzakcii? Pochemu sozdayutsya razryvy pri numeracii v kolonke,
-    gde ya ispol'zuyu posledovatel'nost'/SERIAL?
-    
+  4.11.4) Pochemu chisla iz moej posledovatel'nosti ne ispol'zuyutsya snova pri
+  otmene tranzakcii? Pochemu sozdayutsya razryvy pri numeracii v kolonke, gde
+  ya ispol'zuyu posledovatel'nost'/SERIAL?
+  
    Dlya realizacii konkuretnosti, znacheniya posledovatel'nostej, pri
    neobhodimosti vydayutsya vo vremya zapuska tranzakcij i ne
    blokiruyutsya do polnogo vypolneniya tranzakcij. `Eto mozhet vyzyvat'
    razryvy v numeracii pri otmene tranzakcij.
    
-    4.12) CHto takoe OID? CHto takoe TID?
-    
+  4.12) CHto takoe OID? CHto takoe CTID?
+  
    Kazhdaya, sozdavaemaya v PostgreSQL tablichnaya stroka, poluchaet
    unikal'nyj indentifikator OID za isklyucheniem sluchaya kogda
    ispol'zovalos' WITHOUT OIDS. OID - `eto avtomaticheski naznachaemoe
@@ -819,14 +769,16 @@
    obrazom men'she podverzheny perepolneniyu. Dlya hraneniya znachenij
    8-mi bajtnoj posledovatel'nosti dostupen tip SERIAL8.
    
-   TID ispol'zuetsya dlya identifikacii special'nyh fizicheskih zapisej s
-   blochnymi i offset znacheniyami. TID izmenyaetsya posle togo kak
-   stroki v tablice byli izmeneny ili peregruzheny. TID ispol'zuetsya
-   indeksnymi zapisyami v kachestve ukazatelya na fizicheskie zapisi.
+   CTID ispol'zuetsya dlya identifikacii special'nyh fizicheskih zapisej
+   s blochnymi i offset znacheniyami. CTID izmenyaetsya posle togo kak
+   stroki v tablice byli izmeneny ili peregruzheny.
    
-    4.13) Pochemu ya poluchayu oshibku "ERROR: Memory exhausted in
-    AllocSetAlloc()"?
-    
+   TID ispol'zuetsya indeksnymi zapisyami v kachestve ukazatelya na
+   fizicheskie zapisi.
+   
+  4.13) Pochemu ya poluchayu oshibku "ERROR: Memory exhausted in
+  AllocSetAlloc()"?
+  
    Predpolozhitel'no u vas zakonchilas' virtual'naya pamyat' ili chto
    vashe yadro imeet malen'kij limit na opredelennye resursy. Popytajtes'
    pered zapuskom postmaster vypolnit' sleduyuschie komandy:
@@ -841,36 +793,18 @@
    klientom, potomu chto backend vozvraschaet slishkom bol'shoj ob"em
    dannyh, popytajtes' vypolnit' `etu komandu pered zapuskom klienta.
    
-    4.14) Kak mne uznat', kakaya versiya PostgreSQL zapuschena?
-    
+  4.14) Kak mne uznat', kakaya versiya PostgreSQL zapuschena?
+  
    Iz psql, naberite SELECT version();
    
-    4.15) Pochemu pri rabote s moim bol'shim ob"ektom ya poluchayu oshibku
-    "invalid large obj descriptor"?
-    
-   Vam nuzhno pri ispol'zovanii bol'shogo ob"ekta pomestit' v nachale
-   BEGIN WORK i v konce COMMIT, a vnutri poluchivshegosya bloka lo_open
-   ... lo_close.
-   
-   V nastoyaschij moment PostgreSQL trebuet, chtoby pri zakrytii
-   bol'shogo ob"ekta proishodilo vypolnenie tranzakcii. Takim obrazom,
-   pervaya zhe popytka sdelat' chto-libo s bol'shim ob"ektom, ne
-   soblyudaya dannogo pravila privedet k soobscheniyu invalid large obj
-   descriptor, tak kak kod vypolnyayuschij rabotu nad bol'shim ob"ektom
-   (po krajnej mere v nastoyaschij moment) budet generirovat' soobschenie
-   ob oshibke esli vy ne ispol'zuete tranzakciyu.
-   
-   Esli vy ispol'zuete takoj interfejs klienta kak ODBC, vam vozmozhno
-   ponadobitsya ustanovit' auto-commit off.
-   
-    4.16) Kak mne sozdat' kolonku kotoraya po umolchaniyu budet soderzhat'
-    tekuschee vremya?
-    
+  4.15) Kak mne sozdat' kolonku kotoraya po umolchaniyu budet soderzhat'
+  tekuschee vremya?
+  
    Ispol'zujte CURRENT_TIMESTAMP:
 CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
 
-    4.17) Kak mne vypolnit' vneshnee svyazyvanie?
-    
+  4.16) Kak mne vypolnit' vneshnee svyazyvanie?
+  
    PostgreSQL podderzhivaet vneshnee svyazyvanie, ispol'zuya standartnyj
    sintaksis SQL. Vot dva primera:
     SELECT *
@@ -888,8 +822,8 @@ CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
    neobyazatel'nym i naznachaetsya v LEFT, RIGHT i FULL svyazyvaniyah.
    Obychnye svyazyvaniya nazyvayutsya INNER svyazyvaniya.
    
-    4.18) Kak vypolnyat' zaprosy, ispol'zuyuschie neskol'ko baz dannyh?
-    
+  4.17) Kak vypolnyat' zaprosy, ispol'zuyuschie neskol'ko baz dannyh?
+  
    Ne suschestvuet sposoba sozdat' zapros k bazam dannyh otlichnym ot
    tekuschej. Poskol'ku PostgreSQL zagruzhaet sistemnye katalogi
    specifichnye dlya bazy dannyh, neponyatno dazhe, kak dolzhen sebya
@@ -900,14 +834,14 @@ CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
    soedieneniya s razlichnymi bazami dannyh i takih obrazom ob"edinyat'
    informaciyu iz nih.
    
-    4.19) Kak mne vernut' iz funkcii neskol'ko strok tablicy?
-    
+  4.18) Kak mne vernut' iz funkcii neskol'ko strok tablicy?
+  
    Vy mozhete legko ispol'zovat' funkcii, vozvraschayuschie spisok,
    http://techdocs.postgresql.org/guides/SetReturningFunctions.
    
-    4.20) Pochemu ya poluchayu oshibku "missing oid", kogda obraschayuts' k
-    vremennym tablicam v funkciyah PL/PgSQL?
-    
+  4.19) Pochemu ya poluchayu oshibku "relation with OID #### ne suschestvuet",
+  kogda obraschayuts' k vremennym tablicam v funkciyah PL/PgSQL?
+  
    PL/PgSQL k`eshiruet scenarii funkcii i odin iz negativnyh `effektov
    `etogo sostoit v tom, chto esli funkciya PL/PgSQL obraschaetsya k
    vremennoj tablice i `eta tablica pozdnee udalyaetsya i peresozdaetsya,
@@ -917,50 +851,21 @@ CREATE TABLE test (x int, modtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
    EXECUTE dlya dostupa k vremennym tablicam v PL/PgSQL. Ispol'zovanie
    `etogo operatora zastavit zapros peregenerirovat'sya kazhdyj raz.
    
-    4.21) Kakie opcii shifrovaniya suschestvuyut?
-    
-     * contrib/pgcrypto soderzhit mnogo funkcij shifrovaniya dlya
-       ispol'zovaniya v SQL zaprosah.
-     * Dlya shifrovaniya peredavaemyh dannyh ot klienta k serveru, na
-       servere v fajle postgresql.conf, opciya ssl dolzhna byt'
-       ustanovlena v true, v fajle pg_hba.conf dolzhna byt'
-       sootvetstvuyuschaya zapis' host ili hostssl i na storone klienta
-       sslmode ne dolzhen byt' zapreschion cherez disable. (Zametim, chto
-       takzhe vozmozhno ispol'zovanie nezavisimyh vneshnih shifruyuschih
-       transportov, takih kak stunnel ili ssh, vmesto sobstvennyh SSL
-       soedinenij PostgreSQL).
-     * Paroli pol'zovatelej k baze dannyh avtomaticheski shifruyutsya,
-       pri sohranenii v sistemnyh tablicah.
-     * Server mozhno zapustit', ispol'zuya shifrovannuyu fajlovuyu
-       sistemu.
-     _________________________________________________________________
+  4.20) Kakie est' resheniya dlya replikacii?
+  
+   Hotya "replikaciya" -- `eto edinyj termin, est' neskol'ko raznyh
+   tehnologij dlya vypolneniya replikacij s raznymi osobennostyami dlya
+   kazhdoj.
    
-                          Rasshireniya PostgreSQL
-                                      
-    5.1) YA napisal funkciyu opredelyaemuyu pol'zovatelem. Kogda ya zapuskayu
-    ee v psql, pochemu ya poluchayu core dump?
-    
-   Problema mozhet zaklyuchat'sya v neskol'kih veschah. Popytajtes'
-   sperva protestirovat' vashu funkciyu v otdel'noj samostoyatel'noj
-   programme.
+   Replikaciya Master/slave pozvolyaet imet' odin glavnyj (master) server
+   dlya vypolneniya zaprosov chteniya/zapisi, v to vremya kak
+   podchinionnye (slave) servera mogut proizvodit' tol'ko zaprosy
+   chteniya/SELECT. Naibolee populyarnym resheniem dlya replikacii
+   master-slave v PostgreSQL yavlyaetsya Slony-I.
    
-    5.2) Kak ya mogu vnesti nekotorye klassnye novye tipy i funkcii v
-    PostgreSQL?
-    
-   Otprav'te vashi rasshireniya v spisok rassylki pgsql-hackers i oni po
-   vozmozhnosti budut pomescheny v podkatalog contrib/.
-   
-    5.3) Kak mne napisat' C funkciyu, vozvraschayuschuyu stroku tablicy?
-    
-   V versiyah PostgreSQL, nachinaya s 7.3, funkcii, vozvraschayuschie
-   tablicy polnost'yu podderzhivayutsya v C, PL/PgSQL i SQL. Podrobnosti
-   smotrite v Rukovodstve Programmista. Primer vozvraschayuschej tablicu
-   funkcii, napisannoj na C, mozhno najti v contrib/tablefunc.
-   
-    5.4) YA izmenil ishodnyj fajl. Pochemu posle perekompilyacii ya ne vizhu
-    izmenenij?
-    
-   Fajly Makefile ne imeyut pravil'nyh zavisimostej dlya include fajlov.
-   Vy dolzhny vypolnit' make clean i zatem make. Esli vy ispol'zuete GCC
-   vy mozhete ispol'zovat' opciyu --enable-depend v configure chtoby
-   poruchit' kompilyatoru avtomaticheski otslezhivat' zavisimosti.
+   Replikaciya Multi-master pozvolyaet vypolnyat' zaprosy chteniya/zapisi
+   na neskol'kih, repliciruemyh drug s drugom komp'yuetrah. `Eta
+   osobennost' takzhe privodit k potere proizvoditel'nosti, potomu chto
+   neobhodima sinhronizaciya izmenenij mezhdu neskol'kimi serverami.
+   Naibolee populyarnym resheniem dlya takoj replikacii v PostgreSQL
+   yavlyaetsya Pgcluster.
