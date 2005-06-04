@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.90 2005/03/10 23:21:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.91 2005/06/04 19:19:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -797,10 +797,9 @@ AddInvertedQual(Query *parsetree, Node *qual)
  * If not, we either change the unmatched Var's varno to update_varno
  * (when event == CMD_UPDATE) or replace it with a constant NULL.
  *
- * The caller must also provide target_rtable, the rangetable containing
- * the target relation (which must be described by the target_varno'th
- * RTE in that list).  This is needed to handle whole-row Vars referencing
- * the target.	We expand such Vars into RowExpr constructs.
+ * The caller must also provide target_rte, the RTE describing the target
+ * relation.  This is needed to handle whole-row Vars referencing the target.
+ * We expand such Vars into RowExpr constructs.
  *
  * Note: the business with inserted_sublink is needed to update hasSubLinks
  * in subqueries when the replacement adds a subquery inside a subquery.
@@ -813,7 +812,7 @@ typedef struct
 {
 	int			target_varno;
 	int			sublevels_up;
-	List	   *target_rtable;
+	RangeTblEntry *target_rte;
 	List	   *targetlist;
 	int			event;
 	int			update_varno;
@@ -885,7 +884,8 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 				 * include dummy items for dropped columns.  If the var is
 				 * RECORD (ie, this is a JOIN), then omit dropped columns.
 				 */
-				expandRTE(context->target_rtable, this_varno, this_varlevelsup,
+				expandRTE(context->target_rte,
+						  this_varno, this_varlevelsup,
 						  (var->vartype != RECORDOID),
 						  NULL, &fields);
 				/* Adjust the generated per-field Vars... */
@@ -929,14 +929,14 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 
 Node *
 ResolveNew(Node *node, int target_varno, int sublevels_up,
-		   List *target_rtable,
+		   RangeTblEntry *target_rte,
 		   List *targetlist, int event, int update_varno)
 {
 	ResolveNew_context context;
 
 	context.target_varno = target_varno;
 	context.sublevels_up = sublevels_up;
-	context.target_rtable = target_rtable;
+	context.target_rte = target_rte;
 	context.targetlist = targetlist;
 	context.event = event;
 	context.update_varno = update_varno;

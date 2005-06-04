@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.129 2005/04/28 21:47:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.130 2005/06/04 19:19:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,10 +58,10 @@ static void compare_tlist_datatypes(List *tlist, List *colTypes,
 						bool *differentTypes);
 static bool qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 					  bool *differentTypes);
-static void subquery_push_qual(Query *subquery, List *rtable,
-				   Index rti, Node *qual);
+static void subquery_push_qual(Query *subquery,
+							   RangeTblEntry *rte, Index rti, Node *qual);
 static void recurse_push_qual(Node *setOp, Query *topquery,
-				  List *rtable, Index rti, Node *qual);
+				  RangeTblEntry *rte, Index rti, Node *qual);
 
 
 /*
@@ -365,7 +365,7 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 			if (qual_is_pushdown_safe(subquery, rti, clause, differentTypes))
 			{
 				/* Push it down */
-				subquery_push_qual(subquery, root->rtable, rti, clause);
+				subquery_push_qual(subquery, rte, rti, clause);
 			}
 			else
 			{
@@ -769,13 +769,13 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
  * subquery_push_qual - push down a qual that we have determined is safe
  */
 static void
-subquery_push_qual(Query *subquery, List *rtable, Index rti, Node *qual)
+subquery_push_qual(Query *subquery, RangeTblEntry *rte, Index rti, Node *qual)
 {
 	if (subquery->setOperations != NULL)
 	{
 		/* Recurse to push it separately to each component query */
 		recurse_push_qual(subquery->setOperations, subquery,
-						  rtable, rti, qual);
+						  rte, rti, qual);
 	}
 	else
 	{
@@ -789,7 +789,7 @@ subquery_push_qual(Query *subquery, List *rtable, Index rti, Node *qual)
 		 * This step also ensures that when we are pushing into a setop tree,
 		 * each component query gets its own copy of the qual.
 		 */
-		qual = ResolveNew(qual, rti, 0, rtable,
+		qual = ResolveNew(qual, rti, 0, rte,
 						  subquery->targetList,
 						  CMD_SELECT, 0);
 
@@ -817,7 +817,7 @@ subquery_push_qual(Query *subquery, List *rtable, Index rti, Node *qual)
  */
 static void
 recurse_push_qual(Node *setOp, Query *topquery,
-				  List *rtable, Index rti, Node *qual)
+				  RangeTblEntry *rte, Index rti, Node *qual)
 {
 	if (IsA(setOp, RangeTblRef))
 	{
@@ -826,14 +826,14 @@ recurse_push_qual(Node *setOp, Query *topquery,
 		Query	   *subquery = subrte->subquery;
 
 		Assert(subquery != NULL);
-		subquery_push_qual(subquery, rtable, rti, qual);
+		subquery_push_qual(subquery, rte, rti, qual);
 	}
 	else if (IsA(setOp, SetOperationStmt))
 	{
 		SetOperationStmt *op = (SetOperationStmt *) setOp;
 
-		recurse_push_qual(op->larg, topquery, rtable, rti, qual);
-		recurse_push_qual(op->rarg, topquery, rtable, rti, qual);
+		recurse_push_qual(op->larg, topquery, rte, rti, qual);
+		recurse_push_qual(op->rarg, topquery, rte, rti, qual);
 	}
 	else
 	{

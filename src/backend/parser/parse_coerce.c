@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.130 2005/05/30 01:20:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.131 2005/06/04 19:19:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -695,10 +695,11 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 	{
 		int			rtindex = ((Var *) node)->varno;
 		int			sublevels_up = ((Var *) node)->varlevelsup;
-		List	   *rtable;
+		RangeTblEntry *rte;
 
-		rtable = GetLevelNRangeTable(pstate, sublevels_up);
-		expandRTE(rtable, rtindex, sublevels_up, false, NULL, &args);
+		rte = GetRTEByRangeTablePosn(pstate, rtindex, sublevels_up);
+		expandRTE(rte, rtindex, sublevels_up, false,
+				  NULL, &args);
 	}
 	else
 		ereport(ERROR,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.134 2005/05/31 01:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.135 2005/06/04 19:19:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -697,7 +697,6 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref)
 		RangeTblEntry *rte;
 		int			sublevels_up;
 		int			rtindex;
-		List	   *rtable;
 
 		switch (numnames)
 		{
@@ -742,9 +741,8 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref)
 													  relname));
 
 		rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
-		rtable = GetLevelNRangeTable(pstate, sublevels_up);
 
-		return expandRelAttrs(pstate, rtable, rtindex, sublevels_up);
+		return expandRelAttrs(pstate, rte, rtindex, sublevels_up);
 	}
 }
 
@@ -789,8 +787,7 @@ ExpandAllTables(ParseState *pstate)
 
 		found_table = true;
 		target = list_concat(target,
-							 expandRelAttrs(pstate, pstate->p_rtable,
-											rtindex, 0));
+							 expandRelAttrs(pstate, rte, rtindex, 0));
 	}
 
 	/* Check for SELECT *; */
@@ -929,8 +926,8 @@ expandRecordVariable(ParseState *pstate, Var *var, int levelsup)
 				   *lvar;
 		int			i;
 
-		expandRTE(GetLevelNRangeTable(pstate, netlevelsup),
-				  var->varno, 0, false, &names, &vars);
+		expandRTE(rte, var->varno, 0, false,
+				  &names, &vars);
 
 		tupleDesc = CreateTemplateTupleDesc(list_length(vars), false);
 		i = 1;

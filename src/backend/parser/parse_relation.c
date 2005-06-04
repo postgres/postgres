@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.109 2005/06/03 23:05:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.110 2005/06/04 19:19:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -443,27 +443,6 @@ GetRTEByRangeTablePosn(ParseState *pstate,
 	}
 	Assert(varno > 0 && varno <= list_length(pstate->p_rtable));
 	return rt_fetch(varno, pstate->p_rtable);
-}
-
-/*
- * GetLevelNRangeTable
- *	  Get the rangetable list for the N'th query level up from current.
- */
-List *
-GetLevelNRangeTable(ParseState *pstate, int sublevels_up)
-{
-	int			index = 0;
-
-	while (pstate != NULL)
-	{
-		if (index == sublevels_up)
-			return pstate->p_rtable;
-		index++;
-		pstate = pstate->parentParseState;
-	}
-
-	elog(ERROR, "rangetable not found (internal error)");
-	return NIL;					/* keep compiler quiet */
 }
 
 /*
@@ -1202,19 +1181,19 @@ addImplicitRTE(ParseState *pstate, RangeVar *relation)
  * results.  If include_dropped is TRUE then empty strings and NULL constants
  * (not Vars!) are returned for dropped columns.
  *
- * The target RTE is the rtindex'th entry of rtable.
- * sublevels_up is the varlevelsup value to use in the created Vars.
+ * rtindex and sublevels_up are the varno and varlevelsup values to use
+ * in the created Vars.  Ordinarily rtindex should match the actual position
+ * of the RTE in its rangetable.
  *
  * The output lists go into *colnames and *colvars.
  * If only one of the two kinds of output list is needed, pass NULL for the
  * output pointer for the unwanted one.
  */
 void
-expandRTE(List *rtable, int rtindex, int sublevels_up,
+expandRTE(RangeTblEntry *rte, int rtindex, int sublevels_up,
 		  bool include_dropped,
 		  List **colnames, List **colvars)
 {
-	RangeTblEntry *rte = rt_fetch(rtindex, rtable);
 	int			varattno;
 
 	if (colnames)
@@ -1490,9 +1469,14 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref,
  * expandRelAttrs -
  *	  Workhorse for "*" expansion: produce a list of targetentries
  *	  for the attributes of the rte
+ *
+ * As with expandRTE, rtindex/sublevels_up determine the varno/varlevelsup
+ * fields of the Vars produced.  pstate->p_next_resno determines the resnos
+ * assigned to the TLEs.
  */
 List *
-expandRelAttrs(ParseState *pstate, List *rtable, int rtindex, int sublevels_up)
+expandRelAttrs(ParseState *pstate, RangeTblEntry *rte,
+			   int rtindex, int sublevels_up)
 {
 	List	   *names,
 			   *vars;
@@ -1500,7 +1484,8 @@ expandRelAttrs(ParseState *pstate, List *rtable, int rtindex, int sublevels_up)
 			   *var;
 	List	   *te_list = NIL;
 
-	expandRTE(rtable, rtindex, sublevels_up, false, &names, &vars);
+	expandRTE(rte, rtindex, sublevels_up, false,
+			  &names, &vars);
 
 	forboth(name, names, var, vars)
 	{

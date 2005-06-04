@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.153 2005/06/03 23:05:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.154 2005/06/04 19:19:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,6 +106,8 @@ AcquireRewriteLocks(Query *parsetree)
 		Relation	rel;
 		LOCKMODE	lockmode;
 		List	   *newaliasvars;
+		Index		curinputvarno;
+		RangeTblEntry *curinputrte;
 		ListCell   *ll;
 
 		++rt_index;
@@ -140,8 +142,14 @@ AcquireRewriteLocks(Query *parsetree)
 				 * Scan the join's alias var list to see if any columns
 				 * have been dropped, and if so replace those Vars with
 				 * NULL Consts.
+				 *
+				 * Since a join has only two inputs, we can expect to
+				 * see multiple references to the same input RTE; optimize
+				 * away multiple fetches.
 				 */
 				newaliasvars = NIL;
+				curinputvarno = 0;
+				curinputrte = NULL;
 				foreach(ll, rte->joinaliasvars)
 				{
 					Var		   *aliasvar = (Var *) lfirst(ll);
@@ -165,12 +173,17 @@ AcquireRewriteLocks(Query *parsetree)
 						 * but it's OK to assume here.)
 						 */
 						Assert(aliasvar->varlevelsup == 0);
-						if (aliasvar->varno >= rt_index)
-							elog(ERROR, "unexpected varno %d in JOIN RTE %d",
-								 aliasvar->varno, rt_index);
-						if (get_rte_attribute_is_dropped(
-							rt_fetch(aliasvar->varno, parsetree->rtable),
-							aliasvar->varattno))
+						if (aliasvar->varno != curinputvarno)
+						{
+							curinputvarno = aliasvar->varno;
+							if (curinputvarno >= rt_index)
+								elog(ERROR, "unexpected varno %d in JOIN RTE %d",
+									 curinputvarno, rt_index);
+							curinputrte = rt_fetch(curinputvarno,
+												   parsetree->rtable);
+						}
+						if (get_rte_attribute_is_dropped(curinputrte,
+														 aliasvar->varattno))
 						{
 							/*
 							 * can't use vartype here, since that might be a
@@ -386,7 +399,8 @@ rewriteRuleAction(Query *parsetree,
 		sub_action = (Query *) ResolveNew((Node *) sub_action,
 										  new_varno,
 										  0,
-										  sub_action->rtable,
+										  rt_fetch(new_varno,
+												   sub_action->rtable),
 										  parsetree->targetList,
 										  event,
 										  current_varno);
@@ -1206,7 +1220,7 @@ CopyAndAddInvertedQual(Query *parsetree,
 		new_qual = ResolveNew(new_qual,
 							  PRS2_NEW_VARNO,
 							  0,
-							  parsetree->rtable,
+							  rt_fetch(rt_index, parsetree->rtable),
 							  parsetree->targetList,
 							  event,
 							  rt_index);

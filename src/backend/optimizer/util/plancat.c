@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.109 2005/05/30 18:55:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.110 2005/06/04 19:19:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -451,7 +451,7 @@ build_physical_tlist(Query *root, RelOptInfo *rel)
 			break;
 
 		case RTE_FUNCTION:
-			expandRTE(root->rtable, varno, 0, true /* include dropped */,
+			expandRTE(rte, varno, 0, true /* include dropped */,
 					  NULL, &colvars);
 			foreach(l, colvars)
 			{

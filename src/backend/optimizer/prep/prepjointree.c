@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.27 2005/04/28 21:47:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.28 2005/06/04 19:19:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ typedef struct reduce_outer_joins_state
 static bool is_simple_subquery(Query *subquery);
 static bool has_nullable_targetlist(Query *subquery);
 static void resolvenew_in_jointree(Node *jtnode, int varno,
-					   List *rtable, List *subtlist);
+					   RangeTblEntry *rte, List *subtlist);
 static reduce_outer_joins_state *reduce_outer_joins_pass1(Node *jtnode);
 static void reduce_outer_joins_pass2(Node *jtnode,
 						 reduce_outer_joins_state *state,
@@ -243,18 +243,18 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			subtlist = subquery->targetList;
 			parse->targetList = (List *)
 				ResolveNew((Node *) parse->targetList,
-						   varno, 0, parse->rtable,
+						   varno, 0, rte,
 						   subtlist, CMD_SELECT, 0);
 			resolvenew_in_jointree((Node *) parse->jointree, varno,
-								   parse->rtable, subtlist);
+								   rte, subtlist);
 			Assert(parse->setOperations == NULL);
 			parse->havingQual =
 				ResolveNew(parse->havingQual,
-						   varno, 0, parse->rtable,
+						   varno, 0, rte,
 						   subtlist, CMD_SELECT, 0);
 			parse->in_info_list = (List *)
 				ResolveNew((Node *) parse->in_info_list,
-						   varno, 0, parse->rtable,
+						   varno, 0, rte,
 						   subtlist, CMD_SELECT, 0);
 
 			foreach(rt, parse->rtable)
@@ -264,7 +264,7 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 				if (otherrte->rtekind == RTE_JOIN)
 					otherrte->joinaliasvars = (List *)
 						ResolveNew((Node *) otherrte->joinaliasvars,
-								   varno, 0, parse->rtable,
+								   varno, 0, rte,
 								   subtlist, CMD_SELECT, 0);
 			}
 
@@ -492,7 +492,7 @@ has_nullable_targetlist(Query *subquery)
  */
 static void
 resolvenew_in_jointree(Node *jtnode, int varno,
-					   List *rtable, List *subtlist)
+					   RangeTblEntry *rte, List *subtlist)
 {
 	if (jtnode == NULL)
 		return;
@@ -506,19 +506,19 @@ resolvenew_in_jointree(Node *jtnode, int varno,
 		ListCell   *l;
 
 		foreach(l, f->fromlist)
-			resolvenew_in_jointree(lfirst(l), varno, rtable, subtlist);
+			resolvenew_in_jointree(lfirst(l), varno, rte, subtlist);
 		f->quals = ResolveNew(f->quals,
-							  varno, 0, rtable,
+							  varno, 0, rte,
 							  subtlist, CMD_SELECT, 0);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
 
-		resolvenew_in_jointree(j->larg, varno, rtable, subtlist);
-		resolvenew_in_jointree(j->rarg, varno, rtable, subtlist);
+		resolvenew_in_jointree(j->larg, varno, rte, subtlist);
+		resolvenew_in_jointree(j->rarg, varno, rte, subtlist);
 		j->quals = ResolveNew(j->quals,
-							  varno, 0, rtable,
+							  varno, 0, rte,
 							  subtlist, CMD_SELECT, 0);
 
 		/*
