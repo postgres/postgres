@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.60 2005/05/14 20:29:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.61 2005/06/04 20:14:12 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -398,6 +398,17 @@ AllocSetReset(MemoryContext context)
 	/* Nothing to do if context has never contained any data */
 	if (block == NULL)
 		return;
+
+	/*
+	 * When blocks list has only "keeper" block and freeptr of the block
+	 * is initial value, the context is not used from last reset.
+	 */
+	if (block == set->keeper && block->next == NULL)
+	{
+		char	   *datastart = ((char *) block) + ALLOC_BLOCKHDRSZ;
+		if (block->freeptr == datastart)
+			return;
+	}
 
 	/* Clear chunk freelists */
 	MemSetAligned(set->freelist, 0, sizeof(set->freelist));
