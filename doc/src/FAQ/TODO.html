@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat Jun  4 14:12:31 EDT 2005
+Last updated:           Sat Jun  4 19:05:14 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -543,9 +543,7 @@ first.
   </li><li>pg_dump
   <ul>
     <li>Have pg_dump use multi-statement transactions for INSERT dumps
-    </li><li>Allow pg_dump to use multiple -t and -n switches
-<p>          This should be done by allowing a '-t schema.table' syntax.
-</p>
+    </li><li>Allow pg_dump to use multiple -t and -n switches [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pg_dump">pg_dump</a>]
     </li><li>Add dumping of comments on composite type columns
     </li><li>Add dumping of comments on index columns
     </li><li>Replace crude DELETE FROM method of pg_dumpall for cleaning of

@@ -1,0 +1,1263 @@
+From pgsql-patches-owner+M12042=pgman=candle.pha.pa.us@postgresql.org Wed Jul 21 10:23:52 2004
+Return-path: <pgsql-patches-owner+M12042=pgman=candle.pha.pa.us@postgresql.org>
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i6LENoq23921
+	for <pgman@candle.pha.pa.us>; Wed, 21 Jul 2004 10:23:51 -0400 (EDT)
+X-Original-To: pgsql-patches-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id C3BE2D1B2D9
+	for <pgsql-patches-postgresql.org@localhost.postgresql.org>; Wed, 21 Jul 2004 11:23:06 -0300 (ADT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 59019-03
+	for <pgsql-patches-postgresql.org@localhost.postgresql.org>;
+	Wed, 21 Jul 2004 14:22:42 +0000 (GMT)
+Received: from www.roaringpenguin.com (www.roaringpenguin.com [206.191.13.82])
+	by svr1.postgresql.org (Postfix) with ESMTP id 0F71DD1B179
+	for <pgsql-patches@postgresql.org>; Wed, 21 Jul 2004 11:22:37 -0300 (ADT)
+Received: from ottawa-hs-209-217-122-117.s-ip.magma.ca (ottawa-hs-209-217-122-117.s-ip.magma.ca [209.217.122.117])
+	by www.roaringpenguin.com (8.13.0/8.13.0) with ESMTP id i6LEMP8J001515;
+	Wed, 21 Jul 2004 10:22:25 -0400
+Received: from shishi.roaringpenguin.com (shishi.roaringpenguin.com [192.168.2.3])
+	by shevy.roaringpenguin.com (8.12.10/8.12.10) with ESMTP id i6LEMPCl015669;
+	Wed, 21 Jul 2004 10:22:25 -0400
+Date: Wed, 21 Jul 2004 10:22:25 -0400 (EDT)
+From: "David F. Skoll" <dfs@roaringpenguin.com>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Tom Lane <tgl@sss.pgh.pa.us>,
+   Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   pgsql-patches@postgresql.org
+Subject: Re: [PATCHES] Patch for pg_dump: Multiple -t options and new -T
+In-Reply-To: <200407211417.i6LEHON23029@candle.pha.pa.us>
+Message-ID: <Pine.LNX.4.58.0407211018510.8830@shishi.roaringpenguin.com>
+References: <200407211417.i6LEHON23029@candle.pha.pa.us>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-patches
+Precedence: bulk
+Sender: pgsql-patches-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=no 
+	version=2.61
+Status: OR
+
+On Wed, 21 Jul 2004, Bruce Momjian wrote:
+
+> Even though I suggested it, I am afraid this is just too confusing an API.
+
+How about this:
+
+pg_dump -t t1                          -- Dump table t1 in any schema
+pg_dump -n s1                          -- Dump all of schema s1
+pg_dump -t t1 -n s1                    -- Dump t1 in s1
+pg_dump -t t1 -t t2 -n s1              -- Dump s1.t1 and s1.t2
+pg_dump -t t1 -t t2 -n s1 -n s2        -- Dump s1.t1, s1.t2, s2.t1 and s2.t2
+
+Basically, no "-t" option means dump all tables.  No "-n" option
+means dump all schemas.  If any "-t" or "-n" options are present,
+then we only dump the specified tables/schemas.  We also probably
+should not warn about missing tables, because it's likely that the
+full cartesian product of schemas and tables won't exist.
+
+And we nuke the -T and -N options.
+
+Regards,
+
+David.
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+      subscribe-nomail command to majordomo@postgresql.org so that your
+      message can get through to the mailing list cleanly
+
+From pgsql-patches-owner+M12046=pgman=candle.pha.pa.us@postgresql.org Wed Jul 21 11:01:02 2004
+Return-path: <pgsql-patches-owner+M12046=pgman=candle.pha.pa.us@postgresql.org>
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i6LF11q28864
+	for <pgman@candle.pha.pa.us>; Wed, 21 Jul 2004 11:01:01 -0400 (EDT)
+X-Original-To: pgsql-patches-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id DAF37D1B38A
+	for <pgsql-patches-postgresql.org@localhost.postgresql.org>; Wed, 21 Jul 2004 12:00:16 -0300 (ADT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 83756-03
+	for <pgsql-patches-postgresql.org@localhost.postgresql.org>;
+	Wed, 21 Jul 2004 14:59:51 +0000 (GMT)
+Received: from www.roaringpenguin.com (www.roaringpenguin.com [206.191.13.82])
+	by svr1.postgresql.org (Postfix) with ESMTP id AD03CD1B392
+	for <pgsql-patches@postgresql.org>; Wed, 21 Jul 2004 11:59:49 -0300 (ADT)
+Received: from ottawa-hs-209-217-122-117.s-ip.magma.ca (ottawa-hs-209-217-122-117.s-ip.magma.ca [209.217.122.117])
+	by www.roaringpenguin.com (8.13.0/8.13.0) with ESMTP id i6LExYLg004261;
+	Wed, 21 Jul 2004 10:59:39 -0400
+Received: from shishi.roaringpenguin.com (shishi.roaringpenguin.com [192.168.2.3])
+	by shevy.roaringpenguin.com (8.12.10/8.12.10) with ESMTP id i6LExSCl015967;
+	Wed, 21 Jul 2004 10:59:28 -0400
+Date: Wed, 21 Jul 2004 10:59:28 -0400 (EDT)
+From: "David F. Skoll" <dfs@roaringpenguin.com>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   pgsql-patches@postgresql.org
+Subject: Re: [PATCHES] Patch for pg_dump: Multiple -t options and new -T
+In-Reply-To: <8489.1090420787@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.58.0407211056450.8830@shishi.roaringpenguin.com>
+References: <200407211417.i6LEHON23029@candle.pha.pa.us>
+	<Pine.LNX.4.58.0407211018510.8830@shishi.roaringpenguin.com>
+	<8489.1090420787@sss.pgh.pa.us>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-patches
+Precedence: bulk
+Sender: pgsql-patches-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=no 
+	version=2.61
+Status: OR
+
+On Wed, 21 Jul 2004, Tom Lane wrote:
+
+> pg_dump -t s1.t1 -t s2.t2              -- Dump s1.t1 and s2.t2
+
+That's a good idea, but then it's questionable whether we need the -n
+switch at all.  It might be simpler to extend the -t switch to
+accept:
+
+	pg-dump -t 's1.*'
+
+rather than using a -n switch.  Of course, that breaks
+backward-compatibility.
+
+Regards,
+
+David.
+
+---------------------------(end of broadcast)---------------------------
+TIP 8: explain analyze is your friend
+
+From dfs@roaringpenguin.com Wed Jul 21 10:59:47 2004
+Return-path: <dfs@roaringpenguin.com>
+Received: from www.roaringpenguin.com (www.roaringpenguin.com [206.191.13.82])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i6LExkq28467
+	for <pgman@candle.pha.pa.us>; Wed, 21 Jul 2004 10:59:46 -0400 (EDT)
+Received: from ottawa-hs-209-217-122-117.s-ip.magma.ca (ottawa-hs-209-217-122-117.s-ip.magma.ca [209.217.122.117])
+	by www.roaringpenguin.com (8.13.0/8.13.0) with ESMTP id i6LExYLg004261;
+	Wed, 21 Jul 2004 10:59:39 -0400
+Received: from shishi.roaringpenguin.com (shishi.roaringpenguin.com [192.168.2.3])
+	by shevy.roaringpenguin.com (8.12.10/8.12.10) with ESMTP id i6LExSCl015967;
+	Wed, 21 Jul 2004 10:59:28 -0400
+Date: Wed, 21 Jul 2004 10:59:28 -0400 (EDT)
+From: "David F. Skoll" <dfs@roaringpenguin.com>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   pgsql-patches@postgresql.org
+Subject: Re: [PATCHES] Patch for pg_dump: Multiple -t options and new -T
+	option 
+In-Reply-To: <8489.1090420787@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.58.0407211056450.8830@shishi.roaringpenguin.com>
+References: <200407211417.i6LEHON23029@candle.pha.pa.us>
+	<Pine.LNX.4.58.0407211018510.8830@shishi.roaringpenguin.com>
+	<8489.1090420787@sss.pgh.pa.us>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+On Wed, 21 Jul 2004, Tom Lane wrote:
+
+> pg_dump -t s1.t1 -t s2.t2              -- Dump s1.t1 and s2.t2
+
+That's a good idea, but then it's questionable whether we need the -n
+switch at all.  It might be simpler to extend the -t switch to
+accept:
+
+	pg-dump -t 's1.*'
+
+rather than using a -n switch.  Of course, that breaks
+backward-compatibility.
+
+Regards,
+
+David.
+
+From pgsql-patches-owner+M12047=pgman=candle.pha.pa.us@postgresql.org Wed Jul 21 11:11:15 2004
+Return-path: <pgsql-patches-owner+M12047=pgman=candle.pha.pa.us@postgresql.org>
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i6LFBEq00216
+	for <pgman@candle.pha.pa.us>; Wed, 21 Jul 2004 11:11:14 -0400 (EDT)
+X-Original-To: pgsql-patches-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id A9242D1B269
+	for <pgsql-patches-postgresql.org@localhost.postgresql.org>; Wed, 21 Jul 2004 12:09:46 -0300 (ADT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 89636-05
+	for <pgsql-patches-postgresql.org@localhost.postgresql.org>;
+	Wed, 21 Jul 2004 15:09:23 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 73F3CD1B398
+	for <pgsql-patches@postgresql.org>; Wed, 21 Jul 2004 12:09:23 -0300 (ADT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.11/8.12.11) with ESMTP id i6LF9H0c008840;
+	Wed, 21 Jul 2004 11:09:17 -0400 (EDT)
+To: "David F. Skoll" <dfs@roaringpenguin.com>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   pgsql-patches@postgresql.org
+Subject: Re: [PATCHES] Patch for pg_dump: Multiple -t options and new -T option 
+In-Reply-To: <Pine.LNX.4.58.0407211056450.8830@shishi.roaringpenguin.com> 
+References: <200407211417.i6LEHON23029@candle.pha.pa.us> <Pine.LNX.4.58.0407211018510.8830@shishi.roaringpenguin.com> <8489.1090420787@sss.pgh.pa.us> <Pine.LNX.4.58.0407211056450.8830@shishi.roaringpenguin.com>
+Comments: In-reply-to "David F. Skoll" <dfs@roaringpenguin.com>
+	message dated "Wed, 21 Jul 2004 10:59:28 -0400"
+Date: Wed, 21 Jul 2004 11:09:17 -0400
+Message-ID: <8839.1090422557@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-patches
+Precedence: bulk
+Sender: pgsql-patches-owner@postgresql.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=no 
+	version=2.61
+Status: ORr
+
+"David F. Skoll" <dfs@roaringpenguin.com> writes:
+> On Wed, 21 Jul 2004, Tom Lane wrote:
+>> pg_dump -t s1.t1 -t s2.t2              -- Dump s1.t1 and s2.t2
+
+> That's a good idea, but then it's questionable whether we need the -n
+> switch at all.
+
+Sure we do --- for backwards compatibility if nothing else.
+
+> It might be simpler to extend the -t switch to accept:
+> 	pg-dump -t 's1.*'
+
+That would not be the same thing --- that would mean to dump *only tables*
+from s1, rather than objects of all types.  Anyway, I think it's a bit
+late in this cycle to be proposing to implement wild-card matching.
+Maybe for next time someone can do that, but for 7.5 I think we should
+limit ourselves to cleaning up any design flaws of the already-submitted
+patch.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 7: don't forget to increase your free space map settings
+
+From glenebob@nwlink.com Tue Aug 17 21:15:39 2004
+Return-path: <glenebob@nwlink.com>
+Received: from inetserver.servicepaper.com (67.105.202.226.ptr.us.xo.net [67.105.202.226])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i7I1FYN06577
+	for <pgman@candle.pha.pa.us>; Tue, 17 Aug 2004 21:15:38 -0400 (EDT)
+Received: from glen ([192.168.10.100])
+	by inetserver.servicepaper.com (8.11.6/8.11.6) with SMTP id i7I1FPP01863
+	for <pgman@candle.pha.pa.us>; Tue, 17 Aug 2004 18:15:25 -0700
+From: "Glen Parker" <glenebob@nwlink.com>
+To: "Bruce Momjian" <pgman@candle.pha.pa.us>
+Subject: RE: [GENERAL] pg_dump feature request: Exclude tables?
+Date: Tue, 17 Aug 2004 18:16:27 -0700
+Message-ID: <AJEKKAIECKNMBCEKADJPGENHCMAA.glenebob@nwlink.com>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.6604 (9.0.2911.0)
+In-Reply-To: <200408180059.i7I0xD728914@candle.pha.pa.us>
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1441
+Importance: Normal
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+> No, we have:
+>
+> 	* Allow pg_dump to use multiple -t and -n switches
+>
+> 	  This should be done by allowing a '-t schema.table' syntax.
+>
+> but that doesn't have the exclude option.  We had a patch that
+> implemented an exclude but got confused over how it would interact with
+> the schema switch and stuff.  However, with the new  '-t schema.table'
+> syntax we might be able to get it working.
+
+Hmm, while you're at it, maybe you could make it accept wild cards or regexp
+or something :-)  That should allow you to toss the -n parameter altogether
+(schema.*) if you wanted to.
+
+It would also be at least as good, IMO, to accept only one -t option,
+re-defined as a comma-seperated list of names...  And an exlusion parameter
+defined the same way.
+
+Glen Parker
+glenebob@nwlink.com
+
+From pgsql-general-owner+M64307=pgman=candle.pha.pa.us@postgresql.org Tue Aug 17 21:20:57 2004
+Return-path: <pgsql-general-owner+M64307=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i7I1KuN08623
+	for <pgman@candle.pha.pa.us>; Tue, 17 Aug 2004 21:20:56 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id B02F15E40BB
+	for <pgman@candle.pha.pa.us>; Tue, 17 Aug 2004 22:20:46 -0300 (ADT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 36052-04 for <pgman@candle.pha.pa.us>;
+	Wed, 18 Aug 2004 01:20:47 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 5D09C5E40BA
+	for <pgman@candle.pha.pa.us>; Tue, 17 Aug 2004 22:20:46 -0300 (ADT)
+X-Original-To: pgsql-general-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id A33B15E3F15
+	for <pgsql-general-postgresql.org@localhost.postgresql.org>; Tue, 17 Aug 2004 22:14:59 -0300 (ADT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 32509-09
+	for <pgsql-general-postgresql.org@localhost.postgresql.org>;
+	Wed, 18 Aug 2004 01:14:56 +0000 (GMT)
+Received: from seahorse.shentel.net (seahorse.shentel.net [204.111.11.44])
+	by svr1.postgresql.org (Postfix) with ESMTP id 404585E37CE
+	for <pgsql-general@postgresql.org>; Tue, 17 Aug 2004 22:14:54 -0300 (ADT)
+Received: from [204.111.24.205] (ha24s205.d.shentel.net [204.111.24.205])
+	by seahorse.shentel.net (8.12.11/8.12.11) with ESMTP id i7I1EwKM023339
+	for <pgsql-general@postgresql.org>; Tue, 17 Aug 2004 21:14:58 -0400
+Message-ID: <4122AFAC.40209@shentel.net>
+Date: Tue, 17 Aug 2004 21:23:56 -0400
+From: Paul Tillotson <pntil@shentel.net>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.7.2) Gecko/20040803
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: Postgres General <pgsql-general@postgresql.org>
+Subject: Re: [GENERAL] pg_dump feature request: Exclude tables?
+References: <AJEKKAIECKNMBCEKADJPKENCCMAA.glenebob@nwlink.com>
+In-Reply-To: <AJEKKAIECKNMBCEKADJPKENCCMAA.glenebob@nwlink.com>
+Content-Type: text/plain; charset=iso-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-general
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.8 required=5.0 tests=BAYES_00,HTML_MESSAGE 
+	autolearn=ham version=2.61
+Status: OR
+
+I second this.  I would prefer an option to dump only the schema of 
+certain tables rather than excluding them altogether.
+
+Paul
+
+
+Glen Parker wrote:
+
+>Since pg_dump will be allowing multiple -t <table> parameters for 8.0, here
+>is a related feature request.
+>
+>A similar option (allowing multiples also) to EXCLUDE tables, so we can do a
+>dump of the entire database minus a few tables.
+>
+>Glen Parker
+>glenebob@nwlink.com
+>
+>
+>---------------------------(end of broadcast)---------------------------
+>TIP 7: don't forget to increase your free space map settings
+>
+>
+>  
+>
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 8: explain analyze is your friend
+
+From pgsql-general-owner+M64339@postgresql.org Wed Aug 18 12:18:14 2004
+Return-path: <pgsql-general-owner+M64339@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i7IGI8N29982
+	for <pgman@candle.pha.pa.us>; Wed, 18 Aug 2004 12:18:13 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id AB9565E46C1;
+	Wed, 18 Aug 2004 13:17:56 -0300 (ADT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 43866-08; Wed, 18 Aug 2004 16:18:04 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 5E6C65E46BF;
+	Wed, 18 Aug 2004 13:17:56 -0300 (ADT)
+X-Original-To: pgsql-general-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id BD6215E46DF
+	for <pgsql-general-postgresql.org@localhost.postgresql.org>; Wed, 18 Aug 2004 13:11:20 -0300 (ADT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 42880-02
+	for <pgsql-general-postgresql.org@localhost.postgresql.org>;
+	Wed, 18 Aug 2004 16:11:24 +0000 (GMT)
+Received: from mail.travelamericas.com (unknown [206.130.134.147])
+	by svr1.postgresql.org (Postfix) with SMTP id E4A055E46D5
+	for <pgsql-general@postgresql.org>; Wed, 18 Aug 2004 13:11:13 -0300 (ADT)
+Received: (qmail 30270 invoked from network); 18 Aug 2004 16:11:20 -0000
+Received: from unknown (HELO ?10.0.0.128?) (10.0.0.128)
+  by verkiel.travelamericas.com with SMTP; 18 Aug 2004 16:11:20 -0000
+Message-ID: <41237FA7.50402@travelamericas.com>
+Date: Wed, 18 Aug 2004 09:11:19 -0700
+From: Chris Travers <chris@travelamericas.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.7) Gecko/20040616
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: Glen Parker <glenebob@nwlink.com>
+cc: Postgres General <pgsql-general@postgresql.org>
+Subject: Re: [GENERAL] pg_dump feature request: Exclude tables?
+References: <AJEKKAIECKNMBCEKADJPKENHCMAA.glenebob@nwlink.com>
+In-Reply-To: <AJEKKAIECKNMBCEKADJPKENHCMAA.glenebob@nwlink.com>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-general
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+Glen Parker wrote:
+
+>>No, we have:
+>>	
+>>	* Allow pg_dump to use multiple -t and -n switches
+>>	
+>>	  This should be done by allowing a '-t schema.table' syntax.
+>>
+>>but that doesn't have the exclude option.  We had a patch that
+>>implemented an exclude but got confused over how it would interact with
+>>the schema switch and stuff.  However, with the new  '-t schema.table'
+>>syntax we might be able to get it working.
+>>    
+>>
+>
+>Hmm, while you're at it, maybe you could make it accept wild 
+>cards or regexp or something :-)  That should allow you to toss 
+>the -n parameter altogether (schema.*) if you wanted to.
+>
+>It would also be at least as good, IMO, to accept only one -t 
+>option, re-defined as a comma-seperated list of names...  And an 
+>exlusion parameter defined the same way.
+>
+>  
+>
+How would this interact with the shell?  It seems like a supportability
+issue if we have to require single quotes around such arguments.
+
+Best Wishes,
+Chris Travers
+Metatron Technology Consulting
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-general-owner+M64368@postgresql.org Wed Aug 18 15:17:39 2004
+Return-path: <pgsql-general-owner+M64368@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i7IJHcN23505
+	for <pgman@candle.pha.pa.us>; Wed, 18 Aug 2004 15:17:38 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id AE56A5E46FB;
+	Wed, 18 Aug 2004 16:17:24 -0300 (ADT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 16779-02; Wed, 18 Aug 2004 19:17:32 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 664675E46FA;
+	Wed, 18 Aug 2004 16:17:24 -0300 (ADT)
+X-Original-To: pgsql-general-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 8DD235E46DC
+	for <pgsql-general-postgresql.org@localhost.postgresql.org>; Wed, 18 Aug 2004 16:10:25 -0300 (ADT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 13875-03
+	for <pgsql-general-postgresql.org@localhost.postgresql.org>;
+	Wed, 18 Aug 2004 19:10:30 +0000 (GMT)
+Received: from inetserver.servicepaper.com (67.105.202.226.ptr.us.xo.net [67.105.202.226])
+	by svr1.postgresql.org (Postfix) with ESMTP id 78ED55E46D4
+	for <pgsql-general@postgresql.org>; Wed, 18 Aug 2004 16:10:17 -0300 (ADT)
+Received: from glen ([192.168.10.100])
+	by inetserver.servicepaper.com (8.11.6/8.11.6) with SMTP id i7IJAPP13962
+	for <pgsql-general@postgresql.org>; Wed, 18 Aug 2004 12:10:26 -0700
+From: "Glen Parker" <glenebob@nwlink.com>
+To: "Postgres General" <pgsql-general@postgresql.org>
+Subject: Re: [GENERAL] pg_dump feature request: Exclude tables?
+Date: Wed, 18 Aug 2004 12:11:03 -0700
+Message-ID: <AJEKKAIECKNMBCEKADJPOEOPCMAA.glenebob@nwlink.com>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.6604 (9.0.2911.0)
+In-Reply-To: <41237FA7.50402@travelamericas.com>
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1441
+Importance: Normal
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-general
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+> >Hmm, while you're at it, maybe you could make it accept wild
+> >cards or regexp or something :-)  That should allow you to toss
+> >the -n parameter altogether (schema.*) if you wanted to.
+> >
+> >It would also be at least as good, IMO, to accept only one -t
+> >option, re-defined as a comma-seperated list of names...  And an
+> >exlusion parameter defined the same way.
+> >
+> How would this interact with the shell?  It seems like a supportability
+> issue if we have to require single quotes around such arguments.
+
+I think wild cards would be extremely useful, but you're right, it can't be
+required for common cases.  Maybe "-t schema." could be shorthand for "-t
+schema.*".
+
+As far as the comma-seperated-list notion, I could take it or leave it.  But
+it absolutely does not require quoting unless you add superfluous
+whitespace.  That's just common, basic shell usage.
+
+Glen Parker
+glenebob@nwlink.com
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+               http://archives.postgresql.org
+
+From pgsql-general-owner+M64402@postgresql.org Thu Aug 19 06:10:52 2004
+Return-path: <pgsql-general-owner+M64402@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i7JAApN07896
+	for <pgman@candle.pha.pa.us>; Thu, 19 Aug 2004 06:10:51 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 4C2AD5E46E8;
+	Thu, 19 Aug 2004 07:10:45 -0300 (ADT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 67524-09; Thu, 19 Aug 2004 10:10:45 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 041D85E40BB;
+	Thu, 19 Aug 2004 07:10:45 -0300 (ADT)
+X-Original-To: pgsql-general-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 294FC5E46C1
+	for <pgsql-general-postgresql.org@localhost.postgresql.org>; Thu, 19 Aug 2004 07:04:33 -0300 (ADT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 66409-09
+	for <pgsql-general-postgresql.org@localhost.postgresql.org>;
+	Thu, 19 Aug 2004 10:04:27 +0000 (GMT)
+Received: from anchor-post-33.mail.demon.net (anchor-post-33.mail.demon.net [194.217.242.91])
+	by svr1.postgresql.org (Postfix) with ESMTP id 81BFB5E37CE
+	for <pgsql-general@postgresql.org>; Thu, 19 Aug 2004 07:04:24 -0300 (ADT)
+Received: from mailgate.bray-healthcare.com ([80.177.250.202] helo=solport.bray-healthcare.com)
+	by anchor-post-33.mail.demon.net with esmtp (Exim 3.35 #1)
+	id 1BxjmR-000A7U-0X; Thu, 19 Aug 2004 10:04:23 +0000
+Received: from braydb.bray-healthcare.com ([192.168.1.18])
+	by solport.bray-healthcare.com with esmtp (Exim 3.36 #1 (Debian))
+	id 1BxjmR-0004jK-00; Thu, 19 Aug 2004 11:04:23 +0100
+Subject: Re: [GENERAL] pg_dump feature request: Exclude tables?
+From: Oliver Elphick <olly@lfix.co.uk>
+Reply-To: olly@lfix.co.uk
+To: Glen Parker <glenebob@nwlink.com>
+cc: Postgres General <pgsql-general@postgresql.org>
+In-Reply-To: <AJEKKAIECKNMBCEKADJPOEOPCMAA.glenebob@nwlink.com>
+References: <AJEKKAIECKNMBCEKADJPOEOPCMAA.glenebob@nwlink.com>
+Content-Type: text/plain
+Message-ID: <1092909858.19834.30.camel@braydb>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.6 
+Date: Thu, 19 Aug 2004 11:04:18 +0100
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-general
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+On Wed, 2004-08-18 at 20:11, Glen Parker wrote:
+> > >Hmm, while you're at it, maybe you could make it accept wild
+> > >cards or regexp or something :-)  That should allow you to toss
+> > >the -n parameter altogether (schema.*) if you wanted to.
+> > >
+> > >It would also be at least as good, IMO, to accept only one -t
+> > >option, re-defined as a comma-seperated list of names...  And an
+> > >exlusion parameter defined the same way.
+> > >
+> > How would this interact with the shell?  It seems like a supportability
+> > issue if we have to require single quotes around such arguments.
+> 
+> I think wild cards would be extremely useful, but you're right, it can't be
+> required for common cases.  Maybe "-t schema." could be shorthand for "-t
+> schema.*".
+
+Anyone who uses shell commands must already be familiar with the need to
+quote wildcard characters which are not meant for the shell.  One major
+utility which requires this is find; others that spring to mind are dpkg
+-l and mmv.  Anyone who doesn't get it will very soon be educated; I
+don't see this issue as a reason not to use such wildcards.
+
+Oliver Elphick
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 9: the planner will ignore your desire to choose an index scan if your
+      joining column's datatypes do not match
+
+From tgl@sss.pgh.pa.us Sun Jan 16 23:24:17 2005
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@sss.pgh.pa.us [66.207.139.130])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id j0H5OFw29490
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 00:24:16 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id j0H5O741023101;
+	Mon, 17 Jan 2005 00:24:08 -0500 (EST)
+To: Neil Conway <neilc@samurai.com>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   Andreas Joseph Krogh <andreak@officenet.no>, Enrico <scotty@linuxtime.it>,
+   pgsql-hackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] pgdump 
+In-Reply-To: <1105937990.22946.17.camel@localhost.localdomain> 
+References: <200501170442.j0H4gNW23506@candle.pha.pa.us> <1105937990.22946.17.camel@localhost.localdomain>
+Comments: In-reply-to Neil Conway <neilc@samurai.com>
+	message dated "Mon, 17 Jan 2005 15:59:50 +1100"
+Date: Mon, 17 Jan 2005 00:24:07 -0500
+Message-ID: <23100.1105939447@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: OR
+
+Neil Conway <neilc@samurai.com> writes:
+> Something like the design elaborated here:
+
+> http://archives.postgresql.org/pgsql-patches/2004-07/msg00374.php
+
+> looks good to me, and would be preferrable to Andreas' patch IMHO.
+> Unless I'm missing something, I don't see a patch from David Skoll in
+> that thread that actually implements the above behavior. I'd be happy to
+> implement Tom's suggested design for 8.1 unless someone has already
+> beaten me to it.
+
+A little further down-thread there was some discussion of also allowing
+wild cards in the individual switches, eg
+
+	-t 's1.*'
+
+(This would differ from '-n s1' in that a -t switch would restrict the
+dump to tables only, whereas -n should take every sort of object in the
+selected schema.)  I dismissed it at the time because we were too close
+to feature freeze, but the idea should be considered if you're going to
+do a new patch for 8.1.  I think the issues would be
+
+* what are the wildcard rules exactly?
+* what about quoting/downcasing rules?
+
+Possibly it's sufficient to say "just like the way \d works in psql",
+but we should look closely before leaping.  We've been burnt before
+by choosing rules that turned out to be awkward to use on a shell
+command line because of interference from the shell's quoting and
+expansion behavior.
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M63178=pgman=candle.pha.pa.us@postgresql.org Sun Jan 16 23:47:33 2005
+Return-path: <pgsql-hackers-owner+M63178=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id j0H5lUw01573
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 00:47:32 -0500 (EST)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 890913A2BA1
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 05:47:24 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 32497-02 for <pgman@candle.pha.pa.us>;
+	Mon, 17 Jan 2005 05:47:23 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 863A53A2BDD
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 05:47:23 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 9FB6C3A2B46
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 17 Jan 2005 05:45:12 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 32238-07
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 17 Jan 2005 05:45:02 +0000 (GMT)
+Received: from sue.samurai.com (sue.samurai.com [205.207.28.74])
+	by svr1.postgresql.org (Postfix) with ESMTP id B24C13A2023
+	for <pgsql-hackers@postgresql.org>; Mon, 17 Jan 2005 05:45:01 +0000 (GMT)
+Received: from localhost (localhost [127.0.0.1])
+	by sue.samurai.com (Postfix) with ESMTP id B8CD819890;
+	Mon, 17 Jan 2005 00:45:00 -0500 (EST)
+Received: from sue.samurai.com ([127.0.0.1])
+	by localhost (sue.samurai.com [127.0.0.1]) (amavisd-new, port 10024)
+	with LMTP id 35375-02-2; Mon, 17 Jan 2005 00:44:59 -0500 (EST)
+Received: from fjgateway (unknown [61.88.101.19])
+	by sue.samurai.com (Postfix) with ESMTP id 0D7D81988A;
+	Mon, 17 Jan 2005 00:44:57 -0500 (EST)
+Subject: Re: [HACKERS] pgdump
+From: Neil Conway <neilc@samurai.com>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   Andreas Joseph Krogh <andreak@officenet.no>, Enrico <scotty@linuxtime.it>,
+   pgsql-hackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <23100.1105939447@sss.pgh.pa.us>
+References: <200501170442.j0H4gNW23506@candle.pha.pa.us>
+  <1105937990.22946.17.camel@localhost.localdomain>
+  <23100.1105939447@sss.pgh.pa.us>
+Content-Type: text/plain
+Date: Mon, 17 Jan 2005 16:43:18 +1100
+Message-ID: <1105940598.22946.32.camel@localhost.localdomain>
+MIME-Version: 1.0
+X-Mailer: Evolution 2.0.3 
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at mailbox.samurai.com
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Mon, 2005-01-17 at 00:24 -0500, Tom Lane wrote:
+> A little further down-thread there was some discussion of also allowing
+> wild cards in the individual switches, eg
+> 
+> 	-t 's1.*'
+> 
+> (This would differ from '-n s1' in that a -t switch would restrict the
+> dump to tables only, whereas -n should take every sort of object in the
+> selected schema.)
+
+Is this actually useful behavior? My gut feeling is "no", but I'm open
+to debate. ISTM that the combination of "-n" and "-t" achieves a pretty
+wide swath of the desired functionality. Considering that the various
+combinations of these switches is already quite complex, I think it
+would be wise to avoid additional, unnecessary complications. Plus it
+avoids the need to play games with escaping the wildcard from the shell.
+
+> * what about quoting/downcasing rules?
+
+If we don't implement wildcards, I don't believe we will need to change
+the present behavior of the "-n" and "-t" switches WRT case conversion
+etc.
+
+-Neil
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 7: don't forget to increase your free space map settings
+
+From pgsql-hackers-owner+M63179=pgman=candle.pha.pa.us@postgresql.org Sun Jan 16 23:55:59 2005
+Return-path: <pgsql-hackers-owner+M63179=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id j0H5tww02467
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 00:55:59 -0500 (EST)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 886D03A2951
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 05:55:54 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 32671-06 for <pgman@candle.pha.pa.us>;
+	Mon, 17 Jan 2005 05:55:53 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 9A2883A292A
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 05:55:53 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 185743A2C10
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 17 Jan 2005 05:54:39 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 32471-06
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 17 Jan 2005 05:54:28 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id B577B3A2C07
+	for <pgsql-hackers@postgresql.org>; Mon, 17 Jan 2005 05:54:28 +0000 (GMT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id j0H5sN9V023361;
+	Mon, 17 Jan 2005 00:54:23 -0500 (EST)
+To: Neil Conway <neilc@samurai.com>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   Andreas Joseph Krogh <andreak@officenet.no>, Enrico <scotty@linuxtime.it>,
+   pgsql-hackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] pgdump 
+In-Reply-To: <1105940598.22946.32.camel@localhost.localdomain> 
+References: <200501170442.j0H4gNW23506@candle.pha.pa.us> <1105937990.22946.17.camel@localhost.localdomain> <23100.1105939447@sss.pgh.pa.us> <1105940598.22946.32.camel@localhost.localdomain>
+Comments: In-reply-to Neil Conway <neilc@samurai.com>
+	message dated "Mon, 17 Jan 2005 16:43:18 +1100"
+Date: Mon, 17 Jan 2005 00:54:22 -0500
+Message-ID: <23360.1105941262@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Neil Conway <neilc@samurai.com> writes:
+> On Mon, 2005-01-17 at 00:24 -0500, Tom Lane wrote:
+>> A little further down-thread there was some discussion of also allowing
+>> wild cards in the individual switches,
+
+> Is this actually useful behavior?
+
+Possibly not.  It's been requested often enough, but multiple -t and -n
+switches might be sufficient.
+
+>> * what about quoting/downcasing rules?
+
+> If we don't implement wildcards, I don't believe we will need to change
+> the present behavior of the "-n" and "-t" switches WRT case conversion
+> etc.
+
+I'm not sure you can ignore the issue completely.  The proposal you're
+supporting included being able to pick out a specific table with
+	-t s1.t1
+and without any quoting rules it would then become impossible to deal
+with names containing dots.  Are we willing to blow off that case?
+Or is it better to drop that part of the proposal?
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 7: don't forget to increase your free space map settings
+
+From neilc@samurai.com Mon Jan 17 00:11:03 2005
+Return-path: <neilc@samurai.com>
+Received: from sue.samurai.com (sue.samurai.com [205.207.28.74])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id j0H6B2w03949
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 01:11:02 -0500 (EST)
+Received: from localhost (localhost [127.0.0.1])
+	by sue.samurai.com (Postfix) with ESMTP id BF6DB19896;
+	Mon, 17 Jan 2005 01:10:53 -0500 (EST)
+Received: from sue.samurai.com ([127.0.0.1])
+	by localhost (sue.samurai.com [127.0.0.1]) (amavisd-new, port 10024)
+	with LMTP id 35903-02-2; Mon, 17 Jan 2005 01:10:52 -0500 (EST)
+Received: from fjgateway (unknown [61.88.101.19])
+	by sue.samurai.com (Postfix) with ESMTP id 06A021988A;
+	Mon, 17 Jan 2005 01:10:50 -0500 (EST)
+Subject: Re: [HACKERS] pgdump
+From: Neil Conway <neilc@samurai.com>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   Andreas Joseph Krogh <andreak@officenet.no>, Enrico <scotty@linuxtime.it>,
+   pgsql-hackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <23360.1105941262@sss.pgh.pa.us>
+References: <200501170442.j0H4gNW23506@candle.pha.pa.us>
+  <1105937990.22946.17.camel@localhost.localdomain>
+  <23100.1105939447@sss.pgh.pa.us>
+  <1105940598.22946.32.camel@localhost.localdomain>
+  <23360.1105941262@sss.pgh.pa.us>
+Content-Type: text/plain
+Date: Mon, 17 Jan 2005 17:09:10 +1100
+Message-ID: <1105942150.22946.46.camel@localhost.localdomain>
+MIME-Version: 1.0
+X-Mailer: Evolution 2.0.3 
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at mailbox.samurai.com
+Status: OR
+
+On Mon, 2005-01-17 at 00:54 -0500, Tom Lane wrote:
+> 	-t s1.t1
+> [...] without any quoting rules it would then become impossible to
+> deal with names containing dots.
+
+Ah, yeah -- sorry, I was focusing on case conversion rather than quoting
+in general.
+
+> Are we willing to blow off that case?
+> Or is it better to drop that part of the proposal?
+
+I would be OK with just ignoring this case, but on reflection I would
+prefer removing the "-t schema.table" syntax. Removing the feature
+resolves the quoting issue and also simplifies pg_dump's behavior. We
+lose the ability to dump table t1 in schema s1 and table t2 in schema s2
+in a single command, but
+
+(a) you can specify "-t t1 -t t2 -n s1 -n s2", although this might also
+dump t1.s2 and/or t2.s1
+
+(b) you can just run pg_dump twice, specifying the appropriate -t and -n
+options each time
+
+So the behavior would be that suggested earlier by David Skoll:
+
+> pg_dump -t t1                          -- Dump table t1 in any schema
+> pg_dump -n s1                          -- Dump all of schema s1
+> pg_dump -t t1 -n s1                    -- Dump t1 in s1
+> pg_dump -t t1 -t t2 -n s1              -- Dump s1.t1 and s1.t2
+> pg_dump -t t1 -t t2 -n s1 -n s2        -- Dump s1.t1, s1.t2, s2.t1 and s2.t2
+
+We'd only raise an error if we found no matching tables/schemas, as was
+hashed out in July.
+
+-Neil
+
+
+From tgl@sss.pgh.pa.us Mon Jan 17 00:19:43 2005
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (root@sss.pgh.pa.us [66.207.139.130])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id j0H6Jgw04904
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 01:19:43 -0500 (EST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id j0H6Jajs023583;
+	Mon, 17 Jan 2005 01:19:36 -0500 (EST)
+To: Neil Conway <neilc@samurai.com>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   Andreas Joseph Krogh <andreak@officenet.no>, Enrico <scotty@linuxtime.it>,
+   pgsql-hackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] pgdump 
+In-Reply-To: <1105942150.22946.46.camel@localhost.localdomain> 
+References: <200501170442.j0H4gNW23506@candle.pha.pa.us> <1105937990.22946.17.camel@localhost.localdomain> <23100.1105939447@sss.pgh.pa.us> <1105940598.22946.32.camel@localhost.localdomain> <23360.1105941262@sss.pgh.pa.us> <1105942150.22946.46.camel@localhost.localdomain>
+Comments: In-reply-to Neil Conway <neilc@samurai.com>
+	message dated "Mon, 17 Jan 2005 17:09:10 +1100"
+Date: Mon, 17 Jan 2005 01:19:36 -0500
+Message-ID: <23582.1105942776@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: OR
+
+Neil Conway <neilc@samurai.com> writes:
+> So the behavior would be that suggested earlier by David Skoll:
+
+>> pg_dump -t t1                          -- Dump table t1 in any schema
+>> pg_dump -n s1                          -- Dump all of schema s1
+>> pg_dump -t t1 -n s1                    -- Dump t1 in s1
+>> pg_dump -t t1 -t t2 -n s1              -- Dump s1.t1 and s1.t2
+>> pg_dump -t t1 -t t2 -n s1 -n s2        -- Dump s1.t1, s1.t2, s2.t1 and s2.t2
+
+Well, that at least obeys the KISS principle ;-).  Sure, let's try that
+and see if it satisfies people.
+
+Just to be clear: what I understand the logic to be is "OR" across
+multiple switches of the same type, but "AND" across switches of
+two types.
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M63184=pgman=candle.pha.pa.us@postgresql.org Mon Jan 17 00:50:05 2005
+Return-path: <pgsql-hackers-owner+M63184=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id j0H6o4w07718
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 01:50:04 -0500 (EST)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 6A7FC3A2C10
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 06:49:59 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 38904-02 for <pgman@candle.pha.pa.us>;
+	Mon, 17 Jan 2005 06:49:55 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 830C53A2CC1
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 06:49:56 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 56D163A29AB
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 17 Jan 2005 06:48:39 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 38357-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 17 Jan 2005 06:48:29 +0000 (GMT)
+Received: from sue.samurai.com (sue.samurai.com [205.207.28.74])
+	by svr1.postgresql.org (Postfix) with ESMTP id F3D893A2951
+	for <pgsql-hackers@postgresql.org>; Mon, 17 Jan 2005 06:48:27 +0000 (GMT)
+Received: from localhost (localhost [127.0.0.1])
+	by sue.samurai.com (Postfix) with ESMTP id 531841989B;
+	Mon, 17 Jan 2005 01:48:27 -0500 (EST)
+Received: from sue.samurai.com ([127.0.0.1])
+	by localhost (sue.samurai.com [127.0.0.1]) (amavisd-new, port 10024)
+	with LMTP id 37185-01-4; Mon, 17 Jan 2005 01:48:26 -0500 (EST)
+Received: from fjgateway (unknown [61.88.101.19])
+	by sue.samurai.com (Postfix) with ESMTP id 360F419898;
+	Mon, 17 Jan 2005 01:48:23 -0500 (EST)
+Subject: Re: [HACKERS] pgdump
+From: Neil Conway <neilc@samurai.com>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   Andreas Joseph Krogh <andreak@officenet.no>, Enrico <scotty@linuxtime.it>,
+   pgsql-hackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <23582.1105942776@sss.pgh.pa.us>
+References: <200501170442.j0H4gNW23506@candle.pha.pa.us>
+  <1105937990.22946.17.camel@localhost.localdomain>
+  <23100.1105939447@sss.pgh.pa.us>
+  <1105940598.22946.32.camel@localhost.localdomain>
+  <23360.1105941262@sss.pgh.pa.us>
+  <1105942150.22946.46.camel@localhost.localdomain>
+  <23582.1105942776@sss.pgh.pa.us>
+Content-Type: text/plain
+Date: Mon, 17 Jan 2005 17:46:39 +1100
+Message-ID: <1105944399.22946.74.camel@localhost.localdomain>
+MIME-Version: 1.0
+X-Mailer: Evolution 2.0.3 
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at mailbox.samurai.com
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Mon, 2005-01-17 at 01:19 -0500, Tom Lane wrote:
+> Just to be clear: what I understand the logic to be is "OR" across
+> multiple switches of the same type, but "AND" across switches of
+> two types.
+
+If I understand you correctly, you're suggesting that we should only
+report an error if none of the specified tables exist OR none of the
+specified schemas exist. I'm not sure I agree. Consider this command:
+
+pg_dump -t some_table -t non_existent_table
+
+Assuming some_table exists, we will now blithely ignore the nonexistent
+table. That is perfectly reasonable because of the cartesian explosion
+of possibilities that occurs when both -t and -n are specified, but in
+the absence of that it seems regrettable. The same applies to "-n foo -n
+non_existent_schema", naturally.
+
+An easy fix would be to raise an error for each specified but
+nonexistent object, *except* if both "-n" and "-t" are specified, in
+which case we use your behavior (report an error if none of the
+specified tables are found OR none of the specified schemas are found).
+Perhaps better would be to require that each "-t" or "-n" switch results
+in a 'match' -- i.e. if you specify "-t foo -n x -n y", we check that
+
+(a) schema x exists AND
+(b) schema y exists AND
+(c) table foo exists in (schema x OR schema y)
+
+This means we have tighter error checking, although I'm not sure how
+intuitive it is.
+
+-Neil
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M63185=pgman=candle.pha.pa.us@postgresql.org Mon Jan 17 01:42:12 2005
+Return-path: <pgsql-hackers-owner+M63185=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id j0H7gBw12676
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 02:42:12 -0500 (EST)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 910503A2C64
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 07:42:06 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 44918-09 for <pgman@candle.pha.pa.us>;
+	Mon, 17 Jan 2005 07:42:04 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id A1F143A2BC5
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 07:42:05 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 0E9C13A2C9C
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 17 Jan 2005 07:40:37 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 45969-01
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 17 Jan 2005 07:40:25 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 0FD753A2990
+	for <pgsql-hackers@postgresql.org>; Mon, 17 Jan 2005 07:40:25 +0000 (GMT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id j0H7eJs9024034;
+	Mon, 17 Jan 2005 02:40:20 -0500 (EST)
+To: Neil Conway <neilc@samurai.com>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+   Andreas Joseph Krogh <andreak@officenet.no>, Enrico <scotty@linuxtime.it>,
+   pgsql-hackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] pgdump 
+In-Reply-To: <1105944399.22946.74.camel@localhost.localdomain> 
+References: <200501170442.j0H4gNW23506@candle.pha.pa.us> <1105937990.22946.17.camel@localhost.localdomain> <23100.1105939447@sss.pgh.pa.us> <1105940598.22946.32.camel@localhost.localdomain> <23360.1105941262@sss.pgh.pa.us> <1105942150.22946.46.camel@localhost.localdomain> <23582.1105942776@sss.pgh.pa.us> <1105944399.22946.74.camel@localhost.localdomain>
+Comments: In-reply-to Neil Conway <neilc@samurai.com>
+	message dated "Mon, 17 Jan 2005 17:46:39 +1100"
+Date: Mon, 17 Jan 2005 02:40:19 -0500
+Message-ID: <24033.1105947619@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Neil Conway <neilc@samurai.com> writes:
+> On Mon, 2005-01-17 at 01:19 -0500, Tom Lane wrote:
+>> Just to be clear: what I understand the logic to be is "OR" across
+>> multiple switches of the same type, but "AND" across switches of
+>> two types.
+
+> If I understand you correctly, you're suggesting that we should only
+> report an error if none of the specified tables exist OR none of the
+> specified schemas exist.
+
+No, I was only expressing an opinion about what should be dumped,
+not about what kind of diagnostic messages to issue.
+
+If you want to warn about switches that fail to match anything,
+go for it.  (I vote for just a warning, though, not a hard error.)
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From pgsql-hackers-owner+M63190=pgman=candle.pha.pa.us@postgresql.org Mon Jan 17 06:43:18 2005
+Return-path: <pgsql-hackers-owner+M63190=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id j0HChHw19638
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 07:43:17 -0500 (EST)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id CB9053A3CA5
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 12:43:15 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 93348-06 for <pgman@candle.pha.pa.us>;
+	Mon, 17 Jan 2005 12:43:11 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 902513A3C1B
+	for <pgman@candle.pha.pa.us>; Mon, 17 Jan 2005 12:43:13 +0000 (GMT)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id B67B53A3B35
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 17 Jan 2005 12:40:56 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 93985-01
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 17 Jan 2005 12:40:42 +0000 (GMT)
+Received: from mail.iinet.net.au (mail-02.iinet.net.au [203.59.3.34])
+	by svr1.postgresql.org (Postfix) with SMTP id B49F63A2C05
+	for <pgsql-hackers@postgresql.org>; Mon, 17 Jan 2005 12:40:42 +0000 (GMT)
+Received: (qmail 11099 invoked from network); 17 Jan 2005 12:40:40 -0000
+Received: from unknown (HELO ?192.168.0.3?) (203.217.62.99)
+  by mail.iinet.net.au with SMTP; 17 Jan 2005 12:40:39 -0000
+Message-ID: <41EBB09B.60106@blakjak.sytes.net>
+Date: Mon, 17 Jan 2005 23:33:31 +1100
+From: Brendan Jurd <blakjak@blakjak.sytes.net>
+User-Agent: Mozilla Thunderbird 0.7.3 (Windows/20040803)
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: Neil Conway <neilc@samurai.com>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, Bruce Momjian <pgman@candle.pha.pa.us>,
+   Andreas Joseph Krogh <andreak@officenet.no>, Enrico <scotty@linuxtime.it>,
+   pgsql-hackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] pgdump
+References: <200501170442.j0H4gNW23506@candle.pha.pa.us>	 <1105937990.22946.17.camel@localhost.localdomain>	 <23100.1105939447@sss.pgh.pa.us>	 <1105940598.22946.32.camel@localhost.localdomain>	 <23360.1105941262@sss.pgh.pa.us> <1105942150.22946.46.camel@localhost.localdomain>
+In-Reply-To: <1105942150.22946.46.camel@localhost.localdomain>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Neil Conway wrote:
+
+>I would be OK with just ignoring this case, but on reflection I would
+>prefer removing the "-t schema.table" syntax. Removing the feature
+>resolves the quoting issue and also simplifies pg_dump's behavior. We
+>lose the ability to dump table t1 in schema s1 and table t2 in schema s2
+>in a single command, but
+>
+>(a) you can specify "-t t1 -t t2 -n s1 -n s2", although this might also
+>dump t1.s2 and/or t2.s1
+>
+>(b) you can just run pg_dump twice, specifying the appropriate -t and -n
+>options each time
+>
+>So the behavior would be that suggested earlier by David Skoll:
+>
+>  
+>
+>>pg_dump -t t1                          -- Dump table t1 in any schema
+>>pg_dump -n s1                          -- Dump all of schema s1
+>>pg_dump -t t1 -n s1                    -- Dump t1 in s1
+>>pg_dump -t t1 -t t2 -n s1              -- Dump s1.t1 and s1.t2
+>>pg_dump -t t1 -t t2 -n s1 -n s2        -- Dump s1.t1, s1.t2, s2.t1 and s2.t2
+>>    
+>>
+>
+>We'd only raise an error if we found no matching tables/schemas, as was
+>hashed out in July.
+>  
+>
+I really prefer the -t "schema.table" syntax over the scenario listed 
+above.  If you look at the syntax for psql "\" commands, and SQL 
+commands, the structure "tablename, optionally schema-qualified" is seen 
+time and time again.  By allowing the same structure in arguments to 
+pg_dump, you're helping add to an overall feeling of consistency in the 
+postgres toolbox. 
+
+My feeling is that, to an occasional or novice user of pg_dump, the 
+proposed combination of -n and -t will seem daunting and idiosyncratic, 
+especially for complex cases. 
+
+The fact that with -n -t there are some cases that are actually 
+impossible to perform in a single dump is quite a powerful disadvantage 
+IMO.  Yes, you *can* just run pg_dump multiple times, but I think anyone 
+using pg_dump would rather quote out a wilcard than issue virtually the 
+same command with one changed argument over and over again.  Or writing 
+a script to loop through the desired schema/table combinations and 
+dumping each one at a time.
+
+Is command line quoting really that much of a hassle?  And if so, what 
+are the major hurdles?
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
