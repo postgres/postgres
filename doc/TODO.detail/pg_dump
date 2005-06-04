@@ -1256,7 +1256,7 @@ a script to loop through the desired schema/table combinations and
 dumping each one at a time.
 
 Is command line quoting really that much of a hassle?  And if so, what 
-are the major hurdles?
+are the major hurdles? 
 
 ---------------------------(end of broadcast)---------------------------
 TIP 4: Don't 'kill -9' the postmaster
