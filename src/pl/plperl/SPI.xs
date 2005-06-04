@@ -97,6 +97,11 @@ spi_spi_exec_query(query, ...)
 	OUTPUT:
 		RETVAL
 
+void
+spi_spi_return_next(rv)
+	SV *rv;
+	CODE:
+		plperl_return_next(rv);
 
 BOOT:
     items = 0;  /* avoid 'unused variable' warning */
