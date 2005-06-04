@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jun  4 12:53:41 EDT 2005
+Last updated:		Sat Jun  4 14:12:31 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -423,6 +423,14 @@ Commands
 
 * Add C code to copy directories for use in creating new databases
 * Have pg_ctl look at PGHOST in case it is a socket directory?
+* Allow pg_ctl to work properly with configuration files located outside
+  the PGDATA directory
+
+  pg_ctl can not read the pid file because it isn't located in the
+  config directory but in the PGDATA directory.  The solution is to
+  allow pg_ctl to read and understand postgresql.conf to find the
+  data_directory value.
+
 * Allow column-level GRANT/REVOKE privileges
 * Add a GUC variable to warn about non-standard SQL usage in queries
 * Add MERGE command that does UPDATE/DELETE, or on failure, INSERT (rules,
