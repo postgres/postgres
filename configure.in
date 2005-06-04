@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.411 2005/05/15 00:26:18 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.412 2005/06/04 20:42:41 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -447,11 +447,11 @@ AC_SUBST(krb_srvtab)
 # Kerberos configuration parameters
 #
 PGAC_ARG_REQ(with, krb-srvnam,
-             [  --with-krb-srvnam=NAME  name of the service principal in Kerberos [[postgres]]],
+             [  --with-krb-srvnam=NAME  name of the default service principal in Kerberos [[postgres]]],
              [],
              [with_krb_srvnam="postgres"])
 AC_DEFINE_UNQUOTED([PG_KRB_SRVNAM], ["$with_krb_srvnam"],
-                   [Define to the name of the PostgreSQL service principal in Kerberos. (--with-krb-srvnam=NAME)])
+                   [Define to the name of the default PostgreSQL service principal in Kerberos. (--with-krb-srvnam=NAME)])
 
 
 #

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.263 2005/05/27 18:33:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.264 2005/06/04 20:42:42 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -62,6 +62,9 @@
 
 #ifndef PG_KRB_SRVTAB
 #define PG_KRB_SRVTAB ""
+#endif
+#ifndef PG_KRB_SRVNAM
+#define PG_KRB_SRVNAM ""
 #endif
 
 #define CONFIG_FILENAME	"postgresql.conf"
@@ -860,6 +863,15 @@ static struct config_bool ConfigureNamesBool[] =
 #endif
 	},
 
+	{
+		{"krb_caseins_users", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+			gettext_noop("Sets if Kerberos user names should be treated case insensitive."),
+			NULL
+		},
+		&pg_krb_caseins_users,
+		false, NULL, NULL
+	},
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL
@@ -1570,6 +1582,15 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&pg_krb_server_keyfile,
 		PG_KRB_SRVTAB, NULL, NULL
+	},
+
+	{
+		{"krb_srvname", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+			gettext_noop("Sets the name of the Kerberos service."),
+			NULL
+		},
+		&pg_krb_srvnam,
+		PG_KRB_SRVNAM, NULL, NULL
 	},
 
 	{

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.79 2005/04/27 20:11:07 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.80 2005/06/04 20:42:41 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -617,7 +617,7 @@ local   db1,db2,@demodbs  all                         md5
     quite complex (yet powerful). The 
     <ulink url="http://www.nrl.navy.mil/CCS/people/kenh/kerberos-faq.html">
     Kerberos <acronym>FAQ</></ulink> or 
-    <ulink url="ftp://athena-dist.mit.edu">MIT Project Athena</ulink>
+    <ulink url="http://web.mit.edu/kerberos/www/">MIT Kerberos page</ulink>
     can be a good starting point for exploration.
     Several sources for <productname>Kerberos</> distributions exist.
    </para>
@@ -626,23 +626,29 @@ local   db1,db2,@demodbs  all                         md5
     While <productname>PostgreSQL</> supports both Kerberos 4 and 
     Kerberos 5, only Kerberos 5 is recommended.  Kerberos 4 is
     considered insecure and no longer recommended for general
-    use.
-   </para>
-
-   <para>
-    In order to use <productname>Kerberos</>, support for it must be
-    enabled at build time.  See <xref linkend="installation"> for more
-    information.  Both Kerberos 4 and 5 are supported, but only one
-    version can be supported in any one build.
+    use. Only one version of Kerberos can be supported in any one
+		build, and support must be enabled at build time. See
+		<xref linkend="installation"> for more information.
    </para>
 
    <para>
     <productname>PostgreSQL</> operates like a normal Kerberos service.
     The name of the service principal is
-    <literal><replaceable>servicename</>/<replaceable>hostname</>@<replaceable>realm</></literal>, where
-    <replaceable>servicename</> is <literal>postgres</literal> (unless a
-    different service name was selected at configure time with
-    <literal>./configure --with-krb-srvnam=whatever</>).
+    <literal><replaceable>servicename</>/<replaceable>hostname</>@<replaceable>realm</></literal>.
+	 </para>
+	  <para>
+    <replaceable>servicename</> can be set on the server side using the
+    <xref linkend="guc-krb-srvname"> configuration parameter, and on the
+    client side using the krbsrvname connection parameter. (See also <xref linkend="libpq-connect">.). The installation default can be changed from the default
+		<literal>postgres</literal> at build time using 
+    <literal>./configure --with-krb-srvnam=whatever</>). In most environments,
+		this parameter never needs to be changed. However, to support multiple
+		<productname>PostgreSQL</> installations on the same host it is necessary.
+		Some Kerberos implementations may also require a different service name,
+		such as Microsoft Active Directory which requires the service name
+		to be in uppercase (<literal>POSTGRES</literal>).
+	 </para>
+	 <para>
     <replaceable>hostname</> is the fully qualified host name of the
     server machine. The service principal's realm is the preferred realm
     of the server machine.
@@ -658,12 +664,12 @@ local   db1,db2,@demodbs  all                         md5
    </para>
 
    <para>
-    Make sure that your server key file is readable (and preferably
+    Make sure that your server keytab file is readable (and preferably
     only readable) by the <productname>PostgreSQL</productname> server
     account.  (See also <xref linkend="postgres-user">.) The location
     of the key file is specified by the <xref
     linkend="guc-krb-server-keyfile"> configuration
-    parameter. (See also <xref linkend="runtime-config">.) The default
+    parameter. The default
     is <filename>/etc/srvtab</> if you are using Kerberos 4 and
     <filename>/usr/local/pgsql/etc/krb5.keytab</> (or whichever
     directory was specified as <varname>sysconfdir</> at build time)
@@ -671,12 +677,13 @@ local   db1,db2,@demodbs  all                         md5
    </para>
 
    <para>
-    To generate the keytab file, use for example (with version 5)
+	  The keytab file is generated in the Kerberos system, see the 
+		Kerberos documentation for details. The following example is 
+		for MIT-compatible Kerberos 5 implementations:
 <screen>
 <prompt>kadmin% </><userinput>ank -randkey postgres/server.my.domain.org</>
 <prompt>kadmin% </><userinput>ktadd -k krb5.keytab postgres/server.my.domain.org</>
 </screen>
-    Read the <productname>Kerberos</> documentation for details.
    </para>
 
    <para>

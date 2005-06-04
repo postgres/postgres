@@ -64,8 +64,11 @@
 #authentication_timeout = 60	# 1-600, in seconds
 #ssl = false
 #password_encryption = true
-#krb_server_keyfile = ''
 #db_user_namespace = false
+# Kerberos
+#krb_server_keyfile = ''
+#krb_caseins_users = false
+#krb_srvname = 'postgres'
 
 
 #---------------------------------------------------------------------------

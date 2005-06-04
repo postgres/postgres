@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.100 2005/03/25 00:34:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.101 2005/06/04 20:42:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,7 +196,8 @@ static int
 pg_krb4_sendauth(char *PQerrormsg, int sock,
 				 struct sockaddr_in * laddr,
 				 struct sockaddr_in * raddr,
-				 const char *hostname)
+				 const char *hostname, 
+				 const char *servicename)
 {
 	long		krbopts = 0;	/* one-way authentication */
 	KTEXT_ST	clttkt;
@@ -216,7 +217,7 @@ pg_krb4_sendauth(char *PQerrormsg, int sock,
 	status = krb_sendauth(krbopts,
 						  sock,
 						  &clttkt,
-						  PG_KRB_SRVNAM,
+						  servicename,
 						  hostname,
 						  realm,
 						  (u_long) 0,
@@ -260,6 +261,10 @@ pg_krb4_sendauth(char *PQerrormsg, int sock,
  *	   provide an aname mapping database...it may be a better idea to use
  *	   krb5_an_to_ln, except that it punts if multiple components are found,
  *	   and we can't afford to punt.
+ *
+ * For WIN32, convert username to lowercase because the Win32 kerberos library
+ * generates tickets with the username as the user entered it instead of as
+ * it is entered in the directory.
  */
 static char *
 pg_an_to_ln(char *aname)
@@ -268,6 +273,11 @@ pg_an_to_ln(char *aname)
 
 	if ((p = strchr(aname, '/')) || (p = strchr(aname, '@')))
 		*p = '\0';
+#ifdef WIN32
+	for (p = aname; *p ; p++)
+		*p = pg_tolower(*p);
+#endif
+
 	return aname;
 }
 
@@ -360,7 +370,7 @@ pg_krb5_authname(char *PQerrormsg)
  *					   the server
  */
 static int
-pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname)
+pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *servicename)
 {
 	krb5_error_code retval;
 	int			ret;
@@ -379,7 +389,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname)
 	if (ret != STATUS_OK)
 		return ret;
 
-	retval = krb5_sname_to_principal(pg_krb5_context, hostname, PG_KRB_SRVNAM,
+	retval = krb5_sname_to_principal(pg_krb5_context, hostname, servicename,
 									 KRB5_NT_SRV_HST, &server);
 	if (retval)
 	{
@@ -405,7 +415,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname)
 	}
 
 	retval = krb5_sendauth(pg_krb5_context, &auth_context,
-						   (krb5_pointer) & sock, PG_KRB_SRVNAM,
+						   (krb5_pointer) & sock, "postgres",
 						   pg_krb5_client, server,
 						   AP_OPTS_MUTUAL_REQUIRED,
 						   NULL, 0,		/* no creds, use ccache instead */
@@ -602,7 +612,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			if (pg_krb4_sendauth(PQerrormsg, conn->sock,
 							   (struct sockaddr_in *) & conn->laddr.addr,
 							   (struct sockaddr_in *) & conn->raddr.addr,
-								 hostname) != STATUS_OK)
+								 hostname, conn->krbsrvname) != STATUS_OK)
 			{
 				/* PQerrormsg already filled in */
 				pgunlock_thread();
@@ -620,7 +630,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 #ifdef KRB5
 			pglock_thread();
 			if (pg_krb5_sendauth(PQerrormsg, conn->sock,
-								 hostname) != STATUS_OK)
+								 hostname, conn->krbsrvname) != STATUS_OK)
 			{
 				/* PQerrormsg already filled in */
 				pgunlock_thread();

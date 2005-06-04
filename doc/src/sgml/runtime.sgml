@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.321 2005/05/25 02:56:15 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.322 2005/06/04 20:42:41 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -955,10 +955,38 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the location of the Kerberos server key file. See
-        <xref linkend="kerberos-auth"> for details.
+        <xref linkend="kerberos-auth"> for details. This parameter
+		can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry id="guc-krb-srvname" xreflabel="krb_srvname">
+      <term><varname>krb_srvname</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>krb_srvname</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets the Kerberos service name. See <xref linkend="kerberos-auth">
+        for details. This parameter can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+	 <varlistentry id="guc-krb-caseins-users" xreflabel="krb_caseins_users">
+	  <term><varname>krb_caseins_users</varname> (<type>boolean</type>)</term>
+	  <indexterm>
+	   <primary><varname>krb_caseins_users</varname> configuration parameter</primary>
+      </indexterm>
+	  <listitem>
+	   <para>
+	    Sets if Kerberos usernames should be treated case-insensitive.
+		The default is off (case sensitive). This parameter can only be
+		set at server start.
+       </para>
+	  </listitem>
+	 </varlistentry>
 
      <varlistentry id="guc-db-user-namespace" xreflabel="db_user_namespace">
       <term><varname>db_user_namespace</varname> (<type>boolean</type>)</term>

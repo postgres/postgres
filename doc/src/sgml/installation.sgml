@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.233 2005/05/15 00:26:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.234 2005/06/04 20:42:41 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -816,8 +816,8 @@ su - postgres
        <term><option>--with-krb-srvnam=<replaceable>NAME</></option></term>
        <listitem>
         <para>
-         The name of the Kerberos service principal.
-         <literal>postgres</literal> is the default. There's probably no
+         The default name of the Kerberos service principal.
+         <literal>postgres</literal> is the default. There's usually no
          reason to change this.
         </para>
        </listitem>

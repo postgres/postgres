@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.123 2005/02/22 04:35:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.124 2005/06/04 20:42:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,8 @@ static char *recv_password_packet(Port *port);
 static int	recv_and_check_password_packet(Port *port);
 
 char	   *pg_krb_server_keyfile;
+char       *pg_krb_srvnam;
+bool		pg_krb_caseins_users;
 
 #ifdef USE_PAM
 #ifdef HAVE_PAM_PAM_APPL_H
@@ -99,7 +101,7 @@ pg_krb4_recvauth(Port *port)
 	status = krb_recvauth(krbopts,
 						  port->sock,
 						  &clttkt,
-						  PG_KRB_SRVNAM,
+						  pg_krb_srvnam,
 						  instance,
 						  &port->raddr.in,
 						  &port->laddr.in,
@@ -219,16 +221,16 @@ pg_krb5_init(void)
 		return STATUS_ERROR;
 	}
 
-	retval = krb5_sname_to_principal(pg_krb5_context, NULL, PG_KRB_SRVNAM,
+	retval = krb5_sname_to_principal(pg_krb5_context, NULL, pg_krb_srvnam,
 									 KRB5_NT_SRV_HST, &pg_krb5_server);
 	if (retval)
 	{
 		ereport(LOG,
 		 (errmsg("Kerberos sname_to_principal(\"%s\") returned error %d",
-				 PG_KRB_SRVNAM, retval)));
+				 pg_krb_srvnam, retval)));
 		com_err("postgres", retval,
 				"while getting server principal for service \"%s\"",
-				PG_KRB_SRVNAM);
+				pg_krb_srvnam);
 		krb5_kt_close(pg_krb5_context, pg_krb5_keytab);
 		krb5_free_context(pg_krb5_context);
 		return STATUS_ERROR;
@@ -264,7 +266,7 @@ pg_krb5_recvauth(Port *port)
 		return ret;
 
 	retval = krb5_recvauth(pg_krb5_context, &auth_context,
-						   (krb5_pointer) & port->sock, PG_KRB_SRVNAM,
+						   (krb5_pointer) & port->sock, "postgres",
 						   pg_krb5_server, 0, pg_krb5_keytab, &ticket);
 	if (retval)
 	{
@@ -303,7 +305,11 @@ pg_krb5_recvauth(Port *port)
 	}
 
 	kusername = pg_an_to_ln(kusername);
-	if (strncmp(port->user_name, kusername, SM_DATABASE_USER))
+	if (pg_krb_caseins_users)
+		ret = strncasecmp(port->user_name, kusername, SM_DATABASE_USER);
+	else
+		ret = strncmp(port->user_name, kusername, SM_DATABASE_USER);
+	if (ret)
 	{
 		ereport(LOG,
 				(errmsg("unexpected Kerberos user name received from client (received \"%s\", expected \"%s\")",

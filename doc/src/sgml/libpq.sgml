@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.181 2005/05/30 19:32:44 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.182 2005/06/04 20:42:41 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -275,6 +275,18 @@ PGconn *PQconnectdb(const char *conninfo);
        the server (equivalent to <literal>sslmode</>
        <literal>prefer</>).  This option is only available if
        <productname>PostgreSQL</> is compiled with SSL support.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>krbsrvname</literal></term>
+     <listitem>
+      <para>
+       Kerberos service name to use when authenticating with Kerberos 4 or 5.
+       This must match the service name specified in the server
+       configuration for Kerberos authentication to succeed. (See also
+			 <xref linkend="kerberos-auth">.)
       </para>
      </listitem>
     </varlistentry>
@@ -3766,6 +3778,15 @@ an <acronym>SSL</acronym> connection (equivalent to <literal>sslmode</>
 This option is deprecated in favor of the <literal>sslmode</>
 setting, and is only available if
 <productname>PostgreSQL</> is compiled with SSL support.
+</para>
+</listitem>
+<listitem>
+<para>
+<indexterm>
+ <primary><envar>PGKRBSRVNAME</envar></primary>
+</indexterm>
+<envar>PGKRBSRVNAME</envar> sets the Kerberos service name to use when
+authenticating with Kerberos 4 or 5.
 </para>
 </listitem>
 <listitem>

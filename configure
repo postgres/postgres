@@ -869,7 +869,7 @@ Optional Packages:
   --with-python           build Python modules (PL/Python)
   --with-krb4             build with Kerberos 4 support
   --with-krb5             build with Kerberos 5 support
-  --with-krb-srvnam=NAME  name of the service principal in Kerberos [postgres]
+  --with-krb-srvnam=NAME  name of the default service principal in Kerberos [postgres]
   --with-pam              build with PAM support
   --with-bonjour          build with Bonjour support
   --with-openssl          build with OpenSSL support

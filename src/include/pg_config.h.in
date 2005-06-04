@@ -602,7 +602,7 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Define to the name of the PostgreSQL service principal in Kerberos.
+/* Define to the name of the default PostgreSQL service principal in Kerberos.
    (--with-krb-srvnam=NAME) */
 #undef PG_KRB_SRVNAM
 
@@ -635,6 +635,9 @@
 /* Define to 1 to build with assertion checks. (--enable-cassert) */
 #undef USE_ASSERT_CHECKING
 
+/* Define to 1 to build with Bonjour support. (--with-bonjour) */
+#undef USE_BONJOUR
+
 /* Define to 1 if you want 64-bit integer timestamp and interval support.
    (--enable-integer-datetimes) */
 #undef USE_INTEGER_DATETIMES
@@ -644,9 +647,6 @@
 
 /* Define to 1 to build with PAM support. (--with-pam) */
 #undef USE_PAM
-
-/* Define to 1 to build with Bonjour support. (--with-bonjour) */
-#undef USE_BONJOUR
 
 /* Use replacement snprintf() functions. */
 #undef USE_SNPRINTF
