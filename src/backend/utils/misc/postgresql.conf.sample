@@ -31,6 +31,7 @@
 
 # The default values of these variables are driven from the -D command line
 # switch or PGDATA environment variable, represented here as ConfigDir.
+
 # data_directory = 'ConfigDir'		# use data in another directory
 # hba_file = 'ConfigDir/pg_hba.conf'	# the host-based authentication file
 # ident_file = 'ConfigDir/pg_ident.conf'  # the IDENT configuration file
