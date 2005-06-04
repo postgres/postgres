@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.136 2005/06/03 23:05:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.137 2005/06/04 02:07:09 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,6 @@
 typedef struct ExplainState
 {
 	/* options */
-	bool		printCost;		/* print cost */
 	bool		printNodes;		/* do nodeToString() too */
 	bool		printAnalyze;	/* print actual times */
 	/* other states */
@@ -246,7 +245,6 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 
 	es = (ExplainState *) palloc0(sizeof(ExplainState));
 
-	es->printCost = true;		/* default */
 	es->printNodes = stmt->verbose;
 	es->printAnalyze = stmt->analyze;
 	es->rtable = queryDesc->parsetree->rtable;
@@ -266,18 +264,14 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 			pfree(s);
 			do_text_output_multiline(tstate, f);
 			pfree(f);
-			if (es->printCost)
-				do_text_output_oneline(tstate, "");		/* separator line */
+			do_text_output_oneline(tstate, "");		/* separator line */
 		}
 	}
 
 	str = makeStringInfo();
 
-	if (es->printCost)
-	{
-		explain_outNode(str, queryDesc->plantree, queryDesc->planstate,
-						NULL, 0, es);
-	}
+	explain_outNode(str, queryDesc->plantree, queryDesc->planstate,
+					NULL, 0, es);
 
 	/*
 	 * If we ran the command, run any AFTER triggers it queued.  (Note this
@@ -358,13 +352,10 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 
 	totaltime += elapsed_time(&starttime);
 
-	if (es->printCost)
-	{
-		if (stmt->analyze)
-			appendStringInfo(str, "Total runtime: %.3f ms\n",
-							 1000.0 * totaltime);
-		do_text_output_multiline(tstate, str->data);
-	}
+	if (stmt->analyze)
+		appendStringInfo(str, "Total runtime: %.3f ms\n",
+						 1000.0 * totaltime);
+	do_text_output_multiline(tstate, str->data);
 
 	pfree(str->data);
 	pfree(str);
@@ -667,32 +658,30 @@ explain_outNode(StringInfo str,
 		default:
 			break;
 	}
-	if (es->printCost)
+	
+	appendStringInfo(str, "  (cost=%.2f..%.2f rows=%.0f width=%d)",
+					 plan->startup_cost, plan->total_cost,
+					 plan->plan_rows, plan->plan_width);
+
+	/*
+	 * We have to forcibly clean up the instrumentation state because
+	 * we haven't done ExecutorEnd yet.  This is pretty grotty ...
+	 */
+	if (planstate->instrument)
+		InstrEndLoop(planstate->instrument);
+
+	if (planstate->instrument && planstate->instrument->nloops > 0)
 	{
-		appendStringInfo(str, "  (cost=%.2f..%.2f rows=%.0f width=%d)",
-						 plan->startup_cost, plan->total_cost,
-						 plan->plan_rows, plan->plan_width);
+		double		nloops = planstate->instrument->nloops;
 
-		/*
-		 * We have to forcibly clean up the instrumentation state because
-		 * we haven't done ExecutorEnd yet.  This is pretty grotty ...
-		 */
-		if (planstate->instrument)
-			InstrEndLoop(planstate->instrument);
-
-		if (planstate->instrument && planstate->instrument->nloops > 0)
-		{
-			double		nloops = planstate->instrument->nloops;
-
-			appendStringInfo(str, " (actual time=%.3f..%.3f rows=%.0f loops=%.0f)",
-						1000.0 * planstate->instrument->startup / nloops,
-						  1000.0 * planstate->instrument->total / nloops,
-							 planstate->instrument->ntuples / nloops,
-							 planstate->instrument->nloops);
-		}
-		else if (es->printAnalyze)
-			appendStringInfo(str, " (never executed)");
+		appendStringInfo(str, " (actual time=%.3f..%.3f rows=%.0f loops=%.0f)",
+					1000.0 * planstate->instrument->startup / nloops,
+					  1000.0 * planstate->instrument->total / nloops,
+						 planstate->instrument->ntuples / nloops,
+						 planstate->instrument->nloops);
 	}
+	else if (es->printAnalyze)
+		appendStringInfo(str, " (never executed)");
 	appendStringInfoChar(str, '\n');
 
 	/* quals, sort keys, etc */
