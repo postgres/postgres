@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.83 2005/04/06 23:56:07 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.84 2005/06/04 14:12:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -265,7 +265,7 @@ static void sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 		int rscale);
 static void div_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
-		int rscale);
+		int rscale, bool round);
 static int	select_div_scale(NumericVar *var1, NumericVar *var2);
 static void mod_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void ceil_var(NumericVar *var, NumericVar *result);
@@ -906,14 +906,14 @@ compute_bucket(Numeric operand, Numeric bound1, Numeric bound2,
 		sub_var(&operand_var, &bound1_var, &operand_var);
 		sub_var(&bound2_var, &bound1_var, &bound2_var);
 		div_var(&operand_var, &bound2_var, result_var,
-				select_div_scale(&operand_var, &bound2_var));
+				select_div_scale(&operand_var, &bound2_var), true);
 	}
 	else
 	{
 		sub_var(&bound1_var, &operand_var, &operand_var);
 		sub_var(&bound1_var, &bound2_var, &bound1_var);
 		div_var(&operand_var, &bound1_var, result_var,
-				select_div_scale(&operand_var, &bound1_var));
+				select_div_scale(&operand_var, &bound1_var), true);
 	}
 
 	mul_var(result_var, count_var, result_var,
@@ -1266,7 +1266,7 @@ numeric_div(PG_FUNCTION_ARGS)
 	/*
 	 * Do the divide and return the result
 	 */
-	div_var(&arg1, &arg2, &result, rscale);
+	div_var(&arg1, &arg2, &result, rscale, true);
 
 	res = make_result(&result);
 
@@ -2246,7 +2246,7 @@ numeric_variance(PG_FUNCTION_ARGS)
 	{
 		mul_var(&vN, &vNminus1, &vNminus1, 0);	/* N * (N - 1) */
 		rscale = select_div_scale(&vsumX2, &vNminus1);
-		div_var(&vsumX2, &vNminus1, &vsumX, rscale);	/* variance */
+		div_var(&vsumX2, &vNminus1, &vsumX, rscale, true);	/* variance */
 
 		res = make_result(&vsumX);
 	}
@@ -2322,7 +2322,7 @@ numeric_stddev(PG_FUNCTION_ARGS)
 	{
 		mul_var(&vN, &vNminus1, &vNminus1, 0);	/* N * (N - 1) */
 		rscale = select_div_scale(&vsumX2, &vNminus1);
-		div_var(&vsumX2, &vNminus1, &vsumX, rscale);	/* variance */
+		div_var(&vsumX2, &vNminus1, &vsumX, rscale, true);	/* variance */
 		sqrt_var(&vsumX, &vsumX, rscale);		/* stddev */
 
 		res = make_result(&vsumX);
@@ -3840,7 +3840,7 @@ mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
  */
 static void
 div_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
-		int rscale)
+		int rscale, bool round)
 {
 	int			div_ndigits;
 	int			res_sign;
@@ -4079,8 +4079,11 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result,
 	result->sign = res_sign;
 
 	/* Round to target rscale (and set result->dscale) */
-	round_var(result, rscale);
-
+	if (round)
+		round_var(result, rscale);
+	else
+		trunc_var(result, rscale);
+	
 	/* Strip leading and trailing zeroes */
 	strip_var(result);
 }
@@ -4178,7 +4181,7 @@ mod_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	 */
 	rscale = select_div_scale(var1, var2);
 
-	div_var(var1, var2, &tmp, rscale);
+	div_var(var1, var2, &tmp, rscale, false);
 
 	trunc_var(&tmp, 0);
 
@@ -4294,7 +4297,7 @@ sqrt_var(NumericVar *arg, NumericVar *result, int rscale)
 
 	for (;;)
 	{
-		div_var(&tmp_arg, result, &tmp_val, local_rscale);
+		div_var(&tmp_arg, result, &tmp_val, local_rscale, true);
 
 		add_var(result, &tmp_val, result);
 		mul_var(result, &const_zero_point_five, result, local_rscale);
@@ -4384,7 +4387,7 @@ exp_var(NumericVar *arg, NumericVar *result, int rscale)
 
 	/* Compensate for input sign, and round to requested rscale */
 	if (xneg)
-		div_var(&const_one, result, result, rscale);
+		div_var(&const_one, result, result, rscale, true);
 	else
 		round_var(result, rscale);
 
@@ -4450,7 +4453,7 @@ exp_var_internal(NumericVar *arg, NumericVar *result, int rscale)
 		add_var(&ni, &const_one, &ni);
 		mul_var(&xpow, &x, &xpow, local_rscale);
 		mul_var(&ifac, &ni, &ifac, 0);
-		div_var(&xpow, &ifac, &elem, local_rscale);
+		div_var(&xpow, &ifac, &elem, local_rscale, true);
 
 		if (elem.ndigits == 0)
 			break;
@@ -4534,7 +4537,7 @@ ln_var(NumericVar *arg, NumericVar *result, int rscale)
 	 */
 	sub_var(&x, &const_one, result);
 	add_var(&x, &const_one, &elem);
-	div_var(result, &elem, result, local_rscale);
+	div_var(result, &elem, result, local_rscale, true);
 	set_var_from_var(result, &xx);
 	mul_var(result, result, &x, local_rscale);
 
@@ -4544,7 +4547,7 @@ ln_var(NumericVar *arg, NumericVar *result, int rscale)
 	{
 		add_var(&ni, &const_two, &ni);
 		mul_var(&xx, &x, &xx, local_rscale);
-		div_var(&xx, &ni, &elem, local_rscale);
+		div_var(&xx, &ni, &elem, local_rscale, true);
 
 		if (elem.ndigits == 0)
 			break;
@@ -4614,7 +4617,7 @@ log_var(NumericVar *base, NumericVar *num, NumericVar *result)
 	/* Select scale for division result */
 	rscale = select_div_scale(&ln_num, &ln_base);
 
-	div_var(&ln_num, &ln_base, result, rscale);
+	div_var(&ln_num, &ln_base, result, rscale, true);
 
 	free_var(&ln_num);
 	free_var(&ln_base);
@@ -4752,7 +4755,7 @@ power_var_int(NumericVar *base, int exp, NumericVar *result, int rscale)
 			round_var(result, rscale);
 			return;
 		case -1:
-			div_var(&const_one, base, result, rscale);
+			div_var(&const_one, base, result, rscale, true);
 			return;
 		case 2:
 			mul_var(base, base, result, rscale);
@@ -4790,7 +4793,7 @@ power_var_int(NumericVar *base, int exp, NumericVar *result, int rscale)
 
 	/* Compensate for input sign, and round to requested rscale */
 	if (neg)
-		div_var(&const_one, result, result, rscale);
+		div_var(&const_one, result, result, rscale, true);
 	else
 		round_var(result, rscale);
 }
