@@ -1,0 +1,615 @@
+From pgsql-hackers-owner+M59479@postgresql.org Thu Sep 30 15:55:23 2004
+Return-path: <pgsql-hackers-owner+M59479@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i8UJtHw26165
+	for <pgman@candle.pha.pa.us>; Thu, 30 Sep 2004 15:55:19 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id A4BDD32A219
+	for <pgman@candle.pha.pa.us>; Thu, 30 Sep 2004 20:55:10 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 24195-05 for <pgman@candle.pha.pa.us>;
+	Thu, 30 Sep 2004 19:55:08 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 537C532A216
+	for <pgman@candle.pha.pa.us>; Thu, 30 Sep 2004 20:55:10 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 333B932A1EF
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Thu, 30 Sep 2004 20:49:20 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 21793-04
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Thu, 30 Sep 2004 19:49:09 +0000 (GMT)
+Received: from authenticity.encs.concordia.ca (authenticity-96.encs.concordia.ca [132.205.96.93])
+	by svr1.postgresql.org (Postfix) with ESMTP id BEB6A32A156
+	for <pgsql-hackers@postgresql.org>; Thu, 30 Sep 2004 20:49:03 +0100 (BST)
+Received: from haida.cs.concordia.ca (IDENT:mokhov@haida.cs.concordia.ca [132.205.64.45])
+	by authenticity.encs.concordia.ca (8.12.11/8.12.11) with ESMTP id i8UJn0Xe022202;
+	Thu, 30 Sep 2004 15:49:00 -0400
+Date: Thu, 30 Sep 2004 15:49:00 -0400 (EDT)
+From: "Serguei A. Mokhov" <mokhov@cs.concordia.ca>
+To: pgsql-hackers@postgresql.org
+cc: "Serguei A. Mokhov" <mokhov@cs.concordia.ca>
+Subject: [HACKERS] pg_upgrade project: high-level design proposal of in-place upgrade
+	facility
+Message-ID: <Pine.LNX.4.58.0409301532390.4685@haida.cs.concordia.ca>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+Hello dear all,
+
+[Please CC your replies to me as I am on the digest mode]
+
+Here's finally a very high-level design proposal of the pg_upgrade feature
+I was handwaiving a couple of weeks ago. Since, I am almost done with the
+moving, I can allocate some time for this for 8.1/8.2.
+
+If this topic is of interest to you, please read on until the very end
+before flaming or bashing the ideas out.  I had designed that thing and
+kept updating (the design) more or less regularly, and also reflected some
+issues from the nearby threads [1] and [2].
+
+This design is very high-level at the moment and is not very detailed.  I
+will need to figure out more stuff as I go and design some aspects in
+finer detail.  I started to poke around asking for initdb-forcing code
+paths in [3], but got no response so far.  But I guess if the general idea
+or, rather, ideas accepted I will insist on more information more
+aggressively :) if I can't figure something out for myself.
+
+[1] http://archives.postgresql.org/pgsql-hackers/2004-09/msg00000.php
+[2] http://archives.postgresql.org/pgsql-hackers/2004-09/msg00382.php
+[3] http://archives.postgresql.org/pgsql-hackers/2004-08/msg01594.php
+
+Comments are very welcome, especially _*CONSTRUCTIVE*_...
+
+Thank you, and now sit back and read...
+
+CONTENTS:
+=========
+
+1. The Need
+1. Utilities and User's View of the pg_upgrade Feature
+2. Storage Management
+   - Storage Managers and the smgr API
+3. Source Code Maintenance Aspects
+2. The Upgrade Sequence
+4. Proposed Implementation Plan
+   - initdb() API
+   - upgrade API
+
+
+1. The Need
+-----------
+
+It's been a problem for PG for quite awhile now to have a less painful
+upgrade procedure with every new revision of PostgreSQL, so the
+dump/restore sequence is required.  That can take a while for a production
+DB, while keeping it offline.  The new replication-related solutions, such
+as Slony I, pg_pool, and others can remedy the problem somewhat, but
+require to roughly double the storage requirements of a given database
+while replicating from the older server to a newer one.
+
+The proposed implementation of an in-server pg_upgrade facility attempts
+to address both issues at the same time -- a possibility to keep the
+server running and upgrading lazily w/o doubling the storage requirements
+(there will be some extra disk space taken, but far from doubling the
+size).  The in-process upgrade will not take much of down time and won't
+require that much memory/disk/network resources as replication solutions
+do.
+
+
+Prerequisites
+-------------
+
+Ideally, the (maybe not so anymore) ambitious goal is to simply be able to
+"drop in" the new binaries of the new server and kick off on the older
+version of data files. I think is this feasible now a lot more than before
+since we have those things available, which should ease up the
+implementation:
+
+  - bgwriter
+  - pg_autovacuum (the one to be integrated into the backend in 8.1)
+  - smgr API for pluggable storage managers
+  - initdb in C
+  - ...
+
+initdb in C, bgwriter and pg_autovacuum, and pluggable storage manager
+have made the possibility of creation of the Upgrade Subsystem for
+PostgreSQL to be something more reasonable, complete, feasible, and sane
+to a point.
+
+
+Utilities and the User's (DBA) View of the Feature
+--------------------------------------------------
+
+Two instances exist:
+
+   pg_upgrade (in C)
+
+       A standalone utility to upgrade the binary on-disk format from one
+       version to another when the database is offline.
+       We should always have this as an option.
+       pg_upgrade will accept sub/super set of pg_dump(all)/pg_restore
+       options that do not require a connection. I haven't
+       thought through this in detail yet.
+
+   pg_autoupgrade
+
+       a postgres subprocess, modeled after bgwriter and pg_autovacuum
+       daemons.  This will work when the database system is running
+       on old data directory, and lazily converting relations to the new
+       format.
+
+pg_autoupgrade daemon can be triggered by the following events in addition
+to the lazy upgrade process:
+
+   "SQL" level: UPGRADE <ALL | relation_name [, relation_name]> [NOW | time]
+
+While the database won't be offline running over older database files,
+SELECT/read-only queries would be allowed using older storage managers*.
+Any write operation on old data will act using write-invalidate approach
+that will force the upgrade the affected relations to the new format to be
+scheduled after the relation-in-progress.
+
+(* See the "Storage Management" section.)
+
+Availability of the relations while upgrade is in progress is likely to be
+the same as in VACUUM FULL for that relation, i.e. the entire relation is
+locked until the upgrade is complete.  Maybe we could optimize that by
+locking only particular pages of relations, I have to figure that out.
+
+The upgrade of indices can be done using REINDEX, which seems far less
+complicated than trying to convert its on-disk representation.  This has
+to be done after the relation is converted.  Alternatively, the index
+upgrade can simply be done by "CREATE INDEX" after the upgrade of
+relations.
+
+The relations to be upgraded are ordered according to some priority, e.g.
+system relations being first, then user-owned relations.  System relations
+upgrade is forced upon the postmaster startup, and then user relations are
+processed lazily.
+
+So, in a sense, pg_autoupgrade will act like a proxy choosing appropriate
+storage manager (like a driver) between the new server and the old data
+file upgrading them on-demand.  For that purpose we might need to add a
+pg_upgradeproxy to intercept backend requests and use appropriate storage
+manager.  There will be one proxy process per backend.
+
+
+Storage Management
+==================
+
+Somebody has made a possibility to plug a different storage manager in
+postgres and we even had two of them at some point . for the magnetic disk
+and the main memory.  The main memory one is gone, but the smgr API is
+still there.  Some were dubious why we would ever need another third-party
+storage manager, but here I propose to "plug in" storage managers from the
+older Postgres versions itself!  Here is where the pluggable storage
+manager API would be handy once fully resurrected.  Instead of trying to
+plug some third party storage managers it will primarily be used by the
+storage managers of different versions of Postgres.
+
+We can take the storage manager code from the past maintenance releases,
+namely 6.5.3, 7.0.3, 7.1.3, 7.2.5, 7.3.7, 7.4.5, and 8.0, and arrange them
+in appropriate fashion and have them implement the API properly.  Anyone
+can contribute a storage manager as they see fit, there's no need to get
+them all at once.  As a trial implementation I will try to do the last
+three or four maybe.
+
+
+Where to put relations being upgraded?
+--------------------------------------
+
+At the beginning of the upgrade process if pg detects the old version of
+data files, it moves them under $PGDATA/<ver>, and keeps the old relations
+there until upgraded.  The relations to be upgraded will be kept in the
+pg_upgrade_catalog.  Once all relations upgraded, the <ver> directory is
+removed and the auto and proxy processes are shut down.  The contents of
+the pg_upgrade_catalog emptied.  The only issue remains is how to deal
+with tablespaces (or LOCATION in 7.* releases) elsewhere .- this can
+probably be addressed in the similar fashion, but having a
+/my/tablespace/<ver> directory.
+
+Source Code Maintenance
+=======================
+
+Now, after the above some of you may get scared on the amount of similar
+code to possibly maintain in all those storage managers, but in reality
+they would require as much maintenance as the corresponding releases do
+get back-patched in that code area, and some are not being maintained for
+quite some time already.  Plus, I should be around to maintain it, should
+this become realized.
+
+Release-time Maintenance
+------------------------
+
+For maintenance of pg_upgrade itself, one will have to fork out a new
+storage manager from the previous stable release and "register" it within
+the system.  Alternatively, the new storage manager can be forked when the
+new release cycle begins.  Additionally, a pg_upgrade version has to be
+added implementing the API steps outlined in the pg_upgrade API section.
+
+
+Implementation Steps
+====================
+
+To materialize the above idea, I'd proceed as follows:
+
+*) Provide the initdb() API (quick)
+
+*) Resurrect the pluggable storage manager API to be usable for the
+   purpose.
+
+*) Document it
+
+*) Implement pg_upgrade API for 8.0 and 7.4.5.
+
+*) Extract 8.0 and 7.4.5 storage managers and have them implement the API
+   as a proof of concept.  Massage the API as needed.
+
+*) Document the process of adding new storage managers and pg_upgrade
+   drivers.
+
+*) Extract other versions storage managers.
+
+
+pg_upgrade sequence
+-------------------
+
+pg_upgrade API for the steps below to update for the next release.
+
+What to do with WAL?? Maybe upgrade can simply be done using WAL replay
+with old WAL manager? Not, fully, because not everything is in WAL, but
+some WAL recovery maybe needed in case the server was not shutdown cleanly
+before the upgrade.
+
+pg_upgrade will proceed as follows:
+
+- move PGDATA to PGDATA/<major pg version>
+- move tablespaces likewise
+- optional recovery from WAL in case old server was not shutdown properly
+-? Shall I upgrade PITR logs of 8.x??? So one can recover to a
+  point-in-time in the upgraded database?
+- CLUSTER all old data
+- ANALYZE all old data
+- initdb() new system catalogs
+- Merge in modifications from old system catalogs
+- upgrade schemas/users
+  -- variations
+- upgrade user relations
+
+Upgrade API:
+------------
+
+First draft, to be refined multiple times, but to convey the ideas behind:
+
+moveData()
+  movePGData()
+  moveTablespaces() 8.0+
+  moveDbLocation() < 8.0
+
+preliminaryRecovery()
+ - WAL??
+ - PITR 8.0+??
+
+preliminaryCleanup()
+  CLUSTER -- recover some dead space
+  ANALYZE -- gives us stats
+
+upgradeSystemInfo()
+  initdb()
+  mergeOldCatalogs()
+  mergeOldTemplates()
+
+upgradeUsers()
+
+upgradeSchemas()
+  - > 7.2, else NULL
+
+upgradeUserRelations()
+  upgradeIndices()
+    DROP/CREATE
+
+upgradeInit()
+{
+
+}
+
+The main body in pseudocode:
+
+upgradeLoop()
+{
+    moveData();
+    preliminaryRecovery();
+    preliminaryCleanup();
+    upgradeSystemInfo();
+    upgradeUsers();
+    upgradeSchemas();
+    upgradeUserRelations();
+}
+
+Something along these lines the API would be:
+
+typedef struct t_upgrade
+{
+	bool		(*moveData) (void);
+	bool		(*preliminaryRecovery) (void);		/* may be NULL */
+	bool		(*preliminaryCleanup) (void);		/* may be NULL */
+	bool		(*upgradeSystemInfo) (void);		/* may be NULL */
+	bool		(*upgradeUsers) (void);		/* may be NULL */
+	bool		(*upgradeSchemas) (void);		/* may be NULL */
+	bool		(*upgradeUserRelations) (void);		/* may be NULL */
+} t_upgrade;
+
+
+The above sequence is executed by either pg_upgrade utility uninterrupted
+or by the pg_autoupgrade daemon. In the former the upgrade priority is
+simply by OID, in the latter also, but can be overridden by the user using
+the UPGRADE command to schedule relations upgrade, write operation can
+also change such schedule, with user's selected choice to be first.  The
+more write requests a relation receives while in the upgrade queue, its
+priority increases; thus, the relation with most hits is on top. In case
+of tie, OID is the decision mark.
+
+Some issues to look into:
+
+- catalog merger
+- a crash in the middle of upgrade
+- PITR logs for 8.x+
+- ...
+
+Flames and Handwaiving
+----------------------
+
+Okay, flame is on, but before you flame, mind you, this is a very initial
+version of the design.  Some of the ideas may seem far fetched, the
+contents may seem messy, but I believe it's now more doable than ever and
+I am willing to put effort in it for the next release or two and then
+maintain it afterwards.  It's not going to be done in one shot maybe, but
+incrementally, using input, feedback, and hints from you, guys.
+
+Thank you for reading till this far :-) I.d like to hear from you if any
+of this made sense to you.
+
+Truly yours,
+
+-- 
+Serguei A. Mokhov            |  /~\    The ASCII
+Computer Science Department  |  \ / Ribbon Campaign
+Concordia University         |   X    Against HTML
+Montreal, Quebec, Canada     |  / \      Email!
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From pgsql-hackers-owner+M59486@postgresql.org Thu Sep 30 16:39:54 2004
+Return-path: <pgsql-hackers-owner+M59486@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i8UKdrw02740
+	for <pgman@candle.pha.pa.us>; Thu, 30 Sep 2004 16:39:53 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id EF25F329E3B
+	for <pgman@candle.pha.pa.us>; Thu, 30 Sep 2004 21:39:48 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 38456-02 for <pgman@candle.pha.pa.us>;
+	Thu, 30 Sep 2004 20:39:46 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 88673329C6B
+	for <pgman@candle.pha.pa.us>; Thu, 30 Sep 2004 21:39:48 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id AA522329DAE
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Thu, 30 Sep 2004 21:37:43 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 38130-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Thu, 30 Sep 2004 20:37:39 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 846E9329C63
+	for <pgsql-hackers@postgresql.org>; Thu, 30 Sep 2004 21:37:39 +0100 (BST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id i8UKa3jk025254;
+	Thu, 30 Sep 2004 16:36:03 -0400 (EDT)
+To: "Serguei A. Mokhov" <mokhov@cs.concordia.ca>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] pg_upgrade project: high-level design proposal of in-place upgrade facility 
+In-Reply-To: <Pine.LNX.4.58.0409301532390.4685@haida.cs.concordia.ca> 
+References: <Pine.LNX.4.58.0409301532390.4685@haida.cs.concordia.ca>
+Comments: In-reply-to "Serguei A. Mokhov" <mokhov@cs.concordia.ca>
+	message dated "Thu, 30 Sep 2004 15:49:00 -0400"
+Date: Thu, 30 Sep 2004 16:36:02 -0400
+Message-ID: <25253.1096576562@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+"Serguei A. Mokhov" <mokhov@cs.concordia.ca> writes:
+> Comments are very welcome, especially _*CONSTRUCTIVE*_...
+
+This is fundamentally wrong, because you are assigning the storage
+manager functionality that it does not have.  In particular, the
+storage manager knows nothing of the contents or format of the files
+it is managing, and so you can't realistically expect to use the smgr
+switch as a way to support access to tables with different internal
+formats.  The places that change in interesting ways across versions
+are usually far above the smgr switch.
+
+I don't believe in the idea of incremental "lazy" upgrades very much
+either.  It certainly will not work on the system catalogs --- you have
+to convert those in a big-bang fashion, because how are you going to
+find the other stuff otherwise?  And the real problem with it IMHO is
+that if something goes wrong partway through the process, you're in
+deep trouble because you have no way to back out.  You can't just revert
+to the old version because it won't understand your data, and your old
+backups that are compatible with it are now out of date.  If there are
+going to be any problems, you really need to find out about them
+immediately while your old backups are still current, not in a "lazy"
+fashion.
+
+The design we'd pretty much all bought into six months ago involved
+being able to do in-place upgrades when the format/contents of user
+relations and indexes is not changing.  All you'd have to do is dump
+and restore the schema data (system catalogs) which is a reasonably
+short process even on a large DB, so the big-bang nature of the
+conversion isn't a problem.  Admittedly this will not work for every
+single upgrade, but we had agreed that we could schedule upgrades
+so that the majority of releases do not change user data.  Historically
+that's been mostly true anyway, even without any deliberate attempt to
+group user-data-changing features together.
+
+I think the last major discussion about it started here:
+http://archives.postgresql.org/pgsql-hackers/2003-12/msg00379.php
+(I got distracted by other stuff and never did the promised work,
+but I still think the approach is sound.)
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M59497@postgresql.org Thu Sep 30 17:44:44 2004
+Return-path: <pgsql-hackers-owner+M59497@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i8ULihw11377
+	for <pgman@candle.pha.pa.us>; Thu, 30 Sep 2004 17:44:43 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id D0A6B329E2E
+	for <pgman@candle.pha.pa.us>; Thu, 30 Sep 2004 22:44:38 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 55636-04 for <pgman@candle.pha.pa.us>;
+	Thu, 30 Sep 2004 21:44:36 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 6ED67329DFC
+	for <pgman@candle.pha.pa.us>; Thu, 30 Sep 2004 22:44:38 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 040D2329E2E
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Thu, 30 Sep 2004 22:42:24 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 55767-04
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Thu, 30 Sep 2004 21:42:18 +0000 (GMT)
+Received: from authenticity.encs.concordia.ca (authenticity-96.encs.concordia.ca [132.205.96.93])
+	by svr1.postgresql.org (Postfix) with ESMTP id E3A4D329DFC
+	for <pgsql-hackers@postgresql.org>; Thu, 30 Sep 2004 22:42:19 +0100 (BST)
+Received: from haida.cs.concordia.ca (IDENT:mokhov@haida.cs.concordia.ca [132.205.64.45])
+	by authenticity.encs.concordia.ca (8.12.11/8.12.11) with ESMTP id i8ULgJrP001049;
+	Thu, 30 Sep 2004 17:42:19 -0400
+Date: Thu, 30 Sep 2004 17:42:19 -0400 (EDT)
+From: "Serguei A. Mokhov" <mokhov@cs.concordia.ca>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] pg_upgrade project: high-level design proposal of
+In-Reply-To: <25253.1096576562@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.58.0409301725550.4685@haida.cs.concordia.ca>
+References: <Pine.LNX.4.58.0409301532390.4685@haida.cs.concordia.ca>
+	<25253.1096576562@sss.pgh.pa.us>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+On Thu, 30 Sep 2004, Tom Lane wrote:
+
+> Date: Thu, 30 Sep 2004 16:36:02 -0400
+>
+> "Serguei A. Mokhov" <mokhov@cs.concordia.ca> writes:
+> > Comments are very welcome, especially _*CONSTRUCTIVE*_...
+>
+> This is fundamentally wrong, because you are assigning the storage
+> manager functionality that it does not have.  In particular, the
+
+Maybe, that's why I was asking of all init-db forcing paths, so I can go
+level above smgr to upgrade stuff, let say in access/ and other parts. I
+did ask that before and never got a reply. So the concept of "Storage
+Managers" may and will go well beyond the smgt API. That's the design
+refinement stage.
+
+> I don't believe in the idea of incremental "lazy" upgrades very much
+> either.  It certainly will not work on the system catalogs --- you have
+> to convert those in a big-bang fashion,
+
+I never proposed to do that to system catalogs, on the contrary, I said
+the system catalogs are to be upgraded upon the postmaster startup. only
+user relations are upgraded lazily:
+
+> The relations to be upgraded are ordered according to some priority,
+> e.g.  system relations being first, then user-owned relations.  System
+> relations upgrade is forced upon the postmaster startup, and then user
+> relations are processed lazily.
+
+So looks like we don't disagree here :)
+
+> The design we'd pretty much all bought into six months ago involved
+> being able to do in-place upgrades when the format/contents of user
+> relations and indexes is not changing.  All you'd have to do is dump and
+> restore the schema data (system catalogs) which is a reasonably short
+> process even on a large DB, so the big-bang nature of the conversion
+> isn't a problem.  Admittedly this will not work for every single
+> upgrade, but we had agreed that we could schedule upgrades so that the
+> majority of releases do not change user data.  Historically that's been
+> mostly true anyway, even without any deliberate attempt to group
+> user-data-changing features together.
+
+Annoyingly enough, they still do change.
+
+> I think the last major discussion about it started here:
+> http://archives.postgresql.org/pgsql-hackers/2003-12/msg00379.php
+> (I got distracted by other stuff and never did the promised work,
+> but I still think the approach is sound.)
+
+I'll go over that discussion and maybe will combine useful ideas together.
+I'll open a pgfoundry project to develop it there and then will submit for
+evaluation UNLESS you reserved it for yourself, Tom, to fullfill the
+promise... If anybody objects the pgfoundry idea to test the concepts,
+I'll apply for a project there.
+
+Thank you for the comments!
+
+> 			regards, tom lane
+>
+
+-- 
+Serguei A. Mokhov            |  /~\    The ASCII
+Computer Science Department  |  \ / Ribbon Campaign
+Concordia University         |   X    Against HTML
+Montreal, Quebec, Canada     |  / \      Email!
+
+---------------------------(end of broadcast)---------------------------
+TIP 7: don't forget to increase your free space map settings
+
