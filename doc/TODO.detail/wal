@@ -16,7 +16,7 @@ In-Reply-To: <200206210158.g5L1wFk20118@candle.pha.pa.us>
 Message-ID: <Pine.NEB.4.43.0206211106390.437-100000@angelic.cynic.net>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Status: OR
+Status: RO
 
 On Thu, 20 Jun 2002, Bruce Momjian wrote:
 
@@ -98,7 +98,7 @@ In-Reply-To: <19332.1024668861@sss.pgh.pa.us>
 Message-ID: <Pine.NEB.4.43.0206221731130.1091-100000@angelic.cynic.net>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Status: OR
+Status: RO
 
 On Fri, 21 Jun 2002, Tom Lane wrote:
 
@@ -186,7 +186,7 @@ X-Mailer: Ximian Evolution 1.0.3 (1.0.3-6)
 Date: 22 Jun 2002 18:22:58 -0400
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
-Status: ORr
+Status: ROr
 
 On Thu, 2002-06-20 at 21:58, Bruce Momjian wrote:
 > I was wondering, how does knowing the block is corrupt help MS SQL? 
@@ -287,7 +287,7 @@ Message-ID: <1024835880.1793.264.camel@localhost.localdomain>
 MIME-Version: 1.0
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
-Status: OR
+Status: RO
 
 On Sat, 2002-06-22 at 19:17, Bruce Momjian wrote:
 > J. R. Nield wrote:
@@ -346,84 +346,6 @@ TIP 6: Have you searched our list archives?
 
 http://archives.postgresql.org
 
-From jrnield@usol.com Sun Jun 23 08:37:30 2002
-Return-path: <jrnield@usol.com>
-Received: from hades.usol.com (IDENT:root@hades.usol.com [208.232.58.41])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5NCbRF28741
-	for <pgman@candle.pha.pa.us>; Sun, 23 Jun 2002 08:37:28 -0400 (EDT)
-Received: from 08-032.024.popsite.net (08-032.024.popsite.net [66.19.4.32])
-	by hades.usol.com (8.11.6/8.11.6) with ESMTP id g5NCbNj02111;
-	Sun, 23 Jun 2002 08:37:23 -0400
-Subject: Re: [HACKERS] Index Scans become Seq Scans after VACUUM ANALYSE
-From: "J. R. Nield" <jrnield@usol.com>
-To: Bruce Momjian <pgman@candle.pha.pa.us>
-cc: Curt Sampson <cjs@cynic.net>, Michael Loftis <mloftis@wgops.com>,
-   mlw
-  <markw@mohawksoft.com>,
-   PostgreSQL Hacker <pgsql-hackers@postgresql.org>,
-   Tom Lane <tgl@sss.pgh.pa.us>
-In-Reply-To: <200206222317.g5MNHBn23427@candle.pha.pa.us>
-References: <200206222317.g5MNHBn23427@candle.pha.pa.us>
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-X-Mailer: Ximian Evolution 1.0.3 (1.0.3-6) 
-Date: 23 Jun 2002 08:37:53 -0400
-Message-ID: <1024835880.1793.264.camel@localhost.localdomain>
-MIME-Version: 1.0
-Status: OR
-
-On Sat, 2002-06-22 at 19:17, Bruce Momjian wrote:
-> J. R. Nield wrote:
-> > One other point:
-> > 
-> > Page pre-image logging is fundamentally the same as what Jim Grey's
-> > book[1] would call "careful writes". I don't believe they should be in
-> > the XLOG, because we never need to keep the pre-images after we're sure
-> > the buffer has made it to the disk. Instead, we should have the buffer
-> > IO routines implement ping-pong writes of some kind if we want
-> > protection from partial writes.
-> 
-> Ping-pong writes to where?  We have to fsync, and rather than fsync that
-> area and WAL, we just do WAL.  Not sure about a win there.
-> 
-
-The key question is: do we have some method to ensure that the OS
-doesn't do the writes in parallel?
-
-If the OS will ensure that one of the two block writes of a ping-pong
-completes before the other starts, then we don't need to fsync() at 
-all. 
-
-The only thing we are protecting against is the possibility of both
-writes being partial. If neither is done, that's fine because WAL will
-protect us. If the first write is partial, we will detect that and use
-the old data from the other, then recover from WAL. If the first is
-complete but the second is partial, then we detect that and use the
-newer block from the first write. If the second is complete but the
-first is partial, we detect that and use the newer block from the second
-write.
-
-So does anyone know a way to prevent parallel writes in one of the
-common unix standards? Do they say anything about this?
-
-It would seem to me that if the same process does both ping-pong writes,
-then there should be a cheap way to enforce a serial order. I could be
-wrong though.
-
-As to where the first block of the ping-pong should go, maybe we could
-reserve a file with nBlocks space for them, and write the information
-about which block was being written to the XLOG for use in recovery.
-There are many other ways to do it.
-
-;jrnield
-
--- 
-J. R. Nield
-jrnield@usol.com
-
-
-
-
 From cjs@cynic.net Sun Jun 23 09:33:29 2002
 Return-path: <cjs@cynic.net>
 Received: from academic.cynic.net (academic.cynic.net [63.144.177.3])
@@ -444,7 +366,7 @@ In-Reply-To: <1024835880.1793.264.camel@localhost.localdomain>
 Message-ID: <Pine.NEB.4.43.0206232223300.2100-100000@angelic.cynic.net>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Status: OR
+Status: RO
 
 On 23 Jun 2002, J. R. Nield wrote:
 
@@ -528,7 +450,7 @@ Message-ID: <8461.1024845555@sss.pgh.pa.us>
 From: Tom Lane <tgl@sss.pgh.pa.us>
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
-Status: OR
+Status: RO
 
 Curt Sampson <cjs@cynic.net> writes:
 > This should also allow us to disable completely the ping-pong writes
@@ -573,7 +495,7 @@ In-Reply-To: <8461.1024845555@sss.pgh.pa.us>
 Message-ID: <Pine.NEB.4.43.0206240057070.2100-100000@angelic.cynic.net>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Status: OR
+Status: RO
 
 On Sun, 23 Jun 2002, Tom Lane wrote:
 
@@ -649,7 +571,7 @@ X-Mailer: Ximian Evolution 1.0.3 (1.0.3-6)
 Date: 23 Jun 2002 13:57:19 -0400
 Message-ID: <1024855044.1793.414.camel@localhost.localdomain>
 MIME-Version: 1.0
-Status: ORr
+Status: ROr
 
 On Sun, 2002-06-23 at 11:19, Tom Lane wrote: 
 > Curt Sampson <cjs@cynic.net> writes:
@@ -747,7 +669,7 @@ In-Reply-To: <1024855044.1793.414.camel@localhost.localdomain>
 Message-ID: <Pine.NEB.4.43.0206240307550.511-100000@angelic.cynic.net>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Status: ORr
+Status: ROr
 
 On 23 Jun 2002, J. R. Nield wrote:
 
@@ -805,7 +727,7 @@ X-Mailer: Ximian Evolution 1.0.3 (1.0.3-6)
 Date: 23 Jun 2002 14:15:17 -0400
 Message-ID: <1024856120.3054.418.camel@localhost.localdomain>
 MIME-Version: 1.0
-Status: OR
+Status: RO
 
 On Sun, 2002-06-23 at 12:10, Curt Sampson wrote:
 > 
@@ -864,7 +786,7 @@ Sender: pgsql-hackers-owner@postgresql.org
 X-Spam-Status: No, hits=-3.4 required=5.0
 	tests=IN_REP_TO
 	version=2.30
-Status: OR
+Status: RO
 
 J. R. Nield wrote:
 > So since we have all this buffering designed especially to meet our
@@ -943,7 +865,7 @@ Sender: pgsql-hackers-owner@postgresql.org
 X-Spam-Status: No, hits=-3.4 required=5.0
 	tests=IN_REP_TO
 	version=2.30
-Status: OR
+Status: RO
 
 Curt Sampson wrote:
 > On 23 Jun 2002, J. R. Nield wrote:
@@ -1016,7 +938,7 @@ In-Reply-To: <200206231936.g5NJasa07642@candle.pha.pa.us>
 Message-ID: <Pine.NEB.4.43.0206240907160.511-100000@angelic.cynic.net>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Status: OR
+Status: RO
 
 On Sun, 23 Jun 2002, Bruce Momjian wrote:
 
@@ -1063,7 +985,7 @@ X-Mailer: Ximian Evolution 1.0.3 (1.0.3-6)
 Date: 23 Jun 2002 21:29:23 -0400
 Message-ID: <1024882167.1793.733.camel@localhost.localdomain>
 MIME-Version: 1.0
-Status: ORr
+Status: ROr
 
 On Sun, 2002-06-23 at 15:36, Bruce Momjian wrote:
 > Yes, I don't see writing to two files vs. one to be any win, especially
@@ -1188,7 +1110,7 @@ Sender: pgsql-hackers-owner@postgresql.org
 X-Spam-Status: No, hits=-3.4 required=5.0
 	tests=IN_REP_TO
 	version=2.30
-Status: OR
+Status: RO
 
 J. R. Nield wrote:
 > On Sun, 2002-06-23 at 15:36, Bruce Momjian wrote:
@@ -1336,7 +1258,7 @@ In-Reply-To: <1024882167.1793.733.camel@localhost.localdomain>
 Message-ID: <Pine.NEB.4.43.0206241150500.7326-100000@angelic.cynic.net>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Status: OR
+Status: RO
 
 On 23 Jun 2002, J. R. Nield wrote:
 
@@ -1556,7 +1478,7 @@ Sender: pgsql-hackers-owner@postgresql.org
 X-Spam-Status: No, hits=-5.3 required=5.0
 	tests=IN_REP_TO,X_NOT_PRESENT
 	version=2.30
-Status: OR
+Status: RO
 
 > On Sun, 23 Jun 2002, Bruce Momjian wrote:
 >> Yes, I don't see writing to two files vs. one to be any win, especially
@@ -1636,7 +1558,7 @@ Sender: pgsql-hackers-owner@postgresql.org
 X-Spam-Status: No, hits=-3.4 required=5.0
 	tests=IN_REP_TO
 	version=2.30
-Status: OR
+Status: RO
 
 Tom Lane wrote:
 > > On Sun, 23 Jun 2002, Bruce Momjian wrote:
@@ -1718,7 +1640,7 @@ Sender: pgsql-hackers-owner@postgresql.org
 X-Spam-Status: No, hits=-5.3 required=5.0
 	tests=IN_REP_TO,X_NOT_PRESENT
 	version=2.30
-Status: OR
+Status: RO
 
 Bruce Momjian <pgman@candle.pha.pa.us> writes:
 >> The only thing I've been able to think of that seems like it might
@@ -1771,7 +1693,7 @@ X-Mailer: Ximian Evolution 1.0.3 (1.0.3-6)
 Date: 24 Jun 2002 16:49:42 -0400
 Message-ID: <1024951786.1793.865.camel@localhost.localdomain>
 MIME-Version: 1.0
-Status: ORr
+Status: ROr
 
 On Sun, 2002-06-23 at 23:40, Curt Sampson wrote:
 > On 23 Jun 2002, J. R. Nield wrote:
@@ -2062,7 +1984,7 @@ Comments: In-reply-to "J. R. Nield" <jrnield@usol.com>
 Date: Mon, 24 Jun 2002 17:16:01 -0400
 Message-ID: <21376.1024953361@sss.pgh.pa.us>
 From: Tom Lane <tgl@sss.pgh.pa.us>
-Status: OR
+Status: RO
 
 "J. R. Nield" <jrnield@usol.com> writes:
 > Also, postgreSQL can't recover from any other type of block corruption,
@@ -2129,7 +2051,7 @@ Sender: pgsql-hackers-owner@postgresql.org
 X-Spam-Status: No, hits=-3.4 required=5.0
 	tests=IN_REP_TO
 	version=2.30
-Status: OR
+Status: RO
 
 J. R. Nield wrote:
 > > This I don't quite understand. Assuming you're using a SCSI drive
@@ -2251,7 +2173,7 @@ Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
 Date: Mon, 24 Jun 2002 17:31:56 -0400
 Message-ID: <21482.1024954316@sss.pgh.pa.us>
 From: Tom Lane <tgl@sss.pgh.pa.us>
-Status: ORr
+Status: ROr
 
 Bruce Momjian <pgman@candle.pha.pa.us> writes:
 >> Does anyone know what the major barriers to infinite log replay are in
@@ -2276,77 +2198,6 @@ Any inconsistencies in your tar dump will look like repairable damage;
 replaying the WAL log will fix 'em.
 
 			regards, tom lane
-
-From pgsql-hackers-owner+M24131@postgresql.org Mon Jun 24 21:15:06 2002
-Return-path: <pgsql-hackers-owner+M24131@postgresql.org>
-Received: from postgresql.org (postgresql.org [64.49.215.8])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5P1F5F15390
-	for <pgman@candle.pha.pa.us>; Mon, 24 Jun 2002 21:15:05 -0400 (EDT)
-Received: from localhost.localdomain (postgresql.org [64.49.215.8])
-	by localhost (Postfix) with ESMTP
-	id B76174768CC; Mon, 24 Jun 2002 20:59:56 -0400 (EDT)
-Mailbox-Line: From tgl@sss.pgh.pa.us  Mon Jun 24 20:59:56 2002
-Received: from postgresql.org (postgresql.org [64.49.215.8])
-	by postgresql.org (Postfix) with SMTP
-	id 8724C47742E; Mon, 24 Jun 2002 20:17:44 -0400 (EDT)
-Received: from localhost.localdomain (postgresql.org [64.49.215.8])
-	by localhost (Postfix) with ESMTP id 4E472476875
-	for <pgsql-hackers@postgresql.org>; Mon, 24 Jun 2002 18:37:46 -0400 (EDT)
-Mailbox-Line: From tgl@sss.pgh.pa.us  Mon Jun 24 18:37:46 2002
-Received: from sss.pgh.pa.us (unknown [192.204.191.242])
-	by postgresql.org (Postfix) with ESMTP id CFCC9476A7A
-	for <pgsql-hackers@postgresql.org>; Mon, 24 Jun 2002 17:32:02 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
-	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id g5OLVu121485;
-	Mon, 24 Jun 2002 17:31:56 -0400 (EDT)
-To: Bruce Momjian <pgman@candle.pha.pa.us>
-cc: "J. R. Nield" <jrnield@usol.com>, Curt Sampson <cjs@cynic.net>,
-   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
-Subject: Re: [HACKERS] Index Scans become Seq Scans after VACUUM ANALYSE 
-In-Reply-To: <200206242125.g5OLPFG26140@candle.pha.pa.us> 
-References: <200206242125.g5OLPFG26140@candle.pha.pa.us>
-Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
-	message dated "Mon, 24 Jun 2002 17:25:14 -0400"
-Date: Mon, 24 Jun 2002 17:31:56 -0400
-Message-ID: <21482.1024954316@sss.pgh.pa.us>
-From: Tom Lane <tgl@sss.pgh.pa.us>
-Precedence: bulk
-Sender: pgsql-hackers-owner@postgresql.org
-X-Spam-Status: No, hits=-5.3 required=5.0
-	tests=IN_REP_TO,X_NOT_PRESENT
-	version=2.30
-Status: OR
-
-Bruce Momjian <pgman@candle.pha.pa.us> writes:
->> Does anyone know what the major barriers to infinite log replay are in
->> PostgreSQL? I'm trying to look for everything that might need to be
->> changed outside xlog.c, but surely this has come up before. Searching
->> the archives hasn't revealed much.
-
-> This has been brought up.  Could we just save WAL files and get replay? 
-> I believe some things have to be added to WAL to allow this, but it
-> seems possible.
-
-The Red Hat group has been looking at this somewhat; so far there seem
-to be some minor tweaks that would be needed, but no showstoppers.
-
-> Somehow you would need a tar-type
-> backup of the database, and with a running db, it is hard to get a valid
-> snapshot of that.
-
-But you don't *need* a "valid snapshot", only a correct copy of
-every block older than the first checkpoint in your WAL log series.
-Any inconsistencies in your tar dump will look like repairable damage;
-replaying the WAL log will fix 'em.
-
-			regards, tom lane
-
-
-
----------------------------(end of broadcast)---------------------------
-TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
-
-
 
 From pgsql-hackers-owner+M24133@postgresql.org Mon Jun 24 22:19:55 2002
 Return-path: <pgsql-hackers-owner+M24133@postgresql.org>
@@ -2387,7 +2238,7 @@ Sender: pgsql-hackers-owner@postgresql.org
 X-Spam-Status: No, hits=-3.4 required=5.0
 	tests=IN_REP_TO
 	version=2.30
-Status: OR
+Status: RO
 
 Tom Lane wrote:
 > Bruce Momjian <pgman@candle.pha.pa.us> writes:
@@ -2433,72 +2284,6 @@ TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
 
 
 
-From pgsql-hackers-owner+M24139@postgresql.org Tue Jun 25 00:00:22 2002
-Return-path: <pgsql-hackers-owner+M24139@postgresql.org>
-Received: from postgresql.org (postgresql.org [64.49.215.8])
-	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g5P40LF00838
-	for <pgman@candle.pha.pa.us>; Tue, 25 Jun 2002 00:00:21 -0400 (EDT)
-Received: from localhost.localdomain (postgresql.org [64.49.215.8])
-	by localhost (Postfix) with ESMTP
-	id CBAE8476E94; Mon, 24 Jun 2002 23:44:51 -0400 (EDT)
-Mailbox-Line: From jrnield@usol.com  Mon Jun 24 23:44:51 2002
-Received: from postgresql.org (postgresql.org [64.49.215.8])
-	by postgresql.org (Postfix) with SMTP
-	id C5076476871; Mon, 24 Jun 2002 22:25:46 -0400 (EDT)
-Received: from localhost.localdomain (postgresql.org [64.49.215.8])
-	by localhost (Postfix) with ESMTP id 8DF57476979
-	for <pgsql-hackers@postgresql.org>; Mon, 24 Jun 2002 22:08:31 -0400 (EDT)
-Mailbox-Line: From jrnield@usol.com  Mon Jun 24 22:08:31 2002
-Received: from hades.usol.com (hades.usol.com [208.232.58.41])
-	by postgresql.org (Postfix) with ESMTP id 298D2476101
-	for <pgsql-hackers@postgresql.org>; Mon, 24 Jun 2002 20:27:46 -0400 (EDT)
-Received: from 08-159.024.popsite.net (08-159.024.popsite.net [66.19.4.159])
-	by hades.usol.com (8.11.6/8.11.6) with ESMTP id g5P0RbV01261;
-	Mon, 24 Jun 2002 20:27:37 -0400
-Subject: Re: [HACKERS] Index Scans become Seq Scans after VACUUM ANALYSE
-From: "J. R. Nield" <jrnield@usol.com>
-To: Tom Lane <tgl@sss.pgh.pa.us>
-cc: Curt Sampson <cjs@cynic.net>, Bruce Momjian <pgman@candle.pha.pa.us>,
-   PostgreSQL Hacker <pgsql-hackers@postgresql.org>
-In-Reply-To: <21376.1024953361@sss.pgh.pa.us>
-References: <Pine.NEB.4.43.0206241150500.7326-100000@angelic.cynic.net>
-	<1024951786.1793.865.camel@localhost.localdomain> 
-	<21376.1024953361@sss.pgh.pa.us>
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-X-Mailer: Ximian Evolution 1.0.3 (1.0.3-6) 
-Date: 24 Jun 2002 20:28:00 -0400
-Message-ID: <1024964884.3031.876.camel@localhost.localdomain>
-MIME-Version: 1.0
-Precedence: bulk
-Sender: pgsql-hackers-owner@postgresql.org
-X-Spam-Status: No, hits=-3.4 required=5.0
-	tests=IN_REP_TO
-	version=2.30
-Status: OR
-
-On Mon, 2002-06-24 at 17:16, Tom Lane wrote:
- 
-> I think you have been missing the point...  
-Yes, this appears to be the case. Thanks especially to Curt for clearing
-things up for me.
-
--- 
-J. R. Nield
-jrnield@usol.com
-
-
-
-
-
-
----------------------------(end of broadcast)---------------------------
-TIP 5: Have you checked our extensive FAQ?
-
-http://www.postgresql.org/users-lounge/docs/faq.html
-
-
-
 From jrnield@usol.com Mon Jun 24 20:27:45 2002
 Return-path: <jrnield@usol.com>
 Received: from hades.usol.com (IDENT:root@hades.usol.com [208.232.58.41])
@@ -2522,7 +2307,7 @@ X-Mailer: Ximian Evolution 1.0.3 (1.0.3-6)
 Date: 24 Jun 2002 20:28:00 -0400
 Message-ID: <1024964884.3031.876.camel@localhost.localdomain>
 MIME-Version: 1.0
-Status: OR
+Status: RO
 
 On Mon, 2002-06-24 at 17:16, Tom Lane wrote:
  
@@ -2555,7 +2340,7 @@ In-Reply-To: <1024951786.1793.865.camel@localhost.localdomain>
 Message-ID: <Pine.NEB.4.43.0206251229010.17448-100000@angelic.cynic.net>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Status: OR
+Status: RO
 
 On 24 Jun 2002, J. R. Nield wrote:
 
@@ -2599,7 +2384,7 @@ In-Reply-To: <21376.1024953361@sss.pgh.pa.us>
 Message-ID: <Pine.NEB.4.43.0206251406390.17448-100000@angelic.cynic.net>
 MIME-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Status: ORr
+Status: ROr
 
 On Mon, 24 Jun 2002, Tom Lane wrote:
 
@@ -2662,7 +2447,7 @@ Sender: pgsql-hackers-owner@postgresql.org
 X-Spam-Status: No, hits=-3.4 required=5.0
 	tests=IN_REP_TO
 	version=2.30
-Status: OR
+Status: RO
 
 Curt Sampson wrote:
 > On Mon, 24 Jun 2002, Tom Lane wrote:
@@ -2735,7 +2520,7 @@ X-Virus-Scanned: by AMaViS new-20020517
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by AMaViS new-20020517
-Status: ORr
+Status: ROr
 
 I have been experimenting with empirical tests of file system and device
 level writes to determine the actual constraints in order to speed up the WAL
@@ -2953,7 +2738,7 @@ X-Mailing-List: pgsql-hackers
 Precedence: bulk
 Sender: pgsql-hackers-owner@postgresql.org
 X-Virus-Scanned: by amavisd-new at hub.org
-Status: OR
+Status: RO
 
 
 > One of the things I was thinking about was whether we could use up those
