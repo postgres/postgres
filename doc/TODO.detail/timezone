@@ -1,0 +1,2829 @@
+From pgsql-hackers-owner+M60207=pgman=candle.pha.pa.us@postgresql.org Thu Oct 21 07:25:41 2004
+Return-path: <pgsql-hackers-owner+M60207=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9LBPdf26430
+	for <pgman@candle.pha.pa.us>; Thu, 21 Oct 2004 07:25:40 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 0548B32A593
+	for <pgman@candle.pha.pa.us>; Thu, 21 Oct 2004 12:25:37 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 74257-06 for <pgman@candle.pha.pa.us>;
+	Thu, 21 Oct 2004 11:25:33 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id B0DB532A544
+	for <pgman@candle.pha.pa.us>; Thu, 21 Oct 2004 12:25:36 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 1124A329FAB
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Thu, 21 Oct 2004 12:23:00 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 70900-09
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Thu, 21 Oct 2004 11:22:43 +0000 (GMT)
+Received: from zigo.dhs.org (as2-4-3.an.g.bonet.se [194.236.34.191])
+	by svr1.postgresql.org (Postfix) with ESMTP id 301C532A301
+	for <pgsql-hackers@postgresql.org>; Thu, 21 Oct 2004 12:22:43 +0100 (BST)
+Received: from zigo.zigo.dhs.org (zigo.zigo.dhs.org [192.168.0.1])
+	by zigo.dhs.org (Postfix) with ESMTP id A022C8467
+	for <pgsql-hackers@postgresql.org>; Thu, 21 Oct 2004 13:22:40 +0200 (CEST)
+Date: Thu, 21 Oct 2004 13:22:40 +0200 (CEST)
+From: Dennis Bjorklund <db@zigo.dhs.org>
+To: pgsql-hackers@postgresql.org
+Subject: [HACKERS] timestamp with time zone a la sql99
+Message-ID: <Pine.LNX.4.44.0410211300430.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+I've made a partial implementation of a datatype "timestamp with time
+zone" as described in the sql standard. The current type "timestamptz"  
+does not store the time zone as a standard one should do. So I've made a
+new type I've called timestampstdtz that does store the time zone as the
+standard demands.
+
+Let me show a bit of what currently works in my implementation:
+
+  dennis=# CREATE TABLE foo (
+     a timestampstdtz,
+
+     primary key (a)
+  );
+  dennis=# INSERT INTO foo VALUES ('1993-02-04 13:00 UTC');
+  dennis=# INSERT INTO foo VALUES ('1999-06-01 14:00 CET');
+  dennis=# INSERT INTO foo VALUES ('2003-08-21 15:00 PST');
+
+  dennis=# SELECT a FROM foo;
+             a
+  ------------------------
+   1993-02-04 13:00:00+00
+   1999-06-01 14:00:00+01
+   2003-08-21 15:00:00-08
+ 
+  dennis=# SELECT a AT TIME ZONE 'CET' FROM foo;
+          timezone
+  ------------------------
+   1993-02-04 14:00:00+01
+   1999-06-01 14:00:00+01
+   2003-08-22 00:00:00+01
+
+My plan is to make a GUC variable so that one can tell PG that constructs
+like "timestamp with time zone" will map to timestampstdtz instead of
+timestamptz (some old databases might need the old so unless we want to
+break old code this is the easiest solution I can find).
+
+I've made an implicit cast from timestampstdtz to timestamptz that just
+forgets about the time zone. In the other direction I've made an
+assignment cast that make a timestamp with time zone 0 (that's what a
+timestamptz is anyway). Would it be possible to make it implicit in both
+directions? I currently don't think that you want that, but is it
+possible?
+
+With the implicit cast in place I assume it would be safe to change 
+functions like now() to return a timestampstdtz? I've not tried yet but I 
+will. As far as I can tell the cast would make old code that use now() to 
+still work as before.
+
+Any comments before I invest more time into this subject?
+
+-- 
+/Dennis Björklund
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M60208=pgman=candle.pha.pa.us@postgresql.org Thu Oct 21 10:34:36 2004
+Return-path: <pgsql-hackers-owner+M60208=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9LEYYf08049
+	for <pgman@candle.pha.pa.us>; Thu, 21 Oct 2004 10:34:35 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 34B0F32A2AB
+	for <pgman@candle.pha.pa.us>; Thu, 21 Oct 2004 15:34:30 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 38287-03 for <pgman@candle.pha.pa.us>;
+	Thu, 21 Oct 2004 14:34:26 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 6A38132A1B6
+	for <pgman@candle.pha.pa.us>; Thu, 21 Oct 2004 15:34:29 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 535FE32A9EE
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Thu, 21 Oct 2004 15:29:17 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 34535-09
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Thu, 21 Oct 2004 14:29:10 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 41E4F32A9D6
+	for <pgsql-hackers@postgresql.org>; Thu, 21 Oct 2004 15:29:12 +0100 (BST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id i9LET86O015233;
+	Thu, 21 Oct 2004 10:29:10 -0400 (EDT)
+To: Dennis Bjorklund <db@zigo.dhs.org>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <Pine.LNX.4.44.0410211300430.2015-100000@zigo.dhs.org> 
+References: <Pine.LNX.4.44.0410211300430.2015-100000@zigo.dhs.org>
+Comments: In-reply-to Dennis Bjorklund <db@zigo.dhs.org>
+	message dated "Thu, 21 Oct 2004 13:22:40 +0200"
+Date: Thu, 21 Oct 2004 10:29:07 -0400
+Message-ID: <15232.1098368947@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Dennis Bjorklund <db@zigo.dhs.org> writes:
+> I've made a partial implementation of a datatype "timestamp with time
+> zone" as described in the sql standard. The current type "timestamptz"  
+> does not store the time zone as a standard one should do.
+
+I'm aware that there are aspects of the spec behavior that appear to
+require that, but is it really an improvement over the implementation
+we have?  This is an area in which the standard is pretty brain-dead
+--- the entire concept of a "time with time zone" datatype is rather
+suspect, for instance.
+
+In particular, I wonder how you will handle daylight-savings issues.
+The spec definition seems to preclude doing anything intelligent with
+DST, as they equate a timezone with a fixed offset from UTC.  That's
+not how it works in (large parts of) the real world.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+               http://archives.postgresql.org
+
+From pgsql-hackers-owner+M60210=pgman=candle.pha.pa.us@postgresql.org Thu Oct 21 11:08:02 2004
+Return-path: <pgsql-hackers-owner+M60210=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9LF7xf13992
+	for <pgman@candle.pha.pa.us>; Thu, 21 Oct 2004 11:08:00 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id AEBEE32AB8E
+	for <pgman@candle.pha.pa.us>; Thu, 21 Oct 2004 16:07:55 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 51273-03 for <pgman@candle.pha.pa.us>;
+	Thu, 21 Oct 2004 15:07:55 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 506C832AB6A
+	for <pgman@candle.pha.pa.us>; Thu, 21 Oct 2004 16:07:55 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 59130329F96
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Thu, 21 Oct 2004 16:02:14 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 48602-06
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Thu, 21 Oct 2004 15:01:59 +0000 (GMT)
+Received: from zigo.dhs.org (as2-4-3.an.g.bonet.se [194.236.34.191])
+	by svr1.postgresql.org (Postfix) with ESMTP id 8ED0932A095
+	for <pgsql-hackers@postgresql.org>; Thu, 21 Oct 2004 16:01:54 +0100 (BST)
+Received: from zigo.zigo.dhs.org (zigo.zigo.dhs.org [192.168.0.1])
+	by zigo.dhs.org (Postfix) with ESMTP
+	id D08B88467; Thu, 21 Oct 2004 17:01:52 +0200 (CEST)
+Date: Thu, 21 Oct 2004 17:01:52 +0200 (CEST)
+From: Dennis Bjorklund <db@zigo.dhs.org>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <15232.1098368947@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.44.0410211637560.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Thu, 21 Oct 2004, Tom Lane wrote:
+
+> > I've made a partial implementation of a datatype "timestamp with time
+> > zone" as described in the sql standard. The current type "timestamptz"  
+> > does not store the time zone as a standard one should do.
+> 
+> I'm aware that there are aspects of the spec behavior that appear to
+> require that, but is it really an improvement over the implementation
+> we have?
+
+Improvement and improvement. The actual time value is of course the same
+(the utc part of a timestamp) and the only thing extra you get is that the
+time zone is stored. The extra information you do have now, when stored in
+this way, is that you store both a utc time and a local time. Will any
+application ever need that? Who knows? I think it makes sense and is an
+easier model to think about then what pg uses today. So I would use it
+even if it means using 2 bytes more storage then what timestamptz do
+
+Just that it is standard also makes it useful. The more things of the
+standard we support the easier it is to move between databases. This is
+important to me.
+
+I also want to make a general statement that I think that whenever we use
+standard syntax we should give it a standard semantics. I don't mind
+extensions at all, but as much as we can we should make sure that they
+don't clash with standard syntax and semantics.
+
+>  This is an area in which the standard is pretty brain-dead
+> --- the entire concept of a "time with time zone" datatype is rather
+> suspect, for instance.
+
+I havn't look that much at "time with time zone" yet, just timestamps.
+ 
+I can't see why time with time zone should not also be supported. I can't
+really imagine it being used without a date, but if someone wants to store
+timestamps as a date+time with time zone, then why not. It would be extra
+work tu is it instead of a timestamp (especially for cases where the time
+wraps over to the prev/next day), but hey.
+
+> In particular, I wonder how you will handle daylight-savings issues.
+> The spec definition seems to preclude doing anything intelligent with
+> DST, as they equate a timezone with a fixed offset from UTC.  That's
+> not how it works in (large parts of) the real world.
+
+The tz in the standard is a offset from utc, yes. So when you store a
+value you tell it what offset you use. If you are using daylight-savings
+time it might be +02 and if not dst it might be +01. What else would you
+want to do with it? It's not like you can do anything else with it in pg
+as of today, can you?
+
+The stored tz does not say what region of the globe you are in, it says
+the distance away from utc in minutes that you are. I could imagine
+another datatype that stores the time zone as name, but that's not what
+timestamp with time zone does.
+
+-- 
+/Dennis Björklund
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 8: explain analyze is your friend
+
+From pgsql-hackers-owner+M60232=pgman=candle.pha.pa.us@postgresql.org Fri Oct 22 08:43:06 2004
+Return-path: <pgsql-hackers-owner+M60232=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9MCh4f16646
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 08:43:04 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id D389532A4BA
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 13:42:58 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 01914-09 for <pgman@candle.pha.pa.us>;
+	Fri, 22 Oct 2004 12:42:51 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 82BD832A4B3
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 13:42:58 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 05C2132A3F5
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 22 Oct 2004 13:39:37 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 03281-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 22 Oct 2004 12:39:20 +0000 (GMT)
+Received: from lakermmtao07.cox.net (lakermmtao07.cox.net [68.230.240.32])
+	by svr1.postgresql.org (Postfix) with ESMTP id 1971732A32B
+	for <pgsql-hackers@postgresql.org>; Fri, 22 Oct 2004 13:39:26 +0100 (BST)
+Received: from [192.168.0.9] (really [24.250.237.182])
+          by lakermmtao07.cox.net
+          (InterMail vM.6.01.03.04 201-2131-111-106-20040729) with ESMTP
+          id <20041022123912.IJSP14063.lakermmtao07.cox.net@[192.168.0.9]>;
+          Fri, 22 Oct 2004 08:39:12 -0400
+From: Robert Treat <xzilla@users.sourceforge.net>
+To: Dennis Bjorklund <db@zigo.dhs.org>
+Subject: Re: [HACKERS] timestamp with time zone a la sql99
+Date: Fri, 22 Oct 2004 08:37:33 -0400
+User-Agent: KMail/1.6.2
+cc: Tom Lane <tgl@sss.pgh.pa.us>, pgsql-hackers@postgresql.org
+References: <Pine.LNX.4.44.0410211637560.2015-100000@zigo.dhs.org>
+In-Reply-To: <Pine.LNX.4.44.0410211637560.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Disposition: inline
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Message-ID: <200410220837.33886.xzilla@users.sourceforge.net>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Thursday 21 October 2004 11:01, Dennis Bjorklund wrote:
+> On Thu, 21 Oct 2004, Tom Lane wrote:
+> > I'm aware that there are aspects of the spec behavior that appear to
+> > require that, but is it really an improvement over the implementation
+> > we have?
+>
+> Improvement and improvement. The actual time value is of course the same
+> (the utc part of a timestamp) and the only thing extra you get is that the
+> time zone is stored. The extra information you do have now, when stored in
+> this way, is that you store both a utc time and a local time. Will any
+> application ever need that? Who knows? I think it makes sense and is an
+> easier model to think about then what pg uses today. So I would use it
+> even if it means using 2 bytes more storage then what timestamptz do
+>
+
+In a fit of early morning, pre-coffee thoughts, I'm thinking this might be 
+just what I've been looking for. In one of my apps we take calls from around 
+the country for customers and store the time that call came in. Unfortunately 
+we need to know things like how many calls did we take in an hour across 
+customers, but also how many calls did we take at 6AM local time to the 
+customer.   The way PostgreSQL works now, you have to store some extra bits 
+of info in another column and then reassemble it to be able to determine 
+those two queries, but it sounds like your timestampstdtz would allow that 
+information to be stored together, as it should be.
+
+-- 
+Robert Treat
+Build A Brighter Lamp :: Linux Apache {middleware} PostgreSQL
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M60235=pgman=candle.pha.pa.us@postgresql.org Fri Oct 22 10:18:44 2004
+Return-path: <pgsql-hackers-owner+M60235=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9MEIhf03000
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 10:18:44 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 63ACB329FE3
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 15:18:38 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 35128-09 for <pgman@candle.pha.pa.us>;
+	Fri, 22 Oct 2004 14:18:30 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 3439A329E73
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 15:18:38 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id C332832A5AA
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 22 Oct 2004 15:13:18 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 32986-06
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 22 Oct 2004 14:13:09 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id E7E6F32A576
+	for <pgsql-hackers@postgresql.org>; Fri, 22 Oct 2004 15:13:16 +0100 (BST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id i9MEDIA4006541;
+	Fri, 22 Oct 2004 10:13:18 -0400 (EDT)
+To: Robert Treat <xzilla@users.sourceforge.net>
+cc: Dennis Bjorklund <db@zigo.dhs.org>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <200410220837.33886.xzilla@users.sourceforge.net> 
+References: <Pine.LNX.4.44.0410211637560.2015-100000@zigo.dhs.org> <200410220837.33886.xzilla@users.sourceforge.net>
+Comments: In-reply-to Robert Treat <xzilla@users.sourceforge.net>
+	message dated "Fri, 22 Oct 2004 08:37:33 -0400"
+Date: Fri, 22 Oct 2004 10:13:18 -0400
+Message-ID: <6540.1098454398@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Robert Treat <xzilla@users.sourceforge.net> writes:
+> In a fit of early morning, pre-coffee thoughts, I'm thinking this might be 
+> just what I've been looking for. In one of my apps we take calls from around 
+> the country for customers and store the time that call came in. Unfortunately
+> we need to know things like how many calls did we take in an hour across 
+> customers, but also how many calls did we take at 6AM local time to the 
+> customer.   The way PostgreSQL works now, you have to store some extra bits 
+> of info in another column and then reassemble it to be able to determine 
+> those two queries, but it sounds like your timestampstdtz would allow that 
+> information to be stored together, as it should be.
+
+As far as I can tell, Dennis is planning slavish adherence to the spec,
+which will mean that the datatype is unable to cope effectively with
+daylight-savings issues.  So I'm unconvinced that it will be very
+helpful to you for remembering local time in addition to true
+(universal) time.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+      subscribe-nomail command to majordomo@postgresql.org so that your
+      message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M60237=pgman=candle.pha.pa.us@postgresql.org Fri Oct 22 10:33:04 2004
+Return-path: <pgsql-hackers-owner+M60237=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9MEX3f05134
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 10:33:03 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id AB3B432A907
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 15:32:57 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 42366-04 for <pgman@candle.pha.pa.us>;
+	Fri, 22 Oct 2004 14:32:49 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 28B5E32A6BE
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 15:32:56 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 5366A32A923
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 22 Oct 2004 15:28:12 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 41328-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 22 Oct 2004 14:28:03 +0000 (GMT)
+Received: from zigo.dhs.org (as2-4-3.an.g.bonet.se [194.236.34.191])
+	by svr1.postgresql.org (Postfix) with ESMTP id 0277A32A916
+	for <pgsql-hackers@postgresql.org>; Fri, 22 Oct 2004 15:28:10 +0100 (BST)
+Received: from zigo.zigo.dhs.org (zigo.zigo.dhs.org [192.168.0.1])
+	by zigo.dhs.org (Postfix) with ESMTP
+	id 336C88467; Fri, 22 Oct 2004 16:28:12 +0200 (CEST)
+Date: Fri, 22 Oct 2004 16:28:12 +0200 (CEST)
+From: Dennis Bjorklund <db@zigo.dhs.org>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Robert Treat <xzilla@users.sourceforge.net>,
+   <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <6540.1098454398@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.44.0410221615150.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Fri, 22 Oct 2004, Tom Lane wrote:
+
+> As far as I can tell, Dennis is planning slavish adherence to the spec,
+> which will mean that the datatype is unable to cope effectively with
+> daylight-savings issues.  So I'm unconvinced that it will be very
+> helpful to you for remembering local time in addition to true
+> (universal) time.
+
+And exactly what issues is it that you see? The only thing I can think of
+is if you have a timestamp and then add an interval to it so we jump past
+the daylight saving time change date. Then the new timestamp will keep the
+old timezone data of say +01 even though we now have jumped into the
+daylight saving period of +02.
+
+If you are just storing actual timestamps then the standard definition
+works just fine. If I store '2004-10-22 16:20:04 +02' then that's exactly
+what I get back. No problem what so ever. There is no DST problem with 
+that.
+
+It's possible that I will introduce some daylight saving bit or something
+like that, I'm not sure yet and I will not commit to anything until I've
+thought it over. I don't think there are that much of a problem as you
+claim however. Could you give a concret example where it will be a
+problem?
+
+My current thinking is that storing the time zone value as HH:MM is 
+just fine and you avoid all the problems with political changes of when 
+the DST is in effect or not.
+
+--
+/Dennis Björklund
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+      subscribe-nomail command to majordomo@postgresql.org so that your
+      message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M60240=pgman=candle.pha.pa.us@postgresql.org Fri Oct 22 10:58:26 2004
+Return-path: <pgsql-hackers-owner+M60240=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9MEwOf10545
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 10:58:24 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 8F3BC32A0AC
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 15:58:18 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 53613-02 for <pgman@candle.pha.pa.us>;
+	Fri, 22 Oct 2004 14:58:10 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 32CD532A0A2
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 15:58:18 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 65D9932A0AC
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 22 Oct 2004 15:54:30 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 49578-08
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 22 Oct 2004 14:54:12 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id A7D2A329FB7
+	for <pgsql-hackers@postgresql.org>; Fri, 22 Oct 2004 15:54:17 +0100 (BST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id i9MEsJsB006995;
+	Fri, 22 Oct 2004 10:54:19 -0400 (EDT)
+To: Dennis Bjorklund <db@zigo.dhs.org>
+cc: Robert Treat <xzilla@users.sourceforge.net>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <Pine.LNX.4.44.0410221615150.2015-100000@zigo.dhs.org> 
+References: <Pine.LNX.4.44.0410221615150.2015-100000@zigo.dhs.org>
+Comments: In-reply-to Dennis Bjorklund <db@zigo.dhs.org>
+	message dated "Fri, 22 Oct 2004 16:28:12 +0200"
+Date: Fri, 22 Oct 2004 10:54:19 -0400
+Message-ID: <6994.1098456859@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Dennis Bjorklund <db@zigo.dhs.org> writes:
+> And exactly what issues is it that you see? The only thing I can think of
+> is if you have a timestamp and then add an interval to it so we jump past
+> the daylight saving time change date. Then the new timestamp will keep the
+> old timezone data of say +01 even though we now have jumped into the
+> daylight saving period of +02.
+
+Isn't that sufficient?  You can't design a datatype by thinking only of
+the data values it stores; you have to think about the operations you
+intend to provide as well.  A non-DST-capable timestamp datatype is
+inherently a few bricks shy of a load.  (BTW we really need to fix
+the interval type as well...)
+
+At bottom, what I want to be able to do is say
+	'2004-10-22 10:50:16.916003 America/New_York'
+and have the datatype preserve *all* of the information in that.  You
+are complaining because the existing type only remembers the equivalent
+universal time and not the timezone spec.  Why should I be satisfied if
+it stores only the GMT offset and not the knowledge of which timezone
+this really is?
+
+> My current thinking is that storing the time zone value as HH:MM is 
+> just fine and you avoid all the problems with political changes of when 
+> the DST is in effect or not.
+
+This is fundamentally misguided.  Time zones *are* political whether you
+like it or not, and people *do* expect DST-awareness whether you like it
+or not.  If you still use any computer systems that need to be reset
+twice a year because their designers thought DST was not their problem,
+don't you roundly curse them every time you have to do it?
+
+If you were planning to store a real (potentially DST-aware) timezone
+spec in the data values, I'd be happy.  But storing a fixed GMT offset
+is going to be a step backwards compared to existing functionality.  The
+fact that it's sufficient to satisfy the DST-ignorant SQL spec does not
+make it a reasonable design for the real world.
+
+One way to do this would be to create a system catalog with entries for
+all known timezones, and then represent timestamptz values as universal
+time plus an OID from that catalog.  There are other ways that small
+integer codes could be mapped to timezones of course.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M60239=pgman=candle.pha.pa.us@postgresql.org Fri Oct 22 10:49:13 2004
+Return-path: <pgsql-hackers-owner+M60239=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9MEnCf08566
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 10:49:12 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 5B4D432A0A2
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 15:49:07 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 50773-01 for <pgman@candle.pha.pa.us>;
+	Fri, 22 Oct 2004 14:48:59 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 230EA329F96
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 15:49:07 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 7CCE332A20E
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 22 Oct 2004 15:46:10 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 45902-10
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 22 Oct 2004 14:45:52 +0000 (GMT)
+Received: from wolff.to (wolff.to [66.93.249.74])
+	by svr1.postgresql.org (Postfix) with SMTP id 30F0F32A1FA
+	for <pgsql-hackers@postgresql.org>; Fri, 22 Oct 2004 15:45:58 +0100 (BST)
+Received: (qmail 17526 invoked by uid 500); 22 Oct 2004 14:56:44 -0000
+Date: Fri, 22 Oct 2004 09:56:44 -0500
+From: Bruno Wolff III <bruno@wolff.to>
+To: Dennis Bjorklund <db@zigo.dhs.org>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, Robert Treat <xzilla@users.sourceforge.net>,
+   pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99
+Message-ID: <20041022145644.GA17238@wolff.to>
+Mail-Followup-To: Dennis Bjorklund <db@zigo.dhs.org>,
+	Tom Lane <tgl@sss.pgh.pa.us>,
+	Robert Treat <xzilla@users.sourceforge.net>,
+	pgsql-hackers@postgresql.org
+References: <6540.1098454398@sss.pgh.pa.us> <Pine.LNX.4.44.0410221615150.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.44.0410221615150.2015-100000@zigo.dhs.org>
+User-Agent: Mutt/1.5.6i
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Fri, Oct 22, 2004 at 16:28:12 +0200,
+  Dennis Bjorklund <db@zigo.dhs.org> wrote:
+> On Fri, 22 Oct 2004, Tom Lane wrote:
+> 
+> > As far as I can tell, Dennis is planning slavish adherence to the spec,
+> > which will mean that the datatype is unable to cope effectively with
+> > daylight-savings issues.  So I'm unconvinced that it will be very
+> > helpful to you for remembering local time in addition to true
+> > (universal) time.
+> 
+> And exactly what issues is it that you see? The only thing I can think of
+> is if you have a timestamp and then add an interval to it so we jump past
+> the daylight saving time change date. Then the new timestamp will keep the
+> old timezone data of say +01 even though we now have jumped into the
+> daylight saving period of +02.
+
+I think for just storing values you are fine. When it comes to adding or
+subtracting intervals you might get some unexpected results.
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+      subscribe-nomail command to majordomo@postgresql.org so that your
+      message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M60253=pgman=candle.pha.pa.us@postgresql.org Fri Oct 22 14:44:05 2004
+Return-path: <pgsql-hackers-owner+M60253=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9MIi3f14607
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 14:44:03 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id B336CEAEDAF
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 19:43:39 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 21148-08 for <pgman@candle.pha.pa.us>;
+	Fri, 22 Oct 2004 18:43:46 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 4FC1AEAEDAB
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 19:43:39 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 178B1EAEF44
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 22 Oct 2004 19:38:04 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 20287-01
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 22 Oct 2004 18:38:00 +0000 (GMT)
+Received: from www.postgresql.com (www.postgresql.com [200.46.204.209])
+	by svr1.postgresql.org (Postfix) with ESMTP id D1F79EAEE4F
+	for <pgsql-hackers@postgresql.org>; Fri, 22 Oct 2004 19:37:45 +0100 (BST)
+Received: from zigo.dhs.org (as2-4-3.an.g.bonet.se [194.236.34.191])
+	by www.postgresql.com (Postfix) with ESMTP id 358575A1CED
+	for <pgsql-hackers@postgresql.org>; Fri, 22 Oct 2004 16:34:33 +0100 (BST)
+Received: from zigo.zigo.dhs.org (zigo.zigo.dhs.org [192.168.0.1])
+	by zigo.dhs.org (Postfix) with ESMTP
+	id 89B7E8467; Fri, 22 Oct 2004 17:34:19 +0200 (CEST)
+Date: Fri, 22 Oct 2004 17:34:19 +0200 (CEST)
+From: Dennis Bjorklund <db@zigo.dhs.org>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Robert Treat <xzilla@users.sourceforge.net>,
+   <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <6994.1098456859@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.44.0410221714500.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Fri, 22 Oct 2004, Tom Lane wrote:
+
+> At bottom, what I want to be able to do is say
+> 	'2004-10-22 10:50:16.916003 America/New_York'
+
+Yes, that's what we said in the last mail and I think there is a value in
+having something like this.
+
+> universal time and not the timezone spec.  Why should I be satisfied if
+> it stores only the GMT offset and not the knowledge of which timezone
+> this really is?
+
+You don't need to be satisfied with it. I think a type like the above
+would be fine to have. It should however not be called "TIMESTAMP WITH
+TIME ZONE" because there is already a definition of that type. We can not
+hijack standard types. I would not mind a type like TIMESTAMP WITH TIME
+ZONE NAME (or some other name). I could even imagine that I could
+implement something like that one day.
+
+> > My current thinking is that storing the time zone value as HH:MM is 
+> > just fine and you avoid all the problems with political changes of when 
+> > the DST is in effect or not.
+> 
+> This is fundamentally misguided.  Time zones *are* political whether you
+> like it or not, and people *do* expect DST-awareness whether you like it
+> or not.
+
+And I never said that time zones are not political, just that HH:MM is a
+usable approximation that works fairly well.
+
+> But storing a fixed GMT offset is going to be a step backwards compared
+> to existing functionality.
+
+It's not a step backwards since you can do everything you can do with the 
+current type plus a little bit more. It's however not a step to the 
+datatype discussed above.
+
+> One way to do this would be to create a system catalog with entries for
+> all known timezones, and then represent timestamptz values as universal
+> time plus an OID from that catalog.  There are other ways that small
+> integer codes could be mapped to timezones of course.
+
+This is just fine. You try to make it sound like I am against such a
+datatype, I am not. It's however not the datatype that we can expect
+applications and other databases to use. So why should we settle for only
+that type. Just because you can make a perfect datatype it doesn't mean
+that the standard datatype should just be ignored.
+
+What would you store when the user supplies a timestamp like '2004-10-22
+17:21:00 +0200'. Should you reject that because you don't know the 
+time zone name? So your datatype will not work for applications that try 
+to be compatable with many databases by using the standard?
+
+Maybe one could make a datatype called TIMESTAMP WITH TIME ZONE that can
+accept both HH:MM and TimeZoneName. Whenever you store values with HH:MM 
+time zones you will get the same problem when you add an interval as the 
+standard type has.
+
+-- 
+/Dennis Björklund
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 8: explain analyze is your friend
+
+From pgsql-hackers-owner+M60266=pgman=candle.pha.pa.us@postgresql.org Fri Oct 22 17:04:46 2004
+Return-path: <pgsql-hackers-owner+M60266=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9ML4jf06676
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 17:04:45 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id C13F9EAE46B
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 22:04:20 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 66740-03 for <pgman@candle.pha.pa.us>;
+	Fri, 22 Oct 2004 21:04:28 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 75764EAE1A2
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 22:04:20 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 2E4AFEAE486
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 22 Oct 2004 22:01:22 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 63290-09
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 22 Oct 2004 21:01:22 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 88B3FEAE492
+	for <pgsql-hackers@postgresql.org>; Fri, 22 Oct 2004 22:01:13 +0100 (BST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id i9ML1WrB018877;
+	Fri, 22 Oct 2004 17:01:34 -0400 (EDT)
+To: Dennis Bjorklund <db@zigo.dhs.org>
+cc: Robert Treat <xzilla@users.sourceforge.net>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <Pine.LNX.4.44.0410221714500.2015-100000@zigo.dhs.org> 
+References: <Pine.LNX.4.44.0410221714500.2015-100000@zigo.dhs.org>
+Comments: In-reply-to Dennis Bjorklund <db@zigo.dhs.org>
+	message dated "Fri, 22 Oct 2004 17:34:19 +0200"
+Date: Fri, 22 Oct 2004 17:01:32 -0400
+Message-ID: <18876.1098478892@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Dennis Bjorklund <db@zigo.dhs.org> writes:
+> You don't need to be satisfied with it. I think a type like the above
+> would be fine to have. It should however not be called "TIMESTAMP WITH
+> TIME ZONE" because there is already a definition of that type. We can not
+> hijack standard types.
+
+Sure we can, as long as they are upward compatible with the standard
+behavior.  The spec says you can put a numeric-GMT-offset zone in and
+get a numeric-GMT-offset zone out.  We can do that and also support
+named, possibly DST-aware zones.  This seems a whole lot better to me
+than having two different types (the idea of a GUC variable to choose
+which one is selected by a given type name is just horrid).
+
+>> But storing a fixed GMT offset is going to be a step backwards compared
+>> to existing functionality.
+
+> It's not a step backwards since you can do everything you can do with the 
+> current type plus a little bit more.
+
+... except get useful answers from interval addition ...
+
+> What would you store when the user supplies a timestamp like '2004-10-22
+> 17:21:00 +0200'. Should you reject that because you don't know the 
+> time zone name?
+
+You are attacking a straw man.
+
+We have put a great deal of work into 8.0 to add the ability to support
+real-world zones fully.  We did not import src/timezone because we
+needed it to implement the SQL spec; we did so because we needed it to
+implement what real users want.  We are not fully there yet (can't do AT
+TIME ZONE conversions with all zones yet, for instance) but I am hoping
+to be there by 8.1.  It would be folly to invent a timestamp with time
+zone type that is going in the other direction while we are trying to
+bring the rest of the system up to full speed by allowing all timezone
+kinds everywhere.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+      subscribe-nomail command to majordomo@postgresql.org so that your
+      message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M60267=pgman=candle.pha.pa.us@postgresql.org Fri Oct 22 17:22:15 2004
+Return-path: <pgsql-hackers-owner+M60267=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9MLMEf09207
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 17:22:14 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 0B2D7EAE4AC
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 22:21:49 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 70387-04 for <pgman@candle.pha.pa.us>;
+	Fri, 22 Oct 2004 21:21:56 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 0930BEAE4AA
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 22:21:48 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 292E8EAC955
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 22 Oct 2004 22:18:05 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 68984-06
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 22 Oct 2004 21:18:04 +0000 (GMT)
+Received: from zigo.dhs.org (as2-4-3.an.g.bonet.se [194.236.34.191])
+	by svr1.postgresql.org (Postfix) with ESMTP id A3C4DEAE489
+	for <pgsql-hackers@postgresql.org>; Fri, 22 Oct 2004 22:17:51 +0100 (BST)
+Received: from zigo.zigo.dhs.org (zigo.zigo.dhs.org [192.168.0.1])
+	by zigo.dhs.org (Postfix) with ESMTP
+	id 065508469; Fri, 22 Oct 2004 23:18:08 +0200 (CEST)
+Date: Fri, 22 Oct 2004 23:18:07 +0200 (CEST)
+From: Dennis Bjorklund <db@zigo.dhs.org>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Robert Treat <xzilla@users.sourceforge.net>,
+   <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <18876.1098478892@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.44.0410222306560.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Fri, 22 Oct 2004, Tom Lane wrote:
+
+> than having two different types (the idea of a GUC variable to choose
+> which one is selected by a given type name is just horrid).
+
+That is needed no matter what change you do if you want old programs that
+use the current timestamp with time zone to work. Today you don't get back 
+the same time zone as you insert, programs might depend on that.
+
+> We are not fully there yet (can't do AT TIME ZONE conversions with all
+> zones yet, for instance)
+
+Why is that? When one start with a utc value, performing a AT TIME ZONE 
+operation doesn't look so complicated.
+
+-- 
+/Dennis Björklund
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From pgsql-hackers-owner+M60268=pgman=candle.pha.pa.us@postgresql.org Fri Oct 22 17:41:36 2004
+Return-path: <pgsql-hackers-owner+M60268=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9MLfYf12294
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 17:41:35 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id EFAEAEAE4AA
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 22:41:08 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 75185-08 for <pgman@candle.pha.pa.us>;
+	Fri, 22 Oct 2004 21:41:16 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 311A7EAE4AF
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 22:41:08 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id AC0CFEAE486
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 22 Oct 2004 22:38:14 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 76579-03
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 22 Oct 2004 21:38:13 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id BD0AAEAD7E2
+	for <pgsql-hackers@postgresql.org>; Fri, 22 Oct 2004 22:38:03 +0100 (BST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id i9MLcOnT019118;
+	Fri, 22 Oct 2004 17:38:25 -0400 (EDT)
+To: Dennis Bjorklund <db@zigo.dhs.org>
+cc: Robert Treat <xzilla@users.sourceforge.net>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <Pine.LNX.4.44.0410222306560.2015-100000@zigo.dhs.org> 
+References: <Pine.LNX.4.44.0410222306560.2015-100000@zigo.dhs.org>
+Comments: In-reply-to Dennis Bjorklund <db@zigo.dhs.org>
+	message dated "Fri, 22 Oct 2004 23:18:07 +0200"
+Date: Fri, 22 Oct 2004 17:38:24 -0400
+Message-ID: <19117.1098481104@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Dennis Bjorklund <db@zigo.dhs.org> writes:
+> On Fri, 22 Oct 2004, Tom Lane wrote:
+>> than having two different types (the idea of a GUC variable to choose
+>> which one is selected by a given type name is just horrid).
+
+> That is needed no matter what change you do if you want old programs that
+> use the current timestamp with time zone to work. Today you don't get back 
+> the same time zone as you insert, programs might depend on that.
+
+[ shrug... ]  We've made much larger changes than that in the name of
+standards compliance.  In practice I think the majority of apps are
+working in contexts where they will get back the same zone as they
+inserted, if they inserted a zone explicitly at all, so the risk of
+breakage is not that high.  Having a GUC variable that changes the
+semantics underneath you is *much* riskier, to judge by past experience.
+
+>> We are not fully there yet (can't do AT TIME ZONE conversions with all
+>> zones yet, for instance)
+
+> Why is that?
+
+Because it's not done yet.  There's a set of GMT-offset-only zone names
+wired into the datetime code (look in the "datetime token table") and
+those are what AT TIME ZONE knows how to deal with.  We need to unify
+that old stuff with the src/timezone code, but we ran out of time to do
+it in 8.0.
+
+The way I see it, we have three sorts of zones to deal with: fixed
+numeric offsets from UTC, names that represent fixed offsets (eg, "EST"
+is the same as UTC-5), and names that represent DST-variable offsets
+(eg, "EST5EDT").  For what are now entirely historical reasons, various
+parts of the system cope with different subsets of these three types.
+I want to get to a state where you can use any of them in any context
+and it Just Works.  (While we are at it, we need to make the set of
+recognized zone names user-configurable; the australian_timezones kluge
+satisfies our contributors Down Under, but there are a lot of unhappy
+people still, because for instance IST means different things in Israel
+and India.)
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M60269=pgman=candle.pha.pa.us@postgresql.org Fri Oct 22 17:51:14 2004
+Return-path: <pgsql-hackers-owner+M60269=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9MLpCf14192
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 17:51:13 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 43D6BEAE489
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 22:50:47 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 78632-05 for <pgman@candle.pha.pa.us>;
+	Fri, 22 Oct 2004 21:50:55 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id EFC45EAE486
+	for <pgman@candle.pha.pa.us>; Fri, 22 Oct 2004 22:50:46 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 42518EAC955
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Fri, 22 Oct 2004 22:48:36 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 77399-07
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Fri, 22 Oct 2004 21:48:35 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 8BB75EAE46B
+	for <pgsql-hackers@postgresql.org>; Fri, 22 Oct 2004 22:48:27 +0100 (BST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id i9MLmm1l019192;
+	Fri, 22 Oct 2004 17:48:48 -0400 (EDT)
+To: Dennis Bjorklund <db@zigo.dhs.org>
+cc: Robert Treat <xzilla@users.sourceforge.net>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <19117.1098481104@sss.pgh.pa.us> 
+References: <Pine.LNX.4.44.0410222306560.2015-100000@zigo.dhs.org> <19117.1098481104@sss.pgh.pa.us>
+Comments: In-reply-to Tom Lane <tgl@sss.pgh.pa.us>
+	message dated "Fri, 22 Oct 2004 17:38:24 -0400"
+Date: Fri, 22 Oct 2004 17:48:48 -0400
+Message-ID: <19191.1098481728@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+>> That is needed no matter what change you do if you want old programs that
+>> use the current timestamp with time zone to work. Today you don't get back 
+>> the same time zone as you insert, programs might depend on that.
+
+> [ shrug... ]  We've made much larger changes than that in the name of
+> standards compliance.
+
+BTW, even if you do want output like that, that doesn't make two
+datatypes a good idea.  It'd be better to add a couple of DateStyle-like
+formatting options:
+	* rotate all timestamps into current TimeZone for display, or not;
+	* display the timezone numerically, or as originally given.
+
+A DateStyle kind of GUC variable is a lot less dangerous than what you
+were proposing, because getting it wrong doesn't mean you have the wrong
+data stored in the database ...
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M60274=pgman=candle.pha.pa.us@postgresql.org Sat Oct 23 02:11:58 2004
+Return-path: <pgsql-hackers-owner+M60274=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9N6Buf20583
+	for <pgman@candle.pha.pa.us>; Sat, 23 Oct 2004 02:11:57 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id B3D75EAE4AC
+	for <pgman@candle.pha.pa.us>; Sat, 23 Oct 2004 07:11:22 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 75750-09 for <pgman@candle.pha.pa.us>;
+	Sat, 23 Oct 2004 06:11:32 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 560D3EADBC0
+	for <pgman@candle.pha.pa.us>; Sat, 23 Oct 2004 07:11:22 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 9D862EAE4CB
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Sat, 23 Oct 2004 07:08:48 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 77538-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Sat, 23 Oct 2004 06:08:54 +0000 (GMT)
+Received: from zigo.dhs.org (as2-4-3.an.g.bonet.se [194.236.34.191])
+	by svr1.postgresql.org (Postfix) with ESMTP id 29BC1EAC8F4
+	for <pgsql-hackers@postgresql.org>; Sat, 23 Oct 2004 07:08:40 +0100 (BST)
+Received: from zigo.zigo.dhs.org (zigo.zigo.dhs.org [192.168.0.1])
+	by zigo.dhs.org (Postfix) with ESMTP
+	id 846788467; Sat, 23 Oct 2004 08:09:05 +0200 (CEST)
+Date: Sat, 23 Oct 2004 08:09:05 +0200 (CEST)
+From: Dennis Bjorklund <db@zigo.dhs.org>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Robert Treat <xzilla@users.sourceforge.net>,
+   <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <18876.1098478892@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.44.0410230802200.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Fri, 22 Oct 2004, Tom Lane wrote:
+
+> behavior.  The spec says you can put a numeric-GMT-offset zone in and
+> get a numeric-GMT-offset zone out.  We can do that and also support
+> named, possibly DST-aware zones.
+
+So if I understand you correctly you are planning to extend the current
+timestamp type to work with both named time zones and HH:MM ones? I didn't
+think you wanted the last one since your plan was to store a UTC+OID where
+the OID pointed to a named time zone. And I guess that you don't plan to
+add 00:00, 00:01, 00:02, ... as named zones with an OID.
+
+-- 
+/Dennis Björklund
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 9: the planner will ignore your desire to choose an index scan if your
+      joining column's datatypes do not match
+
+From pgsql-hackers-owner+M60329=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 12:45:39 2004
+Return-path: <pgsql-hackers-owner+M60329=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PGjcf25576
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 12:45:38 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 27F433A4146
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 17:45:35 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 63030-04 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 16:45:34 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id D15153A413C
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 17:45:34 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 4D4653A415D
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 17:43:32 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 60516-10
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 16:43:26 +0000 (GMT)
+Received: from davinci.ethosmedia.com (server226.ethosmedia.com [209.128.84.226])
+	by svr1.postgresql.org (Postfix) with ESMTP id CAB1E3A4170
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 17:43:26 +0100 (BST)
+Received: from [63.195.55.98] (account josh@agliodbs.com HELO spooky)
+  by davinci.ethosmedia.com (CommuniGate Pro SMTP 4.1.8)
+  with ESMTP id 6553366 for pgsql-hackers@postgresql.org; Mon, 25 Oct 2004 09:44:52 -0700
+From: Josh Berkus <josh@agliodbs.com>
+Organization: Aglio Database Solutions
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+Date: Mon, 25 Oct 2004 09:42:38 -0700
+User-Agent: KMail/1.6.2
+References: <20041022184636.62D39EAEE02@svr1.postgresql.org>
+In-Reply-To: <20041022184636.62D39EAEE02@svr1.postgresql.org>
+MIME-Version: 1.0
+Content-Disposition: inline
+Content-Type: text/plain;
+  charset="utf-8"
+Message-ID: <200410250942.38212.josh@agliodbs.com>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by candle.pha.pa.us id i9PGjcf25576
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+Tom,
+
+> As far as I can tell, Dennis is planning slavish adherence to the spec,
+> which will mean that the datatype is unable to cope effectively with
+> daylight-savings issues. Â So I'm unconvinced that it will be very
+> helpful to you for remembering local time in addition to true
+> (universal) time.
+
+As somebody who codes calendar apps, I have to say that I have yet to see an 
+implementation of time zones which is at all useful for this purpose, 
+including the current implementation.   My calendar apps on PostgreSQL 7.4 
+use "timestamp without time zone" and keep the time zone in a seperate field.
+
+The reason is simple:  our current implementation, which does include DST, 
+does not include any provision for the exceptions to DST -- such as Arizona 
+-- or for the difference between "1 day" and "24 hours".  (Try adding "30 
+days" to "2004-10-05 10:00 PDT", you'll see what I mean).     Nor do I see a 
+way out of this without raising the complexity, and configurability, level of 
+timezones significantly.
+
+So if we're going to be broken (at least from the perspective of calendar 
+applications) we might as well be broken in a spec-compliant way.
+
+-- 
+Josh Berkus
+Aglio Database Solutions
+San Francisco
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+               http://archives.postgresql.org
+
+From pgsql-hackers-owner+M60334=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 13:56:27 2004
+Return-path: <pgsql-hackers-owner+M60334=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PHuQf06230
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 13:56:26 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 024493A3C12
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 18:56:23 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 90234-01 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 17:56:21 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id B12643A3BDD
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 18:56:22 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 038CC3A412E
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 18:54:57 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 89206-06
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 17:54:54 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 0D5D13A3B06
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 18:54:54 +0100 (BST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id i9PHsrvv021835;
+	Mon, 25 Oct 2004 13:54:53 -0400 (EDT)
+To: Josh Berkus <josh@agliodbs.com>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <200410250942.38212.josh@agliodbs.com> 
+References: <20041022184636.62D39EAEE02@svr1.postgresql.org> <200410250942.38212.josh@agliodbs.com>
+Comments: In-reply-to Josh Berkus <josh@agliodbs.com>
+	message dated "Mon, 25 Oct 2004 09:42:38 -0700"
+Date: Mon, 25 Oct 2004 13:54:53 -0400
+Message-ID: <21834.1098726893@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Josh Berkus <josh@agliodbs.com> writes:
+> The reason is simple:  our current implementation, which does include DST, 
+> does not include any provision for the exceptions to DST -- such as Arizona 
+
+Say what?
+
+regression=# set timezone to 'MST7MDT';
+SET
+regression=# select now();
+              now
+-------------------------------
+ 2004-10-25 11:52:47.093538-06
+(1 row)
+
+regression=# set timezone to 'US/Arizona';
+SET
+regression=# select now();
+              now
+-------------------------------
+ 2004-10-25 10:52:49.441559-07
+(1 row)
+
+> -- or for the difference between "1 day" and "24 hours".  (Try adding "30 
+> days" to "2004-10-05 10:00 PDT", you'll see what I mean).
+
+This is the point about how interval needs to treat "day" as different
+from "24 hours".  I agree with that; the fact that it's not done already
+is just a reflection of limited supply of round tuits.  I think it's
+orthogonal to the question of how flexible timestamp with time zone
+needs to be, though.
+
+> Nor do I see a way out of this without raising the complexity, and
+> configurability, level of timezones significantly.
+
+This does not seem to me to be an argument why timestamp with time zone
+ought to be incapable of dealing with DST-aware time zones.  That simply
+guarantees that calendar apps won't be able to use the datatype.  If
+they still can't use it when it can do that, then we can look at the
+next blocking factor.
+
+> So if we're going to be broken (at least from the perspective of calendar 
+> applications) we might as well be broken in a spec-compliant way.
+
+I have not said that we can't comply with the spec.  I have said that
+our ambitions need to be higher than merely complying with the spec.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+      subscribe-nomail command to majordomo@postgresql.org so that your
+      message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M60335=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 14:08:52 2004
+Return-path: <pgsql-hackers-owner+M60335=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PI8of08458
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 14:08:51 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id EB0003A4181
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 19:08:47 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 94404-01 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 18:08:46 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 984283A417A
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 19:08:47 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 058F13A3B6E
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 19:06:53 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 91573-10
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 18:06:42 +0000 (GMT)
+Received: from davinci.ethosmedia.com (server226.ethosmedia.com [209.128.84.226])
+	by svr1.postgresql.org (Postfix) with ESMTP id B6FB73A3AC2
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 19:06:43 +0100 (BST)
+Received: from [64.81.245.111] (account josh@agliodbs.com HELO temoku.sf.agliodbs.com)
+  by davinci.ethosmedia.com (CommuniGate Pro SMTP 4.1.8)
+  with ESMTP id 6553760; Mon, 25 Oct 2004 11:08:08 -0700
+From: Josh Berkus <josh@agliodbs.com>
+Reply-To: josh@agliodbs.com
+Organization: Aglio Database Solutions
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99
+Date: Mon, 25 Oct 2004 11:08:52 -0700
+User-Agent: KMail/1.6.2
+cc: Tom Lane <tgl@sss.pgh.pa.us>
+References: <20041022184636.62D39EAEE02@svr1.postgresql.org> <200410250942.38212.josh@agliodbs.com> <21834.1098726893@sss.pgh.pa.us>
+In-Reply-To: <21834.1098726893@sss.pgh.pa.us>
+MIME-Version: 1.0
+Content-Disposition: inline
+Content-Type: text/plain;
+  charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Message-ID: <200410251108.52164.josh@agliodbs.com>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Tom,
+
+> regression=# set timezone to 'US/Arizona';
+> SET
+> regression=# select now();
+>               now
+> -------------------------------
+>  2004-10-25 10:52:49.441559-07
+
+Wow!   When did that get fixed?   How do I keep track of this stuff if you 
+guys keep fixing it?   ;-)
+
+Of course, it would be very helpful if the result above could display 
+"Arizona" instead of the non-specific "-07", but I'm pretty sure that's 
+already a TODO.
+
+> This is the point about how interval needs to treat "day" as different
+> from "24 hours".  I agree with that; the fact that it's not done already
+> is just a reflection of limited supply of round tuits. 
+
+Well, when I first brought up the issue (2001) I was shot down on the basis of 
+spec-compliance, since SQL92 recognizes only Year/Month and 
+Day/Hour/Minute/etc.  partitions.   Glad it's up for consideration again.
+
+Come to think of it, it was Thomas Lockhart who shot down the idea of fixing 
+Interval, and he's retired now ...
+
+> This does not seem to me to be an argument why timestamp with time zone
+> ought to be incapable of dealing with DST-aware time zones.  That simply
+> guarantees that calendar apps won't be able to use the datatype.  If
+> they still can't use it when it can do that, then we can look at the
+> next blocking factor.
+
+That's definitely a progressive attitude .... pardon me for being pessimistic.
+
+> I have not said that we can't comply with the spec.  I have said that
+> our ambitions need to be higher than merely complying with the spec.
+
+Hmmm ... well, does the spec specifically prohibit DST, or just leave it out?
+
+-- 
+--Josh
+
+Josh Berkus
+Aglio Database Solutions
+San Francisco
+
+---------------------------(end of broadcast)---------------------------
+TIP 7: don't forget to increase your free space map settings
+
+From pgsql-hackers-owner+M60336=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 14:21:12 2004
+Return-path: <pgsql-hackers-owner+M60336=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PILAf10029
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 14:21:11 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 96C283A3B0E
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 19:21:07 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 96954-06 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 18:21:06 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 528B73A3B06
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 19:21:07 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id E010F3A4192
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 19:19:46 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 96137-04
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 18:19:41 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id A1BDA3A4190
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 19:19:42 +0100 (BST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id i9PIJegg022094;
+	Mon, 25 Oct 2004 14:19:40 -0400 (EDT)
+To: josh@agliodbs.com
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <200410251108.52164.josh@agliodbs.com> 
+References: <20041022184636.62D39EAEE02@svr1.postgresql.org> <200410250942.38212.josh@agliodbs.com> <21834.1098726893@sss.pgh.pa.us> <200410251108.52164.josh@agliodbs.com>
+Comments: In-reply-to Josh Berkus <josh@agliodbs.com>
+	message dated "Mon, 25 Oct 2004 11:08:52 -0700"
+Date: Mon, 25 Oct 2004 14:19:40 -0400
+Message-ID: <22093.1098728380@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Josh Berkus <josh@agliodbs.com> writes:
+>> regression=# set timezone to 'US/Arizona';
+>> SET
+>> regression=# select now();
+>> now
+>> -------------------------------
+>> 2004-10-25 10:52:49.441559-07
+
+> Wow!   When did that get fixed?   How do I keep track of this stuff if you 
+> guys keep fixing it?   ;-)
+
+> Of course, it would be very helpful if the result above could display 
+> "Arizona" instead of the non-specific "-07", but I'm pretty sure that's 
+> already a TODO.
+
+Well, that is *exactly what I'm talking about*.  I want timestamp with
+time zone to carry "US/Arizona" not just "-07".  Obviously there needs
+to be some option to get the latter displayed when that's all you want,
+but internally a value of the datatype needs to be able to carry full
+knowledge of which timezone it's supposed to be in.  Dumbing that down
+to a simple numeric GMT offset isn't good enough.
+
+>> I have not said that we can't comply with the spec.  I have said that
+>> our ambitions need to be higher than merely complying with the spec.
+
+> Hmmm ... well, does the spec specifically prohibit DST, or just leave it out?
+
+It just doesn't talk about it AFAICS.
+
+To comply with the spec we definitely need to be *able* to support
+timezone values that are simple numeric GMT offsets.  But I think we
+ought also to be able to store values that are references to any of
+the zic database entries.  This looks to me like a straightforward
+extension of the spec.
+
+We went to all the trouble of importing src/timezone in order that we
+could make a significant upgrade in our timezone capability, and now
+it's time to take the steps that that enables.  Before we were limited
+to the lowest-common-denominator of the libc timezone routines on all
+our different platforms, but now we are not...
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+               http://archives.postgresql.org
+
+From pgsql-hackers-owner+M60337=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 14:28:59 2004
+Return-path: <pgsql-hackers-owner+M60337=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PISvf11118
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 14:28:58 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 928B13A3B43
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 19:28:54 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 00197-04 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 18:28:53 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 518C33A3B06
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 19:28:54 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 3AA743A3B0E
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 19:27:17 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 99849-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 18:27:07 +0000 (GMT)
+Received: from zigo.dhs.org (as2-4-3.an.g.bonet.se [194.236.34.191])
+	by svr1.postgresql.org (Postfix) with ESMTP id B62843A418A
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 19:27:01 +0100 (BST)
+Received: from zigo.zigo.dhs.org (zigo.zigo.dhs.org [192.168.0.1])
+	by zigo.dhs.org (Postfix) with ESMTP
+	id 5AD8C8467; Mon, 25 Oct 2004 20:26:59 +0200 (CEST)
+Date: Mon, 25 Oct 2004 20:26:59 +0200 (CEST)
+From: Dennis Bjorklund <db@zigo.dhs.org>
+To: Josh Berkus <josh@agliodbs.com>
+cc: pgsql-hackers@postgresql.org, Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Re: [HACKERS] timestamp with time zone a la sql99
+In-Reply-To: <200410251108.52164.josh@agliodbs.com>
+Message-ID: <Pine.LNX.4.44.0410252019320.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Mon, 25 Oct 2004, Josh Berkus wrote:
+
+> Hmmm ... well, does the spec specifically prohibit DST, or just leave it
+> out?
+
+It doesn't discuss it. According to the spec a timestamp with time zone is 
+a UTC value + a HH:MM offset from GMT. And intervals in the spec is either 
+a year-month value or a day-time value. One can only compare year-month 
+values with each other and day-time values with each other. So they avoid 
+the problem of the how many days is a month by not allowing it.
+
+The spec is not a full solution, it's also not a useless solution. I'm
+happy as long as the spec is a subset of what pg implements. If not then I
+would like to be able to have both but with different names or something
+similar (but I think that should not be needed).
+
+-- 
+/Dennis Björklund
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+      subscribe-nomail command to majordomo@postgresql.org so that your
+      message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M60338=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 14:54:31 2004
+Return-path: <pgsql-hackers-owner+M60338=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PIsUf15052
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 14:54:30 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 3F9063A41BC
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 19:54:27 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 09766-01 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 18:54:25 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id E25B63A41BA
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 19:54:26 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 8FBF23A41A0
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 19:52:27 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 05475-10
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 18:52:24 +0000 (GMT)
+Received: from davinci.ethosmedia.com (server226.ethosmedia.com [209.128.84.226])
+	by svr1.postgresql.org (Postfix) with ESMTP id E7C333A4182
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 19:52:24 +0100 (BST)
+Received: from [64.81.245.111] (account josh@agliodbs.com HELO temoku.sf.agliodbs.com)
+  by davinci.ethosmedia.com (CommuniGate Pro SMTP 4.1.8)
+  with ESMTP id 6553982; Mon, 25 Oct 2004 11:53:49 -0700
+From: Josh Berkus <josh@agliodbs.com>
+Reply-To: josh@agliodbs.com
+Organization: Aglio Database Solutions
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99
+Date: Mon, 25 Oct 2004 11:54:33 -0700
+User-Agent: KMail/1.6.2
+cc: Dennis Bjorklund <db@zigo.dhs.org>, Tom Lane <tgl@sss.pgh.pa.us>
+References: <Pine.LNX.4.44.0410252019320.2015-100000@zigo.dhs.org>
+In-Reply-To: <Pine.LNX.4.44.0410252019320.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Disposition: inline
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Message-ID: <200410251154.33532.josh@agliodbs.com>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Dennis,
+
+> It doesn't discuss it. According to the spec a timestamp with time zone is
+> a UTC value + a HH:MM offset from GMT. And intervals in the spec is either
+> a year-month value or a day-time value. One can only compare year-month
+> values with each other and day-time values with each other. So they avoid
+> the problem of the how many days is a month by not allowing it.
+
+That's not what Tom and I were talking about.  The issue is that the spec 
+defines Days/Weeks as being an agglomeration of hours and not an atomic 
+entity like Months/Years are.   This leads to some wierd and 
+calendar-breaking behavior when combined with DST, for example:
+
+template1=> select '2004-10-09 10:00 PDT'::TIMESTAMPTZ + '45 days'::INTERVAL
+template1-> ;
+        ?column?
+------------------------
+ 2004-11-23 09:00:00-08
+(1 row)
+
+Because of the DST shift, you get an hour shift which is most decidely not 
+anything real human beings would expect from a calendar.  The answer is to 
+try-partition INTERVAL values, as:
+
+Hour/Minute/Second/ms
+Day/Week
+Month/Year
+
+However, this could be considered to break the spec; certainly Thomas thought 
+it did.  My defense is that the SQL committee made some mistakes, and 
+interval is a big one.
+
+-- 
+--Josh
+
+Josh Berkus
+Aglio Database Solutions
+San Francisco
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M60339=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 15:07:28 2004
+Return-path: <pgsql-hackers-owner+M60339=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PJ7Qf17120
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 15:07:27 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 666B73A41B0
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 20:07:23 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 13808-02 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 19:07:21 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 207F03A41AE
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 20:07:23 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id D243F3A4182
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 20:04:23 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 12122-06
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 19:04:18 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 52FFB3A3CF2
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 20:04:18 +0100 (BST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id i9PJ4GUm022503;
+	Mon, 25 Oct 2004 15:04:16 -0400 (EDT)
+To: josh@agliodbs.com
+cc: pgsql-hackers@postgresql.org, Dennis Bjorklund <db@zigo.dhs.org>
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <200410251154.33532.josh@agliodbs.com> 
+References: <Pine.LNX.4.44.0410252019320.2015-100000@zigo.dhs.org> <200410251154.33532.josh@agliodbs.com>
+Comments: In-reply-to Josh Berkus <josh@agliodbs.com>
+	message dated "Mon, 25 Oct 2004 11:54:33 -0700"
+Date: Mon, 25 Oct 2004 15:04:16 -0400
+Message-ID: <22502.1098731056@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Josh Berkus <josh@agliodbs.com> writes:
+>> It doesn't discuss it. According to the spec a timestamp with time zone is
+>> a UTC value + a HH:MM offset from GMT. And intervals in the spec is either
+>> a year-month value or a day-time value. One can only compare year-month
+>> values with each other and day-time values with each other. So they avoid
+>> the problem of the how many days is a month by not allowing it.
+
+> That's not what Tom and I were talking about.  The issue is that the spec 
+> defines Days/Weeks as being an agglomeration of hours and not an atomic 
+> entity like Months/Years are.
+
+I think though that these points are closely related.  The reason the
+spec does that is exactly that they are ignoring DST and so they can
+assume that 1 day == 24 hours == 86400 seconds.  In a DST-aware world
+you have to make a separation between days and the smaller units, just
+as months are separated from smaller units because there's not a fixed
+conversion factor.
+
+To some extent the interval and timestamptz issues are orthogonal, but
+I think it would be good to fix them in the same release if possible.
+There will undoubtedly be some backwards-compatibility problems, and
+I suppose that users would prefer to take them all at once than via
+the chinese water torture method ...
+
+> However, this could be considered to break the spec; certainly Thomas
+> thought it did.  My defense is that the SQL committee made some
+> mistakes, and interval is a big one.
+
+I'm not clear to what extent we have to actually break the spec, as
+opposed to extend it, in order to do this to the "interval" type.  To do
+everything the spec says we need to do, we'll have to be able to make
+some comparisons that aren't strictly valid (which amounts to assuming
+that 1 day == 24 hours for some limited purposes) but we already do much
+the same things with respect to months.  (See other thread about whether
+1 year == 360 days...)
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From pgsql-hackers-owner+M60340=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 15:12:25 2004
+Return-path: <pgsql-hackers-owner+M60340=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PJCNf17962
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 15:12:24 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id AA6B73A41C2
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 20:12:20 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 13059-08 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 19:12:19 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 50BAF3A41C1
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 20:12:20 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 2035E3A41B9
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 20:11:08 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 13808-08
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 19:11:04 +0000 (GMT)
+Received: from zigo.dhs.org (as2-4-3.an.g.bonet.se [194.236.34.191])
+	by svr1.postgresql.org (Postfix) with ESMTP id 5D4C03A41B2
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 20:11:04 +0100 (BST)
+Received: from zigo.zigo.dhs.org (zigo.zigo.dhs.org [192.168.0.1])
+	by zigo.dhs.org (Postfix) with ESMTP
+	id 156808467; Mon, 25 Oct 2004 21:11:04 +0200 (CEST)
+Date: Mon, 25 Oct 2004 21:11:04 +0200 (CEST)
+From: Dennis Bjorklund <db@zigo.dhs.org>
+To: Josh Berkus <josh@agliodbs.com>
+cc: pgsql-hackers@postgresql.org, Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Re: [HACKERS] timestamp with time zone a la sql99
+In-Reply-To: <200410251154.33532.josh@agliodbs.com>
+Message-ID: <Pine.LNX.4.44.0410252103340.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Mon, 25 Oct 2004, Josh Berkus wrote:
+
+> Dennis,
+> 
+> > It doesn't discuss it. According to the spec a timestamp with time zone is
+> > a UTC value + a HH:MM offset from GMT. And intervals in the spec is either
+> > a year-month value or a day-time value. One can only compare year-month
+> > values with each other and day-time values with each other. So they avoid
+> > the problem of the how many days is a month by not allowing it.
+> 
+> That's not what Tom and I were talking about.
+
+You wanted to know what the standard said, and I told what I knew.
+
+> The issue is that the spec defines Days/Weeks as being an agglomeration
+> of hours and not an atomic entity like Months/Years are.
+
+I don't know what you mean with this. The standard does treat them as
+
+year
+month
+day
+hour
+minute
+second (with fractions)
+
+There is no weeks there, if that is what you mean.
+
+> This leads to some wierd and calendar-breaking behavior when combined
+> with DST, for example:
+>
+> template1=> select '2004-10-09 10:00 PDT'::TIMESTAMPTZ + '45 days'::INTERVAL
+> template1-> ;
+>         ?column?
+> ------------------------
+>  2004-11-23 09:00:00-08
+> (1 row)
+> 
+> Because of the DST shift, you get an hour shift which is most decidely not 
+> anything real human beings would expect from a calendar.
+
+I don't see how the above can be caused by the representation of an 
+interval. The above timestamp is 
+
+2004-10-09 10:00 PDT
+
+which in the standard would be
+
+2004-10-09 10:00 -07
+
+and after the additon would be
+
+2004-11-23 10:00:00-07
+
+Here the time zone is wrong since the standard does not know about named 
+zones and dst.
+
+An implementation like the one Tom (and I) want would start with
+
+2004-10-09 10:00 PDT
+
+and then after the addition one would get
+
+2004-11-23 10:00:00 PST
+
+At least that's my understanding of what we want and what we can get (plus 
+that we also need to support HH:MM tz values since those also exist in the 
+world, check this emails header for example).
+
+It's possible that you discuss something else, but that has been lost on 
+me so far.
+
+-- 
+/Dennis Björklund
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+      subscribe-nomail command to majordomo@postgresql.org so that your
+      message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M60341=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 15:15:18 2004
+Return-path: <pgsql-hackers-owner+M60341=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PJFHf18332
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 15:15:17 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id D2DE53A41BD
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 20:15:13 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 16799-02 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 19:15:12 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 928BF3A41A6
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 20:15:13 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 2AE4F3A41C4
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 20:13:02 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 15871-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 19:12:59 +0000 (GMT)
+Received: from zigo.dhs.org (as2-4-3.an.g.bonet.se [194.236.34.191])
+	by svr1.postgresql.org (Postfix) with ESMTP id 6881F3A41BC
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 20:12:59 +0100 (BST)
+Received: from zigo.zigo.dhs.org (zigo.zigo.dhs.org [192.168.0.1])
+	by zigo.dhs.org (Postfix) with ESMTP
+	id 09CC48467; Mon, 25 Oct 2004 21:12:59 +0200 (CEST)
+Date: Mon, 25 Oct 2004 21:12:59 +0200 (CEST)
+From: Dennis Bjorklund <db@zigo.dhs.org>
+To: Josh Berkus <josh@agliodbs.com>
+cc: pgsql-hackers@postgresql.org, Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Re: [HACKERS] timestamp with time zone a la sql99
+In-Reply-To: <200410251154.33532.josh@agliodbs.com>
+Message-ID: <Pine.LNX.4.44.0410252112090.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Mon, 25 Oct 2004, Josh Berkus wrote:
+
+> Hour/Minute/Second/ms
+> Day/Week
+> Month/Year
+
+And just when I pressed "send" on the previous mail I got the problem 
+:-)
+
+-- 
+/Dennis Björklund
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M60342=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 15:20:32 2004
+Return-path: <pgsql-hackers-owner+M60342=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PJKVf19055
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 15:20:32 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 0D6103A418E
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 20:20:28 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 17860-02 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 19:20:26 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id AA4353A41B2
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 20:20:27 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 131A23A41BB
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 20:19:02 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 16799-06
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 19:18:51 +0000 (GMT)
+Received: from zigo.dhs.org (as2-4-3.an.g.bonet.se [194.236.34.191])
+	by svr1.postgresql.org (Postfix) with ESMTP id BBD663A3B06
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 20:18:52 +0100 (BST)
+Received: from zigo.zigo.dhs.org (zigo.zigo.dhs.org [192.168.0.1])
+	by zigo.dhs.org (Postfix) with ESMTP
+	id 36B248467; Mon, 25 Oct 2004 21:18:52 +0200 (CEST)
+Date: Mon, 25 Oct 2004 21:18:52 +0200 (CEST)
+From: Dennis Bjorklund <db@zigo.dhs.org>
+To: Josh Berkus <josh@agliodbs.com>
+cc: pgsql-hackers@postgresql.org, Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Re: [HACKERS] timestamp with time zone a la sql99
+In-Reply-To: <200410251154.33532.josh@agliodbs.com>
+Message-ID: <Pine.LNX.4.44.0410252114250.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Mon, 25 Oct 2004, Josh Berkus wrote:
+
+> Hour/Minute/Second/ms
+> Day/Week
+> Month/Year
+
+This is embarrasing. I'm still a bit confused :-)
+
+The standard treat days as a separate entry, it does not assume that a day 
+is 24 hours. It restricts the hour field to the interval 0-23 so one can 
+never have something like 25 hours. So it does not need to worry about how 
+many days that translate to.
+
+And why do we need weeks also?
+
+Well, this is the last mail I send before I've been thinking about this 
+for a while more :-)
+
+-- 
+/Dennis Björklund
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+               http://archives.postgresql.org
+
+From pgsql-hackers-owner+M60344=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 15:36:30 2004
+Return-path: <pgsql-hackers-owner+M60344=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PJaTf21902
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 15:36:29 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id E2F703A3CF2
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 20:36:25 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 23154-01 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 19:36:24 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 7935E3A3AC2
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 20:36:25 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 13AB03A41BC
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 20:35:09 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 21223-08
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 19:35:05 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id EA1E73A41B3
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 20:35:06 +0100 (BST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id i9PJZ429022817;
+	Mon, 25 Oct 2004 15:35:04 -0400 (EDT)
+To: Dennis Bjorklund <db@zigo.dhs.org>
+cc: Josh Berkus <josh@agliodbs.com>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <Pine.LNX.4.44.0410252114250.2015-100000@zigo.dhs.org> 
+References: <Pine.LNX.4.44.0410252114250.2015-100000@zigo.dhs.org>
+Comments: In-reply-to Dennis Bjorklund <db@zigo.dhs.org>
+	message dated "Mon, 25 Oct 2004 21:18:52 +0200"
+Date: Mon, 25 Oct 2004 15:35:04 -0400
+Message-ID: <22816.1098732904@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Dennis Bjorklund <db@zigo.dhs.org> writes:
+> The standard treat days as a separate entry, it does not assume that a day 
+> is 24 hours.
+
+SQL92 says
+
+         4.5.2  Intervals
+
+         There are two classes of intervals. One class, called year-month
+         intervals, has an express or implied datetime precision that in-
+         cludes no fields other than YEAR and MONTH, though not both are
+         required. The other class, called day-time intervals, has an ex-
+         press or implied interval precision that can include any fields
+         other than YEAR or MONTH.
+
+AFAICS the reason for this rule is that they expect all Y/M intervals to
+be comparable (which they are) and they also expect all D/H/M/S intervals
+to be comparable, which you can only do by assuming that 1 D == 24 H.
+
+It seems to me though that we can store days separately and do interval
+comparisons with the assumption 1 D == 24 H, and be perfectly
+SQL-compatible as far as that goes, and still make good use of the
+separate day info when adding to a timestamptz that has a DST-aware
+timezone.  In a non-DST-aware timezone the addition will act the same as
+if we weren't distinguishing days from h/m/s.  Therefore, an application
+using only the spec-defined features (ie, only fixed-numeric-offset
+timezones) will see no deviation from the spec behavior.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M60343=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 15:31:38 2004
+Return-path: <pgsql-hackers-owner+M60343=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PJVZf21237
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 15:31:36 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 139FF3A41C0
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 20:31:32 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 21073-05 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 19:31:30 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 9E1723A41B8
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 20:31:31 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id C7A9E3A41A0
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 20:30:15 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 19517-04
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 19:30:05 +0000 (GMT)
+Received: from wolff.to (wolff.to [66.93.249.74])
+	by svr1.postgresql.org (Postfix) with SMTP id 9A0483A4182
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 20:30:05 +0100 (BST)
+Received: (qmail 26726 invoked by uid 500); 25 Oct 2004 19:40:57 -0000
+Date: Mon, 25 Oct 2004 14:40:57 -0500
+From: Bruno Wolff III <bruno@wolff.to>
+To: Dennis Bjorklund <db@zigo.dhs.org>
+cc: Josh Berkus <josh@agliodbs.com>, pgsql-hackers@postgresql.org,
+   Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Re: [HACKERS] timestamp with time zone a la sql99
+Message-ID: <20041025194057.GA26356@wolff.to>
+Mail-Followup-To: Dennis Bjorklund <db@zigo.dhs.org>,
+	Josh Berkus <josh@agliodbs.com>, pgsql-hackers@postgresql.org,
+	Tom Lane <tgl@sss.pgh.pa.us>
+References: <200410251154.33532.josh@agliodbs.com> <Pine.LNX.4.44.0410252114250.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.44.0410252114250.2015-100000@zigo.dhs.org>
+User-Agent: Mutt/1.5.6i
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Mon, Oct 25, 2004 at 21:18:52 +0200,
+  Dennis Bjorklund <db@zigo.dhs.org> wrote:
+> On Mon, 25 Oct 2004, Josh Berkus wrote:
+> 
+> > Hour/Minute/Second/ms
+> > Day/Week
+> > Month/Year
+> 
+> This is embarrasing. I'm still a bit confused :-)
+> 
+> The standard treat days as a separate entry, it does not assume that a day 
+> is 24 hours. It restricts the hour field to the interval 0-23 so one can 
+> never have something like 25 hours. So it does not need to worry about how 
+> many days that translate to.
+> 
+> And why do we need weeks also?
+
+For convenience. Just like years are a group of months, weeks are a group
+of days.
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M60346=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 16:10:09 2004
+Return-path: <pgsql-hackers-owner+M60346=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PKA8f26656
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 16:10:08 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 07A343A4201
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 21:10:05 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 62669-07 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 20:10:03 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id ACA1C3A4200
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 21:10:04 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 251663A41FE
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 21:08:18 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 62513-04
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 20:08:15 +0000 (GMT)
+Received: from zigo.dhs.org (as2-4-3.an.g.bonet.se [194.236.34.191])
+	by svr1.postgresql.org (Postfix) with ESMTP id 3C94D3A3AC2
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 21:08:14 +0100 (BST)
+Received: from zigo.zigo.dhs.org (zigo.zigo.dhs.org [192.168.0.1])
+	by zigo.dhs.org (Postfix) with ESMTP
+	id 025568467; Mon, 25 Oct 2004 22:08:14 +0200 (CEST)
+Date: Mon, 25 Oct 2004 22:08:14 +0200 (CEST)
+From: Dennis Bjorklund <db@zigo.dhs.org>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Josh Berkus <josh@agliodbs.com>, <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <22816.1098732904@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.44.0410252204070.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Mon, 25 Oct 2004, Tom Lane wrote:
+
+>          There are two classes of intervals. One class, called year-month
+>          intervals, has an express or implied datetime precision that in-
+>          cludes no fields other than YEAR and MONTH, though not both are
+>          required. The other class, called day-time intervals, has an ex-
+>          press or implied interval precision that can include any fields
+>          other than YEAR or MONTH.
+> 
+> AFAICS the reason for this rule is that they expect all Y/M intervals to
+> be comparable (which they are) and they also expect all D/H/M/S intervals
+> to be comparable, which you can only do by assuming that 1 D == 24 H.
+
+I said I was not going to send any more mails, but here we go again :-)
+
+The standard restrict the hour field to the interval 0-23, so there can 
+never be any compare between for example '1 day 1 hour' and '25 hours'. 
+This means that one can not add two intervals together to get a bigger 
+one but that it would still work to do timestamp+interval+interval.
+
+> It seems to me though that we can store days separately and do interval
+> comparisons with the assumption 1 D == 24 H, and be perfectly
+> SQL-compatible as far as that goes, and still make good use of the
+> separate day info when adding to a timestamptz that has a DST-aware
+> timezone.  In a non-DST-aware timezone the addition will act the same as
+> if we weren't distinguishing days from h/m/s.  Therefore, an application
+> using only the spec-defined features (ie, only fixed-numeric-offset
+> timezones) will see no deviation from the spec behavior.
+
+I agree with this.
+
+-- 
+/Dennis Björklund
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 7: don't forget to increase your free space map settings
+
+From pgsql-hackers-owner+M60347=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 16:20:45 2004
+Return-path: <pgsql-hackers-owner+M60347=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PKKif28309
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 16:20:44 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 65B453A4215
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 21:20:40 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 66092-07 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 20:20:38 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 1DCD53A4210
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 21:20:40 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 803933A3AC2
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 21:18:00 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 64513-06
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 20:17:49 +0000 (GMT)
+Received: from davinci.ethosmedia.com (server226.ethosmedia.com [209.128.84.226])
+	by svr1.postgresql.org (Postfix) with ESMTP id 726633A3CF2
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 21:17:51 +0100 (BST)
+Received: from [64.81.245.111] (account josh@agliodbs.com HELO temoku.sf.agliodbs.com)
+  by davinci.ethosmedia.com (CommuniGate Pro SMTP 4.1.8)
+  with ESMTP id 6554308; Mon, 25 Oct 2004 13:19:17 -0700
+From: Josh Berkus <josh@agliodbs.com>
+Reply-To: josh@agliodbs.com
+Organization: Aglio Database Solutions
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99
+Date: Mon, 25 Oct 2004 13:20:01 -0700
+User-Agent: KMail/1.6.2
+cc: Dennis Bjorklund <db@zigo.dhs.org>, Tom Lane <tgl@sss.pgh.pa.us>
+References: <Pine.LNX.4.44.0410252103340.2015-100000@zigo.dhs.org>
+In-Reply-To: <Pine.LNX.4.44.0410252103340.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Disposition: inline
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Message-ID: <200410251320.01311.josh@agliodbs.com>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Dennis,
+
+> An implementation like the one Tom (and I) want would start with
+>
+> 2004-10-09 10:00 PDT
+>
+> and then after the addition one would get
+>
+> 2004-11-23 10:00:00 PST
+
+Sounds like we're on the same page then.
+
+> The standard restrict the hour field to the interval 0-23, so there can
+> never be any compare between for example '1 day 1 hour' and '25 hours'.
+> This means that one can not add two intervals together to get a bigger
+> one but that it would still work to do timestamp+interval+interval.
+
+Hour field of the timestamp, or hour field of interval?  There a world of 
+difference.
+
+As long as we're willing to live with the understanding that +1day 1 hour may 
+produce a slightly different result than + 25 hours, I don't see the problem.  
+Currently I can add +900 hours if I like, postgreSQL will support it.
+
+-- 
+--Josh
+
+Josh Berkus
+Aglio Database Solutions
+San Francisco
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+      subscribe-nomail command to majordomo@postgresql.org so that your
+      message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M60348=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 16:24:27 2004
+Return-path: <pgsql-hackers-owner+M60348=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PKOQf28960
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 16:24:26 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 2AD843A419B
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 21:24:22 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 68942-02 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 20:24:20 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id E08EE3A4182
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 21:24:21 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id C8C413A419B
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 21:22:31 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 68322-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 20:22:28 +0000 (GMT)
+Received: from zigo.dhs.org (as2-4-3.an.g.bonet.se [194.236.34.191])
+	by svr1.postgresql.org (Postfix) with ESMTP id BB2F53A41EC
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 21:22:29 +0100 (BST)
+Received: from zigo.zigo.dhs.org (zigo.zigo.dhs.org [192.168.0.1])
+	by zigo.dhs.org (Postfix) with ESMTP
+	id 2B7368467; Mon, 25 Oct 2004 22:22:29 +0200 (CEST)
+Date: Mon, 25 Oct 2004 22:22:29 +0200 (CEST)
+From: Dennis Bjorklund <db@zigo.dhs.org>
+To: Josh Berkus <josh@agliodbs.com>
+cc: pgsql-hackers@postgresql.org, Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Re: [HACKERS] timestamp with time zone a la sql99
+In-Reply-To: <200410251320.01311.josh@agliodbs.com>
+Message-ID: <Pine.LNX.4.44.0410252221150.2015-100000@zigo.dhs.org>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+On Mon, 25 Oct 2004, Josh Berkus wrote:
+
+> > The standard restrict the hour field to the interval 0-23, so there can
+> > never be any compare between for example '1 day 1 hour' and '25 hours'.
+> > This means that one can not add two intervals together to get a bigger
+> > one but that it would still work to do timestamp+interval+interval.
+> 
+> Hour field of the timestamp, or hour field of interval?  There a world of 
+> difference.
+
+Hour field of an interval can be 0-23 according to the spec (doesn't say
+that we need that restriction, but we do need to understand what the spec
+say).
+
+-- 
+/Dennis Björklund
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+      subscribe-nomail command to majordomo@postgresql.org so that your
+      message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M60349=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 16:34:48 2004
+Return-path: <pgsql-hackers-owner+M60349=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9PKYlf00828
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 16:34:47 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id D7AD63A3BF2
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 21:34:43 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 72374-02 for <pgman@candle.pha.pa.us>;
+	Mon, 25 Oct 2004 20:34:41 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 99E183A3B88
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 21:34:43 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 534763A3C84
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon, 25 Oct 2004 21:32:42 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 71412-04
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon, 25 Oct 2004 20:32:36 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 798CA3A3B88
+	for <pgsql-hackers@postgresql.org>; Mon, 25 Oct 2004 21:32:38 +0100 (BST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id i9PKWbDK023330;
+	Mon, 25 Oct 2004 16:32:37 -0400 (EDT)
+To: josh@agliodbs.com
+cc: pgsql-hackers@postgresql.org, Dennis Bjorklund <db@zigo.dhs.org>
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <200410251320.01311.josh@agliodbs.com> 
+References: <Pine.LNX.4.44.0410252103340.2015-100000@zigo.dhs.org> <200410251320.01311.josh@agliodbs.com>
+Comments: In-reply-to Josh Berkus <josh@agliodbs.com>
+	message dated "Mon, 25 Oct 2004 13:20:01 -0700"
+Date: Mon, 25 Oct 2004 16:32:37 -0400
+Message-ID: <23329.1098736357@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Josh Berkus <josh@agliodbs.com> writes:
+> As long as we're willing to live with the understanding that +1day 1 hour may
+> produce a slightly different result than + 25 hours, I don't see the problem.
+
+Right, which is exactly why we can't accept the spec's restriction that
+the hour field be limited to 0-23.  People may legitimately want to add
+48 hours to a timestamp, and *not* have that mean the same as adding
+"2 days".  Besides, we would have a backwards-compatibility problem if
+we tried to forbid it, since as you note we've always accepted such input.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From pgsql-hackers-owner+M60371=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 21:26:49 2004
+Return-path: <pgsql-hackers-owner+M60371=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9Q1Qmf13334
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 21:26:49 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id A8E2F3A42A1
+	for <pgman@candle.pha.pa.us>; Tue, 26 Oct 2004 02:26:43 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 52441-04 for <pgman@candle.pha.pa.us>;
+	Tue, 26 Oct 2004 01:26:39 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 5F7503A42A0
+	for <pgman@candle.pha.pa.us>; Tue, 26 Oct 2004 02:26:43 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 02D5D3A427F
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 26 Oct 2004 02:25:27 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 52284-03
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 26 Oct 2004 01:25:22 +0000 (GMT)
+Received: from houston.familyhealth.com.au (houston.au.fhnetwork.com [203.22.197.21])
+	by svr1.postgresql.org (Postfix) with ESMTP id 5C0723A42A0
+	for <pgsql-hackers@postgresql.org>; Tue, 26 Oct 2004 02:25:25 +0100 (BST)
+Received: from houston.familyhealth.com.au (localhost [127.0.0.1])
+	by houston.familyhealth.com.au (Postfix) with ESMTP id 1BDCB2506C;
+	Tue, 26 Oct 2004 09:25:25 +0800 (WST)
+Received: from [192.168.0.40] (work-40.internal [192.168.0.40])
+	by houston.familyhealth.com.au (Postfix) with ESMTP id 14E452506B;
+	Tue, 26 Oct 2004 09:25:25 +0800 (WST)
+Message-ID: <417DA785.7010208@familyhealth.com.au>
+Date: Tue, 26 Oct 2004 09:25:25 +0800
+From: Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+User-Agent: Mozilla Thunderbird 0.8 (Windows/20040913)
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: josh@agliodbs.com, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99
+References: <20041022184636.62D39EAEE02@svr1.postgresql.org> <200410250942.38212.josh@agliodbs.com> <21834.1098726893@sss.pgh.pa.us> <200410251108.52164.josh@agliodbs.com> <22093.1098728380@sss.pgh.pa.us>
+In-Reply-To: <22093.1098728380@sss.pgh.pa.us>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+>>>regression=# set timezone to 'US/Arizona';
+>>>SET
+>>>regression=# select now();
+>>>now
+>>>-------------------------------
+>>>2004-10-25 10:52:49.441559-07
+> 
+> 
+>>Wow!   When did that get fixed?   How do I keep track of this stuff if you 
+>>guys keep fixing it?   ;-)
+
+That's worked for ages.  What doesn't work is this:
+
+usatest=# select current_timestamp at time zone 'US/Arizona';
+ERROR:  time zone "us/arizona" not recognized
+
+Chris
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M60372=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 21:41:27 2004
+Return-path: <pgsql-hackers-owner+M60372=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9Q1fPf15148
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 21:41:26 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id A941F3A4278
+	for <pgman@candle.pha.pa.us>; Tue, 26 Oct 2004 02:41:20 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 54196-09 for <pgman@candle.pha.pa.us>;
+	Tue, 26 Oct 2004 01:41:16 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 50EEA3A4255
+	for <pgman@candle.pha.pa.us>; Tue, 26 Oct 2004 02:41:20 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 34AC13A4288
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 26 Oct 2004 02:39:55 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 54779-07
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 26 Oct 2004 01:39:42 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 3E9493A1D91
+	for <pgsql-hackers@postgresql.org>; Tue, 26 Oct 2004 02:39:45 +0100 (BST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id i9Q1ditA003223;
+	Mon, 25 Oct 2004 21:39:46 -0400 (EDT)
+To: Dennis Bjorklund <db@zigo.dhs.org>
+cc: Robert Treat <xzilla@users.sourceforge.net>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <Pine.LNX.4.44.0410230802200.2015-100000@zigo.dhs.org> 
+References: <Pine.LNX.4.44.0410230802200.2015-100000@zigo.dhs.org>
+Comments: In-reply-to Dennis Bjorklund <db@zigo.dhs.org>
+	message dated "Sat, 23 Oct 2004 08:09:05 +0200"
+Date: Mon, 25 Oct 2004 21:39:43 -0400
+Message-ID: <3222.1098754783@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Dennis Bjorklund <db@zigo.dhs.org> writes:
+> So if I understand you correctly you are planning to extend the current
+> timestamp type to work with both named time zones and HH:MM ones? I didn't
+> think you wanted the last one since your plan was to store a UTC+OID where
+> the OID pointed to a named time zone. And I guess that you don't plan to
+> add 00:00, 00:01, 00:02, ... as named zones with an OID.
+
+I missed getting back to you on this, but I think we can do both.  Some
+random points:
+
+* Once we expand timestamptz to bigger than 8 bytes, there's essentially
+zero cost to making it 12 bytes, and for that matter we could go to 16
+without much penalty, because of alignment considerations.  So there's
+plenty of space.
+
+* What we need is to be able to represent either a fixed offset from UTC
+or a reference of some kind to a zic database entry.  The most
+bit-splurging way of doing the former is a signed offset in seconds from
+Greenwich, which would take 17 bits.  It'd be good enough to represent
+the offset in minutes, which needs only 11 bits.
+
+* I suggested OIDs for referencing zic entries, but we don't have to do
+that; any old mapping table will do.  16 bits would surely be plenty to
+assign a unique label to every present and future zic entry.
+
+* My inclination therefore is to extend timestamptz with two 16-bit
+fields, one being the offset from UTC (in minutes) and one being the
+zic identifier.  If the identifier is zero then it's a straight numeric
+offset from UTC and the offset field is all you need (this is the SQL
+spec compatible case).  If the identifier is not zero then it gives you
+an index to look up the timezone rules.  However, there is no need for
+the offset field to go to waste; we should store the offset anyway,
+since that might save a trip to the zic database in some cases.
+
+* It's not clear to me yet whether the stored offset in the second case
+should be the zone's standard UTC offset (thus always the same for a
+given zone ID) or the current-time offset for the timestamp (thus
+different if the timestamp is in daylight-savings or standard time).
+
+* If we store the current-time offset then it almost doesn't matter
+whether the timestamp itself is stored as a UTC or local time value;
+you can trivially translate either to the other by adding or subtracting
+the offset (*60).  But I'm inclined to store UTC for consistency with
+past practice, and because it will make comparisons a bit faster: you
+can compare the timestamps without adjusting first.  Generally I think
+comparisons ought to be the best-optimized operations in a Postgres
+datatype, because index operations will do a ton of 'em.  (We definitely
+do NOT want to have to visit the zic database in order to compare two
+timestamptz values.)
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M60373=pgman=candle.pha.pa.us@postgresql.org Mon Oct 25 21:53:52 2004
+Return-path: <pgsql-hackers-owner+M60373=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id i9Q1rpf17038
+	for <pgman@candle.pha.pa.us>; Mon, 25 Oct 2004 21:53:51 -0400 (EDT)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 1B6153A42AC
+	for <pgman@candle.pha.pa.us>; Tue, 26 Oct 2004 02:53:46 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 58642-09 for <pgman@candle.pha.pa.us>;
+	Tue, 26 Oct 2004 01:53:42 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id CE6DE3A42A7
+	for <pgman@candle.pha.pa.us>; Tue, 26 Oct 2004 02:53:45 +0100 (BST)
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 768EE3A429E
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Tue, 26 Oct 2004 02:52:13 +0100 (BST)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 58205-07
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Tue, 26 Oct 2004 01:52:07 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 397C43A4294
+	for <pgsql-hackers@postgresql.org>; Tue, 26 Oct 2004 02:52:11 +0100 (BST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id i9Q1q07B003307;
+	Mon, 25 Oct 2004 21:52:00 -0400 (EDT)
+To: Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+cc: josh@agliodbs.com, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] timestamp with time zone a la sql99 
+In-Reply-To: <417DA785.7010208@familyhealth.com.au> 
+References: <20041022184636.62D39EAEE02@svr1.postgresql.org> <200410250942.38212.josh@agliodbs.com> <21834.1098726893@sss.pgh.pa.us> <200410251108.52164.josh@agliodbs.com> <22093.1098728380@sss.pgh.pa.us> <417DA785.7010208@familyhealth.com.au>
+Comments: In-reply-to Christopher Kings-Lynne <chriskl@familyhealth.com.au>
+	message dated "Tue, 26 Oct 2004 09:25:25 +0800"
+Date: Mon, 25 Oct 2004 21:52:00 -0400
+Message-ID: <3306.1098755520@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Christopher Kings-Lynne <chriskl@familyhealth.com.au> writes:
+> That's worked for ages.  What doesn't work is this:
+
+> usatest=# select current_timestamp at time zone 'US/Arizona';
+> ERROR:  time zone "us/arizona" not recognized
+
+Right, and similarly you can do
+
+regression=# select '2004-10-25 21:32:33.430222 MST'::timestamptz;
+          timestamptz          
+-------------------------------
+ 2004-10-26 00:32:33.430222-04
+(1 row)
+
+but not
+
+regression=# select '2004-10-25 21:32:33.430222 US/Arizona'::timestamptz;
+ERROR:  invalid input syntax for type timestamp with time zone: "2004-10-25 21:32:33.430222 US/Arizona"
+
+I would like to see both of these cases working in 8.1; and furthermore
+I'd like to see the timezone specs coming back as entered, not as bare
+numeric offsets.  (This will need to be adjustable via a DateStyle
+option, of course, but I want the information to be in there whether it
+is displayed or not.)
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 7: don't forget to increase your free space map settings
+
