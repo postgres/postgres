@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.22 2005/03/06 22:15:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.23 2005/06/05 22:32:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #define SELFUNCS_H
 
 #include "fmgr.h"
-#include "nodes/parsenodes.h"
+#include "nodes/relation.h"
 
 
 /*
@@ -108,19 +108,19 @@ extern Datum icregexnejoinsel(PG_FUNCTION_ARGS);
 extern Datum nlikejoinsel(PG_FUNCTION_ARGS);
 extern Datum icnlikejoinsel(PG_FUNCTION_ARGS);
 
-extern Selectivity booltestsel(Query *root, BoolTestType booltesttype,
+extern Selectivity booltestsel(PlannerInfo *root, BoolTestType booltesttype,
 			Node *arg, int varRelid, JoinType jointype);
-extern Selectivity nulltestsel(Query *root, NullTestType nulltesttype,
+extern Selectivity nulltestsel(PlannerInfo *root, NullTestType nulltesttype,
 			Node *arg, int varRelid);
 
-extern void mergejoinscansel(Query *root, Node *clause,
+extern void mergejoinscansel(PlannerInfo *root, Node *clause,
 				 Selectivity *leftscan,
 				 Selectivity *rightscan);
 
-extern double estimate_num_groups(Query *root, List *groupExprs,
+extern double estimate_num_groups(PlannerInfo *root, List *groupExprs,
 					double input_rows);
 
-extern Selectivity estimate_hash_bucketsize(Query *root, Node *hashkey,
+extern Selectivity estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey,
 						 double nbuckets);
 
 extern Datum btcostestimate(PG_FUNCTION_ARGS);

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.66 2005/04/06 16:34:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.67 2005/06/05 22:32:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,8 @@
 
 
 static PathKeyItem *makePathKeyItem(Node *key, Oid sortop, bool checkType);
-static List *make_canonical_pathkey(Query *root, PathKeyItem *item);
-static Var *find_indexkey_var(Query *root, RelOptInfo *rel,
+static List *make_canonical_pathkey(PlannerInfo *root, PathKeyItem *item);
+static Var *find_indexkey_var(PlannerInfo *root, RelOptInfo *rel,
 				  AttrNumber varattno);
 
 
@@ -87,7 +87,7 @@ makePathKeyItem(Node *key, Oid sortop, bool checkType)
  * that involves an equijoined variable.
  */
 void
-add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
+add_equijoined_keys(PlannerInfo *root, RestrictInfo *restrictinfo)
 {
 	Expr	   *clause = restrictinfo->clause;
 	PathKeyItem *item1 = makePathKeyItem(get_leftop(clause),
@@ -198,7 +198,7 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
  * restrictinfo datastructures for each pair.
  */
 void
-generate_implied_equalities(Query *root)
+generate_implied_equalities(PlannerInfo *root)
 {
 	ListCell   *cursetlink;
 
@@ -293,7 +293,7 @@ generate_implied_equalities(Query *root)
  * check that case if it's possible to pass identical items.
  */
 bool
-exprs_known_equal(Query *root, Node *item1, Node *item2)
+exprs_known_equal(PlannerInfo *root, Node *item1, Node *item2)
 {
 	ListCell   *cursetlink;
 
@@ -333,7 +333,7 @@ exprs_known_equal(Query *root, Node *item1, Node *item2)
  * scanning the WHERE clause for equijoin operators.
  */
 static List *
-make_canonical_pathkey(Query *root, PathKeyItem *item)
+make_canonical_pathkey(PlannerInfo *root, PathKeyItem *item)
 {
 	List	   *newset;
 	ListCell   *cursetlink;
@@ -358,7 +358,7 @@ make_canonical_pathkey(Query *root, PathKeyItem *item)
  * scanning the WHERE clause for equijoin operators.
  */
 List *
-canonicalize_pathkeys(Query *root, List *pathkeys)
+canonicalize_pathkeys(PlannerInfo *root, List *pathkeys)
 {
 	List	   *new_pathkeys = NIL;
 	ListCell   *l;
@@ -398,10 +398,10 @@ canonicalize_pathkeys(Query *root, List *pathkeys)
  *	  If not, return 0 (without actually adding it to our equi_key_list).
  *
  * This is a hack to support the rather bogus heuristics in
- * build_subquery_pathkeys.
+ * convert_subquery_pathkeys.
  */
 static int
-count_canonical_peers(Query *root, PathKeyItem *item)
+count_canonical_peers(PlannerInfo *root, PathKeyItem *item)
 {
 	ListCell   *cursetlink;
 
@@ -441,7 +441,7 @@ compare_pathkeys(List *keys1, List *keys2)
 
 		/*
 		 * XXX would like to check that we've been given canonicalized
-		 * input, but query root not accessible here...
+		 * input, but PlannerInfo not accessible here...
 		 */
 #ifdef NOT_USED
 		Assert(list_member_ptr(root->equi_key_list, subkey1));
@@ -647,7 +647,7 @@ get_cheapest_fractional_path_for_pathkeys(List *paths,
  * current query.  Caller should do truncate_useless_pathkeys().
  */
 List *
-build_index_pathkeys(Query *root,
+build_index_pathkeys(PlannerInfo *root,
 					 IndexOptInfo *index,
 					 ScanDirection scandir)
 {
@@ -714,7 +714,7 @@ build_index_pathkeys(Query *root,
  * gin up a Var node the hard way.
  */
 static Var *
-find_indexkey_var(Query *root, RelOptInfo *rel, AttrNumber varattno)
+find_indexkey_var(PlannerInfo *root, RelOptInfo *rel, AttrNumber varattno)
 {
 	ListCell   *temp;
 	Index		relid;
@@ -732,24 +732,28 @@ find_indexkey_var(Query *root, RelOptInfo *rel, AttrNumber varattno)
 	}
 
 	relid = rel->relid;
-	reloid = getrelid(relid, root->rtable);
+	reloid = getrelid(relid, root->parse->rtable);
 	get_atttypetypmod(reloid, varattno, &vartypeid, &type_mod);
 
 	return makeVar(relid, varattno, vartypeid, type_mod, 0);
 }
 
 /*
- * build_subquery_pathkeys
+ * convert_subquery_pathkeys
  *	  Build a pathkeys list that describes the ordering of a subquery's
- *	  result (in the terms of the outer query).  The subquery must already
- *	  have been planned, so that its query_pathkeys field has been set.
+ *	  result, in the terms of the outer query.  This is essentially a
+ *	  task of conversion.
+ *
+ * 'rel': outer query's RelOptInfo for the subquery relation.
+ * 'subquery_pathkeys': the subquery's output pathkeys, in its terms.
  *
  * It is not necessary for caller to do truncate_useless_pathkeys(),
  * because we select keys in a way that takes usefulness of the keys into
  * account.
  */
 List *
-build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
+convert_subquery_pathkeys(PlannerInfo *root, RelOptInfo *rel,
+						  List *subquery_pathkeys)
 {
 	List	   *retval = NIL;
 	int			retvallen = 0;
@@ -757,7 +761,7 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 	List	   *sub_tlist = rel->subplan->targetlist;
 	ListCell   *i;
 
-	foreach(i, subquery->query_pathkeys)
+	foreach(i, subquery_pathkeys)
 	{
 		List	   *sub_pathkey = (List *) lfirst(i);
 		ListCell   *j;
@@ -869,7 +873,7 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
  * Returns the list of new path keys.
  */
 List *
-build_join_pathkeys(Query *root,
+build_join_pathkeys(PlannerInfo *root,
 					RelOptInfo *joinrel,
 					JoinType jointype,
 					List *outer_pathkeys)
@@ -954,7 +958,7 @@ make_pathkeys_for_sortclauses(List *sortclauses,
  * problem for normal planning, but it is an issue for GEQO planning.
  */
 void
-cache_mergeclause_pathkeys(Query *root, RestrictInfo *restrictinfo)
+cache_mergeclause_pathkeys(PlannerInfo *root, RestrictInfo *restrictinfo)
 {
 	Node	   *key;
 	PathKeyItem *item;
@@ -1000,7 +1004,7 @@ cache_mergeclause_pathkeys(Query *root, RestrictInfo *restrictinfo)
  * of the join.
  */
 List *
-find_mergeclauses_for_pathkeys(Query *root,
+find_mergeclauses_for_pathkeys(PlannerInfo *root,
 							   List *pathkeys,
 							   List *restrictinfos)
 {
@@ -1093,7 +1097,7 @@ find_mergeclauses_for_pathkeys(Query *root,
  * just make the keys, eh?
  */
 List *
-make_pathkeys_for_mergeclauses(Query *root,
+make_pathkeys_for_mergeclauses(PlannerInfo *root,
 							   List *mergeclauses,
 							   RelOptInfo *rel)
 {
@@ -1162,7 +1166,7 @@ make_pathkeys_for_mergeclauses(Query *root,
  * to be more trouble than it's worth.
  */
 int
-pathkeys_useful_for_merging(Query *root, RelOptInfo *rel, List *pathkeys)
+pathkeys_useful_for_merging(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
 {
 	int			useful = 0;
 	ListCell   *i;
@@ -1226,7 +1230,7 @@ pathkeys_useful_for_merging(Query *root, RelOptInfo *rel, List *pathkeys)
  * So the result is always either 0 or list_length(root->query_pathkeys).
  */
 int
-pathkeys_useful_for_ordering(Query *root, List *pathkeys)
+pathkeys_useful_for_ordering(PlannerInfo *root, List *pathkeys)
 {
 	if (root->query_pathkeys == NIL)
 		return 0;				/* no special ordering requested */
@@ -1248,7 +1252,7 @@ pathkeys_useful_for_ordering(Query *root, List *pathkeys)
  *		Shorten the given pathkey list to just the useful pathkeys.
  */
 List *
-truncate_useless_pathkeys(Query *root,
+truncate_useless_pathkeys(PlannerInfo *root,
 						  RelOptInfo *rel,
 						  List *pathkeys)
 {

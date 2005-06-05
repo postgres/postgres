@@ -245,6 +245,8 @@ planner()
 Optimizer Data Structures
 -------------------------
 
+PlannerInfo     - global information for planning a particular Query
+
 RelOptInfo      - a relation or joined relations
 
  RestrictInfo   - WHERE clauses, like "x = 3" or "y = z"

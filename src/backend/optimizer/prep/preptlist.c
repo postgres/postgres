@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.76 2005/05/23 03:01:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.77 2005/06/05 22:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,9 @@ static List *expand_targetlist(List *tlist, int command_type,
  *	  Returns the new targetlist.
  */
 List *
-preprocess_targetlist(Query *parse, List *tlist)
+preprocess_targetlist(PlannerInfo *root, List *tlist)
 {
+	Query  *parse = root->parse;
 	int		result_relation = parse->resultRelation;
 	List   *range_table = parse->rtable;
 	CmdType	command_type = parse->commandType;

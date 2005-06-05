@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.98 2005/04/25 01:30:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.99 2005/06/05 22:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,7 +292,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 	/*
 	 * Generate the plan for the subquery.
 	 */
-	node->plan = plan = subquery_planner(subquery, tuple_fraction);
+	node->plan = plan = subquery_planner(subquery, tuple_fraction, NULL);
 
 	node->plan_id = PlannerPlanId++;	/* Assign unique ID to this
 										 * SubPlan */
@@ -417,10 +417,8 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		 * top of the subplan, to reduce the cost of reading it
 		 * repeatedly.	This is pointless for a direct-correlated subplan,
 		 * since we'd have to recompute its results each time anyway.  For
-		 * uncorrelated/undirect correlated subplans, we add MATERIAL if
-		 * the subplan's top plan node is anything more complicated than a
-		 * plain sequential scan, and we do it even for seqscan if the
-		 * qual appears selective enough to eliminate many tuples.
+		 * uncorrelated/undirect correlated subplans, we add MATERIAL unless
+		 * the subplan's top plan node would materialize its output anyway.
 		 */
 		else if (node->parParam == NIL)
 		{
@@ -428,29 +426,9 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 
 			switch (nodeTag(plan))
 			{
-				case T_SeqScan:
-					if (plan->initPlan)
-						use_material = true;
-					else
-					{
-						Selectivity qualsel;
-
-						qualsel = clauselist_selectivity(subquery,
-														 plan->qual,
-														 0, JOIN_INNER);
-						/* Is 10% selectivity a good threshold?? */
-						use_material = qualsel < 0.10;
-					}
-					break;
 				case T_Material:
 				case T_FunctionScan:
 				case T_Sort:
-
-					/*
-					 * Don't add another Material node if there's one
-					 * already, nor if the top node is any other type that
-					 * materializes its output anyway.
-					 */
 					use_material = false;
 					break;
 				default:
@@ -678,8 +656,9 @@ subplan_is_hashable(SubLink *slink, SubPlan *node)
  * its in_info_list.
  */
 Node *
-convert_IN_to_join(Query *parse, SubLink *sublink)
+convert_IN_to_join(PlannerInfo *root, SubLink *sublink)
 {
+	Query	   *parse = root->parse;
 	Query	   *subselect = (Query *) sublink->subselect;
 	Relids		left_varnos;
 	int			rtindex;
@@ -746,7 +725,7 @@ convert_IN_to_join(Query *parse, SubLink *sublink)
 	ininfo = makeNode(InClauseInfo);
 	ininfo->lefthand = left_varnos;
 	ininfo->righthand = bms_make_singleton(rtindex);
-	parse->in_info_list = lcons(ininfo, parse->in_info_list);
+	root->in_info_list = lappend(root->in_info_list, ininfo);
 
 	/*
 	 * Build the result qual expressions.  As a side effect,
@@ -1252,7 +1231,7 @@ finalize_primnode(Node *node, finalize_primnode_context *context)
  * We assume the plan hasn't been put through SS_finalize_plan.
  */
 Param *
-SS_make_initplan_from_plan(Query *root, Plan *plan,
+SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 						   Oid resulttype, int32 resulttypmod)
 {
 	List	   *saved_initplan = PlannerInitPlan;
@@ -1271,7 +1250,7 @@ SS_make_initplan_from_plan(Query *root, Plan *plan,
 	/*
 	 * Build extParam/allParam sets for plan nodes.
 	 */
-	SS_finalize_plan(plan, root->rtable);
+	SS_finalize_plan(plan, root->parse->rtable);
 
 	/* Return to outer subquery context */
 	PlannerQueryLevel--;
@@ -1286,7 +1265,7 @@ SS_make_initplan_from_plan(Query *root, Plan *plan,
 	node->plan_id = PlannerPlanId++;	/* Assign unique ID to this
 										 * SubPlan */
 
-	node->rtable = root->rtable;
+	node->rtable = root->parse->rtable;
 
 	PlannerInitPlan = lappend(PlannerInitPlan, node);
 

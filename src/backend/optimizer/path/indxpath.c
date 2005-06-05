@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.180 2005/05/06 17:24:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.181 2005/06/05 22:32:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,13 +55,13 @@
 	((opclass) == BOOL_BTREE_OPS_OID || (opclass) == BOOL_HASH_OPS_OID)
 
 
-static List *find_usable_indexes(Query *root, RelOptInfo *rel,
+static List *find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 								 List *clauses, List *outer_clauses,
 								 bool istoplevel, bool isjoininner,
 								 Relids outer_relids);
-static Path *choose_bitmap_and(Query *root, RelOptInfo *rel, List *paths);
+static Path *choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths);
 static int	bitmap_path_comparator(const void *a, const void *b);
-static Cost bitmap_and_cost_est(Query *root, RelOptInfo *rel, List *paths);
+static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths);
 static bool match_clause_to_indexcol(IndexOptInfo *index,
 						 int indexcol, Oid opclass,
 						 RestrictInfo *rinfo,
@@ -75,7 +75,7 @@ static bool list_matches_any_index(List *clauses, RelOptInfo *rel,
 								   Relids outer_relids);
 static bool matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel,
 							  Relids outer_relids);
-static List *find_clauses_for_join(Query *root, RelOptInfo *rel,
+static List *find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 								   Relids outer_relids, bool isouterjoin);
 static bool match_boolean_index_clause(Node *clause, int indexcol,
 									   IndexOptInfo *index);
@@ -124,7 +124,7 @@ static Const *string_to_const(const char *str, Oid datatype);
  * Note: check_partial_indexes() must have been run previously.
  */
 void
-create_index_paths(Query *root, RelOptInfo *rel)
+create_index_paths(PlannerInfo *root, RelOptInfo *rel)
 {
 	List	   *indexpaths;
 	List	   *bitindexpaths;
@@ -231,7 +231,7 @@ create_index_paths(Query *root, RelOptInfo *rel)
  *----------
  */
 static List *
-find_usable_indexes(Query *root, RelOptInfo *rel,
+find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 					List *clauses, List *outer_clauses,
 					bool istoplevel, bool isjoininner,
 					Relids outer_relids)
@@ -363,7 +363,7 @@ find_usable_indexes(Query *root, RelOptInfo *rel,
  * ORs.  (See find_usable_indexes() for motivation.)
  */
 List *
-generate_bitmap_or_paths(Query *root, RelOptInfo *rel,
+generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 						 List *clauses, List *outer_clauses,
 						 bool isjoininner,
 						 Relids outer_relids)
@@ -473,7 +473,7 @@ generate_bitmap_or_paths(Query *root, RelOptInfo *rel,
  * combining multiple inputs.
  */
 static Path *
-choose_bitmap_and(Query *root, RelOptInfo *rel, List *paths)
+choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 {
 	int			npaths = list_length(paths);
 	Path	  **patharray;
@@ -593,7 +593,7 @@ bitmap_path_comparator(const void *a, const void *b)
  * inputs.
  */
 static Cost
-bitmap_and_cost_est(Query *root, RelOptInfo *rel, List *paths)
+bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
 {
 	BitmapAndPath apath;
 	Path		bpath;
@@ -864,7 +864,7 @@ indexable_operator(Expr *clause, Oid opclass, bool indexkey_on_left)
  *		depending on whether the predicate is satisfied for this query.
  */
 void
-check_partial_indexes(Query *root, RelOptInfo *rel)
+check_partial_indexes(PlannerInfo *root, RelOptInfo *rel)
 {
 	List	   *restrictinfo_list = rel->baserestrictinfo;
 	ListCell   *ilist;
@@ -1675,7 +1675,7 @@ matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel, Relids outer_relids)
  * sufficient to return a single "best" path.
  */
 Path *
-best_inner_indexscan(Query *root, RelOptInfo *rel,
+best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 					 Relids outer_relids, JoinType jointype)
 {
 	Path	   *cheapest;
@@ -1828,7 +1828,7 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
  * indicating that there isn't any potential win here.
  */
 static List *
-find_clauses_for_join(Query *root, RelOptInfo *rel,
+find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 					  Relids outer_relids, bool isouterjoin)
 {
 	List	   *clause_list = NIL;

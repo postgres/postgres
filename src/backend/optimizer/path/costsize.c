@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.145 2005/04/22 21:58:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.146 2005/06/05 22:32:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,10 +104,10 @@ bool		enable_hashjoin = true;
 
 
 static bool cost_qual_eval_walker(Node *node, QualCost *total);
-static Selectivity approx_selectivity(Query *root, List *quals,
+static Selectivity approx_selectivity(PlannerInfo *root, List *quals,
 				   JoinType jointype);
-static Selectivity join_in_selectivity(JoinPath *path, Query *root);
-static void set_rel_width(Query *root, RelOptInfo *rel);
+static Selectivity join_in_selectivity(JoinPath *path, PlannerInfo *root);
+static void set_rel_width(PlannerInfo *root, RelOptInfo *rel);
 static double relation_byte_size(double tuples, int width);
 static double page_size(double tuples, int width);
 
@@ -138,7 +138,7 @@ clamp_row_est(double nrows)
  *	  Determines and returns the cost of scanning a relation sequentially.
  */
 void
-cost_seqscan(Path *path, Query *root,
+cost_seqscan(Path *path, PlannerInfo *root,
 			 RelOptInfo *baserel)
 {
 	Cost		startup_cost = 0;
@@ -227,7 +227,6 @@ cost_nonsequential_access(double relpages)
  *	  NOTE: an indexscan plan node can actually represent several passes,
  *	  but here we consider the cost of just one pass.
  *
- * 'root' is the query root
  * 'index' is the index to be used
  * 'indexQuals' is the list of applicable qual clauses (implicit AND semantics)
  * 'is_injoin' is T if we are considering using the index scan as the inside
@@ -246,7 +245,7 @@ cost_nonsequential_access(double relpages)
  * it was a list of bare clause expressions.
  */
 void
-cost_index(IndexPath *path, Query *root,
+cost_index(IndexPath *path, PlannerInfo *root,
 		   IndexOptInfo *index,
 		   List *indexQuals,
 		   bool is_injoin)
@@ -418,14 +417,13 @@ cost_index(IndexPath *path, Query *root,
  *	  Determines and returns the cost of scanning a relation using a bitmap
  *	  index-then-heap plan.
  *
- * 'root' is the query root
  * 'baserel' is the relation to be scanned
  * 'bitmapqual' is a tree of IndexPaths, BitmapAndPaths, and BitmapOrPaths
  * 'is_injoin' is T if we are considering using the scan as the inside
  *		of a nestloop join (hence, some of the quals are join clauses)
  */
 void
-cost_bitmap_heap_scan(Path *path, Query *root, RelOptInfo *baserel,
+cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 					  Path *bitmapqual, bool is_injoin)
 {
 	Cost		startup_cost = 0;
@@ -534,7 +532,7 @@ cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec)
  * to warrant treating it as one.
  */
 void
-cost_bitmap_and_node(BitmapAndPath *path, Query *root)
+cost_bitmap_and_node(BitmapAndPath *path, PlannerInfo *root)
 {
 	Cost		totalCost;
 	Selectivity	selec;
@@ -577,7 +575,7 @@ cost_bitmap_and_node(BitmapAndPath *path, Query *root)
  * See comments for cost_bitmap_and_node.
  */
 void
-cost_bitmap_or_node(BitmapOrPath *path, Query *root)
+cost_bitmap_or_node(BitmapOrPath *path, PlannerInfo *root)
 {
 	Cost		totalCost;
 	Selectivity	selec;
@@ -620,7 +618,7 @@ cost_bitmap_or_node(BitmapOrPath *path, Query *root)
  *	  Determines and returns the cost of scanning a relation using TIDs.
  */
 void
-cost_tidscan(Path *path, Query *root,
+cost_tidscan(Path *path, PlannerInfo *root,
 			 RelOptInfo *baserel, List *tideval)
 {
 	Cost		startup_cost = 0;
@@ -684,7 +682,7 @@ cost_subqueryscan(Path *path, RelOptInfo *baserel)
  *	  Determines and returns the cost of scanning a function RTE.
  */
 void
-cost_functionscan(Path *path, Query *root, RelOptInfo *baserel)
+cost_functionscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -748,7 +746,7 @@ cost_functionscan(Path *path, Query *root, RelOptInfo *baserel)
  * of sort keys, which all callers *could* supply.)
  */
 void
-cost_sort(Path *path, Query *root,
+cost_sort(Path *path, PlannerInfo *root,
 		  List *pathkeys, Cost input_cost, double tuples, int width)
 {
 	Cost		startup_cost = input_cost;
@@ -857,7 +855,7 @@ cost_material(Path *path,
  * are for appropriately-sorted input.
  */
 void
-cost_agg(Path *path, Query *root,
+cost_agg(Path *path, PlannerInfo *root,
 		 AggStrategy aggstrategy, int numAggs,
 		 int numGroupCols, double numGroups,
 		 Cost input_startup_cost, Cost input_total_cost,
@@ -925,7 +923,7 @@ cost_agg(Path *path, Query *root,
  * input.
  */
 void
-cost_group(Path *path, Query *root,
+cost_group(Path *path, PlannerInfo *root,
 		   int numGroupCols, double numGroups,
 		   Cost input_startup_cost, Cost input_total_cost,
 		   double input_tuples)
@@ -954,7 +952,7 @@ cost_group(Path *path, Query *root,
  * 'path' is already filled in except for the cost fields
  */
 void
-cost_nestloop(NestPath *path, Query *root)
+cost_nestloop(NestPath *path, PlannerInfo *root)
 {
 	Path	   *outer_path = path->outerjoinpath;
 	Path	   *inner_path = path->innerjoinpath;
@@ -1046,7 +1044,7 @@ cost_nestloop(NestPath *path, Query *root)
  * sort is needed because the source path is already ordered.
  */
 void
-cost_mergejoin(MergePath *path, Query *root)
+cost_mergejoin(MergePath *path, PlannerInfo *root)
 {
 	Path	   *outer_path = path->jpath.outerjoinpath;
 	Path	   *inner_path = path->jpath.innerjoinpath;
@@ -1275,7 +1273,7 @@ cost_mergejoin(MergePath *path, Query *root)
  * Note: path's hashclauses should be a subset of the joinrestrictinfo list
  */
 void
-cost_hashjoin(HashPath *path, Query *root)
+cost_hashjoin(HashPath *path, PlannerInfo *root)
 {
 	Path	   *outer_path = path->jpath.outerjoinpath;
 	Path	   *inner_path = path->jpath.innerjoinpath;
@@ -1673,7 +1671,7 @@ cost_qual_eval_walker(Node *node, QualCost *total)
  * seems OK to live with the approximation.
  */
 static Selectivity
-approx_selectivity(Query *root, List *quals, JoinType jointype)
+approx_selectivity(PlannerInfo *root, List *quals, JoinType jointype)
 {
 	Selectivity total = 1.0;
 	ListCell   *l;
@@ -1703,7 +1701,7 @@ approx_selectivity(Query *root, List *quals, JoinType jointype)
  *	baserestrictcost: estimated cost of evaluating baserestrictinfo clauses.
  */
 void
-set_baserel_size_estimates(Query *root, RelOptInfo *rel)
+set_baserel_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 {
 	double		nrows;
 
@@ -1749,7 +1747,7 @@ set_baserel_size_estimates(Query *root, RelOptInfo *rel)
  * build_joinrel_tlist, and baserestrictcost is not used for join rels.
  */
 void
-set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
+set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 						   RelOptInfo *outer_rel,
 						   RelOptInfo *inner_rel,
 						   JoinType jointype,
@@ -1836,7 +1834,7 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
  * 'path' is already filled in except for the cost fields
  */
 static Selectivity
-join_in_selectivity(JoinPath *path, Query *root)
+join_in_selectivity(JoinPath *path, PlannerInfo *root)
 {
 	RelOptInfo *innerrel;
 	UniquePath *innerunique;
@@ -1896,7 +1894,7 @@ join_in_selectivity(JoinPath *path, Query *root)
  * We set the same fields as set_baserel_size_estimates.
  */
 void
-set_function_size_estimates(Query *root, RelOptInfo *rel)
+set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 {
 	/* Should only be applied to base relations that are functions */
 	Assert(rel->relid > 0);
@@ -1929,7 +1927,7 @@ set_function_size_estimates(Query *root, RelOptInfo *rel)
  * building join relations.
  */
 static void
-set_rel_width(Query *root, RelOptInfo *rel)
+set_rel_width(PlannerInfo *root, RelOptInfo *rel)
 {
 	int32		tuple_width = 0;
 	ListCell   *tllist;
@@ -1960,7 +1958,7 @@ set_rel_width(Query *root, RelOptInfo *rel)
 			continue;
 		}
 
-		relid = getrelid(var->varno, root->rtable);
+		relid = getrelid(var->varno, root->parse->rtable);
 		if (relid != InvalidOid)
 		{
 			item_width = get_attavgwidth(relid, var->varattno);

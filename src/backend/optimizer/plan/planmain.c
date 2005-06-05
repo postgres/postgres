@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.81 2004/12/31 22:00:09 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.82 2005/06/05 22:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,9 @@
  * will make the final decision about which to use.
  *
  * Input parameters:
- * root is the query to plan
- * tlist is the target list the query should produce (NOT root->targetList!)
+ * root describes the query to plan
+ * tlist is the target list the query should produce
+ *		(this is NOT necessarily root->parse->targetList!)
  * tuple_fraction is the fraction of tuples we expect will be retrieved
  *
  * Output parameters:
@@ -51,14 +52,14 @@
  * *sorted_path receives the cheapest presorted path for the query,
  *				if any (NULL if there is no useful presorted path)
  *
- * Note: the Query node also includes a query_pathkeys field, which is both
- * an input and an output of query_planner().  The input value signals
+ * Note: the PlannerInfo node also includes a query_pathkeys field, which is
+ * both an input and an output of query_planner().  The input value signals
  * query_planner that the indicated sort order is wanted in the final output
  * plan.  But this value has not yet been "canonicalized", since the needed
  * info does not get computed until we scan the qual clauses.  We canonicalize
  * it as soon as that task is done.  (The main reason query_pathkeys is a
- * Query field and not a passed parameter is that the low-level routines in
- * indxpath.c need to see it.)
+ * PlannerInfo field and not a passed parameter is that the low-level routines
+ * in indxpath.c need to see it.)
  *
  * tuple_fraction is interpreted as follows:
  *	  0: expect all tuples to be retrieved (normal case)
@@ -69,9 +70,10 @@
  *--------------------
  */
 void
-query_planner(Query *root, List *tlist, double tuple_fraction,
+query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 			  Path **cheapest_path, Path **sorted_path)
 {
+	Query	   *parse = root->parse;
 	List	   *constant_quals;
 	RelOptInfo *final_rel;
 	Path	   *cheapestpath;
@@ -81,10 +83,10 @@ query_planner(Query *root, List *tlist, double tuple_fraction,
 	 * If the query has an empty join tree, then it's something easy like
 	 * "SELECT 2+2;" or "INSERT ... VALUES()".	Fall through quickly.
 	 */
-	if (root->jointree->fromlist == NIL)
+	if (parse->jointree->fromlist == NIL)
 	{
 		*cheapest_path = (Path *) create_result_path(NULL, NULL,
-										 (List *) root->jointree->quals);
+										 (List *) parse->jointree->quals);
 		*sorted_path = NULL;
 		return;
 	}
@@ -99,8 +101,8 @@ query_planner(Query *root, List *tlist, double tuple_fraction,
 	 * vars, although if the qual reduces to "WHERE FALSE" this path will
 	 * also be taken.
 	 */
-	root->jointree->quals = (Node *)
-		pull_constant_clauses((List *) root->jointree->quals,
+	parse->jointree->quals = (Node *)
+		pull_constant_clauses((List *) parse->jointree->quals,
 							  &constant_quals);
 
 	/*
@@ -116,7 +118,7 @@ query_planner(Query *root, List *tlist, double tuple_fraction,
 	/*
 	 * Construct RelOptInfo nodes for all base relations in query.
 	 */
-	add_base_rels_to_query(root, (Node *) root->jointree);
+	add_base_rels_to_query(root, (Node *) parse->jointree);
 
 	/*
 	 * Examine the targetlist and qualifications, adding entries to
@@ -133,7 +135,7 @@ query_planner(Query *root, List *tlist, double tuple_fraction,
 	 */
 	build_base_rel_tlists(root, tlist);
 
-	(void) distribute_quals_to_rels(root, (Node *) root->jointree);
+	(void) distribute_quals_to_rels(root, (Node *) parse->jointree);
 
 	/*
 	 * Use the completed lists of equijoined keys to deduce any implied

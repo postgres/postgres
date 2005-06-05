@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.66 2005/05/23 03:01:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.67 2005/06/05 22:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,10 +23,10 @@
 #include "parser/parsetree.h"
 
 
-static RelOptInfo *make_reloptinfo(Query *root, int relid,
+static RelOptInfo *make_reloptinfo(PlannerInfo *root, int relid,
 								   RelOptKind reloptkind);
-static void build_joinrel_tlist(Query *root, RelOptInfo *joinrel);
-static List *build_joinrel_restrictlist(Query *root,
+static void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel);
+static List *build_joinrel_restrictlist(PlannerInfo *root,
 						   RelOptInfo *joinrel,
 						   RelOptInfo *outer_rel,
 						   RelOptInfo *inner_rel,
@@ -46,7 +46,7 @@ static void subbuild_joinrel_joinlist(RelOptInfo *joinrel,
  *	  base_rel_list.
  */
 void
-build_base_rel(Query *root, int relid)
+build_base_rel(PlannerInfo *root, int relid)
 {
 	ListCell   *l;
 	RelOptInfo *rel;
@@ -81,7 +81,7 @@ build_base_rel(Query *root, int relid)
  *	  base relations except that they live in a different list.
  */
 RelOptInfo *
-build_other_rel(Query *root, int relid)
+build_other_rel(PlannerInfo *root, int relid)
 {
 	ListCell   *l;
 	RelOptInfo *rel;
@@ -119,10 +119,10 @@ build_other_rel(Query *root, int relid)
  * Common code for build_base_rel and build_other_rel.
  */
 static RelOptInfo *
-make_reloptinfo(Query *root, int relid, RelOptKind reloptkind)
+make_reloptinfo(PlannerInfo *root, int relid, RelOptKind reloptkind)
 {
 	RelOptInfo *rel = makeNode(RelOptInfo);
-	RangeTblEntry *rte = rt_fetch(relid, root->rtable);
+	RangeTblEntry *rte = rt_fetch(relid, root->parse->rtable);
 
 	rel->reloptkind = reloptkind;
 	rel->relids = bms_make_singleton(relid);
@@ -181,7 +181,7 @@ make_reloptinfo(Query *root, int relid, RelOptKind reloptkind)
  *	  (since we'd have no idea which list to add it to).
  */
 RelOptInfo *
-find_base_rel(Query *root, int relid)
+find_base_rel(PlannerInfo *root, int relid)
 {
 	ListCell   *l;
 	RelOptInfo *rel;
@@ -211,7 +211,7 @@ find_base_rel(Query *root, int relid)
  *	  or NULL if none exists.  This is for join relations.
  */
 RelOptInfo *
-find_join_rel(Query *root, Relids relids)
+find_join_rel(PlannerInfo *root, Relids relids)
 {
 	ListCell   *l;
 
@@ -243,7 +243,7 @@ find_join_rel(Query *root, Relids relids)
  * duplicated calculation of the restrictlist...
  */
 RelOptInfo *
-build_join_rel(Query *root,
+build_join_rel(PlannerInfo *root,
 			   Relids joinrelids,
 			   RelOptInfo *outer_rel,
 			   RelOptInfo *inner_rel,
@@ -356,7 +356,7 @@ build_join_rel(Query *root,
  * of data that was cached at the baserel level by set_rel_width().
  */
 static void
-build_joinrel_tlist(Query *root, RelOptInfo *joinrel)
+build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel)
 {
 	Relids		relids = joinrel->relids;
 	ListCell   *rels;
@@ -433,7 +433,7 @@ build_joinrel_tlist(Query *root, RelOptInfo *joinrel)
  * the original nodes in the lists made for the join relation.
  */
 static List *
-build_joinrel_restrictlist(Query *root,
+build_joinrel_restrictlist(PlannerInfo *root,
 						   RelOptInfo *joinrel,
 						   RelOptInfo *outer_rel,
 						   RelOptInfo *inner_rel,

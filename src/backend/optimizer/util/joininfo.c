@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.41 2004/12/31 22:00:23 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.42 2005/06/05 22:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ make_joininfo_node(RelOptInfo *this_rel, Relids join_relids)
  *				 (there must be more than one)
  */
 void
-add_join_clause_to_rels(Query *root,
+add_join_clause_to_rels(PlannerInfo *root,
 						RestrictInfo *restrictinfo,
 						Relids join_relids)
 {
@@ -131,7 +131,7 @@ add_join_clause_to_rels(Query *root,
  *				 (there must be more than one)
  */
 void
-remove_join_clause_from_rels(Query *root,
+remove_join_clause_from_rels(PlannerInfo *root,
 							 RestrictInfo *restrictinfo,
 							 Relids join_relids)
 {

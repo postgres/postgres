@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.252 2005/05/09 15:09:19 ishii Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.253 2005/06/05 22:32:54 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1146,6 +1146,69 @@ _outHashPath(StringInfo str, HashPath *node)
 }
 
 static void
+_outPlannerInfo(StringInfo str, PlannerInfo *node)
+{
+	WRITE_NODE_TYPE("PLANNERINFO");
+
+	WRITE_NODE_FIELD(parse);
+	WRITE_NODE_FIELD(base_rel_list);
+	WRITE_NODE_FIELD(other_rel_list);
+	WRITE_NODE_FIELD(join_rel_list);
+	WRITE_NODE_FIELD(equi_key_list);
+	WRITE_NODE_FIELD(in_info_list);
+	WRITE_NODE_FIELD(query_pathkeys);
+	WRITE_BOOL_FIELD(hasJoinRTEs);
+	WRITE_BOOL_FIELD(hasHavingQual);
+}
+
+static void
+_outRelOptInfo(StringInfo str, RelOptInfo *node)
+{
+	WRITE_NODE_TYPE("RELOPTINFO");
+
+	/* NB: this isn't a complete set of fields */
+	WRITE_ENUM_FIELD(reloptkind, RelOptKind);
+	WRITE_BITMAPSET_FIELD(relids);
+	WRITE_FLOAT_FIELD(rows, "%.0f");
+	WRITE_INT_FIELD(width);
+	WRITE_NODE_FIELD(reltargetlist);
+	WRITE_NODE_FIELD(pathlist);
+	WRITE_NODE_FIELD(cheapest_startup_path);
+	WRITE_NODE_FIELD(cheapest_total_path);
+	WRITE_NODE_FIELD(cheapest_unique_path);
+	WRITE_UINT_FIELD(relid);
+	WRITE_ENUM_FIELD(rtekind, RTEKind);
+	WRITE_UINT_FIELD(min_attr);
+	WRITE_UINT_FIELD(max_attr);
+	WRITE_NODE_FIELD(indexlist);
+	WRITE_UINT_FIELD(pages);
+	WRITE_FLOAT_FIELD(tuples, "%.0f");
+	WRITE_NODE_FIELD(subplan);
+	WRITE_NODE_FIELD(baserestrictinfo);
+	WRITE_BITMAPSET_FIELD(outerjoinset);
+	WRITE_NODE_FIELD(joininfo);
+	WRITE_BITMAPSET_FIELD(index_outer_relids);
+	WRITE_NODE_FIELD(index_inner_paths);
+}
+
+static void
+_outIndexOptInfo(StringInfo str, IndexOptInfo *node)
+{
+	WRITE_NODE_TYPE("INDEXOPTINFO");
+
+	/* NB: this isn't a complete set of fields */
+	WRITE_OID_FIELD(indexoid);
+	/* Do NOT print rel field, else infinite recursion */
+	WRITE_UINT_FIELD(pages);
+	WRITE_FLOAT_FIELD(tuples, "%.0f");
+	WRITE_INT_FIELD(ncolumns);
+	WRITE_NODE_FIELD(indexprs);
+	WRITE_NODE_FIELD(indpred);
+	WRITE_BOOL_FIELD(predOK);
+	WRITE_BOOL_FIELD(unique);
+}
+
+static void
 _outPathKeyItem(StringInfo str, PathKeyItem *node)
 {
 	WRITE_NODE_TYPE("PATHKEYITEM");
@@ -1183,6 +1246,15 @@ _outJoinInfo(StringInfo str, JoinInfo *node)
 
 	WRITE_BITMAPSET_FIELD(unjoined_relids);
 	WRITE_NODE_FIELD(jinfo_restrictinfo);
+}
+
+static void
+_outInnerIndexscanInfo(StringInfo str, InnerIndexscanInfo *node)
+{
+	WRITE_NODE_TYPE("INNERINDEXSCANINFO");
+	WRITE_BITMAPSET_FIELD(other_relids);
+	WRITE_BOOL_FIELD(isouterjoin);
+	WRITE_NODE_FIELD(best_innerpath);
 }
 
 static void
@@ -1395,8 +1467,6 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(limitCount);
 	WRITE_NODE_FIELD(setOperations);
 	WRITE_NODE_FIELD(resultRelations);
-
-	/* planner-internal fields are not written out */
 }
 
 static void
@@ -1905,6 +1975,15 @@ _outNode(StringInfo str, void *obj)
 			case T_HashPath:
 				_outHashPath(str, obj);
 				break;
+			case T_PlannerInfo:
+				_outPlannerInfo(str, obj);
+				break;
+			case T_RelOptInfo:
+				_outRelOptInfo(str, obj);
+				break;
+			case T_IndexOptInfo:
+				_outIndexOptInfo(str, obj);
+				break;
 			case T_PathKeyItem:
 				_outPathKeyItem(str, obj);
 				break;
@@ -1913,6 +1992,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_JoinInfo:
 				_outJoinInfo(str, obj);
+				break;
+			case T_InnerIndexscanInfo:
+				_outInnerIndexscanInfo(str, obj);
 				break;
 			case T_InClauseInfo:
 				_outInClauseInfo(str, obj);

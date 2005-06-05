@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.304 2005/04/28 21:47:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.305 2005/06/05 22:32:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1615,18 +1615,6 @@ _copyQuery(Query *from)
 	COPY_NODE_FIELD(limitCount);
 	COPY_NODE_FIELD(setOperations);
 	COPY_NODE_FIELD(resultRelations);
-	COPY_NODE_FIELD(in_info_list);
-	COPY_SCALAR_FIELD(hasJoinRTEs);
-	COPY_SCALAR_FIELD(hasHavingQual);
-
-	/*
-	 * We do not copy the other planner internal fields: base_rel_list,
-	 * other_rel_list, join_rel_list, equi_key_list, query_pathkeys. That
-	 * would get us into copying RelOptInfo/Path trees, which we don't
-	 * want to do.	It is necessary to copy in_info_list, hasJoinRTEs,
-	 * and hasHavingQual for the benefit of inheritance_planner(), which
-	 * may try to copy a Query in which these are already set.
-	 */
 
 	return newnode;
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.22 2004/12/31 22:00:04 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.23 2005/06/05 22:32:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,10 +25,12 @@
 #include "parser/parse_coerce.h"
 #include "utils/lsyscache.h"
 
+
 static List *TidqualFromRestrictinfo(Relids relids, List *restrictinfo);
 static bool isEvaluable(int varno, Node *node);
 static Node *TidequalClause(int varno, OpExpr *node);
 static List *TidqualFromExpr(int varno, Expr *expr);
+
 
 static bool
 isEvaluable(int varno, Node *node)
@@ -228,7 +230,7 @@ TidqualFromRestrictinfo(Relids relids, List *restrictinfo)
  *	  Candidate paths are added to the rel's pathlist (using add_path).
  */
 void
-create_tidscan_paths(Query *root, RelOptInfo *rel)
+create_tidscan_paths(PlannerInfo *root, RelOptInfo *rel)
 {
 	List	   *tideval = TidqualFromRestrictinfo(rel->relids,
 												  rel->baserestrictinfo);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.64 2005/06/03 23:05:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.65 2005/06/05 22:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ typedef struct
 
 typedef struct
 {
-	Query	   *root;
+	PlannerInfo *root;
 	int			sublevels_up;
 } flatten_join_alias_vars_context;
 
@@ -66,7 +66,7 @@ static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
 static Node *flatten_join_alias_vars_mutator(Node *node,
 								flatten_join_alias_vars_context *context);
-static Relids alias_relid_set(Query *root, Relids relids);
+static Relids alias_relid_set(PlannerInfo *root, Relids relids);
 
 
 /*
@@ -482,7 +482,7 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
  * to be applied directly to a Query node.
  */
 Node *
-flatten_join_alias_vars(Query *root, Node *node)
+flatten_join_alias_vars(PlannerInfo *root, Node *node)
 {
 	flatten_join_alias_vars_context context;
 
@@ -507,7 +507,7 @@ flatten_join_alias_vars_mutator(Node *node,
 		/* No change unless Var belongs to a JOIN of the target level */
 		if (var->varlevelsup != context->sublevels_up)
 			return node;		/* no need to copy, really */
-		rte = rt_fetch(var->varno, context->root->rtable);
+		rte = rt_fetch(var->varno, context->root->parse->rtable);
 		if (rte->rtekind != RTE_JOIN)
 			return node;
 		if (var->varattno == InvalidAttrNumber)
@@ -608,7 +608,7 @@ flatten_join_alias_vars_mutator(Node *node,
  * underlying base relids
  */
 static Relids
-alias_relid_set(Query *root, Relids relids)
+alias_relid_set(PlannerInfo *root, Relids relids)
 {
 	Relids		result = NULL;
 	Relids		tmprelids;
@@ -617,7 +617,7 @@ alias_relid_set(Query *root, Relids relids)
 	tmprelids = bms_copy(relids);
 	while ((rtindex = bms_first_member(tmprelids)) >= 0)
 	{
-		RangeTblEntry *rte = rt_fetch(rtindex, root->rtable);
+		RangeTblEntry *rte = rt_fetch(rtindex, root->parse->rtable);
 
 		if (rte->rtekind == RTE_JOIN)
 			result = bms_join(result, get_relids_for_join(root, rtindex));

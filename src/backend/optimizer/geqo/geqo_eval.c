@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.73 2004/12/31 21:59:58 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.74 2005/06/05 22:32:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #include "utils/memutils.h"
 
 
-static bool desirable_join(Query *root,
+static bool desirable_join(PlannerInfo *root,
 			   RelOptInfo *outer_rel, RelOptInfo *inner_rel);
 
 
@@ -241,7 +241,7 @@ gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
  * Heuristics for gimme_tree: do we want to join these two relations?
  */
 static bool
-desirable_join(Query *root,
+desirable_join(PlannerInfo *root,
 			   RelOptInfo *outer_rel, RelOptInfo *inner_rel)
 {
 	ListCell   *l;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.70 2005/04/25 02:14:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.71 2005/06/05 22:32:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@
  *----------
  */
 bool
-create_or_index_quals(Query *root, RelOptInfo *rel)
+create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 {
 	BitmapOrPath *bestpath = NULL;
 	RestrictInfo *bestrinfo = NULL;

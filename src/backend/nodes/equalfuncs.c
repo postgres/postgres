@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.241 2005/04/28 21:47:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.242 2005/06/05 22:32:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -653,10 +653,6 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_NODE_FIELD(setOperations);
 	COMPARE_NODE_FIELD(resultRelations);
 
-	/*
-	 * We do not check the planner-internal fields.  They might not be set
-	 * yet, and in any case they should be derivable from the other fields.
-	 */
 	return true;
 }
 

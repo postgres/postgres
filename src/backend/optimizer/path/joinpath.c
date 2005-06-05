@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.94 2005/05/24 18:02:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.95 2005/06/05 22:32:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,15 +24,15 @@
 #include "utils/lsyscache.h"
 
 
-static void sort_inner_and_outer(Query *root, RelOptInfo *joinrel,
+static void sort_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
 					 RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *restrictlist, List *mergeclause_list,
 					 JoinType jointype);
-static void match_unsorted_outer(Query *root, RelOptInfo *joinrel,
+static void match_unsorted_outer(PlannerInfo *root, RelOptInfo *joinrel,
 					 RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *restrictlist, List *mergeclause_list,
 					 JoinType jointype);
-static void hash_inner_and_outer(Query *root, RelOptInfo *joinrel,
+static void hash_inner_and_outer(PlannerInfo *root, RelOptInfo *joinrel,
 					 RelOptInfo *outerrel, RelOptInfo *innerrel,
 					 List *restrictlist, JoinType jointype);
 static List *select_mergejoin_clauses(RelOptInfo *joinrel,
@@ -54,7 +54,7 @@ static List *select_mergejoin_clauses(RelOptInfo *joinrel,
  * paths found so far.
  */
 void
-add_paths_to_joinrel(Query *root,
+add_paths_to_joinrel(PlannerInfo *root,
 					 RelOptInfo *joinrel,
 					 RelOptInfo *outerrel,
 					 RelOptInfo *innerrel,
@@ -133,7 +133,7 @@ add_paths_to_joinrel(Query *root,
  * 'jointype' is the type of join to do
  */
 static void
-sort_inner_and_outer(Query *root,
+sort_inner_and_outer(PlannerInfo *root,
 					 RelOptInfo *joinrel,
 					 RelOptInfo *outerrel,
 					 RelOptInfo *innerrel,
@@ -324,7 +324,7 @@ sort_inner_and_outer(Query *root,
  * 'jointype' is the type of join to do
  */
 static void
-match_unsorted_outer(Query *root,
+match_unsorted_outer(PlannerInfo *root,
 					 RelOptInfo *joinrel,
 					 RelOptInfo *outerrel,
 					 RelOptInfo *innerrel,
@@ -664,7 +664,7 @@ match_unsorted_outer(Query *root,
  * 'jointype' is the type of join to do
  */
 static void
-hash_inner_and_outer(Query *root,
+hash_inner_and_outer(PlannerInfo *root,
 					 RelOptInfo *joinrel,
 					 RelOptInfo *outerrel,
 					 RelOptInfo *innerrel,

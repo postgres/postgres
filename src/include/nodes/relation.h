@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.109 2005/04/25 01:30:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.110 2005/06/05 22:32:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,40 @@ typedef struct QualCost
 	Cost		per_tuple;		/* per-evaluation cost */
 } QualCost;
 
+
+/*----------
+ * PlannerInfo
+ *		Per-query information for planning/optimization
+ *
+ * This struct is conventionally called "root" in all the planner routines.
+ * It holds links to all of the planner's working state, in addition to the
+ * original Query.  Note that at present the planner extensively manipulates
+ * the passed-in Query data structure; someday that should stop.
+ *----------
+ */
+typedef struct PlannerInfo
+{
+	NodeTag		type;
+
+	Query	   *parse;			/* the Query being planned */
+
+	List	   *base_rel_list;	/* list of base-relation RelOptInfos */
+	List	   *other_rel_list; /* list of other 1-relation RelOptInfos */
+	List	   *join_rel_list;	/* list of join-relation RelOptInfos */
+
+	List	   *equi_key_list;	/* list of lists of equijoined
+								 * PathKeyItems */
+
+	List	   *in_info_list;	/* list of InClauseInfos */
+
+	List	   *query_pathkeys; /* desired pathkeys for query_planner(),
+								 * and actual pathkeys afterwards */
+
+	bool		hasJoinRTEs;	/* true if any RTEs are RTE_JOIN kind */
+	bool		hasHavingQual;	/* true if havingQual was non-null */
+} PlannerInfo;
+
+
 /*----------
  * RelOptInfo
  *		Per-relation information for planning/optimization
@@ -55,7 +89,7 @@ typedef struct QualCost
  * In either case it is uniquely identified by an RT index.  A "joinrel"
  * is the joining of two or more base rels.  A joinrel is identified by
  * the set of RT indexes for its component baserels.  We create RelOptInfo
- * nodes for each baserel and joinrel, and store them in the Query's
+ * nodes for each baserel and joinrel, and store them in the PlannerInfo's
  * base_rel_list and join_rel_list respectively.
  *
  * Note that there is only one joinrel for any given set of component
@@ -778,7 +812,7 @@ typedef struct InnerIndexscanInfo
  * When we convert top-level IN quals into join operations, we must restrict
  * the order of joining and use special join methods at some join points.
  * We record information about each such IN clause in an InClauseInfo struct.
- * These structs are kept in the Query node's in_info_list.
+ * These structs are kept in the PlannerInfo node's in_info_list.
  */
 
 typedef struct InClauseInfo

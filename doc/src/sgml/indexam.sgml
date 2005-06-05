@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.4 2005/04/20 22:19:58 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.5 2005/06/05 22:32:53 tgl Exp $
 -->
 
 <chapter id="indexam">
@@ -319,7 +319,7 @@ amrestrpos (IndexScanDesc scan);
   <para>
 <programlisting>
 void
-amcostestimate (Query *root,
+amcostestimate (PlannerInfo *root,
                 IndexOptInfo *index,
                 List *indexQuals,
                 Cost *indexStartupCost,
@@ -656,7 +656,7 @@ amcostestimate (Query *root,
 
 <programlisting>
 void
-amcostestimate (Query *root,
+amcostestimate (PlannerInfo *root,
                 IndexOptInfo *index,
                 List *indexQuals,
                 Cost *indexStartupCost,
@@ -672,7 +672,7 @@ amcostestimate (Query *root,
      <term>root</term>
      <listitem>
       <para>
-       The query being processed.
+       The planner's information about the query being processed.
       </para>
      </listitem>
     </varlistentry>

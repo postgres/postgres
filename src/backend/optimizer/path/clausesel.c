@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.72 2004/12/31 22:00:04 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.73 2005/06/05 22:32:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
  * scalarltsel/scalargtsel; perhaps some day we can generalize the approach.
  */
 Selectivity
-clauselist_selectivity(Query *root,
+clauselist_selectivity(PlannerInfo *root,
 					   List *clauses,
 					   int varRelid,
 					   JoinType jointype)
@@ -406,7 +406,7 @@ bms_is_subset_singleton(const Bitmapset *s, int x)
  * if the clause isn't a join clause or the context is uncertain.
  */
 Selectivity
-clause_selectivity(Query *root,
+clause_selectivity(PlannerInfo *root,
 				   Node *clause,
 				   int varRelid,
 				   JoinType jointype)
@@ -476,7 +476,7 @@ clause_selectivity(Query *root,
 		if (var->varlevelsup == 0 &&
 			(varRelid == 0 || varRelid == (int) var->varno))
 		{
-			RangeTblEntry *rte = rt_fetch(var->varno, root->rtable);
+			RangeTblEntry *rte = rt_fetch(var->varno, root->parse->rtable);
 
 			if (rte->rtekind == RTE_SUBQUERY)
 			{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.4 2005/04/22 21:58:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.5 2005/06/05 22:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,11 +42,11 @@ typedef struct
 } MinMaxAggInfo;
 
 static bool find_minmax_aggs_walker(Node *node, List **context);
-static bool build_minmax_path(Query *root, RelOptInfo *rel,
+static bool build_minmax_path(PlannerInfo *root, RelOptInfo *rel,
 							  MinMaxAggInfo *info);
 static ScanDirection match_agg_to_index_col(MinMaxAggInfo *info,
 											IndexOptInfo *index, int indexcol);
-static void make_agg_subplan(Query *root, MinMaxAggInfo *info,
+static void make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info,
 							 List *constant_quals);
 static Node *replace_aggs_with_params_mutator(Node *node,  List **context);
 static Oid	fetch_agg_sort_op(Oid aggfnoid);
@@ -61,15 +61,16 @@ static Oid	fetch_agg_sort_op(Oid aggfnoid);
  * Given a suitable index on tab.col, this can be much faster than the
  * generic scan-all-the-rows plan.
  *
- * We are passed the Query, the preprocessed tlist, and the best path
+ * We are passed the preprocessed tlist, and the best path
  * devised for computing the input of a standard Agg node.  If we are able
  * to optimize all the aggregates, and the result is estimated to be cheaper
  * than the generic aggregate method, then generate and return a Plan that
  * does it that way.  Otherwise, return NULL.
  */
 Plan *
-optimize_minmax_aggregates(Query *root, List *tlist, Path *best_path)
+optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 {
+	Query	   *parse = root->parse;
 	RangeTblRef *rtr;
 	RangeTblEntry *rte;
 	RelOptInfo *rel;
@@ -83,11 +84,11 @@ optimize_minmax_aggregates(Query *root, List *tlist, Path *best_path)
 	List	   *constant_quals;
 
 	/* Nothing to do if query has no aggregates */
-	if (!root->hasAggs)
+	if (!parse->hasAggs)
 		return NULL;
 
-	Assert(!root->setOperations); /* shouldn't get here if a setop */
-	Assert(root->rowMarks == NIL); /* nor if FOR UPDATE */
+	Assert(!parse->setOperations); /* shouldn't get here if a setop */
+	Assert(parse->rowMarks == NIL); /* nor if FOR UPDATE */
 
 	/*
 	 * Reject unoptimizable cases.
@@ -96,7 +97,7 @@ optimize_minmax_aggregates(Query *root, List *tlist, Path *best_path)
 	 * grouping require looking at all the rows anyway, and so there's not
 	 * much point in optimizing MIN/MAX.
 	 */
-	if (root->groupClause)
+	if (parse->groupClause)
 		return NULL;
 
 	/*
@@ -105,13 +106,13 @@ optimize_minmax_aggregates(Query *root, List *tlist, Path *best_path)
 	 * handle a query containing cartesian-product joins, but it hardly
 	 * seems worth the trouble.)
 	 */
-	Assert(root->jointree != NULL && IsA(root->jointree, FromExpr));
-	if (list_length(root->jointree->fromlist) != 1)
+	Assert(parse->jointree != NULL && IsA(parse->jointree, FromExpr));
+	if (list_length(parse->jointree->fromlist) != 1)
 		return NULL;
-	rtr = (RangeTblRef *) linitial(root->jointree->fromlist);
+	rtr = (RangeTblRef *) linitial(parse->jointree->fromlist);
 	if (!IsA(rtr, RangeTblRef))
 		return NULL;
-	rte = rt_fetch(rtr->rtindex, root->rtable);
+	rte = rt_fetch(rtr->rtindex, parse->rtable);
 	if (rte->rtekind != RTE_RELATION)
 		return NULL;
 	rel = find_base_rel(root, rtr->rtindex);
@@ -121,8 +122,8 @@ optimize_minmax_aggregates(Query *root, List *tlist, Path *best_path)
 	 * This may be overly paranoid, but it's not entirely clear if the
 	 * transformation is safe then.
 	 */
-	if (contain_subplans(root->jointree->quals) ||
-		contain_volatile_functions(root->jointree->quals))
+	if (contain_subplans(parse->jointree->quals) ||
+		contain_volatile_functions(parse->jointree->quals))
 		return NULL;
 
 	/*
@@ -143,7 +144,7 @@ optimize_minmax_aggregates(Query *root, List *tlist, Path *best_path)
 	aggs_list = NIL;
 	if (find_minmax_aggs_walker((Node *) tlist, &aggs_list))
 		return NULL;
-	if (find_minmax_aggs_walker(root->havingQual, &aggs_list))
+	if (find_minmax_aggs_walker(parse->havingQual, &aggs_list))
 		return NULL;
 
 	/* Pass 2: see if each one is optimizable */
@@ -202,7 +203,7 @@ optimize_minmax_aggregates(Query *root, List *tlist, Path *best_path)
 	 */
 	tlist = (List *) replace_aggs_with_params_mutator((Node *) tlist,
 													  &aggs_list);
-	hqual = replace_aggs_with_params_mutator(root->havingQual,
+	hqual = replace_aggs_with_params_mutator(parse->havingQual,
 											 &aggs_list);
 
 	/*
@@ -298,7 +299,7 @@ find_minmax_aggs_walker(Node *node, List **context)
  * Note: check_partial_indexes() must have been run previously.
  */
 static bool
-build_minmax_path(Query *root, RelOptInfo *rel, MinMaxAggInfo *info)
+build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 {
 	IndexPath  *best_path = NULL;
 	Cost		best_cost = 0;
@@ -441,46 +442,48 @@ match_agg_to_index_col(MinMaxAggInfo *info, IndexOptInfo *index, int indexcol)
  * Construct a suitable plan for a converted aggregate query
  */
 static void
-make_agg_subplan(Query *root, MinMaxAggInfo *info, List *constant_quals)
+make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info, List *constant_quals)
 {
-	Query	   *subquery;
+	PlannerInfo subroot;
+	Query	   *subparse;
 	Plan	   *plan;
 	TargetEntry *tle;
 	SortClause *sortcl;
 	NullTest   *ntest;
 
 	/*
-	 * Generate a suitably modified Query node.  Much of the work here is
+	 * Generate a suitably modified query.  Much of the work here is
 	 * probably unnecessary in the normal case, but we want to make it look
 	 * good if someone tries to EXPLAIN the result.
 	 */
-	subquery = (Query *) copyObject(root);
-	subquery->commandType = CMD_SELECT;
-	subquery->resultRelation = 0;
-	subquery->resultRelations = NIL;
-	subquery->into = NULL;
-	subquery->hasAggs = false;
-	subquery->groupClause = NIL;
-	subquery->havingQual = NULL;
-	subquery->hasHavingQual = false;
-	subquery->distinctClause = NIL;
+	memcpy(&subroot, root, sizeof(PlannerInfo));
+	subroot.parse = subparse = (Query *) copyObject(root->parse);
+	subparse->commandType = CMD_SELECT;
+	subparse->resultRelation = 0;
+	subparse->resultRelations = NIL;
+	subparse->into = NULL;
+	subparse->hasAggs = false;
+	subparse->groupClause = NIL;
+	subparse->havingQual = NULL;
+	subparse->distinctClause = NIL;
+	subroot.hasHavingQual = false;
 
 	/* single tlist entry that is the aggregate target */
 	tle = makeTargetEntry(copyObject(info->target),
 						  1,
 						  pstrdup("agg_target"),
 						  false);
-	subquery->targetList = list_make1(tle);
+	subparse->targetList = list_make1(tle);
 
 	/* set up the appropriate ORDER BY entry */
 	sortcl = makeNode(SortClause);
-	sortcl->tleSortGroupRef = assignSortGroupRef(tle, subquery->targetList);
+	sortcl->tleSortGroupRef = assignSortGroupRef(tle, subparse->targetList);
 	sortcl->sortop = info->aggsortop;
-	subquery->sortClause = list_make1(sortcl);
+	subparse->sortClause = list_make1(sortcl);
 
 	/* set up LIMIT 1 */
-	subquery->limitOffset = NULL;
-	subquery->limitCount = (Node *) makeConst(INT4OID, sizeof(int4),
+	subparse->limitOffset = NULL;
+	subparse->limitCount = (Node *) makeConst(INT4OID, sizeof(int4),
 											  Int32GetDatum(1),
 											  false, true);
 
@@ -498,9 +501,9 @@ make_agg_subplan(Query *root, MinMaxAggInfo *info, List *constant_quals)
 	 * most cases the fraction of NULLs isn't high enough to change the
 	 * decision.
 	 */
-	plan = create_plan(subquery, (Path *) info->path);
+	plan = create_plan(&subroot, (Path *) info->path);
 
-	plan->targetlist = copyObject(subquery->targetList);
+	plan->targetlist = copyObject(subparse->targetList);
 
 	ntest = makeNode(NullTest);
 	ntest->nulltesttype = IS_NOT_NULL;
@@ -514,13 +517,13 @@ make_agg_subplan(Query *root, MinMaxAggInfo *info, List *constant_quals)
 									plan);
 
 	plan = (Plan *) make_limit(plan, 
-							   subquery->limitOffset,
-							   subquery->limitCount);
+							   subparse->limitOffset,
+							   subparse->limitCount);
 
 	/*
 	 * Convert the plan into an InitPlan, and make a Param for its result.
 	 */
-	info->param = SS_make_initplan_from_plan(subquery, plan,
+	info->param = SS_make_initplan_from_plan(&subroot, plan,
 											 exprType((Node *) tle->expr),
 											 -1);
 }

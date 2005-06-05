@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.280 2005/06/05 00:38:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.281 2005/06/05 22:32:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,8 +62,9 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
  * Query -
  *	  all statements are turned into a Query tree (via transformStmt)
  *	  for further processing by the optimizer
- *	  utility statements (i.e. non-optimizable statements)
- *	  have the *utilityStmt field set.
+ *
+ *	  utility statements (i.e. non-optimizable statements) have the
+ *	  utilityStmt field set, and the Query itself is mostly dummy.
  */
 typedef struct Query
 {
@@ -121,17 +122,6 @@ typedef struct Query
 	 * ought to go in some sort of TopPlan plan node, not in the Query.
 	 */
 	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
-
-	/* internal to planner */
-	List	   *base_rel_list;	/* list of base-relation RelOptInfos */
-	List	   *other_rel_list; /* list of other 1-relation RelOptInfos */
-	List	   *join_rel_list;	/* list of join-relation RelOptInfos */
-	List	   *equi_key_list;	/* list of lists of equijoined
-								 * PathKeyItems */
-	List	   *in_info_list;	/* list of InClauseInfos */
-	List	   *query_pathkeys; /* desired pathkeys for query_planner() */
-	bool		hasJoinRTEs;	/* true if any RTEs are RTE_JOIN kind */
-	bool		hasHavingQual;	/* true if havingQual was non-null */
 } Query;
 
 

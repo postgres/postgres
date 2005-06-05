@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.35 2005/04/25 02:14:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.36 2005/06/05 22:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ static RestrictInfo *make_restrictinfo_internal(Expr *clause,
 static Expr *make_sub_restrictinfos(Expr *clause,
 					   bool is_pushed_down,
 					   bool valid_everywhere);
-static RestrictInfo *join_clause_is_redundant(Query *root,
+static RestrictInfo *join_clause_is_redundant(PlannerInfo *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
 						 bool isouterjoin);
@@ -354,7 +354,7 @@ get_actual_join_clauses(List *restrictinfo_list,
  * as were in the input.
  */
 List *
-remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
+remove_redundant_join_clauses(PlannerInfo *root, List *restrictinfo_list,
 							  bool isouterjoin)
 {
 	List	   *result = NIL;
@@ -415,7 +415,7 @@ remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
  * for local redundancies, so we don't check again.
  */
 List *
-select_nonredundant_join_clauses(Query *root,
+select_nonredundant_join_clauses(PlannerInfo *root,
 								 List *restrictinfo_list,
 								 List *reference_list,
 								 bool isouterjoin)
@@ -467,7 +467,7 @@ select_nonredundant_join_clauses(Query *root,
  * joined rows after addition of null fill rows, and the other doesn't.
  */
 static RestrictInfo *
-join_clause_is_redundant(Query *root,
+join_clause_is_redundant(PlannerInfo *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
 						 bool isouterjoin)

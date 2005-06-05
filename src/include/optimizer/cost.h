@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.67 2005/04/22 21:58:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.68 2005/06/05 22:32:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,53 +51,53 @@ extern bool enable_mergejoin;
 extern bool enable_hashjoin;
 
 extern double clamp_row_est(double nrows);
-extern void cost_seqscan(Path *path, Query *root, RelOptInfo *baserel);
-extern void cost_index(IndexPath *path, Query *root, IndexOptInfo *index,
+extern void cost_seqscan(Path *path, PlannerInfo *root, RelOptInfo *baserel);
+extern void cost_index(IndexPath *path, PlannerInfo *root, IndexOptInfo *index,
 		   List *indexQuals, bool is_injoin);
-extern void cost_bitmap_heap_scan(Path *path, Query *root, RelOptInfo *baserel,
+extern void cost_bitmap_heap_scan(Path *path, PlannerInfo *root, RelOptInfo *baserel,
 								  Path *bitmapqual, bool is_injoin);
-extern void cost_bitmap_and_node(BitmapAndPath *path, Query *root);
-extern void cost_bitmap_or_node(BitmapOrPath *path, Query *root);
+extern void cost_bitmap_and_node(BitmapAndPath *path, PlannerInfo *root);
+extern void cost_bitmap_or_node(BitmapOrPath *path, PlannerInfo *root);
 extern void cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec);
-extern void cost_tidscan(Path *path, Query *root,
+extern void cost_tidscan(Path *path, PlannerInfo *root,
 			 RelOptInfo *baserel, List *tideval);
 extern void cost_subqueryscan(Path *path, RelOptInfo *baserel);
-extern void cost_functionscan(Path *path, Query *root,
+extern void cost_functionscan(Path *path, PlannerInfo *root,
 				  RelOptInfo *baserel);
-extern void cost_sort(Path *path, Query *root,
+extern void cost_sort(Path *path, PlannerInfo *root,
 		  List *pathkeys, Cost input_cost, double tuples, int width);
 extern void cost_material(Path *path,
 			  Cost input_cost, double tuples, int width);
-extern void cost_agg(Path *path, Query *root,
+extern void cost_agg(Path *path, PlannerInfo *root,
 		 AggStrategy aggstrategy, int numAggs,
 		 int numGroupCols, double numGroups,
 		 Cost input_startup_cost, Cost input_total_cost,
 		 double input_tuples);
-extern void cost_group(Path *path, Query *root,
+extern void cost_group(Path *path, PlannerInfo *root,
 		   int numGroupCols, double numGroups,
 		   Cost input_startup_cost, Cost input_total_cost,
 		   double input_tuples);
-extern void cost_nestloop(NestPath *path, Query *root);
-extern void cost_mergejoin(MergePath *path, Query *root);
-extern void cost_hashjoin(HashPath *path, Query *root);
+extern void cost_nestloop(NestPath *path, PlannerInfo *root);
+extern void cost_mergejoin(MergePath *path, PlannerInfo *root);
+extern void cost_hashjoin(HashPath *path, PlannerInfo *root);
 extern void cost_qual_eval(QualCost *cost, List *quals);
-extern void set_baserel_size_estimates(Query *root, RelOptInfo *rel);
-extern void set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
+extern void set_baserel_size_estimates(PlannerInfo *root, RelOptInfo *rel);
+extern void set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 						   RelOptInfo *outer_rel,
 						   RelOptInfo *inner_rel,
 						   JoinType jointype,
 						   List *restrictlist);
-extern void set_function_size_estimates(Query *root, RelOptInfo *rel);
+extern void set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 
 /*
  * prototypes for clausesel.c
  *	  routines to compute clause selectivities
  */
-extern Selectivity clauselist_selectivity(Query *root,
+extern Selectivity clauselist_selectivity(PlannerInfo *root,
 					   List *clauses,
 					   int varRelid,
 					   JoinType jointype);
-extern Selectivity clause_selectivity(Query *root,
+extern Selectivity clause_selectivity(PlannerInfo *root,
 				   Node *clause,
 				   int varRelid,
 				   JoinType jointype);

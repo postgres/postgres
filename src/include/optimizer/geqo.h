@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/geqo.h,v 1.38 2004/12/31 22:03:36 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/geqo.h,v 1.39 2005/06/05 22:32:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,13 +72,14 @@ extern double Geqo_selection_bias;
  */
 typedef struct
 {
-	Query	   *root;			/* the query we are planning */
+	PlannerInfo *root;			/* the query we are planning */
 	List	   *initial_rels;	/* the base relations */
 } GeqoEvalData;
 
 
 /* routines in geqo_main.c */
-extern RelOptInfo *geqo(Query *root, int number_of_rels, List *initial_rels);
+extern RelOptInfo *geqo(PlannerInfo *root,
+						int number_of_rels, List *initial_rels);
 
 /* routines in geqo_eval.c */
 extern Cost geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata);

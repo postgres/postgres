@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.60 2005/04/22 21:58:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/pathnode.h,v 1.61 2005/06/05 22:32:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,35 +27,35 @@ extern int compare_fractional_path_costs(Path *path1, Path *path2,
 extern void set_cheapest(RelOptInfo *parent_rel);
 extern void add_path(RelOptInfo *parent_rel, Path *new_path);
 
-extern Path *create_seqscan_path(Query *root, RelOptInfo *rel);
-extern IndexPath *create_index_path(Query *root,
+extern Path *create_seqscan_path(PlannerInfo *root, RelOptInfo *rel);
+extern IndexPath *create_index_path(PlannerInfo *root,
 				  IndexOptInfo *index,
 				  List *clause_groups,
 				  List *pathkeys,
 				  ScanDirection indexscandir,
 				  bool isjoininner);
-extern BitmapHeapPath *create_bitmap_heap_path(Query *root,
+extern BitmapHeapPath *create_bitmap_heap_path(PlannerInfo *root,
 											   RelOptInfo *rel,
 											   Path *bitmapqual,
 											   bool isjoininner);
-extern BitmapAndPath *create_bitmap_and_path(Query *root,
+extern BitmapAndPath *create_bitmap_and_path(PlannerInfo *root,
 											 RelOptInfo *rel,
 											 List *bitmapquals);
-extern BitmapOrPath *create_bitmap_or_path(Query *root,
+extern BitmapOrPath *create_bitmap_or_path(PlannerInfo *root,
 										   RelOptInfo *rel,
 										   List *bitmapquals);
-extern TidPath *create_tidscan_path(Query *root, RelOptInfo *rel,
+extern TidPath *create_tidscan_path(PlannerInfo *root, RelOptInfo *rel,
 					List *tideval);
 extern AppendPath *create_append_path(RelOptInfo *rel, List *subpaths);
 extern ResultPath *create_result_path(RelOptInfo *rel, Path *subpath,
 				   List *constantqual);
 extern MaterialPath *create_material_path(RelOptInfo *rel, Path *subpath);
-extern UniquePath *create_unique_path(Query *root, RelOptInfo *rel,
+extern UniquePath *create_unique_path(PlannerInfo *root, RelOptInfo *rel,
 				   Path *subpath);
 extern Path *create_subqueryscan_path(RelOptInfo *rel, List *pathkeys);
-extern Path *create_functionscan_path(Query *root, RelOptInfo *rel);
+extern Path *create_functionscan_path(PlannerInfo *root, RelOptInfo *rel);
 
-extern NestPath *create_nestloop_path(Query *root,
+extern NestPath *create_nestloop_path(PlannerInfo *root,
 					 RelOptInfo *joinrel,
 					 JoinType jointype,
 					 Path *outer_path,
@@ -63,7 +63,7 @@ extern NestPath *create_nestloop_path(Query *root,
 					 List *restrict_clauses,
 					 List *pathkeys);
 
-extern MergePath *create_mergejoin_path(Query *root,
+extern MergePath *create_mergejoin_path(PlannerInfo *root,
 					  RelOptInfo *joinrel,
 					  JoinType jointype,
 					  Path *outer_path,
@@ -74,7 +74,7 @@ extern MergePath *create_mergejoin_path(Query *root,
 					  List *outersortkeys,
 					  List *innersortkeys);
 
-extern HashPath *create_hashjoin_path(Query *root,
+extern HashPath *create_hashjoin_path(PlannerInfo *root,
 					 RelOptInfo *joinrel,
 					 JoinType jointype,
 					 Path *outer_path,
@@ -85,11 +85,11 @@ extern HashPath *create_hashjoin_path(Query *root,
 /*
  * prototypes for relnode.c
  */
-extern void build_base_rel(Query *root, int relid);
-extern RelOptInfo *build_other_rel(Query *root, int relid);
-extern RelOptInfo *find_base_rel(Query *root, int relid);
-extern RelOptInfo *find_join_rel(Query *root, Relids relids);
-extern RelOptInfo *build_join_rel(Query *root,
+extern void build_base_rel(PlannerInfo *root, int relid);
+extern RelOptInfo *build_other_rel(PlannerInfo *root, int relid);
+extern RelOptInfo *find_base_rel(PlannerInfo *root, int relid);
+extern RelOptInfo *find_join_rel(PlannerInfo *root, Relids relids);
+extern RelOptInfo *build_join_rel(PlannerInfo *root,
 			   Relids joinrelids,
 			   RelOptInfo *outer_rel,
 			   RelOptInfo *inner_rel,

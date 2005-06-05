@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.130 2005/06/04 19:19:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.131 2005/06/05 22:32:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,17 +38,17 @@ bool		enable_geqo = false;	/* just in case GUC doesn't set it */
 int			geqo_threshold;
 
 
-static void set_base_rel_pathlists(Query *root);
-static void set_plain_rel_pathlist(Query *root, RelOptInfo *rel,
+static void set_base_rel_pathlists(PlannerInfo *root);
+static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
-static void set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
+static void set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 						   Index rti, RangeTblEntry *rte,
 						   List *inheritlist);
-static void set_subquery_pathlist(Query *root, RelOptInfo *rel,
+static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
-static void set_function_pathlist(Query *root, RelOptInfo *rel,
+static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  RangeTblEntry *rte);
-static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed,
+static RelOptInfo *make_one_rel_by_joins(PlannerInfo *root, int levels_needed,
 					  List *initial_rels);
 static bool subquery_is_pushdown_safe(Query *subquery, Query *topquery,
 						  bool *differentTypes);
@@ -70,7 +70,7 @@ static void recurse_push_qual(Node *setOp, Query *topquery,
  *	  single rel that represents the join of all base rels in the query.
  */
 RelOptInfo *
-make_one_rel(Query *root)
+make_one_rel(PlannerInfo *root)
 {
 	RelOptInfo *rel;
 
@@ -82,9 +82,10 @@ make_one_rel(Query *root)
 	/*
 	 * Generate access paths for the entire join tree.
 	 */
-	Assert(root->jointree != NULL && IsA(root->jointree, FromExpr));
+	Assert(root->parse->jointree != NULL &&
+		   IsA(root->parse->jointree, FromExpr));
 
-	rel = make_fromexpr_rel(root, root->jointree);
+	rel = make_fromexpr_rel(root, root->parse->jointree);
 
 	/*
 	 * The result should join all the query's base rels.
@@ -101,7 +102,7 @@ make_one_rel(Query *root)
  *	  Each useful path is attached to its relation's 'pathlist' field.
  */
 static void
-set_base_rel_pathlists(Query *root)
+set_base_rel_pathlists(PlannerInfo *root)
 {
 	ListCell   *l;
 
@@ -113,7 +114,7 @@ set_base_rel_pathlists(Query *root)
 		List	   *inheritlist;
 
 		Assert(rti > 0);		/* better be base rel */
-		rte = rt_fetch(rti, root->rtable);
+		rte = rt_fetch(rti, root->parse->rtable);
 
 		if (rel->rtekind == RTE_SUBQUERY)
 		{
@@ -147,7 +148,7 @@ set_base_rel_pathlists(Query *root)
  *	  Build access paths for a plain relation (no subquery, no inheritance)
  */
 static void
-set_plain_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
+set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
 	/* Mark rel with estimated output rows, width, etc */
 	set_baserel_size_estimates(root, rel);
@@ -204,7 +205,7 @@ set_plain_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
  * not the same size.
  */
 static void
-set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
+set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 						   Index rti, RangeTblEntry *rte,
 						   List *inheritlist)
 {
@@ -217,7 +218,7 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 	 * XXX for now, can't handle inherited expansion of FOR UPDATE/SHARE;
 	 * can we do better?
 	 */
-	if (list_member_int(root->rowMarks, parentRTindex))
+	if (list_member_int(root->parse->rowMarks, parentRTindex))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("SELECT FOR UPDATE/SHARE is not supported for inheritance queries")));
@@ -241,7 +242,7 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 		ListCell   *parentvars;
 		ListCell   *childvars;
 
-		childrte = rt_fetch(childRTindex, root->rtable);
+		childrte = rt_fetch(childRTindex, root->parse->rtable);
 		childOID = childrte->relid;
 
 		/*
@@ -321,12 +322,13 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
  *		Build the (single) access path for a subquery RTE
  */
 static void
-set_subquery_pathlist(Query *root, RelOptInfo *rel,
+set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte)
 {
 	Query	   *subquery = rte->subquery;
 	bool	   *differentTypes;
 	List	   *pathkeys;
+	List	   *subquery_pathkeys;
 
 	/* We need a workspace for keeping track of set-op type coercions */
 	differentTypes = (bool *)
@@ -379,7 +381,8 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 	pfree(differentTypes);
 
 	/* Generate the plan for the subquery */
-	rel->subplan = subquery_planner(subquery, 0.0 /* default case */ );
+	rel->subplan = subquery_planner(subquery, 0.0 /* default case */,
+									&subquery_pathkeys);
 
 	/* Copy number of output rows from subplan */
 	rel->tuples = rel->subplan->plan_rows;
@@ -388,7 +391,7 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 	set_baserel_size_estimates(root, rel);
 
 	/* Convert subquery pathkeys to outer representation */
-	pathkeys = build_subquery_pathkeys(root, rel, subquery);
+	pathkeys = convert_subquery_pathkeys(root, rel, subquery_pathkeys);
 
 	/* Generate appropriate path */
 	add_path(rel, create_subqueryscan_path(rel, pathkeys));
@@ -402,7 +405,7 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
  *		Build the (single) access path for a function RTE
  */
 static void
-set_function_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
+set_function_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
 	/* Mark rel with estimated output rows, width, etc */
 	set_function_size_estimates(root, rel);
@@ -419,7 +422,7 @@ set_function_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
  *	  Build access paths for a FromExpr jointree node.
  */
 RelOptInfo *
-make_fromexpr_rel(Query *root, FromExpr *from)
+make_fromexpr_rel(PlannerInfo *root, FromExpr *from)
 {
 	int			levels_needed;
 	List	   *initial_rels = NIL;
@@ -483,7 +486,7 @@ make_fromexpr_rel(Query *root, FromExpr *from)
  * the result of joining all the original relations together.
  */
 static RelOptInfo *
-make_one_rel_by_joins(Query *root, int levels_needed, List *initial_rels)
+make_one_rel_by_joins(PlannerInfo *root, int levels_needed, List *initial_rels)
 {
 	List	  **joinitems;
 	int			lev;
@@ -867,7 +870,7 @@ print_relids(Relids relids)
 }
 
 static void
-print_restrictclauses(Query *root, List *clauses)
+print_restrictclauses(PlannerInfo *root, List *clauses)
 {
 	ListCell   *l;
 
@@ -875,14 +878,14 @@ print_restrictclauses(Query *root, List *clauses)
 	{
 		RestrictInfo *c = lfirst(l);
 
-		print_expr((Node *) c->clause, root->rtable);
+		print_expr((Node *) c->clause, root->parse->rtable);
 		if (lnext(l))
 			printf(", ");
 	}
 }
 
 static void
-print_path(Query *root, Path *path, int indent)
+print_path(PlannerInfo *root, Path *path, int indent)
 {
 	const char *ptype;
 	bool		join = false;
@@ -958,7 +961,7 @@ print_path(Query *root, Path *path, int indent)
 		for (i = 0; i < indent; i++)
 			printf("\t");
 		printf("  pathkeys: ");
-		print_pathkeys(path->pathkeys, root->rtable);
+		print_pathkeys(path->pathkeys, root->parse->rtable);
 	}
 
 	if (join)
@@ -994,7 +997,7 @@ print_path(Query *root, Path *path, int indent)
 }
 
 void
-debug_print_rel(Query *root, RelOptInfo *rel)
+debug_print_rel(PlannerInfo *root, RelOptInfo *rel)
 {
 	ListCell   *l;
 

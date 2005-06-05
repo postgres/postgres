@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.121 2005/06/03 19:00:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.122 2005/06/05 22:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -415,7 +415,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
  *	  pathnode.
  */
 Path *
-create_seqscan_path(Query *root, RelOptInfo *rel)
+create_seqscan_path(PlannerInfo *root, RelOptInfo *rel)
 {
 	Path	   *pathnode = makeNode(Path);
 
@@ -445,7 +445,7 @@ create_seqscan_path(Query *root, RelOptInfo *rel)
  * Returns the new path node.
  */
 IndexPath *
-create_index_path(Query *root,
+create_index_path(PlannerInfo *root,
 				  IndexOptInfo *index,
 				  List *clause_groups,
 				  List *pathkeys,
@@ -537,7 +537,7 @@ create_index_path(Query *root,
  * 'bitmapqual' is a tree of IndexPath, BitmapAndPath, and BitmapOrPath nodes.
  */
 BitmapHeapPath *
-create_bitmap_heap_path(Query *root,
+create_bitmap_heap_path(PlannerInfo *root,
 						RelOptInfo *rel,
 						Path *bitmapqual,
 						bool isjoininner)
@@ -590,7 +590,7 @@ create_bitmap_heap_path(Query *root,
  *	  Creates a path node representing a BitmapAnd.
  */
 BitmapAndPath *
-create_bitmap_and_path(Query *root,
+create_bitmap_and_path(PlannerInfo *root,
 					   RelOptInfo *rel,
 					   List *bitmapquals)
 {
@@ -613,7 +613,7 @@ create_bitmap_and_path(Query *root,
  *	  Creates a path node representing a BitmapOr.
  */
 BitmapOrPath *
-create_bitmap_or_path(Query *root,
+create_bitmap_or_path(PlannerInfo *root,
 					  RelOptInfo *rel,
 					  List *bitmapquals)
 {
@@ -637,7 +637,7 @@ create_bitmap_or_path(Query *root,
  *	  pathnode.
  */
 TidPath *
-create_tidscan_path(Query *root, RelOptInfo *rel, List *tideval)
+create_tidscan_path(PlannerInfo *root, RelOptInfo *rel, List *tideval)
 {
 	TidPath    *pathnode = makeNode(TidPath);
 
@@ -759,7 +759,7 @@ create_material_path(RelOptInfo *rel, Path *subpath)
  * for the rel).  So we cache the result.
  */
 UniquePath *
-create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
+create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 {
 	UniquePath *pathnode;
 	Path		sort_path;		/* dummy for result of cost_sort */
@@ -805,7 +805,7 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 	 */
 	if (rel->rtekind == RTE_SUBQUERY)
 	{
-		RangeTblEntry *rte = rt_fetch(rel->relid, root->rtable);
+		RangeTblEntry *rte = rt_fetch(rel->relid, root->parse->rtable);
 
 		if (is_distinct_query(rte->subquery))
 		{
@@ -1029,7 +1029,7 @@ create_subqueryscan_path(RelOptInfo *rel, List *pathkeys)
  *	  returning the pathnode.
  */
 Path *
-create_functionscan_path(Query *root, RelOptInfo *rel)
+create_functionscan_path(PlannerInfo *root, RelOptInfo *rel)
 {
 	Path	   *pathnode = makeNode(Path);
 
@@ -1057,7 +1057,7 @@ create_functionscan_path(Query *root, RelOptInfo *rel)
  * Returns the resulting path node.
  */
 NestPath *
-create_nestloop_path(Query *root,
+create_nestloop_path(PlannerInfo *root,
 					 RelOptInfo *joinrel,
 					 JoinType jointype,
 					 Path *outer_path,
@@ -1097,7 +1097,7 @@ create_nestloop_path(Query *root,
  * 'innersortkeys' are the sort varkeys for the inner relation
  */
 MergePath *
-create_mergejoin_path(Query *root,
+create_mergejoin_path(PlannerInfo *root,
 					  RelOptInfo *joinrel,
 					  JoinType jointype,
 					  Path *outer_path,
@@ -1166,7 +1166,7 @@ create_mergejoin_path(Query *root,
  *		(this should be a subset of the restrict_clauses list)
  */
 HashPath *
-create_hashjoin_path(Query *root,
+create_hashjoin_path(PlannerInfo *root,
 					 RelOptInfo *joinrel,
 					 JoinType jointype,
 					 Path *outer_path,

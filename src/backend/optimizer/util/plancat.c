@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.110 2005/06/04 19:19:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.111 2005/06/05 22:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -379,11 +379,11 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
  * nodes.
  */
 List *
-build_physical_tlist(Query *root, RelOptInfo *rel)
+build_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 {
 	List	   *tlist = NIL;
 	Index		varno = rel->relid;
-	RangeTblEntry *rte = rt_fetch(varno, root->rtable);
+	RangeTblEntry *rte = rt_fetch(varno, root->parse->rtable);
 	Relation	relation;
 	Query	   *subquery;
 	Var		   *var;
@@ -494,7 +494,7 @@ build_physical_tlist(Query *root, RelOptInfo *rel)
  * See clause_selectivity() for the meaning of the additional parameters.
  */
 Selectivity
-restriction_selectivity(Query *root,
+restriction_selectivity(PlannerInfo *root,
 						Oid operator,
 						List *args,
 						int varRelid)
@@ -529,7 +529,7 @@ restriction_selectivity(Query *root,
  * operator relation, by calling the function manager.
  */
 Selectivity
-join_selectivity(Query *root,
+join_selectivity(PlannerInfo *root,
 				 Oid operator,
 				 List *args,
 				 JoinType jointype)

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.179 2005/06/01 17:05:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.180 2005/06/05 22:32:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@
  *
  * The call convention for a restriction estimator (oprrest function) is
  *
- *		Selectivity oprrest (Query *root,
+ *		Selectivity oprrest (PlannerInfo *root,
  *							 Oid operator,
  *							 List *args,
  *							 int varRelid);
@@ -59,7 +59,7 @@
  * except that varRelid is not needed, and instead the join type is
  * supplied:
  *
- *		Selectivity oprjoin (Query *root,
+ *		Selectivity oprjoin (PlannerInfo *root,
  *							 Oid operator,
  *							 List *args,
  *							 JoinType jointype);
@@ -152,18 +152,18 @@ static double convert_one_bytea_to_scalar(unsigned char *value, int valuelen,
 							int rangelo, int rangehi);
 static unsigned char *convert_string_datum(Datum value, Oid typid);
 static double convert_timevalue_to_scalar(Datum value, Oid typid);
-static bool get_restriction_variable(Query *root, List *args, int varRelid,
+static bool get_restriction_variable(PlannerInfo *root, List *args, int varRelid,
 						 VariableStatData *vardata, Node **other,
 						 bool *varonleft);
-static void get_join_variables(Query *root, List *args,
+static void get_join_variables(PlannerInfo *root, List *args,
 				   VariableStatData *vardata1,
 				   VariableStatData *vardata2);
-static void examine_variable(Query *root, Node *node, int varRelid,
+static void examine_variable(PlannerInfo *root, Node *node, int varRelid,
 				 VariableStatData *vardata);
 static double get_variable_numdistinct(VariableStatData *vardata);
-static bool get_variable_maximum(Query *root, VariableStatData *vardata,
+static bool get_variable_maximum(PlannerInfo *root, VariableStatData *vardata,
 					 Oid sortop, Datum *max);
-static Selectivity prefix_selectivity(Query *root, Node *variable,
+static Selectivity prefix_selectivity(PlannerInfo *root, Node *variable,
 				   Oid opclass, Const *prefix);
 static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
 static Datum string_to_datum(const char *str, Oid datatype);
@@ -182,7 +182,7 @@ static Const *string_to_bytea_const(const char *str, size_t str_len);
 Datum
 eqsel(PG_FUNCTION_ARGS)
 {
-	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	int			varRelid = PG_GETARG_INT32(3);
@@ -377,7 +377,7 @@ eqsel(PG_FUNCTION_ARGS)
 Datum
 neqsel(PG_FUNCTION_ARGS)
 {
-	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	int			varRelid = PG_GETARG_INT32(3);
@@ -420,7 +420,7 @@ neqsel(PG_FUNCTION_ARGS)
  * it will return a default estimate.
  */
 static double
-scalarineqsel(Query *root, Oid operator, bool isgt,
+scalarineqsel(PlannerInfo *root, Oid operator, bool isgt,
 			  VariableStatData *vardata, Datum constval, Oid consttype)
 {
 	Form_pg_statistic stats;
@@ -652,7 +652,7 @@ scalarineqsel(Query *root, Oid operator, bool isgt,
 Datum
 scalarltsel(PG_FUNCTION_ARGS)
 {
-	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	int			varRelid = PG_GETARG_INT32(3);
@@ -728,7 +728,7 @@ scalarltsel(PG_FUNCTION_ARGS)
 Datum
 scalargtsel(PG_FUNCTION_ARGS)
 {
-	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	int			varRelid = PG_GETARG_INT32(3);
@@ -804,7 +804,7 @@ scalargtsel(PG_FUNCTION_ARGS)
 static double
 patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 {
-	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 
 #ifdef NOT_USED
 	Oid			operator = PG_GETARG_OID(1);
@@ -1073,7 +1073,7 @@ icnlikesel(PG_FUNCTION_ARGS)
  *		booltestsel		- Selectivity of BooleanTest Node.
  */
 Selectivity
-booltestsel(Query *root, BoolTestType booltesttype, Node *arg,
+booltestsel(PlannerInfo *root, BoolTestType booltesttype, Node *arg,
 			int varRelid, JoinType jointype)
 {
 	VariableStatData vardata;
@@ -1238,7 +1238,8 @@ booltestsel(Query *root, BoolTestType booltesttype, Node *arg,
  *		nulltestsel		- Selectivity of NullTest Node.
  */
 Selectivity
-nulltestsel(Query *root, NullTestType nulltesttype, Node *arg, int varRelid)
+nulltestsel(PlannerInfo *root, NullTestType nulltesttype,
+			Node *arg, int varRelid)
 {
 	VariableStatData vardata;
 	double		selec;
@@ -1310,7 +1311,7 @@ nulltestsel(Query *root, NullTestType nulltesttype, Node *arg, int varRelid)
 Datum
 eqjoinsel(PG_FUNCTION_ARGS)
 {
-	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	JoinType	jointype = (JoinType) PG_GETARG_INT16(3);
@@ -1570,7 +1571,7 @@ eqjoinsel(PG_FUNCTION_ARGS)
 Datum
 neqjoinsel(PG_FUNCTION_ARGS)
 {
-	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	Oid			operator = PG_GETARG_OID(1);
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	JoinType	jointype = (JoinType) PG_GETARG_INT16(3);
@@ -1720,7 +1721,7 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  * variable.
  */
 void
-mergejoinscansel(Query *root, Node *clause,
+mergejoinscansel(PlannerInfo *root, Node *clause,
 				 Selectivity *leftscan,
 				 Selectivity *rightscan)
 {
@@ -1841,7 +1842,7 @@ typedef struct
 } GroupVarInfo;
 
 static List *
-add_unique_group_var(Query *root, List *varinfos,
+add_unique_group_var(PlannerInfo *root, List *varinfos,
 					 Node *var, VariableStatData *vardata)
 {
 	GroupVarInfo *varinfo;
@@ -1953,7 +1954,7 @@ add_unique_group_var(Query *root, List *varinfos,
  * do better).
  */
 double
-estimate_num_groups(Query *root, List *groupExprs, double input_rows)
+estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)
 {
 	List	   *varinfos = NIL;
 	double		numdistinct;
@@ -2151,7 +2152,7 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
  * inner rel is well-dispersed (or the alternatives seem much worse).
  */
 Selectivity
-estimate_hash_bucketsize(Query *root, Node *hashkey, double nbuckets)
+estimate_hash_bucketsize(PlannerInfo *root, Node *hashkey, double nbuckets)
 {
 	VariableStatData vardata;
 	double		estfract,
@@ -2840,7 +2841,7 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
  *		and also indicate which side it was on and the other argument.
  *
  * Inputs:
- *	root: the Query
+ *	root: the planner info
  *	args: clause argument list
  *	varRelid: see specs for restriction selectivity functions
  *
@@ -2855,7 +2856,7 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
  * callers are expecting that the other side will act like a pseudoconstant.
  */
 static bool
-get_restriction_variable(Query *root, List *args, int varRelid,
+get_restriction_variable(PlannerInfo *root, List *args, int varRelid,
 						 VariableStatData *vardata, Node **other,
 						 bool *varonleft)
 {
@@ -2909,7 +2910,7 @@ get_restriction_variable(Query *root, List *args, int varRelid,
  *		Apply examine_variable() to each side of a join clause.
  */
 static void
-get_join_variables(Query *root, List *args,
+get_join_variables(PlannerInfo *root, List *args,
 				   VariableStatData *vardata1, VariableStatData *vardata2)
 {
 	Node	   *left,
@@ -2931,7 +2932,7 @@ get_join_variables(Query *root, List *args,
  *		Fill in a VariableStatData struct to describe the expression.
  *
  * Inputs:
- *	root: the Query
+ *	root: the planner info
  *	node: the expression tree to examine
  *	varRelid: see specs for restriction selectivity functions
  *
@@ -2952,7 +2953,7 @@ get_join_variables(Query *root, List *args,
  * Caller is responsible for doing ReleaseVariableStats() before exiting.
  */
 static void
-examine_variable(Query *root, Node *node, int varRelid,
+examine_variable(PlannerInfo *root, Node *node, int varRelid,
 				 VariableStatData *vardata)
 {
 	Node	   *basenode;
@@ -2985,7 +2986,7 @@ examine_variable(Query *root, Node *node, int varRelid,
 		vardata->atttype = var->vartype;
 		vardata->atttypmod = var->vartypmod;
 
-		relid = getrelid(var->varno, root->rtable);
+		relid = getrelid(var->varno, root->parse->rtable);
 
 		if (OidIsValid(relid))
 		{
@@ -3250,7 +3251,7 @@ get_variable_numdistinct(VariableStatData *vardata)
  * minimum instead of the maximum, just pass the ">" operator instead.)
  */
 static bool
-get_variable_maximum(Query *root, VariableStatData *vardata,
+get_variable_maximum(PlannerInfo *root, VariableStatData *vardata,
 					 Oid sortop, Datum *max)
 {
 	Datum		tmax = 0;
@@ -3696,7 +3697,7 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
  * more useful to use the upper-bound code than not.
  */
 static Selectivity
-prefix_selectivity(Query *root, Node *variable,
+prefix_selectivity(PlannerInfo *root, Node *variable,
 				   Oid opclass, Const *prefixcon)
 {
 	Selectivity prefixsel;
@@ -4198,7 +4199,7 @@ string_to_bytea_const(const char *str, size_t str_len)
  */
 
 static void
-genericcostestimate(Query *root,
+genericcostestimate(PlannerInfo *root,
 					IndexOptInfo *index, List *indexQuals,
 					Cost *indexStartupCost,
 					Cost *indexTotalCost,
@@ -4327,7 +4328,7 @@ genericcostestimate(Query *root,
 Datum
 btcostestimate(PG_FUNCTION_ARGS)
 {
-	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
 	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
 	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
@@ -4354,7 +4355,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	if (index->indexkeys[0] != 0)
 	{
 		/* Simple variable --- look to stats for the underlying table */
-		relid = getrelid(index->rel->relid, root->rtable);
+		relid = getrelid(index->rel->relid, root->parse->rtable);
 		Assert(relid != InvalidOid);
 		colnum = index->indexkeys[0];
 	}
@@ -4406,7 +4407,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 Datum
 rtcostestimate(PG_FUNCTION_ARGS)
 {
-	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
 	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
 	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
@@ -4424,7 +4425,7 @@ rtcostestimate(PG_FUNCTION_ARGS)
 Datum
 hashcostestimate(PG_FUNCTION_ARGS)
 {
-	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
 	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
 	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);
@@ -4442,7 +4443,7 @@ hashcostestimate(PG_FUNCTION_ARGS)
 Datum
 gistcostestimate(PG_FUNCTION_ARGS)
 {
-	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	PlannerInfo *root = (PlannerInfo *) PG_GETARG_POINTER(0);
 	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(1);
 	List	   *indexQuals = (List *) PG_GETARG_POINTER(2);
 	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(3);

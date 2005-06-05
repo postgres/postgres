@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.68 2005/03/29 00:17:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.69 2005/06/05 22:32:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,6 +101,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	bool		have_non_var_grouping;
 	ListCell   *l;
 	bool		hasJoinRTEs;
+	PlannerInfo *root;
 	Node	   *clause;
 
 	/* This should only be called if we found aggregates or grouping */
@@ -162,9 +163,22 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 		}
 	}
 
+	/*
+	 * We use the planner's flatten_join_alias_vars routine to do the
+	 * flattening; it wants a PlannerInfo root node, which fortunately
+	 * can be mostly dummy.
+	 */
 	if (hasJoinRTEs)
-		groupClauses = (List *) flatten_join_alias_vars(qry,
+	{
+		root = makeNode(PlannerInfo);
+		root->parse = qry;
+		root->hasJoinRTEs = true;
+
+		groupClauses = (List *) flatten_join_alias_vars(root,
 												  (Node *) groupClauses);
+	}
+	else
+		root = NULL;			/* keep compiler quiet */
 
 	/*
 	 * Detect whether any of the grouping expressions aren't simple Vars;
@@ -186,13 +200,13 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 */
 	clause = (Node *) qry->targetList;
 	if (hasJoinRTEs)
-		clause = flatten_join_alias_vars(qry, clause);
+		clause = flatten_join_alias_vars(root, clause);
 	check_ungrouped_columns(clause, pstate,
 							groupClauses, have_non_var_grouping);
 
 	clause = (Node *) qry->havingQual;
 	if (hasJoinRTEs)
-		clause = flatten_join_alias_vars(qry, clause);
+		clause = flatten_join_alias_vars(root, clause);
 	check_ungrouped_columns(clause, pstate,
 							groupClauses, have_non_var_grouping);
 }

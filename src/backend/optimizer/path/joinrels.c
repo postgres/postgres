@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.72 2004/12/31 22:00:04 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.73 2005/06/05 22:32:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,13 +18,13 @@
 #include "optimizer/paths.h"
 
 
-static List *make_rels_by_clause_joins(Query *root,
+static List *make_rels_by_clause_joins(PlannerInfo *root,
 						  RelOptInfo *old_rel,
 						  ListCell *other_rels);
-static List *make_rels_by_clauseless_joins(Query *root,
+static List *make_rels_by_clauseless_joins(PlannerInfo *root,
 							  RelOptInfo *old_rel,
 							  ListCell *other_rels);
-static bool is_inside_IN(Query *root, RelOptInfo *rel);
+static bool is_inside_IN(PlannerInfo *root, RelOptInfo *rel);
 
 
 /*
@@ -39,7 +39,7 @@ static bool is_inside_IN(Query *root, RelOptInfo *rel);
  * joinrels[j], 1 <= j < level, is a list of rels containing j items.
  */
 List *
-make_rels_by_joins(Query *root, int level, List **joinrels)
+make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 {
 	List	   *result_rels = NIL;
 	List	   *new_rels;
@@ -284,7 +284,7 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
  * only succeed when other_rel is not already part of old_rel.)
  */
 static List *
-make_rels_by_clause_joins(Query *root,
+make_rels_by_clause_joins(PlannerInfo *root,
 						  RelOptInfo *old_rel,
 						  ListCell *other_rels)
 {
@@ -335,7 +335,7 @@ make_rels_by_clause_joins(Query *root,
  * work for joining to joinrels too.
  */
 static List *
-make_rels_by_clauseless_joins(Query *root,
+make_rels_by_clauseless_joins(PlannerInfo *root,
 							  RelOptInfo *old_rel,
 							  ListCell *other_rels)
 {
@@ -373,7 +373,7 @@ make_rels_by_clauseless_joins(Query *root,
  * out of an IN, so the routine name is a slight misnomer.
  */
 static bool
-is_inside_IN(Query *root, RelOptInfo *rel)
+is_inside_IN(PlannerInfo *root, RelOptInfo *rel)
 {
 	ListCell   *l;
 
@@ -395,7 +395,7 @@ is_inside_IN(Query *root, RelOptInfo *rel)
  *		path that corresponds exactly to what the user wrote.
  */
 RelOptInfo *
-make_jointree_rel(Query *root, Node *jtnode)
+make_jointree_rel(PlannerInfo *root, Node *jtnode)
 {
 	if (IsA(jtnode, RangeTblRef))
 	{
@@ -460,7 +460,7 @@ make_jointree_rel(Query *root, Node *jtnode)
  * happen when working with IN clauses that have been turned into joins.
  */
 RelOptInfo *
-make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
+make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			  JoinType jointype)
 {
 	Relids		joinrelids;

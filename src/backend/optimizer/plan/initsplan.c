@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.105 2005/04/28 21:47:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.106 2005/06/05 22:32:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,16 +34,16 @@
 #include "utils/syscache.h"
 
 
-static void mark_baserels_for_outer_join(Query *root, Relids rels,
+static void mark_baserels_for_outer_join(PlannerInfo *root, Relids rels,
 							 Relids outerrels);
-static void distribute_qual_to_rels(Query *root, Node *clause,
+static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						bool is_pushed_down,
 						bool isdeduced,
 						Relids outerjoin_nonnullable,
 						Relids qualscope);
-static void add_vars_to_targetlist(Query *root, List *vars,
+static void add_vars_to_targetlist(PlannerInfo *root, List *vars,
 					   Relids where_needed);
-static bool qual_is_redundant(Query *root, RestrictInfo *restrictinfo,
+static bool qual_is_redundant(PlannerInfo *root, RestrictInfo *restrictinfo,
 				  List *restrictlist);
 static void check_mergejoinable(RestrictInfo *restrictinfo);
 static void check_hashjoinable(RestrictInfo *restrictinfo);
@@ -68,7 +68,7 @@ static void check_hashjoinable(RestrictInfo *restrictinfo);
  * will be used later to build rels for inheritance children.
  */
 void
-add_base_rels_to_query(Query *root, Node *jtnode)
+add_base_rels_to_query(PlannerInfo *root, Node *jtnode)
 {
 	if (jtnode == NULL)
 		return;
@@ -114,7 +114,7 @@ add_base_rels_to_query(Query *root, Node *jtnode)
  * propagate up through all join plan steps.
  */
 void
-build_base_rel_tlists(Query *root, List *final_tlist)
+build_base_rel_tlists(PlannerInfo *root, List *final_tlist)
 {
 	List	   *tlist_vars = pull_var_clause((Node *) final_tlist, false);
 
@@ -133,7 +133,7 @@ build_base_rel_tlists(Query *root, List *final_tlist)
  *	  where_needed includes "relation 0").
  */
 static void
-add_vars_to_targetlist(Query *root, List *vars, Relids where_needed)
+add_vars_to_targetlist(PlannerInfo *root, List *vars, Relids where_needed)
 {
 	ListCell   *temp;
 
@@ -189,7 +189,7 @@ add_vars_to_targetlist(Query *root, List *vars, Relids where_needed)
  * internal convenience; no outside callers pay attention to the result.
  */
 Relids
-distribute_quals_to_rels(Query *root, Node *jtnode)
+distribute_quals_to_rels(PlannerInfo *root, Node *jtnode)
 {
 	Relids		result = NULL;
 
@@ -306,7 +306,7 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
  *	  Mark all base rels listed in 'rels' as having the given outerjoinset.
  */
 static void
-mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
+mark_baserels_for_outer_join(PlannerInfo *root, Relids rels, Relids outerrels)
 {
 	Relids		tmprelids;
 	int			relno;
@@ -333,7 +333,7 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
 		 */
 		if (rel->outerjoinset == NULL)
 		{
-			if (list_member_int(root->rowMarks, relno))
+			if (list_member_int(root->parse->rowMarks, relno))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to the nullable side of an outer join")));
@@ -367,7 +367,7 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
  * 'is_pushed_down' will be TRUE.
  */
 static void
-distribute_qual_to_rels(Query *root, Node *clause,
+distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						bool is_pushed_down,
 						bool isdeduced,
 						Relids outerjoin_nonnullable,
@@ -626,7 +626,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
  * for more details.
  */
 void
-process_implied_equality(Query *root,
+process_implied_equality(PlannerInfo *root,
 						 Node *item1, Node *item2,
 						 Oid sortop1, Oid sortop2,
 						 Relids item1_relids, Relids item2_relids,
@@ -796,7 +796,7 @@ process_implied_equality(Query *root,
  * all the "var = const" quals.
  */
 static bool
-qual_is_redundant(Query *root,
+qual_is_redundant(PlannerInfo *root,
 				  RestrictInfo *restrictinfo,
 				  List *restrictlist)
 {
