@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.279 2005/06/03 23:05:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.280 2005/06/05 00:38:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -479,10 +479,10 @@ typedef struct DefElem
  *	  FROM clause, but POSTQUEL allows you to refer to tables not listed,
  *	  in which case a range table entry will be generated.	We still support
  *	  this POSTQUEL feature, although there is some doubt whether it's
- *	  convenient or merely confusing.  The flag is needed since an
- *	  implicitly-added RTE shouldn't change the namespace for unqualified
- *	  column names processed later, and it also shouldn't affect the
- *	  expansion of '*'.
+ *	  convenient or merely confusing.  The flag is not actually needed
+ *	  anymore during parsing, since the parser uses a separate "namespace"
+ *	  data structure to control visibility, but it is needed by ruleutils.c
+ *	  to determine whether RTEs should be included in decompiled queries.
  *
  *	  requiredPerms and checkAsUser specify run-time access permissions
  *	  checks to be performed at query startup.	The user must have *all*
@@ -552,7 +552,7 @@ typedef struct RangeTblEntry
 	Alias	   *alias;			/* user-written alias clause, if any */
 	Alias	   *eref;			/* expanded reference names */
 	bool		inh;			/* inheritance requested? */
-	bool		inFromCl;		/* present in FROM clause */
+	bool		inFromCl;		/* present in FROM clause? */
 	AclMode		requiredPerms;	/* bitmask of required access permissions */
 	AclId		checkAsUser;	/* if not zero, check access as this user */
 } RangeTblEntry;

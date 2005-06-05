@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.135 2005/06/04 19:19:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.136 2005/06/05 00:38:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -750,51 +750,31 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref)
  * ExpandAllTables()
  *		Turns '*' (in the target list) into a list of targetlist entries.
  *
- * tlist entries are generated for each relation appearing at the top level
- * of the query's namespace, except for RTEs marked not inFromCl.  (These
- * may include NEW/OLD pseudo-entries, implicit RTEs, etc.)
+ * tlist entries are generated for each relation appearing in the query's
+ * varnamespace.  We do not consider relnamespace because that would include
+ * input tables of aliasless JOINs, NEW/OLD pseudo-entries, implicit RTEs,
+ * etc.
  */
 static List *
 ExpandAllTables(ParseState *pstate)
 {
 	List	   *target = NIL;
-	bool		found_table = false;
-	ListCell   *ns;
-
-	foreach(ns, pstate->p_namespace)
-	{
-		Node	   *n = (Node *) lfirst(ns);
-		int			rtindex;
-		RangeTblEntry *rte;
-
-		if (IsA(n, RangeTblRef))
-			rtindex = ((RangeTblRef *) n)->rtindex;
-		else if (IsA(n, JoinExpr))
-			rtindex = ((JoinExpr *) n)->rtindex;
-		else
-		{
-			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(n));
-			rtindex = 0;		/* keep compiler quiet */
-		}
-
-		/*
-		 * Ignore added-on relations that were not listed in the FROM
-		 * clause.
-		 */
-		rte = rt_fetch(rtindex, pstate->p_rtable);
-		if (!rte->inFromCl)
-			continue;
-
-		found_table = true;
-		target = list_concat(target,
-							 expandRelAttrs(pstate, rte, rtindex, 0));
-	}
+	ListCell   *l;
 
 	/* Check for SELECT *; */
-	if (!found_table)
+	if (!pstate->p_varnamespace)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 			  errmsg("SELECT * with no tables specified is not valid")));
+
+	foreach(l, pstate->p_varnamespace)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+		int		rtindex = RTERangeTablePosn(pstate, rte, NULL);
+
+		target = list_concat(target,
+							 expandRelAttrs(pstate, rte, rtindex, 0));
+	}
 
 	return target;
 }

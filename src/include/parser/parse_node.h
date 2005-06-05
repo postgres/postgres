@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.43 2005/04/28 21:47:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_node.h,v 1.44 2005/06/05 00:38:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,12 +27,19 @@
  * p_joinlist: list of join items (RangeTblRef and JoinExpr nodes) that
  * will become the fromlist of the query's top-level FromExpr node.
  *
- * p_namespace: list of join items that represents the current namespace
- * for table and column lookup.  This may be just a subset of the rtable +
- * joinlist, and/or may contain entries that are not yet added to the main
- * joinlist.  Note that an RTE that is present in p_namespace, but does not
- * have its inFromCl flag set, is accessible only with an explicit qualifier;
- * lookups of unqualified column names should ignore it.
+ * p_relnamespace: list of RTEs that represents the current namespace for
+ * table lookup, ie, those RTEs that are accessible by qualified names.
+ * This may be just a subset of the rtable + joinlist, and/or may contain
+ * entries that are not yet added to the main joinlist.
+ *
+ * p_varnamespace: list of RTEs that represents the current namespace for
+ * column lookup, ie, those RTEs that are accessible by unqualified names.
+ * This is different from p_relnamespace because a JOIN without an alias does
+ * not hide the contained tables (so they must still be in p_relnamespace)
+ * but it does hide their columns (unqualified references to the columns must
+ * refer to the JOIN, not the member tables).  Also, we put POSTQUEL-style
+ * implicit RTEs into p_relnamespace but not p_varnamespace, so that they
+ * do not affect the set of columns available for unqualified references.
  *
  * p_paramtypes: an array of p_numparams type OIDs for $n parameter symbols
  * (zeroth entry in array corresponds to $1).  If p_variableparams is true, the
@@ -49,7 +56,8 @@ typedef struct ParseState
 	List	   *p_rtable;		/* range table so far */
 	List	   *p_joinlist;		/* join items so far (will become FromExpr
 								 * node's fromlist) */
-	List	   *p_namespace;	/* current lookup namespace (join items) */
+	List	   *p_relnamespace;	/* current namespace for relations */
+	List	   *p_varnamespace;	/* current namespace for columns */
 	Oid		   *p_paramtypes;	/* OIDs of types for $n parameter symbols */
 	int			p_numparams;	/* allocated size of p_paramtypes[] */
 	int			p_next_resno;	/* next targetlist resno to assign */

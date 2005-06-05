@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.199 2005/06/03 23:05:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.200 2005/06/05 00:38:10 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -4009,8 +4009,8 @@ get_from_clause(Query *query, const char *prefix, deparse_context *context)
 	 * We use the query's jointree as a guide to what to print.  However,
 	 * we must ignore auto-added RTEs that are marked not inFromCl. (These
 	 * can only appear at the top level of the jointree, so it's
-	 * sufficient to check here.) Also ignore the rule pseudo-RTEs for NEW
-	 * and OLD.
+	 * sufficient to check here.)  This check also ensures we ignore
+	 * the rule pseudo-RTEs for NEW and OLD.
 	 */
 	foreach(l, query->jointree->fromlist)
 	{
@@ -4022,10 +4022,6 @@ get_from_clause(Query *query, const char *prefix, deparse_context *context)
 			RangeTblEntry *rte = rt_fetch(varno, query->rtable);
 
 			if (!rte->inFromCl)
-				continue;
-			if (strcmp(rte->eref->aliasname, "*NEW*") == 0)
-				continue;
-			if (strcmp(rte->eref->aliasname, "*OLD*") == 0)
 				continue;
 		}
 

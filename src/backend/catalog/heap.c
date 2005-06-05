@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.284 2005/04/14 20:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.285 2005/06/05 00:38:07 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1486,7 +1486,7 @@ AddRelationRawConstraints(Relation rel,
 										NULL,
 										false,
 										true);
-	addRTEtoQuery(pstate, rte, true, true);
+	addRTEtoQuery(pstate, rte, true, true, true);
 
 	/*
 	 * Process column default expressions.

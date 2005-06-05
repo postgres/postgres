@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.321 2005/04/28 21:47:14 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.322 2005/06/05 00:38:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -512,7 +512,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	Query	   *qry = makeNode(Query);
 	Query	   *selectQuery = NULL;
 	List	   *sub_rtable;
-	List	   *sub_namespace;
+	List	   *sub_relnamespace;
+	List	   *sub_varnamespace;
 	List	   *icolumns;
 	List	   *attrnos;
 	ListCell   *icols;
@@ -528,20 +529,23 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	 * SELECT.	This can only happen if we are inside a CREATE RULE, and
 	 * in that case we want the rule's OLD and NEW rtable entries to
 	 * appear as part of the SELECT's rtable, not as outer references for
-	 * it.	(Kluge!)  The SELECT's joinlist is not affected however. We
+	 * it.  (Kluge!)  The SELECT's joinlist is not affected however.  We
 	 * must do this before adding the target table to the INSERT's rtable.
 	 */
 	if (stmt->selectStmt)
 	{
 		sub_rtable = pstate->p_rtable;
 		pstate->p_rtable = NIL;
-		sub_namespace = pstate->p_namespace;
-		pstate->p_namespace = NIL;
+		sub_relnamespace = pstate->p_relnamespace;
+		pstate->p_relnamespace = NIL;
+		sub_varnamespace = pstate->p_varnamespace;
+		pstate->p_varnamespace = NIL;
 	}
 	else
 	{
 		sub_rtable = NIL;		/* not used, but keep compiler quiet */
-		sub_namespace = NIL;
+		sub_relnamespace = NIL;
+		sub_varnamespace = NIL;
 	}
 
 	/*
@@ -578,7 +582,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		 * through 6.5 had bugs of just that nature...)
 		 */
 		sub_pstate->p_rtable = sub_rtable;
-		sub_pstate->p_namespace = sub_namespace;
+		sub_pstate->p_relnamespace = sub_relnamespace;
+		sub_pstate->p_varnamespace = sub_varnamespace;
 
 		/*
 		 * Note: we are not expecting that extras_before and extras_after
@@ -605,7 +610,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		rte = addRangeTableEntryForSubquery(pstate,
 											selectQuery,
 											makeAlias("*SELECT*", NIL),
-											true);
+											false);
 		rtr = makeNode(RangeTblRef);
 		/* assume new rte is at end */
 		rtr->rtindex = list_length(pstate->p_rtable);
@@ -1481,8 +1486,8 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 		 */
 		rte = addRangeTableEntry(pstate, stmt->relation, NULL, false, true);
 
-		/* no to join list, yes to namespace */
-		addRTEtoQuery(pstate, rte, false, true);
+		/* no to join list, yes to namespaces */
+		addRTEtoQuery(pstate, rte, false, true, true);
 
 		stmt->whereClause = transformWhereClause(pstate, stmt->whereClause,
 												 "WHERE");
@@ -1500,8 +1505,8 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 			{
 				rte = addRangeTableEntry(pstate, stmt->relation, NULL,
 										 false, true);
-				/* no to join list, yes to namespace */
-				addRTEtoQuery(pstate, rte, false, true);
+				/* no to join list, yes to namespaces */
+				addRTEtoQuery(pstate, rte, false, true, true);
 			}
 			ielem->expr = transformExpr(pstate, ielem->expr);
 
@@ -1559,10 +1564,10 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 	Assert(pstate->p_rtable == NIL);
 	oldrte = addRangeTableEntryForRelation(pstate, rel,
 										   makeAlias("*OLD*", NIL),
-										   false, true);
+										   false, false);
 	newrte = addRangeTableEntryForRelation(pstate, rel,
 										   makeAlias("*NEW*", NIL),
-										   false, true);
+										   false, false);
 	/* Must override addRangeTableEntry's default access-check flags */
 	oldrte->requiredPerms = 0;
 	newrte->requiredPerms = 0;
@@ -1572,24 +1577,22 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 	 * the one(s) that are relevant for the current kind of rule.  In an
 	 * UPDATE rule, quals must refer to OLD.field or NEW.field to be
 	 * unambiguous, but there's no need to be so picky for INSERT &
-	 * DELETE. (Note we marked the RTEs "inFromCl = true" above to allow
-	 * unqualified references to their fields.)  We do not add them to the
-	 * joinlist.
+	 * DELETE.  We do not add them to the joinlist.
 	 */
 	switch (stmt->event)
 	{
 		case CMD_SELECT:
-			addRTEtoQuery(pstate, oldrte, false, true);
+			addRTEtoQuery(pstate, oldrte, false, true, true);
 			break;
 		case CMD_UPDATE:
-			addRTEtoQuery(pstate, oldrte, false, true);
-			addRTEtoQuery(pstate, newrte, false, true);
+			addRTEtoQuery(pstate, oldrte, false, true, true);
+			addRTEtoQuery(pstate, newrte, false, true, true);
 			break;
 		case CMD_INSERT:
-			addRTEtoQuery(pstate, newrte, false, true);
+			addRTEtoQuery(pstate, newrte, false, true, true);
 			break;
 		case CMD_DELETE:
-			addRTEtoQuery(pstate, oldrte, false, true);
+			addRTEtoQuery(pstate, oldrte, false, true, true);
 			break;
 		default:
 			elog(ERROR, "unrecognized event type: %d",
@@ -1651,10 +1654,9 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 
 			/*
 			 * Set up OLD/NEW in the rtable for this statement.  The
-			 * entries are marked not inFromCl because we don't want them
-			 * to be referred to by unqualified field names nor "*" in the
-			 * rule actions.  We must add them to the namespace, however,
-			 * or they won't be accessible at all.  We decide later
+			 * entries are added only to relnamespace, not varnamespace,
+			 * because we don't want them to be referred to by unqualified
+			 * field names nor "*" in the rule actions.  We decide later
 			 * whether to put them in the joinlist.
 			 */
 			oldrte = addRangeTableEntryForRelation(sub_pstate, rel,
@@ -1665,8 +1667,8 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 												   false, false);
 			oldrte->requiredPerms = 0;
 			newrte->requiredPerms = 0;
-			addRTEtoQuery(sub_pstate, oldrte, false, true);
-			addRTEtoQuery(sub_pstate, newrte, false, true);
+			addRTEtoQuery(sub_pstate, oldrte, false, true, false);
+			addRTEtoQuery(sub_pstate, newrte, false, true, false);
 
 			/* Transform the rule action statement */
 			top_subqry = transformStmt(sub_pstate, action,
@@ -1776,7 +1778,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 				/* hack so we can use addRTEtoQuery() */
 				sub_pstate->p_rtable = sub_qry->rtable;
 				sub_pstate->p_joinlist = sub_qry->jointree->fromlist;
-				addRTEtoQuery(sub_pstate, oldrte, true, false);
+				addRTEtoQuery(sub_pstate, oldrte, true, false, false);
 				sub_qry->jointree->fromlist = sub_pstate->p_joinlist;
 			}
 
@@ -1906,10 +1908,10 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 			   *dtlist;
 	List	   *targetvars,
 			   *targetnames,
-			   *sv_namespace,
+			   *sv_relnamespace,
+			   *sv_varnamespace,
 			   *sv_rtable;
 	RangeTblEntry *jrte;
-	RangeTblRef *jrtr;
 	int			tllen;
 
 	qry->commandType = CMD_SELECT;
@@ -2027,7 +2029,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	/*
 	 * As a first step towards supporting sort clauses that are
-	 * expressions using the output columns, generate a namespace entry
+	 * expressions using the output columns, generate a varnamespace entry
 	 * that makes the output columns visible.  A Join RTE node is handy
 	 * for this, since we can easily control the Vars generated upon
 	 * matches.
@@ -2041,15 +2043,16 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 									 JOIN_INNER,
 									 targetvars,
 									 NULL,
-									 true);
-	jrtr = makeNode(RangeTblRef);
-	jrtr->rtindex = 1;			/* only entry in dummy rtable */
+									 false);
 
 	sv_rtable = pstate->p_rtable;
 	pstate->p_rtable = list_make1(jrte);
 
-	sv_namespace = pstate->p_namespace;
-	pstate->p_namespace = list_make1(jrtr);
+	sv_relnamespace = pstate->p_relnamespace;
+	pstate->p_relnamespace = NIL;	/* no qualified names allowed */
+
+	sv_varnamespace = pstate->p_varnamespace;
+	pstate->p_varnamespace = list_make1(jrte);
 
 	/*
 	 * For now, we don't support resjunk sort clauses on the output of a
@@ -2064,8 +2067,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 										  &qry->targetList,
 									  false /* no unknowns expected */ );
 
-	pstate->p_namespace = sv_namespace;
 	pstate->p_rtable = sv_rtable;
+	pstate->p_relnamespace = sv_relnamespace;
+	pstate->p_varnamespace = sv_varnamespace;
 
 	if (tllen != list_length(qry->targetList))
 		ereport(ERROR,
@@ -2164,7 +2168,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		 * happen because the namespace will be empty, but it could happen
 		 * if we are inside a rule.
 		 */
-		if (pstate->p_namespace)
+		if (pstate->p_relnamespace || pstate->p_varnamespace)
 		{
 			if (contain_vars_of_level((Node *) selectQuery, 1))
 				ereport(ERROR,
