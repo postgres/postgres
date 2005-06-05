@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.106 2005/04/19 03:13:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.107 2005/06/05 01:48:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,7 +284,11 @@ assign_timezone(const char *value, bool doit, GucSource source)
 		if (doit)
 		{
 			/* Here we change from SQL to Unix sign convention */
+#ifdef HAVE_INT64_TIMESTAMP
+			CTimeZone = -(interval->time / USECS_PER_SEC);
+#else
 			CTimeZone = -interval->time;
+#endif
 
 			HasCTZSet = true;
 		}
@@ -398,8 +402,12 @@ show_timezone(void)
 	{
 		Interval interval;
 
-		interval.	month = 0;
-		interval.	time = -CTimeZone;
+		interval.month = 0;
+#ifdef HAVE_INT64_TIMESTAMP
+		interval.time = -(CTimeZone * USECS_PER_SEC);
+#else
+		interval.time = -CTimeZone;
+#endif
 
 		tzn = DatumGetCString(DirectFunctionCall1(interval_out,
 										  IntervalPGetDatum(&interval)));
