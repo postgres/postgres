@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jun  4 19:32:31 EDT 2005
+Last updated:		Sat Jun  4 20:19:57 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -180,7 +180,7 @@ Data Types
 * Allow customization of the known set of TZ names (generalize the
   present australian_timezones hack)
 * Allow TIMESTAMP WITH TIME ZONE to store the original timezone
-  information, either zone name or offset from UTC
+  information, either zone name or offset from UTC [timezone]
 
   If the TIMESTAMP value is stored with a time zone name, interval 
   computations should adjust based on the time zone rules, e.g. adding
