@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.71.2.2 2003/06/06 16:25:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.71.2.3 2005/06/05 01:49:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,7 +291,11 @@ assign_timezone(const char *value, bool doit, bool interactive)
 		}
 		if (doit)
 		{
+#ifdef HAVE_INT64_TIMESTAMP
+			CTimeZone = interval->time / INT64CONST(1000000);
+#else
 			CTimeZone = interval->time;
+#endif
 			HasCTZSet = true;
 		}
 		pfree(interval);
@@ -394,7 +398,11 @@ show_timezone(void)
 		Interval	interval;
 
 		interval.month = 0;
+#ifdef HAVE_INT64_TIMESTAMP
+		interval.time = CTimeZone * INT64CONST(1000000);
+#else
 		interval.time = CTimeZone;
+#endif
 
 		tzn = DatumGetCString(DirectFunctionCall1(interval_out,
 										  IntervalPGetDatum(&interval)));
