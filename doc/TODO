@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jun  4 20:45:17 EDT 2005
+Last updated:		Sat Jun  4 23:39:40 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -96,7 +96,9 @@ Administration
 
   Right now, SIGTERM will terminate a session, but it is treated as
   though the postmaster has paniced and shared memory might not be
-  cleaned up properly.  A new signal is needed for safe termination.
+  cleaned up properly.  A new signal is needed for safe termination
+  because backends must first do a query cancel, then exit once they
+  have run the query cancel cleanup routine.
 
 * Un-comment all variables in postgresql.conf
 
