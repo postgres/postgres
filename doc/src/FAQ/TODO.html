@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Sat Jun  4 20:19:57 EDT 2005
+Last updated:           Sat Jun  4 20:28:35 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -102,7 +102,7 @@ first.
   to return to their default values.
 </p>
   </li><li>Allow point-in-time recovery to archive partially filled write-ahead
-  logs
+  logs [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pitr">pitr</a>]
 <p>  Currently only full WAL files are archived. This means that the most
   recent transactions aren't available for recovery in case of a disk
   failure.  This could be triggered by a user command or a timer.
@@ -119,7 +119,7 @@ first.
   copied from the template1 database.
 </p>
   </li><li>Add a function that returns the 'uptime' of the postmaster
-  </li><li>Allow a warm standby system to also allow read-only queries
+  </li><li>Allow a warm standby system to also allow read-only queries [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pitr">pitr</a>]
 <p>  This is useful for checking PITR recovery.
 </p>
   </li><li>Allow the PITR process to be debugged and data examined

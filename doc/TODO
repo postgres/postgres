@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jun  4 20:19:57 EDT 2005
+Last updated:		Sat Jun  4 20:28:35 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -107,7 +107,7 @@ Administration
   to return to their default values.
 
 * Allow point-in-time recovery to archive partially filled write-ahead
-  logs
+  logs [pitr]
 
   Currently only full WAL files are archived. This means that the most
   recent transactions aren't available for recovery in case of a disk
@@ -127,7 +127,7 @@ Administration
   copied from the template1 database.
 
 * Add a function that returns the 'uptime' of the postmaster
-* Allow a warm standby system to also allow read-only queries
+* Allow a warm standby system to also allow read-only queries [pitr]
 
   This is useful for checking PITR recovery.
 
