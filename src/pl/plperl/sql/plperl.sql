@@ -234,3 +234,16 @@ $$ LANGUAGE plperl;
 SELECT perl_get_field((11,12), 'x');
 SELECT perl_get_field((11,12), 'y');
 SELECT perl_get_field((11,12), 'z');
+
+--
+-- Test return_next
+--
+
+CREATE OR REPLACE FUNCTION perl_srf_rn() RETURNS SETOF RECORD AS $$
+$i = 0;
+for ("World", "PostgreSQL", "PL/Perl") {
+    return_next({f1=>++$i, f2=>'Hello', f3=>$_});
+}
+return;
+$$ language plperl;
+SELECT * from perl_srf_rn() AS (f1 INTEGER, f2 TEXT, f3 TEXT);

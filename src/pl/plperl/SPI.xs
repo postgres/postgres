@@ -98,7 +98,7 @@ spi_spi_exec_query(query, ...)
 		RETVAL
 
 void
-spi_spi_return_next(rv)
+spi_return_next(rv)
 	SV *rv;
 	CODE:
 		plperl_return_next(rv);
