@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.67 2005/06/05 22:32:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.68 2005/06/06 04:13:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,8 @@
 
 static RelOptInfo *make_reloptinfo(PlannerInfo *root, int relid,
 								   RelOptKind reloptkind);
-static void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel);
+static void build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
+								RelOptInfo *input_rel);
 static List *build_joinrel_restrictlist(PlannerInfo *root,
 						   RelOptInfo *joinrel,
 						   RelOptInfo *outer_rel,
@@ -43,78 +44,60 @@ static void subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 /*
  * build_base_rel
  *	  Construct a new base relation RelOptInfo, and put it in the query's
- *	  base_rel_list.
+ *	  base_rel_array.
  */
 void
 build_base_rel(PlannerInfo *root, int relid)
 {
-	ListCell   *l;
-	RelOptInfo *rel;
+	Assert(relid > 0);
 
 	/* Rel should not exist already */
-	foreach(l, root->base_rel_list)
-	{
-		rel = (RelOptInfo *) lfirst(l);
-		if (relid == rel->relid)
-			elog(ERROR, "rel already exists");
-	}
-
-	/* It should not exist as an "other" rel, either */
-	foreach(l, root->other_rel_list)
-	{
-		rel = (RelOptInfo *) lfirst(l);
-		if (relid == rel->relid)
-			elog(ERROR, "rel already exists as \"other\" rel");
-	}
+	if (relid < root->base_rel_array_size &&
+		root->base_rel_array[relid] != NULL)
+		elog(ERROR, "rel already exists");
 
 	/* No existing RelOptInfo for this base rel, so make a new one */
-	rel = make_reloptinfo(root, relid, RELOPT_BASEREL);
-
-	/* and add it to the list */
-	root->base_rel_list = lcons(rel, root->base_rel_list);
+	(void) make_reloptinfo(root, relid, RELOPT_BASEREL);
 }
 
 /*
  * build_other_rel
  *	  Returns relation entry corresponding to 'relid', creating a new one
  *	  if necessary.  This is for 'other' relations, which are much like
- *	  base relations except that they live in a different list.
+ *	  base relations except that they have a different RelOptKind.
  */
 RelOptInfo *
 build_other_rel(PlannerInfo *root, int relid)
 {
-	ListCell   *l;
 	RelOptInfo *rel;
 
-	/* Already made? */
-	foreach(l, root->other_rel_list)
-	{
-		rel = (RelOptInfo *) lfirst(l);
-		if (relid == rel->relid)
-			return rel;
-	}
+	Assert(relid > 0);
 
-	/* It should not exist as a base rel */
-	foreach(l, root->base_rel_list)
+	/* Already made? */
+	if (relid < root->base_rel_array_size)
 	{
-		rel = (RelOptInfo *) lfirst(l);
-		if (relid == rel->relid)
-			elog(ERROR, "rel already exists as base rel");
+		rel = root->base_rel_array[relid];
+		if (rel)
+		{
+			/* it should not exist as a base rel */
+			if (rel->reloptkind == RELOPT_BASEREL)
+				elog(ERROR, "rel already exists as base rel");
+			/* otherwise, A-OK */
+			return rel;
+		}
 	}
 
 	/* No existing RelOptInfo for this other rel, so make a new one */
 	/* presently, must be an inheritance child rel */
 	rel = make_reloptinfo(root, relid, RELOPT_OTHER_CHILD_REL);
 
-	/* and add it to the list */
-	root->other_rel_list = lcons(rel, root->other_rel_list);
-
 	return rel;
 }
 
 /*
  * make_reloptinfo
- *	  Construct a RelOptInfo for the specified rangetable index.
+ *	  Construct a RelOptInfo for the specified rangetable index,
+ *	  and enter it into base_rel_array.
  *
  * Common code for build_base_rel and build_other_rel.
  */
@@ -172,31 +155,40 @@ make_reloptinfo(PlannerInfo *root, int relid, RelOptKind reloptkind)
 			break;
 	}
 
+	/* Add the finished struct to the base_rel_array */
+	if (relid >= root->base_rel_array_size)
+	{
+		int		oldsize = root->base_rel_array_size;
+		int		newsize;
+
+		newsize = Max(oldsize * 2, relid + 1);
+		root->base_rel_array = (RelOptInfo **)
+			repalloc(root->base_rel_array, newsize * sizeof(RelOptInfo *));
+		MemSet(root->base_rel_array + oldsize, 0,
+			   (newsize - oldsize) * sizeof(RelOptInfo *));
+		root->base_rel_array_size = newsize;
+	}
+
+	root->base_rel_array[relid] = rel;
+
 	return rel;
 }
 
 /*
  * find_base_rel
- *	  Find a base or other relation entry, which must already exist
- *	  (since we'd have no idea which list to add it to).
+ *	  Find a base or other relation entry, which must already exist.
  */
 RelOptInfo *
 find_base_rel(PlannerInfo *root, int relid)
 {
-	ListCell   *l;
 	RelOptInfo *rel;
 
-	foreach(l, root->base_rel_list)
-	{
-		rel = (RelOptInfo *) lfirst(l);
-		if (relid == rel->relid)
-			return rel;
-	}
+	Assert(relid > 0);
 
-	foreach(l, root->other_rel_list)
+	if (relid < root->base_rel_array_size)
 	{
-		rel = (RelOptInfo *) lfirst(l);
-		if (relid == rel->relid)
+		rel = root->base_rel_array[relid];
+		if (rel)
 			return rel;
 	}
 
@@ -308,8 +300,13 @@ build_join_rel(PlannerInfo *root,
 	 * Create a new tlist containing just the vars that need to be output
 	 * from this join (ie, are needed for higher joinclauses or final
 	 * output).
+	 *
+	 * NOTE: the tlist order for a join rel will depend on which pair of
+	 * outer and inner rels we first try to build it from.  But the
+	 * contents should be the same regardless.
 	 */
-	build_joinrel_tlist(root, joinrel);
+	build_joinrel_tlist(root, joinrel, outer_rel);
+	build_joinrel_tlist(root, joinrel, inner_rel);
 
 	/*
 	 * Construct restrict and join clause lists for the new joinrel. (The
@@ -344,48 +341,39 @@ build_join_rel(PlannerInfo *root,
  *	  Builds a join relation's target list.
  *
  * The join's targetlist includes all Vars of its member relations that
- * will still be needed above the join.
- *
- * In a former lifetime, this just merged the tlists of the two member
- * relations first presented.  While we could still do that, working from
- * lists of Vars would mean doing a find_base_rel lookup for each Var.
- * It seems more efficient to scan the list of base rels and collect the
- * needed vars directly from there.
+ * will still be needed above the join.  This subroutine adds all such
+ * Vars from the specified input rel's tlist to the join rel's tlist.
  *
  * We also compute the expected width of the join's output, making use
  * of data that was cached at the baserel level by set_rel_width().
  */
 static void
-build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel)
+build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
+					RelOptInfo *input_rel)
 {
 	Relids		relids = joinrel->relids;
-	ListCell   *rels;
+	ListCell   *vars;
 
-	joinrel->reltargetlist = NIL;
-	joinrel->width = 0;
-
-	foreach(rels, root->base_rel_list)
+	foreach(vars, input_rel->reltargetlist)
 	{
-		RelOptInfo *baserel = (RelOptInfo *) lfirst(rels);
-		ListCell   *vars;
+		Var		   *var = (Var *) lfirst(vars);
+		RelOptInfo *baserel;
+		int			ndx;
 
-		if (!bms_is_member(baserel->relid, relids))
-			continue;
+		/* We can't run into any child RowExprs here */
+		Assert(IsA(var, Var));
 
-		foreach(vars, baserel->reltargetlist)
+		/* Get the Var's original base rel */
+		baserel = find_base_rel(root, var->varno);
+
+		/* Is it still needed above this joinrel? */
+		ndx = var->varattno - baserel->min_attr;
+		if (bms_nonempty_difference(baserel->attr_needed[ndx], relids))
 		{
-			Var		   *var = (Var *) lfirst(vars);
-			int			ndx = var->varattno - baserel->min_attr;
-
-			/* We can't run into any child RowExprs here */
-			Assert(IsA(var, Var));
-
-			if (bms_nonempty_difference(baserel->attr_needed[ndx], relids))
-			{
-				joinrel->reltargetlist = lappend(joinrel->reltargetlist, var);
-				Assert(baserel->attr_widths[ndx] > 0);
-				joinrel->width += baserel->attr_widths[ndx];
-			}
+			/* Yup, add it to the output */
+			joinrel->reltargetlist = lappend(joinrel->reltargetlist, var);
+			Assert(baserel->attr_widths[ndx] > 0);
+			joinrel->width += baserel->attr_widths[ndx];
 		}
 	}
 }

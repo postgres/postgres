@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.131 2005/06/05 22:32:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.132 2005/06/06 04:13:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,9 +88,33 @@ make_one_rel(PlannerInfo *root)
 	rel = make_fromexpr_rel(root, root->parse->jointree);
 
 	/*
-	 * The result should join all the query's base rels.
+	 * The result should join all and only the query's base rels.
 	 */
-	Assert(bms_num_members(rel->relids) == list_length(root->base_rel_list));
+#ifdef USE_ASSERT_CHECKING
+	{
+		int			num_base_rels = 0;
+		Index		rti;
+
+		for (rti = 1; rti < root->base_rel_array_size; rti++)
+		{
+			RelOptInfo *brel = root->base_rel_array[rti];
+
+			if (brel == NULL)
+				continue;
+
+			Assert(brel->relid == rti);		/* sanity check on array */
+
+			/* ignore RTEs that are "other rels" */
+			if (brel->reloptkind != RELOPT_BASEREL)
+				continue;
+
+			Assert(bms_is_member(rti, rel->relids));
+			num_base_rels++;
+		}
+
+		Assert(bms_num_members(rel->relids) == num_base_rels);
+	}
+#endif
 
 	return rel;
 }
@@ -104,16 +128,29 @@ make_one_rel(PlannerInfo *root)
 static void
 set_base_rel_pathlists(PlannerInfo *root)
 {
-	ListCell   *l;
+	Index		rti;
 
-	foreach(l, root->base_rel_list)
+	/*
+	 * Note: because we call expand_inherited_rtentry inside the loop,
+	 * it's quite possible for the base_rel_array to be enlarged while
+	 * the loop runs.  Hence don't try to optimize the loop.
+	 */
+	for (rti = 1; rti < root->base_rel_array_size; rti++)
 	{
-		RelOptInfo *rel = (RelOptInfo *) lfirst(l);
-		Index		rti = rel->relid;
+		RelOptInfo *rel = root->base_rel_array[rti];
 		RangeTblEntry *rte;
 		List	   *inheritlist;
 
-		Assert(rti > 0);		/* better be base rel */
+		/* there may be empty slots corresponding to non-baserel RTEs */
+		if (rel == NULL)
+			continue;
+
+		Assert(rel->relid == rti);		/* sanity check on array */
+
+		/* ignore RTEs that are "other rels" */
+		if (rel->reloptkind != RELOPT_BASEREL)
+			continue;
+
 		rte = rt_fetch(rti, root->parse->rtable);
 
 		if (rel->rtekind == RTE_SUBQUERY)
@@ -246,10 +283,9 @@ set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		childOID = childrte->relid;
 
 		/*
-		 * Make a RelOptInfo for the child so we can do planning.  Do NOT
-		 * attach the RelOptInfo to the query's base_rel_list, however,
-		 * since the child is not part of the main join tree.  Instead,
-		 * the child RelOptInfo is added to other_rel_list.
+		 * Make a RelOptInfo for the child so we can do planning.
+		 * Mark it as an "other rel" since it will not be part of the
+		 * main join tree.
 		 */
 		childrel = build_other_rel(root, childRTindex);
 

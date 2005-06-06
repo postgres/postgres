@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.110 2005/06/05 22:32:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.111 2005/06/06 04:13:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
  * Relids
  *		Set of relation identifiers (indexes into the rangetable).
  */
-
 typedef Bitmapset *Relids;
 
 /*
@@ -63,8 +62,16 @@ typedef struct PlannerInfo
 
 	Query	   *parse;			/* the Query being planned */
 
-	List	   *base_rel_list;	/* list of base-relation RelOptInfos */
-	List	   *other_rel_list; /* list of other 1-relation RelOptInfos */
+	/*
+	 * base_rel_array holds pointers to "base rels" and "other rels" (see
+	 * comments for RelOptInfo for more info).  It is indexed by rangetable
+	 * index (so entry 0 is always wasted).  Entries can be NULL when
+	 * an RTE does not correspond to a base relation.  Note that the array
+	 * may be enlarged on-the-fly.
+	 */
+	struct RelOptInfo **base_rel_array;	/* All one-relation RelOptInfos */
+	int			base_rel_array_size;	/* current allocated array len */
+
 	List	   *join_rel_list;	/* list of join-relation RelOptInfos */
 
 	List	   *equi_key_list;	/* list of lists of equijoined
@@ -90,15 +97,15 @@ typedef struct PlannerInfo
  * is the joining of two or more base rels.  A joinrel is identified by
  * the set of RT indexes for its component baserels.  We create RelOptInfo
  * nodes for each baserel and joinrel, and store them in the PlannerInfo's
- * base_rel_list and join_rel_list respectively.
+ * base_rel_array and join_rel_list respectively.
  *
  * Note that there is only one joinrel for any given set of component
  * baserels, no matter what order we assemble them in; so an unordered
  * set is the right datatype to identify it with.
  *
  * We also have "other rels", which are like base rels in that they refer to
- * single RT indexes; but they are not part of the join tree, and are stored
- * in other_rel_list not base_rel_list.
+ * single RT indexes; but they are not part of the join tree, and are given
+ * a different RelOptKind to identify them.
  *
  * Currently the only kind of otherrels are those made for child relations
  * of an inheritance scan (SELECT FROM foo*).  The parent table's RTE and
