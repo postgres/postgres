@@ -1,0 +1,316 @@
+From pgsql-bugs-owner+M10740=pgman=candle.pha.pa.us@postgresql.org Mon Jan 24 18:00:00 2005
+Return-path: <pgsql-bugs-owner+M10740=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id j0ONxxw11019
+	for <pgman@candle.pha.pa.us>; Mon, 24 Jan 2005 18:59:59 -0500 (EST)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 182703A4CB1
+	for <pgman@candle.pha.pa.us>; Mon, 24 Jan 2005 23:59:55 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 38013-02 for <pgman@candle.pha.pa.us>;
+	Mon, 24 Jan 2005 23:59:53 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 4B17E3A4B12
+	for <pgman@candle.pha.pa.us>; Mon, 24 Jan 2005 23:59:54 +0000 (GMT)
+X-Original-To: pgsql-bugs-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id E7E323A53D0
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>; Mon, 24 Jan 2005 23:44:58 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 14037-08
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>;
+	Mon, 24 Jan 2005 23:44:45 +0000 (GMT)
+Received: by svr1.postgresql.org (Postfix, from userid 1001)
+	id 1C2D53A585A; Tue, 25 Jan 2005 00:59:20 +0000 (GMT)
+Received: from floppy.pyrenet.fr (floppy.pyrenet.fr [194.250.190.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id C0CB23A573E
+	for <pgsql-bugs@postgresql.org>; Mon, 24 Jan 2005 23:29:17 +0000 (GMT)
+Received: by floppy.pyrenet.fr (Postfix, from userid 106)
+	id EF14E31D91; Tue, 25 Jan 2005 00:29:16 +0100 (MET)
+From: Andrew - Supernews <andrew+nonews@supernews.com>
+X-Newsgroups: pgsql.bugs
+Subject: [BUGS] incorrect index behaviour with rtree on box values
+Date: Mon, 24 Jan 2005 23:29:12 -0000
+Organization: http://www.supernews.com - all your nntp are belong to us
+Message-ID: <slrncvb167.5vn.andrew+nonews@trinity.supernews.net>
+Reply-To: andrew@supernews.com
+User-Agent: slrn/0.9.8.0 (FreeBSD)
+X-Complaints-To: abuse@supernews.com
+Lines: 56
+To: pgsql-bugs@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-bugs
+Precedence: bulk
+Sender: pgsql-bugs-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+Testcase:
+
+create table boxtest (a box);
+create index boxtest_idx on boxtest using rtree (a);
+ 
+create function gen_data() returns void as '
+  begin for i in 1..200 loop
+    insert into boxtest
+     values (box(point((i*2-1)::float,0),point((i*2)::float,1)));
+  end loop;
+  return;
+end;' language plpgsql;
+ 
+select gen_data();
+analyze boxtest;
+ 
+set enable_seqscan = false;
+set enable_bitmapscan = true;
+set enable_indexscan = true;
+select * from boxtest where a << '(3,0),(3,1)'::box;
+set enable_seqscan = true;
+set enable_bitmapscan = false;
+set enable_indexscan = false;
+select * from boxtest where a << '(3,0),(3,1)'::box;
+
+
+Those two selects at the end should clearly return the same result, a
+single row. In fact, what happens is that the second returns no rows at
+all; I tested this on 7.4.6, but others have confirmed this on everything
+from 7.3 to latest.
+
+The problem is that the semantics of the &< and &> operators for the box
+type are not what rtree needs for the "OverLeft" and "OverRight" slots of
+the operator class. Specifically, what rtree needs is this:
+
+  if X << K or X &< K
+  then for all A where A is a union of values including X,
+  then A &< K
+
+(the designation "&<" is of course arbitrary, what matters is what operator
+is placed in the applicable slot of the opclass. Same goes for >> and &>.)
+
+This is because rtree converts (see rtstrat.c) the original "Left" operator
+to an "OverLeft" when comparing against internal nodes of the index, which
+contain values which are the union of all values in their subtree. In the
+testcase, the top node of the tree contains as its first entry a union
+value of the form (184,1),(1,0), which the scan then rejects since
+(184,1),(1,0) &< (3,0),(3,1) is false.
+
+I can see three possible approaches to fixing this:
+
+1) change the semantics of &< and &> to match rtree's expectations
+
+2) replace &< and &> in the opclass with operators that behave as rtree
+expects (this will have the side effect of rendering &< and &> un-indexable)
+
+3) change rtree's behaviour in some way.
+
+-- 
+Andrew, Supernews
+http://www.supernews.com - individual and corporate NNTP services
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-bugs-owner+M10748=pgman=candle.pha.pa.us@postgresql.org Mon Jan 24 18:57:46 2005
+Return-path: <pgsql-bugs-owner+M10748=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id j0P0vjw18152
+	for <pgman@candle.pha.pa.us>; Mon, 24 Jan 2005 19:57:45 -0500 (EST)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 1CD183A52F3
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jan 2005 00:57:41 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 43652-07 for <pgman@candle.pha.pa.us>;
+	Tue, 25 Jan 2005 00:57:39 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 9FEA63A52C5
+	for <pgman@candle.pha.pa.us>; Tue, 25 Jan 2005 00:57:40 +0000 (GMT)
+X-Original-To: pgsql-bugs-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 3E2AF3A1A35
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>; Tue, 25 Jan 2005 00:09:47 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 39621-06
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>;
+	Tue, 25 Jan 2005 00:09:42 +0000 (GMT)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [66.207.139.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id CAB643A19B8
+	for <pgsql-bugs@postgresql.org>; Tue, 25 Jan 2005 00:09:41 +0000 (GMT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.13.1/8.13.1) with ESMTP id j0P09fcc027307;
+	Mon, 24 Jan 2005 19:09:42 -0500 (EST)
+To: andrew@supernews.com
+cc: pgsql-bugs@postgresql.org
+Subject: Re: [BUGS] incorrect index behaviour with rtree on box values 
+In-Reply-To: <slrncvb167.5vn.andrew+nonews@trinity.supernews.net> 
+References: <slrncvb167.5vn.andrew+nonews@trinity.supernews.net>
+Comments: In-reply-to Andrew - Supernews <andrew+nonews@supernews.com>
+	message dated "Mon, 24 Jan 2005 23:29:12 +0000"
+Date: Mon, 24 Jan 2005 19:09:41 -0500
+Message-ID: <27306.1106611781@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-bugs
+Precedence: bulk
+Sender: pgsql-bugs-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+Status: OR
+
+Andrew - Supernews <andrew+nonews@supernews.com> writes:
+> The problem is that the semantics of the &< and &> operators for the box
+> type are not what rtree needs for the "OverLeft" and "OverRight" slots of
+> the operator class.
+
+This was observed nearly a year ago, see this thread:
+http://archives.postgresql.org/pgsql-general/2004-03/msg01135.php
+
+but apparently no one cares enough to fix it.  Are you volunteering?
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 8: explain analyze is your friend
+
+From pgsql-bugs-owner+M10762=pgman=candle.pha.pa.us@postgresql.org Wed Jan 26 08:56:08 2005
+Return-path: <pgsql-bugs-owner+M10762=pgman=candle.pha.pa.us@postgresql.org>
+Received: from svr1.postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id j0QEu6w07027
+	for <pgman@candle.pha.pa.us>; Wed, 26 Jan 2005 09:56:07 -0500 (EST)
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 86BC83A5C12
+	for <pgman@candle.pha.pa.us>; Wed, 26 Jan 2005 14:56:02 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 26111-04 for <pgman@candle.pha.pa.us>;
+	Wed, 26 Jan 2005 14:55:58 +0000 (GMT)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by svr1.postgresql.org (Postfix) with ESMTP id 5329B3A5C0B
+	for <pgman@candle.pha.pa.us>; Wed, 26 Jan 2005 14:56:02 +0000 (GMT)
+X-Original-To: pgsql-bugs-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.144])
+	by svr1.postgresql.org (Postfix) with ESMTP id 3C43C3A5801
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>; Wed, 26 Jan 2005 14:54:51 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (av.hub.org [200.46.204.144]) (amavisd-new, port 10024)
+	with ESMTP id 25627-10
+	for <pgsql-bugs-postgresql.org@localhost.postgresql.org>;
+	Wed, 26 Jan 2005 14:54:39 +0000 (GMT)
+Received: from floppy.pyrenet.fr (floppy.pyrenet.fr [194.250.190.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 17AD33A516B
+	for <pgsql-bugs@postgresql.org>; Wed, 26 Jan 2005 14:54:42 +0000 (GMT)
+Received: by floppy.pyrenet.fr (Postfix, from userid 106)
+	id F3BF931D93; Wed, 26 Jan 2005 15:54:43 +0100 (MET)
+From: Andrew - Supernews <andrew+nonews@supernews.com>
+X-Newsgroups: pgsql.bugs
+Subject: Re: [BUGS] incorrect index behaviour with rtree on box values
+Date: Wed, 26 Jan 2005 14:54:41 -0000
+Organization: http://www.supernews.com - all your nntp are belong to us
+Message-ID: <slrncvfbph.5vn.andrew+nonews@trinity.supernews.net>
+References: <slrncvb167.5vn.andrew+nonews@trinity.supernews.net> <27306.1106611781@sss.pgh.pa.us>
+Reply-To: andrew@supernews.com
+User-Agent: slrn/0.9.8.0 (FreeBSD)
+X-Complaints-To: abuse@supernews.com
+Lines: 79
+To: pgsql-bugs@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Mailing-List: pgsql-bugs
+Precedence: bulk
+Sender: pgsql-bugs-owner@postgresql.org
+X-Virus-Scanned: by amavisd-new at hub.org
+X-Spam-Checker-Version: SpamAssassin 2.61 (1.212.2.1-2003-12-09-exp) on 
+	candle.pha.pa.us
+X-Spam-Status: No, hits=-4.9 required=5.0 tests=BAYES_00 autolearn=ham 
+	version=2.61
+Status: OR
+
+On 2005-01-25, Tom Lane <tgl@sss.pgh.pa.us> wrote:
+> Andrew - Supernews <andrew+nonews@supernews.com> writes:
+>> The problem is that the semantics of the &< and &> operators for the box
+>> type are not what rtree needs for the "OverLeft" and "OverRight" slots of
+>> the operator class.
+>
+> This was observed nearly a year ago, see this thread:
+> http://archives.postgresql.org/pgsql-general/2004-03/msg01135.php
+>
+> but apparently no one cares enough to fix it.  Are you volunteering?
+
+Possibly. I don't feel comfortable with changing anything specific to the
+geometric operators, since (a) I don't actually use them (I discovered
+this issue when adding rtree support to a type of my own) and (b) the
+compatibility implications are obvious. But I think there is a solution
+that involves only changes to the rtree strategy code.
+
+Looking at the earlier discussion: it seems to have ended with the
+conclusion that &< should mean "does not extend to the right of", which
+matches the current implementation for box, but not for some other types.
+
+So for box values, we seem (and someone please correct me if I'm wrong) to
+have the following semantics:
+
+a << b   - a is strictly left of b, i.e. a.right < b.left
+a &< b   - a is no further right than b, i.e. a.right <= b.right
+a &> b   - a is no further left than b, i.e. a.left >= b.left
+a >> b   - a is strictly right of b, i.e. a.left > b.right
+
+For rtree to work as apparently intended, it needs four more operators,
+to use for inner nodes when the scan operator is one of the above four.
+However, a small modification to the way that the internal scan key is
+initialised should eliminate the requirement to explicitly specify these
+operators, which strikes me as the solution which preserves maximum
+compatibility.  The four operators required are:
+
+  NOT (a &> b)      (used when the scan operator is (a << b))
+  NOT (a >> b)      (used when the scan operator is (a &< b))
+  NOT (a << b)      (used when the scan operator is (a &> b))
+  NOT (a &< b)      (used when the scan operator is (a >> b))
+
+(This won't fix rtree on contrib/seg or contrib/cube, but those appear to be
+broken already since they have different, and equally incorrect, definitions
+of &> and &<. Fixing those would require slightly more complex operators,
+such as NOT (a &> b OR a >> b) and so on. The more complex operators would
+work for box too, so it might be worth using them anyway, but I don't yet
+understand the scan key handling well enough to know if these can be
+constructed rather than supplied in the opclass.)
+
+Proof:
+
+Let V be the scan key, i.e. the value we are searching for in the index.
+Let U be a union over a set of values.
+Let X be some value for which X OP V holds.
+
+Consider an internal node entry with union U. We require that the following
+holds: if U contains some value X where X OP V holds, then U OP' V must be
+true. (But not the converse; U OP' V may be true even if no such X exists in
+U. However, we wish it to be false as much as possible for efficiency.)
+
+When OP is << :
+
+X << V, therefore X.right < V.left, therefore X.left < V.left
+therefore NOT (X &> V)
+
+If U contains X, then U &> V is true iff U.left >= V.left
+
+U.left <= min(E.left) for all elements E of U, and therefore for X if X in U
+
+So if X in U, then U.left <= X.left < V.left, and therefore NOT (U &> V)
+
+When OP is &< :
+
+X &< V, therefore X.right <= V.right, therefore X.left <= V.right
+therefore NOT (X >> V), and similar reasoning for U containing X as above.
+
+-- 
+Andrew, Supernews
+http://www.supernews.com - individual and corporate NNTP services
+
+---------------------------(end of broadcast)---------------------------
+TIP 7: don't forget to increase your free space map settings
+
