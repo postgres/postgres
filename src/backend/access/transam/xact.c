@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.203 2005/06/06 17:01:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.204 2005/06/06 20:22:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -719,25 +719,25 @@ RecordTransactionCommit(void)
 			xlrec.xtime = time(NULL);
 			xlrec.nrels = nrels;
 			xlrec.nsubxacts = nchildren;
-			rdata[0].buffer = InvalidBuffer;
 			rdata[0].data = (char *) (&xlrec);
 			rdata[0].len = MinSizeOfXactCommit;
+			rdata[0].buffer = InvalidBuffer;
 			/* dump rels to delete */
 			if (nrels > 0)
 			{
 				rdata[0].next = &(rdata[1]);
-				rdata[1].buffer = InvalidBuffer;
 				rdata[1].data = (char *) rptr;
 				rdata[1].len = nrels * sizeof(RelFileNode);
+				rdata[1].buffer = InvalidBuffer;
 				lastrdata = 1;
 			}
 			/* dump committed child Xids */
 			if (nchildren > 0)
 			{
 				rdata[lastrdata].next = &(rdata[2]);
-				rdata[2].buffer = InvalidBuffer;
 				rdata[2].data = (char *) children;
 				rdata[2].len = nchildren * sizeof(TransactionId);
+				rdata[2].buffer = InvalidBuffer;
 				lastrdata = 2;
 			}
 			rdata[lastrdata].next = NULL;
@@ -1019,25 +1019,25 @@ RecordTransactionAbort(void)
 			xlrec.xtime = time(NULL);
 			xlrec.nrels = nrels;
 			xlrec.nsubxacts = nchildren;
-			rdata[0].buffer = InvalidBuffer;
 			rdata[0].data = (char *) (&xlrec);
 			rdata[0].len = MinSizeOfXactAbort;
+			rdata[0].buffer = InvalidBuffer;
 			/* dump rels to delete */
 			if (nrels > 0)
 			{
 				rdata[0].next = &(rdata[1]);
-				rdata[1].buffer = InvalidBuffer;
 				rdata[1].data = (char *) rptr;
 				rdata[1].len = nrels * sizeof(RelFileNode);
+				rdata[1].buffer = InvalidBuffer;
 				lastrdata = 1;
 			}
 			/* dump committed child Xids */
 			if (nchildren > 0)
 			{
 				rdata[lastrdata].next = &(rdata[2]);
-				rdata[2].buffer = InvalidBuffer;
 				rdata[2].data = (char *) children;
 				rdata[2].len = nchildren * sizeof(TransactionId);
+				rdata[2].buffer = InvalidBuffer;
 				lastrdata = 2;
 			}
 			rdata[lastrdata].next = NULL;
@@ -1205,25 +1205,25 @@ RecordSubTransactionAbort(void)
 			xlrec.xtime = time(NULL);
 			xlrec.nrels = nrels;
 			xlrec.nsubxacts = nchildren;
-			rdata[0].buffer = InvalidBuffer;
 			rdata[0].data = (char *) (&xlrec);
 			rdata[0].len = MinSizeOfXactAbort;
+			rdata[0].buffer = InvalidBuffer;
 			/* dump rels to delete */
 			if (nrels > 0)
 			{
 				rdata[0].next = &(rdata[1]);
-				rdata[1].buffer = InvalidBuffer;
 				rdata[1].data = (char *) rptr;
 				rdata[1].len = nrels * sizeof(RelFileNode);
+				rdata[1].buffer = InvalidBuffer;
 				lastrdata = 1;
 			}
 			/* dump committed child Xids */
 			if (nchildren > 0)
 			{
 				rdata[lastrdata].next = &(rdata[2]);
-				rdata[2].buffer = InvalidBuffer;
 				rdata[2].data = (char *) children;
 				rdata[2].len = nchildren * sizeof(TransactionId);
+				rdata[2].buffer = InvalidBuffer;
 				lastrdata = 2;
 			}
 			rdata[lastrdata].next = NULL;

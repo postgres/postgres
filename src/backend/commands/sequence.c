@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.121 2005/06/06 17:01:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.122 2005/06/06 20:22:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,14 +264,14 @@ DefineSequence(CreateSeqStmt *seq)
 		newseq->log_cnt = 0;
 
 		xlrec.node = rel->rd_node;
-		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = sizeof(xl_seq_rec);
+		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
-		rdata[1].buffer = InvalidBuffer;
 		rdata[1].data = (char *) tuple->t_data;
 		rdata[1].len = tuple->t_len;
+		rdata[1].buffer = InvalidBuffer;
 		rdata[1].next = NULL;
 
 		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG | XLOG_NO_TRAN, rdata);
@@ -338,15 +338,15 @@ AlterSequence(AlterSeqStmt *stmt)
 		XLogRecData rdata[2];
 
 		xlrec.node = seqrel->rd_node;
-		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = sizeof(xl_seq_rec);
+		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
-		rdata[1].buffer = InvalidBuffer;
 		rdata[1].data = (char *) page + ((PageHeader) page)->pd_upper;
 		rdata[1].len = ((PageHeader) page)->pd_special -
 			((PageHeader) page)->pd_upper;
+		rdata[1].buffer = InvalidBuffer;
 		rdata[1].next = NULL;
 
 		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG | XLOG_NO_TRAN, rdata);
@@ -531,9 +531,9 @@ nextval(PG_FUNCTION_ARGS)
 		XLogRecData rdata[2];
 
 		xlrec.node = seqrel->rd_node;
-		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = sizeof(xl_seq_rec);
+		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
 		/* set values that will be saved in xlog */
@@ -541,10 +541,10 @@ nextval(PG_FUNCTION_ARGS)
 		seq->is_called = true;
 		seq->log_cnt = 0;
 
-		rdata[1].buffer = InvalidBuffer;
 		rdata[1].data = (char *) page + ((PageHeader) page)->pd_upper;
 		rdata[1].len = ((PageHeader) page)->pd_special -
 			((PageHeader) page)->pd_upper;
+		rdata[1].buffer = InvalidBuffer;
 		rdata[1].next = NULL;
 
 		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG | XLOG_NO_TRAN, rdata);
@@ -666,9 +666,9 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 		Page		page = BufferGetPage(buf);
 
 		xlrec.node = seqrel->rd_node;
-		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = sizeof(xl_seq_rec);
+		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
 		/* set values that will be saved in xlog */
@@ -676,10 +676,10 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 		seq->is_called = true;
 		seq->log_cnt = 0;
 
-		rdata[1].buffer = InvalidBuffer;
 		rdata[1].data = (char *) page + ((PageHeader) page)->pd_upper;
 		rdata[1].len = ((PageHeader) page)->pd_special -
 			((PageHeader) page)->pd_upper;
+		rdata[1].buffer = InvalidBuffer;
 		rdata[1].next = NULL;
 
 		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG | XLOG_NO_TRAN, rdata);

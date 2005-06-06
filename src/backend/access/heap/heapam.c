@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.192 2005/06/06 17:01:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.193 2005/06/06 20:22:56 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1107,9 +1107,9 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 
 		xlrec.target.node = relation->rd_node;
 		xlrec.target.tid = tup->t_self;
-		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfHeapInsert;
+		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
 		xlhdr.t_natts = tup->t_data->t_natts;
@@ -1121,15 +1121,17 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		 * decides to write the whole page to the xlog, we don't need to
 		 * store xl_heap_header in the xlog.
 		 */
-		rdata[1].buffer = buffer;
 		rdata[1].data = (char *) &xlhdr;
 		rdata[1].len = SizeOfHeapHeader;
+		rdata[1].buffer = buffer;
+		rdata[1].buffer_std = true;
 		rdata[1].next = &(rdata[2]);
 
-		rdata[2].buffer = buffer;
 		/* PG73FORMAT: write bitmap [+ padding] [+ oid] + data */
 		rdata[2].data = (char *) tup->t_data + offsetof(HeapTupleHeaderData, t_bits);
 		rdata[2].len = tup->t_len - offsetof(HeapTupleHeaderData, t_bits);
+		rdata[2].buffer = buffer;
+		rdata[2].buffer_std = true;
 		rdata[2].next = NULL;
 
 		/*
@@ -1378,14 +1380,15 @@ l1:
 
 		xlrec.target.node = relation->rd_node;
 		xlrec.target.tid = tp.t_self;
-		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfHeapDelete;
+		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
-		rdata[1].buffer = buffer;
 		rdata[1].data = NULL;
 		rdata[1].len = 0;
+		rdata[1].buffer = buffer;
+		rdata[1].buffer_std = true;
 		rdata[1].next = NULL;
 
 		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_DELETE, rdata);
@@ -2226,14 +2229,15 @@ l3:
 		xlrec.target.node = relation->rd_node;
 		xlrec.target.tid = tuple->t_self;
 		xlrec.shared_lock = (mode == LockTupleShared);
-		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfHeapLock;
+		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
-		rdata[1].buffer = *buffer;
 		rdata[1].data = NULL;
 		rdata[1].len = 0;
+		rdata[1].buffer = *buffer;
+		rdata[1].buffer_std = true;
 		rdata[1].next = NULL;
 
 		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_LOCK, rdata);
@@ -2330,9 +2334,9 @@ log_heap_clean(Relation reln, Buffer buffer, OffsetNumber *unused, int uncnt)
 	xlrec.node = reln->rd_node;
 	xlrec.block = BufferGetBlockNumber(buffer);
 
-	rdata[0].buffer = InvalidBuffer;
 	rdata[0].data = (char *) &xlrec;
 	rdata[0].len = SizeOfHeapClean;
+	rdata[0].buffer = InvalidBuffer;
 	rdata[0].next = &(rdata[1]);
 
 	/*
@@ -2340,7 +2344,6 @@ log_heap_clean(Relation reln, Buffer buffer, OffsetNumber *unused, int uncnt)
 	 * that it is.	When XLogInsert stores the whole buffer, the offsets
 	 * array need not be stored too.
 	 */
-	rdata[1].buffer = buffer;
 	if (uncnt > 0)
 	{
 		rdata[1].data = (char *) unused;
@@ -2351,6 +2354,8 @@ log_heap_clean(Relation reln, Buffer buffer, OffsetNumber *unused, int uncnt)
 		rdata[1].data = NULL;
 		rdata[1].len = 0;
 	}
+	rdata[1].buffer = buffer;
+	rdata[1].buffer_std = true;
 	rdata[1].next = NULL;
 
 	recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_CLEAN, rdata);
@@ -2388,14 +2393,15 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	xlrec.target.node = reln->rd_node;
 	xlrec.target.tid = from;
 	xlrec.newtid = newtup->t_self;
-	rdata[0].buffer = InvalidBuffer;
 	rdata[0].data = (char *) &xlrec;
 	rdata[0].len = SizeOfHeapUpdate;
+	rdata[0].buffer = InvalidBuffer;
 	rdata[0].next = &(rdata[1]);
 
-	rdata[1].buffer = oldbuf;
 	rdata[1].data = NULL;
 	rdata[1].len = 0;
+	rdata[1].buffer = oldbuf;
+	rdata[1].buffer_std = true;
 	rdata[1].next = &(rdata[2]);
 
 	xlhdr.hdr.t_natts = newtup->t_data->t_natts;
@@ -2420,15 +2426,17 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	 * As with insert records, we need not store the rdata[2] segment if
 	 * we decide to store the whole buffer instead.
 	 */
-	rdata[2].buffer = newbuf;
 	rdata[2].data = (char *) &xlhdr;
 	rdata[2].len = hsize;
+	rdata[2].buffer = newbuf;
+	rdata[2].buffer_std = true;
 	rdata[2].next = &(rdata[3]);
 
-	rdata[3].buffer = newbuf;
 	/* PG73FORMAT: write bitmap [+ padding] [+ oid] + data */
 	rdata[3].data = (char *) newtup->t_data + offsetof(HeapTupleHeaderData, t_bits);
 	rdata[3].len = newtup->t_len - offsetof(HeapTupleHeaderData, t_bits);
+	rdata[3].buffer = newbuf;
+	rdata[3].buffer_std = true;
 	rdata[3].next = NULL;
 
 	/* If new tuple is the single and first tuple on page... */

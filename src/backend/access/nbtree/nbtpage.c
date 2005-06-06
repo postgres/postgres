@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.85 2005/06/02 05:55:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.86 2005/06/06 20:22:57 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -74,9 +74,9 @@ _bt_metapinit(Relation rel)
 		xlrec.meta.fastroot = metad->btm_fastroot;
 		xlrec.meta.fastlevel = metad->btm_fastlevel;
 
-		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfBtreeNewmeta;
+		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = NULL;
 
 		recptr = XLogInsert(RM_BTREE_ID,
@@ -248,9 +248,9 @@ _bt_getroot(Relation rel, int access)
 			xlrec.rootblk = rootblkno;
 			xlrec.level = 0;
 
-			rdata.buffer = InvalidBuffer;
 			rdata.data = (char *) &xlrec;
 			rdata.len = SizeOfBtreeNewroot;
+			rdata.buffer = InvalidBuffer;
 			rdata.next = NULL;
 
 			recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT, &rdata);
@@ -666,9 +666,9 @@ _bt_delitems(Relation rel, Buffer buf,
 		xlrec.node = rel->rd_node;
 		xlrec.block = BufferGetBlockNumber(buf);
 
-		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfBtreeDelete;
+		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
 		/*
@@ -676,7 +676,6 @@ _bt_delitems(Relation rel, Buffer buf,
 		 * it is.  When XLogInsert stores the whole buffer, the offsets
 		 * array need not be stored too.
 		 */
-		rdata[1].buffer = buf;
 		if (nitems > 0)
 		{
 			rdata[1].data = (char *) itemnos;
@@ -687,6 +686,8 @@ _bt_delitems(Relation rel, Buffer buf,
 			rdata[1].data = NULL;
 			rdata[1].len = 0;
 		}
+		rdata[1].buffer = buf;
+		rdata[1].buffer_std = true;
 		rdata[1].next = NULL;
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE, rdata);
@@ -1038,9 +1039,9 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 		xlrec.leftblk = leftsib;
 		xlrec.rightblk = rightsib;
 
-		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfBtreeDeletePage;
+		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = nextrdata = &(rdata[1]);
 
 		if (BufferIsValid(metabuf))
@@ -1050,9 +1051,9 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 			xlmeta.fastroot = metad->btm_fastroot;
 			xlmeta.fastlevel = metad->btm_fastlevel;
 
-			nextrdata->buffer = InvalidBuffer;
 			nextrdata->data = (char *) &xlmeta;
 			nextrdata->len = sizeof(xl_btree_metadata);
+			nextrdata->buffer = InvalidBuffer;
 			nextrdata->next = nextrdata + 1;
 			nextrdata++;
 			xlinfo = XLOG_BTREE_DELETE_PAGE_META;
@@ -1060,24 +1061,27 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 		else
 			xlinfo = XLOG_BTREE_DELETE_PAGE;
 
-		nextrdata->buffer = pbuf;
 		nextrdata->data = NULL;
 		nextrdata->len = 0;
 		nextrdata->next = nextrdata + 1;
+		nextrdata->buffer = pbuf;
+		nextrdata->buffer_std = true;
 		nextrdata++;
 
-		nextrdata->buffer = rbuf;
 		nextrdata->data = NULL;
 		nextrdata->len = 0;
+		nextrdata->buffer = rbuf;
+		nextrdata->buffer_std = true;
 		nextrdata->next = NULL;
 
 		if (BufferIsValid(lbuf))
 		{
 			nextrdata->next = nextrdata + 1;
 			nextrdata++;
-			nextrdata->buffer = lbuf;
 			nextrdata->data = NULL;
 			nextrdata->len = 0;
+			nextrdata->buffer = lbuf;
+			nextrdata->buffer_std = true;
 			nextrdata->next = NULL;
 		}
 

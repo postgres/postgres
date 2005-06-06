@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.158 2005/06/06 17:01:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.159 2005/06/06 20:22:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -444,9 +444,9 @@ createdb(const CreatedbStmt *stmt)
 			xlrec.src_db_id = src_dboid;
 			xlrec.src_tablespace_id = srctablespace;
 
-			rdata[0].buffer = InvalidBuffer;
 			rdata[0].data = (char *) &xlrec;
 			rdata[0].len = sizeof(xl_dbase_create_rec);
+			rdata[0].buffer = InvalidBuffer;
 			rdata[0].next = NULL;
 
 			(void) XLogInsert(RM_DBASE_ID, XLOG_DBASE_CREATE, rdata);
@@ -1074,9 +1074,9 @@ remove_dbtablespaces(Oid db_id)
 			xlrec.db_id = db_id;
 			xlrec.tablespace_id = dsttablespace;
 
-			rdata[0].buffer = InvalidBuffer;
 			rdata[0].data = (char *) &xlrec;
 			rdata[0].len = sizeof(xl_dbase_drop_rec);
+			rdata[0].buffer = InvalidBuffer;
 			rdata[0].next = NULL;
 
 			(void) XLogInsert(RM_DBASE_ID, XLOG_DBASE_DROP, rdata);

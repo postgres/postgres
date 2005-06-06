@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.196 2005/06/06 17:01:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.197 2005/06/06 20:22:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -434,7 +434,8 @@ static void exitArchiveRecovery(TimeLineID endTLI,
 					uint32 endLogId, uint32 endLogSeg);
 static bool recoveryStopsHere(XLogRecord *record, bool *includeThis);
 
-static void SetBkpBlock(BkpBlock *bkpb, Buffer buffer);
+static bool XLogCheckBuffer(XLogRecData *rdata,
+							XLogRecPtr *lsn, BkpBlock *bkpb);
 static bool AdvanceXLInsertBuffer(void);
 static void XLogWrite(XLogwrtRqst WriteRqst);
 static int XLogFileInit(uint32 log, uint32 seg,
@@ -473,7 +474,7 @@ static void remove_backup_label(void);
 /*
  * Insert an XLOG record having the specified RMID and info bytes,
  * with the body of the record being the data chunk(s) described by
- * the rdata list (see xlog.h for notes about rdata).
+ * the rdata chain (see xlog.h for notes about rdata).
  *
  * Returns XLOG pointer to end of record (beginning of next record).
  * This can be used as LSN for data pages affected by the logged action.
@@ -532,7 +533,7 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 	}
 
 	/*
-	 * Here we scan the rdata list, determine which buffers must be backed
+	 * Here we scan the rdata chain, determine which buffers must be backed
 	 * up, and compute the CRC values for the data.  Note that the record
 	 * header isn't added into the CRC initially since we don't know the
 	 * final length or info bits quite yet.  Thus, the CRC will represent
@@ -543,13 +544,13 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 	 * below. We could prevent the race by doing all this work while
 	 * holding the insert lock, but it seems better to avoid doing CRC
 	 * calculations while holding the lock.  This means we have to be
-	 * careful about modifying the rdata list until we know we aren't
+	 * careful about modifying the rdata chain until we know we aren't
 	 * going to loop back again.  The only change we allow ourselves to
-	 * make earlier is to set rdt->data = NULL in list items we have
+	 * make earlier is to set rdt->data = NULL in chain items we have
 	 * decided we will have to back up the whole buffer for.  This is OK
 	 * because we will certainly decide the same thing again for those
 	 * items if we do it over; doing it here saves an extra pass over the
-	 * list later.
+	 * chain later.
 	 */
 begin:;
 	for (i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
@@ -575,7 +576,7 @@ begin:;
 			{
 				if (rdt->buffer == dtbuf[i])
 				{
-					/* Buffer already referenced by earlier list item */
+					/* Buffer already referenced by earlier chain item */
 					if (dtbuf_bkp[i])
 						rdt->data = NULL;
 					else if (rdt->data)
@@ -589,15 +590,9 @@ begin:;
 				{
 					/* OK, put it in this slot */
 					dtbuf[i] = rdt->buffer;
-
-					/*
-					 * XXX We assume page LSN is first data on page
-					 */
-					dtbuf_lsn[i] = *((XLogRecPtr *) BufferGetBlock(rdt->buffer));
-					if (XLByteLE(dtbuf_lsn[i], RedoRecPtr))
+					if (XLogCheckBuffer(rdt, &(dtbuf_lsn[i]), &(dtbuf_xlg[i])))
 					{
 						dtbuf_bkp[i] = true;
-						SetBkpBlock(&(dtbuf_xlg[i]), rdt->buffer);
 						rdt->data = NULL;
 					}
 					else if (rdt->data)
@@ -612,7 +607,7 @@ begin:;
 				elog(PANIC, "can backup at most %d blocks per xlog record",
 					 XLR_MAX_BKP_BLOCKS);
 		}
-		/* Break out of loop when rdt points to last list item */
+		/* Break out of loop when rdt points to last chain item */
 		if (rdt->next == NULL)
 			break;
 		rdt = rdt->next;
@@ -726,15 +721,15 @@ begin:;
 	}
 
 	/*
-	 * Make additional rdata list entries for the backup blocks, so that
+	 * Make additional rdata chain entries for the backup blocks, so that
 	 * we don't need to special-case them in the write loop.  Note that we
-	 * have now irrevocably changed the input rdata list.  At the exit of
+	 * have now irrevocably changed the input rdata chain.  At the exit of
 	 * this loop, write_len includes the backup block data.
 	 *
 	 * Also set the appropriate info bits to show which buffers were backed
 	 * up.	The i'th XLR_SET_BKP_BLOCK bit corresponds to the i'th
 	 * distinct buffer value (ignoring InvalidBuffer) appearing in the
-	 * rdata list.
+	 * rdata chain.
 	 */
 	write_len = len;
 	for (i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
@@ -742,7 +737,7 @@ begin:;
 		BkpBlock   *bkpb;
 		char	   *page;
 
-		if (dtbuf[i] == InvalidBuffer || !(dtbuf_bkp[i]))
+		if (!dtbuf_bkp[i])
 			continue;
 
 		info |= XLR_SET_BKP_BLOCK(i);
@@ -938,43 +933,64 @@ begin:;
 }
 
 /*
- * Fill a BkpBlock struct given a buffer containing the page to be saved
- *
- * This is nontrivial only because it has to decide whether to apply "hole
- * compression".
+ * Determine whether the buffer referenced by an XLogRecData item has to
+ * be backed up, and if so fill a BkpBlock struct for it.  In any case
+ * save the buffer's LSN at *lsn.
  */
-static void
-SetBkpBlock(BkpBlock *bkpb, Buffer buffer)
+static bool
+XLogCheckBuffer(XLogRecData *rdata,
+				XLogRecPtr *lsn, BkpBlock *bkpb)
 {
 	PageHeader	page;
-	uint16		offset;
-	uint16		length;
 
-	/* Save page identity info */
-	bkpb->node = BufferGetFileNode(buffer);
-	bkpb->block = BufferGetBlockNumber(buffer);
+	page = (PageHeader) BufferGetBlock(rdata->buffer);
 
-	/* Test whether there is a "hole" containing zeroes in the page */
-	page = (PageHeader) BufferGetBlock(buffer);
-	offset = page->pd_lower;
-	/* Check if pd_lower appears sane at all */
-	if (offset >= SizeOfPageHeaderData && offset < BLCKSZ)
+	/*
+	 * XXX We assume page LSN is first data on *every* page that can be
+	 * passed to XLogInsert, whether it otherwise has the standard page
+	 * layout or not.
+	 */
+	*lsn = page->pd_lsn;
+
+	if (XLByteLE(page->pd_lsn, RedoRecPtr))
 	{
-		char   *spd = (char *) page + offset;
-		char   *epd = (char *) page + BLCKSZ;
-		char   *pd = spd;
+		/*
+		 * The page needs to be backed up, so set up *bkpb
+		 */
+		bkpb->node = BufferGetFileNode(rdata->buffer);
+		bkpb->block = BufferGetBlockNumber(rdata->buffer);
 
-		while (pd < epd && *pd == '\0')
-			pd++;
+		if (rdata->buffer_std)
+		{
+			/* Assume we can omit data between pd_lower and pd_upper */
+			uint16		lower = page->pd_lower;
+			uint16		upper = page->pd_upper;
 
-		length = pd - spd;
-		if (length == 0)
-			offset = 0;
+			if (lower >= SizeOfPageHeaderData &&
+				upper > lower &&
+				upper <= BLCKSZ)
+			{
+				bkpb->hole_offset = lower;
+				bkpb->hole_length = upper - lower;
+			}
+			else
+			{
+				/* No "hole" to compress out */
+				bkpb->hole_offset = 0;
+				bkpb->hole_length = 0;
+			}
+		}
+		else
+		{
+			/* Not a standard page header, don't try to eliminate "hole" */
+			bkpb->hole_offset = 0;
+			bkpb->hole_length = 0;
+		}
+
+		return true;			/* buffer requires backup */
 	}
-	else
-		offset = length = 0;
-	bkpb->hole_offset = offset;
-	bkpb->hole_length = length;
+
+	return false;				/* buffer does not need to be backed up */
 }
 
 /*
@@ -5093,9 +5109,9 @@ CreateCheckPoint(bool shutdown, bool force)
 	/*
 	 * Now insert the checkpoint record into XLOG.
 	 */
-	rdata.buffer = InvalidBuffer;
 	rdata.data = (char *) (&checkPoint);
 	rdata.len = sizeof(checkPoint);
+	rdata.buffer = InvalidBuffer;
 	rdata.next = NULL;
 
 	recptr = XLogInsert(RM_XLOG_ID,
@@ -5197,9 +5213,9 @@ XLogPutNextOid(Oid nextOid)
 {
 	XLogRecData rdata;
 
-	rdata.buffer = InvalidBuffer;
 	rdata.data = (char *) (&nextOid);
 	rdata.len = sizeof(Oid);
+	rdata.buffer = InvalidBuffer;
 	rdata.next = NULL;
 	(void) XLogInsert(RM_XLOG_ID, XLOG_NEXTOID, &rdata);
 	/*
@@ -5220,9 +5236,9 @@ XLogPutNextMultiXactId(MultiXactId nextMulti)
 {
 	XLogRecData rdata;
 
-	rdata.buffer = InvalidBuffer;
 	rdata.data = (char *) (&nextMulti);
 	rdata.len = sizeof(MultiXactId);
+	rdata.buffer = InvalidBuffer;
 	rdata.next = NULL;
 	(void) XLogInsert(RM_XLOG_ID, XLOG_NEXTMULTI, &rdata);
 	/*

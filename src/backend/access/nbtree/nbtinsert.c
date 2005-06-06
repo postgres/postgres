@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.120 2005/03/21 01:23:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.121 2005/06/06 20:22:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -564,9 +564,9 @@ _bt_insertonpg(Relation rel,
 			xlrec.target.node = rel->rd_node;
 			ItemPointerSet(&(xlrec.target.tid), itup_blkno, itup_off);
 
-			rdata[0].buffer = InvalidBuffer;
 			rdata[0].data = (char *) &xlrec;
 			rdata[0].len = SizeOfBtreeInsert;
+			rdata[0].buffer = InvalidBuffer;
 			rdata[0].next = nextrdata = &(rdata[1]);
 
 			if (BufferIsValid(metabuf))
@@ -576,9 +576,9 @@ _bt_insertonpg(Relation rel,
 				xlmeta.fastroot = metad->btm_fastroot;
 				xlmeta.fastlevel = metad->btm_fastlevel;
 
-				nextrdata->buffer = InvalidBuffer;
 				nextrdata->data = (char *) &xlmeta;
 				nextrdata->len = sizeof(xl_btree_metadata);
+				nextrdata->buffer = InvalidBuffer;
 				nextrdata->next = nextrdata + 1;
 				nextrdata++;
 				xlinfo = XLOG_BTREE_INSERT_META;
@@ -603,6 +603,7 @@ _bt_insertonpg(Relation rel,
 					(sizeof(BTItemData) - sizeof(IndexTupleData));
 			}
 			nextrdata->buffer = buf;
+			nextrdata->buffer_std = true;
 			nextrdata->next = NULL;
 
 			recptr = XLogInsert(RM_BTREE_ID, xlinfo, rdata);
@@ -853,28 +854,29 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		xlrec.leftlen = ((PageHeader) leftpage)->pd_special -
 			((PageHeader) leftpage)->pd_upper;
 
-		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfBtreeSplit;
+		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
-		rdata[1].buffer = InvalidBuffer;
 		rdata[1].data = (char *) leftpage + ((PageHeader) leftpage)->pd_upper;
 		rdata[1].len = xlrec.leftlen;
+		rdata[1].buffer = InvalidBuffer;
 		rdata[1].next = &(rdata[2]);
 
-		rdata[2].buffer = InvalidBuffer;
 		rdata[2].data = (char *) rightpage + ((PageHeader) rightpage)->pd_upper;
 		rdata[2].len = ((PageHeader) rightpage)->pd_special -
 			((PageHeader) rightpage)->pd_upper;
+		rdata[2].buffer = InvalidBuffer;
 		rdata[2].next = NULL;
 
 		if (!P_RIGHTMOST(ropaque))
 		{
 			rdata[2].next = &(rdata[3]);
-			rdata[3].buffer = sbuf;
 			rdata[3].data = NULL;
 			rdata[3].len = 0;
+			rdata[3].buffer = sbuf;
+			rdata[3].buffer_std = true;
 			rdata[3].next = NULL;
 		}
 
@@ -1464,19 +1466,19 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		xlrec.rootblk = rootblknum;
 		xlrec.level = metad->btm_level;
 
-		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfBtreeNewroot;
+		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
 		/*
 		 * Direct access to page is not good but faster - we should
 		 * implement some new func in page API.
 		 */
-		rdata[1].buffer = InvalidBuffer;
 		rdata[1].data = (char *) rootpage + ((PageHeader) rootpage)->pd_upper;
 		rdata[1].len = ((PageHeader) rootpage)->pd_special -
 			((PageHeader) rootpage)->pd_upper;
+		rdata[1].buffer = InvalidBuffer;
 		rdata[1].next = NULL;
 
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT, rdata);

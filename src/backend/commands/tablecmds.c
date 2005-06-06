@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.160 2005/06/05 00:38:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.161 2005/06/06 20:22:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5667,14 +5667,14 @@ copy_relation_data(Relation rel, SMgrRelation dst)
 			xlrec.node = dst->smgr_rnode;
 			xlrec.blkno = blkno;
 
-			rdata[0].buffer = InvalidBuffer;
 			rdata[0].data = (char *) &xlrec;
 			rdata[0].len = SizeOfHeapNewpage;
+			rdata[0].buffer = InvalidBuffer;
 			rdata[0].next = &(rdata[1]);
 
-			rdata[1].buffer = InvalidBuffer;
 			rdata[1].data = (char *) page;
 			rdata[1].len = BLCKSZ;
+			rdata[1].buffer = InvalidBuffer;
 			rdata[1].next = NULL;
 
 			recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_NEWPAGE, rdata);
