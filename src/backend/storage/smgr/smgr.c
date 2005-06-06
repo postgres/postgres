@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.87 2005/05/29 04:23:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.88 2005/06/06 17:01:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -906,13 +906,6 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 	}
 	else
 		elog(PANIC, "smgr_redo: unknown op code %u", info);
-}
-
-void
-smgr_undo(XLogRecPtr lsn, XLogRecord *record)
-{
-	/* Since we have no transactional WAL entries, should never undo */
-	elog(PANIC, "smgr_undo: cannot undo");
 }
 
 void

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.202 2005/05/19 23:58:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.203 2005/06/06 17:01:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3841,17 +3841,6 @@ xact_redo(XLogRecPtr lsn, XLogRecord *record)
 		}
 	}
 	else
-		elog(PANIC, "xact_redo: unknown op code %u", info);
-}
-
-void
-xact_undo(XLogRecPtr lsn, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-
-	if (info == XLOG_XACT_COMMIT)		/* shouldn't be called by XLOG */
-		elog(PANIC, "xact_undo: can't undo committed xaction");
-	else if (info != XLOG_XACT_ABORT)
 		elog(PANIC, "xact_redo: unknown op code %u", info);
 }
 

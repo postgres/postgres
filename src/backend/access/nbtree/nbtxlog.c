@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.21 2005/06/02 05:55:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.22 2005/06/06 17:01:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ _bt_restore_meta(Relation reln, XLogRecPtr lsn,
 }
 
 static void
-btree_xlog_insert(bool redo, bool isleaf, bool ismeta,
+btree_xlog_insert(bool isleaf, bool ismeta,
 				  XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_btree_insert *xlrec = (xl_btree_insert *) XLogRecGetData(record);
@@ -170,70 +170,51 @@ btree_xlog_insert(bool redo, bool isleaf, bool ismeta,
 		datalen -= sizeof(xl_btree_metadata);
 	}
 
-	if (redo && (record->xl_info & XLR_BKP_BLOCK_1) && !ismeta &&
+	if ((record->xl_info & XLR_BKP_BLOCK_1) && !ismeta &&
 		incomplete_splits == NIL)
 		return;					/* nothing to do */
 
-	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->target.node);
+	reln = XLogOpenRelation(xlrec->target.node);
 	if (!RelationIsValid(reln))
 		return;
 
-	if (!redo || !(record->xl_info & XLR_BKP_BLOCK_1))
+	if (!(record->xl_info & XLR_BKP_BLOCK_1))
 	{
 		buffer = XLogReadBuffer(false, reln,
 						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 		if (!BufferIsValid(buffer))
-			elog(PANIC, "btree_insert_%sdo: block unfound", (redo) ? "re" : "un");
+			elog(PANIC, "btree_insert_redo: block unfound");
 		page = (Page) BufferGetPage(buffer);
 		if (PageIsNew((PageHeader) page))
-			elog(PANIC, "btree_insert_%sdo: uninitialized page", (redo) ? "re" : "un");
+			elog(PANIC, "btree_insert_redo: uninitialized page");
 		pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
-		if (redo)
+		if (XLByteLE(lsn, PageGetLSN(page)))
 		{
-			if (XLByteLE(lsn, PageGetLSN(page)))
-			{
-				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-				ReleaseBuffer(buffer);
-			}
-			else
-			{
-				if (PageAddItem(page, (Item) datapos, datalen,
-						ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
-								LP_USED) == InvalidOffsetNumber)
-					elog(PANIC, "btree_insert_redo: failed to add item");
-
-				PageSetLSN(page, lsn);
-				PageSetTLI(page, ThisTimeLineID);
-				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-				WriteBuffer(buffer);
-			}
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			ReleaseBuffer(buffer);
 		}
 		else
 		{
-			if (XLByteLT(PageGetLSN(page), lsn))
-				elog(PANIC, "btree_insert_undo: bad page LSN");
+			if (PageAddItem(page, (Item) datapos, datalen,
+							ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
+							LP_USED) == InvalidOffsetNumber)
+				elog(PANIC, "btree_insert_redo: failed to add item");
 
-			if (!P_ISLEAF(pageop))
-			{
-				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-				ReleaseBuffer(buffer);
-			}
-			else
-				elog(PANIC, "btree_insert_undo: unimplemented");
+			PageSetLSN(page, lsn);
+			PageSetTLI(page, ThisTimeLineID);
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			WriteBuffer(buffer);
 		}
 	}
 
-	if (redo)					/* metapage changes not undoable */
-	{
-		if (ismeta)
-			_bt_restore_meta(reln, lsn,
-							 md.root, md.level,
-							 md.fastroot, md.fastlevel);
-	}
+	if (ismeta)
+		_bt_restore_meta(reln, lsn,
+						 md.root, md.level,
+						 md.fastroot, md.fastlevel);
 
 	/* Forget any split this insertion completes */
-	if (redo && !isleaf && incomplete_splits != NIL)
+	if (!isleaf && incomplete_splits != NIL)
 	{
 		forget_matching_split(reln, xlrec->target.node,
 						 ItemPointerGetBlockNumber(&(xlrec->target.tid)),
@@ -243,7 +224,7 @@ btree_xlog_insert(bool redo, bool isleaf, bool ismeta,
 }
 
 static void
-btree_xlog_split(bool redo, bool onleft, bool isroot,
+btree_xlog_split(bool onleft, bool isroot,
 				 XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_btree_split *xlrec = (xl_btree_split *) XLogRecGetData(record);
@@ -254,9 +235,8 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 	Buffer		buffer;
 	Page		page;
 	BTPageOpaque pageop;
-	char	   *op = (redo) ? "redo" : "undo";
 
-	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->target.node);
+	reln = XLogOpenRelation(xlrec->target.node);
 	if (!RelationIsValid(reln))
 		return;
 
@@ -267,77 +247,51 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 	/* Left (original) sibling */
 	buffer = XLogReadBuffer(false, reln, leftsib);
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "btree_split_%s: lost left sibling", op);
+		elog(PANIC, "btree_split_redo: lost left sibling");
 
 	page = (Page) BufferGetPage(buffer);
-	if (redo)
-		_bt_pageinit(page, BufferGetPageSize(buffer));
-	else if (PageIsNew((PageHeader) page))
-		elog(PANIC, "btree_split_undo: uninitialized left sibling");
+	_bt_pageinit(page, BufferGetPageSize(buffer));
 	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
-	if (redo)
-	{
-		pageop->btpo_prev = xlrec->leftblk;
-		pageop->btpo_next = rightsib;
-		pageop->btpo.level = xlrec->level;
-		pageop->btpo_flags = (xlrec->level == 0) ? BTP_LEAF : 0;
+	pageop->btpo_prev = xlrec->leftblk;
+	pageop->btpo_next = rightsib;
+	pageop->btpo.level = xlrec->level;
+	pageop->btpo_flags = (xlrec->level == 0) ? BTP_LEAF : 0;
 
-		_bt_restore_page(page,
-						 (char *) xlrec + SizeOfBtreeSplit,
-						 xlrec->leftlen);
+	_bt_restore_page(page,
+					 (char *) xlrec + SizeOfBtreeSplit,
+					 xlrec->leftlen);
 
-		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buffer);
-	}
-	else
-	{
-		/* undo */
-		if (XLByteLT(PageGetLSN(page), lsn))
-			elog(PANIC, "btree_split_undo: bad left sibling LSN");
-		elog(PANIC, "btree_split_undo: unimplemented");
-	}
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 
 	/* Right (new) sibling */
-	buffer = XLogReadBuffer((redo) ? true : false, reln, rightsib);
+	buffer = XLogReadBuffer(true, reln, rightsib);
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "btree_split_%s: lost right sibling", op);
+		elog(PANIC, "btree_split_redo: lost right sibling");
 
 	page = (Page) BufferGetPage(buffer);
-	if (redo)
-		_bt_pageinit(page, BufferGetPageSize(buffer));
-	else if (PageIsNew((PageHeader) page))
-		elog(PANIC, "btree_split_undo: uninitialized right sibling");
+	_bt_pageinit(page, BufferGetPageSize(buffer));
 	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
-	if (redo)
-	{
-		pageop->btpo_prev = leftsib;
-		pageop->btpo_next = xlrec->rightblk;
-		pageop->btpo.level = xlrec->level;
-		pageop->btpo_flags = (xlrec->level == 0) ? BTP_LEAF : 0;
+	pageop->btpo_prev = leftsib;
+	pageop->btpo_next = xlrec->rightblk;
+	pageop->btpo.level = xlrec->level;
+	pageop->btpo_flags = (xlrec->level == 0) ? BTP_LEAF : 0;
 
-		_bt_restore_page(page,
-					  (char *) xlrec + SizeOfBtreeSplit + xlrec->leftlen,
+	_bt_restore_page(page,
+					 (char *) xlrec + SizeOfBtreeSplit + xlrec->leftlen,
 					 record->xl_len - SizeOfBtreeSplit - xlrec->leftlen);
 
-		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buffer);
-	}
-	else
-	{
-		/* undo */
-		if (XLByteLT(PageGetLSN(page), lsn))
-			elog(PANIC, "btree_split_undo: bad right sibling LSN");
-		elog(PANIC, "btree_split_undo: unimplemented");
-	}
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 
 	/* Fix left-link of right (next) page */
-	if (redo && !(record->xl_info & XLR_BKP_BLOCK_1))
+	if (!(record->xl_info & XLR_BKP_BLOCK_1))
 	{
 		if (xlrec->rightblk != P_NONE)
 		{
@@ -368,7 +322,7 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 	}
 
 	/* Forget any split this insertion completes */
-	if (redo && xlrec->level > 0 && incomplete_splits != NIL)
+	if (xlrec->level > 0 && incomplete_splits != NIL)
 	{
 		forget_matching_split(reln, xlrec->target.node,
 						 ItemPointerGetBlockNumber(&(xlrec->target.tid)),
@@ -382,18 +336,18 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 }
 
 static void
-btree_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
+btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_btree_delete *xlrec;
 	Relation	reln;
 	Buffer		buffer;
 	Page		page;
 
-	if (!redo || (record->xl_info & XLR_BKP_BLOCK_1))
+	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
 	xlrec = (xl_btree_delete *) XLogRecGetData(record);
-	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->node);
+	reln = XLogOpenRelation(xlrec->node);
 	if (!RelationIsValid(reln))
 		return;
 	buffer = XLogReadBuffer(false, reln, xlrec->block);
@@ -428,7 +382,7 @@ btree_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-btree_xlog_delete_page(bool redo, bool ismeta,
+btree_xlog_delete_page(bool ismeta,
 					   XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_btree_delete_page *xlrec = (xl_btree_delete_page *) XLogRecGetData(record);
@@ -440,9 +394,8 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 	Buffer		buffer;
 	Page		page;
 	BTPageOpaque pageop;
-	char	   *op = (redo) ? "redo" : "undo";
 
-	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->target.node);
+	reln = XLogOpenRelation(xlrec->target.node);
 	if (!RelationIsValid(reln))
 		return;
 
@@ -452,7 +405,7 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 	rightsib = xlrec->rightblk;
 
 	/* parent page */
-	if (redo && !(record->xl_info & XLR_BKP_BLOCK_1))
+	if (!(record->xl_info & XLR_BKP_BLOCK_1))
 	{
 		buffer = XLogReadBuffer(false, reln, parent);
 		if (!BufferIsValid(buffer))
@@ -498,7 +451,7 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 	}
 
 	/* Fix left-link of right sibling */
-	if (redo && !(record->xl_info & XLR_BKP_BLOCK_2))
+	if (!(record->xl_info & XLR_BKP_BLOCK_2))
 	{
 		buffer = XLogReadBuffer(false, reln, rightsib);
 		if (!BufferIsValid(buffer))
@@ -524,7 +477,7 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 	}
 
 	/* Fix right-link of left sibling, if any */
-	if (redo && !(record->xl_info & XLR_BKP_BLOCK_3))
+	if (!(record->xl_info & XLR_BKP_BLOCK_3))
 	{
 		if (leftsib != P_NONE)
 		{
@@ -555,52 +508,36 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 	/* Rewrite target page as empty deleted page */
 	buffer = XLogReadBuffer(false, reln, target);
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "btree_delete_page_%s: lost target page", op);
+		elog(PANIC, "btree_delete_page_redo: lost target page");
 	page = (Page) BufferGetPage(buffer);
-	if (redo)
-		_bt_pageinit(page, BufferGetPageSize(buffer));
-	else if (PageIsNew((PageHeader) page))
-		elog(PANIC, "btree_delete_page_undo: uninitialized target page");
+	_bt_pageinit(page, BufferGetPageSize(buffer));
 	pageop = (BTPageOpaque) PageGetSpecialPointer(page);
 
-	if (redo)
-	{
-		pageop->btpo_prev = leftsib;
-		pageop->btpo_next = rightsib;
-		pageop->btpo.xact = FrozenTransactionId;
-		pageop->btpo_flags = BTP_DELETED;
+	pageop->btpo_prev = leftsib;
+	pageop->btpo_next = rightsib;
+	pageop->btpo.xact = FrozenTransactionId;
+	pageop->btpo_flags = BTP_DELETED;
 
-		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buffer);
-	}
-	else
-	{
-		/* undo */
-		if (XLByteLT(PageGetLSN(page), lsn))
-			elog(PANIC, "btree_delete_page_undo: bad left sibling LSN");
-		elog(PANIC, "btree_delete_page_undo: unimplemented");
-	}
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 
 	/* Update metapage if needed */
-	if (redo)					/* metapage changes not undoable */
+	if (ismeta)
 	{
-		if (ismeta)
-		{
-			xl_btree_metadata md;
+		xl_btree_metadata md;
 
-			memcpy(&md, (char *) xlrec + SizeOfBtreeDeletePage,
-				   sizeof(xl_btree_metadata));
-			_bt_restore_meta(reln, lsn,
-							 md.root, md.level,
-							 md.fastroot, md.fastlevel);
-		}
+		memcpy(&md, (char *) xlrec + SizeOfBtreeDeletePage,
+			   sizeof(xl_btree_metadata));
+		_bt_restore_meta(reln, lsn,
+						 md.root, md.level,
+						 md.fastroot, md.fastlevel);
 	}
 }
 
 static void
-btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
+btree_xlog_newroot(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_btree_newroot *xlrec = (xl_btree_newroot *) XLogRecGetData(record);
 	Relation	reln;
@@ -608,10 +545,7 @@ btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	Page		page;
 	BTPageOpaque pageop;
 
-	if (!redo)
-		return;					/* not undoable */
-
-	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->node);
+	reln = XLogOpenRelation(xlrec->node);
 	if (!RelationIsValid(reln))
 		return;
 	buffer = XLogReadBuffer(true, reln, xlrec->rootblk);
@@ -654,15 +588,12 @@ btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-btree_xlog_newmeta(bool redo, XLogRecPtr lsn, XLogRecord *record)
+btree_xlog_newmeta(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_btree_newmeta *xlrec = (xl_btree_newmeta *) XLogRecGetData(record);
 	Relation	reln;
 
-	if (!redo)
-		return;					/* not undoable */
-
-	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->node);
+	reln = XLogOpenRelation(xlrec->node);
 	if (!RelationIsValid(reln))
 		return;
 
@@ -680,91 +611,43 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 	switch (info)
 	{
 		case XLOG_BTREE_INSERT_LEAF:
-			btree_xlog_insert(true, true, false, lsn, record);
+			btree_xlog_insert(true, false, lsn, record);
 			break;
 		case XLOG_BTREE_INSERT_UPPER:
-			btree_xlog_insert(true, false, false, lsn, record);
+			btree_xlog_insert(false, false, lsn, record);
 			break;
 		case XLOG_BTREE_INSERT_META:
-			btree_xlog_insert(true, false, true, lsn, record);
+			btree_xlog_insert(false, true, lsn, record);
 			break;
 		case XLOG_BTREE_SPLIT_L:
-			btree_xlog_split(true, true, false, lsn, record);
+			btree_xlog_split(true, false, lsn, record);
 			break;
 		case XLOG_BTREE_SPLIT_R:
-			btree_xlog_split(true, false, false, lsn, record);
+			btree_xlog_split(false, false, lsn, record);
 			break;
 		case XLOG_BTREE_SPLIT_L_ROOT:
-			btree_xlog_split(true, true, true, lsn, record);
+			btree_xlog_split(true, true, lsn, record);
 			break;
 		case XLOG_BTREE_SPLIT_R_ROOT:
-			btree_xlog_split(true, false, true, lsn, record);
+			btree_xlog_split(false, true, lsn, record);
 			break;
 		case XLOG_BTREE_DELETE:
-			btree_xlog_delete(true, lsn, record);
+			btree_xlog_delete(lsn, record);
 			break;
 		case XLOG_BTREE_DELETE_PAGE:
-			btree_xlog_delete_page(true, false, lsn, record);
+			btree_xlog_delete_page(false, lsn, record);
 			break;
 		case XLOG_BTREE_DELETE_PAGE_META:
-			btree_xlog_delete_page(true, true, lsn, record);
+			btree_xlog_delete_page(true, lsn, record);
 			break;
 		case XLOG_BTREE_NEWROOT:
-			btree_xlog_newroot(true, lsn, record);
+			btree_xlog_newroot(lsn, record);
 			break;
 		case XLOG_BTREE_NEWMETA:
-			btree_xlog_newmeta(true, lsn, record);
+			btree_xlog_newmeta(lsn, record);
 			break;
 		default:
 			elog(PANIC, "btree_redo: unknown op code %u", info);
-	}
-}
-
-void
-btree_undo(XLogRecPtr lsn, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-
-	switch (info)
-	{
-		case XLOG_BTREE_INSERT_LEAF:
-			btree_xlog_insert(false, true, false, lsn, record);
-			break;
-		case XLOG_BTREE_INSERT_UPPER:
-			btree_xlog_insert(false, false, false, lsn, record);
-			break;
-		case XLOG_BTREE_INSERT_META:
-			btree_xlog_insert(false, false, true, lsn, record);
-			break;
-		case XLOG_BTREE_SPLIT_L:
-			btree_xlog_split(false, true, false, lsn, record);
-			break;
-		case XLOG_BTREE_SPLIT_R:
-			btree_xlog_split(false, false, false, lsn, record);
-			break;
-		case XLOG_BTREE_SPLIT_L_ROOT:
-			btree_xlog_split(false, true, true, lsn, record);
-			break;
-		case XLOG_BTREE_SPLIT_R_ROOT:
-			btree_xlog_split(false, false, true, lsn, record);
-			break;
-		case XLOG_BTREE_DELETE:
-			btree_xlog_delete(false, lsn, record);
-			break;
-		case XLOG_BTREE_DELETE_PAGE:
-			btree_xlog_delete_page(false, false, lsn, record);
-			break;
-		case XLOG_BTREE_DELETE_PAGE_META:
-			btree_xlog_delete_page(false, true, lsn, record);
-			break;
-		case XLOG_BTREE_NEWROOT:
-			btree_xlog_newroot(false, lsn, record);
-			break;
-		case XLOG_BTREE_NEWMETA:
-			btree_xlog_newmeta(false, lsn, record);
-			break;
-		default:
-			elog(PANIC, "btree_undo: unknown op code %u", info);
 	}
 }
 
@@ -918,7 +801,7 @@ btree_xlog_cleanup(void)
 					rpageop;
 		bool		is_only;
 
-		reln = XLogOpenRelation(true, RM_BTREE_ID, split->node);
+		reln = XLogOpenRelation(split->node);
 		if (!RelationIsValid(reln))
 			continue;
 		lbuf = XLogReadBuffer(false, reln, split->leftblk);

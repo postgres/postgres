@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.117 2005/05/17 03:34:18 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.118 2005/06/06 17:01:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1730,12 +1730,6 @@ void
 gist_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	elog(PANIC, "gist_redo: unimplemented");
-}
-
-void
-gist_undo(XLogRecPtr lsn, XLogRecord *record)
-{
-	elog(PANIC, "gist_undo: unimplemented");
 }
 
 void

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.89 2005/05/11 06:24:54 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtree.c,v 1.90 2005/06/06 17:01:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1301,12 +1301,6 @@ void
 rtree_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	elog(PANIC, "rtree_redo: unimplemented");
-}
-
-void
-rtree_undo(XLogRecPtr lsn, XLogRecord *record)
-{
-	elog(PANIC, "rtree_undo: unimplemented");
 }
 
 void

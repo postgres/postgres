@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/sequence.h,v 1.30 2004/12/31 22:03:28 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/commands/sequence.h,v 1.31 2005/06/06 17:01:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,7 +89,6 @@ extern void DefineSequence(CreateSeqStmt *stmt);
 extern void AlterSequence(AlterSeqStmt *stmt);
 
 extern void seq_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void seq_undo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void seq_desc(char *buf, uint8 xl_info, char *rec);
 
 /* Set the upper and lower bounds of a sequence */

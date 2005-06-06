@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.195 2005/06/02 05:55:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.196 2005/06/06 17:01:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2372,7 +2372,7 @@ RestoreBkpBlocks(XLogRecord *record, XLogRecPtr lsn)
 		memcpy(&bkpb, blk, sizeof(BkpBlock));
 		blk += sizeof(BkpBlock);
 
-		reln = XLogOpenRelation(true, record->xl_rmid, bkpb.node);
+		reln = XLogOpenRelation(bkpb.node);
 
 		if (reln)
 		{
@@ -5306,11 +5306,6 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 					(errmsg("unexpected timeline ID %u (should be %u) in checkpoint record",
 							checkPoint.ThisTimeLineID, ThisTimeLineID)));
 	}
-}
-
-void
-xlog_undo(XLogRecPtr lsn, XLogRecord *record)
-{
 }
 
 void

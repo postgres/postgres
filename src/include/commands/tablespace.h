@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/tablespace.h,v 1.8 2004/12/31 22:03:28 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/commands/tablespace.h,v 1.9 2005/06/06 17:01:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,6 @@ extern char *get_tablespace_name(Oid spc_oid);
 extern bool directory_is_empty(const char *path);
 
 extern void tblspc_redo(XLogRecPtr lsn, XLogRecord *rptr);
-extern void tblspc_undo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void tblspc_desc(char *buf, uint8 xl_info, char *rec);
 
 #endif   /* TABLESPACE_H */

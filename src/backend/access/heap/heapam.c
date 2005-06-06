@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.191 2005/05/19 21:35:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.192 2005/06/06 17:01:22 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2452,17 +2452,17 @@ log_heap_move(Relation reln, Buffer oldbuf, ItemPointerData from,
 }
 
 static void
-heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
+heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_clean *xlrec = (xl_heap_clean *) XLogRecGetData(record);
 	Relation	reln;
 	Buffer		buffer;
 	Page		page;
 
-	if (!redo || (record->xl_info & XLR_BKP_BLOCK_1))
+	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
-	reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->node);
+	reln = XLogOpenRelation(xlrec->node);
 	if (!RelationIsValid(reln))
 		return;
 
@@ -2507,7 +2507,7 @@ heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-heap_xlog_newpage(bool redo, XLogRecPtr lsn, XLogRecord *record)
+heap_xlog_newpage(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_newpage *xlrec = (xl_heap_newpage *) XLogRecGetData(record);
 	Relation	reln;
@@ -2519,10 +2519,10 @@ heap_xlog_newpage(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	 * do not do anything that assumes we are touching a heap.
 	 */
 
-	if (!redo || (record->xl_info & XLR_BKP_BLOCK_1))
+	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
-	reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->node);
+	reln = XLogOpenRelation(xlrec->node);
 	if (!RelationIsValid(reln))
 		return;
 	buffer = XLogReadBuffer(true, reln, xlrec->blkno);
@@ -2540,7 +2540,7 @@ heap_xlog_newpage(bool redo, XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
-heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
+heap_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_delete *xlrec = (xl_heap_delete *) XLogRecGetData(record);
 	Relation	reln;
@@ -2550,10 +2550,10 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	ItemId		lp = NULL;
 	HeapTupleHeader htup;
 
-	if (redo && (record->xl_info & XLR_BKP_BLOCK_1))
+	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
-	reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->target.node);
+	reln = XLogOpenRelation(xlrec->target.node);
 
 	if (!RelationIsValid(reln))
 		return;
@@ -2561,153 +2561,129 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	buffer = XLogReadBuffer(false, reln,
 						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "heap_delete_%sdo: no block", (redo) ? "re" : "un");
+		elog(PANIC, "heap_delete_redo: no block");
 
 	page = (Page) BufferGetPage(buffer);
 	if (PageIsNew((PageHeader) page))
-		elog(PANIC, "heap_delete_%sdo: uninitialized page", (redo) ? "re" : "un");
+		elog(PANIC, "heap_delete_redo: uninitialized page");
 
-	if (redo)
+	if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 	{
-		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
-		{
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
-			return;
-		}
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(buffer);
+		return;
 	}
-	else if (XLByteLT(PageGetLSN(page), lsn))	/* changes are not applied
-												 * ?! */
-		elog(PANIC, "heap_delete_undo: bad page LSN");
 
 	offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
 	if (PageGetMaxOffsetNumber(page) >= offnum)
 		lp = PageGetItemId(page, offnum);
 
 	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsUsed(lp))
-		elog(PANIC, "heap_delete_%sdo: invalid lp", (redo) ? "re" : "un");
+		elog(PANIC, "heap_delete_redo: invalid lp");
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
-	if (redo)
-	{
-		htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
-							  HEAP_XMAX_INVALID |
-							  HEAP_XMAX_IS_MULTI |
-							  HEAP_IS_LOCKED |
-							  HEAP_MOVED);
-		HeapTupleHeaderSetXmax(htup, record->xl_xid);
-		HeapTupleHeaderSetCmax(htup, FirstCommandId);
-		/* Make sure there is no forward chain link in t_ctid */
-		htup->t_ctid = xlrec->target.tid;
-		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buffer);
-		return;
-	}
-
-	elog(PANIC, "heap_delete_undo: unimplemented");
+	htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
+						  HEAP_XMAX_INVALID |
+						  HEAP_XMAX_IS_MULTI |
+						  HEAP_IS_LOCKED |
+						  HEAP_MOVED);
+	HeapTupleHeaderSetXmax(htup, record->xl_xid);
+	HeapTupleHeaderSetCmax(htup, FirstCommandId);
+	/* Make sure there is no forward chain link in t_ctid */
+	htup->t_ctid = xlrec->target.tid;
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 }
 
 static void
-heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
+heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_insert *xlrec = (xl_heap_insert *) XLogRecGetData(record);
 	Relation	reln;
 	Buffer		buffer;
 	Page		page;
 	OffsetNumber offnum;
+	struct
+	{
+		HeapTupleHeaderData hdr;
+		char	data[MaxTupleSize];
+	}			tbuf;
+	HeapTupleHeader htup;
+	xl_heap_header xlhdr;
+	uint32		newlen;
 
-	if (redo && (record->xl_info & XLR_BKP_BLOCK_1))
+	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
-	reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->target.node);
+	reln = XLogOpenRelation(xlrec->target.node);
 
 	if (!RelationIsValid(reln))
 		return;
 
-	buffer = XLogReadBuffer((redo) ? true : false, reln,
+	buffer = XLogReadBuffer(true, reln,
 						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	if (!BufferIsValid(buffer))
 		return;
 
 	page = (Page) BufferGetPage(buffer);
 	if (PageIsNew((PageHeader) page) &&
-		(!redo || !(record->xl_info & XLOG_HEAP_INIT_PAGE)))
-		elog(PANIC, "heap_insert_%sdo: uninitialized page", (redo) ? "re" : "un");
+		!(record->xl_info & XLOG_HEAP_INIT_PAGE))
+		elog(PANIC, "heap_insert_redo: uninitialized page");
 
-	if (redo)
+	if (record->xl_info & XLOG_HEAP_INIT_PAGE)
+		PageInit(page, BufferGetPageSize(buffer), 0);
+
+	if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 	{
-		struct
-		{
-			HeapTupleHeaderData hdr;
-			char		data[MaxTupleSize];
-		}			tbuf;
-		HeapTupleHeader htup;
-		xl_heap_header xlhdr;
-		uint32		newlen;
-
-		if (record->xl_info & XLOG_HEAP_INIT_PAGE)
-			PageInit(page, BufferGetPageSize(buffer), 0);
-
-		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
-		{
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
-			return;
-		}
-
-		offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
-		if (PageGetMaxOffsetNumber(page) + 1 < offnum)
-			elog(PANIC, "heap_insert_redo: invalid max offset number");
-
-		newlen = record->xl_len - SizeOfHeapInsert - SizeOfHeapHeader;
-		Assert(newlen <= MaxTupleSize);
-		memcpy((char *) &xlhdr,
-			   (char *) xlrec + SizeOfHeapInsert,
-			   SizeOfHeapHeader);
-		htup = &tbuf.hdr;
-		MemSet((char *) htup, 0, sizeof(HeapTupleHeaderData));
-		/* PG73FORMAT: get bitmap [+ padding] [+ oid] + data */
-		memcpy((char *) htup + offsetof(HeapTupleHeaderData, t_bits),
-			   (char *) xlrec + SizeOfHeapInsert + SizeOfHeapHeader,
-			   newlen);
-		newlen += offsetof(HeapTupleHeaderData, t_bits);
-		htup->t_natts = xlhdr.t_natts;
-		htup->t_infomask = xlhdr.t_infomask;
-		htup->t_hoff = xlhdr.t_hoff;
-		HeapTupleHeaderSetXmin(htup, record->xl_xid);
-		HeapTupleHeaderSetCmin(htup, FirstCommandId);
-		htup->t_ctid = xlrec->target.tid;
-
-		offnum = PageAddItem(page, (Item) htup, newlen, offnum,
-							 LP_USED | OverwritePageMode);
-		if (offnum == InvalidOffsetNumber)
-			elog(PANIC, "heap_insert_redo: failed to add tuple");
-		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buffer);
+		ReleaseBuffer(buffer);
 		return;
 	}
 
-	/* undo insert */
-	if (XLByteLT(PageGetLSN(page), lsn))		/* changes are not applied
-												 * ?! */
-		elog(PANIC, "heap_insert_undo: bad page LSN");
+	offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
+	if (PageGetMaxOffsetNumber(page) + 1 < offnum)
+		elog(PANIC, "heap_insert_redo: invalid max offset number");
 
-	elog(PANIC, "heap_insert_undo: unimplemented");
+	newlen = record->xl_len - SizeOfHeapInsert - SizeOfHeapHeader;
+	Assert(newlen <= MaxTupleSize);
+	memcpy((char *) &xlhdr,
+		   (char *) xlrec + SizeOfHeapInsert,
+		   SizeOfHeapHeader);
+	htup = &tbuf.hdr;
+	MemSet((char *) htup, 0, sizeof(HeapTupleHeaderData));
+	/* PG73FORMAT: get bitmap [+ padding] [+ oid] + data */
+	memcpy((char *) htup + offsetof(HeapTupleHeaderData, t_bits),
+		   (char *) xlrec + SizeOfHeapInsert + SizeOfHeapHeader,
+		   newlen);
+	newlen += offsetof(HeapTupleHeaderData, t_bits);
+	htup->t_natts = xlhdr.t_natts;
+	htup->t_infomask = xlhdr.t_infomask;
+	htup->t_hoff = xlhdr.t_hoff;
+	HeapTupleHeaderSetXmin(htup, record->xl_xid);
+	HeapTupleHeaderSetCmin(htup, FirstCommandId);
+	htup->t_ctid = xlrec->target.tid;
+
+	offnum = PageAddItem(page, (Item) htup, newlen, offnum,
+						 LP_USED | OverwritePageMode);
+	if (offnum == InvalidOffsetNumber)
+		elog(PANIC, "heap_insert_redo: failed to add tuple");
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 }
 
 /*
  * Handles UPDATE & MOVE
  */
 static void
-heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
+heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move)
 {
 	xl_heap_update *xlrec = (xl_heap_update *) XLogRecGetData(record);
-	Relation	reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->target.node);
+	Relation	reln = XLogOpenRelation(xlrec->target.node);
 	Buffer		buffer;
 	bool		samepage =
 	(ItemPointerGetBlockNumber(&(xlrec->newtid)) ==
@@ -2716,11 +2692,19 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 	OffsetNumber offnum;
 	ItemId		lp = NULL;
 	HeapTupleHeader htup;
+	struct
+	{
+		HeapTupleHeaderData hdr;
+		char	data[MaxTupleSize];
+	}			tbuf;
+	xl_heap_header xlhdr;
+	int			hsize;
+	uint32		newlen;
 
 	if (!RelationIsValid(reln))
 		return;
 
-	if (redo && (record->xl_info & XLR_BKP_BLOCK_1))
+	if (record->xl_info & XLR_BKP_BLOCK_1)
 		goto newt;
 
 	/* Deal with old tuple version */
@@ -2728,81 +2712,68 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 	buffer = XLogReadBuffer(false, reln,
 						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "heap_update_%sdo: no block", (redo) ? "re" : "un");
+		elog(PANIC, "heap_update_redo: no block");
 
 	page = (Page) BufferGetPage(buffer);
 	if (PageIsNew((PageHeader) page))
-		elog(PANIC, "heap_update_%sdo: uninitialized old page", (redo) ? "re" : "un");
+		elog(PANIC, "heap_update_redo: uninitialized old page");
 
-	if (redo)
+	if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 	{
-		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
-		{
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
-			if (samepage)
-				return;
-			goto newt;
-		}
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(buffer);
+		if (samepage)
+			return;
+		goto newt;
 	}
-	else if (XLByteLT(PageGetLSN(page), lsn))	/* changes are not applied
-												 * ?! */
-		elog(PANIC, "heap_update_undo: bad old tuple page LSN");
 
 	offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
 	if (PageGetMaxOffsetNumber(page) >= offnum)
 		lp = PageGetItemId(page, offnum);
 
 	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsUsed(lp))
-		elog(PANIC, "heap_update_%sdo: invalid lp", (redo) ? "re" : "un");
+		elog(PANIC, "heap_update_redo: invalid lp");
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
-	if (redo)
+	if (move)
 	{
-		if (move)
-		{
-			htup->t_infomask &= ~(HEAP_XMIN_COMMITTED |
-								  HEAP_XMIN_INVALID |
-								  HEAP_MOVED_IN);
-			htup->t_infomask |= HEAP_MOVED_OFF;
-			HeapTupleHeaderSetXvac(htup, record->xl_xid);
-			/* Make sure there is no forward chain link in t_ctid */
-			htup->t_ctid = xlrec->target.tid;
-		}
-		else
-		{
-			htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
-								  HEAP_XMAX_INVALID |
-								  HEAP_XMAX_IS_MULTI |
-								  HEAP_IS_LOCKED |
-								  HEAP_MOVED);
-			HeapTupleHeaderSetXmax(htup, record->xl_xid);
-			HeapTupleHeaderSetCmax(htup, FirstCommandId);
-			/* Set forward chain link in t_ctid */
-			htup->t_ctid = xlrec->newtid;
-		}
-		if (samepage)
-			goto newsame;
-		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buffer);
-		goto newt;
+		htup->t_infomask &= ~(HEAP_XMIN_COMMITTED |
+							  HEAP_XMIN_INVALID |
+							  HEAP_MOVED_IN);
+		htup->t_infomask |= HEAP_MOVED_OFF;
+		HeapTupleHeaderSetXvac(htup, record->xl_xid);
+		/* Make sure there is no forward chain link in t_ctid */
+		htup->t_ctid = xlrec->target.tid;
 	}
-
-	elog(PANIC, "heap_update_undo: unimplemented");
+	else
+	{
+		htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
+							  HEAP_XMAX_INVALID |
+							  HEAP_XMAX_IS_MULTI |
+							  HEAP_IS_LOCKED |
+							  HEAP_MOVED);
+		HeapTupleHeaderSetXmax(htup, record->xl_xid);
+		HeapTupleHeaderSetCmax(htup, FirstCommandId);
+		/* Set forward chain link in t_ctid */
+		htup->t_ctid = xlrec->newtid;
+	}
+	if (samepage)
+		goto newsame;
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 
 	/* Deal with new tuple */
 
 newt:;
 
-	if (redo &&
-		((record->xl_info & XLR_BKP_BLOCK_2) ||
-		 ((record->xl_info & XLR_BKP_BLOCK_1) && samepage)))
+	if ((record->xl_info & XLR_BKP_BLOCK_2) ||
+		((record->xl_info & XLR_BKP_BLOCK_1) && samepage))
 		return;
 
-	buffer = XLogReadBuffer((redo) ? true : false, reln,
+	buffer = XLogReadBuffer(true, reln,
 							ItemPointerGetBlockNumber(&(xlrec->newtid)));
 	if (!BufferIsValid(buffer))
 		return;
@@ -2811,94 +2782,74 @@ newt:;
 
 newsame:;
 	if (PageIsNew((PageHeader) page) &&
-		(!redo || !(record->xl_info & XLOG_HEAP_INIT_PAGE)))
-		elog(PANIC, "heap_update_%sdo: uninitialized page", (redo) ? "re" : "un");
+		!(record->xl_info & XLOG_HEAP_INIT_PAGE))
+		elog(PANIC, "heap_update_redo: uninitialized page");
 
-	if (redo)
+	if (record->xl_info & XLOG_HEAP_INIT_PAGE)
+		PageInit(page, BufferGetPageSize(buffer), 0);
+
+	if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 	{
-		struct
-		{
-			HeapTupleHeaderData hdr;
-			char		data[MaxTupleSize];
-		}			tbuf;
-		xl_heap_header xlhdr;
-		int			hsize;
-		uint32		newlen;
-
-		if (record->xl_info & XLOG_HEAP_INIT_PAGE)
-			PageInit(page, BufferGetPageSize(buffer), 0);
-
-		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
-		{
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
-			return;
-		}
-
-		offnum = ItemPointerGetOffsetNumber(&(xlrec->newtid));
-		if (PageGetMaxOffsetNumber(page) + 1 < offnum)
-			elog(PANIC, "heap_update_redo: invalid max offset number");
-
-		hsize = SizeOfHeapUpdate + SizeOfHeapHeader;
-		if (move)
-			hsize += (2 * sizeof(TransactionId));
-
-		newlen = record->xl_len - hsize;
-		Assert(newlen <= MaxTupleSize);
-		memcpy((char *) &xlhdr,
-			   (char *) xlrec + SizeOfHeapUpdate,
-			   SizeOfHeapHeader);
-		htup = &tbuf.hdr;
-		MemSet((char *) htup, 0, sizeof(HeapTupleHeaderData));
-		/* PG73FORMAT: get bitmap [+ padding] [+ oid] + data */
-		memcpy((char *) htup + offsetof(HeapTupleHeaderData, t_bits),
-			   (char *) xlrec + hsize,
-			   newlen);
-		newlen += offsetof(HeapTupleHeaderData, t_bits);
-		htup->t_natts = xlhdr.t_natts;
-		htup->t_infomask = xlhdr.t_infomask;
-		htup->t_hoff = xlhdr.t_hoff;
-
-		if (move)
-		{
-			TransactionId xid[2];		/* xmax, xmin */
-
-			memcpy((char *) xid,
-				   (char *) xlrec + SizeOfHeapUpdate + SizeOfHeapHeader,
-				   2 * sizeof(TransactionId));
-			HeapTupleHeaderSetXmin(htup, xid[1]);
-			HeapTupleHeaderSetXmax(htup, xid[0]);
-			HeapTupleHeaderSetXvac(htup, record->xl_xid);
-		}
-		else
-		{
-			HeapTupleHeaderSetXmin(htup, record->xl_xid);
-			HeapTupleHeaderSetCmin(htup, FirstCommandId);
-		}
-		/* Make sure there is no forward chain link in t_ctid */
-		htup->t_ctid = xlrec->newtid;
-
-		offnum = PageAddItem(page, (Item) htup, newlen, offnum,
-							 LP_USED | OverwritePageMode);
-		if (offnum == InvalidOffsetNumber)
-			elog(PANIC, "heap_update_redo: failed to add tuple");
-		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buffer);
+		ReleaseBuffer(buffer);
 		return;
 	}
 
-	/* undo */
-	if (XLByteLT(PageGetLSN(page), lsn))		/* changes not applied?! */
-		elog(PANIC, "heap_update_undo: bad new tuple page LSN");
+	offnum = ItemPointerGetOffsetNumber(&(xlrec->newtid));
+	if (PageGetMaxOffsetNumber(page) + 1 < offnum)
+		elog(PANIC, "heap_update_redo: invalid max offset number");
 
-	elog(PANIC, "heap_update_undo: unimplemented");
+	hsize = SizeOfHeapUpdate + SizeOfHeapHeader;
+	if (move)
+		hsize += (2 * sizeof(TransactionId));
 
+	newlen = record->xl_len - hsize;
+	Assert(newlen <= MaxTupleSize);
+	memcpy((char *) &xlhdr,
+		   (char *) xlrec + SizeOfHeapUpdate,
+		   SizeOfHeapHeader);
+	htup = &tbuf.hdr;
+	MemSet((char *) htup, 0, sizeof(HeapTupleHeaderData));
+	/* PG73FORMAT: get bitmap [+ padding] [+ oid] + data */
+	memcpy((char *) htup + offsetof(HeapTupleHeaderData, t_bits),
+		   (char *) xlrec + hsize,
+		   newlen);
+	newlen += offsetof(HeapTupleHeaderData, t_bits);
+	htup->t_natts = xlhdr.t_natts;
+	htup->t_infomask = xlhdr.t_infomask;
+	htup->t_hoff = xlhdr.t_hoff;
+
+	if (move)
+	{
+		TransactionId xid[2];		/* xmax, xmin */
+
+		memcpy((char *) xid,
+			   (char *) xlrec + SizeOfHeapUpdate + SizeOfHeapHeader,
+			   2 * sizeof(TransactionId));
+		HeapTupleHeaderSetXmin(htup, xid[1]);
+		HeapTupleHeaderSetXmax(htup, xid[0]);
+		HeapTupleHeaderSetXvac(htup, record->xl_xid);
+	}
+	else
+	{
+		HeapTupleHeaderSetXmin(htup, record->xl_xid);
+		HeapTupleHeaderSetCmin(htup, FirstCommandId);
+	}
+	/* Make sure there is no forward chain link in t_ctid */
+	htup->t_ctid = xlrec->newtid;
+
+	offnum = PageAddItem(page, (Item) htup, newlen, offnum,
+						 LP_USED | OverwritePageMode);
+	if (offnum == InvalidOffsetNumber)
+		elog(PANIC, "heap_update_redo: failed to add tuple");
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 }
 
 static void
-heap_xlog_lock(bool redo, XLogRecPtr lsn, XLogRecord *record)
+heap_xlog_lock(XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_lock *xlrec = (xl_heap_lock *) XLogRecGetData(record);
 	Relation	reln;
@@ -2908,10 +2859,10 @@ heap_xlog_lock(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	ItemId		lp = NULL;
 	HeapTupleHeader htup;
 
-	if (redo && (record->xl_info & XLR_BKP_BLOCK_1))
+	if (record->xl_info & XLR_BKP_BLOCK_1)
 		return;
 
-	reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->target.node);
+	reln = XLogOpenRelation(xlrec->target.node);
 
 	if (!RelationIsValid(reln))
 		return;
@@ -2919,58 +2870,46 @@ heap_xlog_lock(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	buffer = XLogReadBuffer(false, reln,
 						ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	if (!BufferIsValid(buffer))
-		elog(PANIC, "heap_lock_%sdo: no block", (redo) ? "re" : "un");
+		elog(PANIC, "heap_lock_redo: no block");
 
 	page = (Page) BufferGetPage(buffer);
 	if (PageIsNew((PageHeader) page))
-		elog(PANIC, "heap_lock_%sdo: uninitialized page", (redo) ? "re" : "un");
+		elog(PANIC, "heap_lock_redo: uninitialized page");
 
-	if (redo)
+	if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 	{
-		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
-		{
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
-			return;
-		}
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(buffer);
+		return;
 	}
-	else if (XLByteLT(PageGetLSN(page), lsn))	/* changes are not applied
-												 * ?! */
-		elog(PANIC, "heap_lock_undo: bad page LSN");
 
 	offnum = ItemPointerGetOffsetNumber(&(xlrec->target.tid));
 	if (PageGetMaxOffsetNumber(page) >= offnum)
 		lp = PageGetItemId(page, offnum);
 
 	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsUsed(lp))
-		elog(PANIC, "heap_lock_%sdo: invalid lp", (redo) ? "re" : "un");
+		elog(PANIC, "heap_lock_redo: invalid lp");
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
-	if (redo)
-	{
-		/*
-		 * Presently, we don't bother to restore the locked state, but
-		 * just set the XMAX_INVALID bit.
-		 */
-		htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
-							  HEAP_XMAX_INVALID |
-							  HEAP_XMAX_IS_MULTI |
-							  HEAP_IS_LOCKED |
-							  HEAP_MOVED);
-		htup->t_infomask |= HEAP_XMAX_INVALID;
-		HeapTupleHeaderSetXmax(htup, record->xl_xid);
-		HeapTupleHeaderSetCmax(htup, FirstCommandId);
-		/* Make sure there is no forward chain link in t_ctid */
-		htup->t_ctid = xlrec->target.tid;
-		PageSetLSN(page, lsn);
-		PageSetTLI(page, ThisTimeLineID);
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		WriteBuffer(buffer);
-		return;
-	}
-
-	elog(PANIC, "heap_lock_undo: unimplemented");
+	/*
+	 * Presently, we don't bother to restore the locked state, but
+	 * just set the XMAX_INVALID bit.
+	 */
+	htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
+						  HEAP_XMAX_INVALID |
+						  HEAP_XMAX_IS_MULTI |
+						  HEAP_IS_LOCKED |
+						  HEAP_MOVED);
+	htup->t_infomask |= HEAP_XMAX_INVALID;
+	HeapTupleHeaderSetXmax(htup, record->xl_xid);
+	HeapTupleHeaderSetCmax(htup, FirstCommandId);
+	/* Make sure there is no forward chain link in t_ctid */
+	htup->t_ctid = xlrec->target.tid;
+	PageSetLSN(page, lsn);
+	PageSetTLI(page, ThisTimeLineID);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 }
 
 void
@@ -2980,45 +2919,21 @@ heap_redo(XLogRecPtr lsn, XLogRecord *record)
 
 	info &= XLOG_HEAP_OPMASK;
 	if (info == XLOG_HEAP_INSERT)
-		heap_xlog_insert(true, lsn, record);
+		heap_xlog_insert(lsn, record);
 	else if (info == XLOG_HEAP_DELETE)
-		heap_xlog_delete(true, lsn, record);
+		heap_xlog_delete(lsn, record);
 	else if (info == XLOG_HEAP_UPDATE)
-		heap_xlog_update(true, lsn, record, false);
+		heap_xlog_update(lsn, record, false);
 	else if (info == XLOG_HEAP_MOVE)
-		heap_xlog_update(true, lsn, record, true);
+		heap_xlog_update(lsn, record, true);
 	else if (info == XLOG_HEAP_CLEAN)
-		heap_xlog_clean(true, lsn, record);
+		heap_xlog_clean(lsn, record);
 	else if (info == XLOG_HEAP_NEWPAGE)
-		heap_xlog_newpage(true, lsn, record);
+		heap_xlog_newpage(lsn, record);
 	else if (info == XLOG_HEAP_LOCK)
-		heap_xlog_lock(true, lsn, record);
+		heap_xlog_lock(lsn, record);
 	else
 		elog(PANIC, "heap_redo: unknown op code %u", info);
-}
-
-void
-heap_undo(XLogRecPtr lsn, XLogRecord *record)
-{
-	uint8		info = record->xl_info & ~XLR_INFO_MASK;
-
-	info &= XLOG_HEAP_OPMASK;
-	if (info == XLOG_HEAP_INSERT)
-		heap_xlog_insert(false, lsn, record);
-	else if (info == XLOG_HEAP_DELETE)
-		heap_xlog_delete(false, lsn, record);
-	else if (info == XLOG_HEAP_UPDATE)
-		heap_xlog_update(false, lsn, record, false);
-	else if (info == XLOG_HEAP_MOVE)
-		heap_xlog_update(false, lsn, record, true);
-	else if (info == XLOG_HEAP_CLEAN)
-		heap_xlog_clean(false, lsn, record);
-	else if (info == XLOG_HEAP_NEWPAGE)
-		heap_xlog_newpage(false, lsn, record);
-	else if (info == XLOG_HEAP_LOCK)
-		heap_xlog_lock(false, lsn, record);
-	else
-		elog(PANIC, "heap_undo: unknown op code %u", info);
 }
 
 static void

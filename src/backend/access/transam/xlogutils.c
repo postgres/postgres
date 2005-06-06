@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.37 2005/05/29 04:23:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.38 2005/06/06 17:01:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,7 @@ XLogCloseRelationCache(void)
  * Open a relation during XLOG replay
  */
 Relation
-XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
+XLogOpenRelation(RelFileNode rnode)
 {
 	XLogRelDesc *res;
 	XLogRelCacheEntry *hentry;

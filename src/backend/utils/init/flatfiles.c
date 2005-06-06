@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.6 2005/04/14 20:03:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.7 2005/06/06 17:01:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -645,7 +645,7 @@ BuildFlatFiles(bool database_only)
 	rnode.relNode = DatabaseRelationId;
 
 	/* No locking is needed because no one else is alive yet */
-	rel = XLogOpenRelation(true, 0, rnode);
+	rel = XLogOpenRelation(rnode);
 	write_database_file(rel);
 
 	if (!database_only)
@@ -655,7 +655,7 @@ BuildFlatFiles(bool database_only)
 		rnode.dbNode = 0;
 		rnode.relNode = GroupRelationId;
 
-		rel = XLogOpenRelation(true, 0, rnode);
+		rel = XLogOpenRelation(rnode);
 		write_group_file(rel);
 
 		/* hard-wired path to pg_shadow */
@@ -663,7 +663,7 @@ BuildFlatFiles(bool database_only)
 		rnode.dbNode = 0;
 		rnode.relNode = ShadowRelationId;
 
-		rel = XLogOpenRelation(true, 0, rnode);
+		rel = XLogOpenRelation(rnode);
 		write_user_file(rel);
 	}
 

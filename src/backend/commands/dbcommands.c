@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.157 2005/05/19 21:35:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.158 2005/06/06 17:01:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1332,12 +1332,6 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 	}
 	else
 		elog(PANIC, "dbase_redo: unknown op code %u", info);
-}
-
-void
-dbase_undo(XLogRecPtr lsn, XLogRecord *record)
-{
-	elog(PANIC, "dbase_undo: unimplemented");
 }
 
 void
