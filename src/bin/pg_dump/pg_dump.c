@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.400.4.4 2005/04/30 08:19:44 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.400.4.5 2005/06/07 14:05:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5115,7 +5115,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
-						  "null::text as proargnames, "
+						  "null as proargnames, "
 						  "provolatile, proisstrict, prosecdef, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_catalog.pg_proc "
@@ -5126,7 +5126,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
-						  "null::text as proargnames, "
+						  "null as proargnames, "
 		 "case when proiscachable then 'i' else 'v' end as provolatile, "
 						  "proisstrict, "
 						  "'f'::boolean as prosecdef, "
@@ -5139,7 +5139,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
-						  "null::text as proargnames, "
+						  "null as proargnames, "
 		 "case when proiscachable then 'i' else 'v' end as provolatile, "
 						  "'f'::boolean as proisstrict, "
 						  "'f'::boolean as prosecdef, "
