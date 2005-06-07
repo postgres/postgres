@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.69 2005/05/26 04:08:31 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.70 2005/06/07 02:47:15 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1251,13 +1251,14 @@ NULL;
      <command>EXECUTE</command> statement is provided:
 
 <synopsis>
-EXECUTE <replaceable class="command">command-string</replaceable>;
+EXECUTE <replaceable class="command">command-string</replaceable> [ INTO <replaceable>target</replaceable> ];
 </synopsis>
 
      where <replaceable>command-string</replaceable> is an expression
-     yielding a string (of type
-     <type>text</type>) containing the command
-     to be executed.  This string is fed literally to the SQL engine.
+     yielding a string (of type <type>text</type>) containing the
+     command to be executed and <replaceable>target</replaceable> is a
+     record variable, row variable, or a comma-separated list of
+     simple variables and record/row fields.
     </para>
 
     <para>
@@ -1276,16 +1277,22 @@ EXECUTE <replaceable class="command">command-string</replaceable>;
     </para>
 
     <para>
-     The results from <command>SELECT</command> commands are discarded
-     by <command>EXECUTE</command>, and <command>SELECT INTO</command>
-     is not currently supported within <command>EXECUTE</command>.
-     So there is no way to extract a result from a dynamically-created
-     <command>SELECT</command> using the plain <command>EXECUTE</command>
-     command.  There are two other ways to do it, however: one is to use the
-     <command>FOR-IN-EXECUTE</>
-     loop form described in <xref linkend="plpgsql-records-iterating">,
-     and the other is to use a cursor with <command>OPEN-FOR-EXECUTE</>, as
-     described in <xref linkend="plpgsql-cursor-opening">.
+     The <literal>INTO</literal> clause specifies where the results of
+     a <command>SELECT</command> command should be assigned. If a row
+     or variable list is provided, it must exactly match the structure
+     of the results produced by the <command>SELECT</command> (when a
+     record variable is used, it will configure itself to match the
+     result's structure automatically). If multiple rows are returned,
+     only the first will be assigned to the <literal>INTO</literal>
+     variable. If no rows are returned, NULL is assigned to the
+     <literal>INTO</literal> variable. If no <literal>INTO</literal>
+     clause is specified, the results of a <command>SELECT</command>
+     command are discarded.
+    </para>
+
+    <para>
+     <command>SELECT INTO</command> is not currently supported within
+     <command>EXECUTE</command>.
     </para>
 
     <para>
@@ -1364,7 +1371,7 @@ EXECUTE 'UPDATE tbl SET '
      command, which has the form:
 
 <synopsis>
-GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> <optional> , ... </optional> ;
+GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> <optional> , ... </optional>;
 </synopsis>
 
      This command allows retrieval of system status indicators.  Each
@@ -2173,7 +2180,7 @@ SELECT merge_db (1, 'dennis');
      Another way is to use the cursor declaration syntax,
      which in general is:
 <synopsis>
-<replaceable>name</replaceable> CURSOR <optional> ( <replaceable>arguments</replaceable> ) </optional> FOR <replaceable>query</replaceable> ;
+<replaceable>name</replaceable> CURSOR <optional> ( <replaceable>arguments</replaceable> ) </optional> FOR <replaceable>query</replaceable>;
 </synopsis>
      (<literal>FOR</> may be replaced by <literal>IS</> for
      <productname>Oracle</productname> compatibility.)
@@ -2218,7 +2225,7 @@ DECLARE
      <title><command>OPEN FOR</command> <replaceable>query</replaceable></title>
 
 <synopsis>
-OPEN <replaceable>unbound_cursor</replaceable> FOR <replaceable>query</replaceable> ;
+OPEN <replaceable>unbound_cursor</replaceable> FOR <replaceable>query</replaceable>;
 </synopsis>
 
        <para>
@@ -3188,7 +3195,7 @@ DECLARE
     func_body text;
     func_cmd text;
 BEGIN 
-    func_body := 'BEGIN' ;
+    func_body := 'BEGIN';
 
     -- Notice how we scan through the results of a query in a FOR loop
     -- using the FOR &lt;record&gt; construct.

@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.72 2005/05/26 04:08:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.73 2005/06/07 02:47:16 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1250,18 +1250,61 @@ stmt_execsql	: execsql_start lno
 					}
 				;
 
-stmt_dynexecute : K_EXECUTE lno expr_until_semi
+stmt_dynexecute : K_EXECUTE lno 
 					{
 						PLpgSQL_stmt_dynexecute *new;
+						PLpgSQL_expr *expr;
+						int endtoken;
+
+						expr = read_sql_construct(K_INTO, ';', "INTO|;", "SELECT ",
+												  true, true, &endtoken);
 
 						new = palloc(sizeof(PLpgSQL_stmt_dynexecute));
 						new->cmd_type = PLPGSQL_STMT_DYNEXECUTE;
 						new->lineno   = $2;
-						new->query	  = $3;
+						new->query    = expr;
+
+						new->rec = NULL;
+						new->row = NULL;
+
+						/*
+						 * If we saw "INTO", look for an additional
+						 * row or record var.
+						 */
+						if (endtoken == K_INTO)
+						{
+							switch (yylex())
+							{
+								case T_ROW:
+									check_assignable((PLpgSQL_datum *) yylval.row);
+									new->row = yylval.row;
+									break;
+
+								case T_RECORD:
+									check_assignable((PLpgSQL_datum *) yylval.row);
+									new->rec = yylval.rec;
+									break;
+
+								case T_SCALAR:
+									new->row = read_into_scalar_list(yytext, yylval.scalar);
+									break;
+
+								default:
+									plpgsql_error_lineno = $2;
+									ereport(ERROR,
+											(errcode(ERRCODE_SYNTAX_ERROR),
+											 errmsg("syntax error at \"%s\"",
+													yytext),
+											 errdetail("Expected record or row variable.")));
+							}
+							if (yylex() != ';')
+								yyerror("syntax error");
+						}
 
 						$$ = (PLpgSQL_stmt *)new;
 					}
 				;
+
 
 stmt_open		: K_OPEN lno cursor_varptr
 					{

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.141 2005/05/26 04:08:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.142 2005/06/07 02:47:17 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2202,6 +2202,13 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 	Oid			restype;
 	char	   *querystr;
 	int			exec_res;
+	PLpgSQL_rec *rec = NULL;
+	PLpgSQL_row *row = NULL;
+
+	if (stmt->rec != NULL)
+		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+	else if (stmt->row != NULL)
+		row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
 
 	/*
 	 * First we evaluate the string expression after the EXECUTE keyword.
@@ -2221,9 +2228,27 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 	/*
 	 * Call SPI_execute() without preparing a saved plan. The returncode can
 	 * be any standard OK.	Note that while a SELECT is allowed, its
-	 * results will be discarded.
+	 * results will be discarded unless an INTO clause is specified.
 	 */
 	exec_res = SPI_execute(querystr, estate->readonly_func, 0);
+
+	/* Assign to INTO variable */
+	if (rec || row)
+	{
+		if (exec_res != SPI_OK_SELECT)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("EXECUTE ... INTO is only for SELECT")));
+		else
+		{
+			if (SPI_processed == 0)
+				exec_move_row(estate, rec, row, NULL, SPI_tuptable->tupdesc);
+			else
+				exec_move_row(estate, rec, row,
+							  SPI_tuptable->vals[0], SPI_tuptable->tupdesc);
+		}
+	}
+
 	switch (exec_res)
 	{
 		case SPI_OK_SELECT:
