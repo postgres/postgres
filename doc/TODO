@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Jun  6 18:03:40 EDT 2005
+Last updated:		Mon Jun  6 21:59:31 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -454,9 +454,13 @@ Commands
 * Add RESET CONNECTION command to reset all session state
 
   This would include resetting of all variables (RESET ALL), dropping of
-  all temporary tables, removal of any NOTIFYs, cursors, prepared 
-  queries(?), currval()s, etc.  This could be used for connection pooling. 
-  We could also change RESET ALL to have this functionality.
+  temporary tables, removing any NOTIFYs, cursors, open transactions,
+  prepared queries, currval()s, etc.  This could be used  for connection
+  pooling.  We could also change RESET ALL to have this functionality.  
+  The difficult of this features is allowing RESET ALL to not affect 
+  changes made by the interface driver for its internal use.  One idea is
+  for this to be a protocol-only feature.  Another approach is to notify
+  the protocol when a RESET CONNECTION command is used.
 
 * Allow FOR UPDATE queries to do NOWAIT locks
 * Add GUC to issue notice about queries that use unjoined tables

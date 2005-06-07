@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Mon Jun  6 18:03:40 EDT 2005
+Last updated:           Mon Jun  6 21:59:31 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -417,9 +417,13 @@ first.
   </li><li>Make row-wise comparisons work per SQL spec
   </li><li>Add RESET CONNECTION command to reset all session state
 <p>  This would include resetting of all variables (RESET ALL), dropping of
-  all temporary tables, removal of any NOTIFYs, cursors, prepared 
-  queries(?), currval()s, etc.  This could be used for connection pooling. 
-  We could also change RESET ALL to have this functionality.
+  temporary tables, removing any NOTIFYs, cursors, open transactions,
+  prepared queries, currval()s, etc.  This could be used  for connection
+  pooling.  We could also change RESET ALL to have this functionality.  
+  The difficult of this features is allowing RESET ALL to not affect 
+  changes made by the interface driver for its internal use.  One idea is
+  for this to be a protocol-only feature.  Another approach is to notify
+  the protocol when a RESET CONNECTION command is used.
 </p>
   </li><li>Allow FOR UPDATE queries to do NOWAIT locks
   </li><li>Add GUC to issue notice about queries that use unjoined tables
