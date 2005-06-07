@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.251 2005/06/06 16:29:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.252 2005/06/07 07:08:34 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -6488,6 +6488,9 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
    <primary>currval</primary>
   </indexterm>
   <indexterm>
+   <primary>lastval</primary>
+  </indexterm>
+  <indexterm>
    <primary>setval</primary>
   </indexterm>
 
@@ -6518,6 +6521,12 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
       </row>
       <row>
         <entry><literal><function>currval</function>(<type>text</type>)</literal></entry>
+        <entry><type>bigint</type></entry>
+        <entry>Return value most recently obtained with
+        <function>nextval</function> for specified sequence</entry>
+      </row>
+      <row>
+        <entry><literal><function>lastval</function>()</literal></entry>
         <entry><type>bigint</type></entry>
         <entry>Return value most recently obtained with <function>nextval</function></entry>
       </row>
@@ -6583,6 +6592,22 @@ nextval('foo')              <lineannotation>searches search path for <literal>fo
         a session-local value, it gives a predictable answer whether or not
         other sessions have executed <function>nextval</function> since the
         current session did.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>lastval</function></term>
+      <listitem>
+       <para>
+        Return the value most recently returned by
+        <function>nextval</> in the current session. This function is
+        identical to <function>currval</function>, except that instead
+        of taking the sequence name as an argument it fetches the
+        value of the last sequence that <function>nextval</function>
+        was used on in the current session. It is an error to call
+        <function>lastval</function> if <function>nextval</function>
+        has not yet been called in the current session.
        </para>
       </listitem>
      </varlistentry>

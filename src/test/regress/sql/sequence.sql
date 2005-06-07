@@ -42,3 +42,30 @@ COMMENT ON SEQUENCE asdf IS 'won''t work';
 COMMENT ON SEQUENCE sequence_test2 IS 'will work';
 COMMENT ON SEQUENCE sequence_test2 IS NULL;
 
+-- Test lastval()
+CREATE SEQUENCE seq;
+SELECT nextval('seq');
+SELECT lastval();
+SELECT setval('seq', 99);
+SELECT lastval();
+
+CREATE SEQUENCE seq2;
+SELECT nextval('seq2');
+SELECT lastval();
+
+DROP SEQUENCE seq2;
+-- should fail
+SELECT lastval();
+
+CREATE USER seq_user;
+
+BEGIN;
+SET LOCAL SESSION AUTHORIZATION seq_user;
+CREATE SEQUENCE seq3;
+SELECT nextval('seq3');
+REVOKE ALL ON seq3 FROM seq_user;
+SELECT lastval();
+ROLLBACK;
+
+DROP USER seq_user;
+DROP SEQUENCE seq;

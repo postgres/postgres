@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.122 2005/06/06 20:22:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.123 2005/06/07 07:08:34 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/resowner.h"
+#include "utils/syscache.h"
 
 
 /*
@@ -68,7 +69,13 @@ typedef SeqTableData *SeqTable;
 
 static SeqTable seqtab = NULL;	/* Head of list of SeqTable items */
 
+/*
+ * last_used_seq is updated by nextval() to point to the last used
+ * sequence.
+ */
+static SeqTableData *last_used_seq = NULL;
 
+static void acquire_share_lock(Relation seqrel, SeqTable seq);
 static void init_sequence(RangeVar *relation,
 			  SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence read_info(SeqTable elm, Relation rel, Buffer *buf);
@@ -400,6 +407,7 @@ nextval(PG_FUNCTION_ARGS)
 
 	if (elm->last != elm->cached)		/* some numbers were cached */
 	{
+		last_used_seq = elm;
 		elm->last += elm->increment;
 		relation_close(seqrel, NoLock);
 		PG_RETURN_INT64(elm->last);
@@ -521,6 +529,8 @@ nextval(PG_FUNCTION_ARGS)
 	elm->last = result;			/* last returned number */
 	elm->cached = last;			/* last fetched number */
 
+	last_used_seq = elm;
+
 	START_CRIT_SECTION();
 
 	/* XLOG stuff */
@@ -599,6 +609,42 @@ currval(PG_FUNCTION_ARGS)
 
 	relation_close(seqrel, NoLock);
 
+	PG_RETURN_INT64(result);
+}
+
+Datum
+lastval(PG_FUNCTION_ARGS)
+{
+	Relation	seqrel;
+	int64		result;
+
+	if (last_used_seq == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("lastval is not yet defined in this session")));
+
+	/* Someone may have dropped the sequence since the last nextval() */
+	if (!SearchSysCacheExists(RELOID,
+							  ObjectIdGetDatum(last_used_seq->relid),
+							  0, 0, 0))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("lastval is not yet defined in this session")));
+
+	seqrel = relation_open(last_used_seq->relid, NoLock);
+	acquire_share_lock(seqrel, last_used_seq);
+
+	/* nextval() must have already been called for this sequence */
+	Assert(last_used_seq->increment != 0);
+
+	if (pg_class_aclcheck(last_used_seq->relid, GetUserId(), ACL_SELECT) != ACLCHECK_OK)
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied for sequence %s",
+						RelationGetRelationName(seqrel))));
+
+	result = last_used_seq->last;
+	relation_close(seqrel, NoLock);
 	PG_RETURN_INT64(result);
 }
 
@@ -741,6 +787,41 @@ setval_and_iscalled(PG_FUNCTION_ARGS)
 
 
 /*
+ * If we haven't touched the sequence already in this transaction,
+ * we need to acquire AccessShareLock.  We arrange for the lock to
+ * be owned by the top transaction, so that we don't need to do it
+ * more than once per xact.
+ */
+static void
+acquire_share_lock(Relation seqrel, SeqTable seq)
+{
+	TransactionId thisxid = GetTopTransactionId();
+
+	if (seq->xid != thisxid)
+	{
+		ResourceOwner currentOwner;
+
+		currentOwner = CurrentResourceOwner;
+		PG_TRY();
+		{
+			CurrentResourceOwner = TopTransactionResourceOwner;
+			LockRelation(seqrel, AccessShareLock);
+		}
+		PG_CATCH();
+		{
+			/* Ensure CurrentResourceOwner is restored on error */
+			CurrentResourceOwner = currentOwner;
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+		CurrentResourceOwner = currentOwner;
+
+		/* Flag that we have a lock in the current xact. */
+		seq->xid = thisxid;
+	}
+}
+
+/*
  * Given a relation name, open and lock the sequence.  p_elm and p_rel are
  * output parameters.
  */
@@ -748,7 +829,6 @@ static void
 init_sequence(RangeVar *relation, SeqTable *p_elm, Relation *p_rel)
 {
 	Oid			relid = RangeVarGetRelid(relation, false);
-	TransactionId thisxid = GetTopTransactionId();
 	volatile SeqTable elm;
 	Relation	seqrel;
 
@@ -796,35 +876,7 @@ init_sequence(RangeVar *relation, SeqTable *p_elm, Relation *p_rel)
 		seqtab = elm;
 	}
 
-	/*
-	 * If we haven't touched the sequence already in this transaction,
-	 * we need to acquire AccessShareLock.  We arrange for the lock to
-	 * be owned by the top transaction, so that we don't need to do it
-	 * more than once per xact.
-	 */
-	if (elm->xid != thisxid)
-	{
-		ResourceOwner currentOwner;
-
-		currentOwner = CurrentResourceOwner;
-		PG_TRY();
-		{
-			CurrentResourceOwner = TopTransactionResourceOwner;
-
-			LockRelation(seqrel, AccessShareLock);
-		}
-		PG_CATCH();
-		{
-			/* Ensure CurrentResourceOwner is restored on error */
-			CurrentResourceOwner = currentOwner;
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
-		CurrentResourceOwner = currentOwner;
-
-		/* Flag that we have a lock in the current xact. */
-		elm->xid = thisxid;
-	}
+	acquire_share_lock(seqrel, elm);
 
 	*p_elm = elm;
 	*p_rel = seqrel;
