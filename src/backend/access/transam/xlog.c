@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.197 2005/06/06 20:22:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.198 2005/06/08 15:50:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3688,12 +3688,13 @@ BootStrapXLOG(void)
 	checkPoint.nextXid = FirstNormalTransactionId;
 	checkPoint.nextOid = FirstBootstrapObjectId;
 	checkPoint.nextMulti = FirstMultiXactId;
+	checkPoint.nextMultiOffset = 0;
 	checkPoint.time = time(NULL);
 
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
-	MultiXactSetNextMXact(checkPoint.nextMulti);
+	MultiXactSetNextMXact(checkPoint.nextMulti, checkPoint.nextMultiOffset);
 
 	/* Set up the XLOG page header */
 	page->xlp_magic = XLOG_PAGE_MAGIC;
@@ -4344,8 +4345,11 @@ StartupXLOG(void)
 					checkPoint.undo.xlogid, checkPoint.undo.xrecoff,
 					wasShutdown ? "TRUE" : "FALSE")));
 	ereport(LOG,
-			(errmsg("next transaction ID: %u; next OID: %u; next MultiXactId: %u",
-					checkPoint.nextXid, checkPoint.nextOid, checkPoint.nextMulti)));
+			(errmsg("next transaction ID: %u; next OID: %u",
+					checkPoint.nextXid, checkPoint.nextOid)));
+	ereport(LOG,
+			(errmsg("next MultiXactId: %u; next MultiXactOffset: %u",
+					checkPoint.nextMulti, checkPoint.nextMultiOffset)));
 	if (!TransactionIdIsNormal(checkPoint.nextXid))
 		ereport(PANIC,
 				(errmsg("invalid next transaction ID")));
@@ -4353,7 +4357,7 @@ StartupXLOG(void)
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
-	MultiXactSetNextMXact(checkPoint.nextMulti);
+	MultiXactSetNextMXact(checkPoint.nextMulti, checkPoint.nextMultiOffset);
 
 	/*
 	 * We must replay WAL entries using the same TimeLineID they were
@@ -5080,7 +5084,9 @@ CreateCheckPoint(bool shutdown, bool force)
 		checkPoint.nextOid += ShmemVariableCache->oidCount;
 	LWLockRelease(OidGenLock);
 
-	checkPoint.nextMulti = MultiXactGetCheckptMulti(shutdown);
+	MultiXactGetCheckptMulti(shutdown,
+							 &checkPoint.nextMulti,
+							 &checkPoint.nextMultiOffset);
 
 	/*
 	 * Having constructed the checkpoint record, ensure all shmem disk
@@ -5229,25 +5235,6 @@ XLogPutNextOid(Oid nextOid)
 }
 
 /*
- * Write a NEXT_MULTIXACT log record
- */
-void
-XLogPutNextMultiXactId(MultiXactId nextMulti)
-{
-	XLogRecData rdata;
-
-	rdata.data = (char *) (&nextMulti);
-	rdata.len = sizeof(MultiXactId);
-	rdata.buffer = InvalidBuffer;
-	rdata.next = NULL;
-	(void) XLogInsert(RM_XLOG_ID, XLOG_NEXTMULTI, &rdata);
-	/*
-	 * We do not flush here either; this assumes that heap_lock_tuple() will
-	 * always generate a WAL record.  See notes therein.
-	 */
-}
-
-/*
  * XLOG resource manager's routines
  */
 void
@@ -5266,14 +5253,6 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 			ShmemVariableCache->oidCount = 0;
 		}
 	}
-	else if (info == XLOG_NEXTMULTI)
-	{
-		MultiXactId	nextMulti;
-
-		memcpy(&nextMulti, XLogRecGetData(record), sizeof(MultiXactId));
-
-		MultiXactAdvanceNextMXact(nextMulti);
-	}
 	else if (info == XLOG_CHECKPOINT_SHUTDOWN)
 	{
 		CheckPoint	checkPoint;
@@ -5283,7 +5262,8 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		ShmemVariableCache->nextXid = checkPoint.nextXid;
 		ShmemVariableCache->nextOid = checkPoint.nextOid;
 		ShmemVariableCache->oidCount = 0;
-		MultiXactSetNextMXact(checkPoint.nextMulti);
+		MultiXactSetNextMXact(checkPoint.nextMulti,
+							  checkPoint.nextMultiOffset);
 
 		/*
 		 * TLI may change in a shutdown checkpoint, but it shouldn't
@@ -5315,7 +5295,8 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 			ShmemVariableCache->nextOid = checkPoint.nextOid;
 			ShmemVariableCache->oidCount = 0;
 		}
-		MultiXactAdvanceNextMXact(checkPoint.nextMulti);
+		MultiXactAdvanceNextMXact(checkPoint.nextMulti,
+								  checkPoint.nextMultiOffset);
 		/* TLI should not change in an on-line checkpoint */
 		if (checkPoint.ThisTimeLineID != ThisTimeLineID)
 			ereport(PANIC,
@@ -5335,12 +5316,13 @@ xlog_desc(char *buf, uint8 xl_info, char *rec)
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
 		sprintf(buf + strlen(buf), "checkpoint: redo %X/%X; undo %X/%X; "
-				"tli %u; xid %u; oid %u; multi %u; %s",
+				"tli %u; xid %u; oid %u; multi %u; offset %u; %s",
 				checkpoint->redo.xlogid, checkpoint->redo.xrecoff,
 				checkpoint->undo.xlogid, checkpoint->undo.xrecoff,
 				checkpoint->ThisTimeLineID, checkpoint->nextXid,
 				checkpoint->nextOid,
 				checkpoint->nextMulti,
+				checkpoint->nextMultiOffset,
 			 (info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
 	}
 	else if (info == XLOG_NEXTOID)
@@ -5349,13 +5331,6 @@ xlog_desc(char *buf, uint8 xl_info, char *rec)
 
 		memcpy(&nextOid, rec, sizeof(Oid));
 		sprintf(buf + strlen(buf), "nextOid: %u", nextOid);
-	}
-	else if (info == XLOG_NEXTMULTI)
-	{
-		MultiXactId	multi;
-
-		memcpy(&multi, rec, sizeof(MultiXactId));
-		sprintf(buf + strlen(buf), "nextMultiXact: %u", multi);
 	}
 	else
 		strcat(buf, "UNKNOWN");

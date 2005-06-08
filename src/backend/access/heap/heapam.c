@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.193 2005/06/06 20:22:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.194 2005/06/08 15:50:21 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2219,6 +2219,8 @@ l3:
 	 * Else the same IDs might be re-used after a crash, which would be
 	 * disastrous if this page made it to disk before the crash.  Essentially
 	 * we have to enforce the WAL log-before-data rule even in this case.
+	 * (Also, in a PITR log-shipping or 2PC environment, we have to have XLOG
+	 * entries for everything anyway.)
 	 */
 	if (!relation->rd_istemp)
 	{
@@ -2228,6 +2230,8 @@ l3:
 
 		xlrec.target.node = relation->rd_node;
 		xlrec.target.tid = tuple->t_self;
+		xlrec.locking_xid = xid;
+		xlrec.xid_is_mxact = ((new_infomask & HEAP_XMAX_IS_MULTI) != 0);
 		xlrec.shared_lock = (mode == LockTupleShared);
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfHeapLock;
@@ -2900,17 +2904,18 @@ heap_xlog_lock(XLogRecPtr lsn, XLogRecord *record)
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
 
-	/*
-	 * Presently, we don't bother to restore the locked state, but
-	 * just set the XMAX_INVALID bit.
-	 */
 	htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 						  HEAP_XMAX_INVALID |
 						  HEAP_XMAX_IS_MULTI |
 						  HEAP_IS_LOCKED |
 						  HEAP_MOVED);
-	htup->t_infomask |= HEAP_XMAX_INVALID;
-	HeapTupleHeaderSetXmax(htup, record->xl_xid);
+	if (xlrec->xid_is_mxact)
+		htup->t_infomask |= HEAP_XMAX_IS_MULTI;
+	if (xlrec->shared_lock)
+		htup->t_infomask |= HEAP_XMAX_SHARED_LOCK;
+	else
+		htup->t_infomask |= HEAP_XMAX_EXCL_LOCK;
+	HeapTupleHeaderSetXmax(htup, xlrec->locking_xid);
 	HeapTupleHeaderSetCmax(htup, FirstCommandId);
 	/* Make sure there is no forward chain link in t_ctid */
 	htup->t_ctid = xlrec->target.tid;
@@ -3010,6 +3015,11 @@ heap_desc(char *buf, uint8 xl_info, char *rec)
 			strcat(buf, "shared_lock: ");
 		else
 			strcat(buf, "exclusive_lock: ");
+		if (xlrec->xid_is_mxact)
+			strcat(buf, "mxid ");
+		else
+			strcat(buf, "xid ");
+		sprintf(buf + strlen(buf), "%u ", xlrec->locking_xid);
 		out_target(buf, &(xlrec->target));
 	}
 	else

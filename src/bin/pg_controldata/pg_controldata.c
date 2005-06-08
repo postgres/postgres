@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.24 2005/06/02 05:55:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.25 2005/06/08 15:50:27 tgl Exp $
  */
 #include "postgres.h"
 
@@ -166,6 +166,7 @@ main(int argc, char *argv[])
 	printf(_("Latest checkpoint's NextXID:          %u\n"), ControlFile.checkPointCopy.nextXid);
 	printf(_("Latest checkpoint's NextOID:          %u\n"), ControlFile.checkPointCopy.nextOid);
 	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"), ControlFile.checkPointCopy.nextMulti);
+	printf(_("Latest checkpoint's NextMultiOffset:  %u\n"), ControlFile.checkPointCopy.nextMultiOffset);
 	printf(_("Time of latest checkpoint:            %s\n"), ckpttime_str);
 	printf(_("Database block size:                  %u\n"), ControlFile.blcksz);
 	printf(_("Blocks per segment of large relation: %u\n"), ControlFile.relseg_size);

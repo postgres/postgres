@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.33 2005/06/02 05:55:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.34 2005/06/08 15:50:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,6 +77,7 @@ main(int argc, char *argv[])
 	TransactionId set_xid = 0;
 	Oid			set_oid = 0;
 	MultiXactId	set_mxid = 0;
+	MultiXactOffset set_mxoff = -1;
 	uint32		minXlogTli = 0,
 				minXlogId = 0,
 				minXlogSeg = 0;
@@ -106,7 +107,7 @@ main(int argc, char *argv[])
 	}
 
 
-	while ((c = getopt(argc, argv, "fl:m:no:x:")) != -1)
+	while ((c = getopt(argc, argv, "fl:m:no:O:x:")) != -1)
 	{
 		switch (c)
 		{
@@ -159,6 +160,21 @@ main(int argc, char *argv[])
 				if (set_mxid == 0)
 				{
 					fprintf(stderr, _("%s: multi transaction ID (-m) must not be 0\n"), progname);
+					exit(1);
+				}
+				break;
+
+			case 'O':
+				set_mxoff = strtoul(optarg, &endptr, 0);
+				if (endptr == optarg || *endptr != '\0')
+				{
+					fprintf(stderr, _("%s: invalid argument for option -O\n"), progname);
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+					exit(1);
+				}
+				if (set_mxoff == -1)
+				{
+					fprintf(stderr, _("%s: multi transaction offset (-O) must not be -1\n"), progname);
 					exit(1);
 				}
 				break;
@@ -264,6 +280,9 @@ main(int argc, char *argv[])
 
 	if (set_mxid != 0)
 		ControlFile.checkPointCopy.nextMulti = set_mxid;
+
+	if (set_mxoff != -1)
+		ControlFile.checkPointCopy.nextMultiOffset = set_mxoff;
 
 	if (minXlogTli > ControlFile.checkPointCopy.ThisTimeLineID)
 		ControlFile.checkPointCopy.ThisTimeLineID = minXlogTli;
@@ -426,6 +445,7 @@ GuessControlValues(void)
 	ControlFile.checkPointCopy.nextXid = (TransactionId) 514;	/* XXX */
 	ControlFile.checkPointCopy.nextOid = FirstBootstrapObjectId;
 	ControlFile.checkPointCopy.nextMulti = FirstMultiXactId;
+	ControlFile.checkPointCopy.nextMultiOffset = 0;
 	ControlFile.checkPointCopy.time = time(NULL);
 
 	ControlFile.state = DB_SHUTDOWNED;
@@ -463,7 +483,7 @@ GuessControlValues(void)
 
 	/*
 	 * XXX eventually, should try to grovel through old XLOG to develop
-	 * more accurate values for TimeLineID, nextXID, and nextOID.
+	 * more accurate values for TimeLineID, nextXID, etc.
 	 */
 }
 
@@ -500,6 +520,7 @@ PrintControlValues(bool guessed)
 	printf(_("Latest checkpoint's NextXID:          %u\n"), ControlFile.checkPointCopy.nextXid);
 	printf(_("Latest checkpoint's NextOID:          %u\n"), ControlFile.checkPointCopy.nextOid);
 	printf(_("Latest checkpoint's NextMultiXactId:  %u\n"), ControlFile.checkPointCopy.nextMulti);
+	printf(_("Latest checkpoint's NextMultiOffset:  %u\n"), ControlFile.checkPointCopy.nextMultiOffset);
 	printf(_("Database block size:                  %u\n"), ControlFile.blcksz);
 	printf(_("Blocks per segment of large relation: %u\n"), ControlFile.relseg_size);
 	printf(_("Maximum length of identifiers:        %u\n"), ControlFile.nameDataLen);
@@ -777,6 +798,7 @@ usage(void)
 	printf(_("  -o OID          set next OID\n"));
 	printf(_("  -x XID          set next transaction ID\n"));
 	printf(_("  -m multiXID     set next multi transaction ID\n"));
+	printf(_("  -O multiOffset  set next multi transaction offset\n"));
 	printf(_("  --help          show this help, then exit\n"));
 	printf(_("  --version       output version information, then exit\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));

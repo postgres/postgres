@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.10 2005/04/28 21:47:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.11 2005/06/08 15:50:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -23,6 +23,7 @@ PostgreSQL documentation
    <arg> -o <replaceable class="parameter">oid</replaceable> </arg>
    <arg> -x <replaceable class="parameter">xid</replaceable> </arg>
    <arg> -m <replaceable class="parameter">mxid</replaceable> </arg>
+   <arg> -O <replaceable class="parameter">mxoff</replaceable> </arg>
    <arg> -l <replaceable class="parameter">timelineid</replaceable>,<replaceable class="parameter">fileid</replaceable>,<replaceable class="parameter">seg</replaceable> </arg>
    <arg choice="plain"><replaceable>datadir</replaceable></arg>
   </cmdsynopsis>
@@ -32,8 +33,8 @@ PostgreSQL documentation
   <title>Description</title>
   <para>
    <command>pg_resetxlog</command> clears the write-ahead log (WAL) and
-   optionally resets some other control information (stored in the
-   <filename>pg_control</> file).  This function is sometimes needed
+   optionally resets some other control information stored in the
+   <filename>pg_control</> file.  This function is sometimes needed
    if these files have become corrupted.  It should be used only as a
    last resort, when the server will not start due to such corruption.
   </para>
@@ -60,8 +61,9 @@ PostgreSQL documentation
    by specifying the <literal>-f</> (force) switch.  In this case plausible
    values will be substituted for the missing data.  Most of the fields can be
    expected to match, but manual assistance may be needed for the next OID,
-   next transaction ID, WAL starting address, and database locale fields.
-   The first three of these can be set using the switches discussed below.
+   next transaction ID, next multi-transaction ID and offset,
+   WAL starting address, and database locale fields.
+   The first five of these can be set using the switches discussed below.
    <command>pg_resetxlog</command>'s own environment is the source for its
    guess at the locale fields; take care that <envar>LANG</> and so forth
    match the environment that <command>initdb</> was run in.
@@ -74,9 +76,10 @@ PostgreSQL documentation
   </para>
 
   <para>
-   The <literal>-o</>, <literal>-x</>, <literal>-m</>, and <literal>-l</>
+   The <literal>-o</>, <literal>-x</>, <literal>-m</>, <literal>-O</>,
+   and <literal>-l</>
    switches allow the next OID, next transaction ID, next multi-transaction
-   ID, and WAL starting address values to
+   ID, next multi-transaction offset, and WAL starting address values to
    be set manually.  These are only needed when
    <command>pg_resetxlog</command> is unable to determine appropriate values
    by reading <filename>pg_control</>.  Safe values may be determined as
@@ -102,6 +105,17 @@ PostgreSQL documentation
       A safe value for the next multi-transaction ID (<literal>-m</>)
       may be determined by looking for the numerically largest
       file name in the directory <filename>pg_multixact/offsets</> under the
+      data directory, adding one, and then multiplying by 65536.  As above,
+      the file names are in hexadecimal, so the easiest way to do this is to
+      specify the switch value in hexadecimal and add four zeroes.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A safe value for the next multi-transaction offset (<literal>-O</>)
+      may be determined by looking for the numerically largest
+      file name in the directory <filename>pg_multixact/members</> under the
       data directory, adding one, and then multiplying by 65536.  As above,
       the file names are in hexadecimal, so the easiest way to do this is to
       specify the switch value in hexadecimal and add four zeroes.
