@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.68 2005/06/06 04:13:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.69 2005/06/08 23:02:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,14 @@
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
+#include "utils/hsearch.h"
 
+
+typedef struct JoinHashEntry
+{
+	Relids		join_relids;	/* hash key --- MUST BE FIRST */
+	RelOptInfo *join_rel;
+} JoinHashEntry;
 
 static RelOptInfo *make_reloptinfo(PlannerInfo *root, int relid,
 								   RelOptKind reloptkind);
@@ -198,6 +205,47 @@ find_base_rel(PlannerInfo *root, int relid)
 }
 
 /*
+ * build_join_rel_hash
+ *	  Construct the auxiliary hash table for join relations.
+ */
+static void
+build_join_rel_hash(PlannerInfo *root)
+{
+	HTAB	   *hashtab;
+	HASHCTL		hash_ctl;
+	ListCell   *l;
+
+	/* Create the hash table */
+	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
+	hash_ctl.keysize = sizeof(Relids);
+	hash_ctl.entrysize = sizeof(JoinHashEntry);
+	hash_ctl.hash = bitmap_hash;
+	hash_ctl.match = bitmap_match;
+	hash_ctl.hcxt = CurrentMemoryContext;
+	hashtab = hash_create("JoinRelHashTable",
+						  256L,
+						  &hash_ctl,
+						  HASH_ELEM | HASH_FUNCTION | HASH_COMPARE | HASH_CONTEXT);
+
+	/* Insert all the already-existing joinrels */
+	foreach(l, root->join_rel_list)
+	{
+		RelOptInfo *rel = (RelOptInfo *) lfirst(l);
+		JoinHashEntry *hentry;
+		bool		found;
+
+		hentry = (JoinHashEntry *) hash_search(hashtab,
+											   &(rel->relids),
+											   HASH_ENTER,
+											   &found);
+		Assert(!found);
+		hentry->join_rel = rel;
+	}
+
+	root->join_rel_hash = hashtab;
+}
+
+/*
  * find_join_rel
  *	  Returns relation entry corresponding to 'relids' (a set of RT indexes),
  *	  or NULL if none exists.  This is for join relations.
@@ -205,14 +253,44 @@ find_base_rel(PlannerInfo *root, int relid)
 RelOptInfo *
 find_join_rel(PlannerInfo *root, Relids relids)
 {
-	ListCell   *l;
+	/*
+	 * Switch to using hash lookup when list grows "too long".  The threshold
+	 * is arbitrary and is known only here.
+	 */
+	if (!root->join_rel_hash && list_length(root->join_rel_list) > 32)
+		build_join_rel_hash(root);
 
-	foreach(l, root->join_rel_list)
+	/*
+	 * Use either hashtable lookup or linear search, as appropriate.
+	 *
+	 * Note: the seemingly redundant hashkey variable is used to avoid
+	 * taking the address of relids; unless the compiler is exceedingly
+	 * smart, doing so would force relids out of a register and thus
+	 * probably slow down the list-search case.
+	 */
+	if (root->join_rel_hash)
 	{
-		RelOptInfo *rel = (RelOptInfo *) lfirst(l);
+		Relids		hashkey = relids;
+		JoinHashEntry *hentry;
 
-		if (bms_equal(rel->relids, relids))
-			return rel;
+		hentry = (JoinHashEntry *) hash_search(root->join_rel_hash,
+											   &hashkey,
+											   HASH_FIND,
+											   NULL);
+		if (hentry)
+			return hentry->join_rel;
+	}
+	else
+	{
+		ListCell   *l;
+
+		foreach(l, root->join_rel_list)
+		{
+			RelOptInfo *rel = (RelOptInfo *) lfirst(l);
+
+			if (bms_equal(rel->relids, relids))
+				return rel;
+		}
 	}
 
 	return NULL;
@@ -329,9 +407,24 @@ build_join_rel(PlannerInfo *root,
 							   jointype, restrictlist);
 
 	/*
-	 * Add the joinrel to the query's joinrel list.
+	 * Add the joinrel to the query's joinrel list, and store it into
+	 * the auxiliary hashtable if there is one.  NB: GEQO requires us
+	 * to append the new joinrel to the end of the list!
 	 */
-	root->join_rel_list = lcons(joinrel, root->join_rel_list);
+	root->join_rel_list = lappend(root->join_rel_list, joinrel);
+
+	if (root->join_rel_hash)
+	{
+		JoinHashEntry *hentry;
+		bool		found;
+
+		hentry = (JoinHashEntry *) hash_search(root->join_rel_hash,
+											   &(joinrel->relids),
+											   HASH_ENTER,
+											   &found);
+		Assert(!found);
+		hentry->join_rel = joinrel;
+	}
 
 	return joinrel;
 }

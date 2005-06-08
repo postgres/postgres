@@ -14,7 +14,7 @@
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/bitmapset.c,v 1.7 2005/01/01 20:44:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/bitmapset.c,v 1.8 2005/06/08 23:02:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -762,4 +762,29 @@ bms_first_member(Bitmapset *a)
 		}
 	}
 	return -1;
+}
+
+/*
+ * bms_hash_value - compute a hash key for a Bitmapset
+ *
+ * Note: we must ensure that any two bitmapsets that are bms_equal() will
+ * hash to the same value; in practice this means that trailing all-zero
+ * words cannot affect the result.  Longitudinal XOR provides a reasonable
+ * hash value that has this property.
+ */
+uint32
+bms_hash_value(const Bitmapset *a)
+{
+	bitmapword	result = 0;
+	int			nwords;
+	int			wordnum;
+
+	if (a == NULL)
+		return 0;				/* All empty sets hash to 0 */
+	nwords = a->nwords;
+	for (wordnum = 0; wordnum < nwords; wordnum++)
+	{
+		result ^= a->words[wordnum];
+	}
+	return (uint32) result;
 }

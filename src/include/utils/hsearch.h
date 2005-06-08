@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.36 2005/05/29 04:23:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.37 2005/06/08 23:02:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,5 +184,7 @@ extern long hash_select_dirsize(long num_entries);
 extern uint32 string_hash(const void *key, Size keysize);
 extern uint32 tag_hash(const void *key, Size keysize);
 extern uint32 oid_hash(const void *key, Size keysize);
+extern uint32 bitmap_hash(const void *key, Size keysize);
+extern int	bitmap_match(const void *key1, const void *key2, Size keysize);
 
 #endif   /* HSEARCH_H */

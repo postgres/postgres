@@ -9,13 +9,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/hashfn.c,v 1.23 2005/04/14 20:32:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/hashfn.c,v 1.24 2005/06/08 23:02:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "nodes/bitmapset.h"
 #include "utils/hsearch.h"
 
 
@@ -52,4 +53,27 @@ oid_hash(const void *key, Size keysize)
 	Assert(keysize == sizeof(Oid));
 	/* We don't actually bother to do anything to the OID value ... */
 	return (uint32) *((const Oid *) key);
+}
+
+/*
+ * bitmap_hash: hash function for keys that are (pointers to) Bitmapsets
+ *
+ * Note: don't forget to specify bitmap_match as the match function!
+ */
+uint32
+bitmap_hash(const void *key, Size keysize)
+{
+	Assert(keysize == sizeof(Bitmapset *));
+	return bms_hash_value(*((const Bitmapset * const *) key));
+}
+
+/*
+ * bitmap_match: match function to use with bitmap_hash
+ */
+int
+bitmap_match(const void *key1, const void *key2, Size keysize)
+{
+	Assert(keysize == sizeof(Bitmapset *));
+	return !bms_equal(*((const Bitmapset * const *) key1),
+					  *((const Bitmapset * const *) key2));
 }

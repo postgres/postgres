@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.74 2005/06/05 22:32:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.75 2005/06/08 23:02:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,8 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	MemoryContext oldcxt;
 	RelOptInfo *joinrel;
 	Cost		fitness;
-	List	   *savelist;
+	int			savelength;
+	struct HTAB *savehash;
 
 	/*
 	 * Because gimme_tree considers both left- and right-sided trees,
@@ -83,13 +84,19 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	 * gimme_tree will add entries to root->join_rel_list, which may or may
 	 * not already contain some entries.  The newly added entries will be
 	 * recycled by the MemoryContextDelete below, so we must ensure that
-	 * the list is restored to its former state before exiting.  With the
-	 * new List implementation, the easiest way is to make a duplicate list
-	 * that gimme_tree can modify.
+	 * the list is restored to its former state before exiting.  We can
+	 * do this by truncating the list to its original length.  NOTE this
+	 * assumes that any added entries are appended at the end!
+	 *
+	 * We also must take care not to mess up the outer join_rel_hash,
+	 * if there is one.  We can do this by just temporarily setting the
+	 * link to NULL.  (If we are dealing with enough join rels, which we
+	 * very likely are, a new hash table will get built and used locally.)
 	 */
-	savelist = evaldata->root->join_rel_list;
+	savelength = list_length(evaldata->root->join_rel_list);
+	savehash = evaldata->root->join_rel_hash;
 
-	evaldata->root->join_rel_list = list_copy(savelist);
+	evaldata->root->join_rel_hash = NULL;
 
 	/* construct the best path for the given combination of relations */
 	joinrel = gimme_tree(tour, num_gene, evaldata);
@@ -105,8 +112,13 @@ geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	else
 		fitness = DBL_MAX;
 
-	/* restore join_rel_list */
-	evaldata->root->join_rel_list = savelist;
+	/*
+	 * Restore join_rel_list to its former state, and put back original
+	 * hashtable if any.
+	 */
+	evaldata->root->join_rel_list = list_truncate(evaldata->root->join_rel_list,
+												  savelength);
+	evaldata->root->join_rel_hash = savehash;
 
 	/* release all the memory acquired within gimme_tree */
 	MemoryContextSwitchTo(oldcxt);
