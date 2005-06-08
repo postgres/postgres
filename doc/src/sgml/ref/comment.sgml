@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.28 2005/05/26 20:05:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.29 2005/06/08 21:15:27 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -243,7 +243,7 @@ COMMENT ON INDEX my_index IS 'Enforces uniqueness on employee ID';
 COMMENT ON LANGUAGE plpython IS 'Python support for stored procedures';
 COMMENT ON LARGE OBJECT 346344 IS 'Planning document';
 COMMENT ON OPERATOR ^ (text, text) IS 'Performs intersection of two texts';
-COMMENT ON OPERATOR ^ (NONE, text) IS 'This is a prefix operator on text';
+COMMENT ON OPERATOR - (NONE, text) IS 'This is a prefix operator on text';
 COMMENT ON OPERATOR CLASS int4ops USING btree IS '4 byte integer operators for btrees';
 COMMENT ON RULE my_rule ON my_table IS 'Logs updates of employee records';
 COMMENT ON SCHEMA my_schema IS 'Departmental data';

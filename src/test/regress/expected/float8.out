@@ -204,7 +204,7 @@ SELECT '' AS five, f.f1, @f.f1 AS abs_f1
 (5 rows)
 
 -- truncate 
-SELECT '' AS five, f.f1, %f.f1 AS trunc_f1
+SELECT '' AS five, f.f1, trunc(f.f1) AS trunc_f1
    FROM FLOAT8_TBL f;
  five |          f1          |       trunc_f1       
 ------+----------------------+----------------------
@@ -216,7 +216,7 @@ SELECT '' AS five, f.f1, %f.f1 AS trunc_f1
 (5 rows)
 
 -- round 
-SELECT '' AS five, f.f1, f.f1 % AS round_f1
+SELECT '' AS five, f.f1, round(f.f1) AS round_f1
    FROM FLOAT8_TBL f;
  five |          f1          |       round_f1       
 ------+----------------------+----------------------

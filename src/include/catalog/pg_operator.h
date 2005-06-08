@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.132 2005/05/30 20:59:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.133 2005/06/08 21:15:28 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -259,8 +259,6 @@ DATA(insert OID = 594 (  "*"	   PGNSP PGUID b f 701 701 701 594	 0	 0	 0	 0	 0 f
 DATA(insert OID = 595 (  "@"	   PGNSP PGUID l f	 0 701 701	 0	 0	 0	 0	 0	 0 float8abs - - ));
 DATA(insert OID = 596 (  "|/"	   PGNSP PGUID l f	 0 701 701	 0	 0	 0	 0	 0	 0 dsqrt - - ));
 DATA(insert OID = 597 (  "||/"	   PGNSP PGUID l f	 0 701 701	 0	 0	 0	 0	 0	 0 dcbrt - - ));
-DATA(insert OID = 598 (  "%"	   PGNSP PGUID l f	 0 701 701	 0	 0	 0	 0	 0	 0 dtrunc - - ));
-DATA(insert OID = 599 (  "%"	   PGNSP PGUID r f 701	 0 701	 0	 0	 0	 0	 0	 0 dround - - ));
 DATA(insert OID = 1284 (  "|"	   PGNSP PGUID l f	 0 704 702	0  0   0   0   0   0 tintervalstart - - ));
 DATA(insert OID = 606 (  "<#>"	   PGNSP PGUID b f 702 702 704	0  0   0   0   0   0 mktinterval - - ));
 DATA(insert OID = 607 (  "="	   PGNSP PGUID b t	26	26	16 607 608 609 609 609 610 oideq eqsel eqjoinsel ));

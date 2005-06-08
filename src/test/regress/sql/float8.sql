@@ -79,11 +79,11 @@ SELECT '' AS five, f.f1, @f.f1 AS abs_f1
    FROM FLOAT8_TBL f;
 
 -- truncate 
-SELECT '' AS five, f.f1, %f.f1 AS trunc_f1
+SELECT '' AS five, f.f1, trunc(f.f1) AS trunc_f1
    FROM FLOAT8_TBL f;
 
 -- round 
-SELECT '' AS five, f.f1, f.f1 % AS round_f1
+SELECT '' AS five, f.f1, round(f.f1) AS round_f1
    FROM FLOAT8_TBL f;
 
 -- ceil / ceiling

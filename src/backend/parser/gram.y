@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.491 2005/05/07 02:22:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.492 2005/06/08 21:15:28 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -6099,14 +6099,6 @@ a_expr:		c_expr									{ $$ = $1; }
 				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, $2); }
 			| '-' a_expr					%prec UMINUS
 				{ $$ = doNegate($2); }
-			| '%' a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", NULL, $2); }
-			| '^' a_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", NULL, $2); }
-			| a_expr '%'
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", $1, NULL); }
-			| a_expr '^'
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", $1, NULL); }
 			| a_expr '+' a_expr
 				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", $1, $3); }
 			| a_expr '-' a_expr
@@ -6468,14 +6460,6 @@ b_expr:		c_expr
 				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", NULL, $2); }
 			| '-' b_expr					%prec UMINUS
 				{ $$ = doNegate($2); }
-			| '%' b_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", NULL, $2); }
-			| '^' b_expr
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", NULL, $2); }
-			| b_expr '%'
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "%", $1, NULL); }
-			| b_expr '^'
-				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "^", $1, NULL); }
 			| b_expr '+' b_expr
 				{ $$ = (Node *) makeSimpleA_Expr(AEXPR_OP, "+", $1, $3); }
 			| b_expr '-' b_expr
