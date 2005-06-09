@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.107 2005/06/05 01:48:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.108 2005/06/09 21:52:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,9 +42,9 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 {
 	int			newDateStyle = DateStyle;
 	int			newDateOrder = DateOrder;
+	bool		have_style = false;
+	bool		have_order = false;
 	bool		ok = true;
-	int			scnt = 0,
-				ocnt = 0;
 	char	   *rawstring;
 	char	   *result;
 	List	   *elemlist;
@@ -74,44 +74,58 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 
 		if (pg_strcasecmp(tok, "ISO") == 0)
 		{
+			if (have_style && newDateStyle != USE_ISO_DATES)
+				ok = false;		/* conflicting styles */
 			newDateStyle = USE_ISO_DATES;
-			scnt++;
+			have_style = true;
 		}
 		else if (pg_strcasecmp(tok, "SQL") == 0)
 		{
+			if (have_style && newDateStyle != USE_SQL_DATES)
+				ok = false;		/* conflicting styles */
 			newDateStyle = USE_SQL_DATES;
-			scnt++;
+			have_style = true;
 		}
 		else if (pg_strncasecmp(tok, "POSTGRES", 8) == 0)
 		{
+			if (have_style && newDateStyle != USE_POSTGRES_DATES)
+				ok = false;		/* conflicting styles */
 			newDateStyle = USE_POSTGRES_DATES;
-			scnt++;
+			have_style = true;
 		}
 		else if (pg_strcasecmp(tok, "GERMAN") == 0)
 		{
+			if (have_style && newDateStyle != USE_GERMAN_DATES)
+				ok = false;		/* conflicting styles */
 			newDateStyle = USE_GERMAN_DATES;
-			scnt++;
+			have_style = true;
 			/* GERMAN also sets DMY, unless explicitly overridden */
-			if (ocnt == 0)
+			if (!have_order)
 				newDateOrder = DATEORDER_DMY;
 		}
 		else if (pg_strcasecmp(tok, "YMD") == 0)
 		{
+			if (have_order && newDateOrder != DATEORDER_YMD)
+				ok = false;		/* conflicting orders */
 			newDateOrder = DATEORDER_YMD;
-			ocnt++;
+			have_order = true;
 		}
 		else if (pg_strcasecmp(tok, "DMY") == 0 ||
 				 pg_strncasecmp(tok, "EURO", 4) == 0)
 		{
+			if (have_order && newDateOrder != DATEORDER_DMY)
+				ok = false;		/* conflicting orders */
 			newDateOrder = DATEORDER_DMY;
-			ocnt++;
+			have_order = true;
 		}
 		else if (pg_strcasecmp(tok, "MDY") == 0 ||
 				 pg_strcasecmp(tok, "US") == 0 ||
 				 pg_strncasecmp(tok, "NONEURO", 7) == 0)
 		{
+			if (have_order && newDateOrder != DATEORDER_MDY)
+				ok = false;		/* conflicting orders */
 			newDateOrder = DATEORDER_MDY;
-			ocnt++;
+			have_order = true;
 		}
 		else if (pg_strcasecmp(tok, "DEFAULT") == 0)
 		{
@@ -128,9 +142,9 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 
 			subval = assign_datestyle(GetConfigOptionResetString("datestyle"),
 									  true, source);
-			if (scnt == 0)
+			if (!have_style)
 				newDateStyle = DateStyle;
-			if (ocnt == 0)
+			if (!have_order)
 				newDateOrder = DateOrder;
 			DateStyle = saveDateStyle;
 			DateOrder = saveDateOrder;
@@ -154,9 +168,6 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 			break;
 		}
 	}
-
-	if (scnt > 1 || ocnt > 1)
-		ok = false;
 
 	pfree(rawstring);
 	list_free(elemlist);
