@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.56 2005/06/09 15:27:27 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.57 2005/06/09 18:40:06 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1006,7 +1006,7 @@ troff_ms_escaped_print(const char *in, FILE *fout)
 		switch (*p)
 		{
 			case '\\':
-				fputs("\(rs", fout);
+				fputs("\\(rs", fout);
 				break;
 			default:
 				fputc(*p, fout);
