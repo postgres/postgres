@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.50 2005/06/09 18:23:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.51 2005/06/09 21:01:25 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -30,6 +30,7 @@
 
 #include "access/genam.h"
 #include "access/hash.h"
+#include "miscadmin.h"
 #include "storage/lmgr.h"
 #include "utils/lsyscache.h"
 
