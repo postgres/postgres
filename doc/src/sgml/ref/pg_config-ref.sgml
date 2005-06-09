@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.19 2005/01/04 03:58:16 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.20 2005/06/09 18:15:05 petere Exp $ -->
 
 <refentry id="app-pgconfig">
  <refmeta>
@@ -119,7 +119,7 @@
        This can be used to reproduce the identical configuration, or
        to find out with what options a binary package was built. (Note
        however that binary packages often contain vendor-specific custom
-       patches.)
+       patches.)  See also the examples below.
       </para>
      </listitem>
     </varlistentry>
@@ -159,6 +159,22 @@
   </para>
  </refsect1>
 
+
+ <refsect1>
+  <title>Example</title>
+
+  <para>
+   To reproduce the build configuration of the current PostgreSQL
+   installation, run the following command:
+<programlisting>
+eval ./configure `pg_config --configure`
+</programlisting>
+   The output of <literal>pg_config --configure</literal> contains
+   shell quotation marks so arguments with spaces are represented
+   correctly.  Therefore, using <literal>eval</literal> is required
+   for proper results.
+  </para>
+ </refsect1>
 
  <refsect1>
   <title>History</title>
