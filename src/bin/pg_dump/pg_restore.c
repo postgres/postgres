@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.70 2005/04/29 07:08:06 neilc Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.71 2005/06/09 17:56:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,6 +103,7 @@ main(int argc, char **argv)
 		{"no-reconnect", 0, NULL, 'R'},
 		{"port", 1, NULL, 'p'},
 		{"password", 0, NULL, 'W'},
+		{"schema", 1, NULL, 'n'},
 		{"schema-only", 0, NULL, 's'},
 		{"superuser", 1, NULL, 'S'},
 		{"table", 1, NULL, 't'},
@@ -141,7 +142,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:lL:Op:P:RsS:t:T:uU:vWxX:",
+	while ((c = getopt_long(argc, argv, "acCd:ef:F:h:iI:lL:n:Op:P:RsS:t:T:uU:vWxX:",
 							cmdopts, NULL)) != -1)
 	{
 		switch (c)
@@ -221,6 +222,11 @@ main(int argc, char **argv)
 				opts->selTypes = 1;
 				opts->selTable = 1;
 				opts->tableNames = strdup(optarg);
+				break;
+
+			case 'n':			/* Dump data for this schema only */
+				opts->selTypes = 1;
+				opts->schemaNames = strdup(optarg);
 				break;
 
 			case 'u':
@@ -375,6 +381,7 @@ usage(const char *progname)
 	printf(_("  -I, --index=NAME         restore named index\n"));
 	printf(_("  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 			 "                           output from this file\n"));
+	printf(_("  -n, --schema=NAME        restore only objects in this schema\n"));
 	printf(_("  -O, --no-owner           skip restoration of object ownership\n"));
 	printf(_("  -P, --function=NAME(args)\n"
 			 "                           restore named function\n"));

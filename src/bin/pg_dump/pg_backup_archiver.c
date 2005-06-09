@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.109 2005/05/17 17:30:29 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.110 2005/06/09 17:56:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1997,6 +1997,14 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt, bool include_acls)
 	/* Check if tablename only is wanted */
 	if (ropt->selTypes)
 	{
+		if (ropt->schemaNames)
+		{
+			/* If no namespace is specified, it means all. */
+			if (!te->namespace)
+				return 0;
+			if(strcmp(ropt->schemaNames, te->namespace) != 0)
+				return 0;
+		}
 		if ((strcmp(te->desc, "TABLE") == 0) || (strcmp(te->desc, "TABLE DATA") == 0))
 		{
 			if (!ropt->selTable)

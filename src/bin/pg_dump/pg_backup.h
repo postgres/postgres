@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.34 2004/11/06 19:36:01 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.35 2005/06/09 17:56:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,6 +98,7 @@ typedef struct _restoreOptions
 	char	   *indexNames;
 	char	   *functionNames;
 	char	   *tableNames;
+	char	   *schemaNames;
 	char	   *triggerNames;
 
 	int			useDB;

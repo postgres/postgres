@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.51 2005/05/29 03:32:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.52 2005/06/09 17:56:51 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -235,6 +235,18 @@
         order they appear in the file. Lines can be moved and may also
         be commented out by placing a <literal>;</literal> at the
         start of the line.  (See below for examples.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-n <replaceable class="parameter">namespace</replaceable></option></term>
+      <term><option>--schema=<replaceable class="parameter">schema</replaceable></option></term>
+      <listitem>
+       <para>
+        Restore only definitions and/or data in the named schema. Not to be
+        confused with the <option>-s</option> option.  This can be combined with
+        <option>-t</option> option.
        </para>
       </listitem>
      </varlistentry>
