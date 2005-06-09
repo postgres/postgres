@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.323 2005/06/09 22:29:52 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.324 2005/06/09 22:35:23 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -2841,12 +2841,12 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
             </row>
             <row>
              <entry><literal>%t</literal></entry>
-             <entry>Time stamp</entry>
+             <entry>Time stamp (no milliseconds)</entry>
              <entry>no</entry>
             </row>
             <row>
              <entry><literal>%m</literal></entry>
-             <entry>Timestamp with milliseconds</entry>
+             <entry>Time stamp with milliseconds</entry>
              <entry>no</entry>
             </row>
             <row>

@@ -244,7 +244,7 @@
 				# %r = remote host and port
 				# %h = remote host
 				# %p = PID
-				# %t = timestamp 
+				# %t = timestamp (no milliseconds)
 				# %m = timestamp with milliseconds
 				# %i = command tag
 				# %c = session id
