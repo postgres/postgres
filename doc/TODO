@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Jun  7 10:12:04 EDT 2005
+Last updated:		Wed Jun  8 23:00:21 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -473,15 +473,11 @@ Commands
 	o Disallow dropping of an inherited constraint
 	o Allow objects to be moved to different schemas
 	o Allow ALTER TABLESPACE to move to different directories
-	o Allow databases and schemas to be moved to different tablespaces
-
-	  One complexity is whether moving a schema should move all existing
-	  schema objects or just define the location for future object creation.
-
+	o Allow databases to be moved to different tablespaces
 	o Allow moving system tables to other tablespaces, where possible
 
 	  Currently non-global system tables must be in the default database
-	  schema. Global system tables can never be moved.
+	  tablespace. Global system tables can never be moved.
 
 	o Prevent child tables from altering constraints like CHECK that were
 	  inherited from the parent table
