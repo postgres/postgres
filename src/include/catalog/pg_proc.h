@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.364 2005/06/07 07:08:34 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.365 2005/06/09 16:35:09 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1459,6 +1459,8 @@ DATA(insert OID = 1156 (  timestamptz_ge   PGNSP PGUID 12 f f t f i 2 16 "1184 1
 DESCR("greater-than-or-equal");
 DATA(insert OID = 1157 (  timestamptz_gt   PGNSP PGUID 12 f f t f i 2 16 "1184 1184" _null_ _null_ _null_ timestamp_gt - _null_ ));
 DESCR("greater-than");
+DATA(insert OID = 1158 (  to_timestamp	   PGNSP PGUID 14 f f t f i 1 1184 "701" _null_	_null_ _null_ "select (\'epoch\'::timestamptz + $1 * \'1 second\'::interval)" - _null_ ));
+DESCR("convert UNIX epoch to timestamptz");
 DATA(insert OID = 1159 (  timezone		   PGNSP PGUID 12 f f t f i 2 1114 "25 1184" _null_ _null_ _null_  timestamptz_zone - _null_ ));
 DESCR("adjust timestamp to new time zone");
 

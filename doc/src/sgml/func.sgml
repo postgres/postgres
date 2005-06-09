@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.252 2005/06/07 07:08:34 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.253 2005/06/09 16:35:08 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -4082,6 +4082,13 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     argument is the value to be formatted and the second argument is a
     template that defines the output or input format.
    </para>
+   <para>
+    The <function>to_timestamp</function> function can also take a single 
+    <type>double precision</type> argument to convert from Unix epoch to 
+    <type>timestamp with time zone</type>.
+    (<type>Integer</type> Unix epochs are implicitly cast to 
+    <type>double precision</type>.)
+   </para>
 
     <table id="functions-formatting-table">
      <title>Formatting Functions</title>
@@ -4137,6 +4144,12 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry><type>timestamp with time zone</type></entry>
         <entry>convert string to time stamp</entry>
         <entry><literal>to_timestamp('05&nbsp;Dec&nbsp;2000', 'DD&nbsp;Mon&nbsp;YYYY')</literal></entry>
+       </row>
+       <row>
+        <entry><literal><function>to_timestamp</function>(<type>double precision</type>)</literal></entry>
+        <entry><type>timestamp with time zone</type></entry>
+        <entry>convert UNIX epoch to time stamp</entry>
+        <entry><literal>to_timestamp(200120400)</literal></entry>
        </row>
        <row>
         <entry><literal><function>to_number</function>(<type>text</type>, <type>text</type>)</literal></entry>
