@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.38 2005/03/31 22:46:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.39 2005/06/09 18:44:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #define FMGR_H
 
 /* We don't want to include primnodes.h here, so make a stub reference */
-struct Node;
+typedef struct Node *fmNodePtr;
 
 
 /*
@@ -51,7 +51,7 @@ typedef struct FmgrInfo
 	bool		fn_retset;		/* function returns a set */
 	void	   *fn_extra;		/* extra space for use by handler */
 	MemoryContext fn_mcxt;		/* memory context to store fn_extra in */
-	struct Node *fn_expr;		/* expression parse tree for call, or NULL */
+	fmNodePtr	fn_expr;		/* expression parse tree for call, or NULL */
 } FmgrInfo;
 
 /*
@@ -60,8 +60,8 @@ typedef struct FmgrInfo
 typedef struct FunctionCallInfoData
 {
 	FmgrInfo   *flinfo;			/* ptr to lookup info used for this call */
-	struct Node *context;		/* pass info about context of call */
-	struct Node *resultinfo;	/* pass or return extra info about result */
+	fmNodePtr	context;		/* pass info about context of call */
+	fmNodePtr	resultinfo;		/* pass or return extra info about result */
 	bool		isnull;			/* function must set true if result is
 								 * NULL */
 	short		nargs;			/* # arguments actually passed */
@@ -405,7 +405,7 @@ extern void clear_external_function_hash(void *filehandle);
 extern Oid	fmgr_internal_function(const char *proname);
 extern Oid	get_fn_expr_rettype(FmgrInfo *flinfo);
 extern Oid	get_fn_expr_argtype(FmgrInfo *flinfo, int argnum);
-extern Oid	get_call_expr_argtype(struct Node *expr, int argnum);
+extern Oid	get_call_expr_argtype(fmNodePtr expr, int argnum);
 
 /*
  * Routines in dfmgr.c
