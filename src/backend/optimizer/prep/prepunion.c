@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.122 2005/06/05 22:32:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.123 2005/06/09 04:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1023,6 +1023,9 @@ adjust_inherited_attrs_mutator(Node *node,
 		newinfo->clause_relids = adjust_relid_set(oldinfo->clause_relids,
 												  context->old_rt_index,
 												  context->new_rt_index);
+		newinfo->required_relids = adjust_relid_set(oldinfo->required_relids,
+													context->old_rt_index,
+													context->new_rt_index);
 		newinfo->left_relids = adjust_relid_set(oldinfo->left_relids,
 												context->old_rt_index,
 												context->new_rt_index);

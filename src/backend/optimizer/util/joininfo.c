@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * joininfo.c
- *	  JoinInfo node manipulation routines
+ *	  joininfo list manipulation routines
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.42 2005/06/05 22:32:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.43 2005/06/09 04:19:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,58 +19,49 @@
 
 
 /*
- * find_joininfo_node
- *	  Find the joininfo node within a relation entry corresponding
- *	  to a join between 'this_rel' and the relations in 'join_relids'.
- *	  If there is no such node, return NULL.
- *
- * Returns a joininfo node, or NULL.
+ * have_relevant_joinclause
+ *		Detect whether there is a joinclause that can be used to join
+ *		the two given relations.
  */
-JoinInfo *
-find_joininfo_node(RelOptInfo *this_rel, Relids join_relids)
+bool
+have_relevant_joinclause(RelOptInfo *rel1, RelOptInfo *rel2)
 {
+	bool		result = false;
+	Relids		join_relids;
+	List	   *joininfo;
 	ListCell   *l;
 
-	foreach(l, this_rel->joininfo)
+	join_relids = bms_union(rel1->relids, rel2->relids);
+
+	/*
+	 * We could scan either relation's joininfo list; may as well use the
+	 * shorter one.
+	 */
+	if (list_length(rel1->joininfo) <= list_length(rel2->joininfo))
+		joininfo = rel1->joininfo;
+	else
+		joininfo = rel2->joininfo;
+
+	foreach(l, joininfo)
 	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(l);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
-		if (bms_equal(join_relids, joininfo->unjoined_relids))
-			return joininfo;
+		if (bms_is_subset(rinfo->required_relids, join_relids))
+		{
+			result = true;
+			break;
+		}
 	}
-	return NULL;
-}
 
-/*
- * make_joininfo_node
- *	  Find the joininfo node within a relation entry corresponding
- *	  to a join between 'this_rel' and the relations in 'join_relids'.
- *	  A new node is created and added to the relation entry's joininfo
- *	  field if the desired one can't be found.
- *
- * Returns a joininfo node.
- */
-JoinInfo *
-make_joininfo_node(RelOptInfo *this_rel, Relids join_relids)
-{
-	JoinInfo   *joininfo = find_joininfo_node(this_rel, join_relids);
+	bms_free(join_relids);
 
-	if (joininfo == NULL)
-	{
-		joininfo = makeNode(JoinInfo);
-		joininfo->unjoined_relids = join_relids;
-		joininfo->jinfo_restrictinfo = NIL;
-		this_rel->joininfo = lcons(joininfo, this_rel->joininfo);
-	}
-	return joininfo;
+	return result;
 }
 
 
 /*
  * add_join_clause_to_rels
- *	  For every relation participating in a join clause, add 'restrictinfo' to
- *	  the appropriate joininfo list (creating a new list and adding it to the
- *	  appropriate rel node if necessary).
+ *	  Add 'restrictinfo' to the joininfo list of each relation it requires.
  *
  * Note that the same copy of the restrictinfo node is linked to by all the
  * lists it is in.	This allows us to exploit caching of information about
@@ -89,32 +80,12 @@ add_join_clause_to_rels(PlannerInfo *root,
 	Relids		tmprelids;
 	int			cur_relid;
 
-	/* For every relid, find the joininfo, and add the proper join entries */
 	tmprelids = bms_copy(join_relids);
 	while ((cur_relid = bms_first_member(tmprelids)) >= 0)
 	{
-		Relids		unjoined_relids;
-		JoinInfo   *joininfo;
+		RelOptInfo *rel = find_base_rel(root, cur_relid);
 
-		/* Get the relids not equal to the current relid */
-		unjoined_relids = bms_copy(join_relids);
-		unjoined_relids = bms_del_member(unjoined_relids, cur_relid);
-		Assert(!bms_is_empty(unjoined_relids));
-
-		/*
-		 * Find or make the joininfo node for this combination of rels,
-		 * and add the restrictinfo node to it.
-		 */
-		joininfo = make_joininfo_node(find_base_rel(root, cur_relid),
-									  unjoined_relids);
-		joininfo->jinfo_restrictinfo = lappend(joininfo->jinfo_restrictinfo,
-											   restrictinfo);
-
-		/*
-		 * Can't bms_free(unjoined_relids) because new joininfo node may
-		 * link to it.	We could avoid leaking memory by doing bms_copy()
-		 * in make_joininfo_node, but for now speed seems better.
-		 */
+		rel->joininfo = lappend(rel->joininfo, restrictinfo);
 	}
 	bms_free(tmprelids);
 }
@@ -138,34 +109,17 @@ remove_join_clause_from_rels(PlannerInfo *root,
 	Relids		tmprelids;
 	int			cur_relid;
 
-	/* For every relid, find the joininfo */
 	tmprelids = bms_copy(join_relids);
 	while ((cur_relid = bms_first_member(tmprelids)) >= 0)
 	{
-		Relids		unjoined_relids;
-		JoinInfo   *joininfo;
-
-		/* Get the relids not equal to the current relid */
-		unjoined_relids = bms_copy(join_relids);
-		unjoined_relids = bms_del_member(unjoined_relids, cur_relid);
-		Assert(!bms_is_empty(unjoined_relids));
-
-		/*
-		 * Find the joininfo node for this combination of rels; it should
-		 * exist already, if add_join_clause_to_rels was called.
-		 */
-		joininfo = find_joininfo_node(find_base_rel(root, cur_relid),
-									  unjoined_relids);
-		Assert(joininfo);
+		RelOptInfo *rel = find_base_rel(root, cur_relid);
 
 		/*
 		 * Remove the restrictinfo from the list.  Pointer comparison is
 		 * sufficient.
 		 */
-		Assert(list_member_ptr(joininfo->jinfo_restrictinfo, restrictinfo));
-		joininfo->jinfo_restrictinfo = list_delete_ptr(joininfo->jinfo_restrictinfo,
-													   restrictinfo);
-		bms_free(unjoined_relids);
+		Assert(list_member_ptr(rel->joininfo, restrictinfo));
+		rel->joininfo = list_delete_ptr(rel->joininfo, restrictinfo);
 	}
 	bms_free(tmprelids);
 }

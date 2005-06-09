@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.75 2005/06/08 23:02:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.76 2005/06/09 04:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include <math.h>
 
 #include "optimizer/geqo.h"
+#include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "utils/memutils.h"
@@ -261,13 +262,8 @@ desirable_join(PlannerInfo *root,
 	/*
 	 * Join if there is an applicable join clause.
 	 */
-	foreach(l, outer_rel->joininfo)
-	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(l);
-
-		if (bms_is_subset(joininfo->unjoined_relids, inner_rel->relids))
-			return true;
-	}
+	if (have_relevant_joinclause(outer_rel, inner_rel))
+		return true;
 
 	/*
 	 * Join if the rels are members of the same IN sub-select.	This is

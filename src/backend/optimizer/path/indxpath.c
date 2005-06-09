@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.181 2005/06/05 22:32:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.182 2005/06/09 04:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,8 +71,6 @@ static Oid indexable_operator(Expr *clause, Oid opclass,
 static bool pred_test_recurse(Node *clause, Node *predicate);
 static bool pred_test_simple_clause(Expr *predicate, Node *clause);
 static Relids indexable_outerrelids(RelOptInfo *rel);
-static bool list_matches_any_index(List *clauses, RelOptInfo *rel,
-								   Relids outer_relids);
 static bool matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel,
 							  Relids outer_relids);
 static List *find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
@@ -908,7 +906,7 @@ pred_test(List *predicate_list, List *restrictinfo_list)
 	 * classes over equi-joined attributes (i.e., if it recognized that a
 	 * qualification such as "where a.b=c.d and a.b=5" could make use of
 	 * an index on c.d), then we could use that equivalence class info
-	 * here with joininfo_list to do more complete tests for the usability
+	 * here with joininfo lists to do more complete tests for the usability
 	 * of a partial index.	For now, the test only uses restriction
 	 * clauses (those in restrictinfo_list). --Nels, Dec '92
 	 *
@@ -1550,90 +1548,72 @@ indexable_outerrelids(RelOptInfo *rel)
 	Relids		outer_relids = NULL;
 	ListCell   *l;
 
+	/*
+	 * Examine each joinclause in the joininfo list to see if it matches any
+	 * key of any index.  If so, add the clause's other rels to the result.
+	 * (Note: we consider only actual participants, not extraneous rels
+	 * possibly mentioned in required_relids.)
+	 */
 	foreach(l, rel->joininfo)
 	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(l);
+		RestrictInfo *joininfo = (RestrictInfo *) lfirst(l);
+		Relids	other_rels;
 
-		/*
-		 * Examine each joinclause in the JoinInfo node's list to see if
-		 * it matches any key of any index.  If so, add the JoinInfo's
-		 * otherrels to the result.  We can skip examining other
-		 * joinclauses in the same list as soon as we find a match, since
-		 * by definition they all have the same otherrels.
-		 */
-		if (list_matches_any_index(joininfo->jinfo_restrictinfo,
-								   rel,
-								   joininfo->unjoined_relids))
-			outer_relids = bms_add_members(outer_relids,
-										   joininfo->unjoined_relids);
+		other_rels = bms_difference(joininfo->clause_relids, rel->relids);
+		if (matches_any_index(joininfo, rel, other_rels))
+			outer_relids = bms_join(outer_relids, other_rels);
+		else
+			bms_free(other_rels);
 	}
 
 	return outer_relids;
 }
 
 /*
- * list_matches_any_index
- *	  Workhorse for indexable_outerrelids: given a list of RestrictInfos,
- *	  see if any of them match any index of the given rel.
- *
- * We define it like this so that we can recurse into OR subclauses.
- */
-static bool
-list_matches_any_index(List *clauses, RelOptInfo *rel, Relids outer_relids)
-{
-	ListCell   *l;
-
-	foreach(l, clauses)
-	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
-		ListCell *j;
-
-		Assert(IsA(rinfo, RestrictInfo));
-
-		/* RestrictInfos that aren't ORs are easy */
-		if (!restriction_is_or_clause(rinfo))
-		{
-			if (matches_any_index(rinfo, rel, outer_relids))
-				return true;
-			continue;
-		}
-
-		foreach(j, ((BoolExpr *) rinfo->orclause)->args)
-		{
-			Node   *orarg = (Node *) lfirst(j);
-
-			/* OR arguments should be ANDs or sub-RestrictInfos */
-			if (and_clause(orarg))
-			{
-				List   *andargs = ((BoolExpr *) orarg)->args;
-
-				/* Recurse to examine AND items and sub-ORs */
-				if (list_matches_any_index(andargs, rel, outer_relids))
-					return true;
-			}
-			else
-			{
-				Assert(IsA(orarg, RestrictInfo));
-				Assert(!restriction_is_or_clause((RestrictInfo *) orarg));
-				if (matches_any_index((RestrictInfo *) orarg, rel,
-									   outer_relids))
-					return true;
-			}
-		}
-	}
-
-	return false;
-}
-
-/*
  * matches_any_index
- *	  Workhorse for indexable_outerrelids: see if a simple joinclause can be
+ *	  Workhorse for indexable_outerrelids: see if a joinclause can be
  *	  matched to any index of the given rel.
  */
 static bool
 matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel, Relids outer_relids)
 {
 	ListCell   *l;
+
+	Assert(IsA(rinfo, RestrictInfo));
+
+	if (restriction_is_or_clause(rinfo))
+	{
+		foreach(l, ((BoolExpr *) rinfo->orclause)->args)
+		{
+			Node   *orarg = (Node *) lfirst(l);
+
+			/* OR arguments should be ANDs or sub-RestrictInfos */
+			if (and_clause(orarg))
+			{
+				ListCell   *j;
+
+				/* Recurse to examine AND items and sub-ORs */
+				foreach(j, ((BoolExpr *) orarg)->args)
+				{
+					RestrictInfo *arinfo = (RestrictInfo *) lfirst(j);
+
+					if (matches_any_index(arinfo, rel, outer_relids))
+						return true;
+				}
+			}
+			else
+			{
+				/* Recurse to examine simple clause */
+				Assert(IsA(orarg, RestrictInfo));
+				Assert(!restriction_is_or_clause((RestrictInfo *) orarg));
+				if (matches_any_index((RestrictInfo *) orarg, rel,
+									  outer_relids))
+					return true;
+			}
+		}
+
+		return false;
+	}
 
 	/* Normal case for a simple restriction clause */
 	foreach(l, rel->indexlist)
@@ -1833,7 +1813,7 @@ find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 {
 	List	   *clause_list = NIL;
 	bool		jfound = false;
-	int			numsources;
+	Relids		join_relids;
 	ListCell   *l;
 
 	/*
@@ -1854,46 +1834,33 @@ find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 		clause_list = lappend(clause_list, rinfo);
 	}
 
-	/* found anything in base restrict list? */
-	numsources = (clause_list != NIL) ? 1 : 0;
-
 	/* Look for joinclauses that are usable with given outer_relids */
+	join_relids = bms_union(rel->relids, outer_relids);
+
 	foreach(l, rel->joininfo)
 	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(l);
-		bool		jfoundhere = false;
-		ListCell   *j;
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
-		if (!bms_is_subset(joininfo->unjoined_relids, outer_relids))
+		/* Can't use pushed-down clauses in outer join */
+		if (isouterjoin && rinfo->is_pushed_down)
+			continue;
+		if (!bms_is_subset(rinfo->required_relids, join_relids))
 			continue;
 
-		foreach(j, joininfo->jinfo_restrictinfo)
-		{
-			RestrictInfo *rinfo = (RestrictInfo *) lfirst(j);
-
-			/* Can't use pushed-down clauses in outer join */
-			if (isouterjoin && rinfo->is_pushed_down)
-				continue;
-
-			clause_list = lappend(clause_list, rinfo);
-			if (!jfoundhere)
-			{
-				jfoundhere = true;
-				jfound = true;
-				numsources++;
-			}
-		}
+		clause_list = lappend(clause_list, rinfo);
+		jfound = true;
 	}
+
+	bms_free(join_relids);
 
 	/* if no join clause was matched then forget it, per comments above */
 	if (!jfound)
 		return NIL;
 
 	/*
-	 * If we found clauses in more than one list, we may now have
-	 * clauses that are known redundant.  Get rid of 'em.
+	 * We may now have clauses that are known redundant.  Get rid of 'em.
 	 */
-	if (numsources > 1)
+	if (list_length(clause_list) > 1)
 	{
 		clause_list = remove_redundant_join_clauses(root,
 													clause_list,
@@ -2304,7 +2271,8 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 				{
 					resultquals = lappend(resultquals,
 										  make_restrictinfo(boolqual,
-															true, true));
+															true, true,
+															NULL));
 					continue;
 				}
 			}
@@ -2553,7 +2521,7 @@ prefix_quals(Node *leftop, Oid opclass,
 			elog(ERROR, "no = operator for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) prefix_const);
-		result = list_make1(make_restrictinfo(expr, true, true));
+		result = list_make1(make_restrictinfo(expr, true, true, NULL));
 		return result;
 	}
 
@@ -2568,7 +2536,7 @@ prefix_quals(Node *leftop, Oid opclass,
 		elog(ERROR, "no >= operator for opclass %u", opclass);
 	expr = make_opclause(oproid, BOOLOID, false,
 						 (Expr *) leftop, (Expr *) prefix_const);
-	result = list_make1(make_restrictinfo(expr, true, true));
+	result = list_make1(make_restrictinfo(expr, true, true, NULL));
 
 	/*-------
 	 * If we can create a string larger than the prefix, we can say
@@ -2584,7 +2552,7 @@ prefix_quals(Node *leftop, Oid opclass,
 			elog(ERROR, "no < operator for opclass %u", opclass);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) greaterstr);
-		result = lappend(result, make_restrictinfo(expr, true, true));
+		result = lappend(result, make_restrictinfo(expr, true, true, NULL));
 	}
 
 	return result;
@@ -2655,7 +2623,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1, opr1right,
 											false, false));
-	result = list_make1(make_restrictinfo(expr, true, true));
+	result = list_make1(make_restrictinfo(expr, true, true, NULL));
 
 	/* create clause "key <= network_scan_last( rightop )" */
 
@@ -2670,7 +2638,7 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 						 (Expr *) leftop,
 						 (Expr *) makeConst(datatype, -1, opr2right,
 											false, false));
-	result = lappend(result, make_restrictinfo(expr, true, true));
+	result = lappend(result, make_restrictinfo(expr, true, true, NULL));
 
 	return result;
 }

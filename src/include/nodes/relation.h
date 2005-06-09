@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.112 2005/06/08 23:02:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.113 2005/06/09 04:19:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ typedef struct PlannerInfo
  * and joins that the relation participates in:
  *
  *		baserestrictinfo - List of RestrictInfo nodes, containing info about
- *					each qualification clause in which this relation
+ *					each non-join qualification clause in which this relation
  *					participates (only used for base rels)
  *		baserestrictcost - Estimated cost of evaluating the baserestrictinfo
  *					clauses at a single tuple (only used for base rels)
@@ -189,8 +189,8 @@ typedef struct PlannerInfo
  *					side of an outer join, the set of all relids
  *					participating in the highest such outer join; else NULL.
  *					Otherwise, unused.
- *		joininfo  - List of JoinInfo nodes, containing info about each join
- *					clause in which this relation participates
+ *		joininfo  - List of RestrictInfo nodes, containing info about each
+ *					join clause in which this relation participates
  *		index_outer_relids - only used for base rels; set of outer relids
  *					that participate in indexable joinclauses for this rel
  *		index_inner_paths - only used for base rels; list of InnerIndexscanInfo
@@ -206,7 +206,7 @@ typedef struct PlannerInfo
  * and should not be processed again at the level of {1 2 3}.)	Therefore,
  * the restrictinfo list in the join case appears in individual JoinPaths
  * (field joinrestrictinfo), not in the parent relation.  But it's OK for
- * the RelOptInfo to store the joininfo lists, because those are the same
+ * the RelOptInfo to store the joininfo list, because that is the same
  * for a given rel no matter how we form it.
  *
  * We store baserestrictcost in the RelOptInfo (for base relations) because
@@ -262,7 +262,8 @@ typedef struct RelOptInfo
 										 * base rel) */
 	QualCost	baserestrictcost;		/* cost of evaluating the above */
 	Relids		outerjoinset;	/* set of base relids */
-	List	   *joininfo;		/* JoinInfo structures */
+	List	   *joininfo;		/* RestrictInfo structures for join clauses
+								 * involving this rel */
 
 	/* cached info about inner indexscan paths for relation: */
 	Relids		index_outer_relids;		/* other relids in indexable join
@@ -645,8 +646,8 @@ typedef struct HashPath
  * in the baserestrictinfo list of the RelOptInfo for that base rel.
  *
  * If a restriction clause references more than one base rel, it will
- * appear in the JoinInfo lists of every RelOptInfo that describes a strict
- * subset of the base rels mentioned in the clause.  The JoinInfo lists are
+ * appear in the joininfo list of every RelOptInfo that describes a strict
+ * subset of the base rels mentioned in the clause.  The joininfo lists are
  * used to drive join tree building by selecting plausible join candidates.
  * The clause cannot actually be applied until we have built a join rel
  * containing all the base rels it references, however.
@@ -676,8 +677,8 @@ typedef struct HashPath
  * pushed down to a lower level than its original syntactic placement in the
  * join tree would suggest.  If an outer join prevents us from pushing a qual
  * down to its "natural" semantic level (the level associated with just the
- * base rels used in the qual) then the qual will appear in JoinInfo lists
- * that reference more than just the base rels it actually uses.  By
+ * base rels used in the qual) then we mark the qual with a "required_relids"
+ * value including more than just the base rels it actually uses.  By
  * pretending that the qual references all the rels appearing in the outer
  * join, we prevent it from being evaluated below the outer join's joinrel.
  * When we do form the outer join's joinrel, we still need to distinguish
@@ -685,11 +686,11 @@ typedef struct HashPath
  * that appeared higher in the tree and were pushed down to the join rel
  * because they used no other rels.  That's what the is_pushed_down flag is
  * for; it tells us that a qual came from a point above the join of the
- * specific set of base rels that it uses (or that the JoinInfo structures
- * claim it uses).	A clause that originally came from WHERE will *always*
- * have its is_pushed_down flag set; a clause that came from an INNER JOIN
- * condition, but doesn't use all the rels being joined, will also have
- * is_pushed_down set because it will get attached to some lower joinrel.
+ * set of base rels listed in required_relids.  A clause that originally came
+ * from WHERE will *always* have its is_pushed_down flag set; a clause that
+ * came from an INNER JOIN condition, but doesn't use all the rels being
+ * joined, will also have is_pushed_down set because it will get attached to
+ * some lower joinrel.
  *
  * We also store a valid_everywhere flag, which says that the clause is not
  * affected by any lower-level outer join, and therefore any conditions it
@@ -732,8 +733,11 @@ typedef struct RestrictInfo
 	 */
 	bool		can_join;
 
-	/* The set of relids (varnos) referenced in the clause: */
+	/* The set of relids (varnos) actually referenced in the clause: */
 	Relids		clause_relids;
+
+	/* The set of relids required to evaluate the clause: */
+	Relids		required_relids;
 
 	/* These fields are set for any binary opclause: */
 	Relids		left_relids;	/* relids in left side of clause */
@@ -766,27 +770,6 @@ typedef struct RestrictInfo
 	Selectivity left_bucketsize;	/* avg bucketsize of left side */
 	Selectivity right_bucketsize;		/* avg bucketsize of right side */
 } RestrictInfo;
-
-/*
- * Join clause info.
- *
- * We make a list of these for each RelOptInfo, containing info about
- * all the join clauses this RelOptInfo participates in.  (For this
- * purpose, a "join clause" is a WHERE clause that mentions both vars
- * belonging to this relation and vars belonging to relations not yet
- * joined to it.)  We group these clauses according to the set of
- * other base relations (unjoined relations) mentioned in them.
- * There is one JoinInfo for each distinct set of unjoined_relids,
- * and its jinfo_restrictinfo lists the clause(s) that use that set
- * of other relations.
- */
-
-typedef struct JoinInfo
-{
-	NodeTag		type;
-	Relids		unjoined_relids;	/* some rels not yet part of my RelOptInfo */
-	List	   *jinfo_restrictinfo;		/* relevant RestrictInfos */
-} JoinInfo;
 
 /*
  * Inner indexscan info.

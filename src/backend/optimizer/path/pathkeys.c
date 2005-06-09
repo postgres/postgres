@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.67 2005/06/05 22:32:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.68 2005/06/09 04:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1157,11 +1157,11 @@ make_pathkeys_for_mergeclauses(PlannerInfo *root,
 /*
  * pathkeys_useful_for_merging
  *		Count the number of pathkeys that may be useful for mergejoins
- *		above the given relation (by looking at its joininfo lists).
+ *		above the given relation (by looking at its joininfo list).
  *
  * We consider a pathkey potentially useful if it corresponds to the merge
  * ordering of either side of any joinclause for the rel.  This might be
- * overoptimistic, since joinclauses that appear in different join lists
+ * overoptimistic, since joinclauses that require different other relations
  * might never be usable at the same time, but trying to be exact is likely
  * to be more trouble than it's worth.
  */
@@ -1179,31 +1179,22 @@ pathkeys_useful_for_merging(PlannerInfo *root, RelOptInfo *rel, List *pathkeys)
 
 		foreach(j, rel->joininfo)
 		{
-			JoinInfo   *joininfo = (JoinInfo *) lfirst(j);
-			ListCell   *k;
+			RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(j);
 
-			foreach(k, joininfo->jinfo_restrictinfo)
+			if (restrictinfo->mergejoinoperator == InvalidOid)
+				continue;
+			cache_mergeclause_pathkeys(root, restrictinfo);
+
+			/*
+			 * We can compare canonical pathkey sublists by simple
+			 * pointer equality; see compare_pathkeys.
+			 */
+			if (pathkey == restrictinfo->left_pathkey ||
+				pathkey == restrictinfo->right_pathkey)
 			{
-				RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(k);
-
-				if (restrictinfo->mergejoinoperator == InvalidOid)
-					continue;
-				cache_mergeclause_pathkeys(root, restrictinfo);
-
-				/*
-				 * We can compare canonical pathkey sublists by simple
-				 * pointer equality; see compare_pathkeys.
-				 */
-				if (pathkey == restrictinfo->left_pathkey ||
-					pathkey == restrictinfo->right_pathkey)
-				{
-					matched = true;
-					break;
-				}
-			}
-
-			if (matched)
+				matched = true;
 				break;
+			}
 		}
 
 		/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.36 2005/06/05 22:32:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.37 2005/06/09 04:19:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,8 @@
 static RestrictInfo *make_restrictinfo_internal(Expr *clause,
 						   Expr *orclause,
 						   bool is_pushed_down,
-						   bool valid_everywhere);
+						   bool valid_everywhere,
+						   Relids required_relids);
 static Expr *make_sub_restrictinfos(Expr *clause,
 					   bool is_pushed_down,
 					   bool valid_everywhere);
@@ -40,14 +41,16 @@ static RestrictInfo *join_clause_is_redundant(PlannerInfo *root,
  * Build a RestrictInfo node containing the given subexpression.
  *
  * The is_pushed_down and valid_everywhere flags must be supplied by the
- * caller.
+ * caller.  required_relids can be NULL, in which case it defaults to the
+ * actual clause contents (i.e., clause_relids).
  *
  * We initialize fields that depend only on the given subexpression, leaving
  * others that depend on context (or may never be needed at all) to be filled
  * later.
  */
 RestrictInfo *
-make_restrictinfo(Expr *clause, bool is_pushed_down, bool valid_everywhere)
+make_restrictinfo(Expr *clause, bool is_pushed_down, bool valid_everywhere,
+				  Relids required_relids)
 {
 	/*
 	 * If it's an OR clause, build a modified copy with RestrictInfos
@@ -62,7 +65,8 @@ make_restrictinfo(Expr *clause, bool is_pushed_down, bool valid_everywhere)
 	Assert(!and_clause((Node *) clause));
 
 	return make_restrictinfo_internal(clause, NULL,
-									  is_pushed_down, valid_everywhere);
+									  is_pushed_down, valid_everywhere,
+									  required_relids);
 }
 
 /*
@@ -133,7 +137,8 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
 			list_make1(make_restrictinfo_internal(make_orclause(withoutris),
 												  make_orclause(withris),
 												  is_pushed_down,
-												  valid_everywhere));
+												  valid_everywhere,
+												  NULL));
 	}
 	else if (IsA(bitmapqual, IndexPath))
 	{
@@ -157,7 +162,8 @@ make_restrictinfo_from_bitmapqual(Path *bitmapqual,
  */
 static RestrictInfo *
 make_restrictinfo_internal(Expr *clause, Expr *orclause,
-						   bool is_pushed_down, bool valid_everywhere)
+						   bool is_pushed_down, bool valid_everywhere,
+						   Relids required_relids)
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
 
@@ -199,6 +205,12 @@ make_restrictinfo_internal(Expr *clause, Expr *orclause,
 		/* and get the total relid set the hard way */
 		restrictinfo->clause_relids = pull_varnos((Node *) clause);
 	}
+
+	/* required_relids defaults to clause_relids */
+	if (required_relids != NULL)
+		restrictinfo->required_relids = required_relids;
+	else
+		restrictinfo->required_relids = restrictinfo->clause_relids;
 
 	/*
 	 * Fill in all the cacheable fields with "not yet set" markers. None
@@ -254,7 +266,8 @@ make_sub_restrictinfos(Expr *clause, bool is_pushed_down,
 		return (Expr *) make_restrictinfo_internal(clause,
 												   make_orclause(orlist),
 												   is_pushed_down,
-												   valid_everywhere);
+												   valid_everywhere,
+												   NULL);
 	}
 	else if (and_clause((Node *) clause))
 	{
@@ -272,7 +285,8 @@ make_sub_restrictinfos(Expr *clause, bool is_pushed_down,
 		return (Expr *) make_restrictinfo_internal(clause,
 												   NULL,
 												   is_pushed_down,
-												   valid_everywhere);
+												   valid_everywhere,
+												   NULL);
 }
 
 /*

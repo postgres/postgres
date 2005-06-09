@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.71 2005/06/05 22:32:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.72 2005/06/09 04:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,43 +96,37 @@ create_or_index_quals(PlannerInfo *root, RelOptInfo *rel)
 	 */
 	foreach(i, rel->joininfo)
 	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
-		ListCell   *j;
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
 
-		foreach(j, joininfo->jinfo_restrictinfo)
+		if (restriction_is_or_clause(rinfo) &&
+			rinfo->valid_everywhere)
 		{
-			RestrictInfo *rinfo = (RestrictInfo *) lfirst(j);
+			/*
+			 * Use the generate_bitmap_or_paths() machinery to estimate
+			 * the value of each OR clause.  We can use regular
+			 * restriction clauses along with the OR clause contents to
+			 * generate indexquals.  We pass outer_relids = NULL so that
+			 * sub-clauses that are actually joins will be ignored.
+			 */
+			List *orpaths;
+			ListCell *k;
 
-			if (restriction_is_or_clause(rinfo) &&
-				rinfo->valid_everywhere)
+			orpaths = generate_bitmap_or_paths(root, rel,
+											   list_make1(rinfo),
+											   rel->baserestrictinfo,
+											   false, NULL);
+
+			/* Locate the cheapest OR path */
+			foreach(k, orpaths)
 			{
-				/*
-				 * Use the generate_bitmap_or_paths() machinery to estimate
-				 * the value of each OR clause.  We can use regular
-				 * restriction clauses along with the OR clause contents to
-				 * generate indexquals.  We pass outer_relids = NULL so that
-				 * sub-clauses that are actually joins will be ignored.
-				 */
-				List *orpaths;
-				ListCell *k;
+				BitmapOrPath   *path = (BitmapOrPath *) lfirst(k);
 
-				orpaths = generate_bitmap_or_paths(root, rel,
-												   list_make1(rinfo),
-												   rel->baserestrictinfo,
-												   false, NULL);
-
-				/* Locate the cheapest OR path */
-				foreach(k, orpaths)
+				Assert(IsA(path, BitmapOrPath));
+				if (bestpath == NULL ||
+					path->path.total_cost < bestpath->path.total_cost)
 				{
-					BitmapOrPath   *path = (BitmapOrPath *) lfirst(k);
-
-					Assert(IsA(path, BitmapOrPath));
-					if (bestpath == NULL ||
-						path->path.total_cost < bestpath->path.total_cost)
-					{
-						bestpath = path;
-						bestrinfo = rinfo;
-					}
+					bestpath = path;
+					bestrinfo = rinfo;
 				}
 			}
 		}

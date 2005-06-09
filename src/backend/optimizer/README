@@ -75,11 +75,10 @@ way.  All the Paths made for a given relation are placed in its
 RelOptInfo.pathlist.  (Actually, we discard Paths that are obviously
 inferior alternatives before they ever get into the pathlist --- what
 ends up in the pathlist is the cheapest way of generating each potentially
-useful sort ordering of the relation.)  Also create RelOptInfo.joininfo
-nodes that list all the join clauses that involve this relation.  For
-example, the WHERE clause "tab1.col1 = tab2.col1" generates a JoinInfo
-for tab1 listing tab2 as an unjoined relation, and also one for tab2
-showing tab1 as an unjoined relation.
+useful sort ordering of the relation.)  Also create a RelOptInfo.joininfo
+list including all the join clauses that involve this relation.  For
+example, the WHERE clause "tab1.col1 = tab2.col1" generates entries in
+both tab1 and tab2's joininfo lists.
 
 If we have only a single base relation in the query, we are done.
 Otherwise we have to figure out how to join the base relations into a
@@ -252,7 +251,6 @@ RelOptInfo      - a relation or joined relations
  RestrictInfo   - WHERE clauses, like "x = 3" or "y = z"
                   (note the same structure is used for restriction and
                    join clauses)
- JoinInfo       - join clauses associated with a particular pair of relations
 
  Path           - every way to generate a RelOptInfo(sequential,index,joins)
   SeqScan       - a plain Path node with pathtype = T_SeqScan

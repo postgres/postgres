@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.106 2005/06/05 22:32:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.107 2005/06/09 04:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,7 +169,7 @@ add_vars_to_targetlist(PlannerInfo *root, List *vars, Relids where_needed)
 /*
  * distribute_quals_to_rels
  *	  Recursively scan the query's join tree for WHERE and JOIN/ON qual
- *	  clauses, and add these to the appropriate RestrictInfo and JoinInfo
+ *	  clauses, and add these to the appropriate restrictinfo and joininfo
  *	  lists belonging to base RelOptInfos.	Also, base RelOptInfos are marked
  *	  with outerjoinset information, to aid in proper positioning of qual
  *	  clauses that appear above outer joins.
@@ -346,7 +346,7 @@ mark_baserels_for_outer_join(PlannerInfo *root, Relids rels, Relids outerrels)
 
 /*
  * distribute_qual_to_rels
- *	  Add clause information to either the 'RestrictInfo' or 'JoinInfo' field
+ *	  Add clause information to either the baserestrictinfo or joininfo list
  *	  (depending on whether the clause is a join) of each base relation
  *	  mentioned in the clause.	A RestrictInfo node is created and added to
  *	  the appropriate list for each rel.  Also, if the clause uses a
@@ -508,7 +508,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	 */
 	restrictinfo = make_restrictinfo((Expr *) clause,
 									 is_pushed_down,
-									 valid_everywhere);
+									 valid_everywhere,
+									 relids);
 
 	/*
 	 * Figure out where to attach it.
@@ -654,8 +655,8 @@ process_implied_equality(PlannerInfo *root,
 
 	/*
 	 * If the exprs involve a single rel, we need to look at that rel's
-	 * baserestrictinfo list.  If multiple rels, any one will have a
-	 * joininfo node for the rest, and we can scan any of 'em.
+	 * baserestrictinfo list.  If multiple rels, we can scan the joininfo
+	 * list of any of 'em.
 	 */
 	if (membership == BMS_SINGLETON)
 	{
@@ -666,20 +667,14 @@ process_implied_equality(PlannerInfo *root,
 	{
 		Relids		other_rels;
 		int			first_rel;
-		JoinInfo   *joininfo;
 
 		/* Copy relids, find and remove one member */
 		other_rels = bms_copy(relids);
 		first_rel = bms_first_member(other_rels);
+		bms_free(other_rels);
 
 		rel1 = find_base_rel(root, first_rel);
-
-		/* use remaining members to find join node */
-		joininfo = find_joininfo_node(rel1, other_rels);
-
-		restrictlist = joininfo ? joininfo->jinfo_restrictinfo : NIL;
-
-		bms_free(other_rels);
+		restrictlist = rel1->joininfo;
 	}
 
 	/*

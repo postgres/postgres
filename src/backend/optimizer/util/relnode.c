@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.69 2005/06/08 23:02:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.70 2005/06/09 04:19:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -479,8 +479,8 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
  *
  *	  These routines are separate because the restriction list must be
  *	  built afresh for each pair of input sub-relations we consider, whereas
- *	  the join lists need only be computed once for any join RelOptInfo.
- *	  The join lists are fully determined by the set of rels making up the
+ *	  the join list need only be computed once for any join RelOptInfo.
+ *	  The join list is fully determined by the set of rels making up the
  *	  joinrel, so we should get the same results (up to ordering) from any
  *	  candidate pair of sub-relations.	But the restriction list is whatever
  *	  is not handled in the sub-relations, so it depends on which
@@ -488,7 +488,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
  *
  *	  If a join clause from an input relation refers to base rels still not
  *	  present in the joinrel, then it is still a join clause for the joinrel;
- *	  we put it into an appropriate JoinInfo list for the joinrel.	Otherwise,
+ *	  we put it into the joininfo list for the joinrel.  Otherwise,
  *	  the clause is now a restrict clause for the joined relation, and we
  *	  return it to the caller of build_joinrel_restrictlist() to be stored in
  *	  join paths made from this pair of sub-relations.	(It will not need to
@@ -506,7 +506,7 @@ build_joinrel_tlist(PlannerInfo *root, RelOptInfo *joinrel,
  *
  * build_joinrel_restrictlist() returns a list of relevant restrictinfos,
  * whereas build_joinrel_joinlist() stores its results in the joinrel's
- * joininfo lists.	One or the other must accept each given clause!
+ * joininfo list.  One or the other must accept each given clause!
  *
  * NB: Formerly, we made deep(!) copies of each input RestrictInfo to pass
  * up to the join relation.  I believe this is no longer necessary, because
@@ -562,29 +562,27 @@ subbuild_joinrel_restrictlist(RelOptInfo *joinrel,
 							  List *joininfo_list)
 {
 	List	   *restrictlist = NIL;
-	ListCell   *xjoininfo;
+	ListCell   *l;
 
-	foreach(xjoininfo, joininfo_list)
+	foreach(l, joininfo_list)
 	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(xjoininfo);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
-		if (bms_is_subset(joininfo->unjoined_relids, joinrel->relids))
+		if (bms_is_subset(rinfo->required_relids, joinrel->relids))
 		{
 			/*
-			 * Clauses in this JoinInfo list become restriction clauses
-			 * for the joinrel, since they refer to no outside rels.
-			 *
-			 * We must copy the list to avoid disturbing the input relation,
-			 * but we can use a shallow copy.
+			 * This clause becomes a restriction clause for the joinrel,
+			 * since it refers to no outside rels.  We don't bother to
+			 * check for duplicates here --- build_joinrel_restrictlist
+			 * will do that.
 			 */
-			restrictlist = list_concat(restrictlist,
-								list_copy(joininfo->jinfo_restrictinfo));
+			restrictlist = lappend(restrictlist, rinfo);
 		}
 		else
 		{
 			/*
-			 * These clauses are still join clauses at this level, so we
-			 * ignore them in this routine.
+			 * This clause is still a join clause at this level, so we
+			 * ignore it in this routine.
 			 */
 		}
 	}
@@ -596,42 +594,33 @@ static void
 subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 						  List *joininfo_list)
 {
-	ListCell   *xjoininfo;
+	ListCell   *l;
 
-	foreach(xjoininfo, joininfo_list)
+	foreach(l, joininfo_list)
 	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(xjoininfo);
-		Relids		new_unjoined_relids;
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
-		new_unjoined_relids = bms_difference(joininfo->unjoined_relids,
-											 joinrel->relids);
-		if (bms_is_empty(new_unjoined_relids))
+		if (bms_is_subset(rinfo->required_relids, joinrel->relids))
 		{
 			/*
-			 * Clauses in this JoinInfo list become restriction clauses
-			 * for the joinrel, since they refer to no outside rels. So we
-			 * can ignore them in this routine.
+			 * This clause becomes a restriction clause for the joinrel,
+			 * since it refers to no outside rels.  So we can ignore it
+			 * in this routine.
 			 */
-			bms_free(new_unjoined_relids);
 		}
 		else
 		{
 			/*
-			 * These clauses are still join clauses at this level, so find
-			 * or make the appropriate JoinInfo item for the joinrel, and
-			 * add the clauses to it, eliminating duplicates.  (Since
-			 * RestrictInfo nodes are normally multiply-linked rather than
-			 * copied, pointer equality should be a sufficient test.  If
-			 * two equal() nodes should happen to sneak in, no great harm
-			 * is done --- they'll be detected by redundant-clause testing
-			 * when they reach a restriction list.)
+			 * This clause is still a join clause at this level, so add
+			 * it to the joininfo list for the joinrel, being careful to
+			 * eliminate duplicates.  (Since RestrictInfo nodes are normally
+			 * multiply-linked rather than copied, pointer equality should be
+			 * a sufficient test.  If two equal() nodes should happen to sneak
+			 * in, no great harm is done --- they'll be detected by
+			 * redundant-clause testing when they reach a restriction list.)
 			 */
-			JoinInfo   *new_joininfo;
-
-			new_joininfo = make_joininfo_node(joinrel, new_unjoined_relids);
-			new_joininfo->jinfo_restrictinfo =
-				list_union_ptr(new_joininfo->jinfo_restrictinfo,
-							   joininfo->jinfo_restrictinfo);
+			if (!list_member_ptr(joinrel->joininfo, rinfo))
+				joinrel->joininfo = lappend(joinrel->joininfo, rinfo);
 		}
 	}
 }

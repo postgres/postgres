@@ -8,12 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.73 2005/06/05 22:32:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.74 2005/06/09 04:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 
@@ -169,30 +170,20 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 
 				if (!bms_overlap(old_rel->relids, new_rel->relids))
 				{
-					ListCell   *i;
-
 					/*
 					 * OK, we can build a rel of the right level from this
 					 * pair of rels.  Do so if there is at least one
 					 * usable join clause.
 					 */
-					foreach(i, old_rel->joininfo)
+					if (have_relevant_joinclause(old_rel, new_rel))
 					{
-						JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
+						RelOptInfo *jrel;
 
-						if (bms_is_subset(joininfo->unjoined_relids,
-										  new_rel->relids))
-						{
-							RelOptInfo *jrel;
-
-							jrel = make_join_rel(root, old_rel, new_rel,
-												 JOIN_INNER);
-							/* Avoid making duplicate entries ... */
-							if (jrel && !list_member_ptr(result_rels, jrel))
-								result_rels = lcons(jrel, result_rels);
-							break;		/* need not consider more
-										 * joininfos */
-						}
+						jrel = make_join_rel(root, old_rel, new_rel,
+											 JOIN_INNER);
+						/* Avoid making duplicate entries ... */
+						if (jrel && !list_member_ptr(result_rels, jrel))
+							result_rels = lcons(jrel, result_rels);
 					}
 				}
 			}
@@ -269,7 +260,7 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 /*
  * make_rels_by_clause_joins
  *	  Build joins between the given relation 'old_rel' and other relations
- *	  that are mentioned within old_rel's joininfo nodes (i.e., relations
+ *	  that are mentioned within old_rel's joininfo list (i.e., relations
  *	  that participate in join clauses that 'old_rel' also participates in).
  *	  The join rel nodes are returned in a list.
  *
@@ -278,10 +269,7 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
  * rels to be considered for joining
  *
  * Currently, this is only used with initial rels in other_rels, but it
- * will work for joining to joinrels too, if the caller ensures there is no
- * membership overlap between old_rel and the rels in other_rels.  (We need
- * no extra test for overlap for initial rels, since the is_subset test can
- * only succeed when other_rel is not already part of old_rel.)
+ * will work for joining to joinrels too.
  */
 static List *
 make_rels_by_clause_joins(PlannerInfo *root,
@@ -289,31 +277,20 @@ make_rels_by_clause_joins(PlannerInfo *root,
 						  ListCell *other_rels)
 {
 	List	   *result = NIL;
-	ListCell   *i,
-			   *j;
+	ListCell   *l;
 
-	foreach(i, old_rel->joininfo)
+	for_each_cell(l, other_rels)
 	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
-		Relids		unjoined_relids = joininfo->unjoined_relids;
+		RelOptInfo *other_rel = (RelOptInfo *) lfirst(l);
 
-		for_each_cell(j, other_rels)
+		if (!bms_overlap(old_rel->relids, other_rel->relids) &&
+			have_relevant_joinclause(old_rel, other_rel))
 		{
-			RelOptInfo *other_rel = (RelOptInfo *) lfirst(j);
+			RelOptInfo *jrel;
 
-			if (bms_is_subset(unjoined_relids, other_rel->relids))
-			{
-				RelOptInfo *jrel;
-
-				jrel = make_join_rel(root, old_rel, other_rel, JOIN_INNER);
-
-				/*
-				 * Avoid entering same joinrel into our output list more
-				 * than once.
-				 */
-				if (jrel && !list_member_ptr(result, jrel))
-					result = lcons(jrel, result);
-			}
+			jrel = make_join_rel(root, old_rel, other_rel, JOIN_INNER);
+			if (jrel)
+				result = lcons(jrel, result);
 		}
 	}
 

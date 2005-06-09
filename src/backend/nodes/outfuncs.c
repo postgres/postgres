@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.254 2005/06/06 04:13:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.255 2005/06/09 04:18:58 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1227,6 +1227,7 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 	WRITE_BOOL_FIELD(valid_everywhere);
 	WRITE_BOOL_FIELD(can_join);
 	WRITE_BITMAPSET_FIELD(clause_relids);
+	WRITE_BITMAPSET_FIELD(required_relids);
 	WRITE_BITMAPSET_FIELD(left_relids);
 	WRITE_BITMAPSET_FIELD(right_relids);
 	WRITE_NODE_FIELD(orclause);
@@ -1236,15 +1237,6 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 	WRITE_NODE_FIELD(left_pathkey);
 	WRITE_NODE_FIELD(right_pathkey);
 	WRITE_OID_FIELD(hashjoinoperator);
-}
-
-static void
-_outJoinInfo(StringInfo str, JoinInfo *node)
-{
-	WRITE_NODE_TYPE("JOININFO");
-
-	WRITE_BITMAPSET_FIELD(unjoined_relids);
-	WRITE_NODE_FIELD(jinfo_restrictinfo);
 }
 
 static void
@@ -1988,9 +1980,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_RestrictInfo:
 				_outRestrictInfo(str, obj);
-				break;
-			case T_JoinInfo:
-				_outJoinInfo(str, obj);
 				break;
 			case T_InnerIndexscanInfo:
 				_outInnerIndexscanInfo(str, obj);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.132 2005/06/06 04:13:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.133 2005/06/09 04:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1048,14 +1048,10 @@ debug_print_rel(PlannerInfo *root, RelOptInfo *rel)
 		printf("\n");
 	}
 
-	foreach(l, rel->joininfo)
+	if (rel->joininfo)
 	{
-		JoinInfo   *j = (JoinInfo *) lfirst(l);
-
-		printf("\tjoininfo (");
-		print_relids(j->unjoined_relids);
-		printf("): ");
-		print_restrictclauses(root, j->jinfo_restrictinfo);
+		printf("\tjoininfo: ");
+		print_restrictclauses(root, rel->joininfo);
 		printf("\n");
 	}
 
