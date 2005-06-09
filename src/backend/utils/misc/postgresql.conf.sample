@@ -241,8 +241,9 @@
 #log_duration = false
 #log_line_prefix = ''		# e.g. '<%u%%%d> ' 
 				# %u=user name %d=database name
-				# %r=remote host and port
+				# %r=remote host and port %h=remote host
 				# %p=PID %t=timestamp %i=command tag
+				# %m=timestamp with milliseconds
 				# %c=session id %l=session line number
 				# %s=session start timestamp %x=transaction id
 				# %q=stop here in non-session processes

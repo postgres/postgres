@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.158 2005/03/12 01:54:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.159 2005/06/09 22:29:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1375,6 +1375,33 @@ log_line_prefix(StringInfo buf)
 			case 'l':
 				appendStringInfo(buf, "%ld", log_line_number);
 				break;
+			case 'm':
+				{
+					time_t stamp_time;
+					char strfbuf[128], msbuf[5];
+					struct timeval tv;
+
+					gettimeofday(&tv, NULL);
+ 					stamp_time = tv.tv_sec;
+
+					strftime(strfbuf, sizeof(strfbuf),
+					/* leave room for milliseconds... */
+					/* Win32 timezone names are too long so don't print them. */
+#ifndef WIN32
+						"%Y-%m-%d %H:%M:%S     %Z",
+#else
+						"%Y-%m-%d %H:%M:%S     ",
+#endif
+						localtime(&stamp_time));
+
+					/* 'paste' milliseconds into place... */
+ 					sprintf(msbuf, ".%03d", 
+						(int)(tv.tv_usec/1000));
+					strncpy(strfbuf+19, msbuf, 4);
+
+					appendStringInfoString(buf, strfbuf);
+				}
+				break;
 			case 't':
 				{
 					/*
@@ -1425,6 +1452,10 @@ log_line_prefix(StringInfo buf)
 						appendStringInfo(buf, "(%s)",
 										 MyProcPort->remote_port);
 				}
+				break;
+			case 'h':
+				if (MyProcPort)
+					appendStringInfo(buf, "%s", MyProcPort->remote_host);
 				break;
 			case 'q':
 				/* in postmaster and friends, stop if %q is seen */
