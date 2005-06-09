@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.144 2005/06/09 15:27:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.145 2005/06/09 23:28:09 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -275,6 +275,11 @@ exec_command(const char *cmd,
 					   cmd, dir, strerror(errno));
 			success = false;
 		}
+
+		if (pset.dirname)
+			pfree(pset.dirname);
+		pset.dirname = pg_strdup(dir);
+		canonicalize_path(pset.dirname);
 
 		if (opt)
 			free(opt);
@@ -661,7 +666,8 @@ exec_command(const char *cmd,
 		success = saveHistory(fname ? fname : "/dev/tty");
 
 		if (success && !quiet && fname)
-			printf(_("Wrote history to file \"%s\".\n"), fname);
+			printf(gettext("Wrote history to file \"%s/%s\".\n"),
+				   pset.dirname ? pset.dirname : ".", fname);
 		if (!fname)
 			putchar('\n');
 		free(fname);
