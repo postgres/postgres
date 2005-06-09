@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.178.4.1 2005/02/26 18:50:44 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.178.4.2 2005/06/09 19:08:36 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -3218,8 +3218,8 @@ A result of -2 indicates that an error occurred (consult
 When <parameter>async</> is true (not zero), <function>PQgetCopyData</>
 will not block waiting for input; it will return zero if the <command>COPY</command> is still
 in progress but no complete row is available.  (In this case wait for
-read-ready before trying again; it does not matter whether you call
-<function>PQconsumeInput</>.)  When <parameter>async</> is
+read-ready and then call <function>PQconsumeInput</> before calling
+<function>PQgetCopyData</> again.)  When <parameter>async</> is
 false (zero), <function>PQgetCopyData</> will block until data is available
 or the operation completes.
 </para>
