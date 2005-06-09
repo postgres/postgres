@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.451 2005/05/15 00:26:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.452 2005/06/09 22:01:12 tgl Exp $
  *
  * NOTES
  *
@@ -3414,7 +3414,7 @@ CountChildren(void)
 /*
  * StartChildProcess -- start a non-backend child process for the postmaster
  *
- * xlog determines what kind of child will be started.	All child types
+ * xlop determines what kind of child will be started.  All child types
  * initially go to BootstrapMain, which will handle common setup.
  *
  * Return value of StartChildProcess is subprocess' PID, or 0 if failed
