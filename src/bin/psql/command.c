@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.143 2005/04/29 13:42:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.144 2005/06/09 15:27:26 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1357,6 +1357,9 @@ _align2string(enum printFormat in)
 		case PRINT_LATEX:
 			return "latex";
 			break;
+		case PRINT_TROFF_MS:
+			return "troff-ms";
+			break;
 	}
 	return "unknown";
 }
@@ -1385,9 +1388,11 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->topt.format = PRINT_HTML;
 		else if (pg_strncasecmp("latex", value, vallen) == 0)
 			popt->topt.format = PRINT_LATEX;
+		else if (pg_strncasecmp("troff-ms", value, vallen) == 0)
+			popt->topt.format = PRINT_TROFF_MS;
 		else
 		{
-			psql_error("\\pset: allowed formats are unaligned, aligned, html, latex\n");
+			psql_error("\\pset: allowed formats are unaligned, aligned, html, latex, troff-ms\n");
 			return false;
 		}
 

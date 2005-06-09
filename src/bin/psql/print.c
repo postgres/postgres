@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.55 2005/02/22 04:40:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.56 2005/06/09 15:27:27 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -992,6 +992,213 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 
 
 
+/*************************/
+/* Troff -ms		 */
+/*************************/
+
+
+static void
+troff_ms_escaped_print(const char *in, FILE *fout)
+{
+	const char *p;
+
+	for (p = in; *p; p++)
+		switch (*p)
+		{
+			case '\\':
+				fputs("\(rs", fout);
+				break;
+			default:
+				fputc(*p, fout);
+		}
+}
+
+
+
+static void
+print_troff_ms_text(const char *title, const char *const * headers,
+				 const char *const * cells, const char *const * footers,
+const char *opt_align, bool opt_barebones, unsigned short int opt_border,
+				 FILE *fout)
+{
+	unsigned int col_count = 0;
+	unsigned int i;
+	const char *const * ptr;
+
+
+	/* print title */
+	if (!opt_barebones && title)
+	{
+		fputs(".LP\n.DS C\n", fout);
+		troff_ms_escaped_print(title, fout);
+		fputs("\n.DE\n", fout);
+	}
+
+	/* count columns */
+	for (ptr = headers; *ptr; ptr++)
+		col_count++;
+
+	/* begin environment and set alignments and borders */
+	fputs(".LP\n.TS\n", fout);
+	if (opt_border == 2)
+		fputs("center box;\n", fout);
+	else
+		fputs("center;\n", fout);
+
+	for (i = 0; i < col_count; i++)
+	{
+		fputc(*(opt_align + i), fout);
+		if (opt_border > 0 && i < col_count - 1)
+			fputs(" | ", fout);
+	}
+	fputs(".\n", fout);
+
+	/* print headers and count columns */
+	for (i = 0, ptr = headers; i < col_count; i++, ptr++)
+	{
+		if (!opt_barebones)
+		{
+			if (i != 0)
+				fputc('\t', fout);
+			fputs("\\fI", fout);
+			troff_ms_escaped_print(*ptr, fout);
+			fputs("\\fP", fout);
+		}
+	}
+
+	if (!opt_barebones)
+	{
+		fputs("\n_\n", fout);
+	}
+
+	/* print cells */
+	for (i = 0, ptr = cells; *ptr; i++, ptr++)
+	{
+		troff_ms_escaped_print(*ptr, fout);
+
+		if ((i + 1) % col_count == 0)
+			fputc('\n', fout);
+		else
+			fputc('\t', fout);
+	}
+
+	fputs(".TE\n.DS L\n", fout);
+
+
+	/* print footers */
+
+	if (footers && !opt_barebones)
+		for (ptr = footers; *ptr; ptr++)
+		{
+			troff_ms_escaped_print(*ptr, fout);
+			fputc('\n', fout);
+		}
+
+	fputs(".DE\n", fout);
+}
+
+
+
+static void
+print_troff_ms_vertical(const char *title, const char *const * headers,
+				  const char *const * cells, const char *const * footers,
+const char *opt_align, bool opt_barebones, unsigned short int opt_border,
+					 FILE *fout)
+{
+	unsigned int col_count = 0;
+	unsigned int i;
+	const char *const * ptr;
+	unsigned int record = 1;
+        unsigned short current_format = 0; /* 0=none, 1=header, 2=body */
+
+	(void) opt_align;			/* currently unused parameter */
+
+	/* print title */
+	if (!opt_barebones && title)
+	{
+		fputs(".LP\n.DS C\n", fout);
+		troff_ms_escaped_print(title, fout);
+		fputs("\n.DE\n", fout);
+	}
+
+	/* begin environment and set alignments and borders */
+	fputs(".LP\n.TS\n", fout);
+	if (opt_border == 2)
+		fputs("center box;\n", fout);
+	else
+		fputs("center;\n", fout);
+
+	/* basic format */
+        if (opt_barebones)
+ 		fputs("c l;\n", fout);
+
+
+	/* count columns */
+	for (ptr = headers; *ptr; ptr++)
+		col_count++;
+
+
+	/* print records */
+	for (i = 0, ptr = cells; *ptr; i++, ptr++)
+	{
+		/* new record */
+		if (i % col_count == 0)
+		{
+			if (!opt_barebones)
+			{
+
+				if (current_format != 1)
+				{
+					if (opt_border == 2 && i > 0)
+						fputs("_\n", fout);
+					if (current_format != 0)
+						fputs(".T&\n", fout);
+					fputs("c s.\n", fout);
+					current_format = 1;
+				}
+				fprintf(fout, "\\fIRecord %d\\fP\n", record++);
+			}
+			if (opt_border >= 1)
+				fputs("_\n", fout);
+		}
+
+		if (!opt_barebones)
+		{
+			if (current_format != 2)
+			{
+				if (current_format != 0)
+					fputs(".T&\n", fout);
+				if (opt_border != 1)
+					fputs("c l.\n", fout);
+				else
+					fputs("c | l.\n", fout);
+				current_format = 2;
+			}
+		}
+
+		troff_ms_escaped_print(headers[i % col_count], fout);
+		fputc('\t', fout);
+		troff_ms_escaped_print(*ptr, fout);
+		fputc('\n', fout);
+	}
+
+	fputs(".TE\n.DS L\n", fout);
+
+
+	/* print footers */
+
+	if (footers && !opt_barebones)
+		for (ptr = footers; *ptr; ptr++)
+		{
+			troff_ms_escaped_print(*ptr, fout);
+			fputc('\n', fout);
+		}
+
+	fputs(".DE\n", fout);
+}
+
+
+
 /********************************/
 /* Public functions		*/
 /********************************/
@@ -1120,6 +1327,12 @@ printTable(const char *title,
 				print_latex_vertical(title, headers, cells, footers, align, opt->tuples_only, border, output);
 			else
 				print_latex_text(title, headers, cells, footers, align, opt->tuples_only, border, output);
+			break;
+		case PRINT_TROFF_MS:
+			if (opt->expanded)
+				print_troff_ms_vertical(title, headers, cells, footers, align, opt->tuples_only, border, output);
+			else
+				print_troff_ms_text(title, headers, cells, footers, align, opt->tuples_only, border, output);
 			break;
 		default:
 			fprintf(stderr, "+ Oops, you shouldn't see this!\n");
