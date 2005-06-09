@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.49 2005/05/11 01:26:01 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.50 2005/06/09 18:23:50 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -421,7 +421,15 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	/*
 	 * Okay to proceed with split.	Update the metapage bucket mapping
 	 * info.
+	 *
+	 * Since we are scribbling on the metapage data right in the shared
+	 * buffer, any failure in this next little bit leaves us with a big
+	 * problem: the metapage is effectively corrupt but could get written
+	 * back to disk.  We don't really expect any failure, but just to be
+	 * sure, establish a critical section.
 	 */
+	START_CRIT_SECTION();
+
 	metap->hashm_maxbucket = new_bucket;
 
 	if (new_bucket > metap->hashm_highmask)
@@ -455,6 +463,9 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 
 	if (!_hash_try_getlock(rel, start_nblkno, HASH_EXCLUSIVE))
 		elog(PANIC, "could not get lock on supposedly new bucket");
+
+	/* Done mucking with metapage */
+	END_CRIT_SECTION();
 
 	/*
 	 * Copy bucket mapping info now; this saves re-accessing the meta page
