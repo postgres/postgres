@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.44 2005/06/10 15:34:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.45 2005/06/10 15:40:41 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -245,7 +245,7 @@ finishInput(int exitstatus, void *arg)
 		if (hist_size >= 0)
 			stifle_history(hist_size);
 
-		write_history(psql_history);
+		saveHistory(psql_history);
 		free(psql_history);
 		psql_history = NULL;
 	}
