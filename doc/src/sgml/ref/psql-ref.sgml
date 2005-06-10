@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.140 2005/06/10 15:34:25 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.141 2005/06/10 16:26:59 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -1991,13 +1991,12 @@ bar
         <term><varname>HISTFILE</varname></term>
         <listitem>
         <para>
-        This variable contains the filename used to save the history.
-        Its default value is <filename>~/.psql_history</filename>.
-        For example, use:
+        The filename that will be used to store the history list. The default
+        value is <filename>~/.psql_history</filename>.  For example, using:
 <programlisting>
 \set HISTFILE ~/.psql_history-:DBNAME
 </programlisting>
-        in your <filename>~/.psqlrc</filename> will get psql to
+        in <filename>~/.psqlrc</filename> will get <application>psql</application> to
         maintain a separate history for each database.
         </para>
         <note>
