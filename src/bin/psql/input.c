@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.43 2005/01/06 18:29:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/input.c,v 1.44 2005/06/10 15:34:26 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -24,6 +24,8 @@
 #ifdef USE_READLINE
 static bool useReadline;
 static bool useHistory;
+char  *psql_history;
+
 
 enum histcontrol
 {
@@ -177,16 +179,24 @@ initializeInput(int flags)
 		if (GetVariable(pset.vars, "HISTSIZE") == NULL)
 			SetVariable(pset.vars, "HISTSIZE", "500");
 		using_history();
-		if (get_home_path(home))
-		{
-			char	   *psql_history;
 
-			psql_history = pg_malloc(strlen(home) + 1 +
-									 strlen(PSQLHISTORY) + 1);
-			sprintf(psql_history, "%s/%s", home, PSQLHISTORY);
-			read_history(psql_history);
-			free(psql_history);
+		if (GetVariable(pset.vars, "HISTFILE") == NULL)
+		{
+			if (get_home_path(home))
+			{
+				psql_history = pg_malloc(strlen(home) + 1 +
+										 strlen(PSQLHISTORY) + 1);
+				snprintf(psql_history, MAXPGPATH, "%s/%s", home, PSQLHISTORY);
+			}
 		}
+		else
+		{
+			psql_history = pg_strdup(GetVariable(pset.vars, "HISTFILE"));
+			expand_tilde(&psql_history);
+		}
+
+		if (psql_history)
+			read_history(psql_history);
 	}
 #endif
 
@@ -227,25 +237,17 @@ finishInput(int exitstatus, void *arg)
 #endif
 {
 #ifdef USE_READLINE
-	if (useHistory)
+	if (useHistory && psql_history)
 	{
-		char		home[MAXPGPATH];
+		int			hist_size;
 
-		if (get_home_path(home))
-		{
-			char	   *psql_history;
-			int			hist_size;
+		hist_size = GetVariableNum(pset.vars, "HISTSIZE", -1, -1, true);
+		if (hist_size >= 0)
+			stifle_history(hist_size);
 
-			hist_size = GetVariableNum(pset.vars, "HISTSIZE", -1, -1, true);
-			if (hist_size >= 0)
-				stifle_history(hist_size);
-
-			psql_history = pg_malloc(strlen(home) + 1 +
-									 strlen(PSQLHISTORY) + 1);
-			sprintf(psql_history, "%s/%s", home, PSQLHISTORY);
-			write_history(psql_history);
-			free(psql_history);
-		}
+		write_history(psql_history);
+		free(psql_history);
+		psql_history = NULL;
 	}
 #endif
 }
