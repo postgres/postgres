@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.99 2005/06/10 14:41:32 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.100 2005/06/10 14:49:31 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1294,7 +1294,11 @@ expand_tilde(char **filename)
 	if (!filename || !(*filename))
 		return NULL;
 
-	/* MSDOS uses tilde for short versions of long file names, so skip it. */
+	/*
+	 *	WIN32 doesn't use tilde expansion for file names.
+	 *	Also, it uses tilde for short versions of long file names,
+	 *	though the tilde is usually toward the end, not at the beginning.
+	 */
 #ifndef WIN32
 
 	/* try tilde expansion */
