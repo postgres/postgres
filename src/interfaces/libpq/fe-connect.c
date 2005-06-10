@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.308 2005/06/10 03:02:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.309 2005/06/10 04:01:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3237,22 +3237,15 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 		port = DEF_PGPORT_STR;
 
 	if ((passfile_env = getenv("PGPASSFILE")) != NULL)
-	{
 		/* use the literal path from the environment, if set */
 		StrNCpy(pgpassfile, passfile_env, MAXPGPATH);
-		if (!pgpassfile)
-		{
-			fprintf(stderr, libpq_gettext("out of memory\n"));
-			return NULL;
-		}
-	}
 	else
 	{
 		char		homedir[MAXPGPATH];
 
 		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
 			return NULL;
-		snprintf(pgpassfile, sizeof(pgpassfile), "%s/%s", homedir, PGPASSFILE);
+		snprintf(pgpassfile, MAXPGPATH, "%s/%s", homedir, PGPASSFILE);
 	}
 
 	/* If password file cannot be opened, ignore it. */
