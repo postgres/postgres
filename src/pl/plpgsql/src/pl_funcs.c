@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.40 2005/04/05 06:22:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.41 2005/06/10 16:23:11 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -634,7 +634,7 @@ dump_block(PLpgSQL_stmt_block *block)
 	{
 		ListCell *e;
 
-		foreach (e, block->exceptions)
+		foreach (e, block->exceptions->exc_list)
 		{
 			PLpgSQL_exception *exc = (PLpgSQL_exception *) lfirst(e);
 			PLpgSQL_condition *cond;

@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.159 2005/06/09 22:29:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.160 2005/06/10 16:23:10 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1482,6 +1482,26 @@ log_line_prefix(StringInfo buf)
 	}
 }
 
+/*
+ * Unpack MAKE_SQLSTATE code. Note that this returns a pointer to a
+ * static buffer.
+ */
+char *
+unpack_sql_state(int sql_state)
+{
+	static char	buf[12];
+	int			i;
+
+	for (i = 0; i < 5; i++)
+	{
+		buf[i] = PGUNSIXBIT(sql_state);
+		sql_state >>= 6;
+	}
+
+	buf[i] = '\0';
+	return buf;
+}
+
 
 /*
  * Write error report to server's log
@@ -1497,21 +1517,7 @@ send_message_to_server_log(ErrorData *edata)
 	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
 
 	if (Log_error_verbosity >= PGERROR_VERBOSE)
-	{
-		/* unpack MAKE_SQLSTATE code */
-		char		tbuf[12];
-		int			ssval;
-		int			i;
-
-		ssval = edata->sqlerrcode;
-		for (i = 0; i < 5; i++)
-		{
-			tbuf[i] = PGUNSIXBIT(ssval);
-			ssval >>= 6;
-		}
-		tbuf[i] = '\0';
-		appendStringInfo(&buf, "%s: ", tbuf);
-	}
+		appendStringInfo(&buf, "%s: ", unpack_sql_state(edata->sqlerrcode));
 
 	if (edata->message)
 		append_with_tabs(&buf, edata->message);

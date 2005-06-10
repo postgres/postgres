@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.90 2005/05/29 04:23:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.91 2005/06/10 16:23:11 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -656,7 +656,7 @@ do_compile(FunctionCallInfo fcinfo,
 	if (num_out_args > 0 || function->fn_rettype == VOIDOID ||
 		function->fn_retset)
 	{
-		if (function->action->exceptions != NIL)
+		if (function->action->exceptions != NULL)
 		{
 			PLpgSQL_stmt_block *new;
 
@@ -882,7 +882,7 @@ plpgsql_parse_word(char *word)
 	}
 
 	/*
-	 * Do a lookup on the compilers namestack
+	 * Do a lookup on the compiler's namestack
 	 */
 	nse = plpgsql_ns_lookup(cp[0], NULL);
 	if (nse != NULL)
@@ -1935,7 +1935,7 @@ plpgsql_parse_err_condition(char *condname)
 
 /* ----------
  * plpgsql_adddatum			Add a variable, record or row
- *					to the compilers datum list.
+ *					to the compiler's datum list.
  * ----------
  */
 void

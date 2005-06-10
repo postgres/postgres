@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.70 2005/06/07 02:47:15 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.71 2005/06/10 16:23:09 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2110,6 +2110,17 @@ END;
       don't use <literal>EXCEPTION</> without need.
      </para>
     </tip>
+
+    <para>
+     Within an exception handler, the <varname>SQLSTATE</varname>
+     variable contains the error code that corresponds to the
+     exception that was raised (refer to <xref
+     linkend="errcodes-table"> for a list of possible error
+     codes). The <varname>SQLERRM</varname> variable contains the
+     error message associated with the exception. These variables are
+     undefined outside exception handlers.
+    </para>
+
     <example id="plpgsql-upsert-example">
     <title>Exceptions with UPDATE/INSERT</title>
     <para>

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.142 2005/06/07 02:47:17 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.143 2005/06/10 16:23:11 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -180,7 +180,7 @@ static Datum exec_simple_cast_value(Datum value, Oid valtype,
 static void exec_init_tuple_store(PLpgSQL_execstate *estate);
 static bool compatible_tupdesc(TupleDesc td1, TupleDesc td2);
 static void exec_set_found(PLpgSQL_execstate *estate, bool state);
-
+static void free_var(PLpgSQL_var *var);
 
 /* ----------
  * plpgsql_exec_function	Called by the call handler for
@@ -760,12 +760,7 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 				{
 					PLpgSQL_var *var = (PLpgSQL_var *) (estate->datums[n]);
 
-					if (var->freeval)
-					{
-						pfree((void *) (var->value));
-						var->freeval = false;
-					}
-
+					free_var(var);
 					if (!var->isconst || var->isnull)
 					{
 						if (var->default_val == NULL)
@@ -864,13 +859,37 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 			SPI_restore_connection();
 
 			/* Look for a matching exception handler */
-			foreach (e, block->exceptions)
+			foreach (e, block->exceptions->exc_list)
 			{
 				PLpgSQL_exception *exception = (PLpgSQL_exception *) lfirst(e);
 
 				if (exception_matches_conditions(edata, exception->conditions))
 				{
+					/*
+					 * Initialize the magic SQLSTATE and SQLERRM
+					 * variables for the exception block. We needn't
+					 * do this until we have found a matching
+					 * exception.
+					 */
+					PLpgSQL_var *state_var;
+					PLpgSQL_var *errm_var;
+
+					state_var = (PLpgSQL_var *) (estate->datums[block->exceptions->sqlstate_varno]);
+					state_var->value = DirectFunctionCall1(textin,
+														   CStringGetDatum(unpack_sql_state(edata->sqlerrcode)));
+					state_var->freeval = true;
+					state_var->isnull = false;
+
+					errm_var = (PLpgSQL_var *) (estate->datums[block->exceptions->sqlerrm_varno]);
+					errm_var->value = DirectFunctionCall1(textin,
+														  CStringGetDatum(edata->message));
+					errm_var->freeval = true;
+					errm_var->isnull = false;
+
 					rc = exec_stmts(estate, exception->action);
+
+					free_var(state_var);
+					free_var(errm_var);
 					break;
 				}
 			}
@@ -2586,9 +2605,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		 * Store the eventually assigned cursor name in the cursor variable
 		 * ----------
 		 */
-		if (curvar->freeval)
-			pfree((void *) (curvar->value));
-
+		free_var(curvar);
 		curvar->value = DirectFunctionCall1(textin, CStringGetDatum(portal->name));
 		curvar->isnull = false;
 		curvar->freeval = true;
@@ -2684,9 +2701,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 	 * Store the eventually assigned portal name in the cursor variable
 	 * ----------
 	 */
-	if (curvar->freeval)
-		pfree((void *) (curvar->value));
-
+	free_var(curvar);
 	curvar->value = DirectFunctionCall1(textin, CStringGetDatum(portal->name));
 	curvar->isnull = false;
 	curvar->freeval = true;
@@ -2857,11 +2872,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 							 errmsg("NULL cannot be assigned to variable \"%s\" declared NOT NULL",
 									var->refname)));
 
-				if (var->freeval)
-				{
-					pfree(DatumGetPointer(var->value));
-					var->freeval = false;
-				}
+				free_var(var);
 
 				/*
 				 * If type is by-reference, make sure we have a freshly
@@ -4342,4 +4353,14 @@ plpgsql_xact_cb(XactEvent event, void *arg)
 	if (event == XACT_EVENT_COMMIT && simple_eval_estate)
 		FreeExecutorState(simple_eval_estate);
 	simple_eval_estate = NULL;
+}
+
+static void
+free_var(PLpgSQL_var *var)
+{
+	if (var->freeval)
+	{
+		pfree(DatumGetPointer(var->value));
+		var->freeval = false;
+	}
 }

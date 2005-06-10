@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.74 2005/06/08 00:49:36 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.75 2005/06/10 16:23:11 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -92,6 +92,7 @@ static	void			 plpgsql_sql_error_callback(void *arg);
 		PLpgSQL_stmt_block		*program;
 		PLpgSQL_condition		*condition;
 		PLpgSQL_exception		*exception;
+		PLpgSQL_exception_block	*exception_block;
 		PLpgSQL_nsitem			*nsitem;
 		PLpgSQL_diag_item		*diagitem;
 }
@@ -129,7 +130,8 @@ static	void			 plpgsql_sql_error_callback(void *arg);
 %type <stmt>	stmt_dynexecute stmt_getdiag
 %type <stmt>	stmt_open stmt_fetch stmt_close stmt_null
 
-%type <list>	exception_sect proc_exceptions
+%type <list>	proc_exceptions
+%type <exception_block> exception_sect
 %type <exception>	proc_exception
 %type <condition>	proc_conditions
 
@@ -1495,9 +1497,38 @@ execsql_start	: T_WORD
 				;
 
 exception_sect	:
-					{ $$ = NIL; }
-				| K_EXCEPTION proc_exceptions
-					{ $$ = $2; }
+					{ $$ = NULL; }
+				| K_EXCEPTION lno
+					{
+						/*
+						 * We use a mid-rule action to add these
+						 * special variables to the namespace before
+						 * parsing the WHEN clauses themselves.
+						 */
+						PLpgSQL_exception_block *new = palloc(sizeof(PLpgSQL_exception_block));
+						PLpgSQL_variable *var;
+
+						var = plpgsql_build_variable("sqlstate", $2,
+													 plpgsql_build_datatype(TEXTOID, -1),
+													 true);
+						((PLpgSQL_var *) var)->isconst = true;
+						new->sqlstate_varno = var->dno;
+
+						var = plpgsql_build_variable("sqlerrm", $2,
+													 plpgsql_build_datatype(TEXTOID, -1),
+													 true);
+						((PLpgSQL_var *) var)->isconst = true;
+						new->sqlerrm_varno = var->dno;
+
+						$<exception_block>$ = new;
+					}
+					proc_exceptions
+					{
+						PLpgSQL_exception_block *new = $<exception_block>3;
+						new->exc_list = $4;
+
+						$$ = new;
+					}
 				;
 
 proc_exceptions	: proc_exceptions proc_exception
