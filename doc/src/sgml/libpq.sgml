@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.183 2005/06/09 19:08:28 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.184 2005/06/10 03:02:01 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -3713,6 +3713,17 @@ allow non-root users to see process environment variables via
 <listitem>
 <para>
 <indexterm>
+ <primary><envar>PGPASSFILE</envar></primary>
+</indexterm>
+<envar>PGPASSFILE</envar>
+specifies the name of the password file to use for lookups.
+If not set, it defaults to <filename>~/.pgpass</>
+(see <xref linkend="libpq-pgpass">).
+</para>
+</listitem>
+<listitem>
+<para>
+<indexterm>
  <primary><envar>PGSERVICE</envar></primary>
 </indexterm>
 <envar>PGSERVICE</envar>
@@ -3902,12 +3913,13 @@ internationalization.
 </indexterm>
 
 <para>
-The file <filename>.pgpass</filename> in a user's home directory is a file
-that can contain passwords to be used if the connection requires a
-password (and no password has been specified otherwise).
-On Microsoft Windows the file is named
-<filename>%APPDATA%\postgresql\pgpass.conf</> (where <filename>%APPDATA%</>
-refers to the Application Data subdirectory in the user's profile).
+The file <filename>.pgpass</filename> in a user's home directory or the
+file referenced by <envar>PGPASSFILE</envar> can contain passwords to
+be used if the connection requires a password (and no password has been
+specified  otherwise). On Microsoft Windows the file is named
+<filename>%APPDATA%\postgresql\pgpass.conf</> (where
+<filename>%APPDATA%</> refers to the Application Data subdirectory in
+the user's profile).
 </para>
 
 <para>

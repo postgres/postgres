@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.307 2005/06/04 20:42:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.308 2005/06/10 03:02:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3217,9 +3217,9 @@ static char *
 PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 {
 	FILE	   *fp;
-	char		homedir[MAXPGPATH];
 	char		pgpassfile[MAXPGPATH];
 	struct stat stat_buf;
+	char       *passfile_env;
 
 #define LINELEN NAMEDATALEN*5
 	char		buf[LINELEN];
@@ -3236,14 +3236,37 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	if (port == NULL)
 		port = DEF_PGPORT_STR;
 
-	if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
-		return NULL;
+	if ((passfile_env = getenv("PGPASSFILE")) != NULL)
+	{
+		/* use the literal path from the environment, if set */
+		StrNCpy(pgpassfile, passfile_env, MAXPGPATH);
+		if (!pgpassfile)
+		{
+			fprintf(stderr, libpq_gettext("out of memory\n"));
+			return NULL;
+		}
+	}
+	else
+	{
+		char		homedir[MAXPGPATH];
 
-	snprintf(pgpassfile, sizeof(pgpassfile), "%s/%s", homedir, PGPASSFILE);
+		if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
+			return NULL;
+		snprintf(pgpassfile, sizeof(pgpassfile), "%s/%s", homedir, PGPASSFILE);
+	}
 
 	/* If password file cannot be opened, ignore it. */
 	if (stat(pgpassfile, &stat_buf) == -1)
 		return NULL;
+
+	if (!S_ISREG(stat_buf.st_mode))
+	{
+		fprintf(stderr,
+				libpq_gettext("WARNING: Password file %s is not a plain file.\n"),
+				pgpassfile);
+		free(pgpassfile);
+		return NULL;
+	}
 
 #ifndef WIN32
 	/* If password file is insecure, alert the user and ignore it. */
