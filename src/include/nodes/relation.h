@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.113 2005/06/09 04:19:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.114 2005/06/10 03:32:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,8 @@ typedef struct PlannerInfo
 
 	List	   *query_pathkeys; /* desired pathkeys for query_planner(),
 								 * and actual pathkeys afterwards */
+
+	double		tuple_fraction;	/* tuple_fraction passed to query_planner */
 
 	bool		hasJoinRTEs;	/* true if any RTEs are RTE_JOIN kind */
 	bool		hasHavingQual;	/* true if havingQual was non-null */

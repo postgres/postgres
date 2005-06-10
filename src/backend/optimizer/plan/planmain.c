@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.84 2005/06/08 23:02:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.85 2005/06/10 03:32:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,9 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	RelOptInfo *final_rel;
 	Path	   *cheapestpath;
 	Path	   *sortedpath;
+
+	/* Make tuple_fraction accessible to lower-level routines */
+	root->tuple_fraction = tuple_fraction;
 
 	/*
 	 * If the query has an empty join tree, then it's something easy like

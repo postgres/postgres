@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.133 2005/06/09 04:18:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.134 2005/06/10 03:32:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -353,6 +353,28 @@ set_inherited_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	set_cheapest(rel);
 }
 
+/* quick-and-dirty test to see if any joining is needed */
+static bool
+has_multiple_baserels(PlannerInfo *root)
+{
+	int			num_base_rels = 0;
+	Index		rti;
+
+	for (rti = 1; rti < root->base_rel_array_size; rti++)
+	{
+		RelOptInfo *brel = root->base_rel_array[rti];
+
+		if (brel == NULL)
+			continue;
+
+		/* ignore RTEs that are "other rels" */
+		if (brel->reloptkind == RELOPT_BASEREL)
+			if (++num_base_rels > 1)
+				return true;
+	}
+	return false;
+}
+
 /*
  * set_subquery_pathlist
  *		Build the (single) access path for a subquery RTE
@@ -361,8 +383,10 @@ static void
 set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte)
 {
+	Query	   *parse = root->parse;
 	Query	   *subquery = rte->subquery;
 	bool	   *differentTypes;
+	double		tuple_fraction;
 	List	   *pathkeys;
 	List	   *subquery_pathkeys;
 
@@ -416,8 +440,24 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 	pfree(differentTypes);
 
+	/*
+	 * We can safely pass the outer tuple_fraction down to the subquery
+	 * if the outer level has no joining, aggregation, or sorting to do.
+	 * Otherwise we'd better tell the subquery to plan for full retrieval.
+	 * (XXX This could probably be made more intelligent ...)
+	 */
+	if (parse->hasAggs ||
+		parse->groupClause ||
+		parse->havingQual ||
+		parse->distinctClause ||
+		parse->sortClause ||
+		has_multiple_baserels(root))
+		tuple_fraction = 0.0;	/* default case */
+	else
+		tuple_fraction = root->tuple_fraction;
+
 	/* Generate the plan for the subquery */
-	rel->subplan = subquery_planner(subquery, 0.0 /* default case */,
+	rel->subplan = subquery_planner(subquery, tuple_fraction,
 									&subquery_pathkeys);
 
 	/* Copy number of output rows from subplan */
