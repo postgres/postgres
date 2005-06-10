@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.188 2005/06/05 22:32:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.189 2005/06/10 02:21:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,8 @@ static Node *preprocess_expression(PlannerInfo *root, Node *expr, int kind);
 static void preprocess_qual_conditions(PlannerInfo *root, Node *jtnode);
 static Plan *inheritance_planner(PlannerInfo *root, List *inheritlist);
 static Plan *grouping_planner(PlannerInfo *root, double tuple_fraction);
+static double adjust_tuple_fraction_for_limit(PlannerInfo *root,
+											  double tuple_fraction);
 static bool choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 					   Path *cheapest_path, Path *sorted_path,
 					   List *sort_pathkeys, List *group_pathkeys,
@@ -648,15 +650,30 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	List	   *current_pathkeys;
 	List	   *sort_pathkeys;
 
+	/* Tweak caller-supplied tuple_fraction if have LIMIT */
+	if (parse->limitCount != NULL)
+		tuple_fraction = adjust_tuple_fraction_for_limit(root, tuple_fraction);
+
 	if (parse->setOperations)
 	{
 		List	   *set_sortclauses;
 
 		/*
+		 * If there's a top-level ORDER BY, assume we have to fetch all
+		 * the tuples.  This might seem too simplistic given all the
+		 * hackery below to possibly avoid the sort ... but a nonzero
+		 * tuple_fraction is only of use to plan_set_operations() when
+		 * the setop is UNION ALL, and the result of UNION ALL is always
+		 * unsorted.
+		 */
+		if (parse->sortClause)
+			tuple_fraction = 0.0;
+
+		/*
 		 * Construct the plan for set operations.  The result will not
 		 * need any work except perhaps a top-level sort and/or LIMIT.
 		 */
-		result_plan = plan_set_operations(root,
+		result_plan = plan_set_operations(root, tuple_fraction,
 										  &set_sortclauses);
 
 		/*
@@ -768,108 +785,6 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 			root->query_pathkeys = sort_pathkeys;
 		else
 			root->query_pathkeys = NIL;
-
-		/*
-		 * Adjust tuple_fraction if we see that we are going to apply
-		 * limiting/grouping/aggregation/etc.  This is not overridable by
-		 * the caller, since it reflects plan actions that this routine
-		 * will certainly take, not assumptions about context.
-		 */
-		if (parse->limitCount != NULL)
-		{
-			/*
-			 * A LIMIT clause limits the absolute number of tuples
-			 * returned. However, if it's not a constant LIMIT then we
-			 * have to punt; for lack of a better idea, assume 10% of the
-			 * plan's result is wanted.
-			 */
-			double		limit_fraction = 0.0;
-
-			if (IsA(parse->limitCount, Const))
-			{
-				Const	   *limitc = (Const *) parse->limitCount;
-				int32		count = DatumGetInt32(limitc->constvalue);
-
-				/*
-				 * A NULL-constant LIMIT represents "LIMIT ALL", which we
-				 * treat the same as no limit (ie, expect to retrieve all
-				 * the tuples).
-				 */
-				if (!limitc->constisnull && count > 0)
-				{
-					limit_fraction = (double) count;
-					/* We must also consider the OFFSET, if present */
-					if (parse->limitOffset != NULL)
-					{
-						if (IsA(parse->limitOffset, Const))
-						{
-							int32		offset;
-
-							limitc = (Const *) parse->limitOffset;
-							offset = DatumGetInt32(limitc->constvalue);
-							if (!limitc->constisnull && offset > 0)
-								limit_fraction += (double) offset;
-						}
-						else
-						{
-							/* OFFSET is an expression ... punt ... */
-							limit_fraction = 0.10;
-						}
-					}
-				}
-			}
-			else
-			{
-				/* LIMIT is an expression ... punt ... */
-				limit_fraction = 0.10;
-			}
-
-			if (limit_fraction > 0.0)
-			{
-				/*
-				 * If we have absolute limits from both caller and LIMIT,
-				 * use the smaller value; if one is fractional and the
-				 * other absolute, treat the fraction as a fraction of the
-				 * absolute value; else we can multiply the two fractions
-				 * together.
-				 */
-				if (tuple_fraction >= 1.0)
-				{
-					if (limit_fraction >= 1.0)
-					{
-						/* both absolute */
-						tuple_fraction = Min(tuple_fraction, limit_fraction);
-					}
-					else
-					{
-						/* caller absolute, limit fractional */
-						tuple_fraction *= limit_fraction;
-						if (tuple_fraction < 1.0)
-							tuple_fraction = 1.0;
-					}
-				}
-				else if (tuple_fraction > 0.0)
-				{
-					if (limit_fraction >= 1.0)
-					{
-						/* caller fractional, limit absolute */
-						tuple_fraction *= limit_fraction;
-						if (tuple_fraction < 1.0)
-							tuple_fraction = 1.0;
-					}
-					else
-					{
-						/* both fractional */
-						tuple_fraction *= limit_fraction;
-					}
-				}
-				else
-				{
-					/* no info from caller, just use limit */
-					tuple_fraction = limit_fraction;
-				}
-			}
-		}
 
 		/*
 		 * With grouping or aggregation, the tuple fraction to pass to
@@ -1240,6 +1155,114 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	root->query_pathkeys = current_pathkeys;
 
 	return result_plan;
+}
+
+/*
+ * adjust_tuple_fraction_for_limit - adjust tuple fraction for LIMIT
+ *
+ * If the query contains LIMIT, we adjust the caller-supplied tuple_fraction
+ * accordingly.  This is not overridable by the caller, since it reflects plan
+ * actions that grouping_planner() will certainly take, not assumptions about
+ * context.
+ */
+static double
+adjust_tuple_fraction_for_limit(PlannerInfo *root, double tuple_fraction)
+{
+	Query	   *parse = root->parse;
+	double		limit_fraction = 0.0;
+
+	/* Should not be called unless LIMIT */
+	Assert(parse->limitCount != NULL);
+
+	/*
+	 * A LIMIT clause limits the absolute number of tuples returned. However,
+	 * if it's not a constant LIMIT then we have to punt; for lack of a better
+	 * idea, assume 10% of the plan's result is wanted.
+	 */
+	if (IsA(parse->limitCount, Const))
+	{
+		Const	   *limitc = (Const *) parse->limitCount;
+		int32		count = DatumGetInt32(limitc->constvalue);
+
+		/*
+		 * A NULL-constant LIMIT represents "LIMIT ALL", which we treat the
+		 * same as no limit (ie, expect to retrieve all the tuples).
+		 */
+		if (!limitc->constisnull && count > 0)
+		{
+			limit_fraction = (double) count;
+			/* We must also consider the OFFSET, if present */
+			if (parse->limitOffset != NULL)
+			{
+				if (IsA(parse->limitOffset, Const))
+				{
+					int32		offset;
+
+					limitc = (Const *) parse->limitOffset;
+					offset = DatumGetInt32(limitc->constvalue);
+					if (!limitc->constisnull && offset > 0)
+						limit_fraction += (double) offset;
+				}
+				else
+				{
+					/* OFFSET is an expression ... punt ... */
+					limit_fraction = 0.10;
+				}
+			}
+		}
+	}
+	else
+	{
+		/* LIMIT is an expression ... punt ... */
+		limit_fraction = 0.10;
+	}
+
+	if (limit_fraction > 0.0)
+	{
+		/*
+		 * If we have absolute limits from both caller and LIMIT, use the
+		 * smaller value; if one is fractional and the other absolute,
+		 * treat the fraction as a fraction of the absolute value;
+		 * else we can multiply the two fractions together.
+		 */
+		if (tuple_fraction >= 1.0)
+		{
+			if (limit_fraction >= 1.0)
+			{
+				/* both absolute */
+				tuple_fraction = Min(tuple_fraction, limit_fraction);
+			}
+			else
+			{
+				/* caller absolute, limit fractional */
+				tuple_fraction *= limit_fraction;
+				if (tuple_fraction < 1.0)
+					tuple_fraction = 1.0;
+			}
+		}
+		else if (tuple_fraction > 0.0)
+		{
+			if (limit_fraction >= 1.0)
+			{
+				/* caller fractional, limit absolute */
+				tuple_fraction *= limit_fraction;
+				if (tuple_fraction < 1.0)
+					tuple_fraction = 1.0;
+			}
+			else
+			{
+				/* both fractional */
+				tuple_fraction *= limit_fraction;
+			}
+		}
+		else
+		{
+			/* no info from caller, just use limit */
+			tuple_fraction = limit_fraction;
+		}
+	}
+
+	return tuple_fraction;
 }
 
 /*

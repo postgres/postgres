@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.123 2005/06/09 04:18:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.124 2005/06/10 02:21:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,16 +50,19 @@ typedef struct
 } adjust_inherited_attrs_context;
 
 static Plan *recurse_set_operations(Node *setOp, PlannerInfo *root,
-					   List *colTypes, bool junkOK,
-					   int flag, List *refnames_tlist,
-					   List **sortClauses);
+									double tuple_fraction,
+									List *colTypes, bool junkOK,
+									int flag, List *refnames_tlist,
+									List **sortClauses);
 static Plan *generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
-					List *refnames_tlist, List **sortClauses);
+								 double tuple_fraction,
+								 List *refnames_tlist, List **sortClauses);
 static Plan *generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 					   List *refnames_tlist, List **sortClauses);
 static List *recurse_union_children(Node *setOp, PlannerInfo *root,
-					   SetOperationStmt *top_union,
-					   List *refnames_tlist);
+									double tuple_fraction,
+									SetOperationStmt *top_union,
+									List *refnames_tlist);
 static List *generate_setop_tlist(List *colTypes, int flag,
 					 Index varno,
 					 bool hack_constants,
@@ -85,11 +88,17 @@ static List *adjust_inherited_tlist(List *tlist,
  * Any top-level ORDER BY requested in root->parse->sortClause will be added
  * when we return to grouping_planner.
  *
+ * tuple_fraction is the fraction of tuples we expect will be retrieved.
+ * tuple_fraction is interpreted as for grouping_planner(); in particular,
+ * zero means "all the tuples will be fetched".  Any LIMIT present at the
+ * top level has already been factored into tuple_fraction.
+ *
  * *sortClauses is an output argument: it is set to a list of SortClauses
  * representing the result ordering of the topmost set operation.
  */
 Plan *
-plan_set_operations(PlannerInfo *root, List **sortClauses)
+plan_set_operations(PlannerInfo *root, double tuple_fraction,
+					List **sortClauses)
 {
 	Query	   *parse = root->parse;
 	SetOperationStmt *topop = (SetOperationStmt *) parse->setOperations;
@@ -124,7 +133,7 @@ plan_set_operations(PlannerInfo *root, List **sortClauses)
 	 * output from the top-level node, plus possibly resjunk working
 	 * columns (we can rely on upper-level nodes to deal with that).
 	 */
-	return recurse_set_operations((Node *) topop, root,
+	return recurse_set_operations((Node *) topop, root, tuple_fraction,
 								  topop->colTypes, true, -1,
 								  leftmostQuery->targetList,
 								  sortClauses);
@@ -134,6 +143,7 @@ plan_set_operations(PlannerInfo *root, List **sortClauses)
  * recurse_set_operations
  *	  Recursively handle one step in a tree of set operations
  *
+ * tuple_fraction: fraction of tuples we expect to retrieve from node
  * colTypes: list of type OIDs of expected output columns
  * junkOK: if true, child resjunk columns may be left in the result
  * flag: if >= 0, add a resjunk output column indicating value of flag
@@ -142,6 +152,7 @@ plan_set_operations(PlannerInfo *root, List **sortClauses)
  */
 static Plan *
 recurse_set_operations(Node *setOp, PlannerInfo *root,
+					   double tuple_fraction,
 					   List *colTypes, bool junkOK,
 					   int flag, List *refnames_tlist,
 					   List **sortClauses)
@@ -159,7 +170,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 		/*
 		 * Generate plan for primitive subquery
 		 */
-		subplan = subquery_planner(subquery, 0.0 /* default case */, NULL);
+		subplan = subquery_planner(subquery, tuple_fraction, NULL);
 
 		/*
 		 * Add a SubqueryScan with the caller-requested targetlist
@@ -189,10 +200,12 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
 
 		/* UNIONs are much different from INTERSECT/EXCEPT */
 		if (op->op == SETOP_UNION)
-			plan = generate_union_plan(op, root, refnames_tlist,
+			plan = generate_union_plan(op, root, tuple_fraction,
+									   refnames_tlist,
 									   sortClauses);
 		else
-			plan = generate_nonunion_plan(op, root, refnames_tlist,
+			plan = generate_nonunion_plan(op, root,
+										  refnames_tlist,
 										  sortClauses);
 
 		/*
@@ -235,6 +248,7 @@ recurse_set_operations(Node *setOp, PlannerInfo *root,
  */
 static Plan *
 generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
+					double tuple_fraction,
 					List *refnames_tlist,
 					List **sortClauses)
 {
@@ -243,14 +257,30 @@ generate_union_plan(SetOperationStmt *op, PlannerInfo *root,
 	Plan	   *plan;
 
 	/*
+	 * If plain UNION, tell children to fetch all tuples.
+	 *
+	 * Note: in UNION ALL, we pass the top-level tuple_fraction unmodified
+	 * to each arm of the UNION ALL.  One could make a case for reducing
+	 * the tuple fraction for later arms (discounting by the expected size
+	 * of the earlier arms' results) but it seems not worth the trouble.
+	 * The normal case where tuple_fraction isn't already zero is a LIMIT
+	 * at top level, and passing it down as-is is usually enough to get the
+	 * desired result of preferring fast-start plans.
+	 */
+	if (!op->all)
+		tuple_fraction = 0.0;
+
+	/*
 	 * If any of my children are identical UNION nodes (same op, all-flag,
 	 * and colTypes) then they can be merged into this node so that we
 	 * generate only one Append and Sort for the lot.  Recurse to find
 	 * such nodes and compute their children's plans.
 	 */
 	planlist = list_concat(recurse_union_children(op->larg, root,
+												  tuple_fraction,
 												  op, refnames_tlist),
 						   recurse_union_children(op->rarg, root,
+												  tuple_fraction,
 												  op, refnames_tlist));
 
 	/*
@@ -309,10 +339,12 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
 
 	/* Recurse on children, ensuring their outputs are marked */
 	lplan = recurse_set_operations(op->larg, root,
+								   0.0 /* all tuples needed */,
 								   op->colTypes, false, 0,
 								   refnames_tlist,
 								   &child_sortclauses);
 	rplan = recurse_set_operations(op->rarg, root,
+								   0.0 /* all tuples needed */,
 								   op->colTypes, false, 1,
 								   refnames_tlist,
 								   &child_sortclauses);
@@ -377,6 +409,7 @@ generate_nonunion_plan(SetOperationStmt *op, PlannerInfo *root,
  */
 static List *
 recurse_union_children(Node *setOp, PlannerInfo *root,
+					   double tuple_fraction,
 					   SetOperationStmt *top_union,
 					   List *refnames_tlist)
 {
@@ -392,9 +425,11 @@ recurse_union_children(Node *setOp, PlannerInfo *root,
 		{
 			/* Same UNION, so fold children into parent's subplan list */
 			return list_concat(recurse_union_children(op->larg, root,
+													  tuple_fraction,
 													  top_union,
 													  refnames_tlist),
 							   recurse_union_children(op->rarg, root,
+													  tuple_fraction,
 													  top_union,
 													  refnames_tlist));
 		}
@@ -411,6 +446,7 @@ recurse_union_children(Node *setOp, PlannerInfo *root,
 	 * resjunk anyway.
 	 */
 	return list_make1(recurse_set_operations(setOp, root,
+											 tuple_fraction,
 											 top_union->colTypes, false,
 											 -1, refnames_tlist,
 											 &child_sortclauses));
