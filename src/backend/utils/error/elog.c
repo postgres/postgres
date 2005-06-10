@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.160 2005/06/10 16:23:10 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.161 2005/06/10 20:48:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1333,10 +1333,7 @@ log_line_prefix(StringInfo buf)
 		/* go to char after '%' */
 		i++;
 		if (i >= format_len)
-		{
-			/* format error - ignore it */
-			break;
-		}
+			break;				/* format error - ignore it */
 
 		/* process the option */
 		switch (Log_line_prefix[i])
@@ -1377,8 +1374,18 @@ log_line_prefix(StringInfo buf)
 				break;
 			case 'm':
 				{
+					/*
+					 * Note: for %m, %t, and %s we deliberately use the
+					 * C library's strftime/localtime, and not the
+					 * equivalent functions from src/timezone.	This
+					 * ensures that all backends will report log entries
+					 * in the same timezone, namely whatever C-library
+					 * setting they inherit from the postmaster.  If we
+					 * used src/timezone then local settings of the
+					 * TimeZone GUC variable would confuse the log.
+					 */
 					time_t stamp_time;
-					char strfbuf[128], msbuf[5];
+					char strfbuf[128], msbuf[8];
 					struct timeval tv;
 
 					gettimeofday(&tv, NULL);
@@ -1388,15 +1395,14 @@ log_line_prefix(StringInfo buf)
 					/* leave room for milliseconds... */
 					/* Win32 timezone names are too long so don't print them. */
 #ifndef WIN32
-						"%Y-%m-%d %H:%M:%S     %Z",
+							 "%Y-%m-%d %H:%M:%S     %Z",
 #else
-						"%Y-%m-%d %H:%M:%S     ",
+							 "%Y-%m-%d %H:%M:%S     ",
 #endif
-						localtime(&stamp_time));
+							 localtime(&stamp_time));
 
 					/* 'paste' milliseconds into place... */
- 					sprintf(msbuf, ".%03d", 
-						(int)(tv.tv_usec/1000));
+ 					sprintf(msbuf, ".%03d", (int) (tv.tv_usec/1000));
 					strncpy(strfbuf+19, msbuf, 4);
 
 					appendStringInfoString(buf, strfbuf);
@@ -1404,16 +1410,6 @@ log_line_prefix(StringInfo buf)
 				break;
 			case 't':
 				{
-					/*
-					 * Note: for %t and %s we deliberately use the C
-					 * library's strftime/localtime, and not the
-					 * equivalent functions from src/timezone.	This
-					 * ensures that all backends will report log entries
-					 * in the same timezone, namely whatever C-library
-					 * setting they inherit from the postmaster.  If we
-					 * used src/timezone then local settings of the
-					 * TimeZone GUC variable would confuse the log.
-					 */
 					time_t		stamp_time = time(NULL);
 					char		strfbuf[128];
 
