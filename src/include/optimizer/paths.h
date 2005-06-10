@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.84 2005/06/05 22:32:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.85 2005/06/10 22:25:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,6 @@ extern bool match_index_to_operand(Node *operand, int indexcol,
 extern List *expand_indexqual_conditions(IndexOptInfo *index,
 										 List *clausegroups);
 extern void check_partial_indexes(PlannerInfo *root, RelOptInfo *rel);
-extern bool pred_test(List *predicate_list, List *restrictinfo_list);
 extern List *flatten_clausegroups_list(List *clausegroups);
 
 /*

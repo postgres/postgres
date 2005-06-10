@@ -4,7 +4,7 @@
 #    Makefile for optimizer/util
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/optimizer/util/Makefile,v 1.15 2003/11/29 19:51:51 pgsql Exp $
+#    $PostgreSQL: pgsql/src/backend/optimizer/util/Makefile,v 1.16 2005/06/10 22:25:36 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,8 +12,8 @@ subdir = src/backend/optimizer/util
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = restrictinfo.o clauses.o plancat.o \
-       joininfo.o pathnode.o relnode.o tlist.o var.o
+OBJS = clauses.o joininfo.o pathnode.o plancat.o predtest.o \
+       relnode.o restrictinfo.o tlist.o var.o
 
 all: SUBSYS.o
 

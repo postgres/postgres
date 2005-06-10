@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.191 2005/06/05 22:32:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.192 2005/06/10 22:25:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +22,9 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
-#include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "optimizer/planmain.h"
+#include "optimizer/predtest.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
@@ -782,8 +782,8 @@ create_indexscan_plan(PlannerInfo *root,
 	 * spot duplicate RestrictInfos, so we try that first.  In some situations
 	 * (particularly with OR'd index conditions) we may have scan_clauses
 	 * that are not equal to, but are logically implied by, the index quals;
-	 * so we also try a pred_test() check to see if we can discard quals
-	 * that way.
+	 * so we also try a predicate_implied_by() check to see if we can discard
+	 * quals that way.
 	 *
 	 * While at it, we strip off the RestrictInfos to produce a list of
 	 * plain expressions.
@@ -796,7 +796,8 @@ create_indexscan_plan(PlannerInfo *root,
 		Assert(IsA(rinfo, RestrictInfo));
 		if (list_member_ptr(nonlossy_indexquals, rinfo))
 			continue;
-		if (pred_test(list_make1(rinfo->clause), nonlossy_indexquals))
+		if (predicate_implied_by(list_make1(rinfo->clause),
+								 nonlossy_indexquals))
 			continue;
 		qpqual = lappend(qpqual, rinfo->clause);
 	}
@@ -878,7 +879,7 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	 * clauses, so we try that first.  In some situations (particularly with
 	 * OR'd index conditions) we may have scan_clauses that are not equal to,
 	 * but are logically implied by, the index quals; so we also try a
-	 * pred_test() check to see if we can discard quals that way.
+	 * predicate_implied_by() check to see if we can discard quals that way.
 	 */
 	qpqual = NIL;
 	foreach(l, scan_clauses)
@@ -887,7 +888,8 @@ create_bitmap_scan_plan(PlannerInfo *root,
 
 		if (list_member(indexquals, clause))
 			continue;
-		if (pred_test(list_make1(clause), indexquals))
+		if (predicate_implied_by(list_make1(clause),
+								 indexquals))
 			continue;
 		qpqual = lappend(qpqual, clause);
 	}
