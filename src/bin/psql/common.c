@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.98 2005/05/30 18:28:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.99 2005/06/10 14:41:32 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1317,9 +1317,9 @@ expand_tilde(char **filename)
 		*p = '\0';
 
 		if (*(fn + 1) == '\0')
-			get_home_path(home);
+			get_home_path(home);	/* ~ or ~/ only */
 		else if ((pw = getpwnam(fn + 1)) != NULL)
-			StrNCpy(home, pw->pw_dir, MAXPGPATH);
+			StrNCpy(home, pw->pw_dir, MAXPGPATH);	/* ~user */
 
 		*p = oldp;
 		if (strlen(home) != 0)
