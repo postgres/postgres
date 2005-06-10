@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.110 2005/05/22 22:30:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.111 2005/06/10 00:28:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,18 +27,32 @@
 
 typedef struct
 {
+	Index		varno;			/* RT index of Var */
+	AttrNumber	varattno;		/* attr number of Var */
+	AttrNumber	resno;			/* TLE position of Var */
+} tlist_vinfo;
+
+typedef struct
+{
+	List	   *tlist;			/* underlying target list */
+	int			num_vars;		/* number of plain Var tlist entries */
+	bool		has_non_vars;	/* are there non-plain-Var entries? */
+	/* array of num_vars entries: */
+	tlist_vinfo	vars[1];		/* VARIABLE LENGTH ARRAY */
+} indexed_tlist;				/* VARIABLE LENGTH STRUCT */
+
+typedef struct
+{
 	List	   *rtable;
-	List	   *outer_tlist;
-	List	   *inner_tlist;
+	indexed_tlist *outer_itlist;
+	indexed_tlist *inner_itlist;
 	Index		acceptable_rel;
-	bool		tlists_have_non_vars;
 } join_references_context;
 
 typedef struct
 {
+	indexed_tlist *subplan_itlist;
 	Index		subvarno;
-	List	   *subplan_targetlist;
-	bool		tlist_has_non_vars;
 } replace_vars_with_subplan_refs_context;
 
 static Plan *set_subqueryscan_references(SubqueryScan *plan, List *rtable);
@@ -51,22 +65,25 @@ static bool fix_expr_references_walker(Node *node, void *context);
 static void set_join_references(Join *join, List *rtable);
 static void set_inner_join_references(Plan *inner_plan,
 									  List *rtable,
-									  List *outer_tlist,
-									  bool tlists_have_non_vars);
+									  indexed_tlist *outer_itlist);
 static void set_uppernode_references(Plan *plan, Index subvarno);
-static bool targetlist_has_non_vars(List *tlist);
+static indexed_tlist *build_tlist_index(List *tlist);
+static Var *search_indexed_tlist_for_var(Var *var,
+										 indexed_tlist *itlist,
+										 Index newvarno);
+static Var *search_indexed_tlist_for_non_var(Node *node,
+											 indexed_tlist *itlist,
+											 Index newvarno);
 static List *join_references(List *clauses,
-				List *rtable,
-				List *outer_tlist,
-				List *inner_tlist,
-				Index acceptable_rel,
-				bool tlists_have_non_vars);
+							 List *rtable,
+							 indexed_tlist *outer_itlist,
+							 indexed_tlist *inner_itlist,
+							 Index acceptable_rel);
 static Node *join_references_mutator(Node *node,
 						join_references_context *context);
 static Node *replace_vars_with_subplan_refs(Node *node,
-							   Index subvarno,
-							   List *subplan_targetlist,
-							   bool tlist_has_non_vars);
+											indexed_tlist *subplan_itlist,
+											Index subvarno);
 static Node *replace_vars_with_subplan_refs_mutator(Node *node,
 						replace_vars_with_subplan_refs_context *context);
 static bool fix_opfuncids_walker(Node *node, void *context);
@@ -689,32 +706,28 @@ set_join_references(Join *join, List *rtable)
 {
 	Plan	   *outer_plan = join->plan.lefttree;
 	Plan	   *inner_plan = join->plan.righttree;
-	List	   *outer_tlist = outer_plan->targetlist;
-	List	   *inner_tlist = inner_plan->targetlist;
-	bool		tlists_have_non_vars;
+	indexed_tlist *outer_itlist;
+	indexed_tlist *inner_itlist;
 
-	tlists_have_non_vars = targetlist_has_non_vars(outer_tlist) ||
-		targetlist_has_non_vars(inner_tlist);
+	outer_itlist = build_tlist_index(outer_plan->targetlist);
+	inner_itlist = build_tlist_index(inner_plan->targetlist);
 
 	/* All join plans have tlist, qual, and joinqual */
 	join->plan.targetlist = join_references(join->plan.targetlist,
 											rtable,
-											outer_tlist,
-											inner_tlist,
-											(Index) 0,
-											tlists_have_non_vars);
+											outer_itlist,
+											inner_itlist,
+											(Index) 0);
 	join->plan.qual = join_references(join->plan.qual,
 									  rtable,
-									  outer_tlist,
-									  inner_tlist,
-									  (Index) 0,
-									  tlists_have_non_vars);
+									  outer_itlist,
+									  inner_itlist,
+									  (Index) 0);
 	join->joinqual = join_references(join->joinqual,
 									 rtable,
-									 outer_tlist,
-									 inner_tlist,
-									 (Index) 0,
-									 tlists_have_non_vars);
+									 outer_itlist,
+									 inner_itlist,
+									 (Index) 0);
 
 	/* Now do join-type-specific stuff */
 	if (IsA(join, NestLoop))
@@ -722,8 +735,7 @@ set_join_references(Join *join, List *rtable)
 		/* This processing is split out to handle possible recursion */
 		set_inner_join_references(inner_plan,
 								  rtable,
-								  outer_tlist,
-								  tlists_have_non_vars);
+								  outer_itlist);
 	}
 	else if (IsA(join, MergeJoin))
 	{
@@ -731,10 +743,9 @@ set_join_references(Join *join, List *rtable)
 
 		mj->mergeclauses = join_references(mj->mergeclauses,
 										   rtable,
-										   outer_tlist,
-										   inner_tlist,
-										   (Index) 0,
-										   tlists_have_non_vars);
+										   outer_itlist,
+										   inner_itlist,
+										   (Index) 0);
 	}
 	else if (IsA(join, HashJoin))
 	{
@@ -742,11 +753,13 @@ set_join_references(Join *join, List *rtable)
 
 		hj->hashclauses = join_references(hj->hashclauses,
 										  rtable,
-										  outer_tlist,
-										  inner_tlist,
-										  (Index) 0,
-										  tlists_have_non_vars);
+										  outer_itlist,
+										  inner_itlist,
+										  (Index) 0);
 	}
+
+	pfree(outer_itlist);
+	pfree(inner_itlist);
 }
 
 /*
@@ -760,8 +773,7 @@ set_join_references(Join *join, List *rtable)
 static void
 set_inner_join_references(Plan *inner_plan,
 						  List *rtable,
-						  List *outer_tlist,
-						  bool tlists_have_non_vars)
+						  indexed_tlist *outer_itlist)
 {
 	if (IsA(inner_plan, IndexScan))
 	{
@@ -782,16 +794,14 @@ set_inner_join_references(Plan *inner_plan,
 			/* only refs to outer vars get changed in the inner qual */
 			innerscan->indexqualorig = join_references(indexqualorig,
 													   rtable,
-													   outer_tlist,
-													   NIL,
-													   innerrel,
-													   tlists_have_non_vars);
+													   outer_itlist,
+													   NULL,
+													   innerrel);
 			innerscan->indexqual = join_references(innerscan->indexqual,
 												   rtable,
-												   outer_tlist,
-												   NIL,
-												   innerrel,
-												   tlists_have_non_vars);
+												   outer_itlist,
+												   NULL,
+												   innerrel);
 
 			/*
 			 * We must fix the inner qpqual too, if it has join
@@ -801,10 +811,9 @@ set_inner_join_references(Plan *inner_plan,
 			if (NumRelids((Node *) inner_plan->qual) > 1)
 				inner_plan->qual = join_references(inner_plan->qual,
 												   rtable,
-												   outer_tlist,
-												   NIL,
-												   innerrel,
-												   tlists_have_non_vars);
+												   outer_itlist,
+												   NULL,
+												   innerrel);
 		}
 	}
 	else if (IsA(inner_plan, BitmapIndexScan))
@@ -823,16 +832,14 @@ set_inner_join_references(Plan *inner_plan,
 			/* only refs to outer vars get changed in the inner qual */
 			innerscan->indexqualorig = join_references(indexqualorig,
 													   rtable,
-													   outer_tlist,
-													   NIL,
-													   innerrel,
-													   tlists_have_non_vars);
+													   outer_itlist,
+													   NULL,
+													   innerrel);
 			innerscan->indexqual = join_references(innerscan->indexqual,
 												   rtable,
-												   outer_tlist,
-												   NIL,
-												   innerrel,
-												   tlists_have_non_vars);
+												   outer_itlist,
+												   NULL,
+												   innerrel);
 			/* no need to fix inner qpqual */
 			Assert(inner_plan->qual == NIL);
 		}
@@ -854,10 +861,9 @@ set_inner_join_references(Plan *inner_plan,
 			/* only refs to outer vars get changed in the inner qual */
 			innerscan->bitmapqualorig = join_references(bitmapqualorig,
 													  rtable,
-													  outer_tlist,
-													  NIL,
-													  innerrel,
-													  tlists_have_non_vars);
+													  outer_itlist,
+													  NULL,
+													  innerrel);
 
 			/*
 			 * We must fix the inner qpqual too, if it has join
@@ -867,16 +873,14 @@ set_inner_join_references(Plan *inner_plan,
 			if (NumRelids((Node *) inner_plan->qual) > 1)
 				inner_plan->qual = join_references(inner_plan->qual,
 												   rtable,
-												   outer_tlist,
-												   NIL,
-												   innerrel,
-												   tlists_have_non_vars);
+												   outer_itlist,
+												   NULL,
+												   innerrel);
 
 			/* Now recurse */
 			set_inner_join_references(inner_plan->lefttree,
 									  rtable,
-									  outer_tlist,
-									  tlists_have_non_vars);
+									  outer_itlist);
 		}
 	}
 	else if (IsA(inner_plan, BitmapAnd))
@@ -889,8 +893,7 @@ set_inner_join_references(Plan *inner_plan,
 		{
 			set_inner_join_references((Plan *) lfirst(l),
 									  rtable,
-									  outer_tlist,
-									  tlists_have_non_vars);
+									  outer_itlist);
 		}
 	}
 	else if (IsA(inner_plan, BitmapOr))
@@ -903,8 +906,7 @@ set_inner_join_references(Plan *inner_plan,
 		{
 			set_inner_join_references((Plan *) lfirst(l),
 									  rtable,
-									  outer_tlist,
-									  tlists_have_non_vars);
+									  outer_itlist);
 		}
 	}
 	else if (IsA(inner_plan, TidScan))
@@ -914,10 +916,9 @@ set_inner_join_references(Plan *inner_plan,
 
 		innerscan->tideval = join_references(innerscan->tideval,
 											 rtable,
-											 outer_tlist,
-											 NIL,
-											 innerrel,
-											 tlists_have_non_vars);
+											 outer_itlist,
+											 NULL,
+											 innerrel);
 	}
 }
 
@@ -941,17 +942,14 @@ static void
 set_uppernode_references(Plan *plan, Index subvarno)
 {
 	Plan	   *subplan = plan->lefttree;
-	List	   *subplan_targetlist,
-			   *output_targetlist;
+	indexed_tlist *subplan_itlist;
+	List	   *output_targetlist;
 	ListCell   *l;
-	bool		tlist_has_non_vars;
 
 	if (subplan != NULL)
-		subplan_targetlist = subplan->targetlist;
+		subplan_itlist = build_tlist_index(subplan->targetlist);
 	else
-		subplan_targetlist = NIL;
-
-	tlist_has_non_vars = targetlist_has_non_vars(subplan_targetlist);
+		subplan_itlist = build_tlist_index(NIL);
 
 	output_targetlist = NIL;
 	foreach(l, plan->targetlist)
@@ -960,9 +958,8 @@ set_uppernode_references(Plan *plan, Index subvarno)
 		Node	   *newexpr;
 
 		newexpr = replace_vars_with_subplan_refs((Node *) tle->expr,
-												 subvarno,
-												 subplan_targetlist,
-												 tlist_has_non_vars);
+												 subplan_itlist,
+												 subvarno);
 		tle = flatCopyTargetEntry(tle);
 		tle->expr = (Expr *) newexpr;
 		output_targetlist = lappend(output_targetlist, tle);
@@ -971,30 +968,127 @@ set_uppernode_references(Plan *plan, Index subvarno)
 
 	plan->qual = (List *)
 		replace_vars_with_subplan_refs((Node *) plan->qual,
-									   subvarno,
-									   subplan_targetlist,
-									   tlist_has_non_vars);
+									   subplan_itlist,
+									   subvarno);
+
+	pfree(subplan_itlist);
 }
 
 /*
- * targetlist_has_non_vars --- are there any non-Var entries in tlist?
+ * build_tlist_index --- build an index data structure for a child tlist
  *
- * In most cases, subplan tlists will be "flat" tlists with only Vars.
- * Checking for this allows us to save comparisons in common cases.
+ * In most cases, subplan tlists will be "flat" tlists with only Vars,
+ * so we try to optimize that case by extracting information about Vars
+ * in advance.  Matching a parent tlist to a child is still an O(N^2)
+ * operation, but at least with a much smaller constant factor than plain
+ * tlist_member() searches.
+ *
+ * The result of this function is an indexed_tlist struct to pass to
+ * search_indexed_tlist_for_var() or search_indexed_tlist_for_non_var().
+ * When done, the indexed_tlist may be freed with a single pfree().
  */
-static bool
-targetlist_has_non_vars(List *tlist)
+static indexed_tlist *
+build_tlist_index(List *tlist)
 {
+	indexed_tlist *itlist;
+	tlist_vinfo *vinfo;
 	ListCell   *l;
 
+	/* Create data structure with enough slots for all tlist entries */
+	itlist = (indexed_tlist *)
+		palloc(offsetof(indexed_tlist, vars) +
+			   list_length(tlist) * sizeof(tlist_vinfo));
+
+	itlist->tlist = tlist;
+	itlist->has_non_vars = false;
+
+	/* Find the Vars and fill in the index array */
+	vinfo = itlist->vars;
 	foreach(l, tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
-		if (tle->expr && !IsA(tle->expr, Var))
-			return true;
+		if (tle->expr && IsA(tle->expr, Var))
+		{
+			Var	   *var = (Var *) tle->expr;
+
+			vinfo->varno = var->varno;
+			vinfo->varattno = var->varattno;
+			vinfo->resno = tle->resno;
+			vinfo++;
+		}
+		else
+			itlist->has_non_vars = true;
 	}
-	return false;
+
+	itlist->num_vars = (vinfo - itlist->vars);
+
+	return itlist;
+}
+
+/*
+ * search_indexed_tlist_for_var --- find a Var in an indexed tlist
+ *
+ * If a match is found, return a copy of the given Var with suitably
+ * modified varno/varattno (to wit, newvarno and the resno of the TLE entry).
+ * If no match, return NULL.
+ */
+static Var *
+search_indexed_tlist_for_var(Var *var, indexed_tlist *itlist, Index newvarno)
+{
+	Index		varno = var->varno;
+	AttrNumber	varattno = var->varattno;
+	tlist_vinfo *vinfo;
+	int			i;
+
+	vinfo = itlist->vars;
+	i = itlist->num_vars;
+	while (i-- > 0)
+	{
+		if (vinfo->varno == varno && vinfo->varattno == varattno)
+		{
+			/* Found a match */
+			Var		   *newvar = (Var *) copyObject(var);
+
+			newvar->varno = newvarno;
+			newvar->varattno = vinfo->resno;
+			return newvar;
+		}
+		vinfo++;
+	}
+	return NULL;				/* no match */
+}
+
+/*
+ * search_indexed_tlist_for_non_var --- find a non-Var in an indexed tlist
+ *
+ * If a match is found, return a Var constructed to reference the tlist item.
+ * If no match, return NULL.
+ *
+ * NOTE: it is a waste of time to call this if !itlist->has_non_vars
+ */
+static Var *
+search_indexed_tlist_for_non_var(Node *node,
+								 indexed_tlist *itlist, Index newvarno)
+{
+	TargetEntry *tle;
+
+	tle = tlist_member(node, itlist->tlist);
+	if (tle)
+	{
+		/* Found a matching subplan output expression */
+		Var		   *newvar;
+
+		newvar = makeVar(newvarno,
+						 tle->resno,
+						 exprType((Node *) tle->expr),
+						 exprTypmod((Node *) tle->expr),
+						 0);
+		newvar->varnoold = 0;		/* wasn't ever a plain Var */
+		newvar->varoattno = 0;
+		return newvar;
+	}
+	return NULL;				/* no match */
 }
 
 /*
@@ -1012,12 +1106,13 @@ targetlist_has_non_vars(List *tlist)
  *
  * For a normal join, acceptable_rel should be zero so that any failure to
  * match a Var will be reported as an error.  For the indexscan case,
- * pass inner_tlist = NIL and acceptable_rel = the ID of the inner relation.
+ * pass inner_itlist = NULL and acceptable_rel = the ID of the inner relation.
  *
  * 'clauses' is the targetlist or list of join clauses
  * 'rtable' is the current range table
- * 'outer_tlist' is the target list of the outer join relation
- * 'inner_tlist' is the target list of the inner join relation, or NIL
+ * 'outer_itlist' is the indexed target list of the outer join relation
+ * 'inner_itlist' is the indexed target list of the inner join relation,
+ *		or NULL
  * 'acceptable_rel' is either zero or the rangetable index of a relation
  *		whose Vars may appear in the clause without provoking an error.
  *
@@ -1027,18 +1122,16 @@ targetlist_has_non_vars(List *tlist)
 static List *
 join_references(List *clauses,
 				List *rtable,
-				List *outer_tlist,
-				List *inner_tlist,
-				Index acceptable_rel,
-				bool tlists_have_non_vars)
+				indexed_tlist *outer_itlist,
+				indexed_tlist *inner_itlist,
+				Index acceptable_rel)
 {
 	join_references_context context;
 
 	context.rtable = rtable;
-	context.outer_tlist = outer_tlist;
-	context.inner_tlist = inner_tlist;
+	context.outer_itlist = outer_itlist;
+	context.inner_itlist = inner_itlist;
 	context.acceptable_rel = acceptable_rel;
-	context.tlists_have_non_vars = tlists_have_non_vars;
 	return (List *) join_references_mutator((Node *) clauses, &context);
 }
 
@@ -1046,31 +1139,27 @@ static Node *
 join_references_mutator(Node *node,
 						join_references_context *context)
 {
+	Var		   *newvar;
+
 	if (node == NULL)
 		return NULL;
 	if (IsA(node, Var))
 	{
 		Var		   *var = (Var *) node;
-		TargetEntry *tle;
 
 		/* First look for the var in the input tlists */
-		tle = tlist_member((Node *) var, context->outer_tlist);
-		if (tle)
-		{
-			Var		   *newvar = (Var *) copyObject(var);
-
-			newvar->varno = OUTER;
-			newvar->varattno = tle->resno;
+		newvar = search_indexed_tlist_for_var(var,
+											  context->outer_itlist,
+											  OUTER);
+		if (newvar)
 			return (Node *) newvar;
-		}
-		tle = tlist_member((Node *) var, context->inner_tlist);
-		if (tle)
+		if (context->inner_itlist)
 		{
-			Var		   *newvar = (Var *) copyObject(var);
-
-			newvar->varno = INNER;
-			newvar->varattno = tle->resno;
-			return (Node *) newvar;
+			newvar = search_indexed_tlist_for_var(var,
+												  context->inner_itlist,
+												  INNER);
+			if (newvar)
+				return (Node *) newvar;
 		}
 
 		/* Return the Var unmodified, if it's for acceptable_rel */
@@ -1081,40 +1170,21 @@ join_references_mutator(Node *node,
 		elog(ERROR, "variable not found in subplan target lists");
 	}
 	/* Try matching more complex expressions too, if tlists have any */
-	if (context->tlists_have_non_vars)
+	if (context->outer_itlist->has_non_vars)
 	{
-		TargetEntry *tle;
-
-		tle = tlist_member(node, context->outer_tlist);
-		if (tle)
-		{
-			/* Found a matching subplan output expression */
-			Var		   *newvar;
-
-			newvar = makeVar(OUTER,
-							 tle->resno,
-							 exprType((Node *) tle->expr),
-							 exprTypmod((Node *) tle->expr),
-							 0);
-			newvar->varnoold = 0;		/* wasn't ever a plain Var */
-			newvar->varoattno = 0;
+		newvar = search_indexed_tlist_for_non_var(node,
+												  context->outer_itlist,
+												  OUTER);
+		if (newvar)
 			return (Node *) newvar;
-		}
-		tle = tlist_member(node, context->inner_tlist);
-		if (tle)
-		{
-			/* Found a matching subplan output expression */
-			Var		   *newvar;
-
-			newvar = makeVar(INNER,
-							 tle->resno,
-							 exprType((Node *) tle->expr),
-							 exprTypmod((Node *) tle->expr),
-							 0);
-			newvar->varnoold = 0;		/* wasn't ever a plain Var */
-			newvar->varoattno = 0;
+	}
+	if (context->inner_itlist && context->inner_itlist->has_non_vars)
+	{
+		newvar = search_indexed_tlist_for_non_var(node,
+												  context->inner_itlist,
+												  INNER);
+		if (newvar)
 			return (Node *) newvar;
-		}
 	}
 	return expression_tree_mutator(node,
 								   join_references_mutator,
@@ -1131,16 +1201,15 @@ join_references_mutator(Node *node,
  * --- so this routine should only be applied to nodes whose subplans'
  * targetlists were generated via flatten_tlist() or some such method.
  *
- * If tlist_has_non_vars is true, then we try to match whole subexpressions
+ * If itlist->has_non_vars is true, then we try to match whole subexpressions
  * against elements of the subplan tlist, so that we can avoid recomputing
  * expressions that were already computed by the subplan.  (This is relatively
  * expensive, so we don't want to try it in the common case where the
  * subplan tlist is just a flattened list of Vars.)
  *
  * 'node': the tree to be fixed (a target item or qual)
+ * 'subplan_itlist': indexed target list for subplan
  * 'subvarno': varno to be assigned to all Vars
- * 'subplan_targetlist': target list for subplan
- * 'tlist_has_non_vars': true if subplan_targetlist contains non-Var exprs
  *
  * The resulting tree is a copy of the original in which all Var nodes have
  * varno = subvarno, varattno = resno of corresponding subplan target.
@@ -1148,15 +1217,13 @@ join_references_mutator(Node *node,
  */
 static Node *
 replace_vars_with_subplan_refs(Node *node,
-							   Index subvarno,
-							   List *subplan_targetlist,
-							   bool tlist_has_non_vars)
+							   indexed_tlist *subplan_itlist,
+							   Index subvarno)
 {
 	replace_vars_with_subplan_refs_context context;
 
+	context.subplan_itlist = subplan_itlist;
 	context.subvarno = subvarno;
-	context.subplan_targetlist = subplan_targetlist;
-	context.tlist_has_non_vars = tlist_has_non_vars;
 	return replace_vars_with_subplan_refs_mutator(node, &context);
 }
 
@@ -1164,42 +1231,29 @@ static Node *
 replace_vars_with_subplan_refs_mutator(Node *node,
 						 replace_vars_with_subplan_refs_context *context)
 {
+	Var		   *newvar;
+
 	if (node == NULL)
 		return NULL;
 	if (IsA(node, Var))
 	{
 		Var		   *var = (Var *) node;
-		TargetEntry *tle;
-		Var		   *newvar;
 
-		tle = tlist_member((Node *) var, context->subplan_targetlist);
-		if (!tle)
+		newvar = search_indexed_tlist_for_var(var,
+											  context->subplan_itlist,
+											  context->subvarno);
+		if (!newvar)
 			elog(ERROR, "variable not found in subplan target list");
-		newvar = (Var *) copyObject(var);
-		newvar->varno = context->subvarno;
-		newvar->varattno = tle->resno;
 		return (Node *) newvar;
 	}
 	/* Try matching more complex expressions too, if tlist has any */
-	if (context->tlist_has_non_vars)
+	if (context->subplan_itlist->has_non_vars)
 	{
-		TargetEntry *tle;
-
-		tle = tlist_member(node, context->subplan_targetlist);
-		if (tle)
-		{
-			/* Found a matching subplan output expression */
-			Var		   *newvar;
-
-			newvar = makeVar(context->subvarno,
-							 tle->resno,
-							 exprType((Node *) tle->expr),
-							 exprTypmod((Node *) tle->expr),
-							 0);
-			newvar->varnoold = 0;		/* wasn't ever a plain Var */
-			newvar->varoattno = 0;
+		newvar = search_indexed_tlist_for_non_var(node,
+												  context->subplan_itlist,
+												  context->subvarno);
+		if (newvar)
 			return (Node *) newvar;
-		}
 	}
 	return expression_tree_mutator(node,
 								   replace_vars_with_subplan_refs_mutator,
