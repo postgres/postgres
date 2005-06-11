@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.6 2003/08/04 02:40:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/euc_jp_and_sjis/euc_jp_and_sjis.c,v 1.6.4.1 2005/06/11 02:50:07 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ mic_to_euc_jp(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(1) == PG_EUC_JP);
 	Assert(len >= 0);
 
-	mic2sjis(src, dest, len);
+	mic2euc_jp(src, dest, len);
 
 	PG_RETURN_VOID();
 }
