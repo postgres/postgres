@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.101 2005/06/04 20:42:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.102 2005/06/12 00:00:21 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,7 +403,7 @@ extern void pqClearAsyncResult(PGconn *conn);
 extern void pqSaveErrorResult(PGconn *conn);
 extern PGresult *pqPrepareAsyncResult(PGconn *conn);
 extern void
-pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
+pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt, ...)
 /* This lets gcc check the format string for consistency. */
 __attribute__((format(printf, 2, 3)));
 extern int	pqAddTuple(PGresult *res, PGresAttValue *tup);

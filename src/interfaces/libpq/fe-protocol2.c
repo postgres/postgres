@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.17 2005/05/11 01:26:02 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.18 2005/06/12 00:00:21 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -438,8 +438,12 @@ pqParseInput2(PGconn *conn)
 					if (pqGets(&conn->workBuffer, conn))
 						return;
 					if (conn->result == NULL)
+					{
 						conn->result = PQmakeEmptyPGresult(conn,
 													   PGRES_COMMAND_OK);
+						if (!conn->result)
+							return;
+					}
 					strncpy(conn->result->cmdStatus, conn->workBuffer.data,
 							CMDSTATUS_LEN);
 					checkXactStatus(conn, conn->workBuffer.data);
@@ -572,19 +576,18 @@ pqParseInput2(PGconn *conn)
 static int
 getRowDescriptions(PGconn *conn)
 {
-	PGresult   *result;
+	PGresult   *result = NULL;
 	int			nfields;
 	int			i;
 
 	result = PQmakeEmptyPGresult(conn, PGRES_TUPLES_OK);
+	if (!result)
+		goto failure;
 
 	/* parseInput already read the 'T' label. */
 	/* the next two bytes are the number of fields	*/
 	if (pqGetInt(&(result->numAttributes), 2, conn))
-	{
-		PQclear(result);
-		return EOF;
-	}
+		goto failure;
 	nfields = result->numAttributes;
 
 	/* allocate space for the attribute descriptors */
@@ -592,6 +595,8 @@ getRowDescriptions(PGconn *conn)
 	{
 		result->attDescs = (PGresAttDesc *)
 			pqResultAlloc(result, nfields * sizeof(PGresAttDesc), TRUE);
+		if (!result->attDescs)
+			goto failure;
 		MemSet(result->attDescs, 0, nfields * sizeof(PGresAttDesc));
 	}
 
@@ -606,10 +611,7 @@ getRowDescriptions(PGconn *conn)
 			pqGetInt(&typid, 4, conn) ||
 			pqGetInt(&typlen, 2, conn) ||
 			pqGetInt(&atttypmod, 4, conn))
-		{
-			PQclear(result);
-			return EOF;
-		}
+			goto failure;
 
 		/*
 		 * Since pqGetInt treats 2-byte integers as unsigned, we need to
@@ -619,6 +621,8 @@ getRowDescriptions(PGconn *conn)
 
 		result->attDescs[i].name = pqResultStrdup(result,
 												  conn->workBuffer.data);
+		if (!result->attDescs[i].name)
+			goto failure;
 		result->attDescs[i].tableid = 0;
 		result->attDescs[i].columnid = 0;
 		result->attDescs[i].format = 0;
@@ -630,6 +634,11 @@ getRowDescriptions(PGconn *conn)
 	/* Success! */
 	conn->result = result;
 	return 0;
+
+failure:
+	if (result)
+		PQclear(result);
+	return EOF;
 }
 
 /*
@@ -685,7 +694,11 @@ getAnotherTuple(PGconn *conn, bool binary)
 	nbytes = (nfields + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
 	/* malloc() only for unusually large field counts... */
 	if (nbytes > sizeof(std_bitmap))
+	{
 		bitmap = (char *) malloc(nbytes);
+		if (!bitmap)
+			goto outOfMemory;
+	}
 
 	if (pqGetnchar(bitmap, nbytes, conn))
 		goto EOFexit;
@@ -758,13 +771,18 @@ outOfMemory:
 	pqClearAsyncResult(conn);
 	printfPQExpBuffer(&conn->errorMessage,
 					  libpq_gettext("out of memory for query result\n"));
+
+	/*
+	 * XXX: if PQmakeEmptyPGresult() fails, there's probably not much
+	 * we can do to recover...
+	 */
 	conn->result = PQmakeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 	conn->asyncStatus = PGASYNC_READY;
 	/* Discard the failed message --- good idea? */
 	conn->inStart = conn->inEnd;
 
 EOFexit:
-	if (bitmap != std_bitmap)
+	if (bitmap != NULL && bitmap != std_bitmap)
 		free(bitmap);
 	return EOF;
 }
@@ -780,7 +798,7 @@ EOFexit:
 static int
 pqGetErrorNotice2(PGconn *conn, bool isError)
 {
-	PGresult   *res;
+	PGresult   *res = NULL;
 	PQExpBufferData workBuf;
 	char	   *startp;
 	char	   *splitp;
@@ -792,10 +810,7 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 	 */
 	initPQExpBuffer(&workBuf);
 	if (pqGets(&workBuf, conn))
-	{
-		termPQExpBuffer(&workBuf);
-		return EOF;
-	}
+		goto failure;
 
 	/*
 	 * Make a PGresult to hold the message.  We temporarily lie about the
@@ -803,8 +818,12 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 	 * conn->errorMessage.
 	 */
 	res = PQmakeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
+	if (!res)
+		goto failure;
 	res->resultStatus = isError ? PGRES_FATAL_ERROR : PGRES_NONFATAL_ERROR;
 	res->errMsg = pqResultStrdup(res, workBuf.data);
+	if (!res->errMsg)
+		goto failure;
 
 	/*
 	 * Break the message into fields.  We can't do very much here, but we
@@ -869,6 +888,12 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 
 	termPQExpBuffer(&workBuf);
 	return 0;
+
+failure:
+	if (res)
+		PQclear(res);
+	termPQExpBuffer(&workBuf);
+	return EOF;
 }
 
 /*

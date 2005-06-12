@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.309 2005/06/10 04:01:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.310 2005/06/12 00:00:21 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,6 +368,8 @@ connectOptions1(PGconn *conn, const char *conninfo)
 	 *
 	 * Don't put anything cute here --- intelligence should be in
 	 * connectOptions2 ...
+	 *
+	 * XXX: probably worth checking strdup() return value here...
 	 */
 	tmp = conninfo_getval(connOptions, "hostaddr");
 	conn->pghostaddr = tmp ? strdup(tmp) : NULL;
@@ -459,7 +461,6 @@ connectOptions2(PGconn *conn)
 	}
 
 #ifdef NOT_USED
-
 	/*
 	 * parse dbName to get all additional info in it, if any
 	 */
@@ -2167,11 +2168,9 @@ closePGconn(PGconn *conn)
 }
 
 /*
-   PQfinish:
-	  properly close a connection to the backend
-	  also frees the PGconn data structure so it shouldn't be re-used
-	  after this
-*/
+ * PQfinish: properly close a connection to the backend. Also frees
+ * the PGconn data structure so it shouldn't be re-used after this.
+ */
 void
 PQfinish(PGconn *conn)
 {
@@ -2182,10 +2181,10 @@ PQfinish(PGconn *conn)
 	}
 }
 
-/* PQreset :
-   resets the connection to the backend
-   closes the existing connection and makes a new one
-*/
+/*
+ * PQreset: resets the connection to the backend by closing the
+ * existing connection and creating a new one.
+ */
 void
 PQreset(PGconn *conn)
 {
@@ -2199,11 +2198,12 @@ PQreset(PGconn *conn)
 }
 
 
-/* PQresetStart :
-   resets the connection to the backend
-   closes the existing connection and makes a new one
-   Returns 1 on success, 0 on failure.
-*/
+/*
+ * PQresetStart:
+ * resets the connection to the backend
+ * closes the existing connection and makes a new one
+ * Returns 1 on success, 0 on failure.
+ */
 int
 PQresetStart(PGconn *conn)
 {
@@ -2218,11 +2218,11 @@ PQresetStart(PGconn *conn)
 }
 
 
-/* PQresetPoll :
-   resets the connection to the backend
-   closes the existing connection and makes a new one
-*/
-
+/*
+ * PQresetPoll:
+ * resets the connection to the backend
+ * closes the existing connection and makes a new one
+ */
 PostgresPollingStatusType
 PQresetPoll(PGconn *conn)
 {
@@ -2514,7 +2514,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 	 * location to find our config files.
 	 */
 	snprintf(serviceFile, MAXPGPATH, "%s/pg_service.conf",
-		   getenv("PGSYSCONFDIR") ? getenv("PGSYSCONFDIR") : SYSCONFDIR);
+			 getenv("PGSYSCONFDIR") ? getenv("PGSYSCONFDIR") : SYSCONFDIR);
 
 	if (service != NULL)
 	{
@@ -2802,7 +2802,14 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		if (option->val)
 			free(option->val);
 		option->val = strdup(pval);
-
+		if (!option->val)
+		{
+			printfPQExpBuffer(errorMessage,
+							  libpq_gettext("out of memory\n"));
+			PQconninfoFree(options);
+			free(buf);
+			return NULL;
+		}
 	}
 
 	/* Done with the modifiable input string */
@@ -2835,6 +2842,13 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 			if ((tmp = getenv(option->envvar)) != NULL)
 			{
 				option->val = strdup(tmp);
+				if (!option->val)
+				{
+					printfPQExpBuffer(errorMessage,
+									  libpq_gettext("out of memory\n"));
+					PQconninfoFree(options);
+					return NULL;
+				}
 				continue;
 			}
 		}
@@ -2846,6 +2860,13 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 		if (option->compiled != NULL)
 		{
 			option->val = strdup(option->compiled);
+			if (!option->val)
+			{
+				printfPQExpBuffer(errorMessage,
+								  libpq_gettext("out of memory\n"));
+				PQconninfoFree(options);
+				return NULL;
+			}
 			continue;
 		}
 

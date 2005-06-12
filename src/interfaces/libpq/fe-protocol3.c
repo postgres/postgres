@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.20 2004/12/31 22:03:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.21 2005/06/12 00:00:21 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ static int	getParameterStatus(PGconn *conn);
 static int	getNotify(PGconn *conn);
 static int	getCopyStart(PGconn *conn, ExecStatusType copytype);
 static int	getReadyForQuery(PGconn *conn);
-static int build_startup_packet(const PGconn *conn, char *packet,
+static int	build_startup_packet(const PGconn *conn, char *packet,
 					 const PQEnvironmentOption *options);
 
 
@@ -197,8 +197,12 @@ pqParseInput3(PGconn *conn)
 					if (pqGets(&conn->workBuffer, conn))
 						return;
 					if (conn->result == NULL)
+					{
 						conn->result = PQmakeEmptyPGresult(conn,
 													   PGRES_COMMAND_OK);
+						if (!conn->result)
+							return;
+					}
 					strncpy(conn->result->cmdStatus, conn->workBuffer.data,
 							CMDSTATUS_LEN);
 					conn->asyncStatus = PGASYNC_READY;
@@ -215,8 +219,12 @@ pqParseInput3(PGconn *conn)
 					break;
 				case 'I':		/* empty query */
 					if (conn->result == NULL)
+					{
 						conn->result = PQmakeEmptyPGresult(conn,
 													  PGRES_EMPTY_QUERY);
+						if (!conn->result)
+							return;
+					}
 					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case '1':		/* Parse Complete */
@@ -224,8 +232,12 @@ pqParseInput3(PGconn *conn)
 					if (conn->queryclass == PGQUERY_PREPARE)
 					{
 						if (conn->result == NULL)
+						{
 							conn->result = PQmakeEmptyPGresult(conn,
 															   PGRES_COMMAND_OK);
+							if (!conn->result)
+								return;
+						}
 						conn->asyncStatus = PGASYNC_READY;
 					}
 					break;
@@ -412,14 +424,13 @@ getRowDescriptions(PGconn *conn)
 	int			i;
 
 	result = PQmakeEmptyPGresult(conn, PGRES_TUPLES_OK);
+	if (!result)
+		goto failure;
 
 	/* parseInput already read the 'T' label and message length. */
 	/* the next two bytes are the number of fields	*/
 	if (pqGetInt(&(result->numAttributes), 2, conn))
-	{
-		PQclear(result);
-		return EOF;
-	}
+		goto failure;
 	nfields = result->numAttributes;
 
 	/* allocate space for the attribute descriptors */
@@ -427,7 +438,9 @@ getRowDescriptions(PGconn *conn)
 	{
 		result->attDescs = (PGresAttDesc *)
 			pqResultAlloc(result, nfields * sizeof(PGresAttDesc), TRUE);
-		MemSet((char *) result->attDescs, 0, nfields * sizeof(PGresAttDesc));
+		if (!result->attDescs)
+			goto failure;
+		MemSet(result->attDescs, 0, nfields * sizeof(PGresAttDesc));
 	}
 
 	/* result->binary is true only if ALL columns are binary */
@@ -451,8 +464,7 @@ getRowDescriptions(PGconn *conn)
 			pqGetInt(&atttypmod, 4, conn) ||
 			pqGetInt(&format, 2, conn))
 		{
-			PQclear(result);
-			return EOF;
+			goto failure;
 		}
 
 		/*
@@ -465,6 +477,8 @@ getRowDescriptions(PGconn *conn)
 
 		result->attDescs[i].name = pqResultStrdup(result,
 												  conn->workBuffer.data);
+		if (!result->attDescs[i].name)
+			goto failure;
 		result->attDescs[i].tableid = tableid;
 		result->attDescs[i].columnid = columnid;
 		result->attDescs[i].format = format;
@@ -479,6 +493,10 @@ getRowDescriptions(PGconn *conn)
 	/* Success! */
 	conn->result = result;
 	return 0;
+
+failure:
+	PQclear(result);
+	return EOF;
 }
 
 /*
@@ -507,7 +525,7 @@ getAnotherTuple(PGconn *conn, int msgLength)
 			pqResultAlloc(result, nfields * sizeof(PGresAttValue), TRUE);
 		if (conn->curTuple == NULL)
 			goto outOfMemory;
-		MemSet((char *) conn->curTuple, 0, nfields * sizeof(PGresAttValue));
+		MemSet(conn->curTuple, 0, nfields * sizeof(PGresAttValue));
 	}
 	tup = conn->curTuple;
 
@@ -593,18 +611,10 @@ outOfMemory:
 int
 pqGetErrorNotice3(PGconn *conn, bool isError)
 {
-	PGresult   *res;
+	PGresult   *res = NULL;
 	PQExpBufferData workBuf;
 	char		id;
 	const char *val;
-
-	/*
-	 * Make a PGresult to hold the accumulated fields.	We temporarily lie
-	 * about the result status, so that PQmakeEmptyPGresult doesn't
-	 * uselessly copy conn->errorMessage.
-	 */
-	res = PQmakeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
-	res->resultStatus = isError ? PGRES_FATAL_ERROR : PGRES_NONFATAL_ERROR;
 
 	/*
 	 * Since the fields might be pretty long, we create a temporary
@@ -613,6 +623,16 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	 * conn->errorMessage either, since this might be only a notice.
 	 */
 	initPQExpBuffer(&workBuf);
+
+	/*
+	 * Make a PGresult to hold the accumulated fields.	We temporarily lie
+	 * about the result status, so that PQmakeEmptyPGresult doesn't
+	 * uselessly copy conn->errorMessage.
+	 */
+	res = PQmakeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
+	if (!res)
+		goto fail;
+	res->resultStatus = isError ? PGRES_FATAL_ERROR : PGRES_NONFATAL_ERROR;
 
 	/*
 	 * Read the fields and save into res.
@@ -702,6 +722,8 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	if (isError)
 	{
 		res->errMsg = pqResultStrdup(res, workBuf.data);
+		if (!res->errMsg)
+			goto fail;
 		pqClearAsyncResult(conn);
 		conn->result = res;
 		resetPQExpBuffer(&conn->errorMessage);
@@ -825,19 +847,15 @@ getCopyStart(PGconn *conn, ExecStatusType copytype)
 	int			i;
 
 	result = PQmakeEmptyPGresult(conn, copytype);
+	if (!result)
+		goto failure;
 
 	if (pqGetc(&conn->copy_is_binary, conn))
-	{
-		PQclear(result);
-		return EOF;
-	}
+		goto failure;
 	result->binary = conn->copy_is_binary;
 	/* the next two bytes are the number of fields	*/
 	if (pqGetInt(&(result->numAttributes), 2, conn))
-	{
-		PQclear(result);
-		return EOF;
-	}
+		goto failure;
 	nfields = result->numAttributes;
 
 	/* allocate space for the attribute descriptors */
@@ -845,7 +863,9 @@ getCopyStart(PGconn *conn, ExecStatusType copytype)
 	{
 		result->attDescs = (PGresAttDesc *)
 			pqResultAlloc(result, nfields * sizeof(PGresAttDesc), TRUE);
-		MemSet((char *) result->attDescs, 0, nfields * sizeof(PGresAttDesc));
+		if (!result->attDescs)
+			goto failure;
+		MemSet(result->attDescs, 0, nfields * sizeof(PGresAttDesc));
 	}
 
 	for (i = 0; i < nfields; i++)
@@ -853,23 +873,23 @@ getCopyStart(PGconn *conn, ExecStatusType copytype)
 		int			format;
 
 		if (pqGetInt(&format, 2, conn))
-		{
-			PQclear(result);
-			return EOF;
-		}
+			goto failure;
 
 		/*
 		 * Since pqGetInt treats 2-byte integers as unsigned, we need to
 		 * coerce these results to signed form.
 		 */
 		format = (int) ((int16) format);
-
 		result->attDescs[i].format = format;
 	}
 
 	/* Success! */
 	conn->result = result;
 	return 0;
+
+failure:
+	PQclear(result);
+	return EOF;
 }
 
 /*

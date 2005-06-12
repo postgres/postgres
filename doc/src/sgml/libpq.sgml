@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.184 2005/06/10 03:02:01 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.185 2005/06/12 00:00:20 neilc Exp $
 -->
 
  <chapter id="libpq">
@@ -581,14 +581,15 @@ typedef struct
 </para>
 
 <para>
-   Returns a connection options array.  This may
-   be used to determine all possible <function>PQconnectdb</function> options and their
+   Returns a connection options array.  This may be used to determine
+   all possible <function>PQconnectdb</function> options and their
    current default values.  The return value points to an array of
-   <structname>PQconninfoOption</structname> structures, which ends with an entry having a null
-   <structfield>keyword</> pointer.  Note that the current default values
-   (<structfield>val</structfield> fields)
-   will depend on environment variables and other context.
-   Callers must treat the connection options data as read-only.
+   <structname>PQconninfoOption</structname> structures, which ends
+   with an entry having a null <structfield>keyword</> pointer.  The
+   null pointer is returned if memory could not be allocated. Note that
+   the current default values (<structfield>val</structfield> fields)
+   will depend on environment variables and other context.  Callers
+   must treat the connection options data as read-only.
    </para>
 
    <para>
@@ -1651,18 +1652,22 @@ void PQclear(PGresult *res);
 <para>
           Constructs an empty <structname>PGresult</structname> object with the given status.
 <synopsis>
-PGresult* PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
+PGresult *PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status);
 </synopsis>
 </para>
 
 <para>
-This is <application>libpq</>'s internal function to allocate and initialize an empty
-<structname>PGresult</structname> object.  It is exported because some applications find it
-useful to generate result objects (particularly objects with error
-status) themselves.  If <parameter>conn</parameter> is not null and <parameter>status</> indicates an error,
-the current error message of the specified connection is copied into the <structname>PGresult</structname>.
-Note that <function>PQclear</function> should eventually be called on the object, just
-as with a <structname>PGresult</structname> returned by <application>libpq</application> itself.
+This is <application>libpq</>'s internal function to allocate and
+initialize an empty <structname>PGresult</structname> object.  This
+function returns NULL if memory could not be allocated. It is exported
+because some applications find it useful to generate result objects
+(particularly objects with error status) themselves.  If
+<parameter>conn</parameter> is not null and <parameter>status</>
+indicates an error, the current error message of the specified
+connection is copied into the <structname>PGresult</structname>.  Note
+that <function>PQclear</function> should eventually be called on the
+object, just as with a <structname>PGresult</structname> returned by
+<application>libpq</application> itself.
 </para>
 </listitem>
 </varlistentry>
@@ -2266,15 +2271,15 @@ unsigned char *PQescapeBytea(const unsigned char *from,
   <para>
    <function>PQescapeBytea</> returns an escaped version of the
    <parameter>from</parameter> parameter binary string in memory
-   allocated with <function>malloc()</>.  This memory must be freed
-   using <function>PQfreemem</> when the result is no longer needed.
-   The return string has all special characters replaced so that they
-   can be properly processed by the
-   <productname>PostgreSQL</productname> string literal parser, and
-   the <type>bytea</type> input function. A terminating zero byte is
-   also added.  The single quotes that must surround
-   <productname>PostgreSQL</productname> string literals are not part
-   of the result string.
+   allocated with <function>malloc()</> (a null pointer is returned if
+   memory could not be allocated).  This memory must be freed using
+   <function>PQfreemem</> when the result is no longer needed.  The
+   return string has all special characters replaced so that they can
+   be properly processed by the <productname>PostgreSQL</productname>
+   string literal parser, and the <type>bytea</type> input function. A
+   terminating zero byte is also added.  The single quotes that must
+   surround <productname>PostgreSQL</productname> string literals are
+   not part of the result string.
   </para>
   </listitem>
   </varlistentry>

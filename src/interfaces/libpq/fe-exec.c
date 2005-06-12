@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.168 2005/06/09 20:01:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.169 2005/06/12 00:00:21 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,6 +134,8 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 	PGresult   *result;
 
 	result = (PGresult *) malloc(sizeof(PGresult));
+	if (!result)
+		return NULL;
 
 	result->ntups = 0;
 	result->numAttributes = 0;
@@ -453,7 +455,7 @@ pqPrepareAsyncResult(PGconn *conn)
  * a trailing newline, and should not be more than one line).
  */
 void
-pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
+pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt, ...)
 {
 	char		msgBuf[1024];
 	va_list		args;
@@ -470,6 +472,8 @@ pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
 
 	/* Make a PGresult to pass to the notice receiver */
 	res = PQmakeEmptyPGresult(NULL, PGRES_NONFATAL_ERROR);
+	if (!res)
+		return;
 	res->noticeHooks = *hooks;
 
 	/*
@@ -480,15 +484,19 @@ pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
 	/* XXX should provide a SQLSTATE too? */
 
 	/*
-	 * Result text is always just the primary message + newline.
+	 * Result text is always just the primary message + newline. If we
+	 * can't allocate it, don't bother invoking the receiver.
 	 */
 	res->errMsg = (char *) pqResultAlloc(res, strlen(msgBuf) + 2, FALSE);
-	sprintf(res->errMsg, "%s\n", msgBuf);
+	if (res->errMsg)
+	{
+		sprintf(res->errMsg, "%s\n", msgBuf);
 
-	/*
-	 * Pass to receiver, then free it.
-	 */
-	(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
+		/*
+		 * Pass to receiver, then free it.
+		 */
+		(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
+	}
 	PQclear(res);
 }
 
@@ -1127,8 +1135,9 @@ PQisBusy(PGconn *conn)
 
 /*
  * PQgetResult
- *	  Get the next PGresult produced by a query.
- *	  Returns NULL if and only if no query work remains.
+ *	  Get the next PGresult produced by a query.  Returns NULL if no
+ *	  query work remains or an error has occurred (e.g. out of
+ *	  memory).
  */
 
 PGresult *

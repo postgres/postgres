@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.113 2005/02/22 04:42:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.114 2005/06/12 00:00:21 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,8 @@ pqGetnchar(char *s, size_t len, PGconn *conn)
 	conn->inCursor += len;
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, libpq_gettext("From backend (%lu)> %.*s\n"), (unsigned long) len, (int) len, s);
+		fprintf(conn->Pfdebug, libpq_gettext("From backend (%lu)> %.*s\n"),
+				(unsigned long) len, (int) len, s);
 
 	return 0;
 }

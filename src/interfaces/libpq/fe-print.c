@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.59 2005/02/22 04:42:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.60 2005/06/12 00:00:21 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,14 +62,11 @@ static void fill(int length, int max, char filler, FILE *fp);
  * details
  *
  * This function should probably be removed sometime since psql
- * doesn't use it anymore. It is unclear to what extend this is used
+ * doesn't use it anymore. It is unclear to what extent this is used
  * by external clients, however.
  */
-
 void
-PQprint(FILE *fout,
-		const PGresult *res,
-		const PQprintOpt *po)
+PQprint(FILE *fout, const PGresult *res, const PQprintOpt *po)
 {
 	int			nFields;
 
@@ -611,6 +608,12 @@ PQdisplayTuples(const PGresult *res,
 	if (fillAlign)
 	{
 		fLength = (int *) malloc(nFields * sizeof(int));
+		if (!fLength)
+		{
+			fprintf(stderr, libpq_gettext("out of memory\n"));
+			exit(1);
+		}
+
 		for (j = 0; j < nFields; j++)
 		{
 			fLength[j] = strlen(PQfname(res, j));
@@ -705,6 +708,11 @@ PQprintTuples(const PGresult *res,
 
 			width = nFields * 14;
 			tborder = malloc(width + 1);
+			if (!tborder)
+			{
+				fprintf(stderr, libpq_gettext("out of memory\n"));
+				exit(1);
+			}
 			for (i = 0; i <= width; i++)
 				tborder[i] = '-';
 			tborder[i] = '\0';
