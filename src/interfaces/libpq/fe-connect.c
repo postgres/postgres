@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.310 2005/06/12 00:00:21 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.311 2005/06/12 00:07:07 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -460,18 +460,6 @@ connectOptions2(PGconn *conn)
 		conn->pghost = NULL;
 	}
 
-#ifdef NOT_USED
-	/*
-	 * parse dbName to get all additional info in it, if any
-	 */
-	if (update_db_info(conn) != 0)
-	{
-		conn->status = CONNECTION_BAD;
-		/* errorMessage is already set */
-		return false;
-	}
-#endif
-
 	/*
 	 * validate sslmode option
 	 */
@@ -642,163 +630,6 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 
 	return conn;
 }
-
-
-#ifdef NOT_USED					/* because it's broken */
-/*
- * update_db_info -
- * get all additional info out of dbName
- */
-static int
-update_db_info(PGconn *conn)
-{
-	char	   *tmp,
-			   *tmp2,
-			   *old = conn->dbName;
-
-	if (strchr(conn->dbName, '@') != NULL)
-	{
-		/* old style: dbname[@server][:port] */
-		tmp = strrchr(conn->dbName, ':');
-		if (tmp != NULL)		/* port number given */
-		{
-			if (conn->pgport)
-				free(conn->pgport);
-			conn->pgport = strdup(tmp + 1);
-			*tmp = '\0';
-		}
-
-		tmp = strrchr(conn->dbName, '@');
-		if (tmp != NULL)		/* host name given */
-		{
-			if (conn->pghost)
-				free(conn->pghost);
-			conn->pghost = strdup(tmp + 1);
-			*tmp = '\0';
-		}
-
-		conn->dbName = strdup(old);
-		free(old);
-	}
-	else
-	{
-		int			offset;
-
-		/*
-		 * only allow protocols tcp and unix
-		 */
-		if (strncmp(conn->dbName, "tcp:", 4) == 0)
-			offset = 4;
-		else if (strncmp(conn->dbName, "unix:", 5) == 0)
-			offset = 5;
-		else
-			return 0;
-
-		if (strncmp(conn->dbName + offset, "postgresql://", strlen("postgresql://")) == 0)
-		{
-
-			/*-------
-			 * new style:
-			 *	<tcp|unix>:postgresql://server[:port|:/unixsocket/path:]
-			 *	[/db name][?options]
-			 *-------
-			 */
-			offset += strlen("postgresql://");
-
-			tmp = strrchr(conn->dbName + offset, '?');
-			if (tmp != NULL)	/* options given */
-			{
-				if (conn->pgoptions)
-					free(conn->pgoptions);
-				conn->pgoptions = strdup(tmp + 1);
-				*tmp = '\0';
-			}
-
-			tmp = last_dir_separator(conn->dbName + offset);
-			if (tmp != NULL)	/* database name given */
-			{
-				if (conn->dbName)
-					free(conn->dbName);
-				conn->dbName = strdup(tmp + 1);
-				*tmp = '\0';
-			}
-			else
-			{
-				/*
-				 * Why do we default only this value from the environment
-				 * again?
-				 */
-				if ((tmp = getenv("PGDATABASE")) != NULL)
-				{
-					if (conn->dbName)
-						free(conn->dbName);
-					conn->dbName = strdup(tmp);
-				}
-				else if (conn->pguser)
-				{
-					if (conn->dbName)
-						free(conn->dbName);
-					conn->dbName = strdup(conn->pguser);
-				}
-			}
-
-			tmp = strrchr(old + offset, ':');
-			if (tmp != NULL)	/* port number or Unix socket path given */
-			{
-				*tmp = '\0';
-				if ((tmp2 = strchr(tmp + 1, ':')) != NULL)
-				{
-					if (strncmp(old, "unix:", 5) != 0)
-					{
-						printfPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext("connectDBStart() -- "
-										  "socket name can only be specified with "
-										  "non-TCP\n"));
-						return 1;
-					}
-					*tmp2 = '\0';
-					if (conn->pgunixsocket)
-						free(conn->pgunixsocket);
-					conn->pgunixsocket = strdup(tmp + 1);
-				}
-				else
-				{
-					if (conn->pgport)
-						free(conn->pgport);
-					conn->pgport = strdup(tmp + 1);
-					if (conn->pgunixsocket)
-						free(conn->pgunixsocket);
-					conn->pgunixsocket = NULL;
-				}
-			}
-
-			if (strncmp(old, "unix:", 5) == 0)
-			{
-				if (conn->pghost)
-					free(conn->pghost);
-				conn->pghost = NULL;
-				if (strcmp(old + offset, "localhost") != 0)
-				{
-					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("connectDBStart() -- "
-									  "non-TCP access only possible on "
-									  "localhost\n"));
-					return 1;
-				}
-			}
-			else
-			{
-				if (conn->pghost)
-					free(conn->pghost);
-				conn->pghost = strdup(old + offset);
-			}
-			free(old);
-		}
-	}
-
-	return 0;
-}
-#endif   /* NOT_USED */
 
 
 /* ----------
