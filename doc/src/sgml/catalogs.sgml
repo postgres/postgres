@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.102 2005/05/17 21:46:09 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.103 2005/06/13 23:14:47 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -356,6 +356,14 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Does the access method support multicolumn indexes?</entry>
+     </row>
+
+     <row>
+      <entry><structfield>amoptionalkey</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Does the access method support a scan without any constraint
+       for the first index column?</entry>
      </row>
 
      <row>

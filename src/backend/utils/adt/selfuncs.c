@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.181 2005/06/10 22:25:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.182 2005/06/13 23:14:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4195,18 +4195,23 @@ string_to_bytea_const(const char *str, size_t str_len)
  * don't have any better idea about how to estimate.  Index-type-specific
  * knowledge can be incorporated in the type-specific routines.
  *
+ * One bit of index-type-specific knowledge we can relatively easily use
+ * in genericcostestimate is the estimate of the number of index tuples
+ * visited.  If numIndexTuples is not 0 then it is used as the estimate,
+ * otherwise we compute a generic estimate.
+ *
  *-------------------------------------------------------------------------
  */
 
 static void
 genericcostestimate(PlannerInfo *root,
 					IndexOptInfo *index, List *indexQuals,
+					double numIndexTuples,
 					Cost *indexStartupCost,
 					Cost *indexTotalCost,
 					Selectivity *indexSelectivity,
 					double *indexCorrelation)
 {
-	double		numIndexTuples;
 	double		numIndexPages;
 	QualCost	index_qual_cost;
 	double		qual_op_cost;
@@ -4254,20 +4259,20 @@ genericcostestimate(PlannerInfo *root,
 											   JOIN_INNER);
 
 	/*
-	 * Estimate the number of tuples that will be visited.	We do it in
-	 * this rather peculiar-looking way in order to get the right answer
-	 * for partial indexes.  We can bound the number of tuples by the
-	 * index size, in any case.
+	 * If caller didn't give us an estimate, estimate the number of index
+	 * tuples that will be visited.  We do it in this rather peculiar-looking
+	 * way in order to get the right answer for partial indexes.
 	 */
-	numIndexTuples = *indexSelectivity * index->rel->tuples;
-
-	if (numIndexTuples > index->tuples)
-		numIndexTuples = index->tuples;
+	if (numIndexTuples <= 0.0)
+		numIndexTuples = *indexSelectivity * index->rel->tuples;
 
 	/*
-	 * Always estimate at least one tuple is touched, even when
+	 * We can bound the number of tuples by the index size in any case.
+	 * Also, always estimate at least one tuple is touched, even when
 	 * indexSelectivity estimate is tiny.
 	 */
+	if (numIndexTuples > index->tuples)
+		numIndexTuples = index->tuples;
 	if (numIndexTuples < 1.0)
 		numIndexTuples = 1.0;
 
@@ -4337,8 +4342,95 @@ btcostestimate(PG_FUNCTION_ARGS)
 	Oid			relid;
 	AttrNumber	colnum;
 	HeapTuple	tuple;
+	double		numIndexTuples;
+	List	   *indexBoundQuals;
+	int			indexcol;
+	bool		eqQualHere;
+	ListCell   *l;
 
-	genericcostestimate(root, index, indexQuals,
+	/*
+	 * For a btree scan, only leading '=' quals plus inequality quals
+	 * for the immediately next attribute contribute to index selectivity
+	 * (these are the "boundary quals" that determine the starting and
+	 * stopping points of the index scan).  Additional quals can suppress
+	 * visits to the heap, so it's OK to count them in indexSelectivity,
+	 * but they should not count for estimating numIndexTuples.  So we must
+	 * examine the given indexQuals to find out which ones count as boundary
+	 * quals.  We rely on the knowledge that they are given in index column
+	 * order.
+	 */
+	indexBoundQuals = NIL;
+	indexcol = 0;
+	eqQualHere = false;
+	foreach(l, indexQuals)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+		Expr   *clause;
+		Oid		clause_op;
+		int		op_strategy;
+
+		Assert(IsA(rinfo, RestrictInfo));
+		clause = rinfo->clause;
+		Assert(IsA(clause, OpExpr));
+		clause_op = ((OpExpr *) clause)->opno;
+		if (match_index_to_operand(get_leftop(clause), indexcol, index))
+		{
+			/* clause_op is correct */
+		}
+		else if (match_index_to_operand(get_rightop(clause), indexcol, index))
+		{
+			/* Must flip operator to get the opclass member */
+			clause_op = get_commutator(clause_op);
+		}
+		else
+		{
+			/* Must be past the end of quals for indexcol, try next */
+			if (!eqQualHere)
+				break;			/* done if no '=' qual for indexcol */
+			indexcol++;
+			eqQualHere = false;
+			if (match_index_to_operand(get_leftop(clause), indexcol, index))
+			{
+				/* clause_op is correct */
+			}
+			else if (match_index_to_operand(get_rightop(clause),
+											indexcol, index))
+			{
+				/* Must flip operator to get the opclass member */
+				clause_op = get_commutator(clause_op);
+			}
+			else
+			{
+				/* No quals for new indexcol, so we are done */
+				break;
+			}
+		}
+		op_strategy = get_op_opclass_strategy(clause_op,
+											  index->classlist[indexcol]);
+		Assert(op_strategy != 0);			/* not a member of opclass?? */
+		if (op_strategy == BTEqualStrategyNumber)
+			eqQualHere = true;
+		indexBoundQuals = lappend(indexBoundQuals, rinfo);
+	}
+
+	/*
+	 * If index is unique and we found an '=' clause for each column,
+	 * we can just assume numIndexTuples = 1 and skip the expensive
+	 * clauselist_selectivity calculations.
+	 */
+	if (index->unique && indexcol == index->ncolumns - 1 && eqQualHere)
+		numIndexTuples = 1.0;
+	else
+	{
+		Selectivity btreeSelectivity;
+
+		btreeSelectivity = clauselist_selectivity(root, indexBoundQuals,
+												  index->rel->relid,
+												  JOIN_INNER);
+		numIndexTuples = btreeSelectivity * index->rel->tuples;
+	}
+
+	genericcostestimate(root, index, indexQuals, numIndexTuples,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -4414,7 +4506,7 @@ rtcostestimate(PG_FUNCTION_ARGS)
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 
-	genericcostestimate(root, index, indexQuals,
+	genericcostestimate(root, index, indexQuals, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -4432,7 +4524,7 @@ hashcostestimate(PG_FUNCTION_ARGS)
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 
-	genericcostestimate(root, index, indexQuals,
+	genericcostestimate(root, index, indexQuals, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 
@@ -4450,7 +4542,7 @@ gistcostestimate(PG_FUNCTION_ARGS)
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(5);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(6);
 
-	genericcostestimate(root, index, indexQuals,
+	genericcostestimate(root, index, indexQuals, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);
 

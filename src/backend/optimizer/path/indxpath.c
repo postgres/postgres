@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.183 2005/06/10 22:25:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.184 2005/06/13 23:14:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,8 @@ static Const *string_to_const(const char *str, Oid datatype);
  *
  * To be considered for an index scan, an index must match one or more
  * restriction clauses or join clauses from the query's qual condition,
- * or match the query's ORDER BY condition.
+ * or match the query's ORDER BY condition, or have a predicate that
+ * matches the query's qual condition.
  *
  * There are two basic kinds of index scans.  A "plain" index scan uses
  * only restriction clauses (possibly none at all) in its indexqual,
@@ -210,6 +211,7 @@ create_index_paths(PlannerInfo *root, RelOptInfo *rel)
  * 'clauses' is the current list of clauses (RestrictInfo nodes)
  * 'outer_clauses' is the list of additional upper-level clauses
  * 'istoplevel' is true if clauses are the rel's top-level restriction list
+ *		(outer_clauses must be NIL when this is true)
  * 'isjoininner' is true if forming an inner indexscan (so some of the
  *		given clauses are join clauses)
  * 'outer_relids' identifies the outer side of the join (pass NULL
@@ -295,13 +297,12 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		 * selectivity of the predicate might alone make the index useful.
 		 *
 		 * Note: not all index AMs support scans with no restriction clauses.
-		 * We assume here that the AM does so if and only if it supports
-		 * ordered scans.  (It would probably be better if there were a
-		 * specific flag for this in pg_am, but there's not.)
+		 * We can't generate a scan over an index with amoptionalkey = false
+		 * unless there's at least one restriction clause.
 		 */
 		if (restrictclauses != NIL ||
-			useful_pathkeys != NIL ||
-			(index->indpred != NIL && index_is_ordered))
+			(index->amoptionalkey &&
+			 (useful_pathkeys != NIL || index->indpred != NIL)))
 		{
 			ipath = create_index_path(root, index,
 									  restrictclauses,
@@ -608,6 +609,11 @@ bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
  * group_clauses_by_indexkey
  *	  Find restriction clauses that can be used with an index.
  *
+ * Returns a list of sublists of RestrictInfo nodes for clauses that can be
+ * used with this index.  Each sublist contains clauses that can be used
+ * with one index key (in no particular order); the top list is ordered by
+ * index key.  (This is depended on by expand_indexqual_conditions().)
+ *
  * As explained in the comments for find_usable_indexes(), we can use
  * clauses from either of the given lists, but the result is required to
  * use at least one clause from the "current clauses" list.  We return
@@ -616,18 +622,14 @@ bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
  * outer_relids determines what Vars will be allowed on the other side
  * of a possible index qual; see match_clause_to_indexcol().
  *
- * Returns a list of sublists of RestrictInfo nodes for clauses that can be
- * used with this index.  Each sublist contains clauses that can be used
- * with one index key (in no particular order); the top list is ordered by
- * index key.  (This is depended on by expand_indexqual_conditions().)
+ * If the index has amoptionalkey = false, we give up and return NIL when
+ * there are no restriction clauses matching the first index key.  Otherwise,
+ * we return NIL if there are no restriction clauses matching any index key.
+ * A non-NIL result will have one (possibly empty) sublist for each index key.
  *
- * Note that in a multi-key index, we stop if we find a key that cannot be
- * used with any clause.  For example, given an index on (A,B,C), we might
- * return ((C1 C2) (C3 C4)) if we find that clauses C1 and C2 use column A,
- * clauses C3 and C4 use column B, and no clauses use column C.  But if
- * no clauses match B we will return ((C1 C2)), whether or not there are
- * clauses matching column C, because the executor couldn't use them anyway.
- * Therefore, there are no empty sublists in the result.
+ * Example: given an index on (A,B,C), we would return ((C1 C2) () (C3 C4))
+ * if we find that clauses C1 and C2 use column A, clauses C3 and C4 use
+ * column C, and no clauses use column B.
  */
 List *
 group_clauses_by_indexkey(IndexOptInfo *index,
@@ -680,11 +682,10 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 		}
 
 		/*
-		 * If no clauses match this key, we're done; we don't want to look
-		 * at keys to its right.
+		 * If no clauses match this key, check for amoptionalkey restriction.
 		 */
-		if (clausegroup == NIL)
-			break;
+		if (clausegroup == NIL && !index->amoptionalkey && indexcol == 0)
+			return NIL;
 
 		clausegroup_list = lappend(clausegroup_list, clausegroup);
 
@@ -1581,11 +1582,9 @@ match_special_index_operator(Expr *clause, Oid opclass,
  *	  will know what to do with.
  *
  * The input list is ordered by index key, and so the output list is too.
- * (The latter is not depended on by any part of the planner, so far as I can
- * tell; but some parts of the executor do assume that the indexqual list
- * ultimately delivered to the executor is so ordered.	One such place is
- * _bt_preprocess_keys() in the btree support.	Perhaps that ought to be fixed
- * someday --- tgl 7/00)
+ * (The latter is not depended on by any part of the core planner, I believe,
+ * but parts of the executor require it, and so do the amcostestimate
+ * functions.)
  */
 List *
 expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)

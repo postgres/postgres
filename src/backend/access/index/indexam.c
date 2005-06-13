@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.82 2005/05/27 23:31:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.83 2005/06/13 23:14:48 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -25,7 +25,6 @@
  *		index_getmulti	- get multiple tuples from a scan
  *		index_bulk_delete	- bulk deletion of index tuples
  *		index_vacuum_cleanup	- post-deletion cleanup of an index
- *		index_cost_estimator	- fetch amcostestimate procedure OID
  *		index_getprocid - get a support procedure OID
  *		index_getprocinfo - get a support procedure's lookup info
  *
@@ -716,27 +715,6 @@ index_vacuum_cleanup(Relation indexRelation,
 									  PointerGetDatum((Pointer) stats)));
 
 	return result;
-}
-
-/* ----------------
- *		index_cost_estimator
- *
- *		Fetch the amcostestimate procedure OID for an index.
- *
- *		We could combine fetching and calling the procedure,
- *		as index_insert does for example; but that would require
- *		importing a bunch of planner/optimizer stuff into this file.
- * ----------------
- */
-RegProcedure
-index_cost_estimator(Relation indexRelation)
-{
-	FmgrInfo   *procedure;
-
-	RELATION_CHECKS;
-	GET_REL_PROCEDURE(amcostestimate);
-
-	return procedure->fn_oid;
 }
 
 /* ----------------

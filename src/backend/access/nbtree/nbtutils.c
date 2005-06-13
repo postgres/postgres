@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.62 2004/12/31 21:59:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.63 2005/06/13 23:14:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,7 +190,9 @@ _bt_formitem(IndexTuple itup)
  * matched to continue the scan.  In general, numberOfRequiredKeys is equal
  * to the number of keys for leading attributes with "=" keys, plus the
  * key(s) for the first non "=" attribute, which can be seen to be correct
- * by considering the above example.
+ * by considering the above example.  Note in particular that if there are no
+ * keys for a given attribute, the keys for subsequent attributes can never
+ * be required; for instance "WHERE y = 4" requires a full-index scan.
  *
  * If possible, redundant keys are eliminated: we keep only the tightest
  * >/>= bound and the tightest </<= bound, and if there's an = key then
@@ -248,8 +250,8 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	outkeys = so->keyData;
 	cur = &inkeys[0];
 	/* we check that input keys are correctly ordered */
-	if (cur->sk_attno != 1)
-		elog(ERROR, "key(s) for attribute 1 missed");
+	if (cur->sk_attno < 1)
+		elog(ERROR, "btree index keys must be ordered by attribute");
 
 	/* We can short-circuit most of the work if there's just one key */
 	if (numberOfKeys == 1)
@@ -270,7 +272,8 @@ _bt_preprocess_keys(IndexScanDesc scan)
 		}
 		memcpy(outkeys, inkeys, sizeof(ScanKeyData));
 		so->numberOfKeys = 1;
-		so->numberOfRequiredKeys = 1;
+		if (cur->sk_attno == 1)
+			so->numberOfRequiredKeys = 1;
 		return;
 	}
 
@@ -324,8 +327,8 @@ _bt_preprocess_keys(IndexScanDesc scan)
 			int			priorNumberOfEqualCols = numberOfEqualCols;
 
 			/* check input keys are correctly ordered */
-			if (i < numberOfKeys && cur->sk_attno != attno + 1)
-				elog(ERROR, "key(s) for attribute %d missed", attno + 1);
+			if (i < numberOfKeys && cur->sk_attno < attno)
+				elog(ERROR, "btree index keys must be ordered by attribute");
 
 			/*
 			 * If = has been specified, no other key will be used. In case

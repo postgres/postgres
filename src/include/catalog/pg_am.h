@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.33 2005/04/14 01:38:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_am.h,v 1.34 2005/06/13 23:14:49 tgl Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -48,6 +48,7 @@ CATALOG(pg_am,2601)
 								 * Zero if AM is not ordered. */
 	bool		amcanunique;	/* does AM support UNIQUE indexes? */
 	bool		amcanmulticol;	/* does AM support multi-column indexes? */
+	bool		amoptionalkey;	/* can query omit key for the first column? */
 	bool		amindexnulls;	/* does AM support NULL index entries? */
 	bool		amconcurrent;	/* does AM support concurrent updates? */
 	regproc		aminsert;		/* "insert this tuple" function */
@@ -75,42 +76,43 @@ typedef FormData_pg_am *Form_pg_am;
  *		compiler constants for pg_am
  * ----------------
  */
-#define Natts_pg_am						20
+#define Natts_pg_am						21
 #define Anum_pg_am_amname				1
 #define Anum_pg_am_amstrategies			2
 #define Anum_pg_am_amsupport			3
 #define Anum_pg_am_amorderstrategy		4
 #define Anum_pg_am_amcanunique			5
 #define Anum_pg_am_amcanmulticol		6
-#define Anum_pg_am_amindexnulls			7
-#define Anum_pg_am_amconcurrent			8
-#define Anum_pg_am_aminsert				9
-#define Anum_pg_am_ambeginscan			10
-#define Anum_pg_am_amgettuple			11
-#define Anum_pg_am_amgetmulti			12
-#define Anum_pg_am_amrescan				13
-#define Anum_pg_am_amendscan			14
-#define Anum_pg_am_ammarkpos			15
-#define Anum_pg_am_amrestrpos			16
-#define Anum_pg_am_ambuild				17
-#define Anum_pg_am_ambulkdelete			18
-#define Anum_pg_am_amvacuumcleanup		19
-#define Anum_pg_am_amcostestimate		20
+#define Anum_pg_am_amoptionalkey		7
+#define Anum_pg_am_amindexnulls			8
+#define Anum_pg_am_amconcurrent			9
+#define Anum_pg_am_aminsert				10
+#define Anum_pg_am_ambeginscan			11
+#define Anum_pg_am_amgettuple			12
+#define Anum_pg_am_amgetmulti			13
+#define Anum_pg_am_amrescan				14
+#define Anum_pg_am_amendscan			15
+#define Anum_pg_am_ammarkpos			16
+#define Anum_pg_am_amrestrpos			17
+#define Anum_pg_am_ambuild				18
+#define Anum_pg_am_ambulkdelete			19
+#define Anum_pg_am_amvacuumcleanup		20
+#define Anum_pg_am_amcostestimate		21
 
 /* ----------------
  *		initial contents of pg_am
  * ----------------
  */
 
-DATA(insert OID = 402 (  rtree	8 3 0 f f f f rtinsert rtbeginscan rtgettuple rtgetmulti rtrescan rtendscan rtmarkpos rtrestrpos rtbuild rtbulkdelete - rtcostestimate ));
+DATA(insert OID = 402 (  rtree	8 3 0 f f f f f rtinsert rtbeginscan rtgettuple rtgetmulti rtrescan rtendscan rtmarkpos rtrestrpos rtbuild rtbulkdelete - rtcostestimate ));
 DESCR("r-tree index access method");
-DATA(insert OID = 403 (  btree	5 1 1 t t t t btinsert btbeginscan btgettuple btgetmulti btrescan btendscan btmarkpos btrestrpos btbuild btbulkdelete btvacuumcleanup btcostestimate ));
+DATA(insert OID = 403 (  btree	5 1 1 t t t t t btinsert btbeginscan btgettuple btgetmulti btrescan btendscan btmarkpos btrestrpos btbuild btbulkdelete btvacuumcleanup btcostestimate ));
 DESCR("b-tree index access method");
 #define BTREE_AM_OID 403
-DATA(insert OID = 405 (  hash	1 1 0 f f f t hashinsert hashbeginscan hashgettuple hashgetmulti hashrescan hashendscan hashmarkpos hashrestrpos hashbuild hashbulkdelete - hashcostestimate ));
+DATA(insert OID = 405 (  hash	1 1 0 f f f f t hashinsert hashbeginscan hashgettuple hashgetmulti hashrescan hashendscan hashmarkpos hashrestrpos hashbuild hashbulkdelete - hashcostestimate ));
 DESCR("hash index access method");
 #define HASH_AM_OID 405
-DATA(insert OID = 783 (  gist	100 7 0 f t f f gistinsert gistbeginscan gistgettuple gistgetmulti gistrescan gistendscan gistmarkpos gistrestrpos gistbuild gistbulkdelete - gistcostestimate ));
+DATA(insert OID = 783 (  gist	100 7 0 f t f f f gistinsert gistbeginscan gistgettuple gistgetmulti gistrescan gistendscan gistmarkpos gistrestrpos gistbuild gistbulkdelete - gistcostestimate ));
 DESCR("GiST index access method");
 #define GIST_AM_OID 783
 

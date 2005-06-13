@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.5 2005/06/05 22:32:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.6 2005/06/13 23:14:47 tgl Exp $
 -->
 
 <chapter id="indexam">
@@ -100,21 +100,30 @@ $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.5 2005/06/05 22:32:53 tgl Exp $
    <structfield>amconcurrent</structfield> in <xref linkend="index-locking">.
    The <structfield>amcanmulticol</structfield> flag asserts that the
    access method supports multi-column indexes, while
+   <structfield>amoptionalkey</structfield> asserts that it allows scans
+   where no indexable restriction clause is given for the first index column.
+   When <structfield>amcanmulticol</structfield> is false,
+   <structfield>amoptionalkey</structfield> essentially says whether the
+   access method allows full-index scans without any restriction clause.
+   Access methods that support multiple index columns <emphasis>must</>
+   support scans that omit restrictions on any or all of the columns after
+   the first; however they are permitted to require some restriction to
+   appear for the first index column, and this is signaled by setting
+   <structfield>amoptionalkey</structfield> false.
    <structfield>amindexnulls</structfield> asserts that index entries are
    created for NULL key values.  Since most indexable operators are
    strict and hence cannot return TRUE for NULL inputs,
    it is at first sight attractive to not store index entries for NULLs:
    they could never be returned by an index scan anyway.  However, this
-   argument fails for a full-table index scan (one with no scan keys);
-   such a scan should include null rows.  In practice this means that
-   indexes that support ordered scans (have <structfield>amorderstrategy</>
-   nonzero) must index nulls, since the planner might decide to use such a
-   scan as a substitute for sorting.  Such indexes must also be willing to
-   run a scan with no scan keys at all.  Another restriction is that an index
+   argument fails when an index scan has no restriction clause for a given
+   index column.  In practice this means that
+   indexes that have <structfield>amoptionalkey</structfield> true must
+   index nulls, since the planner might decide to use such an index
+   with no scan keys at all.  A related restriction is that an index
    access method that supports multiple index columns <emphasis>must</>
    support indexing null values in columns after the first, because the planner
-   will assume the index can be used for queries on just the first
-   column(s).  For example, consider an index on (a,b) and a query with
+   will assume the index can be used for queries that do not restrict
+   these columns.  For example, consider an index on (a,b) and a query with
    <literal>WHERE a = 4</literal>.  The system will assume the index can be
    used to scan for rows with <literal>a = 4</literal>, which is wrong if the
    index omits rows where <literal>b</> is null.
