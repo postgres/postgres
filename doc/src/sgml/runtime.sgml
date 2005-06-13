@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.324 2005/06/09 22:35:23 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.325 2005/06/13 02:40:06 neilc Exp $
 -->
 
 <chapter Id="runtime">
@@ -3234,8 +3234,9 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
        </para>
 
        <para>
-        Consult <xref linkend="mvcc"> and <xref linkend="sql-set-transaction"> for more
-        information.
+        Consult <xref linkend="mvcc"> and <xref
+        linkend="sql-set-transaction"
+        endterm="sql-set-transaction-title"> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -3257,7 +3258,8 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
        </para>
 
        <para>
-        Consult <xref linkend="sql-set-transaction"> for more information.
+        Consult <xref linkend="sql-set-transaction"
+        endterm="sql-set-transaction-title"> for more information.
        </para>
       </listitem>
      </varlistentry>

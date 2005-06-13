@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.50 2005/04/28 21:47:09 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.51 2005/06/13 02:40:05 neilc Exp $
 -->
 
  <chapter id="mvcc">
@@ -224,7 +224,7 @@ $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.50 2005/04/28 21:47:09 tgl Exp $
 
    <para>
     To set the transaction isolation level of a transaction, use the
-    command <xref linkend="sql-set-transaction">.
+    command <xref linkend="sql-set-transaction" endterm="sql-set-transaction-title">.
    </para>
 
   <sect2 id="xact-read-committed">
@@ -524,7 +524,8 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
     The list below shows the available lock modes and the contexts in
     which they are used automatically by
     <productname>PostgreSQL</productname>.  You can also acquire any
-    of these locks explicitly with the command <xref linkend="sql-lock">.
+    of these locks explicitly with the command <xref
+    linkend="sql-lock" endterm="sql-lock-title">.
     Remember that all of these lock modes are table-level locks,
     even if the name contains the word
     <quote>row</quote>; the names of the lock modes are historical.

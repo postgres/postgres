@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.40 2005/03/13 09:36:30 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.41 2005/06/13 02:40:01 neilc Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1540,14 +1540,14 @@ ALTER TABLE products RENAME TO items;
    There are several different privileges: <literal>SELECT</>,
    <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>,
    <literal>RULE</>, <literal>REFERENCES</>, <literal>TRIGGER</>,
-   <literal>CREATE</>, <literal>TEMPORARY</>, <literal>EXECUTE</>,
-   and <literal>USAGE</>.  The privileges applicable to a particular
+   <literal>CREATE</>, <literal>TEMPORARY</>, <literal>EXECUTE</>, and
+   <literal>USAGE</>.  The privileges applicable to a particular
    object vary depending on the object's type (table, function, etc).
-   For complete
-   information on the different types of privileges supported by
-   <productname>PostgreSQL</productname>, refer to the
-   <xref linkend="sql-grant"> reference page.  The following sections
-   and chapters will also show you how those privileges are used.
+   For complete information on the different types of privileges
+   supported by <productname>PostgreSQL</productname>, refer to the
+   <xref linkend="sql-grant" endterm="sql-grant-title"> reference
+   page.  The following sections and chapters will also show you how
+   those privileges are used.
   </para>
 
   <para>
@@ -1558,8 +1558,9 @@ ALTER TABLE products RENAME TO items;
   <note>
    <para>
     To change the owner of a table, index, sequence, or view, use the
-    <xref linkend="sql-altertable"> command.  There are corresponding
-    <literal>ALTER</> commands for other object types.
+    <xref linkend="sql-altertable" endterm="sql-altertable-title">
+    command.  There are corresponding <literal>ALTER</> commands for
+    other object types.
    </para>
   </note>
 
@@ -1596,14 +1597,15 @@ REVOKE ALL ON accounts FROM PUBLIC;
   </para>
 
   <para>
-   Ordinarily, only the object's owner (or a superuser) can grant or revoke
-   privileges on an object.  However, it is possible to grant a privilege
-   <quote>with grant option</>, which gives the recipient the right to
-   grant it in turn to others.  If the grant option is subsequently revoked
-   then all who received the privilege from that recipient (directly or
-   through a chain of grants) will lose the privilege.  For details see
-   the <xref linkend="sql-grant"> and <xref linkend="sql-revoke"> reference
-   pages.
+   Ordinarily, only the object's owner (or a superuser) can grant or
+   revoke privileges on an object.  However, it is possible to grant a
+   privilege <quote>with grant option</>, which gives the recipient
+   the right to grant it in turn to others.  If the grant option is
+   subsequently revoked then all who received the privilege from that
+   recipient (directly or through a chain of grants) will lose the
+   privilege.  For details see the <xref linkend="sql-grant"
+   endterm="sql-grant-title"> and <xref linkend="sql-revoke"
+   endterm="sql-revoke-title"> reference pages.
   </para>
  </sect1>
 

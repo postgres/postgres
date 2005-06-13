@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.142 2005/06/10 16:31:48 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.143 2005/06/13 02:40:08 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -1036,9 +1036,9 @@ testdb=&gt;
         </para>
 
         <para>
-        The commands <xref linkend="SQL-GRANT"> and
-        <xref linkend="SQL-REVOKE">
-        are used to set access privileges.  See <xref linkend="SQL-GRANT">
+        The commands <command>GRANT</command> and
+        <command>REVOKE</command> are used to set access privileges.
+        See <xref linkend="sql-grant" endterm="sql-grant-title">
         for more information.
         </para>
         </listitem>
@@ -1740,10 +1740,10 @@ lo_import 152801
         </para>
 
         <para>
-        The commands <xref linkend="SQL-GRANT"> and
-        <xref linkend="SQL-REVOKE">
-        are used to set access privileges.  See <xref linkend="SQL-GRANT">
-        for more information.
+        The commands <command>GRANT</command> and
+        <command>REVOKE</command> are used to set access privileges.
+        See <xref linkend="sql-grant" endterm="sql-grant-title"> for
+        more information.
         </para>
 
         <para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.253 2005/06/09 16:35:08 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.254 2005/06/13 02:40:04 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -8152,7 +8152,7 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
    <para>
     The <function>session_user</function> is normally the user who initiated
     the current database connection; but superusers can change this setting
-    with <xref linkend="sql-set-session-authorization">.
+    with <xref linkend="sql-set-session-authorization" endterm="sql-set-session-authorization-title">.
     The <function>current_user</function> is the user identifier
     that is applicable for permission checking. Normally, it is equal
     to the session user, but it changes during the execution of

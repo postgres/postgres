@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.43 2005/05/10 22:27:29 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.44 2005/06/13 02:40:04 neilc Exp $
 -->
 
 <chapter id="maintenance">
@@ -74,12 +74,13 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.43 2005/05/10 22:27:29 momj
      </listitem>
     </orderedlist>
 
-   The frequency and scope of the <command>VACUUM</> operations performed for each of
-   these reasons will vary depending on the needs of each site.
-   Therefore, database administrators must understand these issues and
-   develop an appropriate maintenance strategy.  This section concentrates
-   on explaining the high-level issues; for details about command syntax
-   and so on, see the <xref linkend="sql-vacuum"> reference page.
+   The frequency and scope of the <command>VACUUM</> operations
+   performed for each of these reasons will vary depending on the
+   needs of each site.  Therefore, database administrators must
+   understand these issues and develop an appropriate maintenance
+   strategy.  This section concentrates on explaining the high-level
+   issues; for details about command syntax and so on, see the <xref
+   linkend="sql-vacuum" endterm="sql-vacuum-title"> reference page.
   </para>
 
   <para>

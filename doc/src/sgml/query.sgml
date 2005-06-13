@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.44 2005/03/10 23:21:20 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.45 2005/06/13 02:40:06 neilc Exp $
 -->
 
  <chapter id="tutorial-sql">
@@ -269,7 +269,8 @@ COPY weather FROM '/home/user/weather.txt';
     where the file name for the source file must be available to the
     backend server machine, not the client, since the backend server
     reads the file directly.  You can read more about the
-    <command>COPY</command> command in <xref linkend="sql-copy">.
+    <command>COPY</command> command in <xref linkend="sql-copy"
+    endterm="sql-copy-title">.
    </para>
   </sect1>
 

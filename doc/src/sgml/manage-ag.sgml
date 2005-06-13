@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.40 2005/01/08 22:13:34 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.41 2005/06/13 02:40:04 neilc Exp $
 -->
 
 <chapter id="managing-databases">
@@ -88,7 +88,7 @@ SELECT datname FROM pg_database;
 
   <para>
    Databases are created with the SQL command
-   <xref linkend="sql-createdatabase">:<indexterm><primary>CREATE
+   <xref linkend="sql-createdatabase" endterm="sql-createdatabase-title">:<indexterm><primary>CREATE
    DATABASE</></>
 <synopsis>
 CREATE DATABASE <replaceable>name</>;
@@ -314,7 +314,7 @@ ALTER DATABASE mydb SET geqo TO off;
 
   <para>
    Databases are destroyed with the command 
-   <xref linkend="sql-dropdatabase">:<indexterm><primary>DROP DATABASE</></>
+   <xref linkend="sql-dropdatabase" endterm="sql-dropdatabase-title">:<indexterm><primary>DROP DATABASE</></>
 <synopsis>
 DROP DATABASE <replaceable>name</>;
 </synopsis>
@@ -379,7 +379,8 @@ dropdb <replaceable class="parameter">dbname</replaceable>
    </para>
 
    <para>
-    To define a tablespace, use the <xref linkend="sql-createtablespace">
+    To define a tablespace, use the <xref
+    linkend="sql-createtablespace" endterm="sql-createdatabase-title">
     command, for example:<indexterm><primary>CREATE TABLESPACE</></>
 <programlisting>
 CREATE TABLESPACE fastspace LOCATION '/mnt/sda1/postgresql/data';
@@ -459,8 +460,9 @@ CREATE TABLE foo(i int);
    </para>
 
    <para>
-    To remove an empty tablespace, use the <xref linkend="sql-droptablespace">
-    command.  
+    To remove an empty tablespace, use the <xref
+    linkend="sql-droptablespace" endterm="sql-droptablespace-title">
+    command.
    </para>
 
    <para>
