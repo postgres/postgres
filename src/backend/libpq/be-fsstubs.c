@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.77 2004/12/31 21:59:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.78 2005/06/13 02:26:48 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -195,6 +195,12 @@ lo_write(int fd, char *buf, int len)
 		return -1;
 	}
 
+	if ((cookies[fd]->flags & IFS_WRLOCK) == 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("large object descriptor %d was not opened for writing",
+						fd)));
+
 	Assert(fscxt != NULL);
 	currentContext = MemoryContextSwitchTo(fscxt);
 
@@ -236,26 +242,33 @@ lo_lseek(PG_FUNCTION_ARGS)
 Datum
 lo_creat(PG_FUNCTION_ARGS)
 {
-	int32		mode = PG_GETARG_INT32(0);
-	LargeObjectDesc *lobjDesc;
-	MemoryContext currentContext;
 	Oid			lobjId;
+	MemoryContext currentContext;
 
+	/* do we actually need fscxt for this? */
 	CreateFSContext();
 
 	currentContext = MemoryContextSwitchTo(fscxt);
 
-	lobjDesc = inv_create(mode);
+	lobjId = inv_create(InvalidOid);
 
-	if (lobjDesc == NULL)
-	{
-		MemoryContextSwitchTo(currentContext);
-		PG_RETURN_OID(InvalidOid);
-	}
+	MemoryContextSwitchTo(currentContext);
 
-	lobjId = lobjDesc->id;
+	PG_RETURN_OID(lobjId);
+}
 
-	inv_close(lobjDesc);
+Datum
+lo_create(PG_FUNCTION_ARGS)
+{
+	Oid			lobjId = PG_GETARG_OID(0);
+	MemoryContext currentContext;
+
+	/* do we actually need fscxt for this? */
+	CreateFSContext();
+
+	currentContext = MemoryContextSwitchTo(fscxt);
+
+	lobjId = inv_create(lobjId);
 
 	MemoryContextSwitchTo(currentContext);
 
@@ -403,12 +416,13 @@ lo_import(PG_FUNCTION_ARGS)
 	/*
 	 * create an inversion object
 	 */
-	lobj = inv_create(INV_READ | INV_WRITE);
-	lobjOid = lobj->id;
+	lobjOid = inv_create(InvalidOid);
 
 	/*
-	 * read in from the filesystem and write to the inversion file
+	 * read in from the filesystem and write to the inversion object
 	 */
+	lobj = inv_open(lobjOid, INV_WRITE);
+
 	while ((nbytes = FileRead(fd, buf, BUFSIZE)) > 0)
 	{
 		tmp = inv_write(lobj, buf, nbytes);
@@ -421,8 +435,8 @@ lo_import(PG_FUNCTION_ARGS)
 				 errmsg("could not read server file \"%s\": %m",
 						fnamebuf)));
 
-	FileClose(fd);
 	inv_close(lobj);
+	FileClose(fd);
 
 	PG_RETURN_OID(lobjOid);
 }

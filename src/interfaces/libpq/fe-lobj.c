@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.52 2004/12/31 22:03:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.53 2005/06/13 02:26:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,12 +266,11 @@ lo_lseek(PGconn *conn, int fd, int offset, int whence)
 /*
  * lo_creat
  *	  create a new large object
- * the mode is a bitmask describing different attributes of the new object
+ * the mode is ignored (once upon a time it had a use)
  *
  * returns the oid of the large object created or
  * InvalidOid upon failure
  */
-
 Oid
 lo_creat(PGconn *conn, int mode)
 {
@@ -290,6 +289,53 @@ lo_creat(PGconn *conn, int mode)
 	argv[0].len = 4;
 	argv[0].u.integer = mode;
 	res = PQfn(conn, conn->lobjfuncs->fn_lo_creat,
+			   &retval, &result_len, 1, argv, 1);
+	if (PQresultStatus(res) == PGRES_COMMAND_OK)
+	{
+		PQclear(res);
+		return (Oid) retval;
+	}
+	else
+	{
+		PQclear(res);
+		return InvalidOid;
+	}
+}
+
+/*
+ * lo_create
+ *	  create a new large object
+ * if lobjId isn't InvalidOid, it specifies the OID to (attempt to) create
+ *
+ * returns the oid of the large object created or
+ * InvalidOid upon failure
+ */
+Oid
+lo_create(PGconn *conn, Oid lobjId)
+{
+	PQArgBlock	argv[1];
+	PGresult   *res;
+	int			retval;
+	int			result_len;
+
+	if (conn->lobjfuncs == NULL)
+	{
+		if (lo_initialize(conn) < 0)
+			return InvalidOid;
+	}
+
+	/* Must check this on-the-fly because it's not there pre-8.1 */
+	if (conn->lobjfuncs->fn_lo_create == 0)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+		   libpq_gettext("cannot determine OID of function lo_create\n"));
+		return InvalidOid;
+	}
+
+	argv[0].isint = 1;
+	argv[0].len = 4;
+	argv[0].u.integer = lobjId;
+	res = PQfn(conn, conn->lobjfuncs->fn_lo_create,
 			   &retval, &result_len, 1, argv, 1);
 	if (PQresultStatus(res) == PGRES_COMMAND_OK)
 	{
@@ -560,7 +606,8 @@ lo_initialize(PGconn *conn)
 
 	/*
 	 * Execute the query to get all the functions at once.	In 7.3 and
-	 * later we need to be schema-safe.
+	 * later we need to be schema-safe.  lo_create only exists in 8.1
+	 * and up.
 	 */
 	if (conn->sversion >= 70300)
 		query = "select proname, oid from pg_catalog.pg_proc "
@@ -568,6 +615,7 @@ lo_initialize(PGconn *conn)
 			"'lo_open', "
 			"'lo_close', "
 			"'lo_creat', "
+			"'lo_create', "
 			"'lo_unlink', "
 			"'lo_lseek', "
 			"'lo_tell', "
@@ -615,6 +663,8 @@ lo_initialize(PGconn *conn)
 			lobjfuncs->fn_lo_close = foid;
 		else if (!strcmp(fname, "lo_creat"))
 			lobjfuncs->fn_lo_creat = foid;
+		else if (!strcmp(fname, "lo_create"))
+			lobjfuncs->fn_lo_create = foid;
 		else if (!strcmp(fname, "lo_unlink"))
 			lobjfuncs->fn_lo_unlink = foid;
 		else if (!strcmp(fname, "lo_lseek"))
@@ -631,7 +681,7 @@ lo_initialize(PGconn *conn)
 
 	/*
 	 * Finally check that we really got all large object interface
-	 * functions.
+	 * functions --- except lo_create, which may not exist.
 	 */
 	if (lobjfuncs->fn_lo_open == 0)
 	{

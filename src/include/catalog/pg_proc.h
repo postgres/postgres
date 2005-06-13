@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.365 2005/06/09 16:35:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.366 2005/06/13 02:26:50 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1247,6 +1247,8 @@ DESCR("large object write");
 DATA(insert OID = 956 (  lo_lseek		   PGNSP PGUID 12 f f t f v 3 23 "23 23 23" _null_ _null_ _null_	lo_lseek - _null_ ));
 DESCR("large object seek");
 DATA(insert OID = 957 (  lo_creat		   PGNSP PGUID 12 f f t f v 1 26 "23" _null_ _null_ _null_  lo_creat - _null_ ));
+DESCR("large object create");
+DATA(insert OID = 715 (  lo_create		   PGNSP PGUID 12 f f t f v 1 26 "26" _null_ _null_ _null_  lo_create - _null_ ));
 DESCR("large object create");
 DATA(insert OID = 958 (  lo_tell		   PGNSP PGUID 12 f f t f v 1 23 "23" _null_ _null_ _null_  lo_tell - _null_ ));
 DESCR("large object position");

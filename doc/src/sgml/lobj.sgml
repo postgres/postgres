@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.36 2005/01/10 00:04:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.37 2005/06/13 02:26:46 tgl Exp $
 -->
 
  <chapter id="largeObjects">
@@ -115,26 +115,52 @@ $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.36 2005/01/10 00:04:38 tgl Exp $
 Oid lo_creat(PGconn *conn, int mode);
 </synopsis>
      <indexterm><primary>lo_creat</></>
-     creates a new large  object.  
-     <replaceable class="parameter">mode</replaceable>  is  a  bit mask
-     describing  several  different  attributes  of  the new
-     object.  The symbolic constants used here are defined
-     in the header file <filename>libpq/libpq-fs.h</filename>.
-     The access type (read, write, or both) is controlled by
-     or'ing together the bits <symbol>INV_READ</symbol>  and
-     <symbol>INV_WRITE</symbol>.  The low-order sixteen bits of the mask have
-     historically been used at Berkeley to designate the storage  manager  number on which the large object
-     should reside.  These bits should always be zero now.  (The access type
-     does not actually do anything anymore either, but one or both flag bits
-     must be set to avoid an error.)
+     creates a new large object.  
      The return value is the OID that was assigned to the new large object,
      or InvalidOid (zero) on failure.
+
+     <replaceable class="parameter">mode</replaceable> is unused and
+     ignored as of <productname>PostgreSQL</productname> 8.1; however, for
+     backwards compatibility with earlier releases it is best to
+     set it to <symbol>INV_READ</symbol>, <symbol>INV_WRITE</symbol>,
+     or <symbol>INV_READ</symbol> <literal>|</> <symbol>INV_WRITE</symbol>.
+     (These symbolic constants are defined
+     in the header file <filename>libpq/libpq-fs.h</filename>.)
     </para>
 
     <para>
      An example:
 <programlisting>
 inv_oid = lo_creat(conn, INV_READ|INV_WRITE);
+</programlisting>
+    </para>
+
+    <para>
+     The function
+<synopsis>
+Oid lo_create(PGconn *conn, Oid lobjId);
+</synopsis>
+     <indexterm><primary>lo_create</></>
+     also creates a new large object.  The OID to be assigned can be
+     specified by <replaceable class="parameter">lobjId</replaceable>;
+     if so, failure occurs if that OID is already in use for some large
+     object.  If <replaceable class="parameter">lobjId</replaceable>
+     is InvalidOid (zero) then <function>lo_create</> assigns an unused
+     OID (this is the same behavior as <function>lo_creat</>).
+     The return value is the OID that was assigned to the new large object,
+     or InvalidOid (zero) on failure.
+    </para>
+
+    <para>
+     <function>lo_create</> is new as of <productname>PostgreSQL</productname>
+     8.1; if this function is run against an older server version, it will
+     fail and return InvalidOid.
+    </para>
+
+    <para>
+     An example:
+<programlisting>
+inv_oid = lo_create(conn, desired_oid);
 </programlisting>
     </para>
    </sect2>
@@ -186,11 +212,13 @@ int lo_export(PGconn *conn, Oid lobjId, const char *filename);
 int lo_open(PGconn *conn, Oid lobjId, int mode);
 </synopsis>
      <indexterm><primary>lo_open</></>
-     The <parameter>lobjId</parameter> argument specifies  the  OID  of  the  large
-     object  to  open.   The  <parameter>mode</parameter>  bits control whether the
-     object is opened  for  reading  (<symbol>INV_READ</>),  writing (<symbol>INV_WRITE</symbol>),  or
-     both.
-     A  large  object cannot be opened before it is created.
+     The <parameter>lobjId</parameter> argument specifies the OID of the large
+     object to open.   The <parameter>mode</parameter> bits control whether the
+     object is opened for reading (<symbol>INV_READ</>), writing
+     (<symbol>INV_WRITE</symbol>), or both.
+     (These symbolic constants are defined
+     in the header file <filename>libpq/libpq-fs.h</filename>.)
+     A large object cannot be opened before it is created.
      <function>lo_open</function> returns a (non-negative) large object
      descriptor for later use in <function>lo_read</function>,
      <function>lo_write</function>, <function>lo_lseek</function>,
@@ -198,7 +226,31 @@ int lo_open(PGconn *conn, Oid lobjId, int mode);
      The descriptor is only valid for 
      the duration of the current transaction.
      On failure, -1 is returned.
-</para>
+    </para>
+
+    <para>
+     The server currently does not distinguish between modes
+     <symbol>INV_WRITE</symbol> and <symbol>INV_READ</> <literal>|</>
+     <symbol>INV_WRITE</symbol>: you are allowed to read from the descriptor
+     in either case.  However there is a significant difference between
+     these modes and <symbol>INV_READ</> alone: with <symbol>INV_READ</>
+     you cannot write on the descriptor, and the data read from it will
+     reflect the contents of the large object at the time of the transaction
+     snapshot that was active when <function>lo_open</> was executed,
+     regardless of later writes by this or other transactions.  Reading
+     from a descriptor opened with <symbol>INV_WRITE</symbol> returns
+     data that reflects all writes of other committed transactions as well
+     as writes of the current transaction.  This is similar to the behavior
+     of <literal>SERIALIZABLE</> versus <literal>READ COMMITTED</> transaction
+     modes for ordinary SQL <command>SELECT</> commands.
+    </para>
+
+    <para>
+     An example:
+<programlisting>
+inv_fd = lo_open(conn, inv_oid, INV_READ|INV_WRITE);
+</programlisting>
+    </para>
 </sect2>
 
 <sect2>
@@ -317,6 +369,7 @@ int lo_unlink(PGconn *conn, Oid lobjId);
    equivalent server-side functions.  The ones that are actually useful
    to call via SQL commands are
    <function>lo_creat</function><indexterm><primary>lo_creat</></>,
+   <function>lo_create</function><indexterm><primary>lo_create</></>,
    <function>lo_unlink</function><indexterm><primary>lo_unlink</></>,
    <function>lo_import</function><indexterm><primary>lo_import</></>, and
    <function>lo_export</function><indexterm><primary>lo_export</></>.
@@ -329,6 +382,8 @@ CREATE TABLE image (
 );
 
 SELECT lo_creat(-1);       -- returns OID of new, empty large object
+
+SELECT lo_create(43213);   -- attempts to create large object with OID 43213
 
 SELECT lo_unlink(173454);  -- deletes large object with OID 173454
 

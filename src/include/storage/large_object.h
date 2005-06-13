@@ -8,19 +8,22 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/large_object.h,v 1.31 2004/12/31 22:03:42 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/large_object.h,v 1.32 2005/06/13 02:26:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LARGE_OBJECT_H
 #define LARGE_OBJECT_H
 
+#include "utils/tqual.h"
+
 
 /*----------
  * Data about a currently-open large object.
  *
  * id is the logical OID of the large object
- * subid is the subtransaction that opened the LO (or currently owns it)
+ * snapshot is the snapshot to use for read/write operations
+ * subid is the subtransaction that opened the desc (or currently owns it)
  * offset is the current seek offset within the LO
  * flags contains some flag bits
  *
@@ -32,6 +35,7 @@
 typedef struct LargeObjectDesc
 {
 	Oid			id;				/* LO's identifier */
+	Snapshot	snapshot;		/* snapshot to use */
 	SubTransactionId subid;		/* owning subtransaction ID */
 	uint32		offset;			/* current seek pointer */
 	int			flags;			/* locking info, etc */
@@ -39,6 +43,7 @@ typedef struct LargeObjectDesc
 /* flag bits: */
 #define IFS_RDLOCK		(1 << 0)
 #define IFS_WRLOCK		(1 << 1)
+
 } LargeObjectDesc;
 
 
@@ -65,7 +70,7 @@ typedef struct LargeObjectDesc
 
 /* inversion stuff in inv_api.c */
 extern void close_lo_relation(bool isCommit);
-extern LargeObjectDesc *inv_create(int flags);
+extern Oid	inv_create(Oid lobjId);
 extern LargeObjectDesc *inv_open(Oid lobjId, int flags);
 extern void inv_close(LargeObjectDesc *obj_desc);
 extern int	inv_drop(Oid lobjId);
