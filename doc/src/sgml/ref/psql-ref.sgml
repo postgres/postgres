@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.143 2005/06/13 02:40:08 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.144 2005/06/13 06:36:22 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -433,8 +433,8 @@ PostgreSQL documentation
       <term><option>--expanded</></term>
       <listitem>
       <para>
-      Turn on the extended table formatting mode. This is equivalent to the
-      command <command>\x</command>.
+      Turn on the expanded table formatting mode. This is equivalent to the
+      <command>\x</command> command.
       </para>
       </listitem>
     </varlistentry>
@@ -1389,7 +1389,7 @@ lo_import 152801
           <literal>aligned</literal>, <literal>html</literal>,
           <literal>latex</literal>, or <literal>troff-ms</literal>.
           Unique abbreviations are allowed.  (That would mean one letter
-	  is enough.)
+          is enough.)
           </para>
 
           <para>
@@ -1429,10 +1429,13 @@ lo_import 152801
           <listitem>
           <para>
           Toggles between regular and expanded format. When expanded
-          format is enabled, all output has two columns with the column
-          name on the left and the data on the right. This mode is
-          useful if the data wouldn't fit on the screen in the normal
-          <quote>horizontal</quote> mode.
+          format is enabled, query results are displayed in two
+          columns, with the column name on the left and the data on
+          the right. This option only affects how normal query results
+          are displayed; the output of <application>psql</application>
+          meta-commands is always presented using the regular
+          format. This mode is useful if the data wouldn't fit on the
+          screen in the normal <quote>horizontal</quote> mode.
           </para>
 
           <para>
@@ -1722,7 +1725,7 @@ lo_import 152801
         <term><literal>\x</literal></term>
         <listitem>
         <para>
-        Toggles extended table formatting mode. As such it is equivalent to
+        Toggles expanded table formatting mode. As such it is equivalent to
         <literal>\pset expanded</literal>.
        </para>
        </listitem>

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.145 2005/06/09 23:28:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.146 2005/06/13 06:36:22 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -114,11 +114,6 @@ HandleSlashCmds(PsqlScanState scan_state,
 		{
 			/* adjust cmd for possible messages below */
 			cmd[1] = '\0';
-
-#if 0							/* turned out to be too annoying */
-			if (isalpha((unsigned char) cmd[0]))
-				psql_error("Warning: This syntax is deprecated.\n");
-#endif
 		}
 	}
 

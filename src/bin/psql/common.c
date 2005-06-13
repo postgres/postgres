@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.100 2005/06/10 14:49:31 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.101 2005/06/13 06:36:22 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -63,7 +63,6 @@ extern bool prompt_state;
 
 
 static bool command_no_begin(const char *query);
-
 
 /*
  * "Safe" wrapper around strdup()
@@ -189,7 +188,7 @@ setQFout(const char *fname)
  *
  */
 void
-psql_error(const char *fmt,...)
+psql_error(const char *fmt, ...)
 {
 	va_list		ap;
 
@@ -784,6 +783,10 @@ PrintNotifications(void)
 static bool
 PrintQueryTuples(const PGresult *results)
 {
+	printQueryOpt my_popt = pset.popt;
+
+	my_popt.topt.normal_query = true;
+
 	/* write output to \g argument, if any */
 	if (pset.gfname)
 	{
@@ -800,7 +803,7 @@ PrintQueryTuples(const PGresult *results)
 			return false;
 		}
 
-		printQuery(results, &pset.popt, pset.queryFout);
+		printQuery(results, &my_popt, pset.queryFout);
 
 		/* close file/pipe, restore old setting */
 		setQFout(NULL);
@@ -812,7 +815,7 @@ PrintQueryTuples(const PGresult *results)
 		pset.gfname = NULL;
 	}
 	else
-		printQuery(results, &pset.popt, pset.queryFout);
+		printQuery(results, &my_popt, pset.queryFout);
 
 	return true;
 }
@@ -1001,7 +1004,7 @@ SendQuery(const char *query)
 		if (on_error_rollback_warning == false && pset.sversion < 80000)
 		{
 			fprintf(stderr, _("The server version (%d) does not support savepoints for ON_ERROR_ROLLBACK.\n"),
-				pset.sversion);
+					pset.sversion);
 			on_error_rollback_warning = true;
 		}
 		else

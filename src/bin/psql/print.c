@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.57 2005/06/09 18:40:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.58 2005/06/13 06:36:22 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -28,7 +28,6 @@
 #include "libpq-fe.h"
 
 #include "mbprint.h"
-
 
 /*************************/
 /* Unaligned text		 */
@@ -1261,6 +1260,7 @@ printTable(const char *title,
 	const char *default_footer[] = {NULL};
 	unsigned short int border = opt->border;
 	FILE	   *output;
+	bool use_expanded;
 
 	if (opt->format == PRINT_NOTHING)
 		return;
@@ -1270,6 +1270,16 @@ printTable(const char *title,
 
 	if (opt->format != PRINT_HTML && border > 2)
 		border = 2;
+
+	/*
+	 * We only want to display the results in "expanded" format if
+	 * this is a normal (user-submitted) query, not a table we're
+	 * printing for a slash command.
+	 */
+	if (opt->expanded && opt->normal_query)
+		use_expanded = true;
+	else
+		use_expanded = false;
 
 	if (fout == stdout)
 	{
@@ -1305,37 +1315,56 @@ printTable(const char *title,
 	switch (opt->format)
 	{
 		case PRINT_UNALIGNED:
-			if (opt->expanded)
-				print_unaligned_vertical(title, headers, cells, footers, opt->fieldSep, opt->recordSep, opt->tuples_only, output);
+			if (use_expanded)
+				print_unaligned_vertical(title, headers, cells, footers,
+										 opt->fieldSep, opt->recordSep,
+										 opt->tuples_only, output);
 			else
-				print_unaligned_text(title, headers, cells, footers, opt->fieldSep, opt->recordSep, opt->tuples_only, output);
+				print_unaligned_text(title, headers, cells, footers,
+									 opt->fieldSep, opt->recordSep,
+									 opt->tuples_only, output);
 			break;
 		case PRINT_ALIGNED:
-			if (opt->expanded)
-				print_aligned_vertical(title, headers, cells, footers, opt->tuples_only, border, opt->encoding, output);
+			if (use_expanded)
+				print_aligned_vertical(title, headers, cells, footers,
+									   opt->tuples_only, border,
+									   opt->encoding, output);
 			else
-				print_aligned_text(title, headers, cells, footers, align, opt->tuples_only, border, opt->encoding, output);
+				print_aligned_text(title, headers, cells, footers,
+								   align, opt->tuples_only,
+								   border, opt->encoding, output);
 			break;
 		case PRINT_HTML:
-			if (opt->expanded)
-				print_html_vertical(title, headers, cells, footers, align, opt->tuples_only, border, opt->tableAttr, output);
+			if (use_expanded)
+				print_html_vertical(title, headers, cells, footers,
+									align, opt->tuples_only,
+									border, opt->tableAttr, output);
 			else
-				print_html_text(title, headers, cells, footers, align, opt->tuples_only, border, opt->tableAttr, output);
+				print_html_text(title, headers, cells, footers,
+								align, opt->tuples_only, border,
+								opt->tableAttr, output);
 			break;
 		case PRINT_LATEX:
-			if (opt->expanded)
-				print_latex_vertical(title, headers, cells, footers, align, opt->tuples_only, border, output);
+			if (use_expanded)
+				print_latex_vertical(title, headers, cells, footers, align,
+									 opt->tuples_only, border, output);
 			else
-				print_latex_text(title, headers, cells, footers, align, opt->tuples_only, border, output);
+				print_latex_text(title, headers, cells, footers, align,
+								 opt->tuples_only, border, output);
 			break;
 		case PRINT_TROFF_MS:
-			if (opt->expanded)
-				print_troff_ms_vertical(title, headers, cells, footers, align, opt->tuples_only, border, output);
+			if (use_expanded)
+				print_troff_ms_vertical(title, headers, cells, footers,
+										align, opt->tuples_only,
+										border, output);
 			else
-				print_troff_ms_text(title, headers, cells, footers, align, opt->tuples_only, border, output);
+				print_troff_ms_text(title, headers, cells, footers,
+									align, opt->tuples_only,
+									border, output);
 			break;
 		default:
-			fprintf(stderr, "+ Oops, you shouldn't see this!\n");
+			fprintf(stderr, _("illegal output format: %d"), opt->format);
+			exit(EXIT_FAILURE);
 	}
 
 	/* Only close if we used the pager */
