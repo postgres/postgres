@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.184 2005/06/13 23:14:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.185 2005/06/14 04:04:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,17 @@ static bool matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel,
 							  Relids outer_relids);
 static List *find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 								   Relids outer_relids, bool isouterjoin);
+static bool match_variant_ordering(PlannerInfo *root,
+								   IndexOptInfo *index,
+								   List *restrictclauses,
+								   ScanDirection *indexscandir);
+static List *identify_ignorable_ordering_cols(PlannerInfo *root,
+											  IndexOptInfo *index,
+											  List *restrictclauses);
+static bool match_index_to_query_keys(PlannerInfo *root,
+									  IndexOptInfo *index,
+									  ScanDirection indexscandir,
+									  List *ignorables);
 static bool match_boolean_index_clause(Node *clause, int indexcol,
 									   IndexOptInfo *index);
 static bool match_special_index_operator(Expr *clause, Oid opclass,
@@ -315,22 +326,24 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		}
 
 		/*
-		 * 4. If the index is ordered, a backwards scan might be
-		 * interesting. Currently this is only possible for a DESC query
-		 * result ordering.
+		 * 4. If the index is ordered, and there is a requested query
+		 * ordering that we failed to match, consider variant ways of
+		 * achieving the ordering.  Again, this is only interesting
+		 * at top level.
 		 */
-		if (istoplevel && index_is_ordered && !isjoininner)
+		if (istoplevel && index_is_ordered && !isjoininner &&
+			root->query_pathkeys != NIL &&
+			pathkeys_useful_for_ordering(root, useful_pathkeys) == 0)
 		{
-			index_pathkeys = build_index_pathkeys(root, index,
-												  BackwardScanDirection);
-			useful_pathkeys = truncate_useless_pathkeys(root, rel,
-														index_pathkeys);
-			if (useful_pathkeys != NIL)
+			ScanDirection	indexscandir;
+
+			if (match_variant_ordering(root, index, restrictclauses,
+									   &indexscandir))
 			{
 				ipath = create_index_path(root, index,
 										  restrictclauses,
-										  useful_pathkeys,
-										  BackwardScanDirection,
+										  root->query_pathkeys,
+										  indexscandir,
 										  false);
 				result = lappend(result, ipath);
 			}
@@ -1221,6 +1234,255 @@ find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 }
 
 /****************************************************************************
+ *				----  ROUTINES TO HANDLE PATHKEYS  ----
+ ****************************************************************************/
+
+/*
+ * match_variant_ordering
+ *		Try to match an index's ordering to the query's requested ordering
+ *
+ * This is used when the index is ordered but a naive comparison fails to
+ * match its ordering (pathkeys) to root->query_pathkeys.  It may be that
+ * we need to scan the index backwards.  Also, a less naive comparison can
+ * help for both forward and backward indexscans.  Columns of the index
+ * that have an equality restriction clause can be ignored in the match;
+ * that is, an index on (x,y) can be considered to match the ordering of
+ *		... WHERE x = 42 ORDER BY y;
+ *
+ * Note: it would be possible to similarly ignore useless ORDER BY items;
+ * that is, an index on just y could be considered to match the ordering of
+ *		... WHERE x = 42 ORDER BY x, y;
+ * But proving that this is safe would require finding a btree opclass
+ * containing both the = operator and the < or > operator in the ORDER BY
+ * item.  That's significantly more expensive than what we do here, since
+ * we'd have to look at restriction clauses unrelated to the current index
+ * and search for opclasses without any hint from the index.  The practical
+ * use-cases seem to be mostly covered by ignoring index columns, so that's
+ * all we do for now.
+ *
+ * Inputs:
+ * 'index' is the index of interest.
+ * 'restrictclauses' is the list of sublists of restriction clauses
+ *		matching the columns of the index (NIL if none)
+ *
+ * Returns TRUE if able to match the requested query pathkeys, FALSE if not.
+ * In the TRUE case, sets '*indexscandir' to either ForwardScanDirection or
+ * BackwardScanDirection to indicate the proper scan direction.
+ */
+static bool
+match_variant_ordering(PlannerInfo *root,
+					   IndexOptInfo *index,
+					   List *restrictclauses,
+					   ScanDirection *indexscandir)
+{
+	List	   *ignorables;
+
+	/*
+	 * Forget the whole thing if not a btree index; our check for ignorable
+	 * columns assumes we are dealing with btree opclasses.  (It'd be possible
+	 * to factor out just the try for backwards indexscan, but considering
+	 * that we presently have no orderable indexes except btrees anyway,
+	 * it's hardly worth contorting this code for that case.)
+	 *
+	 * Note: if you remove this, you probably need to put in a check on
+	 * amoptionalkey to prevent possible clauseless scan on an index that
+	 * won't cope.
+	 */
+	if (index->relam != BTREE_AM_OID)
+		return false;
+	/*
+	 * Figure out which index columns can be optionally ignored because
+	 * they have an equality constraint.  This is the same set for either
+	 * forward or backward scan, so we do it just once.
+	 */
+	ignorables = identify_ignorable_ordering_cols(root, index,
+												  restrictclauses);
+	/*
+	 * Try to match to forward scan, then backward scan.  However, we can
+	 * skip the forward-scan case if there are no ignorable columns,
+	 * because find_usable_indexes() would have found the match already.
+	 */
+	if (ignorables &&
+		match_index_to_query_keys(root, index, ForwardScanDirection,
+								  ignorables))
+	{
+		*indexscandir = ForwardScanDirection;
+		return true;
+	}
+	if (match_index_to_query_keys(root, index, BackwardScanDirection,
+								  ignorables))
+	{
+		*indexscandir = BackwardScanDirection;
+		return true;
+	}
+	return false;
+}
+
+/*
+ * identify_ignorable_ordering_cols
+ *		Determine which index columns can be ignored for ordering purposes
+ *
+ * Returns an integer List of column numbers (1-based) of ignorable
+ * columns.  The ignorable columns are those that have equality constraints
+ * against pseudoconstants.
+ */
+static List *
+identify_ignorable_ordering_cols(PlannerInfo *root,
+								 IndexOptInfo *index,
+								 List *restrictclauses)
+{
+	List	   *result = NIL;
+	int			indexcol = 0;			/* note this is 0-based */
+	ListCell   *l;
+
+	/* restrictclauses is either NIL or has a sublist per column */
+	foreach(l, restrictclauses)
+	{
+		List   *sublist = (List *) lfirst(l);
+		Oid		opclass = index->classlist[indexcol];
+		ListCell *l2;
+
+		foreach(l2, sublist)
+		{
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l2);
+			OpExpr	   *clause = (OpExpr *) rinfo->clause;
+			Oid		clause_op;
+			int		op_strategy;
+			bool	varonleft;
+			bool	ispc;
+
+			/* We know this clause passed match_clause_to_indexcol */
+
+			/* First check for boolean-index cases. */
+			if (IsBooleanOpclass(opclass))
+			{
+				if (match_boolean_index_clause((Node *) clause, indexcol,
+											   index))
+				{
+					/*
+					 * The clause means either col = TRUE or col = FALSE;
+					 * we do not care which, it's an equality constraint
+					 * either way.
+					 */
+					result = lappend_int(result, indexcol+1);
+					break;
+				}
+			}
+
+			/* Else clause must be a binary opclause. */
+			Assert(IsA(clause, OpExpr));
+
+			/* Determine left/right sides and check the operator */
+			clause_op = clause->opno;
+			if (match_index_to_operand(linitial(clause->args), indexcol,
+									   index))
+			{
+				/* clause_op is correct */
+				varonleft = true;
+			}
+			else
+			{
+				Assert(match_index_to_operand(lsecond(clause->args), indexcol,
+											  index));
+				/* Must flip operator to get the opclass member */
+				clause_op = get_commutator(clause_op);
+				varonleft = false;
+			}
+			if (!OidIsValid(clause_op))
+				continue;		/* ignore non match, per next comment */
+			op_strategy = get_op_opclass_strategy(clause_op, opclass);
+
+			/*
+			 * You might expect to see Assert(op_strategy != 0) here,
+			 * but you won't: the clause might contain a special indexable
+			 * operator rather than an ordinary opclass member.  Currently
+			 * none of the special operators are very likely to expand to
+			 * an equality operator; we do not bother to check, but just
+			 * assume no match.
+			 */
+			if (op_strategy != BTEqualStrategyNumber)
+				continue;
+
+			/* Now check that other side is pseudoconstant */
+			if (varonleft)
+				ispc = is_pseudo_constant_clause_relids(lsecond(clause->args),
+														rinfo->right_relids);
+			else
+				ispc = is_pseudo_constant_clause_relids(linitial(clause->args),
+														rinfo->left_relids);
+			if (ispc)
+			{
+				result = lappend_int(result, indexcol+1);
+				break;
+			}
+		}
+		indexcol++;
+	}
+	return result;
+}
+
+/*
+ * match_index_to_query_keys
+ *		Check a single scan direction for "intelligent" match to query keys
+ *
+ * 'index' is the index of interest.
+ * 'indexscandir' is the scan direction to consider
+ * 'ignorables' is an integer list of indexes of ignorable index columns
+ *
+ * Returns TRUE on successful match (ie, the query_pathkeys can be considered
+ * to match this index).
+ */
+static bool
+match_index_to_query_keys(PlannerInfo *root,
+						  IndexOptInfo *index,
+						  ScanDirection indexscandir,
+						  List *ignorables)
+{
+	List	   *index_pathkeys;
+	ListCell   *index_cell;
+	int			index_col;
+	ListCell   *r;
+
+	/* Get the pathkeys that exactly describe the index */
+	index_pathkeys = build_index_pathkeys(root, index, indexscandir);
+
+	/*
+	 * Can we match to the query's requested pathkeys?  The inner loop
+	 * skips over ignorable index columns while trying to match.
+	 */
+	index_cell = list_head(index_pathkeys);
+	index_col = 0;
+
+	foreach(r, root->query_pathkeys)
+	{
+		List	   *rsubkey = (List *) lfirst(r);
+
+		for (;;)
+		{
+			List   *isubkey;
+
+			if (index_cell == NULL)
+				return false;
+			isubkey = (List *) lfirst(index_cell);
+			index_cell = lnext(index_cell);
+			index_col++;		/* index_col is now 1-based */
+			/*
+			 * Since we are dealing with canonicalized pathkeys, pointer
+			 * comparison is sufficient to determine a match.
+			 */
+			if (rsubkey == isubkey)
+				break;			/* matched current query pathkey */
+
+			if (!list_member_int(ignorables, index_col))
+				return false;	/* definite failure to match */
+			/* otherwise loop around and try to match to next index col */
+		}
+	}
+
+	return true;
+}
+
+/****************************************************************************
  *				----  PATH CREATION UTILITIES  ----
  ****************************************************************************/
 
@@ -1230,7 +1492,8 @@ find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
  *	  of RestrictInfos.
  *
  * This is used to flatten out the result of group_clauses_by_indexkey()
- * to produce an indexclauses list.
+ * to produce an indexclauses list.  The original list structure mustn't
+ * be altered, but it's OK to share copies of the underlying RestrictInfos.
  */
 List *
 flatten_clausegroups_list(List *clausegroups)
