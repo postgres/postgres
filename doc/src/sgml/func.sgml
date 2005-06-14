@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.255 2005/06/14 21:04:38 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.256 2005/06/14 23:47:39 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -282,6 +282,12 @@ PostgreSQL documentation
     There is no difference between the two respective forms apart from
     the <acronym>CPU</acronym> cycles required to rewrite the first one
     into the second one internally.
+    <indexterm>
+     <primary>BETWEEN SYMETRIC</primary>
+    </indexterm>
+    <token>BETWEEN SYMMETRIC</> is the same as <literal>BETWEEN</>
+    except there is no requirement that the argument to the left of <literal>AND</> be less than
+    or equal to the argument on the right;  the proper range is automatically determined.
    </para>
 
    <para>

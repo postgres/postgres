@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.155 2005/05/07 02:22:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.156 2005/06/14 23:47:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"asc", ASC},
 	{"assertion", ASSERTION},
 	{"assignment", ASSIGNMENT},
+	{"asymmetric", ASYMMETRIC},
 	{"at", AT},
 	{"authorization", AUTHORIZATION},
 	{"backward", BACKWARD},
@@ -296,6 +297,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"storage", STORAGE},
 	{"strict", STRICT_P},
 	{"substring", SUBSTRING},
+	{"symmetric", SYMMETRIC},
 	{"sysid", SYSID},
 	{"table", TABLE},
 	{"tablespace", TABLESPACE},

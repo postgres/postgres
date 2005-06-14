@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.492 2005/06/08 21:15:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.493 2005/06/14 23:47:39 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -338,7 +338,7 @@ static void doNegateFloat(Value *v);
 /* ordinary key words in alphabetical order */
 %token <keyword> ABORT_P ABSOLUTE_P ACCESS ACTION ADD AFTER
 	AGGREGATE ALL ALSO ALTER ANALYSE ANALYZE AND ANY ARRAY AS ASC
-	ASSERTION ASSIGNMENT AT AUTHORIZATION
+	ASSERTION ASSIGNMENT ASYMMETRIC AT AUTHORIZATION
 
 	BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
 	BOOLEAN_P BOTH BY
@@ -399,7 +399,8 @@ static void doNegateFloat(Value *v);
 	SAVEPOINT SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
 	SERIALIZABLE SESSION SESSION_USER SET SETOF SHARE
 	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE START STATEMENT
-	STATISTICS STDIN STDOUT STORAGE STRICT_P SUBSTRING SYSID
+	STATISTICS STDIN STDOUT STORAGE STRICT_P SUBSTRING SYMMETRIC
+	SYSID
 
 	TABLE TABLESPACE TEMP TEMPLATE TEMPORARY THEN TIME TIMESTAMP
 	TO TOAST TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P
@@ -6333,18 +6334,41 @@ a_expr:		c_expr									{ $$ = $1; }
 				{
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_OF, "!=", $1, (Node *) $6);
 				}
-			| a_expr BETWEEN b_expr AND b_expr			%prec BETWEEN
+			| a_expr BETWEEN opt_asymmetric b_expr AND b_expr			%prec BETWEEN
 				{
 					$$ = (Node *) makeA_Expr(AEXPR_AND, NIL,
-						(Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $3),
-						(Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $5));
+						(Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $4),
+						(Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $6));
 				}
-			| a_expr NOT BETWEEN b_expr AND b_expr		%prec BETWEEN
+			| a_expr NOT BETWEEN opt_asymmetric b_expr AND b_expr		%prec BETWEEN
 				{
 					$$ = (Node *) makeA_Expr(AEXPR_OR, NIL,
-						(Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $4),
-						(Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $6));
+						(Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $5),
+						(Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $7));
 				}
+				
+			| a_expr BETWEEN SYMMETRIC b_expr AND b_expr			%prec BETWEEN
+				{
+					$$ = (Node *) makeA_Expr(AEXPR_OR, NIL,
+						(Node *) makeA_Expr(AEXPR_AND, NIL,
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $4),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $6)),
+						(Node *) makeA_Expr(AEXPR_AND, NIL,
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $6),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $4)));					
+				}
+			| a_expr NOT BETWEEN SYMMETRIC b_expr AND b_expr		%prec BETWEEN
+				{
+					$$ = (Node *) makeA_Expr(AEXPR_AND, NIL,
+						(Node *) makeA_Expr(AEXPR_OR, NIL,
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $5),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $7)),
+						(Node *) makeA_Expr(AEXPR_OR, NIL,
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $7),
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $5)));					
+				}
+				
+				
 			| a_expr IN_P in_expr
 				{
 					/* in_expr returns a SubLink or a list of a_exprs */
@@ -6442,6 +6466,11 @@ a_expr:		c_expr									{ $$ = $1; }
 							 errmsg("UNIQUE predicate is not yet implemented")));
 				}
 		;
+
+opt_asymmetric:		ASYMMETRIC									{}
+			    | /*EMPTY*/								{}
+		;
+
 
 /*
  * Restricted expressions
@@ -7721,6 +7750,7 @@ unreserved_keyword:
 			| ALTER
 			| ASSERTION
 			| ASSIGNMENT
+			| ASYMMETRIC
 			| AT
 			| BACKWARD
 			| BEFORE
@@ -7867,6 +7897,7 @@ unreserved_keyword:
 			| STDIN
 			| STDOUT
 			| STORAGE
+			| SYMMETRIC
 			| SYSID
 			| STRICT_P
 			| TABLESPACE
