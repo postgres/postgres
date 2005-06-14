@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Jun 14 11:11:04 EDT 2005
+Last updated:		Tue Jun 14 14:10:17 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -43,7 +43,6 @@ Administration
 
 * Allow major upgrades without dump/reload, perhaps using pg_upgrade 
   [pg_upgrade]
-* Have SHOW ALL and pg_settings show descriptions for server-side variables
 * Allow GRANT/REVOKE permissions to be applied to all schema objects with one
   command
 
@@ -541,6 +540,7 @@ Commands
 
 
 * SHOW/SET
+	o Have SHOW ALL and pg_settings show descriptions for server-side variables
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
 	o Add SET PATH for schemas (?)
