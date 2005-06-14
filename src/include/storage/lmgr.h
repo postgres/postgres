@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.48 2005/04/30 19:03:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.49 2005/06/14 22:15:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,8 @@ extern void LockRelation(Relation relation, LOCKMODE lockmode);
 extern bool ConditionalLockRelation(Relation relation, LOCKMODE lockmode);
 extern void UnlockRelation(Relation relation, LOCKMODE lockmode);
 
-extern void LockRelationForSession(LockRelId *relid, LOCKMODE lockmode);
+extern void LockRelationForSession(LockRelId *relid, bool istemprel,
+								   LOCKMODE lockmode);
 extern void UnlockRelationForSession(LockRelId *relid, LOCKMODE lockmode);
 
 /* Lock a relation for extension */

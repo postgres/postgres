@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.87 2005/05/29 22:45:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.88 2005/06/14 22:15:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,6 +212,10 @@ typedef struct LOCKTAG
  * nRequested -- total requested locks of all types.
  * granted -- count of each lock type currently granted on the lock.
  * nGranted -- total granted locks of all types.
+ *
+ * Note: these counts count 1 for each backend.  Internally to a backend,
+ * there may be multiple grabs on a particular lock, but this is not reflected
+ * into shared memory.
  */
 typedef struct LOCK
 {
@@ -235,7 +239,7 @@ typedef struct LOCK
 
 
 /*
- * We may have several different transactions holding or awaiting locks
+ * We may have several different backends holding or awaiting locks
  * on the same lockable object.  We need to store some per-holder/waiter
  * information for each such holder (or would-be holder).  This is kept in
  * a PROCLOCK struct.
@@ -244,20 +248,21 @@ typedef struct LOCK
  * proclock hashtable.	A PROCLOCKTAG value uniquely identifies the combination
  * of a lockable object and a holder/waiter for that object.
  *
- * There are two possible kinds of proclock owners: a transaction (identified
- * both by the PGPROC of the backend running it, and the xact's own ID) and
- * a session (identified by backend PGPROC, with XID = InvalidTransactionId).
- *
- * Currently, session proclocks are used for user locks and for cross-xact
- * locks obtained for VACUUM.  Note that a single backend can hold locks
- * under several different XIDs at once (including session locks).	We treat
- * such locks as never conflicting (a backend can never block itself).
+ * Internally to a backend, it is possible for the same lock to be held
+ * for different purposes: the backend tracks transaction locks separately
+ * from session locks.  However, this is not reflected in the shared-memory
+ * state: we only track which backend(s) hold the lock.  This is OK since a
+ * backend can never block itself.
  *
  * The holdMask field shows the already-granted locks represented by this
  * proclock.  Note that there will be a proclock object, possibly with
  * zero holdMask, for any lock that the process is currently waiting on.
  * Otherwise, proclock objects whose holdMasks are zero are recycled
  * as soon as convenient.
+ *
+ * releaseMask is workspace for LockReleaseAll(): it shows the locks due
+ * to be released during the current call.  This must only be examined or
+ * set by the backend owning the PROCLOCK.
  *
  * Each PROCLOCK object is linked into lists for both the associated LOCK
  * object and the owning PGPROC object.  Note that the PROCLOCK is entered
@@ -269,7 +274,6 @@ typedef struct PROCLOCKTAG
 {
 	SHMEM_OFFSET lock;			/* link to per-lockable-object information */
 	SHMEM_OFFSET proc;			/* link to PGPROC of owning backend */
-	TransactionId xid;			/* xact ID, or InvalidTransactionId */
 } PROCLOCKTAG;
 
 typedef struct PROCLOCK
@@ -279,9 +283,9 @@ typedef struct PROCLOCK
 
 	/* data */
 	LOCKMASK	holdMask;		/* bitmask for lock types currently held */
-	SHM_QUEUE	lockLink;		/* list link for lock's list of proclocks */
-	SHM_QUEUE	procLink;		/* list link for process's list of
-								 * proclocks */
+	LOCKMASK	releaseMask;	/* bitmask for lock types to be released */
+	SHM_QUEUE	lockLink;		/* list link in LOCK's list of proclocks */
+	SHM_QUEUE	procLink;		/* list link in PGPROC's list of proclocks */
 } PROCLOCK;
 
 #define PROCLOCK_LOCKMETHOD(proclock) \
@@ -299,15 +303,16 @@ typedef struct PROCLOCK
 typedef struct LOCALLOCKTAG
 {
 	LOCKTAG		lock;			/* identifies the lockable object */
-	TransactionId xid;			/* xact ID, or InvalidTransactionId */
 	LOCKMODE	mode;			/* lock mode for this table entry */
 } LOCALLOCKTAG;
 
 typedef struct LOCALLOCKOWNER
 {
 	/*
-	 * Note: owner can be NULL to indicate a non-transactional lock. Must
-	 * use a forward struct reference to avoid circularity.
+	 * Note: if owner is NULL then the lock is held on behalf of the session;
+	 * otherwise it is held on behalf of my current transaction.
+	 *
+	 * Must use a forward struct reference to avoid circularity.
 	 */
 	struct ResourceOwnerData *owner;
 	int			nLocks;			/* # of times held by this owner */
@@ -321,6 +326,7 @@ typedef struct LOCALLOCK
 	/* data */
 	LOCK	   *lock;			/* associated LOCK object in shared mem */
 	PROCLOCK   *proclock;		/* associated PROCLOCK object in shmem */
+	bool		isTempObject;	/* true if lock is on a temporary object */
 	int			nLocks;			/* total number of times lock is held */
 	int			numLockOwners;	/* # of relevant ResourceOwners */
 	int			maxLockOwners;	/* allocated size of array */
@@ -366,17 +372,20 @@ extern LOCKMETHODID LockMethodTableInit(const char *tabName,
 					const LOCKMASK *conflictsP,
 					int numModes, int maxBackends);
 extern LOCKMETHODID LockMethodTableRename(LOCKMETHODID lockmethodid);
-extern LockAcquireResult LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
-			TransactionId xid, LOCKMODE lockmode, bool dontWait);
+extern LockAcquireResult LockAcquire(LOCKMETHODID lockmethodid,
+									 LOCKTAG *locktag,
+									 bool isTempObject,
+									 LOCKMODE lockmode,
+									 bool sessionLock,
+									 bool dontWait);
 extern bool LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
-			TransactionId xid, LOCKMODE lockmode);
-extern void LockReleaseAll(LOCKMETHODID lockmethodid, bool allxids);
+						LOCKMODE lockmode, bool sessionLock);
+extern void LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks);
 extern void LockReleaseCurrentOwner(void);
 extern void LockReassignCurrentOwner(void);
 extern int LockCheckConflicts(LockMethod lockMethodTable,
 				   LOCKMODE lockmode,
-				   LOCK *lock, PROCLOCK *proclock, PGPROC *proc,
-				   int *myHolding);
+				   LOCK *lock, PROCLOCK *proclock, PGPROC *proc);
 extern void GrantLock(LOCK *lock, PROCLOCK *proclock, LOCKMODE lockmode);
 extern void GrantAwaitedLock(void);
 extern void RemoveFromWaitQueue(PGPROC *proc);

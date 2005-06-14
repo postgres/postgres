@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.309 2005/05/19 21:35:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.310 2005/06/14 22:15:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1009,7 +1009,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	 * same process.
 	 */
 	onerelid = onerel->rd_lockInfo.lockRelId;
-	LockRelationForSession(&onerelid, lmode);
+	LockRelationForSession(&onerelid, onerel->rd_istemp, lmode);
 
 	/*
 	 * Remember the relation's TOAST relation for later

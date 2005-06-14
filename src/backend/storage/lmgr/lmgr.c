@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.75 2005/05/29 22:45:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.76 2005/06/14 22:15:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,8 +142,8 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 						 relation->rd_lockInfo.lockRelId.dbId,
 						 relation->rd_lockInfo.lockRelId.relId);
 
-	res = LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					  lockmode, false);
+	res = LockAcquire(LockTableId, &tag, relation->rd_istemp,
+					  lockmode, false, false);
 
 	/*
 	 * Check to see if the relcache entry has been invalidated while we
@@ -179,8 +179,8 @@ ConditionalLockRelation(Relation relation, LOCKMODE lockmode)
 						 relation->rd_lockInfo.lockRelId.dbId,
 						 relation->rd_lockInfo.lockRelId.relId);
 
-	res = LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					  lockmode, true);
+	res = LockAcquire(LockTableId, &tag, relation->rd_istemp,
+					  lockmode, false, true);
 
 	if (res == LOCKACQUIRE_NOT_AVAIL)
 		return false;
@@ -214,7 +214,7 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
 						 relation->rd_lockInfo.lockRelId.dbId,
 						 relation->rd_lockInfo.lockRelId.relId);
 
-	LockRelease(LockTableId, &tag, GetTopTransactionId(), lockmode);
+	LockRelease(LockTableId, &tag, lockmode, false);
 }
 
 /*
@@ -230,14 +230,14 @@ UnlockRelation(Relation relation, LOCKMODE lockmode)
  * relcache entry is up to date.
  */
 void
-LockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
+LockRelationForSession(LockRelId *relid, bool istemprel, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
 	SET_LOCKTAG_RELATION(tag, relid->dbId, relid->relId);
 
-	(void) LockAcquire(LockTableId, &tag, InvalidTransactionId,
-					   lockmode, false);
+	(void) LockAcquire(LockTableId, &tag, istemprel,
+					   lockmode, true, false);
 }
 
 /*
@@ -250,7 +250,7 @@ UnlockRelationForSession(LockRelId *relid, LOCKMODE lockmode)
 
 	SET_LOCKTAG_RELATION(tag, relid->dbId, relid->relId);
 
-	LockRelease(LockTableId, &tag, InvalidTransactionId, lockmode);
+	LockRelease(LockTableId, &tag, lockmode, true);
 }
 
 /*
@@ -272,8 +272,8 @@ LockRelationForExtension(Relation relation, LOCKMODE lockmode)
 								relation->rd_lockInfo.lockRelId.dbId,
 								relation->rd_lockInfo.lockRelId.relId);
 
-	(void) LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					   lockmode, false);
+	(void) LockAcquire(LockTableId, &tag, relation->rd_istemp,
+					   lockmode, false, false);
 }
 
 /*
@@ -288,7 +288,7 @@ UnlockRelationForExtension(Relation relation, LOCKMODE lockmode)
 								relation->rd_lockInfo.lockRelId.dbId,
 								relation->rd_lockInfo.lockRelId.relId);
 
-	LockRelease(LockTableId, &tag, GetTopTransactionId(), lockmode);
+	LockRelease(LockTableId, &tag, lockmode, false);
 }
 
 /*
@@ -307,8 +307,8 @@ LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 					 relation->rd_lockInfo.lockRelId.relId,
 					 blkno);
 
-	(void) LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					   lockmode, false);
+	(void) LockAcquire(LockTableId, &tag, relation->rd_istemp,
+					   lockmode, false, false);
 }
 
 /*
@@ -327,8 +327,8 @@ ConditionalLockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 					 relation->rd_lockInfo.lockRelId.relId,
 					 blkno);
 
-	return (LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-						lockmode, true) != LOCKACQUIRE_NOT_AVAIL);
+	return (LockAcquire(LockTableId, &tag, relation->rd_istemp,
+						lockmode, false, true) != LOCKACQUIRE_NOT_AVAIL);
 }
 
 /*
@@ -344,7 +344,7 @@ UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 					 relation->rd_lockInfo.lockRelId.relId,
 					 blkno);
 
-	LockRelease(LockTableId, &tag, GetTopTransactionId(), lockmode);
+	LockRelease(LockTableId, &tag, lockmode, false);
 }
 
 /*
@@ -365,8 +365,8 @@ LockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 					  ItemPointerGetBlockNumber(tid),
 					  ItemPointerGetOffsetNumber(tid));
 
-	(void) LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					   lockmode, false);
+	(void) LockAcquire(LockTableId, &tag, relation->rd_istemp,
+					   lockmode, false, false);
 }
 
 /*
@@ -383,7 +383,7 @@ UnlockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
 					  ItemPointerGetBlockNumber(tid),
 					  ItemPointerGetOffsetNumber(tid));
 
-	LockRelease(LockTableId, &tag, GetTopTransactionId(), lockmode);
+	LockRelease(LockTableId, &tag, lockmode, false);
 }
 
 /*
@@ -400,8 +400,8 @@ XactLockTableInsert(TransactionId xid)
 
 	SET_LOCKTAG_TRANSACTION(tag, xid);
 
-	(void) LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					   ExclusiveLock, false);
+	(void) LockAcquire(LockTableId, &tag, false,
+					   ExclusiveLock, false, false);
 }
 
 /*
@@ -419,7 +419,7 @@ XactLockTableDelete(TransactionId xid)
 
 	SET_LOCKTAG_TRANSACTION(tag, xid);
 
-	LockRelease(LockTableId, &tag, GetTopTransactionId(), ExclusiveLock);
+	LockRelease(LockTableId, &tag, ExclusiveLock, false);
 }
 
 /*
@@ -438,19 +438,18 @@ void
 XactLockTableWait(TransactionId xid)
 {
 	LOCKTAG		tag;
-	TransactionId myxid = GetTopTransactionId();
 
 	for (;;)
 	{
 		Assert(TransactionIdIsValid(xid));
-		Assert(!TransactionIdEquals(xid, myxid));
+		Assert(!TransactionIdEquals(xid, GetTopTransactionId()));
 
 		SET_LOCKTAG_TRANSACTION(tag, xid);
 
-		(void) LockAcquire(LockTableId, &tag, myxid,
-						   ShareLock, false);
+		(void) LockAcquire(LockTableId, &tag, false,
+						   ShareLock, false, false);
 
-		LockRelease(LockTableId, &tag, myxid, ShareLock);
+		LockRelease(LockTableId, &tag, ShareLock, false);
 
 		if (!TransactionIdIsInProgress(xid))
 			break;
@@ -470,9 +469,11 @@ XactLockTableWait(TransactionId xid)
  *		LockDatabaseObject
  *
  * Obtain a lock on a general object of the current database.  Don't use
- * this for shared objects (such as tablespaces).  It's usually unwise to
- * apply it to entire relations, also, since a lock taken this way will
- * NOT conflict with LockRelation.
+ * this for shared objects (such as tablespaces).  It's unwise to apply it
+ * to relations, also, since a lock taken this way will NOT conflict with
+ * LockRelation, and also may be wrongly marked if the relation is temp.
+ * (If we ever invent temp objects that aren't tables, we'll want to extend
+ * the API of this routine to include an isTempObject flag.)
  */
 void
 LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
@@ -486,8 +487,8 @@ LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
 					   objid,
 					   objsubid);
 
-	(void) LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					   lockmode, false);
+	(void) LockAcquire(LockTableId, &tag, false,
+					   lockmode, false, false);
 }
 
 /*
@@ -505,7 +506,7 @@ UnlockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,
 					   objid,
 					   objsubid);
 
-	LockRelease(LockTableId, &tag, GetTopTransactionId(), lockmode);
+	LockRelease(LockTableId, &tag, lockmode, false);
 }
 
 /*
@@ -525,8 +526,8 @@ LockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 					   objid,
 					   objsubid);
 
-	(void) LockAcquire(LockTableId, &tag, GetTopTransactionId(),
-					   lockmode, false);
+	(void) LockAcquire(LockTableId, &tag, false,
+					   lockmode, false, false);
 }
 
 /*
@@ -544,5 +545,5 @@ UnlockSharedObject(Oid classid, Oid objid, uint16 objsubid,
 					   objid,
 					   objsubid);
 
-	LockRelease(LockTableId, &tag, GetTopTransactionId(), lockmode);
+	LockRelease(LockTableId, &tag, lockmode, false);
 }

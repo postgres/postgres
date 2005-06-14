@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.16 2005/04/29 22:28:24 tgl Exp $
+$PostgreSQL: pgsql/src/backend/storage/lmgr/README,v 1.17 2005/06/14 22:15:32 tgl Exp $
 
 
 LOCKING OVERVIEW
@@ -57,16 +57,17 @@ details.
 There are two fundamental lock structures in shared memory: the
 per-lockable-object LOCK struct, and the per-lock-and-requestor PROCLOCK
 struct.  A LOCK object exists for each lockable object that currently has
-locks held or requested on it.  A PROCLOCK struct exists for each transaction
+locks held or requested on it.  A PROCLOCK struct exists for each backend
 that is holding or requesting lock(s) on each LOCK object.
 
 In addition to these, each backend maintains an unshared LOCALLOCK structure
 for each lockable object and lock mode that it is currently holding or
 requesting.  The shared lock structures only allow a single lock grant to
-be made per lockable object/lock mode/transaction.  Internally to a backend,
+be made per lockable object/lock mode/backend.  Internally to a backend,
 however, the same lock may be requested and perhaps released multiple times
-in a transaction.  The internal request counts are held in LOCALLOCK so that
-the shared LockMgrLock need not be obtained to alter them.
+in a transaction, and it can also be held both transactionally and session-
+wide.  The internal request counts are held in LOCALLOCK so that the shared
+LockMgrLock need not be obtained to alter them.
 
 ---------------------------------------------------------------------------
 
@@ -112,9 +113,8 @@ nRequested -
     acquired.  The count includes attempts by processes which were put
     to sleep due to conflicts.  It also counts the same backend twice
     if, for example, a backend process first acquires a read and then
-    acquires a write, or acquires the lock under two different transaction
-    IDs.  (But multiple acquisitions of the same lock/lock mode under the
-    same transaction ID are not multiply counted here; they are recorded
+    acquires a write.  (But multiple acquisitions of the same lock/lock mode
+    within a backend are not multiply counted here; they are recorded
     only in the backend's LOCALLOCK structure.)
 
 requested -
@@ -153,22 +153,16 @@ tag -
     tag.proc
         SHMEM offset of PROC of backend process that owns this PROCLOCK.
 
-    tag.xid
-        XID of transaction this PROCLOCK is for, or InvalidTransactionId
-        if the PROCLOCK is for session-level locking.
-
-    Note that this structure will support multiple transactions running
-    concurrently in one backend.  Currently we do not use it for that
-    purpose: subtransactions acquire locks in the name of their top parent
-    transaction, to simplify reassigning lock ownership at subtransaction end.
-    So the XID field is really only needed to distinguish per-transaction
-    locks from session locks.  User locks are always session locks, and we
-    also use session locks for multi-transaction operations like VACUUM.
-
 holdMask -
     A bitmask for the lock types successfully acquired by this PROCLOCK.
     This should be a subset of the LOCK object's grantMask, and also a
     subset of the PGPROC object's heldLocks mask.
+
+releaseMask -
+    A bitmask for the lock types due to be released during LockReleaseAll.
+    This must be a subset of the holdMask.  Note that it is modified without
+    taking the LockMgrLock, and therefore it is unsafe for any backend except
+    the one owning the PROCLOCK to examine/change it.
 
 lockLink -
     List link for shared memory queue of all the PROCLOCK objects for the
