@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.116 2005/06/14 02:57:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.117 2005/06/14 23:59:31 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -37,8 +37,8 @@ static void processNamePattern(PQExpBuffer buf, const char *pattern,
 				   const char *schemavar, const char *namevar,
 				   const char *altnamevar, const char *visibilityrule);
 
-static void add_tablespace_footer(char relkind, Oid tablespace,
-					  char **footers, int *count, PQExpBufferData buf);
+static bool add_tablespace_footer(char relkind, Oid tablespace, char **footers, 
+										int *count, PQExpBufferData buf, bool newline);
 
 /*----------------
  * Handlers for various slash commands displaying some sort of list
@@ -942,7 +942,7 @@ describeOneTableDetails(const char *schemaname,
 			footers = pg_malloc_zero(4 * sizeof(*footers));
 			footers[count_footers++] = pg_strdup(tmpbuf.data);
 			add_tablespace_footer(tableinfo.relkind, tableinfo.tablespace,
-								  footers, &count_footers, tmpbuf);
+								  footers, &count_footers, tmpbuf, true);
 			footers[count_footers] = NULL;
 
 		}
@@ -1022,7 +1022,7 @@ describeOneTableDetails(const char *schemaname,
 		{
 			printfPQExpBuffer(&buf,
 							  "SELECT c2.relname, i.indisprimary, i.indisunique, i.indisclustered, "
-					"pg_catalog.pg_get_indexdef(i.indexrelid, 0, true)\n"
+					"pg_catalog.pg_get_indexdef(i.indexrelid, 0, true), c2.reltablespace\n"
 							  "FROM pg_catalog.pg_class c, pg_catalog.pg_class c2, pg_catalog.pg_index i\n"
 							  "WHERE c.oid = '%s' AND c.oid = i.indrelid AND i.indexrelid = c2.oid\n"
 							  "ORDER BY i.indisprimary DESC, i.indisunique DESC, c2.relname",
@@ -1142,6 +1142,7 @@ describeOneTableDetails(const char *schemaname,
 			{
 				const char *indexdef;
 				const char *usingpos;
+				PQExpBufferData	tmpbuf;
 
 				/* Output index name */
 				printfPQExpBuffer(&buf, _("    \"%s\""),
@@ -1165,6 +1166,22 @@ describeOneTableDetails(const char *schemaname,
 				if (strcmp(PQgetvalue(result1, i, 3), "t") == 0)
 					appendPQExpBuffer(&buf, " CLUSTER");
 
+				/* Print tablespace of the index on the same line */
+				count_footers += 1;
+				initPQExpBuffer(&tmpbuf);
+				if (add_tablespace_footer('i', 
+									atooid(PQgetvalue(result1, i, 5)),
+									footers, &count_footers, tmpbuf, false))
+				{
+					appendPQExpBuffer(&buf, ", ");
+					appendPQExpBuffer(&buf, tmpbuf.data);
+					
+					count_footers -= 2;
+				}
+				else
+					count_footers -= 1;
+				termPQExpBuffer(&tmpbuf);
+				
 				footers[count_footers++] = pg_strdup(buf.data);
 			}
 		}
@@ -1265,7 +1282,7 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		add_tablespace_footer(tableinfo.relkind, tableinfo.tablespace,
-							  footers, &count_footers, buf);
+							  footers, &count_footers, buf, true);
 		/* end of list marker */
 		footers[count_footers] = NULL;
 
@@ -1317,9 +1334,13 @@ error_return:
 }
 
 
-static void
+/* 
+ * Return true if the relation uses non default tablespace; 
+ * otherwise return false 
+ */
+static bool
 add_tablespace_footer(char relkind, Oid tablespace, char **footers,
-					  int *count, PQExpBufferData buf)
+					  int *count, PQExpBufferData buf, bool newline)
 {
 	/* relkinds for which we support tablespaces */
 	if (relkind == 'r' || relkind == 'i')
@@ -1336,17 +1357,23 @@ add_tablespace_footer(char relkind, Oid tablespace, char **footers,
 							  "WHERE oid = '%u';", tablespace);
 			result1 = PSQLexec(buf.data, false);
 			if (!result1)
-				return;
+				return false;
 			/* Should always be the case, but.... */
 			if (PQntuples(result1) > 0)
 			{
-				printfPQExpBuffer(&buf, _("Tablespace: \"%s\""),
-								  PQgetvalue(result1, 0, 0));
+				printfPQExpBuffer(&buf, 
+					newline?_("Tablespace: \"%s\""):_("tablespace \"%s\""),
+					PQgetvalue(result1, 0, 0));
+					
 				footers[(*count)++] = pg_strdup(buf.data);
 			}
 			PQclear(result1);
+			
+			return true;
 		}
 	}
+	
+	return false;
 }
 
 /*
