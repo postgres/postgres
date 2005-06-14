@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_selection.c,v 1.18 2004/12/31 21:59:58 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_selection.c,v 1.19 2005/06/14 14:21:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,10 +44,11 @@
 
 static int	linear(int max, double bias);
 
-/* geqo_selection
- *
+
+/*
+ * geqo_selection
  *	 according to bias described by input parameters,
- *	 second genes are selected from the pool
+ *	 first and second genes are selected from the pool
  */
 void
 geqo_selection(Chromosome *momma, Chromosome *daddy, Pool *pool, double bias)
@@ -55,28 +56,27 @@ geqo_selection(Chromosome *momma, Chromosome *daddy, Pool *pool, double bias)
 	int			first,
 				second;
 
-	first = (int) linear(pool->size, bias);
-	second = (int) linear(pool->size, bias);
+	first = linear(pool->size, bias);
+	second = linear(pool->size, bias);
 
 	if (pool->size > 1)
 	{
 		while (first == second)
-			second = (int) linear(pool->size, bias);
+			second = linear(pool->size, bias);
 	}
 
 	geqo_copy(momma, &pool->data[first], pool->string_length);
 	geqo_copy(daddy, &pool->data[second], pool->string_length);
 }
 
-/* linear
+/*
+ * linear
  *	  generates random integer between 0 and input max number
  *	  using input linear bias
  *
  *	  probability distribution function is: f(x) = bias - 2(bias - 1)x
  *			 bias = (prob of first rule) / (prob of middle rule)
- *
  */
-
 static int
 linear(int pool_size, double bias)		/* bias is y-intercept of linear
 										 * distribution */
@@ -84,8 +84,21 @@ linear(int pool_size, double bias)		/* bias is y-intercept of linear
 	double		index;			/* index between 0 and pop_size */
 	double		max = (double) pool_size;
 
-	index = max * (bias - sqrt((bias * bias) - 4.0 * (bias - 1.0) * geqo_rand()))
-		/ 2.0 / (bias - 1.0);
+	/*
+	 * If geqo_rand() returns exactly 1.0 then we will get exactly max from
+	 * this equation, whereas we need 0 <= index < max.  Also it seems possible
+	 * that roundoff error might deliver values slightly outside the range;
+	 * in particular avoid passing a value slightly less than 0 to sqrt().
+	 * If we get a bad value just try again.
+	 */
+	do {
+		double	sqrtval;
+
+		sqrtval = (bias * bias) - 4.0 * (bias - 1.0) * geqo_rand();
+		if (sqrtval > 0.0)
+			sqrtval = sqrt(sqrtval);
+		index = max * (bias - sqrtval) / 2.0 / (bias - 1.0);
+	} while (index < 0.0 || index >= max);
 
 	return (int) index;
 }
