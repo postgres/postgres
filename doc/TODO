@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Jun 14 14:23:59 EDT 2005
+Last updated:		Tue Jun 14 16:42:57 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -540,7 +540,7 @@ Commands
 
 
 * SHOW/SET
-	o Have SHOW ALL show descriptions for server-side variables
+	o -Have SHOW ALL show descriptions for server-side variables
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
 	o Add SET PATH for schemas (?)
