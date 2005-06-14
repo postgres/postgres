@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.452 2005/06/09 22:01:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.453 2005/06/14 21:04:39 momjian Exp $
  *
  * NOTES
  *
@@ -222,6 +222,9 @@ static bool FatalError = false; /* T if recovering from backend crash */
 bool		ClientAuthInProgress = false;		/* T during new-client
 												 * authentication */
 
+/* Backend startup time */
+TimestampTz	StartTime;
+
 /*
  * State for assigning random salts and cancel keys.
  * Also, the global MyCancelKey passes the cancel key assigned to a given
@@ -330,6 +333,7 @@ typedef struct
 	InheritableSocket pgStatPipe0;
 	InheritableSocket pgStatPipe1;
 	pid_t PostmasterPid;
+	TimestampTz StartTime;
 #ifdef WIN32
 	HANDLE PostmasterHandle;
 	HANDLE initial_signal_pipe;
@@ -371,6 +375,9 @@ PostmasterMain(int argc, char *argv[])
 	int			status;
 	char	   *userDoption = NULL;
 	int			i;
+
+	AbsoluteTime		StartTimeSec;	/* integer part */
+	int			StartTimeUSec;	/* microsecond part */
 
 	/* This will call exit() if strdup() fails. */
 	progname = get_progname(argv[0]);	
@@ -913,6 +920,12 @@ PostmasterMain(int argc, char *argv[])
 	 * We're ready to rock and roll...
 	 */
 	StartupPID = StartupDataBase();
+
+	/*
+	 * Get start up time
+	 */
+	StartTimeSec = GetCurrentAbsoluteTimeUsec(&StartTimeUSec);
+	StartTime = AbsoluteTimeUsecToTimestampTz(StartTimeSec, StartTimeUSec);
 
 	status = ServerLoop();
 
@@ -3603,6 +3616,7 @@ save_backend_variables(BackendParameters *param, Port *port,
 	write_inheritable_socket(&param->pgStatPipe1, pgStatPipe[1], childPid);
 
 	param->PostmasterPid = PostmasterPid;
+	param->StartTime = StartTime;
 
 #ifdef WIN32
 	param->PostmasterHandle = PostmasterHandle;
@@ -3805,6 +3819,7 @@ restore_backend_variables(BackendParameters *param, Port *port)
 	read_inheritable_socket(&pgStatPipe[1], &param->pgStatPipe1);
 
 	PostmasterPid = param->PostmasterPid;
+	StartTime = param->StartTime;
 
 #ifdef WIN32
 	PostmasterHandle = param->PostmasterHandle;

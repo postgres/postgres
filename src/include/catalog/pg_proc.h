@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.366 2005/06/13 02:26:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.367 2005/06/14 21:04:41 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3650,6 +3650,10 @@ DATA(insert OID = 2558 ( int4				   PGNSP PGUID 12 f f t f i 1  23 "16" _null_ _
 DESCR("convert boolean to int4");
 DATA(insert OID = 2559 ( lastval			   PGNSP PGUID 12 f f t f v 0 20 "" _null_ _null_ _null_	lastval - _null_ ));
 DESCR("current value from last used sequence");
+
+/* start time function */
+DATA(insert OID = 2560 (  pg_postmaster_start_time PGNSP PGUID 12 f f t f s 0 1184 "" _null_ _null_ _null_ pgsql_postmaster_start_time - _null_ ));
+DESCR("postmaster start time");
 
 
 /*

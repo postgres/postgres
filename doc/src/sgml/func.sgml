@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.254 2005/06/13 02:40:04 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.255 2005/06/14 21:04:38 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -8120,6 +8120,12 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
       </row>
 
       <row>
+       <entry><function>pg_postmaster_start_time()</function></entry>
+       <entry><type>timestamp with time zone</type></entry>
+       <entry><command>postmaster</> start time</entry>
+      </row>
+
+      <row>
        <entry><function>user</function></entry>
        <entry><type>name</type></entry>
        <entry>equivalent to <function>current_user</function></entry>
@@ -8214,6 +8220,15 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
      <function>inet_server_port</function> returns the port number.
      All these functions return NULL if the current connection is via a
      Unix-domain socket.
+   </para>
+
+   <indexterm zone="functions-info">
+    <primary>pg_postmaster_start_time</primary>
+   </indexterm>
+
+   <para>
+     <function>pg_postmaster_start_time()</function> returns the timestamp with time zone
+     when the <command>postmaster</> started.
    </para>
 
    <indexterm zone="functions-info">

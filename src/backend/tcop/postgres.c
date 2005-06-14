@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.447 2005/06/03 23:05:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.448 2005/06/14 21:04:40 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -148,6 +148,9 @@ static int	UseNewLine = 1;		/* Use newlines query delimiters (the
 static int	UseNewLine = 0;		/* Use EOF as query delimiters */
 #endif   /* TCOP_DONTUSENEWLINE */
 
+
+/* Backend startup time */
+TimestampTz	StartTime;
 
 /* ----------------------------------------------------------------
  *		decls for routines only used in this file
@@ -2380,6 +2383,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 	sigjmp_buf	local_sigjmp_buf;
 	volatile bool send_rfq = true;
 
+	AbsoluteTime            StartTimeSec;   /* integer part */
+      int                     StartTimeUSec;  /* microsecond part */
+
 #define PendingConfigOption(name,val) \
 	(guc_names = lappend(guc_names, pstrdup(name)), \
 	 guc_values = lappend(guc_values, pstrdup(val)))
@@ -2968,6 +2974,15 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * ----------
 	 */
 	pgstat_bestart();
+
+	/*
+	 * Get stand-alone backend startup time
+	 */
+	if (!IsUnderPostmaster)
+	{
+		StartTimeSec = GetCurrentAbsoluteTimeUsec(&StartTimeUSec);
+		StartTime = AbsoluteTimeUsecToTimestampTz(StartTimeSec, StartTimeUSec);
+	}
 
 	/*
 	 * POSTGRES main processing loop begins here
