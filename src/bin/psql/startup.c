@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.116 2005/06/13 06:36:22 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.117 2005/06/14 02:57:41 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -71,6 +71,7 @@ struct adhoc_opts
 	char	   *host;
 	char	   *port;
 	char	   *username;
+	char	   *logfilename;
 	enum _actions action;
 	char	   *action_string;
 	bool		no_readline;
@@ -109,8 +110,6 @@ main(int argc, char *argv[])
 
 	set_pglocale_pgservice(argv[0], "psql");
 
-	pset.progname = get_progname(argv[0]);
-
 	if (argc > 1)
 	{
 		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
@@ -124,6 +123,8 @@ main(int argc, char *argv[])
 			exit(EXIT_SUCCESS);
 		}
 	}
+
+	pset.progname = get_progname(argv[0]);
 
 #ifdef WIN32
 	setvbuf(stderr, NULL, _IONBF, 0);
@@ -234,6 +235,13 @@ main(int argc, char *argv[])
 		exit(success ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
+	if (options.logfilename)
+	{
+		pset.logfile = fopen(options.logfilename, "a");
+		if (!pset.logfile)
+			fprintf(stderr, gettext("logfile open failed for %s\n\n"), options.logfilename);
+	}
+
 	/*
 	 * Now find something to do
 	 */
@@ -316,6 +324,8 @@ main(int argc, char *argv[])
 	}
 
 	/* clean up */
+	if (pset.logfile)
+		fclose(pset.logfile);
 	PQfinish(pset.db);
 	setQFout(NULL);
 
@@ -344,6 +354,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		{"host", required_argument, NULL, 'h'},
 		{"html", no_argument, NULL, 'H'},
 		{"list", no_argument, NULL, 'l'},
+		{"log", required_argument, NULL, 'L'},
 		{"no-readline", no_argument, NULL, 'n'},
 		{"output", required_argument, NULL, 'o'},
 		{"port", required_argument, NULL, 'p'},
@@ -373,7 +384,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 
 	memset(options, 0, sizeof *options);
 
-	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:h:Hlno:p:P:qR:sStT:uU:v:VWxX?",
+	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:h:HlL:no:p:P:qR:sStT:uU:v:VWxX?",
 							long_options, &optindex)) != -1)
 	{
 		switch (c)
@@ -418,6 +429,9 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				break;
 			case 'l':
 				options->action = ACT_LIST_DB;
+				break;
+			case 'L':
+				options->logfilename = optarg;
 				break;
 			case 'n':
 				options->no_readline = true;

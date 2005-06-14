@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.101 2005/02/22 04:40:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.102 2005/06/14 02:57:41 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -60,7 +60,7 @@ usage(void)
 	user = getenv("PGUSER");
 	if (!user)
 	{
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__OS2__)
 		pw = getpwuid(geteuid());
 		if (pw)
 			user = pw->pw_name;
@@ -107,6 +107,7 @@ usage(void)
 	puts(_("  -n              disable enhanced command line editing (readline)"));
 	puts(_("  -s              single-step mode (confirm each query)"));
 	puts(_("  -S              single-line mode (end of line terminates SQL command)"));
+	puts(_("  -L FILENAME     send session log to file"));
 
 	puts(_("\nOutput format options:"));
 	puts(_("  -A              unaligned table output mode (-P format=unaligned)"));

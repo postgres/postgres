@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.115 2005/04/06 05:23:32 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.116 2005/06/14 02:57:41 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -94,7 +94,7 @@ describeAggregates(const char *pattern, bool verbose)
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of aggregate functions");
 
-	printQuery(res, &myopt, pset.queryFout);
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	PQclear(res);
 	return true;
@@ -147,7 +147,7 @@ describeTablespaces(const char *pattern, bool verbose)
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of tablespaces");
 
-	printQuery(res, &myopt, pset.queryFout);
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	PQclear(res);
 	return true;
@@ -219,7 +219,7 @@ describeFunctions(const char *pattern, bool verbose)
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of functions");
 
-	printQuery(res, &myopt, pset.queryFout);
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	PQclear(res);
 	return true;
@@ -287,7 +287,7 @@ describeTypes(const char *pattern, bool verbose)
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of data types");
 
-	printQuery(res, &myopt, pset.queryFout);
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	PQclear(res);
 	return true;
@@ -334,7 +334,7 @@ describeOperators(const char *pattern)
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of operators");
 
-	printQuery(res, &myopt, pset.queryFout);
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	PQclear(res);
 	return true;
@@ -379,7 +379,7 @@ listAllDbs(bool verbose)
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of databases");
 
-	printQuery(res, &myopt, pset.queryFout);
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	PQclear(res);
 	return true;
@@ -436,7 +436,7 @@ permissionsList(const char *pattern)
 	printfPQExpBuffer(&buf, _("Access privileges for database \"%s\""), PQdb(pset.db));
 	myopt.title = buf.data;
 
-	printQuery(res, &myopt, pset.queryFout);
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	termPQExpBuffer(&buf);
 	PQclear(res);
@@ -592,7 +592,7 @@ objectDescription(const char *pattern)
 	myopt.nullPrint = NULL;
 	myopt.title = _("Object descriptions");
 
-	printQuery(res, &myopt, pset.queryFout);
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	PQclear(res);
 	return true;
@@ -1279,7 +1279,7 @@ describeOneTableDetails(const char *schemaname,
 
 	printTable(title.data, headers,
 			   (const char **) cells, (const char **) footers,
-			   "llll", &myopt, pset.queryFout);
+			   "llll", &myopt, pset.queryFout, pset.logfile);
 
 	retval = true;
 
@@ -1391,7 +1391,7 @@ describeUsers(const char *pattern)
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of users");
 
-	printQuery(res, &myopt, pset.queryFout);
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	PQclear(res);
 	return true;
@@ -1431,7 +1431,7 @@ describeGroups(const char *pattern)
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of groups");
 
-	printQuery(res, &myopt, pset.queryFout);
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	PQclear(res);
 	return true;
@@ -1549,7 +1549,7 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 		myopt.nullPrint = NULL;
 		myopt.title = _("List of relations");
 
-		printQuery(res, &myopt, pset.queryFout);
+		printQuery(res, &myopt, pset.queryFout, pset.logfile);
 	}
 
 	PQclear(res);
@@ -1605,7 +1605,7 @@ listDomains(const char *pattern)
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of domains");
 
-	printQuery(res, &myopt, pset.queryFout);
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	PQclear(res);
 	return true;
@@ -1656,7 +1656,7 @@ listConversions(const char *pattern)
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of conversions");
 
-	printQuery(res, &myopt, pset.queryFout);
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	PQclear(res);
 	return true;
@@ -1706,7 +1706,7 @@ listCasts(const char *pattern)
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of casts");
 
-	printQuery(res, &myopt, pset.queryFout);
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	PQclear(res);
 	return true;
@@ -1756,7 +1756,7 @@ listSchemas(const char *pattern, bool verbose)
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of schemas");
 
-	printQuery(res, &myopt, pset.queryFout);
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
 
 	PQclear(res);
 	return true;

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.24 2005/06/13 06:36:22 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.25 2005/06/14 02:57:41 momjian Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -62,7 +62,7 @@ typedef struct _printTableOpt
 void printTable(const char *title, const char *const * headers,
 		   const char *const * cells, const char *const * footers,
 		   const char *align,
-		   const printTableOpt *opt, FILE *fout);
+		   const printTableOpt *opt, FILE *fout, FILE *flog);
 
 
 
@@ -82,7 +82,8 @@ typedef struct _printQueryOpt
  *
  * It calls the printTable above with all the things set straight.
  */
-void		printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout);
+void		printQuery(const PGresult *result, const printQueryOpt *opt,
+					   FILE *fout, FILE *flog);
 
 #ifndef __CYGWIN__
 #define DEFAULT_PAGER "more"

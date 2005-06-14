@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.144 2005/06/13 06:36:22 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.145 2005/06/14 02:57:38 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -218,6 +218,17 @@ PostgreSQL documentation
       List all available databases, then exit. Other non-connection
       options are ignored. This is similar to the internal command
       <command>\list</command>.
+      </para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-L <replaceable class="parameter">filename</replaceable></></term>
+      <term><option>--log <replaceable class="parameter">filename</replaceable></></term>
+      <listitem>
+      <para>
+      Log all query output into file <replaceable
+      class="parameter">filename</replaceable> in addition to the regular output source.
       </para>
       </listitem>
     </varlistentry>

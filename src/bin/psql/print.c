@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.58 2005/06/13 06:36:22 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.59 2005/06/14 02:57:41 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1255,7 +1255,7 @@ printTable(const char *title,
 		   const char *const * cells,
 		   const char *const * footers,
 		   const char *align,
-		   const printTableOpt *opt, FILE *fout)
+		   const printTableOpt *opt, FILE *fout, FILE *flog)
 {
 	const char *default_footer[] = {NULL};
 	unsigned short int border = opt->border;
@@ -1311,6 +1311,9 @@ printTable(const char *title,
 		output = fout;
 
 	/* print the stuff */
+
+	if (flog)
+		print_aligned_text(title, headers, cells, footers, align, opt->tuples_only, border, opt->encoding, flog);
 
 	switch (opt->format)
 	{
@@ -1380,7 +1383,7 @@ printTable(const char *title,
 
 
 void
-printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
+printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout, FILE *flog)
 {
 	int			nfields;
 	int			ncells;
@@ -1476,7 +1479,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 	/* call table printer */
 	printTable(opt->title, headers, cells,
 			   (const char *const *) footers,
-			   align, &opt->topt, fout);
+			   align, &opt->topt, fout, flog);
 
 	free(headers);
 	free(cells);
