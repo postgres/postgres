@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.143 2005/06/10 16:23:11 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.144 2005/06/14 06:43:14 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -594,7 +594,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	error_context_stack = plerrcontext.previous;
 
 	/*
-	 * Return the triggers result
+	 * Return the trigger's result
 	 */
 	return rettup;
 }
@@ -1095,22 +1095,9 @@ static int
 exec_stmt_perform(PLpgSQL_execstate *estate, PLpgSQL_stmt_perform *stmt)
 {
 	PLpgSQL_expr *expr = stmt->expr;
-	int			rc;
 
-	/*
-	 * If not already done create a plan for this expression
-	 */
-	if (expr->plan == NULL)
-		exec_prepare_plan(estate, expr);
-
-	rc = exec_run_select(estate, expr, 0, NULL);
-	if (rc != SPI_OK_SELECT)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-			   errmsg("query \"%s\" did not return data", expr->query)));
-
+	(void) exec_run_select(estate, expr, 0, NULL);
 	exec_set_found(estate, (estate->eval_processed != 0));
-
 	exec_eval_cleanup(estate);
 
 	return PLPGSQL_RC_OK;
@@ -1941,15 +1928,18 @@ exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 						(errcode(ERRCODE_SYNTAX_ERROR),
 						 errmsg("too few parameters specified for RAISE")));
 
-			exec_eval_datum(estate, estate->datums[lfirst_int(current_param)],
-							InvalidOid,
-							&paramtypeid, &paramvalue, &paramisnull);
+			paramvalue = exec_eval_expr(estate,
+										(PLpgSQL_expr *) lfirst(current_param),
+										&paramisnull,
+										&paramtypeid);
+
 			if (paramisnull)
 				extval = "<NULL>";
 			else
 				extval = convert_value_to_string(paramvalue, paramtypeid);
 			plpgsql_dstring_append(&ds, extval);
 			current_param = lnext(current_param);
+			exec_eval_cleanup(estate);
 			continue;
 		}
 

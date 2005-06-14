@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.71 2005/06/10 16:23:09 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.72 2005/06/14 06:43:14 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2533,9 +2533,9 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
    <para>
     Inside the format string, <literal>%</literal> is replaced by the
     next optional argument's string representation. Write
-    <literal>%%</literal> to emit a literal <literal>%</literal>. Note
-    that the optional arguments must presently be simple variables,
-    not expressions, and the format must be a simple string literal.
+    <literal>%%</literal> to emit a literal <literal>%</literal>. 
+    Arguments can be simple variables or expressions, 
+    and the format must be a simple string literal.
    </para>
 
    <!--

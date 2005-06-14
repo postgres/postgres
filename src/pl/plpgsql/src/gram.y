@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.75 2005/06/10 16:23:11 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.76 2005/06/14 06:43:14 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -135,8 +135,8 @@ static	void			 plpgsql_sql_error_callback(void *arg);
 %type <exception>	proc_exception
 %type <condition>	proc_conditions
 
-%type <list>	raise_params
-%type <ival>	raise_level raise_param
+
+%type <ival>	raise_level
 %type <str>		raise_msg
 
 %type <list>	getdiag_list
@@ -1157,23 +1157,10 @@ stmt_return_next: K_RETURN_NEXT lno
 					}
 				;
 
-stmt_raise		: K_RAISE lno raise_level raise_msg raise_params ';'
+stmt_raise		: K_RAISE lno raise_level raise_msg
 					{
 						PLpgSQL_stmt_raise		*new;
-
-						new = palloc(sizeof(PLpgSQL_stmt_raise));
-
-						new->cmd_type	= PLPGSQL_STMT_RAISE;
-						new->lineno		= $2;
-						new->elog_level = $3;
-						new->message	= $4;
-						new->params		= $5;
-
-						$$ = (PLpgSQL_stmt *)new;
-					}
-				| K_RAISE lno raise_level raise_msg ';'
-					{
-						PLpgSQL_stmt_raise		*new;
+						int	tok;
 
 						new = palloc(sizeof(PLpgSQL_stmt_raise));
 
@@ -1182,6 +1169,32 @@ stmt_raise		: K_RAISE lno raise_level raise_msg raise_params ';'
 						new->elog_level = $3;
 						new->message	= $4;
 						new->params		= NIL;
+
+						tok = yylex();
+
+						/*
+						 * We expect either a semi-colon, which
+						 * indicates no parameters, or a comma that
+						 * begins the list of parameter expressions
+						 */
+						if (tok != ',' && tok != ';')
+							yyerror("syntax error");
+
+						if (tok == ',')
+						{
+							PLpgSQL_expr *expr;
+							int term;
+
+							for (;;)
+							{
+								expr = read_sql_construct(',', ';', ", or ;",
+														  "SELECT ",
+														  true, true, &term);
+								new->params = lappend(new->params, expr);
+								if (term == ';')
+									break;
+							}
+						}
 
 						$$ = (PLpgSQL_stmt *)new;
 					}
@@ -1216,22 +1229,6 @@ raise_level		: K_EXCEPTION
 				| K_DEBUG
 					{
 						$$ = DEBUG1;
-					}
-				;
-
-raise_params	: raise_params raise_param
-					{
-						$$ = lappend_int($1, $2);
-					}
-				| raise_param
-					{
-						$$ = list_make1_int($1);
-					}
-				;
-
-raise_param		: ',' T_SCALAR
-					{
-						$$ = yylval.scalar->dno;
 					}
 				;
 
@@ -1658,7 +1655,7 @@ read_sql_stmt(const char *sqlstart)
  * expected:	text to use in complaining that terminator was not found
  * sqlstart:	text to prefix to the accumulated SQL text
  * isexpression: whether to say we're reading an "expression" or a "statement"
- * valid_sql:   whether to check the syntax of the expression (plus sqlstart)
+ * valid_sql:   whether to check the syntax of the expr (prefixed with sqlstart)
  * endtoken:	if not NULL, ending token is stored at *endtoken
  *				(this is only interesting if until2 isn't zero)
  */

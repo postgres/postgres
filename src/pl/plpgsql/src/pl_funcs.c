@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.42 2005/06/14 00:10:02 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.43 2005/06/14 06:43:14 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -885,13 +885,20 @@ dump_return_next(PLpgSQL_stmt_return_next *stmt)
 static void
 dump_raise(PLpgSQL_stmt_raise *stmt)
 {
-	ListCell *l;
+	ListCell *lc;
+	int i = 0;
 
 	dump_ind();
-	printf("RAISE '%s'", stmt->message);
-	foreach (l, stmt->params)
-		printf(" %d", lfirst_int(l));
-	printf("\n");
+	printf("RAISE '%s'\n", stmt->message);
+	dump_indent += 2;
+	foreach (lc, stmt->params)
+	{
+		dump_ind();
+		printf("    parameter %d: ", i++);
+		dump_expr((PLpgSQL_expr *) lfirst(lc));
+		printf("\n");
+	}
+	dump_indent -= 2;
 }
 
 static void
@@ -916,7 +923,8 @@ dump_dynexecute(PLpgSQL_stmt_dynexecute *stmt)
 	{
 		dump_ind();
 		printf("    target = %d %s\n", stmt->rec->recno, stmt->rec->refname);
-	} else if (stmt->row != NULL)
+	}
+	else if (stmt->row != NULL)
 	{
 		dump_ind();
 		printf("    target = %d %s\n", stmt->row->rowno, stmt->row->refname);

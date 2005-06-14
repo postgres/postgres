@@ -2055,15 +2055,15 @@ drop type eitype cascade;
 -- SQLSTATE and SQLERRM test
 --
 
--- should fail: SQLSTATE and SQLERRM are only in defined EXCEPTION
--- blocks
-create function excpt_test() returns void as $$
+create function excpt_test1() returns void as $$
 begin
     raise notice '% %', sqlstate, sqlerrm;
 end; $$ language plpgsql;
+-- should fail: SQLSTATE and SQLERRM are only in defined EXCEPTION
+-- blocks
+select excpt_test1();
 
--- should fail
-create function excpt_test() returns void as $$
+create function excpt_test2() returns void as $$
 begin
     begin
         begin
@@ -2071,8 +2071,10 @@ begin
         end;
     end;
 end; $$ language plpgsql;
+-- should fail
+select excpt_test2();
 
-create function excpt_test() returns void as $$
+create function excpt_test3() returns void as $$
 begin
     begin
     	raise exception 'user exception';
@@ -2092,5 +2094,21 @@ begin
     end;
 end; $$ language plpgsql;
 
-select excpt_test();
-drop function excpt_test();
+select excpt_test3();
+drop function excpt_test1();
+drop function excpt_test2();
+drop function excpt_test3();
+
+-- parameters of raise stmt can be expressions
+create function raise_exprs() returns void as $$
+declare
+    a integer[] = '{10,20,30}';
+    c varchar = 'xyz';
+    i integer;
+begin
+    i := 2;
+    raise notice '%; %; %; %; %; %', a, a[i], c, (select c || 'abc'), row(10,'aaa',NULL,30), NULL;
+end;$$ language plpgsql;
+
+select raise_exprs();
+drop function raise_exprs();

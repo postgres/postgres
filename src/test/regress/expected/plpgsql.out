@@ -2418,17 +2418,17 @@ drop type eitype cascade;
 --
 -- SQLSTATE and SQLERRM test
 --
--- should fail: SQLSTATE and SQLERRM are only in defined EXCEPTION
--- blocks
-create function excpt_test() returns void as $$
+create function excpt_test1() returns void as $$
 begin
     raise notice '% %', sqlstate, sqlerrm;
 end; $$ language plpgsql;
-ERROR:  syntax error at or near "sqlstate" at character 79
-LINE 3:     raise notice '% %', sqlstate, sqlerrm;
-                                ^
--- should fail
-create function excpt_test() returns void as $$
+-- should fail: SQLSTATE and SQLERRM are only in defined EXCEPTION
+-- blocks
+select excpt_test1();
+ERROR:  column "sqlstate" does not exist
+CONTEXT:  SQL statement "SELECT  sqlstate"
+PL/pgSQL function "excpt_test1" line 2 at raise
+create function excpt_test2() returns void as $$
 begin
     begin
         begin
@@ -2436,10 +2436,12 @@ begin
         end;
     end;
 end; $$ language plpgsql;
-ERROR:  syntax error at or near "sqlstate" at character 108
-LINE 5:          raise notice '% %', sqlstate, sqlerrm;
-                                     ^
-create function excpt_test() returns void as $$
+-- should fail
+select excpt_test2();
+ERROR:  column "sqlstate" does not exist
+CONTEXT:  SQL statement "SELECT  sqlstate"
+PL/pgSQL function "excpt_test2" line 4 at raise
+create function excpt_test3() returns void as $$
 begin
     begin
     	raise exception 'user exception';
@@ -2458,14 +2460,34 @@ begin
 	    raise notice '% %', sqlstate, sqlerrm;
     end;
 end; $$ language plpgsql;
-select excpt_test();
+select excpt_test3();
 NOTICE:  caught exception P0001 user exception
 NOTICE:  P0001 user exception
 NOTICE:  caught exception 22012 division by zero
 NOTICE:  P0001 user exception
- excpt_test 
-------------
+ excpt_test3 
+-------------
  
 (1 row)
 
-drop function excpt_test();
+drop function excpt_test1();
+drop function excpt_test2();
+drop function excpt_test3();
+-- parameters of raise stmt can be expressions
+create function raise_exprs() returns void as $$
+declare
+    a integer[] = '{10,20,30}';
+    c varchar = 'xyz';
+    i integer;
+begin
+    i := 2;
+    raise notice '%; %; %; %; %; %', a, a[i], c, (select c || 'abc'), row(10,'aaa',NULL,30), NULL;
+end;$$ language plpgsql;
+select raise_exprs();
+NOTICE:  {10,20,30}; 20; xyz; xyzabc; (10,aaa,,30); <NULL>
+ raise_exprs 
+-------------
+ 
+(1 row)
+
+drop function raise_exprs();
