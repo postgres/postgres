@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.325 2005/06/13 02:40:06 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.326 2005/06/14 17:43:12 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -969,24 +969,44 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the Kerberos service name. See <xref linkend="kerberos-auth">
-        for details. This parameter can only be set at server start.
+        for details.  This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
 
-	 <varlistentry id="guc-krb-caseins-users" xreflabel="krb_caseins_users">
-	  <term><varname>krb_caseins_users</varname> (<type>boolean</type>)</term>
-	  <indexterm>
-	   <primary><varname>krb_caseins_users</varname> configuration parameter</primary>
+     <varlistentry id="guc-krb-caseins-users" xreflabel="krb_caseins_users">
+      <term><varname>krb_caseins_users</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>krb_caseins_users</varname> configuration parameter</primary>
       </indexterm>
-	  <listitem>
-	   <para>
-	    Sets if Kerberos usernames should be treated case-insensitive.
-		The default is off (case sensitive). This parameter can only be
-		set at server start.
+      <listitem>
+       <para>
+        Sets if Kerberos usernames should be treated case-insensitive.
+        The default is off (case sensitive). This parameter can only be
+        set at server start.
        </para>
-	  </listitem>
-	 </varlistentry>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-krb-server-hostname" xreflabel="krb_server_hostname">
+      <term><varname>krb_server_hostname</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>krb_server_hostname</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets the hostname part of the service principal.
+        This, combined with <varname>krb_srvname</>, is used to generate
+        the complete service principal, i.e.
+        <varname>krb_server_hostname</><literal>/</><varname>krb_server_hostname</><literal>@</>REALM.
+       </para>
+       <para>
+        If not set, the default is to allow any service principal matching an entry
+        in the keytab.  See <xref linkend="kerberos-auth"> for details.
+        This parameter can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
 
      <varlistentry id="guc-db-user-namespace" xreflabel="db_user_namespace">
       <term><varname>db_user_namespace</varname> (<type>boolean</type>)</term>

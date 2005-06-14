@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.124 2005/06/04 20:42:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.125 2005/06/14 17:43:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@ static int	recv_and_check_password_packet(Port *port);
 char	   *pg_krb_server_keyfile;
 char       *pg_krb_srvnam;
 bool		pg_krb_caseins_users;
+char	   *pg_krb_server_hostname = NULL;
 
 #ifdef USE_PAM
 #ifdef HAVE_PAM_PAM_APPL_H
@@ -221,20 +222,25 @@ pg_krb5_init(void)
 		return STATUS_ERROR;
 	}
 
-	retval = krb5_sname_to_principal(pg_krb5_context, NULL, pg_krb_srvnam,
-									 KRB5_NT_SRV_HST, &pg_krb5_server);
-	if (retval)
+	if (pg_krb_server_hostname)
 	{
-		ereport(LOG,
-		 (errmsg("Kerberos sname_to_principal(\"%s\") returned error %d",
-				 pg_krb_srvnam, retval)));
-		com_err("postgres", retval,
-				"while getting server principal for service \"%s\"",
-				pg_krb_srvnam);
-		krb5_kt_close(pg_krb5_context, pg_krb5_keytab);
-		krb5_free_context(pg_krb5_context);
-		return STATUS_ERROR;
-	}
+		retval = krb5_sname_to_principal(pg_krb5_context, 
+					pg_krb_server_hostname, pg_krb_srvnam,
+			 		KRB5_NT_SRV_HST, &pg_krb5_server);
+	 	if (retval)
+		{
+			ereport(LOG,
+		 	(errmsg("Kerberos sname_to_principal(\"%s\") returned error %d",
+				 	pg_krb_srvnam, retval)));
+			com_err("postgres", retval,
+					"while getting server principal for service \"%s\"",
+					pg_krb_srvnam);
+			krb5_kt_close(pg_krb5_context, pg_krb5_keytab);
+			krb5_free_context(pg_krb5_context);
+			return STATUS_ERROR;
+		}
+	} else
+		pg_krb5_server = NULL;
 
 	pg_krb5_initialised = 1;
 	return STATUS_OK;

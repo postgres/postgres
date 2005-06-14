@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.264 2005/06/04 20:42:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.265 2005/06/14 17:43:13 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1591,6 +1591,15 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&pg_krb_srvnam,
 		PG_KRB_SRVNAM, NULL, NULL
+	},
+
+	{
+		{"krb_server_hostname", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+			gettext_noop("Sets the hostname of the Kerberos server."),
+			NULL
+		},
+		&pg_krb_server_hostname,
+		NULL, NULL, NULL
 	},
 
 	{
