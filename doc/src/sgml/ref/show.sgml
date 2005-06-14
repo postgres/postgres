@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.38 2005/04/08 00:59:58 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.39 2005/06/14 20:42:52 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -118,7 +118,7 @@ SHOW ALL
     <term><literal>ALL</literal></term>
     <listitem>
      <para>
-      Show the values of all configuration parameters.
+      Show the values of all configuration parameters, with descriptions.
      </para>
     </listitem>
    </varlistentry>
@@ -164,17 +164,17 @@ SHOW geqo;
    Show all settings:
 <programlisting>
 SHOW ALL;
-              name              |                     setting
---------------------------------+----------------------------------------------
- add_missing_from               | off
- archive_command                | unset
- australian_timezones           | off
+              name              |            setting             |                                         description                                          
+--------------------------------+--------------------------------+----------------------------------------------------------------------------------------------
+ add_missing_from               | off                            | Automatically adds missing table references to FROM clauses.
+ archive_command                | unset                          | WAL archiving command.
+ australian_timezones           | off                            | Interprets ACST, CST, EST, and SAT as Australian time zones.
     .
     .
     .
- work_mem                       | 1024
- zero_damaged_pages             | off
-(140 rows)
+ work_mem                       | 1024                           | Sets the maximum memory to be used for query workspaces.
+ zero_damaged_pages             | off                            | Continues processing past damaged page headers.
+(146 rows)
 </programlisting>
   </para>
  </refsect1>

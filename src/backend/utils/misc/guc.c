@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.265 2005/06/14 17:43:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.266 2005/06/14 20:42:53 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -4337,12 +4337,15 @@ GetPGVariableResultDesc(const char *name)
 
 	if (pg_strcasecmp(name, "all") == 0)
 	{
-		/* need a tuple descriptor representing two TEXT columns */
-		tupdesc = CreateTemplateTupleDesc(2, false);
+		/* need a tuple descriptor representing three TEXT columns */
+		tupdesc = CreateTemplateTupleDesc(3, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "setting",
 						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "description",
+						   TEXTOID, -1, 0);
+
 	}
 	else
 	{
@@ -4415,14 +4418,17 @@ ShowAllGUCConfig(DestReceiver *dest)
 	int			i;
 	TupOutputState *tstate;
 	TupleDesc	tupdesc;
-	char	   *values[2];
+	char	   *values[3];
 
-	/* need a tuple descriptor representing two TEXT columns */
-	tupdesc = CreateTemplateTupleDesc(2, false);
+	/* need a tuple descriptor representing three TEXT columns */
+	tupdesc = CreateTemplateTupleDesc(3, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
 					   TEXTOID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "setting",
 					   TEXTOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "description",
+					   TEXTOID, -1, 0);
+					   
 
 	/* prepare for projection of tuples */
 	tstate = begin_tup_output_tupdesc(dest, tupdesc);
@@ -4438,6 +4444,7 @@ ShowAllGUCConfig(DestReceiver *dest)
 		/* assign to the values array */
 		values[0] = (char *) conf->name;
 		values[1] = _ShowOption(conf);
+		values[2] = (char *) conf->short_desc;
 
 		/* send it to dest */
 		do_tup_output(tstate, values);
