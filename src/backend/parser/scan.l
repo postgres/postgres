@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.124 2005/06/02 17:45:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.125 2005/06/15 16:28:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,17 +178,15 @@ quotefail		{quote}{whitespace}*"-"
 xbstart			[bB]{quote}
 xbinside		[^']*
 
-/* Hexadecimal number
- */
+/* Hexadecimal number */
 xhstart			[xX]{quote}
 xhinside		[^']*
 
-/* National character
- */
+/* National character */
 xnstart			[nN]{quote}
 
 /* Extended quote
- * xqdouble implements embedded quote
+ * xqdouble implements embedded quote, ''''
  */
 xqstart			{quote}
 xqdouble		{quote}{quote}
