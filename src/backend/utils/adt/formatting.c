@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.87 2005/05/25 21:40:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.88 2005/06/15 00:34:08 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -2910,7 +2910,7 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 
 	ZERO_tmtc(&tmtc);
 
-	if (timestamp2tm(dt, NULL, tmtcTm(&tmtc), &tmtcFsec(&tmtc), NULL) != 0)
+	if (timestamp2tm(dt, NULL, tmtcTm(&tmtc), &tmtcFsec(&tmtc), NULL, NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -2935,7 +2935,7 @@ timestamptz_to_char(PG_FUNCTION_ARGS)
 
 	ZERO_tmtc(&tmtc);
 
-	if (timestamp2tm(dt, &tz, tmtcTm(&tmtc), &tmtcFsec(&tmtc), &tmtcTzn(&tmtc)) != 0)
+	if (timestamp2tm(dt, &tz, tmtcTm(&tmtc), &tmtcFsec(&tmtc), &tmtcTzn(&tmtc), NULL) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));

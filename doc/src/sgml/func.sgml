@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.256 2005/06/14 23:47:39 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.257 2005/06/15 00:34:08 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5679,10 +5679,7 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
     specified either as a text string (e.g., <literal>'PST'</literal>)
     or as an interval (e.g., <literal>INTERVAL '-08:00'</literal>).
     In the text case, the available zone names are those shown in
-    <xref linkend="datetime-timezone-input-table">.  (It would be useful
-    to support the more general names shown in
-    <xref linkend="datetime-timezone-set-table">, but this is not yet
-    implemented.)
+    <xref linkend="datetime-timezone-set-table">.
    </para>
 
    <para>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.109 2005/05/26 02:04:13 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.110 2005/06/15 00:34:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <float.h>
+#include <time.h> 
 
 #include "access/hash.h"
 #include "libpq/pqformat.h"
@@ -724,7 +725,7 @@ timestamp_date(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) !=0)
+	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -767,7 +768,7 @@ timestamptz_date(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) !=0)
+	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -1327,7 +1328,7 @@ timestamp_time(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) !=0)
+	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -1364,7 +1365,7 @@ timestamptz_time(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) !=0)
+	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -2247,7 +2248,7 @@ timestamptz_timetz(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) !=0)
+	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -2463,53 +2464,60 @@ timetz_part(PG_FUNCTION_ARGS)
 
 /* timetz_zone()
  * Encode time with time zone type with specified time zone.
+ * Applies DST rules as of the current date.
  */
 Datum
 timetz_zone(PG_FUNCTION_ARGS)
 {
 	text	   *zone = PG_GETARG_TEXT_P(0);
-	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
+	TimeTzADT  *t = PG_GETARG_TIMETZADT_P(1);
 	TimeTzADT  *result;
 	int			tz;
-	int			type,
-				val;
-	char	   *lowzone;
+	char        tzname[TZ_STRLEN_MAX];
+	int         len;
+	pg_tz	   *tzp;
+	struct pg_tm *tm;
+	pg_time_t   now;
 
-	lowzone = downcase_truncate_identifier(VARDATA(zone),
-										   VARSIZE(zone) - VARHDRSZ,
-										   false);
-
-	type = DecodeSpecial(0, lowzone, &val);
-
-	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
-
-	if (type == TZ || type == DTZ)
-	{
-		tz = val * 60;
-#ifdef HAVE_INT64_TIMESTAMP
-		result->time = time->time + (time->zone - tz) * USECS_PER_SEC;
-		while (result->time < INT64CONST(0))
-			result->time += USECS_PER_DAY;
-		while (result->time >= USECS_PER_DAY)
-			result->time -= USECS_PER_DAY;
-#else
-		result->time = time->time + (time->zone - tz);
-		while (result->time < 0)
-			result->time += SECS_PER_DAY;
-		while (result->time >= SECS_PER_DAY)
-			result->time -= SECS_PER_DAY;
-#endif
-
-		result->zone = tz;
-	}
-	else
-	{
+	/* Find the specified timezone */ 
+	len = (VARSIZE(zone)-VARHDRSZ>TZ_STRLEN_MAX)?TZ_STRLEN_MAX:(VARSIZE(zone)-VARHDRSZ);
+	memcpy(tzname,VARDATA(zone),len);
+	tzname[len]=0;
+	tzp = pg_tzset(tzname);
+	if (!tzp) {
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("time zone \"%s\" not recognized", lowzone)));
-
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		 	 errmsg("time zone \"%s\" not recognized", tzname)));
 		PG_RETURN_NULL();
 	}
+
+	/* Get the offset-from-GMT that is valid today for the selected zone */
+	if ((now = time(NULL)) < 0 ||
+	    (tm = pg_localtime(&now, tzp)) == NULL) {
+	   	ereport(ERROR,
+	   		(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("could not determine current time")));
+		PG_RETURN_NULL();
+	}
+
+	result = (TimeTzADT *)palloc(sizeof(TimeTzADT));
+	
+	tz = -tm->tm_gmtoff;
+#ifdef HAVE_INT64_TIMESTAMP
+	result->time = t->time + (t->zone - tz) * USECS_PER_SEC;
+	while (result->time < INT64CONST(0))
+		result->time += USECS_PER_DAY;
+	while (result->time >= USECS_PER_DAY)
+		result->time -= USECS_PER_DAY;
+#else
+	result->time = t->time + (t->zone - tz);
+	while (result->time < 0)
+		result->time += SECS_PER_DAY;
+	while (result->time >= SECS_PER_DAY)
+		result->time -= SECS_PER_DAY;
+#endif
+
+	result->zone = tz;
 
 	PG_RETURN_TIMETZADT_P(result);
 }	/* timetz_zone() */

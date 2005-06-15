@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.44 2005/06/14 21:04:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.45 2005/06/15 00:34:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,7 +264,7 @@ extern TimestampTz StartTime;
 
 extern int	tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *dt);
 extern int timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm,
-			 fsec_t *fsec, char **tzn);
+			 fsec_t *fsec, char **tzn, pg_tz *attimezone);
 extern void dt2time(Timestamp dt, int *hour, int *min, int *sec, fsec_t *fsec);
 
 extern int	interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec);

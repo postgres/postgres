@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.125 2005/06/14 21:04:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.126 2005/06/15 00:34:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ timestamp_out(PG_FUNCTION_ARGS)
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		EncodeSpecialTimestamp(timestamp, buf);
-	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) == 0)
+	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
 		EncodeDateTime(tm, fsec, NULL, &tzn, DateStyle, buf);
 	else
 		ereport(ERROR,
@@ -178,7 +178,7 @@ timestamp_recv(PG_FUNCTION_ARGS)
 	/* rangecheck: see if timestamp_out would like it */
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		 /* ok */ ;
-	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) !=0)
+	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -381,7 +381,7 @@ timestamptz_out(PG_FUNCTION_ARGS)
 
 	if (TIMESTAMP_NOT_FINITE(dt))
 		EncodeSpecialTimestamp(dt, buf);
-	else if (timestamp2tm(dt, &tz, tm, &fsec, &tzn) == 0)
+	else if (timestamp2tm(dt, &tz, tm, &fsec, &tzn, NULL) == 0)
 		EncodeDateTime(tm, fsec, &tz, &tzn, DateStyle, buf);
 	else
 		ereport(ERROR,
@@ -419,7 +419,7 @@ timestamptz_recv(PG_FUNCTION_ARGS)
 	/* rangecheck: see if timestamptz_out would like it */
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		 /* ok */ ;
-	else if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) !=0)
+	else if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -984,9 +984,12 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
  * Returns:
  *	 0 on success
  *	-1 on out of range
+ *
+ * If attimezone is NULL, the global timezone (including possblly brute forced
+ * timezone) will be used.
  */
 int
-timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn)
+timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn, pg_tz *attimezone)
 {
 	Timestamp date;
 	Timestamp	time;
@@ -997,7 +1000,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn
 	 * specified. Go ahead and rotate to the local time zone since we will
 	 * later bypass any calls which adjust the tm fields.
 	 */
-	if (HasCTZSet && (tzp != NULL))
+	if ((attimezone==NULL) && HasCTZSet && (tzp != NULL))
 	{
 #ifdef HAVE_INT64_TIMESTAMP
 		dt -= CTimeZone * USECS_PER_SEC;
@@ -1050,7 +1053,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn
 	 * We have a brute force time zone per SQL99? Then use it without
 	 * change since we have already rotated to the time zone.
 	 */
-	if (HasCTZSet)
+	if ((attimezone==NULL) && HasCTZSet)
 	{
 		*tzp = CTimeZone;
 		tm->tm_isdst = 0;
@@ -1081,7 +1084,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn
 	utime = (pg_time_t) dt;
 	if ((Timestamp) utime == dt)
 	{
-		struct pg_tm *tx = pg_localtime(&utime, global_timezone);
+		struct pg_tm *tx = pg_localtime(&utime, (attimezone!=NULL)?attimezone:global_timezone);
 
 		tm->tm_year = tx->tm_year + 1900;
 		tm->tm_mon = tx->tm_mon + 1;
@@ -1926,7 +1929,7 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 					   *tm = &tt;
 			fsec_t		fsec;
 
-			if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) !=0)
+			if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
@@ -2005,7 +2008,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 					   *tm = &tt;
 			fsec_t		fsec;
 
-			if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) !=0)
+			if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 						 errmsg("timestamp out of range")));
@@ -2332,8 +2335,8 @@ timestamp_age(PG_FUNCTION_ARGS)
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	if (timestamp2tm(dt1, NULL, tm1, &fsec1, NULL) == 0 &&
-		timestamp2tm(dt2, NULL, tm2, &fsec2, NULL) == 0)
+	if (timestamp2tm(dt1, NULL, tm1, &fsec1, NULL, NULL) == 0 &&
+		timestamp2tm(dt2, NULL, tm2, &fsec2, NULL, NULL) == 0)
 	{
 		fsec = (fsec1 - fsec2);
 		tm->tm_sec = tm1->tm_sec - tm2->tm_sec;
@@ -2446,8 +2449,8 @@ timestamptz_age(PG_FUNCTION_ARGS)
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	if (timestamp2tm(dt1, &tz1, tm1, &fsec1, &tzn) == 0 &&
-		timestamp2tm(dt2, &tz2, tm2, &fsec2, &tzn) == 0)
+	if (timestamp2tm(dt1, &tz1, tm1, &fsec1, &tzn, NULL) == 0 &&
+		timestamp2tm(dt2, &tz2, tm2, &fsec2, &tzn, NULL) == 0)
 	{
 		fsec = fsec1 - fsec2;
 		tm->tm_sec = tm1->tm_sec - tm2->tm_sec;
@@ -2750,7 +2753,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 
 	if (type == UNITS)
 	{
-		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) !=0)
+		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -2881,7 +2884,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 
 	if (type == UNITS)
 	{
-		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) !=0)
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -3271,7 +3274,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 
 	if (type == UNITS)
 	{
-		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) !=0)
+		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -3405,7 +3408,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 					 * convert to timestamptz to produce consistent
 					 * results
 					 */
-					if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) !=0)
+					if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
 						ereport(ERROR,
 						   (errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							errmsg("timestamp out of range")));
@@ -3425,7 +3428,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 					break;
 				}
 			case DTK_DOW:
-				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) !=0)
+				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
@@ -3433,7 +3436,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_DOY:
-				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) !=0)
+				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
@@ -3496,7 +3499,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 
 	if (type == UNITS)
 	{
-		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) !=0)
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -3631,7 +3634,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_DOW:
-				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) !=0)
+				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
@@ -3639,7 +3642,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_DOY:
-				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) !=0)
+				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
@@ -3815,38 +3818,40 @@ timestamp_zone(PG_FUNCTION_ARGS)
 {
 	text	   *zone = PG_GETARG_TEXT_P(0);
 	Timestamp timestamp = PG_GETARG_TIMESTAMP(1);
-	TimestampTz result;
+	Timestamp result;
 	int			tz;
-	int			type,
-				val;
-	char	   *lowzone;
+	pg_tz      *tzp;
+	char        tzname[TZ_STRLEN_MAX+1];
+	int         len;
+	struct pg_tm tm;
+	fsec_t      fsec;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMPTZ(timestamp);
 
-	lowzone = downcase_truncate_identifier(VARDATA(zone),
-										   VARSIZE(zone) - VARHDRSZ,
-										   false);
-
-	type = DecodeSpecial(0, lowzone, &val);
-
-	if (type == TZ || type == DTZ)
-	{
-		tz = -(val * 60);
-
-		result = dt2local(timestamp, tz);
-	}
-	else
-	{
+	/* Find the specified timezone? */
+	len = (VARSIZE(zone)-VARHDRSZ>TZ_STRLEN_MAX)?TZ_STRLEN_MAX:(VARSIZE(zone)-VARHDRSZ);
+	memcpy(tzname,VARDATA(zone),len);
+	tzname[len] = 0;
+	tzp = pg_tzset(tzname);
+	if (!tzp) {
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("time zone \"%s\" not recognized",
-						lowzone)));
-
+				 errmsg("time zone \"%s\" not recognised",
+				        tzname)));
 		PG_RETURN_NULL();
 	}
 
-	PG_RETURN_TIMESTAMPTZ(result);
+	/* Apply the timezone change */
+	if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0 ||
+	    tm2timestamp(&tm, fsec, NULL, &result) != 0) {
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("could not convert to time zone \"%s\"",
+				        tzname)));
+		PG_RETURN_NULL();
+	}
+	PG_RETURN_TIMESTAMPTZ(timestamp2timestamptz(result));
 }	/* timestamp_zone() */
 
 /* timestamp_izone()
@@ -3906,7 +3911,7 @@ timestamp2timestamptz(Timestamp timestamp)
 
 	else
 	{
-		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) !=0)
+		if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) !=0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -3941,7 +3946,7 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 
 	else
 	{
-		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) !=0)
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) !=0)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
@@ -3950,7 +3955,6 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
 	}
-
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -3966,31 +3970,34 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	Timestamp	result;
 
 	int			tz;
-	int			type,
-				val;
-	char	   *lowzone;
+	pg_tz	   *tzp;
+	char        tzname[TZ_STRLEN_MAX];
+	int         len;
+	struct pg_tm tm;
+	fsec_t      fsec = 0;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	lowzone = downcase_truncate_identifier(VARDATA(zone),
-										   VARSIZE(zone) - VARHDRSZ,
-										   false);
+	/* Find the specified zone */
+	len = (VARSIZE(zone)-VARHDRSZ>TZ_STRLEN_MAX)?TZ_STRLEN_MAX:(VARSIZE(zone)-VARHDRSZ);
+	memcpy(tzname,VARDATA(zone),len);
+	tzname[len] = 0;
+	tzp = pg_tzset(tzname);
 
-	type = DecodeSpecial(0, lowzone, &val);
-
-	if (type == TZ || type == DTZ)
-	{
-		tz = val * 60;
-
-		result = dt2local(timestamp, tz);
-	}
-	else
-	{
+	if (!tzp) {
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("time zone \"%s\" not recognized", lowzone)));
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			 errmsg("time zone \"%s\" not recognized", tzname)));
 
+		PG_RETURN_NULL();
+	}
+
+	if (timestamp2tm(timestamp, &tz, &tm, &fsec, NULL, tzp) != 0 ||
+	    tm2timestamp(&tm, fsec, NULL, &result)) { 
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+			errmsg("could not to convert to time zone \"%s\"", tzname)));
 		PG_RETURN_NULL();
 	}
 
