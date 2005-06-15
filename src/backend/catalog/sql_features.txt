@@ -413,7 +413,7 @@ T432	Nested and concatenated GROUPING SETS			NO
 T433	Multiargument GROUPING function			NO	
 T434	GROUP BY DISINCT			NO	
 T441	ABS and MOD functions			YES	
-T461	Symmetric BETWEEN predicate			NO	
+T461	Symmetric BETWEEN predicate			YES	
 T471	Result sets return value			NO	
 T491	LATERAL derived table			NO	
 T501	Enhanced EXISTS predicate			YES	
