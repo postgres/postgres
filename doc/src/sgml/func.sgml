@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.257 2005/06/15 00:34:08 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.258 2005/06/15 06:29:25 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -5147,7 +5147,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
 
        <row>
-        <entry><literal><function>timeofday()</function></literal></entry>
+        <entry><literal><function>timeofday</function>()</literal></entry>
         <entry><type>text</type></entry>
         <entry>Current date and time; see <xref
                                          linkend="functions-datetime-current">
@@ -8069,75 +8069,75 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
 
      <tbody>
       <row>
-       <entry><function>current_database()</function></entry>
+       <entry><literal><function>current_database</function>()</literal></entry>
        <entry><type>name</type></entry>
        <entry>name of current database</entry>
       </row>
 
       <row>
-       <entry><function>current_schema()</function></entry>
+       <entry><literal><function>current_schema</function>()</literal></entry>
        <entry><type>name</type></entry>
        <entry>name of current schema</entry>
       </row>
 
       <row>
-       <entry><function>current_schemas(boolean)</function></entry>
+       <entry><literal><function>current_schemas</function>(<type>boolean</type>)</literal></entry>
        <entry><type>name[]</type></entry>
        <entry>names of schemas in search path optionally including implicit schemas</entry>
       </row>
 
       <row>
-       <entry><function>current_user</function></entry>
+       <entry><literal><function>current_user</function></literal></entry>
        <entry><type>name</type></entry>
        <entry>user name of current execution context</entry>
       </row>
 
       <row>
-       <entry><function>inet_client_addr()</function></entry>
+       <entry><literal><function>inet_client_addr</function>()</literal></entry>
        <entry><type>inet</type></entry>
        <entry>address of the remote connection</entry>
       </row>
 
       <row>
-       <entry><function>inet_client_port()</function></entry>
+       <entry><literal><function>inet_client_port</function>()</literal></entry>
        <entry><type>int4</type></entry>
        <entry>port of the remote connection</entry>
       </row>
 
       <row>
-       <entry><function>inet_server_addr()</function></entry>
+       <entry><literal><function>inet_server_addr</function>()</literal></entry>
        <entry><type>inet</type></entry>
        <entry>address of the local connection</entry>
       </row>
 
       <row>
-       <entry><function>inet_server_port()</function></entry>
+       <entry><literal><function>inet_server_port</function>()</literal></entry>
        <entry><type>int4</type></entry>
        <entry>port of the local connection</entry>
       </row>
 
       <row>
-       <entry><function>session_user</function></entry>
+       <entry><literal><function>session_user</function></literal></entry>
        <entry><type>name</type></entry>
        <entry>session user name</entry>
       </row>
 
       <row>
-       <entry><function>pg_postmaster_start_time()</function></entry>
+       <entry><literal><function>pg_postmaster_start_time</function>()</literal></entry>
        <entry><type>timestamp with time zone</type></entry>
        <entry><command>postmaster</> start time</entry>
       </row>
 
       <row>
-       <entry><function>user</function></entry>
+       <entry><literal><function>user</function></literal></entry>
        <entry><type>name</type></entry>
        <entry>equivalent to <function>current_user</function></entry>
       </row>
 
       <row>
-       <entry><function>version()</function></entry>
+       <entry><literal><function>version</function>()</literal></entry>
        <entry><type>text</type></entry>
-       <entry>PostgreSQL version information</entry>
+       <entry><productname>PostgreSQL</> version information</entry>
       </row>
      </tbody>
     </tgroup>
@@ -8230,7 +8230,7 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    </indexterm>
 
    <para>
-     <function>pg_postmaster_start_time()</function> returns the timestamp with time zone
+     <function>pg_postmaster_start_time</function> returns the timestamp with time zone
      when the <command>postmaster</> started.
    </para>
 
@@ -8239,7 +8239,7 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
    </indexterm>
 
    <para>
-    <function>version()</function> returns a string describing the
+    <function>version</function> returns a string describing the
     <productname>PostgreSQL</productname> server's version.
    </para>
 
