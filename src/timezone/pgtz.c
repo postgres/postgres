@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.32 2005/05/29 04:23:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.33 2005/06/15 00:09:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,14 +162,19 @@ score_timezone(const char *tzname, struct tztry * tt)
 	struct tm  *systm;
 	struct pg_tm *pgtm;
 	char		cbuf[TZ_STRLEN_MAX + 1];
-	pg_tz       *tz;
+	pg_tz       tz;
 
-	tz = pg_tzset(tzname);
-	if (!tz)
-		return -1;				/* can't handle the TZ name at all */
+
+	/* Load timezone directly. Don't use pg_tzset, because we don't want 
+	 * all timezones loaded in the cache at startup. */
+	if (tzload(tzname, &tz.state) != 0) {
+		if (tzname[0] == ':' || tzparse(tzname, &tz.state, FALSE) != 0) {
+			return -1;          /* can't handle the TZ name at all */
+		}
+	}
 
 	/* Reject if leap seconds involved */
-	if (!tz_acceptable(tz))
+	if (!tz_acceptable(&tz))
 	{
 		elog(DEBUG4, "Reject TZ \"%s\": uses leap seconds", tzname);
 		return -1;
@@ -179,7 +184,7 @@ score_timezone(const char *tzname, struct tztry * tt)
 	for (i = 0; i < tt->n_test_times; i++)
 	{
 		pgtt = (pg_time_t) (tt->test_times[i]);
-		pgtm = pg_localtime(&pgtt, tz);
+		pgtm = pg_localtime(&pgtt, &tz);
 		if (!pgtm)
 			return -1;			/* probably shouldn't happen */
 		systm = localtime(&(tt->test_times[i]));
