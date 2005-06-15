@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.71 2005/04/16 20:07:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.72 2005/06/15 07:27:44 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ static TupleTableSlot *ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 						  uint32 *hashvalue,
 						  TupleTableSlot *tupleSlot);
 static int	ExecHashJoinNewBatch(HashJoinState *hjstate);
-
+static TupleTableSlot *ExecHashJoinReadOuterPlan(HashJoinState *hjstate);
 
 /* ----------------------------------------------------------------
  *		ExecHashJoin
@@ -57,8 +57,6 @@ ExecHashJoin(HashJoinState *node)
 	HashJoinTable hashtable;
 	HeapTuple	curtuple;
 	TupleTableSlot *outerTupleSlot;
-	uint32		hashvalue;
-	int			batchno;
 
 	/*
 	 * get information from HashJoin node
@@ -107,31 +105,68 @@ ExecHashJoin(HashJoinState *node)
 	 */
 	ResetExprContext(econtext);
 
-	/*
-	 * if this is the first call, build the hash table for inner relation
-	 */
 	if (hashtable == NULL)
 	{
 		/*
-		 * create the hash table
+		 * This is the first call to the node. When _either_ of the
+		 * hash join inputs are empty, we want to avoid doing
+		 * unnecessary work (e.g. building the hash table for the
+		 * inner join relation). We therefore read a single tuple from
+		 * both inputs before proceeding further. We choose which
+		 * input to probe first based on the startup cost of the plan
+		 * node.
+		 *
+		 * Note that if we're executing an outer join and the inner
+		 * relation is empty, we still have work to do.
+		 */
+
+		/* Consider probing the inner relation first */
+		if (hashNode->ps.plan->startup_cost <= outerNode->plan->startup_cost &&
+			node->js.jointype != JOIN_LEFT)
+		{
+			/*
+			 * ExecHash() lets us get a single tuple from the inner
+			 * relation without building the entire hash table
+			 */
+			TupleTableSlot *tup = ExecProcNode(&hashNode->ps);
+			if (TupIsNull(tup))
+				return NULL;
+		}
+
+		/*
+		 * Before we can check the outer relation, we need to build
+		 * the hash table. This is somewhat a waste of time if the
+		 * outer relation is empty, but it would be awkward to avoid.
 		 */
 		hashtable = ExecHashTableCreate((Hash *) hashNode->ps.plan,
 										node->hj_HashOperators);
 		node->hj_HashTable = hashtable;
+		hashNode->hashtable = hashtable;
+
+		/* Now check the outer relation */
+		outerTupleSlot = ExecHashJoinReadOuterPlan(node);
+
+		if (TupIsNull(outerTupleSlot))
+		{
+			ExecHashTableDestroy(node->hj_HashTable);
+			node->hj_HashTable = NULL;
+			return NULL;
+		}
 
 		/*
-		 * execute the Hash node, to build the hash table
+		 * Okay, we can't avoid it, so execute the Hash node to build
+		 * the hash table
 		 */
-		hashNode->hashtable = hashtable;
 		(void) MultiExecProcNode((PlanState *) hashNode);
 
 		/*
-		 * If the inner relation is completely empty, and we're not doing
-		 * an outer join, we can quit without scanning the outer relation.
+		 * If the inner relation is empty but its startup cost was
+		 * less than the outer relation's startup cost, we can arrive
+		 * here -- we're done unless this is an outer join
 		 */
 		if (hashtable->totalTuples == 0 && node->js.jointype != JOIN_LEFT)
 		{
-			ExecHashTableDestroy(hashtable);
+			ExecHashTableDestroy(node->hj_HashTable);
 			node->hj_HashTable = NULL;
 			return NULL;
 		}
@@ -153,46 +188,9 @@ ExecHashJoin(HashJoinState *node)
 		 */
 		if (node->hj_NeedNewOuter)
 		{
-			outerTupleSlot = ExecHashJoinOuterGetTuple(outerNode,
-													   node,
-													   &hashvalue);
+			outerTupleSlot = ExecHashJoinReadOuterPlan(node);
 			if (TupIsNull(outerTupleSlot))
-			{
-				/* end of join */
-				return NULL;
-			}
-
-			node->js.ps.ps_OuterTupleSlot = outerTupleSlot;
-			econtext->ecxt_outertuple = outerTupleSlot;
-			node->hj_NeedNewOuter = false;
-			node->hj_MatchedOuter = false;
-
-			/*
-			 * now we have an outer tuple, find the corresponding bucket
-			 * for this tuple from the hash table
-			 */
-			node->hj_CurHashValue = hashvalue;
-			ExecHashGetBucketAndBatch(hashtable, hashvalue,
-									  &node->hj_CurBucketNo, &batchno);
-			node->hj_CurTuple = NULL;
-
-			/*
-			 * Now we've got an outer tuple and the corresponding hash
-			 * bucket, but this tuple may not belong to the current batch.
-			 */
-			if (batchno != hashtable->curbatch)
-			{
-				/*
-				 * Need to postpone this outer tuple to a later batch.
-				 * Save it in the corresponding outer-batch file.
-				 */
-				Assert(batchno > hashtable->curbatch);
-				ExecHashJoinSaveTuple(ExecFetchSlotTuple(outerTupleSlot),
-									  hashvalue,
-									  &hashtable->outerBatchFile[batchno]);
-				node->hj_NeedNewOuter = true;
-				continue;	/* loop around for a new outer tuple */
-			}
+				return NULL; /* end of join */
 		}
 
 		/*
@@ -488,6 +486,79 @@ ExecEndHashJoin(HashJoinState *node)
 }
 
 /*
+ * ExecHashJoinReadOuterPlan
+ *
+ *		do all the work necessary to produce the next tuple from the
+ *		outer hash join relation that is in the current batch. Returns
+ *		NULL if there are no more tuples in the outer relation.
+ */
+static TupleTableSlot *
+ExecHashJoinReadOuterPlan(HashJoinState *hjstate)
+{
+	PlanState *outerNode;
+	ExprContext *econtext;
+	HashJoinTable hashtable;
+
+	outerNode = outerPlanState(hjstate);
+	econtext = hjstate->js.ps.ps_ExprContext;
+	hashtable = hjstate->hj_HashTable;
+
+	for (;;)
+	{
+		TupleTableSlot *result;
+		uint32		hashvalue;
+		int			batchno;
+
+		result = ExecHashJoinOuterGetTuple(outerNode,
+										   hjstate,
+										   &hashvalue);
+		if (TupIsNull(result))
+		{
+			/* end of join */
+			return NULL;
+		}
+
+		hjstate->js.ps.ps_OuterTupleSlot = result;
+		econtext->ecxt_outertuple = result;
+		hjstate->hj_NeedNewOuter = false;
+		hjstate->hj_MatchedOuter = false;
+
+		/*
+		 * now we have an outer tuple, find the corresponding bucket
+		 * for this tuple from the hash table
+		 */
+		hjstate->hj_CurHashValue = hashvalue;
+		ExecHashGetBucketAndBatch(hashtable, hashvalue,
+								  &hjstate->hj_CurBucketNo, &batchno);
+		hjstate->hj_CurTuple = NULL;
+
+		/*
+		 * Now we've got an outer tuple and the corresponding hash
+		 * bucket, but this tuple may not belong to the current batch.
+		 */
+		if (batchno != hashtable->curbatch)
+		{
+			/*
+			 * Need to postpone this outer tuple to a later batch.
+			 * Save it in the corresponding outer-batch file.
+			 */
+			Assert(batchno > hashtable->curbatch);
+			ExecHashJoinSaveTuple(ExecFetchSlotTuple(result),
+								  hashvalue,
+								  &hashtable->outerBatchFile[batchno]);
+			hjstate->hj_NeedNewOuter = true;
+			continue;	/* Get the next outer tuple */
+		}
+
+		/*
+		 * Otherwise, we have a tuple in the current batch, so we're
+		 * done
+		 */
+		return result;
+	}
+}
+
+/*
  * ExecHashJoinOuterGetTuple
  *
  *		get the next outer tuple for hashjoin: either by
@@ -768,7 +839,6 @@ ExecHashJoinGetSavedTuple(HashJoinState *hjstate,
 				 errmsg("could not read from hash-join temporary file: %m")));
 	return ExecStoreTuple(heapTuple, tupleSlot, InvalidBuffer, true);
 }
-
 
 void
 ExecReScanHashJoin(HashJoinState *node, ExprContext *exprCtxt)

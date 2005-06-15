@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.133 2005/05/14 21:29:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.134 2005/06/15 07:27:44 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1218,6 +1218,7 @@ typedef struct HashState
 	HashJoinTable hashtable;	/* hash table for the hashjoin */
 	List	   *hashkeys;		/* list of ExprState nodes */
 	/* hashkeys is same as parent's hj_InnerHashKeys */
+	TupleTableSlot *firstTuple;	/* tuple produced by ExecHash() */
 } HashState;
 
 /* ----------------
