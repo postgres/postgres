@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.76 2005/06/05 03:16:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.77 2005/06/15 00:35:16 momjian Exp $
  *
  **********************************************************************/
 
@@ -54,6 +54,7 @@
 #include "utils/memutils.h"
 #include "utils/typcache.h"
 #include "miscadmin.h"
+#include "mb/pg_wchar.h"
 
 /* perl stuff */
 #include "EXTERN.h"
@@ -649,6 +650,7 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 	SV		   *retval;
 	int			i;
 	int			count;
+	SV			*sv;
 
 	ENTER;
 	SAVETMPS;
@@ -688,7 +690,11 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 
 			tmp = DatumGetCString(FunctionCall1(&(desc->arg_out_func[i]),
 												fcinfo->arg[i]));
-			XPUSHs(sv_2mortal(newSVpv(tmp, 0)));
+			sv = newSVpv(tmp, 0);
+#if PERL_BCDVERSION >= 0x5006000L
+			if (GetDatabaseEncoding() == PG_UTF8) SvUTF8_on(sv);
+#endif
+			XPUSHs(sv_2mortal(sv));
 			pfree(tmp);
 		}
 	}
@@ -1261,6 +1267,7 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 		Oid			typoutput;
 		bool		typisvarlena;
 		int			namelen;
+		SV			*sv;
 
 		if (tupdesc->attrs[i]->attisdropped)
 			continue;
@@ -1283,7 +1290,11 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 		outputstr = DatumGetCString(OidFunctionCall1(typoutput,
 													 attr));
 
-		hv_store(hv, attname, namelen, newSVpv(outputstr, 0), 0);
+		sv = newSVpv(outputstr, 0);
+#if PERL_BCDVERSION >= 0x5006000L
+		if (GetDatabaseEncoding() == PG_UTF8) SvUTF8_on(sv);
+#endif
+		hv_store(hv, attname, namelen, sv, 0);
 	}
 
 	return newRV_noinc((SV *) hv);
