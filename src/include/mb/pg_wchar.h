@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.58 2005/03/14 18:31:24 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.59 2005/06/15 00:15:08 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -339,5 +339,7 @@ extern void latin2mic(unsigned char *l, unsigned char *p, int len, int lc);
 extern void mic2latin(unsigned char *mic, unsigned char *p, int len, int lc);
 extern void latin2mic_with_table(unsigned char *l, unsigned char *p, int len, int lc, unsigned char *tab);
 extern void mic2latin_with_table(unsigned char *mic, unsigned char *p, int len, int lc, unsigned char *tab);
+
+extern bool pg_utf8_islegal(const unsigned char *source, int length);
 
 #endif   /* PG_WCHAR_H */
