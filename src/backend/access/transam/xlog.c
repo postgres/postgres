@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.199 2005/06/09 22:36:27 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.200 2005/06/15 01:36:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,6 +450,7 @@ static bool RestoreArchivedFile(char *path, const char *xlogfname,
 static int	PreallocXlogFiles(XLogRecPtr endptr);
 static void MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 							int *nsegsremoved, int *nsegsrecycled);
+static void RemoveOldBackupHistory(void);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, int emode);
 static bool ValidXLOGHeader(XLogPageHeader hdr, int emode);
 static XLogRecord *ReadCheckpointRecord(XLogRecPtr RecPtr, int whichChkpt);
@@ -2333,6 +2334,61 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 					(*nsegsremoved)++;
 				}
 
+				XLogArchiveCleanup(xlde->d_name);
+			}
+		}
+		errno = 0;
+	}
+#ifdef WIN32
+
+	/*
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
+	 * not in released version
+	 */
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+		errno = 0;
+#endif
+	if (errno)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+			errmsg("could not read transaction log directory \"%s\": %m",
+				   XLogDir)));
+	FreeDir(xldir);
+}
+
+/*
+ * Remove previous backup history files
+ */
+static void
+RemoveOldBackupHistory(void)
+{
+	DIR		   *xldir;
+	struct dirent *xlde;
+	char		path[MAXPGPATH];
+
+	xldir = AllocateDir(XLogDir);
+	if (xldir == NULL)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+			errmsg("could not open transaction log directory \"%s\": %m",
+				   XLogDir)));
+
+	errno = 0;
+	while ((xlde = readdir(xldir)) != NULL)
+	{
+		if (strlen(xlde->d_name) > 24 &&
+			strspn(xlde->d_name, "0123456789ABCDEF") == 24 &&
+			strcmp(xlde->d_name + strlen(xlde->d_name) - strlen(".backup"),
+				   ".backup") == 0)
+		{
+			/* Remove any *.backup files that have been archived. */
+			if (!XLogArchivingActive() || XLogArchiveIsDone(xlde->d_name))
+			{
+				ereport(DEBUG2,
+					  (errmsg("removing transaction log backup history file \"%s\"",
+							  xlde->d_name)));
+				snprintf(path, MAXPGPATH, "%s/%s", XLogDir, xlde->d_name);
+				unlink(path);
 				XLogArchiveCleanup(xlde->d_name);
 			}
 		}
@@ -5738,6 +5794,8 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 				 errmsg("could not remove file \"%s\": %m",
 						labelfilepath)));
 
+	RemoveOldBackupHistory();
+	
 	/*
 	 * Notify archiver that history file may be archived immediately
 	 */
