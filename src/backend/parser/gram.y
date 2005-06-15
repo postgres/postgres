@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.493 2005/06/14 23:47:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.494 2005/06/15 19:44:05 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -7750,7 +7750,6 @@ unreserved_keyword:
 			| ALTER
 			| ASSERTION
 			| ASSIGNMENT
-			| ASYMMETRIC
 			| AT
 			| BACKWARD
 			| BEFORE
@@ -7897,7 +7896,6 @@ unreserved_keyword:
 			| STDIN
 			| STDOUT
 			| STORAGE
-			| SYMMETRIC
 			| SYSID
 			| STRICT_P
 			| TABLESPACE
@@ -8028,6 +8026,7 @@ reserved_keyword:
 			| ARRAY
 			| AS
 			| ASC
+			| ASYMMETRIC
 			| BOTH
 			| CASE
 			| CAST
@@ -8079,6 +8078,7 @@ reserved_keyword:
 			| SELECT
 			| SESSION_USER
 			| SOME
+			| SYMMETRIC
 			| TABLE
 			| THEN
 			| TO
