@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.45 2005/05/20 14:53:26 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.46 2005/06/16 17:53:54 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -19,6 +19,11 @@
 #define HAVE_FSYNC_WRITETHROUGH
 #define HAVE_FSYNC_WRITETHROUGH_ONLY
 #define ftruncate(a,b)	chsize(a,b)
+/*
+ *	Even though we don't support 'fsync' as a wal_sync_method,
+ *	we do fsync() a few other places where _commit() is just fine.
+ */
+#define fsync(fd) _commit(fd)
 
 #define USES_WINSOCK
 
