@@ -80,12 +80,13 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.71 2005/04/14 01:38:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.72 2005/06/17 22:32:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/twophase_rmgr.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
@@ -170,6 +171,13 @@ static struct CACHECALLBACK
 }	cache_callback_list[MAX_CACHE_CALLBACKS];
 
 static int	cache_callback_count = 0;
+
+/* info values for 2PC callback */
+#define TWOPHASE_INFO_MSG			0		/* SharedInvalidationMessage */
+#define TWOPHASE_INFO_FILE_BEFORE	1		/* relcache file inval */
+#define TWOPHASE_INFO_FILE_AFTER	2		/* relcache file inval */
+
+static void PersistInvalidationMessage(SharedInvalidationMessage *msg);
 
 
 /* ----------------------------------------------------------------
@@ -637,6 +645,56 @@ AtStart_Inval(void)
 }
 
 /*
+ * AtPrepare_Inval
+ * 		Save the inval lists state at 2PC transaction prepare.
+ *
+ * In this phase we just generate 2PC records for all the pending invalidation
+ * work.
+ */
+void
+AtPrepare_Inval(void)
+{
+	/* Must be at top of stack */
+	Assert(transInvalInfo != NULL && transInvalInfo->parent == NULL);
+
+	/*
+	 * Relcache init file invalidation requires processing both before
+	 * and after we send the SI messages.
+	 */
+	if (transInvalInfo->RelcacheInitFileInval)
+		RegisterTwoPhaseRecord(TWOPHASE_RM_INVAL_ID, TWOPHASE_INFO_FILE_BEFORE,
+							   NULL, 0);
+
+	AppendInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
+							   &transInvalInfo->CurrentCmdInvalidMsgs);
+
+	ProcessInvalidationMessages(&transInvalInfo->PriorCmdInvalidMsgs,
+								PersistInvalidationMessage);
+
+	if (transInvalInfo->RelcacheInitFileInval)
+		RegisterTwoPhaseRecord(TWOPHASE_RM_INVAL_ID, TWOPHASE_INFO_FILE_AFTER,
+							   NULL, 0);
+}
+
+/*
+ * PostPrepare_Inval
+ * 		Clean up after successful PREPARE.
+ *
+ * Here, we want to act as though the transaction aborted, so that we will
+ * undo any syscache changes it made, thereby bringing us into sync with the
+ * outside world, which doesn't believe the transaction committed yet.
+ *
+ * If the prepared transaction is later aborted, there is nothing more to
+ * do; if it commits, we will receive the consequent inval messages just
+ * like everyone else.
+ */
+void
+PostPrepare_Inval(void)
+{
+	AtEOXact_Inval(false);
+}
+
+/*
  * AtSubStart_Inval
  *		Initialize inval lists at start of a subtransaction.
  */
@@ -653,6 +711,47 @@ AtSubStart_Inval(void)
 	myInfo->my_level = GetCurrentTransactionNestLevel();
 	transInvalInfo = myInfo;
 }
+
+/*
+ * PersistInvalidationMessage
+ * 		Write an invalidation message to the 2PC state file.
+ */
+static void
+PersistInvalidationMessage(SharedInvalidationMessage *msg)
+{
+	RegisterTwoPhaseRecord(TWOPHASE_RM_INVAL_ID, TWOPHASE_INFO_MSG,
+						   msg, sizeof(SharedInvalidationMessage));
+}
+
+/*
+ * inval_twophase_postcommit
+ *		Process an invalidation message from the 2PC state file.
+ */
+void
+inval_twophase_postcommit(TransactionId xid, uint16 info,
+						  void *recdata, uint32 len)
+{
+	SharedInvalidationMessage *msg;
+
+	switch (info)
+	{
+		case TWOPHASE_INFO_MSG:
+			msg = (SharedInvalidationMessage *) recdata;	
+			Assert(len == sizeof(SharedInvalidationMessage));
+			SendSharedInvalidMessage(msg);
+			break;
+		case TWOPHASE_INFO_FILE_BEFORE:
+			RelationCacheInitFileInvalidate(true);
+			break;
+		case TWOPHASE_INFO_FILE_AFTER:
+			RelationCacheInitFileInvalidate(false);
+			break;
+		default:
+			Assert(false);
+			break;
+	}
+}
+
 
 /*
  * AtEOXact_Inval

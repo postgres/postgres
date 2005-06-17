@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.52 2004/08/21 16:16:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.53 2005/06/17 22:32:42 tgl Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -62,6 +62,7 @@ PostgreSQL Reference Manual
    &cluster;
    &commentOn;
    &commit;
+   &commitPrepared;
    &copyTable;
    &createAggregate;
    &createCast;
@@ -120,11 +121,13 @@ PostgreSQL Reference Manual
    &move;
    &notify;
    &prepare;
+   &prepareTransaction;
    &reindex;
    &releaseSavepoint;
    &reset;
    &revoke;
    &rollback;
+   &rollbackPrepared;
    &rollbackTo;
    &savepoint;
    &select;

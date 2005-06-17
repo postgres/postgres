@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.78 2005/05/19 21:35:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.79 2005/06/17 22:32:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,13 @@ struct XidCache
  * links: list link for any list the PGPROC is in.	When waiting for a lock,
  * the PGPROC is linked into that lock's waitProcs queue.  A recycled PGPROC
  * is linked into ProcGlobal's freeProcs list.
+ *
+ * Note: twophase.c also sets up a dummy PGPROC struct for each currently
+ * prepared transaction.  These PGPROCs appear in the ProcArray data structure
+ * so that the prepared transactions appear to be still running and are
+ * correctly shown as holding locks.  A prepared transaction PGPROC can be
+ * distinguished from a real one at need by the fact that it has pid == 0.
+ * The semaphore and lock-related fields in a prepared-xact PGPROC are unused.
  */
 struct PGPROC
 {
@@ -62,15 +69,8 @@ struct PGPROC
 								 * were starting our xact: vacuum must not
 								 * remove tuples deleted by xid >= xmin ! */
 
-	int			pid;			/* This backend's process id */
+	int			pid;			/* This backend's process id, or 0 */
 	Oid			databaseId;		/* OID of database this backend is using */
-
-	/*
-	 * XLOG location of first XLOG record written by this backend's
-	 * current transaction.  If backend is not in a transaction or hasn't
-	 * yet modified anything, logRec.xrecoff is zero.
-	 */
-	XLogRecPtr	logRec;
 
 	/* Info about LWLock the process is currently waiting for, if any. */
 	bool		lwWaiting;		/* true if waiting for an LW lock */
@@ -120,11 +120,12 @@ extern int	StatementTimeout;
 /*
  * Function Prototypes
  */
-extern int	ProcGlobalSemas(int maxBackends);
-extern int	ProcGlobalShmemSize(int maxBackends);
-extern void InitProcGlobal(int maxBackends);
+extern int	ProcGlobalSemas(void);
+extern int	ProcGlobalShmemSize(void);
+extern void InitProcGlobal(void);
 extern void InitProcess(void);
 extern void InitDummyProcess(int proctype);
+extern bool HaveNFreeProcs(int n);
 extern void ProcReleaseLocks(bool isCommit);
 
 extern void ProcQueueInit(PROC_QUEUE *queue);

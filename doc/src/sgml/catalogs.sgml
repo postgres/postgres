@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.103 2005/06/13 23:14:47 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.104 2005/06/17 22:32:41 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -3933,6 +3933,11 @@
      </row>
 
      <row>
+      <entry><link linkend="view-pg-prepared-xacts"><structname>pg_prepared_xacts</structname></link></entry>
+      <entry>currently prepared transactions</entry>
+     </row>
+
+     <row>
       <entry><link linkend="view-pg-rules"><structname>pg_rules</structname></link></entry>
       <entry>rules</entry>
      </row>
@@ -4167,8 +4172,10 @@
       <entry><structfield>pid</structfield></entry>
       <entry><type>integer</type></entry>
       <entry></entry>
-      <entry>process ID of the server process holding or awaiting this
-      lock</entry>
+      <entry>
+       Process ID of the server process holding or awaiting this
+       lock.  Zero if the lock is held by a prepared transaction.
+      </entry>
      </row>
      <row>
       <entry><structfield>mode</structfield></entry>
@@ -4246,6 +4253,87 @@
    <structfield>procpid</structfield> column of the
    <structname>pg_stat_activity</structname> view to get more
    information on the session holding or waiting to hold the lock.
+  </para>
+
+ </sect1>
+
+ <sect1 id="view-pg-prepared-xacts">
+  <title><structname>pg_prepared_xacts</structname></title>
+
+  <indexterm zone="view-pg-prepared-xacts">
+   <primary>pg_prepared_xacts</primary>
+  </indexterm>
+
+  <para>
+   The view <structname>pg_prepared_xacts</structname> displays
+   information about transactions that are currently prepared for two-phase
+   commit (see <xref linkend="sql-prepare-transaction"
+   endterm="sql-prepare-transaction-title"> for details).
+  </para>
+
+  <para>
+   <structname>pg_prepared_xacts</structname> contains one row per prepared
+   transaction.  An entry is removed when the transaction is committed or
+   rolled back.
+  </para>
+
+  <table>
+   <title><structname>pg_prepared_xacts</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+     <row>
+      <entry><structfield>transaction</structfield></entry>
+      <entry><type>xid</type></entry>
+      <entry></entry>
+      <entry>
+       Numeric transaction identifier of the prepared transaction
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>gid</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>
+       Global transaction identifier that was assigned to the transaction
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>owner</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usename</literal></entry>
+      <entry>
+       Name of the user that executed the transaction
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>database</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry><literal><link linkend="catalog-pg-database"><structname>pg_database</structname></link>.datname</literal></entry>
+      <entry>
+       Name of the database in which the transaction was executed
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   When the <structname>pg_prepared_xacts</structname> view is accessed, the
+   internal transaction manager data structures are momentarily locked, and
+   a copy is made for the view to display.  This ensures that the
+   view produces a consistent set of results, while not blocking
+   normal operations longer than necessary.  Nonetheless
+   there could be some impact on database performance if this view is
+   read often.
   </para>
 
  </sect1>

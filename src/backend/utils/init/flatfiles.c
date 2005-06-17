@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.7 2005/06/06 17:01:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.8 2005/06/17 22:32:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include <unistd.h>
 
 #include "access/heapam.h"
+#include "access/twophase_rmgr.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_group.h"
 #include "catalog/pg_namespace.h"
@@ -48,9 +49,15 @@
 #include "utils/syscache.h"
 
 
+/* Actual names of the flat files (within $PGDATA/global/) */
 #define DATABASE_FLAT_FILE	"pg_database"
 #define GROUP_FLAT_FILE		"pg_group"
 #define USER_FLAT_FILE		"pg_pwd"
+
+/* Info bits in a flatfiles 2PC record */
+#define FF_BIT_DATABASE	1
+#define FF_BIT_GROUP	2
+#define FF_BIT_USER		4
 
 
 /*
@@ -757,6 +764,43 @@ AtEOXact_UpdateFlatFiles(bool isCommit)
 	SendPostmasterSignal(PMSIGNAL_PASSWORD_CHANGE);
 }
 
+
+/*
+ * This routine is called during transaction prepare.
+ *
+ * Record which files need to be refreshed if this transaction later
+ * commits.
+ *
+ * Note: it's OK to clear the flags immediately, since if the PREPARE fails
+ * further on, we'd only reset the flags anyway. So there's no need for a
+ * separate PostPrepare call.
+ */
+void
+AtPrepare_UpdateFlatFiles(void)
+{
+	uint16		info = 0;
+
+	if (database_file_update_subid != InvalidSubTransactionId)
+	{
+		database_file_update_subid = InvalidSubTransactionId;
+		info |= FF_BIT_DATABASE;
+	}
+	if (group_file_update_subid != InvalidSubTransactionId)
+	{
+		group_file_update_subid = InvalidSubTransactionId;
+		info |= FF_BIT_GROUP;
+	}
+	if (user_file_update_subid != InvalidSubTransactionId)
+	{
+		user_file_update_subid = InvalidSubTransactionId;
+		info |= FF_BIT_USER;
+	}
+	if (info != 0)
+		RegisterTwoPhaseRecord(TWOPHASE_RM_FLATFILES_ID, info,
+							   NULL, 0);
+}
+
+
 /*
  * AtEOSubXact_UpdateFlatFiles
  *
@@ -830,4 +874,29 @@ flatfile_update_trigger(PG_FUNCTION_ARGS)
 	}
 
 	return PointerGetDatum(NULL);
+}
+
+
+/*
+ * 2PC processing routine for COMMIT PREPARED case.
+ *
+ * (We don't have to do anything for ROLLBACK PREPARED.)
+ */
+void
+flatfile_twophase_postcommit(TransactionId xid, uint16 info,
+							 void *recdata, uint32 len)
+{
+	/*
+	 * Set flags to do the needed file updates at the end of my own
+	 * current transaction.  (XXX this has some issues if my own
+	 * transaction later rolls back, or if there is any significant
+	 * delay before I commit.  OK for now because we disallow
+	 * COMMIT PREPARED inside a transaction block.)
+	 */
+	if (info & FF_BIT_DATABASE)
+		database_file_update_needed();
+	if (info & FF_BIT_GROUP)
+		group_file_update_needed();
+	if (info & FF_BIT_USER)
+		user_file_update_needed();
 }

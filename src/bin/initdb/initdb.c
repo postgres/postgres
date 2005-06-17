@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.83 2005/04/30 08:08:51 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.84 2005/06/17 22:32:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2124,6 +2124,7 @@ main(int argc, char *argv[])
 		"pg_xlog/archive_status",
 		"pg_clog",
 		"pg_subtrans",
+		"pg_twophase",
 		"pg_multixact/members",
 		"pg_multixact/offsets",
 		"base",

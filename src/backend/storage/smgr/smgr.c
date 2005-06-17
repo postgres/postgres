@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.89 2005/06/06 20:22:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.90 2005/06/17 22:32:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -434,7 +434,7 @@ smgrscheduleunlink(SMgrRelation reln, bool isTemp)
  *		during transactional operations, since it can't be undone.
  *
  *		If isRedo is true, it is okay for the underlying file to be gone
- *		already.  (In practice isRedo will always be true.)
+ *		already.
  *
  * This also implies smgrclose() on the SMgrRelation object.
  */
@@ -676,6 +676,30 @@ smgrimmedsync(SMgrRelation reln)
 						reln->smgr_rnode.dbNode,
 						reln->smgr_rnode.relNode)));
 }
+
+
+/*
+ *	PostPrepare_smgr -- Clean up after a successful PREPARE
+ *
+ * What we have to do here is throw away the in-memory state about pending
+ * relation deletes.  It's all been recorded in the 2PC state file and
+ * it's no longer smgr's job to worry about it.
+ */
+void
+PostPrepare_smgr(void)
+{
+	PendingRelDelete *pending;
+	PendingRelDelete *next;
+
+	for (pending = pendingDeletes; pending != NULL; pending = next)
+	{
+		next = pending->next;
+		pendingDeletes = next;
+		/* must explicitly free the list entry */
+		pfree(pending);
+	}
+}
+
 
 /*
  *	smgrDoPendingDeletes() -- Take care of relation deletes at end of xact.

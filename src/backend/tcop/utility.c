@@ -10,13 +10,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.236 2005/04/28 21:47:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.237 2005/06/17 22:32:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/twophase.h"
 #include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_shadow.h"
@@ -383,11 +384,11 @@ ProcessUtility(Node *parsetree,
 								if (strcmp(item->defname, "transaction_isolation") == 0)
 									SetPGVariable("transaction_isolation",
 												  list_make1(item->arg),
-												  false);
+												  true);
 								else if (strcmp(item->defname, "transaction_read_only") == 0)
 									SetPGVariable("transaction_read_only",
 												  list_make1(item->arg),
-												  false);
+												  true);
 							}
 						}
 						break;
@@ -399,6 +400,25 @@ ProcessUtility(Node *parsetree,
 							if (completionTag)
 								strcpy(completionTag, "ROLLBACK");
 						}
+						break;
+
+					case TRANS_STMT_PREPARE:
+						if (!PrepareTransactionBlock(stmt->gid))
+						{
+							/* report unsuccessful commit in completionTag */
+							if (completionTag)
+								strcpy(completionTag, "ROLLBACK");
+						}
+						break;
+
+					case TRANS_STMT_COMMIT_PREPARED:
+						PreventTransactionChain(stmt, "COMMIT PREPARED");
+						FinishPreparedTransaction(stmt->gid, true);
+						break;
+
+					case TRANS_STMT_ROLLBACK_PREPARED:
+						PreventTransactionChain(stmt, "ROLLBACK PREPARED");
+						FinishPreparedTransaction(stmt->gid, false);
 						break;
 
 					case TRANS_STMT_ROLLBACK:
@@ -1213,6 +1233,18 @@ CreateCommandTag(Node *parsetree)
 
 					case TRANS_STMT_RELEASE:
 						tag = "RELEASE";
+						break;
+
+					case TRANS_STMT_PREPARE:
+						tag = "PREPARE TRANSACTION";
+						break;
+
+					case TRANS_STMT_COMMIT_PREPARED:
+						tag = "COMMIT PREPARED";
+						break;
+
+					case TRANS_STMT_ROLLBACK_PREPARED:
+						tag = "ROLLBACK PREPARED";
 						break;
 
 					default:

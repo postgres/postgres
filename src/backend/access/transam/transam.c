@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.64 2005/02/20 21:46:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.65 2005/06/17 22:32:42 tgl Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -173,6 +173,14 @@ TransactionIdDidCommit(TransactionId transactionId)
 	 * recursively. However, if it's older than TransactionXmin, we can't
 	 * look at pg_subtrans; instead assume that the parent crashed without
 	 * cleaning up its children.
+	 *
+	 * Originally we Assert'ed that the result of SubTransGetParent was
+	 * not zero.  However with the introduction of prepared transactions,
+	 * there can be a window just after database startup where we do not
+	 * have complete knowledge in pg_subtrans of the transactions after
+	 * TransactionXmin.  StartupSUBTRANS() has ensured that any missing
+	 * information will be zeroed.  Since this case should not happen under
+	 * normal conditions, it seems reasonable to emit a WARNING for it.
 	 */
 	if (xidstatus == TRANSACTION_STATUS_SUB_COMMITTED)
 	{
@@ -181,7 +189,12 @@ TransactionIdDidCommit(TransactionId transactionId)
 		if (TransactionIdPrecedes(transactionId, TransactionXmin))
 			return false;
 		parentXid = SubTransGetParent(transactionId);
-		Assert(TransactionIdIsValid(parentXid));
+		if (!TransactionIdIsValid(parentXid))
+		{
+			elog(WARNING, "no pg_subtrans entry for subcommitted XID %u",
+				 transactionId);
+			return false;
+		}
 		return TransactionIdDidCommit(parentXid);
 	}
 
@@ -224,7 +237,13 @@ TransactionIdDidAbort(TransactionId transactionId)
 		if (TransactionIdPrecedes(transactionId, TransactionXmin))
 			return true;
 		parentXid = SubTransGetParent(transactionId);
-		Assert(TransactionIdIsValid(parentXid));
+		if (!TransactionIdIsValid(parentXid))
+		{
+			/* see notes in TransactionIdDidCommit */
+			elog(WARNING, "no pg_subtrans entry for subcommitted XID %u",
+				 transactionId);
+			return true;
+		}
 		return TransactionIdDidAbort(parentXid);
 	}
 

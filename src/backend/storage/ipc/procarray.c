@@ -11,6 +11,11 @@
  * Because of various subtle race conditions it is critical that a backend
  * hold the correct locks while setting or clearing its MyProc->xid field.
  * See notes in GetSnapshotData.
+ *
+ * The process array now also includes PGPROC structures representing
+ * prepared transactions.  The xid and subxids fields of these are valid,
+ * as is the procLocks list.  They can be distinguished from regular backend
+ * PGPROCs at need by checking for pid == 0.
  * 
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
@@ -18,13 +23,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.2 2005/05/19 23:57:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.3 2005/06/17 22:32:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/subtrans.h"
+#include "access/twophase.h"
 #include "miscadmin.h"
 #include "storage/proc.h"
 #include "storage/procarray.h"
@@ -76,25 +82,23 @@ static void DisplayXidCache(void);
  * Report shared-memory space needed by CreateSharedProcArray.
  */
 int
-ProcArrayShmemSize(int maxBackends)
+ProcArrayShmemSize(void)
 {
-	/* sizeof(ProcArrayStruct) includes the first array element */
-	return MAXALIGN(sizeof(ProcArrayStruct) +
-					(maxBackends - 1) * sizeof(PGPROC *));
+	return MAXALIGN(offsetof(ProcArrayStruct, procs) +
+					(MaxBackends + max_prepared_xacts) * sizeof(PGPROC *));
 }
 
 /*
  * Initialize the shared PGPROC array during postmaster startup.
  */
 void
-CreateSharedProcArray(int maxBackends)
+CreateSharedProcArray(void)
 {
 	bool		found;
 
 	/* Create or attach to the ProcArray shared structure */
 	procArray = (ProcArrayStruct *)
-		ShmemInitStruct("Proc Array", ProcArrayShmemSize(maxBackends),
-						&found);
+		ShmemInitStruct("Proc Array", ProcArrayShmemSize(), &found);
 
 	if (!found)
 	{
@@ -102,18 +106,15 @@ CreateSharedProcArray(int maxBackends)
 		 * We're the first - initialize.
 		 */
 		procArray->numProcs = 0;
-		procArray->maxProcs = maxBackends;
+		procArray->maxProcs = MaxBackends + max_prepared_xacts;
 	}
 }
 
 /*
- * Add my own PGPROC (found in the global MyProc) to the shared array.
- *
- * This must be called during backend startup, after fully initializing
- * the contents of MyProc.
+ * Add the specified PGPROC to the shared array.
  */
 void
-ProcArrayAddMyself(void)
+ProcArrayAdd(PGPROC *proc)
 {
 	ProcArrayStruct *arrayP = procArray;
 
@@ -132,32 +133,32 @@ ProcArrayAddMyself(void)
 				 errmsg("sorry, too many clients already")));
 	}
 
-	arrayP->procs[arrayP->numProcs] = MyProc;
+	arrayP->procs[arrayP->numProcs] = proc;
 	arrayP->numProcs++;
 
 	LWLockRelease(ProcArrayLock);
 }
 
 /*
- * Remove my own PGPROC (found in the global MyProc) from the shared array.
- *
- * This must be called during backend shutdown.
+ * Remove the specified PGPROC from the shared array.
  */
 void
-ProcArrayRemoveMyself(void)
+ProcArrayRemove(PGPROC *proc)
 {
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
 
 #ifdef XIDCACHE_DEBUG
-	DisplayXidCache();
+	/* dump stats at backend shutdown, but not prepared-xact end */
+	if (proc->pid != 0)
+		DisplayXidCache();
 #endif
 
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		if (arrayP->procs[index] == MyProc)
+		if (arrayP->procs[index] == proc)
 		{
 			arrayP->procs[index] = arrayP->procs[arrayP->numProcs - 1];
 			arrayP->numProcs--;
@@ -169,7 +170,7 @@ ProcArrayRemoveMyself(void)
 	/* Ooops */
 	LWLockRelease(ProcArrayLock);
 
-	elog(LOG, "failed to find my own proc %p in ProcArray", MyProc);
+	elog(LOG, "failed to find proc %p in ProcArray", proc);
 }
 
 
@@ -330,6 +331,55 @@ result_known:
 }
 
 /*
+ * TransactionIdIsActive -- is xid the top-level XID of an active backend?
+ *
+ * This differs from TransactionIdIsInProgress in that it ignores prepared
+ * transactions.  Also, we ignore subtransactions since that's not needed
+ * for current uses.
+ */
+bool
+TransactionIdIsActive(TransactionId xid)
+{
+	bool		result = false;
+	ProcArrayStruct *arrayP = procArray;
+	int			i;
+
+	/*
+	 * Don't bother checking a transaction older than RecentXmin; it
+	 * could not possibly still be running.
+	 */
+	if (TransactionIdPrecedes(xid, RecentXmin))
+		return false;
+
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	for (i = 0; i < arrayP->numProcs; i++)
+	{
+		PGPROC	   *proc = arrayP->procs[i];
+
+		/* Fetch xid just once - see GetNewTransactionId */
+		TransactionId pxid = proc->xid;
+
+		if (!TransactionIdIsValid(pxid))
+			continue;
+
+		if (proc->pid == 0)
+			continue;			/* ignore prepared transactions */
+
+		if (TransactionIdEquals(pxid, xid))
+		{
+			result = true;
+			break;
+		}
+	}
+
+	LWLockRelease(ProcArrayLock);
+
+	return result;
+}
+
+
+/*
  * GetOldestXmin -- returns oldest transaction that was running
  *					when any current transaction was started.
  *
@@ -441,12 +491,12 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		   TransactionIdIsValid(MyProc->xmin));
 
 	/*
-	 * Allocating space for MaxBackends xids is usually overkill;
+	 * Allocating space for maxProcs xids is usually overkill;
 	 * numProcs would be sufficient.  But it seems better to do the
 	 * malloc while not holding the lock, so we can't look at numProcs.
 	 *
 	 * This does open a possibility for avoiding repeated malloc/free: since
-	 * MaxBackends does not change at runtime, we can simply reuse the
+	 * maxProcs does not change at runtime, we can simply reuse the
 	 * previous xip array if any.  (This relies on the fact that all
 	 * callers pass static SnapshotData structs.)
 	 */
@@ -456,7 +506,7 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		 * First call for this snapshot
 		 */
 		snapshot->xip = (TransactionId *)
-			malloc(MaxBackends * sizeof(TransactionId));
+			malloc(arrayP->maxProcs * sizeof(TransactionId));
 		if (snapshot->xip == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -602,13 +652,20 @@ DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself)
 
 /*
  * BackendPidGetProc -- get a backend's PGPROC given its PID
+ *
+ * Returns NULL if not found.  Note that it is up to the caller to be
+ * sure that the question remains meaningful for long enough for the
+ * answer to be used ...
  */
-struct PGPROC *
+PGPROC *
 BackendPidGetProc(int pid)
 {
 	PGPROC	   *result = NULL;
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
+
+	if (pid == 0)				/* never match dummy PGPROCs */
+		return NULL;
 
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
@@ -642,10 +699,8 @@ IsBackendPid(int pid)
  *		active transactions.  This is used as a heuristic to decide if
  *		a pre-XLOG-flush delay is worthwhile during commit.
  *
- * An active transaction is something that has written at least one XLOG
- * record; read-only transactions don't count.  Also, do not count backends
- * that are blocked waiting for locks, since they are not going to get to
- * run until someone else commits.
+ * Do not count backends that are blocked waiting for locks, since they are
+ * not going to get to run until someone else commits.
  */
 int
 CountActiveBackends(void)
@@ -656,7 +711,7 @@ CountActiveBackends(void)
 
 	/*
 	 * Note: for speed, we don't acquire ProcArrayLock.  This is a little bit
-	 * bogus, but since we are only testing xrecoff for zero or nonzero,
+	 * bogus, but since we are only testing fields for zero or nonzero,
 	 * it should be OK.  The result is only used for heuristic purposes
 	 * anyway...
 	 */
@@ -666,7 +721,9 @@ CountActiveBackends(void)
 
 		if (proc == MyProc)
 			continue;			/* do not count myself */
-		if (proc->logRec.xrecoff == 0)
+		if (proc->pid == 0)
+			continue;			/* do not count prepared xacts */
+		if (proc->xid == InvalidTransactionId)
 			continue;			/* do not count if not in a transaction */
 		if (proc->waitLock != NULL)
 			continue;			/* do not count if blocked on a lock */
@@ -676,25 +733,6 @@ CountActiveBackends(void)
 	return count;
 }
 
-/*
- * CountEmptyBackendSlots - count empty slots in backend process table
- *
- * Acquiring the lock here is almost certainly overkill, but just in
- * case fetching an int is not atomic on your machine ...
- */
-int
-CountEmptyBackendSlots(void)
-{
-	int			count;
-
-	LWLockAcquire(ProcArrayLock, LW_SHARED);
-
-	count = procArray->maxProcs - procArray->numProcs;
-
-	LWLockRelease(ProcArrayLock);
-
-	return count;
-}
 
 #define XidCacheRemove(i) \
 	do { \

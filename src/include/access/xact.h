@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.76 2005/06/06 17:01:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.77 2005/06/17 22:32:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,8 @@ extern bool XactReadOnly;
 typedef enum
 {
 	XACT_EVENT_COMMIT,
-	XACT_EVENT_ABORT
+	XACT_EVENT_ABORT,
+	XACT_EVENT_PREPARE
 } XactEvent;
 
 typedef void (*XactCallback) (XactEvent event, void *arg);
@@ -72,8 +73,11 @@ typedef void (*SubXactCallback) (SubXactEvent event, SubTransactionId mySubid,
  * XLOG allows to store some information in high 4 bits of log
  * record xl_info field
  */
-#define XLOG_XACT_COMMIT	0x00
-#define XLOG_XACT_ABORT		0x20
+#define XLOG_XACT_COMMIT			0x00
+#define XLOG_XACT_PREPARE			0x10
+#define XLOG_XACT_ABORT				0x20
+#define XLOG_XACT_COMMIT_PREPARED	0x30
+#define XLOG_XACT_ABORT_PREPARED	0x40
 
 typedef struct xl_xact_commit
 {
@@ -99,6 +103,31 @@ typedef struct xl_xact_abort
 
 #define MinSizeOfXactAbort offsetof(xl_xact_abort, xnodes)
 
+/*
+ * COMMIT_PREPARED and ABORT_PREPARED are identical to COMMIT/ABORT records
+ * except that we have to store the XID of the prepared transaction explicitly
+ * --- the XID in the record header will be for the transaction doing the
+ * COMMIT PREPARED or ABORT PREPARED command.
+ */
+
+typedef struct xl_xact_commit_prepared
+{
+	TransactionId xid;			/* XID of prepared xact */
+	xl_xact_commit crec;		/* COMMIT record */
+	/* MORE DATA FOLLOWS AT END OF STRUCT */
+} xl_xact_commit_prepared;
+
+#define MinSizeOfXactCommitPrepared offsetof(xl_xact_commit_prepared, crec.xnodes)
+
+typedef struct xl_xact_abort_prepared
+{
+	TransactionId xid;			/* XID of prepared xact */
+	xl_xact_abort arec;			/* ABORT record */
+	/* MORE DATA FOLLOWS AT END OF STRUCT */
+} xl_xact_abort_prepared;
+
+#define MinSizeOfXactAbortPrepared offsetof(xl_xact_abort_prepared, arec.xnodes)
+
 
 /* ----------------
  *		extern definitions
@@ -121,6 +150,7 @@ extern void CommitTransactionCommand(void);
 extern void AbortCurrentTransaction(void);
 extern void BeginTransactionBlock(void);
 extern bool EndTransactionBlock(void);
+extern bool PrepareTransactionBlock(char *gid);
 extern void UserAbortTransactionBlock(void);
 extern void ReleaseSavepoint(List *options);
 extern void DefineSavepoint(char *name);

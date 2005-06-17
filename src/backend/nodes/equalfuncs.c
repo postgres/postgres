@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.243 2005/06/09 04:18:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.244 2005/06/17 22:32:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1053,6 +1053,7 @@ _equalTransactionStmt(TransactionStmt *a, TransactionStmt *b)
 {
 	COMPARE_SCALAR_FIELD(kind);
 	COMPARE_NODE_FIELD(options);
+	COMPARE_STRING_FIELD(gid);
 
 	return true;
 }

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.13 2005/05/17 21:46:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.14 2005/06/17 22:32:43 tgl Exp $
  */
 
 CREATE VIEW pg_user AS 
@@ -101,6 +101,39 @@ CREATE VIEW pg_stats AS
     WHERE has_table_privilege(c.oid, 'select');
 
 REVOKE ALL on pg_statistic FROM public;
+
+CREATE VIEW pg_locks AS 
+    SELECT * 
+    FROM pg_lock_status() AS L
+    (locktype text, database oid, relation oid, page int4, tuple int2,
+     transaction xid, classid oid, objid oid, objsubid int2,
+     pid int4, mode text, granted boolean);
+
+CREATE VIEW pg_prepared_xacts AS
+    SELECT P.transaction, P.gid, U.usename AS owner, D.datname AS database
+    FROM pg_prepared_xact() AS P
+    (transaction xid, gid text, ownerid int4, dbid oid)
+         LEFT JOIN pg_database D ON P.dbid = D.oid
+         LEFT JOIN pg_shadow U ON P.ownerid = U.usesysid;
+
+CREATE VIEW pg_settings AS 
+    SELECT * 
+    FROM pg_show_all_settings() AS A 
+    (name text, setting text, category text, short_desc text, extra_desc text,
+     context text, vartype text, source text, min_val text, max_val text);
+
+CREATE RULE pg_settings_u AS 
+    ON UPDATE TO pg_settings 
+    WHERE new.name = old.name DO 
+    SELECT set_config(old.name, new.setting, 'f');
+
+CREATE RULE pg_settings_n AS 
+    ON UPDATE TO pg_settings 
+    DO INSTEAD NOTHING;
+
+GRANT SELECT, UPDATE ON pg_settings TO PUBLIC;
+
+-- Statistics views
 
 CREATE VIEW pg_stat_all_tables AS 
     SELECT 
@@ -258,27 +291,3 @@ CREATE VIEW pg_stat_database AS
                     pg_stat_get_db_blocks_hit(D.oid) AS blks_read, 
             pg_stat_get_db_blocks_hit(D.oid) AS blks_hit 
     FROM pg_database D;
-
-CREATE VIEW pg_locks AS 
-    SELECT * 
-    FROM pg_lock_status() AS L
-    (locktype text, database oid, relation oid, page int4, tuple int2,
-     transaction xid, classid oid, objid oid, objsubid int2,
-     pid int4, mode text, granted boolean);
-
-CREATE VIEW pg_settings AS 
-    SELECT * 
-    FROM pg_show_all_settings() AS A 
-    (name text, setting text, category text, short_desc text, extra_desc text,
-     context text, vartype text, source text, min_val text, max_val text);
-
-CREATE RULE pg_settings_u AS 
-    ON UPDATE TO pg_settings 
-    WHERE new.name = old.name DO 
-    SELECT set_config(old.name, new.setting, 'f');
-
-CREATE RULE pg_settings_n AS 
-    ON UPDATE TO pg_settings 
-    DO INSTEAD NOTHING;
-
-GRANT SELECT, UPDATE ON pg_settings TO PUBLIC;

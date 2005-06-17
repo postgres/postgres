@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/async.h,v 1.27 2004/12/31 22:03:28 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/commands/async.h,v 1.28 2005/06/17 22:32:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@ extern void AtAbort_Notify(void);
 extern void AtSubStart_Notify(void);
 extern void AtSubCommit_Notify(void);
 extern void AtSubAbort_Notify(void);
+extern void AtPrepare_Notify(void);
 
 /* signal handler for inbound notifies (SIGUSR2) */
 extern void NotifyInterruptHandler(SIGNAL_ARGS);
@@ -37,5 +38,8 @@ extern void NotifyInterruptHandler(SIGNAL_ARGS);
  */
 extern void EnableNotifyInterrupt(void);
 extern bool DisableNotifyInterrupt(void);
+
+extern void notify_twophase_postcommit(TransactionId xid, uint16 info,
+									   void *recdata, uint32 len);
 
 #endif   /* ASYNC_H */

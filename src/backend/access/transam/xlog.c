@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.200 2005/06/15 01:36:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.201 2005/06/17 22:32:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "access/clog.h"
 #include "access/multixact.h"
 #include "access/subtrans.h"
+#include "access/twophase.h"
 #include "access/xact.h"
 #include "access/xlog.h"
 #include "access/xlog_internal.h"
@@ -813,18 +814,6 @@ begin:;
 
 	/* Compute record's XLOG location */
 	INSERT_RECPTR(RecPtr, Insert, curridx);
-
-	/* If first XLOG record of transaction, save it in PGPROC array */
-	if (MyLastRecPtr.xrecoff == 0 && !no_tran)
-	{
-		/*
-		 * We do not acquire ProcArrayLock here because of possible deadlock.
-		 * Anyone who wants to inspect other procs' logRec must acquire
-		 * WALInsertLock, instead.	A better solution would be a per-PROC
-		 * spinlock, but no time for that before 7.2 --- tgl 12/19/01.
-		 */
-		MyProc->logRec = RecPtr;
-	}
 
 #ifdef WAL_DEBUG
 	if (XLOG_DEBUG)
@@ -3827,6 +3816,7 @@ BootStrapXLOG(void)
 	BootStrapCLOG();
 	BootStrapSUBTRANS();
 	BootStrapMultiXact();
+
 	free(buffer);
 }
 
@@ -4268,6 +4258,7 @@ StartupXLOG(void)
 	uint32		endLogSeg;
 	XLogRecord *record;
 	uint32		freespace;
+	TransactionId oldestActiveXID;
 
 	CritSectionCount++;
 
@@ -4678,33 +4669,8 @@ StartupXLOG(void)
 		XLogCtl->Write.curridx = NextBufIdx(0);
 	}
 
-#ifdef NOT_USED
-	/* UNDO */
-	if (InRecovery)
-	{
-		RecPtr = ReadRecPtr;
-		if (XLByteLT(checkPoint.undo, RecPtr))
-		{
-			ereport(LOG,
-					(errmsg("undo starts at %X/%X",
-							RecPtr.xlogid, RecPtr.xrecoff)));
-			do
-			{
-				record = ReadRecord(&RecPtr, PANIC);
-				if (TransactionIdIsValid(record->xl_xid) &&
-					!TransactionIdDidCommit(record->xl_xid))
-					RmgrTable[record->xl_rmid].rm_undo(EndRecPtr, record);
-				RecPtr = record->xl_prev;
-			} while (XLByteLE(checkPoint.undo, RecPtr));
-			ereport(LOG,
-					(errmsg("undo done at %X/%X",
-							ReadRecPtr.xlogid, ReadRecPtr.xrecoff)));
-		}
-		else
-			ereport(LOG,
-					(errmsg("undo is not required")));
-	}
-#endif
+	/* Pre-scan prepared transactions to find out the range of XIDs present */
+	oldestActiveXID = PrescanPreparedTransactions();
 
 	if (InRecovery)
 	{
@@ -4767,8 +4733,11 @@ StartupXLOG(void)
 
 	/* Start up the commit log and related stuff, too */
 	StartupCLOG();
-	StartupSUBTRANS();
+	StartupSUBTRANS(oldestActiveXID);
 	StartupMultiXact();
+
+	/* Reload shared-memory state for prepared transactions */
+	RecoverPreparedTransactions();
 
 	ereport(LOG,
 			(errmsg("database system is ready")));
@@ -5096,31 +5065,6 @@ CreateCheckPoint(bool shutdown, bool force)
 	}
 
 	/*
-	 * Get UNDO record ptr - this is oldest of PGPROC->logRec values. We
-	 * do this while holding insert lock to ensure that we won't miss any
-	 * about-to-commit transactions (UNDO must include all xacts that have
-	 * commits after REDO point).
-	 *
-	 * XXX temporarily ifdef'd out to avoid three-way deadlock condition:
-	 * GetUndoRecPtr needs to grab ProcArrayLock to ensure that it is looking
-	 * at a stable set of proc records, but grabbing ProcArrayLock while
-	 * holding WALInsertLock is no good.  GetNewTransactionId may cause a
-	 * WAL record to be written while holding XidGenLock, and
-	 * GetSnapshotData needs to get XidGenLock while holding ProcArrayLock,
-	 * so there's a risk of deadlock. Need to find a better solution.  See
-	 * pgsql-hackers discussion of 17-Dec-01.
-	 *
-	 * XXX actually, the whole UNDO code is dead code and unlikely to ever be
-	 * revived, so the lack of a good solution here is not troubling.
-	 */
-#ifdef NOT_USED
-	checkPoint.undo = GetUndoRecPtr();
-
-	if (shutdown && checkPoint.undo.xrecoff != 0)
-		elog(PANIC, "active transaction while database system is shutting down");
-#endif
-
-	/*
 	 * Now we can release insert lock and checkpoint start lock, allowing
 	 * other xacts to proceed even while we are flushing disk buffers.
 	 */
@@ -5195,22 +5139,8 @@ CreateCheckPoint(bool shutdown, bool force)
 	/*
 	 * Select point at which we can truncate the log, which we base on the
 	 * prior checkpoint's earliest info.
-	 *
-	 * With UNDO support: oldest item is redo or undo, whichever is older;
-	 * but watch out for case that undo = 0.
-	 *
-	 * Without UNDO support: just use the redo pointer.  This allows xlog
-	 * space to be freed much faster when there are long-running
-	 * transactions.
 	 */
-#ifdef NOT_USED
-	if (ControlFile->checkPointCopy.undo.xrecoff != 0 &&
-		XLByteLT(ControlFile->checkPointCopy.undo,
-				 ControlFile->checkPointCopy.redo))
-		XLByteToSeg(ControlFile->checkPointCopy.undo, _logId, _logSeg);
-	else
-#endif
-		XLByteToSeg(ControlFile->checkPointCopy.redo, _logId, _logSeg);
+	XLByteToSeg(ControlFile->checkPointCopy.redo, _logId, _logSeg);
 
 	/*
 	 * Update the control file.

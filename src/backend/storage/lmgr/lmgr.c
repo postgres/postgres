@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.76 2005/06/14 22:15:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.77 2005/06/17 22:32:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ static LOCKMETHODID LockTableId = INVALID_LOCKMETHOD;
  * Create the lock table described by LockConflicts
  */
 void
-InitLockTable(int maxBackends)
+InitLockTable(void)
 {
 	LOCKMETHODID LongTermTableId;
 
@@ -91,8 +91,7 @@ InitLockTable(int maxBackends)
 	/* number of lock modes is lengthof()-1 because of dummy zero */
 	LockTableId = LockMethodTableInit("LockTable",
 									  LockConflicts,
-									  lengthof(LockConflicts) - 1,
-									  maxBackends);
+									  lengthof(LockConflicts) - 1);
 	if (!LockMethodIsValid(LockTableId))
 		elog(ERROR, "could not initialize lock table");
 	Assert(LockTableId == DEFAULT_LOCKMETHOD);

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.328 2005/06/17 13:12:01 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.329 2005/06/17 22:32:42 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -956,7 +956,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the location of the Kerberos server key file. See
         <xref linkend="kerberos-auth"> for details. This parameter
-		can only be set at server start.
+        can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -1109,6 +1109,33 @@ SET ENABLE_SEQSCAN TO OFF;
         increment in <varname>temp_buffers</>.  However if a buffer is
         actually used an additional 8192 bytes will be consumed for it
         (or in general <symbol>BLCKSZ</symbol> bytes).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-max-prepared-transactions" xreflabel="max_prepared_transactions">
+      <term><varname>max_prepared_transactions</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>max_prepared_transactions</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets the maximum number of transactions that can be in the
+        <quote>prepared</> state simultaneously (see <xref
+        linkend="sql-prepare-transaction"
+        endterm="sql-prepare-transaction-title">).
+        Setting this parameter to zero disables the prepared-transaction
+        feature.
+        The default is 50.
+        This option can only be set at server start.
+       </para>
+
+       <para>
+        Increasing this parameter may cause <productname>PostgreSQL</>
+        to request more <systemitem class="osname">System V</> shared
+        memory than your operating system's default configuration
+        allows. See <xref linkend="sysvipc"> for information on how to
+        adjust those parameters, if necessary.
        </para>
       </listitem>
      </varlistentry>

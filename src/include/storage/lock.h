@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.88 2005/06/14 22:15:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.89 2005/06/17 22:32:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,7 +370,7 @@ extern void InitLocks(void);
 extern LockMethod GetLocksMethodTable(LOCK *lock);
 extern LOCKMETHODID LockMethodTableInit(const char *tabName,
 					const LOCKMASK *conflictsP,
-					int numModes, int maxBackends);
+					int numModes);
 extern LOCKMETHODID LockMethodTableRename(LOCKMETHODID lockmethodid);
 extern LockAcquireResult LockAcquire(LOCKMETHODID lockmethodid,
 									 LOCKTAG *locktag,
@@ -383,13 +383,15 @@ extern bool LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 extern void LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks);
 extern void LockReleaseCurrentOwner(void);
 extern void LockReassignCurrentOwner(void);
+extern void AtPrepare_Locks(void);
+extern void PostPrepare_Locks(TransactionId xid);
 extern int LockCheckConflicts(LockMethod lockMethodTable,
 				   LOCKMODE lockmode,
 				   LOCK *lock, PROCLOCK *proclock, PGPROC *proc);
 extern void GrantLock(LOCK *lock, PROCLOCK *proclock, LOCKMODE lockmode);
 extern void GrantAwaitedLock(void);
 extern void RemoveFromWaitQueue(PGPROC *proc);
-extern int	LockShmemSize(int maxBackends);
+extern int	LockShmemSize(void);
 extern bool DeadLockCheck(PGPROC *proc);
 extern void DeadLockReport(void);
 extern void RememberSimpleDeadLock(PGPROC *proc1,
@@ -400,8 +402,15 @@ extern void InitDeadLockChecking(void);
 extern LockData *GetLockStatusData(void);
 extern const char *GetLockmodeName(LOCKMODE mode);
 
+extern void lock_twophase_recover(TransactionId xid, uint16 info,
+								  void *recdata, uint32 len);
+extern void lock_twophase_postcommit(TransactionId xid, uint16 info,
+									 void *recdata, uint32 len);
+extern void lock_twophase_postabort(TransactionId xid, uint16 info,
+									void *recdata, uint32 len);
+
 #ifdef LOCK_DEBUG
-extern void DumpLocks(void);
+extern void DumpLocks(PGPROC *proc);
 extern void DumpAllLocks(void);
 #endif
 

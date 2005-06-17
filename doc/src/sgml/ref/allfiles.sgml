@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.62 2004/08/21 16:16:04 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.63 2005/06/17 22:32:42 tgl Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -30,6 +30,7 @@ Complete list of usable sgml source files in this directory.
 <!entity cluster            system "cluster.sgml">
 <!entity commentOn          system "comment.sgml">
 <!entity commit             system "commit.sgml">
+<!entity commitPrepared     system "commit_prepared.sgml">
 <!entity copyTable          system "copy.sgml">
 <!entity createAggregate    system "create_aggregate.sgml">
 <!entity createCast         system "create_cast.sgml">
@@ -88,11 +89,13 @@ Complete list of usable sgml source files in this directory.
 <!entity move               system "move.sgml">
 <!entity notify             system "notify.sgml">
 <!entity prepare            system "prepare.sgml">
+<!entity prepareTransaction system "prepare_transaction.sgml">
 <!entity reindex            system "reindex.sgml">
 <!entity releaseSavepoint   system "release_savepoint.sgml">
 <!entity reset              system "reset.sgml">
 <!entity revoke             system "revoke.sgml">
 <!entity rollback           system "rollback.sgml">
+<!entity rollbackPrepared   system "rollback_prepared.sgml">
 <!entity rollbackTo         system "rollback_to.sgml">
 <!entity savepoint          system "savepoint.sgml">
 <!entity select             system "select.sgml">

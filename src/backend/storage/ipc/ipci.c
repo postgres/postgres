@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.76 2005/05/19 21:35:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.77 2005/06/17 22:32:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "access/clog.h"
 #include "access/multixact.h"
 #include "access/subtrans.h"
+#include "access/twophase.h"
 #include "access/xlog.h"
 #include "miscadmin.h"
 #include "postmaster/bgwriter.h"
@@ -54,9 +55,7 @@
  * memory.	This is true for a standalone backend, false for a postmaster.
  */
 void
-CreateSharedMemoryAndSemaphores(bool makePrivate,
-								int maxBackends,
-								int port)
+CreateSharedMemoryAndSemaphores(bool makePrivate, int port)
 {
 	PGShmemHeader *seghdr = NULL;
 
@@ -72,15 +71,16 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 		 */
 		size = hash_estimate_size(SHMEM_INDEX_SIZE, sizeof(ShmemIndexEnt));
 		size += BufferShmemSize();
-		size += LockShmemSize(maxBackends);
-		size += ProcGlobalShmemSize(maxBackends);
+		size += LockShmemSize();
+		size += ProcGlobalShmemSize();
 		size += XLOGShmemSize();
 		size += CLOGShmemSize();
 		size += SUBTRANSShmemSize();
+		size += TwoPhaseShmemSize();
 		size += MultiXactShmemSize();
 		size += LWLockShmemSize();
-		size += ProcArrayShmemSize(maxBackends);
-		size += SInvalShmemSize(maxBackends);
+		size += ProcArrayShmemSize();
+		size += SInvalShmemSize(MaxBackends);
 		size += FreeSpaceShmemSize();
 		size += BgWriterShmemSize();
 #ifdef EXEC_BACKEND
@@ -100,7 +100,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 		/*
 		 * Create semaphores
 		 */
-		numSemas = ProcGlobalSemas(maxBackends);
+		numSemas = ProcGlobalSemas();
 		numSemas += SpinlockSemas();
 		PGReserveSemaphores(numSemas, port);
 	}
@@ -144,6 +144,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 	XLOGShmemInit();
 	CLOGShmemInit();
 	SUBTRANSShmemInit();
+	TwoPhaseShmemInit();
 	MultiXactShmemInit();
 	InitBufferPool();
 
@@ -151,18 +152,18 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 	 * Set up lock manager
 	 */
 	InitLocks();
-	InitLockTable(maxBackends);
+	InitLockTable();
 
 	/*
 	 * Set up process table
 	 */
-	InitProcGlobal(maxBackends);
-	CreateSharedProcArray(maxBackends);
+	InitProcGlobal();
+	CreateSharedProcArray();
 
 	/*
 	 * Set up shared-inval messaging
 	 */
-	CreateSharedInvalidationState(maxBackends);
+	CreateSharedInvalidationState(MaxBackends);
 
 	/*
 	 * Set up free-space map

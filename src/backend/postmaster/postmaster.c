@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.453 2005/06/14 21:04:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.454 2005/06/17 22:32:44 tgl Exp $
  *
  * NOTES
  *
@@ -252,7 +252,7 @@ static void reg_reply(DNSServiceRegistrationReplyErrorType errorCode,
 static void pmdaemonize(void);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
-static void reset_shared(unsigned short port);
+static void reset_shared(int port);
 static void SIGHUP_handler(SIGNAL_ARGS);
 static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
@@ -1783,7 +1783,7 @@ ClosePostmasterPorts(bool am_syslogger)
  * reset_shared -- reset shared memory and semaphores
  */
 static void
-reset_shared(unsigned short port)
+reset_shared(int port)
 {
 	/*
 	 * Create or re-create shared memory and semaphores.
@@ -1793,7 +1793,7 @@ reset_shared(unsigned short port)
 	 * used to determine IPC keys.	This helps ensure that we will clean
 	 * up dead IPC objects if the postmaster crashes and is restarted.
 	 */
-	CreateSharedMemoryAndSemaphores(false, MaxBackends, port);
+	CreateSharedMemoryAndSemaphores(false, port);
 }
 
 
@@ -3182,7 +3182,7 @@ SubPostmasterMain(int argc, char *argv[])
 		/* BackendRun will close sockets */
 
 		/* Attach process to shared data structures */
-		CreateSharedMemoryAndSemaphores(false, MaxBackends, 0);
+		CreateSharedMemoryAndSemaphores(false, 0);
 
 #ifdef USE_SSL
 		/*
@@ -3203,7 +3203,7 @@ SubPostmasterMain(int argc, char *argv[])
 		ClosePostmasterPorts(false);
 
 		/* Attach process to shared data structures */
-		CreateSharedMemoryAndSemaphores(false, MaxBackends, 0);
+		CreateSharedMemoryAndSemaphores(false, 0);
 
 		BootstrapMain(argc - 2, argv + 2);
 		proc_exit(0);

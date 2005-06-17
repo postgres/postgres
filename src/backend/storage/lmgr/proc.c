@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.159 2005/06/14 22:15:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.160 2005/06/17 22:32:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,13 +92,13 @@ static bool CheckStatementTimeout(void);
  * Report shared-memory space needed by InitProcGlobal.
  */
 int
-ProcGlobalShmemSize(int maxBackends)
+ProcGlobalShmemSize(void)
 {
 	int			size = 0;
 
 	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
 	size += MAXALIGN(NUM_DUMMY_PROCS * sizeof(PGPROC));	/* DummyProcs */
-	size += MAXALIGN(maxBackends * sizeof(PGPROC));		/* MyProcs */
+	size += MAXALIGN(MaxBackends * sizeof(PGPROC));		/* MyProcs */
 	size += MAXALIGN(sizeof(slock_t)); /* ProcStructLock */
 
 	return size;
@@ -108,10 +108,10 @@ ProcGlobalShmemSize(int maxBackends)
  * Report number of semaphores needed by InitProcGlobal.
  */
 int
-ProcGlobalSemas(int maxBackends)
+ProcGlobalSemas(void)
 {
 	/* We need a sema per backend, plus one for each dummy process. */
-	return maxBackends + NUM_DUMMY_PROCS;
+	return MaxBackends + NUM_DUMMY_PROCS;
 }
 
 /*
@@ -134,7 +134,7 @@ ProcGlobalSemas(int maxBackends)
  *	  postmaster, not in backends.
  */
 void
-InitProcGlobal(int maxBackends)
+InitProcGlobal(void)
 {
 	bool		foundProcGlobal,
 				foundDummy;
@@ -170,13 +170,13 @@ InitProcGlobal(int maxBackends)
 		 * Pre-create the PGPROC structures and create a semaphore for
 		 * each.
 		 */
-		procs = (PGPROC *) ShmemAlloc(maxBackends * sizeof(PGPROC));
+		procs = (PGPROC *) ShmemAlloc(MaxBackends * sizeof(PGPROC));
 		if (!procs)
 			ereport(FATAL,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of shared memory")));
-		MemSet(procs, 0, maxBackends * sizeof(PGPROC));
-		for (i = 0; i < maxBackends; i++)
+		MemSet(procs, 0, MaxBackends * sizeof(PGPROC));
+		for (i = 0; i < MaxBackends; i++)
 		{
 			PGSemaphoreCreate(&(procs[i].sem));
 			procs[i].links.next = ProcGlobal->freeProcs;
@@ -254,7 +254,6 @@ InitProcess(void)
 	MyProc->xmin = InvalidTransactionId;
 	MyProc->pid = MyProcPid;
 	MyProc->databaseId = MyDatabaseId;
-	MyProc->logRec.xrecoff = 0;
 	MyProc->lwWaiting = false;
 	MyProc->lwExclusive = false;
 	MyProc->lwWaitLink = NULL;
@@ -265,7 +264,7 @@ InitProcess(void)
 	/*
 	 * Add our PGPROC to the PGPROC array in shared memory.
 	 */
-	ProcArrayAddMyself();
+	ProcArrayAdd(MyProc);
 
 	/*
 	 * Arrange to clean up at backend exit.
@@ -332,7 +331,6 @@ InitDummyProcess(int proctype)
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
 	MyProc->databaseId = MyDatabaseId;
-	MyProc->logRec.xrecoff = 0;
 	MyProc->lwWaiting = false;
 	MyProc->lwExclusive = false;
 	MyProc->lwWaitLink = NULL;
@@ -350,6 +348,35 @@ InitDummyProcess(int proctype)
 	 * So be careful and reinitialize its value here.
 	 */
 	PGSemaphoreReset(&MyProc->sem);
+}
+
+/*
+ * Check whether there are at least N free PGPROC objects.
+ *
+ * Note: this is designed on the assumption that N will generally be small.
+ */
+bool
+HaveNFreeProcs(int n)
+{
+	SHMEM_OFFSET offset;
+	PGPROC	   *proc;
+	/* use volatile pointer to prevent code rearrangement */
+	volatile PROC_HDR *procglobal = ProcGlobal;
+
+	SpinLockAcquire(ProcStructLock);
+
+	offset = procglobal->freeProcs;
+
+	while (n > 0 && offset != INVALID_OFFSET)
+	{
+		proc = (PGPROC *) MAKE_PTR(offset);
+		offset = proc->links.next;
+		n--;
+	}
+
+	SpinLockRelease(ProcStructLock);
+
+	return (n <= 0);
 }
 
 /*
@@ -478,7 +505,7 @@ ProcKill(int code, Datum arg)
 #endif
 
 	/* Remove our PGPROC from the PGPROC array in shared memory */
-	ProcArrayRemoveMyself();
+	ProcArrayRemove(MyProc);
 
 	SpinLockAcquire(ProcStructLock);
 

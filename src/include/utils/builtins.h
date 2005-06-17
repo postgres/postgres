@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.257 2005/05/27 00:57:49 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.258 2005/06/17 22:32:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -824,6 +824,9 @@ extern Datum show_all_settings(PG_FUNCTION_ARGS);
 
 /* lockfuncs.c */
 extern Datum pg_lock_status(PG_FUNCTION_ARGS);
+
+/* access/transam/twophase.c */
+extern Datum pg_prepared_xact(PG_FUNCTION_ARGS);
 
 /* catalog/pg_conversion.c */
 extern Datum pg_convert_using(PG_FUNCTION_ARGS);

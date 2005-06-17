@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.122 2005/05/06 17:24:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.123 2005/06/17 22:32:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,7 @@
 #include <netinet/in.h>
 
 #include "access/heapam.h"
+#include "access/twophase_rmgr.h"
 #include "catalog/pg_listener.h"
 #include "commands/async.h"
 #include "libpq/libpq.h"
@@ -405,6 +406,36 @@ Async_UnlistenOnExit(int code, Datum arg)
 	StartTransactionCommand();
 	Async_UnlistenAll();
 	CommitTransactionCommand();
+}
+
+
+/*
+ *--------------------------------------------------------------
+ * AtPrepare_Notify
+ *
+ *		This is called at the prepare phase of a two-phase 
+ *		transaction.  Save the state for possible commit later.
+ *--------------------------------------------------------------
+ */
+void
+AtPrepare_Notify(void)
+{
+	ListCell *p;
+
+	foreach(p, pendingNotifies)
+	{
+		const char *relname = (const char *) lfirst(p);
+
+		RegisterTwoPhaseRecord(TWOPHASE_RM_NOTIFY_ID, 0,
+							   relname, strlen(relname) + 1);
+	}
+
+	/*
+	 * We can clear the state immediately, rather than needing a separate
+	 * PostPrepare call, because if the transaction fails we'd just
+	 * discard the state anyway.
+	 */
+	ClearPendingNotifies();
 }
 
 /*
@@ -1016,8 +1047,9 @@ AsyncExistsPendingNotify(const char *relname)
 
 	foreach(p, pendingNotifies)
 	{
-		/* Use NAMEDATALEN for relname comparison.	  DZ - 26-08-1996 */
-		if (strncmp((const char *) lfirst(p), relname, NAMEDATALEN) == 0)
+		const char *prelname = (const char *) lfirst(p);
+
+		if (strcmp(prelname, relname) == 0)
 			return true;
 	}
 
@@ -1036,4 +1068,23 @@ ClearPendingNotifies(void)
 	 * list head pointer.
 	 */
 	pendingNotifies = NIL;
+}
+
+/*
+ * 2PC processing routine for COMMIT PREPARED case.
+ *
+ * (We don't have to do anything for ROLLBACK PREPARED.)
+ */
+void
+notify_twophase_postcommit(TransactionId xid, uint16 info,
+						   void *recdata, uint32 len)
+{
+	/*
+	 * Set up to issue the NOTIFY at the end of my own
+	 * current transaction.  (XXX this has some issues if my own
+	 * transaction later rolls back, or if there is any significant
+	 * delay before I commit.  OK for now because we disallow
+	 * COMMIT PREPARED inside a transaction block.)
+	 */
+	Async_Notify((char *) recdata);
 }

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/ipc.h,v 1.70 2004/12/31 22:03:42 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/ipc.h,v 1.71 2005/06/17 22:32:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,6 @@ extern void on_shmem_exit(void (*function) (int code, Datum arg), Datum arg);
 extern void on_exit_reset(void);
 
 /* ipci.c */
-extern void CreateSharedMemoryAndSemaphores(bool makePrivate,
-								int maxBackends,
-								int port);
+extern void CreateSharedMemoryAndSemaphores(bool makePrivate, int port);
 
 #endif   /* IPC_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.147 2005/05/19 21:35:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.148 2005/06/17 22:32:47 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -232,7 +232,7 @@ InitCommunication(void)
 		 * We're running a postgres bootstrap process or a standalone
 		 * backend. Create private "shmem" and semaphores.
 		 */
-		CreateSharedMemoryAndSemaphores(true, MaxBackends, 0);
+		CreateSharedMemoryAndSemaphores(true, 0);
 	}
 }
 
@@ -456,7 +456,7 @@ InitPostgres(const char *dbname, const char *username)
 	 */
 	if (!am_superuser &&
 		ReservedBackends > 0 &&
-		CountEmptyBackendSlots() < ReservedBackends)
+		!HaveNFreeProcs(ReservedBackends))
 		ereport(FATAL,
 				(errcode(ERRCODE_TOO_MANY_CONNECTIONS),
 				 errmsg("connection limit exceeded for non-superusers")));
