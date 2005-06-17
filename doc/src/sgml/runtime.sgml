@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.301.4.6 2005/05/09 17:26:55 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.301.4.7 2005/06/17 16:46:45 momjian Exp $
 -->
 
 <chapter id="runtime">
@@ -4375,8 +4375,7 @@ options         SEMMNS=512
 options         SEMMNU=256
 options         SEMMAP=256
 </programlisting>
-        (On <systemitem class="osname">NetBSD</> and <systemitem
-        class="osname">OpenBSD</> the key word is actually
+        (On <systemitem class="osname">OpenBSD</> the key word is actually
         <literal>option</literal> singular.)
        </para>
        <para>
