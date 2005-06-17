@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Thu Jun 16 22:20:43 EDT 2005
+Last updated:           Fri Jun 17 09:47:23 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -742,10 +742,11 @@ first.
   VACUUM can look at just those pages rather than the entire table.  In
   the event of a system crash, the bitmap would probably be invalidated.
 </p>
+  </li><li>Auto-fill the free space map by scanning the buffer cache or by
+  checking pages written by the background writer
   </li><li>Auto-vacuum
   <ul>
     <li>Move into the backend code
-    </li><li>Scan the buffer cache to find free space or use background writer
     </li><li>Use free-space map information to guide refilling
     </li><li>Do VACUUM FULL if table is nearly empty?
   </li></ul>
