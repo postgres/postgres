@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jun 17 09:47:23 EDT 2005
+Last updated:		Fri Jun 17 15:20:21 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -800,6 +800,8 @@ Vacuum
   This allows vacuum to target specific pages for possible free space 
   without requiring a sequential scan.
 
+* Auto-fill the free space map by scanning the buffer cache or by
+  checking pages written by the background writer
 * Create a bitmap of pages that need vacuuming
 
   Instead of sequentially scanning the entire table, have the background
@@ -807,8 +809,6 @@ Vacuum
   VACUUM can look at just those pages rather than the entire table.  In
   the event of a system crash, the bitmap would probably be invalidated.
 
-* Auto-fill the free space map by scanning the buffer cache or by
-  checking pages written by the background writer
 * Auto-vacuum
 	o Move into the backend code
 	o Use free-space map information to guide refilling

@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Fri Jun 17 09:47:23 EDT 2005
+Last updated:           Fri Jun 17 15:20:21 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -736,14 +736,14 @@ first.
 <p>  This allows vacuum to target specific pages for possible free space 
   without requiring a sequential scan.
 </p>
+  </li><li>Auto-fill the free space map by scanning the buffer cache or by
+  checking pages written by the background writer
   </li><li>Create a bitmap of pages that need vacuuming
 <p>  Instead of sequentially scanning the entire table, have the background
   writer or some other process record pages that have expired rows, then
   VACUUM can look at just those pages rather than the entire table.  In
   the event of a system crash, the bitmap would probably be invalidated.
 </p>
-  </li><li>Auto-fill the free space map by scanning the buffer cache or by
-  checking pages written by the background writer
   </li><li>Auto-vacuum
   <ul>
     <li>Move into the backend code
