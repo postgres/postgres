@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.327 2005/06/17 03:25:51 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.328 2005/06/17 13:12:01 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -4544,8 +4544,7 @@ options "SEMMNS=240"
        <para>
         <systemitem class="osname">FreeBSD</> versions before 4.0 work like 
         <systemitem class="osname">NetBSD</> and <systemitem class="osname">
-        OpenBSD</> (see below), except that the configuration file uses the 
-        keyword "options" instead of "option".
+        OpenBSD</> (see below).
        </para>
       </listitem>
      </varlistentry>
@@ -4561,17 +4560,18 @@ options "SEMMNS=240"
         to be enabled when the kernel is compiled. (They are by
         default.) The maximum size of shared memory is determined by
         the option <varname>SHMMAXPGS</> (in pages). The following
-        shows an example of how to set the various parameters:
+        shows an example of how to set the various parameters 
+        (<systemitem class="osname">OpenBSD</> uses <literal>option</> instead):
 <programlisting>
-option         SYSVSHM
-option         SHMMAXPGS=4096
-option         SHMSEG=256
+options        SYSVSHM
+options        SHMMAXPGS=4096
+options        SHMSEG=256
 
-option         SYSVSEM
-option         SEMMNI=256
-option         SEMMNS=512
-option         SEMMNU=256
-option         SEMMAP=256
+options        SYSVSEM
+options        SEMMNI=256
+options        SEMMNS=512
+options        SEMMNU=256
+options        SEMMAP=256
 </programlisting>
        </para>
 
