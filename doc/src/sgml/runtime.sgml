@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.326 2005/06/14 17:43:12 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.327 2005/06/17 03:25:51 momjian Exp $
 -->
 
 <chapter Id="runtime">
@@ -3803,7 +3803,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        Shows the size of a disk block.  It is determined by the value
+        Reports the size of a disk block.  It is determined by the value
         of <literal>BLCKSZ</> when building the server. The default
         value is 8192 bytes.  The meaning of some configuration
         variables (such as <xref linkend="guc-shared-buffers">) is
@@ -3820,7 +3820,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        Shows whether <productname>PostgreSQL</productname> was built
+        Reports whether <productname>PostgreSQL</productname> was built
         with support for 64-bit-integer dates and times.  It is set by
         configuring with <literal>--enable-integer-datetimes</literal>
         when building <productname>PostgreSQL</productname>.  The
@@ -3836,7 +3836,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        Shows the locale in which sorting of textual data is done.
+        Reports the locale in which sorting of textual data is done.
         See <xref linkend="locale"> for more information.
         The value is determined when the database cluster is initialized.
        </para>
@@ -3850,7 +3850,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        Shows the locale that determines character classifications.
+        Reports the locale that determines character classifications.
         See <xref linkend="locale"> for more information.
         The value is determined when the database cluster is initialized.
         Ordinarily this will be the same as <varname>lc_collate</varname>,
@@ -3866,7 +3866,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        Shows the maximum number of function arguments. It is determined by
+        Reports the maximum number of function arguments. It is determined by
         the value of <literal>FUNC_MAX_ARGS</> when building the server. The
         default value is 100.
        </para>
@@ -3880,7 +3880,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        Shows the maximum identifier length. It is determined as one
+        Reports the maximum identifier length. It is determined as one
         less than the value of <literal>NAMEDATALEN</> when building
         the server. The default value of <literal>NAMEDATALEN</> is
         64; therefore the default
@@ -3896,7 +3896,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        Shows the maximum number of index keys. It is determined by
+        Reports the maximum number of index keys. It is determined by
         the value of <literal>INDEX_MAX_KEYS</> when building the server. The
         default value is 32.
        </para>
@@ -3911,7 +3911,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <indexterm><primary>character set</></>
       <listitem>
        <para>
-        Shows the database encoding (character set).
+        Reports the database encoding (character set).
         It is determined when the database is created.  Ordinarily,
         clients need only be concerned with the value of <xref
         linkend="guc-client-encoding">.
@@ -3926,7 +3926,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        Shows the version number of the server. It is determined by the
+        Reports the version number of the server. It is determined by the
         value of <literal>PG_VERSION</> when building the server.
        </para>
       </listitem>
