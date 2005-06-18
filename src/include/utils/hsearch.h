@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.37 2005/06/08 23:02:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.38 2005/06/18 20:51:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,14 +16,25 @@
 
 
 /*
- * Hash and comparison functions must have these signatures.  Comparison
- * functions return zero for match, nonzero for no match.  (The comparison
- * function definition is designed to allow memcmp() and strncmp() to be
- * used directly as key comparison functions.)
+ * Hash functions must have this signature.
  */
 typedef uint32 (*HashValueFunc) (const void *key, Size keysize);
+
+/*
+ * Key comparison functions must have this signature.  Comparison functions
+ * return zero for match, nonzero for no match.  (The comparison function
+ * definition is designed to allow memcmp() and strncmp() to be used directly
+ * as key comparison functions.)
+ */
 typedef int (*HashCompareFunc) (const void *key1, const void *key2,
-											Size keysize);
+								Size keysize);
+
+/*
+ * Key copying functions must have this signature.  The return value is not
+ * used.  (The definition is set up to allow memcpy() and strncpy() to be
+ * used directly.)
+ */
+typedef void *(*HashCopyFunc) (void *dest, const void *src, Size keysize);
 
 /*
  * Space allocation function for a hashtable --- designed to match malloc().
@@ -103,6 +114,7 @@ typedef struct HTAB
 	HASHSEGMENT *dir;			/* directory of segment starts */
 	HashValueFunc hash;			/* hash function */
 	HashCompareFunc match;		/* key comparison function */
+	HashCopyFunc keycopy;		/* key copying function */
 	HashAllocFunc alloc;		/* memory allocator */
 	MemoryContext hcxt;			/* memory context if default allocator
 								 * used */
@@ -123,6 +135,7 @@ typedef struct HASHCTL
 	Size		entrysize;		/* total user element size in bytes */
 	HashValueFunc hash;			/* hash function */
 	HashCompareFunc match;		/* key comparison function */
+	HashCopyFunc keycopy;		/* key copying function */
 	HashAllocFunc alloc;		/* memory allocator */
 	HASHSEGMENT *dir;			/* directory of segment starts */
 	HASHHDR    *hctl;			/* location of header in shared mem */
@@ -140,6 +153,7 @@ typedef struct HASHCTL
 #define HASH_ALLOC		0x100	/* Set memory allocator */
 #define HASH_CONTEXT	0x200	/* Set explicit memory context */
 #define HASH_COMPARE	0x400	/* Set user defined comparison function */
+#define HASH_KEYCOPY	0x800	/* Set user defined key-copying function */
 
 
 /* max_dsize value to indicate expansible directory */

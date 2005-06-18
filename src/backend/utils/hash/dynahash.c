@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.61 2005/05/29 04:23:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.62 2005/06/18 20:51:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,6 +166,16 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 		hashp->match = (HashCompareFunc) strncmp;
 	else
 		hashp->match = memcmp;
+
+	/*
+	 * Similarly, the key-copying function defaults to strncpy() or memcpy().
+	 */
+	if (flags & HASH_KEYCOPY)
+		hashp->keycopy = info->keycopy;
+	else if (hashp->hash == string_hash)
+		hashp->keycopy = (HashCopyFunc) strncpy;
+	else
+		hashp->keycopy = memcpy;
 
 	if (flags & HASH_ALLOC)
 		hashp->alloc = info->alloc;
@@ -650,7 +660,7 @@ hash_search(HTAB *hashp,
 
 			/* copy key into record */
 			currBucket->hashvalue = hashvalue;
-			memcpy(ELEMENTKEY(currBucket), keyPtr, hctl->keysize);
+			hashp->keycopy(ELEMENTKEY(currBucket), keyPtr, keysize);
 
 			/* caller is expected to fill the data field on return */
 
