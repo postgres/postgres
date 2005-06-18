@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.104 2005/06/17 22:32:41 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.105 2005/06/18 19:33:41 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -4090,7 +4090,7 @@
        <literal>extend</>,
        <literal>page</>,
        <literal>tuple</>,
-       <literal>transaction</>,
+       <literal>transactionid</>,
        <literal>object</>, or
        <literal>userlock</>
       </entry>
@@ -4132,7 +4132,7 @@
       </entry>
      </row>
      <row>
-      <entry><structfield>transaction</structfield></entry>
+      <entry><structfield>transactionid</structfield></entry>
       <entry><type>xid</type></entry>
       <entry></entry>
       <entry>
@@ -4169,12 +4169,20 @@
       </entry>
      </row>
      <row>
+      <entry><structfield>transaction</structfield></entry>
+      <entry><type>xid</type></entry>
+      <entry></entry>
+      <entry>
+       ID of the transaction that is holding or awaiting this lock.
+      </entry>
+     </row>
+     <row>
       <entry><structfield>pid</structfield></entry>
       <entry><type>integer</type></entry>
       <entry></entry>
       <entry>
        Process ID of the server process holding or awaiting this
-       lock.  Zero if the lock is held by a prepared transaction.
+       lock.  Null if the lock is held by a prepared transaction.
       </entry>
      </row>
      <row>
@@ -4196,12 +4204,12 @@
 
   <para>
    <structfield>granted</structfield> is true in a row representing a lock
-   held by the indicated session.  False indicates that this session is
+   held by the indicated transaction.  False indicates that this transaction is
    currently waiting to acquire this lock, which implies that some other
-   session is holding a conflicting lock mode on the same lockable object.
-   The waiting session will sleep until the other lock is released (or a
-   deadlock situation is detected). A single session can be waiting to acquire
-   at most one lock at a time.
+   transaction is holding a conflicting lock mode on the same lockable object.
+   The waiting transaction will sleep until the other lock is released (or a
+   deadlock situation is detected). A single transaction can be waiting to
+   acquire at most one lock at a time.
   </para>
 
   <para>
@@ -4253,6 +4261,13 @@
    <structfield>procpid</structfield> column of the
    <structname>pg_stat_activity</structname> view to get more
    information on the session holding or waiting to hold the lock.
+   Also, if you are using prepared transactions, the
+   <structfield>transaction</> column can be joined to the
+   <structfield>transaction</structfield> column of the
+   <structname>pg_prepared_xacts</structname> view to get more
+   information on prepared transactions that hold locks.
+   (A prepared transaction can never be waiting for a lock,
+   but it continues to hold the locks it acquired while running.)
   </para>
 
  </sect1>
@@ -4304,6 +4319,14 @@
       <entry></entry>
       <entry>
        Global transaction identifier that was assigned to the transaction
+      </entry>
+     </row>
+     <row>
+      <entry><structfield>prepared</structfield></entry>
+      <entry><type>timestamp with time zone</type></entry>
+      <entry></entry>
+      <entry>
+       Time at which the transaction was prepared for commit
       </entry>
      </row>
      <row>

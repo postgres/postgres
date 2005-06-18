@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.2 2005/06/18 05:21:09 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.3 2005/06/18 19:33:41 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -104,6 +104,7 @@ int max_prepared_xacts = 50;
 typedef struct GlobalTransactionData
 {
 	PGPROC		proc;			/* dummy proc */
+	TimestampTz	prepared_at;	/* time of preparation */
 	AclId		owner;			/* ID of user that executed the xact */
 	TransactionId locking_xid;	/* top-level XID of backend working on xact */
 	bool		valid;			/* TRUE if fully prepared */
@@ -202,7 +203,8 @@ TwoPhaseShmemInit(void)
  * assuming that we can use very much backend context.
  */
 GlobalTransaction
-MarkAsPreparing(TransactionId xid, Oid databaseid, char *gid, AclId owner)
+MarkAsPreparing(TransactionId xid, const char *gid,
+				TimestampTz prepared_at, AclId owner, Oid databaseid)
 {
 	GlobalTransaction	gxact;
 	int i;
@@ -278,6 +280,7 @@ MarkAsPreparing(TransactionId xid, Oid databaseid, char *gid, AclId owner)
 	gxact->proc.subxids.overflowed = false;
 	gxact->proc.subxids.nxids = 0;
 
+	gxact->prepared_at = prepared_at;
 	gxact->owner = owner;
 	gxact->locking_xid = xid;
 	gxact->valid = false;
@@ -342,7 +345,7 @@ MarkAsPrepared(GlobalTransaction gxact)
  *		Locate the prepared transaction and mark it busy for COMMIT or PREPARE.
  */
 static GlobalTransaction
-LockGXact(char *gid, AclId user)
+LockGXact(const char *gid, AclId user)
 {
 	int i;
 
@@ -509,14 +512,16 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 
 		/* build tupdesc for result tuples */
 		/* this had better match pg_prepared_xacts view in system_views.sql */
-		tupdesc = CreateTemplateTupleDesc(4, false);
+		tupdesc = CreateTemplateTupleDesc(5, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "transaction",
 						   XIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "gid",
 						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "ownerid",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "prepared",
+						   TIMESTAMPTZOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "ownerid",
 						   INT4OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "dbid",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "dbid",
 						   OIDOID, -1, 0);
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
@@ -540,8 +545,8 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 	while (status->array != NULL && status->currIdx < status->ngxacts)
 	{
 		GlobalTransaction gxact = &status->array[status->currIdx++];
-		Datum		values[4];
-		bool		nulls[4];
+		Datum		values[5];
+		bool		nulls[5];
 		HeapTuple	tuple;
 		Datum		result;
 
@@ -556,8 +561,9 @@ pg_prepared_xact(PG_FUNCTION_ARGS)
 
 		values[0] = TransactionIdGetDatum(gxact->proc.xid);
 		values[1] = DirectFunctionCall1(textin, CStringGetDatum(gxact->gid));
-		values[2] = Int32GetDatum(gxact->owner);
-		values[3] = ObjectIdGetDatum(gxact->proc.databaseId);
+		values[2] = TimestampTzGetDatum(gxact->prepared_at);
+		values[3] = Int32GetDatum(gxact->owner);
+		values[4] = ObjectIdGetDatum(gxact->proc.databaseId);
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
 		result = HeapTupleGetDatum(tuple);
@@ -636,7 +642,7 @@ TwoPhaseGetDummyProc(TransactionId xid)
 /*
  * Header for a 2PC state file
  */
-#define TWOPHASE_MAGIC	0x57F94530		/* format identifier */
+#define TWOPHASE_MAGIC	0x57F94531		/* format identifier */
 
 typedef struct TwoPhaseFileHeader
 {
@@ -644,6 +650,7 @@ typedef struct TwoPhaseFileHeader
 	uint32			total_len;			/* actual file length */
 	TransactionId	xid;				/* original transaction XID */
 	Oid				database;			/* OID of database it was in */
+	TimestampTz		prepared_at;		/* time of preparation */
 	AclId			owner;				/* user running the transaction */
 	int32			nsubxacts;			/* number of following subxact XIDs */
 	int32			ncommitrels;		/* number of delete-on-commit rels */
@@ -741,8 +748,9 @@ StartPrepare(GlobalTransaction gxact)
 	hdr.magic = TWOPHASE_MAGIC;
 	hdr.total_len = 0;			/* EndPrepare will fill this in */
 	hdr.xid = xid;
-	hdr.database = MyDatabaseId;
-	hdr.owner = GetUserId();
+	hdr.database = gxact->proc.databaseId;
+	hdr.prepared_at = gxact->prepared_at;
+	hdr.owner = gxact->owner;
 	hdr.nsubxacts = xactGetCommittedChildren(&children);
 	hdr.ncommitrels = smgrGetPendingDeletes(true, &commitrels);
 	hdr.nabortrels = smgrGetPendingDeletes(false, &abortrels);
@@ -1046,7 +1054,7 @@ ReadTwoPhaseFile(TransactionId xid)
  * FinishPreparedTransaction: execute COMMIT PREPARED or ROLLBACK PREPARED
  */
 void
-FinishPreparedTransaction(char *gid, bool isCommit)
+FinishPreparedTransaction(const char *gid, bool isCommit)
 {
 	GlobalTransaction gxact;
 	TransactionId xid;
@@ -1474,7 +1482,10 @@ RecoverPreparedTransactions(void)
 
 			/*
 			 * Reconstruct subtrans state for the transaction --- needed
-			 * because pg_subtrans is not preserved over a restart
+			 * because pg_subtrans is not preserved over a restart.  Note
+			 * that we are linking all the subtransactions directly to the
+			 * top-level XID; there may originally have been a more complex
+			 * hierarchy, but there's no need to restore that exactly.
 			 */
 			for (i = 0; i < hdr->nsubxacts; i++)
 				SubTransSetParent(subxids[i], xid);
@@ -1482,7 +1493,9 @@ RecoverPreparedTransactions(void)
 			/*
 			 * Recreate its GXACT and dummy PGPROC
 			 */
-			gxact = MarkAsPreparing(xid, hdr->database, hdr->gid, hdr->owner);
+			gxact = MarkAsPreparing(xid, hdr->gid,
+									hdr->prepared_at,
+									hdr->owner, hdr->database);
 			GXactLoadSubxactData(gxact, hdr->nsubxacts, subxids);
 			MarkAsPrepared(gxact);
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.14 2005/06/17 22:32:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.15 2005/06/18 19:33:42 tgl Exp $
  */
 
 CREATE VIEW pg_user AS 
@@ -106,15 +106,16 @@ CREATE VIEW pg_locks AS
     SELECT * 
     FROM pg_lock_status() AS L
     (locktype text, database oid, relation oid, page int4, tuple int2,
-     transaction xid, classid oid, objid oid, objsubid int2,
-     pid int4, mode text, granted boolean);
+     transactionid xid, classid oid, objid oid, objsubid int2,
+     transaction xid, pid int4, mode text, granted boolean);
 
 CREATE VIEW pg_prepared_xacts AS
-    SELECT P.transaction, P.gid, U.usename AS owner, D.datname AS database
+    SELECT P.transaction, P.gid, P.prepared,
+           U.usename AS owner, D.datname AS database
     FROM pg_prepared_xact() AS P
-    (transaction xid, gid text, ownerid int4, dbid oid)
-         LEFT JOIN pg_database D ON P.dbid = D.oid
-         LEFT JOIN pg_shadow U ON P.ownerid = U.usesysid;
+    (transaction xid, gid text, prepared timestamptz, ownerid int4, dbid oid)
+         LEFT JOIN pg_shadow U ON P.ownerid = U.usesysid
+         LEFT JOIN pg_database D ON P.dbid = D.oid;
 
 CREATE VIEW pg_settings AS 
     SELECT * 

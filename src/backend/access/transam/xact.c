@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.205 2005/06/17 22:32:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.206 2005/06/18 19:33:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1630,6 +1630,9 @@ PrepareTransaction(void)
 	TransactionState	s = CurrentTransactionState;
 	TransactionId		xid = GetCurrentTransactionId();
 	GlobalTransaction	gxact;
+	TimestampTz			prepared_at;
+	AbsoluteTime		PreparedSec;	/* integer part */
+	int			PreparedUSec;	/* microsecond part */
 
 	ShowTransactionState("PrepareTransaction");
 
@@ -1692,6 +1695,9 @@ PrepareTransaction(void)
 	 */
 	s->state = TRANS_PREPARE;
 
+	PreparedSec = GetCurrentAbsoluteTimeUsec(&PreparedUSec);
+	prepared_at = AbsoluteTimeUsecToTimestampTz(PreparedSec, PreparedUSec);
+
 	/* Tell bufmgr and smgr to prepare for commit */
 	BufmgrCommit();
 
@@ -1699,7 +1705,8 @@ PrepareTransaction(void)
 	 * Reserve the GID for this transaction. This could fail if the
 	 * requested GID is invalid or already in use.
 	 */
-	gxact = MarkAsPreparing(xid, MyDatabaseId, prepareGID, GetUserId());
+	gxact = MarkAsPreparing(xid, prepareGID, prepared_at,
+							GetUserId(), MyDatabaseId);
 	prepareGID = NULL;
 
 	/*

@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.18 2005/05/17 21:46:10 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.19 2005/06/18 19:33:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@ static const char * const LockTagTypeNames[] = {
 	"extend",
 	"page",
 	"tuple",
-	"transaction",
+	"transactionid",
 	"object",
 	"userlock"
 };
@@ -64,7 +64,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		/* build tupdesc for result tuples */
 		/* this had better match pg_locks view in system_views.sql */
-		tupdesc = CreateTemplateTupleDesc(12, false);
+		tupdesc = CreateTemplateTupleDesc(13, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "locktype",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database",
@@ -75,7 +75,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 						   INT4OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "tuple",
 						   INT2OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "transaction",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "transactionid",
 						   XIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "classid",
 						   OIDOID, -1, 0);
@@ -83,11 +83,13 @@ pg_lock_status(PG_FUNCTION_ARGS)
 						   OIDOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 9, "objsubid",
 						   INT2OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "pid",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "transaction",
+						   XIDOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 11, "pid",
 						   INT4OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 11, "mode",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 12, "mode",
 						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 12, "granted",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 13, "granted",
 						   BOOLOID, -1, 0);
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
@@ -118,8 +120,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		LOCKMODE	mode = 0;
 		const char *locktypename;
 		char		tnbuf[32];
-		Datum		values[12];
-		char		nulls[12];
+		Datum		values[13];
+		char		nulls[13];
 		HeapTuple	tuple;
 		Datum		result;
 
@@ -249,10 +251,14 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				break;
 		}
 
-		values[9] = Int32GetDatum(proc->pid);
-		values[10] = DirectFunctionCall1(textin,
+		values[9] = TransactionIdGetDatum(proc->xid);
+		if (proc->pid != 0)
+			values[10] = Int32GetDatum(proc->pid);
+		else
+			nulls[10] = 'n';
+		values[11] = DirectFunctionCall1(textin,
 										 CStringGetDatum(GetLockmodeName(mode)));
-		values[11] = BoolGetDatum(granted);
+		values[12] = BoolGetDatum(granted);
 
 		tuple = heap_formtuple(funcctx->tuple_desc, values, nulls);
 		result = HeapTupleGetDatum(tuple);
