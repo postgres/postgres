@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.29 2003/08/19 01:13:41 tgl Exp $
+ * $Id: hsearch.h,v 1.29.2.1 2005/06/18 20:51:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 typedef uint32 (*HashValueFunc) (const void *key, Size keysize);
 typedef int (*HashCompareFunc) (const void *key1, const void *key2,
 								Size keysize);
+typedef void *(*HashCopyFunc) (void *dest, const void *src, Size keysize);
 
 /*
  * Space allocation function for a hashtable --- designed to match malloc().
@@ -108,6 +109,7 @@ typedef struct HTAB
 								 * used */
 	char	   *tabname;		/* table name (for error messages) */
 	bool		isshared;		/* true if table is in shared memory */
+	HashCopyFunc keycopy;		/* key copying function */
 } HTAB;
 
 /* Parameter data structure for hash_create */
