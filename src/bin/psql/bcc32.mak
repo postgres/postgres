@@ -148,6 +148,7 @@ LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Debug\blibpqddll.lib"
 LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Release\blibpqdll.lib"
 !ENDIF
 
+# Have to use \# so # isn't treated as a comment, but MSVC doesn't like this
 "..\..\port\pg_config_paths.h": win32.mak
 	echo \#define PGBINDIR "" >$@
 	echo \#define PGSHAREDIR "" >>$@

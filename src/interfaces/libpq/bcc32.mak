@@ -142,6 +142,7 @@ config: ..\..\include\pg_config.h pthread.h pg_config_paths.h
 pthread.h: pthread.h.win32
 	copy pthread.h.win32 pthread.h
 
+# Have to use \# so # isn't treated as a comment, but MSVC doesn't like this
 pg_config_paths.h: bcc32.mak
 	echo \#define SYSCONFDIR "" > pg_config_paths.h
 
