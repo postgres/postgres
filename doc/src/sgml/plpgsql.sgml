@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.72 2005/06/14 06:43:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.73 2005/06/19 23:39:05 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2512,7 +2512,7 @@ COMMIT;
     raise errors.
 
 <synopsis>
-RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="parameter">format</replaceable>' <optional>, <replaceable class="parameter">variable</replaceable> <optional>, ...</optional></optional>;
+RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="parameter">format</replaceable>' <optional>, <replaceable class="parameter">expression</replaceable> <optional>, ...</optional></optional>;
 </synopsis>
 
     Possible levels are <literal>DEBUG</literal>,
