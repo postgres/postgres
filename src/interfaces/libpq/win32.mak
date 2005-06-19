@@ -115,7 +115,7 @@ pthread.h: pthread.h.win32
 	copy pthread.h.win32 pthread.h
 
 pg_config_paths.h: win32.mak
-	echo \#define SYSCONFDIR "" > pg_config_paths.h
+	echo #define SYSCONFDIR "" > pg_config_paths.h
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -214,6 +214,9 @@ LINK32_OBJS= \
 	$(CPP) @<<
 	$(CPP_PROJ) /I"." ..\..\backend\utils\mb\encnames.c
 <<
+
+.c{$(CPP_OBJS)}.obj:
+	$(CPP) $(CPP_PROJ) $<
 
 .c.obj:
 	$(CPP) $(CPP_PROJ) $<

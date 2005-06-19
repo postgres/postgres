@@ -99,15 +99,15 @@ LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Release\libpqdll.lib"
 !ENDIF
 
 "..\..\port\pg_config_paths.h": win32.mak
-	echo \#define PGBINDIR "" >$@
-	echo \#define PGSHAREDIR "" >>$@
-	echo \#define SYSCONFDIR "" >>$@
-	echo \#define INCLUDEDIR "" >>$@
-	echo \#define PKGINCLUDEDIR "" >>$@
-	echo \#define INCLUDEDIRSERVER "" >>$@
-	echo \#define LIBDIR "" >>$@
-	echo \#define PKGLIBDIR "" >>$@
-	echo \#define LOCALEDIR "" >>$@
+	echo #define PGBINDIR "" >$@
+	echo #define PGSHAREDIR "" >>$@
+	echo #define SYSCONFDIR "" >>$@
+	echo #define INCLUDEDIR "" >>$@
+	echo #define PKGINCLUDEDIR "" >>$@
+	echo #define INCLUDEDIRSERVER "" >>$@
+	echo #define LIBDIR "" >>$@
+	echo #define PKGLIBDIR "" >>$@
+	echo #define LOCALEDIR "" >>$@
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
