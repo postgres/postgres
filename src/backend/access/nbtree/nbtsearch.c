@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.92 2005/06/13 23:14:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.93 2005/06/19 22:41:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -495,8 +495,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	bool		nextkey;
 	bool		goback;
 	bool		continuescan;
-	ScanKey		scankeys;
-	ScanKey    *startKeys = NULL;
+	ScanKey		startKeys[INDEX_MAX_KEYS];
+	ScanKeyData	scankeys[INDEX_MAX_KEYS];
 	int			keysCount = 0;
 	int			i;
 	StrategyNumber strat_total;
@@ -551,8 +551,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		AttrNumber	curattr;
 		ScanKey		chosen;
 		ScanKey		cur;
-
-		startKeys = (ScanKey *) palloc(so->numberOfKeys * sizeof(ScanKey));
 
 		/*
 		 * chosen is the so-far-chosen key for the current attribute, if
@@ -636,18 +634,14 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * scan from there.
 	 */
 	if (keysCount == 0)
-	{
-		if (startKeys)
-			pfree(startKeys);
 		return _bt_endpoint(scan, dir);
-	}
 
 	/*
 	 * We want to start the scan somewhere within the index.  Set up a
 	 * 3-way-comparison scankey we can use to search for the boundary
 	 * point we identified above.
 	 */
-	scankeys = (ScanKey) palloc(keysCount * sizeof(ScanKeyData));
+	Assert(keysCount <= INDEX_MAX_KEYS);
 	for (i = 0; i < keysCount; i++)
 	{
 		ScanKey		cur = startKeys[i];
@@ -657,12 +651,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		 * code later
 		 */
 		if (cur->sk_flags & SK_ISNULL)
-		{
-			pfree(startKeys);
-			pfree(scankeys);
 			elog(ERROR, "btree doesn't support is(not)null, yet");
-			return false;
-		}
 
 		/*
 		 * If scankey operator is of default subtype, we can use the
@@ -698,8 +687,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 								   cur->sk_argument);
 		}
 	}
-
-	pfree(startKeys);
 
 	/*
 	 * Examine the selected initial-positioning strategy to determine
@@ -809,7 +796,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		/* Only get here if index is completely empty */
 		ItemPointerSetInvalid(current);
 		so->btso_curbuf = InvalidBuffer;
-		pfree(scankeys);
 		return false;
 	}
 
@@ -822,9 +808,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	page = BufferGetPage(buf);
 	blkno = BufferGetBlockNumber(buf);
 	ItemPointerSet(current, blkno, offnum);
-
-	/* done with manufactured scankey, now */
-	pfree(scankeys);
 
 	/*
 	 * If nextkey = false, we are positioned at the first item >= scan
