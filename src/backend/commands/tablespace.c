@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.21 2005/06/06 20:22:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.22 2005/06/19 21:34:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -519,23 +519,16 @@ remove_tablespace_directories(Oid tablespaceoid, bool redo)
 			pfree(location);
 			return true;
 		}
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open directory \"%s\": %m",
-						location)));
+		/* else let ReadDir report the error */
 	}
 
-	errno = 0;
-	while ((de = readdir(dirdesc)) != NULL)
+	while ((de = ReadDir(dirdesc, location)) != NULL)
 	{
 		/* Note we ignore PG_VERSION for the nonce */
 		if (strcmp(de->d_name, ".") == 0 ||
 			strcmp(de->d_name, "..") == 0 ||
 			strcmp(de->d_name, "PG_VERSION") == 0)
-		{
-			errno = 0;
 			continue;
-		}
 
 		subfile = palloc(strlen(location) + 1 + strlen(de->d_name) + 1);
 		sprintf(subfile, "%s/%s", location, de->d_name);
@@ -555,22 +548,8 @@ remove_tablespace_directories(Oid tablespaceoid, bool redo)
 							subfile)));
 
 		pfree(subfile);
-		errno = 0;
 	}
-#ifdef WIN32
 
-	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	 * not in released version
-	 */
-	if (GetLastError() == ERROR_NO_MORE_FILES)
-		errno = 0;
-#endif
-	if (errno)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read directory \"%s\": %m",
-						location)));
 	FreeDir(dirdesc);
 
 	/*
@@ -685,38 +664,16 @@ directory_is_empty(const char *path)
 	struct dirent *de;
 
 	dirdesc = AllocateDir(path);
-	if (dirdesc == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open directory \"%s\": %m",
-						path)));
 
-	errno = 0;
-	while ((de = readdir(dirdesc)) != NULL)
+	while ((de = ReadDir(dirdesc, path)) != NULL)
 	{
 		if (strcmp(de->d_name, ".") == 0 ||
 			strcmp(de->d_name, "..") == 0)
-		{
-			errno = 0;
 			continue;
-		}
 		FreeDir(dirdesc);
 		return false;
 	}
-#ifdef WIN32
 
-	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	 * not in released version
-	 */
-	if (GetLastError() == ERROR_NO_MORE_FILES)
-		errno = 0;
-#endif
-	if (errno)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read directory \"%s\": %m",
-						path)));
 	FreeDir(dirdesc);
 	return true;
 }

@@ -48,7 +48,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.24 2005/02/12 23:53:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.25 2005/06/19 21:34:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -924,14 +924,7 @@ SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions)
 	cutoffPage -= cutoffPage % SLRU_PAGES_PER_SEGMENT;
 
 	cldir = AllocateDir(ctl->Dir);
-	if (cldir == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open directory \"%s\": %m",
-						ctl->Dir)));
-
-	errno = 0;
-	while ((clde = readdir(cldir)) != NULL)
+	while ((clde = ReadDir(cldir, ctl->Dir)) != NULL)
 	{
 		if (strlen(clde->d_name) == 4 &&
 			strspn(clde->d_name, "0123456789ABCDEF") == 4)
@@ -950,21 +943,7 @@ SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions)
 				}
 			}
 		}
-		errno = 0;
 	}
-#ifdef WIN32
-
-	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	 * not in released version
-	 */
-	if (GetLastError() == ERROR_NO_MORE_FILES)
-		errno = 0;
-#endif
-	if (errno)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-			   errmsg("could not read directory \"%s\": %m", ctl->Dir)));
 	FreeDir(cldir);
 
 	return found;

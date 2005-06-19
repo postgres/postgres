@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.43 2005/05/19 21:35:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.44 2005/06/19 21:34:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,11 +187,10 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 	if (!fctx->dirdesc)			/* not a tablespace */
 		SRF_RETURN_DONE(funcctx);
 
-	while ((de = readdir(fctx->dirdesc)) != NULL)
+	while ((de = ReadDir(fctx->dirdesc, fctx->location)) != NULL)
 	{
 		char	   *subdir;
 		DIR		   *dirdesc;
-
 		Oid			datOid = atooid(de->d_name);
 
 		/* this test skips . and .., but is awfully weak */
@@ -204,16 +203,13 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 		subdir = palloc(strlen(fctx->location) + 1 + strlen(de->d_name) + 1);
 		sprintf(subdir, "%s/%s", fctx->location, de->d_name);
 		dirdesc = AllocateDir(subdir);
-		pfree(subdir);
-		if (!dirdesc)
-			continue;			/* XXX more sloppiness */
-
-		while ((de = readdir(dirdesc)) != 0)
+		while ((de = ReadDir(dirdesc, subdir)) != NULL)
 		{
 			if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
 				break;
 		}
 		FreeDir(dirdesc);
+		pfree(subdir);
 
 		if (!de)
 			continue;			/* indeed, nothing in it */

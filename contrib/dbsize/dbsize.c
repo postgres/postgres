@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/dbsize/dbsize.c,v 1.17 2005/05/27 00:57:48 neilc Exp $
+ *	  $PostgreSQL: pgsql/contrib/dbsize/dbsize.c,v 1.18 2005/06/19 21:34:00 tgl Exp $
  *
  */
 
@@ -58,7 +58,7 @@ db_dir_size(const char *path)
 	if (!dirdesc)
 	    return 0;
 
-	while ((direntry = readdir(dirdesc)) != NULL)
+	while ((direntry = ReadDir(dirdesc, path)) != NULL)
 	{
 	    struct stat fst;
 
@@ -97,13 +97,8 @@ calculate_database_size(Oid dbOid)
 	/* Scan the non-default tablespaces */
 	snprintf(pathname, MAXPGPATH, "%s/pg_tblspc", DataDir);
 	dirdesc = AllocateDir(pathname);
-	if (!dirdesc)
-	    ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open tablespace directory \"%s\": %m",
-						pathname)));
 
-	while ((direntry = readdir(dirdesc)) != NULL)
+	while ((direntry = ReadDir(dirdesc, pathname)) != NULL)
 	{
 	    if (strcmp(direntry->d_name, ".") == 0 ||
 			strcmp(direntry->d_name, "..") == 0)
@@ -147,13 +142,7 @@ pg_tablespace_size(PG_FUNCTION_ARGS)
 
 	dirdesc = AllocateDir(tblspcPath);
 
-	if (!dirdesc)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open tablespace directory \"%s\": %m",
-						tblspcPath)));
-
-	while ((direntry = readdir(dirdesc)) != NULL)
+	while ((direntry = ReadDir(dirdesc, tblspcPath)) != NULL)
 	{
 	    struct stat fst;
 

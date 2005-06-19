@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.202 2005/06/19 20:00:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.203 2005/06/19 21:34:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2265,8 +2265,7 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 
 	XLogFileName(lastoff, ThisTimeLineID, log, seg);
 
-	errno = 0;
-	while ((xlde = readdir(xldir)) != NULL)
+	while ((xlde = ReadDir(xldir, XLogDir)) != NULL)
 	{
 		/*
 		 * We ignore the timeline part of the XLOG segment identifiers in
@@ -2326,22 +2325,8 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
 				XLogArchiveCleanup(xlde->d_name);
 			}
 		}
-		errno = 0;
 	}
-#ifdef WIN32
 
-	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	 * not in released version
-	 */
-	if (GetLastError() == ERROR_NO_MORE_FILES)
-		errno = 0;
-#endif
-	if (errno)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-			errmsg("could not read transaction log directory \"%s\": %m",
-				   XLogDir)));
 	FreeDir(xldir);
 }
 
@@ -2362,8 +2347,7 @@ RemoveOldBackupHistory(void)
 			errmsg("could not open transaction log directory \"%s\": %m",
 				   XLogDir)));
 
-	errno = 0;
-	while ((xlde = readdir(xldir)) != NULL)
+	while ((xlde = ReadDir(xldir, XLogDir)) != NULL)
 	{
 		if (strlen(xlde->d_name) > 24 &&
 			strspn(xlde->d_name, "0123456789ABCDEF") == 24 &&
@@ -2381,22 +2365,8 @@ RemoveOldBackupHistory(void)
 				XLogArchiveCleanup(xlde->d_name);
 			}
 		}
-		errno = 0;
 	}
-#ifdef WIN32
 
-	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	 * not in released version
-	 */
-	if (GetLastError() == ERROR_NO_MORE_FILES)
-		errno = 0;
-#endif
-	if (errno)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-			errmsg("could not read transaction log directory \"%s\": %m",
-				   XLogDir)));
 	FreeDir(xldir);
 }
 

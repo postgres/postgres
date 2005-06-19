@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.4 2005/06/19 20:00:38 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.5 2005/06/19 21:34:01 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -1440,13 +1440,7 @@ PrescanPreparedTransactions(void)
 	snprintf(dir, MAXPGPATH, "%s/%s", DataDir, TWOPHASE_DIR);
 
 	cldir = AllocateDir(dir);
-	if (cldir == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open directory \"%s\": %m", dir)));
-
-	errno = 0;
-	while ((clde = readdir(cldir)) != NULL)
+	while ((clde = ReadDir(cldir, dir)) != NULL)
 	{
 		if (strlen(clde->d_name) == 8 &&
 			strspn(clde->d_name, "0123456789ABCDEF") == 8)
@@ -1466,7 +1460,6 @@ PrescanPreparedTransactions(void)
 						(errmsg("removing future twophase state file \"%s\"",
 								clde->d_name)));
 				RemoveTwoPhaseFile(xid, true);
-				errno = 0;
 				continue;
 			}
 
@@ -1483,7 +1476,6 @@ PrescanPreparedTransactions(void)
 						(errmsg("removing corrupt twophase state file \"%s\"",
 								clde->d_name)));
 				RemoveTwoPhaseFile(xid, true);
-				errno = 0;
 				continue;
 			}
 
@@ -1496,7 +1488,6 @@ PrescanPreparedTransactions(void)
 								clde->d_name)));
 				RemoveTwoPhaseFile(xid, true);
 				pfree(buf);
-				errno = 0;
 				continue;
 			}
 
@@ -1528,22 +1519,7 @@ PrescanPreparedTransactions(void)
 
 			pfree(buf);
 		}
-		errno = 0;
 	}
-#ifdef WIN32
-
-	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	 * not in released version
-	 */
-	if (GetLastError() == ERROR_NO_MORE_FILES)
-		errno = 0;
-#endif
-	if (errno)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read directory \"%s\": %m", dir)));
-
 	FreeDir(cldir);
 
 	return result;
@@ -1566,13 +1542,7 @@ RecoverPreparedTransactions(void)
 	snprintf(dir, MAXPGPATH, "%s/%s", DataDir, TWOPHASE_DIR);
 
 	cldir = AllocateDir(dir);
-	if (cldir == NULL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not open directory \"%s\": %m", dir)));
-
-	errno = 0;
-	while ((clde = readdir(cldir)) != NULL)
+	while ((clde = ReadDir(cldir, dir)) != NULL)
 	{
 		if (strlen(clde->d_name) == 8 &&
 			strspn(clde->d_name, "0123456789ABCDEF") == 8)
@@ -1594,7 +1564,6 @@ RecoverPreparedTransactions(void)
 						(errmsg("removing stale twophase state file \"%s\"",
 								clde->d_name)));
 				RemoveTwoPhaseFile(xid, true);
-				errno = 0;
 				continue;
 			}
 
@@ -1606,7 +1575,6 @@ RecoverPreparedTransactions(void)
 						(errmsg("removing corrupt twophase state file \"%s\"",
 								clde->d_name)));
 				RemoveTwoPhaseFile(xid, true);
-				errno = 0;
 				continue;
 			}
 
@@ -1655,22 +1623,7 @@ RecoverPreparedTransactions(void)
 
 			pfree(buf);
 		}
-		errno = 0;
 	}
-#ifdef WIN32
-
-	/*
-	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
-	 * not in released version
-	 */
-	if (GetLastError() == ERROR_NO_MORE_FILES)
-		errno = 0;
-#endif
-	if (errno)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read directory \"%s\": %m", dir)));
-
 	FreeDir(cldir);
 }
 

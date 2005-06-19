@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.33 2005/06/15 00:09:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.34 2005/06/19 21:34:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,11 +409,12 @@ identify_system_timezone(void)
  * score.  bestzonename must be a buffer of length TZ_STRLEN_MAX + 1.
  */
 static void
-scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry * tt,
+scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt,
 						 int *bestscore, char *bestzonename)
 {
 	int			tzdir_orig_len = strlen(tzdir);
 	DIR		   *dirdesc;
+	struct dirent *direntry;
 
 	dirdesc = AllocateDir(tzdir);
 	if (!dirdesc)
@@ -424,21 +425,9 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry * tt,
 		return;
 	}
 
-	for (;;)
+	while ((direntry = ReadDir(dirdesc, tzdir)) != NULL)
 	{
-		struct dirent *direntry;
 		struct stat statbuf;
-
-		errno = 0;
-		direntry = readdir(dirdesc);
-		if (!direntry)
-		{
-			if (errno)
-				ereport(LOG,
-						(errcode_for_file_access(),
-						 errmsg("error reading directory: %m")));
-			break;
-		}
 
 		/* Ignore . and .., plus any other "hidden" files */
 		if (direntry->d_name[0] == '.')
@@ -452,6 +441,7 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry * tt,
 			ereport(LOG,
 					(errcode_for_file_access(),
 					 errmsg("could not stat \"%s\": %m", tzdir)));
+			tzdir[tzdir_orig_len] = '\0';
 			continue;
 		}
 
@@ -480,12 +470,12 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry * tt,
 					StrNCpy(bestzonename, tzdirsub, TZ_STRLEN_MAX + 1);
 			}
 		}
+
+		/* Restore tzdir */
+		tzdir[tzdir_orig_len] = '\0';
 	}
 
 	FreeDir(dirdesc);
-
-	/* Restore tzdir */
-	tzdir[tzdir_orig_len] = '\0';
 }
 
 #else							/* WIN32 */

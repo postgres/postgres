@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.116 2005/05/20 14:53:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.117 2005/06/19 21:34:02 tgl Exp $
  *
  * NOTES:
  *
@@ -1338,6 +1338,59 @@ TryAgain:
 }
 
 /*
+ * Read a directory opened with AllocateDir, ereport'ing any error.
+ *
+ * This is easier to use than raw readdir() since it takes care of some
+ * otherwise rather tedious and error-prone manipulation of errno.  Also,
+ * if you are happy with a generic error message for AllocateDir failure,
+ * you can just do
+ *
+ *		dir = AllocateDir(path);
+ *		while ((dirent = ReadDir(dir, path)) != NULL)
+ *			process dirent;
+ *		FreeDir(path);
+ *
+ * since a NULL dir parameter is taken as indicating AllocateDir failed.
+ * (Make sure errno hasn't been changed since AllocateDir if you use this
+ * shortcut.)
+ *
+ * The pathname passed to AllocateDir must be passed to this routine too,
+ * but it is only used for error reporting.
+ */
+struct dirent *
+ReadDir(DIR *dir, const char *dirname)
+{
+	struct dirent *dent;
+
+	/* Give a generic message for AllocateDir failure, if caller didn't */
+	if (dir == NULL)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open directory \"%s\": %m",
+						dirname)));
+
+	errno = 0;
+	if ((dent = readdir(dir)) != NULL)
+		return dent;
+
+#ifdef WIN32
+	/*
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
+	 * not in released version
+	 */
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+		errno = 0;
+#endif
+
+	if (errno)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not read directory \"%s\": %m",
+						dirname)));
+	return NULL;
+}
+
+/*
  * Close a directory opened with AllocateDir.
  *
  * Note we do not check closedir's return value --- it is up to the caller
@@ -1526,14 +1579,8 @@ RemovePgTempFiles(void)
 	 */
 	snprintf(db_path, sizeof(db_path), "%s/base", DataDir);
 	db_dir = AllocateDir(db_path);
-	if (db_dir == NULL)
-	{
-		/* this really should not happen */
-		elog(LOG, "could not open directory \"%s\": %m", db_path);
-		return;
-	}
 
-	while ((db_de = readdir(db_dir)) != NULL)
+	while ((db_de = ReadDir(db_dir, db_path)) != NULL)
 	{
 		if (strcmp(db_de->d_name, ".") == 0 ||
 			strcmp(db_de->d_name, "..") == 0)
@@ -1576,7 +1623,7 @@ RemovePgTempFilesInDir(const char *tmpdirname)
 		return;
 	}
 
-	while ((temp_de = readdir(temp_dir)) != NULL)
+	while ((temp_de = ReadDir(temp_dir, tmpdirname)) != NULL)
 	{
 		if (strcmp(temp_de->d_name, ".") == 0 ||
 			strcmp(temp_de->d_name, "..") == 0)
