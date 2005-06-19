@@ -1,9 +1,9 @@
 /**********************************************************************
- * pl_funcs.c		- Misc functins for the PL/pgSQL
+ * pl_funcs.c		- Misc functions for the PL/pgSQL
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.43 2005/06/14 06:43:14 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.44 2005/06/19 01:06:12 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
