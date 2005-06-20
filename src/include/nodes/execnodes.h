@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.134 2005/06/15 07:27:44 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.135 2005/06/20 18:37:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,7 +304,9 @@ typedef struct EState
 	ResultRelInfo *es_result_relation_info;		/* currently active array
 												 * elt */
 	JunkFilter *es_junkFilter;	/* currently active junk filter */
+
 	Relation	es_into_relation_descriptor;	/* for SELECT INTO */
+	bool		es_into_relation_use_wal;
 
 	/* Parameter info: */
 	ParamListInfo es_param_list_info;	/* values of external params */

@@ -26,13 +26,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.249 2005/05/22 22:30:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.250 2005/06/20 18:37:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/xlog.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
 #include "commands/tablecmds.h"
@@ -44,6 +45,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
+#include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -784,6 +786,20 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 		 * And open the constructed table for writing.
 		 */
 		intoRelationDesc = heap_open(intoRelationId, AccessExclusiveLock);
+
+		/* use_wal off requires rd_targblock be initially invalid */
+		Assert(intoRelationDesc->rd_targblock == InvalidBlockNumber);
+
+		/*
+		 * We can skip WAL-logging the insertions, unless PITR is in use.
+		 *
+		 * Note that for a non-temp INTO table, this is safe only because
+		 * we know that the catalog changes above will have been WAL-logged,
+		 * and so RecordTransactionCommit will think it needs to WAL-log the
+		 * eventual transaction commit.  Else the commit might be lost, even
+		 * though all the data is safely fsync'd ...
+		 */
+		estate->es_into_relation_use_wal = XLogArchivingActive();
 	}
 
 	estate->es_into_relation_descriptor = intoRelationDesc;
@@ -979,7 +995,22 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	 * close the "into" relation if necessary, again keeping lock
 	 */
 	if (estate->es_into_relation_descriptor != NULL)
+	{
+		/*
+		 * If we skipped using WAL, and it's not a temp relation,
+		 * we must force the relation down to disk before it's
+		 * safe to commit the transaction.  This requires forcing
+		 * out any dirty buffers and then doing a forced fsync.
+		 */
+		if (!estate->es_into_relation_use_wal &&
+			!estate->es_into_relation_descriptor->rd_istemp)
+		{
+			FlushRelationBuffers(estate->es_into_relation_descriptor);
+			smgrimmedsync(estate->es_into_relation_descriptor->rd_smgr);
+		}
+
 		heap_close(estate->es_into_relation_descriptor, NoLock);
+   }
 
 	/*
 	 * close any relations selected FOR UPDATE/FOR SHARE, again keeping locks
@@ -1307,7 +1338,9 @@ ExecSelect(TupleTableSlot *slot,
 
 		tuple = ExecCopySlotTuple(slot);
 		heap_insert(estate->es_into_relation_descriptor, tuple,
-					estate->es_snapshot->curcid);
+					estate->es_snapshot->curcid,
+					estate->es_into_relation_use_wal,
+					false);		/* never any point in using FSM */
 		/* we know there are no indexes to update */
 		heap_freetuple(tuple);
 		IncrAppended();
@@ -1386,7 +1419,8 @@ ExecInsert(TupleTableSlot *slot,
 	 * insert the tuple
 	 */
 	newId = heap_insert(resultRelationDesc, tuple,
-						estate->es_snapshot->curcid);
+						estate->es_snapshot->curcid,
+						true, true);
 
 	IncrAppended();
 	(estate->es_processed)++;
@@ -2089,6 +2123,7 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 	epqstate->es_result_relation_info = estate->es_result_relation_info;
 	epqstate->es_junkFilter = estate->es_junkFilter;
 	epqstate->es_into_relation_descriptor = estate->es_into_relation_descriptor;
+	epqstate->es_into_relation_use_wal = estate->es_into_relation_use_wal;
 	epqstate->es_param_list_info = estate->es_param_list_info;
 	if (estate->es_topPlan->nParamExec > 0)
 		epqstate->es_param_exec_vals = (ParamExecData *)

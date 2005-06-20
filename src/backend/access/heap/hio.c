@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.56 2005/05/07 21:32:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.57 2005/06/20 18:37:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,12 +79,26 @@ RelationPutHeapTuple(Relation relation,
  *	happen if space is freed in that page after heap_update finds there's not
  *	enough there).	In that case, the page will be pinned and locked only once.
  *
+ *	If use_fsm is true (the normal case), we use FSM to help us find free
+ *	space.  If use_fsm is false, we always append a new empty page to the
+ *	end of the relation if the tuple won't fit on the current target page.
+ *	This can save some cycles when we know the relation is new and doesn't
+ *	contain useful amounts of free space.
+ *
+ *	The use_fsm = false case is also useful for non-WAL-logged additions to a
+ *	relation, if the caller holds exclusive lock and is careful to invalidate
+ *	relation->rd_targblock before the first insertion --- that ensures that
+ *	all insertions will occur into newly added pages and not be intermixed
+ *	with tuples from other transactions.  That way, a crash can't risk losing
+ *	any committed data of other transactions.  (See heap_insert's comments
+ *	for additional constraints needed for safe usage of this behavior.)
+ *
  *	ereport(ERROR) is allowed here, so this routine *must* be called
  *	before any (unlogged) changes are made in buffer pool.
  */
 Buffer
 RelationGetBufferForTuple(Relation relation, Size len,
-						  Buffer otherBuffer)
+						  Buffer otherBuffer, bool use_fsm)
 {
 	Buffer		buffer = InvalidBuffer;
 	Page		pageHeader;
@@ -121,11 +135,14 @@ RelationGetBufferForTuple(Relation relation, Size len,
 	 * on each page that proves not to be suitable.)  If the FSM has no
 	 * record of a page with enough free space, we give up and extend the
 	 * relation.
+	 *
+	 * When use_fsm is false, we either put the tuple onto the existing
+	 * target page or extend the relation.
 	 */
 
 	targetBlock = relation->rd_targblock;
 
-	if (targetBlock == InvalidBlockNumber)
+	if (targetBlock == InvalidBlockNumber && use_fsm)
 	{
 		/*
 		 * We have no cached target page, so ask the FSM for an initial
@@ -208,6 +225,10 @@ RelationGetBufferForTuple(Relation relation, Size len,
 			LockBuffer(otherBuffer, BUFFER_LOCK_UNLOCK);
 			ReleaseBuffer(buffer);
 		}
+
+		/* Without FSM, always fall out of the loop and extend */
+		if (!use_fsm)
+			break;
 
 		/*
 		 * Update FSM as to condition of this page, and ask for another

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.194 2005/06/08 15:50:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.195 2005/06/20 18:37:01 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1034,9 +1034,20 @@ heap_get_latest_tid(Relation relation,
  *
  * The new tuple is stamped with current transaction ID and the specified
  * command ID.
+ *
+ * If use_wal is false, the new tuple is not logged in WAL, even for a
+ * non-temp relation.  Safe usage of this behavior requires that we arrange
+ * that all new tuples go into new pages not containing any tuples from other
+ * transactions, that the relation gets fsync'd before commit, and that the
+ * transaction emits at least one WAL record to ensure RecordTransactionCommit
+ * will decide to WAL-log the commit.
+ *
+ * use_fsm is passed directly to RelationGetBufferForTuple, which see for
+ * more info.
  */
 Oid
-heap_insert(Relation relation, HeapTuple tup, CommandId cid)
+heap_insert(Relation relation, HeapTuple tup, CommandId cid,
+			bool use_wal, bool use_fsm)
 {
 	TransactionId xid = GetCurrentTransactionId();
 	Buffer		buffer;
@@ -1086,7 +1097,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		heap_tuple_toast_attrs(relation, tup, NULL);
 
 	/* Find buffer to insert this tuple into */
-	buffer = RelationGetBufferForTuple(relation, tup->t_len, InvalidBuffer);
+	buffer = RelationGetBufferForTuple(relation, tup->t_len,
+									   InvalidBuffer, use_fsm);
 
 	/* NO EREPORT(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
@@ -1096,7 +1108,12 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 	pgstat_count_heap_insert(&relation->pgstat_info);
 
 	/* XLOG stuff */
-	if (!relation->rd_istemp)
+	if (relation->rd_istemp)
+	{
+		/* No XLOG record, but still need to flag that XID exists on disk */
+		MyXactMadeTempRelUpdate = true;
+	}
+	else if (use_wal)
 	{
 		xl_heap_insert xlrec;
 		xl_heap_header xlhdr;
@@ -1151,11 +1168,6 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		PageSetLSN(page, recptr);
 		PageSetTLI(page, ThisTimeLineID);
 	}
-	else
-	{
-		/* No XLOG record, but still need to flag that XID exists on disk */
-		MyXactMadeTempRelUpdate = true;
-	}
 
 	END_CRIT_SECTION();
 
@@ -1183,7 +1195,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 Oid
 simple_heap_insert(Relation relation, HeapTuple tup)
 {
-	return heap_insert(relation, tup, GetCurrentCommandId());
+	return heap_insert(relation, tup, GetCurrentCommandId(), true, true);
 }
 
 /*
@@ -1743,7 +1755,7 @@ l2:
 		{
 			/* Assume there's no chance to put newtup on same page. */
 			newbuf = RelationGetBufferForTuple(relation, newtup->t_len,
-											   buffer);
+											   buffer, true);
 		}
 		else
 		{
@@ -1760,7 +1772,7 @@ l2:
 				 */
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 				newbuf = RelationGetBufferForTuple(relation, newtup->t_len,
-												   buffer);
+												   buffer, true);
 			}
 			else
 			{

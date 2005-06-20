@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.90 2005/06/17 22:32:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.91 2005/06/20 18:37:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -650,7 +650,8 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 /*
  *	smgrimmedsync() -- Force the specified relation to stable storage.
  *
- *		Synchronously force all of the specified relation down to disk.
+ *		Synchronously force all previous writes to the specified relation
+ *		down to disk.
  *
  *		This is useful for building completely new relations (eg, new
  *		indexes).  Instead of incrementally WAL-logging the index build
@@ -664,6 +665,10 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
  *
  *		The preceding writes should specify isTemp = true to avoid
  *		duplicative fsyncs.
+ *
+ *		Note that you need to do FlushRelationBuffers() first if there is
+ *		any possibility that there are dirty buffers for the relation;
+ *		otherwise the sync is not very meaningful.
  */
 void
 smgrimmedsync(SMgrRelation reln)

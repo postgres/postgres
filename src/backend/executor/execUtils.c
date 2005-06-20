@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.123 2005/04/28 21:47:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.124 2005/06/20 18:37:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,9 @@ CreateExecutorState(void)
 	estate->es_result_relation_info = NULL;
 
 	estate->es_junkFilter = NULL;
+
 	estate->es_into_relation_descriptor = NULL;
+	estate->es_into_relation_use_wal = false;
 
 	estate->es_param_list_info = NULL;
 	estate->es_param_exec_vals = NULL;
