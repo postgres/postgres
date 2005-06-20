@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.256 2005/05/19 21:35:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.257 2005/06/20 02:07:47 neilc Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1293,10 +1293,10 @@ UpdateStats(Oid relid, double reltuples)
 		}
 	}
 
-	if (!pg_class_scan)
-		heap_freetuple(tuple);
-	else
+	if (in_place_upd)
 		heap_endscan(pg_class_scan);
+	else
+		heap_freetuple(tuple);
 
 	/*
 	 * We shouldn't have to do this, but we do...  Modify the reldesc in
