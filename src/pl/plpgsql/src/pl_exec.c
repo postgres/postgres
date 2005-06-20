@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.127.4.1 2005/02/01 19:35:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.127.4.2 2005/06/20 20:44:50 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2835,12 +2835,6 @@ exec_assign_value(PLpgSQL_execstate *estate,
 							 errmsg("NULL cannot be assigned to variable \"%s\" declared NOT NULL",
 									var->refname)));
 
-				if (var->freeval)
-				{
-					pfree(DatumGetPointer(var->value));
-					var->freeval = false;
-				}
-
 				/*
 				 * If type is by-reference, make sure we have a freshly
 				 * palloc'd copy; the originally passed value may not live
@@ -2851,16 +2845,28 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				if (!var->datatype->typbyval && !*isNull)
 				{
 					if (newvalue == value)
-						var->value = datumCopy(newvalue,
-											   false,
-											   var->datatype->typlen);
-					else
-						var->value = newvalue;
-					var->freeval = true;
+						newvalue = datumCopy(newvalue,
+											 false,
+											 var->datatype->typlen);
 				}
-				else
-					var->value = newvalue;
+
+				/*
+				 * Now free the old value.  (We can't do this any earlier
+				 * because of the possibility that we are assigning the
+				 * var's old value to it, eg "foo := foo".  We could optimize
+				 * out the assignment altogether in such cases, but it's too
+				 * infrequent to be worth testing for.)
+				 */
+				if (var->freeval)
+				{
+					pfree(DatumGetPointer(var->value));
+					var->freeval = false;
+				}
+
+				var->value = newvalue;
 				var->isnull = *isNull;
+				if (!var->datatype->typbyval && !*isNull)
+					var->freeval = true;
 				break;
 			}
 
@@ -3717,6 +3723,14 @@ exec_move_row(PLpgSQL_execstate *estate,
 	 */
 	if (rec != NULL)
 	{
+		/*
+		 * copy input first, just in case it is pointing at variable's value
+		 */
+		if (HeapTupleIsValid(tup))
+			tup = heap_copytuple(tup);
+		if (tupdesc)
+			tupdesc = CreateTupleDescCopy(tupdesc);
+
 		if (rec->freetup)
 		{
 			heap_freetuple(rec->tup);
@@ -3730,7 +3744,7 @@ exec_move_row(PLpgSQL_execstate *estate,
 
 		if (HeapTupleIsValid(tup))
 		{
-			rec->tup = heap_copytuple(tup);
+			rec->tup = tup;
 			rec->freetup = true;
 		}
 		else if (tupdesc)
@@ -3751,7 +3765,7 @@ exec_move_row(PLpgSQL_execstate *estate,
 
 		if (tupdesc)
 		{
-			rec->tupdesc = CreateTupleDescCopy(tupdesc);
+			rec->tupdesc = tupdesc;
 			rec->freetupdesc = true;
 		}
 		else
