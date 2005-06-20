@@ -82,10 +82,10 @@ gtsvector_out(PG_FUNCTION_ARGS)
 	outbuf = palloc( outbuf_maxlen );
 
 	if ( ISARRKEY(key) ) 
-		sprintf( outbuf, ARROUTSTR, ARRNELEM(key) );  
+		sprintf( outbuf, ARROUTSTR, (int) ARRNELEM(key) );  
 	else {
 		int cnttrue = ( ISALLTRUE(key) ) ? SIGLENBIT : sizebitvec(GETSIGN(key));
-		sprintf( outbuf, SINGOUTSTR, cnttrue, SIGLENBIT - cnttrue ); 
+		sprintf( outbuf, SINGOUTSTR, cnttrue, (int) SIGLENBIT - cnttrue ); 
 	}	
 
 	PG_FREE_IF_COPY(key,0);
