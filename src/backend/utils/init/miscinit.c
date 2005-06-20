@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.141 2005/06/07 16:54:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.142 2005/06/20 02:17:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,7 +549,8 @@ CreateLockFile(const char *filename, bool amPostmaster,
 		other_pid = (pid_t) (encoded_pid < 0 ? -encoded_pid : encoded_pid);
 
 		if (other_pid <= 0)
-			elog(FATAL, "bogus data in lock file \"%s\"", filename);
+			elog(FATAL, "bogus data in lock file \"%s\": \"%s\"",
+				 filename, buffer);
 
 		/*
 		 * Check to see if the other process still exists
