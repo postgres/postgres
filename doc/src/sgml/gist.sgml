@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.18 2005/05/17 00:59:30 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.19 2005/06/20 14:53:32 tgl Exp $
 -->
 
 <chapter id="GiST">
@@ -186,23 +186,15 @@ $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.18 2005/05/17 00:59:30 neilc Exp $
  <para>
   The current implementation of <acronym>GiST</acronym> within
   <productname>PostgreSQL</productname> has some major limitations:
-  <acronym>GiST</acronym> access is not concurrent; the
+  <acronym>GiST</acronym> index access is not concurrent, and the
   <acronym>GiST</acronym> interface doesn't allow the development of certain
-  data types, such as digital trees (see papers by Aoki et al); and there
-  is not yet any support for write-ahead logging of updates in
-  <acronym>GiST</acronym> indexes.
+  data types, such as digital trees (see papers by Aoki et al).
  </para>
 
  <para>
   Solutions to the concurrency problems appear in Marcel Kornacker's
   thesis; however these ideas have not yet been put into practice in the
   <productname>PostgreSQL</productname> implementation.
- </para>
-
- <para>
-  The lack of write-ahead logging is just a small matter of programming,
-  but since it isn't done yet, a crash could render a <acronym>GiST</acronym>
-  index inconsistent, forcing a <command>REINDEX</command>.
  </para>
 
 </sect1>
