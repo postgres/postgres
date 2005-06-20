@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.1 2005/06/20 10:29:36 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.2 2005/06/20 15:22:37 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,7 +183,6 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 					/* path is need to recovery because there is new pages, in a case of
 					   crash it's needed to add inner tuple pointers on parent page */ 
 					rdata = formSplitRdata(gv->index->rd_node, blkno,
-						todelete, ntodelete, addon, curlenaddon,
 						&key, gv->path, gv->curpathlen, dist);
 
 					MemoryContextSwitchTo(oldCtx);
@@ -507,6 +506,8 @@ gistbulkdelete(PG_FUNCTION_ARGS) {
 		ptr = stack->next;
 		pfree( stack );
 		stack = ptr;
+
+		vacuum_delay_point();
 	}
 
 	MemoryContextDelete( opCtx );

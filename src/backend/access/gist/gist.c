@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.120 2005/06/20 10:29:36 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gist.c,v 1.121 2005/06/20 15:22:37 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,17 +317,10 @@ gistplacetopage(GISTInsertState *state, GISTSTATE *giststate) {
 		newitup = gistSplit(state->r, state->stack->buffer, itvec, &tlen, &dist, giststate);
 
 		if ( !state->r->rd_istemp ) {
-			OffsetNumber	noffs=0, offs[ MAXALIGN( sizeof(OffsetNumber) ) / sizeof(OffsetNumber) ];
 			XLogRecPtr	recptr;
 			XLogRecData	*rdata;
 	
-			if ( state->stack->todelete ) {
-				offs[0] = state->stack->childoffnum;
-				noffs=1;
-			}
-
 			rdata = formSplitRdata(state->r->rd_node, state->stack->blkno,
-				offs, noffs, state->itup, state->ituplen, 
 				&(state->key), state->path, state->pathlen, dist); 
 
 			START_CRIT_SECTION();
@@ -716,31 +709,27 @@ gistSplit(Relation r,
 	/* write on disk (may need another split) */
 	if (gistnospace(right, rvectup, v.spl_nright))
 	{
-		int i;
-		SplitedPageLayout *d, *origd=*dist;
-	
 		nlen = v.spl_nright;
 		newtup = gistSplit(r, rightbuf, rvectup, &nlen, dist, giststate);
-		/* XLOG stuff */
-		d=*dist;
-		/* translate offsetnumbers to our */
-		while( d && d!=origd ) {
-			for(i=0;i<d->block.num;i++)
-				d->list[i] = v.spl_right[ d->list[i]-1 ]; 
-			d=d->next;
-		}
 		ReleaseBuffer(rightbuf);
 	}
 	else
 	{
 		OffsetNumber l;
+		char *ptr;
 
 		l = gistfillbuffer(r, right, rvectup, v.spl_nright, FirstOffsetNumber);
 		/* XLOG stuff */
 		ROTATEDIST(*dist);
 		(*dist)->block.blkno = BufferGetBlockNumber(rightbuf);
 		(*dist)->block.num = v.spl_nright;
-		(*dist)->list = v.spl_right;
+		(*dist)->list = (IndexTupleData*)palloc( BLCKSZ );
+		ptr = (char*) ( (*dist)->list );
+		for(i=0;i<v.spl_nright;i++) {
+			memcpy( ptr, rvectup[i], IndexTupleSize( rvectup[i] ) );
+			ptr += IndexTupleSize( rvectup[i] );
+		}
+		(*dist)->lenlist = ptr - ( (char*) ( (*dist)->list ) );
 		(*dist)->buffer = rightbuf;
  
 		nlen = 1;
@@ -754,20 +743,8 @@ gistSplit(Relation r,
 	{
 		int			llen = v.spl_nleft;
 		IndexTuple *lntup;
-		int i;
-		SplitedPageLayout *d, *origd=*dist;
 
 		lntup = gistSplit(r, leftbuf, lvectup, &llen, dist, giststate);
-
-		/* XLOG stuff */
-		d=*dist;
-		/* translate offsetnumbers to our */
-		while( d && d!=origd ) {
-			for(i=0;i<d->block.num;i++)
-				d->list[i] = v.spl_left[ d->list[i]-1 ]; 
-			d=d->next;
-		}
-		
 		ReleaseBuffer(leftbuf);
 
 		newtup = gistjoinvector(newtup, &nlen, lntup, llen);
@@ -775,18 +752,25 @@ gistSplit(Relation r,
 	else
 	{
 		OffsetNumber l;
+		char *ptr;
 
 		l = gistfillbuffer(r, left, lvectup, v.spl_nleft, FirstOffsetNumber);
-		if (BufferGetBlockNumber(buffer) != GIST_ROOT_BLKNO)
-			PageRestoreTempPage(left, p);
-
 		/* XLOG stuff */
 		ROTATEDIST(*dist);
 		(*dist)->block.blkno = BufferGetBlockNumber(leftbuf);
 		(*dist)->block.num = v.spl_nleft;
-		(*dist)->list = v.spl_left;
+		(*dist)->list = (IndexTupleData*)palloc( BLCKSZ );
+		ptr = (char*) ( (*dist)->list );
+		for(i=0;i<v.spl_nleft;i++) {
+			memcpy( ptr, lvectup[i], IndexTupleSize( lvectup[i] ) );
+			ptr += IndexTupleSize( lvectup[i] );
+		}
+		(*dist)->lenlist = ptr - ( (char*) ( (*dist)->list ) );
 		(*dist)->buffer = leftbuf;
  
+		if (BufferGetBlockNumber(buffer) != GIST_ROOT_BLKNO)
+			PageRestoreTempPage(left, p);
+
 		nlen += 1;
 		newtup = (IndexTuple *) repalloc(newtup, sizeof(IndexTuple) * nlen);
 		newtup[nlen - 1] = ( v.spl_leftvalid ) ? gistFormTuple(giststate, r, v.spl_lattr, v.spl_lattrsize, v.spl_lisnull)
