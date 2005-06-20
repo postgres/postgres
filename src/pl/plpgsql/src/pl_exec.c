@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.144 2005/06/14 06:43:14 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.145 2005/06/20 20:44:44 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -181,6 +181,7 @@ static void exec_init_tuple_store(PLpgSQL_execstate *estate);
 static bool compatible_tupdesc(TupleDesc td1, TupleDesc td2);
 static void exec_set_found(PLpgSQL_execstate *estate, bool state);
 static void free_var(PLpgSQL_var *var);
+
 
 /* ----------
  * plpgsql_exec_function	Called by the call handler for
@@ -874,13 +875,15 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 					PLpgSQL_var *state_var;
 					PLpgSQL_var *errm_var;
 
-					state_var = (PLpgSQL_var *) (estate->datums[block->exceptions->sqlstate_varno]);
+					state_var = (PLpgSQL_var *)
+						estate->datums[block->exceptions->sqlstate_varno];
 					state_var->value = DirectFunctionCall1(textin,
 														   CStringGetDatum(unpack_sql_state(edata->sqlerrcode)));
 					state_var->freeval = true;
 					state_var->isnull = false;
 
-					errm_var = (PLpgSQL_var *) (estate->datums[block->exceptions->sqlerrm_varno]);
+					errm_var = (PLpgSQL_var *)
+						estate->datums[block->exceptions->sqlerrm_varno];
 					errm_var->value = DirectFunctionCall1(textin,
 														  CStringGetDatum(edata->message));
 					errm_var->freeval = true;
@@ -2862,8 +2865,6 @@ exec_assign_value(PLpgSQL_execstate *estate,
 							 errmsg("NULL cannot be assigned to variable \"%s\" declared NOT NULL",
 									var->refname)));
 
-				free_var(var);
-
 				/*
 				 * If type is by-reference, make sure we have a freshly
 				 * palloc'd copy; the originally passed value may not live
@@ -2874,16 +2875,24 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				if (!var->datatype->typbyval && !*isNull)
 				{
 					if (newvalue == value)
-						var->value = datumCopy(newvalue,
-											   false,
-											   var->datatype->typlen);
-					else
-						var->value = newvalue;
-					var->freeval = true;
+						newvalue = datumCopy(newvalue,
+											 false,
+											 var->datatype->typlen);
 				}
-				else
-					var->value = newvalue;
+
+				/*
+				 * Now free the old value.  (We can't do this any earlier
+				 * because of the possibility that we are assigning the
+				 * var's old value to it, eg "foo := foo".  We could optimize
+				 * out the assignment altogether in such cases, but it's too
+				 * infrequent to be worth testing for.)
+				 */
+				free_var(var);
+
+				var->value = newvalue;
 				var->isnull = *isNull;
+				if (!var->datatype->typbyval && !*isNull)
+					var->freeval = true;
 				break;
 			}
 
@@ -3740,6 +3749,14 @@ exec_move_row(PLpgSQL_execstate *estate,
 	 */
 	if (rec != NULL)
 	{
+		/*
+		 * copy input first, just in case it is pointing at variable's value
+		 */
+		if (HeapTupleIsValid(tup))
+			tup = heap_copytuple(tup);
+		if (tupdesc)
+			tupdesc = CreateTupleDescCopy(tupdesc);
+
 		if (rec->freetup)
 		{
 			heap_freetuple(rec->tup);
@@ -3753,7 +3770,7 @@ exec_move_row(PLpgSQL_execstate *estate,
 
 		if (HeapTupleIsValid(tup))
 		{
-			rec->tup = heap_copytuple(tup);
+			rec->tup = tup;
 			rec->freetup = true;
 		}
 		else if (tupdesc)
@@ -3774,7 +3791,7 @@ exec_move_row(PLpgSQL_execstate *estate,
 
 		if (tupdesc)
 		{
-			rec->tupdesc = CreateTupleDescCopy(tupdesc);
+			rec->tupdesc = tupdesc;
 			rec->freetupdesc = true;
 		}
 		else
