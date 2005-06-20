@@ -19,16 +19,3 @@ SELECT valid_type('rick');
  
 (1 row)
 
--- Security sandbox tests
-SELECT write_file('/tmp/plpython','Only trusted users should be able to do this!');
-          write_file          
-------------------------------
- Wrote to file: /tmp/plpython
-(1 row)
-
-SELECT read_file('/tmp/plpython');
-                   read_file                   
------------------------------------------------
- Only trusted users should be able to do this!
-(1 row)
-

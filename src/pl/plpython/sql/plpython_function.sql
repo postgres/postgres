@@ -298,15 +298,6 @@ return seq
 '
 	LANGUAGE plpythonu;
 
-CREATE OR REPLACE FUNCTION read_file(text) RETURNS text AS '
-  return open(args[0]).read()
-' LANGUAGE plpythonu;
-
-CREATE OR REPLACE FUNCTION write_file(text,text) RETURNS text AS '
-  open(args[0],"w").write(args[1])
-  return "Wrote to file: %s" % args[0]
-' LANGUAGE plpythonu;
-
 --
 -- Universal Newline Support
 -- 
