@@ -4,7 +4,7 @@
 #    Makefile for access/gist
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/access/gist/Makefile,v 1.13 2005/06/14 11:45:13 teodor Exp $
+#    $PostgreSQL: pgsql/src/backend/access/gist/Makefile,v 1.14 2005/06/20 10:29:36 teodor Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/access/gist
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = gist.o gistutil.o gistxlog.o gistget.o gistscan.o
+OBJS = gist.o gistutil.o gistxlog.o gistvacuum.o gistget.o gistscan.o
 
 all: SUBSYS.o
 

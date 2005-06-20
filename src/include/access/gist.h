@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist.h,v 1.46 2005/05/17 03:34:18 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist.h,v 1.47 2005/06/20 10:29:36 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,8 @@
  * Page opaque data in a GiST index page.
  */
 #define F_LEAF			(1 << 0)
+#define F_DELETED		(1 << 1)
+#define F_TUPLES_DELETED	(1 << 2)
 
 typedef struct GISTPageOpaqueData
 {
@@ -56,6 +58,7 @@ typedef struct GIST_SPLITVEC
 												 * spl_left */
 	int			spl_lattrsize[INDEX_MAX_KEYS];
 	bool		spl_lisnull[INDEX_MAX_KEYS];
+	bool		spl_leftvalid;
 
 	OffsetNumber *spl_right;	/* array of entries that go right */
 	int			spl_nright;		/* size of the array */
@@ -64,6 +67,7 @@ typedef struct GIST_SPLITVEC
 												 * spl_right */
 	int			spl_rattrsize[INDEX_MAX_KEYS];
 	bool		spl_risnull[INDEX_MAX_KEYS];
+	bool		spl_rightvalid;
 
 	int		   *spl_idgrp;
 	int		   *spl_ngrp;		/* number in each group */
@@ -86,7 +90,18 @@ typedef struct GISTENTRY
 	bool		leafkey;
 } GISTENTRY;
 
-#define GIST_LEAF(entry) (((GISTPageOpaque) PageGetSpecialPointer((entry)->page))->flags & F_LEAF)
+#define GistPageIsLeaf(page)	(((GISTPageOpaque) PageGetSpecialPointer(page))->flags & F_LEAF)
+#define GIST_LEAF(entry) (GistPageIsLeaf((entry)->page))
+#define GistPageSetLeaf(page)	(((GISTPageOpaque) PageGetSpecialPointer(page))->flags |= F_LEAF)
+#define GistPageSetNonLeaf(page)	(((GISTPageOpaque) PageGetSpecialPointer(page))->flags &= ~F_LEAF)
+
+#define GistPageIsDeleted(page)	(((GISTPageOpaque) PageGetSpecialPointer(page))->flags & F_DELETED)
+#define GistPageSetDeleted(page)	(((GISTPageOpaque) PageGetSpecialPointer(page))->flags |= F_DELETED)
+#define GistPageSetNonDeleted(page)	(((GISTPageOpaque) PageGetSpecialPointer(page))->flags &= ~F_DELETED)
+
+#define GistTuplesDeleted(page)	(((GISTPageOpaque) PageGetSpecialPointer(page))->flags & F_TUPLES_DELETED)
+#define GistMarkTuplesDeleted(page)	(((GISTPageOpaque) PageGetSpecialPointer(page))->flags |= F_TUPLES_DELETED)
+#define GistClearTuplesDeleted(page)	(((GISTPageOpaque) PageGetSpecialPointer(page))->flags &= ~F_TUPLES_DELETED)
 
 /*
  * Vector of GISTENTRY structs; user-defined methods union and pick

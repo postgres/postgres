@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.48 2005/06/14 11:45:13 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.49 2005/06/20 10:29:36 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,6 @@ gistnext(IndexScanDesc scan, ScanDirection dir)
 {
 	Page		p;
 	OffsetNumber n;
-	GISTPageOpaque po;
 	GISTScanOpaque so;
 	GISTSTACK  *stk;
 	IndexTuple	it;
@@ -127,7 +126,6 @@ gistnext(IndexScanDesc scan, ScanDirection dir)
 	}
 
 	p = BufferGetPage(so->curbuf);
-	po = (GISTPageOpaque) PageGetSpecialPointer(p);
 
 	if (ItemPointerIsValid(&scan->currentItemData) == false)
 	{
@@ -169,7 +167,6 @@ gistnext(IndexScanDesc scan, ScanDirection dir)
 			so->curbuf = ReleaseAndReadBuffer(so->curbuf, scan->indexRelation,
 											  stk->block);
 			p = BufferGetPage(so->curbuf);
-			po = (GISTPageOpaque) PageGetSpecialPointer(p);
 
 			if (ScanDirectionIsBackward(dir))
 				n = OffsetNumberPrev(stk->offset);
@@ -182,7 +179,7 @@ gistnext(IndexScanDesc scan, ScanDirection dir)
 			continue;
 		}
 
-		if (po->flags & F_LEAF)
+		if (GistPageIsLeaf(p))
 		{
 			/*
 			 * We've found a matching index entry in a leaf page, so
@@ -219,7 +216,6 @@ gistnext(IndexScanDesc scan, ScanDirection dir)
 			so->curbuf = ReleaseAndReadBuffer(so->curbuf, scan->indexRelation,
 											  child_block);
 			p = BufferGetPage(so->curbuf);
-			po = (GISTPageOpaque) PageGetSpecialPointer(p);
 
 			if (ScanDirectionIsBackward(dir))
 				n = PageGetMaxOffsetNumber(p);
@@ -255,6 +251,12 @@ gistindex_keytest(IndexTuple tuple,
 	p = BufferGetPage(so->curbuf);
 
 	IncrIndexProcessed();
+
+	/*
+         * Tuple doesn't restore after crash recovery because of inclomplete insert 
+         */
+	if ( !GistPageIsLeaf(p) && GistTupleIsInvalid(tuple) ) 
+		return true;
 
 	while (keySize > 0)
 	{
@@ -317,7 +319,6 @@ gistfindnext(IndexScanDesc scan, OffsetNumber n, ScanDirection dir)
 {
 	OffsetNumber	maxoff;
 	IndexTuple		it;
-	GISTPageOpaque	po;
 	GISTScanOpaque	so;
 	MemoryContext	oldcxt;
 	Page			p;
@@ -325,7 +326,6 @@ gistfindnext(IndexScanDesc scan, OffsetNumber n, ScanDirection dir)
 	so = (GISTScanOpaque) scan->opaque;
 	p = BufferGetPage(so->curbuf);
 	maxoff = PageGetMaxOffsetNumber(p);
-	po = (GISTPageOpaque) PageGetSpecialPointer(p);
 
 	/*
 	 * Make sure we're in a short-lived memory context when we invoke

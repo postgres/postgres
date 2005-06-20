@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.3 2005/06/14 11:45:14 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.4 2005/06/20 10:29:36 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +94,6 @@ typedef struct {
 	int             ituplen; /* length of itup */
 	GISTInsertStack	*stack;
 	bool needInsertComplete;
-	bool xlog_mode;
 
 	/* pointer to heap tuple */
 	ItemPointerData	key;
@@ -142,19 +141,20 @@ typedef struct gistxlogEntryUpdate {
 	RelFileNode	node;
 	BlockNumber	blkno;
 
-	/* if todeleteoffnum!=InvalidOffsetNumber then delete it. */ 
-	OffsetNumber	todeleteoffnum;
+	uint16		ntodelete;
 	uint16		pathlen;
+	bool		isemptypage;	
 
 	/* 
-	 * It used to identify compliteness of insert.
+	 * It used to identify completeness of insert.
          * Sets to leaf itup 
          */ 
 	ItemPointerData	key;
 
 	/* follow:
-	 * 1. path to root (BlockNumber) 
-	 * 2. tuples to insert
+	 * 1. path to root (BlockNumber)
+	 * 2. todelete OffsetNumbers 
+	 * 3. tuples to insert
          */ 
 } gistxlogEntryUpdate;
 
@@ -163,18 +163,19 @@ typedef struct gistxlogEntryUpdate {
 typedef struct gistxlogPageSplit {
 	RelFileNode	node;
 	BlockNumber	origblkno; /*splitted page*/
-	OffsetNumber	todeleteoffnum;
+	uint16		ntodelete;
 	uint16		pathlen;
-	int		npage;
-	int		nitup;
+	uint16		npage;
+	uint16		nitup;
 
 	/* see comments on gistxlogEntryUpdate */
 	ItemPointerData	key;
  
 	/* follow:
 	 * 1. path to root (BlockNumber) 
-	 * 2. tuples to insert
-	 * 3. gistxlogPage and array of OffsetNumber per page
+	 * 2. todelete OffsetNumbers 
+	 * 3. tuples to insert
+	 * 4. gistxlogPage and array of OffsetNumber per page
          */ 
 } gistxlogPageSplit;
 
@@ -188,32 +189,65 @@ typedef struct gistxlogPage {
 
 typedef struct gistxlogInsertComplete {
 	RelFileNode	node;
-	ItemPointerData	key;
+	/* follows ItemPointerData key to clean */
 } gistxlogInsertComplete;
 
-#define XLOG_GIST_CREATE_INDEX	0x50
+#define	XLOG_GIST_CREATE_INDEX	0x50
+
+/*
+ * mark tuples on inner pages during recovery
+ */
+#define TUPLE_IS_VALID		0xffff
+#define TUPLE_IS_INVALID	0xfffe
+
+#define  GistTupleIsInvalid(itup)	( ItemPointerGetOffsetNumber( &((itup)->t_tid) ) == TUPLE_IS_INVALID )
+#define  GistTupleSetValid(itup)	ItemPointerSetOffsetNumber( &((itup)->t_tid), TUPLE_IS_VALID )
+#define  GistTupleSetInvalid(itup)	ItemPointerSetOffsetNumber( &((itup)->t_tid), TUPLE_IS_INVALID )
 
 /* gist.c */
 extern Datum gistbuild(PG_FUNCTION_ARGS);
 extern Datum gistinsert(PG_FUNCTION_ARGS);
-extern Datum gistbulkdelete(PG_FUNCTION_ARGS);
 extern MemoryContext createTempGistContext(void);
 extern void initGISTstate(GISTSTATE *giststate, Relation index);
 extern void freeGISTstate(GISTSTATE *giststate);
-extern void gistnewroot(Relation r, IndexTuple *itup, int len, ItemPointer key, bool xlog_mode);
+extern void gistnewroot(Relation r, IndexTuple *itup, int len, ItemPointer key);
 extern void gistmakedeal(GISTInsertState *state, GISTSTATE *giststate);
 
+typedef struct SplitedPageLayout {
+        gistxlogPage    block;
+        OffsetNumber    *list;
+        Buffer          buffer; /* to write after all proceed */
+
+        struct SplitedPageLayout *next;
+} SplitedPageLayout;
+
+IndexTuple * gistSplit(Relation r, Buffer buffer, IndexTuple *itup,
+                  int *len, SplitedPageLayout    **dist, GISTSTATE *giststate);
 /* gistxlog.c */
 extern void gist_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void gist_desc(char *buf, uint8 xl_info, char *rec);
 extern void gist_xlog_startup(void);
 extern void gist_xlog_cleanup(void);
+extern IndexTuple gist_form_invalid_tuple(BlockNumber blkno);
+
+extern XLogRecData* formUpdateRdata(RelFileNode node, BlockNumber blkno,
+                OffsetNumber *todelete, int ntodelete, bool emptypage,
+                IndexTuple *itup, int ituplen, ItemPointer key,
+                BlockNumber *path, int pathlen);
+
+extern XLogRecData* formSplitRdata(RelFileNode node, BlockNumber blkno,
+                OffsetNumber *todelete, int ntodelete, 
+                IndexTuple *itup, int ituplen, ItemPointer key,
+                BlockNumber *path, int pathlen, SplitedPageLayout *dist );
+
+extern XLogRecPtr gistxlogInsertCompletion(RelFileNode node, ItemPointerData *keys, int len);
 
 /* gistget.c */
 extern Datum gistgettuple(PG_FUNCTION_ARGS);
 extern Datum gistgetmulti(PG_FUNCTION_ARGS);
 
 /* gistutil.c */
+extern	Buffer	gistReadBuffer(Relation r, BlockNumber blkno);
 extern OffsetNumber gistfillbuffer(Relation r, Page page, IndexTuple *itup,
                                 int len, OffsetNumber off);
 extern bool gistnospace(Page page, IndexTuple *itvec, int len);
@@ -230,7 +264,7 @@ extern IndexTuple gistgetadjusted(Relation r,
 extern int gistfindgroup(GISTSTATE *giststate,
                           GISTENTRY *valvec, GIST_SPLITVEC *spl);
 extern void gistadjsubkey(Relation r,
-                          IndexTuple *itup, int *len,
+                          IndexTuple *itup, int len,
                           GIST_SPLITVEC *v,
                           GISTSTATE *giststate);
 extern IndexTuple gistFormTuple(GISTSTATE *giststate,
@@ -247,10 +281,16 @@ extern void gistDeCompressAtt(GISTSTATE *giststate, Relation r,
                               IndexTuple tuple, Page p, OffsetNumber o,
                               GISTENTRY *attdata, bool *isnull);
 extern void gistunionsubkey(Relation r, GISTSTATE *giststate, 
-                            IndexTuple *itvec, GIST_SPLITVEC *spl);
+                            IndexTuple *itvec, GIST_SPLITVEC *spl, bool isall);
 extern void GISTInitBuffer(Buffer b, uint32 f);
 extern void gistdentryinit(GISTSTATE *giststate, int nkey, GISTENTRY *e,
 			   Datum k, Relation r, Page pg, OffsetNumber o,
 			   int b, bool l, bool isNull);
+void gistUserPicksplit(Relation r, GistEntryVector *entryvec, GIST_SPLITVEC *v,
+                IndexTuple *itup, int len, GISTSTATE *giststate);
+
+/* gistvacuum.c */
+extern Datum gistbulkdelete(PG_FUNCTION_ARGS);
+extern Datum gistvacuumcleanup(PG_FUNCTION_ARGS);
 
 #endif	/* GIST_PRIVATE_H */
