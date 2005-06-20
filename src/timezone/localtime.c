@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.10 2005/04/19 03:13:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.11 2005/06/20 08:00:51 neilc Exp $
  */
 
 /*
@@ -81,15 +81,15 @@ static const char *getzname(const char *strp);
 static const char *getnum(const char *strp, int *nump, int min, int max);
 static const char *getsecs(const char *strp, long *secsp);
 static const char *getoffset(const char *strp, long *offsetp);
-static const char *getrule(const char *strp, struct rule * rulep);
-static void gmtload(struct state * sp);
-static void gmtsub(const pg_time_t *timep, long offset, struct pg_tm * tmp);
-static void localsub(const pg_time_t *timep, long offset, struct pg_tm * tmp, const pg_tz *tz);
+static const char *getrule(const char *strp, struct rule *rulep);
+static void gmtload(struct state *sp);
+static void gmtsub(const pg_time_t *timep, long offset, struct pg_tm *tmp);
+static void localsub(const pg_time_t *timep, long offset, struct pg_tm *tmp, const pg_tz *tz);
 static void timesub(const pg_time_t *timep, long offset,
-		const struct state * sp, struct pg_tm * tmp);
+		const struct state *sp, struct pg_tm *tmp);
 static pg_time_t transtime(pg_time_t janfirst, int year,
-						   const struct rule * rulep, long offset);
-int	tzparse(const char *name, struct state * sp, int lastditch);
+						   const struct rule *rulep, long offset);
+int	tzparse(const char *name, struct state *sp, int lastditch);
 
 /* GMT timezone */
 static struct state gmtmem;
@@ -113,8 +113,8 @@ static struct pg_tm tm;
 static long
 detzcode(const char *codep)
 {
-	register long result;
-	register int i;
+	long result;
+	int i;
 
 	result = (codep[0] & 0x80) ? ~0L : 0L;
 	for (i = 0; i < 4; ++i)
@@ -123,16 +123,16 @@ detzcode(const char *codep)
 }
 
 int
-tzload(register const char *name, register struct state * sp)
+tzload(const char *name, struct state *sp)
 {
-	register const char *p;
-	register int i;
-	register int fid;
+	const char *p;
+	int i;
+	int fid;
 
 	if (name == NULL && (name = TZDEFAULT) == NULL)
 		return -1;
 	{
-		register int doaccess;
+		int doaccess;
 		char		fullname[MAXPGPATH];
 
 		if (name[0] == ':')
@@ -209,7 +209,7 @@ tzload(register const char *name, register struct state * sp)
 		}
 		for (i = 0; i < sp->typecnt; ++i)
 		{
-			register struct ttinfo *ttisp;
+			struct ttinfo *ttisp;
 
 			ttisp = &sp->ttis[i];
 			ttisp->tt_gmtoff = detzcode(p);
@@ -227,7 +227,7 @@ tzload(register const char *name, register struct state * sp)
 		sp->chars[i] = '\0';	/* ensure '\0' at end */
 		for (i = 0; i < sp->leapcnt; ++i)
 		{
-			register struct lsinfo *lsisp;
+			struct lsinfo *lsisp;
 
 			lsisp = &sp->lsis[i];
 			lsisp->ls_trans = detzcode(p);
@@ -237,7 +237,7 @@ tzload(register const char *name, register struct state * sp)
 		}
 		for (i = 0; i < sp->typecnt; ++i)
 		{
-			register struct ttinfo *ttisp;
+			struct ttinfo *ttisp;
 
 			ttisp = &sp->ttis[i];
 			if (ttisstdcnt == 0)
@@ -252,7 +252,7 @@ tzload(register const char *name, register struct state * sp)
 		}
 		for (i = 0; i < sp->typecnt; ++i)
 		{
-			register struct ttinfo *ttisp;
+			struct ttinfo *ttisp;
 
 			ttisp = &sp->ttis[i];
 			if (ttisgmtcnt == 0)
@@ -284,9 +284,9 @@ static const int year_lengths[2] = {
  * character.
  */
 static const char *
-getzname(register const char *strp)
+getzname(const char *strp)
 {
-	register char c;
+	char c;
 
 	while ((c = *strp) != '\0' && !is_digit(c) && c != ',' && c != '-' &&
 		   c != '+')
@@ -301,10 +301,10 @@ getzname(register const char *strp)
  * Otherwise, return a pointer to the first character not part of the number.
  */
 static const char *
-getnum(register const char *strp, int *nump, const int min, const int max)
+getnum(const char *strp, int *nump, int min, int max)
 {
-	register char c;
-	register int num;
+	char c;
+	int num;
 
 	if (strp == NULL || !is_digit(c = *strp))
 		return NULL;
@@ -330,7 +330,7 @@ getnum(register const char *strp, int *nump, const int min, const int max)
  * of seconds.
  */
 static const char *
-getsecs(register const char *strp, long *secsp)
+getsecs(const char *strp, long *secsp)
 {
 	int			num;
 
@@ -370,9 +370,9 @@ getsecs(register const char *strp, long *secsp)
  * Otherwise, return a pointer to the first character not part of the time.
  */
 static const char *
-getoffset(register const char *strp, long *offsetp)
+getoffset(const char *strp, long *offsetp)
 {
-	register int neg = 0;
+	int neg = 0;
 
 	if (*strp == '-')
 	{
@@ -396,7 +396,7 @@ getoffset(register const char *strp, long *offsetp)
  * Otherwise, return a pointer to the first character not part of the rule.
  */
 static const char *
-getrule(const char *strp, register struct rule * rulep)
+getrule(const char *strp, struct rule *rulep)
 {
 	if (*strp == 'J')
 	{
@@ -457,13 +457,13 @@ getrule(const char *strp, register struct rule * rulep)
  * calculate the Epoch-relative time that rule takes effect.
  */
 static pg_time_t
-transtime(const pg_time_t janfirst, const int year,
-		  register const struct rule * rulep, const long offset)
+transtime(const pg_time_t janfirst, int year,
+		  const struct rule *rulep, long offset)
 {
-	register int leapyear;
-	register pg_time_t value = 0;
-	register int i;
-	int			d,
+	int leapyear;
+	pg_time_t value = 0;
+	int			i,
+				d,
 				m1,
 				yy0,
 				yy1,
@@ -556,7 +556,7 @@ transtime(const pg_time_t janfirst, const int year,
  */
 
 int
-tzparse(const char *name, register struct state * sp, const int lastditch)
+tzparse(const char *name, struct state *sp, int lastditch)
 {
 	const char *stdname;
 	const char *dstname = NULL;
@@ -564,10 +564,10 @@ tzparse(const char *name, register struct state * sp, const int lastditch)
 	size_t		dstlen;
 	long		stdoffset;
 	long		dstoffset;
-	register pg_time_t *atp;
-	register unsigned char *typep;
-	register char *cp;
-	register int load_result;
+	pg_time_t *atp;
+	unsigned char *typep;
+	char *cp;
+	int load_result;
 
 	stdname = name;
 	if (lastditch)
@@ -614,8 +614,8 @@ tzparse(const char *name, register struct state * sp, const int lastditch)
 		{
 			struct rule start;
 			struct rule end;
-			register int year;
-			register pg_time_t janfirst;
+			int year;
+			pg_time_t janfirst;
 			pg_time_t	starttime;
 			pg_time_t	endtime;
 
@@ -671,12 +671,12 @@ tzparse(const char *name, register struct state * sp, const int lastditch)
 		}
 		else
 		{
-			register long theirstdoffset;
-			register long theirdstoffset;
-			register long theiroffset;
-			register int isdst;
-			register int i;
-			register int j;
+			long theirstdoffset;
+			long theirdstoffset;
+			long theiroffset;
+			int isdst;
+			int i;
+			int j;
 
 			if (*name != '\0')
 				return -1;
@@ -798,7 +798,7 @@ tzparse(const char *name, register struct state * sp, const int lastditch)
 }
 
 static void
-gmtload(struct state * sp)
+gmtload(struct state *sp)
 {
 	if (tzload(gmt, sp) != 0)
 		(void) tzparse(gmt, sp, TRUE);
@@ -814,11 +814,11 @@ gmtload(struct state * sp)
  * The unused offset argument is for the benefit of mktime variants.
  */
 static void
-localsub(const pg_time_t *timep, const long offset, struct pg_tm * tmp, const pg_tz *tz)
+localsub(const pg_time_t *timep, long offset, struct pg_tm *tmp, const pg_tz *tz)
 {
- 	register const struct state *sp;
-	register const struct ttinfo *ttisp;
-	register int i;
+ 	const struct state *sp;
+	const struct ttinfo *ttisp;
+	int i;
 	const pg_time_t t = *timep;
 
 	sp = &tz->state;
@@ -859,7 +859,7 @@ pg_localtime(const pg_time_t *timep, const pg_tz *tz)
  * gmtsub is to gmtime as localsub is to localtime.
  */
 static void
-gmtsub(const pg_time_t *timep, const long offset, struct pg_tm * tmp)
+gmtsub(const pg_time_t *timep, long offset, struct pg_tm *tmp)
 {
 	if (!gmt_is_set)
 	{
@@ -888,21 +888,21 @@ pg_gmtime(const pg_time_t *timep)
 
 
 static void
-timesub(const pg_time_t *timep, const long offset,
-		register const struct state * sp, register struct pg_tm * tmp)
+timesub(const pg_time_t *timep, long offset,
+		const struct state *sp, struct pg_tm *tmp)
 {
-	register const struct lsinfo *lp;
+	const struct lsinfo *lp;
 
 	/* expand days to 64 bits to support full Julian-day range */
-	register int64 days;
-	register int idays;
-	register long rem;
-	register int y;
-	register int yleap;
-	register const int *ip;
-	register long corr;
-	register int hit;
-	register int i;
+	int64 days;
+	int idays;
+	long rem;
+	int y;
+	int yleap;
+	const int *ip;
+	long corr;
+	int hit;
+	int i;
 
 	corr = 0;
 	hit = 0;
@@ -979,7 +979,7 @@ timesub(const pg_time_t *timep, const long offset,
 #define LEAPS_THRU_END_OF(y)	(((y) + 4800) / 4 - ((y) + 4800) / 100 + ((y) + 4800) / 400)
 	while (days < 0 || days >= (int64) year_lengths[yleap = isleap(y)])
 	{
-		register int newy;
+		int newy;
 
 		newy = y + days / DAYSPERNYEAR;
 		if (days < 0)
@@ -1029,8 +1029,8 @@ pg_next_dst_boundary(const pg_time_t *timep,
 					 int *after_isdst,
 	                 const pg_tz *tz)
 {
-	register const struct state *sp;
-	register const struct ttinfo *ttisp;
+	const struct state *sp;
+	const struct ttinfo *ttisp;
 	int i;
 	int j;
 	const pg_time_t t = *timep;

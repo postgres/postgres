@@ -15,7 +15,7 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.6 2005/04/19 03:13:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/strftime.c,v 1.7 2005/06/20 08:00:51 neilc Exp $
  */
 
 #include "postgres.h"
@@ -102,7 +102,7 @@ static char *_fmt(const char *, const struct pg_tm *, char *,
 
 size_t
 pg_strftime(char *s, size_t maxsize, const char *format,
-			const struct pg_tm * t)
+			const struct pg_tm *t)
 {
 	char	   *p;
 	int			warn;
@@ -116,7 +116,7 @@ pg_strftime(char *s, size_t maxsize, const char *format,
 }
 
 static char *
-_fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
+_fmt(const char *format, const struct pg_tm *t, char *pt, const char *ptlim,
 	 int *warnp)
 {
 	for (; *format; ++format)
@@ -467,7 +467,7 @@ _fmt(const char *format, const struct pg_tm * t, char *pt, const char *ptlim,
 }
 
 static char *
-_conv(const int n, const char *format, char *pt, const char *ptlim)
+_conv(int n, const char *format, char *pt, const char *ptlim)
 {
 	char		buf[INT_STRLEN_MAXIMUM(int) +1];
 

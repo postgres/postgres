@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.34 2005/06/19 21:34:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.35 2005/06/20 08:00:51 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ static void scan_available_timezones(char *tzdir, char *tzdirsub,
  * Get GMT offset from a system struct tm
  */
 static int
-get_timezone_offset(struct tm * tm)
+get_timezone_offset(struct tm *tm)
 {
 #if defined(HAVE_STRUCT_TM_TM_ZONE)
 	return tm->tm_gmtoff;
@@ -128,7 +128,7 @@ build_time_t(int year, int month, int day)
  * Does a system tm value match one we computed ourselves?
  */
 static bool
-compare_tm(struct tm * s, struct pg_tm * p)
+compare_tm(struct tm *s, struct pg_tm *p)
 {
 	if (s->tm_sec != p->tm_sec ||
 		s->tm_min != p->tm_min ||
@@ -155,7 +155,7 @@ compare_tm(struct tm * s, struct pg_tm * p)
  * test time.
  */
 static int
-score_timezone(const char *tzname, struct tztry * tt)
+score_timezone(const char *tzname, struct tztry *tt)
 {
 	int			i;
 	pg_time_t	pgtt;
