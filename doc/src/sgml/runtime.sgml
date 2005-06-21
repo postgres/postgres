@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.329 2005/06/17 22:32:42 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.330 2005/06/21 04:02:30 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -54,8 +54,13 @@ $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.329 2005/06/17 22:32:42 tgl Exp
    (<acronym>SQL</acronym> uses the term catalog cluster.) A
    database cluster is a collection of databases that is managed by a
    single instance of a running database server. After initialization, a
-   database cluster will contain a database named
-   <literal>template1</literal>. As the name suggests, this will be used
+   database cluster will contain a database named <literal>postgres</literal>,
+   which is meant as a default database for use by utilities, users and third
+   party applications.  The database server itself does not require the
+   <literal>postgres</literal> database to exist, but many external utility
+   programs assume it exists.  Another database created within each cluster
+   during initialization is called
+   <literal>template1</literal>.  As the name suggests, this will be used
    as a template for subsequently created databases; it should not be
    used for actual work.  (See <xref linkend="managing-databases"> for
    information about creating new databases within a cluster.)
@@ -5319,7 +5324,7 @@ ssh -L 3333:foo.com:5432 joe@foo.com
    to connect to. In order to connect to the database server using
    this tunnel, you connect to port 3333 on the local machine:
 <programlisting>
-psql -h localhost -p 3333 template1
+psql -h localhost -p 3333 postgres
 </programlisting>
    To the database server it will then look as though you are really
    user <literal>joe@foo.com</literal> and it will use whatever

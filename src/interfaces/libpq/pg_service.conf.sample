@@ -4,13 +4,13 @@
 # A service is a set of named connection parameters.  You may specify
 # multiple services in this file.  Each starts with a service name in  
 # brackets.  Subsequent lines have connection configuration parameters of
-# the pattern  "param=value".  A sample configuration for template1 is 
+# the pattern  "param=value".  A sample configuration for postgres is 
 # included in this file.  Lines beginning with '#' are comments.
 #
 # Copy this to your sysconf directory (typically /usr/local/pgsql/etc) and
 # rename it pg_service.conf.
 #
 #
-#[template1]
-#dbname=template1
+#[postgres]
+#dbname=postgres
 #user=postgres

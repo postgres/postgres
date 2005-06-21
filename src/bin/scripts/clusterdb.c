@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.12 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.13 2005/06/21 04:02:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,7 +207,7 @@ cluster_all_databases(const char *host, const char *port,
 	PGresult   *result;
 	int			i;
 
-	conn = connectDatabase("template1", host, port, username, password, progname);
+	conn = connectDatabase("postgres", host, port, username, password, progname);
 	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn;", progname, echo);
 	PQfinish(conn);
 

@@ -37,7 +37,7 @@ Outputs
 
 Example usage
 
-select * from dblink('dbname=template1','select proname, prosrc from pg_proc')
+select * from dblink('dbname=postgres','select proname, prosrc from pg_proc')
  as t1(proname name, prosrc text) where proname like 'bytea%';
   proname   |   prosrc
 ------------+------------
@@ -55,7 +55,7 @@ select * from dblink('dbname=template1','select proname, prosrc from pg_proc')
  byteaout   | byteaout
 (12 rows)
 
-select dblink_connect('dbname=template1');
+select dblink_connect('dbname=postgres');
  dblink_connect
 ----------------
  OK
@@ -111,7 +111,7 @@ A more convenient way to use dblink may be to create a view:
 
  create view myremote_pg_proc as
  select *
- from dblink('dbname=template1','select proname, prosrc from pg_proc')
+ from dblink('dbname=postgres','select proname, prosrc from pg_proc')
  as t1(proname name, prosrc text);
 
 Then you can simply write:

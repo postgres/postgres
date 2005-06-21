@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.72 2005/04/16 16:50:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.73 2005/06/21 04:02:29 tgl Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -647,6 +647,7 @@ $ <userinput>psql -l</userinput>
  euc_kr        | t-ishii | EUC_KR
  euc_tw        | t-ishii | EUC_TW
  mule_internal | t-ishii | MULE_INTERNAL
+ postgres      | t-ishii | EUC_JP
  regression    | t-ishii | SQL_ASCII
  template1     | t-ishii | EUC_JP
  test          | t-ishii | EUC_JP

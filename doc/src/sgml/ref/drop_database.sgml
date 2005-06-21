@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.19 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.20 2005/06/21 04:02:31 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -32,7 +32,7 @@ DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
    catalog entries for the database and deletes the directory
    containing the data.  It can only be executed by the database owner.
    Also, it cannot be executed while you or anyone else are connected
-   to the target database.  (Connect to <literal>template1</literal> or any
+   to the target database.  (Connect to <literal>postgres</literal> or any
    other database to issue this command.) 
   </para>
 

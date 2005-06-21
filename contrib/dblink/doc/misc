@@ -17,10 +17,10 @@ Outputs
 
 Example usage
 
-test=# select dblink_current_query() from (select dblink('dbname=template1','select oid, proname from pg_proc where proname = ''byteacat''') as f1) as t1;
+test=# select dblink_current_query() from (select dblink('dbname=postgres','select oid, proname from pg_proc where proname = ''byteacat''') as f1) as t1;
                                                                 dblink_current_query
 -----------------------------------------------------------------------------------------------------------------------------------------------------
- select dblink_current_query() from (select dblink('dbname=template1','select oid, proname from pg_proc where proname = ''byteacat''') as f1) as t1;
+ select dblink_current_query() from (select dblink('dbname=postgres','select oid, proname from pg_proc where proname = ''byteacat''') as f1) as t1;
 (1 row)
 
 ==================================================================

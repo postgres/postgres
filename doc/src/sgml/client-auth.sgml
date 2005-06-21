@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.80 2005/06/04 20:42:41 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.81 2005/06/21 04:02:29 tgl Exp $
 -->
 
 <chapter id="client-authentication">
@@ -452,17 +452,17 @@ host    all         all         127.0.0.1/32          trust
 host    all         all         127.0.0.1     255.255.255.255     trust     
 
 # Allow any user from any host with IP address 192.168.93.x to connect
-# to database "template1" as the same user name that ident reports for
+# to database "postgres" as the same user name that ident reports for
 # the connection (typically the Unix user name).
 # 
 # TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
-host    template1   all         192.168.93.0/24       ident sameuser
+host    postgres   all         192.168.93.0/24       ident sameuser
 
 # Allow a user from host 192.168.12.10 to connect to database
-# "template1" if the user's password is correctly supplied.
+# "postgres" if the user's password is correctly supplied.
 # 
 # TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
-host    template1   all         192.168.12.10/32      md5
+host    postgres    all         192.168.12.10/32      md5
 
 # In the absence of preceding "host" lines, these two lines will
 # reject all connection from 192.168.54.1 (since that entry will be

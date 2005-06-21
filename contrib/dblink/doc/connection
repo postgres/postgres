@@ -28,13 +28,13 @@ Outputs
 
 Example usage
 
-select dblink_connect('dbname=template1');
+select dblink_connect('dbname=postgres');
  dblink_connect
 ----------------
  OK
 (1 row)
 
-select dblink_connect('myconn','dbname=template1');
+select dblink_connect('myconn','dbname=postgres');
  dblink_connect
 ----------------
  OK

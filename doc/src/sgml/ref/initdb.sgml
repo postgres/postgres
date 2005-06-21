@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.34 2005/02/22 02:54:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.35 2005/06/21 04:02:31 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -47,9 +47,12 @@ PostgreSQL documentation
    which the database data will live, generating the shared catalog
    tables (tables that belong to the whole cluster rather than to any
    particular database), and creating the <literal>template1</literal>
-   database. When you later create a new database, everything in the
-   <literal>template1</literal> database is copied. It contains catalog
-   tables containing things like built-in data types.
+   and <literal>postgres</literal> databases. When you later create a 
+   new database, everything in the <literal>template1</literal> database is 
+   copied.  (Therefore, anything installed in <literal>template1</literal>
+   is automatically copied into each database created later.)
+   The <literal>postgres</literal> database is a default database meant
+   for use by users, utilities and third party applications.
   </para>
 
   <para>

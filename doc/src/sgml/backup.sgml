@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.66 2005/06/20 13:52:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.67 2005/06/21 04:02:29 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -177,11 +177,11 @@ pg_dumpall &gt; <replaceable>outfile</>
 </synopsis>
     The resulting dump can be restored with <application>psql</>:
 <synopsis>
-psql -f <replaceable class="parameter">infile</replaceable> template1
+psql -f <replaceable class="parameter">infile</replaceable> postgres
 </synopsis>
     (Actually, you can specify any existing database name to start from,
-    but if you are reloading in an empty cluster then <literal>template1</>
-    is the only available choice.)  It is always necessary to have
+    but if you are reloading in an empty cluster then <literal>postgres</>
+    should generally be used.)  It is always necessary to have
     database superuser access when restoring a <application>pg_dumpall</>
     dump, as that is required to restore the user and group information.
    </para>
@@ -1223,7 +1223,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    in parallel, on different ports. Then you can use something like
 
 <programlisting>
-pg_dumpall -p 5432 | psql -d template1 -p 6543
+pg_dumpall -p 5432 | psql -d postgres -p 6543
 </programlisting>
 
    to transfer your data.  Or use an intermediate file if you want.
@@ -1256,7 +1256,7 @@ cd ~/postgresql-&version;
 gmake install
 initdb -D /usr/local/pgsql/data
 postmaster -D /usr/local/pgsql/data
-psql -f backup template1
+psql -f backup postgres
 </programlisting>
 
    See <xref linkend="runtime"> about ways to start and stop the

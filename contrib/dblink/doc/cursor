@@ -44,7 +44,7 @@ Note
 
 Example usage
 
-test=# select dblink_connect('dbname=template1');
+test=# select dblink_connect('dbname=postgres');
  dblink_connect
 ----------------
  OK
@@ -94,7 +94,7 @@ Outputs
 
 Example usage
 
-test=# select dblink_connect('dbname=template1');
+test=# select dblink_connect('dbname=postgres');
  dblink_connect
 ----------------
  OK
@@ -175,7 +175,7 @@ Note
 
 Example usage
 
-test=# select dblink_connect('dbname=template1');
+test=# select dblink_connect('dbname=postgres');
  dblink_connect
 ----------------
  OK

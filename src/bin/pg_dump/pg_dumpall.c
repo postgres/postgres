@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.59 2005/04/18 23:47:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.60 2005/06/21 04:02:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,13 +297,13 @@ main(int argc, char *argv[])
 	}
 
 
-	conn = connectDatabase("template1", pghost, pgport, pguser, force_password);
+	conn = connectDatabase("postgres", pghost, pgport, pguser, force_password);
 
 	printf("--\n-- PostgreSQL database cluster dump\n--\n\n");
 	if (verbose)
 		dumpTimestamp("Started on");
 
-	printf("\\connect \"template1\"\n\n");
+	printf("\\connect \"postgres\"\n\n");
 
 	if (!data_only)
 	{
@@ -880,7 +880,7 @@ runPgDump(const char *dbname)
 	/*
 	 * Win32 has to use double-quotes for args, rather than single quotes.
 	 * Strangely enough, this is the only place we pass a database name on
-	 * the command line, except template1 that doesn't need quoting.
+	 * the command line, except "postgres" which doesn't need quoting.
 	 */
 #ifndef WIN32
 	appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp '", SYSTEMQUOTE, pg_dump_bin,

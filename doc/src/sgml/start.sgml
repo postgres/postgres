@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.38 2005/01/08 01:44:08 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.39 2005/06/21 04:02:30 tgl Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -183,7 +183,7 @@ createdb: command not found
    <para>
     Another response could be this:
 <screen>
-createdb: could not connect to database template1: could not connect to server:
+createdb: could not connect to database postgres: could not connect to server:
 No such file or directory
         Is the server running locally and accepting
         connections on Unix domain socket "/tmp/.s.PGSQL.5432"?
@@ -196,7 +196,7 @@ No such file or directory
    <para>
     Another response could be this:
 <screen>
-createdb: could not connect to database template1: FATAL:  user "joe" does not
+createdb: could not connect to database postgres: FATAL:  user "joe" does not
 exist
 </screen>
     where your own login name is mentioned.  This will happen if the

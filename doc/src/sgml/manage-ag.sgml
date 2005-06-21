@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.41 2005/06/13 02:40:04 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.42 2005/06/21 04:02:30 tgl Exp $
 -->
 
 <chapter id="managing-databases">
@@ -113,17 +113,20 @@ CREATE DATABASE <replaceable>name</>;
    <command>initdb</> command when the data storage area is
    initialized. (See <xref linkend="creating-cluster">.)  This
    database is called
-   <literal>template1</>.<indexterm><primary>template1</></> So to
-   create the first <quote>real</> database you can connect to
-   <literal>template1</>.
+   <literal>postgres</>.<indexterm><primary>postgres</></> So to
+   create the first <quote>ordinary</> database you can connect to
+   <literal>postgres</>.
   </para>
 
   <para>
-   The name <literal>template1</literal> is no accident: when a new
-   database is created, the template database is essentially cloned.
+   A second database,
+   <literal>template1</literal>,<indexterm><primary>template1</></>
+   is also created by
+   <command>initdb</>.  Whenever a new database is created within the
+   cluster, <literal>template1</literal> is essentially cloned.
    This means that any changes you make in <literal>template1</> are
-   propagated to all subsequently created databases. This implies that
-   you should not use the template database for real work, but when
+   propagated to all subsequently created databases. Therefore it is
+   unwise to use <literal>template1</> for real work, but when
    used judiciously this feature can be convenient.  More details
    appear in <xref linkend="manage-ag-templatedbs">.
   </para>
@@ -137,7 +140,7 @@ CREATE DATABASE <replaceable>name</>;
 createdb <replaceable class="parameter">dbname</replaceable>
 </synopsis>
 
-   <command>createdb</> does no magic. It connects to the <literal>template1</>
+   <command>createdb</> does no magic. It connects to the <literal>postgres</>
    database and issues the <command>CREATE DATABASE</> command,
    exactly as described above.
    The <xref linkend="app-createdb"> reference page contains the invocation
@@ -268,12 +271,18 @@ createdb -T template0 <replaceable>dbname</>
    <para>
     <literal>template1</> and <literal>template0</> do not have any special
     status beyond the fact that the name <literal>template1</> is the default
-    source database name for <command>CREATE DATABASE</> and the default
-    database-to-connect-to for various programs such as <command>createdb</>.
+    source database name for <command>CREATE DATABASE</>.
     For example, one could drop <literal>template1</> and recreate it from
     <literal>template0</> without any ill effects.  This course of action
     might be advisable if one has carelessly added a bunch of junk in
     <literal>template1</>.
+   </para>
+
+   <para>
+    The <literal>postgres</> database is also created when a database
+    cluster is initialized.  This database is meant as a default database for
+    users and applications to connect to. It is simply a copy of
+    <literal>template1</> and may be dropped and recreated if required.
    </para>
   </note>
  </sect1>

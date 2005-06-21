@@ -8,13 +8,18 @@
  *
  * To create the database cluster, we create the directory that contains
  * all its data, create the files that hold the global tables, create
- * a few other control files for it, and create two databases: the
- * template0 and template1 databases.
+ * a few other control files for it, and create three databases: the
+ * template databases "template0" and "template1", and a default user
+ * database "postgres".
  *
  * The template databases are ordinary PostgreSQL databases.  template0
  * is never supposed to change after initdb, whereas template1 can be
  * changed to add site-local standard data.  Either one can be copied
  * to produce a new database.
+ *
+ * For largely-historical reasons, the template1 database is the one built
+ * by the basic bootstrap process.  After it is complete, template0 and
+ * the default database, postgres, are made just by copying template1.
  *
  * To create template1, we run the postgres (backend) program in bootstrap
  * mode and feed it data from the postgres.bki library file.  After this
@@ -23,11 +28,9 @@
  * just embedded into this program (yeah, it's ugly), but larger chunks
  * are taken from script files.
  *
- * template0 is made just by copying the completed template1.
  *
  * Note:
  *	 The program has some memory leakage - it isn't worth cleaning it up.
- *
  *
  * This is a C implementation of the previous shell script for setting up a
  * PostgreSQL cluster location, and should be highly compatible with it.
@@ -39,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.84 2005/06/17 22:32:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.85 2005/06/21 04:02:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,6 +181,7 @@ static void set_info_version(void);
 static void setup_schema(void);
 static void vacuum_db(void);
 static void make_template0(void);
+static void make_postgres(void);
 static void trapsig(int signum);
 static void check_ok(void);
 static char *escape_quotes(const char *src);
@@ -1846,7 +1850,7 @@ make_template0(void)
 		 * We use the OID of template0 to determine lastsysoid
 		 */
 		"UPDATE pg_database SET datlastsysoid = "
-		"    (SELECT oid::int4 - 1 FROM pg_database "
+		"    (SELECT oid FROM pg_database "
 		"    WHERE datname = 'template0');\n",
 
 		/*
@@ -1875,6 +1879,37 @@ make_template0(void)
 	PG_CMD_OPEN;
 
 	for (line = template0_setup; *line; line++)
+		PG_CMD_PUTS(*line);
+
+	PG_CMD_CLOSE;
+
+	check_ok();
+}
+
+/*
+ * copy template1 to postgres
+ */
+static void
+make_postgres(void)
+{
+	PG_CMD_DECL;
+	char	  **line;
+	static char *postgres_setup[] = {
+		"CREATE DATABASE postgres;\n",
+		NULL
+	};
+
+	fputs(_("copying template1 to postgres ... "), stdout);
+	fflush(stdout);
+
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s\" %s template1 >%s",
+			 backend_exec, backend_options,
+			 DEVNULL);
+
+	PG_CMD_OPEN;
+
+	for (line = postgres_setup; *line; line++)
 		PG_CMD_PUTS(*line);
 
 	PG_CMD_CLOSE;
@@ -2609,6 +2644,8 @@ main(int argc, char *argv[])
 
 	make_template0();
 
+	make_postgres();
+    
 	if (authwarning != NULL)
 		fprintf(stderr, "%s", authwarning);
 

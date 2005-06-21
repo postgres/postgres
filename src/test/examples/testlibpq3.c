@@ -51,14 +51,14 @@ main(int argc, char **argv)
 
 	/*
 	 * If the user supplies a parameter on the command line, use it as the
-	 * conninfo string; otherwise default to setting dbname=template1 and
+	 * conninfo string; otherwise default to setting dbname=postgres and
 	 * using environment variables or defaults for all other connection
 	 * parameters.
 	 */
 	if (argc > 1)
 		conninfo = argv[1];
 	else
-		conninfo = "dbname = template1";
+		conninfo = "dbname = postgres";
 
 	/* Make a connection to the database */
 	conn = PQconnectdb(conninfo);

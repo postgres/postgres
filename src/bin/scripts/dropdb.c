@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/dropdb.c,v 1.14 2004/12/31 22:03:17 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/dropdb.c,v 1.15 2005/06/21 04:02:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,8 @@ main(int argc, char *argv[])
 	appendPQExpBuffer(&sql, "DROP DATABASE %s;\n",
 					  fmtId(dbname));
 
-	conn = connectDatabase("template1", host, port, username, password, progname);
+	conn = connectDatabase(strcmp(dbname, "postgres") == 0 ? "template1" : "postgres",
+						   host, port, username, password, progname);
 
 	if (echo)
 		printf("%s", sql.data);

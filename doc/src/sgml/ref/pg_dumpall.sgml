@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.49 2005/05/29 03:32:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.50 2005/06/21 04:02:31 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -401,7 +401,7 @@ PostgreSQL documentation
   <para>
    To reload this database use, for example:
 <screen>
-<prompt>$</prompt> <userinput>psql -f db.out template1</userinput>
+<prompt>$</prompt> <userinput>psql -f db.out postgres</userinput>
 </screen>
    (It is not important to which database you connect here since the
    script file created by <application>pg_dumpall</application> will

@@ -159,7 +159,7 @@ Any number	(rules 5,6) -- creates a zero-length segment (a point,
 		boundaries. For example, it adds an extra digit to the lower
 		boundary if the resulting interval includes a power of ten:
 
-		template1=> select '10(+-)1'::seg as seg;
+		postgres=> select '10(+-)1'::seg as seg;
 		      seg
 		---------
 		9.0 .. 11 -- should be: 9 .. 11

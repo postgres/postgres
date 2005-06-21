@@ -13,7 +13,7 @@ int main()
    if (getenv("SQLOPT")) ECPGdebug(1,stderr);
 
    exec sql whenever sqlerror do sqlprint();
-   exec sql connect to template1;
+   exec sql connect to postgres;
    
    exec sql allocate descriptor mydesc;
    exec sql select tablename into descriptor mydesc from pg_tables;

@@ -1,6 +1,6 @@
 #!/bin/sh
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
-# Package : reindexdb                 Version : $Revision: 1.5 $
+# Package : reindexdb                 Version : $Revision: 1.6 $
 # Date    : 05/08/2002                Author  : Shaun Thomas
 # Req     : psql, sh, perl, sed         Type  : Utility
 #
@@ -174,7 +174,7 @@ if [ "$alldb" ]; then
   # connect to.  That's the list we'll be using.  It's also why it's
   # a good idea for this to be run as a super-user.
   sql='SELECT datname FROM pg_database WHERE datallowconn'
-  dbname=`$PSQL $PSQLOPT -q -t -A -d template1 -c "$sql"`
+  dbname=`$PSQL $PSQLOPT -q -t -A -d postgres -c "$sql"`
 
 # Ok, if it's not all databases, make sure at least one database is
 # specified before continuing.
