@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.136 2004/12/31 21:59:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.136.4.1 2005/06/21 01:23:25 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1083,16 +1083,16 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 	token = lfirst(line_item);
 	file_map = token;
 
-	/* Get the ident user token (must be provided) */
+	/* Get the ident user token */
 	line_item = lnext(line_item);
-	if (!line)
+	if (!line_item)
 		goto ident_syntax;
 	token = lfirst(line_item);
 	file_ident_user = token;
 
 	/* Get the PG username token */
 	line_item = lnext(line_item);
-	if (!line)
+	if (!line_item)
 		goto ident_syntax;
 	token = lfirst(line_item);
 	file_pguser = token;
@@ -1102,21 +1102,14 @@ parse_ident_usermap(List *line, int line_number, const char *usermap_name,
 		strcmp(file_pguser, pg_user) == 0 &&
 		strcmp(file_ident_user, ident_user) == 0)
 		*found_p = true;
+
 	return;
 
 ident_syntax:
-	if (line_item)
-		ereport(LOG,
-				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("invalid entry in file \"%s\" at line %d, token \"%s\"",
-						IdentFileName, line_number,
-						(const char *) lfirst(line_item))));
-	else
-		ereport(LOG,
-				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-		  errmsg("missing entry in file \"%s\" at end of line %d",
-				 IdentFileName, line_number)));
-
+	ereport(LOG,
+			(errcode(ERRCODE_CONFIG_FILE_ERROR),
+			 errmsg("missing entry in file \"%s\" at end of line %d",
+					IdentFileName, line_number)));
 	*error_p = true;
 }
 
