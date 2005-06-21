@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.131 2005/06/14 17:43:14 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.132 2005/06/21 00:48:33 neilc Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1909,13 +1909,8 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		result = NULL;
 
 		/* Set up suitably-escaped copies of textual inputs */
-		if (text)
-		{
-			e_text = pg_malloc(strlen(text) *2 + 1);
-			PQescapeString(e_text, text, strlen(text));
-		}
-		else
-			e_text = NULL;
+		e_text = pg_malloc(string_length * 2 + 1);
+		PQescapeString(e_text, text, string_length);
 
 		if (completion_info_charp)
 		{
@@ -2035,9 +2030,7 @@ _complete_from_query(int is_schema_query, const char *text, int state)
 		result = exec_query(query_buffer.data);
 
 		termPQExpBuffer(&query_buffer);
-
-		if (e_text)
-			free(e_text);
+		free(e_text);
 		if (e_info_charp)
 			free(e_info_charp);
 	}
