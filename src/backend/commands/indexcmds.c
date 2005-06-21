@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.131 2005/05/06 17:24:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.132 2005/06/21 00:35:05 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -760,8 +760,7 @@ makeObjectName(const char *name1, const char *name2, const char *label)
 			name2chars--;
 	}
 
-	if (name1)
-		name1chars = pg_mbcliplen(name1, name1chars, name1chars);
+	name1chars = pg_mbcliplen(name1, name1chars, name1chars);
 	if (name2)
 		name2chars = pg_mbcliplen(name2, name2chars, name2chars);
 
