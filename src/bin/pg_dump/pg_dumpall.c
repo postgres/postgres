@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.60 2005/06/21 04:02:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.61 2005/06/21 15:22:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,7 +303,7 @@ main(int argc, char *argv[])
 	if (verbose)
 		dumpTimestamp("Started on");
 
-	printf("\\connect \"postgres\"\n\n");
+	printf("\\connect postgres\n\n");
 
 	if (!data_only)
 	{
@@ -661,40 +661,43 @@ dumpCreateDB(PGconn *conn)
 		char	   *dbtablespace = PQgetvalue(res, i, 5);
 		char	   *fdbname;
 
-		if (strcmp(dbname, "template1") == 0)
-			continue;
-
 		buf = createPQExpBuffer();
-
-		/* needed for buildACLCommands() */
 		fdbname = strdup(fmtId(dbname));
 
-		if (output_clean)
-			appendPQExpBuffer(buf, "DROP DATABASE %s;\n", fdbname);
-
-		appendPQExpBuffer(buf, "CREATE DATABASE %s", fdbname);
-
-		appendPQExpBuffer(buf, " WITH TEMPLATE = template0");
-
-		if (strlen(dbowner) != 0)
-			appendPQExpBuffer(buf, " OWNER = %s",
-							  fmtId(dbowner));
-
-		appendPQExpBuffer(buf, " ENCODING = ");
-		appendStringLiteral(buf, dbencoding, true);
-
-		/* Output tablespace if it isn't default */
-		if (strcmp(dbtablespace, "pg_default") != 0)
-			appendPQExpBuffer(buf, " TABLESPACE = %s",
-							  fmtId(dbtablespace));
-
-		appendPQExpBuffer(buf, ";\n");
-
-		if (strcmp(dbistemplate, "t") == 0)
+		/*
+		 * Skip the CREATE DATABASE commands for "template1" and "postgres",
+		 * since they are presumably already there in the destination cluster.
+		 * We do want to emit their ACLs and config options if any, however.
+		 */
+		if (strcmp(dbname, "template1") != 0 &&
+			strcmp(dbname, "postgres") != 0)
 		{
-			appendPQExpBuffer(buf, "UPDATE pg_database SET datistemplate = 't' WHERE datname = ");
-			appendStringLiteral(buf, dbname, true);
+			if (output_clean)
+				appendPQExpBuffer(buf, "DROP DATABASE %s;\n", fdbname);
+
+			appendPQExpBuffer(buf, "CREATE DATABASE %s", fdbname);
+
+			appendPQExpBuffer(buf, " WITH TEMPLATE = template0");
+
+			if (strlen(dbowner) != 0)
+				appendPQExpBuffer(buf, " OWNER = %s", fmtId(dbowner));
+
+			appendPQExpBuffer(buf, " ENCODING = ");
+			appendStringLiteral(buf, dbencoding, true);
+
+			/* Output tablespace if it isn't default */
+			if (strcmp(dbtablespace, "pg_default") != 0)
+				appendPQExpBuffer(buf, " TABLESPACE = %s",
+								  fmtId(dbtablespace));
+
 			appendPQExpBuffer(buf, ";\n");
+
+			if (strcmp(dbistemplate, "t") == 0)
+			{
+				appendPQExpBuffer(buf, "UPDATE pg_database SET datistemplate = 't' WHERE datname = ");
+				appendStringLiteral(buf, dbname, true);
+				appendPQExpBuffer(buf, ";\n");
+			}
 		}
 
 		if (!skip_acls &&
@@ -708,11 +711,12 @@ dumpCreateDB(PGconn *conn)
 		}
 
 		printf("%s", buf->data);
-		destroyPQExpBuffer(buf);
-		free(fdbname);
 
 		if (server_version >= 70300)
 			dumpDatabaseConfig(conn, dbname);
+
+		destroyPQExpBuffer(buf);
+		free(fdbname);
 	}
 
 	PQclear(res);
