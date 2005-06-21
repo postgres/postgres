@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.64 2005/05/25 21:40:41 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.65 2005/06/21 20:45:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
 
-#define LOBBUFSIZE 32768
+#define LOBBUFSIZE 16384
 
 /*
  * Note: zlib.h must be included *after* libpq-fe.h, because the latter may
@@ -88,8 +88,6 @@ typedef z_stream *z_streamp;
 
 #define K_VERS_MAX (( (1 * 256 + 10) * 256 + 255) * 256 + 0)
 
-/* No of BLOBs to restore in 1 TX */
-#define BLOB_BATCH_SIZE 100
 
 /* Flags to indicate disposition of offsets stored in files */
 #define K_OFFSET_POS_NOT_SET 1
@@ -239,9 +237,6 @@ typedef struct _archiveHandle
 	char	   *archdbname;		/* DB name *read* from archive */
 	bool		requirePassword;
 	PGconn	   *connection;
-	PGconn	   *blobConnection; /* Connection for BLOB xref */
-	int			txActive;		/* Flag set if TX active on connection */
-	int			blobTxActive;	/* Flag set if TX active on blobConnection */
 	int			connectToDB;	/* Flag to indicate if direct DB
 								 * connection is required */
 	int			pgCopyIn;		/* Currently in libpq 'COPY IN' mode. */
@@ -250,7 +245,6 @@ typedef struct _archiveHandle
 
 	int			loFd;			/* BLOB fd */
 	int			writingBlob;	/* Flag */
-	int			createdBlobXref;	/* Flag */
 	int			blobCount;		/* # of blobs restored */
 
 	char	   *fSpec;			/* Archive File Spec */

@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.30 2005/01/25 22:44:31 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.31 2005/06/21 20:45:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,10 +314,9 @@ _StartData(ArchiveHandle *AH, TocEntry *te)
  * called for both BLOB and TABLE data; it is the responsibility of
  * the format to manage each kind of data using StartBlob/StartData.
  *
- * It should only be called from withing a DataDumper routine.
+ * It should only be called from within a DataDumper routine.
  *
  * Mandatory.
- *
  */
 static size_t
 _WriteData(ArchiveHandle *AH, const void *data, size_t dLen)
@@ -360,7 +359,6 @@ _EndData(ArchiveHandle *AH, TocEntry *te)
  * It is called just prior to the dumper's DataDumper routine.
  *
  * Optional, but strongly recommended.
- *
  */
 static void
 _StartBlobs(ArchiveHandle *AH, TocEntry *te)
@@ -396,7 +394,6 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
  * Called by the archiver when the dumper calls EndBlob.
  *
  * Optional.
- *
  */
 static void
 _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
@@ -408,7 +405,6 @@ _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
  * Called by the archiver when finishing saving all BLOB DATA.
  *
  * Optional.
- *
  */
 static void
 _EndBlobs(ArchiveHandle *AH, TocEntry *te)
@@ -487,9 +483,6 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 			break;
 
 		case BLK_BLOBS:
-			if (!AH->connection)
-				die_horribly(AH, modulename, "large objects cannot be loaded without a database connection\n");
-
 			_LoadBlobs(AH);
 			break;
 
@@ -870,7 +863,6 @@ _readBlockHeader(ArchiveHandle *AH, int *type, int *id)
 /*
  * If zlib is available, then startit up. This is called from
  * StartData & StartBlob. The buffers are setup in the Init routine.
- *
  */
 static void
 _StartDataCompressor(ArchiveHandle *AH, TocEntry *te)

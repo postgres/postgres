@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.236 2005/06/21 04:02:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.237 2005/06/21 20:45:43 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -387,14 +387,6 @@ su - postgres
      If you need to preserve OIDs (such as when using them as
      foreign keys), then use the <option>-o</option> option when running
      <application>pg_dumpall</>.
-    </para>
-
-    <para>
-     <application>pg_dumpall</application> does not
-     save large objects.  Check
-     <![%standalone-include[the documentation]]>
-     <![%standalone-ignore[<xref linkend="backup-dump-caveats">]]>
-     if you need to do this.
     </para>
 
     <para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.50 2005/06/21 04:02:31 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.51 2005/06/21 20:45:43 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -41,16 +41,6 @@ PostgreSQL documentation
    (<application>pg_dump</application> does not save these objects.)
    This currently includes information about database users and
    groups, and access permissions that apply to databases as a whole.
-  </para>
-
-  <para>
-   Thus, <application>pg_dumpall</application> is an integrated
-   solution for backing up your databases.  But note a limitation:
-   it cannot dump <quote>large objects</quote>, since
-   <application>pg_dump</application> cannot dump such objects into
-   text files.  If you have databases containing large objects,
-   they should be dumped using one of <application>pg_dump</application>'s
-   non-text output modes.
   </para>
 
   <para>

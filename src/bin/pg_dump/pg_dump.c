@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.409 2005/06/07 14:04:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.410 2005/06/21 20:45:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,7 +195,7 @@ main(int argc, char **argv)
 	int			plainText = 0;
 	int			outputClean = 0;
 	int			outputCreate = 0;
-	int			outputBlobs = 0;
+	bool		outputBlobs = true;
 	int			outputNoOwner = 0;
 	static int	use_setsessauth = 0;
 	static int	disable_triggers = 0;
@@ -258,10 +258,7 @@ main(int argc, char **argv)
 
 	/* Set default options based on progname */
 	if (strcmp(progname, "pg_backup") == 0)
-	{
 		format = "c";
-		outputBlobs = true;
-	}
 
 	if (argc > 1)
 	{
@@ -287,7 +284,7 @@ main(int argc, char **argv)
 				break;
 
 			case 'b':			/* Dump blobs */
-				outputBlobs = true;
+				/* this is now default, so just ignore the switch */
 				break;
 
 			case 'c':			/* clean (i.e., drop) schema prior to
@@ -442,31 +439,13 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (outputBlobs && selectTableName != NULL)
-	{
-		write_msg(NULL, "large-object output not supported for a single table\n");
-		write_msg(NULL, "use a full dump instead\n");
-		exit(1);
-	}
-
-	if (outputBlobs && selectSchemaName != NULL)
-	{
-		write_msg(NULL, "large-object output not supported for a single schema\n");
-		write_msg(NULL, "use a full dump instead\n");
-		exit(1);
-	}
+	if (selectTableName != NULL || selectSchemaName != NULL)
+		outputBlobs = false;
 
 	if (dumpInserts == true && oids == true)
 	{
 		write_msg(NULL, "INSERT (-d, -D) and OID (-o) options cannot be used together\n");
 		write_msg(NULL, "(The INSERT command cannot set OIDs.)\n");
-		exit(1);
-	}
-
-	if (outputBlobs == true && (format[0] == 'p' || format[0] == 'P'))
-	{
-		write_msg(NULL, "large-object output is not supported for plain-text dump files\n");
-		write_msg(NULL, "(Use a different output format.)\n");
 		exit(1);
 	}
 
@@ -670,7 +649,6 @@ help(const char *progname)
 
 	printf(_("\nOptions controlling the output content:\n"));
 	printf(_("  -a, --data-only          dump only the data, not the schema\n"));
-	printf(_("  -b, --blobs              include large objects in dump\n"));
 	printf(_("  -c, --clean              clean (drop) schema prior to create\n"));
 	printf(_("  -C, --create             include commands to create database in dump\n"));
 	printf(_("  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"));
@@ -1340,10 +1318,6 @@ dumpEncoding(Archive *AH)
  *	dump all blobs
  *
  */
-
-#define loBufSize 16384
-#define loFetchSize 1000
-
 static int
 dumpBlobs(Archive *AH, void *arg)
 {
@@ -1352,7 +1326,7 @@ dumpBlobs(Archive *AH, void *arg)
 	PGresult   *res;
 	int			i;
 	int			loFd;
-	char		buf[loBufSize];
+	char		buf[LOBBUFSIZE];
 	int			cnt;
 	Oid			blobOid;
 
@@ -1372,13 +1346,13 @@ dumpBlobs(Archive *AH, void *arg)
 	check_sql_result(res, g_conn, oidQry->data, PGRES_COMMAND_OK);
 
 	/* Fetch for cursor */
-	appendPQExpBuffer(oidFetchQry, "FETCH %d IN bloboid", loFetchSize);
+	appendPQExpBuffer(oidFetchQry, "FETCH 1000 IN bloboid");
 
 	do
 	{
-		/* Do a fetch */
 		PQclear(res);
 
+		/* Do a fetch */
 		res = PQexec(g_conn, oidFetchQry->data);
 		check_sql_result(res, g_conn, oidFetchQry->data, PGRES_TUPLES_OK);
 
@@ -1400,7 +1374,7 @@ dumpBlobs(Archive *AH, void *arg)
 			/* Now read it in chunks, sending data to archive */
 			do
 			{
-				cnt = lo_read(g_conn, loFd, buf, loBufSize);
+				cnt = lo_read(g_conn, loFd, buf, LOBBUFSIZE);
 				if (cnt < 0)
 				{
 					write_msg(NULL, "dumpBlobs(): error reading large object: %s",
@@ -1409,15 +1383,15 @@ dumpBlobs(Archive *AH, void *arg)
 				}
 
 				WriteData(AH, buf, cnt);
-
 			} while (cnt > 0);
 
 			lo_close(g_conn, loFd);
 
 			EndBlob(AH, blobOid);
-
 		}
 	} while (PQntuples(res) > 0);
+
+	PQclear(res);
 
 	destroyPQExpBuffer(oidQry);
 	destroyPQExpBuffer(oidFetchQry);

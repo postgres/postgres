@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.61 2004/11/06 19:36:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.62 2005/06/21 20:45:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,6 @@ static const char *modulename = gettext_noop("archiver (db)");
 
 static void _check_database_version(ArchiveHandle *AH, bool ignoreVersion);
 static PGconn *_connectDB(ArchiveHandle *AH, const char *newdbname, const char *newUser);
-static int	_executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc);
 static void notice_processor(void *arg, const char *message);
 static char *_sendSQLLine(ArchiveHandle *AH, char *qry, char *eos);
 static char *_sendCopyLine(ArchiveHandle *AH, char *qry, char *eos);
@@ -288,22 +287,9 @@ notice_processor(void *arg, const char *message)
 /* Public interface */
 /* Convenience function to send a query. Monitors result to handle COPY statements */
 int
-ExecuteSqlCommand(ArchiveHandle *AH, PQExpBuffer qry, char *desc, bool use_blob)
+ExecuteSqlCommand(ArchiveHandle *AH, PQExpBuffer qry, char *desc)
 {
-	if (use_blob)
-		return _executeSqlCommand(AH, AH->blobConnection, qry, desc);
-	else
-		return _executeSqlCommand(AH, AH->connection, qry, desc);
-}
-
-/*
- * Handle command execution. This is used to execute a command on more than one connection,
- * but the 'pgCopyIn' setting assumes the COPY commands are ONLY executed on the primary
- * setting...an error will be raised otherwise.
- */
-static int
-_executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
-{
+	PGconn	   *conn = AH->connection;
 	PGresult   *res;
 	char		errStmt[DB_MAX_ERR_STMT];
 
@@ -316,9 +302,6 @@ _executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
 	{
 		if (PQresultStatus(res) == PGRES_COPY_IN)
 		{
-			if (conn != AH->connection)
-				die_horribly(AH, modulename, "COPY command executed in non-primary connection\n");
-
 			AH->pgCopyIn = 1;
 		}
 		else
@@ -478,7 +461,7 @@ _sendSQLLine(ArchiveHandle *AH, char *qry, char *eos)
 						 * fprintf(stderr, "    sending: '%s'\n\n",
 						 * AH->sqlBuf->data);
 						 */
-						ExecuteSqlCommand(AH, AH->sqlBuf, "could not execute query", false);
+						ExecuteSqlCommand(AH, AH->sqlBuf, "could not execute query");
 						resetPQExpBuffer(AH->sqlBuf);
 						AH->sqlparse.lastChar = '\0';
 
@@ -668,186 +651,13 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, size_t bufLen)
 }
 
 void
-FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
-{
-	PQExpBuffer tblName;
-	PQExpBuffer tblQry;
-	PGresult   *res,
-			   *uRes;
-	int			i,
-				n;
-
-	if (strcmp(te->tag, BLOB_XREF_TABLE) == 0)
-		return;
-
-	tblName = createPQExpBuffer();
-	tblQry = createPQExpBuffer();
-
-	if (te->namespace && strlen(te->namespace) > 0)
-		appendPQExpBuffer(tblName, "%s.",
-						  fmtId(te->namespace));
-	appendPQExpBuffer(tblName, "%s",
-					  fmtId(te->tag));
-
-	appendPQExpBuffer(tblQry,
-					  "SELECT a.attname, t.typname FROM "
-					  "pg_catalog.pg_attribute a, pg_catalog.pg_type t "
-		 "WHERE a.attnum > 0 AND a.attrelid = '%s'::pg_catalog.regclass "
-				 "AND a.atttypid = t.oid AND t.typname in ('oid', 'lo')",
-					  tblName->data);
-
-	res = PQexec(AH->blobConnection, tblQry->data);
-	if (!res)
-		die_horribly(AH, modulename, "could not find OID columns of table \"%s\": %s",
-					 te->tag, PQerrorMessage(AH->connection));
-
-	if ((n = PQntuples(res)) == 0)
-	{
-		/* nothing to do */
-		ahlog(AH, 1, "no OID type columns in table %s\n", te->tag);
-	}
-
-	for (i = 0; i < n; i++)
-	{
-		char	   *attr;
-		char	   *typname;
-		bool		typeisoid;
-
-		attr = PQgetvalue(res, i, 0);
-		typname = PQgetvalue(res, i, 1);
-
-		typeisoid = (strcmp(typname, "oid") == 0);
-
-		ahlog(AH, 1, "fixing large object cross-references for %s.%s\n",
-			  te->tag, attr);
-
-		resetPQExpBuffer(tblQry);
-
-		/*
-		 * Note: we use explicit typename() cast style here because if we
-		 * are dealing with a dump from a pre-7.3 database containing LO
-		 * columns, the dump probably will not have CREATE CAST commands
-		 * for lo<->oid conversions.  What it will have is functions,
-		 * which we will invoke as functions.
-		 */
-
-		/* Can't use fmtId more than once per call... */
-		appendPQExpBuffer(tblQry,
-						  "UPDATE %s SET %s = ",
-						  tblName->data, fmtId(attr));
-		if (typeisoid)
-			appendPQExpBuffer(tblQry,
-							  "%s.newOid",
-							  BLOB_XREF_TABLE);
-		else
-			appendPQExpBuffer(tblQry,
-							  "%s(%s.newOid)",
-							  fmtId(typname),
-							  BLOB_XREF_TABLE);
-		appendPQExpBuffer(tblQry,
-						  " FROM %s WHERE %s.oldOid = ",
-						  BLOB_XREF_TABLE,
-						  BLOB_XREF_TABLE);
-		if (typeisoid)
-			appendPQExpBuffer(tblQry,
-							  "%s.%s",
-							  tblName->data, fmtId(attr));
-		else
-			appendPQExpBuffer(tblQry,
-							  "oid(%s.%s)",
-							  tblName->data, fmtId(attr));
-
-		ahlog(AH, 10, "SQL: %s\n", tblQry->data);
-
-		uRes = PQexec(AH->blobConnection, tblQry->data);
-		if (!uRes)
-			die_horribly(AH, modulename,
-					"could not update column \"%s\" of table \"%s\": %s",
-					  attr, te->tag, PQerrorMessage(AH->blobConnection));
-
-		if (PQresultStatus(uRes) != PGRES_COMMAND_OK)
-			die_horribly(AH, modulename,
-				"error while updating column \"%s\" of table \"%s\": %s",
-					  attr, te->tag, PQerrorMessage(AH->blobConnection));
-
-		PQclear(uRes);
-	}
-
-	PQclear(res);
-	destroyPQExpBuffer(tblName);
-	destroyPQExpBuffer(tblQry);
-}
-
-/**********
- *	Convenient SQL calls
- **********/
-void
-CreateBlobXrefTable(ArchiveHandle *AH)
-{
-	PQExpBuffer qry = createPQExpBuffer();
-
-	/* IF we don't have a BLOB connection, then create one */
-	if (!AH->blobConnection)
-		AH->blobConnection = _connectDB(AH, NULL, NULL);
-
-	ahlog(AH, 1, "creating table for large object cross-references\n");
-
-	appendPQExpBuffer(qry, "CREATE TEMPORARY TABLE %s(oldOid pg_catalog.oid, newOid pg_catalog.oid) WITHOUT OIDS", BLOB_XREF_TABLE);
-	ExecuteSqlCommand(AH, qry, "could not create large object cross-reference table", true);
-
-	destroyPQExpBuffer(qry);
-}
-
-void
-CreateBlobXrefIndex(ArchiveHandle *AH)
-{
-	PQExpBuffer qry = createPQExpBuffer();
-
-	ahlog(AH, 1, "creating index for large object cross-references\n");
-
-	appendPQExpBuffer(qry, "CREATE UNIQUE INDEX %s_ix ON %s(oldOid)",
-					  BLOB_XREF_TABLE, BLOB_XREF_TABLE);
-	ExecuteSqlCommand(AH, qry, "could not create index on large object cross-reference table", true);
-
-	destroyPQExpBuffer(qry);
-}
-
-void
-InsertBlobXref(ArchiveHandle *AH, Oid old, Oid new)
-{
-	PQExpBuffer qry = createPQExpBuffer();
-
-	appendPQExpBuffer(qry,
-					"INSERT INTO %s(oldOid, newOid) VALUES ('%u', '%u')",
-					  BLOB_XREF_TABLE, old, new);
-	ExecuteSqlCommand(AH, qry, "could not create large object cross-reference entry", true);
-
-	destroyPQExpBuffer(qry);
-}
-
-void
 StartTransaction(ArchiveHandle *AH)
 {
 	PQExpBuffer qry = createPQExpBuffer();
 
 	appendPQExpBuffer(qry, "BEGIN");
 
-	ExecuteSqlCommand(AH, qry, "could not start database transaction", false);
-	AH->txActive = true;
-
-	destroyPQExpBuffer(qry);
-}
-
-void
-StartTransactionXref(ArchiveHandle *AH)
-{
-	PQExpBuffer qry = createPQExpBuffer();
-
-	appendPQExpBuffer(qry, "BEGIN");
-
-	ExecuteSqlCommand(AH, qry,
-					  "could not start transaction for large object cross-references", true);
-	AH->blobTxActive = true;
+	ExecuteSqlCommand(AH, qry, "could not start database transaction");
 
 	destroyPQExpBuffer(qry);
 }
@@ -859,21 +669,7 @@ CommitTransaction(ArchiveHandle *AH)
 
 	appendPQExpBuffer(qry, "COMMIT");
 
-	ExecuteSqlCommand(AH, qry, "could not commit database transaction", false);
-	AH->txActive = false;
-
-	destroyPQExpBuffer(qry);
-}
-
-void
-CommitTransactionXref(ArchiveHandle *AH)
-{
-	PQExpBuffer qry = createPQExpBuffer();
-
-	appendPQExpBuffer(qry, "COMMIT");
-
-	ExecuteSqlCommand(AH, qry, "could not commit transaction for large object cross-references", true);
-	AH->blobTxActive = false;
+	ExecuteSqlCommand(AH, qry, "could not commit database transaction");
 
 	destroyPQExpBuffer(qry);
 }

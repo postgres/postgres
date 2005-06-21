@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.52 2005/06/09 17:56:51 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.53 2005/06/21 20:45:43 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -44,14 +44,13 @@
   </para>
 
   <para>
-   <application>pg_restore</application> can operate in two modes: If
-   a database name is specified, the archive is restored directly into
-   the database.  (Large objects can only be restored by using such a direct
-   database connection.)  Otherwise, a script containing the SQL
-   commands necessary to rebuild the database is created (and written
-   to a file or standard output), similar to the ones created by the
-   <application>pg_dump</application> plain text format.  Some of the
-   options controlling the script output are therefore analogous to
+   <application>pg_restore</application> can operate in two modes.
+   If a database name is specified, the archive is restored directly into
+   the database.  Otherwise, a script containing the SQL
+   commands necessary to rebuild the database is created and written
+   to a file or standard output.  The script output is equivalent to
+   the plain text output format of <application>pg_dump</application>.
+   Some of the options controlling the output are therefore analogous to
    <application>pg_dump</application> options.
   </para>
 
@@ -541,16 +540,16 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   <title>Examples</title>
 
   <para>
-   To dump a database called <literal>mydb</> that contains
-   large objects to a <filename>tar</filename> file:
+   To dump a database called <literal>mydb</> to a <filename>tar</filename>
+   file:
 
 <screen>
-<prompt>$</prompt> <userinput>pg_dump -Ft -b mydb &gt; db.tar</userinput>
+<prompt>$</prompt> <userinput>pg_dump -Ft mydb &gt; db.tar</userinput>
 </screen>
   </para>
 
   <para>
-   To reload this database (with large objects) to an
+   To reload this dump into an
    existing database called <literal>newdb</>:
 
 <screen>
