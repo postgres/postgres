@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.180 2005/05/31 01:03:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.181 2005/06/22 15:19:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,9 +64,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	Oid			rettype;
 	Oid			funcid;
 	ListCell   *l;
+	ListCell   *nextl;
 	Node	   *first_arg = NULL;
-	int			nargs = list_length(fargs);
-	int			argn;
+	int			nargs;
 	Oid			actual_arg_types[FUNC_MAX_ARGS];
 	Oid		   *declared_arg_types;
 	Node	   *retval;
@@ -79,11 +79,37 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * protect against array overruns, etc.  Of course, this may not be a
 	 * function, but the test doesn't hurt.
 	 */
-	if (nargs > FUNC_MAX_ARGS)
+	if (list_length(fargs) > FUNC_MAX_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
 				 errmsg("cannot pass more than %d arguments to a function",
 						FUNC_MAX_ARGS)));
+
+	/*
+	 * Extract arg type info in preparation for function lookup.
+	 *
+	 * If any arguments are Param markers of type VOID, we discard them
+	 * from the parameter list.  This is a hack to allow the JDBC driver
+	 * to not have to distinguish "input" and "output" parameter symbols
+	 * while parsing function-call constructs.  We can't use foreach()
+	 * because we may modify the list ...
+	 */
+	nargs = 0;
+	for (l = list_head(fargs); l != NULL; l = nextl)
+	{
+		Node	   *arg = lfirst(l);
+		Oid			argtype = exprType(arg);
+
+		nextl = lnext(l);
+
+		if (argtype == VOIDOID && IsA(arg, Param) && !is_column)
+		{
+			fargs = list_delete_ptr(fargs, arg);
+			continue;
+		}
+
+		actual_arg_types[nargs++] = argtype;
+	}
 
 	if (fargs)
 	{
@@ -99,7 +125,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 */
 	if (nargs == 1 && !agg_star && !agg_distinct && list_length(funcname) == 1)
 	{
-		Oid			argtype = exprType(first_arg);
+		Oid			argtype = actual_arg_types[0];
 
 		if (argtype == RECORDOID || ISCOMPLEX(argtype))
 		{
@@ -117,18 +143,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	}
 
 	/*
-	 * Okay, it's not a column projection, so it must really be a
-	 * function. Extract arg type info in preparation for function lookup.
-	 */
-	argn = 0;
-	foreach(l, fargs)
-	{
-		Node	   *arg = lfirst(l);
-
-		actual_arg_types[argn++] = exprType(arg);
-	}
-
-	/*
+	 * Okay, it's not a column projection, so it must really be a function.
 	 * func_get_detail looks up the function in the catalogs, does
 	 * disambiguation for polymorphic functions, handles inheritance, and
 	 * returns the funcid and type and set or singleton status of the

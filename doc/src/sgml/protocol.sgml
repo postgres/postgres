@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.58 2005/01/23 00:30:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.59 2005/06/22 15:19:43 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -295,7 +295,7 @@
       <listitem>
        <para>
         The frontend must now send a PasswordMessage containing the
-	password in clear-text form.  If
+        password in clear-text form.  If
         this is the correct password, the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
        </para>
@@ -307,8 +307,8 @@
       <listitem>
        <para>
         The frontend must now send a PasswordMessage containing the
-	password encrypted via crypt(3), using the 2-character salt
-	specified in the AuthenticationCryptPassword message.  If
+        password encrypted via crypt(3), using the 2-character salt
+        specified in the AuthenticationCryptPassword message.  If
         this is the correct password, the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
        </para>
@@ -320,8 +320,8 @@
       <listitem>
        <para>
         The frontend must now send a PasswordMessage containing the
-	password encrypted via MD5, using the 4-character salt
-	specified in the AuthenticationMD5Password message.  If
+        password encrypted via MD5, using the 4-character salt
+        specified in the AuthenticationMD5Password message.  If
         this is the correct password, the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
        </para>
@@ -333,12 +333,12 @@
       <listitem>
        <para>
         This response is only possible for local Unix-domain connections
-	on platforms that support SCM credential messages.  The frontend
-	must issue an SCM credential message and then send a single data
-	byte.  (The contents of the data byte are uninteresting; it's
-	only used to ensure that the server waits long enough to receive
-	the credential message.)  If the credential is acceptable,
-	the server responds with an
+        on platforms that support SCM credential messages.  The frontend
+        must issue an SCM credential message and then send a single data
+        byte.  (The contents of the data byte are uninteresting; it's
+        only used to ensure that the server waits long enough to receive
+        the credential message.)  If the credential is acceptable,
+        the server responds with an
         AuthenticationOk, otherwise it responds with an ErrorResponse.
        </para>
       </listitem>
@@ -497,9 +497,9 @@
       <listitem>
        <para>
         Indicates that rows are about to be returned in response to
-	a <command>SELECT</command>, <command>FETCH</command>, etc query.
-	The contents of this message describe the column layout of the rows.
-	This will be followed by a DataRow message for each row being returned
+        a <command>SELECT</command>, <command>FETCH</command>, etc query.
+        The contents of this message describe the column layout of the rows.
+        This will be followed by a DataRow message for each row being returned
         to the frontend.
        </para>
       </listitem>
@@ -510,7 +510,7 @@
       <listitem>
        <para>
         One of the set of rows returned by
-	a <command>SELECT</command>, <command>FETCH</command>, etc query.
+        a <command>SELECT</command>, <command>FETCH</command>, etc query.
        </para>
       </listitem>
      </varlistentry>
@@ -641,6 +641,24 @@
 
    <note>
     <para>
+     A parameter data type can be left unspecified by setting it to zero,
+     or by making the array of parameter type OIDs shorter than the
+     number of parameter symbols (<literal>$</><replaceable>n</>)
+     used in the query string.  Another special case is that a parameter's
+     type can be specified as <type>void</> (that is, the OID of the
+     <type>void</> pseudotype).  This is meant to allow parameter symbols
+     to be used for function parameters that are actually OUT parameters.
+     Ordinarily there is no context in which a <type>void</> parameter
+     could be used, but if such a parameter symbol appears in a function's
+     parameter list, it is effectively ignored.  For example, a function
+     call such as <literal>foo($1,$2,$3,$4)</> could match a function with
+     two IN and two OUT arguments, if <literal>$3</> and <literal>$4</>
+     are specified as having type <type>void</>.
+    </para>
+   </note>
+
+   <note>
+    <para>
      The query string contained in a Parse message cannot include more
      than one SQL statement; else a syntax error is reported.  This
      restriction does not exist in the simple-query protocol, but it
@@ -670,6 +688,8 @@
     the values to use for any parameter placeholders present in the prepared
     statement.  The
     supplied parameter set must match those needed by the prepared statement.
+    (If you declared any <type>void</> parameters in the Parse message,
+    pass NULL values for them in the Bind message.)
     Bind also specifies the format to use for any data returned
     by the query; the format can be specified overall, or per-column.
     The response is either BindComplete or ErrorResponse.
@@ -900,9 +920,9 @@
       <listitem>
        <para>
         The function call was completed and returned the result given
-	in the message.
-	(Note that the Function Call protocol can only handle a single
-	scalar result, not a row type or set of results.)
+        in the message.
+        (Note that the Function Call protocol can only handle a single
+        scalar result, not a row type or set of results.)
        </para>
       </listitem>
      </varlistentry>
@@ -1259,10 +1279,10 @@ This section describes the base data types used in messages.
 <listitem>
 <para>
                 An <replaceable>n</replaceable>-bit integer in network byte
-		order (most significant byte first).
+                order (most significant byte first).
                 If <replaceable>i</replaceable> is specified it
                 is the exact value that will appear, otherwise the value
-		is variable.  Eg. Int16, Int32(42).
+                is variable.  Eg. Int16, Int32(42).
 </para>
 </listitem>
 </varlistentry>
@@ -1273,11 +1293,11 @@ This section describes the base data types used in messages.
 </term>
 <listitem>
 <para>
-		An array of <replaceable>k</replaceable>
+                An array of <replaceable>k</replaceable>
                 <replaceable>n</replaceable>-bit integers, each in network
-		byte order.  The array length <replaceable>k</replaceable>
-		is always determined by an earlier field in the message.
-		Eg. Int16[M].
+                byte order.  The array length <replaceable>k</replaceable>
+                is always determined by an earlier field in the message.
+                Eg. Int16[M].
 </para>
 </listitem>
 </varlistentry>
@@ -1289,9 +1309,9 @@ This section describes the base data types used in messages.
 <listitem>
 <para>
                 A null-terminated string (C-style string).  There is no
-		specific length limitation on strings.
+                specific length limitation on strings.
                 If <replaceable>s</replaceable> is specified it is the exact
-		value that will appear, otherwise the value is variable.
+                value that will appear, otherwise the value is variable.
                 Eg. String, String("user").
 </para>
                 
@@ -1314,8 +1334,8 @@ characters that don't fit into your fixed-size buffer.
 <listitem>
 <para>
                 Exactly <replaceable>n</replaceable> bytes.  If the field
-		width <replaceable>n</replaceable> is not a constant, it is
-		always determinable from an earlier field in the message.
+                width <replaceable>n</replaceable> is not a constant, it is
+                always determinable from an earlier field in the message.
                 If <replaceable>c</replaceable> is specified it is the exact
                 value.  Eg. Byte2, Byte1('\n').
 </para>
@@ -1767,7 +1787,7 @@ Bind (F)
 <listitem>
 <para>
                 The name of the destination portal
-		(an empty string selects the unnamed portal).
+                (an empty string selects the unnamed portal).
 </para>
 </listitem>
 </varlistentry>
@@ -1778,7 +1798,7 @@ Bind (F)
 <listitem>
 <para>
                 The name of the source prepared statement
-		(an empty string selects the unnamed prepared statement).
+                (an empty string selects the unnamed prepared statement).
 </para>
 </listitem>
 </varlistentry>
@@ -1788,13 +1808,13 @@ Bind (F)
 </term>
 <listitem>
 <para>
-		The number of parameter format codes that follow
-		(denoted <replaceable>C</> below).
-		This can be zero to indicate that there are no parameters
-		or that the parameters all use the default format (text);
-		or one, in which case the specified format code is applied
-		to all parameters; or it can equal the actual number of
-		parameters.
+                The number of parameter format codes that follow
+                (denoted <replaceable>C</> below).
+                This can be zero to indicate that there are no parameters
+                or that the parameters all use the default format (text);
+                or one, in which case the specified format code is applied
+                to all parameters; or it can equal the actual number of
+                parameters.
 </para>
 </listitem>
 </varlistentry>
@@ -1805,7 +1825,7 @@ Bind (F)
 <listitem>
 <para>
                 The parameter format codes.  Each must presently be
-		zero (text) or one (binary).
+                zero (text) or one (binary).
 </para>
 </listitem>
 </varlistentry>
@@ -1816,7 +1836,7 @@ Bind (F)
 <listitem>
 <para>
                 The number of parameter values that follow (possibly zero).
-		This must match the number of parameters needed by the query.
+                This must match the number of parameters needed by the query.
 </para>
 </listitem>
 </varlistentry>
@@ -1830,9 +1850,9 @@ Bind (F)
 <listitem>
 <para>
                 The length of the parameter value, in bytes (this count
-		does not include itself).  Can be zero.
-		As a special case, -1 indicates a NULL parameter value.
-		No value bytes follow in the NULL case.
+                does not include itself).  Can be zero.
+                As a special case, -1 indicates a NULL parameter value.
+                No value bytes follow in the NULL case.
 </para>
 </listitem>
 </varlistentry>
@@ -1843,7 +1863,7 @@ Bind (F)
 <listitem>
 <para>
                 The value of the parameter, in the format indicated by the
-		associated format code.
+                associated format code.
                 <replaceable>n</replaceable> is the above length.
 </para>
 </listitem>
@@ -1857,14 +1877,14 @@ Bind (F)
 </term>
 <listitem>
 <para>
-		The number of result-column format codes that follow
-		(denoted <replaceable>R</> below).
-		This can be zero to indicate that there are no result columns
-		or that the result columns should all use the default format
-		(text); 
-		or one, in which case the specified format code is applied
-		to all result columns (if any); or it can equal the actual
-		number of result columns of the query.
+                The number of result-column format codes that follow
+                (denoted <replaceable>R</> below).
+                This can be zero to indicate that there are no result columns
+                or that the result columns should all use the default format
+                (text); 
+                or one, in which case the specified format code is applied
+                to all result columns (if any); or it can equal the actual
+                number of result columns of the query.
 </para>
 </listitem>
 </varlistentry>
@@ -1875,7 +1895,7 @@ Bind (F)
 <listitem>
 <para>
                 The result-column format codes.  Each must presently be
-		zero (text) or one (binary).
+                zero (text) or one (binary).
 </para>
 </listitem>
 </varlistentry>
@@ -2024,8 +2044,8 @@ Close (F)
 <listitem>
 <para>
                 The name of the prepared statement or portal to close
-		(an empty string selects the unnamed prepared statement
-		or portal).
+                (an empty string selects the unnamed prepared statement
+                or portal).
 </para>
 </listitem>
 </varlistentry>
@@ -2115,19 +2135,19 @@ CommandComplete (B)
         <replaceable>rows</replaceable> is the number of rows
         inserted. <replaceable>oid</replaceable> is the object ID
         of the inserted row if <replaceable>rows</replaceable> is 1
-	and the target table has OIDs;
-	otherwise <replaceable>oid</replaceable> is 0.
+        and the target table has OIDs;
+        otherwise <replaceable>oid</replaceable> is 0.
        </para>
 
        <para>
         For a <command>DELETE</command> command, the tag is
-	<literal>DELETE <replaceable>rows</replaceable></literal> where
+        <literal>DELETE <replaceable>rows</replaceable></literal> where
         <replaceable>rows</replaceable> is the number of rows deleted.
        </para>
 
        <para>
         For an <command>UPDATE</command> command, the tag is
-	<literal>UPDATE <replaceable>rows</replaceable></literal> where
+        <literal>UPDATE <replaceable>rows</replaceable></literal> where
         <replaceable>rows</replaceable> is the number of rows updated.
        </para>
 
@@ -2187,9 +2207,9 @@ CopyData (F &amp; B)
 <listitem>
 <para>
                 Data that forms part of a <command>COPY</command> data stream.  Messages sent
-		from the backend will always correspond to single data rows,
-		but messages sent by frontends may divide the data stream
-		arbitrarily.
+                from the backend will always correspond to single data rows,
+                but messages sent by frontends may divide the data stream
+                arbitrarily.
 </para>
 </listitem>
 </varlistentry>
@@ -2295,7 +2315,7 @@ CopyInResponse (B)
 <para>
                 Identifies the message as a Start Copy In response.
                 The frontend must now send copy-in data (if not
-		prepared to do so, send a CopyFail message).
+                prepared to do so, send a CopyFail message).
 </para>
 </listitem>
 </varlistentry>
@@ -2316,12 +2336,12 @@ CopyInResponse (B)
 <listitem>
 <para>
                 0 indicates the overall <command>COPY</command> format is textual (rows
-		separated by newlines, columns separated by separator
-		characters, etc).
-		1 indicates the overall copy format is binary (similar
-		to DataRow format).
-		See <xref linkend="sql-copy" endterm="sql-copy-title">
-		for more information.
+                separated by newlines, columns separated by separator
+                characters, etc).
+                1 indicates the overall copy format is binary (similar
+                to DataRow format).
+                See <xref linkend="sql-copy" endterm="sql-copy-title">
+                for more information.
 </para>
 </listitem>
 </varlistentry>
@@ -2331,8 +2351,8 @@ CopyInResponse (B)
 </term>
 <listitem>
 <para>
-		The number of columns in the data to be copied
-		(denoted <replaceable>N</> below).
+                The number of columns in the data to be copied
+                (denoted <replaceable>N</> below).
 </para>
 </listitem>
 </varlistentry>
@@ -2343,8 +2363,8 @@ CopyInResponse (B)
 <listitem>
 <para>
                 The format codes to be used for each column.
-		Each must presently be zero (text) or one (binary).
-		All must be zero if the overall copy format is textual.
+                Each must presently be zero (text) or one (binary).
+                All must be zero if the overall copy format is textual.
 </para>
 </listitem>
 </varlistentry>
@@ -2405,8 +2425,8 @@ CopyOutResponse (B)
 </term>
 <listitem>
 <para>
-		The number of columns in the data to be copied
-		(denoted <replaceable>N</> below).
+                The number of columns in the data to be copied
+                (denoted <replaceable>N</> below).
 </para>
 </listitem>
 </varlistentry>
@@ -2417,8 +2437,8 @@ CopyOutResponse (B)
 <listitem>
 <para>
                 The format codes to be used for each column.
-		Each must presently be zero (text) or one (binary).
-		All must be zero if the overall copy format is textual.
+                Each must presently be zero (text) or one (binary).
+                All must be zero if the overall copy format is textual.
 </para>
 </listitem>
 </varlistentry>
@@ -2476,9 +2496,9 @@ DataRow (B)
 <listitem>
 <para>
                 The length of the column value, in bytes (this count
-		does not include itself).  Can be zero.
-		As a special case, -1 indicates a NULL column value.
-		No value bytes follow in the NULL case.
+                does not include itself).  Can be zero.
+                As a special case, -1 indicates a NULL column value.
+                No value bytes follow in the NULL case.
 </para>
 </listitem>
 </varlistentry>
@@ -2489,7 +2509,7 @@ DataRow (B)
 <listitem>
 <para>
                 The value of the column, in the format indicated by the
-		associated format code.
+                associated format code.
                 <replaceable>n</replaceable> is the above length.
 </para>
 </listitem>
@@ -2547,8 +2567,8 @@ Describe (F)
 <listitem>
 <para>
                 The name of the prepared statement or portal to describe
-		(an empty string selects the unnamed prepared statement
-		or portal).
+                (an empty string selects the unnamed prepared statement
+                or portal).
 </para>
 </listitem>
 </varlistentry>
@@ -2573,7 +2593,7 @@ EmptyQueryResponse (B)
 <listitem>
 <para>
                 Identifies the message as a response to an empty query string.
-		(This substitutes for CommandComplete.)
+                (This substitutes for CommandComplete.)
 </para>
 </listitem>
 </varlistentry>
@@ -2624,8 +2644,8 @@ ErrorResponse (B)
 </varlistentry>
 </variablelist>
         The message body consists of one or more identified fields,
-	followed by a zero byte as a terminator.  Fields may appear in
-	any order.  For each field there is the following:
+        followed by a zero byte as a terminator.  Fields may appear in
+        any order.  For each field there is the following:
 <variablelist>
 <varlistentry>
 <term>
@@ -2634,12 +2654,12 @@ ErrorResponse (B)
 <listitem>
 <para>
                 A code identifying the field type; if zero, this is
-		the message terminator and no string follows.
-		The presently defined field types are listed in
-		<xref linkend="protocol-error-fields">.
-		Since more field types may be added in future,
-		frontends should silently ignore fields of unrecognized
-		type.
+                the message terminator and no string follows.
+                The presently defined field types are listed in
+                <xref linkend="protocol-error-fields">.
+                Since more field types may be added in future,
+                frontends should silently ignore fields of unrecognized
+                type.
 </para>
 </listitem>
 </varlistentry>
@@ -2695,7 +2715,7 @@ Execute (F)
 <listitem>
 <para>
                 The name of the portal to execute
-		(an empty string selects the unnamed portal).
+                (an empty string selects the unnamed portal).
 </para>
 </listitem>
 </varlistentry>
@@ -2706,8 +2726,8 @@ Execute (F)
 <listitem>
 <para>
                 Maximum number of rows to return, if portal contains
-		a query that returns rows (ignored otherwise).  Zero
-		denotes <quote>no limit</>.
+                a query that returns rows (ignored otherwise).  Zero
+                denotes <quote>no limit</>.
 </para>
 </listitem>
 </varlistentry>
@@ -2796,13 +2816,13 @@ FunctionCall (F)
 </term>
 <listitem>
 <para>
-		The number of argument format codes that follow
-		(denoted <replaceable>C</> below).
-		This can be zero to indicate that there are no arguments
-		or that the arguments all use the default format (text);
-		or one, in which case the specified format code is applied
-		to all arguments; or it can equal the actual number of
-		arguments.
+                The number of argument format codes that follow
+                (denoted <replaceable>C</> below).
+                This can be zero to indicate that there are no arguments
+                or that the arguments all use the default format (text);
+                or one, in which case the specified format code is applied
+                to all arguments; or it can equal the actual number of
+                arguments.
 </para>
 </listitem>
 </varlistentry>
@@ -2813,7 +2833,7 @@ FunctionCall (F)
 <listitem>
 <para>
                 The argument format codes.  Each must presently be
-		zero (text) or one (binary).
+                zero (text) or one (binary).
 </para>
 </listitem>
 </varlistentry>
@@ -2838,9 +2858,9 @@ FunctionCall (F)
 <listitem>
 <para>
                 The length of the argument value, in bytes (this count
-		does not include itself).  Can be zero.
-		As a special case, -1 indicates a NULL argument value.
-		No value bytes follow in the NULL case.
+                does not include itself).  Can be zero.
+                As a special case, -1 indicates a NULL argument value.
+                No value bytes follow in the NULL case.
 </para>
 </listitem>
 </varlistentry>
@@ -2851,7 +2871,7 @@ FunctionCall (F)
 <listitem>
 <para>
                 The value of the argument, in the format indicated by the
-		associated format code.
+                associated format code.
                 <replaceable>n</replaceable> is the above length.
 </para>
 </listitem>
@@ -2866,7 +2886,7 @@ FunctionCall (F)
 <listitem>
 <para>
                 The format code for the function result. Must presently be
-		zero (text) or one (binary).
+                zero (text) or one (binary).
 </para>
 </listitem>
 </varlistentry>
@@ -2912,9 +2932,9 @@ FunctionCallResponse (B)
 <listitem>
 <para>
                 The length of the function result value, in bytes (this count
-		does not include itself).  Can be zero.
-		As a special case, -1 indicates a NULL function result.
-		No value bytes follow in the NULL case.
+                does not include itself).  Can be zero.
+                As a special case, -1 indicates a NULL function result.
+                No value bytes follow in the NULL case.
 </para>
 </listitem>
 </varlistentry>
@@ -2925,7 +2945,7 @@ FunctionCallResponse (B)
 <listitem>
 <para>
                 The value of the function result, in the format indicated by
-		the associated format code.
+                the associated format code.
                 <replaceable>n</replaceable> is the above length.
 </para>
 </listitem>
@@ -3002,8 +3022,8 @@ NoticeResponse (B)
 </varlistentry>
 </variablelist>
         The message body consists of one or more identified fields,
-	followed by a zero byte as a terminator.  Fields may appear in
-	any order.  For each field there is the following:
+        followed by a zero byte as a terminator.  Fields may appear in
+        any order.  For each field there is the following:
 <variablelist>
 <varlistentry>
 <term>
@@ -3012,12 +3032,12 @@ NoticeResponse (B)
 <listitem>
 <para>
                 A code identifying the field type; if zero, this is
-		the message terminator and no string follows.
-		The presently defined field types are listed in
-		<xref linkend="protocol-error-fields">.
-		Since more field types may be added in future,
-		frontends should silently ignore fields of unrecognized
-		type.
+                the message terminator and no string follows.
+                The presently defined field types are listed in
+                <xref linkend="protocol-error-fields">.
+                Since more field types may be added in future,
+                frontends should silently ignore fields of unrecognized
+                type.
 </para>
 </listitem>
 </varlistentry>
@@ -3093,8 +3113,8 @@ NotificationResponse (B)
 <listitem>
 <para>
                 Additional information passed from the notifying process.
-		(Currently, this feature is unimplemented so the field
-		is always an empty string.)
+                (Currently, this feature is unimplemented so the field
+                is always an empty string.)
 </para>
 </listitem>
 </varlistentry>
@@ -3140,7 +3160,7 @@ ParameterDescription (B)
 <listitem>
 <para>
                 The number of parameters used by the statement
-		(may be zero).
+                (may be zero).
 </para>
 </listitem>
 </varlistentry>
@@ -3252,7 +3272,7 @@ Parse (F)
 <listitem>
 <para>
                 The name of the destination prepared statement
-		(an empty string selects the unnamed prepared statement).
+                (an empty string selects the unnamed prepared statement).
 </para>
 </listitem>
 </varlistentry>
@@ -3273,10 +3293,10 @@ Parse (F)
 <listitem>
 <para>
                 The number of parameter data types specified
-		(may be zero).  Note that this is not an indication of
-		the number of parameters that might appear in the
-		query string, only the number that the frontend wants to
-		prespecify types for.
+                (may be zero).  Note that this is not an indication of
+                the number of parameters that might appear in the
+                query string, only the number that the frontend wants to
+                prespecify types for.
 </para>
 </listitem>
 </varlistentry>
@@ -3290,8 +3310,8 @@ Parse (F)
 <listitem>
 <para>
                 Specifies the object ID of the parameter data type.
-		Placing a zero here is equivalent to leaving the type
-		unspecified.
+                Placing a zero here is equivalent to leaving the type
+                unspecified.
 </para>
 </listitem>
 </varlistentry>
@@ -3395,8 +3415,8 @@ PortalSuspended (B)
 <listitem>
 <para>
                 Identifies the message as a portal-suspended indicator.
-		Note this only appears if an Execute message's row-count limit
-		was reached.
+                Note this only appears if an Execute message's row-count limit
+                was reached.
 </para>
 </listitem>
 </varlistentry>
@@ -3498,10 +3518,10 @@ ReadyForQuery (B)
 <listitem>
 <para>
                 Current backend transaction status indicator.
-		Possible values are '<literal>I</>' if idle (not in
-		a transaction block); '<literal>T</>' if in a transaction
-		block; or '<literal>E</>' if in a failed transaction
-		block (queries will be rejected until block is ended).
+                Possible values are '<literal>I</>' if idle (not in
+                a transaction block); '<literal>T</>' if in a transaction
+                block; or '<literal>E</>' if in a failed transaction
+                block (queries will be rejected until block is ended).
 </para>
 </listitem>
 </varlistentry>
@@ -3570,7 +3590,7 @@ RowDescription (B)
 <listitem>
 <para>
                 If the field can be identified as a column of a specific
-		table, the object ID of the table; otherwise zero.
+                table, the object ID of the table; otherwise zero.
 </para>
 </listitem>
 </varlistentry>
@@ -3581,7 +3601,7 @@ RowDescription (B)
 <listitem>
 <para>
                 If the field can be identified as a column of a specific
-		table, the attribute number of the column; otherwise zero.
+                table, the attribute number of the column; otherwise zero.
 </para>
 </listitem>
 </varlistentry>
@@ -3602,7 +3622,7 @@ RowDescription (B)
 <listitem>
 <para>
                 The data type size (see <varname>pg_type.typlen</>).
-		Note that negative values denote variable-width types.
+                Note that negative values denote variable-width types.
 </para>
 </listitem>
 </varlistentry>
@@ -3613,7 +3633,7 @@ RowDescription (B)
 <listitem>
 <para>
                 The type modifier (see <varname>pg_attribute.atttypmod</>).
-		The meaning of the modifier is type-specific.
+                The meaning of the modifier is type-specific.
 </para>
 </listitem>
 </varlistentry>
@@ -3624,9 +3644,9 @@ RowDescription (B)
 <listitem>
 <para>
                 The format code being used for the field.  Currently will
-		be zero (text) or one (binary).  In a RowDescription
-		returned from the statement variant of Describe, the
-		format code is not yet known and will always be zero.
+                be zero (text) or one (binary).  In a RowDescription
+                returned from the statement variant of Describe, the
+                format code is not yet known and will always be zero.
 </para>
 </listitem>
 </varlistentry>
@@ -3701,18 +3721,18 @@ StartupMessage (F)
 <para>
                 The protocol version number.  The most significant 16 bits are
                 the major version number (3 for the protocol described here).
-		The least significant 16 bits are the minor version number
-		(0 for the protocol described here).
+                The least significant 16 bits are the minor version number
+                (0 for the protocol described here).
 </para>
 </listitem>
 </varlistentry>
 </variablelist>
         The protocol version number is followed by one or more pairs of
-	parameter name and value strings.  A zero byte is required as a
-	terminator after the last name/value pair.
-	Parameters can appear in any
-	order.  <literal>user</> is required, others are optional.
-	Each parameter is specified as:
+        parameter name and value strings.  A zero byte is required as a
+        terminator after the last name/value pair.
+        Parameters can appear in any
+        order.  <literal>user</> is required, others are optional.
+        Each parameter is specified as:
 <variablelist>
 <varlistentry>
 <term>
@@ -3730,7 +3750,7 @@ StartupMessage (F)
 <listitem>
 <para>
                         The database user name to connect as.  Required;
-			there is no default.
+                        there is no default.
 </para>
 </listitem>
 </varlistentry>
@@ -3751,18 +3771,18 @@ StartupMessage (F)
 <listitem>
 <para>
                         Command-line arguments for the backend.  (This is
-			deprecated in favor of setting individual run-time
-			parameters.)
+                        deprecated in favor of setting individual run-time
+                        parameters.)
 </para>
 </listitem>
 </varlistentry>
 </variablelist>
 
                 In addition to the above, any run-time parameter that can be
-		set at backend start time may be listed.  Such settings
-		will be applied during backend start (after parsing the
-		command-line options if any).  The values will act as
-		session defaults.
+                set at backend start time may be listed.  Such settings
+                will be applied during backend start (after parsing the
+                command-line options if any).  The values will act as
+                session defaults.
 </para>
 </listitem>
 </varlistentry>
@@ -3879,9 +3899,9 @@ message.
         Severity: the field contents are
         <literal>ERROR</>, <literal>FATAL</>, or
         <literal>PANIC</> (in an error message), or
-	<literal>WARNING</>, <literal>NOTICE</>, <literal>DEBUG</>,
-	<literal>INFO</>, or <literal>LOG</> (in a notice message),
-	or a localized translation of one of these.  Always present.
+        <literal>WARNING</>, <literal>NOTICE</>, <literal>DEBUG</>,
+        <literal>INFO</>, or <literal>LOG</> (in a notice message),
+        or a localized translation of one of these.  Always present.
 </para>
 </listitem>
 </varlistentry>
@@ -3893,7 +3913,7 @@ message.
 <listitem>
 <para>
         Code: the SQLSTATE code for the error (see <xref
-	linkend="errcodes-appendix">).  Not localizable.  Always present.
+        linkend="errcodes-appendix">).  Not localizable.  Always present.
 </para>
 </listitem>
 </varlistentry>
@@ -3930,9 +3950,9 @@ message.
 <listitem>
 <para>
         Hint: an optional suggestion what to do about the problem.
-	This is intended to differ from Detail in that it offers advice
-	(potentially inappropriate) rather than hard facts.
-	May run to multiple lines.
+        This is intended to differ from Detail in that it offers advice
+        (potentially inappropriate) rather than hard facts.
+        May run to multiple lines.
 </para>
 </listitem>
 </varlistentry>
@@ -3944,9 +3964,9 @@ message.
 <listitem>
 <para>
         Position: the field value is a decimal ASCII integer, indicating
-	an error cursor position as an index into the original query string.
-	The first character has index 1, and positions are measured in
-	characters not bytes.
+        an error cursor position as an index into the original query string.
+        The first character has index 1, and positions are measured in
+        characters not bytes.
 </para>
 </listitem>
 </varlistentry>
@@ -3998,7 +4018,7 @@ message.
 <listitem>
 <para>
         File: the file name of the source-code location where the error
-	was reported.
+        was reported.
 </para>
 </listitem>
 </varlistentry>
@@ -4010,7 +4030,7 @@ message.
 <listitem>
 <para>
         Line: the line number of the source-code location where the error
-	was reported.
+        was reported.
 </para>
 </listitem>
 </varlistentry>
