@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.44 2005/06/13 02:40:04 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.45 2005/06/22 21:14:28 tgl Exp $
 -->
 
 <chapter id="maintenance">
@@ -468,8 +468,7 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
 
   <para>
    In some situations it is worthwhile to rebuild indexes periodically
-   with the <command>REINDEX</> command. (There is also
-   <filename>contrib/reindexdb</> which can reindex an entire database.)
+   with the <command>REINDEX</> command.
    However, <productname>PostgreSQL</> 7.4 has substantially reduced the need
    for this activity compared to earlier releases.
   </para>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.132 2005/06/21 00:35:05 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.133 2005/06/22 21:14:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -898,10 +898,10 @@ RemoveIndex(RangeVar *relation, DropBehavior behavior)
 
 /*
  * ReindexIndex
- *		Recreate an index.
+ *		Recreate a specific index.
  */
 void
-ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
+ReindexIndex(RangeVar *indexRelation)
 {
 	Oid			indOid;
 	HeapTuple	tuple;
@@ -931,10 +931,10 @@ ReindexIndex(RangeVar *indexRelation, bool force /* currently unused */ )
 
 /*
  * ReindexTable
- *		Recreate indexes of a table.
+ *		Recreate all indexes of a table (and of its toast table, if any)
  */
 void
-ReindexTable(RangeVar *relation, bool force /* currently unused */ )
+ReindexTable(RangeVar *relation)
 {
 	Oid			heapOid;
 	HeapTuple	tuple;
@@ -981,8 +981,7 @@ ReindexTable(RangeVar *relation, bool force /* currently unused */ )
  * separate transaction, so we can release the lock on it right away.
  */
 void
-ReindexDatabase(const char *dbname, bool force /* currently unused */ ,
-				bool all)
+ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 {
 	Relation	relationRelation;
 	HeapScanDesc scan;
@@ -992,23 +991,23 @@ ReindexDatabase(const char *dbname, bool force /* currently unused */ ,
 	List	   *relids = NIL;
 	ListCell   *l;
 
-	AssertArg(dbname);
+	AssertArg(databaseName);
 
-	if (strcmp(dbname, get_database_name(MyDatabaseId)) != 0)
+	if (strcmp(databaseName, get_database_name(MyDatabaseId)) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("can only reindex the currently open database")));
 
 	if (!pg_database_ownercheck(MyDatabaseId, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
-					   dbname);
+					   databaseName);
 
 	/*
 	 * We cannot run inside a user transaction block; if we were inside a
 	 * transaction, then our commit- and start-transaction-command calls
 	 * would not have the intended effect!
 	 */
-	PreventTransactionChain((void *) dbname, "REINDEX DATABASE");
+	PreventTransactionChain((void *) databaseName, "REINDEX DATABASE");
 
 	/*
 	 * Create a memory context that will survive forced transaction
@@ -1028,9 +1027,12 @@ ReindexDatabase(const char *dbname, bool force /* currently unused */ ,
 	 * before we process any other tables.	This is critical because
 	 * reindexing itself will try to update pg_class.
 	 */
-	old = MemoryContextSwitchTo(private_context);
-	relids = lappend_oid(relids, RelationRelationId);
-	MemoryContextSwitchTo(old);
+	if (do_system)
+	{
+		old = MemoryContextSwitchTo(private_context);
+		relids = lappend_oid(relids, RelationRelationId);
+		MemoryContextSwitchTo(old);
+	}
 
 	/*
 	 * Scan pg_class to build a list of the relations we need to reindex.
@@ -1047,9 +1049,15 @@ ReindexDatabase(const char *dbname, bool force /* currently unused */ ,
 		if (classtuple->relkind != RELKIND_RELATION)
 			continue;
 
-		if (!all)				/* only system tables? */
+		/* Check user/system classification, and optionally skip */
+		if (IsSystemClass(classtuple))
 		{
-			if (!IsSystemClass(classtuple))
+			if (!do_system)
+				continue;
+		}
+		else
+		{
+			if (!do_user)
 				continue;
 		}
 

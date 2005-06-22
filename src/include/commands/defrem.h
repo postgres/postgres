@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.64 2005/04/14 01:38:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.65 2005/06/22 21:14:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,10 @@ extern void DefineIndex(RangeVar *heapRelation,
 			bool skip_build,
 			bool quiet);
 extern void RemoveIndex(RangeVar *relation, DropBehavior behavior);
-extern void ReindexIndex(RangeVar *indexRelation, bool force);
-extern void ReindexTable(RangeVar *relation, bool force);
-extern void ReindexDatabase(const char *databaseName, bool force, bool all);
+extern void ReindexIndex(RangeVar *indexRelation);
+extern void ReindexTable(RangeVar *relation);
+extern void ReindexDatabase(const char *databaseName,
+							bool do_system, bool do_user);
 extern char *makeObjectName(const char *name1, const char *name2,
 			   const char *label);
 extern char *ChooseRelationName(const char *name1, const char *name2,

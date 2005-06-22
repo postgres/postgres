@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.103 2005/06/17 22:32:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.104 2005/06/22 21:14:30 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1246,9 +1246,9 @@ command_no_begin(const char *query)
 		return true;
 
 	/*
-	 * Note: these tests will match REINDEX TABLESPACE, which isn't really
-	 * a valid command so we don't care much.  The other five possible
-	 * matches are correct.
+	 * Note: these tests will match CREATE SYSTEM, DROP SYSTEM, and
+	 * REINDEX TABLESPACE, which aren't really valid commands so we don't
+	 * care much.  The other six possible matches are correct.
 	 */
 	if ((wordlen == 6 && pg_strncasecmp(query, "create", 6) == 0) ||
 		(wordlen == 4 && pg_strncasecmp(query, "drop", 4) == 0) ||
@@ -1263,6 +1263,8 @@ command_no_begin(const char *query)
 			wordlen += PQmblen(&query[wordlen], pset.encoding);
 
 		if (wordlen == 8 && pg_strncasecmp(query, "database", 8) == 0)
+			return true;
+		if (wordlen == 6 && pg_strncasecmp(query, "system", 6) == 0)
 			return true;
 		if (wordlen == 10 && pg_strncasecmp(query, "tablespace", 10) == 0)
 			return true;

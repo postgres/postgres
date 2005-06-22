@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.132 2005/06/21 00:48:33 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.133 2005/06/22 21:14:30 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1456,7 +1456,7 @@ psql_completion(char *text, int start, int end)
 	else if (pg_strcasecmp(prev_wd, "REINDEX") == 0)
 	{
 		static const char *const list_REINDEX[] =
-		{"TABLE", "DATABASE", "INDEX", NULL};
+		{"TABLE", "INDEX", "SYSTEM", "DATABASE", NULL};
 
 		COMPLETE_WITH_LIST(list_REINDEX);
 	}
@@ -1464,10 +1464,11 @@ psql_completion(char *text, int start, int end)
 	{
 		if (pg_strcasecmp(prev_wd, "TABLE") == 0)
 			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
-		else if (pg_strcasecmp(prev_wd, "DATABASE") == 0)
-			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
 		else if (pg_strcasecmp(prev_wd, "INDEX") == 0)
 			COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes, NULL);
+		else if (pg_strcasecmp(prev_wd, "SYSTEM") == 0 ||
+				 pg_strcasecmp(prev_wd, "DATABASE") == 0)
+			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
 	}
 
 /* SELECT */

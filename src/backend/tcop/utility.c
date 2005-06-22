@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.237 2005/06/17 22:32:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.238 2005/06/22 21:14:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1011,13 +1011,14 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->kind)
 				{
 					case OBJECT_INDEX:
-						ReindexIndex(stmt->relation, stmt->force);
+						ReindexIndex(stmt->relation);
 						break;
 					case OBJECT_TABLE:
-						ReindexTable(stmt->relation, stmt->force);
+						ReindexTable(stmt->relation);
 						break;
 					case OBJECT_DATABASE:
-						ReindexDatabase(stmt->name, stmt->force, false);
+						ReindexDatabase(stmt->name,
+										stmt->do_system, stmt->do_user);
 						break;
 					default:
 						elog(ERROR, "unrecognized object type: %d",

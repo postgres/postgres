@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.495 2005/06/17 22:32:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.496 2005/06/22 21:14:29 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -400,7 +400,7 @@ static void doNegateFloat(Value *v);
 	SERIALIZABLE SESSION SESSION_USER SET SETOF SHARE
 	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE START STATEMENT
 	STATISTICS STDIN STDOUT STORAGE STRICT_P SUBSTRING SYMMETRIC
-	SYSID
+	SYSID SYSTEM_P
 
 	TABLE TABLESPACE TEMP TEMPLATE TEMPORARY THEN TIME TIMESTAMP
 	TO TOAST TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P
@@ -3641,8 +3641,9 @@ DropCastStmt: DROP CAST '(' Typename AS Typename ')' opt_drop_behavior
  *
  *		QUERY:
  *
- *		REINDEX type <typename> [FORCE] [ALL]
+ *		REINDEX type <name> [FORCE]
  *
+ * FORCE no longer does anything, but we accept it for backwards compatibility
  *****************************************************************************/
 
 ReindexStmt:
@@ -3652,7 +3653,16 @@ ReindexStmt:
 					n->kind = $2;
 					n->relation = $3;
 					n->name = NULL;
-					n->force = $4;
+					$$ = (Node *)n;
+				}
+			| REINDEX SYSTEM_P name opt_force
+				{
+					ReindexStmt *n = makeNode(ReindexStmt);
+					n->kind = OBJECT_DATABASE;
+					n->name = $3;
+					n->relation = NULL;
+					n->do_system = true;
+					n->do_user = false;
 					$$ = (Node *)n;
 				}
 			| REINDEX DATABASE name opt_force
@@ -3661,7 +3671,8 @@ ReindexStmt:
 					n->kind = OBJECT_DATABASE;
 					n->name = $3;
 					n->relation = NULL;
-					n->force = $4;
+					n->do_system = true;
+					n->do_user = true;
 					$$ = (Node *)n;
 				}
 		;
@@ -7915,6 +7926,7 @@ unreserved_keyword:
 			| STDOUT
 			| STORAGE
 			| SYSID
+			| SYSTEM_P
 			| STRICT_P
 			| TABLESPACE
 			| TEMP

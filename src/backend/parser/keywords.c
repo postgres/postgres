@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.157 2005/06/17 22:32:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.158 2005/06/22 21:14:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -300,6 +300,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"substring", SUBSTRING},
 	{"symmetric", SYMMETRIC},
 	{"sysid", SYSID},
+	{"system", SYSTEM_P},
 	{"table", TABLE},
 	{"tablespace", TABLESPACE},
 	{"temp", TEMP},
