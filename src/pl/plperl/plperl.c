@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.77 2005/06/15 00:35:16 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.78 2005/06/22 16:45:51 tgl Exp $
  *
  **********************************************************************/
 
@@ -114,6 +114,7 @@ static void plperl_init_all(void);
 static void plperl_init_interp(void);
 
 Datum		plperl_call_handler(PG_FUNCTION_ARGS);
+Datum		plperl_validator(PG_FUNCTION_ARGS);
 void		plperl_init(void);
 
 HV		   *plperl_spi_exec(char *query, int limit);
@@ -506,10 +507,11 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 }
 
 
-/* This is the only externally-visible part of the plperl interface.
+/*
+ * This is the only externally-visible part of the plperl call interface.
  * The Postgres function and trigger managers call it to execute a
- * perl function. */
-
+ * perl function.
+ */
 PG_FUNCTION_INFO_V1(plperl_call_handler);
 
 Datum
@@ -539,6 +541,44 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	plperl_current_prodesc = save_prodesc;
 
 	return retval;
+}
+
+/*
+ * This is the other externally visible function - it is called when CREATE
+ * FUNCTION is issued to validate the function being created/replaced.
+ */
+PG_FUNCTION_INFO_V1(plperl_validator);
+
+Datum
+plperl_validator(PG_FUNCTION_ARGS)
+{
+	Oid			funcoid = PG_GETARG_OID(0);
+	HeapTuple	tuple;
+	Form_pg_proc proc;
+	bool		istrigger = false;
+	plperl_proc_desc *prodesc;
+
+	plperl_init_all();
+
+	/* Get the new function's pg_proc entry */
+	tuple = SearchSysCache(PROCOID,
+						   ObjectIdGetDatum(funcoid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cache lookup failed for function %u", funcoid);
+	proc = (Form_pg_proc) GETSTRUCT(tuple);
+
+	/* we assume OPAQUE with no arguments means a trigger */
+	if (proc->prorettype == TRIGGEROID ||
+		(proc->prorettype == OPAQUEOID && proc->pronargs == 0))
+		istrigger = true;
+
+	ReleaseSysCache(tuple);
+
+	prodesc = compile_plperl_function(funcoid, istrigger);
+
+	/* the result of a validator is ignored */
+	PG_RETURN_VOID();
 }
 
 
@@ -600,7 +640,7 @@ plperl_create_sub(char *s, bool trusted)
 	 */
 	subref = newSVsv(POPs);
 
-	if (!SvROK(subref))
+	if (!SvROK(subref) || SvTYPE(SvRV(subref)) != SVt_PVCV)
 	{
 		PUTBACK;
 		FREETMPS;
