@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.76 2005/06/14 06:43:14 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.77 2005/06/22 01:35:02 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -61,6 +61,7 @@ static	void			 plpgsql_sql_error_callback(void *arg);
 
 %union {
 		int32					ival;
+		bool					boolean;
 		char					*str;
 		struct
 		{
@@ -100,7 +101,7 @@ static	void			 plpgsql_sql_error_callback(void *arg);
 %type <declhdr> decl_sect
 %type <varname> decl_varname
 %type <str>		decl_renname
-%type <ival>	decl_const decl_notnull
+%type <boolean>	decl_const decl_notnull exit_type
 %type <expr>	decl_defval decl_cursor_query
 %type <dtype>	decl_datatype
 %type <row>		decl_cursor_args
@@ -153,6 +154,7 @@ static	void			 plpgsql_sql_error_callback(void *arg);
 %token	K_BEGIN
 %token	K_CLOSE
 %token	K_CONSTANT
+%token	K_CONTINUE
 %token	K_CURSOR
 %token	K_DEBUG
 %token	K_DECLARE
@@ -514,9 +516,9 @@ decl_renname	: T_WORD
 				;
 
 decl_const		:
-					{ $$ = 0; }
+					{ $$ = false; }
 				| K_CONSTANT
-					{ $$ = 1; }
+					{ $$ = true; }
 				;
 
 decl_datatype	:
@@ -531,9 +533,9 @@ decl_datatype	:
 				;
 
 decl_notnull	:
-					{ $$ = 0; }
+					{ $$ = false; }
 				| K_NOT K_NULL
-					{ $$ = 1; }
+					{ $$ = true; }
 				;
 
 decl_defval		: ';'
@@ -1035,17 +1037,28 @@ stmt_select		: K_SELECT lno
 					}
 				;
 
-stmt_exit		: K_EXIT lno opt_exitlabel opt_exitcond
+stmt_exit		: exit_type lno opt_exitlabel opt_exitcond
 					{
 						PLpgSQL_stmt_exit *new;
 
 						new = palloc0(sizeof(PLpgSQL_stmt_exit));
 						new->cmd_type = PLPGSQL_STMT_EXIT;
-						new->lineno   = $2;
+						new->is_exit  = $1;
+						new->lineno	  = $2;
 						new->label	  = $3;
 						new->cond	  = $4;
 
 						$$ = (PLpgSQL_stmt *)new;
+					}
+				;
+
+exit_type		: K_EXIT
+					{
+						$$ = true;
+					}
+				| K_CONTINUE
+					{
+						$$ = false;
 					}
 				;
 
@@ -1056,8 +1069,8 @@ stmt_return		: K_RETURN lno
 						new = palloc0(sizeof(PLpgSQL_stmt_return));
 						new->cmd_type = PLPGSQL_STMT_RETURN;
 						new->lineno   = $2;
-						new->expr = NULL;
-						new->retvarno	= -1;
+						new->expr	  = NULL;
+						new->retvarno = -1;
 
 						if (plpgsql_curr_compile->fn_retset)
 						{

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.73 2005/06/19 23:39:05 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.74 2005/06/22 01:35:02 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1779,10 +1779,10 @@ END IF;
     </indexterm>
 
     <para>
-     With the <literal>LOOP</>, <literal>EXIT</>, <literal>WHILE</>,
-     and <literal>FOR</> statements, you can arrange for your
-     <application>PL/pgSQL</application> function to repeat a series
-     of commands.
+     With the <literal>LOOP</>, <literal>EXIT</>,
+     <literal>CONTINUE</>, <literal>WHILE</>, and <literal>FOR</>
+     statements, you can arrange for your <application>PL/pgSQL</>
+     function to repeat a series of commands.
     </para>
 
     <sect3>
@@ -1807,30 +1807,36 @@ END LOOP;
      <sect3>
       <title><literal>EXIT</></title>
 
+     <indexterm>
+      <primary>EXIT</primary>
+      <secondary>in PL/pgSQL</secondary>
+     </indexterm>
+
 <synopsis>
 EXIT <optional> <replaceable>label</replaceable> </optional> <optional> WHEN <replaceable>expression</replaceable> </optional>;
 </synopsis>
 
        <para>
-        If no <replaceable>label</replaceable> is given,
-        the innermost loop is terminated and the
-        statement following <literal>END LOOP</> is executed next.
-        If <replaceable>label</replaceable> is given, it
-        must be the label of the current or some outer level of nested loop
-        or block. Then the named loop or block is terminated and control
-        continues with the statement after the loop's/block's corresponding
-        <literal>END</>.
+        If no <replaceable>label</replaceable> is given, the innermost
+        loop is terminated and the statement following <literal>END
+        LOOP</> is executed next.  If <replaceable>label</replaceable>
+        is given, it must be the label of the current or some outer
+        level of nested loop or block. Then the named loop or block is
+        terminated and control continues with the statement after the
+        loop's/block's corresponding <literal>END</>.
        </para>
 
        <para>
-        If <literal>WHEN</> is present, loop exit occurs only if the specified
-        condition is true, otherwise control passes to the statement after
-        <literal>EXIT</>.
+        If <literal>WHEN</> is specified, the loop exit occurs only if
+        <replaceable>expression</> is true. Otherwise, control passes
+        to the statement after <literal>EXIT</>.
        </para>
 
        <para>
-        <literal>EXIT</> can be used to cause early exit from all types of
-        loops; it is not limited to use with unconditional loops.
+        <literal>EXIT</> can be used with all types of loops; it is
+        not limited to use with unconditional loops. When used with a
+        <literal>BEGIN</literal> block, <literal>EXIT</literal> passes
+        control to the next statement after the end of the block.
        </para>
 
        <para>
@@ -1859,7 +1865,59 @@ END;
      </sect3>
 
      <sect3>
+      <title><literal>CONTINUE</></title>
+
+     <indexterm>
+      <primary>CONTINUE</primary>
+      <secondary>in PL/pgSQL</secondary>
+     </indexterm>
+
+<synopsis>
+CONTINUE <optional> <replaceable>label</replaceable> </optional> <optional> WHEN <replaceable>expression</replaceable> </optional>;
+</synopsis>
+
+       <para>
+        If no <replaceable>label</> is given, the next iteration of
+        the innermost loop is begun. That is, control is passed back
+        to the loop control expression (if any), and the body of the
+        loop is re-evaluated. If <replaceable>label</> is present, it
+        specifies the label of the loop whose execution will be
+        continued.
+       </para>
+
+       <para>
+        If <literal>WHEN</> is specified, the next iteration of the
+        loop is begun only if <replaceable>expression</> is
+        true. Otherwise, control passes to the statement after
+        <literal>CONTINUE</>.
+       </para>
+
+       <para>
+        <literal>CONTINUE</> can be used with all types of loops; it
+        is not limited to use with unconditional loops.
+       </para>
+
+       <para>
+        Examples:
+<programlisting>
+LOOP
+    -- some computations
+    EXIT WHEN count &gt; 100;
+    CONTINUE WHEN count &lt; 50;
+    -- some computations for count IN [50 .. 100] 
+END LOOP;
+</programlisting>
+       </para>
+     </sect3>
+
+
+     <sect3>
       <title><literal>WHILE</></title>
+
+     <indexterm>
+      <primary>WHILE</primary>
+      <secondary>in PL/pgSQL</secondary>
+     </indexterm>
 
 <synopsis>
 <optional>&lt;&lt;<replaceable>label</replaceable>&gt;&gt;</optional>

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.44 2005/06/19 01:06:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.45 2005/06/22 01:35:02 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -845,7 +845,8 @@ static void
 dump_exit(PLpgSQL_stmt_exit *stmt)
 {
 	dump_ind();
-	printf("EXIT lbl='%s'", stmt->label);
+	printf("%s label='%s'",
+		   stmt->is_exit ? "EXIT" : "CONTINUE", stmt->label);
 	if (stmt->cond != NULL)
 	{
 		printf(" WHEN ");

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.146 2005/06/20 22:51:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.147 2005/06/22 01:35:02 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -194,6 +194,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 	PLpgSQL_execstate estate;
 	ErrorContextCallback plerrcontext;
 	int			i;
+	int			rc;
 
 	/*
 	 * Setup the execution state
@@ -282,13 +283,24 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 	 */
 	estate.err_text = NULL;
 	estate.err_stmt = (PLpgSQL_stmt *) (func->action);
-	if (exec_stmt_block(&estate, func->action) != PLPGSQL_RC_RETURN)
+	rc = exec_stmt_block(&estate, func->action);
+	if (rc != PLPGSQL_RC_RETURN)
 	{
 		estate.err_stmt = NULL;
 		estate.err_text = NULL;
-		ereport(ERROR,
-		   (errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
-			errmsg("control reached end of function without RETURN")));
+
+		/*
+		 * Provide a more helpful message if a CONTINUE has been used
+		 * outside a loop.
+		 */
+		if (rc == PLPGSQL_RC_CONTINUE)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("CONTINUE cannot be used outside a loop")));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
+					 errmsg("control reached end of function without RETURN")));
 	}
 
 	/*
@@ -393,6 +405,7 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	PLpgSQL_execstate estate;
 	ErrorContextCallback plerrcontext;
 	int			i;
+	int			rc;
 	PLpgSQL_var *var;
 	PLpgSQL_rec *rec_new,
 			   *rec_old;
@@ -546,13 +559,24 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 	 */
 	estate.err_text = NULL;
 	estate.err_stmt = (PLpgSQL_stmt *) (func->action);
-	if (exec_stmt_block(&estate, func->action) != PLPGSQL_RC_RETURN)
+	rc = exec_stmt_block(&estate, func->action);
+	if (rc != PLPGSQL_RC_RETURN)
 	{
 		estate.err_stmt = NULL;
 		estate.err_text = NULL;
-		ereport(ERROR,
-		   (errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
-			errmsg("control reached end of trigger procedure without RETURN")));
+
+		/*
+		 * Provide a more helpful message if a CONTINUE has been used
+		 * outside a loop.
+		 */
+		if (rc == PLPGSQL_RC_CONTINUE)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("CONTINUE cannot be used outside a loop")));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
+					 errmsg("control reached end of trigger procedure without RETURN")));
 	}
 
 	if (estate.retisset)
@@ -919,7 +943,9 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 	switch (rc)
 	{
 		case PLPGSQL_RC_OK:
-			return PLPGSQL_RC_OK;
+		case PLPGSQL_RC_CONTINUE:
+		case PLPGSQL_RC_RETURN:
+			return rc;
 
 		case PLPGSQL_RC_EXIT:
 			if (estate->exitlabel == NULL)
@@ -930,10 +956,7 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 				return PLPGSQL_RC_EXIT;
 			estate->exitlabel = NULL;
 			return PLPGSQL_RC_OK;
-
-		case PLPGSQL_RC_RETURN:
-			return PLPGSQL_RC_RETURN;
-
+		
 		default:
 			elog(ERROR, "unrecognized rc: %d", rc);
 	}
@@ -1120,7 +1143,7 @@ exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 	{
 		PLpgSQL_diag_item	*diag_item = (PLpgSQL_diag_item *) lfirst(lc);
 		PLpgSQL_datum		*var;
-		bool				 isnull = false;
+		bool				 isnull;
 
 		if (diag_item->target <= 0)
 			continue;
@@ -1165,7 +1188,7 @@ static int
 exec_stmt_if(PLpgSQL_execstate *estate, PLpgSQL_stmt_if *stmt)
 {
 	bool		value;
-	bool		isnull = false;
+	bool		isnull;
 
 	value = exec_eval_boolean(estate, stmt->cond, &isnull);
 	exec_eval_cleanup(estate);
@@ -1209,10 +1232,23 @@ exec_stmt_loop(PLpgSQL_execstate *estate, PLpgSQL_stmt_loop *stmt)
 					return PLPGSQL_RC_OK;
 				if (stmt->label == NULL)
 					return PLPGSQL_RC_EXIT;
-				if (strcmp(stmt->label, estate->exitlabel))
+				if (strcmp(stmt->label, estate->exitlabel) != 0)
 					return PLPGSQL_RC_EXIT;
 				estate->exitlabel = NULL;
 				return PLPGSQL_RC_OK;
+				
+			case PLPGSQL_RC_CONTINUE:
+				if (estate->exitlabel == NULL)
+					/* anonymous continue, so re-run the loop */
+					break;
+				else if (stmt->label != NULL &&
+						 strcmp(stmt->label, estate->exitlabel) == 0)
+					/* label matches named continue, so re-run loop */
+					estate->exitlabel = NULL;
+				else
+					/* label doesn't match named continue, so propagate upward */
+					return PLPGSQL_RC_CONTINUE;
+				break;
 
 			case PLPGSQL_RC_RETURN:
 				return PLPGSQL_RC_RETURN;
@@ -1236,7 +1272,7 @@ static int
 exec_stmt_while(PLpgSQL_execstate *estate, PLpgSQL_stmt_while *stmt)
 {
 	bool		value;
-	bool		isnull = false;
+	bool		isnull;
 	int			rc;
 
 	for (;;)
@@ -1264,6 +1300,19 @@ exec_stmt_while(PLpgSQL_execstate *estate, PLpgSQL_stmt_while *stmt)
 				estate->exitlabel = NULL;
 				return PLPGSQL_RC_OK;
 
+			case PLPGSQL_RC_CONTINUE:
+				if (estate->exitlabel == NULL)
+					/* anonymous continue, so re-run loop */
+					break;
+				else if (stmt->label != NULL &&
+						 strcmp(stmt->label, estate->exitlabel) == 0)
+					/* label matches named continue, so re-run loop */
+					estate->exitlabel = NULL;
+				else
+					/* label doesn't match named continue, propagate upward */
+					return PLPGSQL_RC_CONTINUE;
+				break;
+
 			case PLPGSQL_RC_RETURN:
 				return PLPGSQL_RC_RETURN;
 
@@ -1288,7 +1337,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	PLpgSQL_var *var;
 	Datum		value;
 	Oid			valtype;
-	bool		isnull = false;
+	bool		isnull;
 	bool		found = false;
 	int			rc = PLPGSQL_RC_OK;
 
@@ -1366,12 +1415,34 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 			}
 
 			/*
-			 * otherwise, we processed a labelled exit that does not match
-			 * the current statement's label, if any: return RC_EXIT so
-			 * that the EXIT continues to recurse upward.
+			 * otherwise, this is a labelled exit that does not match
+			 * the current statement's label, if any: return RC_EXIT
+			 * so that the EXIT continues to propagate up the stack.
 			 */
 
 			break;
+		}
+		else if (rc == PLPGSQL_RC_CONTINUE)
+		{
+			if (estate->exitlabel == NULL)
+				/* anonymous continue, so continue the current loop */
+				;
+			else if (stmt->label != NULL &&
+					 strcmp(stmt->label, estate->exitlabel) == 0)
+			{
+				/* labelled continue, matches the current stmt's label */
+				estate->exitlabel = NULL;
+			}
+			else
+			{
+			    /*
+				 * otherwise, this is a labelled continue that does
+				 * not match the current statement's label, if any:
+				 * return RC_CONTINUE so that the CONTINUE will
+				 * propagate up the stack.
+				 */
+			    break;
+			}
 		}
 
 		/*
@@ -1459,17 +1530,8 @@ exec_stmt_fors(PLpgSQL_execstate *estate, PLpgSQL_stmt_fors *stmt)
 			 * Execute the statements
 			 */
 			rc = exec_stmts(estate, stmt->body);
-
 			if (rc != PLPGSQL_RC_OK)
 			{
-				/*
-				 * We're aborting the loop, so cleanup and set FOUND.
-				 * (This code should match the code after the loop.)
-				 */
-				SPI_freetuptable(tuptab);
-				SPI_cursor_close(portal);
-				exec_set_found(estate, found);
-
 				if (rc == PLPGSQL_RC_EXIT)
 				{
 					if (estate->exitlabel == NULL)
@@ -1490,6 +1552,34 @@ exec_stmt_fors(PLpgSQL_execstate *estate, PLpgSQL_stmt_fors *stmt)
 					 * recurse upward.
 					 */
 				}
+				else if (rc == PLPGSQL_RC_CONTINUE)
+				{
+					if (estate->exitlabel == NULL)
+						/* unlabelled continue, continue the current loop */
+						continue;
+					else if (stmt->label != NULL &&
+							 strcmp(stmt->label, estate->exitlabel) == 0)
+					{
+						/* labelled continue, matches the current stmt's label */
+						estate->exitlabel = NULL;
+						continue;
+					}
+
+					/*
+					 * otherwise, we processed a labelled continue
+					 * that does not match the current statement's
+					 * label, if any: return RC_CONTINUE so that the
+					 * CONTINUE will propagate up the stack.
+					 */
+				}
+
+				/*
+				 * We're aborting the loop, so cleanup and set FOUND.
+				 * (This code should match the code after the loop.)
+				 */
+				SPI_freetuptable(tuptab);
+				SPI_cursor_close(portal);
+				exec_set_found(estate, found);
 
 				return rc;
 			}
@@ -1563,7 +1653,7 @@ exec_stmt_select(PLpgSQL_execstate *estate, PLpgSQL_stmt_select *stmt)
 	n = estate->eval_processed;
 
 	/*
-	 * If the query didn't return any row, set the target to NULL and
+	 * If the query didn't return any rows, set the target to NULL and
 	 * return.
 	 */
 	if (n == 0)
@@ -1586,28 +1676,33 @@ exec_stmt_select(PLpgSQL_execstate *estate, PLpgSQL_stmt_select *stmt)
 
 
 /* ----------
- * exec_stmt_exit			Start exiting loop(s) or blocks
+ * exec_stmt_exit			Implements EXIT and CONTINUE
+ *
+ * This begins the process of exiting / restarting a loop.
  * ----------
  */
 static int
 exec_stmt_exit(PLpgSQL_execstate *estate, PLpgSQL_stmt_exit *stmt)
 {
 	/*
-	 * If the exit has a condition, check that it's true
+	 * If the exit / continue has a condition, evaluate it
 	 */
 	if (stmt->cond != NULL)
 	{
 		bool		value;
-		bool		isnull = false;
+		bool		isnull;
 
 		value = exec_eval_boolean(estate, stmt->cond, &isnull);
 		exec_eval_cleanup(estate);
-		if (isnull || !value)
+		if (isnull || value == false)
 			return PLPGSQL_RC_OK;
 	}
 
 	estate->exitlabel = stmt->label;
-	return PLPGSQL_RC_EXIT;
+	if (stmt->is_exit)
+		return PLPGSQL_RC_EXIT;
+	else
+		return PLPGSQL_RC_CONTINUE;
 }
 
 
@@ -2455,14 +2550,6 @@ exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 
 			if (rc != PLPGSQL_RC_OK)
 			{
-				/*
-				 * We're aborting the loop, so cleanup and set FOUND.
-				 * (This code should match the code after the loop.)
-				 */
-				SPI_freetuptable(tuptab);
-				SPI_cursor_close(portal);
-				exec_set_found(estate, found);
-
 				if (rc == PLPGSQL_RC_EXIT)
 				{
 					if (estate->exitlabel == NULL)
@@ -2483,6 +2570,33 @@ exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 					 * recurse upward.
 					 */
 				}
+				else if (rc == PLPGSQL_RC_CONTINUE)
+				{
+					if (estate->exitlabel == NULL)
+						/* unlabelled continue, continue the current loop */
+						continue;
+					else if (stmt->label != NULL &&
+							 strcmp(stmt->label, estate->exitlabel) == 0)
+					{
+						/* labelled continue, matches the current stmt's label */
+						estate->exitlabel = NULL;
+						continue;
+					}
+
+					/*
+					 * otherwise, we process a labelled continue that
+					 * does not match the current statement's label,
+					 * so propagate RC_CONTINUE upward in the stack.
+					 */
+				}
+
+				/*
+				 * We're aborting the loop, so cleanup and set FOUND.
+				 * (This code should match the code after the loop.)
+				 */
+				SPI_freetuptable(tuptab);
+				SPI_cursor_close(portal);
+				exec_set_found(estate, found);
 
 				return rc;
 			}

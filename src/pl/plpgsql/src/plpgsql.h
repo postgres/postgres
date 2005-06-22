@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.63 2005/06/14 06:43:14 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.64 2005/06/22 01:35:02 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -125,7 +125,8 @@ enum
 {
 	PLPGSQL_RC_OK,
 	PLPGSQL_RC_EXIT,
-	PLPGSQL_RC_RETURN
+	PLPGSQL_RC_RETURN,
+	PLPGSQL_RC_CONTINUE
 };
 
 /* ----------
@@ -485,9 +486,10 @@ typedef struct
 
 
 typedef struct
-{								/* EXIT statement			*/
+{								/* EXIT or CONTINUE statement			*/
 	int			cmd_type;
 	int			lineno;
+	bool		is_exit;		/* Is this an exit or a continue? */
 	char	   *label;
 	PLpgSQL_expr *cond;
 } PLpgSQL_stmt_exit;
@@ -610,7 +612,8 @@ typedef struct
 	bool		readonly_func;
 
 	TupleDesc	rettupdesc;
-	char	   *exitlabel;
+	char	   *exitlabel;		/* the "target" label of the current
+								 * EXIT or CONTINUE stmt, if any */
 
 	Tuplestorestate *tuple_store;		/* SRFs accumulate results here */
 	MemoryContext tuple_store_cxt;

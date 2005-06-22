@@ -2112,3 +2112,97 @@ end;$$ language plpgsql;
 
 select raise_exprs();
 drop function raise_exprs();
+
+-- continue statement 
+create table conttesttbl(idx serial, v integer);
+insert into conttesttbl(v) values(10);
+insert into conttesttbl(v) values(20);
+insert into conttesttbl(v) values(30);
+insert into conttesttbl(v) values(40);
+
+create function continue_test1() returns void as $$
+declare _i integer = 0; _r record;
+begin
+  raise notice '---1---';
+  loop
+    _i := _i + 1;
+    raise notice '%', _i;
+    continue when _i < 10;
+    exit;
+  end loop;
+
+  raise notice '---2---';
+  <<lbl>>
+  loop
+    _i := _i - 1;
+    loop
+      raise notice '%', _i;
+      continue lbl when _i > 0;
+      exit lbl;
+    end loop;
+  end loop;
+
+  raise notice '---3---';
+  <<the_loop>>
+  while _i < 10 loop
+    _i := _i + 1;
+    continue the_loop when _i % 2 = 0;
+    raise notice '%', _i;
+  end loop;
+
+  raise notice '---4---';
+  for _i in 1..10 loop
+    begin
+      -- applies to outer loop, not the nested begin block
+      continue when _i < 5; 
+      raise notice '%', _i;
+    end;
+  end loop;
+
+  raise notice '---5---';
+  for _r in select * from conttesttbl loop
+    continue when _r.v <= 20;
+    raise notice '%', _r.v;
+  end loop;
+
+  raise notice '---6---';
+  for _r in execute 'select * from conttesttbl' loop
+    continue when _r.v <= 20;
+    raise notice '%', _r.v;
+  end loop;  
+end; $$ language plpgsql;
+
+select continue_test1();
+
+-- CONTINUE is only legal inside a loop
+create function continue_test2() returns void as $$
+begin
+    begin
+        continue;
+    end;
+    return;
+end;
+$$ language plpgsql;
+
+-- should fail
+select continue_test2();
+
+-- CONTINUE can't reference the label of a named block
+create function continue_test3() returns void as $$
+begin
+    <<begin_block1>>
+    begin
+        loop
+            continue begin_block1;
+        end loop;
+    end;
+end;
+$$ language plpgsql;
+
+-- should fail
+select continue_test3();
+
+drop function continue_test1();
+drop function continue_test2();
+drop function continue_test3();
+drop table conttesttbl;
