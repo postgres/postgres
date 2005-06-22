@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.147 2005/06/22 01:35:02 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.148 2005/06/22 07:28:47 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1216,11 +1216,9 @@ exec_stmt_if(PLpgSQL_execstate *estate, PLpgSQL_stmt_if *stmt)
 static int
 exec_stmt_loop(PLpgSQL_execstate *estate, PLpgSQL_stmt_loop *stmt)
 {
-	int			rc;
-
 	for (;;)
 	{
-		rc = exec_stmts(estate, stmt->body);
+		int rc = exec_stmts(estate, stmt->body);
 
 		switch (rc)
 		{
@@ -1271,12 +1269,12 @@ exec_stmt_loop(PLpgSQL_execstate *estate, PLpgSQL_stmt_loop *stmt)
 static int
 exec_stmt_while(PLpgSQL_execstate *estate, PLpgSQL_stmt_while *stmt)
 {
-	bool		value;
-	bool		isnull;
-	int			rc;
-
 	for (;;)
 	{
+		int			rc;
+		bool		value;
+		bool		isnull;
+
 		value = exec_eval_boolean(estate, stmt->cond, &isnull);
 		exec_eval_cleanup(estate);
 
@@ -1425,21 +1423,22 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 		else if (rc == PLPGSQL_RC_CONTINUE)
 		{
 			if (estate->exitlabel == NULL)
-				/* anonymous continue, so continue the current loop */
-				;
+				/* anonymous continue, so re-run the current loop */
+				rc = PLPGSQL_RC_OK;
 			else if (stmt->label != NULL &&
 					 strcmp(stmt->label, estate->exitlabel) == 0)
 			{
-				/* labelled continue, matches the current stmt's label */
+				/* label matches named continue, so re-run loop */
 				estate->exitlabel = NULL;
+				rc = PLPGSQL_RC_OK;
 			}
 			else
 			{
 			    /*
-				 * otherwise, this is a labelled continue that does
-				 * not match the current statement's label, if any:
-				 * return RC_CONTINUE so that the CONTINUE will
-				 * propagate up the stack.
+				 * otherwise, this is a named continue that does not
+				 * match the current statement's label, if any: return
+				 * RC_CONTINUE so that the CONTINUE will propagate up
+				 * the stack.
 				 */
 			    break;
 			}
@@ -1555,18 +1554,22 @@ exec_stmt_fors(PLpgSQL_execstate *estate, PLpgSQL_stmt_fors *stmt)
 				else if (rc == PLPGSQL_RC_CONTINUE)
 				{
 					if (estate->exitlabel == NULL)
-						/* unlabelled continue, continue the current loop */
+					{
+						/* anonymous continue, so re-run the current loop */
+						rc = PLPGSQL_RC_OK;
 						continue;
+					}
 					else if (stmt->label != NULL &&
 							 strcmp(stmt->label, estate->exitlabel) == 0)
 					{
-						/* labelled continue, matches the current stmt's label */
+						/* label matches named continue, so re-run loop */
+						rc = PLPGSQL_RC_OK;
 						estate->exitlabel = NULL;
 						continue;
 					}
 
 					/*
-					 * otherwise, we processed a labelled continue
+					 * otherwise, we processed a named continue
 					 * that does not match the current statement's
 					 * label, if any: return RC_CONTINUE so that the
 					 * CONTINUE will propagate up the stack.
@@ -2462,14 +2465,12 @@ static int
 exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 {
 	Datum		query;
-	bool		isnull = false;
+	bool		isnull;
 	Oid			restype;
 	char	   *querystr;
 	PLpgSQL_rec *rec = NULL;
 	PLpgSQL_row *row = NULL;
 	SPITupleTable *tuptab;
-	int			rc = PLPGSQL_RC_OK;
-	int			i;
 	int			n;
 	void	   *plan;
 	Portal		portal;
@@ -2536,8 +2537,12 @@ exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 	 */
 	while (n > 0)
 	{
+		int			i;
+
 		for (i = 0; i < n; i++)
 		{
+			int		rc;
+
 			/*
 			 * Assign the tuple to the target
 			 */

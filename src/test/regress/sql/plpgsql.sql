@@ -2169,7 +2169,33 @@ begin
   for _r in execute 'select * from conttesttbl' loop
     continue when _r.v <= 20;
     raise notice '%', _r.v;
-  end loop;  
+  end loop;
+
+  raise notice '---7---';
+  for _i in 1..3 loop
+    raise notice '%', _i;
+    continue when _i = 3;
+  end loop;
+
+  raise notice '---8---';
+  _i := 1;
+  while _i <= 3 loop
+    raise notice '%', _i;
+    _i := _i + 1;
+    continue when _i = 3;
+  end loop;
+
+  raise notice '---9---';
+  for _r in select * from conttesttbl order by v limit 1 loop
+    raise notice '%', _r.v;
+    continue;
+  end loop;
+
+  raise notice '---10---';
+  for _r in execute 'select * from conttesttbl order by v limit 1' loop
+    raise notice '%', _r.v;
+    continue;
+  end loop;
 end; $$ language plpgsql;
 
 select continue_test1();
