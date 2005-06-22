@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.449 2005/06/17 22:32:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.450 2005/06/22 17:45:45 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1928,15 +1928,9 @@ exec_describe_statement_message(const char *stmt_name)
 	 */
 	tupdesc = FetchPreparedStatementResultDesc(pstmt);
 	if (tupdesc)
-	{
-		List	   *targetlist;
-
-		if (ChoosePortalStrategy(pstmt->query_list) == PORTAL_ONE_SELECT)
-			targetlist = ((Query *) linitial(pstmt->query_list))->targetList;
-		else
-			targetlist = NIL;
-		SendRowDescriptionMessage(tupdesc, targetlist, NULL);
-	}
+		SendRowDescriptionMessage(tupdesc,
+								  FetchPreparedStatementTargetList(pstmt),
+								  NULL);
 	else
 		pq_putemptymessage('n');	/* NoData */
 
@@ -1962,16 +1956,9 @@ exec_describe_portal_message(const char *portal_name)
 		return;					/* can't actually do anything... */
 
 	if (portal->tupDesc)
-	{
-		List	   *targetlist;
-
-		if (portal->strategy == PORTAL_ONE_SELECT)
-			targetlist = ((Query *) linitial(portal->parseTrees))->targetList;
-		else
-			targetlist = NIL;
-		SendRowDescriptionMessage(portal->tupDesc, targetlist,
+		SendRowDescriptionMessage(portal->tupDesc,
+								  FetchPortalTargetList(portal),
 								  portal->formats);
-	}
 	else
 		pq_putemptymessage('n');	/* NoData */
 }

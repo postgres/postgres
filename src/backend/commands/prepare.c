@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.39 2005/06/03 23:05:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.40 2005/06/22 17:45:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -443,6 +443,58 @@ FetchPreparedStatementResultDesc(PreparedStatement *stmt)
 			break;
 	}
 	return NULL;
+}
+
+/*
+ * Given a prepared statement that returns tuples, extract the query
+ * targetlist.  Returns NIL if the statement doesn't have a determinable
+ * targetlist.
+ *
+ * Note: do not modify the result.
+ *
+ * XXX be careful to keep this in sync with FetchPortalTargetList,
+ * and with UtilityReturnsTuples.
+ */
+List *
+FetchPreparedStatementTargetList(PreparedStatement *stmt)
+{
+	PortalStrategy strategy = ChoosePortalStrategy(stmt->query_list);
+
+	if (strategy == PORTAL_ONE_SELECT)
+		return ((Query *) linitial(stmt->query_list))->targetList;
+	if (strategy == PORTAL_UTIL_SELECT)
+	{
+		Node *utilityStmt;
+
+		utilityStmt = ((Query *) linitial(stmt->query_list))->utilityStmt;
+		switch (nodeTag(utilityStmt))
+		{
+			case T_FetchStmt:
+			{
+				FetchStmt  *substmt = (FetchStmt *) utilityStmt;
+				Portal		subportal;
+
+				Assert(!substmt->ismove);
+				subportal = GetPortalByName(substmt->portalname);
+				Assert(PortalIsValid(subportal));
+				return FetchPortalTargetList(subportal);
+			}
+
+			case T_ExecuteStmt:
+			{
+				ExecuteStmt *substmt = (ExecuteStmt *) utilityStmt;
+				PreparedStatement *entry;
+
+				Assert(!substmt->into);
+				entry = FetchPreparedStatement(substmt->name, true);
+				return FetchPreparedStatementTargetList(entry);
+			}
+
+			default:
+				break;
+		}
+	}
+	return NIL;
 }
 
 /*
