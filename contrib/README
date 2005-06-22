@@ -28,10 +28,6 @@ adddepend -
 	Add object dependency information to pre-7.3 objects.
 	by Rod Taylor <rbt@rbt.ca>
 
-array -
-	Array iterator functions (now obsolete due to backend improvements)
-	by Massimo Dal Zotto <dz@cs.unitn.it>
-
 btree_gist -
 	Support for emulating BTREE indexing in GiST
 	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
@@ -87,10 +83,6 @@ intarray -
 	Index support for arrays of int4, using GiST
 	by Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov <oleg@sai.msu.su>
 
-ipc_check -
-	Simple test script to help in configuring IPC.
-	FreeBSD only, for now.
-
 isbn_issn -
 	PostgreSQL type extensions for ISBN (books) and ISSN (serials)
 	by Garrett A. Wollman <wollman@khavrinen.lcs.mit.edu>
@@ -111,19 +103,6 @@ mac -
 	Support functions for MAC address types
 	by Lawrence E. Rosenman <ler@lerctr.org>
 
-miscutil -
-	PostgreSQL assert checking and various utility functions
-	by Massimo Dal Zotto <dz@cs.unitn.it>
-
-mysql -
-	Utility to convert MySQL schema dumps to SQL92 and PostgreSQL
-	by Thomas Lockhart <lockhart@alumni.caltech.edu>
-	   Max Rudensky <fonin@ziet.zhitomir.ua>
-	   Valentine Danilchuk <valdan@ziet.zhitomir.ua>
-
-noupdate -
-	Trigger to prevent updates on single columns
-
 oid2name - 
 	Maps numeric files to table names
 	by B Palmer <bpalmer@crimelabs.net>
@@ -140,18 +119,10 @@ pg_buffercache -
 	Real time queries on the shared buffer cache
 	by Mark Kirkwood <markir@paradise.net.nz>
 
-pg_dumplo -
-	Dump large objects
-	by Karel Zak <zakkr@zf.jcu.cz>
-
 pg_trgm -
 	Functions for determining the similarity of text based on trigram
 	matching.
 	by Oleg Bartunov <oleg@sai.msu.su> and Teodor Sigaev <teodor@sigaev.ru>
-
-pg_upgrade -
-	Upgrade from previous PostgreSQL version without pg_dump/reload
-	by Bruce Momjian <pgman@candle.pha.pa.us>
 
 pgbench -
 	TPC-B like benchmarking tool
@@ -183,10 +154,6 @@ spi -
 
 start-scripts - 
 	Scripts for starting the server at boot time.
-	
-string -
-	C-like input/output conversion routines for strings
-	by Massimo Dal Zotto <dz@cs.unitn.it>
 
 tablefunc -
 	Examples of functions returning tables
@@ -195,15 +162,6 @@ tablefunc -
 tips/apache_logging -
 	Getting Apache to log to PostgreSQL
 	by Terry Mackintosh <terry@terrym.com>
-
-tools -
-	Assorted developer tools
-	by Massimo Dal Zotto <dz@cs.unitn.it>
-
-tsearch -
-	Full-text-index support using GiST (obsolete version)
-	by Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov
-	<oleg@sai.msu.su>.
 
 tsearch2 -
 	Full-text-index support using GiST
@@ -217,10 +175,6 @@ userlock -
 vacuumlo -
 	Remove orphaned large objects
 	by Peter T Mount <peter@retep.org.uk>
-
-xml -
-	Storing XML in PostgreSQL (obsolete version)
-	by John Gray <jgray@azuli.co.uk>
 
 xml2 -
 	Storing XML in PostgreSQL
