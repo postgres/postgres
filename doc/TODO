@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jun 17 21:45:55 EDT 2005
+Last updated:		Thu Jun 23 17:28:04 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -91,14 +91,8 @@ Administration
   This would require a new global table that is dumped to flat file for
   use by the postmaster.  We do a similar thing for pg_shadow currently.
 
-* Allow administrators to safely terminate individual sessions
-
-  Right now, SIGTERM will terminate a session, but it is treated as
-  though the postmaster has paniced and shared memory might not be
-  cleaned up properly.  A new signal is needed for safe termination
-  because backends must first do a query cancel, then exit once they
-  have run the query cancel cleanup routine.
-
+* Allow administrators to safely terminate individual sessions either
+  via an SQL function or SIGTERM 
 * Un-comment all variables in postgresql.conf
 
   By not showing commented-out variables, we discourage people from

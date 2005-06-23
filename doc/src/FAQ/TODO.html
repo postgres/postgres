@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
-Last updated:           Fri Jun 17 21:45:55 EDT 2005
+Last updated:           Thu Jun 23 17:28:04 EDT 2005
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -88,13 +88,8 @@ first.
 <p>  This would require a new global table that is dumped to flat file for
   use by the postmaster.  We do a similar thing for pg_shadow currently.
 </p>
-  </li><li>Allow administrators to safely terminate individual sessions
-<p>  Right now, SIGTERM will terminate a session, but it is treated as
-  though the postmaster has paniced and shared memory might not be
-  cleaned up properly.  A new signal is needed for safe termination
-  because backends must first do a query cancel, then exit once they
-  have run the query cancel cleanup routine.
-</p>
+  </li><li>Allow administrators to safely terminate individual sessions either
+  via an SQL function or SIGTERM 
   </li><li>Un-comment all variables in postgresql.conf
 <p>  By not showing commented-out variables, we discourage people from
   thinking that re-commenting a variable returns it to its default.
