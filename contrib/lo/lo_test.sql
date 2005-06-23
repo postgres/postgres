@@ -3,6 +3,11 @@
 --
 -- It's used just for development
 --
+-- XXX would be nice to turn this into a proper regression test
+--
+
+-- Check what is in pg_largeobject
+SELECT count(DISTINCT loid) FROM pg_largeobject;
 
 -- ignore any errors here - simply drop the table if it already exists
 DROP TABLE a;
@@ -11,18 +16,15 @@ DROP TABLE a;
 CREATE TABLE a (fname name,image lo);
 
 -- insert a null object
-INSERT INTO a VALUES ('null');
-
--- insert an empty large object
-INSERT INTO a VALUES ('empty','');
+INSERT INTO a VALUES ('empty');
 
 -- insert a large object based on a file
-INSERT INTO a VALUES ('/etc/group',lo_import('/etc/group')::lo);
+INSERT INTO a VALUES ('/etc/group', lo_import('/etc/group')::lo);
 
 -- now select the table
 SELECT * FROM a;
 
--- this select also returns an oid based on the lo column
+-- check that coercion to plain oid works
 SELECT *,image::oid from a;
 
 -- now test the trigger
@@ -32,7 +34,7 @@ FOR EACH ROW
 EXECUTE PROCEDURE lo_manage(image);
 
 -- insert
-INSERT INTO a VALUES ('aa','');
+INSERT INTO a VALUES ('aa', lo_import('/etc/hosts'));
 SELECT * FROM a
 WHERE fname LIKE 'aa%';
 
@@ -43,7 +45,7 @@ SELECT * FROM a
 WHERE fname LIKE 'aa%';
 
 -- update the 'empty' row which should be null
-UPDATE a SET image=lo_import('/etc/hosts')::lo
+UPDATE a SET image=lo_import('/etc/hosts')
 WHERE fname='empty';
 SELECT * FROM a
 WHERE fname LIKE 'empty%';
@@ -60,10 +62,13 @@ WHERE fname LIKE 'aa%';
 
 -- This deletes the table contents. Note, if you comment this out, and
 -- expect the drop table to remove the objects, think again. The trigger
--- doesn't get thrown by drop table.
+-- doesn't get fired by drop table.
 DELETE FROM a;
 
 -- finally drop the table
 DROP TABLE a;
+
+-- Check what is in pg_largeobject ... if different from original, trouble
+SELECT count(DISTINCT loid) FROM pg_largeobject;
 
 -- end of tests

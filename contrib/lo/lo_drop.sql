@@ -1,15 +1,12 @@
 --
--- This removes the type (and a test table)
+-- This removes the LO type
 -- It's used just for development
 --
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
--- remove our test table
-DROP TABLE a;
-
--- now drop the type and associated C functions
+-- drop the type and associated functions
 DROP TYPE lo CASCADE;
 
 -- the trigger function has no dependency on the type, so drop separately
