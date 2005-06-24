@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.496 2005/06/22 21:14:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.497 2005/06/24 14:28:06 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -6002,14 +6002,6 @@ ConstDatetime:
 					 * - thomas 2001-09-06
 					 */
 					$$->timezone = $2;
-					/* SQL99 specified a default precision of six
-					 * for schema definitions. But for timestamp
-					 * literals we don't want to throw away precision
-					 * so leave this as unspecified for now.
-					 * Later, we may want a different production
-					 * for schemas. - thomas 2001-12-07
-					 */
-					$$->typmod = -1;
 				}
 			| TIME '(' Iconst ')' opt_timezone
 				{
@@ -6039,11 +6031,6 @@ ConstDatetime:
 						$$ = SystemTypeName("timetz");
 					else
 						$$ = SystemTypeName("time");
-					/* SQL99 specified a default precision of zero.
-					 * See comments for timestamp above on why we will
-					 * leave this unspecified for now. - thomas 2001-12-07
-					 */
-					$$->typmod = -1;
 				}
 		;
 
@@ -6715,7 +6702,9 @@ func_expr:	func_name '(' ')'
 					 *
 					 * This could be simplified if we had a way to generate
 					 * an expression tree representing runtime application
-					 * of type-input conversion functions...
+					 * of type-input conversion functions.  (As of PG 7.3
+					 * that is actually possible, but not clear that we want
+					 * to rely on it.)
 					 */
 					A_Const *s = makeNode(A_Const);
 					TypeName *d;
@@ -6742,12 +6731,6 @@ func_expr:	func_name '(' ')'
 					s->typename = SystemTypeName("text");
 
 					d = SystemTypeName("timetz");
-					/* SQL99 mandates a default precision of zero for TIME
-					 * fields in schemas. However, for CURRENT_TIME
-					 * let's preserve the microsecond precision we
-					 * might see from the system clock. - thomas 2001-12-07
-					 */
-					d->typmod = 6;
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
@@ -6784,25 +6767,15 @@ func_expr:	func_name '(' ')'
 			| CURRENT_TIMESTAMP
 				{
 					/*
-					 * Translate as "'now'::text::timestamptz".
-					 * See comments for CURRENT_DATE.
+					 * Translate as "now()", since we have a function that
+					 * does exactly what is needed.
 					 */
-					A_Const *s = makeNode(A_Const);
-					TypeName *d;
-
-					s->val.type = T_String;
-					s->val.val.str = "now";
-					s->typename = SystemTypeName("text");
-
-					d = SystemTypeName("timestamptz");
-					/* SQL99 mandates a default precision of 6 for timestamp.
-					 * Also, that is about as precise as we will get since
-					 * we are using a microsecond time interface.
-					 * - thomas 2001-12-07
-					 */
-					d->typmod = 6;
-
-					$$ = (Node *)makeTypeCast((Node *)s, d);
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = SystemFuncName("now");
+					n->args = NIL;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
 				}
 			| CURRENT_TIMESTAMP '(' Iconst ')'
 				{
@@ -6849,12 +6822,6 @@ func_expr:	func_name '(' ')'
 					s->typename = SystemTypeName("text");
 
 					d = SystemTypeName("time");
-					/* SQL99 mandates a default precision of zero for TIME
-					 * fields in schemas. However, for LOCALTIME
-					 * let's preserve the microsecond precision we
-					 * might see from the system clock. - thomas 2001-12-07
-					 */
-					d->typmod = 6;
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
@@ -6902,12 +6869,6 @@ func_expr:	func_name '(' ')'
 					s->typename = SystemTypeName("text");
 
 					d = SystemTypeName("timestamp");
-					/* SQL99 mandates a default precision of 6 for timestamp.
-					 * Also, that is about as precise as we will get since
-					 * we are using a microsecond time interface.
-					 * - thomas 2001-12-07
-					 */
-					d->typmod = 6;
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
