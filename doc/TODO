@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jun 23 17:28:04 EDT 2005
+Last updated:		Thu Jun 23 22:07:20 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -710,6 +710,7 @@ Fsync
 * Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
 * Allow multiple blocks to be written to WAL with one write()
 * Add an option to sync() before fsync()'ing checkpoint files
+* Add program to test if fsync has a delay compared to non-fsync
 
 
 Cache
