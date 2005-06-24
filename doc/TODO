@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jun 23 22:30:38 EDT 2005
+Last updated:		Fri Jun 24 00:40:44 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -355,8 +355,8 @@ Indexes
   one column or expression indexes, perhaps using per-index statistics
 * Add fillfactor to control reserved free space during index creation
 * Allow the creation of indexes with mixed ascending/descending specifiers
-* Fix incorrect rtree results due to wrong assumptions about "over"
-  operator semantics [rtree]
+* -Fix incorrect rtree results due to wrong assumptions about "over"
+  operator semantics
 
 Commands
 ========
