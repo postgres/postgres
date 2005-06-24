@@ -2,12 +2,12 @@
  *
  * rtree_gist.c
  *	  pg_amproc entries for GiSTs over 2-D boxes.
+ *
  * This gives R-tree behavior, with Guttman's poly-time split algorithm.
  *
  *
- *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/contrib/rtree_gist/rtree_gist.c,v 1.12 2005/05/25 21:40:40 momjian Exp $
+ *	$PostgreSQL: pgsql/contrib/rtree_gist/rtree_gist.c,v 1.13 2005/06/24 00:18:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ gbox_consistent(PG_FUNCTION_ARGS)
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 
 	/*
-	 * * if entry is not leaf, use gbox_internal_consistent, * else use
+	 * if entry is not leaf, use rtree_internal_consistent, else use
 	 * gbox_leaf_consistent
 	 */
 	if (!(DatumGetPointer(entry->key) != NULL && query))
@@ -509,8 +509,9 @@ gpoly_consistent(PG_FUNCTION_ARGS)
 	bool		result;
 
 	/*
-	 * * if entry is not leaf, use gbox_internal_consistent, * else use
-	 * gbox_leaf_consistent
+	 * Since the operators are marked lossy anyway, we can just use
+	 * rtree_internal_consistent even at leaf nodes.  (This works
+	 * in part because the index entries are bounding Boxes not polygons.)
 	 */
 	if (!(DatumGetPointer(entry->key) != NULL && query))
 		PG_RETURN_BOOL(FALSE);
@@ -536,15 +537,19 @@ rtree_internal_consistent(BOX *key,
 	switch (strategy)
 	{
 		case RTLeftStrategyNumber:
+			retval = !DatumGetBool(DirectFunctionCall2(box_overright, PointerGetDatum(key), PointerGetDatum(query)));
+			break;
 		case RTOverLeftStrategyNumber:
-			retval = DatumGetBool(DirectFunctionCall2(box_overleft, PointerGetDatum(key), PointerGetDatum(query)));
+			retval = !DatumGetBool(DirectFunctionCall2(box_right, PointerGetDatum(key), PointerGetDatum(query)));
 			break;
 		case RTOverlapStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overlap, PointerGetDatum(key), PointerGetDatum(query)));
 			break;
 		case RTOverRightStrategyNumber:
+			retval = !DatumGetBool(DirectFunctionCall2(box_left, PointerGetDatum(key), PointerGetDatum(query)));
+			break;
 		case RTRightStrategyNumber:
-			retval = DatumGetBool(DirectFunctionCall2(box_right, PointerGetDatum(key), PointerGetDatum(query)));
+			retval = !DatumGetBool(DirectFunctionCall2(box_overleft, PointerGetDatum(key), PointerGetDatum(query)));
 			break;
 		case RTSameStrategyNumber:
 		case RTContainsStrategyNumber:

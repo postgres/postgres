@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtstrat.c,v 1.25 2004/12/31 21:59:26 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtstrat.c,v 1.26 2005/06/24 00:18:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,20 +28,31 @@
  *	the leaf we search for equality.
  *
  *	This array maps leaf search operators to the internal search operators.
- *	We assume the normal ordering on operators:
- *
- *		left, left-or-overlap, overlap, right-or-overlap, right, same,
- *		contains, contained-by
  */
 static const StrategyNumber RTOperMap[RTNStrategies] = {
-	RTOverLeftStrategyNumber,
-	RTOverLeftStrategyNumber,
-	RTOverlapStrategyNumber,
-	RTOverRightStrategyNumber,
-	RTOverRightStrategyNumber,
-	RTContainsStrategyNumber,
-	RTContainsStrategyNumber,
-	RTOverlapStrategyNumber
+	RTOverRightStrategyNumber,	/* left */
+	RTRightStrategyNumber,		/* overleft */
+	RTOverlapStrategyNumber,	/* overlap */
+	RTLeftStrategyNumber,		/* overright */
+	RTOverLeftStrategyNumber,	/* right */
+	RTContainsStrategyNumber,	/* same */
+	RTContainsStrategyNumber,	/* contains */
+	RTOverlapStrategyNumber		/* contained-by */
+};
+
+/*
+ * We may need to negate the result of the selected operator.  (This could
+ * be avoided by expanding the set of operators required for an opclass.)
+ */
+static const bool RTNegateMap[RTNStrategies] = {
+	true,						/* left */
+	true,						/* overleft */
+	false,						/* overlap */
+	true,						/* overright */
+	true,						/* right */
+	false,						/* same */
+	false,						/* contains */
+	false						/* contained-by */
 };
 
 
@@ -50,4 +61,11 @@ RTMapToInternalOperator(StrategyNumber strat)
 {
 	Assert(strat > 0 && strat <= RTNStrategies);
 	return RTOperMap[strat - 1];
+}
+
+bool
+RTMapToInternalNegate(StrategyNumber strat)
+{
+	Assert(strat > 0 && strat <= RTNStrategies);
+	return RTNegateMap[strat - 1];
 }

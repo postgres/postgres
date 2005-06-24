@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.58 2005/03/29 00:16:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.59 2005/06/24 00:18:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,27 +125,36 @@ rtrescan(PG_FUNCTION_ARGS)
 		 * Scans on internal pages use different operators than they do on
 		 * leaf pages.	For example, if the user wants all boxes that
 		 * exactly match (x1,y1,x2,y2), then on internal pages we need to
-		 * find all boxes that contain (x1,y1,x2,y2).
+		 * find all boxes that contain (x1,y1,x2,y2).  rtstrat.c knows
+		 * how to pick the opclass member to use for internal pages.
+		 * In some cases we need to negate the result of the opclass member.
 		 */
 		for (i = 0; i < s->numberOfKeys; i++)
 		{
 			AttrNumber	attno = s->keyData[i].sk_attno;
 			Oid			opclass;
+			Oid			subtype;
+			StrategyNumber orig_strategy;
 			StrategyNumber int_strategy;
 			Oid			int_oper;
 			RegProcedure int_proc;
+			int			int_flags;
 
 			opclass = s->indexRelation->rd_indclass->values[attno - 1];
-			int_strategy = RTMapToInternalOperator(s->keyData[i].sk_strategy);
-			int_oper = get_opclass_member(opclass,
-										  s->keyData[i].sk_subtype,
-										  int_strategy);
+			subtype = s->keyData[i].sk_subtype;
+			orig_strategy = s->keyData[i].sk_strategy;
+			int_strategy = RTMapToInternalOperator(orig_strategy);
+			int_oper = get_opclass_member(opclass, subtype, int_strategy);
+			Assert(OidIsValid(int_oper));
 			int_proc = get_opcode(int_oper);
+			int_flags = s->keyData[i].sk_flags;
+			if (RTMapToInternalNegate(orig_strategy))
+				int_flags |= SK_NEGATE;
 			ScanKeyEntryInitialize(&(p->s_internalKey[i]),
-								   s->keyData[i].sk_flags,
+								   int_flags,
 								   attno,
 								   int_strategy,
-								   s->keyData[i].sk_subtype,
+								   subtype,
 								   int_proc,
 								   s->keyData[i].sk_argument);
 		}

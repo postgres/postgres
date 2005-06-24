@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/rtree.h,v 1.39 2005/06/06 17:01:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/rtree.h,v 1.40 2005/06/24 00:18:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,5 +136,6 @@ extern void ReleaseResources_rtree(void);
 
 /* rtstrat.c */
 extern StrategyNumber RTMapToInternalOperator(StrategyNumber strat);
+extern bool RTMapToInternalNegate(StrategyNumber strat);
 
 #endif   /* RTREE_H */
