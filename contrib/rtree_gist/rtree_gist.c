@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * rtree_gist.c
- *	  pg_amproc entries for GiSTs over 2-D boxes.
+ *	  pg_amproc entries for GiSTs over 2-D boxes and polygons.
  *
  * This gives R-tree behavior, with Guttman's poly-time split algorithm.
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/contrib/rtree_gist/rtree_gist.c,v 1.13 2005/06/24 00:18:52 tgl Exp $
+ *	$PostgreSQL: pgsql/contrib/rtree_gist/rtree_gist.c,v 1.14 2005/06/24 20:53:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,8 @@ typedef Datum (*BINARY_UNION) (Datum, Datum, int *);
 typedef float (*SIZE_BOX) (Datum);
 
 /*
-** box ops
-*/
+ * box ops
+ */
 PG_FUNCTION_INFO_V1(gbox_compress);
 PG_FUNCTION_INFO_V1(gbox_union);
 PG_FUNCTION_INFO_V1(gbox_picksplit);
@@ -43,8 +43,8 @@ static bool gbox_leaf_consistent(BOX *key, BOX *query, StrategyNumber strategy);
 static float size_box(Datum box);
 
 /*
-** Polygon ops
-*/
+ * Polygon ops
+ */
 PG_FUNCTION_INFO_V1(gpoly_compress);
 PG_FUNCTION_INFO_V1(gpoly_consistent);
 
@@ -52,8 +52,8 @@ Datum		gpoly_compress(PG_FUNCTION_ARGS);
 Datum		gpoly_consistent(PG_FUNCTION_ARGS);
 
 /*
-** Common rtree-function (for all ops)
-*/
+ * Common rtree-function (for all ops)
+ */
 static bool rtree_internal_consistent(BOX *key, BOX *query, StrategyNumber strategy);
 
 PG_FUNCTION_INFO_V1(rtree_decompress);
@@ -441,6 +441,18 @@ gbox_leaf_consistent(BOX *key,
 		case RTContainedByStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_contained, PointerGetDatum(key), PointerGetDatum(query)));
 			break;
+		case RTOverBelowStrategyNumber:
+			retval = DatumGetBool(DirectFunctionCall2(box_overbelow, PointerGetDatum(key), PointerGetDatum(query)));
+			break;
+		case RTBelowStrategyNumber:
+			retval = DatumGetBool(DirectFunctionCall2(box_below, PointerGetDatum(key), PointerGetDatum(query)));
+			break;
+		case RTAboveStrategyNumber:
+			retval = DatumGetBool(DirectFunctionCall2(box_above, PointerGetDatum(key), PointerGetDatum(query)));
+			break;
+		case RTOverAboveStrategyNumber:
+			retval = DatumGetBool(DirectFunctionCall2(box_overabove, PointerGetDatum(key), PointerGetDatum(query)));
+			break;
 		default:
 			retval = FALSE;
 	}
@@ -557,6 +569,18 @@ rtree_internal_consistent(BOX *key,
 			break;
 		case RTContainedByStrategyNumber:
 			retval = DatumGetBool(DirectFunctionCall2(box_overlap, PointerGetDatum(key), PointerGetDatum(query)));
+			break;
+		case RTOverBelowStrategyNumber:
+			retval = !DatumGetBool(DirectFunctionCall2(box_above, PointerGetDatum(key), PointerGetDatum(query)));
+			break;
+		case RTBelowStrategyNumber:
+			retval = !DatumGetBool(DirectFunctionCall2(box_overabove, PointerGetDatum(key), PointerGetDatum(query)));
+			break;
+		case RTAboveStrategyNumber:
+			retval = !DatumGetBool(DirectFunctionCall2(box_overbelow, PointerGetDatum(key), PointerGetDatum(query)));
+			break;
+		case RTOverAboveStrategyNumber:
+			retval = !DatumGetBool(DirectFunctionCall2(box_below, PointerGetDatum(key), PointerGetDatum(query)));
 			break;
 		default:
 			retval = FALSE;

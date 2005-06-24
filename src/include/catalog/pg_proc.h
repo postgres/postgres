@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.369 2005/06/20 10:29:37 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.370 2005/06/24 20:53:32 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -241,10 +241,10 @@ DESCR("convert int2 to text");
 DATA(insert OID = 114 (  text			   PGNSP PGUID 12 f f t f i 1  25 "26" _null_ _null_ _null_	oid_text - _null_ ));
 DESCR("convert oid to text");
 
-DATA(insert OID = 115 (  box_above		   PGNSP PGUID 12 f f t f i 2  16 "603 603" _null_ _null_ _null_	box_above - _null_ ));
-DESCR("is above");
-DATA(insert OID = 116 (  box_below		   PGNSP PGUID 12 f f t f i 2  16 "603 603" _null_ _null_ _null_	box_below - _null_ ));
-DESCR("is below");
+DATA(insert OID = 115 (  box_above_eq	   PGNSP PGUID 12 f f t f i 2  16 "603 603" _null_ _null_ _null_	box_above_eq - _null_ ));
+DESCR("is above (allows touching)");
+DATA(insert OID = 116 (  box_below_eq	   PGNSP PGUID 12 f f t f i 2  16 "603 603" _null_ _null_ _null_	box_below_eq - _null_ ));
+DESCR("is below (allows touching)");
 
 DATA(insert OID = 117 (  point_in		   PGNSP PGUID 12 f f t f i 1 600 "2275" _null_ _null_ _null_  point_in - _null_ ));
 DESCR("I/O");
@@ -3657,6 +3657,24 @@ DESCR("current value from last used sequence");
 /* start time function */
 DATA(insert OID = 2560 (  pg_postmaster_start_time PGNSP PGUID 12 f f t f s 0 1184 "" _null_ _null_ _null_ pgsql_postmaster_start_time - _null_ ));
 DESCR("postmaster start time");
+
+/* new functions for Y-direction rtree opclasses */
+DATA(insert OID = 2562 (  box_below		   PGNSP PGUID 12 f f t f i 2 16 "603 603" _null_ _null_ _null_	box_below - _null_ ));
+DESCR("is below");
+DATA(insert OID = 2563 (  box_overbelow	   PGNSP PGUID 12 f f t f i 2 16 "603 603" _null_ _null_ _null_	box_overbelow - _null_ ));
+DESCR("overlaps or is below");
+DATA(insert OID = 2564 (  box_overabove	   PGNSP PGUID 12 f f t f i 2 16 "603 603" _null_ _null_ _null_	box_overabove - _null_ ));
+DESCR("overlaps or is above");
+DATA(insert OID = 2565 (  box_above		   PGNSP PGUID 12 f f t f i 2 16 "603 603" _null_ _null_ _null_	box_above - _null_ ));
+DESCR("is above");
+DATA(insert OID = 2566 (  poly_below	   PGNSP PGUID 12 f f t f i 2 16 "604 604" _null_ _null_ _null_	poly_below - _null_ ));
+DESCR("is below");
+DATA(insert OID = 2567 (  poly_overbelow   PGNSP PGUID 12 f f t f i 2 16 "604 604" _null_ _null_ _null_	poly_overbelow - _null_ ));
+DESCR("overlaps or is below");
+DATA(insert OID = 2568 (  poly_overabove   PGNSP PGUID 12 f f t f i 2 16 "604 604" _null_ _null_ _null_	poly_overabove - _null_ ));
+DESCR("overlaps or is above");
+DATA(insert OID = 2569 (  poly_above	   PGNSP PGUID 12 f f t f i 2 16 "604 604" _null_ _null_ _null_	poly_above - _null_ ));
+DESCR("is above");
 
 
 /*

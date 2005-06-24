@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.39 2005/02/13 03:04:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.40 2005/06/24 20:53:30 tgl Exp $
 -->
 
 <sect1 id="xindex">
@@ -169,8 +169,12 @@ $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.39 2005/02/13 03:04:15 tgl Exp $
    </table>
 
   <para>
-   R-tree indexes express rectangle-containment relationships.
-   They use eight strategies, shown in <xref linkend="xindex-rtree-strat-table">.
+   R-tree indexes express relationships in two-dimensional space.
+   They use twelve strategies, shown in
+   <xref linkend="xindex-rtree-strat-table">.  Four of these are true
+   two-dimensional tests (overlaps, same, contains, contained by);
+   four of them consider only the X direction; and the other four
+   provide the same tests in the Y direction.
   </para>
 
    <table tocentry="1" id="xindex-rtree-strat-table">
@@ -184,23 +188,23 @@ $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.39 2005/02/13 03:04:15 tgl Exp $
      </thead>
      <tbody>
       <row>
-       <entry>left of</entry>
+       <entry>strictly left of</entry>
        <entry>1</entry>
       </row>
       <row>
-       <entry>left of or overlapping</entry>
+       <entry>does not extend to right of</entry>
        <entry>2</entry>
       </row>
       <row>
-       <entry>overlapping</entry>
+       <entry>overlaps</entry>
        <entry>3</entry>
       </row>
       <row>
-       <entry>right of or overlapping</entry>
+       <entry>does not extend to left of</entry>
        <entry>4</entry>
       </row>
       <row>
-       <entry>right of</entry>
+       <entry>strictly right of</entry>
        <entry>5</entry>
       </row>
       <row>
@@ -214,6 +218,22 @@ $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.39 2005/02/13 03:04:15 tgl Exp $
       <row>
        <entry>contained by</entry>
        <entry>8</entry>
+      </row>
+      <row>
+       <entry>does not extend above</entry>
+       <entry>9</entry>
+      </row>
+      <row>
+       <entry>strictly below</entry>
+       <entry>10</entry>
+      </row>
+      <row>
+       <entry>strictly above</entry>
+       <entry>11</entry>
+      </row>
+      <row>
+       <entry>does not extend below</entry>
+       <entry>12</entry>
       </row>
      </tbody>
     </tgroup>
@@ -398,7 +418,7 @@ $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.39 2005/02/13 03:04:15 tgl Exp $
 
   <para>
    Unlike strategy operators, support functions return whichever data
-   type the particular index method expects, for example in the case
+   type the particular index method expects; for example in the case
    of the comparison function for B-trees, a signed integer.
   </para>
  </sect2>

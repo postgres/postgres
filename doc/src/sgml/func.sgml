@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.258 2005/06/15 06:29:25 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.259 2005/06/24 20:53:29 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -5854,6 +5854,17 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
     linkend="functions-geometry-conv-table">.
    </para>
 
+   <caution>
+    <para>
+     Note that the <quote>same as</> operator, <literal>~=</>, represents
+     the usual notion of equality for the <type>point</type>,
+     <type>box</type>, <type>polygon</type>, and <type>circle</type> types.
+     Some of these types also have an <literal>=</> operator, but it compares
+     for equal <emphasis>areas</> only.  The other scalar comparison operators
+     (<literal>&lt;=</> and so on) likewise compare areas for these types.
+    </para>
+   </caution>
+
    <table id="functions-geometry-op-table">
      <title>Geometric Operators</title>
      <tgroup cols="3">
@@ -5921,6 +5932,16 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
         <entry><literal>box '((0,0),(1,1))' &amp;&amp; box '((0,0),(2,2))'</literal></entry>
        </row>
        <row>
+        <entry> <literal>&lt;&lt;</literal> </entry>
+        <entry>Is strictly left of?</entry>
+        <entry><literal>circle '((0,0),1)' &lt;&lt; circle '((5,0),1)'</literal></entry>
+       </row>
+       <row>
+        <entry> <literal>&gt;&gt;</literal> </entry>
+        <entry>Is strictly right of?</entry>
+        <entry><literal>circle '((5,0),1)' &gt;&gt; circle '((0,0),1)'</literal></entry>
+       </row>
+       <row>
         <entry> <literal>&amp;&lt;</literal> </entry>
         <entry>Does not extend to the right of?</entry>
         <entry><literal>box '((0,0),(1,1))' &amp;&lt; box '((0,0),(2,2))'</literal></entry>
@@ -5931,23 +5952,33 @@ SELECT TIMESTAMP 'now';  -- incorrect for use with DEFAULT
         <entry><literal>box '((0,0),(3,3))' &amp;&gt; box '((0,0),(2,2))'</literal></entry>
        </row>
        <row>
-        <entry> <literal>&lt;&lt;</literal> </entry>
-        <entry>Is left of?</entry>
-        <entry><literal>circle '((0,0),1)' &lt;&lt; circle '((5,0),1)'</literal></entry>
+        <entry> <literal>&lt;&lt;|</literal> </entry>
+        <entry>Is strictly below?</entry>
+        <entry><literal>box '((0,0),(3,3))' &lt;&lt;| box '((3,4),(5,5))'</literal></entry>
        </row>
        <row>
-        <entry> <literal>&gt;&gt;</literal> </entry>
-        <entry>Is right of?</entry>
-        <entry><literal>circle '((5,0),1)' &gt;&gt; circle '((0,0),1)'</literal></entry>
+        <entry> <literal>|&gt;&gt;</literal> </entry>
+        <entry>Is strictly above?</entry>
+        <entry><literal>box '((3,4),(5,5))' |&gt;&gt; box '((0,0),(3,3))'</literal></entry>
+       </row>
+       <row>
+        <entry> <literal>&amp;&lt;|</literal> </entry>
+        <entry>Does not extend above?</entry>
+        <entry><literal>box '((0,0),(1,1))' &amp;&lt;| box '((0,0),(2,2))'</literal></entry>
+       </row>
+       <row>
+        <entry> <literal>|&amp;&gt;</literal> </entry>
+        <entry>Does not extend below?</entry>
+        <entry><literal>box '((0,0),(3,3))' |&amp;&gt; box '((0,0),(2,2))'</literal></entry>
        </row>
        <row>
         <entry> <literal>&lt;^</literal> </entry>
-        <entry>Is below?</entry>
+        <entry>Is below (allows touching)?</entry>
         <entry><literal>circle '((0,0),1)' &lt;^ circle '((0,5),1)'</literal></entry>
        </row>
        <row>
         <entry> <literal>&gt;^</literal> </entry>
-        <entry>Is above?</entry>
+        <entry>Is above (allows touching)?</entry>
         <entry><literal>circle '((0,5),1)' &gt;^ circle '((0,0),1)'</literal></entry>
        </row>
        <row>

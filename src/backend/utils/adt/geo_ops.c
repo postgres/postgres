@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.88 2004/12/31 22:01:21 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.89 2005/06/24 20:53:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -567,7 +567,18 @@ box_ov(BOX *box1, BOX *box2)
 		  FPle(box2->low.y, box1->high.y)));
 }
 
-/*		box_overleft	-		is the right edge of box1 to the left of
+/*		box_left		-		is box1 strictly left of box2?
+ */
+Datum
+box_left(PG_FUNCTION_ARGS)
+{
+	BOX		   *box1 = PG_GETARG_BOX_P(0);
+	BOX		   *box2 = PG_GETARG_BOX_P(1);
+
+	PG_RETURN_BOOL(FPlt(box1->high.x, box2->low.x));
+}
+
+/*		box_overleft	-		is the right edge of box1 at or left of
  *								the right edge of box2?
  *
  *		This is "less than or equal" for the end of a time range,
@@ -582,17 +593,6 @@ box_overleft(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(FPle(box1->high.x, box2->high.x));
 }
 
-/*		box_left		-		is box1 strictly left of box2?
- */
-Datum
-box_left(PG_FUNCTION_ARGS)
-{
-	BOX		   *box1 = PG_GETARG_BOX_P(0);
-	BOX		   *box2 = PG_GETARG_BOX_P(1);
-
-	PG_RETURN_BOOL(FPlt(box1->high.x, box2->low.x));
-}
-
 /*		box_right		-		is box1 strictly right of box2?
  */
 Datum
@@ -604,7 +604,7 @@ box_right(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(FPgt(box1->low.x, box2->high.x));
 }
 
-/*		box_overright	-		is the left edge of box1 to the right of
+/*		box_overright	-		is the left edge of box1 at or right of
  *								the left edge of box2?
  *
  *		This is "greater than or equal" for time ranges, when time ranges
@@ -617,6 +617,52 @@ box_overright(PG_FUNCTION_ARGS)
 	BOX		   *box2 = PG_GETARG_BOX_P(1);
 
 	PG_RETURN_BOOL(FPge(box1->low.x, box2->low.x));
+}
+
+/*		box_below		-		is box1 strictly below box2?
+ */
+Datum
+box_below(PG_FUNCTION_ARGS)
+{
+	BOX		   *box1 = PG_GETARG_BOX_P(0);
+	BOX		   *box2 = PG_GETARG_BOX_P(1);
+
+	PG_RETURN_BOOL(FPlt(box1->high.y, box2->low.y));
+}
+
+/*		box_overbelow	-		is the upper edge of box1 at or below
+ *								the upper edge of box2?
+ */
+Datum
+box_overbelow(PG_FUNCTION_ARGS)
+{
+	BOX		   *box1 = PG_GETARG_BOX_P(0);
+	BOX		   *box2 = PG_GETARG_BOX_P(1);
+
+	PG_RETURN_BOOL(FPle(box1->high.y, box2->high.y));
+}
+
+/*		box_above		-		is box1 strictly above box2?
+ */
+Datum
+box_above(PG_FUNCTION_ARGS)
+{
+	BOX		   *box1 = PG_GETARG_BOX_P(0);
+	BOX		   *box2 = PG_GETARG_BOX_P(1);
+
+	PG_RETURN_BOOL(FPgt(box1->low.y, box2->high.y));
+}
+
+/*		box_overabove	-		is the lower edge of box1 at or above
+ *								the lower edge of box2?
+ */
+Datum
+box_overabove(PG_FUNCTION_ARGS)
+{
+	BOX		   *box1 = PG_GETARG_BOX_P(0);
+	BOX		   *box2 = PG_GETARG_BOX_P(1);
+
+	PG_RETURN_BOOL(FPge(box1->low.y, box2->low.y));
 }
 
 /*		box_contained	-		is box1 contained by box2?
@@ -650,9 +696,14 @@ box_contain(PG_FUNCTION_ARGS)
 
 /*		box_positionop	-
  *				is box1 entirely {above,below} box2?
+ *
+ * box_below_eq and box_above_eq are obsolete versions that (probably
+ * erroneously) accept the equal-boundaries case.  Since these are not
+ * in sync with the box_left and box_right code, they are deprecated and
+ * not supported in the PG 8.1 rtree operator class extension.
  */
 Datum
-box_below(PG_FUNCTION_ARGS)
+box_below_eq(PG_FUNCTION_ARGS)
 {
 	BOX		   *box1 = PG_GETARG_BOX_P(0);
 	BOX		   *box2 = PG_GETARG_BOX_P(1);
@@ -661,7 +712,7 @@ box_below(PG_FUNCTION_ARGS)
 }
 
 Datum
-box_above(PG_FUNCTION_ARGS)
+box_above_eq(PG_FUNCTION_ARGS)
 {
 	BOX		   *box1 = PG_GETARG_BOX_P(0);
 	BOX		   *box2 = PG_GETARG_BOX_P(1);
@@ -3504,7 +3555,7 @@ poly_left(PG_FUNCTION_ARGS)
 
 /*-------------------------------------------------------
  * Is polygon A overlapping or left of polygon B? i.e. is
- * the left most point of A left of the right most point
+ * the right most point of A at or left of the right most point
  * of B?
  *-------------------------------------------------------*/
 Datum
@@ -3514,7 +3565,7 @@ poly_overleft(PG_FUNCTION_ARGS)
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
 	bool		result;
 
-	result = polya->boundbox.low.x <= polyb->boundbox.high.x;
+	result = polya->boundbox.high.x <= polyb->boundbox.high.x;
 
 	/*
 	 * Avoid leaking memory for toasted inputs ... needed for rtree
@@ -3552,7 +3603,7 @@ poly_right(PG_FUNCTION_ARGS)
 
 /*-------------------------------------------------------
  * Is polygon A overlapping or right of polygon B? i.e. is
- * the right most point of A right of the left most point
+ * the left most point of A at or right of the left most point
  * of B?
  *-------------------------------------------------------*/
 Datum
@@ -3562,7 +3613,7 @@ poly_overright(PG_FUNCTION_ARGS)
 	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
 	bool		result;
 
-	result = polya->boundbox.high.x > polyb->boundbox.low.x;
+	result = polya->boundbox.low.x >= polyb->boundbox.low.x;
 
 	/*
 	 * Avoid leaking memory for toasted inputs ... needed for rtree
@@ -3573,6 +3624,103 @@ poly_overright(PG_FUNCTION_ARGS)
 
 	PG_RETURN_BOOL(result);
 }
+
+/*-------------------------------------------------------
+ * Is polygon A strictly below polygon B? i.e. is
+ * the upper most point of A below the lower most point
+ * of B?
+ *-------------------------------------------------------*/
+Datum
+poly_below(PG_FUNCTION_ARGS)
+{
+	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
+	bool		result;
+
+	result = polya->boundbox.high.y < polyb->boundbox.low.y;
+
+	/*
+	 * Avoid leaking memory for toasted inputs ... needed for rtree
+	 * indexes
+	 */
+	PG_FREE_IF_COPY(polya, 0);
+	PG_FREE_IF_COPY(polyb, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+/*-------------------------------------------------------
+ * Is polygon A overlapping or below polygon B? i.e. is
+ * the upper most point of A at or below the upper most point
+ * of B?
+ *-------------------------------------------------------*/
+Datum
+poly_overbelow(PG_FUNCTION_ARGS)
+{
+	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
+	bool		result;
+
+	result = polya->boundbox.high.y <= polyb->boundbox.high.y;
+
+	/*
+	 * Avoid leaking memory for toasted inputs ... needed for rtree
+	 * indexes
+	 */
+	PG_FREE_IF_COPY(polya, 0);
+	PG_FREE_IF_COPY(polyb, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+/*-------------------------------------------------------
+ * Is polygon A strictly above polygon B? i.e. is
+ * the lower most point of A above the upper most point
+ * of B?
+ *-------------------------------------------------------*/
+Datum
+poly_above(PG_FUNCTION_ARGS)
+{
+	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
+	bool		result;
+
+	result = polya->boundbox.low.y > polyb->boundbox.high.y;
+
+	/*
+	 * Avoid leaking memory for toasted inputs ... needed for rtree
+	 * indexes
+	 */
+	PG_FREE_IF_COPY(polya, 0);
+	PG_FREE_IF_COPY(polyb, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
+/*-------------------------------------------------------
+ * Is polygon A overlapping or above polygon B? i.e. is
+ * the lower most point of A at or above the lower most point
+ * of B?
+ *-------------------------------------------------------*/
+Datum
+poly_overabove(PG_FUNCTION_ARGS)
+{
+	POLYGON    *polya = PG_GETARG_POLYGON_P(0);
+	POLYGON    *polyb = PG_GETARG_POLYGON_P(1);
+	bool		result;
+
+	result = polya->boundbox.low.y >= polyb->boundbox.low.y;
+
+	/*
+	 * Avoid leaking memory for toasted inputs ... needed for rtree
+	 * indexes
+	 */
+	PG_FREE_IF_COPY(polya, 0);
+	PG_FREE_IF_COPY(polyb, 1);
+
+	PG_RETURN_BOOL(result);
+}
+
 
 /*-------------------------------------------------------
  * Is polygon A the same as polygon B? i.e. are all the
@@ -3607,7 +3755,7 @@ poly_same(PG_FUNCTION_ARGS)
  * Determine if polygon A overlaps polygon B by determining if
  * their bounding boxes overlap.
  *
- * XXX ought to do a more correct check?
+ * XXX ought to do a more correct check!
  *-----------------------------------------------------------------*/
 Datum
 poly_overlap(PG_FUNCTION_ARGS)
@@ -3696,8 +3844,7 @@ poly_contain(PG_FUNCTION_ARGS)
 
 
 /*-----------------------------------------------------------------
- * Determine if polygon A is contained by polygon B by determining
- * if A's bounding box is contained by B's bounding box.
+ * Determine if polygon A is contained by polygon B
  *-----------------------------------------------------------------*/
 Datum
 poly_contained(PG_FUNCTION_ARGS)
@@ -3705,6 +3852,7 @@ poly_contained(PG_FUNCTION_ARGS)
 	Datum		polya = PG_GETARG_DATUM(0);
 	Datum		polyb = PG_GETARG_DATUM(1);
 
+	/* Just switch the arguments and pass it off to poly_contain */
 	PG_RETURN_DATUM(DirectFunctionCall2(poly_contain, polyb, polya));
 }
 
@@ -4384,7 +4532,7 @@ circle_overlap(PG_FUNCTION_ARGS)
 						circle1->radius + circle2->radius));
 }
 
-/*		circle_overleft -		is the right edge of circle1 to the left of
+/*		circle_overleft -		is the right edge of circle1 at or left of
  *								the right edge of circle2?
  */
 Datum
@@ -4405,7 +4553,7 @@ circle_left(PG_FUNCTION_ARGS)
 	CIRCLE	   *circle1 = PG_GETARG_CIRCLE_P(0);
 	CIRCLE	   *circle2 = PG_GETARG_CIRCLE_P(1);
 
-	PG_RETURN_BOOL(FPle((circle1->center.x + circle1->radius),
+	PG_RETURN_BOOL(FPlt((circle1->center.x + circle1->radius),
 						(circle2->center.x - circle2->radius)));
 }
 
@@ -4417,11 +4565,11 @@ circle_right(PG_FUNCTION_ARGS)
 	CIRCLE	   *circle1 = PG_GETARG_CIRCLE_P(0);
 	CIRCLE	   *circle2 = PG_GETARG_CIRCLE_P(1);
 
-	PG_RETURN_BOOL(FPge((circle1->center.x - circle1->radius),
+	PG_RETURN_BOOL(FPgt((circle1->center.x - circle1->radius),
 						(circle2->center.x + circle2->radius)));
 }
 
-/*		circle_overright		-		is the left edge of circle1 to the right of
+/*		circle_overright	-	is the left edge of circle1 at or right of
  *								the left edge of circle2?
  */
 Datum

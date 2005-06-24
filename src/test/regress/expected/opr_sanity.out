@@ -803,6 +803,10 @@ ORDER BY 1, 2, 3;
      402 |            6 | ~=
      402 |            7 | ~
      402 |            8 | @
+     402 |            9 | &<|
+     402 |           10 | <<|
+     402 |           11 | |>>
+     402 |           12 | |&>
      403 |            1 | <
      403 |            1 | ~<~
      403 |            2 | <=
@@ -815,7 +819,7 @@ ORDER BY 1, 2, 3;
      403 |            5 | ~>~
      405 |            1 | =
      405 |            1 | ~=~
-(20 rows)
+(24 rows)
 
 -- Check that all operators linked to by opclass entries have selectivity
 -- estimators.  This is not absolutely required, but it seems a reasonable

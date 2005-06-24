@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.133 2005/06/08 21:15:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.134 2005/06/24 20:53:31 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -373,8 +373,8 @@ DATA(insert OID =  796 (  ">="	   PGNSP PGUID b f	602  602	 16  795  0 0 0 0 0 p
 DATA(insert OID =  797 (  "#"	   PGNSP PGUID l f	0  602	 23    0  0 0 0 0 0 path_npoints - - ));
 DATA(insert OID =  798 (  "?#"	   PGNSP PGUID b f	602  602	 16    0  0 0 0 0 0 path_inter - - ));
 DATA(insert OID =  799 (  "@-@"    PGNSP PGUID l f	0  602	701    0  0 0 0 0 0 path_length - - ));
-DATA(insert OID =  800 (  ">^"	   PGNSP PGUID b f	603  603	 16    0  0 0 0 0 0 box_above positionsel positionjoinsel ));
-DATA(insert OID =  801 (  "<^"	   PGNSP PGUID b f	603  603	 16    0  0 0 0 0 0 box_below positionsel positionjoinsel ));
+DATA(insert OID =  800 (  ">^"	   PGNSP PGUID b f	603  603	 16    0  0 0 0 0 0 box_above_eq positionsel positionjoinsel ));
+DATA(insert OID =  801 (  "<^"	   PGNSP PGUID b f	603  603	 16    0  0 0 0 0 0 box_below_eq positionsel positionjoinsel ));
 DATA(insert OID =  802 (  "?#"	   PGNSP PGUID b f	603  603	 16    0  0 0 0 0 0 box_overlap areasel areajoinsel ));
 DATA(insert OID =  803 (  "#"	   PGNSP PGUID b f	603  603	603    0  0 0 0 0 0 box_intersect - - ));
 DATA(insert OID =  804 (  "+"	   PGNSP PGUID b f	603  600	603    0  0 0 0 0 0 box_add - - ));
@@ -864,6 +864,16 @@ DATA(insert OID = 2552 (  "+"	   PGNSP PGUID b f	1186 1266 1266 1802 0 0 0 0 0 i
 DATA(insert OID = 2553 (  "+"	   PGNSP PGUID b f	1186 1114 1114 2066 0 0 0 0 0 interval_pl_timestamp - - ));
 DATA(insert OID = 2554 (  "+"	   PGNSP PGUID b f	1186 1184 1184 1327 0 0 0 0 0 interval_pl_timestamptz - - ));
 DATA(insert OID = 2555 (  "+"	   PGNSP PGUID b f	23 1082 1082 1100 0 0 0 0 0 integer_pl_date - - ));
+
+/* new operators for Y-direction rtree opclasses */
+DATA(insert OID = 2570 (  "<<|"	   PGNSP PGUID b f 603 603	16	 0	 0	 0	 0	 0	 0 box_below positionsel positionjoinsel ));
+DATA(insert OID = 2571 (  "&<|"	   PGNSP PGUID b f 603 603	16	 0	 0	 0	 0	 0	 0 box_overbelow positionsel positionjoinsel ));
+DATA(insert OID = 2572 (  "|&>"	   PGNSP PGUID b f 603 603	16	 0	 0	 0	 0	 0	 0 box_overabove positionsel positionjoinsel ));
+DATA(insert OID = 2573 (  "|>>"	   PGNSP PGUID b f 603 603	16	 0	 0	 0	 0	 0	 0 box_above positionsel positionjoinsel ));
+DATA(insert OID = 2574 (  "<<|"	   PGNSP PGUID b f 604 604	16	 0	 0	 0	 0	 0	 0 poly_below positionsel positionjoinsel ));
+DATA(insert OID = 2575 (  "&<|"	   PGNSP PGUID b f 604 604	16	 0	 0	 0	 0	 0	 0 poly_overbelow positionsel positionjoinsel ));
+DATA(insert OID = 2576 (  "|&>"	   PGNSP PGUID b f 604 604	16	 0	 0	 0	 0	 0	 0 poly_overabove positionsel positionjoinsel ));
+DATA(insert OID = 2577 (  "|>>"	   PGNSP PGUID b f 604 604	16	 0	 0	 0	 0	 0	 0 poly_above positionsel positionjoinsel ));
 
 
 /*

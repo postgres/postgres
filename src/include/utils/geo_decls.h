@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/geo_decls.h,v 1.46 2004/12/31 22:03:46 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/geo_decls.h,v 1.47 2005/06/24 20:53:33 tgl Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -278,14 +278,18 @@ extern Datum box_recv(PG_FUNCTION_ARGS);
 extern Datum box_send(PG_FUNCTION_ARGS);
 extern Datum box_same(PG_FUNCTION_ARGS);
 extern Datum box_overlap(PG_FUNCTION_ARGS);
-extern Datum box_overleft(PG_FUNCTION_ARGS);
 extern Datum box_left(PG_FUNCTION_ARGS);
+extern Datum box_overleft(PG_FUNCTION_ARGS);
 extern Datum box_right(PG_FUNCTION_ARGS);
 extern Datum box_overright(PG_FUNCTION_ARGS);
+extern Datum box_below(PG_FUNCTION_ARGS);
+extern Datum box_overbelow(PG_FUNCTION_ARGS);
+extern Datum box_above(PG_FUNCTION_ARGS);
+extern Datum box_overabove(PG_FUNCTION_ARGS);
 extern Datum box_contained(PG_FUNCTION_ARGS);
 extern Datum box_contain(PG_FUNCTION_ARGS);
-extern Datum box_below(PG_FUNCTION_ARGS);
-extern Datum box_above(PG_FUNCTION_ARGS);
+extern Datum box_below_eq(PG_FUNCTION_ARGS);
+extern Datum box_above_eq(PG_FUNCTION_ARGS);
 extern Datum box_lt(PG_FUNCTION_ARGS);
 extern Datum box_gt(PG_FUNCTION_ARGS);
 extern Datum box_eq(PG_FUNCTION_ARGS);
@@ -343,6 +347,10 @@ extern Datum poly_left(PG_FUNCTION_ARGS);
 extern Datum poly_overleft(PG_FUNCTION_ARGS);
 extern Datum poly_right(PG_FUNCTION_ARGS);
 extern Datum poly_overright(PG_FUNCTION_ARGS);
+extern Datum poly_below(PG_FUNCTION_ARGS);
+extern Datum poly_overbelow(PG_FUNCTION_ARGS);
+extern Datum poly_above(PG_FUNCTION_ARGS);
+extern Datum poly_overabove(PG_FUNCTION_ARGS);
 extern Datum poly_same(PG_FUNCTION_ARGS);
 extern Datum poly_overlap(PG_FUNCTION_ARGS);
 extern Datum poly_contain(PG_FUNCTION_ARGS);

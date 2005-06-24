@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/rtree.h,v 1.40 2005/06/24 00:18:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/rtree.h,v 1.41 2005/06/24 20:53:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 #include "utils/rel.h"
 
 /* see rtstrat.c for what all this is about */
-#define RTNStrategies					8
+#define RTNStrategies					12
 #define RTLeftStrategyNumber			1
 #define RTOverLeftStrategyNumber		2
 #define RTOverlapStrategyNumber			3
@@ -30,6 +30,10 @@
 #define RTSameStrategyNumber			6
 #define RTContainsStrategyNumber		7
 #define RTContainedByStrategyNumber		8
+#define RTOverBelowStrategyNumber		9
+#define RTBelowStrategyNumber			10
+#define RTAboveStrategyNumber			11
+#define RTOverAboveStrategyNumber		12
 
 #define RTNProcs						3
 #define RT_UNION_PROC					1

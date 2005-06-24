@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtstrat.c,v 1.26 2005/06/24 00:18:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtstrat.c,v 1.27 2005/06/24 20:53:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,11 @@ static const StrategyNumber RTOperMap[RTNStrategies] = {
 	RTOverLeftStrategyNumber,	/* right */
 	RTContainsStrategyNumber,	/* same */
 	RTContainsStrategyNumber,	/* contains */
-	RTOverlapStrategyNumber		/* contained-by */
+	RTOverlapStrategyNumber,	/* contained-by */
+	RTAboveStrategyNumber,		/* overbelow */
+	RTOverAboveStrategyNumber,	/* below */
+	RTOverBelowStrategyNumber,	/* above */
+	RTBelowStrategyNumber		/* overabove */
 };
 
 /*
@@ -52,7 +56,11 @@ static const bool RTNegateMap[RTNStrategies] = {
 	true,						/* right */
 	false,						/* same */
 	false,						/* contains */
-	false						/* contained-by */
+	false,						/* contained-by */
+	true,						/* overbelow */
+	true,						/* below */
+	true,						/* above */
+	true						/* overabove */
 };
 
 
