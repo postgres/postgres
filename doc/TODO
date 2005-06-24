@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Jun 23 22:07:20 EDT 2005
+Last updated:		Thu Jun 23 22:30:38 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -383,7 +383,7 @@ Commands
   be USING, to avoid anything as confusing as DELETE FROM a FROM b.
 
 * Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
-* Allow REINDEX to rebuild all database indexes, remove /contrib/reindex
+* -Allow REINDEX to rebuild all database indexes
 * Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
 * Add a schema option to createlang
 * Allow UPDATE tab SET ROW (col, ...) = (...) for updating multiple columns
