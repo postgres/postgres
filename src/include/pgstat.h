@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.29 2005/05/11 01:41:41 neilc Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.30 2005/06/25 23:58:58 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -138,7 +138,7 @@ typedef struct PgStat_MsgActivity
 typedef struct PgStat_MsgTabstat
 {
 	PgStat_MsgHdr m_hdr;
-	int			m_databaseid;
+	Oid			m_databaseid;
 	int			m_nentries;
 	int			m_xact_commit;
 	int			m_xact_rollback;

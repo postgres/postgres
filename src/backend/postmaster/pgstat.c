@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2005, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.95 2005/05/29 04:23:03 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.96 2005/06/25 23:58:57 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -162,7 +162,7 @@ static void pgstat_exit(SIGNAL_ARGS);
 static void pgstat_die(SIGNAL_ARGS);
 static void pgstat_beshutdown_hook(int code, Datum arg);
 
-static PgStat_StatDBEntry *pgstat_get_db_entry(int databaseid);
+static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid);
 static int	pgstat_add_backend(PgStat_MsgHdr *msg);
 static void pgstat_sub_backend(int procpid);
 static void pgstat_drop_database(Oid databaseid);
@@ -2052,7 +2052,7 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
  * table entry exists, initialize it.
  */
 static PgStat_StatDBEntry *
-pgstat_get_db_entry(int databaseid)
+pgstat_get_db_entry(Oid databaseid)
 {
 	PgStat_StatDBEntry *result;
 	bool found;
