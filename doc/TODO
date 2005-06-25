@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jun 25 08:37:41 EDT 2005
+Last updated:		Sat Jun 25 11:24:03 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -579,6 +579,8 @@ Commands
 	o Add capability to create and call PROCEDURES
 	o Allow PL/pgSQL to handle %TYPE arrays, e.g. tab.col%TYPE[]
 	o Add MOVE to PL/pgSQL
+	o Pass arrays natively instead of as text between plperl and postgres
+	o Add support for polymorphic arguments and return types to plperl
 
 
 Clients
