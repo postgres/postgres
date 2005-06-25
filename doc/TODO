@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jun 24 21:32:02 EDT 2005
+Last updated:		Fri Jun 24 22:40:39 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -145,6 +145,7 @@ Administration
   clause
 * Allow postgresql.conf values to be set so they can not be changed by
   the user
+* Allow per-user and per-tablespaces quotas
 
 
 Data Types
