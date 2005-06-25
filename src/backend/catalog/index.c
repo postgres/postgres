@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.202 2002/10/21 22:06:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.202.2.1 2005/06/25 16:54:30 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -736,13 +736,21 @@ index_create(Oid heapRelationId,
 	}
 
 	/*
-	 * Fill in the index strategy structure with information from the
-	 * catalogs.  First we must advance the command counter so that we
-	 * will see the newly-entered index catalog tuples.
+	 * Advance the command counter so that we can see the newly-entered
+	 * catalog tuples for the index.
 	 */
 	CommandCounterIncrement();
 
-	RelationInitIndexAccessInfo(indexRelation);
+	/*
+	 * In bootstrap mode, we have to fill in the index strategy structure
+	 * with information from the catalogs.  If we aren't bootstrapping,
+	 * then the relcache entry has already been rebuilt thanks to sinval
+	 * update during CommandCounterIncrement.
+	 */
+	if (IsBootstrapProcessingMode())
+		RelationInitIndexAccessInfo(indexRelation);
+	else
+		Assert(indexRelation->rd_indexcxt != NULL);
 
 	/*
 	 * If this is bootstrap (initdb) time, then we don't actually fill in
