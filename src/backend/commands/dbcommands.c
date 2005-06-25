@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.160 2005/06/21 04:02:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.161 2005/06/25 22:47:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -513,6 +513,36 @@ createdb(const CreatedbStmt *stmt)
 
 	/* Close pg_database, but keep exclusive lock till commit */
 	heap_close(pg_database_rel, NoLock);
+
+	/*
+	 * We force a checkpoint before committing.  This effectively means
+	 * that committed XLOG_DBASE_CREATE operations will never need to be
+	 * replayed (at least not in ordinary crash recovery; we still have
+	 * to make the XLOG entry for the benefit of PITR operations).
+	 * This avoids two nasty scenarios:
+	 *
+	 * #1: When PITR is off, we don't XLOG the contents of newly created
+	 * indexes; therefore the drop-and-recreate-whole-directory behavior
+	 * of DBASE_CREATE replay would lose such indexes.
+	 *
+	 * #2: Since we have to recopy the source database during DBASE_CREATE
+	 * replay, we run the risk of copying changes in it that were committed
+	 * after the original CREATE DATABASE command but before the system
+	 * crash that led to the replay.  This is at least unexpected and at
+	 * worst could lead to inconsistencies, eg duplicate table names.
+	 *
+	 * (Both of these were real bugs in releases 8.0 through 8.0.3.)
+	 *
+	 * In PITR replay, the first of these isn't an issue, and the second
+	 * is only a risk if the CREATE DATABASE and subsequent template
+	 * database change both occur while a base backup is being taken.
+	 * There doesn't seem to be much we can do about that except document
+	 * it as a limitation.
+	 *
+	 * Perhaps if we ever implement CREATE DATABASE in a less cheesy
+	 * way, we can avoid this.
+	 */
+	RequestCheckpoint(true);
 
 	/*
 	 * Set flag to update flat database file at commit.

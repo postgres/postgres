@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.68 2005/06/21 20:45:43 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.69 2005/06/25 22:47:28 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -1116,6 +1116,18 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
      not presently WAL-logged, so replay will not update these index types.
      The recommended workaround is to manually <command>REINDEX</> each
      such index after completing a recovery operation.
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     If a <command>CREATE DATABASE</> command is executed while a base
+     backup is being taken, and then the template database that the
+     <command>CREATE DATABASE</> copied is modified while the base backup
+     is still in progress, it is possible that recovery will cause those
+     modifications to be propagated into the created database as well.
+     This is of course undesirable.  To avoid this risk, it is best not to
+     modify any template databases while taking a base backup.
     </para>
    </listitem>
 
