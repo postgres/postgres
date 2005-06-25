@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Jun 24 17:28:23 EDT 2005
+Last updated:		Fri Jun 24 21:32:02 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -152,6 +152,17 @@ Data Types
 
 * Remove Money type, add money formatting for decimal type
 * Change NUMERIC to enforce the maximum precision, and increase it
+* Add NUMERIC division operator that doesn't round?
+
+  Currently NUMERIC _rounds_ the result to the specified precision.  
+  This means division can return a result that multiplied by the 
+  divisor is greater than the dividend, e.g. this returns a value > 10:
+
+    SELECT (10::numeric(2,0) / 6::numeric(2,0))::numeric(2,0) * 6;
+
+  The positive modulus result returned by NUMERICs might be considered
+  inaccurate, in one sense.
+
 * Add function to return compressed length of TOAST data values
 * Allow INET subnet tests using non-constants to be indexed
 * Add transaction_timestamp(), statement_timestamp(), clock_timestamp()
