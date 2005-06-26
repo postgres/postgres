@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.62 2005/06/18 20:51:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.63 2005/06/26 23:32:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -311,6 +311,7 @@ init_htab(HTAB *hashp, long nelem)
 {
 	HASHHDR    *hctl = hashp->hctl;
 	HASHSEGMENT *segp;
+	long		lnbuckets;
 	int			nbuckets;
 	int			nsegs;
 
@@ -319,9 +320,9 @@ init_htab(HTAB *hashp, long nelem)
 	 * number of buckets.  Allocate space for the next greater power of
 	 * two number of buckets
 	 */
-	nelem = (nelem - 1) / hctl->ffactor + 1;
+	lnbuckets = (nelem - 1) / hctl->ffactor + 1;
 
-	nbuckets = 1 << my_log2(nelem);
+	nbuckets = 1 << my_log2(lnbuckets);
 
 	hctl->max_bucket = hctl->low_mask = nbuckets - 1;
 	hctl->high_mask = (nbuckets << 1) - 1;
@@ -363,6 +364,10 @@ init_htab(HTAB *hashp, long nelem)
 			return false;
 	}
 
+	/* Choose number of entries to allocate at a time */
+	hctl->nelem_alloc = (int) Min(nelem, HASHELEMENT_ALLOC_MAX);
+	hctl->nelem_alloc = Max(hctl->nelem_alloc, 1);
+
 #if HASH_DEBUG
 	fprintf(stderr, "init_htab:\n%s%p\n%s%ld\n%s%ld\n%s%d\n%s%ld\n%s%u\n%s%x\n%s%x\n%s%ld\n%s%ld\n",
 			"TABLE POINTER   ", hashp,
@@ -394,7 +399,8 @@ hash_estimate_size(long num_entries, Size entrysize)
 				nSegments,
 				nDirEntries,
 				nElementAllocs,
-				elementSize;
+				elementSize,
+				elementAllocCnt;
 
 	/* estimate number of buckets wanted */
 	nBuckets = 1L << my_log2((num_entries - 1) / DEF_FFACTOR + 1);
@@ -411,10 +417,12 @@ hash_estimate_size(long num_entries, Size entrysize)
 	size += MAXALIGN(nDirEntries * sizeof(HASHSEGMENT));
 	/* segments */
 	size += nSegments * MAXALIGN(DEF_SEGSIZE * sizeof(HASHBUCKET));
-	/* elements --- allocated in groups of HASHELEMENT_ALLOC_INCR */
+	/* elements --- allocated in groups of up to HASHELEMENT_ALLOC_MAX */
 	elementSize = MAXALIGN(sizeof(HASHELEMENT)) + MAXALIGN(entrysize);
-	nElementAllocs = (num_entries - 1) / HASHELEMENT_ALLOC_INCR + 1;
-	size += nElementAllocs * HASHELEMENT_ALLOC_INCR * elementSize;
+	elementAllocCnt = Min(num_entries, HASHELEMENT_ALLOC_MAX);
+	elementAllocCnt = Max(elementAllocCnt, 1);
+	nElementAllocs = (num_entries - 1) / elementAllocCnt + 1;
+	size += nElementAllocs * elementAllocCnt * elementSize;
 
 	return size;
 }
@@ -633,7 +641,7 @@ hash_search(HTAB *hashp,
 			if (currBucket == NULL)
 			{
 				/* no free elements.  allocate another chunk of buckets */
-				if (!element_alloc(hashp, HASHELEMENT_ALLOC_INCR))
+				if (!element_alloc(hashp, hctl->nelem_alloc))
 				{
 					/* out of memory */
 					if (action == HASH_ENTER_NULL)
