@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.100 2005/06/02 01:23:08 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.101 2005/06/26 03:03:21 momjian Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -247,9 +247,10 @@ UPDATE "my_table" SET "a" = 5;
      write two adjacent single quotes, e.g.
      <literal>'Dianne''s horse'</literal>.
      <productname>PostgreSQL</productname> also allows single quotes
-     to be escaped with a backslash (<literal>\</literal>), so for
-     example the same string could be written
-     <literal>'Dianne\'s horse'</literal>.
+     to be escaped with a backslash (<literal>\'</literal>).  However,
+     future versions of <productname>PostgreSQL</productname> will not
+     support this so applications using this should convert to the 
+     standard-compliant method outlined above.
     </para>
 
     <para>
@@ -267,6 +268,20 @@ UPDATE "my_table" SET "a" = 5;
      character following a backslash is taken literally. Thus, to
      include a backslash in a string constant, write two backslashes.
     </para>
+
+    <note>
+    <para>
+     While ordinary strings now support C-style backslash escapes,
+     future versions will generate warnings for such usage and
+     eventually treat backslashes as literal characters to be
+     standard-compliant. The proper way to specify escape processing is
+     to use the escape string syntax to indicate that escape
+     processing is desired. Escape string syntax is specified by placing
+     the the letter <literal>E</literal> (upper or lower case) before
+     the string, e.g. <literal>E'\041'</>. This method will work in all
+     future versions of <productname>PostgreSQL</productname>.
+    </para>
+    </note>
 
     <para>
      The character with the code zero cannot be in a string constant.

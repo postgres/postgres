@@ -25,7 +25,7 @@ select '(Joe,von Blow)'::fullname, '(Joe,d''Blow)'::fullname;
  (Joe,"von Blow") | (Joe,d'Blow)
 (1 row)
 
-select '(Joe,"von""Blow")'::fullname, '(Joe,d\\\\Blow)'::fullname;
+select '(Joe,"von""Blow")'::fullname, E'(Joe,d\\\\Blow)'::fullname;
      fullname      |    fullname     
 -------------------+-----------------
  (Joe,"von""Blow") | (Joe,"d\\Blow")

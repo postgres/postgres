@@ -330,6 +330,7 @@
 #regex_flavor = advanced	# advanced, extended, or basic
 #sql_inheritance = true
 #default_with_oids = false
+#escape_string_warning = false
 
 # - Other Platforms & Clients -
 

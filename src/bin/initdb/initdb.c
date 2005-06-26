@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.85 2005/06/21 04:02:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.86 2005/06/26 03:03:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1692,7 +1692,7 @@ setup_privileges(void)
 	char	  **priv_lines;
 	static char *privileges_setup[] = {
 		"UPDATE pg_class "
-		"  SET relacl = '{\"=r/\\\\\"$POSTGRES_SUPERUSERNAME\\\\\"\"}' "
+		"  SET relacl = E'{\"=r/\\\\\"$POSTGRES_SUPERUSERNAME\\\\\"\"}' "
 		"  WHERE relkind IN ('r', 'v', 'S') AND relacl IS NULL;\n",
 		"GRANT USAGE ON SCHEMA pg_catalog TO PUBLIC;\n",
 		"GRANT CREATE, USAGE ON SCHEMA public TO PUBLIC;\n",
@@ -1987,8 +1987,10 @@ escape_quotes(const char *src)
 	
 	for (i = 0, j = 0; i < len; i++)
 	{
-		if (src[i] == '\'' || src[i] == '\\')
+		if (src[i] == '\\')
 			result[j++] = '\\';
+		if (src[i] == '\'')		/* ANSI standard, '' */
+			result[j++] = '\'';
 		result[j++] = src[i];
 	}
 	result[j] = '\0';

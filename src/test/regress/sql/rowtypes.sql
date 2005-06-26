@@ -20,7 +20,7 @@ select row('Joe', 'Blow')::fullname, '(Joe,Blow)'::fullname;
 
 select '(Joe,von Blow)'::fullname, '(Joe,d''Blow)'::fullname;
 
-select '(Joe,"von""Blow")'::fullname, '(Joe,d\\\\Blow)'::fullname;
+select '(Joe,"von""Blow")'::fullname, E'(Joe,d\\\\Blow)'::fullname;
 
 select '(Joe,"Blow,Jr")'::fullname;
 

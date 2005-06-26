@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.125 2005/06/15 16:28:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.126 2005/06/26 03:03:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,9 @@
 extern YYSTYPE yylval;
 
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
-static char    *dolqstart;      /* current $foo$ quote start string */
+static char	   *dolqstart;      /* current $foo$ quote start string */
+static bool		warn_on_first_escape;
+bool			escape_string_warning;
 
 /*
  * literalbuf is used to accumulate literal values when multiple rules
@@ -64,6 +66,7 @@ static int		literalalloc;	/* current allocated buffer size */
 static void addlit(char *ytext, int yleng);
 static void addlitchar(unsigned char ychar);
 static char *litbufdup(void);
+static void check_escape_warning(void);
 
 /*
  * When we parse a token that requires multiple lexer rules to process,
@@ -184,6 +187,10 @@ xhinside		[^']*
 
 /* National character */
 xnstart			[nN]{quote}
+
+/* Quote string does not warn about escapes */
+xestart			[eE]{quote}
+xeinside		[^']*
 
 /* Extended quote
  * xqdouble implements embedded quote, ''''
@@ -410,6 +417,13 @@ other			.
 				}
 
 {xqstart}		{
+					warn_on_first_escape = true;
+					token_start = yytext;
+					BEGIN(xq);
+					startlit();
+				}
+{xestart}		{
+					warn_on_first_escape = false;
 					token_start = yytext;
 					BEGIN(xq);
 					startlit();
@@ -428,14 +442,36 @@ other			.
 					addlit(yytext, yyleng);
 				}
 <xq>{xqescape}  {
+					if (yytext[1] == '\'')
+					{
+						if (warn_on_first_escape && escape_string_warning)
+							ereport(WARNING,
+								(errcode(ERRCODE_INVALID_USE_OF_ESCAPE_CHARACTER),
+								 errmsg("Invalid use of \\' in a normal string"),
+								 errhint("Use '' to place quotes in strings, or use the escape string syntax (E'').")));
+					}
+					else if (yytext[1] == '\\')
+					{
+						if (warn_on_first_escape && escape_string_warning)
+							ereport(WARNING,
+								(errcode(ERRCODE_INVALID_USE_OF_ESCAPE_CHARACTER),
+								 errmsg("Invalid use of \\\\ in a normal string"),
+								 errhint("Use the escape string syntax for backslashes, e.g. E'\\\\'.")));
+					}
+					else
+						check_escape_warning();
 					addlitchar(unescape_single_char(yytext[1]));
 				}
 <xq>{xqoctesc}  {
 					unsigned char c = strtoul(yytext+1, NULL, 8);
+
+					check_escape_warning();
 					addlitchar(c);
 				}
 <xq>{xqhexesc}  {
 					unsigned char c = strtoul(yytext+2, NULL, 16);
+
+					check_escape_warning();
 					addlitchar(c);
 				}
 <xq>{quotecontinue} {
@@ -809,4 +845,15 @@ unescape_single_char(unsigned char c)
 		default:
 			return c;
 	}
+}
+
+static void
+check_escape_warning(void)
+{
+	if (warn_on_first_escape && escape_string_warning)
+		ereport(WARNING,
+			(errcode(ERRCODE_INVALID_USE_OF_ESCAPE_CHARACTER),
+			 errmsg("Invalid use of escapes in an ordinary string"),
+			 errhint("Use the escape string syntax for escapes, e.g. E'\\r\\n'.")));
+	warn_on_first_escape = false;	/* warn only once per string */
 }

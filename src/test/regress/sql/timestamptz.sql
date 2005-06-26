@@ -179,7 +179,7 @@ SELECT '' AS to_char_4, to_char(d1, 'FMY,YYY FMYYYY FMYYY FMYY FMY FMCC FMQ FMMM
 SELECT '' AS to_char_5, to_char(d1, 'HH HH12 HH24 MI SS SSSS') 
    FROM TIMESTAMPTZ_TBL;
 
-SELECT '' AS to_char_6, to_char(d1, '"HH:MI:SS is" HH:MI:SS "\\"text between quote marks\\""') 
+SELECT '' AS to_char_6, to_char(d1, E'"HH:MI:SS is" HH:MI:SS "\\"text between quote marks\\""') 
    FROM TIMESTAMPTZ_TBL;		
 		
 SELECT '' AS to_char_7, to_char(d1, 'HH24--text--MI--text--SS')
@@ -207,7 +207,7 @@ SELECT '' AS to_timestamp_4, to_timestamp('My birthday-> Year: 1976, Month: May,
 SELECT '' AS to_timestamp_5, to_timestamp('1,582nd VIII 21', 'Y,YYYth FMRM DD');
 
 SELECT '' AS to_timestamp_6, to_timestamp('15 "text between quote marks" 98 54 45', 
-										  'HH "\\text between quote marks\\"" YY MI SS');
+										  E'HH "\\text between quote marks\\"" YY MI SS');
     
 SELECT '' AS to_timestamp_7, to_timestamp('05121445482000', 'MMDDHHMISSYYYY');    
 

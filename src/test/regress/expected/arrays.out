@@ -436,7 +436,7 @@ select '{{1,{2}},{2,3}}'::text[];
 ERROR:  malformed array literal: "{{1,{2}},{2,3}}"
 select '{{},{}}'::text[];
 ERROR:  malformed array literal: "{{},{}}"
-select '{{1,2},\\{2,3}}'::text[];
+select E'{{1,2},\\{2,3}}'::text[];
 ERROR:  malformed array literal: "{{1,2},\{2,3}}"
 select '{{"1 2" x},{3}}'::text[];
 ERROR:  malformed array literal: "{{"1 2" x},{3}}"

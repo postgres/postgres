@@ -1072,7 +1072,7 @@ SELECT '' AS to_char_19, to_char(val, 'FMS 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 . 9 9
             |          -2 4 9 2 6 8 0 4 . 0 4 5 0 4 7 4 2         
 (10 rows)
 
-SELECT '' AS to_char_20, to_char(val, '99999 "text" 9999 "9999" 999 "\\"text between quote marks\\"" 9999') FROM num_data;
+SELECT '' AS to_char_20, to_char(val, E'99999 "text" 9999 "9999" 999 "\\"text between quote marks\\"" 9999') FROM num_data;
  to_char_20 |                          to_char                          
 ------------+-----------------------------------------------------------
             |       text      9999     "text between quote marks"     0

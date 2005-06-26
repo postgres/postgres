@@ -83,7 +83,7 @@ COPY x from stdin WITH DELIMITER AS ';' NULL AS '';
 3000;;c;;
 \.
 
-COPY x from stdin WITH DELIMITER AS ':' NULL AS '\\X';
+COPY x from stdin WITH DELIMITER AS ':' NULL AS E'\\X';
 4000:\X:C:\X:\X
 4001:1:empty::
 4002:2:null:\X:\X
@@ -121,13 +121,13 @@ CREATE TABLE y (
 	col2 text
 );
 
-INSERT INTO y VALUES ('Jackson, Sam', '\\h');
-INSERT INTO y VALUES ('It is "perfect".','\t');
+INSERT INTO y VALUES ('Jackson, Sam', E'\\h');
+INSERT INTO y VALUES ('It is "perfect".',E'\t');
 INSERT INTO y VALUES ('', NULL);
 
 COPY y TO stdout WITH CSV;
 COPY y TO stdout WITH CSV QUOTE '''' DELIMITER '|';
-COPY y TO stdout WITH CSV FORCE QUOTE col2 ESCAPE '\\';
+COPY y TO stdout WITH CSV FORCE QUOTE col2 ESCAPE E'\\';
 
 --test that we read consecutive LFs properly
 

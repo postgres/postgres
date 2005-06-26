@@ -204,7 +204,7 @@ select 'foo' ilike all (array['F%', '%O']); -- t
 -- none of the following should be accepted
 select '{{1,{2}},{2,3}}'::text[];
 select '{{},{}}'::text[];
-select '{{1,2},\\{2,3}}'::text[];
+select E'{{1,2},\\{2,3}}'::text[];
 select '{{"1 2" x},{3}}'::text[];
 select '{}}'::text[];
 select '{ }}'::text[];

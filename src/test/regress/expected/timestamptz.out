@@ -1041,7 +1041,7 @@ SELECT '' AS to_char_5, to_char(d1, 'HH HH12 HH24 MI SS SSSS')
            | 05 05 17 32 01 63121
 (64 rows)
 
-SELECT '' AS to_char_6, to_char(d1, '"HH:MI:SS is" HH:MI:SS "\\"text between quote marks\\""') 
+SELECT '' AS to_char_6, to_char(d1, E'"HH:MI:SS is" HH:MI:SS "\\"text between quote marks\\""') 
    FROM TIMESTAMPTZ_TBL;		
  to_char_6 |                     to_char                     
 -----------+-------------------------------------------------
@@ -1427,7 +1427,7 @@ SELECT '' AS to_timestamp_5, to_timestamp('1,582nd VIII 21', 'Y,YYYth FMRM DD');
 (1 row)
 
 SELECT '' AS to_timestamp_6, to_timestamp('15 "text between quote marks" 98 54 45', 
-										  'HH "\\text between quote marks\\"" YY MI SS');
+										  E'HH "\\text between quote marks\\"" YY MI SS');
  to_timestamp_6 |         to_timestamp         
 ----------------+------------------------------
                 | Thu Jan 01 15:54:45 1998 PST
