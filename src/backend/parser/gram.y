@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.497 2005/06/24 14:28:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.498 2005/06/26 22:05:38 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -360,7 +360,7 @@ static void doNegateFloat(Value *v);
 	FALSE_P FETCH FIRST_P FLOAT_P FOR FORCE FOREIGN FORWARD
 	FREEZE FROM FULL FUNCTION
 
-	GLOBAL GRANT GROUP_P
+	GLOBAL GRANT GREATEST GROUP_P
 
 	HANDLER HAVING HEADER HOLD HOUR_P
 
@@ -373,8 +373,8 @@ static void doNegateFloat(Value *v);
 
 	KEY
 
-	LANCOMPILER LANGUAGE LARGE_P LAST_P LEADING LEFT LEVEL LIKE LIMIT
-	LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
+	LANCOMPILER LANGUAGE LARGE_P  LAST_P LEADING LEAST LEFT LEVEL
+	LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
 	LOCK_P
 
 	MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
@@ -1154,7 +1154,7 @@ AlterTableStmt:
 					AlterTableStmt *n = makeNode(AlterTableStmt);
 					n->relation = $3;
 					n->cmds = $4;
-					n->relkind = OBJECT_TABLE; 
+					n->relkind = OBJECT_TABLE;
 					$$ = (Node *)n;
 				}
 		|	ALTER INDEX relation_expr alter_rel_cmds
@@ -3821,7 +3821,7 @@ opt_column: COLUMN									{ $$ = COLUMN; }
 
 /*****************************************************************************
  *
- * ALTER THING name OWNER TO newname.  
+ * ALTER THING name OWNER TO newname.
  *
  *****************************************************************************/
 
@@ -6373,7 +6373,7 @@ a_expr:		c_expr									{ $$ = $1; }
 						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $6)),
 						(Node *) makeA_Expr(AEXPR_AND, NIL,
 						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">=", $1, $6),
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $4)));					
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<=", $1, $4)));
 				}
 			| a_expr NOT BETWEEN SYMMETRIC b_expr AND b_expr		%prec BETWEEN
 				{
@@ -6383,7 +6383,7 @@ a_expr:		c_expr									{ $$ = $1; }
 						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $7)),
 						(Node *) makeA_Expr(AEXPR_OR, NIL,
 						    (Node *) makeSimpleA_Expr(AEXPR_OP, "<", $1, $7),
-						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $5)));					
+						    (Node *) makeSimpleA_Expr(AEXPR_OP, ">", $1, $5)));
 				}
 			| a_expr IN_P in_expr
 				{
@@ -7064,6 +7064,20 @@ func_expr:	func_name '(' ')'
 					CoalesceExpr *c = makeNode(CoalesceExpr);
 					c->args = $3;
 					$$ = (Node *)c;
+				}
+			| GREATEST '(' expr_list ')'
+				{
+					MinMaxExpr *v = makeNode(MinMaxExpr);
+					v->args = $3;
+					v->op = IS_GREATEST;
+					$$ = (Node *)v;
+				}
+			| LEAST '(' expr_list ')'
+				{
+					MinMaxExpr *v = makeNode(MinMaxExpr);
+					v->args = $3;
+					v->op = IS_LEAST;
+					$$ = (Node *)v;
 				}
 		;
 
@@ -7944,10 +7958,12 @@ col_name_keyword:
 			| EXISTS
 			| EXTRACT
 			| FLOAT_P
+			| GREATEST
 			| INOUT
 			| INT_P
 			| INTEGER
 			| INTERVAL
+			| LEAST
 			| NATIONAL
 			| NCHAR
 			| NONE

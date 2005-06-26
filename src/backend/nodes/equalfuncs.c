@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.245 2005/06/22 21:14:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.246 2005/06/26 22:05:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -445,6 +445,16 @@ static bool
 _equalCoalesceExpr(CoalesceExpr *a, CoalesceExpr *b)
 {
 	COMPARE_SCALAR_FIELD(coalescetype);
+	COMPARE_NODE_FIELD(args);
+
+	return true;
+}
+
+static bool
+_equalMinMaxExpr(MinMaxExpr *a, MinMaxExpr *b)
+{
+	COMPARE_SCALAR_FIELD(minmaxtype);
+	COMPARE_SCALAR_FIELD(op);
 	COMPARE_NODE_FIELD(args);
 
 	return true;
@@ -1867,6 +1877,9 @@ equal(void *a, void *b)
 			break;
 		case T_CoalesceExpr:
 			retval = _equalCoalesceExpr(a, b);
+			break;
+		case T_MinMaxExpr:
+			retval = _equalMinMaxExpr(a, b);
 			break;
 		case T_NullIfExpr:
 			retval = _equalNullIfExpr(a, b);

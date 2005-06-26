@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.198 2005/06/05 22:32:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.199 2005/06/26 22:05:38 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -542,6 +542,8 @@ expression_returns_set_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, CoalesceExpr))
 		return false;
+	if (IsA(node, MinMaxExpr))
+		return false;
 	if (IsA(node, NullIfExpr))
 		return false;
 
@@ -846,6 +848,8 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	if (IsA(node, RowExpr))
 		return true;
 	if (IsA(node, CoalesceExpr))
+		return true;
+	if (IsA(node, MinMaxExpr))
 		return true;
 	if (IsA(node, NullIfExpr))
 		return true;
@@ -1685,7 +1689,7 @@ eval_const_expressions_mutator(Node *node,
 				newargs = lappend(newargs, newcasewhen);
 				continue;
 			}
-  
+
 			/*
 			 * Found a TRUE condition, so none of the remaining alternatives
 			 * can be reached.  We treat the result as the default result.
@@ -2932,6 +2936,8 @@ expression_tree_walker(Node *node,
 			return walker(((RowExpr *) node)->args, context);
 		case T_CoalesceExpr:
 			return walker(((CoalesceExpr *) node)->args, context);
+		case T_MinMaxExpr:
+			return walker(((MinMaxExpr *) node)->args, context);
 		case T_NullIfExpr:
 			return walker(((NullIfExpr *) node)->args, context);
 		case T_NullTest:
@@ -3389,6 +3395,16 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, coalesceexpr, CoalesceExpr);
 				MUTATE(newnode->args, coalesceexpr->args, List *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_MinMaxExpr:
+			{
+				MinMaxExpr *minmaxexpr = (MinMaxExpr *) node;
+				MinMaxExpr *newnode;
+
+				FLATCOPY(newnode, minmaxexpr, MinMaxExpr);
+				MUTATE(newnode->args, minmaxexpr->args, List *);
 				return (Node *) newnode;
 			}
 			break;

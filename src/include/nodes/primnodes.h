@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.107 2005/04/06 16:34:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.108 2005/06/26 22:05:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -656,6 +656,23 @@ typedef struct CoalesceExpr
 	Oid			coalescetype;	/* type of expression result */
 	List	   *args;			/* the arguments */
 } CoalesceExpr;
+
+/*
+ * MinMaxExpr - a GREATEST or LEAST function
+ */
+typedef enum MinMaxOp
+{
+	IS_GREATEST,
+	IS_LEAST
+} MinMaxOp;
+
+typedef struct MinMaxExpr
+{
+	Expr		xpr;
+	Oid			minmaxtype;		/* common type of arguments and result */
+	MinMaxOp	op;				/* function to execute */
+	List	   *args;			/* the arguments */
+} MinMaxExpr;
 
 /*
  * NullIfExpr - a NULLIF expression

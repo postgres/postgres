@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.170 2005/06/09 04:19:00 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.171 2005/06/26 22:05:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,6 +126,7 @@ typedef enum NodeTag
 	T_ArrayExpr,
 	T_RowExpr,
 	T_CoalesceExpr,
+	T_MinMaxExpr,
 	T_NullIfExpr,
 	T_NullTest,
 	T_BooleanTest,
@@ -159,6 +160,7 @@ typedef enum NodeTag
 	T_ArrayExprState,
 	T_RowExprState,
 	T_CoalesceExprState,
+	T_MinMaxExprState,
 	T_CoerceToDomainState,
 	T_DomainConstraintState,
 

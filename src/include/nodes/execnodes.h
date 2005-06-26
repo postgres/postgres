@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.135 2005/06/20 18:37:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.136 2005/06/26 22:05:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -672,6 +672,17 @@ typedef struct CoalesceExprState
 	ExprState	xprstate;
 	List	   *args;			/* the arguments */
 } CoalesceExprState;
+
+/* ----------------
+ *		MinMaxExprState node
+ * ----------------
+ */
+typedef struct MinMaxExprState
+{
+	ExprState	xprstate;
+	List	   *args;			/* the arguments */
+	FmgrInfo	cfunc;			/* lookup info for comparison func */
+} MinMaxExprState;
 
 /* ----------------
  *		CoerceToDomainState node

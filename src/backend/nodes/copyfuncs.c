@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.308 2005/06/22 21:14:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.309 2005/06/26 22:05:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1042,6 +1042,21 @@ _copyCoalesceExpr(CoalesceExpr *from)
 	CoalesceExpr *newnode = makeNode(CoalesceExpr);
 
 	COPY_SCALAR_FIELD(coalescetype);
+	COPY_NODE_FIELD(args);
+
+	return newnode;
+}
+
+/*
+ * _copyMinMaxExpr
+ */
+static MinMaxExpr *
+_copyMinMaxExpr(MinMaxExpr *from)
+{
+	MinMaxExpr *newnode = makeNode(MinMaxExpr);
+
+	COPY_SCALAR_FIELD(minmaxtype);
+	COPY_SCALAR_FIELD(op);
 	COPY_NODE_FIELD(args);
 
 	return newnode;
@@ -2804,6 +2819,9 @@ copyObject(void *from)
 			break;
 		case T_CoalesceExpr:
 			retval = _copyCoalesceExpr(from);
+			break;
+		case T_MinMaxExpr:
+			retval = _copyMinMaxExpr(from);
 			break;
 		case T_NullIfExpr:
 			retval = _copyNullIfExpr(from);

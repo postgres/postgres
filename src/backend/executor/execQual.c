@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.179 2005/05/12 20:41:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.180 2005/06/26 22:05:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,6 +105,9 @@ static Datum ExecEvalRow(RowExprState *rstate,
 static Datum ExecEvalCoalesce(CoalesceExprState *coalesceExpr,
 				 ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalMinMax(MinMaxExprState *minmaxExpr,
+							ExprContext *econtext,
+							bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalNullIf(FuncExprState *nullIfExpr,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
@@ -2248,6 +2251,63 @@ ExecEvalCoalesce(CoalesceExprState *coalesceExpr, ExprContext *econtext,
 }
 
 /* ----------------------------------------------------------------
+ *		ExecEvalMinMax
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
+			   bool *isNull, ExprDoneCond *isDone)
+{
+	Datum result = (Datum) 0;
+	MinMaxOp	op = ((MinMaxExpr *) minmaxExpr->xprstate.expr)->op;
+	FunctionCallInfoData locfcinfo;
+	ListCell *arg;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+	*isNull = true;				/* until we get a result */
+
+	InitFunctionCallInfoData(locfcinfo, &minmaxExpr->cfunc, 2, NULL, NULL);
+	locfcinfo.argnull[0] = false;
+	locfcinfo.argnull[1] = false;
+
+	foreach(arg, minmaxExpr->args)
+	{
+		ExprState  *e = (ExprState *) lfirst(arg);
+		Datum		value;
+		bool		valueIsNull;
+		int32		cmpresult;
+
+		value = ExecEvalExpr(e, econtext, &valueIsNull, NULL);
+		if (valueIsNull)
+			continue;			/* ignore NULL inputs */
+
+		if (*isNull)
+		{
+			/* first nonnull input, adopt value */
+			result = value;
+			*isNull = false;
+		}
+		else
+		{
+			/* apply comparison function */
+			locfcinfo.arg[0] = result;
+			locfcinfo.arg[1] = value;
+			locfcinfo.isnull = false;
+			cmpresult = DatumGetInt32(FunctionCallInvoke(&locfcinfo));
+			if (locfcinfo.isnull) /* probably should not happen */
+				continue;
+			if (cmpresult > 0 && op == IS_LEAST)
+				result = value;
+			else if (cmpresult < 0 && op == IS_GREATEST)
+				result = value;
+		}
+	}
+
+	return result;
+}
+
+/* ----------------------------------------------------------------
  *		ExecEvalNullIf
  *
  * Note that this is *always* derived from the equals operator,
@@ -3204,6 +3264,36 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				}
 				cstate->args = outlist;
 				state = (ExprState *) cstate;
+			}
+			break;
+		case T_MinMaxExpr:
+			{
+				MinMaxExpr *minmaxexpr = (MinMaxExpr *) node;
+				MinMaxExprState *mstate = makeNode(MinMaxExprState);
+				List	   *outlist = NIL;
+				ListCell   *l;
+				TypeCacheEntry *typentry;
+
+				mstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalMinMax;
+				foreach(l, minmaxexpr->args)
+				{
+					Expr	   *e = (Expr *) lfirst(l);
+					ExprState  *estate;
+
+					estate = ExecInitExpr(e, parent);
+					outlist = lappend(outlist, estate);
+				}
+				mstate->args = outlist;
+				/* Look up the btree comparison function for the datatype */
+				typentry = lookup_type_cache(minmaxexpr->minmaxtype,
+											 TYPECACHE_CMP_PROC);
+				if (!OidIsValid(typentry->cmp_proc))
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_FUNCTION),
+							 errmsg("could not identify a comparison function for type %s",
+									format_type_be(minmaxexpr->minmaxtype))));
+				fmgr_info(typentry->cmp_proc, &(mstate->cfunc));
+				state = (ExprState *) mstate;
 			}
 			break;
 		case T_NullIfExpr:

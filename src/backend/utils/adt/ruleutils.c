@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.200 2005/06/05 00:38:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.201 2005/06/26 22:05:40 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2781,6 +2781,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 		case T_ArrayExpr:
 		case T_RowExpr:
 		case T_CoalesceExpr:
+		case T_MinMaxExpr:
 		case T_NullIfExpr:
 		case T_Aggref:
 		case T_FuncExpr:
@@ -2886,10 +2887,11 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_BoolExpr:		/* lower precedence */
 				case T_ArrayRef:		/* other separators */
 				case T_ArrayExpr:		/* other separators */
-				case T_RowExpr:	/* other separators */
+				case T_RowExpr:			/* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
+				case T_MinMaxExpr:		/* own parentheses */
 				case T_NullIfExpr:		/* other separators */
-				case T_Aggref:	/* own parentheses */
+				case T_Aggref:			/* own parentheses */
 				case T_CaseExpr:		/* other separators */
 					return true;
 				default:
@@ -2933,10 +2935,11 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 					}
 				case T_ArrayRef:		/* other separators */
 				case T_ArrayExpr:		/* other separators */
-				case T_RowExpr:	/* other separators */
+				case T_RowExpr:			/* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
+				case T_MinMaxExpr:		/* own parentheses */
 				case T_NullIfExpr:		/* other separators */
-				case T_Aggref:	/* own parentheses */
+				case T_Aggref:			/* own parentheses */
 				case T_CaseExpr:		/* other separators */
 					return true;
 				default:
@@ -3487,6 +3490,24 @@ get_rule_expr(Node *node, deparse_context *context,
 
 				appendStringInfo(buf, "COALESCE(");
 				get_rule_expr((Node *) coalesceexpr->args, context, true);
+				appendStringInfoChar(buf, ')');
+			}
+			break;
+
+		case T_MinMaxExpr:
+			{
+				MinMaxExpr *minmaxexpr = (MinMaxExpr *) node;
+
+				switch (minmaxexpr->op)
+				{
+					case IS_GREATEST:
+						appendStringInfo(buf, "GREATEST(");
+						break;
+					case IS_LEAST:
+						appendStringInfo(buf, "LEAST(");
+						break;
+				}
+				get_rule_expr((Node *) minmaxexpr->args, context, true);
 				appendStringInfoChar(buf, ')');
 			}
 			break;
@@ -4109,7 +4130,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		bool		need_paren_on_right;
 
 		need_paren_on_right = PRETTY_PAREN(context) &&
-			!IsA(j->rarg, RangeTblRef) && 
+			!IsA(j->rarg, RangeTblRef) &&
 			!(IsA(j->rarg, JoinExpr) && ((JoinExpr*) j->rarg)->alias != NULL);
 
 		if (!PRETTY_PAREN(context) || j->alias != NULL)

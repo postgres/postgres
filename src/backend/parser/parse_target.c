@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.136 2005/06/05 00:38:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.137 2005/06/26 22:05:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1123,6 +1123,18 @@ FigureColnameInternal(Node *node, char **name)
 			/* make coalesce() act like a regular function */
 			*name = "coalesce";
 			return 2;
+		case T_MinMaxExpr:
+			/* make greatest/least act like a regular function */
+			switch (((MinMaxExpr*) node)->op)
+			{
+				case IS_GREATEST:
+					*name = "greatest";
+					return 2;
+				case IS_LEAST:
+					*name = "least";
+					return 2;
+			}
+			break;
 		default:
 			break;
 	}

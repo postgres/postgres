@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.43 2004/12/23 23:07:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.44 2005/06/26 22:05:36 tgl Exp $
 -->
 
 <chapter Id="typeconv">
@@ -120,7 +120,7 @@ with, and perhaps converted to, the types of the target columns.
 </varlistentry>
 <varlistentry>
 <term>
-<literal>UNION</literal>, <literal>CASE</literal>, and <literal>ARRAY</literal> constructs
+<literal>UNION</literal>, <literal>CASE</literal>, and related constructs
 </term>
 <listitem>
 <para>
@@ -129,7 +129,8 @@ must appear in a single set of columns, the types of the results of each
 <command>SELECT</> clause must be matched up and converted to a uniform set.
 Similarly, the result expressions of a <literal>CASE</> construct must be
 converted to a common type so that the <literal>CASE</> expression as a whole
-has a known output type.  The same holds for <literal>ARRAY</> constructs.
+has a known output type.  The same holds for <literal>ARRAY</> constructs,
+and for the <function>GREATEST</> and <function>LEAST</> functions.
 </para>
 </listitem>
 </varlistentry>
@@ -782,7 +783,7 @@ padding spaces.
 </sect1>
 
 <sect1 id="typeconv-union-case">
-<title><literal>UNION</literal>, <literal>CASE</literal>, and <literal>ARRAY</literal> Constructs</title>
+<title><literal>UNION</literal>, <literal>CASE</literal>, and Related Constructs</title>
 
 <indexterm zone="typeconv-union-case">
  <primary>UNION</primary>
@@ -799,20 +800,31 @@ padding spaces.
  <secondary>determination of result type</secondary>
 </indexterm>
 
+<indexterm zone="typeconv-union-case">
+ <primary>GREATEST</primary>
+ <secondary>determination of result type</secondary>
+</indexterm>
+
+<indexterm zone="typeconv-union-case">
+ <primary>LEAST</primary>
+ <secondary>determination of result type</secondary>
+</indexterm>
+
 <para>
 SQL <literal>UNION</> constructs must match up possibly dissimilar
 types to become a single result set.  The resolution algorithm is
 applied separately to each output column of a union query.  The
 <literal>INTERSECT</> and <literal>EXCEPT</> constructs resolve
 dissimilar types in the same way as <literal>UNION</>.  The
-<literal>CASE</> and <literal>ARRAY</> constructs use the identical
+<literal>CASE</>, <literal>ARRAY</>, <function>GREATEST</> and
+<function>LEAST</> constructs use the identical
 algorithm to match up their component expressions and select a result
 data type.
 </para>
 
 <procedure>
-<title><literal>UNION</literal>, <literal>CASE</literal>, and
-<literal>ARRAY</literal> Type Resolution</title>
+<title>Type Resolution for <literal>UNION</literal>, <literal>CASE</literal>,
+and Related Constructs</title>
 
 <step performance="required">
 <para>

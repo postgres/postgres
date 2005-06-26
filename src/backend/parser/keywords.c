@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.158 2005/06/22 21:14:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.159 2005/06/26 22:05:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,6 +146,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"function", FUNCTION},
 	{"global", GLOBAL},
 	{"grant", GRANT},
+	{"greatest", GREATEST},
 	{"group", GROUP_P},
 	{"handler", HANDLER},
 	{"having", HAVING},
@@ -184,6 +185,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"large", LARGE_P},
 	{"last", LAST_P},
 	{"leading", LEADING},
+	{"least", LEAST},
 	{"left", LEFT},
 	{"level", LEVEL},
 	{"like", LIKE},

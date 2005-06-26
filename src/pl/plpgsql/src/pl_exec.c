@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.148 2005/06/22 07:28:47 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.149 2005/06/26 22:05:42 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -4289,6 +4289,16 @@ exec_simple_check_node(Node *node)
 		case T_CoalesceExpr:
 			{
 				CoalesceExpr *expr = (CoalesceExpr *) node;
+
+				if (!exec_simple_check_node((Node *) expr->args))
+					return FALSE;
+
+				return TRUE;
+			}
+
+		case T_MinMaxExpr:
+			{
+				MinMaxExpr *expr = (MinMaxExpr *) node;
 
 				if (!exec_simple_check_node((Node *) expr->args))
 					return FALSE;

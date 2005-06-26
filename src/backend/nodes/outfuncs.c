@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.255 2005/06/09 04:18:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.256 2005/06/26 22:05:37 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -861,6 +861,16 @@ _outCoalesceExpr(StringInfo str, CoalesceExpr *node)
 	WRITE_NODE_TYPE("COALESCE");
 
 	WRITE_OID_FIELD(coalescetype);
+	WRITE_NODE_FIELD(args);
+}
+
+static void
+_outMinMaxExpr(StringInfo str, MinMaxExpr *node)
+{
+	WRITE_NODE_TYPE("MINMAX");
+
+	WRITE_OID_FIELD(minmaxtype);
+	WRITE_ENUM_FIELD(op, MinMaxOp);
 	WRITE_NODE_FIELD(args);
 }
 
@@ -1895,6 +1905,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_CoalesceExpr:
 				_outCoalesceExpr(str, obj);
+				break;
+			case T_MinMaxExpr:
+				_outMinMaxExpr(str, obj);
 				break;
 			case T_NullIfExpr:
 				_outNullIfExpr(str, obj);

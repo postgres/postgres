@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.183 2005/06/04 20:56:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.184 2005/06/26 22:05:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@ static Node *transformSubLink(ParseState *pstate, SubLink *sublink);
 static Node *transformArrayExpr(ParseState *pstate, ArrayExpr *a);
 static Node *transformRowExpr(ParseState *pstate, RowExpr *r);
 static Node *transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c);
+static Node *transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m);
 static Node *transformBooleanTest(ParseState *pstate, BooleanTest *b);
 static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformWholeRowRef(ParseState *pstate, char *schemaname,
@@ -207,6 +208,10 @@ transformExpr(ParseState *pstate, Node *expr)
 
 		case T_CoalesceExpr:
 			result = transformCoalesceExpr(pstate, (CoalesceExpr *) expr);
+			break;
+
+		case T_MinMaxExpr:
+			result = transformMinMaxExpr(pstate, (MinMaxExpr *) expr);
 			break;
 
 		case T_NullTest:
@@ -1230,6 +1235,44 @@ transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c)
 }
 
 static Node *
+transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
+{
+	MinMaxExpr *newm = makeNode(MinMaxExpr);
+	List	   *newargs = NIL;
+	List	   *newcoercedargs = NIL;
+	List	   *typeids = NIL;
+	ListCell   *args;
+
+	newm->op = m->op;
+	foreach(args, m->args)
+	{
+		Node	   *e = (Node *) lfirst(args);
+		Node	   *newe;
+
+		newe = transformExpr(pstate, e);
+		newargs = lappend(newargs, newe);
+		typeids = lappend_oid(typeids, exprType(newe));
+	}
+
+	newm->minmaxtype = select_common_type(typeids, "GREATEST/LEAST");
+
+	/* Convert arguments if necessary */
+	foreach(args, newargs)
+	{
+		Node	   *e = (Node *) lfirst(args);
+		Node	   *newe;
+
+		newe = coerce_to_common_type(pstate, e,
+									 newm->minmaxtype,
+									 "GREATEST/LEAST");
+		newcoercedargs = lappend(newcoercedargs, newe);
+	}
+
+	newm->args = newcoercedargs;
+	return (Node *) newm;
+}
+
+static Node *
 transformBooleanTest(ParseState *pstate, BooleanTest *b)
 {
 	const char *clausename;
@@ -1503,6 +1546,9 @@ exprType(Node *expr)
 		case T_CoalesceExpr:
 			type = ((CoalesceExpr *) expr)->coalescetype;
 			break;
+		case T_MinMaxExpr:
+			type = ((MinMaxExpr *) expr)->minmaxtype;
+			break;
 		case T_NullIfExpr:
 			type = exprType((Node *) linitial(((NullIfExpr *) expr)->args));
 			break;
@@ -1630,6 +1676,30 @@ exprTypmod(Node *expr)
 					Node	   *e = (Node *) lfirst(arg);
 
 					if (exprType(e) != coalescetype)
+						return -1;
+					if (exprTypmod(e) != typmod)
+						return -1;
+				}
+				return typmod;
+			}
+			break;
+		case T_MinMaxExpr:
+			{
+				/*
+				 * If all the alternatives agree on type/typmod, return
+				 * that typmod, else use -1
+				 */
+				MinMaxExpr *mexpr = (MinMaxExpr *) expr;
+				Oid			minmaxtype = mexpr->minmaxtype;
+				int32		typmod;
+				ListCell   *arg;
+
+				typmod = exprTypmod((Node *) linitial(mexpr->args));
+				foreach(arg, mexpr->args)
+				{
+					Node	   *e = (Node *) lfirst(arg);
+
+					if (exprType(e) != minmaxtype)
 						return -1;
 					if (exprTypmod(e) != typmod)
 						return -1;

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.259 2005/06/24 20:53:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.260 2005/06/26 22:05:35 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -6899,6 +6899,39 @@ SELECT NULLIF(value, '(none)') ...
 </programlisting>
   </para>
 
+  </sect2>
+
+  <sect2>
+   <title><literal>GREATEST</literal> and <literal>LEAST</literal></title>
+
+  <indexterm>
+   <primary>GREATEST</primary>
+  </indexterm>
+  <indexterm>
+   <primary>LEAST</primary>
+  </indexterm>
+
+<synopsis>
+<function>GREATEST</function>(<replaceable>value</replaceable> <optional>, ...</optional>)
+</synopsis>
+<synopsis>
+<function>LEAST</function>(<replaceable>value</replaceable> <optional>, ...</optional>)
+</synopsis>
+
+   <para>
+    The <function>GREATEST</> and <function>LEAST</> functions select the
+    largest or smallest value from a list of any number of expressions.
+    The expressions must all be convertible to a common data type, which
+    will be the type of the result
+    (see <xref linkend="typeconv-union-case"> for details).  NULL values
+    in the list are ignored.  The result will be NULL only if all the
+    expressions evaluate to NULL.
+   </para>
+
+   <para>
+    Note that <function>GREATEST</> and <function>LEAST</> are not in
+    the SQL standard, but are a common extension.
+   </para>
   </sect2>
 
  </sect1>
