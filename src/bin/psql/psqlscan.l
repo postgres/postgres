@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.14 2005/06/02 17:45:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.15 2005/06/26 19:16:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,17 +235,18 @@ quotefail		{quote}{whitespace}*"-"
 xbstart			[bB]{quote}
 xbinside		[^']*
 
-/* Hexadecimal number
- */
+/* Hexadecimal number */
 xhstart			[xX]{quote}
 xhinside		[^']*
 
-/* National character
- */
+/* National character */
 xnstart			[nN]{quote}
 
+/* Quoted string that allows backslash escapes */
+xestart			[eE]{quote}
+
 /* Extended quote
- * xqdouble implements embedded quote
+ * xqdouble implements embedded quote, ''''
  */
 xqstart			{quote}
 xqdouble		{quote}{quote}
@@ -447,6 +448,10 @@ other			.
 				}
 
 {xqstart}		{
+					BEGIN(xq);
+					ECHO;
+				}
+{xestart}		{
 					BEGIN(xq);
 					ECHO;
 				}

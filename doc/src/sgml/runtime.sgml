@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.331 2005/06/26 03:03:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.332 2005/06/26 19:16:04 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -3766,13 +3766,11 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <listitem>
        <para>
         When <literal>on</>, a warning is issued if a backslash
-        (<literal>\</>) appears in a ordinary, non-escape syntax
-        (<literal>''</>) string. To log the statement that generated the
-        warning, set <varname>log_min_error_statement</> to
-        <literal>error</>.  The default is off.
+        (<literal>\</>) appears in an ordinary string literal
+        (<literal>'...'</> syntax).  The default is <literal>off</>.
        </para>
        <para>
-        Escape string syntax (<literal>E''</>) should be used for
+        Escape string syntax (<literal>E'...'</>) should be used for
         escapes, because in future versions of
         <productname>PostgreSQL</productname> ordinary strings will have
         the standard-compliant behavior of treating backslashes
@@ -3988,22 +3986,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-escape-string-syntax" xreflabel="escape_string_syntax">
-      <term><varname>escape_string_syntax</varname> (<type>boolean</type>)</term>
-      <indexterm><primary>strings</><secondary>escape</></>
-      <indexterm>
-       <primary><varname>escape_string_syntax</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Reports whether escape string syntax (<literal>E''</>) is
-        supported. This variable is used by applications that need to
-        determine if escape string syntax can be used in their code.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-sql-standard-strings" xreflabel="standard_compliant_strings">
+     <varlistentry id="guc-standard-compliant-strings" xreflabel="standard_compliant_strings">
       <term><varname>standard_compliant_strings</varname> (<type>boolean</type>)</term>
       <indexterm><primary>strings</><secondary>escape</></>
       <indexterm>
@@ -4011,10 +3994,16 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        Reports whether ordinary, non-escape syntax strings
-        (<literal>''</>) treat backslashes literally, as specified in
-        the SQL standard. This variable is used by applications that
-        need to know how ordinary strings are processed`.
+        Reports whether ordinary string literals
+        (<literal>'...'</>) treat backslashes literally, as specified in
+        the SQL standard.  The value is currently always <literal>false</>,
+        indicating that backslashes are treated as escapes.  It is planned
+        that this will change to <literal>true</> in a future
+        <productname>PostgreSQL</productname> release when string literal
+        syntax changes to meet the standard.  Applications may check this
+        parameter to determine how string literals will be processed.
+        The presence of this parameter can also be taken as an indication
+        that the escape string syntax (<literal>E'...'</>) is supported.
        </para>
       </listitem>
      </varlistentry>

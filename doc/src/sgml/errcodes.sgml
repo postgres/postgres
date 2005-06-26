@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.12 2005/01/06 01:49:24 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.13 2005/06/26 19:16:04 tgl Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -368,6 +368,11 @@
 <row>
 <entry><literal>22025</literal></entry>
 <entry>INVALID ESCAPE SEQUENCE</entry>
+</row>
+
+<row>
+<entry><literal>22P06</literal></entry>
+<entry>NONSTANDARD USE OF ESCAPE CHARACTER</entry>
 </row>
 
 <row>

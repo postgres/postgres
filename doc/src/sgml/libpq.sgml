@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.186 2005/06/21 04:02:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.187 2005/06/26 19:16:04 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -286,7 +286,7 @@ PGconn *PQconnectdb(const char *conninfo);
        Kerberos service name to use when authenticating with Kerberos 4 or 5.
        This must match the service name specified in the server
        configuration for Kerberos authentication to succeed. (See also
-			 <xref linkend="kerberos-auth">.)
+       <xref linkend="kerberos-auth">.)
       </para>
      </listitem>
     </varlistentry>
@@ -888,10 +888,13 @@ Parameters reported as of the current release include
 <literal>is_superuser</>,
 <literal>session_authorization</>,
 <literal>DateStyle</>,
-<literal>TimeZone</>, and
-<literal>integer_datetimes</>.
+<literal>TimeZone</>,
+<literal>integer_datetimes</>, and
+<literal>standard_compliant_strings</>.
 (<literal>server_encoding</>, <literal>TimeZone</>, and
-<literal>integer_datetimes</> were not reported by releases before 8.0.)
+<literal>integer_datetimes</> were not reported by releases before 8.0;
+<literal>standard_compliant_strings</> was not reported by releases
+before 8.1.)
 Note that
 <literal>server_version</>,
 <literal>server_encoding</> and
@@ -911,6 +914,14 @@ that on a pre-3.0 connection, changing <literal>client_encoding</> via
 <function>PQparameterStatus</>.)  For <literal>server_version</>,
 see also <function>PQserverVersion</>, which returns the information
 in a numeric form that is much easier to compare against.
+</para>
+
+<para>
+If no value for <literal>standard_compliant_strings</> is reported,
+applications may assume it is <literal>false</>, that is, backslashes
+are treated as escapes in string literals.  Also, the presence of this
+parameter may be taken as an indication that the escape string syntax
+(<literal>E'...'</>) is accepted.
 </para>
 
 <para>

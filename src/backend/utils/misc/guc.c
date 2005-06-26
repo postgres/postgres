@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.269 2005/06/26 03:03:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.270 2005/06/26 19:16:06 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -190,7 +190,6 @@ static int	max_index_keys;
 static int	max_identifier_length;
 static int	block_size;
 static bool	integer_datetimes;
-static bool	escape_string_syntax;
 static bool	standard_compliant_strings;
 
 /* should be static, but commands/variable.c needs to get at it */
@@ -877,7 +876,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"escape_string_warning", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("Warn about backslash escapes in ordinary, non-escape-syntax strings."),
+			gettext_noop("Warn about backslash escapes in ordinary string literals."),
 			NULL
 		},
 		&escape_string_warning,
@@ -885,18 +884,8 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 
 	{
-		{"escape_string_syntax", PGC_INTERNAL, PRESET_OPTIONS,
-			gettext_noop("Escape string syntax (E'') is supported."),
-			NULL,
-			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
-		},
-		&escape_string_syntax,
-		true, NULL, NULL
-	},
-
-	{
 		{"standard_compliant_strings", PGC_INTERNAL, PRESET_OPTIONS,
-			gettext_noop("'' strings treat backslashes literally."),
+			gettext_noop("'...' strings treat backslashes literally."),
 			NULL,
 			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},

@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.41 2005/06/22 01:35:02 neilc Exp $
+ *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.42 2005/06/26 19:16:07 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -291,6 +291,12 @@ dump			{ return O_DUMP;			}
 			  start_charpos = yytext;
 			  BEGIN(IN_STRING);
 			}
+[eE]'		{
+			  /* for now, treat the same as a regular literal */
+			  start_lineno = plpgsql_scanner_lineno();
+			  start_charpos = yytext;
+			  BEGIN(IN_STRING);
+			}
 <IN_STRING>\\.		{ }
 <IN_STRING>\\		{ /* can only happen with \ at EOF */ }
 <IN_STRING>''		{ }
@@ -563,18 +569,41 @@ plpgsql_get_string_value(void)
 		memcpy(result, yytext + dolqlen, len);
 		result[len] = '\0';
 	}
-	else
+	else if (*yytext == 'E' || *yytext == 'e')
 	{
-		/* Token is a '...' string */
+		/* Token is an E'...' string */
 		result = (char *) palloc(yyleng + 1);	/* more than enough room */
 		len = 0;
-		for (cp = yytext; *cp; cp++)
+		for (cp = yytext + 2; *cp; cp++)
 		{
 			if (*cp == '\'')
 			{
 				if (cp[1] == '\'')
 					result[len++] = *cp++;
-				/* else it must be string start or end quote */
+				/* else it must be string end quote */
+			}
+			else if (*cp == '\\')
+			{
+				if (cp[1] != '\0')	/* just a paranoid check */
+					result[len++] = *(++cp);
+			}
+			else
+				result[len++] = *cp;
+		}
+		result[len] = '\0';
+	}
+	else
+	{
+		/* Token is a '...' string */
+		result = (char *) palloc(yyleng + 1);	/* more than enough room */
+		len = 0;
+		for (cp = yytext + 1; *cp; cp++)
+		{
+			if (*cp == '\'')
+			{
+				if (cp[1] == '\'')
+					result[len++] = *cp++;
+				/* else it must be string end quote */
 			}
 			else if (*cp == '\\')
 			{

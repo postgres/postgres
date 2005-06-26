@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.17 2005/01/01 20:44:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.18 2005/06/26 19:16:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,6 +126,7 @@
 #define ERRCODE_INVALID_ESCAPE_CHARACTER	MAKE_SQLSTATE('2','2', '0','1','9')
 #define ERRCODE_INVALID_ESCAPE_OCTET		MAKE_SQLSTATE('2','2', '0','0','D')
 #define ERRCODE_INVALID_ESCAPE_SEQUENCE		MAKE_SQLSTATE('2','2', '0','2','5')
+#define ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER		MAKE_SQLSTATE('2','2', 'P','0','6')
 #define ERRCODE_INVALID_INDICATOR_PARAMETER_VALUE		MAKE_SQLSTATE('2','2', '0','1','0')
 #define ERRCODE_INVALID_LIMIT_VALUE			MAKE_SQLSTATE('2','2', '0','2','0')
 #define ERRCODE_INVALID_PARAMETER_VALUE		MAKE_SQLSTATE('2','2', '0','2','3')

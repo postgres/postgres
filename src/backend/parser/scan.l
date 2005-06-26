@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.126 2005/06/26 03:03:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.127 2005/06/26 19:16:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,9 +48,18 @@
 extern YYSTYPE yylval;
 
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
-static char	   *dolqstart;      /* current $foo$ quote start string */
-static bool		warn_on_first_escape;
+static char    *dolqstart;      /* current $foo$ quote start string */
+
+/*
+ * GUC variable.  This is a DIRECT violation of the warning given at the
+ * head of gram.y, ie flex/bison code must not depend on any GUC variables;
+ * as such, changing its value can induce very unintuitive behavior.
+ * But we shall have to live with it as a short-term thing until the switch
+ * to SQL-standard string syntax is complete.
+ */
 bool			escape_string_warning;
+
+static bool		warn_on_first_escape;
 
 /*
  * literalbuf is used to accumulate literal values when multiple rules
@@ -66,6 +75,7 @@ static int		literalalloc;	/* current allocated buffer size */
 static void addlit(char *ytext, int yleng);
 static void addlitchar(unsigned char ychar);
 static char *litbufdup(void);
+static int	pg_err_position(void);
 static void check_escape_warning(void);
 
 /*
@@ -188,9 +198,8 @@ xhinside		[^']*
 /* National character */
 xnstart			[nN]{quote}
 
-/* Quote string does not warn about escapes */
+/* Quoted string that allows backslash escapes */
 xestart			[eE]{quote}
-xeinside		[^']*
 
 /* Extended quote
  * xqdouble implements embedded quote, ''''
@@ -446,17 +455,21 @@ other			.
 					{
 						if (warn_on_first_escape && escape_string_warning)
 							ereport(WARNING,
-								(errcode(ERRCODE_INVALID_USE_OF_ESCAPE_CHARACTER),
-								 errmsg("Invalid use of \\' in a normal string"),
-								 errhint("Use '' to place quotes in strings, or use the escape string syntax (E'').")));
+									(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
+									 errmsg("nonstandard use of \\' in a string literal"),
+									 errhint("Use '' to write quotes in strings, or use the escape string syntax (E'...')."),
+									 errposition(pg_err_position())));
+						warn_on_first_escape = false;	/* warn only once per string */
 					}
 					else if (yytext[1] == '\\')
 					{
 						if (warn_on_first_escape && escape_string_warning)
 							ereport(WARNING,
-								(errcode(ERRCODE_INVALID_USE_OF_ESCAPE_CHARACTER),
-								 errmsg("Invalid use of \\\\ in a normal string"),
-								 errhint("Use the escape string syntax for backslashes, e.g. E'\\\\'.")));
+									(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
+									 errmsg("nonstandard use of \\\\ in a string literal"),
+									 errhint("Use the escape string syntax for backslashes, e.g., E'\\\\'."),
+									 errposition(pg_err_position())));
+						warn_on_first_escape = false;	/* warn only once per string */
 					}
 					else
 						check_escape_warning();
@@ -707,14 +720,20 @@ other			.
 
 %%
 
+static int
+pg_err_position(void)
+{
+	const char *loc = token_start ? token_start : yytext;
+
+	/* in multibyte encodings, return index in characters not bytes */
+	return pg_mbstrlen_with_len(scanbuf, loc - scanbuf) + 1;
+}
+
 void
 yyerror(const char *message)
 {
 	const char *loc = token_start ? token_start : yytext;
-	int			cursorpos;
-
-	/* in multibyte encodings, return index in characters not bytes */
-	cursorpos = pg_mbstrlen_with_len(scanbuf, loc - scanbuf) + 1;
+	int			cursorpos = pg_err_position();
 
 	if (*loc == YY_END_OF_BUFFER_CHAR)
 	{
@@ -852,8 +871,9 @@ check_escape_warning(void)
 {
 	if (warn_on_first_escape && escape_string_warning)
 		ereport(WARNING,
-			(errcode(ERRCODE_INVALID_USE_OF_ESCAPE_CHARACTER),
-			 errmsg("Invalid use of escapes in an ordinary string"),
-			 errhint("Use the escape string syntax for escapes, e.g. E'\\r\\n'.")));
+				(errcode(ERRCODE_NONSTANDARD_USE_OF_ESCAPE_CHARACTER),
+				 errmsg("nonstandard use of escape in a string literal"),
+				 errhint("Use the escape string syntax for escapes, e.g., E'\\r\\n'."),
+				 errposition(pg_err_position())));
 	warn_on_first_escape = false;	/* warn only once per string */
 }
