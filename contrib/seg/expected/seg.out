@@ -557,7 +557,7 @@ SELECT '1'::seg &< '1'::seg AS bool;
 SELECT '1'::seg &< '2'::seg AS bool;
  bool 
 ------
- f
+ t
 (1 row)
 
 SELECT '0 .. 1'::seg &< '0'::seg AS bool;
@@ -575,7 +575,7 @@ SELECT '0 .. 1'::seg &< '1'::seg AS bool;
 SELECT '0 .. 1'::seg &< '2'::seg AS bool;
  bool 
 ------
- f
+ t
 (1 row)
 
 SELECT '0 .. 1'::seg &< '0 .. 0.5'::seg AS bool;
@@ -605,7 +605,7 @@ SELECT '0 .. 1'::seg &< '1 .. 2'::seg AS bool;
 SELECT '0 .. 1'::seg &< '2 .. 3'::seg AS bool;
  bool 
 ------
- f
+ t
 (1 row)
 
 -- overlap on the right
@@ -625,7 +625,7 @@ SELECT '1'::seg &> '1'::seg AS bool;
 SELECT '2'::seg &> '1'::seg AS bool;
  bool 
 ------
- f
+ t
 (1 row)
 
 SELECT '0'::seg &> '0 .. 1'::seg AS bool;
@@ -643,7 +643,7 @@ SELECT '1'::seg &> '0 .. 1'::seg AS bool;
 SELECT '2'::seg &> '0 .. 1'::seg AS bool;
  bool 
 ------
- f
+ t
 (1 row)
 
 SELECT '0 .. 0.5'::seg &> '0 .. 1'::seg AS bool;
@@ -673,7 +673,7 @@ SELECT '1 .. 2'::seg &> '0 .. 1'::seg AS bool;
 SELECT '2 .. 3'::seg &> '0 .. 1'::seg AS bool;
  bool 
 ------
- f
+ t
 (1 row)
 
 -- left

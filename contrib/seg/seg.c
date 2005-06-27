@@ -204,7 +204,7 @@ gseg_consistent(GISTENTRY *entry,
 				StrategyNumber strategy)
 {
 	/*
-	 * * if entry is not leaf, use gseg_internal_consistent, * else use
+	 * if entry is not leaf, use gseg_internal_consistent, else use
 	 * gseg_leaf_consistent
 	 */
 	if (GIST_LEAF(entry))
@@ -517,15 +517,19 @@ gseg_internal_consistent(SEG * key,
 	switch (strategy)
 	{
 		case RTLeftStrategyNumber:
+			retval = (bool) !seg_over_right(key, query);
+			break;
 		case RTOverLeftStrategyNumber:
-			retval = (bool) seg_over_left(key, query);
+			retval = (bool) !seg_right(key, query);
 			break;
 		case RTOverlapStrategyNumber:
 			retval = (bool) seg_overlap(key, query);
 			break;
 		case RTOverRightStrategyNumber:
+			retval = (bool) !seg_left(key, query);
+			break;
 		case RTRightStrategyNumber:
-			retval = (bool) seg_right(key, query);
+			retval = (bool) !seg_over_left(key, query);
 			break;
 		case RTSameStrategyNumber:
 		case RTContainsStrategyNumber:
@@ -586,12 +590,12 @@ seg_overlap(SEG * a, SEG * b)
 		);
 }
 
-/*	seg_overleft -- is the right edge of (a) located to the left of the right edge of (b)?
+/*	seg_overleft -- is the right edge of (a) located at or left of the right edge of (b)?
  */
 bool
 seg_over_left(SEG * a, SEG * b)
 {
-	return (a->upper <= b->upper && !seg_left(a, b) && !seg_right(a, b));
+	return (a->upper <= b->upper);
 }
 
 /*	seg_left -- is (a) entirely on the left of (b)?
@@ -610,12 +614,12 @@ seg_right(SEG * a, SEG * b)
 	return (a->lower > b->upper);
 }
 
-/*	seg_overright -- is the left edge of (a) located to the right of the left edge of (b)?
+/*	seg_overright -- is the left edge of (a) located at or right of the left edge of (b)?
  */
 bool
 seg_over_right(SEG * a, SEG * b)
 {
-	return (a->lower >= b->lower && !seg_left(a, b) && !seg_right(a, b));
+	return (a->lower >= b->lower);
 }
 
 

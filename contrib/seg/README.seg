@@ -214,7 +214,7 @@ have just 2 significant digits.
 USAGE
 =====
 
-The access method for SEG is a GiST (gist_seg_ops), which is a
+The access method for SEG is a GiST index (gist_seg_ops), which is a
 generalization of R-tree. GiSTs allow the postgres implementation of
 R-tree, originally encoded to support 2-D geometric types such as
 boxes and polygons, to be used with any data type whose data domain
@@ -236,22 +236,26 @@ The operators supported by the GiST access method include:
 [a, b] >> [c, d]	Is right of
 
 	[a, b] is occurs entirely to the right of [c, d]. 
-	[a, b] >> [c, d] is true if b > c and false otherwise
+	[a, b] >> [c, d] is true if a > d and false otherwise
 
-[a, b] &< [c, d]	Over left
+[a, b] &< [c, d]	Overlaps or is left of
 
-	The segment [a, b] overlaps the segment [c, d] in such a way
-	that a <= c <= b and b <= d
+	This might be better read as "does not extend to right of".
+	It is true when b <= d.
 
-[a, b] &> [c, d]	Over right
+[a, b] &> [c, d]	Overlaps or is right of
 
-	The segment [a, b] overlaps the segment [c, d] in such a way
-	that a > c and b <= c <= d
+	This might be better read as "does not extend to left of".
+	It is true when a >= c.
 
 [a, b] = [c, d]		Same as
 
 	The segments [a, b] and [c, d] are identical, that is, a == b
 	and c == d
+
+[a, b] && [c, d]	Overlaps
+
+	The segments [a, b] and [c, d] overlap.
 
 [a, b] @ [c, d]		Contains
 

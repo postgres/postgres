@@ -32,23 +32,23 @@ COMMENT ON TYPE seg IS
 CREATE FUNCTION seg_over_left(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_over_left(seg, seg) IS
-'is over and left of';
+'overlaps or is left of';
 
 CREATE FUNCTION seg_over_right(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_over_right(seg, seg) IS
-'is over and right of';
+'overlaps or is right of';
 
 CREATE FUNCTION seg_left(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_left(seg, seg) IS
 'is left of';
@@ -56,18 +56,18 @@ COMMENT ON FUNCTION seg_left(seg, seg) IS
 CREATE FUNCTION seg_right(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_right(seg, seg) IS
 'is right of';
 
 
--- Comparison methods
+-- Scalar comparison methods
 
 CREATE FUNCTION seg_lt(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_lt(seg, seg) IS
 'less than';
@@ -75,7 +75,7 @@ COMMENT ON FUNCTION seg_lt(seg, seg) IS
 CREATE FUNCTION seg_le(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_le(seg, seg) IS
 'less than or equal';
@@ -83,7 +83,7 @@ COMMENT ON FUNCTION seg_le(seg, seg) IS
 CREATE FUNCTION seg_gt(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_gt(seg, seg) IS
 'greater than';
@@ -91,7 +91,7 @@ COMMENT ON FUNCTION seg_gt(seg, seg) IS
 CREATE FUNCTION seg_ge(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_ge(seg, seg) IS
 'greater than or equal';
@@ -99,7 +99,7 @@ COMMENT ON FUNCTION seg_ge(seg, seg) IS
 CREATE FUNCTION seg_contains(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_contains(seg, seg) IS
 'contains';
@@ -107,7 +107,7 @@ COMMENT ON FUNCTION seg_contains(seg, seg) IS
 CREATE FUNCTION seg_contained(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_contained(seg, seg) IS
 'contained in';
@@ -115,7 +115,7 @@ COMMENT ON FUNCTION seg_contained(seg, seg) IS
 CREATE FUNCTION seg_overlap(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_overlap(seg, seg) IS
 'overlaps';
@@ -123,7 +123,7 @@ COMMENT ON FUNCTION seg_overlap(seg, seg) IS
 CREATE FUNCTION seg_same(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_same(seg, seg) IS
 'same as';
@@ -131,7 +131,7 @@ COMMENT ON FUNCTION seg_same(seg, seg) IS
 CREATE FUNCTION seg_different(seg, seg)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_different(seg, seg) IS
 'different';
@@ -141,36 +141,36 @@ COMMENT ON FUNCTION seg_different(seg, seg) IS
 CREATE OR REPLACE FUNCTION seg_cmp(seg, seg)
 RETURNS int4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' STRICT;
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 COMMENT ON FUNCTION seg_cmp(seg, seg) IS 'btree comparison function';
 
 CREATE FUNCTION seg_union(seg, seg)
 RETURNS seg
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 CREATE FUNCTION seg_inter(seg, seg)
 RETURNS seg
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 CREATE FUNCTION seg_size(seg)
 RETURNS float4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 -- miscellaneous
 
 CREATE FUNCTION seg_upper(seg)
 RETURNS float4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 CREATE FUNCTION seg_lower(seg)
 RETURNS float4
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT IMMUTABLE;
 
 
 --
@@ -230,7 +230,6 @@ CREATE OPERATOR &< (
 	LEFTARG = seg,
 	RIGHTARG = seg,
 	PROCEDURE = seg_over_left,
-	COMMUTATOR = '&>',
 	RESTRICT = positionsel,
 	JOIN = positionjoinsel
 );
@@ -240,15 +239,14 @@ CREATE OPERATOR && (
 	RIGHTARG = seg,
 	PROCEDURE = seg_overlap,
 	COMMUTATOR = '&&',
-	RESTRICT = positionsel,
-	JOIN = positionjoinsel
+	RESTRICT = areasel,
+	JOIN = areajoinsel
 );
 
 CREATE OPERATOR &> (
 	LEFTARG = seg,
 	RIGHTARG = seg,
 	PROCEDURE = seg_over_right,
-	COMMUTATOR = '&<',
 	RESTRICT = positionsel,
 	JOIN = positionjoinsel
 );
@@ -321,7 +319,7 @@ LANGUAGE 'C';
 CREATE FUNCTION gseg_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE 'C' STRICT;
 
 CREATE FUNCTION gseg_picksplit(internal, internal)
 RETURNS internal
