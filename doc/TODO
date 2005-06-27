@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jun 25 11:24:03 EDT 2005
+Last updated:		Sun Jun 26 21:53:52 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -575,7 +575,7 @@ Commands
 	o Add Oracle-style packages
 	o Add table function support to pltcl, plperl, plpython (?)
 	o Allow PL/pgSQL to name columns by ordinal position, e.g. rec.(3)
-	o Allow PL/pgSQL EXECUTE query_var INTO record_var;
+	o -Allow PL/pgSQL EXECUTE query_var INTO record_var;
 	o Add capability to create and call PROCEDURES
 	o Allow PL/pgSQL to handle %TYPE arrays, e.g. tab.col%TYPE[]
 	o Add MOVE to PL/pgSQL
