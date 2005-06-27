@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.237 2005/06/21 20:45:43 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.238 2005/06/27 02:04:23 neilc Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -787,12 +787,10 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-krb4</option></term>
        <term><option>--with-krb5</option></term>
        <listitem>
         <para>
-         Build with support for Kerberos authentication. You can use
-         either Kerberos version 4 or 5, but not both.  On many
+         Build with support for Kerberos 5 authentication. On many
          systems, the Kerberos system is not installed in a location
          that is searched by default (e.g., <filename>/usr/include</>,
          <filename>/usr/lib</>), so you must use the options

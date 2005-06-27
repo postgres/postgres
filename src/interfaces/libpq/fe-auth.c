@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.101 2005/06/04 20:42:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.102 2005/06/27 02:04:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@
  */
 
 #define STARTUP_MSG		7		/* Initialise a connection */
-#define STARTUP_KRB4_MSG	10	/* krb4 session follows */
+#define STARTUP_KRB4_MSG	10	/* krb4 session follows. Not supported any more. */
 #define STARTUP_KRB5_MSG	11	/* krb5 session follows */
 #define STARTUP_PASSWORD_MSG	14		/* Password follows */
 
@@ -87,156 +87,21 @@ struct authsvc
  * isn't any authentication system.
  */
 static const struct authsvc authsvcs[] = {
-#ifdef KRB4
-	{"krb4", STARTUP_KRB4_MSG, 1},
-	{"kerberos", STARTUP_KRB4_MSG, 1},
-#endif   /* KRB4 */
 #ifdef KRB5
 	{"krb5", STARTUP_KRB5_MSG, 1},
 	{"kerberos", STARTUP_KRB5_MSG, 1},
 #endif   /* KRB5 */
 	{UNAUTHNAME, STARTUP_MSG,
-#if defined(KRB4) || defined(KRB5)
+#ifdef KRB5
 		0
-#else							/* !(KRB4 || KRB5) */
+#else							/* !KRB5 */
 		1
-#endif   /* !(KRB4 || KRB5) */
+#endif   /* !KRB5 */
 	},
 	{"password", STARTUP_PASSWORD_MSG, 0}
 };
 
 static const int n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
-
-#ifdef KRB4
-/*
- * MIT Kerberos authentication system - protocol version 4
- */
-
-#include "krb.h"
-
-/* for some reason, this is not defined in krb.h ... */
-extern char *tkt_string(void);
-
-/*
- * pg_krb4_init -- initialization performed before any Kerberos calls are made
- *
- * For v4, all we need to do is make sure the library routines get the right
- * ticket file if we want them to see a special one.  (They will open the file
- * themselves.)
- */
-static void
-pg_krb4_init()
-{
-	char	   *realm;
-	static int	init_done = 0;
-
-	if (init_done)
-		return;
-	init_done = 1;
-
-	/*
-	 * If the user set PGREALM, then we use a ticket file with a special
-	 * name: <usual-ticket-file-name>@<PGREALM-value>
-	 */
-	if ((realm = getenv("PGREALM")))
-	{
-		char		tktbuf[MAXPGPATH];
-
-		(void) snprintf(tktbuf, sizeof(tktbuf), "%s@%s", tkt_string(), realm);
-		krb_set_tkt_string(tktbuf);
-	}
-}
-
-/*
- * pg_krb4_authname -- returns a pointer to static space containing whatever
- *					   name the user has authenticated to the system
- *
- * We obtain this information by digging around in the ticket file.
- */
-static char *
-pg_krb4_authname(char *PQerrormsg)
-{
-	char		instance[INST_SZ + 1];
-	char		realm[REALM_SZ + 1];
-	int			status;
-	static char name[SNAME_SZ + 1] = "";
-
-	if (name[0])
-		return name;
-
-	pg_krb4_init();
-
-	name[SNAME_SZ] = '\0';
-	status = krb_get_tf_fullname(tkt_string(), name, instance, realm);
-	if (status != KSUCCESS)
-	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_krb4_authname: krb_get_tf_fullname: %s\n",
-				 krb_err_txt[status]);
-		return NULL;
-	}
-	return name;
-}
-
-/*
- * pg_krb4_sendauth -- client routine to send authentication information to
- *					   the server
- *
- * This routine does not do mutual authentication, nor does it return enough
- * information to do encrypted connections.  But then, if we want to do
- * encrypted connections, we'll have to redesign the whole RPC mechanism
- * anyway.
- *
- * If the user is too lazy to feed us a hostname, we try to come up with
- * something other than "localhost" since the hostname is used as an
- * instance and instance names in v4 databases are usually actual hostnames
- * (canonicalized to omit all domain suffixes).
- */
-static int
-pg_krb4_sendauth(char *PQerrormsg, int sock,
-				 struct sockaddr_in * laddr,
-				 struct sockaddr_in * raddr,
-				 const char *hostname, 
-				 const char *servicename)
-{
-	long		krbopts = 0;	/* one-way authentication */
-	KTEXT_ST	clttkt;
-	int			status;
-	char		hostbuf[MAXHOSTNAMELEN];
-	const char *realm = getenv("PGREALM");		/* NULL == current realm */
-
-	if (!hostname || !(*hostname))
-	{
-		if (gethostname(hostbuf, MAXHOSTNAMELEN) < 0)
-			strcpy(hostbuf, "localhost");
-		hostname = hostbuf;
-	}
-
-	pg_krb4_init();
-
-	status = krb_sendauth(krbopts,
-						  sock,
-						  &clttkt,
-						  servicename,
-						  hostname,
-						  realm,
-						  (u_long) 0,
-						  NULL,
-						  NULL,
-						  NULL,
-						  laddr,
-						  raddr,
-						  PG_KRB4_VERSION);
-	if (status != KSUCCESS)
-	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 libpq_gettext("Kerberos 4 error: %s\n"),
-				 krb_err_txt[status]);
-		return STATUS_ERROR;
-	}
-	return STATUS_OK;
-}
-#endif   /* KRB4 */
 
 #ifdef KRB5
 /*
@@ -597,7 +462,7 @@ int
 fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			const char *password, char *PQerrormsg)
 {
-#if !defined(KRB4) && !defined(KRB5)
+#ifndef KRB5
 	(void) hostname;			/* not used */
 #endif
 
@@ -607,24 +472,9 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			break;
 
 		case AUTH_REQ_KRB4:
-#ifdef KRB4
-			pglock_thread();
-			if (pg_krb4_sendauth(PQerrormsg, conn->sock,
-							   (struct sockaddr_in *) & conn->laddr.addr,
-							   (struct sockaddr_in *) & conn->raddr.addr,
-								 hostname, conn->krbsrvname) != STATUS_OK)
-			{
-				/* PQerrormsg already filled in */
-				pgunlock_thread();
-				return STATUS_ERROR;
-			}
-			pgunlock_thread();
-			break;
-#else
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 			 libpq_gettext("Kerberos 4 authentication not supported\n"));
 			return STATUS_ERROR;
-#endif
 
 		case AUTH_REQ_KRB5:
 #ifdef KRB5
@@ -754,17 +604,12 @@ fe_getauthname(char *PQerrormsg)
 
 	pglock_thread();
 
-#ifdef KRB4
-	if (authsvc == STARTUP_KRB4_MSG)
-		name = pg_krb4_authname(PQerrormsg);
-#endif
 #ifdef KRB5
 	if (authsvc == STARTUP_KRB5_MSG)
 		name = pg_krb5_authname(PQerrormsg);
 #endif
 
 	if (authsvc == STARTUP_MSG
-		|| (authsvc == STARTUP_KRB4_MSG && !name)
 		|| (authsvc == STARTUP_KRB5_MSG && !name))
 	{
 #ifdef WIN32
@@ -776,7 +621,7 @@ fe_getauthname(char *PQerrormsg)
 #endif
 	}
 
-	if (authsvc != STARTUP_MSG && authsvc != STARTUP_KRB4_MSG && authsvc != STARTUP_KRB5_MSG)
+	if (authsvc != STARTUP_MSG && authsvc != STARTUP_KRB5_MSG)
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 libpq_gettext("fe_getauthname: invalid authentication system: %d\n"),
 				 authsvc);

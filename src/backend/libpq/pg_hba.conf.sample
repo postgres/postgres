@@ -35,7 +35,7 @@
 # an IP address and netmask in separate columns to specify the set of hosts.
 #
 # METHOD can be "trust", "reject", "md5", "crypt", "password",
-# "krb4", "krb5", "ident", or "pam".  Note that "password" sends passwords
+# "krb5", "ident", or "pam".  Note that "password" sends passwords
 # in clear text; "md5" is preferred since it sends encrypted passwords.
 #
 # OPTION is the ident map or the name of the PAM service, depending on METHOD.

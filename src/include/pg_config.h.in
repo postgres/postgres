@@ -575,9 +575,6 @@
 /* Define to the appropriate snprintf format for 64-bit ints, if any. */
 #undef INT64_FORMAT
 
-/* Define to build with Kerberos 4 support. (--with-krb4) */
-#undef KRB4
-
 /* Define to build with Kerberos 5 support. (--with-krb5) */
 #undef KRB5
 

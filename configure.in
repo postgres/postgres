@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.412 2005/06/04 20:42:41 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.413 2005/06/27 02:04:23 neilc Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -410,19 +410,6 @@ AC_MSG_RESULT([$with_python])
 AC_SUBST(with_python)
 
 #
-# Kerberos 4
-#
-AC_MSG_CHECKING([whether to build with Kerberos 4 support])
-PGAC_ARG_BOOL(with, krb4, no, [  --with-krb4             build with Kerberos 4 support],
-[
-  AC_DEFINE(KRB4, 1, [Define to build with Kerberos 4 support. (--with-krb4)])
-  krb_srvtab="/etc/srvtab"
-])
-AC_MSG_RESULT([$with_krb4])
-AC_SUBST(with_krb4)
-
-
-#
 # Kerberos 5
 #
 AC_MSG_CHECKING([whether to build with Kerberos 5 support])
@@ -434,11 +421,6 @@ PGAC_ARG_BOOL(with, krb5, no, [  --with-krb5             build with Kerberos 5 s
 AC_MSG_RESULT([$with_krb5])
 AC_SUBST(with_krb5)
 
-
-# Using both Kerberos 4 and Kerberos 5 at the same time isn't going to work.
-if test "$with_krb4" = yes && test "$with_krb5" = yes ; then
-  AC_MSG_ERROR([Kerberos 4 and Kerberos 5 support cannot be combined])
-fi
 
 AC_SUBST(krb_srvtab)
 
@@ -666,12 +648,6 @@ else
 *** Not using spinlocks will cause poor performance.])
 fi
 
-if test "$with_krb4" = yes ; then
-  AC_CHECK_LIB(des, des_encrypt, [], [AC_MSG_ERROR([library 'des' is required for Kerberos 4])])
-  AC_CHECK_LIB(krb, krb_sendauth, [], [AC_MSG_ERROR([library 'krb' is required for Kerberos 4])])
-  AC_REPLACE_FUNCS([gethostname])
-fi
-
 if test "$with_krb5" = yes ; then
   if test "$PORTNAME" != "win32"; then
      AC_SEARCH_LIBS(com_err, [krb5 'krb5 -ldes -lasn1 -lroken' com_err], [],
@@ -760,10 +736,6 @@ if test "$with_zlib" = yes; then
 If you have zlib already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support.])])
-fi
-
-if test "$with_krb4" = yes ; then
-  AC_CHECK_HEADER(krb.h, [], [AC_MSG_ERROR([header file <krb.h> is required for Kerberos 4])])
 fi
 
 if test "$with_krb5" = yes ; then

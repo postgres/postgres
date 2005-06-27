@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.125 2005/06/14 17:43:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.126 2005/06/27 02:04:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,83 +68,6 @@ static char *pam_passwd = NULL; /* Workaround for Solaris 2.6 brokenness */
 static Port *pam_port_cludge;	/* Workaround for passing "Port *port"
 								 * into pam_passwd_conv_proc */
 #endif   /* USE_PAM */
-
-#ifdef KRB4
-/*----------------------------------------------------------------
- * MIT Kerberos authentication system - protocol version 4
- *----------------------------------------------------------------
- */
-
-#include "krb.h"
-
-/*
- * pg_krb4_recvauth -- server routine to receive authentication information
- *					   from the client
- *
- * Nothing unusual here, except that we compare the username obtained from
- * the client's setup packet to the authenticated name.  (We have to retain
- * the name in the setup packet since we have to retain the ability to handle
- * unauthenticated connections.)
- */
-static int
-pg_krb4_recvauth(Port *port)
-{
-	long		krbopts = 0;	/* one-way authentication */
-	KTEXT_ST	clttkt;
-	char		instance[INST_SZ + 1],
-				version[KRB_SENDAUTH_VLEN + 1];
-	AUTH_DAT	auth_data;
-	Key_schedule key_sched;
-	int			status;
-
-	strcpy(instance, "*");		/* don't care, but arg gets expanded
-								 * anyway */
-	status = krb_recvauth(krbopts,
-						  port->sock,
-						  &clttkt,
-						  pg_krb_srvnam,
-						  instance,
-						  &port->raddr.in,
-						  &port->laddr.in,
-						  &auth_data,
-						  pg_krb_server_keyfile,
-						  key_sched,
-						  version);
-	if (status != KSUCCESS)
-	{
-		ereport(LOG,
-				(errmsg("Kerberos error: %s", krb_err_txt[status])));
-		return STATUS_ERROR;
-	}
-	if (strncmp(version, PG_KRB4_VERSION, KRB_SENDAUTH_VLEN) != 0)
-	{
-		ereport(LOG,
-				(errmsg("unexpected Kerberos protocol version received from client (received \"%s\", expected \"%s\")",
-						version, PG_KRB4_VERSION)));
-		return STATUS_ERROR;
-	}
-	if (strncmp(port->user_name, auth_data.pname, SM_DATABASE_USER) != 0)
-	{
-		ereport(LOG,
-				(errmsg("unexpected Kerberos user name received from client (received \"%s\", expected \"%s\")",
-						port->user_name, auth_data.pname)));
-		return STATUS_ERROR;
-	}
-	return STATUS_OK;
-}
-
-#else
-
-static int
-pg_krb4_recvauth(Port *port)
-{
-	ereport(LOG,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			 errmsg("Kerberos 4 not implemented on this server")));
-	return STATUS_ERROR;
-}
-#endif   /* KRB4 */
-
 
 #ifdef KRB5
 /*----------------------------------------------------------------
@@ -252,8 +175,7 @@ pg_krb5_init(void)
  *					   from the client
  *
  * We still need to compare the username obtained from the client's setup
- * packet to the authenticated name, as described in pg_krb4_recvauth.	This
- * is a bit more problematic in v5, as described above in pg_an_to_ln.
+ * packet to the authenticated name.
  *
  * We have our own keytab file because postgres is unlikely to run as root,
  * and so cannot read the default keytab.
@@ -380,9 +302,6 @@ auth_failed(Port *port, int status)
 		case uaReject:
 			errstr = gettext_noop("authentication failed for user \"%s\": host rejected");
 			break;
-		case uaKrb4:
-			errstr = gettext_noop("Kerberos 4 authentication failed for user \"%s\"");
-			break;
 		case uaKrb5:
 			errstr = gettext_noop("Kerberos 5 authentication failed for user \"%s\"");
 			break;
@@ -461,26 +380,15 @@ ClientAuthentication(Port *port)
 				   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 					errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
 						   hostinfo, port->user_name, port->database_name,
-				   port->ssl ? _("SSL on") : _("SSL off"))));
+						   port->ssl ? _("SSL on") : _("SSL off"))));
 #else
 				ereport(FATAL,
 				   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 					errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\"",
-					   hostinfo, port->user_name, port->database_name)));
+						   hostinfo, port->user_name, port->database_name)));
 #endif
 				break;
 			}
-
-		case uaKrb4:
-			/* Kerberos 4 only seems to work with AF_INET. */
-			if (port->raddr.addr.ss_family != AF_INET
-				|| port->laddr.addr.ss_family != AF_INET)
-				ereport(FATAL,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				   errmsg("Kerberos 4 only supports IPv4 connections")));
-			sendAuthRequest(port, AUTH_REQ_KRB4);
-			status = pg_krb4_recvauth(port);
-			break;
 
 		case uaKrb5:
 			sendAuthRequest(port, AUTH_REQ_KRB5);

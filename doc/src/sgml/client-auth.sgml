@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.81 2005/06/21 04:02:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.82 2005/06/27 02:04:23 neilc Exp $
 -->
 
 <chapter id="client-authentication">
@@ -327,17 +327,6 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
-        <term><literal>krb4</></term>
-        <listitem>
-         <para>
-          Use Kerberos V4 to authenticate the user. This is only
-          available for TCP/IP connections.  See <xref
-          linkend="kerberos-auth"> for details.
-         </para>
-        </listitem>
-       </varlistentry>
-
-       <varlistentry>
         <term><literal>krb5</></term>
         <listitem>
          <para>
@@ -623,11 +612,8 @@ local   db1,db2,@demodbs  all                         md5
    </para>
 
    <para>
-    While <productname>PostgreSQL</> supports both Kerberos 4 and 
-    Kerberos 5, only Kerberos 5 is recommended.  Kerberos 4 is
-    considered insecure and no longer recommended for general
-    use. Only one version of Kerberos can be supported in any one
-		build, and support must be enabled at build time. See
+    <productname>PostgreSQL</> supports Kerberos version 5, and it has
+	to be enabled at build time. See
 		<xref linkend="installation"> for more information.
    </para>
 
@@ -669,11 +655,9 @@ local   db1,db2,@demodbs  all                         md5
     account.  (See also <xref linkend="postgres-user">.) The location
     of the key file is specified by the <xref
     linkend="guc-krb-server-keyfile"> configuration
-    parameter. The default
-    is <filename>/etc/srvtab</> if you are using Kerberos 4 and
+    parameter. The default is
     <filename>/usr/local/pgsql/etc/krb5.keytab</> (or whichever
-    directory was specified as <varname>sysconfdir</> at build time)
-    with Kerberos 5.
+    directory was specified as <varname>sysconfdir</> at build time).
    </para>
 
    <para>

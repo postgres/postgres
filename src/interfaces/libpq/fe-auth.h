@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.h,v 1.20 2004/12/31 22:03:50 pgsql Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.h,v 1.21 2005/06/27 02:04:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,11 +27,11 @@
 #define UNAUTHNAME				"unauth"
 
 /* what a frontend uses by default */
-#if !defined(KRB4) && !defined(KRB5)
+#ifndef KRB5
 #define DEFAULT_CLIENT_AUTHSVC	UNAUTHNAME
-#else							/* KRB4 || KRB5 */
+#else
 #define DEFAULT_CLIENT_AUTHSVC	"kerberos"
-#endif   /* KRB4 || KRB5 */
+#endif   /* KRB5 */
 
 extern int fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			const char *password, char *PQerrormsg);
@@ -39,7 +39,6 @@ extern MsgType fe_getauthsvc(char *PQerrormsg);
 extern void fe_setauthsvc(const char *name, char *PQerrormsg);
 extern char *fe_getauthname(char *PQerrormsg);
 
-#define PG_KRB4_VERSION "PGVER4.1"		/* at most KRB_SENDAUTH_VLEN chars */
-#define PG_KRB5_VERSION "PGVER5.1"
+#define PG_KRB5_VERSION "PGVER5.1"      /* at most KRB_SENDAUTH_VLEN chars */
 
 #endif   /* FE_AUTH_H */

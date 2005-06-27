@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.312 2005/06/19 13:10:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.313 2005/06/27 02:04:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,7 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	{"sslmode", "PGSSLMODE", DefaultSSLMode, NULL,
 	"SSL-Mode", "", 8},			/* sizeof("disable") == 8 */
 
-#if defined(KRB4) || defined(KRB5)
+#ifdef KRB5
 	/* Kerberos authentication supports specifying the service name */
 	{"krbsrvname", "PGKRBSRVNAME", PG_KRB_SRVNAM, NULL,
 	 "Kerberos-service-name", "", 20},
@@ -401,7 +401,7 @@ connectOptions1(PGconn *conn, const char *conninfo)
 		conn->sslmode = strdup("require");
 	}
 #endif
-#if defined(KRB4) || defined(KRB5)
+#ifdef KRB5
 	tmp = conninfo_getval(connOptions, "krbsrvname");
 	conn->krbsrvname = tmp ? strdup(tmp) : NULL;
 #endif
@@ -1916,7 +1916,7 @@ freePGconn(PGconn *conn)
 		free(conn->pgpass);
 	if (conn->sslmode)
 		free(conn->sslmode);
-#if defined(KRB4) || defined(KRB5)
+#ifdef KRB5
 	if (conn->krbsrvname)
 		free(conn->krbsrvname);
 #endif

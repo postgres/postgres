@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.60 2005/06/26 19:16:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.61 2005/06/27 02:04:24 neilc Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -260,19 +260,6 @@
       <listitem>
        <para>
         The authentication exchange is successfully completed.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>AuthenticationKerberosV4</term>
-      <listitem>
-       <para>
-        The frontend must now take part in a Kerberos V4
-        authentication dialog (not described here, part of the
-        Kerberos specification) with the server.  If this is
-        successful, the server responds with an AuthenticationOk,
-        otherwise it responds with an ErrorResponse.
        </para>
       </listitem>
      </varlistentry>
@@ -1406,50 +1393,6 @@ AuthenticationOk (B)
 </varlistentry>
 </variablelist>
 
-</para>
-</listitem>
-</varlistentry>
-
-
-<varlistentry>
-<term>
-AuthenticationKerberosV4 (B)
-</term>
-<listitem>
-<para>
-
-<variablelist>
-<varlistentry>
-<term>
-        Byte1('R')
-</term>
-<listitem>
-<para>
-                Identifies the message as an authentication request.
-</para>
-</listitem>
-</varlistentry>
-<varlistentry>
-<term>
-        Int32(8)
-</term>
-<listitem>
-<para>
-                Length of message contents in bytes, including self.
-</para>
-</listitem>
-</varlistentry>
-<varlistentry>
-<term>
-        Int32(1)
-</term>
-<listitem>
-<para>
-                Specifies that Kerberos V4 authentication is required.
-</para>
-</listitem>
-</varlistentry>
-</variablelist>
 </para>
 </listitem>
 </varlistentry>

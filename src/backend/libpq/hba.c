@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.141 2005/06/21 01:20:09 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.142 2005/06/27 02:04:25 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -607,8 +607,6 @@ parse_hba_auth(ListCell **line_item, UserAuth *userauth_p,
 		*userauth_p = uaIdent;
 	else if (strcmp(token, "password") == 0)
 		*userauth_p = uaPassword;
-	else if (strcmp(token, "krb4") == 0)
-		*userauth_p = uaKrb4;
 	else if (strcmp(token, "krb5") == 0)
 		*userauth_p = uaKrb5;
 	else if (strcmp(token, "reject") == 0)
@@ -694,8 +692,7 @@ parse_hba(List *line, int line_num, hbaPort *port,
 			goto hba_syntax;
 
 		/* Disallow auth methods that always need TCP/IP sockets to work */
-		if (port->auth_method == uaKrb4 ||
-			port->auth_method == uaKrb5)
+		if (port->auth_method == uaKrb5)
 			goto hba_syntax;
 
 		/* Does not match if connection isn't AF_UNIX */

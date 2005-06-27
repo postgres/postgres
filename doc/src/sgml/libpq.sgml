@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.187 2005/06/26 19:16:04 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.188 2005/06/27 02:04:24 neilc Exp $
 -->
 
  <chapter id="libpq">
@@ -283,7 +283,7 @@ PGconn *PQconnectdb(const char *conninfo);
      <term><literal>krbsrvname</literal></term>
      <listitem>
       <para>
-       Kerberos service name to use when authenticating with Kerberos 4 or 5.
+       Kerberos service name to use when authenticating with Kerberos 5.
        This must match the service name specified in the server
        configuration for Kerberos authentication to succeed. (See also
        <xref linkend="kerberos-auth">.)
@@ -3813,7 +3813,7 @@ setting, and is only available if
  <primary><envar>PGKRBSRVNAME</envar></primary>
 </indexterm>
 <envar>PGKRBSRVNAME</envar> sets the Kerberos service name to use when
-authenticating with Kerberos 4 or 5.
+authenticating with Kerberos 5.
 </para>
 </listitem>
 <listitem>
