@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Jun 26 22:17:21 EDT 2005
+Last updated:		Mon Jun 27 19:21:55 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -355,7 +355,7 @@ Indexes
 
   One solution is to create a partial index on an IS NULL expression.
 
-* Add concurrency to GIST
+* -Add concurrency to GIST
 * Pack hash index buckets onto disk pages more efficiently
 
   Currently no only one hash bucket can be stored on a page. Ideally
