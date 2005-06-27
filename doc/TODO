@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sun Jun 26 21:53:52 EDT 2005
+Last updated:		Sun Jun 26 22:17:21 EDT 2005
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -987,7 +987,7 @@ Source Code
 * Promote debug_query_string into a server-side function current_query()
 * Allow the identifier length to be increased via a configure option
 * Remove Win32 rename/unlink looping if unnecessary
-* Remove kerberos4 from source tree?
+* -Remove kerberos4 from source tree
 * Allow cross-compiling by generating the zic database on the target system
 * Improve NLS maintenace of libpgport messages linked onto applications
 * Allow ecpg to work with MSVC and BCC
