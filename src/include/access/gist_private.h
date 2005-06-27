@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.5 2005/06/20 15:22:38 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/access/gist_private.h,v 1.6 2005/06/27 12:45:22 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,13 @@
 #include "access/xlogdefs.h"
 #include "fmgr.h"
 
+#define GIST_UNLOCK	BUFFER_LOCK_UNLOCK
+#define GIST_SHARE	BUFFER_LOCK_SHARE
+#define GIST_EXCLUSIVE	BUFFER_LOCK_EXCLUSIVE
+
+
 /*
+ * XXX old comment!!!
  * When we descend a tree, we keep a stack of parent pointers. This
  * allows us to follow a chain of internal node points until we reach
  * a leaf node, and then back up the stack to re-examine the internal
@@ -31,12 +37,15 @@
  * the node's page that we stopped at (i.e. we followed the child
  * pointer located at the specified offset).
  */
-typedef struct GISTSTACK
+typedef struct GISTSearchStack
 {
-	struct GISTSTACK *parent;
-	OffsetNumber offset;
+	struct GISTSearchStack *next;
 	BlockNumber block;
-} GISTSTACK;
+	/* to identify page changed */
+	GistNSN		lsn;
+	/* to recognize split occured */
+	GistNSN		parentlsn;
+} GISTSearchStack;
 
 typedef struct GISTSTATE
 {
@@ -57,8 +66,8 @@ typedef struct GISTSTATE
  */
 typedef struct GISTScanOpaqueData
 {
-	GISTSTACK			*stack;
-	GISTSTACK			*markstk;
+	GISTSearchStack			*stack;
+	GISTSearchStack			*markstk;
 	uint16				 flags;
 	GISTSTATE			*giststate;
 	MemoryContext		 tempCxt;
@@ -67,6 +76,71 @@ typedef struct GISTScanOpaqueData
 } GISTScanOpaqueData;
 
 typedef GISTScanOpaqueData *GISTScanOpaque;
+
+/* XLog stuff */
+extern	const XLogRecPtr	XLogRecPtrForTemp;
+
+#define	XLOG_GIST_ENTRY_UPDATE	0x00
+#define	XLOG_GIST_ENTRY_DELETE	0x10
+#define XLOG_GIST_NEW_ROOT	0x20
+
+typedef struct gistxlogEntryUpdate {
+	RelFileNode	node;
+	BlockNumber	blkno;
+
+	uint16		ntodelete;
+	bool		isemptypage;	
+
+	/* 
+	 * It used to identify completeness of insert.
+         * Sets to leaf itup 
+         */ 
+	ItemPointerData	key;
+
+	/* follow:
+	 * 1. todelete OffsetNumbers 
+	 * 2. tuples to insert
+         */ 
+} gistxlogEntryUpdate;
+
+#define XLOG_GIST_PAGE_SPLIT	0x30
+
+typedef struct gistxlogPageSplit {
+	RelFileNode	node;
+	BlockNumber	origblkno; /*splitted page*/
+	uint16		npage;
+
+	/* see comments on gistxlogEntryUpdate */
+	ItemPointerData	key;
+ 
+	/* follow:
+	 * 1. gistxlogPage and array of IndexTupleData per page
+         */ 
+} gistxlogPageSplit;
+
+#define XLOG_GIST_INSERT_COMPLETE  0x40
+
+typedef struct gistxlogPage {
+	BlockNumber	blkno;
+	int		num;
+} gistxlogPage;	
+
+#define	XLOG_GIST_CREATE_INDEX	0x50
+
+typedef struct gistxlogInsertComplete {
+	RelFileNode	node;
+	/* follows ItemPointerData key to clean */
+} gistxlogInsertComplete;
+
+/* SplitedPageLayout - gistSplit function result */
+typedef struct SplitedPageLayout {
+        gistxlogPage    block;
+        IndexTupleData  *list;
+	int		lenlist;
+        Buffer          buffer; /* to write after all proceed */
+
+        struct SplitedPageLayout *next;
+} SplitedPageLayout;
 
 /*
  * GISTInsertStack used for locking buffers and transfer arguments during
@@ -78,15 +152,24 @@ typedef struct GISTInsertStack {
 	BlockNumber	blkno;	 
 	Buffer		buffer;
 	Page		page;
+
+	/* log sequence number from page->lsn to
+           recognize page update  and compare it with page's nsn 
+	  to recognize page split*/
+	GistNSN		lsn;
 	
 	/* child's offset */
 	OffsetNumber	childoffnum;
 
-	/* pointer to parent */
+	/* pointer to parent and child */
 	struct GISTInsertStack	*parent;
+	struct GISTInsertStack	*child;
 
-	bool todelete;
+	/* for gistFindPath */
+	struct GISTInsertStack	*next;
 } GISTInsertStack;
+
+#define XLogRecPtrIsInvalid( r )	( (r).xlogid == 0 && (r).xrecoff == 0 )
 
 typedef struct {
 	Relation	r;
@@ -97,10 +180,6 @@ typedef struct {
 
 	/* pointer to heap tuple */
 	ItemPointerData	key;
-
-	/* path to stroe in XLog */
-	BlockNumber	*path;
-	int 		pathlen; 
 } GISTInsertState;
 
 /*
@@ -124,71 +203,13 @@ typedef struct {
  * constants tell us what sort of operation changed the index.
  */
 #define GISTOP_DEL		0
-#define GISTOP_SPLIT	1
+/* #define GISTOP_SPLIT	1 */
 
 #define ATTSIZE(datum, tupdesc, i, isnull) \
         ( \
                 (isnull) ? 0 : \
                    att_addlength(0, (tupdesc)->attrs[(i)-1]->attlen, (datum)) \
         ) 
-
-/* XLog stuff */
-#define	XLOG_GIST_ENTRY_UPDATE	0x00
-#define	XLOG_GIST_ENTRY_DELETE	0x10
-#define XLOG_GIST_NEW_ROOT	0x20
-
-typedef struct gistxlogEntryUpdate {
-	RelFileNode	node;
-	BlockNumber	blkno;
-
-	uint16		ntodelete;
-	uint16		pathlen;
-	bool		isemptypage;	
-
-	/* 
-	 * It used to identify completeness of insert.
-         * Sets to leaf itup 
-         */ 
-	ItemPointerData	key;
-
-	/* follow:
-	 * 1. path to root (BlockNumber)
-	 * 2. todelete OffsetNumbers 
-	 * 3. tuples to insert
-         */ 
-} gistxlogEntryUpdate;
-
-#define XLOG_GIST_PAGE_SPLIT	0x30
-
-typedef struct gistxlogPageSplit {
-	RelFileNode	node;
-	BlockNumber	origblkno; /*splitted page*/
-	uint16		pathlen;
-	uint16		npage;
-
-	/* see comments on gistxlogEntryUpdate */
-	ItemPointerData	key;
- 
-	/* follow:
-	 * 1. path to root (BlockNumber) 
-	 * 2. gistxlogPage and array of IndexTupleData per page
-         */ 
-} gistxlogPageSplit;
-
-typedef struct gistxlogPage {
-	BlockNumber	blkno;
-	int		num;
-} gistxlogPage;	
-
-
-#define XLOG_GIST_INSERT_COMPLETE  0x40
-
-typedef struct gistxlogInsertComplete {
-	RelFileNode	node;
-	/* follows ItemPointerData key to clean */
-} gistxlogInsertComplete;
-
-#define	XLOG_GIST_CREATE_INDEX	0x50
 
 /*
  * mark tuples on inner pages during recovery
@@ -206,20 +227,14 @@ extern Datum gistinsert(PG_FUNCTION_ARGS);
 extern MemoryContext createTempGistContext(void);
 extern void initGISTstate(GISTSTATE *giststate, Relation index);
 extern void freeGISTstate(GISTSTATE *giststate);
-extern void gistnewroot(Relation r, IndexTuple *itup, int len, ItemPointer key);
 extern void gistmakedeal(GISTInsertState *state, GISTSTATE *giststate);
+extern void gistnewroot(Relation r, Buffer buffer, IndexTuple *itup, int len, ItemPointer key);
 
-typedef struct SplitedPageLayout {
-        gistxlogPage    block;
-        IndexTupleData  *list;
-	int		lenlist;
-        Buffer          buffer; /* to write after all proceed */
-
-        struct SplitedPageLayout *next;
-} SplitedPageLayout;
-
-IndexTuple * gistSplit(Relation r, Buffer buffer, IndexTuple *itup,
+extern IndexTuple * gistSplit(Relation r, Buffer buffer, IndexTuple *itup,
                   int *len, SplitedPageLayout    **dist, GISTSTATE *giststate);
+
+extern GISTInsertStack* gistFindPath( Relation r, BlockNumber child, 
+	Buffer  (*myReadBuffer)(bool, Relation, BlockNumber) );
 /* gistxlog.c */
 extern void gist_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void gist_desc(char *buf, uint8 xl_info, char *rec);
@@ -229,12 +244,10 @@ extern IndexTuple gist_form_invalid_tuple(BlockNumber blkno);
 
 extern XLogRecData* formUpdateRdata(RelFileNode node, BlockNumber blkno,
                 OffsetNumber *todelete, int ntodelete, bool emptypage,
-                IndexTuple *itup, int ituplen, ItemPointer key,
-                BlockNumber *path, int pathlen);
+                IndexTuple *itup, int ituplen, ItemPointer key);
 
 extern XLogRecData* formSplitRdata(RelFileNode node, BlockNumber blkno,
-                ItemPointer key,
-                BlockNumber *path, int pathlen, SplitedPageLayout *dist );
+                ItemPointer key, SplitedPageLayout *dist);
 
 extern XLogRecPtr gistxlogInsertCompletion(RelFileNode node, ItemPointerData *keys, int len);
 
@@ -243,7 +256,7 @@ extern Datum gistgettuple(PG_FUNCTION_ARGS);
 extern Datum gistgetmulti(PG_FUNCTION_ARGS);
 
 /* gistutil.c */
-extern	Buffer	gistReadBuffer(Relation r, BlockNumber blkno);
+extern	Buffer	gistNewBuffer(Relation r);
 extern OffsetNumber gistfillbuffer(Relation r, Page page, IndexTuple *itup,
                                 int len, OffsetNumber off);
 extern bool gistnospace(Page page, IndexTuple *itvec, int len);

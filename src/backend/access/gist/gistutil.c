@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *          $PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.2 2005/06/20 10:29:36 teodor Exp $
+ *          $PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.3 2005/06/27 12:45:22 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -803,8 +803,12 @@ GISTInitBuffer(Buffer b, uint32 f)
 	page = BufferGetPage(b);
 	PageInit(page, pageSize, sizeof(GISTPageOpaqueData));
 
-	opaque = (GISTPageOpaque) PageGetSpecialPointer(page);
+	opaque = GistPageGetOpaque(page);
 	opaque->flags = f;
+	opaque->nsplited = 0;
+	opaque->level = 0;
+	opaque->rightlink = InvalidBlockNumber;
+	memset( &(opaque->nsn), 0, sizeof(GistNSN) );
 }
 
 void
@@ -856,30 +860,38 @@ gistUserPicksplit(Relation r, GistEntryVector *entryvec, GIST_SPLITVEC *v,
 }
 
 Buffer  
-gistReadBuffer(Relation r, BlockNumber blkno) {
+gistNewBuffer(Relation r) {
 	Buffer buffer = InvalidBuffer;
+	bool needLock;
 
-	if ( blkno != P_NEW ) {
+	while(true) {
+		BlockNumber blkno = GetFreeIndexPage(&r->rd_node);
+		if (blkno == InvalidBlockNumber)
+			break;
+
 		buffer = ReadBuffer(r, blkno);
-	} else {
-		Page page;
-
-		while(true) {
-			blkno = GetFreeIndexPage(&r->rd_node);
-			if (blkno == InvalidBlockNumber)
-				break;
-
-			buffer = ReadBuffer(r, blkno);
-			page = BufferGetPage(buffer);
+		if ( ConditionalLockBuffer(buffer) ) {
+			Page page = BufferGetPage(buffer);
 			if ( GistPageIsDeleted( page ) ) {
 				GistPageSetNonDeleted( page );
 				return buffer;
-			}
-			ReleaseBuffer( buffer );
+			} else
+				LockBuffer(buffer, GIST_UNLOCK);
 		}
 
-		buffer = ReadBuffer(r, P_NEW); 
+		ReleaseBuffer( buffer );
 	}
-	
+
+	needLock = !RELATION_IS_LOCAL(r);
+
+	if (needLock)
+		LockRelationForExtension(r, ExclusiveLock);
+
+	buffer = ReadBuffer(r, P_NEW);
+	LockBuffer(buffer, GIST_EXCLUSIVE);
+
+	if (needLock)
+		UnlockRelationForExtension(r, ExclusiveLock);
+ 
 	return buffer;
 }

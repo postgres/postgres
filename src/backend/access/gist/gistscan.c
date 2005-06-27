@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.58 2005/05/17 03:34:18 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.59 2005/06/27 12:45:22 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,11 +24,10 @@
 static void gistregscan(IndexScanDesc scan);
 static void gistdropscan(IndexScanDesc scan);
 static void gistadjone(IndexScanDesc scan, int op, BlockNumber blkno,
-		   OffsetNumber offnum);
-static void adjuststack(GISTSTACK *stk, BlockNumber blkno);
-static void adjustiptr(IndexScanDesc scan, ItemPointer iptr,
-		   int op, BlockNumber blkno, OffsetNumber offnum);
-static void gistfreestack(GISTSTACK *s);
+		   OffsetNumber offnum, XLogRecPtr newlsn, XLogRecPtr oldlsn);
+static void adjustiptr(IndexScanDesc scan, ItemPointer iptr, GISTSearchStack *stk,
+		   int op, BlockNumber blkno, OffsetNumber offnum, XLogRecPtr newlsn, XLogRecPtr oldlsn);
+static void gistfreestack(GISTSearchStack *s);
 
 /*
  * Whenever we start a GiST scan in a backend, we register it in
@@ -139,7 +138,7 @@ gistmarkpos(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GISTScanOpaque so;
-	GISTSTACK  *o,
+	GISTSearchStack  *o,
 			   *n,
 			   *tmp;
 
@@ -156,12 +155,13 @@ gistmarkpos(PG_FUNCTION_ARGS)
 	/* copy the parent stack from the current item data */
 	while (n != NULL)
 	{
-		tmp = (GISTSTACK *) palloc(sizeof(GISTSTACK));
-		tmp->offset = n->offset;
+		tmp = (GISTSearchStack *) palloc(sizeof(GISTSearchStack));
+		tmp->lsn = n->lsn;
+		tmp->parentlsn = n->parentlsn;
 		tmp->block = n->block;
-		tmp->parent = o;
+		tmp->next = o;
 		o = tmp;
-		n = n->parent;
+		n = n->next;
 	}
 
 	gistfreestack(so->markstk);
@@ -187,7 +187,7 @@ gistrestrpos(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	GISTScanOpaque so;
-	GISTSTACK  *o,
+	GISTSearchStack  *o,
 			   *n,
 			   *tmp;
 
@@ -204,12 +204,13 @@ gistrestrpos(PG_FUNCTION_ARGS)
 	/* copy the parent stack from the current item data */
 	while (n != NULL)
 	{
-		tmp = (GISTSTACK *) palloc(sizeof(GISTSTACK));
-		tmp->offset = n->offset;
+		tmp = (GISTSearchStack *) palloc(sizeof(GISTSearchStack));
+		tmp->lsn = n->lsn;
+		tmp->parentlsn = n->parentlsn;
 		tmp->block = n->block;
-		tmp->parent = o;
+		tmp->next = o;
 		o = tmp;
-		n = n->parent;
+		n = n->next;
 	}
 
 	gistfreestack(so->stack);
@@ -252,6 +253,7 @@ gistendscan(PG_FUNCTION_ARGS)
 		MemoryContextDelete(so->tempCxt);
 		pfree(scan->opaque);
 	}
+
 
 	gistdropscan(scan);
 
@@ -331,16 +333,19 @@ ReleaseResources_gist(void)
 }
 
 void
-gistadjscans(Relation rel, int op, BlockNumber blkno, OffsetNumber offnum)
+gistadjscans(Relation rel, int op, BlockNumber blkno, OffsetNumber offnum, XLogRecPtr newlsn, XLogRecPtr oldlsn)
 {
 	GISTScanList l;
 	Oid			relid;
+
+	if ( XLogRecPtrIsInvalid(newlsn) || XLogRecPtrIsInvalid(oldlsn) )
+		return; 
 
 	relid = RelationGetRelid(rel);
 	for (l = GISTScans; l != NULL; l = l->gsl_next)
 	{
 		if (l->gsl_scan->indexRelation->rd_id == relid)
-			gistadjone(l->gsl_scan, op, blkno, offnum);
+			gistadjone(l->gsl_scan, op, blkno, offnum, newlsn, oldlsn);
 	}
 }
 
@@ -358,20 +363,12 @@ static void
 gistadjone(IndexScanDesc scan,
 		   int op,
 		   BlockNumber blkno,
-		   OffsetNumber offnum)
+		   OffsetNumber offnum, XLogRecPtr newlsn, XLogRecPtr oldlsn)
 {
-	GISTScanOpaque so;
+	GISTScanOpaque so = (GISTScanOpaque) scan->opaque ;
 
-	adjustiptr(scan, &(scan->currentItemData), op, blkno, offnum);
-	adjustiptr(scan, &(scan->currentMarkData), op, blkno, offnum);
-
-	so = (GISTScanOpaque) scan->opaque;
-
-	if (op == GISTOP_SPLIT)
-	{
-		adjuststack(so->stack, blkno);
-		adjuststack(so->markstk, blkno);
-	}
+	adjustiptr(scan, &(scan->currentItemData), so->stack, op, blkno, offnum, newlsn, oldlsn);
+	adjustiptr(scan, &(scan->currentMarkData), so->markstk, op, blkno, offnum, newlsn, oldlsn);
 }
 
 /*
@@ -383,10 +380,10 @@ gistadjone(IndexScanDesc scan,
  */
 static void
 adjustiptr(IndexScanDesc scan,
-		   ItemPointer iptr,
+		   ItemPointer iptr, GISTSearchStack	*stk,
 		   int op,
 		   BlockNumber blkno,
-		   OffsetNumber offnum)
+		   OffsetNumber offnum, XLogRecPtr newlsn, XLogRecPtr oldlsn)
 {
 	OffsetNumber curoff;
 	GISTScanOpaque so;
@@ -402,7 +399,7 @@ adjustiptr(IndexScanDesc scan,
 			{
 				case GISTOP_DEL:
 					/* back up one if we need to */
-					if (curoff >= offnum)
+					if (curoff >= offnum && XLByteEQ(stk->lsn, oldlsn) ) /* the same vesrion of page */
 					{
 						if (curoff > FirstOffsetNumber)
 						{
@@ -421,18 +418,9 @@ adjustiptr(IndexScanDesc scan,
 							else
 								so->flags |= GS_MRKBEFORE;
 						}
+						stk->lsn = newlsn;
 					}
 					break;
-
-				case GISTOP_SPLIT:
-					/* back to start of page on split */
-					ItemPointerSet(iptr, blkno, FirstOffsetNumber);
-					if (iptr == &(scan->currentItemData))
-						so->flags &= ~GS_CURBEFORE;
-					else
-						so->flags &= ~GS_MRKBEFORE;
-					break;
-
 				default:
 					elog(ERROR, "Bad operation in GiST scan adjust: %d", op);
 			}
@@ -440,37 +428,12 @@ adjustiptr(IndexScanDesc scan,
 	}
 }
 
-/*
- *	adjuststack() -- adjust the supplied stack for a split on a page in
- *					 the index we're scanning.
- *
- *		If a page on our parent stack has split, we need to back up to the
- *		beginning of the page and rescan it.  The reason for this is that
- *		the split algorithm for GiSTs doesn't order tuples in any useful
- *		way on a single page.  This means on that a split, we may wind up
- *		looking at some heap tuples more than once.  This is handled in the
- *		access method update code for heaps; if we've modified the tuple we
- *		are looking at already in this transaction, we ignore the update
- *		request.
- */
 static void
-adjuststack(GISTSTACK *stk, BlockNumber blkno)
-{
-	while (stk != NULL)
-	{
-		if (stk->block == blkno)
-			stk->offset = FirstOffsetNumber;
-
-		stk = stk->parent;
-	}
-}
-
-static void
-gistfreestack(GISTSTACK *s)
+gistfreestack(GISTSearchStack *s)
 {
 	while (s != NULL)
 	{
-		GISTSTACK *p = s->parent;
+		GISTSearchStack *p = s->next;
 		pfree(s);
 		s = p;
 	}

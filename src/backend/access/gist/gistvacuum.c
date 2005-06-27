@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.2 2005/06/20 15:22:37 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.3 2005/06/27 12:45:22 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,42 +34,13 @@ typedef struct {
 	Relation	index;
 	MemoryContext	opCtx;
 	IndexBulkDeleteResult	*result;
-
-	/* path to root */
-	BlockNumber	*path;
-	int		pathlen;
-	int		curpathlen;
 } GistVacuum;
-
-static void
-shiftPath(GistVacuum *gv, BlockNumber blkno) {
-	if ( gv->pathlen == 0 ) {
-		gv->pathlen = 8;
-		gv->path = (BlockNumber*) palloc( MAXALIGN(sizeof(BlockNumber)*gv->pathlen) );
-	} else if ( gv->pathlen == gv->curpathlen ) {
-		gv->pathlen *= 2;
-		gv->path = (BlockNumber*) repalloc( gv->path, MAXALIGN(sizeof(BlockNumber)*gv->pathlen) );
-	}
-
-	if ( gv->curpathlen )
-		memmove( gv->path+1, gv->path, sizeof(BlockNumber)*gv->curpathlen ); 
-	gv->curpathlen++;
-	gv->path[0] = blkno;
-}
-
-static void
-unshiftPath(GistVacuum *gv) {
-	gv->curpathlen--;
-	if ( gv->curpathlen )
-		memmove( gv->path, gv->path+1, sizeof(BlockNumber)*gv->curpathlen );
-} 
 
 typedef struct {
 	IndexTuple	*itup;
 	int		ituplen;
 	bool		emptypage;
 } ArrayTuple;
-
 
 static ArrayTuple
 gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
@@ -100,7 +71,6 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 		completed = (ItemPointerData*)palloc( sizeof(ItemPointerData)*lencompleted );
 		addon=(IndexTuple*)palloc(sizeof(IndexTuple)*lenaddon);
 
-		shiftPath(gv, blkno);
 		for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i)) {
 			ArrayTuple chldtuple;
 			bool needchildunion;
@@ -115,8 +85,6 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 			chldtuple = gistVacuumUpdate( gv, ItemPointerGetBlockNumber(&(idxtuple->t_tid)),
 				needchildunion );
 			if ( chldtuple.ituplen || chldtuple.emptypage ) {
-				/* adjust any scans that will be affected by this deletion */
-				gistadjscans(gv->index, GISTOP_DEL, blkno, i);
 				PageIndexTupleDelete(page, i);
 				todelete[ ntodelete++ ] = i;
 				i--; maxoff--;
@@ -180,10 +148,8 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 	
 					oldCtx = MemoryContextSwitchTo(gv->opCtx);
 
-					/* path is need to recovery because there is new pages, in a case of
-					   crash it's needed to add inner tuple pointers on parent page */ 
 					rdata = formSplitRdata(gv->index->rd_node, blkno,
-						&key, gv->path, gv->curpathlen, dist);
+						&key, dist);
 
 					MemoryContextSwitchTo(oldCtx);
 					
@@ -198,11 +164,18 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 					}
 
 					END_CRIT_SECTION();
-				
+				} else {
+					ptr = dist;
+					while(ptr) {
+						PageSetLSN(BufferGetPage(ptr->buffer), XLogRecPtrForTemp);
+						ptr=ptr->next;
+					}
 				}
 
 				ptr = dist;
 				while(ptr) {
+					if ( BufferGetBlockNumber(ptr->buffer) != blkno )
+						LockBuffer( ptr->buffer, GIST_UNLOCK );
 					WriteBuffer(ptr->buffer);
 					ptr=ptr->next;
 				}
@@ -213,8 +186,10 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 					ItemPointerSet(&key, blkno, TUPLE_IS_VALID);
 
 					oldCtx = MemoryContextSwitchTo(gv->opCtx);
-					gistnewroot(gv->index, res.itup, res.ituplen, &key);
+					gistnewroot(gv->index, buffer, res.itup, res.ituplen, &key);
 					MemoryContextSwitchTo(oldCtx);
+
+					WriteNoReleaseBuffer(buffer);
 				}
 
 				needwrite=false;
@@ -223,16 +198,15 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 
 				needunion = false; /* gistSplit already forms unions */
 			} else {
+				/* enough free space */
 				OffsetNumber off = (PageIsEmpty(page)) ?
 					FirstOffsetNumber
 					:
 					OffsetNumberNext(PageGetMaxOffsetNumber(page));
 
-				/* enough free space */
 				gistfillbuffer(gv->index, page, addon, curlenaddon, off); 
 			} 
 		}
-		unshiftPath(gv);
 	}
 
 	if ( needunion ) {
@@ -272,22 +246,22 @@ gistVacuumUpdate( GistVacuum *gv, BlockNumber blkno, bool needunion ) {
 		if ( !gv->index->rd_istemp ) {
 			XLogRecData *rdata;
 			XLogRecPtr	recptr;
-			MemoryContext oldCtx = MemoryContextSwitchTo(gv->opCtx);
+			char	*xlinfo;
 
-			/* In a vacuum, it's not need to push path, because
-			   there is no new inserted keys */
  			rdata = formUpdateRdata(gv->index->rd_node, blkno, todelete, ntodelete, 
-				res.emptypage, addon, curlenaddon, NULL, NULL, 0);
-			MemoryContextSwitchTo(oldCtx);
-		
+				res.emptypage, addon, curlenaddon, NULL );
+			xlinfo = rdata->data;
 	
 			START_CRIT_SECTION();
 			recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_ENTRY_UPDATE, rdata);
 			PageSetLSN(page, recptr);
 			PageSetTLI(page, ThisTimeLineID);
 			END_CRIT_SECTION();
-			MemoryContextReset(gv->opCtx);
-		}
+
+			pfree( xlinfo );
+			pfree( rdata );
+		} else 
+			PageSetLSN(page, XLogRecPtrForTemp);
 		WriteBuffer( buffer );
 	} else
 		ReleaseBuffer( buffer );
@@ -318,21 +292,19 @@ gistvacuumcleanup(PG_FUNCTION_ARGS) {
 	BlockNumber npages, blkno;
 	BlockNumber nFreePages, *freePages, maxFreePages;
 	BlockNumber lastBlock = GIST_ROOT_BLKNO, lastFilledBlock = GIST_ROOT_BLKNO;	
-
-	/* LockRelation(rel, AccessExclusiveLock); */
+	bool needLock;
 
 	/* gistVacuumUpdate may cause hard work */
 	if ( info->vacuum_full ) {
 		GistVacuum	gv;
 		ArrayTuple	res;
 
+		LockRelation(rel, AccessExclusiveLock);
+
 		gv.index = rel;
 		initGISTstate(&(gv.giststate), rel);
 		gv.opCtx = createTempGistContext();
 		gv.result = stats;
-
-		gv.path=NULL;
-		gv.pathlen = gv.curpathlen = 0;
 
 		/* walk through the entire index for update tuples */
 		res = gistVacuumUpdate( &gv, GIST_ROOT_BLKNO, false );
@@ -343,8 +315,6 @@ gistvacuumcleanup(PG_FUNCTION_ARGS) {
 				pfree( res.itup[i] );
 			pfree( res.itup );
 		}
-		if ( gv.path )
-			pfree( gv.path );
         	freeGISTstate(&(gv.giststate));
         	MemoryContextDelete(gv.opCtx);
 	} else if (needFullVacuum) {
@@ -354,16 +324,29 @@ gistvacuumcleanup(PG_FUNCTION_ARGS) {
 
 	needFullVacuum = false;
 
+	needLock = !RELATION_IS_LOCAL(rel);
+	if ( info->vacuum_full )
+		needLock = false; /* relation locked with AccessExclusiveLock */
+
 	/* try to find deleted pages */
+	if (needLock)
+		LockRelationForExtension(rel, ExclusiveLock);
 	npages = RelationGetNumberOfBlocks(rel);
-	maxFreePages = RelationGetNumberOfBlocks(rel);
+	if (needLock)
+		UnlockRelationForExtension(rel, ExclusiveLock);
+
+	maxFreePages = npages;
 	if ( maxFreePages > MaxFSMPages )
 		maxFreePages = MaxFSMPages;
+
 	nFreePages = 0;
 	freePages = (BlockNumber*) palloc (sizeof(BlockNumber) * maxFreePages);
 	for(blkno=GIST_ROOT_BLKNO+1;blkno<npages;blkno++) {
 		Buffer	buffer = ReadBuffer(rel, blkno);
-		Page	page=(Page)BufferGetPage(buffer);
+		Page	page;	
+
+		LockBuffer( buffer, GIST_SHARE );
+		page=(Page)BufferGetPage(buffer);
 
 		if ( GistPageIsDeleted(page) ) {
 			if (nFreePages < maxFreePages) {
@@ -372,46 +355,68 @@ gistvacuumcleanup(PG_FUNCTION_ARGS) {
 			}
 		} else
 			lastFilledBlock = blkno;
+		LockBuffer( buffer, GIST_UNLOCK );
 		ReleaseBuffer(buffer);
 	}
 	lastBlock = npages-1;
 		
-	if ( nFreePages > 0 ) {
-		if ( info->vacuum_full ) { /* try to truncate index */
-			int i;
-			for(i=0;i<nFreePages;i++)
-				if ( freePages[i] >= lastFilledBlock ) {
-					nFreePages = i;
-					break;
-				}
+	if ( info->vacuum_full && nFreePages>0 ) { /* try to truncate index */
+		int i;
+		for(i=0;i<nFreePages;i++)
+			if ( freePages[i] >= lastFilledBlock ) {
+				nFreePages = i;
+				break;
+			}
 	
-			if ( lastBlock > lastFilledBlock )	
-				RelationTruncate( rel, lastFilledBlock+1 );
-			stats->pages_removed = lastBlock - lastFilledBlock;
-		}
-		
-		if ( nFreePages > 0 )
-			RecordIndexFreeSpace( &rel->rd_node, nFreePages, freePages );
+		if ( lastBlock > lastFilledBlock )	
+			RelationTruncate( rel, lastFilledBlock+1 );
+		stats->pages_removed = lastBlock - lastFilledBlock;
 	}
+		
+	RecordIndexFreeSpace( &rel->rd_node, nFreePages, freePages );
 	pfree( freePages ); 
 
 	/* return statistics */
 	stats->pages_free = nFreePages;
+	if (needLock)
+		LockRelationForExtension(rel, ExclusiveLock);
 	stats->num_pages = RelationGetNumberOfBlocks(rel);
+	if (needLock)
+		UnlockRelationForExtension(rel, ExclusiveLock);
 
-	/* UnlockRelation(rel, AccessExclusiveLock); */
+	if (info->vacuum_full)
+		UnlockRelation(rel, AccessExclusiveLock); 
 
 	PG_RETURN_POINTER(stats);
 }
 
 typedef struct GistBDItem {
+	GistNSN		parentlsn;
 	BlockNumber 	blkno;
 	struct GistBDItem *next; 
 } GistBDItem;
 
+static void
+pushStackIfSplited(Page page, GistBDItem *stack) {
+	GISTPageOpaque opaque = GistPageGetOpaque(page);
+
+	if ( stack->blkno!=GIST_ROOT_BLKNO && !XLogRecPtrIsInvalid( stack->parentlsn ) && 
+			XLByteLT( stack->parentlsn, opaque->nsn) && 
+			opaque->rightlink != InvalidBlockNumber /* sanity check */ ) {
+		/* split page detected, install right link to the stack */
+
+		GistBDItem *ptr = (GistBDItem*) palloc(sizeof(GistBDItem));
+		ptr->blkno = opaque->rightlink;
+		ptr->parentlsn = stack->parentlsn;
+		ptr->next = stack->next;
+		stack->next = ptr;
+	}
+} 
+
+
 /*
  * Bulk deletion of all index entries pointing to a set of heap tuples and
- * update invalid tuples after crash recovery.
+ * check invalid tuples after crash recovery.
  * The set of target tuples is specified via a callback routine that tells
  * whether any given heap tuple (identified by ItemPointer) is being deleted.
  *
@@ -424,49 +429,99 @@ gistbulkdelete(PG_FUNCTION_ARGS) {
 	void* callback_state = (void *) PG_GETARG_POINTER(2);
 	IndexBulkDeleteResult	*result = (IndexBulkDeleteResult*)palloc0(sizeof(IndexBulkDeleteResult));	
 	GistBDItem	*stack, *ptr;
-	MemoryContext opCtx = createTempGistContext();
+	bool	needLock;
 	
-	stack = (GistBDItem*) palloc(sizeof(GistBDItem));
+	stack = (GistBDItem*) palloc0(sizeof(GistBDItem));
 
 	stack->blkno = GIST_ROOT_BLKNO;
-	stack->next = NULL;
 	needFullVacuum = false;
 
 	while( stack ) {
 		Buffer buffer = ReadBuffer(rel, stack->blkno);
-		Page   page   = (Page) BufferGetPage(buffer);
-		OffsetNumber i, maxoff = PageGetMaxOffsetNumber(page);
+		Page   page;
+		OffsetNumber i, maxoff;
 		IndexTuple	idxtuple;
 		ItemId		iid;
-		OffsetNumber *todelete = NULL;
-		int ntodelete = 0;	
+
+		LockBuffer(buffer, GIST_SHARE); 
+		page   = (Page) BufferGetPage(buffer);
 
 		if ( GistPageIsLeaf(page) ) {
-			ItemPointerData heapptr;
+			OffsetNumber *todelete = NULL;
+			int ntodelete = 0;
 
-			todelete = (OffsetNumber*)palloc( MAXALIGN(sizeof(OffsetNumber)*maxoff) );
+			LockBuffer(buffer, GIST_UNLOCK);
+			LockBuffer(buffer, GIST_EXCLUSIVE);
+
+			page   = (Page) BufferGetPage(buffer);
+			if ( stack->blkno==GIST_ROOT_BLKNO && !GistPageIsLeaf(page) ) {
+				/* the only root can become non-leaf during relock */
+				LockBuffer(buffer, GIST_UNLOCK);
+				ReleaseBuffer(buffer);
+				/* one more check */
+				continue;
+			}
+
+			/* check for split proceeded after look at parent, 
+			   we should check it after relock */
+			pushStackIfSplited(page, stack);
+
+			maxoff = PageGetMaxOffsetNumber(page);
+			todelete = (OffsetNumber*)palloc( MAXALIGN(sizeof(OffsetNumber)*(maxoff+1)) );
 
 			for(i=FirstOffsetNumber;i<=maxoff;i=OffsetNumberNext(i)) {
 				iid = PageGetItemId(page, i);	
 				idxtuple = (IndexTuple) PageGetItem(page, iid);
-				heapptr = idxtuple->t_tid;
 
-				if ( callback(&heapptr, callback_state) ) {
-					gistadjscans(rel, GISTOP_DEL, stack->blkno, i);
+				if ( callback(&(idxtuple->t_tid), callback_state) ) {
 					PageIndexTupleDelete(page, i);
-					todelete[ ntodelete++ ] = i;
-					i--; maxoff--;
+					todelete[ ntodelete ] = i;
+					i--; maxoff--; ntodelete++;
 					result->tuples_removed += 1;
+					Assert( maxoff == PageGetMaxOffsetNumber(page) );
 				} else 
 					result->num_index_tuples += 1;
 			}
+
+			if ( ntodelete ) {
+				GistMarkTuplesDeleted(page);
+
+				if (!rel->rd_istemp ) {
+					XLogRecData *rdata;
+					XLogRecPtr      recptr;
+					gistxlogEntryUpdate *xlinfo;
+
+					rdata = formUpdateRdata(rel->rd_node, stack->blkno, todelete, ntodelete,
+						false, NULL, 0, NULL);
+					xlinfo = (gistxlogEntryUpdate*)rdata->data;
+
+					START_CRIT_SECTION();
+					recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_ENTRY_UPDATE, rdata);
+					PageSetLSN(page, recptr);
+					PageSetTLI(page, ThisTimeLineID);
+					END_CRIT_SECTION();
+
+					pfree( xlinfo );
+					pfree( rdata );
+				} else
+					PageSetLSN(page, XLogRecPtrForTemp);
+				WriteNoReleaseBuffer( buffer );
+			}
+
+			pfree( todelete );
 		} else {
+			/* check for split proceeded after look at parent */
+			pushStackIfSplited(page, stack);
+
+			maxoff = PageGetMaxOffsetNumber(page);
+
 			for(i=FirstOffsetNumber;i<=maxoff;i=OffsetNumberNext(i)) {
 				iid = PageGetItemId(page, i);
 				idxtuple = (IndexTuple) PageGetItem(page, iid);
 
 				ptr = (GistBDItem*) palloc(sizeof(GistBDItem));
 				ptr->blkno = ItemPointerGetBlockNumber( &(idxtuple->t_tid) );
+				ptr->parentlsn = PageGetLSN( page );
 				ptr->next = stack->next;
 				stack->next = ptr;
 
@@ -475,33 +530,9 @@ gistbulkdelete(PG_FUNCTION_ARGS) {
 			}
 		}
 
-		if ( ntodelete && todelete ) {
-			GistMarkTuplesDeleted(page);
+		LockBuffer( buffer, GIST_UNLOCK );
+		ReleaseBuffer( buffer );
 
-			if (!rel->rd_istemp ) {
-				XLogRecData *rdata;
-				XLogRecPtr      recptr;
-				MemoryContext oldCtx = MemoryContextSwitchTo(opCtx);
-
-				rdata = formUpdateRdata(rel->rd_node, stack->blkno, todelete, ntodelete,
-					false, NULL, 0, NULL, NULL, 0);
-				MemoryContextSwitchTo(oldCtx);
-
-				START_CRIT_SECTION();
-				recptr = XLogInsert(RM_GIST_ID, XLOG_GIST_ENTRY_UPDATE, rdata);
-				PageSetLSN(page, recptr);
-				PageSetTLI(page, ThisTimeLineID);
-				END_CRIT_SECTION();
-
-				MemoryContextReset(opCtx);
-			}
-
-			WriteBuffer( buffer );
-		} else
-			ReleaseBuffer( buffer );
-
-		if ( todelete )
-			pfree( todelete );
 
 		ptr = stack->next;
 		pfree( stack );
@@ -510,10 +541,13 @@ gistbulkdelete(PG_FUNCTION_ARGS) {
 		vacuum_delay_point();
 	}
 
-	MemoryContextDelete( opCtx );
+	needLock = !RELATION_IS_LOCAL(rel);
 
+	if (needLock)
+		LockRelationForExtension(rel, ExclusiveLock);
 	result->num_pages = RelationGetNumberOfBlocks(rel);
-
+	if (needLock)
+		UnlockRelationForExtension(rel, ExclusiveLock);
 
 	PG_RETURN_POINTER( result );
 }
