@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.85 2004/12/31 22:03:07 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.86 2005/06/27 02:17:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,8 +347,14 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 
 		/*
 		 * Check for inherited CHECK constraints.  We assume a constraint
-		 * is inherited if its expression matches the parent and the name
-		 * is the same, *or* both names start with '$'.
+		 * is inherited if its name matches the name of any constraint in
+		 * the parent.  Originally this code tried to compare the expression
+		 * texts, but that can fail if the parent and child tables are in
+		 * different schemas, because reverse-listing of function calls may
+		 * produce different text (schema-qualified or not) depending on
+		 * search path.  We really need a more bulletproof way of detecting
+		 * inherited constraints --- pg_constraint should record this
+		 * explicitly!
 		 */
 		for (j = 0; j < tbinfo->ncheck; j++)
 		{
@@ -363,14 +369,9 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 				parent = parents[k];
 				for (l = 0; l < parent->ncheck; l++)
 				{
-					ConstraintInfo *pconstr;
+					ConstraintInfo *pconstr = &(parent->checkexprs[l]);
 
-					pconstr = &(parent->checkexprs[l]);
-					if (strcmp(pconstr->condef, constr->condef) != 0)
-						continue;
-					if (strcmp(pconstr->dobj.name, constr->dobj.name) == 0 ||
-						(pconstr->dobj.name[0] == '$' &&
-						 constr->dobj.name[0] == '$'))
+					if (strcmp(pconstr->dobj.name, constr->dobj.name) == 0)
 					{
 						constr->coninherited = true;
 						break;
