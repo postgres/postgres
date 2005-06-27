@@ -181,7 +181,7 @@ numbers with more than about 16 significant digits will be truncated.
 USAGE
 =====
 
-The access method for CUBE is a GiST (gist_cube_ops), which is a
+The access method for CUBE is a GiST index (gist_cube_ops), which is a
 generalization of R-tree. GiSTs allow the postgres implementation of
 R-tree, originally encoded to support 2-D geometric types such as
 boxes and polygons, to be used with any data type whose data domain
@@ -193,42 +193,21 @@ things, all geometric data types, regardless of their dimensionality
 
 The operators supported by the GiST access method include:
 
+a = b		Same as
 
-[a, b] << [c, d]	Is left of
+	The cubements a and b are identical.
 
-	The left operand, [a, b], occurs entirely to the left of the
-	right operand, [c, d], on the axis (-inf, inf). It means,
-	[a, b] << [c, d] is true if b < c and false otherwise
+a && b		Overlaps
 
-[a, b] >> [c, d]	Is right of
+	The cubements a and b overlap.
 
-	[a, b] is occurs entirely to the right of [c, d]. 
-	[a, b] >> [c, d] is true if b > c and false otherwise
+a @ b		Contains
 
-[a, b] &< [c, d]	Over left
+	The cubement a contains the cubement b.
 
-	The cubement [a, b] overlaps the cubement [c, d] in such a way
-	that a <= c <= b and b <= d
+a ~ b		Contained in
 
-[a, b] &> [c, d]	Over right
-
-	The cubement [a, b] overlaps the cubement [c, d] in such a way
-	that a > c and b <= c <= d
-
-[a, b] = [c, d]		Same as
-
-	The cubements [a, b] and [c, d] are identical, that is, a == b
-	and c == d
-
-[a, b] @ [c, d]		Contains
-
-	The cubement [a, b] contains the cubement [c, d], that is, 
-	a <= c and b >= d
-
-[a, b] @ [c, d]		Contained in
-
-	The cubement [a, b] is contained in [c, d], that is, 
-	a >= c and b <= d
+	The cubement a is contained in b.
 
 Although the mnemonics of the following operators is questionable, I
 preserved them to maintain visual consistency with other geometric

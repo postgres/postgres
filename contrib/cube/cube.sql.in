@@ -12,12 +12,13 @@ LANGUAGE 'C' IMMUTABLE STRICT;
 CREATE OR REPLACE FUNCTION cube_out(cube)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'c'IMMUTABLE STRICT;
+LANGUAGE 'C' IMMUTABLE STRICT;
 
 CREATE TYPE cube (
 	INTERNALLENGTH = variable,
 	INPUT = cube_in,
-	OUTPUT = cube_out
+	OUTPUT = cube_out,
+	ALIGNMENT = double
 );
 
 COMMENT ON TYPE cube IS 'multi-dimensional cube ''(FLOAT-1, FLOAT-2, ..., FLOAT-N), (FLOAT-1, FLOAT-2, ..., FLOAT-N)''';
@@ -35,38 +36,6 @@ CREATE CAST (text AS cube) WITH FUNCTION cube(text) AS ASSIGNMENT;
 --
 -- External C-functions for R-tree methods
 --
-
--- Left/Right methods
-
-CREATE OR REPLACE FUNCTION cube_over_left(cube, cube)
-RETURNS bool
-AS 'MODULE_PATHNAME'
-LANGUAGE 'C' IMMUTABLE STRICT;
-
-COMMENT ON FUNCTION cube_over_left(cube, cube) IS 'is over and left of (NOT IMPLEMENTED)';
-
-CREATE OR REPLACE FUNCTION cube_over_right(cube, cube)
-RETURNS bool
-AS 'MODULE_PATHNAME'
-LANGUAGE 'C' IMMUTABLE STRICT;
-
-COMMENT ON FUNCTION cube_over_right(cube, cube) IS 'is over and right of (NOT IMPLEMENTED)';
-
-CREATE OR REPLACE FUNCTION cube_left(cube, cube)
-RETURNS bool
-AS 'MODULE_PATHNAME'
-LANGUAGE 'C' IMMUTABLE STRICT;
-
-COMMENT ON FUNCTION cube_left(cube, cube) IS
-'is left of (NOT IMPLEMENTED)';
-
-CREATE OR REPLACE FUNCTION cube_right(cube, cube)
-RETURNS bool
-AS 'MODULE_PATHNAME'
-LANGUAGE 'C' IMMUTABLE STRICT;
-
-COMMENT ON FUNCTION cube_right(cube, cube) IS 'is right of (NOT IMPLEMENTED)';
-
 
 -- Comparison methods
 
@@ -242,34 +211,10 @@ CREATE OPERATOR >= (
 	RESTRICT = scalargtsel, JOIN = scalargtjoinsel
 );
 
-CREATE OPERATOR << (
-	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_left,
-	COMMUTATOR = '>>',
-	RESTRICT = positionsel, JOIN = positionjoinsel
-);
-
-CREATE OPERATOR &< (
-	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_over_left,
-	COMMUTATOR = '&>',
-	RESTRICT = positionsel, JOIN = positionjoinsel
-);
-
 CREATE OPERATOR && (
 	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_overlap,
 	COMMUTATOR = '&&',
-	RESTRICT = positionsel, JOIN = positionjoinsel
-);
-
-CREATE OPERATOR &> (
-	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_over_right,
-	COMMUTATOR = '&<',
-	RESTRICT = positionsel, JOIN = positionjoinsel
-);
-
-CREATE OPERATOR >> (
-	LEFTARG = cube, RIGHTARG = cube, PROCEDURE = cube_right,
-	COMMUTATOR = '<<',
-	RESTRICT = positionsel, JOIN = positionjoinsel
+	RESTRICT = areasel, JOIN = areajoinsel
 );
 
 CREATE OPERATOR = (
@@ -348,11 +293,7 @@ CREATE OPERATOR CLASS cube_ops
 
 CREATE OPERATOR CLASS gist_cube_ops
     DEFAULT FOR TYPE cube USING gist AS
-	OPERATOR	1	<< ,
-	OPERATOR	2	&< ,
 	OPERATOR	3	&& ,
-	OPERATOR	4	&> ,
-	OPERATOR	5	>> ,
 	OPERATOR	6	= ,
 	OPERATOR	7	@ ,
 	OPERATOR	8	~ ,

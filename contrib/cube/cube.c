@@ -73,14 +73,6 @@ double	   *cube_size(NDBOX * a);
 void		rt_cube_size(NDBOX * a, double *sz);
 
 /*
-** These make no sense for this type, but R-tree wants them
-*/
-bool		cube_over_left(NDBOX * a, NDBOX * b);
-bool		cube_over_right(NDBOX * a, NDBOX * b);
-bool		cube_left(NDBOX * a, NDBOX * b);
-bool		cube_right(NDBOX * a, NDBOX * b);
-
-/*
 ** miscellaneous
 */
 bool		cube_lt(NDBOX * a, NDBOX * b);
@@ -460,20 +452,8 @@ g_cube_leaf_consistent(NDBOX * key,
 	 */
 	switch (strategy)
 	{
-		case RTLeftStrategyNumber:
-			retval = (bool) cube_left(key, query);
-			break;
-		case RTOverLeftStrategyNumber:
-			retval = (bool) cube_over_left(key, query);
-			break;
 		case RTOverlapStrategyNumber:
 			retval = (bool) cube_overlap(key, query);
-			break;
-		case RTOverRightStrategyNumber:
-			retval = (bool) cube_over_right(key, query);
-			break;
-		case RTRightStrategyNumber:
-			retval = (bool) cube_right(key, query);
 			break;
 		case RTSameStrategyNumber:
 			retval = (bool) cube_eq(key, query);
@@ -502,16 +482,8 @@ g_cube_internal_consistent(NDBOX * key,
 	 */
 	switch (strategy)
 	{
-		case RTLeftStrategyNumber:
-		case RTOverLeftStrategyNumber:
-			retval = (bool) cube_over_left(key, query);
-			break;
 		case RTOverlapStrategyNumber:
 			retval = (bool) cube_overlap(key, query);
-			break;
-		case RTOverRightStrategyNumber:
-		case RTRightStrategyNumber:
-			retval = (bool) cube_right(key, query);
 			break;
 		case RTSameStrategyNumber:
 		case RTContainsStrategyNumber:
@@ -690,62 +662,6 @@ rt_cube_size(NDBOX * a, double *size)
 			*size = (*size) * Abs((a->x[j] - a->x[i]));
 	}
 	return;
-}
-
-/* The following four methods compare the projections of the boxes
-   onto the 0-th coordinate axis. These methods are useless for dimensions
-   larger than 2, but it seems that R-tree requires all its strategies
-   map to real functions that return something */
-
-/*	is the right edge of (a) located to the left of
-	the right edge of (b)? */
-bool
-cube_over_left(NDBOX * a, NDBOX * b)
-{
-	if ((a == NULL) || (b == NULL))
-		return (FALSE);
-
-	return (Min(a->x[a->dim - 1], a->x[2 * a->dim - 1]) <=
-			Min(b->x[b->dim - 1], b->x[2 * b->dim - 1]) &&
-			!cube_left(a, b) && !cube_right(a, b));
-}
-
-/*	is the left edge of (a) located to the right of
-	the left edge of (b)? */
-bool
-cube_over_right(NDBOX * a, NDBOX * b)
-{
-	if ((a == NULL) || (b == NULL))
-		return (FALSE);
-
-	return (Min(a->x[a->dim - 1], a->x[2 * a->dim - 1]) >=
-			Min(b->x[b->dim - 1], b->x[2 * b->dim - 1]) &&
-			!cube_left(a, b) && !cube_right(a, b));
-}
-
-
-/* return 'true' if the projection of 'a' is
-   entirely on the left of the projection of 'b' */
-bool
-cube_left(NDBOX * a, NDBOX * b)
-{
-	if ((a == NULL) || (b == NULL))
-		return (FALSE);
-
-	return (Min(a->x[a->dim - 1], a->x[2 * a->dim - 1]) <
-			Min(b->x[0], b->x[b->dim]));
-}
-
-/* return 'true' if the projection of 'a' is
-   entirely on the right  of the projection of 'b' */
-bool
-cube_right(NDBOX * a, NDBOX * b)
-{
-	if ((a == NULL) || (b == NULL))
-		return (FALSE);
-
-	return (Min(a->x[0], a->x[a->dim]) >
-			Min(b->x[b->dim - 1], b->x[2 * b->dim - 1]));
 }
 
 /* make up a metric in which one box will be 'lower' than the other
